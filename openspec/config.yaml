@@ -1,0 +1,49 @@
+# openspec/config.yaml
+schema: spec-driven
+
+context: |
+  Tech stack: Django 5.x (planned), SQLite, Python 3.12+, Bootstrap 5 (initial)
+  Architecture: Greenfield — RPA operations management. Future separation of
+    backend (Django REST Framework) and frontend (Vue.js/React).
+  Testing: None yet. No test runner configured. Project creation phase.
+  Style: Standard Django project layout with apps per domain.
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Keep scope minimal for first iterations
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+  apply:
+    - Follow existing code patterns
+    tdd: false
+    test_command: "python -m pytest"
+  verify:
+    test_command: "python -m pytest"
+    build_command: ""
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas
+
+testing:
+  strict_tdd: false
+  reason: "No test runner discovered. Greenfield project — pytest will be configured during project scaffolding."
+  capabilities:
+    test_runner: null
+    layers:
+      unit: { available: false, tool: null }
+      integration: { available: false, tool: null }
+      e2e: { available: false, tool: null }
+    coverage: { available: false, command: null }
+    quality:
+      linter: { available: false, command: null }
+      type_checker: { available: false, command: null }
+      formatter: { available: false, command: null }
+  detected_at: "2026-07-14"

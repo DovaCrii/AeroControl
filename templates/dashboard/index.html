@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - AeroOps Desk{% endblock %}
+{% block content %}
+<h1 class="mb-4">Operations Dashboard</h1>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-3 col-sm-6">
+    <div class="summary-card">
+      <small>Active Aircraft</small>
+      <strong>{{ aircraft_count }}</strong>
+    </div>
+  </div>
+  <div class="col-md-3 col-sm-6">
+    <div class="summary-card">
+      <small>Active Operators</small>
+      <strong>{{ operator_count }}</strong>
+    </div>
+  </div>
+  <div class="col-md-3 col-sm-6">
+    <div class="summary-card">
+      <small>Pending Alerts</small>
+      <strong>{{ alert_count }}</strong>
+    </div>
+  </div>
+  <div class="col-md-3 col-sm-6">
+    <div class="summary-card">
+      <small>Expiring in 30 days</small>
+      <strong>{{ expirations|length }}</strong>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card p-3">
+      <h4 class="h5">Upcoming Expirations</h4>
+      {% for item in expirations %}
+      <div class="d-flex justify-content-between border-bottom py-2">
+        <span>{{ item.operator }} — {{ item.qualification_type }}</span>
+        <b>{{ item.expiry_date|date:"Y-m-d" }}</b>
+      </div>
+      {% empty %}
+      <p class="text-muted my-2">No upcoming expirations.</p>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card p-3">
+      <h4 class="h5">Tasks by Stage</h4>
+      {% for stage in stages %}
+      <div class="d-flex justify-content-between border-bottom py-2">
+        <span>{{ stage.name }}</span>
+        <b>{{ stage.tasks.count }}</b>
+      </div>
+      {% empty %}
+      <p class="text-muted my-2">No stages configured.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load aero_tags %}
+{% block title %}{{ title|default:'Records' }} - AeroOps Desk{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3">{{ title|default:'Records' }}</h1>
+  <a class="btn btn-primary" href="new/">+ New</a>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          {% block list_header %}
+          <th>Name</th>
+          <th>Created</th>
+          <th>Status</th>
+          {% endblock %}
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for object in objects %}
+        <tr>
+          {% block list_columns %}
+          <td><a href="{{ object.pk }}/">{{ object }}</a></td>
+          <td>{{ object.created_at|date:'Y-m-d' }}</td>
+          <td>
+            {% if object.is_active %}
+              <span class="badge bg-success">Active</span>
+            {% else %}
+              <span class="badge bg-secondary">Archived</span>
+            {% endif %}
+          </td>
+          {% endblock %}
+          <td class="text-end">
+            <a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">View</a>
+            <a href="{{ object.pk }}/edit/" class="btn btn-sm btn-outline-primary">Edit</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="99" class="text-center text-muted py-4">No records found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% render_pagination page_obj %}
+</div>
+{% endblock %}
