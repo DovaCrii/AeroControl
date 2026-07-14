@@ -1,0 +1,4 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}New Document - AeroOps Desk{% endblock %}
+{% block content %}<div class="card p-4"><h1 class="h3 mb-3">New Document</h1><form method="post" enctype="multipart/form-data">{% csrf_token %}{{ form|crispy }}<button class="btn btn-primary">Upload document</button><a href="{% url 'document-list' %}" class="btn btn-outline-secondary ms-2">Cancel</a></form></div>{% endblock %}

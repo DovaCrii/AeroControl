@@ -29,7 +29,7 @@
       <a href="{% url 'assignment-list' %}">↔ Assignments</a>
       <span class="sidebar-label">Compliance</span>
       <a href="{% url 'document-list' %}">📄 Documents</a>
-      <a href="{% url 'alert-list' %}">⚠ Alerts</a>
+       <a href="{% url 'alert-list' %}">⚠ Alerts {% if unresolved_alert_count %}<span class="badge bg-danger">{{ unresolved_alert_count }}</span>{% endif %}</a>
       <span class="sidebar-label">Operations</span>
       <a href="{% url 'permission-list' %}">✓ Permissions</a>
       <a href="{% url 'record-list' %}">🛩 Flights</a>

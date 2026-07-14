@@ -1,19 +1,40 @@
+from pathlib import Path
+
+from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import transaction
+from django.http import FileResponse, Http404
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
-from django.views.generic import ListView, CreateView
-from .models import DocumentType, Document, AlertRule, Alert
-from .forms import DocumentTypeForm, DocumentForm, AlertRuleForm, AlertForm
+from django.utils import timezone
+from django.views.generic import CreateView, DeleteView, DetailView, FormView, ListView, View
+
+from apps.core.views import SearchMixin
+from .forms import AlertForm, AlertRuleForm, DocumentForm, DocumentTypeForm
+from .models import Alert, AlertRule, Document, DocumentType, document_upload_path
 
 
-class ComplianceList(LoginRequiredMixin, ListView):
+def save_uploaded_file(document, uploaded):
+    relative_path = document_upload_path(document, uploaded.name)
+    absolute_path = Path(settings.DOCUMENTS_ROOT) / relative_path
+    absolute_path.parent.mkdir(parents=True, exist_ok=True)
+    with absolute_path.open("wb+") as destination:
+        for chunk in uploaded.chunks():
+            destination.write(chunk)
+    document.file_path = relative_path
+    document.save(update_fields=["file_path", "updated_at"])
+
+
+class ComplianceList(SearchMixin, LoginRequiredMixin, ListView):
     template_name = "generic/list.html"
     context_object_name = "objects"
     paginate_by = 25
 
     def get_context_data(self, **kwargs):
-        c = super().get_context_data(**kwargs)
-        c["title"] = self.model._meta.verbose_name_plural.title()
-        return c
+        context = super().get_context_data(**kwargs)
+        context["title"] = self.model._meta.verbose_name_plural.title()
+        return context
 
 
 class ComplianceCreate(LoginRequiredMixin, CreateView):
@@ -23,16 +44,155 @@ class ComplianceCreate(LoginRequiredMixin, CreateView):
         return reverse(f"{self.model._meta.model_name}-list")
 
     def get_context_data(self, **kwargs):
-        c = super().get_context_data(**kwargs)
-        c["title"] = f"New {self.model._meta.verbose_name.title()}"
-        return c
+        context = super().get_context_data(**kwargs)
+        context["title"] = f"New {self.model._meta.verbose_name.title()}"
+        return context
 
 
-for model, form, name in (
-    (DocumentType, DocumentTypeForm, "DocumentType"),
-    (Document, DocumentForm, "Document"),
-    (AlertRule, AlertRuleForm, "AlertRule"),
-    (Alert, AlertForm, "Alert"),
-):
-    globals()[f"{name}List"] = type(f"{name}List", (ComplianceList,), {"model": model})
-    globals()[f"{name}Create"] = type(f"{name}Create", (ComplianceCreate,), {"model": model, "form_class": form})
+class DocumentList(ComplianceList):
+    model = Document
+    template_name = "compliance/document_list.html"
+    search_fields = ["title"]
+
+    def get_queryset(self):
+        queryset = super().get_queryset().select_related("doc_type", "content_type")
+        if self.request.GET.get("doc_type"):
+            queryset = queryset.filter(doc_type_id=self.request.GET["doc_type"])
+        if self.request.GET.get("is_current_version") in ("true", "false"):
+            queryset = queryset.filter(is_current_version=self.request.GET["is_current_version"] == "true")
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["document_types"] = DocumentType.objects.filter(is_active=True)
+        return context
+
+
+class DocumentCreate(ComplianceCreate):
+    model = Document
+    form_class = DocumentForm
+    template_name = "compliance/document_form.html"
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        save_uploaded_file(self.object, form.cleaned_data["file"])
+        return response
+
+
+class DocumentDetail(LoginRequiredMixin, DetailView):
+    model = Document
+    template_name = "compliance/document_detail.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["versions"] = Document.objects.filter(
+            content_type=self.object.content_type, object_id=self.object.object_id,
+            is_current_version=False,
+        ).exclude(pk=self.object.pk).order_by("-created_at")
+        return context
+
+
+class DocumentDownload(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        document = get_object_or_404(Document, pk=pk, is_active=True)
+        root = Path(settings.DOCUMENTS_ROOT).resolve()
+        path = (root / document.file_path).resolve()
+        if root not in path.parents or not path.is_file():
+            raise Http404("Document file not found")
+        return FileResponse(path.open("rb"), as_attachment=True, filename=path.name)
+
+
+class DocumentReplace(LoginRequiredMixin, FormView):
+    form_class = DocumentForm
+    template_name = "compliance/document_replace.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.document = get_object_or_404(Document, pk=kwargs["pk"], is_active=True)
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_initial(self):
+        return {"title": self.document.title, "doc_type": self.document.doc_type,
+                "entity_type": self.document.content_type, "object_id": self.document.object_id,
+                "issue_date": self.document.issue_date, "expiry_date": self.document.expiry_date}
+
+    def form_valid(self, form):
+        with transaction.atomic():
+            self.document.is_current_version = False
+            self.document.save(update_fields=["is_current_version", "updated_at"])
+            new_document = form.save(commit=False)
+            new_document.is_current_version = True
+            new_document.content_type = self.document.content_type
+            new_document.object_id = self.document.object_id
+            new_document.file_path = ""
+            new_document.save()
+            save_uploaded_file(new_document, form.cleaned_data["file"])
+        return redirect("document-detail", pk=new_document.pk)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(title=f"Replace {self.document.title}", document=self.document)
+        return context
+
+
+class DocumentDelete(LoginRequiredMixin, DeleteView):
+    model = Document
+    template_name = "generic/confirm_delete.html"
+    success_url = "/compliance/document/"
+
+    def form_valid(self, form):
+        self.object.is_active = False
+        self.object.save(update_fields=["is_active", "updated_at"])
+        messages.success(self.request, "Document archived.")
+        return redirect(self.success_url)
+
+
+class AlertList(ComplianceList):
+    model = Alert
+    template_name = "compliance/alert_list.html"
+    search_fields = ["message"]
+
+    def get_queryset(self):
+        queryset = super().get_queryset().select_related("alert_rule", "content_type")
+        resolved = self.request.GET.get("is_resolved")
+        if resolved in ("true", "false"):
+            queryset = queryset.filter(is_resolved=resolved == "true")
+        if self.request.GET.get("entity_type"):
+            queryset = queryset.filter(content_type__model=self.request.GET["entity_type"])
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["entity_types"] = Alert.objects.values_list("content_type__model", flat=True).distinct()
+        return context
+
+
+class AlertResolve(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        alert = get_object_or_404(Alert, pk=pk, is_active=True)
+        alert.is_resolved = True
+        alert.resolved_at = timezone.now()
+        alert.save(update_fields=["is_resolved", "resolved_at", "updated_at"])
+        return redirect("alert-list")
+
+
+class DocumentTypeList(ComplianceList):
+    model = DocumentType
+
+
+class DocumentTypeCreate(ComplianceCreate):
+    model = DocumentType
+    form_class = DocumentTypeForm
+
+
+class AlertRuleList(ComplianceList):
+    model = AlertRule
+
+
+class AlertRuleCreate(ComplianceCreate):
+    model = AlertRule
+    form_class = AlertRuleForm
+
+
+class AlertCreate(ComplianceCreate):
+    model = Alert
+    form_class = AlertForm
