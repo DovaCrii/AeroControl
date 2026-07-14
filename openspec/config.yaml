@@ -2,11 +2,12 @@
 schema: spec-driven
 
 context: |
-  Tech stack: Django 5.x (planned), SQLite, Python 3.12+, Bootstrap 5 (initial)
-  Architecture: Greenfield — RPA operations management. Future separation of
+  Tech stack: Django 6.0, SQLite, Python 3.12+, Bootstrap 5
+  Architecture: Modular monolith — 7 domain apps. Future separation of
     backend (Django REST Framework) and frontend (Vue.js/React).
-  Testing: None yet. No test runner configured. Project creation phase.
+  Testing: pytest pending. No test runner configured yet.
   Style: Standard Django project layout with apps per domain.
+  Data: D:\I+D\AeroOpsDesk_Data\ (outside repo).
 
 rules:
   proposal:

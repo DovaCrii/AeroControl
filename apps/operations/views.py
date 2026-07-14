@@ -1,11 +1,12 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse
 from django.views.generic import ListView, CreateView
+from apps.core.views import SearchMixin
 from .models import FlightPermission, FlightRecord
 from .forms import FlightPermissionForm, FlightRecordForm
 
 
-class OList(LoginRequiredMixin, ListView):
+class OList(SearchMixin, LoginRequiredMixin, ListView):
     template_name = "generic/list.html"
     context_object_name = "objects"
     paginate_by = 25

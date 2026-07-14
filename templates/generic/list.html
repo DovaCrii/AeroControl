@@ -6,6 +6,11 @@
   <h1 class="h3">{{ title|default:'Records' }}</h1>
   <a class="btn btn-primary" href="new/">+ New</a>
 </div>
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-5"><input class="form-control" name="q" value="{{ request.GET.q }}" placeholder="Search..."></div>
+  <div class="col-md-3"><select class="form-select" name="is_active"><option value="">All statuses</option><option value="active" {% if request.GET.is_active == 'active' %}selected{% endif %}>Active</option><option value="archived" {% if request.GET.is_active == 'archived' %}selected{% endif %}>Archived</option></select></div>
+  <div class="col-auto"><button class="btn btn-outline-primary">Search</button></div>
+</form>
 
 <div class="card">
   <div class="table-responsive">
