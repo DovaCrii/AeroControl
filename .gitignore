@@ -8,4 +8,5 @@ staticfiles/
 media/
 .DS_Store
 
-# Obsidian vault config.obsidian/
+# Obsidian vault config
+.obsidian/
