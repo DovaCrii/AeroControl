@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.generic import CreateView, DetailView, ListView
 
-from apps.core.views import SearchMixin, StatusTransitionView
+from apps.core.views import HtmxFormMixin, SearchMixin, StatusTransitionView
 from .forms import FlightPermissionForm, FlightRecordForm
 from .models import FlightPermission, FlightRecord
 
@@ -24,7 +24,7 @@ class OList(SearchMixin, LoginRequiredMixin, ListView):
         return context
 
 
-class OCreate(LoginRequiredMixin, CreateView):
+class OCreate(HtmxFormMixin, LoginRequiredMixin, CreateView):
     template_name = "generic/form.html"
 
     def get_success_url(self):

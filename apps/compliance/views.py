@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, DetailView, FormView, ListView, View
 
-from apps.core.views import SearchMixin
+from apps.core.views import HtmxFormMixin, SearchMixin
 from .forms import AlertForm, AlertRuleForm, DocumentForm, DocumentTypeForm
 from .models import Alert, AlertRule, Document, DocumentType, document_upload_path
 
@@ -37,7 +37,7 @@ class ComplianceList(SearchMixin, LoginRequiredMixin, ListView):
         return context
 
 
-class ComplianceCreate(LoginRequiredMixin, CreateView):
+class ComplianceCreate(HtmxFormMixin, LoginRequiredMixin, CreateView):
     template_name = "generic/form.html"
 
     def get_success_url(self):
@@ -53,6 +53,7 @@ class DocumentList(ComplianceList):
     model = Document
     template_name = "compliance/document_list.html"
     search_fields = ["title"]
+    htmx_template_name = "compliance/_document_rows.html"
 
     def get_queryset(self):
         queryset = super().get_queryset().select_related("doc_type", "content_type")

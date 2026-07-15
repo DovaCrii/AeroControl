@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.generic import CreateView, DetailView, ListView
 
-from apps.core.views import SearchMixin, StatusTransitionView
+from apps.core.views import HtmxFormMixin, SearchMixin, StatusTransitionView
 from .forms import MaintenanceCompletionForm, MaintenanceRecordForm
 from .models import MaintenanceHistory, MaintenanceRecord
 
@@ -20,7 +20,7 @@ class MList(SearchMixin, LoginRequiredMixin, ListView):
         return context
 
 
-class MCreate(LoginRequiredMixin, CreateView):
+class MCreate(HtmxFormMixin, LoginRequiredMixin, CreateView):
     template_name = "generic/form.html"
 
     def get_success_url(self):
