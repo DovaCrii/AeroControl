@@ -1,0 +1,23 @@
+<select class="form-select form-select-sm kanban-filter" name="operator"
+        hx-get="/workboard/_board/"
+        hx-target="#kanban-board"
+        hx-push-url="true"
+        hx-include="[name='priority'],[name='board']"
+        hx-trigger="change">
+  <option value="">All operators</option>
+  {% for op in operators %}
+    <option value="{{ op.id }}" {% if request.GET.operator == op.id|stringformat:'s' %}selected{% endif %}>{{ op.full_name }}</option>
+  {% endfor %}
+</select>
+<select class="form-select form-select-sm kanban-filter" name="priority"
+        hx-get="/workboard/_board/"
+        hx-target="#kanban-board"
+        hx-push-url="true"
+        hx-include="[name='operator'],[name='board']"
+        hx-trigger="change">
+  <option value="">All priorities</option>
+  <option value="low" {% if request.GET.priority == 'low' %}selected{% endif %}>Low</option>
+  <option value="medium" {% if request.GET.priority == 'medium' %}selected{% endif %}>Medium</option>
+  <option value="high" {% if request.GET.priority == 'high' %}selected{% endif %}>High</option>
+  <option value="critical" {% if request.GET.priority == 'critical' %}selected{% endif %}>Critical</option>
+</select>
