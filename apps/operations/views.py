@@ -8,12 +8,12 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.generic import CreateView, DetailView, ListView
 
-from apps.core.views import HtmxFormMixin, SearchMixin, StatusTransitionView
+from apps.core.views import CsvExportMixin, HtmxFormMixin, SearchMixin, StatusTransitionView
 from .forms import FlightPermissionForm, FlightRecordForm
 from .models import FlightPermission, FlightRecord
 
 
-class OList(SearchMixin, LoginRequiredMixin, ListView):
+class OList(CsvExportMixin, SearchMixin, LoginRequiredMixin, ListView):
     template_name = "generic/list.html"
     context_object_name = "objects"
     paginate_by = 25
@@ -36,7 +36,7 @@ class OCreate(HtmxFormMixin, LoginRequiredMixin, CreateView):
         return context
 
 
-class FlightPermissionList(SearchMixin, LoginRequiredMixin, ListView):
+class FlightPermissionList(CsvExportMixin, SearchMixin, LoginRequiredMixin, ListView):
     model = FlightPermission
     template_name = "operations/permission_list.html"
     context_object_name = "objects"

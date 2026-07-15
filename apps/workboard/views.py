@@ -1,12 +1,12 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse
 from django.views.generic import ListView, CreateView
-from apps.core.views import SearchMixin
+from apps.core.views import CsvExportMixin, SearchMixin
 from .models import KanbanBoard, KanbanStage, KanbanTask
 from .forms import KanbanBoardForm, KanbanStageForm, KanbanTaskForm
 
 
-class WList(SearchMixin, LoginRequiredMixin, ListView):
+class WList(CsvExportMixin, SearchMixin, LoginRequiredMixin, ListView):
     template_name = "generic/list.html"
     context_object_name = "objects"
     paginate_by = 25

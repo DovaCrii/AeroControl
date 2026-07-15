@@ -4,12 +4,12 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.generic import CreateView, DetailView, ListView
 
-from apps.core.views import HtmxFormMixin, SearchMixin, StatusTransitionView
+from apps.core.views import CsvExportMixin, HtmxFormMixin, SearchMixin, StatusTransitionView
 from .forms import MaintenanceCompletionForm, MaintenanceRecordForm
 from .models import MaintenanceHistory, MaintenanceRecord
 
 
-class MList(SearchMixin, LoginRequiredMixin, ListView):
+class MList(CsvExportMixin, SearchMixin, LoginRequiredMixin, ListView):
     template_name = "generic/list.html"
     context_object_name = "objects"
     paginate_by = 25
