@@ -1,4 +1,7 @@
-from django.db.models import Q
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import get_object_or_404, redirect
+from django.views import View
 
 
 class SearchMixin:
@@ -10,6 +13,8 @@ class SearchMixin:
         queryset = super().get_queryset()
         query_text = self.request.GET.get("q", "").strip()
         if query_text and self.search_fields:
+            from django.db.models import Q
+
             query = Q()
             for field in self.search_fields:
                 query |= Q(**{f"{field}__icontains": query_text})
@@ -21,3 +26,23 @@ class SearchMixin:
         elif active == "archived":
             queryset = queryset.filter(is_active=False)
         return queryset
+
+
+class StatusTransitionView(LoginRequiredMixin, View):
+    model = None
+    target_status = None
+    valid_from_statuses = []
+    success_message = "Status updated."
+
+    def post(self, request, pk):
+        obj = get_object_or_404(self.model, pk=pk, is_active=True)
+        if obj.status not in self.valid_from_statuses:
+            messages.error(request, f"Cannot transition from {obj.get_status_display()}")
+            return redirect(obj)
+
+        obj.status = self.target_status
+        obj._changed_by = request.user.get_username()
+        obj._transition_notes = request.POST.get("notes", "")
+        obj.save(update_fields=["status", "updated_at"])
+        messages.success(request, self.success_message)
+        return redirect(obj)

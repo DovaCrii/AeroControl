@@ -1,0 +1,20 @@
+{% extends "generic/list.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3">{{ title }}</h1><a class="btn btn-primary" href="new/">+ New</a>
+</div>
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-3"><input class="form-control" name="q" value="{{ request.GET.q }}" placeholder="Search..."></div>
+  <div class="col-md-2"><select class="form-select" name="status"><option value="">All statuses</option>{% for value,label in status_choices %}<option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+  <div class="col-md-2"><select class="form-select" name="maintenance_type"><option value="">All types</option>{% for value,label in type_choices %}<option value="{{ value }}" {% if current_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+  <div class="col-auto"><button class="btn btn-outline-primary">Filter</button></div>
+</form>
+<div class="card"><div class="table-responsive"><table class="table table-hover mb-0">
+  <thead><tr><th>Aircraft</th><th>Type</th><th>Scheduled</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+  <tbody>{% for object in objects %}<tr>
+    <td><a href="{{ object.pk }}/">{{ object.aircraft }}</a></td><td>{{ object.get_maintenance_type_display }}</td><td>{{ object.scheduled_date|date:"Y-m-d" }}</td>
+    <td><span class="badge bg-{% if object.status == 'completed' %}success{% elif object.status == 'in_progress' %}warning{% else %}secondary{% endif %}">{{ object.get_status_display }}</span></td>
+    <td class="text-end"><a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">View</a></td>
+  </tr>{% empty %}<tr><td colspan="5" class="text-center text-muted py-4">No records found.</td></tr>{% endfor %}</tbody>
+</table></div>{% include "generic/_pagination.html" %}</div>
+{% endblock %}

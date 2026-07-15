@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Calendar - AeroOps Desk{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3">{{ month_name }}</h1>
+  <div class="d-flex gap-2">
+    <a href="?month={{ prev_month }}" class="btn btn-outline-secondary">← Previous</a>
+    <a href="?month={{ next_month }}" class="btn btn-outline-secondary">Next →</a>
+  </div>
+</div>
+
+<div class="card p-3">
+  <table class="table table-bordered text-center mb-0">
+    <thead class="table-light">
+      <tr>
+        <th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for week in month_days %}
+      <tr>
+        {% for day in week %}
+        <td class="{% if day == 0 %}text-muted{% elif day == today.day and cal_month == today.month and cal_year == today.year %}bg-info bg-opacity-10{% endif %}" style="vertical-align:top;height:90px;width:14%;padding:4px;">
+          {% if day > 0 %}
+            <strong>{{ day }}</strong>
+            {% for evt_date, evt_list in events.items %}
+              {% if evt_date.day == day and evt_date.month == cal_month and evt_date.year == cal_year %}
+                {% for evt_type, evt in evt_list %}
+                  {% if evt_type == "permission" %}
+                    <div class="small mt-1"><span class="badge bg-warning text-dark" style="font-size:0.65rem;">✈</span> <a href="{% url 'permission-detail' evt.pk %}" class="text-decoration-none small">{{ evt.permission_number }}</a></div>
+                  {% elif evt_type == "maintenance" %}
+                    <div class="small mt-1"><span class="badge bg-secondary" style="font-size:0.65rem;">⚙</span> <a href="{% url 'maintenance-detail' evt.pk %}" class="text-decoration-none small">{{ evt.aircraft }}</a></div>
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

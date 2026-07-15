@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load aero_tags %}
+{% block title %}{{ title }} - AeroOps Desk{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3">{{ title }}</h1>
+  <a class="btn btn-primary" href="new/">+ New</a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-3">
+    <input class="form-control" name="q" value="{{ request.GET.q }}" placeholder="Search number, purpose, location...">
+  </div>
+  <div class="col-md-2">
+    <select class="form-select" name="status">
+      <option value="">All statuses</option>
+      {% for val, label in status_choices %}
+        <option value="{{ val }}" {% if current_status == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <input class="form-control" name="date_from" type="date" value="{{ request.GET.date_from }}" placeholder="From date">
+  </div>
+  <div class="col-md-2">
+    <input class="form-control" name="date_to" type="date" value="{{ request.GET.date_to }}" placeholder="To date">
+  </div>
+  <div class="col-auto">
+    <button class="btn btn-outline-primary">Filter</button>
+    <a href="." class="btn btn-outline-secondary">Clear</a>
+  </div>
+</form>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Number</th>
+          <th>Operator</th>
+          <th>Aircraft</th>
+          <th>Date</th>
+          <th>Status</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for object in objects %}
+        <tr>
+          <td><a href="{{ object.pk }}/">{{ object.permission_number }}</a></td>
+          <td>{{ object.operator }}</td>
+          <td>{{ object.aircraft }}</td>
+          <td>{{ object.flight_date|date:"Y-m-d" }}</td>
+          <td><span class="badge bg-{% if object.status == 'approved' %}success{% elif object.status == 'denied' %}danger{% elif object.status == 'completed' %}info{% else %}warning{% endif %}">{{ object.get_status_display }}</span></td>
+          <td class="text-end">
+            <a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">View</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="99" class="text-center text-muted py-4">No permissions found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% render_pagination page_obj %}
+</div>
+{% endblock %}
