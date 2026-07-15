@@ -253,3 +253,13 @@ body, .sidebar, .card, .form-control, .form-select, .page-link, .table,
 .sidebar a, .navbar, .badge {
   transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
+
+/* ── Chart containers ────────────────────────────── */
+.chart-container canvas {
+  max-height: 220px;
+  width: 100% !important;
+}
+
+[data-theme="dark"] .chart-container {
+  background: #1a1f2e;
+}
