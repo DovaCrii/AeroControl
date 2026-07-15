@@ -1,3 +1,5 @@
+import csv
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
@@ -33,6 +35,47 @@ class SearchMixin:
         elif active == "archived":
             queryset = queryset.filter(is_active=False)
         return queryset
+
+
+class CsvExportMixin:
+    """Add ``?export=csv`` support to list views."""
+
+    csv_filename = None
+
+    def get_csv_filename(self):
+        if self.csv_filename:
+            return self.csv_filename
+        model_name = self.model._meta.verbose_name_plural.replace(" ", "_")
+        return f"{model_name}.csv"
+
+    def render_csv_response(self, queryset):
+        response = HttpResponse(content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = f'attachment; filename="{self.get_csv_filename()}"'
+        # The BOM makes UTF-8 CSV files open correctly in Excel.
+        response.write("\ufeff")
+
+        writer = csv.writer(response, lineterminator="\r\n")
+        fields = self.model._meta.fields
+        writer.writerow([field.verbose_name.title() for field in fields])
+
+        for obj in queryset:
+            row = []
+            for field in fields:
+                value = getattr(obj, field.name)
+                if value is None:
+                    row.append("")
+                elif hasattr(value, "strftime"):
+                    row.append(value.strftime("%Y-%m-%d"))
+                else:
+                    row.append(str(value))
+            writer.writerow(row)
+
+        return response
+
+    def get(self, request, *args, **kwargs):
+        if request.GET.get("export") == "csv":
+            return self.render_csv_response(self.get_queryset())
+        return super().get(request, *args, **kwargs)
 
 
 class HtmxFormMixin:

@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, DetailView, FormView, ListView, View
 
-from apps.core.views import HtmxFormMixin, SearchMixin
+from apps.core.views import CsvExportMixin, HtmxFormMixin, SearchMixin
 from .forms import AlertForm, AlertRuleForm, DocumentForm, DocumentTypeForm
 from .models import Alert, AlertRule, Document, DocumentType, document_upload_path
 
@@ -26,7 +26,7 @@ def save_uploaded_file(document, uploaded):
     document.save(update_fields=["file_path", "updated_at"])
 
 
-class ComplianceList(SearchMixin, LoginRequiredMixin, ListView):
+class ComplianceList(CsvExportMixin, SearchMixin, LoginRequiredMixin, ListView):
     template_name = "generic/list.html"
     context_object_name = "objects"
     paginate_by = 25

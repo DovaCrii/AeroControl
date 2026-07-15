@@ -1,12 +1,12 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse, reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView
-from apps.core.views import HtmxFormMixin, SearchMixin
+from apps.core.views import CsvExportMixin, HtmxFormMixin, SearchMixin
 from .models import CostCenter, Aircraft, Operator, Assignment, Qualification
 from .forms import CostCenterForm, AircraftForm, OperatorForm, AssignmentForm, QualificationForm
 
 
-class RegistryList(SearchMixin, LoginRequiredMixin, ListView):
+class RegistryList(CsvExportMixin, SearchMixin, LoginRequiredMixin, ListView):
     template_name = "generic/list.html"
     context_object_name = "objects"
     paginate_by = 25
