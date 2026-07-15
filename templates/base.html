@@ -6,40 +6,91 @@
   <title>{% block title %}AeroOps Desk{% endblock %}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='50' cy='50' r='46' fill='%231B2A4A'/%3E%3Cpath d='M28 62 L50 28 L72 62' stroke='%232EC4B6' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Ccircle cx='50' cy='62' r='4' fill='%232EC4B6'/%3E%3Cpath d='M50 34 V54' stroke='%232EC4B6' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
   {% block extrahead %}{% endblock %}
 </head>
 <body>
   <!-- Top navbar -->
   <nav class="navbar navbar-dark navy px-3">
-    <a class="navbar-brand fw-bold" href="{% url 'dashboard' %}">AeroOps Desk</a>
-    <span class="text-white d-flex align-items-center gap-2">
-      {{ user.get_username }}
+    <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="{% url 'dashboard' %}">
+      <svg width="24" height="24" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="46" stroke="#2EC4B6" stroke-width="3"/>
+        <path d="M28 62 L50 28 L72 62" stroke="#2EC4B6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="50" cy="62" r="4" fill="#2EC4B6"/>
+        <path d="M50 34 V54" stroke="#2EC4B6" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+      AeroOps Desk
+    </a>
+    <span class="text-white d-flex align-items-center gap-2 small">
+      <span class="opacity-75">{{ user.get_username }}</span>
       <a class="btn btn-sm btn-outline-light" href="{% url 'logout' %}">Sign out</a>
     </span>
   </nav>
 
   <div class="d-flex">
     <!-- Sidebar -->
-    <aside class="sidebar p-3 d-flex flex-column">
-      <a href="{% url 'dashboard' %}">▦ Dashboard</a>
+    <aside class="sidebar p-3 d-flex flex-column" id="sidebar">
+      {% with request.resolver_match.url_name as url_name %}
+      <a href="{% url 'dashboard' %}" class="{% if url_name == 'dashboard' %}active{% endif %}">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M0 1.5A1.5 1.5 0 0 1 1.5 0h2A1.5 1.5 0 0 1 5 1.5v2A1.5 1.5 0 0 1 3.5 5h-2A1.5 1.5 0 0 1 0 3.5v-2zM0 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V8zm13 2a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/></svg>
+        Dashboard
+      </a>
       <span class="sidebar-label">Registry</span>
-      <a href="{% url 'costcenter-list' %}">▣ Cost Centers</a>
-      <a href="{% url 'aircraft-list' %}">✈ Aircraft</a>
-      <a href="{% url 'operator-list' %}">◉ Operators</a>
-      <a href="{% url 'assignment-list' %}">↔ Assignments</a>
+      <a href="{% url 'costcenter-list' %}" class="{% if url_name == 'costcenter-list' %}active{% endif %}">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4 10.781c.148 1.667 1.513 2.85 3.591 3.003V15h1.043v-1.216c1.952-.177 3.326-1.357 3.326-3.09 0-1.543-1.016-2.54-2.746-2.98l-.646-.164v-3.99c1.105.139 1.904.536 2.14 1.303h1.552c-.196-1.443-1.363-2.494-3.292-2.658V2h-1.043v1.197c-1.858.167-3.206 1.332-3.206 2.92 0 1.47.973 2.432 2.633 2.832l.574.153v4c-1.174-.15-1.996-.566-2.264-1.386H4zm2.217-2.867c-.54-.247-.808-.642-.808-1.117 0-.654.487-1.045 1.163-1.179v2.479l-.355-.183zm2.527 3.473c.665.296 1.022.703 1.022 1.251 0 .728-.575 1.164-1.56 1.274l.538-2.525z"/></svg>
+        Cost Centers
+      </a>
+      <a href="{% url 'aircraft-list' %}" class="{% if url_name == 'aircraft-list' %}active{% endif %}">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M2 5.5a.5.5 0 0 1 .5-.5h.5V4a.5.5 0 0 1 1 0v1h.5a.5.5 0 0 1 0 1H4v.5a.5.5 0 0 1-1 0V6h-.5a.5.5 0 0 1-.5-.5zM14 13a1 1 0 0 1-1 1H3a1 1 0 0 1 0-2h10a1 1 0 0 1 1 1zm-6 0a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/></svg>
+        Aircraft
+      </a>
+      <a href="{% url 'operator-list' %}" class="{% if url_name == 'operator-list' %}active{% endif %}">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/></svg>
+        Operators
+      </a>
+      <a href="{% url 'assignment-list' %}" class="{% if url_name == 'assignment-list' %}active{% endif %}">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.5A1.5 1.5 0 0 1 15 6.5v5.5a.5.5 0 0 1-.5.5H7a.5.5 0 0 1 0-1h7.5v-5a.5.5 0 0 0-.5-.5H5v2.5a.5.5 0 0 1-1 0V5H1.5A1.5 1.5 0 0 1 0 3.5z"/></svg>
+        Assignments
+      </a>
       <span class="sidebar-label">Compliance</span>
-      <a href="{% url 'document-list' %}">📄 Documents</a>
-       <a href="{% url 'alert-list' %}">⚠ Alerts {% if unresolved_alert_count %}<span class="badge bg-danger">{{ unresolved_alert_count }}</span>{% endif %}</a>
+      <a href="{% url 'document-list' %}" class="{% if url_name == 'document-list' %}active{% endif %}">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4 0h5.5a1.5 1.5 0 0 1 1.06.44l3.5 3.5A1.5 1.5 0 0 1 14.5 5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zm5.5 1.5V5H13l-3.5-3.5zM5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1H5z"/></svg>
+        Documents
+      </a>
+      <a href="{% url 'alert-list' %}" class="{% if url_name == 'alert-list' %}active{% endif %}">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.553.553 0 0 1-1.1 0L7.1 5.995z"/><path d="m8 15.93-.19.008a6.88 6.88 0 0 1-2.044-.393l.173-.86c.878.259 1.785.336 2.693.286.49.027.98-.03 1.46-.17l.172.86a6.88 6.88 0 0 1-2.044.393L8 15.93z"/><path d="M6.236.3.672 6.417a2.114 2.114 0 0 0 .423 3.283l2.033 1.158c.133.076.245.177.263.324l.327 3.19a.847.847 0 0 0 .847.764h.067l7.367-.6a6.86 6.86 0 0 0 4.123-1.966l.656-.7a2.115 2.115 0 0 0-.415-3.282l-2.084-1.189a.286.286 0 0 1-.185-.257l-.158-2.71a5.18 5.18 0 0 0-1.84-3.55A5.07 5.07 0 0 0 9.85.322 5.17 5.17 0 0 0 6.236.3z"/></svg>
+        Alerts
+        {% if unresolved_alert_count %}<span class="badge bg-danger ms-auto">{{ unresolved_alert_count }}</span>{% endif %}
+      </a>
       <span class="sidebar-label">Operations</span>
-      <a href="{% url 'permission-list' %}">✓ Permissions</a>
-      <a href="{% url 'record-list' %}">🛩 Flights</a>
-      <a href="{% url 'calendar' %}">📅 Calendar</a>
+      <a href="{% url 'permission-list' %}" class="{% if url_name == 'permission-list' %}active{% endif %}">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M13.5 8.5a.5.5 0 0 1 .5.5v5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a.5.5 0 0 1 .5-.5h.5V5a3.5 3.5 0 1 1 7 0v3.5h.5zM8.5 5a1.5 1.5 0 1 0-3 0v3.5h3V5z"/></svg>
+        Permissions
+      </a>
+      <a href="{% url 'record-list' %}" class="{% if url_name == 'record-list' %}active{% endif %}">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M7 0h2v2.466a5.58 5.58 0 0 0-2 0V0zM5.5 0h1v2.492a5.53 5.53 0 0 0-1 0V0z"/><path d="M2.52 2.515A6.5 6.5 0 0 0 1 6.5v3.57l-1 .725V11h1v2a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-2h1v-.205l-1-.725V6.5a6.5 6.5 0 0 0-9.48-5.985zM8 3a5.5 5.5 0 0 1 5.5 5.5v1.315L8 13.95l-5.5-4.135V8.5A5.5 5.5 0 0 1 8 3zm-3 6v2h2V9H5zm4 0v2h2V9H9z"/></svg>
+        Flights
+      </a>
+      <a href="{% url 'calendar' %}" class="{% if url_name == 'calendar' %}active{% endif %}">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/></svg>
+        Calendar
+      </a>
       <span class="sidebar-label">Maintenance</span>
-      <a href="{% url 'maintenance-list' %}">⚙ Records</a>
+      <a href="{% url 'maintenance-list' %}" class="{% if url_name == 'maintenance-list' %}active{% endif %}">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4.54 3.87a5 5 0 0 1 6.19-1.36.5.5 0 0 1 .1.76l-1.43 1.43a.5.5 0 0 0 0 .7l1.43 1.43a.5.5 0 0 1-.1.76 5 5 0 0 1-6.19-1.36.5.5 0 0 1 .2-.77l1.06-.53a.5.5 0 0 0 0-.88L4.74 4.64a.5.5 0 0 1-.2-.77z"/><path d="M1.5 9.66a.5.5 0 0 1 .3-.5l3.68-1.57a.5.5 0 0 1 .64.2l.7 1.22a.5.5 0 0 0 .86 0l.7-1.22a.5.5 0 0 1 .64-.2l3.68 1.57a.5.5 0 0 1 .3.5v4.34a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5V9.66z"/></svg>
+        Records
+      </a>
       <span class="sidebar-label">Workboard</span>
-      <a href="{% url 'task-list' %}">☷ Kanban</a>
+      <a href="{% url 'task-list' %}" class="{% if url_name == 'task-list' %}active{% endif %}">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M2.5 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2h-11zm4 2h3a.5.5 0 0 1 .5.5v.5h2a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 .5-.5h2V2.5a.5.5 0 0 1 .5-.5z"/></svg>
+        Kanban
+      </a>
       <hr>
-      <a href="{% url 'admin:index' %}">⚙ Admin</a>
+      <a href="{% url 'admin:index' %}">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M6 0a6 6 0 0 1 4.72 9.66l4.3 4.31a1 1 0 0 1-1.41 1.42l-4.31-4.3A6 6 0 1 1 6 0zm0 2a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></svg>
+        Admin
+      </a>
+      {% endwith %}
     </aside>
 
     <!-- Main content -->
