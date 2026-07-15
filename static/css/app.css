@@ -27,18 +27,39 @@ body {
 }
 
 .sidebar a {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
   color: var(--navy);
   padding: 0.6rem 0.8rem;
   text-decoration: none;
   border-radius: 6px;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   transition: background 0.15s ease;
 }
 
 .sidebar a:hover {
   background: #e4f8f5;
   color: var(--navy);
+}
+
+.sidebar a.active {
+  background: #d4f5f0;
+  color: #1B2A4A;
+  font-weight: 600;
+}
+
+.sidebar a svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.sidebar a.active svg {
+  opacity: 1;
+}
+
+.sidebar a .badge {
+  margin-left: auto;
 }
 
 .sidebar-label {
