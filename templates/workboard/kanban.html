@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Kanban Board - AeroOps Desk{% endblock %}
+{% block content %}
+<div id="kanban-page">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Kanban Board</h1>
+    <div class="d-flex gap-2 align-items-center">
+      {% include "workboard/_board_selector.html" %}
+      {% include "workboard/_filters.html" %}
+    </div>
+  </div>
+
+  {% if board %}
+  <div id="kanban-board" class="kanban-board">
+    {% include "workboard/_board.html" %}
+  </div>
+  {% else %}
+  <div class="card p-5 text-center text-muted">
+    <p>No board configured.</p>
+    <a href="{% url 'board-create' %}" class="btn btn-primary">Create Board</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extrascripts %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.x/dist/sortable.umd.min.js"></script>
+<script>
+(function() {
+  function initSortables() {
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('operator') || params.get('priority')) return;
+    var board = document.getElementById('kanban-board');
+    if (!board) return;
+    document.querySelectorAll('#kanban-board .kanban-column-body').forEach(function(el) {
+      if (el._kanbanSortable) return;
+      el._kanbanSortable = new Sortable(el, {
+        group: 'kanban',
+        animation: 150,
+        ghostClass: 'kanban-ghost',
+        chosenClass: 'sortable-chosen',
+        onEnd: function(evt) {
+          var taskId = evt.item.dataset.taskId;
+          var stageId = evt.to.dataset.stageId;
+          htmx.ajax('POST', '/workboard/tasks/' + taskId + '/move/', {
+            values: {stage_id: stageId, new_order: evt.newIndex},
+            source: document.body
+          });
+        }
+      });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', initSortables);
+  document.body.addEventListener('htmx:afterSwap', function(event) {
+    if (event.detail.target.id === 'kanban-board') initSortables();
+  });
+  document.body.addEventListener('board-refresh', function() {
+    var query = window.location.search;
+    htmx.ajax('GET', '/workboard/_board/' + query,
+      {target: '#kanban-board', swap: 'innerHTML'});
+  });
+})();
+</script>
+{% endblock %}

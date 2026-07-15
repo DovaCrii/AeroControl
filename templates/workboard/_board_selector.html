@@ -1,0 +1,10 @@
+<select class="form-select form-select-sm kanban-filter" name="board"
+        hx-get="/workboard/_board/"
+        hx-target="#kanban-board"
+        hx-push-url="true"
+        hx-include="[name='operator'],[name='priority']"
+        hx-trigger="change">
+  {% for b in boards %}
+    <option value="{{ b.id }}" {% if board.id == b.id or current == b.id|stringformat:'s' %}selected{% endif %}>{{ b.name }}</option>
+  {% endfor %}
+</select>

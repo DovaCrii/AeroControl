@@ -1,3 +1,16 @@
 from django.urls import path
 from . import views
-urlpatterns=[path("",views.TaskList.as_view(),name="task-list"),path("tasks/new/",views.TaskCreate.as_view(),name="task-create"),path("boards/",views.BoardList.as_view(),name="board-list"),path("boards/new/",views.BoardCreate.as_view(),name="board-create")]
+
+urlpatterns = [
+    # Existing CRUD
+    path("", views.KanbanBoardView.as_view(), name="kanban"),
+    path("tasks/new/", views.TaskCreate.as_view(), name="task-create"),
+    path("tasks/", views.TaskList.as_view(), name="task-list"),
+    path("boards/", views.BoardList.as_view(), name="board-list"),
+    path("boards/new/", views.BoardCreate.as_view(), name="board-create"),
+    # Kanban endpoints
+    path("_board/", views.BoardPartialView.as_view(), name="kanban-board-partial"),
+    path("tasks/<uuid:pk>/move/", views.MoveTaskView.as_view(), name="task-move"),
+    path("tasks/quick/", views.QuickTaskCreate.as_view(), name="task-quick"),
+    path("_boards/", views.BoardSelector.as_view(), name="board-selector"),
+]

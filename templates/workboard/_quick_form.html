@@ -1,0 +1,28 @@
+<form hx-post="{% url 'task-quick' %}"
+      hx-target="closest .kanban-column"
+      hx-swap="outerHTML"
+      class="kanban-quick-form">
+  {% csrf_token %}
+  <input type="hidden" name="stage_id" value="{{ stage.id }}">
+  {% if filter_params.board %}<input type="hidden" name="board" value="{{ filter_params.board }}">{% endif %}
+  {% if filter_params.operator %}<input type="hidden" name="operator" value="{{ filter_params.operator }}">{% endif %}
+  {% if filter_params.priority %}<input type="hidden" name="filter_priority" value="{{ filter_params.priority }}">{% endif %}
+  <div class="input-group input-group-sm mb-1">
+    <input type="text" name="title" class="form-control" placeholder="Task title…" required autofocus>
+    <button class="btn btn-primary" type="submit">Add</button>
+  </div>
+  <div class="d-flex gap-1">
+     <select name="priority" class="form-select form-select-sm" style="width:auto">
+        <option value="low">Low</option>
+        <option value="medium" selected>Medium</option>
+        <option value="high">High</option>
+        <option value="critical">Critical</option>
+    </select>
+    <select name="assigned_to" class="form-select form-select-sm" style="width:auto">
+      <option value="">Unassigned</option>
+      {% for op in operators %}
+        <option value="{{ op.id }}">{{ op.full_name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+</form>
