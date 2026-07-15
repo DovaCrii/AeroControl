@@ -1,7 +1,7 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse, reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView
-from apps.core.views import SearchMixin
+from apps.core.views import HtmxFormMixin, SearchMixin
 from .models import CostCenter, Aircraft, Operator, Assignment, Qualification
 from .forms import CostCenterForm, AircraftForm, OperatorForm, AssignmentForm, QualificationForm
 
@@ -21,7 +21,7 @@ class RegistryDetail(LoginRequiredMixin, DetailView):
     template_name = "generic/detail.html"
 
 
-class RegistryCreate(LoginRequiredMixin, CreateView):
+class RegistryCreate(HtmxFormMixin, LoginRequiredMixin, CreateView):
     template_name = "generic/form.html"
 
     def get_success_url(self):
@@ -34,7 +34,7 @@ class RegistryCreate(LoginRequiredMixin, CreateView):
         return context
 
 
-class RegistryUpdate(LoginRequiredMixin, UpdateView):
+class RegistryUpdate(HtmxFormMixin, LoginRequiredMixin, UpdateView):
     template_name = "generic/form.html"
 
     def get_success_url(self):

@@ -4,15 +4,15 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h1 class="h3">{{ title|default:'Records' }}</h1>
-  <a class="btn btn-primary" href="new/">+ New</a>
+  <a class="btn btn-primary" href="new/" hx-get="new/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal">+ New</a>
 </div>
 <form method="get" class="row g-2 mb-3">
-  <div class="col-md-5"><input class="form-control" name="q" value="{{ request.GET.q }}" placeholder="Search..."></div>
+  <div class="col-md-5">{% include "generic/_search_input.html" with search_url=request.path %}<span id="search-spinner" class="htmx-indicator small text-muted">Searching…</span></div>
   <div class="col-md-3"><select class="form-select" name="is_active"><option value="">All statuses</option><option value="active" {% if request.GET.is_active == 'active' %}selected{% endif %}>Active</option><option value="archived" {% if request.GET.is_active == 'archived' %}selected{% endif %}>Archived</option></select></div>
   <div class="col-auto"><button class="btn btn-outline-primary">Search</button></div>
 </form>
 
-<div class="card">
+<div id="table-wrapper" class="card">
   <div class="table-responsive">
     <table class="table table-hover mb-0">
       <thead>
@@ -25,31 +25,7 @@
           <th class="text-end">Actions</th>
         </tr>
       </thead>
-      <tbody>
-        {% for object in objects %}
-        <tr>
-          {% block list_columns %}
-          <td><a href="{{ object.pk }}/">{{ object }}</a></td>
-          <td>{{ object.created_at|date:'Y-m-d' }}</td>
-          <td>
-            {% if object.is_active %}
-              <span class="badge bg-success">Active</span>
-            {% else %}
-              <span class="badge bg-secondary">Archived</span>
-            {% endif %}
-          </td>
-          {% endblock %}
-          <td class="text-end">
-            <a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">View</a>
-            <a href="{{ object.pk }}/edit/" class="btn btn-sm btn-outline-primary">Edit</a>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="99" class="text-center text-muted py-4">No records found.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
+      <tbody id="table-body">{% include "generic/_table_body.html" %}</tbody>
     </table>
   </div>
   {% render_pagination page_obj %}
