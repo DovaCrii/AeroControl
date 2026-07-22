@@ -148,6 +148,10 @@ It also provides a native XLSX report at /workboard/reports/tasks.xlsx with
 freeze panes, filters and readable column widths.
 The Word version is available at /workboard/reports/tasks.docx.
 
+A read-only API contract is available at /api/v1/workboard/tasks/. It requires
+authentication and the Kanban task view permission, supports the existing
+filters and returns bounded page/page_size results.
+
 - All operational pages require authentication and model-level view/change
   permissions; CSV export uses the same authorization boundary.
 - Uploads allow only PDF, DOCX, XLSX, PNG, JPG and JPEG, enforce a 20 MB limit,
