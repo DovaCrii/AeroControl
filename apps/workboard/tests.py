@@ -1,3 +1,4 @@
+from datetime import timedelta
 import pytest
 from django.contrib.auth.models import Permission, User
 from django.test import Client
@@ -479,7 +480,7 @@ def test_api_v1_task_patch_validates_and_updates(auth_client, board):
     assert invalid.status_code == 400
 
     task.refresh_from_db()
-    stale = task.updated_at.isoformat()
+    stale = (task.updated_at - timedelta(microseconds=1)).isoformat()
     task.title = "Changed elsewhere"
     task.save()
     conflict = auth_client.patch(
