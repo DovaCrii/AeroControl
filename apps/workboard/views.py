@@ -189,6 +189,31 @@ class StageCreate(ModelPermissionRequiredMixin, CreateView):
         return f"{reverse('kanban')}?board={board_id}"
 
 
+class BoardArchiveView(ModelPermissionRequiredMixin, View):
+    model = KanbanBoard
+    permission_action = "change"
+
+    def post(self, request, pk):
+        board = get_object_or_404(KanbanBoard, pk=pk, is_active=True)
+        board.is_active = False
+        board.save(update_fields=["is_active", "updated_at"])
+        return redirect("kanban")
+
+
+class TaskArchiveView(ModelPermissionRequiredMixin, View):
+    model = KanbanTask
+    permission_action = "change"
+
+    def post(self, request, pk):
+        task = get_object_or_404(
+            KanbanTask, pk=pk, is_active=True, board__is_active=True
+        )
+        board_id = task.board_id
+        task.is_active = False
+        task.save(update_fields=["is_active", "updated_at"])
+        return redirect(f"{reverse('kanban')}?board={board_id}")
+
+
 class MoveTaskView(ModelPermissionRequiredMixin, View):
     """Drag-and-drop: move task between stages and re-order siblings."""
 
