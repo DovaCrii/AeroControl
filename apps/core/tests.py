@@ -15,6 +15,7 @@ from django.utils import timezone
 from apps.registry.models import Aircraft, CostCenter
 from apps.compliance.forms import DocumentForm
 from apps.compliance.models import Document, DocumentType, document_upload_path
+from apps.workboard.models import KanbanBoard
 
 
 @pytest.fixture
@@ -227,6 +228,16 @@ class TestAuthenticatedPages:
 
         assert response.status_code == 200
         assert 'name="title"' in response.content.decode()
+
+    def test_kanban_board_create_redirects_to_board_list(self, auth_client):
+        response = auth_client.post(
+            reverse("board-create"),
+            {"name": "Operations board", "description": "Daily work"},
+        )
+
+        assert response.status_code == 302
+        assert response.url == reverse("board-list")
+        assert KanbanBoard.objects.filter(name="Operations board").exists()
 
     def test_document_entity_options_limits_selection_to_allowed_records(self, auth_client):
         aircraft_type = ContentType.objects.get_for_model(Aircraft)
