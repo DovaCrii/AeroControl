@@ -1,0 +1,37 @@
+[project]
+name = "aero-ops-desk"
+version = "0.1.0"
+description = "Local-first operations desk for aviation teams."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "Django==6.0.7",
+    "crispy-bootstrap5==2025.6",
+    "django-crispy-forms==2.4",
+    "python-decouple==3.8",
+]
+
+[dependency-groups]
+dev = [
+    "bandit==1.9.4",
+    "pip-audit==2.10.1",
+    "pytest==9.1.1",
+    "pytest-cov==7.1.0",
+    "pytest-django==4.12.0",
+    "polib>=1.2,<2",
+    "ruff==0.12.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+target-version = "py312"
+exclude = [".venv", ".tmp-baseline", "migrations"]
+
+[tool.ruff.lint]
+# Existing compact model declarations are tracked for incremental refactoring.
+ignore = ["E702", "F403", "F405"]
+
+[tool.bandit]
+exclude_dirs = [".venv", ".tmp-baseline", "migrations", "tests.py"]
+skips = ["B101", "B105"]
