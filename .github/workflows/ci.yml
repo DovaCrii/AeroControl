@@ -13,6 +13,7 @@ jobs:
       DB_PATH: ${{ runner.temp }}/aero-ops.sqlite3
       DOCUMENTS_DIR: ${{ runner.temp }}/documents
       LOGS_DIR: ${{ runner.temp }}/logs
+      BACKUPS_DIR: ${{ runner.temp }}/backups
       SECRET_KEY: ci-only-not-for-production
     steps:
       - uses: actions/checkout@v4
@@ -29,3 +30,8 @@ jobs:
       - run: uv run pytest --cov=apps --cov-report=term-missing
       - run: uv run bandit -q -c pyproject.toml -r apps config
       - run: uv run pip-audit
+      - name: Staging preflight
+        run: |
+          uv run python manage.py scale_readiness --json
+          uv run python manage.py backup
+          uv run python manage.py verify_backup "$(ls \"$BACKUPS_DIR\"/*.sqlite3 | head -n 1)"

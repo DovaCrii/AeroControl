@@ -165,6 +165,10 @@ Before evaluating PostgreSQL, run scale_readiness and follow
 docs/postgresql-readiness.md. The command is read-only and does not switch or
 modify the active database.
 
+CI includes a staging preflight that runs migrations/checks, creates a backup
+and verifies its checksum. Production deployment remains an explicit manual
+step with rollback.
+
 - All operational pages require authentication and model-level view/change
   permissions; CSV export uses the same authorization boundary.
 - Uploads allow only PDF, DOCX, XLSX, PNG, JPG and JPEG, enforce a 20 MB limit,
