@@ -109,6 +109,10 @@ class CostCenterImportView(ModelPermissionRequiredMixin, View):
     permission_action = "add"
 
     def get(self, request):
+        if request.GET.get("template") == "1":
+            response = HttpResponse("code,name\r\n", content_type="text/csv; charset=utf-8")
+            response["Content-Disposition"] = 'attachment; filename="cost-centers-template.csv"'
+            return response
         return render(request, "registry/costcenter_import.html", {"rows": [], "errors": []})
 
     @staticmethod
@@ -166,6 +170,10 @@ class AircraftImportView(CostCenterImportView):
     model = Aircraft
 
     def get(self, request):
+        if request.GET.get("template") == "1":
+            response = HttpResponse("registration,type,model,manufacturer,year,cost_center,status\r\n", content_type="text/csv; charset=utf-8")
+            response["Content-Disposition"] = 'attachment; filename="aircraft-template.csv"'
+            return response
         return render(request, "registry/costcenter_import.html", {"rows": [], "errors": [], "entity": "aircraft"})
 
     @staticmethod
@@ -208,6 +216,10 @@ class OperatorImportView(CostCenterImportView):
     model = Operator
 
     def get(self, request):
+        if request.GET.get("template") == "1":
+            response = HttpResponse("employee_id,full_name,email,phone,cost_center\r\n", content_type="text/csv; charset=utf-8")
+            response["Content-Disposition"] = 'attachment; filename="operators-template.csv"'
+            return response
         return render(request, "registry/costcenter_import.html", {"rows": [], "errors": [], "entity": "operator"})
 
     @staticmethod

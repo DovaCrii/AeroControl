@@ -155,6 +155,11 @@ class TestAuthenticatedPages:
         assert response.status_code == 302
         assert Operator.objects.filter(employee_id="EMP-IMP", cost_center=center).exists()
 
+    def test_import_templates_are_downloadable(self, auth_client):
+        response = auth_client.get(reverse("aircraft-import"), {"template": "1"})
+        assert response.status_code == 200
+        assert "registration,type,model" in response.content.decode()
+
     def test_global_search_respects_permissions(self, auth_client):
         CostCenter.objects.create(code="SEARCH", name="Search Operations")
         response = auth_client.get(reverse("global-search"), {"q": "SEARCH"})

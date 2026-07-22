@@ -837,5 +837,8 @@ msgstr "Importar operadores"
 msgid "CSV columns: employee_id,full_name,email,phone,cost_center."
 msgstr "Columnas CSV: employee_id,full_name,email,phone,cost_center."
 
+msgid "Download template"
+msgstr "Descargar plantilla"
+
 msgid "Registry"
 msgstr "Registro"

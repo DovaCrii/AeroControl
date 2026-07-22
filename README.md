@@ -141,6 +141,7 @@ aircraft at /registry/aircraft/import/, and operators at
 /registry/operator/import/.
 The format is code,name; existing codes are rejected, previews show row errors,
 and applied batches can be reverted logically from the batch action.
+Each import screen also exposes a CSV template download compatible with Excel.
 
 - All operational pages require authentication and model-level view/change
   permissions; CSV export uses the same authorization boundary.
