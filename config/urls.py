@@ -4,7 +4,7 @@ from django.conf.urls.i18n import set_language
 from django.urls import include, path
 
 from apps.operations.views import CalendarView
-from apps.core.views import AlertCountPartial
+from apps.core.views import AlertCountPartial, HealthCheckView
 
 admin.site.site_header = "AeroControl Administration"
 admin.site.site_title = "AeroControl"
@@ -24,6 +24,7 @@ urlpatterns = [
     ),
     path("i18n/setlang/", set_language, name="set_language"),
     path("alerts/count/", AlertCountPartial.as_view(), name="alert-count"),
+    path("health/", HealthCheckView.as_view(), name="health"),
     path("", include("apps.dashboard.urls")),
     path("registry/", include("apps.registry.urls")),
     path("compliance/", include("apps.compliance.urls")),

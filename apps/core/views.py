@@ -1,4 +1,5 @@
 import csv
+from pathlib import Path
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
@@ -6,6 +7,9 @@ from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ImproperlyConfigured
 from django.db import transaction
 from django.http import HttpResponse
+from django.http import JsonResponse
+from django.conf import settings
+from django.db import connection
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.translation import gettext as _
 from django.views import View
@@ -165,6 +169,25 @@ class AlertCountPartial(LoginRequiredMixin, View):
         count = Alert.objects.filter(is_active=True, is_resolved=False).count()
         return render(
             request, "core/_alert_badge.html", {"unresolved_alert_count": count}
+        )
+
+
+class HealthCheckView(View):
+    """Small dependency health endpoint for local monitors and reverse proxies."""
+
+    def get(self, request):
+        checks = {}
+        try:
+            connection.ensure_connection()
+            checks["database"] = "ok"
+        except Exception:
+            checks["database"] = "error"
+        documents = Path(settings.DOCUMENTS_ROOT)
+        checks["documents"] = "ok" if documents.exists() and documents.is_dir() else "error"
+        healthy = all(value == "ok" for value in checks.values())
+        return JsonResponse(
+            {"status": "ok" if healthy else "degraded", "checks": checks},
+            status=200 if healthy else 503,
         )
 
 

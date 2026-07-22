@@ -79,7 +79,9 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
   retención en modo simulación/ejecución para documentos.
 - [x] Implementar respaldo con manifiesto, checksum y comando de verificación.
 - [x] Añadir prueba automatizada de restauración en un destino aislado.
-- [ ] Añadir health check, logs estructurados y métricas de errores.
+- [x] Añadir health check de dependencias (/health/) para base de datos y
+  almacenamiento documental; logs estructurados y métricas quedan como el
+  siguiente subbloque.
 - [ ] Fijar dependencias front-end con SRI o servirlas localmente y definir
   Content Security Policy.
 - [ ] Registrar auditoría de acciones administrativas y cambios de estado.
