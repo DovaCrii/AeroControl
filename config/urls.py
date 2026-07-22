@@ -6,7 +6,8 @@ from django.urls import include, path
 from apps.operations.views import CalendarView
 from apps.core.views import AlertCountPartial, GlobalSearchView, HealthCheckView
 from apps.workboard.views import ApiIndexView, ApiTaskListView, ApiTaskUpdateView
-from apps.workboard.api import KanbanTaskApiView
+from apps.workboard.api import KanbanTaskApiView, api_openapi_schema
+from rest_framework.authtoken.views import obtain_auth_token
 
 admin.site.site_header = "AeroControl Administration"
 admin.site.site_title = "AeroControl"
@@ -31,6 +32,8 @@ urlpatterns = [
     path("api/v1/workboard/tasks/", ApiTaskListView.as_view(), name="api-v1-workboard-tasks"),
     path("api/v1/", ApiIndexView.as_view(), name="api-v1-index"),
     path("api/drf/v1/workboard/tasks/", KanbanTaskApiView.as_view(), name="api-drf-v1-workboard-tasks"),
+    path("api-token/", obtain_auth_token, name="api-token"),
+    path("api/v1/openapi.json", api_openapi_schema, name="api-v1-openapi"),
     path("api/v1/workboard/tasks/<uuid:pk>/", ApiTaskUpdateView.as_view(), name="api-v1-workboard-task-update"),
     path("", include("apps.dashboard.urls")),
     path("registry/", include("apps.registry.urls")),
