@@ -18,7 +18,7 @@ from apps.core.views import (
     SearchMixin,
 )
 from apps.registry.models import Operator
-from .models import KanbanBoard, KanbanChecklistItem, KanbanLabel, KanbanStage, KanbanTask
+from .models import KanbanBoard, KanbanBoardAccess, KanbanChecklistItem, KanbanLabel, KanbanStage, KanbanTask
 from .forms import KanbanBoardForm, KanbanChecklistItemForm, KanbanLabelForm, KanbanStageForm, KanbanTaskForm
 
 
@@ -255,6 +255,10 @@ class ApiTaskListView(ApiPermissionMixin, View):
         listing = KanbanTaskListView()
         listing.request = request
         queryset = listing.get_queryset()
+        if not request.user.is_superuser:
+            rules = KanbanBoardAccess.objects.filter(user=request.user, is_active=True)
+            if rules.exists():
+                queryset = queryset.filter(board_id__in=rules.values("board_id"))
         try:
             page = max(int(request.GET.get("page", "1")), 1)
             page_size = min(max(int(request.GET.get("page_size", "25")), 1), 100)
@@ -286,6 +290,9 @@ class ApiTaskUpdateView(ApiPermissionMixin, View):
 
     def patch(self, request, pk):
         task = get_object_or_404(KanbanTask, pk=pk, is_active=True, board__is_active=True)
+        access = KanbanBoardAccess.objects.filter(board=task.board, user=request.user, is_active=True).first()
+        if not request.user.is_superuser and access and access.role not in {"editor", "manager"}:
+            return JsonResponse({"detail": "Object permission denied."}, status=403)
         expected_updated = request.headers.get("If-Unmodified-Since")
         if expected_updated:
             from django.utils.dateparse import parse_datetime

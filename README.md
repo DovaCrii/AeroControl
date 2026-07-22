@@ -170,6 +170,8 @@ API callers receive JSON 401/403 responses instead of browser login redirects.
 The API contract index is available to authenticated users at /api/v1/.
 PATCH clients can send If-Unmodified-Since; stale edits receive HTTP 409
 instead of silently overwriting newer changes.
+KanbanBoardAccess supports object-level viewer/editor/manager roles. Existing
+users remain model-permission compatible until explicit board rules are added.
 
 Before evaluating PostgreSQL, run scale_readiness and follow
 docs/postgresql-readiness.md. The command is read-only and does not switch or

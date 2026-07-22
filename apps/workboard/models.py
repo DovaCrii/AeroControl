@@ -2,6 +2,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from apps.core.models import BaseModel
 from apps.registry.models import Operator
+from django.contrib.auth import get_user_model
 
 
 class KanbanBoard(BaseModel):
@@ -42,6 +43,16 @@ class KanbanLabel(BaseModel):
 
     def __str__(self):
         return self.name
+
+
+class KanbanBoardAccess(BaseModel):
+    ROLES = [("viewer", _("Viewer")), ("editor", _("Editor")), ("manager", _("Manager"))]
+    board = models.ForeignKey(KanbanBoard, on_delete=models.CASCADE, related_name="access_rules")
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name="kanban_access_rules")
+    role = models.CharField(max_length=20, choices=ROLES, default="viewer")
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["board", "user"], name="unique_kanban_board_access")]
 
 
 class KanbanTask(BaseModel):
