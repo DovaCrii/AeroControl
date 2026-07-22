@@ -4,7 +4,7 @@ from django.test import Client
 from django.urls import reverse
 
 from apps.registry.models import CostCenter, Operator
-from .models import KanbanBoard, KanbanChecklistItem, KanbanLabel, KanbanStage, KanbanTask
+from .models import KanbanBoard, KanbanBoardAccess, KanbanChecklistItem, KanbanLabel, KanbanStage, KanbanTask
 
 
 @pytest.fixture
@@ -488,3 +488,17 @@ def test_api_v1_task_patch_validates_and_updates(auth_client, board):
         HTTP_IF_UNMODIFIED_SINCE=stale,
     )
     assert conflict.status_code == 409
+
+
+@pytest.mark.django_db
+def test_board_object_access_scopes_api(user, auth_client, board):
+    board_obj, todo, _ = board
+    other = KanbanBoard.objects.create(name="Restricted")
+    other_stage = KanbanStage.objects.create(board=other, name="Todo")
+    KanbanTask.objects.create(board=board_obj, stage=todo, title="Allowed")
+    KanbanTask.objects.create(board=other, stage=other_stage, title="Hidden")
+    KanbanBoardAccess.objects.create(board=board_obj, user=user, role="viewer")
+    response = auth_client.get("/api/v1/workboard/tasks/")
+    assert response.status_code == 200
+    titles = [item["title"] for item in response.json()["results"]]
+    assert titles == ["Allowed"]
