@@ -104,6 +104,8 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
   permisos, filtros y paginación.
 - [x] Añadir PATCH API v1 para actualizar tareas con validación de campos,
   prioridad, etapa y permisos de modificación.
+- [x] Añadir índice JSON autodocumentado en /api/v1/ con endpoints, permisos y
+  límites de paginación.
 - [x] Añadir comando scale_readiness y runbook de PostgreSQL con respaldo,
   reconciliación y rollback explícitos.
 - [ ] Diseñar API v1 con Django REST Framework, autenticación y contratos
