@@ -114,8 +114,10 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
   reconciliación y rollback explícitos.
 - [ ] Diseñar API v1 con Django REST Framework, autenticación y contratos
   versionados.
-- [ ] Evaluar PostgreSQL y migración con plan de respaldo/rollback antes de
-  cualquier despliegue multiusuario.
+- [x] Parametrizar backend PostgreSQL opcional con psycopg y mantener SQLite como
+  valor por defecto.
+- [ ] Ejecutar ensayo real de migración PostgreSQL con respaldo/rollback antes
+  de cualquier despliegue multiusuario.
 - [ ] Incorporar permisos por objeto, tenancy si aplica y una estrategia de
   concurrencia.
 - [ ] Separar frontend sólo cuando las necesidades de API, offline o móvil lo

@@ -75,6 +75,14 @@ DOCUMENTS_DIR=D:/I+D/AeroOpsDesk_Data/documents
 LOGS_DIR=D:/I+D/AeroOpsDesk_Data/logs
 # Optional: executable available on PATH, for example clamscan
 # DOCUMENTS_ANTIVIRUS_COMMAND=clamscan
+
+# Optional PostgreSQL rehearsal (overrides DB_PATH when enabled)
+# DB_ENGINE=postgresql
+# DB_NAME=aerocontrol
+# DB_USER=aerocontrol
+# DB_PASSWORD=replace-me
+# DB_HOST=127.0.0.1
+# DB_PORT=5432
 ```
 
 Then run:
