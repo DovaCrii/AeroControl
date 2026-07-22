@@ -18,3 +18,8 @@ Excel workbooks can be validated/applied with:
 
 Expected sheet names are cost_centers, aircraft and operators. Each sheet must
 use the canonical header order from chapter1-v1.
+
+Before applying the official source, run the command without `--apply` and
+review duplicate, reference and schema errors. The source workbook is not part
+of the repository; the load remains pending until the official file is
+provided.

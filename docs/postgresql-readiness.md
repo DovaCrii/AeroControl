@@ -22,3 +22,11 @@ Migration sequence:
 7. Keep the SQLite backup and a documented rollback window.
 
 No production database is changed by scale_readiness.
+
+## Local-first decision
+
+SQLite remains the recommended local backend while the dataset is moderate and
+the application is used in a single local environment. PostgreSQL is deferred
+until real operational data is available or before the first multi-user
+deployment. The migration path is Django migrations plus a verified backup and
+restore; SQLite files must not be exposed or copied as a production database.
