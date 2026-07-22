@@ -1,5 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 import csv
+import json
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.http import HttpResponse, JsonResponse
@@ -247,6 +248,34 @@ class ApiTaskListView(ModelViewPermissionRequiredMixin, View):
                 "checklist": {"total": task.checklist_total, "completed": task.checklist_completed, "progress": task.checklist_progress},
             })
         return JsonResponse({"version": "v1", "page": page, "page_size": page_size, "total": total, "results": items})
+
+
+class ApiTaskUpdateView(ModelPermissionRequiredMixin, View):
+    model = KanbanTask
+    permission_action = "change"
+
+    def patch(self, request, pk):
+        task = get_object_or_404(KanbanTask, pk=pk, is_active=True, board__is_active=True)
+        try:
+            payload = json.loads(request.body or "{}")
+        except json.JSONDecodeError:
+            return JsonResponse({"detail": "Invalid JSON."}, status=400)
+        allowed = {"title", "description", "priority", "stage_id", "due_date"}
+        unknown = sorted(set(payload) - allowed)
+        if unknown:
+            return JsonResponse({"detail": "Unsupported fields.", "fields": unknown}, status=400)
+        if "priority" in payload and payload["priority"] not in dict(KanbanTask.PRIORITIES):
+            return JsonResponse({"detail": "Invalid priority."}, status=400)
+        if "stage_id" in payload:
+            stage = KanbanStage.objects.filter(pk=payload["stage_id"], board=task.board, is_active=True).first()
+            if not stage:
+                return JsonResponse({"detail": "Stage does not belong to this board."}, status=400)
+            task.stage = stage
+        for field in ("title", "description", "priority", "due_date"):
+            if field in payload:
+                setattr(task, field, payload[field])
+        task.save()
+        return JsonResponse({"version": "v1", "id": str(task.pk), "updated": sorted(payload)})
 
 
 class TaskDetailView(ModelViewPermissionRequiredMixin, View):
