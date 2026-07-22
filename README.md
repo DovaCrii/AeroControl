@@ -127,6 +127,10 @@ The unauthenticated GET endpoint /health/ reports database and document-storage
 dependency status as JSON (HTTP 200 when healthy, 503 when degraded) for local
 monitors and reverse proxies.
 
+Each response also carries an X-Request-ID correlation header. Request
+completion and failure events are written as JSON lines to LOGS_DIR with method,
+path, status code and duration, without recording request bodies or credentials.
+
 - All operational pages require authentication and model-level view/change
   permissions; CSV export uses the same authorization boundary.
 - Uploads allow only PDF, DOCX, XLSX, PNG, JPG and JPEG, enforce a 20 MB limit,

@@ -29,6 +29,7 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "apps.core.middleware.RequestMetricsMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -98,8 +99,15 @@ LOGGING = {
             "class": "logging.FileHandler",
             "filename": str(LOG_DIR / "aero_ops.log"),
             "level": "INFO",
+            "formatter": "json",
         },
         "console": {"class": "logging.StreamHandler", "level": "INFO"},
+    },
+    "formatters": {
+        "json": {"()": "apps.core.middleware.JsonLogFormatter"},
+    },
+    "loggers": {
+        "aerocontrol.request": {"handlers": ["file", "console"], "level": "INFO", "propagate": False},
     },
     "root": {"handlers": ["file", "console"], "level": "INFO"},
 }

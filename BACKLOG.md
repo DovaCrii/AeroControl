@@ -80,8 +80,9 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
 - [x] Implementar respaldo con manifiesto, checksum y comando de verificación.
 - [x] Añadir prueba automatizada de restauración en un destino aislado.
 - [x] Añadir health check de dependencias (/health/) para base de datos y
-  almacenamiento documental; logs estructurados y métricas quedan como el
-  siguiente subbloque.
+  almacenamiento documental.
+- [x] Añadir correlación X-Request-ID y eventos JSON con método, ruta, estado y
+  duración para observabilidad básica.
 - [ ] Fijar dependencias front-end con SRI o servirlas localmente y definir
   Content Security Policy.
 - [ ] Registrar auditoría de acciones administrativas y cambios de estado.
