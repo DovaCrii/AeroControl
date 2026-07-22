@@ -476,3 +476,15 @@ def test_api_v1_task_patch_validates_and_updates(auth_client, board):
         content_type="application/json",
     )
     assert invalid.status_code == 400
+
+    task.refresh_from_db()
+    stale = task.updated_at.isoformat()
+    task.title = "Changed elsewhere"
+    task.save()
+    conflict = auth_client.patch(
+        f"/api/v1/workboard/tasks/{task.pk}/",
+        data='{"title":"Stale update"}',
+        content_type="application/json",
+        HTTP_IF_UNMODIFIED_SINCE=stale,
+    )
+    assert conflict.status_code == 409

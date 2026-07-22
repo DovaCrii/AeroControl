@@ -275,6 +275,7 @@ class ApiTaskListView(ApiPermissionMixin, View):
                 "due_date": task.due_date.isoformat() if task.due_date else None,
                 "labels": [{"id": str(label.pk), "name": label.name, "color": label.color} for label in task.labels.all()],
                 "checklist": {"total": task.checklist_total, "completed": task.checklist_completed, "progress": task.checklist_progress},
+                "updated_at": task.updated_at.isoformat(),
             })
         return JsonResponse({"version": "v1", "page": page, "page_size": page_size, "total": total, "results": items})
 
@@ -285,6 +286,12 @@ class ApiTaskUpdateView(ApiPermissionMixin, View):
 
     def patch(self, request, pk):
         task = get_object_or_404(KanbanTask, pk=pk, is_active=True, board__is_active=True)
+        expected_updated = request.headers.get("If-Unmodified-Since")
+        if expected_updated:
+            from django.utils.dateparse import parse_datetime
+            expected = parse_datetime(expected_updated)
+            if expected is None or task.updated_at > expected:
+                return JsonResponse({"detail": "Task changed since it was read.", "code": "conflict"}, status=409)
         try:
             payload = json.loads(request.body or "{}")
         except json.JSONDecodeError:
@@ -304,7 +311,7 @@ class ApiTaskUpdateView(ApiPermissionMixin, View):
             if field in payload:
                 setattr(task, field, payload[field])
         task.save()
-        return JsonResponse({"version": "v1", "id": str(task.pk), "updated": sorted(payload)})
+        return JsonResponse({"version": "v1", "id": str(task.pk), "updated": sorted(payload), "updated_at": task.updated_at.isoformat()})
 
 
 class TaskDetailView(ModelViewPermissionRequiredMixin, View):

@@ -168,6 +168,8 @@ Kanban task change permission; unsupported fields and cross-board stages are
 rejected.
 API callers receive JSON 401/403 responses instead of browser login redirects.
 The API contract index is available to authenticated users at /api/v1/.
+PATCH clients can send If-Unmodified-Since; stale edits receive HTTP 409
+instead of silently overwriting newer changes.
 
 Before evaluating PostgreSQL, run scale_readiness and follow
 docs/postgresql-readiness.md. The command is read-only and does not switch or
