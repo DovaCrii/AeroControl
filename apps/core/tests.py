@@ -119,6 +119,16 @@ class TestAuthRequiredURLs:
 
 
 class TestAuthenticatedPages:
+    def test_global_search_respects_permissions(self, auth_client):
+        CostCenter.objects.create(code="SEARCH", name="Search Operations")
+        response = auth_client.get(reverse("global-search"), {"q": "SEARCH"})
+        assert response.status_code == 200
+        assert "Search Operations" in response.content.decode()
+
+    def test_global_search_requires_authentication(self, client):
+        response = client.get(reverse("global-search"), {"q": "SEARCH"})
+        assert response.status_code == 302
+
     def test_mutating_action_is_audited_without_request_data(self, auth_client):
         response = auth_client.post(reverse("board-create"), {"name": "Audited board"})
         assert response.status_code == 302

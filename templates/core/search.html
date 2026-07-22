@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Global search" %}{% endblock %}
+{% block content %}
+<main class="container-fluid py-4">
+  <div class="mb-4"><p class="eyebrow">{% translate "AeroControl" %}</p><h1 class="h3">{% translate "Global search" %}</h1></div>
+  <form method="get" role="search" class="input-group mb-4">
+    <label class="visually-hidden" for="global-query">{% translate "Search" %}</label>
+    <input id="global-query" class="form-control" name="q" value="{{ query }}" placeholder="{% translate 'Search across operations' %}" autofocus>
+    <button class="btn btn-primary" type="submit">{% translate "Search" %}</button>
+  </form>
+  {% if query %}
+    <p class="text-muted small">{% blocktranslate count counter=results|length %}{{ counter }} result{% plural %}{{ counter }} results{% endblocktranslate %}</p>
+    <div class="list-group">
+    {% for result in results %}
+      <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" href="{{ result.url }}">
+        <span><span class="badge text-bg-secondary me-2">{{ result.model }}</span>{{ result.label }}</span><span aria-hidden="true">→</span>
+      </a>
+    {% empty %}<div class="card p-4 text-center text-muted">{% translate "No results found." %}</div>{% endfor %}
+    </div>
+  {% else %}<div class="card p-4 text-center text-muted">{% translate "Enter a term to search operational records." %}</div>{% endif %}
+</main>
+{% endblock %}

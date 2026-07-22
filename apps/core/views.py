@@ -11,8 +11,10 @@ from django.http import JsonResponse
 from django.conf import settings
 from django.db import connection
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.views import View
+from django.views.generic import TemplateView
 
 
 class SearchMixin:
@@ -189,6 +191,55 @@ class HealthCheckView(View):
             {"status": "ok" if healthy else "degraded", "checks": checks},
             status=200 if healthy else 503,
         )
+
+
+class GlobalSearchView(LoginRequiredMixin, TemplateView):
+    template_name = "core/search.html"
+
+    SEARCH_SOURCES = (
+        ("registry", "CostCenter", "costcenter-list", ("code", "name")),
+        ("registry", "Aircraft", "aircraft-list", ("registration", "model", "type")),
+        ("registry", "Operator", "operator-list", ("employee_id", "full_name", "email")),
+        ("workboard", "KanbanBoard", "board-list", ("name", "description")),
+        ("workboard", "KanbanTask", "workboard-list", ("title", "description")),
+        ("compliance", "Document", "document-list", ("title",)),
+    )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        query = self.request.GET.get("q", "").strip()
+        results = []
+        if query:
+            from django.db.models import Q
+            from apps.compliance.models import Document
+            from apps.registry.models import Aircraft, CostCenter, Operator
+            from apps.workboard.models import KanbanBoard, KanbanTask
+
+            models = {
+                "CostCenter": CostCenter,
+                "Aircraft": Aircraft,
+                "Operator": Operator,
+                "KanbanBoard": KanbanBoard,
+                "KanbanTask": KanbanTask,
+                "Document": Document,
+            }
+            for app_label, model_name, url_name, fields in self.SEARCH_SOURCES:
+                model = models[model_name]
+                if not self.request.user.has_perm(f"{app_label}.view_{model._meta.model_name}"):
+                    continue
+                condition = Q()
+                for field in fields:
+                    condition |= Q(**{f"{field}__icontains": query})
+                objects = model.objects.filter(condition, is_active=True).order_by("-updated_at")[:10]
+                for obj in objects:
+                    results.append({
+                        "model": model._meta.verbose_name.title(),
+                        "label": str(obj),
+                        "url": reverse(url_name),
+                        "id": obj.pk,
+                    })
+        context.update({"query": query, "results": results[:50]})
+        return context
 
 
 class StatusTransitionView(ModelPermissionRequiredMixin, View):
