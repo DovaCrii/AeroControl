@@ -69,6 +69,7 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
   aeronaves y operadores.
 - [x] Preparar cargador transaccional chapter1_import con validación de esquema,
   duplicados y referencias; queda pendiente ejecutarlo con la fuente oficial.
+- [x] Añadir adaptador Excel con hojas y encabezados canónicos versionados.
 - [x] Búsqueda global con permisos de lectura por dominio y enlaces directos a
   los módulos operativos.
 - [x] Reporte CSV operativo de tareas Kanban reutilizando filtros y columnas de

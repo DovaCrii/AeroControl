@@ -23,6 +23,7 @@ class Command(BaseCommand):
         for name in SCHEMAS:
             parser.add_argument(f"--{name.replace('_', '-')}", type=Path)
         parser.add_argument("--apply", action="store_true")
+        parser.add_argument("--workbook", type=Path, help="Excel workbook with cost_centers, aircraft and operators sheets.")
         parser.add_argument("--json", action="store_true", dest="as_json")
 
     def parse_file(self, key, path):
@@ -53,11 +54,51 @@ class Command(BaseCommand):
                 row["status"] = row["status"] or "active"
         return rows
 
+    def parse_workbook(self, path):
+        if not path or not path.is_file():
+            raise CommandError(f"Missing workbook: {path}")
+        from openpyxl import load_workbook
+        workbook = load_workbook(path, read_only=True, data_only=True)
+        payload = {}
+        sheet_names = {"cost_centers": "cost_centers", "aircraft": "aircraft", "operators": "operators"}
+        for key, sheet_name in sheet_names.items():
+            if sheet_name not in workbook.sheetnames:
+                continue
+            sheet = workbook[sheet_name]
+            headers = [str(value or "").strip() for value in next(sheet.iter_rows(values_only=True))]
+            expected = SCHEMAS[key][1]
+            if headers != expected:
+                raise CommandError(f"{sheet_name} columns must be: {','.join(expected)}")
+            rows = []
+            for values in sheet.iter_rows(min_row=2, values_only=True):
+                rows.append({field: str(value or "").strip() for field, value in zip(headers, values)})
+            payload[key] = rows
+        if not payload:
+            raise CommandError("Workbook must contain at least one supported sheet.")
+        return payload
+
     def handle(self, *args, **options):
         paths = {key: options.get(key) for key in SCHEMAS if options.get(key)}
-        if not paths:
+        if not paths and not options.get("workbook"):
             raise CommandError("Provide at least one Chapter 1 CSV source.")
-        payload = {key: self.parse_file(key, path) for key, path in paths.items()}
+        payload = self.parse_workbook(options["workbook"]) if options.get("workbook") else {key: self.parse_file(key, path) for key, path in paths.items()}
+        if options.get("workbook"):
+            for key, rows in payload.items():
+                # Reuse CSV validation by applying the same invariants in-memory.
+                if len(rows) > 5000:
+                    raise CommandError(f"{key} exceeds the 5000-row limit")
+                unique_field = {"cost_centers": "code", "aircraft": "registration", "operators": "employee_id"}[key]
+                values = [row.get(unique_field, "") for row in rows]
+                if any(not value for value in values) or len(values) != len(set(values)):
+                    raise CommandError(f"{key} contains empty or duplicate {unique_field} values")
+                if key == "aircraft":
+                    for row in rows:
+                        row["year"] = int(row["year"]) if row.get("year", "").isdigit() else None
+                        row["status"] = row.get("status") or "active"
+                if key in {"aircraft", "operators"}:
+                    for row in rows:
+                        if not CostCenter.objects.filter(code=row.get("cost_center"), is_active=True).exists():
+                            raise CommandError(f"{key} references unknown cost center {row.get('cost_center')}")
         result = {"mapping": "chapter1-v1", "apply": options["apply"], "rows": {key: len(rows) for key, rows in payload.items()}}
         if options["apply"]:
             with transaction.atomic():
