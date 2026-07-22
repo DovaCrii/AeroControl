@@ -7,5 +7,8 @@
 {% for item in stages %}
   {% include "workboard/_column.html" with stage=item.stage tasks=item.tasks %}
 {% empty %}
-  <div class="kanban-empty w-100">{% translate "This board has no active stages." %}</div>
+  <div class="kanban-empty w-100">
+    <p>{% translate "This board has no active stages." %}</p>
+    <a class="btn btn-sm btn-primary" href="{% url 'stage-create' %}?board={{ board.id }}">+ {% translate "Create first stage" %}</a>
+  </div>
 {% endfor %}

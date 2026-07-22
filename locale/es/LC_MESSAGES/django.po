@@ -678,3 +678,24 @@ msgstr "Registro de vuelo archivado."
 
 msgid "The uploaded file content does not match its extension."
 msgstr "El contenido del archivo no coincide con su extensión."
+
+msgid "Manage boards"
+msgstr "Gestionar tableros"
+
+msgid "New board"
+msgstr "Nuevo tablero"
+
+msgid "New stage"
+msgstr "Nueva etapa"
+
+msgid "Create first stage"
+msgstr "Crear primera etapa"
+
+msgid "Main navigation"
+msgstr "Navegación principal"
+
+msgid "Toggle navigation"
+msgstr "Activar navegación"
+
+msgid "Skip to main content"
+msgstr "Saltar al contenido principal"
