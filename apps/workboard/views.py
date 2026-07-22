@@ -2,7 +2,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 import csv
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext as _
@@ -215,6 +215,38 @@ class TaskReportDocxView(TaskReportCsvView):
         response = HttpResponse(output.getvalue(), content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
         response["Content-Disposition"] = 'attachment; filename="aerocontrol-tasks.docx"'
         return response
+
+
+class ApiTaskListView(ModelViewPermissionRequiredMixin, View):
+    model = KanbanTask
+    permission_action = "view"
+
+    def get(self, request):
+        listing = KanbanTaskListView()
+        listing.request = request
+        queryset = listing.get_queryset()
+        try:
+            page = max(int(request.GET.get("page", "1")), 1)
+            page_size = min(max(int(request.GET.get("page_size", "25")), 1), 100)
+        except ValueError:
+            return JsonResponse({"detail": "Invalid pagination."}, status=400)
+        total = queryset.count()
+        start = (page - 1) * page_size
+        items = []
+        for task in queryset[start:start + page_size]:
+            items.append({
+                "id": str(task.pk),
+                "title": task.title,
+                "board": {"id": str(task.board_id), "name": task.board.name},
+                "state": task.stage.status_type,
+                "stage": task.stage.name,
+                "priority": task.priority,
+                "assignee": task.assigned_to.full_name if task.assigned_to else None,
+                "due_date": task.due_date.isoformat() if task.due_date else None,
+                "labels": [{"id": str(label.pk), "name": label.name, "color": label.color} for label in task.labels.all()],
+                "checklist": {"total": task.checklist_total, "completed": task.checklist_completed, "progress": task.checklist_progress},
+            })
+        return JsonResponse({"version": "v1", "page": page, "page_size": page_size, "total": total, "results": items})
 
 
 class TaskDetailView(ModelViewPermissionRequiredMixin, View):

@@ -100,6 +100,8 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
 
 ## Evolución para escalar (P2)
 
+- [x] Exponer contrato inicial API v1 de lectura para tareas Kanban con
+  permisos, filtros y paginación.
 - [ ] Diseñar API v1 con Django REST Framework, autenticación y contratos
   versionados.
 - [ ] Evaluar PostgreSQL y migración con plan de respaldo/rollback antes de

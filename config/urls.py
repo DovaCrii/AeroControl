@@ -5,6 +5,7 @@ from django.urls import include, path
 
 from apps.operations.views import CalendarView
 from apps.core.views import AlertCountPartial, GlobalSearchView, HealthCheckView
+from apps.workboard.views import ApiTaskListView
 
 admin.site.site_header = "AeroControl Administration"
 admin.site.site_title = "AeroControl"
@@ -26,6 +27,7 @@ urlpatterns = [
     path("alerts/count/", AlertCountPartial.as_view(), name="alert-count"),
     path("health/", HealthCheckView.as_view(), name="health"),
     path("search/", GlobalSearchView.as_view(), name="global-search"),
+    path("api/v1/workboard/tasks/", ApiTaskListView.as_view(), name="api-v1-workboard-tasks"),
     path("", include("apps.dashboard.urls")),
     path("registry/", include("apps.registry.urls")),
     path("compliance/", include("apps.compliance.urls")),
