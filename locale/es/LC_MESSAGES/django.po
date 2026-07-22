@@ -843,5 +843,14 @@ msgstr "Descargar plantilla"
 msgid "Export XLSX"
 msgstr "Exportar XLSX"
 
+msgid "Export Word"
+msgstr "Exportar Word"
+
+msgid "AeroControl — Operational task report"
+msgstr "AeroControl — Reporte operativo de tareas"
+
+msgid "Generated: %(date)s"
+msgstr "Generado: %(date)s"
+
 msgid "Registry"
 msgstr "Registro"

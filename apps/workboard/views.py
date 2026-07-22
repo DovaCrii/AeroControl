@@ -180,6 +180,43 @@ class TaskReportXlsxView(TaskReportCsvView):
         return response
 
 
+class TaskReportDocxView(TaskReportCsvView):
+    def get(self, request):
+        from io import BytesIO
+        from docx import Document
+        from docx.shared import Inches
+        from django.utils import timezone
+
+        listing = KanbanTaskListView()
+        listing.request = request
+        document = Document()
+        document.add_heading(_("AeroControl — Operational task report"), 0)
+        document.add_paragraph(_("Generated: %(date)s") % {"date": timezone.localdate().isoformat()})
+        table = document.add_table(rows=1, cols=6)
+        table.style = "Light Shading Accent 1"
+        headers = [_("Task"), _("Board"), _("State"), _("Assignee"), _("Priority"), _("Progress")]
+        for cell, header in zip(table.rows[0].cells, headers):
+            cell.text = header
+        for task in listing.get_queryset():
+            row = table.add_row().cells
+            values = [
+                task.title, task.board.name, task.stage.get_status_type_display(),
+                task.assigned_to.full_name if task.assigned_to else "",
+                task.get_priority_display(),
+                f"{task.checklist_progress}%" if task.checklist_total else _("No steps"),
+            ]
+            for cell, value in zip(row, values):
+                cell.text = str(value)
+        for section in document.sections:
+            section.left_margin = Inches(0.6)
+            section.right_margin = Inches(0.6)
+        output = BytesIO()
+        document.save(output)
+        response = HttpResponse(output.getvalue(), content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+        response["Content-Disposition"] = 'attachment; filename="aerocontrol-tasks.docx"'
+        return response
+
+
 class TaskDetailView(ModelViewPermissionRequiredMixin, View):
     model = KanbanTask
     permission_action = "view"

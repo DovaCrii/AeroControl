@@ -416,3 +416,13 @@ def test_task_report_exports_xlsx(auth_client, board):
     assert response.status_code == 200
     assert response["Content-Type"].startswith("application/vnd.openxmlformats")
     assert response.content[:2] == b"PK"
+
+
+@pytest.mark.django_db
+def test_task_report_exports_docx(auth_client, board):
+    board_obj, todo, _ = board
+    KanbanTask.objects.create(board=board_obj, stage=todo, title="Word task")
+    response = auth_client.get(reverse("task-report-docx"))
+    assert response.status_code == 200
+    assert response["Content-Type"].startswith("application/vnd.openxmlformats")
+    assert response.content[:2] == b"PK"
