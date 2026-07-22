@@ -133,6 +133,9 @@ path, status code and duration, without recording request bodies or credentials.
 Authenticated mutating requests are also stored append-only as AuditEvent records
 and can be reviewed from Django Admin.
 
+Authenticated users can search permitted operational records from /search/.
+The search never returns entities for which the user lacks a view permission.
+
 - All operational pages require authentication and model-level view/change
   permissions; CSV export uses the same authorization boundary.
 - Uploads allow only PDF, DOCX, XLSX, PNG, JPG and JPEG, enforce a 20 MB limit,

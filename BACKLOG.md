@@ -62,7 +62,8 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
 - [ ] Importación Excel validada, con vista previa, reporte de errores y
   operación reversible.
 - [ ] Carga normalizada del Capítulo 1 con mapeos versionados.
-- [ ] Búsqueda global con permisos y filtros por dominio.
+- [x] Búsqueda global con permisos de lectura por dominio y enlaces directos a
+  los módulos operativos.
 - [ ] Reportes Word y Excel exportables con plantillas controladas.
 - [ ] Validaciones cruzadas entre seguro, aeronave, operador, permiso y
   habilitación.

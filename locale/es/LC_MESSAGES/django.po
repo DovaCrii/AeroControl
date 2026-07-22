@@ -792,3 +792,20 @@ msgstr "Nueva tarea"
 
 msgid "Manage labels"
 msgstr "Gestionar etiquetas"
+
+msgid "Global search"
+msgstr "Búsqueda global"
+
+msgid "Search across operations"
+msgstr "Buscar en operaciones"
+
+msgid "No results found."
+msgstr "No se encontraron resultados."
+
+msgid "Enter a term to search operational records."
+msgstr "Ingresa un término para buscar registros operativos."
+
+msgid "result"
+msgid_plural "results"
+msgstr[0] "resultado"
+msgstr[1] "resultados"
