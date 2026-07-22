@@ -85,7 +85,8 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
   duración para observabilidad básica.
 - [ ] Fijar dependencias front-end con SRI o servirlas localmente y definir
   Content Security Policy.
-- [ ] Registrar auditoría de acciones administrativas y cambios de estado.
+- [x] Registrar acciones mutantes autenticadas con actor, solicitud, resultado
+  y correlación; consultar el historial desde Django Admin.
 
 ## Evolución para escalar (P2)
 

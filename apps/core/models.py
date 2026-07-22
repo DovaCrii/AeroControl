@@ -1,5 +1,6 @@
 import uuid
 from django.db import models
+from django.conf import settings
 
 
 class BaseModel(models.Model):
@@ -21,3 +22,30 @@ class BackupConfig(BaseModel):
 
     def __str__(self):
         return self.backup_path
+
+
+class AuditEvent(models.Model):
+    """Append-only record of authenticated mutating and administrative actions."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="audit_events",
+    )
+    action = models.CharField(max_length=32)
+    method = models.CharField(max_length=10)
+    path = models.CharField(max_length=500)
+    status_code = models.PositiveSmallIntegerField()
+    model_label = models.CharField(max_length=100, blank=True)
+    object_id = models.CharField(max_length=100, blank=True)
+    request_id = models.CharField(max_length=64, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["created_at"]),
+            models.Index(fields=["actor", "created_at"]),
+            models.Index(fields=["model_label", "object_id"]),
+        ]
