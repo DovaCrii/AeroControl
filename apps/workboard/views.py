@@ -225,6 +225,28 @@ class ApiPermissionMixin(ModelPermissionRequiredMixin):
         return JsonResponse({"detail": "Permission denied."}, status=403)
 
 
+class ApiIndexView(LoginRequiredMixin, View):
+    def get(self, request):
+        return JsonResponse({
+            "version": "v1",
+            "authentication": "Django session or configured API gateway",
+            "endpoints": {
+                "tasks_list": {
+                    "method": "GET",
+                    "path": "/api/v1/workboard/tasks/",
+                    "permission": "workboard.view_kanbantask",
+                    "filters": ["board", "operator", "priority", "state", "label", "q", "page", "page_size"],
+                },
+                "task_update": {
+                    "method": "PATCH",
+                    "path": "/api/v1/workboard/tasks/<uuid>/",
+                    "permission": "workboard.change_kanbantask",
+                    "fields": ["title", "description", "priority", "stage_id", "due_date"],
+                },
+            },
+        })
+
+
 class ApiTaskListView(ApiPermissionMixin, View):
     model = KanbanTask
     permission_action = "view"

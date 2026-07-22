@@ -448,6 +448,15 @@ def test_api_v1_tasks_requires_auth(board):
 
 
 @pytest.mark.django_db
+def test_api_v1_index_describes_contract(auth_client):
+    response = auth_client.get("/api/v1/")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["version"] == "v1"
+    assert payload["endpoints"]["task_update"]["method"] == "PATCH"
+
+
+@pytest.mark.django_db
 def test_api_v1_task_patch_validates_and_updates(auth_client, board):
     board_obj, todo, done = board
     task = KanbanTask.objects.create(board=board_obj, stage=todo, title="Before")
