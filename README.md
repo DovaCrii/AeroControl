@@ -152,6 +152,10 @@ A read-only API contract is available at /api/v1/workboard/tasks/. It requires
 authentication and the Kanban task view permission, supports the existing
 filters and returns bounded page/page_size results.
 
+Before evaluating PostgreSQL, run scale_readiness and follow
+docs/postgresql-readiness.md. The command is read-only and does not switch or
+modify the active database.
+
 - All operational pages require authentication and model-level view/change
   permissions; CSV export uses the same authorization boundary.
 - Uploads allow only PDF, DOCX, XLSX, PNG, JPG and JPEG, enforce a 20 MB limit,
