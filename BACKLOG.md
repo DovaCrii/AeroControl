@@ -65,7 +65,9 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
   costo antes de aplicar el lote.
 - [x] Extender el mismo flujo a operadores, validando identificador de empleado
   y centro de costo antes de aplicar el lote.
-- [ ] Carga normalizada del Capítulo 1 con mapeos versionados.
+- [x] Definir mapping canónico versionado chapter1-v1 para centros de costo,
+  aeronaves y operadores.
+- [ ] Ejecutar carga normalizada del Capítulo 1 desde la fuente oficial.
 - [x] Búsqueda global con permisos de lectura por dominio y enlaces directos a
   los módulos operativos.
 - [x] Reporte CSV operativo de tareas Kanban reutilizando filtros y columnas de
