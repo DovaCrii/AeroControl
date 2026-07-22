@@ -151,6 +151,9 @@ The Word version is available at /workboard/reports/tasks.docx.
 A read-only API contract is available at /api/v1/workboard/tasks/. It requires
 authentication and the Kanban task view permission, supports the existing
 filters and returns bounded page/page_size results.
+Task updates use PATCH at /api/v1/workboard/tasks/<uuid>/ and require the
+Kanban task change permission; unsupported fields and cross-board stages are
+rejected.
 
 Before evaluating PostgreSQL, run scale_readiness and follow
 docs/postgresql-readiness.md. The command is read-only and does not switch or

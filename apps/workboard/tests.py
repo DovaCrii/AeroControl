@@ -444,3 +444,25 @@ def test_api_v1_tasks_is_permissioned_and_paginated(auth_client, board):
 def test_api_v1_tasks_requires_auth(board):
     response = Client().get("/api/v1/workboard/tasks/")
     assert response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_api_v1_task_patch_validates_and_updates(auth_client, board):
+    board_obj, todo, done = board
+    task = KanbanTask.objects.create(board=board_obj, stage=todo, title="Before")
+    response = auth_client.patch(
+        f"/api/v1/workboard/tasks/{task.pk}/",
+        data='{"title":"After","stage_id":"%s","priority":"high"}' % done.pk,
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+    task.refresh_from_db()
+    assert task.title == "After"
+    assert task.stage_id == done.pk
+
+    invalid = auth_client.patch(
+        f"/api/v1/workboard/tasks/{task.pk}/",
+        data='{"priority":"invalid"}',
+        content_type="application/json",
+    )
+    assert invalid.status_code == 400
