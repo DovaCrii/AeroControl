@@ -15,10 +15,11 @@
 
 | Prioridad | Objetivo | Criterio de cierre |
 | --- | --- | --- |
-| P0 | Autorización por rol | Asignar los grupos estándar a usuarios reales y completar pruebas de 403 por módulo. |
-| P1 | Archivos de cumplimiento | Validación de tipo por contenido/antimalware y política de retención. |
+| P0 | Historial de permisos | Alinear `PermissionHistory` y su migración; probar transiciones, creación de historial y rollback. |
+| P1 | Autorización de lectura/exportación | Definir alcance de Viewer y proteger listas, detalles y CSV con permisos explícitos. |
+| P1 | Archivos de cumplimiento | Validar código/ruta antes de escribir, tipo por contenido/antimalware y política de retención. |
 | P1 | Copias de seguridad | Backup consistente con manifiesto, checksum y restauración probada. |
-| P2 | Dependencias front-end | Versiones fijadas con SRI u hospedadas localmente. |
+| P2 | Dependencias front-end | Versiones fijadas con SRI u hospedadas localmente y CSP definida. |
 | P2 | Observabilidad | Logs estructurados, health check y métrica de errores. |
 
 Revisar esta lista en cada cambio de flujo, dependencia o despliegue.
