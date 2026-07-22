@@ -123,6 +123,10 @@ an existing destination unless `--force` is supplied.
 
 ## Security boundaries
 
+The unauthenticated GET endpoint /health/ reports database and document-storage
+dependency status as JSON (HTTP 200 when healthy, 503 when degraded) for local
+monitors and reverse proxies.
+
 - All operational pages require authentication and model-level view/change
   permissions; CSV export uses the same authorization boundary.
 - Uploads allow only PDF, DOCX, XLSX, PNG, JPG and JPEG, enforce a 20 MB limit,
