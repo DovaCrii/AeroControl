@@ -24,6 +24,27 @@ class BackupConfig(BaseModel):
         return self.backup_path
 
 
+class OperationalTenant(BaseModel):
+    name = models.CharField(max_length=150)
+    slug = models.SlugField(max_length=80, unique=True)
+    members = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, through="TenantMembership", related_name="operational_tenants"
+    )
+
+    def __str__(self):
+        return self.name
+
+
+class TenantMembership(BaseModel):
+    ROLES = [("member", "Member"), ("admin", "Admin")]
+    tenant = models.ForeignKey(OperationalTenant, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    role = models.CharField(max_length=20, choices=ROLES, default="member")
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["tenant", "user"], name="unique_tenant_membership")]
+
+
 class AuditEvent(models.Model):
     """Append-only record of authenticated mutating and administrative actions."""
 
