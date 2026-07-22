@@ -36,6 +36,13 @@ def auth_client(client, admin_user):
 
 class TestPublicURLs:
     @pytest.mark.django_db
+    def test_responses_include_request_id(self, settings):
+        settings.DOCUMENTS_ROOT = settings.BASE_DIR
+        response = Client().get(reverse("health"), HTTP_X_REQUEST_ID="test-request-42")
+        assert response.status_code == 200
+        assert response.headers["X-Request-ID"] == "test-request-42"
+
+    @pytest.mark.django_db
     def test_health_endpoint_reports_dependencies(self, settings):
         settings.DOCUMENTS_ROOT = settings.BASE_DIR
         response = Client().get(reverse("health"))
