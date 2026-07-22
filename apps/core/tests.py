@@ -42,6 +42,7 @@ class TestPublicURLs:
         response = Client().get(reverse("health"), HTTP_X_REQUEST_ID="test-request-42")
         assert response.status_code == 200
         assert response.headers["X-Request-ID"] == "test-request-42"
+        assert "Content-Security-Policy-Report-Only" in response.headers
 
     @pytest.mark.django_db
     def test_health_endpoint_reports_dependencies(self, settings):

@@ -93,8 +93,9 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
   almacenamiento documental.
 - [x] Añadir correlación X-Request-ID y eventos JSON con método, ruta, estado y
   duración para observabilidad básica.
-- [ ] Fijar dependencias front-end con SRI o servirlas localmente y definir
-  Content Security Policy.
+- [x] Definir Content-Security-Policy-Report-Only configurable para validar
+  fuentes externas sin romper la interfaz existente.
+- [ ] Fijar dependencias front-end con SRI o servirlas localmente.
 - [x] Registrar acciones mutantes autenticadas con actor, solicitud, resultado
   y correlación; consultar el historial desde Django Admin.
 - [x] Hacer el historial de auditoría inmutable desde Django Admin.
