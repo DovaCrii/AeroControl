@@ -134,9 +134,8 @@ Authenticated mutating requests are also stored append-only as AuditEvent record
 and can be reviewed from Django Admin.
 
 Content-Security-Policy-Report-Only is enabled by default and can be controlled
-with CSP_REPORT_ONLY. It currently allows the pinned external UI source used by
-the Kanban drag-and-drop enhancement; SRI/local vendoring remains the next
-hardening step.
+with CSP_REPORT_ONLY. SortableJS is pinned to a fixed version with SRI and
+crossorigin validation.
 
 Authenticated users can search permitted operational records from /search/.
 The search never returns entities for which the user lacks a view permission.
