@@ -4,6 +4,11 @@ from . import views
 urlpatterns = [
     path("document/", views.DocumentList.as_view(), name="document-list"),
     path("document/new/", views.DocumentCreate.as_view(), name="document-create"),
+    path(
+        "document/entity-options/",
+        views.DocumentEntityOptions.as_view(),
+        name="document-entity-options",
+    ),
     path("document/<uuid:pk>/", views.DocumentDetail.as_view(), name="document-detail"),
     path(
         "document/<uuid:pk>/download/",

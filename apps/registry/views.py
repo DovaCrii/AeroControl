@@ -1,10 +1,11 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse
+from django.utils.translation import gettext as _
 from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from apps.core.views import (
     CsvExportMixin,
     HtmxFormMixin,
     ModelPermissionRequiredMixin,
+    ModelViewPermissionRequiredMixin,
     SearchMixin,
 )
 from .models import CostCenter, Aircraft, Operator, Assignment, Qualification
@@ -17,18 +18,18 @@ from .forms import (
 )
 
 
-class RegistryList(CsvExportMixin, SearchMixin, LoginRequiredMixin, ListView):
+class RegistryList(CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListView):
     template_name = "generic/list.html"
     context_object_name = "objects"
     paginate_by = 25
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = self.model._meta.verbose_name_plural.title()
+        context["title"] = _(self.model._meta.verbose_name_plural.title())
         return context
 
 
-class RegistryDetail(LoginRequiredMixin, DetailView):
+class RegistryDetail(ModelViewPermissionRequiredMixin, DetailView):
     template_name = "generic/detail.html"
 
 
@@ -42,7 +43,9 @@ class RegistryCreate(HtmxFormMixin, ModelPermissionRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = f"New {self.model._meta.verbose_name.title()}"
+        context["title"] = _("New %(record)s") % {
+            "record": _(self.model._meta.verbose_name.title())
+        }
         return context
 
 
@@ -56,7 +59,9 @@ class RegistryUpdate(HtmxFormMixin, ModelPermissionRequiredMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = f"Edit {self.model._meta.verbose_name.title()}"
+        context["title"] = _("Edit %(record)s") % {
+            "record": _(self.model._meta.verbose_name.title())
+        }
         return context
 
 

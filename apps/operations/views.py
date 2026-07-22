@@ -6,13 +6,14 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext as _
 from django.views.generic import CreateView, DetailView, ListView
 
 from apps.core.views import (
     CsvExportMixin,
     HtmxFormMixin,
     ModelPermissionRequiredMixin,
+    ModelViewPermissionRequiredMixin,
     SearchMixin,
     StatusTransitionView,
 )
@@ -20,14 +21,14 @@ from .forms import FlightPermissionForm, FlightRecordForm
 from .models import FlightPermission, FlightRecord
 
 
-class OList(CsvExportMixin, SearchMixin, LoginRequiredMixin, ListView):
+class OList(CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListView):
     template_name = "generic/list.html"
     context_object_name = "objects"
     paginate_by = 25
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = self.model._meta.verbose_name_plural.title()
+        context["title"] = _(self.model._meta.verbose_name_plural.title())
         return context
 
 
@@ -40,11 +41,15 @@ class OCreate(HtmxFormMixin, ModelPermissionRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = f"New {self.model._meta.verbose_name.title()}"
+        context["title"] = _("New %(record)s") % {
+            "record": _(self.model._meta.verbose_name.title())
+        }
         return context
 
 
-class FlightPermissionList(CsvExportMixin, SearchMixin, LoginRequiredMixin, ListView):
+class FlightPermissionList(
+    CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListView
+):
     model = FlightPermission
     template_name = "operations/permission_list.html"
     context_object_name = "objects"
@@ -79,7 +84,7 @@ FlightPermissionCreate = type(
 )
 
 
-class FlightPermissionDetail(LoginRequiredMixin, DetailView):
+class FlightPermissionDetail(ModelViewPermissionRequiredMixin, DetailView):
     model = FlightPermission
     template_name = "operations/permission_detail.html"
     context_object_name = "permission"
@@ -95,13 +100,13 @@ class FlightPermissionDetail(LoginRequiredMixin, DetailView):
             "operations.change_flightpermission"
         ):
             actions = [
-                ("approve", "Approve", "btn-success"),
-                ("deny", "Deny", "btn-danger"),
+                ("approve", _("Approve"), "btn-success"),
+                ("deny", _("Deny"), "btn-danger"),
             ]
         elif self.object.status == "approved" and self.request.user.has_perm(
             "operations.change_flightpermission"
         ):
-            actions = [("complete", "Complete", "btn-primary")]
+            actions = [("complete", _("Complete"), "btn-primary")]
         else:
             actions = []
         context["status_actions"] = actions
@@ -157,7 +162,7 @@ class FlightRecordCreate(OCreate):
         return initial
 
 
-class FlightRecordDetail(LoginRequiredMixin, DetailView):
+class FlightRecordDetail(ModelViewPermissionRequiredMixin, DetailView):
     model = FlightRecord
     template_name = "operations/flightrecord_detail.html"
     context_object_name = "record"
@@ -180,7 +185,7 @@ class FlightRecordDelete(ModelPermissionRequiredMixin, DetailView):
         record = self.get_object()
         record.is_active = False
         record.save(update_fields=["is_active", "updated_at"])
-        messages.success(request, "Flight record archived.")
+        messages.success(request, _("Flight record archived."))
         return redirect("record-list")
 
 
@@ -227,7 +232,7 @@ class CalendarView(LoginRequiredMixin, ListView):
             following = selected.replace(month=month + 1)
 
         context.update(
-            month_name=selected.strftime("%B %Y"),
+            month_name=selected,
             month_days=calendar.Calendar(firstweekday=0).monthdayscalendar(year, month),
             events=events,
             month_value=selected.strftime("%Y-%m"),

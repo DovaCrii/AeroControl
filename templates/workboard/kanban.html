@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% load static %}
-{% block title %}Kanban Board - AeroControl{% endblock %}
+{% load static i18n %}
+{% block title %}{% translate "Kanban board" %} - AeroControl{% endblock %}
 {% block content %}
 <div id="kanban-page">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">Kanban Board</h1>
+    <h1 class="h3 mb-0">{% translate "Kanban board" %}</h1>
     <div class="d-flex gap-2 align-items-center">
       {% include "workboard/_board_selector.html" %}
       {% include "workboard/_filters.html" %}
@@ -17,8 +17,8 @@
   </div>
   {% else %}
   <div class="card p-5 text-center text-muted">
-    <p>No board configured.</p>
-    <a href="{% url 'board-create' %}" class="btn btn-primary">Create Board</a>
+    <p>{% translate "No board configured." %}</p>
+    <a href="{% url 'board-create' %}" class="btn btn-primary">{% translate "Create board" %}</a>
   </div>
   {% endif %}
 </div>

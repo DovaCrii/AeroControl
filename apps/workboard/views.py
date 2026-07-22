@@ -4,23 +4,29 @@ from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
+from django.utils.translation import gettext as _
 from django.views import View
 from django.views.generic import ListView, CreateView, TemplateView
 
-from apps.core.views import CsvExportMixin, ModelPermissionRequiredMixin, SearchMixin
+from apps.core.views import (
+    CsvExportMixin,
+    ModelPermissionRequiredMixin,
+    ModelViewPermissionRequiredMixin,
+    SearchMixin,
+)
 from apps.registry.models import Operator
 from .models import KanbanBoard, KanbanStage, KanbanTask
 from .forms import KanbanBoardForm, KanbanStageForm, KanbanTaskForm
 
 
-class WList(CsvExportMixin, SearchMixin, LoginRequiredMixin, ListView):
+class WList(CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListView):
     template_name = "generic/list.html"
     context_object_name = "objects"
     paginate_by = 25
 
     def get_context_data(self, **kwargs):
         c = super().get_context_data(**kwargs)
-        c["title"] = self.model._meta.verbose_name_plural.title()
+        c["title"] = _(self.model._meta.verbose_name_plural.title())
         return c
 
 
@@ -33,7 +39,9 @@ class WCreate(ModelPermissionRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         c = super().get_context_data(**kwargs)
-        c["title"] = f"New {self.model._meta.verbose_name.title()}"
+        c["title"] = _("New %(record)s") % {
+            "record": _(self.model._meta.verbose_name.title())
+        }
         return c
 
 

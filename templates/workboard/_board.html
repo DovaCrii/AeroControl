@@ -1,10 +1,11 @@
+{% load i18n %}
 {% if not drag_enabled %}
   <div class="alert alert-info py-2" role="status" data-drag-disabled="true">
-    Drag-and-drop ordering is disabled while an operator or priority filter is active. Clear the filters to reorder tasks.
+    {% translate "Drag-and-drop ordering is disabled while an operator or priority filter is active. Clear the filters to reorder tasks." %}
   </div>
 {% endif %}
 {% for item in stages %}
   {% include "workboard/_column.html" with stage=item.stage tasks=item.tasks %}
 {% empty %}
-  <div class="kanban-empty w-100">This board has no active stages.</div>
+  <div class="kanban-empty w-100">{% translate "This board has no active stages." %}</div>
 {% endfor %}

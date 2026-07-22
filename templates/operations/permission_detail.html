@@ -1,80 +1,15 @@
 {% extends "base.html" %}
-{% load aero_tags %}
+{% load aero_tags i18n %}
 {% block title %}{{ permission.permission_number }} - AeroControl{% endblock %}
 {% block content %}
-<div class="card p-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3">{{ permission.permission_number }}</h1>
-    <div class="d-flex gap-2">
-      {% for action, label, css_class in status_actions %}
-        <form method="post" action="{{ action }}/" style="display:inline">
-          {% csrf_token %}
-          <button class="btn {{ css_class }}">{{ label }}</button>
-        </form>
-      {% endfor %}
-      <a href="javascript:history.back()" class="btn btn-outline-secondary">← Back</a>
-    </div>
-  </div>
-
-  <table class="table table-bordered">
-    <tbody>
-      <tr><th class="w-25">Status</th><td><span class="badge bg-{% if permission.status == 'approved' %}success{% elif permission.status == 'denied' %}danger{% elif permission.status == 'completed' %}info{% else %}warning{% endif %}">{{ permission.get_status_display }}</span></td></tr>
-      <tr><th>Operator</th><td>{{ permission.operator }}</td></tr>
-      <tr><th>Aircraft</th><td>{{ permission.aircraft }}</td></tr>
-      <tr><th>Cost Center</th><td>{{ permission.cost_center }}</td></tr>
-      <tr><th>Purpose</th><td>{{ permission.purpose }}</td></tr>
-      <tr><th>Flight Date</th><td>{{ permission.flight_date|date:"Y-m-d" }}</td></tr>
-      <tr><th>Location</th><td>{{ permission.location }}</td></tr>
-      <tr><th>Notes</th><td>{{ permission.notes|default:"—" }}</td></tr>
-    </tbody>
-  </table>
-</div>
-
-<!-- Status History -->
-<div class="card mt-3 p-4">
-  <h2 class="h5 mb-3">Status History</h2>
-  {% if permission.history.exists %}
-    <table class="table table-sm">
-      <thead><tr><th>Date</th><th>From</th><th>To</th><th>By</th></tr></thead>
-      <tbody>
-        {% for h in permission.history.all %}
-        <tr>
-          <td>{{ h.created_at|date:"Y-m-d H:i" }}</td>
-          <td>{{ h.get_previous_status_display|default:h.previous_status }}</td>
-          <td>{{ h.get_new_status_display|default:h.new_status }}</td>
-          <td>{{ h.changed_by }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <p class="text-muted mb-0">No status changes recorded yet.</p>
-  {% endif %}
-</div>
-
-<!-- Flight Records -->
-<div class="card mt-3 p-4">
-  <div class="d-flex justify-content-between align-items-center mb-2">
-    <h2 class="h5 mb-0">Flight Records</h2>
-    <a href="{% url 'record-create' %}" class="btn btn-sm btn-primary">+ Add Record</a>
-  </div>
-  {% if permission.records.exists %}
-    <table class="table table-sm">
-      <thead><tr><th>Date</th><th>Pilot</th><th>Aircraft</th><th>Departure</th><th>Arrival</th></tr></thead>
-      <tbody>
-        {% for r in flight_records %}
-        <tr>
-          <td><a href="{% url 'record-detail' r.pk %}">{{ r.actual_date|date:"Y-m-d" }}</a></td>
-          <td>{{ r.pilot }}</td>
-          <td>{{ r.aircraft }}</td>
-          <td>{{ r.departure_time|time:"H:i" }}</td>
-          <td>{{ r.arrival_time|time:"H:i" }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <p class="text-muted mb-0">No flight records for this permission.</p>
-  {% endif %}
-</div>
+<div class="card p-4"><div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h3">{{ permission.permission_number }}</h1><div class="d-flex gap-2">
+  {% for action, label, css_class in status_actions %}<form method="post" action="{{ action }}/" style="display:inline">{% csrf_token %}<button class="btn {{ css_class }}">{{ label }}</button></form>{% endfor %}
+  <a href="javascript:history.back()" class="btn btn-outline-secondary">← {% translate "Back" %}</a>
+</div></div>
+<table class="table table-bordered"><tbody>
+  <tr><th class="w-25">{% translate "Status" %}</th><td><span class="badge bg-{% if permission.status == 'approved' %}success{% elif permission.status == 'denied' %}danger{% elif permission.status == 'completed' %}info{% else %}warning{% endif %}">{{ permission.get_status_display }}</span></td></tr>
+  <tr><th>{% translate "Operator" %}</th><td>{{ permission.operator }}</td></tr><tr><th>{% translate "Aircraft" %}</th><td>{{ permission.aircraft }}</td></tr><tr><th>{% translate "Cost center" %}</th><td>{{ permission.cost_center }}</td></tr><tr><th>{% translate "Purpose" %}</th><td>{{ permission.purpose }}</td></tr><tr><th>{% translate "Flight date" %}</th><td>{{ permission.flight_date|date:"Y-m-d" }}</td></tr><tr><th>{% translate "Location" %}</th><td>{{ permission.location }}</td></tr><tr><th>{% translate "Notes" %}</th><td>{{ permission.notes|default:"—" }}</td></tr>
+</tbody></table></div>
+<div class="card mt-3 p-4"><h2 class="h5 mb-3">{% translate "Status history" %}</h2>{% if permission.history.exists %}<table class="table table-sm"><thead><tr><th>{% translate "Date" %}</th><th>{% translate "From" %}</th><th>{% translate "To" %}</th><th>{% translate "By" %}</th></tr></thead><tbody>{% for h in permission.history.all %}<tr><td>{{ h.created_at|date:"Y-m-d H:i" }}</td><td>{{ h.get_previous_status_display|default:h.previous_status }}</td><td>{{ h.get_new_status_display|default:h.new_status }}</td><td>{{ h.changed_by }}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="text-muted mb-0">{% translate "No status changes recorded yet." %}</p>{% endif %}</div>
+<div class="card mt-3 p-4"><div class="d-flex justify-content-between align-items-center mb-2"><h2 class="h5 mb-0">{% translate "Flight records" %}</h2><a href="{% url 'record-create' %}" class="btn btn-sm btn-primary">+ {% translate "Add record" %}</a></div>{% if permission.records.exists %}<table class="table table-sm"><thead><tr><th>{% translate "Date" %}</th><th>{% translate "Pilot" %}</th><th>{% translate "Aircraft" %}</th><th>{% translate "Departure" %}</th><th>{% translate "Arrival" %}</th></tr></thead><tbody>{% for r in flight_records %}<tr><td><a href="{% url 'record-detail' r.pk %}">{{ r.actual_date|date:"Y-m-d" }}</a></td><td>{{ r.pilot }}</td><td>{{ r.aircraft }}</td><td>{{ r.departure_time|time:"H:i" }}</td><td>{{ r.arrival_time|time:"H:i" }}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="text-muted mb-0">{% translate "No flight records for this permission." %}</p>{% endif %}</div>
 {% endblock %}

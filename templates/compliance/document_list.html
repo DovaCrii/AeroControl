@@ -1,15 +1,17 @@
 {% extends "base.html" %}
+{% load i18n %}
 {% block title %}Documents - AeroControl{% endblock %}
 {% block content %}
+{% translate "Search title..." as document_search_placeholder %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h1 class="h3">Documents</h1>
-  <a class="btn btn-primary" href="{% url 'document-create' %}" hx-get="{% url 'document-create' %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal">+ New</a>
+  <h1 class="h3">{% translate "Documents" %}</h1>
+  <a class="btn btn-primary" href="{% url 'document-create' %}" hx-get="{% url 'document-create' %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal">+ {% translate "New" %}</a>
 </div>
 <form method="get" class="row g-2 mb-3">
-  <div class="col-md-4">{% include "generic/_search_input.html" with search_url=request.path search_placeholder="Search title..." %}<span id="search-spinner" class="htmx-indicator small text-muted">Searching…</span></div>
-  <div class="col-md-3"><select class="form-select" name="doc_type"><option value="">All document types</option>{% for item in document_types %}<option value="{{ item.pk }}" {% if request.GET.doc_type == item.pk|stringformat:'s' %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></div>
-  <div class="col-md-3"><select class="form-select" name="is_current_version"><option value="">All versions</option><option value="true" {% if request.GET.is_current_version == 'true' %}selected{% endif %}>Current</option><option value="false" {% if request.GET.is_current_version == 'false' %}selected{% endif %}>Previous</option></select></div>
-  <div class="col-auto"><button class="btn btn-outline-primary">Filter</button></div>
+  <div class="col-md-3">{% include "generic/_search_input.html" with search_url=request.path search_placeholder=document_search_placeholder %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
+  <div class="col-md-4"><select class="form-select" name="doc_type"><option value="">{% translate "All document types" %}</option>{% for item in document_types %}<option value="{{ item.pk }}" {% if request.GET.doc_type == item.pk|stringformat:'s' %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></div>
+  <div class="col-md-3"><select class="form-select" name="is_current_version"><option value="">{% translate "All versions" %}</option><option value="true" {% if request.GET.is_current_version == 'true' %}selected{% endif %}>{% translate "Current" %}</option><option value="false" {% if request.GET.is_current_version == 'false' %}selected{% endif %}>{% translate "Previous" %}</option></select></div>
+  <div class="col-md-2 d-grid"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
 </form>
-<div id="table-wrapper" class="card"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>Title</th><th>Type</th><th>Entity</th><th>Expiry</th><th>Current</th><th class="text-end">Actions</th></tr></thead><tbody id="table-body">{% include "compliance/_document_rows.html" %}</tbody></table></div>{% include "generic/_pagination.html" %}</div>
+<div id="table-wrapper" class="card"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>{% translate "Title" %}</th><th>{% translate "Type" %}</th><th>{% translate "Entity" %}</th><th>{% translate "Expiry" %}</th><th>{% translate "Current" %}</th><th class="text-end">{% translate "Actions" %}</th></tr></thead><tbody id="table-body">{% include "compliance/_document_rows.html" %}</tbody></table></div>{% include "generic/_pagination.html" %}</div>
 {% endblock %}

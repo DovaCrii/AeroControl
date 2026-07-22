@@ -1,8 +1,14 @@
 {% load crispy_forms_tags i18n %}
-<form method="post" action="{{ request.path }}" {% if form.is_multipart %}enctype="multipart/form-data"{% endif %}
+<form method="post" action="{{ request.path }}" enctype="multipart/form-data"
       hx-post="{{ request.path }}" hx-target="#modal-content" hx-swap="innerHTML">
   {% csrf_token %}
-  {{ form|crispy }}
+  {{ form.title|as_crispy_field }}
+  {{ form.doc_type|as_crispy_field }}
+  {{ form.entity_type|as_crispy_field }}
+  {% include "compliance/_document_object_field.html" %}
+  {{ form.file|as_crispy_field }}
+  {{ form.issue_date|as_crispy_field }}
+  {{ form.expiry_date|as_crispy_field }}
   <div class="d-flex gap-2 mt-3">
     <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{% translate "Cancel" %}</button>

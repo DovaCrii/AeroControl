@@ -1,18 +1,18 @@
 {% extends "base.html" %}
-{% load aero_tags %}
+{% load aero_tags i18n %}
 {% block title %}{{ title|default:'Records' }} - AeroControl{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h1 class="h3">{{ title|default:'Records' }}</h1>
+  <h1 class="h3">{% if title %}{{ title }}{% else %}{% translate "Records" %}{% endif %}</h1>
   <div class="d-flex gap-2">
-    <a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">Export CSV</a>
-    <a class="btn btn-primary" href="new/" hx-get="new/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal">+ New</a>
+    <a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>
+    <a class="btn btn-primary" href="new/" hx-get="new/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal">+ {% translate "New" %}</a>
   </div>
 </div>
 <form method="get" class="row g-2 mb-3">
-  <div class="col-md-5">{% include "generic/_search_input.html" with search_url=request.path %}<span id="search-spinner" class="htmx-indicator small text-muted">Searching…</span></div>
-  <div class="col-md-3"><select class="form-select" name="is_active"><option value="">All statuses</option><option value="active" {% if request.GET.is_active == 'active' %}selected{% endif %}>Active</option><option value="archived" {% if request.GET.is_active == 'archived' %}selected{% endif %}>Archived</option></select></div>
-  <div class="col-auto"><button class="btn btn-outline-primary">Search</button></div>
+  <div class="col-md-5">{% include "generic/_search_input.html" with search_url=request.path %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
+  <div class="col-md-3"><select class="form-select" name="is_active"><option value="">{% translate "All statuses" %}</option><option value="active" {% if request.GET.is_active == 'active' %}selected{% endif %}>{% translate "Active" %}</option><option value="archived" {% if request.GET.is_active == 'archived' %}selected{% endif %}>{% translate "Archived" %}</option></select></div>
+  <div class="col-auto"><button class="btn btn-outline-primary">{% translate "Search" %}</button></div>
 </form>
 
 <div id="table-wrapper" class="card">
@@ -21,11 +21,11 @@
       <thead>
         <tr>
           {% block list_header %}
-          <th>Name</th>
-          <th>Created</th>
-          <th>Status</th>
+          <th>{% translate "Name" %}</th>
+          <th>{% translate "Created" %}</th>
+          <th>{% translate "Status" %}</th>
           {% endblock %}
-          <th class="text-end">Actions</th>
+          <th class="text-end">{% translate "Actions" %}</th>
         </tr>
       </thead>
       <tbody id="table-body">{% include "generic/_table_body.html" %}</tbody>
