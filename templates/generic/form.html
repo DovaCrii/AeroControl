@@ -1,18 +1,18 @@
 {% extends "base.html" %}
-{% load crispy_forms_tags %}
-{% block title %}{{ title|default:'Form' }} - AeroOps Desk{% endblock %}
+{% load crispy_forms_tags i18n %}
+{% block title %}{{ title|default:'Form' }} - AeroControl{% endblock %}
 {% block content %}
 <div class="card p-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3">{{ title|default:view.object|default:'New record' }}</h1>
+    <h1 class="h3">{% if title %}{{ title }}{% elif view.object %}{{ view.object }}{% else %}{% translate "New record" %}{% endif %}</h1>
   </div>
 
   <form method="post" {% if form.is_multipart %}enctype="multipart/form-data"{% endif %}>
     {% csrf_token %}
     {{ form|crispy }}
     <div class="d-flex gap-2 mt-3">
-      <button type="submit" class="btn btn-primary">Save</button>
-      <a href="javascript:history.back()" class="btn btn-outline-secondary">Cancel</a>
+      <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+      <a href="javascript:history.back()" class="btn btn-outline-secondary">{% translate "Cancel" %}</a>
     </div>
   </form>
 </div>

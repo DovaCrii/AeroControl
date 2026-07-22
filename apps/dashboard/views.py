@@ -1,4 +1,3 @@
-import json
 from datetime import date, timedelta
 
 from django.contrib.auth.decorators import login_required
@@ -36,9 +35,7 @@ def dashboard(request):
 
     # --- Chart: Aircraft by status ---
     aircraft_by_status = list(
-        Aircraft.objects.values("status")
-        .annotate(count=Count("id"))
-        .order_by("status")
+        Aircraft.objects.values("status").annotate(count=Count("id")).order_by("status")
     )
 
     # --- Chart: Permissions by status ---
@@ -65,8 +62,8 @@ def dashboard(request):
     # --- Chart: Monthly flight records (last 6 months) ---
     six_months_ago = date.today() - timedelta(days=180)
     monthly_flights = list(
-        FlightRecord.objects.filter(created_at__gte=six_months_ago)
-        .annotate(month=TruncMonth("created_at"))
+        FlightRecord.objects.filter(is_active=True, actual_date__gte=six_months_ago)
+        .annotate(month=TruncMonth("actual_date"))
         .values("month")
         .annotate(count=Count("id"))
         .order_by("month")
@@ -88,6 +85,6 @@ def dashboard(request):
         "alert_count": alert_count,
         "expirations": expirations,
         "stages": stages,
-        "chart_data": json.dumps(chart_data, default=str),
+        "chart_data": chart_data,
     }
     return render(request, "dashboard/index.html", context)

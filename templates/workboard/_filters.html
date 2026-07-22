@@ -1,10 +1,11 @@
+{% load i18n %}
 <select class="form-select form-select-sm kanban-filter" name="operator"
         hx-get="/workboard/_board/"
         hx-target="#kanban-board"
         hx-push-url="true"
         hx-include="[name='priority'],[name='board']"
         hx-trigger="change">
-  <option value="">All operators</option>
+  <option value="">{% translate "All operators" %}</option>
   {% for op in operators %}
     <option value="{{ op.id }}" {% if request.GET.operator == op.id|stringformat:'s' %}selected{% endif %}>{{ op.full_name }}</option>
   {% endfor %}
@@ -15,9 +16,18 @@
         hx-push-url="true"
         hx-include="[name='operator'],[name='board']"
         hx-trigger="change">
-  <option value="">All priorities</option>
-  <option value="low" {% if request.GET.priority == 'low' %}selected{% endif %}>Low</option>
-  <option value="medium" {% if request.GET.priority == 'medium' %}selected{% endif %}>Medium</option>
-  <option value="high" {% if request.GET.priority == 'high' %}selected{% endif %}>High</option>
-  <option value="critical" {% if request.GET.priority == 'critical' %}selected{% endif %}>Critical</option>
+  <option value="">{% translate "All priorities" %}</option>
+  <option value="low" {% if request.GET.priority == 'low' %}selected{% endif %}>{% translate "Low" %}</option>
+  <option value="medium" {% if request.GET.priority == 'medium' %}selected{% endif %}>{% translate "Medium" %}</option>
+  <option value="high" {% if request.GET.priority == 'high' %}selected{% endif %}>{% translate "High" %}</option>
+  <option value="critical" {% if request.GET.priority == 'critical' %}selected{% endif %}>{% translate "Critical" %}</option>
 </select>
+<select class="form-select form-select-sm kanban-filter" name="state" hx-get="/workboard/_board/" hx-target="#kanban-board" hx-push-url="true" hx-include="[name='operator'],[name='priority'],[name='label'],[name='q'],[name='board']" hx-trigger="change">
+  <option value="">{% translate "All states" %}</option>
+  {% for value,label in states %}<option value="{{ value }}" {% if request.GET.state == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+</select>
+<select class="form-select form-select-sm kanban-filter" name="label" hx-get="/workboard/_board/" hx-target="#kanban-board" hx-push-url="true" hx-include="[name='operator'],[name='priority'],[name='state'],[name='q'],[name='board']" hx-trigger="change">
+  <option value="">{% translate "All labels" %}</option>
+  {% for label in labels %}<option value="{{ label.id }}" {% if request.GET.label == label.id|stringformat:'s' %}selected{% endif %}>{{ label.name }}</option>{% endfor %}
+</select>
+<input class="form-control form-control-sm kanban-filter" name="q" value="{{ request.GET.q }}" placeholder="{% translate 'Search tasks' %}" hx-get="/workboard/_board/" hx-target="#kanban-board" hx-push-url="true" hx-include="[name='operator'],[name='priority'],[name='state'],[name='label'],[name='board']" hx-trigger="keyup changed delay:400ms">

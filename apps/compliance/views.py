@@ -2,42 +2,61 @@ from pathlib import Path
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
-from django.http import FileResponse, Http404
-from django.shortcuts import get_object_or_404, redirect
+from django.http import FileResponse, Http404, HttpResponseBadRequest
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.views.generic import CreateView, DeleteView, DetailView, FormView, ListView, View
+from django.utils.translation import gettext as _
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    FormView,
+    ListView,
+    View,
+)
 
-from apps.core.views import CsvExportMixin, HtmxFormMixin, SearchMixin
+from apps.core.views import (
+    CsvExportMixin,
+    HtmxFormMixin,
+    ModelPermissionRequiredMixin,
+    ModelViewPermissionRequiredMixin,
+    SearchMixin,
+)
 from .forms import AlertForm, AlertRuleForm, DocumentForm, DocumentTypeForm
 from .models import Alert, AlertRule, Document, DocumentType, document_upload_path
 
 
 def save_uploaded_file(document, uploaded):
     relative_path = document_upload_path(document, uploaded.name)
-    absolute_path = Path(settings.DOCUMENTS_ROOT) / relative_path
+    root = Path(settings.DOCUMENTS_ROOT).resolve()
+    absolute_path = (root / relative_path).resolve()
+    if root not in absolute_path.parents:
+        raise ValueError("Document path escaped configured storage root")
     absolute_path.parent.mkdir(parents=True, exist_ok=True)
-    with absolute_path.open("wb+") as destination:
+    temporary_path = absolute_path.with_name(f".{absolute_path.name}.part")
+    with temporary_path.open("wb+") as destination:
         for chunk in uploaded.chunks():
             destination.write(chunk)
+    temporary_path.replace(absolute_path)
     document.file_path = relative_path
     document.save(update_fields=["file_path", "updated_at"])
 
 
-class ComplianceList(CsvExportMixin, SearchMixin, LoginRequiredMixin, ListView):
+class ComplianceList(CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListView):
     template_name = "generic/list.html"
     context_object_name = "objects"
     paginate_by = 25
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = self.model._meta.verbose_name_plural.title()
+        context["title"] = _(self.model._meta.verbose_name_plural.title())
         return context
 
 
-class ComplianceCreate(HtmxFormMixin, LoginRequiredMixin, CreateView):
+class ComplianceCreate(HtmxFormMixin, ModelPermissionRequiredMixin, CreateView):
+    permission_action = "add"
     template_name = "generic/form.html"
 
     def get_success_url(self):
@@ -45,7 +64,9 @@ class ComplianceCreate(HtmxFormMixin, LoginRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = f"New {self.model._meta.verbose_name.title()}"
+        context["title"] = _("New %(record)s") % {
+            "record": _(self.model._meta.verbose_name.title())
+        }
         return context
 
 
@@ -60,7 +81,9 @@ class DocumentList(ComplianceList):
         if self.request.GET.get("doc_type"):
             queryset = queryset.filter(doc_type_id=self.request.GET["doc_type"])
         if self.request.GET.get("is_current_version") in ("true", "false"):
-            queryset = queryset.filter(is_current_version=self.request.GET["is_current_version"] == "true")
+            queryset = queryset.filter(
+                is_current_version=self.request.GET["is_current_version"] == "true"
+            )
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -73,6 +96,7 @@ class DocumentCreate(ComplianceCreate):
     model = Document
     form_class = DocumentForm
     template_name = "compliance/document_form.html"
+    htmx_template_name = "compliance/_document_form_content.html"
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -80,20 +104,43 @@ class DocumentCreate(ComplianceCreate):
         return response
 
 
-class DocumentDetail(LoginRequiredMixin, DetailView):
+class DocumentEntityOptions(ModelPermissionRequiredMixin, View):
+    model = Document
+    permission_action = "add"
+
+    def get(self, request):
+        try:
+            content_type_id = int(request.GET.get("entity_type", ""))
+        except (TypeError, ValueError):
+            return HttpResponseBadRequest()
+        form = DocumentForm(data={"entity_type": content_type_id})
+        if not form.fields["entity_type"].queryset.filter(pk=content_type_id).exists():
+            return HttpResponseBadRequest()
+        return render(request, "compliance/_document_object_field.html", {"form": form})
+
+
+class DocumentDetail(ModelViewPermissionRequiredMixin, DetailView):
     model = Document
     template_name = "compliance/document_detail.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["versions"] = Document.objects.filter(
-            content_type=self.object.content_type, object_id=self.object.object_id,
-            is_current_version=False,
-        ).exclude(pk=self.object.pk).order_by("-created_at")
+        context["versions"] = (
+            Document.objects.filter(
+                content_type=self.object.content_type,
+                object_id=self.object.object_id,
+                is_current_version=False,
+            )
+            .exclude(pk=self.object.pk)
+            .order_by("-created_at")
+        )
         return context
 
 
-class DocumentDownload(LoginRequiredMixin, View):
+class DocumentDownload(ModelPermissionRequiredMixin, View):
+    model = Document
+    permission_action = "view"
+
     def get(self, request, pk):
         document = get_object_or_404(Document, pk=pk, is_active=True)
         root = Path(settings.DOCUMENTS_ROOT).resolve()
@@ -103,7 +150,9 @@ class DocumentDownload(LoginRequiredMixin, View):
         return FileResponse(path.open("rb"), as_attachment=True, filename=path.name)
 
 
-class DocumentReplace(LoginRequiredMixin, FormView):
+class DocumentReplace(ModelPermissionRequiredMixin, FormView):
+    model = Document
+    permission_action = "change"
     form_class = DocumentForm
     template_name = "compliance/document_replace.html"
 
@@ -112,9 +161,14 @@ class DocumentReplace(LoginRequiredMixin, FormView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_initial(self):
-        return {"title": self.document.title, "doc_type": self.document.doc_type,
-                "entity_type": self.document.content_type, "object_id": self.document.object_id,
-                "issue_date": self.document.issue_date, "expiry_date": self.document.expiry_date}
+        return {
+            "title": self.document.title,
+            "doc_type": self.document.doc_type,
+            "entity_type": self.document.content_type,
+            "object_id": self.document.object_id,
+            "issue_date": self.document.issue_date,
+            "expiry_date": self.document.expiry_date,
+        }
 
     def form_valid(self, form):
         with transaction.atomic():
@@ -135,8 +189,9 @@ class DocumentReplace(LoginRequiredMixin, FormView):
         return context
 
 
-class DocumentDelete(LoginRequiredMixin, DeleteView):
+class DocumentDelete(ModelPermissionRequiredMixin, DeleteView):
     model = Document
+    permission_action = "delete"
     template_name = "generic/confirm_delete.html"
     success_url = "/compliance/document/"
 
@@ -158,16 +213,23 @@ class AlertList(ComplianceList):
         if resolved in ("true", "false"):
             queryset = queryset.filter(is_resolved=resolved == "true")
         if self.request.GET.get("entity_type"):
-            queryset = queryset.filter(content_type__model=self.request.GET["entity_type"])
+            queryset = queryset.filter(
+                content_type__model=self.request.GET["entity_type"]
+            )
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["entity_types"] = Alert.objects.values_list("content_type__model", flat=True).distinct()
+        context["entity_types"] = Alert.objects.values_list(
+            "content_type__model", flat=True
+        ).distinct()
         return context
 
 
-class AlertResolve(LoginRequiredMixin, View):
+class AlertResolve(ModelPermissionRequiredMixin, View):
+    model = Alert
+    permission_action = "change"
+
     def post(self, request, pk):
         alert = get_object_or_404(Alert, pk=pk, is_active=True)
         alert.is_resolved = True

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Import cost centers" %}{% endblock %}
+{% block content %}
+<main class="container-fluid py-4">
+  <div class="mb-4"><p class="eyebrow">{% translate "Registry" %}</p><h1 class="h3">{% if entity == "aircraft" %}{% translate "Import aircraft" %}{% elif entity == "operator" %}{% translate "Import operators" %}{% else %}{% translate "Import cost centers" %}{% endif %}</h1><p class="text-muted">{% if entity == "aircraft" %}{% translate "CSV columns: registration,type,model,manufacturer,year,cost_center,status." %}{% elif entity == "operator" %}{% translate "CSV columns: employee_id,full_name,email,phone,cost_center." %}{% else %}{% translate "CSV columns: code,name. Existing records are never overwritten." %}{% endif %}</p></div>
+  {% if errors %}<div class="alert alert-danger"><ul class="mb-0">{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}
+  {% if preview and rows and not errors %}<div class="alert alert-info">{% blocktranslate with count=rows|length %}{{ count }} rows are valid. Select the same file again and apply to create them.{% endblocktranslate %}</div><div class="table-responsive mb-3"><table class="table table-sm"><thead><tr><th>code</th><th>name</th></tr></thead><tbody>{% for row in rows %}<tr><td>{{ row.code }}</td><td>{{ row.name }}</td></tr>{% endfor %}</tbody></table></div>{% endif %}
+  <form method="post" enctype="multipart/form-data" class="card p-4" novalidate>{% csrf_token %}<label class="form-label" for="file">{% translate "CSV file" %}</label><input class="form-control mb-3" id="file" name="file" type="file" accept=".csv,text/csv" required><div class="d-flex gap-2"><button class="btn btn-outline-primary" name="preview" value="1" type="submit">{% translate "Preview" %}</button>{% if preview and rows and not errors %}<button class="btn btn-primary" name="apply" value="1" type="submit">{% translate "Apply import" %}</button>{% endif %}<a class="btn btn-link" href="?template=1">{% translate "Download template" %}</a></div></form>
+</main>
+{% endblock %}

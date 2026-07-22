@@ -23,7 +23,7 @@ tags: [aero-ops, seguimiento]
 - Documentación Obsidian-friendly en docs/
 
 ### Decisiones
-- **Nombre**: AeroOps Desk (repo: aero-ops-desk)
+- **Nombre**: AeroControl (repo: aero-ops-desk)
 - **Stack**: Django 6.0 + Bootstrap 5 (monolito inicial)
 - **Licencia**: MIT
 - **SDD**: OpenSpec, modo automático
@@ -33,3 +33,25 @@ tags: [aero-ops, seguimiento]
 - Cargar datos reales (CC, aeronaves, operadores)
 - Probar document upload
 - Revisar y ajustar templates si es necesario
+
+## Sesión actual — 22 Julio 2026
+
+### Avances
+- Autenticación por token y contrato OpenAPI v1 publicados en el PR #1.
+- Preflight de migraciones SQLite ejecutado correctamente.
+- Backup SQLite de ensayo creado y verificado mediante manifiesto y checksum.
+- Logs y respaldos runtime excluidos del repositorio.
+
+### Decisión de persistencia
+- SQLite continúa siendo la base local recomendada mientras el proyecto tenga un
+  volumen moderado y un único entorno de trabajo.
+- PostgreSQL se incorporará después, cuando exista más información real o antes
+  del primer despliegue multiusuario. La migración se realizará mediante
+  migraciones Django y backup/restore, sin copiar archivos internos de SQLite.
+- No se expondrá la base SQLite local a Internet ni se reutilizarán credenciales
+  locales en producción.
+
+### Siguiente bloque
+- Validar el archivo oficial de Capítulo 1 con `chapter1_import`.
+- Aplicar la carga sólo después de revisar el informe de errores y duplicados.
+- Mantener el ensayo real de PostgreSQL pendiente hasta disponer de servidor.

@@ -1,3 +1,4 @@
+{% load i18n %}
 <div class="kanban-column" data-stage-id="{{ stage.id }}">
   <div class="kanban-column-header" style="border-top-color: {{ stage.color|default:'#2EC4B6' }};">
     <span>{{ stage.name }}</span>
@@ -7,13 +8,13 @@
     {% for task in tasks %}
       {% include "workboard/_card.html" %}
     {% empty %}
-      <div class="kanban-empty">No tasks</div>
+      <div class="kanban-empty">{% translate "No tasks" %}</div>
     {% endfor %}
   </div>
   <div class="kanban-footer">
     <button class="btn btn-sm btn-outline-secondary w-100 kanban-add-btn"
             hx-get="{% url 'task-quick' %}?stage_id={{ stage.id }}{% if filter_params.board %}&amp;board={{ filter_params.board|urlencode }}{% endif %}{% if filter_params.operator %}&amp;operator={{ filter_params.operator|urlencode }}{% endif %}{% if filter_params.priority %}&amp;priority={{ filter_params.priority|urlencode }}{% endif %}"
             hx-target="closest .kanban-column .kanban-footer"
-            hx-swap="innerHTML">+ Add</button>
+            hx-swap="innerHTML">+ {% translate "Add" %}</button>
   </div>
 </div>

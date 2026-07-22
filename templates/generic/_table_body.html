@@ -1,13 +1,14 @@
+{% load i18n %}
 {% for object in objects %}
 <tr>
   <td><a href="{{ object.pk }}/">{{ object }}</a></td>
   <td>{{ object.created_at|date:'Y-m-d' }}</td>
-  <td>{% if object.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-secondary">Archived</span>{% endif %}</td>
+  <td>{% if object.is_active %}<span class="badge bg-success">{% translate "Active" %}</span>{% else %}<span class="badge bg-secondary">{% translate "Archived" %}</span>{% endif %}</td>
   <td class="text-end">
-    <a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">View</a>
-    <a href="{{ object.pk }}/edit/" class="btn btn-sm btn-outline-primary">Edit</a>
+    <a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">{% translate "View" %}</a>
+    <a href="{{ object.pk }}/edit/" hx-get="{{ object.pk }}/edit/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">{% translate "Edit" %}</a>
   </td>
 </tr>
 {% empty %}
-<tr><td colspan="99" class="text-center text-muted py-4">No records found.</td></tr>
+<tr><td colspan="99" class="text-center text-muted py-4">{% translate "No records found." %}</td></tr>
 {% endfor %}

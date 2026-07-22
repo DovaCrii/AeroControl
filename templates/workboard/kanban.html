@@ -1,13 +1,20 @@
 {% extends "base.html" %}
-{% load static %}
-{% block title %}Kanban Board - AeroOps Desk{% endblock %}
+{% load static i18n %}
+{% block title %}{% translate "Kanban board" %} - AeroControl{% endblock %}
 {% block content %}
 <div id="kanban-page">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">Kanban Board</h1>
-    <div class="d-flex gap-2 align-items-center">
+    <div><p class="eyebrow mb-1">{% translate "Workboard" %}</p><h1 class="h3 mb-0">{% translate "Kanban board" %}</h1></div>
+    <div class="d-flex gap-2 align-items-center flex-wrap justify-content-end">
       {% include "workboard/_board_selector.html" %}
       {% include "workboard/_filters.html" %}
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'workboard-list' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}">{% translate "List view" %}</a>
+      <a class="btn btn-sm btn-primary" href="{% url 'task-create' %}{% if board %}?board={{ board.id }}{% endif %}">+ {% translate "New task" %}</a>
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'board-list' %}">{% translate "Manage boards" %}</a>
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'label-list' %}">{% translate "Manage labels" %}</a>
+      <a class="btn btn-sm btn-primary" href="{% url 'board-create' %}">+ {% translate "New board" %}</a>
+      {% if board %}<a class="btn btn-sm btn-outline-primary" href="{% url 'stage-create' %}?board={{ board.id }}">+ {% translate "New stage" %}</a>{% endif %}
+      {% if board %}<form method="post" action="{% url 'board-archive' board.id %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-danger" type="submit">{% translate "Archive board" %}</button></form>{% endif %}
     </div>
   </div>
 
@@ -17,20 +24,24 @@
   </div>
   {% else %}
   <div class="card p-5 text-center text-muted">
-    <p>No board configured.</p>
-    <a href="{% url 'board-create' %}" class="btn btn-primary">Create Board</a>
+    <p>{% translate "No board configured." %}</p>
+    <div class="d-flex gap-2 justify-content-center flex-wrap">
+      <a href="{% url 'board-create' %}" class="btn btn-primary">{% translate "Create board" %}</a>
+      <a href="{% url 'board-list' %}" class="btn btn-outline-secondary">{% translate "Manage boards" %}</a>
+    </div>
   </div>
   {% endif %}
 </div>
+<div class="offcanvas offcanvas-end" tabindex="-1" id="task-detail" aria-labelledby="task-detail-title"><div class="offcanvas-header"><h2 id="task-detail-title" class="h5">{% translate "Task details" %}</h2><button class="btn-close" data-bs-dismiss="offcanvas" aria-label="{% translate 'Close' %}"></button></div><div class="offcanvas-body" id="task-detail-content"></div></div>
 {% endblock %}
 
 {% block extrascripts %}
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.x/dist/sortable.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.6/Sortable.min.js" integrity="sha384-HZZ/fukV+9G8gwTNjN7zQDG0Sp7MsZy5DDN6VfY3Be7V9dvQpEpR2jF2HlyFUUjU" crossorigin="anonymous"></script>
 <script>
 (function() {
   function initSortables() {
     var params = new URLSearchParams(window.location.search);
-    if (params.get('operator') || params.get('priority')) return;
+    if (params.get('operator') || params.get('priority') || params.get('state') || params.get('label') || params.get('q')) return;
     var board = document.getElementById('kanban-board');
     if (!board) return;
     document.querySelectorAll('#kanban-board .kanban-column-body').forEach(function(el) {
