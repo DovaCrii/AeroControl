@@ -43,6 +43,20 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
 - [x] Añadir navegación lateral colapsable en pantallas pequeñas, con control
   de teclado y foco gestionado.
 
+## Bloque Kanban operativo — Notion híbrido
+
+- [x] Añadir tipos de etapa operativos y conservar etapas antiguas como
+  personalizadas.
+- [x] Etiquetas configurables por tablero con color, orden y archivado lógico.
+- [x] Checklist ordenado por tarea y avance calculado automáticamente.
+- [x] Panel lateral para consultar/editar tareas y alta rápida existente por
+  columna.
+- [x] Vista de lista con búsqueda, filtros por estado/etiqueta/prioridad/
+  responsable y ordenación; filtros persistidos en URL.
+- [x] Acciones de archivado reversible y drag-and-drop desactivado cuando hay
+  filtros incompatibles.
+- [x] Regresión automatizada para detalle, checklist, avance y filtros.
+
 ## Fase 4 — Importación, búsquedas y reportes (P1)
 
 - [ ] Importación Excel validada, con vista previa, reporte de errores y

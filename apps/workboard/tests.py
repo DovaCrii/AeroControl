@@ -4,7 +4,7 @@ from django.test import Client
 from django.urls import reverse
 
 from apps.registry.models import CostCenter, Operator
-from .models import KanbanBoard, KanbanStage, KanbanTask
+from .models import KanbanBoard, KanbanChecklistItem, KanbanLabel, KanbanStage, KanbanTask
 
 
 @pytest.fixture
@@ -13,7 +13,7 @@ def user(db):
     user.user_permissions.add(
         *Permission.objects.filter(
             content_type__app_label="workboard",
-            content_type__model__in=["kanbantask", "kanbanstage", "kanbanboard"],
+            content_type__model__in=["kanbantask", "kanbanstage", "kanbanboard", "kanbanchecklistitem", "kanbanlabel"],
             codename__in=[
                 "add_kanbantask",
                 "change_kanbantask",
@@ -21,6 +21,10 @@ def user(db):
                 "add_kanbanstage",
                 "add_kanbanboard",
                 "change_kanbanboard",
+                "add_kanbanchecklistitem",
+                "change_kanbanchecklistitem",
+                "add_kanbanlabel",
+                "view_kanbanlabel",
             ],
         )
     )
@@ -369,3 +373,26 @@ def test_workboard_urls_keep_kanban_and_task_list_distinct(auth_client):
     assert reverse("task-list") == "/workboard/tasks/"
     assert auth_client.get("/workboard/").status_code == 200
     assert auth_client.get("/workboard/tasks/").status_code == 200
+
+
+@pytest.mark.django_db
+def test_task_detail_checklist_progress_and_list_filters(auth_client, board):
+    board_obj, todo, _ = board
+    label = KanbanLabel.objects.create(board=board_obj, name="Safety", color="#EF4444")
+    task = KanbanTask.objects.create(board=board_obj, stage=todo, title="Inspect")
+    task.labels.add(label)
+    first = KanbanChecklistItem.objects.create(task=task, title="Review log", order=0)
+    KanbanChecklistItem.objects.create(task=task, title="Sign off", order=1, is_completed=True)
+
+    detail = auth_client.get(reverse("task-detail", args=[task.pk]))
+    assert detail.status_code == 200
+    assert "50%" in detail.content.decode()
+
+    response = auth_client.post(reverse("checklist-toggle", args=[first.pk]))
+    assert response.status_code == 200
+    task.refresh_from_db()
+    assert task.checklist_progress == 100
+
+    listing = auth_client.get(reverse("workboard-list"), {"q": "Inspect", "label": label.pk})
+    assert listing.status_code == 200
+    assert "Inspect" in listing.content.decode()
