@@ -32,6 +32,15 @@ class RequestMetricsMiddleware:
             raise
         duration_ms = round((time.perf_counter() - started) * 1000, 2)
         response["X-Request-ID"] = request_id
+        from django.conf import settings
+        if getattr(settings, "CSP_REPORT_ONLY", True):
+            response["Content-Security-Policy-Report-Only"] = (
+                "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; "
+                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+                "img-src 'self' data:; font-src 'self' https://cdn.jsdelivr.net; "
+                "object-src 'none'; base-uri 'self'; frame-ancestors 'none'; "
+                "form-action 'self'"
+            )
         if (
             request.user.is_authenticated
             and request.method in {"POST", "PUT", "PATCH", "DELETE"}
