@@ -5,6 +5,7 @@ urlpatterns = []
 urlpatterns += [
     path("costcenter/import/", views.CostCenterImportView.as_view(), name="costcenter-import"),
     path("costcenter/import/<uuid:pk>/revert/", views.CostCenterImportRevertView.as_view(), name="costcenter-import-revert"),
+    path("aircraft/import/", views.AircraftImportView.as_view(), name="aircraft-import"),
 ]
 for name in ("CostCenter", "Aircraft", "Operator", "Assignment", "Qualification"):
     lower = name.lower()

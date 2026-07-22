@@ -153,9 +153,52 @@ class CostCenterImportRevertView(ModelPermissionRequiredMixin, View):
     permission_action = "change"
 
     def post(self, request, pk):
-        batch = get_object_or_404(ImportBatch, pk=pk, entity="registry.costcenter", status="applied")
-        CostCenter.objects.filter(pk__in=batch.created_ids).update(is_active=False)
+        batch = get_object_or_404(ImportBatch, pk=pk, entity__in=["registry.costcenter", "registry.aircraft"], status="applied")
+        model = CostCenter if batch.entity == "registry.costcenter" else Aircraft
+        model.objects.filter(pk__in=batch.created_ids).update(is_active=False)
         batch.status = "reverted"
         batch.reverted_at = timezone.now()
         batch.save(update_fields=["status", "reverted_at", "updated_at"])
         return HttpResponse(status=204)
+
+
+class AircraftImportView(CostCenterImportView):
+    model = Aircraft
+
+    def get(self, request):
+        return render(request, "registry/costcenter_import.html", {"rows": [], "errors": [], "entity": "aircraft"})
+
+    @staticmethod
+    def parse(upload):
+        if not upload or upload.size > 2 * 1024 * 1024:
+            return [], ["El archivo es obligatorio y no puede superar 2 MB."]
+        try:
+            reader = csv.DictReader(io.StringIO(upload.read().decode("utf-8-sig")))
+        except (UnicodeDecodeError, csv.Error):
+            return [], ["El archivo debe ser CSV UTF-8 válido."]
+        expected = ["registration", "type", "model", "manufacturer", "year", "cost_center", "status"]
+        if reader.fieldnames != expected:
+            return [], ["Columnas requeridas: " + ",".join(expected)]
+        rows, errors, seen = [], [], set()
+        for line, raw in enumerate(reader, start=2):
+            registration = raw.get("registration", "").strip()
+            center = CostCenter.objects.filter(code=raw.get("cost_center", "").strip(), is_active=True).first()
+            if not registration or registration in seen or Aircraft.objects.filter(registration=registration).exists():
+                errors.append(f"Línea {line}: matrícula vacía o duplicada.")
+            elif not center:
+                errors.append(f"Línea {line}: centro de costo inexistente.")
+            else:
+                seen.add(registration)
+                rows.append({"registration": registration, "type": raw["type"].strip(), "model": raw["model"].strip(), "manufacturer": raw["manufacturer"].strip(), "year": int(raw["year"]) if raw["year"].strip().isdigit() else None, "cost_center_id": str(center.pk), "status": raw["status"].strip() or "active"})
+        return rows, errors
+
+    def post(self, request):
+        rows, errors = self.parse(request.FILES.get("file"))
+        if errors or request.POST.get("apply") != "1":
+            return render(request, "registry/costcenter_import.html", {"rows": rows, "errors": errors, "preview": True, "entity": "aircraft"})
+        with transaction.atomic():
+            batch = ImportBatch.objects.create(actor=request.user, entity="registry.aircraft", rows=rows)
+            created = [Aircraft.objects.create(**row) for row in rows]
+            batch.created_ids = [str(obj.pk) for obj in created]
+            batch.save(update_fields=["created_ids", "updated_at"])
+        return redirect("aircraft-list")

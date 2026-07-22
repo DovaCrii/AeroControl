@@ -136,7 +136,8 @@ and can be reviewed from Django Admin.
 Authenticated users can search permitted operational records from /search/.
 The search never returns entities for which the user lacks a view permission.
 
-Cost centers support a validated CSV import at /registry/costcenter/import/.
+Cost centers support a validated CSV import at /registry/costcenter/import/ and
+aircraft at /registry/aircraft/import/.
 The format is code,name; existing codes are rejected, previews show row errors,
 and applied batches can be reverted logically from the batch action.
 
