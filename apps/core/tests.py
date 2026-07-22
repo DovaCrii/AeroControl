@@ -412,6 +412,10 @@ class TestStaticFiles:
         assert payload["version"] == "chapter1-v1"
         assert "aircraft" in payload["entities"]
 
+    def test_chapter1_import_requires_source_files(self):
+        with pytest.raises(CommandError, match="source"):
+            call_command("chapter1_import")
+
     def test_css_is_served(self):
         static_path = finders.find("css/app.css")
 

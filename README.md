@@ -187,6 +187,9 @@ Run validate_operational_data before imports or release rehearsals to detect
 inactive references and invalid assignment date ranges without changing data.
 The canonical Chapter 1 mapping is documented in docs/chapter1-import.md and
 available through manage.py chapter1_mapping --json.
+When the official CSV sources are available, validate/apply them with
+manage.py chapter1_import --cost-centers <file> --aircraft <file>
+--operators <file> [--apply].
 
 - All operational pages require authentication and model-level view/change
   permissions; CSV export uses the same authorization boundary.

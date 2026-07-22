@@ -67,7 +67,8 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
   y centro de costo antes de aplicar el lote.
 - [x] Definir mapping canónico versionado chapter1-v1 para centros de costo,
   aeronaves y operadores.
-- [ ] Ejecutar carga normalizada del Capítulo 1 desde la fuente oficial.
+- [x] Preparar cargador transaccional chapter1_import con validación de esquema,
+  duplicados y referencias; queda pendiente ejecutarlo con la fuente oficial.
 - [x] Búsqueda global con permisos de lectura por dominio y enlaces directos a
   los módulos operativos.
 - [x] Reporte CSV operativo de tareas Kanban reutilizando filtros y columnas de
