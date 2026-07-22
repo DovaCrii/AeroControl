@@ -159,6 +159,25 @@ body {
   border-radius: 10px;
 }
 
+.skip-link {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 2000;
+  padding: 0.55rem 0.8rem;
+  color: #fff;
+  background: var(--navy);
+  border-radius: 0.35rem;
+  transform: translateY(-150%);
+}
+
+.skip-link:focus { transform: translateY(0); }
+
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 3px solid var(--turquoise);
+  outline-offset: 2px;
+}
+
 .onboarding-card {
   border: 1px solid rgba(46, 196, 182, 0.3);
   background: linear-gradient(135deg, rgba(46, 196, 182, 0.08), transparent 55%);
@@ -357,21 +376,36 @@ body {
 /* ── Responsive ───────────────────────────────────── */
 @media (max-width: 768px) {
   .sidebar {
-    width: 56px;
+    position: fixed;
+    top: 56px;
+    bottom: 0;
+    left: 0;
+    z-index: 1040;
+    width: min(86vw, var(--sidebar-width));
+    overflow-y: auto;
+    transform: translateX(-105%);
+    transition: transform 0.2s ease;
   }
-  .sidebar a {
-    font-size: 0;
-    padding: 0.6rem;
-    text-align: center;
-  }
-  .sidebar a::before {
-    font-size: 1.2rem;
-  }
-  .sidebar-label {
-    display: none;
-  }
-  main {
-    padding: 0.8rem !important;
+  .sidebar.is-open { transform: translateX(0); }
+  .sidebar-toggle { display: inline-flex; align-items: center; justify-content: center; }
+  .brand-subtitle { display: none; }
+  .navbar > .d-flex { margin-left: auto; }
+  .navbar > .d-flex > .opacity-75 { display: none; }
+  main { min-width: 0; }
+  .table-responsive { border-radius: 0.5rem; }
+  .modal-dialog { margin: 0.5rem; }
+  .modal-body { max-height: calc(100vh - 10rem); overflow-y: auto; }
+}
+
+@media (min-width: 769px) {
+  .sidebar-toggle { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
   }
 }
 

@@ -17,7 +17,12 @@
   </script>
 </head>
 <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+  <a class="skip-link" href="#main-content">{% translate "Skip to main content" %}</a>
   <nav class="navbar navbar-dark navy px-3">
+    <button class="btn btn-sm btn-outline-light sidebar-toggle d-md-none" type="button" id="sidebar-toggle" aria-controls="sidebar" aria-expanded="false">
+      <span class="visually-hidden">{% translate "Toggle navigation" %}</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2"/></svg>
+    </button>
     <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="{% url 'dashboard' %}">
       <img class="brand-mark" src="{% static 'img/aerocontrol-mark.svg' %}" alt="" aria-hidden="true">
       <span class="brand-lockup">AeroControl<span class="brand-subtitle">{% translate "Air Operations Control" %}</span></span>
@@ -39,7 +44,7 @@
   </nav>
 
   <div class="d-flex">
-    <aside class="sidebar p-3 d-flex flex-column" id="sidebar" aria-label="Main navigation">
+    <aside class="sidebar p-3 d-flex flex-column" id="sidebar" aria-label="{% translate 'Main navigation' %}">
       {% with request.resolver_match.url_name as url_name %}
       <a href="{% url 'dashboard' %}" class="nav-item nav-overview {% if url_name == 'dashboard' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>{% translate "Dashboard" %}</a>
 
@@ -68,7 +73,7 @@
       {% endwith %}
     </aside>
 
-    <main class="container-fluid p-4">
+    <main class="container-fluid p-4" id="main-content" tabindex="-1">
       {% if messages %}
       <div class="mb-3" aria-live="polite">
         {% for message in messages %}<div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="status">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% translate 'Close' %}"></button></div>{% endfor %}
@@ -78,12 +83,20 @@
     </main>
   </div>
 
-  <div class="modal fade" id="generic-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">{% translate "Form" %}</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% translate 'Close' %}"></button></div><div class="modal-body" id="modal-content"><div class="text-center text-muted py-4">{% translate "Loading…" %}</div></div></div></div></div>
+  <div class="modal fade" id="generic-modal" tabindex="-1" aria-labelledby="generic-modal-title" aria-hidden="true"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="generic-modal-title">{% translate "Form" %}</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% translate 'Close' %}"></button></div><div class="modal-body" id="modal-content"><div class="text-center text-muted py-4" role="status">{% translate "Loading…" %}</div></div></div></div></div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+    let modalTrigger = null;
     function toggleTheme() { const html = document.documentElement; const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; html.setAttribute('data-theme', next); localStorage.setItem('theme', next); }
+    function setSidebar(open) { const sidebar = document.getElementById('sidebar'); const toggle = document.getElementById('sidebar-toggle'); sidebar.classList.toggle('is-open', open); toggle.setAttribute('aria-expanded', String(open)); }
+    document.getElementById('sidebar-toggle').addEventListener('click', function () { setSidebar(!document.getElementById('sidebar').classList.contains('is-open')); });
+    document.querySelectorAll('#sidebar a').forEach(function (link) { link.addEventListener('click', function () { setSidebar(false); }); });
+    document.addEventListener('keydown', function (event) { if (event.key === 'Escape') { setSidebar(false); } });
     document.body.addEventListener('htmx:configRequest', function (event) { event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}'; });
+    document.body.addEventListener('click', function (event) { const trigger = event.target.closest('[data-bs-target="#generic-modal"]'); if (trigger) { modalTrigger = trigger; } });
     document.body.addEventListener('htmx:afterSwap', function (event) { if (event.detail.target.id === 'modal-content') { bootstrap.Modal.getOrCreateInstance(document.getElementById('generic-modal')).show(); } });
+    document.getElementById('generic-modal').addEventListener('shown.bs.modal', function () { const modal = this; window.setTimeout(function () { const first = modal.querySelector('input, select, textarea, button:not(.btn-close)'); if (first) first.focus(); }, 50); });
+    document.getElementById('generic-modal').addEventListener('hidden.bs.modal', function () { if (modalTrigger) { modalTrigger.focus(); } });
     document.body.addEventListener('modal-form-success', function () { bootstrap.Modal.getOrCreateInstance(document.getElementById('generic-modal')).hide(); window.location.reload(); });
   </script>
   {% block extrascripts %}{% endblock %}
