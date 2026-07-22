@@ -5,9 +5,12 @@
 <div id="kanban-page">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h3 mb-0">{% translate "Kanban board" %}</h1>
-    <div class="d-flex gap-2 align-items-center">
+    <div class="d-flex gap-2 align-items-center flex-wrap justify-content-end">
       {% include "workboard/_board_selector.html" %}
       {% include "workboard/_filters.html" %}
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'board-list' %}">{% translate "Manage boards" %}</a>
+      <a class="btn btn-sm btn-primary" href="{% url 'board-create' %}">+ {% translate "New board" %}</a>
+      {% if board %}<a class="btn btn-sm btn-outline-primary" href="{% url 'stage-create' %}?board={{ board.id }}">+ {% translate "New stage" %}</a>{% endif %}
     </div>
   </div>
 
@@ -18,7 +21,10 @@
   {% else %}
   <div class="card p-5 text-center text-muted">
     <p>{% translate "No board configured." %}</p>
-    <a href="{% url 'board-create' %}" class="btn btn-primary">{% translate "Create board" %}</a>
+    <div class="d-flex gap-2 justify-content-center flex-wrap">
+      <a href="{% url 'board-create' %}" class="btn btn-primary">{% translate "Create board" %}</a>
+      <a href="{% url 'board-list' %}" class="btn btn-outline-secondary">{% translate "Manage boards" %}</a>
+    </div>
   </div>
   {% endif %}
 </div>

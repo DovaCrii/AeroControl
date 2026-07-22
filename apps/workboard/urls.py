@@ -8,6 +8,7 @@ urlpatterns = [
     path("tasks/", views.TaskList.as_view(), name="task-list"),
     path("boards/", views.BoardList.as_view(), name="board-list"),
     path("boards/new/", views.BoardCreate.as_view(), name="board-create"),
+    path("stages/new/", views.StageCreate.as_view(), name="stage-create"),
     # Kanban endpoints
     path("_board/", views.BoardPartialView.as_view(), name="kanban-board-partial"),
     path("tasks/<uuid:pk>/move/", views.MoveTaskView.as_view(), name="task-move"),

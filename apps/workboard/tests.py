@@ -13,8 +13,14 @@ def user(db):
     user.user_permissions.add(
         *Permission.objects.filter(
             content_type__app_label="workboard",
-            content_type__model="kanbantask",
-            codename__in=["add_kanbantask", "change_kanbantask"],
+            content_type__model__in=["kanbantask", "kanbanstage", "kanbanboard"],
+            codename__in=[
+                "add_kanbantask",
+                "change_kanbantask",
+                "view_kanbantask",
+                "add_kanbanstage",
+                "add_kanbanboard",
+            ],
         )
     )
     return user
@@ -125,7 +131,29 @@ def test_malformed_board_and_operator_filters_are_ignored(auth_client, board):
         reverse("kanban-board-partial"),
         {"board": "not-a-uuid", "operator": "also-not-a-uuid"},
     )
+    assert response.status_code == 302
+    assert response.url.startswith(reverse("kanban"))
+
+    response = auth_client.get(
+        reverse("kanban-board-partial"),
+        {"board": board[0].pk, "operator": "also-not-a-uuid"},
+        HTTP_HX_REQUEST="true",
+    )
     assert response.status_code == 200
+    assert response.headers["HX-Push-Url"].startswith(reverse("kanban"))
+
+
+@pytest.mark.django_db
+def test_stage_create_is_available_from_empty_board(auth_client, board):
+    board_obj, _, _ = board
+    response = auth_client.post(
+        reverse("stage-create") + f"?board={board_obj.pk}",
+        {"board": board_obj.pk, "name": "Review", "order": 2, "color": "#2EC4B6"},
+    )
+
+    assert response.status_code == 302
+    assert response.url == f"{reverse('kanban')}?board={board_obj.pk}"
+    assert board_obj.stages.filter(name="Review").exists()
 
 
 @pytest.mark.django_db

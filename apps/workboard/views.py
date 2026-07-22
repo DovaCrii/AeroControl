@@ -2,7 +2,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.views import View
@@ -141,6 +141,10 @@ class BoardPartialView(LoginRequiredMixin, View):
     """HTMX fragment — board columns + cards for filter/drag refresh."""
 
     def get(self, request):
+        if request.headers.get("HX-Request") != "true":
+            query = request.GET.urlencode()
+            target = reverse("kanban")
+            return redirect(f"{target}?{query}" if query else target)
         board_id = request.GET.get("board")
         board = KanbanBoardView._get_board(board_id)
 
@@ -150,7 +154,7 @@ class BoardPartialView(LoginRequiredMixin, View):
             )
 
         stage_data = KanbanBoardView()._build_stage_data(board, request.GET)
-        return render(
+        response = render(
             request,
             "workboard/_board.html",
             {
@@ -161,6 +165,28 @@ class BoardPartialView(LoginRequiredMixin, View):
                 "filter_params": request.GET,
             },
         )
+        query = request.GET.urlencode()
+        response.headers["HX-Push-Url"] = (
+            f"{reverse('kanban')}?{query}" if query else reverse("kanban")
+        )
+        return response
+
+
+class StageCreate(ModelPermissionRequiredMixin, CreateView):
+    model = KanbanStage
+    form_class = KanbanStageForm
+    permission_action = "add"
+    template_name = "generic/form.html"
+
+    def get_initial(self):
+        initial = super().get_initial()
+        if self.request.GET.get("board"):
+            initial["board"] = self.request.GET["board"]
+        return initial
+
+    def get_success_url(self):
+        board_id = self.object.board_id
+        return f"{reverse('kanban')}?board={board_id}"
 
 
 class MoveTaskView(ModelPermissionRequiredMixin, View):
