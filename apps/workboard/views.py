@@ -218,7 +218,14 @@ class TaskReportDocxView(TaskReportCsvView):
         return response
 
 
-class ApiTaskListView(ModelViewPermissionRequiredMixin, View):
+class ApiPermissionMixin(ModelPermissionRequiredMixin):
+    def handle_no_permission(self):
+        if not self.request.user.is_authenticated:
+            return JsonResponse({"detail": "Authentication required."}, status=401)
+        return JsonResponse({"detail": "Permission denied."}, status=403)
+
+
+class ApiTaskListView(ApiPermissionMixin, View):
     model = KanbanTask
     permission_action = "view"
 
@@ -250,7 +257,7 @@ class ApiTaskListView(ModelViewPermissionRequiredMixin, View):
         return JsonResponse({"version": "v1", "page": page, "page_size": page_size, "total": total, "results": items})
 
 
-class ApiTaskUpdateView(ModelPermissionRequiredMixin, View):
+class ApiTaskUpdateView(ApiPermissionMixin, View):
     model = KanbanTask
     permission_action = "change"
 
