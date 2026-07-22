@@ -16,7 +16,7 @@ jobs:
       BACKUPS_DIR: ${{ runner.temp }}/backups
       SECRET_KEY: ci-only-not-for-production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.12"
