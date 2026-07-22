@@ -372,6 +372,22 @@ class TestAuthenticatedPages:
         assert ".." not in safe_path
         assert safe_path.startswith("certificates/aircraft/")
 
+    def test_document_delete_archives_without_physical_delete(self, auth_client):
+        doc_type = DocumentType.objects.create(code="archive-test", name="Archive test")
+        aircraft_type = ContentType.objects.get_for_model(Aircraft)
+        document = Document.objects.create(
+            title="Archive document",
+            doc_type=doc_type,
+            content_type=aircraft_type,
+            object_id="00000000-0000-0000-0000-000000000001",
+            file_path="archive-test/aircraft/file.pdf",
+            issue_date=date(2026, 1, 1),
+        )
+        response = auth_client.post(reverse("document-delete", args=[document.pk]))
+        assert response.status_code == 302
+        document.refresh_from_db()
+        assert document.is_active is False
+
 
 class TestStaticFiles:
     @pytest.mark.django_db
