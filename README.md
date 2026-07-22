@@ -222,6 +222,10 @@ and responsive navigation, structured logs/health checks, CSP and asset
 hardening, administrative audit history, validated imports/reports, and a
 planned PostgreSQL/API path only when multi-user scale justifies it.
 
+The frontend boundary decision is documented in docs/frontend-boundary.md; a
+separate SPA is intentionally deferred until API, offline or mobile
+requirements justify it.
+
 ## License
 
 MIT. See [`LICENSE`](LICENSE).
