@@ -1,3 +1,4 @@
+{% load i18n %}
 <div class="kanban-card priority-{{ task.priority }}" data-task-id="{{ task.id }}">
   <div class="kanban-card-title">{{ task.title }}</div>
   <div class="kanban-card-meta">
@@ -9,4 +10,8 @@
   {% if task.due_date %}
     <div class="kanban-due">{{ task.due_date|date:"M j" }}</div>
   {% endif %}
+  <form method="post" action="{% url 'task-archive' task.id %}" class="mt-2">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-sm btn-link p-0 text-muted">{% translate "Archive" %}</button>
+  </form>
 </div>

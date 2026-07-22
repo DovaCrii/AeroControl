@@ -691,6 +691,12 @@ msgstr "Nueva etapa"
 msgid "Create first stage"
 msgstr "Crear primera etapa"
 
+msgid "Archive board"
+msgstr "Archivar tablero"
+
+msgid "Archive"
+msgstr "Archivar"
+
 msgid "Main navigation"
 msgstr "Navegación principal"
 

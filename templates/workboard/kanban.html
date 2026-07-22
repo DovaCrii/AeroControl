@@ -11,6 +11,7 @@
       <a class="btn btn-sm btn-outline-secondary" href="{% url 'board-list' %}">{% translate "Manage boards" %}</a>
       <a class="btn btn-sm btn-primary" href="{% url 'board-create' %}">+ {% translate "New board" %}</a>
       {% if board %}<a class="btn btn-sm btn-outline-primary" href="{% url 'stage-create' %}?board={{ board.id }}">+ {% translate "New stage" %}</a>{% endif %}
+      {% if board %}<form method="post" action="{% url 'board-archive' board.id %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-danger" type="submit">{% translate "Archive board" %}</button></form>{% endif %}
     </div>
   </div>
 

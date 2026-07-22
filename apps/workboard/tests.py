@@ -20,6 +20,7 @@ def user(db):
                 "view_kanbantask",
                 "add_kanbanstage",
                 "add_kanbanboard",
+                "change_kanbanboard",
             ],
         )
     )
@@ -154,6 +155,22 @@ def test_stage_create_is_available_from_empty_board(auth_client, board):
     assert response.status_code == 302
     assert response.url == f"{reverse('kanban')}?board={board_obj.pk}"
     assert board_obj.stages.filter(name="Review").exists()
+
+
+@pytest.mark.django_db
+def test_board_and_task_archives_are_reversible(auth_client, board):
+    board_obj, todo, _ = board
+    task = KanbanTask.objects.create(board=board_obj, stage=todo, title="Archive me")
+
+    task_response = auth_client.post(reverse("task-archive", args=[task.pk]))
+    assert task_response.status_code == 302
+    task.refresh_from_db()
+    assert task.is_active is False
+
+    board_response = auth_client.post(reverse("board-archive", args=[board_obj.pk]))
+    assert board_response.status_code == 302
+    board_obj.refresh_from_db()
+    assert board_obj.is_active is False
 
 
 @pytest.mark.django_db
