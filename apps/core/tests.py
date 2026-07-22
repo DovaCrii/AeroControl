@@ -12,7 +12,7 @@ from django.test import Client, RequestFactory
 from django.urls import reverse
 from django.utils import timezone
 
-from apps.registry.models import Aircraft, CostCenter
+from apps.registry.models import Aircraft, CostCenter, Operator
 from apps.compliance.forms import DocumentForm
 from apps.compliance.models import Document, DocumentType, document_upload_path
 from apps.workboard.models import KanbanBoard
@@ -144,6 +144,16 @@ class TestAuthenticatedPages:
         )
         assert response.status_code == 302
         assert Aircraft.objects.filter(registration="CC-IMP", cost_center=center).exists()
+
+    def test_operator_import_validates_cost_center(self, auth_client):
+        center = CostCenter.objects.create(code="OP-OPS", name="Operator Ops")
+        payload = b"employee_id,full_name,email,phone,cost_center\nEMP-IMP,Imported Operator,imp@example.com,+56900000000,OP-OPS\n"
+        response = auth_client.post(
+            reverse("operator-import"),
+            {"file": SimpleUploadedFile("operators.csv", payload, content_type="text/csv"), "apply": "1"},
+        )
+        assert response.status_code == 302
+        assert Operator.objects.filter(employee_id="EMP-IMP", cost_center=center).exists()
 
     def test_global_search_respects_permissions(self, auth_client):
         CostCenter.objects.create(code="SEARCH", name="Search Operations")

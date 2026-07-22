@@ -63,6 +63,8 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
   de errores, operación transaccional y reversión lógica por lote.
 - [x] Extender el mismo flujo a aeronaves, validando matrícula y centro de
   costo antes de aplicar el lote.
+- [x] Extender el mismo flujo a operadores, validando identificador de empleado
+  y centro de costo antes de aplicar el lote.
 - [ ] Carga normalizada del Capítulo 1 con mapeos versionados.
 - [x] Búsqueda global con permisos de lectura por dominio y enlaces directos a
   los módulos operativos.

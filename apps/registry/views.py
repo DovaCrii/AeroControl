@@ -153,8 +153,8 @@ class CostCenterImportRevertView(ModelPermissionRequiredMixin, View):
     permission_action = "change"
 
     def post(self, request, pk):
-        batch = get_object_or_404(ImportBatch, pk=pk, entity__in=["registry.costcenter", "registry.aircraft"], status="applied")
-        model = CostCenter if batch.entity == "registry.costcenter" else Aircraft
+        batch = get_object_or_404(ImportBatch, pk=pk, entity__in=["registry.costcenter", "registry.aircraft", "registry.operator"], status="applied")
+        model = {"registry.costcenter": CostCenter, "registry.aircraft": Aircraft, "registry.operator": Operator}[batch.entity]
         model.objects.filter(pk__in=batch.created_ids).update(is_active=False)
         batch.status = "reverted"
         batch.reverted_at = timezone.now()
@@ -202,3 +202,47 @@ class AircraftImportView(CostCenterImportView):
             batch.created_ids = [str(obj.pk) for obj in created]
             batch.save(update_fields=["created_ids", "updated_at"])
         return redirect("aircraft-list")
+
+
+class OperatorImportView(CostCenterImportView):
+    model = Operator
+
+    def get(self, request):
+        return render(request, "registry/costcenter_import.html", {"rows": [], "errors": [], "entity": "operator"})
+
+    @staticmethod
+    def parse(upload):
+        if not upload or upload.size > 2 * 1024 * 1024:
+            return [], ["El archivo es obligatorio y no puede superar 2 MB."]
+        try:
+            reader = csv.DictReader(io.StringIO(upload.read().decode("utf-8-sig")))
+        except (UnicodeDecodeError, csv.Error):
+            return [], ["El archivo debe ser CSV UTF-8 válido."]
+        expected = ["employee_id", "full_name", "email", "phone", "cost_center"]
+        if reader.fieldnames != expected:
+            return [], ["Columnas requeridas: " + ",".join(expected)]
+        rows, errors, seen = [], [], set()
+        for line, raw in enumerate(reader, start=2):
+            employee_id = raw.get("employee_id", "").strip()
+            center = CostCenter.objects.filter(code=raw.get("cost_center", "").strip(), is_active=True).first()
+            if not employee_id or employee_id in seen or Operator.objects.filter(employee_id=employee_id).exists():
+                errors.append(f"Línea {line}: employee_id vacío o duplicado.")
+            elif not raw.get("full_name", "").strip():
+                errors.append(f"Línea {line}: full_name es obligatorio.")
+            elif not center:
+                errors.append(f"Línea {line}: centro de costo inexistente.")
+            else:
+                seen.add(employee_id)
+                rows.append({"employee_id": employee_id, "full_name": raw["full_name"].strip(), "email": raw.get("email", "").strip(), "phone": raw.get("phone", "").strip(), "cost_center_id": str(center.pk)})
+        return rows, errors
+
+    def post(self, request):
+        rows, errors = self.parse(request.FILES.get("file"))
+        if errors or request.POST.get("apply") != "1":
+            return render(request, "registry/costcenter_import.html", {"rows": rows, "errors": errors, "preview": True, "entity": "operator"})
+        with transaction.atomic():
+            batch = ImportBatch.objects.create(actor=request.user, entity="registry.operator", rows=rows)
+            created = [Operator.objects.create(**row) for row in rows]
+            batch.created_ids = [str(obj.pk) for obj in created]
+            batch.save(update_fields=["created_ids", "updated_at"])
+        return redirect("operator-list")
