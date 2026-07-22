@@ -1,32 +1,33 @@
 {% extends "base.html" %}
-{% block title %}Dashboard - AeroOps Desk{% endblock %}
+{% load i18n %}
+{% block title %}Dashboard - AeroControl{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Operations Dashboard</h1>
+<h1 class="mb-4">{% translate "Operations Dashboard" %}</h1>
 
 {# ── Summary cards ── #}
 <div class="row g-3 mb-4">
   <div class="col-md-3 col-sm-6">
     <div class="summary-card">
-      <small>Active Aircraft</small>
+      <small>{% translate "Active Aircraft" %}</small>
       <strong>{{ aircraft_count }}</strong>
     </div>
   </div>
   <div class="col-md-3 col-sm-6">
     <div class="summary-card">
-      <small>Active Operators</small>
+      <small>{% translate "Active Operators" %}</small>
       <strong>{{ operator_count }}</strong>
     </div>
   </div>
   <div class="col-md-3 col-sm-6">
     <div class="summary-card">
-      <small>Pending Alerts</small>
+      <small>{% translate "Pending Alerts" %}</small>
       <strong>{{ alert_count }}</strong>
     </div>
   </div>
   <div class="col-md-3 col-sm-6">
     <div class="summary-card">
-      <small>Expiring in 30 days</small>
+      <small>{% translate "Expiring in 30 days" %}</small>
       <strong>{{ expirations|length }}</strong>
     </div>
   </div>
@@ -36,19 +37,19 @@
 <div class="row g-4 mb-4">
   <div class="col-lg-4">
     <div class="card p-3 chart-container">
-      <h4 class="h5 mb-3">Aircraft by Status</h4>
+      <h4 class="h5 mb-3">{% translate "Aircraft by Status" %}</h4>
       <canvas id="chart-aircraft-status"></canvas>
     </div>
   </div>
   <div class="col-lg-4">
     <div class="card p-3 chart-container">
-      <h4 class="h5 mb-3">Permissions by Status</h4>
+      <h4 class="h5 mb-3">{% translate "Permissions by Status" %}</h4>
       <canvas id="statusChart"></canvas>
     </div>
   </div>
   <div class="col-lg-4">
     <div class="card p-3 chart-container">
-      <h4 class="h5 mb-3">Maintenance by Type</h4>
+      <h4 class="h5 mb-3">{% translate "Maintenance by Type" %}</h4>
       <canvas id="chart-maint-type"></canvas>
     </div>
   </div>
@@ -57,13 +58,13 @@
 <div class="row g-4 mb-4">
   <div class="col-lg-6">
     <div class="card p-3 chart-container">
-      <h4 class="h5 mb-3">Tasks per Stage</h4>
+      <h4 class="h5 mb-3">{% translate "Tasks per Stage" %}</h4>
       <canvas id="stagesChart"></canvas>
     </div>
   </div>
   <div class="col-lg-6">
     <div class="card p-3 chart-container">
-      <h4 class="h5 mb-3">Monthly Flights (6 months)</h4>
+      <h4 class="h5 mb-3">{% translate "Monthly Flights (6 months)" %}</h4>
       <canvas id="chart-monthly-flights"></canvas>
     </div>
   </div>
@@ -73,27 +74,27 @@
 <div class="row g-4">
   <div class="col-lg-6">
     <div class="card p-3">
-      <h4 class="h5">Upcoming Expirations</h4>
+      <h4 class="h5">{% translate "Upcoming Expirations" %}</h4>
       {% for item in expirations %}
       <div class="d-flex justify-content-between border-bottom py-2">
         <span>{{ item.operator }} — {{ item.qualification_type }}</span>
         <b>{{ item.expiry_date|date:"Y-m-d" }}</b>
       </div>
       {% empty %}
-      <p class="text-muted my-2">No upcoming expirations.</p>
+      <p class="text-muted my-2">{% translate "No upcoming expirations." %}</p>
       {% endfor %}
     </div>
   </div>
   <div class="col-lg-6">
     <div class="card p-3">
-      <h4 class="h5">Tasks by Stage</h4>
+      <h4 class="h5">{% translate "Tasks by Stage" %}</h4>
       {% for stage in stages %}
       <div class="d-flex justify-content-between border-bottom py-2">
         <span>{{ stage.name }}</span>
         <b>{{ stage.tasks.count }}</b>
       </div>
       {% empty %}
-      <p class="text-muted my-2">No stages configured.</p>
+      <p class="text-muted my-2">{% translate "No stages configured." %}</p>
       {% endfor %}
     </div>
   </div>
@@ -101,7 +102,8 @@
 {% endblock %}
 
 {% block extrahead %}
-<script>const chartData = {{ chart_data|safe }};</script>
+{{ chart_data|json_script:"chart-data" }}
+<script>const chartData = JSON.parse(document.getElementById("chart-data").textContent);</script>
 {% endblock %}
 
 {% block extrascripts %}

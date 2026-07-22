@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.views import View
 from django.views.generic import ListView, CreateView, TemplateView
 
-from apps.core.views import CsvExportMixin, SearchMixin
+from apps.core.views import CsvExportMixin, ModelPermissionRequiredMixin, SearchMixin
 from apps.registry.models import Operator
 from .models import KanbanBoard, KanbanStage, KanbanTask
 from .forms import KanbanBoardForm, KanbanStageForm, KanbanTaskForm
@@ -24,7 +24,8 @@ class WList(CsvExportMixin, SearchMixin, LoginRequiredMixin, ListView):
         return c
 
 
-class WCreate(LoginRequiredMixin, CreateView):
+class WCreate(ModelPermissionRequiredMixin, CreateView):
+    permission_action = "add"
     template_name = "generic/form.html"
 
     def get_success_url(self):
@@ -42,7 +43,9 @@ for model, form, name in (
     (KanbanTask, KanbanTaskForm, "Task"),
 ):
     globals()[f"{name}List"] = type(f"{name}List", (WList,), {"model": model})
-    globals()[f"{name}Create"] = type(f"{name}Create", (WCreate,), {"model": model, "form_class": form})
+    globals()[f"{name}Create"] = type(
+        f"{name}Create", (WCreate,), {"model": model, "form_class": form}
+    )
 
 
 # ─── Kanban Board Views ─────────────────────────────────────
@@ -58,15 +61,20 @@ class KanbanBoardView(LoginRequiredMixin, TemplateView):
         boards = KanbanBoard.objects.filter(is_active=True)
         board_id = self.request.GET.get("board")
         board = self._get_board(board_id)
-        context.update({
-            "board": board,
-            "boards": boards,
-            "operators": self._get_operators(),
-            "priorities": KanbanTask.PRIORITIES,
-            "drag_enabled": self._filter_values(self.request.GET)[0] is None and not self._filter_values(self.request.GET)[1],
-            "stages": self._build_stage_data(board, self.request.GET) if board else [],
-            "filter_params": self.request.GET,
-        })
+        context.update(
+            {
+                "board": board,
+                "boards": boards,
+                "operators": self._get_operators(),
+                "priorities": KanbanTask.PRIORITIES,
+                "drag_enabled": self._filter_values(self.request.GET)[0] is None
+                and not self._filter_values(self.request.GET)[1],
+                "stages": self._build_stage_data(board, self.request.GET)
+                if board
+                else [],
+                "filter_params": self.request.GET,
+            }
+        )
         return context
 
     @staticmethod
@@ -74,7 +82,11 @@ class KanbanBoardView(LoginRequiredMixin, TemplateView):
         operator_id = params.get("operator", "")
         priority = params.get("priority", "")
         try:
-            operator = Operator.objects.filter(pk=operator_id, is_active=True).first() if operator_id else None
+            operator = (
+                Operator.objects.filter(pk=operator_id, is_active=True).first()
+                if operator_id
+                else None
+            )
         except (ValueError, TypeError, ValidationError):
             operator = None
         if priority not in dict(KanbanTask.PRIORITIES):
@@ -116,23 +128,37 @@ class BoardPartialView(LoginRequiredMixin, View):
         board = KanbanBoardView._get_board(board_id)
 
         if not board:
-            return HttpResponse('<p class="text-muted text-center py-5">No board configured.</p>')
+            return HttpResponse(
+                '<p class="text-muted text-center py-5">No board configured.</p>'
+            )
 
         stage_data = KanbanBoardView()._build_stage_data(board, request.GET)
-        return render(request, "workboard/_board.html", {
-            "board": board,
-            "stages": stage_data,
-            "drag_enabled": KanbanBoardView._filter_values(request.GET)[0] is None and not KanbanBoardView._filter_values(request.GET)[1],
-            "filter_params": request.GET,
-        })
+        return render(
+            request,
+            "workboard/_board.html",
+            {
+                "board": board,
+                "stages": stage_data,
+                "drag_enabled": KanbanBoardView._filter_values(request.GET)[0] is None
+                and not KanbanBoardView._filter_values(request.GET)[1],
+                "filter_params": request.GET,
+            },
+        )
 
 
-class MoveTaskView(LoginRequiredMixin, View):
+class MoveTaskView(ModelPermissionRequiredMixin, View):
     """Drag-and-drop: move task between stages and re-order siblings."""
+
+    model = KanbanTask
+    permission_action = "change"
 
     def post(self, request, pk):
         task = get_object_or_404(
-            KanbanTask, pk=pk, is_active=True, board__is_active=True, stage__is_active=True,
+            KanbanTask,
+            pk=pk,
+            is_active=True,
+            board__is_active=True,
+            stage__is_active=True,
         )
         old_stage_id = task.stage_id
 
@@ -162,14 +188,22 @@ class MoveTaskView(LoginRequiredMixin, View):
 
     @staticmethod
     def _remove_from_stage(task, stage):
-        siblings = list(stage.tasks.filter(is_active=True).exclude(pk=task.pk).order_by("order", "created_at"))
+        siblings = list(
+            stage.tasks.filter(is_active=True)
+            .exclude(pk=task.pk)
+            .order_by("order", "created_at")
+        )
         for index, sibling in enumerate(siblings):
             if sibling.order != index:
                 KanbanTask.objects.filter(pk=sibling.pk).update(order=index)
 
     @staticmethod
     def _insert_into_stage(task, stage, order):
-        siblings = list(stage.tasks.filter(is_active=True).exclude(pk=task.pk).order_by("order", "created_at"))
+        siblings = list(
+            stage.tasks.filter(is_active=True)
+            .exclude(pk=task.pk)
+            .order_by("order", "created_at")
+        )
         siblings.insert(min(order, len(siblings)), task)
         for index, sibling in enumerate(siblings):
             if sibling.pk == task.pk:
@@ -179,8 +213,11 @@ class MoveTaskView(LoginRequiredMixin, View):
                 KanbanTask.objects.filter(pk=sibling.pk).update(order=index)
 
 
-class QuickTaskCreate(LoginRequiredMixin, View):
+class QuickTaskCreate(ModelPermissionRequiredMixin, View):
     """Quick-add a task from the column footer, returns refreshed column."""
+
+    model = KanbanTask
+    permission_action = "add"
 
     def get(self, request):
         """Return the quick-add form fragment for a given stage."""
@@ -189,18 +226,24 @@ class QuickTaskCreate(LoginRequiredMixin, View):
             return HttpResponse(status=400)
         try:
             stage = KanbanStage.objects.filter(
-                pk=stage_id, is_active=True, board__is_active=True,
+                pk=stage_id,
+                is_active=True,
+                board__is_active=True,
             ).first()
         except (ValueError, TypeError, ValidationError):
             stage = None
         if stage is None:
             return HttpResponse(status=400)
         operators = KanbanBoardView()._get_operators()
-        return render(request, "workboard/_quick_form.html", {
-            "stage": stage,
-            "operators": operators,
-            "filter_params": request.GET,
-        })
+        return render(
+            request,
+            "workboard/_quick_form.html",
+            {
+                "stage": stage,
+                "operators": operators,
+                "filter_params": request.GET,
+            },
+        )
 
     def post(self, request):
         stage_id = request.POST.get("stage_id")
@@ -213,7 +256,9 @@ class QuickTaskCreate(LoginRequiredMixin, View):
 
         try:
             stage = KanbanStage.objects.filter(
-                pk=stage_id, is_active=True, board__is_active=True,
+                pk=stage_id,
+                is_active=True,
+                board__is_active=True,
             ).first()
         except (ValueError, TypeError, ValidationError):
             stage = None
@@ -221,7 +266,9 @@ class QuickTaskCreate(LoginRequiredMixin, View):
             return HttpResponse(status=400)
         if assigned_to:
             try:
-                operator = Operator.objects.filter(pk=assigned_to, is_active=True).first()
+                operator = Operator.objects.filter(
+                    pk=assigned_to, is_active=True
+                ).first()
             except (ValueError, TypeError, ValidationError):
                 return HttpResponse(status=400)
             if operator is None:
@@ -250,12 +297,16 @@ class QuickTaskCreate(LoginRequiredMixin, View):
             tasks = tasks.filter(assigned_to=operator)
         if valid_priority:
             tasks = tasks.filter(priority=valid_priority)
-        return render(request, "workboard/_column.html", {
-            "stage": stage,
-            "tasks": tasks,
-            "drag_enabled": operator is None and not valid_priority,
-            "filter_params": filter_params,
-        })
+        return render(
+            request,
+            "workboard/_column.html",
+            {
+                "stage": stage,
+                "tasks": tasks,
+                "drag_enabled": operator is None and not valid_priority,
+                "filter_params": filter_params,
+            },
+        )
 
 
 class BoardSelector(LoginRequiredMixin, View):
@@ -264,11 +315,15 @@ class BoardSelector(LoginRequiredMixin, View):
     def get(self, request):
         boards = KanbanBoard.objects.filter(is_active=True)
         current = request.GET.get("board")
-        return render(request, "workboard/_board_selector.html", {
-            "boards": boards, "current": current,
-        })
+        return render(
+            request,
+            "workboard/_board_selector.html",
+            {
+                "boards": boards,
+                "current": current,
+            },
+        )
 
 
 # Backwards-compatible name used by earlier workboard integrations.
 BoardFilterPartial = BoardPartialView
-

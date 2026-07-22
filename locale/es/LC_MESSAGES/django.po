@@ -1,0 +1,209 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: AeroControl\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "English"
+msgstr "Inglés"
+
+msgid "Spanish"
+msgstr "Español"
+
+msgid "Language"
+msgstr "Idioma"
+
+msgid "Sign out"
+msgstr "Cerrar sesión"
+
+msgid "Toggle theme"
+msgstr "Cambiar tema"
+
+msgid "Dashboard"
+msgstr "Panel"
+
+msgid "Registry"
+msgstr "Registro"
+
+msgid "Cost Centers"
+msgstr "Centros de costo"
+
+msgid "Aircraft"
+msgstr "Aeronaves"
+
+msgid "Operators"
+msgstr "Operadores"
+
+msgid "Assignments"
+msgstr "Asignaciones"
+
+msgid "Compliance"
+msgstr "Cumplimiento"
+
+msgid "Documents"
+msgstr "Documentos"
+
+msgid "Alerts"
+msgstr "Alertas"
+
+msgid "Operations"
+msgstr "Operaciones"
+
+msgid "Permissions"
+msgstr "Permisos"
+
+msgid "Flights"
+msgstr "Vuelos"
+
+msgid "Calendar"
+msgstr "Calendario"
+
+msgid "Maintenance"
+msgstr "Mantenimiento"
+
+msgid "Records"
+msgstr "Registros"
+
+msgid "Workboard"
+msgstr "Tablero de trabajo"
+
+msgid "Kanban"
+msgstr "Kanban"
+
+msgid "Admin"
+msgstr "Administración"
+
+msgid "Operations Dashboard"
+msgstr "Panel de operaciones"
+
+msgid "Active Aircraft"
+msgstr "Aeronaves activas"
+
+msgid "Active Operators"
+msgstr "Operadores activos"
+
+msgid "Pending Alerts"
+msgstr "Alertas pendientes"
+
+msgid "Expiring in 30 days"
+msgstr "Vence en 30 días"
+
+msgid "Aircraft by Status"
+msgstr "Aeronaves por estado"
+
+msgid "Permissions by Status"
+msgstr "Permisos por estado"
+
+msgid "Maintenance by Type"
+msgstr "Mantenimiento por tipo"
+
+msgid "Tasks per Stage"
+msgstr "Tareas por etapa"
+
+msgid "Monthly Flights (6 months)"
+msgstr "Vuelos mensuales (6 meses)"
+
+msgid "Upcoming Expirations"
+msgstr "Próximos vencimientos"
+
+msgid "No upcoming expirations."
+msgstr "No hay vencimientos próximos."
+
+msgid "No stages configured."
+msgstr "No hay etapas configuradas."
+
+msgid "New"
+msgstr "Nuevo"
+
+msgid "Search number, purpose, location..."
+msgstr "Buscar número, propósito o ubicación..."
+
+msgid "All statuses"
+msgstr "Todos los estados"
+
+msgid "From date"
+msgstr "Desde fecha"
+
+msgid "To date"
+msgstr "Hasta fecha"
+
+msgid "Filter"
+msgstr "Filtrar"
+
+msgid "Clear"
+msgstr "Limpiar"
+
+msgid "Number"
+msgstr "Número"
+
+msgid "Operator"
+msgstr "Operador"
+
+msgid "Date"
+msgstr "Fecha"
+
+msgid "Status"
+msgstr "Estado"
+
+msgid "Actions"
+msgstr "Acciones"
+
+msgid "View"
+msgstr "Ver"
+
+msgid "No permissions found."
+msgstr "No se encontraron permisos."
+
+msgid "Requested"
+msgstr "Solicitado"
+
+msgid "Approved"
+msgstr "Aprobado"
+
+msgid "Denied"
+msgstr "Rechazado"
+
+msgid "Completed"
+msgstr "Completado"
+
+msgid "Scheduled"
+msgstr "Programado"
+
+msgid "Unscheduled"
+msgstr "No programado"
+
+msgid "Emergency"
+msgstr "Emergencia"
+
+msgid "Pending"
+msgstr "Pendiente"
+
+msgid "In progress"
+msgstr "En progreso"
+
+msgid "Low"
+msgstr "Baja"
+
+msgid "Medium"
+msgstr "Media"
+
+msgid "High"
+msgstr "Alta"
+
+msgid "Critical"
+msgstr "Crítica"
+
+msgid "Air Operations Control"
+msgstr "Control de operaciones aéreas"
+
+msgid "Air Operations Control Center"
+msgstr "Centro de control de operaciones aéreas"
+
+msgid "Sign In"
+msgstr "Iniciar sesión"
+
+msgid "Invalid username or password. Try again."
+msgstr "Usuario o contraseña no válidos. Inténtalo nuevamente."

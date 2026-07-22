@@ -1,4 +1,4 @@
-# Backlog — AeroOps Desk
+# Backlog — AeroControl
 
 ## Fase 2: Operations & Maintenance
 - [ ] Workflow permisos de vuelo (request → approve → complete) con transiciones de estado

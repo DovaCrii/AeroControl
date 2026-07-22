@@ -1,5 +1,5 @@
 import pytest
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Permission, User
 from django.test import Client
 from django.urls import reverse
 
@@ -9,7 +9,15 @@ from .models import KanbanBoard, KanbanStage, KanbanTask
 
 @pytest.fixture
 def user(db):
-    return User.objects.create_user("operator", password="password")
+    user = User.objects.create_user("operator", password="password")
+    user.user_permissions.add(
+        *Permission.objects.filter(
+            content_type__app_label="workboard",
+            content_type__model="kanbantask",
+            codename__in=["add_kanbantask", "change_kanbantask"],
+        )
+    )
+    return user
 
 
 @pytest.fixture
@@ -31,7 +39,9 @@ def board(db):
 def operator(db):
     cost_center = CostCenter.objects.create(code="OPS", name="Operations")
     return Operator.objects.create(
-        employee_id="EMP-001", full_name="Test Operator", cost_center=cost_center,
+        employee_id="EMP-001",
+        full_name="Test Operator",
+        cost_center=cost_center,
     )
 
 
@@ -42,9 +52,19 @@ def test_kanban_and_mutating_endpoints_require_auth(board):
     client = Client()
 
     assert client.get(reverse("kanban")).status_code == 302
-    assert client.post(reverse("task-move", args=[task.pk]), {"stage_id": todo.pk}).status_code == 302
+    assert (
+        client.post(
+            reverse("task-move", args=[task.pk]), {"stage_id": todo.pk}
+        ).status_code
+        == 302
+    )
     assert client.get(reverse("task-quick"), {"stage_id": todo.pk}).status_code == 302
-    assert client.post(reverse("task-quick"), {"stage_id": todo.pk, "title": "Task"}).status_code == 302
+    assert (
+        client.post(
+            reverse("task-quick"), {"stage_id": todo.pk, "title": "Task"}
+        ).status_code
+        == 302
+    )
 
 
 @pytest.mark.django_db
@@ -71,11 +91,19 @@ def test_kanban_without_boards_shows_empty_state(auth_client):
 def test_kanban_filters_by_operator_and_priority(auth_client, board, operator):
     board_obj, todo, _ = board
     matching = KanbanTask.objects.create(
-        board=board_obj, stage=todo, title="Matching", assigned_to=operator, priority="high",
+        board=board_obj,
+        stage=todo,
+        title="Matching",
+        assigned_to=operator,
+        priority="high",
     )
-    KanbanTask.objects.create(board=board_obj, stage=todo, title="Other", priority="low")
+    KanbanTask.objects.create(
+        board=board_obj, stage=todo, title="Other", priority="low"
+    )
 
-    response = auth_client.get(reverse("kanban"), {"operator": operator.pk, "priority": "high"})
+    response = auth_client.get(
+        reverse("kanban"), {"operator": operator.pk, "priority": "high"}
+    )
     content = response.content.decode()
     assert response.status_code == 200
     assert "Matching" in content
@@ -87,23 +115,42 @@ def test_kanban_filters_by_operator_and_priority(auth_client, board, operator):
 
 @pytest.mark.django_db
 def test_malformed_board_and_operator_filters_are_ignored(auth_client, board):
-    response = auth_client.get(reverse("kanban"), {"board": "not-a-uuid", "operator": "also-not-a-uuid"})
+    response = auth_client.get(
+        reverse("kanban"), {"board": "not-a-uuid", "operator": "also-not-a-uuid"}
+    )
     assert response.status_code == 200
     assert "Operations" in response.content.decode()
 
-    response = auth_client.get(reverse("kanban-board-partial"), {"board": "not-a-uuid", "operator": "also-not-a-uuid"})
+    response = auth_client.get(
+        reverse("kanban-board-partial"),
+        {"board": "not-a-uuid", "operator": "also-not-a-uuid"},
+    )
     assert response.status_code == 200
 
 
 @pytest.mark.django_db
 def test_quick_add_preserves_filters_and_refreshes_column(auth_client, board, operator):
     board_obj, todo, _ = board
-    KanbanTask.objects.create(board=board_obj, stage=todo, title="Visible", assigned_to=operator, priority="high")
-    KanbanTask.objects.create(board=board_obj, stage=todo, title="Hidden", priority="low")
+    KanbanTask.objects.create(
+        board=board_obj,
+        stage=todo,
+        title="Visible",
+        assigned_to=operator,
+        priority="high",
+    )
+    KanbanTask.objects.create(
+        board=board_obj, stage=todo, title="Hidden", priority="low"
+    )
 
-    form = auth_client.get(reverse("task-quick"), {
-        "stage_id": todo.pk, "board": board_obj.pk, "operator": operator.pk, "priority": "high",
-    })
+    form = auth_client.get(
+        reverse("task-quick"),
+        {
+            "stage_id": todo.pk,
+            "board": board_obj.pk,
+            "operator": operator.pk,
+            "priority": "high",
+        },
+    )
     assert form.status_code == 200
     form_content = form.content.decode()
     assert f'name="board" value="{board_obj.pk}"' in form_content
@@ -112,10 +159,18 @@ def test_quick_add_preserves_filters_and_refreshes_column(auth_client, board, op
     assert '<option value="high" selected>' not in form_content
     assert '<option value="medium" selected>Medium</option>' in form_content
 
-    response = auth_client.post(reverse("task-quick"), {
-        "stage_id": todo.pk, "title": "New visible", "assigned_to": operator.pk,
-        "priority": "high", "filter_priority": "high", "board": board_obj.pk, "operator": operator.pk,
-    })
+    response = auth_client.post(
+        reverse("task-quick"),
+        {
+            "stage_id": todo.pk,
+            "title": "New visible",
+            "assigned_to": operator.pk,
+            "priority": "high",
+            "filter_priority": "high",
+            "board": board_obj.pk,
+            "operator": operator.pk,
+        },
+    )
     assert response.status_code == 200
     content = response.content.decode()
     assert "Visible" in content and "New visible" in content
@@ -133,7 +188,9 @@ def test_quick_add_rejects_stage_on_inactive_board(auth_client, board):
     _, todo, _ = board
     todo.board.is_active = False
     todo.board.save(update_fields=["is_active"])
-    response = auth_client.post(reverse("task-quick"), {"stage_id": todo.pk, "title": "Invalid"})
+    response = auth_client.post(
+        reverse("task-quick"), {"stage_id": todo.pk, "title": "Invalid"}
+    )
     assert response.status_code == 400
     assert not KanbanTask.objects.filter(title="Invalid").exists()
 
@@ -141,8 +198,12 @@ def test_quick_add_rejects_stage_on_inactive_board(auth_client, board):
 @pytest.mark.django_db
 def test_move_updates_stage_and_order_and_rejects_invalid_stage(auth_client, board):
     board_obj, todo, done = board
-    first = KanbanTask.objects.create(board=board_obj, stage=todo, title="First", order=0)
-    second = KanbanTask.objects.create(board=board_obj, stage=todo, title="Second", order=1)
+    first = KanbanTask.objects.create(
+        board=board_obj, stage=todo, title="First", order=0
+    )
+    second = KanbanTask.objects.create(
+        board=board_obj, stage=todo, title="Second", order=1
+    )
 
     response = auth_client.post(
         reverse("task-move", args=[second.pk]), {"stage_id": done.pk, "new_order": 0}
@@ -157,7 +218,8 @@ def test_move_updates_stage_and_order_and_rejects_invalid_stage(auth_client, boa
     other_board = KanbanBoard.objects.create(name="Other")
     other_stage = KanbanStage.objects.create(board=other_board, name="Other stage")
     response = auth_client.post(
-        reverse("task-move", args=[first.pk]), {"stage_id": other_stage.pk, "new_order": 0}
+        reverse("task-move", args=[first.pk]),
+        {"stage_id": other_stage.pk, "new_order": 0},
     )
     assert response.status_code == 400
 
@@ -170,7 +232,8 @@ def test_move_updates_stage_and_order_and_rejects_invalid_stage(auth_client, boa
     assert first.stage_id == todo.pk
 
     response = auth_client.post(
-        reverse("task-move", args=[first.pk]), {"stage_id": "not-a-uuid", "new_order": 0}
+        reverse("task-move", args=[first.pk]),
+        {"stage_id": "not-a-uuid", "new_order": 0},
     )
     assert response.status_code == 400
 
@@ -181,7 +244,9 @@ def test_move_rejects_task_from_inactive_board(auth_client, board):
     task = KanbanTask.objects.create(board=board_obj, stage=todo, title="Task")
     board_obj.is_active = False
     board_obj.save(update_fields=["is_active"])
-    response = auth_client.post(reverse("task-move", args=[task.pk]), {"stage_id": done.pk, "new_order": 0})
+    response = auth_client.post(
+        reverse("task-move", args=[task.pk]), {"stage_id": done.pk, "new_order": 0}
+    )
     assert response.status_code == 404
 
 
@@ -193,7 +258,9 @@ def test_move_rejects_task_with_mismatched_board_and_stage(auth_client, board):
     task.board = other_board
     task.save(update_fields=["board"])
 
-    response = auth_client.post(reverse("task-move", args=[task.pk]), {"stage_id": done.pk, "new_order": 0})
+    response = auth_client.post(
+        reverse("task-move", args=[task.pk]), {"stage_id": done.pk, "new_order": 0}
+    )
     assert response.status_code == 400
 
 
@@ -204,7 +271,9 @@ def test_move_requires_csrf(auth_client, board):
     client = Client(enforce_csrf_checks=True)
     assert client.login(username="operator", password="password")
 
-    response = client.post(reverse("task-move", args=[task.pk]), {"stage_id": done.pk, "new_order": 0})
+    response = client.post(
+        reverse("task-move", args=[task.pk]), {"stage_id": done.pk, "new_order": 0}
+    )
     assert response.status_code == 403
 
 
@@ -212,13 +281,17 @@ def test_move_requires_csrf(auth_client, board):
 def test_quick_add_validates_active_assignee(auth_client, board, operator):
     _, todo, _ = board
     inactive = Operator.objects.create(
-        employee_id="EMP-002", full_name="Inactive Operator", cost_center=operator.cost_center,
+        employee_id="EMP-002",
+        full_name="Inactive Operator",
+        cost_center=operator.cost_center,
         is_active=False,
     )
     url = reverse("task-quick")
 
     for assigned_to in ("not-a-uuid", inactive.pk):
-        response = auth_client.post(url, {"stage_id": todo.pk, "title": "Invalid", "assigned_to": assigned_to})
+        response = auth_client.post(
+            url, {"stage_id": todo.pk, "title": "Invalid", "assigned_to": assigned_to}
+        )
         assert response.status_code == 400
     assert not KanbanTask.objects.filter(title="Invalid").exists()
 
@@ -226,12 +299,15 @@ def test_quick_add_validates_active_assignee(auth_client, board, operator):
 @pytest.mark.django_db
 def test_quick_add_creates_task_and_renders_assignee(auth_client, board, operator):
     board_obj, todo, _ = board
-    response = auth_client.post(reverse("task-quick"), {
-        "stage_id": todo.pk,
-        "title": "Inspect aircraft",
-        "priority": "high",
-        "assigned_to": operator.pk,
-    })
+    response = auth_client.post(
+        reverse("task-quick"),
+        {
+            "stage_id": todo.pk,
+            "title": "Inspect aircraft",
+            "priority": "high",
+            "assigned_to": operator.pk,
+        },
+    )
     assert response.status_code == 200
     task = KanbanTask.objects.get(title="Inspect aircraft")
     assert task.board_id == board_obj.pk

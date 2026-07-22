@@ -1,14 +1,15 @@
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 from apps.core.models import BaseModel
 from apps.registry.models import Operator, Aircraft, CostCenter
 
 
 class FlightPermission(BaseModel):
     STATUS_CHOICES = [
-        ("requested", "Requested"),
-        ("approved", "Approved"),
-        ("denied", "Denied"),
-        ("completed", "Completed"),
+        ("requested", _("Requested")),
+        ("approved", _("Approved")),
+        ("denied", _("Denied")),
+        ("completed", _("Completed")),
     ]
     permission_number = models.CharField(max_length=50, unique=True)
     operator = models.ForeignKey(Operator, on_delete=models.PROTECT)
@@ -17,13 +18,16 @@ class FlightPermission(BaseModel):
     purpose = models.CharField(max_length=250)
     flight_date = models.DateField()
     location = models.CharField(max_length=250)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="requested")
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default="requested"
+    )
 
     def __str__(self):
         return self.permission_number
 
     def get_absolute_url(self):
         from django.urls import reverse
+
         return reverse("permission-detail", kwargs={"pk": self.pk})
 
 
@@ -41,6 +45,7 @@ class FlightRecord(BaseModel):
 
     def get_absolute_url(self):
         from django.urls import reverse
+
         return reverse("record-detail", kwargs={"pk": self.pk})
 
 

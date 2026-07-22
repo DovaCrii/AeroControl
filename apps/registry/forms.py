@@ -1,9 +1,41 @@
 from django import forms
-from .models import CostCenter, Aircraft, Operator, Assignment, Qualification
 
-class ModelForm(forms.ModelForm):
+from .models import Aircraft, Assignment, CostCenter, Operator, Qualification
+
+
+class CostCenterForm(forms.ModelForm):
     class Meta:
-        fields = "__all__"
+        model = CostCenter
+        fields = ["code", "name"]
 
-for model in (CostCenter, Aircraft, Operator, Assignment, Qualification):
-    globals()[f"{model.__name__}Form"] = type(f"{model.__name__}Form", (ModelForm,), {"Meta": type("Meta", (), {"model": model, "fields": "__all__"})})
+
+class AircraftForm(forms.ModelForm):
+    class Meta:
+        model = Aircraft
+        fields = [
+            "registration",
+            "type",
+            "model",
+            "manufacturer",
+            "year",
+            "cost_center",
+            "status",
+        ]
+
+
+class OperatorForm(forms.ModelForm):
+    class Meta:
+        model = Operator
+        fields = ["employee_id", "full_name", "email", "phone", "cost_center"]
+
+
+class AssignmentForm(forms.ModelForm):
+    class Meta:
+        model = Assignment
+        fields = ["operator", "aircraft", "start_date", "end_date"]
+
+
+class QualificationForm(forms.ModelForm):
+    class Meta:
+        model = Qualification
+        fields = ["operator", "qualification_type", "issue_date", "expiry_date"]

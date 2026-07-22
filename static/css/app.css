@@ -1,4 +1,4 @@
-/* ── AeroOps Desk Theme ────────────────────────────── */
+/* ── AeroControl Theme ──────────────────────────────── */
 :root {
   --navy: #1B2A4A;
   --turquoise: #2EC4B6;
@@ -15,6 +15,26 @@ body {
 /* ── Navbar ───────────────────────────────────────── */
 .navbar-dark.navy {
   background: var(--navy);
+}
+
+.brand-mark {
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 2rem;
+}
+
+.brand-lockup {
+  display: grid;
+  line-height: 1.05;
+}
+
+.brand-subtitle {
+  margin-top: 0.18rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.58rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 /* ── Sidebar ──────────────────────────────────────── */
@@ -49,13 +69,27 @@ body {
   font-weight: 600;
 }
 
-.sidebar a svg {
-  flex-shrink: 0;
-  opacity: 0.7;
+.nav-icon {
+  width: 1.2rem;
+  height: 1.2rem;
+  flex: 0 0 1.2rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
 }
 
-.sidebar a.active svg {
-  opacity: 1;
+.nav-overview .nav-icon { color: #0b7285; }
+.nav-registry .nav-icon { color: #2463b8; }
+.nav-compliance .nav-icon { color: #b15d00; }
+.nav-operations .nav-icon { color: #0d9488; }
+.nav-maintenance .nav-icon { color: #7c3aed; }
+.nav-workboard .nav-icon { color: #be185d; }
+.nav-admin .nav-icon { color: #596579; }
+
+.sidebar a.active {
+  box-shadow: inset 3px 0 0 var(--turquoise);
 }
 
 .sidebar a .badge {
@@ -89,6 +123,19 @@ body {
 
 .btn-outline-light:hover {
   background: rgba(255,255,255,0.1);
+}
+
+.language-switch {
+  width: 3.7rem;
+  min-height: 31px;
+  background-color: transparent;
+  border-color: rgba(255,255,255,0.65);
+  color: #fff;
+  font-weight: 600;
+}
+
+.language-switch option {
+  color: #243247;
 }
 
 /* ── Cards / Summary ──────────────────────────────── */
@@ -316,6 +363,12 @@ body {
   --navy: #0d1520;
   --turquoise: #2EC4B6;
   --light: #0f1419;
+  --surface: #1a1f2e;
+  --surface-raised: #20283a;
+  --border: #344156;
+  --text-primary: #e7edf5;
+  --text-secondary: #aeb9c8;
+  --text-muted: #8f9caf;
 }
 
 [data-theme="dark"] body {
@@ -345,13 +398,31 @@ body {
   color: #6b7a8f;
 }
 
+[data-theme="dark"] .nav-overview .nav-icon { color: #6ed4e3; }
+[data-theme="dark"] .nav-registry .nav-icon { color: #82b1ff; }
+[data-theme="dark"] .nav-compliance .nav-icon { color: #ffc66d; }
+[data-theme="dark"] .nav-operations .nav-icon { color: #55d6c8; }
+[data-theme="dark"] .nav-maintenance .nav-icon { color: #c4a5ff; }
+[data-theme="dark"] .nav-workboard .nav-icon { color: #f2a1c2; }
+[data-theme="dark"] .nav-admin .nav-icon { color: #b9c4d2; }
+
 [data-theme="dark"] .card {
-  background: #1a1f2e;
+  --bs-card-bg: var(--surface);
+  --bs-card-color: var(--text-primary);
+  --bs-card-border-color: var(--border);
+  background: var(--surface);
+  color: var(--text-primary);
   box-shadow: 0 1px 4px rgba(0,0,0,0.3);
 }
 
 [data-theme="dark"] .table {
-  color: #e1e7ef;
+  --bs-table-color: var(--text-primary);
+  --bs-table-bg: var(--surface);
+  --bs-table-border-color: var(--border);
+  --bs-table-hover-color: var(--text-primary);
+  --bs-table-hover-bg: #263246;
+  color: var(--text-primary);
+  background-color: var(--surface);
 }
 
 [data-theme="dark"] .table-hover tbody tr:hover {
@@ -359,20 +430,33 @@ body {
 }
 
 [data-theme="dark"] .table th {
-  color: #8892a4;
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .table-light {
+  --bs-table-color: var(--text-primary);
+  --bs-table-bg: var(--surface-raised);
+  --bs-table-border-color: var(--border);
 }
 
 [data-theme="dark"] .form-control,
 [data-theme="dark"] .form-select {
-  background: #1a1f2e;
-  border-color: #2a3040;
-  color: #e1e7ef;
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .form-control::placeholder {
+  color: var(--text-secondary);
+  opacity: 1;
 }
 
 [data-theme="dark"] .form-control:focus,
 [data-theme="dark"] .form-select:focus {
-  background: #1a1f2e;
+  background: var(--surface);
   border-color: #2EC4B6;
+  color: var(--text-primary);
+  box-shadow: 0 0 0 0.2rem rgba(46, 196, 182, 0.2);
 }
 
 [data-theme="dark"] .page-link {
@@ -394,39 +478,39 @@ body {
 }
 
 [data-theme="dark"] .text-muted {
-  color: #6b7a8f !important;
+  color: var(--text-muted) !important;
 }
 
 [data-theme="dark"] .bg-light {
-  background-color: #1a1f2e !important;
+  background-color: var(--surface) !important;
 }
 
 [data-theme="dark"] .table .btn-outline-secondary {
-  color: #c8d0da;
-  border-color: #3a4a5f;
+  color: var(--text-primary);
+  border-color: var(--border);
 }
 
 [data-theme="dark"] .kanban-column {
-  background: #1a1f2e;
+  background: var(--surface);
 }
 
 [data-theme="dark"] .kanban-column-header {
-  background: #1a1f2e;
-  color: #e1e7ef;
+  background: var(--surface);
+  color: var(--text-primary);
 }
 
 [data-theme="dark"] .kanban-count {
-  background: #2a3040;
-  color: #8892a4;
+  background: var(--surface-raised);
+  color: var(--text-secondary);
 }
 
 [data-theme="dark"] .kanban-card {
-  background: #0f1419;
+  background: #121925;
   box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
 [data-theme="dark"] .kanban-card-title {
-  color: #e1e7ef;
+  color: var(--text-primary);
 }
 
 [data-theme="dark"] .kanban-card:hover {
@@ -434,9 +518,9 @@ body {
 }
 
 [data-theme="dark"] .priority-low {
-  background: #2a3040;
-  color: #8892a4;
-  border-color: #3a4a5f;
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  border-color: var(--border);
 }
 
 [data-theme="dark"] .priority-medium {
@@ -455,11 +539,11 @@ body {
 }
 
 [data-theme="dark"] .kanban-empty {
-  color: #5a6a7f;
+  color: var(--text-muted);
 }
 
 [data-theme="dark"] .kanban-footer {
-  border-top-color: #2a3040;
+  border-top-color: var(--border);
 }
 
 body, .sidebar, .card, .form-control, .form-select, .page-link, .table,
