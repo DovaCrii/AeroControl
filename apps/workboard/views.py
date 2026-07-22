@@ -1,4 +1,5 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+import csv
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.http import HttpResponse
@@ -116,6 +117,33 @@ class KanbanTaskListView(ModelViewPermissionRequiredMixin, ListView):
             "filter_params": self.request.GET,
         })
         return context
+
+
+class TaskReportCsvView(ModelViewPermissionRequiredMixin, View):
+    model = KanbanTask
+    permission_action = "view"
+
+    def get(self, request):
+        response = HttpResponse(content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = 'attachment; filename="aerocontrol-tasks.csv"'
+        response.write("\ufeff")
+        writer = csv.writer(response, lineterminator="\r\n")
+        writer.writerow(["Task", "Board", "State", "Labels", "Assignee", "Priority", "Due", "Progress"])
+        listing = KanbanTaskListView()
+        listing.request = request
+        tasks = listing.get_queryset()
+        for task in tasks:
+            writer.writerow([
+                task.title,
+                task.board.name,
+                task.stage.get_status_type_display(),
+                ", ".join(label.name for label in task.labels.all()),
+                task.assigned_to.full_name if task.assigned_to else "",
+                task.get_priority_display(),
+                task.due_date.isoformat() if task.due_date else "",
+                f"{task.checklist_progress}%" if task.checklist_total else "No steps",
+            ])
+        return response
 
 
 class TaskDetailView(ModelViewPermissionRequiredMixin, View):
