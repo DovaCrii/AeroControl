@@ -1,5 +1,6 @@
 import pytest
 from datetime import date, timedelta
+import json
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
@@ -403,6 +404,13 @@ class TestStaticFiles:
         output = capsys.readouterr().out
         assert "status: ok" in output
         assert "errors: 0" in output
+
+    @pytest.mark.django_db
+    def test_chapter1_mapping_is_versioned(self, capsys):
+        call_command("chapter1_mapping", "--json")
+        payload = json.loads(capsys.readouterr().out)
+        assert payload["version"] == "chapter1-v1"
+        assert "aircraft" in payload["entities"]
 
     def test_css_is_served(self):
         static_path = finders.find("css/app.css")
