@@ -118,8 +118,9 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
   valor por defecto.
 - [ ] Ejecutar ensayo real de migración PostgreSQL con respaldo/rollback antes
   de cualquier despliegue multiusuario.
-- [ ] Incorporar permisos por objeto, tenancy si aplica y una estrategia de
-  concurrencia.
+- [ ] Incorporar permisos por objeto y tenancy si aplica.
+- [x] Añadir control de concurrencia optimista en PATCH API mediante
+  If-Unmodified-Since y respuesta 409 ante conflictos.
 - [ ] Separar frontend sólo cuando las necesidades de API, offline o móvil lo
   justifiquen; mantener el monolito Django mientras reduzca complejidad.
 - [x] Definir preflight CI de staging con migraciones, health/readiness, backup
