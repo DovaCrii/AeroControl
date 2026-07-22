@@ -33,9 +33,12 @@ class WList(CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListV
 class WCreate(ModelPermissionRequiredMixin, CreateView):
     permission_action = "add"
     template_name = "generic/form.html"
+    success_url_name = None
 
     def get_success_url(self):
-        return reverse(f"{self.model._meta.model_name}-list")
+        return reverse(
+            self.success_url_name or f"{self.model._meta.model_name}-list"
+        )
 
     def get_context_data(self, **kwargs):
         c = super().get_context_data(**kwargs)
@@ -52,7 +55,13 @@ for model, form, name in (
 ):
     globals()[f"{name}List"] = type(f"{name}List", (WList,), {"model": model})
     globals()[f"{name}Create"] = type(
-        f"{name}Create", (WCreate,), {"model": model, "form_class": form}
+        f"{name}Create",
+        (WCreate,),
+        {
+            "model": model,
+            "form_class": form,
+            "success_url_name": f"{name.lower()}-list",
+        },
     )
 
 
