@@ -97,6 +97,7 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
   Content Security Policy.
 - [x] Registrar acciones mutantes autenticadas con actor, solicitud, resultado
   y correlación; consultar el historial desde Django Admin.
+- [x] Hacer el historial de auditoría inmutable desde Django Admin.
 
 ## Evolución para escalar (P2)
 

@@ -10,3 +10,12 @@ class AuditEventAdmin(admin.ModelAdmin):
     list_filter = ("action", "method", "status_code")
     search_fields = ("path", "request_id", "object_id", "model_label", "actor__username")
     readonly_fields = [field.name for field in AuditEvent._meta.fields]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
