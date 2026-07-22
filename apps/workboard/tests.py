@@ -522,3 +522,12 @@ def test_tenant_membership_scopes_api(user, auth_client, board):
     titles = [item["title"] for item in response.json()["results"]]
     assert "Tenant task" in titles
     assert "Shared task" in titles
+
+
+@pytest.mark.django_db
+def test_drf_api_tasks_is_permissioned(auth_client, board):
+    board_obj, todo, _ = board
+    KanbanTask.objects.create(board=board_obj, stage=todo, title="DRF task")
+    response = auth_client.get("/api/drf/v1/workboard/tasks/")
+    assert response.status_code == 200
+    assert response.json()[0]["title"] == "DRF task"

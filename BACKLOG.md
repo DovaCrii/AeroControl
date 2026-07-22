@@ -117,8 +117,9 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
   límites de paginación.
 - [x] Añadir comando scale_readiness y runbook de PostgreSQL con respaldo,
   reconciliación y rollback explícitos.
-- [ ] Diseñar API v1 con Django REST Framework, autenticación y contratos
-  versionados.
+- [x] Incorporar Django REST Framework con endpoint read-only versionado para
+  tareas Kanban y permisos de modelo.
+- [ ] Completar autenticación por token y documentación OpenAPI para API v1.
 - [x] Parametrizar backend PostgreSQL opcional con psycopg y mantener SQLite como
   valor por defecto.
 - [ ] Ejecutar ensayo real de migración PostgreSQL con respaldo/rollback antes
