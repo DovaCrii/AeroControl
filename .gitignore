@@ -7,6 +7,8 @@ D:/I+D/AeroOpsDesk_Data/
 *.sqlite3
 staticfiles/
 media/
+logs/
+backups/
 .DS_Store
 
 # Obsidian vault config
