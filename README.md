@@ -169,6 +169,9 @@ CI includes a staging preflight that runs migrations/checks, creates a backup
 and verifies its checksum. Production deployment remains an explicit manual
 step with rollback.
 
+Run validate_operational_data before imports or release rehearsals to detect
+inactive references and invalid assignment date ranges without changing data.
+
 - All operational pages require authentication and model-level view/change
   permissions; CSV export uses the same authorization boundary.
 - Uploads allow only PDF, DOCX, XLSX, PNG, JPG and JPEG, enforce a 20 MB limit,

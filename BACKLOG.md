@@ -74,8 +74,10 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
   columnas dimensionadas.
 - [x] Reporte Word operativo de tareas Kanban con plantilla controlada y filtros
   aplicados.
-- [ ] Validaciones cruzadas entre seguro, aeronave, operador, permiso y
-  habilitación.
+- [x] Validaciones cruzadas base de aeronave, operador, centro de costo y
+  asignación mediante comando de calidad de datos.
+- [ ] Completar validaciones cruzadas de seguro, permiso y habilitación cuando
+  esos dominios tengan sus fuentes normalizadas.
 
 ## Operación segura y confiable (P1)
 

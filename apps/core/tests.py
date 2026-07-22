@@ -397,6 +397,13 @@ class TestStaticFiles:
         assert "database_vendor:" in output
         assert "rollback_required: True" in output
 
+    @pytest.mark.django_db
+    def test_validate_operational_data_reports_clean_dataset(self, capsys):
+        call_command("validate_operational_data")
+        output = capsys.readouterr().out
+        assert "status: ok" in output
+        assert "errors: 0" in output
+
     def test_css_is_served(self):
         static_path = finders.find("css/app.css")
 
