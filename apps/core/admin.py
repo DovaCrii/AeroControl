@@ -1,7 +1,8 @@
 from django.contrib import admin
-from .models import AuditEvent, BackupConfig
+from .models import AuditEvent, BackupConfig, OperationalTenant, TenantMembership
 
 admin.site.register(BackupConfig)
+admin.site.register([OperationalTenant, TenantMembership])
 
 
 @admin.register(AuditEvent)

@@ -172,6 +172,8 @@ PATCH clients can send If-Unmodified-Since; stale edits receive HTTP 409
 instead of silently overwriting newer changes.
 KanbanBoardAccess supports object-level viewer/editor/manager roles. Existing
 users remain model-permission compatible until explicit board rules are added.
+OperationalTenant and TenantMembership provide an optional multi-organization
+boundary; boards without a tenant remain shared for backward compatibility.
 
 Before evaluating PostgreSQL, run scale_readiness and follow
 docs/postgresql-readiness.md. The command is read-only and does not switch or

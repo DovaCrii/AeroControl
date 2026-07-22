@@ -4,6 +4,7 @@ from django.test import Client
 from django.urls import reverse
 
 from apps.registry.models import CostCenter, Operator
+from apps.core.models import OperationalTenant, TenantMembership
 from .models import KanbanBoard, KanbanBoardAccess, KanbanChecklistItem, KanbanLabel, KanbanStage, KanbanTask
 
 
@@ -502,3 +503,21 @@ def test_board_object_access_scopes_api(user, auth_client, board):
     assert response.status_code == 200
     titles = [item["title"] for item in response.json()["results"]]
     assert titles == ["Allowed"]
+
+
+@pytest.mark.django_db
+def test_tenant_membership_scopes_api(user, auth_client, board):
+    board_obj, todo, _ = board
+    tenant = OperationalTenant.objects.create(name="Tenant A", slug="tenant-a")
+    TenantMembership.objects.create(tenant=tenant, user=user, role="member")
+    board_obj.tenant = tenant
+    board_obj.save(update_fields=["tenant", "updated_at"])
+    KanbanTask.objects.create(board=board_obj, stage=todo, title="Tenant task")
+    other_board = KanbanBoard.objects.create(name="Tenant B")
+    other_stage = KanbanStage.objects.create(board=other_board, name="Todo")
+    KanbanTask.objects.create(board=other_board, stage=other_stage, title="Shared task")
+    response = auth_client.get("/api/v1/workboard/tasks/")
+    assert response.status_code == 200
+    titles = [item["title"] for item in response.json()["results"]]
+    assert "Tenant task" in titles
+    assert "Shared task" in titles

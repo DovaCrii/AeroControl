@@ -3,6 +3,7 @@ import csv
 import json
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -256,6 +257,10 @@ class ApiTaskListView(ApiPermissionMixin, View):
         listing.request = request
         queryset = listing.get_queryset()
         if not request.user.is_superuser:
+            from apps.core.models import OperationalTenant
+            tenants = OperationalTenant.objects.filter(members=request.user, is_active=True)
+            if tenants.exists():
+                queryset = queryset.filter(Q(board__tenant__isnull=True) | Q(board__tenant_id__in=tenants.values("id")))
             rules = KanbanBoardAccess.objects.filter(user=request.user, is_active=True)
             if rules.exists():
                 queryset = queryset.filter(board_id__in=rules.values("board_id"))
@@ -291,6 +296,8 @@ class ApiTaskUpdateView(ApiPermissionMixin, View):
     def patch(self, request, pk):
         task = get_object_or_404(KanbanTask, pk=pk, is_active=True, board__is_active=True)
         access = KanbanBoardAccess.objects.filter(board=task.board, user=request.user, is_active=True).first()
+        if task.board.tenant_id and not request.user.is_superuser and not task.board.tenant.members.filter(pk=request.user.pk, tenantmembership__is_active=True).exists():
+            return JsonResponse({"detail": "Tenant access denied."}, status=403)
         if not request.user.is_superuser and access and access.role not in {"editor", "manager"}:
             return JsonResponse({"detail": "Object permission denied."}, status=403)
         expected_updated = request.headers.get("If-Unmodified-Since")

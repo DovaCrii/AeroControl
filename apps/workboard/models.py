@@ -1,11 +1,12 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from apps.core.models import BaseModel
+from apps.core.models import BaseModel, OperationalTenant
 from apps.registry.models import Operator
 from django.contrib.auth import get_user_model
 
 
 class KanbanBoard(BaseModel):
+    tenant = models.ForeignKey(OperationalTenant, on_delete=models.PROTECT, null=True, blank=True, related_name="kanban_boards")
     name = models.CharField(max_length=150)
     description = models.TextField(blank=True)
 
