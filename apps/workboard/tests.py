@@ -1,6 +1,7 @@
 from datetime import timedelta
 import pytest
 from django.contrib.auth.models import Permission, User
+from rest_framework.authtoken.models import Token
 from django.test import Client
 from django.urls import reverse
 
@@ -531,3 +532,20 @@ def test_drf_api_tasks_is_permissioned(auth_client, board):
     response = auth_client.get("/api/drf/v1/workboard/tasks/")
     assert response.status_code == 200
     assert response.json()[0]["title"] == "DRF task"
+
+
+@pytest.mark.django_db
+def test_api_token_and_openapi_contract(user, auth_client):
+    token_response = Client().post(
+        "/api-token/", {"username": "operator", "password": "password"}
+    )
+    assert token_response.status_code == 200
+    token = token_response.json()["token"]
+    assert token == Token.objects.get(user=user).key
+
+    schema_response = Client().get("/api/v1/openapi.json")
+    assert schema_response.status_code == 200
+    schema = schema_response.json()
+    assert schema["openapi"] == "3.0.3"
+    assert "tokenAuth" in schema["components"]["securitySchemes"]
+    assert "/api/drf/v1/workboard/tasks/" in schema["paths"]
