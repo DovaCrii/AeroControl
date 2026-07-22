@@ -124,6 +124,16 @@ class TestAuthenticatedPages:
         assert "data-theme" in content
         assert "AeroControl" in content
 
+    def test_base_template_has_accessible_navigation_and_modal_hooks(self, auth_client):
+        response = auth_client.get(reverse("dashboard"))
+        content = response.content.decode()
+
+        assert 'href="#main-content"' in content
+        assert 'id="sidebar-toggle"' in content
+        assert 'aria-controls="sidebar"' in content
+        assert 'aria-labelledby="generic-modal-title"' in content
+        assert "shown.bs.modal" in content
+
     def test_dashboard_serializes_chart_data_without_marking_it_safe(self, auth_client):
         response = auth_client.get(reverse("dashboard"))
         content = response.content.decode()

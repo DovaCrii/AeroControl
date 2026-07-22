@@ -35,12 +35,12 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
   cada módulo con operaciones de escritura.
 - [ ] Aumentar pruebas de regresión para cargas de documentos, archivado,
   transiciones de estado y restauración de respaldos.
-- [ ] Revisar accesibilidad de teclado, foco, contraste y comportamiento en
+- [x] Revisar accesibilidad de teclado, foco, contraste y comportamiento en
   pantallas pequeñas de los flujos críticos.
 - [x] Convertir los gráficos vacíos del panel en un estado inicial guiado:
   explicar el orden de carga y enlazar a Centro de costo, aeronave, operador y
   permiso.
-- [ ] Añadir navegación lateral colapsable en pantallas pequeñas, con control
+- [x] Añadir navegación lateral colapsable en pantallas pequeñas, con control
   de teclado y foco gestionado.
 
 ## Fase 4 — Importación, búsquedas y reportes (P1)
