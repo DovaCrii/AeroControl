@@ -144,6 +144,8 @@ and applied batches can be reverted logically from the batch action.
 Each import screen also exposes a CSV template download compatible with Excel.
 The Kanban list also provides a filtered CSV operational report at
 /workboard/reports/tasks.csv.
+It also provides a native XLSX report at /workboard/reports/tasks.xlsx with
+freeze panes, filters and readable column widths.
 
 - All operational pages require authentication and model-level view/change
   permissions; CSV export uses the same authorization boundary.

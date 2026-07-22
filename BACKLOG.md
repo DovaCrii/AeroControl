@@ -70,7 +70,9 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
   los módulos operativos.
 - [x] Reporte CSV operativo de tareas Kanban reutilizando filtros y columnas de
   la vista de lista; compatible con Excel.
-- [ ] Reportes Word y Excel nativos con plantillas controladas.
+- [x] Reporte XLSX nativo de tareas Kanban con hoja congelada, filtro y
+  columnas dimensionadas.
+- [ ] Reportes Word con plantillas controladas.
 - [ ] Validaciones cruzadas entre seguro, aeronave, operador, permiso y
   habilitación.
 

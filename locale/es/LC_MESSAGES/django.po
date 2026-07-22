@@ -840,5 +840,8 @@ msgstr "Columnas CSV: employee_id,full_name,email,phone,cost_center."
 msgid "Download template"
 msgstr "Descargar plantilla"
 
+msgid "Export XLSX"
+msgstr "Exportar XLSX"
+
 msgid "Registry"
 msgstr "Registro"

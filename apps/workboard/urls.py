@@ -8,6 +8,7 @@ urlpatterns = [
     path("tasks/", views.TaskList.as_view(), name="task-list"),
     path("list/", views.KanbanTaskListView.as_view(), name="workboard-list"),
     path("reports/tasks.csv", views.TaskReportCsvView.as_view(), name="task-report-csv"),
+    path("reports/tasks.xlsx", views.TaskReportXlsxView.as_view(), name="task-report-xlsx"),
     path("boards/", views.BoardList.as_view(), name="board-list"),
     path("boards/new/", views.BoardCreate.as_view(), name="board-create"),
     path("stages/new/", views.StageCreate.as_view(), name="stage-create"),

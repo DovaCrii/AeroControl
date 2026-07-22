@@ -146,6 +146,40 @@ class TaskReportCsvView(ModelViewPermissionRequiredMixin, View):
         return response
 
 
+class TaskReportXlsxView(TaskReportCsvView):
+    def get(self, request):
+        from io import BytesIO
+        from openpyxl import Workbook
+        from openpyxl.styles import Font
+
+        listing = KanbanTaskListView()
+        listing.request = request
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = "Tasks"
+        headers = ["Task", "Board", "State", "Labels", "Assignee", "Priority", "Due", "Progress"]
+        sheet.append(headers)
+        for cell in sheet[1]:
+            cell.font = Font(bold=True)
+        for task in listing.get_queryset():
+            sheet.append([
+                task.title, task.board.name, task.stage.get_status_type_display(),
+                ", ".join(label.name for label in task.labels.all()),
+                task.assigned_to.full_name if task.assigned_to else "",
+                task.get_priority_display(), task.due_date.isoformat() if task.due_date else "",
+                f"{task.checklist_progress}%" if task.checklist_total else "No steps",
+            ])
+        sheet.freeze_panes = "A2"
+        sheet.auto_filter.ref = sheet.dimensions
+        for column in sheet.columns:
+            sheet.column_dimensions[column[0].column_letter].width = min(max(len(str(cell.value or "")) for cell in column) + 2, 40)
+        output = BytesIO()
+        workbook.save(output)
+        response = HttpResponse(output.getvalue(), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        response["Content-Disposition"] = 'attachment; filename="aerocontrol-tasks.xlsx"'
+        return response
+
+
 class TaskDetailView(ModelViewPermissionRequiredMixin, View):
     model = KanbanTask
     permission_action = "view"

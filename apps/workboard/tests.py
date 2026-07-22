@@ -406,3 +406,13 @@ def test_task_report_exports_filtered_csv(auth_client, board):
     assert response.status_code == 200
     assert "Export me" in response.content.decode()
     assert response["Content-Disposition"].endswith('aerocontrol-tasks.csv"')
+
+
+@pytest.mark.django_db
+def test_task_report_exports_xlsx(auth_client, board):
+    board_obj, todo, _ = board
+    KanbanTask.objects.create(board=board_obj, stage=todo, title="XLSX task")
+    response = auth_client.get(reverse("task-report-xlsx"))
+    assert response.status_code == 200
+    assert response["Content-Type"].startswith("application/vnd.openxmlformats")
+    assert response.content[:2] == b"PK"
