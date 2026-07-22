@@ -1,151 +1,103 @@
-{% load static %}<!doctype html>
-<html lang="en">
+{% load static i18n %}
+{% get_current_language as CURRENT_LANGUAGE %}
+<!doctype html>
+<html lang="{{ CURRENT_LANGUAGE }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}AeroOps Desk{% endblock %}</title>
+  <title>{% block title %}AeroControl{% endblock %}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.x/dist/chart.umd.min.js"></script>
-  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260722-brand">
   <script src="https://unpkg.com/htmx.org@2.x"></script>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='50' cy='50' r='46' fill='%231B2A4A'/%3E%3Cpath d='M28 62 L50 28 L72 62' stroke='%232EC4B6' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Ccircle cx='50' cy='62' r='4' fill='%232EC4B6'/%3E%3Cpath d='M50 34 V54' stroke='%232EC4B6' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="icon" type="image/svg+xml" href="{% static 'img/aerocontrol-mark.svg' %}">
   {% block extrahead %}{% endblock %}
   <script>
     (function(){var t=localStorage.getItem('theme');if(!t){t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'}document.documentElement.setAttribute('data-theme',t)})()
   </script>
 </head>
 <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-  <!-- Top navbar -->
+  <a class="skip-link" href="#main-content">{% translate "Skip to main content" %}</a>
   <nav class="navbar navbar-dark navy px-3">
+    <button class="btn btn-sm btn-outline-light sidebar-toggle d-md-none" type="button" id="sidebar-toggle" aria-controls="sidebar" aria-expanded="false">
+      <span class="visually-hidden">{% translate "Toggle navigation" %}</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2"/></svg>
+    </button>
     <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="{% url 'dashboard' %}">
-      <svg width="24" height="24" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="50" cy="50" r="46" stroke="#2EC4B6" stroke-width="3"/>
-        <path d="M28 62 L50 28 L72 62" stroke="#2EC4B6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="50" cy="62" r="4" fill="#2EC4B6"/>
-        <path d="M50 34 V54" stroke="#2EC4B6" stroke-width="2.5" stroke-linecap="round"/>
-      </svg>
-      AeroOps Desk
+      <img class="brand-mark" src="{% static 'img/aerocontrol-mark.svg' %}" alt="" aria-hidden="true">
+      <span class="brand-lockup">AeroControl<span class="brand-subtitle">{% translate "Air Operations Control" %}</span></span>
     </a>
     <span class="text-white d-flex align-items-center gap-2 small">
       <span class="opacity-75">{{ user.get_username }}</span>
-      <a class="btn btn-sm btn-outline-light" href="{% url 'logout' %}">Sign out</a>
-      <button class="btn btn-sm btn-outline-light" onclick="toggleTheme()" aria-label="Toggle theme">
-        <svg id="theme-icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/>
-        </svg>
+      <form method="post" action="{% url 'set_language' %}" class="d-inline" hx-boost="false">
+        {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <select class="form-select form-select-sm language-switch" name="language" onchange="this.form.submit()" aria-label="{% translate 'Language' %}">
+          <option value="en" {% if CURRENT_LANGUAGE == "en" %}selected{% endif %}>EN</option>
+          <option value="es" {% if CURRENT_LANGUAGE == "es" %}selected{% endif %}>ES</option>
+        </select>
+      </form>
+      <form method="post" action="{% url 'logout' %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-light" type="submit">{% translate "Sign out" %}</button></form>
+      <button class="btn btn-sm btn-outline-light" onclick="toggleTheme()" aria-label="{% translate 'Toggle theme' %}">
+        <svg id="theme-icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/></svg>
       </button>
     </span>
   </nav>
 
   <div class="d-flex">
-    <!-- Sidebar -->
-    <aside class="sidebar p-3 d-flex flex-column" id="sidebar">
+    <aside class="sidebar p-3 d-flex flex-column" id="sidebar" aria-label="{% translate 'Main navigation' %}">
       {% with request.resolver_match.url_name as url_name %}
-      <a href="{% url 'dashboard' %}" class="{% if url_name == 'dashboard' %}active{% endif %}">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M0 1.5A1.5 1.5 0 0 1 1.5 0h2A1.5 1.5 0 0 1 5 1.5v2A1.5 1.5 0 0 1 3.5 5h-2A1.5 1.5 0 0 1 0 3.5v-2zM0 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V8zm13 2a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/></svg>
-        Dashboard
-      </a>
-      <span class="sidebar-label">Registry</span>
-      <a href="{% url 'costcenter-list' %}" class="{% if url_name == 'costcenter-list' %}active{% endif %}">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4 10.781c.148 1.667 1.513 2.85 3.591 3.003V15h1.043v-1.216c1.952-.177 3.326-1.357 3.326-3.09 0-1.543-1.016-2.54-2.746-2.98l-.646-.164v-3.99c1.105.139 1.904.536 2.14 1.303h1.552c-.196-1.443-1.363-2.494-3.292-2.658V2h-1.043v1.197c-1.858.167-3.206 1.332-3.206 2.92 0 1.47.973 2.432 2.633 2.832l.574.153v4c-1.174-.15-1.996-.566-2.264-1.386H4zm2.217-2.867c-.54-.247-.808-.642-.808-1.117 0-.654.487-1.045 1.163-1.179v2.479l-.355-.183zm2.527 3.473c.665.296 1.022.703 1.022 1.251 0 .728-.575 1.164-1.56 1.274l.538-2.525z"/></svg>
-        Cost Centers
-      </a>
-      <a href="{% url 'aircraft-list' %}" class="{% if url_name == 'aircraft-list' %}active{% endif %}">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M2 5.5a.5.5 0 0 1 .5-.5h.5V4a.5.5 0 0 1 1 0v1h.5a.5.5 0 0 1 0 1H4v.5a.5.5 0 0 1-1 0V6h-.5a.5.5 0 0 1-.5-.5zM14 13a1 1 0 0 1-1 1H3a1 1 0 0 1 0-2h10a1 1 0 0 1 1 1zm-6 0a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/></svg>
-        Aircraft
-      </a>
-      <a href="{% url 'operator-list' %}" class="{% if url_name == 'operator-list' %}active{% endif %}">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/></svg>
-        Operators
-      </a>
-      <a href="{% url 'assignment-list' %}" class="{% if url_name == 'assignment-list' %}active{% endif %}">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.5A1.5 1.5 0 0 1 15 6.5v5.5a.5.5 0 0 1-.5.5H7a.5.5 0 0 1 0-1h7.5v-5a.5.5 0 0 0-.5-.5H5v2.5a.5.5 0 0 1-1 0V5H1.5A1.5 1.5 0 0 1 0 3.5z"/></svg>
-        Assignments
-      </a>
-      <span class="sidebar-label">Compliance</span>
-      <a href="{% url 'document-list' %}" class="{% if url_name == 'document-list' %}active{% endif %}">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4 0h5.5a1.5 1.5 0 0 1 1.06.44l3.5 3.5A1.5 1.5 0 0 1 14.5 5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zm5.5 1.5V5H13l-3.5-3.5zM5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1H5z"/></svg>
-        Documents
-      </a>
-      <a href="{% url 'alert-list' %}" class="{% if url_name == 'alert-list' %}active{% endif %}">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.553.553 0 0 1-1.1 0L7.1 5.995z"/><path d="m8 15.93-.19.008a6.88 6.88 0 0 1-2.044-.393l.173-.86c.878.259 1.785.336 2.693.286.49.027.98-.03 1.46-.17l.172.86a6.88 6.88 0 0 1-2.044.393L8 15.93z"/><path d="M6.236.3.672 6.417a2.114 2.114 0 0 0 .423 3.283l2.033 1.158c.133.076.245.177.263.324l.327 3.19a.847.847 0 0 0 .847.764h.067l7.367-.6a6.86 6.86 0 0 0 4.123-1.966l.656-.7a2.115 2.115 0 0 0-.415-3.282l-2.084-1.189a.286.286 0 0 1-.185-.257l-.158-2.71a5.18 5.18 0 0 0-1.84-3.55A5.07 5.07 0 0 0 9.85.322 5.17 5.17 0 0 0 6.236.3z"/></svg>
-        Alerts
-        <span id="alert-badge" class="badge bg-danger ms-auto"
-              hx-get="{% url 'alert-count' %}" hx-trigger="every 60s"
-              hx-target="this" hx-swap="outerHTML">{{ unresolved_alert_count }}</span>
-      </a>
-      <span class="sidebar-label">Operations</span>
-      <a href="{% url 'permission-list' %}" class="{% if url_name == 'permission-list' %}active{% endif %}">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M13.5 8.5a.5.5 0 0 1 .5.5v5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a.5.5 0 0 1 .5-.5h.5V5a3.5 3.5 0 1 1 7 0v3.5h.5zM8.5 5a1.5 1.5 0 1 0-3 0v3.5h3V5z"/></svg>
-        Permissions
-      </a>
-      <a href="{% url 'record-list' %}" class="{% if url_name == 'record-list' %}active{% endif %}">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M6.428 1.151C6.708.591 7.213 0 8 0s1.292.59 1.572 1.151C9.861 1.73 10 2.431 10 3v3.691l5.17 2.585a1.5 1.5 0 0 1 .83 1.342V12a.5.5 0 0 1-.582.493l-5.507-.918-.375 2.253 1.318 1.318A.5.5 0 0 1 10.5 16h-5a.5.5 0 0 1-.354-.854l1.319-1.318-.376-2.253-5.507.918A.5.5 0 0 1 0 12v-1.382a1.5 1.5 0 0 1 .83-1.342L6 6.691V3c0-.568.14-1.271.428-1.849Z"/></svg>
-        Flights
-      </a>
-      <a href="{% url 'calendar' %}" class="{% if url_name == 'calendar' %}active{% endif %}">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/></svg>
-        Calendar
-      </a>
-      <span class="sidebar-label">Maintenance</span>
-      <a href="{% url 'maintenance-list' %}" class="{% if url_name == 'maintenance-list' %}active{% endif %}">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4.54 3.87a5 5 0 0 1 6.19-1.36.5.5 0 0 1 .1.76l-1.43 1.43a.5.5 0 0 0 0 .7l1.43 1.43a.5.5 0 0 1-.1.76 5 5 0 0 1-6.19-1.36.5.5 0 0 1 .2-.77l1.06-.53a.5.5 0 0 0 0-.88L4.74 4.64a.5.5 0 0 1-.2-.77z"/><path d="M1.5 9.66a.5.5 0 0 1 .3-.5l3.68-1.57a.5.5 0 0 1 .64.2l.7 1.22a.5.5 0 0 0 .86 0l.7-1.22a.5.5 0 0 1 .64-.2l3.68 1.57a.5.5 0 0 1 .3.5v4.34a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5V9.66z"/></svg>
-        Records
-      </a>
-      <span class="sidebar-label">Workboard</span>
-      <a href="{% url 'kanban' %}" class="{% if url_name == 'kanban' %}active{% endif %}">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M2.5 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2h-11zm4 2h3a.5.5 0 0 1 .5.5v.5h2a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 .5-.5h2V2.5a.5.5 0 0 1 .5-.5z"/></svg>
-        Kanban
-      </a>
+      <a href="{% url 'dashboard' %}" class="nav-item nav-overview {% if url_name == 'dashboard' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>{% translate "Dashboard" %}</a>
+
+      <span class="sidebar-label">{% translate "Registry" %}</span>
+      <a href="{% url 'costcenter-list' %}" class="nav-item nav-registry {% if url_name == 'costcenter-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V5l8-3 8 3v16"/><path d="M9 21v-4h6v4M8 8h.01M12 8h.01M16 8h.01M8 12h.01M12 12h.01M16 12h.01"/></svg>{% translate "Cost Centers" %}</a>
+      <a href="{% url 'aircraft-list' %}" class="nav-item nav-registry {% if url_name == 'aircraft-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13l7-2 3-7 2 1-1 6 6 2 1 2-7-1-3 5-2-1 1-4-5 1z"/></svg>{% translate "Aircraft" %}</a>
+      <a href="{% url 'operator-list' %}" class="nav-item nav-registry {% if url_name == 'operator-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg>{% translate "Operators" %}</a>
+      <a href="{% url 'assignment-list' %}" class="nav-item nav-registry {% if url_name == 'assignment-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 15l-2 2a3 3 0 0 1-4-4l3-3a3 3 0 0 1 4 0"/><path d="M15 9l2-2a3 3 0 0 1 4 4l-3 3a3 3 0 0 1-4 0M8 16l8-8"/></svg>{% translate "Assignments" %}</a>
+
+      <span class="sidebar-label">{% translate "Compliance" %}</span>
+      <a href="{% url 'document-list' %}" class="nav-item nav-compliance {% if url_name == 'document-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>{% translate "Documents" %}</a>
+      <a href="{% url 'alert-list' %}" class="nav-item nav-compliance {% if url_name == 'alert-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 22h4"/></svg>{% translate "Alerts" %} <span id="alert-badge" class="badge bg-danger ms-auto" hx-get="{% url 'alert-count' %}" hx-trigger="every 60s" hx-target="this" hx-swap="outerHTML">{{ unresolved_alert_count }}</span></a>
+
+      <span class="sidebar-label">{% translate "Operations" %}</span>
+      <a href="{% url 'permission-list' %}" class="nav-item nav-operations {% if url_name == 'permission-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 13l2 2 4-4"/></svg>{% translate "Permissions" %}</a>
+      <a href="{% url 'record-list' %}" class="nav-item nav-operations {% if url_name == 'record-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13l7-2 3-7 2 1-1 6 6 2 1 2-7-1-3 5-2-1 1-4-5 1z"/><path d="M4 6h4"/></svg>{% translate "Flights" %}</a>
+      <a href="{% url 'calendar' %}" class="nav-item nav-operations {% if url_name == 'calendar' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>{% translate "Calendar" %}</a>
+
+      <span class="sidebar-label">{% translate "Maintenance" %}</span>
+      <a href="{% url 'maintenance-list' %}" class="nav-item nav-maintenance {% if url_name == 'maintenance-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 6a5 5 0 0 0-6 6l-5 5 4 4 5-5a5 5 0 0 0 6-6l-3 3-4-4z"/></svg>{% translate "Records" %}</a>
+
+      <span class="sidebar-label">{% translate "Workboard" %}</span>
+      <a href="{% url 'kanban' %}" class="nav-item nav-workboard {% if url_name == 'kanban' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 8v8M13 8v5M18 8v8"/></svg>{% translate "Kanban" %}</a>
       <hr>
-      <a href="{% url 'admin:index' %}">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M6 0a6 6 0 0 1 4.72 9.66l4.3 4.31a1 1 0 0 1-1.41 1.42l-4.31-4.3A6 6 0 1 1 6 0zm0 2a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></svg>
-        Admin
-      </a>
+      <a href="{% url 'admin:index' %}" class="nav-item nav-admin"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2 2-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.04 1.56V20h-2.8v-.1A1.7 1.7 0 0 0 11 18.34a1.7 1.7 0 0 0-1.88.34l-.06.06-2-2 .06-.06A1.7 1.7 0 0 0 7.46 15 1.7 1.7 0 0 0 5.9 14H5.8v-2.8h.1a1.7 1.7 0 0 0 1.56-1.04 1.7 1.7 0 0 0-.34-1.88l-.06-.06 2-2 .06.06A1.7 1.7 0 0 0 11 6.62a1.7 1.7 0 0 0 1.04-1.56V5h2.8v.1a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06 2 2-.06.06a1.7 1.7 0 0 0-.34 1.88A1.7 1.7 0 0 0 21 11.2h.1V14H21a1.7 1.7 0 0 0-1.6 1z"/></svg>{% translate "Admin" %}</a>
       {% endwith %}
     </aside>
 
-    <!-- Main content -->
-    <main class="container-fluid p-4" hx-boost="true">
+    <main class="container-fluid p-4" id="main-content" tabindex="-1">
+      {% if messages %}
+      <div class="mb-3" aria-live="polite">
+        {% for message in messages %}<div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="status">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% translate 'Close' %}"></button></div>{% endfor %}
+      </div>
+      {% endif %}
       {% block content %}{% endblock %}
     </main>
   </div>
 
-  <div class="modal fade" id="generic-modal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Form</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body" id="modal-content">
-          <div class="text-center text-muted py-4">Loading…</div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <div class="modal fade" id="generic-modal" tabindex="-1" aria-labelledby="generic-modal-title" aria-hidden="true"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="generic-modal-title">{% translate "Form" %}</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% translate 'Close' %}"></button></div><div class="modal-body" id="modal-content"><div class="text-center text-muted py-4" role="status">{% translate "Loading…" %}</div></div></div></div></div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    function toggleTheme() {
-      const html = document.documentElement;
-      const current = html.getAttribute('data-theme');
-      const next = current === 'dark' ? 'light' : 'dark';
-      html.setAttribute('data-theme', next);
-      localStorage.setItem('theme', next);
-    }
-
-    document.body.addEventListener('htmx:configRequest', function (event) {
-      event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
-    });
-    document.body.addEventListener('htmx:afterSwap', function (event) {
-      if (event.detail.target.id === 'modal-content') {
-        bootstrap.Modal.getOrCreateInstance(document.getElementById('generic-modal')).show();
-      }
-    });
-    document.body.addEventListener('modal-form-success', function () {
-      bootstrap.Modal.getOrCreateInstance(document.getElementById('generic-modal')).hide();
-      window.location.reload();
-    });
+    let modalTrigger = null;
+    function toggleTheme() { const html = document.documentElement; const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; html.setAttribute('data-theme', next); localStorage.setItem('theme', next); }
+    function setSidebar(open) { const sidebar = document.getElementById('sidebar'); const toggle = document.getElementById('sidebar-toggle'); sidebar.classList.toggle('is-open', open); toggle.setAttribute('aria-expanded', String(open)); }
+    document.getElementById('sidebar-toggle').addEventListener('click', function () { setSidebar(!document.getElementById('sidebar').classList.contains('is-open')); });
+    document.querySelectorAll('#sidebar a').forEach(function (link) { link.addEventListener('click', function () { setSidebar(false); }); });
+    document.addEventListener('keydown', function (event) { if (event.key === 'Escape') { setSidebar(false); } });
+    document.body.addEventListener('htmx:configRequest', function (event) { event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}'; });
+    document.body.addEventListener('click', function (event) { const trigger = event.target.closest('[data-bs-target="#generic-modal"]'); if (trigger) { modalTrigger = trigger; } });
+    document.body.addEventListener('htmx:afterSwap', function (event) { if (event.detail.target.id === 'modal-content') { bootstrap.Modal.getOrCreateInstance(document.getElementById('generic-modal')).show(); } });
+    document.getElementById('generic-modal').addEventListener('shown.bs.modal', function () { const modal = this; window.setTimeout(function () { const first = modal.querySelector('input, select, textarea, button:not(.btn-close)'); if (first) first.focus(); }, 50); });
+    document.getElementById('generic-modal').addEventListener('hidden.bs.modal', function () { if (modalTrigger) { modalTrigger.focus(); } });
+    document.body.addEventListener('modal-form-success', function () { bootstrap.Modal.getOrCreateInstance(document.getElementById('generic-modal')).hide(); window.location.reload(); });
   </script>
   {% block extrascripts %}{% endblock %}
 </body>

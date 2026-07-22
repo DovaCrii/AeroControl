@@ -1,55 +1,31 @@
 {% extends "base.html" %}
-{% load aero_tags crispy_forms_tags %}
-{% block title %}{{ record }} - Maintenance - AeroOps Desk{% endblock %}
+{% load aero_tags crispy_forms_tags i18n %}
+{% block title %}{{ record }} - {% translate "Maintenance" %} - AeroControl{% endblock %}
 {% block content %}
 <div class="card p-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3">Maintenance Record</h1>
+    <h1 class="h3">{% translate "Maintenance record" %}</h1>
     <div class="d-flex gap-2">
-      {% for action, label, css_class in status_actions %}
-        <form method="post" action="{{ action }}/" style="display:inline">
-          {% csrf_token %}
-          <button class="btn {{ css_class }}">{{ label }}</button>
-        </form>
-      {% endfor %}
-      <a href="javascript:history.back()" class="btn btn-outline-secondary">← Back</a>
+      {% for action, label, css_class in status_actions %}<form method="post" action="{{ action }}/" style="display:inline">{% csrf_token %}<button class="btn {{ css_class }}">{{ label }}</button></form>{% endfor %}
+      <a href="javascript:history.back()" class="btn btn-outline-secondary">← {% translate "Back" %}</a>
     </div>
   </div>
-
-  <table class="table table-bordered">
-    <tbody>
-      <tr><th class="w-25">Aircraft</th><td>{{ record.aircraft }}</td></tr>
-      <tr><th>Type</th><td>{{ record.get_maintenance_type_display }}</td></tr>
-      <tr><th>Status</th><td><span class="badge bg-{% if record.status == 'completed' %}success{% elif record.status == 'in_progress' %}warning{% else %}secondary{% endif %}">{{ record.get_status_display }}</span></td></tr>
-      <tr><th>Description</th><td>{{ record.description }}</td></tr>
-      <tr><th>Scheduled Date</th><td>{{ record.scheduled_date|date:"Y-m-d" }}</td></tr>
-      <tr><th>Completed Date</th><td>{{ record.completed_date|date:"Y-m-d"|default:"—" }}</td></tr>
-      <tr><th>Performed By</th><td>{{ record.performed_by|default:"—" }}</td></tr>
-      <tr><th>Cost</th><td>${{ record.cost|floatformat:2 }}</td></tr>
-      <tr><th>Notes</th><td>{{ record.notes|default:"—" }}</td></tr>
-    </tbody>
-  </table>
+  <table class="table table-bordered"><tbody>
+    <tr><th class="w-25">{% translate "Aircraft" %}</th><td>{{ record.aircraft }}</td></tr>
+    <tr><th>{% translate "Type" %}</th><td>{{ record.get_maintenance_type_display }}</td></tr>
+    <tr><th>{% translate "Status" %}</th><td><span class="badge bg-{% if record.status == 'completed' %}success{% elif record.status == 'in_progress' %}warning{% else %}secondary{% endif %}">{{ record.get_status_display }}</span></td></tr>
+    <tr><th>{% translate "Description" %}</th><td>{{ record.description }}</td></tr>
+    <tr><th>{% translate "Scheduled date" %}</th><td>{{ record.scheduled_date|date:"Y-m-d" }}</td></tr>
+    <tr><th>{% translate "Completed date" %}</th><td>{{ record.completed_date|date:"Y-m-d"|default:"—" }}</td></tr>
+    <tr><th>{% translate "Performed by" %}</th><td>{{ record.performed_by|default:"—" }}</td></tr>
+    <tr><th>{% translate "Cost" %}</th><td>${{ record.cost|floatformat:2 }}</td></tr>
+    <tr><th>{% translate "Notes" %}</th><td>{{ record.notes|default:"—" }}</td></tr>
+  </tbody></table>
 </div>
-
-<!-- Status History -->
 <div class="card mt-3 p-4">
-  <h2 class="h5 mb-3">Status History</h2>
-  {% if record.history.exists %}
-    <table class="table table-sm">
-      <thead><tr><th>Date</th><th>From</th><th>To</th><th>By</th></tr></thead>
-      <tbody>
-        {% for h in record.history.all %}
-        <tr>
-          <td>{{ h.changed_at|date:"Y-m-d H:i" }}</td>
-          <td>{{ h.previous_status }}</td>
-          <td>{{ h.new_status }}</td>
-          <td>{{ h.changed_by }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <p class="text-muted mb-0">No status changes recorded yet.</p>
-  {% endif %}
+  <h2 class="h5 mb-3">{% translate "Status history" %}</h2>
+  {% if record.history.exists %}<table class="table table-sm"><thead><tr><th>{% translate "Date" %}</th><th>{% translate "From" %}</th><th>{% translate "To" %}</th><th>{% translate "By" %}</th></tr></thead><tbody>
+    {% for h in record.history.all %}<tr><td>{{ h.changed_at|date:"Y-m-d H:i" }}</td><td>{{ h.previous_status }}</td><td>{{ h.new_status }}</td><td>{{ h.changed_by }}</td></tr>{% endfor %}
+  </tbody></table>{% else %}<p class="text-muted mb-0">{% translate "No status changes recorded yet." %}</p>{% endif %}
 </div>
 {% endblock %}

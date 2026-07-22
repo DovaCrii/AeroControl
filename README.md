@@ -1,224 +1,239 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://via.placeholder.com/120x120/1B2A4A/2EC4B6?text=AO">
-    <img src="https://via.placeholder.com/120x120/1B2A4A/2EC4B6?text=AO" alt="AeroOps Desk" width="120" height="120">
-  </picture>
+  <img src="static/img/aerocontrol-mark.svg" alt="AeroControl drone mark" width="128" height="96">
 </p>
 
-<h1 align="center">AeroOps Desk</h1>
+# AeroControl
 
-<p align="center">
-  <strong>RPA Operations Console</strong><br>
-  Local control panel for managing RPA fleet operations, crew qualifications, compliance, and maintenance.
-</p>
+Local-first operations desk for RPA/UAS teams. AeroControl centralizes fleet
+registry, crew and qualification records, compliance documents, flight
+permissions, maintenance, alerts, and an operational Kanban board in one Django
+application.
 
-<p align="center">
-  <a href="#-features">Features</a> •
-  <a href="#-architecture">Architecture</a> •
-  <a href="#-getting-started">Getting Started</a> •
-  <a href="#-project-structure">Structure</a> •
-  <a href="#-development">Development</a>
-</p>
+> **Status:** alpha / active stabilization. Suitable for controlled local
+> evaluation; production deployment still requires an operational backup,
+> antivirus, retention, and access-control policy.
 
-<p align="center">
-  <img src="https://img.shields.io/badge/python-3.12-blue?style=flat&logo=python&logoColor=white" alt="Python 3.12">
-  <img src="https://img.shields.io/badge/django-6.0-092E20?style=flat&logo=django&logoColor=white" alt="Django 6.0">
-  <img src="https://img.shields.io/badge/license-MIT-green?style=flat" alt="MIT License">
-  <img src="https://img.shields.io/badge/status-alpha-yellow?style=flat" alt="Status: Alpha">
-</p>
+## What it provides
 
-<br>
+| Area | Current scope |
+| --- | --- |
+| Registry | Cost centers, aircraft, operators, assignments, qualifications |
+| Compliance | Document metadata and uploads, document types, expiry alerts and rules |
+| Operations | Flight-permission workflow, permission history, flight records |
+| Maintenance | Scheduled/unscheduled records, status transitions and history |
+| Workboard | Operational Kanban and list views, typed stages, labels, checklists, progress, priorities and operator assignment |
+| Dashboard | Operational counts, upcoming expirations and work distribution |
+| Localization | English and Spanish UI with a direct language switch |
+| Security | Authenticated access, model permissions, CSV authorization, safe uploads |
 
-## 💡 About
+## Technical architecture
 
-**AeroOps Desk** was born from the operational reality of RPA (Remotely Piloted Aircraft) fleet management: spreadsheets everywhere, expiring credentials tracked in email threads, maintenance records scattered across folders, and flight permissions cobbled together at the last minute.
+- **Backend:** Python 3.12, Django 6.0, server-rendered templates.
+- **UI:** Django templates, Bootstrap 5 via `crispy-bootstrap5`, HTMX for
+  partial interactions, and project CSS in `static/css/app.css`.
+- **Persistence:** SQLite by default. The database path is configured through
+  `DB_PATH`; PostgreSQL is a future scale option, not the current default.
+- **Storage:** uploaded documents are stored outside the repository through
+  `DOCUMENTS_DIR`/`DOCUMENTS_ROOT`. Backups are copied to `BACKUPS_DIR`.
+- **Operations:** PowerShell scripts wrap repeatable setup, run and backup
+  commands. CI runs on GitHub Actions with `uv`, Ruff, pytest, Bandit and
+  pip-audit.
 
-This is a **local-first operations console** — not a SaaS platform, not a cloud dashboard. It lives on the operator's machine, talks to a local SQLite database, and keeps operational data completely under the operator's control. The database, documents, and backups live outside the repository, on a separate data directory, so the code can be updated, rolled back, or even reinstalled without touching a single operational record.
+### Repository layout
 
-The name reflects its purpose: **Aero** (aviation), **Ops** (operations), **Desk** (your personal workspace). A tool for the person who needs to know, at a glance, what's airworthy, who's current, what's expiring, and what's next.
-
-<br>
-
-## ✈ Features
-
-| Domain | Capabilities |
-|--------|-------------|
-| **Registry** | Cost centers, aircraft fleet, operators, assignments, and qualifications — all with archival instead of deletion |
-| **Compliance** | Document management with version replacement, configurable alert rules, and automatic expiration tracking |
-| **Operations** | Flight permission workflow (request → approve → complete), flight record logging |
-| **Maintenance** | Scheduled and unscheduled maintenance records, status history, and technical log |
-| **Workboard** | Personal Kanban with stages, task priorities, and operator assignment |
-| **Dashboard** | Executive summary with counts, upcoming expirations, and task distribution |
-| **Backup** | OneDrive-safe SQLite snapshots via PowerShell automation |
-
-<br>
-
-## 🏗 Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    AeroOps Desk (Django)                     │
-│                                                             │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌───────────────┐  │
-│  │ Registry │ │Compliance│ │Operations│ │  Maintenance   │  │
-│  │  ─────── │ │ ──────── │ │ ──────── │ │  ────────────  │  │
-│  │ Aircraft │ │Documents │ │Permits   │ │  Records       │  │
-│  │Operator  │ │Alerts    │ │Flights   │ │  History       │  │
-│  │CostCenter│ │Rules     │ │          │ │                │  │
-│  └─────┬────┘ └────┬─────┘ └────┬─────┘ └───────┬────────┘  │
-│        └───────────┴────────────┴───────────────┘           │
-│                            │                                │
-│                    ┌───────┴────────┐                        │
-│                    │   Workboard    │                        │
-│                    │  (Kanban)      │                        │
-│                    └───────┬────────┘                        │
-│                            │                                │
-│                    ┌───────┴────────┐                        │
-│                    │   Dashboard    │                        │
-│                    │  (Read-only)   │                        │
-│                    └────────────────┘                        │
-│                                                             │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │                Django REST API (Future)               │   │
-│  └──────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
-         ↕                                          ↕
-    ┌─────────┐                           ┌──────────────────┐
-    │SQLite   │                           │  AeroOpsDesk_Data│
-    │Database │                           │ ──────────────── │
-    │(local)  │                           │ documents/       │
-    └─────────┘                           │ backups/         │
-                                          │ exports/         │
-                                          │ logs/            │
-                                          └──────────────────┘
+```text
+aero-ops-desk/
+├── apps/
+│   ├── core/           # shared models, permissions, backups, tests
+│   ├── registry/       # cost centers, aircraft, operators, assignments
+│   ├── compliance/     # documents, alerts and retention/security hooks
+│   ├── operations/     # flight permissions and flight records
+│   ├── maintenance/    # maintenance records and status history
+│   ├── workboard/      # Kanban workflow
+│   └── dashboard/      # dashboard views
+├── config/settings/    # base and development settings
+├── templates/          # server-rendered UI
+├── static/             # CSS and visual assets
+├── scripts/            # setup.ps1, run.ps1 and backup.ps1
+├── docs/               # technical documentation
+├── openspec/           # specifications and change records
+└── manage.py
 ```
 
-### Separation of Code & Data
-
-A core design decision: **code and data never mix**.
-
-```
-D:\I+D\
-├── aero-ops-desk\           ← Code (git repository)
-│   ├── apps/
-│   ├── config/
-│   ├── templates/
-│   ├── manage.py
-│   └── ...
-│
-└── AeroOpsDesk_Data\        ← Data (NOT in git)
-    ├── db/aero_ops.sqlite3   ← Active database
-    ├── documents/             ← Uploaded files
-    ├── backups/               ← SQLite snapshots
-    ├── exports/               ← Generated reports
-    └── logs/                  ← Application logs
-```
-
-This means you can `git pull`, reinstall, or switch branches without risking your operational data. Backups go to OneDrive as closed snapshots — the live SQLite database is never directly synced.
-
-<br>
-
-## 🚀 Getting Started
+## Local setup (Windows)
 
 ### Prerequisites
 
-- **Python 3.12+**
-- **PowerShell 7+** (for automation scripts)
-- **Git** (for updates)
+- Python 3.12.x
+- PowerShell 7+
+- Git
+- [uv](https://docs.astral.sh/uv/)
 
-### Installation
+Create a `.env` file at the repository root. The minimum values are:
+
+```dotenv
+SECRET_KEY=replace-with-a-long-random-secret
+DEBUG=True
+DB_PATH=D:/I+D/AeroOpsDesk_Data/db/aero_ops.sqlite3
+DOCUMENTS_DIR=D:/I+D/AeroOpsDesk_Data/documents
+LOGS_DIR=D:/I+D/AeroOpsDesk_Data/logs
+# Optional: executable available on PATH, for example clamscan
+# DOCUMENTS_ANTIVIRUS_COMMAND=clamscan
+
+# Optional PostgreSQL rehearsal (overrides DB_PATH when enabled)
+# DB_ENGINE=postgresql
+# DB_NAME=aerocontrol
+# DB_USER=aerocontrol
+# DB_PASSWORD=replace-me
+# DB_HOST=127.0.0.1
+# DB_PORT=5432
+```
+
+Then run:
 
 ```powershell
-# 1. Clone the repository
 git clone https://github.com/DovaCrii/aero-ops-desk.git
-cd aero-ops-desk
-
-# 2. Run setup (creates .venv, installs deps, migrates database)
+Set-Location aero-ops-desk
 powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1
-
-# 3. Create your admin user
 .\.venv\Scripts\python.exe manage.py createsuperuser
-
-# 4. Start the server
 powershell -ExecutionPolicy Bypass -File .\scripts\run.ps1
 ```
 
-The app opens at [http://127.0.0.1:8000](http://127.0.0.1:8000).
+Open <http://127.0.0.1:8000/>. The setup script installs locked dependencies,
+compiles translations, applies migrations, initializes standard roles, and
+creates the initial document types and alert rule.
 
-### Data Directory
+## Operational commands
 
-The first time you run setup, `D:\I+D\AeroOpsDesk_Data\` is created automatically. You can change this by editing `DOCUMENTS_DIR` and `DB_PATH` in `.env`.
-
-<br>
-
-## 📁 Project Structure
-
-```
-aero-ops-desk/
-├── apps/
-│   ├── core/           # Base model, backup engine, shared mixins
-│   ├── registry/       # Cost centers, aircraft, operators
-│   ├── compliance/     # Documents, alerts, expiration rules
-│   ├── operations/     # Flight permissions and flight records
-│   ├── maintenance/    # Maintenance records and status history
-│   ├── workboard/      # Personal Kanban workflow
-│   └── dashboard/      # Executive summary view
-├── config/
-│   ├── settings/       # Split settings: base, dev, prod
-│   ├── urls.py         # Root URL configuration
-│   └── wsgi.py         # WSGI entry point
-├── templates/          # Bootstrap 5 responsive templates
-├── static/             # CSS and client-side assets
-├── scripts/            # PowerShell automation
-├── prompts/            # OpenCode continuation prompts
-├── openspec/           # SDD specification artifacts
-├── docs/               # Additional documentation
-└── manage.py           # Django management entry point
-```
-
-<br>
-
-## 🛠 Development
-
-This project uses [Spec-Driven Development (SDD)](https://github.com/gentleman-programming/gentle-ai) through OpenCode. Changes are planned in `openspec/` before implementation:
-
-```
-openspec/
-├── config.yaml           # Project configuration
-├── specs/                # Domain specifications
-└── changes/              # Active and archived changes
-    ├── phase1-document-mgmt/
-    │   ├── proposal.md   # What and why
-    │   ├── spec.md       # Functional requirements
-    │   ├── design.md     # Technical design
-    │   └── tasks.md      # Implementation tasks
-    └── archive/          # Completed changes
-```
-
-### Useful Commands
+Use the project interpreter (`uv run ...` or `.\.venv\Scripts\python.exe ...`):
 
 ```powershell
-# Run checks
-python manage.py check
+# Application checks
+uv run python manage.py check
+uv run python manage.py check --deploy
 
-# Run tests
-python manage.py test
+# Tests and quality gates
+uv run pytest --cov=apps --cov-report=term-missing
+uv run ruff check .
+uv run ruff format --check .
+uv run bandit -q -c pyproject.toml -r apps config
+uv run pip-audit
 
-# Generate alerts
-python manage.py generate_alerts
-
-# Manual backup
+# Backup and integrity verification
 powershell -ExecutionPolicy Bypass -File .\scripts\backup.ps1
+uv run python manage.py verify_backup <path-to-backup.sqlite3>
+uv run python manage.py restore_backup <backup.sqlite3> <destination.sqlite3>
+
+# Document retention (dry-run first; deletion requires --execute)
+uv run python manage.py cleanup_documents --older-than-days 3650
+uv run python manage.py cleanup_documents --older-than-days 3650 --execute
 ```
 
-<br>
+Backups include a JSON manifest with source, timestamp, size, and SHA-256. The
+restore command verifies that manifest before copying and refuses to overwrite
+an existing destination unless `--force` is supplied.
 
-## 📜 License
+## Security boundaries
 
-Distributed under the **MIT License**. See [LICENSE](LICENSE) for details.
+The unauthenticated GET endpoint /health/ reports database and document-storage
+dependency status as JSON (HTTP 200 when healthy, 503 when degraded) for local
+monitors and reverse proxies.
 
----
+Each response also carries an X-Request-ID correlation header. Request
+completion and failure events are written as JSON lines to LOGS_DIR with method,
+path, status code and duration, without recording request bodies or credentials.
+Authenticated mutating requests are also stored append-only as AuditEvent records
+and can be reviewed from Django Admin.
 
-<p align="center">
-  <sub>Built with ❤️ for RPA operators who need their tools to just work.</sub>
-</p>
+Content-Security-Policy-Report-Only is enabled by default and can be controlled
+with CSP_REPORT_ONLY. SortableJS is pinned to a fixed version with SRI and
+crossorigin validation.
+
+Authenticated users can search permitted operational records from /search/.
+The search never returns entities for which the user lacks a view permission.
+
+Cost centers support a validated CSV import at /registry/costcenter/import/,
+aircraft at /registry/aircraft/import/, and operators at
+/registry/operator/import/.
+The format is code,name; existing codes are rejected, previews show row errors,
+and applied batches can be reverted logically from the batch action.
+Each import screen also exposes a CSV template download compatible with Excel.
+The Kanban list also provides a filtered CSV operational report at
+/workboard/reports/tasks.csv.
+It also provides a native XLSX report at /workboard/reports/tasks.xlsx with
+freeze panes, filters and readable column widths.
+The Word version is available at /workboard/reports/tasks.docx.
+
+A read-only API contract is available at /api/v1/workboard/tasks/. It requires
+authentication and the Kanban task view permission, supports the existing
+filters and returns bounded page/page_size results.
+Task updates use PATCH at /api/v1/workboard/tasks/<uuid>/ and require the
+Kanban task change permission; unsupported fields and cross-board stages are
+rejected.
+API callers receive JSON 401/403 responses instead of browser login redirects.
+The API contract index is available to authenticated users at /api/v1/.
+The DRF foundation is available at /api/drf/v1/workboard/tasks/ and currently
+provides a permissioned read-only task resource.
+PATCH clients can send If-Unmodified-Since; stale edits receive HTTP 409
+instead of silently overwriting newer changes.
+KanbanBoardAccess supports object-level viewer/editor/manager roles. Existing
+users remain model-permission compatible until explicit board rules are added.
+OperationalTenant and TenantMembership provide an optional multi-organization
+boundary; boards without a tenant remain shared for backward compatibility.
+
+Before evaluating PostgreSQL, run scale_readiness and follow
+docs/postgresql-readiness.md. The command is read-only and does not switch or
+modify the active database.
+
+CI includes a staging preflight that runs migrations/checks, creates a backup
+and verifies its checksum. Production deployment remains an explicit manual
+step with rollback.
+
+Run validate_operational_data before imports or release rehearsals to detect
+inactive references and invalid assignment date ranges without changing data.
+The canonical Chapter 1 mapping is documented in docs/chapter1-import.md and
+available through manage.py chapter1_mapping --json.
+When the official CSV sources are available, validate/apply them with
+manage.py chapter1_import --cost-centers <file> --aircraft <file>
+--operators <file> [--apply].
+The same command accepts --workbook capitulo1.xlsx with sheets cost_centers,
+aircraft and operators.
+
+- All operational pages require authentication and model-level view/change
+  permissions; CSV export uses the same authorization boundary.
+- Uploads allow only PDF, DOCX, XLSX, PNG, JPG and JPEG, enforce a 20 MB limit,
+  validate the file signature, normalize the generated path, and write through
+  a temporary file before replacement.
+- Antivirus scanning is an integration point, enabled with
+  `DOCUMENTS_ANTIVIRUS_COMMAND`; it must point to an installed executable.
+- SQLite and uploaded files are local resources. They are **not** automatically
+  replicated or encrypted by the application. Backups and access to the data
+  directory remain an operator responsibility.
+
+## Delivery status and next technical priorities
+
+Completed stabilization includes bilingual UI, dark-theme contrast fixes,
+operational form feedback, permission enforcement, document upload hardening,
+backup manifests, restoration verification, and regression coverage.
+
+### Kanban operational flow
+
+The board view is available at /workboard/ and the filterable list view at
+/workboard/list/. Stages are the source of truth for state; legacy stages remain
+Personalized. Labels are scoped to a board and tasks support ordered checklists
+with calculated progress. Task details open in a side panel for review/editing,
+while archive actions are reversible and drag-and-drop is disabled when active
+filters would make ordering ambiguous.
+
+The next priorities are tracked in [`BACKLOG.md`](BACKLOG.md): accessibility
+and responsive navigation, structured logs/health checks, CSP and asset
+hardening, administrative audit history, validated imports/reports, and a
+planned PostgreSQL/API path only when multi-user scale justifies it.
+
+The frontend boundary decision is documented in docs/frontend-boundary.md; a
+separate SPA is intentionally deferred until API, offline or mobile
+requirements justify it.
+
+## License
+
+MIT. See [`LICENSE`](LICENSE).

@@ -2,7 +2,7 @@
 tags: [aero-ops, index, documentacion]
 ---
 
-# 🛩 AeroOps Desk
+# 🛩 AeroControl
 
 **Consola local para control y seguimiento de operaciones RPA.**
 

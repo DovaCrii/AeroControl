@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% load static %}
-{% block title %}{{ object|default:"Detail" }} - AeroOps Desk{% endblock %}
+{% load aero_tags i18n %}
+{% block title %}{{ object|default:"Detail" }} - AeroControl{% endblock %}
 {% block content %}
 <div class="card p-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h3">{{ object }}</h1>
-    <a href="javascript:history.back()" class="btn btn-outline-secondary">← Back</a>
+    <a href="javascript:history.back()" class="btn btn-outline-secondary">← {% translate "Back" %}</a>
   </div>
 
   <table class="table table-bordered">
@@ -16,7 +16,7 @@
         <td>
           {% if field.value %}
             {% if field.is_boolean %}
-              {% if field.value %}✅ Yes{% else %}❌ No{% endif %}
+              {% if field.value %}✅ {% translate "Yes" %}{% else %}❌ {% translate "No" %}{% endif %}
             {% elif field.is_choice %}
               {{ field.choice_value }}
             {% elif field.is_date %}

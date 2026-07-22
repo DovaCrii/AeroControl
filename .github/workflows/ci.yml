@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+      DB_PATH: ${{ runner.temp }}/aero-ops.sqlite3
+      DOCUMENTS_DIR: ${{ runner.temp }}/documents
+      LOGS_DIR: ${{ runner.temp }}/logs
+      BACKUPS_DIR: ${{ runner.temp }}/backups
+      SECRET_KEY: ci-only-not-for-production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --all-groups --locked
+      - run: uv run python scripts/compile_translations.py
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run python manage.py check --deploy
+      - run: uv run python manage.py makemigrations --check --dry-run
+      - run: uv run pytest --cov=apps --cov-report=term-missing
+      - run: uv run bandit -q -c pyproject.toml -r apps config
+      - run: uv run pip-audit
+      - name: Staging preflight
+        run: |
+          uv run python manage.py scale_readiness --json
+          uv run python manage.py backup
+          uv run python manage.py verify_backup "$(ls \"$BACKUPS_DIR\"/*.sqlite3 | head -n 1)"
