@@ -72,7 +72,8 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
   la vista de lista; compatible con Excel.
 - [x] Reporte XLSX nativo de tareas Kanban con hoja congelada, filtro y
   columnas dimensionadas.
-- [ ] Reportes Word con plantillas controladas.
+- [x] Reporte Word operativo de tareas Kanban con plantilla controlada y filtros
+  aplicados.
 - [ ] Validaciones cruzadas entre seguro, aeronave, operador, permiso y
   habilitación.
 

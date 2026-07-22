@@ -9,6 +9,7 @@ dependencies = [
     "django-crispy-forms==2.4",
     "python-decouple==3.8",
     "openpyxl>=3.1,<4",
+    "python-docx>=1.1,<2",
 ]
 
 [dependency-groups]

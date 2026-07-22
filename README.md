@@ -146,6 +146,7 @@ The Kanban list also provides a filtered CSV operational report at
 /workboard/reports/tasks.csv.
 It also provides a native XLSX report at /workboard/reports/tasks.xlsx with
 freeze panes, filters and readable column widths.
+The Word version is available at /workboard/reports/tasks.docx.
 
 - All operational pages require authentication and model-level view/change
   permissions; CSV export uses the same authorization boundary.
