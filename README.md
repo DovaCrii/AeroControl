@@ -130,6 +130,8 @@ monitors and reverse proxies.
 Each response also carries an X-Request-ID correlation header. Request
 completion and failure events are written as JSON lines to LOGS_DIR with method,
 path, status code and duration, without recording request bodies or credentials.
+Authenticated mutating requests are also stored append-only as AuditEvent records
+and can be reviewed from Django Admin.
 
 - All operational pages require authentication and model-level view/change
   permissions; CSV export uses the same authorization boundary.

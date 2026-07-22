@@ -32,6 +32,23 @@ class RequestMetricsMiddleware:
             raise
         duration_ms = round((time.perf_counter() - started) * 1000, 2)
         response["X-Request-ID"] = request_id
+        if (
+            request.user.is_authenticated
+            and request.method in {"POST", "PUT", "PATCH", "DELETE"}
+            and not request.path.startswith("/accounts/")
+        ):
+            from apps.core.models import AuditEvent
+
+            outcome = "success" if response.status_code < 400 else "denied"
+            AuditEvent.objects.create(
+                actor=request.user,
+                action=f"{request.method.lower()}_{outcome}",
+                method=request.method,
+                path=request.path[:500],
+                status_code=response.status_code,
+                request_id=request_id,
+                metadata={"query_keys": sorted(request.GET.keys())},
+            )
         logger.info(
             "request_complete",
             extra={

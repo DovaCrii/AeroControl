@@ -16,6 +16,7 @@ from apps.registry.models import Aircraft, CostCenter
 from apps.compliance.forms import DocumentForm
 from apps.compliance.models import Document, DocumentType, document_upload_path
 from apps.workboard.models import KanbanBoard
+from apps.core.models import AuditEvent
 
 
 @pytest.fixture
@@ -118,6 +119,16 @@ class TestAuthRequiredURLs:
 
 
 class TestAuthenticatedPages:
+    def test_mutating_action_is_audited_without_request_data(self, auth_client):
+        response = auth_client.post(reverse("board-create"), {"name": "Audited board"})
+        assert response.status_code == 302
+        event = AuditEvent.objects.latest("created_at")
+        assert event.actor.username == "admin"
+        assert event.action == "post_success"
+        assert event.path == reverse("board-create")
+        assert event.request_id
+        assert event.metadata == {"query_keys": []}
+
     """Verify representative authenticated pages and shared template behavior."""
 
     def test_dashboard(self, auth_client):
