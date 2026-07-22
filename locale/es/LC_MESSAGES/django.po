@@ -809,3 +809,21 @@ msgid "result"
 msgid_plural "results"
 msgstr[0] "resultado"
 msgstr[1] "resultados"
+
+msgid "Import cost centers"
+msgstr "Importar centros de costo"
+
+msgid "CSV columns: code,name. Existing records are never overwritten."
+msgstr "Columnas CSV: code,name. Los registros existentes nunca se sobrescriben."
+
+msgid "CSV file"
+msgstr "Archivo CSV"
+
+msgid "Preview"
+msgstr "Vista previa"
+
+msgid "Apply import"
+msgstr "Aplicar importación"
+
+msgid "Registry"
+msgstr "Registro"

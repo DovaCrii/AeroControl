@@ -59,8 +59,8 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
 
 ## Fase 4 — Importación, búsquedas y reportes (P1)
 
-- [ ] Importación Excel validada, con vista previa, reporte de errores y
-  operación reversible.
+- [x] Importación CSV validada de Centros de costo, con vista previa, reporte
+  de errores, operación transaccional y reversión lógica por lote.
 - [ ] Carga normalizada del Capítulo 1 con mapeos versionados.
 - [x] Búsqueda global con permisos de lectura por dominio y enlaces directos a
   los módulos operativos.

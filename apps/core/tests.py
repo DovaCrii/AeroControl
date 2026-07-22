@@ -16,7 +16,7 @@ from apps.registry.models import Aircraft, CostCenter
 from apps.compliance.forms import DocumentForm
 from apps.compliance.models import Document, DocumentType, document_upload_path
 from apps.workboard.models import KanbanBoard
-from apps.core.models import AuditEvent
+from apps.core.models import AuditEvent, ImportBatch
 
 
 @pytest.fixture
@@ -119,6 +119,22 @@ class TestAuthRequiredURLs:
 
 
 class TestAuthenticatedPages:
+    def test_cost_center_import_preview_apply_and_revert(self, auth_client):
+        csv_file = SimpleUploadedFile("centers.csv", b"code,name\nIMP-1,Imported one\nIMP-2,Imported two\n", content_type="text/csv")
+        preview = auth_client.post(reverse("costcenter-import"), {"file": csv_file})
+        assert preview.status_code == 200
+        assert "2 rows are valid" in preview.content.decode()
+
+        csv_file = SimpleUploadedFile("centers.csv", b"code,name\nIMP-1,Imported one\nIMP-2,Imported two\n", content_type="text/csv")
+        applied = auth_client.post(reverse("costcenter-import"), {"file": csv_file, "apply": "1"})
+        assert applied.status_code == 302
+        batch = ImportBatch.objects.get(entity="registry.costcenter")
+        assert CostCenter.objects.filter(code="IMP-1", is_active=True).exists()
+
+        reverted = auth_client.post(reverse("costcenter-import-revert", args=[batch.pk]))
+        assert reverted.status_code == 204
+        assert not CostCenter.objects.filter(code="IMP-1", is_active=True).exists()
+
     def test_global_search_respects_permissions(self, auth_client):
         CostCenter.objects.create(code="SEARCH", name="Search Operations")
         response = auth_client.get(reverse("global-search"), {"q": "SEARCH"})

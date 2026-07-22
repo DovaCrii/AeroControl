@@ -136,6 +136,10 @@ and can be reviewed from Django Admin.
 Authenticated users can search permitted operational records from /search/.
 The search never returns entities for which the user lacks a view permission.
 
+Cost centers support a validated CSV import at /registry/costcenter/import/.
+The format is code,name; existing codes are rejected, previews show row errors,
+and applied batches can be reverted logically from the batch action.
+
 - All operational pages require authentication and model-level view/change
   permissions; CSV export uses the same authorization boundary.
 - Uploads allow only PDF, DOCX, XLSX, PNG, JPG and JPEG, enforce a 20 MB limit,
