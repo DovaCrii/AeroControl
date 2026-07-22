@@ -33,7 +33,7 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
   estados, filtros y acciones visibles.
 - [x] Asignar los grupos estándar a usuarios reales y probar respuestas 403 en
   cada módulo con operaciones de escritura.
-- [ ] Aumentar pruebas de regresión para cargas de documentos, archivado,
+- [x] Aumentar pruebas de regresión para cargas de documentos, archivado,
   transiciones de estado y restauración de respaldos.
 - [x] Revisar accesibilidad de teclado, foco, contraste y comportamiento en
   pantallas pequeñas de los flujos críticos.
