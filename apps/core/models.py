@@ -49,3 +49,19 @@ class AuditEvent(models.Model):
             models.Index(fields=["actor", "created_at"]),
             models.Index(fields=["model_label", "object_id"]),
         ]
+
+
+class ImportBatch(BaseModel):
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="import_batches",
+    )
+    entity = models.CharField(max_length=100)
+    status = models.CharField(max_length=20, default="applied")
+    rows = models.JSONField(default=list, blank=True)
+    errors = models.JSONField(default=list, blank=True)
+    created_ids = models.JSONField(default=list, blank=True)
+    reverted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
