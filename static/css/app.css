@@ -159,6 +159,22 @@ body {
   border-radius: 10px;
 }
 
+.onboarding-card {
+  border: 1px solid rgba(46, 196, 182, 0.3);
+  background: linear-gradient(135deg, rgba(46, 196, 182, 0.08), transparent 55%);
+}
+
+.onboarding-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem 2rem;
+  padding-left: 1.35rem;
+}
+
+@media (max-width: 768px) {
+  .onboarding-steps { grid-template-columns: 1fr; }
+}
+
 /* ── Tables ───────────────────────────────────────── */
 .table th {
   font-weight: 600;
@@ -457,6 +473,44 @@ body {
   border-color: #2EC4B6;
   color: var(--text-primary);
   box-shadow: 0 0 0 0.2rem rgba(46, 196, 182, 0.2);
+}
+
+/* The application form controls use the dark palette. Keep modal surfaces in
+   the same palette so labels never inherit light text on a white panel. */
+[data-theme="dark"] .modal-content {
+  --bs-modal-bg: var(--surface-raised);
+  --bs-modal-color: var(--text-primary);
+  --bs-modal-border-color: var(--border);
+  --bs-modal-header-border-color: var(--border);
+  --bs-modal-footer-border-color: var(--border);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .modal-title,
+[data-theme="dark"] .modal .form-label,
+[data-theme="dark"] .modal legend {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .modal .form-text,
+[data-theme="dark"] .modal .form-text.text-muted {
+  color: var(--text-muted) !important;
+}
+
+[data-theme="dark"] .modal .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+[data-theme="dark"] .modal .form-control::file-selector-button {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .modal .form-control::file-selector-button:hover {
+  background: #263246;
 }
 
 [data-theme="dark"] .page-link {

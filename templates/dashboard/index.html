@@ -3,7 +3,13 @@
 {% block title %}Dashboard - AeroControl{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">{% translate "Operations Dashboard" %}</h1>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+  <h1 class="mb-0">{% translate "Operations Dashboard" %}</h1>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-primary" href="{% url 'costcenter-list' %}">{% translate "Open registry" %}</a>
+    <a class="btn btn-primary" href="{% url 'permission-create' %}">+ {% translate "New permission" %}</a>
+  </div>
+</div>
 
 {# ── Summary cards ── #}
 <div class="row g-3 mb-4">
@@ -33,6 +39,22 @@
   </div>
 </div>
 
+{% if not aircraft_count and not operator_count and not alert_count and not stages %}
+<section class="card onboarding-card p-4 mb-4" aria-labelledby="onboarding-title">
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+    <div>
+      <h2 id="onboarding-title" class="h4">{% translate "Start your operation" %}</h2>
+      <p class="text-muted mb-0">{% translate "Load the operational records below to activate indicators, alerts and planning." %}</p>
+    </div>
+    <a class="btn btn-primary" href="{% url 'costcenter-list' %}">1. {% translate "Create a cost center" %}</a>
+  </div>
+  <ol class="onboarding-steps mt-4 mb-0">
+    <li>{% translate "Create a cost center" %}</li>
+    <li>{% translate "Register an aircraft and an operator" %}</li>
+    <li>{% translate "Create a flight permission to begin tracking operations" %}</li>
+  </ol>
+</section>
+{% else %}
 {# ── Chart row ── #}
 <div class="row g-4 mb-4">
   <div class="col-lg-4">
@@ -99,6 +121,7 @@
     </div>
   </div>
 </div>
+{% endif %}
 {% endblock %}
 
 {% block extrahead %}
@@ -109,6 +132,11 @@
 {% block extrascripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+  const chartLabels = {
+    permissions: "{% translate 'Permissions' %}",
+    tasks: "{% translate 'Tasks' %}",
+    flights: "{% translate 'Flights' %}",
+  };
   const palette = ['#1B2A4A','#2EC4B6','#E76F51','#F4A261','#2A9D8F','#6B4CE6','#E63946','#457B9D'];
   const textColor = getComputedStyle(document.body).color;
 
@@ -136,7 +164,7 @@ document.addEventListener('DOMContentLoaded', function () {
       data: {
         labels: permData.map(d => d.status),
         datasets: [{
-          label: 'Permissions',
+          label: chartLabels.permissions,
           data: permData.map(d => d.count),
           backgroundColor: palette.slice(0, permData.length),
         }]
@@ -173,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function () {
       data: {
         labels: stageData.map(d => d.name),
         datasets: [{
-          label: 'Tasks',
+          label: chartLabels.tasks,
           data: stageData.map(d => d.count),
           backgroundColor: '#2EC4B6',
         }]
@@ -194,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function () {
       data: {
         labels: flightData.map(d => d.month ? new Date(d.month).toLocaleString('default',{month:'short',year:'2-digit'}) : ''),
         datasets: [{
-          label: 'Flights',
+          label: chartLabels.flights,
           data: flightData.map(d => d.count),
           borderColor: '#2EC4B6',
           backgroundColor: 'rgba(46,196,182,0.15)',

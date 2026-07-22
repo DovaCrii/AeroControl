@@ -1,6 +1,7 @@
 {% load static i18n %}
+{% get_current_language as CURRENT_LANGUAGE %}
 <!doctype html>
-<html lang="en">
+<html lang="{{ CURRENT_LANGUAGE }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -25,7 +26,6 @@
       <span class="opacity-75">{{ user.get_username }}</span>
       <form method="post" action="{% url 'set_language' %}" class="d-inline" hx-boost="false">
         {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
-        {% get_current_language as CURRENT_LANGUAGE %}
         <select class="form-select form-select-sm language-switch" name="language" onchange="this.form.submit()" aria-label="{% translate 'Language' %}">
           <option value="en" {% if CURRENT_LANGUAGE == "en" %}selected{% endif %}>EN</option>
           <option value="es" {% if CURRENT_LANGUAGE == "es" %}selected{% endif %}>ES</option>
@@ -68,10 +68,17 @@
       {% endwith %}
     </aside>
 
-    <main class="container-fluid p-4" hx-boost="true">{% block content %}{% endblock %}</main>
+    <main class="container-fluid p-4">
+      {% if messages %}
+      <div class="mb-3" aria-live="polite">
+        {% for message in messages %}<div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="status">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% translate 'Close' %}"></button></div>{% endfor %}
+      </div>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </main>
   </div>
 
-  <div class="modal fade" id="generic-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Form</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body" id="modal-content"><div class="text-center text-muted py-4">Loading…</div></div></div></div></div>
+  <div class="modal fade" id="generic-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">{% translate "Form" %}</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% translate 'Close' %}"></button></div><div class="modal-body" id="modal-content"><div class="text-center text-muted py-4">{% translate "Loading…" %}</div></div></div></div></div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     function toggleTheme() { const html = document.documentElement; const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; html.setAttribute('data-theme', next); localStorage.setItem('theme', next); }

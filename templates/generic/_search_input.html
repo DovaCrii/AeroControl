@@ -1,7 +1,9 @@
+{% load i18n %}
 <input class="form-control" name="q" value="{{ request.GET.q }}"
-       placeholder="{{ search_placeholder|default:'Search...' }}"
+       placeholder="{% if search_placeholder %}{{ search_placeholder }}{% else %}{% translate 'Search...' %}{% endif %}"
        hx-get="{{ search_url|default:request.path }}"
        hx-trigger="keyup changed delay:300ms, search"
+       hx-include="closest form"
        hx-target="#table-body"
        hx-push-url="true"
        hx-indicator="#search-spinner">

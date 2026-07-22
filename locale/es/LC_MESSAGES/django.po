@@ -103,6 +103,9 @@ msgstr "Mantenimiento por tipo"
 msgid "Tasks per Stage"
 msgstr "Tareas por etapa"
 
+msgid "Tasks by Stage"
+msgstr "Tareas por etapa"
+
 msgid "Monthly Flights (6 months)"
 msgstr "Vuelos mensuales (6 meses)"
 
@@ -207,3 +210,471 @@ msgstr "Iniciar sesión"
 
 msgid "Invalid username or password. Try again."
 msgstr "Usuario o contraseña no válidos. Inténtalo nuevamente."
+
+msgid "Saved successfully."
+msgstr "Guardado correctamente."
+
+msgid "Close"
+msgstr "Cerrar"
+
+msgid "Export CSV"
+msgstr "Exportar CSV"
+
+msgid "Searching…"
+msgstr "Buscando…"
+
+msgid "Search..."
+msgstr "Buscar..."
+
+msgid "Search"
+msgstr "Buscar"
+
+msgid "Active"
+msgstr "Activo"
+
+msgid "Archived"
+msgstr "Archivado"
+
+msgid "Name"
+msgstr "Nombre"
+
+msgid "Created"
+msgstr "Creado"
+
+msgid "Edit"
+msgstr "Editar"
+
+msgid "No records found."
+msgstr "No se encontraron registros."
+
+msgid "Save"
+msgstr "Guardar"
+
+msgid "Cancel"
+msgstr "Cancelar"
+
+msgid "Back"
+msgstr "Volver"
+
+msgid "Yes"
+msgstr "Sí"
+
+msgid "No"
+msgstr "No"
+
+msgid "New record"
+msgstr "Nuevo registro"
+
+msgid "Open registry"
+msgstr "Abrir registro"
+
+msgid "New permission"
+msgstr "Nuevo permiso"
+
+msgid "Tasks"
+msgstr "Tareas"
+
+msgid "Aircrafts"
+msgstr "Aeronaves"
+
+msgid "Qualifications"
+msgstr "Habilitaciones"
+
+msgid "Cost Center"
+msgstr "Centro de costo"
+
+msgid "Operator"
+msgstr "Operador"
+
+msgid "Assignment"
+msgstr "Asignación"
+
+msgid "Qualification"
+msgstr "Habilitación"
+
+msgid "Flight Permissions"
+msgstr "Permisos de vuelo"
+
+msgid "Flight Records"
+msgstr "Registros de vuelo"
+
+msgid "Flight Permission"
+msgstr "Permiso de vuelo"
+
+msgid "Flight Record"
+msgstr "Registro de vuelo"
+
+msgid "Maintenance Records"
+msgstr "Registros de mantenimiento"
+
+msgid "Maintenance Record"
+msgstr "Registro de mantenimiento"
+
+msgid "Kanban Boards"
+msgstr "Tableros Kanban"
+
+msgid "Kanban Stages"
+msgstr "Etapas Kanban"
+
+msgid "Kanban Tasks"
+msgstr "Tareas Kanban"
+
+msgid "Kanban Board"
+msgstr "Tablero Kanban"
+
+msgid "Kanban Stage"
+msgstr "Etapa Kanban"
+
+msgid "Kanban Task"
+msgstr "Tarea Kanban"
+
+msgid "Document Types"
+msgstr "Tipos de documento"
+
+msgid "Alert Rules"
+msgstr "Reglas de alerta"
+
+msgid "Document"
+msgstr "Documento"
+
+msgid "Document Type"
+msgstr "Tipo de documento"
+
+msgid "Alert Rule"
+msgstr "Regla de alerta"
+
+msgid "Alert"
+msgstr "Alerta"
+
+msgid "New %(record)s"
+msgstr "Nuevo: %(record)s"
+
+msgid "Edit %(record)s"
+msgstr "Editar: %(record)s"
+
+msgid "Form"
+msgstr "Formulario"
+
+msgid "Loading…"
+msgstr "Cargando…"
+
+msgid "Code"
+msgstr "Código"
+
+msgid "Registration"
+msgstr "Matrícula"
+
+msgid "Type"
+msgstr "Tipo"
+
+msgid "Model"
+msgstr "Modelo"
+
+msgid "Manufacturer"
+msgstr "Fabricante"
+
+msgid "Year"
+msgstr "Año"
+
+msgid "Employee ID"
+msgstr "ID de empleado"
+
+msgid "Full name"
+msgstr "Nombre completo"
+
+msgid "Email"
+msgstr "Correo electrónico"
+
+msgid "Phone"
+msgstr "Teléfono"
+
+msgid "Start date"
+msgstr "Fecha de inicio"
+
+msgid "End date"
+msgstr "Fecha de término"
+
+msgid "Qualification type"
+msgstr "Tipo de habilitación"
+
+msgid "Issue date"
+msgstr "Fecha de emisión"
+
+msgid "Expiry date"
+msgstr "Fecha de vencimiento"
+
+msgid "Search title..."
+msgstr "Buscar título..."
+
+msgid "All document types"
+msgstr "Todos los tipos de documento"
+
+msgid "All versions"
+msgstr "Todas las versiones"
+
+msgid "Current"
+msgstr "Vigente"
+
+msgid "Previous"
+msgstr "Anterior"
+
+msgid "Title"
+msgstr "Título"
+
+msgid "Entity"
+msgstr "Entidad"
+
+msgid "Expiry"
+msgstr "Vencimiento"
+
+msgid "No documents found."
+msgstr "No se encontraron documentos."
+
+msgid "Replace"
+msgstr "Reemplazar"
+
+msgid "Delete"
+msgstr "Eliminar"
+
+msgid "New Document"
+msgstr "Nuevo documento"
+
+msgid "Upload document"
+msgstr "Cargar documento"
+
+msgid "Download"
+msgstr "Descargar"
+
+msgid "Previous versions"
+msgstr "Versiones anteriores"
+
+msgid "No previous versions."
+msgstr "No hay versiones anteriores."
+
+msgid "Start your operation"
+msgstr "Comienza tu operación"
+
+msgid "Load the operational records below to activate indicators, alerts and planning."
+msgstr "Carga los registros operativos para activar indicadores, alertas y planificación."
+
+msgid "Create a cost center"
+msgstr "Crea un centro de costo"
+
+msgid "Register an aircraft and an operator"
+msgstr "Registra una aeronave y un operador"
+
+msgid "Create a flight permission to begin tracking operations"
+msgstr "Crea un permiso de vuelo para comenzar el seguimiento operativo"
+
+msgid "Select an entity type"
+msgstr "Selecciona un tipo de entidad"
+
+msgid "Entity type"
+msgstr "Tipo de entidad"
+
+msgid "Related record"
+msgstr "Registro asociado"
+
+msgid "Select an entity type first."
+msgstr "Selecciona primero un tipo de entidad."
+
+msgid "Select the operational record this document belongs to."
+msgstr "Selecciona el registro operativo al que pertenece este documento."
+
+msgid "There are no active records of this type yet."
+msgstr "Aún no hay registros activos de este tipo."
+
+msgid "Document type"
+msgstr "Tipo de documento"
+
+msgid "File"
+msgstr "Archivo"
+
+msgid "Aircraft record"
+msgstr "Aeronave"
+
+msgid "Operator record"
+msgstr "Operador"
+
+msgid "Flight permission"
+msgstr "Permiso de vuelo"
+
+msgid "Maintenance record"
+msgstr "Registro de mantenimiento"
+
+msgid "Maintenance"
+msgstr "Mantenimiento"
+
+msgid "All statuses"
+msgstr "Todos los estados"
+
+msgid "All types"
+msgstr "Todos los tipos"
+
+msgid "Scheduled"
+msgstr "Programado"
+
+msgid "Description"
+msgstr "Descripción"
+
+msgid "Scheduled date"
+msgstr "Fecha programada"
+
+msgid "Completed date"
+msgstr "Fecha de finalización"
+
+msgid "Performed by"
+msgstr "Realizado por"
+
+msgid "Cost"
+msgstr "Costo"
+
+msgid "Status history"
+msgstr "Historial de estados"
+
+msgid "No status changes recorded yet."
+msgstr "Aún no hay cambios de estado registrados."
+
+msgid "Start maintenance"
+msgstr "Iniciar mantenimiento"
+
+msgid "Calendar"
+msgstr "Calendario"
+
+msgid "Next"
+msgstr "Siguiente"
+
+msgid "Monday"
+msgstr "Lunes"
+
+msgid "Tuesday"
+msgstr "Martes"
+
+msgid "Wednesday"
+msgstr "Miércoles"
+
+msgid "Thursday"
+msgstr "Jueves"
+
+msgid "Friday"
+msgstr "Viernes"
+
+msgid "Saturday"
+msgstr "Sábado"
+
+msgid "Sunday"
+msgstr "Domingo"
+
+msgid "Flight permission"
+msgstr "Permiso de vuelo"
+
+msgid "Flight records"
+msgstr "Registros de vuelo"
+
+msgid "Add record"
+msgstr "Agregar registro"
+
+msgid "No flight records for this permission."
+msgstr "No hay registros de vuelo para este permiso."
+
+msgid "Cost center"
+msgstr "Centro de costo"
+
+msgid "Alerts"
+msgstr "Alertas"
+
+msgid "Search alerts..."
+msgstr "Buscar alertas..."
+
+msgid "All alerts"
+msgstr "Todas las alertas"
+
+msgid "Unresolved"
+msgstr "No resueltas"
+
+msgid "Resolved"
+msgstr "Resuelta"
+
+msgid "Entity type"
+msgstr "Tipo de entidad"
+
+msgid "Entity"
+msgstr "Entidad"
+
+msgid "Rule"
+msgstr "Regla"
+
+msgid "Triggered"
+msgstr "Activada"
+
+msgid "Message"
+msgstr "Mensaje"
+
+msgid "Resolve"
+msgstr "Resolver"
+
+msgid "No alerts found."
+msgstr "No se encontraron alertas."
+
+msgid "Kanban board"
+msgstr "Tablero Kanban"
+
+msgid "No board configured."
+msgstr "No hay ningún tablero configurado."
+
+msgid "Create board"
+msgstr "Crear tablero"
+
+msgid "All operators"
+msgstr "Todos los operadores"
+
+msgid "All priorities"
+msgstr "Todas las prioridades"
+
+msgid "Low"
+msgstr "Baja"
+
+msgid "Medium"
+msgstr "Media"
+
+msgid "High"
+msgstr "Alta"
+
+msgid "Critical"
+msgstr "Crítica"
+
+msgid "No tasks"
+msgstr "Sin tareas"
+
+msgid "Add"
+msgstr "Agregar"
+
+msgid "This board has no active stages."
+msgstr "Este tablero no tiene etapas activas."
+
+msgid "Drag-and-drop ordering is disabled while an operator or priority filter is active. Clear the filters to reorder tasks."
+msgstr "El orden por arrastre está desactivado mientras hay un filtro de operador o prioridad activo. Limpia los filtros para reordenar las tareas."
+
+msgid "Cannot transition from %(status)s"
+msgstr "No se puede cambiar desde %(status)s"
+
+msgid "Permission approved."
+msgstr "Permiso aprobado."
+
+msgid "Permission denied."
+msgstr "Permiso rechazado."
+
+msgid "Permission completed."
+msgstr "Permiso completado."
+
+msgid "Maintenance started."
+msgstr "Mantenimiento iniciado."
+
+msgid "Maintenance completed."
+msgstr "Mantenimiento completado."
+
+msgid "Flight record archived."
+msgstr "Registro de vuelo archivado."
+
+msgid "The uploaded file content does not match its extension."
+msgstr "El contenido del archivo no coincide con su extensión."

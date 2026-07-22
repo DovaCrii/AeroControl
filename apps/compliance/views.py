@@ -2,12 +2,12 @@ from pathlib import Path
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
-from django.http import FileResponse, Http404
-from django.shortcuts import get_object_or_404, redirect
+from django.http import FileResponse, Http404, HttpResponseBadRequest
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -21,6 +21,7 @@ from apps.core.views import (
     CsvExportMixin,
     HtmxFormMixin,
     ModelPermissionRequiredMixin,
+    ModelViewPermissionRequiredMixin,
     SearchMixin,
 )
 from .forms import AlertForm, AlertRuleForm, DocumentForm, DocumentTypeForm
@@ -29,23 +30,28 @@ from .models import Alert, AlertRule, Document, DocumentType, document_upload_pa
 
 def save_uploaded_file(document, uploaded):
     relative_path = document_upload_path(document, uploaded.name)
-    absolute_path = Path(settings.DOCUMENTS_ROOT) / relative_path
+    root = Path(settings.DOCUMENTS_ROOT).resolve()
+    absolute_path = (root / relative_path).resolve()
+    if root not in absolute_path.parents:
+        raise ValueError("Document path escaped configured storage root")
     absolute_path.parent.mkdir(parents=True, exist_ok=True)
-    with absolute_path.open("wb+") as destination:
+    temporary_path = absolute_path.with_name(f".{absolute_path.name}.part")
+    with temporary_path.open("wb+") as destination:
         for chunk in uploaded.chunks():
             destination.write(chunk)
+    temporary_path.replace(absolute_path)
     document.file_path = relative_path
     document.save(update_fields=["file_path", "updated_at"])
 
 
-class ComplianceList(CsvExportMixin, SearchMixin, LoginRequiredMixin, ListView):
+class ComplianceList(CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListView):
     template_name = "generic/list.html"
     context_object_name = "objects"
     paginate_by = 25
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = self.model._meta.verbose_name_plural.title()
+        context["title"] = _(self.model._meta.verbose_name_plural.title())
         return context
 
 
@@ -58,7 +64,9 @@ class ComplianceCreate(HtmxFormMixin, ModelPermissionRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = f"New {self.model._meta.verbose_name.title()}"
+        context["title"] = _("New %(record)s") % {
+            "record": _(self.model._meta.verbose_name.title())
+        }
         return context
 
 
@@ -88,6 +96,7 @@ class DocumentCreate(ComplianceCreate):
     model = Document
     form_class = DocumentForm
     template_name = "compliance/document_form.html"
+    htmx_template_name = "compliance/_document_form_content.html"
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -95,7 +104,22 @@ class DocumentCreate(ComplianceCreate):
         return response
 
 
-class DocumentDetail(LoginRequiredMixin, DetailView):
+class DocumentEntityOptions(ModelPermissionRequiredMixin, View):
+    model = Document
+    permission_action = "add"
+
+    def get(self, request):
+        try:
+            content_type_id = int(request.GET.get("entity_type", ""))
+        except (TypeError, ValueError):
+            return HttpResponseBadRequest()
+        form = DocumentForm(data={"entity_type": content_type_id})
+        if not form.fields["entity_type"].queryset.filter(pk=content_type_id).exists():
+            return HttpResponseBadRequest()
+        return render(request, "compliance/_document_object_field.html", {"form": form})
+
+
+class DocumentDetail(ModelViewPermissionRequiredMixin, DetailView):
     model = Document
     template_name = "compliance/document_detail.html"
 

@@ -4,8 +4,10 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ImproperlyConfigured
+from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.translation import gettext as _
 from django.views import View
 
 
@@ -88,6 +90,8 @@ class CsvExportMixin:
 
     def get(self, request, *args, **kwargs):
         if request.GET.get("export") == "csv":
+            if hasattr(self, "has_permission") and not self.has_permission():
+                return self.handle_no_permission()
             return self.render_csv_response(self.get_queryset())
         return super().get(request, *args, **kwargs)
 
@@ -114,6 +118,7 @@ class HtmxFormMixin:
 
     def form_valid(self, form):
         response = super().form_valid(form)
+        messages.success(self.request, _("Saved successfully."))
         if self.request.headers.get("HX-Request") == "true":
             return HttpResponse(
                 status=204, headers={"HX-Trigger": "modal-form-success"}
@@ -145,6 +150,12 @@ class ModelPermissionRequiredMixin(LoginRequiredMixin, PermissionRequiredMixin):
         return (f"{meta.app_label}.{self.permission_action}_{meta.model_name}",)
 
 
+class ModelViewPermissionRequiredMixin(ModelPermissionRequiredMixin):
+    """Require the model's Django view permission for lists and exports."""
+
+    permission_action = "view"
+
+
 class AlertCountPartial(LoginRequiredMixin, View):
     """Render the sidebar alert badge for periodic HTMX refreshes."""
 
@@ -168,13 +179,16 @@ class StatusTransitionView(ModelPermissionRequiredMixin, View):
         obj = get_object_or_404(self.model, pk=pk, is_active=True)
         if obj.status not in self.valid_from_statuses:
             messages.error(
-                request, f"Cannot transition from {obj.get_status_display()}"
+                request,
+                _("Cannot transition from %(status)s")
+                % {"status": obj.get_status_display()},
             )
             return redirect(obj)
 
-        obj.status = self.target_status
-        obj._changed_by = request.user.get_username()
-        obj._transition_notes = request.POST.get("notes", "")
-        obj.save(update_fields=["status", "updated_at"])
-        messages.success(request, self.success_message)
+        with transaction.atomic():
+            obj.status = self.target_status
+            obj._changed_by = request.user.get_username()
+            obj._transition_notes = request.POST.get("notes", "")
+            obj.save(update_fields=["status", "updated_at"])
+        messages.success(request, _(self.success_message))
         return redirect(obj)

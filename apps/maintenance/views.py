@@ -1,13 +1,15 @@
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.translation import gettext as _
 from django.views.generic import CreateView, DetailView, ListView
 
 from apps.core.views import (
     CsvExportMixin,
     HtmxFormMixin,
     ModelPermissionRequiredMixin,
+    ModelViewPermissionRequiredMixin,
     SearchMixin,
     StatusTransitionView,
 )
@@ -15,14 +17,14 @@ from .forms import MaintenanceCompletionForm, MaintenanceRecordForm
 from .models import MaintenanceHistory, MaintenanceRecord
 
 
-class MList(CsvExportMixin, SearchMixin, LoginRequiredMixin, ListView):
+class MList(CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListView):
     template_name = "generic/list.html"
     context_object_name = "objects"
     paginate_by = 25
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = self.model._meta.verbose_name_plural.title()
+        context["title"] = _(self.model._meta.verbose_name_plural.title())
         return context
 
 
@@ -35,7 +37,9 @@ class MCreate(HtmxFormMixin, ModelPermissionRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = f"New {self.model._meta.verbose_name.title()}"
+        context["title"] = _("New %(record)s") % {
+            "record": _(self.model._meta.verbose_name.title())
+        }
         return context
 
 
@@ -70,7 +74,7 @@ class MaintenanceRecordCreate(MCreate):
     form_class = MaintenanceRecordForm
 
 
-class MaintenanceRecordDetail(LoginRequiredMixin, DetailView):
+class MaintenanceRecordDetail(ModelViewPermissionRequiredMixin, DetailView):
     model = MaintenanceRecord
     template_name = "maintenance/record_detail.html"
     context_object_name = "record"
@@ -83,9 +87,9 @@ class MaintenanceRecordDetail(LoginRequiredMixin, DetailView):
         context["history"] = self.object.history.all()
         context["completion_form"] = MaintenanceCompletionForm(instance=self.object)
         context["status_actions"] = (
-            [("start", "Start Maintenance", "btn-warning")]
+            [("start", _("Start maintenance"), "btn-warning")]
             if self.object.status == "pending"
-            else [("complete", "Complete", "btn-success")]
+            else [("complete", _("Complete"), "btn-success")]
             if self.object.status == "in_progress"
             else []
         )
@@ -117,24 +121,25 @@ class MaintenanceComplete(StatusTransitionView):
                 {
                     "record": record,
                     "history": record.history.all(),
-                    "status_actions": [("complete", "Complete", "btn-success")],
+                    "status_actions": [("complete", _("Complete"), "btn-success")],
                     "completion_form": form,
                 },
             )
-        record._changed_by = request.user.get_username()
-        record._transition_notes = form.cleaned_data.get("notes", "")
-        completed = form.save(commit=False)
-        completed.status = self.target_status
-        completed.save(
-            update_fields=[
-                "completed_date",
-                "performed_by",
-                "cost",
-                "notes",
-                "status",
-                "updated_at",
-            ]
-        )
+        with transaction.atomic():
+            record._changed_by = request.user.get_username()
+            record._transition_notes = form.cleaned_data.get("notes", "")
+            completed = form.save(commit=False)
+            completed.status = self.target_status
+            completed.save(
+                update_fields=[
+                    "completed_date",
+                    "performed_by",
+                    "cost",
+                    "notes",
+                    "status",
+                    "updated_at",
+                ]
+            )
         messages.success(request, self.success_message)
         return redirect(record)
 
