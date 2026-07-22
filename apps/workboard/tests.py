@@ -443,7 +443,8 @@ def test_api_v1_tasks_is_permissioned_and_paginated(auth_client, board):
 @pytest.mark.django_db
 def test_api_v1_tasks_requires_auth(board):
     response = Client().get("/api/v1/workboard/tasks/")
-    assert response.status_code == 302
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Authentication required."
 
 
 @pytest.mark.django_db
