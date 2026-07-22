@@ -78,7 +78,8 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
 - [x] Reporte Word operativo de tareas Kanban con plantilla controlada y filtros
   aplicados.
 - [x] Validaciones cruzadas base de aeronave, operador, centro de costo y
-  asignación mediante comando de calidad de datos.
+  asignación, permisos de vuelo y bitácoras mediante comando de calidad de
+  datos.
 - [ ] Completar validaciones cruzadas de seguro, permiso y habilitación cuando
   esos dominios tengan sus fuentes normalizadas.
 
