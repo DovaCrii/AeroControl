@@ -142,6 +142,8 @@ aircraft at /registry/aircraft/import/, and operators at
 The format is code,name; existing codes are rejected, previews show row errors,
 and applied batches can be reverted logically from the batch action.
 Each import screen also exposes a CSV template download compatible with Excel.
+The Kanban list also provides a filtered CSV operational report at
+/workboard/reports/tasks.csv.
 
 - All operational pages require authentication and model-level view/change
   permissions; CSV export uses the same authorization boundary.

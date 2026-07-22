@@ -396,3 +396,13 @@ def test_task_detail_checklist_progress_and_list_filters(auth_client, board):
     listing = auth_client.get(reverse("workboard-list"), {"q": "Inspect", "label": label.pk})
     assert listing.status_code == 200
     assert "Inspect" in listing.content.decode()
+
+
+@pytest.mark.django_db
+def test_task_report_exports_filtered_csv(auth_client, board):
+    board_obj, todo, _ = board
+    KanbanTask.objects.create(board=board_obj, stage=todo, title="Export me", priority="high")
+    response = auth_client.get(reverse("task-report-csv"), {"priority": "high"})
+    assert response.status_code == 200
+    assert "Export me" in response.content.decode()
+    assert response["Content-Disposition"].endswith('aerocontrol-tasks.csv"')

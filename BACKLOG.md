@@ -68,7 +68,9 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
 - [ ] Carga normalizada del Capítulo 1 con mapeos versionados.
 - [x] Búsqueda global con permisos de lectura por dominio y enlaces directos a
   los módulos operativos.
-- [ ] Reportes Word y Excel exportables con plantillas controladas.
+- [x] Reporte CSV operativo de tareas Kanban reutilizando filtros y columnas de
+  la vista de lista; compatible con Excel.
+- [ ] Reportes Word y Excel nativos con plantillas controladas.
 - [ ] Validaciones cruzadas entre seguro, aeronave, operador, permiso y
   habilitación.
 
