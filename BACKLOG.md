@@ -102,6 +102,8 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
 
 - [x] Exponer contrato inicial API v1 de lectura para tareas Kanban con
   permisos, filtros y paginación.
+- [x] Añadir comando scale_readiness y runbook de PostgreSQL con respaldo,
+  reconciliación y rollback explícitos.
 - [ ] Diseñar API v1 con Django REST Framework, autenticación y contratos
   versionados.
 - [ ] Evaluar PostgreSQL y migración con plan de respaldo/rollback antes de

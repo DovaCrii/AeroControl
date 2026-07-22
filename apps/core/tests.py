@@ -373,6 +373,13 @@ class TestAuthenticatedPages:
 
 
 class TestStaticFiles:
+    @pytest.mark.django_db
+    def test_scale_readiness_reports_database_vendor(self, capsys):
+        call_command("scale_readiness")
+        output = capsys.readouterr().out
+        assert "database_vendor:" in output
+        assert "rollback_required: True" in output
+
     def test_css_is_served(self):
         static_path = finders.find("css/app.css")
 
