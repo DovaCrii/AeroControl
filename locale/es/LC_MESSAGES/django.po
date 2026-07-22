@@ -705,3 +705,90 @@ msgstr "Activar navegación"
 
 msgid "Skip to main content"
 msgstr "Saltar al contenido principal"
+
+msgid "Pending"
+msgstr "Pendiente"
+
+msgid "Planned"
+msgstr "Planificado"
+
+msgid "In progress"
+msgstr "En progreso"
+
+msgid "Blocked"
+msgstr "Bloqueado"
+
+msgid "In review"
+msgstr "En revisión"
+
+msgid "Completed"
+msgstr "Completado"
+
+msgid "Custom"
+msgstr "Personalizado"
+
+msgid "Task list"
+msgstr "Lista de tareas"
+
+msgid "Board view"
+msgstr "Vista de tablero"
+
+msgid "State"
+msgstr "Estado"
+
+msgid "All states"
+msgstr "Todos los estados"
+
+msgid "Labels"
+msgstr "Etiquetas"
+
+msgid "All labels"
+msgstr "Todas las etiquetas"
+
+msgid "Search tasks"
+msgstr "Buscar tareas"
+
+msgid "Task"
+msgstr "Tarea"
+
+msgid "Assignee"
+msgstr "Responsable"
+
+msgid "Due"
+msgstr "Vencimiento"
+
+msgid "Progress"
+msgstr "Avance"
+
+msgid "No steps"
+msgstr "Sin pasos"
+
+msgid "No tasks found."
+msgstr "No se encontraron tareas."
+
+msgid "Task details"
+msgstr "Detalle de tarea"
+
+msgid "Checklist"
+msgstr "Lista de pasos"
+
+msgid "No checklist steps yet."
+msgstr "Aún no hay pasos."
+
+msgid "Add step"
+msgstr "Agregar paso"
+
+msgid "Toggle checklist item"
+msgstr "Cambiar paso"
+
+msgid "List view"
+msgstr "Vista de lista"
+
+msgid "complete"
+msgstr "completo"
+
+msgid "New task"
+msgstr "Nueva tarea"
+
+msgid "Manage labels"
+msgstr "Gestionar etiquetas"

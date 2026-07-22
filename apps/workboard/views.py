@@ -6,7 +6,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.views import View
-from django.views.generic import ListView, CreateView, TemplateView
+from django.views.generic import ListView, CreateView, TemplateView, UpdateView
+from uuid import UUID
 
 from apps.core.views import (
     CsvExportMixin,
@@ -15,8 +16,8 @@ from apps.core.views import (
     SearchMixin,
 )
 from apps.registry.models import Operator
-from .models import KanbanBoard, KanbanStage, KanbanTask
-from .forms import KanbanBoardForm, KanbanStageForm, KanbanTaskForm
+from .models import KanbanBoard, KanbanChecklistItem, KanbanLabel, KanbanStage, KanbanTask
+from .forms import KanbanBoardForm, KanbanChecklistItemForm, KanbanLabelForm, KanbanStageForm, KanbanTaskForm
 
 
 class WList(CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListView):
@@ -40,12 +41,137 @@ class WCreate(ModelPermissionRequiredMixin, CreateView):
             self.success_url_name or f"{self.model._meta.model_name}-list"
         )
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        if self.model is KanbanBoard and not self.object.stages.exists():
+            templates = [
+                (_("Pending"), "pending", "#64748B"),
+                (_("Planned"), "planned", "#3B82F6"),
+                (_("In progress"), "in_progress", "#F59E0B"),
+                (_("Blocked"), "blocked", "#EF4444"),
+                (_("In review"), "review", "#8B5CF6"),
+                (_("Completed"), "completed", "#10B981"),
+            ]
+            KanbanStage.objects.bulk_create(
+                [KanbanStage(board=self.object, name=name, status_type=status, color=color, order=index)
+                 for index, (name, status, color) in enumerate(templates)]
+            )
+        return response
+
     def get_context_data(self, **kwargs):
         c = super().get_context_data(**kwargs)
         c["title"] = _("New %(record)s") % {
             "record": _(self.model._meta.verbose_name.title())
         }
         return c
+
+
+class LabelList(WList):
+    model = KanbanLabel
+
+
+class LabelCreate(WCreate):
+    model = KanbanLabel
+    form_class = KanbanLabelForm
+    success_url_name = "label-list"
+
+
+class KanbanTaskListView(ModelViewPermissionRequiredMixin, ListView):
+    model = KanbanTask
+    template_name = "workboard/task_list.html"
+    context_object_name = "tasks"
+    permission_action = "view"
+    paginate_by = 50
+
+    def get_queryset(self):
+        qs = KanbanTask.objects.filter(is_active=True, board__is_active=True).select_related("board", "stage", "assigned_to").prefetch_related("labels", "checklist_items")
+        params = self.request.GET
+        if params.get("board"):
+            qs = qs.filter(board_id=params["board"])
+        if params.get("operator"):
+            qs = qs.filter(assigned_to_id=params["operator"])
+        if params.get("priority") in dict(KanbanTask.PRIORITIES):
+            qs = qs.filter(priority=params["priority"])
+        if params.get("state") in dict(KanbanStage.STATUS_TYPES):
+            qs = qs.filter(stage__status_type=params["state"])
+        if params.get("label"):
+            try:
+                UUID(str(params["label"]))
+                qs = qs.filter(labels__id=params["label"])
+            except (ValueError, TypeError):
+                pass
+        if params.get("q"):
+            qs = qs.filter(title__icontains=params["q"])
+        ordering = params.get("sort")
+        return qs.order_by({"priority": "priority", "due": "due_date", "assignee": "assigned_to__full_name", "progress": "updated_at"}.get(ordering, "stage__order"), "order", "created_at")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            "boards": KanbanBoard.objects.filter(is_active=True),
+            "operators": Operator.objects.filter(is_active=True).order_by("full_name"),
+            "priorities": KanbanTask.PRIORITIES,
+            "states": KanbanStage.STATUS_TYPES,
+            "labels": KanbanLabel.objects.filter(board_id=self.request.GET.get("board"), is_active=True) if self.request.GET.get("board") else KanbanLabel.objects.filter(is_active=True),
+            "filter_params": self.request.GET,
+        })
+        return context
+
+
+class TaskDetailView(ModelViewPermissionRequiredMixin, View):
+    model = KanbanTask
+    permission_action = "view"
+
+    def get(self, request, pk):
+        task = get_object_or_404(KanbanTask.objects.prefetch_related("labels", "checklist_items"), pk=pk, is_active=True, board__is_active=True)
+        return render(request, "workboard/_task_detail.html", {"task": task, "form": KanbanTaskForm(instance=task), "checklist_form": KanbanChecklistItemForm()})
+
+
+class TaskEditView(ModelPermissionRequiredMixin, UpdateView):
+    model = KanbanTask
+    form_class = KanbanTaskForm
+    template_name = "workboard/_task_form.html"
+    permission_action = "change"
+
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=True, board__is_active=True)
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        form.save_m2m()
+        if self.request.headers.get("HX-Request") == "true":
+            return HttpResponse(status=204, headers={"HX-Trigger": "board-refresh,task-saved"})
+        return response
+
+    def get_success_url(self):
+        return reverse("kanban") + f"?board={self.object.board_id}"
+
+
+class ChecklistItemCreate(ModelPermissionRequiredMixin, View):
+    model = KanbanChecklistItem
+    permission_action = "add"
+
+    def post(self, request, pk):
+        task = get_object_or_404(KanbanTask, pk=pk, is_active=True, board__is_active=True)
+        form = KanbanChecklistItemForm(request.POST)
+        if form.is_valid():
+            item = form.save(commit=False)
+            item.task = task
+            item.order = task.checklist_items.count()
+            item.save()
+        return render(request, "workboard/_task_detail.html", {"task": task, "form": KanbanTaskForm(instance=task), "checklist_form": KanbanChecklistItemForm()})
+
+
+class ChecklistItemToggle(ModelPermissionRequiredMixin, View):
+    model = KanbanChecklistItem
+    permission_action = "change"
+
+    def post(self, request, pk):
+        item = get_object_or_404(KanbanChecklistItem, pk=pk, task__is_active=True)
+        item.is_completed = not item.is_completed
+        item.save(update_fields=["is_completed", "updated_at"])
+        task = item.task
+        return render(request, "workboard/_task_detail.html", {"task": task, "form": KanbanTaskForm(instance=task), "checklist_form": KanbanChecklistItemForm()})
 
 
 for model, form, name in (
@@ -84,6 +210,8 @@ class KanbanBoardView(LoginRequiredMixin, TemplateView):
                 "boards": boards,
                 "operators": self._get_operators(),
                 "priorities": KanbanTask.PRIORITIES,
+                "states": KanbanStage.STATUS_TYPES,
+                "labels": KanbanLabel.objects.filter(board=board, is_active=True) if board else KanbanLabel.objects.none(),
                 "drag_enabled": self._filter_values(self.request.GET)[0] is None
                 and not self._filter_values(self.request.GET)[1],
                 "stages": self._build_stage_data(board, self.request.GET)
@@ -123,6 +251,14 @@ class KanbanBoardView(LoginRequiredMixin, TemplateView):
     def _build_stage_data(self, board, params):
         stages = board.stages.filter(is_active=True).order_by("order")
         operator, priority = self._filter_values(params)
+        state = params.get("state") if params.get("state") in dict(KanbanStage.STATUS_TYPES) else ""
+        label = params.get("label")
+        try:
+            if label:
+                UUID(str(label))
+        except (ValueError, TypeError):
+            label = ""
+        query = params.get("q", "").strip()
         stage_data = []
         for stage in stages:
             tasks = stage.tasks.filter(is_active=True).order_by("order")
@@ -130,6 +266,12 @@ class KanbanBoardView(LoginRequiredMixin, TemplateView):
                 tasks = tasks.filter(assigned_to=operator)
             if priority:
                 tasks = tasks.filter(priority=priority)
+            if state:
+                tasks = tasks.filter(stage__status_type=state)
+            if label:
+                tasks = tasks.filter(labels__id=label)
+            if query:
+                tasks = tasks.filter(title__icontains=query)
             stage_data.append({"stage": stage, "tasks": tasks})
         return stage_data
 

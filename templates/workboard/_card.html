@@ -1,6 +1,8 @@
 {% load i18n %}
 <div class="kanban-card priority-{{ task.priority }}" data-task-id="{{ task.id }}">
-  <div class="kanban-card-title">{{ task.title }}</div>
+  <a class="kanban-card-title" href="#task-detail" data-bs-toggle="offcanvas" hx-get="{% url 'task-detail' task.id %}" hx-target="#task-detail-content">{{ task.title }}</a>
+  <div class="mb-2"><span class="kanban-status status-{{ task.stage.status_type }}">{{ task.stage.get_status_type_display }}</span></div>
+  <div class="kanban-labels">{% for label in task.labels.all %}<span class="kanban-label" style="--label-color: {{ label.color }}">{{ label.name }}</span>{% endfor %}</div>
   <div class="kanban-card-meta">
     <span class="kanban-priority priority-{{ task.priority }}">{{ task.get_priority_display }}</span>
     {% if task.assigned_to %}
@@ -10,6 +12,7 @@
   {% if task.due_date %}
     <div class="kanban-due">{{ task.due_date|date:"M j" }}</div>
   {% endif %}
+  <div class="kanban-progress small">{% if task.checklist_total %}{{ task.checklist_progress }}% {% translate "complete" %}<div class="progress"><div class="progress-bar" style="width:{{ task.checklist_progress }}%"></div></div>{% else %}<span class="text-muted">{% translate "No steps" %}</span>{% endif %}</div>
   <form method="post" action="{% url 'task-archive' task.id %}" class="mt-2">
     {% csrf_token %}
     <button type="submit" class="btn btn-sm btn-link p-0 text-muted">{% translate "Archive" %}</button>

@@ -17,7 +17,7 @@ application.
 | Compliance | Document metadata and uploads, document types, expiry alerts and rules |
 | Operations | Flight-permission workflow, permission history, flight records |
 | Maintenance | Scheduled/unscheduled records, status transitions and history |
-| Workboard | Personal Kanban, priorities, stages and operator assignment |
+| Workboard | Operational Kanban and list views, typed stages, labels, checklists, progress, priorities and operator assignment |
 | Dashboard | Operational counts, upcoming expirations and work distribution |
 | Localization | English and Spanish UI with a direct language switch |
 | Security | Authenticated access, model permissions, CSV authorization, safe uploads |
@@ -139,6 +139,15 @@ an existing destination unless `--force` is supplied.
 Completed stabilization includes bilingual UI, dark-theme contrast fixes,
 operational form feedback, permission enforcement, document upload hardening,
 backup manifests, restoration verification, and regression coverage.
+
+### Kanban operational flow
+
+The board view is available at /workboard/ and the filterable list view at
+/workboard/list/. Stages are the source of truth for state; legacy stages remain
+Personalized. Labels are scoped to a board and tasks support ordered checklists
+with calculated progress. Task details open in a side panel for review/editing,
+while archive actions are reversible and drag-and-drop is disabled when active
+filters would make ordering ambiguous.
 
 The next priorities are tracked in [`BACKLOG.md`](BACKLOG.md): accessibility
 and responsive navigation, structured logs/health checks, CSP and asset

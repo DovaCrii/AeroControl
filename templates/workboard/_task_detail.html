@@ -1,0 +1,24 @@
+{% load i18n %}
+<div class="task-detail-header d-flex justify-content-between align-items-start">
+  <div><p class="text-muted small mb-1">{{ task.stage.name }}</p><h2 class="h5 mb-0">{{ task.title }}</h2></div>
+  <a class="btn btn-sm btn-outline-primary" hx-get="{% url 'task-edit' task.id %}" hx-target="#task-detail-content">{% translate "Edit" %}</a>
+</div>
+<hr>
+<div class="d-flex flex-wrap gap-2 mb-3">
+  <span class="kanban-status status-{{ task.stage.status_type }}">{{ task.stage.get_status_type_display }}</span>
+  <span class="badge priority-{{ task.priority }}">{{ task.get_priority_display }}</span>
+  {% for label in task.labels.all %}<span class="kanban-label" style="--label-color: {{ label.color }}">{{ label.name }}</span>{% endfor %}
+</div>
+{% if task.description %}<p class="mb-3">{{ task.description|linebreaksbr }}</p>{% endif %}
+<div class="small text-muted mb-2">{% translate "Checklist" %} · {{ task.checklist_completed }}/{{ task.checklist_total }} ({{ task.checklist_progress }}%)</div>
+<div class="progress mb-3" role="progressbar" aria-valuenow="{{ task.checklist_progress }}" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar" style="width:{{ task.checklist_progress }}%"></div></div>
+<div class="list-group mb-3">
+{% for item in task.checklist_items.all %}
+  <form method="post" action="{% url 'checklist-toggle' item.id %}" hx-post="{% url 'checklist-toggle' item.id %}" hx-target="#task-detail-content" class="list-group-item d-flex gap-2 align-items-center">
+    {% csrf_token %}<button class="btn btn-sm btn-link p-0" aria-label="{% translate 'Toggle checklist item' %}"> {% if item.is_completed %}☑{% else %}☐{% endif %}</button><span class="{% if item.is_completed %}text-decoration-line-through text-muted{% endif %}">{{ item.title }}</span>
+  </form>
+{% empty %}<p class="text-muted small">{% translate "No checklist steps yet." %}</p>{% endfor %}
+</div>
+<form method="post" action="{% url 'checklist-create' task.id %}" hx-post="{% url 'checklist-create' task.id %}" hx-target="#task-detail-content" class="input-group">
+  {% csrf_token %}{{ checklist_form.title }}<button class="btn btn-primary" type="submit">{% translate "Add step" %}</button>
+</form>

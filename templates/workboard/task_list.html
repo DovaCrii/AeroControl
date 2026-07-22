@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Task list" %}{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3"><div><p class="eyebrow">{% translate "Workboard" %}</p><h1 class="h3">{% translate "Task list" %}</h1></div><a class="btn btn-primary" href="{% url 'kanban' %}">{% translate "Board view" %}</a></div>
+  <form method="get" class="row g-2 align-items-end mb-3">
+    <input type="hidden" name="board" value="{{ request.GET.board }}">
+    <div class="col-md-3"><label class="form-label" for="q">{% translate "Search" %}</label><input id="q" name="q" value="{{ request.GET.q }}" class="form-control"></div>
+    <div class="col-md-2"><label class="form-label">{% translate "State" %}</label><select name="state" class="form-select"><option value="">{% translate "All states" %}</option>{% for value,label in states %}<option value="{{ value }}" {% if request.GET.state == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+    <div class="col-md-2"><label class="form-label">{% translate "Priority" %}</label><select name="priority" class="form-select"><option value="">{% translate "All priorities" %}</option>{% for value,label in priorities %}<option value="{{ value }}" {% if request.GET.priority == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+    <div class="col-md-2"><label class="form-label">{% translate "Sort" %}</label><select name="sort" class="form-select"><option value="due">{% translate "Due date" %}</option><option value="priority">{% translate "Priority" %}</option><option value="assignee">{% translate "Assignee" %}</option><option value="progress">{% translate "Progress" %}</option></select></div>
+    <div class="col-md-1"><button class="btn btn-outline-primary w-100" type="submit">{% translate "Apply" %}</button></div>
+  </form>
+  <div class="table-responsive"><table class="table align-middle"><thead><tr><th>{% translate "Task" %}</th><th>{% translate "State" %}</th><th>{% translate "Labels" %}</th><th>{% translate "Assignee" %}</th><th>{% translate "Priority" %}</th><th>{% translate "Due" %}</th><th>{% translate "Progress" %}</th></tr></thead><tbody>
+  {% for task in tasks %}<tr><td><a href="#task-detail" data-bs-toggle="offcanvas" hx-get="{% url 'task-detail' task.id %}" hx-target="#task-detail-content">{{ task.title }}</a></td><td><span class="kanban-status status-{{ task.stage.status_type }}">{{ task.stage.get_status_type_display }}</span></td><td>{% for label in task.labels.all %}<span class="kanban-label" style="--label-color: {{ label.color }}">{{ label.name }}</span>{% empty %}—{% endfor %}</td><td>{{ task.assigned_to|default:"—" }}</td><td>{{ task.get_priority_display }}</td><td>{{ task.due_date|default:"—" }}</td><td>{% if task.checklist_total %}{{ task.checklist_progress }}%{% else %}{% translate "No steps" %}{% endif %}</td></tr>{% empty %}<tr><td colspan="7" class="text-center text-muted py-5">{% translate "No tasks found." %}</td></tr>{% endfor %}
+  </tbody></table></div>
+</div>
+<div class="offcanvas offcanvas-end" tabindex="-1" id="task-detail" aria-labelledby="task-detail-title"><div class="offcanvas-header"><h2 id="task-detail-title" class="h5">{% translate "Task details" %}</h2><button class="btn-close" data-bs-dismiss="offcanvas" aria-label="{% translate 'Close' %}"></button></div><div class="offcanvas-body" id="task-detail-content"></div></div>
+{% endblock %}

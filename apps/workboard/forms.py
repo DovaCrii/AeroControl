@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import KanbanBoard, KanbanStage, KanbanTask
+from .models import KanbanBoard, KanbanChecklistItem, KanbanLabel, KanbanStage, KanbanTask
 
 
 class KanbanBoardForm(forms.ModelForm):
@@ -10,12 +10,14 @@ class KanbanBoardForm(forms.ModelForm):
 
 
 class KanbanStageForm(forms.ModelForm):
+    status_type = forms.ChoiceField(choices=KanbanStage.STATUS_TYPES, required=False)
     class Meta:
         model = KanbanStage
-        fields = ["board", "name", "order", "color"]
+        fields = ["board", "name", "order", "color", "status_type"]
 
 
 class KanbanTaskForm(forms.ModelForm):
+    labels = forms.ModelMultipleChoiceField(queryset=KanbanLabel.objects.none(), required=False)
     class Meta:
         model = KanbanTask
         fields = [
@@ -27,7 +29,16 @@ class KanbanTaskForm(forms.ModelForm):
             "due_date",
             "priority",
             "order",
+            "labels",
         ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        board_id = self.data.get("board") or getattr(self.instance, "board_id", None)
+        if board_id:
+            self.fields["stage"].queryset = KanbanStage.objects.filter(board_id=board_id, is_active=True)
+            self.fields["labels"].queryset = KanbanLabel.objects.filter(board_id=board_id, is_active=True)
+        self.fields["board"].queryset = KanbanBoard.objects.filter(is_active=True)
 
     def clean(self):
         cleaned = super().clean()
@@ -36,3 +47,15 @@ class KanbanTaskForm(forms.ModelForm):
         if board and stage and stage.board_id != board.id:
             self.add_error("stage", "The stage must belong to the selected board.")
         return cleaned
+
+
+class KanbanLabelForm(forms.ModelForm):
+    class Meta:
+        model = KanbanLabel
+        fields = ["board", "name", "color", "order"]
+
+
+class KanbanChecklistItemForm(forms.ModelForm):
+    class Meta:
+        model = KanbanChecklistItem
+        fields = ["title", "order"]
