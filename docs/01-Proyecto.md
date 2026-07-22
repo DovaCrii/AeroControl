@@ -6,7 +6,7 @@ tags: [aero-ops, proyecto]
 
 ## Origen
 
-AeroOps Desk nace de la realidad operativa de la gestión de flotas RPA (Remotely Piloted Aircraft): planillas Excel dispersas, credenciales vencidas rastreadas en hilos de correo, registros de mantenimiento散ados en carpetas, y permisos de vuelo armados sobre la hora.
+AeroControl nace de la realidad operativa de la gestión de flotas RPA (Remotely Piloted Aircraft): planillas Excel dispersas, credenciales vencidas rastreadas en hilos de correo, registros de mantenimiento散ados en carpetas, y permisos de vuelo armados sobre la hora.
 
 ## Propósito
 

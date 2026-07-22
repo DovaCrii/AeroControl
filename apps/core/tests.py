@@ -32,7 +32,7 @@ class TestPublicURLs:
         assert response.status_code == 200
         content = response.content.decode()
         assert "Sign In" in content
-        assert "AeroOps Desk" in content
+        assert "AeroControl" in content
 
     def test_login_post_ok(self, client, admin_user):
         response = client.post(
@@ -112,7 +112,30 @@ class TestAuthenticatedPages:
         assert response.status_code == 200
         assert "toggleTheme" in content
         assert "data-theme" in content
-        assert "AeroOps Desk" in content
+        assert "AeroControl" in content
+
+    def test_dashboard_serializes_chart_data_without_marking_it_safe(self, auth_client):
+        response = auth_client.get(reverse("dashboard"))
+        content = response.content.decode()
+
+        assert 'id="chart-data" type="application/json"' in content
+        assert "chart_data|safe" not in content
+
+    def test_logout_requires_post_and_logs_out(self, auth_client):
+        response = auth_client.post(reverse("logout"))
+
+        assert response.status_code == 302
+        assert response.url == reverse("login")
+
+    def test_language_switches_navigation_and_status_labels_to_spanish(self, auth_client):
+        response = auth_client.post(
+            reverse("set_language"), {"language": "es", "next": reverse("dashboard")}
+        )
+
+        assert response.status_code == 302
+        response = auth_client.get(reverse("dashboard"))
+        assert "Panel de operaciones" in response.content.decode()
+        assert "Aeronaves" in response.content.decode()
 
 
 class TestStaticFiles:

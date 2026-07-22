@@ -1,14 +1,14 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://via.placeholder.com/120x120/1B2A4A/2EC4B6?text=AO">
-    <img src="https://via.placeholder.com/120x120/1B2A4A/2EC4B6?text=AO" alt="AeroOps Desk" width="120" height="120">
+    <source media="(prefers-color-scheme: dark)" srcset="static/img/aerocontrol-mark.svg">
+    <img src="static/img/aerocontrol-mark.svg" alt="AeroControl drone mark" width="120" height="120">
   </picture>
 </p>
 
-<h1 align="center">AeroOps Desk</h1>
+<h1 align="center">AeroControl</h1>
 
 <p align="center">
-  <strong>RPA Operations Console</strong><br>
+  <strong>Air Operations Control Center</strong><br>
   Local control panel for managing RPA fleet operations, crew qualifications, compliance, and maintenance.
 </p>
 
@@ -31,11 +31,11 @@
 
 ## 💡 About
 
-**AeroOps Desk** was born from the operational reality of RPA (Remotely Piloted Aircraft) fleet management: spreadsheets everywhere, expiring credentials tracked in email threads, maintenance records scattered across folders, and flight permissions cobbled together at the last minute.
+**AeroControl** was born from the operational reality of RPA (Remotely Piloted Aircraft) fleet management: spreadsheets everywhere, expiring credentials tracked in email threads, maintenance records scattered across folders, and flight permissions cobbled together at the last minute.
 
 This is a **local-first operations console** — not a SaaS platform, not a cloud dashboard. It lives on the operator's machine, talks to a local SQLite database, and keeps operational data completely under the operator's control. The database, documents, and backups live outside the repository, on a separate data directory, so the code can be updated, rolled back, or even reinstalled without touching a single operational record.
 
-The name reflects its purpose: **Aero** (aviation), **Ops** (operations), **Desk** (your personal workspace). A tool for the person who needs to know, at a glance, what's airworthy, who's current, what's expiring, and what's next.
+The name reflects its purpose: **Aero** (aviation) and **Control** (clear operational command). A tool for the person who needs to know, at a glance, what's airworthy, who's current, what's expiring, and what's next.
 
 <br>
 
@@ -57,7 +57,7 @@ The name reflects its purpose: **Aero** (aviation), **Ops** (operations), **Desk
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    AeroOps Desk (Django)                     │
+│                    AeroControl (Django)                      │
 │                                                             │
 │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌───────────────┐  │
 │  │ Registry │ │Compliance│ │Operations│ │  Maintenance   │  │

@@ -1,8 +1,8 @@
-# AeroOps Desk Architecture
+# AeroControl Architecture
 
 ## Current: Modular Django Monolith
 
-AeroOps Desk is a modular Django monolith. Each domain is an installed application with its own models, forms, views, URLs, and admin registrations.
+AeroControl is a modular Django monolith. Each domain is an installed application with its own models, forms, views, URLs, and admin registrations.
 
 ```
 repo/

@@ -1,14 +1,21 @@
 import calendar
-from datetime import date, datetime
+from datetime import datetime
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from django.views.generic import CreateView, DetailView, ListView
 
-from apps.core.views import CsvExportMixin, HtmxFormMixin, SearchMixin, StatusTransitionView
+from apps.core.views import (
+    CsvExportMixin,
+    HtmxFormMixin,
+    ModelPermissionRequiredMixin,
+    SearchMixin,
+    StatusTransitionView,
+)
 from .forms import FlightPermissionForm, FlightRecordForm
 from .models import FlightPermission, FlightRecord
 
@@ -24,7 +31,8 @@ class OList(CsvExportMixin, SearchMixin, LoginRequiredMixin, ListView):
         return context
 
 
-class OCreate(HtmxFormMixin, LoginRequiredMixin, CreateView):
+class OCreate(HtmxFormMixin, ModelPermissionRequiredMixin, CreateView):
+    permission_action = "add"
     template_name = "generic/form.html"
 
     def get_success_url(self):
@@ -57,7 +65,7 @@ class FlightPermissionList(CsvExportMixin, SearchMixin, LoginRequiredMixin, List
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(
-            title="Permissions",
+            title=_("Permissions"),
             status_choices=FlightPermission.STATUS_CHOICES,
             current_status=self.request.GET.get("status", ""),
         )
@@ -65,7 +73,8 @@ class FlightPermissionList(CsvExportMixin, SearchMixin, LoginRequiredMixin, List
 
 
 FlightPermissionCreate = type(
-    "FlightPermissionCreate", (OCreate,),
+    "FlightPermissionCreate",
+    (OCreate,),
     {"model": FlightPermission, "form_class": FlightPermissionForm},
 )
 
@@ -82,9 +91,16 @@ class FlightPermissionDetail(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context["history"] = self.object.history.all()
         context["flight_records"] = self.object.records.filter(is_active=True)
-        if self.object.status == "requested":
-            actions = [("approve", "Approve", "btn-success"), ("deny", "Deny", "btn-danger")]
-        elif self.object.status == "approved":
+        if self.object.status == "requested" and self.request.user.has_perm(
+            "operations.change_flightpermission"
+        ):
+            actions = [
+                ("approve", "Approve", "btn-success"),
+                ("deny", "Deny", "btn-danger"),
+            ]
+        elif self.object.status == "approved" and self.request.user.has_perm(
+            "operations.change_flightpermission"
+        ):
             actions = [("complete", "Complete", "btn-primary")]
         else:
             actions = []
@@ -114,11 +130,19 @@ class FlightPermissionComplete(StatusTransitionView):
 
 
 FlightRecordList = type(
-    "FlightRecordList", (OList,), {
+    "FlightRecordList",
+    (OList,),
+    {
         "model": FlightRecord,
-        "search_fields": ["permission__permission_number", "pilot__full_name", "aircraft__registration"],
+        "search_fields": [
+            "permission__permission_number",
+            "pilot__full_name",
+            "aircraft__registration",
+        ],
     },
 )
+
+
 class FlightRecordCreate(OCreate):
     model = FlightRecord
     form_class = FlightRecordForm
@@ -139,11 +163,17 @@ class FlightRecordDetail(LoginRequiredMixin, DetailView):
     context_object_name = "record"
 
     def get_queryset(self):
-        return super().get_queryset().filter(is_active=True).select_related("permission", "pilot", "aircraft")
+        return (
+            super()
+            .get_queryset()
+            .filter(is_active=True)
+            .select_related("permission", "pilot", "aircraft")
+        )
 
 
-class FlightRecordDelete(LoginRequiredMixin, DetailView):
+class FlightRecordDelete(ModelPermissionRequiredMixin, DetailView):
     model = FlightRecord
+    permission_action = "delete"
     context_object_name = "object"
 
     def post(self, request, *args, **kwargs):
@@ -152,6 +182,7 @@ class FlightRecordDelete(LoginRequiredMixin, DetailView):
         record.save(update_fields=["is_active", "updated_at"])
         messages.success(request, "Flight record archived.")
         return redirect("record-list")
+
 
 class CalendarView(LoginRequiredMixin, ListView):
     template_name = "core/calendar.html"
@@ -164,7 +195,9 @@ class CalendarView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         today = timezone.now().date()
         try:
-            selected = datetime.strptime(self.request.GET.get("month", ""), "%Y-%m").date()
+            selected = datetime.strptime(
+                self.request.GET.get("month", ""), "%Y-%m"
+            ).date()
         except ValueError:
             selected = today.replace(day=1)
         year, month = selected.year, selected.month
@@ -175,7 +208,9 @@ class CalendarView(LoginRequiredMixin, ListView):
         for permission in FlightPermission.objects.filter(
             flight_date__year=year, flight_date__month=month, is_active=True
         ).select_related("operator", "aircraft"):
-            events.setdefault(permission.flight_date, []).append(("permission", permission))
+            events.setdefault(permission.flight_date, []).append(
+                ("permission", permission)
+            )
         for record in MaintenanceRecord.objects.filter(
             scheduled_date__year=year, scheduled_date__month=month, is_active=True
         ).select_related("aircraft"):

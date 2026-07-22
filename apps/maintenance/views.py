@@ -4,7 +4,13 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.generic import CreateView, DetailView, ListView
 
-from apps.core.views import CsvExportMixin, HtmxFormMixin, SearchMixin, StatusTransitionView
+from apps.core.views import (
+    CsvExportMixin,
+    HtmxFormMixin,
+    ModelPermissionRequiredMixin,
+    SearchMixin,
+    StatusTransitionView,
+)
 from .forms import MaintenanceCompletionForm, MaintenanceRecordForm
 from .models import MaintenanceHistory, MaintenanceRecord
 
@@ -20,7 +26,8 @@ class MList(CsvExportMixin, SearchMixin, LoginRequiredMixin, ListView):
         return context
 
 
-class MCreate(HtmxFormMixin, LoginRequiredMixin, CreateView):
+class MCreate(HtmxFormMixin, ModelPermissionRequiredMixin, CreateView):
+    permission_action = "add"
     template_name = "generic/form.html"
 
     def get_success_url(self):
@@ -104,20 +111,37 @@ class MaintenanceComplete(StatusTransitionView):
             return super().post(request, pk)
         form = MaintenanceCompletionForm(request.POST, instance=record)
         if not form.is_valid():
-            return render(request, "maintenance/record_detail.html", {
-                "record": record,
-                "history": record.history.all(),
-                "status_actions": [("complete", "Complete", "btn-success")],
-                "completion_form": form,
-            })
+            return render(
+                request,
+                "maintenance/record_detail.html",
+                {
+                    "record": record,
+                    "history": record.history.all(),
+                    "status_actions": [("complete", "Complete", "btn-success")],
+                    "completion_form": form,
+                },
+            )
         record._changed_by = request.user.get_username()
         record._transition_notes = form.cleaned_data.get("notes", "")
         completed = form.save(commit=False)
         completed.status = self.target_status
-        completed.save(update_fields=["completed_date", "performed_by", "cost", "notes", "status", "updated_at"])
+        completed.save(
+            update_fields=[
+                "completed_date",
+                "performed_by",
+                "cost",
+                "notes",
+                "status",
+                "updated_at",
+            ]
+        )
         messages.success(request, self.success_message)
         return redirect(record)
 
 
-MaintenanceHistoryList = type("MaintenanceHistoryList", (MList,), {"model": MaintenanceHistory})
-MaintenanceHistoryCreate = type("MaintenanceHistoryCreate", (MCreate,), {"model": MaintenanceHistory})
+MaintenanceHistoryList = type(
+    "MaintenanceHistoryList", (MList,), {"model": MaintenanceHistory}
+)
+MaintenanceHistoryCreate = type(
+    "MaintenanceHistoryCreate", (MCreate,), {"model": MaintenanceHistory}
+)

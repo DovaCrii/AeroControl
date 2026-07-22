@@ -1,7 +1,9 @@
 import csv
 
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.views import redirect_to_login
+from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
@@ -34,13 +36,14 @@ class SearchMixin:
             queryset = queryset.filter(is_active=True)
         elif active == "archived":
             queryset = queryset.filter(is_active=False)
-        return queryset
+        return queryset if queryset.ordered else queryset.order_by("created_at")
 
 
 class CsvExportMixin:
     """Add ``?export=csv`` support to list views."""
 
     csv_filename = None
+    csv_fields = None
 
     def get_csv_filename(self):
         if self.csv_filename:
@@ -50,12 +53,19 @@ class CsvExportMixin:
 
     def render_csv_response(self, queryset):
         response = HttpResponse(content_type="text/csv; charset=utf-8")
-        response["Content-Disposition"] = f'attachment; filename="{self.get_csv_filename()}"'
+        response["Content-Disposition"] = (
+            f'attachment; filename="{self.get_csv_filename()}"'
+        )
         # The BOM makes UTF-8 CSV files open correctly in Excel.
         response.write("\ufeff")
 
         writer = csv.writer(response, lineterminator="\r\n")
-        fields = self.model._meta.fields
+        fields = self.csv_fields or [
+            field
+            for field in self.model._meta.fields
+            if field.name
+            not in {"id", "notes", "is_active", "created_at", "updated_at"}
+        ]
         writer.writerow([field.verbose_name.title() for field in fields])
 
         for obj in queryset:
@@ -67,7 +77,11 @@ class CsvExportMixin:
                 elif hasattr(value, "strftime"):
                     row.append(value.strftime("%Y-%m-%d"))
                 else:
-                    row.append(str(value))
+                    value = str(value)
+                    # Excel/LibreOffice interpret leading formula characters on open.
+                    row.append(
+                        f"'{value}" if value.startswith(("=", "+", "-", "@")) else value
+                    )
             writer.writerow(row)
 
         return response
@@ -90,14 +104,45 @@ class HtmxFormMixin:
 
     def form_invalid(self, form):
         if self.request.headers.get("HX-Request") == "true":
-            return render(self.request, self.htmx_template_name, self.get_context_data(form=form), status=422)
+            return render(
+                self.request,
+                self.htmx_template_name,
+                self.get_context_data(form=form),
+                status=422,
+            )
         return super().form_invalid(form)
 
     def form_valid(self, form):
         response = super().form_valid(form)
         if self.request.headers.get("HX-Request") == "true":
-            return HttpResponse(status=204, headers={"HX-Trigger": "modal-form-success"})
+            return HttpResponse(
+                status=204, headers={"HX-Trigger": "modal-form-success"}
+            )
         return response
+
+
+class ModelPermissionRequiredMixin(LoginRequiredMixin, PermissionRequiredMixin):
+    """Require the Django model permission declared by a mutating view."""
+
+    permission_action = None
+    raise_exception = True
+
+    def handle_no_permission(self):
+        if not self.request.user.is_authenticated:
+            return redirect_to_login(
+                self.request.get_full_path(),
+                self.get_login_url(),
+                self.get_redirect_field_name(),
+            )
+        return super().handle_no_permission()
+
+    def get_permission_required(self):
+        if not self.permission_action or self.model is None:
+            raise ImproperlyConfigured(
+                "A protected model view needs model and permission_action."
+            )
+        meta = self.model._meta
+        return (f"{meta.app_label}.{self.permission_action}_{meta.model_name}",)
 
 
 class AlertCountPartial(LoginRequiredMixin, View):
@@ -107,11 +152,14 @@ class AlertCountPartial(LoginRequiredMixin, View):
         from apps.compliance.models import Alert
 
         count = Alert.objects.filter(is_active=True, is_resolved=False).count()
-        return render(request, "core/_alert_badge.html", {"unresolved_alert_count": count})
+        return render(
+            request, "core/_alert_badge.html", {"unresolved_alert_count": count}
+        )
 
 
-class StatusTransitionView(LoginRequiredMixin, View):
+class StatusTransitionView(ModelPermissionRequiredMixin, View):
     model = None
+    permission_action = "change"
     target_status = None
     valid_from_statuses = []
     success_message = "Status updated."
@@ -119,7 +167,9 @@ class StatusTransitionView(LoginRequiredMixin, View):
     def post(self, request, pk):
         obj = get_object_or_404(self.model, pk=pk, is_active=True)
         if obj.status not in self.valid_from_statuses:
-            messages.error(request, f"Cannot transition from {obj.get_status_display()}")
+            messages.error(
+                request, f"Cannot transition from {obj.get_status_display()}"
+            )
             return redirect(obj)
 
         obj.status = self.target_status

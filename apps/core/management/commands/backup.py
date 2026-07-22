@@ -10,8 +10,14 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         source = Path(settings.DATABASES["default"]["NAME"])
-        destination_dir = Path(__import__("decouple").config("BACKUPS_DIR", default=str(source.parent / "backups")))
+        destination_dir = Path(
+            __import__("decouple").config(
+                "BACKUPS_DIR", default=str(source.parent / "backups")
+            )
+        )
         destination_dir.mkdir(parents=True, exist_ok=True)
-        destination = destination_dir / f"aero_ops_{datetime.now():%Y%m%d_%H%M%S}.sqlite3"
+        destination = (
+            destination_dir / f"aero_ops_{datetime.now():%Y%m%d_%H%M%S}.sqlite3"
+        )
         shutil.copy2(source, destination)
         self.stdout.write(self.style.SUCCESS(f"Backup created: {destination}"))
