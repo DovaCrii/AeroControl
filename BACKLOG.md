@@ -118,5 +118,6 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
   concurrencia.
 - [ ] Separar frontend sólo cuando las necesidades de API, offline o móvil lo
   justifiquen; mantener el monolito Django mientras reduzca complejidad.
-- [ ] Definir pipeline de entrega: entorno staging, migraciones, backup previo,
-  verificación y rollback.
+- [x] Definir preflight CI de staging con migraciones, health/readiness, backup
+  previo y verificación de checksum; el despliegue productivo sigue siendo
+  manual y reversible.
