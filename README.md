@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="static/img/aerocontrol-mark.svg" alt="AeroControl drone mark" width="128" height="96">
+</p>
+
 # AeroControl
 
 Local-first operations desk for RPA/UAS teams. AeroControl centralizes fleet
