@@ -135,6 +135,16 @@ class TestAuthenticatedPages:
         assert reverted.status_code == 204
         assert not CostCenter.objects.filter(code="IMP-1", is_active=True).exists()
 
+    def test_aircraft_import_validates_cost_center(self, auth_client):
+        center = CostCenter.objects.create(code="AIR-OPS", name="Air Ops")
+        payload = b"registration,type,model,manufacturer,year,cost_center,status\nCC-IMP,Drone,X1,Maker,2026,AIR-OPS,active\n"
+        response = auth_client.post(
+            reverse("aircraft-import"),
+            {"file": SimpleUploadedFile("aircraft.csv", payload, content_type="text/csv"), "apply": "1"},
+        )
+        assert response.status_code == 302
+        assert Aircraft.objects.filter(registration="CC-IMP", cost_center=center).exists()
+
     def test_global_search_respects_permissions(self, auth_client):
         CostCenter.objects.create(code="SEARCH", name="Search Operations")
         response = auth_client.get(reverse("global-search"), {"q": "SEARCH"})

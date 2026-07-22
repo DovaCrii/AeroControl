@@ -825,5 +825,11 @@ msgstr "Vista previa"
 msgid "Apply import"
 msgstr "Aplicar importación"
 
+msgid "Import aircraft"
+msgstr "Importar aeronaves"
+
+msgid "CSV columns: registration,type,model,manufacturer,year,cost_center,status."
+msgstr "Columnas CSV: registration,type,model,manufacturer,year,cost_center,status."
+
 msgid "Registry"
 msgstr "Registro"
