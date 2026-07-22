@@ -1,4 +1,5 @@
 from django import forms
+from apps.core.models import OperationalTenant
 
 from .models import KanbanBoard, KanbanChecklistItem, KanbanLabel, KanbanStage, KanbanTask
 
@@ -6,7 +7,12 @@ from .models import KanbanBoard, KanbanChecklistItem, KanbanLabel, KanbanStage, 
 class KanbanBoardForm(forms.ModelForm):
     class Meta:
         model = KanbanBoard
-        fields = ["name", "description"]
+        fields = ["name", "description", "tenant"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["tenant"].required = False
+        self.fields["tenant"].queryset = OperationalTenant.objects.filter(is_active=True)
 
 
 class KanbanStageForm(forms.ModelForm):
