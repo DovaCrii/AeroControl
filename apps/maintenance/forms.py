@@ -1,9 +1,8 @@
-from django import forms
-
+from apps.core.forms import AeroModelForm
 from .models import MaintenanceHistory, MaintenanceRecord
 
 
-class MaintenanceRecordForm(forms.ModelForm):
+class MaintenanceRecordForm(AeroModelForm):
     class Meta:
         model = MaintenanceRecord
         fields = [
@@ -16,13 +15,13 @@ class MaintenanceRecordForm(forms.ModelForm):
         ]
 
 
-class MaintenanceHistoryForm(forms.ModelForm):
+class MaintenanceHistoryForm(AeroModelForm):
     class Meta:
         model = MaintenanceHistory
         fields = ["record", "previous_status", "new_status", "changed_by"]
 
 
-class MaintenanceCompletionForm(forms.ModelForm):
+class MaintenanceCompletionForm(AeroModelForm):
     class Meta:
         model = MaintenanceRecord
         fields = ["completed_date", "performed_by", "cost", "notes"]

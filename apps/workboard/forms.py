@@ -1,10 +1,11 @@
 from django import forms
 from apps.core.models import OperationalTenant
+from apps.core.forms import AeroModelForm
 
 from .models import KanbanBoard, KanbanChecklistItem, KanbanLabel, KanbanStage, KanbanTask
 
 
-class KanbanBoardForm(forms.ModelForm):
+class KanbanBoardForm(AeroModelForm):
     class Meta:
         model = KanbanBoard
         fields = ["name", "description", "tenant"]
@@ -15,14 +16,14 @@ class KanbanBoardForm(forms.ModelForm):
         self.fields["tenant"].queryset = OperationalTenant.objects.filter(is_active=True)
 
 
-class KanbanStageForm(forms.ModelForm):
+class KanbanStageForm(AeroModelForm):
     status_type = forms.ChoiceField(choices=KanbanStage.STATUS_TYPES, required=False)
     class Meta:
         model = KanbanStage
         fields = ["board", "name", "order", "color", "status_type"]
 
 
-class KanbanTaskForm(forms.ModelForm):
+class KanbanTaskForm(AeroModelForm):
     labels = forms.ModelMultipleChoiceField(queryset=KanbanLabel.objects.none(), required=False)
     class Meta:
         model = KanbanTask
@@ -55,13 +56,13 @@ class KanbanTaskForm(forms.ModelForm):
         return cleaned
 
 
-class KanbanLabelForm(forms.ModelForm):
+class KanbanLabelForm(AeroModelForm):
     class Meta:
         model = KanbanLabel
         fields = ["board", "name", "color", "order"]
 
 
-class KanbanChecklistItemForm(forms.ModelForm):
+class KanbanChecklistItemForm(AeroModelForm):
     class Meta:
         model = KanbanChecklistItem
         fields = ["title", "order"]

@@ -1,6 +1,6 @@
 # Backlog — AeroControl
 
-Última revisión: 22 de julio de 2026. Este documento separa lo entregado de los
+Última revisión: 23 de julio de 2026. Este documento separa lo entregado de los
 objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
 
 ## Entregado en la estabilización inicial
@@ -25,6 +25,20 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
   Dependabot.
 
 ## Próxima etapa — cierre funcional y de calidad (P0)
+
+## Modernización UX/UI — rama `codex/ui-modernization`
+
+- [x] Aplicar sistema visual semántico para modo claro/oscuro y botones con
+  estados visibles.
+- [x] Establecer español como idioma inicial y completar etiquetas operativas
+  de formularios con controles de fecha/hora.
+- [x] Añadir panel lateral contraíble en escritorio con persistencia local.
+- [x] Añadir calendario unificado de permisos, mantenimiento y tareas Kanban.
+- [x] Añadir vistas Tablero, Lista y Calendario al Workboard.
+- [x] Añadir Centro de administración operativo separado del Django Admin.
+- [ ] Verificar visualmente las superficies en escritorio, móvil, teclado y
+  modo oscuro; completar ajustes derivados de la revisión.
+- [ ] Cerrar la rama mediante commit, push y PR después de la suite completa.
 
 - [x] Corregir la deriva de `PermissionHistory`: modelo y migraciones alineados,
   transiciones atómicas y prueba de actor, estados y notas del historial.

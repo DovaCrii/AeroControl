@@ -91,14 +91,14 @@ def test_authenticated_kanban_renders_and_empty_board_state(auth_client, board):
     board_obj.stages.update(is_active=False)
     response = auth_client.get(reverse("kanban"))
     assert response.status_code == 200
-    assert "This board has no active stages." in response.content.decode()
+    assert "Este tablero no tiene etapas activas." in response.content.decode()
 
 
 @pytest.mark.django_db
 def test_kanban_without_boards_shows_empty_state(auth_client):
     response = auth_client.get(reverse("kanban"))
     assert response.status_code == 200
-    assert "No board configured." in response.content.decode()
+    assert "No hay ningún tablero configurado." in response.content.decode()
 
 
 @pytest.mark.django_db
@@ -123,7 +123,7 @@ def test_kanban_filters_by_operator_and_priority(auth_client, board, operator):
     assert "Matching" in content
     assert "Other" not in content
     assert 'data-drag-disabled="true"' in content
-    assert "Drag-and-drop ordering is disabled" in content
+    assert "El orden por arrastre está desactivado" in content
     assert str(matching.pk) in content
 
 

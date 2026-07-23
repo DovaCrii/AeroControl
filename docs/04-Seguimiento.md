@@ -55,3 +55,32 @@ tags: [aero-ops, seguimiento]
 - Validar el archivo oficial de Capítulo 1 con `chapter1_import`.
 - Aplicar la carga sólo después de revisar el informe de errores y duplicados.
 - Mantener el ensayo real de PostgreSQL pendiente hasta disponer de servidor.
+
+## Sesión actual — 23 Julio 2026
+
+### Modernización UX/UI
+- Se creó la rama `codex/ui-modernization` sobre la rama de estabilización.
+- Se implementó una base visual semántica para modo claro y oscuro, con panel
+  lateral contraíble y persistencia local.
+- Se estableció español como idioma inicial y se mejoraron etiquetas,
+  validaciones y controles de fecha/hora de los formularios.
+- El Workboard incorporó navegación Tablero, Lista y Calendario, manteniendo
+  HTMX y el drag-and-drop existente.
+- Se añadió `GET /calendar/events/` para combinar permisos, mantenimiento y
+  vencimientos Kanban respetando autenticación y acceso a tableros.
+- Se añadió el Centro de administración operativo en `/administracion/`; el
+  Django Admin continúa como administración técnica avanzada.
+- Se creó la especificación OpenSpec en
+  `openspec/changes/ui-modernization/`.
+
+### Validación
+- `manage.py check`: correcto.
+- Ruff sobre aplicaciones, configuración y scripts: correcto.
+- Suite completa: 116 pruebas correctas.
+- `makemigrations --check --dry-run`: sin migraciones pendientes.
+- `git diff --check`: correcto. Permanece sólo una advertencia local de acceso a
+  `.pytest_cache`, sin impacto en la aplicación.
+
+### Siguiente paso
+- Revisar la aplicación levantada en modo claro/oscuro, cerrar hallazgos visuales
+  de la revisión manual y abrir el PR de modernización desde esta rama.

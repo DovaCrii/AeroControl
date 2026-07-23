@@ -6,6 +6,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext as _
+from django.utils import timezone
 from django.views import View
 from django.views.generic import ListView, CreateView, TemplateView, UpdateView
 from uuid import UUID
@@ -335,6 +336,7 @@ class KanbanBoardView(LoginRequiredMixin, TemplateView):
                 if board
                 else [],
                 "filter_params": self.request.GET,
+                "today": timezone.localdate(),
             }
         )
         return context
@@ -365,6 +367,7 @@ class BoardPartialView(LoginRequiredMixin, View):
                 "drag_enabled": filter_values(request.GET)[0] is None
                 and not filter_values(request.GET)[1],
                 "filter_params": request.GET,
+                "today": timezone.localdate(),
             },
         )
         query = request.GET.urlencode()
@@ -585,6 +588,7 @@ class QuickTaskCreate(ModelPermissionRequiredMixin, View):
                 "tasks": tasks,
                 "drag_enabled": operator is None and not valid_priority,
                 "filter_params": filter_params,
+                "today": timezone.localdate(),
             },
         )
 

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Administration center" %} - AeroControl{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <p class="eyebrow mb-1">{% translate "System" %}</p>
+    <h1>{% translate "Administration center" %}</h1>
+    <p class="text-muted mb-0">{% translate "Configure the operational workspace from one clear place." %}</p>
+  </div>
+  {% if technical_admin_url %}<a class="btn btn-outline-secondary" href="{{ technical_admin_url }}">{% translate "Advanced technical administration" %}</a>{% endif %}
+</div>
+
+<div class="admin-center-grid">
+  {% for section in sections %}
+  <section class="admin-section card" aria-labelledby="admin-section-{{ forloop.counter }}">
+    <div class="admin-section-header">
+      <div><h2 id="admin-section-{{ forloop.counter }}" class="h5 mb-1">{{ section.title }}</h2><p class="text-muted mb-0">{{ section.description }}</p></div>
+    </div>
+    <div class="admin-section-items">
+      {% for item in section.items %}
+      <a class="admin-item" href="{{ item.url }}">
+        <span class="admin-item-icon" aria-hidden="true">{% if item.read_only %}◉{% else %}⚙{% endif %}</span>
+        <span><strong>{{ item.title }}</strong><small>{{ item.description }}</small></span>
+        <span class="admin-item-arrow" aria-hidden="true">→</span>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% empty %}
+  <div class="empty-state card"><div><h2 class="h4">{% translate "No administration modules available" %}</h2><p>{% translate "Ask an administrator to grant the required permissions." %}</p></div></div>
+  {% endfor %}
+</div>
+{% endblock %}
