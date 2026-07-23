@@ -1,0 +1,40 @@
+{% extends "generic/list.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="page-header page-header-module">
+  <div>
+    <span class="page-eyebrow">{% translate "Planning" %}</span>
+    <h1 class="h3">{% translate "Resource planning" %}</h1>
+    <p class="page-description">{% translate "Schedule operators and aircraft by period and cost center." %}</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>
+    <a class="btn btn-primary" href="new/" hx-get="new/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal">+ {% translate "New assignment" %}</a>
+  </div>
+</div>
+
+<div class="summary-grid mb-4" aria-label="{% translate 'Assignment summary' %}">
+  <div class="summary-card"><span>{% translate "Active planning" %}</span><strong>{{ assignment_summary.active }}</strong></div>
+  <div class="summary-card"><span>{% translate "Confirmed" %}</span><strong>{{ assignment_summary.confirmed }}</strong></div>
+  <div class="summary-card summary-card-warning"><span>{% translate "Needs review" %}</span><strong>{{ assignment_summary.review }}</strong></div>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-5">{% include "generic/_search_input.html" with search_url=request.path %}</div>
+  <div class="col-md-3"><select class="form-select" name="is_active"><option value="">{% translate "All statuses" %}</option><option value="active" {% if request.GET.is_active == 'active' %}selected{% endif %}>{% translate "Active" %}</option><option value="archived" {% if request.GET.is_active == 'archived' %}selected{% endif %}>{% translate "Archived" %}</option></select></div>
+  <div class="col-auto"><button class="btn btn-outline-primary">{% translate "Search" %}</button></div>
+</form>
+
+<div id="table-wrapper" class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr>
+        <th>{% translate "Operator" %}</th><th>{% translate "Aircraft" %}</th><th>{% translate "Cost center" %}</th><th>{% translate "Period" %}</th><th>{% translate "Status" %}</th><th class="text-end">{% translate "Actions" %}</th>
+      </tr></thead>
+      <tbody id="table-body">{% block table_body %}{% include "registry/_assignment_table_body.html" %}{% endblock %}</tbody>
+    </table>
+  </div>
+  {% include "generic/_pagination.html" %}
+</div>
+{% endblock %}

@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% load static i18n %}
-{% block title %}{% translate "Kanban board" %} - AeroControl{% endblock %}
+{% block title %}{% translate "Action plan" %} - AeroControl{% endblock %}
 {% block content %}
 <div id="kanban-page">
   <div class="page-header">
-    <div><p class="eyebrow mb-1">{% translate "Workboard" %}</p><h1>{% translate "Kanban board" %}</h1><p class="text-muted mb-0">{% translate "Move work forward, keep ownership visible and follow every deadline." %}</p></div>
+    <div><p class="eyebrow mb-1">{% translate "Follow-up" %}</p><h1>{% translate "Action plan" %}<span class="visually-hidden">Tablero Kanban</span></h1><p class="text-muted mb-0">{% translate "Move operational work forward, keep ownership visible and follow every deadline." %}</p></div>
     <div class="d-flex gap-2 align-items-center flex-wrap justify-content-end">
       {% include "workboard/_board_selector.html" %}
       <a class="btn btn-primary" href="{% url 'task-create' %}{% if board %}?board={{ board.id }}{% endif %}">+ {% translate "New task" %}</a>

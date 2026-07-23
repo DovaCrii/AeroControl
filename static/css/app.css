@@ -720,7 +720,11 @@ main {
 
 .sidebar a:hover { background: var(--ac-primary-soft); color: var(--ac-text); }
 .sidebar a.active { background: var(--ac-primary-soft); color: var(--ac-text); box-shadow: inset 3px 0 0 var(--ac-primary); }
-.sidebar-label { color: var(--ac-text-muted); margin-top: 0.65rem; }
+.sidebar-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; min-height: 34px; margin-bottom: 0.35rem; padding-inline: 0.45rem; }
+.sidebar-toolbar-title { color: var(--ac-text-muted); font-size: 0.68rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+.sidebar-collapse { display: inline-grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 1px solid var(--ac-border); border-radius: 8px; background: var(--ac-surface-raised); color: var(--ac-text-secondary); }
+.sidebar-collapse:hover, .sidebar-collapse:focus-visible { color: var(--ac-text); border-color: var(--ac-primary); background: var(--ac-primary-soft); }
+.sidebar-label { color: var(--ac-text-secondary); margin-top: 0.85rem; padding-inline: 0.45rem; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
 .sidebar hr { border-color: var(--ac-border); opacity: 1; }
 
 .sidebar.is-collapsed {
@@ -730,6 +734,9 @@ main {
 
 .sidebar.is-collapsed .sidebar-label,
 .sidebar.is-collapsed hr { display: none; }
+.sidebar.is-collapsed .sidebar-toolbar { justify-content: center; padding-inline: 0; }
+.sidebar.is-collapsed .sidebar-toolbar-title { display: none; }
+.sidebar.is-collapsed .sidebar-collapse svg { transform: rotate(180deg); }
 .sidebar.is-collapsed .nav-item { justify-content: center; padding-inline: 0; font-size: 0; }
 .sidebar.is-collapsed .nav-icon { margin: 0; }
 .sidebar.is-collapsed .nav-item .badge { display: none; }
@@ -747,6 +754,8 @@ main {
 .page-header { margin-bottom: 1.25rem; }
 .page-header h1 { margin: 0; font-size: clamp(1.65rem, 2vw, 2.2rem); font-weight: 750; letter-spacing: -0.035em; }
 .eyebrow { color: var(--ac-primary); font-size: 0.72rem; font-weight: 750; letter-spacing: 0.12em; text-transform: uppercase; }
+.page-eyebrow { display: block; margin-bottom: 0.25rem; color: var(--ac-primary); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+.page-description { margin: 0.35rem 0 0; color: var(--ac-text-secondary); }
 
 .btn {
   min-height: 40px;
@@ -793,6 +802,13 @@ main {
 .table { --bs-table-color: var(--ac-text); --bs-table-bg: var(--ac-surface); --bs-table-border-color: var(--ac-border); }
 .table th { color: var(--ac-text-secondary); font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; }
 .table td { vertical-align: middle; }
+.table-primary-value { color: var(--ac-text); font-weight: 650; }
+
+.summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.85rem; }
+.summary-card { display: flex; flex-direction: column; gap: 0.25rem; padding: 1rem 1.1rem; border: 1px solid var(--ac-border); border-radius: var(--ac-radius); background: var(--ac-surface); box-shadow: var(--ac-shadow); }
+.summary-card span { color: var(--ac-text-secondary); font-size: 0.8rem; font-weight: 650; }
+.summary-card strong { color: var(--ac-primary); font-size: 1.65rem; line-height: 1; }
+.summary-card-warning strong { color: #d97706; }
 
 .empty-state {
   display: grid;
@@ -836,6 +852,8 @@ main {
 [data-bs-theme="dark"] .sidebar { background: var(--ac-surface); border-color: var(--ac-border); }
 [data-theme="dark"] .sidebar a,
 [data-bs-theme="dark"] .sidebar a { color: var(--ac-text-secondary); }
+[data-theme="dark"] .sidebar-toolbar-title,
+[data-bs-theme="dark"] .sidebar-toolbar-title { color: var(--ac-text-secondary); }
 [data-theme="dark"] .sidebar a:hover,
 [data-theme="dark"] .sidebar a.active,
 [data-bs-theme="dark"] .sidebar a:hover,
@@ -868,6 +886,7 @@ main {
   .sidebar.is-collapsed .nav-item .badge { display: inline-block; }
   main { padding: 1rem !important; }
   .page-header { align-items: flex-start; }
+  .summary-grid { grid-template-columns: 1fr; }
 }
 
 /* ── Calendar ─────────────────────────────────────── */
@@ -878,10 +897,15 @@ main {
 .calendar-legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
 .calendar-dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; display: inline-block; }
 .calendar-dot-permission { background: #f59e0b; }
+.calendar-dot-assignment { background: #2563eb; }
+.calendar-dot-flight { background: #0ea5e9; }
 .calendar-dot-maintenance { background: #8b5cf6; }
+.calendar-dot-compliance { background: #ef4444; }
 .calendar-dot-task { background: #0f9f95; }
 .calendar-filter-label { display: flex; align-items: center; gap: 0.5rem; color: var(--ac-text-secondary); font-size: 0.8rem; font-weight: 650; }
 .calendar-filter-label .form-select { min-width: 170px; }
+.calendar-scope-filters { display: flex; flex: 1 1 100%; gap: 0.6rem; flex-wrap: wrap; }
+.calendar-scope-filters .form-select { min-width: 190px; flex: 1 1 190px; }
 #calendar-app { min-height: 520px; }
 .fc { --fc-border-color: var(--ac-border); --fc-page-bg-color: var(--ac-surface); --fc-neutral-bg-color: var(--ac-surface-raised); --fc-list-event-hover-bg-color: var(--ac-primary-soft); color: var(--ac-text); }
 .fc .fc-toolbar-title { font-size: 1.2rem; color: var(--ac-text); }
@@ -931,6 +955,9 @@ main {
 .kanban-assignee, .kanban-due { color: var(--ac-text-secondary); }
 .kanban-footer { border-top-color: var(--ac-border); }
 .kanban-footer .btn { border-style: dashed; }
+.kanban-source { margin-top: 0.55rem; color: var(--ac-text-secondary); font-size: 0.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kanban-source span { margin-right: 0.25rem; color: var(--ac-text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.task-source { padding: 0.7rem 0.8rem; border: 1px solid var(--ac-border); border-radius: 8px; background: var(--ac-surface-raised); }
 .kanban-empty { color: var(--ac-text-muted); }
 .kanban-progress .progress { height: 5px; margin-top: 0.35rem; background: var(--ac-border); }
 .kanban-progress .progress-bar { background: var(--ac-primary); }

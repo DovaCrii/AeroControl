@@ -28,7 +28,7 @@
           <th class="text-end">{% translate "Actions" %}</th>
         </tr>
       </thead>
-      <tbody id="table-body">{% include "generic/_table_body.html" %}</tbody>
+      <tbody id="table-body">{% block table_body %}{% include "generic/_table_body.html" %}{% endblock %}</tbody>
     </table>
   </div>
   {% render_pagination page_obj %}

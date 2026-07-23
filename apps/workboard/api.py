@@ -29,10 +29,12 @@ class KanbanTaskSerializer(serializers.ModelSerializer):
     stage_name = serializers.CharField(source="stage.name", read_only=True)
     board_name = serializers.CharField(source="board.name", read_only=True)
     progress = serializers.IntegerField(source="checklist_progress", read_only=True)
+    source_type = serializers.CharField(source="source_content_type.model", read_only=True, allow_null=True)
+    source_id = serializers.UUIDField(source="source_object_id", read_only=True, allow_null=True)
 
     class Meta:
         model = KanbanTask
-        fields = ["id", "title", "board", "board_name", "stage", "stage_name", "state", "priority", "due_date", "progress", "updated_at"]
+        fields = ["id", "title", "board", "board_name", "stage", "stage_name", "state", "priority", "due_date", "progress", "source_type", "source_id", "updated_at"]
 
 
 class KanbanTaskViewSet(ViewSet):
@@ -63,6 +65,7 @@ class KanbanTaskViewSet(ViewSet):
             "labels": [{"id": str(label.pk), "name": label.name, "color": label.color} for label in task.labels.all()],
             "checklist": {"total": task.checklist_total, "completed": task.checklist_completed, "progress": task.checklist_progress},
             "updated_at": task.updated_at.isoformat(),
+            "source": {"type": task.source_content_type.model, "id": str(task.source_object_id)} if task.source_content_type_id and task.source_object_id else None,
         }
 
     def list(self, request):

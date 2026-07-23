@@ -202,7 +202,11 @@ class UnifiedCalendarEventsView(LoginRequiredMixin, View):
 
     EVENT_COLORS = {
         "permission": "#f59e0b",
+        "flight": "#0ea5e9",
+        "assignment": "#2563eb",
         "maintenance": "#8b5cf6",
+        "document": "#ef4444",
+        "qualification": "#e11d48",
         "task": "#0f9f95",
     }
 
@@ -220,15 +224,21 @@ class UnifiedCalendarEventsView(LoginRequiredMixin, View):
 
     def get(self, request):
         from django.db.models import Q
+        from django.contrib.contenttypes.models import ContentType
+        from apps.compliance.models import Document
         from apps.maintenance.models import MaintenanceRecord
-        from apps.operations.models import FlightPermission
+        from apps.operations.models import FlightPermission, FlightRecord
+        from apps.registry.models import Aircraft, Assignment, CostCenter, Operator, Qualification
         from apps.workboard.selectors import visible_tasks_for_user
 
         start, end = self.get_date_range(request)
         selected_types = set(filter(None, request.GET.get("types", "").split(",")))
         if not selected_types:
-            selected_types = {"permission", "maintenance", "task"}
+            selected_types = {"permission", "flight", "assignment", "maintenance", "document", "qualification", "task"}
         events = []
+        cost_center_id = request.GET.get("cost_center") or None
+        aircraft_id = request.GET.get("aircraft") or None
+        operator_id = request.GET.get("operator") or None
 
         if request.user.is_superuser:
             tenant_ids = None
@@ -251,6 +261,12 @@ class UnifiedCalendarEventsView(LoginRequiredMixin, View):
                     | Q(aircraft__tenant_id__in=tenant_ids)
                     | Q(cost_center__tenant_id__in=tenant_ids)
                 )
+            if cost_center_id:
+                permissions = permissions.filter(cost_center_id=cost_center_id)
+            if aircraft_id:
+                permissions = permissions.filter(aircraft_id=aircraft_id)
+            if operator_id:
+                permissions = permissions.filter(operator_id=operator_id)
             events.extend(
                 {
                     "id": f"permission-{permission.pk}",
@@ -264,12 +280,74 @@ class UnifiedCalendarEventsView(LoginRequiredMixin, View):
                 for permission in permissions
             )
 
+        if "flight" in selected_types:
+            records = FlightRecord.objects.filter(
+                actual_date__range=(start, end), is_active=True
+            ).select_related("pilot", "aircraft", "permission")
+            if tenant_ids is not None:
+                records = records.filter(aircraft__tenant_id__in=tenant_ids)
+            if cost_center_id:
+                records = records.filter(aircraft__cost_center_id=cost_center_id)
+            if aircraft_id:
+                records = records.filter(aircraft_id=aircraft_id)
+            if operator_id:
+                records = records.filter(pilot_id=operator_id)
+            events.extend(
+                {
+                    "id": f"flight-{record.pk}",
+                    "type": "flight",
+                    "title": f"{record.aircraft} · {record.pilot}",
+                    "start": record.actual_date.isoformat(),
+                    "allDay": True,
+                    "color": self.EVENT_COLORS["flight"],
+                    "url": reverse("record-detail", args=[record.pk]),
+                }
+                for record in records
+            )
+
+        if "assignment" in selected_types:
+            assignments = Assignment.objects.filter(
+                start_date__lte=end,
+                is_active=True,
+            ).filter(Q(end_date__isnull=True) | Q(end_date__gte=start)).select_related(
+                "operator", "aircraft", "cost_center"
+            )
+            if tenant_ids is not None:
+                assignments = assignments.filter(
+                    Q(operator__tenant_id__in=tenant_ids)
+                    | Q(aircraft__tenant_id__in=tenant_ids)
+                    | Q(cost_center__tenant_id__in=tenant_ids)
+                )
+            if cost_center_id:
+                assignments = assignments.filter(cost_center_id=cost_center_id)
+            if aircraft_id:
+                assignments = assignments.filter(aircraft_id=aircraft_id)
+            if operator_id:
+                assignments = assignments.filter(operator_id=operator_id)
+            events.extend(
+                {
+                    "id": f"assignment-{assignment.pk}",
+                    "type": "assignment",
+                    "title": f"{assignment.aircraft} · {assignment.operator}",
+                    "start": assignment.start_date.isoformat(),
+                    "end": (assignment.end_date + timedelta(days=1)).isoformat() if assignment.end_date else None,
+                    "allDay": True,
+                    "color": self.EVENT_COLORS["assignment"],
+                    "url": reverse("assignment-detail", args=[assignment.pk]),
+                }
+                for assignment in assignments
+            )
+
         if "maintenance" in selected_types:
             maintenance = MaintenanceRecord.objects.filter(
                 scheduled_date__range=(start, end), is_active=True
             ).select_related("aircraft")
             if tenant_ids is not None:
                 maintenance = maintenance.filter(aircraft__tenant_id__in=tenant_ids)
+            if cost_center_id:
+                maintenance = maintenance.filter(aircraft__cost_center_id=cost_center_id)
+            if aircraft_id:
+                maintenance = maintenance.filter(aircraft_id=aircraft_id)
             events.extend(
                 {
                     "id": f"maintenance-{record.pk}",
@@ -283,6 +361,70 @@ class UnifiedCalendarEventsView(LoginRequiredMixin, View):
                 for record in maintenance
             )
 
+        if "qualification" in selected_types:
+            qualifications = Qualification.objects.filter(
+                expiry_date__range=(start, end), is_active=True
+            ).select_related("operator")
+            if tenant_ids is not None:
+                qualifications = qualifications.filter(operator__tenant_id__in=tenant_ids)
+            if cost_center_id:
+                qualifications = qualifications.filter(operator__cost_center_id=cost_center_id)
+            if operator_id:
+                qualifications = qualifications.filter(operator_id=operator_id)
+            events.extend(
+                {
+                    "id": f"qualification-{qualification.pk}",
+                    "type": "qualification",
+                    "title": f"{qualification.operator} · {qualification.qualification_type}",
+                    "start": qualification.expiry_date.isoformat(),
+                    "allDay": True,
+                    "color": self.EVENT_COLORS["qualification"],
+                    "url": reverse("qualification-detail", args=[qualification.pk]),
+                }
+                for qualification in qualifications
+            )
+
+        if "document" in selected_types:
+            documents = Document.objects.filter(
+                expiry_date__range=(start, end), is_current_version=True, is_active=True
+            ).select_related("doc_type", "content_type")
+            if tenant_ids is not None:
+                aircraft_type = ContentType.objects.get_for_model(Aircraft)
+                operator_type = ContentType.objects.get_for_model(Operator)
+                cost_center_type = ContentType.objects.get_for_model(CostCenter)
+                allowed_aircraft = Aircraft.objects.filter(tenant_id__in=tenant_ids).values_list("pk", flat=True)
+                allowed_operators = Operator.objects.filter(tenant_id__in=tenant_ids).values_list("pk", flat=True)
+                allowed_centers = CostCenter.objects.filter(tenant_id__in=tenant_ids).values_list("pk", flat=True)
+                documents = documents.filter(
+                    Q(content_type=aircraft_type, object_id__in=allowed_aircraft)
+                    | Q(content_type=operator_type, object_id__in=allowed_operators)
+                    | Q(content_type=cost_center_type, object_id__in=allowed_centers)
+                )
+            if aircraft_id:
+                documents = documents.filter(
+                    content_type=ContentType.objects.get_for_model(Aircraft), object_id=aircraft_id
+                )
+            elif operator_id:
+                documents = documents.filter(
+                    content_type=ContentType.objects.get_for_model(Operator), object_id=operator_id
+                )
+            elif cost_center_id:
+                documents = documents.filter(
+                    content_type=ContentType.objects.get_for_model(CostCenter), object_id=cost_center_id
+                )
+            events.extend(
+                {
+                    "id": f"document-{document.pk}",
+                    "type": "document",
+                    "title": f"{document.title} · {document.doc_type}",
+                    "start": document.expiry_date.isoformat(),
+                    "allDay": True,
+                    "color": self.EVENT_COLORS["document"],
+                    "url": reverse("document-detail", args=[document.pk]),
+                }
+                for document in documents
+            )
+
         if "task" in selected_types:
             tasks = visible_tasks_for_user(request.user).filter(
                 due_date__range=(start, end)
@@ -290,6 +432,10 @@ class UnifiedCalendarEventsView(LoginRequiredMixin, View):
             board_id = request.GET.get("board")
             if board_id:
                 tasks = tasks.filter(board_id=board_id)
+            if operator_id:
+                tasks = tasks.filter(assigned_to_id=operator_id)
+            if cost_center_id:
+                tasks = tasks.filter(assigned_to__cost_center_id=cost_center_id)
             events.extend(
                 {
                     "id": f"task-{task.pk}",

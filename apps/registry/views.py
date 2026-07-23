@@ -30,9 +30,20 @@ class RegistryList(CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin
     context_object_name = "objects"
     paginate_by = 25
 
+    page_titles = {
+        "costcenter": _("Cost centers"),
+        "aircraft": _("Aircraft"),
+        "operator": _("Operators"),
+        "assignment": _("Resource planning"),
+        "qualification": _("Qualifications"),
+    }
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = _(self.model._meta.verbose_name_plural.title())
+        context["title"] = self.page_titles.get(
+            self.model._meta.model_name,
+            _(self.model._meta.verbose_name_plural.title()),
+        )
         return context
 
 
@@ -91,11 +102,55 @@ CostCenterList, CostCenterDetail, CostCenterCreate, CostCenterUpdate = make_view
 AircraftList, AircraftDetail, AircraftCreate, AircraftUpdate = make_views(
     Aircraft, AircraftForm, "Aircraft"
 )
+AircraftList.template_name = "registry/aircraft_list.html"
+AircraftList.search_fields = ["registration", "model", "manufacturer"]
 OperatorList, OperatorDetail, OperatorCreate, OperatorUpdate = make_views(
     Operator, OperatorForm, "Operator"
 )
-AssignmentList, AssignmentDetail, AssignmentCreate, AssignmentUpdate = make_views(
-    Assignment, AssignmentForm, "Assignment"
+class AssignmentList(RegistryList):
+    model = Assignment
+    template_name = "registry/assignment_list.html"
+    search_fields = [
+        "operator__full_name",
+        "operator__employee_id",
+        "aircraft__registration",
+        "aircraft__model",
+        "cost_center__code",
+    ]
+
+    def get_queryset(self):
+        from django.db.models import Q
+        from apps.core.models import OperationalTenant
+
+        queryset = super().get_queryset().select_related(
+            "operator", "aircraft", "cost_center"
+        )
+        if not self.request.user.is_superuser:
+            tenant_ids = OperationalTenant.objects.filter(
+                members=self.request.user, is_active=True
+            ).values_list("id", flat=True)
+            queryset = queryset.filter(
+                Q(operator__tenant_id__in=tenant_ids)
+                | Q(aircraft__tenant_id__in=tenant_ids)
+                | Q(cost_center__tenant_id__in=tenant_ids)
+            )
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        queryset = self.get_queryset()
+        context["assignment_summary"] = {
+            "active": queryset.filter(is_active=True, status__in=["planned", "confirmed"]).count(),
+            "confirmed": queryset.filter(is_active=True, status="confirmed").count(),
+            "review": queryset.filter(is_active=True, cost_center__isnull=True).count(),
+        }
+        return context
+
+
+AssignmentDetail, AssignmentCreate, AssignmentUpdate = (
+    type("AssignmentDetail", (RegistryDetail,), {"model": Assignment}),
+    type("AssignmentCreate", (RegistryCreate,), {"model": Assignment, "form_class": AssignmentForm}),
+    type("AssignmentUpdate", (RegistryUpdate,), {"model": Assignment, "form_class": AssignmentForm}),
 )
 QualificationList, QualificationDetail, QualificationCreate, QualificationUpdate = (
     make_views(Qualification, QualificationForm, "Qualification")

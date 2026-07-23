@@ -45,14 +45,21 @@
 
   <div class="d-flex">
     <aside class="sidebar p-3 d-flex flex-column" id="sidebar" aria-label="{% translate 'Main navigation' %}">
+      <div class="sidebar-toolbar">
+        <span class="sidebar-toolbar-title">{% translate "Navigation" %}</span>
+        <button class="sidebar-collapse" type="button" id="sidebar-collapse" aria-controls="sidebar" aria-label="{% translate 'Collapse sidebar' %}" title="{% translate 'Collapse sidebar' %}">
+          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+        </button>
+      </div>
       {% with request.resolver_match.url_name as url_name %}
       <a href="{% url 'dashboard' %}" class="nav-item nav-overview {% if url_name == 'dashboard' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>{% translate "Dashboard" %}</a>
 
-      <span class="sidebar-label">{% translate "Registry" %}</span>
+      <span class="sidebar-label">{% translate "Master data" %}</span>
       <a href="{% url 'costcenter-list' %}" class="nav-item nav-registry {% if url_name == 'costcenter-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V5l8-3 8 3v16"/><path d="M9 21v-4h6v4M8 8h.01M12 8h.01M16 8h.01M8 12h.01M12 12h.01M16 12h.01"/></svg>{% translate "Cost Centers" %}</a>
       <a href="{% url 'aircraft-list' %}" class="nav-item nav-registry {% if url_name == 'aircraft-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13l7-2 3-7 2 1-1 6 6 2 1 2-7-1-3 5-2-1 1-4-5 1z"/></svg>{% translate "Aircraft" %}</a>
       <a href="{% url 'operator-list' %}" class="nav-item nav-registry {% if url_name == 'operator-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg>{% translate "Operators" %}</a>
-      <a href="{% url 'assignment-list' %}" class="nav-item nav-registry {% if url_name == 'assignment-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 15l-2 2a3 3 0 0 1-4-4l3-3a3 3 0 0 1 4 0"/><path d="M15 9l2-2a3 3 0 0 1 4 4l-3 3a3 3 0 0 1-4 0M8 16l8-8"/></svg>{% translate "Assignments" %}</a>
+      <span class="sidebar-label">{% translate "Planning" %}</span>
+      <a href="{% url 'assignment-list' %}" class="nav-item nav-registry {% if url_name == 'assignment-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 15l-2 2a3 3 0 0 1-4-4l3-3a3 3 0 0 1 4 0"/><path d="M15 9l2-2a3 3 0 0 1 4 4l-3 3a3 3 0 0 1-4 0M8 16l8-8"/></svg>{% translate "Resource planning" %}</a>
 
       <span class="sidebar-label">{% translate "Compliance" %}</span>
       <a href="{% url 'document-list' %}" class="nav-item nav-compliance {% if url_name == 'document-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>{% translate "Documents" %}</a>
@@ -66,8 +73,8 @@
       <span class="sidebar-label">{% translate "Maintenance" %}</span>
       <a href="{% url 'maintenance-list' %}" class="nav-item nav-maintenance {% if url_name == 'maintenance-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 6a5 5 0 0 0-6 6l-5 5 4 4 5-5a5 5 0 0 0 6-6l-3 3-4-4z"/></svg>{% translate "Records" %}</a>
 
-      <span class="sidebar-label">{% translate "Workboard" %}</span>
-      <a href="{% url 'kanban' %}" class="nav-item nav-workboard {% if url_name == 'kanban' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 8v8M13 8v5M18 8v8"/></svg>{% translate "Kanban" %}</a>
+      <span class="sidebar-label">{% translate "Follow-up" %}</span>
+      <a href="{% url 'kanban' %}" class="nav-item nav-workboard {% if url_name == 'kanban' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 8v8M13 8v5M18 8v8"/></svg>{% translate "Action plan" %}</a>
       <hr>
       {% if user.is_staff %}<a href="{% url 'administration' %}" class="nav-item nav-admin"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19 15a8 8 0 1 0-4 4"/></svg>{% translate "Administration center" %}</a>{% endif %}
       <a href="{% url 'admin:index' %}" class="nav-item nav-admin"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2 2-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.04 1.56V20h-2.8v-.1A1.7 1.7 0 0 0 11 18.34a1.7 1.7 0 0 0-1.88.34l-.06.06-2-2 .06-.06A1.7 1.7 0 0 0 7.46 15 1.7 1.7 0 0 0 5.9 14H5.8v-2.8h.1a1.7 1.7 0 0 0 1.56-1.04 1.7 1.7 0 0 0-.34-1.88l-.06-.06 2-2 .06.06A1.7 1.7 0 0 0 11 6.62a1.7 1.7 0 0 0 1.04-1.56V5h2.8v.1a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06 2 2-.06.06a1.7 1.7 0 0 0-.34 1.88A1.7 1.7 0 0 0 21 11.2h.1V14H21a1.7 1.7 0 0 0-1.6 1z"/></svg>{% translate "Admin" %}</a>
@@ -103,11 +110,27 @@
     }
     function toggleTheme() { applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); }
     function setSidebar(open) { const sidebar = document.getElementById('sidebar'); const toggle = document.getElementById('sidebar-toggle'); sidebar.classList.toggle('is-open', open); if (toggle && window.innerWidth < 769) toggle.setAttribute('aria-expanded', String(open)); }
-    function setSidebarCollapsed(collapsed) { const sidebar = document.getElementById('sidebar'); if (!sidebar) return; sidebar.classList.toggle('is-collapsed', collapsed); localStorage.setItem('sidebar-collapsed', String(collapsed)); document.getElementById('sidebar-toggle').setAttribute('aria-expanded', String(!collapsed)); }
+    function setSidebarCollapsed(collapsed) {
+      const sidebar = document.getElementById('sidebar');
+      if (!sidebar) return;
+      sidebar.classList.toggle('is-collapsed', collapsed);
+      localStorage.setItem('sidebar-collapsed', String(collapsed));
+      const toggle = document.getElementById('sidebar-toggle');
+      const innerToggle = document.getElementById('sidebar-collapse');
+      if (toggle && window.innerWidth >= 769) toggle.setAttribute('aria-expanded', String(!collapsed));
+      if (innerToggle) {
+        innerToggle.setAttribute('aria-label', collapsed ? '{% translate "Expand sidebar" %}' : '{% translate "Collapse sidebar" %}');
+        innerToggle.setAttribute('title', collapsed ? '{% translate "Expand sidebar" %}' : '{% translate "Collapse sidebar" %}');
+      }
+    }
     document.getElementById('sidebar-toggle').addEventListener('click', function () { if (window.innerWidth >= 769) { setSidebarCollapsed(!document.getElementById('sidebar').classList.contains('is-collapsed')); } else { setSidebar(!document.getElementById('sidebar').classList.contains('is-open')); } });
+    document.getElementById('sidebar-collapse').addEventListener('click', function () { setSidebarCollapsed(!document.getElementById('sidebar').classList.contains('is-collapsed')); });
     applyTheme(document.documentElement.getAttribute('data-theme') || 'light');
     if (window.innerWidth >= 769 && localStorage.getItem('sidebar-collapsed') === 'true') setSidebarCollapsed(true);
-    document.querySelectorAll('#sidebar a').forEach(function (link) { link.addEventListener('click', function () { setSidebar(false); }); });
+    document.querySelectorAll('#sidebar a').forEach(function (link) {
+      link.title = link.textContent.replace(/\s+/g, ' ').trim();
+      link.addEventListener('click', function () { setSidebar(false); });
+    });
     document.addEventListener('keydown', function (event) { if (event.key === 'Escape') { setSidebar(false); } });
     document.body.addEventListener('htmx:configRequest', function (event) { event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}'; });
     document.body.addEventListener('click', function (event) { const trigger = event.target.closest('[data-bs-target="#generic-modal"]'); if (trigger) { modalTrigger = trigger; } });
