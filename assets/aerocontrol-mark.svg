@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120" role="img" aria-labelledby="title desc">
+  <title id="title">AeroControl drone mark</title>
+  <desc id="desc">Simple turquoise drone icon for AeroControl</desc>
+  <g fill="none" stroke="#2EC4B6" stroke-linecap="round" stroke-linejoin="round" stroke-width="6">
+    <path d="M80 48V28M80 92V72M56 60H32M128 60h-24"/>
+    <path d="m61 41-16-16M99 41l16-16M61 79 45 95M99 79l16 16"/>
+    <rect x="56" y="42" width="48" height="36" rx="12" fill="#1B2A4A"/>
+    <circle cx="68" cy="60" r="4" fill="#2EC4B6" stroke="none"/>
+    <circle cx="92" cy="60" r="4" fill="#2EC4B6" stroke="none"/>
+    <circle cx="26" cy="20" r="10"/>
+    <circle cx="134" cy="20" r="10"/>
+    <circle cx="26" cy="100" r="10"/>
+    <circle cx="134" cy="100" r="10"/>
+  </g>
+</svg>

@@ -1,6 +1,6 @@
 # Backlog — AeroControl
 
-Última revisión: 22 de julio de 2026. Este documento separa lo entregado de los
+Última revisión: 23 de julio de 2026. Este documento separa lo entregado de los
 objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
 
 ## Entregado en la estabilización inicial
@@ -25,6 +25,20 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
   Dependabot.
 
 ## Próxima etapa — cierre funcional y de calidad (P0)
+
+## Modernización UX/UI — rama `codex/ui-modernization`
+
+- [x] Aplicar sistema visual semántico para modo claro/oscuro y botones con
+  estados visibles.
+- [x] Establecer español como idioma inicial y completar etiquetas operativas
+  de formularios con controles de fecha/hora.
+- [x] Añadir panel lateral contraíble en escritorio con persistencia local.
+- [x] Añadir calendario unificado de permisos, mantenimiento y tareas Kanban.
+- [x] Añadir vistas Tablero, Lista y Calendario al Workboard.
+- [x] Añadir Centro de administración operativo separado del Django Admin.
+- [ ] Verificar visualmente las superficies en escritorio, móvil, teclado y
+  modo oscuro; completar ajustes derivados de la revisión.
+- [ ] Cerrar la rama mediante commit, push y PR después de la suite completa.
 
 - [x] Corregir la deriva de `PermissionHistory`: modelo y migraciones alineados,
   transiciones atómicas y prueba de actor, estados y notas del historial.
@@ -84,6 +98,17 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
 - [ ] Completar validaciones cruzadas de seguro, permiso y habilitación cuando
   esos dominios tengan sus fuentes normalizadas.
 
+## Datos oficiales Capítulo 1 — 23 julio 2026
+
+- [x] Añadir campos de responsable de CC y metadatos técnicos del inventario RPA.
+- [x] Implementar lector DOCX `chapter1_docx_import` con hash, exportación de
+  reporte y carga transaccional fuera del repositorio.
+- [x] Cargar 11 CC, 14 aeronaves y 41 operadores sin conflicto en la base local.
+- [ ] Resolver cuatro grupos de operadores duplicados con datos contradictorios.
+- [ ] Asignar oficialmente cada aeronave y operador a un centro de costo.
+- [ ] Modelar habilitaciones DGAC con vigencia, evidencia documental y alertas.
+- [ ] Modelar compatibilidad operador–aeronave antes de autorizar vuelos.
+
 ## Operación segura y confiable (P1)
 
 - [x] Cerrar autorización de lectura y exportación: los listados y CSV exigen
@@ -135,3 +160,21 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
 - [x] Definir preflight CI de staging con migraciones, health/readiness, backup
   previo y verificación de checksum; el despliegue productivo sigue siendo
   manual y reversible.
+
+## Fases pendientes de estabilización
+
+- [x] Unificar el alcance de tenant y acceso de tablero en HTML, HTMX,
+  exportaciones, búsqueda y API; evidencia: pruebas Workboard y DRF.
+- [x] Completar contexto de objeto en `AuditEvent` y hacer tolerante el fallo de
+  escritura del registro; evidencia: pruebas de auditoría.
+- [x] Consolidar toda la escritura de tareas en el ViewSet/servicio DRF único,
+  preservando el contrato `/api/v1/`; depende de cerrar la matriz de clientes.
+- [x] Extraer selectores y el parser CSV común, incluyendo límite de 500 filas,
+  precarga de referencias y reversión atómica.
+- [x] Añadir FKs de actor compatibles y tenant nullable en el dominio raíz,
+  incluyendo migraciones y reporte de etiquetas no resueltas.
+- [x] Activar rotación de logs y declarar `uv.lock`/`pyproject.toml` como fuente
+  única de dependencias.
+- [ ] Tenancy estricto, PostgreSQL, DJI, Celery/Redis, vínculo `Operator.user`
+  y frontend separado permanecen diferidos hasta cumplir sus criterios de
+  entrada.

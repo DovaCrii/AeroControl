@@ -59,6 +59,15 @@ def test_flight_record_form_rejects_data_that_does_not_match_its_permission():
 
 
 @pytest.mark.django_db
+def test_flight_record_form_uses_operational_date_and_time_controls():
+    form = FlightRecordForm()
+
+    assert form.fields["actual_date"].widget.input_type == "date"
+    assert form.fields["departure_time"].widget.input_type == "time"
+    assert form.fields["arrival_time"].widget.input_type == "time"
+
+
+@pytest.mark.django_db
 def test_permission_transition_requires_the_change_permission():
     cost_center = CostCenter.objects.create(code="OPS", name="Operations")
     operator = Operator.objects.create(

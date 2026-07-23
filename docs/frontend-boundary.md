@@ -25,3 +25,9 @@ workflows, not yet a public client platform.
 Until then, new interactive behavior should remain progressively enhanced:
 full URLs must work without JavaScript, and HTMX fragments must never become
 public navigation targets.
+
+The current UX modernization keeps this boundary: FullCalendar is an optional
+progressive enhancement over the server-rendered calendar, and the Workboard
+continues to share Django-rendered Tablero, Lista and Calendario views. The new
+operational administration center composes existing permissions and forms; it
+does not introduce a second frontend or duplicate domain rules.

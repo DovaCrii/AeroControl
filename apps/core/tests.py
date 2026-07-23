@@ -1,10 +1,12 @@
 import pytest
 from datetime import date, timedelta
 import json
+from docx import Document as DocxDocument
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.exceptions import ValidationError
 from django.contrib.staticfiles import finders
 from django.contrib.staticfiles.views import serve
 from django.core.management import call_command
@@ -16,7 +18,9 @@ from django.utils import timezone
 from apps.registry.models import Aircraft, CostCenter, Operator
 from apps.compliance.forms import DocumentForm
 from apps.compliance.models import Document, DocumentType, document_upload_path
-from apps.workboard.models import KanbanBoard
+from apps.maintenance.models import MaintenanceRecord
+from apps.operations.models import FlightPermission
+from apps.workboard.models import KanbanBoard, KanbanStage, KanbanTask
 from apps.core.models import AuditEvent, ImportBatch
 
 
@@ -54,6 +58,39 @@ class TestPublicURLs:
         assert payload["status"] == "ok"
         assert payload["checks"]["database"] == "ok"
 
+    @pytest.mark.django_db
+    def test_unified_calendar_events_combines_operations_maintenance_and_tasks(self, auth_client):
+        center = CostCenter.objects.create(code="CAL", name="Calendar")
+        operator = Operator.objects.create(employee_id="CAL-1", full_name="Calendar Operator", cost_center=center)
+        aircraft = Aircraft.objects.create(registration="CC-CAL", type="Fixed", model="C1", manufacturer="Maker", cost_center=center)
+        permission = FlightPermission.objects.create(
+            permission_number="CAL-001", operator=operator, aircraft=aircraft,
+            cost_center=center, purpose="Inspection", flight_date=date(2026, 7, 24), location="Santiago",
+        )
+        maintenance = MaintenanceRecord.objects.create(
+            aircraft=aircraft, maintenance_type="scheduled", description="Inspection",
+            scheduled_date=date(2026, 7, 25), performed_by="Team", cost=0,
+        )
+        board = KanbanBoard.objects.create(name="Calendar board")
+        stage = KanbanStage.objects.create(board=board, name="Planned")
+        task = KanbanTask.objects.create(board=board, stage=stage, title="Calendar task", due_date=date(2026, 7, 26))
+
+        response = auth_client.get(reverse("calendar-events"), {"start": "2026-07-01", "end": "2026-08-01"})
+
+        assert response.status_code == 200
+        payload = response.json()
+        assert {item["type"] for item in payload} == {"permission", "maintenance", "task"}
+        assert {item["id"] for item in payload} == {f"permission-{permission.pk}", f"maintenance-{maintenance.pk}", f"task-{task.pk}"}
+
+    def test_administration_center_explains_operational_configuration(self, auth_client):
+        response = auth_client.get(reverse("administration"))
+
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert "Centro de administración" in content
+        assert "Configuración del tablero de trabajo" in content
+        assert "Administración técnica avanzada" in content
+
     """Verify pages that are intentionally available without authentication."""
 
     def test_login_page(self, client):
@@ -61,7 +98,7 @@ class TestPublicURLs:
 
         assert response.status_code == 200
         content = response.content.decode()
-        assert "Sign In" in content
+        assert "Iniciar sesión" in content
         assert "AeroControl" in content
 
     def test_login_post_ok(self, client, admin_user):
@@ -81,7 +118,7 @@ class TestPublicURLs:
 
         assert response.status_code == 200
         content = response.content.decode()
-        assert "Invalid username or password" in content
+        assert "Usuario o contraseña no válidos" in content
 
 
 class TestAuthRequiredURLs:
@@ -157,6 +194,55 @@ class TestAuthenticatedPages:
         assert response.status_code == 302
         assert Operator.objects.filter(employee_id="EMP-IMP", cost_center=center).exists()
 
+
+class TestChapter1DocxImport:
+    @pytest.mark.django_db
+    def test_docx_source_reports_aircraft_and_duplicate_operators(self, tmp_path, capsys):
+        document = DocxDocument()
+        document.add_paragraph("1.5- DOTACIÓN OPERADOR RPA")
+        document.add_paragraph("1) PERMANENTES")
+        document.add_paragraph("1.- NOMBRE : Ana Pérez")
+        document.add_paragraph("RUT : 11.111.111-1")
+        document.add_paragraph("Credencial N° : 100")
+        document.add_paragraph("Tipo : Operador RPA")
+        document.add_paragraph("Habilitaciones : Matrice")
+        document.add_paragraph("Dirección : Calle 1")
+        document.add_paragraph("Teléfono : 999")
+        document.add_paragraph("Email : ana@example.com")
+        document.add_paragraph("2.- NOMBRE : Ana Pérez")
+        document.add_paragraph("RUT : 11.111.111-1")
+        document.add_paragraph("Credencial N° : 100")
+        document.add_paragraph("Tipo : Operador RPA")
+        document.add_paragraph("Habilitaciones : Matrice")
+        document.add_paragraph("Dirección : Calle 1")
+        document.add_paragraph("Teléfono : 999")
+        document.add_paragraph("Email : ana@example.com")
+        document.add_paragraph("2) EVENTUALES (NO APLICA)")
+        service_table = document.add_table(rows=2, cols=3)
+        service_table.rows[0].cells[0].text = "AERONAVES"
+        service_table.rows[0].cells[1].text = "REGISTRO"
+        service_table.rows[0].cells[2].text = "SERVICIO"
+        service_table.rows[1].cells[0].text = "DJI / MAVIC"
+        service_table.rows[1].cells[1].text = "RPA 1"
+        service_table.rows[1].cells[2].text = "Fotografía"
+        inventory = document.add_table(rows=2, cols=8)
+        for index, header in enumerate(["Propietario", "Modelo y Año", "Serie", "Inscripción", "MTOW", "Básico", "VLOS", "Paracaídas"]):
+            inventory.rows[0].cells[index].text = header
+        for index, value in enumerate(["J.E.J.", "DJI / MAVIC", "SER-1", "RPA-1", "1,0", "1,0", "VLOS", "NO"]):
+            inventory.rows[1].cells[index].text = value
+        source = tmp_path / "chapter1.docx"
+        document.save(source)
+
+        call_command("chapter1_docx_import", "--source", str(source), "--json")
+        payload = json.loads(capsys.readouterr().out)
+        assert payload["counts"] == {
+            "aircraft_extracted": 1,
+            "operators_extracted": 2,
+            "operators_ready": 1,
+            "duplicate_groups": 1,
+            "cost_centers": 0,
+        }
+
     def test_import_templates_are_downloadable(self, auth_client):
         response = auth_client.get(reverse("aircraft-import"), {"template": "1"})
         assert response.status_code == 200
@@ -180,7 +266,37 @@ class TestAuthenticatedPages:
         assert event.action == "post_success"
         assert event.path == reverse("board-create")
         assert event.request_id
+        assert event.model_label == "workboard.KanbanBoard"
+        assert event.object_id
         assert event.metadata == {"query_keys": []}
+
+    def test_audit_write_failure_does_not_change_mutation_response(self, auth_client, monkeypatch):
+        def fail_create(**kwargs):
+            raise RuntimeError("audit database unavailable")
+
+        monkeypatch.setattr(AuditEvent.objects, "create", fail_create)
+        response = auth_client.post(reverse("board-create"), {"name": "Audit resilient board"})
+        assert response.status_code == 302
+        assert KanbanBoard.objects.filter(name="Audit resilient board").exists()
+
+    def test_audit_events_reject_orm_mutation_and_deletion(self, admin_user):
+        event = AuditEvent.objects.create(
+            actor=admin_user,
+            action="post_success",
+            method="POST",
+            path="/audit-test/",
+            status_code=201,
+        )
+
+        event.action = "tampered"
+        with pytest.raises(ValidationError):
+            event.save()
+        with pytest.raises(ValidationError):
+            event.delete()
+        with pytest.raises(ValidationError):
+            AuditEvent.objects.filter(pk=event.pk).update(action="tampered")
+        with pytest.raises(ValidationError):
+            AuditEvent.objects.filter(pk=event.pk).delete()
 
     """Verify representative authenticated pages and shared template behavior."""
 

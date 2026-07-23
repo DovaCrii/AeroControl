@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from apps.core.models import BaseModel
 from apps.registry.models import Operator, Aircraft, CostCenter
@@ -56,6 +57,10 @@ class PermissionHistory(BaseModel):
     previous_status = models.CharField(max_length=20)
     new_status = models.CharField(max_length=20)
     changed_by = models.CharField(max_length=150)
+    changed_by_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="permission_history_events",
+    )
     notes = models.TextField(blank=True)
 
     class Meta:
