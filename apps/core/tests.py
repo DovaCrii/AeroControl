@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.exceptions import ValidationError
 from django.contrib.staticfiles import finders
 from django.contrib.staticfiles.views import serve
 from django.core.management import call_command
@@ -192,6 +193,25 @@ class TestAuthenticatedPages:
         response = auth_client.post(reverse("board-create"), {"name": "Audit resilient board"})
         assert response.status_code == 302
         assert KanbanBoard.objects.filter(name="Audit resilient board").exists()
+
+    def test_audit_events_reject_orm_mutation_and_deletion(self, admin_user):
+        event = AuditEvent.objects.create(
+            actor=admin_user,
+            action="post_success",
+            method="POST",
+            path="/audit-test/",
+            status_code=201,
+        )
+
+        event.action = "tampered"
+        with pytest.raises(ValidationError):
+            event.save()
+        with pytest.raises(ValidationError):
+            event.delete()
+        with pytest.raises(ValidationError):
+            AuditEvent.objects.filter(pk=event.pk).update(action="tampered")
+        with pytest.raises(ValidationError):
+            AuditEvent.objects.filter(pk=event.pk).delete()
 
     """Verify representative authenticated pages and shared template behavior."""
 

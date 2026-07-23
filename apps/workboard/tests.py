@@ -535,6 +535,24 @@ def test_drf_api_tasks_is_permissioned(auth_client, board):
 
 
 @pytest.mark.django_db
+def test_drf_api_tasks_requires_auth(board):
+    response = Client().get("/api/drf/v1/workboard/tasks/")
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Authentication required."
+
+
+@pytest.mark.django_db
+def test_drf_api_tasks_requires_view_permission(board):
+    client = Client()
+    User.objects.create_user("no-task-view", password="password")
+    assert client.login(username="no-task-view", password="password")
+
+    response = client.get("/api/drf/v1/workboard/tasks/")
+
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
 def test_drf_api_tasks_scopes_tenant_and_board_access(user, auth_client, board):
     board_obj, todo, _ = board
     tenant = OperationalTenant.objects.create(name="Tenant A", slug="tenant-a")
@@ -568,5 +586,8 @@ def test_api_token_and_openapi_contract(user, auth_client):
     assert schema_response.status_code == 200
     schema = schema_response.json()
     assert schema["openapi"] == "3.0.3"
-    assert "tokenAuth" in schema["components"]["securitySchemes"]
+    token_auth = schema["components"]["securitySchemes"]["tokenAuth"]
+    assert token_auth["type"] == "apiKey"
+    assert token_auth["in"] == "header"
+    assert token_auth["name"] == "Authorization"
     assert "/api/drf/v1/workboard/tasks/" in schema["paths"]
