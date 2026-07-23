@@ -1,5 +1,0 @@
-Django==6.0.7
-django-crispy-forms==2.4
-crispy-bootstrap5==2025.6
-python-decouple==3.8
-ruff==0.12.0

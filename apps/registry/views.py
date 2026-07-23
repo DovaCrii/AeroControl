@@ -1,6 +1,3 @@
-import csv
-import io
-
 from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -18,6 +15,7 @@ from apps.core.views import (
 )
 from .models import CostCenter, Aircraft, Operator, Assignment, Qualification
 from apps.core.models import ImportBatch
+from apps.core.imports import CsvImportSpec
 from .forms import (
     CostCenterForm,
     AircraftForm,
@@ -117,28 +115,15 @@ class CostCenterImportView(ModelPermissionRequiredMixin, View):
 
     @staticmethod
     def parse(upload):
-        if not upload or upload.size > 2 * 1024 * 1024:
-            return [], ["El archivo es obligatorio y no puede superar 2 MB."]
-        try:
-            text = upload.read().decode("utf-8-sig")
-            reader = csv.DictReader(io.StringIO(text))
-        except (UnicodeDecodeError, csv.Error):
-            return [], ["El archivo debe ser CSV UTF-8 válido."]
-        if reader.fieldnames != ["code", "name"]:
-            return [], ["Las columnas deben ser exactamente: code,name."]
-        rows, errors, seen = [], [], set()
-        for line, raw in enumerate(reader, start=2):
-            code, name = (raw.get("code", "").strip(), raw.get("name", "").strip())
-            if not code or not name:
-                errors.append(f"Línea {line}: code y name son obligatorios.")
-            elif code in seen or CostCenter.objects.filter(code=code).exists():
-                errors.append(f"Línea {line}: el código {code} está duplicado.")
-            else:
-                seen.add(code)
-                rows.append({"code": code, "name": name})
-        if len(rows) > 500:
-            errors.append("El máximo por lote es de 500 filas.")
-        return rows, errors
+        spec = CsvImportSpec(("code", "name"), "code")
+        existing = set(CostCenter.objects.values_list("code", flat=True))
+        return spec.parse(
+            upload,
+            existing,
+            lambda raw, _line: {"code": raw["code"].strip(), "name": raw["name"].strip()}
+            if raw["name"].strip()
+            else "code y name son obligatorios.",
+        )
 
     def post(self, request):
         rows, errors = self.parse(request.FILES.get("file"))
@@ -157,12 +142,18 @@ class CostCenterImportRevertView(ModelPermissionRequiredMixin, View):
     permission_action = "change"
 
     def post(self, request, pk):
-        batch = get_object_or_404(ImportBatch, pk=pk, entity__in=["registry.costcenter", "registry.aircraft", "registry.operator"], status="applied")
-        model = {"registry.costcenter": CostCenter, "registry.aircraft": Aircraft, "registry.operator": Operator}[batch.entity]
-        model.objects.filter(pk__in=batch.created_ids).update(is_active=False)
-        batch.status = "reverted"
-        batch.reverted_at = timezone.now()
-        batch.save(update_fields=["status", "reverted_at", "updated_at"])
+        with transaction.atomic():
+            batch = get_object_or_404(
+                ImportBatch.objects.select_for_update(),
+                pk=pk,
+                entity__in=["registry.costcenter", "registry.aircraft", "registry.operator"],
+                status="applied",
+            )
+            model = {"registry.costcenter": CostCenter, "registry.aircraft": Aircraft, "registry.operator": Operator}[batch.entity]
+            model.objects.filter(pk__in=batch.created_ids).update(is_active=False)
+            batch.status = "reverted"
+            batch.reverted_at = timezone.now()
+            batch.save(update_fields=["status", "reverted_at", "updated_at"])
         return HttpResponse(status=204)
 
 
@@ -178,27 +169,15 @@ class AircraftImportView(CostCenterImportView):
 
     @staticmethod
     def parse(upload):
-        if not upload or upload.size > 2 * 1024 * 1024:
-            return [], ["El archivo es obligatorio y no puede superar 2 MB."]
-        try:
-            reader = csv.DictReader(io.StringIO(upload.read().decode("utf-8-sig")))
-        except (UnicodeDecodeError, csv.Error):
-            return [], ["El archivo debe ser CSV UTF-8 válido."]
-        expected = ["registration", "type", "model", "manufacturer", "year", "cost_center", "status"]
-        if reader.fieldnames != expected:
-            return [], ["Columnas requeridas: " + ",".join(expected)]
-        rows, errors, seen = [], [], set()
-        for line, raw in enumerate(reader, start=2):
-            registration = raw.get("registration", "").strip()
-            center = CostCenter.objects.filter(code=raw.get("cost_center", "").strip(), is_active=True).first()
-            if not registration or registration in seen or Aircraft.objects.filter(registration=registration).exists():
-                errors.append(f"Línea {line}: matrícula vacía o duplicada.")
-            elif not center:
-                errors.append(f"Línea {line}: centro de costo inexistente.")
-            else:
-                seen.add(registration)
-                rows.append({"registration": registration, "type": raw["type"].strip(), "model": raw["model"].strip(), "manufacturer": raw["manufacturer"].strip(), "year": int(raw["year"]) if raw["year"].strip().isdigit() else None, "cost_center_id": str(center.pk), "status": raw["status"].strip() or "active"})
-        return rows, errors
+        spec = CsvImportSpec(("registration", "type", "model", "manufacturer", "year", "cost_center", "status"), "registration")
+        existing = set(Aircraft.objects.values_list("registration", flat=True))
+        centers = dict(CostCenter.objects.filter(is_active=True).values_list("code", "pk"))
+        def build(raw, _line):
+            center = centers.get(raw["cost_center"].strip())
+            if not center:
+                return "centro de costo inexistente."
+            return {"registration": raw["registration"].strip(), "type": raw["type"].strip(), "model": raw["model"].strip(), "manufacturer": raw["manufacturer"].strip(), "year": int(raw["year"]) if raw["year"].strip().isdigit() else None, "cost_center_id": str(center), "status": raw["status"].strip() or "active"}
+        return spec.parse(upload, existing, build)
 
     def post(self, request):
         rows, errors = self.parse(request.FILES.get("file"))
@@ -224,29 +203,17 @@ class OperatorImportView(CostCenterImportView):
 
     @staticmethod
     def parse(upload):
-        if not upload or upload.size > 2 * 1024 * 1024:
-            return [], ["El archivo es obligatorio y no puede superar 2 MB."]
-        try:
-            reader = csv.DictReader(io.StringIO(upload.read().decode("utf-8-sig")))
-        except (UnicodeDecodeError, csv.Error):
-            return [], ["El archivo debe ser CSV UTF-8 válido."]
-        expected = ["employee_id", "full_name", "email", "phone", "cost_center"]
-        if reader.fieldnames != expected:
-            return [], ["Columnas requeridas: " + ",".join(expected)]
-        rows, errors, seen = [], [], set()
-        for line, raw in enumerate(reader, start=2):
-            employee_id = raw.get("employee_id", "").strip()
-            center = CostCenter.objects.filter(code=raw.get("cost_center", "").strip(), is_active=True).first()
-            if not employee_id or employee_id in seen or Operator.objects.filter(employee_id=employee_id).exists():
-                errors.append(f"Línea {line}: employee_id vacío o duplicado.")
-            elif not raw.get("full_name", "").strip():
-                errors.append(f"Línea {line}: full_name es obligatorio.")
-            elif not center:
-                errors.append(f"Línea {line}: centro de costo inexistente.")
-            else:
-                seen.add(employee_id)
-                rows.append({"employee_id": employee_id, "full_name": raw["full_name"].strip(), "email": raw.get("email", "").strip(), "phone": raw.get("phone", "").strip(), "cost_center_id": str(center.pk)})
-        return rows, errors
+        spec = CsvImportSpec(("employee_id", "full_name", "email", "phone", "cost_center"), "employee_id")
+        existing = set(Operator.objects.values_list("employee_id", flat=True))
+        centers = dict(CostCenter.objects.filter(is_active=True).values_list("code", "pk"))
+        def build(raw, _line):
+            if not raw["full_name"].strip():
+                return "full_name es obligatorio."
+            center = centers.get(raw["cost_center"].strip())
+            if not center:
+                return "centro de costo inexistente."
+            return {"employee_id": raw["employee_id"].strip(), "full_name": raw["full_name"].strip(), "email": raw["email"].strip(), "phone": raw["phone"].strip(), "cost_center_id": str(center)}
+        return spec.parse(upload, existing, build)
 
     def post(self, request):
         rows, errors = self.parse(request.FILES.get("file"))

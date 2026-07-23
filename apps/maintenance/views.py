@@ -127,6 +127,7 @@ class MaintenanceComplete(StatusTransitionView):
             )
         with transaction.atomic():
             record._changed_by = request.user.get_username()
+            record._changed_by_user = request.user
             record._transition_notes = form.cleaned_data.get("notes", "")
             completed = form.save(commit=False)
             completed.status = self.target_status

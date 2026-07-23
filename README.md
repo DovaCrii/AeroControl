@@ -42,7 +42,7 @@ application.
 ### Repository layout
 
 ```text
-aero-ops-desk/
+aerocontrol/
 ├── apps/
 │   ├── core/           # shared models, permissions, backups, tests
 │   ├── registry/       # cost centers, aircraft, operators, assignments
@@ -233,6 +233,19 @@ planned PostgreSQL/API path only when multi-user scale justifies it.
 The frontend boundary decision is documented in docs/frontend-boundary.md; a
 separate SPA is intentionally deferred until API, offline or mobile
 requirements justify it.
+
+## Fases pendientes de estabilización
+
+La rama de estabilización mantiene el contrato `/api/v1/` y registra estas
+fases futuras como trabajo explícito:
+
+- [ ] Activar tenancy estricto y completar el backfill de entidades raíz.
+- [ ] Ensayar migración real a PostgreSQL con respaldo y rollback.
+- [ ] Integrar DJI con estado actual y eventos históricos append-only.
+- [ ] Incorporar procesamiento asíncrono cuando existan webhooks o telemetría.
+- [ ] Decidir el vínculo opcional entre `Operator` y `User`.
+- [ ] Separar frontend solo si aparecen clientes independientes, móvil u offline
+  contractual.
 
 ## License
 

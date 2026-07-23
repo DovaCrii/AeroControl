@@ -180,7 +180,18 @@ class TestAuthenticatedPages:
         assert event.action == "post_success"
         assert event.path == reverse("board-create")
         assert event.request_id
+        assert event.model_label == "workboard.KanbanBoard"
+        assert event.object_id
         assert event.metadata == {"query_keys": []}
+
+    def test_audit_write_failure_does_not_change_mutation_response(self, auth_client, monkeypatch):
+        def fail_create(**kwargs):
+            raise RuntimeError("audit database unavailable")
+
+        monkeypatch.setattr(AuditEvent.objects, "create", fail_create)
+        response = auth_client.post(reverse("board-create"), {"name": "Audit resilient board"})
+        assert response.status_code == 302
+        assert KanbanBoard.objects.filter(name="Audit resilient board").exists()
 
     """Verify representative authenticated pages and shared template behavior."""
 

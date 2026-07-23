@@ -78,6 +78,10 @@ class KanbanTask(BaseModel):
     priority = models.CharField(max_length=20, choices=PRIORITIES, default="medium")
     order = models.PositiveIntegerField(default=0)
     created_by = models.CharField(max_length=150, blank=True)
+    created_by_user = models.ForeignKey(
+        get_user_model(), on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="kanban_tasks_created",
+    )
     labels = models.ManyToManyField(KanbanLabel, through="KanbanTaskLabel", blank=True, related_name="tasks")
 
     @property

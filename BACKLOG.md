@@ -135,3 +135,21 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
 - [x] Definir preflight CI de staging con migraciones, health/readiness, backup
   previo y verificación de checksum; el despliegue productivo sigue siendo
   manual y reversible.
+
+## Fases pendientes de estabilización
+
+- [x] Unificar el alcance de tenant y acceso de tablero en HTML, HTMX,
+  exportaciones, búsqueda y API; evidencia: pruebas Workboard y DRF.
+- [x] Completar contexto de objeto en `AuditEvent` y hacer tolerante el fallo de
+  escritura del registro; evidencia: pruebas de auditoría.
+- [ ] Consolidar toda la escritura de tareas en el ViewSet/servicio DRF único,
+  preservando el contrato `/api/v1/`; depende de cerrar la matriz de clientes.
+- [x] Extraer selectores y el parser CSV común, incluyendo límite de 500 filas,
+  precarga de referencias y reversión atómica.
+- [x] Añadir FKs de actor compatibles y tenant nullable en el dominio raíz,
+  incluyendo migraciones y reporte de etiquetas no resueltas.
+- [x] Activar rotación de logs y declarar `uv.lock`/`pyproject.toml` como fuente
+  única de dependencias.
+- [ ] Tenancy estricto, PostgreSQL, DJI, Celery/Redis, vínculo `Operator.user`
+  y frontend separado permanecen diferidos hasta cumplir sus criterios de
+  entrada.

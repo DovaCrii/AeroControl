@@ -2,9 +2,15 @@ from rest_framework import serializers
 from django.http import JsonResponse
 from rest_framework.permissions import DjangoModelPermissions, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from rest_framework.viewsets import ViewSet
+from rest_framework.exceptions import NotAuthenticated, PermissionDenied
+import json
+from django.shortcuts import get_object_or_404
+from django.utils.dateparse import parse_datetime
 
 from .models import KanbanTask
+from .selectors import user_can_edit_board, visible_tasks_for_user
+from .models import KanbanStage
 
 
 class KanbanTaskSerializer(serializers.ModelSerializer):
@@ -18,17 +24,87 @@ class KanbanTaskSerializer(serializers.ModelSerializer):
         fields = ["id", "title", "board", "board_name", "stage", "stage_name", "state", "priority", "due_date", "progress", "updated_at"]
 
 
-class KanbanTaskApiView(APIView):
+class KanbanTaskViewSet(ViewSet):
+    """Canonical task API used by both the stable and DRF-compatible URLs."""
+
     permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    queryset = KanbanTask.objects.all()
 
     def get_queryset(self):
-        return KanbanTask.objects.filter(is_active=True, board__is_active=True).select_related("board", "stage")
+        return visible_tasks_for_user(self.request.user).select_related("board", "stage", "assigned_to").prefetch_related("labels", "checklist_items")
 
-    def get(self, request):
+    def permission_denied(self, request, message=None, code=None):
+        if not request.user or not request.user.is_authenticated:
+            raise NotAuthenticated("Authentication required.")
+        raise PermissionDenied("Permission denied.")
+
+    @staticmethod
+    def _legacy_item(task):
+        return {
+            "id": str(task.pk),
+            "title": task.title,
+            "board": {"id": str(task.board_id), "name": task.board.name},
+            "state": task.stage.status_type,
+            "stage": task.stage.name,
+            "priority": task.priority,
+            "assignee": task.assigned_to.full_name if task.assigned_to else None,
+            "due_date": task.due_date.isoformat() if task.due_date else None,
+            "labels": [{"id": str(label.pk), "name": label.name, "color": label.color} for label in task.labels.all()],
+            "checklist": {"total": task.checklist_total, "completed": task.checklist_completed, "progress": task.checklist_progress},
+            "updated_at": task.updated_at.isoformat(),
+        }
+
+    def list(self, request):
         queryset = self.get_queryset()
-        if request.query_params.get("priority") in dict(KanbanTask.PRIORITIES):
-            queryset = queryset.filter(priority=request.query_params["priority"])
-        return Response(KanbanTaskSerializer(queryset[:100], many=True).data)
+        priority = request.query_params.get("priority")
+        if priority in dict(KanbanTask.PRIORITIES):
+            queryset = queryset.filter(priority=priority)
+        if request.path.startswith("/api/drf/"):
+            return Response(KanbanTaskSerializer(queryset[:100], many=True).data)
+        try:
+            page = max(int(request.GET.get("page", "1")), 1)
+            page_size = min(max(int(request.GET.get("page_size", "25")), 1), 100)
+        except ValueError:
+            return JsonResponse({"detail": "Invalid pagination."}, status=400)
+        total = queryset.count()
+        start = (page - 1) * page_size
+        items = [self._legacy_item(task) for task in queryset[start:start + page_size]]
+        return JsonResponse({"version": "v1", "page": page, "page_size": page_size, "total": total, "results": items})
+
+    def partial_update(self, request, pk=None):
+        task = get_object_or_404(self.get_queryset(), pk=pk)
+        if not user_can_edit_board(request.user, task.board):
+            return JsonResponse({"detail": "Object permission denied."}, status=403)
+        expected_updated = request.headers.get("If-Unmodified-Since")
+        if expected_updated:
+            expected = parse_datetime(expected_updated)
+            if expected is None or task.updated_at > expected:
+                return JsonResponse({"detail": "Task changed since it was read.", "code": "conflict"}, status=409)
+        try:
+            payload = request.data if hasattr(request, "data") else json.loads(request.body or "{}")
+        except (json.JSONDecodeError, ValueError):
+            return JsonResponse({"detail": "Invalid JSON."}, status=400)
+        allowed = {"title", "description", "priority", "stage_id", "due_date"}
+        unknown = sorted(set(payload) - allowed)
+        if unknown:
+            return JsonResponse({"detail": "Unsupported fields.", "fields": unknown}, status=400)
+        if "priority" in payload and payload["priority"] not in dict(KanbanTask.PRIORITIES):
+            return JsonResponse({"detail": "Invalid priority."}, status=400)
+        if "stage_id" in payload:
+            stage = KanbanStage.objects.filter(pk=payload["stage_id"], board=task.board, is_active=True).first()
+            if not stage:
+                return JsonResponse({"detail": "Stage does not belong to this board."}, status=400)
+            task.stage = stage
+        for field in ("title", "description", "priority", "due_date"):
+            if field in payload:
+                setattr(task, field, payload[field])
+        task.save()
+        from apps.core.audit import set_audit_context
+        set_audit_context(request, task)
+        return JsonResponse({"version": "v1", "id": str(task.pk), "updated": sorted(payload), "updated_at": task.updated_at.isoformat()})
+
+
+KanbanTaskApiView = KanbanTaskViewSet
 
 
 def api_openapi_schema(_request):
