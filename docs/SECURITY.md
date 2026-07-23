@@ -11,15 +11,20 @@
 - Los roles estándar se crean con `python manage.py bootstrap_roles`; las operaciones mutantes requieren permisos de Django.
 - Los secretos de producción no tienen valor por defecto y se activaron validadores de contraseña.
 
-## Objetivos abiertos
+## Estado de los objetivos históricos
 
-| Prioridad | Objetivo | Criterio de cierre |
+Los objetivos definidos durante la estabilización inicial fueron cerrados en
+el commit de estabilización actual. El trabajo futuro de seguridad y
+operación debe registrarse en `BACKLOG.md` para evitar duplicar tareas
+históricas.
+
+| Prioridad | Objetivo | Estado | Evidencia |
 | --- | --- | --- |
-| P0 | Historial de permisos | Alinear `PermissionHistory` y su migración; probar transiciones, creación de historial y rollback. |
-| P1 | Autorización de lectura/exportación | Definir alcance de Viewer y proteger listas, detalles y CSV con permisos explícitos. |
-| P1 | Archivos de cumplimiento | Validar código/ruta antes de escribir, tipo por contenido/antimalware y política de retención. |
-| P1 | Copias de seguridad | Backup consistente con manifiesto, checksum y restauración probada. |
-| P2 | Dependencias front-end | Versiones fijadas con SRI u hospedadas localmente y CSP definida. |
-| P2 | Observabilidad | Logs estructurados, health check y métrica de errores. |
+| P0 | Historial de permisos | Cerrado | Modelo, migraciones, transiciones y pruebas en `apps/operations/`. |
+| P1 | Autorización de lectura/exportación | Cerrado | Permisos `view_*`, exportaciones autorizadas y pruebas `403`. |
+| P1 | Archivos de cumplimiento | Cerrado | Validación de ruta, firma, tamaño, antimalware configurable y retención. |
+| P1 | Copias de seguridad | Cerrado | Manifiesto, checksum, verificación y restauración probada. |
+| P2 | Dependencias front-end | Cerrado | Versiones fijadas, SRI y CSP report-only documentada. |
+| P2 | Observabilidad | Cerrado | Logs estructurados, `X-Request-ID` y `/health/`. |
 
 Revisar esta lista en cada cambio de flujo, dependencia o despliegue.
