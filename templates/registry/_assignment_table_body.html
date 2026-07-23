@@ -1,0 +1,13 @@
+{% load i18n %}
+{% for object in objects %}
+<tr>
+  <td><a href="{{ object.pk }}/" class="fw-semibold">{{ object.operator }}</a><small class="d-block text-muted">{{ object.operator.employee_id }}</small></td>
+  <td><a href="{% url 'aircraft-detail' object.aircraft_id %}">{{ object.aircraft.registration }}</a><small class="d-block text-muted">{{ object.aircraft.model }}</small></td>
+  <td>{{ object.cost_center|default:"Sin asignar" }}</td>
+  <td>{{ object.start_date|date:"Y-m-d" }}{% if object.end_date %} → {{ object.end_date|date:"Y-m-d" }}{% else %} → {% translate "Open" %}{% endif %}</td>
+  <td>{% if object.status == "confirmed" %}<span class="badge bg-success">{% translate "Confirmed" %}</span>{% elif object.status == "planned" %}<span class="badge bg-info text-dark">{% translate "Planned" %}</span>{% elif object.status == "completed" %}<span class="badge bg-secondary">{% translate "Completed" %}</span>{% else %}<span class="badge bg-danger">{% translate "Cancelled" %}</span>{% endif %}{% if not object.cost_center %}<small class="d-block text-warning">{% translate "Needs review" %}</small>{% endif %}</td>
+  <td class="text-end"><a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">{% translate "View" %}</a> <a href="{{ object.pk }}/edit/" hx-get="{{ object.pk }}/edit/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">{% translate "Edit" %}</a></td>
+</tr>
+{% empty %}
+<tr><td colspan="99" class="text-center text-muted py-4">{% translate "No assignments found." %}</td></tr>
+{% endfor %}

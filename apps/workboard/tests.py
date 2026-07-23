@@ -91,14 +91,14 @@ def test_authenticated_kanban_renders_and_empty_board_state(auth_client, board):
     board_obj.stages.update(is_active=False)
     response = auth_client.get(reverse("kanban"))
     assert response.status_code == 200
-    assert "This board has no active stages." in response.content.decode()
+    assert "Este tablero no tiene etapas activas." in response.content.decode()
 
 
 @pytest.mark.django_db
 def test_kanban_without_boards_shows_empty_state(auth_client):
     response = auth_client.get(reverse("kanban"))
     assert response.status_code == 200
-    assert "No board configured." in response.content.decode()
+    assert "No hay ningún tablero configurado." in response.content.decode()
 
 
 @pytest.mark.django_db
@@ -123,7 +123,7 @@ def test_kanban_filters_by_operator_and_priority(auth_client, board, operator):
     assert "Matching" in content
     assert "Other" not in content
     assert 'data-drag-disabled="true"' in content
-    assert "Drag-and-drop ordering is disabled" in content
+    assert "El orden por arrastre está desactivado" in content
     assert str(matching.pk) in content
 
 
@@ -535,6 +535,45 @@ def test_drf_api_tasks_is_permissioned(auth_client, board):
 
 
 @pytest.mark.django_db
+def test_drf_api_tasks_requires_auth(board):
+    response = Client().get("/api/drf/v1/workboard/tasks/")
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Authentication required."
+
+
+@pytest.mark.django_db
+def test_drf_api_tasks_requires_view_permission(board):
+    client = Client()
+    User.objects.create_user("no-task-view", password="password")
+    assert client.login(username="no-task-view", password="password")
+
+    response = client.get("/api/drf/v1/workboard/tasks/")
+
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_drf_api_tasks_scopes_tenant_and_board_access(user, auth_client, board):
+    board_obj, todo, _ = board
+    tenant = OperationalTenant.objects.create(name="Tenant A", slug="tenant-a")
+    TenantMembership.objects.create(tenant=tenant, user=user, role="member")
+    board_obj.tenant = tenant
+    board_obj.save(update_fields=["tenant", "updated_at"])
+    KanbanTask.objects.create(board=board_obj, stage=todo, title="Tenant task")
+    other_tenant = OperationalTenant.objects.create(name="Tenant B", slug="tenant-b")
+    other = KanbanBoard.objects.create(name="Tenant B", tenant=other_tenant)
+    other_stage = KanbanStage.objects.create(board=other, name="Todo")
+    KanbanTask.objects.create(board=other, stage=other_stage, title="Hidden task")
+
+    response = auth_client.get("/api/drf/v1/workboard/tasks/")
+
+    assert response.status_code == 200
+    titles = [item["title"] for item in response.json()]
+    assert "Tenant task" in titles
+    assert "Hidden task" not in titles
+
+
+@pytest.mark.django_db
 def test_api_token_and_openapi_contract(user, auth_client):
     token_response = Client().post(
         "/api-token/", {"username": "operator", "password": "password"}
@@ -547,5 +586,8 @@ def test_api_token_and_openapi_contract(user, auth_client):
     assert schema_response.status_code == 200
     schema = schema_response.json()
     assert schema["openapi"] == "3.0.3"
-    assert "tokenAuth" in schema["components"]["securitySchemes"]
+    token_auth = schema["components"]["securitySchemes"]["tokenAuth"]
+    assert token_auth["type"] == "apiKey"
+    assert token_auth["in"] == "header"
+    assert token_auth["name"] == "Authorization"
     assert "/api/drf/v1/workboard/tasks/" in schema["paths"]

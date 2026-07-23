@@ -78,7 +78,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
-LANGUAGE_CODE = "en"
+LANGUAGE_CODE = "es"
 LANGUAGES = [
     ("en", _("English")),
     ("es", _("Spanish")),
@@ -121,10 +121,13 @@ LOGGING = {
     "disable_existing_loggers": False,
     "handlers": {
         "file": {
-            "class": "logging.FileHandler",
+            "class": "logging.handlers.TimedRotatingFileHandler",
             "filename": str(LOG_DIR / "aero_ops.log"),
             "level": "INFO",
             "formatter": "json",
+            "when": "midnight",
+            "backupCount": 30,
+            "encoding": "utf-8",
         },
         "console": {"class": "logging.StreamHandler", "level": "INFO"},
     },

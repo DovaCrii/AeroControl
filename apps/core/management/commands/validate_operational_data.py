@@ -14,10 +14,14 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         errors = []
         for aircraft in Aircraft.objects.select_related("cost_center").filter(is_active=True):
-            if not aircraft.cost_center.is_active:
+            if aircraft.cost_center_id is None:
+                errors.append({"entity": "aircraft", "id": str(aircraft.pk), "issue": "unassigned_cost_center"})
+            elif not aircraft.cost_center.is_active:
                 errors.append({"entity": "aircraft", "id": str(aircraft.pk), "issue": "inactive_cost_center"})
         for operator in Operator.objects.select_related("cost_center").filter(is_active=True):
-            if not operator.cost_center.is_active:
+            if operator.cost_center_id is None:
+                errors.append({"entity": "operator", "id": str(operator.pk), "issue": "unassigned_cost_center"})
+            elif not operator.cost_center.is_active:
                 errors.append({"entity": "operator", "id": str(operator.pk), "issue": "inactive_cost_center"})
         for assignment in Assignment.objects.select_related("aircraft", "operator").filter(is_active=True):
             if not assignment.aircraft.is_active or not assignment.operator.is_active:

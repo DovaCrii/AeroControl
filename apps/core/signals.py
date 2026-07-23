@@ -25,6 +25,7 @@ def track_status_changes(sender, instance, **kwargs):
         "previous_status": old.status,
         "new_status": instance.status,
         "changed_by": getattr(instance, "_changed_by", "system"),
+        "changed_by_user": getattr(instance, "_changed_by_user", None),
     }
     if any(field.name == "notes" for field in history_model._meta.fields):
         values["notes"] = getattr(instance, "_transition_notes", "")

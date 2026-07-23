@@ -1,5 +1,5 @@
 [project]
-name = "aero-ops-desk"
+name = "aerocontrol"
 version = "0.1.0"
 description = "Local-first operations desk for aviation teams."
 requires-python = ">=3.12,<3.13"

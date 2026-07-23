@@ -6,6 +6,7 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
+from apps.core.forms import AeroModelForm
 from .models import Alert, AlertRule, Document, DocumentType
 from .security import scan_uploaded_file
 
@@ -24,7 +25,7 @@ DOCUMENTABLE_MODEL_LABELS = {
 }
 
 
-class DocumentForm(forms.ModelForm):
+class DocumentForm(AeroModelForm):
     entity_type = forms.ModelChoiceField(
         queryset=ContentType.objects.none(),
         empty_label=_("Select an entity type"),
@@ -175,13 +176,13 @@ class DocumentForm(forms.ModelForm):
         return document
 
 
-class DocumentTypeForm(forms.ModelForm):
+class DocumentTypeForm(AeroModelForm):
     class Meta:
         model = DocumentType
         fields = ["name", "code", "requires_expiry"]
 
 
-class AlertRuleForm(forms.ModelForm):
+class AlertRuleForm(AeroModelForm):
     class Meta:
         model = AlertRule
         fields = [
@@ -193,7 +194,7 @@ class AlertRuleForm(forms.ModelForm):
         ]
 
 
-class AlertForm(forms.ModelForm):
+class AlertForm(AeroModelForm):
     class Meta:
         model = Alert
         fields = ["alert_rule", "content_type", "object_id", "message"]

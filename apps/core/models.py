@@ -1,6 +1,7 @@
 import uuid
 from django.db import models
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 
 class BaseModel(models.Model):
@@ -45,6 +46,23 @@ class TenantMembership(BaseModel):
         constraints = [models.UniqueConstraint(fields=["tenant", "user"], name="unique_tenant_membership")]
 
 
+class AppendOnlyAuditQuerySet(models.QuerySet):
+    """Prevent application code from mutating or deleting audit records."""
+
+    def update(self, **kwargs):
+        raise ValidationError("AuditEvent records are append-only.")
+
+    def delete(self):
+        raise ValidationError("AuditEvent records are append-only.")
+
+    def bulk_update(self, objs, fields, batch_size=None):
+        raise ValidationError("AuditEvent records are append-only.")
+
+
+class AuditEventManager(models.Manager.from_queryset(AppendOnlyAuditQuerySet)):
+    pass
+
+
 class AuditEvent(models.Model):
     """Append-only record of authenticated mutating and administrative actions."""
 
@@ -62,6 +80,16 @@ class AuditEvent(models.Model):
     object_id = models.CharField(max_length=100, blank=True)
     request_id = models.CharField(max_length=64, blank=True)
     metadata = models.JSONField(default=dict, blank=True)
+
+    objects = AuditEventManager()
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            raise ValidationError("AuditEvent records are append-only.")
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError("AuditEvent records are append-only.")
 
     class Meta:
         ordering = ["-created_at"]
