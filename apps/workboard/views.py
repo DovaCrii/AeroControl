@@ -1,6 +1,5 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 import csv
-import json
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.http import HttpResponse, JsonResponse
@@ -144,7 +143,6 @@ class TaskReportCsvView(ModelViewPermissionRequiredMixin, View):
         response.write("\ufeff")
         writer = csv.writer(response, lineterminator="\r\n")
         writer.writerow(["Task", "Board", "State", "Labels", "Assignee", "Priority", "Due", "Progress"])
-        tasks = visible_tasks_for_user(request.user).select_related("board", "stage", "assigned_to").prefetch_related("labels", "checklist_items")
         listing = KanbanTaskListView()
         listing.request = request
         tasks = listing.get_queryset()
@@ -214,13 +212,6 @@ class TaskReportDocxView(TaskReportCsvView):
         return response
 
 
-class ApiPermissionMixin(ModelPermissionRequiredMixin):
-    def handle_no_permission(self):
-        if not self.request.user.is_authenticated:
-            return JsonResponse({"detail": "Authentication required."}, status=401)
-        return JsonResponse({"detail": "Permission denied."}, status=403)
-
-
 class ApiIndexView(LoginRequiredMixin, View):
     def get(self, request):
         return JsonResponse({
@@ -241,76 +232,6 @@ class ApiIndexView(LoginRequiredMixin, View):
                 },
             },
         })
-
-
-class ApiTaskListView(ApiPermissionMixin, View):
-    model = KanbanTask
-    permission_action = "view"
-
-    def get(self, request):
-        listing = KanbanTaskListView()
-        listing.request = request
-        queryset = listing.get_queryset()
-        try:
-            page = max(int(request.GET.get("page", "1")), 1)
-            page_size = min(max(int(request.GET.get("page_size", "25")), 1), 100)
-        except ValueError:
-            return JsonResponse({"detail": "Invalid pagination."}, status=400)
-        total = queryset.count()
-        start = (page - 1) * page_size
-        items = []
-        for task in queryset[start:start + page_size]:
-            items.append({
-                "id": str(task.pk),
-                "title": task.title,
-                "board": {"id": str(task.board_id), "name": task.board.name},
-                "state": task.stage.status_type,
-                "stage": task.stage.name,
-                "priority": task.priority,
-                "assignee": task.assigned_to.full_name if task.assigned_to else None,
-                "due_date": task.due_date.isoformat() if task.due_date else None,
-                "labels": [{"id": str(label.pk), "name": label.name, "color": label.color} for label in task.labels.all()],
-                "checklist": {"total": task.checklist_total, "completed": task.checklist_completed, "progress": task.checklist_progress},
-                "updated_at": task.updated_at.isoformat(),
-            })
-        return JsonResponse({"version": "v1", "page": page, "page_size": page_size, "total": total, "results": items})
-
-
-class ApiTaskUpdateView(ApiPermissionMixin, View):
-    model = KanbanTask
-    permission_action = "change"
-
-    def patch(self, request, pk):
-        task = get_object_or_404(KanbanTask, pk=pk, is_active=True, board__is_active=True)
-        if not user_can_edit_board(request.user, task.board):
-            return JsonResponse({"detail": "Object permission denied."}, status=403)
-        expected_updated = request.headers.get("If-Unmodified-Since")
-        if expected_updated:
-            from django.utils.dateparse import parse_datetime
-            expected = parse_datetime(expected_updated)
-            if expected is None or task.updated_at > expected:
-                return JsonResponse({"detail": "Task changed since it was read.", "code": "conflict"}, status=409)
-        try:
-            payload = json.loads(request.body or "{}")
-        except json.JSONDecodeError:
-            return JsonResponse({"detail": "Invalid JSON."}, status=400)
-        allowed = {"title", "description", "priority", "stage_id", "due_date"}
-        unknown = sorted(set(payload) - allowed)
-        if unknown:
-            return JsonResponse({"detail": "Unsupported fields.", "fields": unknown}, status=400)
-        if "priority" in payload and payload["priority"] not in dict(KanbanTask.PRIORITIES):
-            return JsonResponse({"detail": "Invalid priority."}, status=400)
-        if "stage_id" in payload:
-            stage = KanbanStage.objects.filter(pk=payload["stage_id"], board=task.board, is_active=True).first()
-            if not stage:
-                return JsonResponse({"detail": "Stage does not belong to this board."}, status=400)
-            task.stage = stage
-        for field in ("title", "description", "priority", "due_date"):
-            if field in payload:
-                setattr(task, field, payload[field])
-        task.save()
-        set_audit_context(request, task)
-        return JsonResponse({"version": "v1", "id": str(task.pk), "updated": sorted(payload), "updated_at": task.updated_at.isoformat()})
 
 
 class TaskDetailView(ModelViewPermissionRequiredMixin, View):
