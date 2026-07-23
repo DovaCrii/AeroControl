@@ -98,6 +98,17 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
 - [ ] Completar validaciones cruzadas de seguro, permiso y habilitación cuando
   esos dominios tengan sus fuentes normalizadas.
 
+## Datos oficiales Capítulo 1 — 23 julio 2026
+
+- [x] Añadir campos de responsable de CC y metadatos técnicos del inventario RPA.
+- [x] Implementar lector DOCX `chapter1_docx_import` con hash, exportación de
+  reporte y carga transaccional fuera del repositorio.
+- [x] Cargar 11 CC, 14 aeronaves y 41 operadores sin conflicto en la base local.
+- [ ] Resolver cuatro grupos de operadores duplicados con datos contradictorios.
+- [ ] Asignar oficialmente cada aeronave y operador a un centro de costo.
+- [ ] Modelar habilitaciones DGAC con vigencia, evidencia documental y alertas.
+- [ ] Modelar compatibilidad operador–aeronave antes de autorizar vuelos.
+
 ## Operación segura y confiable (P1)
 
 - [x] Cerrar autorización de lectura y exportación: los listados y CSV exigen

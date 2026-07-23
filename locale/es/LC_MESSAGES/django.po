@@ -28,6 +28,42 @@ msgstr "Panel"
 msgid "Registry"
 msgstr "Registro"
 
+msgid "Responsible"
+msgstr "Responsable"
+
+msgid "Serial number"
+msgstr "Número de serie"
+
+msgid "Maximum takeoff weight (kg)"
+msgstr "Peso máximo de despegue (kg)"
+
+msgid "Basic weight (kg)"
+msgstr "Peso básico (kg)"
+
+msgid "VLOS"
+msgstr "VLOS"
+
+msgid "Parachute"
+msgstr "Paracaídas"
+
+msgid "Authorized services"
+msgstr "Servicios autorizados"
+
+msgid "RUT"
+msgstr "RUT"
+
+msgid "DGAC credential"
+msgstr "Credencial DGAC"
+
+msgid "Operator type"
+msgstr "Tipo de operador"
+
+msgid "Address"
+msgstr "Dirección"
+
+msgid "Authorizations"
+msgstr "Habilitaciones"
+
 msgid "Toggle sidebar"
 msgstr "Contraer o expandir panel lateral"
 

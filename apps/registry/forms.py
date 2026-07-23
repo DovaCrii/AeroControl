@@ -7,8 +7,12 @@ from .models import Aircraft, Assignment, CostCenter, Operator, Qualification
 class CostCenterForm(AeroModelForm):
     class Meta:
         model = CostCenter
-        fields = ["code", "name"]
-        labels = {"code": _("Code"), "name": _("Name")}
+        fields = ["code", "name", "responsible"]
+        labels = {
+            "code": _("Code"),
+            "name": _("Name"),
+            "responsible": _("Responsible"),
+        }
 
 
 class AircraftForm(AeroModelForm):
@@ -20,6 +24,12 @@ class AircraftForm(AeroModelForm):
             "model",
             "manufacturer",
             "year",
+            "serial_number",
+            "max_takeoff_weight_kg",
+            "basic_weight_kg",
+            "vlos",
+            "parachute",
+            "authorized_services",
             "cost_center",
             "status",
         ]
@@ -29,6 +39,12 @@ class AircraftForm(AeroModelForm):
             "model": _("Model"),
             "manufacturer": _("Manufacturer"),
             "year": _("Year"),
+            "serial_number": _("Serial number"),
+            "max_takeoff_weight_kg": _("Maximum takeoff weight (kg)"),
+            "basic_weight_kg": _("Basic weight (kg)"),
+            "vlos": _("VLOS"),
+            "parachute": _("Parachute"),
+            "authorized_services": _("Authorized services"),
             "cost_center": _("Cost Center"),
             "status": _("Status"),
         }
@@ -37,12 +53,28 @@ class AircraftForm(AeroModelForm):
 class OperatorForm(AeroModelForm):
     class Meta:
         model = Operator
-        fields = ["employee_id", "full_name", "email", "phone", "cost_center"]
+        fields = [
+            "employee_id",
+            "full_name",
+            "email",
+            "phone",
+            "rut",
+            "dgac_credential",
+            "operator_type",
+            "address",
+            "authorizations",
+            "cost_center",
+        ]
         labels = {
             "employee_id": _("Employee ID"),
             "full_name": _("Full name"),
             "email": _("Email"),
             "phone": _("Phone"),
+            "rut": _("RUT"),
+            "dgac_credential": _("DGAC credential"),
+            "operator_type": _("Operator type"),
+            "address": _("Address"),
+            "authorizations": _("Authorizations"),
             "cost_center": _("Cost Center"),
         }
 
