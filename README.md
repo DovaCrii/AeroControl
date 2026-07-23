@@ -172,8 +172,9 @@ Kanban task change permission; unsupported fields and cross-board stages are
 rejected.
 API callers receive JSON 401/403 responses instead of browser login redirects.
 The API contract index is available to authenticated users at /api/v1/.
-The DRF foundation is available at /api/drf/v1/workboard/tasks/ and currently
-provides a permissioned read-only task resource.
+The canonical task resource is implemented through a DRF ViewSet at
+`/api/v1/workboard/tasks/`; `/api/drf/v1/workboard/tasks/` remains a temporary
+compatibility alias with the read-oriented serializer shape.
 PATCH clients can send If-Unmodified-Since; stale edits receive HTTP 409
 instead of silently overwriting newer changes.
 KanbanBoardAccess supports object-level viewer/editor/manager roles. Existing
