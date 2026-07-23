@@ -1,6 +1,7 @@
 import pytest
 from datetime import date, timedelta
 import json
+from docx import Document as DocxDocument
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
@@ -192,6 +193,55 @@ class TestAuthenticatedPages:
         )
         assert response.status_code == 302
         assert Operator.objects.filter(employee_id="EMP-IMP", cost_center=center).exists()
+
+
+class TestChapter1DocxImport:
+    @pytest.mark.django_db
+    def test_docx_source_reports_aircraft_and_duplicate_operators(self, tmp_path, capsys):
+        document = DocxDocument()
+        document.add_paragraph("1.5- DOTACIÓN OPERADOR RPA")
+        document.add_paragraph("1) PERMANENTES")
+        document.add_paragraph("1.- NOMBRE : Ana Pérez")
+        document.add_paragraph("RUT : 11.111.111-1")
+        document.add_paragraph("Credencial N° : 100")
+        document.add_paragraph("Tipo : Operador RPA")
+        document.add_paragraph("Habilitaciones : Matrice")
+        document.add_paragraph("Dirección : Calle 1")
+        document.add_paragraph("Teléfono : 999")
+        document.add_paragraph("Email : ana@example.com")
+        document.add_paragraph("2.- NOMBRE : Ana Pérez")
+        document.add_paragraph("RUT : 11.111.111-1")
+        document.add_paragraph("Credencial N° : 100")
+        document.add_paragraph("Tipo : Operador RPA")
+        document.add_paragraph("Habilitaciones : Matrice")
+        document.add_paragraph("Dirección : Calle 1")
+        document.add_paragraph("Teléfono : 999")
+        document.add_paragraph("Email : ana@example.com")
+        document.add_paragraph("2) EVENTUALES (NO APLICA)")
+        service_table = document.add_table(rows=2, cols=3)
+        service_table.rows[0].cells[0].text = "AERONAVES"
+        service_table.rows[0].cells[1].text = "REGISTRO"
+        service_table.rows[0].cells[2].text = "SERVICIO"
+        service_table.rows[1].cells[0].text = "DJI / MAVIC"
+        service_table.rows[1].cells[1].text = "RPA 1"
+        service_table.rows[1].cells[2].text = "Fotografía"
+        inventory = document.add_table(rows=2, cols=8)
+        for index, header in enumerate(["Propietario", "Modelo y Año", "Serie", "Inscripción", "MTOW", "Básico", "VLOS", "Paracaídas"]):
+            inventory.rows[0].cells[index].text = header
+        for index, value in enumerate(["J.E.J.", "DJI / MAVIC", "SER-1", "RPA-1", "1,0", "1,0", "VLOS", "NO"]):
+            inventory.rows[1].cells[index].text = value
+        source = tmp_path / "chapter1.docx"
+        document.save(source)
+
+        call_command("chapter1_docx_import", "--source", str(source), "--json")
+        payload = json.loads(capsys.readouterr().out)
+        assert payload["counts"] == {
+            "aircraft_extracted": 1,
+            "operators_extracted": 2,
+            "operators_ready": 1,
+            "duplicate_groups": 1,
+            "cost_centers": 0,
+        }
 
     def test_import_templates_are_downloadable(self, auth_client):
         response = auth_client.get(reverse("aircraft-import"), {"template": "1"})

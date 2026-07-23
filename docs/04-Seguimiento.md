@@ -56,6 +56,39 @@ tags: [aero-ops, seguimiento]
 - Aplicar la carga sólo después de revisar el informe de errores y duplicados.
 - Mantener el ensayo real de PostgreSQL pendiente hasta disponer de servidor.
 
+## Sesión actual — Carga Capítulo 1 vigente
+
+### Resultado de la revisión
+- Fuente: Capítulo 1 revisión 16, archivo oficial recibido el 23 de julio de 2026.
+- Se extrajeron 14 aeronaves y 50 fichas permanentes de operadores RPA.
+- Se incorporaron 11 centros de costo con responsable, fuera del repositorio de
+  código y con trazabilidad en `ImportBatch`.
+- Se cargaron 14 aeronaves y 41 operadores sin conflicto.
+- Se consolidó un duplicado exacto y se dejaron cuatro grupos de RUT con datos
+  contradictorios pendientes de confirmación.
+- Ninguna aeronave ni operador se asignó a un CC por inferencia: la fuente no
+  trae esa relación. El sistema los marca como pendientes de asignación.
+
+### Brechas detectadas
+- Falta una matriz oficial aeronave/persona → centro de costo.
+- La fuente contiene duplicados y diferencias de nombre, dirección, teléfono,
+  correo o habilitaciones para algunos RUT.
+- Las habilitaciones aparecen como texto libre, sin fecha de emisión, vencimiento
+  ni evidencia documental vinculada.
+- Las aeronaves no traen año de fabricación ni fecha de vigencia operacional.
+- El documento declara VLOS y ausencia de paracaídas, pero no modela aún la
+  evidencia o el procedimiento que respalda cada condición.
+
+### Mejoras recomendadas
+- Crear una revisión de calidad antes de activar asignaciones: RUT, credencial
+  DGAC, correo, teléfono y responsable de CC.
+- Convertir habilitaciones y documentos DGAC en registros versionados con fecha
+  de vencimiento y alertas.
+- Añadir una matriz de compatibilidad operador–aeronave–habilitación antes de
+  permitir permisos de vuelo.
+- Incorporar al tablero una vista de pendientes de datos y un indicador de
+  cobertura por CC, operador y aeronave.
+
 ## Sesión actual — 23 Julio 2026
 
 ### Modernización UX/UI
