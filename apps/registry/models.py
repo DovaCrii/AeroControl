@@ -1,8 +1,12 @@
 from django.db import models
-from apps.core.models import BaseModel
+from apps.core.models import BaseModel, OperationalTenant
 
 
 class CostCenter(BaseModel):
+    tenant = models.ForeignKey(
+        OperationalTenant, on_delete=models.PROTECT, null=True, blank=True,
+        related_name="cost_centers",
+    )
     code = models.CharField(max_length=30, unique=True)
     name = models.CharField(max_length=150)
 
@@ -11,6 +15,10 @@ class CostCenter(BaseModel):
 
 
 class Aircraft(BaseModel):
+    tenant = models.ForeignKey(
+        OperationalTenant, on_delete=models.PROTECT, null=True, blank=True,
+        related_name="aircraft",
+    )
     STATUS_CHOICES = [
         ("active", "Active"),
         ("maintenance", "Maintenance"),
@@ -31,6 +39,10 @@ class Aircraft(BaseModel):
 
 
 class Operator(BaseModel):
+    tenant = models.ForeignKey(
+        OperationalTenant, on_delete=models.PROTECT, null=True, blank=True,
+        related_name="operators",
+    )
     employee_id = models.CharField(max_length=50, unique=True)
     full_name = models.CharField(max_length=150)
     email = models.EmailField(blank=True)
