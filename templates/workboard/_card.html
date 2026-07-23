@@ -9,6 +9,7 @@
       <span class="kanban-assignee">{{ task.assigned_to.full_name }}</span>
     {% endif %}
   </div>
+  {% if task.source_object %}<div class="kanban-source"><span>{% translate "Related" %}</span> {{ task.source_object }}</div>{% endif %}
   {% if task.due_date %}
     <div class="kanban-due {% if today and task.due_date < today %}is-overdue{% endif %}">{% translate "Due" %} {{ task.due_date|date:"M j" }}{% if today and task.due_date < today %} · {% translate "Overdue" %}{% endif %}</div>
   {% endif %}

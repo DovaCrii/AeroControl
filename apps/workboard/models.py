@@ -1,3 +1,5 @@
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from apps.core.models import BaseModel, OperationalTenant
@@ -83,6 +85,9 @@ class KanbanTask(BaseModel):
         related_name="kanban_tasks_created",
     )
     labels = models.ManyToManyField(KanbanLabel, through="KanbanTaskLabel", blank=True, related_name="tasks")
+    source_content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True, blank=True, related_name="workboard_source_tasks")
+    source_object_id = models.UUIDField(null=True, blank=True)
+    source_object = GenericForeignKey("source_content_type", "source_object_id")
 
     @property
     def checklist_total(self):

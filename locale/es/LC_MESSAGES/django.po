@@ -28,6 +28,96 @@ msgstr "Panel"
 msgid "Registry"
 msgstr "Registro"
 
+msgid "Navigation"
+msgstr "Navegación"
+
+msgid "Collapse sidebar"
+msgstr "Contraer panel lateral"
+
+msgid "Expand sidebar"
+msgstr "Expandir panel lateral"
+
+msgid "Master data"
+msgstr "Datos maestros"
+
+msgid "Planning"
+msgstr "Planificación"
+
+msgid "Resource planning"
+msgstr "Planificación de recursos"
+
+msgid "Follow-up"
+msgstr "Seguimiento"
+
+msgid "Action plan"
+msgstr "Plan de acción"
+
+msgid "Registration"
+msgstr "Matrícula"
+
+msgid "Retired"
+msgstr "Retirada"
+
+msgid "Schedule operators and aircraft by period and cost center."
+msgstr "Programa operadores y aeronaves por período y centro de costo."
+
+msgid "New assignment"
+msgstr "Nueva asignación"
+
+msgid "Assignment summary"
+msgstr "Resumen de asignaciones"
+
+msgid "Active planning"
+msgstr "Planificaciones activas"
+
+msgid "Needs review"
+msgstr "Requiere revisión"
+
+msgid "Confirmed"
+msgstr "Confirmada"
+
+msgid "Cancelled"
+msgstr "Cancelada"
+
+msgid "Open"
+msgstr "Abierta"
+
+msgid "No assignments found."
+msgstr "No se encontraron asignaciones."
+
+msgid "Operation or purpose"
+msgstr "Operación o propósito"
+
+msgid "Coordinate resources, operations, maintenance, compliance and action items in one agenda."
+msgstr "Coordina recursos, operaciones, mantenimiento, cumplimiento y acciones en una sola agenda."
+
+msgid "Expirations"
+msgstr "Vencimientos"
+
+msgid "Action items"
+msgstr "Acciones"
+
+msgid "Filter by cost center"
+msgstr "Filtrar por centro de costo"
+
+msgid "All cost centers"
+msgstr "Todos los centros de costo"
+
+msgid "Filter by aircraft"
+msgstr "Filtrar por aeronave"
+
+msgid "All aircraft"
+msgstr "Todas las aeronaves"
+
+msgid "Filter by operator"
+msgstr "Filtrar por operador"
+
+msgid "Related"
+msgstr "Relacionado"
+
+msgid "Related operational record"
+msgstr "Registro operativo relacionado"
+
 msgid "Responsible"
 msgstr "Responsable"
 

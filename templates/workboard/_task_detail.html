@@ -10,6 +10,7 @@
   {% for label in task.labels.all %}<span class="kanban-label" style="--label-color: {{ label.color }}">{{ label.name }}</span>{% endfor %}
 </div>
 {% if task.description %}<p class="mb-3">{{ task.description|linebreaksbr }}</p>{% endif %}
+{% if task.source_object %}<div class="task-source mb-3"><span class="small text-muted d-block">{% translate "Related operational record" %}</span><strong>{{ task.source_object }}</strong></div>{% endif %}
 <div class="small text-muted mb-2">{% translate "Checklist" %} · {{ task.checklist_completed }}/{{ task.checklist_total }} ({{ task.checklist_progress }}%)</div>
 <div class="progress mb-3" role="progressbar" aria-valuenow="{{ task.checklist_progress }}" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar" style="width:{{ task.checklist_progress }}%"></div></div>
 <div class="list-group mb-3">
