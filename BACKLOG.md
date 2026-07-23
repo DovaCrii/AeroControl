@@ -142,7 +142,7 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
   exportaciones, búsqueda y API; evidencia: pruebas Workboard y DRF.
 - [x] Completar contexto de objeto en `AuditEvent` y hacer tolerante el fallo de
   escritura del registro; evidencia: pruebas de auditoría.
-- [ ] Consolidar toda la escritura de tareas en el ViewSet/servicio DRF único,
+- [x] Consolidar toda la escritura de tareas en el ViewSet/servicio DRF único,
   preservando el contrato `/api/v1/`; depende de cerrar la matriz de clientes.
 - [x] Extraer selectores y el parser CSV común, incluyendo límite de 500 filas,
   precarga de referencias y reversión atómica.
