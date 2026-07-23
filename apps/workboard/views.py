@@ -1,9 +1,7 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 import csv
-import json
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -18,9 +16,19 @@ from apps.core.views import (
     ModelViewPermissionRequiredMixin,
     SearchMixin,
 )
+from apps.core.audit import set_audit_context
 from apps.registry.models import Operator
-from .models import KanbanBoard, KanbanBoardAccess, KanbanChecklistItem, KanbanLabel, KanbanStage, KanbanTask
+from .models import KanbanBoard, KanbanChecklistItem, KanbanLabel, KanbanStage, KanbanTask
 from .forms import KanbanBoardForm, KanbanChecklistItemForm, KanbanLabelForm, KanbanStageForm, KanbanTaskForm
+from .selectors import (
+    accessible_boards,
+    board_for_user,
+    build_stage_data,
+    filter_values,
+    task_row,
+    user_can_edit_board,
+    visible_tasks_for_user,
+)
 
 
 class WList(CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListView):
@@ -45,7 +53,11 @@ class WCreate(ModelPermissionRequiredMixin, CreateView):
         )
 
     def form_valid(self, form):
+        board = getattr(form.instance, "board", None)
+        if board is not None and not user_can_edit_board(self.request.user, board):
+            return HttpResponse(status=403)
         response = super().form_valid(form)
+        set_audit_context(self.request, self.object)
         if self.model is KanbanBoard and not self.object.stages.exists():
             templates = [
                 (_("Pending"), "pending", "#64748B"),
@@ -87,7 +99,7 @@ class KanbanTaskListView(ModelViewPermissionRequiredMixin, ListView):
     paginate_by = 50
 
     def get_queryset(self):
-        qs = KanbanTask.objects.filter(is_active=True, board__is_active=True).select_related("board", "stage", "assigned_to").prefetch_related("labels", "checklist_items")
+        qs = visible_tasks_for_user(self.request.user).select_related("board", "stage", "assigned_to").prefetch_related("labels", "checklist_items")
         params = self.request.GET
         if params.get("board"):
             qs = qs.filter(board_id=params["board"])
@@ -111,7 +123,7 @@ class KanbanTaskListView(ModelViewPermissionRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
-            "boards": KanbanBoard.objects.filter(is_active=True),
+            "boards": accessible_boards(self.request.user),
             "operators": Operator.objects.filter(is_active=True).order_by("full_name"),
             "priorities": KanbanTask.PRIORITIES,
             "states": KanbanStage.STATUS_TYPES,
@@ -135,16 +147,7 @@ class TaskReportCsvView(ModelViewPermissionRequiredMixin, View):
         listing.request = request
         tasks = listing.get_queryset()
         for task in tasks:
-            writer.writerow([
-                task.title,
-                task.board.name,
-                task.stage.get_status_type_display(),
-                ", ".join(label.name for label in task.labels.all()),
-                task.assigned_to.full_name if task.assigned_to else "",
-                task.get_priority_display(),
-                task.due_date.isoformat() if task.due_date else "",
-                f"{task.checklist_progress}%" if task.checklist_total else "No steps",
-            ])
+            writer.writerow(task_row(task))
         return response
 
 
@@ -164,13 +167,7 @@ class TaskReportXlsxView(TaskReportCsvView):
         for cell in sheet[1]:
             cell.font = Font(bold=True)
         for task in listing.get_queryset():
-            sheet.append([
-                task.title, task.board.name, task.stage.get_status_type_display(),
-                ", ".join(label.name for label in task.labels.all()),
-                task.assigned_to.full_name if task.assigned_to else "",
-                task.get_priority_display(), task.due_date.isoformat() if task.due_date else "",
-                f"{task.checklist_progress}%" if task.checklist_total else "No steps",
-            ])
+            sheet.append(task_row(task))
         sheet.freeze_panes = "A2"
         sheet.auto_filter.ref = sheet.dimensions
         for column in sheet.columns:
@@ -201,12 +198,8 @@ class TaskReportDocxView(TaskReportCsvView):
             cell.text = header
         for task in listing.get_queryset():
             row = table.add_row().cells
-            values = [
-                task.title, task.board.name, task.stage.get_status_type_display(),
-                task.assigned_to.full_name if task.assigned_to else "",
-                task.get_priority_display(),
-                f"{task.checklist_progress}%" if task.checklist_total else _("No steps"),
-            ]
+            row_values = task_row(task)
+            values = [row_values[0], row_values[1], row_values[2], row_values[4], row_values[5], row_values[7]]
             for cell, value in zip(row, values):
                 cell.text = str(value)
         for section in document.sections:
@@ -217,13 +210,6 @@ class TaskReportDocxView(TaskReportCsvView):
         response = HttpResponse(output.getvalue(), content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
         response["Content-Disposition"] = 'attachment; filename="aerocontrol-tasks.docx"'
         return response
-
-
-class ApiPermissionMixin(ModelPermissionRequiredMixin):
-    def handle_no_permission(self):
-        if not self.request.user.is_authenticated:
-            return JsonResponse({"detail": "Authentication required."}, status=401)
-        return JsonResponse({"detail": "Permission denied."}, status=403)
 
 
 class ApiIndexView(LoginRequiredMixin, View):
@@ -248,92 +234,12 @@ class ApiIndexView(LoginRequiredMixin, View):
         })
 
 
-class ApiTaskListView(ApiPermissionMixin, View):
-    model = KanbanTask
-    permission_action = "view"
-
-    def get(self, request):
-        listing = KanbanTaskListView()
-        listing.request = request
-        queryset = listing.get_queryset()
-        if not request.user.is_superuser:
-            from apps.core.models import OperationalTenant
-            tenants = OperationalTenant.objects.filter(members=request.user, is_active=True)
-            if tenants.exists():
-                queryset = queryset.filter(Q(board__tenant__isnull=True) | Q(board__tenant_id__in=tenants.values("id")))
-            rules = KanbanBoardAccess.objects.filter(user=request.user, is_active=True)
-            if rules.exists():
-                queryset = queryset.filter(board_id__in=rules.values("board_id"))
-        try:
-            page = max(int(request.GET.get("page", "1")), 1)
-            page_size = min(max(int(request.GET.get("page_size", "25")), 1), 100)
-        except ValueError:
-            return JsonResponse({"detail": "Invalid pagination."}, status=400)
-        total = queryset.count()
-        start = (page - 1) * page_size
-        items = []
-        for task in queryset[start:start + page_size]:
-            items.append({
-                "id": str(task.pk),
-                "title": task.title,
-                "board": {"id": str(task.board_id), "name": task.board.name},
-                "state": task.stage.status_type,
-                "stage": task.stage.name,
-                "priority": task.priority,
-                "assignee": task.assigned_to.full_name if task.assigned_to else None,
-                "due_date": task.due_date.isoformat() if task.due_date else None,
-                "labels": [{"id": str(label.pk), "name": label.name, "color": label.color} for label in task.labels.all()],
-                "checklist": {"total": task.checklist_total, "completed": task.checklist_completed, "progress": task.checklist_progress},
-                "updated_at": task.updated_at.isoformat(),
-            })
-        return JsonResponse({"version": "v1", "page": page, "page_size": page_size, "total": total, "results": items})
-
-
-class ApiTaskUpdateView(ApiPermissionMixin, View):
-    model = KanbanTask
-    permission_action = "change"
-
-    def patch(self, request, pk):
-        task = get_object_or_404(KanbanTask, pk=pk, is_active=True, board__is_active=True)
-        access = KanbanBoardAccess.objects.filter(board=task.board, user=request.user, is_active=True).first()
-        if task.board.tenant_id and not request.user.is_superuser and not task.board.tenant.members.filter(pk=request.user.pk, tenantmembership__is_active=True).exists():
-            return JsonResponse({"detail": "Tenant access denied."}, status=403)
-        if not request.user.is_superuser and access and access.role not in {"editor", "manager"}:
-            return JsonResponse({"detail": "Object permission denied."}, status=403)
-        expected_updated = request.headers.get("If-Unmodified-Since")
-        if expected_updated:
-            from django.utils.dateparse import parse_datetime
-            expected = parse_datetime(expected_updated)
-            if expected is None or task.updated_at > expected:
-                return JsonResponse({"detail": "Task changed since it was read.", "code": "conflict"}, status=409)
-        try:
-            payload = json.loads(request.body or "{}")
-        except json.JSONDecodeError:
-            return JsonResponse({"detail": "Invalid JSON."}, status=400)
-        allowed = {"title", "description", "priority", "stage_id", "due_date"}
-        unknown = sorted(set(payload) - allowed)
-        if unknown:
-            return JsonResponse({"detail": "Unsupported fields.", "fields": unknown}, status=400)
-        if "priority" in payload and payload["priority"] not in dict(KanbanTask.PRIORITIES):
-            return JsonResponse({"detail": "Invalid priority."}, status=400)
-        if "stage_id" in payload:
-            stage = KanbanStage.objects.filter(pk=payload["stage_id"], board=task.board, is_active=True).first()
-            if not stage:
-                return JsonResponse({"detail": "Stage does not belong to this board."}, status=400)
-            task.stage = stage
-        for field in ("title", "description", "priority", "due_date"):
-            if field in payload:
-                setattr(task, field, payload[field])
-        task.save()
-        return JsonResponse({"version": "v1", "id": str(task.pk), "updated": sorted(payload), "updated_at": task.updated_at.isoformat()})
-
-
 class TaskDetailView(ModelViewPermissionRequiredMixin, View):
     model = KanbanTask
     permission_action = "view"
 
     def get(self, request, pk):
-        task = get_object_or_404(KanbanTask.objects.prefetch_related("labels", "checklist_items"), pk=pk, is_active=True, board__is_active=True)
+        task = get_object_or_404(visible_tasks_for_user(request.user).prefetch_related("labels", "checklist_items"), pk=pk)
         return render(request, "workboard/_task_detail.html", {"task": task, "form": KanbanTaskForm(instance=task), "checklist_form": KanbanChecklistItemForm()})
 
 
@@ -344,11 +250,12 @@ class TaskEditView(ModelPermissionRequiredMixin, UpdateView):
     permission_action = "change"
 
     def get_queryset(self):
-        return super().get_queryset().filter(is_active=True, board__is_active=True)
+        return visible_tasks_for_user(self.request.user).filter(is_active=True, board__is_active=True)
 
     def form_valid(self, form):
         response = super().form_valid(form)
         form.save_m2m()
+        set_audit_context(self.request, self.object)
         if self.request.headers.get("HX-Request") == "true":
             return HttpResponse(status=204, headers={"HX-Trigger": "board-refresh,task-saved"})
         return response
@@ -411,83 +318,26 @@ class KanbanBoardView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        boards = KanbanBoard.objects.filter(is_active=True)
+        boards = accessible_boards(self.request.user)
         board_id = self.request.GET.get("board")
-        board = self._get_board(board_id)
+        board = board_for_user(self.request.user, board_id)
         context.update(
             {
                 "board": board,
                 "boards": boards,
-                "operators": self._get_operators(),
+                "operators": Operator.objects.filter(is_active=True).order_by("full_name"),
                 "priorities": KanbanTask.PRIORITIES,
                 "states": KanbanStage.STATUS_TYPES,
                 "labels": KanbanLabel.objects.filter(board=board, is_active=True) if board else KanbanLabel.objects.none(),
-                "drag_enabled": self._filter_values(self.request.GET)[0] is None
-                and not self._filter_values(self.request.GET)[1],
-                "stages": self._build_stage_data(board, self.request.GET)
+                "drag_enabled": filter_values(self.request.GET)[0] is None
+                and not filter_values(self.request.GET)[1],
+                "stages": build_stage_data(board, self.request.GET)
                 if board
                 else [],
                 "filter_params": self.request.GET,
             }
         )
         return context
-
-    @staticmethod
-    def _filter_values(params):
-        operator_id = params.get("operator", "")
-        priority = params.get("priority", "")
-        try:
-            operator = (
-                Operator.objects.filter(pk=operator_id, is_active=True).first()
-                if operator_id
-                else None
-            )
-        except (ValueError, TypeError, ValidationError):
-            operator = None
-        if priority not in dict(KanbanTask.PRIORITIES):
-            priority = ""
-        return operator, priority
-
-    @staticmethod
-    def _get_board(board_id):
-        boards = KanbanBoard.objects.filter(is_active=True)
-        if not board_id:
-            return boards.first()
-        try:
-            return boards.filter(pk=board_id).first() or boards.first()
-        except (ValueError, TypeError, ValidationError):
-            return boards.first()
-
-    def _build_stage_data(self, board, params):
-        stages = board.stages.filter(is_active=True).order_by("order")
-        operator, priority = self._filter_values(params)
-        state = params.get("state") if params.get("state") in dict(KanbanStage.STATUS_TYPES) else ""
-        label = params.get("label")
-        try:
-            if label:
-                UUID(str(label))
-        except (ValueError, TypeError):
-            label = ""
-        query = params.get("q", "").strip()
-        stage_data = []
-        for stage in stages:
-            tasks = stage.tasks.filter(is_active=True).order_by("order")
-            if operator:
-                tasks = tasks.filter(assigned_to=operator)
-            if priority:
-                tasks = tasks.filter(priority=priority)
-            if state:
-                tasks = tasks.filter(stage__status_type=state)
-            if label:
-                tasks = tasks.filter(labels__id=label)
-            if query:
-                tasks = tasks.filter(title__icontains=query)
-            stage_data.append({"stage": stage, "tasks": tasks})
-        return stage_data
-
-    def _get_operators(self):
-        return Operator.objects.filter(is_active=True).order_by("full_name")
-
 
 class BoardPartialView(LoginRequiredMixin, View):
     """HTMX fragment — board columns + cards for filter/drag refresh."""
@@ -498,22 +348,22 @@ class BoardPartialView(LoginRequiredMixin, View):
             target = reverse("kanban")
             return redirect(f"{target}?{query}" if query else target)
         board_id = request.GET.get("board")
-        board = KanbanBoardView._get_board(board_id)
+        board = board_for_user(request.user, board_id)
 
         if not board:
             return HttpResponse(
                 '<p class="text-muted text-center py-5">No board configured.</p>'
             )
 
-        stage_data = KanbanBoardView()._build_stage_data(board, request.GET)
+        stage_data = build_stage_data(board, request.GET)
         response = render(
             request,
             "workboard/_board.html",
             {
                 "board": board,
                 "stages": stage_data,
-                "drag_enabled": KanbanBoardView._filter_values(request.GET)[0] is None
-                and not KanbanBoardView._filter_values(request.GET)[1],
+                "drag_enabled": filter_values(request.GET)[0] is None
+                and not filter_values(request.GET)[1],
                 "filter_params": request.GET,
             },
         )
@@ -547,8 +397,11 @@ class BoardArchiveView(ModelPermissionRequiredMixin, View):
 
     def post(self, request, pk):
         board = get_object_or_404(KanbanBoard, pk=pk, is_active=True)
+        if not user_can_edit_board(request.user, board):
+            return HttpResponse(status=403)
         board.is_active = False
         board.save(update_fields=["is_active", "updated_at"])
+        set_audit_context(request, board)
         return redirect("kanban")
 
 
@@ -558,11 +411,14 @@ class TaskArchiveView(ModelPermissionRequiredMixin, View):
 
     def post(self, request, pk):
         task = get_object_or_404(
-            KanbanTask, pk=pk, is_active=True, board__is_active=True
+            visible_tasks_for_user(request.user), pk=pk
         )
+        if not user_can_edit_board(request.user, task.board):
+            return HttpResponse(status=403)
         board_id = task.board_id
         task.is_active = False
         task.save(update_fields=["is_active", "updated_at"])
+        set_audit_context(request, task)
         return redirect(f"{reverse('kanban')}?board={board_id}")
 
 
@@ -574,12 +430,10 @@ class MoveTaskView(ModelPermissionRequiredMixin, View):
 
     def post(self, request, pk):
         task = get_object_or_404(
-            KanbanTask,
-            pk=pk,
-            is_active=True,
-            board__is_active=True,
-            stage__is_active=True,
+            visible_tasks_for_user(request.user), pk=pk, stage__is_active=True
         )
+        if not user_can_edit_board(request.user, task.board):
+            return HttpResponse(status=403)
         old_stage_id = task.stage_id
 
         stage_id = request.POST.get("stage_id")
@@ -603,6 +457,8 @@ class MoveTaskView(ModelPermissionRequiredMixin, View):
             task.stage = new_stage
             task.save(update_fields=["stage", "updated_at"])
             self._insert_into_stage(task, new_stage, new_order)
+
+        set_audit_context(request, task)
 
         return HttpResponse(status=204, headers={"HX-Trigger": "board-refresh"})
 
@@ -654,7 +510,7 @@ class QuickTaskCreate(ModelPermissionRequiredMixin, View):
             stage = None
         if stage is None:
             return HttpResponse(status=400)
-        operators = KanbanBoardView()._get_operators()
+        operators = Operator.objects.filter(is_active=True).order_by("full_name")
         return render(
             request,
             "workboard/_quick_form.html",
@@ -684,6 +540,8 @@ class QuickTaskCreate(ModelPermissionRequiredMixin, View):
             stage = None
         if stage is None:
             return HttpResponse(status=400)
+        if not user_can_edit_board(request.user, stage.board):
+            return HttpResponse(status=403)
         if assigned_to:
             try:
                 operator = Operator.objects.filter(
@@ -695,15 +553,17 @@ class QuickTaskCreate(ModelPermissionRequiredMixin, View):
                 return HttpResponse(status=400)
         max_order = KanbanTask.objects.filter(stage=stage, is_active=True).count()
 
-        KanbanTask.objects.create(
+        created_task = KanbanTask.objects.create(
             board=stage.board,
             stage=stage,
             title=title,
             priority=priority,
             assigned_to_id=assigned_to,
             created_by=request.user.get_username(),
+            created_by_user=request.user,
             order=max_order,
         )
+        set_audit_context(request, created_task)
 
         filter_params = request.POST.copy()
         filter_priority = filter_params.get("filter_priority", "")
@@ -711,7 +571,7 @@ class QuickTaskCreate(ModelPermissionRequiredMixin, View):
             filter_params["priority"] = filter_priority
         else:
             filter_params.pop("priority", None)
-        operator, valid_priority = KanbanBoardView._filter_values(filter_params)
+        operator, valid_priority = filter_values(filter_params)
         tasks = stage.tasks.filter(is_active=True).order_by("order")
         if operator:
             tasks = tasks.filter(assigned_to=operator)
@@ -733,7 +593,7 @@ class BoardSelector(LoginRequiredMixin, View):
     """Board switcher dropdown fragment."""
 
     def get(self, request):
-        boards = KanbanBoard.objects.filter(is_active=True)
+        boards = accessible_boards(request.user)
         current = request.GET.get("board")
         return render(
             request,

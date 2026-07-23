@@ -48,16 +48,32 @@ class RequestMetricsMiddleware:
         ):
             from apps.core.models import AuditEvent
 
-            outcome = "success" if response.status_code < 400 else "denied"
-            AuditEvent.objects.create(
-                actor=request.user,
-                action=f"{request.method.lower()}_{outcome}",
-                method=request.method,
-                path=request.path[:500],
-                status_code=response.status_code,
-                request_id=request_id,
-                metadata={"query_keys": sorted(request.GET.keys())},
-            )
+            if response.status_code < 400:
+                outcome = "success"
+            elif response.status_code in {401, 403}:
+                outcome = "denied"
+            elif response.status_code < 500:
+                outcome = "client_error"
+            else:
+                outcome = "server_error"
+            context = getattr(request, "_audit_context", {})
+            try:
+                AuditEvent.objects.create(
+                    actor=request.user,
+                    action=context.get("action") or f"{request.method.lower()}_{outcome}",
+                    method=request.method,
+                    path=request.path[:500],
+                    status_code=response.status_code,
+                    model_label=context.get("model_label", ""),
+                    object_id=context.get("object_id", ""),
+                    request_id=request_id,
+                    metadata={"query_keys": sorted(request.GET.keys())},
+                )
+            except Exception:
+                logger.exception(
+                    "audit_write_failed",
+                    extra={"request_id": request_id, "method": request.method, "path": request.path},
+                )
         logger.info(
             "request_complete",
             extra={

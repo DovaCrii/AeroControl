@@ -15,6 +15,7 @@ from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.views import View
 from django.views.generic import TemplateView
+from .audit import set_audit_context
 
 
 class SearchMixin:
@@ -124,6 +125,7 @@ class HtmxFormMixin:
 
     def form_valid(self, form):
         response = super().form_valid(form)
+        set_audit_context(self.request, getattr(self, "object", None))
         messages.success(self.request, _("Saved successfully."))
         if self.request.headers.get("HX-Request") == "true":
             return HttpResponse(
@@ -262,6 +264,7 @@ class StatusTransitionView(ModelPermissionRequiredMixin, View):
         with transaction.atomic():
             obj.status = self.target_status
             obj._changed_by = request.user.get_username()
+            obj._changed_by_user = request.user
             obj._transition_notes = request.POST.get("notes", "")
             obj.save(update_fields=["status", "updated_at"])
         messages.success(request, _(self.success_message))

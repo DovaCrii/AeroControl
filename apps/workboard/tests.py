@@ -535,6 +535,27 @@ def test_drf_api_tasks_is_permissioned(auth_client, board):
 
 
 @pytest.mark.django_db
+def test_drf_api_tasks_scopes_tenant_and_board_access(user, auth_client, board):
+    board_obj, todo, _ = board
+    tenant = OperationalTenant.objects.create(name="Tenant A", slug="tenant-a")
+    TenantMembership.objects.create(tenant=tenant, user=user, role="member")
+    board_obj.tenant = tenant
+    board_obj.save(update_fields=["tenant", "updated_at"])
+    KanbanTask.objects.create(board=board_obj, stage=todo, title="Tenant task")
+    other_tenant = OperationalTenant.objects.create(name="Tenant B", slug="tenant-b")
+    other = KanbanBoard.objects.create(name="Tenant B", tenant=other_tenant)
+    other_stage = KanbanStage.objects.create(board=other, name="Todo")
+    KanbanTask.objects.create(board=other, stage=other_stage, title="Hidden task")
+
+    response = auth_client.get("/api/drf/v1/workboard/tasks/")
+
+    assert response.status_code == 200
+    titles = [item["title"] for item in response.json()]
+    assert "Tenant task" in titles
+    assert "Hidden task" not in titles
+
+
+@pytest.mark.django_db
 def test_api_token_and_openapi_contract(user, auth_client):
     token_response = Client().post(
         "/api-token/", {"username": "operator", "password": "password"}
