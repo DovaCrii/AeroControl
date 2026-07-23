@@ -4,7 +4,7 @@ from django.conf.urls.i18n import set_language
 from django.urls import include, path
 
 from apps.operations.views import CalendarView
-from apps.core.views import AlertCountPartial, GlobalSearchView, HealthCheckView
+from apps.core.views import AdministrationCenterView, AlertCountPartial, GlobalSearchView, HealthCheckView, UnifiedCalendarEventsView
 from apps.workboard.views import ApiIndexView
 from apps.workboard.api import KanbanTaskApiView, api_openapi_schema
 from rest_framework.authtoken.views import obtain_auth_token
@@ -28,6 +28,8 @@ urlpatterns = [
     path("i18n/setlang/", set_language, name="set_language"),
     path("alerts/count/", AlertCountPartial.as_view(), name="alert-count"),
     path("health/", HealthCheckView.as_view(), name="health"),
+    path("calendar/events/", UnifiedCalendarEventsView.as_view(), name="calendar-events"),
+    path("administracion/", AdministrationCenterView.as_view(), name="administration"),
     path("search/", GlobalSearchView.as_view(), name="global-search"),
     path("api/v1/workboard/tasks/", KanbanTaskApiView.as_view({"get": "list"}), name="api-v1-workboard-tasks"),
     path("api/v1/", ApiIndexView.as_view(), name="api-v1-index"),

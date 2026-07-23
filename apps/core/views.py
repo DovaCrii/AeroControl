@@ -1,4 +1,5 @@
 import csv
+from datetime import date, timedelta
 from pathlib import Path
 
 from django.contrib import messages
@@ -12,6 +13,7 @@ from django.conf import settings
 from django.db import connection
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views import View
 from django.views.generic import TemplateView
@@ -195,6 +197,118 @@ class HealthCheckView(View):
         )
 
 
+class UnifiedCalendarEventsView(LoginRequiredMixin, View):
+    """Return calendar events from the operational modules in one scoped feed."""
+
+    EVENT_COLORS = {
+        "permission": "#f59e0b",
+        "maintenance": "#8b5cf6",
+        "task": "#0f9f95",
+    }
+
+    def get_date_range(self, request):
+        today = timezone.localdate()
+        try:
+            start = date.fromisoformat(request.GET.get("start", ""))
+        except ValueError:
+            start = today.replace(day=1)
+        try:
+            end = date.fromisoformat(request.GET.get("end", ""))
+        except ValueError:
+            end = start + timedelta(days=42)
+        return start, end
+
+    def get(self, request):
+        from django.db.models import Q
+        from apps.maintenance.models import MaintenanceRecord
+        from apps.operations.models import FlightPermission
+        from apps.workboard.selectors import visible_tasks_for_user
+
+        start, end = self.get_date_range(request)
+        selected_types = set(filter(None, request.GET.get("types", "").split(",")))
+        if not selected_types:
+            selected_types = {"permission", "maintenance", "task"}
+        events = []
+
+        if request.user.is_superuser:
+            tenant_ids = None
+        else:
+            from apps.core.models import OperationalTenant
+
+            tenant_ids = list(
+                OperationalTenant.objects.filter(
+                    members=request.user, is_active=True
+                ).values_list("id", flat=True)
+            )
+
+        if "permission" in selected_types:
+            permissions = FlightPermission.objects.filter(
+                flight_date__range=(start, end), is_active=True
+            ).select_related("operator", "aircraft")
+            if tenant_ids is not None:
+                permissions = permissions.filter(
+                    Q(operator__tenant_id__in=tenant_ids)
+                    | Q(aircraft__tenant_id__in=tenant_ids)
+                    | Q(cost_center__tenant_id__in=tenant_ids)
+                )
+            events.extend(
+                {
+                    "id": f"permission-{permission.pk}",
+                    "type": "permission",
+                    "title": f"{permission.permission_number} · {permission.operator}",
+                    "start": permission.flight_date.isoformat(),
+                    "allDay": True,
+                    "color": self.EVENT_COLORS["permission"],
+                    "url": reverse("permission-detail", args=[permission.pk]),
+                }
+                for permission in permissions
+            )
+
+        if "maintenance" in selected_types:
+            maintenance = MaintenanceRecord.objects.filter(
+                scheduled_date__range=(start, end), is_active=True
+            ).select_related("aircraft")
+            if tenant_ids is not None:
+                maintenance = maintenance.filter(aircraft__tenant_id__in=tenant_ids)
+            events.extend(
+                {
+                    "id": f"maintenance-{record.pk}",
+                    "type": "maintenance",
+                    "title": f"{record.aircraft} · {record.get_maintenance_type_display()}",
+                    "start": record.scheduled_date.isoformat(),
+                    "allDay": True,
+                    "color": self.EVENT_COLORS["maintenance"],
+                    "url": reverse("maintenance-detail", args=[record.pk]),
+                }
+                for record in maintenance
+            )
+
+        if "task" in selected_types:
+            tasks = visible_tasks_for_user(request.user).filter(
+                due_date__range=(start, end)
+            ).select_related("board", "stage", "assigned_to")
+            board_id = request.GET.get("board")
+            if board_id:
+                tasks = tasks.filter(board_id=board_id)
+            events.extend(
+                {
+                    "id": f"task-{task.pk}",
+                    "type": "task",
+                    "title": f"{task.title} · {task.stage.name}",
+                    "start": task.due_date.isoformat(),
+                    "allDay": True,
+                    "color": self.EVENT_COLORS["task"],
+                    # The task detail endpoint is an HTMX fragment. Link calendar
+                    # events to the full Workboard view so direct navigation never
+                    # leaves the user on an unstyled fragment page.
+                    "url": f'{reverse("kanban")}?board={task.board_id}',
+                }
+                for task in tasks
+            )
+
+        return JsonResponse(events, safe=False)
+
+
 class GlobalSearchView(LoginRequiredMixin, TemplateView):
     template_name = "core/search.html"
 
@@ -242,6 +356,67 @@ class GlobalSearchView(LoginRequiredMixin, TemplateView):
                     })
         context.update({"query": query, "results": results[:50]})
         return context
+
+
+class AdministrationCenterView(LoginRequiredMixin, TemplateView):
+    """Operational configuration hub; technical Django Admin remains separate."""
+
+    template_name = "core/administration.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from apps.compliance.models import AlertRule, DocumentType
+        from apps.core.models import AuditEvent, BackupConfig, OperationalTenant, TenantMembership
+        from apps.workboard.models import KanbanBoard, KanbanLabel, KanbanStage
+
+        sections = [
+            {
+                "title": _("Organization"),
+                "description": _("Define the operational scope and who can access it."),
+                "items": [
+                    self.item(_("Operational tenants"), _("Manage organizations and their data boundaries."), "admin:core_operationaltenant_changelist", OperationalTenant),
+                    self.item(_("Tenant memberships"), _("Assign users to an operational tenant."), "admin:core_tenantmembership_changelist", TenantMembership),
+                ],
+            },
+            {
+                "title": _("Compliance configuration"),
+                "description": _("Prepare document and alert rules before loading records."),
+                "items": [
+                    self.item(_("Document types"), _("Control expiry requirements and document categories."), "documenttype-list", DocumentType),
+                    self.item(_("Alert rules"), _("Define when AeroControl should generate an alert."), "alertrule-list", AlertRule),
+                ],
+            },
+            {
+                "title": _("Workboard configuration"),
+                "description": _("Shape how teams organize and follow operational work."),
+                "items": [
+                    self.item(_("Boards"), _("Create and archive operational boards."), "board-list", KanbanBoard),
+                    self.item(_("Stages"), _("Manage the workflow stages used by a board."), "stage-create", KanbanStage),
+                    self.item(_("Labels"), _("Create labels used to classify tasks."), "label-list", KanbanLabel),
+                ],
+            },
+            {
+                "title": _("System"),
+                "description": _("Review backups and trace changes without editing audit records."),
+                "items": [
+                    self.item(_("Backup configuration"), _("Review the local backup destination and schedule."), "admin:core_backupconfig_changelist", BackupConfig),
+                    self.item(_("Audit events"), _("Read-only history of authenticated changes."), "admin:core_auditevent_changelist", AuditEvent, read_only=True),
+                ],
+            },
+        ]
+        context["sections"] = []
+        for section in sections:
+            items = [item for item in section["items"] if item]
+            if items:
+                context["sections"].append({**section, "items": items})
+        context["technical_admin_url"] = "/admin/" if self.request.user.is_staff else ""
+        return context
+
+    def item(self, title, description, url_name, model, read_only=False):
+        permission = f"{model._meta.app_label}.view_{model._meta.model_name}"
+        if not self.request.user.has_perm(permission) and not self.request.user.is_superuser:
+            return None
+        return {"title": title, "description": description, "url": reverse(url_name), "read_only": read_only}
 
 
 class StatusTransitionView(ModelPermissionRequiredMixin, View):

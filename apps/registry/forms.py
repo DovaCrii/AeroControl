@@ -1,17 +1,17 @@
-from django import forms
 from django.utils.translation import gettext_lazy as _
 
+from apps.core.forms import AeroModelForm
 from .models import Aircraft, Assignment, CostCenter, Operator, Qualification
 
 
-class CostCenterForm(forms.ModelForm):
+class CostCenterForm(AeroModelForm):
     class Meta:
         model = CostCenter
         fields = ["code", "name"]
         labels = {"code": _("Code"), "name": _("Name")}
 
 
-class AircraftForm(forms.ModelForm):
+class AircraftForm(AeroModelForm):
     class Meta:
         model = Aircraft
         fields = [
@@ -34,7 +34,7 @@ class AircraftForm(forms.ModelForm):
         }
 
 
-class OperatorForm(forms.ModelForm):
+class OperatorForm(AeroModelForm):
     class Meta:
         model = Operator
         fields = ["employee_id", "full_name", "email", "phone", "cost_center"]
@@ -47,7 +47,7 @@ class OperatorForm(forms.ModelForm):
         }
 
 
-class AssignmentForm(forms.ModelForm):
+class AssignmentForm(AeroModelForm):
     class Meta:
         model = Assignment
         fields = ["operator", "aircraft", "start_date", "end_date"]
@@ -59,7 +59,7 @@ class AssignmentForm(forms.ModelForm):
         }
 
 
-class QualificationForm(forms.ModelForm):
+class QualificationForm(AeroModelForm):
     class Meta:
         model = Qualification
         fields = ["operator", "qualification_type", "issue_date", "expiry_date"]

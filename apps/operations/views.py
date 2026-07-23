@@ -208,6 +208,7 @@ class CalendarView(LoginRequiredMixin, ListView):
         year, month = selected.year, selected.month
 
         from apps.maintenance.models import MaintenanceRecord
+        from apps.workboard.selectors import visible_tasks_for_user
 
         events = {}
         for permission in FlightPermission.objects.filter(
@@ -220,6 +221,10 @@ class CalendarView(LoginRequiredMixin, ListView):
             scheduled_date__year=year, scheduled_date__month=month, is_active=True
         ).select_related("aircraft"):
             events.setdefault(record.scheduled_date, []).append(("maintenance", record))
+        for task in visible_tasks_for_user(self.request.user).filter(
+            due_date__year=year, due_date__month=month
+        ).select_related("board", "stage"):
+            events.setdefault(task.due_date, []).append(("task", task))
 
         previous = selected.replace(day=1)
         if month == 1:
@@ -238,6 +243,9 @@ class CalendarView(LoginRequiredMixin, ListView):
             month_value=selected.strftime("%Y-%m"),
             prev_month=previous.strftime("%Y-%m"),
             next_month=following.strftime("%Y-%m"),
+            selected_calendar_types=self.request.GET.get("types", "all"),
+            selected_calendar_board=self.request.GET.get("board", ""),
+            current_language=getattr(self.request, "LANGUAGE_CODE", "es"),
             today=today,
             cal_year=year,
             cal_month=month,

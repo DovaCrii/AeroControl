@@ -17,7 +17,9 @@ from django.utils import timezone
 from apps.registry.models import Aircraft, CostCenter, Operator
 from apps.compliance.forms import DocumentForm
 from apps.compliance.models import Document, DocumentType, document_upload_path
-from apps.workboard.models import KanbanBoard
+from apps.maintenance.models import MaintenanceRecord
+from apps.operations.models import FlightPermission
+from apps.workboard.models import KanbanBoard, KanbanStage, KanbanTask
 from apps.core.models import AuditEvent, ImportBatch
 
 
@@ -55,6 +57,39 @@ class TestPublicURLs:
         assert payload["status"] == "ok"
         assert payload["checks"]["database"] == "ok"
 
+    @pytest.mark.django_db
+    def test_unified_calendar_events_combines_operations_maintenance_and_tasks(self, auth_client):
+        center = CostCenter.objects.create(code="CAL", name="Calendar")
+        operator = Operator.objects.create(employee_id="CAL-1", full_name="Calendar Operator", cost_center=center)
+        aircraft = Aircraft.objects.create(registration="CC-CAL", type="Fixed", model="C1", manufacturer="Maker", cost_center=center)
+        permission = FlightPermission.objects.create(
+            permission_number="CAL-001", operator=operator, aircraft=aircraft,
+            cost_center=center, purpose="Inspection", flight_date=date(2026, 7, 24), location="Santiago",
+        )
+        maintenance = MaintenanceRecord.objects.create(
+            aircraft=aircraft, maintenance_type="scheduled", description="Inspection",
+            scheduled_date=date(2026, 7, 25), performed_by="Team", cost=0,
+        )
+        board = KanbanBoard.objects.create(name="Calendar board")
+        stage = KanbanStage.objects.create(board=board, name="Planned")
+        task = KanbanTask.objects.create(board=board, stage=stage, title="Calendar task", due_date=date(2026, 7, 26))
+
+        response = auth_client.get(reverse("calendar-events"), {"start": "2026-07-01", "end": "2026-08-01"})
+
+        assert response.status_code == 200
+        payload = response.json()
+        assert {item["type"] for item in payload} == {"permission", "maintenance", "task"}
+        assert {item["id"] for item in payload} == {f"permission-{permission.pk}", f"maintenance-{maintenance.pk}", f"task-{task.pk}"}
+
+    def test_administration_center_explains_operational_configuration(self, auth_client):
+        response = auth_client.get(reverse("administration"))
+
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert "Centro de administración" in content
+        assert "Configuración del tablero de trabajo" in content
+        assert "Administración técnica avanzada" in content
+
     """Verify pages that are intentionally available without authentication."""
 
     def test_login_page(self, client):
@@ -62,7 +97,7 @@ class TestPublicURLs:
 
         assert response.status_code == 200
         content = response.content.decode()
-        assert "Sign In" in content
+        assert "Iniciar sesión" in content
         assert "AeroControl" in content
 
     def test_login_post_ok(self, client, admin_user):
@@ -82,7 +117,7 @@ class TestPublicURLs:
 
         assert response.status_code == 200
         content = response.content.decode()
-        assert "Invalid username or password" in content
+        assert "Usuario o contraseña no válidos" in content
 
 
 class TestAuthRequiredURLs:

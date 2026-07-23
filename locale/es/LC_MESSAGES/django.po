@@ -28,6 +28,201 @@ msgstr "Panel"
 msgid "Registry"
 msgstr "Registro"
 
+msgid "Toggle sidebar"
+msgstr "Contraer o expandir panel lateral"
+
+msgid "Use light theme"
+msgstr "Usar tema claro"
+
+msgid "Use dark theme"
+msgstr "Usar tema oscuro"
+
+msgid "Actual date"
+msgstr "Fecha real"
+
+msgid "Departure time"
+msgstr "Hora de salida"
+
+msgid "Arrival time"
+msgstr "Hora de llegada"
+
+msgid "Pilot"
+msgstr "Piloto"
+
+msgid "Permission"
+msgstr "Permiso"
+
+msgid "Maintenance type"
+msgstr "Tipo de mantenimiento"
+
+msgid "Board"
+msgstr "Tablero"
+
+msgid "Stage"
+msgstr "Etapa"
+
+msgid "Order"
+msgstr "Orden"
+
+msgid "Color"
+msgstr "Color"
+
+msgid "Status type"
+msgstr "Tipo de estado"
+
+msgid "Assigned to"
+msgstr "Asignado a"
+
+msgid "Due date"
+msgstr "Fecha límite"
+
+msgid "Priority"
+msgstr "Prioridad"
+
+msgid "Labels"
+msgstr "Etiquetas"
+
+msgid "Checklist item"
+msgstr "Elemento de lista"
+
+msgid "The aircraft must match the flight permission."
+msgstr "La aeronave debe coincidir con el permiso de vuelo."
+
+msgid "The pilot must match the flight permission operator."
+msgstr "El piloto debe coincidir con el operador del permiso de vuelo."
+
+msgid "The flight date must match the flight permission."
+msgstr "La fecha del vuelo debe coincidir con el permiso de vuelo."
+
+msgid "Arrival time must be later than departure time."
+msgstr "La hora de llegada debe ser posterior a la hora de salida."
+
+msgid "View permissions, maintenance and Kanban deadlines in one place."
+msgstr "Consulta permisos, mantenimiento y vencimientos del Kanban en un solo lugar."
+
+msgid "Event types"
+msgstr "Tipos de evento"
+
+msgid "Kanban tasks"
+msgstr "Tareas Kanban"
+
+msgid "Show"
+msgstr "Mostrar"
+
+msgid "Filter calendar events"
+msgstr "Filtrar eventos del calendario"
+
+msgid "All events"
+msgstr "Todos los eventos"
+
+msgid "Today"
+msgstr "Hoy"
+
+msgid "Month"
+msgstr "Mes"
+
+msgid "Week"
+msgstr "Semana"
+
+msgid "Agenda"
+msgstr "Agenda"
+
+msgid "Move work forward, keep ownership visible and follow every deadline."
+msgstr "Avanza el trabajo, mantén responsables visibles y sigue cada vencimiento."
+
+msgid "Workboard views"
+msgstr "Vistas del tablero de trabajo"
+
+msgid "Calendar view"
+msgstr "Vista de calendario"
+
+msgid "Create a board to organize tasks, owners and deadlines."
+msgstr "Crea un tablero para organizar tareas, responsables y vencimientos."
+
+msgid "Overdue"
+msgstr "Atrasada"
+
+msgid "Administration center"
+msgstr "Centro de administración"
+
+msgid "Configure the operational workspace from one clear place."
+msgstr "Configura el espacio operativo desde un solo lugar claro."
+
+msgid "Advanced technical administration"
+msgstr "Administración técnica avanzada"
+
+msgid "Organization"
+msgstr "Organización"
+
+msgid "Define the operational scope and who can access it."
+msgstr "Define el alcance operativo y quién puede acceder a él."
+
+msgid "Operational tenants"
+msgstr "Organizaciones operativas"
+
+msgid "Manage organizations and their data boundaries."
+msgstr "Gestiona organizaciones y sus límites de datos."
+
+msgid "Tenant memberships"
+msgstr "Membresías de organización"
+
+msgid "Assign users to an operational tenant."
+msgstr "Asigna usuarios a una organización operativa."
+
+msgid "Compliance configuration"
+msgstr "Configuración de cumplimiento"
+
+msgid "Prepare document and alert rules before loading records."
+msgstr "Prepara documentos y reglas de alerta antes de cargar registros."
+
+msgid "Control expiry requirements and document categories."
+msgstr "Controla requisitos de vencimiento y categorías documentales."
+
+msgid "Define when AeroControl should generate an alert."
+msgstr "Define cuándo AeroControl debe generar una alerta."
+
+msgid "Workboard configuration"
+msgstr "Configuración del tablero de trabajo"
+
+msgid "Shape how teams organize and follow operational work."
+msgstr "Define cómo los equipos organizan y siguen el trabajo operativo."
+
+msgid "Boards"
+msgstr "Tableros"
+
+msgid "Create and archive operational boards."
+msgstr "Crea y archiva tableros operativos."
+
+msgid "Stages"
+msgstr "Etapas"
+
+msgid "Manage the workflow stages used by a board."
+msgstr "Gestiona las etapas de flujo utilizadas por un tablero."
+
+msgid "Create labels used to classify tasks."
+msgstr "Crea etiquetas para clasificar tareas."
+
+msgid "Review backups and trace changes without editing audit records."
+msgstr "Revisa respaldos y rastrea cambios sin editar la auditoría."
+
+msgid "Backup configuration"
+msgstr "Configuración de respaldos"
+
+msgid "Review the local backup destination and schedule."
+msgstr "Revisa el destino y la programación de respaldos locales."
+
+msgid "Audit events"
+msgstr "Eventos de auditoría"
+
+msgid "Read-only history of authenticated changes."
+msgstr "Historial de solo lectura de cambios autenticados."
+
+msgid "No administration modules available"
+msgstr "No hay módulos de administración disponibles"
+
+msgid "Ask an administrator to grant the required permissions."
+msgstr "Solicita a un administrador los permisos necesarios."
+
 msgid "Cost Centers"
 msgstr "Centros de costo"
 
@@ -729,6 +924,9 @@ msgstr "Personalizado"
 
 msgid "Task list"
 msgstr "Lista de tareas"
+
+msgid "Review ownership, priorities and deadlines in a sortable list."
+msgstr "Revisa responsables, prioridades y vencimientos en una lista ordenable."
 
 msgid "Board view"
 msgstr "Vista de tablero"

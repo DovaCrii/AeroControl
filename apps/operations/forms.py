@@ -1,9 +1,10 @@
-from django import forms
+from django.utils.translation import gettext_lazy as _
 
+from apps.core.forms import AeroModelForm
 from .models import FlightPermission, FlightRecord
 
 
-class FlightPermissionForm(forms.ModelForm):
+class FlightPermissionForm(AeroModelForm):
     class Meta:
         model = FlightPermission
         fields = [
@@ -17,7 +18,7 @@ class FlightPermissionForm(forms.ModelForm):
         ]
 
 
-class FlightRecordForm(forms.ModelForm):
+class FlightRecordForm(AeroModelForm):
     class Meta:
         model = FlightRecord
         fields = [
@@ -38,17 +39,17 @@ class FlightRecordForm(forms.ModelForm):
         departure = cleaned.get("departure_time")
         arrival = cleaned.get("arrival_time")
         if permission and aircraft and permission.aircraft_id != aircraft.id:
-            self.add_error("aircraft", "The aircraft must match the flight permission.")
+            self.add_error("aircraft", _("The aircraft must match the flight permission."))
         if permission and pilot and permission.operator_id != pilot.id:
             self.add_error(
-                "pilot", "The pilot must match the flight permission operator."
+                "pilot", _("The pilot must match the flight permission operator.")
             )
         if permission and actual_date and actual_date != permission.flight_date:
             self.add_error(
-                "actual_date", "The flight date must match the flight permission."
+                "actual_date", _("The flight date must match the flight permission.")
             )
         if departure and arrival and arrival <= departure:
             self.add_error(
-                "arrival_time", "Arrival time must be later than departure time."
+                "arrival_time", _("Arrival time must be later than departure time.")
             )
         return cleaned
