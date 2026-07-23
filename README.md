@@ -92,8 +92,8 @@ LOGS_DIR=D:/I+D/AeroOpsDesk_Data/logs
 Then run:
 
 ```powershell
-git clone https://github.com/DovaCrii/aero-ops-desk.git
-Set-Location aero-ops-desk
+git clone https://github.com/DovaCrii/AeroControl.git
+Set-Location AeroControl
 powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1
 .\.venv\Scripts\python.exe manage.py createsuperuser
 powershell -ExecutionPolicy Bypass -File .\scripts\run.ps1
