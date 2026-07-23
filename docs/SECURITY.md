@@ -10,6 +10,7 @@
 - Los documentos se limitan a entidades de negocio permitidas y existentes; su ruta se verifica antes de descargar.
 - Los roles estándar se crean con `python manage.py bootstrap_roles`; las operaciones mutantes requieren permisos de Django.
 - Los secretos de producción no tienen valor por defecto y se activaron validadores de contraseña.
+- `AuditEvent` bloquea cambios y borrados desde Django Admin y desde el ORM de la aplicación. La inmutabilidad a nivel de base de datos se evaluará para PostgreSQL antes de un despliegue multiusuario.
 
 ## Estado de los objetivos históricos
 

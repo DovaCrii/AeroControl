@@ -13,6 +13,17 @@ from .selectors import user_can_edit_board, visible_tasks_for_user
 from .models import KanbanStage
 
 
+class ViewModelPermissions(DjangoModelPermissions):
+    """Require Django view permissions for read-only API methods too."""
+
+    perms_map = {
+        **DjangoModelPermissions.perms_map,
+        "GET": ["%(app_label)s.view_%(model_name)s"],
+        "HEAD": ["%(app_label)s.view_%(model_name)s"],
+        "OPTIONS": [],
+    }
+
+
 class KanbanTaskSerializer(serializers.ModelSerializer):
     state = serializers.CharField(source="stage.status_type", read_only=True)
     stage_name = serializers.CharField(source="stage.name", read_only=True)
@@ -27,7 +38,7 @@ class KanbanTaskSerializer(serializers.ModelSerializer):
 class KanbanTaskViewSet(ViewSet):
     """Canonical task API used by both the stable and DRF-compatible URLs."""
 
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    permission_classes = [IsAuthenticated, ViewModelPermissions]
     queryset = KanbanTask.objects.all()
 
     def get_queryset(self):
@@ -124,10 +135,10 @@ def api_openapi_schema(_request):
         "components": {
             "securitySchemes": {
                 "tokenAuth": {
-                    "type": "http",
-                    "scheme": "bearer",
-                    "bearerFormat": "Token",
-                    "description": "Use the token returned by /api-token/.",
+                    "type": "apiKey",
+                    "in": "header",
+                    "name": "Authorization",
+                    "description": "Use Authorization: Token <key>, with the token returned by /api-token/.",
                 }
             },
             "schemas": {
