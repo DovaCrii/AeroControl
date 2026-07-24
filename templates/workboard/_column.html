@@ -1,10 +1,10 @@
 {% load i18n %}
 <div class="kanban-column" data-stage-id="{{ stage.id }}">
-  <div class="kanban-column-header" style="border-top-color: {{ stage.color|default:'#2EC4B6' }};">
+  <div id="kanban-stage-{{ stage.id }}" class="kanban-column-header" style="border-top-color: {{ stage.color|default:'#2EC4B6' }};">
     <span>{{ stage.name }}</span>
-    <span class="kanban-count">{{ tasks|length }}</span>
+    <span class="kanban-count" aria-label="{% translate 'Tasks in stage' %}: {{ tasks|length }}">{{ tasks|length }}</span>
   </div>
-  <div class="kanban-column-body kanban-cards" data-stage-id="{{ stage.id }}">
+  <div class="kanban-column-body kanban-cards" data-stage-id="{{ stage.id }}" role="region" aria-labelledby="kanban-stage-{{ stage.id }}">
     {% for task in tasks %}
       {% include "workboard/_card.html" %}
     {% empty %}

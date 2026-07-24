@@ -613,6 +613,9 @@ msgstr "Nuevo permiso"
 msgid "Tasks"
 msgstr "Tareas"
 
+msgid "Tasks in stage"
+msgstr "Tareas en la etapa"
+
 msgid "Aircrafts"
 msgstr "Aeronaves"
 

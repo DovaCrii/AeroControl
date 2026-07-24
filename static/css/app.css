@@ -704,7 +704,7 @@ main {
   background: var(--ac-surface);
   border-right: 1px solid var(--ac-border);
   box-shadow: none;
-  transition: width 0.2s ease, flex-basis 0.2s ease, background 0.2s ease;
+  transition: background 0.2s ease;
 }
 
 .sidebar a {
@@ -963,7 +963,9 @@ main {
 .kanban-progress .progress-bar { background: var(--ac-primary); }
 
 @media (max-width: 768px) {
-  .view-tabs { overflow-x: auto; white-space: nowrap; }
+  .view-tabs { overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+  .kanban-board { -webkit-overflow-scrolling: touch; overscroll-behavior-inline: contain; scroll-snap-type: inline proximity; }
+  .kanban-column { scroll-snap-align: start; }
   .workboard-toolbar { align-items: stretch; }
   .workboard-toolbar > * { width: 100%; }
   .workboard-toolbar .kanban-filter { width: 100%; }
