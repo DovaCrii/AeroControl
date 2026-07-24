@@ -28,6 +28,9 @@ msgstr "Panel"
 msgid "Registry"
 msgstr "Registro"
 
+msgid "Archive this flight record?"
+msgstr "¿Archivar este registro de vuelo?"
+
 msgid "Archive document?"
 msgstr "¿Archivar documento?"
 
@@ -639,6 +642,15 @@ msgstr "Permiso de vuelo"
 
 msgid "Flight Record"
 msgstr "Registro de vuelo"
+
+msgid "Departure"
+msgstr "Salida"
+
+msgid "Arrival"
+msgstr "Llegada"
+
+msgid "Notes"
+msgstr "Notas"
 
 msgid "Maintenance Records"
 msgstr "Registros de mantenimiento"
