@@ -157,6 +157,34 @@ Cada respaldo incluye un manifiesto JSON con origen, fecha, tamaño y hash SHA-2
 La restauración verifica el manifiesto y no sobrescribe destinos existentes salvo
 que se indique force.
 
+## Operación programada
+
+Tres trabajos deben ejecutarse solos: `generate_alerts` (detecta vencimientos y
+crea sus tareas de seguimiento), `send_alert_digest` (envía el resumen por
+correo a cada responsable de centro de costo) y `backup`. Cada ejecución queda
+registrada en `JobRun`, así que se puede comprobar después si corrieron.
+
+~~~powershell
+# Registrar los tres trabajos diarios en el Programador de tareas de Windows
+./scripts/schedule_tasks.ps1 -EnvFile "C:/AeroControl_Data/.env"
+
+# Horas personalizadas / desregistrar
+./scripts/schedule_tasks.ps1 -AlertsAt "06:30" -DigestAt "07:15" -BackupAt "22:00"
+./scripts/schedule_tasks.ps1 -Unregister
+
+# Probar el resumen sin enviar correo
+uv run python manage.py send_alert_digest --dry-run
+~~~
+
+`-EnvFile` es necesario porque una tarea programada no hereda las variables de
+la sesión interactiva. El destinatario del resumen es el campo **Operador
+responsable** del centro de costo; si falta, el comando lo informa y continúa
+con los demás. Sin `EMAIL_HOST` configurado el correo se imprime en consola en
+lugar de enviarse.
+
+El equivalente en cron para Linux y el detalle completo están en
+[docs/scheduled-operations.md](docs/scheduled-operations.md).
+
 ## Seguridad y cumplimiento
 
 ### Autenticación y permisos

@@ -40,7 +40,10 @@ exclude = [".venv", ".tmp-baseline", "migrations"]
 ignore = ["E702", "F403", "F405"]
 
 [tool.bandit]
-exclude_dirs = [".venv", ".tmp-baseline", "migrations", "tests.py"]
+# Test modules are excluded for the same reason tests.py already was: their
+# literal "password" fixtures trip B106 without being a finding. B106 stays
+# enabled everywhere else so a real hardcoded credential is still reported.
+exclude_dirs = [".venv", ".tmp-baseline", "migrations", "tests.py", "test_"]
 skips = ["B101", "B105"]
 
 [tool.coverage.run]
