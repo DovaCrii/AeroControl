@@ -231,7 +231,9 @@ class Alert(BaseModel):
         """
         rule = self.alert_rule
         board, stage = rule.target_board, rule.target_stage
-        if not (rule.create_kanban_task and rule.target_board_id and rule.target_stage_id):
+        if not (
+            rule.create_kanban_task and rule.target_board_id and rule.target_stage_id
+        ):
             if not allow_default_board:
                 return None
             board, stage = self._default_board_and_stage()

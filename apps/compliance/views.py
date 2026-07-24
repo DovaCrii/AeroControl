@@ -251,9 +251,7 @@ class AlertResolve(ModelPermissionRequiredMixin, View):
         alert = get_object_or_404(Alert, pk=pk, is_active=True)
         moved_task = alert.resolve()
         metadata = {"moved_task_id": str(moved_task.pk)} if moved_task else {}
-        set_audit_context(
-            request, alert, action="alert_resolved", metadata=metadata
-        )
+        set_audit_context(request, alert, action="alert_resolved", metadata=metadata)
         return redirect("alert-list")
 
 
@@ -286,7 +284,9 @@ class AlertCreateTask(ModelPermissionRequiredMixin, View):
             )
         referer = request.META.get("HTTP_REFERER", "")
         if referer and url_has_allowed_host_and_scheme(
-            referer, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+            referer,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
         ):
             return redirect(referer)
         return redirect("alert-list")

@@ -1314,3 +1314,35 @@ msgstr "Número de permiso"
 
 msgid "Purpose"
 msgstr "Propósito"
+
+#: apps/compliance/management/commands/send_alert_digest.py + email templates
+msgid "Due within 7 days"
+msgstr "Vence en 7 días"
+
+msgid "Due within 15 days"
+msgstr "Vence en 15 días"
+
+msgid "Due within 30 days"
+msgstr "Vence en 30 días"
+
+msgid "Total items"
+msgstr "Total de elementos"
+
+msgid "This is an automated message from AeroControl."
+msgstr "Este es un mensaje automático de AeroControl."
+
+msgid "Expiry summary for %(center)s"
+msgstr "Resumen de vencimientos de %(center)s"
+
+msgid "AeroControl · expiry summary for %(center)s"
+msgstr "AeroControl · resumen de vencimientos de %(center)s"
+
+msgid "Responsible operator"
+msgstr "Operador responsable"
+
+msgid "Recipient of expiry digests for this cost center."
+msgstr "Destinatario de los resúmenes de vencimientos de este centro de costo."
+
+msgid "Already expired"
+msgstr "Vencidos"
+
