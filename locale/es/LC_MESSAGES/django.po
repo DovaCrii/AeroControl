@@ -28,6 +28,36 @@ msgstr "Panel"
 msgid "Registry"
 msgstr "Registro"
 
+msgid "All records"
+msgstr "Todos los registros"
+
+msgid "All assignment states"
+msgstr "Todos los estados de asignación"
+
+msgid "All assignments"
+msgstr "Todas las asignaciones"
+
+msgid "Record status"
+msgstr "Estado del registro"
+
+msgid "Assignment status"
+msgstr "Estado de la asignación"
+
+msgid "Review status"
+msgstr "Estado de revisión"
+
+msgid "Period"
+msgstr "Período"
+
+msgid "There are assignments without a cost center. Review them before confirming."
+msgstr "Hay asignaciones sin centro de costo. Revísalas antes de confirmarlas."
+
+msgid "Review pending assignments"
+msgstr "Revisar asignaciones pendientes"
+
+msgid "Una asignación confirmada requiere un centro de costo."
+msgstr "Una asignación confirmada requiere un centro de costo."
+
 msgid "Archive this flight record?"
 msgstr "¿Archivar este registro de vuelo?"
 

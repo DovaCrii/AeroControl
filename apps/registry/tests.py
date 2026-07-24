@@ -1,6 +1,7 @@
 from datetime import date
 
 import pytest
+from django.utils import translation
 from django.urls import reverse
 
 from apps.core.models import OperationalTenant
@@ -69,6 +70,56 @@ def test_confirmed_assignment_rejects_operator_overlap(registry_data):
 
     assert not form.is_valid()
     assert "operator" in form.errors
+
+
+@pytest.mark.django_db
+def test_assignment_status_choices_are_translated_and_confirmed_requires_cost_center(registry_data):
+    _tenant, _center, operator, aircraft = registry_data
+    with translation.override("es"):
+        form = AssignmentForm()
+        assert dict(form.fields["status"].choices)["planned"] == "Planificado"
+
+    form = AssignmentForm(
+        data={
+            "operator": operator.pk,
+            "aircraft": aircraft.pk,
+            "cost_center": "",
+            "purpose": "Inspection",
+            "start_date": "2026-07-11",
+            "end_date": "2026-07-13",
+            "status": "confirmed",
+        }
+    )
+
+    assert not form.is_valid()
+    assert "cost_center" in form.errors
+
+
+@pytest.mark.django_db
+def test_assignment_list_filters_by_status_and_review(client, admin_user, registry_data):
+    _tenant, center, operator, aircraft = registry_data
+    Assignment.objects.create(
+        operator=operator,
+        aircraft=aircraft,
+        cost_center=center,
+        start_date=date(2026, 7, 10),
+        status="confirmed",
+    )
+    Assignment.objects.create(
+        operator=operator,
+        aircraft=aircraft,
+        start_date=date(2026, 7, 20),
+        status="planned",
+    )
+    client.force_login(admin_user)
+
+    response = client.get(reverse("assignment-list"), {"status": "confirmed"})
+    assert response.status_code == 200
+    assert response.context["object_list"].count() == 1
+    assert "Período" in response.content.decode()
+
+    response = client.get(reverse("assignment-list"), {"review": "needs_review"})
+    assert response.context["object_list"].count() == 1
 
 
 @pytest.mark.django_db

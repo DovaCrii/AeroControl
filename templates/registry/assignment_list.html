@@ -20,9 +20,27 @@
   <div class="summary-card summary-card-warning"><span>{% translate "Needs review" %}</span><strong>{{ assignment_summary.review }}</strong></div>
 </div>
 
+{% if assignment_summary.review %}
+<div class="alert alert-warning d-flex flex-wrap align-items-center justify-content-between gap-2" role="status">
+  <span>{% translate "There are assignments without a cost center. Review them before confirming." %}</span>
+  <a class="btn btn-sm btn-outline-dark" href="?review=needs_review&amp;is_active=active">{% translate "Review pending assignments" %}</a>
+</div>
+{% endif %}
+
 <form method="get" class="row g-2 mb-3">
   <div class="col-md-5">{% include "generic/_search_input.html" with search_url=request.path %}</div>
-  <div class="col-md-3"><select class="form-select" name="is_active"><option value="">{% translate "All statuses" %}</option><option value="active" {% if request.GET.is_active == 'active' %}selected{% endif %}>{% translate "Active" %}</option><option value="archived" {% if request.GET.is_active == 'archived' %}selected{% endif %}>{% translate "Archived" %}</option></select></div>
+  <div class="col-md-2"><select class="form-select" name="is_active" aria-label="{% translate 'Record status' %}"><option value="">{% translate "All records" %}</option><option value="active" {% if request.GET.is_active == 'active' %}selected{% endif %}>{% translate "Active" %}</option><option value="archived" {% if request.GET.is_active == 'archived' %}selected{% endif %}>{% translate "Archived" %}</option></select></div>
+  <div class="col-md-2"><select class="form-select" name="status" aria-label="{% translate 'Assignment status' %}">
+    <option value="">{% translate "All assignment states" %}</option>
+    <option value="planned" {% if request.GET.status == 'planned' %}selected{% endif %}>{% translate "Planned" %}</option>
+    <option value="confirmed" {% if request.GET.status == 'confirmed' %}selected{% endif %}>{% translate "Confirmed" %}</option>
+    <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>{% translate "Completed" %}</option>
+    <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>{% translate "Cancelled" %}</option>
+  </select></div>
+  <div class="col-md-2"><select class="form-select" name="review" aria-label="{% translate 'Review status' %}">
+    <option value="">{% translate "All assignments" %}</option>
+    <option value="needs_review" {% if request.GET.review == 'needs_review' %}selected{% endif %}>{% translate "Needs review" %}</option>
+  </select></div>
   <div class="col-auto"><button class="btn btn-outline-primary">{% translate "Search" %}</button></div>
 </form>
 

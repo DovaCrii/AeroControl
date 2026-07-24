@@ -134,6 +134,11 @@ class AssignmentList(RegistryList):
                 | Q(aircraft__tenant_id__in=tenant_ids)
                 | Q(cost_center__tenant_id__in=tenant_ids)
             )
+        status = self.request.GET.get("status")
+        if status in {"planned", "confirmed", "completed", "cancelled"}:
+            queryset = queryset.filter(status=status)
+        if self.request.GET.get("review") == "needs_review":
+            queryset = queryset.filter(is_active=True, cost_center__isnull=True)
         return queryset
 
     def get_context_data(self, **kwargs):
