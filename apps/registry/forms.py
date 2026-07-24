@@ -94,6 +94,14 @@ class AssignmentForm(AeroModelForm):
             "status": _("Status"),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Assignment.STATUS_CHOICES are persisted in English-compatible codes,
+        # but their labels must follow the active UI language.
+        self.fields["status"].choices = [
+            (value, _(label)) for value, label in Assignment.STATUS_CHOICES
+        ]
+
     def clean(self):
         cleaned = super().clean()
         operator = cleaned.get("operator")
@@ -101,8 +109,14 @@ class AssignmentForm(AeroModelForm):
         start_date = cleaned.get("start_date")
         end_date = cleaned.get("end_date")
         status = cleaned.get("status")
+        cost_center = cleaned.get("cost_center")
         if not operator or not aircraft or not start_date:
             return cleaned
+        if status == "confirmed" and not cost_center:
+            self.add_error(
+                "cost_center",
+                _("Una asignación confirmada requiere un centro de costo."),
+            )
         end = end_date or start_date
         overlap = Assignment.objects.filter(
             is_active=True,
