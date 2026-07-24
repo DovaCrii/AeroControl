@@ -2,6 +2,7 @@ from datetime import date, time
 
 import pytest
 from django.contrib.auth.models import User
+from django.db.models import ProtectedError
 from django.test import Client
 from django.urls import reverse
 
@@ -139,3 +140,36 @@ def test_permission_transition_records_history_with_actor_and_notes():
     assert history.new_status == "approved"
     assert history.changed_by == "dispatcher"
     assert history.notes == "Approved after dispatch review."
+
+
+@pytest.mark.django_db
+def test_flight_permission_with_history_cannot_be_hard_deleted():
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    permission = FlightPermission.objects.create(
+        permission_number="PERM-1",
+        operator=operator,
+        aircraft=aircraft,
+        cost_center=cost_center,
+        purpose="Training",
+        flight_date=date(2026, 7, 22),
+        location="Santiago",
+    )
+    PermissionHistory.objects.create(
+        permission=permission,
+        previous_status="requested",
+        new_status="approved",
+        changed_by="dispatcher",
+    )
+
+    with pytest.raises(ProtectedError):
+        permission.delete()

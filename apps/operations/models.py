@@ -52,7 +52,7 @@ class FlightRecord(BaseModel):
 
 class PermissionHistory(BaseModel):
     permission = models.ForeignKey(
-        FlightPermission, on_delete=models.CASCADE, related_name="history"
+        FlightPermission, on_delete=models.PROTECT, related_name="history"
     )
     previous_status = models.CharField(max_length=20)
     new_status = models.CharField(max_length=20)

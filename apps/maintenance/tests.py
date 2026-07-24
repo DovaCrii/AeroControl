@@ -2,6 +2,7 @@ from datetime import date
 
 import pytest
 from django.contrib.auth.models import User
+from django.db.models import ProtectedError
 from django.test import Client
 from django.urls import reverse
 
@@ -106,3 +107,31 @@ def test_record_detail_shows_completion_form_only_while_in_progress():
     assert response.status_code == 200
     assert b'name="performed_by"' in response.content
     assert b'name="cost"' in response.content
+
+
+@pytest.mark.django_db
+def test_maintenance_record_with_history_cannot_be_hard_deleted():
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    record = MaintenanceRecord.objects.create(
+        aircraft=aircraft,
+        maintenance_type="scheduled",
+        description="100h inspection",
+        scheduled_date=date(2026, 7, 20),
+        status="in_progress",
+    )
+    MaintenanceHistory.objects.create(
+        record=record,
+        previous_status="pending",
+        new_status="in_progress",
+        changed_by="mechanic",
+    )
+
+    with pytest.raises(ProtectedError):
+        record.delete()
