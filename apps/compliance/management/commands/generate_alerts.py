@@ -6,6 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand
 
 from apps.compliance.models import Alert, AlertRule
+from apps.core.jobs import record_job_run
 
 logger = logging.getLogger("compliance.alerts")
 
@@ -14,6 +15,18 @@ class Command(BaseCommand):
     help = "Generate unresolved compliance alerts for configured rules."
 
     def handle(self, *args, **options):
+        with record_job_run("generate_alerts") as run:
+            generated, duplicates, tasks_created = self._generate()
+            run["summary"] = (
+                f"{generated} alerts, {duplicates} duplicates skipped, "
+                f"{tasks_created} follow-up tasks"
+            )
+        self.stdout.write(
+            f"Generated {generated} alerts, skipped {duplicates} duplicates, "
+            f"created {tasks_created} follow-up tasks"
+        )
+
+    def _generate(self):
         generated = 0
         duplicates = 0
         tasks_created = 0
@@ -76,10 +89,7 @@ class Command(BaseCommand):
                 generated += 1
                 if alert.ensure_follow_up_task() is not None:
                     tasks_created += 1
-        self.stdout.write(
-            f"Generated {generated} alerts, skipped {duplicates} duplicates, "
-            f"created {tasks_created} follow-up tasks"
-        )
+        return generated, duplicates, tasks_created
 
     @staticmethod
     def _find_model(entity_type):

@@ -1,8 +1,30 @@
 from django.contrib import admin
-from .models import AuditEvent, BackupConfig, OperationalTenant, TenantMembership
+from .models import (
+    AuditEvent,
+    BackupConfig,
+    JobRun,
+    OperationalTenant,
+    TenantMembership,
+)
 
 admin.site.register(BackupConfig)
 admin.site.register([OperationalTenant, TenantMembership])
+
+
+@admin.register(JobRun)
+class JobRunAdmin(admin.ModelAdmin):
+    """Read-only: job history is written by the jobs themselves."""
+
+    list_display = ("command", "started_at", "finished_at", "result", "summary")
+    list_filter = ("command", "result")
+    search_fields = ("command", "summary")
+    readonly_fields = [field.name for field in JobRun._meta.fields]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(AuditEvent)

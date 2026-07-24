@@ -1270,3 +1270,13 @@ msgstr "Tablero Kanban"
 msgid "Complete maintenance"
 msgstr "Completar mantenimiento"
 
+
+#: apps/core/models.py JobRun
+msgid "job run"
+msgstr "ejecución de tarea"
+
+msgid "job runs"
+msgstr "ejecuciones de tareas"
+
+msgid "Failed"
+msgstr "Con error"
