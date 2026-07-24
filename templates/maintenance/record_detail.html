@@ -6,7 +6,7 @@
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h3">{% translate "Maintenance record" %}</h1>
     <div class="d-flex gap-2">
-      {% for action, label, css_class in status_actions %}<form method="post" action="{{ action }}/" style="display:inline">{% csrf_token %}<button class="btn {{ css_class }}">{{ label }}</button></form>{% endfor %}
+      {% for action, label, css_class in status_actions %}{% if action != "complete" %}<form method="post" action="{{ action }}/" style="display:inline">{% csrf_token %}<button class="btn {{ css_class }}">{{ label }}</button></form>{% endif %}{% endfor %}
       <a href="javascript:history.back()" class="btn btn-outline-secondary">← {% translate "Back" %}</a>
     </div>
   </div>
@@ -22,6 +22,18 @@
     <tr><th>{% translate "Notes" %}</th><td>{{ record.notes|default:"—" }}</td></tr>
   </tbody></table>
 </div>
+{% if record.status == "in_progress" %}
+<div class="card mt-3 p-4">
+  <h2 class="h5 mb-3">{% translate "Complete maintenance" %}</h2>
+  <form method="post" action="complete/">
+    {% csrf_token %}
+    {{ completion_form|crispy }}
+    <div class="form-actions d-flex gap-2 mt-2">
+      <button type="submit" class="btn btn-success">{% translate "Complete" %}</button>
+    </div>
+  </form>
+</div>
+{% endif %}
 <div class="card mt-3 p-4">
   <h2 class="h5 mb-3">{% translate "Status history" %}</h2>
   {% if record.history.exists %}<table class="table table-sm"><thead><tr><th>{% translate "Date" %}</th><th>{% translate "From" %}</th><th>{% translate "To" %}</th><th>{% translate "By" %}</th></tr></thead><tbody>
