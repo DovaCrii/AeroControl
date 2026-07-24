@@ -74,6 +74,11 @@ $env:AEROCONTROL_BACKUP_ROOT = 'D:\OneDrive - J.E.J. Ingeniería S.A\AeroControl
 ## Estado actual
 
 - OneDrive está disponible en `D:\OneDrive - J.E.J. Ingeniería S.A`.
-- No se encontró una SQLite de AeroControl en este PC.
-- El primer snapshot debe ejecutarse desde el notebook, donde está la base
-  real, una vez confirmadas `DB_PATH` y `DOCUMENTS_DIR`.
+- Snapshot `aerocontrol_20260724_112625` verificado y restaurado en el PC.
+- La base fue restaurada y validada localmente; el contenido y los conteos de
+  datos privados no se publican en GitHub.
+- El `.env` local del PC apunta a `D:\I+D\AeroOpsDesk_Data-PC` y permanece
+  ignorado por Git.
+- La carpeta `documents` quedó disponible para restauración; si el notebook
+  conserva antecedentes documentales, generar un nuevo snapshot después de
+  confirmar que `DOCUMENTS_DIR` apunta a la carpeta correcta.
