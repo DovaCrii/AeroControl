@@ -71,7 +71,7 @@ AeroControl/
 ├── templates/        # interfaz renderizada en servidor
 ├── static/           # CSS y recursos visuales
 ├── assets/           # recursos de documentación, incluido el logo
-├── scripts/          # setup.ps1, run.ps1 y backup.ps1
+├── scripts/          # setup.ps1, run.ps1 y backups locales
 ├── docs/             # documentación técnica y operativa
 ├── openspec/         # especificaciones y cambios
 └── manage.py
@@ -128,6 +128,17 @@ uv run pip-audit
 powershell -ExecutionPolicy Bypass -File ./scripts/backup.ps1
 uv run python manage.py verify_backup <ruta-al-backup.sqlite3>
 uv run python manage.py restore_backup <backup.sqlite3> <destino.sqlite3>
+
+# Snapshot local de base + documentos (fuera del repositorio)
+$env:AEROCONTROL_BACKUP_ROOT='E:/AeroControlBackups'
+powershell -ExecutionPolicy Bypass -File ./scripts/backup-local.ps1
+powershell -ExecutionPolicy Bypass -File ./scripts/verify-local-backup.ps1 `
+  -Snapshot 'E:/AeroControlBackups/aerocontrol_YYYYMMDD_HHMMSS'
+powershell -ExecutionPolicy Bypass -File ./scripts/restore-local.ps1 `
+  -Snapshot 'E:/AeroControlBackups/aerocontrol_YYYYMMDD_HHMMSS' `
+  -DestinationRoot 'E:/AeroControlRestoreDrill/YYYYMMDD'
+powershell -ExecutionPolicy Bypass -File ./scripts/register-backup-task.ps1 `
+  -DestinationRoot 'E:/AeroControlBackups' -DayOfWeek Sunday -At '18:00'
 
 uv run python manage.py cleanup_documents --older-than-days 3650
 uv run python manage.py cleanup_documents --older-than-days 3650 --execute
@@ -245,6 +256,10 @@ Próximas prioridades:
 La frontera frontend está documentada en docs/frontend-boundary.md. Una SPA
 separada queda postergada hasta que existan requisitos de API independiente,
 uso offline o clientes móviles.
+
+El plan de backend local-first y el runbook de snapshots están en
+`docs/06-Plan-Local-First.md`, `docs/backend-plan.md` y
+`docs/local-backup.md`.
 
 ## Licencia
 
