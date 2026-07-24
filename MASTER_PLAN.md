@@ -28,12 +28,13 @@ Es el **tablero de bloques**. `BACKLOG.md` queda como registro histórico de lo 
 
 ---
 
-## Estado actual (foto 2026-07-24)
+## Estado actual (actualizado 2026-07-24 — FASE 0 cerrada)
 
-- **P0 vivo en `codex/impeccable-ui-audit`:** el dashboard lanza 500 tras login (`{% block extrahead %}` duplicado). `main` no está afectado. → T0.1.
-- **No confíes en el verde:** el gate `verify.ps1` no falla ante tests rojos; CI descarta la cobertura. → T0.3, T0.4.
-- **Sin P0 de seguridad.** Los IDOR (F-03–F-06) son gaps reales pero mitigados hoy por `tenant=NULL` universal; se cierran antes de centralizar el servidor.
-- **Verificación automatizada (ejecutada en la auditoría):** `check` limpio · `check --deploy` (prod) limpio · `pytest` 117 verdes / 7 rojos (por el P0) · cobertura 82% · `ruff check` pasa · `ruff format` fallaría 35 archivos · `bandit` 2 Low · `pip-audit` sin vulnerabilidades.
+- **FASE 0 completa** en `codex/impeccable-ui-audit`: T0.1-T0.7 hechas y commiteadas. El dashboard vuelve a renderizar, `verify.ps1` falla de verdad ante un paso roto, hay un test que compila las 43 plantillas, cobertura con piso real (83%), mantenimiento ya se puede cerrar desde la UI, y `docs/03-Roadmap.md`/`openspec/config.yaml` reflejan el estado real.
+- **Verificación tras el cierre de FASE 0:** `pytest` **170/170 verdes** (124 originales + 3 de mantenimiento + 43 de compilación de plantillas) · cobertura real **83.28%** (umbral `fail_under=83`) · `ruff check` limpio · `ruff format --check` limpio (35 archivos reformateados) · `manage.py check --deploy` limpio.
+- **Nota de entorno:** en el sandbox de esta sesión, `ruff format --check` devuelve código de salida 2 con "Acceso denegado" pese a reportar el chequeo correcto ("88 files already formatted") — es un artefacto de este entorno (relación de confianza de dominio rota, confirmado con `icacls`/`whoami`), no un bug del repo ni de `verify.ps1`. Si reaparece en tu máquina, es señal de revisar permisos de `.ruff_cache`/`.pytest_cache`, no de tocar el script.
+- **Sin P0 de seguridad.** Los IDOR (F-03–F-06) son gaps reales pero mitigados hoy por `tenant=NULL` universal; se cierran antes de centralizar el servidor (FASE 2).
+- **Siguiente bloque recomendado:** FASE 1 (T1.1, partir `core`) o FASE 3 (T3.1, `on_delete=CASCADE→PROTECT`, es más chico y barato de hacer primero).
 
 ---
 
@@ -43,13 +44,13 @@ Es el **tablero de bloques**. `BACKLOG.md` queda como registro histórico de lo 
 
 | ID | Est. | Prio | Tarea | Esf. | Dep. |
 |---|:--:|:--:|---|:--:|:--:|
-| T0.1 | ⬜ | P0 | Corregir el bloque `extrahead` duplicado (restaura la app) | XS | — |
-| T0.2 | ⬜ | P1 | Renderizar `completion_form`: permitir cerrar mantenimientos | S | — |
-| T0.3 | ⬜ | P1 | `verify.ps1` debe fallar ante error (comprobar `$LASTEXITCODE`) | XS | — |
-| T0.4 | ⬜ | P1 | Umbral de cobertura en CI (`--cov-fail-under` + ratchet) | S | T0.3 |
-| T0.5 | ⬜ | P2 | Test que compile las 43 plantillas (habría atrapado T0.1) | S | T0.3 |
-| T0.6 | ⬜ | P2 | Corregir `openspec/config.yaml` y sincronizar `docs/03-Roadmap.md` | XS | — |
-| T0.7 | ⬜ | P2 | `ruff format .` sobre los 35 archivos + `verify.ps1` verde | XS | T0.3 |
+| T0.1 | ✅ | P0 | Corregir el bloque `extrahead` duplicado (restaura la app) | XS | — |
+| T0.2 | ✅ | P1 | Renderizar `completion_form`: permitir cerrar mantenimientos | S | — |
+| T0.3 | ✅ | P1 | `verify.ps1` debe fallar ante error (comprobar `$LASTEXITCODE`) | XS | — |
+| T0.4 | ✅ | P1 | Umbral de cobertura en CI (`--cov-fail-under` + ratchet) | S | T0.3 |
+| T0.5 | ✅ | P2 | Test que compile las 43 plantillas (habría atrapado T0.1) | S | T0.3 |
+| T0.6 | ✅ | P2 | Corregir `openspec/config.yaml` y sincronizar `docs/03-Roadmap.md` | XS | — |
+| T0.7 | ✅ | P2 | `ruff format .` sobre los 35 archivos + `verify.ps1` verde | XS | T0.3 |
 
 ### FASE 1 — Arquitectura y deuda crítica `⛔ requiere FASE 0`
 
@@ -134,7 +135,11 @@ Es el **tablero de bloques**. `BACKLOG.md` queda como registro histórico de lo 
 
 ---
 
-## Detalle de las tareas de FASE 0 (listas para ejecutar)
+## Detalle de las tareas de FASE 0 — ✅ completada 2026-07-24
+
+> Las 7 tareas quedaron implementadas y verificadas en `codex/impeccable-ui-audit`
+> (commits `7dc4151`, `0ed12c5`, `4bf76ed`, `86c57ce`, `0af0c82`, `dab1538`, `83d48a9`).
+> Se conserva el detalle como referencia de lo que se hizo y por qué.
 
 ### T0.1 — Bloque `extrahead` duplicado *(PRIMERA TAREA)*
 - **Evidencia:** AUDIT_CLAUDE.md §6/§23; `templates/dashboard/index.html:4` y `:128`.
