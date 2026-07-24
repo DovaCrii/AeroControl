@@ -3,7 +3,7 @@ from datetime import date, timedelta
 import json
 from docx import Document as DocxDocument
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, User
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.exceptions import ValidationError
@@ -21,6 +21,7 @@ from apps.compliance.models import Document, DocumentType, document_upload_path
 from apps.maintenance.models import MaintenanceRecord
 from apps.operations.models import FlightPermission
 from apps.workboard.models import KanbanBoard, KanbanStage, KanbanTask
+from apps.core.groups import REPORT_RECIPIENTS
 from apps.core.models import AuditEvent, ImportBatch
 
 
@@ -724,3 +725,22 @@ def test_unprivileged_user_cannot_open_mutating_forms(client, db, url_name):
     response = client.get(reverse(url_name))
 
     assert response.status_code == 403
+
+
+class TestBootstrapRoles:
+    @pytest.mark.django_db
+    def test_creates_the_report_recipient_group_without_permissions(self):
+        call_command("bootstrap_roles")
+
+        group = Group.objects.get(name=REPORT_RECIPIENTS)
+        assert group.permissions.count() == 0
+
+    @pytest.mark.django_db
+    def test_keeps_existing_members_when_run_again(self):
+        call_command("bootstrap_roles")
+        user = User.objects.create_user("director", "director@test.com", "password")
+        user.groups.add(Group.objects.get(name=REPORT_RECIPIENTS))
+
+        call_command("bootstrap_roles")
+
+        assert user.groups.filter(name=REPORT_RECIPIENTS).exists()

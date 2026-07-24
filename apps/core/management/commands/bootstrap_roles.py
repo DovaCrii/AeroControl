@@ -1,6 +1,8 @@
 from django.contrib.auth.models import Group, Permission
 from django.core.management.base import BaseCommand
 
+from apps.core.groups import REPORT_RECIPIENTS
+
 
 ROLE_PERMISSIONS = {
     "Operations": {
@@ -57,3 +59,13 @@ class Command(BaseCommand):
         administrators, _ = Group.objects.get_or_create(name="Administrator")
         administrators.permissions.set(all_permissions)
         self.stdout.write(self.style.SUCCESS("Configured role: Administrator"))
+
+        # Notification group, not a role: it carries no permissions and only
+        # decides who receives the executive report. It is created empty on
+        # purpose — who belongs to it is a business decision — but it is
+        # created here so setting up an environment does not depend on someone
+        # reading the command's source to discover the group must exist.
+        recipients, _ = Group.objects.get_or_create(name=REPORT_RECIPIENTS)
+        self.stdout.write(
+            self.style.SUCCESS(f"Configured notification group: {recipients.name}")
+        )
