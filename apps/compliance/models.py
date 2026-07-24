@@ -1,11 +1,13 @@
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
 from django.db import models
 import re
 from pathlib import Path
 from uuid import uuid4
 
 from apps.core.models import BaseModel
+from apps.workboard.models import KanbanBoard, KanbanStage
 
 
 def document_upload_path(instance, filename):
@@ -62,6 +64,33 @@ class AlertRule(BaseModel):
     field_to_watch = models.CharField(max_length=100)
     days_before_expiry = models.PositiveIntegerField(default=30)
     enabled = models.BooleanField(default=True)
+    create_kanban_task = models.BooleanField(default=False)
+    target_board = models.ForeignKey(
+        KanbanBoard,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="alert_rules",
+    )
+    target_stage = models.ForeignKey(
+        KanbanStage,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="alert_rules",
+    )
+
+    def clean(self):
+        super().clean()
+        if not self.create_kanban_task:
+            return
+        if not self.target_board_id or not self.target_stage_id:
+            raise ValidationError(
+                "target_board and target_stage are required when "
+                "create_kanban_task is enabled."
+            )
+        if self.target_stage.board_id != self.target_board_id:
+            raise ValidationError("target_stage must belong to target_board.")
 
 
 class Alert(BaseModel):
