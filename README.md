@@ -91,14 +91,15 @@ AeroControl/
 
 Python 3.12.x, PowerShell 7+, Git y uv.
 
-Crea un archivo .env en la raíz:
+Crea un archivo .env en la raíz (las rutas son un ejemplo; usa cualquier
+directorio fuera del repositorio):
 
 ~~~dotenv
 SECRET_KEY=reemplazar-por-un-secreto-largo-y-aleatorio
 DEBUG=True
-DB_PATH=D:/I+D/AeroOpsDesk_Data/db/aero_ops.sqlite3
-DOCUMENTS_DIR=D:/I+D/AeroOpsDesk_Data/documents
-LOGS_DIR=D:/I+D/AeroOpsDesk_Data/logs
+DB_PATH=C:/AeroControl_Data/db/aero_ops.sqlite3
+DOCUMENTS_DIR=C:/AeroControl_Data/documents
+LOGS_DIR=C:/AeroControl_Data/logs
 # DOCUMENTS_ANTIVIRUS_COMMAND=clamscan
 # DB_ENGINE=postgresql
 # DB_NAME=aerocontrol
@@ -210,13 +211,13 @@ uv run python manage.py chapter1_mapping --json
 Valida y exporta el documento oficial DOCX fuera del repositorio:
 
 ~~~powershell
-uv run python manage.py chapter1_docx_import --source "D:/ruta/1 Capítulo 1 202607_R16.docx" --cost-centers "D:/I+D/AeroOpsDesk_Data/imports/20260723_centros_costo.csv" --export-dir "D:/I+D/AeroOpsDesk_Data/imports/chapter1-YYYYMMDD"
+uv run python manage.py chapter1_docx_import --source "C:/ruta/1 Capítulo 1 202607_R16.docx" --cost-centers "C:/AeroControl_Data/imports/20260723_centros_costo.csv" --export-dir "C:/AeroControl_Data/imports/chapter1-YYYYMMDD"
 ~~~
 
 Revisa el informe JSON y los duplicados antes de aplicar:
 
 ~~~powershell
-uv run python manage.py chapter1_docx_import --source "D:/ruta/1 Capítulo 1 202607_R16.docx" --cost-centers "D:/I+D/AeroOpsDesk_Data/imports/20260723_centros_costo.csv" --apply
+uv run python manage.py chapter1_docx_import --source "C:/ruta/1 Capítulo 1 202607_R16.docx" --cost-centers "C:/AeroControl_Data/imports/20260723_centros_costo.csv" --apply
 ~~~
 
 La carga no inventa relaciones con centros de costo. Si la fuente no trae esa
