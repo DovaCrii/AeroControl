@@ -2,12 +2,12 @@
 schema: spec-driven
 
 context: |
-  Tech stack: Django 6.0, SQLite, Python 3.12+, Bootstrap 5
-  Architecture: Modular monolith — 7 domain apps. Future separation of
-    backend (Django REST Framework) and frontend (Vue.js/React).
-  Testing: pytest pending. No test runner configured yet.
+  Tech stack: Django 6.0, SQLite (PostgreSQL optional via DB_ENGINE), Python 3.12+, Bootstrap 5, DRF, HTMX
+  Architecture: Modular monolith — 7 domain apps. Frontend/backend separation is deferred (YAGNI); see MASTER_PLAN.md.
+  Testing: pytest-django configured (settings config.settings.dev); ~124 tests; runner is `uv run pytest`.
   Style: Standard Django project layout with apps per domain.
   Data: D:\I+D\AeroOpsDesk_Data\ (outside repo).
+  Planning source of truth: MASTER_PLAN.md (blocks/tracking) + AUDIT_CLAUDE.md (evidence).
 
 rules:
   proposal:
@@ -25,26 +25,26 @@ rules:
   apply:
     - Follow existing code patterns
     tdd: false
-    test_command: "python -m pytest"
+    test_command: "uv run pytest"
   verify:
-    test_command: "python -m pytest"
-    build_command: ""
-    coverage_threshold: 0
+    test_command: "uv run pytest --cov=apps --cov-report=term-missing"
+    build_command: "pwsh scripts/verify.ps1"
+    coverage_threshold: 0  # TODO(T0.4): set a real baseline with --cov-fail-under
   archive:
     - Warn before merging destructive deltas
 
 testing:
   strict_tdd: false
-  reason: "No test runner discovered. Greenfield project — pytest will be configured during project scaffolding."
+  reason: "pytest-django configured; runner is `uv run pytest`. See MASTER_PLAN.md FASE 4 for coverage gaps."
   capabilities:
-    test_runner: null
+    test_runner: pytest
     layers:
-      unit: { available: false, tool: null }
-      integration: { available: false, tool: null }
+      unit: { available: true, tool: pytest }
+      integration: { available: true, tool: pytest-django }
       e2e: { available: false, tool: null }
-    coverage: { available: false, command: null }
+    coverage: { available: true, command: "uv run pytest --cov=apps --cov-report=term-missing" }
     quality:
-      linter: { available: false, command: null }
+      linter: { available: true, command: "uv run ruff check ." }
       type_checker: { available: false, command: null }
-      formatter: { available: false, command: null }
-  detected_at: "2026-07-14"
+      formatter: { available: true, command: "uv run ruff format --check ." }
+  detected_at: "2026-07-24"
