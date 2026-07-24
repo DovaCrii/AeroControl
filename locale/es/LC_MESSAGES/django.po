@@ -184,6 +184,18 @@ msgstr "Usar tema oscuro"
 msgid "Actual date"
 msgstr "Fecha real"
 
+msgid "Permission number"
+msgstr "Número de permiso"
+
+msgid "Purpose"
+msgstr "Propósito"
+
+msgid "Flight date"
+msgstr "Fecha de vuelo"
+
+msgid "Location"
+msgstr "Ubicación"
+
 msgid "Departure time"
 msgstr "Hora de salida"
 
