@@ -80,6 +80,41 @@ Pendientes que requieren una decisión de negocio, no del agente:
 - No hay documentos, alertas ni reglas cargadas (0/0/0): el resumen diario no
   tiene nada que enviar hasta que exista documentación con vencimientos.
 
+### Inventario de ramas (TL.6, cruzado el 2026-07-24)
+
+**Orden obligatorio:** primero `git push origin main`, después la poda. Varias
+ramas contienen commits que hoy solo existen en el `main` **local**; borrarlas
+antes del push los deja inalcanzables en el remoto.
+
+Redundantes, contenido preservado en `origin/main` o en su rama gemela:
+`agent/aerocontrol-stabilization`, `codex/stabilization-foundation`,
+`codex/integracion-estabilizacion`, `codex/chapter1-data`,
+`codex/production-settings` (duplicado de `-clean`; `CONN_MAX_AGE` y
+`SECURE_PROXY_SSL_HEADER` verificados en main), `codex/anonymized-snapshot`
+(idéntica byte a byte a `-clean`).
+
+Redundantes **solo después** del push de `main`: `codex/impeccable-ui-audit`
+(línea paralela cerrada), `codex/backend-storage`,
+`codex/production-settings-clean`.
+
+Conservar — trabajo real no fusionado:
+
+- `codex/anonymized-snapshot-clean` — export/import anonimizado, no está en
+  main. Es la mitad del ítem **B-06** de `backend-follow-up.md`.
+- `codex/supabase-cli-operations` — respaldo vía Supabase CLI. La otra mitad de
+  B-06: `BACKLOG.md` sigue pidiendo probar Supabase con datos anonimizados, así
+  que "local-first" no invalida esta rama.
+- `codex/backend-remote-plan` — `backend-plan.md` de 120 líneas frente a las 73
+  de `docs/dev/backend-plan.md` en main (la ruta cambió con TL.12, que es lo que
+  hace parecer que ya está fusionada). Borrarla perdería 47 líneas de plan.
+- `dependabot/*` (5) — son TL.7; borrarlas solo hace que se recreen. Dos están
+  11 commits atrás y necesitarán rebase.
+
+Ramas locales sin remoto: `codex/ui-modernization` (0 commits únicos, contenido
+en main → borrable) y `codex/documentacion-y-onboarding` (1 commit único **no**
+fusionado, toca `README.md`, `docs/SECURITY.md` y `openspec/`; decidir antes de
+borrar, no existe copia en el remoto).
+
 ## Estado actual (actualizado 2026-07-24 — FASE 0 + higiene de Bloque 0 cerradas)
 
 - **FASE 0 completa** en `codex/impeccable-ui-audit`: T0.1-T0.7 hechas y commiteadas. El dashboard vuelve a renderizar, `verify.ps1` falla de verdad ante un paso roto, hay un test que compila las 43 plantillas, cobertura con piso real (83%+), mantenimiento ya se puede cerrar desde la UI.
@@ -319,7 +354,7 @@ No implementado por decisión del plan. Cuando se retome: app `apps/assistant` q
 | TL.3 | ✅ | P3 | Eliminar artefactos temporales sueltos (`.tmp-*.sqlite3`, `.tmp-check-logs/`) | XS | — |
 | TL.4 | ✅ | P2 | Sacar `.agents/skills/impeccable/` del repo (aprobado por el usuario) | S | — |
 | TL.5 | ✅ | P3 | Borrar `.atl/skill-registry.md` y `prompts/` (aprobado por el usuario) | XS | — |
-| TL.6 | ⬜ | P2 | Cerrar `ui-modernization`, mergear a `main`, podar ramas remotas obsoletas y pares `-clean` | M | FASE 0 |
+| TL.6 | 🔄 | P2 | Merge a `main` preparado (fast-forward, verificado); falta el `push`. Poda de ramas inventariada más abajo ("Inventario de ramas"), pendiente de ejecución por el usuario | M | FASE 0 |
 | TL.7 | ⬜ | P3 | Atender los 5 PRs de Dependabot | S | T0.3 |
 | TL.8 | ⬜ | P2 | Consolidar `openspec/`: crear `openspec/specs/` y archivar los 5 changes al 100% | M | — |
 | TL.9 | ✅ | P2 | Ampliar `AGENTS.md`: DoD por tipo de cambio, contrato de lectura, reglas de commit, precedencia documental | S | — |
