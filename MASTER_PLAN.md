@@ -110,6 +110,27 @@ Es el **tablero de bloques**. `BACKLOG.md` queda como registro histórico de lo 
 | T5.8 | ⬜ | P2 | Limpiar fugas de i18n; accesibilidad (`scope`, labels) | M | — |
 | T5.9 | ⬜ | P2 | Vendorizar assets locales (Bootstrap/HTMX/Chart.js/FullCalendar) + SRI | M | T2.5 |
 
+### FASE 5R — Legibilidad y consistencia visual (feedback de revisión en vivo 2026-07-24)
+
+> Observado por el usuario mirando la app corriendo. Las capturas mostraron que la causa
+> raíz de "las alertas/tarjetas no se entienden" es la falta de `__str__` en varios modelos
+> (auditoría A19): la UI imprime `Qualification object (uuid)`, `AlertRule object (...)`,
+> `Alert object (...)`. Prioridad alta porque afecta la comprensión básica de la app.
+
+| ID | Est. | Prio | Tarea | Esf. | Dep. |
+|---|:--:|:--:|---|:--:|:--:|
+| R.1 | ✅ | P1 | `__str__` en `Qualification`, `Alert`, `AlertRule`, `KanbanTask`, `KanbanStage`, `MaintenanceRecord`, `FlightRecord` (`8062425`) | S | — |
+| R.2 | ✅ | P1 | Lista de alertas legible: entidad en vez de UUID, nombre de regla, badge de vencimiento/atraso, `th scope` (`8062425`) | S | R.1 |
+| R.3 | ✅ | P1 | Tarjetas Kanban legibles + comando `refresh_alert_task_titles` para los títulos ya guardados con el repr viejo (`8062425`) | S | R.1 |
+| R.4 | ⬜ | P2 | **[UI]** Badges de etapa/estado consistentes en el Kanban (clases `.status-*` hoy sin definir, F-15) | S | T5.1 |
+| R.5 | ⬜ | P2 | **[UI]** Calendario: etiquetas de eventos legibles (hoy se truncan "Maria Gonzale…"), mejor render de los elementos | M | — |
+| R.6 | ⬜ | P2 | **[UI]** Sidebar contraído: mostrar el conteo de alertas (punto o número) aunque esté colapsado | S | — |
+| R.7 | ⬜ | P2 | **[UI]** Tipografía y contraste globales (se apoya en T5.1: tokens unificados, contraste AA) | M | T5.1 |
+| R.8 | ⬜ | P3 | **[UI]** Iconos distintos y claros para "Vuelos" vs "Aeronaves" (hoy ambos tipo avión) | XS | — |
+| R.9 | ⬜ | P2 | **[UI]** Separación visual más clara entre grupos del sidebar (Datos maestros / Planificación / Cumplimiento / Operaciones / Mantenimiento / Seguimiento) | S | — |
+
+**Nota:** R.1/R.2/R.3 (legibilidad de datos) se abordan ahora porque su raíz es backend y testeable; el resto (R.4-R.9, diseño visual puro) se valida con el panel de navegador desplegado.
+
 ### FASE 6 — Nuevas funcionalidades `⏸ requiere FASE 0-3 cerradas`
 
 | ID | Est. | Prio | Tarea | Esf. | Dep. |
@@ -153,8 +174,8 @@ Un bloque por sesión/PR, en esta secuencia (revisión `PLAN_CLAUDE_CODE_1.md`):
 | B1.1 | ✅ | P2 | `AlertRule`: `create_kanban_task`, `target_board` (FK PROTECT), `target_stage` (FK PROTECT) + validación en `clean()` | M | T3.1 |
 | B1.2 | ✅ | P2 | `generate_alerts` crea `KanbanTask` con `source_object=Alert`; título/descripción/`due_date`; prioridad por urgencia | M | B1.1 |
 | B1.3 | ✅ | P2 | Derivar `assigned_to` (solo cuando la entidad vigilada es/expone un `Operator`; cost-center descartado por ser texto libre) | S | B1.2 |
-| B1.4 | ⬜ | P3 | **[UI, revisión en vivo]** Botón "Crear tarea de seguimiento" en alertas sin tarea (reutiliza `Alert.ensure_follow_up_task`) | S | B1.2 |
-| B1.5 | ⬜ | P3 | **[UI, revisión en vivo]** Mostrar el origen (`source_object`) en `_task_detail.html` con enlace | XS | B1.2 |
+| B1.4 | ✅ | P3 | Botón "Crear tarea" en alertas sin tarea: un clic, con fallback al tablero DGAC (decisión tomada: sin selector de tablero); permiso `add_kanbantask` + 403 test | S | B1.2 |
+| B1.5 | ✅ | P3 | Origen visible en `_task_detail.html` con enlace a la lista de alertas filtrada (decisión: sin página de detalle de alerta por ahora) | XS | B1.2 |
 | B1.6 | ✅ | P2 | `Alert.resolve()` mueve la tarea vinculada a la etapa `completed`, registrando `AuditEvent` (metadata) | S | B1.2 |
 | B1.7 | ✅ | P2 | `Document.resolve_related_alerts()` al reemplazar un documento, con pruebas | M | — |
 | B1.8 | ✅ | P2 | Idempotencia: `generate_alerts` dos veces no duplica tareas | S | B1.2 |
