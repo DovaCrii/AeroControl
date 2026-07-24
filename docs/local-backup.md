@@ -45,3 +45,18 @@ are readable. Never overwrite the working database during a drill.
 Recommended cadence: after each meaningful data load, weekly during active
 use, and before migrations or dependency upgrades. Keep at least three
 verified snapshots on separate media.
+
+## Schedule the weekly backup
+
+After choosing the actual backup unit, register the task under the Windows
+user that runs AeroControl:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\register-backup-task.ps1 `
+  -DestinationRoot 'E:\AeroControlBackups' `
+  -DayOfWeek Sunday `
+  -At '18:00'
+```
+
+The registration script refuses a destination inside the repository. It is
+safe to run again because it replaces the task with the same name.

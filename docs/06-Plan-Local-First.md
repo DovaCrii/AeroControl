@@ -20,7 +20,9 @@ secretos.
       desechable sin tocar la base de trabajo.
 - [x] Ejecutar restore drill con una base y carpeta temporales sintéticas;
       resultado: SQLite y documentos restaurados y verificados.
-- [ ] Programar el backup semanal en Windows Task Scheduler.
+- [x] Preparar `scripts/register-backup-task.ps1` para programar el backup
+      semanal sin guardar la ruta de datos en Git.
+- [ ] Registrar la tarea con la ruta real de la unidad de respaldo.
 - [ ] Conservar tres snapshots verificados en medios separados.
 - [ ] Publicar unicamente un snapshot anonimizado en Supabase/Render para
       pruebas remotas.
