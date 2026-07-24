@@ -58,6 +58,8 @@ class RequestMetricsMiddleware:
             else:
                 outcome = "server_error"
             context = getattr(request, "_audit_context", {})
+            metadata = {"query_keys": sorted(request.GET.keys())}
+            metadata.update(context.get("metadata", {}))
             try:
                 AuditEvent.objects.create(
                     actor=request.user,
@@ -69,7 +71,7 @@ class RequestMetricsMiddleware:
                     model_label=context.get("model_label", ""),
                     object_id=context.get("object_id", ""),
                     request_id=request_id,
-                    metadata={"query_keys": sorted(request.GET.keys())},
+                    metadata=metadata,
                 )
             except Exception:
                 logger.exception(

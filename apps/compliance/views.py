@@ -3,7 +3,6 @@ from django.db import transaction
 from django.http import FileResponse, Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views.generic import (
     CreateView,
@@ -14,6 +13,7 @@ from django.views.generic import (
     View,
 )
 
+from apps.core.audit import set_audit_context
 from apps.core.views import (
     CsvExportMixin,
     HtmxFormMixin,
@@ -169,6 +169,7 @@ class DocumentReplace(ModelPermissionRequiredMixin, FormView):
         with transaction.atomic():
             self.document.is_current_version = False
             self.document.save(update_fields=["is_current_version", "updated_at"])
+            self.document.resolve_related_alerts()
             new_document = form.save(commit=False)
             new_document.is_current_version = True
             new_document.content_type = self.document.content_type
@@ -227,9 +228,11 @@ class AlertResolve(ModelPermissionRequiredMixin, View):
 
     def post(self, request, pk):
         alert = get_object_or_404(Alert, pk=pk, is_active=True)
-        alert.is_resolved = True
-        alert.resolved_at = timezone.now()
-        alert.save(update_fields=["is_resolved", "resolved_at", "updated_at"])
+        moved_task = alert.resolve()
+        metadata = {"moved_task_id": str(moved_task.pk)} if moved_task else {}
+        set_audit_context(
+            request, alert, action="alert_resolved", metadata=metadata
+        )
         return redirect("alert-list")
 
 
