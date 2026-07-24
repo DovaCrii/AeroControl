@@ -36,9 +36,13 @@ AeroControl centraliza la operación de equipos RPA/UAS: flota, operadores,
 habilitaciones, documentos, permisos de vuelo, mantenimiento, alertas y trabajo
 Kanban.
 
-> **Estado:** alpha y estabilización activa. Es apto para evaluación local
-> controlada. Antes de producción se requiere una política de respaldos,
+> **Estado:** alpha en **pausa de estabilización activa**. Es apto para evaluación
+> local controlada. Antes de producción se requiere una política de respaldos,
 > antivirus, retención de datos y control de accesos.
+>
+> 📋 **El trabajo pendiente se sigue por bloques en [MASTER_PLAN.md](MASTER_PLAN.md)**,
+> con la evidencia técnica en [AUDIT_CLAUDE.md](AUDIT_CLAUDE.md). No se incorpora
+> funcionalidad nueva (DJI Cloud API incluida) hasta cerrar las fases 0-3.
 
 ## Qué incluye
 
@@ -50,8 +54,12 @@ Kanban.
 | Mantenimiento | Registros programados/no programados e historial de estados |
 | Tablero | Kanban, Lista y Calendario; etapas, etiquetas, checklists, prioridades y responsables |
 | Administración | Centro operativo y Django Admin técnico separado |
-| Seguridad | Autenticación, permisos, auditoría, aislamiento y cargas seguras |
+| Seguridad | Autenticación, permisos por modelo, auditoría append-only y cargas con validación de firma |
 | Localización | Español por defecto y cambio directo ES/EN |
+
+> El **aislamiento multi-organización (tenancy)** está sentado como base opcional pero
+> aún no es estricto: hoy se aplica en Workboard, asignaciones y el calendario, no en
+> todos los módulos. Fijarlo es un bloque prioritario del plan ([MASTER_PLAN.md](MASTER_PLAN.md), FASE 3).
 
 ## Arquitectura y estructura
 
@@ -152,11 +160,11 @@ que se indique force.
 
 ### Autenticación y permisos
 
-- Las páginas operativas requieren autenticación y permisos según la operación.
+- Las páginas operativas requieren autenticación y permisos de modelo según la operación.
 - Las exportaciones CSV respetan el mismo límite de autorización.
 - La búsqueda no devuelve entidades sin permiso de vista.
-- KanbanBoardAccess soporta roles visor, editor y gestor por tablero.
-- OperationalTenant y TenantMembership ofrecen un límite multi-organización opcional.
+- KanbanBoardAccess soporta roles visor, editor y gestor por tablero (aplicado en la API).
+- OperationalTenant y TenantMembership ofrecen un límite multi-organización **opcional y aún no estricto**: se aplica en Workboard, asignaciones y calendario, no en todas las vistas de detalle/lista. Endurecerlo es un bloque prioritario ([MASTER_PLAN.md](MASTER_PLAN.md), FASE 2-3).
 
 ### Auditoría y monitoreo
 
@@ -173,8 +181,8 @@ que se indique force.
 
 ### Endurecimiento web
 
-- Content-Security-Policy-Report-Only se controla con CSP_REPORT_ONLY.
-- SortableJS está fijado con validación SRI y crossorigin.
+- Content-Security-Policy-Report-Only se emite según CSP_REPORT_ONLY (modo report-only; el enforcing todavía no está disponible — ver [MASTER_PLAN.md](MASTER_PLAN.md), T2.5).
+- SortableJS está fijado con SRI y crossorigin. Las demás dependencias de front (Bootstrap, HTMX, Chart.js, FullCalendar) se cargan por CDN y aún no llevan SRI (bloque T5.9).
 
 ### API y reportes
 
@@ -243,15 +251,24 @@ Completado:
 - Kanban Tablero, Lista y Calendario.
 - Centro de administración operativo.
 - Importación validada del Capítulo 1 vigente.
-- 116 pruebas automatizadas verdes en la base de modernización.
+- Suite de ~124 pruebas con Ruff, Bandit, pip-audit y CI (cobertura ~82%).
 
-Próximas prioridades:
+> **El seguimiento vivo del trabajo pendiente vive en [MASTER_PLAN.md](MASTER_PLAN.md)**
+> (tablero de bloques FASE 0-6, con estado, prioridad y criterio de aceptación).
+> La auditoría técnica que lo respalda está en [AUDIT_CLAUDE.md](AUDIT_CLAUDE.md).
 
-- Resolver los cuatro grupos de operadores duplicados.
-- Asignar oficialmente aeronaves y operadores a centros de costo.
-- Modelar habilitaciones DGAC con vigencia, evidencia y alertas.
-- Añadir compatibilidad operador-aeronave antes de autorizar vuelos.
-- Ejecutar ensayo real de PostgreSQL cuando exista servidor y datos de despliegue.
+Próximas prioridades (ver el detalle y el orden en el plan maestro):
+
+- **FASE 0 — Estabilización:** restaurar el dashboard, hacer que el gate de
+  verificación falle ante errores, cerrar el flujo de mantenimiento y fijar un
+  umbral de cobertura en CI.
+- **FASE 1-3 — Núcleo:** partir `core`, cerrar los permisos de lectura y el
+  aislamiento por organización, y fijar `on_delete`/constraints antes de acumular
+  datos reales.
+- **Operación:** resolver operadores duplicados, asignar aeronaves/operadores a
+  centros de costo y modelar habilitaciones DGAC con vigencia, evidencia y alertas.
+- **Diferido (YAGNI):** PostgreSQL en producción, DJI Cloud API y telemetría, hasta
+  cerrar el núcleo.
 
 La frontera frontend está documentada en docs/frontend-boundary.md. Una SPA
 separada queda postergada hasta que existan requisitos de API independiente,

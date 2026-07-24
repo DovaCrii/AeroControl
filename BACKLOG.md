@@ -1,5 +1,11 @@
 # Backlog — AeroControl
 
+> **⚠️ Registro histórico.** Para el trabajo pendiente y su seguimiento por bloques,
+> la fuente única de verdad es **[MASTER_PLAN.md](MASTER_PLAN.md)** (con evidencia en
+> [AUDIT_CLAUDE.md](AUDIT_CLAUDE.md)). Este archivo conserva el registro de lo entregado
+> en la estabilización inicial; los ítems pendientes de más abajo se migraron a bloques
+> del plan maestro (FASE 0-6) tras la auditoría del 2026-07-24.
+
 Última revisión: 23 de julio de 2026. Este documento separa lo entregado de los
 objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
 
