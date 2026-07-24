@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
@@ -7,7 +9,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from apps.core.models import BaseModel
-from apps.workboard.models import KanbanBoard, KanbanStage
+from apps.workboard.models import KanbanBoard, KanbanStage, KanbanTask
 
 
 def document_upload_path(instance, filename):
@@ -109,3 +111,64 @@ class Alert(BaseModel):
                 fields=["is_resolved", "is_active"], name="compliance_alert_open_idx"
             )
         ]
+
+    def _watched_value(self):
+        field = self.alert_rule.field_to_watch
+        return getattr(self.content_object, field, None)
+
+    def _derive_assigned_operator(self):
+        """Best-effort responsible operator for the follow-up task.
+
+        The schema only lets us resolve an Operator when the watched entity
+        *is* an Operator or exposes one (e.g. Qualification.operator). The
+        cost-center path the roadmap mentions is not usable here because
+        CostCenter.responsible is free text, not an FK, so those cases stay
+        unassigned on purpose.
+        """
+        from apps.registry.models import Operator
+
+        obj = self.content_object
+        if isinstance(obj, Operator):
+            return obj
+        candidate = getattr(obj, "operator", None)
+        return candidate if isinstance(candidate, Operator) else None
+
+    def _follow_up_priority(self):
+        value = self._watched_value()
+        if not isinstance(value, date):
+            return "medium"
+        days_left = (value - date.today()).days
+        if days_left < 0:
+            return "critical"
+        if days_left <= 7:
+            return "high"
+        return "medium"
+
+    def ensure_follow_up_task(self):
+        """Create (idempotently) the Kanban task linked to this alert.
+
+        Returns the task, or None if the rule does not request one. Safe to
+        call repeatedly: a second call returns the existing task instead of
+        creating a duplicate (B1.8).
+        """
+        rule = self.alert_rule
+        if not (rule.create_kanban_task and rule.target_board_id and rule.target_stage_id):
+            return None
+        alert_ct = ContentType.objects.get_for_model(Alert)
+        existing = KanbanTask.objects.filter(
+            source_content_type=alert_ct, source_object_id=self.pk, is_active=True
+        ).first()
+        if existing is not None:
+            return existing
+        watched = self._watched_value()
+        due_date = watched if isinstance(watched, date) else None
+        return KanbanTask.objects.create(
+            board=rule.target_board,
+            stage=rule.target_stage,
+            title=f"{rule.name}: {self.content_object}",
+            description=self.message,
+            due_date=due_date,
+            priority=self._follow_up_priority(),
+            assigned_to=self._derive_assigned_operator(),
+            source_object=self,
+        )

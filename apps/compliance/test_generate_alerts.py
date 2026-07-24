@@ -5,6 +5,8 @@ import pytest
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import call_command
 
+from apps.registry.models import CostCenter, Operator, Qualification
+from apps.workboard.models import KanbanBoard, KanbanStage, KanbanTask
 from .models import Alert, AlertRule, Document, DocumentType
 
 
@@ -73,3 +75,94 @@ def test_valid_rule_creates_one_alert_and_skips_duplicates_on_rerun():
     alert = Alert.objects.get()
     assert alert.object_id == document.pk
     assert alert.is_resolved is False
+
+
+def _kanban_rule(**kwargs):
+    board = KanbanBoard.objects.create(name="Compliance")
+    stage = KanbanStage.objects.create(
+        board=board, name="Por vencer", status_type="pending"
+    )
+    defaults = dict(
+        name="Expiring quals",
+        entity_type="qualification",
+        field_to_watch="expiry_date",
+        days_before_expiry=30,
+        create_kanban_task=True,
+        target_board=board,
+        target_stage=stage,
+    )
+    defaults.update(kwargs)
+    return AlertRule.objects.create(**defaults), board, stage
+
+
+@pytest.mark.django_db
+def test_generate_alerts_creates_linked_task_with_urgency_priority():
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    qualification = Qualification.objects.create(
+        operator=operator,
+        qualification_type="Night rating",
+        issue_date=date(2026, 1, 1),
+        expiry_date=date.today() - timedelta(days=1),  # already expired
+    )
+    rule, board, stage = _kanban_rule()
+
+    call_command("generate_alerts")
+
+    alert = Alert.objects.get()
+    task = KanbanTask.objects.get()
+    assert task.board_id == board.pk
+    assert task.stage_id == stage.pk
+    assert task.source_object == alert
+    assert task.due_date == qualification.expiry_date
+    assert task.priority == "critical"  # expired
+    assert task.assigned_to_id == operator.pk  # derived from qualification.operator
+
+
+@pytest.mark.django_db
+def test_generate_alerts_task_creation_is_idempotent():
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    Qualification.objects.create(
+        operator=operator,
+        qualification_type="Night rating",
+        issue_date=date(2026, 1, 1),
+        expiry_date=date.today() + timedelta(days=3),
+    )
+    _kanban_rule()
+
+    call_command("generate_alerts")
+    call_command("generate_alerts")
+
+    assert Alert.objects.count() == 1
+    assert KanbanTask.objects.count() == 1
+    assert KanbanTask.objects.get().priority == "high"  # within 7 days
+
+
+@pytest.mark.django_db
+def test_rule_without_kanban_flag_creates_no_task():
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    Qualification.objects.create(
+        operator=operator,
+        qualification_type="Night rating",
+        issue_date=date(2026, 1, 1),
+        expiry_date=date.today() + timedelta(days=3),
+    )
+    AlertRule.objects.create(
+        name="Quals no task",
+        entity_type="qualification",
+        field_to_watch="expiry_date",
+        create_kanban_task=False,
+    )
+
+    call_command("generate_alerts")
+
+    assert Alert.objects.count() == 1
+    assert KanbanTask.objects.count() == 0
