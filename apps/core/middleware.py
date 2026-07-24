@@ -103,7 +103,18 @@ class JsonLogFormatter(logging.Formatter):
             "logger": record.name,
             "message": record.getMessage(),
         }
-        for key in ("request_id", "method", "path", "status_code", "duration_ms"):
+        for key in (
+            "request_id",
+            "method",
+            "path",
+            "status_code",
+            "duration_ms",
+            "rule_id",
+            "rule_name",
+            "entity_type",
+            "field_to_watch",
+            "reason",
+        ):
             if hasattr(record, key):
                 payload[key] = getattr(record, key)
         if record.exc_info:
