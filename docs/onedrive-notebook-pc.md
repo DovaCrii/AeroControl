@@ -15,7 +15,7 @@ D:\OneDrive - J.E.J. Ingeniería S.A\AeroControl-Backups
 La carpeta local de trabajo del PC puede ser:
 
 ```text
-D:\I+D\AeroOpsDesk_Data
+D:\I+D\AeroOpsDesk_Data-PC
 ```
 
 El nombre `AeroOpsDesk_Data` identifica datos privados fuera del repositorio;
@@ -58,7 +58,7 @@ $env:AEROCONTROL_BACKUP_ROOT = 'D:\OneDrive - J.E.J. Ingeniería S.A\AeroControl
 ```powershell
 .\scripts\restore-local.ps1 `
   -Snapshot 'D:\OneDrive - J.E.J. Ingeniería S.A\AeroControl-Backups\aerocontrol_YYYYMMDD_HHMMSS' `
-  -DestinationRoot 'D:\I+D\AeroOpsDesk_Data'
+  -DestinationRoot 'D:\I+D\AeroOpsDesk_Data-PC'
 ```
 
 4. Crear el `.env` local del PC apuntando a esa carpeta y ejecutar Django.
