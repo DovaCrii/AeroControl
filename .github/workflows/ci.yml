@@ -35,3 +35,41 @@ jobs:
           uv run python manage.py scale_readiness --json
           uv run python manage.py backup
           uv run python manage.py verify_backup "$(ls \"$BACKUPS_DIR\"/*.sqlite3 | head -n 1)"
+
+  postgres-smoke:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: aerocontrol_ci
+          POSTGRES_USER: aerocontrol_ci
+          POSTGRES_PASSWORD: ci-only-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U aerocontrol_ci -d aerocontrol_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+      SECRET_KEY: ci-only-not-for-production
+      DB_ENGINE: postgresql
+      DB_NAME: aerocontrol_ci
+      DB_USER: aerocontrol_ci
+      DB_PASSWORD: ci-only-password
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DOCUMENTS_DIR: ${{ runner.temp }}/documents-postgres
+      LOGS_DIR: ${{ runner.temp }}/logs-postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --all-groups --locked
+      - run: uv run python manage.py check
+      - run: uv run python manage.py makemigrations --check --dry-run
+      - run: uv run pytest apps/registry/tests.py apps/workboard/tests.py -q
