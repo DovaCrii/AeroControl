@@ -11,36 +11,35 @@
   <link rel="icon" type="image/svg+xml" href="{% static 'img/aerocontrol-mark.svg' %}">
   <script>(function(){var t=localStorage.getItem('theme')||'light';var h=document.documentElement;h.setAttribute('data-theme',t);h.setAttribute('data-bs-theme',t)})()</script>
   <style>
-    .login-page { background: #0d1727; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
-    .login-card { background: #fff; border: 1px solid rgba(255,255,255,.16); border-radius: 16px; padding: 2.5rem 2rem; width: 100%; max-width: 440px; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+    :root { --login-page-bg: #0d1727; --login-card-bg: #fff; --login-card-border: rgba(255,255,255,.16); --login-heading: #14213a; --login-muted: #5b6675; --login-label: #34425a; --login-input-border: #cbd5e1; --login-accent: #087f78; --login-accent-hover: #06655f; --login-footer: #788394; }
+    .login-page { background: var(--login-page-bg); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
+    .login-card { background: var(--login-card-bg); border: 1px solid var(--login-card-border); border-radius: 16px; padding: 2.5rem 2rem; width: 100%; max-width: 440px; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
     .login-logo { text-align: center; margin-bottom: 1.25rem; }
     .login-logo img { width: 64px; height: 64px; }
-    .login-title { font-weight: 700; font-size: 1.35rem; color: #14213A; text-align: center; margin-bottom: .25rem; }
-    .login-subtitle { color: #5b6675; font-size: .9rem; text-align: center; margin-bottom: 1.75rem; }
-    .login-card .form-label { display: block; font-weight: 650; font-size: .85rem; color: #34425a; margin-bottom: .45rem; }
-    .login-card input { display: block; width: 100%; min-height: 42px; border-radius: 8px; padding: .6rem .9rem; border: 1px solid #cbd5e1; font-size: .95rem; }
-    .login-card input:focus { border-color: #087f78; outline: 0; box-shadow: 0 0 0 .2rem rgba(8,127,120,.18); }
-    .login-card .btn-primary { background: #087f78; border: none; border-radius: 8px; padding: .65rem; font-weight: 650; font-size: .95rem; transition: background .15s ease; }
-    .login-card .btn-primary:hover { background: #06655f; }
-    .login-alert { border-radius: 8px; font-size: .85rem; padding: .5rem .75rem; }
-    .login-footer { text-align: center; margin-top: 1.5rem; font-size: .75rem; color: #788394; }
-    [data-theme="dark"] .login-page { background: #080f1a; }
-    [data-theme="dark"] .login-card { background: #161f2d; border-color: #33435b; }
-    [data-theme="dark"] .login-title, [data-theme="dark"] .login-card .form-label { color: #edf3fb; }
-    [data-theme="dark"] .login-subtitle, [data-theme="dark"] .login-footer { color: #b5c1d1; }
-    [data-theme="dark"] .login-card input { background: #1b2737; border-color: #33435b; color: #edf3fb; }
+    .login-title { font-weight: 700; font-size: 1.5rem; line-height: 1.2; color: var(--login-heading); text-align: center; margin: 0 0 .35rem; }
+    .login-subtitle { color: var(--login-muted); font-size: 1rem; line-height: 1.45; text-align: center; margin-bottom: 1.75rem; }
+    .login-card .form-label { display: block; font-weight: 650; font-size: 1rem; color: var(--login-label); margin-bottom: .45rem; }
+    .login-card input { display: block; width: 100%; min-height: 44px; border-radius: 8px; padding: .6rem .9rem; border: 1px solid var(--login-input-border); font-size: 1rem; }
+    .login-card input:focus { border-color: var(--login-accent); outline: 0; box-shadow: 0 0 0 .2rem rgba(8,127,120,.18); }
+    .login-card input:focus-visible, .login-card .btn-primary:focus-visible { outline: 3px solid rgba(8,127,120,.45); outline-offset: 2px; }
+    .login-card .btn-primary { background: var(--login-accent); border: none; border-radius: 8px; padding: .7rem; font-weight: 650; font-size: 1rem; transition: background .15s ease; }
+    .login-card .btn-primary:hover { background: var(--login-accent-hover); }
+    .login-alert { border-radius: 8px; font-size: 1rem; padding: .5rem .75rem; }
+    .login-footer { text-align: center; margin-top: 1.5rem; font-size: 1rem; color: var(--login-footer); }
+    [data-theme="dark"] .login-page { --login-page-bg: #080f1a; --login-card-bg: #161f2d; --login-card-border: #33435b; --login-heading: #edf3fb; --login-muted: #b5c1d1; --login-label: #edf3fb; --login-input-border: #33435b; --login-footer: #b5c1d1; }
+    [data-theme="dark"] .login-card input { background: #1b2737; color: #edf3fb; }
   </style>
 </head>
 <body>
   <div class="login-page">
     <div class="login-card">
       <div class="login-logo"><img src="{% static 'img/aerocontrol-mark.svg' %}" alt="AeroControl"></div>
-      <div class="login-title">AeroControl</div>
+      <h1 class="login-title">AeroControl</h1>
       <div class="login-subtitle">{% translate "Air Operations Control Center" %}</div>
       <form method="post">
         {% csrf_token %}
         {% if form.errors %}
-          <div class="alert alert-danger login-alert">{% translate "Invalid username or password. Try again." %}</div>
+          <div class="alert alert-danger login-alert" role="alert" aria-live="assertive">{% translate "Invalid username or password. Try again." %}</div>
         {% endif %}
         <div class="mb-3"><label for="id_username" class="form-label">{{ form.username.label }}</label>{{ form.username }}</div>
         <div class="mb-3"><label for="id_password" class="form-label">{{ form.password.label }}</label>{{ form.password }}</div>
