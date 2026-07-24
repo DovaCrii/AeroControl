@@ -16,6 +16,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         generated = 0
         duplicates = 0
+        tasks_created = 0
         today = date.today()
         for rule in AlertRule.objects.filter(enabled=True, is_active=True):
             model = self._find_model(rule.entity_type)
@@ -66,15 +67,18 @@ class Command(BaseCommand):
                     duplicates += 1
                     continue
                 value = getattr(record, field, "")
-                Alert.objects.create(
+                alert = Alert.objects.create(
                     alert_rule=rule,
                     content_type=content_type,
                     object_id=record.pk,
                     message=f"{rule.name}: {record} ({field}: {value})",
                 )
                 generated += 1
+                if alert.ensure_follow_up_task() is not None:
+                    tasks_created += 1
         self.stdout.write(
-            f"Generated {generated} alerts, skipped {duplicates} duplicates"
+            f"Generated {generated} alerts, skipped {duplicates} duplicates, "
+            f"created {tasks_created} follow-up tasks"
         )
 
     @staticmethod
