@@ -13,7 +13,11 @@ from django.views.generic import (
     View,
 )
 
+from django.contrib.contenttypes.models import ContentType
+from django.utils.http import url_has_allowed_host_and_scheme
+
 from apps.core.audit import set_audit_context
+from apps.workboard.models import KanbanTask
 from apps.core.views import (
     CsvExportMixin,
     HtmxFormMixin,
@@ -219,6 +223,23 @@ class AlertList(ComplianceList):
         context["entity_types"] = Alert.objects.values_list(
             "content_type__model", flat=True
         ).distinct()
+        # Resolve the linked task for the page's alerts in one query so the
+        # template can offer "Create task" vs "View task" without an N+1.
+        alerts = list(context.get("objects") or [])
+        if alerts:
+            alert_ct = ContentType.objects.get_for_model(Alert)
+            tasks = {
+                task.source_object_id: task
+                for task in KanbanTask.objects.filter(
+                    source_content_type=alert_ct,
+                    source_object_id__in=[alert.pk for alert in alerts],
+                    is_active=True,
+                ).only("id", "board_id", "source_object_id")
+            }
+            for alert in alerts:
+                task = tasks.get(alert.pk)
+                alert.linked_task_id = task.pk if task else None
+                alert.linked_task_board_id = task.board_id if task else None
         return context
 
 
@@ -233,6 +254,41 @@ class AlertResolve(ModelPermissionRequiredMixin, View):
         set_audit_context(
             request, alert, action="alert_resolved", metadata=metadata
         )
+        return redirect("alert-list")
+
+
+class AlertCreateTask(ModelPermissionRequiredMixin, View):
+    """Manually spawn the follow-up task for an alert (B1.4).
+
+    Single click on purpose: reuses Alert.ensure_follow_up_task() and falls
+    back to the compliance board when the rule has no explicit target, so the
+    operator never has to pick a board/stage from the alert list.
+    """
+
+    model = KanbanTask
+    permission_action = "add"
+
+    def post(self, request, pk):
+        alert = get_object_or_404(Alert, pk=pk, is_active=True)
+        task = alert.ensure_follow_up_task(allow_default_board=True)
+        if task is None:
+            messages.error(
+                request,
+                _("No Kanban board is available to hold the follow-up task."),
+            )
+        else:
+            messages.success(request, _("Follow-up task created."))
+            set_audit_context(
+                request,
+                alert,
+                action="alert_task_created",
+                metadata={"task_id": str(task.pk)},
+            )
+        referer = request.META.get("HTTP_REFERER", "")
+        if referer and url_has_allowed_host_and_scheme(
+            referer, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+        ):
+            return redirect(referer)
         return redirect("alert-list")
 
 

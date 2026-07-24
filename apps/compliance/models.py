@@ -11,6 +11,8 @@ from uuid import uuid4
 from apps.core.models import BaseModel
 from apps.workboard.models import KanbanBoard, KanbanStage, KanbanTask
 
+DGAC_BOARD_NAME = "Cumplimiento DGAC"
+
 
 def document_upload_path(instance, filename):
     """Return the relative storage path used for manually saved documents."""
@@ -102,6 +104,9 @@ class AlertRule(BaseModel):
         related_name="alert_rules",
     )
 
+    def __str__(self):
+        return self.name
+
     def clean(self):
         super().clean()
         if not self.create_kanban_task:
@@ -132,9 +137,24 @@ class Alert(BaseModel):
             )
         ]
 
+    def __str__(self):
+        entity = self.content_object
+        return f"{self.alert_rule.name} · {entity}" if entity else self.alert_rule.name
+
     def _watched_value(self):
         field = self.alert_rule.field_to_watch
         return getattr(self.content_object, field, None)
+
+    @property
+    def watched_date(self):
+        """The watched value when it is a date, for display in listings."""
+        value = self._watched_value()
+        return value if isinstance(value, date) else None
+
+    @property
+    def is_overdue(self):
+        watched = self.watched_date
+        return watched is not None and watched < date.today()
 
     def _derive_assigned_operator(self):
         """Best-effort responsible operator for the follow-up task.
@@ -171,24 +191,50 @@ class Alert(BaseModel):
             source_content_type=alert_ct, source_object_id=self.pk, is_active=True
         ).first()
 
-    def ensure_follow_up_task(self):
+    def _default_board_and_stage(self):
+        """Fallback destination when the rule has no explicit target.
+
+        Used by the manual "create follow-up task" action so the operator gets
+        a one-click flow instead of a board/stage picker: the compliance board
+        seeded by `init_dgac_board` is the intended home for these tasks.
+        Returns (board, stage) or (None, None) when no usable board exists.
+        """
+        board = (
+            KanbanBoard.objects.filter(name=DGAC_BOARD_NAME, is_active=True).first()
+            or KanbanBoard.objects.filter(is_active=True).order_by("created_at").first()
+        )
+        if board is None:
+            return None, None
+        stage = board.stages.filter(is_active=True).order_by("order").first()
+        return (board, stage) if stage is not None else (None, None)
+
+    def ensure_follow_up_task(self, allow_default_board=False):
         """Create (idempotently) the Kanban task linked to this alert.
 
-        Returns the task, or None if the rule does not request one. Safe to
+        Returns the task, or None if no destination can be resolved. Safe to
         call repeatedly: a second call returns the existing task instead of
         creating a duplicate (B1.8).
+
+        `allow_default_board=True` (the manual action) falls back to the
+        compliance board when the rule has no target configured; automatic
+        generation stays opt-in via the rule's create_kanban_task flag.
         """
         rule = self.alert_rule
+        board, stage = rule.target_board, rule.target_stage
         if not (rule.create_kanban_task and rule.target_board_id and rule.target_stage_id):
-            return None
+            if not allow_default_board:
+                return None
+            board, stage = self._default_board_and_stage()
+            if board is None:
+                return None
         existing = self.linked_task()
         if existing is not None:
             return existing
         watched = self._watched_value()
         due_date = watched if isinstance(watched, date) else None
         return KanbanTask.objects.create(
-            board=rule.target_board,
-            stage=rule.target_stage,
+            board=board,
+            stage=stage,
             title=f"{rule.name}: {self.content_object}",
             description=self.message,
             due_date=due_date,
