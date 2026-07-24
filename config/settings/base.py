@@ -56,6 +56,10 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 DB_ENGINE = config("DB_ENGINE", default="sqlite3")
 if DB_ENGINE in {"postgres", "postgresql"}:
+    db_options = {}
+    db_sslmode = config("DB_SSLMODE", default="")
+    if db_sslmode:
+        db_options["sslmode"] = db_sslmode
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -64,6 +68,8 @@ if DB_ENGINE in {"postgres", "postgresql"}:
             "PASSWORD": config("DB_PASSWORD", default=""),
             "HOST": config("DB_HOST", default="127.0.0.1"),
             "PORT": config("DB_PORT", default="5432"),
+            "CONN_MAX_AGE": config("DB_CONN_MAX_AGE", default=60, cast=int),
+            "OPTIONS": db_options,
         }
     }
 else:
