@@ -151,6 +151,11 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
+        "compliance.alerts": {
+            "handlers": ["file", "console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
     },
     "root": {"handlers": ["file", "console"], "level": "INFO"},
 }

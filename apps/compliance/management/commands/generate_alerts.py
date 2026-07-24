@@ -1,3 +1,4 @@
+import logging
 from datetime import date, timedelta
 
 from django.apps import apps
@@ -5,6 +6,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand
 
 from apps.compliance.models import Alert, AlertRule
+
+logger = logging.getLogger("compliance.alerts")
 
 
 class Command(BaseCommand):
@@ -16,9 +19,25 @@ class Command(BaseCommand):
         today = date.today()
         for rule in AlertRule.objects.filter(enabled=True, is_active=True):
             model = self._find_model(rule.entity_type)
-            if model is None or not hasattr(model, rule.field_to_watch):
+            if model is None:
+                reason = "unknown_entity_type"
+            elif not hasattr(model, rule.field_to_watch):
+                reason = "unknown_field_to_watch"
+            else:
+                reason = None
+            if reason is not None:
                 self.stdout.write(
                     self.style.WARNING(f"Skipped invalid rule: {rule.name}")
+                )
+                logger.warning(
+                    "invalid_alert_rule_skipped",
+                    extra={
+                        "rule_id": str(rule.pk),
+                        "rule_name": rule.name,
+                        "entity_type": rule.entity_type,
+                        "field_to_watch": rule.field_to_watch,
+                        "reason": reason,
+                    },
                 )
                 continue
             content_type = ContentType.objects.get_for_model(model)
