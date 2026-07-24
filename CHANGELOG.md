@@ -42,6 +42,18 @@ e integración Alertas⇄Kanban (BLOQUE 1, backend), en la rama
   Programador de tareas de Windows, y `docs/scheduled-operations.md` con el
   procedimiento completo y su equivalente en cron.
 
+### Added (BLOQUE 4 parcial — Robustez de reglas y deuda de datos)
+- Las reglas de alerta ya no aceptan texto libre: la entidad y el campo a
+  vigilar se eligen de una lista validada contra los modelos reales, así que una
+  regla mal escrita se rechaza al crearla en vez de fallar en silencio cada
+  noche. Las reglas existentes se normalizaron automáticamente; las que no se
+  pudieron resolver quedaron archivadas con una nota explicando el motivo.
+- Comando `find_duplicate_operators`: lista los operadores que parecen ser la
+  misma persona ingresada dos veces, con sus diferencias campo a campo y cuántos
+  registros apuntan a cada uno. Con `--apply --group` fusiona un grupo: mueve
+  todas las referencias al registro que se conserva, archiva el duplicado con
+  nota y deja constancia en la auditoría. No borra nada y no tiene modo masivo.
+
 ### Changed
 - `on_delete` de `Document`/`Alert`/`AlertRule`/`PermissionHistory`/
   `MaintenanceHistory` cambiado de `CASCADE` a `PROTECT`: el historial de

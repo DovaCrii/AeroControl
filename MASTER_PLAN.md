@@ -163,8 +163,8 @@ Un bloque por sesión/PR, en esta secuencia (revisión `PLAN_CLAUDE_CODE_1.md`):
 1. **BLOQUE 0** — higiene ✅ (falta solo el tag `v0.1.0-alpha`, TL.11).
 2. **BLOQUE 1** — Alertas ⇄ Kanban ✅ (backend + UI, revisada en vivo).
 3. **BLOQUE 2** — notificaciones y programación ✅ (incluye `JobRun`, adelantado del Bloque 5).
-4. **BLOQUE 4 (parcial)** — `← SIGUIENTE`. SOLO B4.1 (validación de `AlertRule`) y B4.2 (duplicados de operadores). B4.3/B4.4 (habilitaciones DGAC, compatibilidad operador–aeronave) **diferidos** hasta que el usuario apruebe su diseño.
-5. **BLOQUE 6.1 y 6.2** — reporte documental determinista + informe ejecutivo por correo.
+4. **BLOQUE 4 (parcial)** ✅ — B4.1 (validación de `AlertRule`) y B4.2 (duplicados de operadores). B4.3/B4.4 (habilitaciones DGAC, compatibilidad operador–aeronave) **diferidos** hasta que el usuario apruebe su diseño.
+5. **BLOQUE 6.1 y 6.2** — `← SIGUIENTE`. Reporte documental determinista + informe ejecutivo por correo.
 
 **Bloques DIFERIDOS (no ejecutar sin instrucción explícita):** BLOQUE 3 (UX Kanban), BLOQUE 5 (centro de administración, salvo `JobRun` que se adelanta al Bloque 2), BLOQUE 6.3 (asistente IA), y los dos ítems de diseño del Bloque 4. Al terminar la ruta, **detenerse y preguntar** si el usuario no indicó lo contrario.
 
@@ -213,16 +213,18 @@ Un bloque por sesión/PR, en esta secuencia (revisión `PLAN_CLAUDE_CODE_1.md`):
 
 **Aceptación del bloque:** pruebas de filtros/agrupación y render de urgencia; revisión de accesibilidad (teclado, contraste); ES/EN.
 
-### BLOQUE 4 — Robustez de reglas y deuda de datos `rama codex/reglas-datos` (parcial en la ruta)
+### BLOQUE 4 — Robustez de reglas y deuda de datos `rama codex/reglas-datos` `✅ COMPLETO (parte en alcance)`
 
 | ID | Est. | Prio | Tarea | Esf. | Dep. |
 |---|:--:|:--:|---|:--:|:--:|
-| B4.1 | ⬜ | P2 | `AlertRule.entity_type`/`field_to_watch` validados contra modelos/campos reales (form + `clean()`); migración de datos que archiva (`is_active=False`) reglas inválidas existentes. Relacionado con T3.4 (`TextChoices`) — coordinar en la misma rama si se hacen juntas | M | — |
-| B4.2 | ⬜ | P2 | Comando `find_duplicate_operators`: lista los 4 grupos contradictorios (BACKLOG.md) con diferencias campo a campo; `--apply` fusiona (reasigna FKs, archiva duplicado, `AuditEvent`), confirmando por grupo | M | — |
+| B4.1 | ✅ | P2 | Registro `apps/compliance/watchables.py`: `entity_type`/`field_to_watch` validados en `clean()` y como choices en el form; `generate_alerts` deja la coincidencia difusa; migración 0006 normaliza y archiva las inválidas con nota (`c965644`) | M | — |
+| B4.2 | ✅ | P2 | `find_duplicate_operators`: reporte con diferencias campo a campo y conteo de referencias; `--apply --group` fusiona (recorre FKs dinámicamente + GFK de Document/Alert), archiva con nota y registra `AuditEvent` (`cd0e197`) | M | — |
 | B4.3 | ⏸ | P2 | **DIFERIDO** Habilitaciones DGAC: modelo (operador, tipo, vigencia, evidencia vía `Document`, reglas de alerta). Proponer diseño en el PR antes de implementar | M | Aprobación del usuario |
 | B4.4 | ⏸ | P2 | **DIFERIDO** Compatibilidad operador–aeronave al crear permisos de vuelo. Proponer diseño antes de implementar | M | Aprobación del usuario |
 
-**Aceptación del bloque:** B4.1/B4.2 completos con pruebas; B4.3/B4.4 solo entran tras aprobación del diseño.
+**Aceptación del bloque (parte en alcance): cumplida.** B4.1 con 10 pruebas y migración verificada sobre la base de demo (normalizó un valor heredado y archivó una regla rota con nota); B4.2 con 12 pruebas, incluida la fusión de referencias por GFK, y verificada de punta a punta en la demo. B4.3/B4.4 siguen diferidos esperando aprobación de diseño.
+
+**Decisión registrada (B4.2):** el registro que sobrevive a una fusión se elige por **cantidad de referencias** primero, no por campos rellenos. Probando con datos realistas, contar campos elegía un duplicado con poco uso que solo tenía un teléfono extra, en vez del registro que era responsable del centro de costo y tenía tarea asignada. La fusión es de un grupo por ejecución y hay que nombrarlo: no existe modo masivo.
 
 ### BLOQUE 5 — Centro de administración operativo `rama codex/admin-center` `⏸ DIFERIDO (salvo B2.0 JobRun, adelantado al Bloque 2)`
 
