@@ -1,6 +1,6 @@
 # Backlog — AeroControl
 
-Última revisión: 23 de julio de 2026. Este documento separa lo entregado de los
+Última revisión: 24 de julio de 2026. Este documento separa lo entregado de los
 objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
 
 ## Entregado en la estabilización inicial
@@ -23,6 +23,27 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
   formularios y controles de seguridad documentados.
 - [x] Entorno reproducible con `uv`, pruebas, Ruff, Bandit, pip-audit, CI y
   Dependabot.
+
+## Próxima etapa — backend local-first y continuidad (P0/P1)
+
+La aplicación continúa siendo personal y local. La SQLite y los documentos
+privados están fuera de GitHub; OneDrive conserva snapshots verificados y no la
+base activa. El detalle operativo está en `docs/backend-follow-up.md`.
+
+- [x] Verificar y restaurar el snapshot de referencia al PC.
+- [x] Registrar la tarea semanal `AeroControl-LocalBackup` en el notebook.
+- [ ] Mantener tres snapshots verificados y observar `LastTaskResult` después
+  de cada ejecución.
+- [ ] Repetir el traspaso notebook → OneDrive → PC con un snapshot nuevo.
+- [ ] Confirmar si el notebook tiene documentos reales y completar un restore
+  drill que los incluya.
+- [ ] Resolver centros de costo y duplicados sólo con fuente oficial.
+- [ ] Modelar habilitaciones DGAC, vencimientos y compatibilidad
+  operador–aeronave antes de confirmar permisos.
+- [ ] Probar Supabase CLI con datos sintéticos/anónimos, sin antecedentes
+  privados ni secretos en el repositorio.
+- [ ] Ejecutar ensayo PostgreSQL con backup, migración, verificación y rollback
+  antes de cualquier necesidad multiusuario.
 
 ## Próxima etapa — cierre funcional y de calidad (P0)
 

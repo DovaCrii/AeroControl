@@ -82,3 +82,17 @@ $env:AEROCONTROL_BACKUP_ROOT = 'D:\OneDrive - J.E.J. Ingeniería S.A\AeroControl
 - La carpeta `documents` quedó disponible para restauración; si el notebook
   conserva antecedentes documentales, generar un nuevo snapshot después de
   confirmar que `DOCUMENTS_DIR` apunta a la carpeta correcta.
+
+## Seguimiento observable
+
+La tarea semanal del notebook está registrada como `AeroControl-LocalBackup`.
+Para observar su última ejecución y resultado:
+
+```powershell
+Get-ScheduledTaskInfo -TaskName 'AeroControl-LocalBackup'
+Get-ChildItem 'D:\OneDrive - J.E.J. Ingeniería S.A\AeroControl-Backups' -Directory |
+  Sort-Object Name -Descending
+```
+
+La rotación de tres snapshots verificados y el registro de cada restauración se
+controlan en `docs/backend-follow-up.md`.

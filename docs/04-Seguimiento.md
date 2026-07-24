@@ -117,3 +117,37 @@ tags: [aero-ops, seguimiento]
 ### Siguiente paso
 - Revisar la aplicación levantada en modo claro/oscuro, cerrar hallazgos visuales
   de la revisión manual y abrir el PR de modernización desde esta rama.
+
+## Sesión actual — continuidad backend y planificación — 24 julio 2026
+
+### Decisiones consolidadas
+
+- AeroControl continúa local-first para uso personal: Django, SQLite y
+  documentos privados permanecen fuera del repositorio.
+- OneDrive se usa como ubicación de snapshots verificados, no como ubicación de
+  una SQLite activa compartida entre notebook y PC.
+- Render Free y Supabase Free quedan limitados a pruebas sintéticas/anónimas;
+  no son respaldo productivo de antecedentes privados.
+- La CLI de Supabase queda disponible como herramienta opcional para un
+  prototipo remoto, sin credenciales en GitHub.
+
+### Evidencia registrada
+
+- Snapshot `aerocontrol_20260724_112625` verificado desde OneDrive.
+- Restauración realizada en `D:\I+D\AeroOpsDesk_Data-PC`.
+- Tarea semanal `AeroControl-LocalBackup` registrada en el notebook.
+- Seguimiento y comandos de observación centralizados en
+  `docs/backend-follow-up.md`.
+- La mejora de traducciones y workflow de planificación quedó respaldada en
+  el commit `f1cd158`.
+
+### Próximas tareas ordenadas
+
+1. B-01: revisar historial de la tarea semanal y conservar tres snapshots
+   verificados.
+2. B-02: repetir el cambio notebook–PC con un snapshot nuevo.
+3. B-03: confirmar documentos reales y completar restore drill documental.
+4. B-04: resolver centros de costo y duplicados con fuente oficial.
+5. B-05: modelar habilitaciones DGAC y compatibilidad operacional.
+6. B-06: probar Supabase CLI sólo con datos sintéticos.
+7. B-07: ejecutar ensayo PostgreSQL con rollback documentado.

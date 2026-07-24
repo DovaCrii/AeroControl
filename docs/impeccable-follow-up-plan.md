@@ -66,18 +66,23 @@ git push
 - [ ] Mantener tres snapshots verificados y documentar restauración.
 - [ ] Resolver conflictos de operadores, centros de costo, habilitaciones DGAC y compatibilidad operador-aeronave únicamente con fuentes confirmadas.
 
-## Bloque siguiente — respaldo local
+## Bloque siguiente — backend y respaldo local
 
-El procedimiento quedó documentado en `docs/local-backup-runbook.md`. El
-destino `D:\AeroControl-Backups` ya fue reservado, pero la ejecución está
-bloqueada porque la ruta configurada de la base SQLite no existe en este equipo.
+El procedimiento está documentado en `docs/local-backup-runbook.md` y la
+evidencia observable en `docs/backend-follow-up.md`. El snapshot de referencia
+ya fue verificado y restaurado al PC; la ejecución ya no está bloqueada por la
+ruta de SQLite.
 
-- [ ] Confirmar el destino real del backup.
-- [ ] Confirmar `DB_PATH` y `DOCUMENTS_DIR` reales con datos locales.
-- [ ] Ejecutar y verificar un snapshot manual.
-- [ ] Registrar la tarea semanal de Windows.
+- [x] Confirmar el destino real: `D:\OneDrive - J.E.J. Ingeniería S.A\AeroControl-Backups`.
+- [x] Confirmar `DB_PATH` y `DOCUMENTS_DIR` fuera del repositorio.
+- [x] Ejecutar y verificar un snapshot de referencia.
+- [x] Registrar la tarea semanal de Windows en el notebook.
+- [x] Restaurar a `D:\I+D\AeroOpsDesk_Data-PC` y validar la aplicación.
 - [ ] Conservar tres snapshots verificados.
-- [ ] Probar una restauración en carpeta desechable.
+- [ ] Probar una restauración que incluya antecedentes documentales reales, si existen.
+
+Los siguientes bloques B-01…B-07 y su orden de ejecución están centralizados
+en `docs/backend-plan.md` y `docs/backend-follow-up.md`.
 
 ## Regla de trabajo
 
