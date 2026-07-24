@@ -6,6 +6,10 @@ Aplicación Django local-first para coordinar operaciones de aviación (flota RP
 
 **Decisión de despliegue ya tomada (no reabrir sin que el usuario lo pida):** la aplicación se mantiene como web en servidor interno (intranet), no como app de escritorio. PostgreSQL se adopta cuando haya usuarios concurrentes reales (ver `docs/postgresql-readiness.md`); no migrar antes.
 
+> **Si existe `HANDOFF.md` en la raíz, léelo antes que nada.** Describe una
+> situación puntual sin resolver (por ejemplo un merge pendiente) que condiciona
+> lo que se puede hacer. Se borra cuando queda resuelta.
+
 ## Precedencia documental
 
 Cuando dos documentos parezcan contradecirse, este es el orden de autoridad:
