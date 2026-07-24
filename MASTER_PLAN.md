@@ -34,6 +34,27 @@ Es el **tablero de bloques**. `BACKLOG.md` queda como registro histórico de lo 
 
 Aún **no mergeada a `main`**. Ver TL.6.
 
+### Dónde retomar
+
+La ruta obligatoria del plan externo está **completa**. Lo siguiente ya no viene
+de esa ruta sino de la auditoría, y el orden recomendado es:
+
+1. **T2.4** — rol `Viewer` con `view_*` explícitos. `bootstrap_roles` usa
+   `codename__startswith="view_"`, así que el rol más bajo recibe también
+   `view_auditevent`, `view_user` y `view_tenantmembership`. Esfuerzo S, sin
+   dependencias. *(Identificada, no empezada.)*
+2. **T2.3** — exigir `view_*` en `/calendar/`, el Kanban HTML y el feed de
+   eventos (hallazgo **F-06**): hoy son solo `LoginRequiredMixin` y un usuario
+   sin ningún permiso ve matrículas, operadores y centros de costo. Esfuerzo S.
+3. **TL.6** — mergear a `main` y podar ramas remotas obsoletas. Ahora que las
+   dos líneas están unificadas, es el momento natural.
+4. **R.10 / T5.1** — unificar los tokens de `app.css`. Mientras conviva la
+   generación vieja, cada arreglo de color hay que hacerlo en dos sitios.
+
+Más adelante, y con más peso: **T3.2** (clave de tenancy) es el bloqueador real
+de la centralización y de DJI, y es barato ahora frente a hacerlo con datos
+acumulados.
+
 ## Estado actual (actualizado 2026-07-24 — FASE 0 + higiene de Bloque 0 cerradas)
 
 - **FASE 0 completa** en `codex/impeccable-ui-audit`: T0.1-T0.7 hechas y commiteadas. El dashboard vuelve a renderizar, `verify.ps1` falla de verdad ante un paso roto, hay un test que compila las 43 plantillas, cobertura con piso real (83%+), mantenimiento ya se puede cerrar desde la UI.
