@@ -44,6 +44,9 @@ class FlightRecord(BaseModel):
         Aircraft, on_delete=models.PROTECT, related_name="flight_records"
     )
 
+    def __str__(self):
+        return f"{self.aircraft} · {self.actual_date}"
+
     def get_absolute_url(self):
         from django.urls import reverse
 

@@ -29,6 +29,11 @@ urlpatterns = [
     path(
         "alert/<uuid:pk>/resolve/", views.AlertResolve.as_view(), name="alert-resolve"
     ),
+    path(
+        "alert/<uuid:pk>/create-task/",
+        views.AlertCreateTask.as_view(),
+        name="alert-create-task",
+    ),
     path("alert/new/", views.AlertCreate.as_view(), name="alert-create"),
     path("documenttype/", views.DocumentTypeList.as_view(), name="documenttype-list"),
     path(

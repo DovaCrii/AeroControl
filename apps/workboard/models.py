@@ -42,6 +42,9 @@ class KanbanStage(BaseModel):
         max_length=20, choices=STATUS_TYPES, default="custom"
     )
 
+    def __str__(self):
+        return f"{self.name} ({self.board.name})"
+
 
 class KanbanLabel(BaseModel):
     board = models.ForeignKey(
@@ -132,6 +135,9 @@ class KanbanTask(BaseModel):
                 fields=["board", "stage", "order"], name="workboard_task_board_order_idx"
             )
         ]
+
+    def __str__(self):
+        return self.title
 
     @property
     def checklist_total(self):
