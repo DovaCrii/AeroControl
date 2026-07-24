@@ -25,10 +25,29 @@ e integración Alertas⇄Kanban (BLOQUE 1, backend), en la rama
 - Comando `init_dgac_board`: tablero "Cumplimiento DGAC" con sus etapas y
   etiquetas de trámite (idempotente).
 
+### Added (BLOQUE 2 — Notificaciones y operación programada)
+- Modelo `JobRun`: cada ejecución de `generate_alerts`, `send_alert_digest` y
+  `backup` queda registrada con inicio, fin, resultado y resumen, así que se
+  puede comprobar si las tareas programadas realmente corrieron. Visible en el
+  admin en modo solo lectura.
+- Comando `send_alert_digest`: envía a cada responsable de centro de costo un
+  resumen de documentos y habilitaciones agrupados por urgencia (vencidos, 7,
+  15 y 30 días), con `--dry-run` para revisar sin enviar. Si un centro de costo
+  no tiene destinatario, lo informa y continúa con los demás.
+- Configuración de correo por entorno (`EMAIL_*`, `DEFAULT_FROM_EMAIL`,
+  `SITE_BASE_URL`). Sin `EMAIL_HOST` el correo se imprime en consola.
+- Campo **Operador responsable** en centro de costo: destinatario de los
+  resúmenes. El campo de texto anterior no permitía contactar a nadie.
+- `scripts/schedule_tasks.ps1` para registrar los tres trabajos diarios en el
+  Programador de tareas de Windows, y `docs/scheduled-operations.md` con el
+  procedimiento completo y su equivalente en cron.
+
 ### Changed
 - `on_delete` de `Document`/`Alert`/`AlertRule`/`PermissionHistory`/
   `MaintenanceHistory` cambiado de `CASCADE` a `PROTECT`: el historial de
   cumplimiento ya no se puede perder por borrado en cascada.
+- La vista de detalle ya no muestra columnas internas (identificador UUID,
+  fechas de auditoría, marca de archivado, tenant) al usuario final.
 
 ### Fixed (legibilidad y contraste, revisión en vivo)
 - Alertas y tarjetas Kanban mostraban `Qualification object (uuid)` por falta
