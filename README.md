@@ -130,15 +130,15 @@ uv run python manage.py verify_backup <ruta-al-backup.sqlite3>
 uv run python manage.py restore_backup <backup.sqlite3> <destino.sqlite3>
 
 # Snapshot local de base + documentos (fuera del repositorio)
-$env:AEROCONTROL_BACKUP_ROOT='E:/AeroControlBackups'
+$env:AEROCONTROL_BACKUP_ROOT='D:/AeroControl-Backups'
 powershell -ExecutionPolicy Bypass -File ./scripts/backup-local.ps1
 powershell -ExecutionPolicy Bypass -File ./scripts/verify-local-backup.ps1 `
-  -Snapshot 'E:/AeroControlBackups/aerocontrol_YYYYMMDD_HHMMSS'
+  -Snapshot 'D:/AeroControl-Backups/aerocontrol_YYYYMMDD_HHMMSS'
 powershell -ExecutionPolicy Bypass -File ./scripts/restore-local.ps1 `
-  -Snapshot 'E:/AeroControlBackups/aerocontrol_YYYYMMDD_HHMMSS' `
-  -DestinationRoot 'E:/AeroControlRestoreDrill/YYYYMMDD'
+  -Snapshot 'D:/AeroControl-Backups/aerocontrol_YYYYMMDD_HHMMSS' `
+  -DestinationRoot 'D:/AeroControl-Restore-Drill/YYYYMMDD'
 powershell -ExecutionPolicy Bypass -File ./scripts/register-backup-task.ps1 `
-  -DestinationRoot 'E:/AeroControlBackups' -DayOfWeek Sunday -At '18:00'
+  -DestinationRoot 'D:/AeroControl-Backups' -DayOfWeek Sunday -At '18:00'
 
 uv run python manage.py cleanup_documents --older-than-days 3650
 uv run python manage.py cleanup_documents --older-than-days 3650 --execute

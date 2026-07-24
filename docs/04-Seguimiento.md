@@ -23,7 +23,7 @@ tags: [aero-ops, seguimiento]
 - Documentación Obsidian-friendly en docs/
 
 ### Decisiones
-- **Nombre**: AeroControl (repo: aero-ops-desk)
+- **Nombre**: AeroControl (repo: `DovaCrii/AeroControl`)
 - **Stack**: Django 6.0 + Bootstrap 5 (monolito inicial)
 - **Licencia**: MIT
 - **SDD**: OpenSpec, modo automático

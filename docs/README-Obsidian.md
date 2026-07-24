@@ -6,7 +6,7 @@ tags: [aero-ops, index, documentacion]
 
 **Consola local para control y seguimiento de operaciones RPA.**
 
-Repositorio: `D:\I+D\aero-ops-desk`  
+Repositorio: `D:\I+D\AeroControl`
 Datos: `D:\I+D\AeroOpsDesk_Data\`
 
 ---
@@ -23,7 +23,7 @@ Datos: `D:\I+D\AeroOpsDesk_Data\`
 ## 🚀 Inicio rápido
 
 ```powershell
-cd D:\I+D\aero-ops-desk
+cd D:\I+D\AeroControl
 powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1
 .\.venv\Scripts\python.exe manage.py createsuperuser
 powershell -ExecutionPolicy Bypass -File .\scripts\run.ps1
@@ -31,5 +31,5 @@ powershell -ExecutionPolicy Bypass -File .\scripts\run.ps1
 
 ## 🔗 Links
 
-- GitHub: https://github.com/DovaCrii/aero-ops-desk
+- GitHub: https://github.com/DovaCrii/AeroControl
 - [[openspec/README]] — SDD artifacts

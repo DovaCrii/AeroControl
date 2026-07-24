@@ -7,7 +7,7 @@ external disk or a second protected location.
 ## Create a snapshot
 
 ```powershell
-$env:AEROCONTROL_BACKUP_ROOT = 'E:\AeroControlBackups'
+$env:AEROCONTROL_BACKUP_ROOT = 'D:\AeroControl-Backups'
 powershell -ExecutionPolicy Bypass -File .\scripts\backup-local.ps1
 ```
 
@@ -18,7 +18,7 @@ The snapshot contains the SQLite backup, its manifest and a copy of
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\verify-local-backup.ps1 `
-  -Snapshot 'E:\AeroControlBackups\aerocontrol_YYYYMMDD_HHMMSS'
+  -Snapshot 'D:\AeroControl-Backups\aerocontrol_YYYYMMDD_HHMMSS'
 ```
 
 Verification checks that every copied file still has the expected size and
@@ -28,8 +28,8 @@ SHA-256 checksum.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\restore-local.ps1 `
-  -Snapshot 'E:\AeroControlBackups\aerocontrol_YYYYMMDD_HHMMSS' `
-  -DestinationRoot 'E:\AeroControlRestoreDrill\YYYYMMDD'
+  -Snapshot 'D:\AeroControl-Backups\aerocontrol_YYYYMMDD_HHMMSS' `
+  -DestinationRoot 'D:\AeroControl-Restore-Drill\YYYYMMDD'
 ```
 
 The restore script refuses to overwrite a destination unless `-Force` is
@@ -53,7 +53,7 @@ user that runs AeroControl:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\register-backup-task.ps1 `
-  -DestinationRoot 'E:\AeroControlBackups' `
+  -DestinationRoot 'D:\AeroControl-Backups' `
   -DayOfWeek Sunday `
   -At '18:00'
 ```
