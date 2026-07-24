@@ -10,6 +10,22 @@ contains code, migrations, documentation and synthetic examples only.
 This is still a real backend: the browser talks to Django through
 `127.0.0.1:8000`. It does not need to be deployed to the public Internet.
 
+## Estado operativo — 24 julio 2026
+
+- La base activa del PC está fuera del repositorio en
+  `D:\I+D\AeroOpsDesk_Data-PC`.
+- El snapshot verificado de referencia está en
+  `D:\OneDrive - J.E.J. Ingeniería S.A\AeroControl-Backups\aerocontrol_20260724_112625`.
+- La restauración al PC fue realizada en una carpeta de trabajo separada y la
+  aplicación levanta correctamente con Django y SQLite.
+- OneDrive conserva snapshots; no se usa como ubicación de la SQLite activa.
+- El respaldo semanal queda registrado en el notebook; falta observar y
+  documentar ejecuciones exitosas en el historial del Programador de tareas.
+- No se ha subido SQLite, documentos, secretos ni `.env` a GitHub.
+
+La evidencia detallada y el checklist para futuras sesiones están en
+`docs/backend-follow-up.md`.
+
 ## Environments
 
 | Environment | Data | Purpose |
@@ -35,6 +51,26 @@ replace an independent backup and restore process.
 5. Move private data to a paid, backed-up service only after the production
    security and restore gates pass.
 
+## Próximos bloques de avance
+
+1. **B-01 — Operación de respaldos:** confirmar la tarea semanal, revisar su
+   último resultado y conservar tres snapshots verificados.
+2. **B-02 — Cambio seguro de equipo:** repetir notebook → OneDrive → PC con un
+   snapshot nuevo y una restauración en carpeta limpia.
+3. **B-03 — Calidad de datos:** resolver asignaciones de centro de costo y
+   duplicados sólo con una fuente oficial confirmada.
+4. **B-04 — Cumplimiento:** modelar habilitaciones DGAC, documentos versionados
+   y alertas de vencimiento.
+5. **B-05 — Compatibilidad operacional:** validar la relación
+   operador–aeronave–habilitación antes de crear permisos confirmados.
+6. **B-06 — Prototipo remoto:** usar Supabase CLI únicamente con datos
+   sintéticos/anónimos y sin credenciales guardadas en el repositorio.
+7. **B-07 — Escalamiento:** ejecutar ensayo PostgreSQL con backup, migración,
+   verificación y rollback antes de evaluar acceso multiusuario.
+
+Cada bloque se cierra con evidencia reproducible, pruebas, un commit pequeño y
+un push a `codex/impeccable-ui-audit`.
+
 ## Production gate
 
 Do not upload real antecedents until all of the following are true:
@@ -47,4 +83,6 @@ Do not upload real antecedents until all of the following are true:
 
 The Supabase CLI remains optional for the remote prototype. It can be run with
 `npx --yes supabase`; no global installation or repository-stored credentials
-are required.
+are required. The CLI is not a reason to move private antecedents to Supabase
+Free: its free tier is for synthetic tests only until retention, access,
+backups and recovery have been validated.

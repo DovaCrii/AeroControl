@@ -1,6 +1,8 @@
 # Runbook de respaldo local
 
-Estado: preparado; requiere localizar/confirmar la base SQLite y la carpeta de documentos reales.
+Estado: operativo; snapshot de referencia verificado y restaurado al PC el 24
+de julio de 2026. Falta completar la rotación de tres snapshots y confirmar la
+carpeta documental real del notebook.
 
 ## Objetivo
 
@@ -42,6 +44,13 @@ Después de probar una ejecución manual, registrar la tarea de Windows:
 
 La tarea se llama `AeroControl-LocalBackup`. Confirmar luego en el Programador de tareas que esté habilitada y revisar el primer resultado.
 
+Para observarla sin abrir la interfaz gráfica:
+
+```powershell
+Get-ScheduledTask -TaskName 'AeroControl-LocalBackup'
+Get-ScheduledTaskInfo -TaskName 'AeroControl-LocalBackup'
+```
+
 ## Política mínima
 
 - Mantener al menos tres snapshots verificados.
@@ -57,10 +66,13 @@ La tarea se llama `AeroControl-LocalBackup`. Confirmar luego en el Programador d
 
 ## Criterio de cierre del bloque
 
-- [ ] Confirmar la ruta real del medio externo.
-- [ ] Confirmar que `DB_PATH` apunta a una base SQLite existente.
-- [ ] Confirmar que `DOCUMENTS_DIR` existe y contiene los antecedentes privados.
-- [ ] Ejecutar y verificar un snapshot manual.
-- [ ] Registrar la tarea semanal.
+- [x] Confirmar la ruta real del medio de snapshots: `D:\OneDrive - J.E.J. Ingeniería S.A\AeroControl-Backups`.
+- [x] Confirmar que `DB_PATH` apunta a una base SQLite existente en el PC.
+- [x] Confirmar que `DOCUMENTS_DIR` está fuera del repositorio.
+- [x] Ejecutar y verificar un snapshot de referencia.
+- [x] Registrar la tarea semanal en el notebook.
 - [ ] Conservar tres snapshots verificados.
-- [ ] Completar una restauración de prueba y documentar el resultado.
+- [x] Completar una restauración de prueba al PC y documentar el resultado.
+
+La evidencia y los siguientes bloques están centralizados en
+`docs/backend-follow-up.md`.
