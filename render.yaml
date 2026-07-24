@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: aerocontrol
+    runtime: python
+    plan: free
+    buildCommand: bash ./build.sh
+    startCommand: uv run gunicorn config.wsgi:application --workers 2 --timeout 120
+    healthCheckPath: /health/
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.prod
+      - key: PYTHON_VERSION
+        value: 3.12.13
+      - key: SECRET_KEY
+        sync: false
+      - key: ALLOWED_HOSTS
+        sync: false
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false
+      - key: DB_ENGINE
+        value: postgresql
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "5432"
+      - key: DOCUMENTS_STORAGE_BACKEND
+        value: s3
+      - key: DOCUMENTS_STORAGE_BUCKET
+        sync: false
+      - key: DOCUMENTS_STORAGE_ENDPOINT_URL
+        sync: false
+      - key: DOCUMENTS_STORAGE_REGION
+        value: us-east-1
+      - key: DOCUMENTS_STORAGE_ACCESS_KEY
+        sync: false
+      - key: DOCUMENTS_STORAGE_SECRET_KEY
+        sync: false

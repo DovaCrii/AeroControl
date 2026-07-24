@@ -1,11 +1,9 @@
 from datetime import timedelta
-from pathlib import Path
-
-from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from apps.compliance.models import Document
+from apps.compliance.storage import DocumentStorageError, get_document_storage
 
 
 class Command(BaseCommand):
@@ -17,17 +15,22 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         cutoff = timezone.now() - timedelta(days=options["older_than_days"])
-        root = Path(settings.DOCUMENTS_ROOT).resolve()
+        storage = get_document_storage()
         documents = Document.objects.filter(
             is_active=False, updated_at__lt=cutoff
         ).exclude(file_path="")
         for document in documents.iterator():
-            path = (root / document.file_path).resolve()
-            if root not in path.parents or not path.is_file():
+            try:
+                exists = storage.exists(document.file_path)
+            except DocumentStorageError:
+                exists = False
+            if not exists:
                 self.stdout.write(f"Skipped unsafe or missing path: {document.pk}")
                 continue
-            self.stdout.write(f"{'Removing' if options['execute'] else 'Would remove'}: {path}")
+            self.stdout.write(
+                f"{'Removing' if options['execute'] else 'Would remove'}: {document.file_path}"
+            )
             if options["execute"]:
-                path.unlink()
+                storage.delete(document.file_path)
                 document.file_path = ""
                 document.save(update_fields=["file_path", "updated_at"])
