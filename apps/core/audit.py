@@ -1,7 +1,7 @@
 """Explicit request-to-record audit context helpers."""
 
 
-def set_audit_context(request, instance, action=None):
+def set_audit_context(request, instance, action=None, metadata=None):
     if instance is None:
         return
     request._audit_context = {
@@ -10,3 +10,5 @@ def set_audit_context(request, instance, action=None):
     }
     if action:
         request._audit_context["action"] = action
+    if metadata:
+        request._audit_context["metadata"] = dict(metadata)

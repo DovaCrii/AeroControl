@@ -59,6 +59,26 @@ class Document(BaseModel):
     def __str__(self):
         return self.title
 
+    def resolve_related_alerts(self):
+        """Resolve open alerts pointing at this document (B1.7).
+
+        Invoked when a newer version supersedes this one: the "expiring soon"
+        alert is now addressed. Each alert is resolved via Alert.resolve(), so
+        any linked Kanban task is closed too. Returns the number resolved.
+        """
+        doc_ct = ContentType.objects.get_for_model(Document)
+        open_alerts = Alert.objects.filter(
+            content_type=doc_ct,
+            object_id=self.pk,
+            is_resolved=False,
+            is_active=True,
+        )
+        resolved = 0
+        for alert in open_alerts:
+            alert.resolve()
+            resolved += 1
+        return resolved
+
 
 class AlertRule(BaseModel):
     name = models.CharField(max_length=150)
@@ -144,6 +164,13 @@ class Alert(BaseModel):
             return "high"
         return "medium"
 
+    def linked_task(self):
+        """Return the active Kanban task spawned from this alert, if any."""
+        alert_ct = ContentType.objects.get_for_model(Alert)
+        return KanbanTask.objects.filter(
+            source_content_type=alert_ct, source_object_id=self.pk, is_active=True
+        ).first()
+
     def ensure_follow_up_task(self):
         """Create (idempotently) the Kanban task linked to this alert.
 
@@ -154,10 +181,7 @@ class Alert(BaseModel):
         rule = self.alert_rule
         if not (rule.create_kanban_task and rule.target_board_id and rule.target_stage_id):
             return None
-        alert_ct = ContentType.objects.get_for_model(Alert)
-        existing = KanbanTask.objects.filter(
-            source_content_type=alert_ct, source_object_id=self.pk, is_active=True
-        ).first()
+        existing = self.linked_task()
         if existing is not None:
             return existing
         watched = self._watched_value()
@@ -172,3 +196,30 @@ class Alert(BaseModel):
             assigned_to=self._derive_assigned_operator(),
             source_object=self,
         )
+
+    def resolve(self):
+        """Mark the alert resolved and close its linked task (B1.6).
+
+        Moves the linked task (if any, and not already there) to the board's
+        first stage whose status_type is 'completed'. Returns the moved task
+        so the caller can record it in the audit trail, or None if nothing
+        moved.
+        """
+        from django.utils import timezone
+
+        self.is_resolved = True
+        self.resolved_at = timezone.now()
+        self.save(update_fields=["is_resolved", "resolved_at", "updated_at"])
+        task = self.linked_task()
+        if task is None:
+            return None
+        completed_stage = (
+            task.board.stages.filter(status_type="completed", is_active=True)
+            .order_by("order")
+            .first()
+        )
+        if completed_stage is None or task.stage_id == completed_stage.pk:
+            return None
+        task.stage = completed_stage
+        task.save(update_fields=["stage", "updated_at"])
+        return task

@@ -166,3 +166,110 @@ def test_rule_without_kanban_flag_creates_no_task():
 
     assert Alert.objects.count() == 1
     assert KanbanTask.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_resolving_alert_moves_linked_task_to_completed_stage():
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    Qualification.objects.create(
+        operator=operator,
+        qualification_type="Night rating",
+        issue_date=date(2026, 1, 1),
+        expiry_date=date.today() + timedelta(days=3),
+    )
+    rule, board, pending_stage = _kanban_rule()
+    done_stage = KanbanStage.objects.create(
+        board=board, name="Aprobado", status_type="completed", order=5
+    )
+    call_command("generate_alerts")
+    alert = Alert.objects.get()
+    task = KanbanTask.objects.get()
+    assert task.stage_id == pending_stage.pk
+
+    moved = alert.resolve()
+
+    assert moved is not None
+    task.refresh_from_db()
+    assert task.stage_id == done_stage.pk
+    alert.refresh_from_db()
+    assert alert.is_resolved is True
+
+
+@pytest.mark.django_db
+def test_resolving_alert_without_task_returns_none():
+    doc_type = DocumentType.objects.create(code="cert", name="Certificate")
+    ct = ContentType.objects.get_for_model(Document)
+    document = Document.objects.create(
+        title="Doc",
+        doc_type=doc_type,
+        content_type=ct,
+        object_id="00000000-0000-0000-0000-000000000001",
+        file_path="cert/document/file.pdf",
+        issue_date=date(2026, 1, 1),
+        expiry_date=date.today() + timedelta(days=3),
+    )
+    rule = AlertRule.objects.create(
+        name="Docs no task",
+        entity_type="document",
+        field_to_watch="expiry_date",
+        create_kanban_task=False,
+    )
+    alert = Alert.objects.create(
+        alert_rule=rule,
+        content_type=ct,
+        object_id=document.pk,
+        message="no task alert",
+    )
+
+    assert alert.resolve() is None
+    alert.refresh_from_db()
+    assert alert.is_resolved is True
+
+
+@pytest.mark.django_db
+def test_document_resolve_related_alerts_closes_open_alerts_and_task():
+    doc_type = DocumentType.objects.create(code="cert", name="Certificate")
+    ct = ContentType.objects.get_for_model(Document)
+    old_document = Document.objects.create(
+        title="Old cert",
+        doc_type=doc_type,
+        content_type=ct,
+        object_id="00000000-0000-0000-0000-000000000001",
+        file_path="cert/document/old.pdf",
+        issue_date=date(2026, 1, 1),
+        expiry_date=date.today() + timedelta(days=2),
+    )
+    board = KanbanBoard.objects.create(name="Compliance")
+    pending = KanbanStage.objects.create(
+        board=board, name="Por vencer", status_type="pending"
+    )
+    done = KanbanStage.objects.create(
+        board=board, name="Aprobado", status_type="completed", order=5
+    )
+    rule = AlertRule.objects.create(
+        name="Doc expiry",
+        entity_type="document",
+        field_to_watch="expiry_date",
+        create_kanban_task=True,
+        target_board=board,
+        target_stage=pending,
+    )
+    alert = Alert.objects.create(
+        alert_rule=rule,
+        content_type=ct,
+        object_id=old_document.pk,
+        message="Doc expiring",
+    )
+    task = alert.ensure_follow_up_task()
+    assert task.stage_id == pending.pk
+
+    resolved = old_document.resolve_related_alerts()
+
+    assert resolved == 1
+    alert.refresh_from_db()
+    assert alert.is_resolved is True
+    task.refresh_from_db()
+    assert task.stage_id == done.pk
