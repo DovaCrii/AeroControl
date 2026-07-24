@@ -28,6 +28,7 @@ INSTALLED_APPS = [
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -93,6 +94,12 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "media/"
 MEDIA_ROOT = Path(config("DOCUMENTS_DIR", default=str(BASE_DIR / "media")))
 DOCUMENTS_ROOT = Path(config("DOCUMENTS_DIR", default=str(BASE_DIR / "media")))
+DOCUMENTS_STORAGE_BACKEND = config("DOCUMENTS_STORAGE_BACKEND", default="local")
+DOCUMENTS_STORAGE_BUCKET = config("DOCUMENTS_STORAGE_BUCKET", default="")
+DOCUMENTS_STORAGE_ENDPOINT_URL = config("DOCUMENTS_STORAGE_ENDPOINT_URL", default="")
+DOCUMENTS_STORAGE_REGION = config("DOCUMENTS_STORAGE_REGION", default="")
+DOCUMENTS_STORAGE_ACCESS_KEY = config("DOCUMENTS_STORAGE_ACCESS_KEY", default="")
+DOCUMENTS_STORAGE_SECRET_KEY = config("DOCUMENTS_STORAGE_SECRET_KEY", default="")
 DOCUMENTS_ANTIVIRUS_COMMAND = config("DOCUMENTS_ANTIVIRUS_COMMAND", default="")
 CSP_REPORT_ONLY = config("CSP_REPORT_ONLY", default=True, cast=bool)
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
