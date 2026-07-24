@@ -22,7 +22,7 @@ Si un plan externo (por ejemplo un archivo que el usuario suba fuera del repo) p
 - Usa `uv sync --all-groups` al empezar. Antes de entregar, `scripts/verify.ps1` debe pasar completo (ver sección de calidad).
 - Define `DB_PATH`, `DOCUMENTS_DIR`, `LOGS_DIR` y `BACKUPS_DIR` fuera del repositorio. Nunca confirmes datos operativos, documentos, backups ni secretos reales.
 - Para cambios de modelo, crea y revisa la migración generada (nombre descriptivo, no el autogenerado por Django si es ambiguo); incluye pruebas de regresión para la regla de negocio que motiva el cambio.
-- Cada bloque cerrado actualiza `MASTER_PLAN.md` (marcar la tarea ✅) y, si corresponde, `BACKLOG.md`/`CHANGELOG.md`.
+- Cada bloque cerrado actualiza `MASTER_PLAN.md` (marcar la tarea ✅), añade su entrada a `CHANGELOG.md` (`[Unreleased]`) y, si corresponde, `BACKLOG.md`.
 
 ## Convenciones de dominio (no negociables)
 
@@ -76,7 +76,7 @@ El gate completo corre: `manage.py check` (+ `--deploy`), `makemigrations --chec
 - Plan de trabajo y seguimiento por bloques: `MASTER_PLAN.md` (fuente de verdad de qué sigue).
 - Auditoría técnica con evidencia: `AUDIT_CLAUDE.md`.
 - Arquitectura: `ARCHITECTURE.md`.
-- Registro histórico de lo entregado: `BACKLOG.md`.
+- Registro histórico de lo entregado: `BACKLOG.md` y `CHANGELOG.md`.
 - Specs de cambios en curso: `openspec/changes/`.
 - Puesta en marcha: `README.md` y `scripts/setup.ps1`.
 - Documentación de producto: `docs/` (raíz). Notas internas/históricas: `docs/dev/` (no autoritativas).
