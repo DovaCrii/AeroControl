@@ -12,13 +12,21 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         usernames = set(get_user_model().objects.values_list("username", flat=True))
         sources = (
-            ("maintenance", MaintenanceHistory.objects.values_list("changed_by", flat=True)),
-            ("operations", PermissionHistory.objects.values_list("changed_by", flat=True)),
+            (
+                "maintenance",
+                MaintenanceHistory.objects.values_list("changed_by", flat=True),
+            ),
+            (
+                "operations",
+                PermissionHistory.objects.values_list("changed_by", flat=True),
+            ),
             ("workboard", KanbanTask.objects.values_list("created_by", flat=True)),
         )
         total = 0
         for name, labels in sources:
-            unresolved = sorted({label for label in labels if label and label not in usernames})
+            unresolved = sorted(
+                {label for label in labels if label and label not in usernames}
+            )
             total += len(unresolved)
             self.stdout.write(f"{name}: {len(unresolved)} unresolved actor labels")
             for label in unresolved:

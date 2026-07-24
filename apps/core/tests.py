@@ -59,30 +59,63 @@ class TestPublicURLs:
         assert payload["checks"]["database"] == "ok"
 
     @pytest.mark.django_db
-    def test_unified_calendar_events_combines_operations_maintenance_and_tasks(self, auth_client):
+    def test_unified_calendar_events_combines_operations_maintenance_and_tasks(
+        self, auth_client
+    ):
         center = CostCenter.objects.create(code="CAL", name="Calendar")
-        operator = Operator.objects.create(employee_id="CAL-1", full_name="Calendar Operator", cost_center=center)
-        aircraft = Aircraft.objects.create(registration="CC-CAL", type="Fixed", model="C1", manufacturer="Maker", cost_center=center)
+        operator = Operator.objects.create(
+            employee_id="CAL-1", full_name="Calendar Operator", cost_center=center
+        )
+        aircraft = Aircraft.objects.create(
+            registration="CC-CAL",
+            type="Fixed",
+            model="C1",
+            manufacturer="Maker",
+            cost_center=center,
+        )
         permission = FlightPermission.objects.create(
-            permission_number="CAL-001", operator=operator, aircraft=aircraft,
-            cost_center=center, purpose="Inspection", flight_date=date(2026, 7, 24), location="Santiago",
+            permission_number="CAL-001",
+            operator=operator,
+            aircraft=aircraft,
+            cost_center=center,
+            purpose="Inspection",
+            flight_date=date(2026, 7, 24),
+            location="Santiago",
         )
         maintenance = MaintenanceRecord.objects.create(
-            aircraft=aircraft, maintenance_type="scheduled", description="Inspection",
-            scheduled_date=date(2026, 7, 25), performed_by="Team", cost=0,
+            aircraft=aircraft,
+            maintenance_type="scheduled",
+            description="Inspection",
+            scheduled_date=date(2026, 7, 25),
+            performed_by="Team",
+            cost=0,
         )
         board = KanbanBoard.objects.create(name="Calendar board")
         stage = KanbanStage.objects.create(board=board, name="Planned")
-        task = KanbanTask.objects.create(board=board, stage=stage, title="Calendar task", due_date=date(2026, 7, 26))
+        task = KanbanTask.objects.create(
+            board=board, stage=stage, title="Calendar task", due_date=date(2026, 7, 26)
+        )
 
-        response = auth_client.get(reverse("calendar-events"), {"start": "2026-07-01", "end": "2026-08-01"})
+        response = auth_client.get(
+            reverse("calendar-events"), {"start": "2026-07-01", "end": "2026-08-01"}
+        )
 
         assert response.status_code == 200
         payload = response.json()
-        assert {item["type"] for item in payload} == {"permission", "maintenance", "task"}
-        assert {item["id"] for item in payload} == {f"permission-{permission.pk}", f"maintenance-{maintenance.pk}", f"task-{task.pk}"}
+        assert {item["type"] for item in payload} == {
+            "permission",
+            "maintenance",
+            "task",
+        }
+        assert {item["id"] for item in payload} == {
+            f"permission-{permission.pk}",
+            f"maintenance-{maintenance.pk}",
+            f"task-{task.pk}",
+        }
 
-    def test_administration_center_explains_operational_configuration(self, auth_client):
+    def test_administration_center_explains_operational_configuration(
+        self, auth_client
+    ):
         response = auth_client.get(reverse("administration"))
 
         assert response.status_code == 200
@@ -159,18 +192,30 @@ class TestAuthRequiredURLs:
 
 class TestAuthenticatedPages:
     def test_cost_center_import_preview_apply_and_revert(self, auth_client):
-        csv_file = SimpleUploadedFile("centers.csv", b"code,name\nIMP-1,Imported one\nIMP-2,Imported two\n", content_type="text/csv")
+        csv_file = SimpleUploadedFile(
+            "centers.csv",
+            b"code,name\nIMP-1,Imported one\nIMP-2,Imported two\n",
+            content_type="text/csv",
+        )
         preview = auth_client.post(reverse("costcenter-import"), {"file": csv_file})
         assert preview.status_code == 200
         assert "2 rows are valid" in preview.content.decode()
 
-        csv_file = SimpleUploadedFile("centers.csv", b"code,name\nIMP-1,Imported one\nIMP-2,Imported two\n", content_type="text/csv")
-        applied = auth_client.post(reverse("costcenter-import"), {"file": csv_file, "apply": "1"})
+        csv_file = SimpleUploadedFile(
+            "centers.csv",
+            b"code,name\nIMP-1,Imported one\nIMP-2,Imported two\n",
+            content_type="text/csv",
+        )
+        applied = auth_client.post(
+            reverse("costcenter-import"), {"file": csv_file, "apply": "1"}
+        )
         assert applied.status_code == 302
         batch = ImportBatch.objects.get(entity="registry.costcenter")
         assert CostCenter.objects.filter(code="IMP-1", is_active=True).exists()
 
-        reverted = auth_client.post(reverse("costcenter-import-revert", args=[batch.pk]))
+        reverted = auth_client.post(
+            reverse("costcenter-import-revert", args=[batch.pk])
+        )
         assert reverted.status_code == 204
         assert not CostCenter.objects.filter(code="IMP-1", is_active=True).exists()
 
@@ -179,25 +224,41 @@ class TestAuthenticatedPages:
         payload = b"registration,type,model,manufacturer,year,cost_center,status\nCC-IMP,Drone,X1,Maker,2026,AIR-OPS,active\n"
         response = auth_client.post(
             reverse("aircraft-import"),
-            {"file": SimpleUploadedFile("aircraft.csv", payload, content_type="text/csv"), "apply": "1"},
+            {
+                "file": SimpleUploadedFile(
+                    "aircraft.csv", payload, content_type="text/csv"
+                ),
+                "apply": "1",
+            },
         )
         assert response.status_code == 302
-        assert Aircraft.objects.filter(registration="CC-IMP", cost_center=center).exists()
+        assert Aircraft.objects.filter(
+            registration="CC-IMP", cost_center=center
+        ).exists()
 
     def test_operator_import_validates_cost_center(self, auth_client):
         center = CostCenter.objects.create(code="OP-OPS", name="Operator Ops")
         payload = b"employee_id,full_name,email,phone,cost_center\nEMP-IMP,Imported Operator,imp@example.com,+56900000000,OP-OPS\n"
         response = auth_client.post(
             reverse("operator-import"),
-            {"file": SimpleUploadedFile("operators.csv", payload, content_type="text/csv"), "apply": "1"},
+            {
+                "file": SimpleUploadedFile(
+                    "operators.csv", payload, content_type="text/csv"
+                ),
+                "apply": "1",
+            },
         )
         assert response.status_code == 302
-        assert Operator.objects.filter(employee_id="EMP-IMP", cost_center=center).exists()
+        assert Operator.objects.filter(
+            employee_id="EMP-IMP", cost_center=center
+        ).exists()
 
 
 class TestChapter1DocxImport:
     @pytest.mark.django_db
-    def test_docx_source_reports_aircraft_and_duplicate_operators(self, tmp_path, capsys):
+    def test_docx_source_reports_aircraft_and_duplicate_operators(
+        self, tmp_path, capsys
+    ):
         document = DocxDocument()
         document.add_paragraph("1.5- DOTACIÓN OPERADOR RPA")
         document.add_paragraph("1) PERMANENTES")
@@ -226,9 +287,22 @@ class TestChapter1DocxImport:
         service_table.rows[1].cells[1].text = "RPA 1"
         service_table.rows[1].cells[2].text = "Fotografía"
         inventory = document.add_table(rows=2, cols=8)
-        for index, header in enumerate(["Propietario", "Modelo y Año", "Serie", "Inscripción", "MTOW", "Básico", "VLOS", "Paracaídas"]):
+        for index, header in enumerate(
+            [
+                "Propietario",
+                "Modelo y Año",
+                "Serie",
+                "Inscripción",
+                "MTOW",
+                "Básico",
+                "VLOS",
+                "Paracaídas",
+            ]
+        ):
             inventory.rows[0].cells[index].text = header
-        for index, value in enumerate(["J.E.J.", "DJI / MAVIC", "SER-1", "RPA-1", "1,0", "1,0", "VLOS", "NO"]):
+        for index, value in enumerate(
+            ["J.E.J.", "DJI / MAVIC", "SER-1", "RPA-1", "1,0", "1,0", "VLOS", "NO"]
+        ):
             inventory.rows[1].cells[index].text = value
         source = tmp_path / "chapter1.docx"
         document.save(source)
@@ -270,12 +344,16 @@ class TestChapter1DocxImport:
         assert event.object_id
         assert event.metadata == {"query_keys": []}
 
-    def test_audit_write_failure_does_not_change_mutation_response(self, auth_client, monkeypatch):
+    def test_audit_write_failure_does_not_change_mutation_response(
+        self, auth_client, monkeypatch
+    ):
         def fail_create(**kwargs):
             raise RuntimeError("audit database unavailable")
 
         monkeypatch.setattr(AuditEvent.objects, "create", fail_create)
-        response = auth_client.post(reverse("board-create"), {"name": "Audit resilient board"})
+        response = auth_client.post(
+            reverse("board-create"), {"name": "Audit resilient board"}
+        )
         assert response.status_code == 302
         assert KanbanBoard.objects.filter(name="Audit resilient board").exists()
 
@@ -344,7 +422,9 @@ class TestChapter1DocxImport:
         assert response.status_code == 302
         assert response.url == reverse("login")
 
-    def test_language_switches_navigation_and_status_labels_to_spanish(self, auth_client):
+    def test_language_switches_navigation_and_status_labels_to_spanish(
+        self, auth_client
+    ):
         response = auth_client.post(
             reverse("set_language"), {"language": "es", "next": reverse("dashboard")}
         )
@@ -372,9 +452,7 @@ class TestChapter1DocxImport:
             reverse("set_language"), {"language": "es", "next": reverse("dashboard")}
         )
 
-        response = auth_client.get(
-            reverse("costcenter-create"), HTTP_HX_REQUEST="true"
-        )
+        response = auth_client.get(reverse("costcenter-create"), HTTP_HX_REQUEST="true")
         content = response.content.decode()
 
         assert response.status_code == 200
@@ -388,9 +466,7 @@ class TestChapter1DocxImport:
             reverse("set_language"), {"language": "es", "next": reverse("dashboard")}
         )
 
-        response = auth_client.get(
-            reverse("document-create"), HTTP_HX_REQUEST="true"
-        )
+        response = auth_client.get(reverse("document-create"), HTTP_HX_REQUEST="true")
         content = response.content.decode()
 
         assert response.status_code == 200
@@ -407,7 +483,9 @@ class TestChapter1DocxImport:
             ("kanban", "Tablero Kanban"),
         ],
     )
-    def test_specific_modules_keep_spanish_labels(self, auth_client, url_name, expected):
+    def test_specific_modules_keep_spanish_labels(
+        self, auth_client, url_name, expected
+    ):
         auth_client.post(
             reverse("set_language"), {"language": "es", "next": reverse("dashboard")}
         )
@@ -418,9 +496,7 @@ class TestChapter1DocxImport:
         assert expected in response.content.decode()
 
     def test_document_create_modal_renders_for_a_new_document(self, auth_client):
-        response = auth_client.get(
-            reverse("document-create"), HTTP_HX_REQUEST="true"
-        )
+        response = auth_client.get(reverse("document-create"), HTTP_HX_REQUEST="true")
 
         assert response.status_code == 200
         assert 'name="title"' in response.content.decode()
@@ -435,7 +511,9 @@ class TestChapter1DocxImport:
         assert response.url == reverse("board-list")
         assert KanbanBoard.objects.filter(name="Operations board").exists()
 
-    def test_document_entity_options_limits_selection_to_allowed_records(self, auth_client):
+    def test_document_entity_options_limits_selection_to_allowed_records(
+        self, auth_client
+    ):
         aircraft_type = ContentType.objects.get_for_model(Aircraft)
         response = auth_client.get(
             reverse("document-entity-options"),
@@ -560,7 +638,9 @@ class TestStaticFiles:
         with pytest.raises(CommandError, match="(size|checksum)"):
             call_command("verify_backup", str(backup))
 
-    def test_backup_can_be_restored_to_explicit_destination(self, monkeypatch, tmp_path):
+    def test_backup_can_be_restored_to_explicit_destination(
+        self, monkeypatch, tmp_path
+    ):
         monkeypatch.setenv("BACKUPS_DIR", str(tmp_path))
         source = tmp_path / "source.sqlite3"
         source.write_bytes(b"restore me")

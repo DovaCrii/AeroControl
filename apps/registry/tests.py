@@ -6,7 +6,13 @@ from django.urls import reverse
 from apps.core.models import OperationalTenant
 from apps.operations.models import FlightPermission
 from apps.registry.forms import AssignmentForm
-from apps.registry.models import Aircraft, Assignment, CostCenter, Operator, Qualification
+from apps.registry.models import (
+    Aircraft,
+    Assignment,
+    CostCenter,
+    Operator,
+    Qualification,
+)
 
 
 @pytest.fixture
@@ -72,7 +78,9 @@ def test_confirmed_assignment_rejects_operator_overlap(registry_data):
 
 
 @pytest.mark.django_db
-def test_calendar_feed_contains_resource_and_expiration_events(client, admin_user, registry_data):
+def test_calendar_feed_contains_resource_and_expiration_events(
+    client, admin_user, registry_data
+):
     _tenant, center, operator, aircraft = registry_data
     Assignment.objects.create(
         operator=operator,
@@ -101,7 +109,11 @@ def test_calendar_feed_contains_resource_and_expiration_events(client, admin_use
 
     response = client.get(
         reverse("calendar-events"),
-        {"start": "2026-07-01", "end": "2026-08-01", "types": "permission,assignment,qualification"},
+        {
+            "start": "2026-07-01",
+            "end": "2026-08-01",
+            "types": "permission,assignment,qualification",
+        },
     )
     event_types = {event["type"] for event in response.json()}
 

@@ -29,7 +29,9 @@ class OperationalTenant(BaseModel):
     name = models.CharField(max_length=150)
     slug = models.SlugField(max_length=80, unique=True)
     members = models.ManyToManyField(
-        settings.AUTH_USER_MODEL, through="TenantMembership", related_name="operational_tenants"
+        settings.AUTH_USER_MODEL,
+        through="TenantMembership",
+        related_name="operational_tenants",
     )
 
     def __str__(self):
@@ -43,7 +45,11 @@ class TenantMembership(BaseModel):
     role = models.CharField(max_length=20, choices=ROLES, default="member")
 
     class Meta:
-        constraints = [models.UniqueConstraint(fields=["tenant", "user"], name="unique_tenant_membership")]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tenant", "user"], name="unique_tenant_membership"
+            )
+        ]
 
 
 class AppendOnlyAuditQuerySet(models.QuerySet):
@@ -69,7 +75,10 @@ class AuditEvent(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
     actor = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="audit_events",
     )
     action = models.CharField(max_length=32)
@@ -102,7 +111,10 @@ class AuditEvent(models.Model):
 
 class ImportBatch(BaseModel):
     actor = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="import_batches",
     )
     entity = models.CharField(max_length=100)

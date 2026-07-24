@@ -86,7 +86,11 @@ def board_for_user(user, board_id=None):
 
 def visible_tasks_for_board(board, params):
     operator, priority = filter_values(params)
-    state = params.get("state") if params.get("state") in dict(KanbanStage.STATUS_TYPES) else ""
+    state = (
+        params.get("state")
+        if params.get("state") in dict(KanbanStage.STATUS_TYPES)
+        else ""
+    )
     label = params.get("label")
     try:
         if label:
@@ -94,7 +98,11 @@ def visible_tasks_for_board(board, params):
     except (ValueError, TypeError):
         label = ""
     query = params.get("q", "").strip()
-    tasks = board.tasks.filter(is_active=True).select_related("board", "stage", "assigned_to").prefetch_related("labels", "checklist_items")
+    tasks = (
+        board.tasks.filter(is_active=True)
+        .select_related("board", "stage", "assigned_to")
+        .prefetch_related("labels", "checklist_items")
+    )
     if operator:
         tasks = tasks.filter(assigned_to=operator)
     if priority:
@@ -110,7 +118,10 @@ def visible_tasks_for_board(board, params):
 
 def build_stage_data(board, params):
     return [
-        {"stage": stage, "tasks": visible_tasks_for_board(board, params).filter(stage=stage)}
+        {
+            "stage": stage,
+            "tasks": visible_tasks_for_board(board, params).filter(stage=stage),
+        }
         for stage in board.stages.filter(is_active=True).order_by("order")
     ]
 

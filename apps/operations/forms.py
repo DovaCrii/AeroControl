@@ -39,7 +39,9 @@ class FlightRecordForm(AeroModelForm):
         departure = cleaned.get("departure_time")
         arrival = cleaned.get("arrival_time")
         if permission and aircraft and permission.aircraft_id != aircraft.id:
-            self.add_error("aircraft", _("The aircraft must match the flight permission."))
+            self.add_error(
+                "aircraft", _("The aircraft must match the flight permission.")
+            )
         if permission and pilot and permission.operator_id != pilot.id:
             self.add_error(
                 "pilot", _("The pilot must match the flight permission operator.")

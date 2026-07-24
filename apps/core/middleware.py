@@ -33,6 +33,7 @@ class RequestMetricsMiddleware:
         duration_ms = round((time.perf_counter() - started) * 1000, 2)
         response["X-Request-ID"] = request_id
         from django.conf import settings
+
         if getattr(settings, "CSP_REPORT_ONLY", True):
             response["Content-Security-Policy-Report-Only"] = (
                 "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; "
@@ -60,7 +61,8 @@ class RequestMetricsMiddleware:
             try:
                 AuditEvent.objects.create(
                     actor=request.user,
-                    action=context.get("action") or f"{request.method.lower()}_{outcome}",
+                    action=context.get("action")
+                    or f"{request.method.lower()}_{outcome}",
                     method=request.method,
                     path=request.path[:500],
                     status_code=response.status_code,
@@ -72,7 +74,11 @@ class RequestMetricsMiddleware:
             except Exception:
                 logger.exception(
                     "audit_write_failed",
-                    extra={"request_id": request_id, "method": request.method, "path": request.path},
+                    extra={
+                        "request_id": request_id,
+                        "method": request.method,
+                        "path": request.path,
+                    },
                 )
         logger.info(
             "request_complete",

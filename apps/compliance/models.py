@@ -10,6 +10,7 @@ from apps.core.models import BaseModel
 
 def document_upload_path(instance, filename):
     """Return the relative storage path used for manually saved documents."""
+
     def safe_segment(value, fallback):
         segment = re.sub(r"[^A-Za-z0-9._-]+", "_", Path(str(value)).name).strip("._")
         return segment or fallback
@@ -18,7 +19,9 @@ def document_upload_path(instance, filename):
     doc_type_code = safe_segment(instance.doc_type.code, "document")
     safe_model = safe_segment(model_name, "entity")
     safe_filename = safe_segment(filename, "upload")
-    return f"{doc_type_code}/{safe_model}/{instance.object_id}/{uuid4()}_{safe_filename}"
+    return (
+        f"{doc_type_code}/{safe_model}/{instance.object_id}/{uuid4()}_{safe_filename}"
+    )
 
 
 class DocumentType(BaseModel):

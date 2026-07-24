@@ -42,6 +42,9 @@ class MaintenanceHistory(BaseModel):
     new_status = models.CharField(max_length=20)
     changed_by = models.CharField(max_length=150)
     changed_by_user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="maintenance_history_events",
     )

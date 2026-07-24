@@ -114,9 +114,7 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.TokenAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ),
-    "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.IsAuthenticated",
-    ),
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
 }
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/"
@@ -148,7 +146,11 @@ LOGGING = {
         "json": {"()": "apps.core.middleware.JsonLogFormatter"},
     },
     "loggers": {
-        "aerocontrol.request": {"handlers": ["file", "console"], "level": "INFO", "propagate": False},
+        "aerocontrol.request": {
+            "handlers": ["file", "console"],
+            "level": "INFO",
+            "propagate": False,
+        },
     },
     "root": {"handlers": ["file", "console"], "level": "INFO"},
 }

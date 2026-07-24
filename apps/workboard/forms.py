@@ -2,7 +2,13 @@ from django import forms
 from apps.core.models import OperationalTenant
 from apps.core.forms import AeroModelForm
 
-from .models import KanbanBoard, KanbanChecklistItem, KanbanLabel, KanbanStage, KanbanTask
+from .models import (
+    KanbanBoard,
+    KanbanChecklistItem,
+    KanbanLabel,
+    KanbanStage,
+    KanbanTask,
+)
 
 
 class KanbanBoardForm(AeroModelForm):
@@ -13,18 +19,24 @@ class KanbanBoardForm(AeroModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["tenant"].required = False
-        self.fields["tenant"].queryset = OperationalTenant.objects.filter(is_active=True)
+        self.fields["tenant"].queryset = OperationalTenant.objects.filter(
+            is_active=True
+        )
 
 
 class KanbanStageForm(AeroModelForm):
     status_type = forms.ChoiceField(choices=KanbanStage.STATUS_TYPES, required=False)
+
     class Meta:
         model = KanbanStage
         fields = ["board", "name", "order", "color", "status_type"]
 
 
 class KanbanTaskForm(AeroModelForm):
-    labels = forms.ModelMultipleChoiceField(queryset=KanbanLabel.objects.none(), required=False)
+    labels = forms.ModelMultipleChoiceField(
+        queryset=KanbanLabel.objects.none(), required=False
+    )
+
     class Meta:
         model = KanbanTask
         fields = [
@@ -43,8 +55,12 @@ class KanbanTaskForm(AeroModelForm):
         super().__init__(*args, **kwargs)
         board_id = self.data.get("board") or getattr(self.instance, "board_id", None)
         if board_id:
-            self.fields["stage"].queryset = KanbanStage.objects.filter(board_id=board_id, is_active=True)
-            self.fields["labels"].queryset = KanbanLabel.objects.filter(board_id=board_id, is_active=True)
+            self.fields["stage"].queryset = KanbanStage.objects.filter(
+                board_id=board_id, is_active=True
+            )
+            self.fields["labels"].queryset = KanbanLabel.objects.filter(
+                board_id=board_id, is_active=True
+            )
         self.fields["board"].queryset = KanbanBoard.objects.filter(is_active=True)
 
     def clean(self):

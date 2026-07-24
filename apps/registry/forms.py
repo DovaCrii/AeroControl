@@ -83,7 +83,15 @@ class OperatorForm(AeroModelForm):
 class AssignmentForm(AeroModelForm):
     class Meta:
         model = Assignment
-        fields = ["operator", "aircraft", "cost_center", "purpose", "start_date", "end_date", "status"]
+        fields = [
+            "operator",
+            "aircraft",
+            "cost_center",
+            "purpose",
+            "start_date",
+            "end_date",
+            "status",
+        ]
         labels = {
             "operator": _("Operator"),
             "aircraft": _("Aircraft"),
@@ -109,18 +117,31 @@ class AssignmentForm(AeroModelForm):
             operator=operator,
             start_date__lte=end,
         ).exclude(pk=self.instance.pk)
-        overlap = overlap.filter(models.Q(end_date__isnull=True) | models.Q(end_date__gte=start_date))
+        overlap = overlap.filter(
+            models.Q(end_date__isnull=True) | models.Q(end_date__gte=start_date)
+        )
         if status == "confirmed" and overlap.filter(status="confirmed").exists():
-            self.add_error("operator", _("El operador ya tiene una asignación confirmada en este período."))
+            self.add_error(
+                "operator",
+                _("El operador ya tiene una asignación confirmada en este período."),
+            )
 
         aircraft_overlap = Assignment.objects.filter(
             is_active=True,
             aircraft=aircraft,
             start_date__lte=end,
         ).exclude(pk=self.instance.pk)
-        aircraft_overlap = aircraft_overlap.filter(models.Q(end_date__isnull=True) | models.Q(end_date__gte=start_date))
-        if status == "confirmed" and aircraft_overlap.filter(status="confirmed").exists():
-            self.add_error("aircraft", _("La aeronave ya tiene una asignación confirmada en este período."))
+        aircraft_overlap = aircraft_overlap.filter(
+            models.Q(end_date__isnull=True) | models.Q(end_date__gte=start_date)
+        )
+        if (
+            status == "confirmed"
+            and aircraft_overlap.filter(status="confirmed").exists()
+        ):
+            self.add_error(
+                "aircraft",
+                _("La aeronave ya tiene una asignación confirmada en este período."),
+            )
         return cleaned
 
 

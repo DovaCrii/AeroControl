@@ -8,7 +8,13 @@ from django.contrib.auth import get_user_model
 
 
 class KanbanBoard(BaseModel):
-    tenant = models.ForeignKey(OperationalTenant, on_delete=models.PROTECT, null=True, blank=True, related_name="kanban_boards")
+    tenant = models.ForeignKey(
+        OperationalTenant,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="kanban_boards",
+    )
     name = models.CharField(max_length=150)
     description = models.TextField(blank=True)
 
@@ -32,30 +38,50 @@ class KanbanStage(BaseModel):
     name = models.CharField(max_length=100)
     order = models.PositiveIntegerField(default=0)
     color = models.CharField(max_length=20, default="#2EC4B6")
-    status_type = models.CharField(max_length=20, choices=STATUS_TYPES, default="custom")
+    status_type = models.CharField(
+        max_length=20, choices=STATUS_TYPES, default="custom"
+    )
 
 
 class KanbanLabel(BaseModel):
-    board = models.ForeignKey(KanbanBoard, on_delete=models.CASCADE, related_name="labels")
+    board = models.ForeignKey(
+        KanbanBoard, on_delete=models.CASCADE, related_name="labels"
+    )
     name = models.CharField(max_length=80)
     color = models.CharField(max_length=20, default="#2EC4B6")
     order = models.PositiveIntegerField(default=0)
 
     class Meta:
-        constraints = [models.UniqueConstraint(fields=["board", "name"], name="unique_board_label_name")]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["board", "name"], name="unique_board_label_name"
+            )
+        ]
 
     def __str__(self):
         return self.name
 
 
 class KanbanBoardAccess(BaseModel):
-    ROLES = [("viewer", _("Viewer")), ("editor", _("Editor")), ("manager", _("Manager"))]
-    board = models.ForeignKey(KanbanBoard, on_delete=models.CASCADE, related_name="access_rules")
-    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name="kanban_access_rules")
+    ROLES = [
+        ("viewer", _("Viewer")),
+        ("editor", _("Editor")),
+        ("manager", _("Manager")),
+    ]
+    board = models.ForeignKey(
+        KanbanBoard, on_delete=models.CASCADE, related_name="access_rules"
+    )
+    user = models.ForeignKey(
+        get_user_model(), on_delete=models.CASCADE, related_name="kanban_access_rules"
+    )
     role = models.CharField(max_length=20, choices=ROLES, default="viewer")
 
     class Meta:
-        constraints = [models.UniqueConstraint(fields=["board", "user"], name="unique_kanban_board_access")]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["board", "user"], name="unique_kanban_board_access"
+            )
+        ]
 
 
 class KanbanTask(BaseModel):
@@ -81,11 +107,22 @@ class KanbanTask(BaseModel):
     order = models.PositiveIntegerField(default=0)
     created_by = models.CharField(max_length=150, blank=True)
     created_by_user = models.ForeignKey(
-        get_user_model(), on_delete=models.SET_NULL, null=True, blank=True,
+        get_user_model(),
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="kanban_tasks_created",
     )
-    labels = models.ManyToManyField(KanbanLabel, through="KanbanTaskLabel", blank=True, related_name="tasks")
-    source_content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True, blank=True, related_name="workboard_source_tasks")
+    labels = models.ManyToManyField(
+        KanbanLabel, through="KanbanTaskLabel", blank=True, related_name="tasks"
+    )
+    source_content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="workboard_source_tasks",
+    )
     source_object_id = models.UUIDField(null=True, blank=True)
     source_object = GenericForeignKey("source_content_type", "source_object_id")
 
@@ -108,11 +145,15 @@ class KanbanTaskLabel(BaseModel):
     label = models.ForeignKey(KanbanLabel, on_delete=models.CASCADE)
 
     class Meta:
-        constraints = [models.UniqueConstraint(fields=["task", "label"], name="unique_task_label")]
+        constraints = [
+            models.UniqueConstraint(fields=["task", "label"], name="unique_task_label")
+        ]
 
 
 class KanbanChecklistItem(BaseModel):
-    task = models.ForeignKey(KanbanTask, on_delete=models.CASCADE, related_name="checklist_items")
+    task = models.ForeignKey(
+        KanbanTask, on_delete=models.CASCADE, related_name="checklist_items"
+    )
     title = models.CharField(max_length=200)
     order = models.PositiveIntegerField(default=0)
     is_completed = models.BooleanField(default=False)
