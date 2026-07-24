@@ -164,9 +164,11 @@ Un bloque por sesión/PR, en esta secuencia (revisión `PLAN_CLAUDE_CODE_1.md`):
 2. **BLOQUE 1** — Alertas ⇄ Kanban ✅ (backend + UI, revisada en vivo).
 3. **BLOQUE 2** — notificaciones y programación ✅ (incluye `JobRun`, adelantado del Bloque 5).
 4. **BLOQUE 4 (parcial)** ✅ — B4.1 (validación de `AlertRule`) y B4.2 (duplicados de operadores). B4.3/B4.4 (habilitaciones DGAC, compatibilidad operador–aeronave) **diferidos** hasta que el usuario apruebe su diseño.
-5. **BLOQUE 6.1 y 6.2** — `← SIGUIENTE`. Reporte documental determinista + informe ejecutivo por correo.
+5. **BLOQUE 6.1 y 6.2** ✅ — Reporte documental determinista + informe ejecutivo por correo.
 
-**Bloques DIFERIDOS (no ejecutar sin instrucción explícita):** BLOQUE 3 (UX Kanban), BLOQUE 5 (centro de administración, salvo `JobRun` que se adelanta al Bloque 2), BLOQUE 6.3 (asistente IA), y los dos ítems de diseño del Bloque 4. Al terminar la ruta, **detenerse y preguntar** si el usuario no indicó lo contrario.
+> **Ruta completa.** Los cinco pasos en alcance están cerrados. Conforme al plan, aquí se **detiene** la ejecución automática: lo que queda requiere instrucción explícita.
+
+**Bloques DIFERIDOS (no ejecutar sin instrucción explícita):** BLOQUE 3 (UX Kanban), BLOQUE 5 (centro de administración, salvo `JobRun` ya adelantado), BLOQUE 6.3 (asistente IA), y B4.3/B4.4 (habilitaciones DGAC y compatibilidad operador–aeronave, que además deben proponerse como diseño antes de implementarse).
 
 ### BLOQUE 1 — Integración Alertas ⇄ Kanban `rama codex/alertas-kanban`
 
@@ -244,11 +246,17 @@ Depende de los Bloques 1 y 2.
 
 | ID | Est. | Prio | Tarea | Esf. | Dep. |
 |---|:--:|:--:|---|:--:|:--:|
-| B6.1 | ⬜ | P2 | Nivel 1 — `compliance_report` (vista + comando) replicando el patrón CSV/XLSX/DOCX de los reportes Kanban: % documentos vigentes por CC, vencimientos 30/15/7, vencidos, alertas abiertas con antigüedad, tiempo medio alerta→resolución. Filtros CC/tipo/fechas persistidos en URL | L | Bloque 1 |
-| B6.2 | ⬜ | P2 | Nivel 2 — `send_executive_report --period week|month [--to] [--dry-run]`: KPIs del período vs anterior, resumen determinista (texto+HTML), XLSX de 6.1 adjunto; destinatarios configurables; registro en `JobRun`+log. Añadir a `schedule_tasks.ps1` (semanal) | L | B6.1, B2.0, B2.1 |
+| B6.1 | ✅ | P2 | Nivel 1 — reporte en pantalla + CSV/XLSX/DOCX + comando `compliance_report`; KPIs en `reports.py` compartidos con el correo; filtros persistidos en URL; neutralización de fórmulas vía `apps/core/exports.py` (`65d5bc2`) | L | Bloque 1 |
+| B6.2 | ✅ | P2 | Nivel 2 — `send_executive_report --period week|month [--to] [--dry-run]` con comparación vs período anterior, XLSX adjunto, destinatarios por grupo *Dirección*, `JobRun` + log; tarea semanal en `schedule_tasks.ps1` y cron documentado (`65d5bc2`) | L | B6.1, B2.0, B2.1 |
 | B6.3 | ⏸ | P3 | **DIFERIDO** Nivel 3 — asistente IA (`apps/assistant`): envía SOLO KPIs agregados/códigos (nunca nombres/archivos/datos crudos) a la API de Anthropic; API key solo por `.env`; degradable si no hay red; salida marcada "borrador" con aprobación humana; `AuditEvent` por generación. Proponer diseño antes de implementar | L | Aprobación del usuario |
 
-**Aceptación:** 6.1/6.2 con pruebas (KPIs con datos de prueba, comparación entre períodos, `locmem`, `--dry-run`); 6.3 solo diseño validable salvo aprobación.
+**Aceptación (6.1/6.2): cumplida.** 18 pruebas: KPIs por urgencia con datos de prueba, aislamiento entre centros de costo, promedio alerta→resolución, neutralización de fórmulas, permisos 403 en la vista y en los tres exportes, escritura del XLSX, comparación entre períodos con `locmem` y `--dry-run`. Verificado en el navegador y por correo con los datos de la demo.
+
+**Decisión registrada (B6.2):** cada KPI comparado declara si "menos es mejor", para que la redacción no contradiga el número (menos documentos vencidos es una mejora; menos vigentes, no). Sin destinatarios el comando falla con mensaje claro en vez de enviar a nadie en silencio.
+
+### BLOQUE 6.3 — Asistente IA `⏸ DIFERIDO (requiere aprobación de diseño)`
+
+No implementado por decisión del plan. Cuando se retome: app `apps/assistant` que envíe **solo KPIs agregados y códigos** (nunca nombres, archivos ni datos crudos), API key solo por `.env`, degradable si no hay red, salida marcada como borrador con aprobación humana, y `AuditEvent` por generación.
 
 ### FASE L — Limpieza y orden del repositorio `puede correr en paralelo a FASE 0`
 
