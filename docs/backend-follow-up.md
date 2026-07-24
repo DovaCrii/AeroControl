@@ -20,6 +20,7 @@ del repositorio y GitHub contiene sólo código, migraciones y documentación.
 | Tarea semanal en notebook | Registrada | `AeroControl-LocalBackup` |
 | Tres snapshots verificados | Pendiente | Actualmente sólo se observa `aerocontrol_20260724_112625` |
 | Restauración con documentos reales | Pendiente | El snapshot de referencia no contenía archivos documentales |
+| Validación de calidad operativa | Pendiente | `validate_operational_data` ejecutado; quedan asignaciones de centro de costo por resolver y no se modificaron datos |
 | Backend remoto con datos privados | No autorizado | Se mantiene fuera de Supabase/Render Free |
 
 ## Cómo observar los respaldos
@@ -113,5 +114,6 @@ privados en GitHub.
 | 2026-07-24 | Pruebas de planificación y traducciones | 5 pruebas correctas | Commit `f1cd158` |
 | 2026-07-24 | Inventario de OneDrive desde el PC | 1 snapshot visible; B-01 sigue pendiente | `AeroControl-Backups` |
 | 2026-07-24 | Revisión B-01 desde el PC | Aplicación activa (`/health/` 200); no se creó copia mientras SQLite está en uso | Detener Django en el equipo activo antes del próximo snapshot |
+| 2026-07-24 | Validación de calidad operativa | Ejecución correcta; quedan asignaciones de centro de costo por resolver y no se modificó la base | `uv run python manage.py validate_operational_data` |
 
 Completar esta tabla después de cada ejecución de respaldo o restauración.
