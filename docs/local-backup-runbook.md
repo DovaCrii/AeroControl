@@ -1,6 +1,6 @@
 # Runbook de respaldo local
 
-Estado: preparado; requiere confirmar una carpeta externa al repositorio.
+Estado: preparado; requiere localizar/confirmar la base SQLite y la carpeta de documentos reales.
 
 ## Objetivo
 
@@ -58,6 +58,8 @@ La tarea se llama `AeroControl-LocalBackup`. Confirmar luego en el Programador d
 ## Criterio de cierre del bloque
 
 - [ ] Confirmar la ruta real del medio externo.
+- [ ] Confirmar que `DB_PATH` apunta a una base SQLite existente.
+- [ ] Confirmar que `DOCUMENTS_DIR` existe y contiene los antecedentes privados.
 - [ ] Ejecutar y verificar un snapshot manual.
 - [ ] Registrar la tarea semanal.
 - [ ] Conservar tres snapshots verificados.
