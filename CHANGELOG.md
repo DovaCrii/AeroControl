@@ -8,9 +8,15 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
-Trabajo de estabilización (`MASTER_PLAN.md` FASE 0 + higiene del Bloque 0)
-e integración Alertas⇄Kanban (BLOQUE 1, backend), en la rama
-`codex/impeccable-ui-audit`, aún no mergeado a `main`.
+Nada todavía.
+
+## [0.2.0-alpha] - 2026-07-24
+
+Estabilización (`MASTER_PLAN.md` FASE 0 + higiene del Bloque 0), integración
+Alertas⇄Kanban (BLOQUE 1, backend), notificaciones y operación programada
+(BLOQUE 2), reportes ejecutivos (BLOQUE 6) y robustez de reglas (BLOQUE 4
+parcial). Las dos líneas de trabajo paralelas (`codex/impeccable-ui-audit` y
+`codex/stabilization-blocks-0-6`) quedaron fusionadas antes de este release.
 
 ### Added (BLOQUE 1 — Alertas ⇄ Kanban, backend)
 - `AlertRule` puede generar una tarea Kanban: campos `create_kanban_task`,
@@ -56,6 +62,9 @@ e integración Alertas⇄Kanban (BLOQUE 1, backend), en la rama
   mejoró o empeoró) y adjunta el Excel. Destinatarios del grupo *Dirección* o
   indicados con `--to`; `--dry-run` permite revisar antes de enviar. Registrado
   como tarea semanal.
+- `bootstrap_roles` crea también el grupo *Dirección* (vacío y sin permisos: es
+  una lista de destinatarios, no un rol), para que montar un entorno no dependa
+  de leer el código del comando para descubrir que el grupo debe existir.
 
 ### Added (BLOQUE 4 parcial — Robustez de reglas y deuda de datos)
 - Las reglas de alerta ya no aceptan texto libre: la entidad y el campo a
@@ -168,5 +177,6 @@ plan").
 - API DRF de solo lectura + escritura acotada para tareas Kanban, con
   autenticación por token y documentación OpenAPI.
 
-[Unreleased]: https://github.com/DovaCrii/AeroControl/compare/v0.1.0-alpha...HEAD
+[Unreleased]: https://github.com/DovaCrii/AeroControl/compare/v0.2.0-alpha...HEAD
+[0.2.0-alpha]: https://github.com/DovaCrii/AeroControl/compare/v0.1.0-alpha...v0.2.0-alpha
 [0.1.0-alpha]: https://github.com/DovaCrii/AeroControl/releases/tag/v0.1.0-alpha
