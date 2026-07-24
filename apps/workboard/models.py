@@ -132,7 +132,8 @@ class KanbanTask(BaseModel):
     class Meta:
         indexes = [
             models.Index(
-                fields=["board", "stage", "order"], name="workboard_task_board_order_idx"
+                fields=["board", "stage", "order"],
+                name="workboard_task_board_order_idx",
             )
         ]
 

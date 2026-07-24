@@ -22,9 +22,7 @@ def test_invalid_entity_type_is_skipped_and_logged(caplog):
         call_command("generate_alerts")
 
     assert Alert.objects.count() == 0
-    record = next(
-        r for r in caplog.records if r.name == "compliance.alerts"
-    )
+    record = next(r for r in caplog.records if r.name == "compliance.alerts")
     assert record.rule_name == "Bogus rule"
     assert record.entity_type == "not_a_real_model"
     assert record.reason == "unknown_entity_type"
@@ -41,9 +39,7 @@ def test_invalid_field_to_watch_is_skipped_and_logged(caplog):
     with caplog.at_level(logging.WARNING, logger="compliance.alerts"):
         call_command("generate_alerts")
 
-    record = next(
-        r for r in caplog.records if r.name == "compliance.alerts"
-    )
+    record = next(r for r in caplog.records if r.name == "compliance.alerts")
     assert record.reason == "unknown_field_to_watch"
     assert record.field_to_watch == "not_a_real_field"
 

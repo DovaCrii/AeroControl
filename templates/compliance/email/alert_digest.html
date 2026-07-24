@@ -1,0 +1,28 @@
+{% load i18n %}<!doctype html>
+<html lang="{{ language|default:'es' }}">
+<body style="margin:0;padding:24px;background:#f4f6f9;font-family:Segoe UI,Arial,sans-serif;color:#1b2a4a;">
+  <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #dde3ec;border-radius:10px;overflow:hidden;">
+    <div style="padding:20px 24px;background:#1b2a4a;color:#ffffff;">
+      <h1 style="margin:0;font-size:18px;">{% blocktranslate with center=cost_center.name %}Expiry summary for {{ center }}{% endblocktranslate %}</h1>
+      <p style="margin:6px 0 0;font-size:13px;opacity:.85;">{{ cost_center.code }} · {% translate "Total items" %}: {{ item_count }}</p>
+    </div>
+    <div style="padding:8px 24px 24px;">
+      {% for group in groups %}{% if group.items %}
+      <h2 style="margin:22px 0 8px;font-size:14px;color:{{ group.color }};">{{ group.title }} ({{ group.items|length }})</h2>
+      <table role="presentation" style="width:100%;border-collapse:collapse;font-size:13px;">
+        {% for item in group.items %}
+        <tr>
+          <td style="padding:7px 0;border-bottom:1px solid #eef1f6;white-space:nowrap;color:{{ group.color }};font-weight:700;">{{ item.expiry_date|date:"Y-m-d" }}</td>
+          <td style="padding:7px 10px;border-bottom:1px solid #eef1f6;">
+            <a href="{{ base_url }}{{ item.url_path }}" style="color:#1b2a4a;text-decoration:underline;">{{ item.label }}</a>
+            <span style="color:#66748c;"> — {{ item.detail }}</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </table>
+      {% endif %}{% endfor %}
+      <p style="margin:26px 0 0;font-size:12px;color:#66748c;">{% translate "This is an automated message from AeroControl." %}</p>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{% load i18n %}{% blocktranslate with center=cost_center.name %}Expiry summary for {{ center }}{% endblocktranslate %}
+{% translate "Cost center" %}: {{ cost_center.code }} - {{ cost_center.name }}
+{% translate "Total items" %}: {{ item_count }}
+
+{% for group in groups %}{% if group.items %}== {{ group.title }} ({{ group.items|length }}) ==
+{% for item in group.items %}- {{ item.expiry_date|date:"Y-m-d" }} · {{ item.label }} ({{ item.detail }})
+  {{ base_url }}{{ item.url_path }}
+{% endfor %}
+{% endif %}{% endfor %}
+--
+{% translate "This is an automated message from AeroControl." %}

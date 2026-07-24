@@ -8,11 +8,12 @@ from .models import Aircraft, Assignment, CostCenter, Operator, Qualification
 class CostCenterForm(AeroModelForm):
     class Meta:
         model = CostCenter
-        fields = ["code", "name", "responsible"]
+        fields = ["code", "name", "responsible", "responsible_operator"]
         labels = {
             "code": _("Code"),
             "name": _("Name"),
             "responsible": _("Responsible"),
+            "responsible_operator": _("Responsible operator"),
         }
 
 

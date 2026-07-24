@@ -14,11 +14,28 @@ class CostCenter(BaseModel):
     )
     code = models.CharField(max_length=30, unique=True)
     name = models.CharField(max_length=150)
+    # Free-text name kept from the Chapter 1 import. It cannot be used to reach
+    # anyone (the imported values do not match operator names), so notifications
+    # use responsible_operator; this stays as the historical record.
     responsible = models.CharField(max_length=150, blank=True)
+    responsible_operator = models.ForeignKey(
+        "registry.Operator",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="cost_centers_in_charge",
+        help_text=_("Recipient of expiry digests for this cost center."),
+    )
 
     def __str__(self):
         label = f"{self.code} - {self.name}"
         return f"{label} · {self.responsible}" if self.responsible else label
+
+    @property
+    def notification_email(self):
+        """Email to notify for this cost center, or "" when unreachable."""
+        operator = self.responsible_operator
+        return operator.email if operator and operator.email else ""
 
 
 class Aircraft(BaseModel):
