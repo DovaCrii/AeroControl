@@ -18,7 +18,7 @@ del repositorio y GitHub contiene sólo código, migraciones y documentación.
 | Restauración al PC | Completo | `D:\I+D\AeroOpsDesk_Data-PC` |
 | Scripts de backup/verificación/restauración | Completo | `scripts/backup-local.ps1`, `scripts/verify-local-backup.ps1`, `scripts/restore-local.ps1` |
 | Tarea semanal en notebook | Registrada | `AeroControl-LocalBackup` |
-| Tres snapshots verificados | Pendiente | Revisar carpeta de respaldos |
+| Tres snapshots verificados | Pendiente | Actualmente sólo se observa `aerocontrol_20260724_112625` |
 | Restauración con documentos reales | Pendiente | El snapshot de referencia no contenía archivos documentales |
 | Backend remoto con datos privados | No autorizado | Se mantiene fuera de Supabase/Render Free |
 
@@ -68,10 +68,29 @@ snapshot creado en la carpeta de OneDrive.
 La misma SQLite nunca debe abrirse simultáneamente en notebook y PC, y nunca
 debe apuntarse `DB_PATH` directamente a una carpeta sincronizada por OneDrive.
 
+## Continuar desde otra máquina o sesión de Codex
+
+GitHub respalda el código y este plan, pero deliberadamente no contiene la
+SQLite, documentos, `.env` ni credenciales. Para continuar desde otro equipo:
+
+1. Clonar el repositorio y cambiar a `codex/impeccable-ui-audit`.
+2. Leer `AGENTS.md`, `docs/backend-plan.md` y este documento.
+3. Confirmar que OneDrive terminó de sincronizar el snapshot.
+4. Ejecutar `verify-local-backup.ps1` antes de restaurar.
+5. Restaurar a una carpeta local nueva, crear el `.env` fuera de Git y ejecutar
+   migraciones y `scripts/verify.ps1`.
+6. Trabajar sólo en ese equipo hasta el próximo cambio de equipo.
+
+Tener una cuenta de Codex permite abrir el proyecto y continuar el plan, pero
+no reemplaza el acceso a la carpeta de OneDrive ni autoriza a publicar datos
+privados en GitHub.
+
 ## Backlog ordenado
 
-- [ ] **B-01:** comprobar el historial de `AeroControl-LocalBackup` y generar
-  snapshots hasta conservar tres verificaciones válidas.
+- [ ] **B-01:** comprobar el historial de `AeroControl-LocalBackup` en el
+  notebook y generar dos snapshots adicionales hasta conservar tres
+  verificaciones válidas. En la revisión del PC del 24-07 sólo se encontró un
+  snapshot.
 - [ ] **B-02:** hacer una transferencia notebook → OneDrive → PC con snapshot
   nuevo y registrar el resultado sin publicar datos.
 - [ ] **B-03:** confirmar la carpeta real de documentos en el notebook y
@@ -92,5 +111,6 @@ debe apuntarse `DB_PATH` directamente a una carpeta sincronizada por OneDrive.
 | 2026-07-24 | Verificación del snapshot de referencia | Correcto | `aerocontrol_20260724_112625` |
 | 2026-07-24 | Restauración al PC | Correcta | `D:\I+D\AeroOpsDesk_Data-PC` |
 | 2026-07-24 | Pruebas de planificación y traducciones | 5 pruebas correctas | Commit `f1cd158` |
+| 2026-07-24 | Inventario de OneDrive desde el PC | 1 snapshot visible; B-01 sigue pendiente | `AeroControl-Backups` |
 
 Completar esta tabla después de cada ejecución de respaldo o restauración.

@@ -21,6 +21,9 @@ This is still a real backend: the browser talks to Django through
 - OneDrive conserva snapshots; no se usa como ubicación de la SQLite activa.
 - El respaldo semanal queda registrado en el notebook; falta observar y
   documentar ejecuciones exitosas en el historial del Programador de tareas.
+- En la revisión del PC del 24 de julio sólo se encontró un snapshot; B-01 debe
+  generar y verificar dos snapshots adicionales antes de considerar completa
+  la rotación mínima.
 - No se ha subido SQLite, documentos, secretos ni `.env` a GitHub.
 
 La evidencia detallada y el checklist para futuras sesiones están en
