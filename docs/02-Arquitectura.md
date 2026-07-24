@@ -8,7 +8,7 @@ tags: [aero-ops, arquitectura]
 
 ```
 D:\I+D\
-├── aero-ops-desk\           ← Código (git)
+├── AeroControl\             ← Código (git)
 │   ├── apps/                ← 7 módulos Django
 │   ├── config/              ← Settings split (base/dev/prod)
 │   ├── templates/           ← Bootstrap 5

@@ -11,7 +11,7 @@ Mantener snapshots locales de la base SQLite y de los antecedentes privados sin 
 En PowerShell, elegir una carpeta de respaldo fuera de `D:\I+D\AeroControl` y fuera de `DOCUMENTS_ROOT`. Ejemplo:
 
 ```powershell
-$env:AEROCONTROL_BACKUP_ROOT = 'E:\AeroControl-Backups'
+$env:AEROCONTROL_BACKUP_ROOT = 'D:\AeroControl-Backups'
 .\scripts\backup-local.ps1
 ```
 
@@ -24,7 +24,7 @@ El script crea una carpeta `aerocontrol_YYYYMMDD_HHMMSS` con:
 ## Verificación obligatoria
 
 ```powershell
-.\scripts\verify-local-backup.ps1 -Snapshot 'E:\AeroControl-Backups\aerocontrol_YYYYMMDD_HHMMSS'
+.\scripts\verify-local-backup.ps1 -Snapshot 'D:\AeroControl-Backups\aerocontrol_YYYYMMDD_HHMMSS'
 ```
 
 Solo un snapshot que termine con `Local snapshot verified` debe conservarse como respaldo válido.
@@ -35,7 +35,7 @@ Después de probar una ejecución manual, registrar la tarea de Windows:
 
 ```powershell
 .\scripts\register-backup-task.ps1 `
-  -DestinationRoot 'E:\AeroControl-Backups' `
+  -DestinationRoot 'D:\AeroControl-Backups' `
   -DayOfWeek Sunday `
   -At '18:00'
 ```
@@ -51,8 +51,8 @@ La tarea se llama `AeroControl-LocalBackup`. Confirmar luego en el Programador d
 
 ```powershell
 .\scripts\restore-local.ps1 `
-  -Snapshot 'E:\AeroControl-Backups\aerocontrol_YYYYMMDD_HHMMSS' `
-  -DestinationRoot 'E:\AeroControl-Restore-Test\YYYYMMDD'
+  -Snapshot 'D:\AeroControl-Backups\aerocontrol_YYYYMMDD_HHMMSS' `
+  -DestinationRoot 'D:\AeroControl-Restore-Test\YYYYMMDD'
 ```
 
 ## Criterio de cierre del bloque
