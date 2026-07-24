@@ -66,6 +66,17 @@ git push
 - [ ] Mantener tres snapshots verificados y documentar restauración.
 - [ ] Resolver conflictos de operadores, centros de costo, habilitaciones DGAC y compatibilidad operador-aeronave únicamente con fuentes confirmadas.
 
+## Bloque siguiente — respaldo local
+
+El procedimiento quedó documentado en `docs/local-backup-runbook.md`. No se
+ejecuta todavía porque falta confirmar una carpeta externa al repositorio.
+
+- [ ] Confirmar el destino real del backup.
+- [ ] Ejecutar y verificar un snapshot manual.
+- [ ] Registrar la tarea semanal de Windows.
+- [ ] Conservar tres snapshots verificados.
+- [ ] Probar una restauración en carpeta desechable.
+
 ## Regla de trabajo
 
 No activar hooks de Impeccable todavía. Ejecutar la skill manualmente al inicio y al cierre de cada lote; si una corrección afecta datos o permisos, detener el lote y validar primero con pruebas funcionales.
