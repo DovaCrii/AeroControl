@@ -3,11 +3,24 @@ from django.utils.translation import gettext_lazy as _
 
 
 def translate_field_label(label):
-    """Normalize Django's generated labels before looking them up in gettext."""
+    """Normalize Django's generated labels before looking them up in gettext.
+
+    Acronyms are preserved: lowercasing them produced lookups like
+    "Dgac credential" that never matched the catalog's "DGAC credential",
+    so those labels silently fell back to English.
+    """
+
+    def normalize(word, first=False):
+        if len(word) > 1 and word.isupper():
+            return word
+        return word.capitalize() if first else word.lower()
+
     words = str(label).replace("_", " ").split()
     if not words:
         return ""
-    return " ".join([words[0].capitalize(), *[word.lower() for word in words[1:]]])
+    return " ".join(
+        [normalize(words[0], first=True), *[normalize(word) for word in words[1:]]]
+    )
 
 
 class AeroModelForm(forms.ModelForm):

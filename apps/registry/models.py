@@ -46,7 +46,7 @@ class Aircraft(BaseModel):
     basic_weight_kg = models.DecimalField(
         max_digits=8, decimal_places=3, null=True, blank=True
     )
-    vlos = models.CharField(max_length=20, blank=True)
+    vlos = models.CharField(max_length=20, blank=True, verbose_name=_("VLOS"))
     parachute = models.CharField(max_length=20, blank=True)
     authorized_services = models.TextField(blank=True)
     cost_center = models.ForeignKey(
@@ -70,12 +70,18 @@ class Operator(BaseModel):
         blank=True,
         related_name="operators",
     )
-    employee_id = models.CharField(max_length=50, unique=True)
+    # Acronyms are spelled out here so the label lookup matches the catalog;
+    # Django's derived labels would be "Employee id"/"Dgac credential".
+    employee_id = models.CharField(
+        max_length=50, unique=True, verbose_name=_("Employee ID")
+    )
     full_name = models.CharField(max_length=150)
     email = models.EmailField(blank=True)
     phone = models.CharField(max_length=50, blank=True)
-    rut = models.CharField(max_length=20, blank=True)
-    dgac_credential = models.CharField(max_length=30, blank=True)
+    rut = models.CharField(max_length=20, blank=True, verbose_name=_("RUT"))
+    dgac_credential = models.CharField(
+        max_length=30, blank=True, verbose_name=_("DGAC credential")
+    )
     operator_type = models.CharField(max_length=80, blank=True)
     address = models.TextField(blank=True)
     authorizations = models.TextField(blank=True)

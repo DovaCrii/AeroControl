@@ -1280,3 +1280,37 @@ msgstr "ejecuciones de tareas"
 
 msgid "Failed"
 msgstr "Con error"
+
+#: generic detail/form field labels
+msgid "Basic weight kg"
+msgstr "Peso básico (kg)"
+
+msgid "Content type"
+msgstr "Tipo de contenido"
+
+msgid "Doc type"
+msgstr "Tipo de documento"
+
+msgid "File path"
+msgstr "Ruta del archivo"
+
+msgid "Flight date"
+msgstr "Fecha de vuelo"
+
+msgid "Is current version"
+msgstr "Es la versión vigente"
+
+msgid "Location"
+msgstr "Ubicación"
+
+msgid "Max takeoff weight kg"
+msgstr "Peso máximo de despegue (kg)"
+
+msgid "Object id"
+msgstr "Identificador del objeto"
+
+msgid "Permission number"
+msgstr "Número de permiso"
+
+msgid "Purpose"
+msgstr "Propósito"
