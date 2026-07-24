@@ -9,6 +9,13 @@ from django.utils.translation import gettext_lazy as _
 from apps.core.forms import AeroModelForm
 from .models import Alert, AlertRule, Document, DocumentType
 from .security import scan_uploaded_file
+from .watchables import (
+    WATCHABLE_MODELS,
+    entity_type_choices,
+    field_choices_for,
+    resolve_model,
+    watchable_fields,
+)
 
 DOCUMENTABLE_MODELS = {
     ("registry", "aircraft"),
@@ -183,6 +190,20 @@ class DocumentTypeForm(AeroModelForm):
 
 
 class AlertRuleForm(AeroModelForm):
+    """Both fields are pickers, not free text.
+
+    field_to_watch depends on the chosen entity, so its options are narrowed to
+    that model once one is selected (on a bound form or when editing); before
+    that it offers every watchable field and the model's clean() rejects a
+    mismatch.
+    """
+
+    entity_type = forms.ChoiceField(
+        choices=[("", "---------")] + entity_type_choices(),
+        label=_("Entity type"),
+    )
+    field_to_watch = forms.ChoiceField(choices=[], label=_("Field to watch"))
+
     class Meta:
         model = AlertRule
         fields = [
@@ -195,6 +216,23 @@ class AlertRuleForm(AeroModelForm):
             "target_board",
             "target_stage",
         ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        selected = self.data.get("entity_type") or self.initial.get("entity_type")
+        if not selected and self.instance and self.instance.pk:
+            selected = self.instance.entity_type
+        options = field_choices_for(selected) if selected else self._all_field_choices()
+        self.fields["field_to_watch"].choices = [("", "---------")] + options
+
+    @staticmethod
+    def _all_field_choices():
+        names = []
+        for key in WATCHABLE_MODELS:
+            for name in watchable_fields(resolve_model(key)):
+                if name not in names:
+                    names.append(name)
+        return [(name, name) for name in sorted(names)]
 
 
 class AlertForm(AeroModelForm):

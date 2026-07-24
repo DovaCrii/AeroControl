@@ -1,11 +1,12 @@
 import logging
 from datetime import date, timedelta
 
-from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand
+from django.db import models
 
 from apps.compliance.models import Alert, AlertRule
+from apps.compliance.watchables import resolve_model, watchable_fields
 from apps.core.jobs import record_job_run
 
 logger = logging.getLogger("compliance.alerts")
@@ -32,10 +33,10 @@ class Command(BaseCommand):
         tasks_created = 0
         today = date.today()
         for rule in AlertRule.objects.filter(enabled=True, is_active=True):
-            model = self._find_model(rule.entity_type)
+            model = resolve_model(rule.entity_type)
             if model is None:
                 reason = "unknown_entity_type"
-            elif not hasattr(model, rule.field_to_watch):
+            elif rule.field_to_watch not in watchable_fields(model):
                 reason = "unknown_field_to_watch"
             else:
                 reason = None
@@ -57,7 +58,9 @@ class Command(BaseCommand):
             content_type = ContentType.objects.get_for_model(model)
             field = rule.field_to_watch
             records = model.objects.filter(is_active=True)
-            if field.endswith("expiry_date") or field.endswith("date"):
+            # The field is known to be watchable at this point, so branch on its
+            # actual type rather than guessing from the name.
+            if isinstance(model._meta.get_field(field), models.DateField):
                 records = records.filter(
                     **{
                         f"{field}__isnull": False,
@@ -65,10 +68,8 @@ class Command(BaseCommand):
                         + timedelta(days=rule.days_before_expiry),
                     }
                 )
-            elif field == "status":
+            else:  # a `status` field with choices
                 records = records.exclude(status__in=("completed", "denied"))
-            else:
-                continue
             for record in records:
                 if Alert.objects.filter(
                     alert_rule=rule,
@@ -90,11 +91,3 @@ class Command(BaseCommand):
                 if alert.ensure_follow_up_task() is not None:
                     tasks_created += 1
         return generated, duplicates, tasks_created
-
-    @staticmethod
-    def _find_model(entity_type):
-        target = entity_type.replace("_", "").replace("-", "").lower()
-        for model in apps.get_models():
-            if model.__name__.replace("_", "").lower() == target:
-                return model
-        return None
