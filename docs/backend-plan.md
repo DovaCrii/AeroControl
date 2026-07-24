@@ -26,7 +26,8 @@ replace an independent backup and restore process.
 ## Delivery sequence
 
 1. Keep the local SQLite workflow stable and finish the current CI/quality PRs.
-2. Use `scripts/backup-local.ps1` to create snapshots outside the repository.
+2. Use `scripts/backup-local.ps1` to create snapshots outside the repository;
+   OneDrive may hold a second copy, but never the live SQLite used concurrently.
 3. Verify every snapshot with `scripts/verify-local-backup.ps1` and perform a
    restore drill using a disposable database. The synthetic drill is now
    implemented by `scripts/restore-local.ps1`.
