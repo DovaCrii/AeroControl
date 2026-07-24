@@ -112,5 +112,6 @@ privados en GitHub.
 | 2026-07-24 | Restauración al PC | Correcta | `D:\I+D\AeroOpsDesk_Data-PC` |
 | 2026-07-24 | Pruebas de planificación y traducciones | 5 pruebas correctas | Commit `f1cd158` |
 | 2026-07-24 | Inventario de OneDrive desde el PC | 1 snapshot visible; B-01 sigue pendiente | `AeroControl-Backups` |
+| 2026-07-24 | Revisión B-01 desde el PC | Aplicación activa (`/health/` 200); no se creó copia mientras SQLite está en uso | Detener Django en el equipo activo antes del próximo snapshot |
 
 Completar esta tabla después de cada ejecución de respaldo o restauración.
