@@ -15,6 +15,11 @@ param(
     [string]$DigestAt = "07:00",
     [ValidatePattern("^([01][0-9]|2[0-3]):[0-5][0-9]$")]
     [string]$BackupAt = "21:00",
+    # Weekly executive report (Bloque 6.2)
+    [ValidatePattern("^([01][0-9]|2[0-3]):[0-5][0-9]$")]
+    [string]$ExecutiveReportAt = "07:30",
+    [ValidateSet("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")]
+    [string]$ExecutiveReportDay = "Monday",
     [string]$TaskPrefix = "AeroControl",
     # Optional .env consumed by the scheduled run. Scheduled tasks do not
     # inherit your interactive shell, so without this the jobs fall back to the
@@ -34,12 +39,15 @@ if ($EnvFile -and -not (Test-Path -LiteralPath $EnvFile)) {
 }
 
 $jobs = @(
-    @{ Name = "GenerateAlerts"; Command = "generate_alerts"; At = $AlertsAt
+    @{ Name = "GenerateAlerts"; Command = "generate_alerts"; At = $AlertsAt; Weekly = $null
        Description = "Generate compliance alerts and their follow-up tasks" }
-    @{ Name = "AlertDigest"; Command = "send_alert_digest"; At = $DigestAt
+    @{ Name = "AlertDigest"; Command = "send_alert_digest"; At = $DigestAt; Weekly = $null
        Description = "Email expiry digests to cost center leads" }
-    @{ Name = "Backup"; Command = "backup"; At = $BackupAt
+    @{ Name = "Backup"; Command = "backup"; At = $BackupAt; Weekly = $null
        Description = "Create a verified database backup" }
+    @{ Name = "ExecutiveReport"; Command = "send_executive_report"
+       At = $ExecutiveReportAt; Weekly = $ExecutiveReportDay
+       Description = "Email the weekly executive compliance report" }
 )
 
 foreach ($job in $jobs) {
@@ -62,11 +70,18 @@ foreach ($job in $jobs) {
 
     $runAt = [datetime]::ParseExact($job.At, "HH:mm", [Globalization.CultureInfo]::InvariantCulture)
     $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $arguments -WorkingDirectory $repoRoot
-    $trigger = New-ScheduledTaskTrigger -Daily -At $runAt
+    if ($job.Weekly) {
+        $trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek $job.Weekly -At $runAt
+        $cadence = "weekly on $($job.Weekly) at $($job.At)"
+    }
+    else {
+        $trigger = New-ScheduledTaskTrigger -Daily -At $runAt
+        $cadence = "daily at $($job.At)"
+    }
 
     Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger `
         -Description $job.Description -Force | Out-Null
-    Write-Host "Scheduled task registered: $taskName (daily at $($job.At))"
+    Write-Host "Scheduled task registered: $taskName ($cadence)"
 }
 
 if (-not $Unregister) {

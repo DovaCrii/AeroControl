@@ -1,0 +1,75 @@
+{% load i18n %}<!doctype html>
+<html lang="es">
+<body style="margin:0;padding:24px;background:#f4f6f9;font-family:Segoe UI,Arial,sans-serif;color:#1b2a4a;">
+  <div style="max-width:680px;margin:0 auto;background:#ffffff;border:1px solid #dde3ec;border-radius:10px;overflow:hidden;">
+    <div style="padding:22px 26px;background:#1b2a4a;color:#ffffff;">
+      <h1 style="margin:0;font-size:19px;">{% blocktranslate with period=period_label %}Executive compliance report ({{ period }}){% endblocktranslate %}</h1>
+      <p style="margin:6px 0 0;font-size:13px;opacity:.85;">{{ report.period.start|date:"Y-m-d" }} — {{ report.period.end|date:"Y-m-d" }}</p>
+    </div>
+
+    <div style="padding:20px 26px;">
+      <table role="presentation" style="width:100%;border-collapse:collapse;margin-bottom:22px;">
+        <tr>
+          <td style="padding:12px;background:#f4f6f9;border-radius:8px;text-align:center;">
+            <div style="font-size:24px;font-weight:700;">{{ report.totals.valid_pct }}%</div>
+            <div style="font-size:12px;color:#66748c;">{% translate "Valid documents" %}</div>
+          </td>
+          <td style="width:10px;"></td>
+          <td style="padding:12px;background:#f4f6f9;border-radius:8px;text-align:center;">
+            <div style="font-size:24px;font-weight:700;color:#c0392b;">{{ report.totals.expired }}</div>
+            <div style="font-size:12px;color:#66748c;">{% translate "Expired" %}</div>
+          </td>
+          <td style="width:10px;"></td>
+          <td style="padding:12px;background:#f4f6f9;border-radius:8px;text-align:center;">
+            <div style="font-size:24px;font-weight:700;color:#d97706;">{{ report.totals.due_30 }}</div>
+            <div style="font-size:12px;color:#66748c;">{% translate "Expiring (30 d)" %}</div>
+          </td>
+          <td style="width:10px;"></td>
+          <td style="padding:12px;background:#f4f6f9;border-radius:8px;text-align:center;">
+            <div style="font-size:24px;font-weight:700;">{{ report.open_alerts|length }}</div>
+            <div style="font-size:12px;color:#66748c;">{% translate "Open alerts" %}</div>
+          </td>
+        </tr>
+      </table>
+
+      <h2 style="font-size:14px;margin:0 0 8px;">{% translate "Compared with the previous period" %}</h2>
+      <table role="presentation" style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:22px;">
+        {% for row in comparison %}
+        <tr>
+          <td style="padding:7px 0;border-bottom:1px solid #eef1f6;">{{ row.label }}</td>
+          <td style="padding:7px 0;border-bottom:1px solid #eef1f6;text-align:right;font-weight:700;">{{ row.current }}</td>
+          <td style="padding:7px 0 7px 12px;border-bottom:1px solid #eef1f6;text-align:right;color:{% if row.direction == 'better' %}#1d8a4e{% elif row.direction == 'worse' %}#c0392b{% else %}#66748c{% endif %};">
+            {{ row.delta|stringformat:"+g" }}{% if row.direction == 'better' %} ▲{% elif row.direction == 'worse' %} ▼{% endif %}
+          </td>
+          <td style="padding:7px 0 7px 12px;border-bottom:1px solid #eef1f6;text-align:right;color:#66748c;">{% translate "prev." %} {{ row.previous }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+
+      <h2 style="font-size:14px;margin:0 0 8px;">{% translate "By cost center" %}</h2>
+      <table role="presentation" style="width:100%;border-collapse:collapse;font-size:13px;">
+        <tr style="color:#66748c;font-size:12px;">
+          <td style="padding:4px 0;">{% translate "Cost center" %}</td>
+          <td style="padding:4px 0;text-align:right;">{% translate "Valid" %}</td>
+          <td style="padding:4px 0;text-align:right;">{% translate "Expired" %}</td>
+          <td style="padding:4px 0;text-align:right;">{% translate "Expiring" %}</td>
+        </tr>
+        {% for row in report.by_cost_center %}
+        <tr>
+          <td style="padding:7px 0;border-bottom:1px solid #eef1f6;"><strong>{{ row.code }}</strong> <span style="color:#66748c;">{{ row.name }}</span></td>
+          <td style="padding:7px 0;border-bottom:1px solid #eef1f6;text-align:right;">{{ row.valid_pct }}%</td>
+          <td style="padding:7px 0;border-bottom:1px solid #eef1f6;text-align:right;">{{ row.expired }}</td>
+          <td style="padding:7px 0;border-bottom:1px solid #eef1f6;text-align:right;">{{ row.due_30 }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+
+      <p style="margin:24px 0 0;font-size:13px;">
+        {% translate "The attached spreadsheet has the full breakdown." %}
+        <a href="{{ base_url }}/compliance/report/" style="color:#1b2a4a;">{% translate "Open the report in AeroControl" %}</a>
+      </p>
+      <p style="margin:20px 0 0;font-size:12px;color:#66748c;">{% translate "This is an automated message from AeroControl." %}</p>
+    </div>
+  </div>
+</body>
+</html>

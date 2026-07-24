@@ -5,7 +5,12 @@
 # Scheduler, which reports the "last result" you see in its UI).
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet("generate_alerts", "send_alert_digest", "backup")]
+    [ValidateSet(
+        "generate_alerts",
+        "send_alert_digest",
+        "backup",
+        "send_executive_report"
+    )]
     [string]$Command,
     [string]$EnvFile = ""
 )

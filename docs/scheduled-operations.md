@@ -9,9 +9,14 @@ resumen corto), así que después se puede comprobar si realmente corrieron.
 | `generate_alerts` | Genera alertas de vencimiento y sus tareas de seguimiento en el tablero | Diario, temprano |
 | `send_alert_digest` | Envía por correo el resumen de vencimientos a cada responsable de centro de costo | Diario, después de las alertas |
 | `backup` | Crea un respaldo de la base con manifiesto y checksum | Diario, fuera de horario |
+| `send_executive_report` | Envía el informe ejecutivo con KPIs del período vs el anterior y el XLSX adjunto | Semanal (lunes) |
 
 El orden importa: `send_alert_digest` reporta lo que `generate_alerts` acaba de
 detectar, así que conviene dejar un margen entre ambos.
+
+`send_executive_report` va a los usuarios del grupo **Dirección** que tengan
+correo, o a los que se indiquen con `--to`. Si no hay ninguno, el comando falla
+con un mensaje claro en vez de enviar a nadie en silencio.
 
 ## Windows (Programador de tareas)
 
@@ -22,7 +27,8 @@ detectar, así que conviene dejar un margen entre ambos.
 Horas personalizables y desregistro:
 
 ```powershell
-./scripts/schedule_tasks.ps1 -AlertsAt "06:30" -DigestAt "07:15" -BackupAt "22:00"
+./scripts/schedule_tasks.ps1 -AlertsAt "06:30" -DigestAt "07:15" -BackupAt "22:00" `
+  -ExecutiveReportDay Monday -ExecutiveReportAt "07:30"
 ./scripts/schedule_tasks.ps1 -Unregister
 ```
 
@@ -51,6 +57,7 @@ Con el repositorio en `/opt/aerocontrol` y las variables en
   0  6   *   *   *   cd /opt/aerocontrol && set -a && . /etc/aerocontrol.env && set +a && uv run python manage.py generate_alerts >> /var/log/aerocontrol/cron.log 2>&1
   0  7   *   *   *   cd /opt/aerocontrol && set -a && . /etc/aerocontrol.env && set +a && uv run python manage.py send_alert_digest >> /var/log/aerocontrol/cron.log 2>&1
   0 21   *   *   *   cd /opt/aerocontrol && set -a && . /etc/aerocontrol.env && set +a && uv run python manage.py backup >> /var/log/aerocontrol/cron.log 2>&1
+ 30  7   *   *   1   cd /opt/aerocontrol && set -a && . /etc/aerocontrol.env && set +a && uv run python manage.py send_executive_report --period week >> /var/log/aerocontrol/cron.log 2>&1
 ```
 
 `set -a` exporta las variables del archivo al entorno del comando, que es el

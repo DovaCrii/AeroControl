@@ -1,0 +1,20 @@
+{% load i18n %}{% blocktranslate with period=period_label %}AeroControl — executive compliance report ({{ period }}){% endblocktranslate %}
+{% translate "Period" %}: {{ report.period.start|date:"Y-m-d" }} — {{ report.period.end|date:"Y-m-d" }}
+
+{% translate "Summary" %}
+- {% blocktranslate with valid=report.totals.valid total=report.totals.total pct=report.totals.valid_pct %}{{ valid }} of {{ total }} current documents are valid ({{ pct }}%).{% endblocktranslate %}
+- {% blocktranslate with expired=report.totals.expired %}{{ expired }} expired.{% endblocktranslate %}
+- {% blocktranslate with due=report.totals.due_30 %}{{ due }} expiring within 30 days.{% endblocktranslate %}
+- {% blocktranslate with open=report.open_alerts|length %}{{ open }} open alerts.{% endblocktranslate %}
+
+{% translate "Compared with the previous period" %}
+{% for row in comparison %}- {{ row.label }}: {{ row.current }} ({% translate "previous" %} {{ row.previous }}, {{ row.delta|stringformat:"+g" }}){% if row.direction == "better" %} ▲{% elif row.direction == "worse" %} ▼{% endif %}
+{% endfor %}
+{% translate "By cost center" %}
+{% for row in report.by_cost_center %}- {{ row.code }} {{ row.name }}: {{ row.valid_pct }}% {% translate "valid" %}, {{ row.expired }} {% translate "expired" %}, {{ row.due_30 }} {% translate "expiring" %}
+{% endfor %}
+{% translate "The attached spreadsheet has the full breakdown." %}
+{{ base_url }}/compliance/report/
+
+--
+{% translate "This is an automated message from AeroControl." %}
