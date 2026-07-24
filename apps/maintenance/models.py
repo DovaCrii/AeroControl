@@ -35,7 +35,7 @@ class MaintenanceRecord(BaseModel):
 
 class MaintenanceHistory(BaseModel):
     record = models.ForeignKey(
-        MaintenanceRecord, on_delete=models.CASCADE, related_name="history"
+        MaintenanceRecord, on_delete=models.PROTECT, related_name="history"
     )
     changed_at = models.DateTimeField(auto_now_add=True)
     previous_status = models.CharField(max_length=20)

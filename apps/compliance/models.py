@@ -34,7 +34,7 @@ class DocumentType(BaseModel):
 
 
 class Document(BaseModel):
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    content_type = models.ForeignKey(ContentType, on_delete=models.PROTECT)
     object_id = models.UUIDField()
     content_object = GenericForeignKey("content_type", "object_id")
     doc_type = models.ForeignKey(DocumentType, on_delete=models.PROTECT)
@@ -67,8 +67,8 @@ class AlertRule(BaseModel):
 class Alert(BaseModel):
     triggered_at = models.DateTimeField(auto_now_add=True)
     resolved_at = models.DateTimeField(null=True, blank=True)
-    alert_rule = models.ForeignKey(AlertRule, on_delete=models.CASCADE)
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    alert_rule = models.ForeignKey(AlertRule, on_delete=models.PROTECT)
+    content_type = models.ForeignKey(ContentType, on_delete=models.PROTECT)
     object_id = models.UUIDField()
     content_object = GenericForeignKey("content_type", "object_id")
     message = models.TextField()

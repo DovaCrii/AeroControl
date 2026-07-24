@@ -1,5 +1,9 @@
+from datetime import date
+
 import pytest
+from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db.models import ProtectedError
 
 from apps.compliance import storage as storage_module
 from apps.compliance.storage import (
@@ -9,6 +13,57 @@ from apps.compliance.storage import (
     S3DocumentStorage,
     get_document_storage,
 )
+from apps.compliance.models import Alert, AlertRule, Document, DocumentType
+from apps.registry.models import Aircraft, CostCenter
+
+
+@pytest.mark.django_db
+def test_document_content_type_cannot_be_deleted_while_referenced():
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    doc_type = DocumentType.objects.create(code="cert", name="Certificate")
+    aircraft_type = ContentType.objects.get_for_model(Aircraft)
+    Document.objects.create(
+        title="Cert",
+        doc_type=doc_type,
+        content_type=aircraft_type,
+        object_id=aircraft.pk,
+        file_path="cert/aircraft/file.pdf",
+        issue_date=date(2026, 1, 1),
+    )
+
+    with pytest.raises(ProtectedError):
+        aircraft_type.delete()
+
+
+@pytest.mark.django_db
+def test_alert_rule_cannot_be_deleted_while_it_has_alerts():
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    rule = AlertRule.objects.create(
+        name="Aircraft status", entity_type="aircraft", field_to_watch="status"
+    )
+    Alert.objects.create(
+        alert_rule=rule,
+        content_type=ContentType.objects.get_for_model(Aircraft),
+        object_id=aircraft.pk,
+        message="test alert",
+    )
+
+    with pytest.raises(ProtectedError):
+        rule.delete()
 
 
 @pytest.mark.django_db
