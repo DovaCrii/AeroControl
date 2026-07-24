@@ -103,6 +103,11 @@ class AssignmentForm(AeroModelForm):
             "status": _("Status"),
         }
 
+    # A previous __init__ here re-translated Assignment.STATUS_CHOICES at
+    # runtime. That is no longer needed: the choices carry gettext_lazy labels
+    # in the model, so the form picks up the active language on its own.
+    # Verified identical output both ways before removing it.
+
     def clean(self):
         cleaned = super().clean()
         operator = cleaned.get("operator")
@@ -110,8 +115,14 @@ class AssignmentForm(AeroModelForm):
         start_date = cleaned.get("start_date")
         end_date = cleaned.get("end_date")
         status = cleaned.get("status")
+        cost_center = cleaned.get("cost_center")
         if not operator or not aircraft or not start_date:
             return cleaned
+        if status == "confirmed" and not cost_center:
+            self.add_error(
+                "cost_center",
+                _("Una asignación confirmada requiere un centro de costo."),
+            )
         end = end_date or start_date
         overlap = Assignment.objects.filter(
             is_active=True,
