@@ -29,7 +29,7 @@ provided.
 La adaptación para el Capítulo 1 vigente permite validar y cargar directamente
 el documento oficial sin copiarlo al repositorio:
 
-    uv run python manage.py chapter1_docx_import --source "D:\ruta\1 Capítulo 1 202607_R16.docx" --cost-centers "D:\I+D\AeroOpsDesk_Data\imports\20260723_centros_costo.csv" --export-dir "D:\I+D\AeroOpsDesk_Data\imports\chapter1-YYYYMMDD"
+    uv run python manage.py chapter1_docx_import --source "C:\ruta\1 Capítulo 1 202607_R16.docx" --cost-centers "C:\AeroControl_Data\imports\20260723_centros_costo.csv" --export-dir "C:\AeroControl_Data\imports\chapter1-YYYYMMDD"
 
 El comando genera un informe JSON y CSV fuera del repositorio. Sólo después de
 revisar duplicados y el informe de calidad se aplica la carga agregando
