@@ -11,6 +11,7 @@ from uuid import uuid4
 
 from apps.core.models import BaseModel
 from apps.workboard.models import KanbanBoard, KanbanStage, KanbanTask
+from .watchables import resolve_model, watchable_fields
 
 DGAC_BOARD_NAME = "Cumplimiento DGAC"
 
@@ -112,15 +113,41 @@ class AlertRule(BaseModel):
 
     def clean(self):
         super().clean()
-        if not self.create_kanban_task:
-            return
-        if not self.target_board_id or not self.target_stage_id:
-            raise ValidationError(
-                "target_board and target_stage are required when "
-                "create_kanban_task is enabled."
+        errors = {}
+
+        # A rule pointing at a model or field that does not exist used to be
+        # accepted and then skipped every night without anyone noticing.
+        model = resolve_model(self.entity_type)
+        if model is None:
+            errors["entity_type"] = _(
+                "Unknown entity type. Choose one of the watchable models."
             )
-        if self.target_stage.board_id != self.target_board_id:
-            raise ValidationError("target_stage must belong to target_board.")
+        else:
+            allowed = watchable_fields(model)
+            if self.field_to_watch not in allowed:
+                errors["field_to_watch"] = _(
+                    "%(field)s is not a watchable field of %(model)s. "
+                    "Available: %(allowed)s"
+                ) % {
+                    "field": self.field_to_watch,
+                    "model": model._meta.verbose_name,
+                    "allowed": ", ".join(allowed) or "-",
+                }
+
+        if self.create_kanban_task:
+            if not self.target_board_id or not self.target_stage_id:
+                errors["target_board"] = _(
+                    "A board and a stage are required to create Kanban tasks."
+                )
+            elif self.target_stage.board_id != self.target_board_id:
+                errors["target_stage"] = _("The stage must belong to the board.")
+
+        if errors:
+            raise ValidationError(errors)
+
+    @property
+    def watched_model(self):
+        return resolve_model(self.entity_type)
 
 
 class Alert(BaseModel):
