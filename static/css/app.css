@@ -445,7 +445,9 @@ body {
 }
 
 [data-theme="dark"] .sidebar-label {
-  color: #6b7a8f;
+  /* #6b7a8f measured 3.79:1 against the dark sidebar at 10.9px, under the
+     4.5:1 AA floor; this brighter grey clears it. */
+  color: #a9b6c9;
 }
 
 [data-theme="dark"] .nav-overview .nav-icon { color: #6ed4e3; }
@@ -724,7 +726,22 @@ main {
 .sidebar-toolbar-title { color: var(--ac-text-muted); font-size: 0.68rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
 .sidebar-collapse { display: inline-grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 1px solid var(--ac-border); border-radius: 8px; background: var(--ac-surface-raised); color: var(--ac-text-secondary); }
 .sidebar-collapse:hover, .sidebar-collapse:focus-visible { color: var(--ac-text); border-color: var(--ac-primary); background: var(--ac-primary-soft); }
-.sidebar-label { color: var(--ac-text-secondary); margin-top: 0.85rem; padding-inline: 0.45rem; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
+/* Group headings: --ac-text-secondary only reached 3.79:1 at this size,
+   below the 4.5:1 AA floor. A brighter token plus a hairline rule above each
+   group makes the sections readable and visually separated. */
+.sidebar-label {
+  color: var(--ac-text);
+  margin-top: 1.1rem;
+  padding-block: 0.55rem 0.35rem;
+  padding-inline: 0.45rem;
+  border-top: 1px solid var(--ac-border);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+.sidebar-label:first-of-type { border-top: 0; margin-top: 0.4rem; }
 .sidebar hr { border-color: var(--ac-border); opacity: 1; }
 
 .sidebar.is-collapsed {
@@ -737,9 +754,27 @@ main {
 .sidebar.is-collapsed .sidebar-toolbar { justify-content: center; padding-inline: 0; }
 .sidebar.is-collapsed .sidebar-toolbar-title { display: none; }
 .sidebar.is-collapsed .sidebar-collapse svg { transform: rotate(180deg); }
-.sidebar.is-collapsed .nav-item { justify-content: center; padding-inline: 0; font-size: 0; }
+.sidebar.is-collapsed .nav-item { position: relative; justify-content: center; padding-inline: 0; font-size: 0; }
 .sidebar.is-collapsed .nav-icon { margin: 0; }
-.sidebar.is-collapsed .nav-item .badge { display: none; }
+
+/* Keep the pending-alert count visible while collapsed: it is the one piece of
+   live state in the nav, so hiding it removed the reason to glance at it.
+   Rendered as a compact dot-badge pinned to the icon. */
+.sidebar.is-collapsed .nav-item .badge {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 9px;
+  border: 2px solid var(--ac-surface);
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 13px;
+  text-align: center;
+}
+.sidebar.is-collapsed .nav-item .badge:empty { display: none; }
 
 .page-header,
 .toolbar,
@@ -824,6 +859,37 @@ main {
 .kanban-status,
 .kanban-label,
 .kanban-priority { border-radius: 999px; }
+
+/* Stage badges: the .status-* classes were used by the Kanban templates but
+   never defined, so stage state rendered as bare text. One shared chip shape
+   plus a per-state accent keeps the six DGAC stages distinguishable, and the
+   left border on the card body means state is not signalled by colour alone. */
+.kanban-status {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border: 1px solid var(--stage-color, var(--ac-border));
+  background: color-mix(in srgb, var(--stage-color, var(--ac-border)) 18%, transparent);
+  color: var(--ac-text);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.status-pending { --stage-color: #8d9bb0; }
+.status-planned { --stage-color: #4c9ce6; }
+.status-in_progress { --stage-color: #e0a34b; }
+.status-blocked { --stage-color: #e2635c; }
+.status-review { --stage-color: #a184f0; }
+.status-completed { --stage-color: #34c98b; }
+.status-custom { --stage-color: var(--ac-primary); }
+
+/* Overdue emphasis: .is-overdue was referenced by the card template with no
+   styling, so an overdue task looked identical to any other. */
+.kanban-due.is-overdue {
+  color: #ff8a80;
+  font-weight: 700;
+}
+.kanban-due.is-overdue::before { content: "\26A0\FE0E"; margin-right: 0.3rem; }
 
 .theme-toggle svg { transition: transform 0.2s ease; }
 .theme-toggle[aria-pressed="true"] svg { transform: rotate(25deg); }
@@ -913,15 +979,26 @@ main {
 .fc .fc-button:hover, .fc .fc-button-primary:not(:disabled).fc-button-active { background: var(--ac-primary); border-color: var(--ac-primary); color: #fff; }
 .fc .fc-daygrid-day-number { color: var(--ac-text-secondary); }
 .fc .fc-col-header-cell-cushion { color: var(--ac-text-secondary); font-size: 0.78rem; text-transform: uppercase; }
-.fc-event { border: 0; border-radius: 5px; padding: 0.15rem 0.3rem; font-size: 0.76rem; font-weight: 650; cursor: pointer; }
-.calendar-fallback .calendar-day { min-width: 8rem; height: 105px; padding: 0.45rem; text-align: left; vertical-align: top; }
+/* Month-view events wrap to two lines instead of clipping mid-word
+   ("Maria Gonzale…"), and the cell grows to fit them. */
+.fc-event { border: 0; border-radius: 5px; padding: 0.15rem 0.35rem; font-size: 0.76rem; font-weight: 650; cursor: pointer; }
+.fc-daygrid-event .fc-event-title { white-space: normal; overflow-wrap: anywhere; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.fc .fc-daygrid-day-frame { min-height: 6.2rem; }
+.fc-daygrid-event { margin-block: 1px; }
+
+.calendar-fallback .calendar-day { min-width: 8rem; height: auto; min-height: 105px; padding: 0.45rem; text-align: left; vertical-align: top; }
 .calendar-day.is-empty { background: var(--ac-bg); }
 .calendar-day.is-today { background: var(--ac-primary-soft); }
-.calendar-event { display: block; overflow: hidden; margin-top: 0.35rem; padding: 0.2rem 0.35rem; border-left: 3px solid currentColor; border-radius: 4px; color: var(--ac-text-secondary); font-size: 0.73rem; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+.calendar-event { display: block; overflow: hidden; margin-top: 0.35rem; padding: 0.2rem 0.35rem; border-left: 3px solid currentColor; border-radius: 4px; color: var(--ac-text-secondary); font-size: 0.73rem; text-decoration: none; line-height: 1.25; overflow-wrap: anywhere; }
 .calendar-event:hover { color: var(--ac-text); background: var(--ac-primary-soft); }
 .event-permission { color: #b26900; }
 .event-maintenance { color: #7650c8; }
 .event-task { color: #087f78; }
+/* Those three are tuned for the light surface; on the dark surface they drop
+   well under AA, so each gets a lighter counterpart. */
+[data-theme="dark"] .event-permission, [data-bs-theme="dark"] .event-permission { color: #f0b45f; }
+[data-theme="dark"] .event-maintenance, [data-bs-theme="dark"] .event-maintenance { color: #b79cf5; }
+[data-theme="dark"] .event-task, [data-bs-theme="dark"] .event-task { color: #46c9bd; }
 
 /* ── Administration center ───────────────────────── */
 .admin-center-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
@@ -951,7 +1028,10 @@ main {
 .kanban-cards { min-height: 120px; padding: 0.65rem; }
 .kanban-card { background: var(--ac-surface); border: 1px solid var(--ac-border); border-left-width: 4px; box-shadow: 0 4px 12px rgba(18,34,59,.06); }
 .kanban-card:hover { border-color: var(--ac-primary); box-shadow: 0 8px 18px rgba(18,34,59,.11); }
-.kanban-card-title { display: block; color: var(--ac-text); font-size: 0.94rem; line-height: 1.35; }
+/* Titles are the densest text on the board; a permanent underline made every
+   card look heavy, so it moves to hover/focus while staying a real link. */
+.kanban-card-title { display: block; color: var(--ac-text); font-size: 0.94rem; font-weight: 600; line-height: 1.35; text-decoration: none; }
+.kanban-card-title:hover, .kanban-card-title:focus-visible { color: var(--ac-primary); text-decoration: underline; }
 .kanban-assignee, .kanban-due { color: var(--ac-text-secondary); }
 .kanban-footer { border-top-color: var(--ac-border); }
 .kanban-footer .btn { border-style: dashed; }

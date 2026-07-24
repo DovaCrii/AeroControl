@@ -27,6 +27,10 @@ class MaintenanceRecord(BaseModel):
     cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     status = models.CharField(max_length=20, choices=STATUSES, default="pending")
 
+    class Meta:
+        verbose_name = _("maintenance record")
+        verbose_name_plural = _("maintenance records")
+
     def __str__(self):
         return f"{self.get_maintenance_type_display()} · {self.aircraft}"
 

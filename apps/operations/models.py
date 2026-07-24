@@ -23,6 +23,10 @@ class FlightPermission(BaseModel):
         max_length=20, choices=STATUS_CHOICES, default="requested"
     )
 
+    class Meta:
+        verbose_name = _("flight permission")
+        verbose_name_plural = _("flight permissions")
+
     def __str__(self):
         return self.permission_number
 

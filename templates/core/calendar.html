@@ -80,7 +80,13 @@ document.addEventListener('DOMContentLoaded', function () {
       const params = new URLSearchParams({ start: info.startStr, end: info.endStr, types: typeQuery(), board: '{{ selected_calendar_board }}', cost_center: costCenter.value, aircraft: aircraft.value, operator: operator.value });
       fetch(root.dataset.eventsUrl + '?' + params.toString()).then(function (response) { if (!response.ok) throw new Error('Calendar request failed'); return response.json(); }).then(success).catch(failure);
     },
-    eventClick: function (info) { if (info.event.url) { info.jsEvent.preventDefault(); window.location.assign(info.event.url); } }
+    eventClick: function (info) { if (info.event.url) { info.jsEvent.preventDefault(); window.location.assign(info.event.url); } },
+    // Titles are kept short so they fit a month cell; the full label (with the
+    // Kanban stage) stays reachable on hover.
+    eventDidMount: function (info) {
+      const full = info.event.extendedProps.tooltip || info.event.title;
+      info.el.setAttribute('title', full);
+    }
   });
   calendar.render(); fallback.hidden = true;
   filter.addEventListener('change', function () { calendar.refetchEvents(); });
