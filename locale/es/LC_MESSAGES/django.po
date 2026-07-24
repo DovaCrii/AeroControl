@@ -28,6 +28,21 @@ msgstr "Panel"
 msgid "Registry"
 msgstr "Registro"
 
+msgid "Archive document?"
+msgstr "¿Archivar documento?"
+
+msgid "This will hide the document without deleting its file."
+msgstr "El documento quedará oculto sin eliminar su archivo."
+
+msgid "Archive"
+msgstr "Archivar"
+
+msgid "The current version will be retained in version history."
+msgstr "La versión actual se conservará en el historial."
+
+msgid "Replace document"
+msgstr "Reemplazar documento"
+
 msgid "Navigation"
 msgstr "Navegación"
 
