@@ -37,7 +37,8 @@ Es el **tablero de bloques**. `BACKLOG.md` queda como registro histórico de lo 
 - **Sin P0 de seguridad.** Los IDOR (F-03–F-06) son gaps reales pero mitigados hoy por `tenant=NULL` universal; se cierran antes de centralizar el servidor (FASE 2).
 - **T3.1 completo** (`6066271`): `Document`/`Alert`/`AlertRule`/historias protegidas de cascada.
 - **BLOQUE 1 (Alertas⇄Kanban) — backend completo y probado** (`6c737fb`, `1b8691b`, `3833d85`, `66ee5b9`): `AlertRule` puede apuntar a un tablero/etapa, `generate_alerts` crea la tarea vinculada con prioridad por urgencia y responsable derivado, resolver la alerta (o reemplazar el documento) cierra la tarea, y `init_dgac_board` siembra el tablero de cumplimiento. **Solo quedan B1.4/B1.5 (UI), que requieren revisión visual en el navegador** — este es el punto de revisión en vivo.
-- FASE 1 (partir `core`, esfuerzo XL) puede esperar — no bloquea a los bloques de producto.
+- **Ruta de ejecución obligatoria** (revisión `PLAN_CLAUDE_CODE_1.md`): Bloque 0 → 1 → 2 → 4-parcial → 6.1/6.2. Diferidos: Bloques 3, 5 (salvo `JobRun`), 6.3 y los dos ítems de diseño del Bloque 4.
+- **Siguiente:** cerrar B1.4/B1.5 (UI, en cuanto haya panel de navegador) y arrancar **BLOQUE 2** (empezando por `JobRun`, B2.0). FASE 1 (partir `core`, XL) puede esperar — no bloquea la ruta de producto.
 
 ---
 
@@ -116,7 +117,7 @@ Es el **tablero de bloques**. `BACKLOG.md` queda como registro histórico de lo 
 | T6.1 | ↪ | P2 | ~~Alertas programadas + notificación email~~ → consolidado y detallado en **BLOQUE 2** (más abajo) | M | FASE 3 |
 | T6.2 | ↪ | P2 | ~~Checklists pre-vuelo cableando `source_object`~~ → consolidado en **BLOQUE 1** (más abajo, `source_object → Alert`, extensible a `FlightPermission`) | M | FASE 3 |
 | T6.3 | ⏸ | P3 | Vista previa de adjuntos (U10) | S | — |
-| T6.4 | ⏸ | P3 | Panel de auditoría en la UI (U11) | M | T1.1 |
+| T6.4 | ↪ | P3 | ~~Panel de auditoría en la UI~~ → consolidado en **BLOQUE 5** (B5.4, vista de auditoría de solo lectura) | M | T1.1 |
 | T6.5 | ⏸ | P2 | Mantenimiento por horas/ciclos (campos nuevos) | L | FASE 3 |
 | T6.6 | ⏸ | P3 | Gestión de baterías (modelo nuevo) | L | FASE 3 |
 | T6.7 | ⏸ | P1 | **DJI Cloud API / telemetría** — diseñar SOLO tras estabilizar tenancy y constraints | XL | FASE 3 |
@@ -125,12 +126,23 @@ Es el **tablero de bloques**. `BACKLOG.md` queda como registro histórico de lo 
 
 ## Bloques de producto (plan externo integrado 2026-07-24)
 
-> Origen: `PLAN_CLAUDE_CODE.md` aportado por el usuario. Se integran aquí como bloques
-> de funcionalidad concreta, con la misma disciplina de una rama por bloque
-> (`codex/<bloque>`, no `feat/...` — ver `AGENTS.md`) y sin mezclar bloques en un PR.
-> No requieren esperar el cierre completo de FASE 1-3, pero **B1 depende de T3.1**
-> (proteger `Alert`/`AlertRule` de `CASCADE` antes de construir más funcionalidad
-> sobre esos modelos — es una tarea S, hacerla primero es barato).
+> Origen: `PLAN_CLAUDE_CODE.md` y su revisión `PLAN_CLAUDE_CODE_1.md`, aportados por
+> el usuario. Se integran aquí como bloques de funcionalidad concreta, con la misma
+> disciplina de una rama por bloque (`codex/<bloque>`, no `feat/...` — ver `AGENTS.md`)
+> y sin mezclar bloques en un PR. **B1 depende de T3.1** (proteger `Alert`/`AlertRule`
+> de `CASCADE` — ya hecho).
+
+### Ruta de ejecución (ORDEN OBLIGATORIO — no seguir el orden numérico)
+
+Un bloque por sesión/PR, en esta secuencia (revisión `PLAN_CLAUDE_CODE_1.md`):
+
+1. **BLOQUE 0** — higiene ✅ (hecho, salvo TL.11 tag/changelog… changelog ✅, falta solo el tag).
+2. **BLOQUE 1** — Alertas ⇄ Kanban: backend ✅; **UI (B1.4/B1.5) pendiente de revisión en vivo**.
+3. **BLOQUE 2** — notificaciones y programación (**incluye el modelo `JobRun`**, adelantado del Bloque 5).
+4. **BLOQUE 4 (parcial)** — SOLO B4.1 (validación de `AlertRule`) y B4.2 (duplicados de operadores). B4.3/B4.4 (habilitaciones DGAC, compatibilidad operador–aeronave) **diferidos** hasta que el usuario apruebe su diseño.
+5. **BLOQUE 6.1 y 6.2** — reporte documental determinista + informe ejecutivo por correo.
+
+**Bloques DIFERIDOS (no ejecutar sin instrucción explícita):** BLOQUE 3 (UX Kanban), BLOQUE 5 (centro de administración, salvo `JobRun` que se adelanta al Bloque 2), BLOQUE 6.3 (asistente IA), y los dos ítems de diseño del Bloque 4. Al terminar la ruta, **detenerse y preguntar** si el usuario no indicó lo contrario.
 
 ### BLOQUE 1 — Integración Alertas ⇄ Kanban `rama codex/alertas-kanban`
 
@@ -150,10 +162,11 @@ Es el **tablero de bloques**. `BACKLOG.md` queda como registro histórico de lo 
 
 **Aceptación del bloque:** pruebas de creación desde regla, creación manual, derivación de responsable, prioridad por urgencia, resolución automática, idempotencia y permisos 403; strings ES/EN; migraciones limpias; `verify.ps1` verde.
 
-### BLOQUE 2 — Notificaciones y programación `rama codex/notificaciones`
+### BLOQUE 2 — Notificaciones y programación `rama codex/notificaciones` `← SIGUIENTE`
 
 | ID | Est. | Prio | Tarea | Esf. | Dep. |
 |---|:--:|:--:|---|:--:|:--:|
+| B2.0 | ⬜ | P2 | **Modelo `JobRun`** en `apps.core` (adelantado del Bloque 5): comando, inicio, fin, resultado (ok/error), resumen corto; índice por comando+fecha. `generate_alerts`, `send_alert_digest` y los scripts de respaldo registran su ejecución. El centro de administración (Bloque 5) lo consumirá después | M | — |
 | B2.1 | ⬜ | P2 | Backend de correo configurable vía `.env` (`EMAIL_HOST*`, `DEFAULT_FROM_EMAIL`; solo nombres de variables, nunca valores); `console.EmailBackend` en dev | S | — |
 | B2.2 | ⬜ | P2 | Comando `send_alert_digest`: resumen por responsable de centro de costo (documentos/habilitaciones que vencen en 30/15/7 días + vencidos), agrupado por urgencia, con `--dry-run`; si falta email, loguear y continuar | M | B2.1 |
 | B2.3 | ⬜ | P3 | Plantilla de correo texto plano + HTML simple, bilingüe | S | B2.2 |
@@ -162,7 +175,7 @@ Es el **tablero de bloques**. `BACKLOG.md` queda como registro histórico de lo 
 
 **Aceptación del bloque:** pruebas con backend `locmem` verificando destinatarios/agrupación/`--dry-run`; sin secretos en el repo; documentación actualizada.
 
-### BLOQUE 3 — Mejoras UX del Kanban `rama codex/kanban-ux` (complementa FASE 5)
+### BLOQUE 3 — Mejoras UX del Kanban `rama codex/kanban-ux` `⏸ DIFERIDO (no ejecutar sin instrucción)`
 
 | ID | Est. | Prio | Tarea | Esf. | Dep. |
 |---|:--:|:--:|---|:--:|:--:|
@@ -174,16 +187,40 @@ Es el **tablero de bloques**. `BACKLOG.md` queda como registro histórico de lo 
 
 **Aceptación del bloque:** pruebas de filtros/agrupación y render de urgencia; revisión de accesibilidad (teclado, contraste); ES/EN.
 
-### BLOQUE 4 — Robustez de reglas y deuda de datos `rama codex/reglas-datos`
+### BLOQUE 4 — Robustez de reglas y deuda de datos `rama codex/reglas-datos` (parcial en la ruta)
 
 | ID | Est. | Prio | Tarea | Esf. | Dep. |
 |---|:--:|:--:|---|:--:|:--:|
-| B4.1 | ⬜ | P2 | `AlertRule.entity_type`/`field_to_watch` validados contra modelos/campos reales (form + `clean()`); migración de datos que archiva (`is_active=False`) reglas inválidas existentes. Relacionado con T3.4 (`TextChoices`) — no duplicar, coordinar en la misma rama si se hacen juntas | M | — |
+| B4.1 | ⬜ | P2 | `AlertRule.entity_type`/`field_to_watch` validados contra modelos/campos reales (form + `clean()`); migración de datos que archiva (`is_active=False`) reglas inválidas existentes. Relacionado con T3.4 (`TextChoices`) — coordinar en la misma rama si se hacen juntas | M | — |
 | B4.2 | ⬜ | P2 | Comando `find_duplicate_operators`: lista los 4 grupos contradictorios (BACKLOG.md) con diferencias campo a campo; `--apply` fusiona (reasigna FKs, archiva duplicado, `AuditEvent`), confirmando por grupo | M | — |
-| B4.3 | ⬜ | P2 | Habilitaciones DGAC: modelo (operador, tipo, vigencia, evidencia vía `Document`, reglas de alerta). **Proponer el diseño en el PR antes de implementar** — requiere validación del usuario | M | Validación del usuario |
-| B4.4 | ⬜ | P2 | Compatibilidad operador–aeronave al crear permisos de vuelo. **Proponer el diseño antes de implementar** — requiere validación del usuario | M | Validación del usuario |
+| B4.3 | ⏸ | P2 | **DIFERIDO** Habilitaciones DGAC: modelo (operador, tipo, vigencia, evidencia vía `Document`, reglas de alerta). Proponer diseño en el PR antes de implementar | M | Aprobación del usuario |
+| B4.4 | ⏸ | P2 | **DIFERIDO** Compatibilidad operador–aeronave al crear permisos de vuelo. Proponer diseño antes de implementar | M | Aprobación del usuario |
 
-**Aceptación del bloque:** B4.1/B4.2 completos con pruebas; B4.3/B4.4 entregados primero como propuesta de diseño validable, implementación solo tras aprobación.
+**Aceptación del bloque:** B4.1/B4.2 completos con pruebas; B4.3/B4.4 solo entran tras aprobación del diseño.
+
+### BLOQUE 5 — Centro de administración operativo `rama codex/admin-center` `⏸ DIFERIDO (salvo B2.0 JobRun, adelantado al Bloque 2)`
+
+Convertir `AdministrationCenterView` + `administration.html` en panel de situación, no solo menú.
+
+| ID | Est. | Prio | Tarea | Esf. | Dep. |
+|---|:--:|:--:|---|:--:|:--:|
+| B5.1 | ⏸ | P2 | Badges por tarjeta: alertas sin resolver, documentos que vencen ≤30 días, reglas activas, usuarios sin grupo (una consulta agregada por métrica) | M | — |
+| B5.2 | ⏸ | P2 | Sección "Salud y operación": último respaldo (fecha+hash), última ejecución de cada job (`JobRun`) con resultado, estado de `/health/`; aviso si un job diario no corre hace >48 h | M | B2.0 |
+| B5.3 | ⏸ | P2 | Acciones rápidas (POST + confirmación + permiso + `AuditEvent`): correr `generate_alerts`, enviar digest de prueba, iniciar respaldo. Documentar el límite de ejecutar en el request | M | B2.0 |
+| B5.4 | ⏸ | P2 | Vista de auditoría de solo lectura (`AuditEvent` filtrable por usuario/modelo/fecha, permiso `view_auditevent`) | M | — |
+| B5.5 | ⏸ | P3 | Panel de usuarios y roles (solo lectura, con enlace al admin técnico) | S | — |
+
+### BLOQUE 6 — Reportes ejecutivos y asistente `rama codex/reportes-ejecutivos` (6.1/6.2 en la ruta; 6.3 diferido)
+
+Depende de los Bloques 1 y 2.
+
+| ID | Est. | Prio | Tarea | Esf. | Dep. |
+|---|:--:|:--:|---|:--:|:--:|
+| B6.1 | ⬜ | P2 | Nivel 1 — `compliance_report` (vista + comando) replicando el patrón CSV/XLSX/DOCX de los reportes Kanban: % documentos vigentes por CC, vencimientos 30/15/7, vencidos, alertas abiertas con antigüedad, tiempo medio alerta→resolución. Filtros CC/tipo/fechas persistidos en URL | L | Bloque 1 |
+| B6.2 | ⬜ | P2 | Nivel 2 — `send_executive_report --period week|month [--to] [--dry-run]`: KPIs del período vs anterior, resumen determinista (texto+HTML), XLSX de 6.1 adjunto; destinatarios configurables; registro en `JobRun`+log. Añadir a `schedule_tasks.ps1` (semanal) | L | B6.1, B2.0, B2.1 |
+| B6.3 | ⏸ | P3 | **DIFERIDO** Nivel 3 — asistente IA (`apps/assistant`): envía SOLO KPIs agregados/códigos (nunca nombres/archivos/datos crudos) a la API de Anthropic; API key solo por `.env`; degradable si no hay red; salida marcada "borrador" con aprobación humana; `AuditEvent` por generación. Proponer diseño antes de implementar | L | Aprobación del usuario |
+
+**Aceptación:** 6.1/6.2 con pruebas (KPIs con datos de prueba, comparación entre períodos, `locmem`, `--dry-run`); 6.3 solo diseño validable salvo aprobación.
 
 ### FASE L — Limpieza y orden del repositorio `puede correr en paralelo a FASE 0`
 
