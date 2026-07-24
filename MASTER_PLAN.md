@@ -35,7 +35,9 @@ Es el **tablero de bloques**. `BACKLOG.md` queda como registro histórico de lo 
 - **Verificación tras el cierre de FASE 0 + higiene:** `pytest` **173/173 verdes** · cobertura real **~84%** (umbral `fail_under=83`) · `ruff check` limpio · `manage.py check --deploy` limpio · `makemigrations --check` limpio.
 - **Nota de entorno:** en el sandbox de esta sesión, `ruff format --check` devuelve código de salida 2 con "Acceso denegado" pese a reportar el chequeo correcto — es un artefacto de este entorno (relación de confianza de dominio rota, confirmado con `icacls`/`whoami`), no un bug del repo ni de `verify.ps1`. Si reaparece en tu máquina, es señal de revisar permisos de `.ruff_cache`/`.pytest_cache`, no de tocar el script.
 - **Sin P0 de seguridad.** Los IDOR (F-03–F-06) son gaps reales pero mitigados hoy por `tenant=NULL` universal; se cierran antes de centralizar el servidor (FASE 2).
-- **Siguiente bloque recomendado:** **T3.1** (`on_delete=CASCADE→PROTECT` en `Alert`/`AlertRule`/historias — esfuerzo S, y desbloquea/protege **BLOQUE 1** que construye fuertemente sobre `AlertRule`), luego **BLOQUE 1** (Alertas⇄Kanban) o **TL.11** (changelog/tag) si se prefiere cerrar la higiene primero. FASE 1 (partir `core`, esfuerzo XL) puede esperar — no bloquea a los bloques de producto.
+- **T3.1 completo** (`6066271`): `Document`/`Alert`/`AlertRule`/historias protegidas de cascada.
+- **BLOQUE 1 (Alertas⇄Kanban) — backend completo y probado** (`6c737fb`, `1b8691b`, `3833d85`, `66ee5b9`): `AlertRule` puede apuntar a un tablero/etapa, `generate_alerts` crea la tarea vinculada con prioridad por urgencia y responsable derivado, resolver la alerta (o reemplazar el documento) cierra la tarea, y `init_dgac_board` siembra el tablero de cumplimiento. **Solo quedan B1.4/B1.5 (UI), que requieren revisión visual en el navegador** — este es el punto de revisión en vivo.
+- FASE 1 (partir `core`, esfuerzo XL) puede esperar — no bloquea a los bloques de producto.
 
 ---
 
@@ -77,7 +79,7 @@ Es el **tablero de bloques**. `BACKLOG.md` queda como registro histórico de lo 
 
 | ID | Est. | Prio | Tarea | Esf. | Dep. |
 |---|:--:|:--:|---|:--:|:--:|
-| T3.1 | ⬜ | P1 | `on_delete=CASCADE → PROTECT` en Document/Alert/historias + respaldo desnormalizado (F-07) | S | — |
+| T3.1 | ✅ | P1 | `on_delete=CASCADE → PROTECT` en Document/Alert/historias (F-07). Respaldo desnormalizado descartado deliberadamente (ver commit `6066271`) | S | — |
 | T3.2 | ⬜ | P1 | ADR + migración de tenancy: `tenant` en 17 modelos, `NOT NULL` con backfill, scoping único (F-08) | XL | T1.1 |
 | T3.3 | ⬜ | P1 | `CheckConstraint` + `UniqueConstraint` compuestos con tenant (F-10) | L | T3.2 |
 | T3.4 | ⬜ | P2 | Migrar estados a `TextChoices` (no cambia el esquema) | M | — |
@@ -136,15 +138,15 @@ Es el **tablero de bloques**. `BACKLOG.md` queda como registro histórico de lo 
 
 | ID | Est. | Prio | Tarea | Esf. | Dep. |
 |---|:--:|:--:|---|:--:|:--:|
-| B1.1 | ⬜ | P2 | `AlertRule`: `create_kanban_task`, `target_board` (FK PROTECT), `target_stage` (FK PROTECT) + validación en `clean()` (etapa pertenece al tablero si `create_kanban_task=True`) | M | T3.1 |
-| B1.2 | ⬜ | P2 | `generate_alerts` crea `KanbanTask` con `source_object=Alert` (a lo sumo una tarea por alerta); título/descripción/`due_date` desde la regla; prioridad `critical`/`high`/`medium` por urgencia | M | B1.1 |
-| B1.3 | ⬜ | P2 | Derivar `assigned_to` (documento → entidad → centro de costo → responsable) cuando sea posible; documentar la regla en el docstring | S | B1.2 |
-| B1.4 | ⬜ | P3 | Botón manual "Crear tarea de seguimiento" en alertas sin tarea vinculada (permiso `add_kanbantask`), reutilizando la lógica de B1.2 (extraer a método de modelo/servicio, no duplicar) | S | B1.2 |
-| B1.5 | ⬜ | P3 | Mostrar el origen (`source_object`) en `_task_detail.html` con enlace a la alerta/entidad | XS | B1.2 |
-| B1.6 | ⬜ | P2 | Al resolver una `Alert`, mover su tarea vinculada a la primera etapa `status_type="completed"` del tablero, registrando `AuditEvent` | S | B1.2 |
-| B1.7 | ⬜ | P2 | `Document.resolve_related_alerts()`: al reemplazar un documento vencido/por vencer (mismo `doc_type`+entidad) resolver sus alertas abiertas automáticamente, con pruebas | M | — |
-| B1.8 | ⬜ | P2 | Idempotencia: correr `generate_alerts` dos veces no duplica tareas (ya existe el control para alertas) | S | B1.2 |
-| B1.9 | ⬜ | P3 | Comando de inicialización: tablero "Cumplimiento DGAC" con etapas (Por vencer → Recopilando → Enviado DGAC → Observado → Aprobado → Archivado) y etiquetas por trámite; `get_or_create`, seguro de re-ejecutar | S | B1.1 |
+| B1.1 | ✅ | P2 | `AlertRule`: `create_kanban_task`, `target_board` (FK PROTECT), `target_stage` (FK PROTECT) + validación en `clean()` | M | T3.1 |
+| B1.2 | ✅ | P2 | `generate_alerts` crea `KanbanTask` con `source_object=Alert`; título/descripción/`due_date`; prioridad por urgencia | M | B1.1 |
+| B1.3 | ✅ | P2 | Derivar `assigned_to` (solo cuando la entidad vigilada es/expone un `Operator`; cost-center descartado por ser texto libre) | S | B1.2 |
+| B1.4 | ⬜ | P3 | **[UI, revisión en vivo]** Botón "Crear tarea de seguimiento" en alertas sin tarea (reutiliza `Alert.ensure_follow_up_task`) | S | B1.2 |
+| B1.5 | ⬜ | P3 | **[UI, revisión en vivo]** Mostrar el origen (`source_object`) en `_task_detail.html` con enlace | XS | B1.2 |
+| B1.6 | ✅ | P2 | `Alert.resolve()` mueve la tarea vinculada a la etapa `completed`, registrando `AuditEvent` (metadata) | S | B1.2 |
+| B1.7 | ✅ | P2 | `Document.resolve_related_alerts()` al reemplazar un documento, con pruebas | M | — |
+| B1.8 | ✅ | P2 | Idempotencia: `generate_alerts` dos veces no duplica tareas | S | B1.2 |
+| B1.9 | ✅ | P3 | Comando `init_dgac_board` (tablero + etapas + etiquetas), `get_or_create`, idempotente | S | B1.1 |
 
 **Aceptación del bloque:** pruebas de creación desde regla, creación manual, derivación de responsable, prioridad por urgencia, resolución automática, idempotencia y permisos 403; strings ES/EN; migraciones limpias; `verify.ps1` verde.
 

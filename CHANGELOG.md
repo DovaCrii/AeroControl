@@ -8,8 +8,27 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
-Trabajo de estabilización (`MASTER_PLAN.md` FASE 0 + higiene del Bloque 0),
-en la rama `codex/impeccable-ui-audit`, aún no mergeado a `main`.
+Trabajo de estabilización (`MASTER_PLAN.md` FASE 0 + higiene del Bloque 0)
+e integración Alertas⇄Kanban (BLOQUE 1, backend), en la rama
+`codex/impeccable-ui-audit`, aún no mergeado a `main`.
+
+### Added (BLOQUE 1 — Alertas ⇄ Kanban, backend)
+- `AlertRule` puede generar una tarea Kanban: campos `create_kanban_task`,
+  `target_board`, `target_stage` con validación de coherencia.
+- `generate_alerts` crea una `KanbanTask` vinculada a la alerta
+  (`source_object`), con prioridad por urgencia (vencida/≤7 días/resto),
+  `due_date` del campo vigilado y responsable derivado cuando la entidad
+  vigilada es o expone un operador. Idempotente.
+- Al resolver una alerta —o al reemplazar el documento vencido— la tarea
+  vinculada se mueve automáticamente a la etapa "completada" del tablero,
+  registrando el movimiento en `AuditEvent`.
+- Comando `init_dgac_board`: tablero "Cumplimiento DGAC" con sus etapas y
+  etiquetas de trámite (idempotente).
+
+### Changed
+- `on_delete` de `Document`/`Alert`/`AlertRule`/`PermissionHistory`/
+  `MaintenanceHistory` cambiado de `CASCADE` a `PROTECT`: el historial de
+  cumplimiento ya no se puede perder por borrado en cascada.
 
 ### Fixed
 - Dashboard: `TemplateSyntaxError` por bloque `extrahead` duplicado que
