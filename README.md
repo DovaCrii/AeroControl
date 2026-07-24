@@ -137,6 +137,8 @@ powershell -ExecutionPolicy Bypass -File ./scripts/verify-local-backup.ps1 `
 powershell -ExecutionPolicy Bypass -File ./scripts/restore-local.ps1 `
   -Snapshot 'E:/AeroControlBackups/aerocontrol_YYYYMMDD_HHMMSS' `
   -DestinationRoot 'E:/AeroControlRestoreDrill/YYYYMMDD'
+powershell -ExecutionPolicy Bypass -File ./scripts/register-backup-task.ps1 `
+  -DestinationRoot 'E:/AeroControlBackups' -DayOfWeek Sunday -At '18:00'
 
 uv run python manage.py cleanup_documents --older-than-days 3650
 uv run python manage.py cleanup_documents --older-than-days 3650 --execute
