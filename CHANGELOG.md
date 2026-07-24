@@ -42,6 +42,21 @@ e integración Alertas⇄Kanban (BLOQUE 1, backend), en la rama
   Programador de tareas de Windows, y `docs/scheduled-operations.md` con el
   procedimiento completo y su equivalente en cron.
 
+### Added (BLOQUE 6 — Reportes ejecutivos)
+- **Reporte de estado documental** (`/compliance/report/`, enlazado en el panel
+  lateral): porcentaje de documentos vigentes por centro de costo, vencimientos
+  a 7/15/30 días, vencidos, alertas abiertas con su antigüedad y tiempo medio
+  entre la detección de una alerta y su resolución. Filtros por centro de costo,
+  tipo de documento y rango de fechas, con exportación a Excel, Word y CSV
+  presentable ante jefatura o DGAC.
+- Comando `compliance_report` con las mismas cifras, que además puede escribir
+  el Excel en una carpeta indicada.
+- Comando `send_executive_report --period week|month`: envía el informe
+  ejecutivo comparando el período con el anterior (marcando si cada indicador
+  mejoró o empeoró) y adjunta el Excel. Destinatarios del grupo *Dirección* o
+  indicados con `--to`; `--dry-run` permite revisar antes de enviar. Registrado
+  como tarea semanal.
+
 ### Added (BLOQUE 4 parcial — Robustez de reglas y deuda de datos)
 - Las reglas de alerta ya no aceptan texto libre: la entidad y el campo a
   vigilar se eligen de una lista validada contra los modelos reales, así que una
