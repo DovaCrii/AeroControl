@@ -1346,3 +1346,138 @@ msgstr "Destinatario de los resúmenes de vencimientos de este centro de costo."
 msgid "Already expired"
 msgstr "Vencidos"
 
+
+#: BLOQUE 6 — reportes de cumplimiento e informe ejecutivo
+msgid "Compliance status report"
+msgstr "Reporte de estado documental"
+
+msgid "AeroControl — Compliance status report"
+msgstr "AeroControl — Reporte de estado documental"
+
+msgid "Document validity, upcoming expiries and alert resolution times."
+msgstr "Vigencia documental, próximos vencimientos y tiempos de resolución de alertas."
+
+msgid "By cost center"
+msgstr "Por centro de costo"
+
+msgid "Current documents"
+msgstr "Documentos vigentes"
+
+msgid "Valid"
+msgstr "Vigentes"
+
+msgid "Valid documents"
+msgstr "Documentos vigentes"
+
+msgid "Valid documents (%)"
+msgstr "Documentos vigentes (%)"
+
+msgid "Expired documents"
+msgstr "Documentos vencidos"
+
+msgid "Expiring within 30 days"
+msgstr "Por vencer en 30 días"
+
+msgid "Expiring (30 d)"
+msgstr "Por vencer (30 d)"
+
+msgid "expiring"
+msgstr "por vencer"
+
+msgid "expired"
+msgstr "vencidos"
+
+msgid "Open alerts"
+msgstr "Alertas abiertas"
+
+msgid "No open alerts."
+msgstr "Sin alertas abiertas."
+
+msgid "No cost centers to report."
+msgstr "No hay centros de costo que informar."
+
+msgid "Alert resolution in the period"
+msgstr "Resolución de alertas en el período"
+
+msgid "Alerts resolved in the period"
+msgstr "Alertas resueltas en el período"
+
+msgid "No alerts were resolved in this period."
+msgstr "No se resolvieron alertas en este período."
+
+msgid "%(count)s alerts resolved, %(days)s days on average."
+msgstr "%(count)s alertas resueltas, %(days)s días en promedio."
+
+msgid "Period"
+msgstr "Período"
+
+msgid "Period analysed: %(start)s to %(end)s"
+msgstr "Período analizado: %(start)s a %(end)s"
+
+msgid "Age"
+msgstr "Antigüedad"
+
+msgid "Apply"
+msgstr "Aplicar"
+
+msgid "From"
+msgstr "Desde"
+
+msgid "Generated"
+msgstr "Generado"
+
+msgid "Summary"
+msgstr "Resumen"
+
+msgid "TOTAL"
+msgstr "TOTAL"
+
+msgid "Excel"
+msgstr "Excel"
+
+msgid "Word"
+msgstr "Word"
+
+msgid "CSV"
+msgstr "CSV"
+
+msgid "Report"
+msgstr "Reporte"
+
+msgid "Compared with the previous period"
+msgstr "Comparado con el período anterior"
+
+msgid "previous"
+msgstr "anterior"
+
+msgid "prev."
+msgstr "ant."
+
+msgid "week"
+msgstr "semana"
+
+msgid "month"
+msgstr "mes"
+
+msgid "AeroControl · executive compliance report (%(period)s)"
+msgstr "AeroControl · informe ejecutivo de cumplimiento (%(period)s)"
+
+msgid "Executive compliance report (%(period)s)"
+msgstr "Informe ejecutivo de cumplimiento (%(period)s)"
+
+msgid "The attached spreadsheet has the full breakdown."
+msgstr "La planilla adjunta tiene el detalle completo."
+
+msgid "Open the report in AeroControl"
+msgstr "Abrir el reporte en AeroControl"
+
+msgid "To"
+msgstr "Hasta"
+
+msgid "Expired"
+msgstr "Vencidos"
+
+msgid "%(days)s day"
+msgid_plural "%(days)s days"
+msgstr[0] "%(days)s día"
+msgstr[1] "%(days)s días"

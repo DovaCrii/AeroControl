@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Compliance status report" %} - AeroControl{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <p class="page-eyebrow mb-1">{% translate "Compliance" %}</p>
+    <h1 class="mb-0">{% translate "Compliance status report" %}</h1>
+    <p class="page-description mb-0">{% translate "Document validity, upcoming expiries and alert resolution times." %}</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a class="btn btn-outline-primary" href="{% url 'compliance-report-xlsx' %}{% if export_query %}?{{ export_query }}{% endif %}">{% translate "Excel" %}</a>
+    <a class="btn btn-outline-primary" href="{% url 'compliance-report-docx' %}{% if export_query %}?{{ export_query }}{% endif %}">{% translate "Word" %}</a>
+    <a class="btn btn-outline-secondary" href="{% url 'compliance-report-csv' %}{% if export_query %}?{{ export_query }}{% endif %}">{% translate "CSV" %}</a>
+  </div>
+</div>
+
+<form method="get" class="card p-3 mb-4">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label" for="cost_center">{% translate "Cost center" %}</label>
+      <select class="form-select" id="cost_center" name="cost_center">
+        <option value="">{% translate "All cost centers" %}</option>
+        {% for center in cost_centers %}<option value="{{ center.pk }}" {% if filter_params.cost_center == center.pk|stringformat:"s" %}selected{% endif %}>{{ center.code }} - {{ center.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label" for="doc_type">{% translate "Document type" %}</label>
+      <select class="form-select" id="doc_type" name="doc_type">
+        <option value="">{% translate "All document types" %}</option>
+        {% for type in document_types %}<option value="{{ type.pk }}" {% if filter_params.doc_type == type.pk|stringformat:"s" %}selected{% endif %}>{{ type.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label" for="start">{% translate "From" %}</label>
+      <input class="form-control" type="date" id="start" name="start" value="{{ report.period.start|date:'Y-m-d' }}">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label" for="end">{% translate "To" %}</label>
+      <input class="form-control" type="date" id="end" name="end" value="{{ report.period.end|date:'Y-m-d' }}">
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-primary w-100">{% translate "Apply" %}</button>
+    </div>
+  </div>
+</form>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-3 col-sm-6"><div class="summary-card"><small>{% translate "Current documents" %}</small><strong>{{ report.totals.total }}</strong></div></div>
+  <div class="col-md-3 col-sm-6"><div class="summary-card"><small>{% translate "Valid" %}</small><strong>{{ report.totals.valid_pct }}%</strong></div></div>
+  <div class="col-md-3 col-sm-6"><div class="summary-card"><small>{% translate "Expired" %}</small><strong>{{ report.totals.expired }}</strong></div></div>
+  <div class="col-md-3 col-sm-6"><div class="summary-card"><small>{% translate "Open alerts" %}</small><strong>{{ report.open_alerts|length }}</strong></div></div>
+</div>
+
+<div class="card mb-4">
+  <div class="p-3 border-bottom"><h2 class="h5 mb-0">{% translate "By cost center" %}</h2></div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr>
+        <th scope="col">{% translate "Cost center" %}</th>
+        <th scope="col" class="text-end">{% translate "Documents" %}</th>
+        <th scope="col" class="text-end">{% translate "Valid" %}</th>
+        <th scope="col" class="text-end">{% translate "Expired" %}</th>
+        <th scope="col" class="text-end">≤7 d</th>
+        <th scope="col" class="text-end">≤15 d</th>
+        <th scope="col" class="text-end">≤30 d</th>
+      </tr></thead>
+      <tbody>
+        {% for row in report.by_cost_center %}
+        <tr>
+          <td><strong>{{ row.code }}</strong> <span class="text-muted">{{ row.name }}</span></td>
+          <td class="text-end">{{ row.total }}</td>
+          <td class="text-end">{{ row.valid_pct }}%</td>
+          <td class="text-end">{% if row.expired %}<span class="badge bg-danger">{{ row.expired }}</span>{% else %}0{% endif %}</td>
+          <td class="text-end">{% if row.due_7 %}<span class="badge bg-warning text-dark">{{ row.due_7 }}</span>{% else %}0{% endif %}</td>
+          <td class="text-end">{{ row.due_15 }}</td>
+          <td class="text-end">{{ row.due_30 }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="99" class="text-center text-muted py-4">{% translate "No cost centers to report." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card mb-4 p-3">
+  <h2 class="h5">{% translate "Alert resolution in the period" %}</h2>
+  {% if report.resolution.resolved_count %}
+  <p class="mb-0">{% blocktranslate with count=report.resolution.resolved_count days=report.resolution.avg_days %}{{ count }} alerts resolved, {{ days }} days on average.{% endblocktranslate %}</p>
+  {% else %}
+  <p class="text-muted mb-0">{% translate "No alerts were resolved in this period." %}</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <div class="p-3 border-bottom"><h2 class="h5 mb-0">{% translate "Open alerts" %}</h2></div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr>
+        <th scope="col">{% translate "Entity" %}</th>
+        <th scope="col">{% translate "Rule" %}</th>
+        <th scope="col">{% translate "Triggered" %}</th>
+        <th scope="col" class="text-end">{% translate "Age" %}</th>
+      </tr></thead>
+      <tbody>
+        {% for alert in report.open_alerts %}
+        <tr>
+          <td><strong>{{ alert.entity }}</strong> <span class="badge bg-secondary-subtle text-secondary-emphasis">{{ alert.entity_type }}</span></td>
+          <td>{{ alert.rule }}</td>
+          <td>{{ alert.triggered_at|date:"Y-m-d" }}</td>
+          <td class="text-end">{% blocktranslate count days=alert.age_days %}{{ days }} day{% plural %}{{ days }} days{% endblocktranslate %}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="99" class="text-center text-muted py-4">{% translate "No open alerts." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,7 +1,25 @@
 from django.urls import path
-from . import views
+from . import report_views, views
 
 urlpatterns = [
+    path(
+        "report/", report_views.ComplianceReportView.as_view(), name="compliance-report"
+    ),
+    path(
+        "report/csv/",
+        report_views.ComplianceReportCsvView.as_view(),
+        name="compliance-report-csv",
+    ),
+    path(
+        "report/xlsx/",
+        report_views.ComplianceReportXlsxView.as_view(),
+        name="compliance-report-xlsx",
+    ),
+    path(
+        "report/docx/",
+        report_views.ComplianceReportDocxView.as_view(),
+        name="compliance-report-docx",
+    ),
     path("document/", views.DocumentList.as_view(), name="document-list"),
     path("document/new/", views.DocumentCreate.as_view(), name="document-create"),
     path(
