@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 from apps.core.models import BaseModel, OperationalTenant
 
 
@@ -29,9 +30,9 @@ class Aircraft(BaseModel):
         related_name="aircraft",
     )
     STATUS_CHOICES = [
-        ("active", "Active"),
-        ("maintenance", "Maintenance"),
-        ("retired", "Retired"),
+        ("active", _("Active")),
+        ("maintenance", _("Maintenance")),
+        ("retired", _("Retired")),
     ]
     registration = models.CharField(max_length=30, unique=True)
     type = models.CharField(max_length=100)
@@ -92,10 +93,10 @@ class Operator(BaseModel):
 
 class Assignment(BaseModel):
     STATUS_CHOICES = [
-        ("planned", "Planned"),
-        ("confirmed", "Confirmed"),
-        ("completed", "Completed"),
-        ("cancelled", "Cancelled"),
+        ("planned", _("Planned")),
+        ("confirmed", _("Confirmed")),
+        ("completed", _("Completed")),
+        ("cancelled", _("Cancelled")),
     ]
     operator = models.ForeignKey(
         Operator, on_delete=models.PROTECT, related_name="assignments"
@@ -157,6 +158,10 @@ class Qualification(BaseModel):
     qualification_type = models.CharField(max_length=150)
     issue_date = models.DateField()
     expiry_date = models.DateField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = _("qualification")
+        verbose_name_plural = _("qualifications")
 
     def __str__(self):
         return f"{self.qualification_type} · {self.operator}"

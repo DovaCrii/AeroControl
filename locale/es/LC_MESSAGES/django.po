@@ -1208,3 +1208,65 @@ msgstr "Generado: %(date)s"
 
 msgid "Registry"
 msgstr "Registro"
+
+#: apps/compliance/views.py templates/compliance/alert_list.html
+msgid "Create task"
+msgstr "Crear tarea"
+
+msgid "View task"
+msgstr "Ver tarea"
+
+msgid "Create a follow-up task on the compliance board"
+msgstr "Crear una tarea de seguimiento en el tablero de cumplimiento"
+
+msgid "Follow-up task created."
+msgstr "Tarea de seguimiento creada."
+
+msgid "No Kanban board is available to hold the follow-up task."
+msgstr "No hay ningún tablero Kanban disponible para alojar la tarea de seguimiento."
+
+msgid "Record unavailable"
+msgstr "Registro no disponible"
+
+#: templates/workboard/_task_detail.html
+msgid "Origin"
+msgstr "Origen"
+
+msgid "View in alerts"
+msgstr "Ver en alertas"
+
+#: model verbose names (shown in alert listings, admin and generic forms)
+msgid "qualification"
+msgstr "habilitación"
+
+msgid "qualifications"
+msgstr "habilitaciones"
+
+msgid "document"
+msgstr "documento"
+
+msgid "documents"
+msgstr "documentos"
+
+msgid "flight permission"
+msgstr "permiso de vuelo"
+
+msgid "flight permissions"
+msgstr "permisos de vuelo"
+
+msgid "maintenance record"
+msgstr "registro de mantenimiento"
+
+msgid "maintenance records"
+msgstr "registros de mantenimiento"
+
+#: templates/workboard/kanban.html
+msgid "Move operational work forward, keep ownership visible and follow every deadline."
+msgstr "Haz avanzar el trabajo operativo, mantén visible al responsable y cumple cada plazo."
+
+msgid "Kanban board"
+msgstr "Tablero Kanban"
+
+msgid "Complete maintenance"
+msgstr "Completar mantenimiento"
+

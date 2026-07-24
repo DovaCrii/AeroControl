@@ -112,7 +112,9 @@ def test_manual_task_creation_without_any_board_reports_error(qualification):
     response = client.post(reverse("alert-create-task", args=[alert.pk]), follow=True)
 
     assert KanbanTask.objects.count() == 0
-    assert any("No Kanban board" in m.message for m in response.context["messages"])
+    # Assert on the message level, not its wording: the copy is translated and
+    # asserting the English text breaks under a Spanish locale.
+    assert [m.level_tag for m in response.context["messages"]] == ["error"]
 
 
 @pytest.mark.django_db

@@ -477,7 +477,11 @@ class UnifiedCalendarEventsView(LoginRequiredMixin, View):
                 {
                     "id": f"task-{task.pk}",
                     "type": "task",
-                    "title": f"{task.title} · {task.stage.name}",
+                    # Month cells only fit ~2 short lines. The stage is already
+                    # conveyed by the event colour, so it moves to the tooltip
+                    # instead of doubling the title length.
+                    "title": task.title,
+                    "tooltip": f"{task.title} · {task.stage.name}",
                     "start": task.due_date.isoformat(),
                     "allDay": True,
                     "color": self.EVENT_COLORS["task"],

@@ -4,6 +4,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 import re
 from pathlib import Path
 from uuid import uuid4
@@ -51,6 +52,8 @@ class Document(BaseModel):
     is_current_version = models.BooleanField(default=True)
 
     class Meta:
+        verbose_name = _("document")
+        verbose_name_plural = _("documents")
         indexes = [
             models.Index(
                 fields=["expiry_date", "is_current_version"],
@@ -144,6 +147,13 @@ class Alert(BaseModel):
     def _watched_value(self):
         field = self.alert_rule.field_to_watch
         return getattr(self.content_object, field, None)
+
+    @property
+    def entity_label(self):
+        """Human-readable name of the watched model (not the raw model slug)."""
+        model = self.content_type.model_class()
+        label = model._meta.verbose_name if model else self.content_type.model
+        return str(label).capitalize()
 
     @property
     def watched_date(self):
