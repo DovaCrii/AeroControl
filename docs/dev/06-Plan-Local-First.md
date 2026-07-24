@@ -40,6 +40,6 @@ completar el restore drill y definir controles de acceso y retencion.
 
 ## Referencias
 
-- `docs/backend-plan.md`: arquitectura y secuencia de ambientes.
-- `docs/local-backup.md`: procedimiento operativo de backup y restauracion.
-- `docs/04-Seguimiento.md`: decisiones historicas y pendientes de datos.
+- `backend-plan.md`: arquitectura y secuencia de ambientes.
+- `local-backup.md`: procedimiento operativo de backup y restauracion.
+- `04-Seguimiento.md`: decisiones historicas y pendientes de datos.

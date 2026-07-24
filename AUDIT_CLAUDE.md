@@ -25,7 +25,7 @@ Los tres mensajes centrales de esta auditoría:
 
 2. **El aislamiento multi-tenant es aspiracional, no real, y varias decisiones de modelo de datos serán irreversibles con datos de producción.** Hoy 17 de 21 modelos no tienen `tenant`, el campo es nullable y nunca se asigna desde formularios, y la regla de scoping por OR sobre tres FKs filtra registros mixtos a ambos tenants. Además hay `on_delete=CASCADE` en el expediente documental de cumplimiento y cero `CheckConstraint` en todo el proyecto. **Estas correcciones cuestan una migración trivial ahora y son irrecuperables tras acumular datos reales.**
 
-3. **No se puede confiar en ninguna señal automatizada actual.** El gate obligatorio `scripts/verify.ps1` no comprueba códigos de salida (un `pytest` rojo puede reportar éxito), CI mide cobertura y la descarta, `openspec/config.yaml` afirma falsamente que "no hay runner de tests", y `docs/03-Roadmap.md` lleva 13 casillas sin marcar de trabajo ya hecho. **Reparar las señales es prerequisito de todo lo demás**, incluida cualquier revisión asistida por IA.
+3. **No se puede confiar en ninguna señal automatizada actual.** El gate obligatorio `scripts/verify.ps1` no comprueba códigos de salida (un `pytest` rojo puede reportar éxito), CI mide cobertura y la descarta, `openspec/config.yaml` afirma falsamente que "no hay runner de tests", y `docs/dev/03-Roadmap.md` lleva 13 casillas sin marcar de trabajo ya hecho. **Reparar las señales es prerequisito de todo lo demás**, incluida cualquier revisión asistida por IA.
 
 La recomendación de proceso del usuario es correcta: **detener la incorporación de DJI Cloud API y estabilizar el núcleo primero.** El riesgo de adaptar la aplicación alrededor de una integración externa antes de fijar el modelo de tenancy y las constraints de datos es alto y transversal.
 
@@ -43,7 +43,7 @@ La recomendación de proceso del usuario es correcta: **detener la incorporació
 | Testing | **4** | 87 tests, pero `maintenance` y `dashboard` a 0%, `generate_alerts` a 0%, sin tests de aislamiento de tenant, y ~14 tests de bajo valor. |
 | Modelo de datos | **4** | `CASCADE` peligrosos, cero `CheckConstraint`, tenancy a medias, sin `db_index`: todo barato ahora, doloroso con datos reales. |
 | Mantenibilidad | **5** | Buenas abstracciones (mixins, `selectors.py` en workboard) conviven con duplicación (5 pares List/Create, 3 representaciones de tarea). |
-| Documentación | **4** | Mucha documentación, pero deriva severa: `openspec/config.yaml` y `docs/03-Roadmap.md` congelados en el día 1. |
+| Documentación | **4** | Mucha documentación, pero deriva severa: `openspec/config.yaml` y `docs/dev/03-Roadmap.md` congelados en el día 1. |
 | DevEx | **5** | `AGENTS.md` denso y útil, estructura openspec correcta; pero gate roto, metadatos falsos y 62.661 líneas de tooling JS vendorizado. |
 | Preparación para crecer | **5** | Switch a PostgreSQL listo, storage abstraído; pero el modelo de tenancy debe arreglarse antes de tener datos, o bloqueará la centralización. |
 
@@ -106,7 +106,7 @@ Lo que está bien hecho y **no debe tocarse** en la estabilización (HECHO, veri
 | **F-09** | P1 | Gate obligatorio `verify.ps1` no falla ante tests rojos | `scripts/verify.ps1:8-14` |
 | **F-10** | P1 | Cero `CheckConstraint`; ~11 invariantes solo en forms | `grep AddConstraint` en 21 migraciones |
 | **F-11** | P2 | CI mide cobertura y la descarta; `maintenance`/`dashboard` a 0% | `.github/workflows/ci.yml:30` |
-| **F-12** | P2 | `openspec/config.yaml` y `docs/03-Roadmap.md` gravemente desactualizados | `openspec/config.yaml:8,38,41` |
+| **F-12** | P2 | `openspec/config.yaml` y `docs/dev/03-Roadmap.md` gravemente desactualizados | `openspec/config.yaml:8,38,41` |
 | **F-13** | P2 | Paginación HTMX muerta en 3 listados | `permission_list.html:47`, `record_list.html:16`, `alert_list.html:4` |
 | **F-14** | P2 | Búsqueda global e importadores sin enlace en la UI | `apps/core/views.py:500`; `templates/base.html:53-80` |
 | **F-15** | P2 | `app.css` son dos sistemas de diseño apilados con duplicados | `static/css/app.css:2-7` vs `:653-669` |
@@ -130,7 +130,7 @@ TemplateSyntaxError: 'block' tag with name 'extrahead' appears more than once
 ```
 `pytest` reporta 7 tests en rojo por esta causa (`apps/core/tests.py::TestChapter1DocxImport::test_dashboard`, `TestAuthRequiredURLs[...dashboard]`, etc.). Como `LOGIN_REDIRECT_URL = "/"` (`config/settings/base.py:122`) y `/` resuelve a la vista `dashboard`, **el primer render tras login es un 500**.
 
-Por qué no se detectó: `manage.py check` no compila plantillas, y las dos tareas abiertas de `openspec/changes/ui-modernization/tasks.md` — "revisión visual escritorio/móvil" y "abrir PR" — son precisamente las que lo habrían capturado. `docs/impeccable-audit.md:19` presenta este mismo commit como mejora de rendimiento con 4/4.
+Por qué no se detectó: `manage.py check` no compila plantillas, y las dos tareas abiertas de `openspec/changes/ui-modernization/tasks.md` — "revisión visual escritorio/móvil" y "abrir PR" — son precisamente las que lo habrían capturado. `docs/dev/impeccable-audit.md:19` presenta este mismo commit como mejora de rendimiento con 4/4.
 
 **Archivos:** `templates/dashboard/index.html`.
 
@@ -221,7 +221,7 @@ Faltan también `UniqueConstraint(tenant, code/employee_id/permission_number)` (
 ## 8. Hallazgos P2
 
 - **F-11 · CI mide cobertura y la descarta.** `.github/workflows/ci.yml:30` no tiene `--cov-fail-under`; no hay `[tool.coverage]`. Es la causa mecánica de que `maintenance` y `dashboard` estén a 0% sin queja. Cobertura global medida hoy: **82%** (`generate_alerts` 0%, `bootstrap_roles` 0%, `compliance/security.py` 35%, `chapter1_import` 21%).
-- **F-12 · Deriva documental severa.** `openspec/config.yaml:8,38` afirma "No test runner configured / discovered" (hay 87 tests); `:28` `test_command: "python -m pytest"` (el real es `uv run pytest`); `:41-49` declara linter/formatter/coverage no disponibles (todos existen). `docs/03-Roadmap.md` tiene 13 casillas sin marcar de trabajo ya hecho. Un agente que lea estos artefactos como verdad concluirá que no debe escribir tests.
+- **F-12 · Deriva documental severa.** `openspec/config.yaml:8,38` afirma "No test runner configured / discovered" (hay 87 tests); `:28` `test_command: "python -m pytest"` (el real es `uv run pytest`); `:41-49` declara linter/formatter/coverage no disponibles (todos existen). `docs/dev/03-Roadmap.md` tiene 13 casillas sin marcar de trabajo ya hecho. Un agente que lea estos artefactos como verdad concluirá que no debe escribir tests.
 - **F-13 · Paginación HTMX muerta.** `generic/_pagination.html` apunta a `hx-target="#table-body"`, pero `permission_list.html:47`, `record_list.html:16` y `alert_list.html:4` tienen `<tbody>` sin `id` → los botones de página no hacen nada. El spec `phase3-htmx` pedía `#table-wrapper`.
 - **F-14 · Funcionalidad inalcanzable desde la UI.** Búsqueda global (`GlobalSearchView`), importadores CSV (`costcenter-import`, `aircraft-import`, `operator-import`) y habilitaciones DGAC (`qualification-list`) **existen en el backend pero no tienen ningún enlace** en las 43 plantillas ni en el centro de administración (`templates/base.html:53-80`). Además los resultados de búsqueda apuntan al **listado**, no al detalle (`apps/core/views.py:500`).
 - **F-15 · `app.css` son dos sistemas de diseño apilados.** 973 líneas con dos generaciones de tokens (`:root` en `:2-7` con `--navy` vs `:653-669` con `--ac-*`) y selectores duplicados (`.sidebar`, `.btn-primary`, bloque dark). Además hay clases usadas en plantillas sin definición CSS (`.status-*`, `.kanban-label` color, `.is-overdue`, `.form-shell`).
@@ -434,7 +434,7 @@ Se recomienda materializar FASE 0-6 como changes de `openspec/` (un change por t
 2. **T0.3** — Hacer que `scripts/verify.ps1` falle ante error (P1, restaura la confianza en el gate).
 3. **T0.2** — Renderizar `completion_form` para poder cerrar mantenimientos (P1).
 4. **T0.4 + T0.5** — Umbral de cobertura y compilación de plantillas en CI (P1/P2).
-5. **T0.6** — Corregir `openspec/config.yaml` y sincronizar `docs/03-Roadmap.md` (P2).
+5. **T0.6** — Corregir `openspec/config.yaml` y sincronizar `docs/dev/03-Roadmap.md` (P2).
 6. **T4.1** — `conftest.py` con `two_tenant_world` y `role_user()` (desbloquea tests de aislamiento).
 7. **T3.1** — `on_delete=CASCADE → PROTECT` en Document/Alert/historias (P1, barato ahora).
 8. **T2.1 + T2.2 + T2.3** — Cerrar los IDOR y las vistas de lectura sin permiso (P1).

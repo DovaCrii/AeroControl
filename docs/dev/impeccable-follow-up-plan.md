@@ -68,7 +68,7 @@ git push
 
 ## Bloque siguiente — respaldo local
 
-El procedimiento quedó documentado en `docs/local-backup-runbook.md`. El
+El procedimiento quedó documentado en `local-backup-runbook.md`. El
 destino `D:\AeroControl-Backups` ya fue reservado, pero la ejecución está
 bloqueada porque la ruta configurada de la base SQLite no existe en este equipo.
 
@@ -85,7 +85,7 @@ No activar hooks de Impeccable todavía. Ejecutar la skill manualmente al inicio
 
 ## Revisión de cierre de los cinco entregables
 
-- [x] Auditoría inicial registrada en `docs/impeccable-audit.md`.
+- [x] Auditoría inicial registrada en `impeccable-audit.md`.
 - [x] Plan de seguimiento registrado en este documento.
 - [x] Lote 1 respaldado en `dfbf968`.
 - [x] Lote 2 respaldado en `7a283e0`.
