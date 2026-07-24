@@ -28,6 +28,12 @@ Es el **tablero de bloques**. `BACKLOG.md` queda como registro histórico de lo 
 
 ---
 
+## Rama de trabajo
+
+`codex/stabilization-blocks-0-6` — contiene la auditoría, los bloques 0/1/2/4-parcial/6.1-6.2, y el **merge de la línea paralela** de `codex/impeccable-ui-audit` (commit `29d9d43`: traducciones de permisos y asignaciones, filtros de estado y «necesita revisión», docs de respaldo, chequeo de calidad de datos). 259 tests verdes, cobertura 88.45%.
+
+Aún **no mergeada a `main`**. Ver TL.6.
+
 ## Estado actual (actualizado 2026-07-24 — FASE 0 + higiene de Bloque 0 cerradas)
 
 - **FASE 0 completa** en `codex/impeccable-ui-audit`: T0.1-T0.7 hechas y commiteadas. El dashboard vuelve a renderizar, `verify.ps1` falla de verdad ante un paso roto, hay un test que compila las 43 plantillas, cobertura con piso real (83%+), mantenimiento ya se puede cerrar desde la UI.
