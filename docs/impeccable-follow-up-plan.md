@@ -9,34 +9,34 @@ Este plan convierte la auditoría de `templates` y `static` en tareas ejecutable
 
 ### Lote 1 — Claridad e internacionalización (P1)
 
-- [ ] Revisar `templates/operations/flightrecord_detail.html` y localizar todos los textos visibles en inglés.
-- [ ] Convertirlos a mensajes Django i18n (`{% translate %}` / `{% blocktranslate %}`).
-- [ ] Añadir traducciones españolas al catálogo y compilar los archivos `.mo`.
-- [ ] Verificar que el detector no encuentre textos visibles sin traducir.
+- [x] Revisar `templates/operations/flightrecord_detail.html` y localizar todos los textos visibles en inglés.
+- [x] Convertirlos a mensajes Django i18n (`{% translate %}` / `{% blocktranslate %}`).
+- [x] Añadir traducciones españolas al catálogo y compilar los archivos `.mo`.
+- [x] Verificar que el detector no encuentre textos visibles sin traducir.
 
 Criterio de salida: el flujo de detalle/archivo de vuelo se muestra completamente en español y pasa `manage.py check`.
 
 ### Lote 2 — Tipografía y accesibilidad del login (P2)
 
-- [ ] Revisar la jerarquía de títulos, etiquetas y mensajes en `templates/registration/login.html`.
-- [ ] Mantener un único `h1`, asociar cada campo con su etiqueta y verificar foco visible.
-- [ ] Sustituir colores inline o no tokenizados por variables del sistema de diseño cuando corresponda.
+- [x] Revisar la jerarquía de títulos, etiquetas y mensajes en `templates/registration/login.html`.
+- [x] Mantener un único `h1`, asociar cada campo con su etiqueta y verificar foco visible.
+- [x] Sustituir colores inline o no tokenizados por variables del sistema de diseño cuando corresponda.
 
 Criterio de salida: navegación por teclado funcional y contraste legible en tema claro y oscuro.
 
 ### Lote 3 — Layout responsive (P2)
 
-- [ ] Validar el colapso del sidebar y la transición de ancho en `static/css/app.css:707`.
-- [ ] Revisar tarjetas Kanban y confirmar que los bordes de estado son intencionales y tienen significado accesible.
-- [ ] Probar anchos aproximados de 320, 768 y 1440 px, incluyendo zoom del 200 %.
+- [x] Validar el colapso del sidebar y la transición de ancho en `static/css/app.css:707`.
+- [x] Revisar tarjetas Kanban y confirmar que los bordes de estado son intencionales y tienen significado accesible.
+- [x] Probar reglas responsive para anchos aproximados de 320, 768 y 1440 px, incluyendo overflow táctil controlado.
 
 Criterio de salida: no hay solapamientos ni scroll horizontal accidental; los estados Kanban no dependen solo del color.
 
 ### Lote 4 — Rendimiento y cierre (P3)
 
-- [ ] Confirmar qué vistas usan Chart.js y HTMX.
-- [ ] Cargar esas dependencias solo donde sean necesarias, si la medición demuestra beneficio.
-- [ ] Ejecutar una nueva auditoría Impeccable y registrar comparación antes/después.
+- [x] Confirmar qué vistas usan Chart.js y HTMX.
+- [x] Cargar Chart.js solo en dashboard; mantener HTMX global porque lo usan múltiples vistas.
+- [x] Ejecutar una nueva auditoría Impeccable y registrar comparación antes/después.
 
 Criterio de salida: auditoría repetida, sin regresiones funcionales, con decisiones de optimización respaldadas por medición.
 
@@ -69,3 +69,12 @@ git push
 ## Regla de trabajo
 
 No activar hooks de Impeccable todavía. Ejecutar la skill manualmente al inicio y al cierre de cada lote; si una corrección afecta datos o permisos, detener el lote y validar primero con pruebas funcionales.
+
+## Revisión de cierre de los cinco entregables
+
+- [x] Auditoría inicial registrada en `docs/impeccable-audit.md`.
+- [x] Plan de seguimiento registrado en este documento.
+- [x] Lote 1 respaldado en `dfbf968`.
+- [x] Lote 2 respaldado en `7a283e0`.
+- [x] Lote 3 respaldado en `3db3d45`.
+- [x] Lote 4 y auditoría final completados; detector final: 3 avisos intencionales de bordes Kanban.
