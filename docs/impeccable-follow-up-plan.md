@@ -68,10 +68,12 @@ git push
 
 ## Bloque siguiente — respaldo local
 
-El procedimiento quedó documentado en `docs/local-backup-runbook.md`. No se
-ejecuta todavía porque falta confirmar una carpeta externa al repositorio.
+El procedimiento quedó documentado en `docs/local-backup-runbook.md`. El
+destino `D:\AeroControl-Backups` ya fue reservado, pero la ejecución está
+bloqueada porque la ruta configurada de la base SQLite no existe en este equipo.
 
 - [ ] Confirmar el destino real del backup.
+- [ ] Confirmar `DB_PATH` y `DOCUMENTS_DIR` reales con datos locales.
 - [ ] Ejecutar y verificar un snapshot manual.
 - [ ] Registrar la tarea semanal de Windows.
 - [ ] Conservar tres snapshots verificados.
