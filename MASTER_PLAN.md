@@ -122,14 +122,17 @@ Es el **tablero de bloques**. `BACKLOG.md` queda como registro histórico de lo 
 | R.1 | ✅ | P1 | `__str__` en `Qualification`, `Alert`, `AlertRule`, `KanbanTask`, `KanbanStage`, `MaintenanceRecord`, `FlightRecord` (`8062425`) | S | — |
 | R.2 | ✅ | P1 | Lista de alertas legible: entidad en vez de UUID, nombre de regla, badge de vencimiento/atraso, `th scope` (`8062425`) | S | R.1 |
 | R.3 | ✅ | P1 | Tarjetas Kanban legibles + comando `refresh_alert_task_titles` para los títulos ya guardados con el repr viejo (`8062425`) | S | R.1 |
-| R.4 | ⬜ | P2 | **[UI]** Badges de etapa/estado consistentes en el Kanban (clases `.status-*` hoy sin definir, F-15) | S | T5.1 |
-| R.5 | ⬜ | P2 | **[UI]** Calendario: etiquetas de eventos legibles (hoy se truncan "Maria Gonzale…"), mejor render de los elementos | M | — |
-| R.6 | ⬜ | P2 | **[UI]** Sidebar contraído: mostrar el conteo de alertas (punto o número) aunque esté colapsado | S | — |
-| R.7 | ⬜ | P2 | **[UI]** Tipografía y contraste globales (se apoya en T5.1: tokens unificados, contraste AA) | M | T5.1 |
-| R.8 | ⬜ | P3 | **[UI]** Iconos distintos y claros para "Vuelos" vs "Aeronaves" (hoy ambos tipo avión) | XS | — |
-| R.9 | ⬜ | P2 | **[UI]** Separación visual más clara entre grupos del sidebar (Datos maestros / Planificación / Cumplimiento / Operaciones / Mantenimiento / Seguimiento) | S | — |
+| R.4 | ✅ | P2 | Badges de etapa `.status-*` (no existían en el CSS) + `.is-overdue` con icono; badge redundante quitado de la tarjeta del tablero (`4b8e150`) | S | — |
+| R.5 | ✅ | P2 | Calendario: eventos a 2 líneas + tooltip con etiqueta completa, etapa fuera del título, colores de fallback para modo oscuro (`4b8e150`) | M | — |
+| R.6 | ✅ | P2 | Sidebar contraído muestra el conteo de alertas como dot-badge sobre la campana (medido 18×17px; antes `display:none`) (`4b8e150`) | S | — |
+| R.7 | ✅ | P2 | Contraste: `.sidebar-label` de **3.79 → 8.06:1** (cumple AA); paleta de gráficos por tema (**1.16 → 5.03:1**) (`4b8e150`) | M | — |
+| R.8 | ✅ | P3 | Icono de "Vuelos" cambiado a bitácora (antes casi idéntico al de Aeronaves) (`4b8e150`) | XS | — |
+| R.9 | ✅ | P2 | Grupos del sidebar con línea separadora y más espaciado (`4b8e150`) | S | — |
+| R.10 | ⬜ | P3 | **[UI, pendiente]** Unificar `app.css`: sigue teniendo dos generaciones de tokens y reglas que ganan por especificidad (causa raíz de R.7). Es T5.1 | M | — |
 
-**Nota:** R.1/R.2/R.3 (legibilidad de datos) se abordan ahora porque su raíz es backend y testeable; el resto (R.4-R.9, diseño visual puro) se valida con el panel de navegador desplegado.
+**Verificado en vivo** (servidor de demo, mediciones de contraste reales, no a ojo). Hallazgos extra encontrados durante la revisión y corregidos: paleta de gráficos invisible en modo oscuro, etiquetas de gráficos con valores crudos (`active` → `Activo`), agregaciones del dashboard contando registros archivados (A5), y ~19 cadenas sin traducir.
+
+**Nota de causa raíz:** R.7 tardó dos intentos porque `[data-theme="dark"] .sidebar-label` ganaba por especificidad sobre la regla de tokens más nueva. Mientras `app.css` conserve dos generaciones superpuestas (R.10/T5.1), este tipo de corrección seguirá necesitando editar el override antiguo además del nuevo.
 
 ### FASE 6 — Nuevas funcionalidades `⏸ requiere FASE 0-3 cerradas`
 

@@ -30,6 +30,24 @@ e integración Alertas⇄Kanban (BLOQUE 1, backend), en la rama
   `MaintenanceHistory` cambiado de `CASCADE` a `PROTECT`: el historial de
   cumplimiento ya no se puede perder por borrado en cascada.
 
+### Fixed (legibilidad y contraste, revisión en vivo)
+- Alertas y tarjetas Kanban mostraban `Qualification object (uuid)` por falta
+  de `__str__` en varios modelos; ahora muestran la entidad legible.
+- Lista de alertas rediseñada: entidad, regla y badge de vencimiento/atraso
+  en lugar del UUID y el mensaje repetido.
+- Contraste de los títulos de grupo del panel lateral: 3.79 → 8.06:1 (AA).
+- El contador de alertas ya no desaparece al contraer el panel lateral.
+- Badges de etapa del Kanban (las clases existían en las plantillas pero no
+  en el CSS) y énfasis visual para tareas atrasadas, con icono además de color.
+- Gráficos del panel: paleta ilegible en modo oscuro (1.16 → 5.03:1), etiquetas
+  con valores crudos de base de datos, y conteos que incluían registros
+  archivados. Los gráficos ahora recolorean al cambiar de tema.
+- Calendario: los eventos del mes ya no se cortan a media palabra; etiqueta
+  completa en el tooltip y colores adecuados en modo oscuro.
+- Icono de "Vuelos" diferenciado del de "Aeronaves".
+- Traducciones faltantes (~19 cadenas) y dos cadenas que no seguían la
+  convención de idioma del proyecto.
+
 ### Fixed
 - Dashboard: `TemplateSyntaxError` por bloque `extrahead` duplicado que
   causaba un 500 en toda sesión tras el login.
