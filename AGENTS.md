@@ -8,7 +8,19 @@ Aplicación Django local-first para coordinar operaciones de aviación (flota RP
 
 > **Si existe `HANDOFF.md` en la raíz, léelo antes que nada.** Describe una
 > situación puntual sin resolver (por ejemplo un merge pendiente) que condiciona
-> lo que se puede hacer. Se borra cuando queda resuelta.
+> lo que se puede hacer. Se borra cuando queda resuelta; su ausencia significa
+> que no hay nada excepcional y se puede ir directo a `MASTER_PLAN.md`.
+
+## Trabajo en paralelo
+
+Puede haber **otra sesión de agente empujando a la misma rama**. Ocurrió el
+2026-07-24: dos líneas arreglaron el mismo P0 por separado. Por eso:
+
+- `git fetch` **antes** de cualquier push, y revisar `git log HEAD..origin/<rama>`.
+- Si la rama divergió, **nunca** `push --force`: empuja a una rama nueva o
+  fusiona deliberadamente. Sobrescribir el trabajo de otro no es reversible.
+- Al fusionar, `locale/es/LC_MESSAGES/django.mo` es **binario**: no se resuelve a
+  mano, se regenera con `scripts/compile_translations.py` desde el `.po` fusionado.
 
 ## Precedencia documental
 
