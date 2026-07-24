@@ -20,7 +20,7 @@ Es el **tablero de bloques**. `BACKLOG.md` queda como registro histórico de lo 
 3. (Opcional para cambios grandes) crear un change en `openspec/changes/<id>/` con `proposal.md` + `tasks.md`.
 4. Implementar. Ejecutar el gate: `pwsh scripts/verify.ps1` **debe** pasar (ver T0.3 — hoy no falla; arréglese primero).
 5. Revisión (Claude Code) contra el criterio de aceptación de la tarea.
-6. Marcar la casilla aquí (`⬜`→`✅`), actualizar `BACKLOG.md` si corresponde, commit con Conventional Commits, PR.
+6. Marcar la casilla aquí (`⬜`→`✅`), actualizar `BACKLOG.md`/`CHANGELOG.md` si corresponde, commit con Conventional Commits, PR.
 
 **Reparto de roles:** Claude Code diseña/revisa (arquitectura, specs, criterio de aceptación, segunda opinión); Codex implementa tarea-a-tarea. Ver §"Reglas de trabajo con agentes".
 
