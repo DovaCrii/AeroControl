@@ -178,3 +178,20 @@ objetivos que aún requieren trabajo para evitar duplicar iniciativas cerradas.
 - [ ] Tenancy estricto, PostgreSQL, DJI, Celery/Redis, vínculo `Operator.user`
   y frontend separado permanecen diferidos hasta cumplir sus criterios de
   entrada.
+
+## Backend remoto — prototipo anonimizado
+
+- [ ] Añadir despliegue Django en Render con HTTPS, Gunicorn, WhiteNoise y
+  variables secretas; ver `docs/backend-plan.md`.
+- [ ] Crear proyecto Supabase, bucket privado y vincularlo mediante la CLI.
+- [ ] Validar migraciones Django contra PostgreSQL y reservar `supabase db push
+  --dry-run`/`migration list` para objetos propios de Supabase.
+- [ ] Abstraer almacenamiento de documentos para backends local y S3 privado.
+- [ ] Crear exportación/importación anonimizada, sin usuarios, auditoría,
+  documentos reales ni secretos.
+- [ ] Ejecutar prueba de carga con datos sintéticos y validar permisos,
+  descargas, reemplazo, archivado y health check.
+- [ ] Programar `generate_alerts`, `supabase db dump` y `supabase storage cp`
+  fuera del repositorio.
+- [ ] Mantener bloqueada la migración de antecedentes privados hasta disponer
+  de backups automáticos, MFA, antivirus y revisión de tratamiento de datos.
