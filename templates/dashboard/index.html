@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% block title %}Dashboard - AeroControl{% endblock %}
-{% block extrahead %}<script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -126,6 +125,7 @@
 {% endblock %}
 
 {% block extrahead %}
+<script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 {{ chart_data|json_script:"chart-data" }}
 <script>const chartData = JSON.parse(document.getElementById("chart-data").textContent);</script>
 {% endblock %}
