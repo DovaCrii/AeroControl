@@ -23,6 +23,8 @@ secretos.
 - [x] Preparar `scripts/register-backup-task.ps1` para programar el backup
       semanal sin guardar la ruta de datos en Git.
 - [ ] Registrar la tarea con la ruta real de la unidad de respaldo.
+- [ ] Unificar notebook y PC mediante snapshots verificados en OneDrive, sin
+      abrir la misma SQLite simultáneamente en ambos equipos.
 - [ ] Conservar tres snapshots verificados en medios separados.
 - [ ] Publicar unicamente un snapshot anonimizado en Supabase/Render para
       pruebas remotas.
