@@ -44,6 +44,14 @@ class Document(BaseModel):
     expiry_date = models.DateField(null=True, blank=True)
     is_current_version = models.BooleanField(default=True)
 
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=["expiry_date", "is_current_version"],
+                name="compliance_doc_expiry_cur_idx",
+            )
+        ]
+
     def __str__(self):
         return self.title
 
@@ -65,3 +73,10 @@ class Alert(BaseModel):
     content_object = GenericForeignKey("content_type", "object_id")
     message = models.TextField()
     is_resolved = models.BooleanField(default=False)
+
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=["is_resolved", "is_active"], name="compliance_alert_open_idx"
+            )
+        ]

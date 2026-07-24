@@ -126,6 +126,13 @@ class KanbanTask(BaseModel):
     source_object_id = models.UUIDField(null=True, blank=True)
     source_object = GenericForeignKey("source_content_type", "source_object_id")
 
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=["board", "stage", "order"], name="workboard_task_board_order_idx"
+            )
+        ]
+
     @property
     def checklist_total(self):
         return self.checklist_items.count()
