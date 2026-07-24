@@ -7,7 +7,14 @@ from django.urls import reverse
 
 from apps.registry.models import CostCenter, Operator
 from apps.core.models import OperationalTenant, TenantMembership
-from .models import KanbanBoard, KanbanBoardAccess, KanbanChecklistItem, KanbanLabel, KanbanStage, KanbanTask
+from .models import (
+    KanbanBoard,
+    KanbanBoardAccess,
+    KanbanChecklistItem,
+    KanbanLabel,
+    KanbanStage,
+    KanbanTask,
+)
 
 
 @pytest.fixture
@@ -16,7 +23,13 @@ def user(db):
     user.user_permissions.add(
         *Permission.objects.filter(
             content_type__app_label="workboard",
-            content_type__model__in=["kanbantask", "kanbanstage", "kanbanboard", "kanbanchecklistitem", "kanbanlabel"],
+            content_type__model__in=[
+                "kanbantask",
+                "kanbanstage",
+                "kanbanboard",
+                "kanbanchecklistitem",
+                "kanbanlabel",
+            ],
             codename__in=[
                 "add_kanbantask",
                 "change_kanbantask",
@@ -385,7 +398,9 @@ def test_task_detail_checklist_progress_and_list_filters(auth_client, board):
     task = KanbanTask.objects.create(board=board_obj, stage=todo, title="Inspect")
     task.labels.add(label)
     first = KanbanChecklistItem.objects.create(task=task, title="Review log", order=0)
-    KanbanChecklistItem.objects.create(task=task, title="Sign off", order=1, is_completed=True)
+    KanbanChecklistItem.objects.create(
+        task=task, title="Sign off", order=1, is_completed=True
+    )
 
     detail = auth_client.get(reverse("task-detail", args=[task.pk]))
     assert detail.status_code == 200
@@ -396,7 +411,9 @@ def test_task_detail_checklist_progress_and_list_filters(auth_client, board):
     task.refresh_from_db()
     assert task.checklist_progress == 100
 
-    listing = auth_client.get(reverse("workboard-list"), {"q": "Inspect", "label": label.pk})
+    listing = auth_client.get(
+        reverse("workboard-list"), {"q": "Inspect", "label": label.pk}
+    )
     assert listing.status_code == 200
     assert "Inspect" in listing.content.decode()
 
@@ -404,7 +421,9 @@ def test_task_detail_checklist_progress_and_list_filters(auth_client, board):
 @pytest.mark.django_db
 def test_task_report_exports_filtered_csv(auth_client, board):
     board_obj, todo, _ = board
-    KanbanTask.objects.create(board=board_obj, stage=todo, title="Export me", priority="high")
+    KanbanTask.objects.create(
+        board=board_obj, stage=todo, title="Export me", priority="high"
+    )
     response = auth_client.get(reverse("task-report-csv"), {"priority": "high"})
     assert response.status_code == 200
     assert "Export me" in response.content.decode()

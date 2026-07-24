@@ -5,7 +5,10 @@ from apps.core.models import BaseModel, OperationalTenant
 
 class CostCenter(BaseModel):
     tenant = models.ForeignKey(
-        OperationalTenant, on_delete=models.PROTECT, null=True, blank=True,
+        OperationalTenant,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
         related_name="cost_centers",
     )
     code = models.CharField(max_length=30, unique=True)
@@ -19,7 +22,10 @@ class CostCenter(BaseModel):
 
 class Aircraft(BaseModel):
     tenant = models.ForeignKey(
-        OperationalTenant, on_delete=models.PROTECT, null=True, blank=True,
+        OperationalTenant,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
         related_name="aircraft",
     )
     STATUS_CHOICES = [
@@ -57,7 +63,10 @@ class Aircraft(BaseModel):
 
 class Operator(BaseModel):
     tenant = models.ForeignKey(
-        OperationalTenant, on_delete=models.PROTECT, null=True, blank=True,
+        OperationalTenant,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
         related_name="operators",
     )
     employee_id = models.CharField(max_length=50, unique=True)
@@ -112,15 +121,31 @@ class Assignment(BaseModel):
     def clean(self):
         errors = {}
         if self.end_date and self.end_date < self.start_date:
-            errors["end_date"] = "La fecha final no puede ser anterior a la fecha inicial."
+            errors["end_date"] = (
+                "La fecha final no puede ser anterior a la fecha inicial."
+            )
         if self.operator_id and not self.operator.is_active:
             errors["operator"] = "El operador seleccionado está inactivo."
-        if self.aircraft_id and (not self.aircraft.is_active or self.aircraft.status != "active"):
+        if self.aircraft_id and (
+            not self.aircraft.is_active or self.aircraft.status != "active"
+        ):
             errors["aircraft"] = "La aeronave seleccionada no está disponible."
-        if self.cost_center_id and self.operator_id and self.operator.cost_center_id not in (None, self.cost_center_id):
-            errors["cost_center"] = "El centro de costo no coincide con el del operador."
-        if self.cost_center_id and self.aircraft_id and self.aircraft.cost_center_id not in (None, self.cost_center_id):
-            errors["cost_center"] = "El centro de costo no coincide con el de la aeronave."
+        if (
+            self.cost_center_id
+            and self.operator_id
+            and self.operator.cost_center_id not in (None, self.cost_center_id)
+        ):
+            errors["cost_center"] = (
+                "El centro de costo no coincide con el del operador."
+            )
+        if (
+            self.cost_center_id
+            and self.aircraft_id
+            and self.aircraft.cost_center_id not in (None, self.cost_center_id)
+        ):
+            errors["cost_center"] = (
+                "El centro de costo no coincide con el de la aeronave."
+            )
         if errors:
             raise ValidationError(errors)
 

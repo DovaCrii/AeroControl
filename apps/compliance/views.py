@@ -33,7 +33,9 @@ def save_uploaded_file(document, uploaded):
     document.save(update_fields=["file_path", "updated_at"])
 
 
-class ComplianceList(CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListView):
+class ComplianceList(
+    CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListView
+):
     template_name = "generic/list.html"
     context_object_name = "objects"
     paginate_by = 25

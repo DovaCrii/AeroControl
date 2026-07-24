@@ -189,7 +189,9 @@ class HealthCheckView(View):
         except Exception:
             checks["database"] = "error"
         documents = Path(settings.DOCUMENTS_ROOT)
-        checks["documents"] = "ok" if documents.exists() and documents.is_dir() else "error"
+        checks["documents"] = (
+            "ok" if documents.exists() and documents.is_dir() else "error"
+        )
         healthy = all(value == "ok" for value in checks.values())
         return JsonResponse(
             {"status": "ok" if healthy else "degraded", "checks": checks},
@@ -228,13 +230,27 @@ class UnifiedCalendarEventsView(LoginRequiredMixin, View):
         from apps.compliance.models import Document
         from apps.maintenance.models import MaintenanceRecord
         from apps.operations.models import FlightPermission, FlightRecord
-        from apps.registry.models import Aircraft, Assignment, CostCenter, Operator, Qualification
+        from apps.registry.models import (
+            Aircraft,
+            Assignment,
+            CostCenter,
+            Operator,
+            Qualification,
+        )
         from apps.workboard.selectors import visible_tasks_for_user
 
         start, end = self.get_date_range(request)
         selected_types = set(filter(None, request.GET.get("types", "").split(",")))
         if not selected_types:
-            selected_types = {"permission", "flight", "assignment", "maintenance", "document", "qualification", "task"}
+            selected_types = {
+                "permission",
+                "flight",
+                "assignment",
+                "maintenance",
+                "document",
+                "qualification",
+                "task",
+            }
         events = []
         cost_center_id = request.GET.get("cost_center") or None
         aircraft_id = request.GET.get("aircraft") or None
@@ -306,11 +322,13 @@ class UnifiedCalendarEventsView(LoginRequiredMixin, View):
             )
 
         if "assignment" in selected_types:
-            assignments = Assignment.objects.filter(
-                start_date__lte=end,
-                is_active=True,
-            ).filter(Q(end_date__isnull=True) | Q(end_date__gte=start)).select_related(
-                "operator", "aircraft", "cost_center"
+            assignments = (
+                Assignment.objects.filter(
+                    start_date__lte=end,
+                    is_active=True,
+                )
+                .filter(Q(end_date__isnull=True) | Q(end_date__gte=start))
+                .select_related("operator", "aircraft", "cost_center")
             )
             if tenant_ids is not None:
                 assignments = assignments.filter(
@@ -330,7 +348,9 @@ class UnifiedCalendarEventsView(LoginRequiredMixin, View):
                     "type": "assignment",
                     "title": f"{assignment.aircraft} · {assignment.operator}",
                     "start": assignment.start_date.isoformat(),
-                    "end": (assignment.end_date + timedelta(days=1)).isoformat() if assignment.end_date else None,
+                    "end": (assignment.end_date + timedelta(days=1)).isoformat()
+                    if assignment.end_date
+                    else None,
                     "allDay": True,
                     "color": self.EVENT_COLORS["assignment"],
                     "url": reverse("assignment-detail", args=[assignment.pk]),
@@ -345,7 +365,9 @@ class UnifiedCalendarEventsView(LoginRequiredMixin, View):
             if tenant_ids is not None:
                 maintenance = maintenance.filter(aircraft__tenant_id__in=tenant_ids)
             if cost_center_id:
-                maintenance = maintenance.filter(aircraft__cost_center_id=cost_center_id)
+                maintenance = maintenance.filter(
+                    aircraft__cost_center_id=cost_center_id
+                )
             if aircraft_id:
                 maintenance = maintenance.filter(aircraft_id=aircraft_id)
             events.extend(
@@ -366,9 +388,13 @@ class UnifiedCalendarEventsView(LoginRequiredMixin, View):
                 expiry_date__range=(start, end), is_active=True
             ).select_related("operator")
             if tenant_ids is not None:
-                qualifications = qualifications.filter(operator__tenant_id__in=tenant_ids)
+                qualifications = qualifications.filter(
+                    operator__tenant_id__in=tenant_ids
+                )
             if cost_center_id:
-                qualifications = qualifications.filter(operator__cost_center_id=cost_center_id)
+                qualifications = qualifications.filter(
+                    operator__cost_center_id=cost_center_id
+                )
             if operator_id:
                 qualifications = qualifications.filter(operator_id=operator_id)
             events.extend(
@@ -392,9 +418,15 @@ class UnifiedCalendarEventsView(LoginRequiredMixin, View):
                 aircraft_type = ContentType.objects.get_for_model(Aircraft)
                 operator_type = ContentType.objects.get_for_model(Operator)
                 cost_center_type = ContentType.objects.get_for_model(CostCenter)
-                allowed_aircraft = Aircraft.objects.filter(tenant_id__in=tenant_ids).values_list("pk", flat=True)
-                allowed_operators = Operator.objects.filter(tenant_id__in=tenant_ids).values_list("pk", flat=True)
-                allowed_centers = CostCenter.objects.filter(tenant_id__in=tenant_ids).values_list("pk", flat=True)
+                allowed_aircraft = Aircraft.objects.filter(
+                    tenant_id__in=tenant_ids
+                ).values_list("pk", flat=True)
+                allowed_operators = Operator.objects.filter(
+                    tenant_id__in=tenant_ids
+                ).values_list("pk", flat=True)
+                allowed_centers = CostCenter.objects.filter(
+                    tenant_id__in=tenant_ids
+                ).values_list("pk", flat=True)
                 documents = documents.filter(
                     Q(content_type=aircraft_type, object_id__in=allowed_aircraft)
                     | Q(content_type=operator_type, object_id__in=allowed_operators)
@@ -402,15 +434,18 @@ class UnifiedCalendarEventsView(LoginRequiredMixin, View):
                 )
             if aircraft_id:
                 documents = documents.filter(
-                    content_type=ContentType.objects.get_for_model(Aircraft), object_id=aircraft_id
+                    content_type=ContentType.objects.get_for_model(Aircraft),
+                    object_id=aircraft_id,
                 )
             elif operator_id:
                 documents = documents.filter(
-                    content_type=ContentType.objects.get_for_model(Operator), object_id=operator_id
+                    content_type=ContentType.objects.get_for_model(Operator),
+                    object_id=operator_id,
                 )
             elif cost_center_id:
                 documents = documents.filter(
-                    content_type=ContentType.objects.get_for_model(CostCenter), object_id=cost_center_id
+                    content_type=ContentType.objects.get_for_model(CostCenter),
+                    object_id=cost_center_id,
                 )
             events.extend(
                 {
@@ -426,9 +461,11 @@ class UnifiedCalendarEventsView(LoginRequiredMixin, View):
             )
 
         if "task" in selected_types:
-            tasks = visible_tasks_for_user(request.user).filter(
-                due_date__range=(start, end)
-            ).select_related("board", "stage", "assigned_to")
+            tasks = (
+                visible_tasks_for_user(request.user)
+                .filter(due_date__range=(start, end))
+                .select_related("board", "stage", "assigned_to")
+            )
             board_id = request.GET.get("board")
             if board_id:
                 tasks = tasks.filter(board_id=board_id)
@@ -447,7 +484,7 @@ class UnifiedCalendarEventsView(LoginRequiredMixin, View):
                     # The task detail endpoint is an HTMX fragment. Link calendar
                     # events to the full Workboard view so direct navigation never
                     # leaves the user on an unstyled fragment page.
-                    "url": f'{reverse("kanban")}?board={task.board_id}',
+                    "url": f"{reverse('kanban')}?board={task.board_id}",
                 }
                 for task in tasks
             )
@@ -461,7 +498,12 @@ class GlobalSearchView(LoginRequiredMixin, TemplateView):
     SEARCH_SOURCES = (
         ("registry", "CostCenter", "costcenter-list", ("code", "name")),
         ("registry", "Aircraft", "aircraft-list", ("registration", "model", "type")),
-        ("registry", "Operator", "operator-list", ("employee_id", "full_name", "email")),
+        (
+            "registry",
+            "Operator",
+            "operator-list",
+            ("employee_id", "full_name", "email"),
+        ),
         ("workboard", "KanbanBoard", "board-list", ("name", "description")),
         ("workboard", "KanbanTask", "workboard-list", ("title", "description")),
         ("compliance", "Document", "document-list", ("title",)),
@@ -487,19 +529,25 @@ class GlobalSearchView(LoginRequiredMixin, TemplateView):
             }
             for app_label, model_name, url_name, fields in self.SEARCH_SOURCES:
                 model = models[model_name]
-                if not self.request.user.has_perm(f"{app_label}.view_{model._meta.model_name}"):
+                if not self.request.user.has_perm(
+                    f"{app_label}.view_{model._meta.model_name}"
+                ):
                     continue
                 condition = Q()
                 for field in fields:
                     condition |= Q(**{f"{field}__icontains": query})
-                objects = model.objects.filter(condition, is_active=True).order_by("-updated_at")[:10]
+                objects = model.objects.filter(condition, is_active=True).order_by(
+                    "-updated_at"
+                )[:10]
                 for obj in objects:
-                    results.append({
-                        "model": model._meta.verbose_name.title(),
-                        "label": str(obj),
-                        "url": reverse(url_name),
-                        "id": obj.pk,
-                    })
+                    results.append(
+                        {
+                            "model": model._meta.verbose_name.title(),
+                            "label": str(obj),
+                            "url": reverse(url_name),
+                            "id": obj.pk,
+                        }
+                    )
         context.update({"query": query, "results": results[:50]})
         return context
 
@@ -512,7 +560,12 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         from apps.compliance.models import AlertRule, DocumentType
-        from apps.core.models import AuditEvent, BackupConfig, OperationalTenant, TenantMembership
+        from apps.core.models import (
+            AuditEvent,
+            BackupConfig,
+            OperationalTenant,
+            TenantMembership,
+        )
         from apps.workboard.models import KanbanBoard, KanbanLabel, KanbanStage
 
         sections = [
@@ -520,33 +573,85 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
                 "title": _("Organization"),
                 "description": _("Define the operational scope and who can access it."),
                 "items": [
-                    self.item(_("Operational tenants"), _("Manage organizations and their data boundaries."), "admin:core_operationaltenant_changelist", OperationalTenant),
-                    self.item(_("Tenant memberships"), _("Assign users to an operational tenant."), "admin:core_tenantmembership_changelist", TenantMembership),
+                    self.item(
+                        _("Operational tenants"),
+                        _("Manage organizations and their data boundaries."),
+                        "admin:core_operationaltenant_changelist",
+                        OperationalTenant,
+                    ),
+                    self.item(
+                        _("Tenant memberships"),
+                        _("Assign users to an operational tenant."),
+                        "admin:core_tenantmembership_changelist",
+                        TenantMembership,
+                    ),
                 ],
             },
             {
                 "title": _("Compliance configuration"),
-                "description": _("Prepare document and alert rules before loading records."),
+                "description": _(
+                    "Prepare document and alert rules before loading records."
+                ),
                 "items": [
-                    self.item(_("Document types"), _("Control expiry requirements and document categories."), "documenttype-list", DocumentType),
-                    self.item(_("Alert rules"), _("Define when AeroControl should generate an alert."), "alertrule-list", AlertRule),
+                    self.item(
+                        _("Document types"),
+                        _("Control expiry requirements and document categories."),
+                        "documenttype-list",
+                        DocumentType,
+                    ),
+                    self.item(
+                        _("Alert rules"),
+                        _("Define when AeroControl should generate an alert."),
+                        "alertrule-list",
+                        AlertRule,
+                    ),
                 ],
             },
             {
                 "title": _("Workboard configuration"),
-                "description": _("Shape how teams organize and follow operational work."),
+                "description": _(
+                    "Shape how teams organize and follow operational work."
+                ),
                 "items": [
-                    self.item(_("Boards"), _("Create and archive operational boards."), "board-list", KanbanBoard),
-                    self.item(_("Stages"), _("Manage the workflow stages used by a board."), "stage-create", KanbanStage),
-                    self.item(_("Labels"), _("Create labels used to classify tasks."), "label-list", KanbanLabel),
+                    self.item(
+                        _("Boards"),
+                        _("Create and archive operational boards."),
+                        "board-list",
+                        KanbanBoard,
+                    ),
+                    self.item(
+                        _("Stages"),
+                        _("Manage the workflow stages used by a board."),
+                        "stage-create",
+                        KanbanStage,
+                    ),
+                    self.item(
+                        _("Labels"),
+                        _("Create labels used to classify tasks."),
+                        "label-list",
+                        KanbanLabel,
+                    ),
                 ],
             },
             {
                 "title": _("System"),
-                "description": _("Review backups and trace changes without editing audit records."),
+                "description": _(
+                    "Review backups and trace changes without editing audit records."
+                ),
                 "items": [
-                    self.item(_("Backup configuration"), _("Review the local backup destination and schedule."), "admin:core_backupconfig_changelist", BackupConfig),
-                    self.item(_("Audit events"), _("Read-only history of authenticated changes."), "admin:core_auditevent_changelist", AuditEvent, read_only=True),
+                    self.item(
+                        _("Backup configuration"),
+                        _("Review the local backup destination and schedule."),
+                        "admin:core_backupconfig_changelist",
+                        BackupConfig,
+                    ),
+                    self.item(
+                        _("Audit events"),
+                        _("Read-only history of authenticated changes."),
+                        "admin:core_auditevent_changelist",
+                        AuditEvent,
+                        read_only=True,
+                    ),
                 ],
             },
         ]
@@ -560,9 +665,17 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
 
     def item(self, title, description, url_name, model, read_only=False):
         permission = f"{model._meta.app_label}.view_{model._meta.model_name}"
-        if not self.request.user.has_perm(permission) and not self.request.user.is_superuser:
+        if (
+            not self.request.user.has_perm(permission)
+            and not self.request.user.is_superuser
+        ):
             return None
-        return {"title": title, "description": description, "url": reverse(url_name), "read_only": read_only}
+        return {
+            "title": title,
+            "description": description,
+            "url": reverse(url_name),
+            "read_only": read_only,
+        }
 
 
 class StatusTransitionView(ModelPermissionRequiredMixin, View):

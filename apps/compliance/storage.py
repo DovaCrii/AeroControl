@@ -129,7 +129,9 @@ class S3DocumentStorage:
 
     def delete(self, key: str) -> None:
         try:
-            self.client.delete_object(Bucket=self.bucket, Key=normalize_storage_key(key))
+            self.client.delete_object(
+                Bucket=self.bucket, Key=normalize_storage_key(key)
+            )
         except ClientError as exc:
             raise DocumentStorageError("Could not delete document") from exc
 

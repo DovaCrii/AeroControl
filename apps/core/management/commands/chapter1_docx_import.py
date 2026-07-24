@@ -62,7 +62,9 @@ class Command(BaseCommand):
             reader = csv.DictReader(stream)
             expected = ["code", "name", "responsible"]
             if reader.fieldnames != expected:
-                raise CommandError(f"cost centers columns must be: {','.join(expected)}")
+                raise CommandError(
+                    f"cost centers columns must be: {','.join(expected)}"
+                )
             rows = [
                 {field: clean_text(value) for field, value in row.items()}
                 for row in reader
@@ -84,7 +86,9 @@ class Command(BaseCommand):
         starts = [match.start() for match in RECORD_START.finditer(section)]
         records = []
         for index, boundary in enumerate(starts):
-            block = section[boundary : starts[index + 1] if index + 1 < len(starts) else None]
+            block = section[
+                boundary : starts[index + 1] if index + 1 < len(starts) else None
+            ]
             values = {
                 "full_name": "",
                 "rut": "",
@@ -113,7 +117,11 @@ class Command(BaseCommand):
                 }.get(raw_label)
                 if not field:
                     continue
-                end = matches[position + 1].start() if position + 1 < len(matches) else len(block)
+                end = (
+                    matches[position + 1].start()
+                    if position + 1 < len(matches)
+                    else len(block)
+                )
                 values[field] = clean_text(block[match.end() : end])
                 if field == "email":
                     values[field] = values[field].split("2)", 1)[0].strip()
@@ -129,7 +137,9 @@ class Command(BaseCommand):
         if len(document.tables) < 2:
             raise CommandError("The source must contain the aircraft inventory table")
         service_table = document.tables[0]
-        shared_services = clean_text(service_table.rows[1].cells[2].text if len(service_table.rows) > 1 else "")
+        shared_services = clean_text(
+            service_table.rows[1].cells[2].text if len(service_table.rows) > 1 else ""
+        )
         inventory = document.tables[1]
         aircraft = []
         for row in inventory.rows[1:]:
@@ -140,8 +150,14 @@ class Command(BaseCommand):
             manufacturer, model = (model_text.split("/", 1) + [""])[:2]
             if not model:
                 manufacturer, model = "", model_text
-            registration_match = re.search(r"RPA\s*[- ]?\s*(\d+)", values[3], re.IGNORECASE)
-            registration = f"RPA-{registration_match.group(1)}" if registration_match else values[3]
+            registration_match = re.search(
+                r"RPA\s*[- ]?\s*(\d+)", values[3], re.IGNORECASE
+            )
+            registration = (
+                f"RPA-{registration_match.group(1)}"
+                if registration_match
+                else values[3]
+            )
             aircraft.append(
                 {
                     "registration": registration,
@@ -172,10 +188,23 @@ class Command(BaseCommand):
                 clean_records.append(records[0])
                 continue
             comparable = [
-                tuple(record[field] for field in ("full_name", "email", "phone", "address", "authorizations"))
+                tuple(
+                    record[field]
+                    for field in (
+                        "full_name",
+                        "email",
+                        "phone",
+                        "address",
+                        "authorizations",
+                    )
+                )
                 for record in records
             ]
-            kind = "exact_duplicate" if len(set(comparable)) == 1 else "conflicting_duplicate"
+            kind = (
+                "exact_duplicate"
+                if len(set(comparable)) == 1
+                else "conflicting_duplicate"
+            )
             duplicate_groups.append({"rut": key, "kind": kind, "records": records})
             if kind == "exact_duplicate":
                 clean_records.append(records[0])
@@ -207,28 +236,48 @@ class Command(BaseCommand):
     def export_report(self, report, directory):
         directory.mkdir(parents=True, exist_ok=True)
         (directory / "chapter1-report.json").write_text(
-            json.dumps(report, ensure_ascii=False, indent=2, default=str), encoding="utf-8"
+            json.dumps(report, ensure_ascii=False, indent=2, default=str),
+            encoding="utf-8",
         )
-        for name, rows in (("chapter1-aircraft.csv", report["aircraft"]), ("chapter1-operators.csv", report["operators"])):
+        for name, rows in (
+            ("chapter1-aircraft.csv", report["aircraft"]),
+            ("chapter1-operators.csv", report["operators"]),
+        ):
             if not rows:
                 continue
             fields = [field for field in rows[0] if field != "source_index"]
             with (directory / name).open("w", encoding="utf-8", newline="") as stream:
                 writer = csv.DictWriter(stream, fieldnames=fields)
                 writer.writeheader()
-                writer.writerows({field: row.get(field, "") for field in fields} for row in rows)
+                writer.writerows(
+                    {field: row.get(field, "") for field in fields} for row in rows
+                )
 
     def apply_report(self, report):
         existing_aircraft = set(Aircraft.objects.values_list("registration", flat=True))
         existing_operators = set(Operator.objects.values_list("employee_id", flat=True))
         existing_centers = set(CostCenter.objects.values_list("code", flat=True))
         collisions = [
-            *(f"aircraft:{row['registration']}" for row in report["aircraft"] if row["registration"] in existing_aircraft),
-            *(f"operator:RUT-{rut_key(row['rut'])}" for row in report["operators"] if f"RUT-{rut_key(row['rut'])}" in existing_operators),
-            *(f"cost_center:{row['code']}" for row in report["cost_centers"] if row["code"] in existing_centers),
+            *(
+                f"aircraft:{row['registration']}"
+                for row in report["aircraft"]
+                if row["registration"] in existing_aircraft
+            ),
+            *(
+                f"operator:RUT-{rut_key(row['rut'])}"
+                for row in report["operators"]
+                if f"RUT-{rut_key(row['rut'])}" in existing_operators
+            ),
+            *(
+                f"cost_center:{row['code']}"
+                for row in report["cost_centers"]
+                if row["code"] in existing_centers
+            ),
         ]
         if collisions:
-            raise CommandError("Existing records would be overwritten: " + ", ".join(collisions))
+            raise CommandError(
+                "Existing records would be overwritten: " + ", ".join(collisions)
+            )
         created_ids = []
         with transaction.atomic():
             for row in report["cost_centers"]:
@@ -247,7 +296,9 @@ class Command(BaseCommand):
                 }
                 payload.pop("source_index", None)
                 created_ids.append(str(Operator.objects.create(**payload).pk))
-            stored_report = json.loads(json.dumps(report, ensure_ascii=False, default=str))
+            stored_report = json.loads(
+                json.dumps(report, ensure_ascii=False, default=str)
+            )
             batch = ImportBatch.objects.create(
                 actor=None,
                 entity="chapter1.docx",
@@ -260,7 +311,9 @@ class Command(BaseCommand):
         source = options["source"]
         if not source.is_file():
             raise CommandError(f"Missing source DOCX: {source}")
-        report = self.build_report(source, self.read_cost_centers(options.get("cost_centers")))
+        report = self.build_report(
+            source, self.read_cost_centers(options.get("cost_centers"))
+        )
         if options.get("export_dir"):
             self.export_report(report, options["export_dir"])
         if options["apply"]:

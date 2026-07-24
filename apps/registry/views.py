@@ -25,7 +25,9 @@ from .forms import (
 )
 
 
-class RegistryList(CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListView):
+class RegistryList(
+    CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListView
+):
     template_name = "generic/list.html"
     context_object_name = "objects"
     paginate_by = 25
@@ -107,6 +109,8 @@ AircraftList.search_fields = ["registration", "model", "manufacturer"]
 OperatorList, OperatorDetail, OperatorCreate, OperatorUpdate = make_views(
     Operator, OperatorForm, "Operator"
 )
+
+
 class AssignmentList(RegistryList):
     model = Assignment
     template_name = "registry/assignment_list.html"
@@ -122,8 +126,8 @@ class AssignmentList(RegistryList):
         from django.db.models import Q
         from apps.core.models import OperationalTenant
 
-        queryset = super().get_queryset().select_related(
-            "operator", "aircraft", "cost_center"
+        queryset = (
+            super().get_queryset().select_related("operator", "aircraft", "cost_center")
         )
         if not self.request.user.is_superuser:
             tenant_ids = OperationalTenant.objects.filter(
@@ -140,7 +144,9 @@ class AssignmentList(RegistryList):
         context = super().get_context_data(**kwargs)
         queryset = self.get_queryset()
         context["assignment_summary"] = {
-            "active": queryset.filter(is_active=True, status__in=["planned", "confirmed"]).count(),
+            "active": queryset.filter(
+                is_active=True, status__in=["planned", "confirmed"]
+            ).count(),
             "confirmed": queryset.filter(is_active=True, status="confirmed").count(),
             "review": queryset.filter(is_active=True, cost_center__isnull=True).count(),
         }
@@ -149,8 +155,16 @@ class AssignmentList(RegistryList):
 
 AssignmentDetail, AssignmentCreate, AssignmentUpdate = (
     type("AssignmentDetail", (RegistryDetail,), {"model": Assignment}),
-    type("AssignmentCreate", (RegistryCreate,), {"model": Assignment, "form_class": AssignmentForm}),
-    type("AssignmentUpdate", (RegistryUpdate,), {"model": Assignment, "form_class": AssignmentForm}),
+    type(
+        "AssignmentCreate",
+        (RegistryCreate,),
+        {"model": Assignment, "form_class": AssignmentForm},
+    ),
+    type(
+        "AssignmentUpdate",
+        (RegistryUpdate,),
+        {"model": Assignment, "form_class": AssignmentForm},
+    ),
 )
 QualificationList, QualificationDetail, QualificationCreate, QualificationUpdate = (
     make_views(Qualification, QualificationForm, "Qualification")
@@ -163,10 +177,16 @@ class CostCenterImportView(ModelPermissionRequiredMixin, View):
 
     def get(self, request):
         if request.GET.get("template") == "1":
-            response = HttpResponse("code,name\r\n", content_type="text/csv; charset=utf-8")
-            response["Content-Disposition"] = 'attachment; filename="cost-centers-template.csv"'
+            response = HttpResponse(
+                "code,name\r\n", content_type="text/csv; charset=utf-8"
+            )
+            response["Content-Disposition"] = (
+                'attachment; filename="cost-centers-template.csv"'
+            )
             return response
-        return render(request, "registry/costcenter_import.html", {"rows": [], "errors": []})
+        return render(
+            request, "registry/costcenter_import.html", {"rows": [], "errors": []}
+        )
 
     @staticmethod
     def parse(upload):
@@ -175,7 +195,10 @@ class CostCenterImportView(ModelPermissionRequiredMixin, View):
         return spec.parse(
             upload,
             existing,
-            lambda raw, _line: {"code": raw["code"].strip(), "name": raw["name"].strip()}
+            lambda raw, _line: {
+                "code": raw["code"].strip(),
+                "name": raw["name"].strip(),
+            }
             if raw["name"].strip()
             else "code y name son obligatorios.",
         )
@@ -183,9 +206,15 @@ class CostCenterImportView(ModelPermissionRequiredMixin, View):
     def post(self, request):
         rows, errors = self.parse(request.FILES.get("file"))
         if errors or request.POST.get("apply") != "1":
-            return render(request, "registry/costcenter_import.html", {"rows": rows, "errors": errors, "preview": True})
+            return render(
+                request,
+                "registry/costcenter_import.html",
+                {"rows": rows, "errors": errors, "preview": True},
+            )
         with transaction.atomic():
-            batch = ImportBatch.objects.create(actor=request.user, entity="registry.costcenter", rows=rows)
+            batch = ImportBatch.objects.create(
+                actor=request.user, entity="registry.costcenter", rows=rows
+            )
             created = [CostCenter.objects.create(**row) for row in rows]
             batch.created_ids = [str(obj.pk) for obj in created]
             batch.save(update_fields=["created_ids", "updated_at"])
@@ -201,10 +230,18 @@ class CostCenterImportRevertView(ModelPermissionRequiredMixin, View):
             batch = get_object_or_404(
                 ImportBatch.objects.select_for_update(),
                 pk=pk,
-                entity__in=["registry.costcenter", "registry.aircraft", "registry.operator"],
+                entity__in=[
+                    "registry.costcenter",
+                    "registry.aircraft",
+                    "registry.operator",
+                ],
                 status="applied",
             )
-            model = {"registry.costcenter": CostCenter, "registry.aircraft": Aircraft, "registry.operator": Operator}[batch.entity]
+            model = {
+                "registry.costcenter": CostCenter,
+                "registry.aircraft": Aircraft,
+                "registry.operator": Operator,
+            }[batch.entity]
             model.objects.filter(pk__in=batch.created_ids).update(is_active=False)
             batch.status = "reverted"
             batch.reverted_at = timezone.now()
@@ -217,29 +254,67 @@ class AircraftImportView(CostCenterImportView):
 
     def get(self, request):
         if request.GET.get("template") == "1":
-            response = HttpResponse("registration,type,model,manufacturer,year,cost_center,status\r\n", content_type="text/csv; charset=utf-8")
-            response["Content-Disposition"] = 'attachment; filename="aircraft-template.csv"'
+            response = HttpResponse(
+                "registration,type,model,manufacturer,year,cost_center,status\r\n",
+                content_type="text/csv; charset=utf-8",
+            )
+            response["Content-Disposition"] = (
+                'attachment; filename="aircraft-template.csv"'
+            )
             return response
-        return render(request, "registry/costcenter_import.html", {"rows": [], "errors": [], "entity": "aircraft"})
+        return render(
+            request,
+            "registry/costcenter_import.html",
+            {"rows": [], "errors": [], "entity": "aircraft"},
+        )
 
     @staticmethod
     def parse(upload):
-        spec = CsvImportSpec(("registration", "type", "model", "manufacturer", "year", "cost_center", "status"), "registration")
+        spec = CsvImportSpec(
+            (
+                "registration",
+                "type",
+                "model",
+                "manufacturer",
+                "year",
+                "cost_center",
+                "status",
+            ),
+            "registration",
+        )
         existing = set(Aircraft.objects.values_list("registration", flat=True))
-        centers = dict(CostCenter.objects.filter(is_active=True).values_list("code", "pk"))
+        centers = dict(
+            CostCenter.objects.filter(is_active=True).values_list("code", "pk")
+        )
+
         def build(raw, _line):
             center = centers.get(raw["cost_center"].strip())
             if not center:
                 return "centro de costo inexistente."
-            return {"registration": raw["registration"].strip(), "type": raw["type"].strip(), "model": raw["model"].strip(), "manufacturer": raw["manufacturer"].strip(), "year": int(raw["year"]) if raw["year"].strip().isdigit() else None, "cost_center_id": str(center), "status": raw["status"].strip() or "active"}
+            return {
+                "registration": raw["registration"].strip(),
+                "type": raw["type"].strip(),
+                "model": raw["model"].strip(),
+                "manufacturer": raw["manufacturer"].strip(),
+                "year": int(raw["year"]) if raw["year"].strip().isdigit() else None,
+                "cost_center_id": str(center),
+                "status": raw["status"].strip() or "active",
+            }
+
         return spec.parse(upload, existing, build)
 
     def post(self, request):
         rows, errors = self.parse(request.FILES.get("file"))
         if errors or request.POST.get("apply") != "1":
-            return render(request, "registry/costcenter_import.html", {"rows": rows, "errors": errors, "preview": True, "entity": "aircraft"})
+            return render(
+                request,
+                "registry/costcenter_import.html",
+                {"rows": rows, "errors": errors, "preview": True, "entity": "aircraft"},
+            )
         with transaction.atomic():
-            batch = ImportBatch.objects.create(actor=request.user, entity="registry.aircraft", rows=rows)
+            batch = ImportBatch.objects.create(
+                actor=request.user, entity="registry.aircraft", rows=rows
+            )
             created = [Aircraft.objects.create(**row) for row in rows]
             batch.created_ids = [str(obj.pk) for obj in created]
             batch.save(update_fields=["created_ids", "updated_at"])
@@ -251,31 +326,58 @@ class OperatorImportView(CostCenterImportView):
 
     def get(self, request):
         if request.GET.get("template") == "1":
-            response = HttpResponse("employee_id,full_name,email,phone,cost_center\r\n", content_type="text/csv; charset=utf-8")
-            response["Content-Disposition"] = 'attachment; filename="operators-template.csv"'
+            response = HttpResponse(
+                "employee_id,full_name,email,phone,cost_center\r\n",
+                content_type="text/csv; charset=utf-8",
+            )
+            response["Content-Disposition"] = (
+                'attachment; filename="operators-template.csv"'
+            )
             return response
-        return render(request, "registry/costcenter_import.html", {"rows": [], "errors": [], "entity": "operator"})
+        return render(
+            request,
+            "registry/costcenter_import.html",
+            {"rows": [], "errors": [], "entity": "operator"},
+        )
 
     @staticmethod
     def parse(upload):
-        spec = CsvImportSpec(("employee_id", "full_name", "email", "phone", "cost_center"), "employee_id")
+        spec = CsvImportSpec(
+            ("employee_id", "full_name", "email", "phone", "cost_center"), "employee_id"
+        )
         existing = set(Operator.objects.values_list("employee_id", flat=True))
-        centers = dict(CostCenter.objects.filter(is_active=True).values_list("code", "pk"))
+        centers = dict(
+            CostCenter.objects.filter(is_active=True).values_list("code", "pk")
+        )
+
         def build(raw, _line):
             if not raw["full_name"].strip():
                 return "full_name es obligatorio."
             center = centers.get(raw["cost_center"].strip())
             if not center:
                 return "centro de costo inexistente."
-            return {"employee_id": raw["employee_id"].strip(), "full_name": raw["full_name"].strip(), "email": raw["email"].strip(), "phone": raw["phone"].strip(), "cost_center_id": str(center)}
+            return {
+                "employee_id": raw["employee_id"].strip(),
+                "full_name": raw["full_name"].strip(),
+                "email": raw["email"].strip(),
+                "phone": raw["phone"].strip(),
+                "cost_center_id": str(center),
+            }
+
         return spec.parse(upload, existing, build)
 
     def post(self, request):
         rows, errors = self.parse(request.FILES.get("file"))
         if errors or request.POST.get("apply") != "1":
-            return render(request, "registry/costcenter_import.html", {"rows": rows, "errors": errors, "preview": True, "entity": "operator"})
+            return render(
+                request,
+                "registry/costcenter_import.html",
+                {"rows": rows, "errors": errors, "preview": True, "entity": "operator"},
+            )
         with transaction.atomic():
-            batch = ImportBatch.objects.create(actor=request.user, entity="registry.operator", rows=rows)
+            batch = ImportBatch.objects.create(
+                actor=request.user, entity="registry.operator", rows=rows
+            )
             created = [Operator.objects.create(**row) for row in rows]
             batch.created_ids = [str(obj.pk) for obj in created]
             batch.save(update_fields=["created_ids", "updated_at"])
