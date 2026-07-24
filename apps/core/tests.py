@@ -620,7 +620,9 @@ class TestStaticFiles:
         assert response.status_code == 200
         assert response["Content-Type"].startswith("text/css")
 
-    def test_backup_writes_manifest_and_detects_tampering(self, monkeypatch, tmp_path):
+    def test_backup_writes_manifest_and_detects_tampering(
+        self, db, monkeypatch, tmp_path
+    ):
         monkeypatch.setenv("BACKUPS_DIR", str(tmp_path))
         source = tmp_path / "source.sqlite3"
         source.write_bytes(b"sqlite test database")
@@ -639,7 +641,7 @@ class TestStaticFiles:
             call_command("verify_backup", str(backup))
 
     def test_backup_can_be_restored_to_explicit_destination(
-        self, monkeypatch, tmp_path
+        self, db, monkeypatch, tmp_path
     ):
         monkeypatch.setenv("BACKUPS_DIR", str(tmp_path))
         source = tmp_path / "source.sqlite3"

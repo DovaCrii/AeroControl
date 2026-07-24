@@ -156,6 +156,16 @@ LOGGING = {
             "level": "WARNING",
             "propagate": False,
         },
+        "aerocontrol.jobs": {
+            "handlers": ["file", "console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "aerocontrol.notifications": {
+            "handlers": ["file", "console"],
+            "level": "INFO",
+            "propagate": False,
+        },
     },
     "root": {"handlers": ["file", "console"], "level": "INFO"},
 }

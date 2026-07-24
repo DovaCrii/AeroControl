@@ -6,11 +6,21 @@ from pathlib import Path
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
+from apps.core.jobs import record_job_run
+
 
 class Command(BaseCommand):
     help = "Create a timestamped SQLite backup."
 
     def handle(self, *args, **options):
+        with record_job_run("backup") as run:
+            destination, manifest = self._create_backup()
+            run["summary"] = f"{destination.name} ({destination.stat().st_size} bytes)"
+        self.stdout.write(
+            self.style.SUCCESS(f"Backup created: {destination} (manifest: {manifest})")
+        )
+
+    def _create_backup(self):
         source = Path(settings.DATABASES["default"]["NAME"])
         destination_dir = Path(
             __import__("decouple").config(
@@ -37,6 +47,4 @@ class Command(BaseCommand):
             ),
             encoding="utf-8",
         )
-        self.stdout.write(
-            self.style.SUCCESS(f"Backup created: {destination} (manifest: {manifest})")
-        )
+        return destination, manifest

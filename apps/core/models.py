@@ -2,6 +2,7 @@ import uuid
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 
 
 class BaseModel(models.Model):
@@ -107,6 +108,43 @@ class AuditEvent(models.Model):
             models.Index(fields=["actor", "created_at"]),
             models.Index(fields=["model_label", "object_id"]),
         ]
+
+
+class JobRun(BaseModel):
+    """Execution record for scheduled/management jobs.
+
+    Written by the commands themselves (see apps.core.jobs.record_job_run) so
+    the operator can tell whether the nightly work actually ran, and the
+    administration centre can surface a stale-job warning later.
+    """
+
+    RESULT_OK = "ok"
+    RESULT_ERROR = "error"
+    RESULTS = [
+        (RESULT_OK, _("Completed")),
+        (RESULT_ERROR, _("Failed")),
+    ]
+
+    command = models.CharField(max_length=100)
+    started_at = models.DateTimeField()
+    finished_at = models.DateTimeField(null=True, blank=True)
+    result = models.CharField(max_length=10, choices=RESULTS, default=RESULT_OK)
+    summary = models.CharField(max_length=300, blank=True)
+
+    class Meta:
+        verbose_name = _("job run")
+        verbose_name_plural = _("job runs")
+        ordering = ["-started_at"]
+        indexes = [models.Index(fields=["command", "-started_at"])]
+
+    def __str__(self):
+        return f"{self.command} · {self.started_at:%Y-%m-%d %H:%M} · {self.result}"
+
+    @property
+    def duration_seconds(self):
+        if self.finished_at is None:
+            return None
+        return round((self.finished_at - self.started_at).total_seconds(), 2)
 
 
 class ImportBatch(BaseModel):

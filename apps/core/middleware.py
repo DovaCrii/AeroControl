@@ -116,6 +116,12 @@ class JsonLogFormatter(logging.Formatter):
             "entity_type",
             "field_to_watch",
             "reason",
+            "job_command",
+            "job_result",
+            "job_duration_ms",
+            "recipient",
+            "item_count",
+            "send_result",
         ):
             if hasattr(record, key):
                 payload[key] = getattr(record, key)
