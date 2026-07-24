@@ -46,14 +46,39 @@ de esa ruta sino de la auditoría, y el orden recomendado es:
 2. **T2.3** — exigir `view_*` en `/calendar/`, el Kanban HTML y el feed de
    eventos (hallazgo **F-06**): hoy son solo `LoginRequiredMixin` y un usuario
    sin ningún permiso ve matrículas, operadores y centros de costo. Esfuerzo S.
-3. **TL.6** — mergear a `main` y podar ramas remotas obsoletas. Ahora que las
-   dos líneas están unificadas, es el momento natural.
+3. **TL.6** — mergear a `main` y podar ramas remotas obsoletas. 🔄 El merge está
+   preparado (fast-forward, `origin/main` es ancestro de la rama); falta el
+   `push`, que ejecuta el usuario.
 4. **R.10 / T5.1** — unificar los tokens de `app.css`. Mientras conviva la
    generación vieja, cada arreglo de color hay que hacerlo en dos sitios.
 
 Más adelante, y con más peso: **T3.2** (clave de tenancy) es el bloqueador real
 de la centralización y de DJI, y es barato ahora frente a hacerlo con datos
 acumulados.
+
+### Estado de la base de datos real (2026-07-24)
+
+La base de trabajo (`DB_PATH` en `.env`) estaba **14 migraciones atrás**: el
+campo `responsible_operator` y la tabla `JobRun` no existían, así que ni el
+resumen de vencimientos ni el informe ejecutivo ni el registro de tareas
+programadas podían funcionar en la instalación real, aunque el código estuviera
+completo. Migrada el 2026-07-24 con copia previa del `.sqlite3`; datos intactos
+(11 centros de costo, 41 operadores, 14 aeronaves). `bootstrap_roles` aplicado:
+los cinco roles más el grupo *Dirección*.
+
+**Nota para futuras sesiones:** el comando `backup` no sirve como red de
+seguridad *antes* de migrar, porque registra su ejecución en `JobRun`. Si esa
+tabla falta, copia el archivo `.sqlite3` a mano.
+
+Pendientes que requieren una decisión de negocio, no del agente:
+
+- Asignar **Operador responsable** en los 11 centros de costo
+  (`/registry/costcenter/<id>/edit/`). Hoy los 11 están sin asignar; los 41
+  operadores tienen correo, así que solo falta decidir quién.
+- Agregar usuarios al grupo *Dirección*. Hoy existe **un solo usuario** en todo
+  el sistema, así que el informe ejecutivo llegaría solo a esa cuenta.
+- No hay documentos, alertas ni reglas cargadas (0/0/0): el resumen diario no
+  tiene nada que enviar hasta que exista documentación con vencimientos.
 
 ## Estado actual (actualizado 2026-07-24 — FASE 0 + higiene de Bloque 0 cerradas)
 
@@ -299,7 +324,7 @@ No implementado por decisión del plan. Cuando se retome: app `apps/assistant` q
 | TL.8 | ⬜ | P2 | Consolidar `openspec/`: crear `openspec/specs/` y archivar los 5 changes al 100% | M | — |
 | TL.9 | ✅ | P2 | Ampliar `AGENTS.md`: DoD por tipo de cambio, contrato de lectura, reglas de commit, precedencia documental | S | — |
 | TL.10 | ⬜ | P3 | Añadir `.github/pull_request_template.md` con casillas verificables | XS | — |
-| TL.11 | ⬜ | P3 | Tag `v0.1.0-alpha` + `CHANGELOG.md` (Keep a Changelog) resumiendo `BACKLOG.md`; proponer el comando de tag, no ejecutar el push (del plan externo, Bloque 0) | S | — |
+| TL.11 | 🔄 | P3 | `CHANGELOG.md` cerrado: la sección `[Unreleased]` pasó a `[0.2.0-alpha] - 2026-07-24`. **Corrección:** `[0.1.0-alpha]` ya describía `main` en el merge del PR #9, así que ese tag apunta a `9eb40ee`, no al trabajo de estabilización. Quedan los dos comandos de tag, que ejecuta el usuario (del plan externo, Bloque 0) | S | TL.6 |
 | TL.12 | ✅ | P2 | Reordenar `docs/`: producto en raíz, notas internas en `docs/dev/` (plan externo, Bloque 0) | S | — |
 | TL.13 | ✅ | P3 | Rutas de ejemplo genéricas en README/.env.example/ARCHITECTURE.md/chapter1-import.md (plan externo, Bloque 0) | XS | — |
 | TL.14 | ✅ | P2 | Índices `Alert(is_resolved,is_active)`, `Document(expiry_date,is_current_version)`, `KanbanTask(board,stage,order)` (plan externo, Bloque 0) | S | — |
