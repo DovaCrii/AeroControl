@@ -10,13 +10,12 @@ from django.utils.translation import gettext as _
 
 from apps.compliance.report_views import build_report_workbook_bytes
 from apps.compliance.reports import build_compliance_report
+from apps.core.groups import REPORT_RECIPIENTS
 from apps.core.jobs import record_job_run
 
 logger = logging.getLogger("aerocontrol.notifications")
 
 PERIOD_DAYS = {"week": 7, "month": 30}
-# Members of this group receive the report when --to is not given.
-RECIPIENT_GROUP = "Dirección"
 
 # KPIs compared against the previous period. "lower_is_better" decides whether a
 # rise is reported as an improvement or a regression, so the wording cannot
@@ -44,7 +43,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--to",
             nargs="*",
-            help=f"Recipients. Defaults to the {RECIPIENT_GROUP} group.",
+            help=f"Recipients. Defaults to the {REPORT_RECIPIENTS} group.",
         )
         parser.add_argument(
             "--dry-run",
@@ -78,7 +77,7 @@ class Command(BaseCommand):
         if explicit:
             return list(explicit)
         emails = list(
-            Group.objects.filter(name=RECIPIENT_GROUP)
+            Group.objects.filter(name=REPORT_RECIPIENTS)
             .values_list("user__email", flat=True)
             .exclude(user__email="")
             .exclude(user__email=None)
@@ -86,7 +85,7 @@ class Command(BaseCommand):
         if not emails:
             raise CommandError(
                 f"No recipients: pass --to, or add users with an email to the "
-                f"{RECIPIENT_GROUP!r} group."
+                f"{REPORT_RECIPIENTS!r} group."
             )
         return emails
 
