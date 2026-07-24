@@ -25,7 +25,7 @@ repo/
 - **`apps.core.BaseModel`** — UUID primary keys, `created_at`/`updated_at` timestamps, `is_active` for archival (never delete), `notes` for optional context.
 - **Settings split** — `base.py` (shared), `dev.py` (DEBUG, SQLite), `prod.py` (production-ready). Env vars via `python-decouple`.
 - **Data isolation** — SQLite database + documents + backups live under `D:\I+D\AeroOpsDesk_Data\`, outside the repo. Paths injected via `.env`.
-- **ContentTypes for documents** — Documents use a generic foreign key so they attach to Aircraft, Operator, Assignment, etc. without coupling.
+- **ContentTypes for documents** — Documents use a generic foreign key so they attach to Aircraft, Operator, FlightPermission, and MaintenanceRecord without coupling (see `apps/compliance/forms.py: DOCUMENTABLE_MODELS` for the current allowlist).
 - **Conservative deletes** — `PROTECT` on all operational ForeignKeys. Entities are archived (`is_active=False`), never deleted, preserving audit trail.
 - **Bootstrap 5** — Responsive layout with navy (#1B2A4A), turquoise (#2EC4B6), light (#F8F9FA) palette.
 
@@ -74,4 +74,5 @@ Phase 4 (production)
 | `static/css/app.css` | Custom styles (navy/turquoise theme) |
 | `config/settings/` | Split Django settings |
 | `scripts/` | PowerShell automation |
-| `prompts/` | OpenCode continuation prompts |
+| `docs/` | Product documentation (security, imports, roadmap boundaries) |
+| `docs/dev/` | Internal dev notes, historical audits, backup/runbooks |

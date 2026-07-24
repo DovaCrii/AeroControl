@@ -30,7 +30,7 @@ Es el **tablero de bloques**. `BACKLOG.md` queda como registro histórico de lo 
 
 ## Estado actual (actualizado 2026-07-24 — FASE 0 cerrada)
 
-- **FASE 0 completa** en `codex/impeccable-ui-audit`: T0.1-T0.7 hechas y commiteadas. El dashboard vuelve a renderizar, `verify.ps1` falla de verdad ante un paso roto, hay un test que compila las 43 plantillas, cobertura con piso real (83%), mantenimiento ya se puede cerrar desde la UI, y `docs/03-Roadmap.md`/`openspec/config.yaml` reflejan el estado real.
+- **FASE 0 completa** en `codex/impeccable-ui-audit`: T0.1-T0.7 hechas y commiteadas. El dashboard vuelve a renderizar, `verify.ps1` falla de verdad ante un paso roto, hay un test que compila las 43 plantillas, cobertura con piso real (83%), mantenimiento ya se puede cerrar desde la UI, y `docs/dev/03-Roadmap.md`/`openspec/config.yaml` reflejan el estado real.
 - **Verificación tras el cierre de FASE 0:** `pytest` **170/170 verdes** (124 originales + 3 de mantenimiento + 43 de compilación de plantillas) · cobertura real **83.28%** (umbral `fail_under=83`) · `ruff check` limpio · `ruff format --check` limpio (35 archivos reformateados) · `manage.py check --deploy` limpio.
 - **Nota de entorno:** en el sandbox de esta sesión, `ruff format --check` devuelve código de salida 2 con "Acceso denegado" pese a reportar el chequeo correcto ("88 files already formatted") — es un artefacto de este entorno (relación de confianza de dominio rota, confirmado con `icacls`/`whoami`), no un bug del repo ni de `verify.ps1`. Si reaparece en tu máquina, es señal de revisar permisos de `.ruff_cache`/`.pytest_cache`, no de tocar el script.
 - **Sin P0 de seguridad.** Los IDOR (F-03–F-06) son gaps reales pero mitigados hoy por `tenant=NULL` universal; se cierran antes de centralizar el servidor (FASE 2).
@@ -49,7 +49,7 @@ Es el **tablero de bloques**. `BACKLOG.md` queda como registro histórico de lo 
 | T0.3 | ✅ | P1 | `verify.ps1` debe fallar ante error (comprobar `$LASTEXITCODE`) | XS | — |
 | T0.4 | ✅ | P1 | Umbral de cobertura en CI (`--cov-fail-under` + ratchet) | S | T0.3 |
 | T0.5 | ✅ | P2 | Test que compile las 43 plantillas (habría atrapado T0.1) | S | T0.3 |
-| T0.6 | ✅ | P2 | Corregir `openspec/config.yaml` y sincronizar `docs/03-Roadmap.md` | XS | — |
+| T0.6 | ✅ | P2 | Corregir `openspec/config.yaml` y sincronizar `docs/dev/03-Roadmap.md` | XS | — |
 | T0.7 | ✅ | P2 | `ruff format .` sobre los 35 archivos + `verify.ps1` verde | XS | T0.3 |
 
 ### FASE 1 — Arquitectura y deuda crítica `⛔ requiere FASE 0`
@@ -168,8 +168,8 @@ Es el **tablero de bloques**. `BACKLOG.md` queda como registro histórico de lo 
 - **Aceptación:** un bloque duplicado o error de sintaxis en cualquier plantilla hace fallar CI.
 
 ### T0.6 — Sincronizar metadatos
-- **Evidencia:** F-12; `openspec/config.yaml:8,28,38-49`, `docs/03-Roadmap.md`.
-- **Cambio:** (parcialmente hecho, ver TL.1) marcar en `docs/03-Roadmap.md` las 13 casillas ya implementadas.
+- **Evidencia:** F-12; `openspec/config.yaml:8,28,38-49`, `docs/dev/03-Roadmap.md`.
+- **Cambio:** (parcialmente hecho, ver TL.1) marcar en `docs/dev/03-Roadmap.md` las 13 casillas ya implementadas.
 - **Aceptación:** ningún doc afirma capacidades falsas del proyecto.
 
 ### T0.7 — Formato

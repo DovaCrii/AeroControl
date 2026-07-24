@@ -275,8 +275,11 @@ separada queda postergada hasta que existan requisitos de API independiente,
 uso offline o clientes móviles.
 
 El plan de backend local-first y el runbook de snapshots están en
-`docs/06-Plan-Local-First.md`, `docs/backend-plan.md` y
-`docs/local-backup.md`.
+`docs/dev/06-Plan-Local-First.md`, `docs/dev/backend-plan.md` y
+`docs/dev/local-backup.md`. La raíz de `docs/` queda solo con documentación
+de producto (`SECURITY.md`, `chapter1-import.md`, `frontend-boundary.md`,
+`postgresql-readiness.md`); notas internas y bitácoras de desarrollo viven
+en `docs/dev/`.
 
 ## Licencia
 
