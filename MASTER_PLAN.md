@@ -1,8 +1,8 @@
 # MASTER_PLAN — AeroControl
 
-> **Fuente única de verdad del trabajo pendiente.** Consolida la auditoría técnica ([AUDIT_CLAUDE.md](AUDIT_CLAUDE.md)) en bloques ejecutables con seguimiento de estado.
+> **Fuente única de verdad del trabajo pendiente.** Consolida la auditoría técnica ([AUDIT_CLAUDE.md](AUDIT_CLAUDE.md)) y el plan de producto que el usuario aportó (`PLAN_CLAUDE_CODE.md`, integrado el 2026-07-24 como los BLOQUE 0-4 de la sección "Bloques de producto" más abajo) en un único tablero ejecutable con seguimiento de estado.
 > **Creado:** 2026-07-24 · **Rama base de referencia:** `main` (25 commits por detrás de `codex/impeccable-ui-audit`).
-> **Regla de oro:** este proyecto está en **pausa de estabilización**. No se incorpora DJI Cloud API ni funcionalidad nueva hasta cerrar FASE 0-3. Un bloque no empieza hasta que sus dependencias estén ✅.
+> **Regla de oro:** este proyecto está en **pausa de estabilización**. No se incorpora DJI Cloud API (T6.7) ni funcionalidad fuera de lo listado aquí. Los BLOQUE 1-4 de producto sí están autorizados a avanzar sin esperar el cierre completo de FASE 1-3 (solo con las dependencias puntuales que cada tarea declara, p. ej. B1.1→T3.1). Un bloque no empieza hasta que sus dependencias declaradas estén ✅.
 
 ---
 
@@ -11,12 +11,12 @@
 Es el **tablero de bloques**. `BACKLOG.md` queda como registro histórico de lo entregado; este archivo manda para lo que viene.
 
 **Leyenda de estado:**
-`⬜ Pendiente` · `🔄 En progreso` · `✅ Hecho` · `⛔ Bloqueado` (esperando una dependencia) · `⏸ Diferido` (YAGNI, no ahora)
+`⬜ Pendiente` · `🔄 En progreso` · `✅ Hecho` · `⛔ Bloqueado` (esperando una dependencia) · `⏸ Diferido` (YAGNI, no ahora) · `↪ Consolidado` (fusionado en otro bloque, ver referencia)
 
 **Ciclo por tarea (disciplina anti «prompt gigante»):**
 
 1. Tomar la **siguiente tarea no bloqueada** de mayor prioridad del tablero.
-2. Rama pequeña `codex/<area>-<id>` (una intención por rama).
+2. Rama pequeña `codex/<area>` (una intención por rama; ver `AGENTS.md` — no usar `feat/...`).
 3. (Opcional para cambios grandes) crear un change en `openspec/changes/<id>/` con `proposal.md` + `tasks.md`.
 4. Implementar. Ejecutar el gate: `pwsh scripts/verify.ps1` **debe** pasar (ver T0.3 — hoy no falla; arréglese primero).
 5. Revisión (Claude Code) contra el criterio de aceptación de la tarea.
@@ -28,13 +28,14 @@ Es el **tablero de bloques**. `BACKLOG.md` queda como registro histórico de lo 
 
 ---
 
-## Estado actual (actualizado 2026-07-24 — FASE 0 cerrada)
+## Estado actual (actualizado 2026-07-24 — FASE 0 + higiene de Bloque 0 cerradas)
 
-- **FASE 0 completa** en `codex/impeccable-ui-audit`: T0.1-T0.7 hechas y commiteadas. El dashboard vuelve a renderizar, `verify.ps1` falla de verdad ante un paso roto, hay un test que compila las 43 plantillas, cobertura con piso real (83%), mantenimiento ya se puede cerrar desde la UI, y `docs/dev/03-Roadmap.md`/`openspec/config.yaml` reflejan el estado real.
-- **Verificación tras el cierre de FASE 0:** `pytest` **170/170 verdes** (124 originales + 3 de mantenimiento + 43 de compilación de plantillas) · cobertura real **83.28%** (umbral `fail_under=83`) · `ruff check` limpio · `ruff format --check` limpio (35 archivos reformateados) · `manage.py check --deploy` limpio.
-- **Nota de entorno:** en el sandbox de esta sesión, `ruff format --check` devuelve código de salida 2 con "Acceso denegado" pese a reportar el chequeo correcto ("88 files already formatted") — es un artefacto de este entorno (relación de confianza de dominio rota, confirmado con `icacls`/`whoami`), no un bug del repo ni de `verify.ps1`. Si reaparece en tu máquina, es señal de revisar permisos de `.ruff_cache`/`.pytest_cache`, no de tocar el script.
+- **FASE 0 completa** en `codex/impeccable-ui-audit`: T0.1-T0.7 hechas y commiteadas. El dashboard vuelve a renderizar, `verify.ps1` falla de verdad ante un paso roto, hay un test que compila las 43 plantillas, cobertura con piso real (83%+), mantenimiento ya se puede cerrar desde la UI.
+- **BLOQUE 0 del plan externo, prácticamente cerrado:** `docs/` reordenado (producto vs `docs/dev/`), rutas de ejemplo genéricas, índices de `Alert`/`Document`/`KanbanTask`, log estructurado de reglas de alerta inválidas, `AGENTS.md` ampliado con DoD/contrato de lectura/precedencia documental. **Solo queda TL.11** (tag `v0.1.0-alpha` + `CHANGELOG.md`).
+- **Verificación tras el cierre de FASE 0 + higiene:** `pytest` **173/173 verdes** · cobertura real **~84%** (umbral `fail_under=83`) · `ruff check` limpio · `manage.py check --deploy` limpio · `makemigrations --check` limpio.
+- **Nota de entorno:** en el sandbox de esta sesión, `ruff format --check` devuelve código de salida 2 con "Acceso denegado" pese a reportar el chequeo correcto — es un artefacto de este entorno (relación de confianza de dominio rota, confirmado con `icacls`/`whoami`), no un bug del repo ni de `verify.ps1`. Si reaparece en tu máquina, es señal de revisar permisos de `.ruff_cache`/`.pytest_cache`, no de tocar el script.
 - **Sin P0 de seguridad.** Los IDOR (F-03–F-06) son gaps reales pero mitigados hoy por `tenant=NULL` universal; se cierran antes de centralizar el servidor (FASE 2).
-- **Siguiente bloque recomendado:** FASE 1 (T1.1, partir `core`) o FASE 3 (T3.1, `on_delete=CASCADE→PROTECT`, es más chico y barato de hacer primero).
+- **Siguiente bloque recomendado:** **T3.1** (`on_delete=CASCADE→PROTECT` en `Alert`/`AlertRule`/historias — esfuerzo S, y desbloquea/protege **BLOQUE 1** que construye fuertemente sobre `AlertRule`), luego **BLOQUE 1** (Alertas⇄Kanban) o **TL.11** (changelog/tag) si se prefiere cerrar la higiene primero. FASE 1 (partir `core`, esfuerzo XL) puede esperar — no bloquea a los bloques de producto.
 
 ---
 
@@ -110,13 +111,77 @@ Es el **tablero de bloques**. `BACKLOG.md` queda como registro histórico de lo 
 
 | ID | Est. | Prio | Tarea | Esf. | Dep. |
 |---|:--:|:--:|---|:--:|:--:|
-| T6.1 | ⏸ | P2 | Alertas programadas + notificación email (U7, U8) | M | FASE 3 |
-| T6.2 | ⏸ | P2 | Checklists pre-vuelo cableando `KanbanTask.source_object → FlightPermission` (U9) | M | FASE 3 |
+| T6.1 | ↪ | P2 | ~~Alertas programadas + notificación email~~ → consolidado y detallado en **BLOQUE 2** (más abajo) | M | FASE 3 |
+| T6.2 | ↪ | P2 | ~~Checklists pre-vuelo cableando `source_object`~~ → consolidado en **BLOQUE 1** (más abajo, `source_object → Alert`, extensible a `FlightPermission`) | M | FASE 3 |
 | T6.3 | ⏸ | P3 | Vista previa de adjuntos (U10) | S | — |
 | T6.4 | ⏸ | P3 | Panel de auditoría en la UI (U11) | M | T1.1 |
 | T6.5 | ⏸ | P2 | Mantenimiento por horas/ciclos (campos nuevos) | L | FASE 3 |
 | T6.6 | ⏸ | P3 | Gestión de baterías (modelo nuevo) | L | FASE 3 |
 | T6.7 | ⏸ | P1 | **DJI Cloud API / telemetría** — diseñar SOLO tras estabilizar tenancy y constraints | XL | FASE 3 |
+
+---
+
+## Bloques de producto (plan externo integrado 2026-07-24)
+
+> Origen: `PLAN_CLAUDE_CODE.md` aportado por el usuario. Se integran aquí como bloques
+> de funcionalidad concreta, con la misma disciplina de una rama por bloque
+> (`codex/<bloque>`, no `feat/...` — ver `AGENTS.md`) y sin mezclar bloques en un PR.
+> No requieren esperar el cierre completo de FASE 1-3, pero **B1 depende de T3.1**
+> (proteger `Alert`/`AlertRule` de `CASCADE` antes de construir más funcionalidad
+> sobre esos modelos — es una tarea S, hacerla primero es barato).
+
+### BLOQUE 1 — Integración Alertas ⇄ Kanban `rama codex/alertas-kanban`
+
+`KanbanTask.source_object` (GFK) ya existe y solo se serializa en la API hoy; este bloque lo usa como vínculo real.
+
+| ID | Est. | Prio | Tarea | Esf. | Dep. |
+|---|:--:|:--:|---|:--:|:--:|
+| B1.1 | ⬜ | P2 | `AlertRule`: `create_kanban_task`, `target_board` (FK PROTECT), `target_stage` (FK PROTECT) + validación en `clean()` (etapa pertenece al tablero si `create_kanban_task=True`) | M | T3.1 |
+| B1.2 | ⬜ | P2 | `generate_alerts` crea `KanbanTask` con `source_object=Alert` (a lo sumo una tarea por alerta); título/descripción/`due_date` desde la regla; prioridad `critical`/`high`/`medium` por urgencia | M | B1.1 |
+| B1.3 | ⬜ | P2 | Derivar `assigned_to` (documento → entidad → centro de costo → responsable) cuando sea posible; documentar la regla en el docstring | S | B1.2 |
+| B1.4 | ⬜ | P3 | Botón manual "Crear tarea de seguimiento" en alertas sin tarea vinculada (permiso `add_kanbantask`), reutilizando la lógica de B1.2 (extraer a método de modelo/servicio, no duplicar) | S | B1.2 |
+| B1.5 | ⬜ | P3 | Mostrar el origen (`source_object`) en `_task_detail.html` con enlace a la alerta/entidad | XS | B1.2 |
+| B1.6 | ⬜ | P2 | Al resolver una `Alert`, mover su tarea vinculada a la primera etapa `status_type="completed"` del tablero, registrando `AuditEvent` | S | B1.2 |
+| B1.7 | ⬜ | P2 | `Document.resolve_related_alerts()`: al reemplazar un documento vencido/por vencer (mismo `doc_type`+entidad) resolver sus alertas abiertas automáticamente, con pruebas | M | — |
+| B1.8 | ⬜ | P2 | Idempotencia: correr `generate_alerts` dos veces no duplica tareas (ya existe el control para alertas) | S | B1.2 |
+| B1.9 | ⬜ | P3 | Comando de inicialización: tablero "Cumplimiento DGAC" con etapas (Por vencer → Recopilando → Enviado DGAC → Observado → Aprobado → Archivado) y etiquetas por trámite; `get_or_create`, seguro de re-ejecutar | S | B1.1 |
+
+**Aceptación del bloque:** pruebas de creación desde regla, creación manual, derivación de responsable, prioridad por urgencia, resolución automática, idempotencia y permisos 403; strings ES/EN; migraciones limpias; `verify.ps1` verde.
+
+### BLOQUE 2 — Notificaciones y programación `rama codex/notificaciones`
+
+| ID | Est. | Prio | Tarea | Esf. | Dep. |
+|---|:--:|:--:|---|:--:|:--:|
+| B2.1 | ⬜ | P2 | Backend de correo configurable vía `.env` (`EMAIL_HOST*`, `DEFAULT_FROM_EMAIL`; solo nombres de variables, nunca valores); `console.EmailBackend` en dev | S | — |
+| B2.2 | ⬜ | P2 | Comando `send_alert_digest`: resumen por responsable de centro de costo (documentos/habilitaciones que vencen en 30/15/7 días + vencidos), agrupado por urgencia, con `--dry-run`; si falta email, loguear y continuar | M | B2.1 |
+| B2.3 | ⬜ | P3 | Plantilla de correo texto plano + HTML simple, bilingüe | S | B2.2 |
+| B2.4 | ⬜ | P3 | `scripts/schedule_tasks.ps1` (Programador de tareas de Windows: `generate_alerts`, `send_alert_digest`, `backup.ps1`); documentar equivalente cron en `docs/` | S | B2.2 |
+| B2.5 | ⬜ | P3 | Registrar cada envío (destinatario, conteo, resultado) en el log JSON — nunca el contenido completo del correo | XS | B2.2 |
+
+**Aceptación del bloque:** pruebas con backend `locmem` verificando destinatarios/agrupación/`--dry-run`; sin secretos en el repo; documentación actualizada.
+
+### BLOQUE 3 — Mejoras UX del Kanban `rama codex/kanban-ux` (complementa FASE 5)
+
+| ID | Est. | Prio | Tarea | Esf. | Dep. |
+|---|:--:|:--:|---|:--:|:--:|
+| B3.1 | ⬜ | P2 | Agrupación por centro de costo/operador en el tablero (o alternativa más barata: agrupación en vista Lista + filtro rápido) | M | — |
+| B3.2 | ⬜ | P2 | Vista "Mi trabajo": tareas asignadas al operador vinculado al usuario, en tablero y lista | S | — |
+| B3.3 | ⬜ | P2 | Degradado de urgencia en tarjetas (≤30/≤15/≤7 días/vencida), accesible (no solo color) | S | — |
+| B3.4 | ⬜ | P3 | Contadores por columna (total y vencidas) | XS | — |
+| B3.5 | ⬜ | P3 | `wip_limit` opcional en `KanbanStage`; aviso visual al superarse, sin bloquear el drop | S | — |
+
+**Aceptación del bloque:** pruebas de filtros/agrupación y render de urgencia; revisión de accesibilidad (teclado, contraste); ES/EN.
+
+### BLOQUE 4 — Robustez de reglas y deuda de datos `rama codex/reglas-datos`
+
+| ID | Est. | Prio | Tarea | Esf. | Dep. |
+|---|:--:|:--:|---|:--:|:--:|
+| B4.1 | ⬜ | P2 | `AlertRule.entity_type`/`field_to_watch` validados contra modelos/campos reales (form + `clean()`); migración de datos que archiva (`is_active=False`) reglas inválidas existentes. Relacionado con T3.4 (`TextChoices`) — no duplicar, coordinar en la misma rama si se hacen juntas | M | — |
+| B4.2 | ⬜ | P2 | Comando `find_duplicate_operators`: lista los 4 grupos contradictorios (BACKLOG.md) con diferencias campo a campo; `--apply` fusiona (reasigna FKs, archiva duplicado, `AuditEvent`), confirmando por grupo | M | — |
+| B4.3 | ⬜ | P2 | Habilitaciones DGAC: modelo (operador, tipo, vigencia, evidencia vía `Document`, reglas de alerta). **Proponer el diseño en el PR antes de implementar** — requiere validación del usuario | M | Validación del usuario |
+| B4.4 | ⬜ | P2 | Compatibilidad operador–aeronave al crear permisos de vuelo. **Proponer el diseño antes de implementar** — requiere validación del usuario | M | Validación del usuario |
+
+**Aceptación del bloque:** B4.1/B4.2 completos con pruebas; B4.3/B4.4 entregados primero como propuesta de diseño validable, implementación solo tras aprobación.
 
 ### FASE L — Limpieza y orden del repositorio `puede correr en paralelo a FASE 0`
 
@@ -125,13 +190,18 @@ Es el **tablero de bloques**. `BACKLOG.md` queda como registro histórico de lo 
 | TL.1 | ✅ | P2 | Corregir `openspec/config.yaml` (metadatos falsos) | XS | — |
 | TL.2 | ✅ | P2 | `BACKLOG.md` → registro histórico que apunta a este plan | XS | — |
 | TL.3 | ✅ | P3 | Eliminar artefactos temporales sueltos (`.tmp-*.sqlite3`, `.tmp-check-logs/`) | XS | — |
-| TL.4 | ⬜ | P2 | Sacar `.agents/skills/impeccable/` del repo (submódulo/externo) — **decisión del dueño** | S | — |
-| TL.5 | ⬜ | P3 | Borrar `.atl/skill-registry.md` (rutas absolutas, usuario) y `prompts/` (obsoleto) — **decisión del dueño** | XS | — |
+| TL.4 | ✅ | P2 | Sacar `.agents/skills/impeccable/` del repo (aprobado por el usuario) | S | — |
+| TL.5 | ✅ | P3 | Borrar `.atl/skill-registry.md` y `prompts/` (aprobado por el usuario) | XS | — |
 | TL.6 | ⬜ | P2 | Cerrar `ui-modernization`, mergear a `main`, podar ramas remotas obsoletas y pares `-clean` | M | FASE 0 |
 | TL.7 | ⬜ | P3 | Atender los 5 PRs de Dependabot | S | T0.3 |
 | TL.8 | ⬜ | P2 | Consolidar `openspec/`: crear `openspec/specs/` y archivar los 5 changes al 100% | M | — |
-| TL.9 | ⬜ | P2 | Ampliar `AGENTS.md`: DoD por tipo de cambio, contrato de lectura, reglas de commit, precedencia documental | S | — |
+| TL.9 | ✅ | P2 | Ampliar `AGENTS.md`: DoD por tipo de cambio, contrato de lectura, reglas de commit, precedencia documental | S | — |
 | TL.10 | ⬜ | P3 | Añadir `.github/pull_request_template.md` con casillas verificables | XS | — |
+| TL.11 | ⬜ | P3 | Tag `v0.1.0-alpha` + `CHANGELOG.md` (Keep a Changelog) resumiendo `BACKLOG.md`; proponer el comando de tag, no ejecutar el push (del plan externo, Bloque 0) | S | — |
+| TL.12 | ✅ | P2 | Reordenar `docs/`: producto en raíz, notas internas en `docs/dev/` (plan externo, Bloque 0) | S | — |
+| TL.13 | ✅ | P3 | Rutas de ejemplo genéricas en README/.env.example/ARCHITECTURE.md/chapter1-import.md (plan externo, Bloque 0) | XS | — |
+| TL.14 | ✅ | P2 | Índices `Alert(is_resolved,is_active)`, `Document(expiry_date,is_current_version)`, `KanbanTask(board,stage,order)` (plan externo, Bloque 0) | S | — |
+| TL.15 | ✅ | P3 | Log JSON estructurado (`compliance.alerts`) para reglas de alerta inválidas en `generate_alerts` (plan externo, Bloque 0) | XS | — |
 
 ---
 
@@ -181,12 +251,14 @@ Es el **tablero de bloques**. `BACKLOG.md` queda como registro histórico de lo 
 
 ## Reglas de trabajo con agentes
 
-1. **Una intención por rama y por commit.** Nunca mezclar tooling/dependencias con producto (el commit `980b763` con 62.661 líneas es el anti-ejemplo).
-2. **Definition of Done por tipo de cambio:** modelo → migración + test de constraint; vista → test 403 + test de scope de tenant; comando → test camino feliz + error; formulario → test por cada `add_error`.
-3. **Contrato de lectura (hoy ausente, causa de F-05/F-06):** toda vista que expone datos de dominio exige `view_*` y acota por tenant.
-4. **Precedencia documental:** `AGENTS.md` > `MASTER_PLAN.md` > `openspec/specs/` > `AUDIT_CLAUDE.md` > `BACKLOG.md` > `README.md` > `docs/*`. `prompts/` y `docs/0X-*.md` son históricos, no autoritativos.
-5. **El gate manda:** ninguna tarea se marca ✅ sin `verify.ps1` verde (tras T0.3) y sin cumplir su criterio de aceptación.
-6. **No implementar FASE 6 antes de cerrar FASE 0-3.** DJI/telemetría/PostgreSQL/Celery están diferidos por diseño (YAGNI).
+> El contrato completo vive en [AGENTS.md](AGENTS.md) (precedencia documental, contrato de lectura, DoD por tipo de cambio, convención de ramas). Resumen aplicado a este tablero:
+
+1. **Una intención por rama y por commit**, rama `codex/<área-o-bloque>` (no `feat/...`). Nunca mezclar tooling/dependencias con producto (el commit `980b763` con 62.661 líneas es el anti-ejemplo).
+2. **Definition of Done por tipo de cambio** (detalle en `AGENTS.md`): modelo → migración + test de constraint; vista → test 403 + test de scope de tenant; comando → test camino feliz + error; formulario → test por cada `add_error`.
+3. **Contrato de lectura (causa de F-05/F-06):** toda vista que expone datos de dominio exige `view_*` y acota por tenant.
+4. **El gate manda:** ninguna tarea se marca ✅ sin `pwsh scripts/verify.ps1` verde y sin cumplir su criterio de aceptación.
+5. **No implementar FASE 6 antes de cerrar FASE 0-3.** DJI/telemetría/PostgreSQL/Celery están diferidos por diseño (YAGNI). Los **BLOQUE 1-4** de producto sí pueden avanzar en paralelo (ver nota de dependencia de B1 con T3.1).
+6. **B4.3/B4.4 (habilitaciones DGAC, compatibilidad operador-aeronave) se entregan primero como propuesta de diseño en el PR**, y se implementan solo tras validación del usuario.
 
 ---
 
