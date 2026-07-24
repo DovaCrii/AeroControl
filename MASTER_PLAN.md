@@ -160,10 +160,10 @@ Es el **tablero de bloques**. `BACKLOG.md` queda como registro histórico de lo 
 
 Un bloque por sesión/PR, en esta secuencia (revisión `PLAN_CLAUDE_CODE_1.md`):
 
-1. **BLOQUE 0** — higiene ✅ (hecho, salvo TL.11 tag/changelog… changelog ✅, falta solo el tag).
-2. **BLOQUE 1** — Alertas ⇄ Kanban: backend ✅; **UI (B1.4/B1.5) pendiente de revisión en vivo**.
-3. **BLOQUE 2** — notificaciones y programación (**incluye el modelo `JobRun`**, adelantado del Bloque 5).
-4. **BLOQUE 4 (parcial)** — SOLO B4.1 (validación de `AlertRule`) y B4.2 (duplicados de operadores). B4.3/B4.4 (habilitaciones DGAC, compatibilidad operador–aeronave) **diferidos** hasta que el usuario apruebe su diseño.
+1. **BLOQUE 0** — higiene ✅ (falta solo el tag `v0.1.0-alpha`, TL.11).
+2. **BLOQUE 1** — Alertas ⇄ Kanban ✅ (backend + UI, revisada en vivo).
+3. **BLOQUE 2** — notificaciones y programación ✅ (incluye `JobRun`, adelantado del Bloque 5).
+4. **BLOQUE 4 (parcial)** — `← SIGUIENTE`. SOLO B4.1 (validación de `AlertRule`) y B4.2 (duplicados de operadores). B4.3/B4.4 (habilitaciones DGAC, compatibilidad operador–aeronave) **diferidos** hasta que el usuario apruebe su diseño.
 5. **BLOQUE 6.1 y 6.2** — reporte documental determinista + informe ejecutivo por correo.
 
 **Bloques DIFERIDOS (no ejecutar sin instrucción explícita):** BLOQUE 3 (UX Kanban), BLOQUE 5 (centro de administración, salvo `JobRun` que se adelanta al Bloque 2), BLOQUE 6.3 (asistente IA), y los dos ítems de diseño del Bloque 4. Al terminar la ruta, **detenerse y preguntar** si el usuario no indicó lo contrario.
@@ -186,18 +186,20 @@ Un bloque por sesión/PR, en esta secuencia (revisión `PLAN_CLAUDE_CODE_1.md`):
 
 **Aceptación del bloque:** pruebas de creación desde regla, creación manual, derivación de responsable, prioridad por urgencia, resolución automática, idempotencia y permisos 403; strings ES/EN; migraciones limpias; `verify.ps1` verde.
 
-### BLOQUE 2 — Notificaciones y programación `rama codex/notificaciones` `← SIGUIENTE`
+### BLOQUE 2 — Notificaciones y programación `rama codex/notificaciones` `✅ COMPLETO`
 
 | ID | Est. | Prio | Tarea | Esf. | Dep. |
 |---|:--:|:--:|---|:--:|:--:|
-| B2.0 | ⬜ | P2 | **Modelo `JobRun`** en `apps.core` (adelantado del Bloque 5): comando, inicio, fin, resultado (ok/error), resumen corto; índice por comando+fecha. `generate_alerts`, `send_alert_digest` y los scripts de respaldo registran su ejecución. El centro de administración (Bloque 5) lo consumirá después | M | — |
-| B2.1 | ⬜ | P2 | Backend de correo configurable vía `.env` (`EMAIL_HOST*`, `DEFAULT_FROM_EMAIL`; solo nombres de variables, nunca valores); `console.EmailBackend` en dev | S | — |
-| B2.2 | ⬜ | P2 | Comando `send_alert_digest`: resumen por responsable de centro de costo (documentos/habilitaciones que vencen en 30/15/7 días + vencidos), agrupado por urgencia, con `--dry-run`; si falta email, loguear y continuar | M | B2.1 |
-| B2.3 | ⬜ | P3 | Plantilla de correo texto plano + HTML simple, bilingüe | S | B2.2 |
-| B2.4 | ⬜ | P3 | `scripts/schedule_tasks.ps1` (Programador de tareas de Windows: `generate_alerts`, `send_alert_digest`, `backup.ps1`); documentar equivalente cron en `docs/` | S | B2.2 |
-| B2.5 | ⬜ | P3 | Registrar cada envío (destinatario, conteo, resultado) en el log JSON — nunca el contenido completo del correo | XS | B2.2 |
+| B2.0 | ✅ | P2 | Modelo `JobRun` + `apps.core.jobs.record_job_run` (registra ok/error y re-lanza); conectado a `generate_alerts`, `backup` y `send_alert_digest`; admin read-only (`f7e22d8`) | M | — |
+| B2.1 | ✅ | P2 | `EMAIL_*`/`DEFAULT_FROM_EMAIL`/`SITE_BASE_URL` por entorno; consola por defecto si no hay `EMAIL_HOST` (`0b6eb75`) | S | — |
+| B2.2 | ✅ | P2 | `send_alert_digest` con buckets vencidos/7/15/30, `--dry-run`, y aviso+continuación si un CC no tiene destinatario (`0b6eb75`) | M | B2.1 |
+| B2.3 | ✅ | P3 | Plantillas de correo texto plano + HTML, traducidas (`0b6eb75`) | S | B2.2 |
+| B2.4 | ✅ | P3 | `schedule_tasks.ps1` + `run-scheduled-job.ps1` (carga `.env`, propaga exit code) y `docs/scheduled-operations.md` con equivalente cron (`d88e000`) | S | B2.2 |
+| B2.5 | ✅ | P3 | Log JSON por envío (destinatario, conteo, resultado); nunca el cuerpo (`0b6eb75`) | XS | B2.2 |
 
-**Aceptación del bloque:** pruebas con backend `locmem` verificando destinatarios/agrupación/`--dry-run`; sin secretos en el repo; documentación actualizada.
+**Aceptación del bloque: cumplida.** 8 pruebas con `locmem` (destinatario, agrupación por urgencia, `--dry-run`, CC sin destinatario, CC sin vencimientos, `JobRun`), sin secretos en el repo, README + `docs/scheduled-operations.md` actualizados. Verificado además con datos reales de la demo: el correo sale en español con las secciones "Vencidos (1)" y "Vence en 7 días (1)".
+
+**Decisión de diseño registrada:** se añadió `CostCenter.responsible_operator` (FK). El campo `responsible` es texto libre y sus valores importados ("J. Perez") no coinciden con ningún operador, así que emparejar por nombre no habría entregado ningún correo y podría acertarle a la persona equivocada. El texto se conserva como registro histórico (auditoría D17).
 
 ### BLOQUE 3 — Mejoras UX del Kanban `rama codex/kanban-ux` `⏸ DIFERIDO (no ejecutar sin instrucción)`
 
