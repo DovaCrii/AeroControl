@@ -17,3 +17,5 @@ backups/
 # Temp artifacts (runtime checks)
 .tmp-*/
 .tmp-*.sqlite3
+.coverage
+htmlcov/
