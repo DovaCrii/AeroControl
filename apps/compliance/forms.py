@@ -191,6 +191,9 @@ class AlertRuleForm(AeroModelForm):
             "field_to_watch",
             "days_before_expiry",
             "enabled",
+            "create_kanban_task",
+            "target_board",
+            "target_stage",
         ]
 
 
