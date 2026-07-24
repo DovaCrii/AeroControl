@@ -1,6 +1,3 @@
-from pathlib import Path
-
-from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
 from django.http import FileResponse, Http404, HttpResponseBadRequest
@@ -26,20 +23,12 @@ from apps.core.views import (
 )
 from .forms import AlertForm, AlertRuleForm, DocumentForm, DocumentTypeForm
 from .models import Alert, AlertRule, Document, DocumentType, document_upload_path
+from .storage import DocumentStorageNotFound, get_document_storage
 
 
 def save_uploaded_file(document, uploaded):
     relative_path = document_upload_path(document, uploaded.name)
-    root = Path(settings.DOCUMENTS_ROOT).resolve()
-    absolute_path = (root / relative_path).resolve()
-    if root not in absolute_path.parents:
-        raise ValueError("Document path escaped configured storage root")
-    absolute_path.parent.mkdir(parents=True, exist_ok=True)
-    temporary_path = absolute_path.with_name(f".{absolute_path.name}.part")
-    with temporary_path.open("wb+") as destination:
-        for chunk in uploaded.chunks():
-            destination.write(chunk)
-    temporary_path.replace(absolute_path)
+    get_document_storage().save(relative_path, uploaded)
     document.file_path = relative_path
     document.save(update_fields=["file_path", "updated_at"])
 
@@ -99,8 +88,9 @@ class DocumentCreate(ComplianceCreate):
     htmx_template_name = "compliance/_document_form_content.html"
 
     def form_valid(self, form):
-        response = super().form_valid(form)
-        save_uploaded_file(self.object, form.cleaned_data["file"])
+        with transaction.atomic():
+            response = super().form_valid(form)
+            save_uploaded_file(self.object, form.cleaned_data["file"])
         return response
 
 
@@ -143,11 +133,14 @@ class DocumentDownload(ModelPermissionRequiredMixin, View):
 
     def get(self, request, pk):
         document = get_object_or_404(Document, pk=pk, is_active=True)
-        root = Path(settings.DOCUMENTS_ROOT).resolve()
-        path = (root / document.file_path).resolve()
-        if root not in path.parents or not path.is_file():
-            raise Http404("Document file not found")
-        return FileResponse(path.open("rb"), as_attachment=True, filename=path.name)
+        try:
+            stream = get_document_storage().open(document.file_path)
+        except DocumentStorageNotFound as exc:
+            raise Http404("Document file not found") from exc
+        except OSError as exc:
+            raise Http404("Document file not found") from exc
+        filename = document.file_path.rsplit("/", 1)[-1]
+        return FileResponse(stream, as_attachment=True, filename=filename)
 
 
 class DocumentReplace(ModelPermissionRequiredMixin, FormView):
