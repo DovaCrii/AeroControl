@@ -1,7 +1,7 @@
 {% load i18n %}
 {% if not drag_enabled %}
   <div class="alert alert-info py-2" role="status" data-drag-disabled="true">
-    {% translate "Drag-and-drop ordering is disabled while an operator or priority filter is active. Clear the filters to reorder tasks." %}
+    {% translate "Drag-and-drop ordering is disabled while filters or a search are active. Clear them to reorder tasks." %}
   </div>
 {% endif %}
 {% for item in stages %}

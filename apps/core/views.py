@@ -14,6 +14,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views import View
 from django.views.generic import TemplateView
 from .audit import set_audit_context
@@ -29,6 +30,31 @@ class SearchMixin:
         if self.request.headers.get("HX-Request") == "true":
             return [self.htmx_template_name]
         return super().get_template_names()
+
+    def _row_action_exists(self, suffix=""):
+        """Whether `<list-path><pk>/<suffix>` resolves to a real view.
+
+        The generic table builds its row links relatively, and it offered View
+        and Edit on every list whether or not the URLs existed: on document
+        types, alert rules, flight records and maintenance history the buttons
+        were 404s (or a modal stuck on "Loading...").
+        """
+        from uuid import uuid4
+
+        from django.urls import Resolver404, resolve
+
+        probe = f"{self.request.path}{uuid4()}/{suffix}"
+        try:
+            resolve(probe)
+        except Resolver404:
+            return False
+        return True
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["has_detail_url"] = self._row_action_exists()
+        context["has_update_url"] = self._row_action_exists("edit/")
+        return context
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -777,7 +803,10 @@ class StatusTransitionView(ModelPermissionRequiredMixin, View):
     permission_action = "change"
     target_status = None
     valid_from_statuses = []
-    success_message = "Status updated."
+    # Subclasses must set this with a *marked* literal (gettext_lazy):
+    # `_(self.success_message)` on a variable is invisible to makemessages, so
+    # every transition message rendered in English inside a Spanish UI.
+    success_message = gettext_lazy("Status updated.")
 
     def post(self, request, pk):
         obj = get_object_or_404(self.model, pk=pk, is_active=True)
@@ -795,5 +824,5 @@ class StatusTransitionView(ModelPermissionRequiredMixin, View):
             obj._changed_by_user = request.user
             obj._transition_notes = request.POST.get("notes", "")
             obj.save(update_fields=["status", "updated_at"])
-        messages.success(request, _(self.success_message))
+        messages.success(request, self.success_message)
         return redirect(obj)

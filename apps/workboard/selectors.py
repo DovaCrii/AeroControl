@@ -58,6 +58,20 @@ def user_can_edit_board(user, board):
     return True
 
 
+def drag_enabled(params):
+    """Whether drag-and-drop ordering is active for these filter params.
+
+    Must mirror the client check in kanban.html's initSortables exactly: the
+    JS disables dragging for operator, priority, state, label and q, but the
+    server flag only knew about the first two, so filtering by state, label or
+    text silently froze the board with no notice - it just looked broken.
+    """
+    return not any(
+        params.get(name, "").strip()
+        for name in ("operator", "priority", "state", "label", "q")
+    )
+
+
 def filter_values(params):
     operator_id = params.get("operator", "")
     priority = params.get("priority", "")

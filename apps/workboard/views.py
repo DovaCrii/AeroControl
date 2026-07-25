@@ -37,6 +37,7 @@ from .selectors import (
     accessible_boards,
     board_for_user,
     build_stage_data,
+    drag_enabled,
     filter_values,
     task_row,
     user_can_edit_board,
@@ -517,8 +518,7 @@ class KanbanBoardView(ModelViewPermissionRequiredMixin, TemplateView):
                 "labels": KanbanLabel.objects.filter(board=board, is_active=True)
                 if board
                 else KanbanLabel.objects.none(),
-                "drag_enabled": filter_values(self.request.GET)[0] is None
-                and not filter_values(self.request.GET)[1],
+                "drag_enabled": drag_enabled(self.request.GET),
                 "stages": build_stage_data(board, self.request.GET) if board else [],
                 "filter_params": self.request.GET,
                 "today": timezone.localdate(),
@@ -552,8 +552,7 @@ class BoardPartialView(ModelViewPermissionRequiredMixin, View):
             {
                 "board": board,
                 "stages": stage_data,
-                "drag_enabled": filter_values(request.GET)[0] is None
-                and not filter_values(request.GET)[1],
+                "drag_enabled": drag_enabled(request.GET),
                 "filter_params": request.GET,
                 "today": timezone.localdate(),
             },
@@ -783,7 +782,7 @@ class QuickTaskCreate(ModelPermissionRequiredMixin, View):
             {
                 "stage": stage,
                 "tasks": tasks,
-                "drag_enabled": operator is None and not valid_priority,
+                "drag_enabled": drag_enabled(filter_params),
                 "filter_params": filter_params,
                 "today": timezone.localdate(),
             },

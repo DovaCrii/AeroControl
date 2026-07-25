@@ -1,6 +1,11 @@
-{% comment %}None means "no view_alert permission": the badge stays as an empty,
-invisible element so the HTMX polling chain remains intact if permissions are
-granted mid-session.{% endcomment %}
-<span id="alert-badge" class="badge bg-danger ms-auto{% if unresolved_alert_count is None %} d-none{% endif %}"
+{% load i18n %}
+{% comment %}None means "no view_alert permission"; 0 means nothing pending. In
+both cases the badge hides but stays in the DOM so the HTMX polling chain keeps
+working - a permanent red "0" read as urgency where there was none. aria-live
+announces changes to screen readers, which otherwise never hear the 60s swap.
+{% endcomment %}
+<span id="alert-badge" class="badge bg-danger ms-auto{% if not unresolved_alert_count %} d-none{% endif %}"
+      role="status" aria-live="polite"
+      {% if unresolved_alert_count %}aria-label="{% blocktranslate count counter=unresolved_alert_count %}{{ counter }} unresolved alert{% plural %}{{ counter }} unresolved alerts{% endblocktranslate %}"{% endif %}
       hx-get="{% url 'alert-count' %}" hx-trigger="every 60s"
-      hx-target="this" hx-swap="outerHTML">{% if unresolved_alert_count is not None %}{{ unresolved_alert_count }}{% endif %}</span>
+      hx-target="this" hx-swap="outerHTML">{% if unresolved_alert_count %}{{ unresolved_alert_count }}{% endif %}</span>

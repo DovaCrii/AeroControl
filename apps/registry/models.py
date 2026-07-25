@@ -151,32 +151,33 @@ class Assignment(BaseModel):
         return f"{self.operator} · {self.aircraft}"
 
     def clean(self):
+        # English source strings with the Spanish in the catalog, like the rest
+        # of the project: these were hardcoded Spanish, so the English UI
+        # showed Spanish errors and makemessages could not see them.
         errors = {}
         if self.end_date and self.end_date < self.start_date:
-            errors["end_date"] = (
-                "La fecha final no puede ser anterior a la fecha inicial."
-            )
+            errors["end_date"] = _("The end date cannot be before the start date.")
         if self.operator_id and not self.operator.is_active:
-            errors["operator"] = "El operador seleccionado está inactivo."
+            errors["operator"] = _("The selected operator is inactive.")
         if self.aircraft_id and (
             not self.aircraft.is_active or self.aircraft.status != "active"
         ):
-            errors["aircraft"] = "La aeronave seleccionada no está disponible."
+            errors["aircraft"] = _("The selected aircraft is not available.")
         if (
             self.cost_center_id
             and self.operator_id
             and self.operator.cost_center_id not in (None, self.cost_center_id)
         ):
-            errors["cost_center"] = (
-                "El centro de costo no coincide con el del operador."
+            errors["cost_center"] = _(
+                "The cost center does not match the operator's."
             )
         if (
             self.cost_center_id
             and self.aircraft_id
             and self.aircraft.cost_center_id not in (None, self.cost_center_id)
         ):
-            errors["cost_center"] = (
-                "El centro de costo no coincide con el de la aeronave."
+            errors["cost_center"] = _(
+                "The cost center does not match the aircraft's."
             )
         if errors:
             raise ValidationError(errors)

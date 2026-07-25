@@ -12,6 +12,7 @@ from django.views.generic import (
     DetailView,
     FormView,
     ListView,
+    UpdateView,
     View,
 )
 
@@ -226,7 +227,7 @@ class DocumentDelete(ModelPermissionRequiredMixin, DeleteView):
     def form_valid(self, form):
         self.object.is_active = False
         self.object.save(update_fields=["is_active", "updated_at"])
-        messages.success(self.request, "Document archived.")
+        messages.success(self.request, _("Document archived."))
         return redirect(self.success_url)
 
 
@@ -271,6 +272,23 @@ class AlertList(ComplianceList):
         return context
 
 
+def _redirect_back(request, fallback="alert-list"):
+    """Return to the validated referer, like AlertCreateTask already did.
+
+    The three buttons on one alert row behaved differently: Create task came
+    back to the filtered, paginated list the user was on, while Resolve and
+    Undo dumped them on page one with the filters gone.
+    """
+    referer = request.META.get("HTTP_REFERER", "")
+    if referer and url_has_allowed_host_and_scheme(
+        referer,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return redirect(referer)
+    return redirect(fallback)
+
+
 class AlertResolve(ModelPermissionRequiredMixin, View):
     model = Alert
     permission_action = "change"
@@ -280,7 +298,8 @@ class AlertResolve(ModelPermissionRequiredMixin, View):
         moved_task = alert.resolve()
         metadata = {"moved_task_id": str(moved_task.pk)} if moved_task else {}
         set_audit_context(request, alert, action="alert_resolved", metadata=metadata)
-        return redirect("alert-list")
+        messages.success(request, _("Alert resolved."))
+        return _redirect_back(request)
 
 
 class AlertReopen(ModelPermissionRequiredMixin, View):
@@ -299,7 +318,8 @@ class AlertReopen(ModelPermissionRequiredMixin, View):
         moved_task = alert.reopen()
         metadata = {"moved_task_id": str(moved_task.pk)} if moved_task else {}
         set_audit_context(request, alert, action="alert_reopened", metadata=metadata)
-        return redirect("alert-list")
+        messages.success(request, _("Alert reopened."))
+        return _redirect_back(request)
 
 
 class AlertCreateTask(ModelPermissionRequiredMixin, View):
@@ -339,6 +359,32 @@ class AlertCreateTask(ModelPermissionRequiredMixin, View):
         return redirect("alert-list")
 
 
+class ComplianceUpdate(HtmxFormMixin, ModelPermissionRequiredMixin, UpdateView):
+    """Edit view for the configuration models.
+
+    Document types and alert rules could be created but never corrected from
+    the UI: the generic list offered an Edit button whose URL did not exist,
+    so a typo in a rule lived forever or went through the technical admin.
+    """
+
+    permission_action = "change"
+    template_name = "generic/form.html"
+
+    def get_success_url(self):
+        return reverse(f"{self.model._meta.model_name}-list")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = _("Edit %(name)s") % {
+            "name": self.model._meta.verbose_name
+        }
+        return context
+
+    def form_valid(self, form):
+        set_audit_context(self.request, self.object)
+        return super().form_valid(form)
+
+
 class DocumentTypeList(ComplianceList):
     model = DocumentType
 
@@ -348,11 +394,21 @@ class DocumentTypeCreate(ComplianceCreate):
     form_class = DocumentTypeForm
 
 
+class DocumentTypeUpdate(ComplianceUpdate):
+    model = DocumentType
+    form_class = DocumentTypeForm
+
+
 class AlertRuleList(ComplianceList):
     model = AlertRule
 
 
 class AlertRuleCreate(ComplianceCreate):
+    model = AlertRule
+    form_class = AlertRuleForm
+
+
+class AlertRuleUpdate(ComplianceUpdate):
     model = AlertRule
     form_class = AlertRuleForm
 

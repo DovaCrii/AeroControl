@@ -6,6 +6,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.generic import CreateView, DetailView, ListView
 
 from apps.core.views import (
@@ -119,21 +120,21 @@ class FlightPermissionApprove(StatusTransitionView):
     model = FlightPermission
     target_status = "approved"
     valid_from_statuses = ["requested"]
-    success_message = "Permission approved."
+    success_message = gettext_lazy("Permission approved.")
 
 
 class FlightPermissionDeny(StatusTransitionView):
     model = FlightPermission
     target_status = "denied"
     valid_from_statuses = ["requested"]
-    success_message = "Permission denied."
+    success_message = gettext_lazy("Permission denied.")
 
 
 class FlightPermissionComplete(StatusTransitionView):
     model = FlightPermission
     target_status = "completed"
     valid_from_statuses = ["approved"]
-    success_message = "Permission completed."
+    success_message = gettext_lazy("Permission completed.")
 
 
 FlightRecordList = type(
