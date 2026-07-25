@@ -7,6 +7,7 @@ from rest_framework.throttling import AnonRateThrottle
 from rest_framework.viewsets import ViewSet
 from rest_framework.exceptions import NotAuthenticated, PermissionDenied
 import json
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_datetime
 
@@ -181,10 +182,24 @@ class KanbanTaskViewSet(ViewSet):
                     {"detail": "Stage does not belong to this board."}, status=400
                 )
             task.stage = stage
+        changed = ["stage"] if "stage_id" in payload else []
         for field in ("title", "description", "priority", "due_date"):
             if field in payload:
                 setattr(task, field, payload[field])
-        task.save()
+                changed.append(field)
+        # full_clean before save: without it {"due_date": "mañana"} raised an
+        # unhandled 500, and a 10,000-character title persisted fine on SQLite
+        # (which ignores varchar lengths) only to blow up on PostgreSQL later.
+        try:
+            task.full_clean()
+        except DjangoValidationError as exc:
+            return JsonResponse(
+                {"detail": "Validation failed.", "errors": exc.message_dict},
+                status=400,
+            )
+        # update_fields keeps the write to what the request touched, so the
+        # optimistic-concurrency check is not undone by rewriting the row.
+        task.save(update_fields=[*changed, "updated_at"])
         from apps.core.audit import set_audit_context
 
         set_audit_context(request, task)
