@@ -22,3 +22,19 @@ CSRF_COOKIE_SECURE = True
 SECURE_HSTS_SECONDS = 31_536_000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
+
+# Content-hashed filenames, so a stylesheet change reaches browsers on its own.
+# Before this, base.html carried a hand-written `?v=` suffix that someone had to
+# remember to bump; it still read "20260724-legibility2" after the CSS had been
+# rewritten, which means a returning user would have kept the old file.
+# WhiteNoise's variant also pre-compresses, and it is the storage WhiteNoise
+# expects when serving with far-future cache headers.
+#
+# Only in production: the manifest is written by `collectstatic`, and requiring
+# it in development would mean running collectstatic before every runserver.
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
+    },
+}
