@@ -7,8 +7,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db import transaction
-from django.http import HttpResponse
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.conf import settings
 from django.db import connection
 from django.shortcuts import get_object_or_404, redirect, render
@@ -50,6 +49,18 @@ class SearchMixin:
         return queryset if queryset.ordered else queryset.order_by("created_at")
 
 
+class _CsvEchoBuffer:
+    """File-like object whose write() returns what it was given.
+
+    csv.writer needs something with write(); returning the value lets each
+    writerow() feed a StreamingHttpResponse instead of accumulating the whole
+    export in memory.
+    """
+
+    def write(self, value):
+        return value
+
+
 class CsvExportMixin:
     """Add ``?export=csv`` support to list views."""
 
@@ -63,38 +74,49 @@ class CsvExportMixin:
         return f"{model_name}.csv"
 
     def render_csv_response(self, queryset):
-        response = HttpResponse(content_type="text/csv; charset=utf-8")
-        response["Content-Disposition"] = (
-            f'attachment; filename="{self.get_csv_filename()}"'
-        )
-        # The BOM makes UTF-8 CSV files open correctly in Excel.
-        response.write("\ufeff")
-
-        writer = csv.writer(response, lineterminator="\r\n")
         fields = self.csv_fields or [
             field
             for field in self.model._meta.fields
             if field.name
             not in {"id", "notes", "is_active", "created_at", "updated_at"}
         ]
-        writer.writerow([field.verbose_name.title() for field in fields])
+        # str(value) on an FK column used to fire one query per relation per
+        # row, and the whole table was materialised in memory: a full flight
+        # log export was ~3 queries per row. Join the relations up front and
+        # stream in chunks instead.
+        related = [field.name for field in fields if field.is_relation]
+        if related:
+            queryset = queryset.select_related(*related)
 
-        for obj in queryset:
-            row = []
-            for field in fields:
-                value = getattr(obj, field.name)
-                if value is None:
-                    row.append("")
-                elif hasattr(value, "strftime"):
-                    row.append(value.strftime("%Y-%m-%d"))
-                else:
-                    value = str(value)
-                    # Excel/LibreOffice interpret leading formula characters on open.
-                    row.append(
-                        f"'{value}" if value.startswith(("=", "+", "-", "@")) else value
-                    )
-            writer.writerow(row)
+        def rows():
+            yield "\ufeff"  # the BOM makes UTF-8 CSV open correctly in Excel
+            buffer = _CsvEchoBuffer()
+            writer = csv.writer(buffer, lineterminator="\r\n")
+            yield writer.writerow([field.verbose_name.title() for field in fields])
+            for obj in queryset.iterator(chunk_size=2000):
+                row = []
+                for field in fields:
+                    value = getattr(obj, field.name)
+                    if value is None:
+                        row.append("")
+                    elif hasattr(value, "strftime"):
+                        row.append(value.strftime("%Y-%m-%d"))
+                    else:
+                        value = str(value)
+                        # Excel/LibreOffice interpret leading formula characters.
+                        row.append(
+                            f"'{value}"
+                            if value.startswith(("=", "+", "-", "@"))
+                            else value
+                        )
+                yield writer.writerow(row)
 
+        response = StreamingHttpResponse(
+            rows(), content_type="text/csv; charset=utf-8"
+        )
+        response["Content-Disposition"] = (
+            f'attachment; filename="{self.get_csv_filename()}"'
+        )
         return response
 
     def get(self, request, *args, **kwargs):
@@ -257,6 +279,12 @@ class UnifiedCalendarEventsView(CalendarAccessMixin, View):
         "task": "#0f9f95",
     }
 
+    # Widest window the calendar UI can legitimately ask for (a quarter).
+    # start/end come straight from the query string, and without a clamp
+    # ?start=2020-01-01&end=2035-01-01 serialised seven whole tables into one
+    # JSON response - an authenticated user could stall the worker at will.
+    MAX_RANGE_DAYS = 92
+
     def get_date_range(self, request):
         today = timezone.localdate()
         try:
@@ -267,6 +295,9 @@ class UnifiedCalendarEventsView(CalendarAccessMixin, View):
             end = date.fromisoformat(request.GET.get("end", ""))
         except ValueError:
             end = start + timedelta(days=42)
+        if end < start:
+            end = start
+        end = min(end, start + timedelta(days=self.MAX_RANGE_DAYS))
         return start, end
 
     def get(self, request):

@@ -34,7 +34,7 @@
   <div class="col-md-3 col-sm-6">
     <div class="summary-card">
       <small>{% translate "Expiring in 30 days" %}</small>
-      <strong>{{ expirations|length }}</strong>
+      <strong>{{ expiring_count }}</strong>
     </div>
   </div>
 </div>
@@ -113,7 +113,10 @@
       {% for stage in stages %}
       <div class="d-flex justify-content-between border-bottom py-2">
         <span>{{ stage.name }}</span>
-        <b>{{ stage.tasks.count }}</b>
+        {% comment %}The annotation, not stage.tasks.count: the manager count
+        issues one COUNT per stage and includes archived tasks, so the two
+        numbers on this page disagreed with each other.{% endcomment %}
+        <b>{{ stage.active_task_count }}</b>
       </div>
       {% empty %}
       <p class="text-muted my-2">{% translate "No stages configured." %}</p>

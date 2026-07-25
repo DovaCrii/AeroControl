@@ -21,12 +21,19 @@ def dashboard(request):
     alert_count = Alert.objects.filter(is_active=True, is_resolved=False).count()
 
     # --- Expirations ---
-    cutoff = timezone.localdate() + timedelta(days=30)
-    expirations = Qualification.objects.filter(
+    # Bounded on both ends: without the floor this listed every historically
+    # expired qualification, on a page opened at every login. The summary tile
+    # keeps the real count; only the visible list is capped.
+    today = timezone.localdate()
+    cutoff = today + timedelta(days=30)
+    expiring = Qualification.objects.filter(
         is_active=True,
         expiry_date__isnull=False,
+        expiry_date__gte=today,
         expiry_date__lte=cutoff,
-    ).order_by("expiry_date")
+    )
+    expiring_count = expiring.count()
+    expirations = expiring.select_related("operator").order_by("expiry_date")[:10]
 
     # --- Kanban stages (archived tasks must not inflate the counts) ---
     stages = KanbanStage.objects.filter(is_active=True).annotate(
@@ -110,6 +117,7 @@ def dashboard(request):
         "operator_count": operator_count,
         "alert_count": alert_count,
         "expirations": expirations,
+        "expiring_count": expiring_count,
         "stages": stages,
         "chart_data": chart_data,
     }

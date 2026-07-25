@@ -117,11 +117,18 @@ def visible_tasks_for_board(board, params):
 
 
 def build_stage_data(board, params):
+    """Stage columns with their tasks, from one task query.
+
+    Filtering per stage re-ran the whole filtered queryset (plus its two
+    prefetches) once per column: ~18 queries for a default six-stage board,
+    on the partial that re-renders with every drag and filter change. One
+    query, grouped in Python, keeps the render cost flat.
+    """
+    tasks_by_stage = {}
+    for task in visible_tasks_for_board(board, params):
+        tasks_by_stage.setdefault(task.stage_id, []).append(task)
     return [
-        {
-            "stage": stage,
-            "tasks": visible_tasks_for_board(board, params).filter(stage=stage),
-        }
+        {"stage": stage, "tasks": tasks_by_stage.get(stage.pk, [])}
         for stage in board.stages.filter(is_active=True).order_by("order")
     ]
 

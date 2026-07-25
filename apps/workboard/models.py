@@ -134,18 +134,41 @@ class KanbanTask(BaseModel):
             models.Index(
                 fields=["board", "stage", "order"],
                 name="workboard_task_board_order_idx",
-            )
+            ),
+            # Alert.linked_task() and the alert list resolve tasks by their
+            # source (type, id) pair.
+            models.Index(
+                fields=["source_content_type", "source_object_id"],
+                name="workboard_task_source_idx",
+            ),
         ]
 
     def __str__(self):
         return self.title
 
+    def _prefetched_checklist(self):
+        """The prefetched checklist rows, or None when not prefetched."""
+        cache = getattr(self, "_prefetched_objects_cache", None)
+        if cache is not None and "checklist_items" in cache:
+            return cache["checklist_items"]
+        return None
+
     @property
     def checklist_total(self):
+        items = self._prefetched_checklist()
+        if items is not None:
+            return len(items)
         return self.checklist_items.count()
 
     @property
     def checklist_completed(self):
+        # `.filter(...).count()` builds a fresh queryset, which silently
+        # bypasses prefetch_related: every card on the board cost one COUNT
+        # query, on a partial that re-renders with each drag and each filter.
+        # Counting the prefetched rows in Python keeps one query per board.
+        items = self._prefetched_checklist()
+        if items is not None:
+            return sum(1 for item in items if item.is_completed)
         return self.checklist_items.filter(is_completed=True).count()
 
     @property

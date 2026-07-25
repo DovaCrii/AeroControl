@@ -33,6 +33,13 @@ class Command(BaseCommand):
         duplicates = 0
         tasks_created = 0
         today = timezone.localdate()
+        # One query instead of an EXISTS per candidate record: the nightly run
+        # grew linearly with history, holding SQLite's write lock the while.
+        open_alert_keys = set(
+            Alert.objects.filter(is_resolved=False, is_active=True).values_list(
+                "alert_rule_id", "object_id"
+            )
+        )
         for rule in AlertRule.objects.filter(enabled=True, is_active=True):
             model = resolve_model(rule.entity_type)
             if model is None:
@@ -70,15 +77,16 @@ class Command(BaseCommand):
                     }
                 )
             else:  # a `status` field with choices
-                records = records.exclude(status__in=("completed", "denied"))
+                # Bounded: without a floor this rescanned every open record
+                # since the beginning of time, forever. A record stuck in an
+                # open status alerted while young and that alert stays open
+                # (alerts never auto-expire), so only a rule created more than
+                # a year after the record would miss it.
+                records = records.exclude(status__in=("completed", "denied")).filter(
+                    created_at__gte=timezone.now() - timedelta(days=365)
+                )
             for record in records:
-                if Alert.objects.filter(
-                    alert_rule=rule,
-                    content_type=content_type,
-                    object_id=record.pk,
-                    is_resolved=False,
-                    is_active=True,
-                ).exists():
+                if (rule.pk, record.pk) in open_alert_keys:
                     duplicates += 1
                     continue
                 value = getattr(record, field, "")
