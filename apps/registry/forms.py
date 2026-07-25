@@ -121,7 +121,7 @@ class AssignmentForm(AeroModelForm):
         if status == "confirmed" and not cost_center:
             self.add_error(
                 "cost_center",
-                _("Una asignación confirmada requiere un centro de costo."),
+                _("A confirmed assignment requires a cost center."),
             )
         end = end_date or start_date
         overlap = Assignment.objects.filter(
@@ -135,7 +135,7 @@ class AssignmentForm(AeroModelForm):
         if status == "confirmed" and overlap.filter(status="confirmed").exists():
             self.add_error(
                 "operator",
-                _("El operador ya tiene una asignación confirmada en este período."),
+                _("This operator already has a confirmed assignment in this period."),
             )
 
         aircraft_overlap = Assignment.objects.filter(
@@ -152,7 +152,7 @@ class AssignmentForm(AeroModelForm):
         ):
             self.add_error(
                 "aircraft",
-                _("La aeronave ya tiene una asignación confirmada en este período."),
+                _("This aircraft already has a confirmed assignment in this period."),
             )
         return cleaned
 

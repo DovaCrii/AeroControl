@@ -200,7 +200,9 @@ class TestAuthenticatedPages:
         )
         preview = auth_client.post(reverse("costcenter-import"), {"file": csv_file})
         assert preview.status_code == 200
-        assert "2 rows are valid" in preview.content.decode()
+        # Spanish: the project renders in es, and this string was only English
+        # here because it was missing from the catalog.
+        assert "2 filas son válidas" in preview.content.decode()
 
         csv_file = SimpleUploadedFile(
             "centers.csv",
