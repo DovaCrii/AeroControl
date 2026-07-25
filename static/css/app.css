@@ -1038,6 +1038,16 @@ main {
 @media (max-width: 900px) { .admin-center-grid { grid-template-columns: 1fr; } }
 
 /* ── Workboard ────────────────────────────────────── */
+/* Action cells keep one height whatever the row's state: a resolved alert shows
+   a badge and one button, an open one shows two, and they must line up. */
+.alert-actions {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 34px;
+}
+
 .view-tabs { display: flex; gap: 0.35rem; border-bottom: 1px solid var(--ac-border); }
 .view-tab { padding: 0.65rem 0.85rem; border-bottom: 3px solid transparent; color: var(--ac-text-secondary); font-weight: 650; text-decoration: none; }
 .view-tab:hover { color: var(--ac-text); background: var(--ac-primary-soft); }
