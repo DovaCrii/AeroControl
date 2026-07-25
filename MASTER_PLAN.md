@@ -39,18 +39,17 @@ Aún **no mergeada a `main`**. Ver TL.6.
 La ruta obligatoria del plan externo está **completa**. Lo siguiente ya no viene
 de esa ruta sino de la auditoría, y el orden recomendado es:
 
-1. **T2.4** — rol `Viewer` con `view_*` explícitos. `bootstrap_roles` usa
-   `codename__startswith="view_"`, así que el rol más bajo recibe también
-   `view_auditevent`, `view_user` y `view_tenantmembership`. Esfuerzo S, sin
-   dependencias. *(Identificada, no empezada.)*
-2. **T2.3** — exigir `view_*` en `/calendar/`, el Kanban HTML y el feed de
-   eventos (hallazgo **F-06**): hoy son solo `LoginRequiredMixin` y un usuario
-   sin ningún permiso ve matrículas, operadores y centros de costo. Esfuerzo S.
-3. **TL.6** — mergear a `main` y podar ramas remotas obsoletas. 🔄 El merge está
-   preparado (fast-forward, `origin/main` es ancestro de la rama); falta el
-   `push`, que ejecuta el usuario.
+1. ~~**T2.4**~~ ✅ y ~~**T2.3**~~ ✅ — los dos hallazgos de autorización de
+   lectura están cerrados (`c5d22dd`, `3611d06`).
+2. **TL.6** — 🔄 el merge a `main` está preparado (fast-forward, verificado);
+   faltan el `push` y la poda de ramas, que ejecuta el usuario. Ver "Inventario
+   de ramas".
+3. **T2.5** — unificar la noción de "hoy" (`TIME_ZONE`). Descubierto al ponerse
+   roja la suite a las 20:07 hora local: es un bug de datos silencioso, no
+   cosmético.
 4. **R.10 / T5.1** — unificar los tokens de `app.css`. Mientras conviva la
    generación vieja, cada arreglo de color hay que hacerlo en dos sitios.
+   **Requiere revisión visual en el navegador**, no solo tests.
 
 Más adelante, y con más peso: **T3.2** (clave de tenancy) es el bloqueador real
 de la centralización y de DJI, y es barato ahora frente a hacerlo con datos
@@ -159,8 +158,9 @@ borrar, no existe copia en el remoto).
 |---|:--:|:--:|---|:--:|:--:|
 | T2.1 | ⬜ | P1 | Cerrar IDOR workboard: acceso a tablero en checklist/stage; `get_queryset` scoped en List (F-03, F-04) | M | T1.1 |
 | T2.2 | ⬜ | P1 | `TenantScopedQuerysetMixin` en documentos + filtro por entidad (F-05) | M | T1.1 |
-| T2.3 | ⬜ | P1 | `has_perm` en `/calendar/`, Kanban HTML y feed de eventos (F-06) | S | T1.1 |
-| T2.4 | ⬜ | P2 | Rol `Viewer` con `view_*` explícitos (no `startswith`) | S | — |
+| T2.3 | ✅ | P1 | `has_perm` en `/calendar/`, Kanban HTML y feed de eventos (F-06) — `CalendarAccessMixin` por fuente de evento, desplegables por `view_*` del modelo que listan, `?types=` acotado a lo permitido (`3611d06`) | S | T1.1 |
+| T2.4 | ✅ | P2 | Rol `Viewer` con `view_*` explícitos (no `startswith`). En la base real recibía **35** permisos, incluidos `authtoken.view_token`, `auth.view_user`, `sessions.view_session` y `core.view_auditevent`; ahora 20 (`c5d22dd`) | S | — |
+| T2.5 | ⬜ | P2 | **[nuevo]** `TIME_ZONE = "UTC"` con la máquina en Chile: el proyecto tiene dos nociones de "hoy" (`date.today()` del SO vs `timezone.localdate()`/lookups `__date`) que discrepan 4 h cada tarde. El informe ya es coherente consigo mismo (`58d5789`), pero quedan `generate_alerts`, `send_alert_digest`, `digest.py`, `dashboard/views.py` y `compliance/models.py` con `date.today()`. Decidir la zona operativa y unificar | S | — |
 | T2.5 | ⬜ | P2 | `django-csp` enforcing por entorno; SRI en 4 dependencias; `django-axes` + throttling (F-17, F-18) | M | — |
 
 ### FASE 3 — Integridad de datos `⛔ requiere FASE 1 · CAMBIAR AHORA`
