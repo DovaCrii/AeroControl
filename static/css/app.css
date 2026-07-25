@@ -1,20 +1,15 @@
 /* ── AeroControl Theme ──────────────────────────────── */
-:root {
-  --navy: #1B2A4A;
-  --turquoise: #2EC4B6;
-  --light: #F8F9FA;
-  --sidebar-width: 250px;
-}
+/* Tokens live in a single :root further down ("UI foundation"). This file used
+   to open with a second, older :root whose values lost to it on source order,
+   so a colour fixed here silently had no effect. */
 
 body {
-  background: var(--light);
-  color: #243247;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 /* ── Navbar ───────────────────────────────────────── */
 .navbar-dark.navy {
-  background: var(--navy);
+  background: var(--ac-navy);
 }
 
 .brand-mark {
@@ -41,7 +36,7 @@ body {
 .sidebar {
   background: #fff;
   min-height: calc(100vh - 56px);
-  width: var(--sidebar-width);
+  width: var(--ac-sidebar-width);
   box-shadow: 1px 0 5px rgba(0,0,0,0.08);
   gap: 0.15rem;
 }
@@ -50,7 +45,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  color: var(--navy);
+  color: var(--ac-navy);
   padding: 0.6rem 0.8rem;
   text-decoration: none;
   border-radius: 6px;
@@ -60,7 +55,7 @@ body {
 
 .sidebar a:hover {
   background: #e4f8f5;
-  color: var(--navy);
+  color: var(--ac-navy);
 }
 
 .sidebar a.active {
@@ -89,7 +84,7 @@ body {
 .nav-admin .nav-icon { color: #596579; }
 
 .sidebar a.active {
-  box-shadow: inset 3px 0 0 var(--turquoise);
+  box-shadow: inset 3px 0 0 var(--ac-turquoise);
 }
 
 .sidebar a .badge {
@@ -112,8 +107,8 @@ body {
 
 /* ── Buttons ──────────────────────────────────────── */
 .btn-primary {
-  background: var(--navy);
-  border-color: var(--navy);
+  background: var(--ac-navy);
+  border-color: var(--ac-navy);
 }
 
 .btn-primary:hover {
@@ -138,7 +133,13 @@ body {
   border-color: rgba(255,255,255,0.65);
   color: #fff;
   font-weight: 600;
-  /* Centres the visible option; text-align alone is ignored on select. */
+  /* Bootstrap reserves 36px of right padding for the caret against 8px on the
+     left, so `text-align: center` centred the text inside a 13px content box
+     shoved 14px off-centre. For a two-letter switch the caret costs more than
+     it explains, so this one control drops it and pads evenly instead. Every
+     other <select> keeps its caret. */
+  background-image: none;
+  padding-inline: 0.4rem;
   text-align: center;
   text-align-last: center;
 }
@@ -149,7 +150,7 @@ body {
 
 /* ── Cards / Summary ──────────────────────────────── */
 .summary-card {
-  background: var(--navy);
+  background: var(--ac-navy);
   color: #fff;
   border-radius: 10px;
   padding: 1.2rem;
@@ -159,7 +160,7 @@ body {
 
 .summary-card strong {
   font-size: 2rem;
-  color: var(--turquoise);
+  color: var(--ac-turquoise);
 }
 
 .card {
@@ -175,7 +176,7 @@ body {
   z-index: 2000;
   padding: 0.55rem 0.8rem;
   color: #fff;
-  background: var(--navy);
+  background: var(--ac-navy);
   border-radius: 0.35rem;
   transform: translateY(-150%);
 }
@@ -183,7 +184,7 @@ body {
 .skip-link:focus { transform: translateY(0); }
 
 :where(a, button, input, select, textarea):focus-visible {
-  outline: 3px solid var(--turquoise);
+  outline: 3px solid var(--ac-turquoise);
   outline-offset: 2px;
 }
 
@@ -216,13 +217,13 @@ body {
 
 /* ── Pagination ───────────────────────────────────── */
 .pagination .page-link {
-  color: var(--navy);
+  color: var(--ac-navy);
   border: 1px solid #dee2e6;
 }
 
 .pagination .page-item.active .page-link {
-  background: var(--navy);
-  border-color: var(--navy);
+  background: var(--ac-navy);
+  border-color: var(--ac-navy);
 }
 
 /* ── Kanban Board ─────────────────────────────────── */
@@ -252,7 +253,7 @@ body {
   padding: 0.75rem 1rem;
   font-weight: 600;
   font-size: 0.9rem;
-  border-top: 3px solid var(--turquoise);
+  border-top: 3px solid var(--ac-turquoise);
   border-radius: 10px 10px 0 0;
   background: #fff;
 }
@@ -303,7 +304,7 @@ body {
   font-weight: 600;
   font-size: 0.88rem;
   margin-bottom: 0.35rem;
-  color: var(--navy);
+  color: var(--ac-navy);
   word-break: break-word;
 }
 
@@ -390,7 +391,7 @@ body {
     bottom: 0;
     left: 0;
     z-index: 1040;
-    width: min(86vw, var(--sidebar-width));
+    width: min(86vw, var(--ac-sidebar-width));
     overflow-y: auto;
     transform: translateX(-105%);
     transition: transform 0.2s ease;
@@ -418,41 +419,22 @@ body {
   }
 }
 
+/* Dark brand overrides only. The surface/text/border values that used to live
+   here were a second, near-identical set (#1a1f2e vs #161f2d, #20283a vs
+   #1b2737, #8f9caf vs #8d9bb0) that produced five slightly different dark
+   surfaces on one screen. They now come from the block at the end of the file,
+   which already won on source order for every shared selector. */
 [data-theme="dark"] {
-  --navy: #0d1520;
-  --turquoise: #2EC4B6;
-  --light: #0f1419;
-  --surface: #1a1f2e;
-  --surface-raised: #20283a;
-  --border: #344156;
-  --text-primary: #e7edf5;
-  --text-secondary: #aeb9c8;
-  --text-muted: #8f9caf;
-}
-
-[data-theme="dark"] body {
-  background: #0f1419;
-  color: #e1e7ef;
+  --ac-navy: #0d1520;
+  --ac-turquoise: #2EC4B6;
 }
 
 [data-theme="dark"] .sidebar {
-  background: #1a1f2e;
   box-shadow: 0 1px 4px rgba(0,0,0,0.3);
 }
 
-[data-theme="dark"] .sidebar a {
-  color: #c8d0da;
-}
-
-[data-theme="dark"] .sidebar a:hover {
-  background: #1a2a35;
-}
-
-[data-theme="dark"] .sidebar a.active {
-  background: #1a2e3a;
-  color: #e1e7ef;
-}
-
+/* The link, hover and active colours that used to sit here were overridden by
+   the same selectors at the end of the file, so editing them changed nothing. */
 [data-theme="dark"] .sidebar-label {
   /* #6b7a8f measured 3.79:1 against the dark sidebar at 10.9px, under the
      4.5:1 AA floor; this brighter grey clears it. */
@@ -468,80 +450,74 @@ body {
 [data-theme="dark"] .nav-admin .nav-icon { color: #b9c4d2; }
 
 [data-theme="dark"] .card {
-  --bs-card-bg: var(--surface);
-  --bs-card-color: var(--text-primary);
-  --bs-card-border-color: var(--border);
-  background: var(--surface);
-  color: var(--text-primary);
+  --bs-card-bg: var(--ac-surface);
+  --bs-card-color: var(--ac-text);
+  --bs-card-border-color: var(--ac-border);
+  background: var(--ac-surface);
+  color: var(--ac-text);
   box-shadow: 0 1px 4px rgba(0,0,0,0.3);
 }
 
+/* The three --bs-table-* declarations that used to sit here are set again at the
+   end of the file; only the hover pair is unique to this rule. */
 [data-theme="dark"] .table {
-  --bs-table-color: var(--text-primary);
-  --bs-table-bg: var(--surface);
-  --bs-table-border-color: var(--border);
-  --bs-table-hover-color: var(--text-primary);
+  --bs-table-hover-color: var(--ac-text);
   --bs-table-hover-bg: #263246;
-  color: var(--text-primary);
-  background-color: var(--surface);
-}
-
-[data-theme="dark"] .table-hover tbody tr:hover {
-  background: #1a2a35;
+  color: var(--ac-text);
+  background-color: var(--ac-surface);
 }
 
 [data-theme="dark"] .table th {
-  color: var(--text-secondary);
+  color: var(--ac-text-secondary);
 }
 
 [data-theme="dark"] .table-light {
-  --bs-table-color: var(--text-primary);
-  --bs-table-bg: var(--surface-raised);
-  --bs-table-border-color: var(--border);
+  --bs-table-color: var(--ac-text);
+  --bs-table-bg: var(--ac-surface-raised);
+  --bs-table-border-color: var(--ac-border);
 }
 
-[data-theme="dark"] .form-control,
-[data-theme="dark"] .form-select {
-  background: var(--surface);
-  border-color: var(--border);
-  color: var(--text-primary);
-}
+/* The control colours are set at the end of the file; this rule only kept the
+   placeholder opacity, which nothing else declares.
 
+   `background-color`, never the `background` shorthand: the shorthand resets
+   background-image, and that is what erased Bootstrap's caret from every
+   <select> in the application -- the dropdowns stopped looking like dropdowns
+   while keeping the 36px of padding reserved for the missing arrow. */
 [data-theme="dark"] .form-control::placeholder {
-  color: var(--text-secondary);
   opacity: 1;
 }
 
 [data-theme="dark"] .form-control:focus,
 [data-theme="dark"] .form-select:focus {
-  background: var(--surface);
-  border-color: #2EC4B6;
-  color: var(--text-primary);
+  background-color: var(--ac-surface-raised);
+  border-color: var(--ac-turquoise);
+  color: var(--ac-text);
   box-shadow: 0 0 0 0.2rem rgba(46, 196, 182, 0.2);
 }
 
 /* The application form controls use the dark palette. Keep modal surfaces in
    the same palette so labels never inherit light text on a white panel. */
 [data-theme="dark"] .modal-content {
-  --bs-modal-bg: var(--surface-raised);
-  --bs-modal-color: var(--text-primary);
-  --bs-modal-border-color: var(--border);
-  --bs-modal-header-border-color: var(--border);
-  --bs-modal-footer-border-color: var(--border);
-  background: var(--surface-raised);
-  color: var(--text-primary);
-  border-color: var(--border);
+  --bs-modal-bg: var(--ac-surface-raised);
+  --bs-modal-color: var(--ac-text);
+  --bs-modal-border-color: var(--ac-border);
+  --bs-modal-header-border-color: var(--ac-border);
+  --bs-modal-footer-border-color: var(--ac-border);
+  background: var(--ac-surface-raised);
+  color: var(--ac-text);
+  border-color: var(--ac-border);
 }
 
 [data-theme="dark"] .modal-title,
 [data-theme="dark"] .modal .form-label,
 [data-theme="dark"] .modal legend {
-  color: var(--text-primary);
+  color: var(--ac-text);
 }
 
 [data-theme="dark"] .modal .form-text,
 [data-theme="dark"] .modal .form-text.text-muted {
-  color: var(--text-muted) !important;
+  color: var(--ac-text-muted) !important;
 }
 
 [data-theme="dark"] .modal .btn-close {
@@ -549,9 +525,9 @@ body {
 }
 
 [data-theme="dark"] .modal .form-control::file-selector-button {
-  background: var(--surface-raised);
-  color: var(--text-primary);
-  border-color: var(--border);
+  background: var(--ac-surface-raised);
+  color: var(--ac-text);
+  border-color: var(--ac-border);
 }
 
 [data-theme="dark"] .modal .form-control::file-selector-button:hover {
@@ -577,30 +553,30 @@ body {
 }
 
 [data-theme="dark"] .text-muted {
-  color: var(--text-muted) !important;
+  color: var(--ac-text-muted) !important;
 }
 
 [data-theme="dark"] .bg-light {
-  background-color: var(--surface) !important;
+  background-color: var(--ac-surface) !important;
 }
 
 [data-theme="dark"] .table .btn-outline-secondary {
-  color: var(--text-primary);
-  border-color: var(--border);
+  color: var(--ac-text);
+  border-color: var(--ac-border);
 }
 
 [data-theme="dark"] .kanban-column {
-  background: var(--surface);
+  background: var(--ac-surface);
 }
 
 [data-theme="dark"] .kanban-column-header {
-  background: var(--surface);
-  color: var(--text-primary);
+  background: var(--ac-surface);
+  color: var(--ac-text);
 }
 
 [data-theme="dark"] .kanban-count {
-  background: var(--surface-raised);
-  color: var(--text-secondary);
+  background: var(--ac-surface-raised);
+  color: var(--ac-text-secondary);
 }
 
 [data-theme="dark"] .kanban-card {
@@ -609,7 +585,7 @@ body {
 }
 
 [data-theme="dark"] .kanban-card-title {
-  color: var(--text-primary);
+  color: var(--ac-text);
 }
 
 [data-theme="dark"] .kanban-card:hover {
@@ -617,9 +593,9 @@ body {
 }
 
 [data-theme="dark"] .priority-low {
-  background: var(--surface-raised);
-  color: var(--text-secondary);
-  border-color: var(--border);
+  background: var(--ac-surface-raised);
+  color: var(--ac-text-secondary);
+  border-color: var(--ac-border);
 }
 
 [data-theme="dark"] .priority-medium {
@@ -638,11 +614,11 @@ body {
 }
 
 [data-theme="dark"] .kanban-empty {
-  color: var(--text-muted);
+  color: var(--ac-text-muted);
 }
 
 [data-theme="dark"] .kanban-footer {
-  border-top-color: var(--border);
+  border-top-color: var(--ac-border);
 }
 
 body, .sidebar, .card, .form-control, .form-select, .page-link, .table,
@@ -661,8 +637,14 @@ body, .sidebar, .card, .form-control, .form-select, .page-link, .table,
 }
 
 /* ── UI foundation refinement ─────────────────────── */
+/* The single source of design tokens. Light values here, dark overrides in the
+   [data-theme="dark"] block below. */
 :root {
-  --sidebar-width: 248px;
+  --ac-sidebar-width: 248px;
+  /* Brand palette. Kept apart from --ac-primary, which is the accessible
+     action colour: the brand turquoise does not clear 4.5:1 on white. */
+  --ac-navy: #1B2A4A;
+  --ac-turquoise: #2EC4B6;
   --ac-bg: #f4f7fb;
   --ac-surface: #ffffff;
   --ac-surface-raised: #ffffff;
@@ -708,8 +690,8 @@ main {
 .sidebar {
   position: sticky;
   top: 58px;
-  flex: 0 0 var(--sidebar-width);
-  width: var(--sidebar-width);
+  flex: 0 0 var(--ac-sidebar-width);
+  width: var(--ac-sidebar-width);
   min-height: calc(100vh - 58px);
   padding: 1rem 0.75rem !important;
   background: var(--ac-surface);
@@ -754,7 +736,7 @@ main {
 .sidebar hr { border-color: var(--ac-border); opacity: 1; }
 
 .sidebar.is-collapsed {
-  --sidebar-width: 72px;
+  --ac-sidebar-width: 72px;
   padding-inline: 0.75rem !important;
 }
 
@@ -836,7 +818,9 @@ main {
   min-height: var(--ac-control-height);
   border: 1px solid var(--ac-border);
   border-radius: 8px;
-  background: var(--ac-surface-raised);
+  /* background-color, not the `background` shorthand: the shorthand resets
+     background-image, which is where Bootstrap draws the <select> caret. */
+  background-color: var(--ac-surface-raised);
   color: var(--ac-text);
 }
 .form-control:focus, .form-select:focus { border-color: var(--ac-primary); box-shadow: 0 0 0 0.2rem rgba(8, 127, 120, 0.15); }
@@ -955,7 +939,7 @@ main {
 [data-theme="dark"] .form-control,
 [data-theme="dark"] .form-select,
 [data-bs-theme="dark"] .form-control,
-[data-bs-theme="dark"] .form-select { background: var(--ac-surface-raised); border-color: var(--ac-border); color: var(--ac-text); }
+[data-bs-theme="dark"] .form-select { background-color: var(--ac-surface-raised); border-color: var(--ac-border); color: var(--ac-text); }
 [data-theme="dark"] .form-control::placeholder,
 [data-bs-theme="dark"] .form-control::placeholder { color: var(--ac-text-muted); }
 [data-theme="dark"] .table,
