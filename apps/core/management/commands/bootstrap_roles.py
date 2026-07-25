@@ -36,7 +36,33 @@ ROLE_PERMISSIONS = {
         "change_maintenancerecord",
         "view_maintenancerecord",
     },
-    "Viewer": set(),
+    # Spelled out on purpose. This used to be every permission whose codename
+    # starts with "view_", which quietly handed the lowest role the API tokens,
+    # the user list, the sessions, the audit trail, the job history and the
+    # tenant configuration. A read-only role reads the operational record, not
+    # the administration of the system.
+    "Viewer": {
+        "view_costcenter",
+        "view_aircraft",
+        "view_operator",
+        "view_assignment",
+        "view_qualification",
+        "view_document",
+        "view_documenttype",
+        "view_alert",
+        "view_alertrule",
+        "view_maintenancerecord",
+        "view_maintenancehistory",
+        "view_flightpermission",
+        "view_flightrecord",
+        "view_permissionhistory",
+        "view_kanbanboard",
+        "view_kanbanstage",
+        "view_kanbantask",
+        "view_kanbanlabel",
+        "view_kanbantasklabel",
+        "view_kanbanchecklistitem",
+    },
 }
 
 
@@ -45,15 +71,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         all_permissions = Permission.objects.all()
-        view_permissions = all_permissions.filter(codename__startswith="view_")
         for name, codenames in ROLE_PERMISSIONS.items():
             group, _ = Group.objects.get_or_create(name=name)
-            permissions = (
-                view_permissions
-                if name == "Viewer"
-                else all_permissions.filter(codename__in=codenames)
-            )
-            group.permissions.set(permissions)
+            group.permissions.set(all_permissions.filter(codename__in=codenames))
             self.stdout.write(self.style.SUCCESS(f"Configured role: {name}"))
 
         administrators, _ = Group.objects.get_or_create(name="Administrator")

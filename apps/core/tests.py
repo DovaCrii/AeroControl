@@ -3,7 +3,7 @@ from datetime import date, timedelta
 import json
 from docx import Document as DocxDocument
 from django.conf import settings
-from django.contrib.auth.models import Group, User
+from django.contrib.auth.models import Group, Permission, User
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.exceptions import ValidationError
@@ -744,3 +744,89 @@ class TestBootstrapRoles:
         call_command("bootstrap_roles")
 
         assert user.groups.filter(name=REPORT_RECIPIENTS).exists()
+
+
+class TestCalendarAndBoardReadPermissions:
+    """F-06: these views only required a login, so any account saw the registry."""
+
+    @pytest.mark.parametrize(
+        "url_name",
+        ["calendar", "calendar-events", "kanban", "board-selector"],
+    )
+    @pytest.mark.django_db
+    def test_unprivileged_user_is_denied(self, client, url_name):
+        User.objects.create_user("nobody", password="password")
+        assert client.login(username="nobody", password="password")
+
+        assert client.get(reverse(url_name)).status_code == 403
+
+    @pytest.mark.django_db
+    def test_calendar_filters_are_empty_without_registry_permissions(self, client):
+        user = User.objects.create_user("planner", password="password")
+        # Enough to reach the calendar, not enough to list the registry.
+        user.user_permissions.add(
+            Permission.objects.get(codename="view_maintenancerecord")
+        )
+        assert client.login(username="planner", password="password")
+
+        response = client.get(reverse("calendar"))
+
+        assert response.status_code == 200
+        assert list(response.context["calendar_operators"]) == []
+        assert list(response.context["calendar_aircraft"]) == []
+        assert list(response.context["calendar_cost_centers"]) == []
+
+    @pytest.mark.django_db
+    def test_event_feed_ignores_types_the_user_may_not_see(self, client):
+        user = User.objects.create_user("planner", password="password")
+        user.user_permissions.add(
+            Permission.objects.get(codename="view_maintenancerecord")
+        )
+        assert client.login(username="planner", password="password")
+
+        response = client.get(reverse("calendar-events"), {"types": "operator,document"})
+
+        assert response.status_code == 200
+        assert response.json() == []
+
+    @pytest.mark.django_db
+    def test_viewer_does_not_receive_administrative_permissions(self):
+        call_command("bootstrap_roles")
+
+        codenames = set(
+            Group.objects.get(name="Viewer").permissions.values_list(
+                "codename", flat=True
+            )
+        )
+
+        # These leaked in when the role was "every codename starting with view_".
+        forbidden = {
+            "view_token",
+            "view_tokenproxy",
+            "view_user",
+            "view_group",
+            "view_permission",
+            "view_session",
+            "view_logentry",
+            "view_contenttype",
+            "view_auditevent",
+            "view_jobrun",
+            "view_backupconfig",
+            "view_importbatch",
+            "view_operationaltenant",
+            "view_tenantmembership",
+            "view_kanbanboardaccess",
+        }
+        assert codenames & forbidden == set()
+        # And it still reads the operational record.
+        assert {"view_aircraft", "view_document", "view_kanbantask"} <= codenames
+
+    @pytest.mark.django_db
+    def test_viewer_grants_only_read_permissions(self):
+        call_command("bootstrap_roles")
+
+        codenames = Group.objects.get(name="Viewer").permissions.values_list(
+            "codename", flat=True
+        )
+
+        assert all(codename.startswith("view_") for codename in codenames)
