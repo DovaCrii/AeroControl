@@ -24,6 +24,22 @@ DOCUMENTABLE_MODELS = {
     ("maintenance", "maintenancerecord"),
 }
 
+# Accepted uploads and the magic bytes each one must actually start with, so a
+# renamed executable cannot pass as a document. KMZ is the flight-area export
+# from Google Earth: a ZIP holding a KML, hence the same signature as DOCX.
+# Plain KML is XML, which may or may not carry the declaration, so both openings
+# are accepted.
+ALLOWED_UPLOAD_SIGNATURES = {
+    "pdf": (b"%PDF-",),
+    "png": (b"\x89PNG\r\n\x1a\n",),
+    "jpg": (b"\xff\xd8\xff",),
+    "jpeg": (b"\xff\xd8\xff",),
+    "docx": (b"PK\x03\x04",),
+    "xlsx": (b"PK\x03\x04",),
+    "kmz": (b"PK\x03\x04",),
+    "kml": (b"<?xml", b"<kml", b"\xef\xbb\xbf<?xml", b"\xef\xbb\xbf<kml"),
+}
+
 DOCUMENTABLE_MODEL_LABELS = {
     ("registry", "aircraft"): _("Aircraft record"),
     ("registry", "operator"): _("Operator record"),
@@ -129,19 +145,25 @@ class DocumentForm(AeroModelForm):
                     pk=object_id, is_active=True
                 ).exists()
             ):
-                self.add_error("object_id", "Select an active existing record.")
+                self.add_error("object_id", _("Select an active existing record."))
 
         uploaded = cleaned.get("file")
         if uploaded:
-            allowed = {"pdf", "docx", "xlsx", "png", "jpg", "jpeg"}
             extension = Path(uploaded.name).suffix.lower().lstrip(".")
-            if extension not in allowed:
+            if extension not in ALLOWED_UPLOAD_SIGNATURES:
                 self.add_error(
                     "file",
-                    "Only PDF, DOCX, XLSX, PNG, JPG, and JPEG files are allowed.",
+                    # Built from the same mapping that validates the content, so
+                    # the message cannot claim to accept something we reject.
+                    _("Allowed file types: %(types)s.")
+                    % {
+                        "types": ", ".join(
+                            sorted(e.upper() for e in ALLOWED_UPLOAD_SIGNATURES)
+                        )
+                    },
                 )
             elif uploaded.size > 20 * 1024 * 1024:
-                self.add_error("file", "The maximum file size is 20 MB.")
+                self.add_error("file", _("The maximum file size is 20 MB."))
             else:
                 try:
                     self._validate_file_signature(uploaded, extension)
@@ -153,24 +175,19 @@ class DocumentForm(AeroModelForm):
                     self.add_error("file", str(exc))
         doc_type = cleaned.get("doc_type")
         if doc_type and doc_type.requires_expiry and not cleaned.get("expiry_date"):
-            self.add_error("expiry_date", "This document type requires an expiry date.")
+            self.add_error(
+                "expiry_date", _("This document type requires an expiry date.")
+            )
         return cleaned
 
     @staticmethod
     def _validate_file_signature(uploaded, extension):
-        signatures = {
-            "pdf": (b"%PDF-",),
-            "png": (b"\x89PNG\r\n\x1a\n",),
-            "jpg": (b"\xff\xd8\xff",),
-            "jpeg": (b"\xff\xd8\xff",),
-            "docx": (b"PK\x03\x04",),
-            "xlsx": (b"PK\x03\x04",),
-        }
+        signatures = ALLOWED_UPLOAD_SIGNATURES[extension]
         current_position = uploaded.tell()
         uploaded.seek(0)
         header = uploaded.read(16)
         uploaded.seek(current_position)
-        if not any(header.startswith(signature) for signature in signatures[extension]):
+        if not any(header.startswith(signature) for signature in signatures):
             raise forms.ValidationError(
                 _("The uploaded file content does not match its extension.")
             )
