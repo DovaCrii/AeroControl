@@ -1,3 +1,6 @@
-<span id="alert-badge" class="badge bg-danger ms-auto"
+{% comment %}None means "no view_alert permission": the badge stays as an empty,
+invisible element so the HTMX polling chain remains intact if permissions are
+granted mid-session.{% endcomment %}
+<span id="alert-badge" class="badge bg-danger ms-auto{% if unresolved_alert_count is None %} d-none{% endif %}"
       hx-get="{% url 'alert-count' %}" hx-trigger="every 60s"
-      hx-target="this" hx-swap="outerHTML">{{ unresolved_alert_count }}</span>
+      hx-target="this" hx-swap="outerHTML">{% if unresolved_alert_count is not None %}{{ unresolved_alert_count }}{% endif %}</span>

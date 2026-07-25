@@ -63,7 +63,7 @@
 
       <span class="sidebar-label">{% translate "Compliance" %}</span>
       <a href="{% url 'document-list' %}" class="nav-item nav-compliance {% if url_name == 'document-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>{% translate "Documents" %}</a>
-      <a href="{% url 'alert-list' %}" class="nav-item nav-compliance {% if url_name == 'alert-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 22h4"/></svg>{% translate "Alerts" %} <span id="alert-badge" class="badge bg-danger ms-auto" hx-get="{% url 'alert-count' %}" hx-trigger="every 60s" hx-target="this" hx-swap="outerHTML">{{ unresolved_alert_count }}</span></a>
+      <a href="{% url 'alert-list' %}" class="nav-item nav-compliance {% if url_name == 'alert-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 22h4"/></svg>{% translate "Alerts" %} {% include "core/_alert_badge.html" %}</a>
       <a href="{% url 'compliance-report' %}" class="nav-item nav-compliance {% if url_name == 'compliance-report' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="M8 16v-4M12 16V8M16 16v-6"/></svg>{% translate "Report" %}</a>
 
       <span class="sidebar-label">{% translate "Operations" %}</span>

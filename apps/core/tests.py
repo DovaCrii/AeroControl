@@ -832,3 +832,30 @@ class TestCalendarAndBoardReadPermissions:
         )
 
         assert all(codename.startswith("view_") for codename in codenames)
+
+
+class TestAlertBadgePermission:
+    """V.4: the sidebar badge is an aggregate over alerts, so it follows the
+    same read contract as every other alert view."""
+
+    @pytest.mark.django_db
+    def test_badge_hides_without_view_alert(self, client):
+        User.objects.create_user("nobody", password="password")
+        assert client.login(username="nobody", password="password")
+
+        response = client.get(reverse("alert-count"))
+
+        content = response.content.decode()
+        assert response.status_code == 200
+        assert "d-none" in content
+
+    @pytest.mark.django_db
+    def test_badge_counts_with_view_alert(self, client):
+        user = User.objects.create_user("compliance", password="password")
+        user.user_permissions.add(Permission.objects.get(codename="view_alert"))
+        assert client.login(username="compliance", password="password")
+
+        response = client.get(reverse("alert-count"))
+
+        assert response.status_code == 200
+        assert "d-none" not in response.content.decode()
