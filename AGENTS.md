@@ -45,7 +45,9 @@ Si un plan externo (por ejemplo un archivo que el usuario suba fuera del repo) p
 - `apps.core.BaseModel`: UUID como PK, `created_at`/`updated_at`, `is_active` para archivado lógico — **nunca borrar filas operativas**, archivar. `notes` para contexto opcional.
 - ForeignKeys operativos usan `on_delete=PROTECT` salvo justificación explícita documentada en el PR (ver `AUDIT_CLAUDE.md` F-07 sobre los `CASCADE` que hay que corregir — no introducir más).
 - Lógica de negocio en modelos ("fat models, thin views"). Nada de reglas de negocio en templates, forms-only (sin espejo en `clean()`/constraint) ni serializers — ver `ARCHITECTURE.md`.
-- Interfaz bilingüe ES/EN: todo string visible al usuario usa `gettext`/`gettext_lazy`, nunca texto crudo ni `_(variable)` (no extraíble por `makemessages`). Compilar con `scripts/compile_translations.py` y verificar que el nuevo string quede en `locale/es/LC_MESSAGES/django.po`.
+- Interfaz bilingüe ES/EN: todo string visible al usuario usa `gettext`/`gettext_lazy`, nunca texto crudo ni `_(variable)` (no extraíble por `makemessages`). **Las cadenas fuente se escriben en inglés**; el español vive en el catálogo, nunca en el código.
+- **GNU gettext es obligatorio** (`scoop install gettext` en Windows, `apt install gettext` en Linux). Sin él `makemessages` no corre y el catálogo se desincroniza en silencio: así se acumularon 29 cadenas rotas y 26 msgid duplicados que impedían a `msgmerge` funcionar. El flujo es `makemessages -l es` → traducir → `compilemessages -l es`. `scripts/compile_translations.py` solo compila; **no valida ni extrae**, así que no sustituye a gettext.
+- `apps/core/test_translations.py` vigila la deriva sin depender de gettext: falla si hay msgid duplicados, entradas vacías o *fuzzy* (Django ignora las fuzzy, así que salen en inglés), cadenas del código ausentes del catálogo, diferencias de solo mayúsculas, o cadenas fuente escritas en español.
 - Auditoría: toda mutación autenticada relevante debe quedar en `AuditEvent` (append-only) vía `apps.core.audit.set_audit_context` en la vista.
 
 ## Contrato de permisos y lectura (obligatorio en toda vista nueva)
