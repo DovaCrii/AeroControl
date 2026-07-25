@@ -8,7 +8,25 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
-Nada todavía.
+### Fixed (autorización de lectura)
+- `/calendar/`, el feed de eventos, el tablero Kanban y sus dos fragmentos HTMX
+  exigían solo sesión iniciada: un usuario sin ningún permiso veía todas las
+  matrículas, operadores y centros de costo en los desplegables de filtro. Cada
+  fuente de eventos se filtra ahora por el permiso `view_*` de su propio modelo,
+  y cada desplegable por el del modelo que lista. El parámetro `?types=` se
+  acota a lo permitido, así que una consulta manipulada no puede ampliar el feed.
+- El rol **Viewer** se definía como "todo permiso cuyo código empieza con
+  `view_`", lo que en la base real eran 35 permisos incluidos
+  `authtoken.view_token`, `auth.view_user`, `sessions.view_session` y
+  `core.view_auditevent`: el rol de solo lectura podía leer los tokens de API y
+  la traza de auditoría. Ahora son 20 permisos operativos explícitos.
+
+### Fixed
+- El informe de cumplimiento tomaba el fin del período de `date.today()` (fecha
+  del sistema operativo) mientras filtraba `resolved_at__date`, que la base
+  evalúa en la zona del proyecto. Con `TIME_ZONE="UTC"` y la máquina al oeste de
+  Greenwich, las dos discrepan cuatro horas cada tarde y toda alerta resuelta en
+  esa franja desaparecía del período sin aviso.
 
 ## [0.2.0-alpha] - 2026-07-24
 
