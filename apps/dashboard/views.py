@@ -6,7 +6,7 @@ from django.db.models.functions import TruncMonth
 from django.shortcuts import render
 from django.utils import timezone
 
-from apps.compliance.models import Alert
+from apps.compliance.models import Alert, AlertRule, Document, DocumentType
 from apps.maintenance.models import MaintenanceRecord
 from apps.operations.models import FlightPermission, FlightRecord
 from apps.registry.models import Aircraft, Operator, Qualification
@@ -19,6 +19,18 @@ def dashboard(request):
     aircraft_count = Aircraft.objects.filter(is_active=True, status="active").count()
     operator_count = Operator.objects.filter(is_active=True).count()
     alert_count = Alert.objects.filter(is_active=True, is_resolved=False).count()
+
+    # --- Compliance module setup state ---
+    # The old onboarding card required *everything* to be empty, so with the
+    # registry loaded it could never fire again - while compliance sat at zero
+    # and the tiles read "0 alerts" as if all was well. These three steps are
+    # what turns the digest, the alerts and the report from built to working.
+    compliance_setup = {
+        "doc_types": DocumentType.objects.filter(is_active=True).exists(),
+        "documents": Document.objects.filter(is_active=True).exists(),
+        "rules": AlertRule.objects.filter(is_active=True).exists(),
+    }
+    compliance_incomplete = not all(compliance_setup.values())
 
     # --- Expirations ---
     # Bounded on both ends: without the floor this listed every historically
@@ -120,5 +132,7 @@ def dashboard(request):
         "expiring_count": expiring_count,
         "stages": stages,
         "chart_data": chart_data,
+        "compliance_setup": compliance_setup,
+        "compliance_incomplete": compliance_incomplete,
     }
     return render(request, "dashboard/index.html", context)

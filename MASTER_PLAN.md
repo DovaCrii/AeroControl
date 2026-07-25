@@ -39,16 +39,22 @@ Aún **no mergeada a `main`**. Ver TL.6.
 La ruta obligatoria del plan externo está **completa**. Lo siguiente ya no viene
 de esa ruta sino de la auditoría, y el orden recomendado es:
 
-1. **Tanda E de la revisión V.*** — los seis ítems ⬜ de UX mayor (V.30, V.31,
-   V.36-V.39) esperan decisiones de alcance del usuario. Todo lo demás de la
-   revisión está ejecutado y verificado.
-2. **V.10-V.12** — seguridad diferida con decisión pendiente: endurecer CSP
-   (exige extraer el JS inline primero), vendorizar CDN con SRI (T5.9), y la
-   política de sesión/cambio de contraseña.
-3. **Cargar datos reales** — 0 documentos, 0 reglas: todo BLOQUE 2/6 está
-   construido y sin nada que procesar. Primer tipo de documento → documentos
-   con vencimiento → una regla → `generate_alerts`; recién entonces asignar
-   operadores responsables y validar el digest.
+1. **Cargar datos reales** — 0 documentos, 0 reglas: todo BLOQUE 2/6 está
+   construido y sin nada que procesar. El dashboard ahora **guía los tres
+   pasos** (tarjeta "Activa el monitoreo de cumplimiento"): tipo de documento →
+   documentos con vencimiento → una regla → `generate_alerts`; recién entonces
+   asignar operadores responsables y validar el digest.
+2. **V.10-V.12** — la seguridad diferida de la revisión: endurecer CSP (exige
+   extraer el JS inline primero), vendorizar CDN con SRI (T5.9), y la política
+   de sesión/cambio de contraseña.
+3. **TL.7** — los 5 PRs de Dependabot.
+
+La revisión V.1-V.39 está **completa** salvo V.3 (⛔ T3.2) y V.10-V.12 (⬜
+decisión). La tanda E se ejecutó el 2026-07-25 con el alcance que eligió el
+usuario: archivar/restaurar desde la UI con confirmación de dependientes en
+centros de costo, aviso del digest para CC archivados con dependientes,
+estados vacíos con CTA, tarjeta de cumplimiento en el dashboard, regresos
+reales en vez de history.back(), y el dedupe responsive.
 
 *(Cerrado antes: T2.3/T2.4 `c5d22dd`/`3611d06`, TIME_ZONE America/Santiago
 `b24fbea`, R.10 tokens `8bdda97`, TL.6/TL.11 con tags y poda ejecutados.)*
@@ -201,16 +207,16 @@ La tanda E (UX mayor) requiere decisiones de alcance del usuario.
 |---|---|---|---|
 | V.28 | ✅ | Ver/Editar con 404 en 4 listas; tipos de documento y reglas de alerta **no se podían corregir nunca** desde la UI → flags de existencia + `ComplianceUpdate` con rutas | D |
 | V.29 | ✅ | Centro de administración oculto tras `is_staff` mientras la página filtra por `view_*`: el encargado de cumplimiento no tenía cómo llegar a su propia configuración | D |
-| V.30 | ⬜ | No existe archivar/restaurar desde la UI (solo Django Admin); el filtro "Archivado" nunca devuelve nada útil | E |
-| V.31 | ⬜ | Archivar un centro de costo lo saca en silencio del digest y del informe; `notification_email` notifica a operadores archivados | E |
+| V.30 | ✅ | No existe archivar/restaurar desde la UI (solo Django Admin); el filtro "Archivado" nunca devuelve nada útil | E |
+| V.31 | ✅ | Archivar un centro de costo lo saca en silencio del digest y del informe; `notification_email` notifica a operadores archivados | E |
 | V.32 | ✅ | Mensajes de transición `_(variable)` invisibles a makemessages (siempre inglés) + validaciones de `Assignment` en castellano en el código | D |
 | V.33 | ✅ | Resolver/Deshacer perdían filtros y página; importadores aplicaban sin confirmación y el revert transaccional no estaba enlazado en ninguna parte | D |
 | V.34 | ✅ | El arrastre del Kanban se apagaba en silencio con 3 de los 5 filtros: el JS conocía 5, el servidor 2, y el aviso mentía | D |
 | V.35 | ✅ | Badge de alertas: "0" rojo permanente, sin `aria-live`, sin nombre accesible, y `base.html` duplicaba el marcado del parcial | D |
-| V.36 | ⬜ | Estados vacíos sin CTA ni distinción "sin datos" vs "filtro sin resultados"; con 0 documentos la pantalla clave es una tabla muda | E |
-| V.37 | ⬜ | El onboarding del dashboard exige todo-o-nada y ya no puede dispararse; el hueco real (cumplimiento en 0) se lee como "sin novedad" | E |
-| V.38 | ⬜ | `javascript:history.back()` como único regreso (muere sin historial y con CSP enforcing); el detalle genérico no ofrece Editar | E |
-| V.39 | ⬜ | Dos bloques `@media (max-width:768px)` en conflicto (la trampa de R.10 en responsive) + errores de validación de modales HTMX sin foco ni anuncio | E |
+| V.36 | ✅ | Estados vacíos sin CTA ni distinción "sin datos" vs "filtro sin resultados"; con 0 documentos la pantalla clave es una tabla muda | E |
+| V.37 | ✅ | El onboarding del dashboard exige todo-o-nada y ya no puede dispararse; el hueco real (cumplimiento en 0) se lee como "sin novedad" | E |
+| V.38 | ✅ | `javascript:history.back()` como único regreso (muere sin historial y con CSP enforcing); el detalle genérico no ofrece Editar | E |
+| V.39 | ✅ | Dos bloques `@media (max-width:768px)` en conflicto (la trampa de R.10 en responsive) + errores de validación de modales HTMX sin foco ni anuncio | E |
 
 Verificado LIMPIO por los auditores (no re-auditar): storage sin path
 traversal, CSRF, pipeline de subida, autorización de lectura de la API DRF,

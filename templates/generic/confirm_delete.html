@@ -1,3 +1,5 @@
 {% extends "base.html" %}
 {% load i18n %}
-{% block content %}<div class="card p-4"><h1 class="h3">{% translate "Archive document?" %}</h1><p>{% translate "This will hide the document without deleting its file." %}</p><form method="post">{% csrf_token %}<button class="btn btn-danger">{% translate "Archive" %}</button><a href="javascript:history.back()" class="btn btn-outline-secondary ms-2">{% translate "Cancel" %}</a></form></div>{% endblock %}
+{% comment %}A real cancel destination: history.back() does nothing when the
+page was opened directly and dies under an enforcing CSP.{% endcomment %}
+{% block content %}<div class="card p-4"><h1 class="h3">{% translate "Archive document?" %}</h1><p>{% translate "This will hide the document without deleting its file." %}</p><form method="post">{% csrf_token %}<button class="btn btn-danger">{% translate "Archive" %}</button><a href="{% url 'document-detail' object.pk %}" class="btn btn-outline-secondary ms-2">{% translate "Cancel" %}</a></form></div>{% endblock %}

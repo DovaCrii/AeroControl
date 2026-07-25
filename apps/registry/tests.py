@@ -1,6 +1,7 @@
 from datetime import date
 
 import pytest
+from django.test import Client
 from django.utils import translation
 from django.urls import reverse
 
@@ -174,3 +175,113 @@ def test_calendar_feed_contains_resource_and_expiration_events(
 
     assert response.status_code == 200
     assert {"permission", "assignment", "qualification"}.issubset(event_types)
+
+
+class TestArchiveRestoreFromUI:
+    """V.30/V.31: archiving lived only in the technical admin, and archiving a
+    cost center silently dropped it from the digest."""
+
+    @staticmethod
+    def _world(db):
+        center = CostCenter.objects.create(code="ARC", name="Archive tests")
+        operator = Operator.objects.create(
+            employee_id="ARC-1", full_name="Pilot", cost_center=center,
+            email="pilot@test.cl",
+        )
+        return center, operator
+
+    @staticmethod
+    def _client(*codenames):
+        from django.contrib.auth.models import Permission, User
+
+        user = User.objects.create_user(f"u-{'-'.join(codenames)}", password="pw")
+        user.user_permissions.add(
+            *Permission.objects.filter(codename__in=codenames)
+        )
+        client = Client()
+        assert client.login(username=user.username, password="pw")
+        return client
+
+    @pytest.mark.django_db
+    def test_archive_requires_delete_permission(self, db):
+        _, operator = self._world(db)
+        client = self._client("view_operator", "change_operator")
+
+        response = client.post(reverse("operator-archive", args=[operator.pk]))
+
+        operator.refresh_from_db()
+        assert response.status_code == 403
+        assert operator.is_active is True
+
+    @pytest.mark.django_db
+    def test_archive_and_restore_roundtrip(self, db):
+        _, operator = self._world(db)
+        client = self._client("delete_operator", "change_operator")
+
+        archived = client.post(reverse("operator-archive", args=[operator.pk]))
+        operator.refresh_from_db()
+        assert archived.status_code == 302
+        assert operator.is_active is False
+
+        restored = client.post(reverse("operator-restore", args=[operator.pk]))
+        operator.refresh_from_db()
+        assert restored.status_code == 302
+        assert operator.is_active is True
+
+    @pytest.mark.django_db
+    def test_cost_center_archive_shows_dependents_first(self, db):
+        center, operator = self._world(db)
+        client = self._client("delete_costcenter")
+
+        response = client.post(reverse("costcenter-archive", args=[center.pk]))
+
+        center.refresh_from_db()
+        assert response.status_code == 200  # confirmation page, nothing archived
+        assert center.is_active is True
+        assert "1" in response.content.decode()
+
+        confirmed = client.post(
+            reverse("costcenter-archive", args=[center.pk]), {"confirm": "1"}
+        )
+        center.refresh_from_db()
+        assert confirmed.status_code == 302
+        assert center.is_active is False
+
+    @pytest.mark.django_db
+    def test_cost_center_without_dependents_archives_directly(self, db):
+        center = CostCenter.objects.create(code="EMPTY", name="No dependents")
+        client = self._client("delete_costcenter")
+
+        response = client.post(reverse("costcenter-archive", args=[center.pk]))
+
+        center.refresh_from_db()
+        assert response.status_code == 302
+        assert center.is_active is False
+
+    @pytest.mark.django_db
+    def test_notification_email_ignores_archived_operator(self, db):
+        center, operator = self._world(db)
+        center.responsible_operator = operator
+        center.save(update_fields=["responsible_operator"])
+        assert center.notification_email == "pilot@test.cl"
+
+        operator.is_active = False
+        operator.save(update_fields=["is_active"])
+
+        assert center.notification_email == ""
+
+    @pytest.mark.django_db
+    def test_digest_reports_archived_center_with_active_dependents(self, db):
+        from apps.compliance.digest import archived_centers_with_active_dependents
+
+        center, operator = self._world(db)
+        center.is_active = False
+        center.save(update_fields=["is_active"])
+
+        rows = archived_centers_with_active_dependents()
+
+        assert len(rows) == 1
+        reported, operators, aircraft = rows[0]
+        assert reported.pk == center.pk
+        assert operators == 1
+        assert aircraft == 0

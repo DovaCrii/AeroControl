@@ -7,7 +7,12 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
-from apps.compliance.digest import BUCKETS, build_digest, cost_centers_to_notify
+from apps.compliance.digest import (
+    BUCKETS,
+    archived_centers_with_active_dependents,
+    build_digest,
+    cost_centers_to_notify,
+)
 from apps.core.jobs import record_job_run
 
 logger = logging.getLogger("aerocontrol.notifications")
@@ -53,6 +58,27 @@ class Command(BaseCommand):
     def _run(self, dry_run):
         today = timezone.localdate()
         sent = skipped = total_items = 0
+        # Archived centers fall out of the loop below by design, but falling
+        # out silently while they still have active operators or aircraft is a
+        # compliance blind spot: their documents stop being watched with no
+        # trace. Report it every run until the dependents are reassigned.
+        for center, operators, aircraft in archived_centers_with_active_dependents():
+            logger.warning(
+                "digest_archived_center_with_dependents",
+                extra={
+                    "recipient": "",
+                    "item_count": operators + aircraft,
+                    "send_result": "skipped",
+                    "reason": "archived_cost_center_with_active_dependents",
+                },
+            )
+            self.stdout.write(
+                self.style.WARNING(
+                    f"{center.code} is archived but still has {operators} active "
+                    f"operator(s) and {aircraft} active aircraft: their expiries "
+                    "are not being watched. Reassign them or restore the center."
+                )
+            )
         for cost_center in cost_centers_to_notify():
             buckets = build_digest(cost_center, today=today)
             item_count = sum(len(items) for items in buckets.values())

@@ -78,4 +78,6 @@ def test_operator_detail_page_renders_translated_labels(operator):
     assert response.status_code == 200
     assert "Nombre completo" in content
     assert "CREATED AT" not in content.upper() or "Creado" in content
-    assert str(operator.pk) not in content.split("</h1>")[1]
+    # The UUID may appear inside action URLs (edit/archive), but never as
+    # visible cell text - that is what this test exists to prevent.
+    assert f">{operator.pk}<" not in content

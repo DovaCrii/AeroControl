@@ -31,11 +31,25 @@ class CostCenter(BaseModel):
         label = f"{self.code} - {self.name}"
         return f"{label} · {self.responsible}" if self.responsible else label
 
+    class Meta:
+        # Translated names: user-facing messages interpolate verbose_name
+        # ("%(name)s archived"), and without this they said "Operator" inside
+        # a Spanish sentence.
+        verbose_name = _("cost center")
+        verbose_name_plural = _("cost centers")
+
     @property
     def notification_email(self):
-        """Email to notify for this cost center, or "" when unreachable."""
+        """Email to notify for this cost center, or "" when unreachable.
+
+        An archived responsible operator does not count as reachable: mailing
+        someone who left looks like the notification worked when nobody who
+        can act on it will read it.
+        """
         operator = self.responsible_operator
-        return operator.email if operator and operator.email else ""
+        if operator and operator.is_active and operator.email:
+            return operator.email
+        return ""
 
 
 class Aircraft(BaseModel):
@@ -75,6 +89,10 @@ class Aircraft(BaseModel):
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
 
+    class Meta:
+        verbose_name = _("aircraft")
+        verbose_name_plural = _("aircraft")
+
     def __str__(self):
         return self.registration
 
@@ -110,6 +128,10 @@ class Operator(BaseModel):
         blank=True,
     )
 
+    class Meta:
+        verbose_name = _("operator")
+        verbose_name_plural = _("operators")
+
     def __str__(self):
         return self.full_name
 
@@ -140,6 +162,8 @@ class Assignment(BaseModel):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="planned")
 
     class Meta:
+        verbose_name = _("assignment")
+        verbose_name_plural = _("assignments")
         # The calendar and the overlap validation both filter by date range.
         indexes = [
             models.Index(

@@ -391,7 +391,9 @@ body {
 @media (max-width: 768px) {
   .sidebar {
     position: fixed;
-    top: 56px;
+    /* 58px: the navbar's real height, and the value the (now removed)
+       duplicate block was actually rendering. */
+    top: 58px;
     bottom: 0;
     left: 0;
     z-index: 1040;
@@ -979,9 +981,16 @@ main {
 [data-bs-theme="dark"] .modal-header,
 [data-bs-theme="dark"] .offcanvas-header { border-color: var(--ac-border); }
 
+/* Mobile rules that must win over the block near the top of the file: both
+   target .sidebar at the same breakpoint, and this one wins on source order.
+   The duplicated width/top declarations that used to sit here conflicted with
+   the other block (56px vs 58px, token width vs hardcoded 280px), which meant
+   editing the first block changed nothing - the R.10 trap in responsive form.
+   Geometry lives only in the first block now; this one keeps what is unique:
+   un-collapsing the sidebar on mobile (off-canvas has no collapsed mode) and
+   page-level spacing. */
 @media (max-width: 768px) {
-  .sidebar { position: fixed; top: 58px; width: min(86vw, 280px); flex-basis: min(86vw, 280px); }
-  .sidebar.is-collapsed { width: min(86vw, 280px); }
+  .sidebar.is-collapsed { width: min(86vw, var(--ac-sidebar-width)); }
   .sidebar.is-collapsed .sidebar-label,
   .sidebar.is-collapsed hr { display: block; }
   .sidebar.is-collapsed .nav-item { justify-content: flex-start; padding-inline: 0.75rem; font-size: 0.92rem; }

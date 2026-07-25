@@ -31,6 +31,16 @@ class SearchMixin:
             return [self.htmx_template_name]
         return super().get_template_names()
 
+    def _list_action_exists(self, suffix):
+        """Whether `<list-path><suffix>` (e.g. `new/`) resolves to a view."""
+        from django.urls import Resolver404, resolve
+
+        try:
+            resolve(f"{self.request.path}{suffix}")
+        except Resolver404:
+            return False
+        return True
+
     def _row_action_exists(self, suffix=""):
         """Whether `<list-path><pk>/<suffix>` resolves to a real view.
 
@@ -52,8 +62,23 @@ class SearchMixin:
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        meta = self.model._meta
         context["has_detail_url"] = self._row_action_exists()
         context["has_update_url"] = self._row_action_exists("edit/")
+        # Restore shows only on archived rows, for models that support it and
+        # users allowed to change them.
+        context["has_restore_url"] = self._row_action_exists(
+            "restore/"
+        ) and self.request.user.has_perm(f"{meta.app_label}.change_{meta.model_name}")
+        context["has_create_url"] = self._list_action_exists(
+            "new/"
+        ) and self.request.user.has_perm(f"{meta.app_label}.add_{meta.model_name}")
+        # An empty table means two different things: no data yet (guide the
+        # user to create the first record) or a filter that matched nothing
+        # (offer to clear it). The template needs to know which.
+        context["is_filtered"] = bool(
+            self.request.GET.get("q") or self.request.GET.get("is_active")
+        )
         return context
 
     def get_queryset(self):

@@ -47,6 +47,36 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 - El badge de alertas se oculta en 0 (mostraba un "0" rojo permanente) y
   anuncia sus cambios a los lectores de pantalla.
 
+### Added (revisión 2026-07-25: tanda E)
+- **Archivar y restaurar desde la interfaz** para centros de costo, aeronaves,
+  operadores, asignaciones y habilitaciones: botón en la página de detalle
+  (permiso de borrado) y Restaurar en la lista filtrada por Archivado (permiso
+  de cambio), con auditoría. Antes retirar un registro exigía el admin técnico
+  y el filtro "Archivado" nunca devolvía nada útil.
+- Archivar un centro de costo con operadores o aeronaves activos pide
+  confirmación mostrando cuántos dependientes tiene y qué implica (sus
+  vencimientos dejan de vigilarse). El resumen diario además reporta los
+  centros archivados que aún tienen dependientes activos, en vez de callar; y
+  ya no notifica a operadores responsables archivados.
+- El dashboard detecta el módulo de cumplimiento sin configurar y guía los tres
+  pasos en orden (tipos de documento → documentos → regla de alerta), con
+  enlaces y marcas de avance. La tarjeta anterior exigía que *todo* estuviera
+  vacío, así que con el padrón cargado nunca podía aparecer.
+- Las tablas vacías distinguen "aún no hay nada" (con enlace para crear el
+  primero) de "ningún registro coincide con los filtros" (con limpiar filtros).
+
+### Fixed (revisión 2026-07-25: tanda E)
+- Los botones Volver ya son enlaces reales: `javascript:history.back()` no
+  hacía nada al llegar desde un correo del resumen o un marcador. El detalle
+  ofrece Volver a la lista, Editar y Archivar.
+- Los errores de validación en modales reciben el foco (el re-render HTMX de un
+  formulario inválido no disparaba el evento de apertura y los errores
+  aparecían sin anuncio).
+- Deduplicados los dos bloques responsive en conflicto de `app.css` (56 vs
+  58px, ancho por token vs fijo): editar el primero no cambiaba nada.
+- Nombres de modelo traducidos en los mensajes ("Operador archivado", no
+  "Operator archivado").
+
 ### Fixed (autorización de lectura)
 - `/calendar/`, el feed de eventos, el tablero Kanban y sus dos fragmentos HTMX
   exigían solo sesión iniciada: un usuario sin ningún permiso veía todas las
