@@ -838,7 +838,20 @@ main {
 .requiredField .asteriskField { color: var(--ac-danger); }
 
 .table { --bs-table-color: var(--ac-text); --bs-table-bg: var(--ac-surface); --bs-table-border-color: var(--ac-border); }
-.table th { color: var(--ac-text-secondary); font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; }
+/* Headers stay on one line and centre with the data. Two problems came from
+   letting them wrap: a two-line header ("Tipo de entidad") next to one-line
+   neighbours, and Bootstrap aligning headers to the bottom while cells are
+   centred, so the header row never sat on the same axis as the rows. The table
+   already lives inside .table-responsive, so a wide header scrolls rather than
+   breaking the layout. */
+.table th {
+  color: var(--ac-text-secondary);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  vertical-align: middle;
+}
 .table td { vertical-align: middle; }
 .table-primary-value { color: var(--ac-text); font-weight: 650; }
 

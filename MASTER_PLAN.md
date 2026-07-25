@@ -149,6 +149,19 @@ aspecto de algo sí o sí. Requiere revisión visual en el navegador, y 10 lugar
 de `templates/` usan `var(--…)` directamente. Por eso quedó sin ejecutar cuando
 se cerró T2.3/T2.4: el análisis está hecho, la decisión de paleta es del usuario.
 
+### Áreas de vuelo en KMZ — decidido el 2026-07-25
+
+**Archivar sí, interpretar no.** Decisión del usuario. Las cartas de permiso y
+los KMZ se guardan como `Document` colgando del permiso de vuelo, con su
+versionado, sus alertas de vencimiento y su sitio en el informe. El KMZ y el KML
+están en la lista blanca de subida con su firma (`2fbe152`).
+
+Queda **fuera de alcance hasta nuevo aviso**: leer la geometría del KMZ para
+dibujar el área, detectar solapamientos entre áreas o comprobar si un vuelo cae
+dentro de la suya. Eso exige soporte geoespacial (PostGIS) y revertiría la
+decisión local-first con SQLite, así que no se aborda sin replantear esa base.
+No reabrir esto como si fuera un olvido: es una decisión tomada.
+
 ### Deuda de `openspec/specs/` (TL.8, pendiente)
 
 Los `spec.md` archivados **no se pueden promover tal cual**: describen lo que se
