@@ -39,17 +39,19 @@ Aún **no mergeada a `main`**. Ver TL.6.
 La ruta obligatoria del plan externo está **completa**. Lo siguiente ya no viene
 de esa ruta sino de la auditoría, y el orden recomendado es:
 
-1. ~~**T2.4**~~ ✅ y ~~**T2.3**~~ ✅ — los dos hallazgos de autorización de
-   lectura están cerrados (`c5d22dd`, `3611d06`).
-2. **TL.6** — 🔄 el merge a `main` está preparado (fast-forward, verificado);
-   faltan el `push` y la poda de ramas, que ejecuta el usuario. Ver "Inventario
-   de ramas".
-3. **T2.5** — unificar la noción de "hoy" (`TIME_ZONE`). Descubierto al ponerse
-   roja la suite a las 20:07 hora local: es un bug de datos silencioso, no
-   cosmético.
-4. **R.10 / T5.1** — unificar los tokens de `app.css`. Mientras conviva la
-   generación vieja, cada arreglo de color hay que hacerlo en dos sitios.
-   **Requiere revisión visual en el navegador**, no solo tests.
+1. **Tanda E de la revisión V.*** — los seis ítems ⬜ de UX mayor (V.30, V.31,
+   V.36-V.39) esperan decisiones de alcance del usuario. Todo lo demás de la
+   revisión está ejecutado y verificado.
+2. **V.10-V.12** — seguridad diferida con decisión pendiente: endurecer CSP
+   (exige extraer el JS inline primero), vendorizar CDN con SRI (T5.9), y la
+   política de sesión/cambio de contraseña.
+3. **Cargar datos reales** — 0 documentos, 0 reglas: todo BLOQUE 2/6 está
+   construido y sin nada que procesar. Primer tipo de documento → documentos
+   con vencimiento → una regla → `generate_alerts`; recién entonces asignar
+   operadores responsables y validar el digest.
+
+*(Cerrado antes: T2.3/T2.4 `c5d22dd`/`3611d06`, TIME_ZONE America/Santiago
+`b24fbea`, R.10 tokens `8bdda97`, TL.6/TL.11 con tags y poda ejecutados.)*
 
 Más adelante, y con más peso: **T3.2** (clave de tenancy) es el bloqueador real
 de la centralización y de DJI, y es barato ahora frente a hacerlo con datos
@@ -148,6 +150,72 @@ para el mismo rol (p. ej. la superficie oscura), así que unificar cambia el
 aspecto de algo sí o sí. Requiere revisión visual en el navegador, y 10 lugares
 de `templates/` usan `var(--…)` directamente. Por eso quedó sin ejecutar cuando
 se cerró T2.3/T2.4: el análisis está hecho, la decisión de paleta es del usuario.
+
+### Revisión 2026-07-25 (V.*) — seguridad, estabilidad, desempeño y UX
+
+Tres auditorías en paralelo sobre lo que AUDIT_CLAUDE.md no cubría o dejó
+abierto. Ejecutadas por tandas: A seguridad (`03b4dbb`), B estabilidad
+(`6d54237`), C desempeño (`b4a128f`), D quick wins de UX (`2f8fa42`).
+La tanda E (UX mayor) requiere decisiones de alcance del usuario.
+
+**Seguridad**
+
+| ID | Estado | P | Hallazgo | Tanda |
+|---|---|---|---|---|
+| V.1 | ✅ | P1 | `WList` sin scope: `?export=csv` devolvía toda la tabla de tareas entre tenants (`workboard/views.py:47`) | A |
+| V.2 | ✅ | P1 | `TaskEditView` sin `user_can_edit_board` y form que ofrecía todos los tableros: un viewer editaba, un editor secuestraba tareas a otro tablero | A |
+| V.3 | ⛔ | P1 | F-05: `Document`/descarga sin ruta a tenant — **Document no tiene campo tenant**; bloqueado por T3.2, exige diseñar `content_object → tenant` | — |
+| V.4 | ✅ | P1 | `/api-token/` sin throttle: `ObtainAuthToken` fija `throttle_classes=()` y esquivaba el default global. Ahora anon 10/min | A |
+| V.5 | ✅ | P2 | `JobRun` nacía con `result="ok"` antes de ejecutar: un proceso muerto quedaba como éxito eterno. Estado `running` + migración | B |
+| V.6 | ✅ | P2 | La ruta de error de `record_job_run` escribía dentro de la transacción condenada y enmascaraba la excepción real | B |
+| V.7 | ✅ | P2 | `generate_alerts`: alerta y tarea en dos escrituras; un corte dejaba la alerta huérfana que la dedupe contaba como duplicado para siempre | B |
+| V.8 | ✅ | P2 | `Alert.resolve()`/`reopen()` con dos `save()` sin transacción: alerta resuelta con tarea abierta | B |
+| V.9 | ✅ | P2 | API PATCH sin `full_clean`: fecha malformada → 500; título de 10k chars persistía en SQLite y reventaría en PostgreSQL | reg. |
+| V.10 | ⬜ | P2 | CSP decorativo: `CSP_REPORT_ONLY=False` **borra** la cabecera, htmx viene de unpkg fuera de la política, ~50 líneas inline sin nonce, sin report-uri. Orden: extraer JS inline → alinear orígenes → `django-csp` | — |
+| V.11 | ⬜ | P2 | Sin SRI en Bootstrap/htmx y `htmx.org@2.x` es rango flotante en unpkg. Es T5.9 (vendorizar) | — |
+| V.12 | ⬜ | P2 | Sesión: 14 días por defecto, sin expiración deslizante, sin `password_change` fuera de `/admin/`. Decidir política para equipos compartidos en terreno | — |
+| V.13 | ✅ | P2 | `StageCreate` explícito sombreaba al generado y perdió la validación de tablero; ídem checklist create/toggle | A |
+| V.14 | ✅ | P3 | Escritura a storage dentro de `atomic`: el rollback dejaba ficheros huérfanos. Limpieza al fallar la transacción | B |
+| V.15 | ✅ | P3 | Badge de alertas global sin `view_alert` (mismo contrato que T2.3) | A |
+
+**Desempeño** (todo ✅ en `b4a128f`, salvo V.22 en `6d54237`)
+
+| ID | Hallazgo |
+|---|---|
+| V.16 | Informe: `content_object` por alerta sin límite (500+ queries a 2 años) → lote por content_type, tope 200, y el filtro `cost_center` que se aceptaba y se ignoraba ahora filtra |
+| V.17 | Buckets de vencimiento iterando documentos en Python por centro → un `aggregate` (límites verificados contra `bucket_for`) |
+| V.18 | `checklist_completed` rompía el prefetch: un COUNT por tarjeta en cada render del tablero → cuenta las filas prefetcheadas |
+| V.19 | `build_stage_data` re-consultaba por etapa (~18 queries fijas) → una query agrupada; test que fija el render en ≤6 queries |
+| V.20 | Dashboard usaba `stage.tasks.count` en plantilla: un COUNT por etapa que además contaba archivadas y contradecía al gráfico de al lado |
+| V.21 | Vencimientos del dashboard sin piso ni tope: listaba todo lo vencido histórico en cada login → [hoy, +30d], 10 filas, conteo real en el mosaico |
+| V.22 | SQLite sin WAL ni timeout: el middleware de auditoría **ya estaba perdiendo eventos** en silencio con cada lock → WAL + busy_timeout 20s, verificado en la base real |
+| V.23 | Índices de fecha ausentes en permisos/vuelos/mantenciones/asignaciones/habilitaciones + `__year/__month` (sin índice en SQLite) → `__range` |
+| V.24 | Pares GenericFK sin indexar en `Document`, `Alert`, `KanbanTask.source` (Django solo indexa la mitad FK) |
+| V.25 | `generate_alerts`: un EXISTS por candidato → set en una query; reglas de estado sin cota → acotadas a 1 año (sus alertas quedan abiertas, no se pierde nada) |
+| V.26 | Feed del calendario aceptaba rangos arbitrarios (`?start=2020&end=2035` = 7 tablas en un JSON) → clamp 92 días |
+| V.27 | Export CSV sin `select_related` ni streaming (~3 queries/fila, todo en RAM) → joins + `iterator()` + `StreamingHttpResponse` |
+
+**UX**
+
+| ID | Estado | Hallazgo | Tanda |
+|---|---|---|---|
+| V.28 | ✅ | Ver/Editar con 404 en 4 listas; tipos de documento y reglas de alerta **no se podían corregir nunca** desde la UI → flags de existencia + `ComplianceUpdate` con rutas | D |
+| V.29 | ✅ | Centro de administración oculto tras `is_staff` mientras la página filtra por `view_*`: el encargado de cumplimiento no tenía cómo llegar a su propia configuración | D |
+| V.30 | ⬜ | No existe archivar/restaurar desde la UI (solo Django Admin); el filtro "Archivado" nunca devuelve nada útil | E |
+| V.31 | ⬜ | Archivar un centro de costo lo saca en silencio del digest y del informe; `notification_email` notifica a operadores archivados | E |
+| V.32 | ✅ | Mensajes de transición `_(variable)` invisibles a makemessages (siempre inglés) + validaciones de `Assignment` en castellano en el código | D |
+| V.33 | ✅ | Resolver/Deshacer perdían filtros y página; importadores aplicaban sin confirmación y el revert transaccional no estaba enlazado en ninguna parte | D |
+| V.34 | ✅ | El arrastre del Kanban se apagaba en silencio con 3 de los 5 filtros: el JS conocía 5, el servidor 2, y el aviso mentía | D |
+| V.35 | ✅ | Badge de alertas: "0" rojo permanente, sin `aria-live`, sin nombre accesible, y `base.html` duplicaba el marcado del parcial | D |
+| V.36 | ⬜ | Estados vacíos sin CTA ni distinción "sin datos" vs "filtro sin resultados"; con 0 documentos la pantalla clave es una tabla muda | E |
+| V.37 | ⬜ | El onboarding del dashboard exige todo-o-nada y ya no puede dispararse; el hueco real (cumplimiento en 0) se lee como "sin novedad" | E |
+| V.38 | ⬜ | `javascript:history.back()` como único regreso (muere sin historial y con CSP enforcing); el detalle genérico no ofrece Editar | E |
+| V.39 | ⬜ | Dos bloques `@media (max-width:768px)` en conflicto (la trampa de R.10 en responsive) + errores de validación de modales HTMX sin foco ni anuncio | E |
+
+Verificado LIMPIO por los auditores (no re-auditar): storage sin path
+traversal, CSRF, pipeline de subida, autorización de lectura de la API DRF,
+feed del calendario sin N+1 (~15-20 queries constantes), `GlobalSearchView`,
+`digest.py`, transiciones de estado con `atomic`, hardening de `prod.py`.
 
 ### Áreas de vuelo en KMZ — decidido el 2026-07-25
 

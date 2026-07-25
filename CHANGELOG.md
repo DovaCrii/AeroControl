@@ -8,6 +8,45 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Fixed (revisión 2026-07-25: seguridad y estabilidad)
+- El export CSV del tablero de trabajo devolvía todas las tareas de todos los
+  tenants; la edición de tareas no comprobaba el acceso de edición al tablero y
+  permitía moverlas a tableros ajenos; `/api-token/` aceptaba intentos de
+  contraseña ilimitados. Todo acotado, con throttling anon de 10/min.
+- SQLite ahora abre con WAL y timeout de 20 s: el middleware de auditoría
+  estaba perdiendo eventos en silencio cada vez que un job nocturno retenía el
+  lock de escritura.
+- Un job interrumpido ya no queda registrado como éxito: `JobRun` nace "en
+  ejecución" y solo pasa a ok/error al terminar.
+- Alerta y tarea de seguimiento se escriben en una transacción; resolver o
+  reabrir una alerta ya no puede dejar la tarea desincronizada.
+- La API valida los valores antes de guardar (una fecha malformada daba 500).
+
+### Changed (revisión 2026-07-25: desempeño)
+- El tablero Kanban renderiza con un número fijo de consultas (antes ~1 por
+  tarjeta más ~3 por columna); el informe de cumplimiento cuenta en la base en
+  vez de iterar documentos en Python y respeta el filtro de centro de costo que
+  ignoraba; el feed del calendario se acota a 92 días; los exports CSV van en
+  streaming; índices nuevos en las fechas del calendario y los pares genéricos.
+
+### Fixed (revisión 2026-07-25: experiencia de uso)
+- Tipos de documento y reglas de alerta ya se pueden **editar** desde la UI
+  (antes el botón Editar era un 404 y corregir un error exigía el admin
+  técnico). Los botones Ver/Editar solo aparecen donde la ruta existe.
+- El Centro de administración se muestra a quien tiene permisos de ver su
+  contenido, no solo a `is_staff`.
+- Los mensajes de aprobar/rechazar/completar salen en español (eran
+  inextraíbles para el catálogo); las validaciones de asignaciones pasan por el
+  catálogo como el resto.
+- Resolver o deshacer una alerta vuelve a la lista filtrada donde estabas, con
+  confirmación; importar CSV confirma cuántas filas entraron y ofrece deshacer
+  la importación desde la propia página (el revert existía pero no estaba
+  enlazado en ninguna parte).
+- El arrastre del Kanban avisa cuando está desactivado por cualquier filtro
+  (antes se apagaba en silencio con estado, etiqueta o búsqueda).
+- El badge de alertas se oculta en 0 (mostraba un "0" rojo permanente) y
+  anuncia sus cambios a los lectores de pantalla.
+
 ### Fixed (autorización de lectura)
 - `/calendar/`, el feed de eventos, el tablero Kanban y sus dos fragmentos HTMX
   exigían solo sesión iniciada: un usuario sin ningún permiso veía todas las

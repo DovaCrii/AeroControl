@@ -789,3 +789,30 @@ class TestBoardRenderQueryBudget:
                     assert task.checklist_progress >= 0
 
         assert sum(len(column["tasks"]) for column in data) == 30
+
+
+@pytest.mark.django_db
+def test_api_patch_validates_values_before_saving(board):
+    """V.20: setattr+save without full_clean turned a malformed date into an
+    unhandled 500 and persisted oversized titles that PostgreSQL would reject."""
+    board_obj, todo, _ = board
+    task = KanbanTask.objects.create(board=board_obj, stage=todo, title="Valid")
+    user = User.objects.create_user("api", password="password")
+    user.user_permissions.add(
+        *Permission.objects.filter(codename__in=["view_kanbantask", "change_kanbantask"])
+    )
+    token = Token.objects.create(user=user)
+    client = Client(HTTP_AUTHORIZATION=f"Token {token.key}")
+    url = reverse("api-v1-workboard-task-update", args=[task.pk])
+
+    bad_date = client.patch(
+        url, '{"due_date": "manana"}', content_type="application/json"
+    )
+    long_title = client.patch(
+        url, '{"title": "' + "x" * 300 + '"}', content_type="application/json"
+    )
+
+    task.refresh_from_db()
+    assert bad_date.status_code == 400
+    assert long_title.status_code == 400
+    assert task.title == "Valid"
