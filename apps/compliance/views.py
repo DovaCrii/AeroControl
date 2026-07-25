@@ -255,6 +255,25 @@ class AlertResolve(ModelPermissionRequiredMixin, View):
         return redirect("alert-list")
 
 
+class AlertReopen(ModelPermissionRequiredMixin, View):
+    """Undo a resolution.
+
+    Resolving is a single click on a crowded row, so it needs a way back. The
+    audit trail keeps both events: reopening does not erase the resolution, it
+    records a second, opposite one.
+    """
+
+    model = Alert
+    permission_action = "change"
+
+    def post(self, request, pk):
+        alert = get_object_or_404(Alert, pk=pk, is_active=True)
+        moved_task = alert.reopen()
+        metadata = {"moved_task_id": str(moved_task.pk)} if moved_task else {}
+        set_audit_context(request, alert, action="alert_reopened", metadata=metadata)
+        return redirect("alert-list")
+
+
 class AlertCreateTask(ModelPermissionRequiredMixin, View):
     """Manually spawn the follow-up task for an alert (B1.4).
 

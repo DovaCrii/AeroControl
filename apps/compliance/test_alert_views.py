@@ -137,3 +137,90 @@ def test_refresh_alert_task_titles_rewrites_legacy_reprs(qualification):
     assert " object (" not in task.title
     assert "Credencial DGAC" in task.title
     assert "Pilot One" in task.title
+
+
+@pytest.mark.django_db
+def test_reopen_requires_change_alert_permission(qualification):
+    alert = _alert_for(qualification)
+    alert.resolve()
+    User.objects.create_user("viewer", password="password")
+    client = Client()
+    assert client.login(username="viewer", password="password")
+
+    response = client.post(reverse("alert-reopen", args=[alert.pk]))
+
+    alert.refresh_from_db()
+    assert response.status_code == 403
+    assert alert.is_resolved is True
+
+
+@pytest.mark.django_db
+def test_reopen_returns_the_task_to_the_stage_it_came_from(qualification):
+    call_command("init_dgac_board")
+    alert = _alert_for(qualification)
+    User.objects.create_superuser("admin", "a@test.com", "password")
+    client = Client()
+    assert client.login(username="admin", password="password")
+    client.post(reverse("alert-create-task", args=[alert.pk]))
+    original_stage = KanbanTask.objects.get().stage
+
+    client.post(reverse("alert-resolve", args=[alert.pk]))
+    moved = KanbanTask.objects.get()
+    assert moved.stage.status_type == "completed"
+    assert moved.stage_id != original_stage.pk
+
+    response = client.post(reverse("alert-reopen", args=[alert.pk]))
+
+    alert.refresh_from_db()
+    assert response.status_code == 302
+    assert alert.is_resolved is False
+    assert alert.resolved_at is None
+    # Back exactly where it was, not merely out of the completed column.
+    assert KanbanTask.objects.get().stage_id == original_stage.pk
+
+
+@pytest.mark.django_db
+def test_reopen_falls_back_when_the_original_stage_was_archived(qualification):
+    call_command("init_dgac_board")
+    alert = _alert_for(qualification)
+    User.objects.create_superuser("admin", "a@test.com", "password")
+    client = Client()
+    assert client.login(username="admin", password="password")
+    client.post(reverse("alert-create-task", args=[alert.pk]))
+    original_stage = KanbanTask.objects.get().stage
+    client.post(reverse("alert-resolve", args=[alert.pk]))
+
+    original_stage.is_active = False
+    original_stage.save(update_fields=["is_active"])
+
+    client.post(reverse("alert-reopen", args=[alert.pk]))
+
+    task = KanbanTask.objects.get()
+    assert task.stage.status_type != "completed"
+    assert task.stage.is_active is True
+
+
+@pytest.mark.django_db
+def test_reopening_an_open_alert_changes_nothing(qualification):
+    alert = _alert_for(qualification)
+
+    assert alert.reopen() is None
+    alert.refresh_from_db()
+    assert alert.is_resolved is False
+
+
+@pytest.mark.django_db
+def test_reopen_records_its_own_audit_event(qualification):
+    from apps.core.models import AuditEvent
+
+    alert = _alert_for(qualification)
+    alert.resolve()
+    User.objects.create_superuser("admin", "a@test.com", "password")
+    client = Client()
+    assert client.login(username="admin", password="password")
+
+    client.post(reverse("alert-reopen", args=[alert.pk]))
+
+    actions = list(AuditEvent.objects.values_list("action", flat=True))
+    # The resolution is not erased; the undo is a second, opposite event.
+    assert "alert_reopened" in actions

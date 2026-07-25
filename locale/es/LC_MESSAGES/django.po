@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-24 21:43-0400\n"
+"POT-Creation-Date: 2026-07-24 21:54-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -226,11 +226,11 @@ msgstr "Sin alertas abiertas."
 msgid "New %(record)s"
 msgstr "Nuevo: %(record)s"
 
-#: .\apps\compliance\views.py:275
+#: .\apps\compliance\views.py:294
 msgid "No Kanban board is available to hold the follow-up task."
 msgstr "No hay ningún tablero Kanban disponible para alojar la tarea de seguimiento."
 
-#: .\apps\compliance\views.py:278
+#: .\apps\compliance\views.py:297
 msgid "Follow-up task created."
 msgstr "Tarea de seguimiento creada."
 
@@ -1041,23 +1041,31 @@ msgstr "Atrasada"
 msgid "Due"
 msgstr "Vencimiento"
 
-#: .\templates\compliance\alert_list.html:13
+#: .\templates\compliance\alert_list.html:12
+msgid "Reopen this alert and send its task back"
+msgstr "Reabre esta alerta y devuelve su tarea a donde estaba"
+
+#: .\templates\compliance\alert_list.html:12
+msgid "Undo"
+msgstr "Deshacer"
+
+#: .\templates\compliance\alert_list.html:14
 msgid "Create a follow-up task on the compliance board"
 msgstr "Crear una tarea de seguimiento en el tablero de cumplimiento"
 
-#: .\templates\compliance\alert_list.html:13
+#: .\templates\compliance\alert_list.html:14
 msgid "Create task"
 msgstr "Crear tarea"
 
-#: .\templates\compliance\alert_list.html:13
+#: .\templates\compliance\alert_list.html:14
 msgid "View task"
 msgstr "Ver tarea"
 
-#: .\templates\compliance\alert_list.html:14
+#: .\templates\compliance\alert_list.html:15
 msgid "Resolve"
 msgstr "Resolver"
 
-#: .\templates\compliance\alert_list.html:17
+#: .\templates\compliance\alert_list.html:18
 msgid "No alerts found."
 msgstr "No se encontraron alertas."
 
