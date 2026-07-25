@@ -1,4 +1,6 @@
 from django import forms
+from django.utils.translation import gettext_lazy as _
+
 from apps.core.models import OperationalTenant
 from apps.core.forms import AeroModelForm
 
@@ -77,7 +79,7 @@ class KanbanTaskForm(AeroModelForm):
         board = cleaned.get("board")
         stage = cleaned.get("stage")
         if board and stage and stage.board_id != board.id:
-            self.add_error("stage", "The stage must belong to the selected board.")
+            self.add_error("stage", _("The stage must belong to the selected board."))
         return cleaned
 
 

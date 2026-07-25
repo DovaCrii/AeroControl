@@ -60,6 +60,16 @@ urlpatterns = [
         views.DocumentTypeCreate.as_view(),
         name="documenttype-create",
     ),
+    path(
+        "documenttype/<uuid:pk>/edit/",
+        views.DocumentTypeUpdate.as_view(),
+        name="documenttype-update",
+    ),
     path("alertrule/", views.AlertRuleList.as_view(), name="alertrule-list"),
     path("alertrule/new/", views.AlertRuleCreate.as_view(), name="alertrule-create"),
+    path(
+        "alertrule/<uuid:pk>/edit/",
+        views.AlertRuleUpdate.as_view(),
+        name="alertrule-update",
+    ),
 ]

@@ -1,12 +1,16 @@
 {% load i18n %}
+{% comment %}has_detail_url / has_update_url come from SearchMixin: they probe
+whether the relative row URLs actually resolve, because this table used to
+offer View/Edit unconditionally and four lists 404ed on them.{% endcomment %}
 {% for object in objects %}
 <tr>
-  <td><a href="{{ object.pk }}/">{{ object }}</a></td>
+  <td>{% if has_detail_url %}<a href="{{ object.pk }}/">{{ object }}</a>{% else %}{{ object }}{% endif %}</td>
   <td>{{ object.created_at|date:'Y-m-d' }}</td>
   <td>{% if object.is_active %}<span class="badge bg-success">{% translate "Active" %}</span>{% else %}<span class="badge bg-secondary">{% translate "Archived" %}</span>{% endif %}</td>
   <td class="text-end">
-    <a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">{% translate "View" %}</a>
-    <a href="{{ object.pk }}/edit/" hx-get="{{ object.pk }}/edit/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">{% translate "Edit" %}</a>
+    {% if has_detail_url %}<a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">{% translate "View" %}</a>{% endif %}
+    {% if has_update_url %}<a href="{{ object.pk }}/edit/" hx-get="{{ object.pk }}/edit/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">{% translate "Edit" %}</a>{% endif %}
+    {% if not has_detail_url and not has_update_url %}<span class="text-muted">—</span>{% endif %}
   </td>
 </tr>
 {% empty %}

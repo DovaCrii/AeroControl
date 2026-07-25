@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-24 23:21-0400\n"
+"POT-Creation-Date: 2026-07-24 23:49-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -157,20 +157,20 @@ msgstr "documento"
 msgid "documents"
 msgstr "documentos"
 
-#: .\apps\compliance\models.py:124
+#: .\apps\compliance\models.py:130
 msgid "Unknown entity type. Choose one of the watchable models."
 msgstr "Tipo de entidad desconocido. Elige uno de los modelos que se pueden vigilar."
 
-#: .\apps\compliance\models.py:130
+#: .\apps\compliance\models.py:136
 #, python-format
 msgid "%(field)s is not a watchable field of %(model)s. Available: %(allowed)s"
 msgstr "%(field)s no es un campo vigilable de %(model)s. Disponibles: %(allowed)s"
 
-#: .\apps\compliance\models.py:141
+#: .\apps\compliance\models.py:147
 msgid "A board and a stage are required to create Kanban tasks."
 msgstr "Para crear tareas Kanban hacen falta un tablero y una etapa."
 
-#: .\apps\compliance\models.py:144
+#: .\apps\compliance\models.py:150
 msgid "The stage must belong to the board."
 msgstr "La etapa debe pertenecer al tablero."
 
@@ -197,7 +197,7 @@ msgstr "Alertas abiertas"
 msgid "AeroControl — Compliance status report"
 msgstr "AeroControl — Reporte de estado documental"
 
-#: .\apps\compliance\report_views.py:203 .\apps\workboard\views.py:281
+#: .\apps\compliance\report_views.py:203 .\apps\workboard\views.py:282
 #, python-format
 msgid "Generated: %(date)s"
 msgstr "Generado: %(date)s"
@@ -236,20 +236,40 @@ msgstr "No se resolvieron alertas en este período."
 msgid "No open alerts."
 msgstr "Sin alertas abiertas."
 
-#: .\apps\compliance\views.py:84 .\apps\maintenance\views.py:40
-#: .\apps\operations\views.py:46 .\apps\registry\views.py:66
-#: .\apps\workboard\views.py:117
+#: .\apps\compliance\views.py:85 .\apps\maintenance\views.py:41
+#: .\apps\operations\views.py:47 .\apps\registry\views.py:68
+#: .\apps\workboard\views.py:118
 #, python-format
 msgid "New %(record)s"
 msgstr "Nuevo: %(record)s"
 
-#: .\apps\compliance\views.py:322
+#: .\apps\compliance\views.py:230
+msgid "Document archived."
+msgstr "Documento archivado."
+
+
+#: .\apps\compliance\views.py:301
+msgid "Alert resolved."
+msgstr "Alerta resuelta."
+
+
+#: .\apps\compliance\views.py:321
+msgid "Alert reopened."
+msgstr "Alerta reabierta."
+
+
+#: .\apps\compliance\views.py:342
 msgid "No Kanban board is available to hold the follow-up task."
 msgstr "No hay ningún tablero Kanban disponible para alojar la tarea de seguimiento."
 
-#: .\apps\compliance\views.py:325
+#: .\apps\compliance\views.py:345
 msgid "Follow-up task created."
 msgstr "Tarea de seguimiento creada."
+
+#: .\apps\compliance\views.py:378
+msgid "Edit %(name)s"
+msgstr "Editar %(name)s"
+
 
 #: .\apps\compliance\watchables.py:16
 msgid "Qualification"
@@ -265,7 +285,7 @@ msgstr "En ejecución"
 
 #: .\apps\core\models.py:126 .\apps\maintenance\models.py:17
 #: .\apps\operations\models.py:13 .\apps\registry\models.py:121
-#: .\apps\workboard\models.py:32 .\apps\workboard\views.py:99
+#: .\apps\workboard\models.py:32 .\apps\workboard\views.py:100
 #: .\templates\registry\_assignment_table_body.html:8
 #: .\templates\registry\assignment_list.html:37
 msgid "Completed"
@@ -283,115 +303,120 @@ msgstr "ejecución de tarea"
 msgid "job runs"
 msgstr "ejecuciones de tareas"
 
-#: .\apps\core\views.py:131
+#: .\apps\core\views.py:179
 msgid "Saved successfully."
 msgstr "Guardado correctamente."
 
-#: .\apps\core\views.py:618
+#: .\apps\core\views.py:675
 msgid "Organization"
 msgstr "Organización"
 
-#: .\apps\core\views.py:619
+#: .\apps\core\views.py:676
 msgid "Define the operational scope and who can access it."
 msgstr "Define el alcance operativo y quién puede acceder a él."
 
-#: .\apps\core\views.py:622
+#: .\apps\core\views.py:679
 msgid "Operational tenants"
 msgstr "Organizaciones operativas"
 
-#: .\apps\core\views.py:623
+#: .\apps\core\views.py:680
 msgid "Manage organizations and their data boundaries."
 msgstr "Gestiona organizaciones y sus límites de datos."
 
-#: .\apps\core\views.py:629
+#: .\apps\core\views.py:686
 msgid "Tenant memberships"
 msgstr "Membresías de organización"
 
-#: .\apps\core\views.py:630
+#: .\apps\core\views.py:687
 msgid "Assign users to an operational tenant."
 msgstr "Asigna usuarios a una organización operativa."
 
-#: .\apps\core\views.py:638
+#: .\apps\core\views.py:695
 msgid "Compliance configuration"
 msgstr "Configuración de cumplimiento"
 
-#: .\apps\core\views.py:640
+#: .\apps\core\views.py:697
 msgid "Prepare document and alert rules before loading records."
 msgstr "Prepara documentos y reglas de alerta antes de cargar registros."
 
-#: .\apps\core\views.py:644
+#: .\apps\core\views.py:701
 msgid "Document types"
 msgstr "Tipos de documento"
 
-#: .\apps\core\views.py:645
+#: .\apps\core\views.py:702
 msgid "Control expiry requirements and document categories."
 msgstr "Controla requisitos de vencimiento y categorías documentales."
 
-#: .\apps\core\views.py:651
+#: .\apps\core\views.py:708
 msgid "Alert rules"
 msgstr "Reglas de alerta"
 
-#: .\apps\core\views.py:652
+#: .\apps\core\views.py:709
 msgid "Define when AeroControl should generate an alert."
 msgstr "Define cuándo AeroControl debe generar una alerta."
 
-#: .\apps\core\views.py:660
+#: .\apps\core\views.py:717
 msgid "Workboard configuration"
 msgstr "Configuración del tablero de trabajo"
 
-#: .\apps\core\views.py:662
+#: .\apps\core\views.py:719
 msgid "Shape how teams organize and follow operational work."
 msgstr "Define cómo los equipos organizan y siguen el trabajo operativo."
 
-#: .\apps\core\views.py:666
+#: .\apps\core\views.py:723
 msgid "Boards"
 msgstr "Tableros"
 
-#: .\apps\core\views.py:667
+#: .\apps\core\views.py:724
 msgid "Create and archive operational boards."
 msgstr "Crea y archiva tableros operativos."
 
-#: .\apps\core\views.py:673
+#: .\apps\core\views.py:730
 msgid "Stages"
 msgstr "Etapas"
 
-#: .\apps\core\views.py:674
+#: .\apps\core\views.py:731
 msgid "Manage the workflow stages used by a board."
 msgstr "Gestiona las etapas de flujo utilizadas por un tablero."
 
-#: .\apps\core\views.py:680 .\templates\workboard\task_list.html:16
+#: .\apps\core\views.py:737 .\templates\workboard\task_list.html:16
 msgid "Labels"
 msgstr "Etiquetas"
 
-#: .\apps\core\views.py:681
+#: .\apps\core\views.py:738
 msgid "Create labels used to classify tasks."
 msgstr "Crea etiquetas para clasificar tareas."
 
-#: .\apps\core\views.py:691
+#: .\apps\core\views.py:748
 msgid "Backups and audit"
 msgstr "Respaldos y auditoría"
 
-#: .\apps\core\views.py:693
+#: .\apps\core\views.py:750
 msgid "Review backups and trace changes without editing audit records."
 msgstr "Revisa respaldos y rastrea cambios sin editar la auditoría."
 
-#: .\apps\core\views.py:697
+#: .\apps\core\views.py:754
 msgid "Backup configuration"
 msgstr "Configuración de respaldos"
 
-#: .\apps\core\views.py:698
+#: .\apps\core\views.py:755
 msgid "Review the local backup destination and schedule."
 msgstr "Revisa el destino y la programación de respaldos locales."
 
-#: .\apps\core\views.py:704
+#: .\apps\core\views.py:761
 msgid "Audit events"
 msgstr "Eventos de auditoría"
 
-#: .\apps\core\views.py:705
+#: .\apps\core\views.py:762
 msgid "Read-only history of authenticated changes."
 msgstr "Historial de solo lectura de cambios autenticados."
 
-#: .\apps\core\views.py:756
+#: .\apps\core\views.py:809
+msgid "Status updated."
+msgstr "Estado actualizado."
+
+
+#: .\apps\core\views.py:816
 #, python-format
 msgid "Cannot transition from %(status)s"
 msgstr "No se puede cambiar desde %(status)s"
@@ -409,12 +434,12 @@ msgid "Emergency"
 msgstr "Emergencia"
 
 #: .\apps\maintenance\models.py:15 .\apps\workboard\models.py:27
-#: .\apps\workboard\views.py:94
+#: .\apps\workboard\views.py:95
 msgid "Pending"
 msgstr "Pendiente"
 
 #: .\apps\maintenance\models.py:16 .\apps\workboard\models.py:29
-#: .\apps\workboard\views.py:96
+#: .\apps\workboard\views.py:97
 msgid "In progress"
 msgstr "En progreso"
 
@@ -426,14 +451,24 @@ msgstr "registro de mantenimiento"
 msgid "maintenance records"
 msgstr "registros de mantenimiento"
 
-#: .\apps\maintenance\views.py:90
+#: .\apps\maintenance\views.py:91
 msgid "Start maintenance"
 msgstr "Iniciar mantenimiento"
 
-#: .\apps\maintenance\views.py:92 .\apps\maintenance\views.py:124
-#: .\apps\operations\views.py:111 .\templates\maintenance\record_detail.html:32
+#: .\apps\maintenance\views.py:93 .\apps\maintenance\views.py:125
+#: .\apps\operations\views.py:112 .\templates\maintenance\record_detail.html:32
 msgid "Complete"
 msgstr "Completar"
+
+#: .\apps\maintenance\views.py:104
+msgid "Maintenance started."
+msgstr "Mantenimiento iniciado."
+
+
+#: .\apps\maintenance\views.py:111
+msgid "Maintenance completed."
+msgstr "Mantenimiento completado."
+
 
 #: .\apps\operations\forms.py:43
 msgid "The aircraft must match the flight permission."
@@ -471,20 +506,35 @@ msgstr "permiso de vuelo"
 msgid "flight permissions"
 msgstr "permisos de vuelo"
 
-#: .\apps\operations\views.py:75 .\templates\base.html:70
-#: .\templates\dashboard\index.html:137
+#: .\apps\operations\views.py:76 .\templates\base.html:70
+#: .\templates\dashboard\index.html:141
 msgid "Permissions"
 msgstr "Permisos"
 
-#: .\apps\operations\views.py:105
+#: .\apps\operations\views.py:106
 msgid "Approve"
 msgstr "Aprobar"
 
-#: .\apps\operations\views.py:106
+#: .\apps\operations\views.py:107
 msgid "Deny"
 msgstr "Rechazar"
 
-#: .\apps\operations\views.py:190
+#: .\apps\operations\views.py:123
+msgid "Permission approved."
+msgstr "Permiso aprobado."
+
+
+#: .\apps\operations\views.py:130
+msgid "Permission denied."
+msgstr "Permiso rechazado."
+
+
+#: .\apps\operations\views.py:137
+msgid "Permission completed."
+msgstr "Permiso completado."
+
+
+#: .\apps\operations\views.py:191
 msgid "Flight record archived."
 msgstr "Registro de vuelo archivado."
 
@@ -609,7 +659,7 @@ msgstr "Habilitaciones"
 msgid "Operator"
 msgstr "Operador"
 
-#: .\apps\registry\forms.py:98 .\apps\registry\views.py:37
+#: .\apps\registry\forms.py:98 .\apps\registry\views.py:39
 #: .\templates\base.html:59 .\templates\maintenance\record_detail.html:14
 #: .\templates\maintenance\record_list.html:15
 #: .\templates\operations\flightrecord_detail.html:25
@@ -661,7 +711,7 @@ msgstr "Tipo de habilitación"
 msgid "Recipient of expiry digests for this cost center."
 msgstr "Destinatario de los resúmenes de vencimientos de este centro de costo."
 
-#: .\apps\registry\models.py:50 .\templates\generic\_table_body.html:6
+#: .\apps\registry\models.py:50 .\templates\generic\_table_body.html:10
 #: .\templates\generic\list.html:14 .\templates\registry\aircraft_list.html:19
 #: .\templates\registry\assignment_list.html:32
 msgid "Active"
@@ -680,7 +730,7 @@ msgid "Retired"
 msgstr "Retirada"
 
 #: .\apps\registry\models.py:119 .\apps\workboard\models.py:28
-#: .\apps\workboard\views.py:95
+#: .\apps\workboard\views.py:96
 #: .\templates\registry\_assignment_table_body.html:8
 #: .\templates\registry\assignment_list.html:35
 msgid "Planned"
@@ -699,41 +749,82 @@ msgstr "Confirmada"
 msgid "Cancelled"
 msgstr "Cancelada"
 
-#: .\apps\registry\models.py:186
+#: .\apps\registry\models.py:159
+msgid "The end date cannot be before the start date."
+msgstr "La fecha final no puede ser anterior a la fecha inicial."
+
+
+#: .\apps\registry\models.py:161
+msgid "The selected operator is inactive."
+msgstr "El operador seleccionado está inactivo."
+
+
+#: .\apps\registry\models.py:165
+msgid "The selected aircraft is not available."
+msgstr "La aeronave seleccionada no está disponible."
+
+
+#: .\apps\registry\models.py:172
+msgid "The cost center does not match the operator's."
+msgstr "El centro de costo no coincide con el del operador."
+
+
+#: .\apps\registry\models.py:180
+msgid "The cost center does not match the aircraft's."
+msgstr "El centro de costo no coincide con el de la aeronave."
+
+
+#: .\apps\registry\models.py:195
 msgid "qualification"
 msgstr "habilitación"
 
-#: .\apps\registry\models.py:187
+#: .\apps\registry\models.py:196
 msgid "qualifications"
 msgstr "habilitaciones"
 
-#: .\apps\registry\views.py:36
+#: .\apps\registry\views.py:38
 msgid "Cost centers"
 msgstr "Centros de costo"
 
-#: .\apps\registry\views.py:38 .\templates\base.html:60
+#: .\apps\registry\views.py:40 .\templates\base.html:60
 msgid "Operators"
 msgstr "Operadores"
 
-#: .\apps\registry\views.py:39 .\templates\base.html:62
+#: .\apps\registry\views.py:41 .\templates\base.html:62
 #: .\templates\registry\assignment_list.html:8
 msgid "Resource planning"
 msgstr "Planificación de recursos"
 
-#: .\apps\registry\views.py:40
+#: .\apps\registry\views.py:42
 msgid "Qualifications"
 msgstr "Habilitaciones"
 
-#: .\apps\registry\views.py:82
+#: .\apps\registry\views.py:84
 #, python-format
 msgid "Edit %(record)s"
 msgstr "Editar: %(record)s"
 
-#: .\apps\workboard\models.py:30 .\apps\workboard\views.py:97
+#: .\apps\registry\views.py:199
+#, python-format
+msgid "%(count)s %(name)s imported. You can undo this from the import page."
+msgstr "%(count)s %(name)s importados. Puedes deshacerlo desde la página de importación."
+
+
+#: .\apps\registry\views.py:287
+msgid "%(count)s imported records archived."
+msgstr "%(count)s registros importados archivados."
+
+
+#: .\apps\workboard\forms.py:82
+msgid "The stage must belong to the selected board."
+msgstr "La etapa debe pertenecer al tablero seleccionado."
+
+
+#: .\apps\workboard\models.py:30 .\apps\workboard\views.py:98
 msgid "Blocked"
 msgstr "Bloqueado"
 
-#: .\apps\workboard\models.py:31 .\apps\workboard\views.py:98
+#: .\apps\workboard\models.py:31 .\apps\workboard\views.py:99
 msgid "In review"
 msgstr "En revisión"
 
@@ -769,35 +860,35 @@ msgstr "Alta"
 msgid "Critical"
 msgstr "Crítica"
 
-#: .\apps\workboard\views.py:279
+#: .\apps\workboard\views.py:280
 msgid "AeroControl — Operational task report"
 msgstr "AeroControl — Reporte operativo de tareas"
 
-#: .\apps\workboard\views.py:286 .\templates\workboard\task_list.html:16
+#: .\apps\workboard\views.py:287 .\templates\workboard\task_list.html:16
 msgid "Task"
 msgstr "Tarea"
 
-#: .\apps\workboard\views.py:287
+#: .\apps\workboard\views.py:288
 msgid "Board"
 msgstr "Tablero"
 
-#: .\apps\workboard\views.py:288 .\templates\workboard\task_list.html:11
+#: .\apps\workboard\views.py:289 .\templates\workboard\task_list.html:11
 #: .\templates\workboard\task_list.html:16
 msgid "State"
 msgstr "Estado"
 
-#: .\apps\workboard\views.py:289 .\templates\workboard\task_list.html:13
+#: .\apps\workboard\views.py:290 .\templates\workboard\task_list.html:13
 #: .\templates\workboard\task_list.html:16
 msgid "Assignee"
 msgstr "Responsable"
 
-#: .\apps\workboard\views.py:290 .\templates\workboard\task_list.html:12
+#: .\apps\workboard\views.py:291 .\templates\workboard\task_list.html:12
 #: .\templates\workboard\task_list.html:13
 #: .\templates\workboard\task_list.html:16
 msgid "Priority"
 msgstr "Prioridad"
 
-#: .\apps\workboard\views.py:291 .\templates\workboard\task_list.html:13
+#: .\apps\workboard\views.py:292 .\templates\workboard\task_list.html:13
 #: .\templates\workboard\task_list.html:16
 msgid "Progress"
 msgstr "Avance"
@@ -846,7 +937,7 @@ msgstr "Navegación principal"
 msgid "Navigation"
 msgstr "Navegación"
 
-#: .\templates\base.html:50 .\templates\base.html:123 .\templates\base.html:124
+#: .\templates\base.html:50 .\templates\base.html:128 .\templates\base.html:129
 msgid "Collapse sidebar"
 msgstr "Contraer panel lateral"
 
@@ -889,7 +980,7 @@ msgid "Operations"
 msgstr "Operaciones"
 
 #: .\templates\base.html:71 .\templates\core\calendar.html:23
-#: .\templates\core\calendar.html:34 .\templates\dashboard\index.html:139
+#: .\templates\core\calendar.html:34 .\templates\dashboard\index.html:143
 msgid "Flights"
 msgstr "Vuelos"
 
@@ -912,37 +1003,37 @@ msgstr "Seguimiento"
 msgid "Action plan"
 msgstr "Plan de acción"
 
-#: .\templates\base.html:80 .\templates\core\administration.html:3
+#: .\templates\base.html:85 .\templates\core\administration.html:3
 #: .\templates\core\administration.html:24
 msgid "Administration center"
 msgstr "Centro de administración"
 
-#: .\templates\base.html:81
+#: .\templates\base.html:86
 msgid "Admin"
 msgstr "Administración"
 
-#: .\templates\base.html:88 .\templates\base.html:95
+#: .\templates\base.html:93 .\templates\base.html:100
 #: .\templates\workboard\kanban.html:42 .\templates\workboard\task_list.html:20
 msgid "Close"
 msgstr "Cerrar"
 
-#: .\templates\base.html:95
+#: .\templates\base.html:100
 msgid "Form"
 msgstr "Formulario"
 
-#: .\templates\base.html:95
+#: .\templates\base.html:100
 msgid "Loading…"
 msgstr "Cargando…"
 
-#: .\templates\base.html:107 .\templates\base.html:108
+#: .\templates\base.html:112 .\templates\base.html:113
 msgid "Use light theme"
 msgstr "Usar tema claro"
 
-#: .\templates\base.html:107 .\templates\base.html:108
+#: .\templates\base.html:112 .\templates\base.html:113
 msgid "Use dark theme"
 msgstr "Usar tema oscuro"
 
-#: .\templates\base.html:123 .\templates\base.html:124
+#: .\templates\base.html:128 .\templates\base.html:129
 msgid "Expand sidebar"
 msgstr "Expandir panel lateral"
 
@@ -974,7 +1065,7 @@ msgid "Previous"
 msgstr "Anterior"
 
 #: .\templates\compliance\_document_rows.html:9
-#: .\templates\generic\_table_body.html:8
+#: .\templates\generic\_table_body.html:12
 #: .\templates\maintenance\record_list.html:19
 #: .\templates\operations\permission_list.html:56
 #: .\templates\registry\_assignment_table_body.html:9
@@ -1312,6 +1403,13 @@ msgid_plural "%(days)s days"
 msgstr[0] "%(days)s día"
 msgstr[1] "%(days)s días"
 
+#: .\templates\core\_alert_badge.html:9
+#, python-format
+msgid "%(counter)s unresolved alert"
+msgid_plural "%(counter)s unresolved alerts"
+msgstr[0] "%(counter)s alerta sin resolver"
+msgstr[1] "%(counter)s alertas sin resolver"
+
 #: .\templates\core\administration.html:23
 msgid "Configuration"
 msgstr "Configuración"
@@ -1554,11 +1652,11 @@ msgstr "No hay vencimientos próximos."
 msgid "Tasks by Stage"
 msgstr "Tareas por etapa"
 
-#: .\templates\dashboard\index.html:119
+#: .\templates\dashboard\index.html:123
 msgid "No stages configured."
 msgstr "No hay etapas configuradas."
 
-#: .\templates\dashboard\index.html:138
+#: .\templates\dashboard\index.html:142
 msgid "Tasks"
 msgstr "Tareas"
 
@@ -1567,19 +1665,19 @@ msgstr "Tareas"
 msgid "Search..."
 msgstr "Buscar..."
 
-#: .\templates\generic\_table_body.html:6 .\templates\generic\list.html:14
+#: .\templates\generic\_table_body.html:10 .\templates\generic\list.html:14
 #: .\templates\registry\assignment_list.html:32
 msgid "Archived"
 msgstr "Archivado"
 
-#: .\templates\generic\_table_body.html:9
+#: .\templates\generic\_table_body.html:13
 #: .\templates\registry\_assignment_table_body.html:9
 #: .\templates\registry\aircraft_list.html:22
 #: .\templates\workboard\_task_detail.html:4
 msgid "Edit"
 msgstr "Editar"
 
-#: .\templates\generic\_table_body.html:13
+#: .\templates\generic\_table_body.html:18
 #: .\templates\maintenance\record_list.html:20
 #: .\templates\registry\aircraft_list.html:26
 msgid "No records found."
@@ -1890,9 +1988,21 @@ msgstr "Aplicar importación"
 msgid "Download template"
 msgstr "Descargar plantilla"
 
+#: .\templates\registry\costcenter_import.html:16
+#, python-format
+msgid "Last import: %(count)s rows on %(when)s."
+msgstr "Última importación: %(count)s filas el %(when)s."
+
+
+#: .\templates\registry\costcenter_import.html:18
+msgid "Undo this import"
+msgstr "Deshacer esta importación"
+
+
 #: .\templates\workboard\_board.html:4
-msgid "Drag-and-drop ordering is disabled while an operator or priority filter is active. Clear the filters to reorder tasks."
-msgstr "El orden por arrastre está desactivado mientras hay un filtro de operador o prioridad activo. Limpia los filtros para reordenar las tareas."
+msgid "Drag-and-drop ordering is disabled while filters or a search are active. Clear them to reorder tasks."
+msgstr "El orden por arrastre está desactivado mientras hay filtros o una búsqueda activos. Límpialos para reordenar las tareas."
+
 
 #: .\templates\workboard\_board.html:11
 msgid "This board has no active stages."

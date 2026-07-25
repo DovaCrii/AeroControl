@@ -7,5 +7,16 @@
   {% if errors %}<div class="alert alert-danger"><ul class="mb-0">{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}
   {% if preview and rows and not errors %}<div class="alert alert-info">{% blocktranslate with count=rows|length %}{{ count }} rows are valid. Select the same file again and apply to create them.{% endblocktranslate %}</div><div class="table-responsive mb-3"><table class="table table-sm"><thead><tr><th>code</th><th>name</th></tr></thead><tbody>{% for row in rows %}<tr><td>{{ row.code }}</td><td>{{ row.name }}</td></tr>{% endfor %}</tbody></table></div>{% endif %}
   <form method="post" enctype="multipart/form-data" class="card p-4" novalidate>{% csrf_token %}<label class="form-label" for="file">{% translate "CSV file" %}</label><input class="form-control mb-3" id="file" name="file" type="file" accept=".csv,text/csv" required><div class="d-flex gap-2"><button class="btn btn-outline-primary" name="preview" value="1" type="submit">{% translate "Preview" %}</button>{% if preview and rows and not errors %}<button class="btn btn-primary" name="apply" value="1" type="submit">{% translate "Apply import" %}</button>{% endif %}<a class="btn btn-link" href="?template=1">{% translate "Download template" %}</a></div></form>
+  {% if last_batch %}
+  {% comment %}The transactional revert always existed but was linked nowhere:
+  after importing 41 rows there was no confirmation and no visible way back.
+  {% endcomment %}
+  <div class="card p-3 mt-3 d-flex flex-row flex-wrap align-items-center gap-2 justify-content-between">
+    <span class="text-muted">{% blocktranslate with count=last_batch.created_ids|length when=last_batch.created_at|date:'Y-m-d H:i' %}Last import: {{ count }} rows on {{ when }}.{% endblocktranslate %}</span>
+    <form method="post" action="{% url 'costcenter-import-revert' last_batch.pk %}">{% csrf_token %}
+      <button class="btn btn-sm btn-outline-danger" type="submit">{% translate "Undo this import" %}</button>
+    </form>
+  </div>
+  {% endif %}
 </main>
 {% endblock %}

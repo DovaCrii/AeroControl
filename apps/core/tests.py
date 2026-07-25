@@ -216,11 +216,21 @@ class TestAuthenticatedPages:
         batch = ImportBatch.objects.get(entity="registry.costcenter")
         assert CostCenter.objects.filter(code="IMP-1", is_active=True).exists()
 
+        # A browser POST now gets a redirect with a message; 204 is HTMX-only.
         reverted = auth_client.post(
             reverse("costcenter-import-revert", args=[batch.pk])
         )
-        assert reverted.status_code == 204
+        assert reverted.status_code == 302
         assert not CostCenter.objects.filter(code="IMP-1", is_active=True).exists()
+
+        htmx_batch = ImportBatch.objects.create(
+            actor=None, entity="registry.costcenter", rows=[], created_ids=[]
+        )
+        htmx = auth_client.post(
+            reverse("costcenter-import-revert", args=[htmx_batch.pk]),
+            HTTP_HX_REQUEST="true",
+        )
+        assert htmx.status_code == 204
 
     def test_aircraft_import_validates_cost_center(self, auth_client):
         center = CostCenter.objects.create(code="AIR-OPS", name="Air Ops")
@@ -851,11 +861,37 @@ class TestAlertBadgePermission:
 
     @pytest.mark.django_db
     def test_badge_counts_with_view_alert(self, client):
+        from uuid import uuid4
+
+        from apps.compliance.models import Alert, AlertRule
+
+        rule = AlertRule.objects.create(
+            name="Docs", entity_type="compliance.document", field_to_watch="expiry_date"
+        )
+        Alert.objects.create(
+            alert_rule=rule,
+            content_type=ContentType.objects.get_for_model(Document),
+            object_id=uuid4(),
+            message="pending",
+        )
         user = User.objects.create_user("compliance", password="password")
         user.user_permissions.add(Permission.objects.get(codename="view_alert"))
         assert client.login(username="compliance", password="password")
 
         response = client.get(reverse("alert-count"))
 
+        content = response.content.decode()
         assert response.status_code == 200
-        assert "d-none" not in response.content.decode()
+        assert "d-none" not in content
+        assert ">1<" in content
+
+    @pytest.mark.django_db
+    def test_badge_hides_at_zero_even_with_permission(self, client):
+        # A permanent red "0" read as urgency where there was none.
+        user = User.objects.create_user("compliance2", password="password")
+        user.user_permissions.add(Permission.objects.get(codename="view_alert"))
+        assert client.login(username="compliance2", password="password")
+
+        response = client.get(reverse("alert-count"))
+
+        assert "d-none" in response.content.decode()

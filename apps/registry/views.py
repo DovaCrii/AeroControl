@@ -1,7 +1,9 @@
+from django.contrib import messages
 from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
 from django.utils import timezone
 from django.views import View
@@ -179,6 +181,27 @@ QualificationList, QualificationDetail, QualificationCreate, QualificationUpdate
 class CostCenterImportView(ModelPermissionRequiredMixin, View):
     model = CostCenter
     permission_action = "add"
+    entity_key = "registry.costcenter"
+
+    def last_applied_batch(self):
+        """Most recent applied batch of this entity, for the revert offer."""
+        return (
+            ImportBatch.objects.filter(entity=self.entity_key, status="applied")
+            .order_by("-created_at")
+            .first()
+        )
+
+    def _apply_feedback(self, request, created_count):
+        # Applying used to redirect with no confirmation, and the revert that
+        # exists precisely for this batch was linked nowhere in the UI.
+        messages.success(
+            request,
+            _("%(count)s %(name)s imported. You can undo this from the import page.")
+            % {
+                "count": created_count,
+                "name": self.model._meta.verbose_name_plural,
+            },
+        )
 
     def get(self, request):
         if request.GET.get("template") == "1":
@@ -190,7 +213,9 @@ class CostCenterImportView(ModelPermissionRequiredMixin, View):
             )
             return response
         return render(
-            request, "registry/costcenter_import.html", {"rows": [], "errors": []}
+            request,
+            "registry/costcenter_import.html",
+            {"rows": [], "errors": [], "last_batch": self.last_applied_batch()},
         )
 
     @staticmethod
@@ -223,6 +248,7 @@ class CostCenterImportView(ModelPermissionRequiredMixin, View):
             created = [CostCenter.objects.create(**row) for row in rows]
             batch.created_ids = [str(obj.pk) for obj in created]
             batch.save(update_fields=["created_ids", "updated_at"])
+        self._apply_feedback(request, len(created))
         return redirect("costcenter-list")
 
 
@@ -251,11 +277,29 @@ class CostCenterImportRevertView(ModelPermissionRequiredMixin, View):
             batch.status = "reverted"
             batch.reverted_at = timezone.now()
             batch.save(update_fields=["status", "reverted_at", "updated_at"])
-        return HttpResponse(status=204)
+        # A browser does nothing with a 204, so the form on the import page
+        # appeared to have no effect. Non-HTMX callers get a redirect with a
+        # message instead.
+        if request.headers.get("HX-Request") == "true":
+            return HttpResponse(status=204)
+        messages.success(
+            request,
+            _("%(count)s imported records archived.")
+            % {"count": len(batch.created_ids)},
+        )
+        referer = request.META.get("HTTP_REFERER", "")
+        if referer and url_has_allowed_host_and_scheme(
+            referer,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        ):
+            return redirect(referer)
+        return redirect("costcenter-list")
 
 
 class AircraftImportView(CostCenterImportView):
     model = Aircraft
+    entity_key = "registry.aircraft"
 
     def get(self, request):
         if request.GET.get("template") == "1":
@@ -270,7 +314,7 @@ class AircraftImportView(CostCenterImportView):
         return render(
             request,
             "registry/costcenter_import.html",
-            {"rows": [], "errors": [], "entity": "aircraft"},
+            {"rows": [], "errors": [], "entity": "aircraft", "last_batch": self.last_applied_batch()},
         )
 
     @staticmethod
@@ -323,11 +367,13 @@ class AircraftImportView(CostCenterImportView):
             created = [Aircraft.objects.create(**row) for row in rows]
             batch.created_ids = [str(obj.pk) for obj in created]
             batch.save(update_fields=["created_ids", "updated_at"])
+        self._apply_feedback(request, len(created))
         return redirect("aircraft-list")
 
 
 class OperatorImportView(CostCenterImportView):
     model = Operator
+    entity_key = "registry.operator"
 
     def get(self, request):
         if request.GET.get("template") == "1":
@@ -342,7 +388,7 @@ class OperatorImportView(CostCenterImportView):
         return render(
             request,
             "registry/costcenter_import.html",
-            {"rows": [], "errors": [], "entity": "operator"},
+            {"rows": [], "errors": [], "entity": "operator", "last_batch": self.last_applied_batch()},
         )
 
     @staticmethod
@@ -386,4 +432,5 @@ class OperatorImportView(CostCenterImportView):
             created = [Operator.objects.create(**row) for row in rows]
             batch.created_ids = [str(obj.pk) for obj in created]
             batch.save(update_fields=["created_ids", "updated_at"])
+        self._apply_feedback(request, len(created))
         return redirect("operator-list")

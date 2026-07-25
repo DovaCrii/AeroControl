@@ -3,6 +3,7 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.generic import CreateView, DetailView, ListView
 
 from apps.core.views import (
@@ -100,14 +101,14 @@ class MaintenanceStart(StatusTransitionView):
     model = MaintenanceRecord
     target_status = "in_progress"
     valid_from_statuses = ["pending"]
-    success_message = "Maintenance started."
+    success_message = gettext_lazy("Maintenance started.")
 
 
 class MaintenanceComplete(StatusTransitionView):
     model = MaintenanceRecord
     target_status = "completed"
     valid_from_statuses = ["in_progress"]
-    success_message = "Maintenance completed."
+    success_message = gettext_lazy("Maintenance completed.")
 
     def post(self, request, pk):
         record = get_object_or_404(self.model, pk=pk, is_active=True)
