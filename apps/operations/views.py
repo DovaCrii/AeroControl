@@ -2,7 +2,6 @@ import calendar
 from datetime import datetime
 
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
@@ -10,12 +9,14 @@ from django.utils.translation import gettext as _
 from django.views.generic import CreateView, DetailView, ListView
 
 from apps.core.views import (
+    CalendarAccessMixin,
     CsvExportMixin,
     HtmxFormMixin,
     ModelPermissionRequiredMixin,
     ModelViewPermissionRequiredMixin,
     SearchMixin,
     StatusTransitionView,
+    allowed_calendar_types,
 )
 from .forms import FlightPermissionForm, FlightRecordForm
 from .models import FlightPermission, FlightRecord
@@ -190,12 +191,18 @@ class FlightRecordDelete(ModelPermissionRequiredMixin, DetailView):
         return redirect("record-list")
 
 
-class CalendarView(LoginRequiredMixin, ListView):
+class CalendarView(CalendarAccessMixin, ListView):
     template_name = "core/calendar.html"
     context_object_name = "events_by_date"
 
     def get_queryset(self):
         return []
+
+    def filter_options(self, model, permission, order_field):
+        """Active rows for a filter dropdown, empty without the permission."""
+        if not self.request.user.has_perm(permission):
+            return model.objects.none()
+        return model.objects.filter(is_active=True).order_by(order_field)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -211,23 +218,29 @@ class CalendarView(LoginRequiredMixin, ListView):
         from apps.maintenance.models import MaintenanceRecord
         from apps.workboard.selectors import visible_tasks_for_user
 
+        allowed_types = allowed_calendar_types(self.request.user)
         events = {}
-        for permission in FlightPermission.objects.filter(
-            flight_date__year=year, flight_date__month=month, is_active=True
-        ).select_related("operator", "aircraft"):
-            events.setdefault(permission.flight_date, []).append(
-                ("permission", permission)
-            )
-        for record in MaintenanceRecord.objects.filter(
-            scheduled_date__year=year, scheduled_date__month=month, is_active=True
-        ).select_related("aircraft"):
-            events.setdefault(record.scheduled_date, []).append(("maintenance", record))
-        for task in (
-            visible_tasks_for_user(self.request.user)
-            .filter(due_date__year=year, due_date__month=month)
-            .select_related("board", "stage")
-        ):
-            events.setdefault(task.due_date, []).append(("task", task))
+        if "permission" in allowed_types:
+            for permission in FlightPermission.objects.filter(
+                flight_date__year=year, flight_date__month=month, is_active=True
+            ).select_related("operator", "aircraft"):
+                events.setdefault(permission.flight_date, []).append(
+                    ("permission", permission)
+                )
+        if "maintenance" in allowed_types:
+            for record in MaintenanceRecord.objects.filter(
+                scheduled_date__year=year, scheduled_date__month=month, is_active=True
+            ).select_related("aircraft"):
+                events.setdefault(record.scheduled_date, []).append(
+                    ("maintenance", record)
+                )
+        if "task" in allowed_types:
+            for task in (
+                visible_tasks_for_user(self.request.user)
+                .filter(due_date__year=year, due_date__month=month)
+                .select_related("board", "stage")
+            ):
+                events.setdefault(task.due_date, []).append(("task", task))
 
         previous = selected.replace(day=1)
         if month == 1:
@@ -251,14 +264,18 @@ class CalendarView(LoginRequiredMixin, ListView):
             selected_calendar_cost_center=self.request.GET.get("cost_center", ""),
             selected_calendar_aircraft=self.request.GET.get("aircraft", ""),
             selected_calendar_operator=self.request.GET.get("operator", ""),
-            calendar_cost_centers=CostCenter.objects.filter(is_active=True).order_by(
-                "code"
+            # The filter dropdowns are a listing of the registry in their own
+            # right, so each one needs the view permission of its model. Without
+            # it they used to expose every cost center, registration and
+            # operator to any authenticated user.
+            calendar_cost_centers=self.filter_options(
+                CostCenter, "registry.view_costcenter", "code"
             ),
-            calendar_aircraft=Aircraft.objects.filter(is_active=True).order_by(
-                "registration"
+            calendar_aircraft=self.filter_options(
+                Aircraft, "registry.view_aircraft", "registration"
             ),
-            calendar_operators=Operator.objects.filter(is_active=True).order_by(
-                "full_name"
+            calendar_operators=self.filter_options(
+                Operator, "registry.view_operator", "full_name"
             ),
             current_language=getattr(self.request, "LANGUAGE_CODE", "es"),
             today=today,

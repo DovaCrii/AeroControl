@@ -5,7 +5,7 @@ from pathlib import Path
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.views import redirect_to_login
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db import transaction
 from django.http import HttpResponse
 from django.http import JsonResponse
@@ -166,6 +166,43 @@ class ModelViewPermissionRequiredMixin(ModelPermissionRequiredMixin):
     permission_action = "view"
 
 
+# The calendar aggregates seven models, so no single model permission describes
+# it. Each source is gated by the view permission of its own model instead: a
+# user sees the event types they are allowed to see and nothing else.
+CALENDAR_EVENT_PERMISSIONS = {
+    "permission": "operations.view_flightpermission",
+    "flight": "operations.view_flightrecord",
+    "assignment": "registry.view_assignment",
+    "maintenance": "maintenance.view_maintenancerecord",
+    "document": "compliance.view_document",
+    "qualification": "registry.view_qualification",
+    "task": "workboard.view_kanbantask",
+}
+
+
+def allowed_calendar_types(user):
+    """Calendar event types this user is allowed to see."""
+    return {
+        event_type
+        for event_type, permission in CALENDAR_EVENT_PERMISSIONS.items()
+        if user.has_perm(permission)
+    }
+
+
+class CalendarAccessMixin(LoginRequiredMixin):
+    """Deny the calendar to a user who cannot view a single event source.
+
+    Per-source filtering still happens inside each view; this only stops a user
+    with no permissions at all from reaching the page, whose filter dropdowns
+    would otherwise list every aircraft, operator and cost center on record.
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and not allowed_calendar_types(request.user):
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+
 class AlertCountPartial(LoginRequiredMixin, View):
     """Render the sidebar alert badge for periodic HTMX refreshes."""
 
@@ -199,7 +236,7 @@ class HealthCheckView(View):
         )
 
 
-class UnifiedCalendarEventsView(LoginRequiredMixin, View):
+class UnifiedCalendarEventsView(CalendarAccessMixin, View):
     """Return calendar events from the operational modules in one scoped feed."""
 
     EVENT_COLORS = {
@@ -242,15 +279,11 @@ class UnifiedCalendarEventsView(LoginRequiredMixin, View):
         start, end = self.get_date_range(request)
         selected_types = set(filter(None, request.GET.get("types", "").split(",")))
         if not selected_types:
-            selected_types = {
-                "permission",
-                "flight",
-                "assignment",
-                "maintenance",
-                "document",
-                "qualification",
-                "task",
-            }
+            selected_types = set(CALENDAR_EVENT_PERMISSIONS)
+        # Asking for a type is not the same as being allowed to see it: the
+        # requested set is narrowed to what the user may view, so a crafted
+        # ?types= cannot widen the feed.
+        selected_types &= allowed_calendar_types(request.user)
         events = []
         cost_center_id = request.GET.get("cost_center") or None
         aircraft_id = request.GET.get("aircraft") or None
