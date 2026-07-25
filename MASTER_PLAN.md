@@ -219,7 +219,7 @@ abierto (hoy sí es cierto, cerrado en `3611d06`).
 | T2.2 | ⬜ | P1 | `TenantScopedQuerysetMixin` en documentos + filtro por entidad (F-05) | M | T1.1 |
 | T2.3 | ✅ | P1 | `has_perm` en `/calendar/`, Kanban HTML y feed de eventos (F-06) — `CalendarAccessMixin` por fuente de evento, desplegables por `view_*` del modelo que listan, `?types=` acotado a lo permitido (`3611d06`) | S | T1.1 |
 | T2.4 | ✅ | P2 | Rol `Viewer` con `view_*` explícitos (no `startswith`). En la base real recibía **35** permisos, incluidos `authtoken.view_token`, `auth.view_user`, `sessions.view_session` y `core.view_auditevent`; ahora 20 (`c5d22dd`) | S | — |
-| T2.5 | ⬜ | P2 | **[nuevo]** `TIME_ZONE = "UTC"` con la máquina en Chile: el proyecto tiene dos nociones de "hoy" (`date.today()` del SO vs `timezone.localdate()`/lookups `__date`) que discrepan 4 h cada tarde. El informe ya es coherente consigo mismo (`58d5789`), pero quedan `generate_alerts`, `send_alert_digest`, `digest.py`, `dashboard/views.py` y `compliance/models.py` con `date.today()`. Decidir la zona operativa y unificar | S | — |
+| T2.5 | ✅ | P2 | **[nuevo]** `TIME_ZONE` pasa a `America/Santiago` (decisión del usuario, 2026-07-25) y configurable por entorno. Todo `date.today()` de producción reemplazado por `timezone.localdate()` en `generate_alerts`, `send_alert_digest`, `digest.py`, `dashboard/views.py` y `compliance/models.py`, más las fixtures de prueba que comparaban contra la fecha del SO. Verificado: las dos nociones de "hoy" ahora coinciden | S | — |
 | T2.5 | ⬜ | P2 | `django-csp` enforcing por entorno; SRI en 4 dependencias; `django-axes` + throttling (F-17, F-18) | M | — |
 
 ### FASE 3 — Integridad de datos `⛔ requiere FASE 1 · CAMBIAR AHORA`

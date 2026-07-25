@@ -22,6 +22,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   la traza de auditoría. Ahora son 20 permisos operativos explícitos.
 
 ### Changed
+- **`TIME_ZONE` pasa de `UTC` a `America/Santiago`** (configurable por entorno).
+  El proyecto tenía dos nociones de "hoy" que discrepaban cuatro horas cada
+  tarde: la fecha del sistema operativo (`date.today()`) y la de la zona del
+  proyecto, que es la que usa la base para los filtros `__date`. Ahora el
+  horizonte de vencimientos, el resumen diario, la ventana de alertas y el
+  período del informe leen todos la misma fecha, y es la del calendario del
+  operador.
 - `.github/pull_request_template.md` con casillas derivadas del Definition of
   Done de `AGENTS.md`, sección de riesgo (datos existentes, permisos) y un
   apartado para declarar lo que el PR deja fuera.

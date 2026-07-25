@@ -1,5 +1,7 @@
 from datetime import date, timedelta
 
+from django.utils import timezone
+
 import pytest
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
@@ -22,7 +24,7 @@ def qualification(db):
         operator=operator,
         qualification_type="Credencial DGAC",
         issue_date=date(2026, 1, 1),
-        expiry_date=date.today() + timedelta(days=3),
+        expiry_date=timezone.localdate() + timedelta(days=3),
     )
 
 

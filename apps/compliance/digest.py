@@ -5,7 +5,9 @@ the same buckets instead of recomputing them, and so it is testable without
 invoking mail.
 """
 
-from datetime import date, timedelta
+from datetime import timedelta
+
+from django.utils import timezone
 
 from apps.compliance.models import Document
 from apps.registry.models import CostCenter, Operator, Qualification
@@ -55,7 +57,7 @@ def build_digest(cost_center, today=None):
     Items are dicts with kind/label/detail/expiry_date/url_path so the email
     templates stay free of model knowledge.
     """
-    today = today or date.today()
+    today = today or timezone.localdate()
     cutoff = today + timedelta(days=HORIZON_DAYS)
     operator_ids = list(
         Operator.objects.filter(cost_center=cost_center, is_active=True).values_list(

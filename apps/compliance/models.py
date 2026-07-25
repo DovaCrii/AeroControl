@@ -4,6 +4,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 import re
 from pathlib import Path
@@ -191,7 +192,7 @@ class Alert(BaseModel):
     @property
     def is_overdue(self):
         watched = self.watched_date
-        return watched is not None and watched < date.today()
+        return watched is not None and watched < timezone.localdate()
 
     def _derive_assigned_operator(self):
         """Best-effort responsible operator for the follow-up task.
@@ -214,7 +215,7 @@ class Alert(BaseModel):
         value = self._watched_value()
         if not isinstance(value, date):
             return "medium"
-        days_left = (value - date.today()).days
+        days_left = (value - timezone.localdate()).days
         if days_left < 0:
             return "critical"
         if days_left <= 7:

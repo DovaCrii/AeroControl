@@ -1,9 +1,10 @@
 import logging
-from datetime import date, timedelta
+from datetime import timedelta
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand
 from django.db import models
+from django.utils import timezone
 
 from apps.compliance.models import Alert, AlertRule
 from apps.compliance.watchables import resolve_model, watchable_fields
@@ -31,7 +32,7 @@ class Command(BaseCommand):
         generated = 0
         duplicates = 0
         tasks_created = 0
-        today = date.today()
+        today = timezone.localdate()
         for rule in AlertRule.objects.filter(enabled=True, is_active=True):
             model = resolve_model(rule.entity_type)
             if model is None:
