@@ -3,7 +3,7 @@ from datetime import date
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 import re
@@ -295,6 +295,7 @@ class Alert(BaseModel):
             source_object=self,
         )
 
+    @transaction.atomic
     def resolve(self):
         """Mark the alert resolved and close its linked task (B1.6).
 
@@ -302,6 +303,10 @@ class Alert(BaseModel):
         first stage whose status_type is 'completed'. Returns the moved task
         so the caller can record it in the audit trail, or None if nothing
         moved.
+
+        Atomic: the alert flag and the task move are one fact. A crash between
+        the two saves left a resolved alert with its task still open -- the
+        exact desynchronisation the alert-task link exists to prevent.
         """
         self.is_resolved = True
         self.resolved_at = timezone.now()
@@ -335,6 +340,7 @@ class Alert(BaseModel):
         task.save(update_fields=["stage", "updated_at"])
         return task
 
+    @transaction.atomic
     def reopen(self):
         """Undo a resolution and send the linked task back (B1.6, inverse).
 

@@ -1,3 +1,5 @@
+from contextlib import contextmanager, suppress
+
 from django.contrib import messages
 from django.db import transaction
 from django.http import FileResponse, Http404, HttpResponseBadRequest
@@ -35,6 +37,26 @@ def save_uploaded_file(document, uploaded):
     get_document_storage().save(relative_path, uploaded)
     document.file_path = relative_path
     document.save(update_fields=["file_path", "updated_at"])
+    return relative_path
+
+
+@contextmanager
+def uploaded_file_cleanup():
+    """Delete the stored file if the surrounding transaction fails.
+
+    Storage is not transactional: the DB rolls back, the file stays. Yields a
+    dict; set `path` after the storage write so a later failure inside the
+    atomic block removes the orphan instead of leaving unreferenced files for
+    cleanup_documents to find.
+    """
+    state = {"path": None}
+    try:
+        yield state
+    except Exception:
+        if state["path"]:
+            with suppress(Exception):
+                get_document_storage().delete(state["path"])
+        raise
 
 
 class ComplianceList(
@@ -94,9 +116,12 @@ class DocumentCreate(ComplianceCreate):
     htmx_template_name = "compliance/_document_form_content.html"
 
     def form_valid(self, form):
-        with transaction.atomic():
-            response = super().form_valid(form)
-            save_uploaded_file(self.object, form.cleaned_data["file"])
+        with uploaded_file_cleanup() as stored:
+            with transaction.atomic():
+                response = super().form_valid(form)
+                stored["path"] = save_uploaded_file(
+                    self.object, form.cleaned_data["file"]
+                )
         return response
 
 
@@ -170,17 +195,20 @@ class DocumentReplace(ModelPermissionRequiredMixin, FormView):
         }
 
     def form_valid(self, form):
-        with transaction.atomic():
-            self.document.is_current_version = False
-            self.document.save(update_fields=["is_current_version", "updated_at"])
-            self.document.resolve_related_alerts()
-            new_document = form.save(commit=False)
-            new_document.is_current_version = True
-            new_document.content_type = self.document.content_type
-            new_document.object_id = self.document.object_id
-            new_document.file_path = ""
-            new_document.save()
-            save_uploaded_file(new_document, form.cleaned_data["file"])
+        with uploaded_file_cleanup() as stored:
+            with transaction.atomic():
+                self.document.is_current_version = False
+                self.document.save(update_fields=["is_current_version", "updated_at"])
+                self.document.resolve_related_alerts()
+                new_document = form.save(commit=False)
+                new_document.is_current_version = True
+                new_document.content_type = self.document.content_type
+                new_document.object_id = self.document.object_id
+                new_document.file_path = ""
+                new_document.save()
+                stored["path"] = save_uploaded_file(
+                    new_document, form.cleaned_data["file"]
+                )
         return redirect("document-detail", pk=new_document.pk)
 
     def get_context_data(self, **kwargs):
