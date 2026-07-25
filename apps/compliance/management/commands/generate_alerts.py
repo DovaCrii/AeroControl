@@ -3,7 +3,7 @@ from datetime import timedelta
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 
 from apps.compliance.models import Alert, AlertRule
@@ -82,13 +82,19 @@ class Command(BaseCommand):
                     duplicates += 1
                     continue
                 value = getattr(record, field, "")
-                alert = Alert.objects.create(
-                    alert_rule=rule,
-                    content_type=content_type,
-                    object_id=record.pk,
-                    message=f"{rule.name}: {record} ({field}: {value})",
-                )
+                # Atomic per alert: if the process dies between creating the
+                # alert and its follow-up task, the dedupe above would count
+                # the orphan alert as a duplicate on the next run and the task
+                # would never be created.
+                with transaction.atomic():
+                    alert = Alert.objects.create(
+                        alert_rule=rule,
+                        content_type=content_type,
+                        object_id=record.pk,
+                        message=f"{rule.name}: {record} ({field}: {value})",
+                    )
+                    task = alert.ensure_follow_up_task()
                 generated += 1
-                if alert.ensure_follow_up_task() is not None:
+                if task is not None:
                     tasks_created += 1
         return generated, duplicates, tasks_created

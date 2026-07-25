@@ -118,9 +118,11 @@ class JobRun(BaseModel):
     administration centre can surface a stale-job warning later.
     """
 
+    RESULT_RUNNING = "running"
     RESULT_OK = "ok"
     RESULT_ERROR = "error"
     RESULTS = [
+        (RESULT_RUNNING, _("Running")),
         (RESULT_OK, _("Completed")),
         (RESULT_ERROR, _("Failed")),
     ]
@@ -128,7 +130,12 @@ class JobRun(BaseModel):
     command = models.CharField(max_length=100)
     started_at = models.DateTimeField()
     finished_at = models.DateTimeField(null=True, blank=True)
-    result = models.CharField(max_length=10, choices=RESULTS, default=RESULT_OK)
+    # "running" until the command finishes. The row used to be created with
+    # result="ok" before the command executed, so a process killed mid-run
+    # (scheduler kill, power loss, OOM) left a permanent success record - the
+    # exact blind spot a stale-job warning would read. A row stuck in
+    # "running" with an old started_at is now a detectable dead job.
+    result = models.CharField(max_length=10, choices=RESULTS, default=RESULT_RUNNING)
     summary = models.CharField(max_length=300, blank=True)
 
     class Meta:

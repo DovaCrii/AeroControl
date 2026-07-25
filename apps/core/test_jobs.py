@@ -75,3 +75,33 @@ def test_backup_failure_is_recorded_as_error(tmp_path, monkeypatch):
     job = JobRun.objects.get(command="backup")
     assert job.result == JobRun.RESULT_ERROR
     assert "FileNotFoundError" in job.summary
+
+
+@pytest.mark.django_db
+def test_a_job_is_running_until_it_finishes():
+    """V.7: the row used to be created with result="ok" before executing, so a
+    killed process left a permanent false success."""
+    with record_job_run("observable_job") as run:
+        mid_flight = JobRun.objects.get()
+        assert mid_flight.result == JobRun.RESULT_RUNNING
+        assert mid_flight.finished_at is None
+        run["summary"] = "done"
+
+    assert JobRun.objects.get().result == JobRun.RESULT_OK
+
+
+@pytest.mark.django_db
+def test_a_dead_job_stays_detectable():
+    """Simulate the process dying without a Python exception: nothing after
+    the create runs. What remains must not read as success."""
+    try:
+        with record_job_run("killed_job"):
+            raise KeyboardInterrupt  # closest simulation of an external kill
+    except KeyboardInterrupt:
+        pass
+
+    job = JobRun.objects.get()
+    # KeyboardInterrupt is not an Exception, so neither branch ran: the row
+    # keeps the state it had when the process vanished.
+    assert job.result == JobRun.RESULT_RUNNING
+    assert job.finished_at is None

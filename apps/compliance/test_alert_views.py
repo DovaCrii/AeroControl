@@ -224,3 +224,29 @@ def test_reopen_records_its_own_audit_event(qualification):
     actions = list(AuditEvent.objects.values_list("action", flat=True))
     # The resolution is not erased; the undo is a second, opposite event.
     assert "alert_reopened" in actions
+
+
+@pytest.mark.django_db
+def test_resolve_is_atomic_with_the_task_move(qualification, monkeypatch):
+    """V.10: a crash between the alert save and the task move left a resolved
+    alert with its task still open. Inject the crash and check neither half
+    persisted."""
+    call_command("init_dgac_board")
+    alert = _alert_for(qualification)
+    task = alert.ensure_follow_up_task(allow_default_board=True)
+    assert task is not None
+
+    from apps.workboard.models import KanbanTask
+
+    def explode(self, *args, **kwargs):
+        raise RuntimeError("simulated crash mid-resolve")
+
+    monkeypatch.setattr(KanbanTask, "save", explode)
+
+    with pytest.raises(RuntimeError):
+        alert.resolve()
+
+    alert.refresh_from_db()
+    task.refresh_from_db()
+    assert alert.is_resolved is False, "the alert flag must roll back too"
+    assert task.stage.status_type != "completed"

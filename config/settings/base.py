@@ -75,7 +75,24 @@ if DB_ENGINE in {"postgres", "postgresql"}:
     }
 else:
     DATABASES = {
-        "default": {"ENGINE": "django.db.backends.sqlite3", "NAME": config("DB_PATH")}
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": config("DB_PATH"),
+            # SQLite serialises writers. With the nightly jobs and the audit
+            # middleware writing on every mutating request, the 5s default
+            # timeout produced intermittent "database is locked" that the
+            # middleware's except swallowed - audit events were being lost
+            # silently. WAL lets readers proceed during a write; NORMAL is the
+            # documented safe synchronous level under WAL.
+            "OPTIONS": {
+                "timeout": 20,
+                "init_command": (
+                    "PRAGMA journal_mode=WAL;"
+                    "PRAGMA synchronous=NORMAL;"
+                    "PRAGMA busy_timeout=20000;"
+                ),
+            },
+        }
     }
 AUTH_PASSWORD_VALIDATORS = [
     {
