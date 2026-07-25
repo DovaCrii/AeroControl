@@ -109,10 +109,69 @@ Conservar — trabajo real no fusionado:
 - `dependabot/*` (5) — son TL.7; borrarlas solo hace que se recreen. Dos están
   11 commits atrás y necesitarán rebase.
 
-Ramas locales sin remoto: `codex/ui-modernization` (0 commits únicos, contenido
-en main → borrable) y `codex/documentacion-y-onboarding` (1 commit único **no**
-fusionado, toca `README.md`, `docs/SECURITY.md` y `openspec/`; decidir antes de
-borrar, no existe copia en el remoto).
+Ramas locales: borradas las cinco ya fusionadas, incluidas
+`codex/ui-modernization` y `codex/documentacion-y-onboarding` (su único commit
+`e3e3e9d` resultó estar en `main` textualmente idéntico en los tres archivos).
+Quedan `main` y `codex/stabilization-blocks-0-6`.
+
+### Anatomía de R.10 / T5.1 (medido el 2026-07-25)
+
+`static/css/app.css`, 1052 líneas, tiene **dos sistemas de tokens completos**,
+no un residuo:
+
+| | Sin prefijo | `--ac-*` |
+| --- | --- | --- |
+| Definición | `:root` línea 655 | `:root` línea 897 |
+| Reglas oscuras | líneas 412-654, 52 selectores | líneas 897-944, 20 selectores |
+| Usos `var()` | 69 | **142** |
+
+Los `--bs-*` no son una tercera generación: son variables de Bootstrap que el
+proyecto sobrescribe, y se quedan.
+
+**Por qué es la causa raíz de R.7:** 10 selectores están definidos en las dos
+generaciones (`body`, `.sidebar`, `.sidebar a`, `.sidebar a:hover`,
+`.sidebar a.active`, `.form-control`, `.form-select`,
+`.form-control::placeholder`, `.table`, `.table-hover tbody tr:hover`). Misma
+especificidad, así que gana la que va después: la de `--ac-*`. Son **18
+declaraciones muertas** en la primera generación. Arreglar un color en
+`--surface` o `--text-primary` no se ve en esos selectores, y no hay nada que
+avise.
+
+**Recomendación:** migrar a `--ac-*` y retirar los 10 tokens sin prefijo
+(`--border`, `--light`, `--navy`, `--sidebar-width`, `--surface`,
+`--surface-raised`, `--text-muted`, `--text-primary`, `--text-secondary`,
+`--turquoise`). Gana por uso (142 vs 69) y por ser la generación que hoy
+manda de hecho.
+
+**No es una limpieza mecánica.** Los dos sistemas tienen *valores distintos*
+para el mismo rol (p. ej. la superficie oscura), así que unificar cambia el
+aspecto de algo sí o sí. Requiere revisión visual en el navegador, y 10 lugares
+de `templates/` usan `var(--…)` directamente. Por eso quedó sin ejecutar cuando
+se cerró T2.3/T2.4: el análisis está hecho, la decisión de paleta es del usuario.
+
+### Deuda de `openspec/specs/` (TL.8, pendiente)
+
+Los `spec.md` archivados **no se pueden promover tal cual**: describen lo que se
+propuso, y varias afirmaciones ya son falsas. Muestra de la deriva encontrada al
+revisarlos:
+
+- `phase2-ops-maint` sitúa el calendario en `/operations/calendar/`; la URL real
+  es `/calendar/`.
+- `phase2-ops-maint` cierra con "All views require login", que era cierto y hoy
+  se queda corto: desde T2.3 exigen además el `view_*` del modelo.
+- `phase1-document-mgmt` describe `generate_alerts` comprobando entidades
+  cableadas (`Qualification.expiry_date`, `Document.expiry_date`,
+  `FlightPermission.status`); el BLOQUE 4 lo reemplazó por el registro validado
+  de `watchables`.
+- `phase1-document-mgmt` F7 propone "add `django-filters` or manual Q-object
+  search": una decisión de implementación, no un requisito.
+- `phase3-workboard` describe `/workboard/` sin mencionar `view_kanbantask`.
+
+Promoverlos requiere verificar cada afirmación contra el código y las 269
+pruebas, no copiar archivos. Un `specs/` con afirmaciones falsas es peor que no
+tenerlo: es exactamente el problema que ya tuvimos con `docs/SECURITY.md`, que
+daba por cerrada la "Autorización de lectura/exportación" mientras F-06 seguía
+abierto (hoy sí es cierto, cerrado en `3611d06`).
 
 ## Estado actual (actualizado 2026-07-24 — FASE 0 + higiene de Bloque 0 cerradas)
 
@@ -215,7 +274,7 @@ borrar, no existe copia en el remoto).
 | R.7 | ✅ | P2 | Contraste: `.sidebar-label` de **3.79 → 8.06:1** (cumple AA); paleta de gráficos por tema (**1.16 → 5.03:1**) (`4b8e150`) | M | — |
 | R.8 | ✅ | P3 | Icono de "Vuelos" cambiado a bitácora (antes casi idéntico al de Aeronaves) (`4b8e150`) | XS | — |
 | R.9 | ✅ | P2 | Grupos del sidebar con línea separadora y más espaciado (`4b8e150`) | S | — |
-| R.10 | ⬜ | P3 | **[UI, pendiente]** Unificar `app.css`: sigue teniendo dos generaciones de tokens y reglas que ganan por especificidad (causa raíz de R.7). Es T5.1 | M | — |
+| R.10 | ⬜ | P3 | **[UI, pendiente]** Unificar `app.css`. Medido: ver "Anatomía de R.10" más abajo. Es T5.1 | M | — |
 
 **Verificado en vivo** (servidor de demo, mediciones de contraste reales, no a ojo). Hallazgos extra encontrados durante la revisión y corregidos: paleta de gráficos invisible en modo oscuro, etiquetas de gráficos con valores crudos (`active` → `Activo`), agregaciones del dashboard contando registros archivados (A5), y ~19 cadenas sin traducir.
 
@@ -356,9 +415,9 @@ No implementado por decisión del plan. Cuando se retome: app `apps/assistant` q
 | TL.5 | ✅ | P3 | Borrar `.atl/skill-registry.md` y `prompts/` (aprobado por el usuario) | XS | — |
 | TL.6 | 🔄 | P2 | Merge a `main` preparado (fast-forward, verificado); falta el `push`. Poda de ramas inventariada más abajo ("Inventario de ramas"), pendiente de ejecución por el usuario | M | FASE 0 |
 | TL.7 | ⬜ | P3 | Atender los 5 PRs de Dependabot | S | T0.3 |
-| TL.8 | ⬜ | P2 | Consolidar `openspec/`: crear `openspec/specs/` y archivar los 5 changes al 100% | M | — |
+| TL.8 | 🔄 | P2 | Consolidar `openspec/`. **Hecho:** los 5 changes al 100% movidos a `openspec/changes/archive/`, así que `changes/` solo contiene trabajo vivo (`ui-modernization`, con su tarea de PR cerrada por el merge); `config.yaml` sincronizado (124→269 tests, umbral de cobertura real). **Pendiente:** `openspec/specs/`, que no es un movimiento de archivos — ver "Deuda de `openspec/specs/`" | M | — |
 | TL.9 | ✅ | P2 | Ampliar `AGENTS.md`: DoD por tipo de cambio, contrato de lectura, reglas de commit, precedencia documental | S | — |
-| TL.10 | ⬜ | P3 | Añadir `.github/pull_request_template.md` con casillas verificables | XS | — |
+| TL.10 | ✅ | P3 | `.github/pull_request_template.md` con casillas derivadas del DoD real de `AGENTS.md` (no genéricas), sección de riesgo y "lo que queda fuera" | XS | — |
 | TL.11 | 🔄 | P3 | `CHANGELOG.md` cerrado: la sección `[Unreleased]` pasó a `[0.2.0-alpha] - 2026-07-24`. **Corrección:** `[0.1.0-alpha]` ya describía `main` en el merge del PR #9, así que ese tag apunta a `9eb40ee`, no al trabajo de estabilización. Quedan los dos comandos de tag, que ejecuta el usuario (del plan externo, Bloque 0) | S | TL.6 |
 | TL.12 | ✅ | P2 | Reordenar `docs/`: producto en raíz, notas internas en `docs/dev/` (plan externo, Bloque 0) | S | — |
 | TL.13 | ✅ | P3 | Rutas de ejemplo genéricas en README/.env.example/ARCHITECTURE.md/chapter1-import.md (plan externo, Bloque 0) | XS | — |
