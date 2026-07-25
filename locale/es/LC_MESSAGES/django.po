@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-24 22:07-0400\n"
+"POT-Creation-Date: 2026-07-24 22:12-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -299,95 +299,95 @@ msgstr "Organizaciones operativas"
 msgid "Manage organizations and their data boundaries."
 msgstr "Gestiona organizaciones y sus límites de datos."
 
-#: .\apps\core\views.py:620
+#: .\apps\core\views.py:621
 msgid "Tenant memberships"
 msgstr "Membresías de organización"
 
-#: .\apps\core\views.py:621
+#: .\apps\core\views.py:622
 msgid "Assign users to an operational tenant."
 msgstr "Asigna usuarios a una organización operativa."
 
-#: .\apps\core\views.py:628
+#: .\apps\core\views.py:630
 msgid "Compliance configuration"
 msgstr "Configuración de cumplimiento"
 
-#: .\apps\core\views.py:630
+#: .\apps\core\views.py:632
 msgid "Prepare document and alert rules before loading records."
 msgstr "Prepara documentos y reglas de alerta antes de cargar registros."
 
-#: .\apps\core\views.py:634
+#: .\apps\core\views.py:636
 msgid "Document types"
 msgstr "Tipos de documento"
 
-#: .\apps\core\views.py:635
+#: .\apps\core\views.py:637
 msgid "Control expiry requirements and document categories."
 msgstr "Controla requisitos de vencimiento y categorías documentales."
 
-#: .\apps\core\views.py:640
+#: .\apps\core\views.py:643
 msgid "Alert rules"
 msgstr "Reglas de alerta"
 
-#: .\apps\core\views.py:641
+#: .\apps\core\views.py:644
 msgid "Define when AeroControl should generate an alert."
 msgstr "Define cuándo AeroControl debe generar una alerta."
 
-#: .\apps\core\views.py:648
+#: .\apps\core\views.py:652
 msgid "Workboard configuration"
 msgstr "Configuración del tablero de trabajo"
 
-#: .\apps\core\views.py:650
+#: .\apps\core\views.py:654
 msgid "Shape how teams organize and follow operational work."
 msgstr "Define cómo los equipos organizan y siguen el trabajo operativo."
 
-#: .\apps\core\views.py:654
+#: .\apps\core\views.py:658
 msgid "Boards"
 msgstr "Tableros"
 
-#: .\apps\core\views.py:655
+#: .\apps\core\views.py:659
 msgid "Create and archive operational boards."
 msgstr "Crea y archiva tableros operativos."
 
-#: .\apps\core\views.py:660
+#: .\apps\core\views.py:665
 msgid "Stages"
 msgstr "Etapas"
 
-#: .\apps\core\views.py:661
+#: .\apps\core\views.py:666
 msgid "Manage the workflow stages used by a board."
 msgstr "Gestiona las etapas de flujo utilizadas por un tablero."
 
-#: .\apps\core\views.py:666 .\templates\workboard\task_list.html:16
+#: .\apps\core\views.py:672 .\templates\workboard\task_list.html:16
 msgid "Labels"
 msgstr "Etiquetas"
 
-#: .\apps\core\views.py:667
+#: .\apps\core\views.py:673
 msgid "Create labels used to classify tasks."
 msgstr "Crea etiquetas para clasificar tareas."
 
-#: .\apps\core\views.py:674 .\templates\core\administration.html:7
-msgid "System"
-msgstr "Sistema"
+#: .\apps\core\views.py:683
+msgid "Backups and audit"
+msgstr "Respaldos y auditoría"
 
-#: .\apps\core\views.py:676
+#: .\apps\core\views.py:685
 msgid "Review backups and trace changes without editing audit records."
 msgstr "Revisa respaldos y rastrea cambios sin editar la auditoría."
 
-#: .\apps\core\views.py:680
+#: .\apps\core\views.py:689
 msgid "Backup configuration"
 msgstr "Configuración de respaldos"
 
-#: .\apps\core\views.py:681
+#: .\apps\core\views.py:690
 msgid "Review the local backup destination and schedule."
 msgstr "Revisa el destino y la programación de respaldos locales."
 
-#: .\apps\core\views.py:686
+#: .\apps\core\views.py:696
 msgid "Audit events"
 msgstr "Eventos de auditoría"
 
-#: .\apps\core\views.py:687
+#: .\apps\core\views.py:697
 msgid "Read-only history of authenticated changes."
 msgstr "Historial de solo lectura de cambios autenticados."
 
-#: .\apps\core\views.py:730
+#: .\apps\core\views.py:748
 #, python-format
 msgid "Cannot transition from %(status)s"
 msgstr "No se puede cambiar desde %(status)s"
@@ -909,7 +909,7 @@ msgid "Action plan"
 msgstr "Plan de acción"
 
 #: .\templates\base.html:80 .\templates\core\administration.html:3
-#: .\templates\core\administration.html:8
+#: .\templates\core\administration.html:24
 msgid "Administration center"
 msgstr "Centro de administración"
 
@@ -1308,19 +1308,27 @@ msgid_plural "%(days)s days"
 msgstr[0] "%(days)s día"
 msgstr[1] "%(days)s días"
 
-#: .\templates\core\administration.html:9
+#: .\templates\core\administration.html:23
+msgid "Configuration"
+msgstr "Configuración"
+
+#: .\templates\core\administration.html:25
 msgid "Configure the operational workspace from one clear place."
 msgstr "Configura el espacio operativo desde un solo lugar claro."
 
-#: .\templates\core\administration.html:11
+#: .\templates\core\administration.html:27
 msgid "Advanced technical administration"
 msgstr "Administración técnica avanzada"
 
-#: .\templates\core\administration.html:31
+#: .\templates\core\administration.html:41
+msgid "Read only"
+msgstr "Solo lectura"
+
+#: .\templates\core\administration.html:49
 msgid "No administration modules available"
 msgstr "No hay módulos de administración disponibles"
 
-#: .\templates\core\administration.html:31
+#: .\templates\core\administration.html:49
 msgid "Ask an administrator to grant the required permissions."
 msgstr "Solicita a un administrador los permisos necesarios."
 

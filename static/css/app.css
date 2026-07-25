@@ -1024,18 +1024,27 @@ main {
 [data-theme="dark"] .event-task, [data-bs-theme="dark"] .event-task { color: #46c9bd; }
 
 /* ── Administration center ───────────────────────── */
-.admin-center-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
-.admin-section { overflow: hidden; }
-.admin-section-header { padding: 1.1rem 1.2rem; border-bottom: 1px solid var(--ac-border); background: var(--ac-surface-raised); }
-.admin-section-items { display: grid; }
-.admin-item { display: grid; grid-template-columns: 2rem 1fr auto; align-items: center; gap: 0.75rem; padding: 1rem 1.2rem; color: var(--ac-text); text-decoration: none; border-bottom: 1px solid var(--ac-border); }
-.admin-item:last-child { border-bottom: 0; }
-.admin-item:hover { background: var(--ac-primary-soft); color: var(--ac-text); }
-.admin-item-icon { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 8px; background: var(--ac-primary-soft); color: var(--ac-primary); font-size: 0.8rem; }
-.admin-item small { display: block; margin-top: 0.15rem; color: var(--ac-text-secondary); }
-.admin-item-arrow { color: var(--ac-primary); font-size: 1.2rem; }
+/* One column read top to bottom. The old 2x2 grid tied each card's height to
+   whether its title wrapped, so the columns never lined up. */
+.admin-list { overflow: hidden; }
+.admin-section + .admin-section { border-top: 1px solid var(--ac-border); }
+.admin-section-header { padding: 1.15rem 1.25rem 0.75rem; }
+.admin-section-title { margin: 0; font-size: 0.82rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ac-text-secondary); }
+.admin-section-description { margin: 0.2rem 0 0; font-size: 0.88rem; color: var(--ac-text-muted); }
+.admin-item { display: grid; grid-template-columns: 2.25rem 1fr auto; align-items: center; gap: 0.9rem; padding: 0.75rem 1.25rem; color: var(--ac-text); text-decoration: none; }
+.admin-item + .admin-item { border-top: 1px solid var(--ac-border); }
+.admin-item:hover, .admin-item:focus-visible { background: var(--ac-primary-soft); color: var(--ac-text); }
+/* A distinct glyph per row. They were all the same cog, so the column carried
+   no information and only repeated itself nine times. */
+.admin-item-icon { width: 2.25rem; height: 2.25rem; padding: 0.45rem; border-radius: 9px; background: var(--ac-primary-soft); color: var(--ac-primary-hover); fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+[data-theme="dark"] .admin-item-icon, [data-bs-theme="dark"] .admin-item-icon { color: var(--ac-primary); }
+.admin-item-text strong { font-weight: 650; }
+.admin-item small { display: block; margin-top: 0.1rem; color: var(--ac-text-secondary); font-size: 0.85rem; }
+.admin-item-badge { margin-left: 0.35rem; padding: 0.05rem 0.4rem; border: 1px solid var(--ac-border); border-radius: 999px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ac-text-secondary); }
+.admin-item-arrow { color: var(--ac-primary-hover); font-size: 1.1rem; }
+[data-theme="dark"] .admin-item-arrow, [data-bs-theme="dark"] .admin-item-arrow { color: var(--ac-primary); }
 
-@media (max-width: 900px) { .admin-center-grid { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .admin-item { grid-template-columns: 2.25rem 1fr; } .admin-item-arrow { display: none; } }
 
 /* ── Workboard ────────────────────────────────────── */
 /* Action cells keep one height whatever the row's state: a resolved alert shows
