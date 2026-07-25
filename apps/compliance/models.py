@@ -160,6 +160,18 @@ class Alert(BaseModel):
     content_object = GenericForeignKey("content_type", "object_id")
     message = models.TextField()
     is_resolved = models.BooleanField(default=False)
+    # Where the linked Kanban task stood before resolving moved it to the
+    # completed stage. Without it, undoing could only guess a destination.
+    # SET_NULL rather than PROTECT: an archived stage must not block the undo,
+    # it just costs the exact restore.
+    resolved_from_stage = models.ForeignKey(
+        "workboard.KanbanStage",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        editable=False,
+    )
 
     class Meta:
         indexes = [
@@ -291,21 +303,78 @@ class Alert(BaseModel):
         so the caller can record it in the audit trail, or None if nothing
         moved.
         """
-        from django.utils import timezone
-
         self.is_resolved = True
         self.resolved_at = timezone.now()
-        self.save(update_fields=["is_resolved", "resolved_at", "updated_at"])
+        task = self.linked_task()
+        completed_stage = None
+        if task is not None:
+            completed_stage = (
+                task.board.stages.filter(status_type="completed", is_active=True)
+                .order_by("order")
+                .first()
+            )
+        moved = (
+            task is not None
+            and completed_stage is not None
+            and task.stage_id != completed_stage.pk
+        )
+        # Recorded before the move, so reopen() can put the task back exactly
+        # where it was instead of guessing a stage.
+        self.resolved_from_stage = task.stage if moved else None
+        self.save(
+            update_fields=[
+                "is_resolved",
+                "resolved_at",
+                "resolved_from_stage",
+                "updated_at",
+            ]
+        )
+        if not moved:
+            return None
+        task.stage = completed_stage
+        task.save(update_fields=["stage", "updated_at"])
+        return task
+
+    def reopen(self):
+        """Undo a resolution and send the linked task back (B1.6, inverse).
+
+        Resolving is one click and easy to hit by mistake, so it has to be
+        reversible. Returns the task that moved back, or None when nothing did.
+
+        The task returns to the stage recorded at resolve time. When that stage
+        is gone -- or the alert was resolved before this was tracked -- it falls
+        back to the first stage that is not a completed one, which is the
+        closest honest guess.
+        """
+        if not self.is_resolved:
+            return None
+
+        self.is_resolved = False
+        self.resolved_at = None
+        origin = self.resolved_from_stage
+        self.resolved_from_stage = None
+        self.save(
+            update_fields=[
+                "is_resolved",
+                "resolved_at",
+                "resolved_from_stage",
+                "updated_at",
+            ]
+        )
+
         task = self.linked_task()
         if task is None:
             return None
-        completed_stage = (
-            task.board.stages.filter(status_type="completed", is_active=True)
-            .order_by("order")
-            .first()
-        )
-        if completed_stage is None or task.stage_id == completed_stage.pk:
+        target = origin if origin is not None and origin.is_active else None
+        if target is None:
+            target = (
+                task.board.stages.filter(is_active=True)
+                .exclude(status_type="completed")
+                .order_by("order")
+                .first()
+            )
+        if target is None or task.stage_id == target.pk:
             return None
-        task.stage = completed_stage
+        task.stage = target
         task.save(update_fields=["stage", "updated_at"])
         return task

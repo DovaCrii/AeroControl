@@ -8,7 +8,8 @@
   <td><span class="text-nowrap">{{ object.triggered_at|date:'Y-m-d' }}</span></td>
   <td>{% if object.watched_date %}{% if object.is_overdue %}<span class="badge bg-danger">{% translate "Overdue" %} · {{ object.watched_date|date:'Y-m-d' }}</span>{% else %}<span class="badge bg-warning text-dark">{% translate "Due" %} {{ object.watched_date|date:'Y-m-d' }}</span>{% endif %}{% else %}<span class="text-muted">—</span>{% endif %}</td>
   <td class="text-end">
-    {% if object.is_resolved %}<span class="badge bg-success">{% translate "Resolved" %}</span>
+    {% if object.is_resolved %}<div class="d-flex gap-2 align-items-center justify-content-end"><span class="badge bg-success">{% translate "Resolved" %}</span>
+      <form method="post" action="{% url 'alert-reopen' object.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary" title="{% translate 'Reopen this alert and send its task back' %}">{% translate "Undo" %}</button></form></div>
     {% else %}<div class="d-flex gap-1 justify-content-end">
       {% if not object.linked_task_id %}<form method="post" action="{% url 'alert-create-task' object.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-primary" title="{% translate 'Create a follow-up task on the compliance board' %}">{% translate "Create task" %}</button></form>{% else %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'kanban' %}?board={{ object.linked_task_board_id }}">{% translate "View task" %}</a>{% endif %}
       <form method="post" action="{% url 'alert-resolve' object.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-success">{% translate "Resolve" %}</button></form>
