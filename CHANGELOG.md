@@ -21,6 +21,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   `core.view_auditevent`: el rol de solo lectura podía leer los tokens de API y
   la traza de auditoría. Ahora son 20 permisos operativos explícitos.
 
+### Changed
+- `.github/pull_request_template.md` con casillas derivadas del Definition of
+  Done de `AGENTS.md`, sección de riesgo (datos existentes, permisos) y un
+  apartado para declarar lo que el PR deja fuera.
+- `openspec/`: los cinco changes completados pasan a `changes/archive/`, así que
+  `changes/` solo contiene trabajo vivo.
+
 ### Fixed
 - El informe de cumplimiento tomaba el fin del período de `date.today()` (fecha
   del sistema operativo) mientras filtraba `resolved_at__date`, que la base
