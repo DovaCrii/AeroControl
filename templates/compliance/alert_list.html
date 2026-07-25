@@ -7,12 +7,16 @@
   <td>{{ object.alert_rule.name }}</td>
   <td><span class="text-nowrap">{{ object.triggered_at|date:'Y-m-d' }}</span></td>
   <td>{% if object.watched_date %}{% if object.is_overdue %}<span class="badge bg-danger">{% translate "Overdue" %} · {{ object.watched_date|date:'Y-m-d' }}</span>{% else %}<span class="badge bg-warning text-dark">{% translate "Due" %} {{ object.watched_date|date:'Y-m-d' }}</span>{% endif %}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+  {% comment %}Both branches share one wrapper and the buttons never wrap, so a
+  resolved row keeps the height of the rest instead of collapsing.{% endcomment %}
   <td class="text-end">
-    {% if object.is_resolved %}<div class="d-flex gap-2 align-items-center justify-content-end"><span class="badge bg-success">{% translate "Resolved" %}</span>
-      <form method="post" action="{% url 'alert-reopen' object.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary" title="{% translate 'Reopen this alert and send its task back' %}">{% translate "Undo" %}</button></form></div>
-    {% else %}<div class="d-flex gap-1 justify-content-end">
-      {% if not object.linked_task_id %}<form method="post" action="{% url 'alert-create-task' object.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-primary" title="{% translate 'Create a follow-up task on the compliance board' %}">{% translate "Create task" %}</button></form>{% else %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'kanban' %}?board={{ object.linked_task_board_id }}">{% translate "View task" %}</a>{% endif %}
-      <form method="post" action="{% url 'alert-resolve' object.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-success">{% translate "Resolve" %}</button></form>
-    </div>{% endif %}
+    <div class="alert-actions">
+    {% if object.is_resolved %}<span class="badge bg-success">{% translate "Resolved" %}</span>
+      <form method="post" action="{% url 'alert-reopen' object.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary text-nowrap" title="{% translate 'Reopen this alert and send its task back' %}">{% translate "Undo" %}</button></form>
+    {% else %}
+      {% if not object.linked_task_id %}<form method="post" action="{% url 'alert-create-task' object.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-primary text-nowrap" title="{% translate 'Create a follow-up task on the compliance board' %}">{% translate "Create task" %}</button></form>{% else %}<a class="btn btn-sm btn-outline-secondary text-nowrap" href="{% url 'kanban' %}?board={{ object.linked_task_board_id }}">{% translate "View task" %}</a>{% endif %}
+      <form method="post" action="{% url 'alert-resolve' object.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-success text-nowrap">{% translate "Resolve" %}</button></form>
+    {% endif %}
+    </div>
   </td>
 </tr>{% empty %}<tr><td colspan="99" class="text-center text-muted py-4">{% translate "No alerts found." %}</td></tr>{% endfor %}</tbody></table></div>{% render_pagination page_obj %}</div>{% endblock %}
