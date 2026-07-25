@@ -5,10 +5,11 @@ report, so the number a manager reads in a spreadsheet is the same one the
 email quotes. No wording or formatting decisions live here.
 """
 
-from datetime import date, timedelta
+from datetime import timedelta
 
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
+from django.utils import timezone
 
 from apps.compliance.digest import HORIZON_DAYS, bucket_for
 from apps.compliance.models import Alert, Document
@@ -132,7 +133,12 @@ def build_compliance_report(start=None, end=None, cost_center=None, doc_type=Non
     always relative to today, because "expiring in 7 days" only means anything
     from now.
     """
-    today = date.today()
+    # `timezone.localdate()`, not `date.today()`: `_resolution_stats` filters
+    # `resolved_at__date`, which the database evaluates in the project timezone.
+    # A naive OS date disagrees with it whenever the two differ — with
+    # TIME_ZONE="UTC" and an operator west of Greenwich, that is every evening,
+    # and alerts resolved in those hours dropped out of the period silently.
+    today = timezone.localdate()
     end = end or today
     start = start or (end - timedelta(days=30))
 

@@ -16,7 +16,10 @@ from apps.registry.models import Aircraft, CostCenter
 from .models import Alert, AlertRule, Document, DocumentType
 from .reports import build_compliance_report
 
-TODAY = date.today()
+# The report's period is bound in the project timezone, so the fixtures must be
+# too: with a naive date these tests fail whenever the OS date and the project
+# date differ, which is a real four-hour window every evening under UTC.
+TODAY = timezone.localdate()
 
 
 @pytest.fixture
