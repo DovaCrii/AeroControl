@@ -451,9 +451,10 @@ for model, form, name in (
 # ─── Kanban Board Views ─────────────────────────────────────
 
 
-class KanbanBoardView(LoginRequiredMixin, TemplateView):
+class KanbanBoardView(ModelViewPermissionRequiredMixin, TemplateView):
     """Main kanban board view — all stages and task cards."""
 
+    model = KanbanTask
     template_name = "workboard/kanban.html"
 
     def get_context_data(self, **kwargs):
@@ -465,8 +466,13 @@ class KanbanBoardView(LoginRequiredMixin, TemplateView):
             {
                 "board": board,
                 "boards": boards,
-                "operators": Operator.objects.filter(is_active=True).order_by(
-                    "full_name"
+                # The assignee filter is a listing of the operator registry, so
+                # it needs its own view permission rather than riding along with
+                # access to the board.
+                "operators": (
+                    Operator.objects.filter(is_active=True).order_by("full_name")
+                    if self.request.user.has_perm("registry.view_operator")
+                    else Operator.objects.none()
                 ),
                 "priorities": KanbanTask.PRIORITIES,
                 "states": KanbanStage.STATUS_TYPES,
@@ -483,8 +489,10 @@ class KanbanBoardView(LoginRequiredMixin, TemplateView):
         return context
 
 
-class BoardPartialView(LoginRequiredMixin, View):
+class BoardPartialView(ModelViewPermissionRequiredMixin, View):
     """HTMX fragment — board columns + cards for filter/drag refresh."""
+
+    model = KanbanTask
 
     def get(self, request):
         if request.headers.get("HX-Request") != "true":
@@ -733,8 +741,10 @@ class QuickTaskCreate(ModelPermissionRequiredMixin, View):
         )
 
 
-class BoardSelector(LoginRequiredMixin, View):
+class BoardSelector(ModelViewPermissionRequiredMixin, View):
     """Board switcher dropdown fragment."""
+
+    model = KanbanTask
 
     def get(self, request):
         boards = accessible_boards(request.user)
