@@ -8,7 +8,7 @@ tags: [aero-ops, roadmap]
 > inicial y varias fases marcadas como pendientes ya estaban implementadas
 > (ver AUDIT_CLAUDE.md F-12). Se corrigió el 2026-07-24 para reflejar el
 > estado real del código. **Para el trabajo pendiente y su seguimiento vivo,
-> la fuente de verdad es [MASTER_PLAN.md](../MASTER_PLAN.md).**
+> la fuente de verdad es [MASTER_PLAN.md](../../MASTER_PLAN.md).**
 
 ## Fase 0: Fundación ✅ (Completada)
 

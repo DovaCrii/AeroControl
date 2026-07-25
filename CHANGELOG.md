@@ -161,9 +161,9 @@ parcial). Las dos líneas de trabajo paralelas (`codex/impeccable-ui-audit` y
   lectura, Definition of Done por tipo de cambio, convención de ramas.
 
 ### Changed
-- `docs/` reorganizado: documentación de producto en la raíz
-  (`SECURITY.md`, `chapter1-import.md`, `frontend-boundary.md`,
-  `postgresql-readiness.md`); notas internas y bitácoras de desarrollo
+- `docs/` reorganizado: documentación de producto en la raíz **de `docs/`**
+  (`docs/SECURITY.md`, `docs/chapter1-import.md`, `docs/frontend-boundary.md`,
+  `docs/postgresql-readiness.md`); notas internas y bitácoras de desarrollo
   movidas a `docs/dev/`.
 - Rutas de ejemplo en `README.md`, `.env.example`, `ARCHITECTURE.md` y
   `docs/chapter1-import.md` genericizadas (ya no exponen la ruta personal
