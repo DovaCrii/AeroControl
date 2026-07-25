@@ -615,12 +615,14 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
                         _("Manage organizations and their data boundaries."),
                         "admin:core_operationaltenant_changelist",
                         OperationalTenant,
+                        icon="organization",
                     ),
                     self.item(
                         _("Tenant memberships"),
                         _("Assign users to an operational tenant."),
                         "admin:core_tenantmembership_changelist",
                         TenantMembership,
+                        icon="people",
                     ),
                 ],
             },
@@ -635,12 +637,14 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
                         _("Control expiry requirements and document categories."),
                         "documenttype-list",
                         DocumentType,
+                        icon="document",
                     ),
                     self.item(
                         _("Alert rules"),
                         _("Define when AeroControl should generate an alert."),
                         "alertrule-list",
                         AlertRule,
+                        icon="bell",
                     ),
                 ],
             },
@@ -655,23 +659,28 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
                         _("Create and archive operational boards."),
                         "board-list",
                         KanbanBoard,
+                        icon="board",
                     ),
                     self.item(
                         _("Stages"),
                         _("Manage the workflow stages used by a board."),
                         "stage-create",
                         KanbanStage,
+                        icon="columns",
                     ),
                     self.item(
                         _("Labels"),
                         _("Create labels used to classify tasks."),
                         "label-list",
                         KanbanLabel,
+                        icon="tag",
                     ),
                 ],
             },
             {
-                "title": _("System"),
+                # Was "System", which repeated the page's own eyebrow and said
+                # nothing about what is inside.
+                "title": _("Backups and audit"),
                 "description": _(
                     "Review backups and trace changes without editing audit records."
                 ),
@@ -681,12 +690,14 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
                         _("Review the local backup destination and schedule."),
                         "admin:core_backupconfig_changelist",
                         BackupConfig,
+                        icon="backup",
                     ),
                     self.item(
                         _("Audit events"),
                         _("Read-only history of authenticated changes."),
                         "admin:core_auditevent_changelist",
                         AuditEvent,
+                        icon="history",
                         read_only=True,
                     ),
                 ],
@@ -700,7 +711,13 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
         context["technical_admin_url"] = "/admin/" if self.request.user.is_staff else ""
         return context
 
-    def item(self, title, description, url_name, model, read_only=False):
+    def item(self, title, description, url_name, model, icon, read_only=False):
+        """One row of the administration list.
+
+        `icon` names a symbol in the sprite at the top of the template. Every
+        row used to draw the same cog, which meant the icons carried no
+        information and only added noise to nine near-identical rows.
+        """
         permission = f"{model._meta.app_label}.view_{model._meta.model_name}"
         if (
             not self.request.user.has_perm(permission)
@@ -711,6 +728,7 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
             "title": title,
             "description": description,
             "url": reverse(url_name),
+            "icon": icon,
             "read_only": read_only,
         }
 
