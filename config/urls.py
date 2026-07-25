@@ -12,8 +12,11 @@ from apps.core.views import (
     UnifiedCalendarEventsView,
 )
 from apps.workboard.views import ApiIndexView
-from apps.workboard.api import KanbanTaskApiView, api_openapi_schema
-from rest_framework.authtoken.views import obtain_auth_token
+from apps.workboard.api import (
+    KanbanTaskApiView,
+    ThrottledObtainAuthToken,
+    api_openapi_schema,
+)
 
 admin.site.site_header = "AeroControl Administration"
 admin.site.site_title = "AeroControl"
@@ -50,7 +53,7 @@ urlpatterns = [
         KanbanTaskApiView.as_view({"get": "list"}),
         name="api-drf-v1-workboard-tasks",
     ),
-    path("api-token/", obtain_auth_token, name="api-token"),
+    path("api-token/", ThrottledObtainAuthToken.as_view(), name="api-token"),
     path("api/v1/openapi.json", api_openapi_schema, name="api-v1-openapi"),
     path(
         "api/v1/workboard/tasks/<uuid:pk>/",

@@ -1,7 +1,9 @@
 from rest_framework import serializers
 from django.http import JsonResponse
+from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.permissions import DjangoModelPermissions, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import AnonRateThrottle
 from rest_framework.viewsets import ViewSet
 from rest_framework.exceptions import NotAuthenticated, PermissionDenied
 import json
@@ -11,6 +13,17 @@ from django.utils.dateparse import parse_datetime
 from .models import KanbanTask
 from .selectors import user_can_edit_board, visible_tasks_for_user
 from .models import KanbanStage
+
+
+class ThrottledObtainAuthToken(ObtainAuthToken):
+    """Token endpoint with the anon throttle it silently opted out of.
+
+    DRF's ObtainAuthToken sets ``throttle_classes = ()`` on the class, so the
+    project-wide DEFAULT_THROTTLE_CLASSES never applied to the one endpoint
+    that accepts unauthenticated credential guesses.
+    """
+
+    throttle_classes = (AnonRateThrottle,)
 
 
 class ViewModelPermissions(DjangoModelPermissions):

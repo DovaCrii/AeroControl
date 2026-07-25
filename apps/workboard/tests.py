@@ -610,3 +610,143 @@ def test_api_token_and_openapi_contract(user, auth_client):
     assert token_auth["in"] == "header"
     assert token_auth["name"] == "Authorization"
     assert "/api/drf/v1/workboard/tasks/" in schema["paths"]
+
+
+class TestBoardScopeEnforcement:
+    """V.1/V.2/V.5: read and write paths that skipped board scoping.
+
+    The scenario everywhere: the user holds the standard model permissions
+    (Operations role) but the board declares access rules where they are only
+    a viewer -- or no rule at all, which excludes them once rules exist.
+    """
+
+    @staticmethod
+    def _restricted_world(user):
+        mine = KanbanBoard.objects.create(name="Mine")
+        mine_stage = KanbanStage.objects.create(board=mine, name="Todo", order=0)
+        other = KanbanBoard.objects.create(name="Theirs")
+        other_stage = KanbanStage.objects.create(board=other, name="Todo", order=0)
+        KanbanBoardAccess.objects.create(board=mine, user=user, role="viewer")
+        mine_task = KanbanTask.objects.create(
+            board=mine, stage=mine_stage, title="Visible task"
+        )
+        other_task = KanbanTask.objects.create(
+            board=other, stage=other_stage, title="Hidden task"
+        )
+        return mine, mine_task, other, other_stage, other_task
+
+    @pytest.mark.django_db
+    def test_csv_export_only_ships_visible_tasks(self, auth_client, user):
+        self._restricted_world(user)
+
+        response = auth_client.get(reverse("task-list"), {"export": "csv"})
+        content = response.content.decode("utf-8-sig")
+
+        assert response.status_code == 200
+        assert "Visible task" in content
+        # Before WList.get_queryset existed, this exported every tenant's rows.
+        assert "Hidden task" not in content
+
+    @pytest.mark.django_db
+    def test_html_list_is_scoped_too(self, auth_client, user):
+        self._restricted_world(user)
+
+        content = auth_client.get(reverse("task-list")).content.decode()
+
+        assert "Visible task" in content
+        assert "Hidden task" not in content
+
+    @pytest.mark.django_db
+    def test_board_viewer_cannot_edit_a_task(self, auth_client, user):
+        _, task, _, _, _ = self._restricted_world(user)
+
+        response = auth_client.post(
+            reverse("task-edit", args=[task.pk]),
+            {
+                "board": task.board_id,
+                "stage": task.stage_id,
+                "title": "Renamed",
+                "priority": "low",
+                "order": 0,
+            },
+        )
+
+        task.refresh_from_db()
+        assert response.status_code == 403
+        assert task.title == "Visible task"
+
+    @pytest.mark.django_db
+    def test_task_cannot_be_moved_to_an_inaccessible_board(self, auth_client, user):
+        mine, task, other, other_stage, _ = self._restricted_world(user)
+        # Editor on their own board, so the edit itself is allowed.
+        access = KanbanBoardAccess.objects.get(board=mine, user=user)
+        access.role = "editor"
+        access.save(update_fields=["role"])
+
+        response = auth_client.post(
+            reverse("task-edit", args=[task.pk]),
+            {
+                "board": other.pk,
+                "stage": other_stage.pk,
+                "title": "Kidnapped",
+                "priority": "low",
+                "order": 0,
+            },
+        )
+
+        task.refresh_from_db()
+        assert task.board_id == mine.pk, response.status_code
+
+    @pytest.mark.django_db
+    def test_board_viewer_cannot_create_a_stage(self, auth_client, user):
+        mine, _, _, _, _ = self._restricted_world(user)
+
+        response = auth_client.post(
+            reverse("stage-create"),
+            {
+                "board": mine.pk,
+                "name": "Sneaky",
+                "order": 9,
+                "color": "#123456",
+                "status_type": "pending",
+            },
+        )
+
+        assert response.status_code == 403
+        assert not KanbanStage.objects.filter(name="Sneaky").exists()
+
+    @pytest.mark.django_db
+    def test_board_viewer_cannot_touch_checklists(self, auth_client, user):
+        _, task, _, _, _ = self._restricted_world(user)
+        item = KanbanChecklistItem.objects.create(task=task, title="Step", order=0)
+
+        created = auth_client.post(
+            reverse("checklist-create", args=[task.pk]), {"title": "New", "order": 1}
+        )
+        toggled = auth_client.post(reverse("checklist-toggle", args=[item.pk]))
+
+        item.refresh_from_db()
+        assert created.status_code == 403
+        assert toggled.status_code == 403
+        assert item.is_completed is False
+
+
+@pytest.mark.django_db
+def test_api_token_endpoint_throttles_credential_guessing(db):
+    from django.core.cache import cache
+
+    cache.clear()  # the throttle history lives in the cache
+    client = Client()
+
+    statuses = [
+        client.post(
+            reverse("api-token"), {"username": "ghost", "password": f"try-{i}"}
+        ).status_code
+        for i in range(12)
+    ]
+
+    # The first attempts fail with 400 (bad credentials); the throttle must
+    # cut in before the 12th. Without it this endpoint was an unlimited
+    # password oracle.
+    assert 429 in statuses
+    cache.clear()

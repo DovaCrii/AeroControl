@@ -49,6 +49,26 @@ class WList(CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListV
     context_object_name = "objects"
     paginate_by = 25
 
+    def get_queryset(self):
+        """Scope every workboard listing to the boards this user can access.
+
+        This was the one read path that skipped board scoping: the HTML list
+        paginated the leak to 25 rows, but ``?export=csv`` (CsvExportMixin)
+        returned the entire table across all tenants' boards.
+        """
+        queryset = super().get_queryset()
+        if self.model is KanbanTask:
+            allowed = visible_tasks_for_user(self.request.user)
+            return queryset.filter(pk__in=allowed.values("pk"))
+        if self.model is KanbanBoard:
+            return queryset.filter(
+                pk__in=accessible_boards(self.request.user).values("pk")
+            )
+        # Stages and labels hang off a board.
+        return queryset.filter(
+            board__in=accessible_boards(self.request.user).values("pk")
+        )
+
     def get_context_data(self, **kwargs):
         c = super().get_context_data(**kwargs)
         c["title"] = _(self.model._meta.verbose_name_plural.title())
@@ -372,7 +392,21 @@ class TaskEditView(ModelPermissionRequiredMixin, UpdateView):
             is_active=True, board__is_active=True
         )
 
+    def get_form_kwargs(self):
+        # The form narrows its board choices to what this user can edit.
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
     def form_valid(self, form):
+        # Being able to *see* a task (board access "viewer") is not being able
+        # to change it. Every other mutating view checks this; this one did not,
+        # and it is the edit path the standard Operations role actually reaches.
+        # Checked on both boards so a task cannot be moved out of an editable
+        # board into a merely visible one.
+        for board in {self.object.board, form.instance.board}:
+            if not user_can_edit_board(self.request.user, board):
+                return HttpResponse(status=403)
         response = super().form_valid(form)
         form.save_m2m()
         set_audit_context(self.request, self.object)
@@ -394,6 +428,8 @@ class ChecklistItemCreate(ModelPermissionRequiredMixin, View):
         task = get_object_or_404(
             KanbanTask, pk=pk, is_active=True, board__is_active=True
         )
+        if not user_can_edit_board(request.user, task.board):
+            return HttpResponse(status=403)
         form = KanbanChecklistItemForm(request.POST)
         if form.is_valid():
             item = form.save(commit=False)
@@ -417,6 +453,8 @@ class ChecklistItemToggle(ModelPermissionRequiredMixin, View):
 
     def post(self, request, pk):
         item = get_object_or_404(KanbanChecklistItem, pk=pk, task__is_active=True)
+        if not user_can_edit_board(request.user, item.task.board):
+            return HttpResponse(status=403)
         item.is_completed = not item.is_completed
         item.save(update_fields=["is_completed", "updated_at"])
         task = item.task
@@ -528,6 +566,10 @@ class BoardPartialView(ModelViewPermissionRequiredMixin, View):
 
 
 class StageCreate(ModelPermissionRequiredMixin, CreateView):
+    """Shadows the generated StageCreate (this class is defined later, and
+    urls.py routes it), so it must repeat WCreate's board-membership check --
+    the generated variant had it and this one silently dropped it."""
+
     model = KanbanStage
     form_class = KanbanStageForm
     permission_action = "add"
@@ -538,6 +580,13 @@ class StageCreate(ModelPermissionRequiredMixin, CreateView):
         if self.request.GET.get("board"):
             initial["board"] = self.request.GET["board"]
         return initial
+
+    def form_valid(self, form):
+        if not user_can_edit_board(self.request.user, form.instance.board):
+            return HttpResponse(status=403)
+        response = super().form_valid(form)
+        set_audit_context(self.request, self.object)
+        return response
 
     def get_success_url(self):
         board_id = self.object.board_id

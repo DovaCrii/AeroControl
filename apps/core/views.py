@@ -209,6 +209,14 @@ class AlertCountPartial(LoginRequiredMixin, View):
     def get(self, request):
         from apps.compliance.models import Alert
 
+        # Same read contract as the calendar (T2.3): an aggregate over alerts
+        # is still alert data. Without the permission the badge renders empty
+        # rather than 403ing, because it refreshes every 60s from the shell and
+        # a red error would outshout the page the user is allowed to see.
+        if not request.user.has_perm("compliance.view_alert"):
+            return render(
+                request, "core/_alert_badge.html", {"unresolved_alert_count": None}
+            )
         count = Alert.objects.filter(is_active=True, is_resolved=False).count()
         return render(
             request, "core/_alert_badge.html", {"unresolved_alert_count": count}

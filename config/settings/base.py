@@ -142,6 +142,18 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    # The anon rate exists for one endpoint: /api-token/ accepts unauthenticated
+    # username/password pairs, and without a throttle it is an offline password
+    # oracle. Authenticated traffic gets a generous ceiling that a human UI
+    # never reaches but a runaway script does.
+    "DEFAULT_THROTTLE_CLASSES": (
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ),
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": config("API_THROTTLE_ANON", default="10/min"),
+        "user": config("API_THROTTLE_USER", default="300/min"),
+    },
 }
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/"

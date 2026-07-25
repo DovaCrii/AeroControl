@@ -51,7 +51,7 @@ class KanbanTaskForm(AeroModelForm):
             "labels",
         ]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         board_id = self.data.get("board") or getattr(self.instance, "board_id", None)
         if board_id:
@@ -61,7 +61,16 @@ class KanbanTaskForm(AeroModelForm):
             self.fields["labels"].queryset = KanbanLabel.objects.filter(
                 board_id=board_id, is_active=True
             )
-        self.fields["board"].queryset = KanbanBoard.objects.filter(is_active=True)
+        # Every active board used to be offered here, so a crafted POST could
+        # move a task onto another tenant's board. When the view passes the
+        # user, the choices narrow to that user's boards; callers that do not
+        # (tests, shell) keep the old behaviour and rely on the view's checks.
+        boards = KanbanBoard.objects.filter(is_active=True)
+        if user is not None:
+            from .selectors import accessible_boards
+
+            boards = boards.filter(pk__in=accessible_boards(user).values("pk"))
+        self.fields["board"].queryset = boards
 
     def clean(self):
         cleaned = super().clean()
