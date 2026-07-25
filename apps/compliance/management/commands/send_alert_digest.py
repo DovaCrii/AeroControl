@@ -1,10 +1,10 @@
 import logging
-from datetime import date
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.core.management.base import BaseCommand
 from django.template.loader import render_to_string
+from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from apps.compliance.digest import BUCKETS, build_digest, cost_centers_to_notify
@@ -51,7 +51,7 @@ class Command(BaseCommand):
         )
 
     def _run(self, dry_run):
-        today = date.today()
+        today = timezone.localdate()
         sent = skipped = total_items = 0
         for cost_center in cost_centers_to_notify():
             buckets = build_digest(cost_center, today=today)

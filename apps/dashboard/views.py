@@ -1,9 +1,10 @@
-from datetime import date, timedelta
+from datetime import timedelta
 
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
 from django.db.models.functions import TruncMonth
 from django.shortcuts import render
+from django.utils import timezone
 
 from apps.compliance.models import Alert
 from apps.maintenance.models import MaintenanceRecord
@@ -20,7 +21,7 @@ def dashboard(request):
     alert_count = Alert.objects.filter(is_active=True, is_resolved=False).count()
 
     # --- Expirations ---
-    cutoff = date.today() + timedelta(days=30)
+    cutoff = timezone.localdate() + timedelta(days=30)
     expirations = Qualification.objects.filter(
         is_active=True,
         expiry_date__isnull=False,
@@ -86,7 +87,7 @@ def dashboard(request):
     )
 
     # --- Chart: Monthly flight records (last 6 months) ---
-    six_months_ago = date.today() - timedelta(days=180)
+    six_months_ago = timezone.localdate() - timedelta(days=180)
     monthly_flights = list(
         FlightRecord.objects.filter(is_active=True, actual_date__gte=six_months_ago)
         .annotate(month=TruncMonth("actual_date"))

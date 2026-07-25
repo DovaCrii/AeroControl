@@ -1,6 +1,8 @@
 import logging
 from datetime import date, timedelta
 
+from django.utils import timezone
+
 import pytest
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import call_command
@@ -55,7 +57,7 @@ def test_valid_rule_creates_one_alert_and_skips_duplicates_on_rerun():
         object_id="00000000-0000-0000-0000-000000000001",
         file_path="cert/document/file.pdf",
         issue_date=date(2026, 1, 1),
-        expiry_date=date.today() + timedelta(days=5),
+        expiry_date=timezone.localdate() + timedelta(days=5),
     )
     AlertRule.objects.create(
         name="Expiring documents",
@@ -101,7 +103,7 @@ def test_generate_alerts_creates_linked_task_with_urgency_priority():
         operator=operator,
         qualification_type="Night rating",
         issue_date=date(2026, 1, 1),
-        expiry_date=date.today() - timedelta(days=1),  # already expired
+        expiry_date=timezone.localdate() - timedelta(days=1),  # already expired
     )
     rule, board, stage = _kanban_rule()
 
@@ -127,7 +129,7 @@ def test_generate_alerts_task_creation_is_idempotent():
         operator=operator,
         qualification_type="Night rating",
         issue_date=date(2026, 1, 1),
-        expiry_date=date.today() + timedelta(days=3),
+        expiry_date=timezone.localdate() + timedelta(days=3),
     )
     _kanban_rule()
 
@@ -149,7 +151,7 @@ def test_rule_without_kanban_flag_creates_no_task():
         operator=operator,
         qualification_type="Night rating",
         issue_date=date(2026, 1, 1),
-        expiry_date=date.today() + timedelta(days=3),
+        expiry_date=timezone.localdate() + timedelta(days=3),
     )
     AlertRule.objects.create(
         name="Quals no task",
@@ -174,7 +176,7 @@ def test_resolving_alert_moves_linked_task_to_completed_stage():
         operator=operator,
         qualification_type="Night rating",
         issue_date=date(2026, 1, 1),
-        expiry_date=date.today() + timedelta(days=3),
+        expiry_date=timezone.localdate() + timedelta(days=3),
     )
     rule, board, pending_stage = _kanban_rule()
     done_stage = KanbanStage.objects.create(
@@ -205,7 +207,7 @@ def test_resolving_alert_without_task_returns_none():
         object_id="00000000-0000-0000-0000-000000000001",
         file_path="cert/document/file.pdf",
         issue_date=date(2026, 1, 1),
-        expiry_date=date.today() + timedelta(days=3),
+        expiry_date=timezone.localdate() + timedelta(days=3),
     )
     rule = AlertRule.objects.create(
         name="Docs no task",
@@ -236,7 +238,7 @@ def test_document_resolve_related_alerts_closes_open_alerts_and_task():
         object_id="00000000-0000-0000-0000-000000000001",
         file_path="cert/document/old.pdf",
         issue_date=date(2026, 1, 1),
-        expiry_date=date.today() + timedelta(days=2),
+        expiry_date=timezone.localdate() + timedelta(days=2),
     )
     board = KanbanBoard.objects.create(name="Compliance")
     pending = KanbanStage.objects.create(

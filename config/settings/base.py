@@ -91,7 +91,11 @@ LANGUAGES = [
     ("es", _("Spanish")),
 ]
 LOCALE_PATHS = [BASE_DIR / "locale"]
-TIME_ZONE = "UTC"
+# The operation runs in Chile, and this decides what "today" means everywhere:
+# expiry counters, the digest, the alert horizon and the report period all read
+# it. With UTC the project disagreed with the operator's calendar for four hours
+# every evening. Configurable so a deployment elsewhere does not need a patch.
+TIME_ZONE = config("TIME_ZONE", default="America/Santiago")
 USE_I18N = True
 USE_TZ = True
 STATIC_URL = "/static/"
