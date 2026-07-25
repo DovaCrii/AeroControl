@@ -9,10 +9,22 @@ offer View/Edit unconditionally and four lists 404ed on them.{% endcomment %}
   <td>{% if object.is_active %}<span class="badge bg-success">{% translate "Active" %}</span>{% else %}<span class="badge bg-secondary">{% translate "Archived" %}</span>{% endif %}</td>
   <td class="text-end">
     {% if has_detail_url %}<a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">{% translate "View" %}</a>{% endif %}
-    {% if has_update_url %}<a href="{{ object.pk }}/edit/" hx-get="{{ object.pk }}/edit/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">{% translate "Edit" %}</a>{% endif %}
-    {% if not has_detail_url and not has_update_url %}<span class="text-muted">—</span>{% endif %}
+    {% if object.is_active %}
+      {% if has_update_url %}<a href="{{ object.pk }}/edit/" hx-get="{{ object.pk }}/edit/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">{% translate "Edit" %}</a>{% endif %}
+    {% elif has_restore_url %}
+      <form method="post" action="{{ object.pk }}/restore/" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-success" type="submit">{% translate "Restore" %}</button></form>
+    {% endif %}
+    {% if not has_detail_url and not has_update_url and not has_restore_url %}<span class="text-muted">—</span>{% endif %}
   </td>
 </tr>
 {% empty %}
-<tr><td colspan="99" class="text-center text-muted py-4">{% translate "No records found." %}</td></tr>
+<tr><td colspan="99" class="text-center text-muted py-4">
+  {% if is_filtered %}
+    {% translate "No records match the current filters." %}
+    <a href="{{ request.path }}">{% translate "Clear filters" %}</a>
+  {% else %}
+    {% translate "Nothing here yet." %}
+    {% if has_create_url %}<a href="new/">{% translate "Create the first one" %}</a>{% endif %}
+  {% endif %}
+</td></tr>
 {% endfor %}

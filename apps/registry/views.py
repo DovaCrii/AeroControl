@@ -16,6 +16,7 @@ from apps.core.views import (
     SearchMixin,
 )
 from .models import CostCenter, Aircraft, Operator, Assignment, Qualification
+from apps.core.audit import set_audit_context
 from apps.core.models import ImportBatch
 from apps.core.imports import CsvImportSpec
 from .forms import (
@@ -54,6 +55,35 @@ class RegistryList(
 class RegistryDetail(ModelViewPermissionRequiredMixin, DetailView):
     template_name = "generic/detail.html"
 
+    def get_context_data(self, **kwargs):
+        """Give the detail page its actions.
+
+        It used to offer only `javascript:history.back()`, which does nothing
+        when the page is reached from a digest email or a bookmark (and dies
+        under an enforcing CSP), and no way to edit or archive: retiring an
+        operator or aircraft required the technical admin.
+        """
+        context = super().get_context_data(**kwargs)
+        meta = self.model._meta
+        user = self.request.user
+        context["list_url"] = reverse(f"{meta.model_name}-list")
+        context["update_url"] = reverse(
+            f"{meta.model_name}-update", args=[self.object.pk]
+        )
+        context["archive_url"] = reverse(
+            f"{meta.model_name}-archive", args=[self.object.pk]
+        )
+        context["restore_url"] = reverse(
+            f"{meta.model_name}-restore", args=[self.object.pk]
+        )
+        context["can_change"] = user.has_perm(
+            f"{meta.app_label}.change_{meta.model_name}"
+        )
+        context["can_archive"] = user.has_perm(
+            f"{meta.app_label}.delete_{meta.model_name}"
+        )
+        return context
+
 
 class RegistryCreate(HtmxFormMixin, ModelPermissionRequiredMixin, CreateView):
     permission_action = "add"
@@ -85,6 +115,92 @@ class RegistryUpdate(HtmxFormMixin, ModelPermissionRequiredMixin, UpdateView):
             "record": _(self.model._meta.verbose_name.title())
         }
         return context
+
+
+class RegistryArchive(ModelPermissionRequiredMixin, View):
+    """Soft-archive an active record (V.30).
+
+    Uses the delete permission because archiving is this project's delete:
+    rows are never removed, only hidden (AGENTS.md). The record disappears
+    from every active listing and can be restored from the archived filter.
+    """
+
+    permission_action = "delete"
+
+    def post(self, request, pk):
+        obj = get_object_or_404(self.model, pk=pk, is_active=True)
+        obj.is_active = False
+        obj.save(update_fields=["is_active", "updated_at"])
+        set_audit_context(request, obj, action="archived")
+        messages.success(
+            request,
+            _("%(name)s archived. It can be restored from the archived filter.")
+            % {"name": self.model._meta.verbose_name.capitalize()},
+        )
+        return redirect(f"{self.model._meta.model_name}-list")
+
+
+class RegistryRestore(ModelPermissionRequiredMixin, View):
+    """Bring an archived record back (V.30). The change permission suffices:
+    restoring re-activates data that already existed."""
+
+    permission_action = "change"
+
+    def post(self, request, pk):
+        obj = get_object_or_404(self.model, pk=pk, is_active=False)
+        obj.is_active = True
+        obj.save(update_fields=["is_active", "updated_at"])
+        set_audit_context(request, obj, action="restored")
+        messages.success(
+            request,
+            _("%(name)s restored.")
+            % {"name": self.model._meta.verbose_name.capitalize()},
+        )
+        return redirect(f"{self.model._meta.model_name}-list")
+
+
+class CostCenterArchive(RegistryArchive):
+    """Archiving a cost center silently drops it from the digest and the
+    report (V.31), so it never happens without seeing the dependents first."""
+
+    model = CostCenter
+
+    def post(self, request, pk):
+        obj = get_object_or_404(CostCenter, pk=pk, is_active=True)
+        dependents = {
+            "operators": obj.operators.filter(is_active=True).count(),
+            "aircraft": obj.aircraft.filter(is_active=True).count(),
+        }
+        if any(dependents.values()) and request.POST.get("confirm") != "1":
+            return render(
+                request,
+                "registry/costcenter_archive_confirm.html",
+                {"object": obj, "dependents": dependents},
+            )
+        return super().post(request, pk)
+
+
+# One archive/restore pair per registry model, same pattern as make_views.
+# CostCenterArchive above is the hand-written exception (dependent check).
+for _model, _name in (
+    (Aircraft, "Aircraft"),
+    (Operator, "Operator"),
+    (Assignment, "Assignment"),
+    (Qualification, "Qualification"),
+):
+    globals()[f"{_name}Archive"] = type(
+        f"{_name}Archive", (RegistryArchive,), {"model": _model}
+    )
+for _model, _name in (
+    (CostCenter, "CostCenter"),
+    (Aircraft, "Aircraft"),
+    (Operator, "Operator"),
+    (Assignment, "Assignment"),
+    (Qualification, "Qualification"),
+):
+    globals()[f"{_name}Restore"] = type(
+        f"{_name}Restore", (RegistryRestore,), {"model": _model}
+    )
 
 
 def make_views(model, form, prefix):

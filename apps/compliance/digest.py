@@ -119,3 +119,32 @@ def cost_centers_to_notify():
         .select_related("responsible_operator")
         .order_by("code")
     )
+
+
+def archived_centers_with_active_dependents():
+    """Archived cost centers whose operators or aircraft are still active.
+
+    Archiving a center drops it from the digest and the report silently -- the
+    exact compliance blind spot the digest exists to prevent. The command
+    reports these instead of staying quiet. Returns (center, operators,
+    aircraft) tuples.
+    """
+    from django.db.models import Count, Q
+
+    centers = (
+        CostCenter.objects.filter(is_active=False)
+        .annotate(
+            active_operators=Count(
+                "operators", filter=Q(operators__is_active=True), distinct=True
+            ),
+            active_aircraft=Count(
+                "aircraft", filter=Q(aircraft__is_active=True), distinct=True
+            ),
+        )
+        .filter(Q(active_operators__gt=0) | Q(active_aircraft__gt=0))
+        .order_by("code")
+    )
+    return [
+        (center, center.active_operators, center.active_aircraft)
+        for center in centers
+    ]

@@ -139,7 +139,18 @@
     document.addEventListener('keydown', function (event) { if (event.key === 'Escape') { setSidebar(false); } });
     document.body.addEventListener('htmx:configRequest', function (event) { event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}'; });
     document.body.addEventListener('click', function (event) { const trigger = event.target.closest('[data-bs-target="#generic-modal"]'); if (trigger) { modalTrigger = trigger; } });
-    document.body.addEventListener('htmx:afterSwap', function (event) { if (event.detail.target.id === 'modal-content') { bootstrap.Modal.getOrCreateInstance(document.getElementById('generic-modal')).show(); } });
+    document.body.addEventListener('htmx:afterSwap', function (event) {
+      if (event.detail.target.id !== 'modal-content') return;
+      var modal = document.getElementById('generic-modal');
+      bootstrap.Modal.getOrCreateInstance(modal).show();
+      // A validation re-render swaps the content of an already-open modal, so
+      // shown.bs.modal never fires again: the errors appeared with no focus
+      // and no announcement. Focus the first invalid field when there is one.
+      window.setTimeout(function () {
+        var invalid = modal.querySelector('.is-invalid, [aria-invalid="true"]');
+        if (invalid) invalid.focus();
+      }, 50);
+    });
     document.getElementById('generic-modal').addEventListener('shown.bs.modal', function () { const modal = this; window.setTimeout(function () { const first = modal.querySelector('input, select, textarea, button:not(.btn-close)'); if (first) first.focus(); }, 50); });
     document.getElementById('generic-modal').addEventListener('hidden.bs.modal', function () { if (modalTrigger) { modalTrigger.focus(); } });
     document.body.addEventListener('modal-form-success', function () { bootstrap.Modal.getOrCreateInstance(document.getElementById('generic-modal')).hide(); window.location.reload(); });

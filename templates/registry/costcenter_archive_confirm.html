@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Archive cost center?" %} - AeroControl{% endblock %}
+{% block content %}
+{% comment %}Server-side confirmation, not a JS confirm(): archiving a cost
+center silently removes it from the daily digest and the compliance report, so
+the decision has to be made looking at the dependents it still has.
+{% endcomment %}
+<div class="card p-4">
+  <h1 class="h3">{% blocktranslate with name=object %}Archive {{ name }}?{% endblocktranslate %}</h1>
+  <p>{% translate "This cost center still has active records assigned to it:" %}</p>
+  <ul>
+    {% if dependents.operators %}<li>{% blocktranslate count counter=dependents.operators %}{{ counter }} active operator{% plural %}{{ counter }} active operators{% endblocktranslate %}</li>{% endif %}
+    {% if dependents.aircraft %}<li>{% blocktranslate count counter=dependents.aircraft %}{{ counter }} active aircraft{% plural %}{{ counter }} active aircraft{% endblocktranslate %}</li>{% endif %}
+  </ul>
+  <div class="alert alert-warning">
+    {% translate "An archived cost center drops out of the daily expiry digest and the compliance report: the documents and qualifications of these records will stop being watched until they are reassigned." %}
+  </div>
+  <form method="post" class="d-flex gap-2">{% csrf_token %}
+    <input type="hidden" name="confirm" value="1">
+    <button class="btn btn-danger" type="submit">{% translate "Archive anyway" %}</button>
+    <a href="{% url 'costcenter-detail' object.pk %}" class="btn btn-outline-secondary">{% translate "Cancel" %}</a>
+  </form>
+</div>
+{% endblock %}

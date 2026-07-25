@@ -55,6 +55,22 @@
   </ol>
 </section>
 {% else %}
+{% if compliance_incomplete and perms.compliance.add_documenttype %}
+{% comment %}The registry is loaded but the compliance module is idle: 0 types,
+0 documents or 0 rules means the digest, the alerts and the report have nothing
+to do, while the tiles above read "0 alerts" as if all were well. This card
+guides the three steps in order and disappears when they are done.
+{% endcomment %}
+<section class="card onboarding-card p-4 mb-4" aria-labelledby="compliance-setup-title">
+  <h2 id="compliance-setup-title" class="h4">{% translate "Activate compliance monitoring" %}</h2>
+  <p class="text-muted mb-2">{% translate "The registry is loaded, but nothing is being watched yet. Three steps in order:" %}</p>
+  <ol class="onboarding-steps mb-0">
+    <li>{% if compliance_setup.doc_types %}✅ {% translate "Document types created" %}{% else %}<a href="{% url 'documenttype-create' %}">{% translate "Create the document types" %}</a> — {% translate "e.g. airworthiness certificate, insurance policy" %}{% endif %}</li>
+    <li>{% if compliance_setup.documents %}✅ {% translate "Documents loaded" %}{% else %}<a href="{% url 'document-create' %}">{% translate "Load the documents with their expiry dates" %}</a>{% endif %}</li>
+    <li>{% if compliance_setup.rules %}✅ {% translate "Alert rules defined" %}{% else %}<a href="{% url 'alertrule-create' %}">{% translate "Define an alert rule" %}</a> — {% translate "then the daily job generates the alerts" %}{% endif %}</li>
+  </ol>
+</section>
+{% endif %}
 {# ── Chart row ── #}
 <div class="row g-4 mb-4">
   <div class="col-lg-4">

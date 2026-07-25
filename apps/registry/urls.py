@@ -41,4 +41,14 @@ for name in ("CostCenter", "Aircraft", "Operator", "Assignment", "Qualification"
             getattr(views, f"{name}Update").as_view(),
             name=f"{lower}-update",
         ),
+        path(
+            f"{lower}/<uuid:pk>/archive/",
+            getattr(views, f"{name}Archive").as_view(),
+            name=f"{lower}-archive",
+        ),
+        path(
+            f"{lower}/<uuid:pk>/restore/",
+            getattr(views, f"{name}Restore").as_view(),
+            name=f"{lower}-restore",
+        ),
     ]
