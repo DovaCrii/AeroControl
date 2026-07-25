@@ -6,7 +6,7 @@ so the screen, the spreadsheet and the executive email cannot disagree.
 """
 
 import csv
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from io import BytesIO
 
 from django.http import HttpResponse
@@ -43,7 +43,8 @@ class ComplianceReportMixin(ModelViewPermissionRequiredMixin):
     permission_action = "view"
 
     def report_for(self, request):
-        end = _parse_date(request.GET.get("end")) or date.today()
+        # Same timezone as the report's own period bounds; see reports.py.
+        end = _parse_date(request.GET.get("end")) or timezone.localdate()
         start = _parse_date(request.GET.get("start")) or (end - timedelta(days=30))
         cost_center = None
         doc_type = None

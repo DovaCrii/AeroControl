@@ -1,11 +1,12 @@
 import logging
-from datetime import date, timedelta
+from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.mail import EmailMultiAlternatives
 from django.core.management.base import BaseCommand, CommandError
 from django.template.loader import render_to_string
+from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from apps.compliance.report_views import build_report_workbook_bytes
@@ -92,7 +93,8 @@ class Command(BaseCommand):
     @staticmethod
     def _build(period):
         days = PERIOD_DAYS[period]
-        end = date.today()
+        # Same timezone as the report's own period bounds; see reports.py.
+        end = timezone.localdate()
         start = end - timedelta(days=days)
         previous_end = start - timedelta(days=1)
         previous_start = previous_end - timedelta(days=days)
