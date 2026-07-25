@@ -13,6 +13,8 @@ from apps.compliance.storage import (
     S3DocumentStorage,
     get_document_storage,
 )
+from django.utils import timezone
+
 from apps.compliance.models import Alert, AlertRule, Document, DocumentType
 from apps.registry.models import Aircraft, CostCenter
 
@@ -147,3 +149,105 @@ def test_s3_storage_missing_object(monkeypatch, settings):
 
     with pytest.raises(DocumentStorageNotFound):
         storage.open("documents/missing.pdf")
+
+
+class TestFlightAreaAttachments:
+    """KMZ flight areas and permission letters attach to the flight permission.
+
+    Document is generic, so the permission was already a valid target; only the
+    KMZ extension was missing from the upload whitelist.
+    """
+
+    @staticmethod
+    def _permission(db):
+        from apps.registry.models import Aircraft, CostCenter, Operator
+        from apps.operations.models import FlightPermission
+
+        center = CostCenter.objects.create(code="KMZ", name="Area tests")
+        operator = Operator.objects.create(
+            employee_id="KMZ-1", full_name="Pilot", cost_center=center
+        )
+        aircraft = Aircraft.objects.create(
+            registration="CC-KMZ",
+            type="Multirotor",
+            model="M1",
+            manufacturer="Maker",
+            cost_center=center,
+        )
+        return FlightPermission.objects.create(
+            permission_number="PV-KMZ-1",
+            operator=operator,
+            aircraft=aircraft,
+            cost_center=center,
+            purpose="Survey",
+            flight_date=timezone.localdate(),
+            location="Antofagasta",
+        )
+
+    def _form_for(self, permission, upload):
+        from django.contrib.contenttypes.models import ContentType
+        from apps.compliance.forms import DocumentForm
+        from apps.operations.models import FlightPermission
+
+        # A flight area does not expire on its own; the permission it belongs
+        # to carries the dates.
+        doc_type = DocumentType.objects.create(
+            code="area", name="Flight area", requires_expiry=False
+        )
+        return DocumentForm(
+            data={
+                "title": "Area de vuelo",
+                "doc_type": doc_type.pk,
+                "entity_type": ContentType.objects.get_for_model(FlightPermission).pk,
+                "object_id": permission.pk,
+                "issue_date": date(2026, 1, 1),
+            },
+            files={"file": upload},
+        )
+
+    @pytest.mark.django_db
+    def test_kmz_attaches_to_a_flight_permission(self, db):
+        permission = self._permission(db)
+        # A KMZ is a ZIP, so it opens with the ZIP magic bytes.
+        upload = SimpleUploadedFile(
+            "area.kmz", b"PK\x03\x04" + b"\x00" * 40, content_type="application/vnd.google-earth.kmz"
+        )
+
+        form = self._form_for(permission, upload)
+
+        assert form.is_valid(), form.errors
+
+    @pytest.mark.django_db
+    def test_plain_kml_is_accepted_too(self, db):
+        permission = self._permission(db)
+        upload = SimpleUploadedFile(
+            "area.kml",
+            b'<?xml version="1.0"?><kml xmlns="http://www.opengis.net/kml/2.2"/>',
+            content_type="application/vnd.google-earth.kml+xml",
+        )
+
+        form = self._form_for(permission, upload)
+
+        assert form.is_valid(), form.errors
+
+    @pytest.mark.django_db
+    def test_a_kmz_that_is_not_a_zip_is_rejected(self, db):
+        permission = self._permission(db)
+        upload = SimpleUploadedFile(
+            "fake.kmz", b"just text", content_type="application/vnd.google-earth.kmz"
+        )
+
+        form = self._form_for(permission, upload)
+
+        assert not form.is_valid()
+        assert "file" in form.errors
+
+    @pytest.mark.django_db
+    def test_an_unlisted_extension_is_still_rejected(self, db):
+        permission = self._permission(db)
+        upload = SimpleUploadedFile("script.exe", b"MZ\x90\x00", content_type="application/x-msdownload")
+
+        form = self._form_for(permission, upload)
+
+        assert not form.is_valid()
+        assert "file" in form.errors
