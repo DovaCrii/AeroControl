@@ -4,7 +4,7 @@ schema: spec-driven
 context: |
   Tech stack: Django 6.0, SQLite (PostgreSQL optional via DB_ENGINE), Python 3.12+, Bootstrap 5, DRF, HTMX
   Architecture: Modular monolith — 7 domain apps. Frontend/backend separation is deferred (YAGNI); see MASTER_PLAN.md.
-  Testing: pytest-django configured (settings config.settings.dev); ~124 tests; runner is `uv run pytest`.
+  Testing: pytest-django configured (settings config.settings.dev); 269 tests; runner is `uv run pytest`.
   Style: Standard Django project layout with apps per domain.
   Data: D:\I+D\AeroOpsDesk_Data\ (outside repo).
   Planning source of truth: MASTER_PLAN.md (blocks/tracking) + AUDIT_CLAUDE.md (evidence).
@@ -29,7 +29,7 @@ rules:
   verify:
     test_command: "uv run pytest --cov=apps --cov-report=term-missing"
     build_command: "pwsh scripts/verify.ps1"
-    coverage_threshold: 0  # TODO(T0.4): set a real baseline with --cov-fail-under
+    coverage_threshold: 83  # enforced by fail_under in pyproject.toml (T0.4)
   archive:
     - Warn before merging destructive deltas
 
@@ -47,4 +47,4 @@ testing:
       linter: { available: true, command: "uv run ruff check ." }
       type_checker: { available: false, command: null }
       formatter: { available: true, command: "uv run ruff format --check ." }
-  detected_at: "2026-07-24"
+  detected_at: "2026-07-25"
