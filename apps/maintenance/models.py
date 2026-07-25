@@ -30,6 +30,12 @@ class MaintenanceRecord(BaseModel):
     class Meta:
         verbose_name = _("maintenance record")
         verbose_name_plural = _("maintenance records")
+        # The calendar filters (scheduled_date, is_active) on every feed request.
+        indexes = [
+            models.Index(
+                fields=["scheduled_date", "is_active"], name="maint_record_date_idx"
+            )
+        ]
 
     def __str__(self):
         return f"{self.get_maintenance_type_display()} · {self.aircraft}"

@@ -8,10 +8,10 @@ email quotes. No wording or formatting decisions live here.
 from datetime import timedelta
 
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.utils import timezone
 
-from apps.compliance.digest import HORIZON_DAYS, bucket_for
+from apps.compliance.digest import HORIZON_DAYS
 from apps.compliance.models import Alert, Document
 from apps.registry.models import Aircraft, CostCenter, Operator
 
@@ -53,26 +53,42 @@ def documents_for_cost_center(cost_center, queryset=None):
 def _cost_center_row(cost_center, doc_type, today):
     documents = documents_for_cost_center(
         cost_center,
-        Document.objects.filter(is_active=True, is_current_version=True).select_related(
-            "doc_type"
-        ),
+        Document.objects.filter(is_active=True, is_current_version=True),
     )
     if doc_type:
         documents = documents.filter(doc_type=doc_type)
 
-    counters = {"expired": 0, "due_7": 0, "due_15": 0, "due_30": 0, "no_expiry": 0}
-    total = 0
-    for document in documents:
-        total += 1
-        if document.expiry_date is None:
-            # No expiry means permanently valid, not "missing data".
-            counters["no_expiry"] += 1
-            continue
-        bucket = bucket_for(document.expiry_date, today)
-        if bucket == "overdue":
-            counters["expired"] += 1
-        elif bucket is not None:
-            counters[bucket] += 1
+    # One aggregate instead of iterating every document in Python: the loop
+    # loaded the cost center's whole document table per row, which turns the
+    # report from instant to seconds within a few years of accumulation.
+    boundaries = {
+        "due_7": today + timedelta(days=7),
+        "due_15": today + timedelta(days=15),
+        "due_30": today + timedelta(days=30),
+    }
+    counted = documents.aggregate(
+        total=Count("pk"),
+        expired=Count("pk", filter=Q(expiry_date__lt=today)),
+        due_7=Count(
+            "pk", filter=Q(expiry_date__gte=today, expiry_date__lte=boundaries["due_7"])
+        ),
+        due_15=Count(
+            "pk",
+            filter=Q(
+                expiry_date__gt=boundaries["due_7"],
+                expiry_date__lte=boundaries["due_15"],
+            ),
+        ),
+        due_30=Count(
+            "pk",
+            filter=Q(
+                expiry_date__gt=boundaries["due_15"],
+                expiry_date__lte=boundaries["due_30"],
+            ),
+        ),
+    )
+    counters = {key: counted[key] for key in ("expired", "due_7", "due_15", "due_30")}
+    total = counted["total"]
 
     valid = total - counters["expired"]
     return {
@@ -88,17 +104,47 @@ def _cost_center_row(cost_center, doc_type, today):
     }
 
 
+# Oldest-first cap on the open-alert list. The report is a status overview,
+# not the alert queue: past this size the marginal row adds nothing the
+# alert list page does not show better.
+OPEN_ALERTS_LIMIT = 200
+
+
 def _open_alerts(cost_center, today):
-    alerts = (
+    alerts = list(
         Alert.objects.filter(is_active=True, is_resolved=False)
         .select_related("alert_rule", "content_type")
-        .order_by("triggered_at")
+        .order_by("triggered_at")[:OPEN_ALERTS_LIMIT]
     )
+    # str(alert.content_object) resolved each watched entity with its own
+    # query - one per open alert, unbounded. Fetch them grouped by type
+    # instead: one query per distinct content type.
+    by_type = {}
+    for alert in alerts:
+        by_type.setdefault(alert.content_type, set()).add(alert.object_id)
+    entities = {}
+    for content_type, ids in by_type.items():
+        model = content_type.model_class()
+        if model is None:
+            continue
+        for obj in model._default_manager.filter(pk__in=ids):
+            entities[(content_type.pk, obj.pk)] = obj
+
     rows = []
     for alert in alerts:
+        entity = entities.get((alert.content_type_id, alert.object_id))
+        # The received cost_center filter used to be accepted and ignored, so
+        # a filtered report still listed every cost center's alerts.
+        if cost_center is not None and entity is not None:
+            entity_center = getattr(entity, "cost_center_id", None)
+            if entity_center is None:
+                operator = getattr(entity, "operator", None)
+                entity_center = getattr(operator, "cost_center_id", None)
+            if entity_center is not None and entity_center != cost_center.pk:
+                continue
         rows.append(
             {
-                "entity": str(alert.content_object or "—"),
+                "entity": str(entity or "—"),
                 "entity_type": alert.entity_label,
                 "rule": alert.alert_rule.name,
                 "triggered_at": alert.triggered_at.date(),

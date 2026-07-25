@@ -1,5 +1,5 @@
 import calendar
-from datetime import datetime
+from datetime import date, datetime, timedelta
 
 from django.contrib import messages
 from django.shortcuts import redirect
@@ -214,6 +214,12 @@ class CalendarView(CalendarAccessMixin, ListView):
         except ValueError:
             selected = today.replace(day=1)
         year, month = selected.year, selected.month
+        # __range instead of __year/__month: SQLite cannot use an index for the
+        # extracted-part lookups, so each one was a full table scan.
+        month_start = selected
+        month_end = date(
+            year + (month == 12), 1 if month == 12 else month + 1, 1
+        ) - timedelta(days=1)
 
         from apps.maintenance.models import MaintenanceRecord
         from apps.workboard.selectors import visible_tasks_for_user
@@ -222,14 +228,14 @@ class CalendarView(CalendarAccessMixin, ListView):
         events = {}
         if "permission" in allowed_types:
             for permission in FlightPermission.objects.filter(
-                flight_date__year=year, flight_date__month=month, is_active=True
+                flight_date__range=(month_start, month_end), is_active=True
             ).select_related("operator", "aircraft"):
                 events.setdefault(permission.flight_date, []).append(
                     ("permission", permission)
                 )
         if "maintenance" in allowed_types:
             for record in MaintenanceRecord.objects.filter(
-                scheduled_date__year=year, scheduled_date__month=month, is_active=True
+                scheduled_date__range=(month_start, month_end), is_active=True
             ).select_related("aircraft"):
                 events.setdefault(record.scheduled_date, []).append(
                     ("maintenance", record)
@@ -237,7 +243,7 @@ class CalendarView(CalendarAccessMixin, ListView):
         if "task" in allowed_types:
             for task in (
                 visible_tasks_for_user(self.request.user)
-                .filter(due_date__year=year, due_date__month=month)
+                .filter(due_date__range=(month_start, month_end))
                 .select_related("board", "stage")
             ):
                 events.setdefault(task.due_date, []).append(("task", task))

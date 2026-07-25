@@ -640,7 +640,11 @@ class TestBoardScopeEnforcement:
         self._restricted_world(user)
 
         response = auth_client.get(reverse("task-list"), {"export": "csv"})
-        content = response.content.decode("utf-8-sig")
+        # The export streams now, so the body is assembled from chunks.
+        content = b"".join(
+            chunk.encode() if isinstance(chunk, str) else chunk
+            for chunk in response.streaming_content
+        ).decode("utf-8-sig")
 
         assert response.status_code == 200
         assert "Visible task" in content
@@ -750,3 +754,38 @@ def test_api_token_endpoint_throttles_credential_guessing(db):
     # password oracle.
     assert 429 in statuses
     cache.clear()
+
+
+class TestBoardRenderQueryBudget:
+    """V.14/V.15: the board partial re-renders on every drag and filter, so its
+    query count must stay flat as tasks and checklists grow."""
+
+    @pytest.mark.django_db
+    def test_stage_data_query_count_is_independent_of_cards(
+        self, django_assert_max_num_queries
+    ):
+        from apps.workboard.selectors import build_stage_data
+
+        board = KanbanBoard.objects.create(name="Busy")
+        stages = [
+            KanbanStage.objects.create(board=board, name=f"S{i}", order=i)
+            for i in range(6)
+        ]
+        for i in range(30):
+            task = KanbanTask.objects.create(
+                board=board, stage=stages[i % 6], title=f"T{i}", order=i
+            )
+            for j in range(3):
+                KanbanChecklistItem.objects.create(
+                    task=task, title=f"step {j}", order=j, is_completed=j == 0
+                )
+
+        # 1 stages + 1 tasks + 2 prefetches; headroom for session noise. The
+        # old shape was ~3 per stage plus one COUNT per card (~48 here).
+        with django_assert_max_num_queries(6):
+            data = build_stage_data(board, {})
+            for column in data:
+                for task in column["tasks"]:
+                    assert task.checklist_progress >= 0
+
+        assert sum(len(column["tasks"]) for column in data) == 30

@@ -26,6 +26,12 @@ class FlightPermission(BaseModel):
     class Meta:
         verbose_name = _("flight permission")
         verbose_name_plural = _("flight permissions")
+        # The calendar filters (flight_date, is_active) on every feed request.
+        indexes = [
+            models.Index(
+                fields=["flight_date", "is_active"], name="ops_permission_date_idx"
+            )
+        ]
 
     def __str__(self):
         return self.permission_number
@@ -47,6 +53,14 @@ class FlightRecord(BaseModel):
     aircraft = models.ForeignKey(
         Aircraft, on_delete=models.PROTECT, related_name="flight_records"
     )
+
+    class Meta:
+        # The table that grows per flight; the calendar scans it by date.
+        indexes = [
+            models.Index(
+                fields=["actual_date", "is_active"], name="ops_record_date_idx"
+            )
+        ]
 
     def __str__(self):
         return f"{self.aircraft} · {self.actual_date}"

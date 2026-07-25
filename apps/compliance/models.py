@@ -60,7 +60,13 @@ class Document(BaseModel):
             models.Index(
                 fields=["expiry_date", "is_current_version"],
                 name="compliance_doc_expiry_cur_idx",
-            )
+            ),
+            # Django only indexes the FK half of a GenericForeignKey; the
+            # report and the calendar filter on the (type, id) pair.
+            models.Index(
+                fields=["content_type", "object_id"],
+                name="compliance_doc_subject_idx",
+            ),
         ]
 
     def __str__(self):
@@ -177,7 +183,13 @@ class Alert(BaseModel):
         indexes = [
             models.Index(
                 fields=["is_resolved", "is_active"], name="compliance_alert_open_idx"
-            )
+            ),
+            # generate_alerts dedupes and resolve_related_alerts filters on the
+            # watched (type, id) pair.
+            models.Index(
+                fields=["content_type", "object_id"],
+                name="compliance_alert_subject_idx",
+            ),
         ]
 
     def __str__(self):

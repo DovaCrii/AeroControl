@@ -139,6 +139,14 @@ class Assignment(BaseModel):
     end_date = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="planned")
 
+    class Meta:
+        # The calendar and the overlap validation both filter by date range.
+        indexes = [
+            models.Index(
+                fields=["start_date", "end_date"], name="reg_assignment_range_idx"
+            )
+        ]
+
     def __str__(self):
         return f"{self.operator} · {self.aircraft}"
 
@@ -185,6 +193,12 @@ class Qualification(BaseModel):
     class Meta:
         verbose_name = _("qualification")
         verbose_name_plural = _("qualifications")
+        # The digest, the dashboard and generate_alerts all scan expiries.
+        indexes = [
+            models.Index(
+                fields=["expiry_date", "is_active"], name="reg_qualification_exp_idx"
+            )
+        ]
 
     def __str__(self):
         return f"{self.qualification_type} · {self.operator}"
