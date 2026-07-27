@@ -555,7 +555,7 @@ arranca la implementación sin "go" explícito del usuario.**
 | ID | Est. | Tarea | Dep. |
 |---|:--:|---|:--:|
 | OPS-0 | ✅ | Propuesta técnica + investigación de competidores (Aloft/DroneLogbook/Airdata) + tablero. (`docs/dev/ops-contract-tracking-plan.md`) | — |
-| OPS-1 | ⬜ | Asignaciones por recurso (`OperatorAssignment`/`AircraftAssignment`) + `ResourceMovementLog` append-only + señal que mantiene la denormalización + migración de datos de `Assignment` + UI. Tests: solape, denormalización, log, 403 | OPS-0 |
+| OPS-1 | 🔄 | **Capa de datos hecha** (`PENDING-OPS1`): `OperatorAssignment`/`AircraftAssignment` (base común, validación de solape en `clean()`), `ResourceMovementLog` append-only, señal en `apps/registry/signals.py` que mantiene `Operator/Aircraft.cost_center` y escribe el log (assigned/reassigned/released), migración de datos idempotente y no destructiva desde `Assignment` (el viejo modelo y el calendario siguen intactos), roles y admin (log read-only). 8 tests (solape, denormalización, tipos de movimiento, `changed_by_user`, aeronave, append-only). **Pendiente:** UI de gestión de asignaciones + vista del log (OPS-1b) y corte del calendario/formularios al nuevo modelo. | OPS-0 |
 | OPS-2 | ⬜ | Ficha del contrato `CostCenterDetailView` con pestañas (Resumen/Equipo/Flota/Permisos/Documentos/Historial) | OPS-1 |
 | OPS-3 | ⬜ | Ubicación física de aeronaves (`current_location`/`current_site`) + `location_changed` en el log + badges visuales | OPS-1 |
 | OPS-4 | ⬜ | `FlightPermission` espejo DGAC: M2M operadores/aeronaves (through PROTECT), `valid_from`/`valid_until`, ubicación estructurada + migración de datos | OPS-0 |

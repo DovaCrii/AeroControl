@@ -19,6 +19,15 @@ ROLE_PERMISSIONS = {
         "add_geoplan",
         "change_geoplan",
         "view_geoplan",
+        # Per-resource assignments (OPS-1). The movement log is append-only, so
+        # only view is ever granted for it.
+        "add_operatorassignment",
+        "change_operatorassignment",
+        "view_operatorassignment",
+        "add_aircraftassignment",
+        "change_aircraftassignment",
+        "view_aircraftassignment",
+        "view_resourcemovementlog",
     },
     "Compliance": {
         "add_document",
@@ -52,6 +61,9 @@ ROLE_PERMISSIONS = {
         "view_aircraft",
         "view_operator",
         "view_assignment",
+        "view_operatorassignment",
+        "view_aircraftassignment",
+        "view_resourcemovementlog",
         "view_qualification",
         "view_document",
         "view_documenttype",
