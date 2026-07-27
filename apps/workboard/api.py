@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.http import JsonResponse
 from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework.permissions import DjangoModelPermissions, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
 from rest_framework.viewsets import ViewSet
@@ -10,6 +10,8 @@ import json
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_datetime
+
+from apps.core.api import ViewModelPermissions
 
 from .models import KanbanTask
 from .selectors import user_can_edit_board, visible_tasks_for_user
@@ -25,17 +27,6 @@ class ThrottledObtainAuthToken(ObtainAuthToken):
     """
 
     throttle_classes = (AnonRateThrottle,)
-
-
-class ViewModelPermissions(DjangoModelPermissions):
-    """Require Django view permissions for read-only API methods too."""
-
-    perms_map = {
-        **DjangoModelPermissions.perms_map,
-        "GET": ["%(app_label)s.view_%(model_name)s"],
-        "HEAD": ["%(app_label)s.view_%(model_name)s"],
-        "OPTIONS": [],
-    }
 
 
 class KanbanTaskSerializer(serializers.ModelSerializer):
@@ -263,7 +254,68 @@ def api_openapi_schema(_request):
                         "progress": {"type": "integer", "minimum": 0, "maximum": 100},
                         "updated_at": {"type": "string", "format": "date-time"},
                     },
-                }
+                },
+                "GeoPlanVersionRef": {
+                    "type": "object",
+                    "required": ["version_number", "checksum"],
+                    "properties": {
+                        "version_number": {"type": "integer", "minimum": 1},
+                        "checksum": {"type": "string"},
+                        "source": {
+                            "type": "string",
+                            "enum": ["import", "editor", "restore"],
+                        },
+                        "summary": {"type": "string"},
+                        "feature_count": {"type": "integer", "minimum": 0},
+                        "size_bytes": {"type": "integer", "minimum": 0},
+                        "bbox": {
+                            "type": "array",
+                            "nullable": True,
+                            "items": {"type": "number"},
+                            "minItems": 4,
+                            "maxItems": 4,
+                        },
+                        "created_at": {"type": "string", "format": "date-time"},
+                    },
+                },
+                "GeoPlan": {
+                    "type": "object",
+                    "required": ["id", "title", "status"],
+                    "properties": {
+                        "id": {"type": "string", "format": "uuid"},
+                        "title": {"type": "string"},
+                        "status": {
+                            "type": "string",
+                            "enum": [
+                                "draft",
+                                "editing",
+                                "in_review",
+                                "approved",
+                                "rejected",
+                            ],
+                        },
+                        "cost_center": {
+                            "type": "object",
+                            "properties": {
+                                "id": {"type": "string", "format": "uuid"},
+                                "name": {"type": "string"},
+                            },
+                        },
+                        "flight_permission": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": True,
+                        },
+                        "current_version": {
+                            "allOf": [
+                                {"$ref": "#/components/schemas/GeoPlanVersionRef"}
+                            ],
+                            "nullable": True,
+                        },
+                        "created_at": {"type": "string", "format": "date-time"},
+                        "updated_at": {"type": "string", "format": "date-time"},
+                    },
+                },
             },
         },
         "paths": {
@@ -333,6 +385,110 @@ def api_openapi_schema(_request):
                         "401": {"description": "Authentication required"},
                         "403": {"description": "Missing change permission"},
                         "409": {"description": "Optimistic concurrency conflict"},
+                    },
+                }
+            },
+            "/api/v1/geo/plans/{id}/": {
+                "get": {
+                    "operationId": "getGeoPlan",
+                    "summary": "Read geo plan metadata",
+                    "security": [{"tokenAuth": []}],
+                    "parameters": [
+                        {
+                            "name": "id",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string", "format": "uuid"},
+                        }
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "Plan metadata",
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/GeoPlan"}
+                                }
+                            },
+                        },
+                        "401": {"description": "Authentication required"},
+                        "403": {"description": "Missing view permission"},
+                        "404": {"description": "No such active plan"},
+                    },
+                }
+            },
+            "/api/v1/geo/plans/{id}/versions/": {
+                "get": {
+                    "operationId": "listGeoPlanVersions",
+                    "summary": "List a plan's versions (without content)",
+                    "security": [{"tokenAuth": []}],
+                    "parameters": [
+                        {
+                            "name": "id",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string", "format": "uuid"},
+                        }
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "Versions, newest first",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "array",
+                                        "items": {
+                                            "$ref": "#/components/schemas/GeoPlanVersionRef"
+                                        },
+                                    }
+                                }
+                            },
+                        },
+                        "401": {"description": "Authentication required"},
+                        "403": {"description": "Missing view permission"},
+                        "404": {"description": "No such active plan"},
+                    },
+                }
+            },
+            "/api/v1/geo/plans/{id}/versions/{number}/content/": {
+                "get": {
+                    "operationId": "getGeoPlanVersionContent",
+                    "summary": "Read the full canonical document of a version",
+                    "description": (
+                        "Returns the canonical AeroKML JSON. The response carries "
+                        "an ETag equal to the content checksum; send it back as "
+                        "If-None-Match to get a 304 when unchanged."
+                    ),
+                    "security": [{"tokenAuth": []}],
+                    "parameters": [
+                        {
+                            "name": "id",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string", "format": "uuid"},
+                        },
+                        {
+                            "name": "number",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "integer", "minimum": 1},
+                        },
+                        {
+                            "name": "If-None-Match",
+                            "in": "header",
+                            "schema": {"type": "string"},
+                        },
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "Canonical document",
+                            "content": {
+                                "application/json": {"schema": {"type": "object"}}
+                            },
+                        },
+                        "304": {"description": "Content unchanged (ETag matched)"},
+                        "401": {"description": "Authentication required"},
+                        "403": {"description": "Missing view permission"},
+                        "404": {"description": "No such plan or version"},
                     },
                 }
             },
