@@ -73,9 +73,13 @@ enviar nada:
 uv run python manage.py send_alert_digest --dry-run
 ```
 
-Si un centro de costo tiene vencimientos pero no un operador responsable con
-correo, el comando lo informa y continúa con los demás. El destinatario se
-configura en el campo **Operador responsable** del centro de costo.
+Si un centro de costo tiene vencimientos pero nadie a quien avisar, el comando
+lo informa y continúa con los demás. El destinatario se configura en el
+centro de costo: **Operador responsable** si es alguien del padrón de
+operadores, o **Contacto externo** (nombre y correo) si es una persona ajena
+al sistema RPA — un administrador, secretaría o un SSO. Si ambos están
+configurados, se prefiere el operador; el contacto externo se usa cuando el
+operador no tiene correo o quedó archivado.
 
 ## Correo
 

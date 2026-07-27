@@ -271,6 +271,47 @@ class TestArchiveRestoreFromUI:
         assert center.notification_email == ""
 
     @pytest.mark.django_db
+    def test_notification_email_falls_back_to_external_contact(self, db):
+        """The responsible person is not always in the operator roster (an
+        administrator, secretary, or safety officer instead of a pilot)."""
+        center, _ = self._world(db)
+        center.responsible_contact_name = "Secretaria de faena"
+        center.responsible_contact_email = "secretaria@test.cl"
+        center.save(
+            update_fields=["responsible_contact_name", "responsible_contact_email"]
+        )
+
+        assert center.notification_email == "secretaria@test.cl"
+
+    @pytest.mark.django_db
+    def test_notification_email_prefers_operator_over_external_contact(self, db):
+        center, operator = self._world(db)
+        center.responsible_operator = operator
+        center.responsible_contact_email = "secretaria@test.cl"
+        center.save(
+            update_fields=["responsible_operator", "responsible_contact_email"]
+        )
+
+        assert center.notification_email == "pilot@test.cl"
+
+    @pytest.mark.django_db
+    def test_notification_email_falls_back_to_contact_when_operator_unreachable(
+        self, db
+    ):
+        """An operator on file who left is not a reason to go silent when an
+        external contact is also configured."""
+        center, operator = self._world(db)
+        center.responsible_operator = operator
+        center.responsible_contact_email = "secretaria@test.cl"
+        center.save(
+            update_fields=["responsible_operator", "responsible_contact_email"]
+        )
+        operator.is_active = False
+        operator.save(update_fields=["is_active"])
+
+        assert center.notification_email == "secretaria@test.cl"
+
+    @pytest.mark.django_db
     def test_digest_reports_archived_center_with_active_dependents(self, db):
         from apps.compliance.digest import archived_centers_with_active_dependents
 

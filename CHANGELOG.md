@@ -8,7 +8,14 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
-Nada todavía.
+### Added
+- Centro de costo acepta un **contacto externo** (nombre y correo) como
+  alternativa al **Operador responsable** para el resumen de vencimientos.
+  Antes, el único destinatario posible era alguien del padrón de operadores
+  RPAS; en la práctica el responsable puede ser un administrador, secretaría
+  o un SSO ajeno al sistema. Si ambos están configurados, se prefiere el
+  operador; el contacto externo se usa cuando el operador no tiene correo o
+  quedó archivado.
 
 ## [0.3.0-alpha] - 2026-07-27
 

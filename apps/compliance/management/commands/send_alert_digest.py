@@ -29,8 +29,9 @@ BUCKET_TITLES = {
 
 class Command(BaseCommand):
     help = (
-        "Email each cost center's responsible operator a summary of documents "
-        "and qualifications expiring within 30 days, grouped by urgency."
+        "Email each cost center's responsible person (operator or external "
+        "contact) a summary of documents and qualifications expiring within "
+        "30 days, grouped by urgency."
     )
 
     def add_arguments(self, parser):
@@ -95,13 +96,13 @@ class Command(BaseCommand):
                         "recipient": "",
                         "item_count": item_count,
                         "send_result": "skipped",
-                        "reason": "no_responsible_operator_email",
+                        "reason": "no_reachable_responsible",
                     },
                 )
                 self.stdout.write(
                     self.style.WARNING(
                         f"{cost_center.code}: {item_count} expiring items but no "
-                        "responsible operator email; skipped."
+                        "reachable responsible operator or contact; skipped."
                     )
                 )
                 continue
