@@ -517,9 +517,9 @@ MVP = GEO-0..GEO-10 (hito *visor*: 0-7; hito *editor*: 8-10). V2 = GEO-11..GEO-1
 
 | ID | Est. | Tarea | Dep. | MVP |
 |---|:--:|---|:--:|:--:|
-| GEO-0 | ⬜ | Fundaciones: app `apps/geo`, vendorizar Leaflet+Geoman con SRI (`static/vendor/`), lxml a dep directa, `FILE_UPLOAD_MAX_MEMORY_SIZE`/`DATA_UPLOAD_MAX_MEMORY_SIZE` explícitos, enmienda a `docs/frontend-boundary.md` (islas JS admisibles) | — | ✔ |
+| GEO-0 | ✅ | Fundaciones: app `apps/geo`, lxml a dep directa, `FILE_UPLOAD_MAX_MEMORY_SIZE`/`DATA_UPLOAD_MAX_MEMORY_SIZE` explícitos, enmienda a `docs/frontend-boundary.md` (islas JS admisibles), `static/vendor/` con política de SRI. **El binario de Leaflet/Geoman se difiere a GEO-7** (no se pueden bajar bytes exactos con SRI en este entorno). (`91fc8e1`) | — | ✔ |
 | GEO-0b | ⬜ | Quick-wins ortogonales: `set_audit_context` en `DocumentReplace`/`DocumentDelete`/`StatusTransitionView`/`FlightRecordDelete`; handler de error 4xx en el drag del Kanban | — | opc. |
-| GEO-1 | ⬜ | Modelos (`GeoPlan`/`GeoPlanVersion` append-only/`GeoPlanHistory`) + migración + `approve_geoplan` en `bootstrap_roles` + mapping en `signals.py`. Tests: unicidad, cerrojos, historia | GEO-0 | ✔ |
+| GEO-1 | ✅ | Modelos (`GeoPlan`/`GeoPlanVersion` append-only/`GeoPlanHistory`) + migración + `approve_geoplan` en `bootstrap_roles` + mapping en `signals.py` + admin. 9 tests (unicidad, cerrojos, historia, permisos por rol). (`7663727`) | GEO-0 | ✔ |
 | GEO-2 | ⬜ | Parser KML/KMZ endurecido + canónico AeroKML JSON. Tests: corpus feliz + 6 fixtures maliciosos (DOCTYPE, bomba, traversal, 300 entradas) | GEO-0 | ✔ |
 | GEO-3 | ⬜ | Generador export + **round-trip test** (igualdad semántica doble pasada; verificación manual en Google Earth documentada) | GEO-2 | ✔ |
 | GEO-4 | ⬜ | Import (form multipart sobre el pipeline existente → `Document` `GEO_SOURCE` + `GeoPlan` + V1, atómico) + lista/detalle shell + mover `ViewModelPermissions` a core. Tests 403 | GEO-1, GEO-2 | ✔ |
