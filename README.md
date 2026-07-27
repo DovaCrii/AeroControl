@@ -11,7 +11,7 @@ Registro de flota, tripulación, cumplimiento normativo, mantenimiento y flujo d
 [![Licencia: MIT](https://img.shields.io/badge/licencia-MIT-2EC4B6.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12-1B2A4A.svg)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/django-6.0-1B2A4A.svg)](https://www.djangoproject.com/)
-[![Estado](https://img.shields.io/badge/estado-alpha%20%2F%20estabilización%20activa-orange.svg)](#estado-y-próximos-pasos)
+[![Estado](https://img.shields.io/badge/estado-v0.3.0--alpha-orange.svg)](#estado-y-próximos-pasos)
 
 </div>
 
@@ -24,6 +24,7 @@ Registro de flota, tripulación, cumplimiento normativo, mantenimiento y flujo d
 - [Arquitectura y estructura](#arquitectura-y-estructura)
 - [Puesta en marcha local](#puesta-en-marcha-local)
 - [Comandos operativos](#comandos-operativos)
+- [Operación programada](#operación-programada)
 - [Seguridad y cumplimiento](#seguridad-y-cumplimiento)
 - [Carga del Capítulo 1](#carga-del-capítulo-1)
 - [Flujo operativo Kanban](#flujo-operativo-kanban)
@@ -32,9 +33,20 @@ Registro de flota, tripulación, cumplimiento normativo, mantenimiento y flujo d
 
 ## Qué es AeroControl
 
-AeroControl centraliza la operación de equipos RPA/UAS: flota, operadores,
-habilitaciones, documentos, permisos de vuelo, mantenimiento, alertas y trabajo
-Kanban.
+AeroControl es una aplicación de gestión operativa para equipos que operan
+aeronaves no tripuladas (RPA/UAS). Reúne en un solo sistema el registro de la
+flota y la tripulación, el cumplimiento documental y normativo, los permisos de
+vuelo, el mantenimiento y la coordinación del trabajo diario, de modo que la
+información operativa deje de vivir dispersa en planillas y carpetas sueltas.
+
+Está construida como aplicación **local-first**: corre en el equipo de la
+organización, con la base de datos y los documentos bajo su control directo y sin
+dependencia de servicios en la nube. Eso la hace apta para entornos con
+conectividad limitada o con requisitos de custodia de los datos.
+
+**Para quién.** Jefaturas de operaciones, encargados de cumplimiento y equipos de
+terreno que necesitan trazabilidad de habilitaciones, vencimientos y permisos —con
+alertas y un registro de auditoría— sin montar infraestructura pesada.
 
 > **Estado:** `v0.3.0-alpha`. La estabilización inicial y una revisión completa de
 > seguridad, estabilidad, desempeño y UX están **cerradas**; es apto para evaluación
