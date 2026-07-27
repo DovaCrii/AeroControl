@@ -52,16 +52,12 @@ def record_job_run(command):
             job.result = JobRun.RESULT_ERROR
             job.summary = f"{type(exc).__name__}: {exc}"[:SUMMARY_MAX_LENGTH]
             job.finished_at = timezone.now()
-            job.save(
-                update_fields=["result", "summary", "finished_at", "updated_at"]
-            )
+            job.save(update_fields=["result", "summary", "finished_at", "updated_at"])
         raise
     job.result = JobRun.RESULT_OK
     job.summary = str(state.get("summary", ""))[:SUMMARY_MAX_LENGTH]
     job.finished_at = timezone.now()
-    job.save(
-        update_fields=["result", "summary", "finished_at", "updated_at"]
-    )
+    job.save(update_fields=["result", "summary", "finished_at", "updated_at"])
     logger.info(
         "job_completed",
         extra={

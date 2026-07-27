@@ -796,7 +796,9 @@ class TestCalendarAndBoardReadPermissions:
         )
         assert client.login(username="planner", password="password")
 
-        response = client.get(reverse("calendar-events"), {"types": "operator,document"})
+        response = client.get(
+            reverse("calendar-events"), {"types": "operator,document"}
+        )
 
         assert response.status_code == 200
         assert response.json() == []

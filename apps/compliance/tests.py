@@ -210,7 +210,9 @@ class TestFlightAreaAttachments:
         permission = self._permission(db)
         # A KMZ is a ZIP, so it opens with the ZIP magic bytes.
         upload = SimpleUploadedFile(
-            "area.kmz", b"PK\x03\x04" + b"\x00" * 40, content_type="application/vnd.google-earth.kmz"
+            "area.kmz",
+            b"PK\x03\x04" + b"\x00" * 40,
+            content_type="application/vnd.google-earth.kmz",
         )
 
         form = self._form_for(permission, upload)
@@ -245,7 +247,9 @@ class TestFlightAreaAttachments:
     @pytest.mark.django_db
     def test_an_unlisted_extension_is_still_rejected(self, db):
         permission = self._permission(db)
-        upload = SimpleUploadedFile("script.exe", b"MZ\x90\x00", content_type="application/x-msdownload")
+        upload = SimpleUploadedFile(
+            "script.exe", b"MZ\x90\x00", content_type="application/x-msdownload"
+        )
 
         form = self._form_for(permission, upload)
 

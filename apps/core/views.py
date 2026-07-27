@@ -162,9 +162,7 @@ class CsvExportMixin:
                         )
                 yield writer.writerow(row)
 
-        response = StreamingHttpResponse(
-            rows(), content_type="text/csv; charset=utf-8"
-        )
+        response = StreamingHttpResponse(rows(), content_type="text/csv; charset=utf-8")
         response["Content-Disposition"] = (
             f'attachment; filename="{self.get_csv_filename()}"'
         )

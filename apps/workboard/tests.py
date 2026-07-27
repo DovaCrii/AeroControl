@@ -799,7 +799,9 @@ def test_api_patch_validates_values_before_saving(board):
     task = KanbanTask.objects.create(board=board_obj, stage=todo, title="Valid")
     user = User.objects.create_user("api", password="password")
     user.user_permissions.add(
-        *Permission.objects.filter(codename__in=["view_kanbantask", "change_kanbantask"])
+        *Permission.objects.filter(
+            codename__in=["view_kanbantask", "change_kanbantask"]
+        )
     )
     token = Token.objects.create(user=user)
     client = Client(HTTP_AUTHORIZATION=f"Token {token.key}")

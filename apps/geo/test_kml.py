@@ -87,7 +87,14 @@ class TestHappyParsing:
         doc = parse_kml_bytes(HAPPY_KML.encode("utf-8"))
         kinds = [c["kind"] for c in doc["children"]]
         # folder, three placemarks, one placemark with data, and the raw NetworkLink
-        assert kinds == ["folder", "placemark", "placemark", "placemark", "placemark", "raw"]
+        assert kinds == [
+            "folder",
+            "placemark",
+            "placemark",
+            "placemark",
+            "placemark",
+            "raw",
+        ]
         folder = doc["children"][0]
         assert folder["name"] == "Area de vuelo"
         assert len(folder["children"]) == 1
