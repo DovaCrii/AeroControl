@@ -69,6 +69,7 @@ alertas y un registro de auditoría— sin montar infraestructura pesada.
 | Operaciones | Permisos de vuelo, historial y registros de vuelo |
 | Mantenimiento | Registros programados/no programados e historial de estados |
 | Tablero | Kanban, Lista y Calendario; etapas, etiquetas, checklists, prioridades y responsables |
+| Planificación geoespacial | Importa KMZ/KML de planificación de vuelo (original preservado), interpreta carpetas y geometrías, y versiona de forma inmutable. El editor de mapa interactivo está **en construcción** (BLOQUE GEO) |
 | Administración | Centro operativo y Django Admin técnico separado |
 | Seguridad | Autenticación, permisos por modelo, auditoría append-only y cargas con validación de firma |
 | Localización | Español por defecto y cambio directo ES/EN |
@@ -313,9 +314,11 @@ Próximas prioridades (ver el detalle y el orden en el plan maestro):
 - **Cargar datos reales de cumplimiento** — documentos con vencimiento y una
   regla de alerta; el dashboard guía los tres pasos. Es lo que enciende el
   resumen diario y el informe ejecutivo, hoy construidos pero sin datos.
-- **BLOQUE GEO — editor geoespacial KMZ/KML:** importar, visualizar, editar,
-  versionar, aprobar y re-exportar planificación de vuelo. Propuesta técnica
-  aprobada en [docs/dev/geo-editor-plan.md](docs/dev/geo-editor-plan.md).
+- **BLOQUE GEO — editor geoespacial KMZ/KML** (en curso): la capa de datos ya
+  está construida y probada —parser endurecido, formato canónico, generador con
+  round-trip verificado, modelos con versiones inmutables e importación desde la
+  UI—; falta el editor de mapa interactivo (isla JavaScript con Leaflet). Diseño
+  y estado en [docs/dev/geo-editor-plan.md](docs/dev/geo-editor-plan.md).
 - **Endurecimiento diferido:** tenancy estricto (aislamiento por organización en
   todas las vistas), CSP enforcing y vendorización con SRI de las dependencias
   de front.
