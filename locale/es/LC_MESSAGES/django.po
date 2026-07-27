@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-27 11:47-0400\n"
+"POT-Creation-Date: 2026-07-27 13:32-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -161,12 +161,14 @@ msgstr "documentos"
 
 #: .\apps\compliance\models.py:130
 msgid "Unknown entity type. Choose one of the watchable models."
-msgstr "Tipo de entidad desconocido. Elige uno de los modelos que se pueden vigilar."
+msgstr ""
+"Tipo de entidad desconocido. Elige uno de los modelos que se pueden vigilar."
 
 #: .\apps\compliance\models.py:136
 #, python-format
 msgid "%(field)s is not a watchable field of %(model)s. Available: %(allowed)s"
-msgstr "%(field)s no es un campo vigilable de %(model)s. Disponibles: %(allowed)s"
+msgstr ""
+"%(field)s no es un campo vigilable de %(model)s. Disponibles: %(allowed)s"
 
 #: .\apps\compliance\models.py:147
 msgid "A board and a stage are required to create Kanban tasks."
@@ -211,8 +213,12 @@ msgstr "Período analizado: %(start)s a %(end)s"
 
 #: .\apps\compliance\report_views.py:213
 #, python-format
-msgid "%(valid)s of %(total)s current documents are valid (%(pct)s%%). %(expired)s expired, %(due)s expiring within %(horizon)s days."
-msgstr "%(valid)s de %(total)s documentos vigentes están al día (%(pct)s%%). %(expired)s vencidos, %(due)s por vencer en %(horizon)s días."
+msgid ""
+"%(valid)s of %(total)s current documents are valid (%(pct)s%%). %(expired)s "
+"expired, %(due)s expiring within %(horizon)s days."
+msgstr ""
+"%(valid)s de %(total)s documentos vigentes están al día (%(pct)s%%). "
+"%(expired)s vencidos, %(due)s por vencer en %(horizon)s días."
 
 #: .\apps\compliance\report_views.py:227
 #: .\templates\compliance\email\executive_report.html:49
@@ -259,7 +265,8 @@ msgstr "Alerta reabierta."
 
 #: .\apps\compliance\views.py:342
 msgid "No Kanban board is available to hold the follow-up task."
-msgstr "No hay ningún tablero Kanban disponible para alojar la tarea de seguimiento."
+msgstr ""
+"No hay ningún tablero Kanban disponible para alojar la tarea de seguimiento."
 
 #: .\apps\compliance\views.py:345
 msgid "Follow-up task created."
@@ -302,119 +309,119 @@ msgstr "ejecución de tarea"
 msgid "job runs"
 msgstr "ejecuciones de tareas"
 
-#: .\apps\core\views.py:204
+#: .\apps\core\views.py:202
 msgid "Saved successfully."
 msgstr "Guardado correctamente."
 
-#: .\apps\core\views.py:700
+#: .\apps\core\views.py:698
 msgid "Organization"
 msgstr "Organización"
 
-#: .\apps\core\views.py:701
+#: .\apps\core\views.py:699
 msgid "Define the operational scope and who can access it."
 msgstr "Define el alcance operativo y quién puede acceder a él."
 
-#: .\apps\core\views.py:704
+#: .\apps\core\views.py:702
 msgid "Operational tenants"
 msgstr "Organizaciones operativas"
 
-#: .\apps\core\views.py:705
+#: .\apps\core\views.py:703
 msgid "Manage organizations and their data boundaries."
 msgstr "Gestiona organizaciones y sus límites de datos."
 
-#: .\apps\core\views.py:711
+#: .\apps\core\views.py:709
 msgid "Tenant memberships"
 msgstr "Membresías de organización"
 
-#: .\apps\core\views.py:712
+#: .\apps\core\views.py:710
 msgid "Assign users to an operational tenant."
 msgstr "Asigna usuarios a una organización operativa."
 
-#: .\apps\core\views.py:720
+#: .\apps\core\views.py:718
 msgid "Compliance configuration"
 msgstr "Configuración de cumplimiento"
 
-#: .\apps\core\views.py:722
+#: .\apps\core\views.py:720
 msgid "Prepare document and alert rules before loading records."
 msgstr "Prepara documentos y reglas de alerta antes de cargar registros."
 
-#: .\apps\core\views.py:726
+#: .\apps\core\views.py:724
 msgid "Document types"
 msgstr "Tipos de documento"
 
-#: .\apps\core\views.py:727
+#: .\apps\core\views.py:725
 msgid "Control expiry requirements and document categories."
 msgstr "Controla requisitos de vencimiento y categorías documentales."
 
-#: .\apps\core\views.py:733
+#: .\apps\core\views.py:731
 msgid "Alert rules"
 msgstr "Reglas de alerta"
 
-#: .\apps\core\views.py:734
+#: .\apps\core\views.py:732
 msgid "Define when AeroControl should generate an alert."
 msgstr "Define cuándo AeroControl debe generar una alerta."
 
-#: .\apps\core\views.py:742
+#: .\apps\core\views.py:740
 msgid "Workboard configuration"
 msgstr "Configuración del tablero de trabajo"
 
-#: .\apps\core\views.py:744
+#: .\apps\core\views.py:742
 msgid "Shape how teams organize and follow operational work."
 msgstr "Define cómo los equipos organizan y siguen el trabajo operativo."
 
-#: .\apps\core\views.py:748
+#: .\apps\core\views.py:746
 msgid "Boards"
 msgstr "Tableros"
 
-#: .\apps\core\views.py:749
+#: .\apps\core\views.py:747
 msgid "Create and archive operational boards."
 msgstr "Crea y archiva tableros operativos."
 
-#: .\apps\core\views.py:755
+#: .\apps\core\views.py:753
 msgid "Stages"
 msgstr "Etapas"
 
-#: .\apps\core\views.py:756
+#: .\apps\core\views.py:754
 msgid "Manage the workflow stages used by a board."
 msgstr "Gestiona las etapas de flujo utilizadas por un tablero."
 
-#: .\apps\core\views.py:762 .\templates\workboard\task_list.html:16
+#: .\apps\core\views.py:760 .\templates\workboard\task_list.html:16
 msgid "Labels"
 msgstr "Etiquetas"
 
-#: .\apps\core\views.py:763
+#: .\apps\core\views.py:761
 msgid "Create labels used to classify tasks."
 msgstr "Crea etiquetas para clasificar tareas."
 
-#: .\apps\core\views.py:773
+#: .\apps\core\views.py:771
 msgid "Backups and audit"
 msgstr "Respaldos y auditoría"
 
-#: .\apps\core\views.py:775
+#: .\apps\core\views.py:773
 msgid "Review backups and trace changes without editing audit records."
 msgstr "Revisa respaldos y rastrea cambios sin editar la auditoría."
 
-#: .\apps\core\views.py:779
+#: .\apps\core\views.py:777
 msgid "Backup configuration"
 msgstr "Configuración de respaldos"
 
-#: .\apps\core\views.py:780
+#: .\apps\core\views.py:778
 msgid "Review the local backup destination and schedule."
 msgstr "Revisa el destino y la programación de respaldos locales."
 
-#: .\apps\core\views.py:786
+#: .\apps\core\views.py:784
 msgid "Audit events"
 msgstr "Eventos de auditoría"
 
-#: .\apps\core\views.py:787
+#: .\apps\core\views.py:785
 msgid "Read-only history of authenticated changes."
 msgstr "Historial de solo lectura de cambios autenticados."
 
-#: .\apps\core\views.py:834
+#: .\apps\core\views.py:832
 msgid "Status updated."
 msgstr "Estado actualizado."
 
-#: .\apps\core\views.py:841
+#: .\apps\core\views.py:839
 #, python-format
 msgid "Cannot transition from %(status)s"
 msgstr "No se puede cambiar desde %(status)s"
@@ -459,40 +466,44 @@ msgstr "Aprobado"
 msgid "Rejected"
 msgstr "Rechazado"
 
-#: .\apps\geo\models.py:76
+#: .\apps\geo\models.py:74
 msgid "geo plan"
 msgstr "plan geoespacial"
 
-#: .\apps\geo\models.py:77
+#: .\apps\geo\models.py:75
 msgid "geo plans"
 msgstr "planes geoespaciales"
 
-#: .\apps\geo\models.py:117
+#: .\apps\geo\models.py:113
 msgid "Import"
 msgstr "Importación"
 
-#: .\apps\geo\models.py:118 .\apps\workboard\models.py:71
+#: .\apps\geo\models.py:114 .\apps\workboard\models.py:71
 msgid "Editor"
 msgstr "Editor"
 
-#: .\apps\geo\models.py:119 .\templates\generic\_table_body.html:16
+#: .\apps\geo\models.py:115 .\templates\generic\_table_body.html:16
 #: .\templates\generic\detail.html:22
 msgid "Restore"
 msgstr "Restaurar"
 
-#: .\apps\geo\models.py:153
+#: .\apps\geo\models.py:147
 msgid "geo plan version"
 msgstr "versión de plan geoespacial"
 
-#: .\apps\geo\models.py:154
+#: .\apps\geo\models.py:148
 msgid "geo plan versions"
 msgstr "versiones de plan geoespacial"
 
-#: .\apps\geo\models.py:204
+#: .\apps\geo\models.py:179
+msgid "This plan cannot be edited in its current state."
+msgstr "Este plan no puede editarse en su estado actual."
+
+#: .\apps\geo\models.py:210
 msgid "geo plan history entry"
 msgstr "entrada del historial del plan geoespacial"
 
-#: .\apps\geo\models.py:205
+#: .\apps\geo\models.py:211
 msgid "geo plan history"
 msgstr "historial del plan geoespacial"
 
@@ -629,12 +640,22 @@ msgid "External contact email"
 msgstr "Correo del contacto externo"
 
 #: .\apps\registry\forms.py:29
-msgid "Recipient of expiry digests. Use when the responsible person is in the operator roster."
-msgstr "Destinatario de los resúmenes de vencimientos. Úsalo cuando el responsable está en el padrón de operadores."
+msgid ""
+"Recipient of expiry digests. Use when the responsible person is in the "
+"operator roster."
+msgstr ""
+"Destinatario de los resúmenes de vencimientos. Úsalo cuando el responsable "
+"está en el padrón de operadores."
 
 #: .\apps\registry\forms.py:33
-msgid "Use instead of the operator when the responsible person is external to the system (an administrator, secretary, or safety officer). Also used for the digest if the operator above has no reachable email."
-msgstr "Úsalo en vez del operador cuando el responsable es externo al sistema (un administrador, secretaría o un SSO). También se usa para el resumen si el operador de arriba no tiene un correo válido."
+msgid ""
+"Use instead of the operator when the responsible person is external to the "
+"system (an administrator, secretary, or safety officer). Also used for the "
+"digest if the operator above has no reachable email."
+msgstr ""
+"Úsalo en vez del operador cuando el responsable es externo al sistema (un "
+"administrador, secretaría o un SSO). También se usa para el resumen si el "
+"operador de arriba no tiene un correo válido."
 
 #: .\apps\registry\forms.py:60 .\templates\registry\aircraft_list.html:5
 msgid "Registration"
@@ -862,19 +883,19 @@ msgstr "El operador seleccionado está inactivo."
 msgid "The selected aircraft is not available."
 msgstr "La aeronave seleccionada no está disponible."
 
-#: .\apps\registry\models.py:208
+#: .\apps\registry\models.py:207
 msgid "The cost center does not match the operator's."
 msgstr "El centro de costo no coincide con el del operador."
 
-#: .\apps\registry\models.py:216
+#: .\apps\registry\models.py:213
 msgid "The cost center does not match the aircraft's."
 msgstr "El centro de costo no coincide con el de la aeronave."
 
-#: .\apps\registry\models.py:231
+#: .\apps\registry\models.py:227
 msgid "qualification"
 msgstr "habilitación"
 
-#: .\apps\registry\models.py:232
+#: .\apps\registry\models.py:228
 msgid "qualifications"
 msgstr "habilitaciones"
 
@@ -913,7 +934,9 @@ msgstr "%(name)s restaurado."
 #: .\apps\registry\views.py:315
 #, python-format
 msgid "%(count)s %(name)s imported. You can undo this from the import page."
-msgstr "%(count)s %(name)s importados. Puedes deshacerlo desde la página de importación."
+msgstr ""
+"%(count)s %(name)s importados. Puedes deshacerlo desde la página de "
+"importación."
 
 #: .\apps\registry\views.py:403
 #, python-format
@@ -1454,7 +1477,9 @@ msgstr "por vencer"
 
 #: .\templates\compliance\report.html:9
 msgid "Document validity, upcoming expiries and alert resolution times."
-msgstr "Vigencia documental, próximos vencimientos y tiempos de resolución de alertas."
+msgstr ""
+"Vigencia documental, próximos vencimientos y tiempos de resolución de "
+"alertas."
 
 #: .\templates\compliance\report.html:12
 msgid "Excel"
@@ -1540,8 +1565,12 @@ msgid "Ask an administrator to grant the required permissions."
 msgstr "Solicita a un administrador los permisos necesarios."
 
 #: .\templates\core\calendar.html:9
-msgid "Coordinate resources, operations, maintenance, compliance and action items in one agenda."
-msgstr "Coordina recursos, operaciones, mantenimiento, cumplimiento y acciones en una sola agenda."
+msgid ""
+"Coordinate resources, operations, maintenance, compliance and action items "
+"in one agenda."
+msgstr ""
+"Coordina recursos, operaciones, mantenimiento, cumplimiento y acciones en "
+"una sola agenda."
 
 #: .\templates\core\calendar.html:13 .\templates\core\calendar.html:50
 msgid "Next"
@@ -1710,8 +1739,12 @@ msgid "Start your operation"
 msgstr "Comienza tu operación"
 
 #: .\templates\dashboard\index.html:47
-msgid "Load the operational records below to activate indicators, alerts and planning."
-msgstr "Carga los registros operativos para activar indicadores, alertas y planificación."
+msgid ""
+"Load the operational records below to activate indicators, alerts and "
+"planning."
+msgstr ""
+"Carga los registros operativos para activar indicadores, alertas y "
+"planificación."
 
 #: .\templates\dashboard\index.html:49 .\templates\dashboard\index.html:52
 msgid "Create a cost center"
@@ -1730,8 +1763,11 @@ msgid "Activate compliance monitoring"
 msgstr "Activa el monitoreo de cumplimiento"
 
 #: .\templates\dashboard\index.html:66
-msgid "The registry is loaded, but nothing is being watched yet. Three steps in order:"
-msgstr "El padrón está cargado, pero todavía no se vigila nada. Tres pasos en orden:"
+msgid ""
+"The registry is loaded, but nothing is being watched yet. Three steps in "
+"order:"
+msgstr ""
+"El padrón está cargado, pero todavía no se vigila nada. Tres pasos en orden:"
 
 #: .\templates\dashboard\index.html:68
 msgid "Document types created"
@@ -1921,8 +1957,12 @@ msgid "No source file."
 msgstr "Sin archivo de origen."
 
 #: .\templates\geo\plan_detail.html:69
-msgid "The interactive map editor is on its way. For now this page shows the plan, its versions and the original file."
-msgstr "El editor de mapa interactivo está en camino. Por ahora esta página muestra el plan, sus versiones y el archivo original."
+msgid ""
+"The interactive map editor is on its way. For now this page shows the plan, "
+"its versions and the original file."
+msgstr ""
+"El editor de mapa interactivo está en camino. Por ahora esta página muestra "
+"el plan, sus versiones y el archivo original."
 
 #: .\templates\geo\plan_import.html:3 .\templates\geo\plan_import.html:8
 #: .\templates\geo\plan_list.html:7
@@ -1930,8 +1970,11 @@ msgid "Import KMZ/KML"
 msgstr "Importar KMZ/KML"
 
 #: .\templates\geo\plan_import.html:9
-msgid "Create a plan from a flight-planning file. The original is stored intact."
-msgstr "Crea un plan a partir de un archivo de planificación de vuelo. El original se guarda intacto."
+msgid ""
+"Create a plan from a flight-planning file. The original is stored intact."
+msgstr ""
+"Crea un plan a partir de un archivo de planificación de vuelo. El original "
+"se guarda intacto."
 
 #: .\templates\geo\plan_import.html:20
 msgid "Import file"
@@ -2129,7 +2172,8 @@ msgid "Active planning"
 msgstr "Planificaciones activas"
 
 #: .\templates\registry\assignment_list.html:25
-msgid "There are assignments without a cost center. Review them before confirming."
+msgid ""
+"There are assignments without a cost center. Review them before confirming."
 msgstr "Hay asignaciones sin centro de costo. Revísalas antes de confirmarlas."
 
 #: .\templates\registry\assignment_list.html:26
@@ -2188,8 +2232,14 @@ msgstr[0] "%(counter)s aeronave activa"
 msgstr[1] "%(counter)s aeronaves activas"
 
 #: .\templates\registry\costcenter_archive_confirm.html:17
-msgid "An archived cost center drops out of the daily expiry digest and the compliance report: the documents and qualifications of these records will stop being watched until they are reassigned."
-msgstr "Un centro de costo archivado sale del resumen diario de vencimientos y del informe de cumplimiento: los documentos y habilitaciones de estos registros dejarán de vigilarse hasta que se reasignen."
+msgid ""
+"An archived cost center drops out of the daily expiry digest and the "
+"compliance report: the documents and qualifications of these records will "
+"stop being watched until they are reassigned."
+msgstr ""
+"Un centro de costo archivado sale del resumen diario de vencimientos y del "
+"informe de cumplimiento: los documentos y habilitaciones de estos registros "
+"dejarán de vigilarse hasta que se reasignen."
 
 #: .\templates\registry\costcenter_archive_confirm.html:21
 msgid "Archive anyway"
@@ -2213,8 +2263,10 @@ msgid "Import operators"
 msgstr "Importar operadores"
 
 #: .\templates\registry\costcenter_import.html:6
-msgid "CSV columns: registration,type,model,manufacturer,year,cost_center,status."
-msgstr "Columnas CSV: registration,type,model,manufacturer,year,cost_center,status."
+msgid ""
+"CSV columns: registration,type,model,manufacturer,year,cost_center,status."
+msgstr ""
+"Columnas CSV: registration,type,model,manufacturer,year,cost_center,status."
 
 #: .\templates\registry\costcenter_import.html:6
 msgid "CSV columns: employee_id,full_name,email,phone,cost_center."
@@ -2222,12 +2274,17 @@ msgstr "Columnas CSV: employee_id,full_name,email,phone,cost_center."
 
 #: .\templates\registry\costcenter_import.html:6
 msgid "CSV columns: code,name. Existing records are never overwritten."
-msgstr "Columnas CSV: code,name. Los registros existentes nunca se sobrescriben."
+msgstr ""
+"Columnas CSV: code,name. Los registros existentes nunca se sobrescriben."
 
 #: .\templates\registry\costcenter_import.html:8
 #, python-format
-msgid "%(count)s rows are valid. Select the same file again and apply to create them."
-msgstr "%(count)s filas son válidas. Vuelve a seleccionar el mismo archivo y aplica para crearlas."
+msgid ""
+"%(count)s rows are valid. Select the same file again and apply to create "
+"them."
+msgstr ""
+"%(count)s filas son válidas. Vuelve a seleccionar el mismo archivo y aplica "
+"para crearlas."
 
 #: .\templates\registry\costcenter_import.html:9
 msgid "CSV file"
@@ -2255,8 +2312,12 @@ msgid "Undo this import"
 msgstr "Deshacer esta importación"
 
 #: .\templates\workboard\_board.html:4
-msgid "Drag-and-drop ordering is disabled while filters or a search are active. Clear them to reorder tasks."
-msgstr "El orden por arrastre está desactivado mientras hay filtros o una búsqueda activos. Límpialos para reordenar las tareas."
+msgid ""
+"Drag-and-drop ordering is disabled while filters or a search are active. "
+"Clear them to reorder tasks."
+msgstr ""
+"El orden por arrastre está desactivado mientras hay filtros o una búsqueda "
+"activos. Límpialos para reordenar las tareas."
 
 #: .\templates\workboard\_board.html:11
 msgid "This board has no active stages."
@@ -2337,8 +2398,12 @@ msgid "Kanban board"
 msgstr "Tablero Kanban"
 
 #: .\templates\workboard\kanban.html:7
-msgid "Move operational work forward, keep ownership visible and follow every deadline."
-msgstr "Haz avanzar el trabajo operativo, mantén visible al responsable y cumple cada plazo."
+msgid ""
+"Move operational work forward, keep ownership visible and follow every "
+"deadline."
+msgstr ""
+"Haz avanzar el trabajo operativo, mantén visible al responsable y cumple "
+"cada plazo."
 
 #: .\templates\workboard\kanban.html:10
 msgid "New task"
@@ -2398,7 +2463,8 @@ msgstr "Lista de tareas"
 
 #: .\templates\workboard\task_list.html:6
 msgid "Review ownership, priorities and deadlines in a sortable list."
-msgstr "Revisa responsables, prioridades y vencimientos en una lista ordenable."
+msgstr ""
+"Revisa responsables, prioridades y vencimientos en una lista ordenable."
 
 #: .\templates\workboard\task_list.html:6
 msgid "Export XLSX"

@@ -19,8 +19,9 @@ from apps.workboard.api import (
 )
 from apps.geo.api import (
     GeoPlanMetaView,
+    GeoPlanRestoreView,
     GeoPlanVersionContentView,
-    GeoPlanVersionListView,
+    GeoPlanVersionsView,
 )
 
 admin.site.site_header = "AeroControl Administration"
@@ -72,13 +73,18 @@ urlpatterns = [
     ),
     path(
         "api/v1/geo/plans/<uuid:pk>/versions/",
-        GeoPlanVersionListView.as_view(),
+        GeoPlanVersionsView.as_view(),
         name="api-v1-geo-plan-versions",
     ),
     path(
         "api/v1/geo/plans/<uuid:pk>/versions/<int:number>/content/",
         GeoPlanVersionContentView.as_view(),
         name="api-v1-geo-plan-version-content",
+    ),
+    path(
+        "api/v1/geo/plans/<uuid:pk>/versions/<int:number>/restore/",
+        GeoPlanRestoreView.as_view(),
+        name="api-v1-geo-plan-version-restore",
     ),
     path("", include("apps.dashboard.urls")),
     path("registry/", include("apps.registry.urls")),

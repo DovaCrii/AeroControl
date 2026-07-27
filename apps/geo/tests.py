@@ -64,6 +64,53 @@ class TestVersionImmutability:
             version.delete()
 
 
+class TestEditableLock:
+    """clean() is layer 2 of the approved-plan lock (GEO-6)."""
+
+    @pytest.mark.django_db
+    def test_editor_version_on_locked_plan_fails_clean(self, db):
+        plan = _plan(db, status="approved")
+        version = GeoPlanVersion(
+            plan=plan,
+            version_number=2,
+            content={"schema_version": 1, "children": []},
+            content_checksum="0" * 64,
+            source="editor",
+            created_by=plan.created_by,
+        )
+        with pytest.raises(ValidationError):
+            version.full_clean()
+
+    @pytest.mark.django_db
+    def test_import_version_is_exempt_from_the_lock(self, db):
+        # V1 is created with the plan while still draft; an import is never a
+        # user content edit, so the lock must not block it even if the plan is
+        # already in a non-editable state.
+        plan = _plan(db, status="approved")
+        version = GeoPlanVersion(
+            plan=plan,
+            version_number=1,
+            content={"schema_version": 1, "children": []},
+            content_checksum="0" * 64,
+            source="import",
+            created_by=plan.created_by,
+        )
+        version.full_clean()  # must not raise
+
+    @pytest.mark.django_db
+    def test_editor_version_on_editable_plan_passes_clean(self, db):
+        plan = _plan(db, status="editing")
+        version = GeoPlanVersion(
+            plan=plan,
+            version_number=2,
+            content={"schema_version": 1, "children": []},
+            content_checksum="0" * 64,
+            source="editor",
+            created_by=plan.created_by,
+        )
+        version.full_clean()  # must not raise
+
+
 class TestStatusHistory:
     @pytest.mark.django_db
     def test_status_change_writes_history(self, db):

@@ -50,8 +50,12 @@ def assert_wellformed_fragment(xml_string):
     Called from canonical.validate_document so raw XML from the database (or a
     commit payload) is never trusted more than a fresh upload.
     """
+    data = xml_string.encode("utf-8")
+    # Same DOCTYPE guard as a fresh upload: a commit payload is the first place
+    # client-supplied raw_xml re-enters, so it gets the byte pre-check too.
+    _reject_doctype(data)
     try:
-        etree.fromstring(xml_string.encode("utf-8"), _hardened_parser())
+        etree.fromstring(data, _hardened_parser())
     except (etree.XMLSyntaxError, ValueError) as exc:
         raise KmlImportError("A stored XML fragment is not well-formed.") from exc
 
