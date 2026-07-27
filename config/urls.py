@@ -17,6 +17,11 @@ from apps.workboard.api import (
     ThrottledObtainAuthToken,
     api_openapi_schema,
 )
+from apps.geo.api import (
+    GeoPlanMetaView,
+    GeoPlanVersionContentView,
+    GeoPlanVersionListView,
+)
 
 admin.site.site_header = "AeroControl Administration"
 admin.site.site_title = "AeroControl"
@@ -59,6 +64,21 @@ urlpatterns = [
         "api/v1/workboard/tasks/<uuid:pk>/",
         KanbanTaskApiView.as_view({"patch": "partial_update"}),
         name="api-v1-workboard-task-update",
+    ),
+    path(
+        "api/v1/geo/plans/<uuid:pk>/",
+        GeoPlanMetaView.as_view(),
+        name="api-v1-geo-plan",
+    ),
+    path(
+        "api/v1/geo/plans/<uuid:pk>/versions/",
+        GeoPlanVersionListView.as_view(),
+        name="api-v1-geo-plan-versions",
+    ),
+    path(
+        "api/v1/geo/plans/<uuid:pk>/versions/<int:number>/content/",
+        GeoPlanVersionContentView.as_view(),
+        name="api-v1-geo-plan-version-content",
     ),
     path("", include("apps.dashboard.urls")),
     path("registry/", include("apps.registry.urls")),
