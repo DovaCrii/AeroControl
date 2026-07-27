@@ -7,7 +7,10 @@ from django.views.generic import DetailView, FormView, ListView
 from apps.compliance.models import Document, DocumentType
 from apps.compliance.views import save_uploaded_file, uploaded_file_cleanup
 from apps.core.audit import set_audit_context
-from apps.core.views import ModelPermissionRequiredMixin, ModelViewPermissionRequiredMixin
+from apps.core.views import (
+    ModelPermissionRequiredMixin,
+    ModelViewPermissionRequiredMixin,
+)
 
 from .forms import GeoPlanImportForm
 from .kml import canonical

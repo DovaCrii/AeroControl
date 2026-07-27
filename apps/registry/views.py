@@ -430,7 +430,12 @@ class AircraftImportView(CostCenterImportView):
         return render(
             request,
             "registry/costcenter_import.html",
-            {"rows": [], "errors": [], "entity": "aircraft", "last_batch": self.last_applied_batch()},
+            {
+                "rows": [],
+                "errors": [],
+                "entity": "aircraft",
+                "last_batch": self.last_applied_batch(),
+            },
         )
 
     @staticmethod
@@ -504,7 +509,12 @@ class OperatorImportView(CostCenterImportView):
         return render(
             request,
             "registry/costcenter_import.html",
-            {"rows": [], "errors": [], "entity": "operator", "last_batch": self.last_applied_batch()},
+            {
+                "rows": [],
+                "errors": [],
+                "entity": "operator",
+                "last_batch": self.last_applied_batch(),
+            },
         )
 
     @staticmethod

@@ -185,7 +185,9 @@ class TestArchiveRestoreFromUI:
     def _world(db):
         center = CostCenter.objects.create(code="ARC", name="Archive tests")
         operator = Operator.objects.create(
-            employee_id="ARC-1", full_name="Pilot", cost_center=center,
+            employee_id="ARC-1",
+            full_name="Pilot",
+            cost_center=center,
             email="pilot@test.cl",
         )
         return center, operator
@@ -195,9 +197,7 @@ class TestArchiveRestoreFromUI:
         from django.contrib.auth.models import Permission, User
 
         user = User.objects.create_user(f"u-{'-'.join(codenames)}", password="pw")
-        user.user_permissions.add(
-            *Permission.objects.filter(codename__in=codenames)
-        )
+        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
         client = Client()
         assert client.login(username=user.username, password="pw")
         return client
@@ -288,9 +288,7 @@ class TestArchiveRestoreFromUI:
         center, operator = self._world(db)
         center.responsible_operator = operator
         center.responsible_contact_email = "secretaria@test.cl"
-        center.save(
-            update_fields=["responsible_operator", "responsible_contact_email"]
-        )
+        center.save(update_fields=["responsible_operator", "responsible_contact_email"])
 
         assert center.notification_email == "pilot@test.cl"
 
@@ -303,9 +301,7 @@ class TestArchiveRestoreFromUI:
         center, operator = self._world(db)
         center.responsible_operator = operator
         center.responsible_contact_email = "secretaria@test.cl"
-        center.save(
-            update_fields=["responsible_operator", "responsible_contact_email"]
-        )
+        center.save(update_fields=["responsible_operator", "responsible_contact_email"])
         operator.is_active = False
         operator.save(update_fields=["is_active"])
 

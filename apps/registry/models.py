@@ -204,17 +204,13 @@ class Assignment(BaseModel):
             and self.operator_id
             and self.operator.cost_center_id not in (None, self.cost_center_id)
         ):
-            errors["cost_center"] = _(
-                "The cost center does not match the operator's."
-            )
+            errors["cost_center"] = _("The cost center does not match the operator's.")
         if (
             self.cost_center_id
             and self.aircraft_id
             and self.aircraft.cost_center_id not in (None, self.cost_center_id)
         ):
-            errors["cost_center"] = _(
-                "The cost center does not match the aircraft's."
-            )
+            errors["cost_center"] = _("The cost center does not match the aircraft's.")
         if errors:
             raise ValidationError(errors)
 

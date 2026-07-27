@@ -49,9 +49,7 @@ class GeoPlan(BaseModel):
         blank=True,
         related_name="geo_plans",
     )
-    status = models.CharField(
-        max_length=20, choices=STATUS_CHOICES, default="draft"
-    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
@@ -78,9 +76,7 @@ class GeoPlan(BaseModel):
         permissions = [("approve_geoplan", "Can approve geo plan")]
         indexes = [
             models.Index(fields=["status", "is_active"], name="geo_plan_status_idx"),
-            models.Index(
-                fields=["cost_center", "is_active"], name="geo_plan_cc_idx"
-            ),
+            models.Index(fields=["cost_center", "is_active"], name="geo_plan_cc_idx"),
         ]
 
     def __str__(self):
@@ -120,9 +116,7 @@ class GeoPlanVersion(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    plan = models.ForeignKey(
-        GeoPlan, on_delete=models.PROTECT, related_name="versions"
-    )
+    plan = models.ForeignKey(GeoPlan, on_delete=models.PROTECT, related_name="versions")
     version_number = models.PositiveIntegerField()
     parent_version = models.ForeignKey(
         "self", on_delete=models.PROTECT, null=True, blank=True, related_name="+"
@@ -187,9 +181,7 @@ class GeoPlanHistory(BaseModel):
     which is why the field names match its expectations.
     """
 
-    plan = models.ForeignKey(
-        GeoPlan, on_delete=models.CASCADE, related_name="history"
-    )
+    plan = models.ForeignKey(GeoPlan, on_delete=models.CASCADE, related_name="history")
     previous_status = models.CharField(max_length=20)
     new_status = models.CharField(max_length=20)
     changed_by = models.CharField(max_length=150)

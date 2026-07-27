@@ -145,6 +145,5 @@ def archived_centers_with_active_dependents():
         .order_by("code")
     )
     return [
-        (center, center.active_operators, center.active_aircraft)
-        for center in centers
+        (center, center.active_operators, center.active_aircraft) for center in centers
     ]

@@ -28,9 +28,7 @@ def _append_raw(parent, raw_xml):
 
 
 def _coord_text(points):
-    return " ".join(
-        ",".join(_format_number(n) for n in point) for point in points
-    )
+    return " ".join(",".join(_format_number(n) for n in point) for point in points)
 
 
 def _format_number(number):
