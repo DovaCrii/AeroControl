@@ -9,6 +9,22 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 ## [Unreleased]
 
 ### Added
+- **Seguimiento de contratos, recursos y permisos (BLOQUE OPS, OPS-0..OPS-8).**
+  Asignaciones por recurso (`OperatorAssignment`/`AircraftAssignment`, un
+  operador o aeronave por centro de costo y período, con validación de
+  solape) reemplazan aditivamente el antiguo par `Assignment` (que sigue
+  intacto). Un log de movimientos append-only (`ResourceMovementLog`) registra
+  cada asignación, reasignación, liberación y cambio de ubicación física de
+  aeronave (casa matriz/faena/mantenimiento). Ficha del contrato
+  (`CostCenterDetail`) con seis pestañas separadas (Resumen/Equipo/Flota/
+  Permisos/Documentos/Historial, cada una acotada por su propio permiso) y
+  timeline propio en la ficha de Operador y Aeronave. `FlightPermission` ahora
+  espeja la autorización DGAC real: varios operadores y aeronaves (M2M) y un
+  rango de vigencia (`valid_from`/`valid_until`) en vez de uno de cada uno en
+  un solo día, con adjuntos (cartas) sobre el pipeline de documentos existente
+  y un log de cuándo se vincula a un plan geoespacial. Filtro global por
+  centro de costo en el dashboard. Diseño en
+  `docs/dev/ops-contract-tracking-plan.md`.
 - **Editor geoespacial KMZ/KML (BLOQUE GEO, MVP GEO-0..GEO-10).** Importar un
   KMZ/KML crea un plan versionado (documento canónico "AeroKML JSON" inmutable
   por versión); un mapa Leaflet (vendorizado con SRI, sin CDN) lo visualiza por
