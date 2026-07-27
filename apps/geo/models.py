@@ -230,3 +230,56 @@ class GeoPlanHistory(BaseModel):
             latest = GeoPlanHistory.objects.order_by("-sequence").first()
             self.sequence = (latest.sequence if latest else 0) + 1
         return super().save(*args, **kwargs)
+
+
+class GeoPlanPermissionLink(BaseModel):
+    """OPS-7: append-only log of when GeoPlan.flight_permission changes.
+
+    That FK is a plain nullable link with no history of its own; this answers
+    "when was this plan linked to a permit, and to which one before" without
+    overloading GeoPlanHistory, which is specifically status transitions, not
+    an arbitrary field's history. Written by
+    apps/geo/signals.py:track_flight_permission_link (pre_save on GeoPlan).
+    """
+
+    sequence = models.PositiveBigIntegerField(editable=False, default=0)
+    plan = models.ForeignKey(
+        GeoPlan, on_delete=models.CASCADE, related_name="permission_links"
+    )
+    previous_permission = models.ForeignKey(
+        "operations.FlightPermission",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    new_permission = models.ForeignKey(
+        "operations.FlightPermission",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    changed_by_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+
+    class Meta:
+        verbose_name = _("geo plan permission link")
+        verbose_name_plural = _("geo plan permission links")
+        ordering = ["-sequence"]
+
+    def __str__(self):
+        return (
+            f"{self.plan_id}: {self.previous_permission_id} -> {self.new_permission_id}"
+        )
+
+    def save(self, *args, **kwargs):
+        if self._state.adding:
+            latest = GeoPlanPermissionLink.objects.order_by("-sequence").first()
+            self.sequence = (latest.sequence if latest else 0) + 1
+        return super().save(*args, **kwargs)

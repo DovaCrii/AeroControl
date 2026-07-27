@@ -149,6 +149,26 @@
         {% endif %}
       </div>
     </div>
+
+    {% if permission_links %}
+    <div class="card mt-3">
+      <div class="card-body">
+        <h2 class="admin-section-title mb-2">{% translate "Flight permission link history" %}</h2>
+        <table class="table table-sm mb-0">
+          <thead><tr><th>{% translate "From" %}</th><th>{% translate "To" %}</th><th>{% translate "Created" %}</th></tr></thead>
+          <tbody>
+            {% for link in permission_links %}
+            <tr>
+              <td>{{ link.previous_permission|default:"—" }}</td>
+              <td>{{ link.new_permission|default:"—" }}</td>
+              <td><span class="text-nowrap">{{ link.created_at|date:'Y-m-d H:i' }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
   </div>
 </div>
 
