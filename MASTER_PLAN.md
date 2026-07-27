@@ -536,6 +536,36 @@ MVP = GEO-0..GEO-10 (hito *visor*: 0-7; hito *editor*: 8-10). V2 = GEO-11..GEO-1
 
 **No bloquea T3.2** (tenancy): el scoping entra por `cost_center` como el resto y la migración futura lo cubre. GEO-0 absorbe parte de T5.9 (vendorización+SRI) y prepara V.10 (CSP).
 
+### BLOQUE OPS (8) — Seguimiento de contratos, recursos y permisos `rama codex/ops-*` `⬜ PROPUESTA — espera "go" de OPS-1`
+
+Cerrar la brecha entre el modelo actual y cómo opera de verdad una empresa RPAS
+bajo DGAC: asignaciones ancladas al centro de costo (= contrato) con **log de
+movimientos** inmutable, ubicación física de aeronaves, permisos de vuelo espejo
+de la autorización DGAC (rango de vigencia, varios operadores y aeronaves,
+ubicación estructurada), ficha del contrato por pestañas e historiales separados
+por entidad. Diseño completo en
+[docs/dev/ops-contract-tracking-plan.md](docs/dev/ops-contract-tracking-plan.md).
+Nace del feedback de producto del equipo (2026-07-27), contrastado con la
+autorización DGAC N°5808 y la plataforma SIGO. **Decisiones tomadas:**
+asignaciones separadas por recurso (operador→CC, aeronave→CC); permiso espejo
+DGAC; log append-only patrón `AuditEvent`; la asignación vigente es la fuente de
+verdad y `Operator/Aircraft.cost_center` quedan como denormalización. **No
+arranca la implementación sin "go" explícito del usuario.**
+
+| ID | Est. | Tarea | Dep. |
+|---|:--:|---|:--:|
+| OPS-0 | ✅ | Propuesta técnica + investigación de competidores (Aloft/DroneLogbook/Airdata) + tablero. (`docs/dev/ops-contract-tracking-plan.md`) | — |
+| OPS-1 | ⬜ | Asignaciones por recurso (`OperatorAssignment`/`AircraftAssignment`) + `ResourceMovementLog` append-only + señal que mantiene la denormalización + migración de datos de `Assignment` + UI. Tests: solape, denormalización, log, 403 | OPS-0 |
+| OPS-2 | ⬜ | Ficha del contrato `CostCenterDetailView` con pestañas (Resumen/Equipo/Flota/Permisos/Documentos/Historial) | OPS-1 |
+| OPS-3 | ⬜ | Ubicación física de aeronaves (`current_location`/`current_site`) + `location_changed` en el log + badges visuales | OPS-1 |
+| OPS-4 | ⬜ | `FlightPermission` espejo DGAC: M2M operadores/aeronaves (through PROTECT), `valid_from`/`valid_until`, ubicación estructurada + migración de datos | OPS-0 |
+| OPS-5 | ⬜ | Adjuntos (cartas Word/PDF) en el detalle del permiso: `DocumentType` dedicado + UI sobre el pipeline endurecido existente | OPS-4 |
+| OPS-6 | ⬜ | Timelines separados por entidad (operador, aeronave, permiso, contrato) | OPS-1..4 |
+| OPS-7 | ⬜ | Log de asociación plan geo ↔ permiso (cuándo se vincula, desde qué fecha) | OPS-4, GEO-1 |
+| OPS-8 | ⬜ | Dashboard: filtro global por centro de costo + pase de mejoras visuales (tipografía/densidad) | OPS-2 |
+
+**Migración de datos es el riesgo principal** (14 aeronaves y 41 operadores reales cargados): migraciones idempotentes, backup previo, pruebas sobre copia de `aero_ops.sqlite3`. Toca la deuda F-08 (tenancy) sin ampliarla.
+
 ### FASE L — Limpieza y orden del repositorio `puede correr en paralelo a FASE 0`
 
 | ID | Est. | Prio | Tarea | Esf. | Dep. |
