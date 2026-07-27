@@ -40,7 +40,7 @@ class GeoPlanImportForm(forms.Form):
         ).order_by("code")
         self.fields["flight_permission"].queryset = FlightPermission.objects.filter(
             is_active=True
-        ).order_by("-flight_date")
+        ).order_by("-valid_from")
         # Parsed canonical document, stashed by clean_file so the view does not
         # parse the upload a second time.
         self.canonical = None

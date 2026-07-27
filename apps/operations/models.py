@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
@@ -6,6 +7,15 @@ from apps.registry.models import Operator, Aircraft, CostCenter
 
 
 class FlightPermission(BaseModel):
+    """A flight authorization, mirroring the real DGAC document (OPS-4).
+
+    A single authorization typically lists several operators and several
+    aircraft over a validity range (docs/dev/ops-contract-tracking-plan.md),
+    not one of each on one day -- the previous single-FK/single-date shape
+    could not represent that. `cost_center` stays a single FK: the scoping
+    unit is unambiguous even when the crew/fleet is a roster.
+    """
+
     STATUS_CHOICES = [
         ("requested", _("Requested")),
         ("approved", _("Approved")),
@@ -13,11 +23,12 @@ class FlightPermission(BaseModel):
         ("completed", _("Completed")),
     ]
     permission_number = models.CharField(max_length=50, unique=True)
-    operator = models.ForeignKey(Operator, on_delete=models.PROTECT)
-    aircraft = models.ForeignKey(Aircraft, on_delete=models.PROTECT)
+    operators = models.ManyToManyField(Operator, related_name="flight_permissions")
+    aircraft_fleet = models.ManyToManyField(Aircraft, related_name="flight_permissions")
     cost_center = models.ForeignKey(CostCenter, on_delete=models.PROTECT)
     purpose = models.CharField(max_length=250)
-    flight_date = models.DateField()
+    valid_from = models.DateField()
+    valid_until = models.DateField()
     location = models.CharField(max_length=250)
     status = models.CharField(
         max_length=20, choices=STATUS_CHOICES, default="requested"
@@ -26,10 +37,12 @@ class FlightPermission(BaseModel):
     class Meta:
         verbose_name = _("flight permission")
         verbose_name_plural = _("flight permissions")
-        # The calendar filters (flight_date, is_active) on every feed request.
+        # The calendar filters (valid_from/valid_until, is_active) on every
+        # feed request, as a range-overlap query.
         indexes = [
             models.Index(
-                fields=["flight_date", "is_active"], name="ops_permission_date_idx"
+                fields=["valid_from", "valid_until", "is_active"],
+                name="ops_permission_range_idx",
             )
         ]
 
@@ -40,6 +53,12 @@ class FlightPermission(BaseModel):
         from django.urls import reverse
 
         return reverse("permission-detail", kwargs={"pk": self.pk})
+
+    def clean(self):
+        if self.valid_until and self.valid_from and self.valid_until < self.valid_from:
+            raise ValidationError(
+                {"valid_until": _("The end date cannot be before the start date.")}
+            )
 
 
 class FlightRecord(BaseModel):

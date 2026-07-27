@@ -1,3 +1,4 @@
+from django import forms
 from django.utils.translation import gettext_lazy as _
 
 from apps.core.forms import AeroModelForm
@@ -9,13 +10,19 @@ class FlightPermissionForm(AeroModelForm):
         model = FlightPermission
         fields = [
             "permission_number",
-            "operator",
-            "aircraft",
+            "operators",
+            "aircraft_fleet",
             "cost_center",
             "purpose",
-            "flight_date",
+            "valid_from",
+            "valid_until",
             "location",
         ]
+        widgets = {
+            # A roster of several, not one pick from a dropdown (OPS-4).
+            "operators": forms.CheckboxSelectMultiple,
+            "aircraft_fleet": forms.CheckboxSelectMultiple,
+        }
 
 
 class FlightRecordForm(AeroModelForm):
@@ -38,17 +45,38 @@ class FlightRecordForm(AeroModelForm):
         actual_date = cleaned.get("actual_date")
         departure = cleaned.get("departure_time")
         arrival = cleaned.get("arrival_time")
-        if permission and aircraft and permission.aircraft_id != aircraft.id:
+        # OPS-4: the permission now lists a roster of operators/aircraft over a
+        # date range, not a single one of each on a single day, so a flight
+        # record is valid whenever it falls within that roster and range --
+        # not an exact match against "the" operator/aircraft/date.
+        if (
+            permission
+            and aircraft
+            and not permission.aircraft_fleet.filter(pk=aircraft.pk).exists()
+        ):
             self.add_error(
-                "aircraft", _("The aircraft must match the flight permission.")
+                "aircraft",
+                _("The aircraft must be part of the flight permission's fleet."),
             )
-        if permission and pilot and permission.operator_id != pilot.id:
+        if (
+            permission
+            and pilot
+            and not permission.operators.filter(pk=pilot.pk).exists()
+        ):
             self.add_error(
-                "pilot", _("The pilot must match the flight permission operator.")
+                "pilot",
+                _("The pilot must be one of the flight permission's operators."),
             )
-        if permission and actual_date and actual_date != permission.flight_date:
+        if (
+            permission
+            and actual_date
+            and not (permission.valid_from <= actual_date <= permission.valid_until)
+        ):
             self.add_error(
-                "actual_date", _("The flight date must match the flight permission.")
+                "actual_date",
+                _(
+                    "The flight date must fall within the flight permission's validity range."
+                ),
             )
         if departure and arrival and arrival <= departure:
             self.add_error(

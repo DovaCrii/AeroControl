@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-27 15:52-0400\n"
+"POT-Creation-Date: 2026-07-27 16:56-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -245,7 +245,7 @@ msgid "No open alerts."
 msgstr "Sin alertas abiertas."
 
 #: .\apps\compliance\views.py:85 .\apps\maintenance\views.py:41
-#: .\apps\operations\views.py:47 .\apps\registry\views.py:111
+#: .\apps\operations\views.py:52 .\apps\registry\views.py:111
 #: .\apps\workboard\views.py:118
 #, python-format
 msgid "New %(record)s"
@@ -291,7 +291,7 @@ msgid "Running"
 msgstr "En ejecución"
 
 #: .\apps\core\models.py:134 .\apps\maintenance\models.py:17
-#: .\apps\operations\models.py:13 .\apps\registry\models.py:189
+#: .\apps\operations\models.py:23 .\apps\registry\models.py:189
 #: .\apps\workboard\models.py:32 .\apps\workboard\views.py:100
 #: .\templates\registry\_assignment_table_body.html:8
 #: .\templates\registry\assignment_list.html:37
@@ -310,119 +310,119 @@ msgstr "ejecución de tarea"
 msgid "job runs"
 msgstr "ejecuciones de tareas"
 
-#: .\apps\core\views.py:202
+#: .\apps\core\views.py:220
 msgid "Saved successfully."
 msgstr "Guardado correctamente."
 
-#: .\apps\core\views.py:698
+#: .\apps\core\views.py:732
 msgid "Organization"
 msgstr "Organización"
 
-#: .\apps\core\views.py:699
+#: .\apps\core\views.py:733
 msgid "Define the operational scope and who can access it."
 msgstr "Define el alcance operativo y quién puede acceder a él."
 
-#: .\apps\core\views.py:702
+#: .\apps\core\views.py:736
 msgid "Operational tenants"
 msgstr "Organizaciones operativas"
 
-#: .\apps\core\views.py:703
+#: .\apps\core\views.py:737
 msgid "Manage organizations and their data boundaries."
 msgstr "Gestiona organizaciones y sus límites de datos."
 
-#: .\apps\core\views.py:709
+#: .\apps\core\views.py:743
 msgid "Tenant memberships"
 msgstr "Membresías de organización"
 
-#: .\apps\core\views.py:710
+#: .\apps\core\views.py:744
 msgid "Assign users to an operational tenant."
 msgstr "Asigna usuarios a una organización operativa."
 
-#: .\apps\core\views.py:718
+#: .\apps\core\views.py:752
 msgid "Compliance configuration"
 msgstr "Configuración de cumplimiento"
 
-#: .\apps\core\views.py:720
+#: .\apps\core\views.py:754
 msgid "Prepare document and alert rules before loading records."
 msgstr "Prepara documentos y reglas de alerta antes de cargar registros."
 
-#: .\apps\core\views.py:724
+#: .\apps\core\views.py:758
 msgid "Document types"
 msgstr "Tipos de documento"
 
-#: .\apps\core\views.py:725
+#: .\apps\core\views.py:759
 msgid "Control expiry requirements and document categories."
 msgstr "Controla requisitos de vencimiento y categorías documentales."
 
-#: .\apps\core\views.py:731
+#: .\apps\core\views.py:765
 msgid "Alert rules"
 msgstr "Reglas de alerta"
 
-#: .\apps\core\views.py:732
+#: .\apps\core\views.py:766
 msgid "Define when AeroControl should generate an alert."
 msgstr "Define cuándo AeroControl debe generar una alerta."
 
-#: .\apps\core\views.py:740
+#: .\apps\core\views.py:774
 msgid "Workboard configuration"
 msgstr "Configuración del tablero de trabajo"
 
-#: .\apps\core\views.py:742
+#: .\apps\core\views.py:776
 msgid "Shape how teams organize and follow operational work."
 msgstr "Define cómo los equipos organizan y siguen el trabajo operativo."
 
-#: .\apps\core\views.py:746
+#: .\apps\core\views.py:780
 msgid "Boards"
 msgstr "Tableros"
 
-#: .\apps\core\views.py:747
+#: .\apps\core\views.py:781
 msgid "Create and archive operational boards."
 msgstr "Crea y archiva tableros operativos."
 
-#: .\apps\core\views.py:753
+#: .\apps\core\views.py:787
 msgid "Stages"
 msgstr "Etapas"
 
-#: .\apps\core\views.py:754
+#: .\apps\core\views.py:788
 msgid "Manage the workflow stages used by a board."
 msgstr "Gestiona las etapas de flujo utilizadas por un tablero."
 
-#: .\apps\core\views.py:760 .\templates\workboard\task_list.html:16
+#: .\apps\core\views.py:794 .\templates\workboard\task_list.html:16
 msgid "Labels"
 msgstr "Etiquetas"
 
-#: .\apps\core\views.py:761
+#: .\apps\core\views.py:795
 msgid "Create labels used to classify tasks."
 msgstr "Crea etiquetas para clasificar tareas."
 
-#: .\apps\core\views.py:771
+#: .\apps\core\views.py:805
 msgid "Backups and audit"
 msgstr "Respaldos y auditoría"
 
-#: .\apps\core\views.py:773
+#: .\apps\core\views.py:807
 msgid "Review backups and trace changes without editing audit records."
 msgstr "Revisa respaldos y rastrea cambios sin editar la auditoría."
 
-#: .\apps\core\views.py:777
+#: .\apps\core\views.py:811
 msgid "Backup configuration"
 msgstr "Configuración de respaldos"
 
-#: .\apps\core\views.py:778
+#: .\apps\core\views.py:812
 msgid "Review the local backup destination and schedule."
 msgstr "Revisa el destino y la programación de respaldos locales."
 
-#: .\apps\core\views.py:784
+#: .\apps\core\views.py:818
 msgid "Audit events"
 msgstr "Eventos de auditoría"
 
-#: .\apps\core\views.py:785
+#: .\apps\core\views.py:819
 msgid "Read-only history of authenticated changes."
 msgstr "Historial de solo lectura de cambios autenticados."
 
-#: .\apps\core\views.py:832
+#: .\apps\core\views.py:866
 msgid "Status updated."
 msgstr "Estado actualizado."
 
-#: .\apps\core\views.py:839
+#: .\apps\core\views.py:873
 #, python-format
 msgid "Cannot transition from %(status)s"
 msgstr "No se puede cambiar desde %(status)s"
@@ -460,7 +460,7 @@ msgstr "En edición"
 msgid "In review"
 msgstr "En revisión"
 
-#: .\apps\geo\models.py:32 .\apps\operations\models.py:11
+#: .\apps\geo\models.py:32 .\apps\operations\models.py:21
 msgid "Approved"
 msgstr "Aprobado"
 
@@ -518,7 +518,7 @@ msgstr "Comenzar edición"
 msgid "Submit for review"
 msgstr "Enviar a revisión"
 
-#: .\apps\geo\views.py:44 .\apps\operations\views.py:106
+#: .\apps\geo\views.py:44 .\apps\operations\views.py:143
 msgid "Approve"
 msgstr "Aprobar"
 
@@ -671,7 +671,7 @@ msgid "Start maintenance"
 msgstr "Iniciar mantenimiento"
 
 #: .\apps\maintenance\views.py:93 .\apps\maintenance\views.py:125
-#: .\apps\operations\views.py:112 .\templates\maintenance\record_detail.html:32
+#: .\apps\operations\views.py:149 .\templates\maintenance\record_detail.html:32
 msgid "Complete"
 msgstr "Completar"
 
@@ -683,61 +683,69 @@ msgstr "Mantenimiento iniciado."
 msgid "Maintenance completed."
 msgstr "Mantenimiento completado."
 
-#: .\apps\operations\forms.py:43
-msgid "The aircraft must match the flight permission."
-msgstr "La aeronave debe coincidir con el permiso de vuelo."
+#: .\apps\operations\forms.py:59
+msgid "The aircraft must be part of the flight permission's fleet."
+msgstr "La aeronave debe ser parte de la flota del permiso de vuelo."
 
-#: .\apps\operations\forms.py:47
-msgid "The pilot must match the flight permission operator."
-msgstr "El piloto debe coincidir con el operador del permiso de vuelo."
+#: .\apps\operations\forms.py:68
+msgid "The pilot must be one of the flight permission's operators."
+msgstr "El piloto debe ser uno de los operadores del permiso de vuelo."
 
-#: .\apps\operations\forms.py:51
-msgid "The flight date must match the flight permission."
-msgstr "La fecha del vuelo debe coincidir con el permiso de vuelo."
+#: .\apps\operations\forms.py:78
+msgid ""
+"The flight date must fall within the flight permission's validity range."
+msgstr ""
+"La fecha del vuelo debe estar dentro del rango de vigencia del permiso de "
+"vuelo."
 
-#: .\apps\operations\forms.py:55
+#: .\apps\operations\forms.py:83
 msgid "Arrival time must be later than departure time."
 msgstr "La hora de llegada debe ser posterior a la hora de salida."
 
-#: .\apps\operations\models.py:10
+#: .\apps\operations\models.py:20
 msgid "Requested"
 msgstr "Solicitado"
 
-#: .\apps\operations\models.py:12
+#: .\apps\operations\models.py:22
 msgid "Denied"
 msgstr "Rechazado"
 
-#: .\apps\operations\models.py:27
+#: .\apps\operations\models.py:38
 msgid "flight permission"
 msgstr "permiso de vuelo"
 
-#: .\apps\operations\models.py:28
+#: .\apps\operations\models.py:39
 msgid "flight permissions"
 msgstr "permisos de vuelo"
 
-#: .\apps\operations\views.py:76 .\templates\base.html:74
-#: .\templates\dashboard\index.html:157
+#: .\apps\operations\models.py:60 .\apps\registry\models.py:229
+#: .\apps\registry\models.py:327
+msgid "The end date cannot be before the start date."
+msgstr "La fecha final no puede ser anterior a la fecha inicial."
+
+#: .\apps\operations\views.py:104 .\templates\base.html:74
+#: .\templates\dashboard\index.html:169
 #: .\templates\registry\costcenter_detail.html:23
 msgid "Permissions"
 msgstr "Permisos"
 
-#: .\apps\operations\views.py:107
+#: .\apps\operations\views.py:144
 msgid "Deny"
 msgstr "Rechazar"
 
-#: .\apps\operations\views.py:123
+#: .\apps\operations\views.py:160
 msgid "Permission approved."
 msgstr "Permiso aprobado."
 
-#: .\apps\operations\views.py:130
+#: .\apps\operations\views.py:167
 msgid "Permission denied."
 msgstr "Permiso rechazado."
 
-#: .\apps\operations\views.py:137
+#: .\apps\operations\views.py:174
 msgid "Permission completed."
 msgstr "Permiso completado."
 
-#: .\apps\operations\views.py:191
+#: .\apps\operations\views.py:229
 msgid "Flight record archived."
 msgstr "Registro de vuelo archivado."
 
@@ -891,8 +899,6 @@ msgstr "Habilitaciones"
 
 #: .\apps\registry\forms.py:130 .\apps\registry\forms.py:212
 #: .\apps\registry\forms.py:249 .\apps\registry\models.py:409
-#: .\templates\operations\permission_detail.html:11
-#: .\templates\operations\permission_list.html:40
 #: .\templates\registry\assignment_list.html:51
 #: .\templates\registry\costcenter_detail.html:52
 #: .\templates\registry\resourcemovementlog_list.html:13
@@ -1045,10 +1051,6 @@ msgstr "asignación"
 msgid "assignments"
 msgstr "asignaciones"
 
-#: .\apps\registry\models.py:229 .\apps\registry\models.py:327
-msgid "The end date cannot be before the start date."
-msgstr "La fecha final no puede ser anterior a la fecha inicial."
-
 #: .\apps\registry\models.py:231
 msgid "The selected operator is inactive."
 msgstr "El operador seleccionado está inactivo."
@@ -1130,6 +1132,8 @@ msgid "Cost centers"
 msgstr "Centros de costo"
 
 #: .\apps\registry\views.py:52 .\templates\base.html:60
+#: .\templates\operations\permission_detail.html:11
+#: .\templates\operations\permission_list.html:40
 msgid "Operators"
 msgstr "Operadores"
 
@@ -1344,7 +1348,7 @@ msgid "Operations"
 msgstr "Operaciones"
 
 #: .\templates\base.html:75 .\templates\core\calendar.html:23
-#: .\templates\core\calendar.html:34 .\templates\dashboard\index.html:159
+#: .\templates\core\calendar.html:34 .\templates\dashboard\index.html:171
 msgid "Flights"
 msgstr "Vuelos"
 
@@ -1473,6 +1477,7 @@ msgstr "Resuelta"
 
 #: .\templates\compliance\alert_list.html:4
 #: .\templates\compliance\document_list.html:14
+#: .\templates\dashboard\index.html:23
 #: .\templates\maintenance\record_list.html:12
 #: .\templates\operations\permission_list.html:29
 #: .\templates\registry\resourcemovementlog_list.html:17
@@ -1739,6 +1744,7 @@ msgid "CSV"
 msgstr "CSV"
 
 #: .\templates\compliance\report.html:23 .\templates\core\calendar.html:41
+#: .\templates\dashboard\index.html:17
 msgid "All cost centers"
 msgstr "Todos los centros de costo"
 
@@ -1962,27 +1968,27 @@ msgstr "Abrir registro"
 msgid "New permission"
 msgstr "Nuevo permiso"
 
-#: .\templates\dashboard\index.html:18
+#: .\templates\dashboard\index.html:30
 msgid "Active Aircraft"
 msgstr "Aeronaves activas"
 
-#: .\templates\dashboard\index.html:24
+#: .\templates\dashboard\index.html:36
 msgid "Active Operators"
 msgstr "Operadores activos"
 
-#: .\templates\dashboard\index.html:30
+#: .\templates\dashboard\index.html:42
 msgid "Pending Alerts"
 msgstr "Alertas pendientes"
 
-#: .\templates\dashboard\index.html:36
+#: .\templates\dashboard\index.html:48
 msgid "Expiring in 30 days"
 msgstr "Vence en 30 días"
 
-#: .\templates\dashboard\index.html:46
+#: .\templates\dashboard\index.html:58
 msgid "Start your operation"
 msgstr "Comienza tu operación"
 
-#: .\templates\dashboard\index.html:47
+#: .\templates\dashboard\index.html:59
 msgid ""
 "Load the operational records below to activate indicators, alerts and "
 "planning."
@@ -1990,98 +1996,98 @@ msgstr ""
 "Carga los registros operativos para activar indicadores, alertas y "
 "planificación."
 
-#: .\templates\dashboard\index.html:49 .\templates\dashboard\index.html:52
+#: .\templates\dashboard\index.html:61 .\templates\dashboard\index.html:64
 msgid "Create a cost center"
 msgstr "Crea un centro de costo"
 
-#: .\templates\dashboard\index.html:53
+#: .\templates\dashboard\index.html:65
 msgid "Register an aircraft and an operator"
 msgstr "Registra una aeronave y un operador"
 
-#: .\templates\dashboard\index.html:54
+#: .\templates\dashboard\index.html:66
 msgid "Create a flight permission to begin tracking operations"
 msgstr "Crea un permiso de vuelo para comenzar el seguimiento operativo"
 
-#: .\templates\dashboard\index.html:65
+#: .\templates\dashboard\index.html:77
 msgid "Activate compliance monitoring"
 msgstr "Activa el monitoreo de cumplimiento"
 
-#: .\templates\dashboard\index.html:66
+#: .\templates\dashboard\index.html:78
 msgid ""
 "The registry is loaded, but nothing is being watched yet. Three steps in "
 "order:"
 msgstr ""
 "El padrón está cargado, pero todavía no se vigila nada. Tres pasos en orden:"
 
-#: .\templates\dashboard\index.html:68
+#: .\templates\dashboard\index.html:80
 msgid "Document types created"
 msgstr "Tipos de documento creados"
 
-#: .\templates\dashboard\index.html:68
+#: .\templates\dashboard\index.html:80
 msgid "Create the document types"
 msgstr "Crea los tipos de documento"
 
-#: .\templates\dashboard\index.html:68
+#: .\templates\dashboard\index.html:80
 msgid "e.g. airworthiness certificate, insurance policy"
 msgstr "p. ej. certificado de aeronavegabilidad, póliza de seguro"
 
-#: .\templates\dashboard\index.html:69
+#: .\templates\dashboard\index.html:81
 msgid "Documents loaded"
 msgstr "Documentos cargados"
 
-#: .\templates\dashboard\index.html:69
+#: .\templates\dashboard\index.html:81
 msgid "Load the documents with their expiry dates"
 msgstr "Carga los documentos con sus fechas de vencimiento"
 
-#: .\templates\dashboard\index.html:70
+#: .\templates\dashboard\index.html:82
 msgid "Alert rules defined"
 msgstr "Reglas de alerta definidas"
 
-#: .\templates\dashboard\index.html:70
+#: .\templates\dashboard\index.html:82
 msgid "Define an alert rule"
 msgstr "Define una regla de alerta"
 
-#: .\templates\dashboard\index.html:70
+#: .\templates\dashboard\index.html:82
 msgid "then the daily job generates the alerts"
 msgstr "después el trabajo diario genera las alertas"
 
-#: .\templates\dashboard\index.html:78
+#: .\templates\dashboard\index.html:90
 msgid "Aircraft by Status"
 msgstr "Aeronaves por estado"
 
-#: .\templates\dashboard\index.html:84
+#: .\templates\dashboard\index.html:96
 msgid "Permissions by Status"
 msgstr "Permisos por estado"
 
-#: .\templates\dashboard\index.html:90
+#: .\templates\dashboard\index.html:102
 msgid "Maintenance by Type"
 msgstr "Mantenimiento por tipo"
 
-#: .\templates\dashboard\index.html:99
+#: .\templates\dashboard\index.html:111
 msgid "Tasks per Stage"
 msgstr "Tareas por etapa"
 
-#: .\templates\dashboard\index.html:105
+#: .\templates\dashboard\index.html:117
 msgid "Monthly Flights (6 months)"
 msgstr "Vuelos mensuales (6 meses)"
 
-#: .\templates\dashboard\index.html:115
+#: .\templates\dashboard\index.html:127
 msgid "Upcoming Expirations"
 msgstr "Próximos vencimientos"
 
-#: .\templates\dashboard\index.html:122
+#: .\templates\dashboard\index.html:134
 msgid "No upcoming expirations."
 msgstr "No hay vencimientos próximos."
 
-#: .\templates\dashboard\index.html:128
+#: .\templates\dashboard\index.html:140
 msgid "Tasks by Stage"
 msgstr "Tareas por etapa"
 
-#: .\templates\dashboard\index.html:139
+#: .\templates\dashboard\index.html:151
 msgid "No stages configured."
 msgstr "No hay etapas configuradas."
 
-#: .\templates\dashboard\index.html:158
+#: .\templates\dashboard\index.html:170
 msgid "Tasks"
 msgstr "Tareas"
 
@@ -2297,7 +2303,6 @@ msgstr "Historial de estados"
 #: .\templates\operations\flightrecord_detail.html:21
 #: .\templates\operations\permission_detail.html:13
 #: .\templates\operations\permission_detail.html:14
-#: .\templates\operations\permission_list.html:42
 msgid "Date"
 msgstr "Fecha"
 
@@ -2354,9 +2359,10 @@ msgid "Purpose"
 msgstr "Propósito"
 
 #: .\templates\operations\permission_detail.html:11
+#: .\templates\operations\permission_list.html:42
 #: .\templates\registry\costcenter_detail.html:107
-msgid "Flight date"
-msgstr "Fecha de vuelo"
+msgid "Validity"
+msgstr "Vigencia"
 
 #: .\templates\operations\permission_detail.html:11
 #: .\templates\registry\aircraft_list.html:10
@@ -2829,6 +2835,9 @@ msgstr "Fecha límite"
 #: .\templates\workboard\task_list.html:17
 msgid "No tasks found."
 msgstr "No se encontraron tareas."
+
+#~ msgid "Flight date"
+#~ msgstr "Fecha de vuelo"
 
 #~ msgid ""
 #~ "The interactive map editor is on its way. For now this page shows the "

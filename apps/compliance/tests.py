@@ -174,15 +174,17 @@ class TestFlightAreaAttachments:
             manufacturer="Maker",
             cost_center=center,
         )
-        return FlightPermission.objects.create(
+        permission = FlightPermission.objects.create(
             permission_number="PV-KMZ-1",
-            operator=operator,
-            aircraft=aircraft,
             cost_center=center,
             purpose="Survey",
-            flight_date=timezone.localdate(),
+            valid_from=timezone.localdate(),
+            valid_until=timezone.localdate(),
             location="Antofagasta",
         )
+        permission.operators.add(operator)
+        permission.aircraft_fleet.add(aircraft)
+        return permission
 
     def _form_for(self, permission, upload):
         from django.contrib.contenttypes.models import ContentType

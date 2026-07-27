@@ -70,12 +70,19 @@ class Command(BaseCommand):
                         "issue": "invalid_date_range",
                     }
                 )
-        for permission in FlightPermission.objects.select_related(
-            "operator", "aircraft", "cost_center"
-        ).filter(is_active=True):
+        # OPS-4: operators/aircraft are now a roster (M2M), not one of each, so
+        # every check below scans the roster instead of a single reference.
+        # select_related -> prefetch_related for the M2M half.
+        for permission in (
+            FlightPermission.objects.select_related("cost_center")
+            .prefetch_related("operators", "aircraft_fleet")
+            .filter(is_active=True)
+        ):
+            operators = list(permission.operators.all())
+            aircraft_fleet = list(permission.aircraft_fleet.all())
             if (
-                not permission.operator.is_active
-                or not permission.aircraft.is_active
+                any(not operator.is_active for operator in operators)
+                or any(not aircraft.is_active for aircraft in aircraft_fleet)
                 or not permission.cost_center.is_active
             ):
                 errors.append(
@@ -85,9 +92,12 @@ class Command(BaseCommand):
                         "issue": "inactive_reference",
                     }
                 )
-            if (
-                permission.operator.cost_center_id != permission.cost_center_id
-                or permission.aircraft.cost_center_id != permission.cost_center_id
+            if any(
+                operator.cost_center_id != permission.cost_center_id
+                for operator in operators
+            ) or any(
+                aircraft.cost_center_id != permission.cost_center_id
+                for aircraft in aircraft_fleet
             ):
                 errors.append(
                     {
@@ -99,7 +109,9 @@ class Command(BaseCommand):
         for record in FlightRecord.objects.select_related(
             "permission", "pilot", "aircraft"
         ).filter(is_active=True):
-            if record.permission.aircraft_id != record.aircraft_id:
+            if not record.permission.aircraft_fleet.filter(
+                pk=record.aircraft_id
+            ).exists():
                 errors.append(
                     {
                         "entity": "flight_record",

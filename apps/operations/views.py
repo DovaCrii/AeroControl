@@ -38,9 +38,14 @@ class OList(CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListV
 class OCreate(HtmxFormMixin, ModelPermissionRequiredMixin, CreateView):
     permission_action = "add"
     template_name = "generic/form.html"
+    # This app's list URLs are named "permission-list"/"record-list", not the
+    # "<model_name>-list" this base class assumed (a pre-existing bug: a
+    # successful create crashed with NoReverseMatch, caught by OPS-4's first
+    # test that POSTs all the way through FlightPermissionCreate).
+    success_url_name = None
 
     def get_success_url(self):
-        return reverse(f"{self.model._meta.model_name}-list")
+        return reverse(self.success_url_name or f"{self.model._meta.model_name}-list")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -58,16 +63,39 @@ class FlightPermissionList(
     context_object_name = "objects"
     paginate_by = 25
     search_fields = ["permission_number"]
+    # Explicit override: the default (self.model._meta.fields) silently drops
+    # ManyToManyFields (operators/aircraft_fleet live in _meta.many_to_many,
+    # not _meta.fields), so without this the CSV export would quietly lose
+    # its two most useful columns instead of erroring.
+    csv_fields = [
+        FlightPermission._meta.get_field(name)
+        for name in (
+            "permission_number",
+            "operators",
+            "aircraft_fleet",
+            "cost_center",
+            "purpose",
+            "valid_from",
+            "valid_until",
+            "location",
+            "status",
+        )
+    ]
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = (
+            super().get_queryset().prefetch_related("operators", "aircraft_fleet")
+        )
         status = self.request.GET.get("status", "")
         if status in dict(FlightPermission.STATUS_CHOICES):
             queryset = queryset.filter(status=status)
+        # OPS-4: a permission now covers a range, so "on or after date_from" /
+        # "on or before date_to" become an overlap test against that range,
+        # not an equality test against a single flight_date.
         if self.request.GET.get("date_from"):
-            queryset = queryset.filter(flight_date__gte=self.request.GET["date_from"])
+            queryset = queryset.filter(valid_until__gte=self.request.GET["date_from"])
         if self.request.GET.get("date_to"):
-            queryset = queryset.filter(flight_date__lte=self.request.GET["date_to"])
+            queryset = queryset.filter(valid_from__lte=self.request.GET["date_to"])
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -83,7 +111,11 @@ class FlightPermissionList(
 FlightPermissionCreate = type(
     "FlightPermissionCreate",
     (OCreate,),
-    {"model": FlightPermission, "form_class": FlightPermissionForm},
+    {
+        "model": FlightPermission,
+        "form_class": FlightPermissionForm,
+        "success_url_name": "permission-list",
+    },
 )
 
 
@@ -93,7 +125,12 @@ class FlightPermissionDetail(ModelViewPermissionRequiredMixin, DetailView):
     context_object_name = "permission"
 
     def get_queryset(self):
-        return super().get_queryset().filter(is_active=True)
+        return (
+            super()
+            .get_queryset()
+            .filter(is_active=True)
+            .prefetch_related("operators", "aircraft_fleet")
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -155,6 +192,7 @@ class FlightRecordCreate(OCreate):
     model = FlightRecord
     form_class = FlightRecordForm
     template_name = "operations/flightrecord_form.html"
+    success_url_name = "record-list"
 
     def get_initial(self):
         initial = super().get_initial()
@@ -228,12 +266,20 @@ class CalendarView(CalendarAccessMixin, ListView):
         allowed_types = allowed_calendar_types(self.request.user)
         events = {}
         if "permission" in allowed_types:
+            # OPS-4: a permission spans a validity range, not a single day, so
+            # an overlap test (not equality) selects it, and it is placed on
+            # every day of the month it actually covers -- not just its
+            # start. select_related -> prefetch_related: operators/aircraft
+            # are now M2M, and select_related only ever worked on FK/O2O.
             for permission in FlightPermission.objects.filter(
-                flight_date__range=(month_start, month_end), is_active=True
-            ).select_related("operator", "aircraft"):
-                events.setdefault(permission.flight_date, []).append(
-                    ("permission", permission)
-                )
+                valid_from__lte=month_end, valid_until__gte=month_start, is_active=True
+            ).prefetch_related("operators", "aircraft_fleet"):
+                first_day = max(permission.valid_from, month_start)
+                last_day = min(permission.valid_until, month_end)
+                day = first_day
+                while day <= last_day:
+                    events.setdefault(day, []).append(("permission", permission))
+                    day += timedelta(days=1)
         if "maintenance" in allowed_types:
             for record in MaintenanceRecord.objects.filter(
                 scheduled_date__range=(month_start, month_end), is_active=True

@@ -37,9 +37,9 @@
       <thead>
         <tr>
           <th>{% translate "Number" %}</th>
-          <th>{% translate "Operator" %}</th>
+          <th>{% translate "Operators" %}</th>
           <th>{% translate "Aircraft" %}</th>
-          <th>{% translate "Date" %}</th>
+          <th>{% translate "Validity" %}</th>
           <th>{% translate "Status" %}</th>
           <th class="text-end">{% translate "Actions" %}</th>
         </tr>
@@ -48,9 +48,9 @@
         {% for object in objects %}
         <tr>
           <td><a href="{{ object.pk }}/">{{ object.permission_number }}</a></td>
-          <td>{{ object.operator }}</td>
-          <td>{{ object.aircraft }}</td>
-          <td>{{ object.flight_date|date:"Y-m-d" }}</td>
+          <td>{% for operator in object.operators.all %}{{ operator }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+          <td>{% for aircraft in object.aircraft_fleet.all %}{{ aircraft }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+          <td>{{ object.valid_from|date:"Y-m-d" }} – {{ object.valid_until|date:"Y-m-d" }}</td>
           <td><span class="badge bg-{% if object.status == 'approved' %}success{% elif object.status == 'denied' %}danger{% elif object.status == 'completed' %}info{% else %}warning{% endif %}">{{ object.get_status_display }}</span></td>
           <td class="text-end">
             <a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">{% translate "View" %}</a>

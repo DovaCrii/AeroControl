@@ -51,15 +51,16 @@ def test_filter_narrows_aircraft_and_permission_counts(auth_client):
     _aircraft(cc1, "CC-A1")
     aircraft2 = _aircraft(cc2, "CC-A2")
     operator = Operator.objects.create(employee_id="E1", full_name="Pilot")
-    FlightPermission.objects.create(
+    permission = FlightPermission.objects.create(
         permission_number="P-1",
-        operator=operator,
-        aircraft=aircraft2,
         cost_center=cc2,
         purpose="Survey",
-        flight_date="2026-01-01",
+        valid_from="2026-01-01",
+        valid_until="2026-01-01",
         location="Site",
     )
+    permission.operators.add(operator)
+    permission.aircraft_fleet.add(aircraft2)
 
     response = auth_client.get(reverse("dashboard"), {"cost_center": cc2.pk})
 

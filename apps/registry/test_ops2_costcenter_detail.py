@@ -121,15 +121,16 @@ class TestPermissionsTab:
         aircraft = Aircraft.objects.create(
             registration="CC-XYZ", type="RPA", model="M3", manufacturer="DJI"
         )
-        FlightPermission.objects.create(
+        permission = FlightPermission.objects.create(
             permission_number="P-1",
-            operator=operator,
-            aircraft=aircraft,
             cost_center=cc,
             purpose="Survey",
-            flight_date=TODAY,
+            valid_from=TODAY,
+            valid_until=TODAY,
             location="Site",
         )
+        permission.operators.add(operator)
+        permission.aircraft_fleet.add(aircraft)
         response = _client("view_costcenter", "view_flightpermission").get(_url(cc))
         assert "P-1" in response.content.decode()
 
