@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load aero_tags i18n %}
+{% block title %}{{ object }} - AeroControl{% endblock %}
+{% block content %}
+<div class="card p-4">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h1 class="h3 mb-0">{{ object }}{% if not object.is_active %} <span class="badge bg-secondary align-middle">{% translate "Archived" %}</span>{% endif %}</h1>
+    <div class="d-flex gap-2">
+      {% if list_url %}<a href="{{ list_url }}" class="btn btn-outline-secondary">← {% translate "Back to list" %}</a>{% endif %}
+      {% if can_change and object.is_active %}<a href="{{ update_url }}" class="btn btn-outline-primary">{% translate "Edit" %}</a>{% endif %}
+      {% if object.is_active and can_archive %}
+      <form method="post" action="{{ archive_url }}">{% csrf_token %}<button class="btn btn-outline-danger" type="submit">{% translate "Archive" %}</button></form>
+      {% elif not object.is_active and can_change %}
+      <form method="post" action="{{ restore_url }}">{% csrf_token %}<button class="btn btn-outline-success" type="submit">{% translate "Restore" %}</button></form>
+      {% endif %}
+    </div>
+  </div>
+
+  {% include "generic/_fields_detail_table.html" %}
+</div>
+
+{% if movements is not None %}
+<div class="card mt-3 p-4">
+  <h2 class="h5 mb-3">{% translate "Movement history" %}</h2>
+  {% if movements %}
+  <table class="table table-sm">
+    <thead><tr><th>{% translate "Movement" %}</th><th>{% translate "From" %}</th><th>{% translate "To" %}</th><th>{% translate "Created" %}</th></tr></thead>
+    <tbody>
+      {% for entry in movements %}
+      <tr>
+        <td>{{ entry.get_movement_display }}</td>
+        <td>{{ entry.from_cost_center|default:"—" }}</td>
+        <td>{{ entry.to_cost_center|default:"—" }}</td>
+        <td><span class="text-nowrap">{{ entry.created_at|date:'Y-m-d H:i' }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="text-muted mb-0">{% translate "No movements recorded yet." %}</p>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}
