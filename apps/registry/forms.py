@@ -2,7 +2,15 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from apps.core.forms import AeroModelForm
-from .models import Aircraft, Assignment, CostCenter, Operator, Qualification
+from .models import (
+    Aircraft,
+    AircraftAssignment,
+    Assignment,
+    CostCenter,
+    Operator,
+    OperatorAssignment,
+    Qualification,
+)
 
 
 class CostCenterForm(AeroModelForm):
@@ -176,6 +184,57 @@ class AssignmentForm(AeroModelForm):
                 _("This aircraft already has a confirmed assignment in this period."),
             )
         return cleaned
+
+
+class OperatorAssignmentForm(AeroModelForm):
+    """OPS-1 per-resource assignment: an operator anchored to a cost center.
+
+    No custom clean() needed here: ModelForm._post_clean() calls
+    instance.full_clean(), which runs ResourceAssignment.clean() (the overlap
+    check) automatically and attaches its errors to the right field.
+    """
+
+    class Meta:
+        model = OperatorAssignment
+        fields = [
+            "operator",
+            "cost_center",
+            "start_date",
+            "end_date",
+            "status",
+            "purpose",
+        ]
+        labels = {
+            "operator": _("Operator"),
+            "cost_center": _("Cost center"),
+            "start_date": _("Start date"),
+            "end_date": _("End date"),
+            "status": _("Status"),
+            "purpose": _("Operation or purpose"),
+        }
+
+
+class AircraftAssignmentForm(AeroModelForm):
+    """OPS-1 per-resource assignment: an aircraft anchored to a cost center."""
+
+    class Meta:
+        model = AircraftAssignment
+        fields = [
+            "aircraft",
+            "cost_center",
+            "start_date",
+            "end_date",
+            "status",
+            "purpose",
+        ]
+        labels = {
+            "aircraft": _("Aircraft"),
+            "cost_center": _("Cost center"),
+            "start_date": _("Start date"),
+            "end_date": _("End date"),
+            "status": _("Status"),
+            "purpose": _("Operation or purpose"),
+        }
 
 
 class QualificationForm(AeroModelForm):
