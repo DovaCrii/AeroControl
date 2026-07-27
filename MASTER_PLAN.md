@@ -562,7 +562,7 @@ arranca la implementación sin "go" explícito del usuario.**
 | OPS-5 | ⬜ | Adjuntos (cartas Word/PDF) en el detalle del permiso: `DocumentType` dedicado + UI sobre el pipeline endurecido existente | OPS-4 |
 | OPS-6 | ⬜ | Timelines separados por entidad (operador, aeronave, permiso, contrato) | OPS-1..4 |
 | OPS-7 | ⬜ | Log de asociación plan geo ↔ permiso (cuándo se vincula, desde qué fecha) | OPS-4, GEO-1 |
-| OPS-8 | ⬜ | Dashboard: filtro global por centro de costo + pase de mejoras visuales (tipografía/densidad) | OPS-2 |
+| OPS-8 | 🔄 | Filtro global `?cost_center=` aplicado a cada métrica con ruta directa o de un salto a `CostCenter` (aeronaves, operadores, vencimientos, permisos, mantenimiento, vuelos mensuales); id inválido o archivado se ignora en silencio. Deliberadamente **no** filtrado: Kanban (escala por tenant/acceso al tablero, eje distinto) y alertas (genéricas, requiere resolución por tipo de entidad aparte). 5 tests. (`ada6a79`) **Pendiente:** el pase de mejoras visuales (tipografía/densidad) — necesita preferencias de diseño del usuario, no se improvisa sin esa entrada. | OPS-2 |
 
 **Migración de datos es el riesgo principal** (14 aeronaves y 41 operadores reales cargados): migraciones idempotentes, backup previo, pruebas sobre copia de `aero_ops.sqlite3`. Toca la deuda F-08 (tenancy) sin ampliarla.
 
