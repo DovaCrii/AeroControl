@@ -152,15 +152,16 @@ def test_calendar_feed_contains_resource_and_expiration_events(
         issue_date=date(2026, 1, 1),
         expiry_date=date(2026, 7, 21),
     )
-    FlightPermission.objects.create(
+    permission = FlightPermission.objects.create(
         permission_number="PERM-1",
-        operator=operator,
-        aircraft=aircraft,
         cost_center=center,
         purpose="Inspection",
-        flight_date=date(2026, 7, 20),
+        valid_from=date(2026, 7, 20),
+        valid_until=date(2026, 7, 20),
         location="Santiago",
     )
+    permission.operators.add(operator)
+    permission.aircraft_fleet.add(aircraft)
     client.force_login(admin_user)
 
     response = client.get(

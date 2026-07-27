@@ -134,10 +134,19 @@ class CsvExportMixin:
         # str(value) on an FK column used to fire one query per relation per
         # row, and the whole table was materialised in memory: a full flight
         # log export was ~3 queries per row. Join the relations up front and
-        # stream in chunks instead.
-        related = [field.name for field in fields if field.is_relation]
+        # stream in chunks instead. select_related only accepts forward FK/O2O,
+        # never M2M (OPS-4's FlightPermission.operators/aircraft_fleet), so
+        # those are prefetched instead.
+        related = [
+            field.name
+            for field in fields
+            if field.is_relation and not field.many_to_many
+        ]
         if related:
             queryset = queryset.select_related(*related)
+        many_related = [field.name for field in fields if field.many_to_many]
+        if many_related:
+            queryset = queryset.prefetch_related(*many_related)
 
         def rows():
             yield "\ufeff"  # the BOM makes UTF-8 CSV open correctly in Excel
@@ -147,6 +156,15 @@ class CsvExportMixin:
             for obj in queryset.iterator(chunk_size=2000):
                 row = []
                 for field in fields:
+                    if field.many_to_many:
+                        # getattr() on a M2M field returns a manager, not a
+                        # value; a plain str(value) would print a repr like
+                        # "<RelatedManager ...>" instead of the members.
+                        value = ", ".join(
+                            str(item) for item in getattr(obj, field.name).all()
+                        )
+                        row.append(value)
+                        continue
                     value = getattr(obj, field.name)
                     if value is None:
                         row.append("")
@@ -389,27 +407,43 @@ class UnifiedCalendarEventsView(CalendarAccessMixin, View):
             )
 
         if "permission" in selected_types:
+            # OPS-4: a permission now covers a validity range (not a single
+            # flight_date) for a roster of operators/aircraft (not one of
+            # each), so this is an overlap test against [start, end] and a
+            # FullCalendar start/end range instead of a single "start" day.
+            # select_related -> prefetch_related: M2M isn't selectable.
             permissions = FlightPermission.objects.filter(
-                flight_date__range=(start, end), is_active=True
-            ).select_related("operator", "aircraft")
+                valid_from__lte=end, valid_until__gte=start, is_active=True
+            ).prefetch_related("operators", "aircraft_fleet")
             if tenant_ids is not None:
                 permissions = permissions.filter(
-                    Q(operator__tenant_id__in=tenant_ids)
-                    | Q(aircraft__tenant_id__in=tenant_ids)
+                    Q(operators__tenant_id__in=tenant_ids)
+                    | Q(aircraft_fleet__tenant_id__in=tenant_ids)
                     | Q(cost_center__tenant_id__in=tenant_ids)
-                )
+                ).distinct()
             if cost_center_id:
                 permissions = permissions.filter(cost_center_id=cost_center_id)
             if aircraft_id:
-                permissions = permissions.filter(aircraft_id=aircraft_id)
+                permissions = permissions.filter(
+                    aircraft_fleet__id=aircraft_id
+                ).distinct()
             if operator_id:
-                permissions = permissions.filter(operator_id=operator_id)
+                permissions = permissions.filter(operators__id=operator_id).distinct()
+
+            def _permission_title(permission):
+                names = [operator.full_name for operator in permission.operators.all()]
+                if not names:
+                    return permission.permission_number
+                label = names[0] if len(names) == 1 else f"{names[0]} +{len(names) - 1}"
+                return f"{permission.permission_number} · {label}"
+
             events.extend(
                 {
                     "id": f"permission-{permission.pk}",
                     "type": "permission",
-                    "title": f"{permission.permission_number} · {permission.operator}",
-                    "start": permission.flight_date.isoformat(),
+                    "title": _permission_title(permission),
+                    "start": permission.valid_from.isoformat(),
+                    "end": (permission.valid_until + timedelta(days=1)).isoformat(),
                     "allDay": True,
                     "color": self.EVENT_COLORS["permission"],
                     "url": reverse("permission-detail", args=[permission.pk]),

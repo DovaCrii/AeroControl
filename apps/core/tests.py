@@ -76,13 +76,14 @@ class TestPublicURLs:
         )
         permission = FlightPermission.objects.create(
             permission_number="CAL-001",
-            operator=operator,
-            aircraft=aircraft,
             cost_center=center,
             purpose="Inspection",
-            flight_date=date(2026, 7, 24),
+            valid_from=date(2026, 7, 24),
+            valid_until=date(2026, 7, 24),
             location="Santiago",
         )
+        permission.operators.add(operator)
+        permission.aircraft_fleet.add(aircraft)
         maintenance = MaintenanceRecord.objects.create(
             aircraft=aircraft,
             maintenance_type="scheduled",

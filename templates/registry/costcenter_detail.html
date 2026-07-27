@@ -104,12 +104,12 @@
     {% if flight_permissions is not None %}
     <div class="tab-pane fade" id="tab-permissions" role="tabpanel">
       <table class="table table-hover">
-        <thead><tr><th>{% translate "Permission" %}</th><th>{% translate "Flight date" %}</th><th>{% translate "Status" %}</th></tr></thead>
+        <thead><tr><th>{% translate "Permission" %}</th><th>{% translate "Validity" %}</th><th>{% translate "Status" %}</th></tr></thead>
         <tbody>
           {% for permission in flight_permissions %}
           <tr>
             <td><a href="{% url 'permission-detail' permission.pk %}">{{ permission.permission_number }}</a></td>
-            <td>{{ permission.flight_date|date:'Y-m-d' }}</td>
+            <td>{{ permission.valid_from|date:'Y-m-d' }} – {{ permission.valid_until|date:'Y-m-d' }}</td>
             <td>{{ permission.get_status_display }}</td>
           </tr>
           {% empty %}

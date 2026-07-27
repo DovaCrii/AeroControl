@@ -173,9 +173,20 @@ def merge_operators(canonical, duplicates, actor=None):
         for relation in Operator._meta.related_objects:
             related_model = relation.related_model
             field_name = relation.field.name
-            updated = related_model.objects.filter(**{field_name: duplicate}).update(
-                **{field_name: canonical}
-            )
+            if relation.many_to_many:
+                # A M2M reverse relation (e.g. FlightPermission.operators,
+                # OPS-4): there is no bulk .update() for M2M, so swap
+                # membership row by row instead.
+                updated = 0
+                for obj in related_model.objects.filter(**{field_name: duplicate}):
+                    manager = getattr(obj, field_name)
+                    manager.remove(duplicate)
+                    manager.add(canonical)
+                    updated += 1
+            else:
+                updated = related_model.objects.filter(
+                    **{field_name: duplicate}
+                ).update(**{field_name: canonical})
             if updated:
                 label = f"{related_model._meta.label}.{field_name}"
                 moved[label] = moved.get(label, 0) + updated

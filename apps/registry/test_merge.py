@@ -97,13 +97,14 @@ def test_merge_moves_every_fk_reference_and_archives_the_duplicate(cost_center):
     )
     permission = FlightPermission.objects.create(
         permission_number="PERM-1",
-        operator=duplicate,
-        aircraft=aircraft,
         cost_center=cost_center,
         purpose="Training",
-        flight_date=date(2026, 7, 22),
+        valid_from=date(2026, 7, 22),
+        valid_until=date(2026, 7, 22),
         location="Santiago",
     )
+    permission.operators.add(duplicate)
+    permission.aircraft_fleet.add(aircraft)
     other_cc = CostCenter.objects.create(code="OTRA", name="Otra")
     other_cc.responsible_operator = duplicate
     other_cc.save(update_fields=["responsible_operator"])
@@ -111,11 +112,13 @@ def test_merge_moves_every_fk_reference_and_archives_the_duplicate(cost_center):
     result = merge_operators(canonical, [duplicate])
 
     qualification.refresh_from_db()
-    permission.refresh_from_db()
     other_cc.refresh_from_db()
     duplicate.refresh_from_db()
     assert qualification.operator_id == canonical.pk
-    assert permission.operator_id == canonical.pk
+    # OPS-4: operators is now M2M -- the merge must swap membership, not
+    # update a FK column that no longer exists.
+    assert permission.operators.filter(pk=canonical.pk).exists()
+    assert not permission.operators.filter(pk=duplicate.pk).exists()
     assert other_cc.responsible_operator_id == canonical.pk
     # Archived, never deleted
     assert duplicate.is_active is False

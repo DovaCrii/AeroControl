@@ -302,7 +302,7 @@ class CostCenterDetail(RegistryDetail):
         if user.has_perm("operations.view_flightpermission"):
             context["flight_permissions"] = FlightPermission.objects.filter(
                 cost_center=cost_center, is_active=True
-            ).order_by("-flight_date")
+            ).order_by("-valid_from")
         else:
             context["flight_permissions"] = None
 
