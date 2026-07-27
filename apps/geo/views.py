@@ -44,8 +44,45 @@ class GeoPlanDetailView(ModelViewPermissionRequiredMixin, DetailView):
         )
 
     def get_context_data(self, **kwargs):
+        from django.conf import settings
+        from django.urls import reverse
+        from django.utils.translation import gettext as _
+
         context = super().get_context_data(**kwargs)
-        context["versions"] = self.object.versions.order_by("-version_number")
+        plan = self.object
+        context["versions"] = plan.versions.order_by("-version_number")
+        # Config for the read-only map island (GEO-7). Only the current version
+        # is shown; the island fetches its canonical document from the read API
+        # and never carries business rules. editable is False here -- editing is
+        # GEO-8, gated on geo.change_geoplan.
+        current = plan.current_version
+        context["map_config"] = {
+            "planId": str(plan.pk),
+            "currentVersion": current.version_number if current else None,
+            "contentUrl": (
+                reverse(
+                    "api-v1-geo-plan-version-content",
+                    args=[plan.pk, current.version_number],
+                )
+                if current
+                else None
+            ),
+            "tileProviders": settings.GEO_TILE_PROVIDERS,
+            "editable": False,
+            "iconBase": settings.STATIC_URL + "vendor/leaflet/images/",
+            # The island is client-side JS (outside gettext's reach), so its
+            # user-visible strings are localized here and passed through.
+            "labels": {
+                "untitled": _("Untitled"),
+                "length": _("Length"),
+                "area": _("Area"),
+                "layers": _("Layers"),
+                "features": _("Features"),
+                "loading": _("Loading map…"),
+                "error": _("The map could not be loaded."),
+                "empty": _("This version has no geometry to show."),
+            },
+        }
         return context
 
 

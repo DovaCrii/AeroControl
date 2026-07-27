@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-27 13:32-0400\n"
+"POT-Creation-Date: 2026-07-27 13:55-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -506,6 +506,38 @@ msgstr "entrada del historial del plan geoespacial"
 #: .\apps\geo\models.py:211
 msgid "geo plan history"
 msgstr "historial del plan geoespacial"
+
+#: .\apps\geo\views.py:76
+msgid "Untitled"
+msgstr "Sin título"
+
+#: .\apps\geo\views.py:77
+msgid "Length"
+msgstr "Longitud"
+
+#: .\apps\geo\views.py:78
+msgid "Area"
+msgstr "Área"
+
+#: .\apps\geo\views.py:79 .\templates\geo\plan_detail.html:34
+msgid "Layers"
+msgstr "Capas"
+
+#: .\apps\geo\views.py:80 .\templates\geo\plan_detail.html:48
+msgid "Features"
+msgstr "Elementos"
+
+#: .\apps\geo\views.py:81
+msgid "Loading map…"
+msgstr "Cargando el mapa…"
+
+#: .\apps\geo\views.py:82
+msgid "The map could not be loaded."
+msgstr "No se pudo cargar el mapa."
+
+#: .\apps\geo\views.py:83
+msgid "This version has no geometry to show."
+msgstr "Esta versión no tiene geometría para mostrar."
 
 #: .\apps\maintenance\models.py:10 .\templates\maintenance\record_list.html:15
 msgid "Scheduled"
@@ -1076,7 +1108,7 @@ msgstr "Centros de costo"
 msgid "Planning"
 msgstr "Planificación"
 
-#: .\templates\base.html:63 .\templates\geo\plan_detail.html:7
+#: .\templates\base.html:63 .\templates\geo\plan_detail.html:14
 #: .\templates\geo\plan_import.html:7 .\templates\geo\plan_list.html:3
 #: .\templates\geo\plan_list.html:6
 msgid "Geospatial planning"
@@ -1182,7 +1214,7 @@ msgstr "Cancelar"
 #: .\templates\compliance\_document_rows.html:8
 #: .\templates\compliance\document_list.html:13
 #: .\templates\compliance\document_list.html:16
-#: .\templates\geo\plan_detail.html:37
+#: .\templates\geo\plan_detail.html:55
 msgid "Current"
 msgstr "Vigente"
 
@@ -1915,54 +1947,46 @@ msgstr "Exportar CSV"
 msgid "All statuses"
 msgstr "Todos los estados"
 
-#: .\templates\generic\list.html:25 .\templates\geo\plan_detail.html:31
+#: .\templates\generic\list.html:25 .\templates\geo\plan_detail.html:49
 #: .\templates\geo\plan_list.html:19
 msgid "Created"
 msgstr "Creado"
 
-#: .\templates\geo\plan_detail.html:16 .\templates\geo\plan_import.html:11
+#: .\templates\geo\plan_detail.html:23 .\templates\geo\plan_import.html:11
 msgid "Back to plans"
 msgstr "Volver a los planes"
 
-#: .\templates\geo\plan_detail.html:23
+#: .\templates\geo\plan_detail.html:29
+msgid "Map"
+msgstr "Mapa"
+
+#: .\templates\geo\plan_detail.html:41
 msgid "Versions"
 msgstr "Versiones"
 
-#: .\templates\geo\plan_detail.html:28 .\templates\geo\plan_list.html:18
+#: .\templates\geo\plan_detail.html:46 .\templates\geo\plan_list.html:18
 msgid "Version"
 msgstr "Versión"
 
-#: .\templates\geo\plan_detail.html:29
+#: .\templates\geo\plan_detail.html:47
 msgid "Source"
 msgstr "Origen"
 
-#: .\templates\geo\plan_detail.html:30
-msgid "Features"
-msgstr "Elementos"
-
-#: .\templates\geo\plan_detail.html:43
+#: .\templates\geo\plan_detail.html:61
 msgid "No versions yet."
 msgstr "Aún no hay versiones."
 
-#: .\templates\geo\plan_detail.html:54
+#: .\templates\geo\plan_detail.html:72
 msgid "Source file"
 msgstr "Archivo de origen"
 
-#: .\templates\geo\plan_detail.html:58
+#: .\templates\geo\plan_detail.html:76
 msgid "Download original"
 msgstr "Descargar original"
 
-#: .\templates\geo\plan_detail.html:61
+#: .\templates\geo\plan_detail.html:79
 msgid "No source file."
 msgstr "Sin archivo de origen."
-
-#: .\templates\geo\plan_detail.html:69
-msgid ""
-"The interactive map editor is on its way. For now this page shows the plan, "
-"its versions and the original file."
-msgstr ""
-"El editor de mapa interactivo está en camino. Por ahora esta página muestra "
-"el plan, sus versiones y el archivo original."
 
 #: .\templates\geo\plan_import.html:3 .\templates\geo\plan_import.html:8
 #: .\templates\geo\plan_list.html:7
@@ -2485,3 +2509,10 @@ msgstr "Fecha límite"
 #: .\templates\workboard\task_list.html:17
 msgid "No tasks found."
 msgstr "No se encontraron tareas."
+
+#~ msgid ""
+#~ "The interactive map editor is on its way. For now this page shows the "
+#~ "plan, its versions and the original file."
+#~ msgstr ""
+#~ "El editor de mapa interactivo está en camino. Por ahora esta página "
+#~ "muestra el plan, sus versiones y el archivo original."

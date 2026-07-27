@@ -1,6 +1,13 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n static %}
 {% block title %}{{ plan.title }} - AeroControl{% endblock %}
+
+{% block extrahead %}
+<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}"
+      integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H"
+      crossorigin="anonymous">
+{% endblock %}
+
 {% block content %}
 <div class="page-header">
   <div>
@@ -14,6 +21,17 @@
   <div class="d-flex gap-2 align-items-center">
     {% include "geo/_status_badge.html" with status=plan.status label=plan.get_status_display %}
     <a class="btn btn-outline-secondary" href="{% url 'geo-plan-list' %}">{% translate "Back to plans" %}</a>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="admin-section-header">
+    <h2 class="admin-section-title">{% translate "Map" %}</h2>
+    <span id="geo-map-status" class="text-muted small"></span>
+  </div>
+  <div class="geo-map-wrap">
+    <div id="geo-map" class="geo-map"></div>
+    <aside id="geo-panel" class="geo-panel" aria-label="{% translate 'Layers' %}"></aside>
   </div>
 </div>
 
@@ -60,15 +78,17 @@
         {% else %}
         <p class="text-muted mb-0">{% translate "No source file." %}</p>
         {% endif %}
-        <hr>
-        {% comment %}The interactive map editor is GEO-7/8; this shell ships
-        first so import, versioning and the workflow are usable while the
-        island is built.{% endcomment %}
-        <p class="text-muted small mb-0">
-          {% translate "The interactive map editor is on its way. For now this page shows the plan, its versions and the original file." %}
-        </p>
       </div>
     </div>
   </div>
 </div>
+
+{{ map_config|json_script:"geo-map-config" }}
+{% endblock %}
+
+{% block extrascripts %}
+<script src="{% static 'vendor/leaflet/leaflet.js' %}"
+        integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH"
+        crossorigin="anonymous"></script>
+<script type="module" src="{% static 'js/geo/main.js' %}"></script>
 {% endblock %}

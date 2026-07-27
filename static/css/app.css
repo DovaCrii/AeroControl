@@ -1118,3 +1118,68 @@ main {
   .workboard-toolbar > * { width: 100%; }
   .workboard-toolbar .kanban-filter { width: 100%; }
 }
+
+/* ── BLOQUE GEO — read-only map island (GEO-7) ──────────────────────────── */
+.geo-map-wrap {
+  display: flex;
+  gap: 0;
+  min-height: 480px;
+}
+.geo-map {
+  flex: 1 1 auto;
+  min-height: 480px;
+  height: 480px;
+  z-index: 0; /* keep Leaflet panes under the app sidebar/modals */
+}
+.geo-panel {
+  flex: 0 0 240px;
+  max-width: 240px;
+  overflow-y: auto;
+  max-height: 480px;
+  border-left: 1px solid var(--ac-border);
+  background: var(--ac-surface-raised);
+  color: var(--ac-text);
+  font-size: 0.85rem;
+}
+.geo-panel-head {
+  padding: 0.5rem 0.75rem;
+  font-weight: 600;
+  color: var(--ac-text-secondary);
+  border-bottom: 1px solid var(--ac-border);
+}
+.geo-panel-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  margin: 0;
+  cursor: pointer;
+}
+.geo-panel-label {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.geo-panel-count {
+  flex: 0 0 auto;
+  color: var(--ac-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.geo-popup strong { display: block; }
+.geo-popup-desc { margin: 0.25rem 0 0; white-space: pre-wrap; }
+.geo-popup-measure { margin: 0.25rem 0 0; font-variant-numeric: tabular-nums; }
+@media (max-width: 768px) {
+  .geo-map-wrap { flex-direction: column; }
+  .geo-panel { flex-basis: auto; max-width: none; max-height: 160px; border-left: 0; border-top: 1px solid var(--ac-border); }
+}
+
+/* Leaflet renders its controls and popups on their own light surfaces. The
+   app's dark theme sets a light text color on containers, which the layer
+   switcher inherits -> light text on white, unreadable. Force dark, theme-
+   independent text on Leaflet's own chrome (the map tiles are unaffected). */
+.leaflet-container .leaflet-control-layers,
+.leaflet-container .leaflet-control-layers label,
+.leaflet-container .leaflet-control-layers-list {
+  color: #1b2737;
+}

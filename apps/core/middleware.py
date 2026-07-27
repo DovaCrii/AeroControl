@@ -38,7 +38,11 @@ class RequestMetricsMiddleware:
             response["Content-Security-Policy-Report-Only"] = (
                 "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; "
                 "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
-                "img-src 'self' data:; font-src 'self' https://cdn.jsdelivr.net; "
+                # Tile hosts for the geo map island (GEO-7); keep in sync with
+                # settings.GEO_TILE_PROVIDERS.
+                "img-src 'self' data: https://*.tile.openstreetmap.org "
+                "https://server.arcgisonline.com; "
+                "font-src 'self' https://cdn.jsdelivr.net; "
                 "object-src 'none'; base-uri 'self'; frame-ancestors 'none'; "
                 "form-action 'self'"
             )
