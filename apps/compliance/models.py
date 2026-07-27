@@ -46,7 +46,9 @@ class Document(BaseModel):
     content_type = models.ForeignKey(ContentType, on_delete=models.PROTECT)
     object_id = models.UUIDField()
     content_object = GenericForeignKey("content_type", "object_id")
-    doc_type = models.ForeignKey(DocumentType, on_delete=models.PROTECT)
+    doc_type = models.ForeignKey(
+        DocumentType, on_delete=models.PROTECT, verbose_name=_("Document type")
+    )
     title = models.CharField(max_length=200)
     file_path = models.CharField(max_length=500)
     issue_date = models.DateField()
