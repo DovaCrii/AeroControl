@@ -45,3 +45,72 @@ export function toGeoJSON(item) {
     properties: { uid: item.uid, name: item.name },
   };
 }
+
+// ── Editing helpers (GEO-8): mutate the canonical tree by uid ──────────────
+
+// Find a placemark node anywhere in the tree by its uid, or null.
+export function findPlacemark(doc, uid) {
+  let found = null;
+  function walk(nodes) {
+    for (const node of nodes || []) {
+      if (found) {
+        return;
+      }
+      if (node.kind === "placemark" && node.uid === uid) {
+        found = node;
+        return;
+      }
+      if (node.kind === "folder") {
+        walk(node.children);
+      }
+    }
+  }
+  walk(doc.children);
+  return found;
+}
+
+// Remove a placemark by uid from wherever it lives. Returns true if removed.
+export function removePlacemark(doc, uid) {
+  function walk(nodes) {
+    for (let i = 0; i < (nodes || []).length; i += 1) {
+      const node = nodes[i];
+      if (node.kind === "placemark" && node.uid === uid) {
+        nodes.splice(i, 1);
+        return true;
+      }
+      if (node.kind === "folder" && walk(node.children)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  return walk(doc.children);
+}
+
+// Append a new placemark to the document root.
+export function addPlacemark(doc, uid, geometry) {
+  if (!Array.isArray(doc.children)) {
+    doc.children = [];
+  }
+  const node = {
+    kind: "placemark",
+    uid,
+    name: "",
+    description: "",
+    geometry,
+  };
+  doc.children.push(node);
+  return node;
+}
+
+// Leaflet layer -> canonical geometry ([lon, lat] order, same as GeoJSON).
+export function geometryFromLayer(layer) {
+  const gj = layer.toGeoJSON();
+  return gj && gj.geometry ? gj.geometry : null;
+}
+
+let uidCounter = 0;
+export function newUid() {
+  uidCounter += 1;
+  return `e-${Date.now().toString(36)}-${uidCounter}`;
+}

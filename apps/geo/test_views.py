@@ -165,3 +165,59 @@ class TestListAndDetail:
         config = response.context["map_config"]
         assert config["currentVersion"] is None
         assert config["contentUrl"] is None
+
+
+class TestEditorConfig:
+    @staticmethod
+    def _plan(db, status="draft"):
+        center = CostCenter.objects.create(code="CC1", name="Uno")
+        user = User.objects.create_user("owner", password="pw")
+        plan = GeoPlan.objects.create(
+            title="Plan", cost_center=center, created_by=user, status=status
+        )
+        version = GeoPlanVersion.objects.create(
+            plan=plan,
+            version_number=1,
+            content={"schema_version": 1, "children": []},
+            content_checksum="0" * 64,
+            source="import",
+            created_by=user,
+        )
+        plan.current_version = version
+        plan.save(update_fields=["current_version", "updated_at"])
+        return plan
+
+    @pytest.mark.django_db
+    def test_change_permission_and_editable_status_enables_editor(self, db):
+        plan = self._plan(db, status="editing")
+        response = _client("view_geoplan", "change_geoplan").get(
+            reverse("geo-plan-detail", args=[plan.pk])
+        )
+        config = response.context["map_config"]
+        assert config["editable"] is True
+        assert config["commitUrl"].endswith("/versions/")
+        assert config["baseVersion"] == 1
+        assert config["csrfToken"]  # a token is issued for the write
+        content = response.content.decode()
+        assert "leaflet-geoman" in content  # editor assets loaded
+        assert 'id="geo-save"' in content
+
+    @pytest.mark.django_db
+    def test_view_only_user_gets_read_only(self, db):
+        plan = self._plan(db, status="editing")
+        response = _client("view_geoplan").get(
+            reverse("geo-plan-detail", args=[plan.pk])
+        )
+        config = response.context["map_config"]
+        assert config["editable"] is False
+        assert config["csrfToken"] == ""
+        assert "leaflet-geoman" not in response.content.decode()
+
+    @pytest.mark.django_db
+    def test_approved_plan_is_not_editable_even_with_change_permission(self, db):
+        plan = self._plan(db, status="approved")
+        response = _client("view_geoplan", "change_geoplan").get(
+            reverse("geo-plan-detail", args=[plan.pk])
+        )
+        assert response.context["map_config"]["editable"] is False
+        assert "leaflet-geoman" not in response.content.decode()

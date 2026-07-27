@@ -1183,3 +1183,28 @@ main {
 .leaflet-container .leaflet-control-layers-list {
   color: #1b2737;
 }
+
+/* GEO-8 editor chrome */
+.geo-banner {
+  padding: 0.5rem 0.9rem;
+  background: #7a2e2e;
+  color: #fff;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+.geo-dialog {
+  border: 1px solid var(--ac-border);
+  border-radius: 0.5rem;
+  background: var(--ac-surface-raised);
+  color: var(--ac-text);
+  padding: 1rem;
+  width: min(420px, 92vw);
+}
+.geo-dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
+.geo-popup-edit input,
+.geo-popup-edit textarea { margin-bottom: 0.35rem; }
+/* Geoman's toolbar sits on its own light surface, like Leaflet's controls. */
+.leaflet-container .leaflet-pm-toolbar .leaflet-pm-actions-container { color: #1b2737; }

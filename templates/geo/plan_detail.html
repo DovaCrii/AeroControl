@@ -6,6 +6,11 @@
 <link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}"
       integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H"
       crossorigin="anonymous">
+{% if editable %}
+<link rel="stylesheet" href="{% static 'vendor/leaflet-geoman/leaflet-geoman.css' %}"
+      integrity="sha384-++juJE6hRzkkV4Ri9H2C+3yjCTdEk4PaZxptm3cpgKKjuMcAHErn35Q/0sGitZCR"
+      crossorigin="anonymous">
+{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -27,13 +32,38 @@
 <div class="card mb-3">
   <div class="admin-section-header">
     <h2 class="admin-section-title">{% translate "Map" %}</h2>
-    <span id="geo-map-status" class="text-muted small"></span>
+    <div class="d-flex align-items-center gap-2">
+      <span id="geo-map-status" class="text-muted small"></span>
+      {% if editable %}
+      <span id="geo-dirty" class="text-warning small"></span>
+      <button type="button" id="geo-undo" class="btn btn-sm btn-outline-secondary" disabled>{% translate "Undo" %}</button>
+      <button type="button" id="geo-redo" class="btn btn-sm btn-outline-secondary" disabled>{% translate "Redo" %}</button>
+      <button type="button" id="geo-save" class="btn btn-sm btn-primary">{% translate "Save" %}</button>
+      {% endif %}
+    </div>
   </div>
+  {% if editable %}
+  <div id="geo-banner" class="geo-banner" role="alert" hidden></div>
+  {% endif %}
   <div class="geo-map-wrap">
     <div id="geo-map" class="geo-map"></div>
     <aside id="geo-panel" class="geo-panel" aria-label="{% translate 'Layers' %}"></aside>
   </div>
 </div>
+
+{% if editable %}
+<dialog id="geo-save-dialog" class="geo-dialog">
+  <form method="dialog">
+    <h3 class="h6">{% translate "Save a new version" %}</h3>
+    <label class="form-label small mb-1" for="geo-summary">{% translate "Describe your change" %}</label>
+    <textarea id="geo-summary" class="form-control form-control-sm" rows="2"></textarea>
+    <div class="d-flex justify-content-end gap-2 mt-2">
+      <button type="submit" value="cancel" class="btn btn-sm btn-outline-secondary">{% translate "Cancel" %}</button>
+      <button type="submit" value="confirm" class="btn btn-sm btn-primary">{% translate "Save" %}</button>
+    </div>
+  </form>
+</dialog>
+{% endif %}
 
 <div class="row g-3">
   <div class="col-lg-7">
@@ -90,5 +120,10 @@
 <script src="{% static 'vendor/leaflet/leaflet.js' %}"
         integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH"
         crossorigin="anonymous"></script>
+{% if editable %}
+<script src="{% static 'vendor/leaflet-geoman/leaflet-geoman.min.js' %}"
+        integrity="sha384-lQvyfQizM1lAcgrQCt06G9R/LyriCixUPr2SkbZm6D+qYYghxeaK/wkmOard+Om0"
+        crossorigin="anonymous"></script>
+{% endif %}
 <script type="module" src="{% static 'js/geo/main.js' %}"></script>
 {% endblock %}
