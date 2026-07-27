@@ -1,0 +1,4 @@
+# Vendored third-party assets are served with Subresource Integrity: the bytes
+# must match what the browser hashes, so git must never normalize their line
+# endings (autocrlf is on in this repo). Treat them as binary/opaque.
+static/vendor/** -text
