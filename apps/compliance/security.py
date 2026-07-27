@@ -1,5 +1,7 @@
 import shutil
-import subprocess
+
+# Used only for the shell-free antivirus call in scan_uploaded_file below.
+import subprocess  # nosec B404
 import tempfile
 from pathlib import Path
 
@@ -24,7 +26,10 @@ def scan_uploaded_file(uploaded):
             temporary_path = temporary.name
             for chunk in uploaded.chunks():
                 temporary.write(chunk)
-        result = subprocess.run(
+        # executable is resolved by shutil.which() from the trusted
+        # DOCUMENTS_ANTIVIRUS_COMMAND setting; args are a fixed list and there is
+        # no shell, so there is no untrusted-input execution path.
+        result = subprocess.run(  # nosec B603
             [executable, "--no-summary", temporary_path],
             capture_output=True,
             check=False,
