@@ -11,6 +11,18 @@
   </div>
 </div>
 
+<form method="get" class="row g-2 mb-4">
+  <div class="col-md-4 col-sm-6">
+    <select class="form-select" name="cost_center" onchange="this.form.submit()">
+      <option value="">{% translate "All cost centers" %}</option>
+      {% for cc in cost_centers %}
+      <option value="{{ cc.pk }}" {% if selected_cost_center.pk == cc.pk %}selected{% endif %}>{{ cc }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <noscript><div class="col-auto"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div></noscript>
+</form>
+
 {# ── Summary cards ── #}
 <div class="row g-3 mb-4">
   <div class="col-md-3 col-sm-6">

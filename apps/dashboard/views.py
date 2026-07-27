@@ -9,15 +9,31 @@ from django.utils import timezone
 from apps.compliance.models import Alert, AlertRule, Document, DocumentType
 from apps.maintenance.models import MaintenanceRecord
 from apps.operations.models import FlightPermission, FlightRecord
-from apps.registry.models import Aircraft, Operator, Qualification
+from apps.registry.models import Aircraft, CostCenter, Operator, Qualification
 from apps.workboard.models import KanbanStage, KanbanTask
 
 
 @login_required
 def dashboard(request):
+    # OPS-8: an optional global filter by cost center. Silently ignored if it
+    # does not resolve to a real, active cost center -- same "malformed filter
+    # is a no-op, not an error" convention SearchMixin already uses.
+    selected_cost_center = None
+    cost_center_id = request.GET.get("cost_center")
+    if cost_center_id:
+        selected_cost_center = CostCenter.objects.filter(
+            pk=cost_center_id, is_active=True
+        ).first()
+    cost_centers = CostCenter.objects.filter(is_active=True).order_by("code")
+
     # --- Summary counts ---
-    aircraft_count = Aircraft.objects.filter(is_active=True, status="active").count()
-    operator_count = Operator.objects.filter(is_active=True).count()
+    aircraft_qs = Aircraft.objects.filter(is_active=True)
+    operator_qs = Operator.objects.filter(is_active=True)
+    if selected_cost_center:
+        aircraft_qs = aircraft_qs.filter(cost_center=selected_cost_center)
+        operator_qs = operator_qs.filter(cost_center=selected_cost_center)
+    aircraft_count = aircraft_qs.filter(status="active").count()
+    operator_count = operator_qs.count()
     alert_count = Alert.objects.filter(is_active=True, is_resolved=False).count()
 
     # --- Compliance module setup state ---
@@ -44,6 +60,8 @@ def dashboard(request):
         expiry_date__gte=today,
         expiry_date__lte=cutoff,
     )
+    if selected_cost_center:
+        expiring = expiring.filter(operator__cost_center=selected_cost_center)
     expiring_count = expiring.count()
     expirations = expiring.select_related("operator").order_by("expiry_date")[:10]
 
@@ -67,28 +85,29 @@ def dashboard(request):
 
     # --- Chart: Aircraft by status ---
     aircraft_by_status = labelled(
-        Aircraft.objects.filter(is_active=True)
-        .values("status")
-        .annotate(count=Count("id"))
-        .order_by("status"),
+        aircraft_qs.values("status").annotate(count=Count("id")).order_by("status"),
         "status",
         Aircraft.STATUS_CHOICES,
     )
 
     # --- Chart: Permissions by status ---
+    permissions_qs = FlightPermission.objects.filter(is_active=True)
+    if selected_cost_center:
+        permissions_qs = permissions_qs.filter(cost_center=selected_cost_center)
     perms_by_status = labelled(
-        FlightPermission.objects.filter(is_active=True)
-        .values("status")
-        .annotate(count=Count("id"))
-        .order_by("status"),
+        permissions_qs.values("status").annotate(count=Count("id")).order_by("status"),
         "status",
         FlightPermission.STATUS_CHOICES,
     )
 
     # --- Chart: Maintenance by type ---
+    maintenance_qs = MaintenanceRecord.objects.filter(is_active=True)
+    if selected_cost_center:
+        maintenance_qs = maintenance_qs.filter(
+            aircraft__cost_center=selected_cost_center
+        )
     maint_by_type = labelled(
-        MaintenanceRecord.objects.filter(is_active=True)
-        .values("maintenance_type")
+        maintenance_qs.values("maintenance_type")
         .annotate(count=Count("id"))
         .order_by("maintenance_type"),
         "maintenance_type",
@@ -96,6 +115,9 @@ def dashboard(request):
     )
 
     # --- Chart: Tasks by priority ---
+    # Not filtered by cost center: Kanban boards scope by tenant/board access,
+    # a different axis (apps/core/views.py's calendar keeps the same split),
+    # not every task has an assignee with a cost center.
     tasks_by_priority = labelled(
         KanbanTask.objects.filter(is_active=True)
         .values("priority")
@@ -107,9 +129,15 @@ def dashboard(request):
 
     # --- Chart: Monthly flight records (last 6 months) ---
     six_months_ago = timezone.localdate() - timedelta(days=180)
+    flight_records_qs = FlightRecord.objects.filter(
+        is_active=True, actual_date__gte=six_months_ago
+    )
+    if selected_cost_center:
+        flight_records_qs = flight_records_qs.filter(
+            aircraft__cost_center=selected_cost_center
+        )
     monthly_flights = list(
-        FlightRecord.objects.filter(is_active=True, actual_date__gte=six_months_ago)
-        .annotate(month=TruncMonth("actual_date"))
+        flight_records_qs.annotate(month=TruncMonth("actual_date"))
         .values("month")
         .annotate(count=Count("id"))
         .order_by("month")
@@ -134,5 +162,7 @@ def dashboard(request):
         "chart_data": chart_data,
         "compliance_setup": compliance_setup,
         "compliance_incomplete": compliance_incomplete,
+        "cost_centers": cost_centers,
+        "selected_cost_center": selected_cost_center,
     }
     return render(request, "dashboard/index.html", context)
