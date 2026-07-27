@@ -209,6 +209,8 @@ REST_FRAMEWORK = {
         # Scoped ceiling for the geo commit/restore endpoints (GEO-6): a human
         # editor saves a handful of times a minute; a runaway client does not.
         "geo-commit": config("API_THROTTLE_GEO_COMMIT", default="30/min"),
+        # Export (GEO-10) rebuilds and zips the document; tighter than commit.
+        "geo-export": config("API_THROTTLE_GEO_EXPORT", default="10/min"),
     },
 }
 LOGIN_URL = "/accounts/login/"

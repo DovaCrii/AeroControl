@@ -363,3 +363,68 @@ class TestRestore:
         plan = _plan_with_versions(count=1)
         response = _post(_client("change_geoplan"), self._url(plan, 99), {})
         assert response.status_code == 404
+
+
+class TestExport:
+    @staticmethod
+    def _url(plan):
+        return reverse("api-v1-geo-plan-export", args=[plan.pk])
+
+    @pytest.mark.django_db
+    def test_requires_auth_and_view_permission(self, db):
+        plan = _plan_with_versions(count=1)
+        url = self._url(plan)
+        assert Client().post(url, {"format": "kml"}).status_code == 401
+        assert _client().post(url, {"format": "kml"}).status_code == 403
+
+    @pytest.mark.django_db
+    def test_export_kml(self, db):
+        plan = _plan_with_versions(count=1)
+        response = _client("view_geoplan").post(
+            self._url(plan), {"version": 1, "format": "kml"}
+        )
+        assert response.status_code == 200
+        assert "google-earth.kml" in response["Content-Type"]
+        assert b"<kml" in response.content
+        assert 'filename="' in response["Content-Disposition"]
+        assert AuditEvent.objects.filter(
+            action="geo_plan_exported", object_id=str(plan.pk)
+        ).exists()
+
+    @pytest.mark.django_db
+    def test_export_kmz_is_a_zip_with_doc_kml(self, db):
+        import io
+        import zipfile
+
+        plan = _plan_with_versions(count=1)
+        response = _client("view_geoplan").post(
+            self._url(plan), {"version": 1, "format": "kmz"}
+        )
+        assert response.status_code == 200
+        assert "google-earth.kmz" in response["Content-Type"]
+        archive = zipfile.ZipFile(io.BytesIO(response.content))
+        assert "doc.kml" in archive.namelist()
+        assert archive.read("doc.kml").startswith(b"<?xml")
+
+    @pytest.mark.django_db
+    def test_export_defaults_to_current_version(self, db):
+        plan = _plan_with_versions(count=2)
+        response = _client("view_geoplan").post(self._url(plan), {"format": "kml"})
+        assert response.status_code == 200
+        assert "_v2.kml" in response["Content-Disposition"]
+
+    @pytest.mark.django_db
+    def test_export_rejects_unknown_format(self, db):
+        plan = _plan_with_versions(count=1)
+        response = _client("view_geoplan").post(
+            self._url(plan), {"version": 1, "format": "pdf"}
+        )
+        assert response.status_code == 400
+
+    @pytest.mark.django_db
+    def test_export_unknown_version_is_404(self, db):
+        plan = _plan_with_versions(count=1)
+        response = _client("view_geoplan").post(
+            self._url(plan), {"version": 99, "format": "kml"}
+        )
+        assert response.status_code == 404

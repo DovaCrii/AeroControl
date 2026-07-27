@@ -1,4 +1,4 @@
-"""GEO-4: import view, list and detail shell."""
+"""GEO-4 import/list/detail shell, GEO-7/8 map island config, GEO-9 workflow."""
 
 import pytest
 from django.contrib.auth.models import Permission, User
@@ -7,7 +7,7 @@ from django.test import Client
 from django.urls import reverse
 
 from apps.compliance.models import Document
-from apps.geo.models import GeoPlan, GeoPlanVersion
+from apps.geo.models import GeoPlan, GeoPlanHistory, GeoPlanVersion
 from apps.geo.test_kml import HAPPY_KML
 from apps.registry.models import CostCenter
 
@@ -221,3 +221,61 @@ class TestEditorConfig:
         )
         assert response.context["map_config"]["editable"] is False
         assert "leaflet-geoman" not in response.content.decode()
+
+
+class TestWorkflow:
+    @staticmethod
+    def _plan(db, status="draft"):
+        center = CostCenter.objects.create(code="CCW", name="W")
+        user = User.objects.create_user("wf-owner", password="pw")
+        return GeoPlan.objects.create(
+            title="WF", cost_center=center, created_by=user, status=status
+        )
+
+    @pytest.mark.django_db
+    def test_start_editing_requires_change_permission(self, db):
+        plan = self._plan(db, status="draft")
+        url = reverse("geo-plan-start-editing", args=[plan.pk])
+        assert _client("view_geoplan").post(url).status_code == 403
+        assert _client("change_geoplan").post(url).status_code == 302
+        plan.refresh_from_db()
+        assert plan.status == "editing"
+
+    @pytest.mark.django_db
+    def test_approve_needs_approve_permission_not_change(self, db):
+        plan = self._plan(db, status="in_review")
+        url = reverse("geo-plan-approve", args=[plan.pk])
+        assert _client("change_geoplan").post(url).status_code == 403
+        assert _client("approve_geoplan").post(url).status_code == 302
+        plan.refresh_from_db()
+        assert plan.status == "approved"
+
+    @pytest.mark.django_db
+    def test_reopen_from_approved_needs_approve_permission(self, db):
+        plan = self._plan(db, status="approved")
+        url = reverse("geo-plan-reopen", args=[plan.pk])
+        assert _client("approve_geoplan").post(url).status_code == 302
+        plan.refresh_from_db()
+        assert plan.status == "editing"
+
+    @pytest.mark.django_db
+    def test_invalid_transition_leaves_status_unchanged(self, db):
+        plan = self._plan(db, status="draft")  # approve is only valid from in_review
+        response = _client("approve_geoplan").post(
+            reverse("geo-plan-approve", args=[plan.pk])
+        )
+        assert response.status_code == 302  # redirected with an error message
+        plan.refresh_from_db()
+        assert plan.status == "draft"
+
+    @pytest.mark.django_db
+    def test_transition_writes_history(self, db):
+        plan = self._plan(db, status="editing")
+        _client("change_geoplan").post(
+            reverse("geo-plan-submit-review", args=[plan.pk])
+        )
+        plan.refresh_from_db()
+        assert plan.status == "in_review"
+        assert GeoPlanHistory.objects.filter(
+            plan=plan, previous_status="editing", new_status="in_review"
+        ).exists()
