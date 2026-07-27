@@ -181,6 +181,9 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": config("API_THROTTLE_ANON", default="10/min"),
         "user": config("API_THROTTLE_USER", default="300/min"),
+        # Scoped ceiling for the geo commit/restore endpoints (GEO-6): a human
+        # editor saves a handful of times a minute; a runaway client does not.
+        "geo-commit": config("API_THROTTLE_GEO_COMMIT", default="30/min"),
     },
 }
 LOGIN_URL = "/accounts/login/"

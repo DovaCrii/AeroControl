@@ -447,6 +447,93 @@ def api_openapi_schema(_request):
                         "403": {"description": "Missing view permission"},
                         "404": {"description": "No such active plan"},
                     },
+                },
+                "post": {
+                    "operationId": "commitGeoPlanVersion",
+                    "summary": "Commit a new canonical version",
+                    "description": (
+                        "Appends a version. The server re-validates and "
+                        "recomputes every derived field; client-supplied "
+                        "checksums/counts are ignored."
+                    ),
+                    "security": [{"tokenAuth": []}],
+                    "parameters": [
+                        {
+                            "name": "id",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string", "format": "uuid"},
+                        },
+                        {
+                            "name": "If-Unmodified-Since",
+                            "in": "header",
+                            "schema": {"type": "string", "format": "date-time"},
+                        },
+                    ],
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": ["base_version", "content"],
+                                    "properties": {
+                                        "base_version": {
+                                            "type": "integer",
+                                            "minimum": 0,
+                                        },
+                                        "summary": {"type": "string"},
+                                        "content": {"type": "object"},
+                                    },
+                                }
+                            }
+                        },
+                    },
+                    "responses": {
+                        "201": {"description": "New version committed"},
+                        "200": {
+                            "description": "No change (content matched the latest)"
+                        },
+                        "400": {"description": "Invalid document"},
+                        "401": {"description": "Authentication required"},
+                        "403": {"description": "Missing change permission"},
+                        "409": {
+                            "description": "conflict (stale base_version) or plan_locked"
+                        },
+                        "429": {"description": "Throttled (geo-commit)"},
+                    },
+                },
+            },
+            "/api/v1/geo/plans/{id}/versions/{number}/restore/": {
+                "post": {
+                    "operationId": "restoreGeoPlanVersion",
+                    "summary": "Restore a version as a new version",
+                    "security": [{"tokenAuth": []}],
+                    "parameters": [
+                        {
+                            "name": "id",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string", "format": "uuid"},
+                        },
+                        {
+                            "name": "number",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "integer", "minimum": 1},
+                        },
+                    ],
+                    "responses": {
+                        "201": {"description": "Restored as a new version"},
+                        "200": {
+                            "description": "No change (already the current version)"
+                        },
+                        "401": {"description": "Authentication required"},
+                        "403": {"description": "Missing change permission"},
+                        "404": {"description": "No such plan or version"},
+                        "409": {"description": "plan_locked"},
+                        "429": {"description": "Throttled (geo-commit)"},
+                    },
                 }
             },
             "/api/v1/geo/plans/{id}/versions/{number}/content/": {

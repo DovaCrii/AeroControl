@@ -165,6 +165,20 @@ class GeoPlanVersion(models.Model):
     def __str__(self):
         return f"{self.plan_id} v{self.version_number}"
 
+    def clean(self):
+        # Layer 2 of the approved-plan lock (the commit API is layer 1, the
+        # read-only editor is layer 3). A version imported with the plan is
+        # exempt: V1 is created while the plan is still draft, and import is not
+        # a content edit by a user. Any editor/restore version, though, may only
+        # land while the plan is in an editable state.
+        super().clean()
+        if self.source == "import":
+            return
+        if self.plan_id and self.plan.status not in GeoPlan.EDITABLE_STATUSES:
+            raise ValidationError(
+                {"plan": _("This plan cannot be edited in its current state.")}
+            )
+
     def save(self, *args, **kwargs):
         if not self._state.adding:
             raise ValidationError("GeoPlanVersion records are append-only.")
