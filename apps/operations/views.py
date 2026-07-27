@@ -136,6 +136,25 @@ class FlightPermissionDetail(ModelViewPermissionRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context["history"] = self.object.history.all()
         context["flight_records"] = self.object.records.filter(is_active=True)
+        # OPS-5: attachments (additional letters/correspondence) through the
+        # existing generic Document pipeline -- FlightPermission is already in
+        # DOCUMENTABLE_MODELS (apps/compliance/forms.py), this just surfaces
+        # them here and links to the existing upload form, pre-filled.
+        if self.request.user.has_perm("compliance.view_document"):
+            from django.contrib.contenttypes.models import ContentType
+
+            from apps.compliance.models import Document
+
+            content_type = ContentType.objects.get_for_model(FlightPermission)
+            context["permission_content_type_id"] = content_type.pk
+            context["documents"] = Document.objects.filter(
+                content_type=content_type,
+                object_id=self.object.pk,
+                is_current_version=True,
+                is_active=True,
+            ).order_by("-issue_date")
+        else:
+            context["documents"] = None
         if self.object.status == "requested" and self.request.user.has_perm(
             "operations.change_flightpermission"
         ):
