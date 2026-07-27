@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags i18n %}
+{% block title %}{% translate "Import KMZ/KML" %} - AeroControl{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <p class="eyebrow mb-1">{% translate "Geospatial planning" %}</p>
+    <h1 class="h3">{% translate "Import KMZ/KML" %}</h1>
+    <p class="text-muted mb-0">{% translate "Create a plan from a flight-planning file. The original is stored intact." %}</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{% url 'geo-plan-list' %}">{% translate "Back to plans" %}</a>
+</div>
+
+<div class="card">
+  <div class="card-body" style="max-width: 640px;">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form|crispy }}
+      <div class="d-flex gap-2 mt-3">
+        <button type="submit" class="btn btn-primary">{% translate "Import file" %}</button>
+        <a class="btn btn-outline-secondary" href="{% url 'geo-plan-list' %}">{% translate "Cancel" %}</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

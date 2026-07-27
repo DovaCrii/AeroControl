@@ -67,4 +67,5 @@ urlpatterns = [
     path("calendar/", CalendarView.as_view(), name="calendar"),
     path("maintenance/", include("apps.maintenance.urls")),
     path("workboard/", include("apps.workboard.urls")),
+    path("geo/", include("apps.geo.urls")),
 ]

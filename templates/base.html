@@ -60,6 +60,7 @@
       <a href="{% url 'operator-list' %}" class="nav-item nav-registry {% if url_name == 'operator-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg>{% translate "Operators" %}</a>
       <span class="sidebar-label">{% translate "Planning" %}</span>
       <a href="{% url 'assignment-list' %}" class="nav-item nav-registry {% if url_name == 'assignment-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3.5v17"/><path d="M7.5 7.5h9M7.5 12h5.5M7.5 16.5h11"/></svg>{% translate "Resource planning" %}</a>
+      <a href="{% url 'geo-plan-list' %}" class="nav-item nav-registry {% if url_name == 'geo-plan-list' or url_name == 'geo-plan-detail' or url_name == 'geo-plan-import' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2z"/><path d="M9 3v16M15 5v16"/></svg>{% translate "Geospatial planning" %}</a>
 
       <span class="sidebar-label">{% translate "Compliance" %}</span>
       <a href="{% url 'document-list' %}" class="nav-item nav-compliance {% if url_name == 'document-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>{% translate "Documents" %}</a>

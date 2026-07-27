@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{{ plan.title }} - AeroControl{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <p class="eyebrow mb-1">{% translate "Geospatial planning" %}</p>
+    <h1 class="h3">{{ plan.title }}</h1>
+    <p class="text-muted mb-0">
+      {{ plan.cost_center }}
+      {% if plan.flight_permission %} · {{ plan.flight_permission }}{% endif %}
+    </p>
+  </div>
+  <div class="d-flex gap-2 align-items-center">
+    {% include "geo/_status_badge.html" with status=plan.status label=plan.get_status_display %}
+    <a class="btn btn-outline-secondary" href="{% url 'geo-plan-list' %}">{% translate "Back to plans" %}</a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="admin-section-header"><h2 class="admin-section-title">{% translate "Versions" %}</h2></div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th scope="col">{% translate "Version" %}</th>
+              <th scope="col">{% translate "Source" %}</th>
+              <th scope="col">{% translate "Features" %}</th>
+              <th scope="col">{% translate "Created" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for version in versions %}
+            <tr>
+              <td>v{{ version.version_number }}{% if plan.current_version_id == version.id %} <span class="badge bg-secondary">{% translate "Current" %}</span>{% endif %}</td>
+              <td>{{ version.get_source_display }}</td>
+              <td>{{ version.feature_count }}</td>
+              <td><span class="text-nowrap">{{ version.created_at|date:'Y-m-d H:i' }}</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="99" class="text-center text-muted py-4">{% translate "No versions yet." %}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="admin-section-title mb-2">{% translate "Source file" %}</h2>
+        {% if plan.source_document %}
+        <p class="mb-2">{{ plan.source_document.title }}</p>
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'document-download' plan.source_document.pk %}">
+          {% translate "Download original" %}
+        </a>
+        {% else %}
+        <p class="text-muted mb-0">{% translate "No source file." %}</p>
+        {% endif %}
+        <hr>
+        {% comment %}The interactive map editor is GEO-7/8; this shell ships
+        first so import, versioning and the workflow are usable while the
+        island is built.{% endcomment %}
+        <p class="text-muted small mb-0">
+          {% translate "The interactive map editor is on its way. For now this page shows the plan, its versions and the original file." %}
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
