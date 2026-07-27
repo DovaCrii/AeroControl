@@ -102,6 +102,12 @@ class GeoPlanDetailView(ModelViewPermissionRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         plan = self.object
         context["versions"] = plan.versions.order_by("-version_number")
+        # OPS-7: when this plan's flight_permission link changed, and to what.
+        # Shown unconditionally on this already geo.view_geoplan-gated page,
+        # same as the Versions/Status history sections above.
+        context["permission_links"] = plan.permission_links.select_related(
+            "previous_permission", "new_permission", "changed_by_user"
+        )
         current = plan.current_version
         # Status buttons the user may use from the current status (GEO-9).
         context["status_actions"] = [
