@@ -8,6 +8,15 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+Nada todavía.
+
+## [0.3.0-alpha] - 2026-07-27
+
+Revisión completa V.1-V.39 (`AUDIT_CLAUDE.md`) sobre seguridad, estabilidad,
+desempeño y experiencia de uso, más el cierre de T2.3/T2.4/T2.5 y R.10/T5.1.
+Pendiente de esa revisión, y a propósito: V.3 (⛔ depende de T3.2, la migración
+de tenancy) y V.10-V.12 (⬜ requieren una decisión de política, no son un bug).
+
 ### Fixed (revisión 2026-07-25: seguridad y estabilidad)
 - El export CSV del tablero de trabajo devolvía todas las tareas de todos los
   tenants; la edición de tareas no comprobaba el acceso de edición al tablero y
@@ -278,6 +287,7 @@ plan").
 - API DRF de solo lectura + escritura acotada para tareas Kanban, con
   autenticación por token y documentación OpenAPI.
 
-[Unreleased]: https://github.com/DovaCrii/AeroControl/compare/v0.2.0-alpha...HEAD
+[Unreleased]: https://github.com/DovaCrii/AeroControl/compare/v0.3.0-alpha...HEAD
+[0.3.0-alpha]: https://github.com/DovaCrii/AeroControl/compare/v0.2.0-alpha...v0.3.0-alpha
 [0.2.0-alpha]: https://github.com/DovaCrii/AeroControl/compare/v0.1.0-alpha...v0.2.0-alpha
 [0.1.0-alpha]: https://github.com/DovaCrii/AeroControl/releases/tag/v0.1.0-alpha
