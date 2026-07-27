@@ -116,6 +116,17 @@ class DocumentCreate(ComplianceCreate):
     template_name = "compliance/document_form.html"
     htmx_template_name = "compliance/_document_form_content.html"
 
+    def get_initial(self):
+        # Pre-fill from an entity's own page (OPS-5: the flight permission
+        # detail's "Upload document" link), same GET-param idiom as
+        # apps/operations/views.py's FlightRecordCreate.get_initial().
+        initial = super().get_initial()
+        for field in ("entity_type", "object_id"):
+            value = self.request.GET.get(field)
+            if value:
+                initial[field] = value
+        return initial
+
     def form_valid(self, form):
         with uploaded_file_cleanup() as stored:
             with transaction.atomic():
