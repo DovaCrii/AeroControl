@@ -8,12 +8,33 @@ from .models import Aircraft, Assignment, CostCenter, Operator, Qualification
 class CostCenterForm(AeroModelForm):
     class Meta:
         model = CostCenter
-        fields = ["code", "name", "responsible", "responsible_operator"]
+        fields = [
+            "code",
+            "name",
+            "responsible",
+            "responsible_operator",
+            "responsible_contact_name",
+            "responsible_contact_email",
+        ]
         labels = {
             "code": _("Code"),
             "name": _("Name"),
             "responsible": _("Responsible"),
             "responsible_operator": _("Responsible operator"),
+            "responsible_contact_name": _("External contact name"),
+            "responsible_contact_email": _("External contact email"),
+        }
+        help_texts = {
+            "responsible_operator": _(
+                "Recipient of expiry digests. Use when the responsible person "
+                "is in the operator roster."
+            ),
+            "responsible_contact_name": _(
+                "Use instead of the operator when the responsible person is "
+                "external to the system (an administrator, secretary, or "
+                "safety officer). Also used for the digest if the operator "
+                "above has no reachable email."
+            ),
         }
 
 

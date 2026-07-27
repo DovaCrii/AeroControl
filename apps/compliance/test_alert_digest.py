@@ -157,6 +157,23 @@ def test_cost_center_without_responsible_email_is_skipped(cost_center, settings)
 
 
 @pytest.mark.django_db
+def test_digest_reaches_an_external_contact_with_no_operator(cost_center, settings):
+    """The responsible person for a cost center is not always an operator."""
+    settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+    cost_center.responsible_operator = None
+    cost_center.responsible_contact_email = "secretaria@example.test"
+    cost_center.save(
+        update_fields=["responsible_operator", "responsible_contact_email"]
+    )
+    _qualification(cost_center, 3)
+
+    call_command("send_alert_digest")
+
+    assert len(mail.outbox) == 1
+    assert mail.outbox[0].to == ["secretaria@example.test"]
+
+
+@pytest.mark.django_db
 def test_cost_center_without_expiring_items_gets_no_email(cost_center, settings):
     settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
     _qualification(cost_center, 200)

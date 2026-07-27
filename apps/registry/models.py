@@ -26,6 +26,16 @@ class CostCenter(BaseModel):
         related_name="cost_centers_in_charge",
         help_text=_("Recipient of expiry digests for this cost center."),
     )
+    # The responsible person is not always in the operator roster: it can be an
+    # administrator, a secretary, or a safety officer instead of a registered
+    # pilot -- and the same person may end up responsible for several cost
+    # centers where staffing is thin. Forcing them into Operator would mean
+    # inventing a DGAC credential and employee ID for someone who does not
+    # fly, and would leak into every other view that assumes the roster is
+    # flight crew. Plain contact info instead, used only when no operator is
+    # reachable (see notification_email).
+    responsible_contact_name = models.CharField(max_length=150, blank=True)
+    responsible_contact_email = models.EmailField(blank=True)
 
     def __str__(self):
         label = f"{self.code} - {self.name}"
@@ -44,12 +54,14 @@ class CostCenter(BaseModel):
 
         An archived responsible operator does not count as reachable: mailing
         someone who left looks like the notification worked when nobody who
-        can act on it will read it.
+        can act on it will read it. Falls back to the external contact when
+        the responsible person is not in the operator roster, or when the
+        operator on file left and nobody replaced them there yet.
         """
         operator = self.responsible_operator
         if operator and operator.is_active and operator.email:
             return operator.email
-        return ""
+        return self.responsible_contact_email
 
 
 class Aircraft(BaseModel):
