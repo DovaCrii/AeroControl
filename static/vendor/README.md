@@ -17,17 +17,24 @@ external CDNs staying up and unmodified.
   `"sha384-" + [Convert]::ToBase64String((Get-FileHash leaflet.js -Algorithm SHA384).Hash -as [byte[]])`
   or, portably: `openssl dgst -sha384 -binary leaflet.js | openssl base64 -A`.
 
-## Pending (added in GEO-7, when the map island is built)
+## Vendored
 
-The BLOQUE GEO editor ([../../docs/dev/geo-editor-plan.md](../../docs/dev/geo-editor-plan.md))
-needs these. They are intentionally **not** committed yet — GEO-0 only
-establishes the directory and the policy; the binaries land with the code that
-loads them, each with its SRI hash recorded here:
+| Librería | Versión | Archivo | `sha384` (integrity) | Origen | Descargado |
+| --- | --- | --- | --- | --- | --- |
+| Leaflet | 1.9.4 | `leaflet/leaflet.js` | `sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH` | https://unpkg.com/leaflet@1.9.4/dist/leaflet.js | 2026-07-27 |
+| Leaflet | 1.9.4 | `leaflet/leaflet.css` | `sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H` | https://unpkg.com/leaflet@1.9.4/dist/leaflet.css | 2026-07-27 |
 
-| Librería | Versión objetivo | Archivos | Origen |
-| --- | --- | --- | --- |
-| Leaflet | 1.9.4 | `leaflet/leaflet.js`, `leaflet/leaflet.css`, `leaflet/images/*` | https://unpkg.com/leaflet@1.9.4/dist/ |
-| Leaflet-Geoman (free) | 2.x (última estable) | `leaflet-geoman/leaflet-geoman.min.js`, `leaflet-geoman/leaflet-geoman.css` | https://unpkg.com/@geoman-io/leaflet-geoman-free/dist/ |
+`leaflet/images/*` (`layers.png`, `layers-2x.png`, `marker-icon.png`,
+`marker-icon-2x.png`, `marker-shadow.png`) are referenced by `leaflet.css` by
+relative path and ship unmodified from the same dist; they carry no SRI because
+CSS-referenced images cannot.
 
-Cuando se agreguen, mover cada fila a una sección "Vendored" con su `sha384` y la
-fecha de descarga.
+## Pending (land with the code that loads them)
+
+| Librería | Versión objetivo | Archivos | Origen | Bloque |
+| --- | --- | --- | --- | --- |
+| Leaflet-Geoman (free) | 2.x (última estable) | `leaflet-geoman/leaflet-geoman.min.js`, `leaflet-geoman/leaflet-geoman.css` | https://unpkg.com/@geoman-io/leaflet-geoman-free/dist/ | GEO-8 (edición) |
+
+GEO-7 es un visor de solo lectura, así que no carga Geoman; se vendoriza cuando
+GEO-8 traiga la edición. Al agregarlo, mover su fila a "Vendored" con `sha384` y
+fecha.
