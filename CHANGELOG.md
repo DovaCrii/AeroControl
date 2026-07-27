@@ -9,6 +9,16 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 ## [Unreleased]
 
 ### Added
+- **Editor geoespacial KMZ/KML (BLOQUE GEO, MVP GEO-0..GEO-10).** Importar un
+  KMZ/KML crea un plan versionado (documento canónico "AeroKML JSON" inmutable
+  por versión); un mapa Leaflet (vendorizado con SRI, sin CDN) lo visualiza por
+  carpetas con mediciones; con permiso de edición, Leaflet-Geoman permite
+  dibujar/editar geometrías y guardar como nueva versión (API de commit con
+  concurrencia optimista y dedupe). Workflow por rol
+  (borrador→edición→revisión→aprobado/rechazado) y export KML/KMZ que reabre en
+  Google Earth, copiando los recursos embebidos del original. Todo el parseo,
+  validación y versionado vive en el servidor; la isla JS es una vista
+  reemplazable. Diseño en `docs/dev/geo-editor-plan.md`.
 - Centro de costo acepta un **contacto externo** (nombre y correo) como
   alternativa al **Operador responsable** para el resumen de vencimientos.
   Antes, el único destinatario posible era alguien del padrón de operadores
