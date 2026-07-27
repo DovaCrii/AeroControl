@@ -9,12 +9,14 @@ def track_status_changes(sender, instance, **kwargs):
     if old.status == instance.status:
         return
 
+    from apps.geo.models import GeoPlanHistory
     from apps.maintenance.models import MaintenanceHistory
     from apps.operations.models import PermissionHistory
 
     history = {
         "flightpermission": (PermissionHistory, "permission"),
         "maintenancerecord": (MaintenanceHistory, "record"),
+        "geoplan": (GeoPlanHistory, "plan"),
     }.get(sender._meta.model_name)
     if history is None:
         return

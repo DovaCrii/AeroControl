@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-27 10:01-0400\n"
+"POT-Creation-Date: 2026-07-27 11:13-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -417,6 +417,74 @@ msgstr "Estado actualizado."
 msgid "Cannot transition from %(status)s"
 msgstr "No se puede cambiar desde %(status)s"
 
+#: .\apps\geo\models.py:29
+msgid "Draft"
+msgstr "Borrador"
+
+
+#: .\apps\geo\models.py:30
+msgid "Editing"
+msgstr "En edición"
+
+
+#: .\apps\geo\models.py:31 .\apps\workboard\models.py:31
+#: .\apps\workboard\views.py:99
+msgid "In review"
+msgstr "En revisión"
+
+#: .\apps\geo\models.py:32 .\apps\operations\models.py:11
+msgid "Approved"
+msgstr "Aprobado"
+
+#: .\apps\geo\models.py:33
+msgid "Rejected"
+msgstr "Rechazado"
+
+
+#: .\apps\geo\models.py:76
+msgid "geo plan"
+msgstr "plan geoespacial"
+
+
+#: .\apps\geo\models.py:77
+msgid "geo plans"
+msgstr "planes geoespaciales"
+
+
+#: .\apps\geo\models.py:117
+msgid "Import"
+msgstr "Importación"
+
+
+#: .\apps\geo\models.py:118 .\apps\workboard\models.py:71
+msgid "Editor"
+msgstr "Editor"
+
+#: .\apps\geo\models.py:119 .\templates\generic\_table_body.html:16
+#: .\templates\generic\detail.html:22
+msgid "Restore"
+msgstr "Restaurar"
+
+#: .\apps\geo\models.py:153
+msgid "geo plan version"
+msgstr "versión de plan geoespacial"
+
+
+#: .\apps\geo\models.py:154
+msgid "geo plan versions"
+msgstr "versiones de plan geoespacial"
+
+
+#: .\apps\geo\models.py:204
+msgid "geo plan history entry"
+msgstr "entrada del historial del plan geoespacial"
+
+
+#: .\apps\geo\models.py:205
+msgid "geo plan history"
+msgstr "historial del plan geoespacial"
+
+
 #: .\apps\maintenance\models.py:10 .\templates\maintenance\record_list.html:15
 msgid "Scheduled"
 msgstr "Programado"
@@ -483,10 +551,6 @@ msgstr "La hora de llegada debe ser posterior a la hora de salida."
 #: .\apps\operations\models.py:10
 msgid "Requested"
 msgstr "Solicitado"
-
-#: .\apps\operations\models.py:11
-msgid "Approved"
-msgstr "Aprobado"
 
 #: .\apps\operations\models.py:12
 msgid "Denied"
@@ -862,10 +926,6 @@ msgstr "La etapa debe pertenecer al tablero seleccionado."
 msgid "Blocked"
 msgstr "Bloqueado"
 
-#: .\apps\workboard\models.py:31 .\apps\workboard\views.py:99
-msgid "In review"
-msgstr "En revisión"
-
 #: .\apps\workboard\models.py:33
 msgid "Custom"
 msgstr "Personalizado"
@@ -873,10 +933,6 @@ msgstr "Personalizado"
 #: .\apps\workboard\models.py:70
 msgid "Viewer"
 msgstr "Lector"
-
-#: .\apps\workboard\models.py:71
-msgid "Editor"
-msgstr "Editor"
 
 #: .\apps\workboard\models.py:72
 msgid "Manager"
@@ -931,11 +987,11 @@ msgstr "Prioridad"
 msgid "Progress"
 msgstr "Avance"
 
-#: .\config\settings\base.py:107
+#: .\config\settings\base.py:108
 msgid "English"
 msgstr "Inglés"
 
-#: .\config\settings\base.py:108
+#: .\config\settings\base.py:109
 msgid "Spanish"
 msgstr "Español"
 
@@ -1756,10 +1812,6 @@ msgstr "Archivado"
 #: .\templates\workboard\_task_detail.html:4
 msgid "Edit"
 msgstr "Editar"
-
-#: .\templates\generic\_table_body.html:16 .\templates\generic\detail.html:22
-msgid "Restore"
-msgstr "Restaurar"
 
 #: .\templates\generic\_table_body.html:24
 msgid "No records match the current filters."

@@ -16,6 +16,9 @@ ROLE_PERMISSIONS = {
         "add_kanbantask",
         "change_kanbantask",
         "view_kanbantask",
+        "add_geoplan",
+        "change_geoplan",
+        "view_geoplan",
     },
     "Compliance": {
         "add_document",
@@ -30,6 +33,9 @@ ROLE_PERMISSIONS = {
         "view_alertrule",
         "change_alert",
         "view_alert",
+        # Compliance approves flight-planning geo plans; it does not draw them.
+        "view_geoplan",
+        "approve_geoplan",
     },
     "Maintenance": {
         "add_maintenancerecord",
@@ -62,6 +68,7 @@ ROLE_PERMISSIONS = {
         "view_kanbanlabel",
         "view_kanbantasklabel",
         "view_kanbanchecklistitem",
+        "view_geoplan",
     },
 }
 
