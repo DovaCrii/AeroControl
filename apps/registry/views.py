@@ -233,9 +233,128 @@ def make_views(model, form, prefix):
     )
 
 
-CostCenterList, CostCenterDetail, CostCenterCreate, CostCenterUpdate = make_views(
+CostCenterList, _CostCenterAutoDetail, CostCenterCreate, CostCenterUpdate = make_views(
     CostCenter, CostCenterForm, "CostCenter"
 )
+
+
+class CostCenterDetail(RegistryDetail):
+    """OPS-2: the contract's own page, with equipment/fleet/permits/documents/
+    history as tabs instead of one mixed table (the SIGO screen this mirrors
+    dumps every entity's history into a single list; here each stays separate,
+    see docs/dev/ops-contract-tracking-plan.md).
+
+    Overrides the make_views()-generated CostCenterDetail above (same name,
+    later in module execution order, so the URL wiring in urls.py -- which does
+    getattr(views, "CostCenterDetail") -- picks up this richer view).
+
+    Each tab is gated by the permission that already governs its own data (the
+    calendar's CALENDAR_EVENT_PERMISSIONS convention): a user missing that
+    permission does not get a 403 for the whole page, the tab is simply absent,
+    same as a source with no view permission never appearing on the calendar.
+    """
+
+    model = CostCenter
+    template_name = "registry/costcenter_detail.html"
+
+    def get_context_data(self, **kwargs):
+        from django.contrib.contenttypes.models import ContentType
+        from django.db.models import Q
+
+        from apps.compliance.models import Document
+        from apps.operations.models import FlightPermission
+
+        context = super().get_context_data(**kwargs)
+        cost_center = self.object
+        user = self.request.user
+        today = timezone.localdate()
+
+        if user.has_perm("registry.view_operatorassignment"):
+            assignments = list(
+                OperatorAssignment.objects.filter(
+                    cost_center=cost_center, is_active=True
+                )
+                .select_related("operator")
+                .order_by("operator__full_name")
+            )
+            expired_operator_ids = set(
+                Qualification.objects.filter(
+                    operator_id__in=[a.operator_id for a in assignments],
+                    expiry_date__lt=today,
+                ).values_list("operator_id", flat=True)
+            )
+            context["operator_assignments"] = assignments
+            context["expired_operator_ids"] = expired_operator_ids
+        else:
+            context["operator_assignments"] = None
+
+        if user.has_perm("registry.view_aircraftassignment"):
+            context["aircraft_assignments"] = (
+                AircraftAssignment.objects.filter(
+                    cost_center=cost_center, is_active=True
+                )
+                .select_related("aircraft")
+                .order_by("aircraft__registration")
+            )
+        else:
+            context["aircraft_assignments"] = None
+
+        if user.has_perm("operations.view_flightpermission"):
+            context["flight_permissions"] = FlightPermission.objects.filter(
+                cost_center=cost_center, is_active=True
+            ).order_by("-flight_date")
+        else:
+            context["flight_permissions"] = None
+
+        if user.has_perm("compliance.view_document"):
+            cc_type = ContentType.objects.get_for_model(CostCenter)
+            context["documents"] = Document.objects.filter(
+                content_type=cc_type,
+                object_id=cost_center.pk,
+                is_current_version=True,
+                is_active=True,
+            ).order_by("-issue_date")
+        else:
+            context["documents"] = None
+
+        if user.has_perm("registry.view_resourcemovementlog"):
+            movements = list(
+                ResourceMovementLog.objects.filter(
+                    Q(from_cost_center=cost_center) | Q(to_cost_center=cost_center)
+                ).select_related(
+                    "changed_by_user", "from_cost_center", "to_cost_center"
+                )[:100]
+            )
+            operator_ids = [
+                m.resource_id for m in movements if m.resource_kind == "operator"
+            ]
+            aircraft_ids = [
+                m.resource_id for m in movements if m.resource_kind == "aircraft"
+            ]
+            operators = dict(
+                Operator.objects.filter(pk__in=operator_ids).values_list(
+                    "pk", "full_name"
+                )
+            )
+            aircraft = dict(
+                Aircraft.objects.filter(pk__in=aircraft_ids).values_list(
+                    "pk", "registration"
+                )
+            )
+            for entry in movements:
+                label = (
+                    operators.get(entry.resource_id)
+                    if entry.resource_kind == "operator"
+                    else aircraft.get(entry.resource_id)
+                )
+                entry.resource_label = label or str(entry.resource_id)
+            context["movements"] = movements
+        else:
+            context["movements"] = None
+
+        return context
+
+
 AircraftList, AircraftDetail, AircraftCreate, AircraftUpdate = make_views(
     Aircraft, AircraftForm, "Aircraft"
 )

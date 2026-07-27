@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% load aero_tags i18n %}
+{% block title %}{{ object }} - AeroControl{% endblock %}
+{% block content %}
+<div class="card p-4">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h1 class="h3 mb-0">{{ object }}{% if not object.is_active %} <span class="badge bg-secondary align-middle">{% translate "Archived" %}</span>{% endif %}</h1>
+    <div class="d-flex gap-2">
+      <a href="{{ list_url }}" class="btn btn-outline-secondary">← {% translate "Back to list" %}</a>
+      {% if can_change and object.is_active %}<a href="{{ update_url }}" class="btn btn-outline-primary">{% translate "Edit" %}</a>{% endif %}
+      {% if object.is_active and can_archive %}
+      <form method="post" action="{{ archive_url }}">{% csrf_token %}<button class="btn btn-outline-danger" type="submit">{% translate "Archive" %}</button></form>
+      {% elif not object.is_active and can_change %}
+      <form method="post" action="{{ restore_url }}">{% csrf_token %}<button class="btn btn-outline-success" type="submit">{% translate "Restore" %}</button></form>
+      {% endif %}
+    </div>
+  </div>
+
+  <ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-summary" type="button" role="tab">{% translate "Summary" %}</button></li>
+    {% if operator_assignments is not None %}<li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-team" type="button" role="tab">{% translate "Team" %}</button></li>{% endif %}
+    {% if aircraft_assignments is not None %}<li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-fleet" type="button" role="tab">{% translate "Fleet" %}</button></li>{% endif %}
+    {% if flight_permissions is not None %}<li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-permissions" type="button" role="tab">{% translate "Permissions" %}</button></li>{% endif %}
+    {% if documents is not None %}<li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-documents" type="button" role="tab">{% translate "Documents" %}</button></li>{% endif %}
+    {% if movements is not None %}<li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-history" type="button" role="tab">{% translate "History" %}</button></li>{% endif %}
+  </ul>
+
+  <div class="tab-content">
+    <div class="tab-pane fade show active" id="tab-summary" role="tabpanel">
+      <table class="table table-bordered">
+        <tbody>
+          {% for field in object|fields_detail %}
+          <tr>
+            <th class="w-25" scope="row">{{ field.label }}</th>
+            <td>
+              {% if field.value %}
+                {% if field.is_boolean %}{% if field.value %}✅ {% translate "Yes" %}{% else %}❌ {% translate "No" %}{% endif %}
+                {% elif field.is_choice %}{{ field.choice_value }}
+                {% elif field.is_date %}{{ field.value|date:"Y-m-d" }}
+                {% else %}{{ field.value }}{% endif %}
+              {% else %}<span class="text-muted">—</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if operator_assignments is not None %}
+    <div class="tab-pane fade" id="tab-team" role="tabpanel">
+      <table class="table table-hover">
+        <thead><tr><th>{% translate "Operator" %}</th><th>{% translate "Since" %}</th><th>{% translate "Status" %}</th><th>{% translate "Credentials" %}</th></tr></thead>
+        <tbody>
+          {% for a in operator_assignments %}
+          <tr>
+            <td><a href="{% url 'operator-detail' a.operator.pk %}">{{ a.operator.full_name }}</a></td>
+            <td>{{ a.start_date|date:'Y-m-d' }}</td>
+            <td>{{ a.get_status_display }}</td>
+            <td>
+              {% if a.operator.pk in expired_operator_ids %}
+                <span class="badge bg-danger">⚠ {% translate "Expired" %}</span>
+              {% else %}
+                <span class="badge bg-success">{% translate "OK" %}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="99" class="text-center text-muted py-3">{% translate "No operators assigned." %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+    {% if aircraft_assignments is not None %}
+    <div class="tab-pane fade" id="tab-fleet" role="tabpanel">
+      <table class="table table-hover">
+        <thead><tr><th>{% translate "Aircraft" %}</th><th>{% translate "Since" %}</th><th>{% translate "Assignment status" %}</th><th>{% translate "Condition" %}</th></tr></thead>
+        <tbody>
+          {% for a in aircraft_assignments %}
+          <tr>
+            <td><a href="{% url 'aircraft-detail' a.aircraft.pk %}">{{ a.aircraft.registration }}</a></td>
+            <td>{{ a.start_date|date:'Y-m-d' }}</td>
+            <td>{{ a.get_status_display }}</td>
+            <td>
+              {% if a.aircraft.status == "active" %}<span class="badge bg-success">{% translate "Active" %}</span>
+              {% elif a.aircraft.status == "maintenance" %}<span class="badge bg-warning text-dark">{% translate "Maintenance" %}</span>
+              {% else %}<span class="badge bg-secondary">{% translate "Retired" %}</span>{% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="99" class="text-center text-muted py-3">{% translate "No aircraft assigned." %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+    {% if flight_permissions is not None %}
+    <div class="tab-pane fade" id="tab-permissions" role="tabpanel">
+      <table class="table table-hover">
+        <thead><tr><th>{% translate "Permission" %}</th><th>{% translate "Flight date" %}</th><th>{% translate "Status" %}</th></tr></thead>
+        <tbody>
+          {% for permission in flight_permissions %}
+          <tr>
+            <td><a href="{% url 'permission-detail' permission.pk %}">{{ permission.permission_number }}</a></td>
+            <td>{{ permission.flight_date|date:'Y-m-d' }}</td>
+            <td>{{ permission.get_status_display }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="99" class="text-center text-muted py-3">{% translate "No flight permissions for this cost center." %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+    {% if documents is not None %}
+    <div class="tab-pane fade" id="tab-documents" role="tabpanel">
+      <table class="table table-hover">
+        <thead><tr><th>{% translate "Document" %}</th><th>{% translate "Type" %}</th><th>{% translate "Expiry" %}</th></tr></thead>
+        <tbody>
+          {% for document in documents %}
+          <tr>
+            <td><a href="{% url 'document-detail' document.pk %}">{{ document.title }}</a></td>
+            <td>{{ document.doc_type }}</td>
+            <td>{{ document.expiry_date|date:'Y-m-d'|default:"—" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="99" class="text-center text-muted py-3">{% translate "No documents for this cost center." %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+    {% if movements is not None %}
+    <div class="tab-pane fade" id="tab-history" role="tabpanel">
+      <table class="table table-hover">
+        <thead><tr><th>{% translate "Resource" %}</th><th>{% translate "Movement" %}</th><th>{% translate "From" %}</th><th>{% translate "To" %}</th><th>{% translate "Created" %}</th></tr></thead>
+        <tbody>
+          {% for entry in movements %}
+          <tr>
+            <td>{{ entry.get_resource_kind_display }}: {{ entry.resource_label }}</td>
+            <td>{{ entry.get_movement_display }}</td>
+            <td>{{ entry.from_cost_center|default:"—" }}</td>
+            <td>{{ entry.to_cost_center|default:"—" }}</td>
+            <td><span class="text-nowrap">{{ entry.created_at|date:'Y-m-d H:i' }}</span></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="99" class="text-center text-muted py-3">{% translate "No movements recorded for this cost center." %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
