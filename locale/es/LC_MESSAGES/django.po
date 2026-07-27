@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-27 13:55-0400\n"
+"POT-Creation-Date: 2026-07-27 14:18-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -507,37 +507,83 @@ msgstr "entrada del historial del plan geoespacial"
 msgid "geo plan history"
 msgstr "historial del plan geoespacial"
 
-#: .\apps\geo\views.py:76
+#: .\apps\geo\views.py:86
 msgid "Untitled"
 msgstr "Sin título"
 
-#: .\apps\geo\views.py:77
+#: .\apps\geo\views.py:87
 msgid "Length"
 msgstr "Longitud"
 
-#: .\apps\geo\views.py:78
+#: .\apps\geo\views.py:88
 msgid "Area"
 msgstr "Área"
 
-#: .\apps\geo\views.py:79 .\templates\geo\plan_detail.html:34
+#: .\apps\geo\views.py:89 .\templates\geo\plan_detail.html:50
 msgid "Layers"
 msgstr "Capas"
 
-#: .\apps\geo\views.py:80 .\templates\geo\plan_detail.html:48
+#: .\apps\geo\views.py:90 .\templates\geo\plan_detail.html:78
 msgid "Features"
 msgstr "Elementos"
 
-#: .\apps\geo\views.py:81
+#: .\apps\geo\views.py:91
 msgid "Loading map…"
 msgstr "Cargando el mapa…"
 
-#: .\apps\geo\views.py:82
+#: .\apps\geo\views.py:92
 msgid "The map could not be loaded."
 msgstr "No se pudo cargar el mapa."
 
-#: .\apps\geo\views.py:83
+#: .\apps\geo\views.py:93
 msgid "This version has no geometry to show."
 msgstr "Esta versión no tiene geometría para mostrar."
+
+#: .\apps\geo\views.py:94 .\apps\registry\forms.py:21
+#: .\templates\generic\list.html:24
+msgid "Name"
+msgstr "Nombre"
+
+#: .\apps\geo\views.py:95 .\templates\maintenance\record_detail.html:17
+msgid "Description"
+msgstr "Descripción"
+
+#: .\apps\geo\views.py:96 .\templates\compliance\report.html:43
+#: .\templates\workboard\task_list.html:14
+msgid "Apply"
+msgstr "Aplicar"
+
+#: .\apps\geo\views.py:97
+msgid "Unsaved changes"
+msgstr "Cambios sin guardar"
+
+#: .\apps\geo\views.py:98
+msgid "Saving…"
+msgstr "Guardando…"
+
+#: .\apps\geo\views.py:100
+msgid ""
+"The plan changed on the server. Reload to get the latest version, then "
+"reapply your changes."
+msgstr ""
+"El plan cambió en el servidor. Recarga para obtener la última versión y "
+"vuelve a aplicar tus cambios."
+
+#: .\apps\geo\views.py:103
+msgid "This plan can no longer be edited."
+msgstr "Este plan ya no puede editarse."
+
+#: .\apps\geo\views.py:104
+msgid "The change was rejected:"
+msgstr "El cambio fue rechazado:"
+
+#: .\apps\geo\views.py:105
+msgid "Too many saves in a row. Wait a moment."
+msgstr "Demasiados guardados seguidos. Espera un momento."
+
+#: .\apps\geo\views.py:106
+msgid "Download your local copy"
+msgstr "Descargar tu copia local"
 
 #: .\apps\maintenance\models.py:10 .\templates\maintenance\record_list.html:15
 msgid "Scheduled"
@@ -650,10 +696,6 @@ msgstr "Registro de vuelo archivado."
 #: .\apps\registry\forms.py:20
 msgid "Code"
 msgstr "Código"
-
-#: .\apps\registry\forms.py:21 .\templates\generic\list.html:24
-msgid "Name"
-msgstr "Nombre"
 
 #: .\apps\registry\forms.py:22
 msgid "Responsible"
@@ -1108,7 +1150,7 @@ msgstr "Centros de costo"
 msgid "Planning"
 msgstr "Planificación"
 
-#: .\templates\base.html:63 .\templates\geo\plan_detail.html:14
+#: .\templates\base.html:63 .\templates\geo\plan_detail.html:19
 #: .\templates\geo\plan_import.html:7 .\templates\geo\plan_list.html:3
 #: .\templates\geo\plan_list.html:6
 msgid "Geospatial planning"
@@ -1196,6 +1238,7 @@ msgstr "Expandir panel lateral"
 
 #: .\templates\compliance\_document_form_content.html:13
 #: .\templates\generic\_form_content.html:7 .\templates\generic\form.html:14
+#: .\templates\geo\plan_detail.html:41 .\templates\geo\plan_detail.html:62
 #: .\templates\workboard\_task_form.html:6
 msgid "Save"
 msgstr "Guardar"
@@ -1205,7 +1248,7 @@ msgstr "Guardar"
 #: .\templates\compliance\document_replace.html:4
 #: .\templates\generic\_form_content.html:8
 #: .\templates\generic\confirm_delete.html:6 .\templates\generic\form.html:15
-#: .\templates\geo\plan_import.html:21
+#: .\templates\geo\plan_detail.html:61 .\templates\geo\plan_import.html:21
 #: .\templates\registry\costcenter_archive_confirm.html:22
 #: .\templates\workboard\_task_form.html:6
 msgid "Cancel"
@@ -1214,7 +1257,7 @@ msgstr "Cancelar"
 #: .\templates\compliance\_document_rows.html:8
 #: .\templates\compliance\document_list.html:13
 #: .\templates\compliance\document_list.html:16
-#: .\templates\geo\plan_detail.html:55
+#: .\templates\geo\plan_detail.html:85
 msgid "Current"
 msgstr "Vigente"
 
@@ -1318,6 +1361,7 @@ msgid "Reopen this alert and send its task back"
 msgstr "Reabre esta alerta y devuelve su tarea a donde estaba"
 
 #: .\templates\compliance\alert_list.html:16
+#: .\templates\geo\plan_detail.html:39
 msgid "Undo"
 msgstr "Deshacer"
 
@@ -1540,11 +1584,6 @@ msgstr "Desde"
 #: .\templates\operations\permission_detail.html:13
 msgid "To"
 msgstr "Hasta"
-
-#: .\templates\compliance\report.html:43
-#: .\templates\workboard\task_list.html:14
-msgid "Apply"
-msgstr "Aplicar"
 
 #: .\templates\compliance\report.html:49
 msgid "Current documents"
@@ -1947,44 +1986,56 @@ msgstr "Exportar CSV"
 msgid "All statuses"
 msgstr "Todos los estados"
 
-#: .\templates\generic\list.html:25 .\templates\geo\plan_detail.html:49
+#: .\templates\generic\list.html:25 .\templates\geo\plan_detail.html:79
 #: .\templates\geo\plan_list.html:19
 msgid "Created"
 msgstr "Creado"
 
-#: .\templates\geo\plan_detail.html:23 .\templates\geo\plan_import.html:11
+#: .\templates\geo\plan_detail.html:28 .\templates\geo\plan_import.html:11
 msgid "Back to plans"
 msgstr "Volver a los planes"
 
-#: .\templates\geo\plan_detail.html:29
+#: .\templates\geo\plan_detail.html:34
 msgid "Map"
 msgstr "Mapa"
 
-#: .\templates\geo\plan_detail.html:41
+#: .\templates\geo\plan_detail.html:40
+msgid "Redo"
+msgstr "Rehacer"
+
+#: .\templates\geo\plan_detail.html:57
+msgid "Save a new version"
+msgstr "Guardar una nueva versión"
+
+#: .\templates\geo\plan_detail.html:58
+msgid "Describe your change"
+msgstr "Describe tu cambio"
+
+#: .\templates\geo\plan_detail.html:71
 msgid "Versions"
 msgstr "Versiones"
 
-#: .\templates\geo\plan_detail.html:46 .\templates\geo\plan_list.html:18
+#: .\templates\geo\plan_detail.html:76 .\templates\geo\plan_list.html:18
 msgid "Version"
 msgstr "Versión"
 
-#: .\templates\geo\plan_detail.html:47
+#: .\templates\geo\plan_detail.html:77
 msgid "Source"
 msgstr "Origen"
 
-#: .\templates\geo\plan_detail.html:61
+#: .\templates\geo\plan_detail.html:91
 msgid "No versions yet."
 msgstr "Aún no hay versiones."
 
-#: .\templates\geo\plan_detail.html:72
+#: .\templates\geo\plan_detail.html:102
 msgid "Source file"
 msgstr "Archivo de origen"
 
-#: .\templates\geo\plan_detail.html:76
+#: .\templates\geo\plan_detail.html:106
 msgid "Download original"
 msgstr "Descargar original"
 
-#: .\templates\geo\plan_detail.html:79
+#: .\templates\geo\plan_detail.html:109
 msgid "No source file."
 msgstr "Sin archivo de origen."
 
@@ -2013,10 +2064,6 @@ msgstr "Aún no hay planes. Importa un KMZ o KML para crear el primero."
 #: .\templates\operations\permission_detail.html:7
 msgid "Back"
 msgstr "Volver"
-
-#: .\templates\maintenance\record_detail.html:17
-msgid "Description"
-msgstr "Descripción"
 
 #: .\templates\maintenance\record_detail.html:18
 msgid "Scheduled date"

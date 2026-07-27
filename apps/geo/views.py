@@ -45,20 +45,26 @@ class GeoPlanDetailView(ModelViewPermissionRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         from django.conf import settings
+        from django.middleware.csrf import get_token
         from django.urls import reverse
         from django.utils.translation import gettext as _
 
         context = super().get_context_data(**kwargs)
         plan = self.object
         context["versions"] = plan.versions.order_by("-version_number")
-        # Config for the read-only map island (GEO-7). Only the current version
-        # is shown; the island fetches its canonical document from the read API
-        # and never carries business rules. editable is False here -- editing is
-        # GEO-8, gated on geo.change_geoplan.
         current = plan.current_version
+        # Editing (GEO-8) is offered only when the user may change the plan AND
+        # the plan is in an editable state; the commit API re-checks both, this
+        # only decides whether to render the editor UI. Read-only otherwise.
+        editable = self.request.user.has_perm("geo.change_geoplan") and plan.is_editable
+        context["editable"] = editable
+        # Config for the map island. It fetches the canonical document from the
+        # read API and (when editable) commits through the write API; business
+        # rules live on the server.
         context["map_config"] = {
             "planId": str(plan.pk),
             "currentVersion": current.version_number if current else None,
+            "baseVersion": current.version_number if current else 0,
             "contentUrl": (
                 reverse(
                     "api-v1-geo-plan-version-content",
@@ -67,8 +73,10 @@ class GeoPlanDetailView(ModelViewPermissionRequiredMixin, DetailView):
                 if current
                 else None
             ),
+            "commitUrl": reverse("api-v1-geo-plan-versions", args=[plan.pk]),
+            "csrfToken": get_token(self.request) if editable else "",
             "tileProviders": settings.GEO_TILE_PROVIDERS,
-            "editable": False,
+            "editable": editable,
             "iconBase": settings.STATIC_URL + "vendor/leaflet/images/",
             # The island is client-side JS (outside gettext's reach), so its
             # user-visible strings are localized here and passed through.
@@ -81,6 +89,19 @@ class GeoPlanDetailView(ModelViewPermissionRequiredMixin, DetailView):
                 "loading": _("Loading map…"),
                 "error": _("The map could not be loaded."),
                 "empty": _("This version has no geometry to show."),
+                "name": _("Name"),
+                "description": _("Description"),
+                "apply": _("Apply"),
+                "unsaved": _("Unsaved changes"),
+                "saving": _("Saving…"),
+                "conflict": _(
+                    "The plan changed on the server. Reload to get the latest "
+                    "version, then reapply your changes."
+                ),
+                "locked": _("This plan can no longer be edited."),
+                "invalid": _("The change was rejected:"),
+                "throttled": _("Too many saves in a row. Wait a moment."),
+                "rescue": _("Download your local copy"),
             },
         }
         return context
