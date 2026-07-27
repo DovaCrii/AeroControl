@@ -43,11 +43,15 @@ de esa ruta sino de la auditoría, y el orden recomendado es:
    construido y sin nada que procesar. El dashboard ahora **guía los tres
    pasos** (tarjeta "Activa el monitoreo de cumplimiento"): tipo de documento →
    documentos con vencimiento → una regla → `generate_alerts`; recién entonces
-   asignar operadores responsables y validar el digest.
-2. **V.10-V.12** — la seguridad diferida de la revisión: endurecer CSP (exige
-   extraer el JS inline primero), vendorizar CDN con SRI (T5.9), y la política
-   de sesión/cambio de contraseña.
-3. **TL.7** — los 5 PRs de Dependabot.
+   asignar operadores responsables y validar el digest. *(Decisión de negocio del
+   usuario, no del agente.)*
+2. **BLOQUE GEO** — editor geoespacial KMZ/KML. Propuesta aprobada 2026-07-27
+   ([docs/dev/geo-editor-plan.md](docs/dev/geo-editor-plan.md)); arranca en GEO-0
+   con el "go" del usuario. Es el trabajo grande de producto pendiente.
+3. **V.10-V.12** — la seguridad diferida de la revisión: endurecer CSP (exige
+   extraer el JS inline primero), vendorizar CDN con SRI (T5.9 — GEO-0 lo empieza),
+   y la política de sesión/cambio de contraseña.
+4. **TL.7** — los 5 PRs de Dependabot.
 
 La revisión V.1-V.39 está **completa** salvo V.3 (⛔ T3.2) y V.10-V.12 (⬜
 decisión). La tanda E se ejecutó el 2026-07-25 con el alcance que eligió el
@@ -227,18 +231,21 @@ traversal, CSRF, pipeline de subida, autorización de lectura de la API DRF,
 feed del calendario sin N+1 (~15-20 queries constantes), `GlobalSearchView`,
 `digest.py`, transiciones de estado con `atomic`, hardening de `prod.py`.
 
-### Áreas de vuelo en KMZ — decidido el 2026-07-25
+### Áreas de vuelo en KMZ — decidido el 2026-07-25, **SUPERADO el 2026-07-27**
 
 **Archivar sí, interpretar no.** Decisión del usuario. Las cartas de permiso y
 los KMZ se guardan como `Document` colgando del permiso de vuelo, con su
 versionado, sus alertas de vencimiento y su sitio en el informe. El KMZ y el KML
-están en la lista blanca de subida con su firma (`2fbe152`).
+están en la lista blanca de subida con su firma (`2fbe152`). **Esto sigue siendo
+verdad y es la base del nuevo bloque.**
 
-Queda **fuera de alcance hasta nuevo aviso**: leer la geometría del KMZ para
-dibujar el área, detectar solapamientos entre áreas o comprobar si un vuelo cae
-dentro de la suya. Eso exige soporte geoespacial (PostGIS) y revertiría la
-decisión local-first con SQLite, así que no se aborda sin replantear esa base.
-No reabrir esto como si fuera un olvido: es una decisión tomada.
+**Lo que cambió (2026-07-27):** el usuario decidió superar el "interpretar no"
+con un alcance acotado — un **editor liviano** (no un GIS): importar, visualizar,
+editar geometrías/atributos, versionar, aprobar y re-exportar. El diseño evita
+PostGIS (sigue local-first con SQLite: el KML se interpreta en Python y el blob
+canónico vive en un `JSONField`) y evita el análisis espacial serio (solapamientos,
+punto-en-polígono), que queda para más adelante. Ver **BLOQUE GEO** abajo y
+[docs/dev/geo-editor-plan.md](docs/dev/geo-editor-plan.md).
 
 ### Deuda de `openspec/specs/` (TL.8, pendiente)
 
@@ -494,6 +501,40 @@ Depende de los Bloques 1 y 2.
 ### BLOQUE 6.3 — Asistente IA `⏸ DIFERIDO (requiere aprobación de diseño)`
 
 No implementado por decisión del plan. Cuando se retome: app `apps/assistant` que envíe **solo KPIs agregados y códigos** (nunca nombres, archivos ni datos crudos), API key solo por `.env`, degradable si no hay red, salida marcada como borrador con aprobación humana, y `AuditEvent` por generación.
+
+### BLOQUE GEO (7) — Editor geoespacial KMZ/KML `rama codex/geo-*` `⬜ PROPUESTA APROBADA — espera "go" de GEO-0`
+
+Editor liviano de planificación RPA/UAS: importar KMZ/KML, interpretar la
+estructura (carpetas/puntos/líneas/polígonos), editar, versionar de forma
+inmutable, aprobar por rol y re-exportar KML/KMZ válido. Diseño completo en
+[docs/dev/geo-editor-plan.md](docs/dev/geo-editor-plan.md). Supera la decisión
+"archivar sí, interpretar no" (ver arriba). **Decisiones tomadas:** Leaflet +
+Leaflet-Geoman (no MapLibre); `cost_center` obligatorio + `flight_permission`
+opcional; OSM + Esri sin API keys; JSON canónico por versión (no GeoJSON, no
+PostGIS); lxml endurecido. **No arranca sin "go" explícito del usuario.**
+
+MVP = GEO-0..GEO-10 (hito *visor*: 0-7; hito *editor*: 8-10). V2 = GEO-11..GEO-14.
+
+| ID | Est. | Tarea | Dep. | MVP |
+|---|:--:|---|:--:|:--:|
+| GEO-0 | ⬜ | Fundaciones: app `apps/geo`, vendorizar Leaflet+Geoman con SRI (`static/vendor/`), lxml a dep directa, `FILE_UPLOAD_MAX_MEMORY_SIZE`/`DATA_UPLOAD_MAX_MEMORY_SIZE` explícitos, enmienda a `docs/frontend-boundary.md` (islas JS admisibles) | — | ✔ |
+| GEO-0b | ⬜ | Quick-wins ortogonales: `set_audit_context` en `DocumentReplace`/`DocumentDelete`/`StatusTransitionView`/`FlightRecordDelete`; handler de error 4xx en el drag del Kanban | — | opc. |
+| GEO-1 | ⬜ | Modelos (`GeoPlan`/`GeoPlanVersion` append-only/`GeoPlanHistory`) + migración + `approve_geoplan` en `bootstrap_roles` + mapping en `signals.py`. Tests: unicidad, cerrojos, historia | GEO-0 | ✔ |
+| GEO-2 | ⬜ | Parser KML/KMZ endurecido + canónico AeroKML JSON. Tests: corpus feliz + 6 fixtures maliciosos (DOCTYPE, bomba, traversal, 300 entradas) | GEO-0 | ✔ |
+| GEO-3 | ⬜ | Generador export + **round-trip test** (igualdad semántica doble pasada; verificación manual en Google Earth documentada) | GEO-2 | ✔ |
+| GEO-4 | ⬜ | Import (form multipart sobre el pipeline existente → `Document` `GEO_SOURCE` + `GeoPlan` + V1, atómico) + lista/detalle shell + mover `ViewModelPermissions` a core. Tests 403 | GEO-1, GEO-2 | ✔ |
+| GEO-5 | ⬜ | API lectura (meta, versiones, content con `ETag`) + OpenAPI manual extendido | GEO-1 | ✔ |
+| GEO-6 | ⬜ | API commit + restore (409 doble capa `conflict`/`plan_locked`, validación server, audit, throttle scoped). Tests: conflicto, bloqueo, `no_change` | GEO-5, GEO-3 | ✔ |
+| GEO-7 | ⬜ | Isla JS fase 1 (solo lectura): mapa + proveedores de tiles + render por folder + panel show/hide + mediciones | GEO-4, GEO-5 | ✔ |
+| GEO-8 | ⬜ | Isla JS fase 2: edición Geoman (punto/línea/polígono/rect, mover, vértices), inspector, undo/redo, guardar con `summary`, manejo 409. Aceptación: importar→editar→commit→export→abre en Google Earth | GEO-7, GEO-6 | ✔ |
+| GEO-9 | ⬜ | Workflow: 6 transiciones + botones en el shell + editor read-only en aprobados + tests 403/transición inválida | GEO-4 | ✔ |
+| GEO-10 | ⬜ | Export POST + UI (KML/KMZ, copia de `kmz_resources` del original) + panel de versiones con restore | GEO-6, GEO-3 | ✔ |
+| GEO-11 | ⬜ | Capas avanzado: reorder/mover entre folders/duplicar/split de geometrías | GEO-8 | V2 |
+| GEO-12 | ⬜ | Diff visual entre versiones (por `uid`) + edición de `ExtendedData` | GEO-10 | V2 |
+| GEO-13 | ⬜ | Iconos embebidos servidos, StyleMap highlight editable, validación XSD | GEO-10 | V2 |
+| GEO-14 | ⬜ | Hooks DJI: interfaz `MissionExporter` + comparación planificado-vs-ejecutado | GEO-10 | V2 |
+
+**No bloquea T3.2** (tenancy): el scoping entra por `cost_center` como el resto y la migración futura lo cubre. GEO-0 absorbe parte de T5.9 (vendorización+SRI) y prepara V.10 (CSP).
 
 ### FASE L — Limpieza y orden del repositorio `puede correr en paralelo a FASE 0`
 
