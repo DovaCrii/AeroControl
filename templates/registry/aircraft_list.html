@@ -7,6 +7,7 @@
 <th>{% translate "Manufacturer" %}</th>
 <th>{% translate "Cost center" %}</th>
 <th>{% translate "Status" %}</th>
+<th>{% translate "Location" %}</th>
 {% endblock %}
 
 {% block table_body %}
@@ -17,6 +18,11 @@
   <td>{{ object.manufacturer|default:"—" }}</td>
   <td>{{ object.cost_center|default:"Sin asignar" }}</td>
   <td>{% if object.status == "active" %}<span class="badge bg-success">{% translate "Active" %}</span>{% elif object.status == "maintenance" %}<span class="badge bg-warning text-dark">{% translate "Maintenance" %}</span>{% else %}<span class="badge bg-secondary">{% translate "Retired" %}</span>{% endif %}</td>
+  <td>
+    {% if object.current_location == "headquarters" %}<span class="badge bg-secondary">{% translate "Headquarters" %}</span>
+    {% elif object.current_location == "on_site" %}<span class="badge bg-info text-dark">{% translate "On site" %}{% if object.current_site %}: {{ object.current_site }}{% endif %}</span>
+    {% else %}<span class="badge bg-warning text-dark">{% translate "In maintenance" %}</span>{% endif %}
+  </td>
   <td class="text-end">
     <a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">{% translate "View" %}</a>
     <a href="{{ object.pk }}/edit/" hx-get="{{ object.pk }}/edit/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">{% translate "Edit" %}</a>

@@ -75,7 +75,7 @@
     {% if aircraft_assignments is not None %}
     <div class="tab-pane fade" id="tab-fleet" role="tabpanel">
       <table class="table table-hover">
-        <thead><tr><th>{% translate "Aircraft" %}</th><th>{% translate "Since" %}</th><th>{% translate "Assignment status" %}</th><th>{% translate "Condition" %}</th></tr></thead>
+        <thead><tr><th>{% translate "Aircraft" %}</th><th>{% translate "Since" %}</th><th>{% translate "Assignment status" %}</th><th>{% translate "Condition" %}</th><th>{% translate "Location" %}</th></tr></thead>
         <tbody>
           {% for a in aircraft_assignments %}
           <tr>
@@ -86,6 +86,11 @@
               {% if a.aircraft.status == "active" %}<span class="badge bg-success">{% translate "Active" %}</span>
               {% elif a.aircraft.status == "maintenance" %}<span class="badge bg-warning text-dark">{% translate "Maintenance" %}</span>
               {% else %}<span class="badge bg-secondary">{% translate "Retired" %}</span>{% endif %}
+            </td>
+            <td>
+              {% if a.aircraft.current_location == "headquarters" %}<span class="badge bg-secondary">{% translate "Headquarters" %}</span>
+              {% elif a.aircraft.current_location == "on_site" %}<span class="badge bg-info text-dark">{% translate "On site" %}{% if a.aircraft.current_site %}: {{ a.aircraft.current_site }}{% endif %}</span>
+              {% else %}<span class="badge bg-warning text-dark">{% translate "In maintenance" %}</span>{% endif %}
             </td>
           </tr>
           {% empty %}
