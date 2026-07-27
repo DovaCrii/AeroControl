@@ -200,6 +200,12 @@ class GeoPlanHistory(BaseModel):
     which is why the field names match its expectations.
     """
 
+    # `created_at` alone cannot order two rows created moments apart: on this
+    # machine `timezone.now()` returns the *identical* value across rapid
+    # successive calls, and SQL gives no ordering guarantee for ties on a
+    # non-unique column. `sequence` is computed in save() as "latest + 1"
+    # (same idiom as GeoPlanVersion.version_number / ResourceMovementLog).
+    sequence = models.PositiveBigIntegerField(editable=False, default=0)
     plan = models.ForeignKey(GeoPlan, on_delete=models.CASCADE, related_name="history")
     previous_status = models.CharField(max_length=20)
     new_status = models.CharField(max_length=20)
@@ -214,7 +220,13 @@ class GeoPlanHistory(BaseModel):
     class Meta:
         verbose_name = _("geo plan history entry")
         verbose_name_plural = _("geo plan history")
-        ordering = ["-created_at"]
+        ordering = ["-sequence"]
 
     def __str__(self):
         return f"{self.plan_id}: {self.previous_status} -> {self.new_status}"
+
+    def save(self, *args, **kwargs):
+        if self._state.adding:
+            latest = GeoPlanHistory.objects.order_by("-sequence").first()
+            self.sequence = (latest.sequence if latest else 0) + 1
+        return super().save(*args, **kwargs)
