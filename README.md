@@ -36,13 +36,17 @@ AeroControl centraliza la operación de equipos RPA/UAS: flota, operadores,
 habilitaciones, documentos, permisos de vuelo, mantenimiento, alertas y trabajo
 Kanban.
 
-> **Estado:** alpha en **pausa de estabilización activa**. Es apto para evaluación
+> **Estado:** `v0.3.0-alpha`. La estabilización inicial y una revisión completa de
+> seguridad, estabilidad, desempeño y UX están **cerradas**; es apto para evaluación
 > local controlada. Antes de producción se requiere una política de respaldos,
-> antivirus, retención de datos y control de accesos.
+> antivirus, retención de datos y control de accesos, más el endurecimiento aún
+> diferido (tenancy estricto, CSP enforcing).
 >
 > 📋 **El trabajo pendiente se sigue por bloques en [MASTER_PLAN.md](MASTER_PLAN.md)**,
-> con la evidencia técnica en [AUDIT_CLAUDE.md](AUDIT_CLAUDE.md). No se incorpora
-> funcionalidad nueva (DJI Cloud API incluida) hasta cerrar las fases 0-3.
+> con la evidencia técnica en [AUDIT_CLAUDE.md](AUDIT_CLAUDE.md). La siguiente pieza
+> grande de producto es el **editor geoespacial KMZ/KML** (BLOQUE GEO, propuesta en
+> [docs/dev/geo-editor-plan.md](docs/dev/geo-editor-plan.md)). DJI Cloud API sigue
+> diferida.
 
 ## Qué incluye
 
@@ -177,10 +181,11 @@ uv run python manage.py send_alert_digest --dry-run
 ~~~
 
 `-EnvFile` es necesario porque una tarea programada no hereda las variables de
-la sesión interactiva. El destinatario del resumen es el campo **Operador
-responsable** del centro de costo; si falta, el comando lo informa y continúa
-con los demás. Sin `EMAIL_HOST` configurado el correo se imprime en consola en
-lugar de enviarse.
+la sesión interactiva. El destinatario del resumen es el **Operador responsable**
+del centro de costo, o su **Contacto externo** (nombre y correo) cuando el
+responsable no está en el padrón de operadores — un administrador, secretaría o
+un SSO; si no hay ninguno, el comando lo informa y continúa con los demás. Sin
+`EMAIL_HOST` configurado el correo se imprime en consola en lugar de enviarse.
 
 El equivalente en cron para Linux y el detalle completo están en
 [docs/scheduled-operations.md](docs/scheduled-operations.md).
@@ -204,7 +209,7 @@ El equivalente en cron para Linux y el detalle completo están en
 
 ### Cargas de archivos
 
-- Se aceptan PDF, DOCX, XLSX, PNG, JPG y JPEG hasta 20 MB.
+- Se aceptan PDF, DOCX, XLSX, PNG, JPG, JPEG, KMZ y KML hasta 20 MB.
 - Se valida la firma real, se normaliza la ruta y se usa un archivo temporal.
 - El antivirus se integra mediante DOCUMENTS_ANTIVIRUS_COMMAND, por ejemplo clamscan.
 
@@ -274,34 +279,40 @@ calendario unificado en /calendar/.
 
 Completado:
 
-- UI en español con cambio ES/EN.
-- Tema claro/oscuro y panel lateral contraíble.
-- Formularios con controles de fecha y hora.
-- Kanban Tablero, Lista y Calendario.
-- Centro de administración operativo.
-- Importación validada del Capítulo 1 vigente.
-- Suite de ~124 pruebas con Ruff, Bandit, pip-audit y CI (cobertura ~82%).
+- UI en español con cambio ES/EN, tema claro/oscuro y panel lateral contraíble.
+- Formularios con controles de fecha y hora; Kanban Tablero, Lista y Calendario.
+- Centro de administración operativo e importación validada del Capítulo 1 vigente.
+- Notificaciones y operación programada (`generate_alerts`, resumen por correo,
+  informe ejecutivo semanal, respaldos), con registro en `JobRun`.
+- **FASE 0 (estabilización) cerrada** y una **revisión completa de seguridad,
+  estabilidad, desempeño y UX** (V.1–V.39): scoping del Workboard, throttling del
+  endpoint de token, SQLite en WAL, atomicidad alerta⇄tarea, N+1 e índices,
+  archivar/restaurar desde la UI, y zona horaria coherente (America/Santiago).
+- Estáticos con hash de contenido en producción (WhiteNoise) y catálogo de
+  traducciones vigilado por un test de deriva.
+- Suite de ~308 pruebas con Ruff, Bandit, pip-audit y CI (cobertura ~89%).
 
 > **El seguimiento vivo del trabajo pendiente vive en [MASTER_PLAN.md](MASTER_PLAN.md)**
-> (tablero de bloques FASE 0-6, con estado, prioridad y criterio de aceptación).
-> La auditoría técnica que lo respalda está en [AUDIT_CLAUDE.md](AUDIT_CLAUDE.md).
+> (tablero de bloques, con estado, prioridad y criterio de aceptación). La
+> auditoría técnica que lo respalda está en [AUDIT_CLAUDE.md](AUDIT_CLAUDE.md).
 
 Próximas prioridades (ver el detalle y el orden en el plan maestro):
 
-- **FASE 0 — Estabilización:** restaurar el dashboard, hacer que el gate de
-  verificación falle ante errores, cerrar el flujo de mantenimiento y fijar un
-  umbral de cobertura en CI.
-- **FASE 1-3 — Núcleo:** partir `core`, cerrar los permisos de lectura y el
-  aislamiento por organización, y fijar `on_delete`/constraints antes de acumular
-  datos reales.
-- **Operación:** resolver operadores duplicados, asignar aeronaves/operadores a
-  centros de costo y modelar habilitaciones DGAC con vigencia, evidencia y alertas.
-- **Diferido (YAGNI):** PostgreSQL en producción, DJI Cloud API y telemetría, hasta
-  cerrar el núcleo.
+- **Cargar datos reales de cumplimiento** — documentos con vencimiento y una
+  regla de alerta; el dashboard guía los tres pasos. Es lo que enciende el
+  resumen diario y el informe ejecutivo, hoy construidos pero sin datos.
+- **BLOQUE GEO — editor geoespacial KMZ/KML:** importar, visualizar, editar,
+  versionar, aprobar y re-exportar planificación de vuelo. Propuesta técnica
+  aprobada en [docs/dev/geo-editor-plan.md](docs/dev/geo-editor-plan.md).
+- **Endurecimiento diferido:** tenancy estricto (aislamiento por organización en
+  todas las vistas), CSP enforcing y vendorización con SRI de las dependencias
+  de front.
+- **Operación:** modelar habilitaciones DGAC con vigencia, evidencia y alertas.
+- **Diferido (YAGNI):** PostgreSQL en producción, DJI Cloud API y telemetría.
 
 La frontera frontend está documentada en docs/frontend-boundary.md. Una SPA
-separada queda postergada hasta que existan requisitos de API independiente,
-uso offline o clientes móviles.
+separada queda postergada; el editor geoespacial será una **isla JavaScript**
+acotada (módulos ES sin build) dentro del shell server-rendered, no una SPA.
 
 El plan de backend local-first y el runbook de snapshots están en
 `docs/dev/06-Plan-Local-First.md`, `docs/dev/backend-plan.md` y
