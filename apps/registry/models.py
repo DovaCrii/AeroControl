@@ -103,12 +103,44 @@ class Aircraft(BaseModel):
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
 
+    # OPS-3: physical whereabouts, a different axis from `status` (condition).
+    # An active aircraft can be at headquarters, deployed on a site, or in for
+    # maintenance; tracked separately so "where is it" and "is it flyable" don't
+    # get conflated into one field.
+    LOCATION_CHOICES = [
+        ("headquarters", _("Headquarters")),
+        ("on_site", _("On site")),
+        ("maintenance", _("In maintenance")),
+    ]
+    current_location = models.CharField(
+        max_length=20, choices=LOCATION_CHOICES, default="headquarters"
+    )
+    current_site = models.ForeignKey(
+        CostCenter,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        help_text=_("The site this aircraft is deployed to, when on site."),
+    )
+
     class Meta:
         verbose_name = _("aircraft")
         verbose_name_plural = _("aircraft")
 
     def __str__(self):
         return self.registration
+
+    def clean(self):
+        errors = {}
+        if self.current_location == "on_site" and not self.current_site_id:
+            errors["current_site"] = _("Select the site the aircraft is deployed to.")
+        if self.current_location != "on_site" and self.current_site_id:
+            errors["current_site"] = _(
+                "A site only applies when the aircraft is on site."
+            )
+        if errors:
+            raise ValidationError(errors)
 
 
 class Operator(BaseModel):
@@ -379,6 +411,7 @@ class ResourceMovementLog(BaseModel):
         ("assigned", _("Assigned")),
         ("reassigned", _("Reassigned")),
         ("released", _("Released")),
+        ("location_changed", _("Location changed")),  # OPS-3
     ]
 
     # `created_at` alone cannot order two rows created moments apart: on this

@@ -70,3 +70,38 @@ def sync_operator_assignment(sender, instance, **kwargs):
 
 def sync_aircraft_assignment(sender, instance, **kwargs):
     _sync(AircraftAssignment, "aircraft", "aircraft", instance)
+
+
+def track_aircraft_location(sender, instance, **kwargs):
+    """OPS-3: log a move whenever Aircraft.current_location/current_site changes.
+
+    pre_save (not post_save): needs the *previous* row to compare against, the
+    same shape as apps/core/signals.py's track_status_changes, but writing to
+    the generic ResourceMovementLog instead of a per-model history table --
+    location isn't a workflow status, and the log already models "resource
+    moved" independently of cost-center assignment.
+    """
+    if not instance.pk:
+        return  # first save: nothing to compare against, no transition to log
+    try:
+        old = sender.objects.get(pk=instance.pk)
+    except sender.DoesNotExist:
+        return
+    if (
+        old.current_location == instance.current_location
+        and old.current_site_id == instance.current_site_id
+    ):
+        return
+    ResourceMovementLog.objects.create(
+        resource_kind="aircraft",
+        resource_id=instance.pk,
+        movement="location_changed",
+        from_cost_center_id=old.current_site_id
+        if old.current_location == "on_site"
+        else None,
+        to_cost_center_id=(
+            instance.current_site_id if instance.current_location == "on_site" else None
+        ),
+        detail=f"{old.get_current_location_display()} → {instance.get_current_location_display()}",
+        changed_by_user=getattr(instance, "_changed_by_user", None),
+    )

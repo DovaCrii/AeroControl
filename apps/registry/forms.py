@@ -63,6 +63,8 @@ class AircraftForm(AeroModelForm):
             "authorized_services",
             "cost_center",
             "status",
+            "current_location",
+            "current_site",
         ]
         labels = {
             "registration": _("Registration"),
@@ -78,6 +80,8 @@ class AircraftForm(AeroModelForm):
             "authorized_services": _("Authorized services"),
             "cost_center": _("Cost Center"),
             "status": _("Status"),
+            "current_location": _("Current location"),
+            "current_site": _("Current site"),
         }
 
 
