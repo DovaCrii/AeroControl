@@ -10,6 +10,10 @@ dependencies = [
     "python-decouple==3.8",
     "openpyxl>=3.1,<4",
     "python-docx>=1.1,<2",
+    # Direct dependency for the BLOQUE GEO KML parser (hardened lxml). It was
+    # already in the tree transitively via python-docx; pinned here so the geo
+    # module does not depend on that chain continuing to pull it.
+    "lxml>=6.1,<7",
     "psycopg[binary]>=3.2,<4",
     "djangorestframework>=3.15,<4",
     "boto3>=1.35,<2",

@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "apps.operations",
     "apps.maintenance",
     "apps.workboard",
+    "apps.geo",
     "apps.dashboard",
 ]
 MIDDLEWARE = [
@@ -128,6 +129,16 @@ DOCUMENTS_STORAGE_REGION = config("DOCUMENTS_STORAGE_REGION", default="")
 DOCUMENTS_STORAGE_ACCESS_KEY = config("DOCUMENTS_STORAGE_ACCESS_KEY", default="")
 DOCUMENTS_STORAGE_SECRET_KEY = config("DOCUMENTS_STORAGE_SECRET_KEY", default="")
 DOCUMENTS_ANTIVIRUS_COMMAND = config("DOCUMENTS_ANTIVIRUS_COMMAND", default="")
+
+# Upload limits made explicit: Django's defaults are 2.5 MB each and easy to hit
+# unknowingly. FILE_UPLOAD_MAX_MEMORY_SIZE only decides when a *file* upload
+# spills from memory to a temp file (documents cap at 20 MB in the form, so they
+# already stream). DATA_UPLOAD_MAX_MEMORY_SIZE bounds the non-file request body,
+# which is what the BLOQUE GEO plan commit uses: a JSON payload capped at 8 MB
+# (see docs/dev/geo-editor-plan.md), so the limit is raised to fit it plus headroom.
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
+DATA_UPLOAD_MAX_MEMORY_SIZE = 12 * 1024 * 1024
+
 CSP_REPORT_ONLY = config("CSP_REPORT_ONLY", default=True, cast=bool)
 
 # Notifications. Only variable *names* live in the repo; hosts, users and
