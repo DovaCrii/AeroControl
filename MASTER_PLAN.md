@@ -59,6 +59,10 @@ reales en vez de history.back(), y el dedupe responsive.
 *(Cerrado antes: T2.3/T2.4 `c5d22dd`/`3611d06`, TIME_ZONE America/Santiago
 `b24fbea`, R.10 tokens `8bdda97`, TL.6/TL.11 con tags y poda ejecutados.)*
 
+**Release `v0.3.0-alpha`** (2026-07-27): cierra todo lo anterior más la
+revisión V.1-V.39 (seguridad, estabilidad, desempeño, tanda E de UX). El tag
+apunta al commit que cierra esta sección del `CHANGELOG.md`, no a `ff9d6db`.
+
 Más adelante, y con más peso: **T3.2** (clave de tenancy) es el bloqueador real
 de la centralización y de DJI, y es barato ahora frente a hacerlo con datos
 acumulados.
