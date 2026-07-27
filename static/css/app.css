@@ -149,20 +149,12 @@ body {
 }
 
 /* ── Cards / Summary ──────────────────────────────── */
-.summary-card {
-  background: var(--ac-navy);
-  color: #fff;
-  border-radius: 10px;
-  padding: 1.2rem;
-  display: flex;
-  flex-direction: column;
-}
-
-.summary-card strong {
-  font-size: 2rem;
-  color: var(--ac-turquoise);
-}
-
+/* The real .summary-card/.card rules live further down (--ac-* token
+   generation); this block used to duplicate them with hardcoded colors
+   (--ac-navy background, #fff text) that the newer rules don't override,
+   leaving white text with no matching background. Only .card's border/shadow/
+   radius survive here -- .summary-card's actual styling comes from the block
+   near the bottom of this file. */
 .card {
   border: none;
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
@@ -858,7 +850,7 @@ main {
 .table-primary-value { color: var(--ac-text); font-weight: 650; }
 
 .summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.85rem; }
-.summary-card { display: flex; flex-direction: column; gap: 0.25rem; padding: 1rem 1.1rem; border: 1px solid var(--ac-border); border-radius: var(--ac-radius); background: var(--ac-surface); box-shadow: var(--ac-shadow); }
+.summary-card { display: flex; flex-direction: column; gap: 0.15rem; padding: 0.65rem 0.85rem; border: 1px solid var(--ac-border); border-radius: var(--ac-radius); background: var(--ac-surface); box-shadow: var(--ac-shadow); }
 .summary-card span { color: var(--ac-text-secondary); font-size: 0.8rem; font-weight: 650; }
 .summary-card strong { color: var(--ac-primary); font-size: 1.65rem; line-height: 1; }
 .summary-card-warning strong { color: #d97706; }
