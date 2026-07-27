@@ -15,7 +15,16 @@ from apps.core.views import (
     ModelViewPermissionRequiredMixin,
     SearchMixin,
 )
-from .models import CostCenter, Aircraft, Operator, Assignment, Qualification
+from .models import (
+    CostCenter,
+    Aircraft,
+    AircraftAssignment,
+    Operator,
+    OperatorAssignment,
+    Assignment,
+    Qualification,
+    ResourceMovementLog,
+)
 from apps.core.audit import set_audit_context
 from apps.core.models import ImportBatch
 from apps.core.imports import CsvImportSpec
@@ -24,6 +33,8 @@ from .forms import (
     AircraftForm,
     OperatorForm,
     AssignmentForm,
+    OperatorAssignmentForm,
+    AircraftAssignmentForm,
     QualificationForm,
 )
 
@@ -40,6 +51,8 @@ class RegistryList(
         "aircraft": _("Aircraft"),
         "operator": _("Operators"),
         "assignment": _("Resource planning"),
+        "operatorassignment": _("Operator assignments"),
+        "aircraftassignment": _("Aircraft assignments"),
         "qualification": _("Qualifications"),
     }
 
@@ -186,6 +199,8 @@ for _model, _name in (
     (Aircraft, "Aircraft"),
     (Operator, "Operator"),
     (Assignment, "Assignment"),
+    (OperatorAssignment, "OperatorAssignment"),
+    (AircraftAssignment, "AircraftAssignment"),
     (Qualification, "Qualification"),
 ):
     globals()[f"{_name}Archive"] = type(
@@ -196,6 +211,8 @@ for _model, _name in (
     (Aircraft, "Aircraft"),
     (Operator, "Operator"),
     (Assignment, "Assignment"),
+    (OperatorAssignment, "OperatorAssignment"),
+    (AircraftAssignment, "AircraftAssignment"),
     (Qualification, "Qualification"),
 ):
     globals()[f"{_name}Restore"] = type(
@@ -289,6 +306,110 @@ AssignmentDetail, AssignmentCreate, AssignmentUpdate = (
         {"model": Assignment, "form_class": AssignmentForm},
     ),
 )
+
+
+class OperatorAssignmentList(RegistryList):
+    """OPS-1: an operator anchored to a cost center over a period."""
+
+    model = OperatorAssignment
+    search_fields = [
+        "operator__full_name",
+        "operator__employee_id",
+        "cost_center__code",
+    ]
+
+    def get_queryset(self):
+        return super().get_queryset().select_related("operator", "cost_center")
+
+
+class AircraftAssignmentList(RegistryList):
+    """OPS-1: an aircraft anchored to a cost center over a period."""
+
+    model = AircraftAssignment
+    search_fields = ["aircraft__registration", "aircraft__model", "cost_center__code"]
+
+    def get_queryset(self):
+        return super().get_queryset().select_related("aircraft", "cost_center")
+
+
+OperatorAssignmentDetail, OperatorAssignmentCreate, OperatorAssignmentUpdate = (
+    type("OperatorAssignmentDetail", (RegistryDetail,), {"model": OperatorAssignment}),
+    type(
+        "OperatorAssignmentCreate",
+        (RegistryCreate,),
+        {"model": OperatorAssignment, "form_class": OperatorAssignmentForm},
+    ),
+    type(
+        "OperatorAssignmentUpdate",
+        (RegistryUpdate,),
+        {"model": OperatorAssignment, "form_class": OperatorAssignmentForm},
+    ),
+)
+AircraftAssignmentDetail, AircraftAssignmentCreate, AircraftAssignmentUpdate = (
+    type("AircraftAssignmentDetail", (RegistryDetail,), {"model": AircraftAssignment}),
+    type(
+        "AircraftAssignmentCreate",
+        (RegistryCreate,),
+        {"model": AircraftAssignment, "form_class": AircraftAssignmentForm},
+    ),
+    type(
+        "AircraftAssignmentUpdate",
+        (RegistryUpdate,),
+        {"model": AircraftAssignment, "form_class": AircraftAssignmentForm},
+    ),
+)
+
+
+class ResourceMovementLogList(ModelViewPermissionRequiredMixin, ListView):
+    """OPS-1: the read-only movement trail -- never a create/edit surface.
+
+    resource_id is a bare UUID (it can point at an Operator or an Aircraft
+    depending on resource_kind), so this resolves a display label per row
+    instead of asking the template to know which model to look up.
+    """
+
+    model = ResourceMovementLog
+    template_name = "registry/resourcemovementlog_list.html"
+    context_object_name = "objects"
+    paginate_by = 50
+
+    def get_queryset(self):
+        queryset = (
+            super()
+            .get_queryset()
+            .select_related("from_cost_center", "to_cost_center", "changed_by_user")
+        )
+        kind = self.request.GET.get("resource_kind")
+        if kind in {"operator", "aircraft"}:
+            queryset = queryset.filter(resource_kind=kind)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = _("Resource movements")
+        context["selected_kind"] = self.request.GET.get("resource_kind", "")
+        entries = list(context["objects"])
+        operator_ids = [e.resource_id for e in entries if e.resource_kind == "operator"]
+        aircraft_ids = [e.resource_id for e in entries if e.resource_kind == "aircraft"]
+        operators = dict(
+            Operator.objects.filter(pk__in=operator_ids).values_list("pk", "full_name")
+        )
+        aircraft = dict(
+            Aircraft.objects.filter(pk__in=aircraft_ids).values_list(
+                "pk", "registration"
+            )
+        )
+        for entry in entries:
+            label = (
+                operators.get(entry.resource_id)
+                if entry.resource_kind == "operator"
+                else aircraft.get(entry.resource_id)
+            )
+            entry.resource_label = label or str(entry.resource_id)
+        context["objects"] = entries
+        return context
+
+
 QualificationList, QualificationDetail, QualificationCreate, QualificationUpdate = (
     make_views(Qualification, QualificationForm, "Qualification")
 )

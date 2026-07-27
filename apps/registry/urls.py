@@ -19,8 +19,22 @@ urlpatterns += [
     path(
         "operator/import/", views.OperatorImportView.as_view(), name="operator-import"
     ),
+    # OPS-1: read-only movement trail, not part of the per-model CRUD loop below.
+    path(
+        "resource-movements/",
+        views.ResourceMovementLogList.as_view(),
+        name="resourcemovementlog-list",
+    ),
 ]
-for name in ("CostCenter", "Aircraft", "Operator", "Assignment", "Qualification"):
+for name in (
+    "CostCenter",
+    "Aircraft",
+    "Operator",
+    "Assignment",
+    "OperatorAssignment",
+    "AircraftAssignment",
+    "Qualification",
+):
     lower = name.lower()
     urlpatterns += [
         path(

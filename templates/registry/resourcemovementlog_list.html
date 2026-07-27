@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load aero_tags i18n %}
+{% block title %}{{ title }} - AeroControl{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1 class="h3">{{ title }}</h1>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-3">
+    <select class="form-select" name="resource_kind">
+      <option value="">{% translate "All resources" %}</option>
+      <option value="operator" {% if selected_kind == "operator" %}selected{% endif %}>{% translate "Operator" %}</option>
+      <option value="aircraft" {% if selected_kind == "aircraft" %}selected{% endif %}>{% translate "Aircraft" %}</option>
+    </select>
+  </div>
+  <div class="col-auto"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
+</form>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>{% translate "Resource" %}</th>
+          <th>{% translate "Movement" %}</th>
+          <th>{% translate "From" %}</th>
+          <th>{% translate "To" %}</th>
+          <th>{% translate "Changed by" %}</th>
+          <th>{% translate "Created" %}</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        {% for entry in objects %}
+        <tr>
+          <td>{{ entry.get_resource_kind_display }}: {{ entry.resource_label }}</td>
+          <td>{{ entry.get_movement_display }}</td>
+          <td>{{ entry.from_cost_center|default:"—" }}</td>
+          <td>{{ entry.to_cost_center|default:"—" }}</td>
+          <td>{{ entry.changed_by_user|default:"—" }}</td>
+          <td><span class="text-nowrap">{{ entry.created_at|date:'Y-m-d H:i' }}</span></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="99" class="text-center text-muted py-4">{% translate "No movements recorded yet." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% render_pagination page_obj %}
+</div>
+{% endblock %}

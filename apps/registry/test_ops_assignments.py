@@ -3,8 +3,10 @@
 from datetime import timedelta
 
 import pytest
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Permission, User
 from django.core.exceptions import ValidationError
+from django.test import Client
+from django.urls import reverse
 from django.utils import timezone
 
 from apps.registry.models import (
@@ -17,6 +19,15 @@ from apps.registry.models import (
 )
 
 TODAY = timezone.localdate()
+
+
+def _client(*codenames):
+    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
+    if codenames:
+        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
+    client = Client()
+    assert client.login(username=user.username, password="pw")
+    return client
 
 
 def _operator(**kwargs):
@@ -151,3 +162,121 @@ class TestAppendOnlyLog:
             qs.delete()
         with pytest.raises(ValidationError):
             qs.first().delete()
+
+
+class TestOperatorAssignmentViews:
+    @pytest.mark.django_db
+    def test_list_requires_view_permission(self, db):
+        assert _client().get(reverse("operatorassignment-list")).status_code == 403
+        response = _client("view_operatorassignment").get(
+            reverse("operatorassignment-list")
+        )
+        assert response.status_code == 200
+
+    @pytest.mark.django_db
+    def test_create_requires_add_permission(self, db):
+        op = _operator()
+        cc = _cc("CC1")
+        payload = {
+            "operator": op.pk,
+            "cost_center": cc.pk,
+            "start_date": TODAY.isoformat(),
+            "status": "active",
+            "purpose": "",
+        }
+        url = reverse("operatorassignment-create")
+        assert _client("view_operatorassignment").post(url, payload).status_code == 403
+
+        response = _client("add_operatorassignment").post(url, payload)
+        assert response.status_code == 302
+        assert OperatorAssignment.objects.filter(operator=op, cost_center=cc).exists()
+
+    @pytest.mark.django_db
+    def test_create_rejects_overlap_via_form(self, db):
+        op = _operator()
+        cc1, cc2 = _cc("CC1"), _cc("CC2")
+        OperatorAssignment.objects.create(
+            operator=op, cost_center=cc1, start_date=TODAY, status="active"
+        )
+        payload = {
+            "operator": op.pk,
+            "cost_center": cc2.pk,
+            "start_date": TODAY.isoformat(),
+            "status": "active",
+            "purpose": "",
+        }
+        response = _client("add_operatorassignment").post(
+            reverse("operatorassignment-create"), payload
+        )
+        # HtmxFormMixin.form_invalid re-renders 200/422 for the modal fragment;
+        # a plain (non-HTMX) POST falls through to the normal invalid-form 200.
+        assert response.status_code == 200
+        assert OperatorAssignment.objects.filter(cost_center=cc2).count() == 0
+
+
+class TestAircraftAssignmentViews:
+    @pytest.mark.django_db
+    def test_list_requires_view_permission(self, db):
+        assert _client().get(reverse("aircraftassignment-list")).status_code == 403
+        response = _client("view_aircraftassignment").get(
+            reverse("aircraftassignment-list")
+        )
+        assert response.status_code == 200
+
+    @pytest.mark.django_db
+    def test_create_requires_add_permission(self, db):
+        aircraft = Aircraft.objects.create(
+            registration="CC-BBB", type="RPA", model="M3", manufacturer="DJI"
+        )
+        cc = _cc("CC1")
+        payload = {
+            "aircraft": aircraft.pk,
+            "cost_center": cc.pk,
+            "start_date": TODAY.isoformat(),
+            "status": "active",
+            "purpose": "",
+        }
+        url = reverse("aircraftassignment-create")
+        assert _client("view_aircraftassignment").post(url, payload).status_code == 403
+        response = _client("add_aircraftassignment").post(url, payload)
+        assert response.status_code == 302
+        assert AircraftAssignment.objects.filter(
+            aircraft=aircraft, cost_center=cc
+        ).exists()
+
+
+class TestResourceMovementLogView:
+    @pytest.mark.django_db
+    def test_requires_view_permission(self, db):
+        op = _operator()
+        OperatorAssignment.objects.create(
+            operator=op, cost_center=_cc("CC1"), start_date=TODAY, status="active"
+        )
+        url = reverse("resourcemovementlog-list")
+        assert _client().get(url).status_code == 403
+        response = _client("view_resourcemovementlog").get(url)
+        assert response.status_code == 200
+        assert op.full_name in response.content.decode()
+
+    @pytest.mark.django_db
+    def test_filters_by_resource_kind(self, db):
+        op = _operator()
+        aircraft = Aircraft.objects.create(
+            registration="CC-CCC", type="RPA", model="M3", manufacturer="DJI"
+        )
+        cc = _cc("CC1")
+        OperatorAssignment.objects.create(
+            operator=op, cost_center=cc, start_date=TODAY, status="active"
+        )
+        AircraftAssignment.objects.create(
+            aircraft=aircraft, cost_center=cc, start_date=TODAY, status="active"
+        )
+        client = _client("view_resourcemovementlog")
+
+        response = client.get(
+            reverse("resourcemovementlog-list"), {"resource_kind": "aircraft"}
+        )
+
+        content = response.content.decode()
+        assert aircraft.registration in content
+        assert op.full_name not in content
