@@ -1,5 +1,7 @@
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from apps.core.models import BaseModel, OperationalTenant
 
@@ -235,3 +237,205 @@ class Qualification(BaseModel):
 
     def __str__(self):
         return f"{self.qualification_type} · {self.operator}"
+
+
+# ── BLOQUE OPS (OPS-1): per-resource assignments + movement log ───────────────
+# The old `Assignment` (operator+aircraft pair) stays for now; these anchor a
+# single resource to a cost center over a period, so an operator can rotate
+# contracts and a cost center can hold N aircraft without duplicating operators.
+# `Operator.cost_center` / `Aircraft.cost_center` become a denormalization of the
+# current assignment, maintained by the signal in apps/registry/signals.py.
+
+
+class ResourceAssignment(BaseModel):
+    """Shared base: a resource assigned to a cost center over a period."""
+
+    STATUS_CHOICES = [
+        ("planned", _("Planned")),
+        ("active", _("Active")),
+        ("ended", _("Ended")),
+        ("cancelled", _("Cancelled")),
+    ]
+    # A resource "holds" a cost center while an assignment is in one of these.
+    ACTIVE_STATUSES = frozenset({"planned", "active"})
+
+    start_date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
+    purpose = models.CharField(max_length=250, blank=True)
+
+    class Meta:
+        abstract = True
+
+    def _resource_id(self):
+        return getattr(self, f"{self.resource_field}_id")
+
+    def _overlapping(self):
+        """Other active assignments for the same resource whose period overlaps.
+
+        Ranges overlap iff each starts on or before the other ends; a null
+        end_date is an open-ended (still current) assignment.
+        """
+        queryset = type(self).objects.filter(
+            is_active=True,
+            status__in=self.ACTIVE_STATUSES,
+            **{f"{self.resource_field}_id": self._resource_id()},
+        )
+        if self.pk:
+            queryset = queryset.exclude(pk=self.pk)
+        if self.end_date is not None:
+            queryset = queryset.filter(start_date__lte=self.end_date)
+        return queryset.filter(
+            Q(end_date__isnull=True) | Q(end_date__gte=self.start_date)
+        )
+
+    def clean(self):
+        errors = {}
+        if self.end_date and self.end_date < self.start_date:
+            errors["end_date"] = _("The end date cannot be before the start date.")
+        resource = getattr(self, self.resource_field, None)
+        if self._resource_id() and resource and not resource.is_active:
+            errors[self.resource_field] = _("The selected resource is inactive.")
+        if (
+            self._resource_id()
+            and self.status in self.ACTIVE_STATUSES
+            and self._overlapping().exists()
+        ):
+            errors[self.resource_field] = _(
+                "This resource already has an overlapping active assignment."
+            )
+        if errors:
+            raise ValidationError(errors)
+
+
+class OperatorAssignment(ResourceAssignment):
+    resource_field = "operator"
+    operator = models.ForeignKey(
+        Operator, on_delete=models.PROTECT, related_name="cc_assignments"
+    )
+    cost_center = models.ForeignKey(
+        CostCenter, on_delete=models.PROTECT, related_name="operator_assignments"
+    )
+
+    class Meta:
+        verbose_name = _("operator assignment")
+        verbose_name_plural = _("operator assignments")
+        indexes = [
+            models.Index(
+                fields=["cost_center", "is_active"], name="reg_opassign_cc_idx"
+            ),
+            models.Index(fields=["operator", "end_date"], name="reg_opassign_op_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.operator} → {self.cost_center}"
+
+
+class AircraftAssignment(ResourceAssignment):
+    resource_field = "aircraft"
+    aircraft = models.ForeignKey(
+        Aircraft, on_delete=models.PROTECT, related_name="cc_assignments"
+    )
+    cost_center = models.ForeignKey(
+        CostCenter, on_delete=models.PROTECT, related_name="aircraft_assignments"
+    )
+
+    class Meta:
+        verbose_name = _("aircraft assignment")
+        verbose_name_plural = _("aircraft assignments")
+        indexes = [
+            models.Index(
+                fields=["cost_center", "is_active"], name="reg_acassign_cc_idx"
+            ),
+            models.Index(fields=["aircraft", "end_date"], name="reg_acassign_ac_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.aircraft} → {self.cost_center}"
+
+
+class AppendOnlyLogQuerySet(models.QuerySet):
+    """Block bulk mutation so the movement log stays append-only (like AuditEvent)."""
+
+    def update(self, **kwargs):
+        raise ValidationError("ResourceMovementLog records are append-only.")
+
+    def delete(self):
+        raise ValidationError("ResourceMovementLog records are append-only.")
+
+    def bulk_update(self, objs, fields, batch_size=None):
+        raise ValidationError("ResourceMovementLog records are append-only.")
+
+
+class ResourceMovementLog(BaseModel):
+    """Immutable trail of resource↔cost-center movements (the OPS-1 headline).
+
+    Written by the assignment signal whenever a resource's current cost center
+    changes. Not deleted or edited; that is the whole point of the trail.
+    """
+
+    RESOURCE_CHOICES = [("operator", _("Operator")), ("aircraft", _("Aircraft"))]
+    MOVEMENT_CHOICES = [
+        ("assigned", _("Assigned")),
+        ("reassigned", _("Reassigned")),
+        ("released", _("Released")),
+    ]
+
+    # `created_at` alone cannot order two rows created moments apart: on this
+    # machine `timezone.now()` returns the *identical* value across rapid
+    # successive calls (coarse clock resolution), and SQL gives no ordering
+    # guarantee for ties on a non-unique column -- confirmed by
+    # test_changing_cost_center_logs_reassigned flipping order under load.
+    # `sequence` is computed in save() as "latest + 1" (same idiom as
+    # GeoPlanVersion.version_number) instead of AutoField: Django requires an
+    # AutoField to be the primary key, and BaseModel.id stays a UUID PK.
+    sequence = models.PositiveBigIntegerField(editable=False)
+    resource_kind = models.CharField(max_length=20, choices=RESOURCE_CHOICES)
+    resource_id = models.UUIDField()
+    movement = models.CharField(max_length=20, choices=MOVEMENT_CHOICES)
+    from_cost_center = models.ForeignKey(
+        CostCenter, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    to_cost_center = models.ForeignKey(
+        CostCenter, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    detail = models.CharField(max_length=250, blank=True)
+    changed_by_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+
+    objects = AppendOnlyLogQuerySet.as_manager()
+
+    class Meta:
+        verbose_name = _("resource movement")
+        verbose_name_plural = _("resource movements")
+        ordering = ["-sequence"]
+        indexes = [
+            models.Index(fields=["-sequence"], name="reg_movement_seq_idx"),
+            models.Index(
+                fields=["resource_kind", "resource_id", "-sequence"],
+                name="reg_movement_res_idx",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.resource_kind}:{self.resource_id} {self.movement}"
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            raise ValidationError("ResourceMovementLog records are append-only.")
+        # No uniqueness is enforced on this value: a rare race between two
+        # concurrent writers computing the same "latest + 1" just means two
+        # rows tie, no worse than the wall-clock collision this replaces, and
+        # this app's write volume for movement events is low (docs/postgresql-
+        # readiness.md: single-writer scale until real concurrency arrives).
+        latest = ResourceMovementLog.objects.order_by("-sequence").first()
+        self.sequence = (latest.sequence if latest else 0) + 1
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError("ResourceMovementLog records are append-only.")
