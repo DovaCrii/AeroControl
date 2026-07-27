@@ -27,23 +27,7 @@
 
   <div class="tab-content">
     <div class="tab-pane fade show active" id="tab-summary" role="tabpanel">
-      <table class="table table-bordered">
-        <tbody>
-          {% for field in object|fields_detail %}
-          <tr>
-            <th class="w-25" scope="row">{{ field.label }}</th>
-            <td>
-              {% if field.value %}
-                {% if field.is_boolean %}{% if field.value %}✅ {% translate "Yes" %}{% else %}❌ {% translate "No" %}{% endif %}
-                {% elif field.is_choice %}{{ field.choice_value }}
-                {% elif field.is_date %}{{ field.value|date:"Y-m-d" }}
-                {% else %}{{ field.value }}{% endif %}
-              {% else %}<span class="text-muted">—</span>{% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+      {% include "generic/_fields_detail_table.html" %}
     </div>
 
     {% if operator_assignments is not None %}

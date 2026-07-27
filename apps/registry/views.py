@@ -259,10 +259,11 @@ class CostCenterDetail(RegistryDetail):
 
     def get_context_data(self, **kwargs):
         from django.contrib.contenttypes.models import ContentType
-        from django.db.models import Q
 
         from apps.compliance.models import Document
         from apps.operations.models import FlightPermission
+
+        from .selectors import movements_for_cost_center
 
         context = super().get_context_data(**kwargs)
         cost_center = self.object
@@ -318,51 +319,57 @@ class CostCenterDetail(RegistryDetail):
             context["documents"] = None
 
         if user.has_perm("registry.view_resourcemovementlog"):
-            movements = list(
-                ResourceMovementLog.objects.filter(
-                    Q(from_cost_center=cost_center) | Q(to_cost_center=cost_center)
-                ).select_related(
-                    "changed_by_user", "from_cost_center", "to_cost_center"
-                )[:100]
-            )
-            operator_ids = [
-                m.resource_id for m in movements if m.resource_kind == "operator"
-            ]
-            aircraft_ids = [
-                m.resource_id for m in movements if m.resource_kind == "aircraft"
-            ]
-            operators = dict(
-                Operator.objects.filter(pk__in=operator_ids).values_list(
-                    "pk", "full_name"
-                )
-            )
-            aircraft = dict(
-                Aircraft.objects.filter(pk__in=aircraft_ids).values_list(
-                    "pk", "registration"
-                )
-            )
-            for entry in movements:
-                label = (
-                    operators.get(entry.resource_id)
-                    if entry.resource_kind == "operator"
-                    else aircraft.get(entry.resource_id)
-                )
-                entry.resource_label = label or str(entry.resource_id)
-            context["movements"] = movements
+            context["movements"] = movements_for_cost_center(cost_center)
         else:
             context["movements"] = None
 
         return context
 
 
-AircraftList, AircraftDetail, AircraftCreate, AircraftUpdate = make_views(
+AircraftList, _AircraftAutoDetail, AircraftCreate, AircraftUpdate = make_views(
     Aircraft, AircraftForm, "Aircraft"
 )
 AircraftList.template_name = "registry/aircraft_list.html"
 AircraftList.search_fields = ["registration", "model", "manufacturer"]
-OperatorList, OperatorDetail, OperatorCreate, OperatorUpdate = make_views(
+OperatorList, _OperatorAutoDetail, OperatorCreate, OperatorUpdate = make_views(
     Operator, OperatorForm, "Operator"
 )
+
+
+class AircraftDetail(RegistryDetail):
+    """OPS-6: this aircraft's own movement timeline (cost-center reassignments
+    from OPS-1 and location changes from OPS-3 both land in
+    ResourceMovementLog, so one query surfaces both kinds)."""
+
+    model = Aircraft
+    template_name = "registry/aircraft_detail.html"
+
+    def get_context_data(self, **kwargs):
+        from .selectors import movements_for_resource
+
+        context = super().get_context_data(**kwargs)
+        if self.request.user.has_perm("registry.view_resourcemovementlog"):
+            context["movements"] = movements_for_resource("aircraft", self.object.pk)
+        else:
+            context["movements"] = None
+        return context
+
+
+class OperatorDetail(RegistryDetail):
+    """OPS-6: this operator's own assignment timeline."""
+
+    model = Operator
+    template_name = "registry/operator_detail.html"
+
+    def get_context_data(self, **kwargs):
+        from .selectors import movements_for_resource
+
+        context = super().get_context_data(**kwargs)
+        if self.request.user.has_perm("registry.view_resourcemovementlog"):
+            context["movements"] = movements_for_resource("operator", self.object.pk)
+        else:
+            context["movements"] = None
+        return context
 
 
 class AssignmentList(RegistryList):
@@ -504,28 +511,12 @@ class ResourceMovementLogList(ModelViewPermissionRequiredMixin, ListView):
         return queryset
 
     def get_context_data(self, **kwargs):
+        from .selectors import label_movements
+
         context = super().get_context_data(**kwargs)
         context["title"] = _("Resource movements")
         context["selected_kind"] = self.request.GET.get("resource_kind", "")
-        entries = list(context["objects"])
-        operator_ids = [e.resource_id for e in entries if e.resource_kind == "operator"]
-        aircraft_ids = [e.resource_id for e in entries if e.resource_kind == "aircraft"]
-        operators = dict(
-            Operator.objects.filter(pk__in=operator_ids).values_list("pk", "full_name")
-        )
-        aircraft = dict(
-            Aircraft.objects.filter(pk__in=aircraft_ids).values_list(
-                "pk", "registration"
-            )
-        )
-        for entry in entries:
-            label = (
-                operators.get(entry.resource_id)
-                if entry.resource_kind == "operator"
-                else aircraft.get(entry.resource_id)
-            )
-            entry.resource_label = label or str(entry.resource_id)
-        context["objects"] = entries
+        context["objects"] = label_movements(context["objects"])
         return context
 
 

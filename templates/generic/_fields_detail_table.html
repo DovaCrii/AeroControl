@@ -1,0 +1,19 @@
+{% load aero_tags i18n %}
+<table class="table table-bordered">
+  <tbody>
+    {% for field in object|fields_detail %}
+    <tr>
+      <th class="w-25" scope="row">{{ field.label }}</th>
+      <td>
+        {% if field.value %}
+          {% if field.is_boolean %}{% if field.value %}✅ {% translate "Yes" %}{% else %}❌ {% translate "No" %}{% endif %}
+          {% elif field.is_choice %}{{ field.choice_value }}
+          {% elif field.is_date %}{{ field.value|date:"Y-m-d" }}
+          {% elif field.is_url %}<a href="{{ field.value }}" target="_blank">{{ field.value }}</a>
+          {% else %}{{ field.value }}{% endif %}
+        {% else %}<span class="text-muted">—</span>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
