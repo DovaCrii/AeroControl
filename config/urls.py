@@ -18,6 +18,7 @@ from apps.workboard.api import (
     api_openapi_schema,
 )
 from apps.geo.api import (
+    GeoPlanExportView,
     GeoPlanMetaView,
     GeoPlanRestoreView,
     GeoPlanVersionContentView,
@@ -85,6 +86,11 @@ urlpatterns = [
         "api/v1/geo/plans/<uuid:pk>/versions/<int:number>/restore/",
         GeoPlanRestoreView.as_view(),
         name="api-v1-geo-plan-version-restore",
+    ),
+    path(
+        "api/v1/geo/plans/<uuid:pk>/export/",
+        GeoPlanExportView.as_view(),
+        name="api-v1-geo-plan-export",
     ),
     path("", include("apps.dashboard.urls")),
     path("registry/", include("apps.registry.urls")),

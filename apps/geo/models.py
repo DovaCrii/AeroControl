@@ -82,6 +82,11 @@ class GeoPlan(BaseModel):
     def __str__(self):
         return self.title
 
+    def get_absolute_url(self):
+        from django.urls import reverse
+
+        return reverse("geo-plan-detail", kwargs={"pk": self.pk})
+
     @property
     def is_editable(self):
         return self.status in self.EDITABLE_STATUSES

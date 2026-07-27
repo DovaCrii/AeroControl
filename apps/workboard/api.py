@@ -536,6 +536,56 @@ def api_openapi_schema(_request):
                     },
                 }
             },
+            "/api/v1/geo/plans/{id}/export/": {
+                "post": {
+                    "operationId": "exportGeoPlan",
+                    "summary": "Export a version as KML or KMZ",
+                    "description": (
+                        "POST (not GET) so the download is audited. KMZ copies "
+                        "the original's embedded resources byte-for-byte."
+                    ),
+                    "security": [{"tokenAuth": []}],
+                    "parameters": [
+                        {
+                            "name": "id",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string", "format": "uuid"},
+                        }
+                    ],
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "version": {"type": "integer", "minimum": 1},
+                                        "format": {
+                                            "type": "string",
+                                            "enum": ["kml", "kmz"],
+                                        },
+                                    },
+                                }
+                            }
+                        },
+                    },
+                    "responses": {
+                        "200": {
+                            "description": "The exported file",
+                            "content": {
+                                "application/vnd.google-earth.kml+xml": {},
+                                "application/vnd.google-earth.kmz": {},
+                            },
+                        },
+                        "400": {"description": "Unsupported format or version"},
+                        "401": {"description": "Authentication required"},
+                        "403": {"description": "Missing view permission"},
+                        "404": {"description": "No such plan or version"},
+                        "429": {"description": "Throttled (geo-export)"},
+                    },
+                }
+            },
             "/api/v1/geo/plans/{id}/versions/{number}/content/": {
                 "get": {
                     "operationId": "getGeoPlanVersionContent",

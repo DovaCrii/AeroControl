@@ -2,6 +2,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from django.shortcuts import redirect
 from django.utils import timezone
+from django.utils.translation import gettext_lazy
 from django.views.generic import DetailView, FormView, ListView
 
 from apps.compliance.models import Document, DocumentType
@@ -10,6 +11,7 @@ from apps.core.audit import set_audit_context
 from apps.core.views import (
     ModelPermissionRequiredMixin,
     ModelViewPermissionRequiredMixin,
+    StatusTransitionView,
 )
 
 from .forms import GeoPlanImportForm
@@ -17,6 +19,54 @@ from .kml import canonical
 from .models import GeoPlan, GeoPlanVersion
 
 GEO_SOURCE_DOC_TYPE_CODE = "GEO_SOURCE"
+
+# The status buttons offered on the plan detail, per current status. Each row is
+# (from_status, url_name, label, css_class, permission). Un-approving requires
+# the same permission as approving (see docs/dev/geo-editor-plan.md §5).
+PLAN_TRANSITIONS = [
+    (
+        "draft",
+        "geo-plan-start-editing",
+        gettext_lazy("Start editing"),
+        "btn-primary",
+        "geo.change_geoplan",
+    ),
+    (
+        "editing",
+        "geo-plan-submit-review",
+        gettext_lazy("Submit for review"),
+        "btn-primary",
+        "geo.change_geoplan",
+    ),
+    (
+        "in_review",
+        "geo-plan-approve",
+        gettext_lazy("Approve"),
+        "btn-success",
+        "geo.approve_geoplan",
+    ),
+    (
+        "in_review",
+        "geo-plan-reject",
+        gettext_lazy("Reject"),
+        "btn-danger",
+        "geo.approve_geoplan",
+    ),
+    (
+        "rejected",
+        "geo-plan-resume-editing",
+        gettext_lazy("Resume editing"),
+        "btn-primary",
+        "geo.change_geoplan",
+    ),
+    (
+        "approved",
+        "geo-plan-reopen",
+        gettext_lazy("Reopen for editing"),
+        "btn-outline-secondary",
+        "geo.approve_geoplan",
+    ),
+]
 
 
 class GeoPlanListView(ModelViewPermissionRequiredMixin, ListView):
@@ -53,11 +103,24 @@ class GeoPlanDetailView(ModelViewPermissionRequiredMixin, DetailView):
         plan = self.object
         context["versions"] = plan.versions.order_by("-version_number")
         current = plan.current_version
+        # Status buttons the user may use from the current status (GEO-9).
+        context["status_actions"] = [
+            {
+                "url": reverse(url_name, args=[plan.pk]),
+                "label": label,
+                "css": css,
+            }
+            for from_status, url_name, label, css, perm in PLAN_TRANSITIONS
+            if plan.status == from_status and self.request.user.has_perm(perm)
+        ]
         # Editing (GEO-8) is offered only when the user may change the plan AND
         # the plan is in an editable state; the commit API re-checks both, this
         # only decides whether to render the editor UI. Read-only otherwise.
         editable = self.request.user.has_perm("geo.change_geoplan") and plan.is_editable
         context["editable"] = editable
+        # Restoring a past version writes a new version, so it is a change too
+        # (GEO-10): same gate as editing.
+        context["can_restore"] = editable
         # Config for the map island. It fetches the canonical document from the
         # read API and (when editable) commits through the write API; business
         # rules live on the server.
@@ -170,3 +233,57 @@ class GeoPlanImportView(ModelPermissionRequiredMixin, FormView):
             )
         self._plan = plan
         return redirect("geo-plan-detail", pk=plan.pk)
+
+
+# ── GEO-9: status workflow ────────────────────────────────────────────────
+# draft → editing → in_review → approved | rejected, with rejected → editing and
+# approved → editing (un-approving needs the approve permission). Each view is a
+# StatusTransitionView; the shared status-change signal writes GeoPlanHistory.
+
+
+class GeoPlanStartEditing(StatusTransitionView):
+    model = GeoPlan
+    permission_action = "change"
+    target_status = "editing"
+    valid_from_statuses = ["draft"]
+    success_message = gettext_lazy("Editing started.")
+
+
+class GeoPlanSubmitReview(StatusTransitionView):
+    model = GeoPlan
+    permission_action = "change"
+    target_status = "in_review"
+    valid_from_statuses = ["editing"]
+    success_message = gettext_lazy("Plan submitted for review.")
+
+
+class GeoPlanApprove(StatusTransitionView):
+    model = GeoPlan
+    permission_action = "approve"
+    target_status = "approved"
+    valid_from_statuses = ["in_review"]
+    success_message = gettext_lazy("Plan approved.")
+
+
+class GeoPlanReject(StatusTransitionView):
+    model = GeoPlan
+    permission_action = "approve"
+    target_status = "rejected"
+    valid_from_statuses = ["in_review"]
+    success_message = gettext_lazy("Plan rejected.")
+
+
+class GeoPlanResumeEditing(StatusTransitionView):
+    model = GeoPlan
+    permission_action = "change"
+    target_status = "editing"
+    valid_from_statuses = ["rejected"]
+    success_message = gettext_lazy("Editing resumed.")
+
+
+class GeoPlanReopen(StatusTransitionView):
+    model = GeoPlan
+    permission_action = "approve"
+    target_status = "editing"
+    valid_from_statuses = ["approved"]
+    success_message = gettext_lazy("Plan reopened for editing.")

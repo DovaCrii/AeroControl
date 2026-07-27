@@ -8,9 +8,13 @@ plan is the single permission anchor. The export surface (GEO-10) is not here
 yet. See docs/dev/geo-editor-plan.md §5-6.
 """
 
+import io
+import zipfile
+
 from django.db import transaction
 from django.http import HttpResponse, JsonResponse
 from django.utils.dateparse import parse_datetime
+from django.utils.text import slugify
 from rest_framework.exceptions import NotAuthenticated, ParseError, PermissionDenied
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
@@ -21,10 +25,13 @@ from apps.core.api import ViewModelPermissions
 from apps.core.audit import set_audit_context
 
 from .kml import canonical
+from .kml.build import build_kml_bytes
 from .kml.errors import KmlImportError
+from .kml.kmz import MAX_ENTRY_BYTES
 from .models import GeoPlan, GeoPlanVersion
 
 CHANGE_PERM = "geo.change_geoplan"
+VIEW_PERM = "geo.view_geoplan"
 
 
 def _get_active_plan(pk):
@@ -376,3 +383,101 @@ class GeoPlanRestoreView(_GeoCommitMixin):
             },
             status=201,
         )
+
+
+def _build_kmz(plan, version, kml_bytes):
+    """Zip doc.kml with the original's embedded resources copied byte-for-byte.
+
+    Resource *names* live in the canonical (validated at import); the bytes are
+    never stored, they are copied from the source KMZ at export. Best-effort: if
+    the source is missing or unreadable the KML still exports, just without its
+    icons/imagery.
+    """
+    buffer = io.BytesIO()
+    # getvalue() must run AFTER the ZipFile closes, or the central directory is
+    # never written and the archive is unreadable.
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as out:
+        out.writestr("doc.kml", kml_bytes)
+        resources = version.content.get("kmz_resources") or []
+        if resources and plan.source_document_id:
+            _copy_kmz_resources(out, plan.source_document, resources)
+    return buffer.getvalue()
+
+
+def _copy_kmz_resources(out, source_document, resources):
+    """Copy named resources from the original KMZ into the export, best-effort."""
+    from apps.compliance.storage import get_document_storage
+
+    try:
+        original = get_document_storage().open(source_document.file_path)
+        source = zipfile.ZipFile(io.BytesIO(original.read()))
+    except Exception:
+        return  # source missing/unreadable: the KML still exports without icons
+    present = {info.filename: info for info in source.infolist()}
+    for name in resources:
+        info = present.get(name)
+        # Guard the copy the way the importer does: a stored file could have been
+        # tampered with between import and export.
+        if info is None or name == "doc.kml" or info.file_size > MAX_ENTRY_BYTES:
+            continue
+        with source.open(info) as handle:
+            out.writestr(name, handle.read(MAX_ENTRY_BYTES + 1)[:MAX_ENTRY_BYTES])
+
+
+class GeoPlanExportView(_GeoCommitMixin):
+    """POST /.../export/ — download a version as KML or KMZ.
+
+    POST (not GET) so the audit middleware records it. Gated on ``view_geoplan``:
+    exporting is a read. Scoped to the geo-export throttle.
+    """
+
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle, ScopedRateThrottle]
+    throttle_scope = "geo-export"
+
+    def post(self, request, pk):
+        if not request.user.has_perm(VIEW_PERM):
+            return JsonResponse({"detail": "Permission denied."}, status=403)
+        plan = _get_active_plan(pk)
+
+        try:
+            payload = request.data
+        except ParseError:
+            return JsonResponse({"detail": "Invalid request."}, status=400)
+
+        fmt = payload.get("format", "kml")
+        if fmt not in ("kml", "kmz"):
+            return JsonResponse({"detail": "Unsupported format."}, status=400)
+
+        number = payload.get("version") or (
+            plan.current_version.version_number if plan.current_version_id else None
+        )
+        try:
+            number = int(number)
+        except (TypeError, ValueError):
+            return JsonResponse({"detail": "A version is required."}, status=400)
+        version = get_object_or_404(plan.versions.all(), version_number=number)
+
+        kml_bytes = build_kml_bytes(version.content)
+        base = slugify(plan.title) or "plan"
+        self._audit(
+            request,
+            plan,
+            "geo_plan_exported",
+            {"version": number, "format": fmt},
+        )
+        if fmt == "kml":
+            response = HttpResponse(
+                kml_bytes, content_type="application/vnd.google-earth.kml+xml"
+            )
+            response["Content-Disposition"] = (
+                f'attachment; filename="{base}_v{number}.kml"'
+            )
+            return response
+
+        response = HttpResponse(
+            _build_kmz(plan, version, kml_bytes),
+            content_type="application/vnd.google-earth.kmz",
+        )
+        response["Content-Disposition"] = f'attachment; filename="{base}_v{number}.kmz"'
+        return response
