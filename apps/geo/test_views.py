@@ -121,3 +121,47 @@ class TestListAndDetail:
         response = _client("view_geoplan").get(url)
         assert response.status_code == 200
         assert "Plan" in response.content.decode()
+
+    @pytest.mark.django_db
+    def test_detail_provides_map_island_config_and_assets(self, db):
+        plan = self._plan(db)
+        version = GeoPlanVersion.objects.create(
+            plan=plan,
+            version_number=1,
+            content={"schema_version": 1, "children": []},
+            content_checksum="0" * 64,
+            source="import",
+            created_by=plan.created_by,
+        )
+        plan.current_version = version
+        plan.save(update_fields=["current_version", "updated_at"])
+
+        response = _client("view_geoplan").get(
+            reverse("geo-plan-detail", args=[plan.pk])
+        )
+
+        assert response.status_code == 200
+        config = response.context["map_config"]
+        assert config["planId"] == str(plan.pk)
+        assert config["currentVersion"] == 1
+        assert config["editable"] is False  # GEO-7 is read-only
+        assert config["contentUrl"].endswith("/versions/1/content/")
+        assert config["tileProviders"]  # at least one provider
+        assert set(config["labels"]) >= {"length", "area", "layers", "empty"}
+
+        content = response.content.decode()
+        assert 'id="geo-map-config"' in content  # json_script mount
+        assert "js/geo/main.js" in content  # ES module island
+        assert "vendor/leaflet/leaflet.js" in content  # vendored, not a CDN
+        assert 'integrity="sha384-' in content  # with SRI
+
+    @pytest.mark.django_db
+    def test_detail_without_version_has_no_content_url(self, db):
+        plan = self._plan(db)  # no current_version
+        response = _client("view_geoplan").get(
+            reverse("geo-plan-detail", args=[plan.pk])
+        )
+        assert response.status_code == 200
+        config = response.context["map_config"]
+        assert config["currentVersion"] is None
+        assert config["contentUrl"] is None

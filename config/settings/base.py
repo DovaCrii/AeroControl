@@ -139,6 +139,31 @@ DOCUMENTS_ANTIVIRUS_COMMAND = config("DOCUMENTS_ANTIVIRUS_COMMAND", default="")
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
 DATA_UPLOAD_MAX_MEMORY_SIZE = 12 * 1024 * 1024
 
+# Base map providers for the geo editor island (GEO-7). No API keys: OSM streets
+# and Esri World Imagery, both raster/XYZ, provider-swappable via config. Names
+# are English source labels (proper nouns), shown in the map's layer switcher.
+# The tile host list must stay in sync with the CSP img-src in
+# apps/core/middleware.py.
+GEO_TILE_PROVIDERS = [
+    {
+        "id": "streets",
+        "name": "Streets (OpenStreetMap)",
+        "url": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        "attribution": "© OpenStreetMap contributors",
+        "maxZoom": 19,
+    },
+    {
+        "id": "satellite",
+        "name": "Satellite (Esri)",
+        "url": (
+            "https://server.arcgisonline.com/ArcGIS/rest/services/"
+            "World_Imagery/MapServer/tile/{z}/{y}/{x}"
+        ),
+        "attribution": "Esri, Maxar, Earthstar Geographics",
+        "maxZoom": 19,
+    },
+]
+
 CSP_REPORT_ONLY = config("CSP_REPORT_ONLY", default=True, cast=bool)
 
 # Notifications. Only variable *names* live in the repo; hosts, users and
