@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load aero_tags i18n %}
+{% block title %}{% translate "Geospatial planning" %} - AeroControl{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1 class="h3">{% translate "Geospatial planning" %}</h1>
+  <a class="btn btn-primary" href="{% url 'geo-plan-import' %}">+ {% translate "Import KMZ/KML" %}</a>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th scope="col">{% translate "Title" %}</th>
+          <th scope="col">{% translate "Cost center" %}</th>
+          <th scope="col">{% translate "Status" %}</th>
+          <th scope="col">{% translate "Version" %}</th>
+          <th scope="col">{% translate "Created" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for plan in plans %}
+        <tr>
+          <td><a href="{% url 'geo-plan-detail' plan.pk %}"><strong>{{ plan.title }}</strong></a></td>
+          <td>{{ plan.cost_center }}</td>
+          <td>{% include "geo/_status_badge.html" with status=plan.status label=plan.get_status_display %}</td>
+          <td>{% if plan.current_version %}v{{ plan.current_version.version_number }}{% else %}—{% endif %}</td>
+          <td><span class="text-nowrap">{{ plan.created_at|date:'Y-m-d' }}</span></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="99" class="text-center text-muted py-4">
+          {% translate "No plans yet. Import a KMZ or KML to create the first one." %}
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% render_pagination page_obj %}
+</div>
+{% endblock %}

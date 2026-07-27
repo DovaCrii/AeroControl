@@ -1,0 +1,6 @@
+{% load i18n %}
+{% if status == "approved" %}<span class="badge bg-success">{{ label }}</span>
+{% elif status == "in_review" %}<span class="badge bg-warning text-dark">{{ label }}</span>
+{% elif status == "rejected" %}<span class="badge bg-danger">{{ label }}</span>
+{% elif status == "editing" %}<span class="badge bg-info text-dark">{{ label }}</span>
+{% else %}<span class="badge bg-secondary">{{ label }}</span>{% endif %}
