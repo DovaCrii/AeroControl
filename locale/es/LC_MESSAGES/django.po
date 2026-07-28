@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-27 17:24-0400\n"
+"POT-Creation-Date: 2026-07-28 09:01-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -51,11 +51,12 @@ msgstr "Archivo"
 #: .\apps\compliance\forms.py:76 .\apps\geo\forms.py:25
 #: .\templates\compliance\document_list.html:16
 #: .\templates\geo\plan_list.html:15
-#: .\templates\operations\permission_detail.html:15
+#: .\templates\operations\permission_detail.html:19
 msgid "Title"
 msgstr "Título"
 
-#: .\apps\compliance\forms.py:77 .\templates\compliance\report.html:28
+#: .\apps\compliance\forms.py:77 .\apps\compliance\models.py:50
+#: .\templates\compliance\report.html:28
 msgid "Document type"
 msgstr "Tipo de documento"
 
@@ -152,30 +153,30 @@ msgstr "mes"
 msgid "AeroControl · executive compliance report (%(period)s)"
 msgstr "AeroControl · informe ejecutivo de cumplimiento (%(period)s)"
 
-#: .\apps\compliance\models.py:57
+#: .\apps\compliance\models.py:59
 msgid "document"
 msgstr "documento"
 
-#: .\apps\compliance\models.py:58
+#: .\apps\compliance\models.py:60
 msgid "documents"
 msgstr "documentos"
 
-#: .\apps\compliance\models.py:130
+#: .\apps\compliance\models.py:132
 msgid "Unknown entity type. Choose one of the watchable models."
 msgstr ""
 "Tipo de entidad desconocido. Elige uno de los modelos que se pueden vigilar."
 
-#: .\apps\compliance\models.py:136
+#: .\apps\compliance\models.py:138
 #, python-format
 msgid "%(field)s is not a watchable field of %(model)s. Available: %(allowed)s"
 msgstr ""
 "%(field)s no es un campo vigilable de %(model)s. Disponibles: %(allowed)s"
 
-#: .\apps\compliance\models.py:147
+#: .\apps\compliance\models.py:149
 msgid "A board and a stage are required to create Kanban tasks."
 msgstr "Para crear tareas Kanban hacen falta un tablero y una etapa."
 
-#: .\apps\compliance\models.py:150
+#: .\apps\compliance\models.py:152
 msgid "The stage must belong to the board."
 msgstr "La etapa debe pertenecer al tablero."
 
@@ -292,7 +293,7 @@ msgid "Running"
 msgstr "En ejecución"
 
 #: .\apps\core\models.py:134 .\apps\maintenance\models.py:17
-#: .\apps\operations\models.py:23 .\apps\registry\models.py:189
+#: .\apps\operations\models.py:26 .\apps\registry\models.py:201
 #: .\apps\workboard\models.py:32 .\apps\workboard\views.py:100
 #: .\templates\registry\_assignment_table_body.html:8
 #: .\templates\registry\assignment_list.html:37
@@ -461,7 +462,7 @@ msgstr "En edición"
 msgid "In review"
 msgstr "En revisión"
 
-#: .\apps\geo\models.py:32 .\apps\operations\models.py:21
+#: .\apps\geo\models.py:32 .\apps\operations\models.py:24
 msgid "Approved"
 msgstr "Aprobado"
 
@@ -529,7 +530,7 @@ msgstr "Comenzar edición"
 msgid "Submit for review"
 msgstr "Enviar a revisión"
 
-#: .\apps\geo\views.py:44 .\apps\operations\views.py:162
+#: .\apps\geo\views.py:44 .\apps\operations\views.py:169
 msgid "Approve"
 msgstr "Aprobar"
 
@@ -682,7 +683,7 @@ msgid "Start maintenance"
 msgstr "Iniciar mantenimiento"
 
 #: .\apps\maintenance\views.py:93 .\apps\maintenance\views.py:125
-#: .\apps\operations\views.py:168 .\templates\maintenance\record_detail.html:32
+#: .\apps\operations\views.py:175 .\templates\maintenance\record_detail.html:32
 msgid "Complete"
 msgstr "Completar"
 
@@ -694,69 +695,136 @@ msgstr "Mantenimiento iniciado."
 msgid "Maintenance completed."
 msgstr "Mantenimiento completado."
 
-#: .\apps\operations\forms.py:59
+#: .\apps\operations\forms.py:34
+msgid "Region"
+msgstr "Región"
+
+#: .\apps\operations\forms.py:35
+msgid "Commune"
+msgstr "Comuna"
+
+#: .\apps\operations\forms.py:36
+msgid "Area or site name"
+msgstr "Nombre del área o faena"
+
+#: .\apps\operations\forms.py:37
+msgid "Latitude"
+msgstr "Latitud"
+
+#: .\apps\operations\forms.py:38
+msgid "Longitude"
+msgstr "Longitud"
+
+#: .\apps\operations\forms.py:39
+msgid "Radius (km)"
+msgstr "Radio (km)"
+
+#: .\apps\operations\forms.py:40
+msgid "Maximum altitude (ft)"
+msgstr "Altitud máxima (ft)"
+
+#: .\apps\operations\forms.py:44
+msgid ""
+"Structured location, in addition to the free-text location above -- optional."
+msgstr ""
+"Ubicación estructurada, además de la ubicación en texto libre de arriba -- "
+"opcional."
+
+#: .\apps\operations\forms.py:47
+msgid "Decimal degrees. Enter together with longitude."
+msgstr "Grados decimales. Ingresar junto con la longitud."
+
+#: .\apps\operations\forms.py:48
+msgid "Decimal degrees. Enter together with latitude."
+msgstr "Grados decimales. Ingresar junto con la latitud."
+
+#: .\apps\operations\forms.py:83
 msgid "The aircraft must be part of the flight permission's fleet."
 msgstr "La aeronave debe ser parte de la flota del permiso de vuelo."
 
-#: .\apps\operations\forms.py:68
+#: .\apps\operations\forms.py:92
 msgid "The pilot must be one of the flight permission's operators."
 msgstr "El piloto debe ser uno de los operadores del permiso de vuelo."
 
-#: .\apps\operations\forms.py:78
+#: .\apps\operations\forms.py:102
 msgid ""
 "The flight date must fall within the flight permission's validity range."
 msgstr ""
 "La fecha del vuelo debe estar dentro del rango de vigencia del permiso de "
 "vuelo."
 
-#: .\apps\operations\forms.py:83
+#: .\apps\operations\forms.py:107
 msgid "Arrival time must be later than departure time."
 msgstr "La hora de llegada debe ser posterior a la hora de salida."
 
-#: .\apps\operations\models.py:20
+#: .\apps\operations\models.py:23
 msgid "Requested"
 msgstr "Solicitado"
 
-#: .\apps\operations\models.py:22
+#: .\apps\operations\models.py:25
 msgid "Denied"
 msgstr "Rechazado"
 
+#: .\apps\operations\models.py:29
+msgid "Permission number"
+msgstr "Número de permiso"
+
+#: .\apps\operations\models.py:33
+msgid "Aircraft fleet"
+msgstr "Flota de aeronaves"
+
+#: .\apps\operations\models.py:37
+msgid "Valid from"
+msgstr "Vigente desde"
+
 #: .\apps\operations\models.py:38
+msgid "Valid until"
+msgstr "Vigente hasta"
+
+#: .\apps\operations\models.py:81
 msgid "flight permission"
 msgstr "permiso de vuelo"
 
-#: .\apps\operations\models.py:39
+#: .\apps\operations\models.py:82
 msgid "flight permissions"
 msgstr "permisos de vuelo"
 
-#: .\apps\operations\models.py:60 .\apps\registry\models.py:229
-#: .\apps\registry\models.py:327
+#: .\apps\operations\models.py:103 .\apps\registry\models.py:243
+#: .\apps\registry\models.py:343
 msgid "The end date cannot be before the start date."
 msgstr "La fecha final no puede ser anterior a la fecha inicial."
 
-#: .\apps\operations\views.py:104 .\templates\base.html:74
+#: .\apps\operations\models.py:107
+msgid "Latitude and longitude must be entered together."
+msgstr "La latitud y la longitud deben ingresarse juntas."
+
+#: .\apps\operations\models.py:111
+msgid "A radius requires a coordinate pair."
+msgstr "Un radio requiere un par de coordenadas."
+
+#: .\apps\operations\views.py:111 .\templates\base.html:74
 #: .\templates\dashboard\index.html:169
 #: .\templates\registry\costcenter_detail.html:23
 msgid "Permissions"
 msgstr "Permisos"
 
-#: .\apps\operations\views.py:163
+#: .\apps\operations\views.py:170
 msgid "Deny"
 msgstr "Rechazar"
 
-#: .\apps\operations\views.py:179
+#: .\apps\operations\views.py:186
 msgid "Permission approved."
 msgstr "Permiso aprobado."
 
-#: .\apps\operations\views.py:186
+#: .\apps\operations\views.py:193
 msgid "Permission denied."
 msgstr "Permiso rechazado."
 
-#: .\apps\operations\views.py:193
+#: .\apps\operations\views.py:200
 msgid "Permission completed."
 msgstr "Permiso completado."
 
-#: .\apps\operations\views.py:248
+#: .\apps\operations\views.py:255
 msgid "Flight record archived."
 msgstr "Registro de vuelo archivado."
 
@@ -772,11 +840,11 @@ msgstr "Responsable"
 msgid "Responsible operator"
 msgstr "Operador responsable"
 
-#: .\apps\registry\forms.py:32
+#: .\apps\registry\forms.py:32 .\apps\registry\models.py:40
 msgid "External contact name"
 msgstr "Nombre del contacto externo"
 
-#: .\apps\registry\forms.py:33
+#: .\apps\registry\forms.py:33 .\apps\registry\models.py:43
 msgid "External contact email"
 msgstr "Correo del contacto externo"
 
@@ -806,7 +874,7 @@ msgstr "Matrícula"
 #: .\templates\compliance\document_list.html:16
 #: .\templates\maintenance\record_detail.html:15
 #: .\templates\maintenance\record_list.html:15
-#: .\templates\operations\permission_detail.html:15
+#: .\templates\operations\permission_detail.html:19
 #: .\templates\registry\costcenter_detail.html:110
 msgid "Type"
 msgstr "Tipo"
@@ -827,15 +895,15 @@ msgstr "Año"
 msgid "Serial number"
 msgstr "Número de serie"
 
-#: .\apps\registry\forms.py:76
+#: .\apps\registry\forms.py:76 .\apps\registry\models.py:97
 msgid "Maximum takeoff weight (kg)"
 msgstr "Peso máximo de despegue (kg)"
 
-#: .\apps\registry\forms.py:77
+#: .\apps\registry\forms.py:77 .\apps\registry\models.py:104
 msgid "Basic weight (kg)"
 msgstr "Peso básico (kg)"
 
-#: .\apps\registry\forms.py:78 .\apps\registry\models.py:94
+#: .\apps\registry\forms.py:78 .\apps\registry\models.py:106
 msgid "VLOS"
 msgstr "VLOS"
 
@@ -873,7 +941,7 @@ msgstr "Ubicación actual"
 msgid "Current site"
 msgstr "Faena actual"
 
-#: .\apps\registry\forms.py:104 .\apps\registry\models.py:157
+#: .\apps\registry\forms.py:104 .\apps\registry\models.py:169
 msgid "Employee ID"
 msgstr "ID de empleado"
 
@@ -889,11 +957,11 @@ msgstr "Correo electrónico"
 msgid "Phone"
 msgstr "Teléfono"
 
-#: .\apps\registry\forms.py:108 .\apps\registry\models.py:162
+#: .\apps\registry\forms.py:108 .\apps\registry\models.py:174
 msgid "RUT"
 msgstr "RUT"
 
-#: .\apps\registry\forms.py:109 .\apps\registry\models.py:164
+#: .\apps\registry\forms.py:109 .\apps\registry\models.py:176
 msgid "DGAC credential"
 msgstr "Credencial DGAC"
 
@@ -910,7 +978,7 @@ msgid "Authorizations"
 msgstr "Habilitaciones"
 
 #: .\apps\registry\forms.py:130 .\apps\registry\forms.py:212
-#: .\apps\registry\forms.py:249 .\apps\registry\models.py:409
+#: .\apps\registry\forms.py:249 .\apps\registry\models.py:425
 #: .\templates\registry\assignment_list.html:51
 #: .\templates\registry\costcenter_detail.html:36
 #: .\templates\registry\resourcemovementlog_list.html:13
@@ -918,12 +986,12 @@ msgid "Operator"
 msgstr "Operador"
 
 #: .\apps\registry\forms.py:131 .\apps\registry\forms.py:235
-#: .\apps\registry\models.py:409 .\apps\registry\views.py:51
+#: .\apps\registry\models.py:425 .\apps\registry\views.py:51
 #: .\templates\base.html:59 .\templates\maintenance\record_detail.html:14
 #: .\templates\maintenance\record_list.html:15
 #: .\templates\operations\flightrecord_detail.html:25
 #: .\templates\operations\permission_detail.html:11
-#: .\templates\operations\permission_detail.html:17
+#: .\templates\operations\permission_detail.html:21
 #: .\templates\operations\permission_list.html:41
 #: .\templates\registry\assignment_list.html:51
 #: .\templates\registry\costcenter_detail.html:62
@@ -932,7 +1000,8 @@ msgid "Aircraft"
 msgstr "Aeronaves"
 
 #: .\apps\registry\forms.py:133 .\apps\registry\forms.py:217
-#: .\apps\registry\forms.py:240
+#: .\apps\registry\forms.py:240 .\apps\registry\models.py:218
+#: .\apps\registry\models.py:312
 msgid "Operation or purpose"
 msgstr "Operación o propósito"
 
@@ -966,15 +1035,15 @@ msgstr "Tipo de habilitación"
 msgid "Recipient of expiry digests for this cost center."
 msgstr "Destinatario de los resúmenes de vencimientos de este centro de costo."
 
-#: .\apps\registry\models.py:50
+#: .\apps\registry\models.py:54
 msgid "cost center"
 msgstr "centro de costo"
 
-#: .\apps\registry\models.py:51
+#: .\apps\registry\models.py:55
 msgid "cost centers"
 msgstr "centros de costo"
 
-#: .\apps\registry\models.py:78 .\apps\registry\models.py:287
+#: .\apps\registry\models.py:82 .\apps\registry\models.py:301
 #: .\templates\generic\_table_body.html:10 .\templates\generic\list.html:14
 #: .\templates\registry\aircraft_list.html:20
 #: .\templates\registry\assignment_list.html:32
@@ -982,7 +1051,7 @@ msgstr "centros de costo"
 msgid "Active"
 msgstr "Activo"
 
-#: .\apps\registry\models.py:79 .\templates\base.html:78
+#: .\apps\registry\models.py:83 .\templates\base.html:78
 #: .\templates\core\calendar.html:24 .\templates\core\calendar.html:35
 #: .\templates\core\calendar.html:56
 #: .\templates\maintenance\record_detail.html:3
@@ -991,151 +1060,151 @@ msgstr "Activo"
 msgid "Maintenance"
 msgstr "Mantenimiento"
 
-#: .\apps\registry\models.py:80 .\templates\registry\aircraft_list.html:20
+#: .\apps\registry\models.py:84 .\templates\registry\aircraft_list.html:20
 #: .\templates\registry\costcenter_detail.html:72
 msgid "Retired"
 msgstr "Retirada"
 
-#: .\apps\registry\models.py:111 .\templates\registry\aircraft_list.html:22
+#: .\apps\registry\models.py:123 .\templates\registry\aircraft_list.html:22
 #: .\templates\registry\costcenter_detail.html:75
 msgid "Headquarters"
 msgstr "Casa matriz"
 
-#: .\apps\registry\models.py:112 .\templates\registry\aircraft_list.html:23
+#: .\apps\registry\models.py:124 .\templates\registry\aircraft_list.html:23
 #: .\templates\registry\costcenter_detail.html:76
 msgid "On site"
 msgstr "En faena"
 
-#: .\apps\registry\models.py:113 .\templates\registry\aircraft_list.html:24
+#: .\apps\registry\models.py:125 .\templates\registry\aircraft_list.html:24
 #: .\templates\registry\costcenter_detail.html:77
 msgid "In maintenance"
 msgstr "En mantenimiento"
 
-#: .\apps\registry\models.py:124
+#: .\apps\registry\models.py:136
 msgid "The site this aircraft is deployed to, when on site."
 msgstr "La faena a la que está desplegada la aeronave, cuando está en faena."
 
-#: .\apps\registry\models.py:128 .\apps\registry\models.py:129
+#: .\apps\registry\models.py:140 .\apps\registry\models.py:141
 msgid "aircraft"
 msgstr "aeronave"
 
-#: .\apps\registry\models.py:137
+#: .\apps\registry\models.py:149
 msgid "Select the site the aircraft is deployed to."
 msgstr "Selecciona la faena a la que está desplegada la aeronave."
 
-#: .\apps\registry\models.py:140
+#: .\apps\registry\models.py:152
 msgid "A site only applies when the aircraft is on site."
 msgstr "Una faena solo aplica cuando la aeronave está en faena."
 
-#: .\apps\registry\models.py:178
+#: .\apps\registry\models.py:190
 msgid "operator"
 msgstr "operador"
 
-#: .\apps\registry\models.py:179
+#: .\apps\registry\models.py:191
 msgid "operators"
 msgstr "operadores"
 
-#: .\apps\registry\models.py:187 .\apps\registry\models.py:286
+#: .\apps\registry\models.py:199 .\apps\registry\models.py:300
 #: .\apps\workboard\models.py:28 .\apps\workboard\views.py:96
 #: .\templates\registry\_assignment_table_body.html:8
 #: .\templates\registry\assignment_list.html:35
 msgid "Planned"
 msgstr "Planificado"
 
-#: .\apps\registry\models.py:188
+#: .\apps\registry\models.py:200
 #: .\templates\registry\_assignment_table_body.html:8
 #: .\templates\registry\assignment_list.html:19
 #: .\templates\registry\assignment_list.html:36
 msgid "Confirmed"
 msgstr "Confirmada"
 
-#: .\apps\registry\models.py:190 .\apps\registry\models.py:289
+#: .\apps\registry\models.py:202 .\apps\registry\models.py:303
 #: .\templates\registry\_assignment_table_body.html:8
 #: .\templates\registry\assignment_list.html:38
 msgid "Cancelled"
 msgstr "Cancelada"
 
-#: .\apps\registry\models.py:211
+#: .\apps\registry\models.py:225
 msgid "assignment"
 msgstr "asignación"
 
-#: .\apps\registry\models.py:212
+#: .\apps\registry\models.py:226
 msgid "assignments"
 msgstr "asignaciones"
 
-#: .\apps\registry\models.py:231
+#: .\apps\registry\models.py:245
 msgid "The selected operator is inactive."
 msgstr "El operador seleccionado está inactivo."
 
-#: .\apps\registry\models.py:235
+#: .\apps\registry\models.py:249
 msgid "The selected aircraft is not available."
 msgstr "La aeronave seleccionada no está disponible."
 
-#: .\apps\registry\models.py:241
+#: .\apps\registry\models.py:255
 msgid "The cost center does not match the operator's."
 msgstr "El centro de costo no coincide con el del operador."
 
-#: .\apps\registry\models.py:247
+#: .\apps\registry\models.py:261
 msgid "The cost center does not match the aircraft's."
 msgstr "El centro de costo no coincide con el de la aeronave."
 
-#: .\apps\registry\models.py:261
+#: .\apps\registry\models.py:275
 msgid "qualification"
 msgstr "habilitación"
 
-#: .\apps\registry\models.py:262
+#: .\apps\registry\models.py:276
 msgid "qualifications"
 msgstr "habilitaciones"
 
-#: .\apps\registry\models.py:288
+#: .\apps\registry\models.py:302
 msgid "Ended"
 msgstr "Finalizada"
 
-#: .\apps\registry\models.py:330
+#: .\apps\registry\models.py:346
 msgid "The selected resource is inactive."
 msgstr "El recurso seleccionado está inactivo."
 
-#: .\apps\registry\models.py:337
+#: .\apps\registry\models.py:353
 msgid "This resource already has an overlapping active assignment."
 msgstr "Este recurso ya tiene una asignación activa que se superpone."
 
-#: .\apps\registry\models.py:353
+#: .\apps\registry\models.py:369
 msgid "operator assignment"
 msgstr "asignación de operador"
 
-#: .\apps\registry\models.py:354
+#: .\apps\registry\models.py:370
 msgid "operator assignments"
 msgstr "asignaciones de operador"
 
-#: .\apps\registry\models.py:376
+#: .\apps\registry\models.py:392
 msgid "aircraft assignment"
 msgstr "asignación de aeronave"
 
-#: .\apps\registry\models.py:377
+#: .\apps\registry\models.py:393
 msgid "aircraft assignments"
 msgstr "asignaciones de aeronave"
 
-#: .\apps\registry\models.py:411
+#: .\apps\registry\models.py:427
 msgid "Assigned"
 msgstr "Asignado"
 
-#: .\apps\registry\models.py:412
+#: .\apps\registry\models.py:428
 msgid "Reassigned"
 msgstr "Reasignado"
 
-#: .\apps\registry\models.py:413
+#: .\apps\registry\models.py:429
 msgid "Released"
 msgstr "Liberado"
 
-#: .\apps\registry\models.py:414
+#: .\apps\registry\models.py:430
 msgid "Location changed"
 msgstr "Cambio de ubicación"
 
-#: .\apps\registry\models.py:447
+#: .\apps\registry\models.py:463
 msgid "resource movement"
 msgstr "movimiento de recurso"
 
-#: .\apps\registry\models.py:448
+#: .\apps\registry\models.py:464
 msgid "resource movements"
 msgstr "movimientos de recursos"
 
@@ -1342,7 +1411,7 @@ msgstr "Cumplimiento"
 
 #: .\templates\base.html:69 .\templates\compliance\document_list.html:7
 #: .\templates\compliance\report.html:61
-#: .\templates\operations\permission_detail.html:15
+#: .\templates\operations\permission_detail.html:19
 #: .\templates\registry\costcenter_detail.html:24
 msgid "Documents"
 msgstr "Documentos"
@@ -1516,7 +1585,7 @@ msgstr "Activada"
 
 #: .\templates\compliance\alert_list.html:4
 #: .\templates\compliance\document_list.html:16
-#: .\templates\operations\permission_detail.html:15
+#: .\templates\operations\permission_detail.html:19
 #: .\templates\registry\costcenter_detail.html:110
 msgid "Expiry"
 msgstr "Vencimiento"
@@ -1588,7 +1657,7 @@ msgid "New Document"
 msgstr "Nuevo documento"
 
 #: .\templates\compliance\document_form.html:4
-#: .\templates\operations\permission_detail.html:15
+#: .\templates\operations\permission_detail.html:19
 msgid "Upload document"
 msgstr "Cargar documento"
 
@@ -1765,7 +1834,7 @@ msgstr "Todos los centros de costo"
 
 #: .\templates\compliance\report.html:35 .\templates\geo\plan_detail.html:158
 #: .\templates\maintenance\record_detail.html:39
-#: .\templates\operations\permission_detail.html:13
+#: .\templates\operations\permission_detail.html:17
 #: .\templates\registry\aircraft_detail.html:27
 #: .\templates\registry\costcenter_detail.html:129
 #: .\templates\registry\operator_detail.html:27
@@ -1775,7 +1844,7 @@ msgstr "Desde"
 
 #: .\templates\compliance\report.html:39 .\templates\geo\plan_detail.html:158
 #: .\templates\maintenance\record_detail.html:39
-#: .\templates\operations\permission_detail.html:13
+#: .\templates\operations\permission_detail.html:17
 #: .\templates\registry\aircraft_detail.html:27
 #: .\templates\registry\costcenter_detail.html:129
 #: .\templates\registry\operator_detail.html:27
@@ -2316,7 +2385,7 @@ msgstr "Costo"
 
 #: .\templates\maintenance\record_detail.html:22
 #: .\templates\operations\flightrecord_detail.html:26
-#: .\templates\operations\permission_detail.html:11
+#: .\templates\operations\permission_detail.html:15
 msgid "Notes"
 msgstr "Notas"
 
@@ -2325,24 +2394,24 @@ msgid "Complete maintenance"
 msgstr "Completar mantenimiento"
 
 #: .\templates\maintenance\record_detail.html:38
-#: .\templates\operations\permission_detail.html:13
+#: .\templates\operations\permission_detail.html:17
 msgid "Status history"
 msgstr "Historial de estados"
 
 #: .\templates\maintenance\record_detail.html:39
 #: .\templates\operations\flightrecord_detail.html:21
-#: .\templates\operations\permission_detail.html:13
 #: .\templates\operations\permission_detail.html:17
+#: .\templates\operations\permission_detail.html:21
 msgid "Date"
 msgstr "Fecha"
 
 #: .\templates\maintenance\record_detail.html:39
-#: .\templates\operations\permission_detail.html:13
+#: .\templates\operations\permission_detail.html:17
 msgid "By"
 msgstr "Por"
 
 #: .\templates\maintenance\record_detail.html:41
-#: .\templates\operations\permission_detail.html:13
+#: .\templates\operations\permission_detail.html:17
 msgid "No status changes recorded yet."
 msgstr "Aún no hay cambios de estado registrados."
 
@@ -2370,17 +2439,17 @@ msgid "Permission"
 msgstr "Permiso"
 
 #: .\templates\operations\flightrecord_detail.html:22
-#: .\templates\operations\permission_detail.html:17
+#: .\templates\operations\permission_detail.html:21
 msgid "Departure"
 msgstr "Salida"
 
 #: .\templates\operations\flightrecord_detail.html:23
-#: .\templates\operations\permission_detail.html:17
+#: .\templates\operations\permission_detail.html:21
 msgid "Arrival"
 msgstr "Llegada"
 
 #: .\templates\operations\flightrecord_detail.html:24
-#: .\templates\operations\permission_detail.html:17
+#: .\templates\operations\permission_detail.html:21
 msgid "Pilot"
 msgstr "Piloto"
 
@@ -2400,19 +2469,35 @@ msgstr "Vigencia"
 msgid "Location"
 msgstr "Ubicación"
 
-#: .\templates\operations\permission_detail.html:15
+#: .\templates\operations\permission_detail.html:12
+msgid "Region / Commune"
+msgstr "Región / Comuna"
+
+#: .\templates\operations\permission_detail.html:13
+msgid "Coordinates"
+msgstr "Coordenadas"
+
+#: .\templates\operations\permission_detail.html:13
+msgid "radius"
+msgstr "radio"
+
+#: .\templates\operations\permission_detail.html:14
+msgid "Maximum altitude"
+msgstr "Altitud máxima"
+
+#: .\templates\operations\permission_detail.html:19
 msgid "No documents attached to this permission."
 msgstr "No hay documentos adjuntos a este permiso."
 
-#: .\templates\operations\permission_detail.html:17
+#: .\templates\operations\permission_detail.html:21
 msgid "Flight records"
 msgstr "Registros de vuelo"
 
-#: .\templates\operations\permission_detail.html:17
+#: .\templates\operations\permission_detail.html:21
 msgid "Add record"
 msgstr "Agregar registro"
 
-#: .\templates\operations\permission_detail.html:17
+#: .\templates\operations\permission_detail.html:21
 msgid "No flight records for this permission."
 msgstr "No hay registros de vuelo para este permiso."
 

@@ -1,4 +1,7 @@
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
@@ -22,14 +25,54 @@ class FlightPermission(BaseModel):
         ("denied", _("Denied")),
         ("completed", _("Completed")),
     ]
-    permission_number = models.CharField(max_length=50, unique=True)
+    permission_number = models.CharField(
+        max_length=50, unique=True, verbose_name=_("Permission number")
+    )
     operators = models.ManyToManyField(Operator, related_name="flight_permissions")
-    aircraft_fleet = models.ManyToManyField(Aircraft, related_name="flight_permissions")
+    aircraft_fleet = models.ManyToManyField(
+        Aircraft, related_name="flight_permissions", verbose_name=_("Aircraft fleet")
+    )
     cost_center = models.ForeignKey(CostCenter, on_delete=models.PROTECT)
     purpose = models.CharField(max_length=250)
-    valid_from = models.DateField()
-    valid_until = models.DateField()
+    valid_from = models.DateField(verbose_name=_("Valid from"))
+    valid_until = models.DateField(verbose_name=_("Valid until"))
     location = models.CharField(max_length=250)
+    # OPS-4 structured location (docs/dev/ops-contract-tracking-plan.md §1.4):
+    # complements `location` rather than replacing it -- the free-text field
+    # stays for the exact wording of the DGAC authorization, these add the
+    # administrative breakdown and, optionally, the point/area the flight
+    # covers so it can later cross-reference the GEO plan (same site).
+    region = models.CharField(max_length=100, blank=True)
+    commune = models.CharField(max_length=100, blank=True)
+    area_name = models.CharField(max_length=200, blank=True)
+    latitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+        validators=[
+            MinValueValidator(Decimal("-90")),
+            MaxValueValidator(Decimal("90")),
+        ],
+    )
+    longitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+        validators=[
+            MinValueValidator(Decimal("-180")),
+            MaxValueValidator(Decimal("180")),
+        ],
+    )
+    radius_km = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0"))],
+    )
+    max_altitude_ft = models.PositiveIntegerField(null=True, blank=True)
     status = models.CharField(
         max_length=20, choices=STATUS_CHOICES, default="requested"
     )
@@ -55,10 +98,19 @@ class FlightPermission(BaseModel):
         return reverse("permission-detail", kwargs={"pk": self.pk})
 
     def clean(self):
+        errors = {}
         if self.valid_until and self.valid_from and self.valid_until < self.valid_from:
-            raise ValidationError(
-                {"valid_until": _("The end date cannot be before the start date.")}
-            )
+            errors["valid_until"] = _("The end date cannot be before the start date.")
+        # A lone coordinate cannot be plotted; require the pair together so a
+        # half-entered point does not silently fail to show on a future map.
+        if (self.latitude is None) != (self.longitude is None):
+            message = _("Latitude and longitude must be entered together.")
+            errors["latitude"] = message
+            errors["longitude"] = message
+        if self.radius_km is not None and self.latitude is None:
+            errors["radius_km"] = _("A radius requires a coordinate pair.")
+        if errors:
+            raise ValidationError(errors)
 
 
 class FlightRecord(BaseModel):
