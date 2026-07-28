@@ -12,7 +12,13 @@ from django.utils.translation import override
 
 from apps.core.forms import translate_field_label
 from apps.core.templatetags.aero_tags import fields_detail
-from apps.registry.models import CostCenter, Operator
+from apps.registry.models import (
+    Aircraft,
+    Assignment,
+    CostCenter,
+    Operator,
+    OperatorAssignment,
+)
 
 
 @pytest.fixture
@@ -64,6 +70,80 @@ def test_technical_fields_are_hidden_from_the_detail_page(operator):
 
     for hidden in ("id", "created at", "updated at", "is active", "tenant"):
         assert hidden not in keys
+
+
+@pytest.mark.django_db
+def test_costcenter_form_label_overrides_are_translated_on_detail():
+    # Meta.labels on CostCenterForm gives these fields a hand-picked label
+    # different from the auto-derived verbose_name ("Responsible contact
+    # name"). fields_detail must agree with the form instead of falling back
+    # to the untranslated auto-derived label.
+    cost_center = CostCenter.objects.create(
+        code="OPS",
+        name="Operations",
+        responsible_contact_name="Jane Doe",
+        responsible_contact_email="jane@example.test",
+    )
+    with override("es"):
+        labels = [field["label"] for field in fields_detail(cost_center)]
+
+    assert "Nombre del contacto externo" in labels
+    assert "Correo del contacto externo" in labels
+    assert "Responsible contact name" not in labels
+    assert "Responsible contact email" not in labels
+
+
+@pytest.mark.django_db
+def test_aircraft_form_label_overrides_are_translated_on_detail():
+    # Same gap as above, for AircraftForm's max_takeoff_weight_kg/
+    # basic_weight_kg, which used "Maximum"/"(kg)" wording the auto-derived
+    # verbose_name did not match.
+    aircraft = Aircraft.objects.create(
+        registration="CC-ABC",
+        type="Multirotor",
+        model="X1",
+        manufacturer="Acme",
+    )
+    with override("es"):
+        labels = [field["label"] for field in fields_detail(aircraft)]
+
+    assert "Peso máximo de despegue (kg)" in labels
+    assert "Peso básico (kg)" in labels
+    assert "Max takeoff weight kg" not in labels
+    assert "Basic weight kg" not in labels
+
+
+@pytest.mark.django_db
+def test_assignment_form_label_override_is_translated_on_detail(operator):
+    # AssignmentForm's Meta.labels renames "purpose" to "Operation or
+    # purpose"; the auto-derived verbose_name ("Purpose") is a different
+    # msgid and used to fall back to English on the detail page.
+    aircraft = Aircraft.objects.create(
+        registration="CC-XYZ", type="Multirotor", model="X1", manufacturer="Acme"
+    )
+    assignment = Assignment.objects.create(
+        operator=operator, aircraft=aircraft, start_date="2026-01-01"
+    )
+    with override("es"):
+        labels = [field["label"] for field in fields_detail(assignment)]
+
+    assert "Operación o propósito" in labels
+    assert "Purpose" not in labels
+
+
+@pytest.mark.django_db
+def test_resource_assignment_form_label_override_is_translated_on_detail(operator):
+    # Same gap as above, for the abstract ResourceAssignment.purpose field
+    # shared by OperatorAssignment and AircraftAssignment.
+    cost_center = CostCenter.objects.create(code="OPS2", name="Operations 2")
+    assignment = OperatorAssignment.objects.create(
+        operator=operator, cost_center=cost_center, start_date="2026-01-01"
+    )
+    with override("es"):
+        labels = [field["label"] for field in fields_detail(assignment)]
+
+    assert "Operación o propósito" in labels
+    assert "Purpose" not in labels
 
 
 @pytest.mark.django_db

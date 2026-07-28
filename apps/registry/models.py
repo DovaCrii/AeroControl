@@ -36,8 +36,12 @@ class CostCenter(BaseModel):
     # fly, and would leak into every other view that assumes the roster is
     # flight crew. Plain contact info instead, used only when no operator is
     # reachable (see notification_email).
-    responsible_contact_name = models.CharField(max_length=150, blank=True)
-    responsible_contact_email = models.EmailField(blank=True)
+    responsible_contact_name = models.CharField(
+        max_length=150, blank=True, verbose_name=_("External contact name")
+    )
+    responsible_contact_email = models.EmailField(
+        blank=True, verbose_name=_("External contact email")
+    )
 
     def __str__(self):
         label = f"{self.code} - {self.name}"
@@ -86,10 +90,18 @@ class Aircraft(BaseModel):
     year = models.PositiveIntegerField(null=True, blank=True)
     serial_number = models.CharField(max_length=100, blank=True)
     max_takeoff_weight_kg = models.DecimalField(
-        max_digits=8, decimal_places=3, null=True, blank=True
+        max_digits=8,
+        decimal_places=3,
+        null=True,
+        blank=True,
+        verbose_name=_("Maximum takeoff weight (kg)"),
     )
     basic_weight_kg = models.DecimalField(
-        max_digits=8, decimal_places=3, null=True, blank=True
+        max_digits=8,
+        decimal_places=3,
+        null=True,
+        blank=True,
+        verbose_name=_("Basic weight (kg)"),
     )
     vlos = models.CharField(max_length=20, blank=True, verbose_name=_("VLOS"))
     parachute = models.CharField(max_length=20, blank=True)
@@ -202,7 +214,9 @@ class Assignment(BaseModel):
         null=True,
         blank=True,
     )
-    purpose = models.CharField(max_length=250, blank=True)
+    purpose = models.CharField(
+        max_length=250, blank=True, verbose_name=_("Operation or purpose")
+    )
     start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="planned")
@@ -294,7 +308,9 @@ class ResourceAssignment(BaseModel):
     start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
-    purpose = models.CharField(max_length=250, blank=True)
+    purpose = models.CharField(
+        max_length=250, blank=True, verbose_name=_("Operation or purpose")
+    )
 
     class Meta:
         abstract = True

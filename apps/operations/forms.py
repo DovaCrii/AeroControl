@@ -17,11 +17,35 @@ class FlightPermissionForm(AeroModelForm):
             "valid_from",
             "valid_until",
             "location",
+            "region",
+            "commune",
+            "area_name",
+            "latitude",
+            "longitude",
+            "radius_km",
+            "max_altitude_ft",
         ]
         widgets = {
             # A roster of several, not one pick from a dropdown (OPS-4).
             "operators": forms.CheckboxSelectMultiple,
             "aircraft_fleet": forms.CheckboxSelectMultiple,
+        }
+        labels = {
+            "region": _("Region"),
+            "commune": _("Commune"),
+            "area_name": _("Area or site name"),
+            "latitude": _("Latitude"),
+            "longitude": _("Longitude"),
+            "radius_km": _("Radius (km)"),
+            "max_altitude_ft": _("Maximum altitude (ft)"),
+        }
+        help_texts = {
+            "region": _(
+                "Structured location, in addition to the free-text location "
+                "above -- optional."
+            ),
+            "latitude": _("Decimal degrees. Enter together with longitude."),
+            "longitude": _("Decimal degrees. Enter together with latitude."),
         }
 
 
