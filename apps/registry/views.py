@@ -572,12 +572,14 @@ class CostCenterImportView(ModelPermissionRequiredMixin, View):
         return spec.parse(
             upload,
             existing,
-            lambda raw, _line: {
-                "code": raw["code"].strip(),
-                "name": raw["name"].strip(),
-            }
-            if raw["name"].strip()
-            else "code y name son obligatorios.",
+            lambda raw, _line: (
+                {
+                    "code": raw["code"].strip(),
+                    "name": raw["name"].strip(),
+                }
+                if raw["name"].strip()
+                else "code y name son obligatorios."
+            ),
         )
 
     def post(self, request):
