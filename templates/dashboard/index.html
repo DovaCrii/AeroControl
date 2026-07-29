@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n static %}
 {% block title %}Dashboard - AeroControl{% endblock %}
 
 {% block content %}
@@ -156,7 +156,9 @@ guides the three steps in order and disappears when they are done.
 {% endblock %}
 
 {% block extrahead %}
-<script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script defer src="{% static 'vendor/chartjs/chart.umd.min.js' %}"
+        integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"
+        crossorigin="anonymous"></script>
 {{ chart_data|json_script:"chart-data" }}
 <script>const chartData = JSON.parse(document.getElementById("chart-data").textContent);</script>
 {% endblock %}

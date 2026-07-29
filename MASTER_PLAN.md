@@ -48,10 +48,12 @@ una **instrucción explícita**. Orden recomendado de lo pendiente:
    documentos con vencimiento → una regla → `generate_alerts`; recién entonces
    asignar operadores responsables y validar el digest. *(Decisión de negocio del
    usuario, no del agente.)*
-2. **V.10-V.12** — la seguridad diferida de la revisión: endurecer CSP (exige
-   extraer el JS inline primero), vendorizar CDN con SRI (T5.9 — GEO-0 ya
-   vendorizó Leaflet/Geoman, falta Bootstrap/htmx/Chart.js/FullCalendar), y la
-   política de sesión/cambio de contraseña. *(Requieren decisión de política.)*
+2. **V.10-V.12** — la seguridad diferida de la revisión. **V.11/T5.9 hecho:**
+   Bootstrap/htmx/Chart.js/FullCalendar/Sortable vendorizados con SRI y orígenes
+   CDN sacados del CSP. **Pendiente V.10:** extraer el JS inline (base.html/
+   dashboard/calendar/login) y recién ahí `django-csp` enforcing. **Pendiente
+   V.12:** política de sesión/cambio de contraseña *(requiere decisión de
+   política del usuario)*.
 3. **TL.7** — los 5 PRs de Dependabot (dos necesitan rebase).
 4. **V2 de GEO** (GEO-11..GEO-14) y los bloques DIFERIDOS (BLOQUE 3 UX Kanban,
    BLOQUE 5 centro de administración, B4.3/B4.4, B6.3 asistente IA): todos
@@ -189,8 +191,8 @@ La tanda E (UX mayor) requiere decisiones de alcance del usuario.
 | V.7 | ✅ | P2 | `generate_alerts`: alerta y tarea en dos escrituras; un corte dejaba la alerta huérfana que la dedupe contaba como duplicado para siempre | B |
 | V.8 | ✅ | P2 | `Alert.resolve()`/`reopen()` con dos `save()` sin transacción: alerta resuelta con tarea abierta | B |
 | V.9 | ✅ | P2 | API PATCH sin `full_clean`: fecha malformada → 500; título de 10k chars persistía en SQLite y reventaría en PostgreSQL | reg. |
-| V.10 | ⬜ | P2 | CSP decorativo: `CSP_REPORT_ONLY=False` **borra** la cabecera, htmx viene de unpkg fuera de la política, ~50 líneas inline sin nonce, sin report-uri. Orden: extraer JS inline → alinear orígenes → `django-csp` | — |
-| V.11 | ⬜ | P2 | Sin SRI en Bootstrap/htmx y `htmx.org@2.x` es rango flotante en unpkg. Es T5.9 (vendorizar) | — |
+| V.10 | 🔄 | P2 | CSP decorativo: `CSP_REPORT_ONLY=False` **borra** la cabecera, ~50 líneas inline sin nonce, sin report-uri. **Hecho (con V.11):** orígenes alineados a `'self'` (htmx ya no viene de unpkg; script/style/font-src sin CDN). **Pendiente:** extraer JS inline (base.html/dashboard/calendar/login) → `django-csp` enforcing con `CSP_REPORT_ONLY=False` real + report-uri. Orden restante: extraer JS inline → `django-csp` | — |
+| V.11 | ✅ | P2 | Bootstrap 5.3.3, htmx **2.0.10** (fijado; era el rango flotante `htmx.org@2.x` en unpkg), Chart.js 4.4.7, FullCalendar 6.1.15 y SortableJS 1.15.6 vendorizados en `static/vendor/` con SRI sha384 (patrón GEO-7). Es T5.9. Verificado en el navegador: CSP-gated Bootstrap CSS carga sin error de consola; los 6 archivos sirven 200 con bytes exactos. De paso encogí los orígenes del CSP a `script-src 'self'` / `font-src 'self'` (ya no hay CDN), adelanto de la parte "alinear orígenes" de V.10 | — |
 | V.12 | ⬜ | P2 | Sesión: 14 días por defecto, sin expiración deslizante, sin `password_change` fuera de `/admin/`. Decidir política para equipos compartidos en terreno | — |
 | V.13 | ✅ | P2 | `StageCreate` explícito sombreaba al generado y perdió la validación de tablero; ídem checklist create/toggle | A |
 | V.14 | ✅ | P3 | Escritura a storage dentro de `atomic`: el rollback dejaba ficheros huérfanos. Limpieza al fallar la transacción | B |
@@ -356,7 +358,7 @@ abierto (hoy sí es cierto, cerrado en `3611d06`).
 | T5.6 | ⬜ | P2 | Paginación HTMX + búsqueda en vivo alineadas (F-13) | S | — |
 | T5.7 | ⬜ | P2 | Exportación visible en todas las listas (U6) | S | — |
 | T5.8 | ⬜ | P2 | Limpiar fugas de i18n; accesibilidad (`scope`, labels) | M | — |
-| T5.9 | ⬜ | P2 | Vendorizar assets locales (Bootstrap/HTMX/Chart.js/FullCalendar) + SRI | M | T2.5 |
+| T5.9 | ✅ | P2 | Vendorizar assets locales (Bootstrap/HTMX/Chart.js/FullCalendar/Sortable) + SRI. Hecho como V.11 (`static/vendor/`, sha384, orígenes CDN eliminados del CSP). Leaflet/Geoman ya venían de GEO-7/8 | M | T2.5 |
 
 ### FASE 5R — Legibilidad y consistencia visual (feedback de revisión en vivo 2026-07-24)
 

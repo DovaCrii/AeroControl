@@ -36,13 +36,19 @@ class RequestMetricsMiddleware:
 
         if getattr(settings, "CSP_REPORT_ONLY", True):
             response["Content-Security-Policy-Report-Only"] = (
-                "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; "
-                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+                # V.11/T5.9: Bootstrap, htmx, Chart.js, FullCalendar and Sortable
+                # are now vendored under static/vendor/ with SRI, so no third-party
+                # script/style origin remains. 'unsafe-inline' on style-src covers
+                # inline style attributes and the login page's <style> block;
+                # script-src stays 'self' with no 'unsafe-inline' on purpose, so the
+                # report surfaces the inline <script> blocks that V.10 must extract.
+                "default-src 'self'; script-src 'self'; "
+                "style-src 'self' 'unsafe-inline'; "
                 # Tile hosts for the geo map island (GEO-7); keep in sync with
                 # settings.GEO_TILE_PROVIDERS.
                 "img-src 'self' data: https://*.tile.openstreetmap.org "
                 "https://server.arcgisonline.com; "
-                "font-src 'self' https://cdn.jsdelivr.net; "
+                "font-src 'self'; "
                 "object-src 'none'; base-uri 'self'; frame-ancestors 'none'; "
                 "form-action 'self'"
             )
