@@ -47,9 +47,10 @@ export function wireLayer(layer, uid, state, onChange) {
 }
 
 // Install the Geoman toolbar and the create/remove handlers. `render` rebuilds
-// all layers from state.doc (used after create/undo so there is a single
-// representation of each feature).
-export function installEditor({ map, state, render, onChange }) {
+// all layers from state.doc (used after create/remove/undo so there is a single
+// representation of each feature). `getActiveFolder` returns the uid of the
+// folder new features should land in (GEO-11), or null for the document root.
+export function installEditor({ map, state, render, onChange, getActiveFolder }) {
   map.pm.addControls(DRAW_CONTROLS);
 
   map.on("pm:create", (event) => {
@@ -60,7 +61,8 @@ export function installEditor({ map, state, render, onChange }) {
     if (!geometry) {
       return;
     }
-    addPlacemark(state.doc, newUid(), geometry);
+    const folderUid = getActiveFolder ? getActiveFolder() : null;
+    addPlacemark(state.doc, newUid(), geometry, folderUid);
     state.snapshot();
     render();
     onChange();
@@ -73,6 +75,8 @@ export function installEditor({ map, state, render, onChange }) {
     }
     removePlacemark(state.doc, uid);
     state.snapshot();
+    // Rebuild layers + the layer tree so the panel reflects the removal.
+    render();
     onChange();
   });
 }

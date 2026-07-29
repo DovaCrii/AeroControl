@@ -1158,6 +1158,44 @@ main {
   color: var(--ac-text-secondary);
   font-variant-numeric: tabular-nums;
 }
+/* GEO-11 editable layer tree */
+.geo-tree { padding: 0.25rem 0; }
+.geo-tree-root {
+  padding: 0.3rem 0.75rem;
+  font-family: var(--bs-font-monospace, monospace);
+  color: var(--ac-text-secondary);
+  cursor: pointer;
+  border-bottom: 1px dashed var(--ac-border);
+}
+.geo-tree-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.5rem;
+  cursor: grab;
+}
+.geo-tree-row.is-dragging { opacity: 0.5; }
+.geo-tree-row.is-drop,
+.geo-tree-root.is-drop { background: var(--ac-turquoise, #0f9f95); color: #fff; }
+.geo-tree-row.is-active,
+.geo-tree-root.is-active { background: color-mix(in srgb, var(--ac-turquoise, #0f9f95) 18%, transparent); }
+.geo-tree-label {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.geo-tree-actions { flex: 0 0 auto; display: flex; gap: 0.15rem; }
+.geo-tree-btn {
+  border: 1px solid var(--ac-border);
+  background: var(--ac-surface);
+  color: var(--ac-text-secondary);
+  border-radius: 4px;
+  line-height: 1;
+  padding: 0.1rem 0.35rem;
+  cursor: pointer;
+}
+.geo-tree-btn:hover { color: var(--ac-text); border-color: var(--ac-text-secondary); }
 .geo-popup strong { display: block; }
 .geo-popup-desc { margin: 0.25rem 0 0; white-space: pre-wrap; }
 .geo-popup-measure { margin: 0.25rem 0 0; font-variant-numeric: tabular-nums; }

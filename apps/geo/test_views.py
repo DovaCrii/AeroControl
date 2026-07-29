@@ -148,6 +148,8 @@ class TestListAndDetail:
         assert config["contentUrl"].endswith("/versions/1/content/")
         assert config["tileProviders"]  # at least one provider
         assert set(config["labels"]) >= {"length", "area", "layers", "empty"}
+        # GEO-11 layer-tree labels are wired through to the island.
+        assert set(config["labels"]) >= {"visible", "duplicate", "explode", "rootDrop"}
 
         content = response.content.decode()
         assert 'id="geo-map-config"' in content  # json_script mount

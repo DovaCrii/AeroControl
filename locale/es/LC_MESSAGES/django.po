@@ -2907,6 +2907,22 @@ msgstr "Tu contraseña ha sido actualizada."
 msgid "Back to dashboard"
 msgstr "Volver al panel"
 
+#: .\apps\geo\views.py:175
+msgid "Visible"
+msgstr "Visible"
+
+#: .\apps\geo\views.py:176
+msgid "Duplicate"
+msgstr "Duplicar"
+
+#: .\apps\geo\views.py:177
+msgid "Split into parts"
+msgstr "Separar en partes"
+
+#: .\apps\geo\views.py:178
+msgid "Root — drop here or click to add new here"
+msgstr "Raíz — suelta aquí o haz clic para agregar aquí"
+
 #~ msgid "Flight date"
 #~ msgstr "Fecha de vuelo"
 

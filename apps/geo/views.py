@@ -171,6 +171,11 @@ class GeoPlanDetailView(ModelViewPermissionRequiredMixin, DetailView):
                 "invalid": _("The change was rejected:"),
                 "throttled": _("Too many saves in a row. Wait a moment."),
                 "rescue": _("Download your local copy"),
+                # GEO-11 layer tree
+                "visible": _("Visible"),
+                "duplicate": _("Duplicate"),
+                "explode": _("Split into parts"),
+                "rootDrop": _("Root — drop here or click to add new here"),
             },
         }
         return context
