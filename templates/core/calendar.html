@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n static %}
 {% block title %}{% translate "Calendar" %} - AeroControl{% endblock %}
 {% block content %}
 <div class="page-header">
@@ -58,7 +58,9 @@
 </tbody></table></div>
 {% endblock %}
 
-{% block extrahead %}<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>{% endblock %}
+{% block extrahead %}<script src="{% static 'vendor/fullcalendar/index.global.min.js' %}"
+        integrity="sha384-B1OFx8Gy9GjPu8UbUyXbGQpzll9ubAUQ9agInFJ8NnD7nYG1u/CLR+Sqr5yifl4q"
+        crossorigin="anonymous"></script>{% endblock %}
 
 {% block extrascripts %}
 <script>

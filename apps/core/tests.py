@@ -400,9 +400,29 @@ class TestChapter1DocxImport:
 
     def test_base_template_has_htmx(self, auth_client):
         response = auth_client.get(reverse("dashboard"))
+        content = response.content.decode()
 
         assert response.status_code == 200
-        assert "htmx.org" in response.content.decode()
+        # V.11/T5.9: htmx is vendored under static/vendor with SRI, no longer
+        # pulled from the floating unpkg htmx.org@2.x range.
+        assert "vendor/htmx/htmx.min.js" in content
+        assert "htmx.org" not in content
+        assert 'integrity="sha384-' in content
+
+    def test_rendered_pages_have_no_third_party_asset_origins(self, auth_client):
+        # V.11/T5.9: every script/style is served from static/vendor now.
+        for url_name in ("dashboard", "calendar", "kanban"):
+            content = auth_client.get(reverse(url_name)).content.decode()
+            for host in ("cdn.jsdelivr.net", "unpkg.com", "cdnjs.cloudflare.com"):
+                assert host not in content, f"{host} still referenced in {url_name}"
+
+    def test_csp_report_only_allows_no_third_party_script_origins(self, auth_client):
+        response = auth_client.get(reverse("dashboard"))
+        csp = response.headers["Content-Security-Policy-Report-Only"]
+
+        assert "script-src 'self';" in csp
+        assert "cdn.jsdelivr.net" not in csp
+        assert "unpkg.com" not in csp
 
     def test_base_template_has_dark_mode_toggle(self, auth_client):
         response = auth_client.get(reverse("dashboard"))
