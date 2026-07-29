@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Audit log" %} - AeroControl{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <p class="eyebrow mb-1">{% translate "Backups and audit" %}</p>
+    <h1>{% translate "Audit log" %}</h1>
+    <p class="text-muted mb-0">{% translate "Read-only history of authenticated changes." %}</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{% url 'administration' %}">{% translate "Back" %}</a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-sm-3">
+    <input type="text" name="actor" value="{{ filters.actor }}" class="form-control form-control-sm" placeholder="{% translate 'User' %}" aria-label="{% translate 'User' %}">
+  </div>
+  <div class="col-sm-3">
+    <select name="model" class="form-select form-select-sm" aria-label="{% translate 'Model' %}">
+      <option value="">{% translate "All models" %}</option>
+      {% for label in model_labels %}<option value="{{ label }}" {% if label == filters.model %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-sm-2"><input type="date" name="since" value="{{ filters.since }}" class="form-control form-control-sm" aria-label="{% translate 'From' %}"></div>
+  <div class="col-sm-2"><input type="date" name="until" value="{{ filters.until }}" class="form-control form-control-sm" aria-label="{% translate 'To' %}"></div>
+  <div class="col-sm-2"><button type="submit" class="btn btn-sm btn-primary w-100">{% translate "Filter" %}</button></div>
+</form>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-sm table-hover mb-0">
+      <thead>
+        <tr>
+          <th scope="col">{% translate "When" %}</th>
+          <th scope="col">{% translate "User" %}</th>
+          <th scope="col">{% translate "Action" %}</th>
+          <th scope="col">{% translate "Model" %}</th>
+          <th scope="col">{% translate "Method" %}</th>
+          <th scope="col">{% translate "Status" %}</th>
+          <th scope="col">{% translate "Path" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for event in events %}
+        <tr>
+          <td class="text-muted small">{{ event.created_at|date:"Y-m-d H:i:s" }}</td>
+          <td>{{ event.actor.username|default:"—" }}</td>
+          <td><code>{{ event.action }}</code></td>
+          <td class="small">{{ event.model_label|default:"—" }}</td>
+          <td class="small">{{ event.method }}</td>
+          <td class="small">{{ event.status_code }}</td>
+          <td class="small text-truncate" style="max-width: 20rem;" title="{{ event.path }}">{{ event.path }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-4">{% translate "No audit events match the filters." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if is_paginated %}
+<nav class="mt-3" aria-label="{% translate 'Pagination' %}">
+  <ul class="pagination pagination-sm">
+    {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?{% if filters.actor %}actor={{ filters.actor }}&amp;{% endif %}{% if filters.model %}model={{ filters.model }}&amp;{% endif %}{% if filters.since %}since={{ filters.since }}&amp;{% endif %}{% if filters.until %}until={{ filters.until }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">{% translate "Previous" %}</a></li>{% endif %}
+    <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+    {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?{% if filters.actor %}actor={{ filters.actor }}&amp;{% endif %}{% if filters.model %}model={{ filters.model }}&amp;{% endif %}{% if filters.since %}since={{ filters.since }}&amp;{% endif %}{% if filters.until %}until={{ filters.until }}&amp;{% endif %}page={{ page_obj.next_page_number }}">{% translate "Next" %}</a></li>{% endif %}
+  </ul>
+</nav>
+{% endif %}
+{% endblock %}
