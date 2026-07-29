@@ -491,17 +491,17 @@ Un bloque por sesión/PR, en esta secuencia (revisión `PLAN_CLAUDE_CODE_1.md`):
 
 **Decisión registrada (B4.2):** el registro que sobrevive a una fusión se elige por **cantidad de referencias** primero, no por campos rellenos. Probando con datos realistas, contar campos elegía un duplicado con poco uso que solo tenía un teléfono extra, en vez del registro que era responsable del centro de costo y tenía tarea asignada. La fusión es de un grupo por ejecución y hay que nombrarlo: no existe modo masivo.
 
-### BLOQUE 5 — Centro de administración operativo `rama codex/admin-center` `⏸ DIFERIDO (salvo B2.0 JobRun, adelantado al Bloque 2)`
+### BLOQUE 5 — Centro de administración operativo `rama codex/admin-center` `🔄 PARCIAL — panel de situación (B5.1/B5.2/B5.4) hecho 2026-07-29`
 
 Convertir `AdministrationCenterView` + `administration.html` en panel de situación, no solo menú.
 
 | ID | Est. | Prio | Tarea | Esf. | Dep. |
 |---|:--:|:--:|---|:--:|:--:|
-| B5.1 | ⏸ | P2 | Badges por tarjeta: alertas sin resolver, documentos que vencen ≤30 días, reglas activas, usuarios sin grupo (una consulta agregada por métrica) | M | — |
-| B5.2 | ⏸ | P2 | Sección "Salud y operación": último respaldo (fecha+hash), última ejecución de cada job (`JobRun`) con resultado, estado de `/health/`; aviso si un job diario no corre hace >48 h | M | B2.0 |
-| B5.3 | ⏸ | P2 | Acciones rápidas (POST + confirmación + permiso + `AuditEvent`): correr `generate_alerts`, enviar digest de prueba, iniciar respaldo. Documentar el límite de ejecutar en el request | M | B2.0 |
-| B5.4 | ⏸ | P2 | Vista de auditoría de solo lectura (`AuditEvent` filtrable por usuario/modelo/fecha, permiso `view_auditevent`) | M | — |
-| B5.5 | ⏸ | P3 | Panel de usuarios y roles (solo lectura, con enlace al admin técnico) | S | — |
+| B5.1 | ✅ | P2 | Badges por métrica: alertas sin resolver, documentos que vencen ≤30 días, reglas activas, usuarios sin rol (un agregado por métrica, cada uno gateado por su `view_*`). (`bc17481`) | M | — |
+| B5.2 | ✅ | P2 | Sección "Salud y operación": último respaldo (nombre+fecha+`sha256` del manifiesto en `BACKUPS_DIR`, `backups_dir()` compartido), última ejecución de cada `JobRun` con resultado + aviso >48 h para los diarios, estado de `/health/` (db + storage) reusado server-side. (`bc17481`) | M | B2.0 |
+| B5.3 | ⏸ | P2 | **DIFERIDO** Acciones rápidas (POST + confirmación + permiso + `AuditEvent`): correr `generate_alerts`, digest `--dry-run`, respaldo. Solo acciones seguras/rápidas (nada que envíe correo real desde un botón); documentar el límite de ejecutar en el request | M | B2.0 |
+| B5.4 | ✅ | P2 | Vista de auditoría de solo lectura (`AuditEventListView`, `core.view_auditevent`, filtrable por usuario/modelo/fecha, paginada, enlazada desde el centro). (`bc17481`) | M | — |
+| B5.5 | ⏸ | P3 | **DIFERIDO** Panel de usuarios y roles (solo lectura, con enlace al admin técnico) | S | — |
 
 ### BLOQUE 6 — Reportes ejecutivos y asistente `rama codex/reportes-ejecutivos` (6.1/6.2 en la ruta; 6.3 diferido)
 
