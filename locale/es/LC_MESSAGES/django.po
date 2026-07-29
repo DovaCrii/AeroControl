@@ -2923,6 +2923,26 @@ msgstr "Separar en partes"
 msgid "Root — drop here or click to add new here"
 msgstr "Raíz — suelta aquí o haz clic para agregar aquí"
 
+#: .\apps\geo\views.py:180
+msgid "Compare"
+msgstr "Comparar"
+
+#: .\apps\geo\views.py:181
+msgid "Exit comparison"
+msgstr "Salir de la comparación"
+
+#: .\apps\geo\views.py:182
+msgid "Added"
+msgstr "Agregado"
+
+#: .\apps\geo\views.py:183
+msgid "Removed"
+msgstr "Eliminado"
+
+#: .\apps\geo\views.py:184
+msgid "Changed"
+msgstr "Modificado"
+
 #~ msgid "Flight date"
 #~ msgstr "Fecha de vuelo"
 

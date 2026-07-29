@@ -50,6 +50,16 @@ export function wireLayer(layer, uid, state, onChange) {
 // all layers from state.doc (used after create/remove/undo so there is a single
 // representation of each feature). `getActiveFolder` returns the uid of the
 // folder new features should land in (GEO-11), or null for the document root.
+// Show/hide the Geoman draw toolbar. Used to suspend editing while the diff
+// overlay (GEO-12a) is active so a stray draw cannot mutate the document.
+export function setDrawControls(map, on) {
+  if (on) {
+    map.pm.addControls(DRAW_CONTROLS);
+  } else {
+    map.pm.removeControls();
+  }
+}
+
 export function installEditor({ map, state, render, onChange, getActiveFolder }) {
   map.pm.addControls(DRAW_CONTROLS);
 

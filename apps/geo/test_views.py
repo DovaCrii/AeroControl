@@ -150,6 +150,10 @@ class TestListAndDetail:
         assert set(config["labels"]) >= {"length", "area", "layers", "empty"}
         # GEO-11 layer-tree labels are wired through to the island.
         assert set(config["labels"]) >= {"visible", "duplicate", "explode", "rootDrop"}
+        # GEO-12a: every version and its content URL, for client-side diffing.
+        assert isinstance(config["versions"], list) and config["versions"]
+        assert set(config["versions"][0]) == {"number", "url"}
+        assert set(config["labels"]) >= {"compare", "diffAdded", "diffRemoved"}
 
         content = response.content.decode()
         assert 'id="geo-map-config"' in content  # json_script mount
