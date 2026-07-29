@@ -42,22 +42,26 @@ bloques grandes de producto que le siguieron: **BLOQUE GEO** (MVP GEO-0..GEO-10
 queda ya no es ruta automática: cada ítem exige o una **decisión de negocio** o
 una **instrucción explícita**. Orden recomendado de lo pendiente:
 
-1. **Cargar datos reales** — 0 documentos, 0 reglas: todo BLOQUE 2/6 está
-   construido y sin nada que procesar. El dashboard ahora **guía los tres
-   pasos** (tarjeta "Activa el monitoreo de cumplimiento"): tipo de documento →
-   documentos con vencimiento → una regla → `generate_alerts`; recién entonces
-   asignar operadores responsables y validar el digest. *(Decisión de negocio del
-   usuario, no del agente.)*
-2. **TL.7** — los 5 PRs de Dependabot (dos necesitan rebase).
-3. **V2 de GEO** (GEO-11..GEO-14) y los bloques DIFERIDOS (BLOQUE 3 UX Kanban,
+Orden acordado con el usuario (2026-07-29):
+
+1. **V2 de GEO** (GEO-11..GEO-14) y/o los bloques DIFERIDOS (BLOQUE 3 UX Kanban,
    BLOQUE 5 centro de administración, B4.3/B4.4, B6.3 asistente IA): todos
-   esperan instrucción/aprobación de diseño explícita.
+   esperan **propuesta de diseño primero** (el agente la presenta antes de
+   implementar).
+2. **Cargar datos reales** — *al final*, por decisión del usuario. 0 documentos,
+   0 reglas: todo BLOQUE 2/6 está construido y sin nada que procesar. El
+   dashboard **guía los tres pasos** (tarjeta "Activa el monitoreo de
+   cumplimiento"): tipo de documento → documentos con vencimiento → una regla →
+   `generate_alerts`; recién entonces asignar operadores responsables y validar
+   el digest. *(Decisión de negocio del usuario, no del agente.)*
 
 **Cerrado el 2026-07-29 (bloque de seguridad V.10-V.12 completo):** GEO-0b
 (auditoría trazable + handler de error del Kanban), V.11/T5.9 (vendorización +
 SRI, orígenes a `'self'`), V.10 (JS inline extraído a `static/js/` + CSP
 enforcing por entorno + `report-uri` con endpoint) y V.12 (sesión que expira al
 cerrar navegador + tope 12h + deslizante, cambio de contraseña en la app).
+También **TL.7** (los 5 PRs de Dependabot: crispy stack, ruff, checkout/setup-uv)
+y el runbook de despliegue en VM ([docs/dev/ubuntu-vm-deploy.md](docs/dev/ubuntu-vm-deploy.md)).
 
 > **Decisión registrada (V.10):** se **descartó añadir `django-csp`** (que el
 > plan nombraba) y se endureció el middleware CSP hecho a mano. Razón: tras
@@ -591,7 +595,7 @@ arranca la implementación sin "go" explícito del usuario.**
 | TL.4 | ✅ | P2 | Sacar `.agents/skills/impeccable/` del repo (aprobado por el usuario) | S | — |
 | TL.5 | ✅ | P3 | Borrar `.atl/skill-registry.md` y `prompts/` (aprobado por el usuario) | XS | — |
 | TL.6 | 🔄 | P2 | Merge a `main` preparado (fast-forward, verificado); falta el `push`. Poda de ramas inventariada más abajo ("Inventario de ramas"), pendiente de ejecución por el usuario | M | FASE 0 |
-| TL.7 | ⬜ | P3 | Atender los 5 PRs de Dependabot | S | T0.3 |
+| TL.7 | ✅ | P3 | Los 5 PRs de Dependabot aplicados **directo sobre el main actual**, no fusionando las ramas (nacían de un main muy viejo; su diff tocaba todo el árbol). pip: crispy-bootstrap5 2025.6→2026.3 + django-crispy-forms 2.4→2.6 (`d8d5b7c`, acoplados), ruff 0.12.0→0.15.22 (`3b1e83a`, un reformateo estilístico). Actions: checkout v4→v7 + setup-uv v6→v7 (`4b45a33`). `uv lock` resolvió sin conflicto con Django 6.0; verify.ps1 verde en cada bump. Los PRs se auto-cierran al llegar las versiones a `origin` | S | T0.3 |
 | TL.8 | 🔄 | P2 | Consolidar `openspec/`. **Hecho:** los 5 changes al 100% movidos a `openspec/changes/archive/`, así que `changes/` solo contiene trabajo vivo (`ui-modernization`, con su tarea de PR cerrada por el merge); `config.yaml` sincronizado (124→269 tests, umbral de cobertura real). **Pendiente:** `openspec/specs/`, que no es un movimiento de archivos — ver "Deuda de `openspec/specs/`" | M | — |
 | TL.9 | ✅ | P2 | Ampliar `AGENTS.md`: DoD por tipo de cambio, contrato de lectura, reglas de commit, precedencia documental | S | — |
 | TL.10 | ✅ | P3 | `.github/pull_request_template.md` con casillas derivadas del DoD real de `AGENTS.md` (no genéricas), sección de riesgo y "lo que queda fuera" | XS | — |
