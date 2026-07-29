@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 from decouple import config
 from django.utils.translation import gettext_lazy as _
@@ -18,6 +19,7 @@ INSTALLED_APPS = [
     "crispy_bootstrap5",
     "rest_framework",
     "rest_framework.authtoken",
+    "axes",
     "apps.core",
     "apps.registry",
     "apps.compliance",
@@ -38,6 +40,9 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # django-axes must sit last so it sees the fully resolved request/user and
+    # can turn a locked-out login attempt into its lockout response.
+    "axes.middleware.AxesMiddleware",
 ]
 ROOT_URLCONF = "config.urls"
 TEMPLATES = [
@@ -233,6 +238,42 @@ SESSION_COOKIE_AGE = config("SESSION_COOKIE_AGE", default=12 * 60 * 60, cast=int
 SESSION_SAVE_EVERY_REQUEST = config(
     "SESSION_SAVE_EVERY_REQUEST", default=True, cast=bool
 )
+
+# django-axes: brute-force lockout on the login form. The HTML login had no
+# rate limiting (only the DRF /api-token/ endpoint did), which is acceptable
+# while the app is reachable only inside the Tailscale tailnet but not once it
+# is exposed to the public internet via Tailscale Funnel. All knobs are
+# env-tunable so a private-only deployment can loosen or disable it.
+AUTHENTICATION_BACKENDS = [
+    # AxesStandaloneBackend must come first: it short-circuits a locked-out
+    # attempt before the real backend ever checks the password.
+    "axes.backends.AxesStandaloneBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+AXES_ENABLED = config("AXES_ENABLED", default=True, cast=bool)
+AXES_FAILURE_LIMIT = config("AXES_FAILURE_LIMIT", default=5, cast=int)
+AXES_COOLOFF_TIME = timedelta(
+    minutes=config("AXES_COOLOFF_MINUTES", default=15, cast=int)
+)
+AXES_RESET_ON_SUCCESS = True
+# Lock on the username alone. The app sits behind the Tailscale serve/funnel
+# proxy, so every request arrives from 127.0.0.1 unless X-Forwarded-For is
+# trusted; keying the lockout on the client IP would either be meaningless
+# (all attempts share the proxy address) or spoofable via a forged header.
+# Username-only lockout stops credential brute force reliably; the cooloff and
+# an admin reset bound the only downside (a targeted username being held out).
+AXES_LOCKOUT_PARAMETERS = ["username"]
+# Record the forwarded client address in the access log for forensics even
+# though it is not part of the lockout key.
+AXES_IPWARE_META_PRECEDENCE_ORDER = ["HTTP_X_FORWARDED_FOR", "REMOTE_ADDR"]
+# axes.W006 warns that a lockout key without 'ip_address' is weaker. That is the
+# deliberate choice above (username-only): behind the proxy every request shares
+# one address, so an IP key would be meaningless, and username-only additionally
+# protects a targeted account from a *distributed* brute force that rotates
+# source IPs. Silenced so `check --deploy` stays clean; revisit if the app ever
+# fronts requests with a trustworthy per-client IP.
+SILENCED_SYSTEM_CHECKS = ["axes.W006"]
+
 X_FRAME_OPTIONS = "DENY"
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"

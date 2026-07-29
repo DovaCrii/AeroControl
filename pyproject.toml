@@ -19,6 +19,7 @@ dependencies = [
     "boto3>=1.35,<2",
     "gunicorn>=23,<24",
     "whitenoise>=6.9,<7",
+    "django-axes>=7,<9",
 ]
 
 [dependency-groups]

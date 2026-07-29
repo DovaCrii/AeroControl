@@ -183,6 +183,48 @@ class TestPublicURLs:
         assert "Usuario o contraseña no válidos" in content
 
 
+class TestLoginLockout:
+    """django-axes locks the login after repeated failures.
+
+    Axes is disabled in dev/tests (AxesStandaloneBackend rejects the
+    request-less Client.login used everywhere else), so this test re-enables it
+    explicitly and drives the real login POST, which does carry a request.
+    """
+
+    @pytest.mark.django_db
+    def test_login_locks_out_after_repeated_failures(
+        self, client, admin_user, settings
+    ):
+        from axes.utils import reset
+
+        settings.AXES_ENABLED = True
+        settings.AXES_FAILURE_LIMIT = 3
+        settings.AXES_LOCKOUT_PARAMETERS = ["username"]
+        reset()
+        try:
+            # Hammer the login with the wrong password until axes stops
+            # returning the form and starts returning a lockout response.
+            statuses = []
+            for _ in range(6):
+                response = client.post(
+                    reverse("login"),
+                    {"username": "admin", "password": "wrong"},
+                )
+                statuses.append(response.status_code)
+                if response.status_code >= 400:
+                    break
+            assert any(status >= 400 for status in statuses), statuses
+
+            # The correct password is refused while the lockout stands.
+            with_correct_password = client.post(
+                reverse("login"),
+                {"username": "admin", "password": "admin123"},
+            )
+            assert with_correct_password.status_code != 302
+        finally:
+            reset()
+
+
 class TestAuthRequiredURLs:
     """Verify that internal pages require authentication and render for users."""
 
