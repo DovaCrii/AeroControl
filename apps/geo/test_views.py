@@ -1,5 +1,8 @@
 """GEO-4 import/list/detail shell, GEO-7/8 map island config, GEO-9 workflow."""
 
+import io
+import zipfile
+
 import pytest
 from django.contrib.auth.models import Permission, User
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -33,6 +36,55 @@ def _kml_upload(name="plan.kml", content=None):
         content if content is not None else HAPPY_KML.encode("utf-8"),
         content_type="application/vnd.google-earth.kml+xml",
     )
+
+
+def _kmz_with_icon():
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        archive.writestr("doc.kml", HAPPY_KML)
+        archive.writestr("files/icon.png", b"\x89PNG\r\n\x1a\nICONBYTES")
+    return SimpleUploadedFile(
+        "plan.kmz",
+        buffer.getvalue(),
+        content_type="application/vnd.google-earth.kmz",
+    )
+
+
+class TestEmbeddedResource:
+    """GEO-13: serving embedded KMZ icons through the whitelisted endpoint."""
+
+    def _import(self, settings, tmp_path):
+        settings.DOCUMENTS_ROOT = str(tmp_path)
+        center = CostCenter.objects.create(code="CCK", name="Kmz")
+        client = _client("add_geoplan", "view_geoplan")
+        response = client.post(
+            reverse("geo-plan-import"),
+            {"title": "K", "cost_center": center.pk, "file": _kmz_with_icon()},
+        )
+        assert response.status_code == 302
+        return client, GeoPlan.objects.get()
+
+    @pytest.mark.django_db
+    def test_serves_a_whitelisted_icon(self, db, settings, tmp_path):
+        client, plan = self._import(settings, tmp_path)
+        url = reverse("api-v1-geo-plan-resource", args=[plan.pk])
+        response = client.get(url, {"name": "files/icon.png"})
+        assert response.status_code == 200
+        assert response["Content-Type"] == "image/png"
+        assert b"ICONBYTES" in response.content
+
+    @pytest.mark.django_db
+    def test_unknown_resource_is_not_found(self, db, settings, tmp_path):
+        client, plan = self._import(settings, tmp_path)
+        url = reverse("api-v1-geo-plan-resource", args=[plan.pk])
+        # Not in the version's kmz_resources whitelist -> never opened.
+        assert client.get(url, {"name": "files/evil.png"}).status_code == 404
+
+    @pytest.mark.django_db
+    def test_requires_view_permission(self, db, settings, tmp_path):
+        _client_with, plan = self._import(settings, tmp_path)
+        url = reverse("api-v1-geo-plan-resource", args=[plan.pk])
+        assert _client().get(url, {"name": "files/icon.png"}).status_code in (401, 403)
 
 
 class TestImport:
@@ -154,6 +206,8 @@ class TestListAndDetail:
         assert isinstance(config["versions"], list) and config["versions"]
         assert set(config["versions"][0]) == {"number", "url"}
         assert set(config["labels"]) >= {"compare", "diffAdded", "diffRemoved"}
+        # GEO-13: base URL for serving embedded KMZ icons.
+        assert config["resourceUrlBase"].endswith("/resource/")
 
         content = response.content.decode()
         assert 'id="geo-map-config"' in content  # json_script mount

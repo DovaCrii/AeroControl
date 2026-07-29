@@ -89,6 +89,26 @@ async function init() {
   let fittedOnce = false;
   let diffState = null; // GEO-12a: {status, removed, base, target, counts} or null
 
+  // GEO-13: render a point that carries an embedded icon as a real marker
+  // (icon served same-origin from the source KMZ); everything else stays a
+  // circle. In diff mode colour wins over the icon so the status reads clearly.
+  function pointLayer(feature, latlng) {
+    const res =
+      feature && feature.properties && feature.properties.iconResource;
+    if (res && config.resourceUrlBase) {
+      const url = `${config.resourceUrlBase}?name=${encodeURIComponent(res)}`;
+      return L.marker(latlng, {
+        icon: L.icon({
+          iconUrl: url,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14],
+          popupAnchor: [0, -12],
+        }),
+      });
+    }
+    return pointToLayer(feature, latlng);
+  }
+
   function makeLayer(item, color) {
     const style = color
       ? () => ({ color, weight: 3, fillOpacity: 0.15 })
@@ -96,7 +116,7 @@ async function init() {
     const pt = color
       ? (_f, latlng) =>
           L.circleMarker(latlng, { radius: 5, color, weight: 2, fillOpacity: 0.6 })
-      : pointToLayer;
+      : pointLayer;
     const layer = L.geoJSON(toGeoJSON(item), { style, pointToLayer: pt });
     layer._geoUid = item.uid;
     layer.eachLayer((leaf) => {

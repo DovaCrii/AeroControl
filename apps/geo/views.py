@@ -143,6 +143,9 @@ class GeoPlanDetailView(ModelViewPermissionRequiredMixin, DetailView):
                 else None
             ),
             "commitUrl": reverse("api-v1-geo-plan-versions", args=[plan.pk]),
+            # GEO-13: base URL for serving embedded KMZ icons; the island appends
+            # ?name=<resource>. Only same-origin embedded resources are used.
+            "resourceUrlBase": reverse("api-v1-geo-plan-resource", args=[plan.pk]),
             "csrfToken": get_token(self.request) if editable else "",
             "tileProviders": settings.GEO_TILE_PROVIDERS,
             "editable": editable,

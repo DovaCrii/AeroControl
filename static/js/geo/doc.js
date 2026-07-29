@@ -6,6 +6,19 @@
 // path so the layer panel can group them. Sibling order is preserved.
 export function collectFeatures(doc) {
   const items = [];
+  const styles = doc.shared_styles || {};
+  const resources = new Set(doc.kmz_resources || []);
+  // GEO-13: an embedded icon is a style href that names a KMZ resource. An
+  // external http(s) icon is ignored here (the map keeps a plain marker) so the
+  // CSP stays 'self' for images.
+  function iconFor(styleUrl) {
+    if (!styleUrl) {
+      return null;
+    }
+    const style = styles[styleUrl];
+    const icon = style && style.resolved && style.resolved.icon;
+    return icon && resources.has(icon) ? icon : null;
+  }
   function walk(nodes, path) {
     for (const node of nodes || []) {
       if (node.kind === "folder") {
@@ -17,6 +30,7 @@ export function collectFeatures(doc) {
           description: node.description || "",
           folderPath: path,
           geometry: node.geometry,
+          iconResource: iconFor(node.style_url),
         });
       }
     }
@@ -42,7 +56,11 @@ export function toGeoJSON(item) {
   return {
     type: "Feature",
     geometry: item.geometry,
-    properties: { uid: item.uid, name: item.name },
+    properties: {
+      uid: item.uid,
+      name: item.name,
+      iconResource: item.iconResource || null,
+    },
   };
 }
 

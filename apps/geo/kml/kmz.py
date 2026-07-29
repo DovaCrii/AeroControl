@@ -73,6 +73,39 @@ def read_kmz(data):
     return main_bytes, resources
 
 
+def read_kmz_resource(data, name):
+    """Return the bytes of one named entry from KMZ bytes, guarded.
+
+    Used to serve an embedded icon/image (GEO-13). The caller must have already
+    checked `name` against the version's stored resource whitelist; this still
+    re-applies the importer's zip guards because a stored file is
+    attacker-controlled input and could have been tampered with. Returns None
+    when the entry is absent (best-effort, like the export copy).
+    """
+    _reject_unsafe_name(name)
+    try:
+        archive = zipfile.ZipFile(io.BytesIO(data))
+    except zipfile.BadZipFile as exc:
+        raise KmlImportError("The file is not a valid KMZ archive.") from exc
+
+    entries = archive.infolist()
+    if len(entries) > MAX_ENTRIES:
+        raise KmlImportError(
+            f"The KMZ has {len(entries)} entries; the limit is {MAX_ENTRIES}."
+        )
+    for info in entries:
+        if info.is_dir() or info.filename != name:
+            continue
+        if info.file_size > MAX_ENTRY_BYTES:
+            raise KmlImportError("A KMZ entry exceeds the per-file size limit.")
+        if info.compress_size > 0:
+            ratio = info.file_size / info.compress_size
+            if ratio > MAX_COMPRESSION_RATIO:
+                raise KmlImportError("A KMZ entry has a suspicious compression ratio.")
+        return _read_verified(archive, info)
+    return None
+
+
 def _pick_main_kml(entries):
     """First root-level .kml, preferring doc.kml (Google Earth's convention)."""
     root_kml = [
