@@ -2879,6 +2879,14 @@ msgstr "Fecha límite"
 msgid "No tasks found."
 msgstr "No se encontraron tareas."
 
+#: .\templates\workboard\kanban.html:88
+msgid "You do not have permission to move this task."
+msgstr "No tienes permiso para mover esta tarea."
+
+#: .\templates\workboard\kanban.html:90
+msgid "The task could not be moved. The board was refreshed."
+msgstr "No se pudo mover la tarea. Se actualizó el tablero."
+
 #~ msgid "Flight date"
 #~ msgstr "Fecha de vuelo"
 

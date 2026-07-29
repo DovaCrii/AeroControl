@@ -596,6 +596,12 @@ class TestChapter1DocxImport:
         assert response.status_code == 302
         document.refresh_from_db()
         assert document.is_active is False
+        # The soft-delete must land in the audit trail as a traceable event,
+        # not an anonymous post_success with empty model_label/object_id.
+        event = AuditEvent.objects.latest("created_at")
+        assert event.action == "archived"
+        assert event.model_label == "compliance.Document"
+        assert event.object_id == str(document.pk)
 
 
 class TestStaticFiles:

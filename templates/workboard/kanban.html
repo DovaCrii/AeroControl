@@ -26,6 +26,7 @@
   </div>
 
   {% if board %}
+  <div id="kanban-move-error" class="alert alert-warning py-2 d-none" role="alert" aria-live="assertive"></div>
   <div id="kanban-board" class="kanban-board">
     {% include "workboard/_board.html" %}
   </div>
@@ -70,15 +71,32 @@
     });
   }
 
+  function refreshBoard() {
+    htmx.ajax('GET', '/workboard/_board/' + window.location.search,
+      {target: '#kanban-board', swap: 'innerHTML'});
+  }
+
   document.addEventListener('DOMContentLoaded', initSortables);
   document.body.addEventListener('htmx:afterSwap', function(event) {
     if (event.detail.target.id === 'kanban-board') initSortables();
   });
-  document.body.addEventListener('board-refresh', function() {
-    var query = window.location.search;
-    htmx.ajax('GET', '/workboard/_board/' + query,
-      {target: '#kanban-board', swap: 'innerHTML'});
+  // A rejected move (403/400) returns no HX-Trigger, so the board would keep
+  // showing the card where it was dropped even though the server refused it.
+  // Snap the board back to the truth and announce why.
+  document.body.addEventListener('htmx:responseError', function(event) {
+    var cfg = event.detail.requestConfig || {};
+    if (!cfg.path || cfg.path.indexOf('/move/') === -1) return;
+    var status = event.detail.xhr ? event.detail.xhr.status : 0;
+    var banner = document.getElementById('kanban-move-error');
+    if (banner) {
+      banner.textContent = status === 403
+        ? '{% translate "You do not have permission to move this task." %}'
+        : '{% translate "The task could not be moved. The board was refreshed." %}';
+      banner.classList.remove('d-none');
+    }
+    refreshBoard();
   });
+  document.body.addEventListener('board-refresh', refreshBoard);
 })();
 </script>
 {% endblock %}

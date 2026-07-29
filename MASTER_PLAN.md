@@ -36,8 +36,11 @@ Aún **no mergeada a `main`**. Ver TL.6.
 
 ### Dónde retomar
 
-La ruta obligatoria del plan externo está **completa**. Lo siguiente ya no viene
-de esa ruta sino de la auditoría, y el orden recomendado es:
+La ruta obligatoria del plan externo está **completa**, y también los dos
+bloques grandes de producto que le siguieron: **BLOQUE GEO** (MVP GEO-0..GEO-10
++ el quick-win GEO-0b) y **BLOQUE OPS** (OPS-0..OPS-8) están cerrados. Lo que
+queda ya no es ruta automática: cada ítem exige o una **decisión de negocio** o
+una **instrucción explícita**. Orden recomendado de lo pendiente:
 
 1. **Cargar datos reales** — 0 documentos, 0 reglas: todo BLOQUE 2/6 está
    construido y sin nada que procesar. El dashboard ahora **guía los tres
@@ -45,13 +48,14 @@ de esa ruta sino de la auditoría, y el orden recomendado es:
    documentos con vencimiento → una regla → `generate_alerts`; recién entonces
    asignar operadores responsables y validar el digest. *(Decisión de negocio del
    usuario, no del agente.)*
-2. **BLOQUE GEO** — editor geoespacial KMZ/KML. Propuesta aprobada 2026-07-27
-   ([docs/dev/geo-editor-plan.md](docs/dev/geo-editor-plan.md)); arranca en GEO-0
-   con el "go" del usuario. Es el trabajo grande de producto pendiente.
-3. **V.10-V.12** — la seguridad diferida de la revisión: endurecer CSP (exige
-   extraer el JS inline primero), vendorizar CDN con SRI (T5.9 — GEO-0 lo empieza),
-   y la política de sesión/cambio de contraseña.
-4. **TL.7** — los 5 PRs de Dependabot.
+2. **V.10-V.12** — la seguridad diferida de la revisión: endurecer CSP (exige
+   extraer el JS inline primero), vendorizar CDN con SRI (T5.9 — GEO-0 ya
+   vendorizó Leaflet/Geoman, falta Bootstrap/htmx/Chart.js/FullCalendar), y la
+   política de sesión/cambio de contraseña. *(Requieren decisión de política.)*
+3. **TL.7** — los 5 PRs de Dependabot (dos necesitan rebase).
+4. **V2 de GEO** (GEO-11..GEO-14) y los bloques DIFERIDOS (BLOQUE 3 UX Kanban,
+   BLOQUE 5 centro de administración, B4.3/B4.4, B6.3 asistente IA): todos
+   esperan instrucción/aprobación de diseño explícita.
 
 La revisión V.1-V.39 está **completa** salvo V.3 (⛔ T3.2) y V.10-V.12 (⬜
 decisión). La tanda E se ejecutó el 2026-07-25 con el alcance que eligió el
@@ -518,7 +522,7 @@ MVP = GEO-0..GEO-10 (hito *visor*: 0-7; hito *editor*: 8-10). V2 = GEO-11..GEO-1
 | ID | Est. | Tarea | Dep. | MVP |
 |---|:--:|---|:--:|:--:|
 | GEO-0 | ✅ | Fundaciones: app `apps/geo`, lxml a dep directa, `FILE_UPLOAD_MAX_MEMORY_SIZE`/`DATA_UPLOAD_MAX_MEMORY_SIZE` explícitos, enmienda a `docs/frontend-boundary.md` (islas JS admisibles), `static/vendor/` con política de SRI. **El binario de Leaflet/Geoman se difiere a GEO-7** (no se pueden bajar bytes exactos con SRI en este entorno). (`91fc8e1`) | — | ✔ |
-| GEO-0b | ⬜ | Quick-wins ortogonales: `set_audit_context` en `DocumentReplace`/`DocumentDelete`/`StatusTransitionView`/`FlightRecordDelete`; handler de error 4xx en el drag del Kanban | — | opc. |
+| GEO-0b | ✅ | Quick-wins ortogonales: `set_audit_context` en `DocumentReplace` (`document_replaced` + `replaced_document_id`), `DocumentDelete`/`FlightRecordDelete` (`archived`) y `StatusTransitionView` (`status_changed`/`status_transition_rejected` con `from`/`to`, beneficia las 11 subclases de transición); handler `htmx:responseError` en el drag del Kanban que refresca el tablero y anuncia el rechazo por live-region (antes un 403/400 dejaba la tarjeta mal colocada sin aviso). 6 tests. | — | opc. |
 | GEO-1 | ✅ | Modelos (`GeoPlan`/`GeoPlanVersion` append-only/`GeoPlanHistory`) + migración + `approve_geoplan` en `bootstrap_roles` + mapping en `signals.py` + admin. 9 tests (unicidad, cerrojos, historia, permisos por rol). (`7663727`) | GEO-0 | ✔ |
 | GEO-2 | ✅ | Parser KML/KMZ endurecido (`apps/geo/kml/`) + canónico AeroKML JSON. 19 tests: corpus feliz + maliciosos (DOCTYPE, no-XML, no-ZIP, traversal, 200+ entradas, bomba de compresión, coordenada fuera de rango) + caps. (`95811d7`) | GEO-0 | ✔ |
 | GEO-3 | ✅ | Generador `build.py` + **round-trip** (igualdad semántica con C14N, punto fijo, supervivencia de elementos no soportados). `pretty_print` desactivado a propósito para no romper la fidelidad byte a byte de los fragmentos crudos. 4 tests. (`fd2c638`) | GEO-2 | ✔ |
@@ -558,7 +562,7 @@ arranca la implementación sin "go" explícito del usuario.**
 | OPS-1 | ✅ | `OperatorAssignment`/`AircraftAssignment` (base común, validación de solape en `clean()`), `ResourceMovementLog` append-only, señal en `apps/registry/signals.py` que mantiene `Operator/Aircraft.cost_center` y escribe el log (assigned/reassigned/released), migración de datos idempotente y no destructiva desde `Assignment` (**el viejo modelo y el calendario siguen intactos a propósito** — el corte del calendario al nuevo modelo no es parte de este alcance, queda para cuando se aborde OPS-6), roles y admin (log read-only). CRUD completo (list/detail/create/update/archive/restore) + vista de solo lectura del log filtrable por tipo de recurso + enlaces de navegación. 15 tests (solape, denormalización, tipos de movimiento, `changed_by_user`, aeronave, append-only, permisos 403 de las vistas nuevas, solape rechazado vía formulario, filtro del log). (`564b6a9`, `45b59f5`) | OPS-0 |
 | OPS-2 | ✅ | Ficha del contrato: `CostCenterDetail` con pestañas (Resumen/Equipo/Flota/Permisos/Documentos/Historial, cada una separada — corrige el defecto de SIGO de mezclarlas), cada pestaña acotada por su propio permiso (mismo patrón `CALENDAR_EVENT_PERMISSIONS` del calendario: falta el permiso → desaparece la pestaña, no la página). Badge de credencial vencida en Equipo, badge de condición en Flota. 11 tests (403, gating por pestaña, contenido). (`e42cdfc`) | OPS-1 |
 | OPS-3 | ✅ | Ubicación física de aeronaves (`current_location`/`current_site`, eje separado de `status`) + validación en `clean()` + señal `pre_save` que escribe `location_changed` en el log (from/to solo mientras `on_site`, así aparece gratis en el Historial de OPS-2) + badges en la lista y en la pestaña Flota. Migración de datos: todo el parque existente parte en `headquarters`. 10 tests. (`67765db`) | OPS-1 |
-| OPS-4 | 🔄 | `FlightPermission` espejo DGAC: `operators`/`aircraft_fleet` M2M, `valid_from`/`valid_until` con validación de rango, `cost_center` sigue FK única. Migración aditiva + backfill a mano (0009/0010). Arreglado en el camino: `merge_operators` no soportaba relaciones M2M inversas, `CsvExportMixin` perdía columnas M2M en silencio, ambos calendarios (grilla mensual y feed JSON) y un bug preexistente en `OCreate.get_success_url()` que nadie había detectado (ningún test posteaba una creación exitosa hasta ahora). 17 tests nuevos/actualizados. **Pendiente:** ubicación estructurada (región/comuna/coordenadas) — diferida a propósito, igual que el pase visual de OPS-8. (`d82fb8d`) | OPS-0 |
+| OPS-4 | ✅ | `FlightPermission` espejo DGAC: `operators`/`aircraft_fleet` M2M, `valid_from`/`valid_until` con validación de rango, `cost_center` sigue FK única. Migración aditiva + backfill a mano (0009/0010). Arreglado en el camino: `merge_operators` no soportaba relaciones M2M inversas, `CsvExportMixin` perdía columnas M2M en silencio, ambos calendarios (grilla mensual y feed JSON) y un bug preexistente en `OCreate.get_success_url()` que nadie había detectado (ningún test posteaba una creación exitosa hasta ahora). 17 tests nuevos/actualizados. **Pendiente:** ubicación estructurada (región/comuna/coordenadas) — diferida a propósito, igual que el pase visual de OPS-8. (`d82fb8d`) | OPS-0 |
 | OPS-5 | ✅ | Adjuntos en el permiso: `FlightPermission` ya estaba en `DOCUMENTABLE_MODELS` (el pipeline genérico de `Document` ya lo soportaba) — el hueco era solo de UI. Sección de documentos en el detalle (acotada por `view_document`) + link de carga pre-llenado (`DocumentCreate.get_initial()`, mismo patrón que `FlightRecordCreate`). 4 tests. (`6f53a3e`) | OPS-4 |
 | OPS-6 | ✅ | Timeline propio en la ficha de Operador y de Aeronave (reemplaza la vista genérica, mismo patrón que `CostCenterDetail` de OPS-2). La aeronave combina reasignaciones (OPS-1) y cambios de ubicación (OPS-3) en una sola consulta — ambos escriben al mismo `ResourceMovementLog`. Extraída la lógica de resolución de etiquetas a `apps/registry/selectors.py` (evita una 4ª copia) y la tabla de campos a un partial compartido. Permiso (`PermissionHistory`) y Contrato (`CostCenterDetail`) ya tenían el suyo. 4 tests. (`73cc51f`) | OPS-1..4 |
 | OPS-7 | ✅ | `GeoPlanPermissionLink`: log append-only de cuándo cambia `GeoPlan.flight_permission` y a qué permiso (señal `pre_save` dedicada, no se sobrecarga `GeoPlanHistory` que es solo transiciones de estado). Visible sin permiso propio en el detalle del plan (misma página ya gateada por `view_geoplan`). 6 tests. (`ab63803`) | OPS-4, GEO-1 |
