@@ -26,7 +26,9 @@
   </div>
 
   {% if board %}
-  <div id="kanban-move-error" class="alert alert-warning py-2 d-none" role="alert" aria-live="assertive"></div>
+  <div id="kanban-move-error" class="alert alert-warning py-2 d-none" role="alert" aria-live="assertive"
+       data-msg-forbidden="{% translate 'You do not have permission to move this task.' %}"
+       data-msg-error="{% translate 'The task could not be moved. The board was refreshed.' %}"></div>
   <div id="kanban-board" class="kanban-board">
     {% include "workboard/_board.html" %}
   </div>
@@ -45,58 +47,5 @@
 
 {% block extrascripts %}
 <script src="{% static 'vendor/sortable/Sortable.min.js' %}" integrity="sha384-HZZ/fukV+9G8gwTNjN7zQDG0Sp7MsZy5DDN6VfY3Be7V9dvQpEpR2jF2HlyFUUjU" crossorigin="anonymous"></script>
-<script>
-(function() {
-  function initSortables() {
-    var params = new URLSearchParams(window.location.search);
-    if (params.get('operator') || params.get('priority') || params.get('state') || params.get('label') || params.get('q')) return;
-    var board = document.getElementById('kanban-board');
-    if (!board) return;
-    document.querySelectorAll('#kanban-board .kanban-column-body').forEach(function(el) {
-      if (el._kanbanSortable) return;
-      el._kanbanSortable = new Sortable(el, {
-        group: 'kanban',
-        animation: 150,
-        ghostClass: 'kanban-ghost',
-        chosenClass: 'sortable-chosen',
-        onEnd: function(evt) {
-          var taskId = evt.item.dataset.taskId;
-          var stageId = evt.to.dataset.stageId;
-          htmx.ajax('POST', '/workboard/tasks/' + taskId + '/move/', {
-            values: {stage_id: stageId, new_order: evt.newIndex},
-            source: document.body
-          });
-        }
-      });
-    });
-  }
-
-  function refreshBoard() {
-    htmx.ajax('GET', '/workboard/_board/' + window.location.search,
-      {target: '#kanban-board', swap: 'innerHTML'});
-  }
-
-  document.addEventListener('DOMContentLoaded', initSortables);
-  document.body.addEventListener('htmx:afterSwap', function(event) {
-    if (event.detail.target.id === 'kanban-board') initSortables();
-  });
-  // A rejected move (403/400) returns no HX-Trigger, so the board would keep
-  // showing the card where it was dropped even though the server refused it.
-  // Snap the board back to the truth and announce why.
-  document.body.addEventListener('htmx:responseError', function(event) {
-    var cfg = event.detail.requestConfig || {};
-    if (!cfg.path || cfg.path.indexOf('/move/') === -1) return;
-    var status = event.detail.xhr ? event.detail.xhr.status : 0;
-    var banner = document.getElementById('kanban-move-error');
-    if (banner) {
-      banner.textContent = status === 403
-        ? '{% translate "You do not have permission to move this task." %}'
-        : '{% translate "The task could not be moved. The board was refreshed." %}';
-      banner.classList.remove('d-none');
-    }
-    refreshBoard();
-  });
-  document.body.addEventListener('board-refresh', refreshBoard);
-})();
-</script>
+<script src="{% static 'js/kanban.js' %}"></script>
 {% endblock %}
