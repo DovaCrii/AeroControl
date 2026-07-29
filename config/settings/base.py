@@ -165,6 +165,9 @@ GEO_TILE_PROVIDERS = [
 ]
 
 CSP_REPORT_ONLY = config("CSP_REPORT_ONLY", default=True, cast=bool)
+# Where the browser posts CSP violation reports. Defaults to the app's own
+# logging endpoint; set empty to omit the report-uri directive entirely.
+CSP_REPORT_URI = config("CSP_REPORT_URI", default="/csp-report/")
 
 # Notifications. Only variable *names* live in the repo; hosts, users and
 # passwords come from the environment. With no EMAIL_HOST configured the

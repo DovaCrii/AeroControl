@@ -7,6 +7,7 @@ from apps.operations.views import CalendarView
 from apps.core.views import (
     AdministrationCenterView,
     AlertCountPartial,
+    CspReportView,
     GlobalSearchView,
     HealthCheckView,
     UnifiedCalendarEventsView,
@@ -44,6 +45,7 @@ urlpatterns = [
     path("i18n/setlang/", set_language, name="set_language"),
     path("alerts/count/", AlertCountPartial.as_view(), name="alert-count"),
     path("health/", HealthCheckView.as_view(), name="health"),
+    path("csp-report/", CspReportView.as_view(), name="csp-report"),
     path(
         "calendar/events/", UnifiedCalendarEventsView.as_view(), name="calendar-events"
     ),

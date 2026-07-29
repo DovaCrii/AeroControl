@@ -5,6 +5,35 @@ import uuid
 
 
 logger = logging.getLogger("aerocontrol.request")
+csp_logger = logging.getLogger("aerocontrol.csp")
+
+
+def build_csp(report_uri=""):
+    """Assemble the Content-Security-Policy directive string.
+
+    V.11/T5.9 vendored Bootstrap, htmx, Chart.js, FullCalendar and Sortable
+    under static/vendor/ with SRI, so no third-party script/style origin
+    remains. V.10 extracted every inline <script>, so script-src is a bare
+    'self' with no 'unsafe-inline'. 'unsafe-inline' stays on style-src only,
+    for inline style attributes and the login page's <style> block.
+    """
+    directives = [
+        "default-src 'self'",
+        "script-src 'self'",
+        "style-src 'self' 'unsafe-inline'",
+        # Tile hosts for the geo map island (GEO-7); keep in sync with
+        # settings.GEO_TILE_PROVIDERS.
+        "img-src 'self' data: https://*.tile.openstreetmap.org "
+        "https://server.arcgisonline.com",
+        "font-src 'self'",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "frame-ancestors 'none'",
+        "form-action 'self'",
+    ]
+    if report_uri:
+        directives.append("report-uri " + report_uri)
+    return "; ".join(directives)
 
 
 class RequestMetricsMiddleware:
@@ -34,24 +63,17 @@ class RequestMetricsMiddleware:
         response["X-Request-ID"] = request_id
         from django.conf import settings
 
-        if getattr(settings, "CSP_REPORT_ONLY", True):
-            response["Content-Security-Policy-Report-Only"] = (
-                # V.11/T5.9: Bootstrap, htmx, Chart.js, FullCalendar and Sortable
-                # are now vendored under static/vendor/ with SRI, so no third-party
-                # script/style origin remains. 'unsafe-inline' on style-src covers
-                # inline style attributes and the login page's <style> block;
-                # script-src stays 'self' with no 'unsafe-inline' on purpose, so the
-                # report surfaces the inline <script> blocks that V.10 must extract.
-                "default-src 'self'; script-src 'self'; "
-                "style-src 'self' 'unsafe-inline'; "
-                # Tile hosts for the geo map island (GEO-7); keep in sync with
-                # settings.GEO_TILE_PROVIDERS.
-                "img-src 'self' data: https://*.tile.openstreetmap.org "
-                "https://server.arcgisonline.com; "
-                "font-src 'self'; "
-                "object-src 'none'; base-uri 'self'; frame-ancestors 'none'; "
-                "form-action 'self'"
-            )
+        policy = build_csp(getattr(settings, "CSP_REPORT_URI", ""))
+        # V.10: emit the *enforcing* header when CSP_REPORT_ONLY is False. The
+        # old code only set the Report-Only header and, when enforcing was asked
+        # for, wrote nothing at all -- so turning enforcing "on" silently removed
+        # the policy. Now one of the two headers is always present.
+        header = (
+            "Content-Security-Policy-Report-Only"
+            if getattr(settings, "CSP_REPORT_ONLY", True)
+            else "Content-Security-Policy"
+        )
+        response[header] = policy
         if (
             request.user.is_authenticated
             and request.method in {"POST", "PUT", "PATCH", "DELETE"}
@@ -132,6 +154,9 @@ class JsonLogFormatter(logging.Formatter):
             "recipient",
             "item_count",
             "send_result",
+            "blocked_uri",
+            "violated_directive",
+            "document_uri",
         ):
             if hasattr(record, key):
                 payload[key] = getattr(record, key)
