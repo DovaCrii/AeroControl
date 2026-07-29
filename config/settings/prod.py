@@ -32,9 +32,15 @@ SECURE_HSTS_PRELOAD = True
 #
 # Only in production: the manifest is written by `collectstatic`, and requiring
 # it in development would mean running collectstatic before every runserver.
+#
+# AeroControlStaticFilesStorage subclasses the WhiteNoise storage to disable the
+# manifest URL-rewriting (`patterns = ()`): rewriting vendored CSS/JS bytes
+# (e.g. source-map comments) invalidates the Subresource Integrity hashes we
+# ship for `static/vendor`, so browsers reject those assets. See
+# config/static_storage.py.
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        "BACKEND": "config.static_storage.AeroControlStaticFilesStorage"
     },
 }
