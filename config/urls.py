@@ -21,6 +21,7 @@ from apps.workboard.api import (
 from apps.geo.api import (
     GeoPlanExportView,
     GeoPlanMetaView,
+    GeoPlanResourceView,
     GeoPlanRestoreView,
     GeoPlanVersionContentView,
     GeoPlanVersionsView,
@@ -109,6 +110,11 @@ urlpatterns = [
         "api/v1/geo/plans/<uuid:pk>/export/",
         GeoPlanExportView.as_view(),
         name="api-v1-geo-plan-export",
+    ),
+    path(
+        "api/v1/geo/plans/<uuid:pk>/resource/",
+        GeoPlanResourceView.as_view(),
+        name="api-v1-geo-plan-resource",
     ),
     path("", include("apps.dashboard.urls")),
     path("registry/", include("apps.registry.urls")),

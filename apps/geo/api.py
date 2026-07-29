@@ -136,6 +136,59 @@ class GeoPlanVersionContentView(_GeoReadView):
         return response
 
 
+# Icons/images that a map can safely render as <img>; anything else is served
+# opaque so a crafted entry (e.g. an SVG carrying script) is never interpreted.
+_RESOURCE_CONTENT_TYPES = {
+    "png": "image/png",
+    "jpg": "image/jpeg",
+    "jpeg": "image/jpeg",
+    "gif": "image/gif",
+    "bmp": "image/bmp",
+}
+
+
+class GeoPlanResourceView(_GeoReadView):
+    """GET /.../resource/?name=<name> — one embedded KMZ resource (GEO-13).
+
+    Serves an icon/image byte-for-byte from the plan's source KMZ so the map can
+    show the real symbols. `name` must be in the current version's
+    ``kmz_resources`` whitelist (the canonical validated at import), so this can
+    never be turned into an arbitrary zip reader. Best-effort: 404 when the
+    source is missing, not a KMZ, or the entry is absent.
+    """
+
+    def get(self, request, pk):
+        from apps.compliance.storage import get_document_storage
+
+        from .kml.kmz import read_kmz_resource
+
+        plan = self.get_plan(pk)
+        name = request.GET.get("name", "")
+        resources = (
+            plan.current_version.content.get("kmz_resources") or []
+            if plan.current_version_id
+            else []
+        )
+        if not name or name not in resources or not plan.source_document_id:
+            return HttpResponse(status=404)
+        try:
+            stored = get_document_storage().open(plan.source_document.file_path)
+            data = stored.read()
+            payload = read_kmz_resource(data, name)
+        except (KmlImportError, FileNotFoundError, OSError):
+            return HttpResponse(status=404)
+        if payload is None:
+            return HttpResponse(status=404)
+        extension = name.rsplit(".", 1)[-1].lower() if "." in name else ""
+        content_type = _RESOURCE_CONTENT_TYPES.get(
+            extension, "application/octet-stream"
+        )
+        response = HttpResponse(payload, content_type=content_type)
+        response["Cache-Control"] = "private, max-age=3600"
+        response["X-Content-Type-Options"] = "nosniff"
+        return response
+
+
 class _GeoCommitMixin(_GeoApiView):
     """Shared write helpers for commit and restore.
 
