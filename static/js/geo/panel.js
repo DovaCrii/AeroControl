@@ -157,11 +157,8 @@ export function buildTree(container, doc, opts) {
 
       const actions = document.createElement("span");
       actions.className = "geo-tree-actions";
-      actions.appendChild(
-        actionButton("⧉", opts.labels.duplicate || "Duplicate", () =>
-          opts.onDuplicate(node.uid),
-        ),
-      );
+      // Explode (only some rows) sits to the left so Duplicate is always the
+      // right-most button — a consistent action column across every row.
       if (isExplodable(node)) {
         actions.appendChild(
           actionButton("⋔", opts.labels.explode || "Split", () =>
@@ -169,6 +166,11 @@ export function buildTree(container, doc, opts) {
           ),
         );
       }
+      actions.appendChild(
+        actionButton("⧉", opts.labels.duplicate || "Duplicate", () =>
+          opts.onDuplicate(node.uid),
+        ),
+      );
 
       row.append(checkbox, text, actions);
       parentEl.appendChild(row);

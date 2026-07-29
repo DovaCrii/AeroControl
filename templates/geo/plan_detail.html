@@ -38,7 +38,8 @@
 <div class="card mb-3">
   <div class="admin-section-header">
     <h2 class="admin-section-title">{% translate "Map" %}</h2>
-    <div class="d-flex align-items-center gap-2">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <span id="geo-diff" class="geo-diff-bar small"></span>
       <span id="geo-map-status" class="text-muted small"></span>
       {% if editable %}
       <span id="geo-dirty" class="text-warning small"></span>

@@ -147,6 +147,18 @@ class GeoPlanDetailView(ModelViewPermissionRequiredMixin, DetailView):
             "tileProviders": settings.GEO_TILE_PROVIDERS,
             "editable": editable,
             "iconBase": settings.STATIC_URL + "vendor/leaflet/images/",
+            # GEO-12a: every version and where to fetch its canonical, so the
+            # island can diff any two versions client-side (newest first).
+            "versions": [
+                {
+                    "number": v.version_number,
+                    "url": reverse(
+                        "api-v1-geo-plan-version-content",
+                        args=[plan.pk, v.version_number],
+                    ),
+                }
+                for v in context["versions"]
+            ],
             # The island is client-side JS (outside gettext's reach), so its
             # user-visible strings are localized here and passed through.
             "labels": {
@@ -176,6 +188,13 @@ class GeoPlanDetailView(ModelViewPermissionRequiredMixin, DetailView):
                 "duplicate": _("Duplicate"),
                 "explode": _("Split into parts"),
                 "rootDrop": _("Root — drop here or click to add new here"),
+                # GEO-12a version diff
+                "compare": _("Compare"),
+                "diffExit": _("Exit comparison"),
+                "diffAdded": _("Added"),
+                "diffRemoved": _("Removed"),
+                "diffChanged": _("Changed"),
+                "diffVersion": _("Version"),
             },
         }
         return context

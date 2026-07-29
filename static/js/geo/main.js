@@ -18,9 +18,10 @@ import {
 } from "./doc.js";
 import { createMap } from "./map.js";
 import { buildPanel, buildTree } from "./panel.js";
+import { diffDocuments, DIFF_COLORS } from "./diff.js";
 import { buildPopup, buildEditablePopup } from "./inspector.js";
 import { EditorState } from "./state.js";
-import { installEditor, wireLayer } from "./edit.js";
+import { installEditor, wireLayer, setDrawControls } from "./edit.js";
 
 const STROKE = "#0f9f95";
 const pathStyle = () => ({ color: STROKE, weight: 2, fillOpacity: 0.2 });
@@ -86,9 +87,17 @@ async function init() {
   const hidden = new Set();
   let activeFolderUid = null;
   let fittedOnce = false;
+  let diffState = null; // GEO-12a: {status, removed, base, target, counts} or null
 
-  function makeLayer(item) {
-    const layer = L.geoJSON(toGeoJSON(item), { style: pathStyle, pointToLayer });
+  function makeLayer(item, color) {
+    const style = color
+      ? () => ({ color, weight: 3, fillOpacity: 0.15 })
+      : pathStyle;
+    const pt = color
+      ? (_f, latlng) =>
+          L.circleMarker(latlng, { radius: 5, color, weight: 2, fillOpacity: 0.6 })
+      : pointToLayer;
+    const layer = L.geoJSON(toGeoJSON(item), { style, pointToLayer: pt });
     layer._geoUid = item.uid;
     layer.eachLayer((leaf) => {
       leaf._geoUid = item.uid;
@@ -165,6 +174,11 @@ async function init() {
     renderedLayers = [];
     uidLayers = new Map();
 
+    if (diffState) {
+      renderDiff();
+      return;
+    }
+
     const items = collectFeatures(currentDoc());
 
     if (!editable) {
@@ -238,6 +252,139 @@ async function init() {
     }
     fitOnce(allLayers);
     setStatus(statusEl, allLayers.length ? "" : labels.empty);
+  }
+
+  // ── GEO-12a version diff ─────────────────────────────────────────────────
+  const diffEl = document.getElementById("geo-diff");
+
+  function renderDiff() {
+    const layers = [];
+    for (const item of diffState.target.values()) {
+      const st = diffState.status.get(item.uid) || "unchanged";
+      const layer = makeLayer(item, DIFF_COLORS[st]);
+      layer.bindPopup(() => buildPopup(item, labels));
+      layer.addTo(map);
+      renderedLayers.push(layer);
+      layers.push(layer);
+    }
+    for (const uid of diffState.removed) {
+      const item = diffState.base.get(uid);
+      if (!item) {
+        continue;
+      }
+      const layer = makeLayer(item, DIFF_COLORS.removed);
+      layer.bindPopup(() => buildPopup(item, labels));
+      layer.addTo(map);
+      renderedLayers.push(layer);
+      layers.push(layer);
+    }
+    if (panelEl) {
+      buildDiffLegend(panelEl);
+    }
+    fitOnce(layers);
+    setStatus(statusEl, "");
+  }
+
+  function buildDiffLegend(container) {
+    container.replaceChildren();
+    const head = document.createElement("div");
+    head.className = "geo-panel-head";
+    head.textContent = labels.compare || "Compare";
+    container.appendChild(head);
+    const rows = [
+      ["added", labels.diffAdded || "Added", diffState.counts.added],
+      ["changed", labels.diffChanged || "Changed", diffState.counts.changed],
+      ["removed", labels.diffRemoved || "Removed", diffState.counts.removed],
+    ];
+    for (const [key, text, count] of rows) {
+      const row = document.createElement("div");
+      row.className = "geo-panel-row";
+      const dot = document.createElement("span");
+      dot.className = "geo-diff-dot";
+      dot.style.background = DIFF_COLORS[key];
+      const label = document.createElement("span");
+      label.className = "geo-panel-label";
+      label.textContent = text;
+      const num = document.createElement("span");
+      num.className = "geo-panel-count";
+      num.textContent = String(count);
+      row.append(dot, label, num);
+      container.appendChild(row);
+    }
+  }
+
+  function versionSelect(defaultIndex) {
+    const select = document.createElement("select");
+    select.className = "form-select form-select-sm geo-diff-select";
+    config.versions.forEach((v, i) => {
+      const opt = document.createElement("option");
+      opt.value = v.url;
+      opt.textContent = `v${v.number}`;
+      if (i === defaultIndex) {
+        opt.selected = true;
+      }
+      select.appendChild(opt);
+    });
+    return select;
+  }
+
+  async function enterDiff(aUrl, bUrl) {
+    if (aUrl === bUrl) {
+      return;
+    }
+    setStatus(statusEl, labels.loading);
+    let aDoc;
+    let bDoc;
+    try {
+      [aDoc, bDoc] = await Promise.all([fetchCanonical(aUrl), fetchCanonical(bUrl)]);
+    } catch (err) {
+      setStatus(statusEl, labels.error);
+      return;
+    }
+    diffState = diffDocuments(aDoc, bDoc);
+    if (editable) {
+      setDrawControls(map, false);
+    }
+    fittedOnce = false;
+    render();
+    buildDiffBar();
+  }
+
+  function exitDiff() {
+    diffState = null;
+    if (editable) {
+      setDrawControls(map, true);
+    }
+    fittedOnce = false;
+    render();
+    buildDiffBar();
+  }
+
+  function buildDiffBar() {
+    if (!diffEl || !config.versions || config.versions.length < 2) {
+      return;
+    }
+    diffEl.replaceChildren();
+    if (diffState) {
+      const exit = document.createElement("button");
+      exit.type = "button";
+      exit.className = "btn btn-sm btn-outline-secondary";
+      exit.textContent = labels.diffExit || "Exit comparison";
+      exit.addEventListener("click", exitDiff);
+      diffEl.appendChild(exit);
+      return;
+    }
+    // Default: compare the second-newest (index 1) against the newest (index 0).
+    const selA = versionSelect(1);
+    const selB = versionSelect(0);
+    const arrow = document.createElement("span");
+    arrow.textContent = "↔";
+    const cmp = document.createElement("button");
+    cmp.type = "button";
+    cmp.className = "btn btn-sm btn-outline-secondary";
+    cmp.textContent = labels.compare || "Compare";
+    cmp.addEventListener("click", () => enterDiff(selA.value, selB.value));
+    diffEl.append(selA, arrow, selB, cmp);
   }
 
   function onChange() {
@@ -367,6 +514,7 @@ async function init() {
 
   render();
   updateToolbar();
+  buildDiffBar();
 }
 
 init();
