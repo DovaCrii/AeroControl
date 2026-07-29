@@ -446,6 +446,32 @@ class TestChapter1DocxImport:
 
         assert response.status_code == 204
 
+    def test_session_policy_expires_on_browser_close_and_is_capped(self):
+        # V.12: shared field devices. Cookie dies on browser close, the session
+        # is capped regardless of activity, and each request slides the expiry.
+        assert settings.SESSION_EXPIRE_AT_BROWSER_CLOSE is True
+        assert settings.SESSION_COOKIE_AGE == 12 * 60 * 60
+        assert settings.SESSION_SAVE_EVERY_REQUEST is True
+
+    def test_password_change_page_updates_the_password(self, auth_client, admin_user):
+        # V.12: an operator can rotate their own credential without /admin/.
+        response = auth_client.post(
+            reverse("password_change"),
+            {
+                "old_password": "admin123",
+                "new_password1": "n3w-str0ng-pass-9",
+                "new_password2": "n3w-str0ng-pass-9",
+            },
+        )
+        assert response.status_code == 302
+        assert response.url == reverse("password_change_done")
+        admin_user.refresh_from_db()
+        assert admin_user.check_password("n3w-str0ng-pass-9")
+
+    def test_change_password_link_is_offered_in_the_chrome(self, auth_client):
+        content = auth_client.get(reverse("dashboard")).content.decode()
+        assert reverse("password_change") in content
+
     def test_base_template_has_dark_mode_toggle(self, auth_client):
         response = auth_client.get(reverse("dashboard"))
         content = response.content.decode()

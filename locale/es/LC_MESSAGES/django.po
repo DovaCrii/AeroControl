@@ -2887,6 +2887,26 @@ msgstr "No tienes permiso para mover esta tarea."
 msgid "The task could not be moved. The board was refreshed."
 msgstr "No se pudo mover la tarea. Se actualizó el tablero."
 
+#: .\templates\base.html:32
+msgid "Change password"
+msgstr "Cambiar contraseña"
+
+#: .\templates\registration\password_change_form.html:11
+msgid "Update password"
+msgstr "Actualizar contraseña"
+
+#: .\templates\registration\password_change_done.html:5
+msgid "Password changed"
+msgstr "Contraseña actualizada"
+
+#: .\templates\registration\password_change_done.html:6
+msgid "Your password has been updated."
+msgstr "Tu contraseña ha sido actualizada."
+
+#: .\templates\registration\password_change_done.html:7
+msgid "Back to dashboard"
+msgstr "Volver al panel"
+
 #~ msgid "Flight date"
 #~ msgstr "Fecha de vuelo"
 
