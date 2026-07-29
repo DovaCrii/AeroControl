@@ -1,0 +1,278 @@
+# Runbook: AeroControl en una VM Ubuntu Server (host Windows 11 Pro)
+
+Guía paso a paso para levantar AeroControl en una máquina virtual Ubuntu
+Server 26.04, para uso interno de 1–2 personas de JEJ en la LAN. Mantiene el
+diseño **local-first** de [backend-plan.md](backend-plan.md): Django + SQLite
+(WAL), datos fuera del repositorio, sin exposición a internet.
+
+> **Supuestos de esta guía** (elegidos el 2026-07-29): host **Windows 11 Pro**,
+> hipervisor **Hyper-V**, guest **Ubuntu Server 26.04**, acceso por **Tailscale**
+> (HTTPS con certificado válido, sin exponer a internet). Si cambian, ver las
+> alternativas al final de cada sección.
+
+> **Esto NO dispara el "production gate"** del backend-plan (que aplica a datos
+> reales en un servicio remoto/internet). Pero la **disciplina de backup +
+> restore probado** (B-01/B-02) importa *más* ahora: la SQLite deja de vivir
+> solo en tu notebook.
+
+---
+
+## 0. El único "gotcha" real: Python 3.12
+
+`pyproject.toml` fija `requires-python = ">=3.12,<3.13"`. Ubuntu 26.04 trae un
+Python de sistema más nuevo (3.14). **No uses el Python del sistema.** El
+proyecto ya usa `uv`, que instala y aísla el intérprete correcto:
+
+```bash
+uv python install 3.12
+```
+
+Todo lo demás (`uv sync`, `uv run …`) usa ese 3.12 automáticamente.
+
+---
+
+## Parte A — Crear la VM en Hyper-V (en el host Windows)
+
+1. **Activar Hyper-V** (PowerShell como administrador; reinicia al terminar):
+   ```powershell
+   Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
+   ```
+2. **Switch de red "External"** (para que otros PCs de la LAN alcancen la VM; el
+   switch "Default" es NAT y no sirve para eso). En *Hyper-V Manager → Virtual
+   Switch Manager → New → External*, ligado a tu adaptador físico (Ethernet o
+   Wi-Fi). Llámalo `LAN-External`.
+3. **Crear la VM**: *New → Virtual Machine*, **Generación 2**, **4096 MB** de RAM
+   (sin memoria dinámica para un server), conectada a `LAN-External`, disco
+   **VHDX 25 GB** (dinámico está bien). Monta el ISO de Ubuntu Server 26.04.
+4. **Antes de arrancar**: en *Settings → Security*, deja Secure Boot activo con
+   plantilla **"Microsoft UEFI Certificate Authority"** (Ubuntu no arranca con la
+   plantilla de Windows). En *Settings → Automatic Start Action*, elige **"Always
+   start automatically"** para que el server vuelva solo tras reiniciar el host.
+5. Instala Ubuntu Server (usuario p. ej. `aero`, OpenSSH activado). Anota la IP
+   que tome de la LAN.
+
+*Alternativa:* si prefieres no usar Hyper-V, **VirtualBox** con adaptador
+**"Puente"** logra lo mismo. WSL2 es una opción más liviana pero no es una VM
+completa; como bajaste el ISO de Server, esta guía asume la VM.
+
+---
+
+## Parte B — Preparar el guest (dentro de Ubuntu)
+
+```bash
+sudo apt update && sudo apt -y upgrade
+sudo apt -y install git curl
+# uv (gestiona Python 3.12 aislado)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+source ~/.bashrc
+uv python install 3.12
+
+# Código en /opt/aerocontrol (ajusta el remoto a tu repo)
+sudo mkdir -p /opt/aerocontrol && sudo chown $USER:$USER /opt/aerocontrol
+git clone <URL-DE-TU-REPO> /opt/aerocontrol
+cd /opt/aerocontrol
+uv sync
+
+# Datos FUERA del repo (SQLite, documentos, respaldos, logs)
+sudo mkdir -p /srv/aerocontrol-data/{db,documents,backups,logs,exports}
+sudo chown -R $USER:$USER /srv/aerocontrol-data
+sudo mkdir -p /var/log/aerocontrol && sudo chown $USER:$USER /var/log/aerocontrol
+```
+
+---
+
+## Parte C — Configuración (`/etc/aerocontrol.env`)
+
+Un solo archivo que cargan **el servicio web (systemd)** y **los trabajos
+programados (cron)**. Contiene el `SECRET_KEY` y la clave de correo → **root,
+permisos 600, nunca al repositorio.**
+
+Genera un `SECRET_KEY`:
+```bash
+cd /opt/aerocontrol
+uv run python -c "from django.core.management.utils import get_random_secret_key as k; print(k())"
+```
+
+Crea `/etc/aerocontrol.env` (`sudo`):
+```ini
+# Django usa 'dev' por defecto en manage.py; en la VM SIEMPRE prod.
+DJANGO_SETTINGS_MODULE=config.settings.prod
+DEBUG=False
+SECRET_KEY=pega-aqui-el-generado
+
+# Datos fuera del repo
+DB_PATH=/srv/aerocontrol-data/db/aero_ops.sqlite3
+DOCUMENTS_DIR=/srv/aerocontrol-data/documents
+BACKUPS_DIR=/srv/aerocontrol-data/backups
+LOGS_DIR=/srv/aerocontrol-data/logs
+EXPORTS_DIR=/srv/aerocontrol-data/exports
+DOCUMENTS_STORAGE_BACKEND=local
+
+# Quién puede entrar. Con Tailscale, el nombre MagicDNS de la VM.
+ALLOWED_HOSTS=aerocontrol.tuTailnet.ts.net,127.0.0.1
+CSRF_TRUSTED_ORIGINS=https://aerocontrol.tuTailnet.ts.net
+
+# TLS la termina Tailscale y reenvía X-Forwarded-Proto=https; prod ya lo lee.
+# Si sirvieras HTTP plano en la LAN (sin proxy), pon estas tres en False:
+#   SECURE_SSL_REDIRECT=False
+#   (y en ese caso las cookies Secure de V.12 no viajan por HTTP)
+
+# Correo (opcional; sin EMAIL_HOST el digest se imprime en el log, no se envía)
+# EMAIL_HOST=smtp.example.com
+# EMAIL_PORT=587
+# EMAIL_HOST_USER=aerocontrol@jej.cl
+# EMAIL_HOST_PASSWORD=clave-de-aplicacion
+# EMAIL_USE_TLS=True
+# DEFAULT_FROM_EMAIL=aerocontrol@jej.cl
+# SITE_BASE_URL=https://aerocontrol.tuTailnet.ts.net
+```
+```bash
+sudo chmod 600 /etc/aerocontrol.env
+```
+
+> `config.settings.prod` **exige** `ALLOWED_HOSTS` (si falta, arranca con error
+> explícito). Las políticas de sesión/CSP endurecidas en V.10–V.12 ya vienen en
+> `base.py`, no hay que configurarlas.
+
+---
+
+## Parte D — Inicializar la base y los estáticos
+
+```bash
+cd /opt/aerocontrol
+set -a && . /etc/aerocontrol.env && set +a   # exporta las vars a esta shell
+uv run python manage.py migrate --no-input
+uv run python manage.py bootstrap_roles
+uv run python manage.py collectstatic --no-input
+uv run python manage.py createsuperuser
+```
+
+Para **traer tus datos reales** desde el notebook: copia el snapshot `.sqlite3`
+verificado a `/srv/aerocontrol-data/db/aero_ops.sqlite3` **antes** del `migrate`
+(el `migrate` lo pone al día). Copia los documentos a
+`/srv/aerocontrol-data/documents/`. Nunca por GitHub.
+
+---
+
+## Parte E — Servicio web (systemd + gunicorn + whitenoise)
+
+WhiteNoise sirve los estáticos desde el propio gunicorn, así que no hace falta
+un servidor de estáticos aparte. Crea `/etc/systemd/system/aerocontrol.service`:
+
+```ini
+[Unit]
+Description=AeroControl (gunicorn)
+After=network.target
+
+[Service]
+User=aero
+WorkingDirectory=/opt/aerocontrol
+EnvironmentFile=/etc/aerocontrol.env
+ExecStart=/home/aero/.local/bin/uv run gunicorn config.wsgi:application \
+    --bind 127.0.0.1:8000 --workers 3 --timeout 60
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+```
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now aerocontrol
+systemctl status aerocontrol          # debe quedar "active (running)"
+curl -sS http://127.0.0.1:8000/health/   # {"status": "ok", ...}
+```
+
+> `gunicorn` escucha en `127.0.0.1` (solo local); Tailscale lo publica hacia
+> afuera. `config.wsgi` ya usa `config.settings.prod` por defecto.
+
+---
+
+## Parte F — Acceso para ti + 1 (Tailscale)
+
+Da HTTPS con certificado válido y nombre estable, sin advertencias de
+self-signed, y no expone nada a internet (queda dentro de tu tailnet).
+
+```bash
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up                 # abre el link para autenticar la VM
+sudo tailscale serve --bg 8000    # publica https://<nombre>.ts.net → 127.0.0.1:8000
+tailscale serve status            # muestra el nombre HTTPS público del tailnet
+```
+
+Pon ese nombre en `ALLOWED_HOSTS`/`CSRF_TRUSTED_ORIGINS` (Parte C) y reinicia:
+`sudo systemctl restart aerocontrol`. La otra persona instala Tailscale en su
+equipo, entra al mismo tailnet, y abre `https://aerocontrol.tuTailnet.ts.net`.
+
+*Alternativas:* **Caddy** de reverse proxy con cert interno (hay que confiar la
+CA en los 2 equipos, una vez). O **HTTP plano en la LAN** apuntando al puerto —
+en ese caso `--bind 0.0.0.0:8000` y `SECURE_SSL_REDIRECT=False` +
+`SESSION_COOKIE_SECURE=False` + `CSRF_COOKIE_SECURE=False` (deshace parte del
+endurecimiento de V.12; por eso se prefiere Tailscale).
+
+---
+
+## Parte G — Trabajos programados (cron)
+
+Igual que [scheduled-operations.md](../scheduled-operations.md), adaptado a estas
+rutas. `crontab -e` del usuario `aero`:
+
+```cron
+# m  h  dom mon dow  comando
+  0  6   *   *   *   cd /opt/aerocontrol && set -a && . /etc/aerocontrol.env && set +a && uv run python manage.py generate_alerts       >> /var/log/aerocontrol/cron.log 2>&1
+  0  7   *   *   *   cd /opt/aerocontrol && set -a && . /etc/aerocontrol.env && set +a && uv run python manage.py send_alert_digest      >> /var/log/aerocontrol/cron.log 2>&1
+  0 22   *   *   *   cd /opt/aerocontrol && set -a && . /etc/aerocontrol.env && set +a && uv run python manage.py backup                 >> /var/log/aerocontrol/cron.log 2>&1
+ 30  7   *   *   1   cd /opt/aerocontrol && set -a && . /etc/aerocontrol.env && set +a && uv run python manage.py send_executive_report --period week >> /var/log/aerocontrol/cron.log 2>&1
+```
+
+`set -a && . /etc/aerocontrol.env && set +a` exporta las variables (incluido
+`DJANGO_SETTINGS_MODULE`) al proceso, que es lo que hace que `manage.py` use
+`prod` y encuentre la base. Prueba sin enviar nada:
+`uv run python manage.py send_alert_digest --dry-run`.
+
+Cada corrida queda en el modelo `JobRun`; revísalo con:
+```bash
+uv run python manage.py shell -c "from apps.core.models import JobRun; print(*JobRun.objects.all()[:10], sep=chr(10))"
+```
+
+---
+
+## Parte H — Respaldo y ensayo de restauración (no opcional)
+
+El `backup` diario (Parte G) escribe en `/srv/aerocontrol-data/backups` con
+manifiesto y checksum. **Súmale dos cosas:**
+
+1. **Copia fuera de la VM**: sincroniza `/srv/aerocontrol-data/backups` a otro
+   disco/equipo (rsync/scp a un NAS o al notebook). Un respaldo en la misma VM
+   no protege de que la VM se pierda.
+2. **Ensayo de restauración**: al menos una vez, restaura un snapshot en una
+   carpeta limpia y confirma que la app levanta con esos datos (equivalente a
+   B-02 del backend-plan). Un respaldo no verificado no cuenta.
+
+---
+
+## Parte I — Verificación final
+
+- `systemctl status aerocontrol` → active (running).
+- `curl https://aerocontrol.tuTailnet.ts.net/health/` desde el otro equipo → 200.
+- Login web con el superusuario; el sidebar y los gráficos cargan.
+- Reinicia la VM y comprueba que el servicio vuelve solo.
+- Tras 24 h, `JobRun` tiene filas `ok` de los trabajos diarios.
+
+---
+
+## Apéndice — Apoyarte con Codex / opencode
+
+Puedes delegar la ejecución a un agente en la VM, con dos reglas:
+
+- **Nunca pegues secretos en el prompt** (el `SECRET_KEY`, la clave de correo,
+  tokens de Tailscale). Que el agente los **genere o lea en la máquina**; tú los
+  colocas en `/etc/aerocontrol.env` a mano.
+- **Paso a paso, no todo de una.** Dale este runbook como referencia y pídele una
+  parte a la vez (A→I), revisando el resultado de cada `systemctl status` /
+  `curl /health/` antes de seguir. Así un error queda acotado a su paso.
+
+Prompt inicial sugerido: *"Sigue `docs/dev/ubuntu-vm-deploy.md` desde la Parte B.
+Ejecuta un paso, muéstrame la salida, y espera mi visto bueno antes del
+siguiente. No inventes valores para `/etc/aerocontrol.env`: cuando haga falta un
+secreto, dime el comando para generarlo y lo pego yo."*

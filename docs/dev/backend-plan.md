@@ -10,6 +10,12 @@ contains code, migrations, documentation and synthetic examples only.
 This is still a real backend: the browser talks to Django through
 `127.0.0.1:8000`. It does not need to be deployed to the public Internet.
 
+> **Variante en VM (2026-07-29):** para operar desde un PC dedicado con 1–2
+> usuarios internos de JEJ, hay un runbook paso a paso en
+> [ubuntu-vm-deploy.md](ubuntu-vm-deploy.md) (Hyper-V + Ubuntu Server 26.04 +
+> Tailscale, sigue siendo SQLite local-first). No dispara el *production gate* de
+> abajo, pero sí exige la disciplina de backup/restore (B-01/B-02).
+
 ## Estado operativo — 24 julio 2026
 
 - La base activa del PC está fuera del repositorio en
