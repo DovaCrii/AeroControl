@@ -423,6 +423,28 @@ class TestChapter1DocxImport:
         assert "script-src 'self';" in csp
         assert "cdn.jsdelivr.net" not in csp
         assert "unpkg.com" not in csp
+        # V.10: the policy points the browser at the report sink.
+        assert "report-uri /csp-report/" in csp
+
+    def test_csp_enforcing_header_is_emitted_when_not_report_only(
+        self, auth_client, settings
+    ):
+        # V.10 bug fix: enforcing mode used to emit no header at all.
+        settings.CSP_REPORT_ONLY = False
+        response = auth_client.get(reverse("dashboard"))
+
+        assert "Content-Security-Policy" in response.headers
+        assert "Content-Security-Policy-Report-Only" not in response.headers
+        assert "script-src 'self';" in response.headers["Content-Security-Policy"]
+
+    def test_csp_report_endpoint_accepts_reports_without_auth_or_csrf(self, client, db):
+        response = client.post(
+            reverse("csp-report"),
+            data=json.dumps({"csp-report": {"blocked-uri": "inline"}}),
+            content_type="application/csp-report",
+        )
+
+        assert response.status_code == 204
 
     def test_base_template_has_dark_mode_toggle(self, auth_client):
         response = auth_client.get(reverse("dashboard"))

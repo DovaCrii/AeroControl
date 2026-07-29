@@ -48,12 +48,21 @@ una **instrucción explícita**. Orden recomendado de lo pendiente:
    documentos con vencimiento → una regla → `generate_alerts`; recién entonces
    asignar operadores responsables y validar el digest. *(Decisión de negocio del
    usuario, no del agente.)*
-2. **V.10-V.12** — la seguridad diferida de la revisión. **V.11/T5.9 hecho:**
-   Bootstrap/htmx/Chart.js/FullCalendar/Sortable vendorizados con SRI y orígenes
-   CDN sacados del CSP. **Pendiente V.10:** extraer el JS inline (base.html/
-   dashboard/calendar/login) y recién ahí `django-csp` enforcing. **Pendiente
-   V.12:** política de sesión/cambio de contraseña *(requiere decisión de
+2. **V.10-V.12** — la seguridad diferida de la revisión. **V.10 y V.11/T5.9
+   hechos:** librerías vendorizadas con SRI, orígenes a `'self'`, JS inline
+   extraído a `static/js/`, y CSP enforcing por entorno + `report-uri` con
+   endpoint de reporte (verificado en navegador en modo enforcing). Falta solo
+   **V.12:** política de sesión/cambio de contraseña *(requiere decisión de
    política del usuario)*.
+
+   > **Decisión registrada (V.10):** se **descartó añadir `django-csp`** (que el
+   > plan nombraba) y se endureció el middleware CSP hecho a mano. Razón: tras
+   > V.11 (todo `'self'`) y la extracción del JS inline, no hay `<script>` inline
+   > → no se necesitan nonces, que es lo que `django-csp` aportaría. La
+   > dependencia habría sido churn (reescribir la política a su formato 4.x,
+   > cambiar middleware) sin beneficio, contra el "local-first" del repo. El
+   > único `'unsafe-inline'` restante es `style-src`, para atributos de estilo y
+   > el `<style>` del login — riesgo bajo, no justifica nonces de estilo.
 3. **TL.7** — los 5 PRs de Dependabot (dos necesitan rebase).
 4. **V2 de GEO** (GEO-11..GEO-14) y los bloques DIFERIDOS (BLOQUE 3 UX Kanban,
    BLOQUE 5 centro de administración, B4.3/B4.4, B6.3 asistente IA): todos
@@ -191,7 +200,7 @@ La tanda E (UX mayor) requiere decisiones de alcance del usuario.
 | V.7 | ✅ | P2 | `generate_alerts`: alerta y tarea en dos escrituras; un corte dejaba la alerta huérfana que la dedupe contaba como duplicado para siempre | B |
 | V.8 | ✅ | P2 | `Alert.resolve()`/`reopen()` con dos `save()` sin transacción: alerta resuelta con tarea abierta | B |
 | V.9 | ✅ | P2 | API PATCH sin `full_clean`: fecha malformada → 500; título de 10k chars persistía en SQLite y reventaría en PostgreSQL | reg. |
-| V.10 | 🔄 | P2 | CSP decorativo: `CSP_REPORT_ONLY=False` **borra** la cabecera, sin report-uri. **Hecho (V.11):** orígenes a `'self'` (sin CDN). **Hecho (este paso):** **JS inline extraído** a `static/js/` (`theme-init.js`/`app.js`/`dashboard.js`/`calendar.js`/`kanban.js`); eliminados los handlers inline (`onclick`/`onchange`/`onsubmit`) y los 4 `javascript:history.back()` (mejora progresiva `data-*`); vars de plantilla pasadas por `data-*` (i18n/locale/board/mensajes) y `json_script` (chart-data). `script-src 'self'` ya no tiene violaciones. Verificado en navegador: tema/sidebar/charts/calendario cargan sin error, 0 scripts ejecutables inline. **Pendiente:** `django-csp` enforcing (`CSP_REPORT_ONLY=False` real que hoy borra la cabecera) + `report-uri`. | — |
+| V.10 | ✅ | P2 | CSP real. **V.11:** orígenes a `'self'` (sin CDN). **JS inline extraído** a `static/js/` (`theme-init`/`app`/`dashboard`/`calendar`/`kanban`); handlers inline (`onclick`/`onchange`/`onsubmit`) y los 4 `javascript:history.back()` reemplazados por mejora progresiva `data-*`; vars por `data-*`/`json_script`. **Enforcing:** corregido el bug por el que `CSP_REPORT_ONLY=False` borraba la cabecera — ahora emite `Content-Security-Policy` (enforcing) o `-Report-Only` según entorno, siempre una de las dos; `build_csp()` centraliza la política + `report-uri /csp-report/` con endpoint `CspReportView` (público, CSRF-exempt, solo loguea, cuerpo capado). Verificado en navegador **en modo enforcing** (`CSP_REPORT_ONLY=False`, demo :8012): Chart.js/htmx/Bootstrap cargan, chart renderiza, toggle de tema funciona, **cero violaciones de consola**. Default sigue Report-Only. | — |
 | V.11 | ✅ | P2 | Bootstrap 5.3.3, htmx **2.0.10** (fijado; era el rango flotante `htmx.org@2.x` en unpkg), Chart.js 4.4.7, FullCalendar 6.1.15 y SortableJS 1.15.6 vendorizados en `static/vendor/` con SRI sha384 (patrón GEO-7). Es T5.9. Verificado en el navegador: CSP-gated Bootstrap CSS carga sin error de consola; los 6 archivos sirven 200 con bytes exactos. De paso encogí los orígenes del CSP a `script-src 'self'` / `font-src 'self'` (ya no hay CDN), adelanto de la parte "alinear orígenes" de V.10 | — |
 | V.12 | ⬜ | P2 | Sesión: 14 días por defecto, sin expiración deslizante, sin `password_change` fuera de `/admin/`. Decidir política para equipos compartidos en terreno | — |
 | V.13 | ✅ | P2 | `StageCreate` explícito sombreaba al generado y perdió la validación de tablero; ídem checklist create/toggle | A |

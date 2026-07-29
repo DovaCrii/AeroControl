@@ -1,8 +1,12 @@
 import csv
+import json
+import logging
 from datetime import date, timedelta
 from pathlib import Path
 
 from django.contrib import messages
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
@@ -331,6 +335,35 @@ class HealthCheckView(View):
             {"status": "ok" if healthy else "degraded", "checks": checks},
             status=200 if healthy else 503,
         )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class CspReportView(View):
+    """Sink for browser CSP violation reports (the policy's report-uri).
+
+    Public and CSRF-exempt because the browser posts it automatically with no
+    token. It only logs; it never trusts the payload. The body is capped so a
+    hostile client cannot flood the log with one request, and only the fields
+    a real report carries are logged, never the raw blob.
+    """
+
+    MAX_BODY = 8192
+
+    def post(self, request):
+        raw = request.body[: self.MAX_BODY]
+        try:
+            report = json.loads(raw).get("csp-report", {})
+        except (ValueError, AttributeError):
+            report = {}
+        logging.getLogger("aerocontrol.csp").warning(
+            "csp_violation",
+            extra={
+                "blocked_uri": str(report.get("blocked-uri", ""))[:500],
+                "violated_directive": str(report.get("violated-directive", ""))[:200],
+                "document_uri": str(report.get("document-uri", ""))[:500],
+            },
+        )
+        return HttpResponse(status=204)
 
 
 class UnifiedCalendarEventsView(CalendarAccessMixin, View):
