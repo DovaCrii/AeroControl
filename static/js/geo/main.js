@@ -6,9 +6,18 @@
 // re-validates everything. Deleting this file leaves the data intact.
 
 import { fetchCanonical, commit } from "./api.js";
-import { collectFeatures, groupByFolder, toGeoJSON, findPlacemark } from "./doc.js";
+import {
+  collectFeatures,
+  groupByFolder,
+  toGeoJSON,
+  findPlacemark,
+  findNode,
+  moveNode,
+  duplicateNode,
+  explodeMultiGeometry,
+} from "./doc.js";
 import { createMap } from "./map.js";
-import { buildPanel } from "./panel.js";
+import { buildPanel, buildTree } from "./panel.js";
 import { buildPopup, buildEditablePopup } from "./inspector.js";
 import { EditorState } from "./state.js";
 import { installEditor, wireLayer } from "./edit.js";
@@ -72,63 +81,162 @@ async function init() {
   }
   const currentDoc = () => (state ? state.doc : doc);
 
-  let renderedGroups = [];
+  let renderedLayers = [];
+  let uidLayers = new Map();
+  const hidden = new Set();
+  let activeFolderUid = null;
   let fittedOnce = false;
 
-  function render() {
-    for (const group of renderedGroups) {
-      map.removeLayer(group);
-    }
-    renderedGroups = [];
+  function makeLayer(item) {
+    const layer = L.geoJSON(toGeoJSON(item), { style: pathStyle, pointToLayer });
+    layer._geoUid = item.uid;
+    layer.eachLayer((leaf) => {
+      leaf._geoUid = item.uid;
+    });
+    return layer;
+  }
 
-    const items = collectFeatures(currentDoc());
-    const groups = groupByFolder(items, labels.untitled || "—");
-    const panelGroups = new Map();
-    const allLayers = [];
-
-    for (const [name, groupItems] of groups) {
-      const group = L.layerGroup();
-      for (const item of groupItems) {
-        const layer = L.geoJSON(toGeoJSON(item), { style: pathStyle, pointToLayer });
-        layer._geoUid = item.uid;
-        layer.eachLayer((leaf) => {
-          leaf._geoUid = item.uid;
-        });
-        if (editable) {
-          layer.bindPopup(() =>
-            buildEditablePopup(findPlacemark(state.doc, item.uid), labels, (n, d) => {
-              const node = findPlacemark(state.doc, item.uid);
-              if (node) {
-                node.name = n;
-                node.description = d;
-                state.snapshot();
-                onChange();
-                layer.closePopup();
-              }
-            }),
-          );
-          wireLayer(layer, item.uid, state, onChange);
-        } else {
-          layer.bindPopup(() => buildPopup(item, labels));
-        }
-        layer.addTo(group);
-        allLayers.push(layer);
-      }
-      group.addTo(map);
-      renderedGroups.push(group);
-      panelGroups.set(name, { group, count: groupItems.length });
-    }
-
-    if (panelEl) {
-      buildPanel(panelEl, panelGroups, map, labels);
-    }
-    if (!fittedOnce && allLayers.length) {
-      const bounds = L.featureGroup(allLayers).getBounds();
+  function fitOnce(layers) {
+    if (!fittedOnce && layers.length) {
+      const bounds = L.featureGroup(layers).getBounds();
       if (bounds.isValid()) {
         map.fitBounds(bounds, { padding: [24, 24], maxZoom: 17 });
       }
       fittedOnce = true;
     }
+  }
+
+  // ── GEO-11 helpers (editable only) ───────────────────────────────────────
+  function descendantPlacemarkUids(folderNode) {
+    const uids = [];
+    (function walk(nodes) {
+      for (const n of nodes || []) {
+        if (n.kind === "placemark") {
+          uids.push(n.uid);
+        } else if (n.kind === "folder") {
+          walk(n.children);
+        }
+      }
+    })(folderNode.children);
+    return uids;
+  }
+
+  function setLayerVisible(uid, visible) {
+    if (visible) {
+      hidden.delete(uid);
+    } else {
+      hidden.add(uid);
+    }
+    const layer = uidLayers.get(uid);
+    if (layer) {
+      if (visible) {
+        layer.addTo(map);
+      } else {
+        map.removeLayer(layer);
+      }
+    }
+  }
+
+  // Visibility is view state, not a document edit, so it never snapshots/dirties.
+  function onToggle(uid, visible) {
+    const node = findNode(currentDoc(), uid);
+    if (node && node.kind === "folder") {
+      for (const u of descendantPlacemarkUids(node)) {
+        setLayerVisible(u, visible);
+      }
+    } else {
+      setLayerVisible(uid, visible);
+    }
+  }
+
+  // A structural mutation already ran; snapshot once and rebuild from the doc.
+  function structural(mutated) {
+    if (mutated) {
+      state.snapshot();
+      render();
+      onChange();
+    }
+  }
+
+  function render() {
+    for (const layer of renderedLayers) {
+      map.removeLayer(layer);
+    }
+    renderedLayers = [];
+    uidLayers = new Map();
+
+    const items = collectFeatures(currentDoc());
+
+    if (!editable) {
+      // Read-only viewer: group by folder path, one layerGroup per group.
+      const groups = groupByFolder(items, labels.untitled || "—");
+      const panelGroups = new Map();
+      const allRO = [];
+      for (const [name, groupItems] of groups) {
+        const group = L.layerGroup();
+        for (const item of groupItems) {
+          const layer = makeLayer(item);
+          layer.bindPopup(() => buildPopup(item, labels));
+          layer.addTo(group);
+          allRO.push(layer);
+        }
+        group.addTo(map);
+        renderedLayers.push(group);
+        panelGroups.set(name, { group, count: groupItems.length });
+      }
+      if (panelEl) {
+        buildPanel(panelEl, panelGroups, map, labels);
+      }
+      fitOnce(allRO);
+      setStatus(statusEl, allRO.length ? "" : labels.empty);
+      return;
+    }
+
+    // Editable: one layer per placemark, addressable by uid for the tree.
+    const allLayers = [];
+    for (const item of items) {
+      const layer = makeLayer(item);
+      uidLayers.set(item.uid, layer);
+      layer.bindPopup(() =>
+        buildEditablePopup(findPlacemark(state.doc, item.uid), labels, (n, d) => {
+          const node = findPlacemark(state.doc, item.uid);
+          if (node) {
+            node.name = n;
+            node.description = d;
+            state.snapshot();
+            render();
+            onChange();
+            layer.closePopup();
+          }
+        }),
+      );
+      wireLayer(layer, item.uid, state, onChange);
+      if (!hidden.has(item.uid)) {
+        layer.addTo(map);
+      }
+      renderedLayers.push(layer);
+      allLayers.push(layer);
+    }
+
+    if (panelEl) {
+      buildTree(panelEl, currentDoc(), {
+        map,
+        uidLayers,
+        labels,
+        activeFolderUid,
+        hidden,
+        onMove: (uid, target, index) =>
+          structural(moveNode(currentDoc(), uid, target, index)),
+        onDuplicate: (uid) => structural(!!duplicateNode(currentDoc(), uid)),
+        onExplode: (uid) => structural(explodeMultiGeometry(currentDoc(), uid) > 0),
+        onSelectFolder: (uid) => {
+          activeFolderUid = uid;
+          render();
+        },
+        onToggle,
+      });
+    }
+    fitOnce(allLayers);
     setStatus(statusEl, allLayers.length ? "" : labels.empty);
   }
 
@@ -215,7 +323,13 @@ async function init() {
   }
 
   if (editable) {
-    installEditor({ map, state, render, onChange });
+    installEditor({
+      map,
+      state,
+      render,
+      onChange,
+      getActiveFolder: () => activeFolderUid,
+    });
     if (saveBtn && dialog && summaryInput) {
       saveBtn.addEventListener("click", () => {
         summaryInput.value = "";
