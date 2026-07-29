@@ -20,7 +20,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views import View
-from django.views.generic import TemplateView
+from django.views.generic import ListView, TemplateView
 from .audit import set_audit_context
 
 
@@ -848,7 +848,15 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
                         icon="backup",
                     ),
                     self.item(
-                        _("Audit events"),
+                        _("Audit log"),
+                        _("Filterable, read-only audit trail inside the app."),
+                        "audit-log",
+                        AuditEvent,
+                        icon="history",
+                        read_only=True,
+                    ),
+                    self.item(
+                        _("Audit events (technical)"),
                         _("Read-only history of authenticated changes."),
                         "admin:core_auditevent_changelist",
                         AuditEvent,
@@ -864,7 +872,160 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
             if items:
                 context["sections"].append({**section, "items": items})
         context["technical_admin_url"] = "/admin/" if self.request.user.is_staff else ""
+        context["situation"] = self._build_situation(self.request.user)
         return context
+
+    # ── BLOQUE 5: situation panel (read-only) ────────────────────────────────
+    # Each block is gated by its own view_* permission, like the config rows and
+    # the calendar tabs: no permission simply hides that block, never 403s.
+    DAILY_JOBS = {"generate_alerts": 48, "send_alert_digest": 48, "backup": 48}
+    WATCHED_JOBS = [
+        "generate_alerts",
+        "send_alert_digest",
+        "backup",
+        "send_executive_report",
+    ]
+
+    def _build_situation(self, user):
+        metrics = self._situation_metrics(user)
+        jobs = self._situation_jobs(user)
+        can_view_backup = user.has_perm("core.view_backupconfig")
+        backup = self._latest_backup() if can_view_backup else None
+        health = self._situation_health() if jobs is not None else None
+        return {
+            "metrics": metrics,
+            "jobs": jobs,
+            "backup": backup,
+            "can_view_backup": can_view_backup,
+            "health": health,
+            "has_any": bool(metrics or jobs is not None or can_view_backup),
+        }
+
+    def _situation_metrics(self, user):
+        from datetime import timedelta
+
+        metrics = []
+        today = timezone.localdate()
+        if user.has_perm("compliance.view_alert"):
+            from apps.compliance.models import Alert
+
+            count = Alert.objects.filter(is_active=True, is_resolved=False).count()
+            metrics.append(
+                {
+                    "label": _("Unresolved alerts"),
+                    "value": count,
+                    "tone": "warn" if count else "ok",
+                    "url": reverse("alert-list"),
+                }
+            )
+        if user.has_perm("compliance.view_document"):
+            from apps.compliance.models import Document
+
+            count = Document.objects.filter(
+                is_active=True,
+                is_current_version=True,
+                expiry_date__isnull=False,
+                expiry_date__lte=today + timedelta(days=30),
+            ).count()
+            metrics.append(
+                {
+                    "label": _("Documents expiring in 30 days"),
+                    "value": count,
+                    "tone": "warn" if count else "ok",
+                    "url": reverse("document-list"),
+                }
+            )
+        if user.has_perm("compliance.view_alertrule"):
+            from apps.compliance.models import AlertRule
+
+            count = AlertRule.objects.filter(is_active=True, enabled=True).count()
+            metrics.append(
+                {"label": _("Active alert rules"), "value": count, "tone": "muted"}
+            )
+        if user.has_perm("auth.view_user"):
+            from django.contrib.auth import get_user_model
+
+            count = (
+                get_user_model()
+                .objects.filter(is_active=True, groups__isnull=True)
+                .count()
+            )
+            metrics.append(
+                {
+                    "label": _("Users without a role"),
+                    "value": count,
+                    "tone": "warn" if count else "ok",
+                }
+            )
+        return metrics
+
+    def _situation_jobs(self, user):
+        if not user.has_perm("core.view_jobrun"):
+            return None
+        from datetime import timedelta
+
+        from apps.core.models import JobRun
+
+        now = timezone.now()
+        rows = []
+        for command in self.WATCHED_JOBS:
+            run = JobRun.objects.filter(command=command).order_by("-started_at").first()
+            max_age = self.DAILY_JOBS.get(command)
+            if run is None:
+                rows.append(
+                    {"command": command, "result": None, "when": None, "stale": True}
+                )
+                continue
+            reference = run.finished_at or run.started_at
+            stale = max_age is not None and (now - reference) > timedelta(hours=max_age)
+            rows.append(
+                {
+                    "command": command,
+                    "result": run.result,
+                    "when": run.started_at,
+                    "stale": stale,
+                }
+            )
+        return rows
+
+    @staticmethod
+    def _situation_health():
+        checks = {}
+        try:
+            connection.ensure_connection()
+            checks["database"] = True
+        except Exception:
+            checks["database"] = False
+        documents = Path(settings.DOCUMENTS_ROOT)
+        checks["documents"] = documents.exists() and documents.is_dir()
+        return checks
+
+    @staticmethod
+    def _latest_backup():
+        import json
+
+        from apps.core.management.commands.backup import backups_dir
+
+        directory = backups_dir()
+        try:
+            manifests = sorted(
+                directory.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True
+            )
+        except OSError:
+            return None
+        for manifest in manifests:
+            try:
+                data = json.loads(manifest.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                continue
+            if "sha256" in data:
+                return {
+                    "name": data.get("backup", manifest.stem),
+                    "created_at": data.get("created_at", ""),
+                    "sha256": data.get("sha256", ""),
+                    "size": data.get("size"),
+                }
+        return None
 
     def item(self, title, description, url_name, model, icon, read_only=False):
         """One row of the administration list.
@@ -886,6 +1047,57 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
             "icon": icon,
             "read_only": read_only,
         }
+
+
+class AuditEventListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    """B5.4: read-only audit trail, filterable by actor / model / date range.
+
+    Gated on ``core.view_auditevent`` (withheld from the Viewer role). The model
+    itself is append-only, so there is nothing to edit here — this is a window
+    onto the trail, not an editor.
+    """
+
+    permission_required = "core.view_auditevent"
+    raise_exception = True
+    template_name = "core/audit_log.html"
+    context_object_name = "events"
+    paginate_by = 50
+
+    def get_queryset(self):
+        from .models import AuditEvent
+
+        queryset = AuditEvent.objects.select_related("actor")  # ordered -sequence
+        actor = self.request.GET.get("actor", "").strip()
+        if actor:
+            queryset = queryset.filter(actor__username__icontains=actor)
+        model_label = self.request.GET.get("model", "").strip()
+        if model_label:
+            queryset = queryset.filter(model_label__icontains=model_label)
+        since = self.request.GET.get("since", "").strip()
+        if since:
+            queryset = queryset.filter(created_at__date__gte=since)
+        until = self.request.GET.get("until", "").strip()
+        if until:
+            queryset = queryset.filter(created_at__date__lte=until)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        from .models import AuditEvent
+
+        context = super().get_context_data(**kwargs)
+        context["model_labels"] = (
+            AuditEvent.objects.exclude(model_label="")
+            .values_list("model_label", flat=True)
+            .distinct()
+            .order_by("model_label")
+        )
+        context["filters"] = {
+            "actor": self.request.GET.get("actor", ""),
+            "model": self.request.GET.get("model", ""),
+            "since": self.request.GET.get("since", ""),
+            "until": self.request.GET.get("until", ""),
+        }
+        return context
 
 
 class StatusTransitionView(ModelPermissionRequiredMixin, View):

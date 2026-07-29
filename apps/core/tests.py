@@ -126,6 +126,33 @@ class TestPublicURLs:
         assert "Configuración del tablero de trabajo" in content
         assert "Administración técnica avanzada" in content
 
+    def test_administration_center_shows_situation_panel(self, auth_client):
+        # B5.1/B5.2: a superuser sees the metrics + the scheduled-jobs block.
+        content = auth_client.get(reverse("administration")).content.decode()
+        assert "Situación" in content
+        assert "Alertas sin resolver" in content
+        assert "Trabajos programados" in content
+
+    def test_audit_log_lists_events_for_a_permitted_user(self, auth_client):
+        # A mutating request writes an AuditEvent (middleware); the log shows it.
+        auth_client.post(reverse("board-create"), {"name": "Audited board"})
+        response = auth_client.get(reverse("audit-log"))
+        assert response.status_code == 200
+        assert "workboard.KanbanBoard" in response.content.decode()
+
+    def test_audit_log_requires_view_auditevent(self, client, db):
+        User.objects.create_user("plain", password="pw")
+        assert client.login(username="plain", password="pw")
+        response = client.get(reverse("audit-log"))
+        assert response.status_code in (302, 403)
+
+    def test_audit_log_filters_by_model(self, auth_client):
+        auth_client.post(reverse("board-create"), {"name": "Filtered board"})
+        response = auth_client.get(reverse("audit-log"), {"model": "nonexistent.Model"})
+        assert response.status_code == 200
+        # The board event is filtered out of the table; the empty-state shows.
+        assert "Ningún evento de auditoría coincide" in response.content.decode()
+
     """Verify pages that are intentionally available without authentication."""
 
     def test_login_page(self, client):

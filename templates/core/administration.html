@@ -26,6 +26,65 @@ whether a title wrapped, so nothing lined up.{% endcomment %}
   {% if technical_admin_url %}<a class="btn btn-outline-secondary" href="{{ technical_admin_url }}">{% translate "Advanced technical administration" %}</a>{% endif %}
 </div>
 
+{% if situation.has_any %}
+<div class="card p-3 mb-3">
+  <h2 class="h5 mb-3">{% translate "Situation" %}</h2>
+  {% if situation.metrics %}
+  <div class="admin-metrics mb-3">
+    {% for m in situation.metrics %}
+    {% if m.url %}<a class="admin-metric admin-metric-{{ m.tone }}" href="{{ m.url }}">{% else %}<div class="admin-metric admin-metric-{{ m.tone }}">{% endif %}
+      <span class="admin-metric-value">{{ m.value }}</span>
+      <span class="admin-metric-label">{{ m.label }}</span>
+    {% if m.url %}</a>{% else %}</div>{% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+  <div class="row g-3">
+    {% if situation.jobs %}
+    <div class="col-md-7">
+      <h3 class="h6">{% translate "Scheduled jobs" %}</h3>
+      <table class="table table-sm align-middle mb-0">
+        <tbody>
+        {% for j in situation.jobs %}
+          <tr>
+            <td><code>{{ j.command }}</code></td>
+            <td>
+              {% if j.result == "ok" %}<span class="badge bg-success">OK</span>
+              {% elif j.result == "error" %}<span class="badge bg-danger">{% translate "Error" %}</span>
+              {% elif j.result == "running" %}<span class="badge bg-secondary">{% translate "Running" %}</span>
+              {% else %}<span class="badge bg-warning text-dark">{% translate "Never run" %}</span>{% endif %}
+              {% if j.stale %} <span class="badge bg-warning text-dark" title="{% translate 'No run in over 48 hours' %}">⚠</span>{% endif %}
+            </td>
+            <td class="text-muted small">{% if j.when %}{{ j.when|date:"Y-m-d H:i" }}{% else %}—{% endif %}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+    <div class="col-md-5">
+      {% if situation.health %}
+      <h3 class="h6">{% translate "Health" %}</h3>
+      <ul class="list-unstyled mb-3">
+        <li>{% if situation.health.database %}✅{% else %}❌{% endif %} {% translate "Database" %}</li>
+        <li>{% if situation.health.documents %}✅{% else %}❌{% endif %} {% translate "Document storage" %}</li>
+      </ul>
+      {% endif %}
+      {% if situation.can_view_backup %}
+      <h3 class="h6">{% translate "Last backup" %}</h3>
+      {% if situation.backup %}
+      <p class="mb-1 small">{{ situation.backup.name }}</p>
+      <p class="mb-1 text-muted small">{{ situation.backup.created_at }}</p>
+      <p class="mb-0 text-muted small text-truncate" title="{{ situation.backup.sha256 }}">sha256 {{ situation.backup.sha256|truncatechars:20 }}</p>
+      {% else %}
+      <p class="text-muted small mb-0">{% translate "No backup found." %}</p>
+      {% endif %}
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
 <div class="admin-list card">
   {% for section in sections %}
   <section class="admin-section" aria-labelledby="admin-section-{{ forloop.counter }}">

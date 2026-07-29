@@ -2943,6 +2943,106 @@ msgstr "Eliminado"
 msgid "Changed"
 msgstr "Modificado"
 
+#: .\templates\core\administration.html
+msgid "Situation"
+msgstr "Situación"
+
+#: .\templates\core\administration.html
+msgid "Scheduled jobs"
+msgstr "Trabajos programados"
+
+#: .\templates\core\administration.html
+msgid "Error"
+msgstr "Error"
+
+#: .\templates\core\administration.html
+msgid "Never run"
+msgstr "Nunca ejecutado"
+
+#: .\templates\core\administration.html
+msgid "No run in over 48 hours"
+msgstr "Sin ejecución hace más de 48 horas"
+
+#: .\templates\core\administration.html
+msgid "Health"
+msgstr "Salud"
+
+#: .\templates\core\administration.html
+msgid "Database"
+msgstr "Base de datos"
+
+#: .\templates\core\administration.html
+msgid "Document storage"
+msgstr "Almacenamiento de documentos"
+
+#: .\templates\core\administration.html
+msgid "Last backup"
+msgstr "Último respaldo"
+
+#: .\templates\core\administration.html
+msgid "No backup found."
+msgstr "No se encontró ningún respaldo."
+
+#: .\apps\core\views.py
+msgid "Unresolved alerts"
+msgstr "Alertas sin resolver"
+
+#: .\apps\core\views.py
+msgid "Documents expiring in 30 days"
+msgstr "Documentos que vencen en 30 días"
+
+#: .\apps\core\views.py
+msgid "Active alert rules"
+msgstr "Reglas de alerta activas"
+
+#: .\apps\core\views.py
+msgid "Users without a role"
+msgstr "Usuarios sin rol"
+
+#: .\apps\core\views.py
+msgid "Audit log"
+msgstr "Registro de auditoría"
+
+#: .\apps\core\views.py
+msgid "Filterable, read-only audit trail inside the app."
+msgstr "Historial de auditoría filtrable y de solo lectura dentro de la app."
+
+#: .\apps\core\views.py
+msgid "Audit events (technical)"
+msgstr "Eventos de auditoría (técnico)"
+
+#: .\templates\core\audit_log.html
+msgid "User"
+msgstr "Usuario"
+
+#: .\templates\core\audit_log.html
+msgid "All models"
+msgstr "Todos los modelos"
+
+#: .\templates\core\audit_log.html
+msgid "When"
+msgstr "Cuándo"
+
+#: .\templates\core\audit_log.html
+msgid "Action"
+msgstr "Acción"
+
+#: .\templates\core\audit_log.html
+msgid "Method"
+msgstr "Método"
+
+#: .\templates\core\audit_log.html
+msgid "Path"
+msgstr "Ruta"
+
+#: .\templates\core\audit_log.html
+msgid "No audit events match the filters."
+msgstr "Ningún evento de auditoría coincide con los filtros."
+
+#: .\templates\core\audit_log.html
+msgid "Pagination"
+msgstr "Paginación"
+
 #~ msgid "Flight date"
 #~ msgstr "Fecha de vuelo"
 

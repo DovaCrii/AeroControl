@@ -3,10 +3,19 @@ import json
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
+
+from decouple import config
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from apps.core.jobs import record_job_run
+
+
+def backups_dir():
+    """Directory where backups + manifests live. Shared with the admin panel
+    (B5.2) so both read the exact same location."""
+    source = Path(settings.DATABASES["default"]["NAME"])
+    return Path(config("BACKUPS_DIR", default=str(source.parent / "backups")))
 
 
 class Command(BaseCommand):
@@ -22,11 +31,7 @@ class Command(BaseCommand):
 
     def _create_backup(self):
         source = Path(settings.DATABASES["default"]["NAME"])
-        destination_dir = Path(
-            __import__("decouple").config(
-                "BACKUPS_DIR", default=str(source.parent / "backups")
-            )
-        )
+        destination_dir = backups_dir()
         destination_dir.mkdir(parents=True, exist_ok=True)
         destination = (
             destination_dir / f"aero_ops_{datetime.now():%Y%m%d_%H%M%S}.sqlite3"
