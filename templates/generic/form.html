@@ -12,7 +12,7 @@
     {{ form|crispy }}
     <div class="form-actions d-flex gap-2 mt-4">
       <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
-      <a href="javascript:history.back()" class="btn btn-outline-secondary">{% translate "Cancel" %}</a>
+      <a href="{% url 'dashboard' %}" data-history-back class="btn btn-outline-secondary">{% translate "Cancel" %}</a>
     </div>
   </form>
 </div>

@@ -11,7 +11,7 @@
         crossorigin="anonymous">
   <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260724-legibility">
   <link rel="icon" type="image/svg+xml" href="{% static 'img/aerocontrol-mark.svg' %}">
-  <script>(function(){var t=localStorage.getItem('theme')||'light';var h=document.documentElement;h.setAttribute('data-theme',t);h.setAttribute('data-bs-theme',t)})()</script>
+  <script src="{% static 'js/theme-init.js' %}"></script>
   <style>
     :root { --login-page-bg: #0d1727; --login-card-bg: #fff; --login-card-border: rgba(255,255,255,.16); --login-heading: #14213a; --login-muted: #5b6675; --login-label: #34425a; --login-input-border: #cbd5e1; --login-accent: #087f78; --login-accent-hover: #06655f; --login-footer: #788394; }
     .login-page { background: var(--login-page-bg); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
