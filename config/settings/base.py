@@ -222,6 +222,17 @@ LOGOUT_REDIRECT_URL = LOGIN_URL
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
+# V.12 session policy for shared field devices: the cookie dies when the
+# browser closes, the server-side session is capped regardless of activity, and
+# each request slides the expiry forward so an active user is not logged out
+# mid-task. All three are env-tunable for deployments with different needs.
+SESSION_EXPIRE_AT_BROWSER_CLOSE = config(
+    "SESSION_EXPIRE_AT_BROWSER_CLOSE", default=True, cast=bool
+)
+SESSION_COOKIE_AGE = config("SESSION_COOKIE_AGE", default=12 * 60 * 60, cast=int)
+SESSION_SAVE_EVERY_REQUEST = config(
+    "SESSION_SAVE_EVERY_REQUEST", default=True, cast=bool
+)
 X_FRAME_OPTIONS = "DENY"
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"

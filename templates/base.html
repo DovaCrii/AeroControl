@@ -30,6 +30,7 @@
     </a>
     <span class="text-white d-flex align-items-center gap-2 small">
       <span class="opacity-75">{{ user.get_username }}</span>
+      <a class="btn btn-sm btn-outline-light" href="{% url 'password_change' %}">{% translate "Change password" %}</a>
       <form method="post" action="{% url 'set_language' %}" class="d-inline" hx-boost="false">
         {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
         <select class="form-select form-select-sm language-switch" name="language" data-autosubmit aria-label="{% translate 'Language' %}">

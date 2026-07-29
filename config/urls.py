@@ -42,6 +42,22 @@ urlpatterns = [
         auth_views.LogoutView.as_view(next_page="/accounts/login/"),
         name="logout",
     ),
+    # V.12: password change inside the app, so an operator never needs the
+    # technical /admin/ to rotate their own credential.
+    path(
+        "accounts/password_change/",
+        auth_views.PasswordChangeView.as_view(
+            template_name="registration/password_change_form.html"
+        ),
+        name="password_change",
+    ),
+    path(
+        "accounts/password_change/done/",
+        auth_views.PasswordChangeDoneView.as_view(
+            template_name="registration/password_change_done.html"
+        ),
+        name="password_change_done",
+    ),
     path("i18n/setlang/", set_language, name="set_language"),
     path("alerts/count/", AlertCountPartial.as_view(), name="alert-count"),
     path("health/", HealthCheckView.as_view(), name="health"),
