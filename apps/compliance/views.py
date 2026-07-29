@@ -221,6 +221,12 @@ class DocumentReplace(ModelPermissionRequiredMixin, FormView):
                 stored["path"] = save_uploaded_file(
                     new_document, form.cleaned_data["file"]
                 )
+        set_audit_context(
+            self.request,
+            new_document,
+            action="document_replaced",
+            metadata={"replaced_document_id": str(self.document.pk)},
+        )
         return redirect("document-detail", pk=new_document.pk)
 
     def get_context_data(self, **kwargs):
@@ -238,6 +244,7 @@ class DocumentDelete(ModelPermissionRequiredMixin, DeleteView):
     def form_valid(self, form):
         self.object.is_active = False
         self.object.save(update_fields=["is_active", "updated_at"])
+        set_audit_context(self.request, self.object, action="archived")
         messages.success(self.request, _("Document archived."))
         return redirect(self.success_url)
 

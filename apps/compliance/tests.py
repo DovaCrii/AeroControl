@@ -1,9 +1,14 @@
 from datetime import date
 
 import pytest
+from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db.models import ProtectedError
+from django.test import Client
+from django.urls import reverse
+
+from apps.core.models import AuditEvent
 
 from apps.compliance import storage as storage_module
 from apps.compliance.storage import (
@@ -42,6 +47,58 @@ def test_document_content_type_cannot_be_deleted_while_referenced():
 
     with pytest.raises(ProtectedError):
         aircraft_type.delete()
+
+
+@pytest.mark.django_db
+def test_document_replace_is_audited_with_replaced_document_id(settings, tmp_path):
+    settings.DOCUMENTS_ROOT = str(tmp_path)
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    doc_type = DocumentType.objects.create(
+        code="cert", name="Certificate", requires_expiry=False
+    )
+    aircraft_type = ContentType.objects.get_for_model(Aircraft)
+    old = Document.objects.create(
+        title="Cert",
+        doc_type=doc_type,
+        content_type=aircraft_type,
+        object_id=aircraft.pk,
+        file_path="cert/aircraft/old.pdf",
+        issue_date=date(2026, 1, 1),
+    )
+    User.objects.create_superuser("admin", "admin@test.com", "password")
+    client = Client()
+    assert client.login(username="admin", password="password")
+
+    response = client.post(
+        reverse("document-replace", args=[old.pk]),
+        {
+            "title": "Cert",
+            "doc_type": doc_type.pk,
+            "entity_type": aircraft_type.pk,
+            "object_id": str(aircraft.pk),
+            "issue_date": date(2026, 6, 1),
+            "file": SimpleUploadedFile(
+                "new.pdf", b"%PDF-1.4\n%%EOF\n", content_type="application/pdf"
+            ),
+        },
+    )
+
+    assert response.status_code == 302
+    old.refresh_from_db()
+    assert old.is_current_version is False
+    new_document = Document.objects.get(is_current_version=True, object_id=aircraft.pk)
+    event = AuditEvent.objects.latest("created_at")
+    assert event.action == "document_replaced"
+    assert event.model_label == "compliance.Document"
+    assert event.object_id == str(new_document.pk)
+    assert event.metadata["replaced_document_id"] == str(old.pk)
 
 
 @pytest.mark.django_db

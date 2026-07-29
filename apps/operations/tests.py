@@ -6,9 +6,10 @@ from django.db.models import ProtectedError
 from django.test import Client
 from django.urls import reverse
 
+from apps.core.models import AuditEvent
 from apps.registry.models import Aircraft, CostCenter, Operator
 from .forms import FlightRecordForm
-from .models import FlightPermission, PermissionHistory
+from .models import FlightPermission, FlightRecord, PermissionHistory
 
 
 def _permission(cost_center, operator, aircraft, **kwargs):
@@ -197,3 +198,40 @@ def test_flight_record_form_allows_any_roster_operator_and_fleet_aircraft():
     )
 
     assert form.is_valid(), form.errors
+
+
+@pytest.mark.django_db
+def test_flight_record_archive_is_audited_as_archived():
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    permission = _permission(cost_center, operator, aircraft)
+    record = FlightRecord.objects.create(
+        permission=permission,
+        actual_date=date(2026, 7, 22),
+        departure_time=time(9, 0),
+        arrival_time=time(10, 0),
+        pilot=operator,
+        aircraft=aircraft,
+    )
+    User.objects.create_superuser("admin", "admin@test.com", "password")
+    client = Client()
+    assert client.login(username="admin", password="password")
+
+    response = client.post(reverse("record-delete", args=[record.pk]))
+
+    assert response.status_code == 302
+    record.refresh_from_db()
+    assert record.is_active is False
+    event = AuditEvent.objects.latest("created_at")
+    assert event.action == "archived"
+    assert event.model_label == "operations.FlightRecord"
+    assert event.object_id == str(record.pk)

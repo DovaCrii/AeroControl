@@ -868,6 +868,12 @@ class StatusTransitionView(ModelPermissionRequiredMixin, View):
     def post(self, request, pk):
         obj = get_object_or_404(self.model, pk=pk, is_active=True)
         if obj.status not in self.valid_from_statuses:
+            set_audit_context(
+                request,
+                obj,
+                action="status_transition_rejected",
+                metadata={"from_status": obj.status, "to_status": self.target_status},
+            )
             messages.error(
                 request,
                 _("Cannot transition from %(status)s")
@@ -875,11 +881,18 @@ class StatusTransitionView(ModelPermissionRequiredMixin, View):
             )
             return redirect(obj)
 
+        from_status = obj.status
         with transaction.atomic():
             obj.status = self.target_status
             obj._changed_by = request.user.get_username()
             obj._changed_by_user = request.user
             obj._transition_notes = request.POST.get("notes", "")
             obj.save(update_fields=["status", "updated_at"])
+        set_audit_context(
+            request,
+            obj,
+            action="status_changed",
+            metadata={"from_status": from_status, "to_status": self.target_status},
+        )
         messages.success(request, self.success_message)
         return redirect(obj)

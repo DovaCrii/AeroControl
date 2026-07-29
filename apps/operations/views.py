@@ -9,6 +9,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.generic import CreateView, DetailView, ListView
 
+from apps.core.audit import set_audit_context
 from apps.core.views import (
     CalendarAccessMixin,
     CsvExportMixin,
@@ -245,6 +246,7 @@ class FlightRecordDelete(ModelPermissionRequiredMixin, DetailView):
         record = self.get_object()
         record.is_active = False
         record.save(update_fields=["is_active", "updated_at"])
+        set_audit_context(request, record, action="archived")
         messages.success(request, _("Flight record archived."))
         return redirect("record-list")
 
