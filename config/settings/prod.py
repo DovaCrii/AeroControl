@@ -40,7 +40,5 @@ SECURE_HSTS_PRELOAD = True
 # config/static_storage.py.
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {
-        "BACKEND": "config.static_storage.AeroControlStaticFilesStorage"
-    },
+    "staticfiles": {"BACKEND": "config.static_storage.AeroControlStaticFilesStorage"},
 }
