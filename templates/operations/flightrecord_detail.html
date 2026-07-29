@@ -7,11 +7,11 @@
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h3">{% translate "Flight Record" %}</h1>
     <div class="d-flex gap-2">
-      <form method="post" action="delete/" style="display:inline" onsubmit="return confirm('{{ archive_flight_record|escapejs }}');">
+      <form method="post" action="delete/" style="display:inline" data-confirm="{{ archive_flight_record }}">
         {% csrf_token %}
         <button class="btn btn-outline-danger btn-sm">{% translate "Archive" %}</button>
       </form>
-      <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">← {% translate "Back" %}</a>
+      <a href="{% url 'record-list' %}" data-history-back class="btn btn-outline-secondary btn-sm">← {% translate "Back" %}</a>
     </div>
   </div>
 

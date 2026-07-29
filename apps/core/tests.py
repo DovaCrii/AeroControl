@@ -429,9 +429,24 @@ class TestChapter1DocxImport:
         content = response.content.decode()
 
         assert response.status_code == 200
-        assert "toggleTheme" in content
-        assert "data-theme" in content
+        # V.10: theme behaviour moved to static/js; the HTML keeps the toggle
+        # hook and the pre-paint theme-init script reference, no inline JS.
+        assert 'id="theme-toggle"' in content
+        assert "data-label-dark=" in content
+        assert "js/theme-init.js" in content
+        assert "js/app.js" in content
         assert "AeroControl" in content
+
+    def test_base_template_has_no_inline_script_or_handlers(self, auth_client):
+        # V.10 CSP: no inline <script> bodies, inline event handlers, or
+        # javascript: URLs, so the policy needs no 'unsafe-inline' for scripts.
+        content = auth_client.get(reverse("dashboard")).content.decode()
+
+        assert "onclick=" not in content
+        assert "onchange=" not in content
+        assert "javascript:" not in content
+        # json_script config blocks are data, not executable script.
+        assert "<script>" not in content
 
     def test_base_template_has_accessible_navigation_and_modal_hooks(self, auth_client):
         response = auth_client.get(reverse("dashboard"))
@@ -441,7 +456,8 @@ class TestChapter1DocxImport:
         assert 'id="sidebar-toggle"' in content
         assert 'aria-controls="sidebar"' in content
         assert 'aria-labelledby="generic-modal-title"' in content
-        assert "shown.bs.modal" in content
+        # The modal focus/afterSwap wiring lives in static/js/app.js now.
+        assert "js/app.js" in content
 
     def test_dashboard_serializes_chart_data_without_marking_it_safe(self, auth_client):
         response = auth_client.get(reverse("dashboard"))

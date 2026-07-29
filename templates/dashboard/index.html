@@ -13,7 +13,7 @@
 
 <form method="get" class="row g-2 mb-4">
   <div class="col-md-4 col-sm-6">
-    <select class="form-select" name="cost_center" onchange="this.form.submit()">
+    <select class="form-select" name="cost_center" data-autosubmit>
       <option value="">{% translate "All cost centers" %}</option>
       {% for cc in cost_centers %}
       <option value="{{ cc.pk }}" {% if selected_cost_center.pk == cc.pk %}selected{% endif %}>{{ cc }}</option>
@@ -94,7 +94,7 @@ guides the three steps in order and disappears when they are done.
   <div class="col-lg-4">
     <div class="card p-2 chart-container">
       <h4 class="h5 mb-2">{% translate "Permissions by Status" %}</h4>
-      <canvas id="statusChart"></canvas>
+      <canvas id="statusChart" data-label="{% translate 'Permissions' %}"></canvas>
     </div>
   </div>
   <div class="col-lg-4">
@@ -109,13 +109,13 @@ guides the three steps in order and disappears when they are done.
   <div class="col-lg-6">
     <div class="card p-2 chart-container">
       <h4 class="h5 mb-2">{% translate "Tasks per Stage" %}</h4>
-      <canvas id="stagesChart"></canvas>
+      <canvas id="stagesChart" data-label="{% translate 'Tasks' %}"></canvas>
     </div>
   </div>
   <div class="col-lg-6">
     <div class="card p-2 chart-container">
       <h4 class="h5 mb-2">{% translate "Monthly Flights (6 months)" %}</h4>
-      <canvas id="chart-monthly-flights"></canvas>
+      <canvas id="chart-monthly-flights" data-label="{% translate 'Flights' %}"></canvas>
     </div>
   </div>
 </div>
@@ -160,148 +160,9 @@ guides the three steps in order and disappears when they are done.
         integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"
         crossorigin="anonymous"></script>
 {{ chart_data|json_script:"chart-data" }}
-<script>const chartData = JSON.parse(document.getElementById("chart-data").textContent);</script>
+<script defer src="{% static 'js/dashboard.js' %}"></script>
 {% endblock %}
 
 {% block extrascripts %}
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  const chartLabels = {
-    permissions: "{% translate 'Permissions' %}",
-    tasks: "{% translate 'Tasks' %}",
-    flights: "{% translate 'Flights' %}",
-  };
-  // The navy first slot was invisible in dark mode (1.16:1 against the card),
-  // so the palette is picked per theme and re-applied on theme change.
-  const palettes = {
-    light: ['#1B2A4A','#2EC4B6','#E76F51','#F4A261','#2A9D8F','#6B4CE6','#E63946','#457B9D'],
-    dark:  ['#5B8FD9','#42D4C6','#F08A6B','#F4B266','#4FBFAE','#A184F0','#F2606D','#6FA8CF'],
-  };
-  const isDark = () => document.documentElement.dataset.theme === 'dark';
-  let palette = isDark() ? palettes.dark : palettes.light;
-  const textColor = getComputedStyle(document.body).color;
-  const charts = [];
-  const track = (chart) => { if (chart) charts.push(chart); return chart; };
-
-  // ── Aircraft by Status (doughnut) ──
-  const acData = chartData.aircraft_by_status;
-  if (acData.length) {
-    track(new Chart(document.getElementById('chart-aircraft-status'), {
-      type: 'doughnut',
-      data: {
-        labels: acData.map(d => d.status),
-        datasets: [{
-          data: acData.map(d => d.count),
-          backgroundColor: palette.slice(0, acData.length),
-        }]
-      },
-      options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: textColor } } } }
-    }));
-  }
-
-  // ── Permissions by Status (bar) ──
-  const permData = chartData.permissions_by_status;
-  if (permData.length) {
-    track(new Chart(document.getElementById('statusChart'), {
-      type: 'bar',
-      data: {
-        labels: permData.map(d => d.status),
-        datasets: [{
-          label: chartLabels.permissions,
-          data: permData.map(d => d.count),
-          backgroundColor: palette.slice(0, permData.length),
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { color: textColor } }, x: { ticks: { color: textColor } } }
-      }
-    }));
-  }
-
-  // ── Maintenance by Type (doughnut) ──
-  const maintData = chartData.maintenance_by_type;
-  if (maintData.length) {
-    track(new Chart(document.getElementById('chart-maint-type'), {
-      type: 'doughnut',
-      data: {
-        labels: maintData.map(d => d.maintenance_type),
-        datasets: [{
-          data: maintData.map(d => d.count),
-          backgroundColor: palette.slice(0, maintData.length),
-        }]
-      },
-      options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: textColor } } } }
-    }));
-  }
-
-  // ── Tasks per Stage (bar) ──
-  const stageData = chartData.tasks_by_stage;
-  if (stageData.length) {
-    track(new Chart(document.getElementById('stagesChart'), {
-      type: 'bar',
-      data: {
-        labels: stageData.map(d => d.name),
-        datasets: [{
-          label: chartLabels.tasks,
-          data: stageData.map(d => d.count),
-          backgroundColor: '#2EC4B6',
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { color: textColor, stepSize: 1 } }, x: { ticks: { color: textColor } } }
-      }
-    }));
-  }
-
-  // ── Monthly Flights (line) ──
-  const flightData = chartData.monthly_flights;
-  if (flightData.length) {
-    track(new Chart(document.getElementById('chart-monthly-flights'), {
-      type: 'line',
-      data: {
-        labels: flightData.map(d => d.month ? new Date(d.month).toLocaleString('default',{month:'short',year:'2-digit'}) : ''),
-        datasets: [{
-          label: chartLabels.flights,
-          data: flightData.map(d => d.count),
-          borderColor: '#2EC4B6',
-          backgroundColor: 'rgba(46,196,182,0.15)',
-          fill: true,
-          tension: 0.3,
-          pointBackgroundColor: '#2EC4B6',
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { labels: { color: textColor } } },
-        scales: { y: { beginAtZero: true, ticks: { color: textColor } }, x: { ticks: { color: textColor } } }
-      }
-    }));
-  }
-
-  // Recolour on theme change: base.html already emits aero:themechange, but
-  // nothing listened, so axes/legends kept the previous theme's colours until
-  // a reload.
-  document.addEventListener('aero:themechange', function () {
-    palette = isDark() ? palettes.dark : palettes.light;
-    const color = getComputedStyle(document.body).color;
-    charts.forEach(function (chart) {
-      chart.data.datasets.forEach(function (dataset) {
-        if (Array.isArray(dataset.backgroundColor)) {
-          dataset.backgroundColor = palette.slice(0, dataset.backgroundColor.length);
-        }
-      });
-      const legend = chart.options.plugins && chart.options.plugins.legend;
-      if (legend && legend.labels) legend.labels.color = color;
-      Object.values(chart.options.scales || {}).forEach(function (scale) {
-        if (scale && scale.ticks) scale.ticks.color = color;
-      });
-      chart.update();
-    });
-  });
-});
-</script>
+{% comment %}Chart logic moved to static/js/dashboard.js (V.10 CSP: no inline JS).{% endcomment %}
 {% endblock %}

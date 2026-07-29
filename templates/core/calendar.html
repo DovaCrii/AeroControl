@@ -43,7 +43,14 @@
       <select id="calendar-operator" class="form-select form-select-sm" aria-label="{% translate 'Filter by operator' %}"><option value="">{% translate "All operators" %}</option>{% for operator in calendar_operators %}<option value="{{ operator.pk }}" {% if selected_calendar_operator == operator.pk|stringformat:'s' %}selected{% endif %}>{{ operator.full_name }}</option>{% endfor %}</select>
     </div>
   </div>
-  <div id="calendar-app" data-events-url="{% url 'calendar-events' %}" aria-live="polite"></div>
+  <div id="calendar-app" data-events-url="{% url 'calendar-events' %}"
+       data-locale="{{ current_language|default:'es' }}"
+       data-board="{{ selected_calendar_board }}"
+       data-text-today="{% translate 'Today' %}"
+       data-text-month="{% translate 'Month' %}"
+       data-text-week="{% translate 'Week' %}"
+       data-text-list="{% translate 'Agenda' %}"
+       aria-live="polite"></div>
 </section>
 <div class="legacy-calendar-header d-flex justify-content-between align-items-center mb-3">
   <h1 class="h3">{{ month_name|date:"F Y" }}</h1>
@@ -62,37 +69,4 @@
         integrity="sha384-B1OFx8Gy9GjPu8UbUyXbGQpzll9ubAUQ9agInFJ8NnD7nYG1u/CLR+Sqr5yifl4q"
         crossorigin="anonymous"></script>{% endblock %}
 
-{% block extrascripts %}
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  const root = document.getElementById('calendar-app');
-  const fallback = document.querySelector('.calendar-fallback');
-  const filter = document.getElementById('calendar-type-filter');
-  if (!root || !window.FullCalendar) return;
-  const costCenter = document.getElementById('calendar-cost-center');
-  const aircraft = document.getElementById('calendar-aircraft');
-  const operator = document.getElementById('calendar-operator');
-  const typeQuery = function () { return filter.value === 'all' ? 'permission,flight,assignment,maintenance,document,qualification,task' : filter.value; };
-  const calendar = new FullCalendar.Calendar(root, {
-    locale: '{{ current_language|default:"es" }}', firstDay: 1, initialView: 'dayGridMonth',
-    height: 'auto', expandRows: true, dayMaxEvents: 3,
-    headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listMonth' },
-    buttonText: { today: '{% translate "Today" %}', month: '{% translate "Month" %}', week: '{% translate "Week" %}', list: '{% translate "Agenda" %}' },
-    events: function (info, success, failure) {
-      const params = new URLSearchParams({ start: info.startStr, end: info.endStr, types: typeQuery(), board: '{{ selected_calendar_board }}', cost_center: costCenter.value, aircraft: aircraft.value, operator: operator.value });
-      fetch(root.dataset.eventsUrl + '?' + params.toString()).then(function (response) { if (!response.ok) throw new Error('Calendar request failed'); return response.json(); }).then(success).catch(failure);
-    },
-    eventClick: function (info) { if (info.event.url) { info.jsEvent.preventDefault(); window.location.assign(info.event.url); } },
-    // Titles are kept short so they fit a month cell; the full label (with the
-    // Kanban stage) stays reachable on hover.
-    eventDidMount: function (info) {
-      const full = info.event.extendedProps.tooltip || info.event.title;
-      info.el.setAttribute('title', full);
-    }
-  });
-  calendar.render(); fallback.hidden = true;
-  filter.addEventListener('change', function () { calendar.refetchEvents(); });
-  [costCenter, aircraft, operator].forEach(function (field) { field.addEventListener('change', function () { calendar.refetchEvents(); }); });
-});
-</script>
-{% endblock %}
+{% block extrascripts %}<script src="{% static 'js/calendar.js' %}"></script>{% endblock %}

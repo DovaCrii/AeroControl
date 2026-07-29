@@ -4,7 +4,7 @@
 {% block content %}
 <div class="card p-4"><div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h3">{{ permission.permission_number }}</h1><div class="d-flex gap-2">
   {% for action, label, css_class in status_actions %}<form method="post" action="{{ action }}/" style="display:inline">{% csrf_token %}<button class="btn {{ css_class }}">{{ label }}</button></form>{% endfor %}
-  <a href="javascript:history.back()" class="btn btn-outline-secondary">← {% translate "Back" %}</a>
+  <a href="{% url 'permission-list' %}" data-history-back class="btn btn-outline-secondary">← {% translate "Back" %}</a>
 </div></div>
 <table class="table table-bordered"><tbody>
   <tr><th class="w-25">{% translate "Status" %}</th><td><span class="badge bg-{% if permission.status == 'approved' %}success{% elif permission.status == 'denied' %}danger{% elif permission.status == 'completed' %}info{% else %}warning{% endif %}">{{ permission.get_status_display }}</span></td></tr>

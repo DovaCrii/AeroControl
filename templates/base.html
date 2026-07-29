@@ -14,10 +14,8 @@
           integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V"
           crossorigin="anonymous"></script>
   <link rel="icon" type="image/svg+xml" href="{% static 'img/aerocontrol-mark.svg' %}">
+  <script src="{% static 'js/theme-init.js' %}"></script>
   {% block extrahead %}{% endblock %}
-  <script>
-    (function(){var t=localStorage.getItem('theme');if(!t){t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'}var h=document.documentElement;h.setAttribute('data-theme',t);h.setAttribute('data-bs-theme',t)})()
-  </script>
 </head>
 <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
   <a class="skip-link" href="#main-content">{% translate "Skip to main content" %}</a>
@@ -34,13 +32,13 @@
       <span class="opacity-75">{{ user.get_username }}</span>
       <form method="post" action="{% url 'set_language' %}" class="d-inline" hx-boost="false">
         {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
-        <select class="form-select form-select-sm language-switch" name="language" onchange="this.form.submit()" aria-label="{% translate 'Language' %}">
+        <select class="form-select form-select-sm language-switch" name="language" data-autosubmit aria-label="{% translate 'Language' %}">
           <option value="en" {% if CURRENT_LANGUAGE == "en" %}selected{% endif %}>EN</option>
           <option value="es" {% if CURRENT_LANGUAGE == "es" %}selected{% endif %}>ES</option>
         </select>
       </form>
       <form method="post" action="{% url 'logout' %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-light" type="submit">{% translate "Sign out" %}</button></form>
-      <button class="btn btn-sm btn-outline-light theme-toggle" id="theme-toggle" type="button" onclick="toggleTheme()" aria-pressed="false" aria-label="{% translate 'Toggle theme' %}" title="{% translate 'Toggle theme' %}">
+      <button class="btn btn-sm btn-outline-light theme-toggle" id="theme-toggle" type="button" aria-pressed="false" aria-label="{% translate 'Toggle theme' %}" title="{% translate 'Toggle theme' %}" data-label-light="{% translate 'Use light theme' %}" data-label-dark="{% translate 'Use dark theme' %}">
         <svg class="theme-icon theme-icon-moon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.6 10.4A6.1 6.1 0 0 1 5.6 2.4a6.5 6.5 0 1 0 8 8z"/></svg>
         <svg class="theme-icon theme-icon-sun" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3.1"/><path d="M8 1.2v1.5M8 13.3v1.5M1.2 8h1.5M13.3 8h1.5M3.2 3.2l1.1 1.1M11.7 11.7l1.1 1.1M3.2 12.8l1.1-1.1M11.7 4.3l1.1-1.1"/></svg>
       </button>
@@ -51,7 +49,7 @@
     <aside class="sidebar p-3 d-flex flex-column" id="sidebar" aria-label="{% translate 'Main navigation' %}">
       <div class="sidebar-toolbar">
         <span class="sidebar-toolbar-title">{% translate "Navigation" %}</span>
-        <button class="sidebar-collapse" type="button" id="sidebar-collapse" aria-controls="sidebar" aria-label="{% translate 'Collapse sidebar' %}" title="{% translate 'Collapse sidebar' %}">
+        <button class="sidebar-collapse" type="button" id="sidebar-collapse" aria-controls="sidebar" aria-label="{% translate 'Collapse sidebar' %}" title="{% translate 'Collapse sidebar' %}" data-label-expand="{% translate 'Expand sidebar' %}" data-label-collapse="{% translate 'Collapse sidebar' %}">
           <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
         </button>
       </div>
@@ -108,63 +106,7 @@
   <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"
           integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
           crossorigin="anonymous"></script>
-  <script>
-    let modalTrigger = null;
-    function applyTheme(theme) {
-      const html = document.documentElement;
-      html.setAttribute('data-theme', theme);
-      html.setAttribute('data-bs-theme', theme);
-      localStorage.setItem('theme', theme);
-      const toggle = document.getElementById('theme-toggle');
-      if (toggle) {
-        toggle.setAttribute('aria-pressed', String(theme === 'dark'));
-        toggle.setAttribute('title', theme === 'dark' ? '{% translate "Use light theme" %}' : '{% translate "Use dark theme" %}');
-        toggle.setAttribute('aria-label', theme === 'dark' ? '{% translate "Use light theme" %}' : '{% translate "Use dark theme" %}');
-      }
-      document.dispatchEvent(new CustomEvent('aero:themechange', { detail: { theme: theme } }));
-    }
-    function toggleTheme() { applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); }
-    function setSidebar(open) { const sidebar = document.getElementById('sidebar'); const toggle = document.getElementById('sidebar-toggle'); sidebar.classList.toggle('is-open', open); if (toggle && window.innerWidth < 769) toggle.setAttribute('aria-expanded', String(open)); }
-    function setSidebarCollapsed(collapsed) {
-      const sidebar = document.getElementById('sidebar');
-      if (!sidebar) return;
-      sidebar.classList.toggle('is-collapsed', collapsed);
-      localStorage.setItem('sidebar-collapsed', String(collapsed));
-      const toggle = document.getElementById('sidebar-toggle');
-      const innerToggle = document.getElementById('sidebar-collapse');
-      if (toggle && window.innerWidth >= 769) toggle.setAttribute('aria-expanded', String(!collapsed));
-      if (innerToggle) {
-        innerToggle.setAttribute('aria-label', collapsed ? '{% translate "Expand sidebar" %}' : '{% translate "Collapse sidebar" %}');
-        innerToggle.setAttribute('title', collapsed ? '{% translate "Expand sidebar" %}' : '{% translate "Collapse sidebar" %}');
-      }
-    }
-    document.getElementById('sidebar-toggle').addEventListener('click', function () { if (window.innerWidth >= 769) { setSidebarCollapsed(!document.getElementById('sidebar').classList.contains('is-collapsed')); } else { setSidebar(!document.getElementById('sidebar').classList.contains('is-open')); } });
-    document.getElementById('sidebar-collapse').addEventListener('click', function () { setSidebarCollapsed(!document.getElementById('sidebar').classList.contains('is-collapsed')); });
-    applyTheme(document.documentElement.getAttribute('data-theme') || 'light');
-    if (window.innerWidth >= 769 && localStorage.getItem('sidebar-collapsed') === 'true') setSidebarCollapsed(true);
-    document.querySelectorAll('#sidebar a').forEach(function (link) {
-      link.title = link.textContent.replace(/\s+/g, ' ').trim();
-      link.addEventListener('click', function () { setSidebar(false); });
-    });
-    document.addEventListener('keydown', function (event) { if (event.key === 'Escape') { setSidebar(false); } });
-    document.body.addEventListener('htmx:configRequest', function (event) { event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}'; });
-    document.body.addEventListener('click', function (event) { const trigger = event.target.closest('[data-bs-target="#generic-modal"]'); if (trigger) { modalTrigger = trigger; } });
-    document.body.addEventListener('htmx:afterSwap', function (event) {
-      if (event.detail.target.id !== 'modal-content') return;
-      var modal = document.getElementById('generic-modal');
-      bootstrap.Modal.getOrCreateInstance(modal).show();
-      // A validation re-render swaps the content of an already-open modal, so
-      // shown.bs.modal never fires again: the errors appeared with no focus
-      // and no announcement. Focus the first invalid field when there is one.
-      window.setTimeout(function () {
-        var invalid = modal.querySelector('.is-invalid, [aria-invalid="true"]');
-        if (invalid) invalid.focus();
-      }, 50);
-    });
-    document.getElementById('generic-modal').addEventListener('shown.bs.modal', function () { const modal = this; window.setTimeout(function () { const first = modal.querySelector('input, select, textarea, button:not(.btn-close)'); if (first) first.focus(); }, 50); });
-    document.getElementById('generic-modal').addEventListener('hidden.bs.modal', function () { if (modalTrigger) { modalTrigger.focus(); } });
-    document.body.addEventListener('modal-form-success', function () { bootstrap.Modal.getOrCreateInstance(document.getElementById('generic-modal')).hide(); window.location.reload(); });
-  </script>
+  <script src="{% static 'js/app.js' %}"></script>
   {% block extrascripts %}{% endblock %}
 </body>
 </html>
