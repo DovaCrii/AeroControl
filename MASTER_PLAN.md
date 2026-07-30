@@ -109,10 +109,51 @@ Pendientes que requieren una decisión de negocio, no del agente:
 - Asignar **Operador responsable** en los 11 centros de costo
   (`/registry/costcenter/<id>/edit/`). Hoy los 11 están sin asignar; los 41
   operadores tienen correo, así que solo falta decidir quién.
-- Agregar usuarios al grupo *Dirección*. Hoy existe **un solo usuario** en todo
-  el sistema, así que el informe ejecutivo llegaría solo a esa cuenta.
-- No hay documentos, alertas ni reglas cargadas (0/0/0): el resumen diario no
-  tiene nada que enviar hasta que exista documentación con vencimientos.
+- Agregar usuarios al grupo *Dirección*. Hoy existe **un solo usuario** (`root`)
+  en todo el sistema, así que el informe ejecutivo llegaría solo a esa cuenta.
+- No hay documentos ni reglas de alerta cargadas (0/0): el resumen diario no
+  tiene nada que enviar hasta que exista documentación con vencimientos. El
+  **catálogo de tipos de documento ya está sembrado** (`seed_document_types`,
+  2026-07-30, ver abajo) — falta cargar documentos reales y crear las reglas.
+
+### Puesta en producción real: VM `p340` (2026-07-29/30)
+
+La app pasó de "corriendo en local" a **desplegada y operando** en una VM
+Ubuntu (`p340`, accesible por Tailscale, runbook en
+[docs/dev/ubuntu-vm-deploy.md](docs/dev/ubuntu-vm-deploy.md)):
+
+- **Datos reales cargados**: los 11 CC / 41 operadores / 14 aeronaves de la
+  base de trabajo se exportaron e importaron a la VM (la VM había arrancado
+  como instalación nueva, vacía).
+- **Login endurecido con `django-axes`** (T2.5, `fea3f3c`) antes de exponer la
+  app a internet.
+- **Acceso público vía Tailscale Funnel** (`https://p340.tailccd107.ts.net`,
+  procedimiento en [docs/dev/funnel-public-access.md](docs/dev/funnel-public-access.md))
+  para permitir acceso a colaboradores sin Tailscale propio, mediante cuentas
+  individuales (no compartidas) creadas en `/admin/`.
+- **Operación programada con systemd timers** (no cron):
+  `generate_alerts` 06:00, `send_alert_digest` 07:00, `backup` 22:00 — ver
+  [docs/scheduled-operations.md](scheduled-operations.md). Primer backup
+  verificado.
+- **Guía de activación del monitoreo de cumplimiento**:
+  [docs/compliance-setup.md](docs/compliance-setup.md) (qué se puede vigilar,
+  catálogo de tipos sugerido, reglas mínimas, orden de pasos).
+- **Catálogo de tipos de documento sembrado** en la VM (`seed_document_types`,
+  6 tipos, uno marcado `is_insurance` para LV-4 abajo).
+- El fix de estáticos con SRI (`config/static_storage.py`, que vivía sin
+  versionar solo en la VM) quedó versionado (`4e02396`).
+
+### Revisión en vivo del usuario sobre la app desplegada (2026-07-30)
+
+Con datos reales y la app públicamente accesible, empezó una ronda de
+feedback de producto mirando la app funcionando (no solo el código). Ver
+sección **"Revisión en vivo 2026-07-30"** más abajo en el tablero: **LV-1 a
+LV-5 y LV-7 cerrados** (`6b9a9b7`) — catálogo de documentos sembrado con ayuda
+de estado vacío, título autogenerado, campo de notas, columna de vencimiento
+de seguro en Aeronaves, indicador de progreso al importar KMZ, y el enlace de
+Kanban oculto del sidebar por decisión del usuario. **LV-6 (vista Gantt del
+Kanban) queda en standby** hasta que se retome con una propuesta de diseño —
+no implementar sin ese paso.
 
 ### Inventario de ramas (TL.6, cruzado el 2026-07-24)
 
@@ -337,7 +378,7 @@ abierto (hoy sí es cierto, cerrado en `3611d06`).
 | T2.3 | ✅ | P1 | `has_perm` en `/calendar/`, Kanban HTML y feed de eventos (F-06) — `CalendarAccessMixin` por fuente de evento, desplegables por `view_*` del modelo que listan, `?types=` acotado a lo permitido (`3611d06`) | S | T1.1 |
 | T2.4 | ✅ | P2 | Rol `Viewer` con `view_*` explícitos (no `startswith`). En la base real recibía **35** permisos, incluidos `authtoken.view_token`, `auth.view_user`, `sessions.view_session` y `core.view_auditevent`; ahora 20 (`c5d22dd`) | S | — |
 | T2.5 | ✅ | P2 | **[nuevo]** `TIME_ZONE` pasa a `America/Santiago` (decisión del usuario, 2026-07-25) y configurable por entorno. Todo `date.today()` de producción reemplazado por `timezone.localdate()` en `generate_alerts`, `send_alert_digest`, `digest.py`, `dashboard/views.py` y `compliance/models.py`, más las fixtures de prueba que comparaban contra la fecha del SO. Verificado: las dos nociones de "hoy" ahora coinciden | S | — |
-| T2.5 | ⬜ | P2 | `django-csp` enforcing por entorno; SRI en 4 dependencias; `django-axes` + throttling (F-17, F-18) | M | — |
+| T2.5 | ✅ | P2 | `django-csp`/SRI ya resueltos (V.10-V.11/T5.9: CSP enforcing hecho a mano — ver decisión de descarte de `django-csp` arriba —, SRI en las 5 dependencias vendorizadas). **Cerrado 2026-07-30:** `django-axes` (F-17/F-18) — bloqueo de fuerza bruta por usuario, 5 intentos/15 min, activo en prod tras exponer la app con Tailscale Funnel (`fea3f3c`) | M | — |
 
 ### FASE 3 — Integridad de datos `⛔ requiere FASE 1 · CAMBIAR AHORA`
 
