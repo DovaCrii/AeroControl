@@ -37,6 +37,18 @@ class DocumentType(BaseModel):
     name = models.CharField(max_length=150)
     code = models.CharField(max_length=50, unique=True)
     requires_expiry = models.BooleanField(default=True)
+    # LV-4: flags the type whose expiry the Aircraft list surfaces as a
+    # column (e.g. liability insurance). Not unique by design -- a fleet may
+    # split insurance into more than one policy type -- the aircraft list
+    # takes whichever of this aircraft's current documents of a flagged type
+    # expires soonest.
+    is_insurance = models.BooleanField(
+        default=False,
+        verbose_name=_("Insurance document type"),
+        help_text=_(
+            "Shows this type's expiry on the aircraft list (e.g. liability insurance)."
+        ),
+    )
 
     def __str__(self):
         return self.name

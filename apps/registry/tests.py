@@ -48,6 +48,51 @@ def test_aircraft_list_exposes_model(client, admin_user, registry_data):
     response = client.get(reverse("aircraft-list"))
 
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_aircraft_list_shows_overdue_insurance(client, admin_user, registry_data):
+    """LV-4: the insurance expiry (a Document flagged is_insurance on its
+    DocumentType) surfaces as a column, marked overdue in the past."""
+    from django.contrib.contenttypes.models import ContentType
+
+    from apps.compliance.models import Document, DocumentType
+
+    _tenant, _center, _operator, aircraft = registry_data
+    insurance_type = DocumentType.objects.create(
+        code="liability-insurance", name="Liability insurance", is_insurance=True
+    )
+    Document.objects.create(
+        title="Insurance",
+        doc_type=insurance_type,
+        content_type=ContentType.objects.get_for_model(Aircraft),
+        object_id=aircraft.pk,
+        file_path="insurance/aircraft/file.pdf",
+        issue_date=date(2025, 1, 1),
+        expiry_date=date(2025, 6, 1),  # in the past relative to any test run
+    )
+    client.force_login(admin_user)
+
+    response = client.get(reverse("aircraft-list"))
+
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert "2025-06-01" in content
+    assert "Overdue" in content or "Atrasada" in content
+
+
+@pytest.mark.django_db
+def test_aircraft_list_shows_dash_without_an_insurance_document(
+    client, admin_user, registry_data
+):
+    client.force_login(admin_user)
+    response = client.get(reverse("aircraft-list"))
+    aircraft_row = [
+        line for line in response.content.decode().splitlines() if "RPA-1" in line
+    ]
+
+    assert response.status_code == 200
+    assert aircraft_row
     assert "RPA-1" in response.content.decode()
     assert "Mavic 3" in response.content.decode()
 

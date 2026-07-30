@@ -121,4 +121,21 @@
       window.history.back();
     }
   });
+  // LV-5: <form data-loading-label="…"> shows a busy state on submit (button
+  // disabled + label swap + an indeterminate progress bar) for requests with
+  // no client-visible progress of their own (e.g. server-side KMZ parsing),
+  // so a slow response does not look hung. The native submission still
+  // proceeds and reloads the page normally; without JavaScript the form still
+  // works, it just shows no feedback while it waits.
+  document.body.addEventListener('submit', function (event) {
+    var form = event.target.closest('form[data-loading-label]');
+    if (!form) return;
+    var button = form.querySelector('button[type="submit"]');
+    if (button) {
+      button.disabled = true;
+      button.textContent = form.dataset.loadingLabel;
+    }
+    var progress = form.querySelector('[data-loading-progress]');
+    if (progress) progress.classList.remove('d-none');
+  });
 })();

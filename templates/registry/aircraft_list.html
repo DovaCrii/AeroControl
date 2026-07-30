@@ -8,6 +8,7 @@
 <th>{% translate "Cost center" %}</th>
 <th>{% translate "Status" %}</th>
 <th>{% translate "Location" %}</th>
+<th>{% translate "Insurance" %}</th>
 {% endblock %}
 
 {% block table_body %}
@@ -22,6 +23,12 @@
     {% if object.current_location == "headquarters" %}<span class="badge bg-secondary">{% translate "Headquarters" %}</span>
     {% elif object.current_location == "on_site" %}<span class="badge bg-info text-dark">{% translate "On site" %}{% if object.current_site %}: {{ object.current_site }}{% endif %}</span>
     {% else %}<span class="badge bg-warning text-dark">{% translate "In maintenance" %}</span>{% endif %}
+  </td>
+  <td>
+    {% if object.insurance_expiry %}
+      {% if object.insurance_is_overdue %}<span class="badge bg-danger">{% translate "Overdue" %} · {{ object.insurance_expiry|date:'Y-m-d' }}</span>
+      {% else %}<span class="badge bg-warning text-dark">{% translate "Due" %} {{ object.insurance_expiry|date:'Y-m-d' }}</span>{% endif %}
+    {% else %}<span class="text-muted">—</span>{% endif %}
   </td>
   <td class="text-end">
     <a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">{% translate "View" %}</a>

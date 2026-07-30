@@ -41,17 +41,22 @@ destinatario se informa y el digest continúa con los demás.
 
 ## Paso 2 — Tipos de documento
 
-Crea los `DocumentType` que uses, con vencimiento activado. Se adjuntan a la
-entidad que corresponda:
+```bash
+uv run python manage.py seed_document_types
+```
 
-| Tipo de documento | Se adjunta a | Vence |
-| --- | --- | --- |
-| Credencial DGAC | Operador | Sí |
-| Certificado médico / aptitud | Operador | Sí |
-| Registro / matrícula de aeronave | Aeronave | Sí |
-| Certificado de aeronavegabilidad | Aeronave | Sí |
-| Seguro de responsabilidad civil | Aeronave o centro de costo | Sí |
-| Autorización DGAC (carta de permiso) | Permiso de vuelo | Sí |
+Siembra el catálogo estándar (idempotente, no duplica si ya corriste antes):
+
+| Tipo de documento | Se adjunta a | Vence | Otro |
+| --- | --- | --- | --- |
+| Credencial DGAC | Operador | Sí | — |
+| Certificado médico / aptitud | Operador | Sí | — |
+| Registro / matrícula de aeronave | Aeronave | Sí | — |
+| Certificado de aeronavegabilidad | Aeronave | Sí | — |
+| Seguro de responsabilidad civil | Aeronave o centro de costo | Sí | `is_insurance` (LV-4: su vencimiento aparece como columna en la lista de aeronaves) |
+| Autorización DGAC (carta de permiso) | Permiso de vuelo | Sí | — |
+
+Si necesitas un tipo adicional, créalo desde la app (`/compliance/documenttype/new/`).
 
 ## Paso 3 — Reglas de alerta
 

@@ -49,6 +49,18 @@ DOCUMENTABLE_MODEL_LABELS = {
 
 
 class DocumentForm(AeroModelForm):
+    # LV-2: free-text titles drifted (same document type worded differently
+    # session to session). Optional here; clean() fills it in from the
+    # document type, the related record and the issue date when left blank,
+    # so the common case needs no typing and stays consistent.
+    title = forms.CharField(
+        required=False,
+        label=_("Title"),
+        help_text=_(
+            "Leave blank to generate it from the document type, "
+            "the related record and the issue date."
+        ),
+    )
     entity_type = forms.ModelChoiceField(
         queryset=ContentType.objects.none(),
         empty_label=_("Select an entity type"),
@@ -71,9 +83,9 @@ class DocumentForm(AeroModelForm):
             "file",
             "issue_date",
             "expiry_date",
+            "notes",
         )
         labels = {
-            "title": _("Title"),
             "doc_type": _("Document type"),
             "file": _("File"),
             "issue_date": _("Issue date"),
@@ -106,6 +118,13 @@ class DocumentForm(AeroModelForm):
         )
         if raw_entity_type:
             self._populate_object_choices(raw_entity_type)
+        # LV-1: an empty catalog makes the required "Document type" field look
+        # broken (nothing to pick). Point at where to fix it instead of
+        # leaving the picker to speak for itself.
+        if not DocumentType.objects.filter(is_active=True).exists():
+            self.fields["doc_type"].help_text = _(
+                "No document types configured yet. Create one first."
+            )
 
     def _populate_object_choices(self, content_type_id):
         try:
@@ -139,13 +158,17 @@ class DocumentForm(AeroModelForm):
             )
         elif entity_type and object_id:
             model = entity_type.model_class()
-            if (
-                model is None
-                or not model._default_manager.filter(
-                    pk=object_id, is_active=True
-                ).exists()
-            ):
+            record = (
+                model._default_manager.filter(pk=object_id, is_active=True).first()
+                if model is not None
+                else None
+            )
+            if record is None:
                 self.add_error("object_id", _("Select an active existing record."))
+            elif not cleaned.get("title"):
+                cleaned["title"] = self._autogenerate_title(
+                    record, cleaned.get("doc_type"), cleaned.get("issue_date")
+                )
 
         uploaded = cleaned.get("file")
         if uploaded:
@@ -181,6 +204,14 @@ class DocumentForm(AeroModelForm):
         return cleaned
 
     @staticmethod
+    def _autogenerate_title(record, doc_type, issue_date):
+        parts = [str(doc_type)] if doc_type else []
+        parts.append(str(record))
+        if issue_date:
+            parts.append(issue_date.isoformat())
+        return " · ".join(parts)[:200]
+
+    @staticmethod
     def _validate_file_signature(uploaded, extension):
         signatures = ALLOWED_UPLOAD_SIGNATURES[extension]
         current_position = uploaded.tell()
@@ -203,7 +234,7 @@ class DocumentForm(AeroModelForm):
 class DocumentTypeForm(AeroModelForm):
     class Meta:
         model = DocumentType
-        fields = ["name", "code", "requires_expiry"]
+        fields = ["name", "code", "requires_expiry", "is_insurance"]
 
 
 class AlertRuleForm(AeroModelForm):

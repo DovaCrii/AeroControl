@@ -102,6 +102,157 @@ def test_document_replace_is_audited_with_replaced_document_id(settings, tmp_pat
 
 
 @pytest.mark.django_db
+def test_document_form_autogenerates_title_when_left_blank(settings, tmp_path):
+    """LV-2: a blank title is filled in from doc_type + record + issue_date,
+    instead of failing or saving an empty string that read differently
+    session to session."""
+    from apps.compliance.forms import DocumentForm
+
+    settings.DOCUMENTS_ROOT = str(tmp_path)
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    doc_type = DocumentType.objects.create(
+        code="cert", name="Certificate", requires_expiry=False
+    )
+    aircraft_type = ContentType.objects.get_for_model(Aircraft)
+
+    form = DocumentForm(
+        data={
+            "title": "",
+            "doc_type": doc_type.pk,
+            "entity_type": aircraft_type.pk,
+            "object_id": str(aircraft.pk),
+            "issue_date": "2026-01-01",
+        },
+        files={
+            "file": SimpleUploadedFile(
+                "cert.pdf", b"%PDF-1.4\n%%EOF\n", content_type="application/pdf"
+            )
+        },
+    )
+
+    assert form.is_valid(), form.errors
+    document = form.save()
+    assert document.title == f"Certificate · {aircraft} · 2026-01-01"
+
+
+@pytest.mark.django_db
+def test_document_form_keeps_an_explicit_title(settings, tmp_path):
+    from apps.compliance.forms import DocumentForm
+
+    settings.DOCUMENTS_ROOT = str(tmp_path)
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    doc_type = DocumentType.objects.create(
+        code="cert", name="Certificate", requires_expiry=False
+    )
+    aircraft_type = ContentType.objects.get_for_model(Aircraft)
+
+    form = DocumentForm(
+        data={
+            "title": "My chosen title",
+            "doc_type": doc_type.pk,
+            "entity_type": aircraft_type.pk,
+            "object_id": str(aircraft.pk),
+            "issue_date": "2026-01-01",
+        },
+        files={
+            "file": SimpleUploadedFile(
+                "cert.pdf", b"%PDF-1.4\n%%EOF\n", content_type="application/pdf"
+            )
+        },
+    )
+
+    assert form.is_valid(), form.errors
+    document = form.save()
+    assert document.title == "My chosen title"
+
+
+@pytest.mark.django_db
+def test_document_form_saves_notes(settings, tmp_path):
+    """LV-3: the notes field (already on BaseModel) is now reachable from the
+    upload form instead of only from the technical admin."""
+    from apps.compliance.forms import DocumentForm
+
+    settings.DOCUMENTS_ROOT = str(tmp_path)
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    doc_type = DocumentType.objects.create(
+        code="cert", name="Certificate", requires_expiry=False
+    )
+    aircraft_type = ContentType.objects.get_for_model(Aircraft)
+
+    form = DocumentForm(
+        data={
+            "title": "Cert",
+            "doc_type": doc_type.pk,
+            "entity_type": aircraft_type.pk,
+            "object_id": str(aircraft.pk),
+            "issue_date": "2026-01-01",
+            "notes": "Renewed early at the operator's request.",
+        },
+        files={
+            "file": SimpleUploadedFile(
+                "cert.pdf", b"%PDF-1.4\n%%EOF\n", content_type="application/pdf"
+            )
+        },
+    )
+
+    assert form.is_valid(), form.errors
+    document = form.save()
+    assert document.notes == "Renewed early at the operator's request."
+
+
+@pytest.mark.django_db
+def test_document_form_flags_the_empty_document_type_catalog():
+    """LV-1: an empty catalog is explained instead of leaving a required,
+    seemingly broken picker with no options."""
+    from apps.compliance.forms import DocumentForm
+
+    assert not DocumentType.objects.filter(is_active=True).exists()
+    form = DocumentForm()
+    help_text = str(form.fields["doc_type"].help_text)
+    assert (
+        "No document types configured yet" in help_text
+        or "Aún no hay tipos de documento configurados" in help_text
+    )
+
+
+@pytest.mark.django_db
+def test_seed_document_types_creates_catalog_including_one_insurance_type():
+    """LV-1: the standard DGAC catalog seeds cleanly and idempotently."""
+    from django.core.management import call_command
+
+    call_command("seed_document_types")
+    assert DocumentType.objects.count() == 6
+    insurance_types = DocumentType.objects.filter(is_insurance=True)
+    assert insurance_types.count() == 1
+    assert insurance_types.first().code == "liability-insurance"
+
+    # Idempotent: a second run does not duplicate or touch existing rows.
+    call_command("seed_document_types")
+    assert DocumentType.objects.count() == 6
+
+
+@pytest.mark.django_db
 def test_alert_rule_cannot_be_deleted_while_it_has_alerts():
     cost_center = CostCenter.objects.create(code="OPS", name="Operations")
     aircraft = Aircraft.objects.create(

@@ -89,6 +89,19 @@ class TestEmbeddedResource:
 
 class TestImport:
     @pytest.mark.django_db
+    def test_import_form_shows_a_loading_indicator_on_submit(self, db):
+        """LV-5: the import can take a few seconds on a large KMZ; the form
+        carries the progressive-enhancement hook (static/js/app.js) that
+        disables the button and shows a progress bar while it waits."""
+        client = _client("add_geoplan")
+
+        response = client.get(reverse("geo-plan-import"))
+
+        content = response.content.decode()
+        assert "data-loading-label=" in content
+        assert "data-loading-progress" in content
+
+    @pytest.mark.django_db
     def test_import_requires_add_permission(self, db, settings, tmp_path):
         settings.DOCUMENTS_ROOT = str(tmp_path)
         center = CostCenter.objects.create(code="CC1", name="Uno")
