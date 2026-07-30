@@ -81,8 +81,12 @@
       <span class="sidebar-label">{% translate "Maintenance" %}</span>
       <a href="{% url 'maintenance-list' %}" class="nav-item nav-maintenance {% if url_name == 'maintenance-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4.5" width="14" height="16.5" rx="2"/><path d="M9.5 4.5V3h5v1.5"/><path d="M8.75 13l2 2 3.5-3.5"/></svg>{% translate "Records" %}</a>
 
+      {% comment %}LV-7 (2026-07-30): hidden by product decision until the
+      calendar-view redundancy (LV-6, Gantt) is redesigned. The 'kanban' route
+      and view stay live -- only the nav entry is hidden. See MASTER_PLAN.md.
       <span class="sidebar-label">{% translate "Follow-up" %}</span>
       <a href="{% url 'kanban' %}" class="nav-item nav-workboard {% if url_name == 'kanban' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 8v8M13 8v5M18 8v8"/></svg>{% translate "Action plan" %}</a>
+      {% endcomment %}
       <hr>
       {% comment %}Gated by the same view_* permissions the page itself checks
       per row, not by is_staff: a compliance manager with view_documenttype had

@@ -3043,6 +3043,38 @@ msgstr "Ningún evento de auditoría coincide con los filtros."
 msgid "Pagination"
 msgstr "Paginación"
 
+#: .\apps\compliance\models.py:47
+msgid "Insurance document type"
+msgstr "Tipo de documento de seguro"
+
+#: .\apps\compliance\models.py:49
+msgid "Shows this type's expiry on the aircraft list (e.g. liability insurance)."
+msgstr "Muestra el vencimiento de este tipo en la lista de aeronaves (p. ej. seguro de responsabilidad civil)."
+
+#: .\apps\compliance\forms.py:60
+msgid "Leave blank to generate it from the document type, the related record and the issue date."
+msgstr "Déjalo en blanco para generarlo con el tipo de documento, el registro relacionado y la fecha de emisión."
+
+#: .\apps\compliance\forms.py:126
+msgid "No document types configured yet. Create one first."
+msgstr "Aún no hay tipos de documento configurados. Crea uno primero."
+
+#: .\templates\compliance\_document_form_content.html:7
+msgid "No document types configured yet."
+msgstr "Aún no hay tipos de documento configurados."
+
+#: .\templates\compliance\_document_form_content.html:8
+msgid "Create one"
+msgstr "Crear uno"
+
+#: .\templates\registry\aircraft_list.html:11
+msgid "Insurance"
+msgstr "Seguro"
+
+#: .\templates\geo\plan_import.html:15
+msgid "Importing…"
+msgstr "Importando…"
+
 #~ msgid "Flight date"
 #~ msgstr "Fecha de vuelo"
 

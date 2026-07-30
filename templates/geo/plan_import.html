@@ -13,12 +13,16 @@
 
 <div class="card">
   <div class="card-body" style="max-width: 640px;">
-    <form method="post" enctype="multipart/form-data">
+    {% translate "Importing…" as importing_label %}
+    <form method="post" enctype="multipart/form-data" data-loading-label="{{ importing_label }}">
       {% csrf_token %}
       {{ form|crispy }}
       <div class="d-flex gap-2 mt-3">
         <button type="submit" class="btn btn-primary">{% translate "Import file" %}</button>
         <a class="btn btn-outline-secondary" href="{% url 'geo-plan-list' %}">{% translate "Cancel" %}</a>
+      </div>
+      <div class="progress mt-3 d-none" data-loading-progress role="progressbar" aria-label="{{ importing_label }}" aria-valuetext="{{ importing_label }}">
+        <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 100%"></div>
       </div>
     </form>
   </div>

@@ -409,9 +409,9 @@ modal "Documentos"):
 
 | ID | Est. | Prio | Tarea | Nota |
 |---|:--:|:--:|---|---|
-| LV-1 | ⬜ | P2 | **"Tipo de documento" confuso / vacío.** Es un catálogo (`DocumentType`), obligatorio, pero el desplegable sale vacío porque aún no hay tipos creados → parece un campo roto. Sembrar un catálogo inicial (comando/fixture con los tipos de [docs/compliance-setup.md](docs/compliance-setup.md): credencial DGAC, aeronavegabilidad, seguro RC, etc.) + texto de ayuda + estado vacío con enlace a "crear tipo". | No es campo libre |
-| LV-2 | ⬜ | P2 | **Título libre → estandarizar.** Hoy `title` es texto libre y quedará inconsistente entre usuarios/sesiones. Decidir política (opciones abajo) e implementarla. | Requiere decisión del usuario |
-| LV-3 | ⬜ | P3 | **Sección de comentarios.** Exponer en el form el campo `notes` (ya existe en `BaseModel`; hoy no se renderiza). Quick win, bajo riesgo. | — |
+| LV-1 | ✅ | P2 | **"Tipo de documento" confuso / vacío.** Comando `seed_document_types` (idempotente, 6 tipos de [docs/compliance-setup.md](docs/compliance-setup.md), uno marcado `is_insurance`) + `DocumentForm` avisa en el `help_text` del campo y en un banner del modal ("Aún no hay tipos… Crear uno") con enlace a `documenttype-create` cuando el catálogo está vacío. | `apps/compliance/management/commands/seed_document_types.py` |
+| LV-2 | ✅ | P2 | **Título libre → estandarizado.** Opción A implementada: `title` ahora opcional; si se deja en blanco, `DocumentForm.clean()` lo genera como `{tipo} · {registro} · {fecha de emisión}` (editable si el usuario prefiere escribir el suyo). | `apps/compliance/forms.py::DocumentForm._autogenerate_title` |
+| LV-3 | ✅ | P3 | **Sección de comentarios.** Campo `notes` (ya en `BaseModel`) agregado a `DocumentForm.Meta.fields` y renderizado en el modal; reutiliza el msgid "Notes"/"Notas" ya existente. | — |
 
 **Opciones para LV-2 (estandarizar el título):**
 - **A (recomendada):** **autogenerar** el título desde tipo + entidad + fecha de emisión (p. ej. "Credencial DGAC · J. Pérez · 2026-03"); campo prellenado y editable. Consistente sin fricción.
@@ -422,17 +422,26 @@ modal "Documentos"):
 
 | ID | Est. | Prio | Tarea | Nota |
 |---|:--:|:--:|---|---|
-| LV-4 | ⬜ | P2 | **Vencimiento del seguro en la lista de aeronaves.** Mostrar la fecha de término del seguro como columna, **marcar visualmente cuando esté vencido** (badge/color + accesible, no solo color) y por vencer (≤30/≤15/≤7 d, misma escala que el resto). El seguro es un `Document` (tipo "Seguro RC") colgado de la aeronave; requiere resolver "el seguro vigente" de cada aeronave sin N+1 (subquery/prefetch del documento actual de ese tipo). | Ver decisión abajo |
-
-**Decisión para LV-4 (cómo se identifica "el seguro"):**
-- **A (recomendada):** marcar un `DocumentType` como el del seguro (flag `is_insurance` o un `code` convenido), y la lista toma el documento vigente de ese tipo. Explícito y extensible a otros vencimientos clave (aeronavegabilidad).
-- **B:** columna genérica "próximo vencimiento" = el documento de la aeronave que vence antes, sin distinguir tipo. Menos preciso pero sin catálogo especial.
+| LV-4 | ✅ | P2 | **Vencimiento del seguro en la lista de aeronaves.** Opción A implementada: `DocumentType.is_insurance` (flag, migración `0009`); `AircraftList.get_queryset()` resuelve en una consulta el documento de seguro vigente que vence antes por aeronave (sin N+1) y lo expone como columna con badge (`Overdue`/`Due` + fecha, mismo patrón que `alert_list.html`). | `apps/registry/views.py::AircraftList`, `templates/registry/aircraft_list.html` |
 
 *Alertas:* el vencimiento del seguro **ya queda cubierto** por la regla
 `compliance.document / expiry_date` (LV/compliance-setup); lo nuevo de LV-4 es
 **surfacing en la lista + marca visual**, no un motor de alertas aparte.
 Generalizable: la misma columna+badge sirve para aeronavegabilidad y otros
 documentos clave de la aeronave.
+
+**Importación KMZ/KML** (`apps/geo` import form, `templates/geo/*import*`):
+
+| ID | Est. | Prio | Tarea | Nota |
+|---|:--:|:--:|---|---|
+| LV-5 | ✅ | P3 | **Sin indicador de progreso al importar KMZ.** `<form data-loading-label="…">` genérico (progressive enhancement en `static/js/app.js`, sin JS = sin feedback pero el envío sigue funcionando): deshabilita el botón, cambia su texto y muestra una barra de progreso indeterminada (Bootstrap) mientras la request POST síncrona corre. Reusable en cualquier otro formulario lento. | `static/js/app.js`, `templates/geo/plan_import.html` |
+
+**Vista de calendario del Kanban** (`templates/workboard` "Plan de acción" — pestañas Tablero/Lista/Calendario):
+
+| ID | Est. | Prio | Tarea | Nota |
+|---|:--:|:--:|---|---|
+| LV-6 | ⬜ | P2 | **"Vista de calendario" del Kanban es redundante con `/calendar/`** (el calendario global ya unifica permisos/mantenimiento/tareas). Reemplazarla por una **vista Gantt** de las tareas del tablero (línea de tiempo por etapa/fecha de vencimiento). Requiere **propuesta de diseño antes de implementar** (biblioteca a usar — FullCalendar ya vendorizado con SRI soporta un plugin de línea de tiempo/resource-timeline, evaluar vs. una implementación liviana propia; qué datos mostrar: rango planned↔due_date por tarea, agrupado por etapa o por responsable). | **Decisión de diseño pendiente** — no implementar aún |
+| LV-7 | ✅ | P2 | **Ocultar "Plan de acción" (Kanban) del sidebar** hasta que LV-6 (Gantt) esté resuelto — decisión del usuario 2026-07-30: "lo podemos hacer crecer en un futuro pero lo dejamos para luego". La sección "Seguimiento" solo tenía ese único enlace, así que se comentó junto con su rótulo (no queda un encabezado vacío); la ruta y la vista `kanban` siguen activas, solo el enlace de navegación se ocultó (`templates/base.html`). | Reversible: retirar el `{% comment %}` cuando se resuelva LV-6 |
 
 *(Pendiente de más issues del usuario — esta sección irá creciendo.)*
 

@@ -2,6 +2,12 @@
 <form method="post" action="{{ request.path }}" enctype="multipart/form-data"
       hx-post="{{ request.path }}" hx-target="#modal-content" hx-swap="innerHTML">
   {% csrf_token %}
+  {% if not form.fields.doc_type.queryset.exists %}
+  <div class="alert alert-warning d-flex justify-content-between align-items-center">
+    <span>{% translate "No document types configured yet." %}</span>
+    <a href="{% url 'documenttype-create' %}" target="_blank" class="btn btn-sm btn-outline-dark text-nowrap">{% translate "Create one" %}</a>
+  </div>
+  {% endif %}
   {{ form.title|as_crispy_field }}
   {{ form.doc_type|as_crispy_field }}
   {{ form.entity_type|as_crispy_field }}
@@ -9,6 +15,7 @@
   {{ form.file|as_crispy_field }}
   {{ form.issue_date|as_crispy_field }}
   {{ form.expiry_date|as_crispy_field }}
+  {{ form.notes|as_crispy_field }}
   <div class="d-flex gap-2 mt-3">
     <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
