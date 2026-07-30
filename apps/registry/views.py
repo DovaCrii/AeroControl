@@ -23,6 +23,7 @@ from .models import (
     OperatorAssignment,
     Assignment,
     Qualification,
+    QualificationType,
     ResourceMovementLog,
 )
 from apps.core.audit import set_audit_context
@@ -36,6 +37,7 @@ from .forms import (
     OperatorAssignmentForm,
     AircraftAssignmentForm,
     QualificationForm,
+    QualificationTypeForm,
 )
 
 
@@ -561,6 +563,23 @@ class ResourceMovementLogList(ModelViewPermissionRequiredMixin, ListView):
 QualificationList, QualificationDetail, QualificationCreate, QualificationUpdate = (
     make_views(Qualification, QualificationForm, "Qualification")
 )
+
+
+# B4.3: the qualification-type catalog. Config model like compliance's
+# DocumentType -- list/create/update only, no detail/archive/restore.
+class QualificationTypeList(RegistryList):
+    model = QualificationType
+    search_fields = ["name", "code", "model_keywords"]
+
+
+class QualificationTypeCreate(RegistryCreate):
+    model = QualificationType
+    form_class = QualificationTypeForm
+
+
+class QualificationTypeUpdate(RegistryUpdate):
+    model = QualificationType
+    form_class = QualificationTypeForm
 
 
 class CostCenterImportView(ModelPermissionRequiredMixin, View):

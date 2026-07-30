@@ -25,6 +25,22 @@ urlpatterns += [
         views.ResourceMovementLogList.as_view(),
         name="resourcemovementlog-list",
     ),
+    # B4.3: qualification-type catalog (config model, list/create/update only).
+    path(
+        "qualificationtype/",
+        views.QualificationTypeList.as_view(),
+        name="qualificationtype-list",
+    ),
+    path(
+        "qualificationtype/new/",
+        views.QualificationTypeCreate.as_view(),
+        name="qualificationtype-create",
+    ),
+    path(
+        "qualificationtype/<uuid:pk>/edit/",
+        views.QualificationTypeUpdate.as_view(),
+        name="qualificationtype-update",
+    ),
 ]
 for name in (
     "CostCenter",

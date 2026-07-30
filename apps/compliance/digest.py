@@ -74,7 +74,7 @@ def build_digest(cost_center, today=None):
             expiry_date__isnull=False,
             expiry_date__lte=cutoff,
         )
-        .select_related("operator")
+        .select_related("operator", "qualification_type")
         .order_by("expiry_date")
     )
     for qualification in qualifications:
@@ -83,7 +83,7 @@ def build_digest(cost_center, today=None):
             buckets[key].append(
                 {
                     "kind": "qualification",
-                    "label": qualification.qualification_type,
+                    "label": qualification.qualification_type.name,
                     "detail": str(qualification.operator),
                     "expiry_date": qualification.expiry_date,
                     "url_path": f"/registry/qualification/{qualification.pk}/",

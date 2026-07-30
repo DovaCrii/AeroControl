@@ -14,7 +14,13 @@ from apps.registry.merge import (
     normalize_name,
     suggest_canonical,
 )
-from apps.registry.models import Aircraft, CostCenter, Operator, Qualification
+from apps.registry.models import (
+    Aircraft,
+    CostCenter,
+    Operator,
+    Qualification,
+    QualificationType,
+)
 
 
 @pytest.fixture
@@ -72,7 +78,9 @@ def test_suggested_record_is_the_one_other_records_point_at(cost_center):
     )
     Qualification.objects.create(
         operator=referenced,
-        qualification_type="Credencial",
+        qualification_type=QualificationType.objects.get_or_create(
+            code="credencial", defaults={"name": "Credencial"}
+        )[0],
         issue_date=date(2026, 1, 1),
     )
     cost_center.responsible_operator = referenced
@@ -93,7 +101,11 @@ def test_merge_moves_every_fk_reference_and_archives_the_duplicate(cost_center):
         cost_center=cost_center,
     )
     qualification = Qualification.objects.create(
-        operator=duplicate, qualification_type="Credencial", issue_date=date(2026, 1, 1)
+        operator=duplicate,
+        qualification_type=QualificationType.objects.get_or_create(
+            code="credencial", defaults={"name": "Credencial"}
+        )[0],
+        issue_date=date(2026, 1, 1),
     )
     permission = FlightPermission.objects.create(
         permission_number="PERM-1",

@@ -6,7 +6,13 @@ from django.core import mail
 from django.core.management import call_command
 
 from apps.core.models import JobRun
-from apps.registry.models import Aircraft, CostCenter, Operator, Qualification
+from apps.registry.models import (
+    Aircraft,
+    CostCenter,
+    Operator,
+    Qualification,
+    QualificationType,
+)
 from .digest import bucket_for, build_digest
 from .models import Document, DocumentType
 
@@ -33,9 +39,12 @@ def _qualification(cost_center, days_from_today, name="Credencial DGAC"):
         full_name=f"Piloto {days_from_today}",
         cost_center=cost_center,
     )
+    qualification_type, _ = QualificationType.objects.get_or_create(
+        code=name, defaults={"name": name}
+    )
     return Qualification.objects.create(
         operator=operator,
-        qualification_type=name,
+        qualification_type=qualification_type,
         issue_date=date(2026, 1, 1),
         expiry_date=TODAY + timedelta(days=days_from_today),
     )

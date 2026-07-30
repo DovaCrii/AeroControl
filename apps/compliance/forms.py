@@ -20,6 +20,7 @@ from .watchables import (
 DOCUMENTABLE_MODELS = {
     ("registry", "aircraft"),
     ("registry", "operator"),
+    ("registry", "qualification"),
     ("operations", "flightpermission"),
     ("maintenance", "maintenancerecord"),
 }
@@ -43,6 +44,7 @@ ALLOWED_UPLOAD_SIGNATURES = {
 DOCUMENTABLE_MODEL_LABELS = {
     ("registry", "aircraft"): _("Aircraft record"),
     ("registry", "operator"): _("Operator record"),
+    ("registry", "qualification"): _("Qualification"),
     ("operations", "flightpermission"): _("Flight permission"),
     ("maintenance", "maintenancerecord"): _("Maintenance record"),
 }

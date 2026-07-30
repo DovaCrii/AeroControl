@@ -42,6 +42,15 @@ ROLE_PERMISSIONS = {
         "view_alertrule",
         "change_alert",
         "view_alert",
+        # Operator qualifications / ratings and their catalog (B4.3): Compliance
+        # tracks credentials, so it manages both. Previously only a superuser
+        # could create a Qualification at all.
+        "add_qualification",
+        "change_qualification",
+        "view_qualification",
+        "add_qualificationtype",
+        "change_qualificationtype",
+        "view_qualificationtype",
         # Compliance approves flight-planning geo plans; it does not draw them.
         "view_geoplan",
         "approve_geoplan",
@@ -65,6 +74,7 @@ ROLE_PERMISSIONS = {
         "view_aircraftassignment",
         "view_resourcemovementlog",
         "view_qualification",
+        "view_qualificationtype",
         "view_document",
         "view_documenttype",
         "view_alert",

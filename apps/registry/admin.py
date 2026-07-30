@@ -8,6 +8,7 @@ from .models import (
     Operator,
     OperatorAssignment,
     Qualification,
+    QualificationType,
     ResourceMovementLog,
 )
 
@@ -20,6 +21,7 @@ admin.site.register(
         OperatorAssignment,
         AircraftAssignment,
         Qualification,
+        QualificationType,
     ]
 )
 

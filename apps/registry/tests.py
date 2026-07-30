@@ -14,6 +14,7 @@ from apps.registry.models import (
     CostCenter,
     Operator,
     Qualification,
+    QualificationType,
 )
 
 
@@ -40,6 +41,44 @@ def registry_data():
         cost_center=center,
     )
     return tenant, center, operator, aircraft
+
+
+@pytest.mark.django_db
+def test_qualification_type_seed_is_idempotent_and_keywords_lowercase():
+    """B4.3: the qualification-type catalog seeds cleanly and keyword_list()
+    normalizes for the B4.4 aircraft-model match."""
+    from django.core.management import call_command
+
+    call_command("seed_qualification_types")
+    count = QualificationType.objects.count()
+    assert count == 7
+    mavic = QualificationType.objects.get(code="mavic")
+    assert mavic.keyword_list() == ["mavic"]
+    autel = QualificationType.objects.get(code="autel-evo")
+    assert autel.keyword_list() == ["autel", "evo"]
+
+    call_command("seed_qualification_types")
+    assert QualificationType.objects.count() == count
+
+
+@pytest.mark.django_db
+def test_qualification_form_flags_empty_type_catalog():
+    from apps.registry.forms import QualificationForm
+
+    assert not QualificationType.objects.exists()
+    help_text = str(QualificationForm().fields["qualification_type"].help_text)
+    assert (
+        "No qualification types configured yet" in help_text
+        or "Aún no hay tipos de habilitación" in help_text
+    )
+
+
+@pytest.mark.django_db
+def test_qualification_is_documentable(client, admin_user, registry_data):
+    """B4.3: evidence documents can hang off a specific qualification."""
+    from apps.compliance.forms import DOCUMENTABLE_MODELS
+
+    assert ("registry", "qualification") in DOCUMENTABLE_MODELS
 
 
 @pytest.mark.django_db
@@ -193,7 +232,7 @@ def test_calendar_feed_contains_resource_and_expiration_events(
     )
     Qualification.objects.create(
         operator=operator,
-        qualification_type="RPAS",
+        qualification_type=QualificationType.objects.create(code="rpas", name="RPAS"),
         issue_date=date(2026, 1, 1),
         expiry_date=date(2026, 7, 21),
     )

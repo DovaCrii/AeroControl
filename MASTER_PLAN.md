@@ -495,6 +495,19 @@ documentos clave de la aeronave.
 | LV-8e | ⬜ | P2 | **Alerta por datos faltantes** (cruza con alertas): una mantención sin `scheduled_date` (o sin `performed_by`) debe **generar una alerta** justamente por esa falta. **Requiere diseño**: el motor actual (`generate_alerts` + `AlertRule`) solo vigila *vencimiento* de un campo de fecha, no *ausencia* de datos — es una semántica nueva. Opciones: (A) un chequeo dedicado en `generate_alerts` para mantenciones incompletas; (B) surfacing en el dashboard/reporte de cumplimiento en vez del motor de alertas. | **Decisión de diseño** |
 | LV-8f | ⬜ | P3 | **Cruce con reportes**: las mantenciones incompletas/por definir deben aparecer como brecha abierta en el reporte de cumplimiento y/o el informe ejecutivo. | Depende de LV-8a/8e |
 
+**Listas genéricas con columnas pobres** (`templates/generic/_table_body.html`, usada por `OperatorList`, `CostCenterList` y otras):
+
+| ID | Est. | Prio | Tarea | Nota |
+|---|:--:|:--:|---|---|
+| LV-9 | ⬜ | P2 | **Las listas genéricas desaprovechan el espacio y dan poca información.** Afecta a **operadores** y **centros de costo** (mismo patrón): 3 columnas genéricas (Nombre, **Creado** — sin valor operativo, Estado) y nada útil de un vistazo. Para operadores faltan: credencial DGAC, CC actual, habilitación vigente/vencida (ya hay B4.3). Para CC faltan: responsable, nº de operadores/aeronaves asignados, permisos/documentos por vencer. Rediseñar cada lista con columnas útiles + densidad, plantilla propia por modelo (patrón `aircraft_list.html`), y **proponer vistas alternativas** (tarjetas, agrupación). Requiere **propuesta de diseño** por lista antes de implementar. | **Propuesta de diseño** primero; empezar por operadores y CC |
+
+**Formulario de centro de costo** (`apps/registry` `CostCenterForm`):
+
+| ID | Est. | Prio | Tarea | Nota |
+|---|:--:|:--:|---|---|
+| LV-10a | ⬜ | P2 | **Prefijo "CC" fijo en el código.** El campo `code` debe llevar siempre un prefijo `CC` no editable antes del número (hoy es "410", "738" libres). Decidir: (A) input-group con prefijo visual "CC" y almacenar `CC738`; (B) prefijo solo de display y seguir guardando el número. **Requiere decisión + migración de datos** (los 11 CC existentes están sin prefijo; hay que normalizarlos o el `unique` y el `__str__` quedan inconsistentes). | **Decisión + migración** |
+| LV-10b | ✅ | P3 | **Renombrar el label "Responsable"** del formulario a **"Nombre de Administrador de contrato"** (campo `responsible`, texto libre). | Solo label del form (cerrado con B4.3, `6-…`) |
+
 *(Pendiente de más issues del usuario — esta sección irá creciendo.)*
 
 ### FASE 6 — Nuevas funcionalidades `⏸ requiere FASE 0-3 cerradas`
@@ -584,8 +597,8 @@ Un bloque por sesión/PR, en esta secuencia (revisión `PLAN_CLAUDE_CODE_1.md`):
 |---|:--:|:--:|---|:--:|:--:|
 | B4.1 | ✅ | P2 | Registro `apps/compliance/watchables.py`: `entity_type`/`field_to_watch` validados en `clean()` y como choices en el form; `generate_alerts` deja la coincidencia difusa; migración 0006 normaliza y archiva las inválidas con nota (`c965644`) | M | — |
 | B4.2 | ✅ | P2 | `find_duplicate_operators`: reporte con diferencias campo a campo y conteo de referencias; `--apply --group` fusiona (recorre FKs dinámicamente + GFK de Document/Alert), archiva con nota y registra `AuditEvent` (`cd0e197`) | M | — |
-| B4.3 | ⏸ | P2 | **DIFERIDO** Habilitaciones DGAC: modelo (operador, tipo, vigencia, evidencia vía `Document`, reglas de alerta). Proponer diseño en el PR antes de implementar | M | Aprobación del usuario |
-| B4.4 | ⏸ | P2 | **DIFERIDO** Compatibilidad operador–aeronave al crear permisos de vuelo. Proponer diseño antes de implementar | M | Aprobación del usuario |
+| B4.3 | ✅ | P2 | **Habilitaciones DGAC** (2026-07-30, aprobado por el usuario). `Qualification` reutilizado y estructurado: nuevo catálogo `QualificationType` (name/code/`model_keywords` para B4.4) con `qualification_type` convertido de texto libre a FK (migración `0014`, tabla vacía → swap limpio); CRUD del catálogo (list/create/update) enlazado desde el centro de administración; `registry.qualification` agregado a `DOCUMENTABLE_MODELS` (evidencia por `Document`); comando `seed_qualification_types` (7 familias de la flota real); las alertas de vencimiento ya existían (`registry.qualification`/`expiry_date`). `digest.py` y el calendario corregidos para el FK + `select_related`. | M | — |
+| B4.4 | ⏸ | P2 | **DIFERIDO (diseño acordado, implementación pendiente)** Compatibilidad operador–aeronave al crear permisos de vuelo. Decidido con el usuario (2026-07-30): **aviso no bloqueante**; el match compara `QualificationType.model_keywords` (de B4.3) contra `Aircraft.model` (no `.type`, que es siempre "RPA"). Falta implementar el chequeo en la creación del permiso + el mensaje. | M | B4.3 ✅ |
 
 **Aceptación del bloque (parte en alcance): cumplida.** B4.1 con 10 pruebas y migración verificada sobre la base de demo (normalizó un valor heredado y archivó una regla rota con nota); B4.2 con 12 pruebas, incluida la fusión de referencias por GFK, y verificada de punta a punta en la demo. B4.3/B4.4 siguen diferidos esperando aprobación de diseño.
 

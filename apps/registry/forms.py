@@ -10,6 +10,7 @@ from .models import (
     Operator,
     OperatorAssignment,
     Qualification,
+    QualificationType,
 )
 
 
@@ -27,7 +28,7 @@ class CostCenterForm(AeroModelForm):
         labels = {
             "code": _("Code"),
             "name": _("Name"),
-            "responsible": _("Responsible"),
+            "responsible": _("Contract administrator name"),
             "responsible_operator": _("Responsible operator"),
             "responsible_contact_name": _("External contact name"),
             "responsible_contact_email": _("External contact email"),
@@ -251,3 +252,18 @@ class QualificationForm(AeroModelForm):
             "issue_date": _("Issue date"),
             "expiry_date": _("Expiry date"),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # B4.3/LV-1 parity: an empty catalog makes the required picker look
+        # broken. Point at where to create the first type.
+        if not QualificationType.objects.filter(is_active=True).exists():
+            self.fields["qualification_type"].help_text = _(
+                "No qualification types configured yet. Create one first."
+            )
+
+
+class QualificationTypeForm(AeroModelForm):
+    class Meta:
+        model = QualificationType
+        fields = ["name", "code", "model_keywords"]
