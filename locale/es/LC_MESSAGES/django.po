@@ -3112,6 +3112,14 @@ msgstr "Habilitaciones del operador y los modelos de aeronave que cubren."
 msgid "Contract administrator name"
 msgstr "Nombre de Administrador de contrato"
 
+#: .\templates\registry\qualification_list.html:6
+msgid "Qualified equipment"
+msgstr "Equipos habilitados"
+
+#: .\templates\registry\qualification_list.html:23
+msgid "View operator"
+msgstr "Ver operador"
+
 #: .\apps\operations\views.py:132
 msgid ""
 "%(operator)s has no current qualification matching: %(aircraft)s. The "

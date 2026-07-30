@@ -236,6 +236,53 @@ class TestSeedOperatorQualifications:
         assert q.issue_date is None
 
 
+# ── LV-14: habilitations list grouped by operator ────────────────────────────
+class TestQualificationListGroupedByOperator:
+    @pytest.mark.django_db
+    def test_one_row_per_operator_with_equipment_chips(self, admin_client):
+        cc = CostCenter.objects.create(code="CC1", name="One")
+        operator = Operator.objects.create(
+            employee_id="OP-1", full_name="René Herrera", cost_center=cc
+        )
+        mavic = QualificationType.objects.create(code="mavic", name="Serie Mavic")
+        matrice = QualificationType.objects.create(code="matrice", name="Serie Matrice")
+        Qualification.objects.create(operator=operator, qualification_type=mavic)
+        Qualification.objects.create(operator=operator, qualification_type=matrice)
+
+        response = admin_client.get(reverse("qualification-list"))
+
+        assert response.status_code == 200
+        # One row for the operator (not one per qualification).
+        assert list(response.context["objects"]) == [operator]
+        content = response.content.decode()
+        # Operator name appears once; both equipment chips are present.
+        assert content.count("René Herrera") == 1
+        assert "Serie Mavic" in content and "Serie Matrice" in content
+
+    @pytest.mark.django_db
+    def test_operator_without_qualifications_is_absent(self, admin_client):
+        cc = CostCenter.objects.create(code="CC1", name="One")
+        Operator.objects.create(
+            employee_id="OP-1", full_name="No Quals", cost_center=cc
+        )
+
+        response = admin_client.get(reverse("qualification-list"))
+        assert list(response.context["objects"]) == []
+
+    @pytest.mark.django_db
+    def test_csv_export_still_exports_individual_qualifications(self, admin_client):
+        cc = CostCenter.objects.create(code="CC1", name="One")
+        operator = Operator.objects.create(
+            employee_id="OP-1", full_name="René", cost_center=cc
+        )
+        mavic = QualificationType.objects.create(code="mavic", name="Serie Mavic")
+        Qualification.objects.create(operator=operator, qualification_type=mavic)
+
+        response = admin_client.get(reverse("qualification-list"), {"export": "csv"})
+        body = b"".join(response.streaming_content).decode("utf-8")
+        assert "Serie Mavic" in body
+
+
 # ── LV-10a: CC code prefix ────────────────────────────────────────────────────
 class TestCostCenterCodePrefix:
     @pytest.mark.django_db
