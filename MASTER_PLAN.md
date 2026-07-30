@@ -542,6 +542,8 @@ documentos clave de la aeronave.
 |---|:--:|:--:|---|---|
 | LV-14 | ✅ | P2 | **Lista de Habilitaciones agrupada por operador.** `QualificationList` ahora es operator-centric: una fila por operador con sus `QualificationType` como chips en una columna "Equipos habilitados" (cada chip abre el editar de esa habilitación; rojo si vencida). Búsqueda/`is_active` filtran las habilitaciones subyacentes; el export CSV sigue exportando las habilitaciones individuales. `qualification_list.html`. 3 tests. | 2026-07-30 |
 
+| LV-15 | ⬜ | P3 | **[mejora futura]** Color por tipo en los chips de "Equipos habilitados" (LV-14), para diferenciar de un vistazo cada familia (Mavic/Matrice/Phantom/…). Un color estable por `QualificationType` (p. ej. derivado del `code`, o un campo `color` en el catálogo como ya tiene `KanbanLabel`). Pedido por el usuario 2026-07-30, no urgente. | Chips hoy son `bg-secondary-subtle` uniformes |
+
 *(Pendiente de más issues del usuario — esta sección irá creciendo.)*
 
 ### FASE 6 — Nuevas funcionalidades `⏸ requiere FASE 0-3 cerradas`
