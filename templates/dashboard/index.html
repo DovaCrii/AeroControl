@@ -49,6 +49,14 @@
       <strong>{{ expiring_count }}</strong>
     </div>
   </div>
+  {% if incomplete_maintenance_count %}
+  <div class="col-md-3 col-sm-6">
+    <a class="summary-card summary-card-warning text-decoration-none d-block" href="{% url 'maintenance-list' %}">
+      <small>{% translate "Maintenance to define" %}</small>
+      <strong>{{ incomplete_maintenance_count }}</strong>
+    </a>
+  </div>
+  {% endif %}
 </div>
 
 {% if not aircraft_count and not operator_count and not alert_count and not stages %}

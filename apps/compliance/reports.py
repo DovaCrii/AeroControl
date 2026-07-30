@@ -213,7 +213,23 @@ def build_compliance_report(start=None, end=None, cost_center=None, doc_type=Non
         "totals": totals,
         "open_alerts": _open_alerts(cost_center, today),
         "resolution": _resolution_stats(start, end),
+        # LV-8f: maintenance still needing planning is an open compliance gap.
+        "incomplete_maintenance": _incomplete_maintenance_count(cost_center),
     }
+
+
+def _incomplete_maintenance_count(cost_center):
+    """LV-8e/8f: maintenance flagged 'to be defined' or missing a scheduled
+    date, and not yet completed. A cross-app read, scoped by cost center via
+    the aircraft when one is selected."""
+    from apps.maintenance.models import MaintenanceRecord
+
+    queryset = MaintenanceRecord.objects.filter(
+        is_active=True, status__in=["pending", "in_progress"]
+    ).filter(Q(maintenance_type="to_be_defined") | Q(scheduled_date__isnull=True))
+    if cost_center is not None:
+        queryset = queryset.filter(aircraft__cost_center=cost_center)
+    return queryset.count()
 
 
 COST_CENTER_HEADERS = [

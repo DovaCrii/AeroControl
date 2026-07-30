@@ -7,6 +7,10 @@ from apps.registry.models import Aircraft
 
 class MaintenanceRecord(BaseModel):
     TYPES = [
+        # LV-8a: a maintenance that is known to be needed but not yet specified
+        # (no date/assignee decided). Listed first so it reads as the "inbox"
+        # state before the work is planned.
+        ("to_be_defined", _("To be defined")),
         ("scheduled", _("Scheduled")),
         ("unscheduled", _("Unscheduled")),
         ("emergency", _("Emergency")),
@@ -21,11 +25,21 @@ class MaintenanceRecord(BaseModel):
     )
     maintenance_type = models.CharField(max_length=20, choices=TYPES)
     description = models.TextField()
-    scheduled_date = models.DateField()
+    # LV-8b: a "to be defined" record legitimately has neither a scheduled date
+    # nor an assignee yet -- both optional so the gap can be recorded and then
+    # surfaced (LV-8e) instead of forcing a placeholder.
+    scheduled_date = models.DateField(null=True, blank=True)
     completed_date = models.DateField(null=True, blank=True)
-    performed_by = models.CharField(max_length=150)
-    cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    performed_by = models.CharField(max_length=150, blank=True)
     status = models.CharField(max_length=20, choices=STATUSES, default="pending")
+
+    @property
+    def is_incomplete(self):
+        """LV-8e: needs planning -- flagged as 'to be defined' or missing a
+        scheduled date, and not already finished."""
+        return self.status != "completed" and (
+            self.maintenance_type == "to_be_defined" or self.scheduled_date is None
+        )
 
     class Meta:
         verbose_name = _("maintenance record")

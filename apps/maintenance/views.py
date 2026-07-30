@@ -136,7 +136,6 @@ class MaintenanceComplete(StatusTransitionView):
                 update_fields=[
                     "completed_date",
                     "performed_by",
-                    "cost",
                     "notes",
                     "status",
                     "updated_at",

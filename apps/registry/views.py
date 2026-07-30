@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.db import transaction
+from django.db.models import Count, Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -235,8 +236,8 @@ def make_views(model, form, prefix):
     )
 
 
-CostCenterList, _CostCenterAutoDetail, CostCenterCreate, CostCenterUpdate = make_views(
-    CostCenter, CostCenterForm, "CostCenter"
+_CostCenterAutoList, _CostCenterAutoDetail, CostCenterCreate, CostCenterUpdate = (
+    make_views(CostCenter, CostCenterForm, "CostCenter")
 )
 
 
@@ -331,9 +332,71 @@ class CostCenterDetail(RegistryDetail):
 _AircraftAutoList, _AircraftAutoDetail, AircraftCreate, AircraftUpdate = make_views(
     Aircraft, AircraftForm, "Aircraft"
 )
-OperatorList, _OperatorAutoDetail, OperatorCreate, OperatorUpdate = make_views(
+_OperatorAutoList, _OperatorAutoDetail, OperatorCreate, OperatorUpdate = make_views(
     Operator, OperatorForm, "Operator"
 )
+
+
+class OperatorList(RegistryList):
+    """LV-9: a useful operator list instead of Name/Created/Status.
+
+    Shows RUT, DGAC credential, cost center and a qualification badge
+    (current / expired), all resolved in one annotated query.
+    """
+
+    model = Operator
+    template_name = "registry/operator_list.html"
+    search_fields = ["full_name", "employee_id", "rut", "dgac_credential"]
+
+    def get_queryset(self):
+        today = timezone.localdate()
+        return (
+            super()
+            .get_queryset()
+            .select_related("cost_center")
+            .annotate(
+                current_quals=Count(
+                    "qualifications",
+                    filter=Q(qualifications__is_active=True)
+                    & (
+                        Q(qualifications__expiry_date__isnull=True)
+                        | Q(qualifications__expiry_date__gte=today)
+                    ),
+                    distinct=True,
+                ),
+                expired_quals=Count(
+                    "qualifications",
+                    filter=Q(
+                        qualifications__is_active=True,
+                        qualifications__expiry_date__lt=today,
+                    ),
+                    distinct=True,
+                ),
+            )
+        )
+
+
+class CostCenterList(RegistryList):
+    """LV-9: contract-oriented columns (administrator, assigned resources)
+    instead of Name/Created/Status. Counts annotated in one query."""
+
+    model = CostCenter
+    template_name = "registry/costcenter_list.html"
+    search_fields = ["code", "name", "responsible"]
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .annotate(
+                operator_count=Count(
+                    "operators", filter=Q(operators__is_active=True), distinct=True
+                ),
+                aircraft_count=Count(
+                    "aircraft", filter=Q(aircraft__is_active=True), distinct=True
+                ),
+            )
+        )
 
 
 class AircraftList(RegistryList):

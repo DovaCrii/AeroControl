@@ -50,6 +50,9 @@
   <div class="col-md-3 col-sm-6"><div class="summary-card"><small>{% translate "Valid" %}</small><strong>{{ report.totals.valid_pct }}%</strong></div></div>
   <div class="col-md-3 col-sm-6"><div class="summary-card"><small>{% translate "Expired" %}</small><strong>{{ report.totals.expired }}</strong></div></div>
   <div class="col-md-3 col-sm-6"><div class="summary-card"><small>{% translate "Open alerts" %}</small><strong>{{ report.open_alerts|length }}</strong></div></div>
+  {% if report.incomplete_maintenance %}
+  <div class="col-md-3 col-sm-6"><div class="summary-card summary-card-warning"><small>{% translate "Maintenance to define" %}</small><strong>{{ report.incomplete_maintenance }}</strong></div></div>
+  {% endif %}
 </div>
 
 <div class="card mb-4">

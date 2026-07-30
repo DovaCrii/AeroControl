@@ -1,3 +1,4 @@
+from django import forms
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -44,7 +45,25 @@ class CostCenterForm(AeroModelForm):
                 "safety officer). Also used for the digest if the operator "
                 "above has no reachable email."
             ),
+            # LV-10a: the "CC" prefix is fixed, not typed. Enforced in
+            # clean_code so the stored value is always CC<number>.
+            "code": _("Enter the number only; the CC prefix is added automatically."),
         }
+
+    def clean_code(self):
+        """LV-10a: every cost-center code carries a fixed 'CC' prefix.
+
+        Whatever the user types (with or without a leading CC) is normalised to
+        uppercase 'CC' + the remainder, so the stored code is the single source
+        of truth everywhere (list, __str__, exports, search). The 11 legacy
+        codes were prefixed by a data migration.
+        """
+        raw = (self.cleaned_data.get("code") or "").strip().upper()
+        remainder = raw[2:] if raw.startswith("CC") else raw
+        remainder = remainder.strip()
+        if not remainder:
+            raise forms.ValidationError(_("Enter the cost-center number."))
+        return f"CC{remainder}"
 
 
 class AircraftForm(AeroModelForm):
