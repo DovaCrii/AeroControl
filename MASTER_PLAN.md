@@ -514,6 +514,28 @@ documentos clave de la aeronave.
 | LV-10a | ✅ | P2 | **Prefijo "CC" fijo en el código** (opción A elegida: se almacena `CC738`). `CostCenterForm.clean_code()` normaliza cualquier entrada a `CC`+número (quita un `CC` que el usuario haya tecleado, exige el número); migración de datos `0015` prefija los 11 códigos existentes (idempotente y reversible). Es la fuente de verdad en lista, `__str__`, exports y búsqueda. | 2026-07-30 |
 | LV-10b | ✅ | P3 | **Renombrar el label "Responsable"** del formulario a **"Nombre de Administrador de contrato"** (campo `responsible`, texto libre). | Solo label del form (cerrado con B4.3, `6-…`) |
 
+**Inconsistencia FK vs asignaciones** (ficha de centro de costo — Equipo/Flota):
+
+| ID | Est. | Prio | Tarea | Nota |
+|---|:--:|:--:|---|---|
+| LV-11 | ✅ | P2 | **La lista de CC contaba aeronaves (por el FK) pero las pestañas Equipo/Flota salían vacías.** No era bug de plantilla: los datos importados pusieron `Operator/Aircraft.cost_center` (FK, la denormalización de OPS-1) pero **nunca se crearon las filas `OperatorAssignment`/`AircraftAssignment`** que la ficha OPS-2 (Equipo/Flota/Historial/timelines) usa como fuente de verdad. En la VM: 13 aeronaves + 2 operadores con FK, 0 asignaciones. Fix: comando idempotente `backfill_resource_assignments` que crea una asignación activa por recurso con FK sin asignación (reejecutable tras cualquier importación masiva tipo `chapter1_import`). Corre con modelos reales; el FK ya coincide, así que la señal no fabrica historial falso. | Cmd `apps/registry/management/commands/backfill_resource_assignments.py` |
+| LV-11b | ⬜ | P3 | **[nota]** `chapter1_import` (y cualquier import que setee el FK directo) debería crear las asignaciones en el mismo paso, para no depender del backfill. Mejora futura. | — |
+
+**Poblar habilitaciones reales desde `Operator.authorizations`** (texto libre):
+
+| ID | Est. | Prio | Tarea | Nota |
+|---|:--:|:--:|---|---|
+| LV-12a | ⬜ | P2 | **`Qualification.issue_date` opcional.** El usuario indicó que la fecha de emisión "no es necesaria". Volverla `null/blank` (hoy es requerida) + ajustar form. | Migración |
+| LV-12b | ⬜ | P2 | **Generar las habilitaciones de cada operador** parseando su `authorizations` (texto libre, p. ej. "Matrice 300 Rtk/ 210 Rtk/ 600 - Mavic 3 - Phantom4") y estandarizándolo al catálogo `QualificationType` por `model_keywords` (matrice/mavic/phantom/…). Un operador puede tener **varias** (ya soportado). Comando idempotente `seed_operator_qualifications`; sin fecha de emisión ni vencimiento. **Reporta los fragmentos no reconocidos** para ampliar el catálogo (aparecen modelos fuera del catálogo actual: Mini, DJI genérico, etc.). | Cmd + estandarización |
+| LV-12c | ⬜ | P3 | **Historial de cambios de habilitación**: el usuario quiere que quede registro si una habilitación cambia al editar (equipo nuevo). Hoy el `AuditEvent` (middleware) ya registra toda mutación de `Qualification` y es visible en el centro de administración → auditoría. Evaluar si basta eso o se necesita un historial dedicado por operador (tipo `PermissionHistory`). | **Decisión de diseño** — audit trail ya cubre lo básico |
+
+**Panel lateral (sidebar)** (`templates/base.html`):
+
+| ID | Est. | Prio | Tarea | Nota |
+|---|:--:|:--:|---|---|
+| LV-13a | ⬜ | P2 | **Reorganizar el flujo del sidebar** — "pierde sentido/rigidez como está". Hoy: NAVEGACIÓN · DATOS MAESTROS (CC/Aeronaves/Operadores) · PLANIFICACIÓN (planif. recursos, asignaciones op/aeronave, movimientos, geoespacial, **Habilitaciones**) · CUMPLIMIENTO · OPERACIONES · MANTENIMIENTO. Habilitaciones quedó mal ubicada bajo Planificación (es dato maestro del operador). Requiere **propuesta de reagrupación** antes de tocar. | **Propuesta de diseño** |
+| LV-13b | ⬜ | P3 | **Cambiar el icono de "Habilitaciones"** (hoy una estrella) por uno de tipo skill/habilidad. Quick win. | Icono SVG |
+
 *(Pendiente de más issues del usuario — esta sección irá creciendo.)*
 
 ### FASE 6 — Nuevas funcionalidades `⏸ requiere FASE 0-3 cerradas`

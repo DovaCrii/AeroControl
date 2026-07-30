@@ -132,6 +132,50 @@ class TestEnrichedLists:
         assert "Admin X" in response.content.decode()
 
 
+# ── Assignment backfill: FK-only data reconciled to OPS-1 assignments ─────────
+class TestBackfillResourceAssignments:
+    @pytest.mark.django_db
+    def test_backfill_creates_assignments_from_the_fk(self, admin_client):
+        from django.core.management import call_command
+
+        from apps.registry.models import AircraftAssignment, OperatorAssignment
+
+        cc = CostCenter.objects.create(code="CC684", name="684")
+        aircraft = Aircraft.objects.create(
+            registration="RPA-2750",
+            type="RPA",
+            model="Mavic 3",
+            manufacturer="DJI",
+            cost_center=cc,
+        )
+        operator = Operator.objects.create(
+            employee_id="OP-1", full_name="Pilot One", cost_center=cc
+        )
+        # Imported state: FK set, but no assignment rows.
+        assert not AircraftAssignment.objects.exists()
+        assert not OperatorAssignment.objects.exists()
+
+        call_command("backfill_resource_assignments")
+
+        assert AircraftAssignment.objects.filter(
+            aircraft=aircraft, cost_center=cc, is_active=True
+        ).exists()
+        assert OperatorAssignment.objects.filter(
+            operator=operator, cost_center=cc, is_active=True
+        ).exists()
+
+        # The contract detail's Flota tab now reflects the aircraft.
+        response = admin_client.get(reverse("costcenter-detail", args=[cc.pk]))
+        assert aircraft in [
+            a.aircraft for a in response.context["aircraft_assignments"]
+        ]
+
+        # Idempotent: a second run creates nothing.
+        call_command("backfill_resource_assignments")
+        assert AircraftAssignment.objects.count() == 1
+        assert OperatorAssignment.objects.count() == 1
+
+
 # ── LV-10a: CC code prefix ────────────────────────────────────────────────────
 class TestCostCenterCodePrefix:
     @pytest.mark.django_db
