@@ -484,6 +484,17 @@ documentos clave de la aeronave.
 | LV-6 | ⬜ | P2 | **"Vista de calendario" del Kanban es redundante con `/calendar/`** (el calendario global ya unifica permisos/mantenimiento/tareas). Reemplazarla por una **vista Gantt** de las tareas del tablero (línea de tiempo por etapa/fecha de vencimiento). Requiere **propuesta de diseño antes de implementar** (biblioteca a usar — FullCalendar ya vendorizado con SRI soporta un plugin de línea de tiempo/resource-timeline, evaluar vs. una implementación liviana propia; qué datos mostrar: rango planned↔due_date por tarea, agrupado por etapa o por responsable). | **Decisión de diseño pendiente** — no implementar aún |
 | LV-7 | ✅ | P2 | **Ocultar "Plan de acción" (Kanban) del sidebar** hasta que LV-6 (Gantt) esté resuelto — decisión del usuario 2026-07-30: "lo podemos hacer crecer en un futuro pero lo dejamos para luego". La sección "Seguimiento" solo tenía ese único enlace, así que se comentó junto con su rótulo (no queda un encabezado vacío); la ruta y la vista `kanban` siguen activas, solo el enlace de navegación se ocultó (`templates/base.html`). | Reversible: retirar el `{% comment %}` cuando se resuelva LV-6 |
 
+**Registro de mantenimiento** (`apps/maintenance`, formulario "Nuevo: Registro de mantenimiento"):
+
+| ID | Est. | Prio | Tarea | Nota |
+|---|:--:|:--:|---|---|
+| LV-8a | ⬜ | P2 | **Tipo "Por definir / pendiente"**: agregar un `maintenance_type` para mantenciones que se sabe que hacen falta pero aún no están especificadas ("algunas aún no tienen"). Distinto del `status` "pending" (que es una etapa del flujo); este es un tipo que admite que falten datos. | Choice nuevo en `MaintenanceRecord.TYPES` |
+| LV-8b | ⬜ | P2 | **`scheduled_date` y `performed_by` opcionales**: hoy son obligatorios; una mantención "por definir" no tiene fecha ni responsable todavía. Volverlos `null/blank` y ajustar el form. | Migración (cambio a nullable) |
+| LV-8c | ⬜ | P3 | **Quitar el campo `cost`/Costo**: no es relevante para esta operación. Verificar antes que no se use en reportes/exports (`apps/compliance/reports.py`, `apps/core/exports`). | Migración (drop column) |
+| LV-8d | ⬜ | P1 | **i18n**: el label "Maintenance type" (y posiblemente otros del form de mantenimiento) se muestran en inglés dentro de la UI en español — falta en el catálogo. Alinear con el guard de `apps/core/test_translations.py`. | Traducción |
+| LV-8e | ⬜ | P2 | **Alerta por datos faltantes** (cruza con alertas): una mantención sin `scheduled_date` (o sin `performed_by`) debe **generar una alerta** justamente por esa falta. **Requiere diseño**: el motor actual (`generate_alerts` + `AlertRule`) solo vigila *vencimiento* de un campo de fecha, no *ausencia* de datos — es una semántica nueva. Opciones: (A) un chequeo dedicado en `generate_alerts` para mantenciones incompletas; (B) surfacing en el dashboard/reporte de cumplimiento en vez del motor de alertas. | **Decisión de diseño** |
+| LV-8f | ⬜ | P3 | **Cruce con reportes**: las mantenciones incompletas/por definir deben aparecer como brecha abierta en el reporte de cumplimiento y/o el informe ejecutivo. | Depende de LV-8a/8e |
+
 *(Pendiente de más issues del usuario — esta sección irá creciendo.)*
 
 ### FASE 6 — Nuevas funcionalidades `⏸ requiere FASE 0-3 cerradas`
