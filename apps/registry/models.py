@@ -296,7 +296,10 @@ class Qualification(BaseModel):
         on_delete=models.PROTECT,
         related_name="qualifications",
     )
-    issue_date = models.DateField()
+    # LV-12a: issue date is optional -- the imported roster records what an
+    # operator is rated for, not when each rating was issued. Expiry likewise
+    # optional (many DGAC ratings do not expire).
+    issue_date = models.DateField(null=True, blank=True)
     expiry_date = models.DateField(null=True, blank=True)
 
     class Meta:
