@@ -249,11 +249,53 @@ class Assignment(BaseModel):
             raise ValidationError(errors)
 
 
+class QualificationType(BaseModel):
+    """Catalog of operator qualifications (B4.3), e.g. a DGAC rating per
+    aircraft family.
+
+    Free text drifted the same way document titles did (LV-1/LV-2): "Serie
+    Mavic" vs "Mavic series" vs "MAVIC" for the same rating. A catalog keeps it
+    consistent and gives B4.4 a structured place to declare which aircraft a
+    rating authorizes.
+    """
+
+    name = models.CharField(max_length=150)
+    code = models.CharField(max_length=50, unique=True)
+    # B4.4: comma-separated, case-insensitive fragments matched against
+    # Aircraft.model (Aircraft.type is uniformly "RPA" in the real data and
+    # carries no signal). "mavic,matrice" means this rating authorizes any
+    # aircraft whose model contains "mavic" or "matrice". Blank = matches
+    # nothing until configured, so B4.4 stays silent rather than guessing.
+    model_keywords = models.CharField(
+        max_length=250,
+        blank=True,
+        verbose_name=_("Aircraft model keywords"),
+        help_text=_(
+            "Comma-separated fragments matched against the aircraft model "
+            "(e.g. 'mavic, matrice'). Used to check operator–aircraft fit."
+        ),
+    )
+
+    class Meta:
+        verbose_name = _("qualification type")
+        verbose_name_plural = _("qualification types")
+
+    def __str__(self):
+        return self.name
+
+    def keyword_list(self):
+        return [k.strip().lower() for k in self.model_keywords.split(",") if k.strip()]
+
+
 class Qualification(BaseModel):
     operator = models.ForeignKey(
         Operator, on_delete=models.PROTECT, related_name="qualifications"
     )
-    qualification_type = models.CharField(max_length=150)
+    qualification_type = models.ForeignKey(
+        QualificationType,
+        on_delete=models.PROTECT,
+        related_name="qualifications",
+    )
     issue_date = models.DateField()
     expiry_date = models.DateField(null=True, blank=True)
 

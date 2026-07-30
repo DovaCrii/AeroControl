@@ -7,7 +7,12 @@ import pytest
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import call_command
 
-from apps.registry.models import CostCenter, Operator, Qualification
+from apps.registry.models import (
+    CostCenter,
+    Operator,
+    Qualification,
+    QualificationType,
+)
 from apps.workboard.models import KanbanBoard, KanbanStage, KanbanTask
 from .models import Alert, AlertRule, Document, DocumentType
 
@@ -101,7 +106,9 @@ def test_generate_alerts_creates_linked_task_with_urgency_priority():
     )
     qualification = Qualification.objects.create(
         operator=operator,
-        qualification_type="Night rating",
+        qualification_type=QualificationType.objects.get_or_create(
+            code="night-rating", defaults={"name": "Night rating"}
+        )[0],
         issue_date=date(2026, 1, 1),
         expiry_date=timezone.localdate() - timedelta(days=1),  # already expired
     )
@@ -127,7 +134,9 @@ def test_generate_alerts_task_creation_is_idempotent():
     )
     Qualification.objects.create(
         operator=operator,
-        qualification_type="Night rating",
+        qualification_type=QualificationType.objects.get_or_create(
+            code="night-rating", defaults={"name": "Night rating"}
+        )[0],
         issue_date=date(2026, 1, 1),
         expiry_date=timezone.localdate() + timedelta(days=3),
     )
@@ -149,7 +158,9 @@ def test_rule_without_kanban_flag_creates_no_task():
     )
     Qualification.objects.create(
         operator=operator,
-        qualification_type="Night rating",
+        qualification_type=QualificationType.objects.get_or_create(
+            code="night-rating", defaults={"name": "Night rating"}
+        )[0],
         issue_date=date(2026, 1, 1),
         expiry_date=timezone.localdate() + timedelta(days=3),
     )
@@ -174,7 +185,9 @@ def test_resolving_alert_moves_linked_task_to_completed_stage():
     )
     Qualification.objects.create(
         operator=operator,
-        qualification_type="Night rating",
+        qualification_type=QualificationType.objects.get_or_create(
+            code="night-rating", defaults={"name": "Night rating"}
+        )[0],
         issue_date=date(2026, 1, 1),
         expiry_date=timezone.localdate() + timedelta(days=3),
     )

@@ -63,7 +63,9 @@ def dashboard(request):
     if selected_cost_center:
         expiring = expiring.filter(operator__cost_center=selected_cost_center)
     expiring_count = expiring.count()
-    expirations = expiring.select_related("operator").order_by("expiry_date")[:10]
+    expirations = expiring.select_related("operator", "qualification_type").order_by(
+        "expiry_date"
+    )[:10]
 
     # --- Kanban stages (archived tasks must not inflate the counts) ---
     stages = KanbanStage.objects.filter(is_active=True).annotate(

@@ -574,7 +574,7 @@ class UnifiedCalendarEventsView(CalendarAccessMixin, View):
         if "qualification" in selected_types:
             qualifications = Qualification.objects.filter(
                 expiry_date__range=(start, end), is_active=True
-            ).select_related("operator")
+            ).select_related("operator", "qualification_type")
             if tenant_ids is not None:
                 qualifications = qualifications.filter(
                     operator__tenant_id__in=tenant_ids
@@ -758,6 +758,7 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
             OperationalTenant,
             TenantMembership,
         )
+        from apps.registry.models import QualificationType
         from apps.workboard.models import KanbanBoard, KanbanLabel, KanbanStage
 
         sections = [
@@ -800,6 +801,13 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
                         "alertrule-list",
                         AlertRule,
                         icon="bell",
+                    ),
+                    self.item(
+                        _("Qualification types"),
+                        _("Operator ratings and the aircraft models they cover."),
+                        "qualificationtype-list",
+                        QualificationType,
+                        icon="tag",
                     ),
                 ],
             },

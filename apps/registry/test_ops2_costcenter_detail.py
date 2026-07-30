@@ -18,6 +18,7 @@ from apps.registry.models import (
     Operator,
     OperatorAssignment,
     Qualification,
+    QualificationType,
     ResourceMovementLog,
 )
 
@@ -72,7 +73,7 @@ class TestTeamTab:
         )
         Qualification.objects.create(
             operator=expired_op,
-            qualification_type="RPA",
+            qualification_type=QualificationType.objects.create(code="rpa", name="RPA"),
             issue_date=TODAY - timedelta(days=800),
             expiry_date=TODAY - timedelta(days=1),
         )

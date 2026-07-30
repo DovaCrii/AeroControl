@@ -9,7 +9,12 @@ from django.core.management import call_command
 from django.test import Client
 from django.urls import reverse
 
-from apps.registry.models import CostCenter, Operator, Qualification
+from apps.registry.models import (
+    CostCenter,
+    Operator,
+    Qualification,
+    QualificationType,
+)
 from apps.workboard.models import KanbanTask
 from .models import Alert, AlertRule
 
@@ -20,9 +25,12 @@ def qualification(db):
     operator = Operator.objects.create(
         employee_id="P1", full_name="Pilot One", cost_center=cost_center
     )
+    qualification_type = QualificationType.objects.create(
+        code="dgac-credential", name="Credencial DGAC"
+    )
     return Qualification.objects.create(
         operator=operator,
-        qualification_type="Credencial DGAC",
+        qualification_type=qualification_type,
         issue_date=date(2026, 1, 1),
         expiry_date=timezone.localdate() + timedelta(days=3),
     )

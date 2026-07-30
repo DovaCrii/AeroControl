@@ -3075,6 +3075,43 @@ msgstr "Seguro"
 msgid "Importing…"
 msgstr "Importando…"
 
+#: .\apps\registry\models.py:280
+msgid "qualification type"
+msgstr "tipo de habilitación"
+
+#: .\apps\registry\models.py:281
+msgid "qualification types"
+msgstr "tipos de habilitación"
+
+#: .\apps\registry\models.py:295
+msgid "Aircraft model keywords"
+msgstr "Palabras clave de modelo de aeronave"
+
+#: .\apps\registry\models.py:297
+msgid ""
+"Comma-separated fragments matched against the aircraft model (e.g. 'mavic, "
+"matrice'). Used to check operator–aircraft fit."
+msgstr ""
+"Fragmentos separados por coma que se comparan con el modelo de la aeronave "
+"(p. ej. 'mavic, matrice'). Se usa para verificar la compatibilidad "
+"operador-aeronave."
+
+#: .\apps\registry\forms.py:261
+msgid "No qualification types configured yet. Create one first."
+msgstr "Aún no hay tipos de habilitación configurados. Crea uno primero."
+
+#: .\apps\core\views.py:806
+msgid "Qualification types"
+msgstr "Tipos de habilitación"
+
+#: .\apps\core\views.py:807
+msgid "Operator ratings and the aircraft models they cover."
+msgstr "Habilitaciones del operador y los modelos de aeronave que cubren."
+
+#: .\apps\registry\forms.py:31
+msgid "Contract administrator name"
+msgstr "Nombre de Administrador de contrato"
+
 #~ msgid "Flight date"
 #~ msgstr "Fecha de vuelo"
 
