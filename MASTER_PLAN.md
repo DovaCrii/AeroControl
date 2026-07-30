@@ -525,16 +525,16 @@ documentos clave de la aeronave.
 
 | ID | Est. | Prio | Tarea | Nota |
 |---|:--:|:--:|---|---|
-| LV-12a | ⬜ | P2 | **`Qualification.issue_date` opcional.** El usuario indicó que la fecha de emisión "no es necesaria". Volverla `null/blank` (hoy es requerida) + ajustar form. | Migración |
-| LV-12b | ⬜ | P2 | **Generar las habilitaciones de cada operador** parseando su `authorizations` (texto libre, p. ej. "Matrice 300 Rtk/ 210 Rtk/ 600 - Mavic 3 - Phantom4") y estandarizándolo al catálogo `QualificationType` por `model_keywords` (matrice/mavic/phantom/…). Un operador puede tener **varias** (ya soportado). Comando idempotente `seed_operator_qualifications`; sin fecha de emisión ni vencimiento. **Reporta los fragmentos no reconocidos** para ampliar el catálogo (aparecen modelos fuera del catálogo actual: Mini, DJI genérico, etc.). | Cmd + estandarización |
-| LV-12c | ⬜ | P3 | **Historial de cambios de habilitación**: el usuario quiere que quede registro si una habilitación cambia al editar (equipo nuevo). Hoy el `AuditEvent` (middleware) ya registra toda mutación de `Qualification` y es visible en el centro de administración → auditoría. Evaluar si basta eso o se necesita un historial dedicado por operador (tipo `PermissionHistory`). | **Decisión de diseño** — audit trail ya cubre lo básico |
+| LV-12a | ✅ | P2 | **`Qualification.issue_date` opcional** (`null/blank`, migración `0016`). | 2026-07-30 |
+| LV-12b | ✅ | P2 | **Comando `seed_operator_qualifications`**: parsea `Operator.authorizations` y lo estandariza al catálogo `QualificationType` por `model_keywords`, creando una `Qualification` por modelo reconocido (varias por operador), sin fecha de emisión ni vencimiento. Idempotente. **Reporta los operadores cuyo texto no matcheó ningún tipo** para ampliar el catálogo. | Cmd |
+| LV-12c | ✅ | P3 | **Historial vía audit trail** (decisión del usuario): toda edición/creación/borrado de `Qualification` ya queda en `AuditEvent`, visible y filtrable en Centro de administración → Auditoría. No se agregó modelo dedicado. | — |
 
 **Panel lateral (sidebar)** (`templates/base.html`):
 
 | ID | Est. | Prio | Tarea | Nota |
 |---|:--:|:--:|---|---|
-| LV-13a | ⬜ | P2 | **Reorganizar el flujo del sidebar** — "pierde sentido/rigidez como está". Hoy: NAVEGACIÓN · DATOS MAESTROS (CC/Aeronaves/Operadores) · PLANIFICACIÓN (planif. recursos, asignaciones op/aeronave, movimientos, geoespacial, **Habilitaciones**) · CUMPLIMIENTO · OPERACIONES · MANTENIMIENTO. Habilitaciones quedó mal ubicada bajo Planificación (es dato maestro del operador). Requiere **propuesta de reagrupación** antes de tocar. | **Propuesta de diseño** |
-| LV-13b | ⬜ | P3 | **Cambiar el icono de "Habilitaciones"** (hoy una estrella) por uno de tipo skill/habilidad. Quick win. | Icono SVG |
+| LV-13a | ✅ | P2 | **Sidebar reagrupado por flujo operativo** (opción elegida por el usuario): DATOS MAESTROS (CC · Aeronaves · Operadores · **Habilitaciones**) · PLANIFICACIÓN (asignaciones op/aeronave · movimientos · geoespacial) · OPERACIONES · MANTENIMIENTO · CUMPLIMIENTO · ADMIN. Habilitaciones movida a Datos maestros; la **"Planificación de recursos"** (modelo `Assignment` legado, reemplazado por las asignaciones por-recurso) **retirada del nav** (ruta intacta). | `templates/base.html` |
+| LV-13b | ✅ | P3 | **Icono de "Habilitaciones"** cambiado de estrella a una medalla/insignia (skill). | — |
 
 *(Pendiente de más issues del usuario — esta sección irá creciendo.)*
 

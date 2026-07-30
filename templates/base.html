@@ -57,22 +57,22 @@
       {% with request.resolver_match.url_name as url_name %}
       <a href="{% url 'dashboard' %}" class="nav-item nav-overview {% if url_name == 'dashboard' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>{% translate "Dashboard" %}</a>
 
+      {% comment %}LV-13a (2026-07-30): sidebar regrouped by operational flow.
+      Qualifications moved here (operator master data, not planning); the legacy
+      "Resource planning" (old single Assignment model, superseded by the
+      per-resource assignments below) dropped from the nav -- route stays.
+      Compliance moved after Operations/Maintenance.{% endcomment %}
       <span class="sidebar-label">{% translate "Master data" %}</span>
       <a href="{% url 'costcenter-list' %}" class="nav-item nav-registry {% if url_name == 'costcenter-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V5l8-3 8 3v16"/><path d="M9 21v-4h6v4M8 8h.01M12 8h.01M16 8h.01M8 12h.01M12 12h.01M16 12h.01"/></svg>{% translate "Cost Centers" %}</a>
       <a href="{% url 'aircraft-list' %}" class="nav-item nav-registry {% if url_name == 'aircraft-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="6" height="6" rx="2"/><path d="M9.4 9.4 6.6 6.6M14.6 9.4l2.8-2.8M9.4 14.6l-2.8 2.8M14.6 14.6l2.8 2.8"/><circle cx="4.8" cy="4.8" r="2.2"/><circle cx="19.2" cy="4.8" r="2.2"/><circle cx="4.8" cy="19.2" r="2.2"/><circle cx="19.2" cy="19.2" r="2.2"/></svg>{% translate "Aircraft" %}</a>
       <a href="{% url 'operator-list' %}" class="nav-item nav-registry {% if url_name == 'operator-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg>{% translate "Operators" %}</a>
+      <a href="{% url 'qualification-list' %}" class="nav-item nav-registry {% if url_name == 'qualification-list' or url_name == 'qualification-detail' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="5"/><path d="M9.5 13.2 8 21l4-2.2L16 21l-1.5-7.8"/><path d="M12 6.7l.9 1.8 2 .3-1.45 1.4.35 2L12 11.3l-1.8.9.35-2L9.1 8.8l2-.3z"/></svg>{% translate "Qualifications" %}</a>
+
       <span class="sidebar-label">{% translate "Planning" %}</span>
-      <a href="{% url 'assignment-list' %}" class="nav-item nav-registry {% if url_name == 'assignment-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3.5v17"/><path d="M7.5 7.5h9M7.5 12h5.5M7.5 16.5h11"/></svg>{% translate "Resource planning" %}</a>
       <a href="{% url 'operatorassignment-list' %}" class="nav-item nav-registry {% if url_name == 'operatorassignment-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg>{% translate "Operator assignments" %}</a>
       <a href="{% url 'aircraftassignment-list' %}" class="nav-item nav-registry {% if url_name == 'aircraftassignment-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="6" height="6" rx="2"/><path d="M9.4 9.4 6.6 6.6M14.6 9.4l2.8-2.8M9.4 14.6l-2.8 2.8M14.6 14.6l2.8 2.8"/><circle cx="4.8" cy="4.8" r="2.2"/><circle cx="19.2" cy="4.8" r="2.2"/><circle cx="4.8" cy="19.2" r="2.2"/><circle cx="19.2" cy="19.2" r="2.2"/></svg>{% translate "Aircraft assignments" %}</a>
       <a href="{% url 'resourcemovementlog-list' %}" class="nav-item nav-registry {% if url_name == 'resourcemovementlog-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>{% translate "Resource movements" %}</a>
       <a href="{% url 'geo-plan-list' %}" class="nav-item nav-registry {% if url_name == 'geo-plan-list' or url_name == 'geo-plan-detail' or url_name == 'geo-plan-import' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2z"/><path d="M9 3v16M15 5v16"/></svg>{% translate "Geospatial planning" %}</a>
-      <a href="{% url 'qualification-list' %}" class="nav-item nav-registry {% if url_name == 'qualification-list' or url_name == 'qualification-detail' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 21.5 7.1 18.2 8 12.7l-4-3.9L9.5 8z"/></svg>{% translate "Qualifications" %}</a>
-
-      <span class="sidebar-label">{% translate "Compliance" %}</span>
-      <a href="{% url 'document-list' %}" class="nav-item nav-compliance {% if url_name == 'document-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>{% translate "Documents" %}</a>
-      <a href="{% url 'alert-list' %}" class="nav-item nav-compliance {% if url_name == 'alert-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 22h4"/></svg>{% translate "Alerts" %} {% include "core/_alert_badge.html" %}</a>
-      <a href="{% url 'compliance-report' %}" class="nav-item nav-compliance {% if url_name == 'compliance-report' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="M8 16v-4M12 16V8M16 16v-6"/></svg>{% translate "Report" %}</a>
 
       <span class="sidebar-label">{% translate "Operations" %}</span>
       <a href="{% url 'permission-list' %}" class="nav-item nav-operations {% if url_name == 'permission-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 13l2 2 4-4"/></svg>{% translate "Permissions" %}</a>
@@ -81,6 +81,11 @@
 
       <span class="sidebar-label">{% translate "Maintenance" %}</span>
       <a href="{% url 'maintenance-list' %}" class="nav-item nav-maintenance {% if url_name == 'maintenance-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4.5" width="14" height="16.5" rx="2"/><path d="M9.5 4.5V3h5v1.5"/><path d="M8.75 13l2 2 3.5-3.5"/></svg>{% translate "Records" %}</a>
+
+      <span class="sidebar-label">{% translate "Compliance" %}</span>
+      <a href="{% url 'document-list' %}" class="nav-item nav-compliance {% if url_name == 'document-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>{% translate "Documents" %}</a>
+      <a href="{% url 'alert-list' %}" class="nav-item nav-compliance {% if url_name == 'alert-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 22h4"/></svg>{% translate "Alerts" %} {% include "core/_alert_badge.html" %}</a>
+      <a href="{% url 'compliance-report' %}" class="nav-item nav-compliance {% if url_name == 'compliance-report' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="M8 16v-4M12 16V8M16 16v-6"/></svg>{% translate "Report" %}</a>
 
       {% comment %}LV-7 (2026-07-30): hidden by product decision until the
       calendar-view redundancy (LV-6, Gantt) is redesigned. The 'kanban' route

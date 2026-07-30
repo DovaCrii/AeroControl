@@ -176,6 +176,66 @@ class TestBackfillResourceAssignments:
         assert OperatorAssignment.objects.count() == 1
 
 
+# ── LV-12: qualifications from Operator.authorizations ────────────────────────
+class TestSeedOperatorQualifications:
+    @pytest.mark.django_db
+    def test_creates_qualifications_from_authorizations_text(self, db):
+        from django.core.management import call_command
+
+        cc = CostCenter.objects.create(code="CC1", name="One")
+        QualificationType.objects.create(
+            code="mavic", name="Serie Mavic", model_keywords="mavic"
+        )
+        QualificationType.objects.create(
+            code="matrice", name="Serie Matrice", model_keywords="matrice"
+        )
+        operator = Operator.objects.create(
+            employee_id="OP-1",
+            full_name="Franco",
+            cost_center=cc,
+            authorizations="Matrice 300 Rtk/ 210 Rtk/ 600 - Mavic 3 - Phantom4",
+        )
+
+        call_command("seed_operator_qualifications")
+
+        codes = set(
+            Qualification.objects.filter(operator=operator).values_list(
+                "qualification_type__code", flat=True
+            )
+        )
+        assert codes == {"mavic", "matrice"}  # phantom not in the catalog here
+        q = Qualification.objects.filter(operator=operator).first()
+        assert q.issue_date is None and q.expiry_date is None
+
+    @pytest.mark.django_db
+    def test_is_idempotent(self, db):
+        from django.core.management import call_command
+
+        cc = CostCenter.objects.create(code="CC1", name="One")
+        QualificationType.objects.create(
+            code="mavic", name="Serie Mavic", model_keywords="mavic"
+        )
+        Operator.objects.create(
+            employee_id="OP-1",
+            full_name="F",
+            cost_center=cc,
+            authorizations="Mavic 3",
+        )
+        call_command("seed_operator_qualifications")
+        call_command("seed_operator_qualifications")
+        assert Qualification.objects.count() == 1
+
+    @pytest.mark.django_db
+    def test_qualification_issue_date_is_optional(self, db):
+        cc = CostCenter.objects.create(code="CC1", name="One")
+        operator = Operator.objects.create(
+            employee_id="OP-1", full_name="F", cost_center=cc
+        )
+        qt = QualificationType.objects.create(code="mavic", name="Serie Mavic")
+        q = Qualification.objects.create(operator=operator, qualification_type=qt)
+        assert q.issue_date is None
+
+
 # ── LV-10a: CC code prefix ────────────────────────────────────────────────────
 class TestCostCenterCodePrefix:
     @pytest.mark.django_db
