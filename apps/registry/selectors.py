@@ -5,9 +5,12 @@ standalone movement log list cannot drift apart on how a row's bare
 resource_id gets resolved to a human label.
 """
 
-from django.db.models import Q
+from collections import defaultdict
 
-from .models import Aircraft, Operator, ResourceMovementLog
+from django.db.models import Q
+from django.utils import timezone
+
+from .models import Aircraft, Operator, Qualification, ResourceMovementLog
 
 
 def label_movements(entries):
@@ -50,3 +53,43 @@ def movements_for_cost_center(cost_center, limit=100):
         Q(from_cost_center=cost_center) | Q(to_cost_center=cost_center)
     ).select_related("changed_by_user", "from_cost_center", "to_cost_center")[:limit]
     return label_movements(queryset)
+
+
+def operator_aircraft_compatibility_gaps(operators, aircraft_fleet):
+    """B4.4: (operator, aircraft) pairs from these rosters where the operator
+    holds no current qualification covering that aircraft's model.
+
+    Non-blocking by design (agreed with the user 2026-07-30): a flight
+    permission can still be created with a gap, this only flags it. Matched
+    against `Aircraft.model` -- `Aircraft.type` is uniformly "RPA" in the real
+    fleet and carries no signal to compare against.
+
+    Returns a list of (operator, aircraft) tuples, empty when either roster is
+    empty, no qualification type declares `model_keywords`, or every pair is
+    covered.
+    """
+    operators = list(operators)
+    aircraft_fleet = list(aircraft_fleet)
+    if not operators or not aircraft_fleet:
+        return []
+
+    today = timezone.localdate()
+    current_qualifications = (
+        Qualification.objects.filter(operator__in=operators, is_active=True)
+        .filter(Q(expiry_date__isnull=True) | Q(expiry_date__gte=today))
+        .select_related("qualification_type")
+    )
+    keywords_by_operator = defaultdict(list)
+    for qualification in current_qualifications:
+        keywords_by_operator[qualification.operator_id].extend(
+            qualification.qualification_type.keyword_list()
+        )
+
+    gaps = []
+    for operator in operators:
+        keywords = keywords_by_operator.get(operator.pk, [])
+        for aircraft in aircraft_fleet:
+            model = (aircraft.model or "").lower()
+            if not any(keyword in model for keyword in keywords):
+                gaps.append((operator, aircraft))
+    return gaps
