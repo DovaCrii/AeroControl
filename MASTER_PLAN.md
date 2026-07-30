@@ -397,6 +397,45 @@ abierto (hoy sí es cierto, cerrado en `3611d06`).
 
 **Nota de causa raíz:** R.7 tardó dos intentos porque `[data-theme="dark"] .sidebar-label` ganaba por especificidad sobre la regla de tokens más nueva. Mientras `app.css` conserve dos generaciones superpuestas (R.10/T5.1), este tipo de corrección seguirá necesitando editar el override antiguo además del nuevo.
 
+### Revisión en vivo 2026-07-30 — issues de formularios/UX `🔄 EN CAPTURA`
+
+> Feedback del usuario mirando la app **ya desplegada** (VM `p340`, acceso
+> público por Funnel, datos reales). Se va poblando a medida que el usuario sube
+> issues/recomendaciones; cada uno se vuelve tarea aquí **antes** de tocar
+> código. Mismo espíritu que FASE 5R.
+
+**Formulario de carga de documentos** (`apps/compliance/forms.py::DocumentForm`,
+modal "Documentos"):
+
+| ID | Est. | Prio | Tarea | Nota |
+|---|:--:|:--:|---|---|
+| LV-1 | ⬜ | P2 | **"Tipo de documento" confuso / vacío.** Es un catálogo (`DocumentType`), obligatorio, pero el desplegable sale vacío porque aún no hay tipos creados → parece un campo roto. Sembrar un catálogo inicial (comando/fixture con los tipos de [docs/compliance-setup.md](docs/compliance-setup.md): credencial DGAC, aeronavegabilidad, seguro RC, etc.) + texto de ayuda + estado vacío con enlace a "crear tipo". | No es campo libre |
+| LV-2 | ⬜ | P2 | **Título libre → estandarizar.** Hoy `title` es texto libre y quedará inconsistente entre usuarios/sesiones. Decidir política (opciones abajo) e implementarla. | Requiere decisión del usuario |
+| LV-3 | ⬜ | P3 | **Sección de comentarios.** Exponer en el form el campo `notes` (ya existe en `BaseModel`; hoy no se renderiza). Quick win, bajo riesgo. | — |
+
+**Opciones para LV-2 (estandarizar el título):**
+- **A (recomendada):** **autogenerar** el título desde tipo + entidad + fecha de emisión (p. ej. "Credencial DGAC · J. Pérez · 2026-03"); campo prellenado y editable. Consistente sin fricción.
+- **B:** título **opcional**; si se deja vacío, se autogenera como en A.
+- **C:** dejarlo libre con texto de ayuda y convención sugerida (el más débil; no garantiza consistencia).
+
+**Lista de aeronaves** (`apps/registry` lista de `Aircraft`):
+
+| ID | Est. | Prio | Tarea | Nota |
+|---|:--:|:--:|---|---|
+| LV-4 | ⬜ | P2 | **Vencimiento del seguro en la lista de aeronaves.** Mostrar la fecha de término del seguro como columna, **marcar visualmente cuando esté vencido** (badge/color + accesible, no solo color) y por vencer (≤30/≤15/≤7 d, misma escala que el resto). El seguro es un `Document` (tipo "Seguro RC") colgado de la aeronave; requiere resolver "el seguro vigente" de cada aeronave sin N+1 (subquery/prefetch del documento actual de ese tipo). | Ver decisión abajo |
+
+**Decisión para LV-4 (cómo se identifica "el seguro"):**
+- **A (recomendada):** marcar un `DocumentType` como el del seguro (flag `is_insurance` o un `code` convenido), y la lista toma el documento vigente de ese tipo. Explícito y extensible a otros vencimientos clave (aeronavegabilidad).
+- **B:** columna genérica "próximo vencimiento" = el documento de la aeronave que vence antes, sin distinguir tipo. Menos preciso pero sin catálogo especial.
+
+*Alertas:* el vencimiento del seguro **ya queda cubierto** por la regla
+`compliance.document / expiry_date` (LV/compliance-setup); lo nuevo de LV-4 es
+**surfacing en la lista + marca visual**, no un motor de alertas aparte.
+Generalizable: la misma columna+badge sirve para aeronavegabilidad y otros
+documentos clave de la aeronave.
+
+*(Pendiente de más issues del usuario — esta sección irá creciendo.)*
+
 ### FASE 6 — Nuevas funcionalidades `⏸ requiere FASE 0-3 cerradas`
 
 | ID | Est. | Prio | Tarea | Esf. | Dep. |
