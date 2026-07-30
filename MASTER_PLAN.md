@@ -42,18 +42,24 @@ bloques grandes de producto que le siguieron: **BLOQUE GEO** (MVP GEO-0..GEO-10
 queda ya no es ruta automática: cada ítem exige o una **decisión de negocio** o
 una **instrucción explícita**. Orden recomendado de lo pendiente:
 
-Orden acordado con el usuario (2026-07-29):
+**Orden vigente acordado con el usuario (actualizado 2026-07-30):**
 
-1. **V2 de GEO** (GEO-11..GEO-14) y/o los bloques DIFERIDOS (BLOQUE 3 UX Kanban,
-   BLOQUE 5 centro de administración, B4.3/B4.4, B6.3 asistente IA): todos
-   esperan **propuesta de diseño primero** (el agente la presenta antes de
-   implementar).
-2. **Cargar datos reales** — *al final*, por decisión del usuario. 0 documentos,
-   0 reglas: todo BLOQUE 2/6 está construido y sin nada que procesar. El
-   dashboard **guía los tres pasos** (tarjeta "Activa el monitoreo de
-   cumplimiento"): tipo de documento → documentos con vencimiento → una regla →
-   `generate_alerts`; recién entonces asignar operadores responsables y validar
-   el digest. *(Decisión de negocio del usuario, no del agente.)*
+1. **Ronda de revisión en vivo (LV-1..LV-10)** — ✅ cerrada salvo LV-6 (Gantt,
+   en standby). Ver la sección "Revisión en vivo 2026-07-30" abajo.
+2. **BLOQUE 4** (B4.3/B4.4 habilitaciones + compatibilidad) — ✅ completo.
+3. **GEO V2** — **siguiente foco**. El usuario quiere revisarlo a fondo (está
+   en operación y le interesa) antes de decidir los ítems diferidos (GEO-12b
+   edición de ExtendedData, GEO-13b StyleMap/XSD, GEO-14 hooks DJI). Arrancar
+   con una **revisión del estado actual + propuesta de diseño** de lo que
+   quede por hacer, no implementar a ciegas.
+4. **Deuda de arquitectura** — después de GEO V2: T3.2 (tenancy, el bloqueador
+   real, XL) y el resto de FASE 1/4 y R.10/T5.1.
+5. **Cargar más datos reales / activar cumplimiento** — decisión de negocio del
+   usuario, en paralelo cuando quiera (guía en docs/compliance-setup.md).
+
+*(Orden anterior 2026-07-29: GEO V2 y/o bloques diferidos con propuesta de
+diseño primero; carga de datos al final. Se conserva la disciplina de "diseño
+antes de implementar" para todo lo diferido.)*
 
 **Cerrado el 2026-07-29 (bloque de seguridad V.10-V.12 completo):** GEO-0b
 (auditoría trazable + handler de error del Kanban), V.11/T5.9 (vendorización +
@@ -488,24 +494,24 @@ documentos clave de la aeronave.
 
 | ID | Est. | Prio | Tarea | Nota |
 |---|:--:|:--:|---|---|
-| LV-8a | ⬜ | P2 | **Tipo "Por definir / pendiente"**: agregar un `maintenance_type` para mantenciones que se sabe que hacen falta pero aún no están especificadas ("algunas aún no tienen"). Distinto del `status` "pending" (que es una etapa del flujo); este es un tipo que admite que falten datos. | Choice nuevo en `MaintenanceRecord.TYPES` |
-| LV-8b | ⬜ | P2 | **`scheduled_date` y `performed_by` opcionales**: hoy son obligatorios; una mantención "por definir" no tiene fecha ni responsable todavía. Volverlos `null/blank` y ajustar el form. | Migración (cambio a nullable) |
-| LV-8c | ⬜ | P3 | **Quitar el campo `cost`/Costo**: no es relevante para esta operación. Verificar antes que no se use en reportes/exports (`apps/compliance/reports.py`, `apps/core/exports`). | Migración (drop column) |
-| LV-8d | ⬜ | P1 | **i18n**: el label "Maintenance type" (y posiblemente otros del form de mantenimiento) se muestran en inglés dentro de la UI en español — falta en el catálogo. Alinear con el guard de `apps/core/test_translations.py`. | Traducción |
-| LV-8e | ⬜ | P2 | **Alerta por datos faltantes** (cruza con alertas): una mantención sin `scheduled_date` (o sin `performed_by`) debe **generar una alerta** justamente por esa falta. **Requiere diseño**: el motor actual (`generate_alerts` + `AlertRule`) solo vigila *vencimiento* de un campo de fecha, no *ausencia* de datos — es una semántica nueva. Opciones: (A) un chequeo dedicado en `generate_alerts` para mantenciones incompletas; (B) surfacing en el dashboard/reporte de cumplimiento en vez del motor de alertas. | **Decisión de diseño** |
-| LV-8f | ⬜ | P3 | **Cruce con reportes**: las mantenciones incompletas/por definir deben aparecer como brecha abierta en el reporte de cumplimiento y/o el informe ejecutivo. | Depende de LV-8a/8e |
+| LV-8a | ✅ | P2 | **Tipo "Por definir"** (`to_be_defined`) agregado a `MaintenanceRecord.TYPES`, listado primero (estado "inbox" antes de planificar). | 2026-07-30 |
+| LV-8b | ✅ | P2 | **`scheduled_date` y `performed_by` opcionales** (`null/blank`, migración `0006`). Al *completar* siguen exigiéndose (`MaintenanceCompletionForm`), solo se relajan al crear/por-definir. | — |
+| LV-8c | ✅ | P3 | **Campo `cost` eliminado** del modelo/form/detalle/completar (migración `0006`). Confirmado que no se usaba en `reports.py`. | — |
+| LV-8d | ✅ | P1 | **i18n**: "Maintenance type" y labels del form de mantenimiento explicitados y traducidos; guard de traducciones verde. | — |
+| LV-8e | ✅ | P2 | **Datos faltantes surfaced** (opción B elegida por el usuario): tarjeta "Mantenciones por definir" en el dashboard (solo si >0, con enlace) y `MaintenanceRecord.is_incomplete`. Se descartó crear un objeto Alert para no distorsionar el motor (solo vencimientos). | — |
+| LV-8f | ✅ | P3 | **Cruce con reporte**: `build_compliance_report` incluye `incomplete_maintenance` (scopeado por CC) y `report.html` lo muestra. | — |
 
 **Listas genéricas con columnas pobres** (`templates/generic/_table_body.html`, usada por `OperatorList`, `CostCenterList` y otras):
 
 | ID | Est. | Prio | Tarea | Nota |
 |---|:--:|:--:|---|---|
-| LV-9 | ⬜ | P2 | **Las listas genéricas desaprovechan el espacio y dan poca información.** Afecta a **operadores** y **centros de costo** (mismo patrón): 3 columnas genéricas (Nombre, **Creado** — sin valor operativo, Estado) y nada útil de un vistazo. Para operadores faltan: credencial DGAC, CC actual, habilitación vigente/vencida (ya hay B4.3). Para CC faltan: responsable, nº de operadores/aeronaves asignados, permisos/documentos por vencer. Rediseñar cada lista con columnas útiles + densidad, plantilla propia por modelo (patrón `aircraft_list.html`), y **proponer vistas alternativas** (tarjetas, agrupación). Requiere **propuesta de diseño** por lista antes de implementar. | **Propuesta de diseño** primero; empezar por operadores y CC |
+| LV-9 | ✅ | P2 | **Listas enriquecidas** (opción "tabla enriquecida" elegida por el usuario). **Operadores** (`operator_list.html`): Nombre · RUT · Credencial DGAC · Centro de costo · Habilitación (badge vigente/vencida vía B4.3) — anotado en una consulta (`current_quals`/`expired_quals`). **Centros de costo** (`costcenter_list.html`): Código · Nombre · Admin. de contrato · Nº operadores · Nº aeronaves — conteos anotados. `OperatorList`/`CostCenterList` ahora son clases explícitas que sobreescriben las genéricas. "Docs por vencer" en la lista de CC se omitió a propósito (cálculo GFK caro por fila; vive en el reporte y en la ficha del CC). | 2026-07-30 |
 
 **Formulario de centro de costo** (`apps/registry` `CostCenterForm`):
 
 | ID | Est. | Prio | Tarea | Nota |
 |---|:--:|:--:|---|---|
-| LV-10a | ⬜ | P2 | **Prefijo "CC" fijo en el código.** El campo `code` debe llevar siempre un prefijo `CC` no editable antes del número (hoy es "410", "738" libres). Decidir: (A) input-group con prefijo visual "CC" y almacenar `CC738`; (B) prefijo solo de display y seguir guardando el número. **Requiere decisión + migración de datos** (los 11 CC existentes están sin prefijo; hay que normalizarlos o el `unique` y el `__str__` quedan inconsistentes). | **Decisión + migración** |
+| LV-10a | ✅ | P2 | **Prefijo "CC" fijo en el código** (opción A elegida: se almacena `CC738`). `CostCenterForm.clean_code()` normaliza cualquier entrada a `CC`+número (quita un `CC` que el usuario haya tecleado, exige el número); migración de datos `0015` prefija los 11 códigos existentes (idempotente y reversible). Es la fuente de verdad en lista, `__str__`, exports y búsqueda. | 2026-07-30 |
 | LV-10b | ✅ | P3 | **Renombrar el label "Responsable"** del formulario a **"Nombre de Administrador de contrato"** (campo `responsible`, texto libre). | Solo label del form (cerrado con B4.3, `6-…`) |
 
 *(Pendiente de más issues del usuario — esta sección irá creciendo.)*

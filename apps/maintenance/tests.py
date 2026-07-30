@@ -67,7 +67,6 @@ def test_completing_maintenance_with_required_fields_records_history():
         {
             "completed_date": "2026-07-24",
             "performed_by": "Contract workshop",
-            "cost": "150.00",
             "notes": "Replaced worn part.",
         },
     )
@@ -107,7 +106,7 @@ def test_record_detail_shows_completion_form_only_while_in_progress():
 
     assert response.status_code == 200
     assert b'name="performed_by"' in response.content
-    assert b'name="cost"' in response.content
+    assert b'name="completed_date"' in response.content
 
 
 @pytest.mark.django_db

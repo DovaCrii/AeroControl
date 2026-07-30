@@ -90,7 +90,6 @@ class TestPublicURLs:
             description="Inspection",
             scheduled_date=date(2026, 7, 25),
             performed_by="Team",
-            cost=0,
         )
         board = KanbanBoard.objects.create(name="Calendar board")
         stage = KanbanStage.objects.create(board=board, name="Planned")

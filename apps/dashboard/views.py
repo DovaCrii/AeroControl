@@ -116,6 +116,16 @@ def dashboard(request):
         MaintenanceRecord.TYPES,
     )
 
+    # --- LV-8e: maintenance that still needs planning ---
+    # "To be defined" or missing a scheduled date, and not yet completed. The
+    # alert engine only watches date *expiry*, so this absence is surfaced here
+    # (and in the compliance report) instead of as an Alert object.
+    incomplete_maintenance_count = (
+        maintenance_qs.filter(status__in=["pending", "in_progress"])
+        .filter(Q(maintenance_type="to_be_defined") | Q(scheduled_date__isnull=True))
+        .count()
+    )
+
     # --- Chart: Tasks by priority ---
     # Not filtered by cost center: Kanban boards scope by tenant/board access,
     # a different axis (apps/core/views.py's calendar keeps the same split),
@@ -158,6 +168,7 @@ def dashboard(request):
         "aircraft_count": aircraft_count,
         "operator_count": operator_count,
         "alert_count": alert_count,
+        "incomplete_maintenance_count": incomplete_maintenance_count,
         "expirations": expirations,
         "expiring_count": expiring_count,
         "stages": stages,

@@ -3120,6 +3120,30 @@ msgstr ""
 "%(operator)s no tiene una habilitación vigente que cubra: %(aircraft)s. El "
 "permiso se guardó igual; revisa las habilitaciones del operador."
 
+#: .\apps\maintenance\forms.py:22
+msgid "Maintenance type"
+msgstr "Tipo de mantenimiento"
+
+#: .\apps\maintenance\forms.py:28
+msgid "Leave blank for a 'to be defined' maintenance until it is planned."
+msgstr "Déjalo en blanco para una mantención 'por definir' hasta que se planifique."
+
+#: .\apps\maintenance\models.py:13
+msgid "To be defined"
+msgstr "Por definir"
+
+#: .\apps\registry\forms.py:50
+msgid "Enter the number only; the CC prefix is added automatically."
+msgstr "Ingresa solo el número; el prefijo CC se agrega automáticamente."
+
+#: .\apps\registry\forms.py:65
+msgid "Enter the cost-center number."
+msgstr "Ingresa el número del centro de costo."
+
+#: .\templates\compliance\report.html:54
+msgid "Maintenance to define"
+msgstr "Mantenciones por definir"
+
 #~ msgid "Flight date"
 #~ msgstr "Fecha de vuelo"
 
