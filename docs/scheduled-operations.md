@@ -64,6 +64,69 @@ Con el repositorio en `/opt/aerocontrol` y las variables en
 equivalente de `-EnvFile` en Windows. Igual que allá, cron arranca con un
 entorno mínimo: si se omite, los trabajos no encontrarán la configuración.
 
+## Linux (systemd — la VM p340)
+
+En la VM el servicio ya corre bajo systemd con `User=levdigital01` +
+`EnvironmentFile=/etc/aerocontrol.env` (systemd lee el archivo como root y luego
+baja al usuario, así los trabajos reciben los secretos sin poder leer el
+archivo). Los trabajos programados usan el mismo patrón con *timers*, más
+robustos que cron para esto (`Persistent=true` recupera una corrida perdida si
+la VM estaba apagada, y `journalctl` guarda la salida).
+
+Crear los `.service` (oneshot) y `.timer` — un par por trabajo. Ejecutar como
+root (pide `sudo`):
+
+```bash
+sudo bash -c '
+mkjob() {  # $1=nombre  $2=comando manage.py  $3=OnCalendar
+  cat >/etc/systemd/system/aerocontrol-$1.service <<EOF
+[Unit]
+Description=AeroControl $1
+After=network.target
+
+[Service]
+Type=oneshot
+User=levdigital01
+WorkingDirectory=/opt/aerocontrol
+EnvironmentFile=/etc/aerocontrol.env
+ExecStart=/home/levdigital01/.local/bin/uv run python manage.py $2
+EOF
+  cat >/etc/systemd/system/aerocontrol-$1.timer <<EOF
+[Unit]
+Description=AeroControl $1 (scheduled)
+
+[Timer]
+OnCalendar=$3
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+}
+mkjob alerts "generate_alerts"          "*-*-* 06:00:00"
+mkjob digest "send_alert_digest"        "*-*-* 07:00:00"
+mkjob backup "backup"                   "*-*-* 22:00:00"
+systemctl daemon-reload
+systemctl enable --now aerocontrol-alerts.timer aerocontrol-digest.timer aerocontrol-backup.timer
+'
+```
+
+Verificar y ver la próxima corrida:
+
+```bash
+systemctl list-timers 'aerocontrol-*' --all
+```
+
+Salida de la última ejecución de cualquiera de ellos:
+
+```bash
+journalctl -u aerocontrol-alerts.service -n 30 --no-pager
+```
+
+El informe ejecutivo semanal (`send_executive_report --period week`) se agrega
+igual, con `OnCalendar=Mon *-*-* 07:30:00`, cuando haya destinatarios en el
+grupo *Dirección*.
+
 ## Prueba antes de programar
 
 `send_alert_digest` acepta `--dry-run`, que imprime destinatarios y conteos sin
