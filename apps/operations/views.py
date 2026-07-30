@@ -23,6 +23,7 @@ from apps.core.views import (
 from .forms import FlightPermissionForm, FlightRecordForm
 from .models import FlightPermission, FlightRecord
 from apps.registry.models import Aircraft, CostCenter, Operator
+from apps.registry.selectors import operator_aircraft_compatibility_gaps
 
 
 class OList(CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListView):
@@ -109,15 +110,40 @@ class FlightPermissionList(
         return context
 
 
-FlightPermissionCreate = type(
-    "FlightPermissionCreate",
-    (OCreate,),
-    {
-        "model": FlightPermission,
-        "form_class": FlightPermissionForm,
-        "success_url_name": "permission-list",
-    },
-)
+class FlightPermissionCreate(OCreate):
+    model = FlightPermission
+    form_class = FlightPermissionForm
+    success_url_name = "permission-list"
+
+    def form_valid(self, form):
+        """B4.4: warn (do not block) when an assigned operator has no current
+        qualification matching an assigned aircraft's model.
+
+        The M2M rosters (operators, aircraft_fleet) only exist on self.object
+        once form.save_m2m() has run, which happens inside
+        super().form_valid() -- so the check has to come after it, not before.
+        """
+        response = super().form_valid(form)
+        gaps = operator_aircraft_compatibility_gaps(
+            self.object.operators.all(), self.object.aircraft_fleet.all()
+        )
+        aircraft_by_operator = {}
+        for operator, aircraft in gaps:
+            aircraft_by_operator.setdefault(operator, []).append(aircraft)
+        for operator, aircraft_list in aircraft_by_operator.items():
+            messages.warning(
+                self.request,
+                _(
+                    "%(operator)s has no current qualification matching: "
+                    "%(aircraft)s. The permission was saved; review the "
+                    "operator's qualifications."
+                )
+                % {
+                    "operator": operator,
+                    "aircraft": ", ".join(str(a) for a in aircraft_list),
+                },
+            )
+        return response
 
 
 class FlightPermissionDetail(ModelViewPermissionRequiredMixin, DetailView):

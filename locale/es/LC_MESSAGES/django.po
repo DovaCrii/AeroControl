@@ -3112,6 +3112,14 @@ msgstr "Habilitaciones del operador y los modelos de aeronave que cubren."
 msgid "Contract administrator name"
 msgstr "Nombre de Administrador de contrato"
 
+#: .\apps\operations\views.py:132
+msgid ""
+"%(operator)s has no current qualification matching: %(aircraft)s. The "
+"permission was saved; review the operator's qualifications."
+msgstr ""
+"%(operator)s no tiene una habilitación vigente que cubra: %(aircraft)s. El "
+"permiso se guardó igual; revisa las habilitaciones del operador."
+
 #~ msgid "Flight date"
 #~ msgstr "Fecha de vuelo"
 

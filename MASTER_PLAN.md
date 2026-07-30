@@ -539,12 +539,12 @@ Un bloque por sesión/PR, en esta secuencia (revisión `PLAN_CLAUDE_CODE_1.md`):
 1. **BLOQUE 0** — higiene ✅ (falta solo el tag `v0.1.0-alpha`, TL.11).
 2. **BLOQUE 1** — Alertas ⇄ Kanban ✅ (backend + UI, revisada en vivo).
 3. **BLOQUE 2** — notificaciones y programación ✅ (incluye `JobRun`, adelantado del Bloque 5).
-4. **BLOQUE 4 (parcial)** ✅ — B4.1 (validación de `AlertRule`) y B4.2 (duplicados de operadores). B4.3/B4.4 (habilitaciones DGAC, compatibilidad operador–aeronave) **diferidos** hasta que el usuario apruebe su diseño.
+4. **BLOQUE 4** ✅ **COMPLETO** — B4.1 (validación de `AlertRule`), B4.2 (duplicados de operadores), **B4.3/B4.4 cerrados 2026-07-30** (habilitaciones DGAC estructuradas + aviso de compatibilidad operador–aeronave, con diseño aprobado por el usuario).
 5. **BLOQUE 6.1 y 6.2** ✅ — Reporte documental determinista + informe ejecutivo por correo.
 
 > **Ruta completa.** Los cinco pasos en alcance están cerrados. Conforme al plan, aquí se **detiene** la ejecución automática: lo que queda requiere instrucción explícita.
 
-**Bloques DIFERIDOS (no ejecutar sin instrucción explícita):** BLOQUE 3 (UX Kanban), BLOQUE 5 (centro de administración, salvo `JobRun` ya adelantado), BLOQUE 6.3 (asistente IA), y B4.3/B4.4 (habilitaciones DGAC y compatibilidad operador–aeronave, que además deben proponerse como diseño antes de implementarse).
+**Bloques DIFERIDOS (no ejecutar sin instrucción explícita):** BLOQUE 3 (UX Kanban, en standby además por decisión del usuario 2026-07-30 — ver LV-7), BLOQUE 5 (centro de administración, salvo `JobRun` ya adelantado), BLOQUE 6.3 (asistente IA).
 
 ### BLOQUE 1 — Integración Alertas ⇄ Kanban `rama codex/alertas-kanban`
 
@@ -598,7 +598,7 @@ Un bloque por sesión/PR, en esta secuencia (revisión `PLAN_CLAUDE_CODE_1.md`):
 | B4.1 | ✅ | P2 | Registro `apps/compliance/watchables.py`: `entity_type`/`field_to_watch` validados en `clean()` y como choices en el form; `generate_alerts` deja la coincidencia difusa; migración 0006 normaliza y archiva las inválidas con nota (`c965644`) | M | — |
 | B4.2 | ✅ | P2 | `find_duplicate_operators`: reporte con diferencias campo a campo y conteo de referencias; `--apply --group` fusiona (recorre FKs dinámicamente + GFK de Document/Alert), archiva con nota y registra `AuditEvent` (`cd0e197`) | M | — |
 | B4.3 | ✅ | P2 | **Habilitaciones DGAC** (2026-07-30, aprobado por el usuario). `Qualification` reutilizado y estructurado: nuevo catálogo `QualificationType` (name/code/`model_keywords` para B4.4) con `qualification_type` convertido de texto libre a FK (migración `0014`, tabla vacía → swap limpio); CRUD del catálogo (list/create/update) enlazado desde el centro de administración; `registry.qualification` agregado a `DOCUMENTABLE_MODELS` (evidencia por `Document`); comando `seed_qualification_types` (7 familias de la flota real); las alertas de vencimiento ya existían (`registry.qualification`/`expiry_date`). `digest.py` y el calendario corregidos para el FK + `select_related`. | M | — |
-| B4.4 | ⏸ | P2 | **DIFERIDO (diseño acordado, implementación pendiente)** Compatibilidad operador–aeronave al crear permisos de vuelo. Decidido con el usuario (2026-07-30): **aviso no bloqueante**; el match compara `QualificationType.model_keywords` (de B4.3) contra `Aircraft.model` (no `.type`, que es siempre "RPA"). Falta implementar el chequeo en la creación del permiso + el mensaje. | M | B4.3 ✅ |
+| B4.4 | ✅ | P2 | **Compatibilidad operador–aeronave** (2026-07-30). `operator_aircraft_compatibility_gaps()` en `apps/registry/selectors.py`: compara las palabras clave de las habilitaciones vigentes del operador (`QualificationType.model_keywords`) contra `Aircraft.model` de cada aeronave del permiso. `FlightPermissionCreate.form_valid()` corre el chequeo tras guardar el M2M y muestra un **aviso no bloqueante** (`messages.warning`) por operador con las aeronaves sin cobertura — el permiso se guarda igual. 7 tests (selector + vista, con/sin vencimiento, sin palabras clave configuradas). | M | B4.3 ✅ |
 
 **Aceptación del bloque (parte en alcance): cumplida.** B4.1 con 10 pruebas y migración verificada sobre la base de demo (normalizó un valor heredado y archivó una regla rota con nota); B4.2 con 12 pruebas, incluida la fusión de referencias por GFK, y verificada de punta a punta en la demo. B4.3/B4.4 siguen diferidos esperando aprobación de diseño.
 
