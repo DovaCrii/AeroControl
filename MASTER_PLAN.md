@@ -536,6 +536,12 @@ documentos clave de la aeronave.
 | LV-13a | ✅ | P2 | **Sidebar reagrupado por flujo operativo** (opción elegida por el usuario): DATOS MAESTROS (CC · Aeronaves · Operadores · **Habilitaciones**) · PLANIFICACIÓN (asignaciones op/aeronave · movimientos · geoespacial) · OPERACIONES · MANTENIMIENTO · CUMPLIMIENTO · ADMIN. Habilitaciones movida a Datos maestros; la **"Planificación de recursos"** (modelo `Assignment` legado, reemplazado por las asignaciones por-recurso) **retirada del nav** (ruta intacta). | `templates/base.html` |
 | LV-13b | ✅ | P3 | **Icono de "Habilitaciones"** cambiado de estrella a una medalla/insignia (skill). | — |
 
+**Lista de habilitaciones repite el operador** (`qualification-list`):
+
+| ID | Est. | Prio | Tarea | Nota |
+|---|:--:|:--:|---|---|
+| LV-14 | ✅ | P2 | **Lista de Habilitaciones agrupada por operador.** `QualificationList` ahora es operator-centric: una fila por operador con sus `QualificationType` como chips en una columna "Equipos habilitados" (cada chip abre el editar de esa habilitación; rojo si vencida). Búsqueda/`is_active` filtran las habilitaciones subyacentes; el export CSV sigue exportando las habilitaciones individuales. `qualification_list.html`. 3 tests. | 2026-07-30 |
+
 *(Pendiente de más issues del usuario — esta sección irá creciendo.)*
 
 ### FASE 6 — Nuevas funcionalidades `⏸ requiere FASE 0-3 cerradas`

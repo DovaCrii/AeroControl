@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count, Prefetch, Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -623,9 +623,70 @@ class ResourceMovementLogList(ModelViewPermissionRequiredMixin, ListView):
         return context
 
 
-QualificationList, QualificationDetail, QualificationCreate, QualificationUpdate = (
-    make_views(Qualification, QualificationForm, "Qualification")
-)
+(
+    _QualificationAutoList,
+    QualificationDetail,
+    QualificationCreate,
+    QualificationUpdate,
+) = make_views(Qualification, QualificationForm, "Qualification")
+
+
+class QualificationList(RegistryList):
+    """LV-14: operator-centric habilitations list.
+
+    One row per operator (not per qualification, which repeated the operator's
+    name across rows), with the operator's qualification types as chips in one
+    column. Search/is_active still filter the underlying qualifications; the
+    CSV export keeps exporting the individual qualifications (the real data).
+    """
+
+    model = Qualification
+    template_name = "registry/qualification_list.html"
+    search_fields = [
+        "operator__full_name",
+        "operator__employee_id",
+        "qualification_type__name",
+    ]
+
+    def _qualifications_queryset(self):
+        """The Qualification rows after search/is_active (used for the CSV and
+        to derive which operators to show)."""
+        return super().get_queryset()
+
+    def get_queryset(self):
+        operator_ids = list(
+            self._qualifications_queryset()
+            .values_list("operator_id", flat=True)
+            .distinct()
+        )
+        return (
+            Operator.objects.filter(pk__in=operator_ids)
+            .order_by("full_name")
+            .prefetch_related(
+                Prefetch(
+                    "qualifications",
+                    queryset=Qualification.objects.filter(is_active=True)
+                    .select_related("qualification_type")
+                    .order_by("qualification_type__name"),
+                    to_attr="active_qualifications",
+                )
+            )
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["today"] = timezone.localdate()
+        return context
+
+    def get(self, request, *args, **kwargs):
+        # Export the underlying qualifications (render_csv_response builds its
+        # columns from self.model == Qualification), not the grouped operators.
+        if request.GET.get("export") == "csv":
+            queryset = self._qualifications_queryset().select_related(
+                "operator", "qualification_type"
+            )
+            return self.render_csv_response(queryset)
+        return super().get(request, *args, **kwargs)
 
 
 # B4.3: the qualification-type catalog. Config model like compliance's
