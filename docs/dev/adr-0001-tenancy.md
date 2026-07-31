@@ -23,9 +23,18 @@
 >   un bug latente: un no-superuser sin membership veía calendario/listas vacíos.
 >   Con test de aislamiento (usuario de otro tenant no ve los datos del default).
 >
-> Siguen: **Fase 2** (cambiar el OR-sobre-3-FKs por ruta canónica única —
-> la parte sensible, se hace junto con la matriz de aislamiento de Fase 4),
-> Fase 3 (constraints únicas por tenant).
+> - **Fase 4 (red inicial)** ✅ — tests de aislamiento cross-tenant para las
+>   vistas que **ya** scopean (lista de asignaciones y feed del calendario):
+>   un usuario de otro tenant no ve los datos, y el fallback al default funciona
+>   (`apps/core/test_tenancy.py`). Es la red para hacer el cambio de scoping sin
+>   regresiones. **Descubrimiento de alcance:** las listas de registry
+>   (CostCenter/Operator/Aircraft) **hoy no scopean por tenant** — es parte del
+>   trabajo de Fase 2, no solo el OR.
+>
+> Siguen: **Fase 2** (OR-sobre-3-FKs → ruta canónica única **y** agregar scoping
+> a las listas de registry que no lo tienen; simplificar el bloque de documentos
+> del calendario usando `Document.tenant`), Fase 3 (constraints únicas por
+> tenant), y ampliar la matriz de Fase 4 a esas listas al arreglarlas.
 **Relacionados:** MASTER_PLAN T3.2 / T3.3 / T4.1 / T4.2 · AUDIT_CLAUDE F-03..F-06, F-08, F-10
 
 ## Contexto
