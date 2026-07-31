@@ -79,6 +79,54 @@ class TestAssignmentListIsolation:
         assert not list(response.context["objects"])  # isolated: sees nothing
 
 
+class TestRegistryListIsolation:
+    """T3.2 Fase 2: the registry lists (CostCenter/Operator/Aircraft), which did
+    not scope by tenant before, now only show the user's tenant."""
+
+    def _client(self, username, codename, tenant=None):
+        user = User.objects.create_user(username, password="pw")
+        user.user_permissions.add(Permission.objects.get(codename=codename))
+        if tenant is not None:
+            TenantMembership.objects.create(tenant=tenant, user=user)
+        client = Client()
+        assert client.login(username=username, password="pw")
+        return client
+
+    @pytest.mark.django_db
+    def test_cost_center_list_is_scoped(self):
+        a = OperationalTenant.objects.create(name="A", slug="a")
+        b = OperationalTenant.objects.create(name="B", slug="b")
+        cc = CostCenter.objects.create(code="CCA", name="A", tenant=a)
+        a_client = self._client("a_cc", "view_costcenter", tenant=a)
+        b_client = self._client("b_cc", "view_costcenter", tenant=b)
+        assert cc in list(a_client.get(reverse("costcenter-list")).context["objects"])
+        assert cc not in list(
+            b_client.get(reverse("costcenter-list")).context["objects"]
+        )
+
+    @pytest.mark.django_db
+    def test_operator_list_is_scoped(self):
+        a = OperationalTenant.objects.create(name="A", slug="a")
+        b = OperationalTenant.objects.create(name="B", slug="b")
+        op = Operator.objects.create(employee_id="OA", full_name="Op A", tenant=a)
+        a_client = self._client("a_op", "view_operator", tenant=a)
+        b_client = self._client("b_op", "view_operator", tenant=b)
+        assert op in list(a_client.get(reverse("operator-list")).context["objects"])
+        assert op not in list(b_client.get(reverse("operator-list")).context["objects"])
+
+    @pytest.mark.django_db
+    def test_aircraft_list_is_scoped(self):
+        a = OperationalTenant.objects.create(name="A", slug="a")
+        b = OperationalTenant.objects.create(name="B", slug="b")
+        ac = Aircraft.objects.create(
+            registration="RPA-A", type="RPA", model="M", manufacturer="DJI", tenant=a
+        )
+        a_client = self._client("a_ac", "view_aircraft", tenant=a)
+        b_client = self._client("b_ac", "view_aircraft", tenant=b)
+        assert ac in list(a_client.get(reverse("aircraft-list")).context["objects"])
+        assert ac not in list(b_client.get(reverse("aircraft-list")).context["objects"])
+
+
 class TestCalendarFeedIsolation:
     """Safety net (T3.2 Fase 4) for the calendar feed's tenant scoping, so the
     Fase 2 change from OR-over-FKs to a canonical path cannot regress it."""
