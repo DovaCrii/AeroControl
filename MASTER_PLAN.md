@@ -410,7 +410,7 @@ abierto (hoy sí es cierto, cerrado en `3611d06`).
 
 | ID | Est. | Prio | Tarea | Esf. | Dep. |
 |---|:--:|:--:|---|:--:|:--:|
-| T5.1 | ⬜ | P2 | Unificar `app.css` en un solo set de tokens; eliminar clases sin definir (F-15) | M | — |
+| T5.1 | ✅ | P2 | Unificar `app.css` en un solo set de tokens. **Verificado hecho 2026-07-31**: hay un único `:root` (el de `--ac-*`), cero definiciones y cero usos de tokens sin prefijo, sin referencias colgantes; el `:root` viejo fue removido (lo documenta el comentario de cabecera del CSS). `--stage-color` y `--login-*` son sets locales/scoped legítimos, no una segunda generación. | M | — |
 | T5.2 | ⬜ | P1 | Enlazar habilitaciones, búsqueda global e importadores en el sidebar (U1, F-14) | S | — |
 | T5.3 | ⬜ | P1 | Búsqueda global que lleve al detalle (U2) | S | — |
 | T5.4 | ⬜ | P1 | Dashboard accionable + disponibilidad de flota/vencimientos reales (U3, U4) | M | — |
@@ -438,7 +438,7 @@ abierto (hoy sí es cierto, cerrado en `3611d06`).
 | R.7 | ✅ | P2 | Contraste: `.sidebar-label` de **3.79 → 8.06:1** (cumple AA); paleta de gráficos por tema (**1.16 → 5.03:1**) (`4b8e150`) | M | — |
 | R.8 | ✅ | P3 | Icono de "Vuelos" cambiado a bitácora (antes casi idéntico al de Aeronaves) (`4b8e150`) | XS | — |
 | R.9 | ✅ | P2 | Grupos del sidebar con línea separadora y más espaciado (`4b8e150`) | S | — |
-| R.10 | ⬜ | P3 | **[UI, pendiente]** Unificar `app.css`. Medido: ver "Anatomía de R.10" más abajo. Es T5.1 | M | — |
+| R.10 | ✅ | P3 | Unificar `app.css` (= T5.1). **Verificado hecho 2026-07-31**: un solo `:root` `--ac-*`, sin la generación sin prefijo. La "Anatomía de R.10" más abajo describe el estado *previo* (dos generaciones); ya no aplica. | M | — |
 
 **Verificado en vivo** (servidor de demo, mediciones de contraste reales, no a ojo). Hallazgos extra encontrados durante la revisión y corregidos: paleta de gráficos invisible en modo oscuro, etiquetas de gráficos con valores crudos (`active` → `Activo`), agregaciones del dashboard contando registros archivados (A5), y ~19 cadenas sin traducir.
 
