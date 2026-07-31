@@ -4,14 +4,21 @@
 **Fecha:** 2026-07-31
 **Decisor:** usuario (dueño del producto)
 
-> **Progreso:** Fase 0a hecha — helper `apps/core/tenancy.py::get_default_tenant`
-> (default del FK, evita churn de tests) + `CostCenter`/`Aircraft`/`Operator.tenant`
-> a `NOT NULL` con backfill al tenant por defecto (migraciones `registry` 0018
-> backfill + 0019 alter). Siguen: Fase 0b (resto de modelos raíz), Fase 1
-> (resolución de tenant del request), Fase 2 (mixin único), Fase 3 (constraints),
-> Fase 4 (tests de aislamiento). Nota de diseño para 0b: los modelos hijo
-> (historias, versiones, through) derivan el tenant de su padre — no llevan FK
-> propio; solo los agregados raíz lo llevan.
+> **Progreso:**
+> - **Fase 0a** ✅ — helper `apps/core/tenancy.py::get_default_tenant` (default del
+>   FK, evita churn de tests) + `CostCenter`/`Aircraft`/`Operator.tenant` a
+>   `NOT NULL` con backfill (migr. `registry` 0018/0019).
+> - **Fase 0b** ✅ — FK `tenant` propio en `Document` (GFK, no deriva; cierra F-05)
+>   y `AlertRule` (config, sin padre) (migr. `compliance` 0010). Decidido con el
+>   usuario: **catálogos globales** (DocumentType/QualificationType sin tenant);
+>   los demás agregados (Qualification, MaintenanceRecord, GeoPlan,
+>   FlightPermission, asignaciones, historias) **derivan** el tenant de su padre
+>   único vía el mixin de la Fase 2 — no llevan FK propio.
+> - **Fase 0 completa**: todo registro scopeable puede resolver un tenant.
+>
+> Siguen: Fase 1 (resolución de tenant del request), Fase 2 (mixin único de
+> scoping que deriva), Fase 3 (constraints únicas por tenant), Fase 4 (tests de
+> aislamiento).
 **Relacionados:** MASTER_PLAN T3.2 / T3.3 / T4.1 / T4.2 · AUDIT_CLAUDE F-03..F-06, F-08, F-10
 
 ## Contexto
