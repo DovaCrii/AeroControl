@@ -80,6 +80,47 @@ def test_valid_rule_creates_one_alert_and_skips_duplicates_on_rerun():
     assert alert.is_resolved is False
 
 
+@pytest.mark.django_db
+def test_status_field_rule_alerts_open_records_not_terminal_ones():
+    """A rule watching a `status` field (not a date) alerts records in an open
+    status and skips terminal ones (completed/denied)."""
+    from apps.operations.models import FlightPermission
+
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    common = dict(
+        cost_center=cost_center,
+        purpose="Survey",
+        valid_from=date(2026, 7, 1),
+        valid_until=date(2026, 7, 10),
+        location="Site",
+    )
+    open_permission = FlightPermission.objects.create(
+        permission_number="P-OPEN", status="requested", **common
+    )
+    FlightPermission.objects.create(
+        permission_number="P-DONE", status="completed", **common
+    )
+    AlertRule.objects.create(
+        name="Permits pending",
+        entity_type="operations.flightpermission",
+        field_to_watch="status",
+    )
+
+    call_command("generate_alerts")
+
+    ct = ContentType.objects.get_for_model(FlightPermission)
+    alerts = Alert.objects.filter(content_type=ct)
+    assert [a.object_id for a in alerts] == [open_permission.pk]
+
+
+@pytest.mark.django_db
+def test_digest_item_count_sums_all_buckets():
+    from apps.compliance.digest import digest_item_count
+
+    buckets = {"overdue": [1, 2], "due_7": [3], "due_15": [], "due_30": [4]}
+    assert digest_item_count(buckets) == 4
+
+
 def _kanban_rule(**kwargs):
     board = KanbanBoard.objects.create(name="Compliance")
     stage = KanbanStage.objects.create(
