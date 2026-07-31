@@ -402,7 +402,7 @@ abierto (hoy sí es cierto, cerrado en `3611d06`).
 |---|:--:|:--:|---|:--:|:--:|
 | T4.1 | ⬜ | P1 | `conftest.py` con fixtures `two_tenant_world`, `role_user()` | M | FASE 0 |
 | T4.2 | ⬜ | P1 | Matriz de aislamiento cross-tenant por vista | L | T4.1, T3.2 |
-| T4.3 | ⬜ | P1 | Tests de `generate_alerts`, `maintenance`, `dashboard` (hoy 0%) | L | T4.1 |
+| T4.3 | 🔄 | P1 | Tests de `generate_alerts`, `maintenance`, `dashboard`. **El "hoy 0%" quedó obsoleto** (2026-07-24): al 2026-07-30 `dashboard` estaba **100%** (test_ops8 + LV-8e) y `maintenance` se llevó a **100%** (vista de lista + filtros, form create GET/POST, rama de completar-ya-completado, `is_incomplete` en completado — 4 tests nuevos). **Falta `generate_alerts`** (compliance) para cerrar del todo. | L | T4.1 |
 | T4.4 | ⬜ | P2 | Neutralización de fórmulas en reportes workboard (XLSX/DOCX) + test | M | — |
 | T4.5 | ⬜ | P3 | Sustituir ~14 tests de bajo valor por los P0 de arriba | S | T4.1 |
 
