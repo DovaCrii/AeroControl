@@ -1,8 +1,17 @@
 # ADR-0001: Modelo de tenancy (T3.2 / F-08)
 
-**Estado:** Propuesto
+**Estado:** Aceptado (Opción A, por fases — usuario 2026-07-31)
 **Fecha:** 2026-07-31
 **Decisor:** usuario (dueño del producto)
+
+> **Progreso:** Fase 0a hecha — helper `apps/core/tenancy.py::get_default_tenant`
+> (default del FK, evita churn de tests) + `CostCenter`/`Aircraft`/`Operator.tenant`
+> a `NOT NULL` con backfill al tenant por defecto (migraciones `registry` 0018
+> backfill + 0019 alter). Siguen: Fase 0b (resto de modelos raíz), Fase 1
+> (resolución de tenant del request), Fase 2 (mixin único), Fase 3 (constraints),
+> Fase 4 (tests de aislamiento). Nota de diseño para 0b: los modelos hijo
+> (historias, versiones, through) derivan el tenant de su padre — no llevan FK
+> propio; solo los agregados raíz lo llevan.
 **Relacionados:** MASTER_PLAN T3.2 / T3.3 / T4.1 / T4.2 · AUDIT_CLAUDE F-03..F-06, F-08, F-10
 
 ## Contexto

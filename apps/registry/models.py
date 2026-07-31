@@ -4,14 +4,14 @@ from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from apps.core.models import BaseModel, OperationalTenant
+from apps.core.tenancy import get_default_tenant
 
 
 class CostCenter(BaseModel):
     tenant = models.ForeignKey(
         OperationalTenant,
         on_delete=models.PROTECT,
-        null=True,
-        blank=True,
+        default=get_default_tenant,
         related_name="cost_centers",
     )
     code = models.CharField(max_length=30, unique=True)
@@ -73,8 +73,7 @@ class Aircraft(BaseModel):
     tenant = models.ForeignKey(
         OperationalTenant,
         on_delete=models.PROTECT,
-        null=True,
-        blank=True,
+        default=get_default_tenant,
         related_name="aircraft",
     )
     STATUS_CHOICES = [
@@ -150,8 +149,7 @@ class Operator(BaseModel):
     tenant = models.ForeignKey(
         OperationalTenant,
         on_delete=models.PROTECT,
-        null=True,
-        blank=True,
+        default=get_default_tenant,
         related_name="operators",
     )
     # Acronyms are spelled out here so the label lookup matches the catalog;
