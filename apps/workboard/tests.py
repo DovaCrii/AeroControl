@@ -451,6 +451,33 @@ def test_task_report_exports_docx(auth_client, board):
 
 
 @pytest.mark.django_db
+def test_csv_report_neutralizes_formula_titles(auth_client, board):
+    """T4.4: a task title starting with a formula character must be inert in
+    the export (Excel/LibreOffice execute a cell that starts with =/+/-/@)."""
+    board_obj, todo, _ = board
+    KanbanTask.objects.create(
+        board=board_obj, stage=todo, title='=HYPERLINK("http://evil","x")'
+    )
+    response = auth_client.get(reverse("task-report-csv"))
+    body = response.content.decode()
+    assert "'=HYPERLINK" in body  # apostrophe-prefixed, inert
+
+
+@pytest.mark.django_db
+def test_xlsx_report_neutralizes_formula_titles(auth_client, board):
+    from io import BytesIO
+
+    from openpyxl import load_workbook
+
+    board_obj, todo, _ = board
+    KanbanTask.objects.create(board=board_obj, stage=todo, title="=SUM(A1:A2)")
+    response = auth_client.get(reverse("task-report-xlsx"))
+    sheet = load_workbook(BytesIO(response.content)).active
+    # Row 2 (after the header), first column (Task).
+    assert sheet.cell(row=2, column=1).value == "'=SUM(A1:A2)"
+
+
+@pytest.mark.django_db
 def test_api_v1_tasks_is_permissioned_and_paginated(auth_client, board):
     board_obj, todo, _ = board
     KanbanTask.objects.create(board=board_obj, stage=todo, title="API task")

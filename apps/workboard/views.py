@@ -18,6 +18,7 @@ from apps.core.views import (
     SearchMixin,
 )
 from apps.core.audit import set_audit_context
+from apps.core.exports import neutralize
 from apps.registry.models import Operator
 from .models import (
     KanbanBoard,
@@ -219,7 +220,10 @@ class TaskReportCsvView(ModelViewPermissionRequiredMixin, View):
         listing.request = request
         tasks = listing.get_queryset()
         for task in tasks:
-            writer.writerow(task_row(task))
+            # Neutralize before writing: a task title like "=HYPERLINK(...)"
+            # would otherwise execute when the CSV is opened in Excel/LibreOffice
+            # (T4.4 / AGENTS.md formula-injection rule).
+            writer.writerow([neutralize(value) for value in task_row(task)])
         return response
 
 
@@ -248,7 +252,9 @@ class TaskReportXlsxView(TaskReportCsvView):
         for cell in sheet[1]:
             cell.font = Font(bold=True)
         for task in listing.get_queryset():
-            sheet.append(task_row(task))
+            # Same formula-injection neutralization as the CSV (T4.4): XLSX is
+            # executed by the spreadsheet just like CSV.
+            sheet.append([neutralize(value) for value in task_row(task)])
         sheet.freeze_panes = "A2"
         sheet.auto_filter.ref = sheet.dimensions
         for column in sheet.columns:
