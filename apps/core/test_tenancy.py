@@ -127,6 +127,47 @@ class TestRegistryListIsolation:
         assert ac not in list(b_client.get(reverse("aircraft-list")).context["objects"])
 
 
+class TestTenantUniqueConstraints:
+    """T3.2 Fase 3: cost-center code and employee id are unique per tenant,
+    not globally -- two organizations may reuse them, one may not."""
+
+    @pytest.mark.django_db
+    def test_two_tenants_can_reuse_a_cost_center_code(self):
+        a = OperationalTenant.objects.create(name="A", slug="a")
+        b = OperationalTenant.objects.create(name="B", slug="b")
+        CostCenter.objects.create(code="CC1", tenant=a)
+        CostCenter.objects.create(code="CC1", tenant=b)
+        assert CostCenter.objects.filter(code="CC1").count() == 2
+
+    @pytest.mark.django_db
+    def test_same_tenant_cannot_reuse_a_cost_center_code(self):
+        from django.db import IntegrityError, transaction
+
+        a = OperationalTenant.objects.create(name="A", slug="a")
+        CostCenter.objects.create(code="CC1", tenant=a)
+        with pytest.raises(IntegrityError):
+            with transaction.atomic():
+                CostCenter.objects.create(code="CC1", tenant=a)
+
+    @pytest.mark.django_db
+    def test_two_tenants_can_reuse_an_employee_id(self):
+        a = OperationalTenant.objects.create(name="A", slug="a")
+        b = OperationalTenant.objects.create(name="B", slug="b")
+        Operator.objects.create(employee_id="E1", full_name="A", tenant=a)
+        Operator.objects.create(employee_id="E1", full_name="B", tenant=b)
+        assert Operator.objects.filter(employee_id="E1").count() == 2
+
+    @pytest.mark.django_db
+    def test_same_tenant_cannot_reuse_an_employee_id(self):
+        from django.db import IntegrityError, transaction
+
+        a = OperationalTenant.objects.create(name="A", slug="a")
+        Operator.objects.create(employee_id="E1", full_name="A", tenant=a)
+        with pytest.raises(IntegrityError):
+            with transaction.atomic():
+                Operator.objects.create(employee_id="E1", full_name="dup", tenant=a)
+
+
 class TestCalendarFeedIsolation:
     """Safety net (T3.2 Fase 4) for the calendar feed's tenant scoping, so the
     Fase 2 change from OR-over-FKs to a canonical path cannot regress it."""
