@@ -152,6 +152,22 @@ class TestPublicURLs:
         # The board event is filtered out of the table; the empty-state shows.
         assert "Ningún evento de auditoría coincide" in response.content.decode()
 
+    def test_user_role_panel_lists_users_and_their_groups(self, auth_client):
+        # B5.5: read-only users/roles panel.
+        user = User.objects.create_user("planner", password="pw")
+        user.groups.create(name="Operations")
+        response = auth_client.get(reverse("user-role-list"))
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert "planner" in content
+        assert "Operations" in content
+
+    def test_user_role_panel_requires_view_user(self, client, db):
+        User.objects.create_user("plain", password="pw")
+        assert client.login(username="plain", password="pw")
+        response = client.get(reverse("user-role-list"))
+        assert response.status_code in (302, 403)
+
     """Verify pages that are intentionally available without authentication."""
 
     def test_login_page(self, client):

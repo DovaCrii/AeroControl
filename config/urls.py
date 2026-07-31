@@ -12,6 +12,7 @@ from apps.core.views import (
     GlobalSearchView,
     HealthCheckView,
     UnifiedCalendarEventsView,
+    UserRoleListView,
 )
 from apps.workboard.views import ApiIndexView
 from apps.workboard.api import (
@@ -72,6 +73,11 @@ urlpatterns = [
         "administracion/auditoria/",
         AuditEventListView.as_view(),
         name="audit-log",
+    ),
+    path(
+        "administracion/usuarios/",
+        UserRoleListView.as_view(),
+        name="user-role-list",
     ),
     path("search/", GlobalSearchView.as_view(), name="global-search"),
     path(

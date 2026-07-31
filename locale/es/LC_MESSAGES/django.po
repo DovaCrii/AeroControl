@@ -3120,6 +3120,46 @@ msgstr "Equipos habilitados"
 msgid "View operator"
 msgstr "Ver operador"
 
+#: .\apps\core\views.py:786
+msgid "Users and roles"
+msgstr "Usuarios y roles"
+
+#: .\apps\core\views.py:787
+msgid "Read-only view of who holds which role."
+msgstr "Vista de solo lectura de quién tiene qué rol."
+
+#: .\templates\core\users_roles.html:9
+msgid ""
+"Read-only view of who holds which role. Edits are made in the technical "
+"admin."
+msgstr ""
+"Vista de solo lectura de quién tiene qué rol. Las ediciones se hacen en el "
+"admin técnico."
+
+#: .\templates\core\users_roles.html:12
+msgid "Technical admin"
+msgstr "Admin técnico"
+
+#: .\templates\core\users_roles.html:25
+msgid "Roles"
+msgstr "Roles"
+
+#: .\templates\core\users_roles.html:36
+msgid "Superuser"
+msgstr "Superusuario"
+
+#: .\templates\core\users_roles.html:37
+msgid "No role"
+msgstr "Sin rol"
+
+#: .\templates\core\users_roles.html:39
+msgid "Inactive"
+msgstr "Inactivo"
+
+#: .\templates\core\users_roles.html:42
+msgid "No users found."
+msgstr "No se encontraron usuarios."
+
 #: .\apps\operations\views.py:132
 msgid ""
 "%(operator)s has no current qualification matching: %(aircraft)s. The "
