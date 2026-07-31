@@ -175,12 +175,12 @@ class TestOperatorAssignmentViews:
 
     @pytest.mark.django_db
     def test_create_requires_add_permission(self, db):
+        # LV-18: the "+ New" entry point is now the bulk-assign form.
         op = _operator()
         cc = _cc("CC1")
         payload = {
-            "operator": op.pk,
             "cost_center": cc.pk,
-            "start_date": TODAY.isoformat(),
+            "operators": [op.pk],
             "status": "active",
             "purpose": "",
         }
@@ -192,26 +192,56 @@ class TestOperatorAssignmentViews:
         assert OperatorAssignment.objects.filter(operator=op, cost_center=cc).exists()
 
     @pytest.mark.django_db
-    def test_create_rejects_overlap_via_form(self, db):
+    def test_create_assigns_several_operators_at_once(self, db):
+        # LV-18: 5-10 operators onto a contract in one submit, not one by one.
+        ops = [
+            _operator(employee_id=f"E{i}", full_name=f"Pilot {i}") for i in range(3)
+        ]
+        cc = _cc("CC1")
+        payload = {
+            "cost_center": cc.pk,
+            "operators": [o.pk for o in ops],
+            "status": "active",
+            "purpose": "",
+        }
+        response = _client("add_operatorassignment").post(
+            reverse("operatorassignment-create"), payload, HTTP_HX_REQUEST="true"
+        )
+        assert response.status_code == 204
+        assert response.headers.get("HX-Trigger") == "modal-form-success"
+        assert OperatorAssignment.objects.filter(cost_center=cc).count() == 3
+        for operator in ops:
+            operator.refresh_from_db()
+            assert operator.cost_center_id == cc.pk
+
+    @pytest.mark.django_db
+    def test_bulk_reassign_moves_instead_of_rejecting(self, db):
+        # LV-17/18: with an operator already placed, bulk-assigning them to a new
+        # cost center moves them (ends the old, opens the new) rather than
+        # hitting the per-operator overlap guard the single form used to raise.
         op = _operator()
         cc1, cc2 = _cc("CC1"), _cc("CC2")
         OperatorAssignment.objects.create(
             operator=op, cost_center=cc1, start_date=TODAY, status="active"
         )
         payload = {
-            "operator": op.pk,
             "cost_center": cc2.pk,
-            "start_date": TODAY.isoformat(),
+            "operators": [op.pk],
             "status": "active",
             "purpose": "",
         }
         response = _client("add_operatorassignment").post(
-            reverse("operatorassignment-create"), payload
+            reverse("operatorassignment-create"), payload, HTTP_HX_REQUEST="true"
         )
-        # HtmxFormMixin.form_invalid re-renders 200/422 for the modal fragment;
-        # a plain (non-HTMX) POST falls through to the normal invalid-form 200.
-        assert response.status_code == 200
-        assert OperatorAssignment.objects.filter(cost_center=cc2).count() == 0
+        assert response.status_code == 204
+        op.refresh_from_db()
+        assert op.cost_center_id == cc2.pk
+        assert OperatorAssignment.objects.filter(
+            operator=op, cost_center=cc1, status="ended"
+        ).exists()
+        assert OperatorAssignment.objects.filter(
+            operator=op, cost_center=cc2, status="active"
+        ).exists()
 
 
 class TestAircraftAssignmentViews:
@@ -280,3 +310,86 @@ class TestResourceMovementLogView:
         content = response.content.decode()
         assert aircraft.registration in content
         assert op.full_name not in content
+
+
+class TestBulkAssignService:
+    @pytest.mark.django_db
+    def test_assigns_many_operators_and_returns_count(self, db):
+        from apps.registry.services import bulk_assign_operators
+
+        ops = [_operator(employee_id=f"E{i}", full_name=f"P{i}") for i in range(3)]
+        cc = _cc("CC1")
+        moved = bulk_assign_operators(
+            operators=ops, cost_center=cc, status="active", purpose="", user=None
+        )
+        assert moved == 3
+        assert (
+            OperatorAssignment.objects.filter(cost_center=cc, status="active").count()
+            == 3
+        )
+        for operator in ops:
+            operator.refresh_from_db()
+            assert operator.cost_center_id == cc.pk
+
+    @pytest.mark.django_db
+    def test_operator_already_on_target_is_skipped(self, db):
+        from apps.registry.services import bulk_assign_operators
+
+        op = _operator()
+        cc = _cc("CC1")
+        OperatorAssignment.objects.create(
+            operator=op, cost_center=cc, start_date=TODAY, status="active"
+        )
+        moved = bulk_assign_operators(
+            operators=[op], cost_center=cc, status="active", purpose="", user=None
+        )
+        assert moved == 0
+        assert OperatorAssignment.objects.filter(operator=op, cost_center=cc).count() == 1
+
+    @pytest.mark.django_db
+    def test_moving_an_operator_ends_the_old_and_logs_reassigned(self, db):
+        from apps.registry.services import bulk_assign_operators
+
+        op = _operator()
+        cc1, cc2 = _cc("CC1"), _cc("CC2")
+        OperatorAssignment.objects.create(
+            operator=op, cost_center=cc1, start_date=TODAY, status="active"
+        )
+        user = User.objects.create_user("mover", password="pw")
+        moved = bulk_assign_operators(
+            operators=[op], cost_center=cc2, status="active", purpose="", user=user
+        )
+        assert moved == 1
+        op.refresh_from_db()
+        assert op.cost_center_id == cc2.pk
+        assert OperatorAssignment.objects.filter(
+            operator=op, cost_center=cc1, status="ended"
+        ).exists()
+        latest = ResourceMovementLog.objects.filter(resource_id=op.pk).first()
+        assert latest.movement == "reassigned"
+        assert latest.from_cost_center_id == cc1.pk
+        assert latest.to_cost_center_id == cc2.pk
+        assert latest.changed_by_user_id == user.pk
+
+
+class TestOperatorAssignmentFormLV17:
+    @pytest.mark.django_db
+    def test_form_drops_the_date_fields(self, db):
+        from apps.registry.forms import OperatorAssignmentForm
+
+        fields = OperatorAssignmentForm().fields
+        assert "start_date" not in fields
+        assert "end_date" not in fields
+
+    @pytest.mark.django_db
+    def test_save_autofills_start_date_with_today(self, db):
+        from apps.registry.forms import OperatorAssignmentForm
+
+        op = _operator()
+        cc = _cc("CC1")
+        form = OperatorAssignmentForm(
+            data={"operator": op.pk, "cost_center": cc.pk, "status": "active", "purpose": ""}
+        )
+        assert form.is_valid(), form.errors
+        instance = form.save()
+        assert instance.start_date == TODAY

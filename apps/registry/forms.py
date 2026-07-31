@@ -217,9 +217,13 @@ class AssignmentForm(AeroModelForm):
 class OperatorAssignmentForm(AeroModelForm):
     """OPS-1 per-resource assignment: an operator anchored to a cost center.
 
-    No custom clean() needed here: ModelForm._post_clean() calls
-    instance.full_clean(), which runs ResourceAssignment.clean() (the overlap
-    check) automatically and attaches its errors to the right field.
+    LV-17: the dates are not what the user tracks here -- the cost center and
+    the status are. `start_date` (required on the model) is filled in with today
+    on create, so it stays off the form. Editing an existing row keeps its date.
+
+    No custom clean() needed: ModelForm._post_clean() calls instance.full_clean(),
+    which runs ResourceAssignment.clean() (the overlap check) and attaches its
+    errors to the right field.
     """
 
     class Meta:
@@ -227,19 +231,58 @@ class OperatorAssignmentForm(AeroModelForm):
         fields = [
             "operator",
             "cost_center",
-            "start_date",
-            "end_date",
             "status",
             "purpose",
         ]
         labels = {
             "operator": _("Operator"),
             "cost_center": _("Cost center"),
-            "start_date": _("Start date"),
-            "end_date": _("End date"),
             "status": _("Status"),
             "purpose": _("Operation or purpose"),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # start_date stays required on the model but off the form (LV-17). Set it
+        # here, before validation runs: the overlap check reads start_date, so a
+        # None left until save() would break _overlapping's date filter.
+        if self.instance.start_date is None:
+            from django.utils import timezone
+
+            self.instance.start_date = timezone.localdate()
+
+
+class OperatorBulkAssignForm(forms.Form):
+    """LV-18: assign several operators to one cost center at once.
+
+    Only the cost center, the operators and the status matter (no dates, per
+    LV-17). Reassigning an operator already placed elsewhere moves them; see
+    apps.registry.services.bulk_assign_operators.
+    """
+
+    cost_center = forms.ModelChoiceField(
+        queryset=CostCenter.objects.filter(is_active=True).order_by("code"),
+        label=_("Cost center"),
+    )
+    operators = forms.ModelMultipleChoiceField(
+        queryset=Operator.objects.filter(is_active=True).order_by("full_name"),
+        label=_("Operators"),
+        widget=forms.SelectMultiple(attrs={"size": 12}),
+        help_text=_(
+            "Select one or more. Each is assigned to the cost center above; "
+            "an operator already assigned elsewhere is moved here."
+        ),
+    )
+    status = forms.ChoiceField(
+        choices=OperatorAssignment.STATUS_CHOICES,
+        initial="active",
+        label=_("Status"),
+    )
+    purpose = forms.CharField(
+        max_length=250,
+        required=False,
+        label=_("Operation or purpose"),
+    )
 
 
 class AircraftAssignmentForm(AeroModelForm):

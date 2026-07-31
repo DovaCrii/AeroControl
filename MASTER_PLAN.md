@@ -550,6 +550,14 @@ documentos clave de la aeronave.
 |---|:--:|:--:|---|---|
 | LV-16 | ✅ | P2 | **Form de CC simplificado** (2026-07-30). "Nombre" fuera del `CostCenterForm`; `CostCenter.name` opcional (`blank=True`, migración `0017`) y `__str__` cae al código cuando está vacío; los nombres existentes se conservan (ModelForm no toca campos ausentes). Campo **"Notas"** agregado al final del form (`notes` de `BaseModel`) y **columna "Notas"** al final de la lista de CC. 4 tests. | — |
 
+**Asignaciones de operador — pedidos 2026-07-31** (`OperatorAssignment*`):
+
+| ID | Est. | Prio | Tarea | Nota |
+|---|:--:|:--:|---|---|
+| LV-17 | ✅ | P2 | **Fechas de inicio/término fuera de la asignación de operador.** `OperatorAssignmentForm` deja solo operador + CC + estado + propósito; `start_date` (obligatorio en el modelo) se autollena con hoy en `__init__` (antes de validar, porque `_overlapping` lee `start_date`). Sin migración, lógica de solape intacta. 2 tests. | `apps/registry/forms.py::OperatorAssignmentForm` |
+| LV-18 | ✅ | P2 | **Asignación masiva de operadores a un CC.** Nueva vista `OperatorBulkAssign` (`FormView` + `HtmxFormMixin`) que toma el "+ Nuevo" de la lista de asignaciones: multi-selección de operadores + CC + estado + propósito. Servicio `services.bulk_assign_operators` mueve con semántica *un operador = un CC* (cierra la asignación previa, abre la nueva `start_date=hoy`, integra el `signal`: denormalización + `ResourceMovementLog` "reassigned"); operador ya en el CC destino se omite. 5 tests (servicio + vista HTMX 204). Aclarado 2026-07-31 (el pedido era agilizar, no un bloqueo). | `apps/registry/services.py`, `views.py::OperatorBulkAssign`, `forms.py::OperatorBulkAssignForm` |
+| LV-19 | ⬜ | P3 | **"El nombre de administrador de contrato aparece en la lista pero no se puede cambiar en Editar".** `CostCenterForm` **sí** incluye `responsible` (label "Contract administrator name"), y la lista muestra ese mismo campo. No se reproduce en código. Hipótesis: confusión con `responsible_operator` (dropdown, campo distinto) o layout del modal. Falta confirmar en pantalla qué campo intentó editar. | `CostCenterForm`, `costcenter_list.html:18` |
+
 *(Pendiente de más issues del usuario — esta sección irá creciendo.)*
 
 ### FASE 6 — Nuevas funcionalidades `⏸ requiere FASE 0-3 cerradas`
