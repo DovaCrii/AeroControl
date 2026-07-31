@@ -10,7 +10,8 @@ import re
 from pathlib import Path
 from uuid import uuid4
 
-from apps.core.models import BaseModel
+from apps.core.models import BaseModel, OperationalTenant
+from apps.core.tenancy import get_default_tenant
 from apps.workboard.models import KanbanBoard, KanbanStage, KanbanTask
 from .watchables import resolve_model, watchable_fields
 
@@ -55,6 +56,16 @@ class DocumentType(BaseModel):
 
 
 class Document(BaseModel):
+    # T3.2 Fase 0b: own tenant FK. A Document points at any entity through a
+    # GenericForeignKey, so its tenant cannot be derived with a cheap join like
+    # the other records -- this is also the F-05 gap (download authorization had
+    # no tenant path). Root aggregate, carries its own tenant.
+    tenant = models.ForeignKey(
+        OperationalTenant,
+        on_delete=models.PROTECT,
+        default=get_default_tenant,
+        related_name="documents",
+    )
     content_type = models.ForeignKey(ContentType, on_delete=models.PROTECT)
     object_id = models.UUIDField()
     content_object = GenericForeignKey("content_type", "object_id")
@@ -106,6 +117,15 @@ class Document(BaseModel):
 
 
 class AlertRule(BaseModel):
+    # T3.2 Fase 0b: own tenant FK. A rule is per-tenant configuration with no
+    # single parent to derive from. The alerts it generates derive their tenant
+    # from the rule (or the watched record).
+    tenant = models.ForeignKey(
+        OperationalTenant,
+        on_delete=models.PROTECT,
+        default=get_default_tenant,
+        related_name="alert_rules",
+    )
     name = models.CharField(max_length=150)
     entity_type = models.CharField(max_length=100)
     field_to_watch = models.CharField(max_length=100)
