@@ -74,8 +74,18 @@ Conjunto recomendado:
 | Habilitaciones por vencer *(opcional)* | `registry.qualification` | `expiry_date` | 30 |
 | Mantenimiento programado *(opcional)* | `maintenance.maintenancerecord` | `scheduled_date` | 15 |
 
-Las **dos primeras** cubren lo esencial. Deja *crear tarea Kanban* apagado al
-inicio; si luego lo activas, siembra antes el tablero con `init_dgac_board`.
+Siembra las **dos esenciales** de una vez (idempotente por nombre, igual que
+`seed_document_types`):
+
+```bash
+uv run python manage.py seed_alert_rules
+```
+
+Agrega `--with-optional` para sembrar también las dos opcionales
+(habilitaciones y mantenimiento). El comando deja *crear tarea Kanban* apagado
+al inicio; si luego lo activas desde la app, siembra antes el tablero con
+`init_dgac_board`. Un rerun no duplica ni pisa reglas que hayas ajustado en la
+UI. También puedes crear o afinar reglas a mano desde `/compliance/alertrule/`.
 
 ## Paso 4 — Cargar documentos
 
