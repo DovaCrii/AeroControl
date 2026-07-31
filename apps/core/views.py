@@ -428,16 +428,13 @@ class UnifiedCalendarEventsView(CalendarAccessMixin, View):
         aircraft_id = request.GET.get("aircraft") or None
         operator_id = request.GET.get("operator") or None
 
-        if request.user.is_superuser:
-            tenant_ids = None
-        else:
-            from apps.core.models import OperationalTenant
+        # T3.2 Fase 1: single source of truth for read scoping (was an inline
+        # membership query here and in the assignment list). None = all tenants
+        # (superuser); otherwise the user's tenants, falling back to the default
+        # tenant when they have no membership.
+        from apps.core.tenancy import visible_tenant_ids
 
-            tenant_ids = list(
-                OperationalTenant.objects.filter(
-                    members=request.user, is_active=True
-                ).values_list("id", flat=True)
-            )
+        tenant_ids = visible_tenant_ids(request.user)
 
         if "permission" in selected_types:
             # OPS-4: a permission now covers a validity range (not a single

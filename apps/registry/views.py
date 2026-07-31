@@ -488,15 +488,14 @@ class AssignmentList(RegistryList):
 
     def get_queryset(self):
         from django.db.models import Q
-        from apps.core.models import OperationalTenant
+        from apps.core.tenancy import visible_tenant_ids
 
         queryset = (
             super().get_queryset().select_related("operator", "aircraft", "cost_center")
         )
-        if not self.request.user.is_superuser:
-            tenant_ids = OperationalTenant.objects.filter(
-                members=self.request.user, is_active=True
-            ).values_list("id", flat=True)
+        # T3.2 Fase 1: shared tenant resolution (was an inline membership query).
+        tenant_ids = visible_tenant_ids(self.request.user)
+        if tenant_ids is not None:
             queryset = queryset.filter(
                 Q(operator__tenant_id__in=tenant_ids)
                 | Q(aircraft__tenant_id__in=tenant_ids)

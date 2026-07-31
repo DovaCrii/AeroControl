@@ -16,9 +16,16 @@
 >   único vía el mixin de la Fase 2 — no llevan FK propio.
 > - **Fase 0 completa**: todo registro scopeable puede resolver un tenant.
 >
-> Siguen: Fase 1 (resolución de tenant del request), Fase 2 (mixin único de
-> scoping que deriva), Fase 3 (constraints únicas por tenant), Fase 4 (tests de
-> aislamiento).
+> - **Fase 1** ✅ — `apps/core/tenancy.py::visible_tenant_ids(user)` como fuente
+>   única de "qué tenants ve el usuario" (None=superuser; sus memberships; o el
+>   default si no tiene ninguna). Reemplaza las 3 copias inline (calendario
+>   permisos+asignaciones, lista de Assignment). El fallback al default corrige
+>   un bug latente: un no-superuser sin membership veía calendario/listas vacíos.
+>   Con test de aislamiento (usuario de otro tenant no ve los datos del default).
+>
+> Siguen: **Fase 2** (cambiar el OR-sobre-3-FKs por ruta canónica única —
+> la parte sensible, se hace junto con la matriz de aislamiento de Fase 4),
+> Fase 3 (constraints únicas por tenant).
 **Relacionados:** MASTER_PLAN T3.2 / T3.3 / T4.1 / T4.2 · AUDIT_CLAUDE F-03..F-06, F-08, F-10
 
 ## Contexto
