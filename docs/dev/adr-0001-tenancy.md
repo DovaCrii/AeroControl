@@ -31,10 +31,18 @@
 >   (CostCenter/Operator/Aircraft) **hoy no scopean por tenant** — es parte del
 >   trabajo de Fase 2, no solo el OR.
 >
-> Siguen: **Fase 2** (OR-sobre-3-FKs → ruta canónica única **y** agregar scoping
-> a las listas de registry que no lo tienen; simplificar el bloque de documentos
-> del calendario usando `Document.tenant`), Fase 3 (constraints únicas por
-> tenant), y ampliar la matriz de Fase 4 a esas listas al arreglarlas.
+> - **Fase 2** ✅ — el `OR-sobre-3-FKs` se reemplazó por **ruta canónica única**:
+>   permisos y asignaciones del calendario y la lista de Assignment ahora scopean
+>   por `cost_center__tenant` (con fallback a `operator` solo cuando el Assignment
+>   legado no tiene CC); el bloque de documentos del calendario usa
+>   `Document.tenant` directo (adiós a la derivación por 3 ContentTypes). Además,
+>   las **listas de registry** (CostCenter/Operator/Aircraft) que **no** scopeaban
+>   ahora lo hacen vía `RegistryList.scope_by_tenant`. Matriz de aislamiento de
+>   Fase 4 ampliada a esas 3 listas.
+>
+> Sigue: **Fase 3** (constraints `UniqueConstraint(tenant, code/employee_id/
+> permission_number)` — F-10) y, opcional, el scoping de las vistas de *detalle*
+> (IDOR F-03/F-06) para que no se pueda ver por URL un registro de otro tenant.
 **Relacionados:** MASTER_PLAN T3.2 / T3.3 / T4.1 / T4.2 · AUDIT_CLAUDE F-03..F-06, F-08, F-10
 
 ## Contexto

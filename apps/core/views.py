@@ -446,11 +446,11 @@ class UnifiedCalendarEventsView(CalendarAccessMixin, View):
                 valid_from__lte=end, valid_until__gte=start, is_active=True
             ).prefetch_related("operators", "aircraft_fleet")
             if tenant_ids is not None:
-                permissions = permissions.filter(
-                    Q(operators__tenant_id__in=tenant_ids)
-                    | Q(aircraft_fleet__tenant_id__in=tenant_ids)
-                    | Q(cost_center__tenant_id__in=tenant_ids)
-                ).distinct()
+                # T3.2 Fase 2: scope by the cost center's tenant, the single
+                # canonical path, instead of an OR over operators/aircraft/CC
+                # that matched a permission if *any* of its FKs was in the
+                # tenant (F-08 leak across tenants on a mixed roster).
+                permissions = permissions.filter(cost_center__tenant_id__in=tenant_ids)
             if cost_center_id:
                 permissions = permissions.filter(cost_center_id=cost_center_id)
             if aircraft_id:
@@ -516,10 +516,12 @@ class UnifiedCalendarEventsView(CalendarAccessMixin, View):
                 .select_related("operator", "aircraft", "cost_center")
             )
             if tenant_ids is not None:
+                # T3.2 Fase 2: canonical scope by the cost center's tenant; the
+                # legacy Assignment allows a null cost center, so fall back to
+                # the operator's tenant only in that case. No more OR-any-FK leak.
                 assignments = assignments.filter(
-                    Q(operator__tenant_id__in=tenant_ids)
-                    | Q(aircraft__tenant_id__in=tenant_ids)
-                    | Q(cost_center__tenant_id__in=tenant_ids)
+                    Q(cost_center__tenant_id__in=tenant_ids)
+                    | Q(cost_center__isnull=True, operator__tenant_id__in=tenant_ids)
                 )
             if cost_center_id:
                 assignments = assignments.filter(cost_center_id=cost_center_id)
@@ -600,23 +602,10 @@ class UnifiedCalendarEventsView(CalendarAccessMixin, View):
                 expiry_date__range=(start, end), is_current_version=True, is_active=True
             ).select_related("doc_type", "content_type")
             if tenant_ids is not None:
-                aircraft_type = ContentType.objects.get_for_model(Aircraft)
-                operator_type = ContentType.objects.get_for_model(Operator)
-                cost_center_type = ContentType.objects.get_for_model(CostCenter)
-                allowed_aircraft = Aircraft.objects.filter(
-                    tenant_id__in=tenant_ids
-                ).values_list("pk", flat=True)
-                allowed_operators = Operator.objects.filter(
-                    tenant_id__in=tenant_ids
-                ).values_list("pk", flat=True)
-                allowed_centers = CostCenter.objects.filter(
-                    tenant_id__in=tenant_ids
-                ).values_list("pk", flat=True)
-                documents = documents.filter(
-                    Q(content_type=aircraft_type, object_id__in=allowed_aircraft)
-                    | Q(content_type=operator_type, object_id__in=allowed_operators)
-                    | Q(content_type=cost_center_type, object_id__in=allowed_centers)
-                )
+                # T3.2 Fase 2: Document now carries its own tenant (Fase 0b), so
+                # scope on it directly instead of deriving through the subject's
+                # ContentType (three subqueries) -- simpler and canonical.
+                documents = documents.filter(tenant_id__in=tenant_ids)
             if aircraft_id:
                 documents = documents.filter(
                     content_type=ContentType.objects.get_for_model(Aircraft),

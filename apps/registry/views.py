@@ -67,6 +67,20 @@ class RegistryList(
         )
         return context
 
+    def scope_by_tenant(self, queryset, field="tenant_id"):
+        """T3.2 Fase 2: restrict a list to the user's tenant(s).
+
+        Only for models with a direct `tenant` FK (CostCenter/Operator/Aircraft);
+        lists that scope through a relation (the assignment list, via the cost
+        center) filter themselves. `None` (superuser) means no restriction.
+        """
+        from apps.core.tenancy import visible_tenant_ids
+
+        tenant_ids = visible_tenant_ids(self.request.user)
+        if tenant_ids is not None:
+            queryset = queryset.filter(**{f"{field}__in": tenant_ids})
+        return queryset
+
 
 class RegistryDetail(ModelViewPermissionRequiredMixin, DetailView):
     template_name = "generic/detail.html"
@@ -350,7 +364,7 @@ class OperatorList(RegistryList):
 
     def get_queryset(self):
         today = timezone.localdate()
-        return (
+        return self.scope_by_tenant(
             super()
             .get_queryset()
             .select_related("cost_center")
@@ -385,7 +399,7 @@ class CostCenterList(RegistryList):
     search_fields = ["code", "name", "responsible"]
 
     def get_queryset(self):
-        return (
+        return self.scope_by_tenant(
             super()
             .get_queryset()
             .annotate(
@@ -417,7 +431,7 @@ class AircraftList(RegistryList):
 
         from apps.compliance.models import Document
 
-        queryset = super().get_queryset()
+        queryset = self.scope_by_tenant(super().get_queryset())
         aircraft_ct = ContentType.objects.get_for_model(Aircraft)
         # Earliest (most urgent) expiry per aircraft when more than one
         # current insurance-flagged document exists for it.
@@ -493,13 +507,14 @@ class AssignmentList(RegistryList):
         queryset = (
             super().get_queryset().select_related("operator", "aircraft", "cost_center")
         )
-        # T3.2 Fase 1: shared tenant resolution (was an inline membership query).
+        # T3.2 Fase 1/2: shared tenant resolution + canonical scope by the cost
+        # center's tenant (operator fallback only when the legacy Assignment has
+        # no cost center), instead of the OR-any-FK that leaked across tenants.
         tenant_ids = visible_tenant_ids(self.request.user)
         if tenant_ids is not None:
             queryset = queryset.filter(
-                Q(operator__tenant_id__in=tenant_ids)
-                | Q(aircraft__tenant_id__in=tenant_ids)
-                | Q(cost_center__tenant_id__in=tenant_ids)
+                Q(cost_center__tenant_id__in=tenant_ids)
+                | Q(cost_center__isnull=True, operator__tenant_id__in=tenant_ids)
             )
         status = self.request.GET.get("status")
         if status in {"planned", "confirmed", "completed", "cancelled"}:
