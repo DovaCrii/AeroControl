@@ -5,18 +5,40 @@
 > Última actualización: **2026-07-31**.
 
 ## Estado de producción (VM `p340`)
-- Corriendo en `origin/main` = **`9beab4c`**, servicio `active`, `/health/` 200.
+- Corriendo en **`8f688f4`** (pulled para el scaffolding de cumplimiento),
+  servicio `active`, `/health/` 200. **`origin/main` va adelante en `14854fe`**
+  (LV-15/17/18 commiteados y pusheados, **aún no desplegados** a prod).
 - Acceso: Tailscale + **público por Funnel** (`https://p340.tailccd107.ts.net`).
 - **Login endurecido** (django-axes, 5 intentos/15 min).
 - **Datos reales cargados**: 12 centros de costo, 41 operadores, 15 aeronaves,
-  109 habilitaciones. Documentos/alertas/reglas siguen en 0 (activación de
-  cumplimiento = decisión de negocio, pendiente).
+  109 habilitaciones. **Scaffolding de cumplimiento sembrado en prod**
+  (`seed_document_types` = 6 tipos, `seed_alert_rules` = 2 reglas esenciales).
+  Faltan **documentos con vencimiento** (decisión de negocio) para que
+  `generate_alerts` produzca alertas; hoy sigue en 0 alertas.
 - **Tareas programadas** (systemd timers): `generate_alerts` 06:00,
   `send_alert_digest` 07:00, `backup` 22:00.
 - Runbook de despliegue: [docs/dev/ubuntu-vm-deploy.md](docs/dev/ubuntu-vm-deploy.md).
   Deploy = `git pull --ff-only` + `uv sync --frozen` (los hago yo por SSH, sin
   sudo) + un bloque `sudo` (migrate/collectstatic/restart) que **corre el
   usuario**. Ese bloque pide contraseña de sudo — no manejarla.
+
+## Cerrado (2ª ventana, 2026-07-31)
+- **Scaffolding de cumplimiento** (elegido "activar cumplimiento"): comando
+  nuevo `seed_alert_rules` (idempotente, `--with-optional`) + tests; guía
+  `docs/compliance-setup.md` Paso 3 apunta al comando. Sembrado y verificado en
+  **local** (BD de dev migrada a `main` con respaldo) y **prod** (2 reglas
+  creadas; 0 alertas porque faltan documentos con vencimiento). Commit `8f688f4`.
+- **LV-15** (`ceb0a70`): chips de "Equipos habilitados" con color estable por
+  `QualificationType` (`chip_class`, hash `crc32` → paleta Bootstrap *subtle*).
+- **LV-17 + LV-18** (`14854fe`): fechas fuera del form de asignación de operador
+  (autollenado `start_date=hoy`); **asignación masiva** de operadores a un CC
+  (`OperatorBulkAssign` + `services.bulk_assign_operators`, semántica *un
+  operador = un CC* con mover/cerrar la previa). Aclarado con el usuario: el
+  pedido era agilizar, no un bloqueo.
+- **Pendiente de esta ventana**: **desplegar `14854fe` a prod** (LV-15/17/18 no
+  están live); **LV-19** (editar nombre de administrador de contrato) — el campo
+  `responsible` **sí** es editable en `CostCenterForm`, no se reprodujo; falta
+  que el usuario confirme en pantalla qué intentó. Ver LV-17/18/19 en el plan.
 
 ## Cerrado esta sesión (2026-07-31)
 - **Puesta en producción + seguridad**: axes, Funnel, systemd timers, fix SRI de
