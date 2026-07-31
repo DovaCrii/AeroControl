@@ -24,3 +24,28 @@ def get_default_tenant():
         defaults={"name": DEFAULT_TENANT_NAME},
     )
     return tenant.pk
+
+
+def visible_tenant_ids(user):
+    """Tenant ids a user may see, or ``None`` for "all tenants" (T3.2 Fase 1).
+
+    Single source of truth for read scoping, replacing three inline copies of
+    the same `OperationalTenant.objects.filter(members=...)` query (the calendar
+    feed and the assignment list). A superuser sees everything (``None``). Any
+    other user sees the tenants they are a member of; **when they have none they
+    fall back to the default tenant** instead of seeing nothing -- today every
+    record lives in that default tenant and there are no memberships yet, so
+    without the fallback a non-superuser collaborator saw an empty calendar and
+    empty lists (a latent bug this fixes). Real multi-tenant membership takes
+    over automatically once memberships exist.
+    """
+    if user.is_superuser:
+        return None
+    from apps.core.models import OperationalTenant
+
+    ids = list(
+        OperationalTenant.objects.filter(members=user, is_active=True).values_list(
+            "pk", flat=True
+        )
+    )
+    return ids or [get_default_tenant()]
