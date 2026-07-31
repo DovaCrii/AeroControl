@@ -751,6 +751,8 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        from django.contrib.auth.models import User
+
         from apps.compliance.models import AlertRule, DocumentType
         from apps.core.models import (
             AuditEvent,
@@ -779,6 +781,14 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
                         "admin:core_tenantmembership_changelist",
                         TenantMembership,
                         icon="people",
+                    ),
+                    self.item(
+                        _("Users and roles"),
+                        _("Read-only view of who holds which role."),
+                        "user-role-list",
+                        User,
+                        icon="people",
+                        read_only=True,
                     ),
                 ],
             },
@@ -1105,6 +1115,33 @@ class AuditEventListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
             "since": self.request.GET.get("since", ""),
             "until": self.request.GET.get("until", ""),
         }
+        return context
+
+
+class UserRoleListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    """B5.5: read-only panel of users and the roles (groups) they hold.
+
+    Answers "who can do what" at a glance without opening the technical Django
+    admin. Gated on ``auth.view_user`` (the Viewer role does not have it). Edits
+    still happen in /admin/ -- this is a window, with a link there.
+    """
+
+    permission_required = "auth.view_user"
+    raise_exception = True
+    template_name = "core/users_roles.html"
+    context_object_name = "users"
+    paginate_by = 50
+
+    def get_queryset(self):
+        from django.contrib.auth.models import User
+
+        return User.objects.prefetch_related("groups").order_by("username")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["technical_admin_url"] = (
+            "/admin/auth/user/" if self.request.user.is_staff else ""
+        )
         return context
 
 
