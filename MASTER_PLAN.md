@@ -544,6 +544,12 @@ documentos clave de la aeronave.
 
 | LV-15 | ⬜ | P3 | **[mejora futura]** Color por tipo en los chips de "Equipos habilitados" (LV-14), para diferenciar de un vistazo cada familia (Mavic/Matrice/Phantom/…). Un color estable por `QualificationType` (p. ej. derivado del `code`, o un campo `color` en el catálogo como ya tiene `KanbanLabel`). Pedido por el usuario 2026-07-30, no urgente. | Chips hoy son `bg-secondary-subtle` uniformes |
 
+**Formulario de centro de costo — simplificar** (`CostCenterForm`, lista de CC):
+
+| ID | Est. | Prio | Tarea | Nota |
+|---|:--:|:--:|---|---|
+| LV-16 | ✅ | P2 | **Form de CC simplificado** (2026-07-30). "Nombre" fuera del `CostCenterForm`; `CostCenter.name` opcional (`blank=True`, migración `0017`) y `__str__` cae al código cuando está vacío; los nombres existentes se conservan (ModelForm no toca campos ausentes). Campo **"Notas"** agregado al final del form (`notes` de `BaseModel`) y **columna "Notas"** al final de la lista de CC. 4 tests. | — |
+
 *(Pendiente de más issues del usuario — esta sección irá creciendo.)*
 
 ### FASE 6 — Nuevas funcionalidades `⏸ requiere FASE 0-3 cerradas`
@@ -650,7 +656,7 @@ Convertir `AdministrationCenterView` + `administration.html` en panel de situaci
 | B5.2 | ✅ | P2 | Sección "Salud y operación": último respaldo (nombre+fecha+`sha256` del manifiesto en `BACKUPS_DIR`, `backups_dir()` compartido), última ejecución de cada `JobRun` con resultado + aviso >48 h para los diarios, estado de `/health/` (db + storage) reusado server-side. (`bc17481`) | M | B2.0 |
 | B5.3 | ⏸ | P2 | **DIFERIDO** Acciones rápidas (POST + confirmación + permiso + `AuditEvent`): correr `generate_alerts`, digest `--dry-run`, respaldo. Solo acciones seguras/rápidas (nada que envíe correo real desde un botón); documentar el límite de ejecutar en el request | M | B2.0 |
 | B5.4 | ✅ | P2 | Vista de auditoría de solo lectura (`AuditEventListView`, `core.view_auditevent`, filtrable por usuario/modelo/fecha, paginada, enlazada desde el centro). (`bc17481`) | M | — |
-| B5.5 | ⏸ | P3 | **DIFERIDO** Panel de usuarios y roles (solo lectura, con enlace al admin técnico) | S | — |
+| B5.5 | ✅ | P3 | **Panel de usuarios y roles (solo lectura)** — `UserRoleListView` en `/administracion/usuarios/`, gateado por `auth.view_user`, lista usuarios con sus grupos/roles (+ badge superusuario), estado activo/inactivo, enlace al admin técnico; item read-only en la sección "Organización" del centro de administración. 2 tests (lista + 403 sin permiso). Cerrado 2026-07-30. | S | — |
 
 ### BLOQUE 6 — Reportes ejecutivos y asistente `rama codex/reportes-ejecutivos` (6.1/6.2 en la ruta; 6.3 diferido)
 

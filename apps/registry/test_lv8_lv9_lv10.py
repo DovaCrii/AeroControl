@@ -236,6 +236,48 @@ class TestSeedOperatorQualifications:
         assert q.issue_date is None
 
 
+# ── LV-16: cost-center form drops name, adds notes; notes column in the list ──
+class TestCostCenterFormSimplified:
+    @pytest.mark.django_db
+    def test_form_has_no_name_field_but_has_notes(self, db):
+        form = CostCenterForm()
+        assert "name" not in form.fields
+        assert "notes" in form.fields
+
+    @pytest.mark.django_db
+    def test_can_save_a_cost_center_without_a_name_with_notes(self, db):
+        form = CostCenterForm(
+            data={
+                "code": "738",
+                "responsible": "Juan Quiroz",
+                "notes": "Contrato MLP",
+            }
+        )
+        assert form.is_valid(), form.errors
+        cc = form.save()
+        assert cc.code == "CC738"
+        assert cc.name == ""
+        assert cc.notes == "Contrato MLP"
+        assert str(cc) == "CC738 · Juan Quiroz"  # __str__ falls back to code
+
+    @pytest.mark.django_db
+    def test_editing_preserves_an_existing_name(self, db):
+        cc = CostCenter.objects.create(code="CC410", name="Levantamientos")
+        form = CostCenterForm(
+            data={"code": "410", "responsible": "X", "notes": ""}, instance=cc
+        )
+        assert form.is_valid(), form.errors
+        form.save()
+        cc.refresh_from_db()
+        assert cc.name == "Levantamientos"  # untouched: not a form field
+
+    @pytest.mark.django_db
+    def test_cost_center_list_shows_a_notes_column(self, admin_client):
+        CostCenter.objects.create(code="CC1", name="One", notes="Nota visible")
+        response = admin_client.get(reverse("costcenter-list"))
+        assert "Nota visible" in response.content.decode()
+
+
 # ── LV-14: habilitations list grouped by operator ────────────────────────────
 class TestQualificationListGroupedByOperator:
     @pytest.mark.django_db

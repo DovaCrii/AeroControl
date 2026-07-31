@@ -18,21 +18,25 @@ from .models import (
 class CostCenterForm(AeroModelForm):
     class Meta:
         model = CostCenter
+        # LV-16: "Nombre" dropped from the form (code + contract administrator
+        # are what matters). The model field stays optional; existing names are
+        # preserved because a ModelForm never touches fields it does not list.
+        # "Notas" added at the end (the notes field already lives on BaseModel).
         fields = [
             "code",
-            "name",
             "responsible",
             "responsible_operator",
             "responsible_contact_name",
             "responsible_contact_email",
+            "notes",
         ]
         labels = {
             "code": _("Code"),
-            "name": _("Name"),
             "responsible": _("Contract administrator name"),
             "responsible_operator": _("Responsible operator"),
             "responsible_contact_name": _("External contact name"),
             "responsible_contact_email": _("External contact email"),
+            "notes": _("Notes"),
         }
         help_texts = {
             "responsible_operator": _(
