@@ -403,7 +403,7 @@ abierto (hoy sí es cierto, cerrado en `3611d06`).
 | T4.1 | ⬜ | P1 | `conftest.py` con fixtures `two_tenant_world`, `role_user()` | M | FASE 0 |
 | T4.2 | ⬜ | P1 | Matriz de aislamiento cross-tenant por vista | L | T4.1, T3.2 |
 | T4.3 | ✅ | P1 | Tests de `generate_alerts`, `maintenance`, `dashboard`. **El "hoy 0%" era obsoleto** (2026-07-24). Cerrado 2026-07-30: `dashboard` **100%** (test_ops8 + LV-8e), `maintenance` **100%** (lista+filtros, form create GET/POST, completar-ya-completado, `is_incomplete` en completado), `generate_alerts` + `digest` **100%** (regla que vigila un campo `status`, `digest_item_count`). 6 tests nuevos. | L | T4.1 |
-| T4.4 | ⬜ | P2 | Neutralización de fórmulas en reportes workboard (XLSX/DOCX) + test | M | — |
+| T4.4 | ✅ | P2 | Neutralización de fórmulas en reportes workboard. El CSV y el XLSX volcaban `task_row()` (título/etiquetas/responsable, texto libre) sin neutralizar → *formula injection* al abrir en Excel. Ahora aplican `core.exports.neutralize` por celda (cerrado 2026-07-30). El DOCX no ejecuta fórmulas, no requiere. 2 tests (CSV y XLSX con título `=…`, verificando el prefijo `'`). | M | — |
 | T4.5 | ⬜ | P3 | Sustituir ~14 tests de bajo valor por los P0 de arriba | S | T4.1 |
 
 ### FASE 5 — UX y flujos operacionales `requiere FASE 0`
