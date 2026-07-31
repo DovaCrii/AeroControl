@@ -542,7 +542,7 @@ documentos clave de la aeronave.
 |---|:--:|:--:|---|---|
 | LV-14 | ✅ | P2 | **Lista de Habilitaciones agrupada por operador.** `QualificationList` ahora es operator-centric: una fila por operador con sus `QualificationType` como chips en una columna "Equipos habilitados" (cada chip abre el editar de esa habilitación; rojo si vencida). Búsqueda/`is_active` filtran las habilitaciones subyacentes; el export CSV sigue exportando las habilitaciones individuales. `qualification_list.html`. 3 tests. | 2026-07-30 |
 
-| LV-15 | ⬜ | P3 | **[mejora futura]** Color por tipo en los chips de "Equipos habilitados" (LV-14), para diferenciar de un vistazo cada familia (Mavic/Matrice/Phantom/…) y que sean **visiblemente diferenciables**. Un color estable por `QualificationType` (p. ej. derivado del `code`, o un campo `color` en el catálogo como ya tiene `KanbanLabel`). Pedido por el usuario 2026-07-30, **reiterado 2026-07-31 con captura** (todos los chips salen en gris uniforme). No urgente. | Chips hoy son `bg-secondary-subtle` uniformes |
+| LV-15 | ✅ | P3 | **Color por tipo en los chips de "Equipos habilitados" (LV-14).** `QualificationType.chip_class` deriva un color estable del `code` (hash `crc32` determinista, sin migración) hacia una paleta de pares Bootstrap *subtle* theme-aware (`primary/success/info/warning/secondary/dark`); `bg-danger` queda reservado para vencidas. `qualification_list.html` usa la propiedad. 2 tests (render coloreado + vencida sigue roja; propiedad estable/en-paleta/nunca danger). Pedido 2026-07-30, reiterado 2026-07-31. | `apps/registry/models.py::QualificationType.chip_class`, `qualification_list.html` |
 
 **Formulario de centro de costo — simplificar** (`CostCenterForm`, lista de CC):
 

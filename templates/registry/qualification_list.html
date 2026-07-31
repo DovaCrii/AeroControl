@@ -15,7 +15,7 @@
       <a href="{% url 'qualification-update' q.pk %}"
          hx-get="{% url 'qualification-update' q.pk %}" hx-target="#modal-content"
          data-bs-toggle="modal" data-bs-target="#generic-modal"
-         class="badge text-decoration-none me-1 mb-1 {% if q.expiry_date and q.expiry_date < today %}bg-danger{% else %}bg-secondary-subtle text-secondary-emphasis{% endif %}"
+         class="badge text-decoration-none me-1 mb-1 {% if q.expiry_date and q.expiry_date < today %}bg-danger{% else %}{{ q.qualification_type.chip_class }}{% endif %}"
          title="{% translate 'Edit qualification' %}">{{ q.qualification_type.name }}{% if q.expiry_date and q.expiry_date < today %} · {% translate "Expired" %}{% endif %}</a>
     {% empty %}<span class="text-muted">—</span>{% endfor %}
   </td>

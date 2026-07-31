@@ -1,3 +1,5 @@
+import zlib
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -290,12 +292,36 @@ class QualificationType(BaseModel):
         ),
     )
 
+    # LV-15: theme-aware, accessible Bootstrap "subtle" pairs used to colour the
+    # equipment chips so each family is visibly differentiable at a glance.
+    # `bg-danger` is deliberately absent -- it is reserved for expired chips.
+    CHIP_PALETTE = (
+        "bg-primary-subtle text-primary-emphasis",
+        "bg-success-subtle text-success-emphasis",
+        "bg-info-subtle text-info-emphasis",
+        "bg-warning-subtle text-warning-emphasis",
+        "bg-secondary-subtle text-secondary-emphasis",
+        "bg-dark-subtle text-dark-emphasis",
+    )
+
     class Meta:
         verbose_name = _("qualification type")
         verbose_name_plural = _("qualification types")
 
     def __str__(self):
         return self.name
+
+    @property
+    def chip_class(self):
+        """LV-15: a stable colour class for this type's chips.
+
+        Derived from `code` with a deterministic hash (crc32, not Python's
+        per-process salted `hash()`) so the colour never shifts between
+        requests or restarts, and every type -- present or future -- gets one
+        without a migration or manual configuration.
+        """
+        index = zlib.crc32(self.code.encode("utf-8")) % len(self.CHIP_PALETTE)
+        return self.CHIP_PALETTE[index]
 
     def keyword_list(self):
         return [k.strip().lower() for k in self.model_keywords.split(",") if k.strip()]
