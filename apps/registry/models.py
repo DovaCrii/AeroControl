@@ -15,7 +15,9 @@ class CostCenter(BaseModel):
         related_name="cost_centers",
     )
     code = models.CharField(max_length=30, unique=True)
-    name = models.CharField(max_length=150)
+    # LV-16: optional -- the code plus the contract administrator identify the
+    # cost center; a free-text name is no longer required on the form.
+    name = models.CharField(max_length=150, blank=True)
     # Free-text name kept from the Chapter 1 import. It cannot be used to reach
     # anyone (the imported values do not match operator names), so notifications
     # use responsible_operator; this stays as the historical record.
@@ -40,7 +42,8 @@ class CostCenter(BaseModel):
     responsible_contact_email = models.EmailField(blank=True)
 
     def __str__(self):
-        label = f"{self.code} - {self.name}"
+        # name is optional (LV-16): fall back to the code alone when blank.
+        label = f"{self.code} - {self.name}" if self.name else self.code
         return f"{label} · {self.responsible}" if self.responsible else label
 
     class Meta:
