@@ -200,3 +200,124 @@ def test_maintenance_record_with_history_cannot_be_hard_deleted():
 
     with pytest.raises(ProtectedError):
         record.delete()
+
+
+# ── FASE 4: cover the list view, the create form and the edge branches ────────
+def _mechanic_client():
+    User.objects.create_superuser("mechanic", "mechanic@test.com", "password")
+    client = Client()
+    assert client.login(username="mechanic", password="password")
+    return client
+
+
+def _aircraft():
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    return Aircraft.objects.create(
+        registration="CC-AAA",
+        type="RPA",
+        model="M300",
+        manufacturer="DJI",
+        cost_center=cost_center,
+    )
+
+
+@pytest.mark.django_db
+def test_maintenance_list_renders_and_filters_by_status_and_type():
+    aircraft = _aircraft()
+    scheduled = MaintenanceRecord.objects.create(
+        aircraft=aircraft,
+        maintenance_type="scheduled",
+        description="100h inspection",
+        scheduled_date=date(2026, 7, 20),
+        status="pending",
+    )
+    tbd = MaintenanceRecord.objects.create(
+        aircraft=aircraft,
+        maintenance_type="to_be_defined",
+        description="battery check, date TBD",
+        status="in_progress",
+    )
+    client = _mechanic_client()
+
+    full = client.get(reverse("maintenance-list"))
+    assert full.status_code == 200
+    ids = {r.pk for r in full.context["objects"]}
+    assert {scheduled.pk, tbd.pk} <= ids
+    # The filter dropdowns are populated from the choices.
+    assert full.context["status_choices"] == MaintenanceRecord.STATUSES
+    assert full.context["type_choices"] == MaintenanceRecord.TYPES
+
+    by_status = client.get(reverse("maintenance-list"), {"status": "in_progress"})
+    assert [r.pk for r in by_status.context["objects"]] == [tbd.pk]
+    assert by_status.context["current_status"] == "in_progress"
+
+    by_type = client.get(
+        reverse("maintenance-list"), {"maintenance_type": "to_be_defined"}
+    )
+    assert [r.pk for r in by_type.context["objects"]] == [tbd.pk]
+    assert by_type.context["current_type"] == "to_be_defined"
+
+
+@pytest.mark.django_db
+def test_maintenance_create_form_renders_and_creates_a_record():
+    aircraft = _aircraft()
+    client = _mechanic_client()
+
+    form_page = client.get(reverse("maintenance-create"))
+    assert form_page.status_code == 200
+    assert b'name="maintenance_type"' in form_page.content
+
+    response = client.post(
+        reverse("maintenance-create"),
+        {
+            "aircraft": aircraft.pk,
+            "maintenance_type": "to_be_defined",
+            "description": "Needs inspection, date to be defined",
+        },
+    )
+
+    assert response.status_code == 302
+    assert response.url == reverse("maintenance-list")
+    record = MaintenanceRecord.objects.get(aircraft=aircraft)
+    assert record.maintenance_type == "to_be_defined"
+    assert record.scheduled_date is None  # optional (LV-8b)
+
+
+@pytest.mark.django_db
+def test_completing_an_already_completed_record_does_not_change_it():
+    aircraft = _aircraft()
+    record = MaintenanceRecord.objects.create(
+        aircraft=aircraft,
+        maintenance_type="scheduled",
+        description="100h inspection",
+        scheduled_date=date(2026, 7, 20),
+        status="completed",
+    )
+    client = _mechanic_client()
+
+    # complete is only valid from in_progress; from completed it is rejected
+    # (the early-return branch that defers to StatusTransitionView).
+    response = client.post(
+        reverse("maintenance-complete", args=[record.pk]),
+        {"completed_date": "2026-07-25", "performed_by": "Someone"},
+    )
+
+    assert response.status_code == 302
+    record.refresh_from_db()
+    assert record.status == "completed"
+    event = AuditEvent.objects.latest("created_at")
+    assert event.action == "status_transition_rejected"
+
+
+@pytest.mark.django_db
+def test_completed_record_is_not_incomplete_even_without_a_schedule():
+    """models.is_incomplete: a completed record is never 'incomplete', even if
+    it is a to_be_defined type with no scheduled date."""
+    aircraft = _aircraft()
+    record = MaintenanceRecord.objects.create(
+        aircraft=aircraft,
+        maintenance_type="to_be_defined",
+        description="done",
+        status="completed",
+    )
+    assert record.is_incomplete is False
