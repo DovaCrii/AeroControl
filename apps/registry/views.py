@@ -8,7 +8,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
 from django.utils import timezone
 from django.views import View
-from django.views.generic import ListView, DetailView, CreateView, UpdateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, FormView
 from apps.core.views import (
     CsvExportMixin,
     HtmxFormMixin,
@@ -36,10 +36,12 @@ from .forms import (
     OperatorForm,
     AssignmentForm,
     OperatorAssignmentForm,
+    OperatorBulkAssignForm,
     AircraftAssignmentForm,
     QualificationForm,
     QualificationTypeForm,
 )
+from .services import bulk_assign_operators
 
 
 class RegistryList(
@@ -575,13 +577,41 @@ class AircraftAssignmentList(RegistryList):
         return super().get_queryset().select_related("aircraft", "cost_center")
 
 
+class OperatorBulkAssign(HtmxFormMixin, ModelPermissionRequiredMixin, FormView):
+    """LV-18: assign many operators to one cost center in a single submit.
+
+    Takes over the operator-assignment "+ New" entry point so the common case
+    (drop 5-10 operators onto a contract) is one action, not one per operator.
+    Editing a single existing assignment still goes through the ModelForm.
+    """
+
+    model = OperatorAssignment
+    permission_action = "add"
+    template_name = "generic/form.html"
+    form_class = OperatorBulkAssignForm
+
+    def get_success_url(self):
+        return reverse("operatorassignment-list")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = _("Assign operators to a cost center")
+        return context
+
+    def form_valid(self, form):
+        bulk_assign_operators(
+            operators=form.cleaned_data["operators"],
+            cost_center=form.cleaned_data["cost_center"],
+            status=form.cleaned_data["status"],
+            purpose=form.cleaned_data["purpose"],
+            user=self.request.user,
+        )
+        return super().form_valid(form)
+
+
 OperatorAssignmentDetail, OperatorAssignmentCreate, OperatorAssignmentUpdate = (
     type("OperatorAssignmentDetail", (RegistryDetail,), {"model": OperatorAssignment}),
-    type(
-        "OperatorAssignmentCreate",
-        (RegistryCreate,),
-        {"model": OperatorAssignment, "form_class": OperatorAssignmentForm},
-    ),
+    OperatorBulkAssign,
     type(
         "OperatorAssignmentUpdate",
         (RegistryUpdate,),
