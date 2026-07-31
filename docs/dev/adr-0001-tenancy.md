@@ -1,6 +1,6 @@
 # ADR-0001: Modelo de tenancy (T3.2 / F-08)
 
-**Estado:** Aceptado (Opción A, por fases — usuario 2026-07-31)
+**Estado:** Implementado (Opción A — Fases 0-4 completas, 2026-07-31)
 **Fecha:** 2026-07-31
 **Decisor:** usuario (dueño del producto)
 
@@ -40,9 +40,17 @@
 >   ahora lo hacen vía `RegistryList.scope_by_tenant`. Matriz de aislamiento de
 >   Fase 4 ampliada a esas 3 listas.
 >
-> Sigue: **Fase 3** (constraints `UniqueConstraint(tenant, code/employee_id/
-> permission_number)` — F-10) y, opcional, el scoping de las vistas de *detalle*
-> (IDOR F-03/F-06) para que no se pueda ver por URL un registro de otro tenant.
+> - **Fase 3** ✅ — `UniqueConstraint(tenant, code)` en CostCenter y
+>   `(tenant, employee_id)` en Operator (migr. `registry` 0020); se quitó el
+>   `unique=True` global. `permission_number` (permiso DGAC) y `registration`
+>   (matrícula) **siguen globales** por ser identificadores emitidos por la
+>   autoridad, únicos por naturaleza; los catálogos también. F-10 cerrado para
+>   los identificadores internos.
+>
+> **T3.2 completo** (Fases 0-4). Pendiente **opcional** (no parte de T3.2, es
+> F-03/F-06): scoping por objeto en las vistas de *detalle* para que un usuario
+> no pueda abrir por URL un registro de otro tenant — hoy irrelevante (un solo
+> tenant), se hará si/ cuando se centralice.
 **Relacionados:** MASTER_PLAN T3.2 / T3.3 / T4.1 / T4.2 · AUDIT_CLAUDE F-03..F-06, F-08, F-10
 
 ## Contexto

@@ -14,7 +14,9 @@ class CostCenter(BaseModel):
         default=get_default_tenant,
         related_name="cost_centers",
     )
-    code = models.CharField(max_length=30, unique=True)
+    # T3.2 Fase 3: unique per tenant, not globally -- two organizations may
+    # reuse a cost-center code. (Global unique dropped; see Meta.constraints.)
+    code = models.CharField(max_length=30)
     # LV-16: optional -- the code plus the contract administrator identify the
     # cost center; a free-text name is no longer required on the form.
     name = models.CharField(max_length=150, blank=True)
@@ -52,6 +54,11 @@ class CostCenter(BaseModel):
         # a Spanish sentence.
         verbose_name = _("cost center")
         verbose_name_plural = _("cost centers")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tenant", "code"], name="registry_costcenter_tenant_code_uniq"
+            )
+        ]
 
     @property
     def notification_email(self):
@@ -154,9 +161,9 @@ class Operator(BaseModel):
     )
     # Acronyms are spelled out here so the label lookup matches the catalog;
     # Django's derived labels would be "Employee id"/"Dgac credential".
-    employee_id = models.CharField(
-        max_length=50, unique=True, verbose_name=_("Employee ID")
-    )
+    # T3.2 Fase 3: unique per tenant (global unique dropped; see
+    # Meta.constraints) -- an employee id is an organization-internal id.
+    employee_id = models.CharField(max_length=50, verbose_name=_("Employee ID"))
     full_name = models.CharField(max_length=150)
     email = models.EmailField(blank=True)
     phone = models.CharField(max_length=50, blank=True)
@@ -178,6 +185,12 @@ class Operator(BaseModel):
     class Meta:
         verbose_name = _("operator")
         verbose_name_plural = _("operators")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tenant", "employee_id"],
+                name="registry_operator_tenant_employee_uniq",
+            )
+        ]
 
     def __str__(self):
         return self.full_name
