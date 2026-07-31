@@ -253,6 +253,43 @@ def test_seed_document_types_creates_catalog_including_one_insurance_type():
 
 
 @pytest.mark.django_db
+def test_seed_alert_rules_creates_the_two_essential_rules_idempotently():
+    """The recommended rule set seeds cleanly, stays valid, and is idempotent."""
+    from django.core.management import call_command
+
+    call_command("seed_alert_rules")
+    assert AlertRule.objects.count() == 2
+    essential = AlertRule.objects.get(name="Documentos por vencer")
+    assert essential.entity_type == "compliance.document"
+    assert essential.field_to_watch == "expiry_date"
+    assert essential.days_before_expiry == 30
+    assert essential.enabled is True
+    assert essential.create_kanban_task is False
+    # Seeded rules must survive the model's own validation, or generate_alerts
+    # would silently skip them every night.
+    for rule in AlertRule.objects.all():
+        rule.full_clean()
+
+    # Idempotent: a second run does not duplicate.
+    call_command("seed_alert_rules")
+    assert AlertRule.objects.count() == 2
+
+
+@pytest.mark.django_db
+def test_seed_alert_rules_with_optional_adds_qualification_and_maintenance():
+    from django.core.management import call_command
+
+    call_command("seed_alert_rules", "--with-optional")
+    assert AlertRule.objects.count() == 4
+    assert AlertRule.objects.filter(
+        entity_type="registry.qualification", field_to_watch="expiry_date"
+    ).exists()
+    assert AlertRule.objects.filter(
+        entity_type="maintenance.maintenancerecord", field_to_watch="scheduled_date"
+    ).exists()
+
+
+@pytest.mark.django_db
 def test_alert_rule_cannot_be_deleted_while_it_has_alerts():
     cost_center = CostCenter.objects.create(code="OPS", name="Operations")
     aircraft = Aircraft.objects.create(
