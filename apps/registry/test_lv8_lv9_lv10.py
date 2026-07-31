@@ -302,6 +302,40 @@ class TestQualificationListGroupedByOperator:
         assert "Serie Mavic" in content and "Serie Matrice" in content
 
     @pytest.mark.django_db
+    def test_current_chips_are_coloured_per_type_expired_stay_red(self, admin_client):
+        """LV-15: a current chip carries its type's stable colour class, while
+        an expired chip keeps the red override."""
+        cc = CostCenter.objects.create(code="CC1", name="One")
+        operator = Operator.objects.create(
+            employee_id="OP-1", full_name="René Herrera", cost_center=cc
+        )
+        mavic = QualificationType.objects.create(code="mavic", name="Serie Mavic")
+        phantom = QualificationType.objects.create(code="phantom", name="Serie Phantom")
+        Qualification.objects.create(operator=operator, qualification_type=mavic)
+        Qualification.objects.create(
+            operator=operator,
+            qualification_type=phantom,
+            expiry_date=date(2000, 1, 1),  # long expired
+        )
+
+        content = admin_client.get(reverse("qualification-list")).content.decode()
+
+        # The current chip shows its type colour, the expired one stays red.
+        assert mavic.chip_class in content
+        assert "bg-danger" in content
+
+    def test_chip_class_is_stable_in_palette_and_never_danger(self):
+        """LV-15: the colour is deterministic, drawn from the palette, and
+        never collides with the reserved expired-red."""
+        a = QualificationType(code="mavic", name="Serie Mavic")
+        b = QualificationType(code="matrice", name="Serie Matrice")
+        assert a.chip_class in QualificationType.CHIP_PALETTE
+        assert a.chip_class == QualificationType(code="mavic", name="x").chip_class
+        assert "bg-danger" not in a.chip_class
+        # Different families should not all look identical.
+        assert a.chip_class != b.chip_class
+
+    @pytest.mark.django_db
     def test_operator_without_qualifications_is_absent(self, admin_client):
         cc = CostCenter.objects.create(code="CC1", name="One")
         Operator.objects.create(
