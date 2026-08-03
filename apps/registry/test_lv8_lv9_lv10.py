@@ -239,9 +239,11 @@ class TestSeedOperatorQualifications:
 # ── LV-16: cost-center form drops name, adds notes; notes column in the list ──
 class TestCostCenterFormSimplified:
     @pytest.mark.django_db
-    def test_form_has_no_name_field_but_has_notes(self, db):
+    def test_form_has_an_optional_name_field_and_notes(self, db):
+        # LV-19: name is back on the form (optional) so it can be edited.
         form = CostCenterForm()
-        assert "name" not in form.fields
+        assert "name" in form.fields
+        assert not form.fields["name"].required
         assert "notes" in form.fields
 
     @pytest.mark.django_db
@@ -261,15 +263,17 @@ class TestCostCenterFormSimplified:
         assert str(cc) == "CC738 · Juan Quiroz"  # __str__ falls back to code
 
     @pytest.mark.django_db
-    def test_editing_preserves_an_existing_name(self, db):
+    def test_name_can_be_set_and_changed_from_the_form(self, db):
+        # LV-19: the name shown in the list was frozen; now it is editable.
         cc = CostCenter.objects.create(code="CC410", name="Levantamientos")
         form = CostCenterForm(
-            data={"code": "410", "responsible": "X", "notes": ""}, instance=cc
+            data={"code": "410", "name": "Levantamientos digital", "notes": ""},
+            instance=cc,
         )
         assert form.is_valid(), form.errors
         form.save()
         cc.refresh_from_db()
-        assert cc.name == "Levantamientos"  # untouched: not a form field
+        assert cc.name == "Levantamientos digital"
 
     @pytest.mark.django_db
     def test_cost_center_list_shows_a_notes_column(self, admin_client):
