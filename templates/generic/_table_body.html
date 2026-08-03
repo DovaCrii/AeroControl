@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load aero_tags i18n %}
 {% comment %}has_detail_url / has_update_url come from SearchMixin: they probe
 whether the relative row URLs actually resolve, because this table used to
 offer View/Edit unconditionally and four lists 404ed on them.{% endcomment %}
@@ -28,3 +28,8 @@ offer View/Edit unconditionally and four lists 404ed on them.{% endcomment %}
   {% endif %}
 </td></tr>
 {% endfor %}
+{% comment %}F-13: keep the pagination in sync with the live-searched/paged rows.
+The rows swap into #table-body, but the controls live outside it, so update them
+out-of-band in the same response instead of leaving a stale page range behind.
+{% endcomment %}
+<div id="pagination-container" hx-swap-oob="true">{% render_pagination page_obj %}</div>

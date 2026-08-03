@@ -32,6 +32,6 @@
       <tbody id="table-body">{% block table_body %}{% include "generic/_table_body.html" %}{% endblock %}</tbody>
     </table>
   </div>
-  {% render_pagination page_obj %}
+  <div id="pagination-container">{% render_pagination page_obj %}</div>
 </div>
 {% endblock %}
