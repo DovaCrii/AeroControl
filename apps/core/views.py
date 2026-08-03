@@ -290,6 +290,10 @@ CALENDAR_EVENT_PERMISSIONS = {
     "maintenance": "maintenance.view_maintenancerecord",
     "document": "compliance.view_document",
     "qualification": "registry.view_qualification",
+    # LV-29: the DGAC vigencias, joining the "Expirations" lane, each gated by
+    # the view permission of its own registry model.
+    "operator_credential": "registry.view_operator",
+    "aircraft_insurance": "registry.view_aircraft",
     "task": "workboard.view_kanbantask",
 }
 
@@ -397,6 +401,9 @@ class UnifiedCalendarEventsView(CalendarAccessMixin, View):
         "maintenance": "#8b5cf6",
         "document": "#ef4444",
         "qualification": "#e11d48",
+        # LV-29: same red "Expirations" family as document/qualification.
+        "operator_credential": "#be123c",
+        "aircraft_insurance": "#f43f5e",
         "task": "#0f9f95",
     }
 
@@ -616,6 +623,57 @@ class UnifiedCalendarEventsView(CalendarAccessMixin, View):
                     "url": reverse("qualification-detail", args=[qualification.pk]),
                 }
                 for qualification in qualifications
+            )
+
+        if "operator_credential" in selected_types:
+            # LV-29: DGAC credential validity per operator. Honours the cost
+            # center and operator scope filters (not aircraft, which is not an
+            # axis of an operator).
+            operators = Operator.objects.filter(
+                credential_expiry__range=(start, end), is_active=True
+            )
+            if tenant_ids is not None:
+                operators = operators.filter(tenant_id__in=tenant_ids)
+            if cost_center_id:
+                operators = operators.filter(cost_center_id=cost_center_id)
+            if operator_id:
+                operators = operators.filter(id=operator_id)
+            events.extend(
+                {
+                    "id": f"operator_credential-{operator.pk}",
+                    "type": "operator_credential",
+                    "title": f"{operator.full_name} · {_('DGAC credential')}",
+                    "start": operator.credential_expiry.isoformat(),
+                    "allDay": True,
+                    "color": self.EVENT_COLORS["operator_credential"],
+                    "url": reverse("operator-detail", args=[operator.pk]),
+                }
+                for operator in operators
+            )
+
+        if "aircraft_insurance" in selected_types:
+            # LV-29: JAC insurance validity per aircraft. Honours the cost
+            # center and aircraft scope filters (not operator).
+            insured = Aircraft.objects.filter(
+                insurance_expiry__range=(start, end), is_active=True
+            )
+            if tenant_ids is not None:
+                insured = insured.filter(tenant_id__in=tenant_ids)
+            if cost_center_id:
+                insured = insured.filter(cost_center_id=cost_center_id)
+            if aircraft_id:
+                insured = insured.filter(id=aircraft_id)
+            events.extend(
+                {
+                    "id": f"aircraft_insurance-{aircraft.pk}",
+                    "type": "aircraft_insurance",
+                    "title": f"{aircraft.registration} · {_('JAC insurance')}",
+                    "start": aircraft.insurance_expiry.isoformat(),
+                    "allDay": True,
+                    "color": self.EVENT_COLORS["aircraft_insurance"],
+                    "url": reverse("aircraft-detail", args=[aircraft.pk]),
+                }
+                for aircraft in insured
             )
 
         if "document" in selected_types:

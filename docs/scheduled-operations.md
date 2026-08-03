@@ -10,6 +10,7 @@ resumen corto), así que después se puede comprobar si realmente corrieron.
 | `send_alert_digest` | Envía por correo el resumen de vencimientos a cada responsable de centro de costo | Diario, después de las alertas |
 | `backup` | Crea un respaldo de la base con manifiesto y checksum | Diario, fuera de horario |
 | `send_executive_report` | Envía el informe ejecutivo con KPIs del período vs el anterior y el XLSX adjunto | Semanal (lunes) |
+| `notify_expiring_credentials` (opcional, LV-29) | Avisa por correo a **cada operador** de sus vigencias DGAC por vencer o ya vencidas (credencial + habilitaciones, ≤30 días) | Diario o semanal, si se quiere el aviso directo al operador |
 
 El orden importa: `send_alert_digest` reporta lo que `generate_alerts` acaba de
 detectar, así que conviene dejar un margen entre ambos.
@@ -126,6 +127,11 @@ journalctl -u aerocontrol-alerts.service -n 30 --no-pager
 El informe ejecutivo semanal (`send_executive_report --period week`) se agrega
 igual, con `OnCalendar=Mon *-*-* 07:30:00`, cuando haya destinatarios en el
 grupo *Dirección*.
+
+El aviso opcional de vigencias al operador (LV-29) se agrega con el mismo patrón
+cuando se quiera activar —`mkjob credentials "notify_expiring_credentials"
+"*-*-* 07:30:00"`—; solo avisa a operadores con correo en su ficha (los demás se
+reportan y se omiten). Acepta `--dry-run` y `--days N` (ventana, 30 por defecto).
 
 ## Prueba antes de programar
 

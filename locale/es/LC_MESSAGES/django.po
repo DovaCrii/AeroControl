@@ -3268,6 +3268,35 @@ msgstr "Enviar a mantenimiento"
 msgid "No open maintenance for this aircraft."
 msgstr "No hay mantenciones abiertas para esta aeronave."
 
+# LV-29: DGAC vigencias.
+msgid "DGAC credential expiry"
+msgstr "Vencimiento credencial DGAC"
+
+msgid "JAC insurance expiry"
+msgstr "Vencimiento seguro JAC"
+
+msgid "Credential expiry"
+msgstr "Vence credencial"
+
+msgid "JAC insurance"
+msgstr "Seguro JAC"
+
+msgid "AeroControl · your DGAC validities are expiring"
+msgstr "AeroControl · tus vigencias DGAC están por vencer"
+
+msgid "The following DGAC validities of yours are expiring soon or already lapsed:"
+msgstr "Las siguientes vigencias DGAC tuyas están por vencer o ya vencieron:"
+
+msgid "already expired"
+msgstr "ya vencida"
+
+msgid "Please renew them with the DGAC to keep operating."
+msgstr "Renuévalas ante la DGAC para seguir operando."
+
+#, python-format
+msgid "Hello %(name)s,"
+msgstr "Hola %(name)s,"
+
 #~ msgid "Flight date"
 #~ msgstr "Fecha de vuelo"
 

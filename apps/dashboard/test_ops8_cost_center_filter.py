@@ -142,6 +142,38 @@ def test_upcoming_expirations_spans_quals_documents_and_permissions():
 
 
 @pytest.mark.django_db
+def test_upcoming_expirations_include_dgac_vigencias():
+    # LV-29: a lapsing DGAC credential and JAC insurance join the window.
+    from datetime import timedelta
+
+    from django.utils import timezone, translation
+
+    from apps.dashboard.views import upcoming_expirations
+
+    today = timezone.localdate()
+    cutoff = today + timedelta(days=30)
+    soon = today + timedelta(days=10)
+
+    cc = CostCenter.objects.create(code="CC1", name="One")
+    Operator.objects.create(
+        employee_id="P1", full_name="Ana", cost_center=cc, credential_expiry=soon
+    )
+    aircraft = _aircraft(cc, "CC-A1")
+    aircraft.insurance_expiry = soon
+    aircraft.save(update_fields=["insurance_expiry"])
+
+    # The kind label is translated; pin the language so the assertion is stable.
+    with translation.override("en"):
+        kinds = {item["kind"]: item for item in upcoming_expirations(today, cutoff)}
+
+    assert "DGAC credential" in kinds
+    assert "JAC insurance" in kinds
+    assert kinds["DGAC credential"]["label"] == "Ana"
+    assert kinds["JAC insurance"]["label"] == "CC-A1"
+    assert all(item["url"] for item in kinds.values())
+
+
+@pytest.mark.django_db
 def test_archived_cost_center_is_ignored(auth_client):
     cc1 = CostCenter.objects.create(code="CC1", name="One", is_active=False)
     _aircraft(cc1, "CC-A1")

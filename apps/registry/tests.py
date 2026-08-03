@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 from django.test import Client
-from django.utils import translation
+from django.utils import timezone, translation
 from django.urls import reverse
 
 from apps.core.models import OperationalTenant
@@ -91,25 +91,11 @@ def test_aircraft_list_exposes_model(client, admin_user, registry_data):
 
 @pytest.mark.django_db
 def test_aircraft_list_shows_overdue_insurance(client, admin_user, registry_data):
-    """LV-4: the insurance expiry (a Document flagged is_insurance on its
-    DocumentType) surfaces as a column, marked overdue in the past."""
-    from django.contrib.contenttypes.models import ContentType
-
-    from apps.compliance.models import Document, DocumentType
-
+    """LV-29: the JAC insurance expiry is a field on Aircraft (was derived from
+    an is_insurance Document under LV-4); the list marks a past date overdue."""
     _tenant, _center, _operator, aircraft = registry_data
-    insurance_type = DocumentType.objects.create(
-        code="liability-insurance", name="Liability insurance", is_insurance=True
-    )
-    Document.objects.create(
-        title="Insurance",
-        doc_type=insurance_type,
-        content_type=ContentType.objects.get_for_model(Aircraft),
-        object_id=aircraft.pk,
-        file_path="insurance/aircraft/file.pdf",
-        issue_date=date(2025, 1, 1),
-        expiry_date=date(2025, 6, 1),  # in the past relative to any test run
-    )
+    aircraft.insurance_expiry = date(2025, 6, 1)  # in the past relative to any run
+    aircraft.save(update_fields=["insurance_expiry"])
     client.force_login(admin_user)
 
     response = client.get(reverse("aircraft-list"))
@@ -342,6 +328,141 @@ class TestArchiveRestoreFromUI:
         center.refresh_from_db()
         assert response.status_code == 302
         assert center.is_active is False
+
+
+# ── LV-29: DGAC vigencias ─────────────────────────────────────────────────────
+
+
+@pytest.mark.django_db
+def test_vigencia_overdue_properties(registry_data):
+    """Past dates are overdue; a missing date is unknown, not overdue."""
+    _tenant, _center, operator, aircraft = registry_data
+    assert operator.credential_is_overdue is False
+    assert aircraft.insurance_is_overdue is False
+
+    operator.credential_expiry = date(2000, 1, 1)
+    aircraft.insurance_expiry = date(2000, 1, 1)
+    assert operator.credential_is_overdue is True
+    assert aircraft.insurance_is_overdue is True
+
+
+@pytest.mark.django_db
+def test_operator_list_shows_credential_expiry_column(client, admin_user, registry_data):
+    _tenant, _center, operator, _aircraft = registry_data
+    operator.credential_expiry = date(2025, 6, 1)  # past
+    operator.save(update_fields=["credential_expiry"])
+    client.force_login(admin_user)
+
+    response = client.get(reverse("operator-list"))
+
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert "2025-06-01" in content
+    assert "Overdue" in content or "Atrasada" in content
+
+
+@pytest.mark.django_db
+def test_load_dgac_vigencias_matches_updates_and_reports_unmatched(
+    registry_data, capsys
+):
+    from django.core.management import call_command
+
+    _tenant, _center, operator, aircraft = registry_data
+    operator.dgac_credential = "CRED-1"
+    operator.save(update_fields=["dgac_credential"])
+
+    csv_rows = [
+        ("operator", "CRED-1", "2026-09-01"),
+        ("aircraft", "RPA-1", "2026-10-01"),
+        ("aircraft", "RPA-DOES-NOT-EXIST", "2026-10-01"),
+    ]
+    tmp = _write_csv(csv_rows)
+    call_command("load_dgac_vigencias", "--file", str(tmp))
+
+    operator.refresh_from_db()
+    aircraft.refresh_from_db()
+    assert operator.credential_expiry == date(2026, 9, 1)
+    assert aircraft.insurance_expiry == date(2026, 10, 1)
+    out = capsys.readouterr().out
+    assert "unmatched: aircraft:RPA-DOES-NOT-EXIST" in out
+
+
+@pytest.mark.django_db
+def test_load_dgac_vigencias_dry_run_and_idempotent(registry_data, capsys):
+    from django.core.management import call_command
+
+    _tenant, _center, _operator, aircraft = registry_data
+    tmp = _write_csv([("aircraft", "RPA-1", "2026-10-01")])
+
+    call_command("load_dgac_vigencias", "--file", str(tmp), "--dry-run")
+    aircraft.refresh_from_db()
+    assert aircraft.insurance_expiry is None  # dry-run wrote nothing
+
+    call_command("load_dgac_vigencias", "--file", str(tmp))
+    aircraft.refresh_from_db()
+    assert aircraft.insurance_expiry == date(2026, 10, 1)
+
+    # A rerun with the same data changes nothing.
+    call_command("load_dgac_vigencias", "--file", str(tmp))
+    assert "0 updated, 1 already current" in capsys.readouterr().out
+
+
+@pytest.mark.django_db
+def test_notify_expiring_credentials_emails_operator_with_their_items(
+    registry_data, settings
+):
+    from django.core import mail
+    from django.core.management import call_command
+
+    _tenant, _center, operator, _aircraft = registry_data
+    operator.email = "pilot@example.cl"
+    operator.credential_expiry = timezone.localdate() + date.resolution * 5  # +5 days
+    operator.save(update_fields=["email", "credential_expiry"])
+    qual_type = QualificationType.objects.create(name="Mavic", code="mavic")
+    Qualification.objects.create(
+        operator=operator,
+        qualification_type=qual_type,
+        expiry_date=timezone.localdate() - date.resolution * 2,  # already lapsed
+    )
+
+    call_command("notify_expiring_credentials")
+
+    assert len(mail.outbox) == 1
+    message = mail.outbox[0]
+    assert message.to == ["pilot@example.cl"]
+    assert "Mavic" in message.body
+
+
+@pytest.mark.django_db
+def test_notify_expiring_credentials_skips_operator_without_email(
+    registry_data, capsys
+):
+    from django.core import mail
+    from django.core.management import call_command
+
+    _tenant, _center, operator, _aircraft = registry_data
+    operator.email = ""
+    operator.credential_expiry = timezone.localdate() + date.resolution * 5
+    operator.save(update_fields=["email", "credential_expiry"])
+
+    call_command("notify_expiring_credentials")
+
+    assert mail.outbox == []
+    assert "no email on file" in capsys.readouterr().out
+
+
+def _write_csv(rows):
+    """Write a kind,key,expiry CSV to the pytest tmp dir and return its path."""
+    import csv
+    import tempfile
+    from pathlib import Path
+
+    path = Path(tempfile.mkdtemp()) / "vigencias.csv"
+    with open(path, "w", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(["kind", "key", "expiry"])
+        writer.writerows(rows)
+    return path
 
     @pytest.mark.django_db
     def test_notification_email_ignores_archived_operator(self, db):

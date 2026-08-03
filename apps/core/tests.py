@@ -114,6 +114,48 @@ class TestPublicURLs:
             f"task-{task.pk}",
         }
 
+    @pytest.mark.django_db
+    def test_unified_calendar_events_include_dgac_vigencias(self, auth_client):
+        """LV-29: the credential and JAC insurance expiries appear as their own
+        event types in the feed, each landing on its detail page."""
+        center = CostCenter.objects.create(code="VIG", name="Vigencias")
+        operator = Operator.objects.create(
+            employee_id="VIG-1",
+            full_name="Vigencia Operator",
+            cost_center=center,
+            credential_expiry=date(2026, 7, 20),
+        )
+        aircraft = Aircraft.objects.create(
+            registration="CC-VIG",
+            type="RPAS",
+            model="M300",
+            manufacturer="DJI",
+            cost_center=center,
+            insurance_expiry=date(2026, 7, 22),
+        )
+
+        response = auth_client.get(
+            reverse("calendar-events"),
+            {
+                "start": "2026-07-01",
+                "end": "2026-08-01",
+                "types": "operator_credential,aircraft_insurance",
+            },
+        )
+
+        assert response.status_code == 200
+        payload = response.json()
+        by_type = {item["type"]: item for item in payload}
+        assert set(by_type) == {"operator_credential", "aircraft_insurance"}
+        assert by_type["operator_credential"]["start"] == "2026-07-20"
+        assert by_type["operator_credential"]["url"] == reverse(
+            "operator-detail", args=[operator.pk]
+        )
+        assert by_type["aircraft_insurance"]["start"] == "2026-07-22"
+        assert by_type["aircraft_insurance"]["url"] == reverse(
+            "aircraft-detail", args=[aircraft.pk]
+        )
+
     def test_administration_center_explains_operational_configuration(
         self, auth_client
     ):

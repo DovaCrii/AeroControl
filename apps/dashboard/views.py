@@ -42,6 +42,38 @@ def upcoming_expirations(today, cutoff, cost_center=None):
             }
         )
 
+    # LV-29: the DGAC vigencias join the same window -- a lapsing credential or
+    # JAC insurance is exactly what "upcoming expirations" is for.
+    credentials = Operator.objects.filter(
+        is_active=True, credential_expiry__gte=today, credential_expiry__lte=cutoff
+    )
+    if cost_center:
+        credentials = credentials.filter(cost_center=cost_center)
+    for operator in credentials:
+        items.append(
+            {
+                "kind": _("DGAC credential"),
+                "label": operator.full_name,
+                "date": operator.credential_expiry,
+                "url": reverse("operator-detail", args=[operator.pk]),
+            }
+        )
+
+    insured = Aircraft.objects.filter(
+        is_active=True, insurance_expiry__gte=today, insurance_expiry__lte=cutoff
+    )
+    if cost_center:
+        insured = insured.filter(cost_center=cost_center)
+    for aircraft in insured:
+        items.append(
+            {
+                "kind": _("JAC insurance"),
+                "label": aircraft.registration,
+                "date": aircraft.insurance_expiry,
+                "url": reverse("aircraft-detail", args=[aircraft.pk]),
+            }
+        )
+
     documents = Document.objects.filter(
         is_active=True,
         is_current_version=True,
