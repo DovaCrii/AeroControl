@@ -2,22 +2,41 @@
 
 > Punto de retome entre ventanas/sesiones. La **fuente de verdad del trabajo
 > pendiente** es [MASTER_PLAN.md](MASTER_PLAN.md); esto es el resumen de estado.
-> Última actualización: **2026-07-31**.
+> Última actualización: **2026-08-03**.
 
 ## PRÓXIMA VENTANA — empezar acá
-El usuario aprobó un plan grande (**LV-29/30/31/32**) para la **próxima ventana**;
-esta se cerró solo con el push + estos docs. Fuente del plan:
-`C:\Users\cmunoz\.claude\plans\temporal-stirring-rivest.md` (y las filas LV-29..32
-en MASTER_PLAN). Resumen: **A** vigencias DGAC como campos (credencial operador +
-seguro JAC aeronave: columna/alerta/calendario/aviso, con `load_dgac_vigencias`
-desde las capturas SIGO); **B** módulo de **registros operacionales** (bitácora/
-checklist/inspección, ligados al CC con fecha) + **cumplimiento mensual**
-(`MonthlyComplianceReview`, comando `check_monthly_records` de fin de mes, revisor
-único = grupo Dirección, informe/panel); **C** pasada ejecutiva (panel,
-asignaciones con columnas reales, chips, badges, calendario, LV-23/25); **D**
-modernización UX/UI (design pass de tokens/tablas). **A y B traen migraciones** →
-ese deploy será pull + `migrate` + restart + seeds. Empezar por A (las columnas)
-tras retomar. Kanban sigue en standby; T3.4/T4.1 diferidos.
+El batch **LV-29..32** se implementó (parte funcional) en la ventana del
+2026-08-03. Estado por bloque (fuente del plan:
+`C:\Users\cmunoz\.claude\plans\temporal-stirring-rivest.md`):
+- **A · Vigencias DGAC (LV-29)** ✅ commit `09a091e`. Credencial operador + seguro
+  JAC aeronave como campos: columna/alerta/calendario/dashboard, `load_dgac_vigencias`
+  y `notify_expiring_credentials`. **Falta que el usuario entregue la transcripción
+  de las capturas SIGO** para poblar `load_dgac_vigencias` (hoy corre con `--file`
+  CSV; el fixture embebido va vacío).
+- **B · Registros operacionales + cumplimiento mensual (LV-30)** ✅ commit `abd16d9`.
+  Repositorio `/compliance/operational-records/`, `MonthlyComplianceReview`,
+  `check_monthly_records` (timer fin de mes → avisa a Dirección), página
+  `/compliance/monthly-review/`, tarjeta de panel.
+- **C · Pasada ejecutiva — parte FUNCIONAL (LV-31/LV-25)** ✅ commit `cd042e3`.
+  Columnas reales en asignaciones operador/aeronave, colapso de permisos
+  multi-día en el calendario, VLOS/paracaídas como lista (LV-25).
+- **C · resto ESTÉTICO + D · modernización UX/UI (LV-24, chips, LV-23, LV-32)**
+  ⬜ **diferido a revisión con capturas del usuario** (decisión confirmada
+  2026-08-03: no adivinar estética a ciegas; el propio plan D pide un "commit de
+  propuesta" para evaluar con capturas). Es la pasada de tokens `--ac-*`/tablas/
+  paleta/panel; se hace con el usuario mirando la app desplegada.
+
+**DEPLOY PENDIENTE (lo revisa/dispara el usuario):** el batch trae migraciones
+(`registry 0021`, `compliance 0011`) → `git pull` + bloque sudo `migrate` +
+`collectstatic` + restart, más seeds (`seed_document_types`,
+`seed_alert_rules --with-optional`, `load_dgac_vigencias` cuando estén los datos)
+y, opcional, el timer `check_monthly_records` (ver scheduled-operations.md).
+Suite completa **618 verde** (2026-08-03). Kanban sigue en standby; T3.4/T4.1
+diferidos.
+
+> Nota: quedó pendiente de despliegue además el batch de **aislamiento por
+> objeto** (`36acc76`, no-op hoy, sin migraciones → `pull` + restart), previo a
+> este batch. Ver "Estado de producción".
 
 ## Estado de producción (VM `p340`)
 - Prod desplegado hasta el batch grande (documentos en fichas, empresa, LV-20/26,
