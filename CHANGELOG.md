@@ -42,6 +42,28 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   o un SSO ajeno al sistema. Si ambos están configurados, se prefiere el
   operador; el contacto externo se usa cuando el operador no tiene correo o
   quedó archivado.
+- **Comando `seed_alert_rules`**: siembra idempotente del conjunto de reglas de
+  alerta recomendado para una operación RPAS bajo DGAC (documentos y permisos de
+  vuelo por vencer a 30 días), con `--with-optional` para habilitaciones y
+  mantenimiento. Espeja a `seed_document_types` y convierte el paso "crear las
+  reglas a mano" de `docs/compliance-setup.md` en un comando repetible.
+- **Asignación masiva de operadores a un centro de costo**: el botón "+ Nuevo"
+  de *Asignaciones de operador* ahora toma varios operadores a la vez y los
+  lleva al mismo centro de costo en una sola acción, en vez de uno por uno. Un
+  operador ya asignado en otro centro de costo se **mueve** (cierra la
+  asignación previa y abre la nueva), integrado con el log de movimientos.
+- **Chips de "Equipos habilitados" con color por tipo** en la lista de
+  Habilitaciones: un color estable por `QualificationType` para diferenciar cada
+  familia (Mavic/Matrice/Phantom/…) de un vistazo; las vencidas siguen en rojo.
+
+### Changed
+- **El formulario de asignación de operador ya no pide fechas**: lo relevante es
+  el centro de costo y el estado, así que la fecha de inicio se autollena con hoy
+  y las fechas salen del formulario.
+- **El nombre del centro de costo vuelve a ser editable** desde el formulario
+  (opcional). Se había quitado en la simplificación anterior, lo que dejaba
+  congelado el nombre que muestra la lista y obligaba a usar el admin técnico
+  para crear o corregir un nombre como "Casa Matriz".
 
 ## [0.3.0-alpha] - 2026-07-27
 
