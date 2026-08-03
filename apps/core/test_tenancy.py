@@ -216,6 +216,56 @@ class TestObjectLevelIsolation:
         operator.refresh_from_db()
         assert operator.is_active  # untouched
 
+    @pytest.mark.django_db
+    def test_document_detail_is_404_for_another_tenant(self):
+        from django.contrib.contenttypes.models import ContentType
+
+        from apps.compliance.models import Document, DocumentType
+
+        a = OperationalTenant.objects.create(name="A", slug="a")
+        b = OperationalTenant.objects.create(name="B", slug="b")
+        cc = CostCenter.objects.create(code="CCA", tenant=a)
+        document = Document.objects.create(
+            title="Secret", doc_type=DocumentType.objects.create(code="c", name="C"),
+            content_type=ContentType.objects.get_for_model(CostCenter),
+            object_id=cc.pk, file_path="x.pdf", issue_date=date(2026, 1, 1), tenant=a,
+        )
+        intruder = self._client("b_doc", "view_document", tenant=b)
+        url = reverse("document-detail", args=[document.pk])
+        assert intruder.get(url).status_code == 404
+
+    @pytest.mark.django_db
+    def test_permission_detail_is_404_for_another_tenant(self):
+        from apps.operations.models import FlightPermission
+
+        a = OperationalTenant.objects.create(name="A", slug="a")
+        b = OperationalTenant.objects.create(name="B", slug="b")
+        cc = CostCenter.objects.create(code="CCA", tenant=a)
+        permission = FlightPermission.objects.create(
+            permission_number="P1", cost_center=cc, purpose="x",
+            valid_from=date(2026, 7, 1), valid_until=date(2026, 7, 2), location="S",
+        )
+        intruder = self._client("b_perm", "view_flightpermission", tenant=b)
+        url = reverse("permission-detail", args=[permission.pk])
+        assert intruder.get(url).status_code == 404
+
+    @pytest.mark.django_db
+    def test_maintenance_detail_is_404_for_another_tenant(self):
+        from apps.maintenance.models import MaintenanceRecord
+
+        a = OperationalTenant.objects.create(name="A", slug="a")
+        b = OperationalTenant.objects.create(name="B", slug="b")
+        aircraft = Aircraft.objects.create(
+            registration="RPA-A", type="RPA", model="M", manufacturer="DJI", tenant=a
+        )
+        record = MaintenanceRecord.objects.create(
+            aircraft=aircraft, maintenance_type="scheduled",
+            description="c", scheduled_date=date(2026, 7, 20),
+        )
+        intruder = self._client("b_maint", "view_maintenancerecord", tenant=b)
+        url = reverse("maintenance-detail", args=[record.pk])
+        assert intruder.get(url).status_code == 404
+
 
 class TestCalendarFeedIsolation:
     """Safety net (T3.2 Fase 4) for the calendar feed's tenant scoping, so the

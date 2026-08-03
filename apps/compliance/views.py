@@ -27,7 +27,9 @@ from apps.core.views import (
     ModelPermissionRequiredMixin,
     ModelViewPermissionRequiredMixin,
     SearchMixin,
+    TenantScopedQuerysetMixin,
 )
+from apps.core.tenancy import scope_queryset_to_tenant
 from .forms import AlertForm, AlertRuleForm, DocumentForm, DocumentTypeForm
 from .models import Alert, AlertRule, Document, DocumentType, document_upload_path
 from .storage import DocumentStorageNotFound, get_document_storage
@@ -201,7 +203,9 @@ class DocumentEntityOptions(ModelPermissionRequiredMixin, View):
         return render(request, "compliance/_document_object_field.html", {"form": form})
 
 
-class DocumentDetail(ModelViewPermissionRequiredMixin, DetailView):
+class DocumentDetail(
+    TenantScopedQuerysetMixin, ModelViewPermissionRequiredMixin, DetailView
+):
     model = Document
     template_name = "compliance/document_detail.html"
 
@@ -224,7 +228,11 @@ class DocumentDownload(ModelPermissionRequiredMixin, View):
     permission_action = "view"
 
     def get(self, request, pk):
-        document = get_object_or_404(Document, pk=pk, is_active=True)
+        document = get_object_or_404(
+            scope_queryset_to_tenant(Document.objects.all(), request.user),
+            pk=pk,
+            is_active=True,
+        )
         try:
             stream = get_document_storage().open(document.file_path)
         except DocumentStorageNotFound as exc:
@@ -242,7 +250,11 @@ class DocumentReplace(ModelPermissionRequiredMixin, FormView):
     template_name = "compliance/document_replace.html"
 
     def dispatch(self, request, *args, **kwargs):
-        self.document = get_object_or_404(Document, pk=kwargs["pk"], is_active=True)
+        self.document = get_object_or_404(
+            scope_queryset_to_tenant(Document.objects.all(), request.user),
+            pk=kwargs["pk"],
+            is_active=True,
+        )
         return super().dispatch(request, *args, **kwargs)
 
     def get_initial(self):
@@ -284,7 +296,9 @@ class DocumentReplace(ModelPermissionRequiredMixin, FormView):
         return context
 
 
-class DocumentDelete(ModelPermissionRequiredMixin, DeleteView):
+class DocumentDelete(
+    TenantScopedQuerysetMixin, ModelPermissionRequiredMixin, DeleteView
+):
     model = Document
     permission_action = "delete"
     template_name = "generic/confirm_delete.html"
@@ -426,7 +440,9 @@ class AlertCreateTask(ModelPermissionRequiredMixin, View):
         return redirect("alert-list")
 
 
-class ComplianceUpdate(HtmxFormMixin, ModelPermissionRequiredMixin, UpdateView):
+class ComplianceUpdate(
+    TenantScopedQuerysetMixin, HtmxFormMixin, ModelPermissionRequiredMixin, UpdateView
+):
     """Edit view for the configuration models.
 
     Document types and alert rules could be created but never corrected from

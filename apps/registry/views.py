@@ -15,6 +15,7 @@ from apps.core.views import (
     ModelPermissionRequiredMixin,
     ModelViewPermissionRequiredMixin,
     SearchMixin,
+    TenantScopedQuerysetMixin,
 )
 from .models import (
     CostCenter,
@@ -82,17 +83,6 @@ class RegistryList(
         if tenant_ids is not None:
             queryset = queryset.filter(**{f"{field}__in": tenant_ids})
         return queryset
-
-
-class TenantScopedQuerysetMixin:
-    """Scope a detail/edit view's object lookup to the user's tenant (F-03/F-06),
-    so another tenant's record cannot be opened or edited by its URL. A no-op for
-    models without a direct `tenant` FK and for superusers."""
-
-    def get_queryset(self):
-        from apps.core.tenancy import scope_queryset_to_tenant
-
-        return scope_queryset_to_tenant(super().get_queryset(), self.request.user)
 
 
 class RegistryDetail(
@@ -578,8 +568,16 @@ class AssignmentList(RegistryList):
         return context
 
 
+# Derived models reach the tenant through their cost center, so the object-level
+# scoping (F-03/F-06) needs the explicit path.
+_CC_TENANT_PATH = "cost_center__tenant_id"
+
 AssignmentDetail, AssignmentCreate, AssignmentUpdate = (
-    type("AssignmentDetail", (RegistryDetail,), {"model": Assignment}),
+    type(
+        "AssignmentDetail",
+        (RegistryDetail,),
+        {"model": Assignment, "tenant_path": _CC_TENANT_PATH},
+    ),
     type(
         "AssignmentCreate",
         (RegistryCreate,),
@@ -588,7 +586,11 @@ AssignmentDetail, AssignmentCreate, AssignmentUpdate = (
     type(
         "AssignmentUpdate",
         (RegistryUpdate,),
-        {"model": Assignment, "form_class": AssignmentForm},
+        {
+            "model": Assignment,
+            "form_class": AssignmentForm,
+            "tenant_path": _CC_TENANT_PATH,
+        },
     ),
 )
 
@@ -650,16 +652,28 @@ class OperatorBulkAssign(HtmxFormMixin, ModelPermissionRequiredMixin, FormView):
 
 
 OperatorAssignmentDetail, OperatorAssignmentCreate, OperatorAssignmentUpdate = (
-    type("OperatorAssignmentDetail", (RegistryDetail,), {"model": OperatorAssignment}),
+    type(
+        "OperatorAssignmentDetail",
+        (RegistryDetail,),
+        {"model": OperatorAssignment, "tenant_path": _CC_TENANT_PATH},
+    ),
     OperatorBulkAssign,
     type(
         "OperatorAssignmentUpdate",
         (RegistryUpdate,),
-        {"model": OperatorAssignment, "form_class": OperatorAssignmentForm},
+        {
+            "model": OperatorAssignment,
+            "form_class": OperatorAssignmentForm,
+            "tenant_path": _CC_TENANT_PATH,
+        },
     ),
 )
 AircraftAssignmentDetail, AircraftAssignmentCreate, AircraftAssignmentUpdate = (
-    type("AircraftAssignmentDetail", (RegistryDetail,), {"model": AircraftAssignment}),
+    type(
+        "AircraftAssignmentDetail",
+        (RegistryDetail,),
+        {"model": AircraftAssignment, "tenant_path": _CC_TENANT_PATH},
+    ),
     type(
         "AircraftAssignmentCreate",
         (RegistryCreate,),
@@ -668,7 +682,11 @@ AircraftAssignmentDetail, AircraftAssignmentCreate, AircraftAssignmentUpdate = (
     type(
         "AircraftAssignmentUpdate",
         (RegistryUpdate,),
-        {"model": AircraftAssignment, "form_class": AircraftAssignmentForm},
+        {
+            "model": AircraftAssignment,
+            "form_class": AircraftAssignmentForm,
+            "tenant_path": _CC_TENANT_PATH,
+        },
     ),
 )
 
@@ -713,6 +731,9 @@ class ResourceMovementLogList(ModelViewPermissionRequiredMixin, ListView):
     QualificationCreate,
     QualificationUpdate,
 ) = make_views(Qualification, QualificationForm, "Qualification")
+# Qualification reaches the tenant through its operator (F-03/F-06).
+QualificationDetail.tenant_path = "operator__tenant_id"
+QualificationUpdate.tenant_path = "operator__tenant_id"
 
 
 class QualificationList(RegistryList):

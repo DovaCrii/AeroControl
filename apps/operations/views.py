@@ -18,6 +18,7 @@ from apps.core.views import (
     ModelViewPermissionRequiredMixin,
     SearchMixin,
     StatusTransitionView,
+    TenantScopedQuerysetMixin,
     allowed_calendar_types,
 )
 from .forms import FlightPermissionForm, FlightRecordForm
@@ -146,10 +147,13 @@ class FlightPermissionCreate(OCreate):
         return response
 
 
-class FlightPermissionDetail(ModelViewPermissionRequiredMixin, DetailView):
+class FlightPermissionDetail(
+    TenantScopedQuerysetMixin, ModelViewPermissionRequiredMixin, DetailView
+):
     model = FlightPermission
     template_name = "operations/permission_detail.html"
     context_object_name = "permission"
+    tenant_path = "cost_center__tenant_id"
 
     def get_queryset(self):
         return (
@@ -249,10 +253,13 @@ class FlightRecordCreate(OCreate):
         return initial
 
 
-class FlightRecordDetail(ModelViewPermissionRequiredMixin, DetailView):
+class FlightRecordDetail(
+    TenantScopedQuerysetMixin, ModelViewPermissionRequiredMixin, DetailView
+):
     model = FlightRecord
     template_name = "operations/flightrecord_detail.html"
     context_object_name = "record"
+    tenant_path = "aircraft__tenant_id"
 
     def get_queryset(self):
         return (

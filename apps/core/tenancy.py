@@ -26,23 +26,30 @@ def get_default_tenant():
     return tenant.pk
 
 
-def scope_queryset_to_tenant(queryset, user):
+def scope_queryset_to_tenant(queryset, user, tenant_path=None):
     """Restrict a queryset to the user's tenant(s) (F-03/F-06, object-level).
 
     The list views were scoped in T3.2 Fase 2, but a detail/edit/archive view
     resolved its object by pk alone, so `/aircraft/<other-tenant-pk>/` still
-    opened. This closes that by tenant, for models with a **direct** `tenant` FK
-    (CostCenter/Aircraft/Operator); a no-op for a superuser and for models that
-    scope through a relation. Behaviour-preserving today (single tenant), correct
-    once tenants diverge.
+    opened. This closes that by tenant. A no-op for a superuser.
+
+    `tenant_path` is the ORM path from the model to the tenant id:
+    - ``None`` (default): the model's own ``tenant_id`` if it has a direct
+      ``tenant`` FK (CostCenter/Aircraft/Operator/Document/AlertRule), else a
+      no-op -- so passing an unrelated queryset never over-filters.
+    - an explicit path for models that reach the tenant through a relation
+      (e.g. ``"cost_center__tenant_id"``, ``"aircraft__tenant_id"``).
+
+    Behaviour-preserving today (single tenant), correct once tenants diverge.
     """
-    model = queryset.model
-    if not any(field.name == "tenant" for field in model._meta.fields):
-        return queryset
     tenant_ids = visible_tenant_ids(user)
     if tenant_ids is None:
         return queryset
-    return queryset.filter(tenant_id__in=tenant_ids)
+    if tenant_path is None:
+        if not any(field.name == "tenant" for field in queryset.model._meta.fields):
+            return queryset
+        tenant_path = "tenant_id"
+    return queryset.filter(**{f"{tenant_path}__in": tenant_ids})
 
 
 def visible_tenant_ids(user):
