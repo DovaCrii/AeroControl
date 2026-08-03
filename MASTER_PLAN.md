@@ -559,7 +559,11 @@ documentos clave de la aeronave.
 | LV-16b | ✅ | P3 | **Historial de la decisión del nombre.** 2026-07-31: al pedir "CC110 Casa Matriz" el usuario primero eligió mantener LV-16 (nombre por `/admin`), pero al chocar con que **el `name` de la lista quedaba congelado** (no editable) pidió priorizar poder editarlo → ver LV-19 (nombre reincorporado al form). | Superseded por LV-19 |
 | LV-19 | ✅ | P2 | **Nombre de CC editable desde el formulario.** El `name` (columna NOMBRE de la lista, p. ej. "Levantamientos digital") lo mostraba la lista pero LV-16 lo había sacado del `CostCenterForm`, dejándolo **congelado** — no se podía crear ni corregir sin `/admin`. Reincorporado como campo **opcional** (`CostCenter.name` ya era `blank=True`, sin migración), con help text. Ahora Casa Matriz y cualquier CC se nombran desde "+ Nuevo"/Editar. 3 tests LV-16 actualizados. (El campo `responsible` "Nombre de administrador de contrato" siempre estuvo y era editable; la confusión era con ese.) | `apps/registry/forms.py::CostCenterForm` |
 
-*(Pendiente de más issues del usuario — esta sección irá creciendo.)*
+**Fichas, documentos y estética — pedidos 2026-08-03:**
+
+| ID | Est. | Prio | Tarea | Nota |
+|---|:--:|:--:|---|---|
+| LV-20 | ✅ | P1 | **Guardar de aeronave "no funciona".** Era `Aircraft.clean()` rechazando ubicación ≠ "En faena" con una faena aún seleccionada; el 422 re-renderizaba sin mostrar el error, parecía botón muerto. `AircraftForm.clean()` ahora limpia `current_site` en silencio cuando la ubicación no es "on_site" (el guard del modelo se mantiene para escrituras no-form). 1 test. | `apps/registry/forms.py::AircraftForm` |
 
 ### FASE 6 — Nuevas funcionalidades `⏸ requiere FASE 0-3 cerradas`
 
