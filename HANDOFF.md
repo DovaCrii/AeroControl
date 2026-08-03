@@ -6,10 +6,10 @@
 
 ## Estado de producción (VM `p340`)
 - Corriendo en **`fe8fbe0`** (recipiente report + fix auditoría DRF + i18n ya
-  live; el usuario ya corrió `check_digest_recipients` en prod), servicio
-  `active`, `/health/` 200. **`origin/main` va adelante en `6b86970`**: falta
-  solo el bump **crispy 2.7**, cuyo deploy **exige `uv sync --frozen`** (cambió
-  una dependencia), no solo pull+restart. Suite completa **566 verde** (2026-08-03).
+  live), servicio `active`, `/health/` 200. **`origin/main` va adelante en
+  `be6383f`**: faltan por desplegar el bump **crispy 2.7** y la **búsqueda global
+  cableada** (T5.2/T5.3). Ese deploy **exige `uv sync --frozen`** (crispy cambió
+  una dependencia), no solo pull+restart. Suite completa **567 verde** (2026-08-03).
 - Acceso: Tailscale + **público por Funnel** (`https://p340.tailccd107.ts.net`).
 - **Login endurecido** (django-axes, 5 intentos/15 min).
 - **Datos reales cargados**: 12 centros de costo, 41 operadores, 15 aeronaves,
@@ -58,6 +58,10 @@
   en la lista de aeronaves. Worktrees `eager-hofstadter`/`elegant-ishizaka`/
   `suspicious-boyd` **eliminados**. Quedan `main` y `amazing-bouman` (podable a
   futuro, su valor ya extraído).
+- **Búsqueda global cableada** (`be6383f`, T5.2/T5.3): existía en `/search/`
+  pero era **inalcanzable** (nada la enlazaba) y sus resultados iban a la lista.
+  Ahora hay caja en el navbar y los resultados de CC/aeronave/operador abren la
+  **ficha**. Pendiente menor de T5.2: enlazar importadores en el sidebar.
 - **Dependabot resuelto** (`6b86970`): de 8 PRs, solo 2 vivos aplicados directo
   a `main` — `django-crispy-forms` 2.7 y `gunicorn <27` (suite verde). Los otros
   5 ya estaban en `main` (checkout/setup-uv v7, crispy-bootstrap5 2026.3,
