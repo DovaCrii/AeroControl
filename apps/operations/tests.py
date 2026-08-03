@@ -68,6 +68,46 @@ def test_flight_record_form_rejects_data_that_does_not_match_its_permission():
 
 
 @pytest.mark.django_db
+def test_flight_record_form_narrows_pickers_to_the_permission_roster():
+    # T5.5: with a permission prefilled, the pilot and aircraft pickers only
+    # offer that permission's roster, not the whole registry.
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    other_operator = Operator.objects.create(
+        employee_id="P2", full_name="Pilot Two", cost_center=cost_center
+    )
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA", type="Fixed", model="A", manufacturer="M", cost_center=cost_center
+    )
+    other_aircraft = Aircraft.objects.create(
+        registration="CC-BBB", type="Fixed", model="B", manufacturer="M", cost_center=cost_center
+    )
+    permission = _permission(cost_center, operator, aircraft)
+
+    form = FlightRecordForm(initial={"permission": permission.pk})
+
+    assert list(form.fields["pilot"].queryset) == [operator]
+    assert other_operator not in form.fields["pilot"].queryset
+    assert list(form.fields["aircraft"].queryset) == [aircraft]
+    assert other_aircraft not in form.fields["aircraft"].queryset
+
+
+@pytest.mark.django_db
+def test_flight_record_form_without_permission_offers_the_full_registry():
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    Operator.objects.create(
+        employee_id="P2", full_name="Pilot Two", cost_center=cost_center
+    )
+    form = FlightRecordForm()
+    assert form.fields["pilot"].queryset.count() == 2
+
+
+@pytest.mark.django_db
 def test_flight_record_form_uses_operational_date_and_time_controls():
     form = FlightRecordForm()
 

@@ -9,6 +9,14 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 ## [Unreleased]
 
 ### Added
+- **Dashboard más accionable y con vencimientos reales (T5.4).** Los indicadores
+  de aeronaves, operadores y alertas ahora son enlaces a sus listas, y el panel
+  de próximos vencimientos ya no muestra solo habilitaciones: suma **documentos
+  y permisos de vuelo** por vencer, cada uno con enlace directo a su ficha.
+- **Registrar un vuelo desde su permiso es más rápido (T5.5).** Al crear un
+  registro de vuelo desde la ficha del permiso, este queda prellenado y los
+  selectores de piloto y aeronave se acotan al roster de ese permiso —sin tener
+  que buscar entre todo el padrón ni arriesgar una combinación inválida.
 - **Búsqueda global accesible y que lleva al detalle (T5.2/T5.3).** La búsqueda
   global existía pero no había forma de llegar a ella; ahora hay una caja en la
   barra superior. Y sus resultados de centros de costo, aeronaves y operadores
