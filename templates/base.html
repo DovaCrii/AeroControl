@@ -28,6 +28,14 @@
       <img class="brand-mark" src="{% static 'img/aerocontrol-mark.svg' %}" alt="" aria-hidden="true">
       <span class="brand-lockup">AeroControl<span class="brand-subtitle">{% translate "Air Operations Control" %}</span></span>
     </a>
+    <form method="get" action="{% url 'global-search' %}" role="search" class="global-search d-none d-md-flex mx-auto" hx-boost="false">
+      <div class="input-group input-group-sm">
+        <input class="form-control" type="search" name="q" value="{{ request.GET.q|default:'' }}" placeholder="{% translate 'Search across operations' %}" aria-label="{% translate 'Global search' %}">
+        <button class="btn btn-outline-light" type="submit" aria-label="{% translate 'Search' %}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+        </button>
+      </div>
+    </form>
     <span class="text-white d-flex align-items-center gap-2 small">
       <span class="opacity-75">{{ user.get_username }}</span>
       <a class="btn btn-sm btn-outline-light" href="{% url 'password_change' %}">{% translate "Change password" %}</a>

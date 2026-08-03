@@ -426,6 +426,14 @@ class TestChapter1DocxImport:
         assert response.status_code == 200
         assert "Search Operations" in response.content.decode()
 
+    def test_global_search_links_registry_results_to_detail(self, auth_client):
+        # T5.3: a hit lands on the object's detail page, not the list.
+        cc = CostCenter.objects.create(code="SEARCH", name="Search Operations")
+        response = auth_client.get(reverse("global-search"), {"q": "SEARCH"})
+        detail_url = reverse("costcenter-detail", args=[cc.pk])
+        assert any(r["url"] == detail_url for r in response.context["results"])
+        assert detail_url in response.content.decode()
+
     def test_global_search_requires_authentication(self, client):
         response = client.get(reverse("global-search"), {"q": "SEARCH"})
         assert response.status_code == 302

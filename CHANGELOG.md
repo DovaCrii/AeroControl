@@ -9,6 +9,11 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 ## [Unreleased]
 
 ### Added
+- **Búsqueda global accesible y que lleva al detalle (T5.2/T5.3).** La búsqueda
+  global existía pero no había forma de llegar a ella; ahora hay una caja en la
+  barra superior. Y sus resultados de centros de costo, aeronaves y operadores
+  abren la ficha del registro en vez de la lista, así que encontrar algo es un
+  clic hasta el detalle.
 - **Seguimiento de contratos, recursos y permisos (BLOQUE OPS, OPS-0..OPS-8).**
   Asignaciones por recurso (`OperatorAssignment`/`AircraftAssignment`, un
   operador o aeronave por centro de costo y período, con validación de

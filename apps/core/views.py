@@ -673,18 +673,30 @@ class UnifiedCalendarEventsView(CalendarAccessMixin, View):
 class GlobalSearchView(LoginRequiredMixin, TemplateView):
     template_name = "core/search.html"
 
+    # (app_label, model_name, list_url, detail_url_or_None, fields). A result
+    # links to its object's detail page when there is one, so global search
+    # lands the user on the record -- not a list they have to re-scan (U2/T5.3).
+    # Sources without a per-object page (Kanban board/task, documents) fall back
+    # to their list.
     SEARCH_SOURCES = (
-        ("registry", "CostCenter", "costcenter-list", ("code", "name")),
-        ("registry", "Aircraft", "aircraft-list", ("registration", "model", "type")),
+        ("registry", "CostCenter", "costcenter-list", "costcenter-detail", ("code", "name")),
+        (
+            "registry",
+            "Aircraft",
+            "aircraft-list",
+            "aircraft-detail",
+            ("registration", "model", "type"),
+        ),
         (
             "registry",
             "Operator",
             "operator-list",
+            "operator-detail",
             ("employee_id", "full_name", "email"),
         ),
-        ("workboard", "KanbanBoard", "board-list", ("name", "description")),
-        ("workboard", "KanbanTask", "workboard-list", ("title", "description")),
-        ("compliance", "Document", "document-list", ("title",)),
+        ("workboard", "KanbanBoard", "board-list", None, ("name", "description")),
+        ("workboard", "KanbanTask", "workboard-list", None, ("title", "description")),
+        ("compliance", "Document", "document-list", None, ("title",)),
     )
 
     def get_context_data(self, **kwargs):
@@ -705,7 +717,9 @@ class GlobalSearchView(LoginRequiredMixin, TemplateView):
                 "KanbanTask": KanbanTask,
                 "Document": Document,
             }
-            for app_label, model_name, url_name, fields in self.SEARCH_SOURCES:
+            for app_label, model_name, list_url, detail_url, fields in (
+                self.SEARCH_SOURCES
+            ):
                 model = models[model_name]
                 if not self.request.user.has_perm(
                     f"{app_label}.view_{model._meta.model_name}"
@@ -718,11 +732,16 @@ class GlobalSearchView(LoginRequiredMixin, TemplateView):
                     "-updated_at"
                 )[:10]
                 for obj in objects:
+                    url = (
+                        reverse(detail_url, args=[obj.pk])
+                        if detail_url
+                        else reverse(list_url)
+                    )
                     results.append(
                         {
                             "model": model._meta.verbose_name.title(),
                             "label": str(obj),
-                            "url": reverse(url_name),
+                            "url": url,
                             "id": obj.pk,
                         }
                     )
