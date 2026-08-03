@@ -242,14 +242,21 @@ def test_seed_document_types_creates_catalog_including_one_insurance_type():
     from django.core.management import call_command
 
     call_command("seed_document_types")
-    assert DocumentType.objects.count() == 6
+    assert DocumentType.objects.count() == 9
     insurance_types = DocumentType.objects.filter(is_insurance=True)
     assert insurance_types.count() == 1
     assert insurance_types.first().code == "liability-insurance"
+    # LV-30: the three per-flight operational-record types.
+    op_records = DocumentType.objects.filter(is_operational_record=True)
+    assert set(op_records.values_list("code", flat=True)) == {
+        "flight-log",
+        "rpa-checklist",
+        "drone-inspection",
+    }
 
     # Idempotent: a second run does not duplicate or touch existing rows.
     call_command("seed_document_types")
-    assert DocumentType.objects.count() == 6
+    assert DocumentType.objects.count() == 9
 
 
 @pytest.mark.django_db
@@ -280,7 +287,7 @@ def test_seed_alert_rules_with_optional_adds_qualification_and_maintenance():
     from django.core.management import call_command
 
     call_command("seed_alert_rules", "--with-optional")
-    assert AlertRule.objects.count() == 7
+    assert AlertRule.objects.count() == 8
     assert AlertRule.objects.filter(
         entity_type="registry.qualification", field_to_watch="expiry_date"
     ).exists()
@@ -296,6 +303,10 @@ def test_seed_alert_rules_with_optional_adds_qualification_and_maintenance():
     ).exists()
     assert AlertRule.objects.filter(
         entity_type="registry.aircraft", field_to_watch="insurance_expiry"
+    ).exists()
+    # LV-30: the monthly compliance review rule (watches status).
+    assert AlertRule.objects.filter(
+        entity_type="compliance.monthlycompliancereview", field_to_watch="status"
     ).exists()
 
 

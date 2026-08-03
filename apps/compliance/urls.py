@@ -26,6 +26,21 @@ urlpatterns = [
         views.CompanyDocumentsView.as_view(),
         name="company-documents",
     ),
+    path(
+        "operational-records/",
+        views.OperationalRecordsView.as_view(),
+        name="operational-records",
+    ),
+    path(
+        "monthly-review/",
+        views.MonthlyReviewView.as_view(),
+        name="monthly-review",
+    ),
+    path(
+        "monthly-review/<uuid:pk>/mark/",
+        views.MonthlyReviewMark.as_view(),
+        name="monthly-review-mark",
+    ),
     path("document/new/", views.DocumentCreate.as_view(), name="document-create"),
     path(
         "document/entity-options/",

@@ -10,14 +10,19 @@ from django.db import transaction
 
 from apps.compliance.models import DocumentType
 
-# (code, name, requires_expiry, is_insurance)
+# (code, name, requires_expiry, is_insurance, is_operational_record)
 DOCUMENT_TYPES = [
-    ("dgac-credential", "Credencial DGAC", True, False),
-    ("medical-cert", "Certificado médico / aptitud", True, False),
-    ("aircraft-registration", "Registro / matrícula de aeronave", True, False),
-    ("airworthiness-cert", "Certificado de aeronavegabilidad", True, False),
-    ("liability-insurance", "Seguro de responsabilidad civil", True, True),
-    ("dgac-flight-permit", "Autorización DGAC (carta de permiso)", True, False),
+    ("dgac-credential", "Credencial DGAC", True, False, False),
+    ("medical-cert", "Certificado médico / aptitud", True, False, False),
+    ("aircraft-registration", "Registro / matrícula de aeronave", True, False, False),
+    ("airworthiness-cert", "Certificado de aeronavegabilidad", True, False, False),
+    ("liability-insurance", "Seguro de responsabilidad civil", True, True, False),
+    ("dgac-flight-permit", "Autorización DGAC (carta de permiso)", True, False, False),
+    # LV-30: the per-flight operational records. They do not expire (a record of
+    # what happened, not a validity), so requires_expiry=False.
+    ("flight-log", "Bitácora de vuelo (REG-015)", False, False, True),
+    ("rpa-checklist", "Check list RPA (LVE-003)", False, False, True),
+    ("drone-inspection", "Inspección de dron (LVE-002)", False, False, True),
 ]
 
 
@@ -27,13 +32,14 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **options):
         created_count = 0
-        for code, name, requires_expiry, is_insurance in DOCUMENT_TYPES:
+        for code, name, requires_expiry, is_insurance, is_op_record in DOCUMENT_TYPES:
             _obj, created = DocumentType.objects.get_or_create(
                 code=code,
                 defaults={
                     "name": name,
                     "requires_expiry": requires_expiry,
                     "is_insurance": is_insurance,
+                    "is_operational_record": is_op_record,
                 },
             )
             created_count += int(created)

@@ -1,5 +1,6 @@
 from datetime import date
 
+from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
@@ -48,6 +49,18 @@ class DocumentType(BaseModel):
         verbose_name=_("Insurance document type"),
         help_text=_(
             "Shows this type's expiry on the aircraft list (e.g. liability insurance)."
+        ),
+    )
+    # LV-30: flags the per-flight operational records (flight log, RPA
+    # checklist, drone inspection) that the operational-records repository and
+    # the monthly compliance review track -- a different category from the
+    # company-wide procedures, which stay ordinary documents.
+    is_operational_record = models.BooleanField(
+        default=False,
+        verbose_name=_("Operational record type"),
+        help_text=_(
+            "A per-flight record (flight log, checklist, inspection) tracked in "
+            "the operational-records repository and the monthly review."
         ),
     )
 
@@ -114,6 +127,88 @@ class Document(BaseModel):
             alert.resolve()
             resolved += 1
         return resolved
+
+
+class MonthlyComplianceReview(BaseModel):
+    """LV-30: the end-of-month sign-off that a cost center's operational records
+    (flight logs, checklists, inspections) are on file for the flights it flew.
+
+    One row per (cost_center, period). `check_monthly_records` creates it in
+    `pending` on the last day of the month and mails the reviewer (Dirección);
+    the reviewer then marks it `completed` or `non_compliant`. The alert rule
+    watching `status` keeps a pending review as a live alert (generate_alerts
+    treats completed/non_compliant as terminal); marking it resolves that alert
+    via `resolve_open_alerts_for`.
+
+    Tenancy: derives through `cost_center` (ADR-0001 -- only roots carry a
+    tenant), so no own tenant FK.
+    """
+
+    STATUS_PENDING = "pending"
+    STATUS_COMPLETED = "completed"
+    STATUS_NON_COMPLIANT = "non_compliant"
+    STATUS_CHOICES = [
+        (STATUS_PENDING, _("Pending review")),
+        (STATUS_COMPLETED, _("Compliant")),
+        (STATUS_NON_COMPLIANT, _("Non-compliant")),
+    ]
+    # generate_alerts stops alerting once the status is one of these (the
+    # reviewer has acted); mirrors its ("completed", "denied") terminal set.
+    RESOLVED_STATUSES = frozenset({STATUS_COMPLETED, STATUS_NON_COMPLIANT})
+
+    cost_center = models.ForeignKey(
+        "registry.CostCenter",
+        on_delete=models.PROTECT,
+        related_name="monthly_reviews",
+    )
+    # First day of the month under review, the canonical key for the period.
+    period = models.DateField(verbose_name=_("Period (month)"))
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING
+    )
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = _("monthly compliance review")
+        verbose_name_plural = _("monthly compliance reviews")
+        ordering = ["-period", "cost_center__code"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["cost_center", "period"],
+                name="compliance_monthlyreview_cc_period_uniq",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.cost_center} · {self.period:%Y-%m}"
+
+    @transaction.atomic
+    def mark(self, status, user, notes=""):
+        """Record the reviewer's decision and clear the pending alert.
+
+        Marking either terminal status resolves the open alert (the review is
+        done); a status back to pending is not offered in the UI.
+        """
+        from .alerts import resolve_open_alerts_for
+
+        self.status = status
+        self.reviewed_by = user if getattr(user, "is_authenticated", False) else None
+        self.reviewed_at = timezone.now()
+        if notes:
+            self.notes = notes
+        self.save(
+            update_fields=["status", "reviewed_by", "reviewed_at", "notes", "updated_at"]
+        )
+        if status in self.RESOLVED_STATUSES:
+            resolve_open_alerts_for(self)
+        return self
 
 
 class AlertRule(BaseModel):

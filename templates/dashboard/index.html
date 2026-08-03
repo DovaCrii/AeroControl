@@ -58,6 +58,15 @@
     </a>
   </div>
   {% endif %}
+  {% if monthly_records %}
+  <div class="col-md-3 col-sm-6">
+    <a class="summary-card{% if monthly_records.pending %} summary-card-warning{% endif %} text-decoration-none d-block" href="{% url 'monthly-review' %}">
+      <small>{% translate "Monthly records" %} ({{ monthly_records.period }})</small>
+      <strong>{{ monthly_records.compliant }}/{{ monthly_records.total }}</strong>
+      <small class="text-muted">{% translate "cost centers up to date" %}</small>
+    </a>
+  </div>
+  {% endif %}
 </div>
 
 {% if not aircraft_count and not operator_count and not alert_count and not stages %}

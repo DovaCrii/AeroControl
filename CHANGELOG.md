@@ -9,6 +9,15 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 ## [Unreleased]
 
 ### Added
+- **Registros operacionales por vuelo + cierre de cumplimiento mensual (LV-30).**
+  Nueva sección **"Registros operacionales"** (*Cumplimiento*) para la bitácora
+  (REG-015), el checklist RPA (LVE-003) y la inspección de dron (LVE-002):
+  documentos por vuelo colgados de un centro de costo, filtrables por CC, mes y
+  tipo, con subida prellenada. Y una **"Cumplimiento mensual"**: a fin de mes el
+  comando `check_monthly_records` crea una revisión pendiente por cada CC que
+  voló (vuelos vs registros del mes) y avisa a Dirección; cada pendiente queda
+  como **alerta viva** hasta que Dirección la marca **Cumple/No cumple** (con
+  notas y export CSV). El panel muestra "Registros del mes: X/Y centros al día".
 - **Vigencias DGAC en las fichas: credencial del operador y seguro JAC de la
   aeronave (LV-29).** Ahora se registra en la ficha la fecha de *Vigencia* de la
   credencial DGAC de cada operador y la del *Seguro JAC* de cada aeronave (datos

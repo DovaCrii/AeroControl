@@ -82,9 +82,12 @@ class Command(BaseCommand):
                 # open status alerted while young and that alert stays open
                 # (alerts never auto-expire), so only a rule created more than
                 # a year after the record would miss it.
-                records = records.exclude(status__in=("completed", "denied")).filter(
-                    created_at__gte=timezone.now() - timedelta(days=365)
-                )
+                # Terminal statuses across the watchable models: a completed
+                # maintenance, a denied permit, a reviewed monthly compliance
+                # (LV-30: completed or non_compliant -- the reviewer acted).
+                records = records.exclude(
+                    status__in=("completed", "denied", "non_compliant")
+                ).filter(created_at__gte=timezone.now() - timedelta(days=365))
             for record in records:
                 if (rule.pk, record.pk) in open_alert_keys:
                     duplicates += 1

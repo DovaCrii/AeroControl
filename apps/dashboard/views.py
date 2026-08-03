@@ -155,6 +155,32 @@ def dashboard(request):
     expiring_count = len(all_expirations)
     expirations = all_expirations[:10]
 
+    # --- LV-30: monthly compliance snapshot (latest period on record) ---
+    # Compliant / total cost centers for the most recent reviewed month, with a
+    # link into the monthly-review page. Absent (card hidden) until the first
+    # month closes and check_monthly_records creates reviews.
+    from django.db.models import Max
+
+    from apps.compliance.models import MonthlyComplianceReview
+
+    monthly_records = None
+    review_qs = MonthlyComplianceReview.objects.filter(is_active=True)
+    if selected_cost_center:
+        review_qs = review_qs.filter(cost_center=selected_cost_center)
+    latest_period = review_qs.aggregate(latest=Max("period"))["latest"]
+    if latest_period:
+        period_reviews = review_qs.filter(period=latest_period)
+        monthly_records = {
+            "period": latest_period.strftime("%Y-%m"),
+            "total": period_reviews.count(),
+            "compliant": period_reviews.filter(
+                status=MonthlyComplianceReview.STATUS_COMPLETED
+            ).count(),
+            "pending": period_reviews.filter(
+                status=MonthlyComplianceReview.STATUS_PENDING
+            ).count(),
+        }
+
     # --- Kanban stages (archived tasks must not inflate the counts) ---
     stages = KanbanStage.objects.filter(is_active=True).annotate(
         active_task_count=Count("tasks", filter=Q(tasks__is_active=True))
@@ -265,5 +291,6 @@ def dashboard(request):
         "compliance_incomplete": compliance_incomplete,
         "cost_centers": cost_centers,
         "selected_cost_center": selected_cost_center,
+        "monthly_records": monthly_records,
     }
     return render(request, "dashboard/index.html", context)

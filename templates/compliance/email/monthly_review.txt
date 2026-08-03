@@ -1,0 +1,11 @@
+{% load i18n %}{% blocktranslate with period=period %}Monthly records review — {{ period }}{% endblocktranslate %}
+
+{% translate "For each cost center that flew this month, flights vs operational records on file:" %}
+
+{% translate "Cost center" %} | {% translate "Flights" %} | {% translate "Records" %} | {% translate "Status" %}
+{% for row in rows %}{{ row.code }} | {{ row.flights }} | {{ row.records }} | {{ row.status }}
+{% endfor %}
+{% blocktranslate count total=rows|length %}Review {{ total }} cost center and mark it Compliant or Non-compliant:{% plural %}Review these {{ total }} cost centers and mark each Compliant or Non-compliant:{% endblocktranslate %}
+{{ base_url }}{{ review_path }}
+--
+{% translate "This is an automated message from AeroControl." %}

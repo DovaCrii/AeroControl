@@ -121,6 +121,26 @@ El tipo de documento se elige del catálogo (Paso 2); crea los que falten
 `/compliance/documenttype/new/`. Todo documento con **fecha de vencimiento**
 queda vigilado por la regla de alertas, sin importar a qué entidad cuelga.
 
+### Registros operacionales y cierre mensual (LV-30)
+
+Los **registros por vuelo** —bitácora (REG-015), checklist RPA (LVE-003),
+inspección de dron (LVE-002)— son otra categoría: no vencen, pero deben existir
+uno por vuelo. No se confunden con los procedimientos (esos van a *Documentos de
+la empresa*) ni con la resolución JAC (esa va a la ficha de la aeronave).
+
+- **Dónde viven**: *Cumplimiento → Registros operacionales*
+  (`/compliance/operational-records/`). Se cuelgan de un **centro de costo** con
+  la **fecha del vuelo** como fecha de emisión; se filtran por CC, mes y tipo, y
+  se suben con "Subir registro" (prellena el CC elegido).
+- **Cierre de mes**: el comando `check_monthly_records` (timer diario, actúa el
+  último día del mes) crea una **revisión de cumplimiento** pendiente por cada
+  centro de costo que voló y avisa al grupo **Dirección** con la tabla vuelos vs
+  registros. Cada revisión pendiente es una **alerta viva** hasta que Dirección
+  la marca **Cumple** o **No cumple** en *Cumplimiento → Cumplimiento mensual*
+  (`/compliance/monthly-review/`, con export CSV). Marcarla cierra la alerta.
+- **Quién revisa**: solo el grupo *Dirección* (permiso
+  `change_monthlycompliancereview`); el resto la ve en modo lectura.
+
 ## Paso 5 — Probar
 
 En la VM (con el entorno cargado):
