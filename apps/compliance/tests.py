@@ -280,12 +280,15 @@ def test_seed_alert_rules_with_optional_adds_qualification_and_maintenance():
     from django.core.management import call_command
 
     call_command("seed_alert_rules", "--with-optional")
-    assert AlertRule.objects.count() == 4
+    assert AlertRule.objects.count() == 5
     assert AlertRule.objects.filter(
         entity_type="registry.qualification", field_to_watch="expiry_date"
     ).exists()
     assert AlertRule.objects.filter(
         entity_type="maintenance.maintenancerecord", field_to_watch="scheduled_date"
+    ).exists()
+    assert AlertRule.objects.filter(
+        entity_type="maintenance.maintenancerecord", field_to_watch="status"
     ).exists()
 
 
