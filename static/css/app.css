@@ -120,6 +120,13 @@ body {
   background: rgba(255,255,255,0.1);
 }
 
+/* Global search box in the navbar: centered, bounded so it does not crowd the
+   brand or the account controls (it is hidden below md via d-none d-md-flex). */
+.navbar .global-search {
+  max-width: 22rem;
+  flex: 0 1 22rem;
+}
+
 /* Scoped to .navbar so it outranks the generic `.form-select` control height
    further down the file. With a single class it lost on source order: the
    31px asked for here silently became the 42px of --ac-control-height, which

@@ -411,8 +411,8 @@ abierto (hoy sí es cierto, cerrado en `3611d06`).
 | ID | Est. | Prio | Tarea | Esf. | Dep. |
 |---|:--:|:--:|---|:--:|:--:|
 | T5.1 | ✅ | P2 | Unificar `app.css` en un solo set de tokens. **Verificado hecho 2026-07-31**: hay un único `:root` (el de `--ac-*`), cero definiciones y cero usos de tokens sin prefijo, sin referencias colgantes; el `:root` viejo fue removido (lo documenta el comentario de cabecera del CSS). `--stage-color` y `--login-*` son sets locales/scoped legítimos, no una segunda generación. | M | — |
-| T5.2 | ⬜ | P1 | Enlazar habilitaciones, búsqueda global e importadores en el sidebar (U1, F-14) | S | — |
-| T5.3 | ⬜ | P1 | Búsqueda global que lleve al detalle (U2) | S | — |
+| T5.2 | 🔄 | P1 | Enlazar habilitaciones, búsqueda global e importadores (U1, F-14). **Hecho 2026-08-03:** Habilitaciones ya estaba en el sidebar; **búsqueda global ahora accesible** desde una caja en el navbar (`global-search` existía pero era inalcanzable, `base.html` + `.global-search` en `app.css`). **Pendiente menor:** enlazar los importadores (costcenter/aircraft/operator-import) desde el sidebar (hoy se llegan desde las listas). | S | — |
+| T5.3 | ✅ | P1 | **Búsqueda global que lleva al detalle (U2).** `GlobalSearchView.SEARCH_SOURCES` ahora mapea cada fuente a su URL de detalle: los resultados de CostCenter/Aircraft/Operator abren la ficha del objeto en vez de la lista. Kanban (standby) y Document quedan en su lista (no tienen ficha por objeto). 1 test. | S | — |
 | T5.4 | ⬜ | P1 | Dashboard accionable + disponibilidad de flota/vencimientos reales (U3, U4) | M | — |
 | T5.5 | ⬜ | P1 | Formulario de vuelo reducido + prellenado desde permiso (U5) | M | — |
 | T5.6 | ⬜ | P2 | Paginación HTMX + búsqueda en vivo alineadas (F-13) | S | — |
