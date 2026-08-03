@@ -24,7 +24,9 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   fusionó *Fabricante* dentro de *Modelo*, el centro de costo muestra su código
   (nombre en tooltip) y se compactó la columna de seguro, para que la tabla
   quepa sin scroll. El **panel** se
-  reordenó: KPIs con el **número protagonista**, la activación de cumplimiento
+  reordenó: KPIs con el **número protagonista** repartidos en una grilla pareja
+  (sin que una tarjeta quede suelta), pastillas de tipo/estado con más presencia
+  en oscuro (menos opacas), la activación de cumplimiento
   pasó a una **franja compacta con estados**, los vencimientos suben arriba y
   los gráficos sin datos se ocultan (sin recuadros vacíos ni el duplicado
   "Tareas por etapa"). El buscador dice **"Buscar en AeroControl"**, el

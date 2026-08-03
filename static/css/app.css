@@ -1018,9 +1018,15 @@ main {
    instead of dissolving into the panel. Colour comes from the text, so every
    family stays on-brand and the same rule works in both themes. */
 .badge[class*="-subtle"] {
-  background-color: color-mix(in srgb, currentColor 18%, var(--ac-surface-raised));
-  border-color: color-mix(in srgb, currentColor 60%, transparent);
+  background-color: color-mix(in srgb, currentColor 24%, var(--ac-surface-raised));
+  border-color: color-mix(in srgb, currentColor 78%, transparent);
   font-weight: 650;
+}
+/* LV-D9: the neutral "entity type" pills (secondary) read too muted in dark
+   because Bootstrap's secondary-emphasis is a dim grey. Brighten just their
+   text so they carry like the coloured ones. */
+[data-theme="dark"] .badge.bg-secondary-subtle {
+  color: #d5deea;
 }
 /* The sidebar alert count keeps its own compact sizing (set earlier); don't let
    the generic bump enlarge it. */
@@ -1090,6 +1096,16 @@ main {
 }
 .compliance-strip {
   border-left: 3px solid var(--ac-turquoise);
+}
+/* LV-D9: KPIs in an even grid so N tiles share the row equally (no lone tile
+   wrapping underneath), and each tile lays out consistently. */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+  gap: 0.6rem;
+}
+.kpi-grid .summary-card {
+  height: 100%;
 }
 
 /* ── Calendar ─────────────────────────────────────── */
