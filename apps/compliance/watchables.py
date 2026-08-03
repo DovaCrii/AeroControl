@@ -14,6 +14,11 @@ from django.utils.translation import gettext_lazy as _
 # Keys are "app_label.modelname" (lowercase), which is unambiguous.
 WATCHABLE_MODELS = {
     "registry.qualification": _("Qualification"),
+    # LV-29: the DGAC vigencias. The only date field either model exposes is the
+    # new expiry (Aircraft.status is a choices field, also offered), so the rule
+    # picker cannot point at an irrelevant timestamp.
+    "registry.operator": _("Operator"),
+    "registry.aircraft": _("Aircraft"),
     "compliance.document": _("Document"),
     "operations.flightpermission": _("Flight permission"),
     "maintenance.maintenancerecord": _("Maintenance record"),

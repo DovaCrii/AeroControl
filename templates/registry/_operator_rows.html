@@ -4,6 +4,12 @@
   <td><a href="{{ object.pk }}/" class="fw-semibold">{{ object.full_name }}</a></td>
   <td>{{ object.rut|default:"—" }}</td>
   <td>{{ object.dgac_credential|default:"—" }}</td>
+  <td>
+    {% if object.credential_expiry %}
+      {% if object.credential_is_overdue %}<span class="badge bg-danger">{% translate "Overdue" %} · {{ object.credential_expiry|date:'Y-m-d' }}</span>
+      {% else %}<span class="badge bg-warning text-dark">{% translate "Due" %} {{ object.credential_expiry|date:'Y-m-d' }}</span>{% endif %}
+    {% else %}<span class="text-muted">—</span>{% endif %}
+  </td>
   <td>{% if object.cost_center %}{{ object.cost_center }}{% else %}{% translate "Unassigned" %}{% endif %}</td>
   <td>
     {% if object.current_quals %}<span class="badge bg-success">{% translate "Current" %}</span>

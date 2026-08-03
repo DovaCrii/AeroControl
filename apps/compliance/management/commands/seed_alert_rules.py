@@ -28,6 +28,9 @@ OPTIONAL_RULES = [
     # LV-26: watches the status field, so any maintenance that is not completed
     # stays an open alert until it is resolved.
     ("Mantenciones abiertas", "maintenance.maintenancerecord", "status", 0),
+    # LV-29: the DGAC vigencias entered on the operator/aircraft fiches.
+    ("Credenciales DGAC por vencer", "registry.operator", "credential_expiry", 30),
+    ("Seguros JAC por vencer", "registry.aircraft", "insurance_expiry", 30),
 ]
 
 

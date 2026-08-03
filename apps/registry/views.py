@@ -426,12 +426,13 @@ class CostCenterList(RegistryList):
 
 
 class AircraftList(RegistryList):
-    """LV-4: surface each aircraft's insurance expiry as a list column.
+    """LV-4 / LV-29: surface each aircraft's JAC insurance expiry as a column.
 
-    The insurance date is not a field on Aircraft -- it lives on a Document
-    whose DocumentType is flagged `is_insurance` (apps.compliance). Resolved
-    here in one query instead of per-row, and attached as plain attributes so
-    the template needs no cross-app lookups of its own.
+    LV-29 made `insurance_expiry` a real field on Aircraft (the user enters it
+    from the DGAC/SIGO capture), so this no longer derives the date from an
+    is_insurance Document -- the field is the canonical source, and
+    `insurance_is_overdue` is a model property. The supporting file may still
+    be attached as a document, but the column reads the field.
     """
 
     model = Aircraft
@@ -440,30 +441,7 @@ class AircraftList(RegistryList):
     search_fields = ["registration", "model", "manufacturer"]
 
     def get_queryset(self):
-        from django.contrib.contenttypes.models import ContentType
-
-        from apps.compliance.models import Document
-
-        queryset = self.scope_by_tenant(super().get_queryset())
-        aircraft_ct = ContentType.objects.get_for_model(Aircraft)
-        # Earliest (most urgent) expiry per aircraft when more than one
-        # current insurance-flagged document exists for it.
-        insurance_by_aircraft = {}
-        insurance_documents = Document.objects.filter(
-            content_type=aircraft_ct,
-            doc_type__is_insurance=True,
-            doc_type__is_active=True,
-            is_current_version=True,
-            is_active=True,
-        ).order_by("expiry_date")
-        for document in insurance_documents:
-            insurance_by_aircraft.setdefault(document.object_id, document.expiry_date)
-        today = timezone.localdate()
-        for aircraft in queryset:
-            expiry = insurance_by_aircraft.get(aircraft.pk)
-            aircraft.insurance_expiry = expiry
-            aircraft.insurance_is_overdue = expiry is not None and expiry < today
-        return queryset
+        return self.scope_by_tenant(super().get_queryset())
 
 
 class AircraftDetail(RegistryDetail):

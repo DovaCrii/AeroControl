@@ -9,6 +9,16 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 ## [Unreleased]
 
 ### Added
+- **Vigencias DGAC en las fichas: credencial del operador y seguro JAC de la
+  aeronave (LV-29).** Ahora se registra en la ficha la fecha de *Vigencia* de la
+  credencial DGAC de cada operador y la del *Seguro JAC* de cada aeronave (datos
+  del SIGO). Aparecen como **columna** en las listas (badge Vencida/Por vencer),
+  suman al panel de **próximos vencimientos**, generan **alerta** con las dos
+  reglas opcionales nuevas (`seed_alert_rules --with-optional`) y salen en el
+  **calendario** dentro del carril "Vencimientos". Para cargarlas en lote está
+  `load_dgac_vigencias` (idempotente, `--dry-run`, `--file` CSV, reporta los no
+  coincidentes) y para avisar a cada operador de sus vigencias por vencer o ya
+  vencidas, `notify_expiring_credentials` (email al operador; timer opcional).
 - **Enviar una aeronave a mantenimiento, y que quede como alerta hasta
   resolverse.** La ficha de la aeronave muestra sus mantenciones abiertas y tiene
   un botón "Enviar a mantenimiento"; con la regla de alerta de mantenciones

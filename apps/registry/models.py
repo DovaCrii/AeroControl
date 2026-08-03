@@ -104,6 +104,15 @@ class Aircraft(BaseModel):
     )
     vlos = models.CharField(max_length=20, blank=True, verbose_name=_("VLOS"))
     parachute = models.CharField(max_length=20, blank=True)
+    # LV-29: the JAC insurance validity from the SIGO screen, as a first-class
+    # field (the user enters it from the DGAC capture). This is the canonical
+    # source for the list column and the alert/calendar/dashboard wiring; an
+    # insurance document may still be attached as the supporting file, but the
+    # date lives here (before LV-29 it was derived from an is_insurance
+    # Document, which meant no expiry until a file was uploaded).
+    insurance_expiry = models.DateField(
+        null=True, blank=True, verbose_name=_("JAC insurance expiry")
+    )
     authorized_services = models.TextField(blank=True)
     cost_center = models.ForeignKey(
         CostCenter,
@@ -142,6 +151,17 @@ class Aircraft(BaseModel):
     def __str__(self):
         return self.registration
 
+    @property
+    def insurance_is_overdue(self):
+        """LV-29: the JAC insurance lapsed (past its expiry). ``None`` expiry --
+        no date on file -- is not overdue, it is simply unknown."""
+        from django.utils import timezone
+
+        return (
+            self.insurance_expiry is not None
+            and self.insurance_expiry < timezone.localdate()
+        )
+
     def clean(self):
         errors = {}
         if self.current_location == "on_site" and not self.current_site_id:
@@ -173,6 +193,12 @@ class Operator(BaseModel):
     dgac_credential = models.CharField(
         max_length=30, blank=True, verbose_name=_("DGAC credential")
     )
+    # LV-29: the credential's validity (the *Vigencia* column on the SIGO
+    # operator screen), entered by the user from the DGAC capture. Drives the
+    # list column, the alert rule, the calendar feed and the operator notice.
+    credential_expiry = models.DateField(
+        null=True, blank=True, verbose_name=_("DGAC credential expiry")
+    )
     operator_type = models.CharField(max_length=80, blank=True)
     address = models.TextField(blank=True)
     authorizations = models.TextField(blank=True)
@@ -196,6 +222,17 @@ class Operator(BaseModel):
 
     def __str__(self):
         return self.full_name
+
+    @property
+    def credential_is_overdue(self):
+        """LV-29: the DGAC credential lapsed. ``None`` -- no date on file -- is
+        unknown, not overdue (mirrors Aircraft.insurance_is_overdue)."""
+        from django.utils import timezone
+
+        return (
+            self.credential_expiry is not None
+            and self.credential_expiry < timezone.localdate()
+        )
 
 
 class Assignment(BaseModel):

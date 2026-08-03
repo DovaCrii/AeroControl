@@ -33,7 +33,7 @@
         <option value="assignment" {% if selected_calendar_types == "assignment" %}selected{% endif %}>{% translate "Assignments" %}</option>
         <option value="flight" {% if selected_calendar_types == "flight" %}selected{% endif %}>{% translate "Flights" %}</option>
         <option value="maintenance" {% if selected_calendar_types == "maintenance" %}selected{% endif %}>{% translate "Maintenance" %}</option>
-        <option value="document,qualification" {% if selected_calendar_types == "document,qualification" %}selected{% endif %}>{% translate "Expirations" %}</option>
+        <option value="document,qualification,operator_credential,aircraft_insurance" {% if selected_calendar_types == "document,qualification,operator_credential,aircraft_insurance" %}selected{% endif %}>{% translate "Expirations" %}</option>
         <option value="task" {% if selected_calendar_types == "task" %}selected{% endif %}>{% translate "Action items" %}</option>
       </select>
     </label>
