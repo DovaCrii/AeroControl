@@ -1022,11 +1022,19 @@ main {
   border-color: color-mix(in srgb, currentColor 78%, transparent);
   font-weight: 650;
 }
-/* LV-D9: the neutral "entity type" pills (secondary) read too muted in dark
-   because Bootstrap's secondary-emphasis is a dim grey. Brighten just their
-   text so they carry like the coloured ones. */
+/* LV-D9/D10: the neutral "entity type" pills (secondary) need an explicit colour
+   in BOTH themes -- Bootstrap's secondary-subtle read grey-heavy in light and
+   dim in dark. A soft near-white fill with dark-blue text in light, and a
+   dark-blue fill with light text in dark, both with a defined outline. */
+.badge.bg-secondary-subtle {
+  background-color: #eceff4 !important;
+  border-color: #c4ccd8;
+  color: #384252 !important;
+}
 [data-theme="dark"] .badge.bg-secondary-subtle {
-  color: #d5deea;
+  background-color: #2b3749 !important;
+  border-color: #46566d;
+  color: #d5deea !important;
 }
 /* The sidebar alert count keeps its own compact sizing (set earlier); don't let
    the generic bump enlarge it. */

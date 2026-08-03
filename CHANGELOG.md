@@ -9,6 +9,11 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 ## [Unreleased]
 
 ### Fixed
+- **Etiquetas de tipo de entidad (Operador/Aeronave/Seguro JAC…) oscuras en tema
+  claro.** Bootstrap aplica `bg-secondary-subtle`/`text-secondary-emphasis` con
+  `!important`, así que la pastilla neutra quedaba con fondo casi negro en claro.
+  Se fija su color explícito por tema (fondo casi blanco + texto azul oscuro en
+  claro; fondo azul oscuro + texto claro en oscuro), legible en ambos.
 - **Textos que salían en inglés en producción.** El catálogo compilado
   (`django.mo`) estaba desfasado del `.po` y el despliegue no lo recompila, así
   que los textos nuevos (registros operacionales, cumplimiento mensual,
