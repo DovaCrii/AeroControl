@@ -8,7 +8,6 @@
   <td>{{ object.aircraft_count }}</td>
   <td class="small text-truncate" style="max-width: 16rem;" title="{{ object.notes }}">{{ object.notes|default:"—" }}</td>
   <td class="text-end">
-    <a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">{% translate "View" %}</a>
     <a href="{{ object.pk }}/edit/" hx-get="{{ object.pk }}/edit/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">{% translate "Edit" %}</a>
   </td>
 </tr>

@@ -7,17 +7,16 @@
   <td>
     {% if object.credential_expiry %}
       {% if object.credential_is_overdue %}<span class="badge bg-danger">{% translate "Overdue" %} · {{ object.credential_expiry|date:'Y-m-d' }}</span>
-      {% else %}<span class="badge bg-warning text-dark">{% translate "Due" %} {{ object.credential_expiry|date:'Y-m-d' }}</span>{% endif %}
+      {% else %}<span class="badge bg-warning-subtle text-warning-emphasis">{{ object.credential_expiry|date:'Y-m-d' }}</span>{% endif %}
     {% else %}<span class="text-muted">—</span>{% endif %}
   </td>
-  <td>{% if object.cost_center %}{{ object.cost_center }}{% else %}{% translate "Unassigned" %}{% endif %}</td>
+  <td>{% if object.cost_center %}<span title="{{ object.cost_center }}">{{ object.cost_center.code }}</span>{% else %}<span class="text-muted">{% translate "Unassigned" %}</span>{% endif %}</td>
   <td>
     {% if object.current_quals %}<span class="badge bg-success">{% translate "Current" %}</span>
     {% elif object.expired_quals %}<span class="badge bg-danger">{% translate "Expired" %}</span>
     {% else %}<span class="text-muted">—</span>{% endif %}
   </td>
   <td class="text-end">
-    <a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">{% translate "View" %}</a>
     <a href="{{ object.pk }}/edit/" hx-get="{{ object.pk }}/edit/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">{% translate "Edit" %}</a>
   </td>
 </tr>
