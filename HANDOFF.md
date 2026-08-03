@@ -5,11 +5,14 @@
 > Última actualización: **2026-07-31**.
 
 ## Estado de producción (VM `p340`)
-- Prod ya con crispy 2.7 + búsqueda global desplegados (deploy confirmado por el
-  usuario). **`origin/main` va adelante en `1125d88`**: faltan por desplegar
-  **T5.4** (dashboard), **T5.5** (form de vuelo) y **T5.2-importadores** (botón
-  Importar en listas) — solo template/vista/form, deploy = `pull` + restart
-  (sin `uv sync`). Suite completa **571 verde** (2026-08-03).
+- Prod ya con crispy 2.7 + búsqueda global desplegados. **`origin/main` va muy
+  adelante en `0871e86`** — **pendiente de despliegue, esperando revisión del
+  usuario**: T5.4/T5.5/T5.2-importadores, T5.6(a+b) (paginación/columnas HTMX),
+  LV-20 (fix guardar aeronave), LV-27 (documentos en fichas), LV-28 (documentos
+  de la empresa), LV-21/22 (títulos de modal/labels ES), LV-26 (mantenimiento).
+  **Sin migraciones ni deps nuevas → deploy = `pull` + restart** (sin `uv sync`,
+  sin `migrate`). Opcional tras deploy: `seed_alert_rules --with-optional` para
+  la regla "Mantenciones abiertas" (LV-26). Suite completa **587 verde** (2026-08-03).
 - Acceso: Tailscale + **público por Funnel** (`https://p340.tailccd107.ts.net`).
 - **Login endurecido** (django-axes, 5 intentos/15 min).
 - **Datos reales cargados**: 12 centros de costo, 41 operadores, 15 aeronaves,
