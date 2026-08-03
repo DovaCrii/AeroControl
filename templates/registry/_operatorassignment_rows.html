@@ -2,12 +2,11 @@
 {% for object in objects %}
 <tr>
   <td><a href="{{ object.pk }}/" class="fw-semibold">{{ object.operator.full_name }}</a></td>
-  <td>{{ object.cost_center.code }}{% if object.cost_center.name %} · {{ object.cost_center.name }}{% endif %}</td>
+  <td><span title="{{ object.cost_center.name }}">{{ object.cost_center.code }}</span></td>
   <td>{% include "registry/_assignment_status.html" %}</td>
   <td>{{ object.purpose|default:"—" }}</td>
   <td>{{ object.start_date|date:"Y-m-d" }}</td>
   <td class="text-end">
-    <a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">{% translate "View" %}</a>
     <a href="{{ object.pk }}/edit/" hx-get="{{ object.pk }}/edit/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">{% translate "Edit" %}</a>
   </td>
 </tr>
