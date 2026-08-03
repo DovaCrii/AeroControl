@@ -57,6 +57,11 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   familia (Mavic/Matrice/Phantom/…) de un vistazo; las vencidas siguen en rojo.
 
 ### Changed
+- **Dependencias:** `django-crispy-forms` 2.6 → 2.7 (pack de render de
+  formularios, suite completa verde) y `gunicorn` amplía su rango a `>=23,<27`.
+  `ruff` se mantiene en 0.15.22 a propósito: 0.16.0 cambia su set de reglas por
+  defecto (224 issues nuevos de orden de imports), un cleanup aparte, no un
+  drop-in. El resto de PRs de dependabot ya estaban en `main`.
 - **Los formularios Kanban ya no muestran el campo técnico "Orden"**: la
   posición de columnas, tarjetas, etiquetas e ítems de checklist se maneja con
   arrastrar y soltar y se asigna en el servidor (las nuevas se agregan al final),
