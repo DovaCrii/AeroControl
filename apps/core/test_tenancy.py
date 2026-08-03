@@ -168,6 +168,55 @@ class TestTenantUniqueConstraints:
                 Operator.objects.create(employee_id="E1", full_name="dup", tenant=a)
 
 
+class TestObjectLevelIsolation:
+    """F-03/F-06: a detail/edit/archive view must not open another tenant's
+    record by URL -- the T3.2 Fase 2 scoping only guarded the lists."""
+
+    def _client(self, username, codename, tenant=None):
+        user = User.objects.create_user(username, password="pw")
+        user.user_permissions.add(Permission.objects.get(codename=codename))
+        if tenant is not None:
+            TenantMembership.objects.create(tenant=tenant, user=user)
+        client = Client()
+        assert client.login(username=username, password="pw")
+        return client
+
+    @pytest.mark.django_db
+    def test_aircraft_detail_is_visible_to_owner_but_404_to_another_tenant(self):
+        a = OperationalTenant.objects.create(name="A", slug="a")
+        b = OperationalTenant.objects.create(name="B", slug="b")
+        aircraft = Aircraft.objects.create(
+            registration="RPA-A", type="RPA", model="M", manufacturer="DJI", tenant=a
+        )
+        owner = self._client("a_det", "view_aircraft", tenant=a)
+        intruder = self._client("b_det", "view_aircraft", tenant=b)
+        url = reverse("aircraft-detail", args=[aircraft.pk])
+        assert owner.get(url).status_code == 200
+        assert intruder.get(url).status_code == 404
+
+    @pytest.mark.django_db
+    def test_cost_center_edit_is_404_for_another_tenant(self):
+        a = OperationalTenant.objects.create(name="A", slug="a")
+        b = OperationalTenant.objects.create(name="B", slug="b")
+        cost_center = CostCenter.objects.create(code="CCA", name="A", tenant=a)
+        intruder = self._client("b_edit", "change_costcenter", tenant=b)
+        url = reverse("costcenter-update", args=[cost_center.pk])
+        assert intruder.get(url).status_code == 404
+
+    @pytest.mark.django_db
+    def test_operator_archive_is_404_for_another_tenant(self):
+        a = OperationalTenant.objects.create(name="A", slug="a")
+        b = OperationalTenant.objects.create(name="B", slug="b")
+        operator = Operator.objects.create(
+            employee_id="OA2", full_name="Op A", tenant=a
+        )
+        intruder = self._client("b_arch", "delete_operator", tenant=b)
+        response = intruder.post(reverse("operator-archive", args=[operator.pk]))
+        assert response.status_code == 404
+        operator.refresh_from_db()
+        assert operator.is_active  # untouched
+
+
 class TestCalendarFeedIsolation:
     """Safety net (T3.2 Fase 4) for the calendar feed's tenant scoping, so the
     Fase 2 change from OR-over-FKs to a canonical path cannot regress it."""

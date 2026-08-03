@@ -103,6 +103,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   congelado el nombre que muestra la lista y obligaba a usar el admin técnico
   para crear o corregir un nombre como "Casa Matriz".
 
+### Security
+- **Aislamiento por objeto entre organizaciones (F-03/F-06).** Las listas ya se
+  acotaban por organización; ahora también la **ficha, la edición y el
+  archivar/restaurar** de centros de costo, aeronaves y operadores: abrir por URL
+  el registro de otra organización devuelve 404. Sin efecto con una sola
+  organización (el caso actual), correcto al centralizar varias.
+
 ### Fixed
 - **La búsqueda en vivo y la paginación ya funcionan bien en todas las listas
   (F-13).** Dos problemas resueltos: los controles de paginación quedaban con el

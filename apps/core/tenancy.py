@@ -26,6 +26,25 @@ def get_default_tenant():
     return tenant.pk
 
 
+def scope_queryset_to_tenant(queryset, user):
+    """Restrict a queryset to the user's tenant(s) (F-03/F-06, object-level).
+
+    The list views were scoped in T3.2 Fase 2, but a detail/edit/archive view
+    resolved its object by pk alone, so `/aircraft/<other-tenant-pk>/` still
+    opened. This closes that by tenant, for models with a **direct** `tenant` FK
+    (CostCenter/Aircraft/Operator); a no-op for a superuser and for models that
+    scope through a relation. Behaviour-preserving today (single tenant), correct
+    once tenants diverge.
+    """
+    model = queryset.model
+    if not any(field.name == "tenant" for field in model._meta.fields):
+        return queryset
+    tenant_ids = visible_tenant_ids(user)
+    if tenant_ids is None:
+        return queryset
+    return queryset.filter(tenant_id__in=tenant_ids)
+
+
 def visible_tenant_ids(user):
     """Tenant ids a user may see, or ``None`` for "all tenants" (T3.2 Fase 1).
 
