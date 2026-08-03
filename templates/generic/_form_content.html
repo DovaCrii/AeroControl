@@ -1,4 +1,8 @@
 {% load crispy_forms_tags i18n %}
+{% comment %}LV-21: the modal title lives outside #modal-content, so update it
+out-of-band with this view's real title ("Edit aircraft", "New flight
+permission") instead of the generic "Form".{% endcomment %}
+{% if title %}<h5 id="generic-modal-title" class="modal-title" hx-swap-oob="true">{{ title }}</h5>{% endif %}
 <form class="form-shell" method="post" action="{{ request.path }}" {% if form.is_multipart %}enctype="multipart/form-data"{% endif %}
       hx-post="{{ request.path }}" hx-target="#modal-content" hx-swap="innerHTML">
   {% csrf_token %}

@@ -19,6 +19,19 @@ class FlightPermissionForm(AeroModelForm):
             "valid_until",
             "location",
         ]
+        # LV-22: without explicit labels the auto-generated English ones ("Permission
+        # number", "Valid from"…) fell through the catalog and rendered in English
+        # inside the Spanish UI.
+        labels = {
+            "permission_number": _("Permission number"),
+            "operators": _("Operators"),
+            "aircraft_fleet": _("Aircraft fleet"),
+            "cost_center": _("Cost center"),
+            "purpose": _("Purpose"),
+            "valid_from": _("Valid from"),
+            "valid_until": _("Valid until"),
+            "location": _("Location"),
+        }
         widgets = {
             # A roster of several, not one pick from a dropdown (OPS-4).
             "operators": forms.CheckboxSelectMultiple,
@@ -37,6 +50,14 @@ class FlightRecordForm(AeroModelForm):
             "pilot",
             "aircraft",
         ]
+        labels = {
+            "permission": _("Flight permission"),
+            "actual_date": _("Flight date"),
+            "departure_time": _("Departure time"),
+            "arrival_time": _("Arrival time"),
+            "pilot": _("Pilot"),
+            "aircraft": _("Aircraft"),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -3238,6 +3238,27 @@ msgstr "Planes geoespaciales"
 msgid "No geospatial plans linked to this permission."
 msgstr "No hay planes geoespaciales vinculados a este permiso."
 
+msgid "Permission number"
+msgstr "Número de permiso"
+
+msgid "Aircraft fleet"
+msgstr "Flota de aeronaves"
+
+msgid "Valid from"
+msgstr "Vigente desde"
+
+msgid "Valid until"
+msgstr "Vigente hasta"
+
+msgid "Flight date"
+msgstr "Fecha de vuelo"
+
+msgid "Departure time"
+msgstr "Hora de salida"
+
+msgid "Arrival time"
+msgstr "Hora de llegada"
+
 #~ msgid "Flight date"
 #~ msgstr "Fecha de vuelo"
 
