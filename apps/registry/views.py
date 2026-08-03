@@ -277,9 +277,7 @@ class CostCenterDetail(RegistryDetail):
     template_name = "registry/costcenter_detail.html"
 
     def get_context_data(self, **kwargs):
-        from django.contrib.contenttypes.models import ContentType
-
-        from apps.compliance.models import Document
+        from apps.compliance.attachments import attached_documents_context
         from apps.operations.models import FlightPermission
 
         from .selectors import movements_for_cost_center
@@ -326,16 +324,7 @@ class CostCenterDetail(RegistryDetail):
         else:
             context["flight_permissions"] = None
 
-        if user.has_perm("compliance.view_document"):
-            cc_type = ContentType.objects.get_for_model(CostCenter)
-            context["documents"] = Document.objects.filter(
-                content_type=cc_type,
-                object_id=cost_center.pk,
-                is_current_version=True,
-                is_active=True,
-            ).order_by("-issue_date")
-        else:
-            context["documents"] = None
+        context.update(attached_documents_context(user, cost_center))
 
         if user.has_perm("registry.view_resourcemovementlog"):
             context["movements"] = movements_for_cost_center(cost_center)
@@ -469,6 +458,8 @@ class AircraftDetail(RegistryDetail):
     template_name = "registry/aircraft_detail.html"
 
     def get_context_data(self, **kwargs):
+        from apps.compliance.attachments import attached_documents_context
+
         from .selectors import movements_for_resource
 
         context = super().get_context_data(**kwargs)
@@ -476,6 +467,7 @@ class AircraftDetail(RegistryDetail):
             context["movements"] = movements_for_resource("aircraft", self.object.pk)
         else:
             context["movements"] = None
+        context.update(attached_documents_context(self.request.user, self.object))
         return context
 
 
@@ -486,6 +478,8 @@ class OperatorDetail(RegistryDetail):
     template_name = "registry/operator_detail.html"
 
     def get_context_data(self, **kwargs):
+        from apps.compliance.attachments import attached_documents_context
+
         from .selectors import movements_for_resource
 
         context = super().get_context_data(**kwargs)
@@ -493,6 +487,7 @@ class OperatorDetail(RegistryDetail):
             context["movements"] = movements_for_resource("operator", self.object.pk)
         else:
             context["movements"] = None
+        context.update(attached_documents_context(self.request.user, self.object))
         return context
 
 

@@ -3212,6 +3212,32 @@ msgstr ""
 msgid "Unassigned"
 msgstr "Sin asignar"
 
+msgid "Company"
+msgstr "Empresa"
+
+msgid "Company documents"
+msgstr "Documentos de la empresa"
+
+msgid "AOC, operating procedures and forms available to the whole operation."
+msgstr ""
+"AOC, procedimientos operativos y formularios disponibles para toda la "
+"operación."
+
+msgid "No company documents yet."
+msgstr "Aún no hay documentos de la empresa."
+
+msgid "Upload the first one"
+msgstr "Subir el primero"
+
+msgid "No documents attached yet."
+msgstr "Aún no hay documentos adjuntos."
+
+msgid "Geospatial plans"
+msgstr "Planes geoespaciales"
+
+msgid "No geospatial plans linked to this permission."
+msgstr "No hay planes geoespaciales vinculados a este permiso."
+
 #~ msgid "Flight date"
 #~ msgstr "Fecha de vuelo"
 

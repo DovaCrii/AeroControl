@@ -6,6 +6,7 @@
 <div class="page-header">
   <h1 class="mb-0">{% translate "Operations Dashboard" %}</h1>
   <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="{% url 'company-documents' %}">{% translate "Company documents" %}</a>
     <a class="btn btn-outline-primary" href="{% url 'costcenter-list' %}">{% translate "Open registry" %}</a>
     <a class="btn btn-primary" href="{% url 'permission-create' %}">+ {% translate "New permission" %}</a>
   </div>

@@ -110,6 +110,55 @@ class DocumentList(ComplianceList):
         return context
 
 
+class CompanyDocumentsView(ModelViewPermissionRequiredMixin, ListView):
+    """A visible, downloadable home for company-wide documents -- the AOC,
+    procedures and forms that belong to the operator as a whole rather than to
+    a specific aircraft or permit. They attach to the tenant and flow through
+    the same upload/replace/download pipeline as any other Document.
+    """
+
+    model = Document
+    template_name = "compliance/company_documents.html"
+    context_object_name = "documents"
+    paginate_by = 25
+
+    def get_queryset(self):
+        from apps.core.models import OperationalTenant
+        from apps.core.tenancy import visible_tenant_ids
+
+        tenant_ct = ContentType.objects.get_for_model(OperationalTenant)
+        queryset = (
+            Document.objects.filter(
+                content_type=tenant_ct, is_current_version=True, is_active=True
+            )
+            .select_related("doc_type")
+            .order_by("-issue_date")
+        )
+        tenant_ids = visible_tenant_ids(self.request.user)
+        if tenant_ids is not None:
+            queryset = queryset.filter(object_id__in=tenant_ids)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        from apps.core.models import OperationalTenant
+        from apps.core.tenancy import get_default_tenant, visible_tenant_ids
+
+        context = super().get_context_data(**kwargs)
+        context["title"] = _("Company documents")
+        context["document_content_type_id"] = ContentType.objects.get_for_model(
+            OperationalTenant
+        ).pk
+        # get_default_tenant() returns the pk; resolve the instance so the
+        # template can build the upload link from tenant.pk.
+        tenant_ids = visible_tenant_ids(self.request.user)
+        if tenant_ids is None:
+            tenant_ids = [get_default_tenant()]
+        context["tenant"] = OperationalTenant.objects.filter(
+            pk__in=tenant_ids, is_active=True
+        ).first()
+        return context
+
+
 class DocumentCreate(ComplianceCreate):
     model = Document
     form_class = DocumentForm

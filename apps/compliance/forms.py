@@ -21,8 +21,11 @@ DOCUMENTABLE_MODELS = {
     ("registry", "aircraft"),
     ("registry", "operator"),
     ("registry", "qualification"),
+    ("registry", "costcenter"),
     ("operations", "flightpermission"),
     ("maintenance", "maintenancerecord"),
+    # Company-wide documents (AOC, procedures, forms) hang off the tenant.
+    ("core", "operationaltenant"),
 }
 
 # Accepted uploads and the magic bytes each one must actually start with, so a
@@ -45,8 +48,10 @@ DOCUMENTABLE_MODEL_LABELS = {
     ("registry", "aircraft"): _("Aircraft record"),
     ("registry", "operator"): _("Operator record"),
     ("registry", "qualification"): _("Qualification"),
+    ("registry", "costcenter"): _("Cost center"),
     ("operations", "flightpermission"): _("Flight permission"),
     ("maintenance", "maintenancerecord"): _("Maintenance record"),
+    ("core", "operationaltenant"): _("Company"),
 }
 
 
