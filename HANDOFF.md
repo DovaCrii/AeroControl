@@ -154,6 +154,11 @@ diferidos.
   (T3.3/T3.4/T3.5). DJI (T6.7) sigue diferido tras estabilizar.
 
 ## Gotchas de esta base (ver también memoria del proyecto)
+- **El `.mo` está versionado y el deploy NO lo recompila.** Al tocar
+  `locale/es/LC_MESSAGES/django.po` hay que **recompilar el `.mo` y commitearlo**,
+  o los strings ES nuevos salen en inglés en prod. La VM/dev no tiene `gettext`
+  (por eso la guardia `test_translations` lee el `.po`), así que compilar con
+  `uv run python -c "import polib; polib.pofile('locale/es/LC_MESSAGES/django.po').save_as_mofile('locale/es/LC_MESSAGES/django.mo')"`.
 - `manage.py dumpdata --output` en Windows escribe **cp1252** → usar
   `PYTHONUTF8=1` (rompió un `loaddata` con acentos).
 - La suite completa tarda **~5 min**; correrla en background.

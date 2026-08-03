@@ -30,7 +30,7 @@
     </a>
     <form method="get" action="{% url 'global-search' %}" role="search" class="global-search d-none d-md-flex mx-auto" hx-boost="false">
       <div class="input-group input-group-sm">
-        <input class="form-control" type="search" name="q" value="{{ request.GET.q|default:'' }}" placeholder="{% translate 'Search across operations' %}" aria-label="{% translate 'Global search' %}">
+        <input class="form-control" type="search" name="q" value="{{ request.GET.q|default:'' }}" placeholder="{% translate 'Search in AeroControl' %}" aria-label="{% translate 'Global search' %}">
         <button class="btn btn-outline-light" type="submit" aria-label="{% translate 'Search' %}">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
         </button>
@@ -91,7 +91,14 @@
       <a href="{% url 'maintenance-list' %}" class="nav-item nav-maintenance {% if url_name == 'maintenance-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4.5" width="14" height="16.5" rx="2"/><path d="M9.5 4.5V3h5v1.5"/><path d="M8.75 13l2 2 3.5-3.5"/></svg>{% translate "Records" %}</a>
 
       <span class="sidebar-label">{% translate "Compliance" %}</span>
+      {% comment %}LV-D8 (2026-08-03): la lista general de Documentos se ocultó
+      del menú por decisión de producto -- la carga ya está dividida por sección
+      (ficha de cada entidad, Documentos de la empresa, Registros operacionales),
+      así que una pestaña transversal encima se sentía redundante. La vista y la
+      URL 'document-list' siguen vivas (auditoría de todo junto) -- solo se
+      quita el enlace, igual que el patrón de LV-7 con Kanban.
       <a href="{% url 'document-list' %}" class="nav-item nav-compliance {% if url_name == 'document-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>{% translate "Documents" %}</a>
+      {% endcomment %}
       <a href="{% url 'alert-list' %}" class="nav-item nav-compliance {% if url_name == 'alert-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 22h4"/></svg>{% translate "Alerts" %} {% include "core/_alert_badge.html" %}</a>
       <a href="{% url 'compliance-report' %}" class="nav-item nav-compliance {% if url_name == 'compliance-report' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="M8 16v-4M12 16V8M16 16v-6"/></svg>{% translate "Report" %}</a>
       <a href="{% url 'company-documents' %}" class="nav-item nav-compliance {% if url_name == 'company-documents' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>{% translate "Company documents" %}</a>

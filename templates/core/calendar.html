@@ -16,7 +16,10 @@
 <section class="calendar-shell card p-3" aria-labelledby="calendar-title">
   <div class="calendar-toolbar mb-3">
     <div>
-      <h2 id="calendar-title" class="h5 mb-1">{{ month_name|date:"F Y" }}</h2>
+      {# LV-D6: FullCalendar ya rotula el mes en su barra; este título propio
+         era redundante. Se mantiene solo como landmark accesible (oculto a la
+         vista) para el aria-labelledby de la sección. #}
+      <h2 id="calendar-title" class="visually-hidden">{{ month_name|date:"F Y" }} · {% translate "Calendar" %}</h2>
       <div class="calendar-legend" aria-label="{% translate 'Event types' %}">
         <span><i class="calendar-dot calendar-dot-permission"></i>{% translate "Flight permissions" %}</span>
         <span><i class="calendar-dot calendar-dot-assignment"></i>{% translate "Assignments" %}</span>

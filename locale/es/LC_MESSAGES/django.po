@@ -3383,6 +3383,10 @@ msgid_plural "Review these %(total)s cost centers and mark each Compliant or Non
 msgstr[0] "Revisa %(total)s centro de costo y márcalo Cumple o No cumple:"
 msgstr[1] "Revisa estos %(total)s centros de costo y marca cada uno Cumple o No cumple:"
 
+# Revisión en vivo 2026-08-03 (pasada de diseño).
+msgid "Search in AeroControl"
+msgstr "Buscar en AeroControl"
+
 #~ msgid "Flight date"
 #~ msgstr "Fecha de vuelo"
 
