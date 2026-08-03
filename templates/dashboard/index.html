@@ -26,22 +26,22 @@
 {# ── Summary cards ── #}
 <div class="row g-2 mb-3">
   <div class="col-md-3 col-sm-6">
-    <div class="summary-card">
+    <a class="summary-card text-decoration-none d-block" href="{% url 'aircraft-list' %}">
       <small>{% translate "Active Aircraft" %}</small>
       <strong>{{ aircraft_count }}</strong>
-    </div>
+    </a>
   </div>
   <div class="col-md-3 col-sm-6">
-    <div class="summary-card">
+    <a class="summary-card text-decoration-none d-block" href="{% url 'operator-list' %}">
       <small>{% translate "Active Operators" %}</small>
       <strong>{{ operator_count }}</strong>
-    </div>
+    </a>
   </div>
   <div class="col-md-3 col-sm-6">
-    <div class="summary-card">
+    <a class="summary-card text-decoration-none d-block" href="{% url 'alert-list' %}">
       <small>{% translate "Pending Alerts" %}</small>
       <strong>{{ alert_count }}</strong>
-    </div>
+    </a>
   </div>
   <div class="col-md-3 col-sm-6">
     <div class="summary-card">
@@ -134,10 +134,10 @@ guides the three steps in order and disappears when they are done.
     <div class="card p-2">
       <h4 class="h5">{% translate "Upcoming Expirations" %}</h4>
       {% for item in expirations %}
-      <div class="d-flex justify-content-between border-bottom py-1">
-        <span>{{ item.operator }} — {{ item.qualification_type }}</span>
-        <b>{{ item.expiry_date|date:"Y-m-d" }}</b>
-      </div>
+      <a href="{{ item.url }}" class="d-flex justify-content-between align-items-center border-bottom py-1 text-decoration-none text-body">
+        <span><span class="badge text-bg-secondary me-2">{{ item.kind }}</span>{{ item.label }}</span>
+        <b>{{ item.date|date:"Y-m-d" }}</b>
+      </a>
       {% empty %}
       <p class="text-muted my-2">{% translate "No upcoming expirations." %}</p>
       {% endfor %}

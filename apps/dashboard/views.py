@@ -4,13 +4,78 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
 from django.db.models.functions import TruncMonth
 from django.shortcuts import render
+from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from apps.compliance.models import Alert, AlertRule, Document, DocumentType
 from apps.maintenance.models import MaintenanceRecord
 from apps.operations.models import FlightPermission, FlightRecord
 from apps.registry.models import Aircraft, CostCenter, Operator, Qualification
 from apps.workboard.models import KanbanStage, KanbanTask
+
+
+def upcoming_expirations(today, cutoff, cost_center=None):
+    """The real expiries in the [today, cutoff] window across the three things
+    that actually expire (T5.4/U4): operator qualifications, compliance
+    documents and flight permissions -- not just qualifications as before. Each
+    item carries a link so the dashboard lands the user on the record to act.
+
+    Qualifications and permissions honour the cost-center filter; documents hang
+    off a generic relation with no direct cost center, so they are always
+    included (they are also watched by the alert engine and the report).
+    """
+    items = []
+
+    quals = Qualification.objects.filter(
+        is_active=True, expiry_date__gte=today, expiry_date__lte=cutoff
+    ).select_related("operator", "qualification_type")
+    if cost_center:
+        quals = quals.filter(operator__cost_center=cost_center)
+    for qual in quals:
+        items.append(
+            {
+                "kind": _("Qualification"),
+                "label": f"{qual.operator} — {qual.qualification_type}",
+                "date": qual.expiry_date,
+                "url": reverse("operator-detail", args=[qual.operator_id]),
+            }
+        )
+
+    documents = Document.objects.filter(
+        is_active=True,
+        is_current_version=True,
+        expiry_date__isnull=False,
+        expiry_date__gte=today,
+        expiry_date__lte=cutoff,
+    ).select_related("doc_type")
+    for document in documents:
+        items.append(
+            {
+                "kind": _("Document"),
+                "label": document.title,
+                "date": document.expiry_date,
+                "url": reverse("document-detail", args=[document.pk]),
+            }
+        )
+
+    permissions = FlightPermission.objects.filter(
+        is_active=True, valid_until__gte=today, valid_until__lte=cutoff
+    )
+    if cost_center:
+        permissions = permissions.filter(cost_center=cost_center)
+    for permission in permissions:
+        items.append(
+            {
+                "kind": _("Flight permission"),
+                "label": permission.permission_number,
+                "date": permission.valid_until,
+                "url": reverse("permission-detail", args=[permission.pk]),
+            }
+        )
+
+    items.sort(key=lambda item: item["date"])
+    return items
 
 
 @login_required
@@ -54,18 +119,9 @@ def dashboard(request):
     # keeps the real count; only the visible list is capped.
     today = timezone.localdate()
     cutoff = today + timedelta(days=30)
-    expiring = Qualification.objects.filter(
-        is_active=True,
-        expiry_date__isnull=False,
-        expiry_date__gte=today,
-        expiry_date__lte=cutoff,
-    )
-    if selected_cost_center:
-        expiring = expiring.filter(operator__cost_center=selected_cost_center)
-    expiring_count = expiring.count()
-    expirations = expiring.select_related("operator", "qualification_type").order_by(
-        "expiry_date"
-    )[:10]
+    all_expirations = upcoming_expirations(today, cutoff, selected_cost_center)
+    expiring_count = len(all_expirations)
+    expirations = all_expirations[:10]
 
     # --- Kanban stages (archived tasks must not inflate the counts) ---
     stages = KanbanStage.objects.filter(is_active=True).annotate(

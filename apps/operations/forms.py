@@ -1,4 +1,5 @@
 from django import forms
+from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
 from apps.core.forms import AeroModelForm
@@ -36,6 +37,31 @@ class FlightRecordForm(AeroModelForm):
             "pilot",
             "aircraft",
         ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # T5.5: once a permission is chosen (prefilled from its detail page, or
+        # posted back), narrow the pilot and aircraft pickers to that
+        # permission's roster instead of the whole registry. The clean() below
+        # still enforces it, but this stops the user picking an invalid option
+        # in the first place -- the form reduces to what the permission allows.
+        permission_id = (
+            self.data.get("permission")
+            or self.initial.get("permission")
+            or getattr(self.instance, "permission_id", None)
+        )
+        if not permission_id:
+            return
+        try:
+            permission = FlightPermission.objects.prefetch_related(
+                "operators", "aircraft_fleet"
+            ).get(pk=permission_id)
+        except (FlightPermission.DoesNotExist, ValidationError, ValueError, TypeError):
+            return
+        self.fields["pilot"].queryset = permission.operators.filter(is_active=True)
+        self.fields["aircraft"].queryset = permission.aircraft_fleet.filter(
+            is_active=True
+        )
 
     def clean(self):
         cleaned = super().clean()
