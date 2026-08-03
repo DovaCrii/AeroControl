@@ -111,6 +111,17 @@ class AircraftForm(AeroModelForm):
             "current_site": _("Current site"),
         }
 
+    def clean(self):
+        # LV-20: a "site" only means something when the aircraft is on site.
+        # The model guards this too, but on the form the raised error made
+        # Save look broken (the 422 re-rendered without surfacing it): the user
+        # picks Headquarters/Maintenance and the still-selected site blocks the
+        # save. Clear it silently instead -- the location field is what they set.
+        cleaned = super().clean()
+        if cleaned.get("current_location") != "on_site":
+            cleaned["current_site"] = None
+        return cleaned
+
 
 class OperatorForm(AeroModelForm):
     class Meta:

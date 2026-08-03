@@ -352,6 +352,29 @@ class TestCostCenterFormSimplified:
         content = admin_client.get(reverse("operator-list")).content.decode()
         assert content.count('id="pagination-container"') == 1
 
+    @pytest.mark.django_db
+    def test_aircraft_form_clears_the_site_when_not_on_site(self):
+        # LV-20: choosing Headquarters/Maintenance with a site still selected
+        # used to make Save look broken (the model guard raised, the 422 hid it).
+        from apps.registry.forms import AircraftForm
+
+        cc = CostCenter.objects.create(code="CC1", name="One")
+        form = AircraftForm(
+            data={
+                "registration": "CC-XYZ",
+                "type": "RPA",
+                "model": "M300",
+                "manufacturer": "DJI",
+                "cost_center": cc.pk,
+                "status": "active",
+                "current_location": "headquarters",
+                "current_site": cc.pk,
+            }
+        )
+        assert form.is_valid(), form.errors
+        aircraft = form.save()
+        assert aircraft.current_site_id is None
+
 
 # ── LV-14: habilitations list grouped by operator ────────────────────────────
 class TestQualificationListGroupedByOperator:
