@@ -102,6 +102,25 @@ UI. También puedes crear o afinar reglas a mano desde `/compliance/alertrule/`.
 Sube documentos con **fecha de vencimiento real**, colgando del operador /
 aeronave / permiso correspondiente. Eso es lo que las reglas vigilan.
 
+### Dónde vive cada documento
+
+Cada documento se sube **desde la ficha de la entidad a la que pertenece**, no
+desde una bandeja suelta — así el expediente queda completo en un solo lugar:
+
+| Documento | Dónde subirlo |
+| --- | --- |
+| Carta / autorización DGAC de un permiso | Ficha del **permiso de vuelo** → "Subir documento" |
+| Área de vuelo (KMZ/KML) | *Planificación geoespacial* → **Importar** (elige el CC y el permiso); queda listada en la ficha del permiso |
+| Resolución JAC, registro/matrícula, aeronavegabilidad, seguro | Ficha de la **aeronave** → "Subir documento" |
+| Credencial DGAC, certificado médico del operador | Ficha del **operador** → "Subir documento". Al renovar, usa **Reemplazar**: guarda el histórico y la versión vigente es la que se vigila |
+| AOC de la empresa, procedimientos, checklists, plantillas | **Documentos de la empresa** (sidebar *Cumplimiento* o el botón del panel) |
+| Documentos del contrato/centro de costo | Ficha del **centro de costo** → pestaña *Documentos* |
+
+El tipo de documento se elige del catálogo (Paso 2); crea los que falten
+(p. ej. "Resolución JAC", "Procedimiento interno") desde
+`/compliance/documenttype/new/`. Todo documento con **fecha de vencimiento**
+queda vigilado por la regla de alertas, sin importar a qué entidad cuelga.
+
 ## Paso 5 — Probar
 
 En la VM (con el entorno cargado):
