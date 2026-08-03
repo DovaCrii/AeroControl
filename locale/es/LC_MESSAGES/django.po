@@ -3192,6 +3192,22 @@ msgstr "Ingresa el número del centro de costo."
 msgid "Maintenance to define"
 msgstr "Mantenciones por definir"
 
+#: .\apps\registry\views.py:598
+msgid "Assign operators to a cost center"
+msgstr "Asignar operadores a un centro de costo"
+
+#: .\apps\registry\forms.py:44
+msgid "Optional descriptive name (e.g. Casa Matriz)."
+msgstr "Nombre descriptivo opcional (p. ej. Casa Matriz)."
+
+#: .\apps\registry\forms.py:274
+msgid ""
+"Select one or more. Each is assigned to the cost center above; an operator "
+"already assigned elsewhere is moved here."
+msgstr ""
+"Selecciona uno o más. Cada uno se asigna al centro de costo de arriba; un "
+"operador ya asignado en otro centro de costo se mueve aquí."
+
 #~ msgid "Flight date"
 #~ msgstr "Fecha de vuelo"
 
