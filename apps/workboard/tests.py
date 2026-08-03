@@ -588,6 +588,25 @@ def test_api_v1_task_patch_validates_and_updates(auth_client, board):
 
 
 @pytest.mark.django_db
+def test_api_v1_task_patch_records_task_audit_context(auth_client, board):
+    from apps.core.models import AuditEvent
+
+    board_obj, todo, done = board
+    task = KanbanTask.objects.create(board=board_obj, stage=todo, title="Before")
+    response = auth_client.patch(
+        f"/api/v1/workboard/tasks/{task.pk}/",
+        data='{"title":"After"}',
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+    # set_audit_context runs on the DRF request; the middleware must still see
+    # the task context on the underlying HttpRequest, not a generic patch_success.
+    event = AuditEvent.objects.get(path=f"/api/v1/workboard/tasks/{task.pk}/")
+    assert event.model_label == KanbanTask._meta.label
+    assert event.object_id == str(task.pk)
+
+
+@pytest.mark.django_db
 def test_board_object_access_scopes_api(user, auth_client, board):
     board_obj, todo, _ = board
     other = KanbanBoard.objects.create(name="Restricted")
