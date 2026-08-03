@@ -574,9 +574,13 @@ AssignmentDetail, AssignmentCreate, AssignmentUpdate = (
 
 
 class OperatorAssignmentList(RegistryList):
-    """OPS-1: an operator anchored to a cost center over a period."""
+    """OPS-1 / LV-31: an operator anchored to a cost center over a period, with
+    its own columns (Operator / Cost center / Status / Purpose / Since) instead
+    of the generic Name/Created/Status table."""
 
     model = OperatorAssignment
+    template_name = "registry/operatorassignment_list.html"
+    htmx_template_name = "registry/_operatorassignment_rows.html"
     search_fields = [
         "operator__full_name",
         "operator__employee_id",
@@ -588,9 +592,12 @@ class OperatorAssignmentList(RegistryList):
 
 
 class AircraftAssignmentList(RegistryList):
-    """OPS-1: an aircraft anchored to a cost center over a period."""
+    """OPS-1 / LV-31: an aircraft anchored to a cost center over a period, with
+    its own columns (mirror of the operator-assignment list)."""
 
     model = AircraftAssignment
+    template_name = "registry/aircraftassignment_list.html"
+    htmx_template_name = "registry/_aircraftassignment_rows.html"
     search_fields = ["aircraft__registration", "aircraft__model", "cost_center__code"]
 
     def get_queryset(self):

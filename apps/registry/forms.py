@@ -113,6 +113,32 @@ class AircraftForm(AeroModelForm):
             "current_site": _("Current site"),
         }
 
+    # LV-25: VLOS and parachute were free text that drifted; offer the values
+    # actually in use as a dropdown instead. The options are built in __init__
+    # from the column itself plus a small default set, and the row's own stored
+    # value is always included -- so turning the field into a ChoiceField never
+    # rejects a legacy value on edit (soft normalization, no data migration).
+    VLOS_DEFAULTS = ("VLOS", "BVLOS")
+    PARACHUTE_DEFAULTS = ("SI", "NO")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._make_choice_field("vlos", self.VLOS_DEFAULTS, _("VLOS"))
+        self._make_choice_field("parachute", self.PARACHUTE_DEFAULTS, _("Parachute"))
+
+    def _make_choice_field(self, name, defaults, label):
+        values = set(defaults)
+        for raw in Aircraft.objects.exclude(**{name: ""}).values_list(name, flat=True):
+            if raw and raw.strip():
+                values.add(raw.strip())
+        current = getattr(self.instance, name, "") or ""
+        if current:
+            values.add(current)
+        choices = [("", "—")] + [(value, value) for value in sorted(values)]
+        self.fields[name] = forms.ChoiceField(
+            choices=choices, required=False, label=label
+        )
+
     def clean(self):
         # LV-20: a "site" only means something when the aircraft is on site.
         # The model guards this too, but on the form the raised error made

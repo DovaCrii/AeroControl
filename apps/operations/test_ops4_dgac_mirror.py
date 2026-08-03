@@ -148,7 +148,10 @@ class TestCsvExportIncludesRoster:
 
 class TestCalendarSpansMultipleDays:
     @pytest.mark.django_db
-    def test_json_feed_emits_start_and_end_for_the_full_range(self, db):
+    def test_json_feed_collapses_a_multi_day_permit_to_one_marker(self, db):
+        # LV-31: the feed no longer spans a multi-day permit across every day
+        # (a bar in each cell); it collapses to one marker at the start with the
+        # end carried in the title as "→ hasta DD-MM".
         cc = _cc()
         op = _operator("E1", cc)
         ac = _aircraft("CC-A1", cc)
@@ -178,9 +181,8 @@ class TestCalendarSpansMultipleDays:
         events = response.json()
         assert len(events) == 1
         assert events[0]["start"] == "2026-07-05"
-        # FullCalendar's end is exclusive: a permit valid through the 8th ends
-        # on the 9th so the 8th itself still renders as covered.
-        assert events[0]["end"] == "2026-07-09"
+        assert "end" not in events[0]
+        assert "08-07" in events[0]["title"]
 
     @pytest.mark.django_db
     def test_month_grid_places_the_permit_on_every_day_it_covers(self, db):

@@ -156,6 +156,42 @@ class TestPublicURLs:
             "aircraft-detail", args=[aircraft.pk]
         )
 
+    @pytest.mark.django_db
+    def test_multi_day_permission_collapses_to_one_marker(self, auth_client):
+        """LV-31: a multi-day permit is one marker with '→ hasta DD-MM', not a
+        bar spanning every day (no `end`); a single-day permit has no arrow."""
+        center = CostCenter.objects.create(code="COL", name="Collapse")
+        multi = FlightPermission.objects.create(
+            permission_number="MULTI-1",
+            cost_center=center,
+            purpose="Survey",
+            valid_from=date(2026, 7, 10),
+            valid_until=date(2026, 7, 20),
+            location="Santiago",
+        )
+        single = FlightPermission.objects.create(
+            permission_number="SINGLE-1",
+            cost_center=center,
+            purpose="Survey",
+            valid_from=date(2026, 7, 12),
+            valid_until=date(2026, 7, 12),
+            location="Santiago",
+        )
+
+        response = auth_client.get(
+            reverse("calendar-events"),
+            {"start": "2026-07-01", "end": "2026-08-01", "types": "permission"},
+        )
+
+        assert response.status_code == 200
+        by_id = {item["id"]: item for item in response.json()}
+        multi_event = by_id[f"permission-{multi.pk}"]
+        assert "end" not in multi_event
+        assert "→" in multi_event["title"]
+        assert "20-07" in multi_event["title"]
+        single_event = by_id[f"permission-{single.pk}"]
+        assert "→" not in single_event["title"]
+
     def test_administration_center_explains_operational_configuration(
         self, auth_client
     ):
