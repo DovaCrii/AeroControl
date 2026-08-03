@@ -30,32 +30,36 @@ El batch **LV-29..32** se implementó (parte funcional) en la ventana del
   **Queda pendiente (no tocado):** LV-23 (grid de checkboxes del roster del
   permiso) y el pulido fino que el usuario pida en próximas revisiones.
 
-**DEPLOY PENDIENTE (lo revisa/dispara el usuario):** el batch trae migraciones
-(`registry 0021`, `compliance 0011`) → `git pull` + bloque sudo `migrate` +
-`collectstatic` + restart, más seeds (`seed_document_types`,
-`seed_alert_rules --with-optional`, `load_dgac_vigencias` cuando estén los datos)
-y, opcional, el timer `check_monthly_records` (ver scheduled-operations.md).
+**DEPLOY: HECHO 2026-08-03** (commit `6640f66`): migrate + collectstatic + seeds
++ `load_dgac_vigencias` (44 cargadas) + restart, con el usuario en la sesión SSH.
+Gotcha resuelto: `/etc/aerocontrol.env` es 600 root → cargar con
+`source <(sudo cat /etc/aerocontrol.env)` (no `. …`) para correr como el usuario
+sin romper el dueño de la SQLite. **Opcional pendiente:** agregar los timers
+`check_monthly_records` y `notify_expiring_credentials` (ver scheduled-operations.md).
 Suite completa **618 verde** (2026-08-03). Kanban sigue en standby; T3.4/T4.1
 diferidos.
 
-> Nota: quedó pendiente de despliegue además el batch de **aislamiento por
-> objeto** (`36acc76`, no-op hoy, sin migraciones → `pull` + restart), previo a
-> este batch. Ver "Estado de producción".
+> **DESPLEGADO 2026-08-03** (commit `6640f66`): migrate + collectstatic + seeds +
+> 44 vigencias cargadas + restart, verificado por el usuario. Ver "Estado de
+> producción". Ya no queda deploy pendiente de este batch.
 
 ## Estado de producción (VM `p340`)
-- Prod desplegado hasta el batch grande (documentos en fichas, empresa, LV-20/26,
-  búsqueda, dashboard, F-13, etc.; deploy confirmado por el usuario). **`origin/main`
-  va adelante en `36acc76`** — **pendiente de despliegue, esperando revisión**:
-  aislamiento por objeto (F-03/F-06/F-05, `TenantScopedQuerysetMixin` en todas las
-  fichas/ediciones) — **no-op con un solo tenant, sin migraciones → `pull` +
-  restart**. Suite completa **590 verde** (2026-08-03).
+- **Desplegado el batch LV-29..32 + la pasada de diseño (commit `6640f66`) el
+  2026-08-03.** Migraciones aplicadas (`registry 0021`, `compliance 0011`),
+  `collectstatic` OK (CSS nuevo), seeds corridos (`seed_document_types` = 9 tipos,
+  `seed_alert_rules --with-optional` = 8 reglas), y **`load_dgac_vigencias`
+  cargó 44 vigencias** (28 no coincidentes = registros del SIGO ausentes en
+  AeroControl). El batch de **aislamiento por objeto** (`36acc76`) entró en el
+  mismo pull. Suite completa **618 verde** (2026-08-03).
 - Acceso: Tailscale + **público por Funnel** (`https://p340.tailccd107.ts.net`).
 - **Login endurecido** (django-axes, 5 intentos/15 min).
 - **Datos reales cargados**: 12 centros de costo, 41 operadores, 15 aeronaves,
-  109 habilitaciones. **Scaffolding de cumplimiento sembrado en prod**
-  (`seed_document_types` = 6 tipos, `seed_alert_rules` = 2 reglas esenciales).
-  Faltan **documentos con vencimiento** (decisión de negocio) para que
-  `generate_alerts` produzca alertas; hoy sigue en 0 alertas.
+  109 habilitaciones. **Vigencias DGAC cargadas** (credencial operador + seguro
+  JAC aeronave, 44 fechas del SIGO). **Scaffolding de cumplimiento** ampliado
+  (9 tipos de documento incl. registros operacionales; 8 reglas incl. las 2 de
+  vigencias + cumplimiento mensual). Faltan **documentos con vencimiento**
+  (decisión de negocio) para más alertas; y el timer opcional
+  `check_monthly_records` / `notify_expiring_credentials` (ver scheduled-operations).
 - **Tareas programadas** (systemd timers): `generate_alerts` 06:00,
   `send_alert_digest` 07:00, `backup` 22:00.
 - Runbook de despliegue: [docs/dev/ubuntu-vm-deploy.md](docs/dev/ubuntu-vm-deploy.md).
