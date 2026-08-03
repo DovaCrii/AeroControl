@@ -5,11 +5,11 @@
 > Última actualización: **2026-07-31**.
 
 ## Estado de producción (VM `p340`)
-- Corriendo en **`fe8fbe0`** (recipiente report + fix auditoría DRF + i18n ya
-  live), servicio `active`, `/health/` 200. **`origin/main` va adelante en
-  `be6383f`**: faltan por desplegar el bump **crispy 2.7** y la **búsqueda global
-  cableada** (T5.2/T5.3). Ese deploy **exige `uv sync --frozen`** (crispy cambió
-  una dependencia), no solo pull+restart. Suite completa **567 verde** (2026-08-03).
+- Prod ya con crispy 2.7 + búsqueda global desplegados (deploy confirmado por el
+  usuario). **`origin/main` va adelante en `bdb9403`**: faltan por desplegar
+  **T5.4 (dashboard accionable + vencimientos reales)** y **T5.5 (form de vuelo
+  acotado al permiso)** — solo template/vista/form, deploy = `pull` + restart
+  (sin `uv sync`). Suite completa **570 verde** (2026-08-03).
 - Acceso: Tailscale + **público por Funnel** (`https://p340.tailccd107.ts.net`).
 - **Login endurecido** (django-axes, 5 intentos/15 min).
 - **Datos reales cargados**: 12 centros de costo, 41 operadores, 15 aeronaves,
@@ -58,10 +58,17 @@
   en la lista de aeronaves. Worktrees `eager-hofstadter`/`elegant-ishizaka`/
   `suspicious-boyd` **eliminados**. Quedan `main` y `amazing-bouman` (podable a
   futuro, su valor ya extraído).
-- **Búsqueda global cableada** (`be6383f`, T5.2/T5.3): existía en `/search/`
-  pero era **inalcanzable** (nada la enlazaba) y sus resultados iban a la lista.
-  Ahora hay caja en el navbar y los resultados de CC/aeronave/operador abren la
-  **ficha**. Pendiente menor de T5.2: enlazar importadores en el sidebar.
+- **Cluster UX T5.2–T5.5 (cara al usuario, recomendado por prioridad):**
+  - **T5.2/T5.3** (`be6383f`): búsqueda global — antes **inalcanzable** — ahora
+    con caja en el navbar y resultados que abren la **ficha** (no la lista).
+    Pendiente menor: enlazar importadores en el sidebar.
+  - **T5.4** (`bdb9403`): dashboard — tiles ahora enlazan a sus listas; el panel
+    de vencimientos unifica habilitaciones + **documentos + permisos** (antes
+    solo habilitaciones), cada uno con enlace a su ficha (`upcoming_expirations`).
+  - **T5.5** (`bdb9403`): registrar vuelo desde la ficha del permiso prellena el
+    permiso y **acota piloto/aeronave al roster** del permiso.
+  - **Cluster UX restante (no tomado):** T5.6 (paginación HTMX + búsqueda en
+    vivo), T5.7 (exportar en todas las listas), T5.8 (i18n/accesibilidad).
 - **Dependabot resuelto** (`6b86970`): de 8 PRs, solo 2 vivos aplicados directo
   a `main` — `django-crispy-forms` 2.7 y `gunicorn <27` (suite verde). Los otros
   5 ya estaban en `main` (checkout/setup-uv v7, crispy-bootstrap5 2026.3,
