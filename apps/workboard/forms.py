@@ -31,7 +31,10 @@ class KanbanStageForm(AeroModelForm):
 
     class Meta:
         model = KanbanStage
-        fields = ["board", "name", "order", "color", "status_type"]
+        # `order` is intentionally omitted: column position is a technical field
+        # the user never types -- it is assigned server-side on create (append at
+        # the end) and changed only by drag-and-drop.
+        fields = ["board", "name", "color", "status_type"]
 
 
 class KanbanTaskForm(AeroModelForm):
@@ -41,6 +44,9 @@ class KanbanTaskForm(AeroModelForm):
 
     class Meta:
         model = KanbanTask
+        # `order` is intentionally omitted: it is a technical position the user
+        # never types -- set server-side when a task is added and changed only by
+        # drag-and-drop. Editing a task keeps its existing order.
         fields = [
             "board",
             "stage",
@@ -49,7 +55,6 @@ class KanbanTaskForm(AeroModelForm):
             "assigned_to",
             "due_date",
             "priority",
-            "order",
             "labels",
         ]
 
@@ -86,10 +91,13 @@ class KanbanTaskForm(AeroModelForm):
 class KanbanLabelForm(AeroModelForm):
     class Meta:
         model = KanbanLabel
-        fields = ["board", "name", "color", "order"]
+        # `order` assigned server-side on create (append at the end).
+        fields = ["board", "name", "color"]
 
 
 class KanbanChecklistItemForm(AeroModelForm):
     class Meta:
         model = KanbanChecklistItem
-        fields = ["title", "order"]
+        # `order` is set by the create view (item.order = items.count()), so it
+        # was never actually read from this form.
+        fields = ["title"]

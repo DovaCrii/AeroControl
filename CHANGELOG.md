@@ -57,6 +57,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   familia (Mavic/Matrice/Phantom/…) de un vistazo; las vencidas siguen en rojo.
 
 ### Changed
+- **Los formularios Kanban ya no muestran el campo técnico "Orden"**: la
+  posición de columnas, tarjetas, etiquetas e ítems de checklist se maneja con
+  arrastrar y soltar y se asigna en el servidor (las nuevas se agregan al final),
+  así que el input numérico de orden — que el usuario nunca escribía a mano —
+  sale de los cuatro formularios. (Refactor rescatado de una rama paralela que
+  había quedado sin fusionar.)
 - **El formulario de asignación de operador ya no pide fechas**: lo relevante es
   el centro de costo y el estado, así que la fecha de inicio se autollena con hoy
   y las fechas salen del formulario.

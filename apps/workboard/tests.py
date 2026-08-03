@@ -177,6 +177,54 @@ def test_stage_create_is_available_from_empty_board(auth_client, board):
     assert board_obj.stages.filter(name="Review").exists()
 
 
+def test_order_is_not_a_kanban_form_field():
+    """`order` is a technical position managed by drag-and-drop, not typed."""
+    from apps.workboard.forms import (
+        KanbanChecklistItemForm,
+        KanbanLabelForm,
+        KanbanStageForm,
+        KanbanTaskForm,
+    )
+
+    for form_cls in (
+        KanbanStageForm,
+        KanbanTaskForm,
+        KanbanLabelForm,
+        KanbanChecklistItemForm,
+    ):
+        assert "order" not in form_cls().fields
+
+
+@pytest.mark.django_db
+def test_new_stage_label_and_task_are_appended_at_the_end(auth_client, board):
+    """`order` left the forms; the create views assign it server-side so a new
+    column/label/card lands at the end instead of jumping to the front."""
+    board_obj, todo, _ = board  # the fixture seeds two stages (order 0 and 1)
+
+    stage_resp = auth_client.post(
+        reverse("stage-create") + f"?board={board_obj.pk}",
+        {"board": board_obj.pk, "name": "Review", "color": "#2EC4B6"},
+    )
+    assert stage_resp.status_code == 302
+    assert KanbanStage.objects.get(board=board_obj, name="Review").order == 2
+
+    KanbanLabel.objects.create(board=board_obj, name="Urgent", color="#ff0000", order=0)
+    label_resp = auth_client.post(
+        reverse("label-create"),
+        {"board": board_obj.pk, "name": "Later", "color": "#0000ff"},
+    )
+    assert label_resp.status_code == 302
+    assert KanbanLabel.objects.get(board=board_obj, name="Later").order == 1
+
+    KanbanTask.objects.create(board=board_obj, stage=todo, title="First", order=0)
+    task_resp = auth_client.post(
+        reverse("task-create"),
+        {"board": board_obj.pk, "stage": todo.pk, "title": "Second", "priority": "low"},
+    )
+    assert task_resp.status_code == 302
+    assert KanbanTask.objects.get(board=board_obj, title="Second").order == 1
+
+
 @pytest.mark.django_db
 def test_board_and_task_archives_are_reversible(auth_client, board):
     board_obj, todo, _ = board

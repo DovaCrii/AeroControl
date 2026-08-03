@@ -131,6 +131,13 @@ class LabelCreate(WCreate):
     form_class = KanbanLabelForm
     success_url_name = "label-list"
 
+    def form_valid(self, form):
+        # `order` is no longer a form field; append the new label at the end.
+        form.instance.order = KanbanLabel.objects.filter(
+            board=form.instance.board, is_active=True
+        ).count()
+        return super().form_valid(form)
+
 
 class KanbanTaskListView(ModelViewPermissionRequiredMixin, ListView):
     model = KanbanTask
@@ -493,6 +500,22 @@ for model, form, name in (
     )
 
 
+class TaskCreate(WCreate):
+    """Shadows the generated TaskCreate: `order` left the form (it is a
+    technical position), so the modal create path must append the new card at
+    the end of its stage, the same as the inline add does via max_order."""
+
+    model = KanbanTask
+    form_class = KanbanTaskForm
+    success_url_name = "task-list"
+
+    def form_valid(self, form):
+        form.instance.order = KanbanTask.objects.filter(
+            stage=form.instance.stage, is_active=True
+        ).count()
+        return super().form_valid(form)
+
+
 # ─── Kanban Board Views ─────────────────────────────────────
 
 
@@ -589,6 +612,11 @@ class StageCreate(ModelPermissionRequiredMixin, CreateView):
     def form_valid(self, form):
         if not user_can_edit_board(self.request.user, form.instance.board):
             return HttpResponse(status=403)
+        # `order` is no longer a form field; append the new column at the end so
+        # it does not jump to the front (the model default would be 0).
+        form.instance.order = KanbanStage.objects.filter(
+            board=form.instance.board, is_active=True
+        ).count()
         response = super().form_valid(form)
         set_audit_context(self.request, self.object)
         return response
