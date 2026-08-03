@@ -4,15 +4,28 @@
 > pendiente** es [MASTER_PLAN.md](MASTER_PLAN.md); esto es el resumen de estado.
 > Última actualización: **2026-07-31**.
 
+## PRÓXIMA VENTANA — empezar acá
+El usuario aprobó un plan grande (**LV-29/30/31/32**) para la **próxima ventana**;
+esta se cerró solo con el push + estos docs. Fuente del plan:
+`C:\Users\cmunoz\.claude\plans\temporal-stirring-rivest.md` (y las filas LV-29..32
+en MASTER_PLAN). Resumen: **A** vigencias DGAC como campos (credencial operador +
+seguro JAC aeronave: columna/alerta/calendario/aviso, con `load_dgac_vigencias`
+desde las capturas SIGO); **B** módulo de **registros operacionales** (bitácora/
+checklist/inspección, ligados al CC con fecha) + **cumplimiento mensual**
+(`MonthlyComplianceReview`, comando `check_monthly_records` de fin de mes, revisor
+único = grupo Dirección, informe/panel); **C** pasada ejecutiva (panel,
+asignaciones con columnas reales, chips, badges, calendario, LV-23/25); **D**
+modernización UX/UI (design pass de tokens/tablas). **A y B traen migraciones** →
+ese deploy será pull + `migrate` + restart + seeds. Empezar por A (las columnas)
+tras retomar. Kanban sigue en standby; T3.4/T4.1 diferidos.
+
 ## Estado de producción (VM `p340`)
-- Prod ya con crispy 2.7 + búsqueda global desplegados. **`origin/main` va muy
-  adelante en `0871e86`** — **pendiente de despliegue, esperando revisión del
-  usuario**: T5.4/T5.5/T5.2-importadores, T5.6(a+b) (paginación/columnas HTMX),
-  LV-20 (fix guardar aeronave), LV-27 (documentos en fichas), LV-28 (documentos
-  de la empresa), LV-21/22 (títulos de modal/labels ES), LV-26 (mantenimiento).
-  **Sin migraciones ni deps nuevas → deploy = `pull` + restart** (sin `uv sync`,
-  sin `migrate`). Opcional tras deploy: `seed_alert_rules --with-optional` para
-  la regla "Mantenciones abiertas" (LV-26). Suite completa **587 verde** (2026-08-03).
+- Prod desplegado hasta el batch grande (documentos en fichas, empresa, LV-20/26,
+  búsqueda, dashboard, F-13, etc.; deploy confirmado por el usuario). **`origin/main`
+  va adelante en `36acc76`** — **pendiente de despliegue, esperando revisión**:
+  aislamiento por objeto (F-03/F-06/F-05, `TenantScopedQuerysetMixin` en todas las
+  fichas/ediciones) — **no-op con un solo tenant, sin migraciones → `pull` +
+  restart**. Suite completa **590 verde** (2026-08-03).
 - Acceso: Tailscale + **público por Funnel** (`https://p340.tailccd107.ts.net`).
 - **Login endurecido** (django-axes, 5 intentos/15 min).
 - **Datos reales cargados**: 12 centros de costo, 41 operadores, 15 aeronaves,
