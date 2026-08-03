@@ -362,6 +362,9 @@ class OperatorList(RegistryList):
 
     model = Operator
     template_name = "registry/operator_list.html"
+    # T5.6/F-13: the live-search/pagination partial must carry this list's own
+    # columns, or an HTMX search collapsed them to the generic Name/Created/Status.
+    htmx_template_name = "registry/_operator_rows.html"
     search_fields = ["full_name", "employee_id", "rut", "dgac_credential"]
 
     def get_queryset(self):
@@ -398,6 +401,7 @@ class CostCenterList(RegistryList):
 
     model = CostCenter
     template_name = "registry/costcenter_list.html"
+    htmx_template_name = "registry/_costcenter_rows.html"
     search_fields = ["code", "name", "responsible"]
 
     def get_queryset(self):
@@ -426,6 +430,7 @@ class AircraftList(RegistryList):
 
     model = Aircraft
     template_name = "registry/aircraft_list.html"
+    htmx_template_name = "registry/_aircraft_rows.html"
     search_fields = ["registration", "model", "manufacturer"]
 
     def get_queryset(self):
@@ -494,6 +499,7 @@ class OperatorDetail(RegistryDetail):
 class AssignmentList(RegistryList):
     model = Assignment
     template_name = "registry/assignment_list.html"
+    htmx_template_name = "registry/_assignment_table_body.html"
     search_fields = [
         "operator__full_name",
         "operator__employee_id",
@@ -686,6 +692,7 @@ class QualificationList(RegistryList):
 
     model = Qualification
     template_name = "registry/qualification_list.html"
+    htmx_template_name = "registry/_qualification_rows.html"
     search_fields = [
         "operator__full_name",
         "operator__employee_id",

@@ -1,0 +1,21 @@
+{% load aero_tags i18n %}
+{% for object in objects %}
+<tr>
+  <td><a href="{{ object.pk }}/" class="fw-semibold">{{ object.full_name }}</a></td>
+  <td>{{ object.rut|default:"—" }}</td>
+  <td>{{ object.dgac_credential|default:"—" }}</td>
+  <td>{% if object.cost_center %}{{ object.cost_center }}{% else %}{% translate "Unassigned" %}{% endif %}</td>
+  <td>
+    {% if object.current_quals %}<span class="badge bg-success">{% translate "Current" %}</span>
+    {% elif object.expired_quals %}<span class="badge bg-danger">{% translate "Expired" %}</span>
+    {% else %}<span class="text-muted">—</span>{% endif %}
+  </td>
+  <td class="text-end">
+    <a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">{% translate "View" %}</a>
+    <a href="{{ object.pk }}/edit/" hx-get="{{ object.pk }}/edit/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">{% translate "Edit" %}</a>
+  </td>
+</tr>
+{% empty %}
+<tr><td colspan="99" class="text-center text-muted py-4">{% translate "No records found." %}</td></tr>
+{% endfor %}
+{% if is_htmx %}<div id="pagination-container" hx-swap-oob="true">{% render_pagination page_obj %}</div>{% endif %}

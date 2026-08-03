@@ -83,6 +83,10 @@ class SearchMixin:
         context["is_filtered"] = bool(
             self.request.GET.get("q") or self.request.GET.get("is_active")
         )
+        # Row partials emit the out-of-band pagination update only on an HTMX
+        # response; on a full page it would duplicate the #pagination-container
+        # the list template already renders (and nest a <div> inside <tbody>).
+        context["is_htmx"] = self.request.headers.get("HX-Request") == "true"
         return context
 
     def get_queryset(self):

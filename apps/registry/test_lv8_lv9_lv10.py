@@ -304,6 +304,54 @@ class TestCostCenterFormSimplified:
         assert 'id="pagination-container"' in content
         assert 'hx-swap-oob="true"' in content
 
+    def test_custom_lists_declare_their_own_htmx_row_partial(self):
+        # T5.6(b): without this, a live search returned the generic partial and
+        # each list's own columns collapsed to Name/Created/Status.
+        from apps.registry.views import (
+            AircraftList,
+            AssignmentList,
+            CostCenterList,
+            OperatorList,
+            QualificationList,
+        )
+
+        assert CostCenterList.htmx_template_name == "registry/_costcenter_rows.html"
+        assert OperatorList.htmx_template_name == "registry/_operator_rows.html"
+        assert AircraftList.htmx_template_name == "registry/_aircraft_rows.html"
+        assert QualificationList.htmx_template_name == "registry/_qualification_rows.html"
+        assert (
+            AssignmentList.htmx_template_name
+            == "registry/_assignment_table_body.html"
+        )
+
+    @pytest.mark.django_db
+    def test_operator_htmx_search_keeps_the_custom_columns(self, admin_client):
+        # dgac_credential is only rendered by the operator partial, never by the
+        # generic one, so its presence proves the right partial answered.
+        cc = CostCenter.objects.create(code="CC1", name="One")
+        Operator.objects.create(
+            employee_id="OP-9",
+            full_name="Zed Pilot",
+            dgac_credential="CRED-XYZ",
+            cost_center=cc,
+        )
+        response = admin_client.get(
+            reverse("operator-list"), {"q": "Zed"}, HTTP_HX_REQUEST="true"
+        )
+        assert "CRED-XYZ" in response.content.decode()
+
+    @pytest.mark.django_db
+    def test_full_page_list_has_a_single_pagination_container(self, admin_client):
+        # The out-of-band pagination is HTMX-only; a full page must not render a
+        # second #pagination-container (nested in <tbody>) alongside the real one.
+        cc = CostCenter.objects.create(code="CC1", name="One")
+        for index in range(30):
+            Operator.objects.create(
+                employee_id=f"E{index}", full_name=f"Op {index}", cost_center=cc
+            )
+        content = admin_client.get(reverse("operator-list")).content.decode()
+        assert content.count('id="pagination-container"') == 1
+
 
 # ── LV-14: habilitations list grouped by operator ────────────────────────────
 class TestQualificationListGroupedByOperator:

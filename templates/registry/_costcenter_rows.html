@@ -1,0 +1,18 @@
+{% load aero_tags i18n %}
+{% for object in objects %}
+<tr>
+  <td><a href="{{ object.pk }}/" class="fw-semibold">{{ object.code }}</a></td>
+  <td>{{ object.name }}</td>
+  <td>{{ object.responsible|default:"—" }}</td>
+  <td>{{ object.operator_count }}</td>
+  <td>{{ object.aircraft_count }}</td>
+  <td class="small text-truncate" style="max-width: 16rem;" title="{{ object.notes }}">{{ object.notes|default:"—" }}</td>
+  <td class="text-end">
+    <a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">{% translate "View" %}</a>
+    <a href="{{ object.pk }}/edit/" hx-get="{{ object.pk }}/edit/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">{% translate "Edit" %}</a>
+  </td>
+</tr>
+{% empty %}
+<tr><td colspan="99" class="text-center text-muted py-4">{% translate "No records found." %}</td></tr>
+{% endfor %}
+{% if is_htmx %}<div id="pagination-container" hx-swap-oob="true">{% render_pagination page_obj %}</div>{% endif %}
