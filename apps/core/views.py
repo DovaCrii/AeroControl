@@ -490,24 +490,37 @@ class UnifiedCalendarEventsView(CalendarAccessMixin, View):
 
             def _permission_title(permission):
                 names = [operator.full_name for operator in permission.operators.all()]
-                if not names:
-                    return permission.permission_number
-                label = names[0] if len(names) == 1 else f"{names[0]} +{len(names) - 1}"
-                return f"{permission.permission_number} · {label}"
+                base = permission.permission_number
+                if names:
+                    label = (
+                        names[0]
+                        if len(names) == 1
+                        else f"{names[0]} +{len(names) - 1}"
+                    )
+                    base = f"{permission.permission_number} · {label}"
+                # LV-31: a multi-day permit collapses to one marker at its start
+                # with "→ hasta DD-MM", instead of a bar painted across every day.
+                if permission.valid_until > permission.valid_from:
+                    return f"{base} → {_('until')} {permission.valid_until:%d-%m}"
+                return base
 
-            events.extend(
-                {
+            def _permission_event(permission):
+                # Single-day: a point. Multi-day: still a point (collapsed), so no
+                # `end` -- the title carries the range instead of a spanning bar.
+                event = {
                     "id": f"permission-{permission.pk}",
                     "type": "permission",
                     "title": _permission_title(permission),
-                    "start": permission.valid_from.isoformat(),
-                    "end": (permission.valid_until + timedelta(days=1)).isoformat(),
+                    # Keep the marker inside the requested window when the permit
+                    # started earlier, so a still-valid long permit stays visible.
+                    "start": max(permission.valid_from, start).isoformat(),
                     "allDay": True,
                     "color": self.EVENT_COLORS["permission"],
                     "url": reverse("permission-detail", args=[permission.pk]),
                 }
-                for permission in permissions
-            )
+                return event
+
+            events.extend(_permission_event(permission) for permission in permissions)
 
         if "flight" in selected_types:
             records = FlightRecord.objects.filter(

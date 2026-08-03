@@ -9,6 +9,14 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 ## [Unreleased]
 
 ### Added
+- **Listas de asignaciones con columnas reales + calendario más limpio + VLOS/
+  paracaídas como lista (LV-31/LV-25).** Las **asignaciones de operador y de
+  aeronave** dejan la tabla genérica y muestran columnas propias (Operador/
+  Aeronave, Centro de costo, Estado, Propósito, Desde). En el **calendario**, un
+  permiso de varios días ya no se pinta en cada casilla: aparece como un solo
+  marcador en su inicio con "→ hasta DD-MM". Y en la ficha de aeronave, **VLOS**
+  y **Paracaídas** pasan de texto libre a una **lista** con los valores en uso
+  (normalización suave: editar una fila antigua nunca rechaza su valor).
 - **Registros operacionales por vuelo + cierre de cumplimiento mensual (LV-30).**
   Nueva sección **"Registros operacionales"** (*Cumplimiento*) para la bitácora
   (REG-015), el checklist RPA (LVE-003) y la inspección de dron (LVE-002):

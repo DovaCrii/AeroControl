@@ -464,6 +464,101 @@ def _write_csv(rows):
         writer.writerows(rows)
     return path
 
+
+# ── LV-31: per-resource assignment lists with real columns ────────────────────
+
+
+@pytest.mark.django_db
+def test_operator_assignment_list_shows_real_columns(client, admin_user, registry_data):
+    from apps.registry.models import OperatorAssignment
+
+    _tenant, center, operator, _aircraft = registry_data
+    OperatorAssignment.objects.create(
+        operator=operator,
+        cost_center=center,
+        start_date=date(2026, 5, 1),
+        status="active",
+        purpose="Survey rotation",
+    )
+    client.force_login(admin_user)
+
+    response = client.get(reverse("operatorassignment-list"))
+
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert "Pilot One" in content
+    assert center.code in content
+    assert "Survey rotation" in content
+    # The real-column template, not the generic Name/Created/Status one.
+    assert "registry/operatorassignment_list.html" in {
+        t.name for t in response.templates
+    }
+
+
+@pytest.mark.django_db
+def test_aircraft_assignment_list_shows_real_columns(client, admin_user, registry_data):
+    from apps.registry.models import AircraftAssignment
+
+    _tenant, center, _operator, aircraft = registry_data
+    AircraftAssignment.objects.create(
+        aircraft=aircraft,
+        cost_center=center,
+        start_date=date(2026, 5, 1),
+        status="active",
+        purpose="Deployed",
+    )
+    client.force_login(admin_user)
+
+    response = client.get(reverse("aircraftassignment-list"))
+
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert "RPA-1" in content
+    assert "Deployed" in content
+
+
+# ── LV-25: VLOS / parachute as data-driven choices with soft normalization ────
+
+
+@pytest.mark.django_db
+def test_aircraft_form_offers_vlos_parachute_choices(registry_data):
+    from apps.registry.forms import AircraftForm
+
+    form = AircraftForm()
+    vlos_values = [value for value, _label in form.fields["vlos"].choices]
+    assert "VLOS" in vlos_values
+    parachute_values = [value for value, _label in form.fields["parachute"].choices]
+    assert "NO" in parachute_values
+
+
+@pytest.mark.django_db
+def test_aircraft_form_keeps_legacy_free_text_value(registry_data):
+    """Editing a row whose stored value predates the choices must not reject it."""
+    from apps.registry.forms import AircraftForm
+
+    _tenant, _center, _operator, aircraft = registry_data
+    aircraft.vlos = "legacy-freeform"
+    aircraft.save(update_fields=["vlos"])
+
+    form = AircraftForm(instance=aircraft)
+    assert "legacy-freeform" in [v for v, _ in form.fields["vlos"].choices]
+
+    bound = AircraftForm(
+        instance=aircraft,
+        data={
+            "registration": aircraft.registration,
+            "type": aircraft.type,
+            "model": aircraft.model,
+            "manufacturer": aircraft.manufacturer,
+            "vlos": "legacy-freeform",
+            "parachute": "",
+            "cost_center": aircraft.cost_center_id,
+            "status": "active",
+            "current_location": "headquarters",
+        },
+    )
+    assert bound.is_valid(), bound.errors
+
     @pytest.mark.django_db
     def test_notification_email_ignores_archived_operator(self, db):
         center, operator = self._world(db)
