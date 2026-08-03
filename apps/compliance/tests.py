@@ -290,6 +290,55 @@ def test_seed_alert_rules_with_optional_adds_qualification_and_maintenance():
 
 
 @pytest.mark.django_db
+def test_check_digest_recipients_classifies_reachable_and_missing():
+    """The readiness report mirrors CostCenter.notification_email and explains
+    why a cost center has no reachable digest recipient."""
+    from apps.compliance.management.commands.check_digest_recipients import (
+        recipient_status,
+    )
+    from apps.registry.models import Operator
+
+    cc_operator = CostCenter.objects.create(code="CC1", name="Has operator")
+    operator = Operator.objects.create(
+        employee_id="E1", full_name="Ana", email="ana@x.cl", cost_center=cc_operator
+    )
+    cc_operator.responsible_operator = operator
+    cc_operator.save()
+
+    cc_contact = CostCenter.objects.create(
+        code="CC2", name="Has contact", responsible_contact_email="c@x.cl"
+    )
+    cc_none = CostCenter.objects.create(code="CC3", name="Nobody")
+    cc_no_email = CostCenter.objects.create(code="CC4", name="Operator without email")
+    silent = Operator.objects.create(
+        employee_id="E2", full_name="Beto", email="", cost_center=cc_no_email
+    )
+    cc_no_email.responsible_operator = silent
+    cc_no_email.save()
+
+    assert recipient_status(cc_operator)[0] is True
+    assert "operator" in recipient_status(cc_operator)[2]
+    assert recipient_status(cc_contact)[0] is True
+    assert recipient_status(cc_none)[0] is False
+    assert recipient_status(cc_no_email)[0] is False
+    assert "no email" in recipient_status(cc_no_email)[2]
+
+
+@pytest.mark.django_db
+def test_check_digest_recipients_command_runs_and_summarises():
+    from io import StringIO
+
+    from django.core.management import call_command
+
+    CostCenter.objects.create(code="CC1", name="X")
+    out = StringIO()
+    call_command("check_digest_recipients", stdout=out)
+    text = out.getvalue()
+    assert "cost centers" in text
+    assert "missing a recipient" in text
+
+
+@pytest.mark.django_db
 def test_alert_rule_cannot_be_deleted_while_it_has_alerts():
     cost_center = CostCenter.objects.create(code="OPS", name="Operations")
     aircraft = Aircraft.objects.create(
