@@ -18,12 +18,13 @@ from .models import (
 class CostCenterForm(AeroModelForm):
     class Meta:
         model = CostCenter
-        # LV-16: "Nombre" dropped from the form (code + contract administrator
-        # are what matters). The model field stays optional; existing names are
-        # preserved because a ModelForm never touches fields it does not list.
-        # "Notas" added at the end (the notes field already lives on BaseModel).
+        # LV-16 dropped "Nombre" from the form; LV-19 brought it back as an
+        # *optional* field: names shown in the list (e.g. "Casa Matriz",
+        # "Levantamientos digital") were otherwise frozen -- there was no way to
+        # set or fix a cost center's name without the Django admin.
         fields = [
             "code",
+            "name",
             "responsible",
             "responsible_operator",
             "responsible_contact_name",
@@ -32,6 +33,7 @@ class CostCenterForm(AeroModelForm):
         ]
         labels = {
             "code": _("Code"),
+            "name": _("Name"),
             "responsible": _("Contract administrator name"),
             "responsible_operator": _("Responsible operator"),
             "responsible_contact_name": _("External contact name"),
@@ -39,6 +41,7 @@ class CostCenterForm(AeroModelForm):
             "notes": _("Notes"),
         }
         help_texts = {
+            "name": _("Optional descriptive name (e.g. Casa Matriz)."),
             "responsible_operator": _(
                 "Recipient of expiry digests. Use when the responsible person "
                 "is in the operator roster."
