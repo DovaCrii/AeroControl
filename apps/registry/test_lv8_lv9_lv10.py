@@ -288,6 +288,22 @@ class TestCostCenterFormSimplified:
             response = admin_client.get(reverse(f"{name}-list"))
             assert reverse(f"{name}-import") in response.content.decode()
 
+    @pytest.mark.django_db
+    def test_htmx_list_response_carries_pagination_out_of_band(self, admin_client):
+        # F-13: the live-search/pagination partial updates the pagination
+        # controls out-of-band, so they do not go stale against the new rows.
+        cc = CostCenter.objects.create(code="CC1", name="One")
+        for index in range(30):  # > paginate_by (25), so there is a second page
+            Operator.objects.create(
+                employee_id=f"E{index}", full_name=f"Op {index}", cost_center=cc
+            )
+        response = admin_client.get(
+            reverse("operator-list"), HTTP_HX_REQUEST="true"
+        )
+        content = response.content.decode()
+        assert 'id="pagination-container"' in content
+        assert 'hx-swap-oob="true"' in content
+
 
 # ── LV-14: habilitations list grouped by operator ────────────────────────────
 class TestQualificationListGroupedByOperator:
