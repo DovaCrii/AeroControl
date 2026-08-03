@@ -24,48 +24,36 @@
   <noscript><div class="col-auto"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div></noscript>
 </form>
 
-{# ── Summary cards ── #}
-<div class="row g-2 mb-3">
-  <div class="col-md-3 col-sm-6">
-    <a class="summary-card text-decoration-none d-block" href="{% url 'aircraft-list' %}">
-      <small>{% translate "Active Aircraft" %}</small>
-      <strong>{{ aircraft_count }}</strong>
-    </a>
-  </div>
-  <div class="col-md-3 col-sm-6">
-    <a class="summary-card text-decoration-none d-block" href="{% url 'operator-list' %}">
-      <small>{% translate "Active Operators" %}</small>
-      <strong>{{ operator_count }}</strong>
-    </a>
-  </div>
-  <div class="col-md-3 col-sm-6">
-    <a class="summary-card text-decoration-none d-block" href="{% url 'alert-list' %}">
-      <small>{% translate "Pending Alerts" %}</small>
-      <strong>{{ alert_count }}</strong>
-    </a>
-  </div>
-  <div class="col-md-3 col-sm-6">
-    <div class="summary-card">
-      <small>{% translate "Expiring in 30 days" %}</small>
-      <strong>{{ expiring_count }}</strong>
-    </div>
+{# ── Summary cards (LV-D9: grilla pareja que reparte las tarjetas por igual) ── #}
+<div class="kpi-grid mb-3">
+  <a class="summary-card text-decoration-none" href="{% url 'aircraft-list' %}">
+    <small>{% translate "Active Aircraft" %}</small>
+    <strong>{{ aircraft_count }}</strong>
+  </a>
+  <a class="summary-card text-decoration-none" href="{% url 'operator-list' %}">
+    <small>{% translate "Active Operators" %}</small>
+    <strong>{{ operator_count }}</strong>
+  </a>
+  <a class="summary-card text-decoration-none" href="{% url 'alert-list' %}">
+    <small>{% translate "Pending Alerts" %}</small>
+    <strong>{{ alert_count }}</strong>
+  </a>
+  <div class="summary-card">
+    <small>{% translate "Expiring in 30 days" %}</small>
+    <strong>{{ expiring_count }}</strong>
   </div>
   {% if incomplete_maintenance_count %}
-  <div class="col-md-3 col-sm-6">
-    <a class="summary-card summary-card-warning text-decoration-none d-block" href="{% url 'maintenance-list' %}">
-      <small>{% translate "Maintenance to define" %}</small>
-      <strong>{{ incomplete_maintenance_count }}</strong>
-    </a>
-  </div>
+  <a class="summary-card summary-card-warning text-decoration-none" href="{% url 'maintenance-list' %}">
+    <small>{% translate "Maintenance to define" %}</small>
+    <strong>{{ incomplete_maintenance_count }}</strong>
+  </a>
   {% endif %}
   {% if monthly_records %}
-  <div class="col-md-3 col-sm-6">
-    <a class="summary-card{% if monthly_records.pending %} summary-card-warning{% endif %} text-decoration-none d-block" href="{% url 'monthly-review' %}">
-      <small>{% translate "Monthly records" %} ({{ monthly_records.period }})</small>
-      <strong>{{ monthly_records.compliant }}/{{ monthly_records.total }}</strong>
-      <small class="text-muted">{% translate "cost centers up to date" %}</small>
-    </a>
-  </div>
+  <a class="summary-card{% if monthly_records.pending %} summary-card-warning{% endif %} text-decoration-none" href="{% url 'monthly-review' %}">
+    <small>{% translate "Monthly records" %} ({{ monthly_records.period }})</small>
+    <strong>{{ monthly_records.compliant }}/{{ monthly_records.total }}</strong>
+    <small class="text-muted">{% translate "cost centers up to date" %}</small>
+  </a>
   {% endif %}
 </div>
 
