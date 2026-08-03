@@ -84,7 +84,20 @@ class RegistryList(
         return queryset
 
 
-class RegistryDetail(ModelViewPermissionRequiredMixin, DetailView):
+class TenantScopedQuerysetMixin:
+    """Scope a detail/edit view's object lookup to the user's tenant (F-03/F-06),
+    so another tenant's record cannot be opened or edited by its URL. A no-op for
+    models without a direct `tenant` FK and for superusers."""
+
+    def get_queryset(self):
+        from apps.core.tenancy import scope_queryset_to_tenant
+
+        return scope_queryset_to_tenant(super().get_queryset(), self.request.user)
+
+
+class RegistryDetail(
+    TenantScopedQuerysetMixin, ModelViewPermissionRequiredMixin, DetailView
+):
     template_name = "generic/detail.html"
 
     def get_context_data(self, **kwargs):
@@ -133,7 +146,9 @@ class RegistryCreate(HtmxFormMixin, ModelPermissionRequiredMixin, CreateView):
         return context
 
 
-class RegistryUpdate(HtmxFormMixin, ModelPermissionRequiredMixin, UpdateView):
+class RegistryUpdate(
+    TenantScopedQuerysetMixin, HtmxFormMixin, ModelPermissionRequiredMixin, UpdateView
+):
     permission_action = "change"
     template_name = "generic/form.html"
 
@@ -160,7 +175,13 @@ class RegistryArchive(ModelPermissionRequiredMixin, View):
     permission_action = "delete"
 
     def post(self, request, pk):
-        obj = get_object_or_404(self.model, pk=pk, is_active=True)
+        from apps.core.tenancy import scope_queryset_to_tenant
+
+        obj = get_object_or_404(
+            scope_queryset_to_tenant(self.model._default_manager.all(), request.user),
+            pk=pk,
+            is_active=True,
+        )
         obj.is_active = False
         obj.save(update_fields=["is_active", "updated_at"])
         set_audit_context(request, obj, action="archived")
@@ -179,7 +200,13 @@ class RegistryRestore(ModelPermissionRequiredMixin, View):
     permission_action = "change"
 
     def post(self, request, pk):
-        obj = get_object_or_404(self.model, pk=pk, is_active=False)
+        from apps.core.tenancy import scope_queryset_to_tenant
+
+        obj = get_object_or_404(
+            scope_queryset_to_tenant(self.model._default_manager.all(), request.user),
+            pk=pk,
+            is_active=False,
+        )
         obj.is_active = True
         obj.save(update_fields=["is_active", "updated_at"])
         set_audit_context(request, obj, action="restored")
