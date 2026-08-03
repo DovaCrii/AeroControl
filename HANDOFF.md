@@ -6,9 +6,10 @@
 
 ## Estado de producción (VM `p340`)
 - Corriendo en **`da6d326`** (refactor Kanban ya live), servicio `active`,
-  `/health/` 200. **`origin/main` va adelante en `a27391b`**: falta un `pull` +
-  restart para el reporte `check_digest_recipients`, el **fix de auditoría DRF**
-  y el de i18n "Unassigned". Suite completa **566 verde** (2026-08-03).
+  `/health/` 200. **`origin/main` va adelante en `6b86970`**: falta desplegar el
+  reporte `check_digest_recipients`, el fix de auditoría DRF, el i18n "Unassigned"
+  y el bump crispy 2.7. **Ese deploy exige `uv sync --frozen`** (cambió una
+  dependencia), no solo pull+restart. Suite completa **566 verde** (2026-08-03).
 - Acceso: Tailscale + **público por Funnel** (`https://p340.tailccd107.ts.net`).
 - **Login endurecido** (django-axes, 5 intentos/15 min).
 - **Datos reales cargados**: 12 centros de costo, 41 operadores, 15 aeronaves,
@@ -57,8 +58,13 @@
   en la lista de aeronaves. Worktrees `eager-hofstadter`/`elegant-ishizaka`/
   `suspicious-boyd` **eliminados**. Quedan `main` y `amazing-bouman` (podable a
   futuro, su valor ya extraído).
-- **Higiene pendiente**: 11 PRs `origin/dependabot/*` y 3 `origin/codex/*` sin
-  atender (se ven/mergean desde GitHub).
+- **Dependabot resuelto** (`6b86970`): de 8 PRs, solo 2 vivos aplicados directo
+  a `main` — `django-crispy-forms` 2.7 y `gunicorn <27` (suite verde). Los otros
+  5 ya estaban en `main` (checkout/setup-uv v7, crispy-bootstrap5 2026.3,
+  crispy-forms 2.6, ruff base vieja) → cerrar en GitHub. **`ruff` NO subido a
+  0.16.0**: cambia el set de reglas por defecto (+224 issues de orden de
+  imports); adoptarlo es un cleanup aparte (`ruff check --fix`). Quedan 3 PRs
+  `origin/codex/*` sin atender (GitHub). **El deploy de crispy exige `uv sync`.**
 - **Pendiente para el usuario (negocio, no código)**: crear **CC110 Casa Matriz**
   en prod (desde *Centros de costo → + Nuevo*, con el campo Nombre; ya está en
   local), asignar destinatarios por CC, y **cargar documentos con vencimiento**.
