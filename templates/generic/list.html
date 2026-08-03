@@ -5,6 +5,7 @@
 <div class="page-header">
   <h1 class="h3">{% if title %}{{ title }}{% else %}{% translate "Records" %}{% endif %}</h1>
   <div class="d-flex gap-2">
+    {% block list_actions %}{% endblock %}
     <a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>
     <a class="btn btn-primary" href="new/" hx-get="new/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal">+ {% translate "New" %}</a>
   </div>
