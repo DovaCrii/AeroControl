@@ -17,7 +17,7 @@
   <td><a href="{{ object.pk }}/" class="fw-semibold">{{ object.registration }}</a></td>
   <td><span class="table-primary-value">{{ object.model|default:"—" }}</span></td>
   <td>{{ object.manufacturer|default:"—" }}</td>
-  <td>{{ object.cost_center|default:"Sin asignar" }}</td>
+  <td>{% if object.cost_center %}{{ object.cost_center }}{% else %}{% translate "Unassigned" %}{% endif %}</td>
   <td>{% if object.status == "active" %}<span class="badge bg-success">{% translate "Active" %}</span>{% elif object.status == "maintenance" %}<span class="badge bg-warning text-dark">{% translate "Maintenance" %}</span>{% else %}<span class="badge bg-secondary">{% translate "Retired" %}</span>{% endif %}</td>
   <td>
     {% if object.current_location == "headquarters" %}<span class="badge bg-secondary">{% translate "Headquarters" %}</span>

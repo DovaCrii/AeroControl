@@ -3208,6 +3208,10 @@ msgstr ""
 "Selecciona uno o más. Cada uno se asigna al centro de costo de arriba; un "
 "operador ya asignado en otro centro de costo se mueve aquí."
 
+#: .\templates\registry\aircraft_list.html:20
+msgid "Unassigned"
+msgstr "Sin asignar"
+
 #~ msgid "Flight date"
 #~ msgstr "Fecha de vuelo"
 
