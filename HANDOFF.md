@@ -5,9 +5,10 @@
 > Última actualización: **2026-07-31**.
 
 ## Estado de producción (VM `p340`)
-- Corriendo en **`71f9121`**, servicio `active`, `/health/` 200. **`origin/main`
-  va adelante en `05b34f2`** (refactor Kanban: quitar campo "Orden" de los forms;
-  falta **un `pull` + restart** para dejarlo live). Suite completa **563 verde**.
+- Corriendo en **`da6d326`** (refactor Kanban ya live), servicio `active`,
+  `/health/` 200. **`origin/main` va adelante en `a27391b`**: falta un `pull` +
+  restart para el reporte `check_digest_recipients`, el **fix de auditoría DRF**
+  y el de i18n "Unassigned". Suite completa **566 verde** (2026-08-03).
 - Acceso: Tailscale + **público por Funnel** (`https://p340.tailccd107.ts.net`).
 - **Login endurecido** (django-axes, 5 intentos/15 min).
 - **Datos reales cargados**: 12 centros de costo, 41 operadores, 15 aeronaves,
@@ -42,18 +43,25 @@
 - **i18n + CHANGELOG** (`0d4992a`, `71f9121`): 3 strings ES nuevos al catálogo
   (los introdujeron LV-17/18/19 y el guard `test_translations` los cazó) +
   CHANGELOG `[Unreleased]` al día. **Todo desplegado; suite 561 verde.**
-- **Pendiente para el usuario (negocio, no código)**: crear **CC110 Casa Matriz**
-  en prod (ahora desde *Centros de costo → + Nuevo*, con el campo Nombre; ya está
-  en local) y **cargar documentos con vencimiento** para que suenen las alertas.
 - **Refactor Kanban rescatado** (`05b34f2`): el campo técnico "Orden" sale de los
-  4 formularios Kanban (se asigna server-side, append al final). Era el único
-  valor único de la rama varada `amazing-bouman` (el resto de sus commits ya
-  estaba en `main`); reaplicado limpio en vez de mergear la rama (61 commits
+  4 formularios Kanban (se asigna server-side, append al final). Reaplicado
+  limpio desde la rama varada `amazing-bouman` en vez de mergearla (61 commits
   atrás, migraciones en conflicto).
-- **Higiene abierta (TL.6, requiere decisión)**: con lo anterior, `amazing-bouman`
-  y los 3 worktrees ya fusionados quedan **podables** (borrar worktrees/ramas es
-  destructivo y gestionado por el harness → pedir OK antes). Además 11 PRs
-  `origin/dependabot/*` y 3 `origin/codex/*` sin atender.
+- **Negocio — reporte de destinatarios** (`630f870`): comando
+  `check_digest_recipients` (read-only) lista cada CC como OK/MISSING para el
+  digest. En local, 11/12 sin destinatario. Falta que el usuario asigne
+  responsable/contacto por CC y cargue documentos con vencimiento (datos).
+- **Higiene TL.6 hecha (rescate + poda)** (`a27391b`): al podar los 3 worktrees
+  fusionados se hallaron 2 fixes sin commitear → **rescatados a `main`**: bug de
+  auditoría DRF (`set_audit_context` unwrap `_request` + test) e i18n "Unassigned"
+  en la lista de aeronaves. Worktrees `eager-hofstadter`/`elegant-ishizaka`/
+  `suspicious-boyd` **eliminados**. Quedan `main` y `amazing-bouman` (podable a
+  futuro, su valor ya extraído).
+- **Higiene pendiente**: 11 PRs `origin/dependabot/*` y 3 `origin/codex/*` sin
+  atender (se ven/mergean desde GitHub).
+- **Pendiente para el usuario (negocio, no código)**: crear **CC110 Casa Matriz**
+  en prod (desde *Centros de costo → + Nuevo*, con el campo Nombre; ya está en
+  local), asignar destinatarios por CC, y **cargar documentos con vencimiento**.
 
 ## Cerrado esta sesión (2026-07-31)
 - **Puesta en producción + seguridad**: axes, Funnel, systemd timers, fix SRI de
