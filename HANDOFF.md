@@ -5,9 +5,9 @@
 > Última actualización: **2026-07-31**.
 
 ## Estado de producción (VM `p340`)
-- Corriendo en **`71f9121`** = `origin/main`, servicio `active`, `/health/` 200.
-  Todo lo de esta ventana (cumplimiento, LV-15/17/18/19, i18n) está desplegado.
-  Suite completa **561 verde** (2026-08-03).
+- Corriendo en **`71f9121`**, servicio `active`, `/health/` 200. **`origin/main`
+  va adelante en `05b34f2`** (refactor Kanban: quitar campo "Orden" de los forms;
+  falta **un `pull` + restart** para dejarlo live). Suite completa **563 verde**.
 - Acceso: Tailscale + **público por Funnel** (`https://p340.tailccd107.ts.net`).
 - **Login endurecido** (django-axes, 5 intentos/15 min).
 - **Datos reales cargados**: 12 centros de costo, 41 operadores, 15 aeronaves,
@@ -45,9 +45,15 @@
 - **Pendiente para el usuario (negocio, no código)**: crear **CC110 Casa Matriz**
   en prod (ahora desde *Centros de costo → + Nuevo*, con el campo Nombre; ya está
   en local) y **cargar documentos con vencimiento** para que suenen las alertas.
-- **Higiene abierta (TL.6, requiere decisión)**: worktree `claude/amazing-bouman-1b3d09`
-  tiene un refactor de Kanban **sin fusionar** (drop del campo *order*); 11 PRs
-  `origin/dependabot/*` y 3 `origin/codex/*` sin atender. No podar a ciegas.
+- **Refactor Kanban rescatado** (`05b34f2`): el campo técnico "Orden" sale de los
+  4 formularios Kanban (se asigna server-side, append al final). Era el único
+  valor único de la rama varada `amazing-bouman` (el resto de sus commits ya
+  estaba en `main`); reaplicado limpio en vez de mergear la rama (61 commits
+  atrás, migraciones en conflicto).
+- **Higiene abierta (TL.6, requiere decisión)**: con lo anterior, `amazing-bouman`
+  y los 3 worktrees ya fusionados quedan **podables** (borrar worktrees/ramas es
+  destructivo y gestionado por el harness → pedir OK antes). Además 11 PRs
+  `origin/dependabot/*` y 3 `origin/codex/*` sin atender.
 
 ## Cerrado esta sesión (2026-07-31)
 - **Puesta en producción + seguridad**: axes, Funnel, systemd timers, fix SRI de
