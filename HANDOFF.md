@@ -20,11 +20,15 @@ El batch **LV-29..32** se implementó (parte funcional) en la ventana del
 - **C · Pasada ejecutiva — parte FUNCIONAL (LV-31/LV-25)** ✅ commit `cd042e3`.
   Columnas reales en asignaciones operador/aeronave, colapso de permisos
   multi-día en el calendario, VLOS/paracaídas como lista (LV-25).
-- **C · resto ESTÉTICO + D · modernización UX/UI (LV-24, chips, LV-23, LV-32)**
-  ⬜ **diferido a revisión con capturas del usuario** (decisión confirmada
-  2026-08-03: no adivinar estética a ciegas; el propio plan D pide un "commit de
-  propuesta" para evaluar con capturas). Es la pasada de tokens `--ac-*`/tablas/
-  paleta/panel; se hace con el usuario mirando la app desplegada.
+- **C · resto ESTÉTICO + D · modernización UX/UI (LV-24/LV-32 = LV-D1..D9)**
+  ✅ **hecho en una pasada de diseño EN VIVO con el usuario** (2026-08-03, sobre
+  el demo `:8011` con datos sembrados). Commits `8b51bc2` (pastillas legibles
+  oscuro/claro, contraste botones/cabeceras, panel reordenado, buscador,
+  calendario, Documentos fuera del menú, **+ fix del `.mo`**), `42720f6` y
+  `a585b23` (columnas de listas compactas, una acción/fila, CC=código), `e1cf5a7`
+  (grilla pareja de KPIs, pastillas menos opacas). Suite/guardias verdes.
+  **Queda pendiente (no tocado):** LV-23 (grid de checkboxes del roster del
+  permiso) y el pulido fino que el usuario pida en próximas revisiones.
 
 **DEPLOY PENDIENTE (lo revisa/dispara el usuario):** el batch trae migraciones
 (`registry 0021`, `compliance 0011`) → `git pull` + bloque sudo `migrate` +
