@@ -6,10 +6,10 @@
 
 ## Estado de producción (VM `p340`)
 - Prod ya con crispy 2.7 + búsqueda global desplegados (deploy confirmado por el
-  usuario). **`origin/main` va adelante en `bdb9403`**: faltan por desplegar
-  **T5.4 (dashboard accionable + vencimientos reales)** y **T5.5 (form de vuelo
-  acotado al permiso)** — solo template/vista/form, deploy = `pull` + restart
-  (sin `uv sync`). Suite completa **570 verde** (2026-08-03).
+  usuario). **`origin/main` va adelante en `1125d88`**: faltan por desplegar
+  **T5.4** (dashboard), **T5.5** (form de vuelo) y **T5.2-importadores** (botón
+  Importar en listas) — solo template/vista/form, deploy = `pull` + restart
+  (sin `uv sync`). Suite completa **571 verde** (2026-08-03).
 - Acceso: Tailscale + **público por Funnel** (`https://p340.tailccd107.ts.net`).
 - **Login endurecido** (django-axes, 5 intentos/15 min).
 - **Datos reales cargados**: 12 centros de costo, 41 operadores, 15 aeronaves,
@@ -59,9 +59,10 @@
   `suspicious-boyd` **eliminados**. Quedan `main` y `amazing-bouman` (podable a
   futuro, su valor ya extraído).
 - **Cluster UX T5.2–T5.5 (cara al usuario, recomendado por prioridad):**
-  - **T5.2/T5.3** (`be6383f`): búsqueda global — antes **inalcanzable** — ahora
-    con caja en el navbar y resultados que abren la **ficha** (no la lista).
-    Pendiente menor: enlazar importadores en el sidebar.
+  - **T5.2/T5.3** (`be6383f` + `1125d88`): búsqueda global — antes
+    **inalcanzable** — ahora con caja en el navbar y resultados que abren la
+    **ficha** (no la lista). Botón **"Importar"** en las listas de
+    CC/aeronaves/operadores (bloque `list_actions` en `generic/list.html`).
   - **T5.4** (`bdb9403`): dashboard — tiles ahora enlazan a sus listas; el panel
     de vencimientos unifica habilitaciones + **documentos + permisos** (antes
     solo habilitaciones), cada uno con enlace a su ficha (`upcoming_expirations`).
