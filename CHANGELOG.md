@@ -20,7 +20,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   etiquetas y pastillas (chips de habilitaciones, tipos de entidad, estados) se
   leen ahora como pastillas en tema **oscuro y claro** —contorno, cuerpo y más
   peso de fuente— en lugar de fundirse con el fondo. Botones y cabeceras de
-  tabla ganan contraste en oscuro y las filas quedan parejas. El **panel** se
+  tabla ganan contraste en oscuro y las filas quedan parejas. En **Aeronaves** se
+  fusionó *Fabricante* dentro de *Modelo*, el centro de costo muestra su código
+  (nombre en tooltip) y se compactó la columna de seguro, para que la tabla
+  quepa sin scroll. El **panel** se
   reordenó: KPIs con el **número protagonista**, la activación de cumplimiento
   pasó a una **franja compacta con estados**, los vencimientos suben arriba y
   los gráficos sin datos se ocultan (sin recuadros vacíos ni el duplicado
