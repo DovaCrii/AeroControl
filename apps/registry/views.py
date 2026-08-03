@@ -468,6 +468,18 @@ class AircraftDetail(RegistryDetail):
         else:
             context["movements"] = None
         context.update(attached_documents_context(self.request.user, self.object))
+        # LV-26: open maintenance for this aircraft, so the detail shows "this
+        # M300 is due for / in maintenance" until it is resolved.
+        if self.request.user.has_perm("maintenance.view_maintenancerecord"):
+            from apps.maintenance.models import MaintenanceRecord
+
+            context["open_maintenance"] = MaintenanceRecord.objects.filter(
+                aircraft=self.object,
+                is_active=True,
+                status__in=["pending", "in_progress"],
+            ).order_by("scheduled_date")
+        else:
+            context["open_maintenance"] = None
         return context
 
 

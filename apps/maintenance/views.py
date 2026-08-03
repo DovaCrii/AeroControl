@@ -74,6 +74,14 @@ class MaintenanceRecordCreate(MCreate):
     model = MaintenanceRecord
     form_class = MaintenanceRecordForm
 
+    def get_initial(self):
+        # LV-26: "Send to maintenance" from an aircraft's detail prefills it.
+        initial = super().get_initial()
+        aircraft = self.request.GET.get("aircraft")
+        if aircraft:
+            initial["aircraft"] = aircraft
+        return initial
+
 
 class MaintenanceRecordDetail(ModelViewPermissionRequiredMixin, DetailView):
     model = MaintenanceRecord
@@ -141,6 +149,11 @@ class MaintenanceComplete(StatusTransitionView):
                     "updated_at",
                 ]
             )
+            # LV-26: completing the maintenance closes its open alert, so the
+            # "aircraft needs maintenance" warning does not linger once resolved.
+            from apps.compliance.alerts import resolve_open_alerts_for
+
+            resolve_open_alerts_for(completed)
         messages.success(request, self.success_message)
         return redirect(record)
 

@@ -25,6 +25,9 @@ ESSENTIAL_RULES = [
 OPTIONAL_RULES = [
     ("Habilitaciones por vencer", "registry.qualification", "expiry_date", 30),
     ("Mantenimiento programado", "maintenance.maintenancerecord", "scheduled_date", 15),
+    # LV-26: watches the status field, so any maintenance that is not completed
+    # stays an open alert until it is resolved.
+    ("Mantenciones abiertas", "maintenance.maintenancerecord", "status", 0),
 ]
 
 

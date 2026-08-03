@@ -9,6 +9,11 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 ## [Unreleased]
 
 ### Added
+- **Enviar una aeronave a mantenimiento, y que quede como alerta hasta
+  resolverse.** La ficha de la aeronave muestra sus mantenciones abiertas y tiene
+  un botón "Enviar a mantenimiento"; con la regla de alerta de mantenciones
+  abiertas, esa aeronave queda marcada en Alertas y el panel hasta que la
+  mantención se completa, momento en que la alerta se cierra sola.
 - **Cada ficha guarda sus documentos, y la empresa tiene su repositorio.** Las
   fichas de aeronave y operador ahora muestran y permiten subir sus documentos
   (resolución JAC, aeronavegabilidad, seguro, credenciales…), igual que ya hacía

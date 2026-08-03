@@ -82,6 +82,60 @@ def test_completing_maintenance_with_required_fields_records_history():
 
 
 @pytest.mark.django_db
+def test_completing_maintenance_resolves_its_open_alert():
+    # LV-26: the "aircraft in maintenance" alert clears when the work is done.
+    from django.contrib.contenttypes.models import ContentType
+
+    from apps.compliance.models import Alert, AlertRule
+
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA", type="RPA", model="M300",
+        manufacturer="DJI", cost_center=cost_center,
+    )
+    record = MaintenanceRecord.objects.create(
+        aircraft=aircraft, maintenance_type="scheduled",
+        description="check", scheduled_date=date(2026, 7, 20), status="in_progress",
+    )
+    rule = AlertRule.objects.create(
+        name="Open maintenance",
+        entity_type="maintenance.maintenancerecord",
+        field_to_watch="status",
+    )
+    alert = Alert.objects.create(
+        alert_rule=rule,
+        content_type=ContentType.objects.get_for_model(MaintenanceRecord),
+        object_id=record.pk,
+        message="M300 in maintenance",
+    )
+
+    User.objects.create_superuser("mech", "m@t.com", "pw")
+    client = Client()
+    assert client.login(username="mech", password="pw")
+    client.post(
+        reverse("maintenance-complete", args=[record.pk]),
+        {"completed_date": "2026-07-24", "performed_by": "Shop", "notes": ""},
+    )
+
+    alert.refresh_from_db()
+    assert alert.is_resolved
+
+
+@pytest.mark.django_db
+def test_aircraft_detail_offers_send_to_maintenance(admin_client):
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    aircraft = Aircraft.objects.create(
+        registration="CC-BBB", type="RPA", model="M300",
+        manufacturer="DJI", cost_center=cost_center,
+    )
+    content = admin_client.get(
+        reverse("aircraft-detail", args=[aircraft.pk])
+    ).content.decode()
+    assert reverse("maintenance-create") in content
+    assert f"aircraft={aircraft.pk}" in content
+
+
+@pytest.mark.django_db
 def test_record_detail_shows_completion_form_only_while_in_progress():
     cost_center = CostCenter.objects.create(code="OPS", name="Operations")
     aircraft = Aircraft.objects.create(

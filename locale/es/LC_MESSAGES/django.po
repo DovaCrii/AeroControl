@@ -3259,6 +3259,15 @@ msgstr "Hora de salida"
 msgid "Arrival time"
 msgstr "Hora de llegada"
 
+msgid "Maintenance & status"
+msgstr "Mantenimiento y estado"
+
+msgid "Send to maintenance"
+msgstr "Enviar a mantenimiento"
+
+msgid "No open maintenance for this aircraft."
+msgstr "No hay mantenciones abiertas para esta aeronave."
+
 #~ msgid "Flight date"
 #~ msgstr "Fecha de vuelo"
 
