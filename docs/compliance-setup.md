@@ -39,6 +39,16 @@ Si ambos existen se prefiere el operador; el contacto externo se usa cuando el
 operador no tiene correo o quedó archivado. Un CC con vencimientos pero sin
 destinatario se informa y el digest continúa con los demás.
 
+Para ver de una vez qué centros de costo **aún no tienen destinatario alcanzable**
+(sin esperar a que haya vencimientos), corre el reporte de preparación:
+
+```bash
+uv run python manage.py check_digest_recipients
+```
+
+Lista cada CC activo como `OK`/`MISSING` con el motivo, y un resumen. Es de solo
+lectura y usa la misma lógica (`CostCenter.notification_email`) que el digest.
+
 ## Paso 2 — Tipos de documento
 
 ```bash
