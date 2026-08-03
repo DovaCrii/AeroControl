@@ -1,6 +1,8 @@
 {% extends "generic/list.html" %}
 {% load i18n %}
 
+{% block list_actions %}<a class="btn btn-outline-secondary" href="{% url 'operator-import' %}">{% translate "Import" %}</a>{% endblock %}
+
 {% block list_header %}
 <th>{% translate "Name" %}</th>
 <th>{% translate "RUT" %}</th>

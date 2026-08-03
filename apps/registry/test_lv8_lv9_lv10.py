@@ -281,6 +281,13 @@ class TestCostCenterFormSimplified:
         response = admin_client.get(reverse("costcenter-list"))
         assert "Nota visible" in response.content.decode()
 
+    @pytest.mark.django_db
+    def test_registry_lists_show_an_import_button(self, admin_client):
+        # T5.2: importers are reachable from their list, not just by URL.
+        for name in ("costcenter", "aircraft", "operator"):
+            response = admin_client.get(reverse(f"{name}-list"))
+            assert reverse(f"{name}-import") in response.content.decode()
+
 
 # ── LV-14: habilitations list grouped by operator ────────────────────────────
 class TestQualificationListGroupedByOperator:
