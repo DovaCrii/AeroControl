@@ -999,6 +999,99 @@ main {
   .summary-grid { grid-template-columns: 1fr; }
 }
 
+/* ── LV-D1: sistema de etiquetas legible (oscuro y claro) ──────────────────
+   Los chips y etiquetas con paleta *subtle* tenían el fondo casi idéntico al
+   del panel y sin borde, así que no se leían como pastillas (revisión en vivo
+   2026-08-03). Se les da un contorno en el tono de su propio texto y un poco
+   más de cuerpo tipográfico: la pastilla se define en cualquier superficie sin
+   cambiar el color semántico. */
+.badge {
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.01em;
+  padding: 0.36em 0.62em;
+  border: 1px solid transparent;
+  vertical-align: baseline;
+}
+/* Subtle pills: give the pill real body (a fill tinted with its own family
+   colour) plus a defined outline, so it reads as a pill on light and dark alike
+   instead of dissolving into the panel. Colour comes from the text, so every
+   family stays on-brand and the same rule works in both themes. */
+.badge[class*="-subtle"] {
+  background-color: color-mix(in srgb, currentColor 18%, var(--ac-surface-raised));
+  border-color: color-mix(in srgb, currentColor 60%, transparent);
+  font-weight: 650;
+}
+/* The sidebar alert count keeps its own compact sizing (set earlier); don't let
+   the generic bump enlarge it. */
+.sidebar a .badge { font-size: 0.72rem; padding: 0.2em 0.5em; }
+
+/* ── LV-D2: cabeceras y botones legibles en oscuro ─────────────────────────
+   El th en gris tenue se leía "apagado" y el borde del botón outline
+   (--ac-border) era casi invisible sobre el fondo oscuro, así que los botones
+   no se percibían como botones (revisión en vivo 2026-08-03). */
+[data-theme="dark"] .table th {
+  color: #cdd8e6;
+}
+[data-theme="dark"] .btn-outline-secondary,
+[data-theme="dark"] .table .btn-outline-secondary {
+  color: var(--ac-text);
+  border-color: var(--ac-text-muted);
+}
+[data-theme="dark"] .btn-outline-secondary:hover,
+[data-theme="dark"] .table .btn-outline-secondary:hover {
+  background-color: var(--ac-surface-raised);
+  border-color: var(--ac-text-secondary);
+  color: var(--ac-text);
+}
+
+/* ── LV-D7: tablas más parejas y alineadas ─────────────────────────────────
+   Filas centradas verticalmente y celdas que no parten fechas ni pastillas, así
+   las columnas quedan igualadas y legibles. */
+.table td,
+.table th {
+  vertical-align: middle;
+}
+.table td .badge {
+  white-space: nowrap;
+}
+/* The first column is the row's anchor (a code or registration): keep it on one
+   line so rows line up instead of some wrapping to two lines. */
+.table td:first-child,
+.table th:first-child {
+  white-space: nowrap;
+}
+.table > :not(caption) > * > * {
+  padding-block: 0.55rem;
+}
+
+/* ── LV-D5: panel más jerárquico ───────────────────────────────────────────
+   El número del KPI protagoniza (label como eyebrow arriba), los títulos de
+   sección son uniformes, y la franja de cumplimiento lleva un acento lateral
+   para leerse como aviso accionable, no como un bloque más. */
+.summary-card small:first-of-type {
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 0.7rem;
+}
+.summary-card strong {
+  font-size: 2rem;
+}
+.section-title {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ac-text-secondary);
+  margin-bottom: 0.5rem;
+}
+[data-theme="dark"] .section-title {
+  color: #cdd8e6;
+}
+.compliance-strip {
+  border-left: 3px solid var(--ac-turquoise);
+}
+
 /* ── Calendar ─────────────────────────────────────── */
 .legacy-calendar-header { display: none !important; }
 .calendar-shell { overflow: visible; }

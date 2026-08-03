@@ -86,66 +86,33 @@
 </section>
 {% else %}
 {% if compliance_incomplete and perms.compliance.add_documenttype %}
-{% comment %}The registry is loaded but the compliance module is idle: 0 types,
-0 documents or 0 rules means the digest, the alerts and the report have nothing
-to do, while the tiles above read "0 alerts" as if all were well. This card
-guides the three steps in order and disappears when they are done.
-{% endcomment %}
-<section class="card onboarding-card p-3 mb-3" aria-labelledby="compliance-setup-title">
-  <h2 id="compliance-setup-title" class="h4">{% translate "Activate compliance monitoring" %}</h2>
-  <p class="text-muted mb-2">{% translate "The registry is loaded, but nothing is being watched yet. Three steps in order:" %}</p>
-  <ol class="onboarding-steps mb-0">
-    <li>{% if compliance_setup.doc_types %}✅ {% translate "Document types created" %}{% else %}<a href="{% url 'documenttype-create' %}">{% translate "Create the document types" %}</a> — {% translate "e.g. airworthiness certificate, insurance policy" %}{% endif %}</li>
-    <li>{% if compliance_setup.documents %}✅ {% translate "Documents loaded" %}{% else %}<a href="{% url 'document-create' %}">{% translate "Load the documents with their expiry dates" %}</a>{% endif %}</li>
-    <li>{% if compliance_setup.rules %}✅ {% translate "Alert rules defined" %}{% else %}<a href="{% url 'alertrule-create' %}">{% translate "Define an alert rule" %}</a> — {% translate "then the daily job generates the alerts" %}{% endif %}</li>
-  </ol>
+{% comment %}LV-D4: the registry is loaded but compliance is idle (0 types /
+documents / rules), so the digest, alerts and report have nothing to do while
+the tiles read "0 alerts" as if all were well. Redesigned as a compact strip
+whose steps are status pills consistent with the rest of the UI; it disappears
+when the three are done.{% endcomment %}
+<section class="card compliance-strip p-3 mb-3" aria-labelledby="compliance-setup-title">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h2 id="compliance-setup-title" class="h6 mb-1">{% translate "Activate compliance monitoring" %}</h2>
+      <p class="text-muted small mb-0">{% translate "The registry is loaded, but nothing is being watched yet. Three steps in order:" %}</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+      {% if compliance_setup.doc_types %}<span class="badge bg-success-subtle text-success-emphasis">✓ {% translate "Document types created" %}</span>{% else %}<a href="{% url 'documenttype-create' %}" class="badge bg-warning-subtle text-warning-emphasis text-decoration-none">1 · {% translate "Create the document types" %}</a>{% endif %}
+      {% if compliance_setup.documents %}<span class="badge bg-success-subtle text-success-emphasis">✓ {% translate "Documents loaded" %}</span>{% else %}<a href="{% url 'document-create' %}" class="badge bg-warning-subtle text-warning-emphasis text-decoration-none">2 · {% translate "Load the documents with their expiry dates" %}</a>{% endif %}
+      {% if compliance_setup.rules %}<span class="badge bg-success-subtle text-success-emphasis">✓ {% translate "Alert rules defined" %}</span>{% else %}<a href="{% url 'alertrule-create' %}" class="badge bg-warning-subtle text-warning-emphasis text-decoration-none">3 · {% translate "Define an alert rule" %}</a>{% endif %}
+    </div>
+  </div>
 </section>
 {% endif %}
-{# ── Chart row ── #}
+{# ── LV-D5: lo accionable primero (vencimientos), analítica después ── #}
 <div class="row g-3 mb-3">
-  <div class="col-lg-4">
-    <div class="card p-2 chart-container">
-      <h4 class="h5 mb-2">{% translate "Aircraft by Status" %}</h4>
-      <canvas id="chart-aircraft-status"></canvas>
-    </div>
-  </div>
-  <div class="col-lg-4">
-    <div class="card p-2 chart-container">
-      <h4 class="h5 mb-2">{% translate "Permissions by Status" %}</h4>
-      <canvas id="statusChart" data-label="{% translate 'Permissions' %}"></canvas>
-    </div>
-  </div>
-  <div class="col-lg-4">
-    <div class="card p-2 chart-container">
-      <h4 class="h5 mb-2">{% translate "Maintenance by Type" %}</h4>
-      <canvas id="chart-maint-type"></canvas>
-    </div>
-  </div>
-</div>
-
-<div class="row g-3 mb-3">
-  <div class="col-lg-6">
-    <div class="card p-2 chart-container">
-      <h4 class="h5 mb-2">{% translate "Tasks per Stage" %}</h4>
-      <canvas id="stagesChart" data-label="{% translate 'Tasks' %}"></canvas>
-    </div>
-  </div>
-  <div class="col-lg-6">
-    <div class="card p-2 chart-container">
-      <h4 class="h5 mb-2">{% translate "Monthly Flights (6 months)" %}</h4>
-      <canvas id="chart-monthly-flights" data-label="{% translate 'Flights' %}"></canvas>
-    </div>
-  </div>
-</div>
-
-{# ── Detail panels ── #}
-<div class="row g-3">
-  <div class="col-lg-6">
-    <div class="card p-2">
-      <h4 class="h5">{% translate "Upcoming Expirations" %}</h4>
+  <div class="col-12">
+    <div class="card p-3">
+      <h4 class="h6 section-title mb-2">{% translate "Upcoming Expirations" %}</h4>
       {% for item in expirations %}
       <a href="{{ item.url }}" class="d-flex justify-content-between align-items-center border-bottom py-1 text-decoration-none text-body">
-        <span><span class="badge text-bg-secondary me-2">{{ item.kind }}</span>{{ item.label }}</span>
+        <span><span class="badge bg-secondary-subtle text-secondary-emphasis me-2">{{ item.kind }}</span>{{ item.label }}</span>
         <b>{{ item.date|date:"Y-m-d" }}</b>
       </a>
       {% empty %}
@@ -153,22 +120,52 @@ guides the three steps in order and disappears when they are done.
       {% endfor %}
     </div>
   </div>
-  <div class="col-lg-6">
-    <div class="card p-2">
-      <h4 class="h5">{% translate "Tasks by Stage" %}</h4>
-      {% for stage in stages %}
-      <div class="d-flex justify-content-between border-bottom py-1">
-        <span>{{ stage.name }}</span>
-        {% comment %}The annotation, not stage.tasks.count: the manager count
-        issues one COUNT per stage and includes archived tasks, so the two
-        numbers on this page disagreed with each other.{% endcomment %}
-        <b>{{ stage.active_task_count }}</b>
-      </div>
-      {% empty %}
-      <p class="text-muted my-2">{% translate "No stages configured." %}</p>
-      {% endfor %}
+</div>
+
+{% comment %}Analítica: una grilla pareja; los gráficos sin datos se ocultan
+(LV-D5). 'Tasks per Stage' vivía además como lista aparte (redundante); queda
+solo el gráfico.{% endcomment %}
+<div class="row g-3 mb-3">
+  {% if chart_data.aircraft_by_status %}
+  <div class="col-lg-4">
+    <div class="card p-2 chart-container">
+      <h4 class="h6 section-title mb-2">{% translate "Aircraft by Status" %}</h4>
+      <canvas id="chart-aircraft-status"></canvas>
     </div>
   </div>
+  {% endif %}
+  {% if chart_data.permissions_by_status %}
+  <div class="col-lg-4">
+    <div class="card p-2 chart-container">
+      <h4 class="h6 section-title mb-2">{% translate "Permissions by Status" %}</h4>
+      <canvas id="statusChart" data-label="{% translate 'Permissions' %}"></canvas>
+    </div>
+  </div>
+  {% endif %}
+  {% if chart_data.maintenance_by_type %}
+  <div class="col-lg-4">
+    <div class="card p-2 chart-container">
+      <h4 class="h6 section-title mb-2">{% translate "Maintenance by Type" %}</h4>
+      <canvas id="chart-maint-type"></canvas>
+    </div>
+  </div>
+  {% endif %}
+  {% if chart_data.tasks_by_stage %}
+  <div class="col-lg-4">
+    <div class="card p-2 chart-container">
+      <h4 class="h6 section-title mb-2">{% translate "Tasks per Stage" %}</h4>
+      <canvas id="stagesChart" data-label="{% translate 'Tasks' %}"></canvas>
+    </div>
+  </div>
+  {% endif %}
+  {% if chart_data.monthly_flights %}
+  <div class="col-lg-4">
+    <div class="card p-2 chart-container">
+      <h4 class="h6 section-title mb-2">{% translate "Monthly Flights (6 months)" %}</h4>
+      <canvas id="chart-monthly-flights" data-label="{% translate 'Flights' %}"></canvas>
+    </div>
+  </div>
+  {% endif %}
 </div>
 {% endif %}
 {% endblock %}

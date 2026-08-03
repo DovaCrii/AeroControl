@@ -8,6 +8,26 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Fixed
+- **Textos que salían en inglés en producción.** El catálogo compilado
+  (`django.mo`) estaba desfasado del `.po` y el despliegue no lo recompila, así
+  que los textos nuevos (registros operacionales, cumplimiento mensual,
+  vigencias DGAC, etc.) se veían en inglés. Se recompiló el `.mo`; al tocar el
+  `.po` hay que recompilarlo (con `polib`, la VM no tiene `gettext`).
+
+### Changed
+- **Pasada de diseño de la revisión en vivo (legibilidad + panel).** Las
+  etiquetas y pastillas (chips de habilitaciones, tipos de entidad, estados) se
+  leen ahora como pastillas en tema **oscuro y claro** —contorno, cuerpo y más
+  peso de fuente— en lugar de fundirse con el fondo. Botones y cabeceras de
+  tabla ganan contraste en oscuro y las filas quedan parejas. El **panel** se
+  reordenó: KPIs con el **número protagonista**, la activación de cumplimiento
+  pasó a una **franja compacta con estados**, los vencimientos suben arriba y
+  los gráficos sin datos se ocultan (sin recuadros vacíos ni el duplicado
+  "Tareas por etapa"). El buscador dice **"Buscar en AeroControl"**, el
+  calendario deja de repetir el mes, y la lista general de **Documentos** sale
+  del menú (la carga ya vive en cada ficha/sección).
+
 ### Added
 - **Listas de asignaciones con columnas reales + calendario más limpio + VLOS/
   paracaídas como lista (LV-31/LV-25).** Las **asignaciones de operador y de
