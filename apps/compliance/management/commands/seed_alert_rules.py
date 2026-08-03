@@ -31,6 +31,14 @@ OPTIONAL_RULES = [
     # LV-29: the DGAC vigencias entered on the operator/aircraft fiches.
     ("Credenciales DGAC por vencer", "registry.operator", "credential_expiry", 30),
     ("Seguros JAC por vencer", "registry.aircraft", "insurance_expiry", 30),
+    # LV-30: a pending monthly review stays a live alert until the reviewer
+    # marks it (watches `status`, like "Mantenciones abiertas").
+    (
+        "Cumplimiento mensual de registros",
+        "compliance.monthlycompliancereview",
+        "status",
+        0,
+    ),
 ]
 
 

@@ -3297,6 +3297,92 @@ msgstr "Renuévalas ante la DGAC para seguir operando."
 msgid "Hello %(name)s,"
 msgstr "Hola %(name)s,"
 
+# LV-30: registros operacionales + cumplimiento mensual.
+msgid "Operational record type"
+msgstr "Tipo de registro operacional"
+
+msgid "A per-flight record (flight log, checklist, inspection) tracked in the operational-records repository and the monthly review."
+msgstr "Un registro por vuelo (bitácora, checklist, inspección) que se lleva en el repositorio de registros operacionales y en la revisión mensual."
+
+msgid "Pending review"
+msgstr "Pendiente de revisión"
+
+msgid "Compliant"
+msgstr "Cumple"
+
+msgid "Non-compliant"
+msgstr "No cumple"
+
+msgid "Period (month)"
+msgstr "Período (mes)"
+
+msgid "monthly compliance review"
+msgstr "revisión de cumplimiento mensual"
+
+msgid "monthly compliance reviews"
+msgstr "revisiones de cumplimiento mensual"
+
+msgid "Monthly compliance review"
+msgstr "Revisión de cumplimiento mensual"
+
+msgid "Operational records"
+msgstr "Registros operacionales"
+
+msgid "Monthly compliance"
+msgstr "Cumplimiento mensual"
+
+#, python-format
+msgid "%(center)s %(period)s marked."
+msgstr "%(center)s %(period)s marcado."
+
+#, python-format
+msgid "AeroControl · monthly records review %(period)s"
+msgstr "AeroControl · revisión de registros del mes %(period)s"
+
+msgid "End-of-month check that each cost center's operational records are on file for the flights it flew."
+msgstr "Chequeo de fin de mes: que cada centro de costo tenga en archivo sus registros operacionales por los vuelos realizados."
+
+msgid "All"
+msgstr "Todos"
+
+msgid "Reviewer"
+msgstr "Revisor"
+
+msgid "Decision"
+msgstr "Decisión"
+
+msgid "No monthly reviews yet. They are created at month-end for each cost center that flew."
+msgstr "Aún no hay revisiones mensuales. Se crean a fin de mes para cada centro de costo que voló."
+
+msgid "Flight logs, RPA checklists and drone inspections filed against each cost center."
+msgstr "Bitácoras de vuelo, checklists RPA e inspecciones de dron archivadas por cada centro de costo."
+
+msgid "Upload record"
+msgstr "Subir registro"
+
+msgid "No operational records match this filter."
+msgstr "Ningún registro operacional coincide con este filtro."
+
+msgid "Monthly records"
+msgstr "Registros del mes"
+
+msgid "cost centers up to date"
+msgstr "centros de costo al día"
+
+# LV-30 email body (compliance/email/monthly_review.txt).
+#, python-format
+msgid "Monthly records review — %(period)s"
+msgstr "Revisión de registros del mes — %(period)s"
+
+msgid "For each cost center that flew this month, flights vs operational records on file:"
+msgstr "Por cada centro de costo que voló este mes, vuelos vs registros operacionales en archivo:"
+
+#, python-format
+msgid "Review %(total)s cost center and mark it Compliant or Non-compliant:"
+msgid_plural "Review these %(total)s cost centers and mark each Compliant or Non-compliant:"
+msgstr[0] "Revisa %(total)s centro de costo y márcalo Cumple o No cumple:"
+msgstr[1] "Revisa estos %(total)s centros de costo y marca cada uno Cumple o No cumple:"
+
 #~ msgid "Flight date"
 #~ msgstr "Fecha de vuelo"
 

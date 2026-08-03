@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load aero_tags i18n %}
+{% block title %}{% translate "Operational records" %} - AeroControl{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <span class="page-eyebrow">{% translate "Compliance" %}</span>
+    <h1 class="h3 mb-0">{% translate "Operational records" %}</h1>
+    <p class="page-description">{% translate "Flight logs, RPA checklists and drone inspections filed against each cost center." %}</p>
+  </div>
+  {% if perms.compliance.add_document %}
+  <a href="{% url 'document-create' %}?entity_type={{ cost_center_content_type_id }}{% if selected_cost_center %}&object_id={{ selected_cost_center }}{% endif %}{% if selected_doc_type %}&doc_type={{ selected_doc_type }}{% endif %}" class="btn btn-primary">+ {% translate "Upload record" %}</a>
+  {% endif %}
+</div>
+
+<form method="get" class="card p-3 mb-3">
+  <div class="row g-2 align-items-end">
+    <div class="col-sm-4">
+      <label class="form-label" for="filter-cc">{% translate "Cost center" %}</label>
+      <select id="filter-cc" name="cost_center" class="form-select form-select-sm">
+        <option value="">{% translate "All cost centers" %}</option>
+        {% for cc in cost_centers %}<option value="{{ cc.pk }}" {% if selected_cost_center == cc.pk|stringformat:'s' %}selected{% endif %}>{{ cc.code }}{% if cc.name %} · {{ cc.name }}{% endif %}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-sm-4">
+      <label class="form-label" for="filter-type">{% translate "Type" %}</label>
+      <select id="filter-type" name="doc_type" class="form-select form-select-sm">
+        <option value="">{% translate "All types" %}</option>
+        {% for dt in operational_doc_types %}<option value="{{ dt.pk }}" {% if selected_doc_type == dt.pk|stringformat:'s' %}selected{% endif %}>{{ dt.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-sm-3">
+      <label class="form-label" for="filter-month">{% translate "Month" %}</label>
+      <input id="filter-month" type="month" name="month" value="{{ selected_month }}" class="form-control form-control-sm">
+    </div>
+    <div class="col-sm-1 d-grid">
+      <button type="submit" class="btn btn-sm btn-outline-primary">{% translate "Filter" %}</button>
+    </div>
+  </div>
+</form>
+
+<div class="card p-2">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr>
+        <th>{% translate "Date" %}</th><th>{% translate "Cost center" %}</th><th>{% translate "Type" %}</th><th>{% translate "Title" %}</th><th class="text-end">{% translate "Actions" %}</th>
+      </tr></thead>
+      <tbody>
+        {% for document in documents %}
+        <tr>
+          <td>{{ document.issue_date|date:"Y-m-d" }}</td>
+          <td>{% if document.cost_center %}{{ document.cost_center.code }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+          <td>{{ document.doc_type }}</td>
+          <td><a href="{% url 'document-detail' document.pk %}" class="fw-semibold">{{ document.title }}</a></td>
+          <td class="text-end">
+            <a href="{% url 'document-download' document.pk %}" class="btn btn-sm btn-outline-secondary" hx-boost="false">{% translate "Download" %}</a>
+            {% if perms.compliance.add_document %}<a href="{% url 'document-replace' document.pk %}" hx-get="{% url 'document-replace' document.pk %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">{% translate "Replace" %}</a>{% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="99" class="text-center text-muted py-4">{% translate "No operational records match this filter." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% render_pagination page_obj %}
+</div>
+{% endblock %}

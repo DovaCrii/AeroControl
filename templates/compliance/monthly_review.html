@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% load aero_tags i18n %}
+{% block title %}{% translate "Monthly compliance" %} - AeroControl{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <span class="page-eyebrow">{% translate "Compliance" %}</span>
+    <h1 class="h3 mb-0">{% translate "Monthly compliance" %}</h1>
+    <p class="page-description">{% translate "End-of-month check that each cost center's operational records are on file for the flights it flew." %}</p>
+  </div>
+  <a href="?export=csv{% if selected_month %}&month={{ selected_month }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}" class="btn btn-outline-secondary" hx-boost="false">{% translate "Export CSV" %}</a>
+</div>
+
+<form method="get" class="card p-3 mb-3">
+  <div class="row g-2 align-items-end">
+    <div class="col-sm-4">
+      <label class="form-label" for="filter-month">{% translate "Month" %}</label>
+      <input id="filter-month" type="month" name="month" value="{{ selected_month }}" class="form-control form-control-sm">
+    </div>
+    <div class="col-sm-4">
+      <label class="form-label" for="filter-status">{% translate "Status" %}</label>
+      <select id="filter-status" name="status" class="form-select form-select-sm">
+        <option value="">{% translate "All" %}</option>
+        {% for value, label in status_choices %}<option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-sm-2 d-grid">
+      <button type="submit" class="btn btn-sm btn-outline-primary">{% translate "Filter" %}</button>
+    </div>
+  </div>
+</form>
+
+<div class="card p-2">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead><tr>
+        <th>{% translate "Period" %}</th><th>{% translate "Cost center" %}</th>
+        <th class="text-end">{% translate "Flights" %}</th><th class="text-end">{% translate "Records" %}</th>
+        <th>{% translate "Status" %}</th><th>{% translate "Reviewer" %}</th>
+        {% if can_review %}<th class="text-end">{% translate "Decision" %}</th>{% endif %}
+      </tr></thead>
+      <tbody>
+        {% for review in reviews %}
+        <tr>
+          <td>{{ review.period|date:"Y-m" }}</td>
+          <td class="fw-semibold">{{ review.cost_center.code }}</td>
+          <td class="text-end">{{ review.flights }}</td>
+          <td class="text-end">
+            <a href="{% url 'operational-records' %}?cost_center={{ review.cost_center.pk }}&month={{ review.period|date:'Y-m' }}">{{ review.records }}</a>
+          </td>
+          <td>
+            {% if review.status == "completed" %}<span class="badge bg-success-subtle text-success-emphasis">{{ review.get_status_display }}</span>
+            {% elif review.status == "non_compliant" %}<span class="badge bg-danger">{{ review.get_status_display }}</span>
+            {% else %}<span class="badge bg-warning text-dark">{{ review.get_status_display }}</span>{% endif %}
+          </td>
+          <td>{% if review.reviewed_by %}{{ review.reviewed_by.get_username }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+          {% if can_review %}
+          <td class="text-end">
+            <form method="post" action="{% url 'monthly-review-mark' review.pk %}" class="d-inline">
+              {% csrf_token %}
+              <input type="hidden" name="status" value="completed">
+              <button type="submit" class="btn btn-sm btn-outline-success">{% translate "Compliant" %}</button>
+            </form>
+            <form method="post" action="{% url 'monthly-review-mark' review.pk %}" class="d-inline">
+              {% csrf_token %}
+              <input type="hidden" name="status" value="non_compliant">
+              <button type="submit" class="btn btn-sm btn-outline-danger">{% translate "Non-compliant" %}</button>
+            </form>
+          </td>
+          {% endif %}
+        </tr>
+        {% empty %}
+        <tr><td colspan="99" class="text-center text-muted py-4">{% translate "No monthly reviews yet. They are created at month-end for each cost center that flew." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% render_pagination page_obj %}
+</div>
+{% endblock %}

@@ -11,6 +11,7 @@ resumen corto), así que después se puede comprobar si realmente corrieron.
 | `backup` | Crea un respaldo de la base con manifiesto y checksum | Diario, fuera de horario |
 | `send_executive_report` | Envía el informe ejecutivo con KPIs del período vs el anterior y el XLSX adjunto | Semanal (lunes) |
 | `notify_expiring_credentials` (opcional, LV-29) | Avisa por correo a **cada operador** de sus vigencias DGAC por vencer o ya vencidas (credencial + habilitaciones, ≤30 días) | Diario o semanal, si se quiere el aviso directo al operador |
+| `check_monthly_records` (LV-30) | El último día del mes, crea la **revisión de cumplimiento** pendiente por cada centro de costo que voló y avisa al grupo Dirección (vuelos vs registros del mes) | Diario (actúa solo el último día 28/29/30/31) |
 
 El orden importa: `send_alert_digest` reporta lo que `generate_alerts` acaba de
 detectar, así que conviene dejar un margen entre ambos.
@@ -132,6 +133,13 @@ El aviso opcional de vigencias al operador (LV-29) se agrega con el mismo patró
 cuando se quiera activar —`mkjob credentials "notify_expiring_credentials"
 "*-*-* 07:30:00"`—; solo avisa a operadores con correo en su ficha (los demás se
 reportan y se omiten). Acepta `--dry-run` y `--days N` (ventana, 30 por defecto).
+
+El cierre de cumplimiento mensual (LV-30) se agrega con `mkjob monthly
+"check_monthly_records" "*-*-* 23:30:00"`: corre a diario y **actúa solo el
+último día del mes** (crea las revisiones pendientes y avisa a Dirección). Acepta
+`--period YYYY-MM` (mes puntual), `--force` (correr fuera del último día) y
+`--dry-run`. La revisión pendiente queda como alerta viva (regla "Cumplimiento
+mensual de registros") hasta que Dirección la marca Cumple/No cumple.
 
 ## Prueba antes de programar
 

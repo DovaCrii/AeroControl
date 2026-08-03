@@ -20,6 +20,8 @@ WATCHABLE_MODELS = {
     "registry.operator": _("Operator"),
     "registry.aircraft": _("Aircraft"),
     "compliance.document": _("Document"),
+    # LV-30: a pending monthly review is a live alert (watched via `status`).
+    "compliance.monthlycompliancereview": _("Monthly compliance review"),
     "operations.flightpermission": _("Flight permission"),
     "maintenance.maintenancerecord": _("Maintenance record"),
 }
