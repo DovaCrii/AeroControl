@@ -5,9 +5,9 @@
 > Última actualización: **2026-07-31**.
 
 ## Estado de producción (VM `p340`)
-- Corriendo en **`8f688f4`** (pulled para el scaffolding de cumplimiento),
-  servicio `active`, `/health/` 200. **`origin/main` va adelante en `14854fe`**
-  (LV-15/17/18 commiteados y pusheados, **aún no desplegados** a prod).
+- Corriendo en **`71f9121`** = `origin/main`, servicio `active`, `/health/` 200.
+  Todo lo de esta ventana (cumplimiento, LV-15/17/18/19, i18n) está desplegado.
+  Suite completa **561 verde** (2026-08-03).
 - Acceso: Tailscale + **público por Funnel** (`https://p340.tailccd107.ts.net`).
 - **Login endurecido** (django-axes, 5 intentos/15 min).
 - **Datos reales cargados**: 12 centros de costo, 41 operadores, 15 aeronaves,
@@ -35,10 +35,19 @@
   (`OperatorBulkAssign` + `services.bulk_assign_operators`, semántica *un
   operador = un CC* con mover/cerrar la previa). Aclarado con el usuario: el
   pedido era agilizar, no un bloqueo.
-- **Pendiente de esta ventana**: **desplegar `14854fe` a prod** (LV-15/17/18 no
-  están live); **LV-19** (editar nombre de administrador de contrato) — el campo
-  `responsible` **sí** es editable en `CostCenterForm`, no se reprodujo; falta
-  que el usuario confirme en pantalla qué intentó. Ver LV-17/18/19 en el plan.
+- **LV-19** (`6e21930`): el `name` del CC vuelve al `CostCenterForm` como
+  **opcional** (LV-16 lo había quitado y quedaba congelado); ahora se nombran/
+  corrigen CC desde la app. La confusión inicial era con `responsible` ("Nombre
+  de administrador de contrato"), que siempre fue editable.
+- **i18n + CHANGELOG** (`0d4992a`, `71f9121`): 3 strings ES nuevos al catálogo
+  (los introdujeron LV-17/18/19 y el guard `test_translations` los cazó) +
+  CHANGELOG `[Unreleased]` al día. **Todo desplegado; suite 561 verde.**
+- **Pendiente para el usuario (negocio, no código)**: crear **CC110 Casa Matriz**
+  en prod (ahora desde *Centros de costo → + Nuevo*, con el campo Nombre; ya está
+  en local) y **cargar documentos con vencimiento** para que suenen las alertas.
+- **Higiene abierta (TL.6, requiere decisión)**: worktree `claude/amazing-bouman-1b3d09`
+  tiene un refactor de Kanban **sin fusionar** (drop del campo *order*); 11 PRs
+  `origin/dependabot/*` y 3 `origin/codex/*` sin atender. No podar a ciegas.
 
 ## Cerrado esta sesión (2026-07-31)
 - **Puesta en producción + seguridad**: axes, Funnel, systemd timers, fix SRI de
