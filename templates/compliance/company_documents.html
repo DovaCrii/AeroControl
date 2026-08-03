@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load aero_tags i18n %}
+{% block title %}{% translate "Company documents" %} - AeroControl{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <span class="page-eyebrow">{% translate "Compliance" %}</span>
+    <h1 class="h3 mb-0">{% translate "Company documents" %}</h1>
+    <p class="page-description">{% translate "AOC, operating procedures and forms available to the whole operation." %}</p>
+  </div>
+  {% if perms.compliance.add_document and tenant %}
+  <a href="{% url 'document-create' %}?entity_type={{ document_content_type_id }}&object_id={{ tenant.pk }}" class="btn btn-primary">+ {% translate "Upload document" %}</a>
+  {% endif %}
+</div>
+
+<div class="card p-2">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr>
+        <th>{% translate "Title" %}</th><th>{% translate "Type" %}</th><th>{% translate "Expiry" %}</th><th class="text-end">{% translate "Actions" %}</th>
+      </tr></thead>
+      <tbody>
+        {% for document in documents %}
+        <tr>
+          <td><a href="{% url 'document-detail' document.pk %}" class="fw-semibold">{{ document.title }}</a></td>
+          <td>{{ document.doc_type }}</td>
+          <td>{% if document.expiry_date %}{{ document.expiry_date|date:"Y-m-d" }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+          <td class="text-end">
+            <a href="{% url 'document-download' document.pk %}" class="btn btn-sm btn-outline-secondary" hx-boost="false">{% translate "Download" %}</a>
+            {% if perms.compliance.add_document %}<a href="{% url 'document-replace' document.pk %}" hx-get="{% url 'document-replace' document.pk %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">{% translate "Replace" %}</a>{% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="99" class="text-center text-muted py-4">{% translate "No company documents yet." %}{% if perms.compliance.add_document and tenant %} <a href="{% url 'document-create' %}?entity_type={{ document_content_type_id }}&object_id={{ tenant.pk }}">{% translate "Upload the first one" %}</a>{% endif %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% render_pagination page_obj %}
+</div>
+{% endblock %}

@@ -9,6 +9,15 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 ## [Unreleased]
 
 ### Added
+- **Cada ficha guarda sus documentos, y la empresa tiene su repositorio.** Las
+  fichas de aeronave y operador ahora muestran y permiten subir sus documentos
+  (resolución JAC, aeronavegabilidad, seguro, credenciales…), igual que ya hacía
+  la del permiso; el centro de costo también. Renovar una credencial que vence
+  guarda el histórico (reemplazo versionado). La ficha del permiso lista además
+  sus planes geoespaciales (KMZ), así que carta y área quedan juntas. Y hay una
+  nueva sección **"Documentos de la empresa"** (accesible desde el panel) para el
+  AOC, los procedimientos y los formularios, con descarga y control de
+  vencimiento.
 - **Dashboard más accionable y con vencimientos reales (T5.4).** Los indicadores
   de aeronaves, operadores y alertas ahora son enlaces a sus listas, y el panel
   de próximos vencimientos ya no muestra solo habilitaciones: suma **documentos

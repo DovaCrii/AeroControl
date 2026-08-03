@@ -21,6 +21,11 @@ urlpatterns = [
         name="compliance-report-docx",
     ),
     path("document/", views.DocumentList.as_view(), name="document-list"),
+    path(
+        "company-documents/",
+        views.CompanyDocumentsView.as_view(),
+        name="company-documents",
+    ),
     path("document/new/", views.DocumentCreate.as_view(), name="document-create"),
     path(
         "document/entity-options/",
