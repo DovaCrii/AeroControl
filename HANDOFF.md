@@ -5,11 +5,11 @@
 > Última actualización: **2026-07-31**.
 
 ## Estado de producción (VM `p340`)
-- Corriendo en **`da6d326`** (refactor Kanban ya live), servicio `active`,
-  `/health/` 200. **`origin/main` va adelante en `6b86970`**: falta desplegar el
-  reporte `check_digest_recipients`, el fix de auditoría DRF, el i18n "Unassigned"
-  y el bump crispy 2.7. **Ese deploy exige `uv sync --frozen`** (cambió una
-  dependencia), no solo pull+restart. Suite completa **566 verde** (2026-08-03).
+- Corriendo en **`fe8fbe0`** (recipiente report + fix auditoría DRF + i18n ya
+  live; el usuario ya corrió `check_digest_recipients` en prod), servicio
+  `active`, `/health/` 200. **`origin/main` va adelante en `6b86970`**: falta
+  solo el bump **crispy 2.7**, cuyo deploy **exige `uv sync --frozen`** (cambió
+  una dependencia), no solo pull+restart. Suite completa **566 verde** (2026-08-03).
 - Acceso: Tailscale + **público por Funnel** (`https://p340.tailccd107.ts.net`).
 - **Login endurecido** (django-axes, 5 intentos/15 min).
 - **Datos reales cargados**: 12 centros de costo, 41 operadores, 15 aeronaves,
