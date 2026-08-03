@@ -30,6 +30,7 @@ offer View/Edit unconditionally and four lists 404ed on them.{% endcomment %}
 {% endfor %}
 {% comment %}F-13: keep the pagination in sync with the live-searched/paged rows.
 The rows swap into #table-body, but the controls live outside it, so update them
-out-of-band in the same response instead of leaving a stale page range behind.
+out-of-band in the same response. Only on HTMX: on a full page the list template
+already renders #pagination-container, and a <div> cannot live inside <tbody>.
 {% endcomment %}
-<div id="pagination-container" hx-swap-oob="true">{% render_pagination page_obj %}</div>
+{% if is_htmx %}<div id="pagination-container" hx-swap-oob="true">{% render_pagination page_obj %}</div>{% endif %}

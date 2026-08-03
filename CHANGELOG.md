@@ -90,13 +90,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   para crear o corregir un nombre como "Casa Matriz".
 
 ### Fixed
-- **La paginación ya no queda desfasada al buscar o paginar en vivo (F-13).**
-  La búsqueda en vivo y los enlaces de página actualizaban solo las filas, pero
-  los controles de paginación viven fuera de esa zona y quedaban con el número
-  de páginas anterior; ahora se actualizan en la misma respuesta (swap
-  *out-of-band*). *(Queda pendiente, para una sesión con navegador: las listas
-  con columnas propias colapsan a las genéricas al buscar en vivo — ver T5.6 en
-  MASTER_PLAN.)*
+- **La búsqueda en vivo y la paginación ya funcionan bien en todas las listas
+  (F-13).** Dos problemas resueltos: los controles de paginación quedaban con el
+  número de páginas anterior tras buscar (ahora se actualizan en la misma
+  respuesta, *out-of-band*); y las listas con columnas propias (centros de
+  costo, aeronaves, operadores, habilitaciones, asignaciones) mostraban las
+  columnas genéricas al buscar en vivo (ahora cada una conserva sus columnas).
 
 ## [0.3.0-alpha] - 2026-07-27
 
