@@ -13,7 +13,9 @@ from apps.core.views import (
     ModelViewPermissionRequiredMixin,
     SearchMixin,
     StatusTransitionView,
+    TenantScopedQuerysetMixin,
 )
+from apps.core.tenancy import scope_queryset_to_tenant
 from .forms import MaintenanceCompletionForm, MaintenanceRecordForm
 from .models import MaintenanceHistory, MaintenanceRecord
 
@@ -83,10 +85,13 @@ class MaintenanceRecordCreate(MCreate):
         return initial
 
 
-class MaintenanceRecordDetail(ModelViewPermissionRequiredMixin, DetailView):
+class MaintenanceRecordDetail(
+    TenantScopedQuerysetMixin, ModelViewPermissionRequiredMixin, DetailView
+):
     model = MaintenanceRecord
     template_name = "maintenance/record_detail.html"
     context_object_name = "record"
+    tenant_path = "aircraft__tenant_id"
 
     def get_queryset(self):
         return super().get_queryset().filter(is_active=True).select_related("aircraft")
@@ -119,7 +124,13 @@ class MaintenanceComplete(StatusTransitionView):
     success_message = gettext_lazy("Maintenance completed.")
 
     def post(self, request, pk):
-        record = get_object_or_404(self.model, pk=pk, is_active=True)
+        record = get_object_or_404(
+            scope_queryset_to_tenant(
+                self.model._default_manager.all(), request.user, "aircraft__tenant_id"
+            ),
+            pk=pk,
+            is_active=True,
+        )
         if record.status not in self.valid_from_statuses:
             return super().post(request, pk)
         form = MaintenanceCompletionForm(request.POST, instance=record)

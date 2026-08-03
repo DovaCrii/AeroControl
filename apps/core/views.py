@@ -263,6 +263,23 @@ class ModelViewPermissionRequiredMixin(ModelPermissionRequiredMixin):
     permission_action = "view"
 
 
+class TenantScopedQuerysetMixin:
+    """Scope a detail/edit/delete view's object lookup to the user's tenant
+    (F-03/F-06), so another tenant's record cannot be opened by its URL. Set
+    `tenant_path` for models that reach the tenant through a relation (e.g.
+    "cost_center__tenant_id"); leave it None for a direct `tenant` FK (auto).
+    A no-op for superusers and single-tenant setups."""
+
+    tenant_path = None
+
+    def get_queryset(self):
+        from apps.core.tenancy import scope_queryset_to_tenant
+
+        return scope_queryset_to_tenant(
+            super().get_queryset(), self.request.user, self.tenant_path
+        )
+
+
 # The calendar aggregates seven models, so no single model permission describes
 # it. Each source is gated by the view permission of its own model instead: a
 # user sees the event types they are allowed to see and nothing else.
