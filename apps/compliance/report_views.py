@@ -9,6 +9,7 @@ import csv
 from datetime import datetime, timedelta
 from io import BytesIO
 
+from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -36,6 +37,22 @@ def _parse_date(value):
         return None
 
 
+def _lookup_by_pk(queryset, raw_pk):
+    """`queryset.filter(pk=raw_pk).first()`, treating a malformed UUID the
+    same as "not found" instead of a 500.
+
+    A bookmarked URL, browser autofill, or a bot probing query strings can
+    hand this a value that isn't a UUID at all -- `pk` is a UUIDField on both
+    CostCenter and DocumentType, and `.filter(pk=...)` raises ValidationError
+    (uncaught, a 500) rather than just finding nothing, unlike every other
+    mismatch (wrong-but-valid UUID, wrong tenant, archived row).
+    """
+    try:
+        return queryset.filter(pk=raw_pk).first()
+    except (ValueError, ValidationError):
+        return None
+
+
 class ComplianceReportMixin(ModelViewPermissionRequiredMixin):
     """Resolves the shared filters, kept in the URL like the other reports."""
 
@@ -49,13 +66,13 @@ class ComplianceReportMixin(ModelViewPermissionRequiredMixin):
         cost_center = None
         doc_type = None
         if request.GET.get("cost_center"):
-            cost_center = CostCenter.objects.filter(
-                pk=request.GET["cost_center"], is_active=True
-            ).first()
+            cost_center = _lookup_by_pk(
+                CostCenter.objects.filter(is_active=True), request.GET["cost_center"]
+            )
         if request.GET.get("doc_type"):
-            doc_type = DocumentType.objects.filter(
-                pk=request.GET["doc_type"], is_active=True
-            ).first()
+            doc_type = _lookup_by_pk(
+                DocumentType.objects.filter(is_active=True), request.GET["doc_type"]
+            )
         return build_compliance_report(
             start=start, end=end, cost_center=cost_center, doc_type=doc_type
         )
