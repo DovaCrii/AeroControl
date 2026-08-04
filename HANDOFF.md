@@ -5,6 +5,18 @@
 > Última actualización: **2026-08-04** (3ª tanda LV-44..54 y LV-55 **ya
 > desplegadas en la VM**; B3.3/B3.4 nuevos, aún NO desplegados).
 
+## PENDIENTE PRIORITARIO — LV-57: normalizar las tablas de listas
+El usuario pidió (2026-08-04, con capturas de Centros de costo, Aeronaves,
+Operadores y Habilitaciones) **normalizar cómo se muestran las 4 listas**: hoy
+cada una reparte el ancho distinto, solo Aeronaves usa el patrón de columna
+primaria de dos líneas (matrícula + modelo), y el verbo de acción no es
+consistente ("Editar" vs "Ver operador"). Pide un mismo estilo para todas y
+aprovechar mejor el espacio. Es la continuación concreta de **LV-32** (sistema
+de tablas, quedó parcial). **Aún no implementado**: antes de tocar las 4
+plantillas hay que acordar con el usuario el patrón exacto (¿columna primaria
+de dos líneas en todas? ¿anchos proporcionales fijos? ¿un solo verbo de
+acción?). Ver la fila LV-57 en `MASTER_PLAN.md`.
+
 ## BLOQUE 3 (mejoras UX del Seguimiento de alertas) — retomado parcialmente
 El usuario pidió retomar el standby de BLOQUE 3 ahora que el tablero se llama
 "Seguimiento de alertas" (LV-48/55). Hechos **B3.3** (degradado de urgencia en

@@ -16,12 +16,14 @@ from .models import (
 
 
 class CostCenterForm(AeroModelForm):
-    # LV-34: one "responsible type" picker instead of three parallel fields the
-    # user had to know which to fill. It drives which field shows (JS in app.js)
-    # and which the form validates/keeps: administrator = the contract admin
-    # name; operator = someone from the roster; external = a name + email.
+    # LV-34/LV-56: the contract administrator name is always required -- every
+    # cost center must have one on file. "Responsible type" is a separate,
+    # optional distinction on top of that: who the day-to-day contact is, if
+    # different from the administrator above (an operator from the roster, or
+    # someone external). It drives which extra field shows (JS in app.js) and
+    # which the form validates/keeps.
     RESPONSIBLE_TYPES = [
-        ("administrator", _("Administrator")),
+        ("administrator", _("Same as administrator")),
         ("operator", _("Operator")),
         ("external", _("External contact")),
     ]
@@ -30,15 +32,15 @@ class CostCenterForm(AeroModelForm):
         label=_("Responsible type"),
         required=False,
         help_text=_(
-            "Who is in charge: the contract administrator, an operator from the "
-            "roster, or an external contact."
+            "Optional: pick this only if the day-to-day responsible contact "
+            "differs from the contract administrator above."
         ),
     )
     field_order = [
         "code",
         "name",
-        "responsible_type",
         "responsible",
+        "responsible_type",
         "responsible_operator",
         "responsible_contact_name",
         "responsible_contact_email",
@@ -108,9 +110,16 @@ class CostCenterForm(AeroModelForm):
                 self.fields["responsible_type"].initial = "administrator"
 
     def clean(self):
-        """LV-34: require only the field the chosen type uses, and clear the
-        others so a switch of type never leaves stale data behind."""
+        """LV-56: the contract administrator name is always required, no
+        matter which responsible_type is chosen. responsible_type/its field
+        is an independent, optional refinement -- require only the field the
+        chosen type additionally uses, and clear the others so a switch of
+        type never leaves stale data behind."""
         cleaned = super().clean()
+        if not cleaned.get("responsible"):
+            self.add_error(
+                "responsible", _("Enter the contract administrator name.")
+            )
         rtype = cleaned.get("responsible_type")
         if rtype == "operator":
             if not cleaned.get("responsible_operator"):
@@ -125,7 +134,7 @@ class CostCenterForm(AeroModelForm):
                     "responsible_contact_name", _("Enter the external contact name.")
                 )
             cleaned["responsible_operator"] = None
-        else:  # administrator (or unset): the admin name is optional (as before)
+        else:  # administrator (or unset): the admin above IS the responsible
             cleaned["responsible_operator"] = None
             cleaned["responsible_contact_name"] = ""
             cleaned["responsible_contact_email"] = ""

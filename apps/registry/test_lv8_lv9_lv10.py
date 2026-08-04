@@ -267,7 +267,12 @@ class TestCostCenterFormSimplified:
         # LV-19: the name shown in the list was frozen; now it is editable.
         cc = CostCenter.objects.create(code="CC410", name="Levantamientos")
         form = CostCenterForm(
-            data={"code": "410", "name": "Levantamientos digital", "notes": ""},
+            data={
+                "code": "410",
+                "name": "Levantamientos digital",
+                "responsible": "Admin Name",
+                "notes": "",
+            },
             instance=cc,
         )
         assert form.is_valid(), form.errors
@@ -278,13 +283,25 @@ class TestCostCenterFormSimplified:
     @pytest.mark.django_db
     def test_responsible_type_operator_requires_an_operator(self, db):
         # LV-34: choosing "operator" but selecting none is flagged.
-        form = CostCenterForm(data={"code": "700", "responsible_type": "operator"})
+        form = CostCenterForm(
+            data={
+                "code": "700",
+                "responsible": "Admin Name",
+                "responsible_type": "operator",
+            }
+        )
         assert not form.is_valid()
         assert "responsible_operator" in form.errors
 
     @pytest.mark.django_db
     def test_responsible_type_external_requires_a_name(self, db):
-        form = CostCenterForm(data={"code": "701", "responsible_type": "external"})
+        form = CostCenterForm(
+            data={
+                "code": "701",
+                "responsible": "Admin Name",
+                "responsible_type": "external",
+            }
+        )
         assert not form.is_valid()
         assert "responsible_contact_name" in form.errors
 
@@ -296,6 +313,7 @@ class TestCostCenterFormSimplified:
         form = CostCenterForm(
             data={
                 "code": "702",
+                "responsible": "Admin Name",
                 "responsible_type": "operator",
                 "responsible_operator": operator.pk,
                 "responsible_contact_name": "stale",
@@ -307,6 +325,45 @@ class TestCostCenterFormSimplified:
         assert cc.responsible_operator_id == operator.pk
         assert cc.responsible_contact_name == ""
         assert cc.responsible_contact_email == ""
+
+    @pytest.mark.django_db
+    def test_contract_administrator_name_is_always_required(self, db):
+        """LV-56: unlike responsible_type's own field, the administrator name
+        is not conditional on the chosen type -- every cost center must have
+        one on file, even when the day-to-day contact is an operator or
+        someone external."""
+        from apps.registry.models import Operator
+
+        operator = Operator.objects.create(employee_id="R3", full_name="Resp Op3")
+        for data in (
+            {"code": "704", "responsible_type": "administrator"},
+            {
+                "code": "705",
+                "responsible_type": "operator",
+                "responsible_operator": operator.pk,
+            },
+            {
+                "code": "706",
+                "responsible_type": "external",
+                "responsible_contact_name": "Ext Name",
+            },
+        ):
+            form = CostCenterForm(data=data)
+            assert not form.is_valid()
+            assert "responsible" in form.errors
+
+    @pytest.mark.django_db
+    def test_administrator_type_is_valid_with_only_the_administrator_name(self, db):
+        """The default type: the administrator above IS the day-to-day
+        responsible, so no extra field is needed."""
+        form = CostCenterForm(
+            data={
+                "code": "707",
+                "responsible": "Admin Name",
+                "responsible_type": "administrator",
+            }
+        )
+        assert form.is_valid(), form.errors
 
     @pytest.mark.django_db
     def test_responsible_type_initial_derived_from_instance(self, db):
@@ -503,13 +560,17 @@ class TestQualificationListGroupedByOperator:
 class TestCostCenterCodePrefix:
     @pytest.mark.django_db
     def test_form_prefixes_a_bare_number(self, db):
-        form = CostCenterForm(data={"code": "738", "name": "New CC"})
+        form = CostCenterForm(
+            data={"code": "738", "name": "New CC", "responsible": "Admin Name"}
+        )
         assert form.is_valid(), form.errors
         assert form.cleaned_data["code"] == "CC738"
 
     @pytest.mark.django_db
     def test_form_does_not_double_prefix(self, db):
-        form = CostCenterForm(data={"code": "cc738", "name": "New CC"})
+        form = CostCenterForm(
+            data={"code": "cc738", "name": "New CC", "responsible": "Admin Name"}
+        )
         assert form.is_valid(), form.errors
         assert form.cleaned_data["code"] == "CC738"
 
