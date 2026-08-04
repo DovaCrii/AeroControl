@@ -3387,6 +3387,13 @@ msgstr[1] "Revisa estos %(total)s centros de costo y marca cada uno Cumple o No 
 msgid "Search in AeroControl"
 msgstr "Buscar en AeroControl"
 
+# LV-39: estado + número condicional del permiso.
+msgid "Optional until the permission is approved."
+msgstr "Opcional hasta que el permiso esté aprobado."
+
+msgid "An approved permission needs its DGAC number."
+msgstr "Un permiso aprobado necesita su número DGAC."
+
 #~ msgid "Flight date"
 #~ msgstr "Fecha de vuelo"
 

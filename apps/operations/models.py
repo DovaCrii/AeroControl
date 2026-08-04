@@ -22,7 +22,12 @@ class FlightPermission(BaseModel):
         ("denied", _("Denied")),
         ("completed", _("Completed")),
     ]
-    permission_number = models.CharField(max_length=50, unique=True)
+    # LV-39: optional until the permit is approved, so a permit can be drafted
+    # ("requested") or recorded as "denied" before the DGAC folio exists. null
+    # (not "") so several folio-less permits don't collide on the unique index.
+    permission_number = models.CharField(
+        max_length=50, unique=True, null=True, blank=True
+    )
     operators = models.ManyToManyField(Operator, related_name="flight_permissions")
     aircraft_fleet = models.ManyToManyField(Aircraft, related_name="flight_permissions")
     cost_center = models.ForeignKey(CostCenter, on_delete=models.PROTECT)
@@ -47,7 +52,8 @@ class FlightPermission(BaseModel):
         ]
 
     def __str__(self):
-        return self.permission_number
+        # LV-39: a permit may not have its folio yet (still requested/denied).
+        return self.permission_number or f"{self.get_status_display()} · {self.purpose[:30]}"
 
     def get_absolute_url(self):
         from django.urls import reverse
