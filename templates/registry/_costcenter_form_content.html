@@ -1,0 +1,14 @@
+{% load i18n %}
+{% comment %}LV-36: cost-center modal fragment, grouped sections. Mirrors
+generic/_form_content.html (OOB modal title + HTMX post to #modal-content) but
+renders the fields via the shared grouped partial.{% endcomment %}
+{% if title %}<h5 id="generic-modal-title" class="modal-title" hx-swap-oob="true">{{ title }}</h5>{% endif %}
+<form class="form-shell" method="post" action="{{ request.path }}" {% if form.is_multipart %}enctype="multipart/form-data"{% endif %}
+      hx-post="{{ request.path }}" hx-target="#modal-content" hx-swap="innerHTML">
+  {% csrf_token %}
+  {% include "registry/_costcenter_form_fields.html" %}
+  <div class="form-actions d-flex gap-2 mt-4">
+    <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+  </div>
+</form>

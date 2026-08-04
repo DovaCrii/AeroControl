@@ -1,0 +1,26 @@
+{% load crispy_forms_tags i18n %}
+{% comment %}LV-36: the flat cost-center form grouped into labelled sections
+(Identification / Responsible / Notes). Rendered field-by-field with
+as_crispy_field so the div_id_* wrappers stay intact -- the LV-34 responsible-
+type toggle (app.js) targets #div_id_responsible / #div_id_responsible_operator
+/ #div_id_responsible_contact_name / #div_id_responsible_contact_email.
+Shared by the full-page template and the HTMX modal fragment.{% endcomment %}
+{{ form.non_field_errors }}
+{% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+<fieldset class="cc-form-section mb-4">
+  <legend class="h6 section-title mb-3">{% translate "Identification" %}</legend>
+  {{ form.code|as_crispy_field }}
+  {{ form.name|as_crispy_field }}
+</fieldset>
+<fieldset class="cc-form-section mb-4">
+  <legend class="h6 section-title mb-3">{% translate "Responsible" %}</legend>
+  {{ form.responsible_type|as_crispy_field }}
+  {{ form.responsible|as_crispy_field }}
+  {{ form.responsible_operator|as_crispy_field }}
+  {{ form.responsible_contact_name|as_crispy_field }}
+  {{ form.responsible_contact_email|as_crispy_field }}
+</fieldset>
+<fieldset class="cc-form-section mb-0">
+  <legend class="h6 section-title mb-3">{% translate "Notes" %}</legend>
+  {{ form.notes|as_crispy_field }}
+</fieldset>
