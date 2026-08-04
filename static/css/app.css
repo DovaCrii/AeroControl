@@ -1145,7 +1145,10 @@ main {
 }
 
 /* ── Calendar ─────────────────────────────────────── */
-.legacy-calendar-header { display: none !important; }
+/* LV-47: .calendar-noscript (wraps .legacy-calendar-header + .calendar-fallback)
+   is hidden by calendar.js once FullCalendar renders, not by CSS -- a static
+   `display: none` here left the no-JS fallback with no visible month title or
+   working nav in the one scenario it exists for (JS/CDN failure). */
 .calendar-shell { overflow: visible; }
 .calendar-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
 .calendar-legend { display: flex; gap: 0.85rem; flex-wrap: wrap; color: var(--ac-text-secondary); font-size: 0.78rem; }
