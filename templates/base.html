@@ -65,30 +65,26 @@
       {% with request.resolver_match.url_name as url_name %}
       <a href="{% url 'dashboard' %}" class="nav-item nav-overview {% if url_name == 'dashboard' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>{% translate "Dashboard" %}</a>
 
-      {% comment %}LV-13a (2026-07-30): sidebar regrouped by operational flow.
-      Qualifications moved here (operator master data, not planning); the legacy
-      "Resource planning" (old single Assignment model, superseded by the
-      per-resource assignments below) dropped from the nav -- route stays.
-      Compliance moved after Operations/Maintenance.{% endcomment %}
-      <span class="sidebar-label">{% translate "Master data" %}</span>
-      <a href="{% url 'costcenter-list' %}" class="nav-item nav-registry {% if url_name == 'costcenter-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V5l8-3 8 3v16"/><path d="M9 21v-4h6v4M8 8h.01M12 8h.01M16 8h.01M8 12h.01M12 12h.01M16 12h.01"/></svg>{% translate "Cost Centers" %}</a>
-      <a href="{% url 'aircraft-list' %}" class="nav-item nav-registry {% if url_name == 'aircraft-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="6" height="6" rx="2"/><path d="M9.4 9.4 6.6 6.6M14.6 9.4l2.8-2.8M9.4 14.6l-2.8 2.8M14.6 14.6l2.8 2.8"/><circle cx="4.8" cy="4.8" r="2.2"/><circle cx="19.2" cy="4.8" r="2.2"/><circle cx="4.8" cy="19.2" r="2.2"/><circle cx="19.2" cy="19.2" r="2.2"/></svg>{% translate "Aircraft" %}</a>
-      <a href="{% url 'operator-list' %}" class="nav-item nav-registry {% if url_name == 'operator-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg>{% translate "Operators" %}</a>
-      <a href="{% url 'qualification-list' %}" class="nav-item nav-registry {% if url_name == 'qualification-list' or url_name == 'qualification-detail' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="5"/><path d="M9.5 13.2 8 21l4-2.2L16 21l-1.5-7.8"/><path d="M12 6.7l.9 1.8 2 .3-1.45 1.4.35 2L12 11.3l-1.8.9.35-2L9.1 8.8l2-.3z"/></svg>{% translate "Qualifications" %}</a>
+      {% comment %}LV-61 (2026-08-04): the menu used to be ordered by data
+      model -- what you configure once (registry, assignments) sat in the top
+      two groups, and the work done every day (permissions, alerts) was buried
+      below it. Now it reads as the operational flow: the permission lifecycle
+      first, in the order it actually happens, then how it is proven, then
+      maintenance, and the registry last because it is set up once.
 
-      <span class="sidebar-label">{% translate "Planning" %}</span>
-      <a href="{% url 'operatorassignment-list' %}" class="nav-item nav-registry {% if url_name == 'operatorassignment-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg>{% translate "Operator assignments" %}</a>
-      <a href="{% url 'aircraftassignment-list' %}" class="nav-item nav-registry {% if url_name == 'aircraftassignment-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="6" height="6" rx="2"/><path d="M9.4 9.4 6.6 6.6M14.6 9.4l2.8-2.8M9.4 14.6l-2.8 2.8M14.6 14.6l2.8 2.8"/><circle cx="4.8" cy="4.8" r="2.2"/><circle cx="19.2" cy="4.8" r="2.2"/><circle cx="4.8" cy="19.2" r="2.2"/><circle cx="19.2" cy="19.2" r="2.2"/></svg>{% translate "Aircraft assignments" %}</a>
-      <a href="{% url 'resourcemovementlog-list' %}" class="nav-item nav-registry {% if url_name == 'resourcemovementlog-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>{% translate "Resource movements" %}</a>
-      <a href="{% url 'geo-plan-list' %}" class="nav-item nav-registry {% if url_name == 'geo-plan-list' or url_name == 'geo-plan-detail' or url_name == 'geo-plan-import' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2z"/><path d="M9 3v16M15 5v16"/></svg>{% translate "Geospatial planning" %}</a>
+      "Geospatial planning" moved out of the old "Planning" group -- that group
+      is about staffing a contract (an administrative act), while a KMZ is the
+      flight area of one specific permission (LV-60). It now sits right after
+      Permissions, where it belongs in the flow.
 
-      <span class="sidebar-label">{% translate "Operations" %}</span>
+      Supersedes the LV-13a grouping (2026-07-30). The legacy "Resource
+      planning" (single Assignment model, superseded by the per-resource
+      assignments) is still out of the nav; its route stays.{% endcomment %}
+      <span class="sidebar-label">{% translate "Flight" %}</span>
       <a href="{% url 'permission-list' %}" class="nav-item nav-operations {% if url_name == 'permission-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 13l2 2 4-4"/></svg>{% translate "Permissions" %}</a>
+      <a href="{% url 'geo-plan-list' %}" class="nav-item nav-operations {% if url_name == 'geo-plan-list' or url_name == 'geo-plan-detail' or url_name == 'geo-plan-import' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2z"/><path d="M9 3v16M15 5v16"/></svg>{% translate "Geospatial planning" %}</a>
       <a href="{% url 'record-list' %}" class="nav-item nav-operations {% if url_name == 'record-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H19v16H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M8 4v16M11 9h6M11 13h4"/></svg>{% translate "Flights" %}</a>
       <a href="{% url 'calendar' %}" class="nav-item nav-operations {% if url_name == 'calendar' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>{% translate "Calendar" %}</a>
-
-      <span class="sidebar-label">{% translate "Maintenance" %}</span>
-      <a href="{% url 'maintenance-list' %}" class="nav-item nav-maintenance {% if url_name == 'maintenance-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4.5" width="14" height="16.5" rx="2"/><path d="M9.5 4.5V3h5v1.5"/><path d="M8.75 13l2 2 3.5-3.5"/></svg>{% translate "Records" %}</a>
 
       <span class="sidebar-label">{% translate "Compliance" %}</span>
       {% comment %}LV-D8 (2026-08-03): la lista general de Documentos se ocultó
@@ -102,9 +98,27 @@
       <a href="{% url 'alert-list' %}" class="nav-item nav-compliance {% if url_name == 'alert-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 22h4"/></svg>{% translate "Alerts" %} {% include "core/_alert_badge.html" %}</a>
       <a href="{% url 'kanban' %}" class="nav-item nav-compliance {% if url_name == 'kanban' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 8v8M13 8v5M18 8v8"/></svg>{% translate "Action plan" %}</a>
       <a href="{% url 'compliance-report' %}" class="nav-item nav-compliance {% if url_name == 'compliance-report' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="M8 16v-4M12 16V8M16 16v-6"/></svg>{% translate "Report" %}</a>
-      <a href="{% url 'company-documents' %}" class="nav-item nav-compliance {% if url_name == 'company-documents' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>{% translate "Company documents" %}</a>
       <a href="{% url 'operational-records' %}" class="nav-item nav-compliance {% if url_name == 'operational-records' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h11l5 5v11H4z"/><path d="M8 12h8M8 16h8M8 8h4"/></svg>{% translate "Operational records" %}</a>
       <a href="{% url 'monthly-review' %}" class="nav-item nav-compliance {% if url_name == 'monthly-review' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4M9 15l2 2 4-4"/></svg>{% translate "Monthly compliance" %}</a>
+      <a href="{% url 'company-documents' %}" class="nav-item nav-compliance {% if url_name == 'company-documents' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>{% translate "Company documents" %}</a>
+
+      <span class="sidebar-label">{% translate "Maintenance" %}</span>
+      {% comment %}LV-61: was "Records", which collided with "Operational
+      records" above and with the flight records in "Flights" -- three
+      different things called the same in one menu.{% endcomment %}
+      <a href="{% url 'maintenance-list' %}" class="nav-item nav-maintenance {% if url_name == 'maintenance-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4.5" width="14" height="16.5" rx="2"/><path d="M9.5 4.5V3h5v1.5"/><path d="M8.75 13l2 2 3.5-3.5"/></svg>{% translate "Maintenance jobs" %}</a>
+
+      {% comment %}LV-61: `context` because a bare "Registry" already means the
+      eyebrow of the cost-center import page ("Registro"); as a sidebar group
+      covering the roster and its assignments it reads "Padrón".{% endcomment %}
+      <span class="sidebar-label">{% translate "Registry" context "sidebar group" %}</span>
+      <a href="{% url 'costcenter-list' %}" class="nav-item nav-registry {% if url_name == 'costcenter-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V5l8-3 8 3v16"/><path d="M9 21v-4h6v4M8 8h.01M12 8h.01M16 8h.01M8 12h.01M12 12h.01M16 12h.01"/></svg>{% translate "Cost Centers" %}</a>
+      <a href="{% url 'aircraft-list' %}" class="nav-item nav-registry {% if url_name == 'aircraft-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="6" height="6" rx="2"/><path d="M9.4 9.4 6.6 6.6M14.6 9.4l2.8-2.8M9.4 14.6l-2.8 2.8M14.6 14.6l2.8 2.8"/><circle cx="4.8" cy="4.8" r="2.2"/><circle cx="19.2" cy="4.8" r="2.2"/><circle cx="4.8" cy="19.2" r="2.2"/><circle cx="19.2" cy="19.2" r="2.2"/></svg>{% translate "Aircraft" %}</a>
+      <a href="{% url 'operator-list' %}" class="nav-item nav-registry {% if url_name == 'operator-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg>{% translate "Operators" %}</a>
+      <a href="{% url 'qualification-list' %}" class="nav-item nav-registry {% if url_name == 'qualification-list' or url_name == 'qualification-detail' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="5"/><path d="M9.5 13.2 8 21l4-2.2L16 21l-1.5-7.8"/><path d="M12 6.7l.9 1.8 2 .3-1.45 1.4.35 2L12 11.3l-1.8.9.35-2L9.1 8.8l2-.3z"/></svg>{% translate "Qualifications" %}</a>
+      <a href="{% url 'operatorassignment-list' %}" class="nav-item nav-registry {% if url_name == 'operatorassignment-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg>{% translate "Operator assignments" %}</a>
+      <a href="{% url 'aircraftassignment-list' %}" class="nav-item nav-registry {% if url_name == 'aircraftassignment-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="6" height="6" rx="2"/><path d="M9.4 9.4 6.6 6.6M14.6 9.4l2.8-2.8M9.4 14.6l-2.8 2.8M14.6 14.6l2.8 2.8"/><circle cx="4.8" cy="4.8" r="2.2"/><circle cx="19.2" cy="4.8" r="2.2"/><circle cx="4.8" cy="19.2" r="2.2"/><circle cx="19.2" cy="19.2" r="2.2"/></svg>{% translate "Aircraft assignments" %}</a>
+      <a href="{% url 'resourcemovementlog-list' %}" class="nav-item nav-registry {% if url_name == 'resourcemovementlog-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>{% translate "Resource movements" %}</a>
 
       <hr>
       {% comment %}Gated by the same view_* permissions the page itself checks

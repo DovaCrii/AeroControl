@@ -6,18 +6,28 @@
 > desplegados en la VM**; LV-58 y LV-62 aún no; LV-59/60/61 son propuestas de
 > diseño anotadas, sin implementar).
 
-## Propuestas de diseño pendientes (LV-59/60/61) — capturas primero, sin implementar
-El usuario pidió dejar anotadas 3 mejoras de diseño, ninguna implementada aún
-(faltan capturas/detalle o una decisión de alcance antes de tocar código):
-- **LV-59**: revisar metodología/diseño del módulo Vuelos — sin capturas aún.
-- **LV-60**: unificar Planificación geoespacial con Permisos de vuelo (hoy
-  separados pero son una sola etapa del proceso); nota concreta del usuario:
-  molesta pedir un **nuevo título** al importar un KMZ cuando ya se vincula a
-  un permiso que ya tiene identidad propia.
-- **LV-61**: reagrupar el menú lateral según el flujo real de uso, no solo la
-  estructura de datos (continúa LV-13a).
+## El ciclo de vida del permiso — el hilo que une LV-59/60/61
+Diseño hecho con **Opus 5** el 2026-08-04. El hallazgo de fondo: AeroControl
+tiene **un** proceso (solicitar permiso → adjuntar documentos + plan KMZ →
+aprobar → volar → registrar → cumplimiento mensual) repartido en módulos que
+no sabían que eran uno solo. La ficha del permiso ya era de hecho el centro de
+ese ciclo (tiene documentos, planes, registros de vuelo e historial), pero el
+menú y los formularios lo trataban como piezas sueltas.
 
-Ver el detalle completo de cada una en sus filas de `MASTER_PLAN.md`.
+- **LV-60 ✅**: importar un KMZ contra un permiso ya no pide título ni centro
+  de costo (se heredan). De paso se cerró un agujero de integridad: un plan
+  podía quedar en un CC distinto al del permiso que dice cubrir.
+- **LV-61 ✅**: el menú pasó de estar ordenado por modelo de datos a estar
+  ordenado por flujo — VUELO (el ciclo en orden) · CUMPLIMIENTO ·
+  MANTENIMIENTO · PADRÓN (lo que se configura una vez, al final).
+- **LV-59 ⬜**: queda abierta, pero **ya con diagnóstico** (no "faltan
+  capturas"): la lista de Vuelos es la única del área sin columnas propias, la
+  duración del vuelo se guarda pero nunca se calcula, y un `FlightRecord`
+  siempre cuelga de un permiso aunque el módulo lo presente como
+  independiente. Hay 3 propuestas concretas en su fila; falta que el usuario
+  elija alcance.
+
+Ver el detalle completo en las filas LV-59/60/61 de `MASTER_PLAN.md`.
 
 ## LV-62 — 6 títulos de lista en inglés/mal capitalizados, corregidos
 El usuario notó "Flight Records" en inglés; pedido de paso "buscar traducir lo

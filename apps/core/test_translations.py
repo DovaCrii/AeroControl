@@ -41,7 +41,13 @@ def _unescape(value):
 
 
 def _entries():
-    """Yield (msgid, msgstr, is_fuzzy) for every entry in the catalog."""
+    """Yield (msgctxt, msgid, msgstr, is_fuzzy) for every entry in the catalog.
+
+    The context matters: gettext keys entries on the (msgctxt, msgid) pair, so
+    the same source literal may legitimately appear twice under different
+    contexts -- which is the point of `{% translate "X" context "..." %}`.
+    Reading only the msgid made such a pair look like a duplicate.
+    """
     text = PO_PATH.read_text(encoding="utf-8")
     for block in re.split(r"\n\s*\n", text):
         ids = re.findall(r"(?m)^msgid ((?:" + _LITERAL_NC + r"\s*)+)", block)
@@ -53,8 +59,10 @@ def _entries():
         msgid = _unescape("".join(re.findall(_LITERAL, ids[0])))
         if not msgid:  # the header entry
             continue
+        ctxts = re.findall(r"(?m)^msgctxt ((?:" + _LITERAL_NC + r"\s*)+)", block)
+        msgctxt = _unescape("".join(re.findall(_LITERAL, ctxts[0]))) if ctxts else ""
         msgstr = _unescape("".join(re.findall(_LITERAL, strs[0])))
-        yield msgid, msgstr, "#, fuzzy" in block
+        yield msgctxt, msgid, msgstr, "#, fuzzy" in block
 
 
 def _source_strings():
@@ -83,12 +91,19 @@ def catalog():
 
 def test_catalog_has_no_duplicate_msgids(catalog):
     """msgmerge refuses to run on a catalog with duplicates, so nobody can
-    resync it until they are gone."""
+    resync it until they are gone.
+
+    Keyed on (msgctxt, msgid), which is what gettext itself considers unique:
+    the same literal under two different contexts is a legitimate pair, not a
+    duplicate (LV-61 needed one, "Registry" meaning both the import page's
+    eyebrow and the sidebar group over the roster).
+    """
     seen, duplicated = set(), []
-    for msgid, _msgstr, _fuzzy in catalog:
-        if msgid in seen:
-            duplicated.append(msgid)
-        seen.add(msgid)
+    for msgctxt, msgid, _msgstr, _fuzzy in catalog:
+        key = (msgctxt, msgid)
+        if key in seen:
+            duplicated.append(f"{msgid!r} (context {msgctxt!r})" if msgctxt else msgid)
+        seen.add(key)
 
     assert not duplicated, f"msgid duplicados en django.po: {sorted(set(duplicated))}"
 
@@ -96,8 +111,8 @@ def test_catalog_has_no_duplicate_msgids(catalog):
 def test_every_entry_is_translated_and_not_fuzzy(catalog):
     """A fuzzy entry is as invisible as an empty one: gettext skips it and the
     string renders in English."""
-    empty = [msgid for msgid, msgstr, _ in catalog if not msgstr]
-    fuzzy = [msgid for msgid, _, is_fuzzy in catalog if is_fuzzy]
+    empty = [msgid for _, msgid, msgstr, _ in catalog if not msgstr]
+    fuzzy = [msgid for _, msgid, _, is_fuzzy in catalog if is_fuzzy]
 
     assert not empty, f"sin traducir: {empty}"
     assert not fuzzy, f"marcadas fuzzy, Django las ignora: {fuzzy}"
@@ -107,7 +122,7 @@ def test_every_translatable_string_is_in_the_catalog(catalog):
     """Catches the case that started this: `_("Document types")` while the
     catalog held "Document Types". gettext keys are exact, so the lookup missed
     and the English source was displayed."""
-    msgids = {msgid for msgid, _, _ in catalog}
+    msgids = {msgid for _, msgid, _, _ in catalog}
     lower = {msgid.lower(): msgid for msgid in msgids}
 
     missing, case_only = [], []
