@@ -82,6 +82,8 @@
     if (event.detail.target.id !== 'modal-content') return;
     var modal = document.getElementById('generic-modal');
     bootstrap.Modal.getOrCreateInstance(modal).show();
+    // LV-34: apply the responsible-type toggle to a form just loaded into the modal.
+    if (window.initResponsibleType) window.initResponsibleType();
     // A validation re-render swaps the content of an already-open modal, so
     // shown.bs.modal never fires again: the errors appeared with no focus and
     // no announcement. Focus the first invalid field when there is one.
@@ -150,4 +152,36 @@
     );
     if (tabTrigger) bootstrap.Tab.getOrCreateInstance(tabTrigger).show();
   }
+
+  // LV-34: the cost-center "responsible type" picker shows only the field its
+  // choice uses (administrator name / operator / external contact). Delegated
+  // so it works on the full page and inside the HTMX modal alike.
+  function applyResponsibleType(select) {
+    var groups = {
+      administrator: ['div_id_responsible'],
+      operator: ['div_id_responsible_operator'],
+      external: ['div_id_responsible_contact_name', 'div_id_responsible_contact_email'],
+    };
+    var all = [
+      'div_id_responsible',
+      'div_id_responsible_operator',
+      'div_id_responsible_contact_name',
+      'div_id_responsible_contact_email',
+    ];
+    var show = groups[select.value] || [];
+    all.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.style.display = show.indexOf(id) >= 0 ? '' : 'none';
+    });
+  }
+  window.initResponsibleType = function () {
+    var select = document.getElementById('id_responsible_type');
+    if (select) applyResponsibleType(select);
+  };
+  document.body.addEventListener('change', function (event) {
+    if (event.target && event.target.id === 'id_responsible_type') {
+      applyResponsibleType(event.target);
+    }
+  });
+  window.initResponsibleType();
 })();

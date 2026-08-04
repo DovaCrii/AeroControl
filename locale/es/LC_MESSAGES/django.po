@@ -3394,6 +3394,25 @@ msgstr "Opcional hasta que el permiso esté aprobado."
 msgid "An approved permission needs its DGAC number."
 msgstr "Un permiso aprobado necesita su número DGAC."
 
+# LV-34: responsable del centro de costo por tipo.
+msgid "Responsible type"
+msgstr "Tipo de responsable"
+
+msgid "Administrator"
+msgstr "Administrador"
+
+msgid "External contact"
+msgstr "Contacto externo"
+
+msgid "Who is in charge: the contract administrator, an operator from the roster, or an external contact."
+msgstr "Quién está a cargo: el administrador de contrato, un operador del padrón o un contacto externo."
+
+msgid "Select the responsible operator."
+msgstr "Selecciona el operador responsable."
+
+msgid "Enter the external contact name."
+msgstr "Ingresa el nombre del contacto externo."
+
 #~ msgid "Flight date"
 #~ msgstr "Fecha de vuelo"
 

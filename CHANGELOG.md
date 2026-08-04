@@ -26,6 +26,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   `.po` hay que recompilarlo (con `polib`, la VM no tiene `gettext`).
 
 ### Changed
+- **Responsable del centro de costo por tipo (LV-34).** Un selector
+  **Administrador / Operador / Contacto externo** muestra solo el campo que
+  corresponde (y limpia los demás), en vez de tres campos paralelos que había
+  que saber cuál llenar.
 - **Formulario de permiso de vuelo más práctico (LV-38/LV-39).** Los operadores
   (~40) y la flota (~14) se muestran en una **grilla de varias columnas con
   scroll** en vez de una lista vertical larga (mantiene la selección múltiple), y
