@@ -2392,6 +2392,31 @@ msgstr "No se encontraron registros."
 msgid "Flight Record"
 msgstr "Registro de vuelo"
 
+msgid "Flight Records"
+msgstr "Registros de vuelo"
+
+#: title-case variants below are what OList/WList/MList/ComplianceList
+#: actually look up (verbose_name(_plural).title() gets translated a second
+#: time) -- found via a full audit of every list page's rendered <h1> after
+#: the user spotted "Flight Records" in an otherwise-Spanish screen.
+msgid "Alert Rules"
+msgstr "Reglas de alerta"
+
+msgid "Document Types"
+msgstr "Tipos de documento"
+
+msgid "Kanban Boards"
+msgstr "Tableros"
+
+msgid "Kanban Labels"
+msgstr "Etiquetas"
+
+msgid "Registros De Mantenimiento"
+msgstr "Registros de mantenimiento"
+
+msgid "Tipos De Habilitación"
+msgstr "Tipos de habilitación"
+
 #: .\templates\operations\flightrecord_detail.html:5
 msgid "Archive this flight record?"
 msgstr "¿Archivar este registro de vuelo?"
