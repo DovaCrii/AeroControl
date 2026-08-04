@@ -12,7 +12,7 @@ from django.utils import timezone
 
 from apps.core.exports import neutralize
 from apps.core.models import JobRun
-from apps.registry.models import Aircraft, CostCenter
+from apps.registry.models import Aircraft, CostCenter, Operator
 from .models import Alert, AlertRule, Document, DocumentType
 from .reports import build_compliance_report
 
@@ -76,6 +76,53 @@ def test_report_can_be_filtered_by_document_type(world):
     report = build_compliance_report(doc_type=other_type)
 
     assert report["totals"]["total"] == 0
+
+
+@pytest.mark.django_db
+def test_report_includes_vigencias_alongside_documents(world):
+    """LV-49: DGAC vigencias already drive real alerts (LV-29) but were never
+    reflected in this report, which read 0/0.0% even with open vigencia alerts."""
+    world["aircraft"].insurance_expiry = TODAY + timedelta(days=3)
+    world["aircraft"].save(update_fields=["insurance_expiry"])
+    Operator.objects.create(
+        employee_id="OP-1",
+        full_name="Pilot One",
+        cost_center=world["cost_center"],
+        credential_expiry=TODAY - timedelta(days=1),
+    )
+
+    report = build_compliance_report()
+
+    totals = report["totals"]
+    # 5 documents (world fixture) + 2 vigencias (1 due_7, 1 expired)
+    assert totals["total"] == 7
+    assert totals["expired"] == 2
+    assert totals["due_7"] == 2
+
+
+@pytest.mark.django_db
+def test_report_excludes_vigencias_when_filtered_by_document_type(world):
+    """Vigencias have no doc_type -- filtering by one should not silently
+    pull them back into a narrower view than the filter implies."""
+    world["aircraft"].insurance_expiry = TODAY + timedelta(days=3)
+    world["aircraft"].save(update_fields=["insurance_expiry"])
+
+    report = build_compliance_report(doc_type=world["doc_type"])
+
+    assert report["totals"]["total"] == 5
+
+
+@pytest.mark.django_db
+def test_report_does_not_count_an_unset_vigencia_as_valid(world):
+    """Unlike Document.expiry_date (null = never expires, counts as valid),
+    a null vigencia means the value was never entered -- it should not count
+    at all, matching what generate_alerts already does with these fields."""
+    assert world["aircraft"].insurance_expiry is None
+
+    report = build_compliance_report()
+
+    # Same 5 as the plain document count -- the aircraft's unset vigencia adds nothing
+    assert report["totals"]["total"] == 5
 
 
 @pytest.mark.django_db
