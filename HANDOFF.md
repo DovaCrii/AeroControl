@@ -2,7 +2,8 @@
 
 > Punto de retome entre ventanas/sesiones. La **fuente de verdad del trabajo
 > pendiente** es [MASTER_PLAN.md](MASTER_PLAN.md); esto es el resumen de estado.
-> Última actualización: **2026-08-04** (3ª tanda LV-44..54, ninguna en la VM aún).
+> Última actualización: **2026-08-04** (3ª tanda LV-44..54 **ya desplegada en
+> la VM**; LV-55 nuevo, aún NO desplegado).
 
 ## Worktrees en background — estado 2026-08-04 (leer antes de tocar)
 Hay 3 worktrees bajo `.claude/worktrees/`, de sesiones en segundo plano que el
@@ -159,22 +160,28 @@ ventana, todos **implementados y en `main`** (commits `a8a0d7d`, `3de71c8`,
   corregida en `MASTER_PLAN.md` una fila desactualizada (LV-23, ya resuelta
   vía LV-38 desde 2026-08-03 pero seguía marcada abierta).
 
-**Pendiente: 3er deploy consolidado** (trae `registry 0022`+`0023` + CSS/JS
-del calendario + plantillas nuevas (permisos, geo, calendario, workboard) +
-`.mo` recompilado): mismo patrón que las veces anteriores —
-```bash
-cd /opt/aerocontrol && git pull --ff-only && uv sync --frozen
-```
-seguido de (recordar `source <(sudo cat /etc/aerocontrol.env)`, no `. …`):
-```bash
-cd /opt/aerocontrol && set -a && source <(sudo cat /etc/aerocontrol.env) && set +a && uv run python manage.py migrate --no-input && uv run python manage.py collectstatic --no-input && sudo systemctl restart aerocontrol
-```
-Sin timers ni tableros nuevos que activar en esta tanda (LV-45's `init_dgac_board`
-ya se corrió). Suite local **637/637 verde** (corrida completa 2026-08-04,
-última corrida tras LV-53 — incluye el fixup de LV-44 y las 262+ tests de
-operations/geo/registry/maintenance/compliance que cubren el cambio aditivo
-de `generic/list.html`). Nada verificado aún
-en la VM salvo LV-45.
+**3er deploy consolidado: HECHO 2026-08-04** (commit en VM = `da42d9f`, por SSH
+con el usuario, sin sudo el `git pull`/`uv sync`, con sudo el resto): `git pull
+--ff-only` (fast-forward `2c7ad1b..da42d9f`) + `uv sync --frozen` + `migrate
+--no-input` (`registry 0022`+`0023` aplicadas OK) + `collectstatic --no-input`
+(2 nuevos, 366 post-procesados) + `sudo systemctl restart aerocontrol`.
+Verificado: `systemctl status` activo desde el restart, `journalctl` sin
+errores y con tráfico real (`request_complete`) fluyendo con normalidad
+después del reinicio; y confirmado visualmente entrando a
+`https://p340.tailccd107.ts.net/workboard/` — el tablero "Seguimiento de
+alertas" (LV-48) carga bien en producción con alertas reales cruzadas. Trae
+`registry 0022`+`0023`, CSS/JS del calendario, plantillas nuevas (permisos,
+geo, calendario, workboard) y el `.mo` recompilado. Sin timers ni tableros
+nuevos que activar en esta tanda (LV-45's `init_dgac_board` ya se había
+corrido antes). Suite local **639/639 verde**.
+
+**Pendiente: deploy de LV-55** (posterior al 3er deploy, aún no en la VM):
+enlace de "Seguimiento de alertas" en el sidebar (bajo Alertas) + quitada la
+pestaña "Vista de calendario" del tablero. Solo plantillas
+(`templates/base.html`, `templates/workboard/kanban.html`), sin migración —
+el mismo `git pull --ff-only && uv sync --frozen` + `collectstatic` +
+`restart` de siempre, sin paso de `migrate` necesario mas no hace daño
+correrlo.
 
 ## Estado de producción (VM `p340`)
 - **Desplegado el batch LV-29..32 + la pasada de diseño (commit `6640f66`) el
