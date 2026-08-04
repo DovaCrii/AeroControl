@@ -272,6 +272,12 @@ def make_views(model, form, prefix):
 _CostCenterAutoList, _CostCenterAutoDetail, CostCenterCreate, CostCenterUpdate = (
     make_views(CostCenter, CostCenterForm, "CostCenter")
 )
+# LV-36: the cost-center form is grouped into labelled sections (Identification
+# / Responsible / Notes) instead of one flat list. Both entry points are
+# covered: full page (Edit from the detail) and HTMX modal (Edit from the list).
+for _cc_view in (CostCenterCreate, CostCenterUpdate):
+    _cc_view.template_name = "registry/costcenter_form.html"
+    _cc_view.htmx_template_name = "registry/_costcenter_form_content.html"
 
 
 class CostCenterDetail(RegistryDetail):

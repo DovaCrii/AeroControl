@@ -764,6 +764,10 @@ msgstr "Registro de vuelo archivado."
 msgid "Code"
 msgstr "Código"
 
+#: .\templates\registry\_costcenter_form_fields.html
+msgid "Identification"
+msgstr "Identificación"
+
 #: .\apps\registry\forms.py:30
 msgid "Responsible"
 msgstr "Responsable"
@@ -3412,9 +3416,6 @@ msgstr "Selecciona el operador responsable."
 
 msgid "Enter the external contact name."
 msgstr "Ingresa el nombre del contacto externo."
-
-#~ msgid "Flight date"
-#~ msgstr "Fecha de vuelo"
 
 #~ msgid ""
 #~ "The interactive map editor is on its way. For now this page shows the "
