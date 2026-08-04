@@ -276,6 +276,48 @@ class TestCostCenterFormSimplified:
         assert cc.name == "Levantamientos digital"
 
     @pytest.mark.django_db
+    def test_responsible_type_operator_requires_an_operator(self, db):
+        # LV-34: choosing "operator" but selecting none is flagged.
+        form = CostCenterForm(data={"code": "700", "responsible_type": "operator"})
+        assert not form.is_valid()
+        assert "responsible_operator" in form.errors
+
+    @pytest.mark.django_db
+    def test_responsible_type_external_requires_a_name(self, db):
+        form = CostCenterForm(data={"code": "701", "responsible_type": "external"})
+        assert not form.is_valid()
+        assert "responsible_contact_name" in form.errors
+
+    @pytest.mark.django_db
+    def test_responsible_type_operator_clears_stale_external_fields(self, db):
+        from apps.registry.models import Operator
+
+        operator = Operator.objects.create(employee_id="R1", full_name="Resp Op")
+        form = CostCenterForm(
+            data={
+                "code": "702",
+                "responsible_type": "operator",
+                "responsible_operator": operator.pk,
+                "responsible_contact_name": "stale",
+                "responsible_contact_email": "stale@x.cl",
+            }
+        )
+        assert form.is_valid(), form.errors
+        cc = form.save()
+        assert cc.responsible_operator_id == operator.pk
+        assert cc.responsible_contact_name == ""
+        assert cc.responsible_contact_email == ""
+
+    @pytest.mark.django_db
+    def test_responsible_type_initial_derived_from_instance(self, db):
+        from apps.registry.models import Operator
+
+        operator = Operator.objects.create(employee_id="R2", full_name="Resp Op2")
+        cc = CostCenter.objects.create(code="CC703", responsible_operator=operator)
+        form = CostCenterForm(instance=cc)
+        assert form.fields["responsible_type"].initial == "operator"
+
+    @pytest.mark.django_db
     def test_cost_center_list_shows_a_notes_column(self, admin_client):
         CostCenter.objects.create(code="CC1", name="One", notes="Nota visible")
         response = admin_client.get(reverse("costcenter-list"))

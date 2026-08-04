@@ -16,6 +16,35 @@ from .models import (
 
 
 class CostCenterForm(AeroModelForm):
+    # LV-34: one "responsible type" picker instead of three parallel fields the
+    # user had to know which to fill. It drives which field shows (JS in app.js)
+    # and which the form validates/keeps: administrator = the contract admin
+    # name; operator = someone from the roster; external = a name + email.
+    RESPONSIBLE_TYPES = [
+        ("administrator", _("Administrator")),
+        ("operator", _("Operator")),
+        ("external", _("External contact")),
+    ]
+    responsible_type = forms.ChoiceField(
+        choices=RESPONSIBLE_TYPES,
+        label=_("Responsible type"),
+        required=False,
+        help_text=_(
+            "Who is in charge: the contract administrator, an operator from the "
+            "roster, or an external contact."
+        ),
+    )
+    field_order = [
+        "code",
+        "name",
+        "responsible_type",
+        "responsible",
+        "responsible_operator",
+        "responsible_contact_name",
+        "responsible_contact_email",
+        "notes",
+    ]
+
     class Meta:
         model = CostCenter
         # LV-16 dropped "Nombre" from the form; LV-19 brought it back as an
@@ -56,6 +85,51 @@ class CostCenterForm(AeroModelForm):
             # clean_code so the stored value is always CC<number>.
             "code": _("Enter the number only; the CC prefix is added automatically."),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # The three responsible fields are required conditionally (see clean),
+        # not always -- only the one the chosen type uses.
+        for name in (
+            "responsible",
+            "responsible_operator",
+            "responsible_contact_name",
+            "responsible_contact_email",
+        ):
+            self.fields[name].required = False
+        # Preselect the type from the saved data when editing.
+        if not self.is_bound and not self.fields["responsible_type"].initial:
+            instance = self.instance
+            if getattr(instance, "responsible_operator_id", None):
+                self.fields["responsible_type"].initial = "operator"
+            elif instance.responsible_contact_name or instance.responsible_contact_email:
+                self.fields["responsible_type"].initial = "external"
+            else:
+                self.fields["responsible_type"].initial = "administrator"
+
+    def clean(self):
+        """LV-34: require only the field the chosen type uses, and clear the
+        others so a switch of type never leaves stale data behind."""
+        cleaned = super().clean()
+        rtype = cleaned.get("responsible_type")
+        if rtype == "operator":
+            if not cleaned.get("responsible_operator"):
+                self.add_error(
+                    "responsible_operator", _("Select the responsible operator.")
+                )
+            cleaned["responsible_contact_name"] = ""
+            cleaned["responsible_contact_email"] = ""
+        elif rtype == "external":
+            if not cleaned.get("responsible_contact_name"):
+                self.add_error(
+                    "responsible_contact_name", _("Enter the external contact name.")
+                )
+            cleaned["responsible_operator"] = None
+        else:  # administrator (or unset): the admin name is optional (as before)
+            cleaned["responsible_operator"] = None
+            cleaned["responsible_contact_name"] = ""
+            cleaned["responsible_contact_email"] = ""
+        return cleaned
 
     def clean_code(self):
         """LV-10a: every cost-center code carries a fixed 'CC' prefix.
