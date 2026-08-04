@@ -7,6 +7,7 @@
 # Example:
 #   ./scripts/schedule_tasks.ps1 -EnvFile "C:\AeroControl_Data\.env"
 #   ./scripts/schedule_tasks.ps1 -AlertsAt "06:30" -DigestAt "07:15" -BackupAt "22:00"
+#   ./scripts/schedule_tasks.ps1 -WithCredentialNotice   # enable the optional LV-29 job
 #   ./scripts/schedule_tasks.ps1 -Unregister
 param(
     [ValidatePattern("^([01][0-9]|2[0-3]):[0-5][0-9]$")]
@@ -20,6 +21,15 @@ param(
     [string]$ExecutiveReportAt = "07:30",
     [ValidateSet("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")]
     [string]$ExecutiveReportDay = "Monday",
+    # Month-end compliance close (LV-30). Runs daily and self-guards to the last
+    # day of the month, so the time only sets when it fires that day.
+    [ValidatePattern("^([01][0-9]|2[0-3]):[0-5][0-9]$")]
+    [string]$MonthlyRecordsAt = "23:30",
+    # Optional per-operator expiry notice (LV-29). Off by default; enable with
+    # -WithCredentialNotice. -Unregister always removes it regardless.
+    [ValidatePattern("^([01][0-9]|2[0-3]):[0-5][0-9]$")]
+    [string]$CredentialNoticeAt = "07:30",
+    [switch]$WithCredentialNotice,
     [string]$TaskPrefix = "AeroControl",
     # Optional .env consumed by the scheduled run. Scheduled tasks do not
     # inherit your interactive shell, so without this the jobs fall back to the
@@ -48,6 +58,11 @@ $jobs = @(
     @{ Name = "ExecutiveReport"; Command = "send_executive_report"
        At = $ExecutiveReportAt; Weekly = $ExecutiveReportDay
        Description = "Email the weekly executive compliance report" }
+    @{ Name = "MonthlyRecords"; Command = "check_monthly_records"; At = $MonthlyRecordsAt; Weekly = $null
+       Description = "Month-end compliance reviews (daily; acts only on the last day of the month)" }
+    @{ Name = "CredentialNotice"; Command = "notify_expiring_credentials"; At = $CredentialNoticeAt; Weekly = $null
+       Optional = $true
+       Description = "Email each operator their DGAC expiries (<=30 days)" }
 )
 
 foreach ($job in $jobs) {
@@ -58,6 +73,12 @@ foreach ($job in $jobs) {
             Unregister-ScheduledTask -TaskName $taskName -Confirm:$false
             Write-Host "Removed scheduled task: $taskName"
         }
+        continue
+    }
+
+    # Optional jobs (LV-29 credential notice) stay off unless explicitly asked.
+    if ($job.Optional -and -not $WithCredentialNotice) {
+        Write-Host "Skipping optional task: $taskName (enable with -WithCredentialNotice)"
         continue
     }
 
