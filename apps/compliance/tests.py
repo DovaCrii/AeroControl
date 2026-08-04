@@ -311,6 +311,29 @@ def test_seed_alert_rules_with_optional_adds_qualification_and_maintenance():
 
 
 @pytest.mark.django_db
+def test_document_create_success_url_returns_to_fiche():
+    """LV-40: uploading a document returns to its entity's fiche (Documents tab),
+    not the general document list (which is off the menu, LV-D8)."""
+    from apps.compliance.views import DocumentCreate
+
+    cc = CostCenter.objects.create(code="RET", name="Return")
+    doc_type = DocumentType.objects.create(code="ret-doc", name="Doc")
+    doc = Document.objects.create(
+        content_type=ContentType.objects.get_for_model(CostCenter),
+        object_id=cc.pk,
+        doc_type=doc_type,
+        title="D",
+        issue_date=date(2026, 1, 1),
+        file_path="x",
+    )
+    view = DocumentCreate()
+    view.object = doc
+    assert view.get_success_url() == (
+        f"{reverse('costcenter-detail', args=[cc.pk])}#tab-documents"
+    )
+
+
+@pytest.mark.django_db
 def test_check_digest_recipients_classifies_reachable_and_missing():
     """The readiness report mirrors CostCenter.notification_email and explains
     why a cost center has no reachable digest recipient."""

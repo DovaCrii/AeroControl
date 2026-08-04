@@ -275,6 +275,35 @@ class DocumentCreate(ComplianceCreate):
                 initial[field] = value
         return initial
 
+    def get_success_url(self):
+        """LV-40: return to the entity's own fiche (its Documents tab), not the
+        general document list -- which is off the menu (LV-D8) and left the user
+        stranded after uploading from a fiche."""
+        from django.urls import NoReverseMatch
+
+        obj = self.object
+        content_type = obj.content_type
+        key = f"{content_type.app_label}.{content_type.model}"
+        if key == "core.operationaltenant":
+            return reverse("company-documents")
+        detail_name = {
+            "registry.costcenter": "costcenter-detail",
+            "registry.aircraft": "aircraft-detail",
+            "registry.operator": "operator-detail",
+            "operations.flightpermission": "permission-detail",
+        }.get(key)
+        if detail_name:
+            try:
+                return f"{reverse(detail_name, args=[obj.object_id])}#tab-documents"
+            except NoReverseMatch:
+                pass
+        # Operational records live in their own repository; everything else that
+        # is left falls back to the company documents view rather than the
+        # unlisted general document list.
+        if obj.doc_type.is_operational_record:
+            return reverse("operational-records")
+        return reverse("company-documents")
+
     def form_valid(self, form):
         with uploaded_file_cleanup() as stored:
             with transaction.atomic():

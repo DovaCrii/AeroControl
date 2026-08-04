@@ -9,6 +9,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 ## [Unreleased]
 
 ### Fixed
+- **Cargar un documento desde una ficha te sacaba de ella.** Subir un documento
+  desde un centro de costo (u operador/aeronave/permiso) redirigía a la lista
+  general de Documentos —que además ya no está en el menú—; ahora vuelve a la
+  **ficha de origen, a su pestaña Documentos**.
 - **Contraste malo de las pastillas en tema claro y oscuro.** Las clases
   `*-subtle` de Bootstrap traen `!important` y colores que no siguen el tema de
   la app, así que muchas etiquetas (chips de habilitaciones, tipos de entidad,
