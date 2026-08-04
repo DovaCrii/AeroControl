@@ -45,12 +45,16 @@ class CostCenter(BaseModel):
     # verbose_name matches the form's labels (registry/forms.py CostCenterForm)
     # so the detail page and the edit form read the same -- Django's
     # auto-derived label ("Responsible contact name") has no catalog entry and
-    # rendered in English on the detail page otherwise.
+    # rendered in English on the detail page otherwise. Case must match the
+    # catalog msgid exactly ("External contact name"/"...email", already used
+    # by the form) -- translate_field_label() only re-cases+relooks-up a miss,
+    # so a source literal that only near-matches (wrong case) passes the
+    # detail page by accident but fails test_translations' exact-match guard.
     responsible_contact_name = models.CharField(
-        max_length=150, blank=True, verbose_name=_("external contact name")
+        max_length=150, blank=True, verbose_name=_("External contact name")
     )
     responsible_contact_email = models.EmailField(
-        blank=True, verbose_name=_("external contact email")
+        blank=True, verbose_name=_("External contact email")
     )
 
     def __str__(self):

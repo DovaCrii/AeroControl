@@ -13,11 +13,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='costcenter',
             name='responsible_contact_email',
-            field=models.EmailField(blank=True, max_length=254, verbose_name='external contact email'),
+            field=models.EmailField(blank=True, max_length=254, verbose_name='External contact email'),
         ),
         migrations.AlterField(
             model_name='costcenter',
             name='responsible_contact_name',
-            field=models.CharField(blank=True, max_length=150, verbose_name='external contact name'),
+            field=models.CharField(blank=True, max_length=150, verbose_name='External contact name'),
         ),
     ]

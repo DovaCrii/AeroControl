@@ -748,7 +748,7 @@ class TestChapter1DocxImport:
             ("alert-list", "Alertas"),
             ("maintenance-list", "Mantenimiento"),
             ("calendar", "Calendario"),
-            ("kanban", "Tablero Kanban"),
+            ("kanban", "Seguimiento de alertas"),
         ],
     )
     def test_specific_modules_keep_spanish_labels(
