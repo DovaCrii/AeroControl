@@ -1013,29 +1013,31 @@ main {
   border: 1px solid transparent;
   vertical-align: baseline;
 }
-/* Subtle pills: give the pill real body (a fill tinted with its own family
-   colour) plus a defined outline, so it reads as a pill on light and dark alike
-   instead of dissolving into the panel. Colour comes from the text, so every
-   family stays on-brand and the same rule works in both themes. */
+/* LV-D10: own pill palette. Bootstrap's *-subtle utilities ship with !important
+   and colours that do NOT follow our data-theme, so contrast failed in one mode
+   or the other. Each family gets an explicit fill/border/text per theme, all
+   picked for AA text-on-fill contrast, overriding Bootstrap with a two-class
+   selector + !important. The 1px transparent border from .badge above is what
+   these border-colours paint. */
 .badge[class*="-subtle"] {
-  background-color: color-mix(in srgb, currentColor 24%, var(--ac-surface-raised));
-  border-color: color-mix(in srgb, currentColor 78%, transparent);
   font-weight: 650;
 }
-/* LV-D9/D10: the neutral "entity type" pills (secondary) need an explicit colour
-   in BOTH themes -- Bootstrap's secondary-subtle read grey-heavy in light and
-   dim in dark. A soft near-white fill with dark-blue text in light, and a
-   dark-blue fill with light text in dark, both with a defined outline. */
-.badge.bg-secondary-subtle {
-  background-color: #eceff4 !important;
-  border-color: #c4ccd8;
-  color: #384252 !important;
-}
-[data-theme="dark"] .badge.bg-secondary-subtle {
-  background-color: #2b3749 !important;
-  border-color: #46566d;
-  color: #d5deea !important;
-}
+/* Light theme */
+.badge.bg-primary-subtle   { background-color: #e7efff !important; border-color: #a9c7f5; color: #1b4f9c !important; }
+.badge.bg-success-subtle   { background-color: #e4f6ea !important; border-color: #a7d9b8; color: #1f7a43 !important; }
+.badge.bg-info-subtle      { background-color: #e0f4f8 !important; border-color: #9fd6e2; color: #14707f !important; }
+.badge.bg-warning-subtle   { background-color: #fdf1dc !important; border-color: #ecc98a; color: #8a5a12 !important; }
+.badge.bg-danger-subtle    { background-color: #fce4e6 !important; border-color: #f0b0b6; color: #a52834 !important; }
+.badge.bg-secondary-subtle { background-color: #eceff4 !important; border-color: #c4ccd8; color: #384252 !important; }
+.badge.bg-dark-subtle      { background-color: #e9ebee !important; border-color: #c2c7cf; color: #343a42 !important; }
+/* Dark theme */
+[data-theme="dark"] .badge.bg-primary-subtle   { background-color: #17304d !important; border-color: #2f5c93; color: #9cc3ff !important; }
+[data-theme="dark"] .badge.bg-success-subtle   { background-color: #14361f !important; border-color: #2c6b40; color: #7fd6a0 !important; }
+[data-theme="dark"] .badge.bg-info-subtle      { background-color: #123a42 !important; border-color: #2a6b78; color: #79d6e6 !important; }
+[data-theme="dark"] .badge.bg-warning-subtle   { background-color: #3d2f14 !important; border-color: #7a5f26; color: #e6c079 !important; }
+[data-theme="dark"] .badge.bg-danger-subtle    { background-color: #3d1a1e !important; border-color: #7a343c; color: #f0a0a8 !important; }
+[data-theme="dark"] .badge.bg-secondary-subtle { background-color: #2b3749 !important; border-color: #46566d; color: #d5deea !important; }
+[data-theme="dark"] .badge.bg-dark-subtle      { background-color: #2a3038 !important; border-color: #4a525c; color: #cfd5dd !important; }
 /* The sidebar alert count keeps its own compact sizing (set earlier); don't let
    the generic bump enlarge it. */
 .sidebar a .badge { font-size: 0.72rem; padding: 0.2em 0.5em; }

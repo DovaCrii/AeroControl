@@ -9,11 +9,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 ## [Unreleased]
 
 ### Fixed
-- **Etiquetas de tipo de entidad (Operador/Aeronave/Seguro JAC…) oscuras en tema
-  claro.** Bootstrap aplica `bg-secondary-subtle`/`text-secondary-emphasis` con
-  `!important`, así que la pastilla neutra quedaba con fondo casi negro en claro.
-  Se fija su color explícito por tema (fondo casi blanco + texto azul oscuro en
-  claro; fondo azul oscuro + texto claro en oscuro), legible en ambos.
+- **Contraste malo de las pastillas en tema claro y oscuro.** Las clases
+  `*-subtle` de Bootstrap traen `!important` y colores que no siguen el tema de
+  la app, así que muchas etiquetas (chips de habilitaciones, tipos de entidad,
+  estados) fallaban de contraste en uno u otro modo. Se define una **paleta de
+  pastillas propia por familia** (azul/verde/cian/ámbar/rojo/gris) con tonos
+  elegidos para leer bien —contraste AA texto/fondo— en **ambos temas**.
 - **Textos que salían en inglés en producción.** El catálogo compilado
   (`django.mo`) estaba desfasado del `.po` y el despliegue no lo recompila, así
   que los textos nuevos (registros operacionales, cumplimiento mensual,
