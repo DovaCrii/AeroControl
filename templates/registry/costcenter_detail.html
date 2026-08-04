@@ -18,7 +18,7 @@
 
   <ul class="nav nav-tabs mb-3" role="tablist">
     <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-summary" type="button" role="tab">{% translate "Summary" %}</button></li>
-    {% if operator_assignments is not None %}<li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-team" type="button" role="tab">{% translate "Team" %}</button></li>{% endif %}
+    {% if operator_assignments is not None %}<li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-team" type="button" role="tab">{% translate "Operators" %}</button></li>{% endif %}
     {% if aircraft_assignments is not None %}<li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-fleet" type="button" role="tab">{% translate "Fleet" %}</button></li>{% endif %}
     {% if flight_permissions is not None %}<li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-permissions" type="button" role="tab">{% translate "Permissions" %}</button></li>{% endif %}
     {% if documents is not None %}<li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-documents" type="button" role="tab">{% translate "Documents" %}</button></li>{% endif %}
