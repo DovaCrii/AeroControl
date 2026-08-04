@@ -24,4 +24,9 @@ urlpatterns = [
         name="maintenance-complete",
     ),
     path("history/", views.MaintenanceHistoryList.as_view(), name="history-list"),
+    path(
+        "aircraft/<uuid:pk>/incident/",
+        views.AircraftReportIncident.as_view(),
+        name="aircraft-report-incident",
+    ),
 ]

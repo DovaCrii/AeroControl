@@ -95,6 +95,10 @@ class Aircraft(BaseModel):
     )
     STATUS_CHOICES = [
         ("active", _("Active")),
+        # LV-46: an accident/incident just happened and the aircraft has not
+        # yet been formally sent to maintenance -- distinct from "maintenance"
+        # (already in the workflow) so the fleet list flags it at a glance.
+        ("damaged", _("Damaged")),
         ("maintenance", _("Maintenance")),
         ("retired", _("Retired")),
     ]

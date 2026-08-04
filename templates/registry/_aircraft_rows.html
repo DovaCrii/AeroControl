@@ -7,7 +7,7 @@
     {% if object.manufacturer %}<div class="text-muted small">{{ object.manufacturer }}</div>{% endif %}
   </td>
   <td>{% if object.cost_center %}<span title="{{ object.cost_center }}">{{ object.cost_center.code }}</span>{% else %}<span class="text-muted">{% translate "Unassigned" %}</span>{% endif %}</td>
-  <td>{% if object.status == "active" %}<span class="badge bg-success">{% translate "Active" %}</span>{% elif object.status == "maintenance" %}<span class="badge bg-warning text-dark">{% translate "Maintenance" %}</span>{% else %}<span class="badge bg-secondary">{% translate "Retired" %}</span>{% endif %}</td>
+  <td>{% if object.status == "active" %}<span class="badge bg-success">{% translate "Active" %}</span>{% elif object.status == "damaged" %}<span class="badge bg-danger">{% translate "Damaged" %}</span>{% elif object.status == "maintenance" %}<span class="badge bg-warning text-dark">{% translate "Maintenance" %}</span>{% else %}<span class="badge bg-secondary">{% translate "Retired" %}</span>{% endif %}</td>
   <td>
     {% if object.current_location == "headquarters" %}<span class="badge bg-secondary-subtle text-secondary-emphasis">{% translate "Headquarters" %}</span>
     {% elif object.current_location == "on_site" %}<span class="badge bg-info-subtle text-info-emphasis"{% if object.current_site %} title="{{ object.current_site }}"{% endif %}>{% translate "On site" %}</span>

@@ -987,6 +987,26 @@ msgid "Active"
 msgstr "Activo"
 
 #: .\apps\registry\models.py:79 .\templates\base.html:78
+#: .\apps\registry\models.py
+msgid "Damaged"
+msgstr "Mal estado"
+
+#: .\apps\maintenance\views.py
+msgid "Report accident / damage"
+msgstr "Reportar accidente / daño"
+
+#: .\templates\registry\aircraft_detail.html
+msgid "Mark this aircraft as damaged and open an emergency maintenance record?"
+msgstr "¿Marcar esta aeronave en Mal estado y abrir una mantención de emergencia?"
+
+#: .\apps\maintenance\views.py
+msgid "Incident reported from the aircraft fiche. Pending assessment."
+msgstr "Incidente reportado desde la ficha de la aeronave. Pendiente de evaluación."
+
+#: .\apps\maintenance\views.py
+msgid "Incident logged: aircraft marked as damaged and an emergency maintenance record was opened."
+msgstr "Incidente registrado: la aeronave quedó en Mal estado y se abrió una mantención de emergencia."
+
 #: .\templates\core\calendar.html:24 .\templates\core\calendar.html:35
 #: .\templates\core\calendar.html:56
 #: .\templates\maintenance\record_detail.html:3
