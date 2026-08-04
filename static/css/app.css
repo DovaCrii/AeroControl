@@ -257,6 +257,12 @@ body {
   background: #fff;
 }
 
+.kanban-header-counts {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 .kanban-count {
   background: #dee2e6;
   color: #555;
@@ -265,6 +271,20 @@ body {
   border-radius: 10px;
   font-weight: 600;
 }
+
+/* B3.4: same shape as .kanban-count so it reads as a sibling counter, not a
+   new widget -- colour marks it as the urgent one, but the icon + aria-label
+   (not colour alone) carry the "overdue" meaning for anyone who can't see it.
+   Compound selector (not just .kanban-count-overdue) on purpose: the plain
+   .kanban-count background/color get redeclared later in this file (the
+   token-consolidation pass around .kanban-column), and an equal-specificity
+   single-class rule would lose that cascade fight by source order. */
+.kanban-count.kanban-count-overdue {
+  background: var(--ac-danger);
+  color: #fff;
+}
+[data-theme="dark"] .kanban-count.kanban-count-overdue,
+[data-bs-theme="dark"] .kanban-count.kanban-count-overdue { background: #ff8a80; color: #2a0a0a; }
 
 .kanban-cards {
   padding: 0.5rem;

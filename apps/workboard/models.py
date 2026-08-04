@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
@@ -175,6 +177,22 @@ class KanbanTask(BaseModel):
     def checklist_progress(self):
         total = self.checklist_total
         return round(self.checklist_completed * 100 / total) if total else 0
+
+    def urgency_bucket(self, today):
+        """Same expired/due_7/due_15/due_30 buckets as the compliance report
+        (apps/compliance/reports.py), so "urgent" reads the same way across
+        the app. Empty string covers no due date or more than 30 days out."""
+        if not self.due_date:
+            return ""
+        if self.due_date < today:
+            return "overdue"
+        if self.due_date <= today + timedelta(days=7):
+            return "due_7"
+        if self.due_date <= today + timedelta(days=15):
+            return "due_15"
+        if self.due_date <= today + timedelta(days=30):
+            return "due_30"
+        return ""
 
 
 class KanbanTaskLabel(BaseModel):

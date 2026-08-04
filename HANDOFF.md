@@ -3,7 +3,17 @@
 > Punto de retome entre ventanas/sesiones. La **fuente de verdad del trabajo
 > pendiente** es [MASTER_PLAN.md](MASTER_PLAN.md); esto es el resumen de estado.
 > Última actualización: **2026-08-04** (3ª tanda LV-44..54 y LV-55 **ya
-> desplegadas en la VM**; sin pendientes de deploy).
+> desplegadas en la VM**; B3.3/B3.4 nuevos, aún NO desplegados).
+
+## BLOQUE 3 (mejoras UX del Seguimiento de alertas) — retomado parcialmente
+El usuario pidió retomar el standby de BLOQUE 3 ahora que el tablero se llama
+"Seguimiento de alertas" (LV-48/55). Hechos **B3.3** (degradado de urgencia en
+tarjetas, mismos límites que el reporte de cumplimiento) y **B3.4** (contador
+de vencidas por columna) — ver detalle y archivos en `MASTER_PLAN.md`. 651/651
+tests verdes. **Pendiente de deploy** (mismo patrón de siempre, sin
+migración). Quedan **B3.1** (agrupación por CC/operador), **B3.2** (vista "Mi
+trabajo") y **B3.5** (`wip_limit`) sin tocar — preguntar al usuario por cuál
+seguir.
 
 ## Worktrees en background — CERRADO 2026-08-04
 Había 3 worktrees bajo `.claude/worktrees/`, de sesiones en segundo plano

@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n workboard_extras %}
 <article class="kanban-card priority-{{ task.priority }}" data-task-id="{{ task.id }}" aria-label="{{ task.title }}">
   <a class="kanban-card-title" href="#task-detail" data-bs-toggle="offcanvas" hx-get="{% url 'task-detail' task.id %}" hx-target="#task-detail-content">{{ task.title }}</a>
   {% comment %}
@@ -15,7 +15,18 @@
   </div>
   {% if task.source_object %}<div class="kanban-source"><span>{% translate "Related" %}</span> {{ task.source_object }}</div>{% endif %}
   {% if task.due_date %}
-    <div class="kanban-due {% if today and task.due_date < today %}is-overdue{% endif %}">{% translate "Due" %} {{ task.due_date|date:"M j" }}{% if today and task.due_date < today %} · {% translate "Overdue" %}{% endif %}</div>
+    {% with bucket=task|urgency_bucket:today %}
+    {% comment %}
+      B3.3: graduated urgency, not colour alone -- each bucket appends its own
+      translated label (screen readers and colour-blind users get the same
+      signal a sighted user gets from the colour/weight). Reuses Bootstrap's
+      text-warning-emphasis/fw-* utilities (already dark-mode aware via
+      data-bs-theme, set in theme-init.js) instead of new tokens, so no fresh
+      contrast measurement was needed -- same colours already vetted elsewhere
+      (aircraft insurance badge, compliance report buckets).
+    {% endcomment %}
+    <div class="kanban-due{% if bucket == 'overdue' %} is-overdue{% elif bucket == 'due_7' %} text-warning-emphasis fw-bold{% elif bucket == 'due_15' %} text-warning-emphasis fw-semibold{% elif bucket == 'due_30' %} text-warning-emphasis{% endif %}">{% translate "Due" %} {{ task.due_date|date:"M j" }}{% if bucket == "overdue" %} · {% translate "Overdue" %}{% elif bucket == "due_7" %} · {% translate "Due within 7 days" %}{% elif bucket == "due_15" %} · {% translate "Due within 15 days" %}{% elif bucket == "due_30" %} · {% translate "Due within 30 days" %}{% endif %}</div>
+    {% endwith %}
   {% endif %}
   <div class="kanban-progress small">{% if task.checklist_total %}{{ task.checklist_progress }}% {% translate "complete" %}<div class="progress"><div class="progress-bar" style="width:{{ task.checklist_progress }}%"></div></div>{% else %}<span class="text-muted">{% translate "No steps" %}</span>{% endif %}</div>
   <form method="post" action="{% url 'task-archive' task.id %}" class="mt-2">
