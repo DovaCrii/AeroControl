@@ -153,17 +153,18 @@
     if (tabTrigger) bootstrap.Tab.getOrCreateInstance(tabTrigger).show();
   }
 
-  // LV-34: the cost-center "responsible type" picker shows only the field its
-  // choice uses (administrator name / operator / external contact). Delegated
-  // so it works on the full page and inside the HTMX modal alike.
+  // LV-34/LV-56: the cost-center "responsible type" picker shows only the
+  // *extra* field its choice needs (operator / external contact) on top of
+  // the contract administrator name, which is always required and always
+  // visible -- not part of this toggle. Delegated so it works on the full
+  // page and inside the HTMX modal alike.
   function applyResponsibleType(select) {
     var groups = {
-      administrator: ['div_id_responsible'],
+      administrator: [],
       operator: ['div_id_responsible_operator'],
       external: ['div_id_responsible_contact_name', 'div_id_responsible_contact_email'],
     };
     var all = [
-      'div_id_responsible',
       'div_id_responsible_operator',
       'div_id_responsible_contact_name',
       'div_id_responsible_contact_email',

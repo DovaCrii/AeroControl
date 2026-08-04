@@ -3446,6 +3446,15 @@ msgstr "Contacto externo"
 msgid "Who is in charge: the contract administrator, an operator from the roster, or an external contact."
 msgstr "Quién está a cargo: el administrador de contrato, un operador del padrón o un contacto externo."
 
+msgid "Same as administrator"
+msgstr "El mismo administrador"
+
+msgid "Optional: pick this only if the day-to-day responsible contact differs from the contract administrator above."
+msgstr "Opcional: elige esto solo si el contacto responsable del día a día es distinto del administrador de contrato de arriba."
+
+msgid "Enter the contract administrator name."
+msgstr "Ingresa el nombre del administrador de contrato."
+
 msgid "Select the responsible operator."
 msgstr "Selecciona el operador responsable."
 
