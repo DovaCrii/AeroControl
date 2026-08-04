@@ -228,6 +228,10 @@ msgstr ""
 msgid "By cost center"
 msgstr "Por centro de costo"
 
+#: .\templates\compliance\report.html
+msgid "Includes DGAC vigencias (operator credentials, aircraft insurance) alongside uploaded documents."
+msgstr "Incluye vigencias DGAC (credenciales de operador, seguros de aeronave) junto con los documentos subidos."
+
 #: .\apps\compliance\report_views.py:238 .\templates\compliance\report.html:88
 msgid "Alert resolution in the period"
 msgstr "Resolución de alertas en el período"

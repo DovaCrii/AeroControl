@@ -90,6 +90,28 @@ def _cost_center_row(cost_center, doc_type, today):
     counters = {key: counted[key] for key in ("expired", "due_7", "due_15", "due_30")}
     total = counted["total"]
 
+    # LV-49: DGAC vigencias (Operator.credential_expiry, Aircraft.insurance_expiry)
+    # already drive real alerts (LV-29's "Credenciales DGAC"/"Seguros JAC" rules)
+    # but were never reflected here, so this report read 0/0.0% for every cost
+    # center while the alert list showed real open items for the same data.
+    # Only merged in when no doc_type filter narrows the view: vigencias are
+    # not Document rows and have no doc_type, so a type-filtered report should
+    # not silently pull them back in.
+    if doc_type is None:
+        for model, field in (
+            (Operator, "credential_expiry"),
+            (Aircraft, "insurance_expiry"),
+        ):
+            vigencias = _vigencia_bucket_counts(
+                model.objects.filter(cost_center=cost_center, is_active=True),
+                field,
+                today,
+                boundaries,
+            )
+            total += vigencias["total"]
+            for key in ("expired", "due_7", "due_15", "due_30"):
+                counters[key] += vigencias[key]
+
     valid = total - counters["expired"]
     return {
         "code": cost_center.code,
@@ -102,6 +124,47 @@ def _cost_center_row(cost_center, doc_type, today):
         "due_15": counters["due_15"],
         "due_30": counters["due_30"],
     }
+
+
+def _vigencia_bucket_counts(queryset, date_field, today, boundaries):
+    """Expired/due-soon counters for a DGAC vigencia field.
+
+    Unlike Document.expiry_date -- where null means "this document type never
+    expires" and the row still counts as valid -- a null vigencia means the
+    value was never entered in the fiche. Those rows are excluded entirely
+    rather than counted as valid, matching how generate_alerts already treats
+    these same fields (LV-29: only aircraft/operators with a value set are
+    watched).
+    """
+    present = queryset.filter(**{f"{date_field}__isnull": False})
+    return present.aggregate(
+        total=Count("pk"),
+        expired=Count("pk", filter=Q(**{f"{date_field}__lt": today})),
+        due_7=Count(
+            "pk",
+            filter=Q(
+                **{f"{date_field}__gte": today, f"{date_field}__lte": boundaries["due_7"]}
+            ),
+        ),
+        due_15=Count(
+            "pk",
+            filter=Q(
+                **{
+                    f"{date_field}__gt": boundaries["due_7"],
+                    f"{date_field}__lte": boundaries["due_15"],
+                }
+            ),
+        ),
+        due_30=Count(
+            "pk",
+            filter=Q(
+                **{
+                    f"{date_field}__gt": boundaries["due_15"],
+                    f"{date_field}__lte": boundaries["due_30"],
+                }
+            ),
+        ),
+    )
 
 
 # Oldest-first cap on the open-alert list. The report is a status overview,

@@ -56,7 +56,15 @@
 </div>
 
 <div class="card mb-4">
-  <div class="p-3 border-bottom"><h2 class="h5 mb-0">{% translate "By cost center" %}</h2></div>
+  <div class="p-3 border-bottom">
+    <h2 class="h5 mb-0">{% translate "By cost center" %}</h2>
+    {% if not filter_params.doc_type %}
+    {% comment %}LV-49: vigencias have no doc_type, so they drop out of the
+    count the moment a document type filter is applied -- this note only
+    shows when nothing narrows the totals away from including them.{% endcomment %}
+    <p class="text-muted small mb-0 mt-1">{% translate "Includes DGAC vigencias (operator credentials, aircraft insurance) alongside uploaded documents." %}</p>
+    {% endif %}
+  </div>
   <div class="table-responsive">
     <table class="table table-hover mb-0">
       <thead><tr>
