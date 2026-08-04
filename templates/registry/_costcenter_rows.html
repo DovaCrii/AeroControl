@@ -5,7 +5,14 @@
     <a href="{{ object.pk }}/" class="table-primary-value">{{ object.code }}</a>{% if object.notes %} <span class="text-muted" title="{{ object.notes }}">&#9432;</span>{% endif %}
     {% if object.name %}<span class="table-primary-sub cell-truncate" title="{{ object.name }}">{{ object.name }}</span>{% endif %}
   </td>
-  <td class="cell-truncate" title="{{ object.responsible }}">{{ object.responsible|default:"—" }}</td>
+  {% comment %}LV-58: the administrator name rarely fills this column's width
+  on its own -- when the day-to-day contact is someone else (an operator or an
+  external contact, LV-34), it earns the rest of the space as a subtitle
+  instead of being invisible in this list.{% endcomment %}
+  <td>
+    <span class="table-primary-value cell-truncate" title="{{ object.responsible }}">{{ object.responsible|default:"—" }}</span>
+    {% if object.day_to_day_contact %}<span class="table-primary-sub cell-truncate" title="{{ object.day_to_day_contact }}">{% translate "Day-to-day" %}: {{ object.day_to_day_contact }}</span>{% endif %}
+  </td>
   {% comment %}A zero reads as "no crew assigned yet", not as data worth the
   same weight as a real count -- same muted treatment as an empty value.{% endcomment %}
   <td class="cell-numeric">{% if object.operator_count %}{{ object.operator_count }}{% else %}<span class="text-muted">0</span>{% endif %}</td>

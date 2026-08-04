@@ -445,6 +445,8 @@ class CostCenterList(RegistryList):
         return self.scope_by_tenant(
             super()
             .get_queryset()
+            # LV-58: day_to_day_contact reads responsible_operator per row.
+            .select_related("responsible_operator")
             .annotate(
                 operator_count=Count(
                     "operators", filter=Q(operators__is_active=True), distinct=True
