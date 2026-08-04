@@ -83,9 +83,10 @@ sudo mkdir -p /var/log/aerocontrol && sudo chown $USER:$USER /var/log/aerocontro
 
 ## Parte C — Configuración (`/etc/aerocontrol.env`)
 
-Un solo archivo que cargan **el servicio web (systemd)** y **los trabajos
-programados (cron)**. Contiene el `SECRET_KEY` y la clave de correo → **root,
-permisos 600, nunca al repositorio.**
+Un solo archivo que cargan **el servicio web** y **los trabajos programados**,
+ambos vía `systemd` (`EnvironmentFile=`, que sí puede leer un archivo 600 root
+antes de bajar privilegios — ver Parte E y Parte G). Contiene el `SECRET_KEY`
+y la clave de correo → **root, permisos 600, nunca al repositorio.**
 
 Genera un `SECRET_KEY`:
 ```bash
@@ -140,7 +141,11 @@ sudo chmod 600 /etc/aerocontrol.env
 
 ```bash
 cd /opt/aerocontrol
-set -a && . /etc/aerocontrol.env && set +a   # exporta las vars a esta shell
+# /etc/aerocontrol.env es 600 root (Parte C): como usuario normal, ". ..." da
+# "Permission denied". Usa sudo cat + process substitution para exportar las
+# vars a esta shell sin volverte root (y sin que archivos que crees aquí, como
+# la SQLite del migrate, queden con dueño root).
+source <(sudo cat /etc/aerocontrol.env)
 uv run python manage.py migrate --no-input
 uv run python manage.py bootstrap_roles
 uv run python manage.py collectstatic --no-input
@@ -217,23 +222,62 @@ endurecimiento de V.12; por eso se prefiere Tailscale).
 
 ---
 
-## Parte G — Trabajos programados (cron)
+## Parte G — Trabajos programados (systemd timers)
 
-Igual que [scheduled-operations.md](../scheduled-operations.md), adaptado a estas
-rutas. `crontab -e` del usuario `aero`:
+`/etc/aerocontrol.env` es 600 root (Parte C). Un cron corriendo como `aero` no
+puede hacer `. /etc/aerocontrol.env` (da "Permission denied"), y meter
+`source <(sudo cat /etc/aerocontrol.env)` en la línea de crontab **tampoco
+sirve**: cron no tiene TTY para la contraseña de `sudo`, así que esa línea
+fallaría igual de silenciosa. Esto no es teórico — es el mismo gotcha que se
+repitió en el deploy real de la VM p340 (ver `HANDOFF.md`), y ahí se resolvió
+cambiando cron por **timers de systemd**: el `.service` lee
+`EnvironmentFile=/etc/aerocontrol.env` como root y luego baja privilegios a
+`User=aero` para ejecutar el comando, así el proceso recibe los secretos sin
+que `aero` necesite leer el archivo directamente. Detalle completo y el patrón
+`mkjob` en [scheduled-operations.md](../scheduled-operations.md#linux-systemd--la-vm-p340);
+aquí, adaptado a las rutas de esta guía:
 
-```cron
-# m  h  dom mon dow  comando
-  0  6   *   *   *   cd /opt/aerocontrol && set -a && . /etc/aerocontrol.env && set +a && uv run python manage.py generate_alerts       >> /var/log/aerocontrol/cron.log 2>&1
-  0  7   *   *   *   cd /opt/aerocontrol && set -a && . /etc/aerocontrol.env && set +a && uv run python manage.py send_alert_digest      >> /var/log/aerocontrol/cron.log 2>&1
-  0 22   *   *   *   cd /opt/aerocontrol && set -a && . /etc/aerocontrol.env && set +a && uv run python manage.py backup                 >> /var/log/aerocontrol/cron.log 2>&1
- 30  7   *   *   1   cd /opt/aerocontrol && set -a && . /etc/aerocontrol.env && set +a && uv run python manage.py send_executive_report --period week >> /var/log/aerocontrol/cron.log 2>&1
+```bash
+sudo bash -c '
+mkjob() {  # $1=nombre  $2=comando manage.py  $3=OnCalendar
+  cat >/etc/systemd/system/aerocontrol-$1.service <<EOF
+[Unit]
+Description=AeroControl $1
+After=network.target
+
+[Service]
+Type=oneshot
+User=aero
+WorkingDirectory=/opt/aerocontrol
+EnvironmentFile=/etc/aerocontrol.env
+ExecStart=/home/aero/.local/bin/uv run python manage.py $2
+EOF
+  cat >/etc/systemd/system/aerocontrol-$1.timer <<EOF
+[Unit]
+Description=AeroControl $1 (scheduled)
+
+[Timer]
+OnCalendar=$3
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+}
+mkjob alerts  "generate_alerts"                        "*-*-* 06:00:00"
+mkjob digest  "send_alert_digest"                      "*-*-* 07:00:00"
+mkjob backup  "backup"                                 "*-*-* 22:00:00"
+mkjob execrep "send_executive_report --period week"    "Mon *-*-* 07:30:00"
+systemctl daemon-reload
+systemctl enable --now aerocontrol-alerts.timer aerocontrol-digest.timer aerocontrol-backup.timer aerocontrol-execrep.timer
+'
 ```
 
-`set -a && . /etc/aerocontrol.env && set +a` exporta las variables (incluido
-`DJANGO_SETTINGS_MODULE`) al proceso, que es lo que hace que `manage.py` use
-`prod` y encuentre la base. Prueba sin enviar nada:
-`uv run python manage.py send_alert_digest --dry-run`.
+`EnvironmentFile=` exporta las variables (incluido `DJANGO_SETTINGS_MODULE`) al
+proceso, que es lo que hace que `manage.py` use `prod` y encuentre la base.
+Prueba sin enviar nada: `uv run python manage.py send_alert_digest --dry-run`.
+Verifica con `systemctl list-timers 'aerocontrol-*' --all` y revisa la salida
+de una corrida con `journalctl -u aerocontrol-alerts.service -n 30 --no-pager`.
 
 Cada corrida queda en el modelo `JobRun`; revísalo con:
 ```bash
