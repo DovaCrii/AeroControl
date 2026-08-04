@@ -92,10 +92,24 @@ uv run python manage.py seed_alert_rules
 ```
 
 Agrega `--with-optional` para sembrar también las dos opcionales
-(habilitaciones y mantenimiento). El comando deja *crear tarea Kanban* apagado
-al inicio; si luego lo activas desde la app, siembra antes el tablero con
-`init_dgac_board`. Un rerun no duplica ni pisa reglas que hayas ajustado en la
-UI. También puedes crear o afinar reglas a mano desde `/compliance/alertrule/`.
+(habilitaciones y mantenimiento). El comando deja la creación *automática* de
+tarea Kanban apagada al inicio (el flag `create_kanban_task` de cada regla).
+
+**Aun así, corre `init_dgac_board` desde el primer día.** El botón manual
+"Crear tarea" que aparece en cada fila de `/compliance/alert/` es independiente
+de ese flag automático — funciona en cualquier alerta, prendida o no la
+creación automática — pero necesita que exista **algún** tablero Kanban activo.
+Sin correr `init_dgac_board` primero, el botón falla con "No hay ningún
+tablero Kanban disponible" (LV-45). El comando es idempotente
+(`get_or_create`), así que correrlo de más no hace daño:
+
+```bash
+uv run python manage.py init_dgac_board
+```
+
+Un rerun de cualquiera de los dos comandos no duplica ni pisa reglas/tableros
+que hayas ajustado en la UI. También puedes crear o afinar reglas a mano desde
+`/compliance/alertrule/`.
 
 ## Paso 4 — Cargar documentos
 

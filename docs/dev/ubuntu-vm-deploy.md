@@ -145,6 +145,11 @@ uv run python manage.py migrate --no-input
 uv run python manage.py bootstrap_roles
 uv run python manage.py collectstatic --no-input
 uv run python manage.py createsuperuser
+# Tablero Kanban "Cumplimiento DGAC": sin esto el botón manual "Crear tarea"
+# de /compliance/alert/ falla con "No hay ningún tablero Kanban disponible"
+# (LV-45) -- es independiente del flag automático create_kanban_task de cada
+# regla. Idempotente (get_or_create), seguro correr de más.
+uv run python manage.py init_dgac_board
 ```
 
 Para **traer tus datos reales** desde el notebook: copia el snapshot `.sqlite3`
