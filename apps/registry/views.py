@@ -312,6 +312,20 @@ class CostCenterDetail(RegistryDetail):
                 .select_related("operator")
                 .order_by("operator__full_name")
             )
+            # LV-33: when operators were linked by cost_center directly (a bulk
+            # import that never ran backfill_resource_assignments), there are no
+            # assignment rows and the tab was empty though the contract has a
+            # team. Fall back to those operators as in-memory assignments -- same
+            # template interface, no fabricated DB rows.
+            if not assignments:
+                assignments = [
+                    OperatorAssignment(
+                        operator=operator, cost_center=cost_center, status="active"
+                    )
+                    for operator in Operator.objects.filter(
+                        cost_center=cost_center, is_active=True
+                    ).order_by("full_name")
+                ]
             expired_operator_ids = set(
                 Qualification.objects.filter(
                     operator_id__in=[a.operator_id for a in assignments],
@@ -324,13 +338,24 @@ class CostCenterDetail(RegistryDetail):
             context["operator_assignments"] = None
 
         if user.has_perm("registry.view_aircraftassignment"):
-            context["aircraft_assignments"] = (
+            aircraft_assignments = list(
                 AircraftAssignment.objects.filter(
                     cost_center=cost_center, is_active=True
                 )
                 .select_related("aircraft")
                 .order_by("aircraft__registration")
             )
+            if not aircraft_assignments:
+                # LV-33: same fallback for the fleet tab.
+                aircraft_assignments = [
+                    AircraftAssignment(
+                        aircraft=aircraft, cost_center=cost_center, status="active"
+                    )
+                    for aircraft in Aircraft.objects.filter(
+                        cost_center=cost_center, is_active=True
+                    ).order_by("registration")
+                ]
+            context["aircraft_assignments"] = aircraft_assignments
         else:
             context["aircraft_assignments"] = None
 
