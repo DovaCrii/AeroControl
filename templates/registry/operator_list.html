@@ -3,13 +3,26 @@
 
 {% block list_actions %}<a class="btn btn-outline-secondary" href="{% url 'operator-import' %}">{% translate "Import" %}</a>{% endblock %}
 
+{% block list_table_class %}table-normalized{% endblock %}
+
+{% block list_colgroup %}
+<colgroup>
+  <col class="col-primary">
+  <col class="col-compact">
+  <col class="col-text">
+  <col class="col-flex">
+  <col class="col-status">
+  <col class="col-actions">
+</colgroup>
+{% endblock %}
+
+{% comment %}LV-57: "RUT" folds into the identity column under the name.{% endcomment %}
 {% block list_header %}
 <th>{% translate "Name" %}</th>
-<th>{% translate "RUT" %}</th>
 <th>{% translate "DGAC credential" %}</th>
-<th>{% translate "Credential expiry" %}</th>
+<th class="cell-status">{% translate "Credential expiry" %}</th>
 <th>{% translate "Cost center" %}</th>
-<th>{% translate "Qualification" %}</th>
+<th class="cell-status">{% translate "Qualification" %}</th>
 {% endblock %}
 
 {% block table_body %}{% include "registry/_operator_rows.html" %}{% endblock %}

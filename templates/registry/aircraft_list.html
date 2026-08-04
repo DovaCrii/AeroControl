@@ -3,13 +3,28 @@
 
 {% block list_actions %}<a class="btn btn-outline-secondary" href="{% url 'aircraft-import' %}">{% translate "Import" %}</a>{% endblock %}
 
+{% block list_table_class %}table-normalized{% endblock %}
+
+{% block list_colgroup %}
+<colgroup>
+  <col class="col-primary">
+  <col class="col-compact">
+  <col class="col-status">
+  <col class="col-flex">
+  <col class="col-text">
+  <col class="col-actions">
+</colgroup>
+{% endblock %}
+
+{% comment %}LV-57: "Model" folds into the identity column under the
+registration -- this list already had the two-line block, it just sat in the
+second column; now it is the pattern the other three follow.{% endcomment %}
 {% block list_header %}
 <th>{% translate "Registration" %}</th>
-<th>{% translate "Model" %}</th>
 <th>{% translate "Cost center" %}</th>
-<th>{% translate "Status" %}</th>
-<th>{% translate "Location" %}</th>
-<th>{% translate "Insurance" %}</th>
+<th class="cell-status">{% translate "Status" %}</th>
+<th class="cell-status">{% translate "Location" %}</th>
+<th class="cell-status">{% translate "Insurance" %}</th>
 {% endblock %}
 
 {% block table_body %}{% include "registry/_aircraft_rows.html" %}{% endblock %}

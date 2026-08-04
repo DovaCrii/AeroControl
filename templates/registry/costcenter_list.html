@@ -3,13 +3,27 @@
 
 {% block list_actions %}<a class="btn btn-outline-secondary" href="{% url 'costcenter-import' %}">{% translate "Import" %}</a>{% endblock %}
 
+{% block list_table_class %}table-normalized{% endblock %}
+
+{% block list_colgroup %}
+<colgroup>
+  <col class="col-primary">
+  <col class="col-flex">
+  <col class="col-numeric">
+  <col class="col-numeric">
+  <col class="col-actions">
+</colgroup>
+{% endblock %}
+
+{% comment %}LV-57: "Name" folds into the identity column under the code, and
+"Notes" (a generic BaseModel field, "—" on nearly every row) stops being a
+column -- rows that have one flag it next to the code and keep the full text in
+the cost center's detail page.{% endcomment %}
 {% block list_header %}
 <th>{% translate "Code" %}</th>
-<th>{% translate "Name" %}</th>
 <th>{% translate "Contract administrator name" %}</th>
-<th>{% translate "Operators" %}</th>
-<th>{% translate "Aircraft" %}</th>
-<th>{% translate "Notes" %}</th>
+<th class="cell-numeric">{% translate "Operators" %}</th>
+<th class="cell-numeric">{% translate "Aircraft" %}</th>
 {% endblock %}
 
 {% block table_body %}{% include "registry/_costcenter_rows.html" %}{% endblock %}

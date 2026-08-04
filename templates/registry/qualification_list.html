@@ -1,8 +1,28 @@
 {% extends "generic/list.html" %}
 {% load i18n %}
 
+{% block list_table_class %}table-normalized{% endblock %}
+
+{% block list_colgroup %}
+<colgroup>
+  <col class="col-primary">
+  <col class="col-compact">
+  <col class="col-text">
+  <col class="col-chips">
+  <col class="col-actions">
+</colgroup>
+{% endblock %}
+
+{% comment %}LV-57: this list stays operator-centric (LV-14) but no longer
+stops at two columns -- the row *is* an operator, so its cost center and
+credential expiry are legitimate columns, and they are the two that make it
+read as "the operator list focused on equipment" instead of a separate table.
+They also earn their space: "qualified on 4 aircraft but the DGAC credential
+expires in 12 days" used to require jumping between two lists.{% endcomment %}
 {% block list_header %}
 <th>{% translate "Operator" %}</th>
+<th>{% translate "Cost center" %}</th>
+<th class="cell-status">{% translate "Credential expiry" %}</th>
 <th>{% translate "Qualified equipment" %}</th>
 {% endblock %}
 

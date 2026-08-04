@@ -1,12 +1,15 @@
 {% load aero_tags i18n %}
 {% for object in objects %}
 <tr>
-  <td><a href="{{ object.pk }}/" class="fw-semibold">{{ object.code }}</a></td>
-  <td>{{ object.name }}</td>
-  <td>{{ object.responsible|default:"—" }}</td>
-  <td>{{ object.operator_count }}</td>
-  <td>{{ object.aircraft_count }}</td>
-  <td class="small text-truncate" style="max-width: 16rem;" title="{{ object.notes }}">{{ object.notes|default:"—" }}</td>
+  <td>
+    <a href="{{ object.pk }}/" class="table-primary-value">{{ object.code }}</a>{% if object.notes %} <span class="text-muted" title="{{ object.notes }}">&#9432;</span>{% endif %}
+    {% if object.name %}<span class="table-primary-sub cell-truncate" title="{{ object.name }}">{{ object.name }}</span>{% endif %}
+  </td>
+  <td class="cell-truncate" title="{{ object.responsible }}">{{ object.responsible|default:"—" }}</td>
+  {% comment %}A zero reads as "no crew assigned yet", not as data worth the
+  same weight as a real count -- same muted treatment as an empty value.{% endcomment %}
+  <td class="cell-numeric">{% if object.operator_count %}{{ object.operator_count }}{% else %}<span class="text-muted">0</span>{% endif %}</td>
+  <td class="cell-numeric">{% if object.aircraft_count %}{{ object.aircraft_count }}{% else %}<span class="text-muted">0</span>{% endif %}</td>
   <td class="text-end">
     <a href="{{ object.pk }}/edit/" hx-get="{{ object.pk }}/edit/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">{% translate "Edit" %}</a>
   </td>

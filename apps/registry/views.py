@@ -784,6 +784,9 @@ class QualificationList(RegistryList):
         return (
             Operator.objects.filter(pk__in=operator_ids)
             .order_by("full_name")
+            # LV-57 added a cost-center column to this list; without this the
+            # row partial costs one query per operator.
+            .select_related("cost_center")
             .prefetch_related(
                 Prefetch(
                     "qualifications",
