@@ -209,6 +209,15 @@ class GeoPlanImportView(ModelPermissionRequiredMixin, FormView):
     template_name = "geo/plan_import.html"
     form_class = GeoPlanImportForm
 
+    def get_initial(self):
+        # LV-50: "Importar plan" from a flight permission's own detail page
+        # prefills it, same pattern as maintenance-create?aircraft=.
+        initial = super().get_initial()
+        flight_permission = self.request.GET.get("flight_permission")
+        if flight_permission:
+            initial["flight_permission"] = flight_permission
+        return initial
+
     def form_valid(self, form):
         uploaded = form.cleaned_data["file"]
         document_content = form.canonical

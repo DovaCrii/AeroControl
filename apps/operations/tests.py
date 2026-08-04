@@ -2,14 +2,32 @@ from datetime import date, time
 
 import pytest
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
 from django.db.models import ProtectedError
 from django.test import Client
 from django.urls import reverse
 
+from apps.compliance.models import Document, DocumentType
 from apps.core.models import AuditEvent
 from apps.registry.models import Aircraft, CostCenter, Operator
 from .forms import FlightRecordForm
 from .models import FlightPermission, FlightRecord, PermissionHistory
+
+
+def _attach_dgac_permit_pdf(permission):
+    """LV-51: the document FlightPermissionApprove requires on file."""
+    doc_type, _created = DocumentType.objects.get_or_create(
+        code="dgac-flight-permit",
+        defaults={"name": "Autorización DGAC (carta de permiso)"},
+    )
+    return Document.objects.create(
+        doc_type=doc_type,
+        content_type=ContentType.objects.get_for_model(FlightPermission),
+        object_id=permission.pk,
+        title="Carta SIGO",
+        issue_date=date(2026, 7, 20),
+        file_path="permits/sigo.pdf",
+    )
 
 
 def _permission(cost_center, operator, aircraft, **kwargs):
@@ -155,6 +173,7 @@ def test_permission_transition_records_history_with_actor_and_notes():
         cost_center=cost_center,
     )
     permission = _permission(cost_center, operator, aircraft)
+    _attach_dgac_permit_pdf(permission)  # LV-51: required before approval
     User.objects.create_superuser("dispatcher", "dispatcher@test.com", "password")
     client = Client()
     assert client.login(username="dispatcher", password="password")
@@ -172,6 +191,89 @@ def test_permission_transition_records_history_with_actor_and_notes():
     assert history.new_status == "approved"
     assert history.changed_by == "dispatcher"
     assert history.notes == "Approved after dispatch review."
+
+
+@pytest.mark.django_db
+def test_permission_approval_is_blocked_without_the_dgac_permit_pdf():
+    """LV-51: AeroControl's "approved" must not outrun the real DGAC paperwork
+    -- the SIGO-issued authorization letter has to be on file first."""
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    permission = _permission(cost_center, operator, aircraft)
+    User.objects.create_superuser("dispatcher", "dispatcher@test.com", "password")
+    client = Client()
+    assert client.login(username="dispatcher", password="password")
+
+    response = client.post(reverse("permission-approve", args=[permission.pk]))
+
+    assert response.status_code == 302
+    permission.refresh_from_db()
+    assert permission.status == "requested"
+    assert not PermissionHistory.objects.filter(permission=permission).exists()
+
+
+@pytest.mark.django_db
+def test_permission_approval_succeeds_once_the_dgac_permit_pdf_is_attached():
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    permission = _permission(cost_center, operator, aircraft)
+    _attach_dgac_permit_pdf(permission)
+    User.objects.create_superuser("dispatcher", "dispatcher@test.com", "password")
+    client = Client()
+    assert client.login(username="dispatcher", password="password")
+
+    response = client.post(reverse("permission-approve", args=[permission.pk]))
+
+    assert response.status_code == 302
+    permission.refresh_from_db()
+    assert permission.status == "approved"
+
+
+@pytest.mark.django_db
+def test_permission_approval_ignores_a_non_current_or_archived_permit_pdf():
+    """A superseded version or an archived upload should not satisfy the
+    guard -- only a current, active document counts as "on file"."""
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    permission = _permission(cost_center, operator, aircraft)
+    stale = _attach_dgac_permit_pdf(permission)
+    stale.is_current_version = False
+    stale.save(update_fields=["is_current_version"])
+    User.objects.create_superuser("dispatcher", "dispatcher@test.com", "password")
+    client = Client()
+    assert client.login(username="dispatcher", password="password")
+
+    response = client.post(reverse("permission-approve", args=[permission.pk]))
+
+    permission.refresh_from_db()
+    assert permission.status == "requested"
 
 
 @pytest.mark.django_db

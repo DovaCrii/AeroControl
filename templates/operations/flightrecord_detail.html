@@ -17,7 +17,7 @@
 
   <table class="table table-bordered">
     <tbody>
-      <tr><th class="w-25">{% translate "Permission" %}</th><td><a href="{% url 'permission-detail' record.permission.pk %}">{{ record.permission.permission_number }}</a></td></tr>
+      <tr><th class="w-25">{% translate "Permission" %}</th><td><a href="{% url 'permission-detail' record.permission.pk %}">{{ record.permission }}</a></td></tr>
       <tr><th>{% translate "Date" %}</th><td>{{ record.actual_date|date:"Y-m-d" }}</td></tr>
       <tr><th>{% translate "Departure" %}</th><td>{{ record.departure_time|time:"H:i" }}</td></tr>
       <tr><th>{% translate "Arrival" %}</th><td>{{ record.arrival_time|time:"H:i" }}</td></tr>

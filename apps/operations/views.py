@@ -2,7 +2,8 @@ import calendar
 from datetime import date, datetime, timedelta
 
 from django.contrib import messages
-from django.shortcuts import redirect
+from django.contrib.contenttypes.models import ContentType
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -208,6 +209,33 @@ class FlightPermissionApprove(StatusTransitionView):
     target_status = "approved"
     valid_from_statuses = ["requested"]
     success_message = gettext_lazy("Permission approved.")
+
+    def post(self, request, pk):
+        # LV-51: the DGAC-issued authorization letter (the PDF SIGO produces)
+        # must be on file before a permit can be marked approved here --
+        # otherwise AeroControl's "approved" status can outrun the real DGAC
+        # paperwork. Checked before the base transition, same guard shape as
+        # MaintenanceComplete's pre-check.
+        from apps.compliance.models import Document
+
+        permission = get_object_or_404(FlightPermission, pk=pk, is_active=True)
+        has_permit_pdf = Document.objects.filter(
+            content_type=ContentType.objects.get_for_model(FlightPermission),
+            object_id=permission.pk,
+            doc_type__code="dgac-flight-permit",
+            is_current_version=True,
+            is_active=True,
+        ).exists()
+        if not has_permit_pdf:
+            messages.error(
+                request,
+                _(
+                    "Upload the DGAC authorization letter (the SIGO PDF) "
+                    "before approving this permit."
+                ),
+            )
+            return redirect(permission)
+        return super().post(request, pk)
 
 
 class FlightPermissionDeny(StatusTransitionView):

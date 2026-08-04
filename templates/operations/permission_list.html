@@ -47,7 +47,7 @@
       <tbody>
         {% for object in objects %}
         <tr>
-          <td><a href="{{ object.pk }}/">{{ object.permission_number }}</a></td>
+          <td><a href="{{ object.pk }}/">{{ object }}</a></td>
           <td>{% for operator in object.operators.all %}{{ operator }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
           <td>{% for aircraft in object.aircraft_fleet.all %}{{ aircraft }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
           <td>{{ object.valid_from|date:"Y-m-d" }} – {{ object.valid_until|date:"Y-m-d" }}</td>

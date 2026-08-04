@@ -102,6 +102,47 @@ class TestImport:
         assert "data-loading-progress" in content
 
     @pytest.mark.django_db
+    def test_import_prefills_the_flight_permission_from_the_query_string(self, db):
+        """LV-50: "Import plan" from a flight permission's own detail page
+        (?flight_permission=<pk>) prefills that field, same pattern as
+        maintenance-create?aircraft=."""
+        from datetime import date
+
+        from apps.operations.models import FlightPermission
+        from apps.registry.models import Aircraft, Operator
+
+        center = CostCenter.objects.create(code="CC1", name="Uno")
+        operator = Operator.objects.create(
+            employee_id="P1", full_name="Pilot One", cost_center=center
+        )
+        aircraft = Aircraft.objects.create(
+            registration="CC-AAA",
+            type="Fixed",
+            model="A",
+            manufacturer="Maker",
+            cost_center=center,
+        )
+        permission = FlightPermission.objects.create(
+            cost_center=center,
+            purpose="Survey",
+            valid_from=date(2026, 7, 22),
+            valid_until=date(2026, 7, 22),
+            location="Santiago",
+        )
+        permission.operators.add(operator)
+        permission.aircraft_fleet.add(aircraft)
+        client = _client("add_geoplan")
+
+        response = client.get(
+            reverse("geo-plan-import"), {"flight_permission": str(permission.pk)}
+        )
+
+        assert response.status_code == 200
+        assert response.context["form"].initial["flight_permission"] == str(
+            permission.pk
+        )
+
+    @pytest.mark.django_db
     def test_import_requires_add_permission(self, db, settings, tmp_path):
         settings.DOCUMENTS_ROOT = str(tmp_path)
         center = CostCenter.objects.create(code="CC1", name="Uno")
