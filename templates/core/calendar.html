@@ -8,10 +8,14 @@
     <h1>{% translate "Calendar" %}</h1>
     <p class="text-muted mb-0">{% translate "Coordinate resources, operations, maintenance, compliance and action items in one agenda." %}</p>
   </div>
-  <div class="d-flex gap-2 flex-wrap">
-    <a href="?month={{ prev_month }}" class="btn btn-outline-secondary">← {% translate "Previous" %}</a>
-    <a href="?month={{ next_month }}" class="btn btn-outline-secondary">{% translate "Next" %} →</a>
-  </div>
+  {% comment %}
+    LV-47: these used to be the calendar's only prev/next controls, from before
+    FullCalendar existed. FullCalendar has run its own (the small ‹ › by "Hoy")
+    for a while now, and never reads this `?month=` param -- so these buttons
+    changed the URL on click but never the visible month, looking broken.
+    Removed here; the equivalent controls for the no-JS/CDN-failure fallback
+    below still exist in .calendar-noscript.
+  {% endcomment %}
 </div>
 <section class="calendar-shell card p-3" aria-labelledby="calendar-title">
   <div class="calendar-toolbar mb-3">
@@ -57,6 +61,14 @@
        data-text-list="{% translate 'Agenda' %}"
        aria-live="polite"></div>
 </section>
+{% comment %}
+  LV-47: shown only when FullCalendar can't load (JS/CDN failure) -- a real
+  no-JS fallback needs its own month title + working nav, so both live under
+  one wrapper calendar.js hides in a single step once FullCalendar renders
+  (previously .legacy-calendar-header was hidden unconditionally by CSS,
+  leaving this table with no way to change month at all in that scenario).
+{% endcomment %}
+<div class="calendar-noscript">
 <div class="legacy-calendar-header d-flex justify-content-between align-items-center mb-3">
   <h1 class="h3">{{ month_name|date:"F Y" }}</h1>
   <div class="d-flex gap-2"><a href="?month={{ prev_month }}" class="btn btn-outline-secondary">← {% translate "Previous" %}</a><a href="?month={{ next_month }}" class="btn btn-outline-secondary">{% translate "Next" %} →</a></div>
@@ -68,6 +80,7 @@
   {% if day > 0 %}<strong>{{ day }}</strong>{% for evt_date, evt_list in events.items %}{% if evt_date.day == day and evt_date.month == cal_month and evt_date.year == cal_year %}{% for evt_type, evt in evt_list %}{% if evt_type == "permission" %}<div class="small mt-1"><span class="badge bg-warning text-dark" title="{% translate 'Flight permission' %}">✈</span> <a href="{% url 'permission-detail' evt.pk %}" class="text-decoration-none small">{{ evt.permission_number }}</a></div>{% elif evt_type == "maintenance" %}<div class="small mt-1"><span class="badge bg-secondary" title="{% translate 'Maintenance' %}">⚙</span> <a href="{% url 'maintenance-detail' evt.pk %}" class="text-decoration-none small">{{ evt.aircraft }}</a></div>{% endif %}{% endfor %}{% endif %}{% endfor %}{% endif %}
 </td>{% endfor %}</tr>{% endfor %}
 </tbody></table></div>
+</div>
 {% endblock %}
 
 {% block extrahead %}<script src="{% static 'vendor/fullcalendar/index.global.min.js' %}"

@@ -6,7 +6,11 @@
 (function () {
   document.addEventListener('DOMContentLoaded', function () {
     var root = document.getElementById('calendar-app');
-    var fallback = document.querySelector('.calendar-fallback');
+    // LV-47: one wrapper for the whole no-JS fallback (month title, nav, and
+    // the plain table) so a single toggle hides all of it once FullCalendar
+    // takes over -- previously only the table was hidden here, leaving its
+    // header's prev/next always visible and disconnected from FullCalendar.
+    var fallback = document.querySelector('.calendar-noscript');
     var filter = document.getElementById('calendar-type-filter');
     if (!root || !window.FullCalendar) return;
     var costCenter = document.getElementById('calendar-cost-center');
