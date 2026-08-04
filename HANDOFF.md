@@ -2,8 +2,8 @@
 
 > Punto de retome entre ventanas/sesiones. La **fuente de verdad del trabajo
 > pendiente** es [MASTER_PLAN.md](MASTER_PLAN.md); esto es el resumen de estado.
-> Última actualización: **2026-08-04** (3ª tanda LV-44..54 **ya desplegada en
-> la VM**; LV-55 nuevo, aún NO desplegado).
+> Última actualización: **2026-08-04** (3ª tanda LV-44..54 y LV-55 **ya
+> desplegadas en la VM**; sin pendientes de deploy).
 
 ## Worktrees en background — estado 2026-08-04 (leer antes de tocar)
 Hay 3 worktrees bajo `.claude/worktrees/`, de sesiones en segundo plano que el
@@ -175,13 +175,12 @@ geo, calendario, workboard) y el `.mo` recompilado. Sin timers ni tableros
 nuevos que activar en esta tanda (LV-45's `init_dgac_board` ya se había
 corrido antes). Suite local **639/639 verde**.
 
-**Pendiente: deploy de LV-55** (posterior al 3er deploy, aún no en la VM):
-enlace de "Seguimiento de alertas" en el sidebar (bajo Alertas) + quitada la
-pestaña "Vista de calendario" del tablero. Solo plantillas
-(`templates/base.html`, `templates/workboard/kanban.html`), sin migración —
-el mismo `git pull --ff-only && uv sync --frozen` + `collectstatic` +
-`restart` de siempre, sin paso de `migrate` necesario mas no hace daño
-correrlo.
+**LV-55: HECHO en la VM 2026-08-04** (commit `9807650`, por SSH con el
+usuario): enlace de "Seguimiento de alertas" en el sidebar (bajo Alertas) +
+quitada la pestaña "Vista de calendario" del tablero. Solo plantillas, sin
+migración. `git pull` confirmó "Already up to date" (ya estaba al día de un
+ciclo anterior) + `collectstatic` + `restart` sin error. **Sin pendientes de
+deploy** al cierre de esta ventana.
 
 ## Estado de producción (VM `p340`)
 - **Desplegado el batch LV-29..32 + la pasada de diseño (commit `6640f66`) el
