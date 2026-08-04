@@ -26,11 +26,19 @@ con un mensaje claro en vez de enviar a nadie en silencio.
 ./scripts/schedule_tasks.ps1 -EnvFile "C:/AeroControl_Data/.env"
 ```
 
-Horas personalizables y desregistro:
+El script registra `GenerateAlerts`, `AlertDigest`, `Backup`, `ExecutiveReport`
+y `MonthlyRecords` (LV-30, cierre mensual: corre a diario y actúa solo el último
+día del mes). El aviso por operador `CredentialNotice` (LV-29) es **opcional** y
+queda apagado salvo que se pase `-WithCredentialNotice`.
+
+Horas personalizables, trabajo opcional y desregistro:
 
 ```powershell
 ./scripts/schedule_tasks.ps1 -AlertsAt "06:30" -DigestAt "07:15" -BackupAt "22:00" `
-  -ExecutiveReportDay Monday -ExecutiveReportAt "07:30"
+  -ExecutiveReportDay Monday -ExecutiveReportAt "07:30" -MonthlyRecordsAt "23:30"
+# Activar además el aviso opcional de vigencias a cada operador (LV-29):
+./scripts/schedule_tasks.ps1 -WithCredentialNotice -CredentialNoticeAt "07:30"
+# Quitar todas las tareas (incluye las opcionales):
 ./scripts/schedule_tasks.ps1 -Unregister
 ```
 
