@@ -39,6 +39,19 @@ sin romper el dueño de la SQLite. **Opcional pendiente:** agregar los timers
 Suite completa **618 verde** (2026-08-03). Kanban sigue en standby; T3.4/T4.1
 diferidos.
 
+### 2ª tanda de revisión en vivo (LV-33..40) — post-deploy 2026-08-03
+Tras el primer deploy, el usuario siguió revisando y salieron LV-33..40, todos
+**implementados y en `main`** (commits `72ac499`, `7545e01`, `c92ed86`,
+`090da0e`, `62c1e04`, `2f9c876`): LV-33 (fallback Operadores/Flota del CC por
+`cost_center`), LV-34 (responsable del CC por tipo Administrador/Operador/Externo,
+JS en `app.js`), LV-35 (textareas medianas), LV-37 (pestaña "Equipo"→"Operadores"),
+LV-38 (grilla de operadores/flota en el permiso), LV-39 (permiso: estado +
+número opcional, **migración `operations 0011`**), LV-40 (cargar documento vuelve
+a la ficha). **Pendiente 2º deploy consolidado** (trae `operations 0011` + CSS/JS
+nuevos): `pull` + `uv sync` + `migrate` + `collectstatic` + restart, más el
+`backfill_resource_assignments` (llena Operadores/Flota) y los timers opcionales.
+**Único LV sin hacer:** LV-36 (editar CC en pestañas, P3, requiere navegador).
+
 > **DESPLEGADO 2026-08-03** (commit `6640f66`): migrate + collectstatic + seeds +
 > 44 vigencias cargadas + restart, verificado por el usuario. Ver "Estado de
 > producción". Ya no queda deploy pendiente de este batch.
