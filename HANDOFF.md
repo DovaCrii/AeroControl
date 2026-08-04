@@ -5,37 +5,25 @@
 > Última actualización: **2026-08-04** (3ª tanda LV-44..54 y LV-55 **ya
 > desplegadas en la VM**; sin pendientes de deploy).
 
-## Worktrees en background — estado 2026-08-04 (leer antes de tocar)
-Hay 3 worktrees bajo `.claude/worktrees/`, de sesiones en segundo plano que el
-usuario lanzó desde chips sugeridos. Antes de retomar cualquiera, revisar esto
-para no duplicar trabajo:
+## Worktrees en background — CERRADO 2026-08-04
+Había 3 worktrees bajo `.claude/worktrees/`, de sesiones en segundo plano
+lanzadas desde chips sugeridos. Los tres ya se resolvieron:
 
-- **`peaceful-swanson-ba9498`** (branch `claude/peaceful-swanson-ba9498`,
-  base `3e31aee`) — era la tarea de validar `doc_type`/`cost_center` mal
-  formado en el reporte de cumplimiento. **Se quedó sin contexto sin
-  commitear**, pero el fix que dejó a medio camino (`report_views.py` +
-  `test_reports.py`) es **funcionalmente idéntico** al que ya se implementó y
-  se subió directamente a `main` como **LV-54** (commit `95f9fbf`) en esta
-  misma sesión. **No hay nada que rescatar de este worktree** — es seguro
-  descartar sus cambios sin commitear y eliminarlo
-  (`git worktree remove --force .claude/worktrees/peaceful-swanson-ba9498`),
-  pero eso es una acción destructiva: pedir confirmación antes de borrarlo.
-- **`affectionate-moser-088890`** (branch `claude/affectionate-moser-088890`,
-  base `3de71c8`) — era la tarea del gotcha `. /etc/aerocontrol.env` en
-  `ubuntu-vm-deploy.md`. **Sin cambios pendientes** (diff vacío contra su
-  base) — su trabajo ya se revisó, se completó a mano y se subió a `main`
-  (commit `f2102b7`) en esta misma sesión. Seguro de eliminar.
-- **`amazing-bouman-1b3d09`** (branch más vieja, base `0023572`,
-  2026-07-28) — de una sesión **anterior**, no relacionada con el trabajo de
-  hoy. Tiene un solo archivo sin trackear (`docs/deploy-vm.md`). No investigado
-  a fondo en esta sesión; revisar su contenido antes de decidir si conservarlo
-  o descartarlo.
-
-**Recomendación:** la próxima sesión puede simplemente **no retomar
-`peaceful-swanson-ba9498` ni `affectionate-moser-088890`** (ambas ya
-resueltas en `main`) y, con el visto bueno del usuario, limpiar los 3
-worktrees para no acumular más (mismo patrón de "sesiones paralelas" que ya
-está anotado en la memoria de hazards del repo).
+- **`peaceful-swanson-ba9498`** y **`affectionate-moser-088890`**: su trabajo
+  ya estaba en `main` (LV-54 `95f9fbf`, y el fix de `ubuntu-vm-deploy.md`
+  `f2102b7`, ambos de esta misma sesión). `git worktree remove --force` los
+  desregistró y vació su contenido; solo quedó el directorio contenedor
+  **vacío** sin poder borrarse (`Remove-Item`/`rename` fallan con "being used
+  by another process" — algo, probablemente el Explorador de Windows o una
+  ventana abierta, lo tiene como ruta activa). **Decisión del usuario:
+  dejarlas así** — están vacías, no las usa git ni la app, no estorban.
+  Si en el futuro se quiere reintentar el borrado: cerrar cualquier
+  Explorador/ventana abierta en esas rutas y correr
+  `Remove-Item -Recurse -Force ".claude\worktrees\<nombre>"`.
+- **`amazing-bouman-1b3d09`**: contenido revisado (`docs/deploy-vm.md`, un
+  borrador de 2026-07-28 superado por el runbook actual
+  `docs/dev/ubuntu-vm-deploy.md`) — descartado. `git worktree remove --force`
+  lo eliminó **completamente**, sin rastro.
 
 ## PRÓXIMA VENTANA — empezar acá
 El batch **LV-29..32** se implementó (parte funcional) en la ventana del
