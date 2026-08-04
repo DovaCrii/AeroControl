@@ -1,4 +1,5 @@
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.shortcuts import redirect
 from django.utils import timezone
@@ -6,6 +7,7 @@ from django.utils.translation import gettext_lazy
 from django.views.generic import DetailView, FormView, ListView
 
 from apps.compliance.models import Document, DocumentType
+from apps.operations.models import FlightPermission
 from apps.compliance.views import save_uploaded_file, uploaded_file_cleanup
 from apps.core.audit import set_audit_context
 from apps.core.views import (
@@ -213,9 +215,26 @@ class GeoPlanImportView(ModelPermissionRequiredMixin, FormView):
         # LV-50: "Importar plan" from a flight permission's own detail page
         # prefills it, same pattern as maintenance-create?aircraft=.
         initial = super().get_initial()
-        flight_permission = self.request.GET.get("flight_permission")
-        if flight_permission:
-            initial["flight_permission"] = flight_permission
+        raw_permission = self.request.GET.get("flight_permission")
+        if not raw_permission:
+            return initial
+        initial["flight_permission"] = raw_permission
+        # LV-60: the cost center is not a second decision -- the permission
+        # already has one, and the form now rejects a mismatch. Showing it
+        # filled in makes that visible instead of asking again.
+        # `.filter(pk=...)` on a UUIDField raises on a malformed value, so this
+        # is guarded the same way as the compliance report's filters (LV-54):
+        # a bad query string leaves the field empty, it does not 500.
+        try:
+            permission = (
+                FlightPermission.objects.filter(pk=raw_permission)
+                .select_related("cost_center")
+                .first()
+            )
+        except (ValueError, ValidationError):
+            permission = None
+        if permission:
+            initial["cost_center"] = permission.cost_center_id
         return initial
 
     def form_valid(self, form):

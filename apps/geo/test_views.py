@@ -38,6 +38,23 @@ def _kml_upload(name="plan.kml", content=None):
     )
 
 
+def _permission(cost_center, **overrides):
+    """A minimal active FlightPermission on `cost_center` (LV-60 tests)."""
+    from datetime import date
+
+    from apps.operations.models import FlightPermission
+
+    fields = {
+        "cost_center": cost_center,
+        "purpose": "Survey",
+        "valid_from": date(2026, 7, 22),
+        "valid_until": date(2026, 7, 22),
+        "location": "Santiago",
+    }
+    fields.update(overrides)
+    return FlightPermission.objects.create(**fields)
+
+
 def _kmz_with_icon():
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as archive:
@@ -141,6 +158,113 @@ class TestImport:
         assert response.context["form"].initial["flight_permission"] == str(
             permission.pk
         )
+        # LV-60: the cost center is the permission's, not a second decision.
+        assert response.context["form"].initial["cost_center"] == center.pk
+
+    @pytest.mark.django_db
+    def test_import_from_a_malformed_permission_id_does_not_crash(self, db):
+        """LV-60 prefills the cost center by looking the permission up; a
+        non-UUID in the query string must leave the field empty, not 500
+        (same guard as the compliance report's filters, LV-54)."""
+        client = _client("add_geoplan")
+
+        response = client.get(reverse("geo-plan-import"), {"flight_permission": "1"})
+
+        assert response.status_code == 200
+        assert "cost_center" not in response.context["form"].initial
+
+    @pytest.mark.django_db
+    def test_a_plan_linked_to_a_permission_inherits_its_title_and_cost_center(
+        self, db, settings, tmp_path
+    ):
+        """LV-60: importing against a permission is not a separate record --
+        posting neither a title nor a cost center still produces a coherent
+        plan, both derived from the permission the user already chose."""
+        settings.DOCUMENTS_ROOT = str(tmp_path)
+        permission = _permission(CostCenter.objects.create(code="CC1", name="Uno"))
+        client = _client("add_geoplan")
+
+        response = client.post(
+            reverse("geo-plan-import"),
+            {
+                "flight_permission": permission.pk,
+                "file": _kml_upload(name="area-norte.kml"),
+            },
+        )
+
+        assert response.status_code == 302
+        plan = GeoPlan.objects.get()
+        assert plan.flight_permission_id == permission.pk
+        assert plan.cost_center_id == permission.cost_center_id
+        assert plan.title == f"{permission} · area-norte"
+
+    @pytest.mark.django_db
+    def test_a_plan_without_a_permission_derives_its_title_from_the_cost_center(
+        self, db, settings, tmp_path
+    ):
+        settings.DOCUMENTS_ROOT = str(tmp_path)
+        center = CostCenter.objects.create(code="CC1", name="Uno")
+        client = _client("add_geoplan")
+
+        response = client.post(
+            reverse("geo-plan-import"),
+            {"cost_center": center.pk, "file": _kml_upload(name="area-sur.kml")},
+        )
+
+        assert response.status_code == 302
+        assert GeoPlan.objects.get().title == f"{center} · area-sur"
+
+    @pytest.mark.django_db
+    def test_an_explicit_title_is_kept(self, db, settings, tmp_path):
+        settings.DOCUMENTS_ROOT = str(tmp_path)
+        permission = _permission(CostCenter.objects.create(code="CC1", name="Uno"))
+        client = _client("add_geoplan")
+
+        client.post(
+            reverse("geo-plan-import"),
+            {
+                "title": "Mi propio título",
+                "flight_permission": permission.pk,
+                "file": _kml_upload(),
+            },
+        )
+
+        assert GeoPlan.objects.get().title == "Mi propio título"
+
+    @pytest.mark.django_db
+    def test_a_cost_center_other_than_the_permissions_is_rejected(
+        self, db, settings, tmp_path
+    ):
+        """LV-60: a plan filed under a different contract than its own
+        permission is incoherent; nothing rejected it before."""
+        settings.DOCUMENTS_ROOT = str(tmp_path)
+        permission = _permission(CostCenter.objects.create(code="CC1", name="Uno"))
+        other = CostCenter.objects.create(code="CC2", name="Dos")
+        client = _client("add_geoplan")
+
+        response = client.post(
+            reverse("geo-plan-import"),
+            {
+                "flight_permission": permission.pk,
+                "cost_center": other.pk,
+                "file": _kml_upload(),
+            },
+        )
+
+        assert response.status_code == 200  # re-rendered with the error
+        assert "cost_center" in response.context["form"].errors
+        assert GeoPlan.objects.count() == 0
+
+    @pytest.mark.django_db
+    def test_neither_a_permission_nor_a_cost_center_is_rejected(self, db):
+        """Nothing to inherit from, and GeoPlan.cost_center is not nullable."""
+        client = _client("add_geoplan")
+
+        response = client.post(reverse("geo-plan-import"), {"file": _kml_upload()})
+
+        assert response.status_code == 200
+        assert "cost_center" in response.context["form"].errors
+        assert GeoPlan.objects.count() == 0
 
     @pytest.mark.django_db
     def test_import_requires_add_permission(self, db, settings, tmp_path):

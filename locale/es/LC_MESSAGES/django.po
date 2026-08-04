@@ -1354,6 +1354,20 @@ msgstr "Panel"
 msgid "Master data"
 msgstr "Datos maestros"
 
+#: LV-61 sidebar groups: the flow first ("Vuelo" = the permission lifecycle),
+#: the registry last because it is set up once.
+msgid "Flight"
+msgstr "Vuelo"
+
+#: a bare "Registry" is already the cost-center import page's eyebrow
+#: ("Registro"); this one is the sidebar group over the roster.
+msgctxt "sidebar group"
+msgid "Registry"
+msgstr "Padrón"
+
+msgid "Maintenance jobs"
+msgstr "Mantenciones"
+
 #: .\templates\base.html:58
 msgid "Cost Centers"
 msgstr "Centros de costo"
@@ -2798,6 +2812,26 @@ msgstr "Atrasadas en esta etapa"
 
 msgid "Day-to-day"
 msgstr "Día a día"
+
+msgid ""
+"Leave blank to generate it from the flight permission (or the cost center) "
+"and the file name."
+msgstr ""
+"Déjalo en blanco para generarlo a partir del permiso de vuelo (o del centro "
+"de costo) y el nombre del archivo."
+
+msgid "Taken from the flight permission when one is selected."
+msgstr "Se toma del permiso de vuelo cuando seleccionas uno."
+
+msgid ""
+"This cost center is not the one on the selected flight permission "
+"(%(expected)s)."
+msgstr ""
+"Este centro de costo no es el del permiso de vuelo seleccionado "
+"(%(expected)s)."
+
+msgid "Select a cost center."
+msgstr "Selecciona un centro de costo."
 
 #: .\templates\workboard\_column.html:11
 msgid "No tasks"
