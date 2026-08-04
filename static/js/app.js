@@ -138,4 +138,16 @@
     var progress = form.querySelector('[data-loading-progress]');
     if (progress) progress.classList.remove('d-none');
   });
+
+  // LV-40: open the tab named by the URL hash (#tab-…). A redirect that lands on
+  // a detail page with a hash (e.g. after uploading a document from a fiche,
+  // which returns to costcenter-detail#tab-documents) then shows the right tab
+  // instead of the default Summary one. Harmless when the tab is absent.
+  var tabHash = window.location.hash;
+  if (tabHash && /^#tab-[\w-]+$/.test(tabHash) && window.bootstrap && bootstrap.Tab) {
+    var tabTrigger = document.querySelector(
+      '[data-bs-toggle="tab"][data-bs-target="' + tabHash + '"]'
+    );
+    if (tabTrigger) bootstrap.Tab.getOrCreateInstance(tabTrigger).show();
+  }
 })();
