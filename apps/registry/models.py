@@ -42,8 +42,16 @@ class CostCenter(BaseModel):
     # fly, and would leak into every other view that assumes the roster is
     # flight crew. Plain contact info instead, used only when no operator is
     # reachable (see notification_email).
-    responsible_contact_name = models.CharField(max_length=150, blank=True)
-    responsible_contact_email = models.EmailField(blank=True)
+    # verbose_name matches the form's labels (registry/forms.py CostCenterForm)
+    # so the detail page and the edit form read the same -- Django's
+    # auto-derived label ("Responsible contact name") has no catalog entry and
+    # rendered in English on the detail page otherwise.
+    responsible_contact_name = models.CharField(
+        max_length=150, blank=True, verbose_name=_("external contact name")
+    )
+    responsible_contact_email = models.EmailField(
+        blank=True, verbose_name=_("external contact email")
+    )
 
     def __str__(self):
         # name is optional (LV-16): fall back to the code alone when blank.
