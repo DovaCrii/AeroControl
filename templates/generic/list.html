@@ -22,7 +22,12 @@
 
 <div id="table-wrapper" class="card">
   <div class="table-responsive">
-    <table class="table table-hover mb-0">
+    {% comment %}LV-57: both blocks are empty by default, so every list that
+    does not override them renders exactly as before. A list opts into the
+    normalized column widths by declaring its <colgroup> here and adding
+    table-normalized -- the widths only bind where a colgroup exists.{% endcomment %}
+    <table class="table table-hover mb-0 {% block list_table_class %}{% endblock %}">
+      {% block list_colgroup %}{% endblock %}
       <thead>
         <tr>
           {% block list_header %}

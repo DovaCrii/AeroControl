@@ -1095,9 +1095,12 @@ main {
   white-space: nowrap;
 }
 /* The first column is the row's anchor (a code or registration): keep it on one
-   line so rows line up instead of some wrapping to two lines. */
-.table td:first-child,
-.table th:first-child {
+   line so rows line up instead of some wrapping to two lines.
+   LV-57 scopes this out of .table-normalized, whose first column is a
+   deliberate two-line identity block -- there the nowrap applies to the
+   anchor line only (see the LV-57 section at the end of this file). */
+.table:not(.table-normalized) td:first-child,
+.table:not(.table-normalized) th:first-child {
   white-space: nowrap;
 }
 .table > :not(caption) > * > * {
@@ -1451,3 +1454,70 @@ a.admin-metric:hover { border-color: var(--ac-text-secondary); }
 .geo-popup-edit textarea { margin-bottom: 0.35rem; }
 /* Geoman's toolbar sits on its own light surface, like Leaflet's controls. */
 .leaflet-container .leaflet-pm-toolbar .leaflet-pm-actions-container { color: #1b2737; }
+
+/* ── LV-57: una sola anatomía de fila para las listas del padrón ───────────
+   Centros de costo, Aeronaves, Operadores y Habilitaciones repartían el ancho
+   cada una a su manera (la columna con el texto más largo se quedaba con el
+   espacio), y sólo Aeronaves usaba el bloque de identidad de dos líneas. Este
+   vocabulario lo generaliza: zonas fijas IDENTIDAD | ATRIBUTOS | ESTADO |
+   ACCIÓN, anchos declarados en un <colgroup> por lista.
+
+   Opt-in a propósito: .table-normalized sólo actúa donde hay <colgroup>, así
+   que las demás listas (asignaciones, mantenimiento, permisos, documentos,
+   alertas…) siguen con el reparto automático, byte por byte igual que antes. */
+.table-normalized {
+  table-layout: fixed;
+  /* Con anchos en porcentaje, una pantalla estrecha aplastaría las columnas
+     hasta hacerlas ilegibles; por debajo de esto scrollea (.table-responsive
+     ya envuelve la tabla). */
+  min-width: 900px;
+}
+
+/* Anchos por rol de columna. Van sobre <col>, no sobre las celdas: así el
+   reparto se lee de un vistazo en la plantilla y no hay estilos inline.
+
+   Las 4 listas fijan igual la primera columna (26%) y la de acción (110px):
+   ese es el efecto buscado -- el ancla y el botón caen en la misma posición
+   en las cuatro pantallas. Cada lista deja además UNA columna sin ancho
+   (.col-flex o .col-chips) que absorbe el sobrante, de modo que los
+   porcentajes no tienen que sumar exacto pese a que cada lista tiene un
+   número distinto de columnas. */
+.table-normalized .col-primary { width: 26%; }
+.table-normalized .col-text { width: 18%; }
+.table-normalized .col-compact { width: 12%; }
+.table-normalized .col-numeric { width: 8%; }
+.table-normalized .col-status { width: 13%; }
+.table-normalized .col-flex,
+.table-normalized .col-chips { width: auto; }
+.table-normalized .col-actions { width: 110px; }
+
+/* IDENTIDAD: la línea 1 es el identificador con el que se habla del registro
+   (código, matrícula, nombre) y no se parte; la línea 2 desambigua y trunca. */
+.table-normalized td:first-child { white-space: normal; }
+.table-normalized .table-primary-value { white-space: nowrap; }
+.table-primary-sub {
+  display: block;
+  color: var(--ac-text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
+/* Numéricos: a la derecha y con cifras de ancho fijo, para que las columnas de
+   conteo se comparen en vertical en vez de flotar en una franja vacía. */
+.table-normalized .cell-numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.table-normalized th.cell-numeric { text-align: right; }
+
+.table-normalized .cell-status { text-align: center; }
+.table-normalized th.cell-status { text-align: center; }
+
+/* Salida definida para el texto largo: con table-layout fijo, sin esto el
+   contenido desborda la celda en vez de repartirse. El valor completo queda
+   en el title. Sustituye al style="max-width:16rem" inline que había. */
+.table-normalized .cell-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

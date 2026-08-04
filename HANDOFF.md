@@ -3,19 +3,26 @@
 > Punto de retome entre ventanas/sesiones. La **fuente de verdad del trabajo
 > pendiente** es [MASTER_PLAN.md](MASTER_PLAN.md); esto es el resumen de estado.
 > Última actualización: **2026-08-04** (3ª tanda LV-44..54 y LV-55 **ya
-> desplegadas en la VM**; B3.3/B3.4 nuevos, aún NO desplegados).
+> desplegadas en la VM**; B3.3/B3.4, LV-56 y LV-57 nuevos, aún NO desplegados).
 
-## PENDIENTE PRIORITARIO — LV-57: normalizar las tablas de listas
-El usuario pidió (2026-08-04, con capturas de Centros de costo, Aeronaves,
-Operadores y Habilitaciones) **normalizar cómo se muestran las 4 listas**: hoy
-cada una reparte el ancho distinto, solo Aeronaves usa el patrón de columna
-primaria de dos líneas (matrícula + modelo), y el verbo de acción no es
-consistente ("Editar" vs "Ver operador"). Pide un mismo estilo para todas y
-aprovechar mejor el espacio. Es la continuación concreta de **LV-32** (sistema
-de tablas, quedó parcial). **Aún no implementado**: antes de tocar las 4
-plantillas hay que acordar con el usuario el patrón exacto (¿columna primaria
-de dos líneas en todas? ¿anchos proporcionales fijos? ¿un solo verbo de
-acción?). Ver la fila LV-57 en `MASTER_PLAN.md`.
+## LV-57 — tablas del padrón normalizadas (hecho, sin desplegar)
+Las 4 listas del padrón (Centros de costo, Aeronaves, Operadores,
+Habilitaciones) comparten ahora **una sola anatomía de fila**:
+`IDENTIDAD | ATRIBUTOS | ESTADO | ACCIÓN`, con bloque de identidad de dos
+líneas, anchos por `<colgroup>` + `table-layout:fixed`, y verbo "Editar"
+único. Diseño hecho con **Opus 5**. Detalle completo en la fila LV-57 de
+`MASTER_PLAN.md`.
+
+**Lo importante para futuras sesiones:** el mecanismo es **opt-in**. Una lista
+entra al patrón declarando `{% block list_table_class %}table-normalized{% endblock %}`
+y su `{% block list_colgroup %}` en `generic/list.html`; las que no lo hacen
+(asignaciones, mantenimiento, permisos, documentos, alertas, planes,
+movimientos…) siguen exactamente igual que antes. **Si se quiere extender el
+patrón a esas listas, ese es el camino** — no hace falta tocar la plantilla
+base otra vez. El vocabulario de clases (`col-primary/-text/-compact/-numeric/
+-status/-flex/-chips/-actions`, `table-primary-sub`, `cell-numeric`,
+`cell-status`, `cell-truncate`) está al final de `app.css` bajo la cabecera
+`── LV-57 ──`.
 
 ## BLOQUE 3 (mejoras UX del Seguimiento de alertas) — retomado parcialmente
 El usuario pidió retomar el standby de BLOQUE 3 ahora que el tablero se llama

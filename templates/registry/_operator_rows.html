@@ -1,17 +1,18 @@
 {% load aero_tags i18n %}
 {% for object in objects %}
 <tr>
-  <td><a href="{{ object.pk }}/" class="fw-semibold">{{ object.full_name }}</a></td>
-  <td>{{ object.rut|default:"—" }}</td>
-  <td>{{ object.dgac_credential|default:"—" }}</td>
-  <td>
+  <td><a href="{{ object.pk }}/" class="table-primary-value">{{ object.full_name }}</a>
+    {% if object.rut %}<span class="table-primary-sub cell-truncate">{{ object.rut }}</span>{% endif %}
+  </td>
+  <td class="cell-truncate">{{ object.dgac_credential|default:"—" }}</td>
+  <td class="cell-status">
     {% if object.credential_expiry %}
       {% if object.credential_is_overdue %}<span class="badge bg-danger">{% translate "Overdue" %} · {{ object.credential_expiry|date:'Y-m-d' }}</span>
       {% else %}<span class="badge bg-warning-subtle text-warning-emphasis">{{ object.credential_expiry|date:'Y-m-d' }}</span>{% endif %}
     {% else %}<span class="text-muted">—</span>{% endif %}
   </td>
-  <td>{% if object.cost_center %}<span title="{{ object.cost_center }}">{{ object.cost_center.code }}</span>{% else %}<span class="text-muted">{% translate "Unassigned" %}</span>{% endif %}</td>
-  <td>
+  <td class="cell-truncate">{% if object.cost_center %}<span title="{{ object.cost_center }}">{{ object.cost_center.code }}</span>{% else %}<span class="text-muted">{% translate "Unassigned" %}</span>{% endif %}</td>
+  <td class="cell-status">
     {% if object.current_quals %}<span class="badge bg-success">{% translate "Current" %}</span>
     {% elif object.expired_quals %}<span class="badge bg-danger">{% translate "Expired" %}</span>
     {% else %}<span class="text-muted">—</span>{% endif %}

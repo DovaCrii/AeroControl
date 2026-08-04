@@ -1,7 +1,16 @@
 {% load aero_tags i18n %}
 {% for object in objects %}
 <tr>
-  <td><a href="{% url 'operator-detail' object.pk %}" class="fw-semibold">{{ object.full_name }}</a></td>
+  <td><a href="{% url 'operator-detail' object.pk %}" class="table-primary-value">{{ object.full_name }}</a>
+    {% if object.rut %}<span class="table-primary-sub cell-truncate">{{ object.rut }}</span>{% endif %}
+  </td>
+  <td class="cell-truncate">{% if object.cost_center %}<span title="{{ object.cost_center }}">{{ object.cost_center.code }}</span>{% else %}<span class="text-muted">{% translate "Unassigned" %}</span>{% endif %}</td>
+  <td class="cell-status">
+    {% if object.credential_expiry %}
+      {% if object.credential_is_overdue %}<span class="badge bg-danger">{% translate "Overdue" %} · {{ object.credential_expiry|date:'Y-m-d' }}</span>
+      {% else %}<span class="badge bg-warning-subtle text-warning-emphasis">{{ object.credential_expiry|date:'Y-m-d' }}</span>{% endif %}
+    {% else %}<span class="text-muted">—</span>{% endif %}
+  </td>
   <td>
     {% for q in object.active_qualifications %}
       <a href="{% url 'qualification-update' q.pk %}"
@@ -11,8 +20,12 @@
          title="{% translate 'Edit qualification' %}">{{ q.qualification_type.name }}{% if q.expiry_date and q.expiry_date < today %} · {% translate "Expired" %}{% endif %}</a>
     {% empty %}<span class="text-muted">—</span>{% endfor %}
   </td>
+  {% comment %}LV-57: was "View operator", the only list of the four with a
+  different verb. The row's subject is an operator, so editing it is the same
+  action the other three offer; the name above still links to the detail, same
+  convention as everywhere else.{% endcomment %}
   <td class="text-end">
-    <a href="{% url 'operator-detail' object.pk %}" class="btn btn-sm btn-outline-secondary">{% translate "View operator" %}</a>
+    <a href="{% url 'operator-update' object.pk %}" hx-get="{% url 'operator-update' object.pk %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">{% translate "Edit" %}</a>
   </td>
 </tr>
 {% empty %}
