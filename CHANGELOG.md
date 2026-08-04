@@ -26,6 +26,11 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   `.po` hay que recompilarlo (con `polib`, la VM no tiene `gettext`).
 
 ### Changed
+- **Formulario de permiso de vuelo más práctico (LV-38/LV-39).** Los operadores
+  (~40) y la flota (~14) se muestran en una **grilla de varias columnas con
+  scroll** en vez de una lista vertical larga (mantiene la selección múltiple), y
+  el **Estado** va al inicio con el **número de permiso opcional** hasta que esté
+  aprobado, para armar el permiso antes de tener el folio DGAC.
 - **Pasada de diseño de la revisión en vivo (legibilidad + panel).** Las
   etiquetas y pastillas (chips de habilitaciones, tipos de entidad, estados) se
   leen ahora como pastillas en tema **oscuro y claro** —contorno, cuerpo y más
