@@ -1036,8 +1036,11 @@ main {
 [data-theme="dark"] .badge.bg-info-subtle      { background-color: #123a42 !important; border-color: #2a6b78; color: #79d6e6 !important; }
 [data-theme="dark"] .badge.bg-warning-subtle   { background-color: #3d2f14 !important; border-color: #7a5f26; color: #e6c079 !important; }
 [data-theme="dark"] .badge.bg-danger-subtle    { background-color: #3d1a1e !important; border-color: #7a343c; color: #f0a0a8 !important; }
-[data-theme="dark"] .badge.bg-secondary-subtle { background-color: #2b3749 !important; border-color: #46566d; color: #d5deea !important; }
-[data-theme="dark"] .badge.bg-dark-subtle      { background-color: #2a3038 !important; border-color: #4a525c; color: #cfd5dd !important; }
+/* LV-42: los grises neutros se fundían con la tarjeta oscura (fondo 1.38:1,
+   borde 2.2:1 vs card). Se sube el relleno y se aclara el borde a ≥3:1 para que
+   la pastilla lea como pastilla; el texto ya contrastaba (~9:1). */
+[data-theme="dark"] .badge.bg-secondary-subtle { background-color: #37455c !important; border-color: #657793 !important; color: #e6edf6 !important; }
+[data-theme="dark"] .badge.bg-dark-subtle      { background-color: #353d48 !important; border-color: #636d7b !important; color: #e2e7ee !important; }
 /* The sidebar alert count keeps its own compact sizing (set earlier); don't let
    the generic bump enlarge it. */
 .sidebar a .badge { font-size: 0.72rem; padding: 0.2em 0.5em; }
