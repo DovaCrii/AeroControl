@@ -9,7 +9,10 @@ from .models import FlightPermission, FlightRecord
 class FlightPermissionForm(AeroModelForm):
     class Meta:
         model = FlightPermission
+        # LV-39: status first, then the number -- a permit is built while it is
+        # still "requested" (or "denied"), before it has a DGAC folio.
         fields = [
+            "status",
             "permission_number",
             "operators",
             "aircraft_fleet",
@@ -23,6 +26,7 @@ class FlightPermissionForm(AeroModelForm):
         # number", "Valid from"…) fell through the catalog and rendered in English
         # inside the Spanish UI.
         labels = {
+            "status": _("Status"),
             "permission_number": _("Permission number"),
             "operators": _("Operators"),
             "aircraft_fleet": _("Aircraft fleet"),
@@ -32,11 +36,37 @@ class FlightPermissionForm(AeroModelForm):
             "valid_until": _("Valid until"),
             "location": _("Location"),
         }
+        help_texts = {
+            "permission_number": _(
+                "Optional until the permission is approved."
+            ),
+        }
         widgets = {
             # A roster of several, not one pick from a dropdown (OPS-4).
             "operators": forms.CheckboxSelectMultiple,
             "aircraft_fleet": forms.CheckboxSelectMultiple,
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # LV-39: the folio is only demanded once approved (see clean); until then
+        # the permit can be assembled without it.
+        self.fields["permission_number"].required = False
+
+    def clean(self):
+        cleaned = super().clean()
+        status = cleaned.get("status")
+        number = (cleaned.get("permission_number") or "").strip()
+        if status == "approved" and not number:
+            self.add_error(
+                "permission_number",
+                _("An approved permission needs its DGAC number."),
+            )
+        # Store null (not "") so several folio-less permits don't collide on the
+        # unique index.
+        cleaned["permission_number"] = number or None
+        self.instance.permission_number = cleaned["permission_number"]
+        return cleaned
 
 
 class FlightRecordForm(AeroModelForm):

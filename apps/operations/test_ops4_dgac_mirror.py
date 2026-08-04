@@ -103,6 +103,7 @@ class TestRoster:
         response = client.post(
             reverse("permission-create"),
             {
+                "status": "requested",
                 "permission_number": "P-1",
                 "operators": [op1.pk, op2.pk],
                 "aircraft_fleet": [ac1.pk],
@@ -118,6 +119,42 @@ class TestRoster:
         permission = FlightPermission.objects.get(permission_number="P-1")
         assert permission.operators.count() == 2
         assert permission.aircraft_fleet.get() == ac1
+
+    @pytest.mark.django_db
+    def test_requested_permission_can_be_built_without_a_number(self, db):
+        """LV-39: a permit can be assembled before its DGAC folio exists."""
+        cc = _cc()
+        op1 = _operator("E1", cc)
+        ac1 = _aircraft("CC-A1", cc)
+        client = _client("add_flightpermission")
+
+        response = client.post(
+            reverse("permission-create"),
+            {
+                "status": "requested",
+                "permission_number": "",
+                "operators": [op1.pk],
+                "aircraft_fleet": [ac1.pk],
+                "cost_center": cc.pk,
+                "purpose": "Survey",
+                "valid_from": "2026-07-01",
+                "valid_until": "2026-07-10",
+                "location": "Site",
+            },
+        )
+
+        assert response.status_code == 302
+        permission = FlightPermission.objects.get(cost_center=cc)
+        assert permission.permission_number is None
+        assert permission.status == "requested"
+
+    @pytest.mark.django_db
+    def test_approved_permission_requires_a_number(self, db):
+        from apps.operations.forms import FlightPermissionForm
+
+        form = FlightPermissionForm(data={"status": "approved", "permission_number": ""})
+        assert not form.is_valid()
+        assert "permission_number" in form.errors
 
 
 class TestCsvExportIncludesRoster:
