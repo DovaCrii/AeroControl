@@ -47,10 +47,19 @@ Tras el primer deploy, el usuario siguió revisando y salieron LV-33..40, todos
 JS en `app.js`), LV-35 (textareas medianas), LV-37 (pestaña "Equipo"→"Operadores"),
 LV-38 (grilla de operadores/flota en el permiso), LV-39 (permiso: estado +
 número opcional, **migración `operations 0011`**), LV-40 (cargar documento vuelve
-a la ficha). **Pendiente 2º deploy consolidado** (trae `operations 0011` + CSS/JS
-nuevos): `pull` + `uv sync` + `migrate` + `collectstatic` + restart, más el
-`backfill_resource_assignments` (llena Operadores/Flota) y los timers opcionales.
-**Único LV sin hacer:** LV-36 (editar CC en pestañas, P3, requiere navegador).
+a la ficha). Después (2026-08-04) se cerraron los últimos: **LV-41** (comentario
+`{# %}` multilínea que se renderizaba literal en el calendario → `{% comment %}`,
+`65554ca`), **LV-42** (pastillas grises se fundían con la tarjeta en oscuro →
+borde a 3.64:1, `2453b7a`), **LV-36** (form del CC en secciones agrupadas
+Identificación/Responsable/Notas, ambas vías full-page+modal; + fix de un
+`#~ msgid` duplicado que rompía `compilemessages`, `5f11949`) y **LV-43** (timers
+LV-29/30 cableados en `schedule_tasks.ps1`, `1e0d694`). **Ya no queda ningún LV
+abierto** (LV-29..43 todos ✅).
+**Pendiente 2º deploy consolidado** (trae `operations 0011` + CSS/JS nuevos +
+`.mo` recompilado): `pull` + `uv sync` + `migrate` + `collectstatic` + restart,
+más el `backfill_resource_assignments` (llena Operadores/Flota) y **activar los
+2 systemd timers ya cableados** (LV-30 `check_monthly_records` + opcional LV-29
+`notify_expiring_credentials`, `mkjob` en `docs/scheduled-operations.md`).
 
 > **DESPLEGADO 2026-08-03** (commit `6640f66`): migrate + collectstatic + seeds +
 > 44 vigencias cargadas + restart, verificado por el usuario. Ver "Estado de
@@ -74,7 +83,11 @@ nuevos): `pull` + `uv sync` + `migrate` + `collectstatic` + restart, más el
   (decisión de negocio) para más alertas; y el timer opcional
   `check_monthly_records` / `notify_expiring_credentials` (ver scheduled-operations).
 - **Tareas programadas** (systemd timers): `generate_alerts` 06:00,
-  `send_alert_digest` 07:00, `backup` 22:00.
+  `send_alert_digest` 07:00, `backup` 22:00. **Pendiente de activar en el 2º
+  deploy** (ya cableados en `schedule_tasks.ps1`, LV-43): `check_monthly_records`
+  (diario 23:30, actúa el último día del mes) y — opcional — `notify_expiring_credentials`
+  (diario 07:30). Comandos `mkjob monthly …` / `mkjob credentials …` en
+  `docs/scheduled-operations.md` (sección systemd).
 - Runbook de despliegue: [docs/dev/ubuntu-vm-deploy.md](docs/dev/ubuntu-vm-deploy.md).
   Deploy = `git pull --ff-only` + `uv sync --frozen` (los hago yo por SSH, sin
   sudo) + un bloque `sudo` (migrate/collectstatic/restart) que **corre el
