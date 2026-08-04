@@ -150,6 +150,7 @@ class TestFlightPermissionCreateWarns:
         response = client.post(
             reverse("permission-create"),
             {
+                "status": "requested",
                 "permission_number": "P-GAP",
                 "operators": [operator.pk],
                 "aircraft_fleet": [aircraft.pk],
@@ -185,6 +186,7 @@ class TestFlightPermissionCreateWarns:
         response = client.post(
             reverse("permission-create"),
             {
+                "status": "requested",
                 "permission_number": "P-OK",
                 "operators": [operator.pk],
                 "aircraft_fleet": [aircraft.pk],
