@@ -64,6 +64,11 @@ class FlightPermissionList(
 ):
     model = FlightPermission
     template_name = "operations/permission_list.html"
+    # LV-53: own partial (Operators/Aircraft/Validity/Status columns), not the
+    # generic created_at/is_active one -- same reason as OperatorList's
+    # override (T5.6\F-13): a live-search HTMX response must carry this
+    # list's own columns, or the search result collapses to the generic ones.
+    htmx_template_name = "operations/_permission_rows.html"
     context_object_name = "objects"
     paginate_by = 25
     search_fields = ["permission_number"]
@@ -108,6 +113,14 @@ class FlightPermissionList(
             title=_("Permissions"),
             status_choices=FlightPermission.STATUS_CHOICES,
             current_status=self.request.GET.get("status", ""),
+        )
+        # LV-53: SearchMixin's is_filtered only knows about q/is_active, not
+        # this list's own status/date_from/date_to -- widen it so "cleared
+        # filters" offers correctly when only those are set.
+        context["is_filtered"] = context["is_filtered"] or bool(
+            self.request.GET.get("status")
+            or self.request.GET.get("date_from")
+            or self.request.GET.get("date_to")
         )
         return context
 

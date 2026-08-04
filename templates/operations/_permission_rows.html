@@ -1,0 +1,25 @@
+{% load aero_tags i18n %}
+{% for object in objects %}
+<tr>
+  <td><a href="{{ object.pk }}/">{{ object }}</a></td>
+  <td>{% for operator in object.operators.all %}{{ operator }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+  <td>{% for aircraft in object.aircraft_fleet.all %}{{ aircraft }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+  <td>{{ object.valid_from|date:"Y-m-d" }} – {{ object.valid_until|date:"Y-m-d" }}</td>
+  <td><span class="badge bg-{% if object.status == 'approved' %}success{% elif object.status == 'denied' %}danger{% elif object.status == 'completed' %}info{% else %}warning{% endif %}">{{ object.get_status_display }}</span></td>
+  <td class="text-end">
+    <a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">{% translate "View" %}</a>
+  </td>
+</tr>
+{% empty %}
+<tr>
+  <td colspan="99" class="text-center text-muted py-4">
+    {% if is_filtered %}
+      {% translate "No records match the current filters." %}
+      <a href="{{ request.path }}">{% translate "Clear filters" %}</a>
+    {% else %}
+      {% translate "No permissions found." %}
+    {% endif %}
+  </td>
+</tr>
+{% endfor %}
+{% if is_htmx %}<div id="pagination-container" hx-swap-oob="true">{% render_pagination page_obj %}</div>{% endif %}

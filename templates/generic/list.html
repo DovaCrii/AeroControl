@@ -6,14 +6,18 @@
   <h1 class="h3">{% if title %}{{ title }}{% else %}{% translate "Records" %}{% endif %}</h1>
   <div class="d-flex gap-2">
     {% block list_actions %}{% endblock %}
+    {% block list_primary_actions %}
     <a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>
     <a class="btn btn-primary" href="new/" hx-get="new/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal">+ {% translate "New" %}</a>
+    {% endblock %}
   </div>
 </div>
 <form method="get" class="row g-2 mb-3">
+  {% block list_filters %}
   <div class="col-md-5">{% include "generic/_search_input.html" with search_url=request.path %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
   <div class="col-md-3"><select class="form-select" name="is_active"><option value="">{% translate "All statuses" %}</option><option value="active" {% if request.GET.is_active == 'active' %}selected{% endif %}>{% translate "Active" %}</option><option value="archived" {% if request.GET.is_active == 'archived' %}selected{% endif %}>{% translate "Archived" %}</option></select></div>
   <div class="col-auto"><button class="btn btn-outline-primary">{% translate "Search" %}</button></div>
+  {% endblock %}
 </form>
 
 <div id="table-wrapper" class="card">
