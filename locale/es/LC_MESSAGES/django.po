@@ -1406,7 +1406,7 @@ msgstr "Seguimiento"
 #: .\templates\base.html:82 .\templates\workboard\kanban.html:3
 #: .\templates\workboard\kanban.html:7 .\templates\workboard\task_list.html:6
 msgid "Action plan"
-msgstr "Plan de acción"
+msgstr "Seguimiento de alertas"
 
 #: .\templates\base.html:89 .\templates\core\administration.html:3
 #: .\templates\core\administration.html:24
