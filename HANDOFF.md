@@ -2,7 +2,7 @@
 
 > Punto de retome entre ventanas/sesiones. La **fuente de verdad del trabajo
 > pendiente** es [MASTER_PLAN.md](MASTER_PLAN.md); esto es el resumen de estado.
-> Última actualización: **2026-08-04**.
+> Última actualización: **2026-08-04** (3ª tanda LV-44..49).
 
 ## PRÓXIMA VENTANA — empezar acá
 El batch **LV-29..32** se implementó (parte funcional) en la ventana del
@@ -79,6 +79,46 @@ abierto** (LV-29..43 todos ✅).
 > **DESPLEGADO 2026-08-03** (commit `6640f66`): migrate + collectstatic + seeds +
 > 44 vigencias cargadas + restart, verificado por el usuario. Ver "Estado de
 > producción". Ya no queda deploy pendiente de este batch.
+
+### 3ª tanda (LV-44..49) — 2026-08-04, aún NO desplegada en la VM
+Tras el 2º deploy, siguieron apareciendo hallazgos y pedidos en la misma
+ventana, todos **implementados y en `main`** (commits `a8a0d7d`, `3de71c8`,
+`f2102b7`, `d56b7ad`, `037b2e9`, `46c41f4`, `3e31aee`):
+- **LV-44**: ficha del CC mostraba "RESPONSIBLE CONTACT NAME/EMAIL" en inglés
+  → `verbose_name` explícito en el modelo, reutiliza msgids del form.
+  Migración `registry 0022` (solo `verbose_name`, sin cambio de esquema).
+- **LV-45**: botón "Crear tarea" de `/compliance/alert/` fallaba (nunca se
+  corrió `init_dgac_board`) — **corregido también en la VM** por el usuario
+  ("Created board 'Cumplimiento DGAC'…"), esta parte YA está en prod.
+- **LV-46**: nuevo estado `Aircraft.status="damaged"` ("Mal estado") + botón
+  de un clic "Reportar accidente/daño" que abre una mantención de emergencia
+  y cruza con la alerta "Mantenciones abiertas" ya existente. Migración
+  `registry 0023` (solo `choices`, sin cambio de esquema).
+- **LV-47**: botones "Anterior/Siguiente" del calendario no hacían nada
+  (desconectados de FullCalendar) — quitados; unificado el respaldo sin-JS.
+- **LV-48**: reapertura del standby de Kanban — el tablero se renombra a
+  **"Seguimiento de alertas"** (ya no dice "Kanban" en ningún lado).
+- **LV-49**: el Reporte de cumplimiento mostraba 0/0,0%/0 en todo CC porque
+  nunca sumó las vigencias DGAC (LV-29) — ahora las integra (excluidas si hay
+  filtro de tipo de documento).
+
+**Pendiente: 3er deploy consolidado** (trae `registry 0022`+`0023` + CSS/JS
+del calendario + plantillas nuevas + `.mo` recompilado): mismo patrón que las
+veces anteriores —
+```bash
+cd /opt/aerocontrol && git pull --ff-only && uv sync --frozen
+```
+seguido de (recordar `source <(sudo cat /etc/aerocontrol.env)`, no `. …`):
+```bash
+cd /opt/aerocontrol && set -a && source <(sudo cat /etc/aerocontrol.env) && set +a && uv run python manage.py migrate --no-input && uv run python manage.py collectstatic --no-input && sudo systemctl restart aerocontrol
+```
+Sin timers ni tableros nuevos que activar en esta tanda (LV-45's `init_dgac_board`
+ya se corrió). Suite local **632/632 verde** (corrida completa 2026-08-04, tras
+corregir dos fallas reales que este batch introdujo: el test de
+`test_specific_modules_keep_spanish_labels[kanban-...]` que aún esperaba
+"Tablero Kanban", y un `verbose_name=_(...)` de LV-44 con mayúscula
+distinta a la del catálogo — ver LV-44 en MASTER_PLAN.md). Nada verificado aún
+en la VM salvo LV-45.
 
 ## Estado de producción (VM `p340`)
 - **Desplegado el batch LV-29..32 + la pasada de diseño (commit `6640f66`) el
