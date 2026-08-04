@@ -2771,6 +2771,9 @@ msgstr "Tareas en la etapa"
 msgid "Overdue in this stage"
 msgstr "Atrasadas en esta etapa"
 
+msgid "Day-to-day"
+msgstr "Día a día"
+
 #: .\templates\workboard\_column.html:11
 msgid "No tasks"
 msgstr "Sin tareas"

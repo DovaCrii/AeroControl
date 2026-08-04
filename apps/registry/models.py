@@ -75,6 +75,16 @@ class CostCenter(BaseModel):
         ]
 
     @property
+    def day_to_day_contact(self):
+        """Who to reach day-to-day, when it is not the contract administrator
+        above (LV-34/LV-56): an operator from the roster, or an external
+        contact. Empty when the administrator already covers it -- callers
+        show this only as a supplement, not a replacement."""
+        if self.responsible_operator_id:
+            return self.responsible_operator.full_name
+        return self.responsible_contact_name
+
+    @property
     def notification_email(self):
         """Email to notify for this cost center, or "" when unreachable.
 

@@ -131,6 +131,35 @@ class TestEnrichedLists:
         assert row.aircraft_count == 1
         assert "Admin X" in response.content.decode()
 
+    @pytest.mark.django_db
+    def test_cost_center_list_shows_the_day_to_day_contact_when_different(
+        self, admin_client
+    ):
+        """LV-58: the administrator column rarely fills its width alone --
+        when the day-to-day contact (LV-34) is someone else, it earns the
+        rest of the space as a subtitle."""
+        operator = Operator.objects.create(employee_id="R4", full_name="Resp Op4")
+        CostCenter.objects.create(
+            code="CC800", responsible="Admin Y", responsible_operator=operator
+        )
+        CostCenter.objects.create(
+            code="CC801",
+            responsible="Admin Z",
+            responsible_contact_name="Secretaria Externa",
+        )
+        administrator_only = CostCenter.objects.create(
+            code="CC802", responsible="Admin W"
+        )
+
+        content = admin_client.get(reverse("costcenter-list")).content.decode()
+
+        assert "Resp Op4" in content
+        assert "Secretaria Externa" in content
+        assert administrator_only.day_to_day_contact == ""
+        # The administrator-only row has nothing to add -- no stray "Day-to-day"
+        # label floating with no name after it.
+        assert content.count("Día a día") == 2
+
 
 # ── Assignment backfill: FK-only data reconciled to OPS-1 assignments ─────────
 class TestBackfillResourceAssignments:
