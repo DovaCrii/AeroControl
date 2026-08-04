@@ -2,7 +2,7 @@
 
 > Punto de retome entre ventanas/sesiones. La **fuente de verdad del trabajo
 > pendiente** es [MASTER_PLAN.md](MASTER_PLAN.md); esto es el resumen de estado.
-> Última actualización: **2026-08-03**.
+> Última actualización: **2026-08-04**.
 
 ## PRÓXIMA VENTANA — empezar acá
 El batch **LV-29..32** se implementó (parte funcional) en la ventana del
@@ -55,11 +55,26 @@ Identificación/Responsable/Notas, ambas vías full-page+modal; + fix de un
 `#~ msgid` duplicado que rompía `compilemessages`, `5f11949`) y **LV-43** (timers
 LV-29/30 cableados en `schedule_tasks.ps1`, `1e0d694`). **Ya no queda ningún LV
 abierto** (LV-29..43 todos ✅).
-**Pendiente 2º deploy consolidado** (trae `operations 0011` + CSS/JS nuevos +
-`.mo` recompilado): `pull` + `uv sync` + `migrate` + `collectstatic` + restart,
-más el `backfill_resource_assignments` (llena Operadores/Flota) y **activar los
-2 systemd timers ya cableados** (LV-30 `check_monthly_records` + opcional LV-29
-`notify_expiring_credentials`, `mkjob` en `docs/scheduled-operations.md`).
+
+> **2º DEPLOY CONSOLIDADO: HECHO 2026-08-04** (commit en VM = `2c7ad1b`, con el
+> usuario por SSH). `git pull --ff-only` (fast-forward `5066ab3..2c7ad1b`, 12
+> archivos) + `uv sync --frozen` + `migrate --no-input` ("No migrations to
+> apply" — `operations 0011` ya estaba aplicada de un pull anterior) +
+> `collectstatic --no-input` (1 archivo nuevo, `app.css` de LV-42; 365
+> post-procesados) + `backfill_resource_assignments` (0 nuevos, idempotente) +
+> `systemctl restart aerocontrol`. **Los 2 timers de LV-43 quedaron activos**:
+> `aerocontrol-monthly.timer` (check_monthly_records, próxima 23:30 UTC) y
+> `aerocontrol-credentials.timer` (notify_expiring_credentials, próxima 07:30
+> UTC) — confirmado con `systemctl list-timers`. Ya no queda deploy pendiente
+> de este batch. Gotcha nuevo: `. /etc/aerocontrol.env` da "Permission denied"
+> (600 root) — usar `source <(sudo cat /etc/aerocontrol.env)` (ya documentado
+> arriba, se repitió el error igual).
+>
+> **Pendiente (no bloqueante):** verificación visual en pantalla del permiso
+> (grilla/estado, LV-38/39), responsable del CC (LV-34) y form del CC en
+> secciones (LV-36) — no se hizo por el pane del navegador congelado en esta
+> máquina. Y LV-D6-resto / capturas futuras si el usuario quiere seguir la
+> revisión en vivo.
 
 > **DESPLEGADO 2026-08-03** (commit `6640f66`): migrate + collectstatic + seeds +
 > 44 vigencias cargadas + restart, verificado por el usuario. Ver "Estado de
@@ -82,12 +97,14 @@ más el `backfill_resource_assignments` (llena Operadores/Flota) y **activar los
   vigencias + cumplimiento mensual). Faltan **documentos con vencimiento**
   (decisión de negocio) para más alertas; y el timer opcional
   `check_monthly_records` / `notify_expiring_credentials` (ver scheduled-operations).
-- **Tareas programadas** (systemd timers): `generate_alerts` 06:00,
-  `send_alert_digest` 07:00, `backup` 22:00. **Pendiente de activar en el 2º
-  deploy** (ya cableados en `schedule_tasks.ps1`, LV-43): `check_monthly_records`
-  (diario 23:30, actúa el último día del mes) y — opcional — `notify_expiring_credentials`
-  (diario 07:30). Comandos `mkjob monthly …` / `mkjob credentials …` en
-  `docs/scheduled-operations.md` (sección systemd).
+- **Tareas programadas** (systemd timers), **las 5 activas desde 2026-08-04**:
+  `generate_alerts` 06:00, `send_alert_digest` 07:00, `backup` 22:00,
+  `check_monthly_records` (diario 23:30, actúa solo el último día del mes) y
+  `notify_expiring_credentials` (diario 07:30, LV-29 opcional — activado).
+  Confirmado con `systemctl list-timers 'aerocontrol-*' --all`; aún sin `LAST`
+  run (recién creados). Revisar en unos días con
+  `journalctl -u aerocontrol-monthly.service -n 30 --no-pager` /
+  `…-credentials.service…` que corrieron sin error.
 - Runbook de despliegue: [docs/dev/ubuntu-vm-deploy.md](docs/dev/ubuntu-vm-deploy.md).
   Deploy = `git pull --ff-only` + `uv sync --frozen` (los hago yo por SSH, sin
   sudo) + un bloque `sudo` (migrate/collectstatic/restart) que **corre el
