@@ -20,7 +20,6 @@
   <nav class="view-tabs mb-3" aria-label="{% translate 'Workboard views' %}">
     <a class="view-tab is-active" href="{% url 'kanban' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}">{% translate "Board view" %}</a>
     <a class="view-tab" href="{% url 'workboard-list' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}">{% translate "List view" %}</a>
-    <a class="view-tab" href="{% url 'calendar' %}?types=task{% if board %}&amp;board={{ board.id }}{% endif %}">{% translate "Calendar view" %}</a>
   </nav>
   <div class="workboard-toolbar mb-3">
     <div class="d-flex gap-2 align-items-center flex-wrap">{% include "workboard/_filters.html" %}</div>
