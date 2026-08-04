@@ -37,4 +37,9 @@ class AeroModelForm(forms.ModelForm):
                 field.widget.input_type = "date"
             elif isinstance(field.widget, forms.TimeInput):
                 field.widget.input_type = "time"
+            elif isinstance(field.widget, forms.Textarea):
+                # LV-35: textareas (Notas, dirección, servicios…) start at a
+                # medium height instead of the oversized default block; the user
+                # can still drag to grow them.
+                field.widget.attrs.setdefault("rows", 3)
             field.widget.attrs.setdefault("autocomplete", "off")
