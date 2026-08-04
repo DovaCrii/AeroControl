@@ -92,7 +92,7 @@
         <tbody>
           {% for permission in flight_permissions %}
           <tr>
-            <td><a href="{% url 'permission-detail' permission.pk %}">{{ permission.permission_number }}</a></td>
+            <td><a href="{% url 'permission-detail' permission.pk %}">{{ permission }}</a></td>
             <td>{{ permission.valid_from|date:'Y-m-d' }} – {{ permission.valid_until|date:'Y-m-d' }}</td>
             <td>{{ permission.get_status_display }}</td>
           </tr>

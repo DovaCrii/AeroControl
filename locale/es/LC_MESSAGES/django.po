@@ -752,6 +752,10 @@ msgstr "Rechazar"
 msgid "Permission approved."
 msgstr "Permiso aprobado."
 
+#: .\apps\operations\views.py
+msgid "Upload the DGAC authorization letter (the SIGO PDF) before approving this permit."
+msgstr "Sube la carta de autorización DGAC (el PDF del SIGO) antes de aprobar este permiso."
+
 #: .\apps\operations\views.py:186
 msgid "Permission denied."
 msgstr "Permiso rechazado."
@@ -3262,6 +3266,10 @@ msgstr "Aún no hay documentos adjuntos."
 
 msgid "Geospatial plans"
 msgstr "Planes geoespaciales"
+
+#: .\templates\operations\permission_detail.html
+msgid "Import plan"
+msgstr "Importar plan"
 
 msgid "No geospatial plans linked to this permission."
 msgstr "No hay planes geoespaciales vinculados a este permiso."
