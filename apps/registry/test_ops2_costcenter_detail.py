@@ -87,6 +87,22 @@ class TestTeamTab:
         assert ids == {expired_op.pk, ok_op.pk}
         assert response.context["expired_operator_ids"] == {expired_op.pk}
 
+    @pytest.mark.django_db
+    def test_falls_back_to_operators_linked_by_cost_center(self, db):
+        """LV-33: with no OperatorAssignment rows (operators imported straight
+        onto cost_center), the tab still lists them instead of showing empty."""
+        cc = _cc()
+        op = Operator.objects.create(
+            employee_id="IMP", full_name="Imported Pilot", cost_center=cc
+        )
+        assert not OperatorAssignment.objects.filter(cost_center=cc).exists()
+
+        response = _client("view_costcenter", "view_operatorassignment").get(_url(cc))
+
+        assert "Imported Pilot" in response.content.decode()
+        ids = {a.operator_id for a in response.context["operator_assignments"]}
+        assert op.pk in ids
+
 
 class TestFleetTab:
     @pytest.mark.django_db
