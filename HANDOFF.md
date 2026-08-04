@@ -2,8 +2,32 @@
 
 > Punto de retome entre ventanas/sesiones. La **fuente de verdad del trabajo
 > pendiente** es [MASTER_PLAN.md](MASTER_PLAN.md); esto es el resumen de estado.
-> Última actualización: **2026-08-04** (todo lo del día, hasta LV-57 y B3.3/B3.4,
-> **ya desplegado en la VM**; sin pendientes de deploy).
+> Última actualización: **2026-08-04** (LV-44..58/62 y B3.3/B3.4 **ya
+> desplegados en la VM**; LV-58 y LV-62 aún no; LV-59/60/61 son propuestas de
+> diseño anotadas, sin implementar).
+
+## Propuestas de diseño pendientes (LV-59/60/61) — capturas primero, sin implementar
+El usuario pidió dejar anotadas 3 mejoras de diseño, ninguna implementada aún
+(faltan capturas/detalle o una decisión de alcance antes de tocar código):
+- **LV-59**: revisar metodología/diseño del módulo Vuelos — sin capturas aún.
+- **LV-60**: unificar Planificación geoespacial con Permisos de vuelo (hoy
+  separados pero son una sola etapa del proceso); nota concreta del usuario:
+  molesta pedir un **nuevo título** al importar un KMZ cuando ya se vincula a
+  un permiso que ya tiene identidad propia.
+- **LV-61**: reagrupar el menú lateral según el flujo real de uso, no solo la
+  estructura de datos (continúa LV-13a).
+
+Ver el detalle completo de cada una en sus filas de `MASTER_PLAN.md`.
+
+## LV-62 — 6 títulos de lista en inglés/mal capitalizados, corregidos
+El usuario notó "Flight Records" en inglés; pedido de paso "buscar traducir lo
+que falte". Causa raíz: `OList`/`WList`/`MList`/`ComplianceList` hacen
+`_(model._meta.verbose_name_plural.title())` — el `.title()` corre **antes**
+del `_()`, así que el catálogo necesita la variante Title Case exacta, no la
+que ya existía en minúscula. Auditado con un test temporal que pegó las 21
+páginas de lista (creado y borrado en la misma sesión, no quedó en el repo).
+Solo cambio de catálogo (`django.po`/`.mo`), sin tocar código. Ver LV-62 en
+`MASTER_PLAN.md`.
 
 ## LV-57 — tablas del padrón normalizadas (HECHO Y DESPLEGADO en la VM)
 Las 4 listas del padrón (Centros de costo, Aeronaves, Operadores,
