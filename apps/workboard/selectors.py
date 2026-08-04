@@ -8,6 +8,7 @@ from uuid import UUID
 
 from django.db.models import Q
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 from apps.core.models import OperationalTenant
 from apps.registry.models import Operator
@@ -138,13 +139,26 @@ def build_stage_data(board, params):
     on the partial that re-renders with every drag and filter change. One
     query, grouped in Python, keeps the render cost flat.
     """
+    today = timezone.localdate()
     tasks_by_stage = {}
     for task in visible_tasks_for_board(board, params):
         tasks_by_stage.setdefault(task.stage_id, []).append(task)
-    return [
-        {"stage": stage, "tasks": tasks_by_stage.get(stage.pk, [])}
-        for stage in board.stages.filter(is_active=True).order_by("order")
-    ]
+    stage_rows = []
+    for stage in board.stages.filter(is_active=True).order_by("order"):
+        tasks = tasks_by_stage.get(stage.pk, [])
+        stage_rows.append(
+            {
+                "stage": stage,
+                "tasks": tasks,
+                # B3.4: overdue count alongside the existing total, so a
+                # loaded column ("47 tasks") also shows how many of those are
+                # actually late, without opening every card.
+                "overdue_count": sum(
+                    1 for task in tasks if task.due_date and task.due_date < today
+                ),
+            }
+        )
+    return stage_rows
 
 
 def task_row(task):

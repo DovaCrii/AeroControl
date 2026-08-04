@@ -4,6 +4,7 @@ from django.contrib.auth.models import Permission, User
 from rest_framework.authtoken.models import Token
 from django.test import Client
 from django.urls import reverse
+from django.utils import timezone
 
 from apps.registry.models import CostCenter, Operator
 from apps.core.models import OperationalTenant, TenantMembership
@@ -912,3 +913,98 @@ def test_api_patch_validates_values_before_saving(board):
     assert bad_date.status_code == 400
     assert long_title.status_code == 400
     assert task.title == "Valid"
+
+
+@pytest.mark.parametrize(
+    ("offset", "expected"),
+    [
+        (-1, "overdue"),
+        (0, "due_7"),
+        (7, "due_7"),
+        (8, "due_15"),
+        (15, "due_15"),
+        (16, "due_30"),
+        (30, "due_30"),
+        (31, ""),
+        (None, ""),
+    ],
+)
+def test_urgency_bucket_matches_the_compliance_report_boundaries(offset, expected):
+    """B3.3: same expired/due_7/due_15/due_30 boundaries as
+    apps.compliance.reports._vigencia_bucket_counts, so "urgent" means the
+    same thing everywhere in the app."""
+    today = timezone.localdate()
+    task = KanbanTask(
+        due_date=None if offset is None else today + timedelta(days=offset)
+    )
+
+    assert task.urgency_bucket(today) == expected
+
+
+@pytest.mark.django_db
+def test_kanban_card_shows_graduated_urgency_not_colour_alone(auth_client, board):
+    """B3.3: each bucket appends its own translated label so the signal
+    survives without colour (screen reader, colour-blind, printed page)."""
+    board_obj, todo, _ = board
+    today = timezone.localdate()
+    KanbanTask.objects.create(
+        board=board_obj,
+        stage=todo,
+        title="Overdue task",
+        due_date=today - timedelta(days=1),
+    )
+    KanbanTask.objects.create(
+        board=board_obj,
+        stage=todo,
+        title="Due soon task",
+        due_date=today + timedelta(days=5),
+    )
+    KanbanTask.objects.create(
+        board=board_obj,
+        stage=todo,
+        title="Far out task",
+        due_date=today + timedelta(days=60),
+    )
+
+    content = auth_client.get(reverse("kanban")).content.decode()
+
+    assert "is-overdue" in content
+    assert "text-warning-emphasis" in content
+    assert "Due within 7 days" in content or "Vence en 7 días" in content
+
+
+@pytest.mark.django_db
+def test_kanban_column_header_shows_overdue_count_alongside_total(
+    auth_client, board
+):
+    """B3.4: a loaded column ("47 tasks") also surfaces how many are actually
+    late, without opening every card."""
+    board_obj, todo, done = board
+    today = timezone.localdate()
+    KanbanTask.objects.create(
+        board=board_obj, stage=todo, title="Late", due_date=today - timedelta(days=2)
+    )
+    KanbanTask.objects.create(
+        board=board_obj, stage=todo, title="On time", due_date=today + timedelta(days=2)
+    )
+    KanbanTask.objects.create(board=board_obj, stage=done, title="Done, no due date")
+
+    content = auth_client.get(reverse("kanban")).content.decode()
+
+    assert "kanban-count-overdue" in content
+    assert "Overdue in this stage: 1" in content or "esta etapa: 1" in content
+
+
+@pytest.mark.django_db
+def test_kanban_column_header_hides_overdue_badge_when_nothing_is_late(
+    auth_client, board
+):
+    board_obj, todo, _ = board
+    today = timezone.localdate()
+    KanbanTask.objects.create(
+        board=board_obj, stage=todo, title="On time", due_date=today + timedelta(days=2)
+    )
+
+    content = auth_client.get(reverse("kanban")).content.decode()
+
+    assert "kanban-count-overdue" not in content

@@ -2,7 +2,10 @@
 <div class="kanban-column" data-stage-id="{{ stage.id }}">
   <div id="kanban-stage-{{ stage.id }}" class="kanban-column-header" style="border-top-color: {{ stage.color|default:'#2EC4B6' }};">
     <span>{{ stage.name }}</span>
-    <span class="kanban-count" aria-label="{% translate 'Tasks in stage' %}: {{ tasks|length }}">{{ tasks|length }}</span>
+    <span class="kanban-header-counts">
+      <span class="kanban-count" aria-label="{% translate 'Tasks in stage' %}: {{ tasks|length }}">{{ tasks|length }}</span>
+      {% if overdue_count %}<span class="kanban-count kanban-count-overdue" title="{% translate 'Overdue in this stage' %}" aria-label="{% translate 'Overdue in this stage' %}: {{ overdue_count }}">&#9888; {{ overdue_count }}</span>{% endif %}
+    </span>
   </div>
   <div class="kanban-column-body kanban-cards" data-stage-id="{{ stage.id }}" role="region" aria-labelledby="kanban-stage-{{ stage.id }}">
     {% for task in tasks %}
