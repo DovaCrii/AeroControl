@@ -207,6 +207,21 @@ def test_report_page_renders_for_an_authorised_user(world):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("param", ["doc_type", "cost_center"])
+def test_report_page_ignores_a_malformed_filter_value(world, param):
+    """A non-UUID value in doc_type/cost_center (bookmarked URL, autofill, bot
+    probing query strings) must be treated as "no filter", not a 500."""
+    User.objects.create_superuser("admin", "a@test.com", "password")
+    client = Client()
+    assert client.login(username="admin", password="password")
+
+    response = client.get(reverse("compliance-report"), {param: "not-a-uuid"})
+
+    assert response.status_code == 200
+    assert "FAENA-01" in response.content.decode()
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "route,content_type",
     [
