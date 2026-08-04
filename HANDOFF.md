@@ -2,10 +2,10 @@
 
 > Punto de retome entre ventanas/sesiones. La **fuente de verdad del trabajo
 > pendiente** es [MASTER_PLAN.md](MASTER_PLAN.md); esto es el resumen de estado.
-> Última actualización: **2026-08-04** (3ª tanda LV-44..54 y LV-55 **ya
-> desplegadas en la VM**; B3.3/B3.4, LV-56 y LV-57 nuevos, aún NO desplegados).
+> Última actualización: **2026-08-04** (todo lo del día, hasta LV-57 y B3.3/B3.4,
+> **ya desplegado en la VM**; sin pendientes de deploy).
 
-## LV-57 — tablas del padrón normalizadas (hecho, sin desplegar)
+## LV-57 — tablas del padrón normalizadas (HECHO Y DESPLEGADO en la VM)
 Las 4 listas del padrón (Centros de costo, Aeronaves, Operadores,
 Habilitaciones) comparten ahora **una sola anatomía de fila**:
 `IDENTIDAD | ATRIBUTOS | ESTADO | ACCIÓN`, con bloque de identidad de dos
