@@ -26,7 +26,14 @@
   <div class="d-flex justify-content-between align-items-center mb-2">
     <h2 class="h5 mb-0">{% translate "Maintenance & status" %}</h2>
     {% if perms.maintenance.add_maintenancerecord and object.is_active %}
-    <a href="{% url 'maintenance-create' %}?aircraft={{ object.pk }}" hx-get="{% url 'maintenance-create' %}?aircraft={{ object.pk }}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-warning">{% translate "Send to maintenance" %}</a>
+    <div class="d-flex gap-2">
+      {% if object.status != "damaged" %}
+      {% comment %}LV-46: one click, no form -- an accident report shouldn't
+      wait on picking a scheduled date or assignee first.{% endcomment %}
+      <form method="post" action="{% url 'aircraft-report-incident' object.pk %}" onsubmit="return confirm('{% translate "Mark this aircraft as damaged and open an emergency maintenance record?" %}');">{% csrf_token %}<button type="submit" class="btn btn-sm btn-danger">{% translate "Report accident / damage" %}</button></form>
+      {% endif %}
+      <a href="{% url 'maintenance-create' %}?aircraft={{ object.pk }}" hx-get="{% url 'maintenance-create' %}?aircraft={{ object.pk }}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-warning">{% translate "Send to maintenance" %}</a>
+    </div>
     {% endif %}
   </div>
   {% if open_maintenance %}

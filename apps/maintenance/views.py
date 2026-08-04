@@ -4,8 +4,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
-from django.views.generic import CreateView, DetailView, ListView
+from django.views.generic import CreateView, DetailView, ListView, View
 
+from apps.core.audit import set_audit_context
 from apps.core.views import (
     CsvExportMixin,
     HtmxFormMixin,
@@ -16,6 +17,7 @@ from apps.core.views import (
     TenantScopedQuerysetMixin,
 )
 from apps.core.tenancy import scope_queryset_to_tenant
+from apps.registry.models import Aircraft
 from .forms import MaintenanceCompletionForm, MaintenanceRecordForm
 from .models import MaintenanceHistory, MaintenanceRecord
 
@@ -167,6 +169,48 @@ class MaintenanceComplete(StatusTransitionView):
             resolve_open_alerts_for(completed)
         messages.success(request, self.success_message)
         return redirect(record)
+
+
+class AircraftReportIncident(ModelPermissionRequiredMixin, View):
+    """LV-46: one-click flag for an aircraft that just crashed or was damaged
+    and has not yet been formally sent to maintenance.
+
+    Sets the aircraft's own status (the "Mal estado" badge on the list/detail
+    pages) and opens an emergency maintenance record in the same click --
+    reusing the existing "Mantenciones abiertas" alert rule (LV-26, watches
+    maintenance.maintenancerecord/status) so the alert fires on the next
+    generate_alerts run without a new rule. No form to fill in first: an
+    accident report should not wait on a scheduled date or an assignee.
+    """
+
+    model = MaintenanceRecord
+    permission_action = "add"
+
+    def post(self, request, pk):
+        aircraft = get_object_or_404(
+            scope_queryset_to_tenant(Aircraft._default_manager.all(), request.user),
+            pk=pk,
+            is_active=True,
+        )
+        aircraft.status = "damaged"
+        aircraft.save(update_fields=["status", "updated_at"])
+        record = MaintenanceRecord.objects.create(
+            aircraft=aircraft,
+            maintenance_type="emergency",
+            status="pending",
+            description=_(
+                "Incident reported from the aircraft fiche. Pending assessment."
+            ),
+        )
+        set_audit_context(request, aircraft, action="incident_reported")
+        messages.success(
+            request,
+            _(
+                "Incident logged: aircraft marked as damaged and an emergency "
+                "maintenance record was opened."
+            ),
+        )
+        return redirect(reverse("aircraft-detail", kwargs={"pk": aircraft.pk}))
 
 
 MaintenanceHistoryList = type(
