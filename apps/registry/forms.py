@@ -104,7 +104,9 @@ class CostCenterForm(AeroModelForm):
             instance = self.instance
             if getattr(instance, "responsible_operator_id", None):
                 self.fields["responsible_type"].initial = "operator"
-            elif instance.responsible_contact_name or instance.responsible_contact_email:
+            elif (
+                instance.responsible_contact_name or instance.responsible_contact_email
+            ):
                 self.fields["responsible_type"].initial = "external"
             else:
                 self.fields["responsible_type"].initial = "administrator"
@@ -117,9 +119,7 @@ class CostCenterForm(AeroModelForm):
         type never leaves stale data behind."""
         cleaned = super().clean()
         if not cleaned.get("responsible"):
-            self.add_error(
-                "responsible", _("Enter the contract administrator name.")
-            )
+            self.add_error("responsible", _("Enter the contract administrator name."))
         rtype = cleaned.get("responsible_type")
         if rtype == "operator":
             if not cleaned.get("responsible_operator"):

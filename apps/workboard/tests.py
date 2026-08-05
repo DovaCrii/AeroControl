@@ -974,9 +974,7 @@ def test_kanban_card_shows_graduated_urgency_not_colour_alone(auth_client, board
 
 
 @pytest.mark.django_db
-def test_kanban_column_header_shows_overdue_count_alongside_total(
-    auth_client, board
-):
+def test_kanban_column_header_shows_overdue_count_alongside_total(auth_client, board):
     """B3.4: a loaded column ("47 tasks") also surfaces how many are actually
     late, without opening every card."""
     board_obj, todo, done = board

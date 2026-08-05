@@ -90,12 +90,18 @@ def test_completing_maintenance_resolves_its_open_alert():
 
     cost_center = CostCenter.objects.create(code="OPS", name="Operations")
     aircraft = Aircraft.objects.create(
-        registration="CC-AAA", type="RPA", model="M300",
-        manufacturer="DJI", cost_center=cost_center,
+        registration="CC-AAA",
+        type="RPA",
+        model="M300",
+        manufacturer="DJI",
+        cost_center=cost_center,
     )
     record = MaintenanceRecord.objects.create(
-        aircraft=aircraft, maintenance_type="scheduled",
-        description="check", scheduled_date=date(2026, 7, 20), status="in_progress",
+        aircraft=aircraft,
+        maintenance_type="scheduled",
+        description="check",
+        scheduled_date=date(2026, 7, 20),
+        status="in_progress",
     )
     rule = AlertRule.objects.create(
         name="Open maintenance",
@@ -125,8 +131,11 @@ def test_completing_maintenance_resolves_its_open_alert():
 def test_aircraft_detail_offers_send_to_maintenance(admin_client):
     cost_center = CostCenter.objects.create(code="OPS", name="Operations")
     aircraft = Aircraft.objects.create(
-        registration="CC-BBB", type="RPA", model="M300",
-        manufacturer="DJI", cost_center=cost_center,
+        registration="CC-BBB",
+        type="RPA",
+        model="M300",
+        manufacturer="DJI",
+        cost_center=cost_center,
     )
     content = admin_client.get(
         reverse("aircraft-detail", args=[aircraft.pk])

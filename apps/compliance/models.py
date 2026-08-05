@@ -204,7 +204,13 @@ class MonthlyComplianceReview(BaseModel):
         if notes:
             self.notes = notes
         self.save(
-            update_fields=["status", "reviewed_by", "reviewed_at", "notes", "updated_at"]
+            update_fields=[
+                "status",
+                "reviewed_by",
+                "reviewed_at",
+                "notes",
+                "updated_at",
+            ]
         )
         if status in self.RESOLVED_STATUSES:
             resolve_open_alerts_for(self)

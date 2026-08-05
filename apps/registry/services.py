@@ -38,9 +38,7 @@ def bulk_assign_operators(*, operators, cost_center, status, purpose, user):
             continue  # already here
         # Close any open assignment elsewhere before opening the new one, so the
         # signal sees a single active assignment and logs one clean "reassigned".
-        current.exclude(cost_center=cost_center).update(
-            status="ended", end_date=today
-        )
+        current.exclude(cost_center=cost_center).update(status="ended", end_date=today)
         assignment = OperatorAssignment(
             operator=operator,
             cost_center=cost_center,

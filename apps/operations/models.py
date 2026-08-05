@@ -55,7 +55,10 @@ class FlightPermission(BaseModel):
 
     def __str__(self):
         # LV-39: a permit may not have its folio yet (still requested/denied).
-        return self.permission_number or f"{self.get_status_display()} · {self.purpose[:30]}"
+        return (
+            self.permission_number
+            or f"{self.get_status_display()} · {self.purpose[:30]}"
+        )
 
     def get_absolute_url(self):
         from django.urls import reverse

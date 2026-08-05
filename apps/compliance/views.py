@@ -585,9 +585,9 @@ class MonthlyReviewView(ModelViewPermissionRequiredMixin, ListView):
 
         from .monthly import month_start
 
-        queryset = MonthlyComplianceReview.objects.filter(is_active=True).select_related(
-            "cost_center", "reviewed_by"
-        )
+        queryset = MonthlyComplianceReview.objects.filter(
+            is_active=True
+        ).select_related("cost_center", "reviewed_by")
         tenant_ids = visible_tenant_ids(self.request.user)
         if tenant_ids is not None:
             queryset = queryset.filter(cost_center__tenant_id__in=tenant_ids)
@@ -688,7 +688,10 @@ class MonthlyReviewMark(ModelPermissionRequiredMixin, View):
         messages.success(
             request,
             _("%(center)s %(period)s marked.")
-            % {"center": review.cost_center.code, "period": review.period.strftime("%Y-%m")},
+            % {
+                "center": review.cost_center.code,
+                "period": review.period.strftime("%Y-%m"),
+            },
         )
         return _redirect_back(request, fallback="monthly-review")
 

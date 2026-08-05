@@ -37,9 +37,7 @@ class FlightPermissionForm(AeroModelForm):
             "location": _("Location"),
         }
         help_texts = {
-            "permission_number": _(
-                "Optional until the permission is approved."
-            ),
+            "permission_number": _("Optional until the permission is approved."),
         }
         widgets = {
             # A roster of several, not one pick from a dropdown (OPS-4).

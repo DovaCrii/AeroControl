@@ -390,8 +390,11 @@ def test_aircraft_and_operator_details_offer_a_documents_upload(admin_client):
 
     cost_center = CostCenter.objects.create(code="CC1", name="One")
     aircraft = Aircraft.objects.create(
-        registration="CC-AAA", type="RPA", model="M3",
-        manufacturer="DJI", cost_center=cost_center,
+        registration="CC-AAA",
+        type="RPA",
+        model="M3",
+        manufacturer="DJI",
+        cost_center=cost_center,
     )
     operator = Operator.objects.create(
         employee_id="E1", full_name="Ana", cost_center=cost_center
