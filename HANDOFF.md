@@ -22,6 +22,25 @@
 > tipo nuevo no aparece en `p340` y nadie podrá aprobar ningún permiso).
 > LV-65 (mejora del selector de aeronaves en Mantenciones) queda anotada como
 > pendiente, sin implementar.
+>
+> **2026-08-05 — auditoría externa de Codex, verificada y actuada.** El
+> usuario pidió revisar sus 4 hallazgos contra el repo real antes de actuar;
+> los 4 eran ciertos. (1) **Higiene**: el CI de GitHub corre `ruff check`/
+> `ruff format --check` (`ci.yml:26-27`) y llevaba días en rojo — esta sesión
+> venía verificando solo con `pytest`. Corregido (2 `F841` + 23 archivos de
+> formato), 670/670 verde. (2) **LV-63 (crítico, móvil)**: a 390px el
+> contenido quedaba comprimido a ~94px con scroll horizontal — dos
+> generaciones de la regla `.sidebar` en `app.css` con la misma especificidad,
+> la más nueva (sin `@media`) pisando la móvil en cualquier viewport.
+> Fusionadas en una regla; de paso el drawer móvil ahora también anima al
+> abrir/cerrar (no lo hacía) y se corrigieron 2 bugs menores (padding móvil
+> inerte, colapso residual en móvil). (3) Los archivos grandes de `core`/
+> `registry` — confirmado, ya en el plan como T1.1/T1.2 (diferido). (4) La
+> recomendación de "no refactor grande todavía" — adoptada como política
+> explícita en `MASTER_PLAN.md`. **Todo pendiente de deploy**, sin
+> migraciones. Ver "Prioridades post-v0.4.0-beta" al inicio de
+> `MASTER_PLAN.md` — la sección "Dónde retomar" antigua queda marcada como
+> histórica.
 
 ## El ciclo de vida del permiso — el hilo que une LV-59/60/61
 Diseño hecho con **Opus 5** el 2026-08-04. El hallazgo de fondo: AeroControl
