@@ -126,6 +126,37 @@ def test_flight_record_form_without_permission_offers_the_full_registry():
 
 
 @pytest.mark.django_db
+def test_flight_record_form_permission_picker_excludes_archived_ones():
+    """LV-59: the picker someone actually sees when creating a flight record
+    from the standalone Vuelos list (T5.5's narrowing only kicks in once a
+    permission is already chosen) had no queryset override at all -- every
+    permission ever created, unfiltered and in raw pk order."""
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    active = _permission(
+        cost_center, operator, aircraft, permission_number="ACTIVE-1"
+    )
+    archived = _permission(
+        cost_center, operator, aircraft, permission_number="ARCHIVED-1"
+    )
+    archived.is_active = False
+    archived.save(update_fields=["is_active"])
+
+    form = FlightRecordForm()
+
+    assert list(form.fields["permission"].queryset) == [active]
+
+
+@pytest.mark.django_db
 def test_flight_record_form_uses_operational_date_and_time_controls():
     form = FlightRecordForm()
 

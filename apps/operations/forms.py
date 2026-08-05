@@ -91,6 +91,17 @@ class FlightRecordForm(AeroModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # LV-59: the "permission" field had no queryset override, so it fell
+        # back to the ModelForm default (every FlightPermission ever created,
+        # in raw pk order) -- unusable once there are more than a handful.
+        # This is the picker someone actually sees when creating a flight
+        # record from the standalone Vuelos list rather than from a specific
+        # permission's own "+ Agregar registro" (which prefills it and never
+        # shows this dropdown); the T5.5 narrowing below only starts once a
+        # permission is already chosen, so it does not help here.
+        self.fields["permission"].queryset = FlightPermission.objects.filter(
+            is_active=True
+        ).order_by("-valid_from")
         # T5.5: once a permission is chosen (prefilled from its detail page, or
         # posted back), narrow the pilot and aircraft pickers to that
         # permission's roster instead of the whole registry. The clean() below
