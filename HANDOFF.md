@@ -8,7 +8,8 @@
 > día**: `git log --oneline -1` en la VM devolvió `abff809`, que ya incluye
 > LV-58/60/61/62 — solo faltan ahí los 2 commits de documentación del corte de
 > versión (`CHANGELOG`/`HANDOFF`), que no tocan código ni requieren reinicio.
-> **LV-59 (parcial) recién agregado, aún NO desplegado.**
+> **LV-59 (parcial) desplegado en `p340`** (`git log --oneline -1` → `7b46e69`,
+> servicio activo). Sin pendientes de deploy al cierre de esta ventana.
 
 ## El ciclo de vida del permiso — el hilo que une LV-59/60/61
 Diseño hecho con **Opus 5** el 2026-08-04. El hallazgo de fondo: AeroControl
