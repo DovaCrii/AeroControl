@@ -12,8 +12,16 @@
 > **LV-59 opción (c) revisada y cerrada 2026-08-05** sin fusionar módulos
 > (LV-61 ya resolvió la contigüidad en el menú); se encontró y corrigió un
 > problema concreto de fondo: el desplegable de permiso en el form de Vuelos
-> no filtraba archivados ni ordenaba. **Aún NO desplegado.** Sin más
-> pendientes de deploy además de esto.
+> no filtraba archivados ni ordenaba.
+> **LV-64 (2026-08-05): dos tipos de documento DGAC distintos** (carta de
+> permiso vs. autorización de operación ya aprobada) — la regla de LV-51 ya
+> exige el tipo nuevo, no la carta. **Ninguno de LV-59c/LV-64 está desplegado
+> aún.** Al desplegar, además del patrón habitual: **re-correr
+> `seed_document_types`** después del `git pull` (mismo gotcha de LV-45/
+> `init_dgac_board` — idempotente, pero no se re-ejecuta solo; sin esto el
+> tipo nuevo no aparece en `p340` y nadie podrá aprobar ningún permiso).
+> LV-65 (mejora del selector de aeronaves en Mantenciones) queda anotada como
+> pendiente, sin implementar.
 
 ## El ciclo de vida del permiso — el hilo que une LV-59/60/61
 Diseño hecho con **Opus 5** el 2026-08-04. El hallazgo de fondo: AeroControl

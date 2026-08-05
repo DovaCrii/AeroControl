@@ -15,16 +15,18 @@ from .models import FlightPermission, FlightRecord, PermissionHistory
 
 
 def _attach_dgac_permit_pdf(permission):
-    """LV-51: the document FlightPermissionApprove requires on file."""
+    """LV-51/LV-64: the document FlightPermissionApprove requires on file --
+    the signed authorization the DGAC returns, not the request letter (those
+    are two distinct real documents; see FlightPermissionApprove.post)."""
     doc_type, _created = DocumentType.objects.get_or_create(
-        code="dgac-flight-permit",
-        defaults={"name": "Autorización DGAC (carta de permiso)"},
+        code="dgac-rpa-operation-authorization",
+        defaults={"name": "Autorización de Operación RPA (DGAC aprobada)"},
     )
     return Document.objects.create(
         doc_type=doc_type,
         content_type=ContentType.objects.get_for_model(FlightPermission),
         object_id=permission.pk,
-        title="Carta SIGO",
+        title="Autorización SIGO",
         issue_date=date(2026, 7, 20),
         file_path="permits/sigo.pdf",
     )
@@ -276,6 +278,47 @@ def test_permission_approval_succeeds_once_the_dgac_permit_pdf_is_attached():
     assert response.status_code == 302
     permission.refresh_from_db()
     assert permission.status == "approved"
+
+
+@pytest.mark.django_db
+def test_permission_approval_is_not_satisfied_by_the_request_letter_alone():
+    """LV-64: the letter that goes *to* the DGAC as part of the request and
+    the signed authorization that comes *back* once approved are two
+    distinct real documents -- only the latter (dgac-rpa-operation-
+    authorization) certifies an actual DGAC approval."""
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    permission = _permission(cost_center, operator, aircraft)
+    letter_type, _created = DocumentType.objects.get_or_create(
+        code="dgac-flight-permit",
+        defaults={"name": "Autorización DGAC (carta de permiso)"},
+    )
+    Document.objects.create(
+        doc_type=letter_type,
+        content_type=ContentType.objects.get_for_model(FlightPermission),
+        object_id=permission.pk,
+        title="Carta SIGO",
+        issue_date=date(2026, 7, 20),
+        file_path="permits/letter.pdf",
+    )
+    User.objects.create_superuser("dispatcher", "dispatcher@test.com", "password")
+    client = Client()
+    assert client.login(username="dispatcher", password="password")
+
+    response = client.post(reverse("permission-approve", args=[permission.pk]))
+
+    assert response.status_code == 302
+    permission.refresh_from_db()
+    assert permission.status == "requested"
 
 
 @pytest.mark.django_db
