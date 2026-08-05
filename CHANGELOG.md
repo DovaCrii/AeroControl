@@ -8,7 +8,103 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+## [0.4.0-beta] - 2026-08-04
+
+Primera versión **beta**: de aquí en adelante el foco es estabilizar lo que ya
+existe, no seguir agregando módulos nuevos. Cubre el bloque de planificación
+geoespacial (KMZ/KML) y el de seguimiento operativo completos (BLOQUE
+GEO/OPS), más ~30 hallazgos de una revisión en vivo con datos reales de la
+DGAC (12 centros de costo, 41 operadores, 15 aeronaves). Pendiente,
+deliberadamente, de una versión 1.0: **V.3** (aislamiento de `Document` entre
+organizaciones, bloqueado por la migración de tenancy T3.2) y **T2.1**
+(cerrar el IDOR de checklist/etapa en el tablero) — sin efecto mientras haya
+una sola organización, que es el caso actual; ver `MASTER_PLAN.md`.
+
+### Added
+- **Seguimiento de alertas: degradado de urgencia y contador de vencidas
+  (B3.3/B3.4).** Cada tarjeta muestra ahora si vence en 7/15/30 días o si ya
+  está atrasada — con color, peso y una etiqueta propia (no solo color, para
+  quien no lo distingue), usando los mismos límites que el reporte de
+  cumplimiento. Cada columna suma, junto al total, cuántas de sus tareas están
+  atrasadas.
+- **El centro de costo puede tener un contacto del día a día distinto del
+  administrador (LV-58).** La lista ya mostraba el administrador de contrato;
+  ahora, cuando el responsable directo es un operador del padrón o un contacto
+  externo, aparece como subtítulo — antes esa información no se veía en
+  ningún lado.
+- **"Reportar accidente / daño" en la ficha de la aeronave (LV-46).** Un botón
+  marca la aeronave como "Mal estado" y abre de inmediato una mantención de
+  emergencia, sin tener que llenar un formulario antes — la alerta de
+  "Mantenciones abiertas" ya existente la recoge sola.
+- **Importar un plan geoespacial (KMZ/KML) desde el permiso, con un clic
+  (LV-50/LV-60).** La ficha del permiso ganó un botón "+ Importar plan"; y al
+  llegar desde ahí, el plan **hereda el título y el centro de costo del
+  permiso** en vez de pedirlos de nuevo — un plan vinculado a un permiso es su
+  área de vuelo, no un registro aparte. De paso se cerró un hueco real: nada
+  impedía antes que un plan quedara en un centro de costo distinto al del
+  permiso que dice cubrir; ahora se rechaza.
+- **Aprobar un permiso de vuelo exige el PDF de la DGAC (LV-51).** No se puede
+  pasar a "Aprobado" sin tener adjunta la autorización real que emite el SIGO
+  — evita que el estado en el sistema se adelante al papeleo.
+
+### Changed
+- **El menú lateral sigue el flujo de trabajo, no la estructura de datos
+  (LV-61).** Antes lo que se configura una vez (padrón, asignaciones) ocupaba
+  los primeros dos grupos y lo que se usa a diario (permisos, alertas) quedaba
+  abajo. Ahora: **Vuelo** (Permisos → Planificación geoespacial → Vuelos →
+  Calendario, en el orden en que ocurre) · **Cumplimiento** ·
+  **Mantenimiento** (renombrado "Mantenciones", ya no colisiona de nombre con
+  "Registros operacionales") · **Padrón** al final.
+- **El tablero "Plan de acción" pasa a ser "Seguimiento de alertas" (LV-48),
+  con su propio enlace en el menú (LV-55).** Ya no es un Kanban genérico: es
+  donde se le hace seguimiento a la acción correctiva de cada alerta —el
+  botón "Crear tarea" de una alerta y el reporte de aeronaves dañadas
+  desembocan ahí. Se le quitó además la pestaña "Vista de calendario", que
+  duplicaba el calendario general de la app.
+- **El nombre del administrador de contrato es obligatorio en Centros de
+  costo (LV-56).** Era el único de los tres tipos de responsable sin esa
+  validación (Operador y Contacto externo ya la tenían).
+- **Columnas normalizadas en Centros de costo, Aeronaves, Operadores y
+  Habilitaciones (LV-57), y en Permisos de vuelo (LV-53).** Las cuatro listas
+  del padrón y la de permisos ya siguen la misma distribución que el resto de
+  la app (búsqueda en vivo, columna de identidad con subtítulo, acciones
+  consistentes) en vez de una plantilla plana propia sin filtros.
+- **El calendario ya no tiene tres sistemas de navegación superpuestos y
+  desconectados (LV-47).** Los botones "← Anterior / Siguiente →" no movían
+  el calendario real (FullCalendar los ignoraba); se quitaron, y el respaldo
+  para cuando falla el JavaScript ahora sí funciona cuando realmente se
+  necesita, en vez de estar oculto siempre.
+- **Ficha del centro de costo en secciones agrupadas (LV-36)** y **textareas
+  que empiezan en 3 filas, no en un bloque enorme (LV-35)**, consistente en
+  todas las fichas.
+- La pestaña "Equipo" del centro de costo pasa a llamarse **"Operadores"**
+  (confundía con equipamiento/drones; "Equipos habilitados" sigue siendo la
+  flota) (LV-37).
+
 ### Fixed
+- **El reporte de cumplimiento mostraba 0% aunque hubiera vencimientos reales
+  (LV-49).** Las vigencias DGAC (credencial del operador, seguro de la
+  aeronave) ya disparaban alertas reales, pero el reporte solo contaba
+  documentos — ahora las suma con los mismos rangos de urgencia.
+- **Cinco lugares donde un permiso sin folio mostraba "None" como título
+  (LV-52).** La ficha, la lista, el registro de vuelo, la pestaña de permisos
+  del centro de costo y el respaldo sin-JS del calendario usaban el campo
+  crudo en vez del texto ya resuelto (con su alternativa correcta cuando no
+  hay folio).
+- **Un `?doc_type=` o `?cost_center=` con un valor inválido en la URL del
+  reporte rompía la página con un error (LV-54).** Ahora se ignora, como
+  cualquier otro filtro que no coincide con nada.
+- **El botón "Crear tarea" de una alerta no funcionaba (LV-45).** Faltaba
+  sembrar el tablero de cumplimiento en el entorno — quedó documentado en el
+  procedimiento de despliegue para que no vuelva a faltar.
+- **Seis títulos de lista en inglés o mal capitalizados (LV-62)**, entre
+  ellos "Flight Records" en Vuelos, "Alert Rules" y "Kanban Boards" —
+  encontrados con una auditoría de las 21 páginas de lista de la app.
+- Un comentario multilínea `{# ... #}` se renderizaba literal sobre la barra
+  del calendario, en vez de ocultarse (LV-41); y las pastillas grises se
+  fundían con la tarjeta en tema oscuro por bajo contraste de borde (LV-42).
+- Las tareas programadas de vigencias DGAC y cumplimiento mensual ya quedan
+  cableadas al calendario de tareas de Windows, no solo documentadas (LV-43).
 - **Cargar un documento desde una ficha te sacaba de ella.** Subir un documento
   desde un centro de costo (u operador/aeronave/permiso) redirigía a la lista
   general de Documentos —que además ya no está en el menú—; ahora vuelve a la
@@ -466,7 +562,8 @@ plan").
 - API DRF de solo lectura + escritura acotada para tareas Kanban, con
   autenticación por token y documentación OpenAPI.
 
-[Unreleased]: https://github.com/DovaCrii/AeroControl/compare/v0.3.0-alpha...HEAD
+[Unreleased]: https://github.com/DovaCrii/AeroControl/compare/v0.4.0-beta...HEAD
+[0.4.0-beta]: https://github.com/DovaCrii/AeroControl/compare/v0.3.0-alpha...v0.4.0-beta
 [0.3.0-alpha]: https://github.com/DovaCrii/AeroControl/compare/v0.2.0-alpha...v0.3.0-alpha
 [0.2.0-alpha]: https://github.com/DovaCrii/AeroControl/compare/v0.1.0-alpha...v0.2.0-alpha
 [0.1.0-alpha]: https://github.com/DovaCrii/AeroControl/releases/tag/v0.1.0-alpha
