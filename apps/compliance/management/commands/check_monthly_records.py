@@ -39,7 +39,9 @@ logger = logging.getLogger("aerocontrol.notifications")
 
 
 class Command(BaseCommand):
-    help = "At month-end, create pending monthly compliance reviews and notify Dirección."
+    help = (
+        "At month-end, create pending monthly compliance reviews and notify Dirección."
+    )
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -102,7 +104,9 @@ class Command(BaseCommand):
                 review = MonthlyComplianceReview.objects.filter(
                     cost_center=cost_center, period=period_start
                 ).first()
-                status = review.status if review else MonthlyComplianceReview.STATUS_PENDING
+                status = (
+                    review.status if review else MonthlyComplianceReview.STATUS_PENDING
+                )
             else:
                 review, was_created = MonthlyComplianceReview.objects.get_or_create(
                     cost_center=cost_center, period=period_start
@@ -132,7 +136,11 @@ class Command(BaseCommand):
             # signal. Report the gap and carry on, like send_alert_digest.
             logger.warning(
                 "monthly_review_no_recipients",
-                extra={"recipient": "", "item_count": len(rows), "reason": "no_direccion"},
+                extra={
+                    "recipient": "",
+                    "item_count": len(rows),
+                    "reason": "no_direccion",
+                },
             )
             self.stdout.write(
                 self.style.WARNING(

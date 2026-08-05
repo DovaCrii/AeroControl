@@ -143,7 +143,10 @@ def _vigencia_bucket_counts(queryset, date_field, today, boundaries):
         due_7=Count(
             "pk",
             filter=Q(
-                **{f"{date_field}__gte": today, f"{date_field}__lte": boundaries["due_7"]}
+                **{
+                    f"{date_field}__gte": today,
+                    f"{date_field}__lte": boundaries["due_7"],
+                }
             ),
         ),
         due_15=Count(

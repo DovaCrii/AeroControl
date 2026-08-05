@@ -21,7 +21,9 @@ def month_start(day):
 def month_bounds(period):
     """(first_day, last_day) of the month `period` belongs to."""
     first = month_start(period)
-    last = date(first.year, first.month, calendar.monthrange(first.year, first.month)[1])
+    last = date(
+        first.year, first.month, calendar.monthrange(first.year, first.month)[1]
+    )
     return first, last
 
 
@@ -88,4 +90,6 @@ def cost_centers_that_flew(period):
         .values_list("aircraft__cost_center_id", flat=True)
         .distinct()
     )
-    return CostCenter.objects.filter(pk__in=list(cc_ids), is_active=True).order_by("code")
+    return CostCenter.objects.filter(pk__in=list(cc_ids), is_active=True).order_by(
+        "code"
+    )

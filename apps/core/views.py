@@ -493,9 +493,7 @@ class UnifiedCalendarEventsView(CalendarAccessMixin, View):
                 base = permission.permission_number
                 if names:
                     label = (
-                        names[0]
-                        if len(names) == 1
-                        else f"{names[0]} +{len(names) - 1}"
+                        names[0] if len(names) == 1 else f"{names[0]} +{len(names) - 1}"
                     )
                     base = f"{permission.permission_number} · {label}"
                 # LV-31: a multi-day permit collapses to one marker at its start
@@ -771,7 +769,13 @@ class GlobalSearchView(LoginRequiredMixin, TemplateView):
     # Sources without a per-object page (Kanban board/task, documents) fall back
     # to their list.
     SEARCH_SOURCES = (
-        ("registry", "CostCenter", "costcenter-list", "costcenter-detail", ("code", "name")),
+        (
+            "registry",
+            "CostCenter",
+            "costcenter-list",
+            "costcenter-detail",
+            ("code", "name"),
+        ),
         (
             "registry",
             "Aircraft",
@@ -809,9 +813,13 @@ class GlobalSearchView(LoginRequiredMixin, TemplateView):
                 "KanbanTask": KanbanTask,
                 "Document": Document,
             }
-            for app_label, model_name, list_url, detail_url, fields in (
-                self.SEARCH_SOURCES
-            ):
+            for (
+                app_label,
+                model_name,
+                list_url,
+                detail_url,
+                fields,
+            ) in self.SEARCH_SOURCES:
                 model = models[model_name]
                 if not self.request.user.has_perm(
                     f"{app_label}.view_{model._meta.model_name}"

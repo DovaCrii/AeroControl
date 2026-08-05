@@ -152,7 +152,9 @@ class TestRoster:
     def test_approved_permission_requires_a_number(self, db):
         from apps.operations.forms import FlightPermissionForm
 
-        form = FlightPermissionForm(data={"status": "approved", "permission_number": ""})
+        form = FlightPermissionForm(
+            data={"status": "approved", "permission_number": ""}
+        )
         assert not form.is_valid()
         assert "permission_number" in form.errors
 

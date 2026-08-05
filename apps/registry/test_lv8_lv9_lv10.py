@@ -425,9 +425,7 @@ class TestCostCenterFormSimplified:
             Operator.objects.create(
                 employee_id=f"E{index}", full_name=f"Op {index}", cost_center=cc
             )
-        response = admin_client.get(
-            reverse("operator-list"), HTTP_HX_REQUEST="true"
-        )
+        response = admin_client.get(reverse("operator-list"), HTTP_HX_REQUEST="true")
         content = response.content.decode()
         assert 'id="pagination-container"' in content
         assert 'hx-swap-oob="true"' in content
@@ -446,10 +444,11 @@ class TestCostCenterFormSimplified:
         assert CostCenterList.htmx_template_name == "registry/_costcenter_rows.html"
         assert OperatorList.htmx_template_name == "registry/_operator_rows.html"
         assert AircraftList.htmx_template_name == "registry/_aircraft_rows.html"
-        assert QualificationList.htmx_template_name == "registry/_qualification_rows.html"
         assert (
-            AssignmentList.htmx_template_name
-            == "registry/_assignment_table_body.html"
+            QualificationList.htmx_template_name == "registry/_qualification_rows.html"
+        )
+        assert (
+            AssignmentList.htmx_template_name == "registry/_assignment_table_body.html"
         )
 
     @pytest.mark.django_db

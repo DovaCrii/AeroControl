@@ -186,9 +186,7 @@ class Command(BaseCommand):
                     raise CommandError(
                         f"CSV is missing column(s): {', '.join(sorted(missing))}."
                     )
-                return [
-                    (row["kind"], row["key"], row["expiry"]) for row in reader
-                ]
+                return [(row["kind"], row["key"], row["expiry"]) for row in reader]
         except FileNotFoundError as exc:
             raise CommandError(f"File not found: {path}") from exc
 

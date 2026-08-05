@@ -226,9 +226,13 @@ class TestObjectLevelIsolation:
         b = OperationalTenant.objects.create(name="B", slug="b")
         cc = CostCenter.objects.create(code="CCA", tenant=a)
         document = Document.objects.create(
-            title="Secret", doc_type=DocumentType.objects.create(code="c", name="C"),
+            title="Secret",
+            doc_type=DocumentType.objects.create(code="c", name="C"),
             content_type=ContentType.objects.get_for_model(CostCenter),
-            object_id=cc.pk, file_path="x.pdf", issue_date=date(2026, 1, 1), tenant=a,
+            object_id=cc.pk,
+            file_path="x.pdf",
+            issue_date=date(2026, 1, 1),
+            tenant=a,
         )
         intruder = self._client("b_doc", "view_document", tenant=b)
         url = reverse("document-detail", args=[document.pk])
@@ -242,8 +246,12 @@ class TestObjectLevelIsolation:
         b = OperationalTenant.objects.create(name="B", slug="b")
         cc = CostCenter.objects.create(code="CCA", tenant=a)
         permission = FlightPermission.objects.create(
-            permission_number="P1", cost_center=cc, purpose="x",
-            valid_from=date(2026, 7, 1), valid_until=date(2026, 7, 2), location="S",
+            permission_number="P1",
+            cost_center=cc,
+            purpose="x",
+            valid_from=date(2026, 7, 1),
+            valid_until=date(2026, 7, 2),
+            location="S",
         )
         intruder = self._client("b_perm", "view_flightpermission", tenant=b)
         url = reverse("permission-detail", args=[permission.pk])
@@ -259,8 +267,10 @@ class TestObjectLevelIsolation:
             registration="RPA-A", type="RPA", model="M", manufacturer="DJI", tenant=a
         )
         record = MaintenanceRecord.objects.create(
-            aircraft=aircraft, maintenance_type="scheduled",
-            description="c", scheduled_date=date(2026, 7, 20),
+            aircraft=aircraft,
+            maintenance_type="scheduled",
+            description="c",
+            scheduled_date=date(2026, 7, 20),
         )
         intruder = self._client("b_maint", "view_maintenancerecord", tenant=b)
         url = reverse("maintenance-detail", args=[record.pk])

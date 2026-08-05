@@ -99,10 +99,18 @@ def test_flight_record_form_narrows_pickers_to_the_permission_roster():
         employee_id="P2", full_name="Pilot Two", cost_center=cost_center
     )
     aircraft = Aircraft.objects.create(
-        registration="CC-AAA", type="Fixed", model="A", manufacturer="M", cost_center=cost_center
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="M",
+        cost_center=cost_center,
     )
     other_aircraft = Aircraft.objects.create(
-        registration="CC-BBB", type="Fixed", model="B", manufacturer="M", cost_center=cost_center
+        registration="CC-BBB",
+        type="Fixed",
+        model="B",
+        manufacturer="M",
+        cost_center=cost_center,
     )
     permission = _permission(cost_center, operator, aircraft)
 
@@ -144,9 +152,7 @@ def test_flight_record_form_permission_picker_excludes_archived_ones():
         manufacturer="Maker",
         cost_center=cost_center,
     )
-    active = _permission(
-        cost_center, operator, aircraft, permission_number="ACTIVE-1"
-    )
+    active = _permission(cost_center, operator, aircraft, permission_number="ACTIVE-1")
     archived = _permission(
         cost_center, operator, aircraft, permission_number="ARCHIVED-1"
     )
@@ -344,7 +350,7 @@ def test_permission_approval_ignores_a_non_current_or_archived_permit_pdf():
     client = Client()
     assert client.login(username="dispatcher", password="password")
 
-    response = client.post(reverse("permission-approve", args=[permission.pk]))
+    client.post(reverse("permission-approve", args=[permission.pk]))
 
     permission.refresh_from_db()
     assert permission.status == "requested"

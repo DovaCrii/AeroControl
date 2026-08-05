@@ -347,7 +347,9 @@ def test_vigencia_overdue_properties(registry_data):
 
 
 @pytest.mark.django_db
-def test_operator_list_shows_credential_expiry_column(client, admin_user, registry_data):
+def test_operator_list_shows_credential_expiry_column(
+    client, admin_user, registry_data
+):
     _tenant, _center, operator, _aircraft = registry_data
     operator.credential_expiry = date(2025, 6, 1)  # past
     operator.save(update_fields=["credential_expiry"])

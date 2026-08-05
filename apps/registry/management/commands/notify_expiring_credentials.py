@@ -28,7 +28,9 @@ logger = logging.getLogger("aerocontrol.notifications")
 
 
 class Command(BaseCommand):
-    help = "Email each operator their DGAC credential/qualification expiries (<=30 days)."
+    help = (
+        "Email each operator their DGAC credential/qualification expiries (<=30 days)."
+    )
 
     def add_arguments(self, parser):
         parser.add_argument(

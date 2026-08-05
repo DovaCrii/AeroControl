@@ -194,9 +194,7 @@ class TestOperatorAssignmentViews:
     @pytest.mark.django_db
     def test_create_assigns_several_operators_at_once(self, db):
         # LV-18: 5-10 operators onto a contract in one submit, not one by one.
-        ops = [
-            _operator(employee_id=f"E{i}", full_name=f"Pilot {i}") for i in range(3)
-        ]
+        ops = [_operator(employee_id=f"E{i}", full_name=f"Pilot {i}") for i in range(3)]
         cc = _cc("CC1")
         payload = {
             "cost_center": cc.pk,
@@ -344,7 +342,9 @@ class TestBulkAssignService:
             operators=[op], cost_center=cc, status="active", purpose="", user=None
         )
         assert moved == 0
-        assert OperatorAssignment.objects.filter(operator=op, cost_center=cc).count() == 1
+        assert (
+            OperatorAssignment.objects.filter(operator=op, cost_center=cc).count() == 1
+        )
 
     @pytest.mark.django_db
     def test_moving_an_operator_ends_the_old_and_logs_reassigned(self, db):
@@ -388,7 +388,12 @@ class TestOperatorAssignmentFormLV17:
         op = _operator()
         cc = _cc("CC1")
         form = OperatorAssignmentForm(
-            data={"operator": op.pk, "cost_center": cc.pk, "status": "active", "purpose": ""}
+            data={
+                "operator": op.pk,
+                "cost_center": cc.pk,
+                "status": "active",
+                "purpose": "",
+            }
         )
         assert form.is_valid(), form.errors
         instance = form.save()

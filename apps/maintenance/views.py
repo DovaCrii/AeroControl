@@ -194,7 +194,7 @@ class AircraftReportIncident(ModelPermissionRequiredMixin, View):
         )
         aircraft.status = "damaged"
         aircraft.save(update_fields=["status", "updated_at"])
-        record = MaintenanceRecord.objects.create(
+        MaintenanceRecord.objects.create(
             aircraft=aircraft,
             maintenance_type="emergency",
             status="pending",

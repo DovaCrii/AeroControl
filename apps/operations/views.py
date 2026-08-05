@@ -286,11 +286,7 @@ class FlightRecordList(OList):
     ]
 
     def get_queryset(self):
-        return (
-            super()
-            .get_queryset()
-            .select_related("permission", "pilot", "aircraft")
-        )
+        return super().get_queryset().select_related("permission", "pilot", "aircraft")
 
 
 class FlightRecordCreate(OCreate):

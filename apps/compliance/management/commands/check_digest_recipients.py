@@ -37,14 +37,18 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         centers = list(cost_centers_to_notify())
         reachable = 0
-        self.stdout.write(f"Digest recipient readiness ({len(centers)} cost centers):\n")
+        self.stdout.write(
+            f"Digest recipient readiness ({len(centers)} cost centers):\n"
+        )
         for center in centers:
             ok, email, explanation = recipient_status(center)
             reachable += int(ok)
             label = f"{center.code} {center.name or ''}".strip()
             if ok:
                 self.stdout.write(
-                    self.style.SUCCESS(f"  OK       {label:32} {email}  ({explanation})")
+                    self.style.SUCCESS(
+                        f"  OK       {label:32} {email}  ({explanation})"
+                    )
                 )
             else:
                 self.stdout.write(
