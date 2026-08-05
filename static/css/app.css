@@ -33,12 +33,32 @@ body {
 }
 
 /* ── Sidebar ──────────────────────────────────────── */
+/* LV-63: this used to be two rules -- this bare base one, and a second,
+   later one (originally at ~line 719, from the design-tokens pass) that
+   redeclared position/width/flex/padding/background with the same (0,1,0)
+   specificity. Two same-specificity rules for the same selector means the
+   LATER one in the file wins regardless of what @media wraps the other --
+   so the mobile off-canvas block below (position: fixed) was losing to this
+   rule's desktop values every time, at every viewport. Fused into one
+   declaration so there is only one place geometry can come from, and the
+   @media (max-width:768px) block right after it wins on mobile the normal
+   way: by being more specific to that viewport, not by source-order luck. */
 .sidebar {
-  background: #fff;
-  min-height: calc(100vh - 56px);
+  position: sticky;
+  top: 58px;
+  flex: 0 0 var(--ac-sidebar-width);
   width: var(--ac-sidebar-width);
-  box-shadow: 1px 0 5px rgba(0,0,0,0.08);
+  min-height: calc(100vh - 58px);
+  padding: 1rem 0.75rem !important;
   gap: 0.15rem;
+  background: var(--ac-surface);
+  border-right: 1px solid var(--ac-border);
+  /* Transition also fused in (was a separate rule at ~line 649 that listed
+     .sidebar for background/color/border/box-shadow only): transform joins
+     the list here so the mobile drawer actually animates open/closed
+     instead of snapping, and dark/light toggles keep animating too. */
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease,
+    box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .sidebar a {
@@ -419,7 +439,9 @@ body {
     width: min(86vw, var(--ac-sidebar-width));
     overflow-y: auto;
     transform: translateX(-105%);
-    transition: transform 0.2s ease;
+    /* transition lives in the base .sidebar rule now (LV-63) -- it already
+       includes transform, and duplicating it here is exactly the trap this
+       fix removes elsewhere. */
   }
   .sidebar.is-open { transform: translateX(0); }
   .sidebar-toggle { display: inline-flex; align-items: center; justify-content: center; }
@@ -646,7 +668,7 @@ body {
   border-top-color: var(--ac-border);
 }
 
-body, .sidebar, .card, .form-control, .form-select, .page-link, .table,
+body, .card, .form-control, .form-select, .page-link, .table,
 .sidebar a, .navbar, .badge, .kanban-column, .kanban-card, .kanban-column-header {
   transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -716,19 +738,6 @@ main {
 .sidebar-toggle,
 .theme-toggle { min-width: 40px; min-height: 36px; }
 
-.sidebar {
-  position: sticky;
-  top: 58px;
-  flex: 0 0 var(--ac-sidebar-width);
-  width: var(--ac-sidebar-width);
-  min-height: calc(100vh - 58px);
-  padding: 1rem 0.75rem !important;
-  background: var(--ac-surface);
-  border-right: 1px solid var(--ac-border);
-  box-shadow: none;
-  transition: background 0.2s ease;
-}
-
 .sidebar a {
   min-height: 42px;
   padding: 0.62rem 0.75rem;
@@ -764,37 +773,48 @@ main {
 .sidebar-label:first-of-type { border-top: 0; margin-top: 0.4rem; }
 .sidebar hr { border-color: var(--ac-border); opacity: 1; }
 
-.sidebar.is-collapsed {
-  --ac-sidebar-width: 72px;
-  padding-inline: 0.75rem !important;
-}
+/* LV-63: the collapsed rail is a desktop-only mode -- app.js only ever
+   toggles is-collapsed when innerWidth >= 769 (it is the sidebar-collapse
+   button's whole job; there is no way to enter it from a narrow viewport).
+   Scoping it here means a class left over from resizing down out of desktop
+   simply does nothing on mobile, instead of needing separate mobile
+   counter-rules to undo it (the two blocks further down that used to do
+   exactly that, and did it wrong: the sidebar-width var was already 72px by
+   the time they ran, so "un-collapsing" resolved to min(86vw, 72px) instead
+   of the full drawer width). */
+@media (min-width: 769px) {
+  .sidebar.is-collapsed {
+    --ac-sidebar-width: 72px;
+    padding-inline: 0.75rem !important;
+  }
 
-.sidebar.is-collapsed .sidebar-label,
-.sidebar.is-collapsed hr { display: none; }
-.sidebar.is-collapsed .sidebar-toolbar { justify-content: center; padding-inline: 0; }
-.sidebar.is-collapsed .sidebar-toolbar-title { display: none; }
-.sidebar.is-collapsed .sidebar-collapse svg { transform: rotate(180deg); }
-.sidebar.is-collapsed .nav-item { position: relative; justify-content: center; padding-inline: 0; font-size: 0; }
-.sidebar.is-collapsed .nav-icon { margin: 0; }
+  .sidebar.is-collapsed .sidebar-label,
+  .sidebar.is-collapsed hr { display: none; }
+  .sidebar.is-collapsed .sidebar-toolbar { justify-content: center; padding-inline: 0; }
+  .sidebar.is-collapsed .sidebar-toolbar-title { display: none; }
+  .sidebar.is-collapsed .sidebar-collapse svg { transform: rotate(180deg); }
+  .sidebar.is-collapsed .nav-item { position: relative; justify-content: center; padding-inline: 0; font-size: 0; }
+  .sidebar.is-collapsed .nav-icon { margin: 0; }
 
-/* Keep the pending-alert count visible while collapsed: it is the one piece of
-   live state in the nav, so hiding it removed the reason to glance at it.
-   Rendered as a compact dot-badge pinned to the icon. */
-.sidebar.is-collapsed .nav-item .badge {
-  position: absolute;
-  top: 4px;
-  right: 8px;
-  min-width: 17px;
-  height: 17px;
-  padding: 0 4px;
-  border-radius: 9px;
-  border: 2px solid var(--ac-surface);
-  font-size: 0.62rem;
-  font-weight: 700;
-  line-height: 13px;
-  text-align: center;
+  /* Keep the pending-alert count visible while collapsed: it is the one piece
+     of live state in the nav, so hiding it removed the reason to glance at
+     it. Rendered as a compact dot-badge pinned to the icon. */
+  .sidebar.is-collapsed .nav-item .badge {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4px;
+    border-radius: 9px;
+    border: 2px solid var(--ac-surface);
+    font-size: 0.62rem;
+    font-weight: 700;
+    line-height: 13px;
+    text-align: center;
+  }
+  .sidebar.is-collapsed .nav-item .badge:empty { display: none; }
 }
-.sidebar.is-collapsed .nav-item .badge:empty { display: none; }
 
 .page-header,
 .toolbar,
@@ -1000,21 +1020,19 @@ main {
 [data-bs-theme="dark"] .modal-header,
 [data-bs-theme="dark"] .offcanvas-header { border-color: var(--ac-border); }
 
-/* Mobile rules that must win over the block near the top of the file: both
-   target .sidebar at the same breakpoint, and this one wins on source order.
-   The duplicated width/top declarations that used to sit here conflicted with
-   the other block (56px vs 58px, token width vs hardcoded 280px), which meant
-   editing the first block changed nothing - the R.10 trap in responsive form.
-   Geometry lives only in the first block now; this one keeps what is unique:
-   un-collapsing the sidebar on mobile (off-canvas has no collapsed mode) and
-   page-level spacing. */
+/* LV-63: this used to also carry counter-rules un-collapsing the sidebar on
+   mobile ("is-collapsed doesn't apply here, so undo its effects"). Scoping
+   .sidebar.is-collapsed itself to min-width:769px (above) made those
+   unnecessary -- there is nothing left to undo, so removed rather than kept
+   as dead weight. What is left here is page-level mobile spacing, unrelated
+   to the sidebar fix. */
 @media (max-width: 768px) {
-  .sidebar.is-collapsed { width: min(86vw, var(--ac-sidebar-width)); }
-  .sidebar.is-collapsed .sidebar-label,
-  .sidebar.is-collapsed hr { display: block; }
-  .sidebar.is-collapsed .nav-item { justify-content: flex-start; padding-inline: 0.75rem; font-size: 0.92rem; }
-  .sidebar.is-collapsed .nav-item .badge { display: inline-block; }
-  main { padding: 1rem !important; }
+  /* #main-content, not `main`: main.container-fluid already carries
+     Bootstrap's .p-4 (1.5rem, !important), which has higher specificity
+     (0,1,1) than a bare element selector (0,0,1) -- an !important on the
+     losing side of that comparison is still losing, so this rule did
+     nothing on any viewport. The id (1,0,0) wins outright. */
+  #main-content { padding: 1rem !important; }
   .page-header { align-items: flex-start; }
   .summary-grid { grid-template-columns: 1fr; }
 }
