@@ -2455,6 +2455,15 @@ msgstr "Llegada"
 msgid "Pilot"
 msgstr "Piloto"
 
+#: LV-59: record-list column header.
+msgid "Duration"
+msgstr "Duración"
+
+#: LV-59: record-list empty state, same specific-empty-state pattern as
+#: _permission_rows.html's "No permissions found."
+msgid "No flight records found."
+msgstr "No se encontraron registros de vuelo."
+
 #: .\templates\operations\permission_detail.html:11
 msgid "Purpose"
 msgstr "Propósito"

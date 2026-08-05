@@ -265,18 +265,28 @@ class FlightPermissionComplete(StatusTransitionView):
     success_message = gettext_lazy("Permission completed.")
 
 
-FlightRecordList = type(
-    "FlightRecordList",
-    (OList,),
-    {
-        "model": FlightRecord,
-        "search_fields": [
-            "permission__permission_number",
-            "pilot__full_name",
-            "aircraft__registration",
-        ],
-    },
-)
+class FlightRecordList(OList):
+    """LV-59: was the generic created_at/is_active columns (this was the
+    only list in the area without its own), which is also how a Vuelos
+    screenshot ended up showing "Nombre" as a column header. Real columns
+    (LV-57 pattern) plus the flight duration, which was stored but never
+    computed anywhere."""
+
+    model = FlightRecord
+    template_name = "operations/record_list.html"
+    htmx_template_name = "operations/_record_rows.html"
+    search_fields = [
+        "permission__permission_number",
+        "pilot__full_name",
+        "aircraft__registration",
+    ]
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .select_related("permission", "pilot", "aircraft")
+        )
 
 
 class FlightRecordCreate(OCreate):

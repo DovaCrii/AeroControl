@@ -377,3 +377,92 @@ def test_flight_record_archive_is_audited_as_archived():
     assert event.action == "archived"
     assert event.model_label == "operations.FlightRecord"
     assert event.object_id == str(record.pk)
+
+
+@pytest.mark.parametrize(
+    ("departure", "arrival", "expected"),
+    [
+        (time(9, 0), time(10, 30), "1h 30min"),
+        (time(9, 0), time(9, 45), "45min"),
+        (time(9, 0), time(11, 0), "2h 00min"),
+        # LV-59: FlightRecordForm rejects arrival <= departure, but that is
+        # not a model-level constraint -- a record created outside the form
+        # (admin, fixture) crossing midnight must not show a negative length.
+        (time(23, 0), time(1, 0), "2h 00min"),
+    ],
+)
+def test_flight_record_duration_is_computed_from_departure_and_arrival(
+    departure, arrival, expected
+):
+    record = FlightRecord(departure_time=departure, arrival_time=arrival)
+    record.actual_date = date(2026, 7, 22)
+
+    assert record.duration_display == expected
+
+
+@pytest.mark.django_db
+def test_record_list_shows_real_columns_not_the_generic_ones(admin_client):
+    """LV-59: was the only list in the area still on the generic Name/
+    Created/Status columns -- this is why a screenshot of it showed "Nombre"
+    as a column header."""
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    permission = _permission(cost_center, operator, aircraft)
+    FlightRecord.objects.create(
+        permission=permission,
+        actual_date=date(2026, 7, 22),
+        departure_time=time(9, 0),
+        arrival_time=time(10, 30),
+        pilot=operator,
+        aircraft=aircraft,
+    )
+
+    content = admin_client.get(reverse("record-list")).content.decode()
+
+    assert "Pilot One" in content
+    assert "CC-AAA" in content
+    assert "1h 30min" in content
+    assert reverse("permission-detail", args=[permission.pk]) in content
+
+
+@pytest.mark.django_db
+def test_record_list_htmx_search_keeps_its_own_columns(admin_client):
+    """F-13: a live-search HTMX response must carry this list's own columns,
+    not collapse to the generic ones (same regression class as LV-53)."""
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    permission = _permission(cost_center, operator, aircraft)
+    FlightRecord.objects.create(
+        permission=permission,
+        actual_date=date(2026, 7, 22),
+        departure_time=time(9, 0),
+        arrival_time=time(10, 30),
+        pilot=operator,
+        aircraft=aircraft,
+    )
+
+    response = admin_client.get(
+        reverse("record-list"), {"q": "CC-AAA"}, HTTP_HX_REQUEST="true"
+    )
+    content = response.content.decode()
+
+    assert "Pilot One" in content
+    assert "1h 30min" in content
