@@ -756,6 +756,11 @@ msgstr "Permiso aprobado."
 msgid "Upload the DGAC authorization letter (the SIGO PDF) before approving this permit."
 msgstr "Sube la carta de autorización DGAC (el PDF del SIGO) antes de aprobar este permiso."
 
+#: LV-64: FlightPermissionApprove now requires the signed authorization the
+#: DGAC returns, not the request letter above (two distinct real documents).
+msgid "Upload the DGAC operation authorization (the signed SIGO PDF) before approving this permit."
+msgstr "Sube la autorización de operación de la DGAC (el PDF firmado del SIGO) antes de aprobar este permiso."
+
 #: .\apps\operations\views.py:186
 msgid "Permission denied."
 msgstr "Permiso rechazado."

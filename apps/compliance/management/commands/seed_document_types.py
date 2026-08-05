@@ -18,6 +18,20 @@ DOCUMENT_TYPES = [
     ("airworthiness-cert", "Certificado de aeronavegabilidad", True, False, False),
     ("liability-insurance", "Seguro de responsabilidad civil", True, True, False),
     ("dgac-flight-permit", "Autorización DGAC (carta de permiso)", True, False, False),
+    # LV-64: two distinct real documents, not one -- the letter above is what
+    # goes *to* the DGAC as part of the request; this is what comes *back*,
+    # signed and folio'd, once the DGAC actually approves the operation
+    # ("Autorización de Operación RPA" in the DGAC's own wording). Approving a
+    # permission in the app now requires this one (see
+    # FlightPermissionApprove), not the letter -- only the signed
+    # authorization actually certifies DGAC approval.
+    (
+        "dgac-rpa-operation-authorization",
+        "Autorización de Operación RPA (DGAC aprobada)",
+        True,
+        False,
+        False,
+    ),
     # LV-30: the per-flight operational records. They do not expire (a record of
     # what happened, not a validity), so requires_expiry=False.
     ("flight-log", "Bitácora de vuelo (REG-015)", False, False, True),

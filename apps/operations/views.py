@@ -224,18 +224,22 @@ class FlightPermissionApprove(StatusTransitionView):
     success_message = gettext_lazy("Permission approved.")
 
     def post(self, request, pk):
-        # LV-51: the DGAC-issued authorization letter (the PDF SIGO produces)
-        # must be on file before a permit can be marked approved here --
-        # otherwise AeroControl's "approved" status can outrun the real DGAC
-        # paperwork. Checked before the base transition, same guard shape as
-        # MaintenanceComplete's pre-check.
+        # LV-51/LV-64: the signed DGAC authorization ("Autorización de
+        # Operación RPA", the folio'd PDF that comes back once the DGAC
+        # actually approves the operation) must be on file before a permit
+        # can be marked approved here -- otherwise AeroControl's "approved"
+        # status can outrun the real DGAC paperwork. This is deliberately
+        # NOT "dgac-flight-permit" (the letter that goes *to* the DGAC as
+        # part of the request) -- that one can exist long before an approval
+        # and does not itself certify one. Checked before the base
+        # transition, same guard shape as MaintenanceComplete's pre-check.
         from apps.compliance.models import Document
 
         permission = get_object_or_404(FlightPermission, pk=pk, is_active=True)
         has_permit_pdf = Document.objects.filter(
             content_type=ContentType.objects.get_for_model(FlightPermission),
             object_id=permission.pk,
-            doc_type__code="dgac-flight-permit",
+            doc_type__code="dgac-rpa-operation-authorization",
             is_current_version=True,
             is_active=True,
         ).exists()
@@ -243,8 +247,8 @@ class FlightPermissionApprove(StatusTransitionView):
             messages.error(
                 request,
                 _(
-                    "Upload the DGAC authorization letter (the SIGO PDF) "
-                    "before approving this permit."
+                    "Upload the DGAC operation authorization (the signed "
+                    "SIGO PDF) before approving this permit."
                 ),
             )
             return redirect(permission)

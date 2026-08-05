@@ -242,7 +242,7 @@ def test_seed_document_types_creates_catalog_including_one_insurance_type():
     from django.core.management import call_command
 
     call_command("seed_document_types")
-    assert DocumentType.objects.count() == 9
+    assert DocumentType.objects.count() == 10
     insurance_types = DocumentType.objects.filter(is_insurance=True)
     assert insurance_types.count() == 1
     assert insurance_types.first().code == "liability-insurance"
@@ -256,7 +256,7 @@ def test_seed_document_types_creates_catalog_including_one_insurance_type():
 
     # Idempotent: a second run does not duplicate or touch existing rows.
     call_command("seed_document_types")
-    assert DocumentType.objects.count() == 9
+    assert DocumentType.objects.count() == 10
 
 
 @pytest.mark.django_db
