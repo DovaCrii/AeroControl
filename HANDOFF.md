@@ -2,9 +2,12 @@
 
 > Punto de retome entre ventanas/sesiones. La **fuente de verdad del trabajo
 > pendiente** es [MASTER_PLAN.md](MASTER_PLAN.md); esto es el resumen de estado.
-> Última actualización: **2026-08-04** (LV-44..58/62 y B3.3/B3.4 **ya
-> desplegados en la VM**; LV-58 y LV-62 aún no; LV-59/60/61 son propuestas de
-> diseño anotadas, sin implementar).
+> Última actualización: **2026-08-04** — **`v0.4.0-beta` cortado** (commit
+> `7941bc2`, tag publicado): cubre todo desde `v0.3.0-alpha` (GEO/OPS +
+> LV-1..62 + B3.3/B3.4). Ver `CHANGELOG.md`. **Pendiente de confirmar el
+> deploy en `p340`** de LV-58/60/61/62 (LV-44..57 y B3.3/B3.4 sí confirmados)
+> — el `git log --oneline -1` de la VM quedó sin verificar en la sesión
+> anterior.
 
 ## El ciclo de vida del permiso — el hilo que une LV-59/60/61
 Diseño hecho con **Opus 5** el 2026-08-04. El hallazgo de fondo: AeroControl
