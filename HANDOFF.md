@@ -8,8 +8,12 @@
 > día**: `git log --oneline -1` en la VM devolvió `abff809`, que ya incluye
 > LV-58/60/61/62 — solo faltan ahí los 2 commits de documentación del corte de
 > versión (`CHANGELOG`/`HANDOFF`), que no tocan código ni requieren reinicio.
-> **LV-59 (parcial) desplegado en `p340`** (`git log --oneline -1` → `7b46e69`,
-> servicio activo). Sin pendientes de deploy al cierre de esta ventana.
+> **LV-59 (parcial, opción (a)+(b)) desplegado en `p340`** (`7b46e69`).
+> **LV-59 opción (c) revisada y cerrada 2026-08-05** sin fusionar módulos
+> (LV-61 ya resolvió la contigüidad en el menú); se encontró y corrigió un
+> problema concreto de fondo: el desplegable de permiso en el form de Vuelos
+> no filtraba archivados ni ordenaba. **Aún NO desplegado.** Sin más
+> pendientes de deploy además de esto.
 
 ## El ciclo de vida del permiso — el hilo que une LV-59/60/61
 Diseño hecho con **Opus 5** el 2026-08-04. El hallazgo de fondo: AeroControl
