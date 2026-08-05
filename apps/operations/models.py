@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
@@ -94,6 +96,31 @@ class FlightRecord(BaseModel):
         from django.urls import reverse
 
         return reverse("record-detail", kwargs={"pk": self.pk})
+
+    @property
+    def duration(self):
+        """LV-59: departure/arrival are stored but nothing ever computed the
+        flight's actual length from them. `FlightRecordForm.clean()` rejects
+        arrival <= departure at the form, but that is not a model-level
+        constraint (a record created via the admin or a fixture has no such
+        guard) -- an arrival not later than departure is treated as a flight
+        that crossed midnight, not a negative duration."""
+        anchor = datetime.combine(self.actual_date, self.departure_time)
+        end = datetime.combine(self.actual_date, self.arrival_time)
+        if end <= anchor:
+            end += timedelta(days=1)
+        return end - anchor
+
+    @property
+    def duration_display(self):
+        """`duration` as "1h 05min" (or "05min" under an hour) for the list
+        and detail pages -- a raw timedelta renders as "1:05:00" in a
+        template, which reads as a clock, not a length."""
+        total_minutes = self.duration.seconds // 60
+        hours, minutes = divmod(total_minutes, 60)
+        if hours:
+            return f"{hours}h {minutes:02d}min"
+        return f"{minutes}min"
 
 
 class PermissionHistory(BaseModel):

@@ -1,0 +1,25 @@
+{% load aero_tags i18n %}
+{% for object in objects %}
+<tr>
+  <td><a href="{{ object.pk }}/" class="table-primary-value">{{ object.actual_date|date:"Y-m-d" }}</a></td>
+  <td class="cell-truncate"><a href="{% url 'permission-detail' object.permission_id %}">{{ object.permission }}</a></td>
+  <td class="cell-truncate">{{ object.pilot }}</td>
+  <td class="cell-truncate">{{ object.aircraft }}</td>
+  <td class="cell-numeric" title="{{ object.departure_time|time:'H:i' }} – {{ object.arrival_time|time:'H:i' }}">{{ object.duration_display }}</td>
+  <td class="text-end">
+    <a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">{% translate "View" %}</a>
+  </td>
+</tr>
+{% empty %}
+<tr>
+  <td colspan="99" class="text-center text-muted py-4">
+    {% if is_filtered %}
+      {% translate "No records match the current filters." %}
+      <a href="{{ request.path }}">{% translate "Clear filters" %}</a>
+    {% else %}
+      {% translate "No flight records found." %}
+    {% endif %}
+  </td>
+</tr>
+{% endfor %}
+{% if is_htmx %}<div id="pagination-container" hx-swap-oob="true">{% render_pagination page_obj %}</div>{% endif %}
