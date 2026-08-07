@@ -5,7 +5,10 @@
 {% translate "Search title..." as document_search_placeholder %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h1 class="h3">{% translate "Documents" %}</h1>
-  <a class="btn btn-primary" href="{% url 'document-create' %}" hx-get="{% url 'document-create' %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal">+ {% translate "New" %}</a>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>
+    <a class="btn btn-primary" href="{% url 'document-create' %}" hx-get="{% url 'document-create' %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal">+ {% translate "New" %}</a>
+  </div>
 </div>
 <form method="get" class="row g-2 mb-3">
   <div class="col-md-3">{% include "generic/_search_input.html" with search_url=request.path search_placeholder=document_search_placeholder %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>

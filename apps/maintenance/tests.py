@@ -322,6 +322,31 @@ def test_maintenance_list_renders_and_filters_by_status_and_type():
 
 
 @pytest.mark.django_db
+def test_maintenance_list_shows_export_link_and_export_returns_csv():
+    """T5.7 (U6): the backend already supported ?export=csv (MList mixes in
+    CsvExportMixin), but this template rebuilds `content` from scratch and
+    never rendered the link -- unlike every other generic-list page."""
+    aircraft = _aircraft()
+    MaintenanceRecord.objects.create(
+        aircraft=aircraft,
+        maintenance_type="scheduled",
+        description="100h inspection",
+        scheduled_date=date(2026, 7, 20),
+        status="pending",
+    )
+    client = _mechanic_client()
+
+    page = client.get(reverse("maintenance-list"))
+    assert "export=csv" in page.content.decode()
+
+    export = client.get(reverse("maintenance-list"), {"export": "csv"})
+    assert export.status_code == 200
+    assert export["Content-Type"].startswith("text/csv")
+    body = b"".join(export.streaming_content).decode()
+    assert "100h inspection" in body
+
+
+@pytest.mark.django_db
 def test_maintenance_create_form_renders_and_creates_a_record():
     aircraft = _aircraft()
     client = _mechanic_client()
