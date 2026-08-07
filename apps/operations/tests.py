@@ -10,7 +10,7 @@ from django.urls import reverse
 from apps.compliance.models import Document, DocumentType
 from apps.core.models import AuditEvent
 from apps.registry.models import Aircraft, CostCenter, Operator
-from .forms import FlightRecordForm
+from .forms import FlightPermissionForm, FlightRecordForm
 from .models import FlightPermission, FlightRecord, PermissionHistory
 
 
@@ -45,6 +45,101 @@ def _permission(cost_center, operator, aircraft, **kwargs):
     permission.operators.add(operator)
     permission.aircraft_fleet.add(aircraft)
     return permission
+
+
+def _permission_form_data(cost_center, operator, aircraft, **overrides):
+    data = {
+        "status": "requested",
+        "permission_number": "PERM-1",
+        "operators": [operator.pk],
+        "aircraft_fleet": [aircraft.pk],
+        "cost_center": cost_center.pk,
+        "purpose": "Training",
+        "valid_from": "2026-07-22",
+        "valid_until": "2026-07-22",
+        "location": "Santiago",
+        "area_type": "populated",
+    }
+    data.update(overrides)
+    return data
+
+
+@pytest.mark.django_db
+def test_flight_permission_form_requires_an_area_type():
+    """R2.6: DAN 151 (populated) vs. DAN 91 (unpopulated) is a real normative
+    distinction the audit guide asks to have on record (clause 6.1.3) --
+    required from now on, though existing permissions predate the field."""
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    data = _permission_form_data(cost_center, operator, aircraft, area_type="")
+
+    form = FlightPermissionForm(data=data)
+
+    assert not form.is_valid()
+    assert "area_type" in form.errors
+
+
+@pytest.mark.django_db
+def test_flight_permission_form_accepts_each_area_type_choice():
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    for choice, _label in FlightPermission.AREA_TYPE_CHOICES:
+        data = _permission_form_data(
+            cost_center,
+            operator,
+            aircraft,
+            permission_number=f"PERM-{choice}",
+            area_type=choice,
+        )
+
+        form = FlightPermissionForm(data=data)
+
+        assert form.is_valid(), form.errors
+        assert form.save().area_type == choice
+
+
+@pytest.mark.django_db
+def test_existing_permission_without_an_area_type_still_renders():
+    """Existing rows predate the field (null, not one of the three choices) --
+    the detail page must not blow up on get_area_type_display() for them."""
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    permission = _permission(cost_center, operator, aircraft)
+    assert permission.area_type is None
+    User.objects.create_superuser("dispatcher", "dispatcher@test.com", "password")
+    client = Client()
+    assert client.login(username="dispatcher", password="password")
+
+    response = client.get(reverse("permission-detail", args=[permission.pk]))
+
+    assert response.status_code == 200
 
 
 @pytest.mark.django_db
@@ -231,6 +326,7 @@ def test_permission_update_edits_the_permission_and_redirects_to_the_list():
             "valid_from": permission.valid_from,
             "valid_until": permission.valid_until,
             "location": "Valparaiso",
+            "area_type": "populated",
         },
     )
 

@@ -21,6 +21,7 @@ class FlightPermissionForm(AeroModelForm):
             "valid_from",
             "valid_until",
             "location",
+            "area_type",
         ]
         # LV-22: without explicit labels the auto-generated English ones ("Permission
         # number", "Valid from"…) fell through the catalog and rendered in English
@@ -35,9 +36,11 @@ class FlightPermissionForm(AeroModelForm):
             "valid_from": _("Valid from"),
             "valid_until": _("Valid until"),
             "location": _("Location"),
+            "area_type": _("Area type"),
         }
         help_texts = {
             "permission_number": _("Optional until the permission is approved."),
+            "area_type": _("DAN 151 (populated) vs. DAN 91 (unpopulated)."),
         }
         widgets = {
             # A roster of several, not one pick from a dropdown (OPS-4).

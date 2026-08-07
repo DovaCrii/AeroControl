@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-07 13:40-0400\n"
+"POT-Creation-Date: 2026-08-07 13:53-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -23,7 +23,7 @@ msgid "Qualification"
 msgstr "Habilitación"
 
 #: .\apps\compliance\forms.py:51 .\apps\geo\forms.py:45
-#: .\apps\operations\forms.py:33 .\apps\registry\forms.py:291
+#: .\apps\operations\forms.py:34 .\apps\registry\forms.py:291
 #: .\apps\registry\forms.py:374 .\apps\registry\forms.py:400
 #: .\apps\registry\forms.py:438 .\templates\compliance\email\alert_digest.txt:2
 #: .\templates\compliance\email\executive_report.html:52
@@ -46,7 +46,7 @@ msgstr "Centro de costo"
 
 #: .\apps\compliance\forms.py:52 .\apps\compliance\watchables.py:25
 #: .\apps\dashboard\views.py:113 .\apps\geo\forms.py:51
-#: .\apps\operations\forms.py:82 .\templates\core\calendar.html:83
+#: .\apps\operations\forms.py:85 .\templates\core\calendar.html:83
 #: .\templates\operations\record_list.html:6
 msgid "Flight permission"
 msgstr "Permiso de vuelo"
@@ -421,7 +421,7 @@ msgid "Operator"
 msgstr "Operador"
 
 #: .\apps\compliance\watchables.py:21 .\apps\maintenance\forms.py:21
-#: .\apps\operations\forms.py:87 .\apps\registry\forms.py:290
+#: .\apps\operations\forms.py:90 .\apps\registry\forms.py:290
 #: .\apps\registry\forms.py:437 .\apps\registry\models.py:571
 #: .\apps\registry\views.py:57 .\templates\base.html:120
 #: .\templates\maintenance\record_detail.html:21
@@ -1011,7 +1011,7 @@ msgstr ""
 "Incidente registrado: la aeronave quedó en Mal estado y se abrió una "
 "mantención de emergencia."
 
-#: .\apps\operations\forms.py:29 .\apps\registry\forms.py:195
+#: .\apps\operations\forms.py:30 .\apps\registry\forms.py:195
 #: .\apps\registry\forms.py:295 .\apps\registry\forms.py:375
 #: .\apps\registry\forms.py:414 .\apps\registry\forms.py:441
 #: .\templates\compliance\email\monthly_review.txt:5
@@ -1034,11 +1034,11 @@ msgstr ""
 msgid "Status"
 msgstr "Estado"
 
-#: .\apps\operations\forms.py:30
+#: .\apps\operations\forms.py:31
 msgid "Permission number"
 msgstr "Número de permiso"
 
-#: .\apps\operations\forms.py:31 .\apps\registry\forms.py:404
+#: .\apps\operations\forms.py:32 .\apps\registry\forms.py:404
 #: .\apps\registry\views.py:58 .\templates\base.html:121
 #: .\templates\operations\permission_detail.html:53
 #: .\templates\operations\permission_list.html:35
@@ -1047,76 +1047,85 @@ msgstr "Número de permiso"
 msgid "Operators"
 msgstr "Operadores"
 
-#: .\apps\operations\forms.py:32
+#: .\apps\operations\forms.py:33
 msgid "Aircraft fleet"
 msgstr "Flota de aeronaves"
 
-#: .\apps\operations\forms.py:34
+#: .\apps\operations\forms.py:35
 #: .\templates\operations\permission_detail.html:53
 #: .\templates\registry\aircraftassignment_list.html:8
 #: .\templates\registry\operatorassignment_list.html:8
 msgid "Purpose"
 msgstr "Propósito"
 
-#: .\apps\operations\forms.py:35
+#: .\apps\operations\forms.py:36
 msgid "Valid from"
 msgstr "Vigente desde"
 
-#: .\apps\operations\forms.py:36
+#: .\apps\operations\forms.py:37
 msgid "Valid until"
 msgstr "Vigente hasta"
 
-#: .\apps\operations\forms.py:37
+#: .\apps\operations\forms.py:38
 #: .\templates\operations\permission_detail.html:53
 #: .\templates\registry\aircraft_list.html:27
 #: .\templates\registry\costcenter_detail.html:62
 msgid "Location"
 msgstr "Ubicación"
 
+#: .\apps\operations\forms.py:39
+#: .\templates\operations\permission_detail.html:53
+msgid "Area type"
+msgstr "Tipo de área"
+
 # LV-39: estado + número condicional del permiso.
-#: .\apps\operations\forms.py:40
+#: .\apps\operations\forms.py:42
 msgid "Optional until the permission is approved."
 msgstr "Opcional hasta que el permiso esté aprobado."
 
-#: .\apps\operations\forms.py:61
+#: .\apps\operations\forms.py:43
+msgid "DAN 151 (populated) vs. DAN 91 (unpopulated)."
+msgstr "DAN 151 (poblada) vs. DAN 91 (no poblada)."
+
+#: .\apps\operations\forms.py:64
 msgid "An approved permission needs its DGAC number."
 msgstr "Un permiso aprobado necesita su número DGAC."
 
-#: .\apps\operations\forms.py:83
+#: .\apps\operations\forms.py:86
 msgid "Flight date"
 msgstr "Fecha de vuelo"
 
-#: .\apps\operations\forms.py:84
+#: .\apps\operations\forms.py:87
 msgid "Departure time"
 msgstr "Hora de salida"
 
-#: .\apps\operations\forms.py:85
+#: .\apps\operations\forms.py:88
 msgid "Arrival time"
 msgstr "Hora de llegada"
 
-#: .\apps\operations\forms.py:86
+#: .\apps\operations\forms.py:89
 #: .\templates\operations\flightrecord_detail.html:29
 #: .\templates\operations\permission_detail.html:62
 #: .\templates\operations\record_list.html:7
 msgid "Pilot"
 msgstr "Piloto"
 
-#: .\apps\operations\forms.py:145
+#: .\apps\operations\forms.py:148
 msgid "The aircraft must be part of the flight permission's fleet."
 msgstr "La aeronave debe ser parte de la flota del permiso de vuelo."
 
-#: .\apps\operations\forms.py:154
+#: .\apps\operations\forms.py:157
 msgid "The pilot must be one of the flight permission's operators."
 msgstr "El piloto debe ser uno de los operadores del permiso de vuelo."
 
-#: .\apps\operations\forms.py:164
+#: .\apps\operations\forms.py:167
 msgid ""
 "The flight date must fall within the flight permission's validity range."
 msgstr ""
 "La fecha del vuelo debe estar dentro del rango de vigencia del permiso de "
 "vuelo."
 
-#: .\apps\operations\forms.py:169
+#: .\apps\operations\forms.py:172
 msgid "Arrival time must be later than departure time."
 msgstr "La hora de llegada debe ser posterior a la hora de salida."
 
@@ -1128,15 +1137,27 @@ msgstr "Solicitado"
 msgid "Denied"
 msgstr "Rechazado"
 
-#: .\apps\operations\models.py:45
+#: .\apps\operations\models.py:34
+msgid "Populated area"
+msgstr "Área poblada"
+
+#: .\apps\operations\models.py:35
+msgid "Unpopulated area"
+msgstr "Área no poblada"
+
+#: .\apps\operations\models.py:36
+msgid "Mixed (crosses both)"
+msgstr "Mixta (cruza ambas)"
+
+#: .\apps\operations\models.py:60
 msgid "flight permission"
 msgstr "permiso de vuelo"
 
-#: .\apps\operations\models.py:46
+#: .\apps\operations\models.py:61
 msgid "flight permissions"
 msgstr "permisos de vuelo"
 
-#: .\apps\operations\models.py:71 .\apps\registry\models.py:322
+#: .\apps\operations\models.py:86 .\apps\registry\models.py:322
 #: .\apps\registry\models.py:489
 msgid "The end date cannot be before the start date."
 msgstr "La fecha final no puede ser anterior a la fecha inicial."

@@ -159,6 +159,7 @@ class TestFlightPermissionCreateWarns:
                 "valid_from": "2026-07-01",
                 "valid_until": "2026-07-10",
                 "location": "Site",
+                "area_type": "populated",
             },
             follow=True,
         )
@@ -195,6 +196,7 @@ class TestFlightPermissionCreateWarns:
                 "valid_from": "2026-07-01",
                 "valid_until": "2026-07-10",
                 "location": "Site",
+                "area_type": "populated",
             },
             follow=True,
         )
