@@ -1,6 +1,7 @@
 import zlib
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
@@ -234,6 +235,19 @@ class Operator(BaseModel):
         related_name="operators",
         null=True,
         blank=True,
+    )
+    # B3.2: "My work" needs to resolve the operator for the logged-in user.
+    # Explicit and admin/form-set on purpose -- matching by email (like the
+    # CostCenter.responsible_operator precedent avoided) could silently link
+    # the wrong person if an address is stale or shared.
+    user = models.OneToOneField(
+        get_user_model(),
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="operator_profile",
+        verbose_name=_("Linked user account"),
+        help_text=_('Optional. Lets this person see "My work" filtered to them.'),
     )
 
     class Meta:

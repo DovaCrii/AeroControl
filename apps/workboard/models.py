@@ -43,6 +43,17 @@ class KanbanStage(BaseModel):
     status_type = models.CharField(
         max_length=20, choices=STATUS_TYPES, default="custom"
     )
+    # B3.5: a soft cap. Warns in the board header when exceeded; deliberately
+    # does not block MoveTaskView/QuickTaskCreate from adding one more.
+    wip_limit = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        verbose_name=_("WIP limit"),
+        help_text=_(
+            "Optional. Warn when this stage holds more active tasks than "
+            "this number; does not block moving a task in."
+        ),
+    )
 
     def __str__(self):
         return f"{self.name} ({self.board.name})"

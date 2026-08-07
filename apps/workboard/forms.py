@@ -34,7 +34,7 @@ class KanbanStageForm(AeroModelForm):
         # `order` is intentionally omitted: column position is a technical field
         # the user never types -- it is assigned server-side on create (append at
         # the end) and changed only by drag-and-drop.
-        fields = ["board", "name", "color", "status_type"]
+        fields = ["board", "name", "color", "status_type", "wip_limit"]
 
 
 class KanbanTaskForm(AeroModelForm):

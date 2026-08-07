@@ -468,6 +468,61 @@ def test_task_detail_checklist_progress_and_list_filters(auth_client, board):
 
 
 @pytest.mark.django_db
+def test_my_work_shortcut_shown_only_when_operator_is_linked(auth_client, board, user):
+    board_obj, _, _ = board
+
+    kanban_body = auth_client.get(reverse("kanban")).content.decode()
+    list_body = auth_client.get(reverse("workboard-list")).content.decode()
+    assert "My work" not in kanban_body
+    assert "My work" not in list_body
+
+    linked = Operator.objects.create(
+        employee_id="EMP-ME", full_name="Logged-in Operator", user=user
+    )
+
+    kanban_body = auth_client.get(reverse("kanban")).content.decode()
+    list_body = auth_client.get(reverse("workboard-list")).content.decode()
+    assert f"operator={linked.pk}" in kanban_body
+    assert f"operator={linked.pk}" in list_body
+
+
+@pytest.mark.django_db
+def test_task_list_operator_quick_filter_and_grouping(auth_client, board, operator):
+    board_obj, todo, _ = board
+    other_cc = CostCenter.objects.create(code="ADMIN", name="Administration")
+    other_operator = Operator.objects.create(
+        employee_id="EMP-002", full_name="Other Operator", cost_center=other_cc
+    )
+    KanbanTask.objects.create(
+        board=board_obj, stage=todo, title="Assigned task", assigned_to=operator
+    )
+    KanbanTask.objects.create(
+        board=board_obj, stage=todo, title="Other task", assigned_to=other_operator
+    )
+    KanbanTask.objects.create(board=board_obj, stage=todo, title="Unassigned task")
+
+    filtered = auth_client.get(reverse("workboard-list"), {"operator": operator.pk})
+    body = filtered.content.decode()
+    assert "Assigned task" in body
+    assert "Other task" not in body
+
+    grouped_by_operator = auth_client.get(
+        reverse("workboard-list"), {"group_by": "operator"}
+    )
+    body = grouped_by_operator.content.decode()
+    assert "Test Operator" in body
+    assert "Other Operator" in body
+    assert "Sin asignar" in body
+
+    grouped_by_cc = auth_client.get(
+        reverse("workboard-list"), {"group_by": "cost_center"}
+    )
+    body = grouped_by_cc.content.decode()
+    assert "Administration" in body
+    assert "Sin centro de costo" in body
+
+
+@pytest.mark.django_db
 def test_task_report_exports_filtered_csv(auth_client, board):
     board_obj, todo, _ = board
     KanbanTask.objects.create(
@@ -1006,3 +1061,70 @@ def test_kanban_column_header_hides_overdue_badge_when_nothing_is_late(
     content = auth_client.get(reverse("kanban")).content.decode()
 
     assert "kanban-count-overdue" not in content
+
+
+@pytest.mark.django_db
+def test_kanban_column_header_shows_wip_exceeded_badge_when_over_limit(
+    auth_client, board
+):
+    """B3.5: a soft cap. Warns once the stage holds more active tasks than
+    wip_limit, shown as "count/limit" instead of the bare count."""
+    board_obj, todo, _ = board
+    todo.wip_limit = 1
+    todo.save(update_fields=["wip_limit"])
+    KanbanTask.objects.create(board=board_obj, stage=todo, title="First")
+    KanbanTask.objects.create(board=board_obj, stage=todo, title="Second")
+
+    content = auth_client.get(reverse("kanban")).content.decode()
+
+    assert "kanban-count-wip-exceeded" in content
+    assert "2/1" in content
+
+
+@pytest.mark.django_db
+def test_kanban_column_header_hides_wip_badge_within_limit_or_unset(auth_client, board):
+    board_obj, todo, done = board
+    todo.wip_limit = 5
+    todo.save(update_fields=["wip_limit"])
+    KanbanTask.objects.create(board=board_obj, stage=todo, title="Only one")
+    # `done` has no wip_limit at all -- must never show a fraction.
+
+    content = auth_client.get(reverse("kanban")).content.decode()
+
+    assert "kanban-count-wip-exceeded" not in content
+
+
+@pytest.mark.django_db
+def test_kanban_column_header_wip_limit_of_zero_still_shows_the_fraction(
+    auth_client, board
+):
+    """`{% if stage.wip_limit %}` would treat 0 as unset and hide the "/0" --
+    0 is a legitimate limit (this stage should hold no active tasks)."""
+    board_obj, todo, _ = board
+    todo.wip_limit = 0
+    todo.save(update_fields=["wip_limit"])
+    KanbanTask.objects.create(board=board_obj, stage=todo, title="Only one")
+
+    content = auth_client.get(reverse("kanban")).content.decode()
+
+    assert "kanban-count-wip-exceeded" in content
+    assert "1/0" in content
+
+
+@pytest.mark.django_db
+def test_moving_a_task_past_the_wip_limit_is_not_blocked(auth_client, board):
+    """The cap is a warning, not a gate: MoveTaskView must still accept the
+    drop that pushes a stage over its limit."""
+    board_obj, todo, done = board
+    done.wip_limit = 1
+    done.save(update_fields=["wip_limit"])
+    KanbanTask.objects.create(board=board_obj, stage=done, title="Already there")
+    task = KanbanTask.objects.create(board=board_obj, stage=todo, title="Incoming")
+
+    response = auth_client.post(
+        reverse("task-move", args=[task.pk]), {"stage_id": done.pk, "new_order": 0}
+    )
+
+    assert response.status_code == 204
+    task.refresh_from_db()
+    assert task.stage_id == done.pk
