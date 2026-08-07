@@ -24,6 +24,7 @@
   <div class="workboard-toolbar mb-3">
     <div class="d-flex gap-2 align-items-center flex-wrap">{% include "workboard/_filters.html" %}</div>
     <div class="d-flex gap-2 align-items-center flex-wrap">
+      {% if my_operator %}<a class="btn btn-sm btn-outline-primary" href="{% url 'kanban' %}?{% if board %}board={{ board.id }}&amp;{% endif %}operator={{ my_operator.id }}">{% translate "My work" %}</a>{% endif %}
       <a class="btn btn-sm btn-outline-secondary" href="{% url 'board-list' %}">{% translate "Manage boards" %}</a>
       <a class="btn btn-sm btn-outline-secondary" href="{% url 'label-list' %}">{% translate "Manage labels" %}</a>
       {% if board %}<a class="btn btn-sm btn-outline-primary" href="{% url 'stage-create' %}?board={{ board.id }}">+ {% translate "New stage" %}</a>{% endif %}

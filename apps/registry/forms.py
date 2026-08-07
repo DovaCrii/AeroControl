@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -249,6 +250,7 @@ class OperatorForm(AeroModelForm):
             "address",
             "authorizations",
             "cost_center",
+            "user",
         ]
         labels = {
             "employee_id": _("Employee ID"),
@@ -262,7 +264,13 @@ class OperatorForm(AeroModelForm):
             "address": _("Address"),
             "authorizations": _("Authorizations"),
             "cost_center": _("Cost Center"),
+            "user": _("Linked user account"),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["user"].required = False
+        self.fields["user"].queryset = get_user_model().objects.order_by("username")
 
 
 class AssignmentForm(AeroModelForm):

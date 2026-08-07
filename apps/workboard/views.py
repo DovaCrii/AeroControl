@@ -1,5 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 import csv
+from itertools import groupby
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.http import HttpResponse, JsonResponse
@@ -40,6 +41,7 @@ from .selectors import (
     build_stage_data,
     drag_enabled,
     filter_values,
+    operator_for_user,
     task_row,
     user_can_edit_board,
     visible_tasks_for_user,
@@ -149,7 +151,7 @@ class KanbanTaskListView(ModelViewPermissionRequiredMixin, ListView):
     def get_queryset(self):
         qs = (
             visible_tasks_for_user(self.request.user)
-            .select_related("board", "stage", "assigned_to")
+            .select_related("board", "stage", "assigned_to", "assigned_to__cost_center")
             .prefetch_related("labels", "checklist_items")
         )
         params = self.request.GET
@@ -170,19 +172,31 @@ class KanbanTaskListView(ModelViewPermissionRequiredMixin, ListView):
         if params.get("q"):
             qs = qs.filter(title__icontains=params["q"])
         ordering = params.get("sort")
-        return qs.order_by(
-            {
-                "priority": "priority",
-                "due": "due_date",
-                "assignee": "assigned_to__full_name",
-                "progress": "updated_at",
-            }.get(ordering, "stage__order"),
-            "order",
-            "created_at",
-        )
+        secondary_order = {
+            "priority": "priority",
+            "due": "due_date",
+            "assignee": "assigned_to__full_name",
+            "progress": "updated_at",
+        }.get(ordering, "stage__order")
+        # B3.1: grouping is the cheaper alternative to swimlanes on the board
+        # (MASTER_PLAN) -- it only needs the group field to lead the ordering,
+        # groupby() in get_context_data does the rest against this exact order.
+        group_by = params.get("group_by")
+        if group_by == "operator":
+            return qs.order_by(
+                "assigned_to__full_name", secondary_order, "order", "created_at"
+            )
+        if group_by == "cost_center":
+            return qs.order_by(
+                "assigned_to__cost_center__name", secondary_order, "order", "created_at"
+            )
+        return qs.order_by(secondary_order, "order", "created_at")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        group_by = self.request.GET.get("group_by")
+        if group_by not in ("operator", "cost_center"):
+            group_by = ""
         context.update(
             {
                 "boards": accessible_boards(self.request.user),
@@ -197,9 +211,31 @@ class KanbanTaskListView(ModelViewPermissionRequiredMixin, ListView):
                 if self.request.GET.get("board")
                 else KanbanLabel.objects.filter(is_active=True),
                 "filter_params": self.request.GET,
+                "group_by": group_by,
+                "grouped_tasks": self._grouped_tasks(context["tasks"], group_by)
+                if group_by
+                else None,
+                "my_operator": operator_for_user(self.request.user),
             }
         )
         return context
+
+    @staticmethod
+    def _grouped_tasks(tasks, group_by):
+        if group_by == "operator":
+
+            def key(task):
+                return (
+                    task.assigned_to.full_name if task.assigned_to else _("Unassigned")
+                )
+        else:
+
+            def key(task):
+                if task.assigned_to and task.assigned_to.cost_center:
+                    return task.assigned_to.cost_center.name
+                return _("No cost center")
+
+        return [(label, list(items)) for label, items in groupby(tasks, key=key)]
 
 
 class TaskReportCsvView(ModelViewPermissionRequiredMixin, View):
@@ -551,6 +587,9 @@ class KanbanBoardView(ModelViewPermissionRequiredMixin, TemplateView):
                 "stages": build_stage_data(board, self.request.GET) if board else [],
                 "filter_params": self.request.GET,
                 "today": timezone.localdate(),
+                # B3.2: "My work" shortcut -- None when this login has no
+                # linked operator, so the template just hides the button.
+                "my_operator": operator_for_user(self.request.user),
             }
         )
         return context

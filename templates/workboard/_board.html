@@ -5,7 +5,7 @@
   </div>
 {% endif %}
 {% for item in stages %}
-  {% include "workboard/_column.html" with stage=item.stage tasks=item.tasks overdue_count=item.overdue_count %}
+  {% include "workboard/_column.html" with stage=item.stage tasks=item.tasks overdue_count=item.overdue_count over_wip_limit=item.over_wip_limit %}
 {% empty %}
   <div class="kanban-empty w-100">
     <p>{% translate "This board has no active stages." %}</p>

@@ -3,7 +3,7 @@
   <div id="kanban-stage-{{ stage.id }}" class="kanban-column-header" style="border-top-color: {{ stage.color|default:'#2EC4B6' }};">
     <span>{{ stage.name }}</span>
     <span class="kanban-header-counts">
-      <span class="kanban-count" aria-label="{% translate 'Tasks in stage' %}: {{ tasks|length }}">{{ tasks|length }}</span>
+      <span class="kanban-count{% if over_wip_limit %} kanban-count-wip-exceeded{% endif %}" {% if over_wip_limit %}title="{% translate 'Over the WIP limit for this stage' %}"{% endif %} aria-label="{% translate 'Tasks in stage' %}: {{ tasks|length }}{% if stage.wip_limit != None %} / {{ stage.wip_limit }}{% endif %}">{{ tasks|length }}{% if stage.wip_limit != None %}/{{ stage.wip_limit }}{% endif %}</span>
       {% if overdue_count %}<span class="kanban-count kanban-count-overdue" title="{% translate 'Overdue in this stage' %}" aria-label="{% translate 'Overdue in this stage' %}: {{ overdue_count }}">&#9888; {{ overdue_count }}</span>{% endif %}
     </span>
   </div>

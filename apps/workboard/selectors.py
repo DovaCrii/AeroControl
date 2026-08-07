@@ -89,6 +89,16 @@ def filter_values(params):
     return operator, priority
 
 
+def operator_for_user(user):
+    """B3.2: the operator record linked to this login, or None.
+
+    A plain attribute lookup (``user.operator_profile``) raises on the
+    reverse side of a OneToOneField when unset -- this is the query form so
+    "no linked operator" is just None, not an exception to catch everywhere.
+    """
+    return Operator.objects.filter(user=user, is_active=True).first()
+
+
 def board_for_user(user, board_id=None):
     boards = accessible_boards(user)
     if not board_id:
@@ -155,6 +165,11 @@ def build_stage_data(board, params):
                 # actually late, without opening every card.
                 "overdue_count": sum(
                     1 for task in tasks if task.due_date and task.due_date < today
+                ),
+                # B3.5: a soft cap -- warns in the header, never blocks the
+                # drop (MoveTaskView/QuickTaskCreate do not check this).
+                "over_wip_limit": (
+                    stage.wip_limit is not None and len(tasks) > stage.wip_limit
                 ),
             }
         )

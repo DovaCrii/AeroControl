@@ -306,6 +306,17 @@ body {
 [data-theme="dark"] .kanban-count.kanban-count-overdue,
 [data-bs-theme="dark"] .kanban-count.kanban-count-overdue { background: #ff8a80; color: #2a0a0a; }
 
+/* B3.5: same compound-selector reasoning as .kanban-count-overdue above --
+   plain .kanban-count would lose the cascade fight against the later
+   token-consolidation rule. Amber, not red: this is a soft warning, the
+   drop is never blocked. */
+.kanban-count.kanban-count-wip-exceeded {
+  background: #f59e0b;
+  color: #2a1400;
+}
+[data-theme="dark"] .kanban-count.kanban-count-wip-exceeded,
+[data-bs-theme="dark"] .kanban-count.kanban-count-wip-exceeded { background: #fbbf24; color: #2a1400; }
+
 .kanban-cards {
   padding: 0.5rem;
   flex: 1;
@@ -1277,6 +1288,7 @@ main {
 [data-bs-theme="dark"] .view-tab.is-active { color: var(--ac-primary); }
 .workboard-toolbar { display: flex; justify-content: space-between; gap: 1rem; align-items: center; flex-wrap: wrap; padding: 0.8rem; background: var(--ac-surface); border: 1px solid var(--ac-border); border-radius: 10px; }
 .workboard-toolbar .kanban-filter { min-width: 145px; }
+.table-group-row th { background: var(--ac-surface-raised); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ac-text-secondary); }
 .kanban-board { min-height: 58vh; padding: 0.15rem 0.15rem 1rem; gap: 0.85rem; }
 .kanban-column { background: var(--ac-surface-raised); border: 1px solid var(--ac-border); border-radius: 12px; min-width: 285px; max-width: 330px; box-shadow: none; }
 .kanban-column-header { background: var(--ac-surface); border-top-width: 4px; color: var(--ac-text); padding: 0.85rem 0.9rem; }
