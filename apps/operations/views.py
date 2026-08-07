@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
-from django.views.generic import CreateView, DetailView, ListView
+from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from apps.core.audit import set_audit_context
 from apps.core.views import (
@@ -160,6 +160,35 @@ class FlightPermissionCreate(OCreate):
                 },
             )
         return response
+
+
+class FlightPermissionUpdate(
+    TenantScopedQuerysetMixin, HtmxFormMixin, ModelPermissionRequiredMixin, UpdateView
+):
+    """R2.1: the only way to correct a permission used to be /admin/ -- there
+    was no FlightPermissionUpdate/permission-update at all. Same pattern as
+    RegistryUpdate; local rather than shared because this app's success URL
+    ("permission-list", not "flightpermission-list") already needed its own
+    override, same reason OCreate does."""
+
+    model = FlightPermission
+    form_class = FlightPermissionForm
+    template_name = "generic/form.html"
+    permission_action = "change"
+    tenant_path = "cost_center__tenant_id"
+
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=True)
+
+    def get_success_url(self):
+        return reverse("permission-list")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = _("Edit %(record)s") % {
+            "record": _(self.model._meta.verbose_name.title())
+        }
+        return context
 
 
 class FlightPermissionDetail(

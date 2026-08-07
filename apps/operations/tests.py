@@ -1,7 +1,7 @@
 from datetime import date, time
 
 import pytest
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Permission, User
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import ProtectedError
 from django.test import Client
@@ -171,6 +171,74 @@ def test_flight_record_form_uses_operational_date_and_time_controls():
     assert form.fields["actual_date"].widget.input_type == "date"
     assert form.fields["departure_time"].widget.input_type == "time"
     assert form.fields["arrival_time"].widget.input_type == "time"
+
+
+@pytest.mark.django_db
+def test_permission_update_requires_the_change_permission():
+    """R2.1: before this view existed, /admin/ was the only place to fix a
+    permission -- editing here is protected the same way the transitions are."""
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    permission = _permission(cost_center, operator, aircraft)
+    User.objects.create_user("viewer", password="password")
+    client = Client()
+    assert client.login(username="viewer", password="password")
+
+    response = client.get(reverse("permission-update", args=[permission.pk]))
+
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_permission_update_edits_the_permission_and_redirects_to_the_list():
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    permission = _permission(cost_center, operator, aircraft)
+    editor = User.objects.create_user("editor", password="password")
+    editor.user_permissions.add(
+        Permission.objects.get(codename="change_flightpermission")
+    )
+    client = Client()
+    assert client.login(username="editor", password="password")
+
+    response = client.post(
+        reverse("permission-update", args=[permission.pk]),
+        {
+            "status": permission.status,
+            "permission_number": "PERM-EDITED",
+            "operators": [operator.pk],
+            "aircraft_fleet": [aircraft.pk],
+            "cost_center": cost_center.pk,
+            "purpose": permission.purpose,
+            "valid_from": permission.valid_from,
+            "valid_until": permission.valid_until,
+            "location": "Valparaiso",
+        },
+    )
+
+    assert response.status_code == 302
+    assert response.url == reverse("permission-list")
+    permission.refresh_from_db()
+    assert permission.permission_number == "PERM-EDITED"
+    assert permission.location == "Valparaiso"
 
 
 @pytest.mark.django_db

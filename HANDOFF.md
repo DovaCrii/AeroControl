@@ -5,14 +5,18 @@
 > post-auditoría"**, al inicio del archivo. Este documento es solo el resumen
 > de estado; el detalle de cada ítem vive en las filas de `MASTER_PLAN.md`.
 
-## Estado al 2026-08-07 (tarde)
+## Estado al 2026-08-07 (noche)
 
 - **`main` tiene commits sin desplegar.** El último deploy confirmado a
   `p340` fue el commit `8224373` (2026-08-05). Desde entonces se subieron
-  B3.1/B3.2/B3.5, T5.7, y hoy todo el **BLOQUE R1** (5 bugs de la revisión en
-  vivo, 3 corregidos + 2 investigados-no-reproducibles) y parte de **R2**
-  (R2.5: desplegable de estado en permisos + fix de un bug real de
-  navegación). Nada de esto llegó a producción todavía.
+  B3.1/B3.2/B3.5, T5.7, todo el **BLOQUE R1** (5 bugs de la revisión en
+  vivo, 3 corregidos + 2 investigados-no-reproducibles), y de **R2**: R2.5
+  (desplegable de estado en permisos + fix de un bug real de navegación) y
+  **R2.1** (vista de edición de permisos, no existía). Nada de esto llegó a
+  producción todavía.
+- **694 tests verdes** (era 686 antes de R2.5; R2.5 y R2.1 sumaron los que
+  faltan — no hubo que restar nada). `ruff check .` y `ruff format --check .`
+  también verdes.
 - **`p340` estuvo sin internet gran parte del día** y volvió a tener acceso
   SSH hacia el final — no se llegó a desplegar antes de cerrar esta ventana.
 - **Tres migraciones nuevas sin aplicar en `p340`**: `workboard/0009`
@@ -43,8 +47,6 @@ permiso nuevo.
 Resumen de lo que sigue abierto en el **BLOQUE R2** (permiso de vuelo),
 con las decisiones de negocio ya tomadas el 2026-08-07:
 
-- **R2.1** — no existe vista de edición de permisos (solo `/admin/`). Crear
-  `FlightPermissionUpdate` + ruta + botón "Editar".
 - **R2.2/R2.3** — folio interno **`JEJ-2026-001`** (correlativo anual,
   siempre presente desde la creación) + folio DGAC opcional; `__str__` usa
   el folio interno. **Requiere backfill sobre datos reales de `p340`** —
@@ -59,8 +61,7 @@ con las decisiones de negocio ya tomadas el 2026-08-07:
 - **R2.7** — `search_fields` de permisos solo busca `permission_number`
   pero el placeholder promete número/propósito/ubicación.
 
-**R1 y R2.5 están completos** (686→ tests verdes antes de R2.5; correr la
-suite completa para el número actual antes de seguir). Ver las filas
+**R1, R2.1 y R2.5 están completos** (694 tests verdes). Ver las filas
 correspondientes en `MASTER_PLAN.md` para el detalle de cada fix, incluidos
 dos bugs reales encontrados y reproducidos en vivo que no estaban en el
 plan original (el botón "Volver" de permisos/mantención/vuelos necesitaba
