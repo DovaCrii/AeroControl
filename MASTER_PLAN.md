@@ -29,8 +29,8 @@ conserva como historial, no como guía. Esta es la guía vigente:
 3. **CSP a enforcing en producción**: ya verificado que funciona
    (`CSP_REPORT_ONLY=False` probado en demo, cero violaciones), solo falta
    activar la variable de entorno en `p340`.
-4. **Bajo demanda del usuario, no proactivo**: B3.1/B3.2/B3.5 (resto del
-   bloque de mejoras del tablero), LV-6 (vista Gantt, requiere decisión de
+4. **Bajo demanda del usuario, no proactivo**: ~~B3.1/B3.2/B3.5~~ hechos el
+   2026-08-07 (ver BLOQUE 3 abajo); queda LV-6 (vista Gantt, requiere decisión de
    diseño), T5.7/T5.8, LV-59 opción (c) si se quiere reabrir, LV-65 (selector
    de aeronaves en Mantenciones).
 5. **Deuda técnica (T1.x, T3.x, T4.x): política incremental, no una
@@ -735,11 +735,11 @@ Un bloque por sesión/PR, en esta secuencia (revisión `PLAN_CLAUDE_CODE_1.md`):
 
 | ID | Est. | Prio | Tarea | Esf. | Dep. |
 |---|:--:|:--:|---|:--:|:--:|
-| B3.1 | ⬜ | P2 | Agrupación por centro de costo/operador en el tablero (o alternativa más barata: agrupación en vista Lista + filtro rápido) | M | — |
-| B3.2 | ⬜ | P2 | Vista "Mi trabajo": tareas asignadas al operador vinculado al usuario, en tablero y lista | S | — |
+| B3.1 | ✅ | P2 | **Hecho 2026-08-07.** Alternativa más barata elegida: filtro rápido por operador (existía en el backend de `KanbanTaskListView` pero nunca se mostraba en `task_list.html`) + `group_by=operator\|cost_center` con subcabeceras, en vez de swimlanes en el tablero. `itertools.groupby` sobre la página ya ordenada por el campo de agrupación. | `apps/workboard/views.py`, `templates/workboard/task_list.html` |
+| B3.2 | ✅ | P2 | **Hecho 2026-08-07.** No existía vínculo User↔Operator; decisión del usuario: FK explícita (`Operator.user`, opcional, se asigna en el form/admin del operador) en vez de match automático por email — mismo criterio que el precedente de `CostCenter.responsible_operator`. Botón "Mi trabajo" en tablero y lista (oculto si el usuario no tiene operador vinculado), reutiliza el filtro por operador de B3.1. | `apps/registry/models.py`, `apps/workboard/selectors.py`, `templates/workboard/kanban.html`, `templates/workboard/task_list.html` |
 | B3.3 | ✅ | P2 | **Hecho 2026-08-04** (retomado a pedido del usuario, ahora que el tablero es "Seguimiento de alertas"). Nuevo `KanbanTask.urgency_bucket(today)` — mismos límites vencido/≤7/≤15/≤30 días que el reporte de cumplimiento (`apps/compliance/reports.py`), para que "urgente" signifique lo mismo en toda la app. La tarjeta agrega una etiqueta traducida propia por bucket ("Vence en 7 días", etc., msgids ya existentes en el catálogo) además del color/negrita (`text-warning-emphasis`/`fw-bold`/`fw-semibold` de Bootstrap, ya con soporte de tema oscuro vía `data-bs-theme`) — la accesibilidad no depende solo del color. 10 tests nuevos (bucket parametrizado + render). | `apps/workboard/models.py`, `templates/workboard/_card.html`, `apps/workboard/templatetags/workboard_extras.py` |
 | B3.4 | ✅ | P3 | **Hecho 2026-08-04** (junto con B3.3). Contador de vencidas junto al total en la cabecera de cada columna (`⚠ N`), calculado en `build_stage_data()` sin queries extra (ya itera las tareas de la etapa). Bug encontrado y corregido durante la verificación: el badge no se veía rojo porque `.kanban-count-overdue` compartía especificidad CSS con una redeclaración posterior de `.kanban-count` (paleta de tokens) y perdía por orden de aparición — solucionado con selector compuesto `.kanban-count.kanban-count-overdue`. 2 tests nuevos. Verificado en demo con una tarea vencida real (antes/después del fix de especificidad). | `apps/workboard/selectors.py`, `templates/workboard/_column.html`, `templates/workboard/_board.html`, `static/css/app.css` |
-| B3.5 | ⬜ | P3 | `wip_limit` opcional en `KanbanStage`; aviso visual al superarse, sin bloquear el drop | S | — |
+| B3.5 | ✅ | P3 | **Hecho 2026-08-07.** `wip_limit` opcional en `KanbanStage` (editable en `/admin/` por ahora — la app no tiene vista de edición de etapas). El contador de la columna pasa a ámbar y muestra "cuenta/límite" al superarse, sin bloquear el drop (`MoveTaskView`/`QuickTaskCreate` intactos). Bug propio encontrado y corregido antes de comitear: `{% if stage.wip_limit %}` trataba un límite de 0 como "sin límite" y ocultaba la fracción justo en ese caso. | `apps/workboard/models.py`, `apps/workboard/selectors.py`, `templates/workboard/_column.html`, `static/css/app.css` |
 
 **Aceptación del bloque:** pruebas de filtros/agrupación y render de urgencia; revisión de accesibilidad (teclado, contraste); ES/EN.
 
