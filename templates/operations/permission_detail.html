@@ -1,16 +1,53 @@
 {% extends "base.html" %}
-{% load aero_tags i18n %}
+{% load aero_tags i18n static %}
 {% block title %}{{ permission }} - AeroControl{% endblock %}
 {% block content %}
-<div class="card p-4"><div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h3">{{ permission }}</h1><div class="d-flex gap-2">
-  {% for action, label, css_class in status_actions %}<form method="post" action="{{ action }}/" style="display:inline">{% csrf_token %}<button class="btn {{ css_class }}">{{ label }}</button></form>{% endfor %}
-  <a href="{% url 'permission-list' %}" data-history-back class="btn btn-outline-secondary">← {% translate "Back" %}</a>
+<div class="card p-4"><div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h3">{{ permission }}</h1><div class="d-flex gap-2 align-items-end flex-wrap">
+  {% if status_actions %}
+  {% comment %}
+    R2.5: one dropdown instead of one coloured button per transition -- most
+    visits to this page do not change the status at all, and "no siempre se
+    harán cambios" was the user's own framing for wanting this simpler. The
+    form's static action attribute defaults to the first option so it still
+    works without JS; permission-status.js overwrites it to match whatever
+    the user actually picked, right before submit.
+  {% endcomment %}
+  <form method="post" action="{{ status_actions.0.1 }}" id="permission-status-form" class="d-flex gap-2 align-items-end">
+    {% csrf_token %}
+    <div>
+      <label class="form-label small mb-0" for="permission-status-action">{% translate "Change status" %}</label>
+      <select id="permission-status-action" name="_target_action" class="form-select form-select-sm">
+        {% for label, url in status_actions %}<option value="{{ url }}">{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="form-label small mb-0" for="permission-status-notes">{% translate "Notes (optional)" %}</label>
+      <input type="text" id="permission-status-notes" name="notes" class="form-control form-control-sm" style="min-width:220px">
+    </div>
+    <button type="submit" class="btn btn-sm btn-primary">{% translate "Apply" %}</button>
+  </form>
+  {% endif %}
+  {% comment %}
+    R2.5: every status action (approve/deny/complete, success or failure)
+    redirects back to this same detail URL (core/views.py StatusTransitionView
+    always ends in redirect(obj), and the guard in FlightPermissionApprove
+    does too on rejection) -- each of those redirects is a fresh navigation
+    that pushes its own history entry, even though the URL does not change.
+    data-history-back's window.history.back() does not know that: it just
+    steps one entry back, landing on an earlier render of this exact page
+    instead of the permit list. Reproduced live: after any Approve/Deny
+    click, "Back" needed two clicks to actually leave the page. This link
+    already has the one, well-defined destination (the list) -- unlike a
+    create form's "Cancel", which has no fixed origin -- so it does not need
+    the history shortcut at all.
+  {% endcomment %}
+  <a href="{% url 'permission-list' %}" class="btn btn-outline-secondary">← {% translate "Back" %}</a>
 </div></div>
 <table class="table table-bordered"><tbody>
   <tr><th class="w-25">{% translate "Status" %}</th><td><span class="badge bg-{% if permission.status == 'approved' %}success{% elif permission.status == 'denied' %}danger{% elif permission.status == 'completed' %}info{% else %}warning{% endif %}">{{ permission.get_status_display }}</span></td></tr>
   <tr><th>{% translate "Operators" %}</th><td>{% for operator in permission.operators.all %}{{ operator }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr><tr><th>{% translate "Aircraft" %}</th><td>{% for aircraft in permission.aircraft_fleet.all %}{{ aircraft }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr><tr><th>{% translate "Cost center" %}</th><td>{{ permission.cost_center }}</td></tr><tr><th>{% translate "Purpose" %}</th><td>{{ permission.purpose }}</td></tr><tr><th>{% translate "Validity" %}</th><td>{{ permission.valid_from|date:"Y-m-d" }} – {{ permission.valid_until|date:"Y-m-d" }}</td></tr><tr><th>{% translate "Location" %}</th><td>{{ permission.location }}</td></tr><tr><th>{% translate "Notes" %}</th><td>{{ permission.notes|default:"—" }}</td></tr>
 </tbody></table></div>
-<div class="card mt-3 p-4"><h2 class="h5 mb-3">{% translate "Status history" %}</h2>{% if permission.history.exists %}<table class="table table-sm"><thead><tr><th>{% translate "Date" %}</th><th>{% translate "From" %}</th><th>{% translate "To" %}</th><th>{% translate "By" %}</th></tr></thead><tbody>{% for h in permission.history.all %}<tr><td>{{ h.created_at|date:"Y-m-d H:i" }}</td><td>{{ h.get_previous_status_display|default:h.previous_status }}</td><td>{{ h.get_new_status_display|default:h.new_status }}</td><td>{{ h.changed_by }}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="text-muted mb-0">{% translate "No status changes recorded yet." %}</p>{% endif %}</div>
+<div class="card mt-3 p-4"><h2 class="h5 mb-3">{% translate "Status history" %}</h2>{% if permission.history.exists %}<table class="table table-sm"><thead><tr><th>{% translate "Date" %}</th><th>{% translate "From" %}</th><th>{% translate "To" %}</th><th>{% translate "By" %}</th><th>{% translate "Notes" %}</th></tr></thead><tbody>{% for h in permission.history.all %}<tr><td>{{ h.created_at|date:"Y-m-d H:i" }}</td><td>{{ h.get_previous_status_display|default:h.previous_status }}</td><td>{{ h.get_new_status_display|default:h.new_status }}</td><td>{{ h.changed_by }}</td><td>{{ h.notes|default:"—" }}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="text-muted mb-0">{% translate "No status changes recorded yet." %}</p>{% endif %}</div>
 {% if documents is not None %}
 <div class="card mt-3 p-4"><div class="d-flex justify-content-between align-items-center mb-2"><h2 class="h5 mb-0">{% translate "Documents" %}</h2>{% if perms.compliance.add_document %}<a href="{% url 'document-create' %}?entity_type={{ permission_content_type_id }}&object_id={{ permission.pk }}" class="btn btn-sm btn-primary">+ {% translate "Upload document" %}</a>{% endif %}</div>{% if documents %}<table class="table table-sm"><thead><tr><th>{% translate "Title" %}</th><th>{% translate "Type" %}</th><th>{% translate "Expiry" %}</th></tr></thead><tbody>{% for document in documents %}<tr><td><a href="{% url 'document-detail' document.pk %}">{{ document.title }}</a></td><td>{{ document.doc_type }}</td><td>{{ document.expiry_date|date:"Y-m-d"|default:"—" }}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="text-muted mb-0">{% translate "No documents attached to this permission." %}</p>{% endif %}</div>
 {% endif %}
@@ -19,3 +56,5 @@
 {% endif %}
 <div class="card mt-3 p-4"><div class="d-flex justify-content-between align-items-center mb-2"><h2 class="h5 mb-0">{% translate "Flight records" %}</h2><a href="{% url 'record-create' %}?permission={{ permission.pk }}" class="btn btn-sm btn-primary">+ {% translate "Add record" %}</a></div>{% if permission.records.exists %}<table class="table table-sm"><thead><tr><th>{% translate "Date" %}</th><th>{% translate "Pilot" %}</th><th>{% translate "Aircraft" %}</th><th>{% translate "Departure" %}</th><th>{% translate "Arrival" %}</th></tr></thead><tbody>{% for r in flight_records %}<tr><td><a href="{% url 'record-detail' r.pk %}">{{ r.actual_date|date:"Y-m-d" }}</a></td><td>{{ r.pilot }}</td><td>{{ r.aircraft }}</td><td>{{ r.departure_time|time:"H:i" }}</td><td>{{ r.arrival_time|time:"H:i" }}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="text-muted mb-0">{% translate "No flight records for this permission." %}</p>{% endif %}</div>
 {% endblock %}
+
+{% block extrascripts %}<script src="{% static 'js/permission-status.js' %}"></script>{% endblock %}

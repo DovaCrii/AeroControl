@@ -7,7 +7,13 @@
     <h1 class="h3">{% translate "Maintenance record" %}</h1>
     <div class="d-flex gap-2">
       {% for action, label, css_class in status_actions %}{% if action != "complete" %}<form method="post" action="{{ action }}/" style="display:inline">{% csrf_token %}<button class="btn {{ css_class }}">{{ label }}</button></form>{% endif %}{% endfor %}
-      <a href="{% url 'maintenance-list' %}" data-history-back class="btn btn-outline-secondary">← {% translate "Back" %}</a>
+      {% comment %}R2.5: same fix as permission_detail.html -- the status
+      actions above redirect back to this same URL, which pushes a fresh
+      history entry each time. data-history-back's window.history.back()
+      then lands on an earlier render of this page instead of the list, so
+      "Back" needed two clicks. This link already has one fixed
+      destination.{% endcomment %}
+      <a href="{% url 'maintenance-list' %}" class="btn btn-outline-secondary">← {% translate "Back" %}</a>
     </div>
   </div>
   <table class="table table-bordered"><tbody>
