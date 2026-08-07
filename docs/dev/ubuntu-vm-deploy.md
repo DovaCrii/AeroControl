@@ -289,14 +289,73 @@ uv run python manage.py shell -c "from apps.core.models import JobRun; print(*Jo
 ## Parte H — Respaldo y ensayo de restauración (no opcional)
 
 El `backup` diario (Parte G) escribe en `/srv/aerocontrol-data/backups` con
-manifiesto y checksum. **Súmale dos cosas:**
+manifiesto y checksum. **Súmale dos cosas:** una copia fuera de la VM y un
+ensayo de restauración probado — un respaldo nunca restaurado no es un
+respaldo, es una suposición.
 
-1. **Copia fuera de la VM**: sincroniza `/srv/aerocontrol-data/backups` a otro
-   disco/equipo (rsync/scp a un NAS o al notebook). Un respaldo en la misma VM
-   no protege de que la VM se pierda.
-2. **Ensayo de restauración**: al menos una vez, restaura un snapshot en una
-   carpeta limpia y confirma que la app levanta con esos datos (equivalente a
-   B-02 del backend-plan). Un respaldo no verificado no cuenta.
+### H.1 — Copia fuera de la VM
+
+Desde el notebook (Windows, OpenSSH ya viene incluido), traer el último
+respaldo + su manifiesto a la misma carpeta de OneDrive que ya se usa para los
+respaldos locales (ver `docs/backend-follow-up.md`), en una subcarpeta propia
+para no mezclarlos con los snapshots del PC:
+
+```powershell
+$dest = "D:\OneDrive - J.E.J. Ingeniería S.A\AeroControl-Backups\p340"
+New-Item -ItemType Directory -Force -Path $dest | Out-Null
+scp levdigital01@p340.tailccd107.ts.net:/srv/aerocontrol-data/backups/aero_ops_*.sqlite3 $dest
+scp levdigital01@p340.tailccd107.ts.net:/srv/aerocontrol-data/backups/aero_ops_*.json $dest
+Get-ChildItem $dest | Sort-Object Name -Descending | Select-Object -First 6
+```
+
+Repetir periódicamente (a mano por ahora; automatizar con el Programador de
+tareas de Windows es un paso posterior, no bloqueante). Un respaldo que solo
+vive en `p340` no sobrevive a perder la VM.
+
+### H.2 — Ensayo de restauración
+
+En `p340`, restaurar a una ruta de ensayo — **nunca** sobre
+`/srv/aerocontrol-data/db/aero_ops.sqlite3`, que es la base en uso:
+
+```bash
+cd /opt/aerocontrol
+ls -la /srv/aerocontrol-data/backups   # elegir el snapshot más reciente
+uv run python manage.py restore_backup \
+  /srv/aerocontrol-data/backups/aero_ops_<YYYYMMDD_HHMMSS>.sqlite3 \
+  /srv/aerocontrol-data/restore-drill/aero_ops_drill.sqlite3
+```
+
+`restore_backup` ya verifica el checksum del manifiesto antes de copiar — si
+falla ahí, el respaldo está corrupto y **eso también es un resultado válido
+del ensayo** (mejor descubrirlo ahora que en una pérdida real).
+
+Confirmar que la copia restaurada es una base real y legible, sin tocar la
+`.env` de producción — se apunta `DB_PATH` solo para este comando puntual:
+
+```bash
+set -a && source <(sudo cat /etc/aerocontrol.env) && set +a
+DB_PATH=/srv/aerocontrol-data/restore-drill/aero_ops_drill.sqlite3 \
+  uv run python manage.py shell -c "
+from apps.registry.models import Aircraft, Operator, CostCenter
+print('aeronaves:', Aircraft.objects.count())
+print('operadores:', Operator.objects.count())
+print('centros de costo:', CostCenter.objects.count())
+"
+```
+
+Los conteos deben coincidir con lo que se ve hoy en la app en vivo (12/41/12
+al 2026-08-05, ver "Prioridades post-v0.4.0-beta" al inicio de
+`MASTER_PLAN.md`). Si coinciden, el respaldo es restaurable de verdad.
+Limpiar la copia de ensayo al terminar — contiene datos reales de la DGAC y no
+debe quedar viva más de lo necesario:
+
+```bash
+rm -rf /srv/aerocontrol-data/restore-drill
+```
+
+Registrar el resultado (fecha, snapshot usado, conteos, si el checksum pasó)
+en la tabla de evidencias de `docs/backend-follow-up.md` o en `HANDOFF.md`
+para que quede trazado.
 
 ---
 

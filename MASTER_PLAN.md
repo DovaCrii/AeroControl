@@ -19,10 +19,13 @@ conserva como historial, no como guía. Esta es la guía vigente:
    reales de la DGAC adentro (12 centros de costo, 41 operadores, 15
    aeronaves). El respaldo diario corre y vive dentro de la misma VM, pero
    nunca se ha probado una restauración — un respaldo nunca restaurado no es
-   un respaldo, es una suposición. Ver `docs/backend-follow-up.md`.
-2. **T2.1** (P1, seguridad): cerrar el IDOR de checklist/etapa en el tablero
-   de trabajo. Sin efecto mientras haya una sola organización (el caso
-   actual), pero hay que cerrarlo antes de sumar una segunda.
+   un respaldo, es una suposición. **Runbook con comandos concretos listo**
+   desde el 2026-08-07 en `docs/dev/ubuntu-vm-deploy.md` → Parte H (antes era
+   solo una directiva sin pasos) — falta que alguien con sesión SSH a `p340`
+   lo ejecute y registre el resultado. Ver también `docs/backend-follow-up.md`.
+2. ~~T2.1~~ — **cerrado, no era una tarea real.** Verificado 2026-08-07: el
+   fix ya estaba en el código desde `03b4dbb` (2026-07-24); la fila de FASE 2
+   nunca se actualizó cuando se cerró V.1/V.2. Ver la fila T2.1 más abajo.
 3. **CSP a enforcing en producción**: ya verificado que funciona
    (`CSP_REPORT_ONLY=False` probado en demo, cero violaciones), solo falta
    activar la variable de entorno en `p340`.
@@ -424,7 +427,7 @@ abierto (hoy sí es cierto, cerrado en `3611d06`).
 
 | ID | Est. | Prio | Tarea | Esf. | Dep. |
 |---|:--:|:--:|---|:--:|:--:|
-| T2.1 | ⬜ | P1 | Cerrar IDOR workboard: acceso a tablero en checklist/stage; `get_queryset` scoped en List (F-03, F-04). **Dependencia corregida 2026-08-05**: decía `T1.1`, pero T2.2 (✅, sin depender de T1.1) ya resolvió exactamente este mismo tipo de aislamiento por tenant en registry/documentos/permisos/mantenimiento con `TenantScopedQuerysetMixin` — el mismo patrón aplica aquí sin esperar la partición de `core`. | M | — |
+| T2.1 | ✅ | P1 | Cerrar IDOR workboard: acceso a tablero en checklist/stage; `get_queryset` scoped en List (F-03, F-04). **Corregido 2026-08-07**: esta fila seguía en ⬜ pero el fix ya estaba en el código desde el `03b4dbb` del 2026-07-24 (tanda A de seguridad, ver V.1/V.2 arriba) — `WList.get_queryset` ya scopea por `visible_tasks_for_user`/`accessible_boards`, y `ChecklistItemCreate`/`ChecklistItemToggle`/`StageCreate` ya llaman `user_can_edit_board` antes de mutar. Verificado leyendo `apps/workboard/views.py` línea a línea contra F-03/F-04; el checklist de FASE 2 nunca se actualizó cuando se cerró V.1/V.2. Sin cambio de código, solo de tablero. | M | — |
 | T2.2 | ✅ | P1 | **`TenantScopedQuerysetMixin` — aislamiento por objeto (F-03/F-06/F-05).** `core.views.TenantScopedQuerysetMixin` + `core.tenancy.scope_queryset_to_tenant(tenant_path)` cierran el IDOR por objeto en **todas** las superficies: registry raíces (detalle/edición/archivar/restaurar) y derivadas (asignaciones/habilitaciones por `cost_center__/operator__tenant_id`), **documentos** (detalle/descarga/reemplazo/borrado, FK directo), **AlertRule** (edición), **permisos** (`cost_center__tenant_id`), **registros de vuelo** y **mantenimiento** (`aircraft__tenant_id`, incl. completar). Otro tenant → **404**, dueño → 200. No-op hoy (un tenant). 6 tests `TestObjectLevelIsolation`. **Pendiente menor:** transiciones de estado genéricas (`StatusTransitionView`: aprobar/denegar permiso, iniciar mantención). | M | — |
 | T2.3 | ✅ | P1 | `has_perm` en `/calendar/`, Kanban HTML y feed de eventos (F-06) — `CalendarAccessMixin` por fuente de evento, desplegables por `view_*` del modelo que listan, `?types=` acotado a lo permitido (`3611d06`) | S | T1.1 |
 | T2.4 | ✅ | P2 | Rol `Viewer` con `view_*` explícitos (no `startswith`). En la base real recibía **35** permisos, incluidos `authtoken.view_token`, `auth.view_user`, `sessions.view_session` y `core.view_auditevent`; ahora 20 (`c5d22dd`) | S | — |
