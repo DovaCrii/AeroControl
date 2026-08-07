@@ -1,7 +1,7 @@
 {% load aero_tags i18n %}
 {% for object in objects %}
 <tr>
-  <td><a href="{{ object.pk }}/" class="table-primary-value">{{ object.full_name }}</a>
+  <td><a href="{{ object.pk }}/" class="table-primary-value">{{ object.full_name }}</a>{% if not object.is_active %} <span class="badge bg-secondary">{% translate "Archived" %}</span>{% endif %}
     {% if object.rut %}<span class="table-primary-sub cell-truncate">{{ object.rut }}</span>{% endif %}
   </td>
   <td class="cell-truncate">{{ object.dgac_credential|default:"—" }}</td>
@@ -18,7 +18,11 @@
     {% else %}<span class="text-muted">—</span>{% endif %}
   </td>
   <td class="text-end">
+    {% if object.is_active %}
     <a href="{{ object.pk }}/edit/" hx-get="{{ object.pk }}/edit/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">{% translate "Edit" %}</a>
+    {% elif has_restore_url %}
+    <form method="post" action="{{ object.pk }}/restore/" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-success" type="submit">{% translate "Restore" %}</button></form>
+    {% endif %}
   </td>
 </tr>
 {% empty %}
