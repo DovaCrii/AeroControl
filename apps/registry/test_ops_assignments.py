@@ -309,6 +309,26 @@ class TestResourceMovementLogView:
         assert aircraft.registration in content
         assert op.full_name not in content
 
+    @pytest.mark.django_db
+    def test_export_link_is_present(self, db):
+        client = _client("view_resourcemovementlog")
+        response = client.get(reverse("resourcemovementlog-list"))
+        assert "export=csv" in response.content.decode()
+
+    @pytest.mark.django_db
+    def test_export_csv_shows_resource_label_not_uuid(self, db):
+        op = _operator()
+        OperatorAssignment.objects.create(
+            operator=op, cost_center=_cc("CC1"), start_date=TODAY, status="active"
+        )
+        client = _client("view_resourcemovementlog")
+
+        response = client.get(reverse("resourcemovementlog-list"), {"export": "csv"})
+
+        body = b"".join(response.streaming_content).decode("utf-8-sig")
+        assert op.full_name in body
+        assert str(op.pk) not in body
+
 
 class TestBulkAssignService:
     @pytest.mark.django_db
