@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Prefetch, Q
+from django.db.models.functions import Length
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -429,6 +430,9 @@ class OperatorList(RegistryList):
                     distinct=True,
                 ),
             )
+            # R3.2: no Meta.ordering fell back to created_at (SearchMixin's
+            # fallback), i.e. insertion order -- alphabetical by full name.
+            .order_by("full_name")
         )
 
 
@@ -455,6 +459,12 @@ class CostCenterList(RegistryList):
                     "aircraft", filter=Q(aircraft__is_active=True), distinct=True
                 ),
             )
+            # R3.2: `code` is a CharField, so plain alphabetical sorting puts
+            # "CC110" before "CC2" -- ordering by length first groups codes
+            # with the same digit count together, which sorts a same-prefix
+            # numeric series (CC1, CC2, ..., CC99, CC100, CC110, ...)
+            # correctly without a DB-specific regex/substring function.
+            .order_by(Length("code"), "code")
         )
 
 
@@ -474,7 +484,8 @@ class AircraftList(RegistryList):
     search_fields = ["registration", "model", "manufacturer"]
 
     def get_queryset(self):
-        return self.scope_by_tenant(super().get_queryset())
+        # R3.2: no Meta.ordering fell back to created_at.
+        return self.scope_by_tenant(super().get_queryset()).order_by("registration")
 
 
 class AircraftDetail(RegistryDetail):
