@@ -38,10 +38,10 @@
     <small>{% translate "Pending Alerts" %}</small>
     <strong>{{ alert_count }}</strong>
   </a>
-  <div class="summary-card">
+  <a class="summary-card text-decoration-none" href="#upcoming-expirations">
     <small>{% translate "Expiring in 30 days" %}</small>
     <strong>{{ expiring_count }}</strong>
-  </div>
+  </a>
   {% if incomplete_maintenance_count %}
   <a class="summary-card summary-card-warning text-decoration-none" href="{% url 'maintenance-list' %}">
     <small>{% translate "Maintenance to define" %}</small>
@@ -96,12 +96,22 @@ when the three are done.{% endcomment %}
 {# ── LV-D5: lo accionable primero (vencimientos), analítica después ── #}
 <div class="row g-3 mb-3">
   <div class="col-12">
-    <div class="card p-3">
+    <div class="card p-3" id="upcoming-expirations">
       <h4 class="h6 section-title mb-2">{% translate "Upcoming Expirations" %}</h4>
       {% for item in expirations %}
+      {% comment %}
+        R1.1: this row used to be a flat gray badge regardless of how soon
+        something expires -- exactly what the live review flagged as "pasa
+        desapercibida" (its existence goes unnoticed). Reuses the same
+        bucket/label pair as the Kanban card (B3.3) and the compliance
+        report instead of a fourth urgency scale, so "urgent" reads the same
+        everywhere in the app.
+      {% endcomment %}
       <a href="{{ item.url }}" class="d-flex justify-content-between align-items-center border-bottom py-1 text-decoration-none text-body">
         <span><span class="badge bg-secondary-subtle text-secondary-emphasis me-2">{{ item.kind }}</span>{{ item.label }}</span>
-        <b>{{ item.date|date:"Y-m-d" }}</b>
+        <span class="text-end{% if item.bucket == 'overdue' %} text-danger fw-bold{% elif item.bucket == 'due_7' %} text-warning-emphasis fw-bold{% elif item.bucket == 'due_15' %} text-warning-emphasis fw-semibold{% elif item.bucket == 'due_30' %} text-warning-emphasis{% endif %}">
+          <b>{{ item.date|date:"Y-m-d" }}</b>{% if item.bucket == "overdue" %} · {% translate "Overdue" %}{% elif item.bucket == "due_7" %} · {% translate "Due within 7 days" %}{% elif item.bucket == "due_15" %} · {% translate "Due within 15 days" %}{% elif item.bucket == "due_30" %} · {% translate "Due within 30 days" %}{% endif %}
+        </span>
       </a>
       {% empty %}
       <p class="text-muted my-2">{% translate "No upcoming expirations." %}</p>

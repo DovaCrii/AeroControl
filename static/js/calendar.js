@@ -16,10 +16,14 @@
     var costCenter = document.getElementById('calendar-cost-center');
     var aircraft = document.getElementById('calendar-aircraft');
     var operator = document.getElementById('calendar-operator');
+    // R1.1: "all" used to be a literal list here that drifted from the real
+    // event types (it dropped operator_credential/aircraft_insurance, so a
+    // JAC/DGAC vigencia never showed up in the default view). The server
+    // computes the same list CalendarAccessMixin uses for permissions, via
+    // #calendar-app's data-all-types -- this can't drift again because
+    // there is only one source of truth for "every event type" now.
     var typeQuery = function () {
-      return filter.value === 'all'
-        ? 'permission,flight,assignment,maintenance,document,qualification,task'
-        : filter.value;
+      return filter.value === 'all' ? root.dataset.allTypes : filter.value;
     };
     var calendar = new FullCalendar.Calendar(root, {
       locale: root.dataset.locale || 'es', firstDay: 1, initialView: 'dayGridMonth',

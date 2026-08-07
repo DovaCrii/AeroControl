@@ -54,6 +54,7 @@
   </div>
   <div id="calendar-app" data-events-url="{% url 'calendar-events' %}"
        data-locale="{{ current_language|default:'es' }}"
+       data-all-types="{{ calendar_all_types }}"
        data-board="{{ selected_calendar_board }}"
        data-text-today="{% translate 'Today' %}"
        data-text-month="{% translate 'Month' %}"

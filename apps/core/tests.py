@@ -192,6 +192,43 @@ class TestPublicURLs:
         single_event = by_id[f"permission-{single.pk}"]
         assert "→" not in single_event["title"]
 
+    @pytest.mark.django_db
+    def test_permission_without_dgac_folio_does_not_render_the_word_none(
+        self, auth_client
+    ):
+        """R1.2: permission_number is None until the DGAC folio arrives
+        (LV-39). f"{permission.permission_number} · {label}" used to
+        interpolate that as the literal word "None" whenever the permit had
+        operators, e.g. "None · Alexandra Márquez Cortés +2 → hasta 07-10"."""
+        center = CostCenter.objects.create(code="NUL", name="Sin folio")
+        first = Operator.objects.create(
+            employee_id="NUL-1", full_name="Alexandra Márquez", cost_center=center
+        )
+        second = Operator.objects.create(
+            employee_id="NUL-2", full_name="Javier Marín", cost_center=center
+        )
+        permission = FlightPermission.objects.create(
+            cost_center=center,
+            purpose="Audiovisual",
+            valid_from=date(2026, 7, 10),
+            valid_until=date(2026, 7, 20),
+            location="Santiago",
+        )
+        permission.operators.add(first, second)
+        assert permission.permission_number is None
+
+        response = auth_client.get(
+            reverse("calendar-events"),
+            {"start": "2026-07-01", "end": "2026-08-01", "types": "permission"},
+        )
+
+        title = response.json()[0]["title"]
+        assert "None" not in title
+        # M2M order is not guaranteed, so either operator can be first.
+        assert title.startswith(
+            "En proceso · Alexandra Márquez +1"
+        ) or title.startswith("En proceso · Javier Marín +1")
+
     def test_administration_center_explains_operational_configuration(
         self, auth_client
     ):
@@ -1048,6 +1085,62 @@ class TestCalendarAndBoardReadPermissions:
         assert list(response.context["calendar_operators"]) == []
         assert list(response.context["calendar_aircraft"]) == []
         assert list(response.context["calendar_cost_centers"]) == []
+
+    @pytest.mark.django_db
+    def test_calendar_all_types_includes_dgac_and_jac_vigencias(self, client):
+        """R1.1: "All events" used to be a literal list hardcoded in
+        calendar.js that omitted operator_credential/aircraft_insurance, so a
+        JAC/DGAC vigencia never showed up in the default view. The server now
+        computes the "all" expansion from the same source CalendarAccessMixin
+        uses, exposed as calendar_all_types."""
+        user = User.objects.create_user("planner", password="password")
+        user.user_permissions.add(
+            *Permission.objects.filter(
+                codename__in=[
+                    "view_flightpermission",
+                    "view_flightrecord",
+                    "view_assignment",
+                    "view_maintenancerecord",
+                    "view_document",
+                    "view_qualification",
+                    "view_operator",
+                    "view_aircraft",
+                    "view_kanbantask",
+                ]
+            )
+        )
+        assert client.login(username="planner", password="password")
+
+        response = client.get(reverse("calendar"))
+
+        all_types = response.context["calendar_all_types"].split(",")
+        assert set(all_types) == {
+            "permission",
+            "flight",
+            "assignment",
+            "maintenance",
+            "document",
+            "qualification",
+            "operator_credential",
+            "aircraft_insurance",
+            "task",
+        }
+        assert (
+            'data-all-types="{}"'.format(response.context["calendar_all_types"])
+            in response.content.decode()
+        )
+
+    @pytest.mark.django_db
+    def test_calendar_all_types_excludes_what_the_user_may_not_see(self, client):
+        user = User.objects.create_user("planner", password="password")
+        user.user_permissions.add(
+            Permission.objects.get(codename="view_maintenancerecord")
+        )
+        assert client.login(username="planner", password="password")
+
+        response = client.get(reverse("calendar"))
+
+        assert response.context["calendar_all_types"] == "maintenance"
 
     @pytest.mark.django_db
     def test_event_feed_ignores_types_the_user_may_not_see(self, client):

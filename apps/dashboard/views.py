@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
+from apps.compliance.digest import bucket_for
 from apps.compliance.models import Alert, AlertRule, Document, DocumentType
 from apps.maintenance.models import MaintenanceRecord
 from apps.operations.models import FlightPermission, FlightRecord
@@ -24,6 +25,12 @@ def upcoming_expirations(today, cutoff, cost_center=None):
     Qualifications and permissions honour the cost-center filter; documents hang
     off a generic relation with no direct cost center, so they are always
     included (they are also watched by the alert engine and the report).
+
+    R1.1: each item's "bucket" reuses digest.bucket_for -- the same
+    overdue/due_7/due_15/due_30 scale as the compliance report and the Kanban
+    card (B3.3), instead of a fourth scale. The panel is a flat gray badge
+    today regardless of how soon something expires, which is exactly why the
+    live review flagged it as "pasa desapercibida" (easy to miss).
     """
     items = []
 
@@ -38,6 +45,7 @@ def upcoming_expirations(today, cutoff, cost_center=None):
                 "kind": _("Qualification"),
                 "label": f"{qual.operator} — {qual.qualification_type}",
                 "date": qual.expiry_date,
+                "bucket": bucket_for(qual.expiry_date, today),
                 "url": reverse("operator-detail", args=[qual.operator_id]),
             }
         )
@@ -55,6 +63,7 @@ def upcoming_expirations(today, cutoff, cost_center=None):
                 "kind": _("DGAC credential"),
                 "label": operator.full_name,
                 "date": operator.credential_expiry,
+                "bucket": bucket_for(operator.credential_expiry, today),
                 "url": reverse("operator-detail", args=[operator.pk]),
             }
         )
@@ -70,6 +79,7 @@ def upcoming_expirations(today, cutoff, cost_center=None):
                 "kind": _("JAC insurance"),
                 "label": aircraft.registration,
                 "date": aircraft.insurance_expiry,
+                "bucket": bucket_for(aircraft.insurance_expiry, today),
                 "url": reverse("aircraft-detail", args=[aircraft.pk]),
             }
         )
@@ -87,6 +97,7 @@ def upcoming_expirations(today, cutoff, cost_center=None):
                 "kind": _("Document"),
                 "label": document.title,
                 "date": document.expiry_date,
+                "bucket": bucket_for(document.expiry_date, today),
                 "url": reverse("document-detail", args=[document.pk]),
             }
         )
@@ -100,8 +111,13 @@ def upcoming_expirations(today, cutoff, cost_center=None):
         items.append(
             {
                 "kind": _("Flight permission"),
-                "label": permission.permission_number,
+                # R1.2: permission_number is None until the DGAC folio
+                # arrives (LV-39) -- rendered as-is, the row read "Flight
+                # permission None" (verified live on the demo). Same
+                # placeholder as the calendar's _permission_title.
+                "label": permission.permission_number or _("Pending DGAC folio"),
                 "date": permission.valid_until,
+                "bucket": bucket_for(permission.valid_until, today),
                 "url": reverse("permission-detail", args=[permission.pk]),
             }
         )

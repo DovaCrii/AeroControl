@@ -490,12 +490,19 @@ class UnifiedCalendarEventsView(CalendarAccessMixin, View):
 
             def _permission_title(permission):
                 names = [operator.full_name for operator in permission.operators.all()]
-                base = permission.permission_number
+                # R1.2: permission_number is None until the DGAC folio arrives
+                # (LV-39) -- an f-string interpolates None as the literal word
+                # "None", not an empty string, so a permit without a folio
+                # rendered as "None · Alexandra Márquez Cortés +2" on this
+                # calendar. Guard here now; R2.2/R2.3 remove the possibility
+                # entirely by giving every permit an internal folio that is
+                # never empty.
+                base = permission.permission_number or _("Pending DGAC folio")
                 if names:
                     label = (
                         names[0] if len(names) == 1 else f"{names[0]} +{len(names) - 1}"
                     )
-                    base = f"{permission.permission_number} · {label}"
+                    base = f"{base} · {label}"
                 # LV-31: a multi-day permit collapses to one marker at its start
                 # with "→ hasta DD-MM", instead of a bar painted across every day.
                 if permission.valid_until > permission.valid_from:
