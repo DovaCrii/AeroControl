@@ -2,7 +2,7 @@
 {% for object in objects %}
 <tr>
   <td>
-    <a href="{{ object.pk }}/" class="table-primary-value">{{ object.code }}</a>{% if object.notes %} <span class="text-muted" title="{{ object.notes }}">&#9432;</span>{% endif %}
+    <a href="{{ object.pk }}/" class="table-primary-value{% if object.contract_status == 'closed' %} text-muted{% endif %}">{{ object.code }}</a>{% if object.contract_status == 'closed' %} <span class="badge bg-secondary">{% translate "Closed" %}</span>{% endif %}{% if object.notes %} <span class="text-muted" title="{{ object.notes }}">&#9432;</span>{% endif %}
     {% if object.name %}<span class="table-primary-sub cell-truncate" title="{{ object.name }}">{{ object.name }}</span>{% endif %}
   </td>
   {% comment %}LV-58: the administrator name rarely fills this column's width

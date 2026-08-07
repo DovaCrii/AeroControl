@@ -40,6 +40,7 @@ class CostCenterForm(AeroModelForm):
     field_order = [
         "code",
         "name",
+        "contract_status",
         "responsible",
         "responsible_type",
         "responsible_operator",
@@ -57,6 +58,7 @@ class CostCenterForm(AeroModelForm):
         fields = [
             "code",
             "name",
+            "contract_status",
             "responsible",
             "responsible_operator",
             "responsible_contact_name",
@@ -66,6 +68,7 @@ class CostCenterForm(AeroModelForm):
         labels = {
             "code": _("Code"),
             "name": _("Name"),
+            "contract_status": _("Contract status"),
             "responsible": _("Contract administrator name"),
             "responsible_operator": _("Responsible operator"),
             "responsible_contact_name": _("External contact name"),
@@ -74,6 +77,10 @@ class CostCenterForm(AeroModelForm):
         }
         help_texts = {
             "name": _("Optional descriptive name (e.g. Casa Matriz)."),
+            "contract_status": _(
+                "Closed keeps the cost center on the list (greyed, grouped "
+                "after the active ones) instead of archiving it."
+            ),
             "responsible_operator": _(
                 "Recipient of expiry digests. Use when the responsible person "
                 "is in the operator roster."
@@ -100,6 +107,13 @@ class CostCenterForm(AeroModelForm):
             "responsible_contact_email",
         ):
             self.fields[name].required = False
+        # R3.3(b): optional -- closing a contract is an occasional action on
+        # an existing record, not a fact every cost center needs on
+        # creation. An omitted value falls back to "active" in clean(), not
+        # to Django's ordinary empty-string handling for an unrequired
+        # ChoiceField (which would otherwise save "" instead of a real
+        # choice).
+        self.fields["contract_status"].required = False
         # Preselect the type from the saved data when editing.
         if not self.is_bound and not self.fields["responsible_type"].initial:
             instance = self.instance
@@ -119,6 +133,9 @@ class CostCenterForm(AeroModelForm):
         chosen type additionally uses, and clear the others so a switch of
         type never leaves stale data behind."""
         cleaned = super().clean()
+        if not cleaned.get("contract_status"):
+            cleaned["contract_status"] = "active"
+            self.instance.contract_status = "active"
         if not cleaned.get("responsible"):
             self.add_error("responsible", _("Enter the contract administrator name."))
         rtype = cleaned.get("responsible_type")

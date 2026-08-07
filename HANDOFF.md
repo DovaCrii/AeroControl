@@ -14,24 +14,27 @@
   (desplegable de estado en permisos + fix de un bug real de navegación),
   **R2.1** (vista de edición de permisos, no existía), **R2.4** (el PDF
   DGAC ahora también se exige para `completed`, no solo `approved`) y
-  **R2.6** (campo poblado/no poblado/mixto), y del **BLOQUE R3**: **R3.2**
-  (ordenamiento de listas) y R3.3 parcial ((a) operador archivado visible,
-  (c) investigado — `Aircraft.retired` ya estaba implementado, solo le
-  faltaba el test). Nada de esto llegó a producción todavía.
-- **702 tests verdes** antes de sumar los de R3.3 (686 antes de R2.5;
-  sumaron los de R2.5/R2.1/R2.4/R2.6/R3.2, no hubo que restar nada). `ruff
-  check .` y `ruff format --check .` también verdes. Catálogo `.po`
-  regenerado dos veces con `makemessages -l es` (R2.4 y R2.6): aparecieron
-  fuzzy nuevos ambas veces (msgstr copiado de otro string por parecido, no
-  por significado) — corregidos a mano antes de compilar, como advierte la
-  nota de abajo.
+  **R2.6** (campo poblado/no poblado/mixto), y todo el **BLOQUE R3**
+  salvo lo bloqueado en datos reales: **R3.2** (ordenamiento de listas) y
+  **R3.3** completo — (a) operador archivado visible, (b) `contract_status`
+  en `CostCenter` (decisión de negocio tomada en esta misma ventana, ver
+  abajo), (c) investigado, ya estaba implementado. Nada de esto llegó a
+  producción todavía.
+- **709 tests verdes** (686 antes de R2.5; sumaron los de
+  R2.5/R2.1/R2.4/R2.6/R3.2/R3.3, no hubo que restar nada). `ruff check .` y
+  `ruff format --check .` también verdes. Catálogo `.po` regenerado tres
+  veces con `makemessages -l es` (R2.4, R2.6, R3.3b): aparecieron fuzzy
+  nuevos las tres veces (msgstr copiado de otro string por parecido, no por
+  significado) — corregidos a mano antes de compilar, como advierte la nota
+  de abajo.
 - **`p340` estuvo sin internet gran parte del día** y volvió a tener acceso
   SSH hacia el final — no se llegó a desplegar antes de cerrar esta ventana.
-- **Cuatro migraciones nuevas sin aplicar en `p340`**: `workboard/0009`
+- **Cinco migraciones nuevas sin aplicar en `p340`**: `workboard/0009`
   (`wip_limit`), `registry/0024` (`Operator.user`), `operations/0012`
   (choices en `PermissionHistory`), `operations/0013` (`area_type`, nula —
-  no rompe los permisos ya cargados). El deploy con sudo (abajo) ya corre
-  `migrate` — solo falta ejecutarlo.
+  no rompe los permisos ya cargados), `registry/0025` (`contract_status`,
+  default "active" — no rompe los centros de costo ya cargados). El deploy
+  con sudo (abajo) ya corre `migrate` — solo falta ejecutarlo.
 - **Tres documentos de plan nuevos** (solo lectura, sin código):
   `docs/auditoria-iso-trazabilidad.md` (mapeo de las 14 cláusulas ISO),
   `docs/dev/adr-0002-coexistencia-aerolink.md` (contrato con la segunda app,
@@ -66,17 +69,24 @@ con las decisiones de negocio ya tomadas el 2026-08-07:
 - **R2.7** — `search_fields` de permisos solo busca `permission_number`
   pero el placeholder promete número/propósito/ubicación. Depende de R3.1.
 
-**R1, R2.1, R2.4, R2.5, R2.6 y R3.2 están completos.** R3.3 quedó parcial:
-(a) y (c) hechas, **(b) sigue abierta y necesita una decisión de negocio**
-antes de tocar código — qué es exactamente "contrato cerrado" en
-`CostCenter` (¿un eje distinto de `is_active`, o el mismo archivado con
-otra etiqueta y una vista que lo muestre en gris en vez de ocultarlo?).
-BLOQUE R3 sigue con **R3.1/R3.1a** (bloqueados en datos reales de `p340`,
-igual que R2.2/R2.3) y R3.3(b). Ver las filas correspondientes en
-`MASTER_PLAN.md` para el detalle de cada fix, incluidos dos bugs reales
-encontrados y reproducidos en vivo que no estaban en el plan original (el
-botón "Volver" de permisos/mantención/vuelos necesitaba dos clics tras
-cualquier acción; `PermissionHistory` mostraba estados en inglés crudo).
+**R1, R2.1, R2.4, R2.5, R2.6, R3.2 y R3.3 están completos.** Decisión de
+negocio tomada 2026-08-07 para R3.3(b): "contrato cerrado" es un **eje
+nuevo e independiente** de `is_active` — un CC con contrato cerrado sigue
+en la lista normal (no se archiva), atenuado y agrupado después de los
+operativos; `is_active` sigue siendo solo para archivar por error/duplicado.
+
+**Todo lo que queda en R2 y R3 está bloqueado en datos reales de `p340`**,
+no en trabajo de código: R2.2/R2.3 (folio interno, espera la restauración
+del respaldo), R3.1/R3.1a (`report_purpose_mapping` tiene que correr contra
+datos reales antes de escribir su migración) y R2.7 (depende de R3.1). El
+siguiente bloque no bloqueado es **R4** (repositorio documental) — pero
+revisar primero si de verdad no depende de R3.1/X.1 antes de arrancarlo.
+
+Ver las filas correspondientes en `MASTER_PLAN.md` para el detalle de cada
+fix, incluidos dos bugs reales encontrados y reproducidos en vivo que no
+estaban en el plan original (el botón "Volver" de permisos/mantención/
+vuelos necesitaba dos clics tras cualquier acción; `PermissionHistory`
+mostraba estados en inglés crudo).
 
 ## Cómo desplegar (patrón establecido)
 

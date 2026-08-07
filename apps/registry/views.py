@@ -464,7 +464,10 @@ class CostCenterList(RegistryList):
             # with the same digit count together, which sorts a same-prefix
             # numeric series (CC1, CC2, ..., CC99, CC100, CC110, ...)
             # correctly without a DB-specific regex/substring function.
-            .order_by(Length("code"), "code")
+            # R3.3(b): "contract_status" first so closed cost centers group
+            # after the active ones instead of interleaving with them --
+            # "active" < "closed" alphabetically already gives that order.
+            .order_by("contract_status", Length("code"), "code")
         )
 
 

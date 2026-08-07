@@ -11,6 +11,7 @@ Shared by the full-page template and the HTMX modal fragment.{% endcomment %}
   <legend class="h6 section-title mb-3">{% translate "Identification" %}</legend>
   {{ form.code|as_crispy_field }}
   {{ form.name|as_crispy_field }}
+  {{ form.contract_status|as_crispy_field }}
 </fieldset>
 <fieldset class="cc-form-section mb-4">
   <legend class="h6 section-title mb-3">{% translate "Responsible" %}</legend>
