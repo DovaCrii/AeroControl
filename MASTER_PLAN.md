@@ -29,6 +29,9 @@
    `R2`, `R3` y `R4` traen migraciones sobre datos reales de la DGAC. Runbook
    con comandos concretos en `docs/dev/ubuntu-vm-deploy.md` → Parte H. **Ningún
    bloque con migración debe llegar a producción antes de esto.**
+   **Queda absorbido por `R4`** (decisión 2026-08-07): el importador corre local
+   contra una copia restaurada del respaldo, así que restaurarlo *es* el ensayo.
+   Se ejecuta ahí y se registra en `docs/backend-follow-up.md`.
 2. **`R1` — bugs que ocultan información de cumplimiento.** Barato y crítico:
    hoy el calendario **no muestra** las vigencias DGAC/JAC en su vista por
    defecto. Es justo la información que la auditoría exige tener a la vista.
@@ -955,11 +958,11 @@ calendario y al título de la ficha. Un solo arreglo de raíz corrige las cuatro
 | ID | Est. | Tarea |
 |---|:--:|---|
 | R2.1 | ⬜ | **[bug] No existe vista de edición de permisos.** No hay `FlightPermissionUpdate` ni ruta `permission-update`; solo list/new/detail/approve/deny/complete. El único camino es `/admin/`. Crear la vista + ruta + botón "Editar" reutilizando el patrón de `RegistryUpdate`. Sin esto no se puede corregir nada. |
-| R2.2 | ⬜ | **Doble folio**: interno JEJ (correlativo propio, **siempre** presente desde la creación) + DGAC (opcional hasta aprobar). Ambos visibles y ligados; sin folio DGAC se muestra **"En proceso"**, no vacío. *Requiere decidir el formato del correlativo.* |
+| R2.2 | ⬜ | **Doble folio**: interno JEJ + DGAC (opcional hasta aprobar). Ambos visibles y ligados; sin folio DGAC se muestra **"En proceso"**, no vacío. **Formato decidido 2026-08-07: correlativo anual `JEJ-2026-001`**, asignado en la creación y nunca vacío. Se reinicia cada año; el año ubica el permiso en el tiempo, igual que las resoluciones DGAC que ya maneja la operación. Ojo con la concurrencia al generar el correlativo (transacción, no `count()+1`). |
 | R2.3 | ⬜ | `__str__` usa el folio interno → arregla en cascada lista/geo/calendario/ficha. `purpose` vuelve a ser dato, no identificador. |
 | R2.4 | ⬜ | Exigir el PDF oficial DGAC también para **`completed`** (hoy solo `approved`, LV-64). Pedido explícito del usuario. | 
 | R2.5 | ⬜ | Cambio de estado por **desplegable** en vez de botones; que "Volver" lleve a algún lado; renderizar el motivo de la transición (el modelo ya soporta `_transition_notes`, la plantilla nunca lo muestra, así que hoy siempre se guarda vacío). |
-| R2.6 | ⬜ | **Poblado / no poblado**: distinción normativa real (DAN 151 áreas pobladas vs DAN 91 no pobladas) que condiciona qué evidencia se exige. *Requiere decisión.* |
+| R2.6 | ⬜ | **Poblado / no poblado**: distinción normativa real (DAN 151 áreas pobladas vs DAN 91 no pobladas). **Decidido 2026-08-07: campo con tres opciones** (poblado / no poblado / mixto), **obligatorio** al crear el permiso, y **sin exigencia documental adicional por ahora**. Se registra el dato —que es lo que la auditoría pide (cláusula 6.1.3)— sin bloquear el flujo. Qué evidencia extra pide la DAN 151 en área poblada se define después, cuando esté confirmado contra la edición vigente. "Mixto" existe porque un levantamiento puede cruzar ambas zonas y un booleano lo representaría mal. |
 | R2.7 | ⬜ | El placeholder promete "número, propósito o ubicación" pero `search_fields = ["permission_number"]`. Corregir a `["permission_number", "purpose_detail", "location"]` (tras R3.1). |
 
 ### BLOQUE R3 — Estandarización transversal `P1` — antes de importar
@@ -991,14 +994,27 @@ Fuente: `Z:\01-116 OPERACIONES_RPA_JEJ` — 79 archivos / 0.17 GB, 16 carpetas d
 | R4.2 | ⬜ | **Idempotencia y procedencia**: campos nuevos `Document.content_sha256` (la ruta no sirve — `document_upload_path` mete un `uuid4()` fresco en cada path) y `Document.source_reference` (ruta **relativa** al origen). Hay un caso real de **mismo nombre con contenido distinto** (`Poliza_0020099470-21147.pdf`, 110.176 B vs 107.152 B) → deduplicar por nombre sería incorrecto. Desplegar esta migración **sola y primero**: es lo único que toca esquema. |
 | R4.3 | ⬜ | **`expiry_date` nunca se infiere — siempre `NULL` en v1.** El bloque `(DDMMYY)` de los nombres es ambiguo: `RES. EX. 0147(260127)` → 2027 y `RES. EX. 0994(120825)` → 2025; no pueden ser ambos lo mismo. `generate_alerts` filtra `expiry_date__isnull=False`, así que `NULL` es el modo de falla honesto: una fecha adivinada dispara una alerta falsa o —peor— hace que una aeronave *parezca* cubierta. El vencimiento de seguro ya tiene hogar canónico (`Aircraft.insurance_expiry`, LV-29). |
 | R4.4 | ⬜ | **Formatos**: `.msg` (17 archivos, la traza DGAC) solo con antivirus configurado — hoy `scan_uploaded_file` es un no-op silencioso si `DOCUMENTS_ANTIVIRUS_COMMAND` está vacío, y el comando debe **negarse** en vez de escanear la nada. `.rar`/`.zip` (3) y `.kmz` (2) se **saltan**: los KMZ tienen hogar de primera clase en `geo.GeoPlan`, y un `.rar` derrota el propósito de "dar el orden". |
-| R4.5 | ⬜ | **PII que probablemente no debe entrar**: la carpeta contiene cédula de identidad, comprobantes de transferencia bancaria y escrituras notariales. Copiarlos mete PII tras un endpoint de descarga cuya autorización por objeto es justo el área F-05 que la auditoría marcó incompleta. Nunca automático: `REVIEW-SENSITIVE`, opt-in explícito. |
+| R4.5 | ⬜ | **PII: no entra a AeroControl. Decidido 2026-08-07.** La carpeta contiene cédula de identidad, comprobantes de transferencia bancaria y escrituras notariales. Se quedan solo en `Z:`/Nextcloud. Razones: (a) la autorización por objeto en la descarga de documentos es justo la brecha **F-05** que la auditoría técnica marcó incompleta; (b) aplica la **Ley 19.628**; (c) no son evidencia de cumplimiento DGAC, son respaldo administrativo. El importador los clasifica `REVIEW-SENSITIVE` y **no los importa ni con `--apply`** — para importarlos habría que cerrar F-05 primero y agregar un nivel de permiso por documento que hoy no existe. |
 | R4.6 | ⬜ | **"Documentos de la empresa" como repositorio real** (hoy vacío y sin filtros, búsqueda ni categorías): AOC, normativas DAN, procedimientos y manuales, con categoría y vigencia. Las **normativas DAN se saltan** como `Document`: son PDF públicos de la DGAC y entrarían a los informes de cumplimiento de la empresa como si fueran evidencia propia. |
 | R4.7 | ⬜ | **Licencia RPA del operador**: columna que avisa cuándo falta el PDF. El mecanismo ya existe (GFK + tipo `dgac-credential`); falta la señal de "información incompleta". |
 | R4.8 | ⬜ | Tipo de documento nuevo **"Aviso Mensual de No Operación"** (lo exige el procedimiento interno cuando no hubo vuelos), más `maintenance-certificate`, `aoc-certificate` y `company-procedure`. Van en `seed_document_types` — **gotcha de despliegue LV-45/LV-64: hay que correrlo a mano en `p340`.** |
 
-> **Bloqueante operativo sin resolver:** `Z:` es una unidad mapeada en la máquina Windows
-> del usuario; `p340` es Ubuntu y casi con certeza no la ve. O el import corre localmente
-> contra una copia de la BD de producción, o el árbol se traslada a la VM primero.
+> **Dónde corre el importador — decidido 2026-08-07: localmente, contra una copia
+> restaurada del respaldo de producción.** `Z:` es una unidad mapeada en la máquina
+> Windows del usuario y `p340` (Ubuntu) no la ve, así que el import no puede correr en
+> la VM.
+>
+> **Esta decisión resuelve dos problemas de una vez.** Traer el respaldo de `p340`,
+> restaurarlo local y trabajar sobre esa copia **es exactamente el ensayo de
+> restauración de respaldos** que lleva semanas siendo la prioridad #1 del tablero
+> (`docs/dev/ubuntu-vm-deploy.md` → Parte H). Se ejecuta como parte de `R4` y se
+> registra su resultado en `docs/backend-follow-up.md`. Si la restauración falla, eso
+> **detiene todo el bloque** — y sería la mejor noticia posible, porque significaría
+> haber descubierto un respaldo inservible antes de necesitarlo de verdad.
+>
+> Flujo: respaldo de `p340` → restaurar local → correr el importador contra `Z:` en
+> modo informe → revisar → `--apply` sobre la copia local → verificar → recién ahí
+> llevar el resultado a producción.
 
 ### BLOQUE R5 — Trazabilidad y ciclo de vida `P1-P2`
 
