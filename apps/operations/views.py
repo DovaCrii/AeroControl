@@ -201,17 +201,25 @@ class FlightPermissionDetail(
             ).order_by("-issue_date")
         else:
             context["documents"] = None
+        # R2.5: a single dropdown instead of one button per transition -- most
+        # visits do not change the status at all, and the previous row of
+        # colour-coded buttons was more chrome than the decision warranted.
+        # Full URLs (not the bare "approve"/"deny" slug the old template
+        # built into "{{ action }}/") so the JS that swaps the form's action
+        # before submit does not have to know the URL structure.
         if self.object.status == "requested" and self.request.user.has_perm(
             "operations.change_flightpermission"
         ):
             actions = [
-                ("approve", _("Approve"), "btn-success"),
-                ("deny", _("Deny"), "btn-danger"),
+                (_("Approve"), reverse("permission-approve", args=[self.object.pk])),
+                (_("Deny"), reverse("permission-deny", args=[self.object.pk])),
             ]
         elif self.object.status == "approved" and self.request.user.has_perm(
             "operations.change_flightpermission"
         ):
-            actions = [("complete", _("Complete"), "btn-primary")]
+            actions = [
+                (_("Complete"), reverse("permission-complete", args=[self.object.pk]))
+            ]
         else:
             actions = []
         context["status_actions"] = actions

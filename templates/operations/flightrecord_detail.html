@@ -11,7 +11,11 @@
         {% csrf_token %}
         <button class="btn btn-outline-danger btn-sm">{% translate "Archive" %}</button>
       </form>
-      <a href="{% url 'record-list' %}" data-history-back class="btn btn-outline-secondary btn-sm">← {% translate "Back" %}</a>
+      {% comment %}R2.5: same fix as permission_detail.html -- a redirect
+      back to this same URL (e.g. after Archive) pushes a fresh history
+      entry, so data-history-back's window.history.back() can land on an
+      earlier render of this page instead of the list.{% endcomment %}
+      <a href="{% url 'record-list' %}" class="btn btn-outline-secondary btn-sm">← {% translate "Back" %}</a>
     </div>
   </div>
 

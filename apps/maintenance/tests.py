@@ -173,6 +173,37 @@ def test_record_detail_shows_completion_form_only_while_in_progress():
 
 
 @pytest.mark.django_db
+def test_record_detail_back_link_does_not_rely_on_browser_history():
+    """R2.5: same fix as the flight permission detail page -- the status
+    actions next to this link redirect back to this same URL, which pushes a
+    fresh history entry each time and breaks data-history-back's
+    window.history.back()."""
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    record = MaintenanceRecord.objects.create(
+        aircraft=aircraft,
+        maintenance_type="scheduled",
+        description="100h inspection",
+        scheduled_date=date(2026, 7, 20),
+        status="in_progress",
+    )
+    client = _mechanic_client()
+
+    content = client.get(
+        reverse("maintenance-detail", args=[record.pk])
+    ).content.decode()
+
+    assert "data-history-back" not in content
+    assert reverse("maintenance-list") in content
+
+
+@pytest.mark.django_db
 def test_status_transition_is_audited_with_from_and_to_status():
     cost_center = CostCenter.objects.create(code="OPS", name="Operations")
     aircraft = Aircraft.objects.create(

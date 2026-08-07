@@ -233,6 +233,106 @@ def test_permission_transition_records_history_with_actor_and_notes():
 
 
 @pytest.mark.django_db
+def test_permission_history_notes_are_rendered_on_the_detail_page():
+    """R2.5: the model already captured the transition's notes (see the test
+    above), but the template had no column for them -- typing a reason on
+    approve/deny had nowhere to show up afterwards."""
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    permission = _permission(cost_center, operator, aircraft)
+    User.objects.create_superuser("dispatcher", "dispatcher@test.com", "password")
+    client = Client()
+    assert client.login(username="dispatcher", password="password")
+    client.post(
+        reverse("permission-deny", args=[permission.pk]),
+        {"notes": "Missing insurance paperwork."},
+    )
+
+    content = client.get(
+        reverse("permission-detail", args=[permission.pk])
+    ).content.decode()
+
+    assert "Missing insurance paperwork." in content
+
+
+@pytest.mark.django_db
+def test_permission_detail_shows_one_status_dropdown_not_a_button_per_action():
+    """R2.5: "no siempre se harán cambios" -- one dropdown + notes field
+    instead of a button per transition, and it degrades to the first option
+    without JS (permission-status.js only overwrites the form's action to
+    match whatever was actually selected)."""
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    permission = _permission(cost_center, operator, aircraft)
+    User.objects.create_superuser("dispatcher", "dispatcher@test.com", "password")
+    client = Client()
+    assert client.login(username="dispatcher", password="password")
+
+    content = client.get(
+        reverse("permission-detail", args=[permission.pk])
+    ).content.decode()
+
+    assert 'id="permission-status-action"' in content
+    assert 'id="permission-status-notes"' in content
+    approve_url = reverse("permission-approve", args=[permission.pk])
+    deny_url = reverse("permission-deny", args=[permission.pk])
+    assert f'value="{approve_url}"' in content
+    assert f'value="{deny_url}"' in content
+    # The form's static action is the first option, so it still works with
+    # JS disabled.
+    assert f'action="{approve_url}"' in content
+
+
+@pytest.mark.django_db
+def test_permission_detail_back_link_does_not_rely_on_browser_history():
+    """R2.5: reproduced live -- every status action (success or failure)
+    redirects back to this same URL, which pushes a fresh history entry each
+    time. data-history-back's window.history.back() then lands on an earlier
+    render of this page instead of the permit list, so "Back" needed two
+    clicks. The link already has one well-defined destination."""
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    permission = _permission(cost_center, operator, aircraft)
+    User.objects.create_superuser("dispatcher", "dispatcher@test.com", "password")
+    client = Client()
+    assert client.login(username="dispatcher", password="password")
+
+    content = client.get(
+        reverse("permission-detail", args=[permission.pk])
+    ).content.decode()
+
+    assert "data-history-back" not in content
+    assert reverse("permission-list") in content
+
+
+@pytest.mark.django_db
 def test_permission_approval_is_blocked_without_the_dgac_permit_pdf():
     """LV-51: AeroControl's "approved" must not outrun the real DGAC paperwork
     -- the SIGO-issued authorization letter has to be on file first."""
@@ -457,6 +557,41 @@ def test_flight_record_archive_is_audited_as_archived():
     assert event.action == "archived"
     assert event.model_label == "operations.FlightRecord"
     assert event.object_id == str(record.pk)
+
+
+@pytest.mark.django_db
+def test_flight_record_detail_back_link_does_not_rely_on_browser_history():
+    """R2.5: same fix as the flight permission detail page -- a redirect
+    back to this same URL (e.g. after Archive) pushes a fresh history entry,
+    which breaks data-history-back's window.history.back()."""
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    permission = _permission(cost_center, operator, aircraft)
+    record = FlightRecord.objects.create(
+        permission=permission,
+        actual_date=date(2026, 7, 22),
+        departure_time=time(9, 0),
+        arrival_time=time(10, 0),
+        pilot=operator,
+        aircraft=aircraft,
+    )
+    User.objects.create_superuser("admin2", "admin2@test.com", "password")
+    client = Client()
+    assert client.login(username="admin2", password="password")
+
+    content = client.get(reverse("record-detail", args=[record.pk])).content.decode()
+
+    assert "data-history-back" not in content
+    assert reverse("record-list") in content
 
 
 @pytest.mark.parametrize(
