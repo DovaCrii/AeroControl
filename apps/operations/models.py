@@ -24,6 +24,17 @@ class FlightPermission(BaseModel):
         ("denied", _("Denied")),
         ("completed", _("Completed")),
     ]
+    # R2.6: DAN 151 (populated area) vs DAN 91 (unpopulated) is a real
+    # normative distinction (ISO 9001/45001 audit guide, clause 6.1.3), not
+    # a boolean -- a single survey can cross both, which "mixed" exists to
+    # record. Decided 2026-08-07: just the fact, no extra document
+    # requirement yet (what DAN 151 demands beyond this is defined later,
+    # once confirmed against the edition in force).
+    AREA_TYPE_CHOICES = [
+        ("populated", _("Populated area")),
+        ("unpopulated", _("Unpopulated area")),
+        ("mixed", _("Mixed (crosses both)")),
+    ]
     # LV-39: optional until the permit is approved, so a permit can be drafted
     # ("requested") or recorded as "denied" before the DGAC folio exists. null
     # (not "") so several folio-less permits don't collide on the unique index.
@@ -37,6 +48,10 @@ class FlightPermission(BaseModel):
     valid_from = models.DateField()
     valid_until = models.DateField()
     location = models.CharField(max_length=250)
+    # Nullable so the permissions created before this field existed are not
+    # retroactively broken; the form requires it (blank=False, the default)
+    # for anything created or edited from now on.
+    area_type = models.CharField(max_length=20, choices=AREA_TYPE_CHOICES, null=True)
     status = models.CharField(
         max_length=20, choices=STATUS_CHOICES, default="requested"
     )

@@ -12,20 +12,23 @@
   B3.1/B3.2/B3.5, T5.7, todo el **BLOQUE R1** (5 bugs de la revisión en
   vivo, 3 corregidos + 2 investigados-no-reproducibles), y de **R2**: R2.5
   (desplegable de estado en permisos + fix de un bug real de navegación),
-  **R2.1** (vista de edición de permisos, no existía) y **R2.4** (el PDF
-  DGAC ahora también se exige para `completed`, no solo `approved`). Nada
-  de esto llegó a producción todavía.
-- **696 tests verdes** (686 antes de R2.5; sumaron los de R2.5/R2.1/R2.4, no
-  hubo que restar nada). `ruff check .` y `ruff format --check .` también
-  verdes. Catálogo `.po` regenerado con `makemessages -l es`: apareció un
-  fuzzy nuevo (msgstr de "completing this permit" copiado del de "approving
-  this permit") — corregido a mano antes de compilar, como advierte la nota
+  **R2.1** (vista de edición de permisos, no existía), **R2.4** (el PDF
+  DGAC ahora también se exige para `completed`, no solo `approved`) y
+  **R2.6** (campo poblado/no poblado/mixto). Nada de esto llegó a
+  producción todavía.
+- **699 tests verdes** (686 antes de R2.5; sumaron los de
+  R2.5/R2.1/R2.4/R2.6, no hubo que restar nada). `ruff check .` y
+  `ruff format --check .` también verdes. Catálogo `.po` regenerado dos
+  veces con `makemessages -l es` (R2.4 y R2.6): aparecieron fuzzy nuevos
+  ambas veces (msgstr copiado de otro string por parecido, no por
+  significado) — corregidos a mano antes de compilar, como advierte la nota
   de abajo.
 - **`p340` estuvo sin internet gran parte del día** y volvió a tener acceso
   SSH hacia el final — no se llegó a desplegar antes de cerrar esta ventana.
-- **Tres migraciones nuevas sin aplicar en `p340`**: `workboard/0009`
+- **Cuatro migraciones nuevas sin aplicar en `p340`**: `workboard/0009`
   (`wip_limit`), `registry/0024` (`Operator.user`), `operations/0012`
-  (choices en `PermissionHistory`). El deploy con sudo (abajo) ya corre
+  (choices en `PermissionHistory`), `operations/0013` (`area_type`, nula —
+  no rompe los permisos ya cargados). El deploy con sudo (abajo) ya corre
   `migrate` — solo falta ejecutarlo.
 - **Tres documentos de plan nuevos** (solo lectura, sin código):
   `docs/auditoria-iso-trazabilidad.md` (mapeo de las 14 cláusulas ISO),
@@ -58,12 +61,10 @@ con las decisiones de negocio ya tomadas el 2026-08-07:
   **localmente contra una copia restaurada del respaldo**, lo que de paso
   sirve como el ensayo de restauración pendiente hace semanas. No aplicar
   esta migración directo en producción.
-- **R2.6** — campo poblado/no poblado/mixto, obligatorio, sin exigencia
-  documental adicional todavía.
 - **R2.7** — `search_fields` de permisos solo busca `permission_number`
-  pero el placeholder promete número/propósito/ubicación.
+  pero el placeholder promete número/propósito/ubicación. Depende de R3.1.
 
-**R1, R2.1, R2.4 y R2.5 están completos** (696 tests verdes). Ver las filas
+**R1, R2.1, R2.4, R2.5 y R2.6 están completos.** Ver las filas
 correspondientes en `MASTER_PLAN.md` para el detalle de cada fix, incluidos
 dos bugs reales encontrados y reproducidos en vivo que no estaban en el
 plan original (el botón "Volver" de permisos/mantención/vuelos necesitaba
