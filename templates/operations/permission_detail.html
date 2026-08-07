@@ -41,6 +41,9 @@
     create form's "Cancel", which has no fixed origin -- so it does not need
     the history shortcut at all.
   {% endcomment %}
+  {% if perms.operations.change_flightpermission %}
+  <a href="{% url 'permission-update' permission.pk %}" class="btn btn-outline-primary">{% translate "Edit" %}</a>
+  {% endif %}
   <a href="{% url 'permission-list' %}" class="btn btn-outline-secondary">← {% translate "Back" %}</a>
 </div></div>
 <table class="table table-bordered"><tbody>

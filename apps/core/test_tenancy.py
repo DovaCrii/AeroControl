@@ -258,6 +258,25 @@ class TestObjectLevelIsolation:
         assert intruder.get(url).status_code == 404
 
     @pytest.mark.django_db
+    def test_permission_update_is_404_for_another_tenant(self):
+        from apps.operations.models import FlightPermission
+
+        a = OperationalTenant.objects.create(name="A", slug="a")
+        b = OperationalTenant.objects.create(name="B", slug="b")
+        cc = CostCenter.objects.create(code="CCA", tenant=a)
+        permission = FlightPermission.objects.create(
+            permission_number="P1",
+            cost_center=cc,
+            purpose="x",
+            valid_from=date(2026, 7, 1),
+            valid_until=date(2026, 7, 2),
+            location="S",
+        )
+        intruder = self._client("b_perm_edit", "change_flightpermission", tenant=b)
+        url = reverse("permission-update", args=[permission.pk])
+        assert intruder.get(url).status_code == 404
+
+    @pytest.mark.django_db
     def test_maintenance_detail_is_404_for_another_tenant(self):
         from apps.maintenance.models import MaintenanceRecord
 
