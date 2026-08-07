@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 import pytest
 from django.contrib.auth.models import Permission, User
 from rest_framework.authtoken.models import Token
@@ -1026,6 +1026,30 @@ def test_kanban_card_shows_graduated_urgency_not_colour_alone(auth_client, board
     assert "is-overdue" in content
     assert "text-warning-emphasis" in content
     assert "Due within 7 days" in content or "Vence en 7 días" in content
+
+
+@pytest.mark.django_db
+def test_kanban_card_due_date_month_is_localized(auth_client, board):
+    """R1.4: the live review reported a card reading "Vencimiento May 2" --
+    Spanish label, English month. Not reproducible against current code (no
+    override here, so this runs under the project default LANGUAGE_CODE=es):
+    the `|date:"M j"` filter in _card.html goes through Django's own
+    dateformat, which is translated. Locks the correct behaviour in so a
+    future regression (e.g. a raw strftime replacing the template filter,
+    which would bypass Django's i18n and always render in the OS locale)
+    fails a test instead of only showing up in production."""
+    board_obj, todo, _ = board
+    KanbanTask.objects.create(
+        board=board_obj,
+        stage=todo,
+        title="August task",
+        due_date=date(2026, 8, 5),
+    )
+
+    content = auth_client.get(reverse("kanban")).content.decode()
+
+    assert "Ago" in content
+    assert "Aug 5" not in content
 
 
 @pytest.mark.django_db

@@ -12,6 +12,7 @@ from django.views.generic import CreateView, DetailView, ListView
 
 from apps.core.audit import set_audit_context
 from apps.core.views import (
+    CALENDAR_EVENT_PERMISSIONS,
     CalendarAccessMixin,
     CsvExportMixin,
     HtmxFormMixin,
@@ -418,6 +419,16 @@ class CalendarView(CalendarAccessMixin, ListView):
             prev_month=previous.strftime("%Y-%m"),
             next_month=following.strftime("%Y-%m"),
             selected_calendar_types=self.request.GET.get("types", "all"),
+            # R1.1: "all" used to be a literal list hardcoded in calendar.js
+            # that drifted from the 9 real event types (it was missing the two
+            # DGAC/JAC vigencia lanes) -- derive it from the same source of
+            # truth CalendarAccessMixin already uses, so a new event type
+            # can't silently go missing from "All events" again.
+            calendar_all_types=",".join(
+                event_type
+                for event_type in CALENDAR_EVENT_PERMISSIONS
+                if event_type in allowed_types
+            ),
             selected_calendar_board=self.request.GET.get("board", ""),
             selected_calendar_cost_center=self.request.GET.get("cost_center", ""),
             selected_calendar_aircraft=self.request.GET.get("aircraft", ""),
