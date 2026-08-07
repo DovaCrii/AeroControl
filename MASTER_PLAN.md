@@ -29,10 +29,11 @@ conserva como historial, no como guía. Esta es la guía vigente:
 3. **CSP a enforcing en producción**: ya verificado que funciona
    (`CSP_REPORT_ONLY=False` probado en demo, cero violaciones), solo falta
    activar la variable de entorno en `p340`.
-4. **Bajo demanda del usuario, no proactivo**: ~~B3.1/B3.2/B3.5~~ hechos el
-   2026-08-07 (ver BLOQUE 3 abajo); queda LV-6 (vista Gantt, requiere decisión de
-   diseño), T5.7/T5.8, LV-59 opción (c) si se quiere reabrir, LV-65 (selector
-   de aeronaves en Mantenciones).
+4. **Bajo demanda del usuario, no proactivo**: ~~B3.1/B3.2/B3.5~~ y ~~T5.7~~
+   hechos el 2026-08-07 (ver sus filas abajo); ~~LV-59 opción (c)~~ ya estaba
+   cerrada desde el 2026-08-05 (fila LV-59, no era pendiente real). Queda
+   LV-6 (vista Gantt, requiere decisión de diseño), T5.8, y LV-65 (selector de
+   aeronaves en Mantenciones, también requiere decisión de formato).
 5. **Deuda técnica (T1.x, T3.x, T4.x): política incremental, no una
    migración grande.** `core/views.py` (1.150 líneas) y `registry/views.py`
    (948) son grandes, pero con 670+ tests verdes y uso diario real en
@@ -464,7 +465,7 @@ abierto (hoy sí es cierto, cerrado en `3611d06`).
 | T5.4 | ✅ | P1 | **Dashboard accionable + vencimientos reales (U3, U4).** Los tiles de Aeronaves/Operadores/Alertas ahora son enlaces a sus listas. El panel "Próximos vencimientos" dejó de ser solo habilitaciones: `dashboard.views.upcoming_expirations()` unifica **habilitaciones + documentos + permisos de vuelo** en la ventana de 30 días, cada uno con enlace a su ficha (habilitación→operador, documento→ficha de documento, permiso→ficha). Filtro por CC en habilitaciones/permisos; documentos van por relación genérica (sin CC directo). 1 test. | M | — |
 | T5.5 | ✅ | P1 | **Formulario de vuelo reducido + prellenado desde el permiso (U5).** La ficha del permiso ("+ Add record") ahora prellena el permiso (`?permission=`); y `FlightRecordForm` **acota** los selectores de piloto y aeronave al roster de ese permiso en vez del padrón completo (mismo patrón que `KanbanTaskForm`), así el usuario solo ve opciones válidas. 2 tests. | M | — |
 | T5.6 | ✅ | P2 | **Paginación HTMX + búsqueda en vivo alineadas (F-13).** Eran dos problemas, ambos resueltos: (a) los controles de paginación quedaban **stale** al buscar/paginar en vivo → ahora se actualizan out-of-band (`#pagination-container`, `hx-swap-oob`, guard `is_htmx` para no duplicarlos en página completa); (b) las 5 listas con columnas propias (CC, operador, aeronave, habilitaciones, asignaciones) devolvían el `_table_body.html` genérico en HTMX, colapsando sus columnas → ahora cada una tiene su parcial de filas (`registry/_*_rows.html`) y su `htmx_template_name`. De paso, dos `"Sin asignar"` hardcodeados → `{% translate "Unassigned" %}`. Verificado a nivel de respuesta (columnas custom presentes en HTMX; un solo `#pagination-container` en página completa). 4 tests. | M | — |
-| T5.7 | ⬜ | P2 | Exportación visible en todas las listas (U6) | S | — |
+| T5.7 | ✅ | P2 | **Hecho 2026-08-07.** El backend ya soportaba `?export=csv` en casi todas las listas (`CsvExportMixin` mezclado en `WList`/`OList`/`MList`/`ComplianceList`/registry); el hueco real eran 3 plantillas que reconstruyen `content` a mano y nunca renderizaban el link: Documentos, Alertas y Registros de mantenimiento. Agregado el botón en las 3, con test que verifica presencia del link **y** que `?export=csv` devuelve un CSV real. **Fuera de alcance, marcado para otra sesión**: `ResourceMovementLogList` (registry) no tiene `CsvExportMixin` en absoluto — necesitaría además resolver cómo exportar su `resource_label` (property, no field). | `templates/compliance/{document,alert}_list.html`, `templates/maintenance/record_list.html` |
 | T5.8 | ⬜ | P2 | Limpiar fugas de i18n; accesibilidad (`scope`, labels) | M | — |
 | T5.9 | ✅ | P2 | Vendorizar assets locales (Bootstrap/HTMX/Chart.js/FullCalendar/Sortable) + SRI. Hecho como V.11 (`static/vendor/`, sha384, orígenes CDN eliminados del CSP). Leaflet/Geoman ya venían de GEO-7/8 | M | T2.5 |
 

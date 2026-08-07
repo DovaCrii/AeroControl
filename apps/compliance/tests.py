@@ -102,6 +102,41 @@ def test_document_replace_is_audited_with_replaced_document_id(settings, tmp_pat
 
 
 @pytest.mark.django_db
+def test_document_list_shows_export_link_and_export_returns_csv():
+    """T5.7 (U6): DocumentList already mixes in CsvExportMixin (via
+    ComplianceList), but its bespoke template never rendered the link."""
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    doc_type = DocumentType.objects.create(code="cert", name="Certificate")
+    Document.objects.create(
+        title="Insurance certificate",
+        doc_type=doc_type,
+        content_type=ContentType.objects.get_for_model(Aircraft),
+        object_id=aircraft.pk,
+        file_path="cert/aircraft/file.pdf",
+        issue_date=date(2026, 1, 1),
+    )
+    User.objects.create_superuser("admin", "admin@test.com", "password")
+    client = Client()
+    assert client.login(username="admin", password="password")
+
+    page = client.get(reverse("document-list"))
+    assert "export=csv" in page.content.decode()
+
+    export = client.get(reverse("document-list"), {"export": "csv"})
+    assert export.status_code == 200
+    assert export["Content-Type"].startswith("text/csv")
+    body = b"".join(export.streaming_content).decode()
+    assert "Insurance certificate" in body
+
+
+@pytest.mark.django_db
 def test_document_form_autogenerates_title_when_left_blank(settings, tmp_path):
     """LV-2: a blank title is filled in from doc_type + record + issue_date,
     instead of failing or saving an empty string that read differently

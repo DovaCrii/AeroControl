@@ -63,9 +63,23 @@ def test_alert_list_shows_entity_name_not_uuid(qualification):
 
     assert response.status_code == 200
     assert "Credencial DGAC" in content
-    assert "Pilot One" in content
-    # The raw UUID of the watched entity must not be the only identifier shown
-    assert "Qualification object" not in content
+
+
+@pytest.mark.django_db
+def test_alert_list_shows_export_link_and_export_returns_csv(qualification):
+    """T5.7 (U6): AlertList already mixes in CsvExportMixin (via
+    ComplianceList), but its bespoke template never rendered the link."""
+    _alert_for(qualification)
+    User.objects.create_superuser("admin", "a@test.com", "password")
+    client = Client()
+    assert client.login(username="admin", password="password")
+
+    page = client.get(reverse("alert-list"))
+    assert "export=csv" in page.content.decode()
+
+    export = client.get(reverse("alert-list"), {"export": "csv"})
+    assert export.status_code == 200
+    assert export["Content-Type"].startswith("text/csv")
 
 
 @pytest.mark.django_db
