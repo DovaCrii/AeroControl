@@ -6,46 +6,52 @@
 
 ---
 
-## Prioridades post-v0.4.0-beta (2026-08-05 — leer esto primero)
+## Prioridades post-auditoría (2026-08-07 — leer esto primero)
 
-`v0.4.0-beta` ya está cortado y desplegado (ver `CHANGELOG.md` y `HANDOFF.md`).
-La sección "Dónde retomar" de más abajo describe el orden acordado el
-2026-07-30, **desactualizado** por todo lo que pasó desde entonces (el bloque
-GEO/OPS completo, la revisión en vivo LV-1..65, la auditoría de Codex) — se
-conserva como historial, no como guía. Esta es la guía vigente:
+`v0.4.0-beta` está cortado, desplegado y operando con datos reales. El
+2026-08-07 entraron **tres insumos nuevos** que reordenan el tablero:
 
-1. **Ensayo de restauración de respaldos (B-01/B-02) + copia fuera de la VM**
-   — **crítico, el mayor riesgo real del sistema hoy** con datos operativos
-   reales de la DGAC adentro (12 centros de costo, 41 operadores, 15
-   aeronaves). El respaldo diario corre y vive dentro de la misma VM, pero
-   nunca se ha probado una restauración — un respaldo nunca restaurado no es
-   un respaldo, es una suposición. **Runbook con comandos concretos listo**
-   desde el 2026-08-07 en `docs/dev/ubuntu-vm-deploy.md` → Parte H (antes era
-   solo una directiva sin pasos) — falta que alguien con sesión SSH a `p340`
-   lo ejecute y registre el resultado. Ver también `docs/backend-follow-up.md`.
-2. ~~T2.1~~ — **cerrado, no era una tarea real.** Verificado 2026-08-07: el
-   fix ya estaba en el código desde `03b4dbb` (2026-07-24); la fila de FASE 2
-   nunca se actualizó cuando se cerró V.1/V.2. Ver la fila T2.1 más abajo.
-3. **CSP a enforcing en producción**: ya verificado que funciona
-   (`CSP_REPORT_ONLY=False` probado en demo, cero violaciones), solo falta
-   activar la variable de entorno en `p340`.
-4. **Bajo demanda del usuario, no proactivo**: ~~B3.1/B3.2/B3.5~~ y ~~T5.7~~
-   hechos el 2026-08-07 (ver sus filas abajo); ~~LV-59 opción (c)~~ ya estaba
-   cerrada desde el 2026-08-05 (fila LV-59, no era pendiente real). Queda
-   LV-6 (vista Gantt, requiere decisión de diseño), T5.8, y LV-65 (selector de
-   aeronaves en Mantenciones, también requiere decisión de formato).
-5. **Deuda técnica (T1.x, T3.x, T4.x): política incremental, no una
-   migración grande.** `core/views.py` (1.150 líneas) y `registry/views.py`
-   (948) son grandes, pero con 670+ tests verdes y uso diario real en
-   producción, el riesgo de una migración XL (partir `core`, T1.1/T1.2) supera
-   su beneficio *ahora*. Extraer mixins/selectors/servicios **solo al tocar el
-   flujo correspondiente** por otra razón (un bug, una feature) — nunca como
-   proyecto aparte mientras la beta siga en revisión en vivo. Ver la nota en
-   T1.1 más abajo.
-6. **Higiene recurrente**: cerrar cada ventana corriendo `ruff check .` **y**
-   `ruff format --check .`, no solo `pytest` — el CI de GitHub corre ambos
-   (`ci.yml:26-27`) y esta sesión dejó el repo en rojo ahí varios días sin
-   notarlo (LV-63, hallazgo de la auditoría de Codex del 2026-08-05).
+- **Revisión en vivo del usuario** (`D:\I+D\Obsidian\Revisiones luego de
+  Auditoria.md`, 19 capturas) — origen de los bloques `R1`–`R8` de más abajo.
+- **Guía de auditoría ISO 9001/14001/45001** para levantamientos con RPAS —
+  14 cláusulas con evidencia exigible. Mapeo completo en
+  [docs/auditoria-iso-trazabilidad.md](docs/auditoria-iso-trazabilidad.md);
+  bloque `R7`.
+- **AeroLink** (`DovaCrii/AeroLink`) — gateway DJI Pilot 2 que extrae datos del
+  RPA sin depender de lo que escriba el operador. Contrato de coexistencia en
+  [docs/dev/adr-0002-coexistencia-aerolink.md](docs/dev/adr-0002-coexistencia-aerolink.md);
+  bloque `X`.
+
+**Orden vigente:**
+
+1. **Ensayo de restauración de respaldos (B-01/B-02) + copia fuera de la VM.**
+   Sigue siendo **el mayor riesgo real del sistema**, y ahora más: los bloques
+   `R2`, `R3` y `R4` traen migraciones sobre datos reales de la DGAC. Runbook
+   con comandos concretos en `docs/dev/ubuntu-vm-deploy.md` → Parte H. **Ningún
+   bloque con migración debe llegar a producción antes de esto.**
+2. **`R1` — bugs que ocultan información de cumplimiento.** Barato y crítico:
+   hoy el calendario **no muestra** las vigencias DGAC/JAC en su vista por
+   defecto. Es justo la información que la auditoría exige tener a la vista.
+3. **`R2` — permiso de vuelo**: no existe vista de edición, y el folio DGAC
+   ausente se filtra como `status · purpose` a cuatro pantallas distintas.
+4. **`R3` — estandarización**, y **`X.1` — `serial_number` como llave única.**
+   Ambos **antes** de importar documentos: si se importa primero, se reimporta.
+5. **`R4` — repositorio documental** (importador desde `Z:` con revisión previa).
+6. `R5` trazabilidad → `R6` alertas/reportes → `R7` base ISO → `R8` clima.
+7. **CSP a enforcing en producción**: verificado en demo, solo falta activar la
+   variable de entorno en `p340`.
+8. **Deuda técnica (T1.x, T3.x, T4.x): política incremental**, sin migración
+   grande. `core/views.py` (1.150 líneas) y `registry/views.py` (948) son
+   grandes, pero con 679 tests verdes y uso diario real, el riesgo de una
+   migración XL supera su beneficio *ahora*. Extraer mixins/selectors **solo al
+   tocar el flujo correspondiente** por otra razón. Ver la nota en T1.1.
+9. **Higiene recurrente**: cerrar cada ventana con `ruff check .` **y**
+   `ruff format --check .`, no solo `pytest` — el CI corre ambos (`ci.yml:26-27`)
+   y ya estuvo rojo días por no hacerlo.
+
+*Cerrados y fuera de la cola:* ~~T2.1~~ (ya estaba en el código desde `03b4dbb`),
+~~B3.1/B3.2/B3.5~~ y ~~T5.7~~ (2026-08-07), ~~LV-59 (c)~~ (2026-08-05).
+Quedan bajo demanda: LV-6 (Gantt), T5.8, LV-65 (absorbido por `R5.5`).
 
 ---
 
@@ -916,6 +922,140 @@ arranca la implementación sin "go" explícito del usuario.**
 - **Evidencia:** `ruff format --check` falla en 35 archivos.
 - **Cambio:** `uv run ruff format .` y commit del reformateo (idealmente en su propio commit «style:»).
 - **Aceptación:** `verify.ps1` verde de punta a punta.
+
+---
+
+## REVISIÓN POST-AUDITORÍA (2026-08-07) — bloques R1-R8 y X
+
+> Origen: revisión en vivo del usuario (19 capturas), guía de auditoría ISO y la
+> aparición de AeroLink. Ver "Prioridades post-auditoría" al inicio para el orden.
+> Los ítems marcados **[bug]** no los reportó el usuario: salieron de cruzar su
+> feedback con el código y son, varios, peores que los reportados.
+
+### BLOQUE R1 — Bugs que ocultan información de cumplimiento `P0`
+
+| ID | Est. | Tarea | Archivos |
+|---|:--:|---|---|
+| R1.1 | ⬜ | **[bug] El calendario oculta las vigencias DGAC y JAC en su vista por defecto.** `typeQuery()` expande `'all'` a 7 tipos literales y omite `operator_credential` y `aircraft_insurance`; el selector arranca en "Todos los eventos", así que un seguro que vence mañana **no se ve**. Arreglar la **causa**: derivar la lista desde el servidor (los 9 tipos ya están en `CALENDAR_EVENT_PERMISSIONS`) en vez de repetirla en el JS, para que no vuelva a desincronizarse. | `static/js/calendar.js:19-23`, `templates/core/calendar.html`, `apps/core/views.py:286-298` |
+| R1.2 | ⬜ | **[bug]** Permiso sin folio renderiza el literal `"None"` en el calendario. Lo resuelve R2.2; dejar además una guarda explícita. | `apps/core/views.py:491-503` |
+| R1.3 | ⬜ | Panel "Próximos vencimientos": la etiqueta es el mismo gris para las 5 fuentes y no hay noción de urgencia — un vencimiento de mañana se ve igual que uno de un mes. Reutilizar los buckets **ya existentes** (`KanbanTask.urgency_bucket` / `compliance/reports.py`: vencido/≤7/≤15/≤30), mostrar "faltan N días", y hacer clickeable la tarjeta KPI "Vence en 30 días" (es la única del grid que no lo es). | `apps/dashboard/views.py:18-110`, `templates/dashboard/index.html:41-44,97-110` |
+| R1.4 | ⬜ | Fechas en inglés en tarjetas Kanban ("Vencimiento May 2"). Auditar filtros de fecha sin localizar. | `templates/workboard/_card.html` |
+| R1.5 | ⬜ | Geo: "Volver a los planes" falla según el usuario. **Reproducir primero** — la URL existe. | `templates/geo/plan_detail.html:34` |
+
+**Aceptación del bloque:** un seguro que vence mañana aparece en el calendario en la
+vista por defecto, y en el panel se distingue de uno que vence en un mes sin leer la fecha.
+
+### BLOQUE R2 — Permiso de vuelo: numeración, edición y flujo `P0`
+
+Núcleo del feedback (4 de las 19 capturas). **Causa raíz común:** `FlightPermission.__str__`
+cae en `f"{status} · {purpose[:30]}"` cuando no hay folio (`apps/operations/models.py:56-61`),
+y ese texto se filtra a la columna NÚMERO, a los títulos de planes geo, a los eventos del
+calendario y al título de la ficha. Un solo arreglo de raíz corrige las cuatro pantallas.
+
+| ID | Est. | Tarea |
+|---|:--:|---|
+| R2.1 | ⬜ | **[bug] No existe vista de edición de permisos.** No hay `FlightPermissionUpdate` ni ruta `permission-update`; solo list/new/detail/approve/deny/complete. El único camino es `/admin/`. Crear la vista + ruta + botón "Editar" reutilizando el patrón de `RegistryUpdate`. Sin esto no se puede corregir nada. |
+| R2.2 | ⬜ | **Doble folio**: interno JEJ (correlativo propio, **siempre** presente desde la creación) + DGAC (opcional hasta aprobar). Ambos visibles y ligados; sin folio DGAC se muestra **"En proceso"**, no vacío. *Requiere decidir el formato del correlativo.* |
+| R2.3 | ⬜ | `__str__` usa el folio interno → arregla en cascada lista/geo/calendario/ficha. `purpose` vuelve a ser dato, no identificador. |
+| R2.4 | ⬜ | Exigir el PDF oficial DGAC también para **`completed`** (hoy solo `approved`, LV-64). Pedido explícito del usuario. | 
+| R2.5 | ⬜ | Cambio de estado por **desplegable** en vez de botones; que "Volver" lleve a algún lado; renderizar el motivo de la transición (el modelo ya soporta `_transition_notes`, la plantilla nunca lo muestra, así que hoy siempre se guarda vacío). |
+| R2.6 | ⬜ | **Poblado / no poblado**: distinción normativa real (DAN 151 áreas pobladas vs DAN 91 no pobladas) que condiciona qué evidencia se exige. *Requiere decisión.* |
+| R2.7 | ⬜ | El placeholder promete "número, propósito o ubicación" pero `search_fields = ["permission_number"]`. Corregir a `["permission_number", "purpose_detail", "location"]` (tras R3.1). |
+
+### BLOQUE R3 — Estandarización transversal `P1` — antes de importar
+
+| ID | Est. | Tarea |
+|---|:--:|---|
+| R3.1 | ⬜ | **`purpose` → vocabulario cerrado**: los 2 procedimientos SIGO (DAN 137 Cap. J) + "Otro" con detalle obligatorio. **Lista de tuplas, no `TextChoices`** — T3.4 ("migrar estados a TextChoices") está ⏸ diferido por churn sin valor, y no hay un solo `TextChoices` en el repo. Constante en `apps/core/choices.py` (la necesitan 3 modelos en 2 apps). Tres campos: `purpose` (código), `purpose_detail` (libre), `purpose_legacy` (**inmutable**, conserva el texto original — mismo criterio que `CostCenter.responsible`). Constraint `CheckConstraint` + `clean()`, no solo formulario. Toca **5** formularios (`OperatorBulkAssignForm` no es `ModelForm`), `services.py` y 3 plantillas. |
+| R3.1a | ⬜ | **Paso previo obligatorio**: comando de solo lectura `report_purpose_mapping` que liste, por modelo, el valor original y el código propuesto. **Correrlo en `p340` y congelar la tabla de mapeo con datos reales antes de escribir la migración.** `"Audiovisual"` va a `other` + detalle: los dos procedimientos producen imágenes y el término no dice cuál fue — adivinarlo acierta la mitad de las veces y el valor termina en títulos de calendario. |
+| R3.2 | ⬜ | **Ordenamiento**: ninguna lista define `ordering`; todas caen en `created_at` (`apps/core/views.py:108`). CC por número **ascendente** — ojo, `code` es `CharField`, así que alfabético ≠ numérico (CC110 < CC2); hay que ordenar por el número extraído. Aeronaves por matrícula, operadores alfabético. |
+| R3.3 | ⬜ | **Estados visibles**: (a) `is_active` del operador no aparece en su lista — quien salió de la empresa se ve igual que un activo; (b) `CostCenter` no tiene "contrato cerrado" (solo `is_active` genérico) — agregarlo, mostrar en gris sin borrar, separar operativos de cerrados; (c) `Aircraft.retired` **ya existe**, falta hacerlo visible y usable. |
+
+> **Conflicto de traducción resuelto:** los nombres de procedimiento son normativos y en
+> español, pero `test_source_strings_are_written_in_english` falla si un string fuente
+> lleva tilde. Solución: **msgid en inglés como clave, `msgstr` español como literal
+> autoritativo** (`_("Photogrammetry Procedure")` → `"Procedimiento de Fotogrametría"`).
+> La cita "DAN 137 Cap. J" va una vez en el `help_text`, no repetida en cada etiqueta.
+> `"Other"` necesita `pgettext_lazy` (msgid probablemente ya usado, precedente LV-61).
+
+### BLOQUE R4 — Repositorio documental `P1`
+
+Fuente: `Z:\01-116 OPERACIONES_RPA_JEJ` — 79 archivos / 0.17 GB, 16 carpetas de aeronave
+`CC{centro}-{serie}-{modelo}` con 5 subcarpetas fijas, más `DOCUMENTOS BASES`.
+**`Z:` es de solo lectura: no se escribe, borra ni mueve nada ahí.**
+
+| ID | Est. | Tarea |
+|---|:--:|---|
+| R4.1 | ⬜ | **Importador `import_document_repository` con informe previo.** Por defecto **informa, no escribe**; se escribe solo con `--apply` (precedente del repo: `chapter1_import --apply`, `cleanup_documents --execute`). Se **niega** a aplicar si quedan filas `REVIEW-*`. Lógica pura en `apps/compliance/repository_import.py`, testeable sin filesystem. |
+| R4.1a | ⬜ | **Calce por serial, sin difuso.** Verificado contra producción: de 16 aeronaves, **solo 11 calzan exacto**. 2 tienen un **espacio** en el serial de la app (`RPA-4401`, `RPA-4436`), 2 difieren en caracteres (`RPA-4647` confusión `O`/`0`; `RPA-4884` `1581` vs `1582`), 1 tiene el CC distinto (`RPA-2019`: app CC110, carpeta CC717), 1 no está en `Z:` (`RPA-2198`, Wingtra, serial `2832`, sin CC) y 1 carpeta no tiene aeronave (`CC633/1581F5FHD231500C2Z48` "M3E Revisión"). **Nada de Levenshtein ni sustitución O↔0**: atribuir mal un certificado DGAC es peor que un arreglo manual. Reportar `near:<matrícula>` y decidir a mano. |
+| R4.2 | ⬜ | **Idempotencia y procedencia**: campos nuevos `Document.content_sha256` (la ruta no sirve — `document_upload_path` mete un `uuid4()` fresco en cada path) y `Document.source_reference` (ruta **relativa** al origen). Hay un caso real de **mismo nombre con contenido distinto** (`Poliza_0020099470-21147.pdf`, 110.176 B vs 107.152 B) → deduplicar por nombre sería incorrecto. Desplegar esta migración **sola y primero**: es lo único que toca esquema. |
+| R4.3 | ⬜ | **`expiry_date` nunca se infiere — siempre `NULL` en v1.** El bloque `(DDMMYY)` de los nombres es ambiguo: `RES. EX. 0147(260127)` → 2027 y `RES. EX. 0994(120825)` → 2025; no pueden ser ambos lo mismo. `generate_alerts` filtra `expiry_date__isnull=False`, así que `NULL` es el modo de falla honesto: una fecha adivinada dispara una alerta falsa o —peor— hace que una aeronave *parezca* cubierta. El vencimiento de seguro ya tiene hogar canónico (`Aircraft.insurance_expiry`, LV-29). |
+| R4.4 | ⬜ | **Formatos**: `.msg` (17 archivos, la traza DGAC) solo con antivirus configurado — hoy `scan_uploaded_file` es un no-op silencioso si `DOCUMENTS_ANTIVIRUS_COMMAND` está vacío, y el comando debe **negarse** en vez de escanear la nada. `.rar`/`.zip` (3) y `.kmz` (2) se **saltan**: los KMZ tienen hogar de primera clase en `geo.GeoPlan`, y un `.rar` derrota el propósito de "dar el orden". |
+| R4.5 | ⬜ | **PII que probablemente no debe entrar**: la carpeta contiene cédula de identidad, comprobantes de transferencia bancaria y escrituras notariales. Copiarlos mete PII tras un endpoint de descarga cuya autorización por objeto es justo el área F-05 que la auditoría marcó incompleta. Nunca automático: `REVIEW-SENSITIVE`, opt-in explícito. |
+| R4.6 | ⬜ | **"Documentos de la empresa" como repositorio real** (hoy vacío y sin filtros, búsqueda ni categorías): AOC, normativas DAN, procedimientos y manuales, con categoría y vigencia. Las **normativas DAN se saltan** como `Document`: son PDF públicos de la DGAC y entrarían a los informes de cumplimiento de la empresa como si fueran evidencia propia. |
+| R4.7 | ⬜ | **Licencia RPA del operador**: columna que avisa cuándo falta el PDF. El mecanismo ya existe (GFK + tipo `dgac-credential`); falta la señal de "información incompleta". |
+| R4.8 | ⬜ | Tipo de documento nuevo **"Aviso Mensual de No Operación"** (lo exige el procedimiento interno cuando no hubo vuelos), más `maintenance-certificate`, `aoc-certificate` y `company-procedure`. Van en `seed_document_types` — **gotcha de despliegue LV-45/LV-64: hay que correrlo a mano en `p340`.** |
+
+> **Bloqueante operativo sin resolver:** `Z:` es una unidad mapeada en la máquina Windows
+> del usuario; `p340` es Ubuntu y casi con certeza no la ve. O el import corre localmente
+> contra una copia de la BD de producción, o el árbol se traslada a la VM primero.
+
+### BLOQUE R5 — Trazabilidad y ciclo de vida `P1-P2`
+
+| ID | Est. | Tarea |
+|---|:--:|---|
+| R5.1 | ⬜ | **Mantenimiento con flujo real**: `enviado → en taller → finalizado → en tránsito → casa matriz`, ligado al historial del equipo y cruzado con alertas. Hoy los estados son planos y el formulario mínimo. El usuario lo marcó como *"crítico para el futuro"*. |
+| R5.2 | ⬜ | **[bug] Atribución de movimientos**: `ResourceMovementLog.changed_by_user` queda vacío en casi todo — solo 3 sitios setean `_changed_by_user` y las vistas CRUD del padrón no están entre ellos. Un registro de movimientos sin autor no sirve de evidencia. |
+| R5.3 | ⬜ | Movimientos de recursos: mostrar la columna `detail` (existe y no se renderiza), sumar búsqueda, exportación CSV y **scoping por tenant** — es la única lista del padrón sin ninguno de los tres. |
+| R5.4 | ⬜ | **Ficha de aeronave como expediente**: documentos + movimientos + mantenciones + horas de vuelo en una vista. Pedido como *"trazabilidad del activo"*. |
+| R5.5 | ⬜ | Selector de aeronaves con modelo y serie, no solo matrícula (absorbe LV-65). |
+| R5.6 | ⬜ | Asignación múltiple de **aeronaves**: existe `OperatorBulkAssign` para operadores, no hay equivalente para aeronaves. |
+
+### BLOQUE R6 — Alertas y reportes `P2`
+
+| ID | Est. | Tarea |
+|---|:--:|---|
+| R6.1 | ⬜ | **[bug] Cierre bidireccional alerta ↔ tarjeta.** Hoy resolver la alerta mueve la tarjeta, pero **completar la tarjeta no resuelve la alerta** — no hay señal que lo haga. |
+| R6.2 | ⬜ | **Resolver con motivo**: ISO 10.2 exige causa raíz y verificación de eficacia; hoy "Resolver" no pide nada. |
+| R6.3 | ⬜ | Agrupar alertas del mismo origen (dos aeronaves, misma póliza, misma fecha → una fila). |
+| R6.4 | ⬜ | **Informe ejecutivo en la web** (hoy solo existe como correo programado) y **exportación PDF** (hoy no hay PDF en ningún reporte). |
+| R6.5 | ⬜ | **Revisión del día 15** sobre el mes anterior, además del cierre de fin de mes que ya existe (`check_monthly_records`, LV-30). Lo exige el procedimiento interno. |
+
+### BLOQUE R7 — Base para la auditoría ISO `P2`
+
+Decisión del usuario: **dejar la base y el mapeo, no implementar completo.** Trazabilidad
+cláusula por cláusula en [docs/auditoria-iso-trazabilidad.md](docs/auditoria-iso-trazabilidad.md).
+
+| ID | Est. | Cláusula | Dónde aterriza |
+|---|:--:|---|---|
+| R7.1 | ⬜ | 7.1.3 horas de vuelo | **Casi gratis**: `FlightRecord.duration` ya está calculado, falta el agregado por aeronave y mostrarlo. **Implementar.** |
+| R7.2 | ⬜ | 7.1.3 baterías y ciclos | Modelo nuevo. **Punto natural de AeroLink** (DJI reporta ciclos). Diseñar la forma, no llenarla a mano. |
+| R7.3 | ⬜ | 7.1.5 calibración GNSS/RTK, GCP | Tipo de documento nuevo. Ya hay un `Certificado Calibración.pdf` en `Z:` esperando. |
+| R7.4 | ⬜ | 8.5.1/8.6 calidad del entregable (RMSE, GSD) | Solo diseño. |
+| R7.5 | ⬜ | 45001 IPER, baterías LiPo, jornada de vuelo | Solo diseño. |
+| R7.6 | ⬜ | 10.2 no conformidades, re-vuelos | Parcial (LV-46 ya crea mantención desde incidente). Diseñar el resto. |
+| R7.7 | ⬜ | 9.1.1 KPIs | Parcial (el informe ejecutivo ya compara `valid_pct`, `expired`, `due_30`). |
+
+### BLOQUE R8 — Clima y contexto operacional `P3`
+
+| ID | Est. | Tarea |
+|---|:--:|---|
+| R8.1 | ⬜ | Clima/viento tipo [UAV Forecast](https://www.uavforecast.com/) en el calendario y antes del vuelo (ISO 8.1 exige revisión meteorológica). **Hoy el proyecto tiene cero llamadas HTTP salientes** — es una decisión de arquitectura, no una feature: toca CSP, secretos, caché y degradación cuando el servicio no responde. Diseñar antes de elegir proveedor. |
+
+### BLOQUE X — Contrato de coexistencia con AeroLink `P1`
+
+Decisión completa en [docs/dev/adr-0002-coexistencia-aerolink.md](docs/dev/adr-0002-coexistencia-aerolink.md).
+**Las dos apps siguen separadas en despliegue** (las razones del ADR-0001 de AeroLink se
+sostienen: la ingesta MQTT es continua y asíncrona, y su falla no debe voltear el sistema
+operacional). Lo que cambia es que el contrato deja de estar sin definir.
+
+| ID | Est. | Tarea |
+|---|:--:|---|
+| X.1 | ⬜ | **`Aircraft.serial_number` como llave de cruce.** Hoy es `CharField(max_length=100, blank=True)`: opcional, no único, sin normalizar. Es la única llave presente en los **tres** mundos — la reporta DJI, está en los nombres de carpeta de `Z:` y la registra la DGAC. **Verificado en producción: las 16 la tienen poblada**, pero 2 traen un espacio y 2 no calzan con `Z:`. Normalizar → resolver las 4 discrepancias contra el certificado DGAC → recién entonces imponer `unique`. Tarea más barata y de mayor palanca del plan. |
+| X.2 | ⬜ | Declarar por escrito: **AeroControl es maestro del padrón** (aeronaves, operadores, centros de costo, permisos, documentos); **AeroLink es maestro de telemetría, sesiones de vuelo y evidencia**. Ninguno escribe en el dominio del otro; ninguno comparte base de datos ni filesystem. |
+| X.3 | ⬜ | AeroControl expone el padrón como endpoint **de solo lectura** para AeroLink. Ya hay DRF, token auth y throttling: es un scope nuevo, no una app nueva. |
+| X.4 | ⬜ | Más adelante: recibir sesiones de vuelo cerradas desde AeroLink y conciliarlas con `FlightRecord`. **Aquí es donde el proyecto paga**: horas de vuelo y ciclos de batería (R7.1/R7.2) dejan de depender de lo que escriba el operador. |
+| X.5 | ⬜ | Identidad (Entra ID vs cuentas Django para las mismas ~8 personas) y retención cruzada. |
 
 ---
 
