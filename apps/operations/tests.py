@@ -525,6 +525,61 @@ def test_permission_approval_ignores_a_non_current_or_archived_permit_pdf():
 
 
 @pytest.mark.django_db
+def test_permission_completion_is_blocked_without_the_dgac_permit_pdf():
+    """R2.4: completing used to have no document guard at all -- a permit
+    could reach 'approved' with the PDF on file and then 'completed' after
+    it was removed/superseded, same risk the approve guard (LV-64) exists to
+    prevent."""
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    permission = _permission(cost_center, operator, aircraft, status="approved")
+    User.objects.create_superuser("dispatcher", "dispatcher@test.com", "password")
+    client = Client()
+    assert client.login(username="dispatcher", password="password")
+
+    response = client.post(reverse("permission-complete", args=[permission.pk]))
+
+    assert response.status_code == 302
+    permission.refresh_from_db()
+    assert permission.status == "approved"
+
+
+@pytest.mark.django_db
+def test_permission_completion_succeeds_once_the_dgac_permit_pdf_is_attached():
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    permission = _permission(cost_center, operator, aircraft, status="approved")
+    _attach_dgac_permit_pdf(permission)
+    User.objects.create_superuser("dispatcher", "dispatcher@test.com", "password")
+    client = Client()
+    assert client.login(username="dispatcher", password="password")
+
+    response = client.post(reverse("permission-complete", args=[permission.pk]))
+
+    assert response.status_code == 302
+    permission.refresh_from_db()
+    assert permission.status == "completed"
+
+
+@pytest.mark.django_db
 def test_flight_permission_with_history_cannot_be_hard_deleted():
     cost_center = CostCenter.objects.create(code="OPS", name="Operations")
     operator = Operator.objects.create(

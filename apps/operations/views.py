@@ -255,42 +255,47 @@ class FlightPermissionDetail(
         return context
 
 
-class FlightPermissionApprove(StatusTransitionView):
-    model = FlightPermission
-    target_status = "approved"
-    valid_from_statuses = ["requested"]
-    success_message = gettext_lazy("Permission approved.")
+class RequireDgacPermitPdfMixin:
+    """LV-51/LV-64/R2.4: the signed DGAC authorization ("Autorización de
+    Operación RPA", the folio'd PDF that comes back once the DGAC actually
+    approves the operation) must be on file before a permit can move to
+    this status -- otherwise AeroControl's status can outrun the real DGAC
+    paperwork. This is deliberately NOT "dgac-flight-permit" (the letter
+    that goes *to* the DGAC as part of the request) -- that one can exist
+    long before an approval and does not itself certify one. Originally
+    only guarded Approve (LV-64); R2.4 extended it to Complete because a
+    permit reaching approved and then completed without ever attaching the
+    signed PDF was still possible. Checked before the base transition, same
+    guard shape as MaintenanceComplete's pre-check."""
+
+    missing_pdf_message = None
 
     def post(self, request, pk):
-        # LV-51/LV-64: the signed DGAC authorization ("Autorización de
-        # Operación RPA", the folio'd PDF that comes back once the DGAC
-        # actually approves the operation) must be on file before a permit
-        # can be marked approved here -- otherwise AeroControl's "approved"
-        # status can outrun the real DGAC paperwork. This is deliberately
-        # NOT "dgac-flight-permit" (the letter that goes *to* the DGAC as
-        # part of the request) -- that one can exist long before an approval
-        # and does not itself certify one. Checked before the base
-        # transition, same guard shape as MaintenanceComplete's pre-check.
         from apps.compliance.models import Document
 
-        permission = get_object_or_404(FlightPermission, pk=pk, is_active=True)
+        permission = get_object_or_404(self.model, pk=pk, is_active=True)
         has_permit_pdf = Document.objects.filter(
-            content_type=ContentType.objects.get_for_model(FlightPermission),
+            content_type=ContentType.objects.get_for_model(self.model),
             object_id=permission.pk,
             doc_type__code="dgac-rpa-operation-authorization",
             is_current_version=True,
             is_active=True,
         ).exists()
         if not has_permit_pdf:
-            messages.error(
-                request,
-                _(
-                    "Upload the DGAC operation authorization (the signed "
-                    "SIGO PDF) before approving this permit."
-                ),
-            )
+            messages.error(request, self.missing_pdf_message)
             return redirect(permission)
         return super().post(request, pk)
+
+
+class FlightPermissionApprove(RequireDgacPermitPdfMixin, StatusTransitionView):
+    model = FlightPermission
+    target_status = "approved"
+    valid_from_statuses = ["requested"]
+    success_message = gettext_lazy("Permission approved.")
+    missing_pdf_message = gettext_lazy(
+        "Upload the DGAC operation authorization (the signed SIGO PDF) "
+        "before approving this permit."
+    )
 
 
 class FlightPermissionDeny(StatusTransitionView):
@@ -300,11 +305,15 @@ class FlightPermissionDeny(StatusTransitionView):
     success_message = gettext_lazy("Permission denied.")
 
 
-class FlightPermissionComplete(StatusTransitionView):
+class FlightPermissionComplete(RequireDgacPermitPdfMixin, StatusTransitionView):
     model = FlightPermission
     target_status = "completed"
     valid_from_statuses = ["approved"]
     success_message = gettext_lazy("Permission completed.")
+    missing_pdf_message = gettext_lazy(
+        "Upload the DGAC operation authorization (the signed SIGO PDF) "
+        "before completing this permit."
+    )
 
 
 class FlightRecordList(OList):
