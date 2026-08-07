@@ -23,6 +23,22 @@ class CostCenter(BaseModel):
     # LV-16: optional -- the code plus the contract administrator identify the
     # cost center; a free-text name is no longer required on the form.
     name = models.CharField(max_length=150, blank=True)
+    # R3.3(b): a separate axis from `is_active` (which is this project's soft
+    # delete, AGENTS.md -- never remove operative rows). A cost center whose
+    # client contract ended is not an error/duplicate to archive away; it
+    # should keep showing (greyed, grouped after the operative ones) so its
+    # history stays reachable from the normal list, not just from "archived".
+    CONTRACT_STATUS_CHOICES = [
+        ("active", _("Active")),
+        ("closed", _("Closed")),
+    ]
+    # blank=True: unlike R2.6's area_type, closing a contract is an
+    # occasional action on an existing record, not a fact every cost center
+    # needs on creation -- forcing a choice on every form would be friction
+    # for no benefit when "active" is already the right default.
+    contract_status = models.CharField(
+        max_length=20, choices=CONTRACT_STATUS_CHOICES, default="active", blank=True
+    )
     # Free-text name kept from the Chapter 1 import. It cannot be used to reach
     # anyone (the imported values do not match operator names), so notifications
     # use responsible_operator; this stays as the historical record.
