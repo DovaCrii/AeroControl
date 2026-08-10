@@ -5,6 +5,21 @@
 > post-auditoría"**, al inicio del archivo. Este documento es solo el resumen
 > de estado; el detalle de cada ítem vive en las filas de `MASTER_PLAN.md`.
 
+## Estado al 2026-08-10 (última actualización: normalización X.1)
+
+- **🔄 X.1 — normalización de `Aircraft.serial_number`, hecho hoy, no cerrado del todo.**
+  `Aircraft.save()` limpia todo el whitespace (incluido el interno —
+  `"".join(serial.split())`) y la migración de datos `0027` aplicó lo mismo a
+  las 16 filas reales. Verificado contra la copia restaurada + `Z:` en vivo:
+  las 2 discrepancias de espacio (`RPA-4401`, `RPA-4436`) ya quedaron
+  resueltas. **Quedan 2 discrepancias reales sin resolver** —
+  `RPA-4647` (ceros vs "OO") y `RPA-4884` (`1581` vs `1582` contra la carpeta
+  `CC717`) — que ninguna fuente disponible puede arbitrar; hace falta la
+  placa física del equipo o el certificado DGAC. `unique=True` en el campo
+  queda pendiente de esa verificación. 734 tests verdes (730 antes),
+  `ruff`/`bandit`/`pip-audit` limpios. Rama `codex/serial-number-normalize`,
+  sin mergear.
+
 ## Estado al 2026-08-10
 
 - **Desplegado y confirmado en `p340`, commit `e008748`.** Las cinco
