@@ -5,40 +5,32 @@
 > post-auditoría"**, al inicio del archivo. Este documento es solo el resumen
 > de estado; el detalle de cada ítem vive en las filas de `MASTER_PLAN.md`.
 
-## Estado al 2026-08-07 (noche)
+## Estado al 2026-08-10
 
-- **`main` tiene commits sin desplegar.** El último deploy confirmado a
-  `p340` fue el commit `8224373` (2026-08-05). Desde entonces se subieron
-  B3.1/B3.2/B3.5, T5.7, todo el **BLOQUE R1** (5 bugs de la revisión en
-  vivo, 3 corregidos + 2 investigados-no-reproducibles), y de **R2**: R2.5
-  (desplegable de estado en permisos + fix de un bug real de navegación),
-  **R2.1** (vista de edición de permisos, no existía), **R2.4** (el PDF
-  DGAC ahora también se exige para `completed`, no solo `approved`) y
-  **R2.6** (campo poblado/no poblado/mixto), y todo el **BLOQUE R3**
-  salvo lo bloqueado en datos reales: **R3.2** (ordenamiento de listas) y
-  **R3.3** completo — (a) operador archivado visible, (b) `contract_status`
-  en `CostCenter` (decisión de negocio tomada en esta misma ventana, ver
-  abajo), (c) investigado, ya estaba implementado. Nada de esto llegó a
-  producción todavía.
+- **Desplegado y confirmado en `p340`, commit `e008748`.** Las cinco
+  migraciones pendientes (`workboard/0009`, `registry/0024`,
+  `operations/0012`, `operations/0013`, `registry/0025`) se aplicaron sin
+  error, `collectstatic` corrió y `aerocontrol.service` está
+  `active (running)`. Este commit incluye todo lo subido el 2026-08-07:
+  B3.1/B3.2/B3.5, T5.7, **BLOQUE R1** completo (3 bugs corregidos + 2
+  investigados-no-reproducibles), **R2.1/R2.4/R2.5/R2.6** y **BLOQUE R3**
+  completo salvo lo bloqueado en datos reales (R3.1/R3.1a) — R3.2
+  (ordenamiento de listas) y R3.3 completo (operador archivado visible,
+  `CostCenter.contract_status`, `Aircraft.retired` verificado).
 - **709 tests verdes** (686 antes de R2.5; sumaron los de
-  R2.5/R2.1/R2.4/R2.6/R3.2/R3.3, no hubo que restar nada). `ruff check .` y
-  `ruff format --check .` también verdes. Catálogo `.po` regenerado tres
-  veces con `makemessages -l es` (R2.4, R2.6, R3.3b): aparecieron fuzzy
-  nuevos las tres veces (msgstr copiado de otro string por parecido, no por
-  significado) — corregidos a mano antes de compilar, como advierte la nota
-  de abajo.
-- **`p340` estuvo sin internet gran parte del día** y volvió a tener acceso
-  SSH hacia el final — no se llegó a desplegar antes de cerrar esta ventana.
-- **Cinco migraciones nuevas sin aplicar en `p340`**: `workboard/0009`
-  (`wip_limit`), `registry/0024` (`Operator.user`), `operations/0012`
-  (choices en `PermissionHistory`), `operations/0013` (`area_type`, nula —
-  no rompe los permisos ya cargados), `registry/0025` (`contract_status`,
-  default "active" — no rompe los centros de costo ya cargados). El deploy
-  con sudo (abajo) ya corre `migrate` — solo falta ejecutarlo.
+  R2.5/R2.1/R2.4/R2.6/R3.2/R3.3). `ruff check .` y `ruff format --check .`
+  también verdes.
 - **Tres documentos de plan nuevos** (solo lectura, sin código):
   `docs/auditoria-iso-trazabilidad.md` (mapeo de las 14 cláusulas ISO),
   `docs/dev/adr-0002-coexistencia-aerolink.md` (contrato con la segunda app,
-  AeroLink), y un PR ya abierto en `DovaCrii/AeroLink` (#31, plan revisado).
+  AeroLink).
+- **AeroLink (repo separado) quedó estabilizado en esta misma ventana**: los
+  tres PRs pendientes (#29 esquema+sondas, #30→#33 verificador de
+  conectividad/licencia DJI, #31 revisión de plan + ADR-0002) están
+  mergeados a `main`, CI verde, 18/18 tests. AL-101 y AL-102 cerrados en el
+  tracker. **Pendiente de esta ventana:** confirmar AL-003 (¿`p340` puede
+  recibir MQTTS 8883, o solo HTTPS por Tailscale Funnel?) — es el
+  bloqueador real antes de que AeroLink toque EMQX/Postgres/worker (M1).
 
 ## Pendiente inmediato (antes de dar por cerrado el deploy)
 
