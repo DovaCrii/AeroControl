@@ -220,6 +220,21 @@ class Aircraft(BaseModel):
         return self.registration
 
     @property
+    def selector_label(self):
+        """R5.5: `registration` alone does not distinguish "which M300 is
+        this" in a dropdown with several of the same model. Deliberately
+        not folded into `__str__` -- other places (movement logs, the
+        assignment tables) depend on that staying just the registration.
+        Used via `label_from_instance` in every form that lets someone pick
+        an aircraft (AssignmentForm, AircraftAssignmentForm,
+        AircraftBulkAssignForm, FlightRecordForm,
+        FlightPermissionForm.aircraft_fleet, MaintenanceRecordForm)."""
+        parts = [self.registration, self.model]
+        if self.serial_number:
+            parts.append(f"S/N {self.serial_number}")
+        return " · ".join(parts)
+
+    @property
     def insurance_is_overdue(self):
         """LV-29: the JAC insurance lapsed (past its expiry). ``None`` expiry --
         no date on file -- is not overdue, it is simply unknown."""

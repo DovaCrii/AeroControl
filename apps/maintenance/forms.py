@@ -30,6 +30,12 @@ class MaintenanceRecordForm(AeroModelForm):
             ),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # R5.5: registration alone doesn't distinguish "which M300" in a
+        # dropdown with several of the same model.
+        self.fields["aircraft"].label_from_instance = lambda obj: obj.selector_label
+
 
 class MaintenanceHistoryForm(AeroModelForm):
     class Meta:

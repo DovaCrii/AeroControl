@@ -5,7 +5,25 @@
 > post-auditoría"**, al inicio del archivo. Este documento es solo el resumen
 > de estado; el detalle de cada ítem vive en las filas de `MASTER_PLAN.md`.
 
-## Estado al 2026-08-10 (última actualización: R5.7 hecho + fix de migración)
+## Estado al 2026-08-10 (última actualización: R5.5/R5.6 hechos)
+
+- **✅ R5.5 y R5.6 hechos, BLOQUE R5 queda casi completo.** `Aircraft.
+  selector_label` ("RPA-1 · M300 · S/N 1ABC234") enlazado vía
+  `label_from_instance` en los 6 selectores de aeronave de toda la app
+  (`registry`, `operations`, `maintenance`) — deliberadamente separado de
+  `__str__` (que sigue siendo solo la matrícula). `bulk_assign_aircraft` +
+  `AircraftBulkAssignForm` + vista `AircraftBulkAssign` toman el "+ Nuevo"
+  de `aircraftassignment-create`, mismo movimiento que `OperatorBulkAssign`
+  ya hacía. Verificado en vivo contra el demo (selector con etiquetas
+  correctas, formulario de asignación múltiple renderizando y traducido).
+  Del **BLOQUE R5 solo queda R5.1** (mantenimiento con flujo real — pide
+  propuesta de diseño primero, no es un cambio chico como los demás) y
+  **R5.8** (observación de Habilitaciones, ya capturada sin implementar,
+  esperando que el usuario decida si la revisa ahora o después).
+- Rama `codex/r5-aircraft-selector-and-bulk-assign`, apilada sobre toda la
+  cadena de esta ventana, sin mergear ni con push.
+
+## Estado al 2026-08-10 (R5.7 hecho + fix de migración)
 
 - **✅ R5.7 hecho.** `Aircraft.insurance_status` (`pending`/`active`) rastrea
   el trámite del seguro JAC antes de que exista la fecha real de vigencia

@@ -56,6 +56,11 @@ class FlightPermissionForm(AeroModelForm):
         # LV-39: the folio is only demanded once approved (see clean); until then
         # the permit can be assembled without it.
         self.fields["permission_number"].required = False
+        # R5.5: registration alone doesn't distinguish "which M300" in a
+        # roster with several of the same model.
+        self.fields["aircraft_fleet"].label_from_instance = lambda obj: (
+            obj.selector_label
+        )
 
     def clean(self):
         cleaned = super().clean()
@@ -106,6 +111,9 @@ class FlightRecordForm(AeroModelForm):
         self.fields["permission"].queryset = FlightPermission.objects.filter(
             is_active=True
         ).order_by("-valid_from")
+        # R5.5: registration alone doesn't distinguish "which M300" in a
+        # dropdown with several of the same model.
+        self.fields["aircraft"].label_from_instance = lambda obj: obj.selector_label
         # T5.5: once a permission is chosen (prefilled from its detail page, or
         # posted back), narrow the pilot and aircraft pickers to that
         # permission's roster instead of the whole registry. The clean() below

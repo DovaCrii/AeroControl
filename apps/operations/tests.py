@@ -897,6 +897,38 @@ def test_total_flight_duration_sums_every_active_record_for_the_aircraft():
 
 
 @pytest.mark.django_db
+def test_flight_record_form_aircraft_field_uses_the_selector_label():
+    """R5.5: registration alone doesn't distinguish "which M300" in a
+    dropdown with several of the same model."""
+    aircraft = Aircraft.objects.create(
+        registration="RPA-1",
+        type="RPA",
+        model="M300",
+        manufacturer="DJI",
+        serial_number="1ABC234",
+    )
+    form = FlightRecordForm()
+    assert form.fields["aircraft"].label_from_instance(aircraft) == (
+        "RPA-1 · M300 · S/N 1ABC234"
+    )
+
+
+@pytest.mark.django_db
+def test_flight_permission_form_aircraft_fleet_field_uses_the_selector_label():
+    aircraft = Aircraft.objects.create(
+        registration="RPA-1",
+        type="RPA",
+        model="M300",
+        manufacturer="DJI",
+        serial_number="1ABC234",
+    )
+    form = FlightPermissionForm()
+    assert form.fields["aircraft_fleet"].label_from_instance(aircraft) == (
+        "RPA-1 · M300 · S/N 1ABC234"
+    )
+
+
+@pytest.mark.django_db
 def test_record_list_shows_real_columns_not_the_generic_ones(admin_client):
     """LV-59: was the only list in the area still on the generic Name/
     Created/Status columns -- this is why a screenshot of it showed "Nombre"
