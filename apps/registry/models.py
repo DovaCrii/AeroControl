@@ -217,6 +217,15 @@ class Aircraft(BaseModel):
         if errors:
             raise ValidationError(errors)
 
+    def save(self, *args, **kwargs):
+        # X.1: the DJI serial never contains whitespace -- production has 2
+        # aircraft with a stray internal space typed into this field
+        # (confirmed against the Z: folder names, which carry the real
+        # serial). `.split()`+`"".join` removes internal as well as leading/
+        # trailing whitespace, unlike `.strip()`.
+        self.serial_number = "".join(self.serial_number.split())
+        super().save(*args, **kwargs)
+
 
 class Operator(BaseModel):
     tenant = models.ForeignKey(
