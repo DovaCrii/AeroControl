@@ -88,6 +88,17 @@ class Document(BaseModel):
     issue_date = models.DateField()
     expiry_date = models.DateField(null=True, blank=True)
     is_current_version = models.BooleanField(default=True)
+    # R4.2: idempotency and provenance for the Z: repository importer.
+    # `file_path` cannot detect a re-import -- document_upload_path() mints a
+    # fresh uuid4() into the path every time. `content_sha256` catches the
+    # real case found in production of two files sharing a name with
+    # different content (a policy PDF filed under two subfolders, 110176 B
+    # vs 107152 B) -- deduplicating by name alone would silently keep only
+    # one. `source_reference` is the path relative to the import source
+    # (e.g. `Z:`), so a rerun can tell "already imported this exact file"
+    # from "new file at this path" without re-hashing everything.
+    content_sha256 = models.CharField(max_length=64, blank=True)
+    source_reference = models.CharField(max_length=500, blank=True)
 
     class Meta:
         verbose_name = _("document")
