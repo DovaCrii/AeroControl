@@ -294,3 +294,16 @@ class AlertForm(AeroModelForm):
     class Meta:
         model = Alert
         fields = ["alert_rule", "content_type", "object_id", "message"]
+
+
+class AlertResolveForm(forms.Form):
+    """R6.2: ISO 10.2 asks for the root cause on record, not just "handled".
+    A plain Form, not a ModelForm -- this only ever feeds Alert.resolve(),
+    never a direct model save, and the field it collects (the reason) does
+    not have to exist until resolution."""
+
+    reason = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 2}),
+        label=_("Reason / root cause"),
+        help_text=_("Why this happened and how it was addressed."),
+    )

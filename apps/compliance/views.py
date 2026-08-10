@@ -2,7 +2,7 @@ from contextlib import contextmanager, suppress
 
 from django.contrib import messages
 from django.db import transaction
-from django.http import FileResponse, Http404, HttpResponseBadRequest
+from django.http import FileResponse, Http404, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext as _
@@ -30,7 +30,13 @@ from apps.core.views import (
     TenantScopedQuerysetMixin,
 )
 from apps.core.tenancy import scope_queryset_to_tenant
-from .forms import AlertForm, AlertRuleForm, DocumentForm, DocumentTypeForm
+from .forms import (
+    AlertForm,
+    AlertResolveForm,
+    AlertRuleForm,
+    DocumentForm,
+    DocumentTypeForm,
+)
 from .models import (
     Alert,
     AlertRule,
@@ -497,14 +503,48 @@ def _redirect_back(request, fallback="alert-list"):
 
 
 class AlertResolve(ModelPermissionRequiredMixin, View):
+    """R6.2: ISO 10.2 asks for the root cause on record -- "Resolve" used to
+    take nothing at all. AlertResolveForm makes `reason` required for this
+    one manual click; the automatic callers of Alert.resolve() (generate_alerts
+    -> resolve_open_alerts_for, Document.resolve_related_alerts, R6.1's
+    task-completion signal) have no human to ask and stay reason-less.
+
+    A crowded list row has no room for a required textarea, so this is a
+    small modal (the same generic/_form_content.html every other
+    create/edit modal in the app uses) instead of the one-click button the
+    other row actions still are.
+    """
+
     model = Alert
     permission_action = "change"
 
+    def get(self, request, pk):
+        get_object_or_404(Alert, pk=pk, is_active=True)
+        return render(
+            request,
+            "generic/_form_content.html",
+            {"form": AlertResolveForm(), "title": _("Resolve alert")},
+        )
+
     def post(self, request, pk):
         alert = get_object_or_404(Alert, pk=pk, is_active=True)
-        moved_task = alert.resolve()
-        metadata = {"moved_task_id": str(moved_task.pk)} if moved_task else {}
+        form = AlertResolveForm(request.POST)
+        if not form.is_valid():
+            return render(
+                request,
+                "generic/_form_content.html",
+                {"form": form, "title": _("Resolve alert")},
+                status=422,
+            )
+        moved_task = alert.resolve(reason=form.cleaned_data["reason"])
+        metadata = {"reason": form.cleaned_data["reason"]}
+        if moved_task:
+            metadata["moved_task_id"] = str(moved_task.pk)
         set_audit_context(request, alert, action="alert_resolved", metadata=metadata)
+        if request.headers.get("HX-Request") == "true":
+            return HttpResponse(
+                status=204, headers={"HX-Trigger": "modal-form-success"}
+            )
         messages.success(request, _("Alert resolved."))
         return _redirect_back(request)
 
