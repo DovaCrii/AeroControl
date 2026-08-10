@@ -253,14 +253,16 @@ class TestAircraftAssignmentViews:
 
     @pytest.mark.django_db
     def test_create_requires_add_permission(self, db):
+        # R5.6: the "+ New" entry point is now the bulk-assign form (same
+        # move OperatorAssignment made for LV-18) -- one aircraft is just
+        # the smallest case of "one or more".
         aircraft = Aircraft.objects.create(
             registration="CC-BBB", type="RPA", model="M3", manufacturer="DJI"
         )
         cc = _cc("CC1")
         payload = {
-            "aircraft": aircraft.pk,
+            "aircraft": [aircraft.pk],
             "cost_center": cc.pk,
-            "start_date": TODAY.isoformat(),
             "status": "active",
             "purpose": "",
         }
@@ -270,6 +272,59 @@ class TestAircraftAssignmentViews:
         assert response.status_code == 302
         assert AircraftAssignment.objects.filter(
             aircraft=aircraft, cost_center=cc
+        ).exists()
+
+    @pytest.mark.django_db
+    def test_create_assigns_several_aircraft_at_once(self, db):
+        aircraft_fleet = [
+            Aircraft.objects.create(
+                registration=f"CC-{i}", type="RPA", model="M3", manufacturer="DJI"
+            )
+            for i in range(3)
+        ]
+        cc = _cc("CC1")
+        payload = {
+            "cost_center": cc.pk,
+            "aircraft": [a.pk for a in aircraft_fleet],
+            "status": "active",
+            "purpose": "",
+        }
+        response = _client("add_aircraftassignment").post(
+            reverse("aircraftassignment-create"), payload, HTTP_HX_REQUEST="true"
+        )
+        assert response.status_code == 204
+        assert response.headers.get("HX-Trigger") == "modal-form-success"
+        assert AircraftAssignment.objects.filter(cost_center=cc).count() == 3
+        for aircraft in aircraft_fleet:
+            aircraft.refresh_from_db()
+            assert aircraft.cost_center_id == cc.pk
+
+    @pytest.mark.django_db
+    def test_bulk_reassign_moves_instead_of_rejecting(self, db):
+        aircraft = Aircraft.objects.create(
+            registration="CC-BBB", type="RPA", model="M3", manufacturer="DJI"
+        )
+        cc1, cc2 = _cc("CC1"), _cc("CC2")
+        AircraftAssignment.objects.create(
+            aircraft=aircraft, cost_center=cc1, start_date=TODAY, status="active"
+        )
+        payload = {
+            "cost_center": cc2.pk,
+            "aircraft": [aircraft.pk],
+            "status": "active",
+            "purpose": "",
+        }
+        response = _client("add_aircraftassignment").post(
+            reverse("aircraftassignment-create"), payload, HTTP_HX_REQUEST="true"
+        )
+        assert response.status_code == 204
+        aircraft.refresh_from_db()
+        assert aircraft.cost_center_id == cc2.pk
+        assert AircraftAssignment.objects.filter(
+            aircraft=aircraft, cost_center=cc1, status="ended"
+        ).exists()
+        assert AircraftAssignment.objects.filter(
+            aircraft=aircraft, cost_center=cc2, status="active"
         ).exists()
 
 
@@ -526,6 +581,96 @@ class TestBulkAssignService:
             operator=op, cost_center=cc1, status="ended"
         ).exists()
         latest = ResourceMovementLog.objects.filter(resource_id=op.pk).first()
+        assert latest.movement == "reassigned"
+        assert latest.from_cost_center_id == cc1.pk
+        assert latest.to_cost_center_id == cc2.pk
+        assert latest.changed_by_user_id == user.pk
+
+
+class TestBulkAssignAircraftService:
+    """R5.6: same bulk-move service as TestBulkAssignService above, for
+    aircraft -- see apps.registry.services.bulk_assign_aircraft."""
+
+    @pytest.mark.django_db
+    def test_assigns_many_aircraft_and_returns_count(self, db):
+        from apps.registry.services import bulk_assign_aircraft
+
+        fleet = [
+            Aircraft.objects.create(
+                registration=f"CC-{i}", type="RPA", model="M3", manufacturer="DJI"
+            )
+            for i in range(3)
+        ]
+        cc = _cc("CC1")
+        moved = bulk_assign_aircraft(
+            aircraft=fleet,
+            cost_center=cc,
+            status="active",
+            purpose="",
+            purpose_detail="",
+            user=None,
+        )
+        assert moved == 3
+        assert (
+            AircraftAssignment.objects.filter(cost_center=cc, status="active").count()
+            == 3
+        )
+        for aircraft in fleet:
+            aircraft.refresh_from_db()
+            assert aircraft.cost_center_id == cc.pk
+
+    @pytest.mark.django_db
+    def test_aircraft_already_on_target_is_skipped(self, db):
+        from apps.registry.services import bulk_assign_aircraft
+
+        aircraft = Aircraft.objects.create(
+            registration="CC-BBB", type="RPA", model="M3", manufacturer="DJI"
+        )
+        cc = _cc("CC1")
+        AircraftAssignment.objects.create(
+            aircraft=aircraft, cost_center=cc, start_date=TODAY, status="active"
+        )
+        moved = bulk_assign_aircraft(
+            aircraft=[aircraft],
+            cost_center=cc,
+            status="active",
+            purpose="",
+            purpose_detail="",
+            user=None,
+        )
+        assert moved == 0
+        assert (
+            AircraftAssignment.objects.filter(aircraft=aircraft, cost_center=cc).count()
+            == 1
+        )
+
+    @pytest.mark.django_db
+    def test_moving_an_aircraft_ends_the_old_and_logs_reassigned(self, db):
+        from apps.registry.services import bulk_assign_aircraft
+
+        aircraft = Aircraft.objects.create(
+            registration="CC-BBB", type="RPA", model="M3", manufacturer="DJI"
+        )
+        cc1, cc2 = _cc("CC1"), _cc("CC2")
+        AircraftAssignment.objects.create(
+            aircraft=aircraft, cost_center=cc1, start_date=TODAY, status="active"
+        )
+        user = User.objects.create_user("mover2", password="pw")
+        moved = bulk_assign_aircraft(
+            aircraft=[aircraft],
+            cost_center=cc2,
+            status="active",
+            purpose="",
+            purpose_detail="",
+            user=user,
+        )
+        assert moved == 1
+        aircraft.refresh_from_db()
+        assert aircraft.cost_center_id == cc2.pk
+        assert AircraftAssignment.objects.filter(
+            aircraft=aircraft, cost_center=cc1, status="ended"
+        ).exists()
+        latest = ResourceMovementLog.objects.filter(resource_id=aircraft.pk).first()
         assert latest.movement == "reassigned"
         assert latest.from_cost_center_id == cc1.pk
         assert latest.to_cost_center_id == cc2.pk

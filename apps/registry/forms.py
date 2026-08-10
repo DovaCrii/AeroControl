@@ -325,6 +325,12 @@ class AssignmentForm(AeroModelForm):
     # in the model, so the form picks up the active language on its own.
     # Verified identical output both ways before removing it.
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # R5.5: registration alone doesn't distinguish "which M300" in a
+        # dropdown with several of the same model.
+        self.fields["aircraft"].label_from_instance = lambda obj: obj.selector_label
+
     def clean(self):
         cleaned = super().clean()
         operator = cleaned.get("operator")
@@ -467,6 +473,56 @@ class OperatorBulkAssignForm(forms.Form):
         return cleaned
 
 
+class AircraftBulkAssignForm(forms.Form):
+    """R5.6: assign several aircraft to one cost center at once -- the same
+    pattern as OperatorBulkAssignForm above (LV-18), which had no aircraft
+    equivalent. See apps.registry.services.bulk_assign_aircraft.
+    """
+
+    cost_center = forms.ModelChoiceField(
+        queryset=CostCenter.objects.filter(is_active=True).order_by("code"),
+        label=_("Cost center"),
+    )
+    aircraft = forms.ModelMultipleChoiceField(
+        queryset=Aircraft.objects.filter(is_active=True).order_by("registration"),
+        label=_("Aircraft"),
+        widget=forms.SelectMultiple(attrs={"size": 12}),
+        help_text=_(
+            "Select one or more. Each is assigned to the cost center above; "
+            "an aircraft already assigned elsewhere is moved here."
+        ),
+    )
+    status = forms.ChoiceField(
+        choices=AircraftAssignment.STATUS_CHOICES,
+        initial="active",
+        label=_("Status"),
+    )
+    purpose = forms.ChoiceField(
+        choices=[("", "---------"), *PURPOSE_CHOICES],
+        required=False,
+        label=_("Operation or purpose"),
+    )
+    purpose_detail = forms.CharField(
+        max_length=250,
+        required=False,
+        label=_("Purpose detail"),
+        help_text=_("Required when purpose is 'Other'."),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # R5.5: same reasoning as AssignmentForm.
+        self.fields["aircraft"].label_from_instance = lambda obj: obj.selector_label
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get("purpose") == "other" and not cleaned.get("purpose_detail"):
+            self.add_error(
+                "purpose_detail", _("Describe the purpose when 'Other' is selected.")
+            )
+        return cleaned
+
+
 class AircraftAssignmentForm(AeroModelForm):
     """OPS-1 per-resource assignment: an aircraft anchored to a cost center."""
 
@@ -493,6 +549,11 @@ class AircraftAssignmentForm(AeroModelForm):
         help_texts = {
             "purpose_detail": _("Required when purpose is 'Other'."),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # R5.5: same reasoning as AssignmentForm above.
+        self.fields["aircraft"].label_from_instance = lambda obj: obj.selector_label
 
 
 class QualificationForm(AeroModelForm):

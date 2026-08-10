@@ -40,10 +40,11 @@ from .forms import (
     OperatorAssignmentForm,
     OperatorBulkAssignForm,
     AircraftAssignmentForm,
+    AircraftBulkAssignForm,
     QualificationForm,
     QualificationTypeForm,
 )
-from .services import bulk_assign_operators
+from .services import bulk_assign_aircraft, bulk_assign_operators
 
 
 class RegistryList(
@@ -742,17 +743,48 @@ OperatorAssignmentDetail, OperatorAssignmentCreate, OperatorAssignmentUpdate = (
         },
     ),
 )
+
+
+class AircraftBulkAssign(HtmxFormMixin, ModelPermissionRequiredMixin, FormView):
+    """R5.6: assign many aircraft to one cost center in a single submit --
+    the same pattern as OperatorBulkAssign above (LV-18), which had no
+    aircraft equivalent. Takes over the aircraft-assignment "+ New" entry
+    point; editing a single existing assignment still goes through the
+    ModelForm.
+    """
+
+    model = AircraftAssignment
+    permission_action = "add"
+    template_name = "generic/form.html"
+    form_class = AircraftBulkAssignForm
+
+    def get_success_url(self):
+        return reverse("aircraftassignment-list")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = _("Assign aircraft to a cost center")
+        return context
+
+    def form_valid(self, form):
+        bulk_assign_aircraft(
+            aircraft=form.cleaned_data["aircraft"],
+            cost_center=form.cleaned_data["cost_center"],
+            status=form.cleaned_data["status"],
+            purpose=form.cleaned_data["purpose"],
+            purpose_detail=form.cleaned_data["purpose_detail"],
+            user=self.request.user,
+        )
+        return super().form_valid(form)
+
+
 AircraftAssignmentDetail, AircraftAssignmentCreate, AircraftAssignmentUpdate = (
     type(
         "AircraftAssignmentDetail",
         (RegistryDetail,),
         {"model": AircraftAssignment, "tenant_path": _CC_TENANT_PATH},
     ),
-    type(
-        "AircraftAssignmentCreate",
-        (RegistryCreate,),
-        {"model": AircraftAssignment, "form_class": AircraftAssignmentForm},
-    ),
+    AircraftBulkAssign,
     type(
         "AircraftAssignmentUpdate",
         (RegistryUpdate,),

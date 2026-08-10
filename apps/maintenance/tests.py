@@ -8,7 +8,25 @@ from django.urls import reverse
 
 from apps.core.models import AuditEvent
 from apps.registry.models import Aircraft, CostCenter
+from .forms import MaintenanceRecordForm
 from .models import MaintenanceHistory, MaintenanceRecord
+
+
+@pytest.mark.django_db
+def test_maintenance_record_form_aircraft_field_uses_the_selector_label():
+    """R5.5: registration alone doesn't distinguish "which M300" in a
+    dropdown with several of the same model."""
+    aircraft = Aircraft.objects.create(
+        registration="RPA-1",
+        type="RPA",
+        model="M300",
+        manufacturer="DJI",
+        serial_number="1ABC234",
+    )
+    form = MaintenanceRecordForm()
+    assert form.fields["aircraft"].label_from_instance(aircraft) == (
+        "RPA-1 · M300 · S/N 1ABC234"
+    )
 
 
 @pytest.mark.django_db
