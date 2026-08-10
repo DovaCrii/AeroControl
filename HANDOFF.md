@@ -5,7 +5,35 @@
 > post-auditoría"**, al inicio del archivo. Este documento es solo el resumen
 > de estado; el detalle de cada ítem vive en las filas de `MASTER_PLAN.md`.
 
-## Estado al 2026-08-10 (última actualización: R5.4/R7.1 hechos)
+## Estado al 2026-08-10 (última actualización: R5.7 hecho + fix de migración)
+
+- **✅ R5.7 hecho.** `Aircraft.insurance_status` (`pending`/`active`) rastrea
+  el trámite del seguro JAC antes de que exista la fecha real de vigencia
+  — mismo patrón que `CostCenter.contract_status`. `clean()` fuerza
+  `"active"` en cuanto llega un `insurance_expiry` real, así el campo no
+  puede quedar obsoleto diciendo "en trámite" después de que la póliza ya
+  se recibió. Columna "Seguro" de la lista de Aeronaves ahora distingue 3
+  estados: `—` / **"En trámite"** / fecha vigente-atrasada.
+- **🐛 Bug real encontrado y corregido, no en el trabajo de hoy sino en
+  X.1 (migración `0028`, ya comiteada en una rama anterior de esta misma
+  ventana).** Verificando R5.7 en vivo contra el **demo** (no la copia de
+  restauración) la migración `0028` falló con `IntegrityError`: el demo
+  tiene 6 aeronaves con `serial_number=""` de verdad, y la copia de
+  restauración usada para probar X.1 no tenía ninguna, así que el bug
+  quedó silencioso ahí. La causa: el orden de las 2 operaciones de esa
+  migración intentaba poner `NULL` en una columna que todavía era
+  `NOT NULL` en ese punto. Corregido a 3 pasos (nullable → limpiar datos →
+  `unique=True`) directamente en `apps/registry/migrations/
+  0028_aircraft_serial_number_unique.py`. **Lección para la próxima
+  ventana**: cuando una migración de datos toca una copia de restauración
+  como único banco de pruebas, correrla también contra el demo (u otro
+  set con casos límite reales) antes de darla por cerrada — los datos
+  "limpios" de producción no cubren todos los casos.
+- Rama `codex/r5-jac-insurance-filing-status`, apilada sobre toda la
+  cadena de esta ventana (X.1 → R4 schema → R4 import → R5.2/R5.3 →
+  R5.4 → R5.7), sin mergear ni con push.
+
+## Estado al 2026-08-10 (R5.4/R7.1 hechos)
 
 - **✅ R5.4 y R7.1 hechos en el mismo cambio.** La ficha de aeronave ya tenía
   documentos y movimientos (OPS-6); se agregó historial de mantenciones

@@ -163,6 +163,24 @@ class Aircraft(BaseModel):
     insurance_expiry = models.DateField(
         null=True, blank=True, verbose_name=_("JAC insurance expiry")
     )
+    # R5.7: a newly-registered aircraft with the JAC policy already
+    # requested looked identical to one with no insurance requested at all
+    # -- both showed "-" on the list, since insurance_expiry was null either
+    # way. This tracks the filing itself, a separate axis from
+    # insurance_expiry (same pattern as CostCenter.contract_status, R3.3b).
+    # clean() below forces "active" once a real expiry date exists, so this
+    # cannot go stale and claim "pending" after the policy has arrived.
+    INSURANCE_STATUS_CHOICES = [
+        ("pending", _("Filing in progress")),
+        ("active", _("Active")),
+    ]
+    insurance_status = models.CharField(
+        max_length=20,
+        choices=INSURANCE_STATUS_CHOICES,
+        default="active",
+        blank=True,
+        verbose_name=_("Insurance status"),
+    )
     authorized_services = models.TextField(blank=True)
     cost_center = models.ForeignKey(
         CostCenter,
@@ -222,6 +240,14 @@ class Aircraft(BaseModel):
             )
         if errors:
             raise ValidationError(errors)
+        # R5.7: a real expiry date means the JAC policy already arrived --
+        # "pending" would be stale and contradict insurance_expiry, the
+        # field that actually drives the vigente/atrasado column. Same
+        # normalize-on-clean idiom as CostCenter.contract_status (R3.3b).
+        if self.insurance_expiry is not None:
+            self.insurance_status = "active"
+        elif not self.insurance_status:
+            self.insurance_status = "active"
 
     def save(self, *args, **kwargs):
         # X.1: the DJI serial never contains whitespace -- production has 2

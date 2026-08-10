@@ -15,6 +15,7 @@
     {% if object.insurance_expiry %}
       {% if object.insurance_is_overdue %}<span class="badge bg-danger">{% translate "Overdue" %} · {{ object.insurance_expiry|date:'Y-m-d' }}</span>
       {% else %}<span class="badge bg-warning-subtle text-warning-emphasis">{{ object.insurance_expiry|date:'Y-m-d' }}</span>{% endif %}
+    {% elif object.insurance_status == "pending" %}<span class="badge bg-info-subtle text-info-emphasis">{{ object.get_insurance_status_display }}</span>
     {% else %}<span class="text-muted">—</span>{% endif %}
   </td>
   <td class="text-end">
