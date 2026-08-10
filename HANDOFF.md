@@ -5,7 +5,24 @@
 > post-auditoría"**, al inicio del archivo. Este documento es solo el resumen
 > de estado; el detalle de cada ítem vive en las filas de `MASTER_PLAN.md`.
 
-## Estado al 2026-08-10 (última actualización: R5.2/R5.3 hechos)
+## Estado al 2026-08-10 (última actualización: R5.4/R7.1 hechos)
+
+- **✅ R5.4 y R7.1 hechos en el mismo cambio.** La ficha de aeronave ya tenía
+  documentos y movimientos (OPS-6); se agregó historial de mantenciones
+  **completadas** (separado de las abiertas de LV-26, que ya tenían su propia
+  tabla con botones — así no se repite el mismo registro dos veces) y horas
+  de vuelo acumuladas (`apps/operations/selectors.py`,
+  `total_flight_duration` + `format_duration` — esta última también la usa
+  ahora `FlightRecord.duration_display`, que antes duplicaba la misma lógica
+  de formato). El agregado de horas de vuelo es exactamente lo que R7.1
+  (ISO 7.1.3) pedía por separado — un solo lugar de implementación sirve a
+  los dos ítems del tablero. Verificado en vivo contra el demo con datos de
+  prueba descartables (un `MaintenanceRecord` completado y un `FlightRecord`
+  de 1h30, creados y borrados en la misma sesión — el demo queda como
+  estaba). Rama `codex/r5-aircraft-fiche-expediente`, apilada sobre las
+  de R5.2/R5.3 y R4, sin mergear.
+
+## Estado al 2026-08-10 (R5.2/R5.3 hechos)
 
 - **✅ R5.2 (bug) y R5.3 hechos.** `RegistryCreate`/`RegistryUpdate.form_valid()`
   atribuyen el usuario a `_changed_by_user` antes de guardar — cierra el hueco

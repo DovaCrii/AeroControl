@@ -835,6 +835,68 @@ def test_flight_record_duration_is_computed_from_departure_and_arrival(
 
 
 @pytest.mark.django_db
+def test_total_flight_duration_sums_every_active_record_for_the_aircraft():
+    """R5.4/R7.1: the aircraft fiche's cumulative flight hours."""
+    from apps.operations.selectors import total_flight_duration
+
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    aircraft = Aircraft.objects.create(
+        registration="CC-AAA",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    other_aircraft = Aircraft.objects.create(
+        registration="CC-BBB",
+        type="Fixed",
+        model="A",
+        manufacturer="Maker",
+        cost_center=cost_center,
+    )
+    permission = _permission(cost_center, operator, aircraft)
+    FlightRecord.objects.create(
+        permission=permission,
+        actual_date=date(2026, 7, 22),
+        departure_time=time(9, 0),
+        arrival_time=time(10, 30),
+        pilot=operator,
+        aircraft=aircraft,
+    )
+    archived = FlightRecord.objects.create(
+        permission=permission,
+        actual_date=date(2026, 7, 23),
+        departure_time=time(9, 0),
+        arrival_time=time(9, 30),
+        pilot=operator,
+        aircraft=aircraft,
+    )
+    archived.is_active = False
+    archived.save(update_fields=["is_active", "updated_at"])
+    # A flight for a different aircraft must not be counted here.
+    other_permission = _permission(
+        cost_center, operator, other_aircraft, permission_number="PERM-2"
+    )
+    FlightRecord.objects.create(
+        permission=other_permission,
+        actual_date=date(2026, 7, 22),
+        departure_time=time(9, 0),
+        arrival_time=time(10, 0),
+        pilot=operator,
+        aircraft=other_aircraft,
+    )
+
+    duration = total_flight_duration(aircraft)
+
+    from apps.operations.selectors import format_duration
+
+    assert format_duration(duration) == "1h 30min"
+
+
+@pytest.mark.django_db
 def test_record_list_shows_real_columns_not_the_generic_ones(admin_client):
     """LV-59: was the only list in the area still on the generic Name/
     Created/Status columns -- this is why a screenshot of it showed "Nombre"

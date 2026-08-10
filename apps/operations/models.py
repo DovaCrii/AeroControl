@@ -201,11 +201,9 @@ class FlightRecord(BaseModel):
         """`duration` as "1h 05min" (or "05min" under an hour) for the list
         and detail pages -- a raw timedelta renders as "1:05:00" in a
         template, which reads as a clock, not a length."""
-        total_minutes = self.duration.seconds // 60
-        hours, minutes = divmod(total_minutes, 60)
-        if hours:
-            return f"{hours}h {minutes:02d}min"
-        return f"{minutes}min"
+        from .selectors import format_duration
+
+        return format_duration(self.duration)
 
 
 class PermissionHistory(BaseModel):
