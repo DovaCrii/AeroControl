@@ -111,11 +111,12 @@ def upcoming_expirations(today, cutoff, cost_center=None):
         items.append(
             {
                 "kind": _("Flight permission"),
-                # R1.2: permission_number is None until the DGAC folio
-                # arrives (LV-39) -- rendered as-is, the row read "Flight
-                # permission None" (verified live on the demo). Same
-                # placeholder as the calendar's _permission_title.
-                "label": permission.permission_number or _("Pending DGAC folio"),
+                # R1.2/R2.2/R2.3: used to be `permission_number or "Pending
+                # DGAC folio"` -- permission_number is None until the DGAC
+                # folio arrives (LV-39), and rendered as-is the row read
+                # "Flight permission None" (verified live on the demo).
+                # internal_folio is assigned at creation and never blank.
+                "label": permission.internal_folio,
                 "date": permission.valid_until,
                 "bucket": bucket_for(permission.valid_until, today),
                 "url": reverse("permission-detail", args=[permission.pk]),

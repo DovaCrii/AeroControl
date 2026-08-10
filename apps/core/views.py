@@ -490,14 +490,15 @@ class UnifiedCalendarEventsView(CalendarAccessMixin, View):
 
             def _permission_title(permission):
                 names = [operator.full_name for operator in permission.operators.all()]
-                # R1.2: permission_number is None until the DGAC folio arrives
-                # (LV-39) -- an f-string interpolates None as the literal word
-                # "None", not an empty string, so a permit without a folio
-                # rendered as "None · Alexandra Márquez Cortés +2" on this
-                # calendar. Guard here now; R2.2/R2.3 remove the possibility
-                # entirely by giving every permit an internal folio that is
-                # never empty.
-                base = permission.permission_number or _("Pending DGAC folio")
+                # R1.2/R2.2/R2.3: used to be `permission_number or "Pending
+                # DGAC folio"` -- permission_number is None until the DGAC
+                # folio arrives (LV-39), and an f-string interpolates None
+                # as the literal word "None", not an empty string, so a
+                # permit without one rendered as "None · Alexandra Márquez
+                # Cortés +2" on this calendar. internal_folio is assigned at
+                # creation and never blank, so the possibility is gone, not
+                # just guarded.
+                base = permission.internal_folio
                 if names:
                     label = (
                         names[0] if len(names) == 1 else f"{names[0]} +{len(names) - 1}"

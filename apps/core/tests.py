@@ -199,7 +199,10 @@ class TestPublicURLs:
         """R1.2: permission_number is None until the DGAC folio arrives
         (LV-39). f"{permission.permission_number} · {label}" used to
         interpolate that as the literal word "None" whenever the permit had
-        operators, e.g. "None · Alexandra Márquez Cortés +2 → hasta 07-10"."""
+        operators, e.g. "None · Alexandra Márquez Cortés +2 → hasta 07-10".
+        R2.2/R2.3 replaced the whole fallback with internal_folio, assigned
+        at creation and never blank -- the title is built from that now,
+        not from the (possibly missing) DGAC folio."""
         center = CostCenter.objects.create(code="NUL", name="Sin folio")
         first = Operator.objects.create(
             employee_id="NUL-1", full_name="Alexandra Márquez", cost_center=center
@@ -226,8 +229,8 @@ class TestPublicURLs:
         assert "None" not in title
         # M2M order is not guaranteed, so either operator can be first.
         assert title.startswith(
-            "En proceso · Alexandra Márquez +1"
-        ) or title.startswith("En proceso · Javier Marín +1")
+            f"{permission.internal_folio} · Alexandra Márquez +1"
+        ) or title.startswith(f"{permission.internal_folio} · Javier Marín +1")
 
     def test_administration_center_explains_operational_configuration(
         self, auth_client

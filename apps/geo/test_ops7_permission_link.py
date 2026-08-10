@@ -115,5 +115,7 @@ class TestDetailPageShowsHistory:
             reverse("geo-plan-detail", args=[plan.pk])
         )
 
-        assert "P-1" in response.content.decode()
+        # R2.3: __str__ shows internal_folio now, not the DGAC folio ("P-1")
+        # passed to _permit -- that is the point of the cascading fix.
+        assert permit.internal_folio in response.content.decode()
         assert response.context["permission_links"].count() == 1

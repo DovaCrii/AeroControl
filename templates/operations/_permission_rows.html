@@ -1,7 +1,7 @@
 {% load aero_tags i18n %}
 {% for object in objects %}
 <tr>
-  <td><a href="{{ object.pk }}/">{{ object }}</a></td>
+  <td><a href="{{ object.pk }}/" class="table-primary-value">{{ object }}</a><span class="table-primary-sub cell-truncate">{% translate "DGAC" %}: {% if object.permission_number %}{{ object.permission_number }}{% else %}{% translate "In process" %}{% endif %}</span></td>
   <td>{% for operator in object.operators.all %}{{ operator }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
   <td>{% for aircraft in object.aircraft_fleet.all %}{{ aircraft }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
   <td>{{ object.valid_from|date:"Y-m-d" }} – {{ object.valid_until|date:"Y-m-d" }}</td>

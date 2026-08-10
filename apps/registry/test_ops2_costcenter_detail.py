@@ -149,7 +149,8 @@ class TestPermissionsTab:
         permission.operators.add(operator)
         permission.aircraft_fleet.add(aircraft)
         response = _client("view_costcenter", "view_flightpermission").get(_url(cc))
-        assert "P-1" in response.content.decode()
+        # R2.3: __str__ shows internal_folio now, not the DGAC folio ("P-1").
+        assert permission.internal_folio in response.content.decode()
 
 
 class TestDocumentsTab:
