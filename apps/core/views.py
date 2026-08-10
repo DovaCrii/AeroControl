@@ -1172,7 +1172,9 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
         }
 
 
-class AuditEventListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+class AuditEventListView(
+    CsvExportMixin, LoginRequiredMixin, PermissionRequiredMixin, ListView
+):
     """B5.4: read-only audit trail, filterable by actor / model / date range.
 
     Gated on ``core.view_auditevent`` (withheld from the Viewer role). The model
@@ -1185,6 +1187,26 @@ class AuditEventListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     template_name = "core/audit_log.html"
     context_object_name = "events"
     paginate_by = 50
+    csv_filename = "audit_log.csv"
+
+    @property
+    def csv_fields(self):
+        from .models import AuditEvent
+
+        return [
+            AuditEvent._meta.get_field(name)
+            for name in (
+                "created_at",
+                "actor",
+                "action",
+                "model_label",
+                "object_id",
+                "method",
+                "status_code",
+                "path",
+                "request_id",
+            )
+        ]
 
     def get_queryset(self):
         from .models import AuditEvent
@@ -1223,7 +1245,9 @@ class AuditEventListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         return context
 
 
-class UserRoleListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+class UserRoleListView(
+    CsvExportMixin, LoginRequiredMixin, PermissionRequiredMixin, ListView
+):
     """B5.5: read-only panel of users and the roles (groups) they hold.
 
     Answers "who can do what" at a glance without opening the technical Django
@@ -1236,6 +1260,28 @@ class UserRoleListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     template_name = "core/users_roles.html"
     context_object_name = "users"
     paginate_by = 50
+    csv_filename = "users_and_roles.csv"
+
+    @property
+    def csv_fields(self):
+        # Explicit allowlist, not the generic model._meta.fields default:
+        # django.contrib.auth.User carries `password` (hashed, but still not
+        # something a CSV export should ever emit) plus staff/session fields
+        # that are irrelevant here.
+        from django.contrib.auth.models import User
+
+        return [
+            User._meta.get_field(name)
+            for name in (
+                "username",
+                "first_name",
+                "last_name",
+                "email",
+                "is_active",
+                "is_superuser",
+                "groups",
+            )
+        ]
 
     def get_queryset(self):
         from django.contrib.auth.models import User

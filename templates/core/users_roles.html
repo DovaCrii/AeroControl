@@ -9,6 +9,7 @@
     <p class="text-muted mb-0">{% translate "Read-only view of who holds which role. Edits are made in the technical admin." %}</p>
   </div>
   <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>
     {% if technical_admin_url %}<a class="btn btn-outline-secondary" href="{{ technical_admin_url }}">{% translate "Technical admin" %}</a>{% endif %}
     <a class="btn btn-outline-secondary" href="{% url 'administration' %}">{% translate "Back" %}</a>
   </div>

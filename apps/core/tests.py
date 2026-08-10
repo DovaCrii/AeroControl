@@ -230,6 +230,21 @@ class TestPublicURLs:
         # The board event is filtered out of the table; the empty-state shows.
         assert "Ningún evento de auditoría coincide" in response.content.decode()
 
+    def test_audit_log_export_link_is_present(self, auth_client):
+        response = auth_client.get(reverse("audit-log"))
+        assert "export=csv" in response.content.decode()
+
+    def test_audit_log_export_csv_includes_events(self, auth_client):
+        auth_client.post(reverse("board-create"), {"name": "Exported board"})
+        response = auth_client.get(reverse("audit-log"), {"export": "csv"})
+        body = b"".join(response.streaming_content).decode("utf-8-sig")
+        assert "workboard.KanbanBoard" in body
+        # T5.7 gap: the default CsvExportMixin field list drops created_at,
+        # but that is the whole point of an audit trail -- verify it survives
+        # the explicit csv_fields override.
+        header = body.splitlines()[0]
+        assert "Created" in header or "creado" in header.lower()
+
     def test_user_role_panel_lists_users_and_their_groups(self, auth_client):
         # B5.5: read-only users/roles panel.
         user = User.objects.create_user("planner", password="pw")
@@ -239,6 +254,16 @@ class TestPublicURLs:
         content = response.content.decode()
         assert "planner" in content
         assert "Operations" in content
+
+    def test_user_role_panel_export_csv_excludes_password(self, auth_client):
+        user = User.objects.create_user("planner2", password="super-secret-pw")
+        user.groups.create(name="Operations")
+        response = auth_client.get(reverse("user-role-list"), {"export": "csv"})
+        body = b"".join(response.streaming_content).decode("utf-8-sig")
+        assert "planner2" in body
+        assert "Operations" in body
+        assert "super-secret-pw" not in body
+        assert "pbkdf2" not in body  # Django's password hash prefix
 
     def test_user_role_panel_requires_view_user(self, client, db):
         User.objects.create_user("plain", password="pw")
