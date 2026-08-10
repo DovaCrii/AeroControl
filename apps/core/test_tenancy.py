@@ -127,6 +127,50 @@ class TestRegistryListIsolation:
         assert ac not in list(b_client.get(reverse("aircraft-list")).context["objects"])
 
 
+class TestResourceMovementLogIsolation:
+    """R5.3: ResourceMovementLog has no tenant FK of its own (resource_id is a
+    bare UUID, not a join) -- scoped by resolving which Aircraft/Operator ids
+    belong to the user's tenant(s) first, same idea as the other lists here."""
+
+    def _client(self, username, codename, tenant=None):
+        user = User.objects.create_user(username, password="pw")
+        user.user_permissions.add(Permission.objects.get(codename=codename))
+        if tenant is not None:
+            TenantMembership.objects.create(tenant=tenant, user=user)
+        client = Client()
+        assert client.login(username=username, password="pw")
+        return client
+
+    @pytest.mark.django_db
+    def test_movement_log_is_scoped_by_the_aircrafts_tenant(self):
+        from apps.registry.models import AircraftAssignment, ResourceMovementLog
+
+        a = OperationalTenant.objects.create(name="A", slug="a")
+        b = OperationalTenant.objects.create(name="B", slug="b")
+        cc = CostCenter.objects.create(code="CCA", name="A", tenant=a)
+        aircraft = Aircraft.objects.create(
+            registration="RPA-A",
+            type="RPA",
+            model="M",
+            manufacturer="DJI",
+            tenant=a,
+        )
+        AircraftAssignment.objects.create(
+            aircraft=aircraft, cost_center=cc, start_date=date(2026, 7, 1)
+        )
+        log = ResourceMovementLog.objects.get(resource_id=aircraft.pk)
+
+        a_client = self._client("a_log", "view_resourcemovementlog", tenant=a)
+        b_client = self._client("b_log", "view_resourcemovementlog", tenant=b)
+
+        assert log in list(
+            a_client.get(reverse("resourcemovementlog-list")).context["objects"]
+        )
+        assert log not in list(
+            b_client.get(reverse("resourcemovementlog-list")).context["objects"]
+        )
+
+
 class TestTenantUniqueConstraints:
     """T3.2 Fase 3: cost-center code and employee id are unique per tenant,
     not globally -- two organizations may reuse them, one may not."""

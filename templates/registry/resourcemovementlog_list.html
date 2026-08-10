@@ -4,9 +4,13 @@
 {% block content %}
 <div class="page-header">
   <h1 class="h3">{{ title }}</h1>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>
+  </div>
 </div>
 
 <form method="get" class="row g-2 mb-3">
+  <div class="col-md-5">{% include "generic/_search_input.html" with search_url=request.path %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
   <div class="col-md-3">
     <select class="form-select" name="resource_kind">
       <option value="">{% translate "All resources" %}</option>
@@ -26,26 +30,14 @@
           <th>{% translate "Movement" %}</th>
           <th>{% translate "From" %}</th>
           <th>{% translate "To" %}</th>
+          <th>{% translate "Detail" %}</th>
           <th>{% translate "Changed by" %}</th>
           <th>{% translate "Created" %}</th>
         </tr>
       </thead>
-      <tbody id="table-body">
-        {% for entry in objects %}
-        <tr>
-          <td>{{ entry.get_resource_kind_display }}: {{ entry.resource_label }}</td>
-          <td>{{ entry.get_movement_display }}</td>
-          <td>{{ entry.from_cost_center|default:"—" }}</td>
-          <td>{{ entry.to_cost_center|default:"—" }}</td>
-          <td>{{ entry.changed_by_user|default:"—" }}</td>
-          <td><span class="text-nowrap">{{ entry.created_at|date:'Y-m-d H:i' }}</span></td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="99" class="text-center text-muted py-4">{% translate "No movements recorded yet." %}</td></tr>
-        {% endfor %}
-      </tbody>
+      <tbody id="table-body">{% include "registry/_resourcemovementlog_rows.html" %}</tbody>
     </table>
   </div>
-  {% render_pagination page_obj %}
+  <div id="pagination-container">{% render_pagination page_obj %}</div>
 </div>
 {% endblock %}

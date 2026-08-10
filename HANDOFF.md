@@ -5,7 +5,25 @@
 > post-auditoría"**, al inicio del archivo. Este documento es solo el resumen
 > de estado; el detalle de cada ítem vive en las filas de `MASTER_PLAN.md`.
 
-## Estado al 2026-08-10 (última actualización: R4.1/R4.2/R4.3/R4.5 hechos)
+## Estado al 2026-08-10 (última actualización: R5.2/R5.3 hechos)
+
+- **✅ R5.2 (bug) y R5.3 hechos.** `RegistryCreate`/`RegistryUpdate.form_valid()`
+  atribuyen el usuario a `_changed_by_user` antes de guardar — cierra el hueco
+  en `AircraftAssignment` (crear/editar) y `OperatorAssignment` (editar), y de
+  paso uno no listado en el plan original: editar la ubicación de una
+  `Aircraft` tampoco atribuía autor (mismo mecanismo, `track_aircraft_location`
+  OPS-3). `ResourceMovementLogList` ahora tiene columna `detail`, búsqueda
+  (por texto libre **y** por matrícula/nombre del recurso, ya que
+  `resource_id` es un UUID sin FK — se resuelve primero qué aeronaves/
+  operadores calzan), exportación CSV y scoping por tenant con el mismo truco
+  de resolución previa (no hay `tenant_path` posible sin FK). Tests nuevos en
+  `test_ops_assignments.py`, `test_ops3_aircraft_location.py` y
+  `apps/core/test_tenancy.py` (el archivo donde ya vivían las otras pruebas
+  de aislamiento por tenant del padrón).
+- Rama `codex/r5-movement-attribution-and-log`, apilada sobre la de R4
+  (`codex/r4-document-repository-import`), sin mergear.
+
+## Estado al 2026-08-10 (R4.1/R4.2/R4.3/R4.5 hechos)
 
 - **✅ R4.1/R4.2/R4.3/R4.5 hechos, R4.1a/R4.4 parciales** (bloque
   repositorio documental, `Z:`). Importador `import_document_repository`

@@ -273,6 +273,70 @@ class TestAircraftAssignmentViews:
         ).exists()
 
 
+class TestMovementAttribution:
+    """R5.2 [bug]: a ResourceMovementLog row without an author is not useful
+    as evidence. Only bulk_assign_operators (services.py) was setting
+    `_changed_by_user` -- every plain CRUD save through RegistryCreate/
+    RegistryUpdate left it blank, so creating an AircraftAssignment or
+    editing an OperatorAssignment through the ordinary form logged a
+    movement with no one attached to it."""
+
+    @pytest.mark.django_db
+    def test_creating_an_aircraft_assignment_via_the_view_attributes_the_user(self, db):
+        aircraft = Aircraft.objects.create(
+            registration="CC-DDD", type="RPA", model="M3", manufacturer="DJI"
+        )
+        cc = _cc("CC1")
+        user = User.objects.create_user("creator", password="pw")
+        user.user_permissions.add(
+            Permission.objects.get(codename="add_aircraftassignment")
+        )
+        client = Client()
+        assert client.login(username="creator", password="pw")
+
+        client.post(
+            reverse("aircraftassignment-create"),
+            {
+                "aircraft": aircraft.pk,
+                "cost_center": cc.pk,
+                "start_date": TODAY.isoformat(),
+                "status": "active",
+                "purpose": "",
+            },
+        )
+
+        log = ResourceMovementLog.objects.get(resource_id=aircraft.pk)
+        assert log.changed_by_user_id == user.pk
+
+    @pytest.mark.django_db
+    def test_editing_an_operator_assignment_via_the_view_attributes_the_user(self, db):
+        op = _operator()
+        cc1, cc2 = _cc("CC1"), _cc("CC2")
+        assignment = OperatorAssignment.objects.create(
+            operator=op, cost_center=cc1, start_date=TODAY, status="active"
+        )
+        user = User.objects.create_user("editor", password="pw")
+        user.user_permissions.add(
+            Permission.objects.get(codename="change_operatorassignment")
+        )
+        client = Client()
+        assert client.login(username="editor", password="pw")
+
+        client.post(
+            reverse("operatorassignment-update", args=[assignment.pk]),
+            {
+                "operator": op.pk,
+                "cost_center": cc2.pk,
+                "status": "active",
+                "purpose": "",
+            },
+        )
+
+        log = ResourceMovementLog.objects.filter(resource_id=op.pk).latest("sequence")
+        assert log.movement == "reassigned"
+        assert log.changed_by_user_id == user.pk
+
+
 class TestResourceMovementLogView:
     @pytest.mark.django_db
     def test_requires_view_permission(self, db):
@@ -308,6 +372,87 @@ class TestResourceMovementLogView:
         content = response.content.decode()
         assert aircraft.registration in content
         assert op.full_name not in content
+
+    @pytest.mark.django_db
+    def test_detail_column_renders(self, db):
+        """R5.3: `detail` exists on the model (e.g. OPS-3's location-change
+        text) but the list did not render it."""
+        aircraft = Aircraft.objects.create(
+            registration="CC-EEE", type="RPA", model="M3", manufacturer="DJI"
+        )
+        cc = _cc("CC1")
+        aircraft.current_location = "on_site"
+        aircraft.current_site = cc
+        aircraft.save(update_fields=["current_location", "current_site", "updated_at"])
+
+        response = _client("view_resourcemovementlog").get(
+            reverse("resourcemovementlog-list")
+        )
+
+        content = response.content.decode()
+        assert "Casa matriz" in content  # from_location -> to_location text
+        assert "En faena" in content
+
+    @pytest.mark.django_db
+    def test_search_matches_the_aircrafts_registration(self, db):
+        # R5.3: resource_id is a bare UUID, not a join -- search resolves the
+        # matching Aircraft/Operator ids first, same as the tenant scoping.
+        op = _operator()
+        aircraft = Aircraft.objects.create(
+            registration="RPA-4647", type="RPA", model="M3", manufacturer="DJI"
+        )
+        cc = _cc("CC1")
+        OperatorAssignment.objects.create(
+            operator=op, cost_center=cc, start_date=TODAY, status="active"
+        )
+        AircraftAssignment.objects.create(
+            aircraft=aircraft, cost_center=cc, start_date=TODAY, status="active"
+        )
+        client = _client("view_resourcemovementlog")
+
+        response = client.get(reverse("resourcemovementlog-list"), {"q": "4647"})
+
+        content = response.content.decode()
+        assert aircraft.registration in content
+        assert op.full_name not in content
+
+    @pytest.mark.django_db
+    def test_search_matches_the_detail_text(self, db):
+        aircraft = Aircraft.objects.create(
+            registration="CC-FFF", type="RPA", model="M3", manufacturer="DJI"
+        )
+        cc = _cc("CC1")
+        aircraft.current_location = "on_site"
+        aircraft.current_site = cc
+        aircraft.save(update_fields=["current_location", "current_site", "updated_at"])
+        other = Aircraft.objects.create(
+            registration="CC-GGG", type="RPA", model="M3", manufacturer="DJI"
+        )
+        AircraftAssignment.objects.create(
+            aircraft=other, cost_center=cc, start_date=TODAY, status="active"
+        )
+        client = _client("view_resourcemovementlog")
+
+        response = client.get(reverse("resourcemovementlog-list"), {"q": "En faena"})
+
+        content = response.content.decode()
+        assert aircraft.registration in content
+        assert other.registration not in content
+
+    @pytest.mark.django_db
+    def test_export_csv(self, db):
+        op = _operator()
+        OperatorAssignment.objects.create(
+            operator=op, cost_center=_cc("CC1"), start_date=TODAY, status="active"
+        )
+        client = _client("view_resourcemovementlog")
+
+        response = client.get(reverse("resourcemovementlog-list"), {"export": "csv"})
+
+        assert response.status_code == 200
+        assert response["Content-Type"].startswith("text/csv")
+        body = b"".join(response.streaming_content).decode()
+        assert "assigned" in body
 
 
 class TestBulkAssignService:
