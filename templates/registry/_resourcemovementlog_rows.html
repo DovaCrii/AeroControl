@@ -1,0 +1,15 @@
+{% load aero_tags i18n %}
+{% for entry in objects %}
+<tr>
+  <td>{{ entry.get_resource_kind_display }}: {{ entry.resource_label }}</td>
+  <td>{{ entry.get_movement_display }}</td>
+  <td>{{ entry.from_cost_center|default:"—" }}</td>
+  <td>{{ entry.to_cost_center|default:"—" }}</td>
+  <td class="cell-truncate">{{ entry.detail|default:"—" }}</td>
+  <td>{{ entry.changed_by_user|default:"—" }}</td>
+  <td><span class="text-nowrap">{{ entry.created_at|date:'Y-m-d H:i' }}</span></td>
+</tr>
+{% empty %}
+<tr><td colspan="99" class="text-center text-muted py-4">{% translate "No movements recorded yet." %}</td></tr>
+{% endfor %}
+{% if is_htmx %}<div id="pagination-container" hx-swap-oob="true">{% render_pagination page_obj %}</div>{% endif %}

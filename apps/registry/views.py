@@ -136,6 +136,16 @@ class RegistryCreate(HtmxFormMixin, ModelPermissionRequiredMixin, CreateView):
         }
         return context
 
+    def form_valid(self, form):
+        # R5.2: apps/registry/signals.py logs a ResourceMovementLog on every
+        # AircraftAssignment/OperatorAssignment save and every Aircraft
+        # location change, attributed to `instance._changed_by_user` when
+        # set. Only bulk_assign_operators (services.py) was setting it --
+        # every plain CRUD save through this base view left it blank, so a
+        # movement created or edited from the ordinary form had no author.
+        form.instance._changed_by_user = self.request.user
+        return super().form_valid(form)
+
 
 class RegistryUpdate(
     TenantScopedQuerysetMixin, HtmxFormMixin, ModelPermissionRequiredMixin, UpdateView
@@ -153,6 +163,13 @@ class RegistryUpdate(
             "record": _(self.model._meta.verbose_name.title())
         }
         return context
+
+    def form_valid(self, form):
+        # R5.2: see RegistryCreate.form_valid above -- same gap on update
+        # (an edited AircraftAssignment/OperatorAssignment, or an Aircraft
+        # whose current_location changed through the ordinary edit form).
+        form.instance._changed_by_user = self.request.user
+        return super().form_valid(form)
 
 
 class RegistryArchive(ModelPermissionRequiredMixin, View):
@@ -724,28 +741,80 @@ AircraftAssignmentDetail, AircraftAssignmentCreate, AircraftAssignmentUpdate = (
 )
 
 
-class ResourceMovementLogList(ModelViewPermissionRequiredMixin, ListView):
+class ResourceMovementLogList(
+    CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListView
+):
     """OPS-1: the read-only movement trail -- never a create/edit surface.
 
     resource_id is a bare UUID (it can point at an Operator or an Aircraft
     depending on resource_kind), so this resolves a display label per row
-    instead of asking the template to know which model to look up.
+    instead of asking the template to know which model to look up. That same
+    bare UUID is why this is the one padrón list that cannot use
+    TenantScopedQuerysetMixin's plain `tenant_path` (R5.3): there is no ORM
+    join from this model to a tenant, so scoping and "search by aircraft
+    registration / operator name" are both done here by resolving matching
+    resource ids first, then filtering on (resource_kind, resource_id).
     """
 
     model = ResourceMovementLog
     template_name = "registry/resourcemovementlog_list.html"
+    htmx_template_name = "registry/_resourcemovementlog_rows.html"
     context_object_name = "objects"
     paginate_by = 50
+    search_fields = [
+        "detail",
+        "from_cost_center__code",
+        "from_cost_center__name",
+        "to_cost_center__code",
+        "to_cost_center__name",
+        "changed_by_user__username",
+    ]
 
     def get_queryset(self):
-        queryset = (
-            super()
-            .get_queryset()
-            .select_related("from_cost_center", "to_cost_center", "changed_by_user")
+        from apps.core.tenancy import visible_tenant_ids
+
+        # Bypasses SearchMixin.get_queryset() on purpose: it would AND its own
+        # search_fields filter with whatever runs here, but resource-label
+        # search (below) needs to OR into the same query, not stack on top of
+        # it as a second, narrower one.
+        queryset = ListView.get_queryset(self).select_related(
+            "from_cost_center", "to_cost_center", "changed_by_user"
         )
+
         kind = self.request.GET.get("resource_kind")
         if kind in {"operator", "aircraft"}:
             queryset = queryset.filter(resource_kind=kind)
+
+        tenant_ids = visible_tenant_ids(self.request.user)
+        if tenant_ids is not None:
+            aircraft_ids = Aircraft.objects.filter(
+                tenant_id__in=tenant_ids
+            ).values_list("pk", flat=True)
+            operator_ids = Operator.objects.filter(
+                tenant_id__in=tenant_ids
+            ).values_list("pk", flat=True)
+            queryset = queryset.filter(
+                Q(resource_kind="aircraft", resource_id__in=aircraft_ids)
+                | Q(resource_kind="operator", resource_id__in=operator_ids)
+            )
+
+        query_text = self.request.GET.get("q", "").strip()
+        if query_text:
+            matching_aircraft_ids = Aircraft.objects.filter(
+                registration__icontains=query_text
+            ).values_list("pk", flat=True)
+            matching_operator_ids = Operator.objects.filter(
+                full_name__icontains=query_text
+            ).values_list("pk", flat=True)
+            field_query = Q()
+            for field in self.search_fields:
+                field_query |= Q(**{f"{field}__icontains": query_text})
+            queryset = queryset.filter(
+                field_query
+                | Q(resource_kind="aircraft", resource_id__in=matching_aircraft_ids)
+                | Q(resource_kind="operator", resource_id__in=matching_operator_ids)
+            )
+
         return queryset
 
     def get_context_data(self, **kwargs):

@@ -123,6 +123,34 @@ class TestMovementLog:
             resource_id=aircraft.pk, movement="location_changed"
         ).exists()
 
+    @pytest.mark.django_db
+    def test_editing_location_via_the_view_attributes_the_user(self, db):
+        """R5.2 [bug]: editing an aircraft's location through the ordinary
+        form used to log a movement with no author -- RegistryUpdate did not
+        set `_changed_by_user` before saving."""
+        aircraft = _aircraft()
+        cc = CostCenter.objects.create(code="CC1", name="Site One")
+        client = _client("change_aircraft")
+        user = User.objects.get(username="u-change_aircraft")
+
+        client.post(
+            reverse("aircraft-update", args=[aircraft.pk]),
+            {
+                "registration": aircraft.registration,
+                "type": aircraft.type,
+                "model": aircraft.model,
+                "manufacturer": aircraft.manufacturer,
+                "current_location": "on_site",
+                "current_site": cc.pk,
+                "status": "active",
+            },
+        )
+
+        log = ResourceMovementLog.objects.get(
+            resource_kind="aircraft", resource_id=aircraft.pk
+        )
+        assert log.changed_by_user_id == user.pk
+
 
 class TestListRendersLocationBadge:
     @pytest.mark.django_db
