@@ -5,7 +5,24 @@
 > post-auditoría"**, al inicio del archivo. Este documento es solo el resumen
 > de estado; el detalle de cada ítem vive en las filas de `MASTER_PLAN.md`.
 
-## Estado al 2026-08-10 (última actualización: R5.1 hecho, BLOQUE R5 cerrado)
+## Estado al 2026-08-10 (última actualización: R6.1 hecho)
+
+- **✅ R6.1 (bug) hecho — arrancó el BLOQUE R6.** Cierre bidireccional
+  alerta↔tarjeta: antes solo funcionaba "resolver la alerta mueve la
+  tarjeta"; ahora "completar la tarjeta (arrastrarla a una etapa
+  `status_type=completed`) también resuelve la alerta" —
+  `apps/workboard/signals.py`, nuevo. **Detalle técnico no obvio**: tuvo
+  que ser `post_save`, no `pre_save` (que es el patrón que usan las demás
+  señales de esta ventana, registry/maintenance) — `Alert.resolve()`
+  vuelve a guardar la tarjeta si no quedó en la etapa "canónica" (la
+  primera `completed` por `order`), y con `pre_save` esa segunda escritura
+  se pisaba con el guardado original todavía pendiente. Se detectó con un
+  test que fallaba, no a ojo. Verificado con la vista real de
+  drag-and-drop (`task-move`), no solo con `.save()` directo.
+- Rama `codex/r6-alert-task-bidirectional-close`, apilada sobre toda la
+  cadena de esta ventana, sin mergear ni con push.
+
+## Estado al 2026-08-10 (R5.1 hecho, BLOQUE R5 cerrado)
 
 - **✅ R5.1 hecho — propuesta de diseño discutida en vivo con el usuario antes
   de implementar** (dos preguntas de diseño resueltas en el chat: caminos
