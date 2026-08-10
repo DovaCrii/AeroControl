@@ -24,14 +24,14 @@
 
 **Orden vigente:**
 
-1. **Ensayo de restauración de respaldos (B-01/B-02) + copia fuera de la VM.**
-   Sigue siendo **el mayor riesgo real del sistema**, y ahora más: los bloques
-   `R2`, `R3` y `R4` traen migraciones sobre datos reales de la DGAC. Runbook
-   con comandos concretos en `docs/dev/ubuntu-vm-deploy.md` → Parte H. **Ningún
-   bloque con migración debe llegar a producción antes de esto.**
-   **Queda absorbido por `R4`** (decisión 2026-08-07): el importador corre local
-   contra una copia restaurada del respaldo, así que restaurarlo *es* el ensayo.
-   Se ejecuta ahí y se registra en `docs/backend-follow-up.md`.
+1. ~~**Ensayo de restauración de respaldos (B-01/B-02) + copia fuera de la VM.**~~
+   **✅ Hecho 2026-08-10.** `verify_backup` + `restore_backup` contra el
+   snapshot `aero_ops_20260809_180019.sqlite3` (checksum verificado, copia
+   fuera de la VM en OneDrive, restauración a ruta de ensayo, 16
+   aeronaves/41 operadores/14 centros de costo/2 permisos legibles por el
+   ORM). Registro completo en `docs/backend-follow-up.md`. **Ya no bloquea
+   R2.2/R2.3, R3.1/R3.1a ni R4** — la copia restaurada queda disponible para
+   que el importador de R4 corra contra ella en modo informe.
 2. **`R1` — bugs que ocultan información de cumplimiento.** Barato y crítico:
    hoy el calendario **no muestra** las vigencias DGAC/JAC en su vista por
    defecto. Es justo la información que la auditoría exige tener a la vista.

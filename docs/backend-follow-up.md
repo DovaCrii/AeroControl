@@ -115,5 +115,6 @@ privados en GitHub.
 | 2026-07-24 | Inventario de OneDrive desde el PC | 1 snapshot visible; B-01 sigue pendiente | `AeroControl-Backups` |
 | 2026-07-24 | Revisión B-01 desde el PC | Aplicación activa (`/health/` 200); no se creó copia mientras SQLite está en uso | Detener Django en el equipo activo antes del próximo snapshot |
 | 2026-07-24 | Validación de calidad operativa | Ejecución correcta; quedan asignaciones de centro de costo por resolver y no se modificó la base | `uv run python manage.py validate_operational_data` |
+| 2026-08-10 | **Ensayo de restauración de respaldo de `p340` (Parte H, prioridad #1 del tablero)** | **Correcto.** `verify_backup` validó el checksum del manifiesto; `restore_backup` copió a una ruta de ensayo (no la base de desarrollo); la copia restaurada es legible por Django ORM: 16 aeronaves, 41 operadores, 14 centros de costo, 2 permisos de vuelo. Primera vez que se prueba que un respaldo de producción es restaurable de verdad. | Snapshot `aero_ops_20260809_180019.sqlite3` (SHA-256 verificado contra su manifiesto), transferido a `AeroControl-Backups\p340\` vía `scp` desde el notebook |
 
 Completar esta tabla después de cada ejecución de respaldo o restauración.

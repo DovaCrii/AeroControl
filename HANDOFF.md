@@ -28,9 +28,21 @@
   tres PRs pendientes (#29 esquema+sondas, #30→#33 verificador de
   conectividad/licencia DJI, #31 revisión de plan + ADR-0002) están
   mergeados a `main`, CI verde, 18/18 tests. AL-101 y AL-102 cerrados en el
-  tracker. **Pendiente de esta ventana:** confirmar AL-003 (¿`p340` puede
-  recibir MQTTS 8883, o solo HTTPS por Tailscale Funnel?) — es el
-  bloqueador real antes de que AeroLink toque EMQX/Postgres/worker (M1).
+  tracker. **AL-003 confirmado con evidencia**: ni 443 ni 8883 responden
+  desde afuera de la red Tailscale de `p340` — Tailscale Funnel no abre
+  puertos, túnela saliente. Decisión tomada: **relay MQTT externo**. Hay un
+  worker (cliente MQTT saliente) armado y con tests en la rama local
+  `codex/relay-worker` de AeroLink, sin subir — AeroLink quedó aparcado, no
+  es el foco de esta ventana.
+- **✅ Ensayo de restauración de respaldos — hecho 2026-08-10, primera vez
+  que se prueba de verdad.** `aero_ops_20260809_180019.sqlite3` verificado
+  (checksum) y restaurado a una ruta de ensayo: 16 aeronaves, 41 operadores,
+  14 centros de costo, 2 permisos de vuelo, todo legible por el ORM.
+  Registro en `docs/backend-follow-up.md`. **Esto desbloquea R2.2/R2.3,
+  R3.1/R3.1a y todo R4** — ya no falta el ensayo, falta el trabajo de código
+  en sí. La copia restaurada queda en
+  `D:\I+D\AeroOpsDesk_Data\restore-drill\aero_ops_drill.sqlite3` (datos
+  reales de la DGAC — no debe quedar viva más de lo necesario).
 
 ## Pendiente inmediato (antes de dar por cerrado el deploy)
 
@@ -53,26 +65,23 @@ con las decisiones de negocio ya tomadas el 2026-08-07:
 
 - **R2.2/R2.3** — folio interno **`JEJ-2026-001`** (correlativo anual,
   siempre presente desde la creación) + folio DGAC opcional; `__str__` usa
-  el folio interno. **Requiere backfill sobre datos reales de `p340`** —
-  el plan decidió que el importador/migración de datos reales corra
-  **localmente contra una copia restaurada del respaldo**, lo que de paso
-  sirve como el ensayo de restauración pendiente hace semanas. No aplicar
-  esta migración directo en producción.
-- **R2.7** — `search_fields` de permisos solo busca `permission_number`
-  pero el placeholder promete número/propósito/ubicación. Depende de R3.1.
+  el folio interno. **Ya no está bloqueado** — corre el backfill localmente
+  contra `D:\I+D\AeroOpsDesk_Data\restore-drill\aero_ops_drill.sqlite3`
+  (la copia restaurada del ensayo de esta ventana). No aplicar directo en
+  producción.
+- **R3.1/R3.1a** — vocabulario cerrado de `purpose`. **Ya no está
+  bloqueado**: `report_purpose_mapping` puede correr contra la misma copia
+  restaurada.
+- **R2.7** — `search_fields` de permisos. Depende de R3.1.
+- **R4** (repositorio documental) — **ya no está bloqueado**: el importador
+  puede correr en modo informe contra la copia restaurada. Antes revisar si
+  depende de R3.1/X.1 (normalizar `serial_number`) para no reimportar.
 
 **R1, R2.1, R2.4, R2.5, R2.6, R3.2 y R3.3 están completos.** Decisión de
 negocio tomada 2026-08-07 para R3.3(b): "contrato cerrado" es un **eje
 nuevo e independiente** de `is_active` — un CC con contrato cerrado sigue
 en la lista normal (no se archiva), atenuado y agrupado después de los
 operativos; `is_active` sigue siendo solo para archivar por error/duplicado.
-
-**Todo lo que queda en R2 y R3 está bloqueado en datos reales de `p340`**,
-no en trabajo de código: R2.2/R2.3 (folio interno, espera la restauración
-del respaldo), R3.1/R3.1a (`report_purpose_mapping` tiene que correr contra
-datos reales antes de escribir su migración) y R2.7 (depende de R3.1). El
-siguiente bloque no bloqueado es **R4** (repositorio documental) — pero
-revisar primero si de verdad no depende de R3.1/X.1 antes de arrancarlo.
 
 Ver las filas correspondientes en `MASTER_PLAN.md` para el detalle de cada
 fix, incluidos dos bugs reales encontrados y reproducidos en vivo que no
