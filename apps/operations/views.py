@@ -74,8 +74,16 @@ class FlightPermissionList(
     paginate_by = 25
     # R2.2/R2.3: internal_folio is the identifier every screen actually
     # shows now; permission_number (the DGAC folio) stays searchable too,
-    # it just is not always present.
-    search_fields = ["internal_folio", "permission_number"]
+    # it just is not always present. R2.7: the placeholder ("Search number,
+    # purpose, location...") promised purpose/location matches that
+    # search_fields never actually had -- purpose_detail (not the now-closed
+    # `purpose` code) is the free text a search box should match.
+    search_fields = [
+        "internal_folio",
+        "permission_number",
+        "purpose_detail",
+        "location",
+    ]
     # Explicit override: the default (self.model._meta.fields) silently drops
     # ManyToManyFields (operators/aircraft_fleet live in _meta.many_to_many,
     # not _meta.fields), so without this the CSV export would quietly lose

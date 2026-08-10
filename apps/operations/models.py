@@ -2,9 +2,11 @@ from datetime import datetime, timedelta
 
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
+from django.db.models import Q
 from django.conf import settings
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from apps.core.choices import PURPOSE_CHOICES
 from apps.core.models import BaseModel
 from apps.registry.models import Operator, Aircraft, CostCenter
 
@@ -53,7 +55,20 @@ class FlightPermission(BaseModel):
     operators = models.ManyToManyField(Operator, related_name="flight_permissions")
     aircraft_fleet = models.ManyToManyField(Aircraft, related_name="flight_permissions")
     cost_center = models.ForeignKey(CostCenter, on_delete=models.PROTECT)
-    purpose = models.CharField(max_length=250)
+    # R3.1: closed vocabulary (the 2 SIGO procedures under DAN 137 Cap. J,
+    # confirmed against real data + the user directly -- see
+    # apps.core.choices) instead of free text, so a calendar/list title
+    # built from `purpose` cannot drift into whatever wording someone typed
+    # ("Audiovisual" told nobody which procedure it actually was).
+    purpose = models.CharField(max_length=20, choices=PURPOSE_CHOICES)
+    purpose_detail = models.CharField(max_length=250, blank=True, default="")
+    # Immutable historical record of what this field held before R3.1 --
+    # same criterion as CostCenter.responsible: never shown as the primary
+    # value, never edited, kept only so the original SIGO wording is not
+    # lost to a backfill's best-effort classification.
+    purpose_legacy = models.CharField(
+        max_length=250, blank=True, default="", editable=False
+    )
     valid_from = models.DateField()
     valid_until = models.DateField()
     location = models.CharField(max_length=250)
@@ -74,6 +89,15 @@ class FlightPermission(BaseModel):
             models.Index(
                 fields=["valid_from", "valid_until", "is_active"],
                 name="ops_permission_range_idx",
+            )
+        ]
+        # R3.1: enforced at the DB level, not just the form -- the admin,
+        # a script or a future import must not be able to save "other"
+        # without a detail either.
+        constraints = [
+            models.CheckConstraint(
+                condition=~Q(purpose="other") | ~Q(purpose_detail=""),
+                name="ops_flightpermission_other_purpose_requires_detail",
             )
         ]
 
@@ -119,10 +143,15 @@ class FlightPermission(BaseModel):
         return super().save(*args, **kwargs)
 
     def clean(self):
+        errors = {}
         if self.valid_until and self.valid_from and self.valid_until < self.valid_from:
-            raise ValidationError(
-                {"valid_until": _("The end date cannot be before the start date.")}
+            errors["valid_until"] = _("The end date cannot be before the start date.")
+        if self.purpose == "other" and not self.purpose_detail:
+            errors["purpose_detail"] = _(
+                "Describe the purpose when 'Other' is selected."
             )
+        if errors:
+            raise ValidationError(errors)
 
 
 class FlightRecord(BaseModel):

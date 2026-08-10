@@ -18,6 +18,7 @@ class FlightPermissionForm(AeroModelForm):
             "aircraft_fleet",
             "cost_center",
             "purpose",
+            "purpose_detail",
             "valid_from",
             "valid_until",
             "location",
@@ -33,6 +34,7 @@ class FlightPermissionForm(AeroModelForm):
             "aircraft_fleet": _("Aircraft fleet"),
             "cost_center": _("Cost center"),
             "purpose": _("Purpose"),
+            "purpose_detail": _("Purpose detail"),
             "valid_from": _("Valid from"),
             "valid_until": _("Valid until"),
             "location": _("Location"),
@@ -41,6 +43,7 @@ class FlightPermissionForm(AeroModelForm):
         help_texts = {
             "permission_number": _("Optional until the permission is approved."),
             "area_type": _("DAN 151 (populated) vs. DAN 91 (unpopulated)."),
+            "purpose_detail": _("Required when purpose is 'Other'."),
         }
         widgets = {
             # A roster of several, not one pick from a dropdown (OPS-4).

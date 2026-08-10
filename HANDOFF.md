@@ -46,9 +46,28 @@
   `select_for_update()`; backfill probado primero contra la copia restaurada
   (`JEJ-2026-001`/`JEJ-2026-002`) antes de tocar el modelo en serio. `__str__`
   ahora devuelve el folio interno — cascada automática a lista, calendario,
-  panel de vencimientos, ficha de CC y plan geo. 715 tests verdes, verificado
-  en vivo contra el demo (folio interno siempre presente, "En proceso" cuando
-  falta el folio DGAC). Sigo desatendido con R3.1/R3.1a y R4.
+  panel de vencimientos, ficha de CC y plan geo. Verificado en vivo contra
+  el demo (folio interno siempre presente, "En proceso" cuando falta el
+  folio DGAC).
+- **✅ R3.1/R3.1a — vocabulario cerrado de `purpose`, hecho 2026-08-10.**
+  `report_purpose_mapping` (solo lectura) corrido contra la copia restaurada:
+  solo 3 filas reales con `purpose` en toda la base, las 3 mezclando más de
+  un concepto. **Confirmado con el usuario**: los 2 procedimientos SIGO son
+  "Fotogrametría" y "Videos" (no "Videografía"). Las 3 filas reales
+  quedaron en "Otro" con el texto original preservado. Encontrado y resuelto
+  de paso: `Meta.constraints` en una clase abstracta **no se hereda** si la
+  subclase concreta declara su propio `Meta` sin subclasificar el del padre
+  — cada constraint quedó declarada en el modelo concreto.
+- **✅ R2.7 — búsqueda de permisos, hecho 2026-08-10** (ya destrabado por
+  R3.1). `search_fields` ahora sí busca por folio interno, folio DGAC,
+  `purpose_detail` y ubicación, como ya prometía el placeholder.
+- **730 tests verdes** (686 antes de R2.5). `ruff check .`/
+  `ruff format --check .` verdes. Catálogo `.po` regenerado dos veces más
+  (R2.2/R2.3, R3.1): aparecieron fuzzy nuevos ambas veces, corregidos a
+  mano antes de compilar.
+- **Todo el BLOQUE R2 y R3 quedó completo esta ventana** — no queda nada
+  bloqueado en ese frente. Sigo desatendido con **R4** (repositorio
+  documental), el único bloque post-auditoría que falta.
 
 ## Pendiente inmediato (antes de dar por cerrado el deploy)
 
@@ -66,21 +85,23 @@ permiso nuevo.
 ## Dónde retomar el trabajo de código
 
 `MASTER_PLAN.md` → "Prioridades post-auditoría" tiene el orden completo.
-Resumen de lo que sigue abierto en el **BLOQUE R2** (permiso de vuelo),
-con las decisiones de negocio ya tomadas el 2026-08-07:
+**R1, R2 y R3 están completos.** Lo único que queda del post-auditoría es:
 
-- **R3.1/R3.1a** — vocabulario cerrado de `purpose`. `report_purpose_mapping`
-  corre contra la misma copia restaurada.
-- **R2.7** — `search_fields` de permisos. Depende de R3.1.
-- **R4** (repositorio documental) — el importador corre en modo informe
-  contra la copia restaurada. Antes revisar si depende de R3.1/X.1
-  (normalizar `serial_number`) para no reimportar.
+- **R4** (repositorio documental, `Z:`) — el importador corre en modo
+  informe contra la copia restaurada
+  (`D:\I+D\AeroOpsDesk_Data\restore-drill\aero_ops_drill.sqlite3`). Revisar
+  primero si depende de X.1 (normalizar `Aircraft.serial_number`) para no
+  reimportar después.
+- **R5-R8** y **BLOQUE X** (contrato AeroLink) — sin empezar, ver el
+  detalle en `MASTER_PLAN.md`. X.1 en particular es "la tarea más barata y
+  de mayor palanca del plan" y ya no depende de nada.
 
-**R1, R2.1, R2.2, R2.3, R2.4, R2.5, R2.6, R3.2 y R3.3 están completos.**
-Decisión de negocio tomada 2026-08-07 para R3.3(b): "contrato cerrado" es un **eje
-nuevo e independiente** de `is_active` — un CC con contrato cerrado sigue
-en la lista normal (no se archiva), atenuado y agrupado después de los
-operativos; `is_active` sigue siendo solo para archivar por error/duplicado.
+Decisión de negocio tomada 2026-08-07 para R3.3(b): "contrato cerrado" es un
+**eje nuevo e independiente** de `is_active` — un CC con contrato cerrado
+sigue en la lista normal (no se archiva), atenuado y agrupado después de
+los operativos; `is_active` sigue siendo solo para archivar por
+error/duplicado. Decisión tomada 2026-08-10 para R3.1: los 2 procedimientos
+SIGO son "Fotogrametría" y "Videos" (no "Videografía").
 
 Ver las filas correspondientes en `MASTER_PLAN.md` para el detalle de cada
 fix, incluidos dos bugs reales encontrados y reproducidos en vivo que no

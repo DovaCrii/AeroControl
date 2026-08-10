@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from apps.core.choices import PURPOSE_CHOICES
 from apps.core.forms import AeroModelForm
 from .models import (
     Aircraft,
@@ -298,6 +299,7 @@ class AssignmentForm(AeroModelForm):
             "aircraft",
             "cost_center",
             "purpose",
+            "purpose_detail",
             "start_date",
             "end_date",
             "status",
@@ -307,9 +309,13 @@ class AssignmentForm(AeroModelForm):
             "aircraft": _("Aircraft"),
             "cost_center": _("Cost center"),
             "purpose": _("Operation or purpose"),
+            "purpose_detail": _("Purpose detail"),
             "start_date": _("Start date"),
             "end_date": _("End date"),
             "status": _("Status"),
+        }
+        help_texts = {
+            "purpose_detail": _("Required when purpose is 'Other'."),
         }
 
     # A previous __init__ here re-translated Assignment.STATUS_CHOICES at
@@ -385,12 +391,17 @@ class OperatorAssignmentForm(AeroModelForm):
             "cost_center",
             "status",
             "purpose",
+            "purpose_detail",
         ]
         labels = {
             "operator": _("Operator"),
             "cost_center": _("Cost center"),
             "status": _("Status"),
             "purpose": _("Operation or purpose"),
+            "purpose_detail": _("Purpose detail"),
+        }
+        help_texts = {
+            "purpose_detail": _("Required when purpose is 'Other'."),
         }
 
     def __init__(self, *args, **kwargs):
@@ -430,11 +441,28 @@ class OperatorBulkAssignForm(forms.Form):
         initial="active",
         label=_("Status"),
     )
-    purpose = forms.CharField(
-        max_length=250,
+    # R3.1: closed vocabulary (apps.core.choices), same as the other 4 forms
+    # touched by this change -- optional here (LV-17), so the blank
+    # "---------" choice stays valid.
+    purpose = forms.ChoiceField(
+        choices=[("", "---------"), *PURPOSE_CHOICES],
         required=False,
         label=_("Operation or purpose"),
     )
+    purpose_detail = forms.CharField(
+        max_length=250,
+        required=False,
+        label=_("Purpose detail"),
+        help_text=_("Required when purpose is 'Other'."),
+    )
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get("purpose") == "other" and not cleaned.get("purpose_detail"):
+            self.add_error(
+                "purpose_detail", _("Describe the purpose when 'Other' is selected.")
+            )
+        return cleaned
 
 
 class AircraftAssignmentForm(AeroModelForm):
@@ -449,6 +477,7 @@ class AircraftAssignmentForm(AeroModelForm):
             "end_date",
             "status",
             "purpose",
+            "purpose_detail",
         ]
         labels = {
             "aircraft": _("Aircraft"),
@@ -457,6 +486,10 @@ class AircraftAssignmentForm(AeroModelForm):
             "end_date": _("End date"),
             "status": _("Status"),
             "purpose": _("Operation or purpose"),
+            "purpose_detail": _("Purpose detail"),
+        }
+        help_texts = {
+            "purpose_detail": _("Required when purpose is 'Other'."),
         }
 
 
