@@ -38,11 +38,17 @@
   que se prueba de verdad.** `aero_ops_20260809_180019.sqlite3` verificado
   (checksum) y restaurado a una ruta de ensayo: 16 aeronaves, 41 operadores,
   14 centros de costo, 2 permisos de vuelo, todo legible por el ORM.
-  Registro en `docs/backend-follow-up.md`. **Esto desbloquea R2.2/R2.3,
-  R3.1/R3.1a y todo R4** — ya no falta el ensayo, falta el trabajo de código
-  en sí. La copia restaurada queda en
+  Registro en `docs/backend-follow-up.md`. La copia restaurada queda en
   `D:\I+D\AeroOpsDesk_Data\restore-drill\aero_ops_drill.sqlite3` (datos
   reales de la DGAC — no debe quedar viva más de lo necesario).
+- **✅ R2.2/R2.3 — folio interno correlativo, hecho 2026-08-10.**
+  `internal_folio` (`JEJ-2026-NNN`) asignado en `save()` bajo
+  `select_for_update()`; backfill probado primero contra la copia restaurada
+  (`JEJ-2026-001`/`JEJ-2026-002`) antes de tocar el modelo en serio. `__str__`
+  ahora devuelve el folio interno — cascada automática a lista, calendario,
+  panel de vencimientos, ficha de CC y plan geo. 715 tests verdes, verificado
+  en vivo contra el demo (folio interno siempre presente, "En proceso" cuando
+  falta el folio DGAC). Sigo desatendido con R3.1/R3.1a y R4.
 
 ## Pendiente inmediato (antes de dar por cerrado el deploy)
 
@@ -63,22 +69,15 @@ permiso nuevo.
 Resumen de lo que sigue abierto en el **BLOQUE R2** (permiso de vuelo),
 con las decisiones de negocio ya tomadas el 2026-08-07:
 
-- **R2.2/R2.3** — folio interno **`JEJ-2026-001`** (correlativo anual,
-  siempre presente desde la creación) + folio DGAC opcional; `__str__` usa
-  el folio interno. **Ya no está bloqueado** — corre el backfill localmente
-  contra `D:\I+D\AeroOpsDesk_Data\restore-drill\aero_ops_drill.sqlite3`
-  (la copia restaurada del ensayo de esta ventana). No aplicar directo en
-  producción.
-- **R3.1/R3.1a** — vocabulario cerrado de `purpose`. **Ya no está
-  bloqueado**: `report_purpose_mapping` puede correr contra la misma copia
-  restaurada.
+- **R3.1/R3.1a** — vocabulario cerrado de `purpose`. `report_purpose_mapping`
+  corre contra la misma copia restaurada.
 - **R2.7** — `search_fields` de permisos. Depende de R3.1.
-- **R4** (repositorio documental) — **ya no está bloqueado**: el importador
-  puede correr en modo informe contra la copia restaurada. Antes revisar si
-  depende de R3.1/X.1 (normalizar `serial_number`) para no reimportar.
+- **R4** (repositorio documental) — el importador corre en modo informe
+  contra la copia restaurada. Antes revisar si depende de R3.1/X.1
+  (normalizar `serial_number`) para no reimportar.
 
-**R1, R2.1, R2.4, R2.5, R2.6, R3.2 y R3.3 están completos.** Decisión de
-negocio tomada 2026-08-07 para R3.3(b): "contrato cerrado" es un **eje
+**R1, R2.1, R2.2, R2.3, R2.4, R2.5, R2.6, R3.2 y R3.3 están completos.**
+Decisión de negocio tomada 2026-08-07 para R3.3(b): "contrato cerrado" es un **eje
 nuevo e independiente** de `is_active` — un CC con contrato cerrado sigue
 en la lista normal (no se archiva), atenuado y agrupado después de los
 operativos; `is_active` sigue siendo solo para archivar por error/duplicado.

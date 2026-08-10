@@ -138,7 +138,7 @@ def test_upcoming_expirations_spans_quals_documents_and_permissions():
     labels = " ".join(item["label"] for item in items)
     assert "Ana" in labels
     assert "Airworthiness cert" in labels
-    assert "PERM-1" in labels
+    assert permission.internal_folio in labels
 
 
 @pytest.mark.django_db
@@ -197,7 +197,9 @@ def test_upcoming_expirations_assigns_the_shared_urgency_bucket():
 def test_permission_without_dgac_folio_does_not_render_the_word_none():
     """R1.2: verified live on the demo -- a permit with no DGAC folio showed
     up on this panel as "Flight permission None", not blank. Same root cause
-    as the calendar's _permission_title, different code path."""
+    as the calendar's _permission_title, different code path. R2.2/R2.3:
+    the label is internal_folio now, assigned at creation and never blank,
+    not a placeholder for the missing DGAC folio."""
     from datetime import timedelta
 
     from django.utils import timezone
@@ -220,7 +222,7 @@ def test_permission_without_dgac_folio_does_not_render_the_word_none():
     items = upcoming_expirations(today, cutoff)
 
     assert len(items) == 1
-    assert items[0]["label"] == "En proceso"
+    assert items[0]["label"] == permission.internal_folio
 
 
 @pytest.mark.django_db

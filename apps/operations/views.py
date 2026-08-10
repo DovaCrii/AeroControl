@@ -72,7 +72,10 @@ class FlightPermissionList(
     htmx_template_name = "operations/_permission_rows.html"
     context_object_name = "objects"
     paginate_by = 25
-    search_fields = ["permission_number"]
+    # R2.2/R2.3: internal_folio is the identifier every screen actually
+    # shows now; permission_number (the DGAC folio) stays searchable too,
+    # it just is not always present.
+    search_fields = ["internal_folio", "permission_number"]
     # Explicit override: the default (self.model._meta.fields) silently drops
     # ManyToManyFields (operators/aircraft_fleet live in _meta.many_to_many,
     # not _meta.fields), so without this the CSV export would quietly lose
@@ -80,6 +83,7 @@ class FlightPermissionList(
     csv_fields = [
         FlightPermission._meta.get_field(name)
         for name in (
+            "internal_folio",
             "permission_number",
             "operators",
             "aircraft_fleet",

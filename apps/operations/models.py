@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
 
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.conf import settings
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from apps.core.models import BaseModel
 from apps.registry.models import Operator, Aircraft, CostCenter
@@ -35,6 +36,14 @@ class FlightPermission(BaseModel):
         ("unpopulated", _("Unpopulated area")),
         ("mixed", _("Mixed (crosses both)")),
     ]
+    # R2.2/R2.3: the identifier every screen actually needs is this one, not
+    # the DGAC folio below -- a permit exists (and needs a title on the
+    # calendar, the list, its geo plan) long before the DGAC ever assigns a
+    # number. Annual correlative ("JEJ-2026-001") because the year is enough
+    # to place it in time, same as the DGAC resoluciones the operation
+    # already handles. Assigned once in save() below, never blank, never
+    # user-editable (excluded from FlightPermissionForm).
+    internal_folio = models.CharField(max_length=20, unique=True, editable=False)
     # LV-39: optional until the permit is approved, so a permit can be drafted
     # ("requested") or recorded as "denied" before the DGAC folio exists. null
     # (not "") so several folio-less permits don't collide on the unique index.
@@ -69,16 +78,45 @@ class FlightPermission(BaseModel):
         ]
 
     def __str__(self):
-        # LV-39: a permit may not have its folio yet (still requested/denied).
-        return (
-            self.permission_number
-            or f"{self.get_status_display()} · {self.purpose[:30]}"
-        )
+        # R2.3: was `permission_number or f"{status} · {purpose[:30]}"` --
+        # purpose leaked into the list/calendar/geo-plan titles as a
+        # de-facto identifier for any permit without a DGAC folio yet.
+        # internal_folio is assigned at creation and never blank, so
+        # purpose goes back to being plain data.
+        return self.internal_folio
 
     def get_absolute_url(self):
         from django.urls import reverse
 
         return reverse("permission-detail", kwargs={"pk": self.pk})
+
+    @staticmethod
+    def _next_internal_folio():
+        """Annual correlative, safe under concurrent creation.
+
+        `select_for_update()` locks the current-year rows within this
+        transaction so two permits created at the same moment cannot both
+        compute the same next number -- the second blocks until the first
+        commits. The one gap this does not close is the very first permit
+        of a new year (nothing to lock yet); the `unique` constraint turns
+        that rare race into a failed save instead of a silent duplicate.
+        """
+        prefix = f"JEJ-{timezone.now().year}-"
+        last = (
+            FlightPermission.objects.select_for_update()
+            .filter(internal_folio__startswith=prefix)
+            .order_by("-internal_folio")
+            .first()
+        )
+        next_seq = int(last.internal_folio[len(prefix) :]) + 1 if last else 1
+        return f"{prefix}{next_seq:03d}"
+
+    def save(self, *args, **kwargs):
+        if self._state.adding and not self.internal_folio:
+            with transaction.atomic():
+                self.internal_folio = self._next_internal_folio()
+                return super().save(*args, **kwargs)
+        return super().save(*args, **kwargs)
 
     def clean(self):
         if self.valid_until and self.valid_from and self.valid_until < self.valid_from:
