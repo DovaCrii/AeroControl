@@ -1026,6 +1026,7 @@ Fuente: `Z:\01-116 OPERACIONES_RPA_JEJ` — 79 archivos / 0.17 GB, 16 carpetas d
 | R5.4 | ⬜ | **Ficha de aeronave como expediente**: documentos + movimientos + mantenciones + horas de vuelo en una vista. Pedido como *"trazabilidad del activo"*. |
 | R5.5 | ⬜ | Selector de aeronaves con modelo y serie, no solo matrícula (absorbe LV-65). |
 | R5.6 | ⬜ | Asignación múltiple de **aeronaves**: existe `OperatorBulkAssign` para operadores, no hay equivalente para aeronaves. |
+| R5.7 | ⬜ | **Seguimiento del trámite de seguro JAC para aeronaves nuevas** (pedido 2026-08-10, viendo la lista de Aeronaves en vivo). Hoy la columna "Seguro" solo distingue vigente/atrasado/`—`; una aeronave recién ingresada con el seguro ya solicitado se ve igual que una sin seguro pedido. Agregar un estado del trámite — **"En trámite"** mientras se espera la póliza JAC, pasa a activo (la fecha de `insurance_expiry` ya existente) cuando se recibe — para tener el seguimiento completo desde que se pide hasta que la aeronave queda operativa. Mismo patrón que `CostCenter.contract_status` (R3.3b) y `FlightPermission.area_type` (R2.6): campo de estado nuevo junto a un dato existente, no lo reemplaza. |
 
 ### BLOQUE R6 — Alertas y reportes `P2`
 
