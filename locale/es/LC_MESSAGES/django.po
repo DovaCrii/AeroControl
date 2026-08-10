@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-10 17:17-0400\n"
+"POT-Creation-Date: 2026-08-10 17:59-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -151,6 +151,14 @@ msgstr "El contenido del archivo no coincide con su extensión."
 #: .\apps\compliance\forms.py:260
 msgid "Field to watch"
 msgstr "Campo a vigilar"
+
+#: .\apps\compliance\forms.py:307
+msgid "Reason / root cause"
+msgstr "Motivo / causa raíz"
+
+#: .\apps\compliance\forms.py:308
+msgid "Why this happened and how it was addressed."
+msgstr "Por qué ocurrió y cómo se solucionó."
 
 #: .\apps\compliance\management\commands\check_monthly_records.py:158
 #, python-format
@@ -353,59 +361,63 @@ msgstr "No se resolvieron alertas en este período."
 msgid "No open alerts."
 msgstr "Sin alertas abiertas."
 
-#: .\apps\compliance\views.py:94 .\apps\maintenance\views.py:45
+#: .\apps\compliance\views.py:100 .\apps\maintenance\views.py:45
 #: .\apps\operations\views.py:57 .\apps\registry\views.py:135
 #: .\apps\workboard\views.py:121
 #, python-format
 msgid "New %(record)s"
 msgstr "Nuevo: %(record)s"
 
-#: .\apps\compliance\views.py:156 .\templates\base.html:105
+#: .\apps\compliance\views.py:162 .\templates\base.html:105
 #: .\templates\compliance\company_documents.html:3
 #: .\templates\compliance\company_documents.html:8
 #: .\templates\dashboard\index.html:9
 msgid "Company documents"
 msgstr "Documentos de la empresa"
 
-#: .\apps\compliance\views.py:234 .\templates\base.html:103
+#: .\apps\compliance\views.py:240 .\templates\base.html:103
 #: .\templates\compliance\operational_records.html:3
 #: .\templates\compliance\operational_records.html:8
 msgid "Operational records"
 msgstr "Registros operacionales"
 
-#: .\apps\compliance\views.py:437
+#: .\apps\compliance\views.py:443
 msgid "Document archived."
 msgstr "Documento archivado."
 
-#: .\apps\compliance\views.py:508
+#: .\apps\compliance\views.py:526 .\apps\compliance\views.py:536
+msgid "Resolve alert"
+msgstr "Resolver alerta"
+
+#: .\apps\compliance\views.py:548
 msgid "Alert resolved."
 msgstr "Alerta resuelta."
 
-#: .\apps\compliance\views.py:528
+#: .\apps\compliance\views.py:568
 msgid "Alert reopened."
 msgstr "Alerta reabierta."
 
-#: .\apps\compliance\views.py:549
+#: .\apps\compliance\views.py:589
 msgid "No Kanban board is available to hold the follow-up task."
 msgstr ""
 "No hay ningún tablero Kanban disponible para alojar la tarea de seguimiento."
 
-#: .\apps\compliance\views.py:552
+#: .\apps\compliance\views.py:592
 msgid "Follow-up task created."
 msgstr "Tarea de seguimiento creada."
 
-#: .\apps\compliance\views.py:656 .\templates\base.html:104
+#: .\apps\compliance\views.py:696 .\templates\base.html:104
 #: .\templates\compliance\monthly_review.html:3
 #: .\templates\compliance\monthly_review.html:8
 msgid "Monthly compliance"
 msgstr "Cumplimiento mensual"
 
-#: .\apps\compliance\views.py:690
+#: .\apps\compliance\views.py:730
 #, python-format
 msgid "%(center)s %(period)s marked."
 msgstr "%(center)s %(period)s marcado."
 
-#: .\apps\compliance\views.py:717
+#: .\apps\compliance\views.py:757
 #, python-format
 msgid "Edit %(name)s"
 msgstr "Editar %(name)s"
@@ -2303,6 +2315,10 @@ msgstr "Crear tarea"
 #: .\templates\compliance\alert_list.html:18
 msgid "View task"
 msgstr "Ver tarea"
+
+#: .\templates\compliance\alert_list.html:19
+msgid "Resolve, with a reason on record (ISO 10.2)"
+msgstr "Resolver, dejando un motivo registrado (ISO 10.2)"
 
 #: .\templates\compliance\alert_list.html:19
 msgid "Resolve"

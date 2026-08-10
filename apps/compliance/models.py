@@ -322,6 +322,13 @@ class Alert(BaseModel):
         related_name="+",
         editable=False,
     )
+    # R6.2: ISO 10.2 asks for the root cause on record, not just "handled" --
+    # the manual "Resolve" button required nothing before this. Blank at the
+    # model level (automatic resolutions -- resolve_open_alerts_for,
+    # resolve_related_alerts, R6.1's task-completion signal -- have no human
+    # to ask, and stay reason-less); AlertResolveForm is what actually makes
+    # it required for the one place a human clicks "Resolve".
+    resolution_reason = models.TextField(blank=True)
 
     class Meta:
         indexes = [
@@ -452,7 +459,7 @@ class Alert(BaseModel):
         )
 
     @transaction.atomic
-    def resolve(self):
+    def resolve(self, reason=""):
         """Mark the alert resolved and close its linked task (B1.6).
 
         Moves the linked task (if any, and not already there) to the board's
@@ -463,9 +470,15 @@ class Alert(BaseModel):
         Atomic: the alert flag and the task move are one fact. A crash between
         the two saves left a resolved alert with its task still open -- the
         exact desynchronisation the alert-task link exists to prevent.
+
+        `reason` (R6.2, ISO 10.2's root cause on record) is optional here --
+        the automatic callers (resolve_open_alerts_for, resolve_related_alerts,
+        R6.1's task-completion signal) have no human to ask. AlertResolveForm
+        is what actually requires it for the one manual "Resolve" button.
         """
         self.is_resolved = True
         self.resolved_at = timezone.now()
+        self.resolution_reason = reason
         task = self.linked_task()
         completed_stage = None
         if task is not None:
@@ -486,6 +499,7 @@ class Alert(BaseModel):
             update_fields=[
                 "is_resolved",
                 "resolved_at",
+                "resolution_reason",
                 "resolved_from_stage",
                 "updated_at",
             ]
@@ -513,12 +527,14 @@ class Alert(BaseModel):
 
         self.is_resolved = False
         self.resolved_at = None
+        self.resolution_reason = ""
         origin = self.resolved_from_stage
         self.resolved_from_stage = None
         self.save(
             update_fields=[
                 "is_resolved",
                 "resolved_at",
+                "resolution_reason",
                 "resolved_from_stage",
                 "updated_at",
             ]

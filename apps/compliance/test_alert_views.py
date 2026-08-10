@@ -186,7 +186,7 @@ def test_reopen_returns_the_task_to_the_stage_it_came_from(qualification):
     client.post(reverse("alert-create-task", args=[alert.pk]))
     original_stage = KanbanTask.objects.get().stage
 
-    client.post(reverse("alert-resolve", args=[alert.pk]))
+    client.post(reverse("alert-resolve", args=[alert.pk]), {"reason": "Fixed"})
     moved = KanbanTask.objects.get()
     assert moved.stage.status_type == "completed"
     assert moved.stage_id != original_stage.pk
@@ -210,7 +210,7 @@ def test_reopen_falls_back_when_the_original_stage_was_archived(qualification):
     assert client.login(username="admin", password="password")
     client.post(reverse("alert-create-task", args=[alert.pk]))
     original_stage = KanbanTask.objects.get().stage
-    client.post(reverse("alert-resolve", args=[alert.pk]))
+    client.post(reverse("alert-resolve", args=[alert.pk]), {"reason": "Fixed"})
 
     original_stage.is_active = False
     original_stage.save(update_fields=["is_active"])
@@ -229,6 +229,111 @@ def test_reopening_an_open_alert_changes_nothing(qualification):
     assert alert.reopen() is None
     alert.refresh_from_db()
     assert alert.is_resolved is False
+
+
+class TestResolveRequiresAReason:
+    """R6.2: ISO 10.2 asks for the root cause on record -- "Resolve" used to
+    take nothing at all."""
+
+    @pytest.mark.django_db
+    def test_get_renders_the_reason_form_in_the_modal(self, qualification):
+        alert = _alert_for(qualification)
+        User.objects.create_superuser("admin", "a@test.com", "password")
+        client = Client()
+        assert client.login(username="admin", password="password")
+
+        response = client.get(reverse("alert-resolve", args=[alert.pk]))
+
+        assert response.status_code == 200
+        assert b'name="reason"' in response.content
+
+    @pytest.mark.django_db
+    def test_blank_reason_does_not_resolve_the_alert(self, qualification):
+        alert = _alert_for(qualification)
+        User.objects.create_superuser("admin", "a@test.com", "password")
+        client = Client()
+        assert client.login(username="admin", password="password")
+
+        response = client.post(
+            reverse("alert-resolve", args=[alert.pk]), {"reason": ""}
+        )
+
+        assert response.status_code == 422
+        alert.refresh_from_db()
+        assert alert.is_resolved is False
+
+    @pytest.mark.django_db
+    def test_a_real_reason_resolves_the_alert_and_is_kept_on_record(
+        self, qualification
+    ):
+        alert = _alert_for(qualification)
+        User.objects.create_superuser("admin", "a@test.com", "password")
+        client = Client()
+        assert client.login(username="admin", password="password")
+
+        response = client.post(
+            reverse("alert-resolve", args=[alert.pk]),
+            {"reason": "JAC policy renewed, folio 12345."},
+        )
+
+        assert response.status_code == 302
+        alert.refresh_from_db()
+        assert alert.is_resolved is True
+        assert alert.resolution_reason == "JAC policy renewed, folio 12345."
+
+    @pytest.mark.django_db
+    def test_htmx_submit_returns_204_with_the_modal_close_trigger(self, qualification):
+        alert = _alert_for(qualification)
+        User.objects.create_superuser("admin", "a@test.com", "password")
+        client = Client()
+        assert client.login(username="admin", password="password")
+
+        response = client.post(
+            reverse("alert-resolve", args=[alert.pk]),
+            {"reason": "Fixed"},
+            HTTP_HX_REQUEST="true",
+        )
+
+        assert response.status_code == 204
+        assert response.headers.get("HX-Trigger") == "modal-form-success"
+
+    @pytest.mark.django_db
+    def test_reopening_clears_the_recorded_reason(self, qualification):
+        alert = _alert_for(qualification)
+        alert.resolve(reason="Fixed the first time")
+
+        alert.reopen()
+
+        alert.refresh_from_db()
+        assert alert.resolution_reason == ""
+
+    @pytest.mark.django_db
+    def test_resolve_requires_change_alert_permission(self, qualification):
+        alert = _alert_for(qualification)
+        User.objects.create_user("viewer", password="password")
+        client = Client()
+        assert client.login(username="viewer", password="password")
+
+        response = client.post(
+            reverse("alert-resolve", args=[alert.pk]), {"reason": "Fixed"}
+        )
+
+        assert response.status_code == 403
+        alert.refresh_from_db()
+        assert alert.is_resolved is False
+
+    @pytest.mark.django_db
+    def test_automatic_resolution_stays_reason_less(self, qualification):
+        """The system-driven callers (resolve_open_alerts_for,
+        Document.resolve_related_alerts, R6.1's task-completion signal) have
+        no human to ask -- Alert.resolve() must keep working without one."""
+        alert = _alert_for(qualification)
+
+        alert.resolve()
+
+        alert.refresh_from_db()
+        assert alert.is_resolved is True
+        assert alert.resolution_reason == ""
 
 
 @pytest.mark.django_db
