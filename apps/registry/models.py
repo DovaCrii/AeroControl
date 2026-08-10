@@ -139,7 +139,13 @@ class Aircraft(BaseModel):
     model = models.CharField(max_length=100)
     manufacturer = models.CharField(max_length=100)
     year = models.PositiveIntegerField(null=True, blank=True)
-    serial_number = models.CharField(max_length=100, blank=True)
+    # X.1: the only key present in all three worlds (DJI, the Z: folder
+    # names, the DGAC registry) -- unique now that the 4 known production
+    # discrepancies are resolved (see save() and migration 0028). `null=True`
+    # (not just blank) so aircraft without a serial on file yet do not
+    # collide on the unique index, same pattern as
+    # FlightPermission.permission_number.
+    serial_number = models.CharField(max_length=100, blank=True, null=True, unique=True)
     max_takeoff_weight_kg = models.DecimalField(
         max_digits=8, decimal_places=3, null=True, blank=True
     )
@@ -222,8 +228,10 @@ class Aircraft(BaseModel):
         # aircraft with a stray internal space typed into this field
         # (confirmed against the Z: folder names, which carry the real
         # serial). `.split()`+`"".join` removes internal as well as leading/
-        # trailing whitespace, unlike `.strip()`.
-        self.serial_number = "".join(self.serial_number.split())
+        # trailing whitespace, unlike `.strip()`. An empty result becomes
+        # `None`, not `""`, so several aircraft without a serial on file
+        # do not collide on the unique index.
+        self.serial_number = "".join((self.serial_number or "").split()) or None
         super().save(*args, **kwargs)
 
 

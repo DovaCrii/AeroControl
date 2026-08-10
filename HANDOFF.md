@@ -5,20 +5,31 @@
 > post-auditoría"**, al inicio del archivo. Este documento es solo el resumen
 > de estado; el detalle de cada ítem vive en las filas de `MASTER_PLAN.md`.
 
-## Estado al 2026-08-10 (última actualización: normalización X.1)
+## Estado al 2026-08-10 (última actualización: X.1 cerrado)
 
-- **🔄 X.1 — normalización de `Aircraft.serial_number`, hecho hoy, no cerrado del todo.**
+- **✅ X.1 — `Aircraft.serial_number` como llave de cruce, cerrado hoy.**
   `Aircraft.save()` limpia todo el whitespace (incluido el interno —
-  `"".join(serial.split())`) y la migración de datos `0027` aplicó lo mismo a
-  las 16 filas reales. Verificado contra la copia restaurada + `Z:` en vivo:
-  las 2 discrepancias de espacio (`RPA-4401`, `RPA-4436`) ya quedaron
-  resueltas. **Quedan 2 discrepancias reales sin resolver** —
-  `RPA-4647` (ceros vs "OO") y `RPA-4884` (`1581` vs `1582` contra la carpeta
-  `CC717`) — que ninguna fuente disponible puede arbitrar; hace falta la
-  placa física del equipo o el certificado DGAC. `unique=True` en el campo
-  queda pendiente de esa verificación. 734 tests verdes (730 antes),
-  `ruff`/`bandit`/`pip-audit` limpios. Rama `codex/serial-number-normalize`,
-  sin mergear.
+  `"".join(serial.split())`) — migración `0027` aplicó lo mismo a las 16
+  filas reales, resolviendo las 2 discrepancias de espacio (`RPA-4401`,
+  `RPA-4436`). Las otras 2 (`RPA-4647` ceros vs "OO", `RPA-4884` `1581` vs
+  `1582` contra la carpeta `CC717`) **las confirmó el usuario contra el
+  registro físico**: el valor que ya tenía la app era el correcto en ambos
+  casos — no se tocó la base. El usuario corrige el nombre de carpeta en
+  `Z:` por su cuenta; este repo no escribe ahí. Campo ahora
+  `null=True, unique=True` (migración `0028`, mismo patrón que
+  `FlightPermission.permission_number`). **X.1 ya no bloquea nada de R4.**
+  736 tests verdes (730 antes de esta ventana), `ruff`/`bandit`/`pip-audit`
+  limpios. Rama `codex/serial-number-normalize`, sin mergear.
+- **Observación en vivo capturada, sin implementar:** el usuario ve
+  "Habilitaciones" (`qualification-list`) como redundante con Operadores.
+  No es redundancia técnica (`Qualification` alimenta alertas de vencimiento
+  y el aviso de compatibilidad B4.4) sino de contenido — la ficha de
+  Operador ya muestra `authorizations` (texto libre) y Habilitaciones
+  muestra lo mismo estructurado pero casi siempre sin fecha. Capturado como
+  **R5.8** en `MASTER_PLAN.md`: no borrar el modelo, evaluar si debe salir
+  del sidebar de primer nivel (mismo movimiento que LV-7 hizo con Kanban).
+  Propuesta de diseño antes de implementar — el usuario todavía no confirmó
+  si prefiere revisarlo ya o mantener el orden vigente (R4 primero).
 
 ## Estado al 2026-08-10
 
@@ -100,16 +111,17 @@ permiso nuevo.
 ## Dónde retomar el trabajo de código
 
 `MASTER_PLAN.md` → "Prioridades post-auditoría" tiene el orden completo.
-**R1, R2 y R3 están completos.** Lo único que queda del post-auditoría es:
+**R1, R2, R3 y X.1 están completos.** Lo único que queda del post-auditoría es:
 
 - **R4** (repositorio documental, `Z:`) — el importador corre en modo
   informe contra la copia restaurada
-  (`D:\I+D\AeroOpsDesk_Data\restore-drill\aero_ops_drill.sqlite3`). Revisar
-  primero si depende de X.1 (normalizar `Aircraft.serial_number`) para no
-  reimportar después.
-- **R5-R8** y **BLOQUE X** (contrato AeroLink) — sin empezar, ver el
-  detalle en `MASTER_PLAN.md`. X.1 en particular es "la tarea más barata y
-  de mayor palanca del plan" y ya no depende de nada.
+  (`D:\I+D\AeroOpsDesk_Data\restore-drill\aero_ops_drill.sqlite3`). **Ya no
+  depende de X.1** — las 4 discrepancias de `Aircraft.serial_number`
+  quedaron resueltas 2026-08-10, así que el calce por serial (R4.1a) puede
+  correr con confianza.
+- **R5-R8** (salvo R5.7/R5.8, ya en el tablero) y el resto de **BLOQUE X**
+  (X.2-X.5, contrato AeroLink) — sin empezar, ver el detalle en
+  `MASTER_PLAN.md`.
 
 Decisión de negocio tomada 2026-08-07 para R3.3(b): "contrato cerrado" es un
 **eje nuevo e independiente** de `is_active` — un CC con contrato cerrado
