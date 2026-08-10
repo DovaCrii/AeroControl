@@ -12,7 +12,9 @@ from .models import OperatorAssignment
 
 
 @transaction.atomic
-def bulk_assign_operators(*, operators, cost_center, status, purpose, user):
+def bulk_assign_operators(
+    *, operators, cost_center, status, purpose, purpose_detail, user
+):
     """Assign several operators to one cost center in a single action (LV-18).
 
     An operator belongs to a single cost center, so one already active on a
@@ -45,6 +47,7 @@ def bulk_assign_operators(*, operators, cost_center, status, purpose, user):
             start_date=today,
             status=status,
             purpose=purpose,
+            purpose_detail=purpose_detail,
         )
         assignment._changed_by_user = user
         assignment.save()

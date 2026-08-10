@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
+from apps.core.choices import PURPOSE_CHOICES
 from apps.core.models import BaseModel, OperationalTenant
 from apps.core.tenancy import get_default_tenant
 
@@ -311,7 +312,15 @@ class Assignment(BaseModel):
         null=True,
         blank=True,
     )
-    purpose = models.CharField(max_length=250, blank=True)
+    # R3.1: same closed vocabulary as FlightPermission (apps.core.choices) --
+    # optional here (blank=True), unlike the flight permit: LV-17 already
+    # decided this is a supplementary note on an assignment, not a fact
+    # every assignment must carry.
+    purpose = models.CharField(max_length=20, choices=PURPOSE_CHOICES, blank=True)
+    purpose_detail = models.CharField(max_length=250, blank=True, default="")
+    purpose_legacy = models.CharField(
+        max_length=250, blank=True, default="", editable=False
+    )
     start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="planned")
@@ -325,6 +334,12 @@ class Assignment(BaseModel):
                 fields=["start_date", "end_date"], name="reg_assignment_range_idx"
             )
         ]
+        constraints = [
+            models.CheckConstraint(
+                condition=~Q(purpose="other") | ~Q(purpose_detail=""),
+                name="reg_assignment_other_purpose_requires_detail",
+            )
+        ]
 
     def __str__(self):
         return f"{self.operator} · {self.aircraft}"
@@ -336,6 +351,10 @@ class Assignment(BaseModel):
         errors = {}
         if self.end_date and self.end_date < self.start_date:
             errors["end_date"] = _("The end date cannot be before the start date.")
+        if self.purpose == "other" and not self.purpose_detail:
+            errors["purpose_detail"] = _(
+                "Describe the purpose when 'Other' is selected."
+            )
         if self.operator_id and not self.operator.is_active:
             errors["operator"] = _("The selected operator is inactive.")
         if self.aircraft_id and (
@@ -472,7 +491,15 @@ class ResourceAssignment(BaseModel):
     start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
-    purpose = models.CharField(max_length=250, blank=True)
+    # R3.1: same closed vocabulary as FlightPermission/Assignment, optional
+    # here too (blank=True) -- unchanged from before this field held free
+    # text (LV-17's decision that this is a supplementary note, not a
+    # mandatory classification, still holds).
+    purpose = models.CharField(max_length=20, choices=PURPOSE_CHOICES, blank=True)
+    purpose_detail = models.CharField(max_length=250, blank=True, default="")
+    purpose_legacy = models.CharField(
+        max_length=250, blank=True, default="", editable=False
+    )
 
     class Meta:
         abstract = True
@@ -503,6 +530,10 @@ class ResourceAssignment(BaseModel):
         errors = {}
         if self.end_date and self.end_date < self.start_date:
             errors["end_date"] = _("The end date cannot be before the start date.")
+        if self.purpose == "other" and not self.purpose_detail:
+            errors["purpose_detail"] = _(
+                "Describe the purpose when 'Other' is selected."
+            )
         resource = getattr(self, self.resource_field, None)
         if self._resource_id() and resource and not resource.is_active:
             errors[self.resource_field] = _("The selected resource is inactive.")
@@ -536,6 +567,16 @@ class OperatorAssignment(ResourceAssignment):
             ),
             models.Index(fields=["operator", "end_date"], name="reg_opassign_op_idx"),
         ]
+        # R3.1: declared here, not on the abstract ResourceAssignment --
+        # this Meta does not subclass the parent's, so its constraints
+        # would not otherwise be created (confirmed empirically:
+        # makemigrations skipped it when it only lived on the abstract).
+        constraints = [
+            models.CheckConstraint(
+                condition=~Q(purpose="other") | ~Q(purpose_detail=""),
+                name="reg_opassign_other_purpose_requires_detail",
+            )
+        ]
 
     def __str__(self):
         return f"{self.operator} → {self.cost_center}"
@@ -558,6 +599,12 @@ class AircraftAssignment(ResourceAssignment):
                 fields=["cost_center", "is_active"], name="reg_acassign_cc_idx"
             ),
             models.Index(fields=["aircraft", "end_date"], name="reg_acassign_ac_idx"),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=~Q(purpose="other") | ~Q(purpose_detail=""),
+                name="reg_acassign_other_purpose_requires_detail",
+            )
         ]
 
     def __str__(self):

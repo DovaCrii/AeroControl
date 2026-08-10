@@ -37,7 +37,7 @@ def _permission(cost_center, operator, aircraft, **kwargs):
     member (OPS-4: operators/aircraft_fleet are M2M, so they cannot be passed
     as .create() kwargs like the old single FKs could)."""
     kwargs.setdefault("permission_number", "PERM-1")
-    kwargs.setdefault("purpose", "Training")
+    kwargs.setdefault("purpose", "photogrammetry")
     kwargs.setdefault("valid_from", date(2026, 7, 22))
     kwargs.setdefault("valid_until", kwargs["valid_from"])
     kwargs.setdefault("location", "Santiago")
@@ -54,7 +54,7 @@ def _permission_form_data(cost_center, operator, aircraft, **overrides):
         "operators": [operator.pk],
         "aircraft_fleet": [aircraft.pk],
         "cost_center": cost_center.pk,
-        "purpose": "Training",
+        "purpose": "photogrammetry",
         "valid_from": "2026-07-22",
         "valid_until": "2026-07-22",
         "location": "Santiago",

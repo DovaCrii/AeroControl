@@ -678,6 +678,7 @@ class OperatorBulkAssign(HtmxFormMixin, ModelPermissionRequiredMixin, FormView):
             cost_center=form.cleaned_data["cost_center"],
             status=form.cleaned_data["status"],
             purpose=form.cleaned_data["purpose"],
+            purpose_detail=form.cleaned_data["purpose_detail"],
             user=self.request.user,
         )
         return super().form_valid(form)

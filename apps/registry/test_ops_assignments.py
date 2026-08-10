@@ -318,7 +318,12 @@ class TestBulkAssignService:
         ops = [_operator(employee_id=f"E{i}", full_name=f"P{i}") for i in range(3)]
         cc = _cc("CC1")
         moved = bulk_assign_operators(
-            operators=ops, cost_center=cc, status="active", purpose="", user=None
+            operators=ops,
+            cost_center=cc,
+            status="active",
+            purpose="",
+            purpose_detail="",
+            user=None,
         )
         assert moved == 3
         assert (
@@ -339,7 +344,12 @@ class TestBulkAssignService:
             operator=op, cost_center=cc, start_date=TODAY, status="active"
         )
         moved = bulk_assign_operators(
-            operators=[op], cost_center=cc, status="active", purpose="", user=None
+            operators=[op],
+            cost_center=cc,
+            status="active",
+            purpose="",
+            purpose_detail="",
+            user=None,
         )
         assert moved == 0
         assert (
@@ -357,7 +367,12 @@ class TestBulkAssignService:
         )
         user = User.objects.create_user("mover", password="pw")
         moved = bulk_assign_operators(
-            operators=[op], cost_center=cc2, status="active", purpose="", user=user
+            operators=[op],
+            cost_center=cc2,
+            status="active",
+            purpose="",
+            purpose_detail="",
+            user=user,
         )
         assert moved == 1
         op.refresh_from_db()
