@@ -19,7 +19,10 @@
   <table class="table table-bordered"><tbody>
     <tr><th class="w-25">{% translate "Aircraft" %}</th><td>{{ record.aircraft }}</td></tr>
     <tr><th>{% translate "Type" %}</th><td>{{ record.get_maintenance_type_display }}</td></tr>
-    <tr><th>{% translate "Status" %}</th><td><span class="badge bg-{% if record.status == 'completed' %}success{% elif record.status == 'in_progress' %}warning{% else %}secondary{% endif %}">{{ record.get_status_display }}</span></td></tr>
+    <tr><th>{% translate "Status" %}</th><td>
+      <span class="badge bg-{% if record.status == 'completed' %}success{% elif record.status == 'in_progress' %}warning{% elif record.is_at_workshop_stage %}info text-dark{% else %}secondary{% endif %}">{{ record.get_status_display }}</span>
+      {% if record.workshop_dwell_is_overdue %}<span class="badge bg-danger ms-1">{% blocktranslate count days=record.days_in_current_status %}{{ days }} day in this status{% plural %}{{ days }} days in this status{% endblocktranslate %}</span>{% endif %}
+    </td></tr>
     <tr><th>{% translate "Description" %}</th><td>{{ record.description }}</td></tr>
     <tr><th>{% translate "Scheduled date" %}</th><td>{% if record.scheduled_date %}{{ record.scheduled_date|date:"Y-m-d" }}{% else %}<span class="badge bg-warning text-dark">{% translate "To be defined" %}</span>{% endif %}</td></tr>
     <tr><th>{% translate "Completed date" %}</th><td>{{ record.completed_date|date:"Y-m-d"|default:"—" }}</td></tr>
@@ -27,7 +30,7 @@
     <tr><th>{% translate "Notes" %}</th><td>{{ record.notes|default:"—" }}</td></tr>
   </tbody></table>
 </div>
-{% if record.status == "in_progress" %}
+{% if record.status == "in_progress" or record.status == "in_transit" %}
 <div class="card mt-3 p-4">
   <h2 class="h5 mb-3">{% translate "Complete maintenance" %}</h2>
   <form method="post" action="complete/">

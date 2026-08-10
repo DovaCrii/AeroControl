@@ -5,7 +5,39 @@
 > post-auditoría"**, al inicio del archivo. Este documento es solo el resumen
 > de estado; el detalle de cada ítem vive en las filas de `MASTER_PLAN.md`.
 
-## Estado al 2026-08-10 (última actualización: R5.5/R5.6 hechos)
+## Estado al 2026-08-10 (última actualización: R5.1 hecho, BLOQUE R5 cerrado)
+
+- **✅ R5.1 hecho — propuesta de diseño discutida en vivo con el usuario antes
+  de implementar** (dos preguntas de diseño resueltas en el chat: caminos
+  corto/largo desde "pending", y alcance de la alerta de permanencia).
+  `MaintenanceRecord` tiene ahora dos caminos: el corto original
+  (`in_progress → completed`, mantenimiento in-situ) y uno largo nuevo
+  (`sent → at_workshop → finished → in_transit → completed`, para lo que
+  sale a un taller externo). Una señal nueva
+  (`apps/maintenance/signals.py`) liga esto al historial del equipo:
+  mueve `Aircraft.current_location`/`status` a "mantenimiento" al entrar
+  en `sent` y de vuelta a "casa matriz"/"activo" al completar desde
+  `in_transit`, reusando la señal de OPS-3 que ya generaba
+  `ResourceMovementLog` — el rastro del activo queda automático, sin
+  código nuevo para eso. La "alerta de permanencia" que el usuario pidió
+  quedó como **bandera visual** (`status_changed_at` + ⚠ en la lista +
+  texto en la ficha), **no** como `Alert`/`AlertRule` formal — decisión
+  explícita para no sobre-complejizar (conectarlo al motor genérico de
+  alertas habría exigido que esa rama soportara "lleva N días" además de
+  "vence en N días", afectando `FlightPermission`/`MonthlyComplianceReview`
+  de paso). La idea de usar Kanban para visualizar esto quedó **aparcada**
+  (R5.9) — el propio usuario no está seguro de que haga falta.
+  Verificado en vivo contra el demo: cadena completa de botones, aeronave
+  marcada correctamente en cada paso, movimiento registrado, datos de
+  prueba limpiados después.
+- **BLOQUE R5 queda completo** salvo R5.8 (observación de Habilitaciones,
+  capturada, esperando que el usuario decida) y R5.9 (idea de Kanban,
+  aparcada a propósito). Siguiente foco pedido por el usuario: **BLOQUE R6**
+  (alertas y reportes).
+- Rama `codex/r5-maintenance-workshop-flow`, apilada sobre toda la cadena
+  de esta ventana, sin mergear ni con push.
+
+## Estado al 2026-08-10 (R5.5/R5.6 hechos)
 
 - **✅ R5.5 y R5.6 hechos, BLOQUE R5 queda casi completo.** `Aircraft.
   selector_label` ("RPA-1 · M300 · S/N 1ABC234") enlazado vía

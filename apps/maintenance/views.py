@@ -102,13 +102,22 @@ class MaintenanceRecordDetail(
         context = super().get_context_data(**kwargs)
         context["history"] = self.object.history.all()
         context["completion_form"] = MaintenanceCompletionForm(instance=self.object)
-        context["status_actions"] = (
-            [("start", _("Start maintenance"), "btn-warning")]
-            if self.object.status == "pending"
-            else [("complete", _("Complete"), "btn-success")]
-            if self.object.status == "in_progress"
-            else []
-        )
+        # R5.1: "pending" offers both paths -- most maintenance is resolved
+        # in-house (short: start/complete) and forcing every record through
+        # the workshop chain would be friction for a 10-minute in-house
+        # check. "complete" itself is handled separately below (it needs the
+        # full completion form, not a bare button) and is valid from both
+        # in_progress (short path) and in_transit (workshop path arrived
+        # home) -- MaintenanceComplete.valid_from_statuses covers both.
+        context["status_actions"] = {
+            "pending": [
+                ("start", _("Start maintenance"), "btn-warning"),
+                ("send", _("Send to workshop"), "btn-info"),
+            ],
+            "sent": [("arrive-at-workshop", _("Arrived at workshop"), "btn-info")],
+            "at_workshop": [("finish", _("Finish repair"), "btn-info")],
+            "finished": [("depart", _("Departed workshop"), "btn-info")],
+        }.get(self.object.status, [])
         return context
 
 
@@ -119,10 +128,47 @@ class MaintenanceStart(StatusTransitionView):
     success_message = gettext_lazy("Maintenance started.")
 
 
+class MaintenanceSend(StatusTransitionView):
+    """R5.1: the workshop chain's entry point -- see
+    apps.maintenance.signals.sync_maintenance_status_transition for the
+    Aircraft.current_location/status side effect this triggers."""
+
+    model = MaintenanceRecord
+    target_status = "sent"
+    valid_from_statuses = ["pending"]
+    success_message = gettext_lazy("Aircraft sent to the workshop.")
+
+
+class MaintenanceArriveAtWorkshop(StatusTransitionView):
+    model = MaintenanceRecord
+    target_status = "at_workshop"
+    valid_from_statuses = ["sent"]
+    success_message = gettext_lazy("Aircraft arrived at the workshop.")
+
+
+class MaintenanceFinish(StatusTransitionView):
+    model = MaintenanceRecord
+    target_status = "finished"
+    valid_from_statuses = ["at_workshop"]
+    success_message = gettext_lazy("Repair finished at the workshop.")
+
+
+class MaintenanceDepart(StatusTransitionView):
+    model = MaintenanceRecord
+    target_status = "in_transit"
+    valid_from_statuses = ["finished"]
+    success_message = gettext_lazy("Aircraft in transit back to headquarters.")
+
+
 class MaintenanceComplete(StatusTransitionView):
     model = MaintenanceRecord
     target_status = "completed"
-    valid_from_statuses = ["in_progress"]
+    # R5.1: valid from either path's last working state -- in_progress (the
+    # short in-house path) or in_transit (arrived home from the workshop
+    # chain). apps.maintenance.signals decides, from old_status alone,
+    # whether arriving at "completed" also means the aircraft is back
+    # (only true from in_transit).
+    valid_from_statuses = ["in_progress", "in_transit"]
     success_message = gettext_lazy("Maintenance completed.")
 
     def post(self, request, pk):

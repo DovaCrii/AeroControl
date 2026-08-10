@@ -18,7 +18,10 @@
   <thead><tr><th>{% translate "Aircraft" %}</th><th>{% translate "Type" %}</th><th>{% translate "Scheduled" %}</th><th>{% translate "Status" %}</th><th class="text-end">{% translate "Actions" %}</th></tr></thead>
   <tbody>{% for object in objects %}<tr>
     <td><a href="{{ object.pk }}/">{{ object.aircraft }}</a></td><td>{{ object.get_maintenance_type_display }}</td><td>{{ object.scheduled_date|date:"Y-m-d" }}</td>
-    <td><span class="badge bg-{% if object.status == 'completed' %}success{% elif object.status == 'in_progress' %}warning{% else %}secondary{% endif %}">{{ object.get_status_display }}</span></td>
+    <td>
+      <span class="badge bg-{% if object.status == 'completed' %}success{% elif object.status == 'in_progress' %}warning{% elif object.is_at_workshop_stage %}info text-dark{% else %}secondary{% endif %}">{{ object.get_status_display }}</span>
+      {% if object.workshop_dwell_is_overdue %}<span class="badge bg-danger" title="{% translate 'Dwelling in this status longer than usual' %}">⚠</span>{% endif %}
+    </td>
     <td class="text-end"><a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">{% translate "View" %}</a></td>
   </tr>{% empty %}<tr><td colspan="5" class="text-center text-muted py-4">{% translate "No records found." %}</td></tr>{% endfor %}</tbody>
 </table></div>{% include "generic/_pagination.html" %}</div>
