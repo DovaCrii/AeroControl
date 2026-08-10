@@ -8,9 +8,12 @@
     <h1 class="h3 mb-0">{% translate "Operational records" %}</h1>
     <p class="page-description">{% translate "Flight logs, RPA checklists and drone inspections filed against each cost center." %}</p>
   </div>
-  {% if perms.compliance.add_document %}
-  <a href="{% url 'document-create' %}?entity_type={{ cost_center_content_type_id }}{% if selected_cost_center %}&object_id={{ selected_cost_center }}{% endif %}{% if selected_doc_type %}&doc_type={{ selected_doc_type }}{% endif %}" class="btn btn-primary">+ {% translate "Upload record" %}</a>
-  {% endif %}
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>
+    {% if perms.compliance.add_document %}
+    <a href="{% url 'document-create' %}?entity_type={{ cost_center_content_type_id }}{% if selected_cost_center %}&object_id={{ selected_cost_center }}{% endif %}{% if selected_doc_type %}&doc_type={{ selected_doc_type }}{% endif %}" class="btn btn-primary">+ {% translate "Upload record" %}</a>
+    {% endif %}
+  </div>
 </div>
 
 <form method="get" class="card p-3 mb-3">

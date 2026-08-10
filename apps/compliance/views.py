@@ -119,7 +119,7 @@ class DocumentList(ComplianceList):
         return context
 
 
-class CompanyDocumentsView(ModelViewPermissionRequiredMixin, ListView):
+class CompanyDocumentsView(CsvExportMixin, ModelViewPermissionRequiredMixin, ListView):
     """A visible, downloadable home for company-wide documents -- the AOC,
     procedures and forms that belong to the operator as a whole rather than to
     a specific aircraft or permit. They attach to the tenant and flow through
@@ -168,7 +168,9 @@ class CompanyDocumentsView(ModelViewPermissionRequiredMixin, ListView):
         return context
 
 
-class OperationalRecordsView(ModelViewPermissionRequiredMixin, ListView):
+class OperationalRecordsView(
+    CsvExportMixin, ModelViewPermissionRequiredMixin, ListView
+):
     """LV-30: the per-flight operational records (flight logs, checklists,
     inspections) filed against each cost center, month by month.
 

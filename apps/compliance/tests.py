@@ -445,6 +445,30 @@ def test_company_documents_page_lists_tenant_docs_and_offers_upload(admin_client
 
 
 @pytest.mark.django_db
+def test_company_documents_export_csv(admin_client):
+    from django.contrib.contenttypes.models import ContentType
+
+    from apps.core.models import OperationalTenant
+    from apps.core.tenancy import get_default_tenant
+
+    tenant = OperationalTenant.objects.get(pk=get_default_tenant())
+    doc_type = DocumentType.objects.create(code="aoc", name="AOC")
+    Document.objects.create(
+        title="AOC 1485",
+        doc_type=doc_type,
+        content_type=ContentType.objects.get_for_model(OperationalTenant),
+        object_id=tenant.pk,
+        file_path="aoc.pdf",
+        issue_date=date(2026, 1, 1),
+    )
+
+    response = admin_client.get(reverse("company-documents"), {"export": "csv"})
+
+    body = b"".join(response.streaming_content).decode("utf-8-sig")
+    assert "AOC 1485" in body
+
+
+@pytest.mark.django_db
 def test_alert_rule_cannot_be_deleted_while_it_has_alerts():
     cost_center = CostCenter.objects.create(code="OPS", name="Operations")
     aircraft = Aircraft.objects.create(
