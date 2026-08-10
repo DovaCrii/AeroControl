@@ -1034,7 +1034,7 @@ Fuente: `Z:\01-116 OPERACIONES_RPA_JEJ` — 79 archivos / 0.17 GB, 16 carpetas d
 
 | ID | Est. | Tarea |
 |---|:--:|---|
-| R6.1 | ⬜ | **[bug] Cierre bidireccional alerta ↔ tarjeta.** Hoy resolver la alerta mueve la tarjeta, pero **completar la tarjeta no resuelve la alerta** — no hay señal que lo haga. |
+| R6.1 | ✅ | **[bug] Cierre bidireccional alerta ↔ tarjeta, hecho 2026-08-10.** `apps/workboard/signals.py`: `post_save` en `KanbanTask` — al entrar a una etapa con `status_type="completed"` y `source_object` apuntando a un `Alert` sin resolver, llama a `alert.resolve()` (la misma lógica que ya existía en la otra dirección). **`post_save`, no `pre_save`** — `Alert.resolve()` vuelve a guardar la tarjeta si no está en la etapa "canónica" (la primera por `order` marcada `completed`); con `pre_save` esa segunda escritura ocurre *antes* de que la propia tarjeta termine de guardar su cambio, y la pisa (se probó, falló, se corrigió). Verificado con la vista real (`task-move`, drag-and-drop) además de guardados directos del modelo. |
 | R6.2 | ⬜ | **Resolver con motivo**: ISO 10.2 exige causa raíz y verificación de eficacia; hoy "Resolver" no pide nada. |
 | R6.3 | ⬜ | Agrupar alertas del mismo origen (dos aeronaves, misma póliza, misma fecha → una fila). |
 | R6.4 | ⬜ | **Informe ejecutivo en la web** (hoy solo existe como correo programado) y **exportación PDF** (hoy no hay PDF en ningún reporte). |

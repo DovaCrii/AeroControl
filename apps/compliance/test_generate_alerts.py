@@ -250,6 +250,105 @@ def test_resolving_alert_moves_linked_task_to_completed_stage():
     assert alert.is_resolved is True
 
 
+class TestCompletingTheTaskResolvesTheAlert:
+    """R6.1 [bug]: the other direction -- before this, resolving the alert
+    moved the task, but completing the task by hand (drag-and-drop, the API)
+    never resolved the alert."""
+
+    def _alert_with_task(self):
+        cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+        operator = Operator.objects.create(
+            employee_id="P1", full_name="Pilot One", cost_center=cost_center
+        )
+        Qualification.objects.create(
+            operator=operator,
+            qualification_type=QualificationType.objects.get_or_create(
+                code="night-rating", defaults={"name": "Night rating"}
+            )[0],
+            issue_date=date(2026, 1, 1),
+            expiry_date=timezone.localdate() + timedelta(days=3),
+        )
+        rule, board, pending_stage = _kanban_rule()
+        done_stage = KanbanStage.objects.create(
+            board=board, name="Aprobado", status_type="completed", order=5
+        )
+        call_command("generate_alerts")
+        return Alert.objects.get(), KanbanTask.objects.get(), done_stage
+
+    @pytest.mark.django_db
+    def test_moving_the_task_to_a_completed_stage_resolves_the_alert(self):
+        alert, task, done_stage = self._alert_with_task()
+
+        task.stage = done_stage
+        task.save(update_fields=["stage", "updated_at"])
+
+        alert.refresh_from_db()
+        assert alert.is_resolved is True
+
+    @pytest.mark.django_db
+    def test_moving_the_task_to_a_non_completed_stage_does_not_resolve_the_alert(self):
+        alert, task, done_stage = self._alert_with_task()
+        other_stage = KanbanStage.objects.create(
+            board=task.board, name="En curso", status_type="in_progress", order=3
+        )
+
+        task.stage = other_stage
+        task.save(update_fields=["stage", "updated_at"])
+
+        alert.refresh_from_db()
+        assert alert.is_resolved is False
+
+    @pytest.mark.django_db
+    def test_moving_an_unlinked_task_to_a_completed_stage_does_not_error(self):
+        board = KanbanBoard.objects.create(name="General")
+        pending_stage = KanbanStage.objects.create(
+            board=board, name="Por hacer", status_type="pending"
+        )
+        done_stage = KanbanStage.objects.create(
+            board=board, name="Hecho", status_type="completed", order=5
+        )
+        task = KanbanTask.objects.create(
+            board=board, stage=pending_stage, title="Regular task"
+        )
+
+        task.stage = done_stage
+        task.save(update_fields=["stage", "updated_at"])  # must not raise
+
+        task.refresh_from_db()
+        assert task.stage_id == done_stage.pk
+
+    @pytest.mark.django_db
+    def test_an_already_resolved_alert_is_not_resolved_again(self):
+        alert, task, done_stage = self._alert_with_task()
+        alert.resolve()
+        resolved_at = Alert.objects.get(pk=alert.pk).resolved_at
+
+        task.refresh_from_db()
+        task.stage = done_stage  # already there via alert.resolve() -- a no-op move
+        task.save(update_fields=["stage", "updated_at"])
+
+        assert Alert.objects.get(pk=alert.pk).resolved_at == resolved_at
+
+    @pytest.mark.django_db
+    def test_landing_on_a_second_completed_stage_settles_on_the_canonical_one(self):
+        """Regression guard against the recursion this could invite:
+        Alert.resolve() re-saves the task to the board's first completed-type
+        stage by `order` when it lands on a *different* one -- that second
+        save re-enters this same signal, and must not resolve twice or loop."""
+        alert, task, canonical_done_stage = self._alert_with_task()
+        later_done_stage = KanbanStage.objects.create(
+            board=task.board, name="Archivado", status_type="completed", order=9
+        )
+
+        task.stage = later_done_stage
+        task.save(update_fields=["stage", "updated_at"])
+
+        alert.refresh_from_db()
+        assert alert.is_resolved is True
+        task.refresh_from_db()
+        assert task.stage_id == canonical_done_stage.pk
+
+
 @pytest.mark.django_db
 def test_resolving_alert_without_task_returns_none():
     doc_type = DocumentType.objects.create(code="cert", name="Certificate")

@@ -353,6 +353,67 @@ def test_move_updates_stage_and_order_and_rejects_invalid_stage(auth_client, boa
 
 
 @pytest.mark.django_db
+def test_moving_a_task_to_a_completed_stage_resolves_its_alert(auth_client, board):
+    """R6.1 [bug]: completing a task through the real drag-and-drop endpoint
+    (not just a direct model .save()) must resolve the alert it was spawned
+    from -- before this fix, only the reverse direction (resolving the
+    alert moves the task) worked."""
+    from django.contrib.contenttypes.models import ContentType
+
+    from apps.compliance.models import Alert, AlertRule
+    from apps.registry.models import (
+        CostCenter,
+        Operator,
+        Qualification,
+        QualificationType,
+    )
+
+    board_obj, todo, _ = board
+    done = KanbanStage.objects.create(
+        board=board_obj, name="Aprobado", status_type="completed", order=5
+    )
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    operator = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    qualification_type = QualificationType.objects.get_or_create(
+        code="night-rating", defaults={"name": "Night rating"}
+    )[0]
+    qualification = Qualification.objects.create(
+        operator=operator,
+        qualification_type=qualification_type,
+        issue_date=date(2026, 1, 1),
+        expiry_date=timezone.localdate() + timedelta(days=3),
+    )
+    rule = AlertRule.objects.create(
+        name="Expiring quals",
+        entity_type="qualification",
+        field_to_watch="expiry_date",
+        days_before_expiry=30,
+        create_kanban_task=True,
+        target_board=board_obj,
+        target_stage=todo,
+    )
+    alert = Alert.objects.create(
+        alert_rule=rule,
+        content_type=ContentType.objects.get_for_model(Qualification),
+        object_id=qualification.pk,
+        message="Expiring soon",
+    )
+    task = KanbanTask.objects.create(
+        board=board_obj, stage=todo, title="Follow up", source_object=alert
+    )
+
+    response = auth_client.post(
+        reverse("task-move", args=[task.pk]), {"stage_id": done.pk, "new_order": 0}
+    )
+
+    assert response.status_code == 204
+    alert.refresh_from_db()
+    assert alert.is_resolved is True
+
+
+@pytest.mark.django_db
 def test_move_rejects_task_from_inactive_board(auth_client, board):
     board_obj, todo, done = board
     task = KanbanTask.objects.create(board=board_obj, stage=todo, title="Task")
