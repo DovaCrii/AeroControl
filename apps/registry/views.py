@@ -509,9 +509,11 @@ class AircraftList(RegistryList):
 
 
 class AircraftDetail(RegistryDetail):
-    """OPS-6: this aircraft's own movement timeline (cost-center reassignments
-    from OPS-1 and location changes from OPS-3 both land in
-    ResourceMovementLog, so one query surfaces both kinds)."""
+    """OPS-6/R5.4: the aircraft fiche as expediente -- documents, movement
+    timeline (cost-center reassignments from OPS-1 and location changes from
+    OPS-3 both land in ResourceMovementLog, so one query surfaces both
+    kinds), maintenance (open and historical) and cumulative flight hours,
+    all on the one page instead of scattered across separate lists."""
 
     model = Aircraft
     template_name = "registry/aircraft_detail.html"
@@ -537,8 +539,30 @@ class AircraftDetail(RegistryDetail):
                 is_active=True,
                 status__in=["pending", "in_progress"],
             ).order_by("scheduled_date")
+            # R5.4: the completed side of the same record set -- open_maintenance
+            # above already covers "due for/in maintenance", so this is
+            # deliberately just the closed ones, not the full unfiltered set,
+            # to avoid showing every open record twice on the same page.
+            context["maintenance_history"] = MaintenanceRecord.objects.filter(
+                aircraft=self.object, is_active=True, status="completed"
+            ).order_by("-completed_date")[:20]
         else:
             context["open_maintenance"] = None
+            context["maintenance_history"] = None
+        # R5.4/R7.1: cumulative flight time -- FlightRecord.duration is a
+        # property (departure/arrival + midnight-crossing), not a DB column,
+        # so this sums in Python; fine at one-aircraft scale.
+        if self.request.user.has_perm("operations.view_flightrecord"):
+            from apps.operations.selectors import (
+                format_duration,
+                total_flight_duration,
+            )
+
+            context["total_flight_hours"] = format_duration(
+                total_flight_duration(self.object)
+            )
+        else:
+            context["total_flight_hours"] = None
         return context
 
 

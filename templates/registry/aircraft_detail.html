@@ -52,6 +52,31 @@
   {% else %}
   <p class="text-muted mb-0">{% translate "No open maintenance for this aircraft." %}</p>
   {% endif %}
+
+  {% comment %}R5.4: the completed side of the same record set -- open ones
+  show above with their action buttons, this is the closed history.{% endcomment %}
+  {% if maintenance_history %}
+  <h3 class="h6 mt-3 mb-2 text-muted">{% translate "Maintenance history" %}</h3>
+  <table class="table table-sm mb-0">
+    <thead><tr><th>{% translate "Type" %}</th><th>{% translate "Completed date" %}</th><th>{% translate "Performed by" %}</th></tr></thead>
+    <tbody>
+      {% for m in maintenance_history %}
+      <tr>
+        <td><a href="{% url 'maintenance-detail' m.pk %}">{{ m.get_maintenance_type_display }}</a></td>
+        <td>{{ m.completed_date|date:"Y-m-d"|default:"—" }}</td>
+        <td>{{ m.performed_by|default:"—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if total_flight_hours is not None %}
+<div class="card mt-3 p-4">
+  <h2 class="h5 mb-2">{% translate "Flight hours" %}</h2>
+  <p class="mb-0">{% translate "Cumulative flight time recorded for this aircraft:" %} <strong>{{ total_flight_hours }}</strong></p>
 </div>
 {% endif %}
 
