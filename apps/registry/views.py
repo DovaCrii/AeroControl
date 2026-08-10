@@ -535,11 +535,19 @@ class AircraftDetail(RegistryDetail):
         if self.request.user.has_perm("maintenance.view_maintenancerecord"):
             from apps.maintenance.models import MaintenanceRecord
 
-            context["open_maintenance"] = MaintenanceRecord.objects.filter(
-                aircraft=self.object,
-                is_active=True,
-                status__in=["pending", "in_progress"],
-            ).order_by("scheduled_date")
+            # R5.1: excludes only the terminal status, not an explicit list of
+            # the non-terminal ones -- the workshop chain added 4 more of
+            # those (sent/at_workshop/finished/in_transit), and an aircraft
+            # away at a workshop is exactly the kind of "open" this section
+            # exists to surface.
+            context["open_maintenance"] = (
+                MaintenanceRecord.objects.filter(
+                    aircraft=self.object,
+                    is_active=True,
+                )
+                .exclude(status="completed")
+                .order_by("scheduled_date")
+            )
             # R5.4: the completed side of the same record set -- open_maintenance
             # above already covers "due for/in maintenance", so this is
             # deliberately just the closed ones, not the full unfiltered set,

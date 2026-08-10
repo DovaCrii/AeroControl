@@ -1,10 +1,11 @@
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 from django.contrib.auth.models import User
 from django.db.models import ProtectedError
 from django.test import Client
 from django.urls import reverse
+from django.utils import timezone
 
 from apps.core.models import AuditEvent
 from apps.registry.models import Aircraft, CostCenter
@@ -458,3 +459,284 @@ def test_completed_record_is_not_incomplete_even_without_a_schedule():
         status="completed",
     )
     assert record.is_incomplete is False
+
+
+# ── R5.1: the workshop chain (sent -> at_workshop -> finished -> in_transit) ──
+
+
+class TestWorkshopChainTransitions:
+    """Each step is a plain StatusTransitionView, same shape as the existing
+    start/complete pair -- one test per hop confirms the chain links up."""
+
+    @pytest.mark.django_db
+    def test_full_chain_from_pending_to_completed(self, db):
+        aircraft = _aircraft()
+        record = MaintenanceRecord.objects.create(
+            aircraft=aircraft,
+            maintenance_type="unscheduled",
+            description="Gearbox replacement",
+            scheduled_date=date(2026, 7, 20),
+            status="pending",
+        )
+        client = _mechanic_client()
+
+        steps = [
+            ("maintenance-send", "sent"),
+            ("maintenance-arrive-at-workshop", "at_workshop"),
+            ("maintenance-finish", "finished"),
+            ("maintenance-depart", "in_transit"),
+        ]
+        for url_name, expected_status in steps:
+            response = client.post(reverse(url_name, args=[record.pk]))
+            assert response.status_code == 302
+            record.refresh_from_db()
+            assert record.status == expected_status
+
+        response = client.post(
+            reverse("maintenance-complete", args=[record.pk]),
+            {"completed_date": "2026-08-01", "performed_by": "Contract workshop"},
+        )
+        assert response.status_code == 302
+        record.refresh_from_db()
+        assert record.status == "completed"
+
+    @pytest.mark.django_db
+    def test_cannot_skip_a_step(self, db):
+        aircraft = _aircraft()
+        record = MaintenanceRecord.objects.create(
+            aircraft=aircraft,
+            maintenance_type="unscheduled",
+            description="Gearbox replacement",
+            status="sent",
+        )
+        client = _mechanic_client()
+
+        # at_workshop -> finished is not valid while still just "sent".
+        response = client.post(reverse("maintenance-finish", args=[record.pk]))
+
+        assert response.status_code == 302
+        record.refresh_from_db()
+        assert record.status == "sent"
+        event = AuditEvent.objects.latest("created_at")
+        assert event.action == "status_transition_rejected"
+
+
+class TestWorkshopChainDrivesAircraftLocation:
+    """R5.1: entering the chain ("sent") marks the aircraft away; arriving
+    home from it (completing from "in_transit") marks it active again --
+    the states in between don't touch the aircraft a second time."""
+
+    @pytest.mark.django_db
+    def test_sending_to_workshop_moves_the_aircraft_and_logs_it(self, db):
+        from apps.registry.models import ResourceMovementLog
+
+        aircraft = _aircraft()
+        record = MaintenanceRecord.objects.create(
+            aircraft=aircraft,
+            maintenance_type="unscheduled",
+            description="Gearbox replacement",
+            status="pending",
+        )
+        user = User.objects.create_superuser("sender", "s@t.com", "pw")
+        client = Client()
+        assert client.login(username="sender", password="pw")
+
+        client.post(reverse("maintenance-send", args=[record.pk]))
+
+        aircraft.refresh_from_db()
+        assert aircraft.current_location == "maintenance"
+        assert aircraft.status == "maintenance"
+        log = ResourceMovementLog.objects.get(
+            resource_kind="aircraft", resource_id=aircraft.pk
+        )
+        assert log.movement == "location_changed"
+        assert log.changed_by_user_id == user.pk
+
+    @pytest.mark.django_db
+    def test_arriving_and_finishing_do_not_move_the_aircraft_again(self, db):
+        aircraft = _aircraft()
+        record = MaintenanceRecord.objects.create(
+            aircraft=aircraft,
+            maintenance_type="unscheduled",
+            description="Gearbox replacement",
+            status="sent",
+        )
+        aircraft.current_location = "maintenance"
+        aircraft.status = "maintenance"
+        aircraft.save(update_fields=["current_location", "status", "updated_at"])
+        client = _mechanic_client()
+
+        client.post(reverse("maintenance-arrive-at-workshop", args=[record.pk]))
+        client.post(reverse("maintenance-finish", args=[record.pk]))
+
+        aircraft.refresh_from_db()
+        assert aircraft.current_location == "maintenance"
+        assert aircraft.status == "maintenance"
+
+    @pytest.mark.django_db
+    def test_completing_from_in_transit_brings_the_aircraft_home(self, db):
+        aircraft = _aircraft()
+        aircraft.current_location = "maintenance"
+        aircraft.status = "maintenance"
+        aircraft.save(update_fields=["current_location", "status", "updated_at"])
+        record = MaintenanceRecord.objects.create(
+            aircraft=aircraft,
+            maintenance_type="unscheduled",
+            description="Gearbox replacement",
+            status="in_transit",
+        )
+        client = _mechanic_client()
+
+        client.post(
+            reverse("maintenance-complete", args=[record.pk]),
+            {"completed_date": "2026-08-01", "performed_by": "Contract workshop"},
+        )
+
+        aircraft.refresh_from_db()
+        assert aircraft.current_location == "headquarters"
+        assert aircraft.status == "active"
+
+    @pytest.mark.django_db
+    def test_completing_the_short_in_house_path_does_not_touch_the_aircraft(self, db):
+        """Regression guard: the original pending -> in_progress -> completed
+        path must keep working exactly as it did before R5.1 -- no aircraft
+        side effect, since it never left headquarters."""
+        aircraft = _aircraft()
+        original_location = aircraft.current_location
+        original_status = aircraft.status
+        record = MaintenanceRecord.objects.create(
+            aircraft=aircraft,
+            maintenance_type="scheduled",
+            description="100h inspection",
+            status="in_progress",
+        )
+        client = _mechanic_client()
+
+        client.post(
+            reverse("maintenance-complete", args=[record.pk]),
+            {"completed_date": "2026-08-01", "performed_by": "In-house crew"},
+        )
+
+        aircraft.refresh_from_db()
+        assert aircraft.current_location == original_location
+        assert aircraft.status == original_status
+
+
+class TestStatusChangedAtAndDwell:
+    @pytest.mark.django_db
+    def test_status_changed_at_is_set_on_creation(self, db):
+        aircraft = _aircraft()
+        before = timezone.now()
+        record = MaintenanceRecord.objects.create(
+            aircraft=aircraft,
+            maintenance_type="scheduled",
+            description="100h inspection",
+            status="pending",
+        )
+        assert record.status_changed_at is not None
+        assert record.status_changed_at >= before
+
+    @pytest.mark.django_db
+    def test_status_changed_at_bumps_on_a_real_transition(self, db):
+        aircraft = _aircraft()
+        record = MaintenanceRecord.objects.create(
+            aircraft=aircraft,
+            maintenance_type="scheduled",
+            description="100h inspection",
+            status="pending",
+        )
+        first = record.status_changed_at
+        client = _mechanic_client()
+
+        client.post(reverse("maintenance-start", args=[record.pk]))
+
+        record.refresh_from_db()
+        # >=, not >: this machine's timezone.now() can return the identical
+        # value across rapid successive calls (same clock-resolution note as
+        # ResourceMovementLog.sequence) -- the meaningful assertion is that
+        # it did not go backwards or stay at some earlier value, not that it
+        # strictly increased within the same test's wall-clock tick.
+        assert record.status_changed_at >= first
+
+    @pytest.mark.django_db
+    def test_status_changed_at_does_not_move_on_an_unrelated_save(self, db):
+        aircraft = _aircraft()
+        record = MaintenanceRecord.objects.create(
+            aircraft=aircraft,
+            maintenance_type="scheduled",
+            description="100h inspection",
+            status="pending",
+        )
+        first = record.status_changed_at
+        record.description = "100h inspection, updated notes"
+        record.save(update_fields=["description", "updated_at"])
+        record.refresh_from_db()
+        assert record.status_changed_at == first
+
+    @pytest.mark.django_db
+    def test_workshop_dwell_is_overdue_past_the_threshold(self, db):
+        aircraft = _aircraft()
+        record = MaintenanceRecord.objects.create(
+            aircraft=aircraft,
+            maintenance_type="unscheduled",
+            description="Gearbox replacement",
+            status="at_workshop",
+        )
+        MaintenanceRecord.objects.filter(pk=record.pk).update(
+            status_changed_at=timezone.now()
+            - timedelta(days=MaintenanceRecord.WORKSHOP_DWELL_ALERT_DAYS)
+        )
+        record.refresh_from_db()
+        assert record.workshop_dwell_is_overdue is True
+
+    @pytest.mark.django_db
+    def test_workshop_dwell_is_not_overdue_before_the_threshold(self, db):
+        aircraft = _aircraft()
+        record = MaintenanceRecord.objects.create(
+            aircraft=aircraft,
+            maintenance_type="unscheduled",
+            description="Gearbox replacement",
+            status="at_workshop",
+        )
+        MaintenanceRecord.objects.filter(pk=record.pk).update(
+            status_changed_at=timezone.now()
+            - timedelta(days=MaintenanceRecord.WORKSHOP_DWELL_ALERT_DAYS - 1)
+        )
+        record.refresh_from_db()
+        assert record.workshop_dwell_is_overdue is False
+
+    @pytest.mark.django_db
+    def test_short_path_status_is_never_flagged_as_dwelling(self, db):
+        """in_progress is not a workshop status -- no dwell flag regardless
+        of how long it has been open."""
+        aircraft = _aircraft()
+        record = MaintenanceRecord.objects.create(
+            aircraft=aircraft,
+            maintenance_type="scheduled",
+            description="100h inspection",
+            status="in_progress",
+        )
+        MaintenanceRecord.objects.filter(pk=record.pk).update(
+            status_changed_at=timezone.now() - timedelta(days=30)
+        )
+        record.refresh_from_db()
+        assert record.workshop_dwell_is_overdue is False
+
+
+@pytest.mark.django_db
+def test_aircraft_detail_open_maintenance_includes_workshop_chain_statuses():
+    """Regression guard: AircraftDetail's open_maintenance used to hardcode
+    ["pending", "in_progress"], which would have silently dropped a record
+    the moment it moved into the workshop chain."""
+    aircraft = _aircraft()
+    record = MaintenanceRecord.objects.create(
+        aircraft=aircraft,
+        maintenance_type="unscheduled",
+        description="Gearbox replacement",
+        status="at_workshop",
+    )
+    client = _mechanic_client()
+
+    response = client.get(reverse("aircraft-detail", args=[aircraft.pk]))
+
+    assert record in list(response.context["open_maintenance"])

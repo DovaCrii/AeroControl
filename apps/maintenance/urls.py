@@ -19,6 +19,26 @@ urlpatterns = [
         name="maintenance-start",
     ),
     path(
+        "records/<uuid:pk>/send/",
+        views.MaintenanceSend.as_view(),
+        name="maintenance-send",
+    ),
+    path(
+        "records/<uuid:pk>/arrive-at-workshop/",
+        views.MaintenanceArriveAtWorkshop.as_view(),
+        name="maintenance-arrive-at-workshop",
+    ),
+    path(
+        "records/<uuid:pk>/finish/",
+        views.MaintenanceFinish.as_view(),
+        name="maintenance-finish",
+    ),
+    path(
+        "records/<uuid:pk>/depart/",
+        views.MaintenanceDepart.as_view(),
+        name="maintenance-depart",
+    ),
+    path(
         "records/<uuid:pk>/complete/",
         views.MaintenanceComplete.as_view(),
         name="maintenance-complete",

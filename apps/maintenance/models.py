@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from apps.core.models import BaseModel
 from apps.registry.models import Aircraft
@@ -15,11 +16,38 @@ class MaintenanceRecord(BaseModel):
         ("unscheduled", _("Unscheduled")),
         ("emergency", _("Emergency")),
     ]
+    # R5.1: two paths from "pending", chosen at send time -- most maintenance
+    # is resolved in-house (the original flat in_progress -> completed) and
+    # forcing 5 clicks on a 10-minute in-house check would be friction for no
+    # reason. The workshop chain (sent -> at_workshop -> finished ->
+    # in_transit) is only for equipment that actually leaves the base;
+    # "completed" is the single shared terminal state either path ends at
+    # (generate_alerts' generic "still open" check on `status` keeps working
+    # unchanged: nothing here is terminal except "completed").
     STATUSES = [
         ("pending", _("Pending")),
         ("in_progress", _("In progress")),
+        ("sent", _("Sent to workshop")),
+        ("at_workshop", _("At the workshop")),
+        ("finished", _("Finished at workshop")),
+        ("in_transit", _("In transit back")),
         ("completed", _("Completed")),
     ]
+    # The aircraft is physically away from headquarters in all of these --
+    # see apps/maintenance/signals.py, which drives Aircraft.current_location/
+    # status at the two edges of this set (entering at "sent", leaving at
+    # "completed" from "in_transit"). `workshop_dwell_is_overdue` below flags
+    # a record that has dwelled in one of these too long.
+    WORKSHOP_STATUSES = frozenset({"sent", "at_workshop", "finished", "in_transit"})
+    # How long is too long in one workshop state before it deserves a visual
+    # flag (record_list.html/record_detail.html). A fixed constant, not an
+    # AlertRule: turning this into an admin-configurable rule would need the
+    # generic AlertRule date-field branch (`field <= today + N days`, an
+    # "upcoming expiry" query) to also support the opposite direction ("has
+    # this timestamp been in the past for more than N days") for every other
+    # watched model, not just this one -- more machinery than a first cut
+    # earns. Revisit only if this constant proves wrong in practice.
+    WORKSHOP_DWELL_ALERT_DAYS = 5
     aircraft = models.ForeignKey(
         Aircraft, on_delete=models.PROTECT, related_name="maintenance_records"
     )
@@ -32,6 +60,12 @@ class MaintenanceRecord(BaseModel):
     completed_date = models.DateField(null=True, blank=True)
     performed_by = models.CharField(max_length=150, blank=True)
     status = models.CharField(max_length=20, choices=STATUSES, default="pending")
+    # R5.1: when `status` last changed -- apps/maintenance/signals.py bumps
+    # this on every real transition. Backfilled from `updated_at` for rows
+    # that predate this field (migration 0007); not exact for their history,
+    # but it is the best available proxy and only matters going forward for
+    # rows created after this field existed.
+    status_changed_at = models.DateTimeField(null=True, blank=True, editable=False)
 
     @property
     def is_incomplete(self):
@@ -39,6 +73,31 @@ class MaintenanceRecord(BaseModel):
         scheduled date, and not already finished."""
         return self.status != "completed" and (
             self.maintenance_type == "to_be_defined" or self.scheduled_date is None
+        )
+
+    @property
+    def is_at_workshop_stage(self):
+        """Whether the aircraft is currently away in the workshop chain --
+        used by the templates to badge the status distinctly from the short
+        in-house path's pending/in_progress/completed."""
+        return self.status in self.WORKSHOP_STATUSES
+
+    @property
+    def days_in_current_status(self):
+        """None when unknown (no status_changed_at on file yet)."""
+        if self.status_changed_at is None:
+            return None
+        return (timezone.now() - self.status_changed_at).days
+
+    @property
+    def workshop_dwell_is_overdue(self):
+        """R5.1: flags a record that has sat in one workshop state too long
+        -- a visual cue on the list/detail pages, not a formal Alert (see
+        WORKSHOP_DWELL_ALERT_DAYS)."""
+        return (
+            self.status in self.WORKSHOP_STATUSES
+            and self.days_in_current_status is not None
+            and self.days_in_current_status >= self.WORKSHOP_DWELL_ALERT_DAYS
         )
 
     class Meta:

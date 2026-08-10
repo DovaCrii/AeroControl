@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-10 15:18-0400\n"
+"POT-Creation-Date: 2026-08-10 17:17-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -465,7 +465,7 @@ msgstr "Otro"
 msgid "Running"
 msgstr "En ejecución"
 
-#: .\apps\core\models.py:134 .\apps\maintenance\models.py:21
+#: .\apps\core\models.py:134 .\apps\maintenance\models.py:34
 #: .\apps\operations\models.py:28 .\apps\registry\models.py:357
 #: .\apps\workboard\models.py:34 .\apps\workboard\views.py:103
 #: .\templates\registry\_assignment_table_body.html:8
@@ -831,7 +831,7 @@ msgid "Name"
 msgstr "Nombre"
 
 #: .\apps\geo\views.py:179 .\apps\maintenance\forms.py:23
-#: .\templates\maintenance\record_detail.html:24
+#: .\templates\maintenance\record_detail.html:27
 msgid "Description"
 msgstr "Descripción"
 
@@ -942,12 +942,12 @@ msgstr "Plan reabierto para edición."
 msgid "Maintenance type"
 msgstr "Tipo de mantenimiento"
 
-#: .\apps\maintenance\forms.py:24 .\templates\maintenance\record_detail.html:25
+#: .\apps\maintenance\forms.py:24 .\templates\maintenance\record_detail.html:28
 #: .\templates\registry\aircraft_detail.html:42
 msgid "Scheduled date"
 msgstr "Fecha programada"
 
-#: .\apps\maintenance\forms.py:25 .\templates\maintenance\record_detail.html:27
+#: .\apps\maintenance\forms.py:25 .\templates\maintenance\record_detail.html:30
 #: .\templates\registry\aircraft_detail.html:63
 msgid "Performed by"
 msgstr "Realizado por"
@@ -957,64 +957,112 @@ msgid "Leave blank for a 'to be defined' maintenance until it is planned."
 msgstr ""
 "Déjalo en blanco para una mantención 'por definir' hasta que se planifique."
 
-#: .\apps\maintenance\models.py:13
-#: .\templates\maintenance\record_detail.html:25
+#: .\apps\maintenance\models.py:14
+#: .\templates\maintenance\record_detail.html:28
 msgid "To be defined"
 msgstr "Por definir"
 
-#: .\apps\maintenance\models.py:14 .\templates\maintenance\record_list.html:18
+#: .\apps\maintenance\models.py:15 .\templates\maintenance\record_list.html:18
 msgid "Scheduled"
 msgstr "Programado"
 
-#: .\apps\maintenance\models.py:15
+#: .\apps\maintenance\models.py:16
 msgid "Unscheduled"
 msgstr "No programado"
 
-#: .\apps\maintenance\models.py:16
+#: .\apps\maintenance\models.py:17
 msgid "Emergency"
 msgstr "Emergencia"
 
-#: .\apps\maintenance\models.py:19 .\apps\workboard\models.py:29
+#: .\apps\maintenance\models.py:28 .\apps\workboard\models.py:29
 #: .\apps\workboard\views.py:98
 msgid "Pending"
 msgstr "Pendiente"
 
-#: .\apps\maintenance\models.py:20 .\apps\workboard\models.py:31
+#: .\apps\maintenance\models.py:29 .\apps\workboard\models.py:31
 #: .\apps\workboard\views.py:100
 msgid "In progress"
 msgstr "En progreso"
 
-#: .\apps\maintenance\models.py:45
+#: .\apps\maintenance\models.py:30
+msgid "Sent to workshop"
+msgstr "Enviado a taller"
+
+#: .\apps\maintenance\models.py:31
+msgid "At the workshop"
+msgstr "En el taller"
+
+#: .\apps\maintenance\models.py:32
+msgid "Finished at workshop"
+msgstr "Finalizado en taller"
+
+#: .\apps\maintenance\models.py:33
+msgid "In transit back"
+msgstr "En tránsito de vuelta"
+
+#: .\apps\maintenance\models.py:104
 msgid "maintenance record"
 msgstr "registro de mantenimiento"
 
-#: .\apps\maintenance\models.py:46
+#: .\apps\maintenance\models.py:105
 msgid "maintenance records"
 msgstr "registros de mantenimiento"
 
-#: .\apps\maintenance\views.py:106
+#: .\apps\maintenance\views.py:114
 msgid "Start maintenance"
 msgstr "Iniciar mantenimiento"
 
-#: .\apps\maintenance\views.py:108 .\apps\maintenance\views.py:146
-#: .\apps\operations\views.py:262 .\templates\maintenance\record_detail.html:38
-msgid "Complete"
-msgstr "Completar"
+#: .\apps\maintenance\views.py:115
+msgid "Send to workshop"
+msgstr "Enviar a taller"
+
+#: .\apps\maintenance\views.py:117
+msgid "Arrived at workshop"
+msgstr "Llegó al taller"
+
+#: .\apps\maintenance\views.py:118
+msgid "Finish repair"
+msgstr "Terminar reparación"
 
 #: .\apps\maintenance\views.py:119
+msgid "Departed workshop"
+msgstr "Salió del taller"
+
+#: .\apps\maintenance\views.py:128
 msgid "Maintenance started."
 msgstr "Mantenimiento iniciado."
 
-#: .\apps\maintenance\views.py:126
+#: .\apps\maintenance\views.py:139
+msgid "Aircraft sent to the workshop."
+msgstr "Aeronave enviada al taller."
+
+#: .\apps\maintenance\views.py:146
+msgid "Aircraft arrived at the workshop."
+msgstr "Aeronave llegó al taller."
+
+#: .\apps\maintenance\views.py:153
+msgid "Repair finished at the workshop."
+msgstr "Reparación terminada en el taller."
+
+#: .\apps\maintenance\views.py:160
+msgid "Aircraft in transit back to headquarters."
+msgstr "Aeronave en tránsito de vuelta a casa matriz."
+
+#: .\apps\maintenance\views.py:172
 msgid "Maintenance completed."
 msgstr "Mantenimiento completado."
 
-#: .\apps\maintenance\views.py:202
+#: .\apps\maintenance\views.py:192 .\apps\operations\views.py:262
+#: .\templates\maintenance\record_detail.html:41
+msgid "Complete"
+msgstr "Completar"
+
+#: .\apps\maintenance\views.py:248
 msgid "Incident reported from the aircraft fiche. Pending assessment."
 msgstr ""
 "Incidente reportado desde la ficha de la aeronave. Pendiente de evaluación."
 
-#: .\apps\maintenance\views.py:209
+#: .\apps\maintenance\views.py:255
 msgid ""
 "Incident logged: aircraft marked as damaged and an emergency maintenance "
 "record was opened."
@@ -1293,7 +1341,7 @@ msgstr "Nombre del contacto externo"
 msgid "External contact email"
 msgstr "Correo del contacto externo"
 
-#: .\apps\registry\forms.py:77 .\templates\maintenance\record_detail.html:28
+#: .\apps\registry\forms.py:77 .\templates\maintenance\record_detail.html:31
 #: .\templates\operations\flightrecord_detail.html:31
 #: .\templates\operations\permission_detail.html:55
 #: .\templates\operations\permission_detail.html:57
@@ -1770,26 +1818,26 @@ msgstr "%(name)s archivado. Se puede restaurar desde el filtro de archivados."
 msgid "%(name)s restored."
 msgstr "%(name)s restaurado."
 
-#: .\apps\registry\views.py:714
+#: .\apps\registry\views.py:722
 msgid "Assign operators to a cost center"
 msgstr "Asignar operadores a un centro de costo"
 
-#: .\apps\registry\views.py:766
+#: .\apps\registry\views.py:774
 msgid "Assign aircraft to a cost center"
 msgstr "Asignar aeronaves a un centro de costo"
 
-#: .\apps\registry\views.py:880 .\templates\base.html:125
+#: .\apps\registry\views.py:888 .\templates\base.html:125
 msgid "Resource movements"
 msgstr "Movimientos de recursos"
 
-#: .\apps\registry\views.py:994
+#: .\apps\registry\views.py:1002
 #, python-format
 msgid "%(count)s %(name)s imported. You can undo this from the import page."
 msgstr ""
 "%(count)s %(name)s importados. Puedes deshacerlo desde la página de "
 "importación."
 
-#: .\apps\registry\views.py:1084
+#: .\apps\registry\views.py:1092
 #, python-format
 msgid "%(count)s imported records archived."
 msgstr "%(count)s registros importados archivados."
@@ -2101,7 +2149,7 @@ msgstr "Anterior"
 
 #: .\templates\compliance\_document_rows.html:9
 #: .\templates\generic\_table_body.html:12
-#: .\templates\maintenance\record_list.html:22
+#: .\templates\maintenance\record_list.html:25
 #: .\templates\operations\_permission_rows.html:10
 #: .\templates\operations\_record_rows.html:10
 #: .\templates\registry\_assignment_table_body.html:9
@@ -2538,7 +2586,7 @@ msgid "All types"
 msgstr "Todos los tipos"
 
 #: .\templates\compliance\operational_records.html:46
-#: .\templates\maintenance\record_detail.html:45
+#: .\templates\maintenance\record_detail.html:48
 #: .\templates\operations\flightrecord_detail.html:26
 #: .\templates\operations\permission_detail.html:57
 #: .\templates\operations\permission_detail.html:64
@@ -2570,7 +2618,7 @@ msgstr "CSV"
 
 #: .\templates\compliance\report.html:35 .\templates\core\audit_log.html:24
 #: .\templates\geo\plan_detail.html:159
-#: .\templates\maintenance\record_detail.html:45
+#: .\templates\maintenance\record_detail.html:48
 #: .\templates\operations\permission_detail.html:57
 #: .\templates\registry\aircraft_detail.html:90
 #: .\templates\registry\costcenter_detail.html:132
@@ -2581,7 +2629,7 @@ msgstr "Desde"
 
 #: .\templates\compliance\report.html:39 .\templates\core\audit_log.html:25
 #: .\templates\geo\plan_detail.html:159
-#: .\templates\maintenance\record_detail.html:45
+#: .\templates\maintenance\record_detail.html:48
 #: .\templates\operations\permission_detail.html:57
 #: .\templates\registry\aircraft_detail.html:90
 #: .\templates\registry\costcenter_detail.html:132
@@ -3212,31 +3260,42 @@ msgstr "Importar archivo"
 msgid "No plans yet. Import a KMZ or KML to create the first one."
 msgstr "Aún no hay planes. Importa un KMZ o KML para crear el primero."
 
-#: .\templates\maintenance\record_detail.html:26
+#: .\templates\maintenance\record_detail.html:25
+#, python-format
+msgid "%(days)s day in this status"
+msgid_plural "%(days)s days in this status"
+msgstr[0] "%(days)s día en este estado"
+msgstr[1] "%(days)s días en este estado"
+
+#: .\templates\maintenance\record_detail.html:29
 #: .\templates\registry\aircraft_detail.html:63
 msgid "Completed date"
 msgstr "Fecha de finalización"
 
-#: .\templates\maintenance\record_detail.html:33
+#: .\templates\maintenance\record_detail.html:36
 msgid "Complete maintenance"
 msgstr "Completar mantenimiento"
 
-#: .\templates\maintenance\record_detail.html:44
+#: .\templates\maintenance\record_detail.html:47
 #: .\templates\operations\permission_detail.html:57
 msgid "Status history"
 msgstr "Historial de estados"
 
-#: .\templates\maintenance\record_detail.html:45
+#: .\templates\maintenance\record_detail.html:48
 #: .\templates\operations\permission_detail.html:57
 msgid "By"
 msgstr "Por"
 
-#: .\templates\maintenance\record_detail.html:47
+#: .\templates\maintenance\record_detail.html:50
 #: .\templates\operations\permission_detail.html:57
 msgid "No status changes recorded yet."
 msgstr "Aún no hay cambios de estado registrados."
 
 #: .\templates\maintenance\record_list.html:23
+msgid "Dwelling in this status longer than usual"
+msgstr "Lleva más tiempo del habitual en este estado"
+
+#: .\templates\maintenance\record_list.html:26
 #: .\templates\registry\_aircraft_rows.html:26
 #: .\templates\registry\_aircraftassignment_rows.html:14
 #: .\templates\registry\_costcenter_rows.html:27
