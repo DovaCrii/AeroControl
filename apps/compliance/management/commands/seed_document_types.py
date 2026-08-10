@@ -37,6 +37,19 @@ DOCUMENT_TYPES = [
     ("flight-log", "Bitácora de vuelo (REG-015)", False, False, True),
     ("rpa-checklist", "Check list RPA (LVE-003)", False, False, True),
     ("drone-inspection", "Inspección de dron (LVE-002)", False, False, True),
+    # R4.1/R4.8: pulled forward from R4.8 because import_document_repository
+    # cannot classify anything under the Z: repository's "02.-"/"03.-"/"04.-"
+    # subfolders without them. Historical records, not validities that lapse
+    # -- requires_expiry=False, same reasoning as the flight-log group above.
+    ("flight-request", "Solicitud de vuelo (histórico)", False, False, False),
+    (
+        "incident-investigation-record",
+        "Registro de investigación de incidente",
+        False,
+        False,
+        False,
+    ),
+    ("maintenance-certificate", "Certificado de mantención", False, False, False),
 ]
 
 

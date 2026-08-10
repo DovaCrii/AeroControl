@@ -5,7 +5,51 @@
 > post-auditoría"**, al inicio del archivo. Este documento es solo el resumen
 > de estado; el detalle de cada ítem vive en las filas de `MASTER_PLAN.md`.
 
-## Estado al 2026-08-10 (última actualización: X.1 cerrado)
+## Estado al 2026-08-10 (última actualización: R4.1/R4.2/R4.3/R4.5 hechos)
+
+- **✅ R4.1/R4.2/R4.3/R4.5 hechos, R4.1a/R4.4 parciales** (bloque
+  repositorio documental, `Z:`). Importador `import_document_repository`
+  (`apps/compliance/management/commands/`) — informa por defecto, `--apply`
+  crea `Document` idempotentemente, se niega si quedan filas bloqueantes.
+  Lógica pura en `apps/compliance/repository_import.py`. **Corrido en modo
+  informe contra `Z:` real** (copia descartable de la restauración, ya
+  borrada): de 73 archivos, 42 `OK`, 15 `REVIEW-NEEDS-ANTIVIRUS`, 5
+  `REVIEW-NO-MATCH`, 5 `REVIEW-SENSITIVE`, 5 `SKIP-FORMAT`, 1
+  `REVIEW-UNKNOWN-SUBFOLDER` — cuadra exacto con el conteo real. **No se
+  corrió `--apply`** — sin escribir nada en ninguna base todavía.
+- **Dos hallazgos reales no anticipados por el plan, encontrados corriendo
+  contra `Z:` real** (no contra datos sintéticos): (a) una subcarpeta
+  (`02.- Solicitud de Vuelos`) tiene a su vez una subcarpeta propia
+  (`Junio-Agosto/`) que el primer intento del recorrido **perdía en
+  silencio** (sin filesystem/DB de por medio no se detecta este tipo de
+  bug — hay que correr contra la estructura real); (b) un archivo suelto en
+  la raíz de una carpeta de aeronave, fuera de las 5 subcarpetas fijas.
+  Ambos arreglados y con test de regresión antes de seguir.
+- **R4.1a**: X.1 (ver abajo) resolvió las 2 discrepancias de espacio; de 16
+  aeronaves, **14 ya calzan** por serial. Quedan 2 (`RPA-4647`, `RPA-4884`)
+  sin calzar porque el nombre de carpeta en `Z:` **todavía no se corrigió** —
+  el usuario dijo que lo hace él mismo en el disco Z, pendiente de su lado.
+- **R4.4**: antivirus sigue sin configurarse en ningún ambiente
+  (`DOCUMENTS_ANTIVIRUS_COMMAND` vacío) — los 15 `.msg` puros quedan
+  bloqueados hasta que exista uno. El gate de antivirus reutiliza
+  `scan_uploaded_file` (mismo que el formulario web) vía un adaptador de
+  ruta a archivo; probado con un antivirus simulado (mock) en ambos
+  sentidos, no contra un ClamAV real.
+- **Decisión de diseño propuesta, no validada con el usuario todavía**:
+  mapeo de las 5 subcarpetas fijas a `DocumentType` — 2 ya existían
+  (`aircraft-registration` para "01.-", `liability-insurance` para "05.-");
+  se agregaron 3 nuevos códigos a `seed_document_types` (`flight-request`
+  "02.-", `incident-investigation-record` "03.-", `maintenance-certificate`
+  "04.-", adelantados desde R4.8 porque el importador no podía clasificar
+  esas subcarpetas sin ellos). **Correr `seed_document_types` de nuevo en
+  cualquier ambiente donde se vaya a usar el importador** (pasa de 10 a 13
+  tipos) — mismo gotcha de despliegue que ya documentaba LV-45/LV-64.
+- **`DOCUMENTOS BASES` queda fuera de alcance a propósito** (R4.6, sin
+  empezar): el importador de R4.1 no camina esa carpeta.
+- 158 tests nuevos entre R4 y X.1 desde la última marca; gate completo
+  corrido al cierre de esta ventana (ver más abajo el resultado).
+
+## Estado al 2026-08-10 (X.1 cerrado)
 
 - **✅ X.1 — `Aircraft.serial_number` como llave de cruce, cerrado hoy.**
   `Aircraft.save()` limpia todo el whitespace (incluido el interno —
@@ -106,22 +150,28 @@ cd /opt/aerocontrol && set -a && source <(sudo cat /etc/aerocontrol.env) && set 
 Si dice `Ensured 10 document types (0 created)` ya está hecho; si dice
 `(1 created)` recién quedó al día. Sin esto, "Autorización de Operación RPA
 (DGAC aprobada)" no aparece en el desplegable y nadie puede aprobar un
-permiso nuevo.
+permiso nuevo. **Ojo — el catálogo pasó de 10 a 13 tipos con R4.1/R4.8**
+(`flight-request`, `incident-investigation-record`,
+`maintenance-certificate`, agregados 2026-08-10): la próxima vez que se
+corra este comando en `p340` el mensaje esperado ya no es "10", es
+`Ensured 13 document types (3 created)` la primera vez que se corra después
+de este despliegue.
 
 ## Dónde retomar el trabajo de código
 
 `MASTER_PLAN.md` → "Prioridades post-auditoría" tiene el orden completo.
-**R1, R2, R3 y X.1 están completos.** Lo único que queda del post-auditoría es:
+**R1, R2, R3 y X.1 están completos. R4.1/R4.2/R4.3/R4.5 también** (hechos
+2026-08-10). Pedido explícito del usuario 2026-08-10: **seguir con los
+bloques siguientes antes de pensar en desplegar** — acumular más cambios
+locales primero, no ir a producción todavía. Lo que queda:
 
-- **R4** (repositorio documental, `Z:`) — el importador corre en modo
-  informe contra la copia restaurada
-  (`D:\I+D\AeroOpsDesk_Data\restore-drill\aero_ops_drill.sqlite3`). **Ya no
-  depende de X.1** — las 4 discrepancias de `Aircraft.serial_number`
-  quedaron resueltas 2026-08-10, así que el calce por serial (R4.1a) puede
-  correr con confianza.
+- **Cerrar R4 del todo** (bajo prioridad frente a lo de abajo, no bloquea
+  nada): R4.1a espera que el usuario corrija 2 nombres de carpeta en `Z:`
+  (`RPA-4647`, `RPA-4884`); R4.4 espera que exista un antivirus configurado
+  en algún ambiente; R4.6/R4.7/R4.8(resto) sin empezar.
 - **R5-R8** (salvo R5.7/R5.8, ya en el tablero) y el resto de **BLOQUE X**
   (X.2-X.5, contrato AeroLink) — sin empezar, ver el detalle en
-  `MASTER_PLAN.md`.
+  `MASTER_PLAN.md`. **Siguiente foco de esta ventana.**
 
 Decisión de negocio tomada 2026-08-07 para R3.3(b): "contrato cerrado" es un
 **eje nuevo e independiente** de `is_active` — un CC con contrato cerrado
