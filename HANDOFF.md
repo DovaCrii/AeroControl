@@ -5,6 +5,132 @@
 > post-auditoría"**, al inicio del archivo. Este documento es solo el resumen
 > de estado; el detalle de cada ítem vive en las filas de `MASTER_PLAN.md`.
 
+## 🔒 CIERRE DE VENTANA — 2026-08-10, sesión larga (X.1 → R6.2)
+
+**Empezar aquí en la próxima ventana.** Esta sección resume TODA la sesión
+de hoy (las entradas fechadas 2026-08-10 más abajo son el detalle
+cronológico de cada ítem, quedan como bitácora). `MASTER_PLAN.md` ya tiene
+cada fila marcada ✅ con su propio resumen técnico — esto es la vista de
+conjunto para retomar sin haber visto la conversación.
+
+### Lo que se hizo (11 commits, ninguno en `main`, ninguno pusheado)
+
+Pila completa de ramas locales, cada una apilada sobre la anterior (la
+última es donde quedó el working tree):
+
+```
+main
+ └─ codex/serial-number-normalize          X.1 (2 commits)
+     └─ codex/r4-document-repository-schema        R4.2
+         └─ codex/r4-document-repository-import    R4.1/R4.3/R4.5
+             └─ codex/r5-movement-attribution-and-log   R5.2/R5.3
+                 └─ codex/r5-aircraft-fiche-expediente      R5.4/R7.1
+                     └─ codex/r5-jac-insurance-filing-status    R5.7 + fix migración 0028
+                         └─ codex/r5-aircraft-selector-and-bulk-assign  R5.5/R5.6
+                             └─ codex/r5-maintenance-workshop-flow          R5.1
+                                 └─ codex/r6-alert-task-bidirectional-close     R6.1
+                                     └─ codex/r6-alert-resolve-with-reason          R6.2  ← HEAD
+```
+
+**`main` no se tocó.** Nada de esto se mergeó ni se pusheó — el usuario no lo
+pidió y el trabajo de merge/push/despliegue queda para cuando él decida.
+Si la próxima sesión no tiene el mismo working tree (por ejemplo, corre en
+un checkout nuevo de `main`), **este trabajo completo no estará ahí** —
+hay que ir a buscar estas ramas.
+
+**Bloques cerrados hoy:**
+
+- **X.1** — `Aircraft.serial_number` normalizado (espacios) + `unique=True`.
+  Las 2 discrepancias de caracteres (`RPA-4647`, `RPA-4884`) las confirmó
+  el usuario contra el registro físico: el valor de la app ya era el
+  correcto en ambos casos, no se tocó la base. **El usuario corrige 2
+  nombres de carpeta en `Z:` por su cuenta** (pendiente de su lado, no
+  del código).
+- **BLOQUE R4** (parcial) — importador `import_document_repository`
+  (modo informe + `--apply`) para el repositorio de `Z:`. **R4.1a**: 14/16
+  aeronaves calzan hoy; las 2 de arriba calzarán solas en cuanto el usuario
+  renombre esas 2 carpetas. **R4.4**: el gate de antivirus para `.msg`
+  (15 archivos reales) sigue bloqueado porque `DOCUMENTS_ANTIVIRUS_COMMAND`
+  sigue vacío en todos los ambientes — nadie ha configurado un ClamAV real
+  todavía. **`--apply` nunca se corrió** — ni contra la copia local ni
+  contra producción; sigue pendiente esa decisión del usuario. **R4.6/R4.7/
+  R4.8(resto)** sin empezar (documentos de la empresa, licencia RPA
+  incompleta, tipos de documento que faltan).
+- **BLOQUE R5 — completo** salvo dos ítems dejados fuera a propósito:
+  R5.8 (observación "Habilitaciones parece redundante", capturada, el
+  usuario no ha dicho si la revisa) y R5.9 (idea de usar Kanban para
+  visualizar el flujo de taller, aparcada — el propio usuario dudó si hacía
+  falta). R5.1-R5.7 y R7.1 todos hechos y verificados en vivo contra el
+  demo.
+- **BLOQUE R6 — arrancado, 2 de 5 hechos.** R6.1 (bug del cierre
+  bidireccional alerta↔tarjeta) y R6.2 (resolver con motivo, ISO 10.2).
+  **R6.3/R6.4/R6.5 sin empezar**: agrupar alertas del mismo origen, informe
+  ejecutivo en la web + PDF, revisión del día 15.
+
+### Lo único sin verificación visual: R6.2
+
+Todo lo anterior se probó en vivo contra el demo (`aerocontrol-demo`,
+`D:\I+D\AeroControl\scripts\run-demo.ps1`, login `demo`/`demo-review-only`).
+**R6.2 no** — la herramienta de preview del navegador tuvo un problema
+técnico justo al cierre de la ventana (el panel no montaba, los `ref_N` no
+resolvían). Queda cubierto por 36 tests que ejercitan el modal
+(GET renderiza el formulario, POST inválido devuelve 422, POST válido
+resuelve y guarda el motivo, HTMX devuelve 204 + `modal-form-success`,
+`reopen()` limpia el motivo) pero **nadie lo miró en un navegador de
+verdad**. Antes de considerar este ítem realmente cerrado, abrir
+`/compliance/alert/` en el demo, hacer clic en "Resolver" en una alerta sin
+resolver, y confirmar que el modal se ve bien y el flujo completo funciona.
+
+### Hallazgos no anticipados por el plan (quedaron documentados en su fila
+de `MASTER_PLAN.md`, resumen aquí para no perderlos)
+
+- **Bug real en la migración `0028`** (de X.1): el orden de sus 2
+  operaciones rompía con datos que tuvieran aeronaves con `serial_number`
+  en blanco de verdad — silencioso contra la copia de restauración (no
+  tenía ninguna), reventó contra el demo (tiene 6). Corregido, commit
+  separado (`e5dea67`). **Lección**: cuando una migración de datos solo se
+  prueba contra una copia "limpia", correrla también contra el demo (u
+  otro set con casos límite) antes de darla por cerrada.
+- **Dos formas reales del repositorio `Z:` que el plan no anticipaba**:
+  una subcarpeta con su propia subcarpeta anidada, y un archivo suelto en
+  la raíz de una carpeta de aeronave. Ambas las encontró el importador real
+  corriendo contra `Z:` de verdad (no contra datos sintéticos) — arregladas
+  con test de regresión antes de seguir.
+- **Bug de atribución no listado originalmente en R5.2**: editar la
+  ubicación de una aeronave por el formulario normal tampoco atribuía
+  autor al movimiento — mismo mecanismo que el bug de asignaciones que sí
+  estaba en el plan.
+- **Carrera de señales en R6.1**: la primera versión (con `pre_save`, igual
+  que las demás señales de la ventana) perdía la escritura de
+  `Alert.resolve()` contra el guardado original todavía pendiente — la
+  atrapó un test que fallaba, se corrigió pasando a `post_save`.
+
+### Decisiones de negocio/diseño tomadas en vivo con el usuario hoy
+
+- **R5.1**: dos caminos desde "pending" (corto in-situ, largo por taller);
+  filas existentes en `in_progress` se dejan tal cual, se editan a mano si
+  hace falta; alerta de permanencia como bandera visual simple, no como
+  `Alert`/`AlertRule` formal — decisión explícita de no sobre-complejizar.
+- **Kanban para seguimiento de mantención (R5.9)**: aparcado, evaluar más
+  adelante si la bandera visual no alcanza.
+- **X.1**: los 2 valores en disputa (`RPA-4647` ceros, `RPA-4884` `1581`)
+  son los que ya tenía la app — confirmado contra el registro físico, no
+  adivinado.
+
+### Qué preguntar/decidir en la próxima ventana, en orden de urgencia
+
+1. **Verificar R6.2 en el navegador** (ver arriba) antes de considerarlo
+   realmente terminado.
+2. **¿Mergear/pushear algo de esta pila?** Nada se subió todavía; son 11
+   commits en 11 ramas locales. El usuario decide cuándo y cómo.
+3. **BLOQUE R6 restante**: R6.3 (agrupar alertas), R6.4 (informe ejecutivo
+   web + PDF), R6.5 (revisión día 15) — orden sugerido por `MASTER_PLAN.md`,
+   ninguno bloqueado.
+4. **R4**: falta que el usuario corrija 2 carpetas en `Z:` y que alguien
+   configure un antivirus real antes de que R4.1a/R4.4 puedan cerrarse del
+   todo; recién ahí tiene sentido correr `--apply`.
+5. **R5.8/R5.9**: quedan esperando que el usuario decida si los revisa.
+
 ## Estado al 2026-08-10 (última actualización: R6.1 hecho)
 
 - **✅ R6.1 (bug) hecho — arrancó el BLOQUE R6.** Cierre bidireccional
