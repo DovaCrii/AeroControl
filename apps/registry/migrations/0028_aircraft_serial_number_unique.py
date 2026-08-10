@@ -13,7 +13,16 @@ No further data change is needed in this app -- both disputed values already
 matched the correct record. Converts blank "" to NULL first (several blank
 aircraft must not collide on the new unique index; see
 FlightPermission.permission_number for the same pattern) before adding the
-constraint.
+uniqueness constraint.
+
+Three steps, not two, and in this exact order -- caught 2026-08-10 running
+against a real demo database with several genuinely blank aircraft (the
+restored-backup copy this migration was first tested against had none, so
+the bug was silent there): the column has to become nullable *before* the
+data migration can set it to NULL (`UPDATE ... SET serial_number = NULL`
+against a still-NOT-NULL column raises `IntegrityError`), and only *after*
+the blanks are converted can `unique=True` be added without every blank row
+colliding with every other blank row.
 """
 
 from django.db import migrations, models
@@ -35,12 +44,15 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.AlterField(
+            model_name="aircraft",
+            name="serial_number",
+            field=models.CharField(max_length=100, blank=True, null=True),
+        ),
         migrations.RunPython(blank_to_null, null_to_blank),
         migrations.AlterField(
             model_name="aircraft",
             name="serial_number",
-            field=models.CharField(
-                max_length=100, blank=True, null=True, unique=True
-            ),
+            field=models.CharField(max_length=100, blank=True, null=True, unique=True),
         ),
     ]
