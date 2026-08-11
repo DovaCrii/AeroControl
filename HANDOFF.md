@@ -81,16 +81,32 @@ Ninguno de estos está bloqueado por falta de trabajo técnico:
 1. **25 commits en 25 ramas locales apiladas, nada pusheado ni mergeado.** Es
    el pendiente más grande y es una decisión del usuario. Conviene una sesión
    dedicada solo a eso.
-2. **El AOC real sigue sin subir.** El usuario compartió
-   `OneDrive\...\Certificado AOC 1485.pdf` y confirmó que lo que importa es
-   tenerlo "visible y a mano". **No se importó**: la base local de `.env` está
-   vacía y el usuario confirmó que la operación real vive en la VM `p340`. Hay
-   que subirlo allá (tras correr `seed_document_types`, que pasó de 13 a 17
-   tipos e incluye `aoc-certificate`).
+2. **El AOC real: lo sube el usuario a mano, y NO necesita el deploy.**
+   Compartió `OneDrive\...\Certificado AOC 1485.pdf` y confirmó que lo que
+   importa es tenerlo "visible y a mano". No se importó desde acá: la base local
+   de `.env` está vacía y la operación real vive en `p340`.
+   **Corrección de una afirmación equivocada de esta misma sesión**: se dijo
+   primero que estaba bloqueado esperando el deploy. **No lo está.** Las dos
+   piezas necesarias ya están en `main` desde el 2026-08-03 (`7897dcb`,
+   LV-27/28), o sea ya desplegadas: `/compliance/company-documents/` y
+   `/compliance/documenttype/new/`. El tipo `aoc-certificate` es **solo una fila
+   en la base, no código**, así que se crea desde la app:
+   - `/compliance/documenttype/new/` → Nombre `Certificado AOC`, Código
+     **`aoc-certificate`** (exacto), "Vence" **desmarcado** (decisión del
+     usuario: es único e interno, no se renueva), "Seguro" desmarcado.
+     Pide permiso `compliance.add_documenttype`.
+   - `/compliance/company-documents/` → "+ Cargar documento" → el PDF.
+     Pide `compliance.add_document`.
+   **Por qué el código exacto importa**: `seed_document_types` usa
+   `get_or_create(code=...)`, así que cuando se despliegue encontrará esa fila y
+   la dejará intacta — no duplica ni sobrescribe el nombre. El usuario eligió
+   hacerlo él mismo en el navegador (2026-08-11) en vez de que se hiciera por
+   SSH, para ver exactamente qué se sube y dónde queda.
 3. **Al desplegar a `p340`**: `uv sync` (dependencia nueva `reportlab`),
-   `seed_document_types` a mano (gotcha LV-45/LV-64), migración `registry/0030`
-   (tabla `Battery`, nueva, sin tocar datos), y decidir si se activa
-   `WEATHER_ENABLED`.
+   `seed_document_types` a mano (gotcha LV-45/LV-64; pasa de 10 a 17 tipos, y
+   respeta el `aoc-certificate` que el usuario haya creado a mano antes —
+   ver punto 2), migración `registry/0030` (tabla `Battery`, nueva, sin tocar
+   datos existentes), y decidir si se activa `WEATHER_ENABLED`.
 4. **`.claude/launch.json` (ignorado por git) quedó con `WEATHER_ENABLED=True`**
    para poder revisar el clima en el demo. Si molesta, quitarlo.
 
