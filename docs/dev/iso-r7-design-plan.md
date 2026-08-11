@@ -311,9 +311,17 @@ vacía.
 Criterio: primero lo que no necesita ninguna decisión de negocio y desbloquea al
 resto.
 
-1. **`ComplianceSnapshot`** (de R7.7). No necesita preguntar nada, no toca
-   código existente, y sin él la tendencia de cualquier KPI es una ilusión.
-   **Es por acá donde conviene seguir.**
+1. ~~**`ComplianceSnapshot`** (de R7.7).~~ **✅ HECHO 2026-08-11.** Modelo +
+   migración `compliance/0014` + comando `snapshot_compliance` (idempotente por
+   fecha) + integración en el reporte, que ahora usa el snapshot como base de
+   comparación cuando existe y **explica en pantalla** por qué marca "sin cambio"
+   cuando todavía no hay historia. 19 tests. Verificado en vivo contra el demo en
+   los dos estados: con historia el delta se mueve de verdad (66,7% vs 33,3% =
+   +33,4 ▲), sin historia lo dice en vez de fingir una comparación.
+   **Ojo con una limitación real**: `--date` en el pasado guarda **los números de
+   hoy** bajo esa fecha; sirve para inicializar, **no para reconstruir historia**
+   que no se registró. Cada día sin el trabajo programado es historia perdida
+   para siempre — conviene activarlo en `p340` cuanto antes.
 2. **Verificación de eficacia** (de R7.6). Reusa el molde de R6.5; solo falta un
    número (cuántos días).
 3. **Límite de jornada de vuelo** (de R7.5). Cero datos nuevos; solo falta el

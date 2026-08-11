@@ -285,6 +285,39 @@ def build_compliance_report(start=None, end=None, cost_center=None, doc_type=Non
     }
 
 
+def latest_snapshot_before(day, cost_center=None):
+    """R7.7: the most recent `ComplianceSnapshot` strictly before `day`.
+
+    `None` when no history has been recorded yet -- a fresh install, or one
+    where `snapshot_compliance` has never run. Callers must degrade instead of
+    failing: an empty history is the normal state on day one.
+    """
+    from .models import ComplianceSnapshot
+
+    return (
+        ComplianceSnapshot.objects.filter(
+            date__lt=day, cost_center=cost_center, is_active=True
+        )
+        .order_by("-date")
+        .first()
+    )
+
+
+def totals_from_snapshot(snapshot):
+    """A stored snapshot in the same shape as `report["totals"]`, so it can
+    stand in for a recomputed "previous period" without the comparison code
+    needing to know where the numbers came from."""
+    return {
+        "total": snapshot.total,
+        "valid": snapshot.valid,
+        "expired": snapshot.expired,
+        "due_7": snapshot.due_7,
+        "due_15": snapshot.due_15,
+        "due_30": snapshot.due_30,
+        "valid_pct": snapshot.valid_pct,
+    }
+
+
 def previous_period(start, end):
     """The period of equal length immediately before [start, end] -- what
     "compared with last period" means throughout the executive report."""

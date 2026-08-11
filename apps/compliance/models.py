@@ -228,6 +228,87 @@ class MonthlyComplianceReview(BaseModel):
         return self
 
 
+class ComplianceSnapshot(BaseModel):
+    """R7.7 (ISO 9.1.1): the documentary totals as they stood on one date.
+
+    Exists to make **trend** possible. `build_compliance_report` evaluates
+    `valid`/`expired`/`due_*` always "as of today" regardless of the period
+    asked for (only the resolution stats honour `start`/`end`), so comparing
+    "this period" against "the previous one" reads *no change* on those
+    counters by construction -- two photographs of the same instant. ISO 9.1.1
+    asks for a KPI with a target **and a trend**; without stored history there
+    is no trend to show. Found and documented while doing R6.4, resolved here.
+
+    Written by the `snapshot_compliance` command, one row per (date, cost
+    center) plus one consolidated row with `cost_center=None`. Append-only in
+    spirit: a rerun for the same date overwrites that date rather than
+    accumulating duplicates, so a job that runs twice does not corrupt a trend.
+
+    Tenancy: carries its own `tenant` FK. The consolidated row has no cost
+    center to derive it from (ADR-0001: only roots carry a tenant), the same
+    reason `AlertRule` and `Document` carry theirs.
+    """
+
+    tenant = models.ForeignKey(
+        OperationalTenant,
+        on_delete=models.PROTECT,
+        default=get_default_tenant,
+        related_name="compliance_snapshots",
+    )
+    date = models.DateField(verbose_name=_("Snapshot date"))
+    # NULL = the consolidated row across every cost center of this tenant.
+    cost_center = models.ForeignKey(
+        "registry.CostCenter",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="compliance_snapshots",
+    )
+    total = models.PositiveIntegerField(default=0)
+    valid = models.PositiveIntegerField(default=0)
+    expired = models.PositiveIntegerField(default=0)
+    due_7 = models.PositiveIntegerField(default=0)
+    due_15 = models.PositiveIntegerField(default=0)
+    due_30 = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        verbose_name = _("compliance snapshot")
+        verbose_name_plural = _("compliance snapshots")
+        ordering = ["-date"]
+        constraints = [
+            # Two constraints, not one: SQLite (and Postgres) treat NULLs as
+            # distinct in a unique index, so a single constraint over
+            # (tenant, date, cost_center) would happily store the consolidated
+            # row twice for the same date. Split by whether cost_center is set.
+            models.UniqueConstraint(
+                fields=["tenant", "date", "cost_center"],
+                condition=models.Q(cost_center__isnull=False),
+                name="compliance_snapshot_cc_date_uniq",
+            ),
+            models.UniqueConstraint(
+                fields=["tenant", "date"],
+                condition=models.Q(cost_center__isnull=True),
+                name="compliance_snapshot_total_date_uniq",
+            ),
+        ]
+        indexes = [
+            # The trend lookup is "the most recent snapshot before date X".
+            models.Index(
+                fields=["cost_center", "-date"], name="compliance_snap_trend_idx"
+            )
+        ]
+
+    def __str__(self):
+        scope = self.cost_center.code if self.cost_center else _("All cost centers")
+        return f"{self.date:%Y-%m-%d} · {scope}"
+
+    @property
+    def valid_pct(self):
+        """Recomputed, never stored: a stored percentage can silently disagree
+        with the counters it came from once either is edited."""
+        return round(self.valid * 100 / self.total, 1) if self.total else 0.0
+
+
 class AlertRule(BaseModel):
     # T3.2 Fase 0b: own tenant FK. A rule is per-tenant configuration with no
     # single parent to derive from. The alerts it generates derive their tenant
