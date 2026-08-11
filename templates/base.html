@@ -124,6 +124,7 @@
       {% endcomment %}
       <a href="{% url 'operatorassignment-list' %}" class="nav-item nav-registry {% if url_name == 'operatorassignment-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg>{% translate "Operator assignments" %}</a>
       <a href="{% url 'aircraftassignment-list' %}" class="nav-item nav-registry {% if url_name == 'aircraftassignment-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="6" height="6" rx="2"/><path d="M9.4 9.4 6.6 6.6M14.6 9.4l2.8-2.8M9.4 14.6l-2.8 2.8M14.6 14.6l2.8 2.8"/><circle cx="4.8" cy="4.8" r="2.2"/><circle cx="19.2" cy="4.8" r="2.2"/><circle cx="4.8" cy="19.2" r="2.2"/><circle cx="19.2" cy="19.2" r="2.2"/></svg>{% translate "Aircraft assignments" %}</a>
+      <a href="{% url 'battery-list' %}" class="nav-item nav-registry {% if url_name == 'battery-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="8" width="16" height="9" rx="2"/><path d="M20 11v3"/><path d="M6.5 12.5h5"/></svg>{% translate "Batteries" %}</a>
       <a href="{% url 'resourcemovementlog-list' %}" class="nav-item nav-registry {% if url_name == 'resourcemovementlog-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>{% translate "Resource movements" %}</a>
 
       <hr>

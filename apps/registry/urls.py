@@ -25,6 +25,9 @@ urlpatterns += [
         views.ResourceMovementLogList.as_view(),
         name="resourcemovementlog-list",
     ),
+    # R7.2: read-only battery inventory (AeroLink is the master, ADR-0002), so
+    # it is registered here rather than in the per-model CRUD loop below.
+    path("battery/", views.BatteryList.as_view(), name="battery-list"),
     # B4.3: qualification-type catalog (config model, list/create/update only).
     path(
         "qualificationtype/",
