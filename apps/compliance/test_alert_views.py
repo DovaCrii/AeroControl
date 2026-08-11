@@ -372,9 +372,13 @@ class TestGroupedAlerts:
     one row instead of one per record."""
 
     @pytest.mark.django_db
-    def test_same_rule_and_date_render_as_one_row_with_a_bulk_resolve_button(
+    def test_grouping_is_visual_only_and_every_action_stays_per_alert(
         self, two_qualifications
     ):
+        """LV-68: the row groups to cut noise, but must NOT offer to resolve the
+        whole group with one shared reason. Two records can share an expiry date
+        without sharing a cause, and one root cause signed across independent
+        findings is false evidence (ISO 10.2)."""
         qual_a, qual_b = two_qualifications
         rule = AlertRule.objects.create(
             name="Vencimiento de habilitaciones",
@@ -400,18 +404,22 @@ class TestGroupedAlerts:
         response = client.get(reverse("alert-list"))
         content = response.content.decode()
 
-        # Assert on structure, not translated copy (LANGUAGE_CODE="es" at runtime).
-        resolve_url = reverse(
-            "alert-resolve-group", args=[f"{alert_a.pk},{alert_b.pk}"]
-        )
-        assert resolve_url in content
-        # No per-alert "Resolve" left for either member -- the group's bulk
-        # button replaces both.
-        assert reverse("alert-resolve", args=[alert_a.pk]) not in content
-        assert reverse("alert-resolve", args=[alert_b.pk]) not in content
-        # Each member keeps its own per-alert task action inside the row.
-        assert reverse("alert-create-task", args=[alert_a.pk]) in content
-        assert reverse("alert-create-task", args=[alert_b.pk]) in content
+        # Both members grouped into one row: the rule name appears once, not
+        # once per alert.
+        assert content.count("Vencimiento de habilitaciones") == 1
+        # ...and each one keeps its own resolve AND its own task action.
+        for alert in (alert_a, alert_b):
+            assert reverse("alert-resolve", args=[alert.pk]) in content
+            assert reverse("alert-create-task", args=[alert.pk]) in content
+
+    @pytest.mark.django_db
+    def test_no_bulk_group_resolve_endpoint_exists(self):
+        """The removal is part of the contract: a URL that resolves N alerts
+        with one shared reason must not come back by accident."""
+        from django.urls import NoReverseMatch
+
+        with pytest.raises(NoReverseMatch):
+            reverse("alert-resolve-group", args=["whatever"])
 
     @pytest.mark.django_db
     def test_different_dates_never_group(self, two_qualifications):
@@ -477,194 +485,12 @@ class TestGroupedAlerts:
         # joining a bulk button.
         assert reverse("alert-resolve", args=[alert_b.pk]) in content
 
-    @pytest.mark.django_db
-    def test_group_get_renders_a_reason_form_titled_with_the_count(
-        self, two_qualifications
-    ):
-        qual_a, qual_b = two_qualifications
-        rule = AlertRule.objects.create(
-            name="Vencimiento de habilitaciones",
-            entity_type="qualification",
-            field_to_watch="expiry_date",
-        )
-        alerts = [
-            Alert.objects.create(
-                alert_rule=rule,
-                content_type=ContentType.objects.get_for_model(Qualification),
-                object_id=qual.pk,
-                message="Expiring soon",
-            )
-            for qual in (qual_a, qual_b)
-        ]
-        User.objects.create_superuser("admin", "a@test.com", "password")
-        client = Client()
-        assert client.login(username="admin", password="password")
-
-        ids = ",".join(str(a.pk) for a in alerts)
-        response = client.get(reverse("alert-resolve-group", args=[ids]))
-
-        assert response.status_code == 200
-        assert b'name="reason"' in response.content
-        # The count is interpolated, not translated -- safe to assert as-is
-        # regardless of runtime LANGUAGE_CODE.
-        assert b"2" in response.content
-        assert reverse("alert-resolve-group", args=[ids]).encode() in response.content
-
-    @pytest.mark.django_db
-    def test_group_post_resolves_every_member_with_the_same_reason(
-        self, two_qualifications
-    ):
-        qual_a, qual_b = two_qualifications
-        rule = AlertRule.objects.create(
-            name="Vencimiento de habilitaciones",
-            entity_type="qualification",
-            field_to_watch="expiry_date",
-        )
-        alerts = [
-            Alert.objects.create(
-                alert_rule=rule,
-                content_type=ContentType.objects.get_for_model(Qualification),
-                object_id=qual.pk,
-                message="Expiring soon",
-            )
-            for qual in (qual_a, qual_b)
-        ]
-        User.objects.create_superuser("admin", "a@test.com", "password")
-        client = Client()
-        assert client.login(username="admin", password="password")
-
-        ids = ",".join(str(a.pk) for a in alerts)
-        response = client.post(
-            reverse("alert-resolve-group", args=[ids]),
-            {"reason": "Fleet policy renewed, folio 9001."},
-        )
-
-        assert response.status_code == 302
-        for alert in alerts:
-            alert.refresh_from_db()
-            assert alert.is_resolved is True
-            assert alert.resolution_reason == "Fleet policy renewed, folio 9001."
-
-    @pytest.mark.django_db
-    def test_group_resolve_blank_reason_resolves_nothing(self, two_qualifications):
-        qual_a, qual_b = two_qualifications
-        rule = AlertRule.objects.create(
-            name="Vencimiento de habilitaciones",
-            entity_type="qualification",
-            field_to_watch="expiry_date",
-        )
-        alerts = [
-            Alert.objects.create(
-                alert_rule=rule,
-                content_type=ContentType.objects.get_for_model(Qualification),
-                object_id=qual.pk,
-                message="Expiring soon",
-            )
-            for qual in (qual_a, qual_b)
-        ]
-        User.objects.create_superuser("admin", "a@test.com", "password")
-        client = Client()
-        assert client.login(username="admin", password="password")
-
-        ids = ",".join(str(a.pk) for a in alerts)
-        response = client.post(
-            reverse("alert-resolve-group", args=[ids]), {"reason": ""}
-        )
-
-        assert response.status_code == 422
-        for alert in alerts:
-            alert.refresh_from_db()
-            assert alert.is_resolved is False
-
-    @pytest.mark.django_db
-    def test_group_resolve_htmx_returns_204_with_the_modal_close_trigger(
-        self, two_qualifications
-    ):
-        qual_a, qual_b = two_qualifications
-        rule = AlertRule.objects.create(
-            name="Vencimiento de habilitaciones",
-            entity_type="qualification",
-            field_to_watch="expiry_date",
-        )
-        alerts = [
-            Alert.objects.create(
-                alert_rule=rule,
-                content_type=ContentType.objects.get_for_model(Qualification),
-                object_id=qual.pk,
-                message="Expiring soon",
-            )
-            for qual in (qual_a, qual_b)
-        ]
-        User.objects.create_superuser("admin", "a@test.com", "password")
-        client = Client()
-        assert client.login(username="admin", password="password")
-
-        ids = ",".join(str(a.pk) for a in alerts)
-        response = client.post(
-            reverse("alert-resolve-group", args=[ids]),
-            {"reason": "Fixed"},
-            HTTP_HX_REQUEST="true",
-        )
-
-        assert response.status_code == 204
-        assert response.headers.get("HX-Trigger") == "modal-form-success"
-
-    @pytest.mark.django_db
-    def test_group_resolve_requires_change_alert_permission(self, two_qualifications):
-        qual_a, qual_b = two_qualifications
-        rule = AlertRule.objects.create(
-            name="Vencimiento de habilitaciones",
-            entity_type="qualification",
-            field_to_watch="expiry_date",
-        )
-        alerts = [
-            Alert.objects.create(
-                alert_rule=rule,
-                content_type=ContentType.objects.get_for_model(Qualification),
-                object_id=qual.pk,
-                message="Expiring soon",
-            )
-            for qual in (qual_a, qual_b)
-        ]
-        User.objects.create_user("viewer", password="password")
-        client = Client()
-        assert client.login(username="viewer", password="password")
-
-        ids = ",".join(str(a.pk) for a in alerts)
-        response = client.post(
-            reverse("alert-resolve-group", args=[ids]), {"reason": "Fixed"}
-        )
-
-        assert response.status_code == 403
-        for alert in alerts:
-            alert.refresh_from_db()
-            assert alert.is_resolved is False
-
-    @pytest.mark.django_db
-    def test_group_resolve_with_an_unknown_id_returns_404(self, two_qualifications):
-        qual_a, _qual_b = two_qualifications
-        rule = AlertRule.objects.create(
-            name="Vencimiento de habilitaciones",
-            entity_type="qualification",
-            field_to_watch="expiry_date",
-        )
-        Alert.objects.create(
-            alert_rule=rule,
-            content_type=ContentType.objects.get_for_model(Qualification),
-            object_id=qual_a.pk,
-            message="Expiring soon",
-        )
-        User.objects.create_superuser("admin", "a@test.com", "password")
-        client = Client()
-        assert client.login(username="admin", password="password")
-
-        response = client.get(
-            reverse(
-                "alert-resolve-group", args=["00000000-0000-0000-0000-000000000000"]
-            )
-        )
-
-        assert response.status_code == 404
+    # LV-68: the six tests that covered AlertResolveGroup were deleted with the
+    # view. They asserted that N alerts resolve with one shared reason, which is
+    # the behaviour that turned out to be wrong against real data -- keeping
+    # them would have locked in the defect. What replaced them:
+    # test_no_bulk_group_resolve_endpoint_exists (the URL must stay gone) and
+    # test_grouping_is_visual_only_and_every_action_stays_per_alert.
 
 
 @pytest.mark.django_db
