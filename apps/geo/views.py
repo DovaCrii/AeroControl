@@ -202,7 +202,31 @@ class GeoPlanDetailView(ModelViewPermissionRequiredMixin, DetailView):
                 "diffVersion": _("Version"),
             },
         }
+        context.update(self._weather_context(plan, current))
         return context
+
+    @staticmethod
+    def _weather_context(plan, current):
+        """R8.1: forecast over this plan's area, for the day it is flown.
+
+        Only asked for when the plan is tied to a permit with a start date --
+        without a date there is no day to forecast, and a forecast for "today"
+        on a plan flown next month would be worse than none. `weather` is None
+        whenever the feature is off, the area has no bbox, or the provider did
+        not answer; the template then shows nothing rather than an error.
+        """
+        from apps.core.weather import bbox_centroid, forecast_for
+
+        centroid = bbox_centroid(current)
+        permission = plan.flight_permission
+        target_date = permission.valid_from if permission else None
+        if centroid is None or target_date is None:
+            return {"weather": None, "weather_date": None}
+        latitude, longitude = centroid
+        return {
+            "weather": forecast_for(latitude, longitude, target_date),
+            "weather_date": target_date,
+        }
 
 
 class GeoPlanImportView(ModelPermissionRequiredMixin, FormView):
