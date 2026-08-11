@@ -9,6 +9,7 @@
     <p class="page-description mb-0">{% translate "Document validity, upcoming expiries and alert resolution times." %}</p>
   </div>
   <div class="d-flex gap-2 flex-wrap">
+    <a class="btn btn-outline-primary" href="{% url 'compliance-report-pdf' %}{% if export_query %}?{{ export_query }}{% endif %}">{% translate "PDF" %}</a>
     <a class="btn btn-outline-primary" href="{% url 'compliance-report-xlsx' %}{% if export_query %}?{{ export_query }}{% endif %}">{% translate "Excel" %}</a>
     <a class="btn btn-outline-primary" href="{% url 'compliance-report-docx' %}{% if export_query %}?{{ export_query }}{% endif %}">{% translate "Word" %}</a>
     <a class="btn btn-outline-secondary" href="{% url 'compliance-report-csv' %}{% if export_query %}?{{ export_query }}{% endif %}">{% translate "CSV" %}</a>
@@ -53,6 +54,32 @@
   {% if report.incomplete_maintenance %}
   <div class="col-md-3 col-sm-6"><div class="summary-card summary-card-warning"><small>{% translate "Maintenance to define" %}</small><strong>{{ report.incomplete_maintenance }}</strong></div></div>
   {% endif %}
+</div>
+
+<div class="card mb-4">
+  <div class="p-3 border-bottom"><h2 class="h5 mb-0">{% translate "Compared with the previous period" %}</h2></div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr>
+        <th scope="col">{% translate "KPI" %}</th>
+        <th scope="col" class="text-end">{% translate "This period" %}</th>
+        <th scope="col" class="text-end">{% translate "Change" %}</th>
+        <th scope="col" class="text-end">{% translate "Previous period" %}</th>
+      </tr></thead>
+      <tbody>
+        {% for row in comparison %}
+        <tr>
+          <td>{{ row.label }}</td>
+          <td class="text-end"><strong>{{ row.current }}</strong></td>
+          <td class="text-end {% if row.direction == 'better' %}text-success{% elif row.direction == 'worse' %}text-danger{% else %}text-muted{% endif %}">
+            {{ row.delta|stringformat:"+g" }}{% if row.direction == 'better' %} ▲{% elif row.direction == 'worse' %} ▼{% endif %}
+          </td>
+          <td class="text-end text-muted">{{ row.previous }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <div class="card mb-4">

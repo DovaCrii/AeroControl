@@ -20,6 +20,11 @@ urlpatterns = [
         report_views.ComplianceReportDocxView.as_view(),
         name="compliance-report-docx",
     ),
+    path(
+        "report/pdf/",
+        report_views.ComplianceReportPdfView.as_view(),
+        name="compliance-report-pdf",
+    ),
     path("document/", views.DocumentList.as_view(), name="document-list"),
     path(
         "company-documents/",

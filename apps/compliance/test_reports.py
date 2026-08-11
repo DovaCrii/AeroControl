@@ -234,6 +234,7 @@ def test_report_page_ignores_a_malformed_filter_value(world, param):
             "compliance-report-docx",
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         ),
+        ("compliance-report-pdf", "application/pdf"),
     ],
 )
 def test_exports_return_an_attachment(world, route, content_type):
@@ -258,8 +259,77 @@ def test_exports_require_view_permission(world):
         "compliance-report-csv",
         "compliance-report-xlsx",
         "compliance-report-docx",
+        "compliance-report-pdf",
     ):
         assert client.get(reverse(route)).status_code == 403
+
+
+@pytest.mark.django_db
+def test_pdf_export_starts_with_the_pdf_magic_bytes(world):
+    """A real PDF, not just the right Content-Type header."""
+    User.objects.create_superuser("admin", "a@test.com", "password")
+    client = Client()
+    assert client.login(username="admin", password="password")
+
+    response = client.get(reverse("compliance-report-pdf"))
+
+    assert response.content.startswith(b"%PDF-")
+
+
+@pytest.mark.django_db
+def test_report_page_context_includes_the_period_comparison(world):
+    """R6.4: the web report reads the same current-vs-previous-period
+    comparison the executive email already sends -- previously only the
+    inbox had it."""
+    User.objects.create_superuser("admin", "a@test.com", "password")
+    client = Client()
+    assert client.login(username="admin", password="password")
+
+    response = client.get(reverse("compliance-report"))
+
+    assert response.status_code == 200
+    comparison = response.context["comparison"]
+    # 3 KPI rows (valid_pct, expired, due_30) + resolved-alert count
+    assert len(comparison) == 4
+    assert {row["direction"] for row in comparison} <= {"better", "worse", "flat"}
+
+
+@pytest.mark.django_db
+def test_report_page_comparison_shows_the_resolution_count_change(world):
+    """The one comparison row genuinely bound by [start, end]: the 3 document/
+    vigencia KPIs (valid_pct, expired, due_30) are always evaluated "as of
+    today" regardless of the period requested (see build_compliance_report /
+    _cost_center_row), so current == previous for those rows by construction
+    -- there is no historical snapshot to compare against. Alert resolution
+    counts are the only ones that actually differ between the two periods."""
+    rule = AlertRule.objects.create(
+        name="Docs", entity_type="compliance.document", field_to_watch="expiry_date"
+    )
+    document = Document.objects.first()
+    alert = Alert.objects.create(
+        alert_rule=rule,
+        content_type=ContentType.objects.get_for_model(Document),
+        object_id=document.pk,
+        message="test",
+    )
+    Alert.objects.filter(pk=alert.pk).update(
+        triggered_at=timezone.now() - timedelta(days=4),
+        resolved_at=timezone.now(),
+        is_resolved=True,
+    )
+    User.objects.create_superuser("admin", "a@test.com", "password")
+    client = Client()
+    assert client.login(username="admin", password="password")
+
+    response = client.get(reverse("compliance-report"))
+
+    comparison = response.context["comparison"]
+    # compare_periods appends the resolution row last, after the 3 KPI rows;
+    # asserting by position (not by label) since the label is translated and
+    # this test runs under LANGUAGE_CODE="es".
+    resolved_row = comparison[-1]
+    assert resolved_row["current"] == 1
+    assert resolved_row["previous"] == 0
 
 
 @pytest.mark.django_db

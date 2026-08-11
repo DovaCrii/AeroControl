@@ -24,7 +24,9 @@ from .reports import (
     COST_CENTER_HEADERS,
     alert_rows,
     build_compliance_report,
+    compare_periods,
     cost_center_rows,
+    previous_period,
 )
 
 FILENAME_STEM = "aerocontrol-cumplimiento"
@@ -59,7 +61,7 @@ class ComplianceReportMixin(ModelViewPermissionRequiredMixin):
     model = Document
     permission_action = "view"
 
-    def report_for(self, request):
+    def _filters(self, request):
         # Same timezone as the report's own period bounds; see reports.py.
         end = _parse_date(request.GET.get("end")) or timezone.localdate()
         start = _parse_date(request.GET.get("start")) or (end - timedelta(days=30))
@@ -73,9 +75,28 @@ class ComplianceReportMixin(ModelViewPermissionRequiredMixin):
             doc_type = _lookup_by_pk(
                 DocumentType.objects.filter(is_active=True), request.GET["doc_type"]
             )
+        return start, end, cost_center, doc_type
+
+    def report_for(self, request):
+        start, end, cost_center, doc_type = self._filters(request)
         return build_compliance_report(
             start=start, end=end, cost_center=cost_center, doc_type=doc_type
         )
+
+    def report_and_comparison_for(self, request):
+        """R6.4: the current report plus the same current-vs-previous-period
+        reading the executive email already sends -- so the web page and the
+        inbox tell the same story about the same numbers instead of the web
+        page only showing the raw counters."""
+        start, end, cost_center, doc_type = self._filters(request)
+        current = build_compliance_report(
+            start=start, end=end, cost_center=cost_center, doc_type=doc_type
+        )
+        prev_start, prev_end = previous_period(start, end)
+        previous = build_compliance_report(
+            start=prev_start, end=prev_end, cost_center=cost_center, doc_type=doc_type
+        )
+        return current, compare_periods(current, previous)
 
 
 class ComplianceReportView(ComplianceReportMixin, TemplateView):
@@ -83,9 +104,10 @@ class ComplianceReportView(ComplianceReportMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        report = self.report_for(self.request)
+        report, comparison = self.report_and_comparison_for(self.request)
         context.update(
             report=report,
+            comparison=comparison,
             title=_("Compliance status report"),
             cost_centers=CostCenter.objects.filter(is_active=True).order_by("code"),
             document_types=DocumentType.objects.filter(is_active=True).order_by("name"),
@@ -291,4 +313,155 @@ class ComplianceReportDocxView(ComplianceReportMixin, View):
             ),
         )
         response["Content-Disposition"] = f'attachment; filename="{FILENAME_STEM}.docx"'
+        return response
+
+
+class ComplianceReportPdfView(ComplianceReportMixin, View):
+    """R6.4: a printable, one-file report -- CSV/XLSX/DOCX all need the
+    receiving app installed; a PDF opens the same everywhere and is what
+    ISO auditors expect to be handed. Built with reportlab (pure Python,
+    no system package like Cairo/Pango or wkhtmltopdf on the Ubuntu VM
+    deploy) rather than rendering the HTML template."""
+
+    def get(self, request):
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import letter
+        from reportlab.lib.styles import getSampleStyleSheet
+        from reportlab.lib.units import inch
+        from reportlab.platypus import (
+            Paragraph,
+            SimpleDocTemplate,
+            Spacer,
+            Table,
+            TableStyle,
+        )
+
+        report, comparison = self.report_and_comparison_for(request)
+        styles = getSampleStyleSheet()
+        elements = [
+            Paragraph(
+                str(_("AeroControl — Compliance status report")), styles["Title"]
+            ),
+            Paragraph(
+                str(_("Generated: %(date)s"))
+                % {"date": timezone.localdate().isoformat()},
+                styles["Normal"],
+            ),
+            Paragraph(
+                str(_("Period analysed: %(start)s to %(end)s"))
+                % {
+                    "start": report["period"]["start"].isoformat(),
+                    "end": report["period"]["end"].isoformat(),
+                },
+                styles["Normal"],
+            ),
+            Spacer(1, 0.2 * inch),
+        ]
+
+        def add_table(heading, headers, rows, empty_message):
+            elements.append(Paragraph(str(heading), styles["Heading2"]))
+            if rows:
+                data = [[str(cell) for cell in headers]] + [
+                    [str(neutralize(cell)) for cell in row] for row in rows
+                ]
+                table = Table(data, repeatRows=1)
+                table.setStyle(
+                    TableStyle(
+                        [
+                            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1b2a4a")),
+                            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                            ("FONTSIZE", (0, 0), (-1, -1), 8),
+                            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#dde3ec")),
+                            (
+                                "ROWBACKGROUNDS",
+                                (0, 1),
+                                (-1, -1),
+                                [colors.white, colors.HexColor("#f4f6f9")],
+                            ),
+                        ]
+                    )
+                )
+                elements.append(table)
+            else:
+                elements.append(Paragraph(str(empty_message), styles["Normal"]))
+            elements.append(Spacer(1, 0.25 * inch))
+
+        totals = report["totals"]
+        elements.append(
+            Paragraph(
+                str(
+                    _(
+                        "%(valid)s of %(total)s current documents are valid "
+                        "(%(pct)s%%). %(expired)s expired, %(due)s expiring within "
+                        "%(horizon)s days."
+                    )
+                )
+                % {
+                    "valid": totals["valid"],
+                    "total": totals["total"],
+                    "pct": totals["valid_pct"],
+                    "expired": totals["expired"],
+                    "due": totals["due_7"] + totals["due_15"] + totals["due_30"],
+                    "horizon": report["horizon_days"],
+                },
+                styles["Normal"],
+            )
+        )
+        elements.append(Spacer(1, 0.2 * inch))
+
+        add_table(
+            _("Compared with the previous period"),
+            [_("KPI"), _("This period"), _("Change"), _("Previous period")],
+            [
+                [row["label"], row["current"], f"{row['delta']:+g}", row["previous"]]
+                for row in comparison
+            ],
+            _("No comparison available."),
+        )
+        add_table(
+            _("By cost center"),
+            COST_CENTER_HEADERS,
+            cost_center_rows(report),
+            _("No cost centers to report."),
+        )
+
+        resolution = report["resolution"]
+        elements.append(
+            Paragraph(str(_("Alert resolution in the period")), styles["Heading2"])
+        )
+        if resolution["resolved_count"]:
+            elements.append(
+                Paragraph(
+                    str(_("%(count)s alerts resolved, %(days)s days on average."))
+                    % {
+                        "count": resolution["resolved_count"],
+                        "days": resolution["avg_days"],
+                    },
+                    styles["Normal"],
+                )
+            )
+        else:
+            elements.append(
+                Paragraph(
+                    str(_("No alerts were resolved in this period.")), styles["Normal"]
+                )
+            )
+        elements.append(Spacer(1, 0.25 * inch))
+
+        add_table(
+            _("Open alerts"),
+            ALERT_HEADERS,
+            alert_rows(report),
+            _("No open alerts."),
+        )
+
+        output = BytesIO()
+        SimpleDocTemplate(
+            output,
+            pagesize=letter,
+            leftMargin=0.6 * inch,
+            rightMargin=0.6 * inch,
+        ).build(elements)
+        response = HttpResponse(output.getvalue(), content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="{FILENAME_STEM}.pdf"'
         return response
