@@ -90,6 +90,30 @@ uv run ruff check .
 
 El gate completo corre: `manage.py check` (+ `--deploy`), `makemigrations --check --dry-run`, `pytest --cov=apps` (falla bajo el umbral de `pyproject.toml`, hoy 83%), `ruff check`, `ruff format --check`, `bandit`, `pip-audit`.
 
+## Lecciones operativas (gotchas verificados, no teoría)
+
+Cada una costó tiempo real al menos una vez. Consolidadas 2026-08-11.
+
+**El tablero miente en las dos direcciones.** Un `⬜` puede estar hecho: pasó con `T2.1`, con `R1.1`/`R1.2`/`R1.3` (resueltos 4 días antes de que alguien marcara la casilla), con `X.2` y con `V.3` — cinco veces. **Antes de implementar una fila pendiente, grep el código que describe.** Puede ahorrar la implementación entera. Y al revés: una fila ✅ puede tener una premisa vencida (la de `R6.4` decía "sólo existe como correo" cuando la vista web ya existía).
+
+**`makemessages` fuzzy-matchea mal y no avisa.** Inventa traducciones tomándolas de strings parecidos. Después de **cada** corrida: `grep fuzzy` en el `.po`, corregir a mano, y recompilar el `.mo` con `polib` — **el despliegue no corre `compilemessages`** y el `.mo` está versionado, así que un `.po` correcto con `.mo` viejo se ve en inglés en producción. `test_every_entry_is_translated_and_not_fuzzy` lo caza; confía en ese cero, no en una revisión visual.
+
+**Los strings fuente van en inglés.** `test_source_strings_are_written_in_english` falla con una sola tilde en un literal del código. Escribí el `msgid` en inglés y la versión española en el catálogo, incluso para textos que sólo verá un usuario chileno.
+
+**Correr `ruff check` *y* `ruff format --check`.** El CI corre ambos y ya estuvo rojo días porque una sesión sólo corrió el primero.
+
+**Verificar en el navegador antes de marcar ✅.** Los tests pasan y la pantalla igual está mal — o al revés, la fila del tablero describe un problema que ya no existe. El demo (`scripts/run-demo.ps1`, login `demo`/`demo-review-only`) tiene datos con casos límite que la copia de restauración no tiene: el bug de orden de operaciones de la migración `0028` era **silencioso** contra la copia limpia y reventó contra el demo.
+
+**Señales: `post_save`, no `pre_save`, cuando el handler vuelve a guardar algo.** `Alert.resolve()` re-guarda la tarjeta enlazada; con `pre_save` esa escritura interna corre contra el guardado externo que aún no aterrizó y se pierde. Lo atrapó un test que falló (R6.1), no una revisión.
+
+**Un `⬜` bloqueado por una decisión de negocio no se desbloquea programando.** Umbrales de contrato, límites de jornada y metas de KPI los define el usuario; inventar un número convierte un control en un estorbo que alguien va a desactivar.
+
+**Producción: dónde corre cada comando.** El merge/push va en Windows (las ramas sólo existen ahí); el despliegue va **dentro** de la sesión SSH (`/opt/aerocontrol` es ruta Linux y PowerShell la resuelve como `C:\opt\...`). Al cargar el entorno en la VM, **`set -a` no es opcional**: `source` sobre un archivo `CLAVE=valor` define variables de shell, no de entorno, y `manage.py` cae a `config.settings.dev`. Verificá `DJANGO_SETTINGS_MODULE` y `DB_PATH` con un `echo` **antes** de migrar.
+
+**Chequeos previos a una migración: `values_list`, nunca `.all()`.** Corren con el código nuevo sobre la base vieja, así que un `SELECT *` intenta leer columnas que la migración todavía no creó y falla antes de comprobar nada.
+
+**El gate verifica código, nadie verifica el cableado de producción.** Tres funciones con tests verdes no llegaban a nadie porque el grupo destinatario no tenía correos y un trabajo programado nunca se registró. Al terminar una función que notifica, comprobar el camino completo **en producción** (`--dry-run`, `list-timers`), no sólo el test.
+
 ## Referencias
 
 - Plan de trabajo y seguimiento por bloques: `MASTER_PLAN.md` (fuente de verdad de qué sigue).

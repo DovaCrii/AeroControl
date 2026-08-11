@@ -95,21 +95,52 @@ Agrega `--with-optional` para sembrar también las dos opcionales
 (habilitaciones y mantenimiento). El comando deja la creación *automática* de
 tarea Kanban apagada al inicio (el flag `create_kanban_task` de cada regla).
 
-**Aun así, corre `init_dgac_board` desde el primer día.** El botón manual
-"Crear tarea" que aparece en cada fila de `/compliance/alert/` es independiente
-de ese flag automático — funciona en cualquier alerta, prendida o no la
-creación automática — pero necesita que exista **algún** tablero Kanban activo.
-Sin correr `init_dgac_board` primero, el botón falla con "No hay ningún
-tablero Kanban disponible" (LV-45). El comando es idempotente
-(`get_or_create`), así que correrlo de más no hace daño:
+Un rerun no duplica ni pisa reglas que hayas ajustado en la UI. También puedes
+crear o afinar reglas a mano desde `/compliance/alertrule/`.
 
-```bash
-uv run python manage.py init_dgac_board
-```
+> **`init_dgac_board` ya no es necesario para operar** (2026-08-11, LV-69/69b).
+> El tablero "Seguimiento de alertas" salió del menú y la lista de alertas ya no
+> ofrece "Crear tarea"/"Ver tarea", así que no hay un botón que falle por falta
+> de tablero. El comando sigue existiendo y la vista sigue viva por URL; correrlo
+> es inocuo (`get_or_create`).
 
-Un rerun de cualquiera de los dos comandos no duplica ni pisa reglas/tableros
-que hayas ajustado en la UI. También puedes crear o afinar reglas a mano desde
-`/compliance/alertrule/`.
+## Cómo se resuelve una alerta
+
+**La regla de oro: arreglar el dato primero, resolver después.**
+
+`generate_alerts` corre a diario (06:00) y crea una alerta por cada registro en
+ventana. **Sólo evita duplicar contra alertas abiertas**, así que:
+
+> Resolver una alerta cuya condición sigue vigente la hace **reaparecer a la
+> mañana siguiente**. No es un defecto — impide barrer un vencimiento bajo la
+> alfombra — pero explica por qué "Resolver" puede parecer que no funciona.
+
+**Se cierran solas, sin tocar la alerta:**
+
+| Acción | Mecanismo |
+|---|---|
+| Actualizar la vigencia a una fecha fuera de riesgo (seguro JAC, credencial DGAC, habilitación, permiso) | Señal de LV-71 — deja el motivo *"Vigencia renovada al AAAA-MM-DD (cierre automático)"* |
+| Reemplazar un documento por una versión nueva | `Document.resolve_related_alerts` |
+| Completar una mantención | `resolve_open_alerts_for` |
+| Firmar la revisión mensual | `resolve_open_alerts_for` |
+| Completar la tarjeta del tablero | señal de R6.1 |
+
+**Flujo normal, ejemplo con un seguro JAC vencido:**
+
+1. Renovar la póliza con la aseguradora.
+2. Ficha de la aeronave → **Editar** → actualizar "Vencimiento seguro JAC".
+3. **Listo**: la alerta se cierra sola y queda registrado por qué.
+
+**Cuándo hay que resolver a mano** (`/compliance/alert/` → "Resolver", con
+motivo obligatorio): cuando la alerta se cierra por una razón que **no** es una
+fecha nueva — se dio de baja la aeronave, la alerta se generó por un dato
+equivocado, o se decidió aceptar el riesgo con justificación. Ahí el motivo lo
+escribe una persona, que es justo lo que ISO 10.2 pide para esos casos.
+
+**Si borrás la fecha en vez de renovarla**, la alerta **queda abierta** a
+propósito: una vigencia ausente es un estado peor que una por vencer.
+
+Todo cierre es reversible con **Deshacer**, que limpia el motivo y reabre.
 
 ## Paso 4 — Cargar documentos
 

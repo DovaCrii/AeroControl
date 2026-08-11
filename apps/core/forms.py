@@ -31,12 +31,26 @@ class AeroModelForm(forms.ModelForm):
         for field in self.fields.values():
             if field.label:
                 field.label = _(translate_field_label(field.label))
+            # LV-73 [bug de pérdida de datos]: cambiar `input_type` sin fijar
+            # también el `format` hacía que el navegador **descartara el valor**.
+            # Django renderizaba la fecha en el formato del locale
+            # (`value="21/08/2026"` con LANGUAGE_CODE="es") y un
+            # `<input type="date">` sólo acepta ISO `AAAA-MM-DD`, así que el
+            # campo se mostraba **vacío** aunque la base tuviera el dato — y
+            # guardar el formulario lo borraba en silencio. Se descubrió en el
+            # demo abriendo la ficha de RPA-2002, cuyo seguro JAC vencía el
+            # 2026-08-21 y aparecía en blanco.
+            # El lado del guardado ya estaba bien: `DATE_INPUT_FORMATS` del
+            # locale `es` incluye `%Y-%m-%d`, así que sólo faltaba emitirlo así.
             if isinstance(field.widget, forms.DateTimeInput):
                 field.widget.input_type = "datetime-local"
+                field.widget.format = "%Y-%m-%dT%H:%M"
             elif isinstance(field.widget, forms.DateInput):
                 field.widget.input_type = "date"
+                field.widget.format = "%Y-%m-%d"
             elif isinstance(field.widget, forms.TimeInput):
                 field.widget.input_type = "time"
+                field.widget.format = "%H:%M"
             elif isinstance(field.widget, forms.Textarea):
                 # LV-35: textareas (Notas, dirección, servicios…) start at a
                 # medium height instead of the oversized default block; the user
