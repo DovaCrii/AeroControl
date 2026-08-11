@@ -5,6 +5,107 @@
 > post-auditoría"**, al inicio del archivo. Este documento es solo el resumen
 > de estado; el detalle de cada ítem vive en las filas de `MASTER_PLAN.md`.
 
+## 🔒 CIERRE DE VENTANA — 2026-08-11 (R6.2 verificado + R6.3/R6.4/R6.5, BLOQUE R6 completo)
+
+**Empezar aquí en la próxima ventana.** Esta ventana retomó exactamente donde
+quedó la anterior (mismo working tree, misma pila de ramas) y cerró el único
+cabo suelto que quedaba (verificar R6.2 en el navegador) más los tres ítems
+que faltaban del BLOQUE R6. **BLOQUE R6 queda completo (R6.1–R6.5, los 5
+✅).**
+
+### Lo que se hizo (3 commits nuevos, apilados sobre `codex/r6-alert-resolve-with-reason`, ninguno mergeado ni pusheado)
+
+```
+... (cadena completa de la ventana anterior, sin tocar) ...
+    └─ codex/r6-alert-resolve-with-reason          R6.2  (ya existía)
+        └─ codex/r6-group-same-origin-alerts           R6.3
+            └─ codex/r6-executive-report-web-pdf            R6.4
+                └─ codex/r6-monthly-review-deadline             R6.5  ← HEAD
+```
+
+- **R6.2 verificado en el navegador.** El único punto pendiente de la ventana
+  anterior. Contra el demo real: el modal abre con el textarea "Motivo / causa
+  raíz", `required` bloquea el envío vacío, el POST con motivo devuelve 204 y
+  la fila pasa a "Reabrir" (contador de 17→16), `reopen()` la devuelve a su
+  estado original. Sin sorpresas — ya queda cerrado del todo.
+- **R6.3 — agrupar alertas del mismo origen.** `_group_alerts` (views.py)
+  agrupa alertas **sin resolver** por `(alert_rule_id, watched_date)` — p. ej.
+  una póliza de seguro de flota que vence en una fecha y cubre varias
+  aeronaves, o un lote de habilitaciones DGAC vencidas el mismo día. Solo
+  afecta la lista (no la paginación ni el queryset): cada alerta sigue
+  resolviéndose (y cerrando su propia tarea Kanban) de forma independiente.
+  Cada fila agrupada conserva la acción de tarea de cada miembro + un botón
+  nuevo "Resolver (N)" (`AlertResolveGroup`) que reutiliza `AlertResolveForm`
+  para pedir un motivo compartido — sin eso, cerrar un grupo de 4 significaba
+  escribir el mismo motivo 4 veces. Verificado en vivo: 3 grupos reales
+  aparecieron solos con los datos del demo, resolver un grupo lo separó en
+  filas "Resuelta" individuales, y reabrir una por una reformó los grupos
+  hasta volver al estado original (17 alertas).
+- **R6.4 — informe ejecutivo en la web + PDF.** La premisa del plan ("hoy solo
+  existe como correo") estaba desactualizada — `ComplianceReportView` ya
+  existía con CSV/XLSX/DOCX. Lo que de verdad faltaba era la comparación
+  contra el período anterior que el correo (`send_executive_report`) sí
+  mostraba; se movió a `reports.py` (`compare_periods`/`previous_period`/
+  `COMPARED_KPIS`) para que la web y el correo lean la misma función en vez de
+  dos copias — el propio docstring del módulo ya prometía eso y no era cierto
+  para esta tabla. **Hallazgo documentado, no corregido**: los 3 KPIs de
+  documentos/vigencias (`valid_pct`, `expired`, `due_30`) se evalúan siempre
+  "a hoy" — comparar período actual vs. anterior da **siempre "sin cambio"**
+  en esas 3 filas por construcción (ya pasaba en el correo, ahora es visible
+  también en la web); arreglarlo de verdad exigiría una tabla de snapshots
+  históricos que no existe. Solo la fila de alertas resueltas varía de
+  verdad. Exportación **PDF** nueva (`ComplianceReportPdfView`, `reportlab`,
+  dependencia nueva sin paquete de sistema que instalar en la VM). Verificado
+  en vivo: tabla de comparación traducida con el patrón "+0" esperado,
+  descarga de PDF confirmada por `fetch` (magic bytes `%PDF-1.4`).
+- **R6.5 — recordatorio del día 15.** Alcance confirmado con el usuario antes
+  de implementar (pregunta explícita en el chat): es un **recordatorio de
+  pendientes**, no una segunda revisión formal. Comando nuevo
+  `check_monthly_review_deadline` — corre a diario, actúa solo el día 15,
+  escala a Dirección en un segundo correo las `MonthlyComplianceReview` del
+  mes anterior que sigan `pending`. **Nunca crea ni cambia una revisión** —
+  `check_monthly_records` (LV-30) sigue siendo el único dueño; así un fallo
+  del cierre de fin de mes se ve como 0 filas aquí, no como un falso "todo en
+  orden". Registrado en `scripts/schedule_tasks.ps1` y `docs/scheduled-
+  operations.md`. Verificado manualmente el correo contra el backend de
+  consola (asunto/cuerpo en español, singular/plural, período interpolado)
+  antes de confiar solo en los tests automatizados.
+
+### Gotcha que se repitió 3 veces esta ventana: `makemessages` fuzzy
+
+Cada uno de R6.3/R6.4/R6.5 agregó strings nuevos al `.po` y **cada corrida de
+`makemessages` fuzzy-matcheó algo mal** (11 entradas fuzzy en total, en 4
+rondas) — exactamente el hazard ya documentado en la memoria del repo. Todas
+se revisaron a mano (`grep fuzzy`), se corrigieron y se recompiló el `.mo` con
+`polib` antes de seguir. Un caso interesante en R6.4: reusar el msgid ya
+existente `"Current"` para una columna nueva ("valor de este período") habría
+sido un falso amigo con su significado real en la app ("versión vigente del
+documento") — se detectó y se renombró antes de traducir, no después.
+
+### Decisión de negocio tomada en vivo con el usuario hoy
+
+- **R6.5**: se preguntó explícitamente qué debía hacer el chequeo del día 15
+  (recordatorio de pendientes vs. segunda revisión formal independiente vs.
+  otra cosa) antes de implementar, porque un procedimiento que alimenta una
+  auditoría ISO no es algo para adivinar. El usuario eligió la opción
+  recomendada (recordatorio).
+
+### Qué preguntar/decidir en la próxima ventana, en orden de urgencia
+
+1. **¿Mergear/pushear algo de la pila?** Son ahora 14 commits en 14 ramas
+   locales apiladas (11 de la ventana anterior + 3 de hoy), nada se subió
+   todavía. El usuario decide cuándo y cómo.
+2. **BLOQUE R6 completo** — no queda nada abierto ahí. Siguiente bloque
+   natural según `MASTER_PLAN.md`: **R7** (base ISO, ⬜ salvo R7.1) o volver a
+   **R4** (importador `Z:`, esperando que el usuario corrija 2 carpetas y que
+   alguien configure un antivirus real).
+3. **R5.8/R5.9** siguen esperando que el usuario decida si los revisa
+   (observación de Habilitaciones / idea de Kanban aparcada).
+4. **Higiene**: `reportlab` es una dependencia nueva (`pyproject.toml`/
+   `uv.lock`) — si se despliega a la VM Ubuntu, correr `uv sync` allá también.
+
+---
+
 ## 🔒 CIERRE DE VENTANA — 2026-08-10, sesión larga (X.1 → R6.2)
 
 **Empezar aquí en la próxima ventana.** Esta sección resume TODA la sesión
