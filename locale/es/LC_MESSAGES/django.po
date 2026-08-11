@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-11 17:18-0400\n"
+"POT-Creation-Date: 2026-08-11 17:53-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -425,6 +425,11 @@ msgstr "Por vencer en 30 días"
 msgid "Alerts resolved in the period"
 msgstr "Alertas resueltas en el período"
 
+#: .\apps\compliance\signals.py:81
+#, python-format
+msgid "Validity renewed to %(date)s (automatic closure)"
+msgstr "Vigencia renovada al %(date)s (cierre automático)"
+
 #: .\apps\compliance\views.py:100 .\apps\maintenance\views.py:45
 #: .\apps\operations\views.py:57 .\apps\registry\views.py:137
 #: .\apps\workboard\views.py:121
@@ -449,39 +454,39 @@ msgstr "Registros operacionales"
 msgid "Document archived."
 msgstr "Documento archivado."
 
-#: .\apps\compliance\views.py:592 .\apps\compliance\views.py:602
+#: .\apps\compliance\views.py:581 .\apps\compliance\views.py:591
 msgid "Resolve alert"
 msgstr "Resolver alerta"
 
-#: .\apps\compliance\views.py:614
+#: .\apps\compliance\views.py:603
 msgid "Alert resolved."
 msgstr "Alerta resuelta."
 
-#: .\apps\compliance\views.py:644
+#: .\apps\compliance\views.py:633
 msgid "Alert reopened."
 msgstr "Alerta reabierta."
 
-#: .\apps\compliance\views.py:665
+#: .\apps\compliance\views.py:654
 msgid "No Kanban board is available to hold the follow-up task."
 msgstr ""
 "No hay ningún tablero Kanban disponible para alojar la tarea de seguimiento."
 
-#: .\apps\compliance\views.py:668
+#: .\apps\compliance\views.py:657
 msgid "Follow-up task created."
 msgstr "Tarea de seguimiento creada."
 
-#: .\apps\compliance\views.py:772 .\templates\base.html:117
+#: .\apps\compliance\views.py:761 .\templates\base.html:117
 #: .\templates\compliance\monthly_review.html:3
 #: .\templates\compliance\monthly_review.html:8
 msgid "Monthly compliance"
 msgstr "Cumplimiento mensual"
 
-#: .\apps\compliance\views.py:806
+#: .\apps\compliance\views.py:795
 #, python-format
 msgid "%(center)s %(period)s marked."
 msgstr "%(center)s %(period)s marcado."
 
-#: .\apps\compliance\views.py:833
+#: .\apps\compliance\views.py:822
 #, python-format
 msgid "Edit %(name)s"
 msgstr "Editar %(name)s"
@@ -2367,7 +2372,7 @@ msgid "Unresolved"
 msgstr "No resueltas"
 
 #: .\templates\compliance\alert_list.html:4
-#: .\templates\compliance\alert_list.html:33
+#: .\templates\compliance\alert_list.html:36
 msgid "Resolved"
 msgstr "Resuelta"
 
@@ -2409,38 +2414,23 @@ msgstr "Activada"
 msgid "Actions"
 msgstr "Acciones"
 
-#: .\templates\compliance\alert_list.html:15
-#: .\templates\compliance\alert_list.html:24
+#: .\templates\compliance\alert_list.html:19
+#: .\templates\compliance\alert_list.html:27
 msgid "Record unavailable"
 msgstr "Registro no disponible"
 
-#: .\templates\compliance\alert_list.html:16
-#: .\templates\compliance\alert_list.html:36
-msgid "Create a follow-up task on the compliance board"
-msgstr "Crear una tarea de seguimiento en el tablero de cumplimiento"
-
-#: .\templates\compliance\alert_list.html:16
-#: .\templates\compliance\alert_list.html:36
-msgid "Create task"
-msgstr "Crear tarea"
-
-#: .\templates\compliance\alert_list.html:16
-#: .\templates\compliance\alert_list.html:36
-msgid "View task"
-msgstr "Ver tarea"
-
-#: .\templates\compliance\alert_list.html:17
-#: .\templates\compliance\alert_list.html:37
+#: .\templates\compliance\alert_list.html:20
+#: .\templates\compliance\alert_list.html:39
 msgid "Resolve, with a reason on record (ISO 10.2)"
 msgstr "Resolver, dejando un motivo registrado (ISO 10.2)"
 
-#: .\templates\compliance\alert_list.html:17
-#: .\templates\compliance\alert_list.html:37
+#: .\templates\compliance\alert_list.html:20
+#: .\templates\compliance\alert_list.html:39
 msgid "Resolve"
 msgstr "Resolver"
 
-#: .\templates\compliance\alert_list.html:21
-#: .\templates\compliance\alert_list.html:27
+#: .\templates\compliance\alert_list.html:24
+#: .\templates\compliance\alert_list.html:30
 #: .\templates\dashboard\index.html:115
 #: .\templates\registry\_aircraft_rows.html:16
 #: .\templates\registry\_operator_rows.html:10
@@ -2449,29 +2439,29 @@ msgstr "Resolver"
 msgid "Overdue"
 msgstr "Atrasada"
 
-#: .\templates\compliance\alert_list.html:21
-#: .\templates\compliance\alert_list.html:27
+#: .\templates\compliance\alert_list.html:24
+#: .\templates\compliance\alert_list.html:30
 #: .\templates\workboard\_card.html:30 .\templates\workboard\task_list.html:18
 msgid "Due"
 msgstr "Vencimiento"
 
-#: .\templates\compliance\alert_list.html:22
+#: .\templates\compliance\alert_list.html:25
 #, python-format
 msgid "%(counter)s alert"
 msgid_plural "%(counter)s alerts"
 msgstr[0] "%(counter)s alerta"
 msgstr[1] "%(counter)s alertas"
 
-#: .\templates\compliance\alert_list.html:34
+#: .\templates\compliance\alert_list.html:37
 msgid "Reopen this alert and send its task back"
 msgstr "Reabre esta alerta y devuelve su tarea a donde estaba"
 
-#: .\templates\compliance\alert_list.html:34
+#: .\templates\compliance\alert_list.html:37
 #: .\templates\geo\plan_detail.html:46
 msgid "Undo"
 msgstr "Deshacer"
 
-#: .\templates\compliance\alert_list.html:42
+#: .\templates\compliance\alert_list.html:44
 msgid "No alerts found."
 msgstr "No se encontraron alertas."
 
@@ -4253,6 +4243,15 @@ msgstr "Fecha límite"
 #: .\templates\workboard\task_list.html:20
 msgid "No tasks found."
 msgstr "No se encontraron tareas."
+
+#~ msgid "Create a follow-up task on the compliance board"
+#~ msgstr "Crear una tarea de seguimiento en el tablero de cumplimiento"
+
+#~ msgid "Create task"
+#~ msgstr "Crear tarea"
+
+#~ msgid "View task"
+#~ msgstr "Ver tarea"
 
 #, python-format
 #~ msgid "Resolve %(count)d alerts"
