@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-11 13:59-0400\n"
+"POT-Creation-Date: 2026-08-11 14:47-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -407,7 +407,7 @@ msgid "Alerts resolved in the period"
 msgstr "Alertas resueltas en el período"
 
 #: .\apps\compliance\views.py:100 .\apps\maintenance\views.py:45
-#: .\apps\operations\views.py:57 .\apps\registry\views.py:135
+#: .\apps\operations\views.py:57 .\apps\registry\views.py:137
 #: .\apps\workboard\views.py:121
 #, python-format
 msgid "New %(record)s"
@@ -479,7 +479,7 @@ msgstr "Editar %(name)s"
 
 #: .\apps\compliance\watchables.py:20 .\apps\registry\forms.py:29
 #: .\apps\registry\forms.py:310 .\apps\registry\forms.py:405
-#: .\apps\registry\forms.py:564 .\apps\registry\models.py:692
+#: .\apps\registry\forms.py:564 .\apps\registry\models.py:803
 #: .\templates\registry\assignment_list.html:51
 #: .\templates\registry\costcenter_detail.html:36
 #: .\templates\registry\operatorassignment_list.html:5
@@ -491,7 +491,7 @@ msgstr "Operador"
 #: .\apps\compliance\watchables.py:21 .\apps\maintenance\forms.py:21
 #: .\apps\operations\forms.py:98 .\apps\registry\forms.py:311
 #: .\apps\registry\forms.py:488 .\apps\registry\forms.py:541
-#: .\apps\registry\models.py:692 .\apps\registry\views.py:59
+#: .\apps\registry\models.py:803 .\apps\registry\views.py:60
 #: .\templates\base.html:120 .\templates\maintenance\record_detail.html:21
 #: .\templates\maintenance\record_list.html:18
 #: .\templates\operations\flightrecord_detail.html:30
@@ -533,7 +533,7 @@ msgid "Running"
 msgstr "En ejecución"
 
 #: .\apps\core\models.py:134 .\apps\maintenance\models.py:34
-#: .\apps\operations\models.py:28 .\apps\registry\models.py:357
+#: .\apps\operations\models.py:28 .\apps\registry\models.py:468
 #: .\apps\workboard\models.py:34 .\apps\workboard\views.py:103
 #: .\templates\registry\_assignment_table_body.html:8
 #: .\templates\registry\assignment_list.html:37
@@ -563,7 +563,7 @@ msgstr "hasta"
 #: .\apps\core\views.py:664 .\apps\dashboard\views.py:63
 #: .\apps\registry\forms.py:281
 #: .\apps\registry\management\commands\notify_expiring_credentials.py:129
-#: .\apps\registry\models.py:296 .\templates\registry\operator_list.html:23
+#: .\apps\registry\models.py:407 .\templates\registry\operator_list.html:23
 msgid "DGAC credential"
 msgstr "Credencial DGAC"
 
@@ -1155,6 +1155,7 @@ msgstr ""
 #: .\templates\registry\aircraft_list.html:26
 #: .\templates\registry\aircraftassignment_list.html:7
 #: .\templates\registry\assignment_list.html:51
+#: .\templates\registry\battery_list.html:46
 #: .\templates\registry\costcenter_detail.html:36
 #: .\templates\registry\costcenter_detail.html:91
 #: .\templates\registry\operatorassignment_list.html:7
@@ -1166,7 +1167,7 @@ msgid "Permission number"
 msgstr "Número de permiso"
 
 #: .\apps\operations\forms.py:33 .\apps\registry\forms.py:440
-#: .\apps\registry\views.py:60 .\templates\base.html:121
+#: .\apps\registry\views.py:61 .\templates\base.html:121
 #: .\templates\operations\permission_detail.html:55
 #: .\templates\operations\permission_list.html:35
 #: .\templates\registry\costcenter_detail.html:21
@@ -1296,14 +1297,14 @@ msgstr "permiso de vuelo"
 msgid "flight permissions"
 msgstr "permisos de vuelo"
 
-#: .\apps\operations\models.py:148 .\apps\registry\models.py:411
-#: .\apps\registry\models.py:590
+#: .\apps\operations\models.py:148 .\apps\registry\models.py:522
+#: .\apps\registry\models.py:701
 msgid "The end date cannot be before the start date."
 msgstr "La fecha final no puede ser anterior a la fecha inicial."
 
 #: .\apps\operations\models.py:151 .\apps\registry\forms.py:471
-#: .\apps\registry\forms.py:521 .\apps\registry\models.py:414
-#: .\apps\registry\models.py:593
+#: .\apps\registry\forms.py:521 .\apps\registry\models.py:525
+#: .\apps\registry\models.py:704
 msgid "Describe the purpose when 'Other' is selected."
 msgstr "Describe el propósito cuando se selecciona 'Otro'."
 
@@ -1322,7 +1323,7 @@ msgstr ""
 "%(operator)s no tiene una habilitación vigente que cubra: %(aircraft)s. El "
 "permiso se guardó igual; revisa las habilitaciones del operador."
 
-#: .\apps\operations\views.py:200 .\apps\registry\views.py:163
+#: .\apps\operations\views.py:200 .\apps\registry\views.py:165
 #, python-format
 msgid "Edit %(record)s"
 msgstr "Editar: %(record)s"
@@ -1499,7 +1500,8 @@ msgstr "Fabricante"
 msgid "Year"
 msgstr "Año"
 
-#: .\apps\registry\forms.py:206
+#: .\apps\registry\forms.py:206 .\apps\registry\models.py:327
+#: .\templates\registry\battery_list.html:37
 msgid "Serial number"
 msgstr "Número de serie"
 
@@ -1544,7 +1546,7 @@ msgstr "Ubicación actual"
 msgid "Current site"
 msgstr "Faena actual"
 
-#: .\apps\registry\forms.py:276 .\apps\registry\models.py:290
+#: .\apps\registry\forms.py:276 .\apps\registry\models.py:401
 msgid "Employee ID"
 msgstr "ID de empleado"
 
@@ -1560,12 +1562,12 @@ msgstr "Correo electrónico"
 msgid "Phone"
 msgstr "Teléfono"
 
-#: .\apps\registry\forms.py:280 .\apps\registry\models.py:294
+#: .\apps\registry\forms.py:280 .\apps\registry\models.py:405
 msgid "RUT"
 msgstr "RUT"
 
 # LV-29: DGAC vigencias.
-#: .\apps\registry\forms.py:282 .\apps\registry\models.py:302
+#: .\apps\registry\forms.py:282 .\apps\registry\models.py:413
 msgid "DGAC credential expiry"
 msgstr "Vencimiento credencial DGAC"
 
@@ -1581,7 +1583,7 @@ msgstr "Dirección"
 msgid "Authorizations"
 msgstr "Habilitaciones"
 
-#: .\apps\registry\forms.py:287 .\apps\registry\models.py:324
+#: .\apps\registry\forms.py:287 .\apps\registry\models.py:435
 msgid "Linked user account"
 msgstr "Cuenta de usuario vinculada"
 
@@ -1640,10 +1642,12 @@ msgid "AeroControl · your DGAC validities are expiring"
 msgstr "AeroControl · tus vigencias DGAC están por vencer"
 
 #: .\apps\registry\models.py:33 .\apps\registry\models.py:129
-#: .\apps\registry\models.py:175 .\apps\registry\models.py:542
-#: .\templates\core\users_roles.html:39 .\templates\generic\_table_body.html:10
-#: .\templates\generic\list.html:18 .\templates\registry\_aircraft_rows.html:8
+#: .\apps\registry\models.py:175 .\apps\registry\models.py:314
+#: .\apps\registry\models.py:653 .\templates\core\users_roles.html:39
+#: .\templates\generic\_table_body.html:10 .\templates\generic\list.html:18
+#: .\templates\registry\_aircraft_rows.html:8
 #: .\templates\registry\assignment_list.html:32
+#: .\templates\registry\battery_list.html:25
 #: .\templates\registry\costcenter_detail.html:70
 msgid "Active"
 msgstr "Activo"
@@ -1677,7 +1681,8 @@ msgstr "Mal estado"
 msgid "Maintenance"
 msgstr "Mantenimiento"
 
-#: .\apps\registry\models.py:135 .\templates\registry\_aircraft_rows.html:8
+#: .\apps\registry\models.py:135 .\apps\registry\models.py:317
+#: .\templates\registry\_aircraft_rows.html:8
 #: .\templates\registry\costcenter_detail.html:72
 msgid "Retired"
 msgstr "Retirada"
@@ -1717,68 +1722,108 @@ msgstr "Selecciona la faena a la que está desplegada la aeronave."
 msgid "A site only applies when the aircraft is on site."
 msgstr "Una faena solo aplica cuando la aeronave está en faena."
 
-#: .\apps\registry\models.py:325
+#: .\apps\registry\models.py:310
+msgid "Entered by hand"
+msgstr "Ingresada a mano"
+
+#: .\apps\registry\models.py:311
+msgid "Synced from AeroLink"
+msgstr "Sincronizada desde AeroLink"
+
+#: .\apps\registry\models.py:337 .\templates\registry\battery_list.html:44
+msgid "Last seen on aircraft"
+msgstr "Vista por última vez en"
+
+#: .\apps\registry\models.py:339 .\templates\registry\battery_list.html:38
+msgid "Cycles"
+msgstr "Ciclos"
+
+#: .\apps\registry\models.py:341
+msgid "Health (%)"
+msgstr "Salud (%)"
+
+#: .\apps\registry\models.py:350 .\templates\registry\battery_list.html:47
+msgid "Last synced"
+msgstr "Última sincronización"
+
+#: .\apps\registry\models.py:354
+msgid "battery"
+msgstr "batería"
+
+#: .\apps\registry\models.py:355
+msgid "batteries"
+msgstr "baterías"
+
+#: .\apps\registry\models.py:371
+msgid "Battery"
+msgstr "Batería"
+
+#: .\apps\registry\models.py:386
+msgid "A battery needs its serial number."
+msgstr "Una batería necesita su número de serie."
+
+#: .\apps\registry\models.py:436
 msgid "Optional. Lets this person see \"My work\" filtered to them."
 msgstr ""
 "Opcional. Permite que esta persona vea \"Mi trabajo\" filtrado a lo suyo."
 
-#: .\apps\registry\models.py:329
+#: .\apps\registry\models.py:440
 msgid "operator"
 msgstr "operador"
 
-#: .\apps\registry\models.py:330
+#: .\apps\registry\models.py:441
 msgid "operators"
 msgstr "operadores"
 
-#: .\apps\registry\models.py:355 .\apps\registry\models.py:541
+#: .\apps\registry\models.py:466 .\apps\registry\models.py:652
 #: .\apps\workboard\models.py:30 .\apps\workboard\views.py:99
 #: .\templates\registry\_assignment_table_body.html:8
 #: .\templates\registry\assignment_list.html:35
 msgid "Planned"
 msgstr "Planificado"
 
-#: .\apps\registry\models.py:356
+#: .\apps\registry\models.py:467
 #: .\templates\registry\_assignment_table_body.html:8
 #: .\templates\registry\assignment_list.html:19
 #: .\templates\registry\assignment_list.html:36
 msgid "Confirmed"
 msgstr "Confirmada"
 
-#: .\apps\registry\models.py:358 .\apps\registry\models.py:544
+#: .\apps\registry\models.py:469 .\apps\registry\models.py:655
 #: .\templates\registry\_assignment_table_body.html:8
 #: .\templates\registry\assignment_list.html:38
 msgid "Cancelled"
 msgstr "Cancelada"
 
-#: .\apps\registry\models.py:387
+#: .\apps\registry\models.py:498
 msgid "assignment"
 msgstr "asignación"
 
-#: .\apps\registry\models.py:388
+#: .\apps\registry\models.py:499
 msgid "assignments"
 msgstr "asignaciones"
 
-#: .\apps\registry\models.py:417
+#: .\apps\registry\models.py:528
 msgid "The selected operator is inactive."
 msgstr "El operador seleccionado está inactivo."
 
-#: .\apps\registry\models.py:421
+#: .\apps\registry\models.py:532
 msgid "The selected aircraft is not available."
 msgstr "La aeronave seleccionada no está disponible."
 
-#: .\apps\registry\models.py:427
+#: .\apps\registry\models.py:538
 msgid "The cost center does not match the operator's."
 msgstr "El centro de costo no coincide con el del operador."
 
-#: .\apps\registry\models.py:433
+#: .\apps\registry\models.py:544
 msgid "The cost center does not match the aircraft's."
 msgstr "El centro de costo no coincide con el de la aeronave."
 
-#: .\apps\registry\models.py:458
+#: .\apps\registry\models.py:569
 msgid "Aircraft model keywords"
 msgstr "Palabras clave de modelo de aeronave"
 
-#: .\apps\registry\models.py:460
+#: .\apps\registry\models.py:571
 msgid ""
 "Comma-separated fragments matched against the aircraft model (e.g. 'mavic, "
 "matrice'). Used to check operator–aircraft fit."
@@ -1787,71 +1832,71 @@ msgstr ""
 "(p. ej. 'mavic, matrice'). Se usa para verificar la compatibilidad operador-"
 "aeronave."
 
-#: .\apps\registry\models.py:478
+#: .\apps\registry\models.py:589
 msgid "qualification type"
 msgstr "tipo de habilitación"
 
-#: .\apps\registry\models.py:479
+#: .\apps\registry\models.py:590
 msgid "qualification types"
 msgstr "tipos de habilitación"
 
-#: .\apps\registry\models.py:516
+#: .\apps\registry\models.py:627
 msgid "qualification"
 msgstr "habilitación"
 
-#: .\apps\registry\models.py:517
+#: .\apps\registry\models.py:628
 msgid "qualifications"
 msgstr "habilitaciones"
 
-#: .\apps\registry\models.py:543
+#: .\apps\registry\models.py:654
 msgid "Ended"
 msgstr "Finalizada"
 
-#: .\apps\registry\models.py:597
+#: .\apps\registry\models.py:708
 msgid "The selected resource is inactive."
 msgstr "El recurso seleccionado está inactivo."
 
-#: .\apps\registry\models.py:604
+#: .\apps\registry\models.py:715
 msgid "This resource already has an overlapping active assignment."
 msgstr "Este recurso ya tiene una asignación activa que se superpone."
 
-#: .\apps\registry\models.py:620
+#: .\apps\registry\models.py:731
 msgid "operator assignment"
 msgstr "asignación de operador"
 
-#: .\apps\registry\models.py:621
+#: .\apps\registry\models.py:732
 msgid "operator assignments"
 msgstr "asignaciones de operador"
 
-#: .\apps\registry\models.py:653
+#: .\apps\registry\models.py:764
 msgid "aircraft assignment"
 msgstr "asignación de aeronave"
 
-#: .\apps\registry\models.py:654
+#: .\apps\registry\models.py:765
 msgid "aircraft assignments"
 msgstr "asignaciones de aeronave"
 
-#: .\apps\registry\models.py:694
+#: .\apps\registry\models.py:805
 msgid "Assigned"
 msgstr "Asignado"
 
-#: .\apps\registry\models.py:695
+#: .\apps\registry\models.py:806
 msgid "Reassigned"
 msgstr "Reasignado"
 
-#: .\apps\registry\models.py:696
+#: .\apps\registry\models.py:807
 msgid "Released"
 msgstr "Liberado"
 
-#: .\apps\registry\models.py:697
+#: .\apps\registry\models.py:808
 msgid "Location changed"
 msgstr "Cambio de ubicación"
 
-#: .\apps\registry\models.py:730
+#: .\apps\registry\models.py:841
 msgid "resource movement"
 msgstr "movimiento de recurso"
 
-#: .\apps\registry\models.py:731
+#: .\apps\registry\models.py:842
 msgid "resource movements"
 msgstr "movimientos de recursos"
 
@@ -1860,56 +1905,60 @@ msgstr "movimientos de recursos"
 msgid "No PDF"
 msgstr "Sin PDF"
 
-#: .\apps\registry\views.py:58
+#: .\apps\registry\views.py:59
 msgid "Cost centers"
 msgstr "Centros de costo"
 
-#: .\apps\registry\views.py:61 .\templates\registry\assignment_list.html:8
+#: .\apps\registry\views.py:62 .\templates\registry\assignment_list.html:8
 msgid "Resource planning"
 msgstr "Planificación de recursos"
 
-#: .\apps\registry\views.py:62 .\templates\base.html:130
+#: .\apps\registry\views.py:63 .\templates\base.html:130
 msgid "Operator assignments"
 msgstr "Asignaciones de operador"
 
-#: .\apps\registry\views.py:63 .\templates\base.html:131
+#: .\apps\registry\views.py:64 .\templates\base.html:131
 msgid "Aircraft assignments"
 msgstr "Asignaciones de aeronave"
 
-#: .\apps\registry\views.py:64 .\templates\registry\operator_detail.html:28
+#: .\apps\registry\views.py:65 .\templates\registry\operator_detail.html:28
 msgid "Qualifications"
 msgstr "Habilitaciones"
 
-#: .\apps\registry\views.py:199
+#: .\apps\registry\views.py:66 .\templates\base.html:132
+msgid "Batteries"
+msgstr "Baterías"
+
+#: .\apps\registry\views.py:201
 #, python-format
 msgid "%(name)s archived. It can be restored from the archived filter."
 msgstr "%(name)s archivado. Se puede restaurar desde el filtro de archivados."
 
-#: .\apps\registry\views.py:224
+#: .\apps\registry\views.py:226
 #, python-format
 msgid "%(name)s restored."
 msgstr "%(name)s restaurado."
 
-#: .\apps\registry\views.py:749
+#: .\apps\registry\views.py:751
 msgid "Assign operators to a cost center"
 msgstr "Asignar operadores a un centro de costo"
 
-#: .\apps\registry\views.py:801
+#: .\apps\registry\views.py:803
 msgid "Assign aircraft to a cost center"
 msgstr "Asignar aeronaves a un centro de costo"
 
-#: .\apps\registry\views.py:915 .\templates\base.html:132
+#: .\apps\registry\views.py:917 .\templates\base.html:133
 msgid "Resource movements"
 msgstr "Movimientos de recursos"
 
-#: .\apps\registry\views.py:1029
+#: .\apps\registry\views.py:1052
 #, python-format
 msgid "%(count)s %(name)s imported. You can undo this from the import page."
 msgstr ""
 "%(count)s %(name)s importados. Puedes deshacerlo desde la página de "
 "importación."
 
-#: .\apps\registry\views.py:1119
+#: .\apps\registry\views.py:1142
 #, python-format
 msgid "%(count)s imported records archived."
 msgstr "%(count)s registros importados archivados."
@@ -2045,6 +2094,7 @@ msgstr "Búsqueda global"
 #: .\templates\base.html:34 .\templates\core\search.html:8
 #: .\templates\core\search.html:10 .\templates\generic\list.html:19
 #: .\templates\registry\assignment_list.html:44
+#: .\templates\registry\battery_list.html:29
 #: .\templates\workboard\task_list.html:10
 msgid "Search"
 msgstr "Buscar"
@@ -2152,25 +2202,25 @@ msgstr "Padrón"
 msgid "Cost Centers"
 msgstr "Centros de costo"
 
-#: .\templates\base.html:140 .\templates\core\administration.html:3
+#: .\templates\base.html:141 .\templates\core\administration.html:3
 #: .\templates\core\administration.html:24
 msgid "Administration center"
 msgstr "Centro de administración"
 
-#: .\templates\base.html:141
+#: .\templates\base.html:142
 msgid "Admin"
 msgstr "Administración"
 
-#: .\templates\base.html:148 .\templates\base.html:155
+#: .\templates\base.html:149 .\templates\base.html:156
 #: .\templates\workboard\kanban.html:52 .\templates\workboard\task_list.html:23
 msgid "Close"
 msgstr "Cerrar"
 
-#: .\templates\base.html:155
+#: .\templates\base.html:156
 msgid "Form"
 msgstr "Formulario"
 
-#: .\templates\base.html:155
+#: .\templates\base.html:156
 msgid "Loading…"
 msgstr "Cargando…"
 
@@ -2294,6 +2344,7 @@ msgstr "Aún no hay documentos adjuntos."
 #: .\templates\generic\list.html:10 .\templates\maintenance\record_list.html:7
 #: .\templates\operations\permission_list.html:10
 #: .\templates\registry\assignment_list.html:12
+#: .\templates\registry\battery_list.html:16
 #: .\templates\registry\resourcemovementlog_list.html:8
 #: .\templates\workboard\task_list.html:6
 msgid "Export CSV"
@@ -2431,6 +2482,7 @@ msgstr ""
 #: .\templates\compliance\document_list.html:14
 #: .\templates\generic\list.html:17
 #: .\templates\operations\permission_list.html:16
+#: .\templates\registry\battery_list.html:21
 #: .\templates\registry\resourcemovementlog_list.html:13
 msgid "Searching…"
 msgstr "Buscando…"
@@ -2823,6 +2875,7 @@ msgid "No run in over 48 hours"
 msgstr "Sin ejecución hace más de 48 horas"
 
 #: .\templates\core\administration.html:68
+#: .\templates\registry\battery_list.html:43
 msgid "Health"
 msgstr "Salud"
 
@@ -3203,6 +3256,7 @@ msgstr "Buscar..."
 #: .\templates\generic\list.html:18 .\templates\registry\_operator_rows.html:4
 #: .\templates\registry\aircraft_detail.html:7
 #: .\templates\registry\assignment_list.html:32
+#: .\templates\registry\battery_list.html:26
 #: .\templates\registry\costcenter_detail.html:7
 #: .\templates\registry\operator_detail.html:7
 msgid "Archived"
@@ -3275,6 +3329,7 @@ msgstr "Nuevo registro"
 
 #: .\templates\generic\list.html:18 .\templates\maintenance\record_list.html:13
 #: .\templates\operations\permission_list.html:19
+#: .\templates\registry\battery_list.html:24
 msgid "All statuses"
 msgstr "Todos los estados"
 
@@ -3307,8 +3362,8 @@ msgstr "Pronóstico meteorológico"
 #, python-format
 msgid "Forecast over this area for %(date)s, the day the linked permit begins."
 msgstr ""
-"Pronóstico sobre esta área para el %(date)s, el día en que empieza el permiso "
-"vinculado."
+"Pronóstico sobre esta área para el %(date)s, el día en que empieza el "
+"permiso vinculado."
 
 #: .\templates\geo\plan_detail.html:70
 msgid "Max wind"
@@ -3614,6 +3669,22 @@ msgstr "Requiere revisión"
 msgid "No assignments found."
 msgstr "No se encontraron asignaciones."
 
+#: .\templates\registry\_battery_rows.html:20
+msgid "Never synced from AeroLink"
+msgstr "Nunca se sincronizó desde AeroLink"
+
+#: .\templates\registry\_battery_rows.html:25
+msgid "No batteries recorded yet."
+msgstr "Aún no hay baterías registradas."
+
+#: .\templates\registry\_battery_rows.html:26
+msgid ""
+"This inventory is synced from AeroLink (ISO 7.1.3); it stays empty until "
+"that link exists."
+msgstr ""
+"Este inventario se sincroniza desde AeroLink (ISO 7.1.3); queda vacío hasta "
+"que ese enlace exista."
+
 #: .\templates\registry\_costcenter_form_fields.html:12
 msgid "Identification"
 msgstr "Identificación"
@@ -3749,6 +3820,16 @@ msgstr "Estado de revisión"
 #: .\templates\registry\assignment_list.html:41
 msgid "All assignments"
 msgstr "Todas las asignaciones"
+
+#: .\templates\registry\battery_list.html:13
+msgid "LiPo cycle count and health for ISO 7.1.3, synced from AeroLink."
+msgstr ""
+"Ciclos y salud de las baterías LiPo para ISO 7.1.3, sincronizados desde "
+"AeroLink."
+
+#: .\templates\registry\battery_list.html:45
+msgid "Firmware"
+msgstr "Firmware"
 
 #: .\templates\registry\costcenter_archive_confirm.html:3
 msgid "Archive cost center?"

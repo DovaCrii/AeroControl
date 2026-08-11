@@ -22,6 +22,7 @@ from .models import (
     CostCenter,
     Aircraft,
     AircraftAssignment,
+    Battery,
     Operator,
     OperatorAssignment,
     Assignment,
@@ -62,6 +63,7 @@ class RegistryList(
         "operatorassignment": _("Operator assignments"),
         "aircraftassignment": _("Aircraft assignments"),
         "qualification": _("Qualifications"),
+        "battery": _("Batteries"),
     }
 
     def get_context_data(self, **kwargs):
@@ -989,6 +991,25 @@ class QualificationList(RegistryList):
             )
             return self.render_csv_response(queryset)
         return super().get(request, *args, **kwargs)
+
+
+class BatteryList(RegistryList):
+    """R7.2 (ISO 7.1.3): LiPo inventory and cycle count, read-only.
+
+    No create/update/archive views deliberately -- ADR-0002 makes AeroLink the
+    master of battery data and the plan item said "diseñar la forma, no llenarla
+    a mano". Until `X.4` syncs it this list is empty, which is the honest state:
+    a hand-kept cycle count would look like evidence while drifting from the
+    aircraft's real number.
+    """
+
+    model = Battery
+    template_name = "registry/battery_list.html"
+    htmx_template_name = "registry/_battery_rows.html"
+    search_fields = ["serial_number", "model", "manufacturer", "firmware_version"]
+
+    def get_queryset(self):
+        return self.scope_by_tenant(super().get_queryset().select_related("aircraft"))
 
 
 # B4.3: the qualification-type catalog. Config model like compliance's

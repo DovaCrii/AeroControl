@@ -276,6 +276,117 @@ class Aircraft(BaseModel):
         super().save(*args, **kwargs)
 
 
+class Battery(BaseModel):
+    """LiPo battery inventory and cycle count (R7.2, ISO 7.1.3).
+
+    **A mirror, not a master.** ADR-0002 assigns battery inventory to AeroLink,
+    because DJI reports cycles and health natively and a hand-kept count drifts
+    from reality immediately. This table exists so the ISO 7.1.3 evidence lives
+    where the auditor already looks -- next to the aircraft, the maintenance
+    history and the flight hours -- while the numbers themselves come from
+    AeroLink once `X.4` lands. Until then it stays empty on purpose; there is
+    no create/edit form (the plan's own wording: "diseñar la forma, no llenarla
+    a mano").
+
+    That mirror role is what shapes the fields:
+
+    - `serial_number` is the join key and is unique, exactly like
+      `Aircraft.serial_number` (X.1) -- it is what DJI reports, so it is the
+      only value both systems can agree on. Same whitespace normalization, so
+      a serial typed by a human and one arriving from telemetry compare equal.
+    - `cycle_count` / `health_percent` / `firmware_version` are the three
+      things ISO 7.1.3 asks about that only the aircraft knows.
+    - `synced_at` / `source` record **where a row came from and how stale it
+      is**. Without them a zero cycle count is ambiguous: a new battery, or a
+      sync that never ran? An auditor asking "is this current?" needs that
+      answered on the record, not inferred.
+    - `aircraft` is nullable and intentionally weak: batteries rotate between
+      airframes, so this is "last seen on", not ownership.
+    """
+
+    SOURCE_MANUAL = "manual"
+    SOURCE_AEROLINK = "aerolink"
+    SOURCE_CHOICES = [
+        (SOURCE_MANUAL, _("Entered by hand")),
+        (SOURCE_AEROLINK, _("Synced from AeroLink")),
+    ]
+    STATUS_CHOICES = [
+        ("active", _("Active")),
+        # A LiPo past its cycle life is a safety item (ISO 45001 6.1.2), not
+        # just an inventory one -- it needs to be visibly out of service.
+        ("retired", _("Retired")),
+    ]
+
+    tenant = models.ForeignKey(
+        OperationalTenant,
+        on_delete=models.PROTECT,
+        default=get_default_tenant,
+        related_name="batteries",
+    )
+    serial_number = models.CharField(
+        max_length=100, unique=True, verbose_name=_("Serial number")
+    )
+    manufacturer = models.CharField(max_length=100, blank=True)
+    model = models.CharField(max_length=100, blank=True)
+    aircraft = models.ForeignKey(
+        Aircraft,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="batteries",
+        verbose_name=_("Last seen on aircraft"),
+    )
+    cycle_count = models.PositiveIntegerField(default=0, verbose_name=_("Cycles"))
+    health_percent = models.PositiveSmallIntegerField(
+        null=True, blank=True, verbose_name=_("Health (%)")
+    )
+    firmware_version = models.CharField(max_length=50, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
+    first_use_date = models.DateField(null=True, blank=True)
+    source = models.CharField(
+        max_length=20, choices=SOURCE_CHOICES, default=SOURCE_MANUAL
+    )
+    synced_at = models.DateTimeField(
+        null=True, blank=True, verbose_name=_("Last synced")
+    )
+
+    class Meta:
+        verbose_name = _("battery")
+        verbose_name_plural = _("batteries")
+        ordering = ["serial_number"]
+        indexes = [
+            models.Index(fields=["status", "is_active"], name="reg_battery_status_idx"),
+            # X.4 will resolve incoming telemetry by serial, one lookup per
+            # battery per session.
+            models.Index(fields=["serial_number"], name="reg_battery_serial_idx"),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(health_percent__isnull=True) | Q(health_percent__lte=100),
+                name="reg_battery_health_pct_max",
+            )
+        ]
+
+    def __str__(self):
+        label = self.model or self.manufacturer or _("Battery")
+        return f"{label} · {self.serial_number}"
+
+    def save(self, *args, **kwargs):
+        # Same normalization as Aircraft.serial_number (X.1): a serial from DJI
+        # never contains whitespace, and a hand-typed one must compare equal to
+        # it. Unlike Aircraft this field is required, so an empty result is a
+        # validation problem rather than a legitimate NULL -- left to clean().
+        self.serial_number = "".join((self.serial_number or "").split())
+        super().save(*args, **kwargs)
+
+    def clean(self):
+        super().clean()
+        if not "".join((self.serial_number or "").split()):
+            raise ValidationError(
+                {"serial_number": _("A battery needs its serial number.")}
+            )
+
+
 class Operator(BaseModel):
     tenant = models.ForeignKey(
         OperationalTenant,

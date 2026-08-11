@@ -79,7 +79,7 @@ vuelo por aeronave**; control de ciclos y estado de baterías LiPo; registro de 
 |---|---|
 | Estado | 🟡 |
 | Hoy | Inventario completo (16 aeronaves con matrícula, modelo, fabricante, serie, centro de costo, estado y ubicación). Historial de mantenciones. Trazabilidad de movimientos entre faenas (`ResourceMovementLog`, *append-only*). |
-| Falta | **Horas de vuelo por aeronave**: `FlightRecord.duration` ya está calculado, solo falta el agregado → `R7.1`, barato. **Ciclos de batería y firmware**: no se modelan → `R7.2`. |
+| Falta | ~~**Horas de vuelo por aeronave**~~ hecho (`R7.1`, 2026-08-10), se muestra en la ficha. **Ciclos de batería y firmware (`R7.2`, 2026-08-11): el modelo existe** (`registry.Battery`: serial como llave de cruce, ciclos, salud, firmware, y `source`/`synced_at` para saber de dónde vino el dato y qué tan fresco es), con lista de solo lectura en Padrón → Baterías. **Pero está vacío**: es un espejo de AeroLink y ese enlace (`X.4`) todavía no existe, así que hoy la cláusula tiene la forma pero no los datos. |
 | Nota | Este es el punto donde **AeroLink** cambia el juego: DJI reporta ciclos de batería y horas de forma nativa, sin depender de que el operador los anote. Ver `docs/dev/adr-0002-coexistencia-aerolink.md`. |
 | Brecha de evidencia | `ResourceMovementLog.changed_by_user` queda vacío en casi todos los registros (bug `R5.2`). Un registro de movimientos sin autor **no sirve como evidencia** ante un auditor. |
 
