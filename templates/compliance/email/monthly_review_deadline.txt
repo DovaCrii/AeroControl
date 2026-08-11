@@ -1,0 +1,11 @@
+{% load i18n %}{% blocktranslate with period=period %}Monthly review deadline reminder — {{ period }}{% endblocktranslate %}
+
+{% blocktranslate count total=rows|length %}This cost center's {{ period }} compliance review has not been signed off yet:{% plural %}These {{ total }} cost centers' {{ period }} compliance reviews have not been signed off yet:{% endblocktranslate %}
+
+{% translate "Cost center" %} | {% translate "Flights" %} | {% translate "Records" %}
+{% for row in rows %}{{ row.code }} | {{ row.flights }} | {{ row.records }}
+{% endfor %}
+{% translate "Mark each Compliant or Non-compliant:" %}
+{{ base_url }}{{ review_path }}
+--
+{% translate "This is an automated message from AeroControl." %}

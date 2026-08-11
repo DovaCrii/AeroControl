@@ -212,6 +212,77 @@ def test_check_monthly_records_emails_direccion(world):
     assert cc.code in mail.outbox[0].body
 
 
+# ── check_monthly_review_deadline command (R6.5) ─────────────────────────────
+
+
+@pytest.mark.django_db
+def test_deadline_check_escalates_a_still_pending_review(world):
+    cc, _operator, _aircraft = world
+    MonthlyComplianceReview.objects.create(cost_center=cc, period=PERIOD)
+    reviewer = User.objects.create_user("dir", email="dir@x.cl", password="pw")
+    Group.objects.create(name=REPORT_RECIPIENTS).user_set.add(reviewer)
+
+    call_command("check_monthly_review_deadline", "--period", "2026-05")
+
+    assert len(mail.outbox) == 1
+    assert mail.outbox[0].to == ["dir@x.cl"]
+    assert cc.code in mail.outbox[0].body
+
+
+@pytest.mark.django_db
+def test_deadline_check_never_creates_or_changes_a_review(world):
+    """This command only reports; check_monthly_records owns creating and
+    updating MonthlyComplianceReview rows."""
+    cc, _operator, _aircraft = world
+    review = MonthlyComplianceReview.objects.create(cost_center=cc, period=PERIOD)
+
+    call_command("check_monthly_review_deadline", "--period", "2026-05", "--dry-run")
+
+    assert MonthlyComplianceReview.objects.count() == 1
+    review.refresh_from_db()
+    assert review.status == MonthlyComplianceReview.STATUS_PENDING
+
+
+@pytest.mark.django_db
+def test_deadline_check_sends_nothing_when_nothing_is_pending(world):
+    cc, _operator, _aircraft = world
+    MonthlyComplianceReview.objects.create(
+        cost_center=cc,
+        period=PERIOD,
+        status=MonthlyComplianceReview.STATUS_COMPLETED,
+    )
+    Group.objects.create(name=REPORT_RECIPIENTS).user_set.add(
+        User.objects.create_user("dir", email="dir@x.cl", password="pw")
+    )
+
+    call_command("check_monthly_review_deadline", "--period", "2026-05")
+
+    assert mail.outbox == []
+
+
+@pytest.mark.django_db
+def test_deadline_check_reports_but_does_not_mail_without_recipients(world):
+    cc, _operator, _aircraft = world
+    MonthlyComplianceReview.objects.create(cost_center=cc, period=PERIOD)
+
+    call_command("check_monthly_review_deadline", "--period", "2026-05")
+
+    assert mail.outbox == []
+
+
+@pytest.mark.django_db
+def test_deadline_check_only_acts_on_the_15th_unless_forced(world):
+    cc, _operator, _aircraft = world
+    MonthlyComplianceReview.objects.create(cost_center=cc, period=PERIOD)
+    Group.objects.create(name=REPORT_RECIPIENTS).user_set.add(
+        User.objects.create_user("dir", email="dir@x.cl", password="pw")
+    )
+
+    call_command("check_monthly_review_deadline")  # no --period, no --force
+
+    assert mail.outbox == []
+
+
 # ── Monthly-review page ──────────────────────────────────────────────────────
 
 
