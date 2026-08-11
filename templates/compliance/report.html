@@ -57,7 +57,18 @@
 </div>
 
 <div class="card mb-4">
-  <div class="p-3 border-bottom"><h2 class="h5 mb-0">{% translate "Compared with the previous period" %}</h2></div>
+  <div class="p-3 border-bottom">
+    <h2 class="h5 mb-0">{% translate "Compared with the previous period" %}</h2>
+    {% comment %}R7.7: naming the baseline is the difference between a real
+    trend and two photos of the same instant. Without a stored snapshot the
+    document counters are both evaluated "as of today" and can only read
+    "no change" -- say so instead of implying a comparison happened.{% endcomment %}
+    {% if comparison_baseline %}
+    <p class="text-muted small mb-0 mt-1">{% blocktranslate with date=comparison_baseline.date|date:"Y-m-d" %}Document counters compared against the stored snapshot of {{ date }}.{% endblocktranslate %}</p>
+    {% else %}
+    <p class="text-muted small mb-0 mt-1">{% translate "No history stored yet: the document counters are evaluated as of today on both sides, so they will read no change. Run snapshot_compliance daily to get a real trend." %}</p>
+    {% endif %}
+  </div>
   <div class="table-responsive">
     <table class="table table-hover mb-0">
       <thead><tr>

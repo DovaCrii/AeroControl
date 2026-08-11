@@ -29,6 +29,10 @@ param(
     # the 15th, escalating any review still pending from last month.
     [ValidatePattern("^([01][0-9]|2[0-3]):[0-5][0-9]$")]
     [string]$MonthlyReviewDeadlineAt = "08:00",
+    # Compliance snapshot (R7.7). Stores the day's totals so the report can
+    # show a real trend. Late in the day, after the day's edits.
+    [ValidatePattern("^([01][0-9]|2[0-3]):[0-5][0-9]$")]
+    [string]$ComplianceSnapshotAt = "23:00",
     # Optional per-operator expiry notice (LV-29). Off by default; enable with
     # -WithCredentialNotice. -Unregister always removes it regardless.
     [ValidatePattern("^([01][0-9]|2[0-3]):[0-5][0-9]$")]
@@ -67,6 +71,9 @@ $jobs = @(
     @{ Name = "MonthlyReviewDeadline"; Command = "check_monthly_review_deadline"
        At = $MonthlyReviewDeadlineAt; Weekly = $null
        Description = "Escalate still-pending monthly reviews (daily; acts only on the 15th)" }
+    @{ Name = "ComplianceSnapshot"; Command = "snapshot_compliance"
+       At = $ComplianceSnapshotAt; Weekly = $null
+       Description = "Store the day's compliance totals so the report can show a trend (R7.7)" }
     @{ Name = "CredentialNotice"; Command = "notify_expiring_credentials"; At = $CredentialNoticeAt; Weekly = $null
        Optional = $true
        Description = "Email each operator their DGAC expiries (<=30 days)" }

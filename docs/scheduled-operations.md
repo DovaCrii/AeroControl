@@ -13,6 +13,7 @@ resumen corto), así que después se puede comprobar si realmente corrieron.
 | `notify_expiring_credentials` (opcional, LV-29) | Avisa por correo a **cada operador** de sus vigencias DGAC por vencer o ya vencidas (credencial + habilitaciones, ≤30 días) | Diario o semanal, si se quiere el aviso directo al operador |
 | `check_monthly_records` (LV-30) | El último día del mes, crea la **revisión de cumplimiento** pendiente por cada centro de costo que voló y avisa al grupo Dirección (vuelos vs registros del mes) | Diario (actúa solo el último día 28/29/30/31) |
 | `check_monthly_review_deadline` (R6.5) | El día 15, revisa las revisiones del mes anterior que sigan **pendientes** (nadie las marcó) y las escala al grupo Dirección en un segundo correo. No crea ni cambia ninguna revisión, solo persigue lo que quedó sin firmar | Diario (actúa solo el día 15) |
+| `snapshot_compliance` (R7.7) | Guarda los totales documentales del día (una fila por centro de costo más una consolidada). **Sin esto el reporte no puede mostrar tendencia**: los contadores se evalúan siempre "a hoy", así que comparar período contra período marca "sin cambio" por construcción. Idempotente: repetir la misma fecha la sobrescribe, no duplica | Diario, al final del día |
 
 El orden importa: `send_alert_digest` reporta lo que `generate_alerts` acaba de
 detectar, así que conviene dejar un margen entre ambos.
@@ -158,6 +159,15 @@ el día 15**, escalando a Dirección en un segundo correo las revisiones del mes
 anterior que sigan pendientes. No crea ni cambia revisiones -- solo reporta lo
 que `check_monthly_records` ya dejó pendiente. Acepta los mismos flags
 (`--period YYYY-MM`, `--force`, `--dry-run`).
+
+El registro histórico de cumplimiento (R7.7) se agrega con `mkjob snapshot
+"snapshot_compliance" "*-*-* 23:00:00"`. **Conviene activarlo cuanto antes**: la
+tendencia que exige ISO 9.1.1 solo puede calcularse sobre los días que ya
+quedaron guardados, así que cada día que pasa sin este trabajo es un día de
+historia que no se puede recuperar después. Acepta `--date YYYY-MM-DD` (para
+rellenar un día puntual, aunque **rellenar el pasado guarda los números de hoy**,
+no los de ese día — sirve para inicializar, no para reconstruir historia) y
+`--dry-run`.
 
 ## Prueba antes de programar
 

@@ -26,7 +26,9 @@ from .reports import (
     build_compliance_report,
     compare_periods,
     cost_center_rows,
+    latest_snapshot_before,
     previous_period,
+    totals_from_snapshot,
 )
 
 FILENAME_STEM = "aerocontrol-cumplimiento"
@@ -87,7 +89,19 @@ class ComplianceReportMixin(ModelViewPermissionRequiredMixin):
         """R6.4: the current report plus the same current-vs-previous-period
         reading the executive email already sends -- so the web page and the
         inbox tell the same story about the same numbers instead of the web
-        page only showing the raw counters."""
+        page only showing the raw counters.
+
+        R7.7: when a stored snapshot exists from before the period, the
+        documentary counters of "previous" come from **it** instead of from a
+        recomputation. Without that substitution those three counters are
+        always evaluated "as of today" whatever period is asked for, so the
+        comparison could only ever read "no change" -- the finding R6.4
+        documented and left open. The resolution stats keep coming from the
+        recomputed report, because those *do* honour start/end correctly.
+
+        Degrades on purpose: no snapshot (fresh install, or the job never ran)
+        means the previous behaviour, not an error.
+        """
         start, end, cost_center, doc_type = self._filters(request)
         current = build_compliance_report(
             start=start, end=end, cost_center=cost_center, doc_type=doc_type
@@ -96,7 +110,15 @@ class ComplianceReportMixin(ModelViewPermissionRequiredMixin):
         previous = build_compliance_report(
             start=prev_start, end=prev_end, cost_center=cost_center, doc_type=doc_type
         )
-        return current, compare_periods(current, previous)
+        snapshot = None
+        # A doc_type filter narrows the report in a way the snapshot does not
+        # record (snapshots are unfiltered), so comparing against one would be
+        # apples to oranges. Only substitute when the view is unfiltered by type.
+        if doc_type is None:
+            snapshot = latest_snapshot_before(start, cost_center=cost_center)
+        if snapshot is not None:
+            previous["totals"] = totals_from_snapshot(snapshot)
+        return current, compare_periods(current, previous), snapshot
 
 
 class ComplianceReportView(ComplianceReportMixin, TemplateView):
@@ -104,10 +126,14 @@ class ComplianceReportView(ComplianceReportMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        report, comparison = self.report_and_comparison_for(self.request)
+        report, comparison, snapshot = self.report_and_comparison_for(self.request)
         context.update(
             report=report,
             comparison=comparison,
+            # R7.7: the template says *where* the comparison baseline came
+            # from. "Compared with the previous period" is misleading when
+            # there is no history and both sides are the same instant.
+            comparison_baseline=snapshot,
             title=_("Compliance status report"),
             cost_centers=CostCenter.objects.filter(is_active=True).order_by("code"),
             document_types=DocumentType.objects.filter(is_active=True).order_by("name"),
@@ -336,7 +362,7 @@ class ComplianceReportPdfView(ComplianceReportMixin, View):
             TableStyle,
         )
 
-        report, comparison = self.report_and_comparison_for(request)
+        report, comparison, _snapshot = self.report_and_comparison_for(request)
         styles = getSampleStyleSheet()
         elements = [
             Paragraph(
