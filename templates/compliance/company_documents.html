@@ -2,40 +2,36 @@
 {% load aero_tags i18n %}
 {% block title %}{% translate "Company documents" %} - AeroControl{% endblock %}
 {% block content %}
+{% translate "Search title..." as company_document_search_placeholder %}
 <div class="page-header">
   <div>
     <span class="page-eyebrow">{% translate "Compliance" %}</span>
     <h1 class="h3 mb-0">{% translate "Company documents" %}</h1>
     <p class="page-description">{% translate "AOC, operating procedures and forms available to the whole operation." %}</p>
   </div>
-  {% if perms.compliance.add_document and tenant %}
-  <a href="{% url 'document-create' %}?entity_type={{ document_content_type_id }}&object_id={{ tenant.pk }}" class="btn btn-primary">+ {% translate "Upload document" %}</a>
-  {% endif %}
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>
+    {% if perms.compliance.add_document and tenant %}
+    <a href="{% url 'document-create' %}?entity_type={{ document_content_type_id }}&object_id={{ tenant.pk }}" class="btn btn-primary">+ {% translate "Upload document" %}</a>
+    {% endif %}
+  </div>
 </div>
 
-<div class="card p-2">
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-5">{% include "generic/_search_input.html" with search_url=request.path search_placeholder=company_document_search_placeholder %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
+  <div class="col-md-4"><select class="form-select" name="doc_type"><option value="">{% translate "All document types" %}</option>{% for item in document_types %}<option value="{{ item.pk }}" {% if request.GET.doc_type == item.pk|stringformat:'s' %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></div>
+  <div class="col-md-3 d-grid"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
+</form>
+
+<div id="table-wrapper" class="card p-2">
   <div class="table-responsive">
     <table class="table table-hover mb-0">
       <thead><tr>
         <th>{% translate "Title" %}</th><th>{% translate "Type" %}</th><th>{% translate "Expiry" %}</th><th class="text-end">{% translate "Actions" %}</th>
       </tr></thead>
-      <tbody>
-        {% for document in documents %}
-        <tr>
-          <td><a href="{% url 'document-detail' document.pk %}" class="fw-semibold">{{ document.title }}</a></td>
-          <td>{{ document.doc_type }}</td>
-          <td>{% if document.expiry_date %}{{ document.expiry_date|date:"Y-m-d" }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
-          <td class="text-end">
-            <a href="{% url 'document-download' document.pk %}" class="btn btn-sm btn-outline-secondary" hx-boost="false">{% translate "Download" %}</a>
-            {% if perms.compliance.add_document %}<a href="{% url 'document-replace' document.pk %}" hx-get="{% url 'document-replace' document.pk %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">{% translate "Replace" %}</a>{% endif %}
-          </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="99" class="text-center text-muted py-4">{% translate "No company documents yet." %}{% if perms.compliance.add_document and tenant %} <a href="{% url 'document-create' %}?entity_type={{ document_content_type_id }}&object_id={{ tenant.pk }}">{% translate "Upload the first one" %}</a>{% endif %}</td></tr>
-        {% endfor %}
-      </tbody>
+      <tbody id="table-body">{% include "compliance/_company_document_rows.html" %}</tbody>
     </table>
   </div>
-  {% render_pagination page_obj %}
+  <div id="pagination-container">{% render_pagination page_obj %}</div>
 </div>
 {% endblock %}
