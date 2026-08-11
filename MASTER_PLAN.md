@@ -6,10 +6,63 @@
 
 ---
 
-## Prioridades post-auditoría (2026-08-07 — leer esto primero)
+## Rumbo a 1.0 (2026-08-11 — leer esto primero)
 
-`v0.4.0-beta` está cortado, desplegado y operando con datos reales. El
-2026-08-07 entraron **tres insumos nuevos** que reordenan el tablero:
+`v0.5.0-beta` está cortado, desplegado en `p340` y verificado en vivo. **Los
+bloques R1, R2, R3, R5 y R6 están completos**; R7 tiene su base (R7.1-R7.3) y el
+**diseño escrito** de lo que faltaba (R7.4-R7.7); R8.1 y X.1-X.3 hechos.
+
+### Lo que separa a esta app de una 1.0 ya no es código, es operación
+
+Los 2 bloqueadores que `v0.4.0-beta` declaró para la 1.0 **están cerrados**
+(`T2.1` y `V.3`). Criterio de salida propuesto:
+
+| # | Criterio | Estado |
+|---|---|---|
+| 1 | CSP a *enforcing* en `p340` | Falta activar la variable |
+| 2 | Notificaciones llegando a personas reales (LV-66/LV-67) | Pendiente en `p340` |
+| 3 | Importador `R4` corrido con `--apply` de verdad | Bloqueado: 2 carpetas `Z:` + antivirus |
+| 4 | Ensayo de restauración como **rutina**, con cadencia escrita | Hecho 1 vez |
+| 5 | Monitoreo mínimo (uptime + errores) | **No existe** |
+| 6 | 30 días de operación estable post-0.5.0 sin incidente P0 | Corre desde 2026-08-11 |
+| 7 | Correo saliente con dominio corporativo (`@jej.cl`, SPF/DKIM) | Revisar `EMAIL_HOST` |
+
+**"Más empresarial"** = los puntos 5 y 7, más branding JEJ en los PDF del reporte
+(barato con `reportlab`, ya instalado) y la política de retención escrita.
+
+### Próximas sesiones, en orden
+
+- **Sesión B — ISO sin decisiones nuevas.** Verificación de eficacia (R7.6, molde
+  de `check_monthly_review_deadline`); los **2 KPIs operacionales ya calculables**
+  (disponibilidad de equipos vía `Aircraft.status` + estados de taller de R5.1;
+  cumplimiento de plazos vía fechas de permiso vs. vuelo); persistir la revisión
+  meteorológica como evidencia (hoy `R8.1` la consulta pero no la guarda);
+  **LV-72** (trazabilidad estilo SIGO). Decidir si el tablero Kanban se elimina.
+- **Sesión C — decisiones de negocio → cerrar ISO.** Preguntar en bloque:
+  umbrales RMSE/GSD del contrato (R7.4), límite de jornada de vuelo (R7.5), metas
+  de KPI (R7.7), días de verificación de eficacia. Con eso, ejecutar lo ya
+  diseñado en [docs/dev/iso-r7-design-plan.md](docs/dev/iso-r7-design-plan.md):
+  `Deliverable` + gate de liberación, `NonConformity`, `KpiTarget`.
+- **Sesión D — AeroLink y escalabilidad.** `X.4` (recibir sesiones de vuelo y
+  conciliar con `FlightRecord`: **acá el proyecto paga** — horas y ciclos dejan de
+  depender del operador y se llena `Battery`, hoy vacía a propósito);
+  **reabrir PostgreSQL** con un ADR (AeroLink lo instala en la misma VM: un motor
+  y un respaldo); `X.5` identidad (Entra ID vs. Django) y retención escrita.
+
+### Deuda técnica: política incremental (sin cambios)
+
+`core/views.py` y `registry/views.py` son grandes, pero con ~950 tests verdes y
+uso diario real el riesgo de una migración XL supera su beneficio *ahora*.
+Extraer mixins/selectors **sólo al tocar el flujo** por otra razón.
+
+---
+
+## Antecedentes: prioridades post-auditoría (2026-08-07)
+
+> Histórico. Su orden ya se cumplió; se conserva porque explica de dónde salieron
+> los bloques `R1`-`R8` y `X`.
+
+El 2026-08-07 entraron **tres insumos nuevos** que reordenaron el tablero:
 
 - **Revisión en vivo del usuario** (`D:\I+D\Obsidian\Revisiones luego de
   Auditoria.md`, 19 capturas) — origen de los bloques `R1`–`R8` de más abajo.

@@ -8,8 +8,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
-Trabajo acumulado desde `v0.4.0-beta` (2026-08-04): **59 commits**, de los cuales
-30 ya están en `main` y 29 en la pila de ramas de la sesión del 2026-08-11.
+## [0.5.0-beta] - 2026-08-11
+
+Trabajo acumulado desde `v0.4.0-beta` (2026-08-04), desplegado y verificado en
+producción (`p340`) el mismo día.
 Cierra completos los **BLOQUE R1, R2, R3, R5 y R6** de la revisión post-auditoría,
 más `R4` parcial, la base ISO de `R7`, `R8.1` y las fases 1-2 del contrato con
 AeroLink (`X.1`–`X.3`).
@@ -130,6 +132,46 @@ AeroLink (`X.1`–`X.3`).
   `file://`, así que una URL mal configurada habría sido una lectura de archivo
   local. Lo detectó `bandit` y se corrigió validando el esquema, no silenciando
   el aviso.
+
+### Revisión en vivo sobre producción, el mismo día (LV-66 a LV-73)
+
+El usuario revisó `p340` con datos reales inmediatamente después del despliegue.
+Lo encontrado ahí:
+
+- **[P0] Se arregló una pérdida de datos silenciosa en todas las fechas
+  (`LV-73`).** Cada `<input type="date">`/`time`/`datetime-local` se mostraba
+  **vacío aunque la base tuviera el dato**, y guardar el formulario **lo
+  borraba**: el valor se emitía en formato chileno (`21/08/2026`) y esos campos
+  sólo aceptan ISO, así que el navegador lo descartaba. Editar cualquier dato de
+  una aeronave borraba la vigencia del seguro JAC, y con ella su alerta, su fila
+  del calendario y su aporte al reporte. Afectaba a **todos** los formularios de
+  escritura. Se encontró abriendo el navegador para verificar otra cosa — ningún
+  test lo habría visto, porque el HTML *contenía* el valor.
+- **Renovar una vigencia ahora cierra su alerta sola (`LV-71`)**, dejando el
+  motivo *"Vigencia renovada al AAAA-MM-DD (cierre automático)"*. Antes había que
+  renovar **y** resolver a mano, y eso aplicaba a la mayoría de las alertas
+  reales. El cierre queda trazable para ISO 10.2 sin que nadie lo escriba.
+- **Se quitó el "Resolver" conjunto de las alertas agrupadas (`LV-68`).**
+  Agrupar por (regla + fecha) asumía que una fecha compartida implica una causa
+  compartida; los datos reales mostraron dos aeronaves con pólizas distintas
+  venciendo el mismo día, y un motivo único firmado sobre hechos independientes
+  es evidencia falsa. El agrupado visual se mantiene; cada alerta se resuelve por
+  separado.
+- **"Seguimiento de alertas" salió del menú (`LV-69`/`LV-69b`)** por decisión del
+  usuario, junto con los botones que mandaban trabajo ahí. La lista de alertas
+  quedó autocontenida. La vista sigue viva por URL.
+- **Comando `refresh_geoplan_titles` (`LV-70`)** para los títulos de planes
+  geoespaciales congelados con el formato de permiso anterior a `R2.2`.
+
+### Interno
+
+- `HANDOFF.md` pasó de ~900 a 72 líneas: había derivado a bitácora de sesiones,
+  que su propio encabezado prohíbe. El contenido operativo se movió a
+  `docs/compliance-setup.md` y los gotchas acumulados a una sección
+  **"Lecciones operativas"** en `AGENTS.md`.
+- El runbook de la VM se corrigió con el despliegue real: **`set -a` no es
+  opcional** al cargar el entorno (sin él `manage.py` cae a `dev`), y el usuario
+  de systemd es `levdigital01`, no `aero`.
 
 ## [0.4.0-beta] - 2026-08-04
 
