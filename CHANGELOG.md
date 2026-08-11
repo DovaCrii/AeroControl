@@ -8,6 +8,129 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+Trabajo acumulado desde `v0.4.0-beta` (2026-08-04): **59 commits**, de los cuales
+30 ya están en `main` y 29 en la pila de ramas de la sesión del 2026-08-11.
+Cierra completos los **BLOQUE R1, R2, R3, R5 y R6** de la revisión post-auditoría,
+más `R4` parcial, la base ISO de `R7`, `R8.1` y las fases 1-2 del contrato con
+AeroLink (`X.1`–`X.3`).
+
+> **Nota sobre el alcance de la beta.** `v0.4.0-beta` declaró que de ahí en
+> adelante el foco era *estabilizar lo que ya existe, no agregar módulos nuevos*.
+> Esta tanda **sí agrega capacidad nueva** (baterías, API del padrón, clima,
+> exportación PDF), porque salió de los bloques post-auditoría que el usuario
+> priorizó explícitamente el 2026-08-07. No es una desviación silenciosa: es un
+> cambio de prioridad decidido, y queda anotado acá para que la próxima
+> definición de alcance no herede una premisa vencida.
+
+### Added
+
+- **Inventario de baterías con ciclos y salud (`R7.2`, ISO 7.1.3).**
+  `registry.Battery` con serial como llave de cruce, ciclos, salud, firmware y
+  —clave— `source`/`synced_at` para saber de dónde vino el dato y qué tan fresco
+  es. **Es un espejo de solo lectura, no el maestro**: el ADR-0002 asigna el
+  inventario de baterías a AeroLink porque DJI reporta los ciclos de forma nativa
+  y un conteo llevado a mano se desvía de inmediato. Queda **vacío a propósito**
+  hasta que aterrice `X.4`, y el estado vacío lo explica en pantalla para que no
+  se lea como un error.
+- **API de solo lectura del padrón para AeroLink (`X.3`, ADR-0002 Fase 1).**
+  Aeronaves, operadores y centros de costo expuestos para que AeroLink resuelva
+  seriales sin duplicar el inventario. Scope nuevo sobre el DRF que ya existía,
+  no una aplicación nueva.
+- **Pronóstico de viento y ráfagas sobre el área de vuelo (`R8.1`, ISO 8.1).**
+  En la ficha del plan geoespacial, para el día en que empieza el permiso
+  vinculado (no "hoy", que sería peor que nada para un plan del mes que viene).
+  **La llamada se hace del lado del servidor**, así que la CSP no cambia; se
+  eligió Open-Meteo porque no requiere API key; y **está apagado por defecto**
+  (`WEATHER_ENABLED`), de modo que un despliegue que no lo active conserva la
+  propiedad de cero llamadas salientes.
+- **Exportación PDF del reporte de cumplimiento (`R6.4`).** Con `reportlab`
+  (puro Python, sin paquete de sistema que instalar en la VM). Junto a
+  CSV/XLSX/DOCX, que ya existían.
+- **Comparación contra el período anterior en el reporte web (`R6.4`).** Ya
+  existía en el correo ejecutivo; ahora la web y el correo leen la **misma**
+  función en vez de dos copias.
+- **Agrupar alertas del mismo origen y resolverlas juntas (`R6.3`).** Una póliza
+  de flota que vence en una fecha y cubre varias aeronaves se ve como una fila,
+  con un botón que pide **un motivo compartido** — antes había que escribir el
+  mismo motivo N veces.
+- **Resolver una alerta exige un motivo / causa raíz (`R6.2`, ISO 10.2).**
+  `Alert.resolution_reason`. Los llamadores automáticos siguen sin motivo a
+  propósito: no hay humano a quien preguntarle.
+- **Recordatorio del día 15 de revisiones mensuales pendientes (`R6.5`).**
+  Comando nuevo que escala a Dirección lo que nadie firmó. **Nunca crea ni
+  modifica una revisión**, solo reporta — así un fallo del cierre de fin de mes
+  no queda enmascarado como "todo en orden".
+- **"Documentos de la empresa" como repositorio real (`R4.6`).** Búsqueda por
+  título, filtro por categoría y exportación CSV, donde antes había un listado
+  plano sin filtros.
+- **Cuatro tipos de documento nuevos (`R7.3`, `R4.8`).** Certificado de
+  calibración GNSS/RTK (vigencia vigilada, ISO 7.1.5), Certificado AOC,
+  Procedimiento o manual de la empresa, y Aviso Mensual de No Operación.
+- **Habilitaciones en la ficha del operador (`R5.8`).** Con tipo, fechas e
+  insignia de vencido, reemplazando el texto libre que decía lo mismo sin fecha.
+  La sección del menú se ocultó (la vista sigue viva).
+- **Flujo real de mantención con taller externo (`R5.1`).** Camino largo
+  `enviado → en taller → terminado → en tránsito → completado` junto al corto
+  original, ligado al historial del equipo: la aeronave se marca "en mantención"
+  y vuelve a "casa matriz" sola, reusando la señal que ya generaba el rastro de
+  movimientos.
+- **Ficha de aeronave como expediente (`R5.4`, `R7.1`).** Historial de
+  mantenciones completadas y **horas de vuelo acumuladas** (ISO 7.1.3).
+- **Asignación múltiple de aeronaves y selectores con modelo y serie
+  (`R5.5`/`R5.6`).**
+- **Seguimiento del trámite del seguro JAC (`R5.7`).** Distingue "en trámite" de
+  "sin seguro pedido", que antes se veían igual.
+- **Importador del repositorio documental de `Z:` (`R4.1`/`R4.3`/`R4.5`).** Con
+  modo informe obligatorio antes de `--apply`, y campos de procedencia
+  (`content_sha256`, `source_reference`, `R4.2`) para que una reimportación no
+  duplique.
+- **Columna, búsqueda y CSV del registro de movimientos (`R5.3`).**
+- **Diseño de las 4 cláusulas ISO que quedaban (`R7.4`–`R7.7`).**
+  [docs/dev/iso-r7-design-plan.md](docs/dev/iso-r7-design-plan.md) — entregable
+  de diseño, no implementación, que es lo que el bloque pedía.
+
+### Changed
+
+- **`Aircraft.serial_number` es único y normalizado (`X.1`).** Es la llave de
+  cruce con AeroLink y con las carpetas de `Z:`. Las 4 discrepancias contra el
+  repositorio se resolvieron **contra el registro físico, no adivinando**: 2 eran
+  espacios espurios, y en las otras 2 el valor correcto era el que ya tenía la
+  app (las carpetas de `Z:` son las que están mal).
+- **Insignia "Sin PDF" en la lista de operadores (`R4.7`).** La fecha de vigencia
+  DGAC se tipea a mano y no decía nada sobre si el PDF de la credencial estaba
+  cargado; ahora sí.
+- Dependencia nueva: `reportlab>=4.2,<5`. **Requiere `uv sync` al desplegar.**
+
+### Fixed
+
+- **Completar la tarjeta del tablero ahora sí resuelve su alerta (`R6.1`).** El
+  cierre era unidireccional, así que una acción correctiva podía quedar
+  inconsistente entre las dos vistas. Detalle no obvio: tuvo que ser `post_save`,
+  no `pre_save`, o la segunda escritura de `Alert.resolve()` se perdía.
+- **Los movimientos de recursos registran quién los hizo (`R5.2`).** Un registro
+  de movimientos sin autor no sirve como evidencia ante un auditor. Cubrió
+  también un tercer caso que el plan no listaba: editar la ubicación de una
+  aeronave.
+- **Orden de operaciones de la migración `0028` (`X.1`).** Reventaba con
+  aeronaves de serial en blanco. Se descubrió corriendo contra el demo: la copia
+  del respaldo con que se probó primero no tenía ninguna, así que ahí el error
+  era silencioso.
+- **Paginación desactualizada tras buscar en la lista de documentos.** La página
+  completa no renderizaba el contenedor que el intercambio htmx necesita, así que
+  el paginador quedaba obsoleto en silencio.
+
+### Security
+
+- **La descarga de documentos tiene test de aislamiento entre organizaciones
+  (`V.3`/F-05).** El control ya estaba en el código; lo que faltaba era la
+  prueba, y un control de seguridad sin prueba está a un refactor de regresar en
+  silencio. **Con esto se cierra uno de los dos pendientes que `v0.4.0-beta`
+  declaró para la 1.0** (el otro, `T2.1`, ya estaba cerrado).
+- **Validación de esquema en la llamada de clima (`R8.1`).** `urlopen` acepta
+  `file://`, así que una URL mal configurada habría sido una lectura de archivo
+  local. Lo detectó `bandit` y se corrigió validando el esquema, no silenciando
+  el aviso.
+
 ## [0.4.0-beta] - 2026-08-04
 
 Primera versión **beta**: de aquí en adelante el foco es estabilizar lo que ya

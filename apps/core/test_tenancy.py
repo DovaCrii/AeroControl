@@ -283,6 +283,45 @@ class TestObjectLevelIsolation:
         assert intruder.get(url).status_code == 404
 
     @pytest.mark.django_db
+    def test_document_download_is_404_for_another_tenant(self, settings, tmp_path):
+        """F-05 / V.3: the gap the audit named was *download authorization*
+        having no tenant path, which is a different code path from the detail
+        view above -- DocumentDownload streams the file straight from storage.
+
+        The owner must get a real 200 here, not just "the intruder got 404":
+        with no file on disk both tenants 404 (DocumentStorageNotFound), which
+        would make this test pass while proving nothing about scoping.
+        """
+        from django.contrib.contenttypes.models import ContentType
+
+        from apps.compliance.models import Document, DocumentType
+
+        settings.DOCUMENTS_ROOT = str(tmp_path)
+        (tmp_path / "secret.pdf").write_bytes(b"%PDF-1.4 owner only")
+
+        a = OperationalTenant.objects.create(name="A", slug="a")
+        b = OperationalTenant.objects.create(name="B", slug="b")
+        cc = CostCenter.objects.create(code="CCA", tenant=a)
+        document = Document.objects.create(
+            title="Secret",
+            doc_type=DocumentType.objects.create(code="c", name="C"),
+            content_type=ContentType.objects.get_for_model(CostCenter),
+            object_id=cc.pk,
+            file_path="secret.pdf",
+            issue_date=date(2026, 1, 1),
+            tenant=a,
+        )
+        url = reverse("document-download", args=[document.pk])
+
+        owner = self._client("a_dl", "view_document", tenant=a)
+        owner_response = owner.get(url)
+        assert owner_response.status_code == 200
+        assert b"owner only" in b"".join(owner_response.streaming_content)
+
+        intruder = self._client("b_dl", "view_document", tenant=b)
+        assert intruder.get(url).status_code == 404
+
+    @pytest.mark.django_db
     def test_permission_detail_is_404_for_another_tenant(self):
         from apps.operations.models import FlightPermission
 
