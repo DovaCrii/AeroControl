@@ -16,7 +16,34 @@
     </div>
   </div>
 
-  {% include "generic/_fields_detail_table.html" %}
+  {% comment %}R5.8: authorizations (free text) is superseded by the
+  structured Qualifications card below -- showing both would just repeat the
+  same information twice on the same page.{% endcomment %}
+  {% include "generic/_fields_detail_table.html" with exclude="authorizations" %}
+</div>
+
+<div class="card mt-3 p-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="h5 mb-0">{% translate "Qualifications" %}</h2>
+    {% if perms.registry.add_qualification %}<a href="{% url 'qualification-create' %}" hx-get="{% url 'qualification-create' %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">+ {% translate "New" %}</a>{% endif %}
+  </div>
+  {% if qualifications %}
+  <table class="table table-sm mb-0">
+    <thead><tr><th>{% translate "Qualification type" %}</th><th>{% translate "Issue date" %}</th><th>{% translate "Expiry date" %}</th><th></th></tr></thead>
+    <tbody>
+      {% for qualification in qualifications %}
+      <tr>
+        <td><span class="badge {% if qualification.expiry_date and qualification.expiry_date < today %}bg-danger{% else %}{{ qualification.qualification_type.chip_class }}{% endif %}">{{ qualification.qualification_type.name }}</span></td>
+        <td>{{ qualification.issue_date|date:'Y-m-d'|default:'—' }}</td>
+        <td>{% if qualification.expiry_date %}{{ qualification.expiry_date|date:'Y-m-d' }}{% if qualification.expiry_date < today %} <span class="badge bg-danger">{% translate "Expired" %}</span>{% endif %}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+        <td class="text-end">{% if perms.registry.change_qualification %}<a href="{% url 'qualification-update' qualification.pk %}" hx-get="{% url 'qualification-update' qualification.pk %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-secondary">{% translate "Edit" %}</a>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="text-muted mb-0">{% translate "No qualifications recorded yet." %}</p>
+  {% endif %}
 </div>
 
 {% include "compliance/_documents_section.html" %}

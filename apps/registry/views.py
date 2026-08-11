@@ -608,6 +608,16 @@ class OperatorDetail(RegistryDetail):
             context["movements"] = movements_for_resource("operator", self.object.pk)
         else:
             context["movements"] = None
+        # R5.8: the ficha's own Qualifications card, replacing the sidebar's
+        # "Habilitaciones" as the place to see this operator's ratings --
+        # authorizations (free text, excluded above) said the same thing with
+        # no date most of the time.
+        context["qualifications"] = (
+            self.object.qualifications.filter(is_active=True)
+            .select_related("qualification_type")
+            .order_by("qualification_type__name")
+        )
+        context["today"] = timezone.localdate()
         context.update(attached_documents_context(self.request.user, self.object))
         return context
 

@@ -13,13 +13,23 @@ TECHNICAL_FIELDS = frozenset({"id", "created_at", "updated_at", "is_active", "te
 
 
 @register.filter
-def fields_detail(obj):
-    """Return a list of dicts with label/value/type info for each model field."""
+def fields_detail(obj, exclude=""):
+    """Return a list of dicts with label/value/type info for each model field.
+
+    `exclude` (comma-separated field names) is for a field that a detail page
+    replaced with something better -- e.g. Operator.authorizations (R5.8),
+    superseded on the ficha by a real Qualification section. Distinct from
+    TECHNICAL_FIELDS, which hides bookkeeping columns on every model; this is
+    a per-page opt-out for one specific business field.
+    """
     if not obj:
         return []
+    excluded = TECHNICAL_FIELDS | {
+        name.strip() for name in exclude.split(",") if name.strip()
+    }
     result = []
     for field in obj._meta.fields:
-        if field.name in TECHNICAL_FIELDS:
+        if field.name in excluded:
             continue
         raw = getattr(obj, field.name)
         is_boolean = isinstance(field, (models.BooleanField, models.NullBooleanField))
