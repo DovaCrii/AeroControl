@@ -5,7 +5,98 @@
 > post-auditoría"**, al inicio del archivo. Este documento es solo el resumen
 > de estado; el detalle de cada ítem vive en las filas de `MASTER_PLAN.md`.
 
-## 🔒 CIERRE DE VENTANA — 2026-08-11, sesión larga (R6.2 verificado, BLOQUE R6 completo, R4.7/R7.3/X.2 + 3 checkboxes de R1 corregidos)
+## 🔒 CIERRE DE VENTANA — 2026-08-11, tercer tramo (R8.1, X.3, R7.2 — se agotó lo implementable sin decisiones nuevas)
+
+**Empezar aquí.** Tras cerrar el BLOQUE R6 y los ítems sueltos (ver la sección
+siguiente, del mismo día), el usuario pidió "avanzar hasta terminar todos los
+pendientes". Se cerraron los tres que quedaban implementables. **Con esto se
+agotó el trabajo que se puede hacer sin una decisión nueva del usuario o sin
+que AeroLink exista.**
+
+```
+... (cadena de los dos tramos anteriores) ...
+    └─ codex/r4-company-documents-repository        R4.6
+        └─ codex/r4-remaining-document-types           R4.8
+            └─ codex/r5-qualifications-on-ficha            R5.8
+                └─ codex/r8-weather-forecast                  R8.1
+                    └─ codex/x3-padron-readonly-api              X.3
+                        └─ codex/r7-battery-inventory               R7.2  ← HEAD
+```
+
+- **R8.1 — clima/viento.** Las 4 preocupaciones que la fila nombraba (CSP,
+  secretos, caché, degradación) las resolvió **una sola decisión: la llamada se
+  hace del lado del servidor, nunca desde el navegador.** El CSP **no cambió**
+  (verificado leyendo el header y confirmando cero peticiones del navegador a
+  Open-Meteo); **no hay secretos** porque se eligió Open-Meteo justamente por no
+  pedir API key, a diferencia de UAV Forecast/OpenWeather; se cachean también
+  los fallos (si no, un proveedor caído costaría una petición por vista); y todo
+  camino de falla devuelve `None` y la tarjeta no aparece. **Apagado por
+  defecto** (`WEATHER_ENABLED=False`), así un despliegue que no lo active
+  conserva la propiedad de cero llamadas salientes. Sin dependencia nueva
+  (`urllib` de la stdlib; `requests` está solo en el árbol de dev). Aterriza en
+  la ficha del plan geo (ahí están las coordenadas, vía `bbox_*`), para el día
+  del `valid_from` del permiso, no "hoy". **Bandit encontró un agujero real**
+  (B310: `urlopen` acepta `file://`, así que un `WEATHER_API_URL` mal escrito
+  habría sido una lectura de archivo local) — se validó el esquema en vez de
+  silenciar el warning, con 5 tests que ejercitan el guard.
+- **X.3 — padrón de solo lectura para AeroLink.** `GET /api/v1/registry/aircraft/`
+  con `?serial=` (la búsqueda que AeroLink de verdad hace). **Solo lectura de
+  verdad**: no hay ruta de escritura, un superusuario recibe `405` — no se puede
+  aflojar después repartiendo un permiso. Serial exacto, nunca parcial (un
+  prefijo atribuiría telemetría a la aeronave equivocada). Campos mínimos: las
+  fechas de seguro/pesos/VLOS **no se exponen**. Acotado por tenant y
+  `view_aircraft`, verificado **en ambos sentidos**. Contrato completo en el
+  ADR-0002 sección 4.
+- **R7.2 — inventario de baterías.** Alcance confirmado con el usuario antes de
+  migrar (crear el espejo ahora, sin carga manual). `registry.Battery` +
+  migración `0030` + lista de solo lectura. **Es un espejo, no el maestro**: el
+  ADR-0002 le da el inventario a AeroLink porque DJI reporta ciclos nativamente.
+  **Queda vacío a propósito** hasta `X.4`, y el estado vacío lo explica en
+  pantalla para que no se lea como un bug. `source`/`synced_at` registran
+  procedencia y frescura, porque un conteo en 0 sin fecha es ambiguo (¿batería
+  nueva, o sincronización que nunca corrió?).
+
+### Qué queda, y por qué no se puede avanzar solo
+
+Ninguno de estos está bloqueado por falta de trabajo técnico:
+
+- **X.4** (recibir sesiones de vuelo de AeroLink) y **X.5** (identidad Entra ID
+  vs Django) — **dependen de que AeroLink exista**. Hoy está en M0 (andamiaje).
+  X.3 y R7.2 ya dejaron el lado de AeroControl listo para ambos.
+- **R7.4/R7.5/R7.6/R7.7** — el encabezado del BLOQUE R7 dice, por decisión del
+  usuario, *"dejar la base y el mapeo, no implementar completo"*, y esas 4 filas
+  dicen **"solo diseño"**. Ese entregable de diseño **es**
+  `docs/auditoria-iso-trazabilidad.md`, que existe y se actualizó hoy. Quedaron
+  en ⬜ a propósito: marcarlas ✅ es una decisión del usuario sobre si el mapeo
+  ya cuenta como cerrado, no algo que corresponda decidir sola.
+- **R4.1a/R4.4** — esperan al usuario (renombrar 2 carpetas en `Z:`) y a que
+  alguien configure un antivirus real para los `.msg`. `--apply` sigue sin
+  correrse nunca.
+- **R5.9** (Kanban para taller) — aparcado por decisión explícita del usuario.
+- **T1.x/T3.5/T4.x/T5.8** — deuda técnica, diferida por la política del propio
+  tablero (punto 8 de "Prioridades": incremental, sin migración grande).
+
+### Cabos sueltos concretos para la próxima ventana
+
+1. **25 commits en 25 ramas locales apiladas, nada pusheado ni mergeado.** Es
+   el pendiente más grande y es una decisión del usuario. Conviene una sesión
+   dedicada solo a eso.
+2. **El AOC real sigue sin subir.** El usuario compartió
+   `OneDrive\...\Certificado AOC 1485.pdf` y confirmó que lo que importa es
+   tenerlo "visible y a mano". **No se importó**: la base local de `.env` está
+   vacía y el usuario confirmó que la operación real vive en la VM `p340`. Hay
+   que subirlo allá (tras correr `seed_document_types`, que pasó de 13 a 17
+   tipos e incluye `aoc-certificate`).
+3. **Al desplegar a `p340`**: `uv sync` (dependencia nueva `reportlab`),
+   `seed_document_types` a mano (gotcha LV-45/LV-64), migración `registry/0030`
+   (tabla `Battery`, nueva, sin tocar datos), y decidir si se activa
+   `WEATHER_ENABLED`.
+4. **`.claude/launch.json` (ignorado por git) quedó con `WEATHER_ENABLED=True`**
+   para poder revisar el clima en el demo. Si molesta, quitarlo.
+
+---
+
+## 🔒 CIERRE DE VENTANA — 2026-08-11, primeros dos tramos (R6.2 verificado, BLOQUE R6 completo, R4.7/R7.3/X.2 + 3 checkboxes de R1 corregidos)
 
 **Empezar aquí en la próxima ventana.** Esta ventana retomó exactamente donde
 quedó la anterior (mismo working tree, misma pila de ramas) en dos tramos:
