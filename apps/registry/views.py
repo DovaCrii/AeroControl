@@ -424,7 +424,23 @@ class OperatorList(RegistryList):
     search_fields = ["full_name", "employee_id", "rut", "dgac_credential"]
 
     def get_queryset(self):
+        from django.contrib.contenttypes.models import ContentType
+        from django.db.models import Exists, OuterRef
+
+        from apps.compliance.models import Document
+
         today = timezone.localdate()
+        # R4.7: credential_expiry is a date the user typed in from the DGAC
+        # capture (LV-29) -- it says nothing about whether the licence PDF
+        # itself was ever uploaded. Without this, a row with a vigencia badge
+        # looked complete even with no supporting document on file.
+        credential_pdf = Document.objects.filter(
+            content_type=ContentType.objects.get_for_model(Operator),
+            object_id=OuterRef("pk"),
+            doc_type__code="dgac-credential",
+            is_active=True,
+            is_current_version=True,
+        )
         return self.scope_by_tenant(
             super()
             .get_queryset()
@@ -447,6 +463,7 @@ class OperatorList(RegistryList):
                     ),
                     distinct=True,
                 ),
+                has_credential_pdf=Exists(credential_pdf),
             )
             # R3.2: no Meta.ordering fell back to created_at (SearchMixin's
             # fallback), i.e. insertion order -- alphabetical by full name.
