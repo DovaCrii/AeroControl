@@ -50,6 +50,18 @@ DOCUMENT_TYPES = [
         False,
     ),
     ("maintenance-certificate", "Certificado de mantención", False, False, False),
+    # R7.3 (ISO 7.1.5): GNSS/RTK and camera calibration certificates. A real
+    # "Certificado Calibración.pdf" already sits in Z:\CC706-...\04.- Mantenciones
+    # waiting for a place to live. requires_expiry=True -- unlike
+    # maintenance-certificate above, ISO 7.1.5 asks for a *vigente* one, so a
+    # lapsed calibration should watch and alert like airworthiness-cert does.
+    (
+        "calibration-certificate",
+        "Certificado de calibración (GNSS/RTK/cámara)",
+        True,
+        False,
+        False,
+    ),
 ]
 
 
