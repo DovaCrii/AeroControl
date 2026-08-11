@@ -12,6 +12,7 @@ resumen corto), así que después se puede comprobar si realmente corrieron.
 | `send_executive_report` | Envía el informe ejecutivo con KPIs del período vs el anterior y el XLSX adjunto | Semanal (lunes) |
 | `notify_expiring_credentials` (opcional, LV-29) | Avisa por correo a **cada operador** de sus vigencias DGAC por vencer o ya vencidas (credencial + habilitaciones, ≤30 días) | Diario o semanal, si se quiere el aviso directo al operador |
 | `check_monthly_records` (LV-30) | El último día del mes, crea la **revisión de cumplimiento** pendiente por cada centro de costo que voló y avisa al grupo Dirección (vuelos vs registros del mes) | Diario (actúa solo el último día 28/29/30/31) |
+| `check_monthly_review_deadline` (R6.5) | El día 15, revisa las revisiones del mes anterior que sigan **pendientes** (nadie las marcó) y las escala al grupo Dirección en un segundo correo. No crea ni cambia ninguna revisión, solo persigue lo que quedó sin firmar | Diario (actúa solo el día 15) |
 
 El orden importa: `send_alert_digest` reporta lo que `generate_alerts` acaba de
 detectar, así que conviene dejar un margen entre ambos.
@@ -26,16 +27,18 @@ con un mensaje claro en vez de enviar a nadie en silencio.
 ./scripts/schedule_tasks.ps1 -EnvFile "C:/AeroControl_Data/.env"
 ```
 
-El script registra `GenerateAlerts`, `AlertDigest`, `Backup`, `ExecutiveReport`
-y `MonthlyRecords` (LV-30, cierre mensual: corre a diario y actúa solo el último
-día del mes). El aviso por operador `CredentialNotice` (LV-29) es **opcional** y
-queda apagado salvo que se pase `-WithCredentialNotice`.
+El script registra `GenerateAlerts`, `AlertDigest`, `Backup`, `ExecutiveReport`,
+`MonthlyRecords` (LV-30, cierre mensual: corre a diario y actúa solo el último
+día del mes) y `MonthlyReviewDeadline` (R6.5, recordatorio del día 15: corre a
+diario y actúa solo ese día). El aviso por operador `CredentialNotice` (LV-29)
+es **opcional** y queda apagado salvo que se pase `-WithCredentialNotice`.
 
 Horas personalizables, trabajo opcional y desregistro:
 
 ```powershell
 ./scripts/schedule_tasks.ps1 -AlertsAt "06:30" -DigestAt "07:15" -BackupAt "22:00" `
-  -ExecutiveReportDay Monday -ExecutiveReportAt "07:30" -MonthlyRecordsAt "23:30"
+  -ExecutiveReportDay Monday -ExecutiveReportAt "07:30" -MonthlyRecordsAt "23:30" `
+  -MonthlyReviewDeadlineAt "08:00"
 # Activar además el aviso opcional de vigencias a cada operador (LV-29):
 ./scripts/schedule_tasks.ps1 -WithCredentialNotice -CredentialNoticeAt "07:30"
 # Quitar todas las tareas (incluye las opcionales):
@@ -148,6 +151,13 @@ El cierre de cumplimiento mensual (LV-30) se agrega con `mkjob monthly
 `--period YYYY-MM` (mes puntual), `--force` (correr fuera del último día) y
 `--dry-run`. La revisión pendiente queda como alerta viva (regla "Cumplimiento
 mensual de registros") hasta que Dirección la marca Cumple/No cumple.
+
+El recordatorio del día 15 (R6.5) se agrega con `mkjob monthly-deadline
+"check_monthly_review_deadline" "*-*-* 08:00:00"`: corre a diario y **actúa solo
+el día 15**, escalando a Dirección en un segundo correo las revisiones del mes
+anterior que sigan pendientes. No crea ni cambia revisiones -- solo reporta lo
+que `check_monthly_records` ya dejó pendiente. Acepta los mismos flags
+(`--period YYYY-MM`, `--force`, `--dry-run`).
 
 ## Prueba antes de programar
 

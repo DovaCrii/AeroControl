@@ -8,7 +8,7 @@ lives here once.
 """
 
 import calendar
-from datetime import date
+from datetime import date, timedelta
 
 from django.contrib.contenttypes.models import ContentType
 
@@ -31,6 +31,17 @@ def is_last_day_of_month(day):
     """True when tomorrow is a different month -- the day the month closes."""
     _first, last = month_bounds(day)
     return day == last
+
+
+def previous_month_start(day):
+    """First day of the month before `day`'s month."""
+    return month_start(month_start(day) - timedelta(days=1))
+
+
+def is_review_deadline_day(day):
+    """R6.5: the internal procedure's deadline for Dirección to have signed
+    off last month's compliance review -- the 15th of the following month."""
+    return day.day == 15
 
 
 def flights_in_month(cost_center, period):

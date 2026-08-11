@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-11 09:39-0400\n"
+"POT-Creation-Date: 2026-08-11 09:57-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -29,6 +29,7 @@ msgstr "Habilitación"
 #: .\templates\compliance\email\alert_digest.txt:2
 #: .\templates\compliance\email\executive_report.html:52
 #: .\templates\compliance\email\monthly_review.txt:5
+#: .\templates\compliance\email\monthly_review_deadline.txt:5
 #: .\templates\compliance\monthly_review.html:37
 #: .\templates\compliance\operational_records.html:19
 #: .\templates\compliance\operational_records.html:46
@@ -165,6 +166,11 @@ msgstr "Por qué ocurrió y cómo se solucionó."
 msgid "AeroControl · monthly records review %(period)s"
 msgstr "AeroControl · revisión de registros del mes %(period)s"
 
+#: .\apps\compliance\management\commands\check_monthly_review_deadline.py:155
+#, python-format
+msgid "AeroControl · monthly review deadline reminder %(period)s"
+msgstr "AeroControl · recordatorio de revisión pendiente %(period)s"
+
 #: .\apps\compliance\management\commands\send_alert_digest.py:23
 msgid "Already expired"
 msgstr "Vencidos"
@@ -293,28 +299,28 @@ msgid "TOTAL"
 msgstr "TOTAL"
 
 #: .\apps\compliance\report_views.py:148 .\apps\compliance\report_views.py:289
-#: .\apps\compliance\report_views.py:441
+#: .\apps\compliance\report_views.py:452
 #: .\templates\compliance\email\executive_report.html:30
 #: .\templates\compliance\report.html:53 .\templates\compliance\report.html:136
 msgid "Open alerts"
 msgstr "Alertas abiertas"
 
-#: .\apps\compliance\report_views.py:240 .\apps\compliance\report_views.py:342
+#: .\apps\compliance\report_views.py:240 .\apps\compliance\report_views.py:343
 msgid "AeroControl — Compliance status report"
 msgstr "AeroControl — Reporte de estado documental"
 
-#: .\apps\compliance\report_views.py:242 .\apps\compliance\report_views.py:344
+#: .\apps\compliance\report_views.py:242 .\apps\compliance\report_views.py:346
 #: .\apps\workboard\views.py:331
 #, python-format
 msgid "Generated: %(date)s"
 msgstr "Generado: %(date)s"
 
-#: .\apps\compliance\report_views.py:246 .\apps\compliance\report_views.py:349
+#: .\apps\compliance\report_views.py:246 .\apps\compliance\report_views.py:351
 #, python-format
 msgid "Period analysed: %(start)s to %(end)s"
 msgstr "Período analizado: %(start)s a %(end)s"
 
-#: .\apps\compliance\report_views.py:252 .\apps\compliance\report_views.py:387
+#: .\apps\compliance\report_views.py:252 .\apps\compliance\report_views.py:394
 #, python-format
 msgid ""
 "%(valid)s of %(total)s current documents are valid (%(pct)s%%). %(expired)s "
@@ -323,62 +329,62 @@ msgstr ""
 "%(valid)s de %(total)s documentos vigentes están al día (%(pct)s%%). "
 "%(expired)s vencidos, %(due)s por vencer en %(horizon)s días."
 
-#: .\apps\compliance\report_views.py:266 .\apps\compliance\report_views.py:415
+#: .\apps\compliance\report_views.py:266 .\apps\compliance\report_views.py:422
 #: .\templates\compliance\email\executive_report.html:49
 #: .\templates\compliance\email\executive_report.txt:13
 #: .\templates\compliance\report.html:87
 msgid "By cost center"
 msgstr "Por centro de costo"
 
-#: .\apps\compliance\report_views.py:277 .\apps\compliance\report_views.py:422
+#: .\apps\compliance\report_views.py:277 .\apps\compliance\report_views.py:430
 #: .\templates\compliance\report.html:127
 msgid "Alert resolution in the period"
 msgstr "Resolución de alertas en el período"
 
-#: .\apps\compliance\report_views.py:280 .\apps\compliance\report_views.py:426
+#: .\apps\compliance\report_views.py:280 .\apps\compliance\report_views.py:435
 #: .\templates\compliance\report.html:129
 #, python-format
 msgid "%(count)s alerts resolved, %(days)s days on average."
 msgstr "%(count)s alertas resueltas, %(days)s días en promedio."
 
-#: .\apps\compliance\report_views.py:287 .\apps\compliance\report_views.py:436
+#: .\apps\compliance\report_views.py:287 .\apps\compliance\report_views.py:446
 #: .\templates\compliance\report.html:131
 msgid "No alerts were resolved in this period."
 msgstr "No se resolvieron alertas en este período."
 
-#: .\apps\compliance\report_views.py:300 .\apps\compliance\report_views.py:444
+#: .\apps\compliance\report_views.py:300 .\apps\compliance\report_views.py:455
 #: .\templates\compliance\report.html:154
 msgid "No open alerts."
 msgstr "Sin alertas abiertas."
 
-#: .\apps\compliance\report_views.py:406
+#: .\apps\compliance\report_views.py:413
 #: .\templates\compliance\email\executive_report.html:35
 #: .\templates\compliance\email\executive_report.txt:10
 #: .\templates\compliance\report.html:60
 msgid "Compared with the previous period"
 msgstr "Comparado con el período anterior"
 
-#: .\apps\compliance\report_views.py:407 .\templates\compliance\report.html:64
+#: .\apps\compliance\report_views.py:414 .\templates\compliance\report.html:64
 msgid "KPI"
 msgstr "KPI"
 
-#: .\apps\compliance\report_views.py:407 .\templates\compliance\report.html:65
+#: .\apps\compliance\report_views.py:414 .\templates\compliance\report.html:65
 msgid "This period"
 msgstr "Este período"
 
-#: .\apps\compliance\report_views.py:407 .\templates\compliance\report.html:66
+#: .\apps\compliance\report_views.py:414 .\templates\compliance\report.html:66
 msgid "Change"
 msgstr "Variación"
 
-#: .\apps\compliance\report_views.py:407 .\templates\compliance\report.html:67
+#: .\apps\compliance\report_views.py:414 .\templates\compliance\report.html:67
 msgid "Previous period"
 msgstr "Período anterior"
 
-#: .\apps\compliance\report_views.py:412
+#: .\apps\compliance\report_views.py:419
 msgid "No comparison available."
 msgstr "No hay comparación disponible."
 
-#: .\apps\compliance\report_views.py:418 .\templates\compliance\report.html:119
+#: .\apps\compliance\report_views.py:425 .\templates\compliance\report.html:119
 msgid "No cost centers to report."
 msgstr "No hay centros de costo que informar."
 
@@ -2093,6 +2099,7 @@ msgid "Geospatial planning"
 msgstr "Planificación geoespacial"
 
 #: .\templates\base.html:87 .\templates\compliance\email\monthly_review.txt:5
+#: .\templates\compliance\email\monthly_review_deadline.txt:5
 #: .\templates\compliance\monthly_review.html:38
 #: .\templates\core\calendar.html:34 .\templates\core\calendar.html:45
 #: .\templates\dashboard\index.html:166
@@ -2468,6 +2475,7 @@ msgstr "Total de elementos"
 #: .\templates\compliance\email\executive_report.html:71
 #: .\templates\compliance\email\executive_report.txt:20
 #: .\templates\compliance\email\monthly_review.txt:11
+#: .\templates\compliance\email\monthly_review_deadline.txt:11
 #: .\templates\registry\email\credential_notice.txt:9
 msgid "This is an automated message from AeroControl."
 msgstr "Este es un mensaje automático de AeroControl."
@@ -2583,6 +2591,7 @@ msgstr ""
 "operacionales en archivo:"
 
 #: .\templates\compliance\email\monthly_review.txt:5
+#: .\templates\compliance\email\monthly_review_deadline.txt:5
 #: .\templates\compliance\monthly_review.html:38
 #: .\templates\generic\list.html:6
 msgid "Records"
@@ -2596,6 +2605,27 @@ msgid_plural ""
 msgstr[0] "Revisa %(total)s centro de costo y márcalo Cumple o No cumple:"
 msgstr[1] ""
 "Revisa estos %(total)s centros de costo y marca cada uno Cumple o No cumple:"
+
+#: .\templates\compliance\email\monthly_review_deadline.txt:1
+#, python-format
+msgid "Monthly review deadline reminder — %(period)s"
+msgstr "Recordatorio de revisión pendiente — %(period)s"
+
+#: .\templates\compliance\email\monthly_review_deadline.txt:3
+#, python-format
+msgid ""
+"This cost center's %(period)s compliance review has not been signed off yet:"
+msgid_plural ""
+"These %(total)s cost centers' %(period)s compliance reviews have not been "
+"signed off yet:"
+msgstr[0] "Este centro de costo todavía no tiene su revisión de %(period)s firmada:"
+msgstr[1] ""
+"Estos %(total)s centros de costo todavía no tienen su revisión de "
+"%(period)s firmada:"
+
+#: .\templates\compliance\email\monthly_review_deadline.txt:8
+msgid "Mark each Compliant or Non-compliant:"
+msgstr "Marca cada uno Cumple o No cumple:"
 
 #: .\templates\compliance\monthly_review.html:9
 msgid ""
