@@ -5,23 +5,37 @@
 > post-auditoría"**, al inicio del archivo. Este documento es solo el resumen
 > de estado; el detalle de cada ítem vive en las filas de `MASTER_PLAN.md`.
 
-## 🚀 ESTADO DE RELEASE — lo más urgente al 2026-08-11
+## 🚀 ESTADO DE RELEASE — 2026-08-11
 
-**Lo que hay que hacer no es más código: es cortar versión y desplegar.** El
-backlog implementable está agotado y hay riesgo acumulándose por no liberar.
+### ✅ MERGE Y PUSH HECHOS
 
-**La pila es UNA cadena lineal, no 22 ramas divergentes.** Se verificó que las
-21 ramas `codex/*` restantes son *ancestros* de `codex/r7-battery-inventory`, así
-que ese único merge trae todo:
+`main` está en **`f0527e6`** y **pusheado a `origin/main`**. El *fast-forward*
+trajo los 30 commits de la pila de una sola vez (99 archivos, +9.212 líneas),
+porque la pila era **una cadena lineal**, no 22 ramas divergentes — se verificó
+que las 21 ramas `codex/*` restantes eran *ancestros* de la punta.
 
-```bash
-git fetch origin                  # regla del repo: siempre antes de push
-git checkout main
-git merge --ff-only codex/r7-battery-inventory   # fast-forward, sin merge commit
-```
+`verify.ps1` verde antes del merge: **938 tests**, ruff, bandit y pip-audit
+limpios.
 
-Estado verificado hoy: `main` == `origin/main` (nadie más pusheó), 919 tests
-verdes, `verify.ps1` completo limpio (ruff, bandit, pip-audit).
+**Falta el despliegue a `p340` y etiquetar la versión** (ver abajo).
+
+### Ojo con dónde se corre cada comando (costó dos errores)
+
+- **El merge/push va en Windows**, en `D:\I+D\AeroControl`. Las ramas solo
+  existen ahí. Correrlo sin `cd` da `fatal: not a git repository`.
+- **El despliegue va dentro de la VM, por SSH.** `/opt/aerocontrol` es una ruta
+  **Linux**: escribirla en PowerShell da
+  `Cannot find path 'C:\opt\aerocontrol'` porque PowerShell la interpreta como
+  ruta de Windows. Hay que entrar primero:
+  ```bash
+  ssh levdigital01@p340.tailccd107.ts.net
+  ```
+- **Inconsistencia de los docs, sin resolver**: `ubuntu-vm-deploy.md` dice
+  `User=aero` en los `systemd` units, pero `scheduled-operations.md` usa
+  `User=levdigital01`, y el `scp` de respaldos usa `levdigital01@p340...`. Si
+  `git pull` da *permission denied* o no encuentra `uv`, es por esto — revisar
+  quién es dueño de `/opt/aerocontrol` y dónde está el binario (`which uv`, o
+  la ruta larga `/home/<usuario>/.local/bin/uv`).
 
 ### Qué falta antes de etiquetar
 
@@ -38,23 +52,48 @@ verdes, `verify.ps1` completo limpio (ruff, bandit, pip-audit).
    decisión del antivirus, y repetir el ensayo de restauración como rutina y no
    una vez. Conviene declarar eso como criterio de salida explícito.
 
-### Riesgos concretos del despliegue
+### Secuencia de despliegue en `p340`, en orden
 
-- **Migración `registry/0028` es la delicada**: impone `unique=True` en
-  `serial_number`. Ya maneja los blancos (3 pasos, bug corregido en `e5dea67`),
-  pero **si dos seriales distintos normalizan al mismo valor, revienta**.
-  Chequeo previo en `p340`, antes de migrar:
-  ```bash
-  uv run python manage.py shell -c "
-  from collections import Counter
-  from apps.registry.models import Aircraft
-  n = [''.join((a.serial_number or '').split()) for a in Aircraft.objects.all()]
-  print([s for s,c in Counter(x for x in n if x).items() if c>1] or 'sin duplicados')"
-  ```
-- **`uv sync`** en `p340` (dependencia nueva `reportlab`).
-- **`seed_document_types`** a mano (gotcha LV-45/LV-64): pasa de 10 a 17 tipos.
-- **Decidir `WEATHER_ENABLED`**: apagado por defecto; si no se activa, `R8.1` no
-  se ve (y se conserva la propiedad de cero llamadas salientes).
+```bash
+ssh levdigital01@p340.tailccd107.ts.net
+cd /opt/aerocontrol
+git pull
+# El .env es de root; esto exporta las vars sin volverse root (y sin que la
+# SQLite del migrate quede con dueño root). Es bash, no sh.
+source <(sudo cat /etc/aerocontrol.env)
+```
+
+**Antes de migrar**, el único chequeo que puede fallar con datos reales — la
+migración `registry/0028` impone `unique=True` en `serial_number`; ya maneja los
+blancos (3 pasos, bug corregido en `e5dea67`), pero **revienta si dos seriales
+distintos normalizan al mismo valor**:
+
+```bash
+uv run python manage.py shell -c "
+from collections import Counter
+from apps.registry.models import Aircraft
+n = [''.join((a.serial_number or '').split()) for a in Aircraft.objects.all()]
+print([s for s,c in Counter(x for x in n if x).items() if c>1] or 'sin duplicados')"
+```
+
+Si imprime `sin duplicados`, seguir:
+
+```bash
+uv sync                                              # dependencia nueva: reportlab
+uv run python manage.py migrate --no-input           # 7 migraciones
+uv run python manage.py seed_document_types          # gotcha LV-45/LV-64: 10 -> 17 tipos
+uv run python manage.py collectstatic --no-input
+sudo systemctl restart aerocontrol
+```
+
+**Decisiones de configuración que quedan abiertas:**
+
+- **`WEATHER_ENABLED`** (`R8.1`): apagado por defecto. Si no se activa, el clima
+  no se ve — y se conserva la propiedad de cero llamadas salientes.
+- **`snapshot_compliance` (`R7.7`) conviene programarlo cuanto antes.** La
+  tendencia solo se puede calcular sobre los días ya guardados: cada día sin ese
+  trabajo es historia perdida que **no se puede reconstruir después**.
+- **CSP a *enforcing*** sigue pendiente (es criterio de salida de `beta`).
 
 ### Las 2 ramas `claude/*` NO están en la pila y necesitan decisión
 
