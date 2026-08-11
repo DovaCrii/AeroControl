@@ -69,6 +69,11 @@ urlpatterns = [
     ),
     path("alert/<uuid:pk>/reopen/", views.AlertReopen.as_view(), name="alert-reopen"),
     path(
+        "alert/resolve-group/<str:ids>/",
+        views.AlertResolveGroup.as_view(),
+        name="alert-resolve-group",
+    ),
+    path(
         "alert/<uuid:pk>/create-task/",
         views.AlertCreateTask.as_view(),
         name="alert-create-task",
