@@ -530,24 +530,13 @@ class AlertList(ComplianceList):
         context["entity_types"] = Alert.objects.values_list(
             "content_type__model", flat=True
         ).distinct()
-        # Resolve the linked task for the page's alerts in one query so the
-        # template can offer "Create task" vs "View task" without an N+1.
-        alerts = list(context.get("objects") or [])
-        if alerts:
-            alert_ct = ContentType.objects.get_for_model(Alert)
-            tasks = {
-                task.source_object_id: task
-                for task in KanbanTask.objects.filter(
-                    source_content_type=alert_ct,
-                    source_object_id__in=[alert.pk for alert in alerts],
-                    is_active=True,
-                ).only("id", "board_id", "source_object_id")
-            }
-            for alert in alerts:
-                task = tasks.get(alert.pk)
-                alert.linked_task_id = task.pk if task else None
-                alert.linked_task_board_id = task.board_id if task else None
-        context["alert_rows"] = _group_alerts(alerts)
+        # LV-69b: this used to resolve each alert's linked KanbanTask in one
+        # query, so the row could offer "Create task" vs "View task". Those
+        # actions were removed when the workboard left the menu (LV-69) --
+        # they pushed work into a place nobody navigates to any more -- so the
+        # query went with them rather than costing one lookup per page load for
+        # a value no template reads. Restoring the buttons means restoring this.
+        context["alert_rows"] = _group_alerts(list(context.get("objects") or []))
         return context
 
 

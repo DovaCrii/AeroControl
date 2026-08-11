@@ -407,10 +407,39 @@ class TestGroupedAlerts:
         # Both members grouped into one row: the rule name appears once, not
         # once per alert.
         assert content.count("Vencimiento de habilitaciones") == 1
-        # ...and each one keeps its own resolve AND its own task action.
+        # ...and each one keeps its own resolve.
         for alert in (alert_a, alert_b):
             assert reverse("alert-resolve", args=[alert.pk]) in content
-            assert reverse("alert-create-task", args=[alert.pk]) in content
+
+    @pytest.mark.django_db
+    def test_the_list_no_longer_pushes_work_to_the_hidden_workboard(
+        self, two_qualifications
+    ):
+        """LV-69b: the board left the sidebar, so the alert list must not offer
+        to create or open tasks there -- that sent work somewhere nobody
+        navigates to. The list is self-contained: resolve and undo."""
+        qual_a, _qual_b = two_qualifications
+        rule = AlertRule.objects.create(
+            name="Vencimiento de habilitaciones",
+            entity_type="qualification",
+            field_to_watch="expiry_date",
+        )
+        alert = Alert.objects.create(
+            alert_rule=rule,
+            content_type=ContentType.objects.get_for_model(Qualification),
+            object_id=qual_a.pk,
+            message="Expiring soon",
+        )
+        User.objects.create_superuser("admin", "a@test.com", "password")
+        client = Client()
+        assert client.login(username="admin", password="password")
+
+        content = client.get(reverse("alert-list")).content.decode()
+
+        assert reverse("alert-create-task", args=[alert.pk]) not in content
+        assert reverse("kanban") not in content
+        # The way out is still there, per alert.
+        assert reverse("alert-resolve", args=[alert.pk]) in content
 
     @pytest.mark.django_db
     def test_no_bulk_group_resolve_endpoint_exists(self):
