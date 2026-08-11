@@ -62,6 +62,29 @@ DOCUMENT_TYPES = [
         False,
         False,
     ),
+    # R4.6/R4.8: the remaining company-wide document types the new "Documentos
+    # de la empresa" repository needs to actually be usable -- without these,
+    # nobody could classify an AOC or a procedure upload there at all.
+    # aoc-certificate: confirmed with the user 2026-08-11 -- unlike a DGAC
+    # credential or an insurance policy, the AOC is a single internal
+    # document that is not periodically renewed/re-uploaded.
+    # requires_expiry=False, same reasoning as company-procedure below (a
+    # static reference document, not a vigencia to watch).
+    ("aoc-certificate", "Certificado AOC", False, False, False),
+    # company-procedure: manuals and procedures (e.g. the flyaway/emergency
+    # response procedure ISO 45001 8.2 asks for). Revised through
+    # is_current_version, not a vigencia -- same reasoning as
+    # maintenance-certificate above.
+    ("company-procedure", "Procedimiento o manual de la empresa", False, False, False),
+    # monthly-non-operation-notice: the DGAC filing for a month with no RPAS
+    # activity. A historical record of what (did not) happen, not a validity.
+    (
+        "monthly-non-operation-notice",
+        "Aviso Mensual de No Operación",
+        False,
+        False,
+        False,
+    ),
 ]
 
 
