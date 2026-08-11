@@ -72,9 +72,15 @@ distintos normalizan al mismo valor**:
 uv run python manage.py shell -c "
 from collections import Counter
 from apps.registry.models import Aircraft
-n = [''.join((a.serial_number or '').split()) for a in Aircraft.objects.all()]
-print([s for s,c in Counter(x for x in n if x).items() if c>1] or 'sin duplicados')"
+n = [''.join((s or '').split()) for s in Aircraft.objects.values_list('serial_number', flat=True)]
+print([x for x,c in Counter(v for v in n if v).items() if c>1] or 'sin duplicados')"
 ```
+
+> **`values_list`, no `Aircraft.objects.all()`** — y esto importa, no es estilo.
+> Este chequeo corre **con el código nuevo pero la base todavía sin migrar**, así
+> que un `.all()` haría `SELECT *` e intentaría leer columnas que aún no existen
+> (`insurance_status`, de la migración `0029`), fallando con *no such column*
+> antes de poder comprobar nada. `values_list` selecciona solo esa columna.
 
 Si imprime `sin duplicados`, seguir:
 
