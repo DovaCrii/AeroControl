@@ -10,6 +10,7 @@
       {% if object.credential_is_overdue %}<span class="badge bg-danger">{% translate "Overdue" %} · {{ object.credential_expiry|date:'Y-m-d' }}</span>
       {% else %}<span class="badge bg-warning-subtle text-warning-emphasis">{{ object.credential_expiry|date:'Y-m-d' }}</span>{% endif %}
     {% else %}<span class="text-muted">—</span>{% endif %}
+    {% if not object.has_credential_pdf %}<span class="badge bg-secondary-subtle text-secondary-emphasis" title="{% translate 'No DGAC credential PDF on file' %}">{% translate "No PDF" %}</span>{% endif %}
   </td>
   <td class="cell-truncate">{% if object.cost_center %}<span title="{{ object.cost_center }}">{{ object.cost_center.code }}</span>{% else %}<span class="text-muted">{% translate "Unassigned" %}</span>{% endif %}</td>
   <td class="cell-status">
