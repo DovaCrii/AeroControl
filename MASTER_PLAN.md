@@ -32,14 +32,16 @@
    ORM). Registro completo en `docs/backend-follow-up.md`. **Ya no bloquea
    R2.2/R2.3, R3.1/R3.1a ni R4** — la copia restaurada queda disponible para
    que el importador de R4 corra contra ella en modo informe.
-2. **`R1` — bugs que ocultan información de cumplimiento.** Barato y crítico:
-   hoy el calendario **no muestra** las vigencias DGAC/JAC en su vista por
-   defecto. Es justo la información que la auditoría exige tener a la vista.
-3. **`R2` — permiso de vuelo**: no existe vista de edición, y el folio DGAC
-   ausente se filtra como `status · purpose` a cuatro pantallas distintas.
-4. **`R3` — estandarización**, y **`X.1` — `serial_number` como llave única.**
-   Ambos **antes** de importar documentos: si se importa primero, se reimporta.
+2. ~~**`R1` — bugs que ocultan información de cumplimiento.**~~ **Completo, R1.1-R1.5
+   ✅** (cerrado 2026-08-07 en `ee3db03`, checkboxes corregidos 2026-08-11 — habían
+   quedado desactualizados aunque el código ya estaba arreglado). El calendario
+   ahora sí muestra las vigencias DGAC/JAC en su vista por defecto.
+3. ~~**`R2` — permiso de vuelo**~~ **Completo, R2.1-R2.7 ✅.**
+4. ~~**`R3` — estandarización**, y **`X.1` — `serial_number` como llave única.**~~
+   **Completos.**
 5. **`R4` — repositorio documental** (importador desde `Z:` con revisión previa).
+   **Parcial** — ver bloque `R4` más abajo (bloqueado en 2 carpetas de `Z:` y el
+   antivirus para `.msg`, ambos del lado del usuario).
 6. `R5` trazabilidad → `R6` alertas/reportes → `R7` base ISO → `R8` clima.
 7. **CSP a enforcing en producción**: verificado en demo, solo falta activar la
    variable de entorno en `p340`.
@@ -939,9 +941,9 @@ arranca la implementación sin "go" explícito del usuario.**
 
 | ID | Est. | Tarea | Archivos |
 |---|:--:|---|---|
-| R1.1 | ⬜ | **[bug] El calendario oculta las vigencias DGAC y JAC en su vista por defecto.** `typeQuery()` expande `'all'` a 7 tipos literales y omite `operator_credential` y `aircraft_insurance`; el selector arranca en "Todos los eventos", así que un seguro que vence mañana **no se ve**. Arreglar la **causa**: derivar la lista desde el servidor (los 9 tipos ya están en `CALENDAR_EVENT_PERMISSIONS`) en vez de repetirla en el JS, para que no vuelva a desincronizarse. | `static/js/calendar.js:19-23`, `templates/core/calendar.html`, `apps/core/views.py:286-298` |
-| R1.2 | ⬜ | **[bug]** Permiso sin folio renderiza el literal `"None"` en el calendario. Lo resuelve R2.2; dejar además una guarda explícita. | `apps/core/views.py:491-503` |
-| R1.3 | ⬜ | Panel "Próximos vencimientos": la etiqueta es el mismo gris para las 5 fuentes y no hay noción de urgencia — un vencimiento de mañana se ve igual que uno de un mes. Reutilizar los buckets **ya existentes** (`KanbanTask.urgency_bucket` / `compliance/reports.py`: vencido/≤7/≤15/≤30), mostrar "faltan N días", y hacer clickeable la tarjeta KPI "Vence en 30 días" (es la única del grid que no lo es). | `apps/dashboard/views.py:18-110`, `templates/dashboard/index.html:41-44,97-110` |
+| R1.1 | ✅ | **[bug] El calendario oculta las vigencias DGAC y JAC en su vista por defecto.** **Ya estaba hecho desde el commit `ee3db03` (2026-08-07, mismo commit que cerró R1.4/R1.5) -- checkbox quedado desactualizado, corregido 2026-08-11.** `typeQuery()` ya no expande `'all'` a una lista literal en JS; el servidor computa la expansión desde `CALENDAR_EVENT_PERMISSIONS` (9 tipos, incluye `operator_credential`/`aircraft_insurance`) y la expone vía `data-all-types`, así no puede volver a desincronizarse. Cubierto por `test_calendar_all_types_includes_dgac_and_jac_vigencias`. **Re-verificado en vivo hoy contra el demo**: `data-all-types` trae los 9 tipos y el feed `/calendar/events/` con `types=all` incluye `RPA-2002 · Seguro JAC` y las credenciales DGAC de Bruno Díaz/Elena Vega. | `static/js/calendar.js:19-24`, `templates/core/calendar.html`, `apps/core/views.py:286-308` |
+| R1.2 | ✅ | **[bug]** Permiso sin folio renderiza el literal `"None"` en el calendario. **Ya estaba hecho desde `ee3db03` (2026-08-07)** -- checkbox desactualizado. `_permission_title` (calendario) y el panel de vencimientos del dashboard usaban placeholders explícitos ("Pending DGAC folio"/"En proceso") en vez de interpolar `None`; **R2.2/R2.3 (2026-08-10) volvieron el guard innecesario en la práctica** al darle a todo permiso un `internal_folio` siempre presente (`__str__` ya no puede devolver `None`). Cubierto por `test_permission_without_dgac_folio_does_not_render_the_word_none`. | `apps/core/views.py:491-503`, `apps/operations/models.py` |
+| R1.3 | ✅ | Panel "Próximos vencimientos": la etiqueta es el mismo gris para las 5 fuentes y no hay noción de urgencia. **Ya estaba hecho desde `ee3db03` (2026-08-07)** -- checkbox desactualizado. Reutiliza `digest.bucket_for` (misma escala vencido/≤7/≤15/≤30 que el reporte de cumplimiento y la tarjeta Kanban), texto "Vence en N días", y la tarjeta KPI "Vence en 30 días" ya enlaza a `#upcoming-expirations`. **Re-verificado en vivo hoy**: filas con `text-warning-emphasis fw-semibold` y "Vence en 15 días", tarjeta con `href="#upcoming-expirations"`. | `apps/dashboard/views.py:18-110`, `templates/dashboard/index.html:41-44,97-110` |
 | R1.4 | ✅ | **Investigado 2026-08-07, no reproducible con el código actual.** `_card.html:28` usa `{{ task.due_date\|date:"M j" }}`, que pasa por `django.utils.dateformat` — traducido, no un `strftime` crudo (se auditó todo `apps/` buscando `%b`/`%B` directos: cero resultados). Verificado en vivo contra la demo (fecha en agosto) y en test sin `override()` de idioma (usa el default del proyecto, `LANGUAGE_CODE="es"`): ambos muestran "Ago 5", no "Aug 5". `LocaleMiddleware` está bien ubicado en `MIDDLEWARE` y no hay ningún `translation.activate()`/`deactivate()` sin scope que pudiera filtrar estado entre requests. Conclusión más probable: la captura del usuario corresponde a una sesión con idioma de navegador o cookie en inglés en ese momento, no a un defecto de código. **Test de regresión agregado** (`test_kanban_card_due_date_month_is_localized`) para que, si esto reaparece, falle un test en vez de descubrirse otra vez en producción. | `apps/workboard/tests.py` |
 | R1.5 | ✅ | **Investigado 2026-08-07, no reproducible.** Es un `<a href="{% url 'geo-plan-list' %}">` plano, sin `hx-*` ni `data-history-back`, así que no depende de JS para navegar. Probado en el navegador contra la demo en los tres estados relevantes de la ficha — vista simple, edición activa, y con "Comparar" versiones abierto — sin ningún error de consola ni fallo de navegación en ninguno. Hipótesis más probable: algo transitorio de la sesión del usuario en el momento de la captura (no un defecto de código reproducible). Si vuelve a pasar, hace falta el estado exacto del plan (¿cuántas versiones, `flight_permission` vinculado, estado del borrador?) para reproducirlo. | `templates/geo/plan_detail.html:34` |
 
