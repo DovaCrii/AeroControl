@@ -113,8 +113,8 @@ zona de despegue. Bitácora de cada vuelo.
 | | |
 |---|---|
 | Estado | 🟡 |
-| Hoy | Plan de misión: módulo geoespacial con versionado. Bitácora: `FlightRecord` + tipos de registro operacional (`flight-log`, `rpa-checklist`, `drone-inspection`) con cierre mensual que cruza vuelos contra registros. `Aircraft.vlos` existe como campo. |
-| Falta | **Meteorología: no existe** — el proyecto no hace ninguna llamada HTTP saliente hoy → `R8.1`. Evaluación de sitio y obstáculos no se modela. El checklist existe como *documento adjunto*, no como formulario estructurado. |
+| Hoy | Plan de misión: módulo geoespacial con versionado. Bitácora: `FlightRecord` + tipos de registro operacional (`flight-log`, `rpa-checklist`, `drone-inspection`) con cierre mensual que cruza vuelos contra registros. `Aircraft.vlos` existe como campo. **Meteorología (R8.1, hecho 2026-08-11):** la ficha del plan geo muestra viento máximo, ráfagas, precipitación y probabilidad de lluvia sobre el área del plan para el día en que empieza el permiso vinculado (Open-Meteo, sin API key, llamada del lado del servidor, apagada por defecto vía `WEATHER_ENABLED`). |
+| Falta | Evaluación de sitio y obstáculos no se modela. El checklist existe como *documento adjunto*, no como formulario estructurado. El pronóstico es **de referencia y no queda registrado**: si el auditor pide evidencia de que la revisión meteorológica *se hizo* para un vuelo concreto, eso todavía no se guarda (hoy se consulta en vivo, no se persiste con el `FlightRecord`). |
 
 ### 8.4 — Control de proveedores y pilotos externos
 
@@ -204,7 +204,8 @@ equipos, cumplimiento de plazos.
 |---|---|
 | ✅ Cubierto | 6.1.3/9.1.2 (cumplimiento legal DGAC) |
 | 🟡 Parcial | 4.2, 6.1.3 (zonas/privacidad), 7.1.3, 7.2, 8.1, 45001 8.2, 10.2, 9.1.1 |
-| ⬜ Brecha | 6.1 (riesgo por vuelo), 7.1.5 (calibración), 8.4 (externos), 8.5.1/8.6 (calidad), 14001 6.1.2 (ambiental), 45001 6.1.2 (IPER) |
+| ⬜ Brecha | 6.1 (riesgo por vuelo), 8.4 (externos), 8.5.1/8.6 (calidad), 14001 6.1.2 (ambiental), 45001 6.1.2 (IPER) |
+| 🟡 Movida a parcial | 7.1.5 (calibración) — `calibration-certificate` existe como tipo de documento desde `R7.3` (2026-08-11); falta el modelo de GCP |
 
 **Lectura:** AeroControl está fuerte donde la DGAC fiscaliza —vigencias, permisos,
 documentación, trazabilidad de equipos— y débil en el resto del sistema de gestión:

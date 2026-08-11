@@ -58,6 +58,23 @@
   </div>
 </div>
 
+{% comment %}R8.1 (ISO 8.1): the meteorological review for the day this area is
+flown. Absent entirely when the feature is off, the area has no bounding box or
+the provider did not answer -- a forecast is context, never a blocker.{% endcomment %}
+{% if weather %}
+<div class="card mb-3 p-3">
+  <h2 class="h5 mb-1">{% translate "Weather forecast" %}</h2>
+  <p class="text-muted small mb-3">{% blocktranslate with date=weather_date|date:"Y-m-d" %}Forecast over this area for {{ date }}, the day the linked permit begins.{% endblocktranslate %}</p>
+  <div class="row g-3">
+    <div class="col-sm-3"><div class="summary-card"><small>{% translate "Max wind" %}</small><strong>{% if weather.wind_speed_10m_max is not None %}{{ weather.wind_speed_10m_max }} {{ weather.units.wind_speed_10m_max|default:"" }}{% else %}—{% endif %}</strong></div></div>
+    <div class="col-sm-3"><div class="summary-card"><small>{% translate "Max gusts" %}</small><strong>{% if weather.wind_gusts_10m_max is not None %}{{ weather.wind_gusts_10m_max }} {{ weather.units.wind_gusts_10m_max|default:"" }}{% else %}—{% endif %}</strong></div></div>
+    <div class="col-sm-3"><div class="summary-card"><small>{% translate "Precipitation" %}</small><strong>{% if weather.precipitation_sum is not None %}{{ weather.precipitation_sum }} {{ weather.units.precipitation_sum|default:"" }}{% else %}—{% endif %}</strong></div></div>
+    <div class="col-sm-3"><div class="summary-card"><small>{% translate "Chance of rain" %}</small><strong>{% if weather.precipitation_probability_max is not None %}{{ weather.precipitation_probability_max }}%{% else %}—{% endif %}</strong></div></div>
+  </div>
+  <p class="text-muted small mb-0 mt-3">{% translate "Source: Open-Meteo. Reference only -- it does not replace the pre-flight check." %}</p>
+</div>
+{% endif %}
+
 {% if editable %}
 <dialog id="geo-save-dialog" class="geo-dialog">
   <form method="dialog">

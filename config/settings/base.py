@@ -169,6 +169,20 @@ GEO_TILE_PROVIDERS = [
     },
 ]
 
+# R8.1 (ISO 8.1 meteorological review). The project's only outgoing HTTP call,
+# so it is **opt-in**: a deployment that never sets WEATHER_ENABLED keeps the
+# zero-outgoing-calls property it has today. Open-Meteo needs no API key, so
+# there is no credential here -- see apps/core/weather.py for why that decided
+# the provider choice. The call is server-side only, so the CSP below is
+# unaffected (no connect-src exception).
+WEATHER_ENABLED = config("WEATHER_ENABLED", default=False, cast=bool)
+WEATHER_API_URL = config(
+    "WEATHER_API_URL", default="https://api.open-meteo.com/v1/forecast"
+)
+# Short on purpose: a slow third party must not hold a gunicorn worker.
+WEATHER_TIMEOUT_SECONDS = config("WEATHER_TIMEOUT_SECONDS", default=4, cast=int)
+WEATHER_CACHE_SECONDS = config("WEATHER_CACHE_SECONDS", default=3600, cast=int)
+
 CSP_REPORT_ONLY = config("CSP_REPORT_ONLY", default=True, cast=bool)
 # Where the browser posts CSP violation reports. Defaults to the app's own
 # logging endpoint; set empty to omit the report-uri directive entirely.

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-11 12:52-0400\n"
+"POT-Creation-Date: 2026-08-11 13:59-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -799,7 +799,7 @@ msgid "Editor"
 msgstr "Editor"
 
 #: .\apps\geo\models.py:120 .\templates\generic\_table_body.html:16
-#: .\templates\generic\detail.html:22 .\templates\geo\plan_detail.html:102
+#: .\templates\generic\detail.html:22 .\templates\geo\plan_detail.html:120
 #: .\templates\registry\_operator_rows.html:25
 #: .\templates\registry\aircraft_detail.html:14
 #: .\templates\registry\costcenter_detail.html:14
@@ -875,7 +875,7 @@ msgstr "Área"
 msgid "Layers"
 msgstr "Capas"
 
-#: .\apps\geo\views.py:174 .\templates\geo\plan_detail.html:85
+#: .\apps\geo\views.py:174 .\templates\geo\plan_detail.html:103
 msgid "Features"
 msgstr "Elementos"
 
@@ -976,32 +976,32 @@ msgstr "Eliminado"
 msgid "Changed"
 msgstr "Modificado"
 
-#: .\apps\geo\views.py:202 .\templates\geo\plan_detail.html:83
+#: .\apps\geo\views.py:202 .\templates\geo\plan_detail.html:101
 #: .\templates\geo\plan_list.html:18
 msgid "Version"
 msgstr "Versión"
 
-#: .\apps\geo\views.py:310
+#: .\apps\geo\views.py:334
 msgid "Editing started."
 msgstr "Edición iniciada."
 
-#: .\apps\geo\views.py:318
+#: .\apps\geo\views.py:342
 msgid "Plan submitted for review."
 msgstr "Plan enviado a revisión."
 
-#: .\apps\geo\views.py:326
+#: .\apps\geo\views.py:350
 msgid "Plan approved."
 msgstr "Plan aprobado."
 
-#: .\apps\geo\views.py:334
+#: .\apps\geo\views.py:358
 msgid "Plan rejected."
 msgstr "Plan rechazado."
 
-#: .\apps\geo\views.py:342
+#: .\apps\geo\views.py:366
 msgid "Editing resumed."
 msgstr "Edición reanudada."
 
-#: .\apps\geo\views.py:350
+#: .\apps\geo\views.py:374
 msgid "Plan reopened for editing."
 msgstr "Plan reabierto para edición."
 
@@ -1890,26 +1890,26 @@ msgstr "%(name)s archivado. Se puede restaurar desde el filtro de archivados."
 msgid "%(name)s restored."
 msgstr "%(name)s restaurado."
 
-#: .\apps\registry\views.py:747
+#: .\apps\registry\views.py:749
 msgid "Assign operators to a cost center"
 msgstr "Asignar operadores a un centro de costo"
 
-#: .\apps\registry\views.py:799
+#: .\apps\registry\views.py:801
 msgid "Assign aircraft to a cost center"
 msgstr "Asignar aeronaves a un centro de costo"
 
-#: .\apps\registry\views.py:913 .\templates\base.html:132
+#: .\apps\registry\views.py:915 .\templates\base.html:132
 msgid "Resource movements"
 msgstr "Movimientos de recursos"
 
-#: .\apps\registry\views.py:1027
+#: .\apps\registry\views.py:1029
 #, python-format
 msgid "%(count)s %(name)s imported. You can undo this from the import page."
 msgstr ""
 "%(count)s %(name)s importados. Puedes deshacerlo desde la página de "
 "importación."
 
-#: .\apps\registry\views.py:1117
+#: .\apps\registry\views.py:1119
 #, python-format
 msgid "%(count)s imported records archived."
 msgstr "%(count)s registros importados archivados."
@@ -2205,7 +2205,7 @@ msgstr "Crear uno"
 
 #: .\templates\compliance\_document_form_content.html:20
 #: .\templates\generic\_form_content.html:12 .\templates\generic\form.html:14
-#: .\templates\geo\plan_detail.html:48 .\templates\geo\plan_detail.html:69
+#: .\templates\geo\plan_detail.html:48 .\templates\geo\plan_detail.html:87
 #: .\templates\registry\_costcenter_form_content.html:12
 #: .\templates\registry\costcenter_form.html:14
 #: .\templates\workboard\_task_form.html:6
@@ -2217,7 +2217,7 @@ msgstr "Guardar"
 #: .\templates\compliance\document_replace.html:4
 #: .\templates\generic\_form_content.html:13
 #: .\templates\generic\confirm_delete.html:6 .\templates\generic\form.html:15
-#: .\templates\geo\plan_detail.html:68 .\templates\geo\plan_import.html:22
+#: .\templates\geo\plan_detail.html:86 .\templates\geo\plan_import.html:22
 #: .\templates\registration\password_change_form.html:14
 #: .\templates\registry\_costcenter_form_content.html:13
 #: .\templates\registry\costcenter_archive_confirm.html:22
@@ -2229,7 +2229,7 @@ msgstr "Cancelar"
 #: .\templates\compliance\_document_rows.html:8
 #: .\templates\compliance\document_list.html:16
 #: .\templates\compliance\document_list.html:19
-#: .\templates\geo\plan_detail.html:93
+#: .\templates\geo\plan_detail.html:111
 #: .\templates\registry\_operator_rows.html:17
 msgid "Current"
 msgstr "Vigente"
@@ -2735,7 +2735,7 @@ msgid "CSV"
 msgstr "CSV"
 
 #: .\templates\compliance\report.html:36 .\templates\core\audit_log.html:24
-#: .\templates\geo\plan_detail.html:159
+#: .\templates\geo\plan_detail.html:177
 #: .\templates\maintenance\record_detail.html:48
 #: .\templates\operations\permission_detail.html:57
 #: .\templates\registry\aircraft_detail.html:90
@@ -2746,7 +2746,7 @@ msgid "From"
 msgstr "Desde"
 
 #: .\templates\compliance\report.html:40 .\templates\core\audit_log.html:25
-#: .\templates\geo\plan_detail.html:159
+#: .\templates\geo\plan_detail.html:177
 #: .\templates\maintenance\record_detail.html:48
 #: .\templates\operations\permission_detail.html:57
 #: .\templates\registry\aircraft_detail.html:90
@@ -3186,11 +3186,11 @@ msgstr "Tareas"
 msgid "Monthly Flights (6 months)"
 msgstr "Vuelos mensuales (6 meses)"
 
-#: .\templates\generic\_fields_detail_table.html:9
+#: .\templates\generic\_fields_detail_table.html:10
 msgid "Yes"
 msgstr "Sí"
 
-#: .\templates\generic\_fields_detail_table.html:9
+#: .\templates\generic\_fields_detail_table.html:10
 msgid "No"
 msgstr "No"
 
@@ -3278,8 +3278,8 @@ msgstr "Nuevo registro"
 msgid "All statuses"
 msgstr "Todos los estados"
 
-#: .\templates\generic\list.html:36 .\templates\geo\plan_detail.html:86
-#: .\templates\geo\plan_detail.html:159 .\templates\geo\plan_list.html:19
+#: .\templates\generic\list.html:36 .\templates\geo\plan_detail.html:104
+#: .\templates\geo\plan_detail.html:177 .\templates\geo\plan_list.html:19
 #: .\templates\registry\aircraft_detail.html:90
 #: .\templates\registry\costcenter_detail.html:132
 #: .\templates\registry\operator_detail.html:57
@@ -3299,55 +3299,90 @@ msgstr "Mapa"
 msgid "Redo"
 msgstr "Rehacer"
 
-#: .\templates\geo\plan_detail.html:64
+#: .\templates\geo\plan_detail.html:67
+msgid "Weather forecast"
+msgstr "Pronóstico meteorológico"
+
+#: .\templates\geo\plan_detail.html:68
+#, python-format
+msgid "Forecast over this area for %(date)s, the day the linked permit begins."
+msgstr ""
+"Pronóstico sobre esta área para el %(date)s, el día en que empieza el permiso "
+"vinculado."
+
+#: .\templates\geo\plan_detail.html:70
+msgid "Max wind"
+msgstr "Viento máximo"
+
+#: .\templates\geo\plan_detail.html:71
+msgid "Max gusts"
+msgstr "Ráfagas máximas"
+
+#: .\templates\geo\plan_detail.html:72
+msgid "Precipitation"
+msgstr "Precipitación"
+
+#: .\templates\geo\plan_detail.html:73
+msgid "Chance of rain"
+msgstr "Probabilidad de lluvia"
+
+#: .\templates\geo\plan_detail.html:75
+msgid ""
+"Source: Open-Meteo. Reference only -- it does not replace the pre-flight "
+"check."
+msgstr ""
+"Fuente: Open-Meteo. Solo de referencia -- no reemplaza el chequeo "
+"preoperacional."
+
+#: .\templates\geo\plan_detail.html:82
 msgid "Save a new version"
 msgstr "Guardar una nueva versión"
 
-#: .\templates\geo\plan_detail.html:65
+#: .\templates\geo\plan_detail.html:83
 msgid "Describe your change"
 msgstr "Describe tu cambio"
 
-#: .\templates\geo\plan_detail.html:78
+#: .\templates\geo\plan_detail.html:96
 msgid "Versions"
 msgstr "Versiones"
 
-#: .\templates\geo\plan_detail.html:84
+#: .\templates\geo\plan_detail.html:102
 msgid "Source"
 msgstr "Origen"
 
-#: .\templates\geo\plan_detail.html:109
+#: .\templates\geo\plan_detail.html:127
 msgid "No versions yet."
 msgstr "Aún no hay versiones."
 
-#: .\templates\geo\plan_detail.html:121
+#: .\templates\geo\plan_detail.html:139
 msgid "Export"
 msgstr "Exportar"
 
-#: .\templates\geo\plan_detail.html:122
+#: .\templates\geo\plan_detail.html:140
 msgid "Download the current version to open in Google Earth."
 msgstr "Descarga la versión vigente para abrirla en Google Earth."
 
-#: .\templates\geo\plan_detail.html:128
+#: .\templates\geo\plan_detail.html:146
 msgid "Export KML"
 msgstr "Exportar KML"
 
-#: .\templates\geo\plan_detail.html:134
+#: .\templates\geo\plan_detail.html:152
 msgid "Export KMZ"
 msgstr "Exportar KMZ"
 
-#: .\templates\geo\plan_detail.html:142
+#: .\templates\geo\plan_detail.html:160
 msgid "Source file"
 msgstr "Archivo de origen"
 
-#: .\templates\geo\plan_detail.html:146
+#: .\templates\geo\plan_detail.html:164
 msgid "Download original"
 msgstr "Descargar original"
 
-#: .\templates\geo\plan_detail.html:149
+#: .\templates\geo\plan_detail.html:167
 msgid "No source file."
 msgstr "Sin archivo de origen."
 
-#: .\templates\geo\plan_detail.html:157
+#: .\templates\geo\plan_detail.html:175
 msgid "Flight permission link history"
 msgstr "Historial de vínculo con el permiso de vuelo"
 
