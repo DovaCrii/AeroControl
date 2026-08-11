@@ -5,6 +5,52 @@
 > post-auditoría"**, al inicio del archivo. Este documento es solo el resumen
 > de estado; el detalle de cada ítem vive en las filas de `MASTER_PLAN.md`.
 
+## ⚠️ CÓMO SE RESUELVE UNA ALERTA (leer antes de tocar alertas)
+
+Escrito el 2026-08-11 porque el usuario lo preguntó explícitamente y la
+respuesta no es obvia. **La regla de oro: arreglar el dato primero, resolver
+después.**
+
+`generate_alerts` corre a diario (06:00) y crea una alerta por registro en
+ventana. **Sólo evita duplicar contra alertas ABIERTAS**, así que:
+
+> **Resolver una alerta cuya condición sigue vigente la hace reaparecer a la
+> mañana siguiente.** No es un defecto — impide barrer un vencimiento bajo la
+> alfombra — pero explica por qué "Resolver" puede parecer que no funciona.
+
+**Cierran solas (no hay que tocar la alerta):**
+
+| Acción | Mecanismo |
+|---|---|
+| Reemplazar un documento por una versión nueva | `Document.resolve_related_alerts` |
+| Completar una mantención | `resolve_open_alerts_for` (maintenance/views.py) |
+| Firmar la revisión mensual | `resolve_open_alerts_for` (compliance/models.py) |
+| Completar la tarjeta del tablero | señal de R6.1 |
+
+**NO cierran solas — hay que resolver a mano, y es la mayoría de lo real:**
+seguro JAC (`Aircraft.insurance_expiry`), credencial DGAC
+(`Operator.credential_expiry`), habilitación (`Qualification.expiry_date`) y
+permiso de vuelo (`FlightPermission.valid_until`). Ver **LV-71** en
+`MASTER_PLAN.md`: la asimetría está capturada, con la tensión que impide el
+arreglo obvio (cerrar al mover la fecha cerraría **sin motivo registrado**, y
+R6.2 exige causa raíz para el cierre humano por ISO 10.2).
+
+**Flujo correcto, ejemplo con un seguro JAC:**
+
+1. Renovar la póliza con la aseguradora.
+2. Ficha de la aeronave → Editar → actualizar "Vencimiento seguro JAC".
+3. `/compliance/alert/` → **Resolver** → escribir el motivo ("póliza renovada,
+   folio 12345").
+
+Si se hace 3 sin 2, la alerta vuelve mañana.
+
+**Nota sobre el tablero (LV-69/LV-69b):** "Seguimiento de alertas" salió del
+menú y la lista de alertas ya no ofrece "Crear tarea"/"Ver tarea". Verificado en
+producción el 2026-08-11: **ninguna regla tiene `create_kanban_task` activo**,
+así que nada se acumula ahí; queda 1 tarjeta viva, y **se cierra sola** cuando
+se resuelva su alerta desde la lista (`Alert.resolve()` mueve la tarjeta a la
+etapa completada, B1.6). No hay nada que limpiar a mano.
+
 ## 🚀 ESTADO DE RELEASE — 2026-08-11
 
 ### ✅ MERGE Y PUSH HECHOS
