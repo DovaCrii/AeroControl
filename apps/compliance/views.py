@@ -498,15 +498,15 @@ def _group_alerts(alerts):
             rows.append(("group", key))
         buckets[key].append(alert)
 
-    result = []
-    for kind, value in rows:
-        members = [value] if kind == "single" else buckets[value]
-        is_group = len(members) > 1
-        row = {"alerts": members, "is_group": is_group}
-        if is_group:
-            row["ids"] = ",".join(str(member.pk) for member in members)
-        result.append(row)
-    return result
+    # No group-level id list: LV-68 removed the bulk resolve, so nothing needs
+    # to address the group as a unit any more. Each member is acted on by pk.
+    return [
+        {
+            "alerts": [value] if kind == "single" else buckets[value],
+            "is_group": kind == "group" and len(buckets[value]) > 1,
+        }
+        for kind, value in rows
+    ]
 
 
 class AlertList(ComplianceList):
@@ -615,71 +615,14 @@ class AlertResolve(ModelPermissionRequiredMixin, View):
         return _redirect_back(request)
 
 
-class AlertResolveGroup(ModelPermissionRequiredMixin, View):
-    """R6.3: resolve every alert in a same-rule, same-date group with one
-    shared reason, instead of clicking "Resolve" N times and retyping the
-    same explanation -- e.g. a fleet insurance policy that renews on one
-    date but covers several aircraft.
-
-    `ids` is the comma-joined pks _group_alerts put together for that row.
-    Grouping is a list-display concern only: each alert still resolves (and
-    closes its own linked task, if any) independently via Alert.resolve() --
-    a partial failure leaves the rest resolved rather than none.
-    """
-
-    model = Alert
-    permission_action = "change"
-
-    def _alerts(self, ids):
-        pks = [pk for pk in ids.split(",") if pk]
-        alerts = list(
-            Alert.objects.filter(pk__in=pks, is_active=True, is_resolved=False)
-        )
-        if not alerts:
-            raise Http404
-        return alerts
-
-    def get(self, request, ids):
-        alerts = self._alerts(ids)
-        return render(
-            request,
-            "generic/_form_content.html",
-            {
-                "form": AlertResolveForm(),
-                "title": _("Resolve %(count)d alerts") % {"count": len(alerts)},
-            },
-        )
-
-    def post(self, request, ids):
-        alerts = self._alerts(ids)
-        form = AlertResolveForm(request.POST)
-        if not form.is_valid():
-            return render(
-                request,
-                "generic/_form_content.html",
-                {
-                    "form": form,
-                    "title": _("Resolve %(count)d alerts") % {"count": len(alerts)},
-                },
-                status=422,
-            )
-        reason = form.cleaned_data["reason"]
-        for alert in alerts:
-            moved_task = alert.resolve(reason=reason)
-            metadata = {"reason": reason, "group_size": len(alerts)}
-            if moved_task:
-                metadata["moved_task_id"] = str(moved_task.pk)
-            set_audit_context(
-                request, alert, action="alert_resolved", metadata=metadata
-            )
-        if request.headers.get("HX-Request") == "true":
-            return HttpResponse(
-                status=204, headers={"HX-Trigger": "modal-form-success"}
-            )
-        messages.success(
-            request, _("%(count)d alerts resolved.") % {"count": len(alerts)}
-        )
-        return _redirect_back(request)
+# LV-68 (2026-08-11): AlertResolveGroup lived here -- one modal that resolved a
+# whole (rule, date) group with a single shared reason. Removed after seeing it
+# against real production data: two aircraft can share an insurance expiry date
+# without sharing a cause, and writing one root cause across independent
+# findings is false evidence, the opposite of what ISO 10.2 wants. The visual
+# grouping stays (R6.3, it does cut noise); every action is per alert again.
+# Deleted rather than left unrouted: an endpoint that performs the action we
+# just judged wrong is a liability, not a spare part.
 
 
 class AlertReopen(ModelPermissionRequiredMixin, View):

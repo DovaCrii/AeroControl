@@ -4,18 +4,21 @@
 {% block content %}<div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h3">{% translate "Alerts" %}</h1><a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a></div><form method="get" class="row g-2 mb-3"><div class="col-md-4"><input class="form-control" name="q" value="{{ request.GET.q }}" placeholder="{% translate 'Search alerts...' %}"></div><div class="col-md-3"><select class="form-select" name="is_resolved"><option value="">{% translate "All alerts" %}</option><option value="false" {% if request.GET.is_resolved == 'false' %}selected{% endif %}>{% translate "Unresolved" %}</option><option value="true" {% if request.GET.is_resolved == 'true' %}selected{% endif %}>{% translate "Resolved" %}</option></select></div><div class="col-auto"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div></form><div class="card"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th scope="col">{% translate "Entity type" %}</th><th scope="col">{% translate "Entity" %}</th><th scope="col">{% translate "Rule" %}</th><th scope="col">{% translate "Triggered" %}</th><th scope="col">{% translate "Expiry" %}</th><th scope="col" class="text-end">{% translate "Actions" %}</th></tr></thead><tbody>{% for row in alert_rows %}{% with object=row.alerts.0 %}<tr>
   <td><span class="badge bg-secondary-subtle text-secondary-emphasis">{{ object.entity_label }}</span></td>
   {% if row.is_group %}
-  {% comment %}R6.3: same rule, same watched date (e.g. one insurance policy
-  renewal covering several aircraft) -- one row, entities listed together,
-  each keeping its own per-alert task action.{% endcomment %}
-  <td><ul class="list-unstyled mb-0">{% for member in row.alerts %}<li><strong>{{ member.content_object|default:_("Record unavailable") }}</strong>
+  {% comment %}R6.3 groups same-rule, same-date alerts into one row to cut noise
+  on a long list. LV-68 (2026-08-11, from real production data): the row must
+  NOT offer a single "resolve all with one shared reason". Two aircraft can
+  share an expiry date without sharing a cause -- their insurance policies are
+  separate -- and signing one root cause for two independent facts is false
+  evidence, the opposite of what ISO 10.2 asks for. So the grouping stays
+  visual (rule and date shown once) and every action stays per alert.{% endcomment %}
+  <td><ul class="list-unstyled mb-0">{% for member in row.alerts %}<li class="mb-1"><strong>{{ member.content_object|default:_("Record unavailable") }}</strong>
     {% if not member.linked_task_id %}<form method="post" class="d-inline" action="{% url 'alert-create-task' member.pk %}">{% csrf_token %}<button class="btn btn-sm btn-link p-0 align-baseline" title="{% translate 'Create a follow-up task on the compliance board' %}">{% translate "Create task" %}</button></form>{% else %}<a class="small" href="{% url 'kanban' %}?board={{ member.linked_task_board_id }}">{% translate "View task" %}</a>{% endif %}
+    <a class="btn btn-sm btn-link p-0 align-baseline text-success" href="{% url 'alert-resolve' member.pk %}" hx-get="{% url 'alert-resolve' member.pk %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" title="{% translate 'Resolve, with a reason on record (ISO 10.2)' %}">{% translate "Resolve" %}</a>
   </li>{% endfor %}</ul></td>
   <td>{{ object.alert_rule.name }}</td>
   <td><span class="text-nowrap">{{ object.triggered_at|date:'Y-m-d' }}</span></td>
   <td>{% if object.is_overdue %}<span class="badge bg-danger">{% translate "Overdue" %} · {{ object.watched_date|date:'Y-m-d' }}</span>{% else %}<span class="badge bg-warning text-dark">{% translate "Due" %} {{ object.watched_date|date:'Y-m-d' }}</span>{% endif %}</td>
-  <td class="text-end">
-    <a class="btn btn-sm btn-outline-success text-nowrap" href="{% url 'alert-resolve-group' row.ids %}" hx-get="{% url 'alert-resolve-group' row.ids %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" title="{% translate 'Resolve all of these with one shared reason (ISO 10.2)' %}">{% translate "Resolve" %} ({{ row.alerts|length }})</a>
-  </td>
+  <td class="text-end"><span class="text-muted small">{% blocktranslate count counter=row.alerts|length %}{{ counter }} alert{% plural %}{{ counter }} alerts{% endblocktranslate %}</span></td>
   {% else %}
   <td><strong>{{ object.content_object|default:_("Record unavailable") }}</strong></td>
   <td>{{ object.alert_rule.name }}</td>
