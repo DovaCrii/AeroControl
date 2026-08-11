@@ -28,6 +28,7 @@ from apps.geo.api import (
     GeoPlanVersionContentView,
     GeoPlanVersionsView,
 )
+from apps.registry.api import AircraftPadronViewSet
 
 admin.site.site_header = "AeroControl Administration"
 admin.site.site_title = "AeroControl"
@@ -127,6 +128,18 @@ urlpatterns = [
         "api/v1/geo/plans/<uuid:pk>/resource/",
         GeoPlanResourceView.as_view(),
         name="api-v1-geo-plan-resource",
+    ),
+    # X.3: read-only padrón for AeroLink. Only "list" and "retrieve" are
+    # routed -- there is no write route to gate, by design (ADR-0002).
+    path(
+        "api/v1/registry/aircraft/",
+        AircraftPadronViewSet.as_view({"get": "list"}),
+        name="api-v1-registry-aircraft",
+    ),
+    path(
+        "api/v1/registry/aircraft/<uuid:pk>/",
+        AircraftPadronViewSet.as_view({"get": "retrieve"}),
+        name="api-v1-registry-aircraft-detail",
     ),
     path("", include("apps.dashboard.urls")),
     path("registry/", include("apps.registry.urls")),

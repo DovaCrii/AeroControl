@@ -98,9 +98,33 @@ Ninguno escribe en el dominio del otro.
 Contratos versionados sobre HTTP, en la red interna de `p340`. Nada de acceso directo a
 datos.
 
-- **Fase 1 (`X.3`)** — AeroControl expone el padrón como endpoint **de solo lectura**.
-  Ya existe la infraestructura: DRF, autenticación por token y throttling
-  (`ThrottledObtainAuthToken`). Es un scope nuevo, no una aplicación nueva.
+- **Fase 1 (`X.3`) — implementada 2026-08-11.** AeroControl expone el padrón como
+  endpoint **de solo lectura**: `GET /api/v1/registry/aircraft/` (lista) y
+  `.../<uuid>/` (detalle), con `?serial=<serial>` como la búsqueda que AeroLink
+  realmente usa — tiene un serial de DJI y necesita la aeronave que le
+  corresponde. Detalles del contrato:
+  - **Solo lectura de verdad**: no hay ruta de escritura que proteger. Un
+    superusuario recibe `405` en POST/PUT/PATCH/DELETE, así que esto no se puede
+    "aflojar" después repartiendo un permiso.
+  - **Serial exacto, nunca parcial**: un prefijo que calce atribuiría telemetría
+    a la aeronave equivocada, peor que no resolverla. El valor entrante se
+    normaliza igual que `Aircraft.save()` (sin espacios, X.1), así el llamador no
+    tiene que saber esa regla.
+  - **Campos mínimos**: matrícula, serial, fabricante, modelo, tipo, estado y
+    centro de costo. Las fechas de seguro, pesos, VLOS y el resto de la ficha
+    **no se exponen** — son asunto de cumplimiento de AeroControl, no de un
+    gateway de telemetría, y cada campo expuesto es un campo que hay que
+    mantener funcionando para un consumidor externo.
+  - **Acotado por tenant y por permiso** (`view_aircraft`), igual que las vistas
+    HTML: un token no es un bypass de ninguno de los dos. Verificado en ambos
+    sentidos (un miembro del otro tenant ve lo suyo y no lo ajeno), y que la
+    búsqueda por serial tampoco cruza el límite.
+  - **Throttle propio** (`padron`, 120/min por defecto): generoso para un
+    consumidor máquina que puede recuperar un lote tras un corte, pero con techo
+    para que un bucle de reintentos del otro lado no sature la app operacional
+    que comparte la VM.
+  Reusó la infraestructura existente (DRF, token auth, throttling): fue un scope
+  nuevo, no una aplicación nueva, como este ADR anticipaba.
 - **Fase 2 (`X.4`)** — AeroLink entrega sesiones de vuelo cerradas; AeroControl las
   concilia con `FlightRecord`. Es el punto donde el proyecto paga: las horas de vuelo y
   los ciclos de batería dejan de depender de la planilla del operador.
