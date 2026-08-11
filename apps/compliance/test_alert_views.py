@@ -336,6 +336,337 @@ class TestResolveRequiresAReason:
         assert alert.resolution_reason == ""
 
 
+@pytest.fixture
+def two_qualifications():
+    """Two operators whose habilitación expires on the same date -- the
+    shape R6.3 groups (same rule, same watched date, different aircraft or
+    operator)."""
+    cost_center = CostCenter.objects.create(code="OPS", name="Operations")
+    qualification_type = QualificationType.objects.create(
+        code="dgac-credential", name="Credencial DGAC"
+    )
+    shared_expiry = timezone.localdate() + timedelta(days=3)
+    operator_a = Operator.objects.create(
+        employee_id="P1", full_name="Pilot One", cost_center=cost_center
+    )
+    operator_b = Operator.objects.create(
+        employee_id="P2", full_name="Pilot Two", cost_center=cost_center
+    )
+    qual_a = Qualification.objects.create(
+        operator=operator_a,
+        qualification_type=qualification_type,
+        issue_date=date(2026, 1, 1),
+        expiry_date=shared_expiry,
+    )
+    qual_b = Qualification.objects.create(
+        operator=operator_b,
+        qualification_type=qualification_type,
+        issue_date=date(2026, 1, 1),
+        expiry_date=shared_expiry,
+    )
+    return qual_a, qual_b
+
+
+class TestGroupedAlerts:
+    """R6.3: two records due under the same rule on the same date show as
+    one row instead of one per record."""
+
+    @pytest.mark.django_db
+    def test_same_rule_and_date_render_as_one_row_with_a_bulk_resolve_button(
+        self, two_qualifications
+    ):
+        qual_a, qual_b = two_qualifications
+        rule = AlertRule.objects.create(
+            name="Vencimiento de habilitaciones",
+            entity_type="qualification",
+            field_to_watch="expiry_date",
+        )
+        alert_a = Alert.objects.create(
+            alert_rule=rule,
+            content_type=ContentType.objects.get_for_model(Qualification),
+            object_id=qual_a.pk,
+            message="Expiring soon",
+        )
+        alert_b = Alert.objects.create(
+            alert_rule=rule,
+            content_type=ContentType.objects.get_for_model(Qualification),
+            object_id=qual_b.pk,
+            message="Expiring soon",
+        )
+        User.objects.create_superuser("admin", "a@test.com", "password")
+        client = Client()
+        assert client.login(username="admin", password="password")
+
+        response = client.get(reverse("alert-list"))
+        content = response.content.decode()
+
+        # Assert on structure, not translated copy (LANGUAGE_CODE="es" at runtime).
+        resolve_url = reverse(
+            "alert-resolve-group", args=[f"{alert_a.pk},{alert_b.pk}"]
+        )
+        assert resolve_url in content
+        # No per-alert "Resolve" left for either member -- the group's bulk
+        # button replaces both.
+        assert reverse("alert-resolve", args=[alert_a.pk]) not in content
+        assert reverse("alert-resolve", args=[alert_b.pk]) not in content
+        # Each member keeps its own per-alert task action inside the row.
+        assert reverse("alert-create-task", args=[alert_a.pk]) in content
+        assert reverse("alert-create-task", args=[alert_b.pk]) in content
+
+    @pytest.mark.django_db
+    def test_different_dates_never_group(self, two_qualifications):
+        qual_a, qual_b = two_qualifications
+        qual_b.expiry_date = qual_b.expiry_date + timedelta(days=1)
+        qual_b.save(update_fields=["expiry_date"])
+        rule = AlertRule.objects.create(
+            name="Vencimiento de habilitaciones",
+            entity_type="qualification",
+            field_to_watch="expiry_date",
+        )
+        alerts = [
+            Alert.objects.create(
+                alert_rule=rule,
+                content_type=ContentType.objects.get_for_model(Qualification),
+                object_id=qual.pk,
+                message="Expiring soon",
+            )
+            for qual in (qual_a, qual_b)
+        ]
+        User.objects.create_superuser("admin", "a@test.com", "password")
+        client = Client()
+        assert client.login(username="admin", password="password")
+
+        response = client.get(reverse("alert-list"))
+        content = response.content.decode()
+
+        # Each keeps its own per-alert "Resolve" instead of the bulk button.
+        for alert in alerts:
+            assert reverse("alert-resolve", args=[alert.pk]) in content
+
+    @pytest.mark.django_db
+    def test_a_resolved_member_never_groups_back_in(self, two_qualifications):
+        qual_a, qual_b = two_qualifications
+        rule = AlertRule.objects.create(
+            name="Vencimiento de habilitaciones",
+            entity_type="qualification",
+            field_to_watch="expiry_date",
+        )
+        alert_a = Alert.objects.create(
+            alert_rule=rule,
+            content_type=ContentType.objects.get_for_model(Qualification),
+            object_id=qual_a.pk,
+            message="Expiring soon",
+        )
+        alert_b = Alert.objects.create(
+            alert_rule=rule,
+            content_type=ContentType.objects.get_for_model(Qualification),
+            object_id=qual_b.pk,
+            message="Expiring soon",
+        )
+        alert_a.resolve(reason="Already handled")
+        User.objects.create_superuser("admin", "a@test.com", "password")
+        client = Client()
+        assert client.login(username="admin", password="password")
+
+        response = client.get(reverse("alert-list"))
+        content = response.content.decode()
+
+        assert reverse("alert-reopen", args=[alert_a.pk]) in content
+        # alert_b is unresolved but no longer has a same-date, unresolved
+        # partner -- it keeps its own single-alert "Resolve" instead of
+        # joining a bulk button.
+        assert reverse("alert-resolve", args=[alert_b.pk]) in content
+
+    @pytest.mark.django_db
+    def test_group_get_renders_a_reason_form_titled_with_the_count(
+        self, two_qualifications
+    ):
+        qual_a, qual_b = two_qualifications
+        rule = AlertRule.objects.create(
+            name="Vencimiento de habilitaciones",
+            entity_type="qualification",
+            field_to_watch="expiry_date",
+        )
+        alerts = [
+            Alert.objects.create(
+                alert_rule=rule,
+                content_type=ContentType.objects.get_for_model(Qualification),
+                object_id=qual.pk,
+                message="Expiring soon",
+            )
+            for qual in (qual_a, qual_b)
+        ]
+        User.objects.create_superuser("admin", "a@test.com", "password")
+        client = Client()
+        assert client.login(username="admin", password="password")
+
+        ids = ",".join(str(a.pk) for a in alerts)
+        response = client.get(reverse("alert-resolve-group", args=[ids]))
+
+        assert response.status_code == 200
+        assert b'name="reason"' in response.content
+        # The count is interpolated, not translated -- safe to assert as-is
+        # regardless of runtime LANGUAGE_CODE.
+        assert b"2" in response.content
+        assert reverse("alert-resolve-group", args=[ids]).encode() in response.content
+
+    @pytest.mark.django_db
+    def test_group_post_resolves_every_member_with_the_same_reason(
+        self, two_qualifications
+    ):
+        qual_a, qual_b = two_qualifications
+        rule = AlertRule.objects.create(
+            name="Vencimiento de habilitaciones",
+            entity_type="qualification",
+            field_to_watch="expiry_date",
+        )
+        alerts = [
+            Alert.objects.create(
+                alert_rule=rule,
+                content_type=ContentType.objects.get_for_model(Qualification),
+                object_id=qual.pk,
+                message="Expiring soon",
+            )
+            for qual in (qual_a, qual_b)
+        ]
+        User.objects.create_superuser("admin", "a@test.com", "password")
+        client = Client()
+        assert client.login(username="admin", password="password")
+
+        ids = ",".join(str(a.pk) for a in alerts)
+        response = client.post(
+            reverse("alert-resolve-group", args=[ids]),
+            {"reason": "Fleet policy renewed, folio 9001."},
+        )
+
+        assert response.status_code == 302
+        for alert in alerts:
+            alert.refresh_from_db()
+            assert alert.is_resolved is True
+            assert alert.resolution_reason == "Fleet policy renewed, folio 9001."
+
+    @pytest.mark.django_db
+    def test_group_resolve_blank_reason_resolves_nothing(self, two_qualifications):
+        qual_a, qual_b = two_qualifications
+        rule = AlertRule.objects.create(
+            name="Vencimiento de habilitaciones",
+            entity_type="qualification",
+            field_to_watch="expiry_date",
+        )
+        alerts = [
+            Alert.objects.create(
+                alert_rule=rule,
+                content_type=ContentType.objects.get_for_model(Qualification),
+                object_id=qual.pk,
+                message="Expiring soon",
+            )
+            for qual in (qual_a, qual_b)
+        ]
+        User.objects.create_superuser("admin", "a@test.com", "password")
+        client = Client()
+        assert client.login(username="admin", password="password")
+
+        ids = ",".join(str(a.pk) for a in alerts)
+        response = client.post(
+            reverse("alert-resolve-group", args=[ids]), {"reason": ""}
+        )
+
+        assert response.status_code == 422
+        for alert in alerts:
+            alert.refresh_from_db()
+            assert alert.is_resolved is False
+
+    @pytest.mark.django_db
+    def test_group_resolve_htmx_returns_204_with_the_modal_close_trigger(
+        self, two_qualifications
+    ):
+        qual_a, qual_b = two_qualifications
+        rule = AlertRule.objects.create(
+            name="Vencimiento de habilitaciones",
+            entity_type="qualification",
+            field_to_watch="expiry_date",
+        )
+        alerts = [
+            Alert.objects.create(
+                alert_rule=rule,
+                content_type=ContentType.objects.get_for_model(Qualification),
+                object_id=qual.pk,
+                message="Expiring soon",
+            )
+            for qual in (qual_a, qual_b)
+        ]
+        User.objects.create_superuser("admin", "a@test.com", "password")
+        client = Client()
+        assert client.login(username="admin", password="password")
+
+        ids = ",".join(str(a.pk) for a in alerts)
+        response = client.post(
+            reverse("alert-resolve-group", args=[ids]),
+            {"reason": "Fixed"},
+            HTTP_HX_REQUEST="true",
+        )
+
+        assert response.status_code == 204
+        assert response.headers.get("HX-Trigger") == "modal-form-success"
+
+    @pytest.mark.django_db
+    def test_group_resolve_requires_change_alert_permission(self, two_qualifications):
+        qual_a, qual_b = two_qualifications
+        rule = AlertRule.objects.create(
+            name="Vencimiento de habilitaciones",
+            entity_type="qualification",
+            field_to_watch="expiry_date",
+        )
+        alerts = [
+            Alert.objects.create(
+                alert_rule=rule,
+                content_type=ContentType.objects.get_for_model(Qualification),
+                object_id=qual.pk,
+                message="Expiring soon",
+            )
+            for qual in (qual_a, qual_b)
+        ]
+        User.objects.create_user("viewer", password="password")
+        client = Client()
+        assert client.login(username="viewer", password="password")
+
+        ids = ",".join(str(a.pk) for a in alerts)
+        response = client.post(
+            reverse("alert-resolve-group", args=[ids]), {"reason": "Fixed"}
+        )
+
+        assert response.status_code == 403
+        for alert in alerts:
+            alert.refresh_from_db()
+            assert alert.is_resolved is False
+
+    @pytest.mark.django_db
+    def test_group_resolve_with_an_unknown_id_returns_404(self, two_qualifications):
+        qual_a, _qual_b = two_qualifications
+        rule = AlertRule.objects.create(
+            name="Vencimiento de habilitaciones",
+            entity_type="qualification",
+            field_to_watch="expiry_date",
+        )
+        Alert.objects.create(
+            alert_rule=rule,
+            content_type=ContentType.objects.get_for_model(Qualification),
+            object_id=qual_a.pk,
+            message="Expiring soon",
+        )
+        User.objects.create_superuser("admin", "a@test.com", "password")
+        client = Client()
+        assert client.login(username="admin", password="password")
+
+        response = client.get(
+            reverse(
+                "alert-resolve-group", args=["00000000-0000-0000-0000-000000000000"]
+            )
+        )
+
+        assert response.status_code == 404
+
+
 @pytest.mark.django_db
 def test_reopen_records_its_own_audit_event(qualification):
     from apps.core.models import AuditEvent

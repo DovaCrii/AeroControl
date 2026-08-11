@@ -444,6 +444,48 @@ class DocumentDelete(
         return redirect(self.success_url)
 
 
+def _group_alerts(alerts):
+    """Fold same-rule, same-date alerts into one list row (R6.3).
+
+    Example: a fleet insurance policy renews on one date but covers several
+    aircraft, each with its own Alert row (one per (rule, record) -- see
+    generate_alerts). Grouping them by (alert_rule_id, watched_date) shows
+    that as a single row instead of one per aircraft. Only unresolved alerts
+    with a comparable date group; a resolved alert or a status-watched one
+    (no expiry date, e.g. an open maintenance record) always keeps its own
+    row. Operates on whichever page of alerts the caller already fetched --
+    it does not touch pagination or the underlying queryset.
+
+    Returns a list of {"alerts": [...], "is_group": bool}, one per row, in
+    the alerts' original order.
+    """
+    buckets = {}
+    rows = []  # ("single", alert) or ("group", key)
+    for alert in alerts:
+        key = (
+            (alert.alert_rule_id, alert.watched_date)
+            if not alert.is_resolved and alert.watched_date is not None
+            else None
+        )
+        if key is None:
+            rows.append(("single", alert))
+            continue
+        if key not in buckets:
+            buckets[key] = []
+            rows.append(("group", key))
+        buckets[key].append(alert)
+
+    result = []
+    for kind, value in rows:
+        members = [value] if kind == "single" else buckets[value]
+        is_group = len(members) > 1
+        row = {"alerts": members, "is_group": is_group}
+        if is_group:
+            row["ids"] = ",".join(str(member.pk) for member in members)
+        result.append(row)
+    return result
+
+
 class AlertList(ComplianceList):
     model = Alert
     template_name = "compliance/alert_list.html"
@@ -482,6 +524,7 @@ class AlertList(ComplianceList):
                 task = tasks.get(alert.pk)
                 alert.linked_task_id = task.pk if task else None
                 alert.linked_task_board_id = task.board_id if task else None
+        context["alert_rows"] = _group_alerts(alerts)
         return context
 
 
@@ -546,6 +589,73 @@ class AlertResolve(ModelPermissionRequiredMixin, View):
                 status=204, headers={"HX-Trigger": "modal-form-success"}
             )
         messages.success(request, _("Alert resolved."))
+        return _redirect_back(request)
+
+
+class AlertResolveGroup(ModelPermissionRequiredMixin, View):
+    """R6.3: resolve every alert in a same-rule, same-date group with one
+    shared reason, instead of clicking "Resolve" N times and retyping the
+    same explanation -- e.g. a fleet insurance policy that renews on one
+    date but covers several aircraft.
+
+    `ids` is the comma-joined pks _group_alerts put together for that row.
+    Grouping is a list-display concern only: each alert still resolves (and
+    closes its own linked task, if any) independently via Alert.resolve() --
+    a partial failure leaves the rest resolved rather than none.
+    """
+
+    model = Alert
+    permission_action = "change"
+
+    def _alerts(self, ids):
+        pks = [pk for pk in ids.split(",") if pk]
+        alerts = list(
+            Alert.objects.filter(pk__in=pks, is_active=True, is_resolved=False)
+        )
+        if not alerts:
+            raise Http404
+        return alerts
+
+    def get(self, request, ids):
+        alerts = self._alerts(ids)
+        return render(
+            request,
+            "generic/_form_content.html",
+            {
+                "form": AlertResolveForm(),
+                "title": _("Resolve %(count)d alerts") % {"count": len(alerts)},
+            },
+        )
+
+    def post(self, request, ids):
+        alerts = self._alerts(ids)
+        form = AlertResolveForm(request.POST)
+        if not form.is_valid():
+            return render(
+                request,
+                "generic/_form_content.html",
+                {
+                    "form": form,
+                    "title": _("Resolve %(count)d alerts") % {"count": len(alerts)},
+                },
+                status=422,
+            )
+        reason = form.cleaned_data["reason"]
+        for alert in alerts:
+            moved_task = alert.resolve(reason=reason)
+            metadata = {"reason": reason, "group_size": len(alerts)}
+            if moved_task:
+                metadata["moved_task_id"] = str(moved_task.pk)
+            set_audit_context(
+                request, alert, action="alert_resolved", metadata=metadata
+            )
+        if request.headers.get("HX-Request") == "true":
+            return HttpResponse(
+                status=204, headers={"HX-Trigger": "modal-form-success"}
+            )
+        messages.success(
+            request, _("%(count)d alerts resolved.") % {"count": len(alerts)}
+        )
         return _redirect_back(request)
 
 
