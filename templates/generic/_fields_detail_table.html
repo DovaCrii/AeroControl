@@ -1,7 +1,8 @@
 {% load aero_tags i18n %}
+{% with exclude=exclude|default:"" %}
 <table class="table table-bordered">
   <tbody>
-    {% for field in object|fields_detail %}
+    {% for field in object|fields_detail:exclude %}
     <tr>
       <th class="w-25" scope="row">{{ field.label }}</th>
       <td>
@@ -17,3 +18,4 @@
     {% endfor %}
   </tbody>
 </table>
+{% endwith %}
