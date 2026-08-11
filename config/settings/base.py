@@ -233,6 +233,11 @@ REST_FRAMEWORK = {
         "geo-commit": config("API_THROTTLE_GEO_COMMIT", default="30/min"),
         # Export (GEO-10) rebuilds and zips the document; tighter than commit.
         "geo-export": config("API_THROTTLE_GEO_EXPORT", default="10/min"),
+        # X.3: AeroLink resolving airframes by serial. Generous -- it is a
+        # machine consumer that may look up a batch after a connectivity gap --
+        # but still a ceiling, so a retry loop on their side cannot saturate
+        # the operational app that shares this VM.
+        "padron": config("API_THROTTLE_PADRON", default="120/min"),
     },
 }
 LOGIN_URL = "/accounts/login/"
