@@ -10,6 +10,7 @@ from datetime import timedelta
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Count, Q
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from apps.compliance.digest import HORIZON_DAYS
 from apps.compliance.models import Alert, Document
@@ -282,6 +283,66 @@ def build_compliance_report(start=None, end=None, cost_center=None, doc_type=Non
         # LV-8f: maintenance still needing planning is an open compliance gap.
         "incomplete_maintenance": _incomplete_maintenance_count(cost_center),
     }
+
+
+def previous_period(start, end):
+    """The period of equal length immediately before [start, end] -- what
+    "compared with last period" means throughout the executive report."""
+    length = (end - start).days
+    previous_end = start - timedelta(days=1)
+    previous_start = previous_end - timedelta(days=length)
+    return previous_start, previous_end
+
+
+# R6.4: shared by the executive email (send_executive_report) and the web
+# report page, so both read the same comparison instead of the web page
+# showing the raw counters while only the inbox says whether they are
+# getting better or worse. "lower_is_better" decides whether a rise reads as
+# an improvement or a regression, so the wording never contradicts the number.
+COMPARED_KPIS = [
+    ("valid_pct", _("Valid documents (%)"), False),
+    ("expired", _("Expired documents"), True),
+    ("due_30", _("Expiring within 30 days"), True),
+]
+
+
+def compare_periods(current, previous):
+    """Each COMPARED_KPIS totals entry, current vs. previous, plus alert
+    resolution counts (always reported "flat" -- more resolutions is not
+    unambiguously better or worse, unlike a lower expired count)."""
+    comparison = []
+    for key, label, lower_is_better in COMPARED_KPIS:
+        now = current["totals"][key]
+        before = previous["totals"][key]
+        delta = round(now - before, 1)
+        if delta == 0:
+            direction = "flat"
+        elif (delta < 0) == lower_is_better:
+            direction = "better"
+        else:
+            direction = "worse"
+        comparison.append(
+            {
+                "label": label,
+                "current": now,
+                "previous": before,
+                "delta": delta,
+                "direction": direction,
+            }
+        )
+    comparison.append(
+        {
+            "label": _("Alerts resolved in the period"),
+            "current": current["resolution"]["resolved_count"],
+            "previous": previous["resolution"]["resolved_count"],
+            "delta": (
+                current["resolution"]["resolved_count"]
+                - previous["resolution"]["resolved_count"]
+            ),
+            "direction": "flat",
+        }
+    )
+    return comparison
 
 
 def _incomplete_maintenance_count(cost_center):

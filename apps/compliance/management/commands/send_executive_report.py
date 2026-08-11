@@ -10,22 +10,13 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from apps.compliance.report_views import build_report_workbook_bytes
-from apps.compliance.reports import build_compliance_report
+from apps.compliance.reports import build_compliance_report, compare_periods
 from apps.core.groups import REPORT_RECIPIENTS
 from apps.core.jobs import record_job_run
 
 logger = logging.getLogger("aerocontrol.notifications")
 
 PERIOD_DAYS = {"week": 7, "month": 30}
-
-# KPIs compared against the previous period. "lower_is_better" decides whether a
-# rise is reported as an improvement or a regression, so the wording cannot
-# contradict the number.
-COMPARED_KPIS = [
-    ("valid_pct", _("Valid documents (%)"), False),
-    ("expired", _("Expired documents"), True),
-    ("due_30", _("Expiring within 30 days"), True),
-]
 
 
 class Command(BaseCommand):
@@ -101,42 +92,7 @@ class Command(BaseCommand):
 
         current = build_compliance_report(start=start, end=end)
         previous = build_compliance_report(start=previous_start, end=previous_end)
-
-        comparison = []
-        for key, label, lower_is_better in COMPARED_KPIS:
-            now = current["totals"][key]
-            before = previous["totals"][key]
-            delta = round(now - before, 1)
-            if delta == 0:
-                direction = "flat"
-            elif (delta < 0) == lower_is_better:
-                direction = "better"
-            else:
-                direction = "worse"
-            comparison.append(
-                {
-                    "label": label,
-                    "current": now,
-                    "previous": before,
-                    "delta": delta,
-                    "direction": direction,
-                }
-            )
-        # Resolution time is only meaningful per period, so it is compared apart
-        # from the expiry counters above.
-        comparison.append(
-            {
-                "label": _("Alerts resolved in the period"),
-                "current": current["resolution"]["resolved_count"],
-                "previous": previous["resolution"]["resolved_count"],
-                "delta": (
-                    current["resolution"]["resolved_count"]
-                    - previous["resolution"]["resolved_count"]
-                ),
-                "direction": "flat",
-            }
-        )
-        return current, previous, comparison
+        return current, previous, compare_periods(current, previous)
 
     @staticmethod
     def _context(period, report, comparison):
