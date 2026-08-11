@@ -55,13 +55,24 @@ limpios.
 ### Secuencia de despliegue en `p340`, en orden
 
 ```bash
-ssh levdigital01@p340.tailccd107.ts.net
+ssh levdigital01@100.121.16.118      # la IP de Tailscale; el nombre DNS no resuelve bien
 cd /opt/aerocontrol
 git pull
 # El .env es de root; esto exporta las vars sin volverse root (y sin que la
 # SQLite del migrate quede con dueño root). Es bash, no sh.
-source <(sudo cat /etc/aerocontrol.env)
+set -a; source <(sudo cat /etc/aerocontrol.env); set +a
+echo "settings=$DJANGO_SETTINGS_MODULE  db=$DB_PATH"   # debe decir config.settings.prod
 ```
+
+> **`set -a` no es opcional** (se descubrió en el despliegue del 2026-08-11; el
+> runbook lo tuvo mal meses y ya está corregido). `source` sobre un archivo de
+> líneas `CLAVE=valor` define variables de **shell**, no de **entorno**, así que
+> `uv run python` no las ve. Sin él, `manage.py` cae a su default
+> `config.settings.dev` y muere con `SECRET_KEY not found`.
+> **Falla de forma segura**: `DB_PATH` no tiene valor por defecto, así que
+> reventó antes de poder tocar ninguna base — no hay que deshacer nada. Por eso
+> el `echo` de verificación va **antes** del `migrate`: migrar con `dev` en vez
+> de `prod` apuntaría a otra base, y es el error más caro disponible acá.
 
 **Antes de migrar**, el único chequeo que puede fallar con datos reales — la
 migración `registry/0028` impone `unique=True` en `serial_number`; ya maneja los

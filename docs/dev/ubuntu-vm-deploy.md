@@ -145,7 +145,20 @@ cd /opt/aerocontrol
 # "Permission denied". Usa sudo cat + process substitution para exportar las
 # vars a esta shell sin volverte root (y sin que archivos que crees aquí, como
 # la SQLite del migrate, queden con dueño root).
-source <(sudo cat /etc/aerocontrol.env)
+#
+# `set -a` NO es opcional (corregido 2026-08-11, la versión sin él estuvo mal
+# meses): `source` sobre un archivo de líneas `CLAVE=valor` define variables de
+# *shell*, no de *entorno*, así que un proceso hijo como `uv run python` no las
+# ve. Sin esto, `manage.py` cae al default `config.settings.dev` de su
+# `setdefault` y muere con `SECRET_KEY not found` -- que es como se descubrió.
+# Es el mismo `set -a` que ya usan los ejemplos de cron en
+# `docs/scheduled-operations.md`.
+set -a; source <(sudo cat /etc/aerocontrol.env); set +a
+
+# Verifica ANTES de migrar que el entorno es el correcto. Migrar con `dev` en
+# lugar de `prod` es el error más caro disponible acá: apuntaría a otra base.
+echo "settings=$DJANGO_SETTINGS_MODULE  db=$DB_PATH"   # debe decir config.settings.prod
+
 uv run python manage.py migrate --no-input
 uv run python manage.py bootstrap_roles
 uv run python manage.py collectstatic --no-input
