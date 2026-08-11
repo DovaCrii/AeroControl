@@ -1,0 +1,15 @@
+{% load aero_tags i18n %}
+{% for document in documents %}
+<tr>
+  <td><a href="{% url 'document-detail' document.pk %}" class="fw-semibold">{{ document.title }}</a></td>
+  <td>{{ document.doc_type }}</td>
+  <td>{% if document.expiry_date %}{{ document.expiry_date|date:"Y-m-d" }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+  <td class="text-end">
+    <a href="{% url 'document-download' document.pk %}" class="btn btn-sm btn-outline-secondary" hx-boost="false">{% translate "Download" %}</a>
+    {% if perms.compliance.add_document %}<a href="{% url 'document-replace' document.pk %}" hx-get="{% url 'document-replace' document.pk %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">{% translate "Replace" %}</a>{% endif %}
+  </td>
+</tr>
+{% empty %}
+<tr><td colspan="99" class="text-center text-muted py-4">{% translate "No company documents yet." %}{% if perms.compliance.add_document and tenant %} <a href="{% url 'document-create' %}?entity_type={{ document_content_type_id }}&object_id={{ tenant.pk }}">{% translate "Upload the first one" %}</a>{% endif %}</td></tr>
+{% endfor %}
+{% if is_htmx %}<div id="pagination-container" hx-swap-oob="true">{% render_pagination page_obj %}</div>{% endif %}

@@ -137,6 +137,20 @@ def test_document_list_shows_export_link_and_export_returns_csv():
 
 
 @pytest.mark.django_db
+def test_document_list_full_page_has_a_pagination_container():
+    """The out-of-band pagination swap in _document_rows.html targets
+    #pagination-container; without the wrapper on the full page, htmx's OOB
+    swap silently drops after a search and the pager goes stale."""
+    User.objects.create_superuser("admin", "admin@test.com", "password")
+    client = Client()
+    assert client.login(username="admin", password="password")
+
+    response = client.get(reverse("document-list"))
+
+    assert 'id="pagination-container"' in response.content.decode()
+
+
+@pytest.mark.django_db
 def test_document_form_autogenerates_title_when_left_blank(settings, tmp_path):
     """LV-2: a blank title is filled in from doc_type + record + issue_date,
     instead of failing or saving an empty string that read differently
@@ -489,6 +503,100 @@ def test_company_documents_page_lists_tenant_docs_and_offers_upload(admin_client
     content = response.content.decode()
     assert "AOC 1485" in content
     assert reverse("document-create") in content
+
+
+@pytest.fixture
+def company_documents(db):
+    """R4.6: two company-wide documents of different types, for search and
+    category-filter tests."""
+    from django.contrib.contenttypes.models import ContentType
+
+    from apps.core.models import OperationalTenant
+    from apps.core.tenancy import get_default_tenant
+
+    tenant = OperationalTenant.objects.get(pk=get_default_tenant())
+    aoc_type = DocumentType.objects.create(code="aoc-certificate", name="AOC")
+    procedure_type = DocumentType.objects.create(
+        code="company-procedure", name="Procedimiento"
+    )
+    tenant_ct = ContentType.objects.get_for_model(OperationalTenant)
+    aoc = Document.objects.create(
+        title="AOC 1485",
+        doc_type=aoc_type,
+        content_type=tenant_ct,
+        object_id=tenant.pk,
+        file_path="aoc.pdf",
+        issue_date=date(2026, 1, 1),
+    )
+    procedure = Document.objects.create(
+        title="Procedimiento de emergencias",
+        doc_type=procedure_type,
+        content_type=tenant_ct,
+        object_id=tenant.pk,
+        file_path="proc.pdf",
+        issue_date=date(2026, 1, 1),
+    )
+    return {"aoc": aoc, "procedure": procedure, "aoc_type": aoc_type}
+
+
+@pytest.mark.django_db
+def test_company_documents_search_matches_only_the_title(
+    admin_client, company_documents
+):
+    response = admin_client.get(reverse("company-documents"), {"q": "AOC"})
+
+    content = response.content.decode()
+    assert "AOC 1485" in content
+    assert "Procedimiento de emergencias" not in content
+
+
+@pytest.mark.django_db
+def test_company_documents_filters_by_type(admin_client, company_documents):
+    response = admin_client.get(
+        reverse("company-documents"),
+        {"doc_type": company_documents["aoc_type"].pk},
+    )
+
+    content = response.content.decode()
+    assert "AOC 1485" in content
+    assert "Procedimiento de emergencias" not in content
+
+
+@pytest.mark.django_db
+def test_company_documents_htmx_search_returns_only_the_rows_partial(
+    admin_client, company_documents
+):
+    """The live-search response must not re-render the page shell (search
+    box, filters), only the rows -- same contract as every other htmx list."""
+    response = admin_client.get(
+        reverse("company-documents"), {"q": "AOC"}, HTTP_HX_REQUEST="true"
+    )
+
+    content = response.content.decode()
+    assert "AOC 1485" in content
+    assert "<form" not in content
+
+
+@pytest.mark.django_db
+def test_company_documents_export_returns_csv(admin_client, company_documents):
+    response = admin_client.get(reverse("company-documents"), {"export": "csv"})
+
+    assert response.status_code == 200
+    assert response["Content-Type"].startswith("text/csv")
+    body = b"".join(response.streaming_content).decode("utf-8-sig")
+    assert "AOC 1485" in body
+    assert "Procedimiento de emergencias" in body
+
+
+@pytest.mark.django_db
+def test_company_documents_export_requires_view_permission():
+    User.objects.create_user("viewer", password="password")
+    client = Client()
+    assert client.login(username="viewer", password="password")
+
+    response = client.get(reverse("company-documents"), {"export": "csv"})
+
+    assert response.status_code == 403
 
 
 @pytest.mark.django_db

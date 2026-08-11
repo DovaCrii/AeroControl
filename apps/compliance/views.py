@@ -125,17 +125,33 @@ class DocumentList(ComplianceList):
         return context
 
 
-class CompanyDocumentsView(ModelViewPermissionRequiredMixin, ListView):
+class CompanyDocumentsView(CsvExportMixin, ModelViewPermissionRequiredMixin, ListView):
     """A visible, downloadable home for company-wide documents -- the AOC,
     procedures and forms that belong to the operator as a whole rather than to
     a specific aircraft or permit. They attach to the tenant and flow through
     the same upload/replace/download pipeline as any other Document.
+
+    R4.6: was a plain, unfiltered dump -- no search, no way to narrow by
+    category. Reuses DocumentType as the "category" axis (the same one every
+    other Document list in the app already groups by) rather than inventing a
+    second taxonomy just for this page.
     """
 
     model = Document
     template_name = "compliance/company_documents.html"
+    htmx_template_name = "compliance/_company_document_rows.html"
     context_object_name = "documents"
     paginate_by = 25
+    csv_filename = "company_documents.csv"
+    csv_fields = [
+        Document._meta.get_field(name)
+        for name in ("title", "doc_type", "issue_date", "expiry_date")
+    ]
+
+    def get_template_names(self):
+        if self.request.headers.get("HX-Request") == "true":
+            return [self.htmx_template_name]
+        return super().get_template_names()
 
     def get_queryset(self):
         from apps.core.models import OperationalTenant
@@ -152,6 +168,11 @@ class CompanyDocumentsView(ModelViewPermissionRequiredMixin, ListView):
         tenant_ids = visible_tenant_ids(self.request.user)
         if tenant_ids is not None:
             queryset = queryset.filter(object_id__in=tenant_ids)
+        query_text = self.request.GET.get("q", "").strip()
+        if query_text:
+            queryset = queryset.filter(title__icontains=query_text)
+        if self.request.GET.get("doc_type"):
+            queryset = queryset.filter(doc_type_id=self.request.GET["doc_type"])
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -163,6 +184,8 @@ class CompanyDocumentsView(ModelViewPermissionRequiredMixin, ListView):
         context["document_content_type_id"] = ContentType.objects.get_for_model(
             OperationalTenant
         ).pk
+        context["document_types"] = DocumentType.objects.filter(is_active=True)
+        context["is_htmx"] = self.request.headers.get("HX-Request") == "true"
         # get_default_tenant() returns the pk; resolve the instance so the
         # template can build the upload link from tenant.pk.
         tenant_ids = visible_tenant_ids(self.request.user)
