@@ -5,22 +5,28 @@
 > post-auditoría"**, al inicio del archivo. Este documento es solo el resumen
 > de estado; el detalle de cada ítem vive en las filas de `MASTER_PLAN.md`.
 
-## 🔒 CIERRE DE VENTANA — 2026-08-11 (R6.2 verificado + R6.3/R6.4/R6.5, BLOQUE R6 completo)
+## 🔒 CIERRE DE VENTANA — 2026-08-11, sesión larga (R6.2 verificado, BLOQUE R6 completo, R4.7/R7.3/X.2 + 3 checkboxes de R1 corregidos)
 
 **Empezar aquí en la próxima ventana.** Esta ventana retomó exactamente donde
-quedó la anterior (mismo working tree, misma pila de ramas) y cerró el único
-cabo suelto que quedaba (verificar R6.2 en el navegador) más los tres ítems
-que faltaban del BLOQUE R6. **BLOQUE R6 queda completo (R6.1–R6.5, los 5
-✅).**
+quedó la anterior (mismo working tree, misma pila de ramas) en dos tramos:
+primero cerró el cabo suelto que quedaba (R6.2 en el navegador) y el resto del
+BLOQUE R6 (R6.3-R6.5); después, con permiso de seguir cerrando bloques, avanzó
+sobre ítems sueltos de R7/X/R4 y **encontró y corrigió 3 checkboxes de R1 que
+llevaban desactualizados desde el 2026-08-07** (ya estaban resueltos en el
+código, nadie los había marcado). **BLOQUE R6 completo (R6.1–R6.5) y BLOQUE
+R1 completo (R1.1–R1.5), los 10 ✅.**
 
-### Lo que se hizo (3 commits nuevos, apilados sobre `codex/r6-alert-resolve-with-reason`, ninguno mergeado ni pusheado)
+### Lo que se hizo (7 commits nuevos, apilados sobre `codex/r6-alert-resolve-with-reason`, ninguno mergeado ni pusheado)
 
 ```
 ... (cadena completa de la ventana anterior, sin tocar) ...
     └─ codex/r6-alert-resolve-with-reason          R6.2  (ya existía)
         └─ codex/r6-group-same-origin-alerts           R6.3
             └─ codex/r6-executive-report-web-pdf            R6.4
-                └─ codex/r6-monthly-review-deadline             R6.5  ← HEAD
+                └─ codex/r6-monthly-review-deadline             R6.5
+                    └─ codex/r7-x2-calibration-cert                 X.2 (checkbox) + R7.3
+                        └─ codex/r4-operator-credential-pdf-flag        R4.7
+                            └─ codex/r1-stale-checkbox-fix                R1.1/R1.2/R1.3 (checkboxes)  ← HEAD
 ```
 
 - **R6.2 verificado en el navegador.** El único punto pendiente de la ventana
@@ -90,19 +96,70 @@ documento") — se detectó y se renombró antes de traducir, no después.
   auditoría ISO no es algo para adivinar. El usuario eligió la opción
   recomendada (recordatorio).
 
+### Segundo tramo de hoy: X.2, R7.3, R4.7, y 3 checkboxes de R1
+
+- **X.2** — declarar por escrito quién es maestro de qué entre AeroControl y
+  AeroLink. **Checkbox desactualizado**: ya estaba resuelto por completo desde
+  el 2026-08-07 en `docs/dev/adr-0002-coexistencia-aerolink.md` (sección 3).
+  Solo se corrigió el tablero.
+- **R7.3** (ISO 7.1.5, calibración) — `calibration-certificate` agregado a
+  `seed_document_types` (`requires_expiry=True`). Alcance acotado al tipo de
+  documento, tal como lo pedía la fila del tablero; el modelo de GCP que
+  menciona la brecha ISO queda fuera (sin pedido concreto).
+- **R4.7** (licencia RPA del operador) — `OperatorList` gana
+  `has_credential_pdf` (subquery `Exists` sobre `Document`); la lista de
+  operadores muestra "Sin PDF" cuando la vigencia DGAC no tiene el documento
+  real en archivo, tenga fecha puesta o no. Verificado en vivo: los 9
+  operadores del demo muestran "Sin PDF" (ninguno tiene el `Document` real
+  cargado hoy).
+- **R1.1/R1.2/R1.3 — checkboxes corregidos, no había código pendiente.**
+  Las tres ya estaban resueltas desde el commit `ee3db03` del 2026-08-07 (el
+  mismo commit que cerró R1.4/R1.5, que sí se habían marcado) — el calendario
+  ya no oculta las vigencias DGAC/JAC en su vista por defecto, un permiso sin
+  folio ya no renderiza `"None"`, y el panel de vencimientos ya distingue
+  urgencia por color con "Vence en N días". **Re-verificado en vivo hoy antes
+  de tocar el tablero** (no solo confiando en el mensaje del commit): el
+  feed `/calendar/events/?types=all` trae `RPA-2002 · Seguro JAC` y las
+  credenciales DGAC de Bruno Díaz/Elena Vega; el panel de vencimientos
+  muestra `text-warning-emphasis fw-semibold` y enlaza a
+  `#upcoming-expirations`. **BLOQUE R1 queda completo (R1.1–R1.5).**
+
+### Lección de esta ventana: el tablero puede mentir en cualquier dirección
+
+Ya se sabía que un ⬜ puede estar hecho de verdad (memoria
+`aerocontrol-repo-hazards`, caso T2.1). Hoy se confirmó **tres veces más en
+el mismo bloque** (R1.1/R1.2/R1.3), todas desde el mismo commit de hace 4
+días. **Antes de implementar cualquier fila marcada ⬜/🔄, grep el código real
+primero** — puede ahorrar toda la implementación.
+
 ### Qué preguntar/decidir en la próxima ventana, en orden de urgencia
 
-1. **¿Mergear/pushear algo de la pila?** Son ahora 14 commits en 14 ramas
-   locales apiladas (11 de la ventana anterior + 3 de hoy), nada se subió
+1. **¿Mergear/pushear algo de la pila?** Son ahora 18 commits en 18 ramas
+   locales apiladas (11 de la ventana anterior + 7 de hoy), nada se subió
    todavía. El usuario decide cuándo y cómo.
-2. **BLOQUE R6 completo** — no queda nada abierto ahí. Siguiente bloque
-   natural según `MASTER_PLAN.md`: **R7** (base ISO, ⬜ salvo R7.1) o volver a
-   **R4** (importador `Z:`, esperando que el usuario corrija 2 carpetas y que
-   alguien configure un antivirus real).
-3. **R5.8/R5.9** siguen esperando que el usuario decida si los revisa
-   (observación de Habilitaciones / idea de Kanban aparcada).
-4. **Higiene**: `reportlab` es una dependencia nueva (`pyproject.toml`/
+2. **BLOQUE R1 y BLOQUE R6 completos.** No queda nada abierto en ninguno de
+   los dos. Lo que sigue en el tablero (2026-08-11, fin de esta ventana) son
+   todos ítems que necesitan una decisión del usuario antes de implementar,
+   no trabajo que se pueda seguir de forma autónoma:
+   - **R7.2** (modelo de baterías/ciclos) — "diseñar la forma" ligado a
+     AeroLink; el contrato real todavía no está construido (`X.3`).
+   - **X.3** (endpoint de solo lectura del padrón para AeroLink) — superficie
+     nueva expuesta a otro sistema; el ADR ya define el contrato pero no la
+     forma exacta de la respuesta.
+   - **R8.1** (clima/viento) — decisión de arquitectura (primera llamada HTTP
+     saliente del proyecto: CSP, secretos, caché, degradación).
+   - **R5.8** (¿la sección Habilitaciones sigue siendo de primer nivel en el
+     sidebar o se integra a la ficha del operador?) y **R5.9** (Kanban para
+     mantención, aparcado) — ambos esperando que el usuario decida.
+   - **R4.6** (Documentos de la empresa como repositorio real) — no está
+     bloqueado, simplemente no se empezó; candidato razonable si se quiere
+     seguir sin esperar una decisión, pero es un ítem más grande (categorías,
+     filtros, búsqueda) que merece confirmarse antes de arrancar.
+3. **Higiene**: `reportlab` es una dependencia nueva (`pyproject.toml`/
    `uv.lock`) — si se despliega a la VM Ubuntu, correr `uv sync` allá también.
+   `seed_document_types` pasó de 13 a 14 tipos (`calibration-certificate`) —
+   correr a mano en `p340` cuando se despliegue (mismo gotcha LV-45/LV-64 de
+   siempre).
 
 ---
 
