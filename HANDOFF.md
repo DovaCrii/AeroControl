@@ -5,6 +5,69 @@
 > post-auditoría"**, al inicio del archivo. Este documento es solo el resumen
 > de estado; el detalle de cada ítem vive en las filas de `MASTER_PLAN.md`.
 
+## 🚀 ESTADO DE RELEASE — lo más urgente al 2026-08-11
+
+**Lo que hay que hacer no es más código: es cortar versión y desplegar.** El
+backlog implementable está agotado y hay riesgo acumulándose por no liberar.
+
+**La pila es UNA cadena lineal, no 22 ramas divergentes.** Se verificó que las
+21 ramas `codex/*` restantes son *ancestros* de `codex/r7-battery-inventory`, así
+que ese único merge trae todo:
+
+```bash
+git fetch origin                  # regla del repo: siempre antes de push
+git checkout main
+git merge --ff-only codex/r7-battery-inventory   # fast-forward, sin merge commit
+```
+
+Estado verificado hoy: `main` == `origin/main` (nadie más pusheó), 919 tests
+verdes, `verify.ps1` completo limpio (ruff, bandit, pip-audit).
+
+### Qué falta antes de etiquetar
+
+1. **El CHANGELOG ya está listo** (se llenó el 2026-08-11): `[Unreleased]`
+   documenta los **59 commits** desde `v0.4.0-beta` — 30 ya en `main` y 29 en la
+   pila. Solo falta renombrar la sección a la versión elegida y fechar.
+2. **Versión recomendada: `v0.5.0-beta`.** Es *minor*, no *patch*: modelo nuevo
+   (`Battery`), superficie de API nueva (`X.3`), primera integración saliente
+   (`R8.1`), dependencia nueva y 7 migraciones. Cierra completos R1, R2, R3, R5 y R6.
+3. **Ojo con el sufijo `-beta`**: los **2 pendientes que `v0.4.0-beta` declaró
+   para la 1.0 están cerrados** (`T2.1` el 2026-08-07, `V.3` el 2026-08-11). Lo
+   que falta para 1.0 ya no es código sino **operación**: CSP a *enforcing* en
+   `p340`, correr el importador de `R4` con `--apply` de verdad, cerrar la
+   decisión del antivirus, y repetir el ensayo de restauración como rutina y no
+   una vez. Conviene declarar eso como criterio de salida explícito.
+
+### Riesgos concretos del despliegue
+
+- **Migración `registry/0028` es la delicada**: impone `unique=True` en
+  `serial_number`. Ya maneja los blancos (3 pasos, bug corregido en `e5dea67`),
+  pero **si dos seriales distintos normalizan al mismo valor, revienta**.
+  Chequeo previo en `p340`, antes de migrar:
+  ```bash
+  uv run python manage.py shell -c "
+  from collections import Counter
+  from apps.registry.models import Aircraft
+  n = [''.join((a.serial_number or '').split()) for a in Aircraft.objects.all()]
+  print([s for s,c in Counter(x for x in n if x).items() if c>1] or 'sin duplicados')"
+  ```
+- **`uv sync`** en `p340` (dependencia nueva `reportlab`).
+- **`seed_document_types`** a mano (gotcha LV-45/LV-64): pasa de 10 a 17 tipos.
+- **Decidir `WEATHER_ENABLED`**: apagado por defecto; si no se activa, `R8.1` no
+  se ve (y se conserva la propiedad de cero llamadas salientes).
+
+### Las 2 ramas `claude/*` NO están en la pila y necesitan decisión
+
+`claude/amazing-bouman-1b3d09` (+5, **29 archivos / ~1.330 líneas**) y
+`claude/beautiful-curie-4193f1` (+2, 18 archivos). **No son duplicados
+descartables**: tienen trabajo único que no está en `main` (pulido visual, barrido
+de traducción de etiquetas, quitar el campo técnico `order` de los formularios
+Kanban, huecos de exportación CSV). **Pero son anteriores a los bloques R** y
+tocan archivos que la pila también modificó (`document_list.html`,
+`dashboard/index.html`, `calendar.html`) → **conflicto real si se mergean
+después**. Hay que decidir explícitamente: rescatar, rehacer sobre la base
+actual, o descartar. No mergear a ciegas.
+
 ## 🔒 CIERRE DE VENTANA — 2026-08-11, tercer tramo (R8.1, X.3, R7.2 — se agotó lo implementable sin decisiones nuevas)
 
 **Empezar aquí.** Tras cerrar el BLOQUE R6 y los ítems sueltos (ver la sección
