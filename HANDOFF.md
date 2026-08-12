@@ -11,7 +11,7 @@
 
 - **Versión:** `v0.5.0-beta` (etiquetada). `main` = `origin/main` (pusheado
   2026-08-12).
-- **Gate:** `pwsh scripts/verify.ps1` verde (1065 tests, ruff, bandit, pip-audit).
+- **Gate:** `pwsh scripts/verify.ps1` verde (1074 tests, ruff, bandit, pip-audit).
 - **Sin desplegar en `p340`:** lo de 2026-08-12 trae **6 migraciones**, todas
   aditivas y sin dato obligatorio: `operations.0016` (ubicación estructurada),
   `compliance.0015` (verificación de eficacia), `geo.0004` (revisión
@@ -77,10 +77,16 @@ producción.
 |---|---|
 | Verificación de eficacia (R7.6a) | ✅ Hecho — 30 días, decidido por el usuario |
 | Revisión meteorológica como evidencia (R8.2) | ✅ Hecho |
-| Los 2 KPI operacionales ya calculables (R7.7a) | ✅ Hecho — flota con meta 90%; cumplimiento de plazos **sin meta acordada**, se muestra pero no marca incumplimiento |
+| Los **5** KPI operacionales (R7.7a + R7.7b) | ✅ Hecho — completos. **Sólo la meta de flota (90%) está acordada**; los otros 4 muestran su valor sin marcar incumplimiento |
 | Límite de jornada de vuelo (R7.5a) | ✅ Hecho — 8 horas |
 | LV-72 (trazabilidad estilo SIGO) | ⬜ **Lo siguiente de la Sesión B** |
 | Decidir si el tablero Kanban se elimina | ⬜ Requiere decisión |
+
+**Lo único que le falta a la cláusula 9.1.1 son las metas restantes** (precisión
+de levantamientos, tasa de re-vuelos, cumplimiento de plazos). Son decisiones de
+la dirección, no de código: fijarlas es cambiar una constante en
+`apps/compliance/kpis.py`, y con eso el indicador empieza a marcar "Bajo la
+meta" cuando corresponde.
 
 ### La Sesión C ya no está bloqueada por los umbrales
 
