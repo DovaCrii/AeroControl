@@ -242,6 +242,15 @@ class DocumentTypeForm(AeroModelForm):
     class Meta:
         model = DocumentType
         fields = ["name", "code", "requires_expiry", "is_insurance"]
+        # LV-22: without explicit labels Django auto-derives an English one
+        # ("Requires expiry") whose msgid is in no catalog, so it renders in
+        # English inside the Spanish UI.
+        labels = {
+            "name": _("Name"),
+            "code": _("Code"),
+            "requires_expiry": _("Requires expiry"),
+            "is_insurance": _("Is insurance"),
+        }
 
 
 class AlertRuleForm(AeroModelForm):
@@ -271,6 +280,18 @@ class AlertRuleForm(AeroModelForm):
             "target_board",
             "target_stage",
         ]
+        labels = {
+            "name": _("Name"),
+            "days_before_expiry": _("Days before expiry"),
+            "enabled": _("Enabled"),
+            # Sentence case on purpose: AeroModelForm normalizes every label
+            # through translate_field_label() before the gettext lookup, so
+            # "Create Kanban task" would be normalized to this anyway and the
+            # catalog entry for the capitalized form would never be hit.
+            "create_kanban_task": _("Create kanban task"),
+            "target_board": _("Target board"),
+            "target_stage": _("Target stage"),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -294,6 +315,12 @@ class AlertForm(AeroModelForm):
     class Meta:
         model = Alert
         fields = ["alert_rule", "content_type", "object_id", "message"]
+        labels = {
+            "alert_rule": _("Alert rule"),
+            "content_type": _("Content type"),
+            "object_id": _("Object id"),
+            "message": _("Message"),
+        }
 
 
 class AlertResolveForm(forms.Form):

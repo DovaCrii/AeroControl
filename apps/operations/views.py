@@ -100,6 +100,13 @@ class FlightPermissionList(
             "valid_from",
             "valid_until",
             "location",
+            "region",
+            "commune",
+            "area_name",
+            "latitude",
+            "longitude",
+            "radius_km",
+            "max_altitude_ft",
             "status",
         )
     ]

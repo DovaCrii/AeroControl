@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
+from decimal import Decimal
 
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
 from django.db.models import Q
 from django.conf import settings
@@ -72,6 +74,45 @@ class FlightPermission(BaseModel):
     valid_from = models.DateField()
     valid_until = models.DateField()
     location = models.CharField(max_length=250)
+    # OPS-4 structured location (docs/dev/ops-contract-tracking-plan.md §1.4),
+    # deferred when the rest of OPS-4 landed and picked up here. It
+    # *complements* `location` rather than replacing it: the free-text field
+    # keeps the exact wording of the DGAC authorization, while these add the
+    # administrative breakdown and, optionally, the point/area the flight
+    # covers so it can later cross-reference the GEO plan for the same site.
+    # All optional -- an older permit whose paperwork only ever said
+    # "Chuquicamata" is not retroactively incomplete.
+    region = models.CharField(max_length=100, blank=True)
+    commune = models.CharField(max_length=100, blank=True)
+    area_name = models.CharField(max_length=200, blank=True)
+    latitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+        validators=[
+            MinValueValidator(Decimal("-90")),
+            MaxValueValidator(Decimal("90")),
+        ],
+    )
+    longitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+        validators=[
+            MinValueValidator(Decimal("-180")),
+            MaxValueValidator(Decimal("180")),
+        ],
+    )
+    radius_km = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0"))],
+    )
+    max_altitude_ft = models.PositiveIntegerField(null=True, blank=True)
     # Nullable so the permissions created before this field existed are not
     # retroactively broken; the form requires it (blank=False, the default)
     # for anything created or edited from now on.
@@ -150,6 +191,14 @@ class FlightPermission(BaseModel):
             errors["purpose_detail"] = _(
                 "Describe the purpose when 'Other' is selected."
             )
+        # A lone coordinate cannot be plotted; require the pair together so a
+        # half-entered point does not silently fail to show on a future map.
+        if (self.latitude is None) != (self.longitude is None):
+            message = _("Latitude and longitude must be entered together.")
+            errors["latitude"] = message
+            errors["longitude"] = message
+        if self.radius_km is not None and self.latitude is None:
+            errors["radius_km"] = _("A radius requires a coordinate pair.")
         if errors:
             raise ValidationError(errors)
 
