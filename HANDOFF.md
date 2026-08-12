@@ -15,76 +15,48 @@
   R7.4-R7.7 escritos · R8.1 · X.1-X.3.
 - **Parcial:** R4 (importador listo, `--apply` nunca corrido).
 - **AOC cargado en producción** ✅ (2026-08-11, por el usuario).
-
-> ⚠️ **`p340` está un commit atrás del tag.** Se desplegó `f0527e6`; despues se
-> corrigieron **LV-68/69/69b/70/71/73** en `main`. **`LV-73` es un P0 de pérdida
-> de datos** (ver abajo), así que ese despliegue no es opcional.
+- **`p340` al día con `main`** ✅ (2026-08-12, incluye el arreglo P0 de `LV-73`).
 
 ### Qué corre solo en `p340`
 
-7 timers de systemd: `alerts` (06:00), `digest` (07:00), `credentials` (07:30),
+**8 timers de systemd**, todos verificados corriendo: `alerts` (06:00),
+`digest` (07:00), `credentials` (07:30), `executive` (lunes 07:30),
 `backup` (22:00), `snapshot` (23:00), `monthly` (23:30, último día del mes),
-`monthly-deadline` (08:00, día 15). **Falta `executive`** (LV-67).
+`monthly-deadline` (08:00, día 15).
 
 Verificar: `systemctl list-timers 'aerocontrol-*' --no-pager`
 
+Notificaciones a `Dirección`: `aortega@jej.cl` + `cmunoz@jej.cl`.
+
 ## Pendientes inmediatos — empezar por acá
 
-**1. Desplegar el delta (P0, incluye el arreglo de pérdida de datos LV-73).**
-No hay migraciones nuevas.
+**1. Cargar 10 vigencias que faltan (LV-74).** Es lo único con impacto de
+cumplimiento hoy. **No es un bug** — se verificó contra el respaldo que nunca
+estuvieron cargadas. Importa porque **un `NULL` no genera alerta** (decisión
+correcta de LV-29: un nulo significa "nunca se ingresó"), así que estos 10 son
+invisibles para las alertas, el calendario y el reporte: el hueco no se anuncia.
 
-```bash
-ssh levdigital01@100.121.16.118
-cd /opt/aerocontrol && git pull
-set -a; source <(sudo cat /etc/aerocontrol.env); set +a
-uv sync && uv run python manage.py collectstatic --no-input && sudo systemctl restart aerocontrol
-```
+- Sin `insurance_expiry` (seguro JAC): `RPA-2019`, `RPA-3696`, `RPA-7126`.
+- Sin `credential_expiry` (credencial DGAC): René Herrera Molina, Natalia Ramos
+  Mora, Jimmy Patricio Andrade Muñoz, David Vidal Vidal, Jose Luis Ogalde
+  Henríquez, Luis Piña Tapia, Alberto Jesus Angel Milla.
 
-**2. Destinatarios de las notificaciones (LV-66).** Hoy tres funciones
-(`send_executive_report`, `check_monthly_records`, `check_monthly_review_deadline`)
-no llegan a nadie: el grupo `Dirección` sólo tiene a `aortega`, **sin correo**.
+Se cargan desde la ficha de cada aeronave/operador, o re-corriendo
+`load_dgac_vigencias` con una captura completa.
 
-```bash
-uv run python manage.py shell -v 0 -c "
-from django.contrib.auth.models import Group, User
-g = Group.objects.get(name='Dirección')
-a = User.objects.get(username='aortega'); a.email='aortega@jej.cl'; a.save()
-u, _ = User.objects.get_or_create(username='cmunoz', defaults={'email':'cmunoz@jej.cl'})
-u.email='cmunoz@jej.cl'; u.save(); g.user_set.add(u)
-print(list(g.user_set.values_list('username','email')))"
-uv run python manage.py send_executive_report --dry-run   # debe listar 2
-```
-
-**3. Timer del informe ejecutivo (LV-67)** — nunca se programó. Crear el par
-`.service`/`.timer` con el patrón de `docs/scheduled-operations.md`
-(usuario `levdigital01`, `OnCalendar=Mon *-*-* 07:30:00`, comando
-`send_executive_report --period week`).
-
-**4. Títulos de planes geoespaciales (LV-70).** Informe → revisar las 2 líneas →
-repetir con `--apply`:
-
-```bash
-uv run python manage.py refresh_geoplan_titles
-```
-
-**5. Revisar si el bug LV-73 borró vigencias.** Las fechas que ese bug destruyó
-**no son recuperables desde la app**; el respaldo previo al despliegue
-(`/srv/aerocontrol-data/backups/aero_ops_20260811_165707.sqlite3`) las tendría.
-
-```bash
-uv run python manage.py shell -v 0 -c "
-from apps.registry.models import Aircraft, Operator
-print('aeronaves sin seguro:', list(Aircraft.objects.filter(insurance_expiry__isnull=True).values_list('registration', flat=True)))
-print('operadores sin vigencia:', list(Operator.objects.filter(credential_expiry__isnull=True).values_list('full_name', flat=True)))"
-```
-
-**6. CSP a *enforcing***: verificado en demo, falta la variable en `p340`.
+**2. CSP a *enforcing***: verificado en demo, falta la variable en `p340`.
 Criterio de salida de `beta`.
 
-**7. R4, bloqueado del lado del usuario**: corregir 2 nombres de carpeta en `Z:`
+**3. Las 2 ramas `claude/*`** (ver abajo) — cuanto más se demore, más difícil el
+rescate.
+
+**4. R4, bloqueado del lado del usuario**: corregir 2 nombres de carpeta en `Z:`
 (`RPA-4647`, `RPA-4884`) y configurar un antivirus real
 (`DOCUMENTS_ANTIVIRUS_COMMAND` está vacío en todos los ambientes) antes de correr
 el importador con `--apply`.
+
+Después de esto, el trabajo de fondo son las **Sesiones B/C/D** de
+`MASTER_PLAN.md` → "Rumbo a 1.0".
 
 ## Cómo desplegar
 
