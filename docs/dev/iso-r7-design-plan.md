@@ -297,13 +297,17 @@ todos los KPI que vengan después**. Es la recomendación de por dónde seguir.
 
 | KPI que pide la guía | De qué depende | ¿Disponible? |
 |---|---|---|
-| Precisión lograda vs. requerida | `R7.4` | No |
-| Tasa de re-vuelos | `R7.6` | No |
-| Horas de vuelo sin incidentes | `R7.1` (hecho) + `R7.6` | Mitad |
+| Precisión lograda vs. requerida | `R7.4` | **Sí — desde 2026-08-12** |
+| Tasa de re-vuelos | `R7.6` | **Sí — desde 2026-08-12** |
+| Horas de vuelo sin incidentes | `R7.1` (hecho) + `R7.6` | **Sí — desde 2026-08-12** |
 | Disponibilidad de equipos | `Aircraft.status` + estados de taller de `R5.1` (hechos) | **Sí** |
 | Cumplimiento de plazos | fechas del permiso vs. fechas de vuelo | **Sí, derivable** |
 
-Los dos últimos se pueden calcular **hoy**, sin ningún modelo nuevo.
+Los dos últimos se podían calcular sin ningún modelo nuevo, y se hicieron
+primero. **Los cinco están implementados desde el 2026-08-12** (`apps/compliance/kpis.py`),
+porque `R7.4` y `R7.6` aterrizaron el mismo día. Lo único que sigue faltando de
+la cláusula son **las metas**: sólo la de disponibilidad de flota está acordada
+(90%), y los demás muestran su valor sin marcar incumplimiento.
 
 ### Qué falta preguntar
 
