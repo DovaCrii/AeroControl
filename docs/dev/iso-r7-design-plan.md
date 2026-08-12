@@ -86,9 +86,16 @@ permiso sin el PDF de la DGAC. Mismo mixin, misma forma, otro criterio.
 
 ### Qué falta preguntar
 
-1. **Los umbrales reales.** RMSE y GSD aceptables salen del contrato con el
-   cliente. No se pueden inventar: un umbral inventado que la operación no
-   cumple convierte el *gate* en un estorbo que alguien va a desactivar.
+1. ~~**Los umbrales reales.**~~ **Resuelto por la forma, no por la respuesta
+   (2026-08-12).** El diseño ya decía que los umbrales van **al contrato**
+   (`CostCenter`), no al entregable — y de ahí se sigue algo que este documento
+   no había sacado en limpio: **no hace falta conocer los números para escribir
+   el código**, porque cada contrato carga los suyos. El bloqueo era menor de lo
+   que decía el tablero. Implementado con la regla **"un contrato sin umbrales
+   no tiene *gate*"**: el entregable registra sus métricas y no declara
+   veredicto. Los números se cargan por contrato, desde la ficha del centro de
+   costo, sin tocar código. Sigue en pie el motivo original: un umbral global
+   inventado sería peor que ninguno.
 2. **¿Un entregable por permiso, o por faena/mes?** Cambia el anclaje.
 3. **¿Quién valida?** Rol nuevo o el grupo `Dirección` que ya revisa el cierre
    mensual.
@@ -329,10 +336,12 @@ resto.
 4. **Los dos KPI ya disponibles** (disponibilidad de equipos, cumplimiento de
    plazos), una vez que exista el *snapshot*.
 5. **`NonConformity`** (R7.6) — modelo nuevo, pero de forma clara.
-6. **`Deliverable`** (R7.4) — **el de mayor valor de negocio y el más
-   bloqueado**: sin los umbrales reales del contrato no se puede cerrar. Vale
-   preguntarlos pronto, porque de él dependen dos KPI y el disparador principal
-   de las no conformidades.
+6. ~~**`Deliverable`** (R7.4)~~ — **✅ HECHO 2026-08-12.** Resultó **no estar
+   bloqueado**: los umbrales viven en el contrato, así que la estructura se
+   construye sin conocerlos y el *gate* se activa por contrato al cargarlos.
+   Modelo + 2 migraciones + CRUD + *gate* de liberación con excepción firmada,
+   20 tests. Lo que **sí** sigue esperando los números reales es el uso: hasta
+   que un contrato tenga umbrales, sus entregables se registran "sin evaluar".
 7. **IPER estructurado** (R7.5) — último, y solo con pedido explícito: es el que
    más se arriesga a sentirse como burocracia nueva.
 

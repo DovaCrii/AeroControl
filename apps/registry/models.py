@@ -1,8 +1,10 @@
 import zlib
+from decimal import Decimal
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
@@ -74,6 +76,55 @@ class CostCenter(BaseModel):
     responsible_contact_email = models.EmailField(
         blank=True, verbose_name=_("External contact email")
     )
+    # R7.4 (ISO 9001 8.6): the acceptance criteria for a survey belong to the
+    # contract, not to each deliverable. If someone types the threshold on
+    # every row it is not an agreed criterion, it is an opinion per record --
+    # so `Deliverable` compares against these and derives "meets / does not"
+    # instead of storing a declared verdict.
+    #
+    # All nullable, and that is the design, not a gap: **a contract with no
+    # thresholds set simply has no quality gate**, and the deliverable records
+    # its metrics without a pass/fail claim. That is what makes this shippable
+    # before the real contract numbers are known -- they are loaded per
+    # contract, by the people who negotiated them, with no code change. An
+    # invented global threshold would be worse than none: a gate the operation
+    # cannot meet is a gate somebody switches off.
+    required_gsd_cm = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0"))],
+        verbose_name=_("Required GSD (cm)"),
+    )
+    max_rmse_xy_cm = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0"))],
+        verbose_name=_("Maximum horizontal RMSE (cm)"),
+    )
+    max_rmse_z_cm = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0"))],
+        verbose_name=_("Maximum vertical RMSE (cm)"),
+    )
+
+    @property
+    def has_quality_thresholds(self):
+        """Whether this contract defines acceptance criteria at all."""
+        return any(
+            value is not None
+            for value in (
+                self.required_gsd_cm,
+                self.max_rmse_xy_cm,
+                self.max_rmse_z_cm,
+            )
+        )
 
     def __str__(self):
         # name is optional (LV-16): fall back to the code alone when blank.

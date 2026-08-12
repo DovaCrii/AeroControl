@@ -64,6 +64,11 @@ class CostCenterForm(AeroModelForm):
             "responsible_operator",
             "responsible_contact_name",
             "responsible_contact_email",
+            # R7.4: the survey acceptance criteria are part of the contract,
+            # so they are captured here rather than typed per deliverable.
+            "required_gsd_cm",
+            "max_rmse_xy_cm",
+            "max_rmse_z_cm",
             "notes",
         ]
         labels = {
@@ -74,6 +79,9 @@ class CostCenterForm(AeroModelForm):
             "responsible_operator": _("Responsible operator"),
             "responsible_contact_name": _("External contact name"),
             "responsible_contact_email": _("External contact email"),
+            "required_gsd_cm": _("Required GSD (cm)"),
+            "max_rmse_xy_cm": _("Maximum horizontal RMSE (cm)"),
+            "max_rmse_z_cm": _("Maximum vertical RMSE (cm)"),
             "notes": _("Notes"),
         }
         help_texts = {
@@ -95,6 +103,12 @@ class CostCenterForm(AeroModelForm):
             # LV-10a: the "CC" prefix is fixed, not typed. Enforced in
             # clean_code so the stored value is always CC<number>.
             "code": _("Enter the number only; the CC prefix is added automatically."),
+            "required_gsd_cm": _(
+                "Survey acceptance criteria (ISO 9001 8.6), from the contract. "
+                "Leave blank when none was agreed: a deliverable is then "
+                "recorded without a pass/fail verdict rather than judged "
+                "against an invented threshold."
+            ),
         }
 
     def __init__(self, *args, **kwargs):

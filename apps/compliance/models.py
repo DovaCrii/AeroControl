@@ -721,3 +721,208 @@ class Alert(BaseModel):
             ]
         )
         return True
+
+
+class Deliverable(BaseModel):
+    """R7.4: quality control of what the survey produced (ISO 9001 8.5.1/8.6).
+
+    AeroControl covers *permission to fly* and *the record that it flew*; this
+    is the missing third thing -- **whether what was delivered is fit for use**.
+
+    It does **not** store the product. Point clouds and orthophotos live in the
+    processing pipeline and on `Z:`; what an auditor asks to see is the metrics
+    and the validation signature, so that is what this holds.
+
+    Anchored to `CostCenter` (the contract, always present) with an optional
+    M2M to `FlightPermission`: a real deliverable can span several flights and
+    several permits, and a permit may produce none, so a single FK to the
+    permit would misrepresent both cases.
+
+    **Acceptance is derived, never declared.** The thresholds live on the
+    contract (`CostCenter.required_gsd_cm` and friends); this compares against
+    them. A contract with no thresholds set has no gate, and the deliverable
+    records its metrics without claiming a verdict -- which is what lets this
+    ship before the negotiated numbers are known.
+
+    Tenancy derives through `cost_center` (ADR-0001), so no own tenant FK.
+    """
+
+    STATUS_DRAFT = "draft"
+    STATUS_VALIDATED = "validated"
+    STATUS_RELEASED = "released"
+    STATUS_REJECTED = "rejected"
+    STATUS_CHOICES = [
+        (STATUS_DRAFT, _("Draft")),
+        (STATUS_VALIDATED, _("Validated")),
+        (STATUS_RELEASED, _("Released")),
+        (STATUS_REJECTED, _("Rejected")),
+    ]
+
+    title = models.CharField(max_length=200)
+    cost_center = models.ForeignKey(
+        "registry.CostCenter",
+        on_delete=models.PROTECT,
+        related_name="deliverables",
+    )
+    flight_permissions = models.ManyToManyField(
+        "operations.FlightPermission",
+        blank=True,
+        related_name="deliverables",
+    )
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default=STATUS_DRAFT
+    )
+
+    # Achieved metrics. All optional: a deliverable is created when the survey
+    # is processed and the numbers arrive from the pipeline afterwards.
+    gsd_achieved_cm = models.DecimalField(
+        max_digits=6, decimal_places=2, null=True, blank=True
+    )
+    # Horizontal and vertical are accepted against different thresholds -- a
+    # single combined RMSE cannot support the decision.
+    rmse_xy_cm = models.DecimalField(
+        max_digits=6, decimal_places=2, null=True, blank=True
+    )
+    rmse_z_cm = models.DecimalField(
+        max_digits=6, decimal_places=2, null=True, blank=True
+    )
+    # An RMSE computed over the same points used to fit the model is not an
+    # independent check. Keeping control points and check points apart is what
+    # makes the number defensible in front of an auditor.
+    gcp_count = models.PositiveIntegerField(null=True, blank=True)
+    checkpoint_count = models.PositiveIntegerField(null=True, blank=True)
+    coverage_pct = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True
+    )
+    overlap_pct = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True
+    )
+
+    validated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    validated_at = models.DateTimeField(null=True, blank=True)
+    # The thresholds in force when this was validated, copied here on purpose.
+    # Renegotiating a contract must not silently rewrite the verdict of work
+    # already accepted -- same criterion as `purpose_legacy` in R3.1.
+    applied_required_gsd_cm = models.DecimalField(
+        max_digits=6, decimal_places=2, null=True, blank=True, editable=False
+    )
+    applied_max_rmse_xy_cm = models.DecimalField(
+        max_digits=6, decimal_places=2, null=True, blank=True, editable=False
+    )
+    applied_max_rmse_z_cm = models.DecimalField(
+        max_digits=6, decimal_places=2, null=True, blank=True, editable=False
+    )
+    # A release that goes out below the agreed criteria has to be a decision
+    # someone signed, not a silent override -- see `can_release` below.
+    release_waiver_reason = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = _("deliverable")
+        verbose_name_plural = _("deliverables")
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(
+                fields=["cost_center", "status"], name="compliance_deliv_cc_idx"
+            )
+        ]
+
+    def __str__(self):
+        return self.title
+
+    def get_absolute_url(self):
+        from django.urls import reverse
+
+        return reverse("deliverable-detail", kwargs={"pk": self.pk})
+
+    def _thresholds(self):
+        """The thresholds to judge against: the frozen ones once validated,
+        the contract's current ones before that."""
+        if self.validated_at is not None:
+            return (
+                self.applied_required_gsd_cm,
+                self.applied_max_rmse_xy_cm,
+                self.applied_max_rmse_z_cm,
+            )
+        return (
+            self.cost_center.required_gsd_cm,
+            self.cost_center.max_rmse_xy_cm,
+            self.cost_center.max_rmse_z_cm,
+        )
+
+    def acceptance_checks(self):
+        """[(label, achieved, threshold, passed), ...] for each criterion the
+        contract defines and this deliverable has a measurement for.
+
+        A criterion with no threshold, or no measurement, is left out entirely
+        rather than counted as passed: "not assessed" and "meets" are different
+        statements, and merging them is how a gate quietly stops gating.
+        """
+        required_gsd, max_xy, max_z = self._thresholds()
+        candidates = [
+            # GSD is a resolution: *smaller is better*, so achieving less than
+            # or equal to what was required is the pass condition -- the same
+            # direction as the RMSE limits, which is why one comparison works
+            # for all three.
+            (_("GSD (cm)"), self.gsd_achieved_cm, required_gsd),
+            (_("Horizontal RMSE (cm)"), self.rmse_xy_cm, max_xy),
+            (_("Vertical RMSE (cm)"), self.rmse_z_cm, max_z),
+        ]
+        return [
+            (label, achieved, threshold, achieved <= threshold)
+            for label, achieved, threshold in candidates
+            if achieved is not None and threshold is not None
+        ]
+
+    @property
+    def meets_acceptance_criteria(self):
+        """True/False, or **None when nothing could be assessed**.
+
+        None is not a failure: it means the contract set no thresholds, or the
+        metrics have not arrived yet. Rendering it as a failure would flag
+        every deliverable of every contract that has not negotiated criteria.
+        """
+        checks = self.acceptance_checks()
+        if not checks:
+            return None
+        return all(passed for *_rest, passed in checks)
+
+    @property
+    def can_release(self):
+        """Whether releasing is allowed as things stand.
+
+        Blocked only on a *measured* failure. An unassessed deliverable
+        (`None`) releases freely: with no agreed criteria there is nothing to
+        enforce, and inventing one here would be a gate nobody agreed to.
+        Overriding a real failure needs `release_waiver_reason` -- the same
+        shape as R2.4's document gate, one step from a hard block to a signed
+        exception.
+        """
+        if self.meets_acceptance_criteria is False:
+            return bool(self.release_waiver_reason.strip())
+        return True
+
+    def validate_quality(self, *, user=None):
+        """Sign the internal validation and freeze the thresholds applied."""
+        self.status = self.STATUS_VALIDATED
+        self.validated_by = user
+        self.validated_at = timezone.now()
+        self.applied_required_gsd_cm = self.cost_center.required_gsd_cm
+        self.applied_max_rmse_xy_cm = self.cost_center.max_rmse_xy_cm
+        self.applied_max_rmse_z_cm = self.cost_center.max_rmse_z_cm
+        self.save(
+            update_fields=[
+                "status",
+                "validated_by",
+                "validated_at",
+                "applied_required_gsd_cm",
+                "applied_max_rmse_xy_cm",
+                "applied_max_rmse_z_cm",
+                "updated_at",
+            ]
+        )

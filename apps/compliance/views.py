@@ -34,12 +34,14 @@ from .forms import (
     AlertForm,
     AlertResolveForm,
     AlertRuleForm,
+    DeliverableForm,
     DocumentForm,
     DocumentTypeForm,
 )
 from .models import (
     Alert,
     AlertRule,
+    Deliverable,
     Document,
     DocumentType,
     MonthlyComplianceReview,
@@ -101,6 +103,148 @@ class ComplianceCreate(HtmxFormMixin, ModelPermissionRequiredMixin, CreateView):
             "record": _(self.model._meta.verbose_name.title())
         }
         return context
+
+
+class DeliverableList(ComplianceList):
+    """R7.4: survey deliverables and their quality verdict (ISO 9001 8.6)."""
+
+    model = Deliverable
+    template_name = "compliance/deliverable_list.html"
+    search_fields = ["title", "cost_center__code", "cost_center__name"]
+
+    def get_queryset(self):
+        queryset = super().get_queryset().select_related("cost_center")
+        status = self.request.GET.get("status")
+        if status in dict(Deliverable.STATUS_CHOICES):
+            queryset = queryset.filter(status=status)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["status_choices"] = Deliverable.STATUS_CHOICES
+        context["selected_status"] = self.request.GET.get("status", "")
+        return context
+
+
+class DeliverableDetail(ModelViewPermissionRequiredMixin, DetailView):
+    model = Deliverable
+    template_name = "compliance/deliverable_detail.html"
+    context_object_name = "deliverable"
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .filter(is_active=True)
+            .select_related("cost_center", "validated_by")
+            .prefetch_related("flight_permissions")
+        )
+
+
+class DeliverableCreate(ComplianceCreate):
+    model = Deliverable
+    form_class = DeliverableForm
+
+
+class DeliverableUpdate(HtmxFormMixin, ModelPermissionRequiredMixin, UpdateView):
+    model = Deliverable
+    form_class = DeliverableForm
+    permission_action = "change"
+    template_name = "generic/form.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = _("Edit deliverable")
+        return context
+
+
+class DeliverableValidate(ModelPermissionRequiredMixin, View):
+    """The internal validation signature ISO 8.6 asks for before release.
+
+    A signature, not a boolean: it records who and when, and freezes the
+    contract thresholds in force at that moment so renegotiating the contract
+    later cannot silently rewrite the verdict of work already accepted.
+    """
+
+    model = Deliverable
+    permission_action = "change"
+
+    def post(self, request, pk):
+        deliverable = get_object_or_404(Deliverable, pk=pk, is_active=True)
+        if deliverable.status != Deliverable.STATUS_DRAFT:
+            messages.error(request, _("Only a draft deliverable can be validated."))
+            return redirect(deliverable)
+        deliverable.validate_quality(user=request.user)
+        set_audit_context(request, deliverable, action="deliverable_validated")
+        messages.success(request, _("Deliverable validated."))
+        return redirect(deliverable)
+
+
+class DeliverableRelease(ModelPermissionRequiredMixin, View):
+    """The quality gate (R7.4), same shape as R2.4's document gate.
+
+    Blocked only on a *measured* failure against the contract's thresholds. A
+    deliverable nobody could assess -- no thresholds agreed, or metrics not in
+    yet -- releases freely: enforcing an invented criterion is how a gate ends
+    up switched off. Overriding a real failure needs a written waiver, so the
+    exception is a decision on record rather than a silent bypass.
+    """
+
+    model = Deliverable
+    permission_action = "change"
+
+    def post(self, request, pk):
+        deliverable = get_object_or_404(Deliverable, pk=pk, is_active=True)
+        if deliverable.status != Deliverable.STATUS_VALIDATED:
+            messages.error(request, _("Only a validated deliverable can be released."))
+            return redirect(deliverable)
+
+        waiver = (request.POST.get("waiver_reason") or "").strip()
+        if waiver:
+            deliverable.release_waiver_reason = waiver
+        if not deliverable.can_release:
+            set_audit_context(
+                request, deliverable, action="deliverable_release_blocked"
+            )
+            messages.error(
+                request,
+                _(
+                    "This deliverable is below the contract's acceptance "
+                    "criteria. Releasing it anyway requires a documented reason."
+                ),
+            )
+            return redirect(deliverable)
+
+        deliverable.status = Deliverable.STATUS_RELEASED
+        deliverable.save(
+            update_fields=["status", "release_waiver_reason", "updated_at"]
+        )
+        set_audit_context(
+            request,
+            deliverable,
+            action="deliverable_released",
+            metadata={"waived": bool(deliverable.release_waiver_reason)},
+        )
+        messages.success(request, _("Deliverable released."))
+        return redirect(deliverable)
+
+
+class DeliverableReject(ModelPermissionRequiredMixin, View):
+    """Reject a deliverable -- the reflight / rework path of ISO 10.2."""
+
+    model = Deliverable
+    permission_action = "change"
+
+    def post(self, request, pk):
+        deliverable = get_object_or_404(Deliverable, pk=pk, is_active=True)
+        if deliverable.status == Deliverable.STATUS_RELEASED:
+            messages.error(request, _("A released deliverable cannot be rejected."))
+            return redirect(deliverable)
+        deliverable.status = Deliverable.STATUS_REJECTED
+        deliverable.save(update_fields=["status", "updated_at"])
+        set_audit_context(request, deliverable, action="deliverable_rejected")
+        messages.success(request, _("Deliverable rejected."))
+        return redirect(deliverable)
 
 
 class DocumentList(ComplianceList):
