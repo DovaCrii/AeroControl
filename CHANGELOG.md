@@ -17,6 +17,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   que un permiso antiguo cuyo papel sólo decía "Chuquicamata" no queda
   retroactivamente incompleto. Un punto a medio ingresar (latitud sin longitud)
   se rechaza: no se puede dibujar en un mapa y fallaría en silencio.
+- **Control de calidad del entregable (`R7.4`, ISO 9001 8.5.1/8.6).** Registro de
+  GSD y RMSE logrados **contra los requeridos por el contrato**, con validación
+  interna firmada antes de liberar. Liberar por debajo del criterio acordado
+  exige un motivo escrito, que queda visible. Los umbrales se cargan en la ficha
+  del centro de costo: **un contrato sin umbrales no impone ningún control**, y
+  sus entregables quedan "sin evaluar" en vez de juzgarse contra un número
+  inventado.
 - **Indicadores operacionales en el reporte (`R7.7a`, ISO 9001 9.1.1).**
   Disponibilidad de flota (meta 90%) y cumplimiento de plazos, con valor, meta y
   estado. Sin datos nuevos.

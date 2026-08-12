@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from apps.core.forms import AeroModelForm
-from .models import Alert, AlertRule, Document, DocumentType
+from .models import Alert, AlertRule, Deliverable, Document, DocumentType
 from .security import scan_uploaded_file
 from .watchables import (
     WATCHABLE_MODELS,
@@ -320,6 +320,51 @@ class AlertForm(AeroModelForm):
             "content_type": _("Content type"),
             "object_id": _("Object id"),
             "message": _("Message"),
+        }
+
+
+class DeliverableForm(AeroModelForm):
+    """R7.4. `status` is not editable here: it moves through the validate /
+    release / reject actions, which carry the signature and the gate. A status
+    dropdown would let someone type "released" past the acceptance check."""
+
+    class Meta:
+        model = Deliverable
+        fields = [
+            "title",
+            "cost_center",
+            "flight_permissions",
+            "gsd_achieved_cm",
+            "rmse_xy_cm",
+            "rmse_z_cm",
+            "gcp_count",
+            "checkpoint_count",
+            "coverage_pct",
+            "overlap_pct",
+            "notes",
+        ]
+        widgets = {"flight_permissions": forms.CheckboxSelectMultiple}
+        labels = {
+            "title": _("Title"),
+            "cost_center": _("Cost center"),
+            "flight_permissions": _("Flight permissions"),
+            "gsd_achieved_cm": _("Achieved GSD (cm)"),
+            "rmse_xy_cm": _("Horizontal RMSE (cm)"),
+            "rmse_z_cm": _("Vertical RMSE (cm)"),
+            "gcp_count": _("Control points"),
+            "checkpoint_count": _("Check points"),
+            "coverage_pct": _("Coverage (%)"),
+            "overlap_pct": _("Overlap (%)"),
+            "notes": _("Notes"),
+        }
+        help_texts = {
+            "gsd_achieved_cm": _(
+                "Compared against the cost center's required GSD, when set."
+            ),
+            "checkpoint_count": _(
+                "Points held back from the adjustment. An RMSE computed only "
+                "over control points is not an independent check."
+            ),
         }
 
 
