@@ -139,6 +139,64 @@ def test_every_translatable_string_is_in_the_catalog(catalog):
     assert not missing, "ausentes del catalogo:\n  " + "\n  ".join(missing)
 
 
+def _all_model_forms():
+    """Every concrete ModelForm defined under apps/*/forms.py."""
+    import importlib
+    import pkgutil
+
+    from django import forms as django_forms
+
+    import apps as apps_pkg
+
+    found = {}
+    for mod in pkgutil.walk_packages(apps_pkg.__path__, "apps."):
+        if not mod.name.endswith(".forms"):
+            continue
+        module = importlib.import_module(mod.name)
+        for name in dir(module):
+            obj = getattr(module, name)
+            if (
+                isinstance(obj, type)
+                and issubclass(obj, django_forms.ModelForm)
+                and obj.__module__ == module.__name__
+                and getattr(getattr(obj, "Meta", None), "model", None) is not None
+            ):
+                found[f"{mod.name}.{name}"] = obj
+    return found
+
+
+@pytest.mark.django_db
+def test_every_form_label_is_in_the_catalog(catalog):
+    """A field with no Meta.labels entry (and no model verbose_name) renders
+    Django's auto-derived English label, whose msgid is never in the catalog --
+    so it shows in English inside the Spanish UI. The sibling test above only
+    sees literals written in the source; an auto-derived label exists nowhere
+    in the code, which is exactly why this class of drift stayed invisible.
+    This instantiates every form and checks each rendered label/help text
+    resolves to a catalog entry.
+
+    This is LV-22 generalized: that fix added explicit labels to one form at a
+    time, as each was spotted by eye, which is how 18 of them survived.
+    """
+    from django.utils.translation import override
+
+    translated = {msgid for _, msgid, msgstr, fuzzy in catalog if msgstr and not fuzzy}
+    problems = []
+    with override("en"):
+        for form_label, form_cls in sorted(_all_model_forms().items()):
+            try:
+                form = form_cls()
+            except Exception:  # noqa: BLE001 - a form needing args isn't reachable bare
+                continue
+            for name, field in form.fields.items():
+                for kind, value in (("label", field.label), ("help", field.help_text)):
+                    text = str(value) if value else ""
+                    if text and text not in translated:
+                        problems.append(f"{form_label}.{name} [{kind}]: {text!r}")
+
+    assert not problems, "labels/help texts sin traducir:\n  " + "\n  ".join(problems)
+
+
 def test_source_strings_are_written_in_english():
     """The project keeps source strings in English and Spanish in the catalog.
     Two validation messages had been written directly in Spanish, which put the
