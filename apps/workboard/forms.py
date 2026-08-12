@@ -17,6 +17,13 @@ class KanbanBoardForm(AeroModelForm):
     class Meta:
         model = KanbanBoard
         fields = ["name", "description", "tenant"]
+        # LV-22: an unlisted field renders Django's derived English label,
+        # whose msgid is in no catalog -- English inside the Spanish UI.
+        labels = {
+            "name": _("Name"),
+            "description": _("Description"),
+            "tenant": _("Tenant"),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -35,6 +42,13 @@ class KanbanStageForm(AeroModelForm):
         # the user never types -- it is assigned server-side on create (append at
         # the end) and changed only by drag-and-drop.
         fields = ["board", "name", "color", "status_type", "wip_limit"]
+        labels = {
+            "board": _("Board"),
+            "name": _("Name"),
+            "color": _("Color"),
+            "status_type": _("Status type"),
+            "wip_limit": _("WIP limit"),
+        }
 
 
 class KanbanTaskForm(AeroModelForm):
@@ -57,6 +71,16 @@ class KanbanTaskForm(AeroModelForm):
             "priority",
             "labels",
         ]
+        labels = {
+            "board": _("Board"),
+            "stage": _("Stage"),
+            "title": _("Title"),
+            "description": _("Description"),
+            "assigned_to": _("Assigned to"),
+            "due_date": _("Due date"),
+            "priority": _("Priority"),
+            "labels": _("Labels"),
+        }
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -93,6 +117,11 @@ class KanbanLabelForm(AeroModelForm):
         model = KanbanLabel
         # `order` assigned server-side on create (append at the end).
         fields = ["board", "name", "color"]
+        labels = {
+            "board": _("Board"),
+            "name": _("Name"),
+            "color": _("Color"),
+        }
 
 
 class KanbanChecklistItemForm(AeroModelForm):
@@ -101,3 +130,4 @@ class KanbanChecklistItemForm(AeroModelForm):
         # `order` is set by the create view (item.order = items.count()), so it
         # was never actually read from this form.
         fields = ["title"]
+        labels = {"title": _("Title")}
