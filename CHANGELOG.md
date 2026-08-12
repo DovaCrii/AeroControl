@@ -17,6 +17,11 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   que un permiso antiguo cuyo papel sólo decía "Chuquicamata" no queda
   retroactivamente incompleto. Un punto a medio ingresar (latitud sin longitud)
   se rechaza: no se puede dibujar en un mapa y fallaría en silencio.
+- **Trazabilidad del permiso al estilo SIGO (`LV-72`).** La ficha del permiso
+  abre con el avance del trámite en pasos y, debajo, el historial numerado con
+  **acción, usuario, rol, fecha y notas** — la misma forma que los operadores ya
+  leen en el sistema de la DGAC, y el orden en que un auditor pide la evidencia.
+  Sin datos nuevos: el historial ya se registraba, faltaba mostrarlo así.
 - **Los 5 indicadores operacionales que pide la guía ISO (`R7.7b`).** A los dos
   que ya estaban se suman precisión de los levantamientos, tasa de re-vuelos y
   horas de vuelo sin incidentes, que dependían de las dos funciones nuevas de
