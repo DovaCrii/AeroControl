@@ -13,6 +13,33 @@ from apps.core.models import BaseModel, OperationalTenant
 from apps.core.tenancy import get_default_tenant
 
 
+def normalize_serial(raw):
+    """The serial as ADR-0002 §2 defines it: upper-case, no whitespace.
+
+    One function, used by `Aircraft.save()`, `Battery.save()` and the AeroLink
+    sync, because a serial typed by a human, one read from a `Z:` folder name
+    and one arriving from DJI telemetry all have to compare equal.
+
+    Whitespace is stripped from **inside** the value too, not just the ends:
+    two real aircraft (`RPA-4401`, `RPA-4436`) carry a spurious space mid-serial.
+
+    Upper-casing was in the ADR from the start and only reached the code on
+    2026-08-12 (X.4c) -- until then AeroControl did the whitespace half and
+    would silently fail to match anything AeroLink upper-cased.
+
+    Returns None for an empty result, so `Aircraft.serial_number` (nullable and
+    unique) does not collide on the empty string. `Battery` requires it and
+    coerces back to "" at the call site, where `clean()` rejects it.
+
+    **No fuzzy matching, ever** -- ADR-0002 §2 forbids Levenshtein and O/0
+    substitution by name. Two of the sixteen real aircraft differ from their
+    folder by one character, and guessing which is right would attribute
+    telemetry to the wrong airframe. That is resolved against the DGAC's RPAS
+    certificate by a human, not here.
+    """
+    return "".join((raw or "").split()).upper() or None
+
+
 class CostCenter(BaseModel):
     tenant = models.ForeignKey(
         OperationalTenant,
@@ -323,7 +350,7 @@ class Aircraft(BaseModel):
         # trailing whitespace, unlike `.strip()`. An empty result becomes
         # `None`, not `""`, so several aircraft without a serial on file
         # do not collide on the unique index.
-        self.serial_number = "".join((self.serial_number or "").split()) or None
+        self.serial_number = normalize_serial(self.serial_number)
         super().save(*args, **kwargs)
 
 
@@ -427,7 +454,7 @@ class Battery(BaseModel):
         # never contains whitespace, and a hand-typed one must compare equal to
         # it. Unlike Aircraft this field is required, so an empty result is a
         # validation problem rather than a legitimate NULL -- left to clean().
-        self.serial_number = "".join((self.serial_number or "").split())
+        self.serial_number = normalize_serial(self.serial_number) or ""
         super().save(*args, **kwargs)
 
     def clean(self):

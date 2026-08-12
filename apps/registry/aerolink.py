@@ -12,6 +12,9 @@ agree on a shape before either builds against a guess:
     GET {AEROLINK_API_URL}/devices/?kind=battery
     Authorization: Token <token>
 
+`AEROLINK_API_URL` **includes the version prefix** -- only "/devices/?kind=..."
+is appended here. So it is set to e.g. `http://127.0.0.1:8081/api/v1`.
+
     {"results": [
       {"serial_number": "...",       # required, the join key (ADR-0002 §2)
        "model": "...",               # optional

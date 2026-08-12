@@ -172,6 +172,35 @@ class TestTheSync:
         assert Battery.objects.filter(serial_number="BAT-001").exists()
 
     @pytest.mark.django_db
+    def test_a_hand_entered_battery_is_not_reported_as_missing(self, tmp_path, capsys):
+        """It is not AeroLink's to report. Including it warned about the same
+        rows on every single run -- the kind of permanent warning people learn
+        to scroll past, which is how a real one gets missed."""
+        Battery.objects.create(serial_number="MANUAL-1")  # source defaults to manual
+
+        call_command(
+            "sync_batteries", "--from-file", _write(tmp_path, _payload(_battery()))
+        )
+
+        assert "MANUAL-1" not in capsys.readouterr().out
+
+    @pytest.mark.django_db
+    def test_a_synced_battery_absent_from_the_feed_is_still_reported(
+        self, tmp_path, capsys
+    ):
+        call_command(
+            "sync_batteries", "--from-file", _write(tmp_path, _payload(_battery()))
+        )
+
+        call_command(
+            "sync_batteries",
+            "--from-file",
+            _write(tmp_path, _payload(_battery(serial="BAT-002"))),
+        )
+
+        assert "BAT-001" in capsys.readouterr().out
+
+    @pytest.mark.django_db
     def test_dry_run_writes_nothing(self, tmp_path):
         call_command(
             "sync_batteries",
@@ -198,6 +227,67 @@ class TestTheSync:
     def test_a_missing_file_fails_clearly(self):
         with pytest.raises(CommandError):
             call_command("sync_batteries", "--from-file", "nope.json")
+
+
+class TestTheSharedContractFixture:
+    """The other half of the cross-repo contract test (ADR-0002 fase 2b).
+
+    AeroLink asserts its endpoint reproduces `tests/fixtures/battery_inventory.json`
+    byte for byte; this consumes the same file. If either side drifts, one of the
+    two suites goes red instead of the mismatch showing up during a deploy.
+
+    A copy rather than a reference across repositories on purpose: a test that
+    reads a path outside its own repo fails on any machine that does not have
+    both checked out side by side, including CI.
+    """
+
+    @pytest.mark.django_db
+    def test_the_published_fixture_syncs_cleanly(self, tmp_path):
+        from apps.registry.models import Aircraft
+
+        Aircraft.objects.create(
+            registration="CC-DEMO",
+            type="RPA",
+            model="M3",
+            manufacturer="DJI",
+            serial_number="AIRDEMO0001",
+        )
+        fixture = _write(
+            tmp_path,
+            {
+                "results": [
+                    {
+                        "serial_number": "TB65DEMO0001",
+                        "model": "TB65",
+                        "status": "active",
+                        "cycle_count": 120,
+                        "health_percent": 93,
+                        "firmware_version": "03.00.05",
+                        "aircraft_serial": "AIRDEMO0001",
+                    },
+                    {
+                        "serial_number": "TB65DEMO0002",
+                        "model": "TB65",
+                        "status": "retired",
+                        "cycle_count": 480,
+                        "health_percent": 61,
+                        "firmware_version": "03.00.05",
+                    },
+                ],
+                "count": 2,
+            },
+        )
+
+        call_command("sync_batteries", "--from-file", fixture)
+
+        assert Battery.objects.count() == 2
+        linked = Battery.objects.get(serial_number="TB65DEMO0001")
+        assert linked.aircraft.registration == "CC-DEMO"
+        assert linked.cycle_count == 120
+        retired = Battery.objects.get(serial_number="TB65DEMO0002")
+        assert retired.status == "retired"
+        # `count` is an extra key the consumer must ignore rather than choke on.
+        assert retired.health_percent == 61
 
 
 class TestTheGatewayIsOptIn:
