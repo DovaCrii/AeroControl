@@ -1,0 +1,11 @@
+{% load i18n %}{% translate "Corrective actions awaiting effectiveness verification" %}
+
+{% blocktranslate count total=rows|length %}This alert was resolved over {{ days }} days ago and nobody has confirmed the action worked:{% plural %}These {{ total }} alerts were resolved over {{ days }} days ago and nobody has confirmed the actions worked:{% endblocktranslate %}
+
+{% translate "Entity" %} | {% translate "Rule" %} | {% translate "Resolved" %} | {% translate "Reason" %}
+{% for row in rows %}{{ row.entity }} | {{ row.rule }} | {{ row.resolved_on }} | {{ row.reason }}
+{% endfor %}
+{% translate "Confirm each one held, or reopen it if it did not:" %}
+{{ base_url }}{{ alert_path }}
+--
+{% translate "This is an automated message from AeroControl." %}

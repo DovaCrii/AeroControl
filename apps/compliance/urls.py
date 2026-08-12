@@ -73,6 +73,12 @@ urlpatterns = [
         "alert/<uuid:pk>/resolve/", views.AlertResolve.as_view(), name="alert-resolve"
     ),
     path("alert/<uuid:pk>/reopen/", views.AlertReopen.as_view(), name="alert-reopen"),
+    # R7.6: effectiveness verification of a corrective action (ISO 10.2).
+    path(
+        "alert/<uuid:pk>/verify-effectiveness/",
+        views.AlertVerifyEffectiveness.as_view(),
+        name="alert-verify-effectiveness",
+    ),
     path(
         "alert/<uuid:pk>/create-task/",
         views.AlertCreateTask.as_view(),

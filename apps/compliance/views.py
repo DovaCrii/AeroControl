@@ -617,6 +617,34 @@ class AlertReopen(ModelPermissionRequiredMixin, View):
         return _redirect_back(request)
 
 
+class AlertVerifyEffectiveness(ModelPermissionRequiredMixin, View):
+    """R7.6: confirm a corrective action actually held (ISO 10.2).
+
+    Not the inverse of reopening: this leaves the alert resolved and its reason
+    untouched, and adds a second, later statement -- "and it worked". The way
+    to say the opposite is to reopen, which is already there.
+
+    An optional note travels with it. Unlike the resolution reason (required by
+    R6.2), "it held" often needs no elaboration, and demanding prose to confirm
+    a non-event is how a control turns into a formality people click through.
+    """
+
+    model = Alert
+    permission_action = "change"
+
+    def post(self, request, pk):
+        alert = get_object_or_404(Alert, pk=pk, is_active=True)
+        note = (request.POST.get("note") or "").strip()
+        if not alert.verify_effectiveness(user=request.user, note=note):
+            messages.error(
+                request, _("Only a resolved alert can have its action verified.")
+            )
+            return _redirect_back(request)
+        set_audit_context(request, alert, action="alert_effectiveness_verified")
+        messages.success(request, _("Corrective action verified."))
+        return _redirect_back(request)
+
+
 class AlertCreateTask(ModelPermissionRequiredMixin, View):
     """Manually spawn the follow-up task for an alert (B1.4).
 

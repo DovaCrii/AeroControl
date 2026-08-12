@@ -1,9 +1,12 @@
+from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
+from django.views import View
 from django.views.generic import DetailView, FormView, ListView
 
 from apps.compliance.models import Document, DocumentType
@@ -19,7 +22,7 @@ from apps.core.views import (
 
 from .forms import GeoPlanImportForm
 from .kml import canonical
-from .models import GeoPlan, GeoPlanVersion
+from .models import GeoPlan, GeoPlanVersion, WeatherReview
 
 GEO_SOURCE_DOC_TYPE_CODE = "GEO_SOURCE"
 
@@ -221,12 +224,21 @@ class GeoPlanDetailView(ModelViewPermissionRequiredMixin, DetailView):
         centroid = bbox_centroid(current)
         permission = plan.flight_permission
         target_date = permission.valid_from if permission else None
+        # The recorded reviews are listed whether or not a live forecast is
+        # available right now: evidence already on record must not disappear
+        # from the page because the provider is down today.
+        reviews = plan.weather_reviews.select_related("reviewed_by")[:10]
         if centroid is None or target_date is None:
-            return {"weather": None, "weather_date": None}
+            return {
+                "weather": None,
+                "weather_date": None,
+                "weather_reviews": reviews,
+            }
         latitude, longitude = centroid
         return {
             "weather": forecast_for(latitude, longitude, target_date),
             "weather_date": target_date,
+            "weather_reviews": reviews,
         }
 
 
@@ -373,3 +385,56 @@ class GeoPlanReopen(StatusTransitionView):
     target_status = "editing"
     valid_from_statuses = ["approved"]
     success_message = gettext_lazy("Plan reopened for editing.")
+
+
+class WeatherReviewCreate(ModelPermissionRequiredMixin, View):
+    """R8.1: put the meteorological review on record (ISO 8.1).
+
+    POST only, and only from the plan's own page: this records that a person
+    reviewed the conditions, so it must be an act, not a side effect of
+    rendering. The numbers are stored as read -- a forecast cannot be looked up
+    again after the fact (the provider answers a later model run, or refuses a
+    past date), so a row pointing back at the provider would be evidence of
+    nothing.
+    """
+
+    model = WeatherReview
+    permission_action = "add"
+
+    def post(self, request, pk):
+        from apps.core.weather import bbox_centroid, forecast_for
+
+        plan = get_object_or_404(GeoPlan, pk=pk)
+        centroid = bbox_centroid(plan.current_version)
+        permission = plan.flight_permission
+        target_date = permission.valid_from if permission else None
+        if centroid is None or target_date is None:
+            messages.error(
+                request,
+                _("This plan has no area or no linked permit date to review."),
+            )
+            return redirect(plan.get_absolute_url())
+
+        latitude, longitude = centroid
+        forecast = forecast_for(latitude, longitude, target_date)
+        if forecast is None:
+            # Deliberately not a blank row: "we asked and got nothing" is not a
+            # meteorological review, and filing it as one would be worse than
+            # having none.
+            messages.error(
+                request,
+                _("The forecast is unavailable right now, so nothing was recorded."),
+            )
+            return redirect(plan.get_absolute_url())
+
+        review = WeatherReview.from_forecast(
+            plan=plan,
+            forecast=forecast,
+            latitude=latitude,
+            longitude=longitude,
+            user=request.user,
+        )
+        set_audit_context(request, review)
+        review.save()
+        messages.success(request, _("Weather review recorded."))
+        return redirect(plan.get_absolute_url())

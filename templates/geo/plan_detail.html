@@ -72,6 +72,37 @@ the provider did not answer -- a forecast is context, never a blocker.{% endcomm
     <div class="col-sm-3"><div class="summary-card"><small>{% translate "Chance of rain" %}</small><strong>{% if weather.precipitation_probability_max is not None %}{{ weather.precipitation_probability_max }}%{% else %}—{% endif %}</strong></div></div>
   </div>
   <p class="text-muted small mb-0 mt-3">{% translate "Source: Open-Meteo. Reference only -- it does not replace the pre-flight check." %}</p>
+  {% comment %}R8.1 evidence: showing the forecast is not proof it was reviewed.
+  A forecast also cannot be looked up again afterwards -- the provider answers a
+  later model run, or refuses a past date -- so recording it stores the numbers
+  as read. Gated on add_weatherreview, like every other mutating action.{% endcomment %}
+  {% if perms.geo.add_weatherreview %}
+  <form method="post" action="{% url 'weather-review-create' plan.pk %}" class="mt-3">{% csrf_token %}
+    <button class="btn btn-sm btn-outline-primary">{% translate "Record this review" %}</button>
+    <span class="text-muted small ms-2">{% translate "Files these numbers as evidence that the weather was reviewed before the flight." %}</span>
+  </form>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if weather_reviews %}
+<div class="card mb-3 p-3">
+  <h2 class="h5 mb-1">{% translate "Recorded weather reviews" %}</h2>
+  <p class="text-muted small mb-3">{% translate "Append-only: each row is what the forecast said at the moment it was reviewed." %}</p>
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead><tr><th>{% translate "Reviewed" %}</th><th>{% translate "For" %}</th><th>{% translate "Max wind" %}</th><th>{% translate "Max gusts" %}</th><th>{% translate "Precipitation" %}</th><th>{% translate "Chance of rain" %}</th><th>{% translate "By" %}</th></tr></thead>
+      <tbody>{% for review in weather_reviews %}<tr>
+        <td class="text-nowrap">{{ review.created_at|date:"Y-m-d H:i" }}</td>
+        <td class="text-nowrap">{{ review.target_date|date:"Y-m-d" }}</td>
+        <td>{% if review.wind_speed_max is not None %}{{ review.wind_speed_max }} {{ review.units.wind_speed_10m_max|default:"" }}{% else %}—{% endif %}</td>
+        <td>{% if review.wind_gusts_max is not None %}{{ review.wind_gusts_max }} {{ review.units.wind_gusts_10m_max|default:"" }}{% else %}—{% endif %}</td>
+        <td>{% if review.precipitation_sum is not None %}{{ review.precipitation_sum }} {{ review.units.precipitation_sum|default:"" }}{% else %}—{% endif %}</td>
+        <td>{% if review.precipitation_probability_max is not None %}{{ review.precipitation_probability_max }}%{% else %}—{% endif %}</td>
+        <td>{{ review.reviewed_by|default:"—" }}</td>
+      </tr>{% endfor %}</tbody>
+    </table>
+  </div>
 </div>
 {% endif %}
 
