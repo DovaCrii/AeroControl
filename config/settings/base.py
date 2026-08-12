@@ -183,6 +183,15 @@ WEATHER_API_URL = config(
 WEATHER_TIMEOUT_SECONDS = config("WEATHER_TIMEOUT_SECONDS", default=4, cast=int)
 WEATHER_CACHE_SECONDS = config("WEATHER_CACHE_SECONDS", default=3600, cast=int)
 
+# X.4b (ADR-0002 phase 2): reading AeroLink's battery inventory. Opt-in for the
+# same reason as the weather call -- with no URL configured nothing is fetched
+# and the zero-outgoing-calls property holds. Both services live on the same
+# VM's internal network, so this is normally a localhost URL and never crosses
+# the public internet.
+AEROLINK_API_URL = config("AEROLINK_API_URL", default="")
+AEROLINK_API_TOKEN = config("AEROLINK_API_TOKEN", default="")
+AEROLINK_TIMEOUT_SECONDS = config("AEROLINK_TIMEOUT_SECONDS", default=10, cast=int)
+
 CSP_REPORT_ONLY = config("CSP_REPORT_ONLY", default=True, cast=bool)
 # Where the browser posts CSP violation reports. Defaults to the app's own
 # logging endpoint; set empty to omit the report-uri directive entirely.
