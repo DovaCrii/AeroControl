@@ -2,7 +2,7 @@
 {% load aero_tags i18n %}
 {% block title %}{{ title }} - AeroControl{% endblock %}
 {% block content %}
-<div class="page-header">
+<div class="page-header d-flex justify-content-between align-items-start">
   <h1 class="h3">{{ title }}</h1>
   <div class="d-flex gap-2">
     <a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>
