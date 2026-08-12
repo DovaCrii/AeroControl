@@ -7,10 +7,14 @@
 > podarlo: se hizo el 2026-08-11 (de 900 a ~110) y el contenido no se perdió,
 > se movió a donde correspondía.
 
-## Estado al 2026-08-11
+## Estado al 2026-08-12
 
-- **Versión:** `v0.5.0-beta` (etiquetada y pusheada). `main` = `origin/main`.
-- **Gate:** `pwsh scripts/verify.ps1` verde (953 tests, ruff, bandit, pip-audit).
+- **Versión:** `v0.5.0-beta` (etiquetada y pusheada). **`main` local va adelante
+  de `origin/main`**: el rescate de las ramas `claude/*` y `LV-75` están
+  confirmados en local, **sin pushear**.
+- **Gate:** `pwsh scripts/verify.ps1` verde (972 tests, ruff, bandit, pip-audit).
+- **Sin desplegar en `p340`:** lo de 2026-08-12 incluye **una migración**
+  (`operations.0016`, aditiva y toda opcional).
 - **Bloques completos:** R1, R2, R3, R5, R6 · base ISO R7.1-R7.3 + diseños
   R7.4-R7.7 escritos · R8.1 · X.1-X.3.
 - **Parcial:** R4 (importador listo, `--apply` nunca corrido).
@@ -47,10 +51,7 @@ Se cargan desde la ficha de cada aeronave/operador, o re-corriendo
 **2. CSP a *enforcing***: verificado en demo, falta la variable en `p340`.
 Criterio de salida de `beta`.
 
-**3. Las 2 ramas `claude/*`** (ver abajo) — cuanto más se demore, más difícil el
-rescate.
-
-**4. R4, bloqueado del lado del usuario**: corregir 2 nombres de carpeta en `Z:`
+**3. R4, bloqueado del lado del usuario**: corregir 2 nombres de carpeta en `Z:`
 (`RPA-4647`, `RPA-4884`) y configurar un antivirus real
 (`DOCUMENTS_ANTIVIRUS_COMMAND` está vacío en todos los ambientes) antes de correr
 el importador con `--apply`.
@@ -97,13 +98,27 @@ Lo esencial y los dos errores que costaron tiempo el 2026-08-11:
 | Trabajos programados | `docs/scheduled-operations.md` |
 | Qué cambió y cuándo | `CHANGELOG.md`, `git log` |
 
-## Ramas sin resolver
+## Ramas `claude/*` — resueltas 2026-08-12
 
-Dos ramas `claude/*` **no** están en `main` y tienen trabajo único (~1.300
-líneas: pulido visual, barrido de traducciones, quitar el campo técnico `order`
-de los formularios Kanban, huecos de exportación CSV). Son **anteriores** a los
-bloques R y tocan archivos que `main` ya cambió → conflicto real si se mergean
-así. Hay que decidir: rescatar, rehacer sobre la base actual, o descartar.
+Las dos están **cerradas**: lo que valía se rescató a `main` pieza por pieza, no
+por merge (son anteriores a los bloques R y `main` ya había reimplementado parte
+de su contenido por otro camino). **Ya se pueden borrar.**
 
-- `claude/amazing-bouman-1b3d09` (+5)
-- `claude/beautiful-curie-4193f1` (+2)
+| Rama | Qué se hizo |
+|---|---|
+| `claude/beautiful-curie-4193f1` | **Rescatada** (`9d2c7ba`): huecos de exportación CSV. |
+| `claude/amazing-bouman-1b3d09` | **Parcialmente rescatada** (`4cb5dd8`): la ubicación estructurada de `OPS-4` y el barrido de traducciones. Lo demás, descartado. |
+
+Lo descartado, y por qué — para que nadie lo vuelva a "rescatar":
+
+- **Quitar el campo `order` de los formularios Kanban:** `main` ya lo tenía.
+- **Pulido visual del onboarding** (rastreador de pasos con badges): `main`
+  rediseñó esa sección después con otro lenguaje visual (`LV-D4`, tira de
+  pastillas). Aplicarlo sería un retroceso.
+- **Su versión de los tests de i18n:** es anterior al soporte de `msgctxt` y
+  reportaba como duplicado el par legítimo de `LV-61` ("Registry"); las
+  aserciones de `test_detail_labels` esperaban redacciones que `main` ya no usa.
+
+Lección que quedó: **medir antes de rescatar.** Correr los tests de la rama
+contra `main` separó en una corrida lo que era hueco real (18 etiquetas en
+inglés) de lo que era premisa vencida.
