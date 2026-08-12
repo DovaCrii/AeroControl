@@ -6,11 +6,27 @@
 
 ---
 
-## Rumbo a 1.0 (2026-08-11 — leer esto primero)
+## Rumbo a 1.0 (actualizado 2026-08-12 — leer esto primero)
 
-`v0.5.0-beta` está cortado, desplegado en `p340` y verificado en vivo. **Los
-bloques R1, R2, R3, R5 y R6 están completos**; R7 tiene su base (R7.1-R7.3) y el
-**diseño escrito** de lo que faltaba (R7.4-R7.7); R8.1 y X.1-X.3 hechos.
+**El bloque `R7` (ISO) quedó completo salvo el IPER estructurado**, y las
+Sesiones B y C del plan anterior están cerradas. Hecho el 2026-08-12, todo en
+`origin/main` y **nada de eso desplegado todavía**:
+
+| Cláusula | Qué se cerró |
+|---|---|
+| `R7.4` | Calidad del entregable, con *gate* de liberación y excepción firmada |
+| `R7.5a` | Límite de jornada de vuelo (8 h) |
+| `R7.6a` | Verificación de eficacia a 30 días |
+| `R7.6b` | `NonConformity`, con el disparador desde el entregable rechazado |
+| `R7.7` | Los **5** KPI operacionales que pide la guía |
+| `R8.2` | La revisión meteorológica como evidencia |
+| `LV-72` | Trazabilidad estilo SIGO (permiso y plan geo) |
+| `X.4b` | Espejo del inventario de baterías desde AeroLink |
+
+**Lo que separa a la app de una 1.0 sigue sin ser código.** Es, en orden de
+importancia: **desplegar** lo anterior, los 5 puntos de operación de la tabla de
+abajo, y **decisiones de negocio** que sólo el usuario puede tomar (las metas de
+KPI que faltan, los umbrales del contrato, el alcance de la limpieza del Kanban).
 
 ### Lo que separa a esta app de una 1.0 ya no es código, es operación
 
@@ -30,30 +46,49 @@ Los 2 bloqueadores que `v0.4.0-beta` declaró para la 1.0 **están cerrados**
 **"Más empresarial"** = los puntos 5 y 7, más branding JEJ en los PDF del reporte
 (barato con `reportlab`, ya instalado) y la política de retención escrita.
 
-### Próximas sesiones, en orden
+### Qué queda, al 2026-08-12
 
-- **Sesión B — ISO sin decisiones nuevas.** Verificación de eficacia (R7.6, molde
-  de `check_monthly_review_deadline`); los **2 KPIs operacionales ya calculables**
-  (disponibilidad de equipos vía `Aircraft.status` + estados de taller de R5.1;
-  cumplimiento de plazos vía fechas de permiso vs. vuelo); persistir la revisión
-  meteorológica como evidencia (hoy `R8.1` la consulta pero no la guarda);
-  **LV-72** (trazabilidad estilo SIGO). Decidir si el tablero Kanban se elimina.
-- **Sesión C — decisiones de negocio → cerrar ISO.** Preguntar en bloque:
-  umbrales RMSE/GSD del contrato (R7.4), límite de jornada de vuelo (R7.5), metas
-  de KPI (R7.7), días de verificación de eficacia. Con eso, ejecutar lo ya
-  diseñado en [docs/dev/iso-r7-design-plan.md](docs/dev/iso-r7-design-plan.md):
-  `Deliverable` + gate de liberación, `NonConformity`, `KpiTarget`.
-- **Sesión D — AeroLink y escalabilidad.** `X.4` (recibir sesiones de vuelo y
-  conciliar con `FlightRecord`: **acá el proyecto paga** — horas y ciclos dejan de
-  depender del operador y se llena `Battery`, hoy vacía a propósito);
-  **reabrir PostgreSQL** con un ADR (AeroLink lo instala en la misma VM: un motor
-  y un respaldo); `X.5` identidad (Entra ID vs. Django) y retención escrita.
+~~Sesión B~~ y ~~Sesión C~~ **cerradas** (ver la tabla de arriba). Lo que sigue,
+en orden de lo que más desbloquea:
+
+**1. Desplegar.** Es lo único que separa todo el trabajo de esta sesión de estar
+en uso: 6 migraciones, `bootstrap_roles` y 2 timers. La secuencia exacta está en
+`HANDOFF.md` → "Despliegue pendiente". Cada tanda que se acumula alarga la
+ventana y mezcla cambios que sería mejor verificar por separado.
+
+**2. Decisiones que sólo el usuario puede tomar** (ninguna bloquea código nuevo,
+todas bloquean que lo hecho *sirva*):
+
+- **Las metas de KPI que faltan** (precisión, tasa de re-vuelos, cumplimiento de
+  plazos). Sin ellas el indicador se muestra pero no marca incumplimiento. Fijar
+  una es cambiar una constante en `apps/compliance/kpis.py`.
+- **Los umbrales RMSE/GSD por contrato** (`R7.4`). Sin ellos los entregables se
+  registran "Sin evaluar" y se liberan sin control. Se cargan desde la ficha del
+  centro de costo, sin tocar código.
+- **El alcance de la limpieza del Kanban** (`LV-78`), porque una de las opciones
+  borra el registro de qué tarjeta cerró qué alerta.
+- **`LV-74`**: las 10 vigencias que faltan en producción. Es lo único con impacto
+  de cumplimiento *hoy*.
+
+**3. Bloqueado del lado de terceros:**
+
+- **`R4`** — 2 nombres de carpeta en `Z:` y un antivirus real configurado.
+- **`X.4`** (sesiones de vuelo) — AeroLink está en M0 y las sesiones son M3. Los
+  3 huecos del contrato están en el ADR-0002; **la mitad de baterías ya se cerró
+  con `X.4b`**.
+
+**4. Deuda y mejoras, sin urgencia:** `LV-80` (títulos en inglés, transversal a 5
+apps), el IPER estructurado de `R7.5` (sólo a pedido explícito: es el que más se
+arriesga a sentirse como burocracia nueva), `X.5` (identidad), reabrir PostgreSQL
+con un ADR cuando AeroLink lo instale en la misma VM, `LV-6` (Gantt) y `T5.8`.
 
 ### Deuda técnica: política incremental (sin cambios)
 
-`core/views.py` y `registry/views.py` son grandes, pero con ~950 tests verdes y
+`core/views.py` y `registry/views.py` son grandes, pero con ~1.100 tests verdes y
 uso diario real el riesgo de una migración XL supera su beneficio *ahora*.
-Extraer mixins/selectors **sólo al tocar el flujo** por otra razón.
+Extraer mixins/selectors **sólo al tocar el flujo** por otra razón — como se hizo
+el 2026-08-12 con `EffectivenessVerificationMixin` y `StatusFlowMixin`, ambos
+extraídos al aparecer su segundo usuario y ninguno con migración.
 
 ---
 
