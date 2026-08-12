@@ -12,19 +12,15 @@
 - **Versión:** `v0.5.0-beta` (etiquetada). `main` = `origin/main` (pusheado
   2026-08-12).
 - **Gate:** `pwsh scripts/verify.ps1` verde (1095 tests, ruff, bandit, pip-audit).
-- **Sin desplegar en `p340`:** lo de 2026-08-12 trae **6 migraciones**, todas
-  aditivas y sin dato obligatorio: `operations.0016` (ubicación estructurada),
-  `compliance.0015` (verificación de eficacia), `geo.0004` (revisión
-  meteorológica), `registry.0031` + `compliance.0016` (calidad del entregable) y
-  `compliance.0017` (no conformidades).
-- **Al desplegar hay dos pasos que no son `git pull` + restart:**
-  1. `manage.py bootstrap_roles` — hay permisos nuevos (`weatherreview`,
-     `deliverable`, `nonconformity`); sin correrlo, las secciones nuevas no le
-     aparecen a nadie en el menú.
-  2. **Dos timers nuevos** (serían 10 en total), ver
-     [docs/scheduled-operations.md](docs/scheduled-operations.md):
-     `mkjob alert-effectiveness "check_alert_effectiveness" "*-*-* 08:30:00"` y
-     `mkjob duty-limit "check_flight_duty_limit" "*-*-* 07:45:00"`.
+- **Desplegado en `p340` el 2026-08-12** ✅. Las 7 migraciones aplicaron limpio
+  (`registry.0031`/`0032`, `operations.0016`, `compliance.0015`/`0016`/`0017`,
+  `geo.0004`), `bootstrap_roles` corrió, y los 2 timers nuevos quedaron
+  habilitados — **son 10**. Respaldo previo tomado **y verificado**
+  (`aero_ops_20260812_182936`).
+- **`audit_serial_case` en producción: limpio** — 16 aeronaves, cero seriales en
+  minúscula, cero colisiones. Por eso `registry.0032` no tuvo nada que
+  normalizar; si hubiera habido una colisión, esa migración aborta a propósito y
+  frena el `migrate` entero.
 - **Bloques completos:** R1, R2, R3, R5, R6 · **R7 completo salvo el IPER
   estructurado de R7.5** · R8.1-R8.2 · X.1-X.3.
 - **Parcial:** R4 (importador listo, `--apply` nunca corrido).
@@ -58,18 +54,24 @@ invisibles para las alertas, el calendario y el reporte: el hueco no se anuncia.
 Se cargan desde la ficha de cada aeronave/operador, o re-corriendo
 `load_dgac_vigencias` con una captura completa.
 
-**2. CSP a *enforcing***: verificado en demo, falta la variable en `p340`.
-Criterio de salida de `beta`.
+**2. Dos variables que faltan en `/etc/aerocontrol.env`.** Las dos son código ya
+desplegado que **no se ve hasta activarlas**:
+
+- **`WEATHER_ENABLED=True`** — el pronóstico y la revisión meteorológica (`R8.1`,
+  `R8.2`) vienen **apagados a propósito**: sin esta variable el proyecto conserva
+  su propiedad de cero llamadas salientes. Es la única llamada externa que hace.
+  Ojo: aunque se active, la tarjeta sólo aparece si el plan geo tiene **área** y
+  un **permiso enlazado con fecha** — sin eso no hay día que consultar.
+- **`CSP_REPORT_ONLY=False`** — CSP a *enforcing*, verificado en demo con cero
+  violaciones. Criterio de salida de `beta`.
 
 **3. R4, bloqueado del lado del usuario**: corregir 2 nombres de carpeta en `Z:`
 (`RPA-4647`, `RPA-4884`) y configurar un antivirus real
 (`DOCUMENTS_ANTIVIRUS_COMMAND` está vacío en todos los ambientes) antes de correr
 el importador con `--apply`.
 
-**4. Desplegar lo del 2026-08-12** — ver los dos pasos extra arriba (roles y el
-timer nuevo). Nada de esto urge, pero mientras no se despliegue, la verificación
-de eficacia no corre y la revisión meteorológica no se puede registrar en
-producción.
+**4. ~~Desplegar lo del 2026-08-12.~~ Hecho ese mismo día** — 7 migraciones,
+roles y los 2 timers nuevos. Todo lo de esa tanda ya corre en `p340`.
 
 ### Estado de la Sesión B (avanzada el 2026-08-12)
 
@@ -166,47 +168,20 @@ el guardado **no reescribe filas ya almacenadas**. La migración `registry/0032`
 las normaliza y **aborta si dos sólo difieren en mayúsculas** — eso lo resuelve
 el certificado RPAS de la DGAC, no una migración.
 
-## Despliegue pendiente del 2026-08-12 — secuencia lista
+## Despliegue del 2026-08-12 — hecho
 
-Todo lo de esta tanda está en `origin/main` y **sin desplegar**. Copiar y pegar
-dentro de la sesión SSH (`ssh levdigital01@100.121.16.118`), no en PowerShell.
+Aplicado en `p340` el mismo día. Queda como registro de la secuencia, porque la
+próxima tanda con migraciones repite estos pasos:
 
-```bash
-cd /opt/aerocontrol && git pull
-set -a; source <(sudo cat /etc/aerocontrol.env); set +a
-echo "settings=$DJANGO_SETTINGS_MODULE  db=$DB_PATH"   # debe decir prod
-
-# Respaldo ANTES de migrar, y verificarlo: son 6 migraciones.
-uv run python manage.py backup
-uv run python manage.py verify_backup <ruta-que-imprimió-backup>
-
-uv sync
-uv run python manage.py migrate --no-input
-# Permisos nuevos (weatherreview, deliverable, nonconformity). Sin esto las
-# secciones nuevas no le aparecen a nadie en el menú.
-uv run python manage.py bootstrap_roles
-uv run python manage.py collectstatic --no-input
-sudo systemctl restart aerocontrol
-```
-
-**No correr `init_dgac_board`**, aunque el runbook lo liste: el tablero Kanban
-se dio de baja (`LV-78`).
-
-Los dos timers nuevos (quedan 10):
-
-```bash
-sudo bash -c '
-mkjob() { ... }   # la función está en docs/scheduled-operations.md
-mkjob duty-limit "check_flight_duty_limit" "*-*-* 07:45:00"
-mkjob alert-effectiveness "check_alert_effectiveness" "*-*-* 08:30:00"
-systemctl daemon-reload
-systemctl enable --now aerocontrol-duty-limit.timer aerocontrol-alert-effectiveness.timer
-'
-```
-
-Comprobar al final: `systemctl list-timers 'aerocontrol-*' --no-pager` (10) y
-abrir el reporte de cumplimiento, que debe mostrar los 5 indicadores.
-
+- Respaldo **y `verify_backup`** antes de migrar. No es ceremonia: eran 7
+  migraciones sobre datos reales.
+- `manage.py bootstrap_roles` cuando hay permisos nuevos. Sin él las secciones
+  nuevas no aparecen en el menú de nadie y parece que el despliegue falló.
+- **No correr `init_dgac_board`**, aunque la Parte D del runbook siga
+  listándolo: el tablero Kanban se dio de baja (`LV-78`).
+- Los timers se agregan con el bloque `mkjob` de
+  [docs/scheduled-operations.md](docs/scheduled-operations.md), que es
+  autocontenido y hay que pegar entero.
 ## Cómo desplegar
 
 Secuencia completa y corregida en
