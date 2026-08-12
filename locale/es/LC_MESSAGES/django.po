@@ -3921,6 +3921,10 @@ msgstr "No hay documentos para este centro de costo."
 msgid "Resource"
 msgstr "Recurso"
 
+#: .\apps\registry\views.py:767
+msgid "Resource kind"
+msgstr "Tipo de recurso"
+
 #: .\templates\registry\costcenter_detail.html:143
 msgid "No movements recorded for this cost center."
 msgstr "No hay movimientos registrados para este centro de costo."

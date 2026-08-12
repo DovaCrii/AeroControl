@@ -495,6 +495,12 @@ class TestResourceMovementLogView:
         assert other.registration not in content
 
     @pytest.mark.django_db
+    def test_export_link_is_present(self, db):
+        client = _client("view_resourcemovementlog")
+        response = client.get(reverse("resourcemovementlog-list"))
+        assert "export=csv" in response.content.decode()
+
+    @pytest.mark.django_db
     def test_export_csv(self, db):
         op = _operator()
         OperatorAssignment.objects.create(
@@ -506,8 +512,15 @@ class TestResourceMovementLogView:
 
         assert response.status_code == 200
         assert response["Content-Type"].startswith("text/csv")
-        body = b"".join(response.streaming_content).decode()
-        assert "assigned" in body
+        body = b"".join(response.streaming_content).decode("utf-8-sig")
+        # Human-readable labels, not the raw stored values: the export goes to
+        # a person reading a spreadsheet, so "Asignado", not "assigned".
+        assert "Tipo de recurso" in body
+        assert "assigned" not in body
+        # The row shows the resolved operator label, never the bare UUID that
+        # `resource_id` stores.
+        assert op.full_name in body
+        assert str(op.pk) not in body
 
 
 class TestBulkAssignService:
