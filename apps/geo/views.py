@@ -108,6 +108,14 @@ class GeoPlanDetailView(ModelViewPermissionRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         plan = self.object
         context["versions"] = plan.versions.order_by("-version_number")
+        # LV-72: same traceability block as the flight permit. Oldest first
+        # (SIGO numbers 1..N in the order things happened) with the actor's
+        # groups prefetched -- unprefetched the role costs one query per row.
+        context["history"] = (
+            plan.history.select_related("changed_by_user")
+            .prefetch_related("changed_by_user__groups")
+            .order_by("sequence")
+        )
         # OPS-7: when this plan's flight_permission link changed, and to what.
         # Shown unconditionally on this already geo.view_geoplan-gated page,
         # same as the Versions/Status history sections above.
