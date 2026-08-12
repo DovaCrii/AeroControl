@@ -13,6 +13,7 @@ resumen corto), así que después se puede comprobar si realmente corrieron.
 | `notify_expiring_credentials` (opcional, LV-29) | Avisa por correo a **cada operador** de sus vigencias DGAC por vencer o ya vencidas (credencial + habilitaciones, ≤30 días) | Diario o semanal, si se quiere el aviso directo al operador |
 | `check_monthly_records` (LV-30) | El último día del mes, crea la **revisión de cumplimiento** pendiente por cada centro de costo que voló y avisa al grupo Dirección (vuelos vs registros del mes) | Diario (actúa solo el último día 28/29/30/31) |
 | `check_monthly_review_deadline` (R6.5) | El día 15, revisa las revisiones del mes anterior que sigan **pendientes** (nadie las marcó) y las escala al grupo Dirección en un segundo correo. No crea ni cambia ninguna revisión, solo persigue lo que quedó sin firmar | Diario (actúa solo el día 15) |
+| `check_flight_duty_limit` (R7.5) | Reporta al grupo Dirección los pilotos cuya **jornada de vuelo del día anterior** superó las **8 horas** (control de fatiga, ISO 45001 6.1.2). Sólo reporta: nunca edita ni rechaza un registro de vuelo | Diario |
 | `check_alert_effectiveness` (R7.6) | Escala al grupo Dirección las acciones correctivas resueltas hace **30 días** cuya eficacia **nadie confirmó**. Nunca resuelve, reabre ni verifica por su cuenta: una máquina declarando que una acción correctiva fue eficaz es lo contrario de la evidencia que pide ISO 10.2 | Diario |
 | `snapshot_compliance` (R7.7) | Guarda los totales documentales del día (una fila por centro de costo más una consolidada). **Sin esto el reporte no puede mostrar tendencia**: los contadores se evalúan siempre "a hoy", así que comparar período contra período marca "sin cambio" por construcción. Idempotente: repetir la misma fecha la sobrescribe, no duplica | Diario, al final del día |
 
@@ -160,6 +161,17 @@ el día 15**, escalando a Dirección en un segundo correo las revisiones del mes
 anterior que sigan pendientes. No crea ni cambia revisiones -- solo reporta lo
 que `check_monthly_records` ya dejó pendiente. Acepta los mismos flags
 (`--period YYYY-MM`, `--force`, `--dry-run`).
+
+El límite de jornada de vuelo (R7.5) se agrega con `mkjob duty-limit
+"check_flight_duty_limit" "*-*-* 07:45:00"`. **Reporta el día anterior**, no el
+de hoy: una jornada sólo está completa cuando terminó, y correrlo sobre el día
+en curso daría un total parcial que se lee como "todo en orden". `--date
+YYYY-MM-DD` apunta a un día puntual y `--dry-run` reporta sin enviar. El límite
+es `selectors.DAILY_FLIGHT_LIMIT` (8 horas, decidido con el usuario el
+2026-08-12). **Cuenta tiempo de vuelo, no jornada real** — el día del piloto
+incluye traslados, montaje y espera de ventana meteorológica — así que es un
+**piso**: superarlo es con certeza exceso; no superarlo no prueba que la jornada
+estuvo dentro del límite.
 
 La verificación de eficacia (R7.6) se agrega con `mkjob alert-effectiveness
 "check_alert_effectiveness" "*-*-* 08:30:00"`: corre a diario y escala lo que

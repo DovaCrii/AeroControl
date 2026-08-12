@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-12 10:21-0400\n"
+"POT-Creation-Date: 2026-08-12 11:34-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -35,7 +35,7 @@ msgstr "Habilitación"
 #: .\templates\compliance\operational_records.html:22
 #: .\templates\compliance\operational_records.html:49
 #: .\templates\compliance\report.html:22
-#: .\templates\compliance\report.html:111 .\templates\geo\plan_list.html:19
+#: .\templates\compliance\report.html:132 .\templates\geo\plan_list.html:19
 #: .\templates\operations\permission_detail.html:55
 #: .\templates\registry\aircraft_list.html:25
 #: .\templates\registry\aircraftassignment_list.html:6
@@ -222,6 +222,26 @@ msgstr "Motivo / causa raíz"
 msgid "Why this happened and how it was addressed."
 msgstr "Por qué ocurrió y cómo se solucionó."
 
+#: .\apps\compliance\kpis.py:111
+msgid "Fleet availability"
+msgstr "Disponibilidad de flota"
+
+#: .\apps\compliance\kpis.py:112
+msgid "Aircraft flyable now, excluding retired ones."
+msgstr "Aeronaves operativas ahora, sin contar las dadas de baja."
+
+#: .\apps\compliance\kpis.py:124
+msgid "On-time execution"
+msgstr "Cumplimiento de plazos"
+
+#: .\apps\compliance\kpis.py:126
+msgid ""
+"Approved permits whose validity ended in this period with at least one "
+"flight recorded."
+msgstr ""
+"Permisos aprobados cuya vigencia terminó en este período con al menos un "
+"vuelo registrado."
+
 #: .\apps\compliance\management\commands\check_alert_effectiveness.py:92
 #: .\templates\compliance\alert_list.html:20
 msgid "Record unavailable"
@@ -393,7 +413,7 @@ msgstr "TOTAL"
 #: .\apps\compliance\report_views.py:478
 #: .\templates\compliance\email\executive_report.html:30
 #: .\templates\compliance\report.html:53
-#: .\templates\compliance\report.html:148
+#: .\templates\compliance\report.html:169
 msgid "Open alerts"
 msgstr "Alertas abiertas"
 
@@ -424,51 +444,52 @@ msgstr ""
 #: .\apps\compliance\report_views.py:292 .\apps\compliance\report_views.py:448
 #: .\templates\compliance\email\executive_report.html:49
 #: .\templates\compliance\email\executive_report.txt:13
-#: .\templates\compliance\report.html:99
+#: .\templates\compliance\report.html:120
 msgid "By cost center"
 msgstr "Por centro de costo"
 
 #: .\apps\compliance\report_views.py:303 .\apps\compliance\report_views.py:456
-#: .\templates\compliance\report.html:139
+#: .\templates\compliance\report.html:160
 msgid "Alert resolution in the period"
 msgstr "Resolución de alertas en el período"
 
 #: .\apps\compliance\report_views.py:306 .\apps\compliance\report_views.py:461
-#: .\templates\compliance\report.html:141
+#: .\templates\compliance\report.html:162
 #, python-format
 msgid "%(count)s alerts resolved, %(days)s days on average."
 msgstr "%(count)s alertas resueltas, %(days)s días en promedio."
 
 #: .\apps\compliance\report_views.py:313 .\apps\compliance\report_views.py:472
-#: .\templates\compliance\report.html:143
+#: .\templates\compliance\report.html:164
 msgid "No alerts were resolved in this period."
 msgstr "No se resolvieron alertas en este período."
 
 #: .\apps\compliance\report_views.py:326 .\apps\compliance\report_views.py:481
-#: .\templates\compliance\report.html:166
+#: .\templates\compliance\report.html:187
 msgid "No open alerts."
 msgstr "Sin alertas abiertas."
 
 #: .\apps\compliance\report_views.py:439
 #: .\templates\compliance\email\executive_report.html:35
 #: .\templates\compliance\email\executive_report.txt:10
-#: .\templates\compliance\report.html:61
+#: .\templates\compliance\report.html:82
 msgid "Compared with the previous period"
 msgstr "Comparado con el período anterior"
 
-#: .\apps\compliance\report_views.py:440 .\templates\compliance\report.html:76
+#: .\apps\compliance\report_views.py:440 .\templates\compliance\report.html:97
 msgid "KPI"
 msgstr "KPI"
 
-#: .\apps\compliance\report_views.py:440 .\templates\compliance\report.html:77
+#: .\apps\compliance\report_views.py:440 .\templates\compliance\report.html:98
 msgid "This period"
 msgstr "Este período"
 
-#: .\apps\compliance\report_views.py:440 .\templates\compliance\report.html:78
+#: .\apps\compliance\report_views.py:440 .\templates\compliance\report.html:99
 msgid "Change"
 msgstr "Variación"
 
-#: .\apps\compliance\report_views.py:440 .\templates\compliance\report.html:79
+#: .\apps\compliance\report_views.py:440
+#: .\templates\compliance\report.html:100
 msgid "Previous period"
 msgstr "Período anterior"
 
@@ -477,23 +498,23 @@ msgid "No comparison available."
 msgstr "No hay comparación disponible."
 
 #: .\apps\compliance\report_views.py:451
-#: .\templates\compliance\report.html:131
+#: .\templates\compliance\report.html:152
 msgid "No cost centers to report."
 msgstr "No hay centros de costo que informar."
 
-#: .\apps\compliance\reports.py:336
+#: .\apps\compliance\reports.py:341
 msgid "Valid documents (%)"
 msgstr "Documentos vigentes (%)"
 
-#: .\apps\compliance\reports.py:337
+#: .\apps\compliance\reports.py:342
 msgid "Expired documents"
 msgstr "Documentos vencidos"
 
-#: .\apps\compliance\reports.py:338
+#: .\apps\compliance\reports.py:343
 msgid "Expiring within 30 days"
 msgstr "Por vencer en 30 días"
 
-#: .\apps\compliance\reports.py:368
+#: .\apps\compliance\reports.py:373
 msgid "Alerts resolved in the period"
 msgstr "Alertas resueltas en el período"
 
@@ -503,7 +524,7 @@ msgid "Validity renewed to %(date)s (automatic closure)"
 msgstr "Vigencia renovada al %(date)s (cierre automático)"
 
 #: .\apps\compliance\views.py:100 .\apps\maintenance\views.py:45
-#: .\apps\operations\views.py:57 .\apps\registry\views.py:140
+#: .\apps\operations\views.py:58 .\apps\registry\views.py:140
 #: .\apps\workboard\views.py:121
 #, python-format
 msgid "New %(record)s"
@@ -946,7 +967,7 @@ msgstr "Comenzar edición"
 msgid "Submit for review"
 msgstr "Enviar a revisión"
 
-#: .\apps\geo\views.py:50 .\apps\operations\views.py:262
+#: .\apps\geo\views.py:50 .\apps\operations\views.py:263
 msgid "Approve"
 msgstr "Aprobar"
 
@@ -1250,7 +1271,7 @@ msgstr "Aeronave en tránsito de vuelta a casa matriz."
 msgid "Maintenance completed."
 msgstr "Mantenimiento completado."
 
-#: .\apps\maintenance\views.py:192 .\apps\operations\views.py:269
+#: .\apps\maintenance\views.py:192 .\apps\operations\views.py:270
 #: .\templates\maintenance\record_detail.html:41
 msgid "Complete"
 msgstr "Completar"
@@ -1275,8 +1296,9 @@ msgstr ""
 #: .\templates\compliance\email\monthly_review.txt:5
 #: .\templates\compliance\monthly_review.html:21
 #: .\templates\compliance\monthly_review.html:39
-#: .\templates\core\audit_log.html:42 .\templates\core\users_roles.html:27
-#: .\templates\generic\list.html:37 .\templates\geo\plan_list.html:20
+#: .\templates\compliance\report.html:69 .\templates\core\audit_log.html:42
+#: .\templates\core\users_roles.html:27 .\templates\generic\list.html:37
+#: .\templates\geo\plan_list.html:20
 #: .\templates\maintenance\record_detail.html:23
 #: .\templates\maintenance\record_list.html:18
 #: .\templates\operations\permission_detail.html:54
@@ -1419,6 +1441,7 @@ msgid "Arrival time"
 msgstr "Hora de llegada"
 
 #: .\apps\operations\forms.py:117
+#: .\templates\operations\email\duty_limit.txt:5
 #: .\templates\operations\flightrecord_detail.html:29
 #: .\templates\operations\permission_detail.html:67
 #: .\templates\operations\record_list.html:7
@@ -1443,6 +1466,11 @@ msgstr ""
 #: .\apps\operations\forms.py:203
 msgid "Arrival time must be later than departure time."
 msgstr "La hora de llegada debe ser posterior a la hora de salida."
+
+#: .\apps\operations\management\commands\check_flight_duty_limit.py:129
+#, python-format
+msgid "AeroControl · daily flight limit exceeded on %(day)s"
+msgstr "AeroControl · límite de jornada de vuelo excedido el %(day)s"
 
 #: .\apps\operations\models.py:27
 msgid "Requested"
@@ -1491,13 +1519,13 @@ msgstr "La latitud y la longitud deben ingresarse juntas."
 msgid "A radius requires a coordinate pair."
 msgstr "El radio requiere un par de coordenadas."
 
-#: .\apps\operations\views.py:133 .\templates\base.html:85
+#: .\apps\operations\views.py:134 .\templates\base.html:85
 #: .\templates\dashboard\index.html:142
 #: .\templates\registry\costcenter_detail.html:23
 msgid "Permissions"
 msgstr "Permisos"
 
-#: .\apps\operations\views.py:172
+#: .\apps\operations\views.py:173
 #, python-format
 msgid ""
 "%(operator)s has no current qualification matching: %(aircraft)s. The "
@@ -1506,20 +1534,20 @@ msgstr ""
 "%(operator)s no tiene una habilitación vigente que cubra: %(aircraft)s. El "
 "permiso se guardó igual; revisa las habilitaciones del operador."
 
-#: .\apps\operations\views.py:207 .\apps\registry\views.py:168
+#: .\apps\operations\views.py:208 .\apps\registry\views.py:168
 #, python-format
 msgid "Edit %(record)s"
 msgstr "Editar: %(record)s"
 
-#: .\apps\operations\views.py:263
+#: .\apps\operations\views.py:264
 msgid "Deny"
 msgstr "Rechazar"
 
-#: .\apps\operations\views.py:313
+#: .\apps\operations\views.py:314
 msgid "Permission approved."
 msgstr "Permiso aprobado."
 
-#: .\apps\operations\views.py:315
+#: .\apps\operations\views.py:316
 msgid ""
 "Upload the DGAC operation authorization (the signed SIGO PDF) before "
 "approving this permit."
@@ -1527,15 +1555,15 @@ msgstr ""
 "Sube la autorización de operación de la DGAC (el PDF firmado del SIGO) antes"
 " de aprobar este permiso."
 
-#: .\apps\operations\views.py:324
+#: .\apps\operations\views.py:325
 msgid "Permission denied."
 msgstr "Permiso rechazado."
 
-#: .\apps\operations\views.py:331
+#: .\apps\operations\views.py:332
 msgid "Permission completed."
 msgstr "Permiso completado."
 
-#: .\apps\operations\views.py:333
+#: .\apps\operations\views.py:334
 msgid ""
 "Upload the DGAC operation authorization (the signed SIGO PDF) before "
 "completing this permit."
@@ -1543,7 +1571,16 @@ msgstr ""
 "Sube la autorización de operación de la DGAC (el PDF firmado del SIGO) antes"
 " de completar este permiso."
 
-#: .\apps\operations\views.py:400
+#: .\apps\operations\views.py:378
+#, python-format
+msgid ""
+"%(pilot)s now has %(total)s logged on %(date)s, over the %(limit)s daily "
+"flight limit."
+msgstr ""
+"%(pilot)s acumula %(total)s el %(date)s, por sobre el límite diario de vuelo"
+" de %(limit)s."
+
+#: .\apps\operations\views.py:433
 msgid "Flight record archived."
 msgstr "Registro de vuelo archivado."
 
@@ -2560,7 +2597,7 @@ msgstr "No se encontraron documentos."
 
 #: .\templates\compliance\_documents_section.html:10
 #: .\templates\compliance\document_list.html:7
-#: .\templates\compliance\report.html:112
+#: .\templates\compliance\report.html:133
 #: .\templates\operations\permission_detail.html:62
 #: .\templates\registry\costcenter_detail.html:24
 msgid "Documents"
@@ -2641,18 +2678,18 @@ msgstr "Filtrar"
 #: .\templates\compliance\document_detail.html:4
 #: .\templates\compliance\document_list.html:19
 #: .\templates\compliance\email\alert_effectiveness.txt:5
-#: .\templates\compliance\report.html:152
+#: .\templates\compliance\report.html:173
 msgid "Entity"
 msgstr "Entidad"
 
 #: .\templates\compliance\alert_list.html:7
 #: .\templates\compliance\email\alert_effectiveness.txt:5
-#: .\templates\compliance\report.html:153
+#: .\templates\compliance\report.html:174
 msgid "Rule"
 msgstr "Regla"
 
 #: .\templates\compliance\alert_list.html:7
-#: .\templates\compliance\report.html:154
+#: .\templates\compliance\report.html:175
 msgid "Triggered"
 msgstr "Activada"
 
@@ -2793,6 +2830,7 @@ msgstr "Total de elementos"
 #: .\templates\compliance\email\executive_report.txt:20
 #: .\templates\compliance\email\monthly_review.txt:11
 #: .\templates\compliance\email\monthly_review_deadline.txt:11
+#: .\templates\operations\email\duty_limit.txt:10
 #: .\templates\registry\email\credential_notice.txt:9
 msgid "This is an automated message from AeroControl."
 msgstr "Este es un mensaje automático de AeroControl."
@@ -2836,7 +2874,7 @@ msgstr "Documentos vigentes"
 #: .\templates\compliance\email\executive_report.html:20
 #: .\templates\compliance\email\executive_report.html:54
 #: .\templates\compliance\report.html:52
-#: .\templates\compliance\report.html:114
+#: .\templates\compliance\report.html:135
 #: .\templates\registry\_operator_rows.html:18
 #: .\templates\registry\_qualification_rows.html:20
 #: .\templates\registry\costcenter_detail.html:45
@@ -2854,7 +2892,7 @@ msgstr "ant."
 
 #: .\templates\compliance\email\executive_report.html:53
 #: .\templates\compliance\report.html:51
-#: .\templates\compliance\report.html:113
+#: .\templates\compliance\report.html:134
 msgid "Valid"
 msgstr "Vigentes"
 
@@ -3070,14 +3108,38 @@ msgstr "Documentos vigentes"
 msgid "Maintenance to define"
 msgstr "Mantenciones por definir"
 
-#: .\templates\compliance\report.html:68
+#: .\templates\compliance\report.html:66
+msgid "Operational indicators"
+msgstr "Indicadores operacionales"
+
+#: .\templates\compliance\report.html:69
+msgid "Indicator"
+msgstr "Indicador"
+
+#: .\templates\compliance\report.html:69
+msgid "Value"
+msgstr "Valor"
+
+#: .\templates\compliance\report.html:69
+msgid "Target"
+msgstr "Meta"
+
+#: .\templates\compliance\report.html:74
+msgid "Met"
+msgstr "Cumple"
+
+#: .\templates\compliance\report.html:74
+msgid "Below target"
+msgstr "Bajo la meta"
+
+#: .\templates\compliance\report.html:89
 #, python-format
 msgid "Document counters compared against the stored snapshot of %(date)s."
 msgstr ""
 "Contadores documentales comparados contra el registro histórico del "
 "%(date)s."
 
-#: .\templates\compliance\report.html:70
+#: .\templates\compliance\report.html:91
 msgid ""
 "No history stored yet: the document counters are evaluated as of today on "
 "both sides, so they will read no change. Run snapshot_compliance daily to "
@@ -3087,7 +3149,7 @@ msgstr ""
 "hoy en ambos lados, así que van a marcar sin cambio. Programa "
 "snapshot_compliance a diario para obtener una tendencia real."
 
-#: .\templates\compliance\report.html:105
+#: .\templates\compliance\report.html:126
 msgid ""
 "Includes DGAC vigencias (operator credentials, aircraft insurance) alongside"
 " uploaded documents."
@@ -3095,11 +3157,11 @@ msgstr ""
 "Incluye vigencias DGAC (credenciales de operador, seguros de aeronave) junto"
 " con los documentos subidos."
 
-#: .\templates\compliance\report.html:155
+#: .\templates\compliance\report.html:176
 msgid "Age"
 msgstr "Antigüedad"
 
-#: .\templates\compliance\report.html:163
+#: .\templates\compliance\report.html:184
 #, python-format
 msgid "%(days)s day"
 msgid_plural "%(days)s days"
@@ -3823,6 +3885,36 @@ msgstr "No se encontraron permisos."
 #: .\templates\operations\_record_rows.html:20
 msgid "No flight records found."
 msgstr "No se encontraron registros de vuelo."
+
+#: .\templates\operations\email\duty_limit.txt:1
+#, python-format
+msgid "Daily flight limit exceeded on %(day)s"
+msgstr "Límite de jornada de vuelo excedido el %(day)s"
+
+#: .\templates\operations\email\duty_limit.txt:3
+#, python-format
+msgid "This pilot logged more than the %(limit)s daily flight limit:"
+msgid_plural ""
+"These %(total)s pilots logged more than the %(limit)s daily flight limit:"
+msgstr[0] "Este piloto superó el límite diario de vuelo de %(limit)s:"
+msgstr[1] ""
+"Estos %(total)s pilotos superaron el límite diario de vuelo de %(limit)s:"
+
+#: .\templates\operations\email\duty_limit.txt:5
+msgid "Logged"
+msgstr "Acumulado"
+
+#: .\templates\operations\email\duty_limit.txt:5
+msgid "Over by"
+msgstr "Exceso"
+
+#: .\templates\operations\email\duty_limit.txt:8
+msgid ""
+"Flight time only: the real duty day (travel, setup, waiting on weather) is "
+"longer, so this is a floor."
+msgstr ""
+"Sólo tiempo de vuelo: la jornada real (traslados, montaje, espera de ventana"
+" meteorológica) es más larga, así que esto es un piso."
 
 #: .\templates\operations\flightrecord_detail.html:3
 #: .\templates\operations\flightrecord_detail.html:8

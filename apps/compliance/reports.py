@@ -13,6 +13,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from apps.compliance.digest import HORIZON_DAYS
+from apps.compliance.kpis import operational_kpis
 from apps.compliance.models import Alert, Document
 from apps.registry.models import Aircraft, CostCenter, Operator
 
@@ -282,6 +283,10 @@ def build_compliance_report(start=None, end=None, cost_center=None, doc_type=Non
         "resolution": _resolution_stats(start, end),
         # LV-8f: maintenance still needing planning is an open compliance gap.
         "incomplete_maintenance": _incomplete_maintenance_count(cost_center),
+        # R7.7: the two operational KPIs derivable without Deliverable (R7.4)
+        # or NonConformity (R7.6). Fleet-wide on purpose -- availability is a
+        # property of the fleet, not of a cost center's slice of it.
+        "operational_kpis": operational_kpis(start, end),
     }
 
 
