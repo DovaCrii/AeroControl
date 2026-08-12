@@ -9,33 +9,82 @@
 
 ## Estado al 2026-08-11
 
-- **Versión:** `v0.5.0-beta`. `main` = `origin/main`, desplegado en `p340`.
-- **Gate:** `pwsh scripts/verify.ps1` verde (≈950 tests, ruff, bandit, pip-audit).
+- **Versión:** `v0.5.0-beta` (etiquetada y pusheada). `main` = `origin/main`.
+- **Gate:** `pwsh scripts/verify.ps1` verde (953 tests, ruff, bandit, pip-audit).
 - **Bloques completos:** R1, R2, R3, R5, R6 · base ISO R7.1-R7.3 + diseños
   R7.4-R7.7 escritos · R8.1 · X.1-X.3.
 - **Parcial:** R4 (importador listo, `--apply` nunca corrido).
+- **AOC cargado en producción** ✅ (2026-08-11, por el usuario).
+
+> ⚠️ **`p340` está un commit atrás del tag.** Se desplegó `f0527e6`; despues se
+> corrigieron **LV-68/69/69b/70/71/73** en `main`. **`LV-73` es un P0 de pérdida
+> de datos** (ver abajo), así que ese despliegue no es opcional.
 
 ### Qué corre solo en `p340`
 
-8 timers de systemd: `alerts` (06:00), `digest` (07:00), `credentials` (07:30),
+7 timers de systemd: `alerts` (06:00), `digest` (07:00), `credentials` (07:30),
 `backup` (22:00), `snapshot` (23:00), `monthly` (23:30, último día del mes),
-`monthly-deadline` (08:00, día 15), `executive` (lunes 07:30).
+`monthly-deadline` (08:00, día 15). **Falta `executive`** (LV-67).
 
 Verificar: `systemctl list-timers 'aerocontrol-*' --no-pager`
 
-## Pendientes inmediatos
+## Pendientes inmediatos — empezar por acá
 
-1. **Subir el AOC** — no necesita despliegue. `/compliance/documenttype/new/`
-   ya no hace falta (el tipo `aoc-certificate` existe desde el deploy de hoy):
-   ir directo a `/compliance/company-documents/` → "+ Cargar documento".
-2. **`refresh_geoplan_titles`** en `p340` (LV-70): informe → revisar las 2
-   líneas → repetir con `--apply`.
-3. **CSP a *enforcing***: verificado en demo, falta activar la variable en
-   `p340`. Es criterio de salida de `beta`.
-4. **R4 bloqueado del lado del usuario**: corregir 2 nombres de carpeta en `Z:`
-   (`RPA-4647`, `RPA-4884`) y configurar un antivirus real
-   (`DOCUMENTS_ANTIVIRUS_COMMAND` está vacío en todos los ambientes) antes de
-   correr el importador con `--apply`.
+**1. Desplegar el delta (P0, incluye el arreglo de pérdida de datos LV-73).**
+No hay migraciones nuevas.
+
+```bash
+ssh levdigital01@100.121.16.118
+cd /opt/aerocontrol && git pull
+set -a; source <(sudo cat /etc/aerocontrol.env); set +a
+uv sync && uv run python manage.py collectstatic --no-input && sudo systemctl restart aerocontrol
+```
+
+**2. Destinatarios de las notificaciones (LV-66).** Hoy tres funciones
+(`send_executive_report`, `check_monthly_records`, `check_monthly_review_deadline`)
+no llegan a nadie: el grupo `Dirección` sólo tiene a `aortega`, **sin correo**.
+
+```bash
+uv run python manage.py shell -v 0 -c "
+from django.contrib.auth.models import Group, User
+g = Group.objects.get(name='Dirección')
+a = User.objects.get(username='aortega'); a.email='aortega@jej.cl'; a.save()
+u, _ = User.objects.get_or_create(username='cmunoz', defaults={'email':'cmunoz@jej.cl'})
+u.email='cmunoz@jej.cl'; u.save(); g.user_set.add(u)
+print(list(g.user_set.values_list('username','email')))"
+uv run python manage.py send_executive_report --dry-run   # debe listar 2
+```
+
+**3. Timer del informe ejecutivo (LV-67)** — nunca se programó. Crear el par
+`.service`/`.timer` con el patrón de `docs/scheduled-operations.md`
+(usuario `levdigital01`, `OnCalendar=Mon *-*-* 07:30:00`, comando
+`send_executive_report --period week`).
+
+**4. Títulos de planes geoespaciales (LV-70).** Informe → revisar las 2 líneas →
+repetir con `--apply`:
+
+```bash
+uv run python manage.py refresh_geoplan_titles
+```
+
+**5. Revisar si el bug LV-73 borró vigencias.** Las fechas que ese bug destruyó
+**no son recuperables desde la app**; el respaldo previo al despliegue
+(`/srv/aerocontrol-data/backups/aero_ops_20260811_165707.sqlite3`) las tendría.
+
+```bash
+uv run python manage.py shell -v 0 -c "
+from apps.registry.models import Aircraft, Operator
+print('aeronaves sin seguro:', list(Aircraft.objects.filter(insurance_expiry__isnull=True).values_list('registration', flat=True)))
+print('operadores sin vigencia:', list(Operator.objects.filter(credential_expiry__isnull=True).values_list('full_name', flat=True)))"
+```
+
+**6. CSP a *enforcing***: verificado en demo, falta la variable en `p340`.
+Criterio de salida de `beta`.
+
+**7. R4, bloqueado del lado del usuario**: corregir 2 nombres de carpeta en `Z:`
+(`RPA-4647`, `RPA-4884`) y configurar un antivirus real
+(`DOCUMENTS_ANTIVIRUS_COMMAND` está vacío en todos los ambientes) antes de correr
+el importador con `--apply`.
 
 ## Cómo desplegar
 
