@@ -13,7 +13,7 @@ dependencies = [
     # R6.4: PDF export for the compliance report. Pure-Python, no system
     # package (Cairo/Pango, wkhtmltopdf) required on the Ubuntu VM deploy --
     # unlike weasyprint/xhtml2pdf's HTML-rendering route.
-    "reportlab>=4.2,<5",
+    "reportlab>=4.2,<6",
     # Direct dependency for the BLOQUE GEO KML parser (hardened lxml). It was
     # already in the tree transitively via python-docx; pinned here so the geo
     # module does not depend on that chain continuing to pull it.
