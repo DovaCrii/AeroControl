@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import pgettext_lazy
 import re
 from pathlib import Path
 from uuid import uuid4
@@ -382,7 +383,89 @@ class AlertRule(BaseModel):
         return resolve_model(self.entity_type)
 
 
-class Alert(BaseModel):
+class EffectivenessVerificationMixin(models.Model):
+    """R7.6 (ISO 10.2): "was the corrective action effective?", shared.
+
+    Extracted when `NonConformity` became the second user of the pattern that
+    `Alert` introduced -- the repo's rule is to extract on the second use, not
+    to anticipate it (AGENTS.md). The fields and the clock are identical; what
+    differs per model is *when* the subject counts as closed, which subclasses
+    answer through `effectiveness_subject_is_closed`.
+    """
+
+    # 30 days: one monthly cycle, matching the cadence the compliance review
+    # already runs on (R6.5), so verification lands in a rhythm the operation
+    # keeps rather than a new one. Decided with the user 2026-08-12.
+    EFFECTIVENESS_DAYS = 30
+
+    # Nullable, so records closed before this existed are not retroactively
+    # overdue -- there is no honest due date to invent for them.
+    effectiveness_due_date = models.DateField(null=True, blank=True)
+    effectiveness_verified_at = models.DateTimeField(null=True, blank=True)
+    effectiveness_verified_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    effectiveness_note = models.TextField(blank=True)
+
+    class Meta:
+        abstract = True
+
+    def effectiveness_subject_is_closed(self):
+        """Whether the corrective action has been taken at all."""
+        raise NotImplementedError
+
+    def start_effectiveness_clock(self):
+        self.effectiveness_due_date = timezone.localdate() + timedelta(
+            days=self.EFFECTIVENESS_DAYS
+        )
+
+    def clear_effectiveness(self):
+        """Used when the closure is undone: any verification recorded attested
+        to a closure that no longer stands."""
+        self.effectiveness_due_date = None
+        self.effectiveness_verified_at = None
+        self.effectiveness_verified_by = None
+        self.effectiveness_note = ""
+
+    @property
+    def effectiveness_is_due(self):
+        """Closed, past its due date, and nobody has confirmed it worked."""
+        return (
+            self.effectiveness_subject_is_closed()
+            and self.effectiveness_due_date is not None
+            and self.effectiveness_verified_at is None
+            and self.effectiveness_due_date <= timezone.localdate()
+        )
+
+    def verify_effectiveness(self, *, user=None, note=""):
+        """Record that the corrective action was checked and held.
+
+        Deliberately *not* the inverse of undoing the closure: it leaves the
+        record closed and its reason untouched, and adds a second, later
+        statement -- "and it worked" -- which is what ISO 10.2 asks for beyond
+        the fix itself.
+        """
+        if not self.effectiveness_subject_is_closed():
+            return False
+        self.effectiveness_verified_at = timezone.now()
+        self.effectiveness_verified_by = user
+        self.effectiveness_note = note
+        self.save(
+            update_fields=[
+                "effectiveness_verified_at",
+                "effectiveness_verified_by",
+                "effectiveness_note",
+                "updated_at",
+            ]
+        )
+        return True
+
+
+class Alert(EffectivenessVerificationMixin, BaseModel):
     triggered_at = models.DateTimeField(auto_now_add=True)
     resolved_at = models.DateTimeField(null=True, blank=True)
     alert_rule = models.ForeignKey(AlertRule, on_delete=models.PROTECT)
@@ -410,28 +493,11 @@ class Alert(BaseModel):
     # to ask, and stay reason-less); AlertResolveForm is what actually makes
     # it required for the one place a human clicks "Resolve".
     resolution_reason = models.TextField(blank=True)
-    # R7.6 (ISO 10.2): a corrective action is not finished when it is taken --
-    # the norm asks whether it *worked*. Until now resolving was terminal and
-    # nobody ever went back to look, so a reason on record could describe a fix
-    # that never held. Set on resolve() to resolved_at + EFFECTIVENESS_DAYS;
+    # R7.6 (ISO 10.2): the effectiveness fields and the 30-day clock come from
+    # EffectivenessVerificationMixin, shared with NonConformity. Resolving used
+    # to be terminal -- nobody ever went back to ask whether the action worked,
+    # so a reason on record could describe a fix that never held.
     # `check_alert_effectiveness` escalates whatever is due and unverified.
-    # Nullable, so the alerts resolved before this existed are not retroactively
-    # overdue -- there is no honest due date to invent for them.
-    effectiveness_due_date = models.DateField(null=True, blank=True)
-    effectiveness_verified_at = models.DateTimeField(null=True, blank=True)
-    effectiveness_verified_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="+",
-    )
-    effectiveness_note = models.TextField(blank=True)
-
-    # 30 days: one monthly cycle, matching the cadence the compliance review
-    # already runs on (R6.5), so verification lands in a rhythm the operation
-    # keeps rather than a new one. Decided with the user 2026-08-12.
-    EFFECTIVENESS_DAYS = 30
 
     class Meta:
         indexes = [
@@ -591,9 +657,7 @@ class Alert(BaseModel):
         # caller including the automatic ones. An automatic close (a renewed
         # expiry date, a completed maintenance) is still a corrective action
         # whose effect the norm expects someone to confirm.
-        self.effectiveness_due_date = timezone.localdate() + timedelta(
-            days=self.EFFECTIVENESS_DAYS
-        )
+        self.start_effectiveness_clock()
         task = self.linked_task()
         completed_stage = None
         if task is not None:
@@ -646,13 +710,8 @@ class Alert(BaseModel):
         self.resolution_reason = ""
         # R7.6: reopening *is* the answer to "did it work?" -- no. The pending
         # verification goes with it; the alert is open again and will get its
-        # own new due date when it is next resolved. Any verification already
-        # recorded is cleared too: it attested to a resolution that no longer
-        # stands.
-        self.effectiveness_due_date = None
-        self.effectiveness_verified_at = None
-        self.effectiveness_verified_by = None
-        self.effectiveness_note = ""
+        # own new due date when it is next resolved.
+        self.clear_effectiveness()
         origin = self.resolved_from_stage
         self.resolved_from_stage = None
         self.save(
@@ -686,41 +745,160 @@ class Alert(BaseModel):
         task.save(update_fields=["stage", "updated_at"])
         return task
 
+    def effectiveness_subject_is_closed(self):
+        """For an alert, the corrective action is taken once it is resolved.
+        Verifying an open one would attest to the effectiveness of an action
+        nobody has taken."""
+        return self.is_resolved
+
+
+class NonConformity(EffectivenessVerificationMixin, BaseModel):
+    """R7.6: a reflight, a rejected survey or an incident, on record (ISO 10.2).
+
+    **Deliberately not an Alert.** `AlertRule` watches "this date expires in N
+    days"; a reflight is not that, and forcing it through that engine would
+    repeat the mistake R5.1 already avoided. What the two share is the
+    effectiveness follow-up, which is why that lives in a mixin rather than in
+    either model.
+
+    The source object is a GFK (`Document` and `Alert` already use the pattern)
+    because the origin can be a deliverable, a maintenance record, a flight --
+    or nothing at all, for a finding that came out of an audit.
+
+    Reporting to the DGAC is two plain fields rather than a workflow: for an
+    incident that legally requires notification, "reported on this date with
+    this reference" *is* the evidence an auditor asks for. Whether a given
+    incident requires it is a regulatory question nobody has answered yet, so
+    this records the fact and does not gate on it.
+    """
+
+    SOURCE_REFLIGHT = "reflight"
+    SOURCE_REJECTED_DELIVERABLE = "rejected_deliverable"
+    SOURCE_INCIDENT = "incident"
+    SOURCE_AUDIT_FINDING = "audit_finding"
+    SOURCE_CHOICES = [
+        (SOURCE_REFLIGHT, _("Reflight")),
+        (SOURCE_REJECTED_DELIVERABLE, _("Rejected deliverable")),
+        (SOURCE_INCIDENT, _("Incident")),
+        (SOURCE_AUDIT_FINDING, _("Audit finding")),
+    ]
+
+    STATUS_OPEN = "open"
+    STATUS_CLOSED = "closed"
+    # Under a context: the bare "Closed" msgid is already the contract status
+    # ("Cerrado", masculine, agreeing with *contrato*), and reusing it renders
+    # "Cerrado" next to *no conformidad*, which is feminine in Spanish. Same
+    # mechanism LV-61 needed for "Registry".
+    STATUS_CHOICES = [
+        (STATUS_OPEN, pgettext_lazy("non-conformity status", "Open")),
+        (STATUS_CLOSED, pgettext_lazy("non-conformity status", "Closed")),
+    ]
+
+    title = models.CharField(max_length=200)
+    source = models.CharField(max_length=30, choices=SOURCE_CHOICES)
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default=STATUS_OPEN
+    )
+    cost_center = models.ForeignKey(
+        "registry.CostCenter",
+        on_delete=models.PROTECT,
+        related_name="non_conformities",
+        null=True,
+        blank=True,
+    )
+    # The origin object, when there is one. SET_NULL semantics by hand: a GFK
+    # has no on_delete, so both parts are nullable and a vanished origin leaves
+    # the finding standing rather than deleting the evidence with it.
+    content_type = models.ForeignKey(
+        ContentType, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    object_id = models.UUIDField(null=True, blank=True)
+    content_object = GenericForeignKey("content_type", "object_id")
+
+    description = models.TextField()
+    # Empty until someone investigates. ISO 10.2 wants the root cause on
+    # record, but demanding it at creation would push people to write "pending"
+    # -- which is worse than an empty field, because it looks answered.
+    root_cause = models.TextField(blank=True)
+    corrective_action = models.TextField(blank=True)
+    detected_on = models.DateField(default=date.today)
+    closed_at = models.DateTimeField(null=True, blank=True)
+    closed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    reported_to_dgac_at = models.DateField(null=True, blank=True)
+    dgac_report_reference = models.CharField(max_length=100, blank=True)
+
+    class Meta:
+        verbose_name = _("non-conformity")
+        verbose_name_plural = _("non-conformities")
+        ordering = ["-detected_on", "-created_at"]
+        indexes = [
+            models.Index(fields=["status", "source"], name="compliance_nc_status_idx"),
+            models.Index(
+                fields=["content_type", "object_id"], name="compliance_nc_origin_idx"
+            ),
+        ]
+
+    def __str__(self):
+        return self.title
+
+    def get_absolute_url(self):
+        from django.urls import reverse
+
+        return reverse("nonconformity-detail", kwargs={"pk": self.pk})
+
+    def effectiveness_subject_is_closed(self):
+        return self.status == self.STATUS_CLOSED
+
     @property
-    def effectiveness_is_due(self):
-        """Resolved, past its due date, and nobody has confirmed it worked."""
-        return (
-            self.is_resolved
-            and self.effectiveness_due_date is not None
-            and self.effectiveness_verified_at is None
-            and self.effectiveness_due_date <= timezone.localdate()
-        )
+    def can_close(self):
+        """ISO 10.2 asks for the root cause *and* the action taken. Closing
+        without them would file a finding as handled while recording neither
+        what caused it nor what was done -- the exact gap R6.2 closed for
+        alerts."""
+        return bool(self.root_cause.strip() and self.corrective_action.strip())
 
-    def verify_effectiveness(self, *, user=None, note=""):
-        """R7.6: record that the corrective action was checked and held.
-
-        Deliberately *not* the inverse of reopen(): confirming effectiveness
-        leaves the alert resolved and its reason untouched. It adds a second,
-        later statement -- "and it worked" -- which is what ISO 10.2 asks for
-        beyond the fix itself.
-
-        Only meaningful on a resolved alert; verifying an open one would
-        attest to the effectiveness of an action nobody has taken.
-        """
-        if not self.is_resolved:
+    def close(self, *, user=None):
+        if not self.can_close:
             return False
-        self.effectiveness_verified_at = timezone.now()
-        self.effectiveness_verified_by = user
-        self.effectiveness_note = note
+        self.status = self.STATUS_CLOSED
+        self.closed_at = timezone.now()
+        self.closed_by = user
+        self.start_effectiveness_clock()
         self.save(
             update_fields=[
+                "status",
+                "closed_at",
+                "closed_by",
+                "effectiveness_due_date",
+                "updated_at",
+            ]
+        )
+        return True
+
+    def reopen(self):
+        """Reopening is the answer to "did it work?" -- no."""
+        self.status = self.STATUS_OPEN
+        self.closed_at = None
+        self.closed_by = None
+        self.clear_effectiveness()
+        self.save(
+            update_fields=[
+                "status",
+                "closed_at",
+                "closed_by",
+                "effectiveness_due_date",
                 "effectiveness_verified_at",
                 "effectiveness_verified_by",
                 "effectiveness_note",
                 "updated_at",
             ]
         )
-        return True
 
 
 class Deliverable(BaseModel):

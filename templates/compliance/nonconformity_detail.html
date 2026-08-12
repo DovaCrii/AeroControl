@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{{ finding.title }} - AeroControl{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-start">
+  <div>
+    <h1 class="h3 mb-1">{{ finding.title }}</h1>
+    <p class="text-muted mb-0">{{ finding.get_source_display }}{% if finding.cost_center %} · {{ finding.cost_center }}{% endif %}</p>
+  </div>
+  {% if perms.compliance.change_nonconformity %}
+  <a class="btn btn-outline-secondary" href="{% url 'nonconformity-update' finding.pk %}">{% translate "Edit" %}</a>
+  {% endif %}
+</div>
+
+<div class="card mb-3 p-4">
+  <table class="table table-bordered mb-0"><tbody>
+    <tr><th class="w-25">{% translate "Status" %}</th><td><span class="badge bg-{% if finding.status == 'closed' %}success{% else %}warning text-dark{% endif %}">{{ finding.get_status_display }}</span></td></tr>
+    <tr><th>{% translate "Detected on" %}</th><td>{{ finding.detected_on|date:"Y-m-d" }}</td></tr>
+    {% if finding.content_object %}<tr><th>{% translate "Origin" %}</th><td>{{ finding.content_object }}</td></tr>{% endif %}
+    <tr><th>{% translate "Description" %}</th><td>{{ finding.description|linebreaksbr }}</td></tr>
+    {% comment %}ISO 10.2 asks for both, and `close()` refuses without them --
+    a finding filed as handled with neither the cause nor the action recorded
+    is the gap R6.2 closed for alerts.{% endcomment %}
+    <tr><th>{% translate "Root cause" %}</th><td>{% if finding.root_cause %}{{ finding.root_cause|linebreaksbr }}{% else %}<span class="text-muted">{% translate "Not investigated yet" %}</span>{% endif %}</td></tr>
+    <tr><th>{% translate "Corrective action" %}</th><td>{% if finding.corrective_action %}{{ finding.corrective_action|linebreaksbr }}{% else %}<span class="text-muted">{% translate "Not defined yet" %}</span>{% endif %}</td></tr>
+    {% if finding.closed_at %}<tr><th>{% translate "Closed" %}</th><td>{{ finding.closed_at|date:"Y-m-d H:i" }} · {{ finding.closed_by|default:"—" }}</td></tr>{% endif %}
+    {% if finding.reported_to_dgac_at %}<tr><th>{% translate "Reported to DGAC" %}</th><td>{{ finding.reported_to_dgac_at|date:"Y-m-d" }}{% if finding.dgac_report_reference %} · {{ finding.dgac_report_reference }}{% endif %}</td></tr>{% endif %}
+    <tr><th>{% translate "Notes" %}</th><td>{{ finding.notes|default:"—" }}</td></tr>
+  </tbody></table>
+</div>
+
+{% if finding.status == 'closed' %}
+<div class="card mb-3 p-3">
+  <h2 class="h5 mb-1">{% translate "Effectiveness verification" %}</h2>
+  <p class="text-muted small mb-3">{% translate "ISO 10.2 asks whether the corrective action worked, not only that it was taken." %}</p>
+  {% if finding.effectiveness_verified_at %}
+    <p class="mb-0"><span class="badge bg-primary-subtle text-primary-emphasis">{% translate "Verified" %}</span>
+    <span class="text-muted small ms-2">{{ finding.effectiveness_verified_at|date:"Y-m-d" }} · {{ finding.effectiveness_verified_by|default:"—" }}</span></p>
+    {% if finding.effectiveness_note %}<p class="small text-muted mt-2 mb-0">{{ finding.effectiveness_note }}</p>{% endif %}
+  {% elif perms.compliance.change_nonconformity %}
+    <form method="post" action="{% url 'nonconformity-verify-effectiveness' finding.pk %}" class="d-flex flex-column gap-2">{% csrf_token %}
+      <label class="form-label small mb-0" for="note">{% translate "Note (optional)" %}</label>
+      <input class="form-control" id="note" name="note" maxlength="500">
+      <button class="btn btn-outline-primary align-self-start">{% translate "Confirm it held" %}</button>
+    </form>
+    {% if finding.effectiveness_due_date %}<p class="text-muted small mb-0 mt-2">{% blocktranslate with due=finding.effectiveness_due_date|date:"Y-m-d" %}Due for verification on {{ due }}.{% endblocktranslate %}</p>{% endif %}
+  {% endif %}
+</div>
+{% endif %}
+
+{% if perms.compliance.change_nonconformity %}
+<div class="card p-3">
+  <h2 class="h5 mb-3">{% translate "Actions" %}</h2>
+  <div class="d-flex flex-wrap gap-2">
+    {% if finding.status == 'open' %}
+    <form method="post" action="{% url 'nonconformity-close' finding.pk %}">{% csrf_token %}
+      <button class="btn btn-primary"{% if not finding.can_close %} disabled title="{% translate 'Record the root cause and the corrective action first' %}"{% endif %}>{% translate "Close" %}</button>
+    </form>
+    {% else %}
+    <form method="post" action="{% url 'nonconformity-reopen' finding.pk %}">{% csrf_token %}
+      <button class="btn btn-outline-secondary">{% translate "Reopen" %}</button>
+    </form>
+    {% endif %}
+  </div>
+  {% if finding.status == 'open' and not finding.can_close %}
+  <p class="text-muted small mb-0 mt-2">{% translate "Closing requires the root cause and the corrective action on record." %}</p>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -28,9 +28,24 @@ _LITERAL_NC = r'"(?:[^"\\]|\\.)*"'
 # Strings marked for translation in Python and in templates. The Python pattern
 # takes one or more adjacent literals, because a long message is usually split
 # over several lines and Python joins them before gettext ever sees it.
+#
+# `pgettext` needs its own pattern: its first argument is the *context*, not a
+# translatable string. Without this the plain pattern matched the "gettext_lazy"
+# tail inside "pgettext_lazy" and reported the context as a missing msgid --
+# which is what happened the first time a pgettext call was added in Python
+# (the template form, `{% translate "X" context "..." %}`, never had the problem
+# because the context sits after the string there).
+#
+# The leading `\b` on the plain pattern is what keeps it from matching inside
+# `pgettext_lazy` in the first place.
 _SOURCE_PATTERNS = [
+    re.compile(r"\b(?:_|gettext|gettext_lazy)\(\s*((?:" + _LITERAL_NC + r"\s*)+)"),
     re.compile(
-        r"(?:\b_|gettext|gettext_lazy|pgettext)\(\s*((?:" + _LITERAL_NC + r"\s*)+)"
+        r"\bpgettext(?:_lazy)?\(\s*"
+        + _LITERAL_NC
+        + r"\s*,\s*((?:"
+        + _LITERAL_NC
+        + r"\s*)+)"
     ),
     re.compile(r"\{%\s*(?:translate|trans)\s+(" + _LITERAL_NC + r")"),
 ]

@@ -104,6 +104,42 @@ urlpatterns = [
         views.DeliverableReject.as_view(),
         name="deliverable-reject",
     ),
+    # R7.6: non-conformities (ISO 10.2).
+    path(
+        "nonconformity/",
+        views.NonConformityList.as_view(),
+        name="nonconformity-list",
+    ),
+    path(
+        "nonconformity/new/",
+        views.NonConformityCreate.as_view(),
+        name="nonconformity-create",
+    ),
+    path(
+        "nonconformity/<uuid:pk>/",
+        views.NonConformityDetail.as_view(),
+        name="nonconformity-detail",
+    ),
+    path(
+        "nonconformity/<uuid:pk>/edit/",
+        views.NonConformityUpdate.as_view(),
+        name="nonconformity-update",
+    ),
+    path(
+        "nonconformity/<uuid:pk>/close/",
+        views.NonConformityClose.as_view(),
+        name="nonconformity-close",
+    ),
+    path(
+        "nonconformity/<uuid:pk>/reopen/",
+        views.NonConformityReopen.as_view(),
+        name="nonconformity-reopen",
+    ),
+    path(
+        "nonconformity/<uuid:pk>/verify-effectiveness/",
+        views.NonConformityVerifyEffectiveness.as_view(),
+        name="nonconformity-verify-effectiveness",
+    ),
     path("alert/<uuid:pk>/reopen/", views.AlertReopen.as_view(), name="alert-reopen"),
     # R7.6: effectiveness verification of a corrective action (ISO 10.2).
     path(
