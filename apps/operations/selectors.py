@@ -27,3 +27,51 @@ def total_flight_duration(aircraft):
 
     records = FlightRecord.objects.filter(aircraft=aircraft, is_active=True)
     return sum((record.duration for record in records), timedelta())
+
+
+# R7.5 (ISO 45001 6.1.2/8.1.2): pilot fatigue is one of the hazards the field
+# IPER has to control, and a duty limit is the control the guide names. 8 hours
+# of flight time in one day, decided with the user on 2026-08-12.
+#
+# This counts *flight* time, not time on site: it is what the records actually
+# hold. A pilot's real duty day is longer (travel, setup, waiting on weather),
+# so treat this as a floor -- crossing it certainly exceeds the limit, staying
+# under it does not prove the day was within it.
+DAILY_FLIGHT_LIMIT = timedelta(hours=8)
+
+
+def duty_time_for(pilot, day):
+    """Total flight time this pilot logged on `day`.
+
+    Summed in Python for the same reason as total_flight_duration above:
+    `FlightRecord.duration` is a property, not a column.
+    """
+    from .models import FlightRecord
+
+    records = FlightRecord.objects.filter(pilot=pilot, actual_date=day, is_active=True)
+    return sum((record.duration for record in records), timedelta())
+
+
+def pilots_over_daily_limit(day):
+    """[(pilot, duty_time), ...] for everyone past the limit on `day`.
+
+    One query for the day's records, then grouped in Python -- the alternative
+    (a query per pilot) is the shape that made the Kanban board slow (V.19).
+    """
+    from .models import FlightRecord
+
+    totals = {}
+    records = FlightRecord.objects.filter(
+        actual_date=day, is_active=True
+    ).select_related("pilot")
+    for record in records:
+        totals[record.pilot] = totals.get(record.pilot, timedelta()) + record.duration
+    return sorted(
+        (
+            (pilot, total)
+            for pilot, total in totals.items()
+            if total > DAILY_FLIGHT_LIMIT
+        ),
+        key=lambda pair: pair[1],
+        reverse=True,
+    )

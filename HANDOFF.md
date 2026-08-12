@@ -11,7 +11,7 @@
 
 - **Versión:** `v0.5.0-beta` (etiquetada). `main` = `origin/main` (pusheado
   2026-08-12).
-- **Gate:** `pwsh scripts/verify.ps1` verde (994 tests, ruff, bandit, pip-audit).
+- **Gate:** `pwsh scripts/verify.ps1` verde (1022 tests, ruff, bandit, pip-audit).
 - **Sin desplegar en `p340`:** lo de 2026-08-12 trae **3 migraciones**, todas
   aditivas y sin dato obligatorio: `operations.0016` (ubicación estructurada),
   `compliance.0015` (verificación de eficacia), `geo.0004` (revisión
@@ -19,9 +19,10 @@
 - **Al desplegar hay dos pasos que no son `git pull` + restart:**
   1. `manage.py bootstrap_roles` — hay permisos nuevos (`add/view_weatherreview`);
      sin correrlo, el botón de registrar la revisión no le aparece a nadie.
-  2. Un timer nuevo, el noveno:
-     `mkjob alert-effectiveness "check_alert_effectiveness" "*-*-* 08:30:00"`
-     (ver [docs/scheduled-operations.md](docs/scheduled-operations.md)).
+  2. **Dos timers nuevos** (serían 10 en total), ver
+     [docs/scheduled-operations.md](docs/scheduled-operations.md):
+     `mkjob alert-effectiveness "check_alert_effectiveness" "*-*-* 08:30:00"` y
+     `mkjob duty-limit "check_flight_duty_limit" "*-*-* 07:45:00"`.
 - **Bloques completos:** R1, R2, R3, R5, R6 · base ISO R7.1-R7.3 + diseños
   R7.4-R7.7 escritos · R8.1 · X.1-X.3.
 - **Parcial:** R4 (importador listo, `--apply` nunca corrido).
@@ -74,8 +75,9 @@ producción.
 |---|---|
 | Verificación de eficacia (R7.6a) | ✅ Hecho — 30 días, decidido por el usuario |
 | Revisión meteorológica como evidencia (R8.2) | ✅ Hecho |
-| Los 2 KPI operacionales ya calculables (R7.7) | ⬜ **Lo siguiente.** Meta de disponibilidad de flota fijada en **90%** por el usuario el 2026-08-12; la de cumplimiento de plazos sigue sin definir |
-| LV-72 (trazabilidad estilo SIGO) | ⬜ |
+| Los 2 KPI operacionales ya calculables (R7.7a) | ✅ Hecho — flota con meta 90%; cumplimiento de plazos **sin meta acordada**, se muestra pero no marca incumplimiento |
+| Límite de jornada de vuelo (R7.5a) | ✅ Hecho — 8 horas |
+| LV-72 (trazabilidad estilo SIGO) | ⬜ **Lo siguiente de la Sesión B** |
 | Decidir si el tablero Kanban se elimina | ⬜ Requiere decisión |
 
 **Números que el usuario ya fijó (2026-08-12), para no volver a preguntarlos:**
