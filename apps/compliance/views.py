@@ -469,48 +469,17 @@ class DocumentDelete(
         return redirect(self.success_url)
 
 
-def _group_alerts(alerts):
-    """Fold same-rule, same-date alerts into one list row (R6.3).
-
-    Example: a fleet insurance policy renews on one date but covers several
-    aircraft, each with its own Alert row (one per (rule, record) -- see
-    generate_alerts). Grouping them by (alert_rule_id, watched_date) shows
-    that as a single row instead of one per aircraft. Only unresolved alerts
-    with a comparable date group; a resolved alert or a status-watched one
-    (no expiry date, e.g. an open maintenance record) always keeps its own
-    row. Operates on whichever page of alerts the caller already fetched --
-    it does not touch pagination or the underlying queryset.
-
-    Returns a list of {"alerts": [...], "is_group": bool}, one per row, in
-    the alerts' original order.
-    """
-    buckets = {}
-    rows = []  # ("single", alert) or ("group", key)
-    for alert in alerts:
-        key = (
-            (alert.alert_rule_id, alert.watched_date)
-            if not alert.is_resolved and alert.watched_date is not None
-            else None
-        )
-        if key is None:
-            rows.append(("single", alert))
-            continue
-        if key not in buckets:
-            buckets[key] = []
-            rows.append(("group", key))
-        buckets[key].append(alert)
-
-    # No group-level id list: LV-68 removed the bulk resolve, so nothing needs
-    # to address the group as a unit any more. Each member is acted on by pk.
-    return [
-        {
-            "alerts": [value] if kind == "single" else buckets[value],
-            "is_group": kind == "group" and len(buckets[value]) > 1,
-        }
-        for kind, value in rows
-    ]
-
-
+# LV-75: `_group_alerts` lived here and folded same-rule, same-date alerts into
+# one row (R6.3). It is gone: one alert, one row.
+#
+# R6.3's premise was "same rule + same date => same cause" (a fleet policy
+# covering several aircraft). LV-68 already found that false against production
+# data -- dates coincide without a shared cause -- and removed the bulk resolve,
+# but kept the visual grouping. That left the row itself making the claim the
+# data does not support, plus a second, quieter cost: a grouped row had no
+# button in its Actions column (just "2 alertas") and offered its members a
+# text link instead, so the same action lived in two different places depending
+# on whether a neighbouring record happened to share a date.
 class AlertList(ComplianceList):
     model = Alert
     template_name = "compliance/alert_list.html"
@@ -529,16 +498,28 @@ class AlertList(ComplianceList):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["entity_types"] = Alert.objects.values_list(
-            "content_type__model", flat=True
-        ).distinct()
+        # LV-76: get_queryset() has filtered on ?entity_type since this view was
+        # written and this list has always been in the context, but no template
+        # ever rendered it -- a working filter with no way to reach it. Paired
+        # with the raw model slug ("flightpermission") the select would have been
+        # unreadable anyway, so the labels come from the same verbose_name the
+        # rows already show in the "Entity type" column.
+        content_types = ContentType.objects.filter(
+            pk__in=Alert.objects.values("content_type_id")
+        )
+        entity_types = []
+        for content_type in content_types:
+            model = content_type.model_class()
+            label = model._meta.verbose_name if model else content_type.model
+            entity_types.append((content_type.model, str(label).capitalize()))
+        context["entity_types"] = sorted(entity_types, key=lambda pair: pair[1])
+        context["selected_entity_type"] = self.request.GET.get("entity_type", "")
         # LV-69b: this used to resolve each alert's linked KanbanTask in one
         # query, so the row could offer "Create task" vs "View task". Those
         # actions were removed when the workboard left the menu (LV-69) --
         # they pushed work into a place nobody navigates to any more -- so the
         # query went with them rather than costing one lookup per page load for
         # a value no template reads. Restoring the buttons means restoring this.
-        context["alert_rows"] = _group_alerts(list(context.get("objects") or []))
         return context
 
 
