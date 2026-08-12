@@ -32,7 +32,7 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from apps.core.api import ViewModelPermissions
 from apps.core.tenancy import scope_queryset_to_tenant
 
-from .models import Aircraft
+from .models import Aircraft, normalize_serial
 
 
 class PadronPagination(PageNumberPagination):
@@ -76,9 +76,11 @@ class AircraftPadronViewSet(ReadOnlyModelViewSet):
     `?serial=<serial>` is the lookup AeroLink actually uses: it holds a serial
     from DJI and needs the matching airframe. Matched exactly (not `icontains`)
     -- a partial match on a serial would resolve telemetry to the wrong
-    aircraft, which is worse than not resolving it. X.1 already normalizes
-    stored serials (whitespace stripped), so the incoming value is normalized
-    the same way before comparing instead of trusting the caller to do it.
+    aircraft, which is worse than not resolving it. Stored serials are
+    normalized by `normalize_serial` (X.1 whitespace, plus the upper-casing
+    ADR-0002 §2 always required and X.4c finally implemented), so the incoming
+    value goes through the same function instead of trusting the caller to have
+    done it.
     """
 
     serializer_class = AircraftPadronSerializer
@@ -100,5 +102,5 @@ class AircraftPadronViewSet(ReadOnlyModelViewSet):
         queryset = scope_queryset_to_tenant(queryset, self.request.user)
         serial = self.request.query_params.get("serial")
         if serial:
-            queryset = queryset.filter(serial_number="".join(serial.split()))
+            queryset = queryset.filter(serial_number=normalize_serial(serial))
         return queryset

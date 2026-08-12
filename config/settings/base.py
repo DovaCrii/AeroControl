@@ -188,6 +188,8 @@ WEATHER_CACHE_SECONDS = config("WEATHER_CACHE_SECONDS", default=3600, cast=int)
 # and the zero-outgoing-calls property holds. Both services live on the same
 # VM's internal network, so this is normally a localhost URL and never crosses
 # the public internet.
+# Debe incluir el prefijo de versión: el cliente sólo concatena
+# "/devices/?kind=battery". Ej.: http://127.0.0.1:8081/api/v1
 AEROLINK_API_URL = config("AEROLINK_API_URL", default="")
 AEROLINK_API_TOKEN = config("AEROLINK_API_TOKEN", default="")
 AEROLINK_TIMEOUT_SECONDS = config("AEROLINK_TIMEOUT_SECONDS", default=10, cast=int)

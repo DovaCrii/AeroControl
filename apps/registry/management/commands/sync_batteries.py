@@ -31,7 +31,7 @@ from apps.registry.aerolink import (
     fetch_batteries,
     parse_batteries,
 )
-from apps.registry.models import Aircraft, Battery
+from apps.registry.models import Aircraft, Battery, normalize_serial
 
 logger = logging.getLogger("aerocontrol.aerolink")
 
@@ -105,7 +105,7 @@ class Command(BaseCommand):
         }
 
         for entry in payload:
-            serial = "".join(str(entry.get("serial_number") or "").split())
+            serial = normalize_serial(entry.get("serial_number"))
             if not serial:
                 # A battery with no serial cannot be matched to anything, now
                 # or later. Counting it as skipped beats inventing a key.
@@ -125,11 +125,15 @@ class Command(BaseCommand):
                 existing.save()
             updated += 1
 
+        # Only batteries this feed is responsible for. A hand-entered one
+        # (source="manual") is not AeroLink's to report, and including it meant
+        # warning about the same rows on every single run -- the kind of
+        # permanent warning people learn to scroll past.
         missing = (
             set(
-                Battery.objects.filter(is_active=True).values_list(
-                    "serial_number", flat=True
-                )
+                Battery.objects.filter(
+                    is_active=True, source=Battery.SOURCE_AEROLINK
+                ).values_list("serial_number", flat=True)
             )
             - seen
         )
@@ -156,7 +160,7 @@ class Command(BaseCommand):
         health = entry.get("health_percent")
         if isinstance(health, int) and 0 <= health <= 100:
             fields["health_percent"] = health
-        aircraft_serial = "".join(str(entry.get("aircraft_serial") or "").split())
+        aircraft_serial = normalize_serial(entry.get("aircraft_serial"))
         if aircraft_serial and aircraft_serial in aircraft_by_serial:
             fields["aircraft_id"] = aircraft_by_serial[aircraft_serial]
         return fields
