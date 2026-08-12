@@ -1293,6 +1293,27 @@ main {
    step's ::before and pointed at the previous one, so the number of steps
    comes entirely from the template loop -- a status added to the model's
    STATUS_FLOW needs no CSS change. */
+/* R8.3: los iconos del pronóstico. Trazo, no relleno, igual que los del menú
+   lateral, y `currentColor` para que sigan al texto en claro y en oscuro sin
+   una segunda regla. Van dentro del <small>, así que se alinean con la
+   etiqueta y no compiten con el número. */
+.weather-icon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.weather-grid .summary-card small {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 .status-steps {
   display: flex;
   list-style: none;
