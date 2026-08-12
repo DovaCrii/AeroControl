@@ -68,7 +68,11 @@ window closed) and renders "—": a 0% there would read as total failure.{% endc
       <thead><tr><th>{% translate "Indicator" %}</th><th class="text-end">{% translate "Value" %}</th><th class="text-end">{% translate "Target" %}</th><th class="text-end">{% translate "Status" %}</th></tr></thead>
       <tbody>{% for kpi in report.operational_kpis %}<tr>
         <td><strong>{{ kpi.label }}</strong><div class="small text-muted">{{ kpi.help }}</div></td>
-        <td class="text-end">{% if kpi.value is not None %}{{ kpi.value }}%<div class="small text-muted">{{ kpi.detail }}</div>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+        {% comment %}Not every indicator is a percentage: the incident-free
+        counter is an accumulated duration, so it shows its total alone. The
+        unit says which is which -- inferring it from a null value would print
+        a bare "0/0" for a percentage that simply had nothing to measure.{% endcomment %}
+        <td class="text-end">{% if kpi.unit == 'duration' %}{{ kpi.detail }}{% elif kpi.value is not None %}{{ kpi.value }}%<div class="small text-muted">{{ kpi.detail }}</div>{% else %}<span class="text-muted">—</span>{% endif %}</td>
         <td class="text-end">{% if kpi.target %}{{ kpi.target }}%{% else %}<span class="text-muted">—</span>{% endif %}</td>
         <td class="text-end">{% if kpi.met is None %}<span class="text-muted">—</span>{% elif kpi.met %}<span class="badge bg-success">{% translate "Met" %}</span>{% else %}<span class="badge bg-danger">{% translate "Below target" %}</span>{% endif %}</td>
       </tr>{% endfor %}</tbody>

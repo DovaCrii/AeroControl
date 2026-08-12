@@ -17,6 +17,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   que un permiso antiguo cuyo papel sólo decía "Chuquicamata" no queda
   retroactivamente incompleto. Un punto a medio ingresar (latitud sin longitud)
   se rechaza: no se puede dibujar en un mapa y fallaría en silencio.
+- **Los 5 indicadores operacionales que pide la guía ISO (`R7.7b`).** A los dos
+  que ya estaban se suman precisión de los levantamientos, tasa de re-vuelos y
+  horas de vuelo sin incidentes, que dependían de las dos funciones nuevas de
+  esta misma tanda.
 - **No conformidades (`R7.6b`, ISO 10.2).** Registro de re-vuelos, entregables
   rechazados, incidentes y hallazgos de auditoría, con causa raíz, acción
   correctiva y verificación de eficacia a los 30 días. **Cerrar exige la causa y

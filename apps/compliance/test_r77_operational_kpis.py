@@ -1,8 +1,11 @@
-"""R7.7: the two operational KPIs derivable today (ISO 9001 9.1.1).
+"""R7.7: the five operational KPIs the guide asks for (ISO 9001 9.1.1).
 
 The clause wants a target, a trend and action when the target is missed. These
 cover value and target; the trend for document counters comes from
 ComplianceSnapshot, already built.
+
+Three of the five became computable only once R7.4 (`Deliverable`) and R7.6
+(`NonConformity`) existed.
 """
 
 from datetime import date, time, timedelta
@@ -170,6 +173,179 @@ class TestOnTimeExecution:
         assert on_time_execution(START, END)["pct"] is None
 
 
+class TestSurveyAccuracy:
+    @pytest.mark.django_db
+    def test_only_assessable_deliverables_count(self, db):
+        """A deliverable whose contract set no thresholds is neither a pass nor
+        a failure. Folding it either way would make the number describe how
+        many contracts have criteria, not how good the work was."""
+        from decimal import Decimal
+
+        from apps.compliance.kpis import survey_accuracy
+        from apps.compliance.models import Deliverable
+
+        with_criteria = CostCenter.objects.create(
+            code="CC1", name="Uno", max_rmse_xy_cm=Decimal("10.0")
+        )
+        without = CostCenter.objects.create(code="CC2", name="Dos")
+        passing = Deliverable.objects.create(
+            title="Cumple", cost_center=with_criteria, rmse_xy_cm=Decimal("5.0")
+        )
+        failing = Deliverable.objects.create(
+            title="No cumple", cost_center=with_criteria, rmse_xy_cm=Decimal("30.0")
+        )
+        unassessable = Deliverable.objects.create(
+            title="Sin criterios", cost_center=without, rmse_xy_cm=Decimal("99.0")
+        )
+        for deliverable in (passing, failing, unassessable):
+            deliverable.validate_quality(user=None)
+
+        result = survey_accuracy(START, END)
+
+        assert result["total"] == 2  # the unassessable one is out
+        assert result["met"] == 1
+        assert result["pct"] == 50.0
+
+    @pytest.mark.django_db
+    def test_nothing_validated_gives_no_percentage(self, db):
+        from apps.compliance.kpis import survey_accuracy
+
+        assert survey_accuracy(START, END)["pct"] is None
+
+
+class TestReflightRate:
+    @pytest.mark.django_db
+    def test_counts_reflights_over_flights_flown(self, db):
+        from apps.compliance.kpis import reflight_rate
+        from apps.compliance.models import NonConformity
+
+        cost_center = CostCenter.objects.create(code="CC1", name="Uno")
+        permit = _permit(cost_center, date(2026, 8, 10))
+        pilot = Operator.objects.create(employee_id="P1", full_name="Pilot One")
+        aircraft = _aircraft("CC-A1")
+        permit.operators.add(pilot)
+        permit.aircraft_fleet.add(aircraft)
+        for day in (5, 6, 7, 8):
+            FlightRecord.objects.create(
+                permission=permit,
+                actual_date=date(2026, 8, day),
+                departure_time=time(9, 0),
+                arrival_time=time(10, 0),
+                pilot=pilot,
+                aircraft=aircraft,
+            )
+        NonConformity.objects.create(
+            title="Re-vuelo",
+            source=NonConformity.SOURCE_REFLIGHT,
+            description="x",
+            detected_on=date(2026, 8, 9),
+        )
+
+        result = reflight_rate(START, END)
+
+        assert result["flights"] == 4
+        assert result["reflights"] == 1
+        assert result["pct"] == 25.0
+
+    @pytest.mark.django_db
+    def test_lower_is_better_so_the_direction_is_explicit(self, db):
+        """Leaving the direction to be inferred from the name is how a red
+        badge lands on the best month of the year."""
+        from apps.compliance.kpis import LOWER_IS_BETTER, operational_kpis
+
+        reflights = next(
+            kpi
+            for kpi in operational_kpis(START, END)
+            if kpi["code"] == "reflight_rate"
+        )
+
+        assert reflights["direction"] == LOWER_IS_BETTER
+
+    @pytest.mark.django_db
+    def test_no_flights_gives_no_rate(self, db):
+        from apps.compliance.kpis import reflight_rate
+
+        assert reflight_rate(START, END)["pct"] is None
+
+
+class TestIncidentFreeFlightHours:
+    def _flight(self, permit, pilot, aircraft, day, hours=2):
+        return FlightRecord.objects.create(
+            permission=permit,
+            actual_date=day,
+            departure_time=time(9, 0),
+            arrival_time=time(9 + hours, 0),
+            pilot=pilot,
+            aircraft=aircraft,
+        )
+
+    @pytest.mark.django_db
+    def test_counts_the_whole_history_with_no_incident(self, db):
+        from apps.compliance.kpis import incident_free_flight_hours
+
+        cost_center = CostCenter.objects.create(code="CC1", name="Uno")
+        permit = _permit(cost_center, date(2026, 8, 20))
+        pilot = Operator.objects.create(employee_id="P1", full_name="Pilot One")
+        aircraft = _aircraft("CC-A1")
+        permit.operators.add(pilot)
+        permit.aircraft_fleet.add(aircraft)
+        self._flight(permit, pilot, aircraft, date(2026, 8, 5))
+        self._flight(permit, pilot, aircraft, date(2026, 8, 6))
+
+        result = incident_free_flight_hours()
+
+        assert result["since"] is None
+        assert result["hours"] == 4.0
+
+    @pytest.mark.django_db
+    def test_counts_only_after_the_last_incident(self, db):
+        from apps.compliance.kpis import incident_free_flight_hours
+        from apps.compliance.models import NonConformity
+
+        cost_center = CostCenter.objects.create(code="CC1", name="Uno")
+        permit = _permit(cost_center, date(2026, 8, 20))
+        pilot = Operator.objects.create(employee_id="P1", full_name="Pilot One")
+        aircraft = _aircraft("CC-A1")
+        permit.operators.add(pilot)
+        permit.aircraft_fleet.add(aircraft)
+        self._flight(permit, pilot, aircraft, date(2026, 8, 5))  # before
+        NonConformity.objects.create(
+            title="Incidente",
+            source=NonConformity.SOURCE_INCIDENT,
+            description="x",
+            detected_on=date(2026, 8, 6),
+        )
+        self._flight(permit, pilot, aircraft, date(2026, 8, 7), hours=3)  # after
+
+        result = incident_free_flight_hours()
+
+        assert result["since"] == date(2026, 8, 6)
+        assert result["hours"] == 3.0
+
+    @pytest.mark.django_db
+    def test_a_flight_on_the_incident_day_does_not_count(self, db):
+        """The counter runs from *after* the incident: a flight the same day
+        happened around it, so claiming it as incident-free would overstate."""
+        from apps.compliance.kpis import incident_free_flight_hours
+        from apps.compliance.models import NonConformity
+
+        cost_center = CostCenter.objects.create(code="CC1", name="Uno")
+        permit = _permit(cost_center, date(2026, 8, 20))
+        pilot = Operator.objects.create(employee_id="P1", full_name="Pilot One")
+        aircraft = _aircraft("CC-A1")
+        permit.operators.add(pilot)
+        permit.aircraft_fleet.add(aircraft)
+        NonConformity.objects.create(
+            title="Incidente",
+            source=NonConformity.SOURCE_INCIDENT,
+            description="x",
+            detected_on=date(2026, 8, 6),
+        )
+        self._flight(permit, pilot, aircraft, date(2026, 8, 6))
+
+        assert incident_free_flight_hours()["hours"] == 0.0
+
+
 class TestTheReportSurface:
     @pytest.mark.django_db
     def test_availability_below_target_is_flagged(self, db):
@@ -204,7 +380,21 @@ class TestTheReportSurface:
         assert execution["met"] is None
 
     @pytest.mark.django_db
-    def test_the_report_page_renders_both(self, db):
+    def test_all_five_indicators_the_guide_asks_for_are_present(self, db):
+        """R7.4 and R7.6 unlocked the three that were missing, so 9.1.1's list
+        is now complete."""
+        codes = [kpi["code"] for kpi in operational_kpis(START, END)]
+
+        assert codes == [
+            "fleet_availability",
+            "on_time_execution",
+            "survey_accuracy",
+            "reflight_rate",
+            "incident_free_flight_hours",
+        ]
+
+    @pytest.mark.django_db
+    def test_the_report_page_renders_them(self, db):
         _aircraft("CC-A1")
         user = User.objects.create_user("reporter", password="pw")
         user.user_permissions.add(
@@ -217,5 +407,10 @@ class TestTheReportSurface:
         content = response.content.decode()
 
         assert response.status_code == 200
-        assert len(response.context["report"]["operational_kpis"]) == 2
+        assert len(response.context["report"]["operational_kpis"]) == 5
         assert "Disponibilidad de flota" in content
+        assert "Tasa de re-vuelos" in content
+        assert "Horas de vuelo sin incidentes" in content
+        # A percentage with nothing to measure shows a dash, not its bare
+        # "0/0" denominator -- the counter's unit is what tells them apart.
+        assert "0/0" not in content
