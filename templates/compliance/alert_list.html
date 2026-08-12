@@ -1,27 +1,20 @@
 {% extends "base.html" %}
 {% load aero_tags i18n %}
 {% block title %}{% translate "Alerts" %} - AeroControl{% endblock %}
-{% block content %}<div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h3">{% translate "Alerts" %}</h1><a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a></div><form method="get" class="row g-2 mb-3"><div class="col-md-4"><input class="form-control" name="q" value="{{ request.GET.q }}" placeholder="{% translate 'Search alerts...' %}"></div><div class="col-md-3"><select class="form-select" name="is_resolved"><option value="">{% translate "All alerts" %}</option><option value="false" {% if request.GET.is_resolved == 'false' %}selected{% endif %}>{% translate "Unresolved" %}</option><option value="true" {% if request.GET.is_resolved == 'true' %}selected{% endif %}>{% translate "Resolved" %}</option></select></div><div class="col-auto"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div></form><div class="card"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th scope="col">{% translate "Entity type" %}</th><th scope="col">{% translate "Entity" %}</th><th scope="col">{% translate "Rule" %}</th><th scope="col">{% translate "Triggered" %}</th><th scope="col">{% translate "Expiry" %}</th><th scope="col" class="text-end">{% translate "Actions" %}</th></tr></thead><tbody>{% for row in alert_rows %}{% with object=row.alerts.0 %}<tr>
+{% block content %}<div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h3">{% translate "Alerts" %}</h1><a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a></div><form method="get" class="row g-2 mb-3"><div class="col-md-4"><input class="form-control" name="q" value="{{ request.GET.q }}" placeholder="{% translate 'Search alerts...' %}"></div><div class="col-md-3"><select class="form-select" name="is_resolved"><option value="">{% translate "All alerts" %}</option><option value="false" {% if request.GET.is_resolved == 'false' %}selected{% endif %}>{% translate "Unresolved" %}</option><option value="true" {% if request.GET.is_resolved == 'true' %}selected{% endif %}>{% translate "Resolved" %}</option></select></div>{% comment %}LV-76: the view has filtered on ?entity_type since it was
+written, but nothing ever rendered the picker -- a working filter with no way
+to reach it.{% endcomment %}<div class="col-md-3"><select class="form-select" name="entity_type"><option value="">{% translate "All entity types" %}</option>{% for value, label in entity_types %}<option value="{{ value }}" {% if selected_entity_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div><div class="col-auto"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div></form><div class="card"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th scope="col">{% translate "Entity type" %}</th><th scope="col">{% translate "Entity" %}</th><th scope="col">{% translate "Rule" %}</th><th scope="col">{% translate "Triggered" %}</th><th scope="col">{% translate "Expiry" %}</th><th scope="col" class="text-end">{% translate "Actions" %}</th></tr></thead><tbody>{% comment %}LV-75: one alert, one row. R6.3 used to fold same-rule,
+same-date alerts together on the premise that a shared date meant a shared
+cause (a fleet policy covering several aircraft); LV-68 found that false
+against production data and removed the bulk resolve, but the row itself kept
+making the claim -- and a grouped row had no button in its Actions column
+while its members got a text link instead, so the same action sat in two
+different places depending on whether a neighbouring record shared a date.
+
+LV-69b: the workboard actions ("Create task"/"View task") were removed when
+that module left the menu -- they pushed work somewhere nobody navigates to.
+The list is self-contained: Resolve and Undo.{% endcomment %}{% for object in objects %}<tr>
   <td><span class="badge bg-secondary-subtle text-secondary-emphasis">{{ object.entity_label }}</span></td>
-  {% if row.is_group %}
-  {% comment %}R6.3 groups same-rule, same-date alerts into one row to cut noise
-  on a long list. LV-68 (2026-08-11, from real production data): the row must
-  NOT offer a single "resolve all with one shared reason". Two aircraft can
-  share an expiry date without sharing a cause -- their insurance policies are
-  separate -- and signing one root cause for two independent facts is false
-  evidence, the opposite of what ISO 10.2 asks for. So the grouping stays
-  visual (rule and date shown once) and every action stays per alert.{% endcomment %}
-  {% comment %}LV-69b: las acciones hacia el tablero ("Crear tarea"/"Ver tarea")
-  se quitaron cuando se ocultó el módulo -- mandaban trabajo a un lugar que ya
-  no está en el menú. La lista quedó autocontenida: Resolver y Deshacer.{% endcomment %}
-  <td><ul class="list-unstyled mb-0">{% for member in row.alerts %}<li class="mb-1"><strong>{{ member.content_object|default:_("Record unavailable") }}</strong>
-    <a class="btn btn-sm btn-link p-0 align-baseline text-success" href="{% url 'alert-resolve' member.pk %}" hx-get="{% url 'alert-resolve' member.pk %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" title="{% translate 'Resolve, with a reason on record (ISO 10.2)' %}">{% translate "Resolve" %}</a>
-  </li>{% endfor %}</ul></td>
-  <td>{{ object.alert_rule.name }}</td>
-  <td><span class="text-nowrap">{{ object.triggered_at|date:'Y-m-d' }}</span></td>
-  <td>{% if object.is_overdue %}<span class="badge bg-danger">{% translate "Overdue" %} · {{ object.watched_date|date:'Y-m-d' }}</span>{% else %}<span class="badge bg-warning text-dark">{% translate "Due" %} {{ object.watched_date|date:'Y-m-d' }}</span>{% endif %}</td>
-  <td class="text-end"><span class="text-muted small">{% blocktranslate count counter=row.alerts|length %}{{ counter }} alert{% plural %}{{ counter }} alerts{% endblocktranslate %}</span></td>
-  {% else %}
   <td><strong>{{ object.content_object|default:_("Record unavailable") }}</strong></td>
   <td>{{ object.alert_rule.name }}</td>
   <td><span class="text-nowrap">{{ object.triggered_at|date:'Y-m-d' }}</span></td>
@@ -30,12 +23,15 @@
   resolved row keeps the height of the rest instead of collapsing.{% endcomment %}
   <td class="text-end">
     <div class="alert-actions">
-    {% if object.is_resolved %}<span class="badge bg-success" {% if object.resolution_reason %}title="{{ object.resolution_reason }}"{% endif %}>{% translate "Resolved" %}</span>
+    {% if object.is_resolved %}<span class="badge bg-success">{% translate "Resolved" %}</span>
       <form method="post" action="{% url 'alert-reopen' object.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary text-nowrap" title="{% translate 'Reopen this alert and send its task back' %}">{% translate "Undo" %}</button></form>
     {% else %}
       <a class="btn btn-sm btn-outline-success text-nowrap" href="{% url 'alert-resolve' object.pk %}" hx-get="{% url 'alert-resolve' object.pk %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" title="{% translate 'Resolve, with a reason on record (ISO 10.2)' %}">{% translate "Resolve" %}</a>
     {% endif %}
     </div>
+    {% comment %}The reason used to live only in a `title` tooltip, which is
+    invisible on touch and unreadable at a glance -- so the ISO 10.2 evidence
+    the resolve modal insists on collecting was, in practice, write-only.{% endcomment %}
+    {% if object.is_resolved and object.resolution_reason %}<div class="small text-muted mt-1 alert-reason">{{ object.resolution_reason }}</div>{% endif %}
   </td>
-  {% endif %}
-</tr>{% endwith %}{% empty %}<tr><td colspan="99" class="text-center text-muted py-4">{% translate "No alerts found." %}</td></tr>{% endfor %}</tbody></table></div>{% render_pagination page_obj %}</div>{% endblock %}
+</tr>{% empty %}<tr><td colspan="99" class="text-center text-muted py-4">{% translate "No alerts found." %}</td></tr>{% endfor %}</tbody></table></div>{% render_pagination page_obj %}</div>{% endblock %}

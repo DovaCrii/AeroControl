@@ -338,9 +338,8 @@ class TestResolveRequiresAReason:
 
 @pytest.fixture
 def two_qualifications():
-    """Two operators whose habilitación expires on the same date -- the
-    shape R6.3 groups (same rule, same watched date, different aircraft or
-    operator)."""
+    """Two operators whose habilitación expires on the same date -- the shape
+    R6.3 used to fold into one row and LV-75 keeps as two."""
     cost_center = CostCenter.objects.create(code="OPS", name="Operations")
     qualification_type = QualificationType.objects.create(
         code="dgac-credential", name="Credencial DGAC"
@@ -367,18 +366,16 @@ def two_qualifications():
     return qual_a, qual_b
 
 
-class TestGroupedAlerts:
-    """R6.3: two records due under the same rule on the same date show as
-    one row instead of one per record."""
+class TestAlertRows:
+    """LV-75: one alert, one row -- a shared expiry date never folds two
+    findings together."""
 
     @pytest.mark.django_db
-    def test_grouping_is_visual_only_and_every_action_stays_per_alert(
-        self, two_qualifications
-    ):
-        """LV-68: the row groups to cut noise, but must NOT offer to resolve the
-        whole group with one shared reason. Two records can share an expiry date
-        without sharing a cause, and one root cause signed across independent
-        findings is false evidence (ISO 10.2)."""
+    def test_same_date_alerts_stay_on_separate_rows(self, two_qualifications):
+        """R6.3 grouped these on the premise that a shared date meant a shared
+        cause. LV-68 found that false against production data (two aircraft,
+        two separate insurance policies, one coincident date) and dropped the
+        shared-reason resolve; LV-75 drops the row that still implied it."""
         qual_a, qual_b = two_qualifications
         rule = AlertRule.objects.create(
             name="Vencimiento de habilitaciones",
@@ -404,10 +401,12 @@ class TestGroupedAlerts:
         response = client.get(reverse("alert-list"))
         content = response.content.decode()
 
-        # Both members grouped into one row: the rule name appears once, not
-        # once per alert.
-        assert content.count("Vencimiento de habilitaciones") == 1
-        # ...and each one keeps its own resolve.
+        # One row each: the rule name is printed once per alert, not once for
+        # the pair.
+        assert content.count("Vencimiento de habilitaciones") == 2
+        # Both entities are named -- neither is hidden inside another's row.
+        assert "Pilot One" in content
+        assert "Pilot Two" in content
         for alert in (alert_a, alert_b):
             assert reverse("alert-resolve", args=[alert.pk]) in content
 
@@ -449,6 +448,69 @@ class TestGroupedAlerts:
 
         with pytest.raises(NoReverseMatch):
             reverse("alert-resolve-group", args=["whatever"])
+
+    @pytest.mark.django_db
+    def test_the_entity_type_filter_is_reachable_from_the_page(
+        self, two_qualifications
+    ):
+        """LV-76: get_queryset() has always honoured ?entity_type and the
+        context has always carried the list, but no template rendered the
+        picker -- a working filter nobody could reach. The options carry the
+        model's verbose_name, not the raw slug."""
+        qual_a, _qual_b = two_qualifications
+        rule = AlertRule.objects.create(
+            name="Vencimiento de habilitaciones",
+            entity_type="qualification",
+            field_to_watch="expiry_date",
+        )
+        Alert.objects.create(
+            alert_rule=rule,
+            content_type=ContentType.objects.get_for_model(Qualification),
+            object_id=qual_a.pk,
+            message="Expiring soon",
+        )
+        User.objects.create_superuser("admin", "a@test.com", "password")
+        client = Client()
+        assert client.login(username="admin", password="password")
+
+        content = client.get(reverse("alert-list")).content.decode()
+
+        assert 'name="entity_type"' in content
+        assert '<option value="qualification"' in content
+        # And it actually narrows the list.
+        filtered = client.get(
+            reverse("alert-list"), {"entity_type": "flightpermission"}
+        )
+        assert "Pilot One" not in filtered.content.decode()
+
+    @pytest.mark.django_db
+    def test_the_resolution_reason_is_visible_not_only_a_tooltip(
+        self, two_qualifications
+    ):
+        """LV-75: the reason lived only in a `title` attribute, invisible on
+        touch and at a glance -- so the ISO 10.2 evidence the resolve modal
+        insists on collecting was effectively write-only."""
+        qual_a, _qual_b = two_qualifications
+        rule = AlertRule.objects.create(
+            name="Vencimiento de habilitaciones",
+            entity_type="qualification",
+            field_to_watch="expiry_date",
+        )
+        alert = Alert.objects.create(
+            alert_rule=rule,
+            content_type=ContentType.objects.get_for_model(Qualification),
+            object_id=qual_a.pk,
+            message="Expiring soon",
+        )
+        alert.resolve(reason="Credencial renovada ante la DGAC")
+        User.objects.create_superuser("admin", "a@test.com", "password")
+        client = Client()
+        assert client.login(username="admin", password="password")
+
+        content = client.get(reverse("alert-list")).content.decode()
+
+        assert 'class="small text-muted mt-1 alert-reason"' in content
+        assert "Credencial renovada ante la DGAC" in content
 
     @pytest.mark.django_db
     def test_different_dates_never_group(self, two_qualifications):

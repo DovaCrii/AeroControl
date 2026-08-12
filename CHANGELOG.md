@@ -8,6 +8,37 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Added
+
+- **Ubicación estructurada en el permiso de vuelo (`OPS-4`, diferido en su
+  momento).** Región, comuna y nombre del área, más un par de coordenadas
+  opcional con radio y altitud máxima. **Complementa** el campo de texto libre,
+  que conserva la redacción exacta de la autorización DGAC; todo opcional, así
+  que un permiso antiguo cuyo papel sólo decía "Chuquicamata" no queda
+  retroactivamente incompleto. Un punto a medio ingresar (latitud sin longitud)
+  se rechaza: no se puede dibujar en un mapa y fallaría en silencio.
+- **Filtro por tipo de entidad en la lista de alertas (`LV-76`).** La vista ya
+  filtraba por tipo, pero no había forma de usarlo desde la pantalla.
+- **Exportación CSV donde faltaba.** Log de auditoría, usuarios y roles, planes
+  geoespaciales, documentos de la empresa y registros operacionales. El log de
+  movimientos exporta la **etiqueta** del recurso, no el UUID crudo.
+
+### Changed
+
+- **Una alerta, una fila (`LV-75`).** Se eliminó el agrupado por regla + fecha:
+  su premisa ("misma fecha ⇒ misma causa") ya se había mostrado falsa contra
+  datos reales, y la fila agrupada seguía afirmándola además de dejar su columna
+  de acciones sin botón. El **motivo de cierre ahora se lee en la lista** en vez
+  de vivir escondido en un tooltip.
+
+### Fixed
+
+- **18 etiquetas de formulario que se veían en inglés** dentro de la interfaz en
+  español (alertas, reglas de alerta, tipos de documento, historial de
+  mantención y los cuatro formularios del tablero). Se agregó además el test que
+  las caza: una etiqueta derivada por Django no es un literal del código, así
+  que nada la comparaba contra el catálogo.
+
 ## [0.5.0-beta] - 2026-08-11
 
 Trabajo acumulado desde `v0.4.0-beta` (2026-08-04), desplegado y verificado en
