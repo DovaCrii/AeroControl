@@ -22,6 +22,13 @@ class FlightPermissionForm(AeroModelForm):
             "valid_from",
             "valid_until",
             "location",
+            "region",
+            "commune",
+            "area_name",
+            "latitude",
+            "longitude",
+            "radius_km",
+            "max_altitude_ft",
             "area_type",
         ]
         # LV-22: without explicit labels the auto-generated English ones ("Permission
@@ -38,12 +45,25 @@ class FlightPermissionForm(AeroModelForm):
             "valid_from": _("Valid from"),
             "valid_until": _("Valid until"),
             "location": _("Location"),
+            "region": _("Region"),
+            "commune": _("Commune"),
+            "area_name": _("Area or site name"),
+            "latitude": _("Latitude"),
+            "longitude": _("Longitude"),
+            "radius_km": _("Radius (km)"),
+            "max_altitude_ft": _("Maximum altitude (ft)"),
             "area_type": _("Area type"),
         }
         help_texts = {
             "permission_number": _("Optional until the permission is approved."),
             "area_type": _("DAN 151 (populated) vs. DAN 91 (unpopulated)."),
             "purpose_detail": _("Required when purpose is 'Other'."),
+            "region": _(
+                "Structured location, in addition to the free-text location "
+                "above -- optional."
+            ),
+            "latitude": _("Decimal degrees. Enter together with longitude."),
+            "longitude": _("Decimal degrees. Enter together with latitude."),
         }
         widgets = {
             # A roster of several, not one pick from a dropdown (OPS-4).
