@@ -17,6 +17,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   que un permiso antiguo cuyo papel sólo decía "Chuquicamata" no queda
   retroactivamente incompleto. Un punto a medio ingresar (latitud sin longitud)
   se rechaza: no se puede dibujar en un mapa y fallaría en silencio.
+- **La unión con AeroLink funciona de punta a punta (`X.4d`).** El endpoint que
+  faltaba está implementado en el repo de AeroLink (pendiente de PR) y verificado:
+  AeroControl sincroniza las baterías **contra el servicio real**, enlazándolas a
+  su aeronave por número de serie.
 - **Sincronización del inventario de baterías desde AeroLink (`X.4b`).** El
   comando `sync_batteries` llena la tabla de baterías (ciclos, salud, firmware)
   que hasta ahora estaba vacía a propósito, enlazando cada una a su aeronave por
@@ -82,6 +86,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **Los números de serie se normalizan a mayúsculas (`X.4c`).** El contrato con
+  AeroLink lo exigía desde el principio y sólo se aplicaba la parte de los
+  espacios. Sin esto, una batería no habría encontrado su aeronave —y una
+  cargada a mano se habría duplicado— **sin ningún error visible**.
 - **Subir la autorización DGAC ya no obliga a repetir las fechas del permiso
   (`LV-79`).** El formulario las propone desde el registro enlazado —permiso de
   vuelo y habilitación— y avisa de dónde salieron, para corregirlas si el

@@ -144,13 +144,27 @@ registro de topología y seriales, `AL-304` un dashboard de inventario, pero
 ninguno publica una API para un consumidor externo. Es un ítem nuevo para su
 plan, y es chico al lado de M2/M3: los datos ya los tienen modelados.
 
-**Y sí hacía falta un plan de integración, no por formalidad**: el `AGENTS.md`
-de AeroLink dice que la integración *"está fuera de alcance hasta crear un plan
-separado"*, y su `ADR-0001` dice que ese plan vive en este repo. Escrito el
-2026-08-12 en
+**El plan de integración era una precondición, no una formalidad**: el
+`AGENTS.md` de AeroLink dejaba la integración *"fuera de alcance hasta crear un
+plan separado"*, y su `ADR-0001` dice que ese plan vive en este repo. Escrito y
+aprobado el 2026-08-12:
 [docs/dev/plan-integracion-aerolink.md](docs/dev/plan-integracion-aerolink.md).
-**Está pendiente de tu aprobación**; mientras no se apruebe, cualquier trabajo de
-integración del lado de AeroLink viola su propia guía.
+
+**Con eso, el endpoint se implementó** (`X.4d`) en la rama
+`codex/api-inventario-dispositivos` de AeroLink, **pendiente de PR** — su `main`
+está protegido y exige uno. Verificado de punta a punta: AeroControl sincroniza
+baterías contra el endpoint real y las enlaza por serial.
+
+**Antes del primer sync contra datos reales**, correr en `p340`:
+
+```bash
+uv run python manage.py audit_serial_case
+```
+
+`X.4c` alineó la normalización de seriales con el ADR (mayúsculas), pero cambiar
+el guardado **no reescribe filas ya almacenadas**. La migración `registry/0032`
+las normaliza y **aborta si dos sólo difieren en mayúsculas** — eso lo resuelve
+el certificado RPAS de la DGAC, no una migración.
 
 ## Despliegue pendiente del 2026-08-12 — secuencia lista
 
@@ -228,6 +242,7 @@ Lo esencial y los dos errores que costaron tiempo el 2026-08-11:
 | Cómo se resuelve una alerta (operación) | `docs/compliance-setup.md` |
 | Diseño de las cláusulas ISO abiertas | `docs/dev/iso-r7-design-plan.md` |
 | Contrato con AeroLink | `docs/dev/adr-0002-coexistencia-aerolink.md` |
+| Plan de integración con AeroLink | `docs/dev/plan-integracion-aerolink.md` |
 | Runbook de la VM | `docs/dev/ubuntu-vm-deploy.md` |
 | Trabajos programados | `docs/scheduled-operations.md` |
 | Qué cambió y cuándo | `CHANGELOG.md`, `git log` |
