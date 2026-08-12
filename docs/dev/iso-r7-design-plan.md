@@ -335,7 +335,11 @@ resto.
    límite.
 4. **Los dos KPI ya disponibles** (disponibilidad de equipos, cumplimiento de
    plazos), una vez que exista el *snapshot*.
-5. **`NonConformity`** (R7.6) — modelo nuevo, pero de forma clara.
+5. ~~**`NonConformity`** (R7.6)~~ — **✅ HECHO 2026-08-12.** Modelo + migración
+   `compliance/0017` + CRUD + el disparador desde el entregable rechazado. El
+   patrón de eficacia se extrajo a `EffectivenessVerificationMixin`, compartido
+   con `Alert` como sugería este documento, **sin migración** sobre `Alert`.
+   17 tests.
 6. ~~**`Deliverable`** (R7.4)~~ — **✅ HECHO 2026-08-12.** Resultó **no estar
    bloqueado**: los umbrales viven en el contrato, así que la estructura se
    construye sin conocerlos y el *gate* se activa por contrato al cargarlos.

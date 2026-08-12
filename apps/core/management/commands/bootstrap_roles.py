@@ -28,6 +28,10 @@ ROLE_PERMISSIONS = {
         # releasing it belongs to Compliance, so no `change` here.
         "add_deliverable",
         "view_deliverable",
+        # R7.6: Operations reports what happened in the field (an incident, a
+        # reflight); the analysis and the closure are Compliance's.
+        "add_nonconformity",
+        "view_nonconformity",
         # Per-resource assignments (OPS-1). The movement log is append-only, so
         # only view is ever granted for it.
         "add_operatorassignment",
@@ -71,6 +75,11 @@ ROLE_PERMISSIONS = {
         "add_deliverable",
         "change_deliverable",
         "view_deliverable",
+        # R7.6: corrective action with root cause on record is Compliance's
+        # own ground (ISO 10.2), same as resolving an alert with a reason.
+        "add_nonconformity",
+        "change_nonconformity",
+        "view_nonconformity",
     },
     "Maintenance": {
         "add_maintenancerecord",

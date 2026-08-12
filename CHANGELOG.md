@@ -17,6 +17,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   que un permiso antiguo cuyo papel sólo decía "Chuquicamata" no queda
   retroactivamente incompleto. Un punto a medio ingresar (latitud sin longitud)
   se rechaza: no se puede dibujar en un mapa y fallaría en silencio.
+- **No conformidades (`R7.6b`, ISO 10.2).** Registro de re-vuelos, entregables
+  rechazados, incidentes y hallazgos de auditoría, con causa raíz, acción
+  correctiva y verificación de eficacia a los 30 días. **Cerrar exige la causa y
+  la acción**; y **rechazar un entregable abre la no conformidad solo**, que era
+  el disparador que faltaba. Incluye el reporte a la DGAC (fecha y folio) para
+  los eventos que exigen notificar a la autoridad.
 - **Control de calidad del entregable (`R7.4`, ISO 9001 8.5.1/8.6).** Registro de
   GSD y RMSE logrados **contra los requeridos por el contrato**, con validación
   interna firmada antes de liberar. Liberar por debajo del criterio acordado
