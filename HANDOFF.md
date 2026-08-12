@@ -11,7 +11,7 @@
 
 - **Versión:** `v0.5.0-beta` (etiquetada). `main` = `origin/main` (pusheado
   2026-08-12).
-- **Gate:** `pwsh scripts/verify.ps1` verde (1074 tests, ruff, bandit, pip-audit).
+- **Gate:** `pwsh scripts/verify.ps1` verde (1095 tests, ruff, bandit, pip-audit).
 - **Sin desplegar en `p340`:** lo de 2026-08-12 trae **6 migraciones**, todas
   aditivas y sin dato obligatorio: `operations.0016` (ubicación estructurada),
   `compliance.0015` (verificación de eficacia), `geo.0004` (revisión
@@ -79,8 +79,13 @@ producción.
 | Revisión meteorológica como evidencia (R8.2) | ✅ Hecho |
 | Los **5** KPI operacionales (R7.7a + R7.7b) | ✅ Hecho — completos. **Sólo la meta de flota (90%) está acordada**; los otros 4 muestran su valor sin marcar incumplimiento |
 | Límite de jornada de vuelo (R7.5a) | ✅ Hecho — 8 horas |
-| LV-72 (trazabilidad estilo SIGO) | ✅ Hecho — en la ficha del permiso. **Extensible** a la ficha de aeronave y al plan geoespacial con el mismo patrón |
-| Decidir si el tablero Kanban se elimina | ⬜ **Lo único que queda de la Sesión B, y requiere decisión tuya** |
+| LV-72 (trazabilidad estilo SIGO) | ✅ Hecho — permiso **y** plan geoespacial. La ficha de aeronave se dejó fuera a propósito (su estado no es una progresión) |
+| Decidir si el tablero Kanban se elimina | ✅ **Decidido: se da de baja** (usuario, 2026-08-12). Queda la limpieza, ver `LV-78` |
+
+**Con esto la Sesión B está cerrada.** Lo que queda del tablero es limpieza con
+migración (`LV-78`), y **no urge**: ya está fuera del menú y sin botones, así que
+nadie lo alcanza. Lo que hay que decidir antes de borrar es el alcance — sobre
+todo si la migración puede borrar el registro de qué tarjeta cerró qué alerta.
 
 **Lo único que le falta a la cláusula 9.1.1 son las metas restantes** (precisión
 de levantamientos, tasa de re-vuelos, cumplimiento de plazos). Son decisiones de
@@ -112,9 +117,21 @@ verificación de eficacia **30 días** (ya implementado como
 `Alert.EFFECTIVENESS_DAYS`), meta de disponibilidad de flota **90%**, límite de
 jornada de vuelo **8 horas** (R7.5, aún sin implementar).
 
-Sigue sin respuesta lo que bloquea la **Sesión C**: los umbrales RMSE/GSD del
-contrato (R7.4), de los que dependen `Deliverable`, dos KPI y el disparador
-principal de las no conformidades.
+### AeroLink (Sesión D): verificado el 2026-08-12, **X.4 todavía no se puede**
+
+No por falta de trabajo de este lado. Leyendo el repo (`D:\I+D\AeroLink`,
+`main` sin divergencia, `d05abe1`): está en **M0**, las sesiones de vuelo son
+**M3**, el modelo `FlightSession` existe pero **ningún endpoint lo expone**, y
+su propio README dice que no se integra con AeroControl todavía. Su bloqueo es
+de red: Tailscale Funnel sirve HTTPS pero no MQTTS.
+
+Construir el receptor ahora sería inventar el contrato de un productor que aún
+no decidió. Lo que **sí** se hizo: registrar en
+[adr-0002](docs/dev/adr-0002-coexistencia-aerolink.md) los **tres huecos del
+contrato** que ya se ven en su modelo real — la sesión no lleva el serial (lleva
+un UUID interno no resoluble desde acá), **no hay llave de cruce para el
+piloto**, y "sesión cerrada" no está definida. Conviene cerrarlos con ellos
+*antes* de que construyan el endpoint, no después.
 
 ## Cómo desplegar
 

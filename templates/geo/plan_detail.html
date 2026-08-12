@@ -160,6 +160,12 @@ the provider did not answer -- a forecast is context, never a blocker.{% endcomm
         </table>
       </div>
     </div>
+
+    {% comment %}LV-72: the same traceability block the flight permit carries.
+    A geo plan is a request that advances through review too, so it earns the
+    stepper; an aircraft does not (its status goes back and forth between
+    active and maintenance, which is not a progression).{% endcomment %}
+    {% include "generic/_traceability.html" with record=plan %}
   </div>
 
   <div class="col-lg-5">

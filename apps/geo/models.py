@@ -14,10 +14,10 @@ from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
-from apps.core.models import BaseModel
+from apps.core.models import BaseModel, StatusFlowMixin
 
 
-class GeoPlan(BaseModel):
+class GeoPlan(StatusFlowMixin, BaseModel):
     """A geospatial flight-planning document anchored to a cost center.
 
     Anchored to `cost_center` (the real scoping unit in this project) with an
@@ -26,13 +26,22 @@ class GeoPlan(BaseModel):
     never mutated; edits produce new GeoPlanVersion rows.
     """
 
+    STATUS_DRAFT = "draft"
+    STATUS_EDITING = "editing"
+    STATUS_IN_REVIEW = "in_review"
+    STATUS_APPROVED = "approved"
+    STATUS_REJECTED = "rejected"
     STATUS_CHOICES = [
-        ("draft", _("Draft")),
-        ("editing", _("Editing")),
-        ("in_review", _("In review")),
-        ("approved", _("Approved")),
-        ("rejected", _("Rejected")),
+        (STATUS_DRAFT, _("Draft")),
+        (STATUS_EDITING, _("Editing")),
+        (STATUS_IN_REVIEW, _("In review")),
+        (STATUS_APPROVED, _("Approved")),
+        (STATUS_REJECTED, _("Rejected")),
     ]
+    # LV-72: read by StatusFlowMixin.status_steps(). `rejected` is the stop,
+    # not a step -- a rejected plan returns to editing, it does not carry on.
+    STATUS_FLOW = [STATUS_DRAFT, STATUS_EDITING, STATUS_IN_REVIEW, STATUS_APPROVED]
+    STATUS_BLOCKED = STATUS_REJECTED
     # Content can only change while the plan is in one of these states; the
     # commit API is the authoritative enforcement (see GEO-6).
     EDITABLE_STATUSES = frozenset({"draft", "editing"})

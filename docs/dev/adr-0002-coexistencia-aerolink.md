@@ -129,6 +129,44 @@ datos.
   concilia con `FlightRecord`. Es el punto donde el proyecto paga: las horas de vuelo y
   los ciclos de batería dejan de depender de la planilla del operador.
 
+  **Estado real de AeroLink, verificado el 2026-08-12** leyendo el repo
+  (`D:\I+D\AeroLink`, `main` sin divergencia con `origin/main`, commit `d05abe1`):
+
+  - Está en **M0** (descubrimiento y viabilidad). Las sesiones de vuelo son
+    **M3** (`AL-301`…`AL-306`); faltan M1 (plataforma) y M2 (DJI Pilot 2)
+    completos. Su propio README lo dice: *"no se integra con AeroControl
+    todavía"*.
+  - El modelo `FlightSession` **ya existe** (`src/aerolink/models.py`), pero
+    **no hay endpoint que lo exponga**: `main.py` sólo publica `/health`,
+    `/ready`, `/metrics`, `/pilot2/diagnostic` y `/api/v1`.
+  - Bloqueo declarado por ellos: `p340` se expone por Tailscale Funnel, que
+    sirve HTTPS pero **no MQTTS (8883)**; sin resolverlo, M1 no avanza.
+
+  **Conclusión: `X.4` no se puede implementar todavía**, y no por falta de
+  trabajo de este lado — no existe aún de dónde leer. Construir el receptor
+  ahora significaría inventar el contrato de un productor que todavía no tomó
+  sus decisiones, que es exactamente lo que este ADR evitó para la Fase 1.
+
+  **Tres huecos del contrato que se ven ya en el modelo real**, y que conviene
+  cerrar *antes* de que AeroLink construya el endpoint:
+
+  1. **La sesión no lleva el serial**, lleva `aircraft_device_id` (FK interna a
+     `Device`). La llave de cruce acordada es el **serial** (§2), así que el
+     endpoint debe exponer el serial del dispositivo, no su UUID interno: un
+     UUID de AeroLink no es resoluble desde AeroControl.
+  2. **No hay llave de cruce para el piloto.** La sesión trae `pilot_subject`
+     (identidad Entra); AeroControl identifica al operador por `employee_id`.
+     §2 resolvió la llave de la aeronave y **dejó ésta sin definir**. Sin ella,
+     una sesión se puede atribuir a una aeronave pero no a quién la voló.
+  3. **"Sesión cerrada" no está definida.** `FlightSession.status` es texto
+     libre con default `"detected"`; el contrato dice "sesiones cerradas" sin
+     decir qué valor lo significa. Hay que fijar el vocabulario, del mismo modo
+     que `R3.1` cerró el de `purpose`.
+
+  Además, `summary_json` no está tipado: si de ahí salen las horas de vuelo y
+  los ciclos de batería, esas claves son parte del contrato y no un detalle de
+  implementación del otro lado.
+
 La conciliación **no** es sustitución: un `FlightRecord` tiene datos que DJI no conoce
 (el permiso de vuelo bajo el que se voló, el propósito). La sesión de AeroLink aporta la
 medición; AeroControl aporta el encuadre normativo.

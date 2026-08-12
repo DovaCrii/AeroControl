@@ -16,6 +16,69 @@ class BaseModel(models.Model):
         abstract = True
 
 
+class StatusFlowMixin(models.Model):
+    """LV-72: a record's progress as a stepper, SIGO-style.
+
+    Extracted when GeoPlan became the second user of what FlightPermission
+    introduced -- the repo extracts on the second use, not in anticipation.
+    Adds no fields, so adopting it costs no migration.
+
+    A model opts in by declaring, next to its own `STATUS_CHOICES`:
+
+    - `STATUS_FLOW`: the codes in the order they advance. **Never spelled out
+      in a template** -- a hand-written list drifting from the real choices is
+      the R1.1 defect exactly.
+    - `STATUS_BLOCKED`: optional, the terminal status that is not a step on the
+      way anywhere but where the flow stops (denied, rejected).
+
+    Only applies to records that really do advance through a sequence. An
+    aircraft moves between active and maintenance and back; drawing that as a
+    stepper would claim a progression that does not exist.
+    """
+
+    STATUS_FLOW = []
+    STATUS_BLOCKED = None
+
+    class Meta:
+        abstract = True
+
+    def status_steps(self):
+        """[{code, label, state}], state in done/current/pending/blocked."""
+        labels = dict(self.STATUS_CHOICES)
+        if self.STATUS_BLOCKED and self.status == self.STATUS_BLOCKED:
+            # Not the full flow greyed out: that would imply the remaining
+            # steps are still ahead of a record that is not going anywhere.
+            # Show how far it got and where it stopped.
+            return [
+                {
+                    "code": self.STATUS_FLOW[0],
+                    "label": labels[self.STATUS_FLOW[0]],
+                    "state": "done",
+                },
+                {
+                    "code": self.STATUS_BLOCKED,
+                    "label": labels[self.STATUS_BLOCKED],
+                    "state": "blocked",
+                },
+            ]
+
+        reached = (
+            self.STATUS_FLOW.index(self.status)
+            if self.status in self.STATUS_FLOW
+            else -1
+        )
+        steps = []
+        for index, code in enumerate(self.STATUS_FLOW):
+            if index < reached:
+                state = "done"
+            elif index == reached:
+                state = "current"
+            else:
+                state = "pending"
+            steps.append({"code": code, "label": labels[code], "state": state})
+        return steps
+
+
 class BackupConfig(BaseModel):
     backup_enabled = models.BooleanField(default=True)
     backup_path = models.CharField(max_length=500)
