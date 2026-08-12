@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Prefetch, Q
 from django.db.models.functions import Length
-from django.http import HttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -10,6 +10,8 @@ from django.utils.translation import gettext as _
 from django.utils import timezone
 from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, FormView
+import csv
+from apps.core.exports import neutralize
 from apps.core.views import (
     CsvExportMixin,
     HtmxFormMixin,
@@ -17,6 +19,7 @@ from apps.core.views import (
     ModelViewPermissionRequiredMixin,
     SearchMixin,
     TenantScopedQuerysetMixin,
+    _CsvEchoBuffer,
 )
 from .models import (
     CostCenter,
@@ -918,6 +921,51 @@ class ResourceMovementLogList(
         context["selected_kind"] = self.request.GET.get("resource_kind", "")
         context["objects"] = label_movements(context["objects"])
         return context
+
+    def render_csv_response(self, queryset):
+        # resource_id is a bare UUID that resolves to an Operator or Aircraft
+        # depending on resource_kind -- CsvExportMixin's default export only
+        # knows real model fields, so this hand-builds rows with the
+        # label_movements()-resolved resource_label in place of the UUID,
+        # the same way TaskReportCsvView hand-builds rows for computed
+        # columns instead of using the generic field list.
+        from .selectors import label_movements
+
+        entries = label_movements(queryset)
+
+        def rows():
+            yield "\ufeff"
+            buffer = _CsvEchoBuffer()
+            writer = csv.writer(buffer, lineterminator="\r\n")
+            yield writer.writerow(
+                [
+                    _("Resource kind"),
+                    _("Resource"),
+                    _("Movement"),
+                    _("From"),
+                    _("To"),
+                    _("Changed by"),
+                    _("Created"),
+                ]
+            )
+            for entry in entries:
+                yield writer.writerow(
+                    [
+                        neutralize(entry.get_resource_kind_display()),
+                        neutralize(entry.resource_label),
+                        neutralize(entry.get_movement_display()),
+                        neutralize(entry.from_cost_center),
+                        neutralize(entry.to_cost_center),
+                        neutralize(entry.changed_by_user),
+                        neutralize(entry.created_at),
+                    ]
+                )
+
+        response = StreamingHttpResponse(rows(), content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = (
+            f'attachment; filename="{self.get_csv_filename()}"'
+        )
+        return response
 
 
 (

@@ -197,7 +197,9 @@ class CompanyDocumentsView(CsvExportMixin, ModelViewPermissionRequiredMixin, Lis
         return context
 
 
-class OperationalRecordsView(ModelViewPermissionRequiredMixin, ListView):
+class OperationalRecordsView(
+    CsvExportMixin, ModelViewPermissionRequiredMixin, ListView
+):
     """LV-30: the per-flight operational records (flight logs, checklists,
     inspections) filed against each cost center, month by month.
 

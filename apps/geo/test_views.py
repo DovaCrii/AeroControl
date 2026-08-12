@@ -344,6 +344,15 @@ class TestListAndDetail:
         assert _client("view_geoplan").get(reverse("geo-plan-list")).status_code == 200
 
     @pytest.mark.django_db
+    def test_list_export_csv(self, db):
+        plan = self._plan(db)
+        response = _client("view_geoplan").get(
+            reverse("geo-plan-list"), {"export": "csv"}
+        )
+        body = b"".join(response.streaming_content).decode("utf-8-sig")
+        assert plan.title in body
+
+    @pytest.mark.django_db
     def test_detail_requires_view_permission(self, db):
         plan = self._plan(db)
         url = reverse("geo-plan-detail", args=[plan.pk])
