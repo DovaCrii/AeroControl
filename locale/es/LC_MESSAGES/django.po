@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-12 12:53-0400\n"
+"POT-Creation-Date: 2026-08-12 13:46-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -38,7 +38,7 @@ msgstr "Habilitación"
 #: .\templates\compliance\operational_records.html:22
 #: .\templates\compliance\operational_records.html:49
 #: .\templates\compliance\report.html:22
-#: .\templates\compliance\report.html:132 .\templates\geo\plan_list.html:19
+#: .\templates\compliance\report.html:136 .\templates\geo\plan_list.html:19
 #: .\templates\operations\permission_detail.html:55
 #: .\templates\registry\aircraft_list.html:25
 #: .\templates\registry\aircraftassignment_list.html:6
@@ -339,25 +339,58 @@ msgstr "Motivo / causa raíz"
 msgid "Why this happened and how it was addressed."
 msgstr "Por qué ocurrió y cómo se solucionó."
 
-#: .\apps\compliance\kpis.py:116
+#: .\apps\compliance\kpis.py:224
 msgid "Fleet availability"
 msgstr "Disponibilidad de flota"
 
-#: .\apps\compliance\kpis.py:117
+#: .\apps\compliance\kpis.py:225
 msgid "Aircraft flyable now, excluding retired ones."
 msgstr "Aeronaves operativas ahora, sin contar las dadas de baja."
 
-#: .\apps\compliance\kpis.py:129
+#: .\apps\compliance\kpis.py:236
 msgid "On-time execution"
 msgstr "Cumplimiento de plazos"
 
-#: .\apps\compliance\kpis.py:131
+#: .\apps\compliance\kpis.py:238
 msgid ""
 "Approved permits whose validity ended in this period with at least one "
 "flight recorded."
 msgstr ""
 "Permisos aprobados cuya vigencia terminó en este período con al menos un "
 "vuelo registrado."
+
+#: .\apps\compliance\kpis.py:249
+msgid "Survey accuracy"
+msgstr "Precisión de los levantamientos"
+
+#: .\apps\compliance\kpis.py:251
+msgid ""
+"Deliverables validated in this period that met the contract's criteria, out "
+"of those that could be assessed."
+msgstr ""
+"Entregables validados en este período que cumplieron los criterios del "
+"contrato, sobre los que se pudieron evaluar."
+
+#: .\apps\compliance\kpis.py:262
+msgid "Reflight rate"
+msgstr "Tasa de re-vuelos"
+
+#: .\apps\compliance\kpis.py:263
+msgid "Reflights recorded in this period, out of flights flown."
+msgstr "Re-vuelos registrados en este período, sobre los vuelos realizados."
+
+#: .\apps\compliance\kpis.py:274
+msgid "Incident-free flight hours"
+msgstr "Horas de vuelo sin incidentes"
+
+#: .\apps\compliance\kpis.py:276
+#, python-format
+msgid "Flight time accumulated since the incident of %(date)s."
+msgstr "Tiempo de vuelo acumulado desde el incidente del %(date)s."
+
+#: .\apps\compliance\kpis.py:279
+msgid "Flight time accumulated with no incident on record."
+msgstr "Tiempo de vuelo acumulado sin ningún incidente registrado."
 
 #: .\apps\compliance\management\commands\check_alert_effectiveness.py:92
 #: .\templates\compliance\alert_list.html:20
@@ -593,7 +626,7 @@ msgstr "TOTAL"
 #: .\apps\compliance\report_views.py:478
 #: .\templates\compliance\email\executive_report.html:30
 #: .\templates\compliance\report.html:53
-#: .\templates\compliance\report.html:169
+#: .\templates\compliance\report.html:173
 msgid "Open alerts"
 msgstr "Alertas abiertas"
 
@@ -624,52 +657,55 @@ msgstr ""
 #: .\apps\compliance\report_views.py:292 .\apps\compliance\report_views.py:448
 #: .\templates\compliance\email\executive_report.html:49
 #: .\templates\compliance\email\executive_report.txt:13
-#: .\templates\compliance\report.html:120
+#: .\templates\compliance\report.html:124
 msgid "By cost center"
 msgstr "Por centro de costo"
 
 #: .\apps\compliance\report_views.py:303 .\apps\compliance\report_views.py:456
-#: .\templates\compliance\report.html:160
+#: .\templates\compliance\report.html:164
 msgid "Alert resolution in the period"
 msgstr "Resolución de alertas en el período"
 
 #: .\apps\compliance\report_views.py:306 .\apps\compliance\report_views.py:461
-#: .\templates\compliance\report.html:162
+#: .\templates\compliance\report.html:166
 #, python-format
 msgid "%(count)s alerts resolved, %(days)s days on average."
 msgstr "%(count)s alertas resueltas, %(days)s días en promedio."
 
 #: .\apps\compliance\report_views.py:313 .\apps\compliance\report_views.py:472
-#: .\templates\compliance\report.html:164
+#: .\templates\compliance\report.html:168
 msgid "No alerts were resolved in this period."
 msgstr "No se resolvieron alertas en este período."
 
 #: .\apps\compliance\report_views.py:326 .\apps\compliance\report_views.py:481
-#: .\templates\compliance\report.html:187
+#: .\templates\compliance\report.html:191
 msgid "No open alerts."
 msgstr "Sin alertas abiertas."
 
 #: .\apps\compliance\report_views.py:439
 #: .\templates\compliance\email\executive_report.html:35
 #: .\templates\compliance\email\executive_report.txt:10
-#: .\templates\compliance\report.html:82
+#: .\templates\compliance\report.html:86
 msgid "Compared with the previous period"
 msgstr "Comparado con el período anterior"
 
-#: .\apps\compliance\report_views.py:440 .\templates\compliance\report.html:97
+#: .\apps\compliance\report_views.py:440
+#: .\templates\compliance\report.html:101
 msgid "KPI"
 msgstr "KPI"
 
-#: .\apps\compliance\report_views.py:440 .\templates\compliance\report.html:98
+#: .\apps\compliance\report_views.py:440
+#: .\templates\compliance\report.html:102
 msgid "This period"
 msgstr "Este período"
 
-#: .\apps\compliance\report_views.py:440 .\templates\compliance\report.html:99
+#: .\apps\compliance\report_views.py:440
+#: .\templates\compliance\report.html:103
 msgid "Change"
 msgstr "Variación"
 
 #: .\apps\compliance\report_views.py:440
-#: .\templates\compliance\report.html:100
+#: .\templates\compliance\report.html:104
 msgid "Previous period"
 msgstr "Período anterior"
 
@@ -678,7 +714,7 @@ msgid "No comparison available."
 msgstr "No hay comparación disponible."
 
 #: .\apps\compliance\report_views.py:451
-#: .\templates\compliance\report.html:152
+#: .\templates\compliance\report.html:156
 msgid "No cost centers to report."
 msgstr "No hay centros de costo que informar."
 
@@ -2863,7 +2899,7 @@ msgstr "No se encontraron documentos."
 
 #: .\templates\compliance\_documents_section.html:10
 #: .\templates\compliance\document_list.html:7
-#: .\templates\compliance\report.html:133
+#: .\templates\compliance\report.html:137
 #: .\templates\operations\permission_detail.html:62
 #: .\templates\registry\costcenter_detail.html:24
 msgid "Documents"
@@ -2948,18 +2984,18 @@ msgstr "Filtrar"
 #: .\templates\compliance\document_detail.html:4
 #: .\templates\compliance\document_list.html:19
 #: .\templates\compliance\email\alert_effectiveness.txt:5
-#: .\templates\compliance\report.html:173
+#: .\templates\compliance\report.html:177
 msgid "Entity"
 msgstr "Entidad"
 
 #: .\templates\compliance\alert_list.html:7
 #: .\templates\compliance\email\alert_effectiveness.txt:5
-#: .\templates\compliance\report.html:174
+#: .\templates\compliance\report.html:178
 msgid "Rule"
 msgstr "Regla"
 
 #: .\templates\compliance\alert_list.html:7
-#: .\templates\compliance\report.html:175
+#: .\templates\compliance\report.html:179
 msgid "Triggered"
 msgstr "Activada"
 
@@ -3264,7 +3300,7 @@ msgstr "Documentos vigentes"
 #: .\templates\compliance\email\executive_report.html:20
 #: .\templates\compliance\email\executive_report.html:54
 #: .\templates\compliance\report.html:52
-#: .\templates\compliance\report.html:135
+#: .\templates\compliance\report.html:139
 #: .\templates\registry\_operator_rows.html:18
 #: .\templates\registry\_qualification_rows.html:20
 #: .\templates\registry\costcenter_detail.html:45
@@ -3282,7 +3318,7 @@ msgstr "ant."
 
 #: .\templates\compliance\email\executive_report.html:53
 #: .\templates\compliance\report.html:51
-#: .\templates\compliance\report.html:134
+#: .\templates\compliance\report.html:138
 msgid "Valid"
 msgstr "Vigentes"
 
@@ -3593,22 +3629,22 @@ msgstr "Valor"
 msgid "Target"
 msgstr "Meta"
 
-#: .\templates\compliance\report.html:74
+#: .\templates\compliance\report.html:78
 msgid "Met"
 msgstr "Cumple"
 
-#: .\templates\compliance\report.html:74
+#: .\templates\compliance\report.html:78
 msgid "Below target"
 msgstr "Bajo la meta"
 
-#: .\templates\compliance\report.html:89
+#: .\templates\compliance\report.html:93
 #, python-format
 msgid "Document counters compared against the stored snapshot of %(date)s."
 msgstr ""
 "Contadores documentales comparados contra el registro histórico del "
 "%(date)s."
 
-#: .\templates\compliance\report.html:91
+#: .\templates\compliance\report.html:95
 msgid ""
 "No history stored yet: the document counters are evaluated as of today on "
 "both sides, so they will read no change. Run snapshot_compliance daily to "
@@ -3618,7 +3654,7 @@ msgstr ""
 "hoy en ambos lados, así que van a marcar sin cambio. Programa "
 "snapshot_compliance a diario para obtener una tendencia real."
 
-#: .\templates\compliance\report.html:126
+#: .\templates\compliance\report.html:130
 msgid ""
 "Includes DGAC vigencias (operator credentials, aircraft insurance) alongside"
 " uploaded documents."
@@ -3626,11 +3662,11 @@ msgstr ""
 "Incluye vigencias DGAC (credenciales de operador, seguros de aeronave) junto"
 " con los documentos subidos."
 
-#: .\templates\compliance\report.html:176
+#: .\templates\compliance\report.html:180
 msgid "Age"
 msgstr "Antigüedad"
 
-#: .\templates\compliance\report.html:184
+#: .\templates\compliance\report.html:188
 #, python-format
 msgid "%(days)s day"
 msgid_plural "%(days)s days"
