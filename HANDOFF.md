@@ -9,12 +9,19 @@
 
 ## Estado al 2026-08-12
 
-- **Versión:** `v0.5.0-beta` (etiquetada y pusheada). **`main` local va adelante
-  de `origin/main`**: el rescate de las ramas `claude/*` y `LV-75` están
-  confirmados en local, **sin pushear**.
-- **Gate:** `pwsh scripts/verify.ps1` verde (972 tests, ruff, bandit, pip-audit).
-- **Sin desplegar en `p340`:** lo de 2026-08-12 incluye **una migración**
-  (`operations.0016`, aditiva y toda opcional).
+- **Versión:** `v0.5.0-beta` (etiquetada). `main` = `origin/main` (pusheado
+  2026-08-12).
+- **Gate:** `pwsh scripts/verify.ps1` verde (994 tests, ruff, bandit, pip-audit).
+- **Sin desplegar en `p340`:** lo de 2026-08-12 trae **3 migraciones**, todas
+  aditivas y sin dato obligatorio: `operations.0016` (ubicación estructurada),
+  `compliance.0015` (verificación de eficacia), `geo.0004` (revisión
+  meteorológica).
+- **Al desplegar hay dos pasos que no son `git pull` + restart:**
+  1. `manage.py bootstrap_roles` — hay permisos nuevos (`add/view_weatherreview`);
+     sin correrlo, el botón de registrar la revisión no le aparece a nadie.
+  2. Un timer nuevo, el noveno:
+     `mkjob alert-effectiveness "check_alert_effectiveness" "*-*-* 08:30:00"`
+     (ver [docs/scheduled-operations.md](docs/scheduled-operations.md)).
 - **Bloques completos:** R1, R2, R3, R5, R6 · base ISO R7.1-R7.3 + diseños
   R7.4-R7.7 escritos · R8.1 · X.1-X.3.
 - **Parcial:** R4 (importador listo, `--apply` nunca corrido).
@@ -56,8 +63,29 @@ Criterio de salida de `beta`.
 (`DOCUMENTS_ANTIVIRUS_COMMAND` está vacío en todos los ambientes) antes de correr
 el importador con `--apply`.
 
-Después de esto, el trabajo de fondo son las **Sesiones B/C/D** de
-`MASTER_PLAN.md` → "Rumbo a 1.0".
+**4. Desplegar lo del 2026-08-12** — ver los dos pasos extra arriba (roles y el
+timer nuevo). Nada de esto urge, pero mientras no se despliegue, la verificación
+de eficacia no corre y la revisión meteorológica no se puede registrar en
+producción.
+
+### Estado de la Sesión B (avanzada el 2026-08-12)
+
+| Ítem | Estado |
+|---|---|
+| Verificación de eficacia (R7.6a) | ✅ Hecho — 30 días, decidido por el usuario |
+| Revisión meteorológica como evidencia (R8.2) | ✅ Hecho |
+| Los 2 KPI operacionales ya calculables (R7.7) | ⬜ **Lo siguiente.** Meta de disponibilidad de flota fijada en **90%** por el usuario el 2026-08-12; la de cumplimiento de plazos sigue sin definir |
+| LV-72 (trazabilidad estilo SIGO) | ⬜ |
+| Decidir si el tablero Kanban se elimina | ⬜ Requiere decisión |
+
+**Números que el usuario ya fijó (2026-08-12), para no volver a preguntarlos:**
+verificación de eficacia **30 días** (ya implementado como
+`Alert.EFFECTIVENESS_DAYS`), meta de disponibilidad de flota **90%**, límite de
+jornada de vuelo **8 horas** (R7.5, aún sin implementar).
+
+Sigue sin respuesta lo que bloquea la **Sesión C**: los umbrales RMSE/GSD del
+contrato (R7.4), de los que dependen `Deliverable`, dos KPI y el disparador
+principal de las no conformidades.
 
 ## Cómo desplegar
 
