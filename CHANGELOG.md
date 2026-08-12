@@ -17,6 +17,8 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   que un permiso antiguo cuyo papel sólo decía "Chuquicamata" no queda
   retroactivamente incompleto. Un punto a medio ingresar (latitud sin longitud)
   se rechaza: no se puede dibujar en un mapa y fallaría en silencio.
+- **Iconos en el pronóstico meteorológico (`R8.3`).** Viento, ráfagas,
+  precipitación y probabilidad de lluvia se distinguen de un vistazo.
 - **La unión con AeroLink funciona de punta a punta (`X.4d`).** El endpoint que
   faltaba está implementado en el repo de AeroLink (pendiente de PR) y verificado:
   AeroControl sincroniza las baterías **contra el servicio real**, enlazándolas a

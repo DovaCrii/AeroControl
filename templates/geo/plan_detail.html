@@ -65,11 +65,27 @@ the provider did not answer -- a forecast is context, never a blocker.{% endcomm
 <div class="card mb-3 p-3">
   <h2 class="h5 mb-1">{% translate "Weather forecast" %}</h2>
   <p class="text-muted small mb-3">{% blocktranslate with date=weather_date|date:"Y-m-d" %}Forecast over this area for {{ date }}, the day the linked permit begins.{% endblocktranslate %}</p>
-  <div class="row g-3">
-    <div class="col-sm-3"><div class="summary-card"><small>{% translate "Max wind" %}</small><strong>{% if weather.wind_speed_10m_max is not None %}{{ weather.wind_speed_10m_max }} {{ weather.units.wind_speed_10m_max|default:"" }}{% else %}—{% endif %}</strong></div></div>
-    <div class="col-sm-3"><div class="summary-card"><small>{% translate "Max gusts" %}</small><strong>{% if weather.wind_gusts_10m_max is not None %}{{ weather.wind_gusts_10m_max }} {{ weather.units.wind_gusts_10m_max|default:"" }}{% else %}—{% endif %}</strong></div></div>
-    <div class="col-sm-3"><div class="summary-card"><small>{% translate "Precipitation" %}</small><strong>{% if weather.precipitation_sum is not None %}{{ weather.precipitation_sum }} {{ weather.units.precipitation_sum|default:"" }}{% else %}—{% endif %}</strong></div></div>
-    <div class="col-sm-3"><div class="summary-card"><small>{% translate "Chance of rain" %}</small><strong>{% if weather.precipitation_probability_max is not None %}{{ weather.precipitation_probability_max }}%{% else %}—{% endif %}</strong></div></div>
+  {% comment %}Los iconos van inline, no como fuente ni imagen externa: la CSP es
+  un `default-src 'self'` pelado y traer un set de iconos la obligaría a abrirse
+  para todos. Son los mismos trazos que el menú lateral, así que se leen como
+  parte de la misma app y heredan el color del texto en ambos temas.{% endcomment %}
+  <div class="row g-3 weather-grid">
+    <div class="col-sm-3"><div class="summary-card">
+      <small><svg class="weather-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h11a3 3 0 1 0-3-3"/><path d="M3 12h15a3 3 0 1 1-3 3"/><path d="M3 16h9"/></svg>{% translate "Max wind" %}</small>
+      <strong>{% if weather.wind_speed_10m_max is not None %}{{ weather.wind_speed_10m_max }} {{ weather.units.wind_speed_10m_max|default:"" }}{% else %}—{% endif %}</strong>
+    </div></div>
+    <div class="col-sm-3"><div class="summary-card">
+      <small><svg class="weather-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h10a3 3 0 1 0-3-3"/><path d="M3 12h7"/><path d="M14 12h4a3 3 0 1 1-3 3"/><path d="M3 17h6"/><path d="M17 6l3 3-3 3"/></svg>{% translate "Max gusts" %}</small>
+      <strong>{% if weather.wind_gusts_10m_max is not None %}{{ weather.wind_gusts_10m_max }} {{ weather.units.wind_gusts_10m_max|default:"" }}{% else %}—{% endif %}</strong>
+    </div></div>
+    <div class="col-sm-3"><div class="summary-card">
+      <small><svg class="weather-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3s5 6.2 5 9.4A5 5 0 0 1 7 12.4C7 9.2 12 3 12 3z"/></svg>{% translate "Precipitation" %}</small>
+      <strong>{% if weather.precipitation_sum is not None %}{{ weather.precipitation_sum }} {{ weather.units.precipitation_sum|default:"" }}{% else %}—{% endif %}</strong>
+    </div></div>
+    <div class="col-sm-3"><div class="summary-card">
+      <small><svg class="weather-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 15a4 4 0 0 1 .4-8A5.5 5.5 0 0 1 18 8.5a3.5 3.5 0 0 1-.5 6.5"/><path d="M9 19l-1 2M13 19l-1 2M17 19l-1 2"/></svg>{% translate "Chance of rain" %}</small>
+      <strong>{% if weather.precipitation_probability_max is not None %}{{ weather.precipitation_probability_max }}%{% else %}—{% endif %}</strong>
+    </div></div>
   </div>
   <p class="text-muted small mb-0 mt-3">{% translate "Source: Open-Meteo. Reference only -- it does not replace the pre-flight check." %}</p>
   {% comment %}R8.1 evidence: showing the forecast is not proof it was reviewed.
