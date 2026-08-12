@@ -11,20 +11,22 @@
 
 - **Versión:** `v0.5.0-beta` (etiquetada). `main` = `origin/main` (pusheado
   2026-08-12).
-- **Gate:** `pwsh scripts/verify.ps1` verde (1022 tests, ruff, bandit, pip-audit).
-- **Sin desplegar en `p340`:** lo de 2026-08-12 trae **3 migraciones**, todas
+- **Gate:** `pwsh scripts/verify.ps1` verde (1065 tests, ruff, bandit, pip-audit).
+- **Sin desplegar en `p340`:** lo de 2026-08-12 trae **6 migraciones**, todas
   aditivas y sin dato obligatorio: `operations.0016` (ubicación estructurada),
   `compliance.0015` (verificación de eficacia), `geo.0004` (revisión
-  meteorológica).
+  meteorológica), `registry.0031` + `compliance.0016` (calidad del entregable) y
+  `compliance.0017` (no conformidades).
 - **Al desplegar hay dos pasos que no son `git pull` + restart:**
-  1. `manage.py bootstrap_roles` — hay permisos nuevos (`add/view_weatherreview`);
-     sin correrlo, el botón de registrar la revisión no le aparece a nadie.
+  1. `manage.py bootstrap_roles` — hay permisos nuevos (`weatherreview`,
+     `deliverable`, `nonconformity`); sin correrlo, las secciones nuevas no le
+     aparecen a nadie en el menú.
   2. **Dos timers nuevos** (serían 10 en total), ver
      [docs/scheduled-operations.md](docs/scheduled-operations.md):
      `mkjob alert-effectiveness "check_alert_effectiveness" "*-*-* 08:30:00"` y
      `mkjob duty-limit "check_flight_duty_limit" "*-*-* 07:45:00"`.
-- **Bloques completos:** R1, R2, R3, R5, R6 · base ISO R7.1-R7.3 + diseños
-  R7.4-R7.7 escritos · R8.1 · X.1-X.3.
+- **Bloques completos:** R1, R2, R3, R5, R6 · **R7 completo salvo el IPER
+  estructurado de R7.5** · R8.1-R8.2 · X.1-X.3.
 - **Parcial:** R4 (importador listo, `--apply` nunca corrido).
 - **AOC cargado en producción** ✅ (2026-08-11, por el usuario).
 - **`p340` al día con `main`** ✅ (2026-08-12, incluye el arreglo P0 de `LV-73`).
