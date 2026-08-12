@@ -125,13 +125,24 @@ No por falta de trabajo de este lado. Leyendo el repo (`D:\I+D\AeroLink`,
 su propio README dice que no se integra con AeroControl todavía. Su bloqueo es
 de red: Tailscale Funnel sirve HTTPS pero no MQTTS.
 
-Construir el receptor ahora sería inventar el contrato de un productor que aún
-no decidió. Lo que **sí** se hizo: registrar en
+Construir el receptor de **sesiones de vuelo** ahora sería inventar el contrato
+de un productor que aún no decidió. Quedaron registrados en
 [adr-0002](docs/dev/adr-0002-coexistencia-aerolink.md) los **tres huecos del
 contrato** que ya se ven en su modelo real — la sesión no lleva el serial (lleva
 un UUID interno no resoluble desde acá), **no hay llave de cruce para el
 piloto**, y "sesión cerrada" no está definida. Conviene cerrarlos con ellos
 *antes* de que construyan el endpoint, no después.
+
+**Pero las baterías sí avanzaron (`X.4b`, hecho).** No dependían de las sesiones:
+AeroLink ya modela las baterías como `Device` con serial único. El comando
+`sync_batteries` llena `registry.Battery` y **se puede probar hoy** con
+`--from-file`; el contrato que esperamos quedó escrito en el ADR.
+
+**Lo que hay que pedirle a AeroLink** es un endpoint que exponga el inventario
+de dispositivos. Revisado su plan maestro: **no está** — `AL-203` cubre el
+registro de topología y seriales, `AL-304` un dashboard de inventario, pero
+ninguno publica una API para un consumidor externo. Es un ítem nuevo para su
+plan, y es chico al lado de M2/M3: los datos ya los tienen modelados.
 
 ## Cómo desplegar
 

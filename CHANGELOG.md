@@ -17,6 +17,11 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   que un permiso antiguo cuyo papel sólo decía "Chuquicamata" no queda
   retroactivamente incompleto. Un punto a medio ingresar (latitud sin longitud)
   se rechaza: no se puede dibujar en un mapa y fallaría en silencio.
+- **Sincronización del inventario de baterías desde AeroLink (`X.4b`).** El
+  comando `sync_batteries` llena la tabla de baterías (ciclos, salud, firmware)
+  que hasta ahora estaba vacía a propósito, enlazando cada una a su aeronave por
+  número de serie. Se puede probar hoy con `--from-file`, antes de que AeroLink
+  publique su endpoint; el contrato quedó escrito en el ADR-0002.
 - **Trazabilidad también en el plan geoespacial (`LV-72`).** El mismo bloque que
   el permiso, porque un plan también avanza por revisión. La ficha de aeronave
   no lo lleva: su estado va y vuelve entre activa y mantención, que no es un
