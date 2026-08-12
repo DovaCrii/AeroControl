@@ -1278,6 +1278,16 @@ main {
   min-height: 34px;
 }
 
+/* LV-75: the resolution reason under the "Resolved" badge. Capped and wrapped
+   so a long root cause does not stretch the actions column and push the
+   buttons off their alignment with the rest of the table. */
+.alert-reason {
+  max-width: 26rem;
+  margin-left: auto;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
 .view-tabs { display: flex; gap: 0.35rem; border-bottom: 1px solid var(--ac-border); }
 .view-tab { padding: 0.65rem 0.85rem; border-bottom: 3px solid transparent; color: var(--ac-text-secondary); font-weight: 650; text-decoration: none; }
 .view-tab:hover { color: var(--ac-text); background: var(--ac-primary-soft); }
