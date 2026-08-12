@@ -56,6 +56,26 @@
   {% endif %}
 </div>
 
+{% comment %}R7.7 (ISO 9001 9.1.1): a KPI needs a target and an action when it
+is missed, not just a number. These are the two operational indicators
+derivable without Deliverable (R7.4) or NonConformity (R7.6). A null value
+means the question does not apply this period (no fleet, or no permit whose
+window closed) and renders "—": a 0% there would read as total failure.{% endcomment %}
+<div class="card mb-4">
+  <div class="p-3 border-bottom"><h2 class="h5 mb-0">{% translate "Operational indicators" %}</h2></div>
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead><tr><th>{% translate "Indicator" %}</th><th class="text-end">{% translate "Value" %}</th><th class="text-end">{% translate "Target" %}</th><th class="text-end">{% translate "Status" %}</th></tr></thead>
+      <tbody>{% for kpi in report.operational_kpis %}<tr>
+        <td><strong>{{ kpi.label }}</strong><div class="small text-muted">{{ kpi.help }}</div></td>
+        <td class="text-end">{% if kpi.value is not None %}{{ kpi.value }}%<div class="small text-muted">{{ kpi.detail }}</div>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+        <td class="text-end">{% if kpi.target %}{{ kpi.target }}%{% else %}<span class="text-muted">—</span>{% endif %}</td>
+        <td class="text-end">{% if kpi.met is None %}<span class="text-muted">—</span>{% elif kpi.met %}<span class="badge bg-success">{% translate "Met" %}</span>{% else %}<span class="badge bg-danger">{% translate "Below target" %}</span>{% endif %}</td>
+      </tr>{% endfor %}</tbody>
+    </table>
+  </div>
+</div>
+
 <div class="card mb-4">
   <div class="p-3 border-bottom">
     <h2 class="h5 mb-0">{% translate "Compared with the previous period" %}</h2>

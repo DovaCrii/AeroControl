@@ -17,6 +17,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   que un permiso antiguo cuyo papel sólo decía "Chuquicamata" no queda
   retroactivamente incompleto. Un punto a medio ingresar (latitud sin longitud)
   se rechaza: no se puede dibujar en un mapa y fallaría en silencio.
+- **Indicadores operacionales en el reporte (`R7.7a`, ISO 9001 9.1.1).**
+  Disponibilidad de flota (meta 90%) y cumplimiento de plazos, con valor, meta y
+  estado. Sin datos nuevos.
+- **Límite de jornada de vuelo (`R7.5a`, ISO 45001).** Aviso al registrar un
+  vuelo que lleva al piloto sobre las **8 horas** del día, y un reporte diario de
+  los excesos de la jornada anterior. Avisa, nunca rechaza: el registro se
+  escribe después del vuelo, y negarlo sólo perdería la evidencia.
 - **Verificación de eficacia de las acciones correctivas (`R7.6a`, ISO 10.2).**
   Resolver una alerta dejaba de ser el final: a los **30 días** el sistema
   pregunta si la acción realmente sirvió, y escala a Dirección lo que nadie

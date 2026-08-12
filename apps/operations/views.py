@@ -25,6 +25,7 @@ from apps.core.views import (
 )
 from .forms import FlightPermissionForm, FlightRecordForm
 from .models import FlightPermission, FlightRecord
+from .selectors import DAILY_FLIGHT_LIMIT, duty_time_for, format_duration
 from apps.registry.models import Aircraft, CostCenter, Operator
 from apps.registry.selectors import operator_aircraft_compatibility_gaps
 
@@ -355,7 +356,39 @@ class FlightRecordList(OList):
         return super().get_queryset().select_related("permission", "pilot", "aircraft")
 
 
-class FlightRecordCreate(OCreate):
+class DutyLimitWarningMixin:
+    """R7.5: warn when a pilot's logged flight time for a day passes the limit.
+
+    A warning, not a rejection. The limit is a fatigue control (ISO 45001
+    6.1.2), and the record is written *after* the flight: refusing to save it
+    would not un-fly the day, it would only leave the excess unrecorded --
+    losing the very evidence the clause exists to produce. So the flight is
+    always saved and the excess is said out loud, here and in the daily job.
+    """
+
+    def form_valid(self, response_or_form):
+        response = super().form_valid(response_or_form)
+        record = self.object
+        if record.pilot_id and record.actual_date:
+            total = duty_time_for(record.pilot, record.actual_date)
+            if total > DAILY_FLIGHT_LIMIT:
+                messages.warning(
+                    self.request,
+                    _(
+                        "%(pilot)s now has %(total)s logged on %(date)s, over the "
+                        "%(limit)s daily flight limit."
+                    )
+                    % {
+                        "pilot": record.pilot,
+                        "total": format_duration(total),
+                        "date": record.actual_date.isoformat(),
+                        "limit": format_duration(DAILY_FLIGHT_LIMIT),
+                    },
+                )
+        return response
+
+
+class FlightRecordCreate(DutyLimitWarningMixin, OCreate):
     model = FlightRecord
     form_class = FlightRecordForm
     template_name = "operations/flightrecord_form.html"
