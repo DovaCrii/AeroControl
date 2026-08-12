@@ -144,6 +144,47 @@ registro de topología y seriales, `AL-304` un dashboard de inventario, pero
 ninguno publica una API para un consumidor externo. Es un ítem nuevo para su
 plan, y es chico al lado de M2/M3: los datos ya los tienen modelados.
 
+## Despliegue pendiente del 2026-08-12 — secuencia lista
+
+Todo lo de esta tanda está en `origin/main` y **sin desplegar**. Copiar y pegar
+dentro de la sesión SSH (`ssh levdigital01@100.121.16.118`), no en PowerShell.
+
+```bash
+cd /opt/aerocontrol && git pull
+set -a; source <(sudo cat /etc/aerocontrol.env); set +a
+echo "settings=$DJANGO_SETTINGS_MODULE  db=$DB_PATH"   # debe decir prod
+
+# Respaldo ANTES de migrar, y verificarlo: son 6 migraciones.
+uv run python manage.py backup
+uv run python manage.py verify_backup <ruta-que-imprimió-backup>
+
+uv sync
+uv run python manage.py migrate --no-input
+# Permisos nuevos (weatherreview, deliverable, nonconformity). Sin esto las
+# secciones nuevas no le aparecen a nadie en el menú.
+uv run python manage.py bootstrap_roles
+uv run python manage.py collectstatic --no-input
+sudo systemctl restart aerocontrol
+```
+
+**No correr `init_dgac_board`**, aunque el runbook lo liste: el tablero Kanban
+se dio de baja (`LV-78`).
+
+Los dos timers nuevos (quedan 10):
+
+```bash
+sudo bash -c '
+mkjob() { ... }   # la función está en docs/scheduled-operations.md
+mkjob duty-limit "check_flight_duty_limit" "*-*-* 07:45:00"
+mkjob alert-effectiveness "check_alert_effectiveness" "*-*-* 08:30:00"
+systemctl daemon-reload
+systemctl enable --now aerocontrol-duty-limit.timer aerocontrol-alert-effectiveness.timer
+'
+```
+
+Comprobar al final: `systemctl list-timers 'aerocontrol-*' --no-pager` (10) y
+abrir el reporte de cumplimiento, que debe mostrar los 5 indicadores.
+
 ## Cómo desplegar
 
 Secuencia completa y corregida en
