@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-12 15:47-0400\n"
+"POT-Creation-Date: 2026-08-12 16:30-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -23,8 +23,8 @@ msgstr "Operador"
 msgid "Qualification"
 msgstr "Habilitación"
 
-#: .\apps\compliance\forms.py:58 .\apps\compliance\forms.py:356
-#: .\apps\compliance\forms.py:399 .\apps\geo\forms.py:45
+#: .\apps\compliance\forms.py:58 .\apps\compliance\forms.py:367
+#: .\apps\compliance\forms.py:410 .\apps\geo\forms.py:45
 #: .\apps\operations\forms.py:42 .\apps\registry\forms.py:326
 #: .\apps\registry\forms.py:420 .\apps\registry\forms.py:450
 #: .\apps\registry\forms.py:498 .\apps\registry\forms.py:556
@@ -37,8 +37,8 @@ msgstr "Habilitación"
 #: .\templates\compliance\nonconformity_list.html:33
 #: .\templates\compliance\operational_records.html:22
 #: .\templates\compliance\operational_records.html:49
-#: .\templates\compliance\report.html:22 .\templates\compliance\report.html:137
-#: .\templates\geo\plan_list.html:19
+#: .\templates\compliance\report.html:22
+#: .\templates\compliance\report.html:137 .\templates\geo\plan_list.html:19
 #: .\templates\operations\permission_detail.html:55
 #: .\templates\registry\aircraft_list.html:25
 #: .\templates\registry\aircraftassignment_list.html:6
@@ -66,8 +66,8 @@ msgstr "Registro de mantenimiento"
 msgid "Company"
 msgstr "Empresa"
 
-#: .\apps\compliance\forms.py:72 .\apps\compliance\forms.py:355
-#: .\apps\compliance\forms.py:397 .\apps\geo\forms.py:36
+#: .\apps\compliance\forms.py:72 .\apps\compliance\forms.py:366
+#: .\apps\compliance\forms.py:408 .\apps\geo\forms.py:36
 #: .\apps\workboard\forms.py:77 .\apps\workboard\forms.py:133
 #: .\templates\compliance\_documents_section.html:17
 #: .\templates\compliance\company_documents.html:30
@@ -93,7 +93,7 @@ msgstr ""
 msgid "Select an entity type"
 msgstr "Selecciona un tipo de entidad"
 
-#: .\apps\compliance\forms.py:81 .\apps\compliance\forms.py:274
+#: .\apps\compliance\forms.py:81 .\apps\compliance\forms.py:285
 #: .\templates\compliance\alert_list.html:7
 msgid "Entity type"
 msgstr "Tipo de entidad"
@@ -126,40 +126,46 @@ msgstr "Fecha de emisión"
 msgid "Expiry date"
 msgstr "Fecha de vencimiento"
 
-#: .\apps\compliance\forms.py:140
+#: .\apps\compliance\forms.py:119
+msgid ""
+"Taken from the linked record. Correct it if the document says otherwise."
+msgstr ""
+"Tomada del registro enlazado. Corrígela si el documento dice otra cosa."
+
+#: .\apps\compliance\forms.py:151
 msgid "No document types configured yet. Create one first."
 msgstr "Aún no hay tipos de documento configurados. Crea uno primero."
 
-#: .\apps\compliance\forms.py:157
+#: .\apps\compliance\forms.py:168
 msgid "Select the operational record this document belongs to."
 msgstr "Selecciona el registro operativo al que pertenece este documento."
 
-#: .\apps\compliance\forms.py:159
+#: .\apps\compliance\forms.py:170
 msgid "There are no active records of this type yet."
 msgstr "Aún no hay registros activos de este tipo."
 
-#: .\apps\compliance\forms.py:181
+#: .\apps\compliance\forms.py:192
 msgid "Select an active existing record."
 msgstr "Selecciona un registro activo existente."
 
-#: .\apps\compliance\forms.py:195
+#: .\apps\compliance\forms.py:206
 #, python-format
 msgid "Allowed file types: %(types)s."
 msgstr "Tipos de archivo permitidos: %(types)s."
 
-#: .\apps\compliance\forms.py:203 .\apps\geo\forms.py:113
+#: .\apps\compliance\forms.py:214 .\apps\geo\forms.py:113
 msgid "The maximum file size is 20 MB."
 msgstr "El tamaño máximo del archivo es 20 MB."
 
-#: .\apps\compliance\forms.py:216
+#: .\apps\compliance\forms.py:227
 msgid "This document type requires an expiry date."
 msgstr "Este tipo de documento exige una fecha de vencimiento."
 
-#: .\apps\compliance\forms.py:237 .\apps\geo\forms.py:122
+#: .\apps\compliance\forms.py:248 .\apps\geo\forms.py:122
 msgid "The uploaded file content does not match its extension."
 msgstr "El contenido del archivo no coincide con su extensión."
 
-#: .\apps\compliance\forms.py:256 .\apps\compliance\forms.py:291
+#: .\apps\compliance\forms.py:267 .\apps\compliance\forms.py:302
 #: .\apps\geo\views.py:190 .\apps\registry\forms.py:76
 #: .\apps\workboard\forms.py:23 .\apps\workboard\forms.py:47
 #: .\apps\workboard\forms.py:122 .\templates\core\users_roles.html:24
@@ -167,96 +173,96 @@ msgstr "El contenido del archivo no coincide con su extensión."
 msgid "Name"
 msgstr "Nombre"
 
-#: .\apps\compliance\forms.py:257 .\apps\registry\forms.py:75
+#: .\apps\compliance\forms.py:268 .\apps\registry\forms.py:75
 #: .\templates\registry\costcenter_list.html:24
 msgid "Code"
 msgstr "Código"
 
-#: .\apps\compliance\forms.py:258
+#: .\apps\compliance\forms.py:269
 msgid "Requires expiry"
 msgstr "Requiere vencimiento"
 
-#: .\apps\compliance\forms.py:259
+#: .\apps\compliance\forms.py:270
 msgid "Is insurance"
 msgstr "Es un seguro"
 
-#: .\apps\compliance\forms.py:276
+#: .\apps\compliance\forms.py:287
 msgid "Field to watch"
 msgstr "Campo a vigilar"
 
-#: .\apps\compliance\forms.py:292
+#: .\apps\compliance\forms.py:303
 msgid "Days before expiry"
 msgstr "Días antes del vencimiento"
 
-#: .\apps\compliance\forms.py:293
+#: .\apps\compliance\forms.py:304
 msgid "Enabled"
 msgstr "Habilitada"
 
-#: .\apps\compliance\forms.py:298
+#: .\apps\compliance\forms.py:309
 msgid "Create kanban task"
 msgstr "Crear tarea Kanban"
 
-#: .\apps\compliance\forms.py:299
+#: .\apps\compliance\forms.py:310
 msgid "Target board"
 msgstr "Tablero destino"
 
-#: .\apps\compliance\forms.py:300
+#: .\apps\compliance\forms.py:311
 msgid "Target stage"
 msgstr "Etapa destino"
 
-#: .\apps\compliance\forms.py:326
+#: .\apps\compliance\forms.py:337
 msgid "Alert rule"
 msgstr "Regla de alerta"
 
-#: .\apps\compliance\forms.py:327
+#: .\apps\compliance\forms.py:338
 msgid "Content type"
 msgstr "Tipo de contenido"
 
-#: .\apps\compliance\forms.py:328
+#: .\apps\compliance\forms.py:339
 msgid "Object id"
 msgstr "Id del objeto"
 
-#: .\apps\compliance\forms.py:329
+#: .\apps\compliance\forms.py:340
 msgid "Message"
 msgstr "Mensaje"
 
-#: .\apps\compliance\forms.py:357
+#: .\apps\compliance\forms.py:368
 #: .\templates\compliance\deliverable_detail.html:18
 #: .\templates\core\calendar.html:32 .\templates\core\calendar.html:43
 msgid "Flight permissions"
 msgstr "Permisos de vuelo"
 
-#: .\apps\compliance\forms.py:358
+#: .\apps\compliance\forms.py:369
 msgid "Achieved GSD (cm)"
 msgstr "GSD logrado (cm)"
 
-#: .\apps\compliance\forms.py:359 .\apps\compliance\models.py:1051
+#: .\apps\compliance\forms.py:370 .\apps\compliance\models.py:1051
 msgid "Horizontal RMSE (cm)"
 msgstr "RMSE horizontal (cm)"
 
-#: .\apps\compliance\forms.py:360 .\apps\compliance\models.py:1052
+#: .\apps\compliance\forms.py:371 .\apps\compliance\models.py:1052
 msgid "Vertical RMSE (cm)"
 msgstr "RMSE vertical (cm)"
 
-#: .\apps\compliance\forms.py:361
+#: .\apps\compliance\forms.py:372
 #: .\templates\compliance\deliverable_detail.html:19
 msgid "Control points"
 msgstr "Puntos de control"
 
-#: .\apps\compliance\forms.py:362
+#: .\apps\compliance\forms.py:373
 #: .\templates\compliance\deliverable_detail.html:24
 msgid "Check points"
 msgstr "Puntos de chequeo"
 
-#: .\apps\compliance\forms.py:363
+#: .\apps\compliance\forms.py:374
 msgid "Coverage (%)"
 msgstr "Cobertura (%)"
 
-#: .\apps\compliance\forms.py:364
+#: .\apps\compliance\forms.py:375
 msgid "Overlap (%)"
 msgstr "Traslape (%)"
 
-#: .\apps\compliance\forms.py:365 .\apps\compliance\forms.py:406
+#: .\apps\compliance\forms.py:376 .\apps\compliance\forms.py:417
 #: .\apps\registry\forms.py:85
 #: .\templates\compliance\deliverable_detail.html:28
 #: .\templates\compliance\nonconformity_detail.html:29
@@ -268,12 +274,13 @@ msgstr "Traslape (%)"
 msgid "Notes"
 msgstr "Notas"
 
-#: .\apps\compliance\forms.py:369
+#: .\apps\compliance\forms.py:380
 msgid "Compared against the cost center's required GSD, when set."
 msgstr ""
-"Se compara contra el GSD requerido del centro de costo, cuando está definido."
+"Se compara contra el GSD requerido del centro de costo, cuando está "
+"definido."
 
-#: .\apps\compliance\forms.py:372
+#: .\apps\compliance\forms.py:383
 msgid ""
 "Points held back from the adjustment. An RMSE computed only over control "
 "points is not an independent check."
@@ -281,18 +288,18 @@ msgstr ""
 "Puntos excluidos del ajuste. Un RMSE calculado sólo sobre los puntos de "
 "control no es una verificación independiente."
 
-#: .\apps\compliance\forms.py:398
+#: .\apps\compliance\forms.py:409
 #: .\templates\compliance\nonconformity_list.html:33
 #: .\templates\geo\plan_detail.html:134
 msgid "Source"
 msgstr "Origen"
 
-#: .\apps\compliance\forms.py:400
+#: .\apps\compliance\forms.py:411
 #: .\templates\compliance\nonconformity_detail.html:18
 msgid "Detected on"
 msgstr "Detectada el"
 
-#: .\apps\compliance\forms.py:401 .\apps\geo\views.py:191
+#: .\apps\compliance\forms.py:412 .\apps\geo\views.py:191
 #: .\apps\maintenance\forms.py:23 .\apps\workboard\forms.py:24
 #: .\apps\workboard\forms.py:78
 #: .\templates\compliance\nonconformity_detail.html:20
@@ -300,25 +307,25 @@ msgstr "Detectada el"
 msgid "Description"
 msgstr "Descripción"
 
-#: .\apps\compliance\forms.py:402
+#: .\apps\compliance\forms.py:413
 #: .\templates\compliance\nonconformity_detail.html:25
 msgid "Root cause"
 msgstr "Causa raíz"
 
-#: .\apps\compliance\forms.py:403
+#: .\apps\compliance\forms.py:414
 #: .\templates\compliance\nonconformity_detail.html:26
 msgid "Corrective action"
 msgstr "Acción correctiva"
 
-#: .\apps\compliance\forms.py:404
+#: .\apps\compliance\forms.py:415
 msgid "Reported to DGAC on"
 msgstr "Reportada a la DGAC el"
 
-#: .\apps\compliance\forms.py:405
+#: .\apps\compliance\forms.py:416
 msgid "DGAC report reference"
 msgstr "Referencia del reporte DGAC"
 
-#: .\apps\compliance\forms.py:410
+#: .\apps\compliance\forms.py:421
 msgid ""
 "Required before closing. Leave blank until it is actually investigated -- a "
 "placeholder looks answered."
@@ -326,15 +333,15 @@ msgstr ""
 "Requerida antes de cerrar. Dejar en blanco hasta investigarla de verdad: un "
 "texto de relleno parece una respuesta."
 
-#: .\apps\compliance\forms.py:414
+#: .\apps\compliance\forms.py:425
 msgid "Only when the event required notifying the authority."
 msgstr "Sólo cuando el evento exigió notificar a la autoridad."
 
-#: .\apps\compliance\forms.py:427
+#: .\apps\compliance\forms.py:438
 msgid "Reason / root cause"
 msgstr "Motivo / causa raíz"
 
-#: .\apps\compliance\forms.py:428
+#: .\apps\compliance\forms.py:439
 msgid "Why this happened and how it was addressed."
 msgstr "Por qué ocurrió y cómo se solucionó."
 
@@ -532,7 +539,8 @@ msgstr ""
 
 #: .\apps\compliance\models.py:362
 #, python-format
-msgid "%(field)s is not a watchable field of %(model)s. Available: %(allowed)s"
+msgid ""
+"%(field)s is not a watchable field of %(model)s. Available: %(allowed)s"
 msgstr ""
 "%(field)s no es un campo vigilable de %(model)s. Disponibles: %(allowed)s"
 
@@ -623,7 +631,8 @@ msgstr "TOTAL"
 #: .\apps\compliance\report_views.py:174 .\apps\compliance\report_views.py:315
 #: .\apps\compliance\report_views.py:478
 #: .\templates\compliance\email\executive_report.html:30
-#: .\templates\compliance\report.html:53 .\templates\compliance\report.html:174
+#: .\templates\compliance\report.html:53
+#: .\templates\compliance\report.html:174
 msgid "Open alerts"
 msgstr "Alertas abiertas"
 
@@ -686,19 +695,23 @@ msgstr "Sin alertas abiertas."
 msgid "Compared with the previous period"
 msgstr "Comparado con el período anterior"
 
-#: .\apps\compliance\report_views.py:440 .\templates\compliance\report.html:102
+#: .\apps\compliance\report_views.py:440
+#: .\templates\compliance\report.html:102
 msgid "KPI"
 msgstr "KPI"
 
-#: .\apps\compliance\report_views.py:440 .\templates\compliance\report.html:103
+#: .\apps\compliance\report_views.py:440
+#: .\templates\compliance\report.html:103
 msgid "This period"
 msgstr "Este período"
 
-#: .\apps\compliance\report_views.py:440 .\templates\compliance\report.html:104
+#: .\apps\compliance\report_views.py:440
+#: .\templates\compliance\report.html:104
 msgid "Change"
 msgstr "Variación"
 
-#: .\apps\compliance\report_views.py:440 .\templates\compliance\report.html:105
+#: .\apps\compliance\report_views.py:440
+#: .\templates\compliance\report.html:105
 msgid "Previous period"
 msgstr "Período anterior"
 
@@ -706,7 +719,8 @@ msgstr "Período anterior"
 msgid "No comparison available."
 msgstr "No hay comparación disponible."
 
-#: .\apps\compliance\report_views.py:451 .\templates\compliance\report.html:157
+#: .\apps\compliance\report_views.py:451
+#: .\templates\compliance\report.html:157
 msgid "No cost centers to report."
 msgstr "No hay centros de costo que informar."
 
@@ -810,7 +824,7 @@ msgstr "No conformidad reabierta."
 msgid "Only a closed finding can have its action verified."
 msgstr "Sólo una no conformidad cerrada puede tener su acción verificada."
 
-#: .\apps\compliance\views.py:391 .\apps\compliance\views.py:933
+#: .\apps\compliance\views.py:391 .\apps\compliance\views.py:991
 msgid "Corrective action verified."
 msgstr "Acción correctiva verificada."
 
@@ -827,47 +841,47 @@ msgstr "Documentos de la empresa"
 msgid "Operational records"
 msgstr "Registros operacionales"
 
-#: .\apps\compliance\views.py:757
+#: .\apps\compliance\views.py:815
 msgid "Document archived."
 msgstr "Documento archivado."
 
-#: .\apps\compliance\views.py:853 .\apps\compliance\views.py:863
+#: .\apps\compliance\views.py:911 .\apps\compliance\views.py:921
 msgid "Resolve alert"
 msgstr "Resolver alerta"
 
-#: .\apps\compliance\views.py:875
+#: .\apps\compliance\views.py:933
 msgid "Alert resolved."
 msgstr "Alerta resuelta."
 
-#: .\apps\compliance\views.py:905
+#: .\apps\compliance\views.py:963
 msgid "Alert reopened."
 msgstr "Alerta reabierta."
 
-#: .\apps\compliance\views.py:929
+#: .\apps\compliance\views.py:987
 msgid "Only a resolved alert can have its action verified."
 msgstr "Sólo una alerta resuelta puede tener su acción verificada."
 
-#: .\apps\compliance\views.py:954
+#: .\apps\compliance\views.py:1012
 msgid "No Kanban board is available to hold the follow-up task."
 msgstr ""
 "No hay ningún tablero Kanban disponible para alojar la tarea de seguimiento."
 
-#: .\apps\compliance\views.py:957
+#: .\apps\compliance\views.py:1015
 msgid "Follow-up task created."
 msgstr "Tarea de seguimiento creada."
 
-#: .\apps\compliance\views.py:1061 .\templates\base.html:117
+#: .\apps\compliance\views.py:1119 .\templates\base.html:117
 #: .\templates\compliance\monthly_review.html:3
 #: .\templates\compliance\monthly_review.html:8
 msgid "Monthly compliance"
 msgstr "Cumplimiento mensual"
 
-#: .\apps\compliance\views.py:1095
+#: .\apps\compliance\views.py:1153
 #, python-format
 msgid "%(center)s %(period)s marked."
 msgstr "%(center)s %(period)s marcado."
 
-#: .\apps\compliance\views.py:1122
+#: .\apps\compliance\views.py:1180
 #, python-format
 msgid "Edit %(name)s"
 msgstr "Editar %(name)s"
@@ -1408,12 +1422,14 @@ msgstr "Revisión meteorológica registrada."
 msgid "Maintenance type"
 msgstr "Tipo de mantenimiento"
 
-#: .\apps\maintenance\forms.py:24 .\templates\maintenance\record_detail.html:28
+#: .\apps\maintenance\forms.py:24
+#: .\templates\maintenance\record_detail.html:28
 #: .\templates\registry\aircraft_detail.html:42
 msgid "Scheduled date"
 msgstr "Fecha programada"
 
-#: .\apps\maintenance\forms.py:25 .\templates\maintenance\record_detail.html:30
+#: .\apps\maintenance\forms.py:25
+#: .\templates\maintenance\record_detail.html:30
 #: .\templates\registry\aircraft_detail.html:63
 msgid "Performed by"
 msgstr "Realizado por"
@@ -1678,7 +1694,8 @@ msgstr "Requerido cuando el propósito es 'Otro'."
 
 #: .\apps\operations\forms.py:62
 msgid ""
-"Structured location, in addition to the free-text location above -- optional."
+"Structured location, in addition to the free-text location above -- "
+"optional."
 msgstr ""
 "Ubicación estructurada, además de la ubicación en texto libre de arriba: "
 "opcional."
@@ -1707,7 +1724,8 @@ msgstr "Hora de salida"
 msgid "Arrival time"
 msgstr "Hora de llegada"
 
-#: .\apps\operations\forms.py:117 .\templates\operations\email\duty_limit.txt:5
+#: .\apps\operations\forms.py:117
+#: .\templates\operations\email\duty_limit.txt:5
 #: .\templates\operations\flightrecord_detail.html:29
 #: .\templates\operations\permission_detail.html:67
 #: .\templates\operations\record_list.html:7
@@ -1818,8 +1836,8 @@ msgid ""
 "Upload the DGAC operation authorization (the signed SIGO PDF) before "
 "approving this permit."
 msgstr ""
-"Sube la autorización de operación de la DGAC (el PDF firmado del SIGO) antes "
-"de aprobar este permiso."
+"Sube la autorización de operación de la DGAC (el PDF firmado del SIGO) antes"
+" de aprobar este permiso."
 
 #: .\apps\operations\views.py:337
 msgid "Permission denied."
@@ -1834,8 +1852,8 @@ msgid ""
 "Upload the DGAC operation authorization (the signed SIGO PDF) before "
 "completing this permit."
 msgstr ""
-"Sube la autorización de operación de la DGAC (el PDF firmado del SIGO) antes "
-"de completar este permiso."
+"Sube la autorización de operación de la DGAC (el PDF firmado del SIGO) antes"
+" de completar este permiso."
 
 #: .\apps\operations\views.py:390
 #, python-format
@@ -1843,8 +1861,8 @@ msgid ""
 "%(pilot)s now has %(total)s logged on %(date)s, over the %(limit)s daily "
 "flight limit."
 msgstr ""
-"%(pilot)s acumula %(total)s el %(date)s, por sobre el límite diario de vuelo "
-"de %(limit)s."
+"%(pilot)s acumula %(total)s el %(date)s, por sobre el límite diario de vuelo"
+" de %(limit)s."
 
 #: .\apps\operations\views.py:445
 msgid "Flight record archived."
@@ -1944,8 +1962,8 @@ msgid ""
 "verdict rather than judged against an invented threshold."
 msgstr ""
 "Criterios de aceptación del levantamiento (ISO 9001 8.6), tomados del "
-"contrato. Dejar en blanco si no se acordó ninguno: el entregable se registra "
-"sin veredicto en vez de juzgarse contra un umbral inventado."
+"contrato. Dejar en blanco si no se acordó ninguno: el entregable se registra"
+" sin veredicto en vez de juzgarse contra un umbral inventado."
 
 #: .\apps\registry\forms.py:155
 msgid "Enter the contract administrator name."
@@ -2156,7 +2174,8 @@ msgstr "Cerrado"
 
 #: .\apps\registry\models.py:55
 msgid "Recipient of expiry digests for this cost center."
-msgstr "Destinatario de los resúmenes de vencimientos de este centro de costo."
+msgstr ""
+"Destinatario de los resúmenes de vencimientos de este centro de costo."
 
 #: .\apps\registry\models.py:138
 msgid "cost center"
@@ -2262,8 +2281,7 @@ msgstr "Una batería necesita su número de serie."
 
 #: .\apps\registry\models.py:487
 msgid "Optional. Lets this person see \"My work\" filtered to them."
-msgstr ""
-"Opcional. Permite que esta persona vea \"Mi trabajo\" filtrado a lo suyo."
+msgstr "Opcional. Permite que esta persona vea \"Mi trabajo\" filtrado a lo suyo."
 
 #: .\apps\registry\models.py:491
 msgid "operator"
@@ -2449,7 +2467,8 @@ msgstr "Movimientos de recursos"
 msgid "Resource kind"
 msgstr "Tipo de recurso"
 
-#: .\apps\registry\views.py:943 .\templates\registry\costcenter_detail.html:132
+#: .\apps\registry\views.py:943
+#: .\templates\registry\costcenter_detail.html:132
 #: .\templates\registry\resourcemovementlog_list.html:29
 msgid "Resource"
 msgstr "Recurso"
@@ -2481,7 +2500,8 @@ msgstr "Desde"
 msgid "To"
 msgstr "Hasta"
 
-#: .\apps\registry\views.py:948 .\templates\compliance\deliverable_list.html:27
+#: .\apps\registry\views.py:948
+#: .\templates\compliance\deliverable_list.html:27
 #: .\templates\generic\list.html:36 .\templates\geo\plan_detail.html:136
 #: .\templates\geo\plan_detail.html:216 .\templates\geo\plan_list.html:22
 #: .\templates\registry\aircraft_detail.html:90
@@ -2784,7 +2804,8 @@ msgstr "Administración"
 
 #: .\templates\base.html:164 .\templates\base.html:171
 #: .\templates\compliance\nonconformity_detail.html:58
-#: .\templates\workboard\kanban.html:52 .\templates\workboard\task_list.html:23
+#: .\templates\workboard\kanban.html:52
+#: .\templates\workboard\task_list.html:23
 msgid "Close"
 msgstr "Cerrar"
 
@@ -2988,7 +3009,8 @@ msgstr "Activada"
 #: .\templates\compliance\document_list.html:19
 #: .\templates\compliance\nonconformity_detail.html:54
 #: .\templates\compliance\operational_records.html:49
-#: .\templates\generic\list.html:39 .\templates\maintenance\record_list.html:18
+#: .\templates\generic\list.html:39
+#: .\templates\maintenance\record_list.html:18
 #: .\templates\registry\assignment_list.html:51
 msgid "Actions"
 msgstr "Acciones"
@@ -3153,8 +3175,8 @@ msgid ""
 "This deliverable is below the contract's criteria. State the reason for "
 "releasing it anyway:"
 msgstr ""
-"Este entregable está bajo los criterios del contrato. Indique el motivo para "
-"liberarlo igualmente:"
+"Este entregable está bajo los criterios del contrato. Indique el motivo para"
+" liberarlo igualmente:"
 
 #: .\templates\compliance\deliverable_detail.html:79
 msgid "Release"
@@ -3170,7 +3192,8 @@ msgstr "Nuevo entregable"
 
 #: .\templates\compliance\deliverable_list.html:17
 #: .\templates\compliance\nonconformity_list.html:17
-#: .\templates\generic\list.html:18 .\templates\maintenance\record_list.html:13
+#: .\templates\generic\list.html:18
+#: .\templates\maintenance\record_list.html:13
 #: .\templates\operations\permission_list.html:19
 #: .\templates\registry\battery_list.html:24
 msgid "All statuses"
@@ -3280,7 +3303,8 @@ msgstr "Documentos vigentes"
 
 #: .\templates\compliance\email\executive_report.html:20
 #: .\templates\compliance\email\executive_report.html:54
-#: .\templates\compliance\report.html:52 .\templates\compliance\report.html:140
+#: .\templates\compliance\report.html:52
+#: .\templates\compliance\report.html:140
 #: .\templates\registry\_operator_rows.html:18
 #: .\templates\registry\_qualification_rows.html:20
 #: .\templates\registry\costcenter_detail.html:45
@@ -3297,7 +3321,8 @@ msgid "prev."
 msgstr "ant."
 
 #: .\templates\compliance\email\executive_report.html:53
-#: .\templates\compliance\report.html:51 .\templates\compliance\report.html:139
+#: .\templates\compliance\report.html:51
+#: .\templates\compliance\report.html:139
 msgid "Valid"
 msgstr "Vigentes"
 
@@ -3374,8 +3399,8 @@ msgstr "Revisión de registros del mes — %(period)s"
 
 #: .\templates\compliance\email\monthly_review.txt:3
 msgid ""
-"For each cost center that flew this month, flights vs operational records on "
-"file:"
+"For each cost center that flew this month, flights vs operational records on"
+" file:"
 msgstr ""
 "Por cada centro de costo que voló este mes, vuelos vs registros "
 "operacionales en archivo:"
@@ -3391,7 +3416,8 @@ msgstr "Registros"
 #, python-format
 msgid "Review %(total)s cost center and mark it Compliant or Non-compliant:"
 msgid_plural ""
-"Review these %(total)s cost centers and mark each Compliant or Non-compliant:"
+"Review these %(total)s cost centers and mark each Compliant or Non-"
+"compliant:"
 msgstr[0] "Revisa %(total)s centro de costo y márcalo Cumple o No cumple:"
 msgstr[1] ""
 "Revisa estos %(total)s centros de costo y marca cada uno Cumple o No cumple:"
@@ -3411,8 +3437,8 @@ msgid_plural ""
 msgstr[0] ""
 "Este centro de costo todavía no tiene su revisión de %(period)s firmada:"
 msgstr[1] ""
-"Estos %(total)s centros de costo todavía no tienen su revisión de %(period)s "
-"firmada:"
+"Estos %(total)s centros de costo todavía no tienen su revisión de %(period)s"
+" firmada:"
 
 #: .\templates\compliance\email\monthly_review_deadline.txt:8
 msgid "Mark each Compliant or Non-compliant:"
@@ -3478,7 +3504,8 @@ msgid ""
 "ISO 10.2 asks whether the corrective action worked, not only that it was "
 "taken."
 msgstr ""
-"ISO 10.2 pregunta si la acción correctiva sirvió, no sólo que se haya tomado."
+"ISO 10.2 pregunta si la acción correctiva sirvió, no sólo que se haya "
+"tomado."
 
 #: .\templates\compliance\nonconformity_detail.html:43
 msgid "Note (optional)"
@@ -3618,7 +3645,8 @@ msgstr "Bajo la meta"
 #, python-format
 msgid "Document counters compared against the stored snapshot of %(date)s."
 msgstr ""
-"Contadores documentales comparados contra el registro histórico del %(date)s."
+"Contadores documentales comparados contra el registro histórico del "
+"%(date)s."
 
 #: .\templates\compliance\report.html:96
 msgid ""
@@ -3632,11 +3660,11 @@ msgstr ""
 
 #: .\templates\compliance\report.html:131
 msgid ""
-"Includes DGAC vigencias (operator credentials, aircraft insurance) alongside "
-"uploaded documents."
+"Includes DGAC vigencias (operator credentials, aircraft insurance) alongside"
+" uploaded documents."
 msgstr ""
-"Incluye vigencias DGAC (credenciales de operador, seguros de aeronave) junto "
-"con los documentos subidos."
+"Incluye vigencias DGAC (credenciales de operador, seguros de aeronave) junto"
+" con los documentos subidos."
 
 #: .\templates\compliance\report.html:181
 msgid "Age"
@@ -3742,7 +3770,8 @@ msgstr "Todos los modelos"
 msgid "When"
 msgstr "Cuándo"
 
-#: .\templates\core\audit_log.html:39 .\templates\generic\_traceability.html:28
+#: .\templates\core\audit_log.html:39
+#: .\templates\generic\_traceability.html:28
 msgid "Action"
 msgstr "Acción"
 
@@ -4123,7 +4152,8 @@ msgstr "¿Archivar documento?"
 msgid "This will hide the document without deleting its file."
 msgstr "El documento quedará oculto sin eliminar su archivo."
 
-#: .\templates\generic\confirm_delete.html:6 .\templates\generic\detail.html:18
+#: .\templates\generic\confirm_delete.html:6
+#: .\templates\generic\detail.html:18
 #: .\templates\operations\flightrecord_detail.html:12
 #: .\templates\registry\aircraft_detail.html:12
 #: .\templates\registry\costcenter_detail.html:12
@@ -4161,7 +4191,8 @@ msgstr "Pronóstico meteorológico"
 
 #: .\templates\geo\plan_detail.html:68
 #, python-format
-msgid "Forecast over this area for %(date)s, the day the linked permit begins."
+msgid ""
+"Forecast over this area for %(date)s, the day the linked permit begins."
 msgstr ""
 "Pronóstico sobre esta área para el %(date)s, el día en que empieza el "
 "permiso vinculado."
@@ -4210,8 +4241,8 @@ msgid ""
 "Append-only: each row is what the forecast said at the moment it was "
 "reviewed."
 msgstr ""
-"Sólo se agrega: cada fila es lo que decía el pronóstico en el momento en que "
-"se revisó."
+"Sólo se agrega: cada fila es lo que decía el pronóstico en el momento en que"
+" se revisó."
 
 #: .\templates\geo\plan_detail.html:96
 msgid "Reviewed"
@@ -4376,8 +4407,8 @@ msgid ""
 "Flight time only: the real duty day (travel, setup, waiting on weather) is "
 "longer, so this is a floor."
 msgstr ""
-"Sólo tiempo de vuelo: la jornada real (traslados, montaje, espera de ventana "
-"meteorológica) es más larga, así que esto es un piso."
+"Sólo tiempo de vuelo: la jornada real (traslados, montaje, espera de ventana"
+" meteorológica) es más larga, así que esto es un piso."
 
 #: .\templates\operations\flightrecord_detail.html:3
 #: .\templates\operations\flightrecord_detail.html:8
@@ -4493,7 +4524,8 @@ msgstr "Número"
 msgid "Duration"
 msgstr "Duración"
 
-#: .\templates\registration\login.html:8 .\templates\registration\login.html:48
+#: .\templates\registration\login.html:8
+#: .\templates\registration\login.html:48
 msgid "Sign In"
 msgstr "Iniciar sesión"
 
@@ -4584,7 +4616,8 @@ msgid "Maintenance & status"
 msgstr "Mantenimiento y estado"
 
 #: .\templates\registry\aircraft_detail.html:34
-msgid "Mark this aircraft as damaged and open an emergency maintenance record?"
+msgid ""
+"Mark this aircraft as damaged and open an emergency maintenance record?"
 msgstr ""
 "¿Marcar esta aeronave en Mal estado y abrir una mantención de emergencia?"
 
@@ -4651,7 +4684,8 @@ msgstr "Planificaciones activas"
 #: .\templates\registry\assignment_list.html:25
 msgid ""
 "There are assignments without a cost center. Review them before confirming."
-msgstr "Hay asignaciones sin centro de costo. Revísalas antes de confirmarlas."
+msgstr ""
+"Hay asignaciones sin centro de costo. Revísalas antes de confirmarlas."
 
 #: .\templates\registry\assignment_list.html:26
 msgid "Review pending assignments"
@@ -5038,7 +5072,8 @@ msgstr "Crea un tablero para organizar tareas, responsables y vencimientos."
 msgid "Create board"
 msgstr "Crear tablero"
 
-#: .\templates\workboard\kanban.html:52 .\templates\workboard\task_list.html:23
+#: .\templates\workboard\kanban.html:52
+#: .\templates\workboard\task_list.html:23
 msgid "Task details"
 msgstr "Detalle de tarea"
 
