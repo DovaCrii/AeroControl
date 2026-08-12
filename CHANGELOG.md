@@ -77,6 +77,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **Subir la autorización DGAC ya no obliga a repetir las fechas del permiso
+  (`LV-79`).** El formulario las propone desde el registro enlazado —permiso de
+  vuelo y habilitación— y avisa de dónde salieron, para corregirlas si el
+  documento dice otra cosa.
 - **18 etiquetas de formulario que se veían en inglés** dentro de la interfaz en
   español (alertas, reglas de alerta, tipos de documento, historial de
   mantención y los cuatro formularios del tablero). Se agregó además el test que
