@@ -41,6 +41,14 @@ class MaintenanceHistoryForm(AeroModelForm):
     class Meta:
         model = MaintenanceHistory
         fields = ["record", "previous_status", "new_status", "changed_by"]
+        # Same reason as MaintenanceRecordForm above: an unlisted field renders
+        # Django's derived English label, which is in no catalog.
+        labels = {
+            "record": _("Record"),
+            "previous_status": _("Previous status"),
+            "new_status": _("New status"),
+            "changed_by": _("Changed by"),
+        }
 
 
 class MaintenanceCompletionForm(AeroModelForm):
