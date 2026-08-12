@@ -593,7 +593,65 @@ class DocumentCreate(ComplianceCreate):
             value = self.request.GET.get(field)
             if value:
                 initial[field] = value
+        self._prefill_dates_from_record(initial)
         return initial
+
+    def _prefill_dates_from_record(self, initial):
+        """LV-79: propose the dates the linked record already holds.
+
+        Uploading the DGAC authorization for a permit meant retyping the very
+        dates the permit was created with -- the same information looked up
+        twice. The record already knows them, so it offers them.
+
+        Derived from the record rather than passed in the URL: the link is not
+        the only way to reach this form, and a URL parameter would silently
+        stop working the moment someone arrives another way.
+
+        **Only where the mapping is unambiguous.** A permit's validity window
+        *is* the window its authorization covers, and a qualification's dates
+        are the same dates. An aircraft or an operator carries several dates
+        (insurance, credential, airworthiness) and which one applies depends on
+        the document type -- guessing wrong there is worse than not guessing,
+        so those are left blank.
+
+        Every value is a suggestion in an editable field, never a decision: the
+        DGAC can issue a resolution on a date of its own.
+        """
+        from django.contrib.contenttypes.models import ContentType
+
+        # (app_label, model) -> (source field for issue_date, for expiry_date)
+        date_sources = {
+            ("operations", "flightpermission"): ("valid_from", "valid_until"),
+            ("registry", "qualification"): ("issue_date", "expiry_date"),
+        }
+
+        entity_type, object_id = initial.get("entity_type"), initial.get("object_id")
+        if not entity_type or not object_id:
+            return
+        content_type = ContentType.objects.filter(pk=entity_type).first()
+        if content_type is None:
+            return
+        source = date_sources.get((content_type.app_label, content_type.model))
+        if source is None:
+            return
+        model = content_type.model_class()
+        if model is None:
+            return
+        record = model._default_manager.filter(pk=object_id, is_active=True).first()
+        if record is None:
+            return
+
+        issue_field, expiry_field = source
+        for target, field_name in (
+            ("issue_date", issue_field),
+            ("expiry_date", expiry_field),
+        ):
+            # Anything already in the URL wins: an explicit request beats a
+            # derived suggestion.
+            if not initial.get(target):
+                value = getattr(record, field_name, None)
+                if value:
+                    initial[target] = value
 
     def get_success_url(self):
         """LV-40: return to the entity's own fiche (its Documents tab), not the

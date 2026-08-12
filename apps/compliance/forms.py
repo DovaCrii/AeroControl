@@ -108,6 +108,17 @@ class DocumentForm(AeroModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # LV-79: DocumentCreate proposes the dates the linked record already
+        # holds. Say where they came from, or a pre-filled field reads as a
+        # value someone else entered and nobody dares correct it -- and the
+        # DGAC can perfectly well issue a resolution on a date of its own.
+        if not self.is_bound:
+            for name in ("issue_date", "expiry_date"):
+                if self.initial.get(name):
+                    self.fields[name].help_text = _(
+                        "Taken from the linked record. Correct it if the "
+                        "document says otherwise."
+                    )
         allowed_type_filter = Q()
         for app_label, model in DOCUMENTABLE_MODELS:
             allowed_type_filter |= Q(app_label=app_label, model=model)
