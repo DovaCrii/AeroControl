@@ -37,6 +37,7 @@ from .forms import (
     DeliverableForm,
     DocumentForm,
     DocumentTypeForm,
+    NonConformityForm,
 )
 from .models import (
     Alert,
@@ -45,6 +46,7 @@ from .models import (
     Document,
     DocumentType,
     MonthlyComplianceReview,
+    NonConformity,
     document_upload_path,
 )
 from .storage import DocumentStorageNotFound, get_document_storage
@@ -230,11 +232,22 @@ class DeliverableRelease(ModelPermissionRequiredMixin, View):
 
 
 class DeliverableReject(ModelPermissionRequiredMixin, View):
-    """Reject a deliverable -- the reflight / rework path of ISO 10.2."""
+    """Reject a deliverable -- the reflight / rework path of ISO 10.2.
+
+    Rejecting **opens a non-conformity automatically**. This is the clause's
+    most important trigger: a rejected survey is exactly the kind of finding
+    10.2 wants a root cause for, and leaving it to someone to remember to file
+    one is how the record ends up incomplete.
+
+    The finding is created open and empty of analysis on purpose -- prompting
+    for a root cause at the moment of rejection would get "pending" typed into
+    it, which looks answered and is worse than blank.
+    """
 
     model = Deliverable
     permission_action = "change"
 
+    @transaction.atomic
     def post(self, request, pk):
         deliverable = get_object_or_404(Deliverable, pk=pk, is_active=True)
         if deliverable.status == Deliverable.STATUS_RELEASED:
@@ -242,9 +255,141 @@ class DeliverableReject(ModelPermissionRequiredMixin, View):
             return redirect(deliverable)
         deliverable.status = Deliverable.STATUS_REJECTED
         deliverable.save(update_fields=["status", "updated_at"])
-        set_audit_context(request, deliverable, action="deliverable_rejected")
-        messages.success(request, _("Deliverable rejected."))
+
+        finding = NonConformity.objects.create(
+            title=_("Rejected deliverable: %(title)s") % {"title": deliverable.title},
+            source=NonConformity.SOURCE_REJECTED_DELIVERABLE,
+            cost_center=deliverable.cost_center,
+            content_type=ContentType.objects.get_for_model(Deliverable),
+            object_id=deliverable.pk,
+            description=_(
+                "Opened automatically when the deliverable was rejected. "
+                "Record the root cause and the corrective action before "
+                "closing it."
+            ),
+        )
+        set_audit_context(
+            request,
+            deliverable,
+            action="deliverable_rejected",
+            metadata={"non_conformity_id": str(finding.pk)},
+        )
+        messages.success(
+            request, _("Deliverable rejected and a non-conformity opened.")
+        )
         return redirect(deliverable)
+
+
+class NonConformityList(ComplianceList):
+    """R7.6: reflights, rejected surveys, incidents and audit findings."""
+
+    model = NonConformity
+    template_name = "compliance/nonconformity_list.html"
+    search_fields = ["title", "description", "root_cause"]
+
+    def get_queryset(self):
+        queryset = super().get_queryset().select_related("cost_center")
+        status = self.request.GET.get("status")
+        if status in dict(NonConformity.STATUS_CHOICES):
+            queryset = queryset.filter(status=status)
+        source = self.request.GET.get("source")
+        if source in dict(NonConformity.SOURCE_CHOICES):
+            queryset = queryset.filter(source=source)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["status_choices"] = NonConformity.STATUS_CHOICES
+        context["source_choices"] = NonConformity.SOURCE_CHOICES
+        context["selected_status"] = self.request.GET.get("status", "")
+        context["selected_source"] = self.request.GET.get("source", "")
+        return context
+
+
+class NonConformityDetail(ModelViewPermissionRequiredMixin, DetailView):
+    model = NonConformity
+    template_name = "compliance/nonconformity_detail.html"
+    context_object_name = "finding"
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .filter(is_active=True)
+            .select_related("cost_center", "closed_by", "effectiveness_verified_by")
+        )
+
+
+class NonConformityCreate(ComplianceCreate):
+    model = NonConformity
+    form_class = NonConformityForm
+
+
+class NonConformityUpdate(HtmxFormMixin, ModelPermissionRequiredMixin, UpdateView):
+    model = NonConformity
+    form_class = NonConformityForm
+    permission_action = "change"
+    template_name = "generic/form.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = _("Edit non-conformity")
+        return context
+
+
+class NonConformityClose(ModelPermissionRequiredMixin, View):
+    """Close a finding, which requires the analysis ISO 10.2 asks for."""
+
+    model = NonConformity
+    permission_action = "change"
+
+    def post(self, request, pk):
+        finding = get_object_or_404(NonConformity, pk=pk, is_active=True)
+        if not finding.close(user=request.user):
+            messages.error(
+                request,
+                _(
+                    "Record the root cause and the corrective action before "
+                    "closing this finding."
+                ),
+            )
+            return redirect(finding)
+        set_audit_context(request, finding, action="non_conformity_closed")
+        messages.success(request, _("Non-conformity closed."))
+        return redirect(finding)
+
+
+class NonConformityReopen(ModelPermissionRequiredMixin, View):
+    model = NonConformity
+    permission_action = "change"
+
+    def post(self, request, pk):
+        finding = get_object_or_404(NonConformity, pk=pk, is_active=True)
+        finding.reopen()
+        set_audit_context(request, finding, action="non_conformity_reopened")
+        messages.success(request, _("Non-conformity reopened."))
+        return redirect(finding)
+
+
+class NonConformityVerifyEffectiveness(ModelPermissionRequiredMixin, View):
+    """Same second statement as on an alert: "and it worked"."""
+
+    model = NonConformity
+    permission_action = "change"
+
+    def post(self, request, pk):
+        finding = get_object_or_404(NonConformity, pk=pk, is_active=True)
+        note = (request.POST.get("note") or "").strip()
+        if not finding.verify_effectiveness(user=request.user, note=note):
+            messages.error(
+                request, _("Only a closed finding can have its action verified.")
+            )
+            return redirect(finding)
+        set_audit_context(
+            request, finding, action="non_conformity_effectiveness_verified"
+        )
+        messages.success(request, _("Corrective action verified."))
+        return redirect(finding)
 
 
 class DocumentList(ComplianceList):

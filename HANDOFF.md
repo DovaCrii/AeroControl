@@ -93,8 +93,11 @@ no tenga umbrales, sus entregables se registran "Sin evaluar" y se pueden
 liberar sin control. Cargarlos es un formulario (ficha del centro de costo), no
 un cambio de código.
 
-Queda de `R7.4`/`R7.6`: **`NonConformity`** — un entregable rechazado debería
-abrir una no conformidad con causa raíz, y ése es el disparador que falta.
+~~Queda de `R7.4`/`R7.6`: **`NonConformity`**.~~ **Hecho el 2026-08-12**: existe
+el registro, cerrar exige causa raíz y acción correctiva, y **rechazar un
+entregable abre la no conformidad solo**. Con eso **`R7` queda cerrado salvo el
+IPER estructurado** (`R7.5`), que el diseño deja último y sólo a pedido
+explícito por ser el que más se arriesga a sentirse como burocracia nueva.
 
 **Números que el usuario ya fijó (2026-08-12), para no volver a preguntarlos:**
 verificación de eficacia **30 días** (ya implementado como

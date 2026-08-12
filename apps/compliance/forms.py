@@ -7,7 +7,14 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from apps.core.forms import AeroModelForm
-from .models import Alert, AlertRule, Deliverable, Document, DocumentType
+from .models import (
+    Alert,
+    AlertRule,
+    Deliverable,
+    Document,
+    DocumentType,
+    NonConformity,
+)
 from .security import scan_uploaded_file
 from .watchables import (
     WATCHABLE_MODELS,
@@ -364,6 +371,47 @@ class DeliverableForm(AeroModelForm):
             "checkpoint_count": _(
                 "Points held back from the adjustment. An RMSE computed only "
                 "over control points is not an independent check."
+            ),
+        }
+
+
+class NonConformityForm(AeroModelForm):
+    """R7.6. `status` is not a field: closing goes through the action that
+    checks the root cause is on record first."""
+
+    class Meta:
+        model = NonConformity
+        fields = [
+            "title",
+            "source",
+            "cost_center",
+            "detected_on",
+            "description",
+            "root_cause",
+            "corrective_action",
+            "reported_to_dgac_at",
+            "dgac_report_reference",
+            "notes",
+        ]
+        labels = {
+            "title": _("Title"),
+            "source": _("Source"),
+            "cost_center": _("Cost center"),
+            "detected_on": _("Detected on"),
+            "description": _("Description"),
+            "root_cause": _("Root cause"),
+            "corrective_action": _("Corrective action"),
+            "reported_to_dgac_at": _("Reported to DGAC on"),
+            "dgac_report_reference": _("DGAC report reference"),
+            "notes": _("Notes"),
+        }
+        help_texts = {
+            "root_cause": _(
+                "Required before closing. Leave blank until it is actually "
+                "investigated -- a placeholder looks answered."
+            ),
+            "reported_to_dgac_at": _(
+                "Only when the event required notifying the authority."
             ),
         }
 

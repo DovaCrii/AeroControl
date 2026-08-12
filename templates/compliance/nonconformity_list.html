@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load aero_tags i18n %}
+{% block title %}{% translate "Non-conformities" %} - AeroControl{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-start">
+  <h1 class="h3">{% translate "Non-conformities" %}</h1>
+  <div class="d-flex gap-2">
+    {% if perms.compliance.add_nonconformity %}<a class="btn btn-primary" href="{% url 'nonconformity-create' %}">{% translate "New non-conformity" %}</a>{% endif %}
+    <a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>
+  </div>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-4">{% include "generic/_search_input.html" with search_url=request.path %}</div>
+  <div class="col-md-3">
+    <select class="form-select" name="status">
+      <option value="">{% translate "All statuses" %}</option>
+      {% for value, label in status_choices %}<option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3">
+    <select class="form-select" name="source">
+      <option value="">{% translate "All sources" %}</option>
+      {% for value, label in source_choices %}<option value="{{ value }}" {% if selected_source == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-auto"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
+</form>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>{% translate "Title" %}</th><th>{% translate "Source" %}</th><th>{% translate "Cost center" %}</th><th>{% translate "Detected" %}</th><th>{% translate "Status" %}</th><th>{% translate "Effectiveness" %}</th></tr></thead>
+      <tbody>{% for object in objects %}<tr>
+        <td><a href="{{ object.get_absolute_url }}"><strong>{{ object.title }}</strong></a></td>
+        <td>{{ object.get_source_display }}</td>
+        <td>{{ object.cost_center|default:"—" }}</td>
+        <td><span class="text-nowrap">{{ object.detected_on|date:"Y-m-d" }}</span></td>
+        <td><span class="badge bg-{% if object.status == 'closed' %}success{% else %}warning text-dark{% endif %}">{{ object.get_status_display }}</span></td>
+        {% comment %}R7.6: closing is not the end of the story -- the norm asks
+        whether the action worked. An open finding shows nothing here rather
+        than a blank, because the question does not apply yet.{% endcomment %}
+        <td>{% if object.effectiveness_verified_at %}<span class="badge bg-primary-subtle text-primary-emphasis">{% translate "Verified" %}</span>{% elif object.effectiveness_is_due %}<span class="badge bg-danger">{% translate "Verification due" %}</span>{% elif object.status == 'closed' %}<span class="text-muted small">{{ object.effectiveness_due_date|date:"Y-m-d"|default:"—" }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+      </tr>{% empty %}<tr><td colspan="99" class="text-center text-muted py-4">{% translate "No non-conformities recorded yet." %}</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+  <div id="pagination-container">{% render_pagination page_obj %}</div>
+</div>
+{% endblock %}
