@@ -4,7 +4,10 @@
 {% block content %}
 <div class="page-header">
   <h1 class="h3">{% translate "Geospatial planning" %}</h1>
-  <a class="btn btn-primary" href="{% url 'geo-plan-import' %}">+ {% translate "Import KMZ/KML" %}</a>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>
+    <a class="btn btn-primary" href="{% url 'geo-plan-import' %}">+ {% translate "Import KMZ/KML" %}</a>
+  </div>
 </div>
 
 <div class="card">

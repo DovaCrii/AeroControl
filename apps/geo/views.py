@@ -11,6 +11,7 @@ from apps.operations.models import FlightPermission
 from apps.compliance.views import save_uploaded_file, uploaded_file_cleanup
 from apps.core.audit import set_audit_context
 from apps.core.views import (
+    CsvExportMixin,
     ModelPermissionRequiredMixin,
     ModelViewPermissionRequiredMixin,
     StatusTransitionView,
@@ -71,7 +72,7 @@ PLAN_TRANSITIONS = [
 ]
 
 
-class GeoPlanListView(ModelViewPermissionRequiredMixin, ListView):
+class GeoPlanListView(CsvExportMixin, ModelViewPermissionRequiredMixin, ListView):
     model = GeoPlan
     template_name = "geo/plan_list.html"
     context_object_name = "plans"

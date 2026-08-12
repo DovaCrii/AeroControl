@@ -108,6 +108,18 @@ def test_operational_records_page_lists_and_filters(world):
 
 
 @pytest.mark.django_db
+def test_operational_records_export_csv(world):
+    cc, _operator, _aircraft = world
+    _op_record(cc, date(2026, 5, 10))
+    client = _admin_client()
+
+    response = client.get(reverse("operational-records"), {"export": "csv"})
+
+    body = b"".join(response.streaming_content).decode("utf-8-sig")
+    assert f"Record {date(2026, 5, 10)}" in body
+
+
+@pytest.mark.django_db
 def test_operational_records_excludes_non_operational_documents(world):
     cc, _operator, _aircraft = world
     ordinary = DocumentType.objects.create(code="aoc", name="AOC")
