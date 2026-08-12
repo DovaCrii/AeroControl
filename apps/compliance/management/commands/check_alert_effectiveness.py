@@ -30,7 +30,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
-from apps.compliance.models import Alert
+from apps.compliance.models import Alert, NonConformity
 from apps.core.groups import REPORT_RECIPIENTS
 from apps.core.jobs import record_job_run
 
@@ -99,6 +99,26 @@ class Command(BaseCommand):
                 "reason": alert.resolution_reason or "—",
             }
             for alert in due
+        ]
+        # R7.6: non-conformities share the clock, so they share this job. A
+        # second timer over the same question would mean two mails a manager
+        # has to reconcile to know what is actually pending.
+        findings_due = NonConformity.objects.filter(
+            status=NonConformity.STATUS_CLOSED,
+            is_active=True,
+            effectiveness_verified_at__isnull=True,
+            effectiveness_due_date__lte=today,
+        ).order_by("effectiveness_due_date")
+        rows += [
+            {
+                "entity": finding.title,
+                "rule": finding.get_source_display(),
+                "resolved_on": (
+                    finding.closed_at.date().isoformat() if finding.closed_at else "—"
+                ),
+                "reason": finding.corrective_action or "—",
+            }
+            for finding in findings_due
         ]
         mailed = self._notify(rows, window, dry_run) if rows else False
         return rows, mailed
