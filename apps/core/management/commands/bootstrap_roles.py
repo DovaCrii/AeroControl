@@ -24,6 +24,10 @@ ROLE_PERMISSIONS = {
         # view are granted, change and delete never are.
         "add_weatherreview",
         "view_weatherreview",
+        # R7.4: Operations records the deliverable's metrics; validating and
+        # releasing it belongs to Compliance, so no `change` here.
+        "add_deliverable",
+        "view_deliverable",
         # Per-resource assignments (OPS-1). The movement log is append-only, so
         # only view is ever granted for it.
         "add_operatorassignment",
@@ -61,6 +65,12 @@ ROLE_PERMISSIONS = {
         "approve_geoplan",
         # Reads the meteorological evidence (ISO 8.1) without producing it.
         "view_weatherreview",
+        # R7.4: Compliance owns the internal validation and the release gate
+        # (ISO 8.6) -- the whole point is that whoever produced the survey is
+        # not the one who signs it off.
+        "add_deliverable",
+        "change_deliverable",
+        "view_deliverable",
     },
     "Maintenance": {
         "add_maintenancerecord",

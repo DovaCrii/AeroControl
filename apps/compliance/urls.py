@@ -72,6 +72,38 @@ urlpatterns = [
     path(
         "alert/<uuid:pk>/resolve/", views.AlertResolve.as_view(), name="alert-resolve"
     ),
+    # R7.4: deliverable quality control (ISO 9001 8.5.1/8.6).
+    path("deliverable/", views.DeliverableList.as_view(), name="deliverable-list"),
+    path(
+        "deliverable/new/",
+        views.DeliverableCreate.as_view(),
+        name="deliverable-create",
+    ),
+    path(
+        "deliverable/<uuid:pk>/",
+        views.DeliverableDetail.as_view(),
+        name="deliverable-detail",
+    ),
+    path(
+        "deliverable/<uuid:pk>/edit/",
+        views.DeliverableUpdate.as_view(),
+        name="deliverable-update",
+    ),
+    path(
+        "deliverable/<uuid:pk>/validate/",
+        views.DeliverableValidate.as_view(),
+        name="deliverable-validate",
+    ),
+    path(
+        "deliverable/<uuid:pk>/release/",
+        views.DeliverableRelease.as_view(),
+        name="deliverable-release",
+    ),
+    path(
+        "deliverable/<uuid:pk>/reject/",
+        views.DeliverableReject.as_view(),
+        name="deliverable-reject",
+    ),
     path("alert/<uuid:pk>/reopen/", views.AlertReopen.as_view(), name="alert-reopen"),
     # R7.6: effectiveness verification of a corrective action (ISO 10.2).
     path(

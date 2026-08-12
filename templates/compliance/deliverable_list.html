@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load aero_tags i18n %}
+{% block title %}{% translate "Deliverables" %} - AeroControl{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-start">
+  <h1 class="h3">{% translate "Deliverables" %}</h1>
+  <div class="d-flex gap-2">
+    {% if perms.compliance.add_deliverable %}<a class="btn btn-primary" href="{% url 'deliverable-create' %}">{% translate "New deliverable" %}</a>{% endif %}
+    <a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>
+  </div>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-5">{% include "generic/_search_input.html" with search_url=request.path %}</div>
+  <div class="col-md-3">
+    <select class="form-select" name="status">
+      <option value="">{% translate "All statuses" %}</option>
+      {% for value, label in status_choices %}<option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-auto"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
+</form>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>{% translate "Title" %}</th><th>{% translate "Cost center" %}</th><th>{% translate "Status" %}</th><th>{% translate "Acceptance" %}</th><th>{% translate "Created" %}</th></tr></thead>
+      <tbody>{% for object in objects %}<tr>
+        <td><a href="{{ object.get_absolute_url }}"><strong>{{ object.title }}</strong></a></td>
+        <td>{{ object.cost_center }}</td>
+        <td><span class="badge bg-{% if object.status == 'released' %}success{% elif object.status == 'rejected' %}danger{% elif object.status == 'validated' %}info{% else %}secondary{% endif %}">{{ object.get_status_display }}</span></td>
+        {% comment %}R7.4: "not assessed" is a third state, not a pass. The
+        contract may set no thresholds, or the metrics may not be in yet --
+        showing either as compliant is how a quality gate quietly stops
+        gating.{% endcomment %}
+        <td>{% if object.meets_acceptance_criteria is None %}<span class="text-muted">{% translate "Not assessed" %}</span>{% elif object.meets_acceptance_criteria %}<span class="badge bg-success">{% translate "Meets criteria" %}</span>{% else %}<span class="badge bg-danger">{% translate "Below criteria" %}</span>{% endif %}</td>
+        <td><span class="text-nowrap">{{ object.created_at|date:"Y-m-d" }}</span></td>
+      </tr>{% empty %}<tr><td colspan="99" class="text-center text-muted py-4">{% translate "No deliverables recorded yet." %}</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+  <div id="pagination-container">{% render_pagination page_obj %}</div>
+</div>
+{% endblock %}
