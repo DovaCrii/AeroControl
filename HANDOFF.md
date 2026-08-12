@@ -80,6 +80,22 @@ producción.
 | LV-72 (trazabilidad estilo SIGO) | ⬜ **Lo siguiente de la Sesión B** |
 | Decidir si el tablero Kanban se elimina | ⬜ Requiere decisión |
 
+### La Sesión C ya no está bloqueada por los umbrales
+
+`R7.4` (`Deliverable`) figuraba como "el más bloqueado, sin los umbrales del
+contrato no se puede cerrar". **Era un diagnóstico equivocado**, y conviene que
+no vuelva: los umbrales viven en el **contrato** (`CostCenter`), no en el
+entregable, así que la estructura se construye sin conocerlos y **cada contrato
+activa su propio control al cargar los suyos**. Hecho el 2026-08-12.
+
+Lo que sí queda esperando los números reales es el **uso**: mientras un contrato
+no tenga umbrales, sus entregables se registran "Sin evaluar" y se pueden
+liberar sin control. Cargarlos es un formulario (ficha del centro de costo), no
+un cambio de código.
+
+Queda de `R7.4`/`R7.6`: **`NonConformity`** — un entregable rechazado debería
+abrir una no conformidad con causa raíz, y ése es el disparador que falta.
+
 **Números que el usuario ya fijó (2026-08-12), para no volver a preguntarlos:**
 verificación de eficacia **30 días** (ya implementado como
 `Alert.EFFECTIVENESS_DAYS`), meta de disponibilidad de flota **90%**, límite de
