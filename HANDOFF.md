@@ -57,11 +57,10 @@ Se cargan desde la ficha de cada aeronave/operador, o re-corriendo
 **2. Dos variables que faltan en `/etc/aerocontrol.env`.** Las dos son código ya
 desplegado que **no se ve hasta activarlas**:
 
-- **`WEATHER_ENABLED=True`** — el pronóstico y la revisión meteorológica (`R8.1`,
-  `R8.2`) vienen **apagados a propósito**: sin esta variable el proyecto conserva
-  su propiedad de cero llamadas salientes. Es la única llamada externa que hace.
-  Ojo: aunque se active, la tarjeta sólo aparece si el plan geo tiene **área** y
-  un **permiso enlazado con fecha** — sin eso no hay día que consultar.
+- ~~**`WEATHER_ENABLED=True`**~~ — **activado el 2026-08-12 y funcionando en
+  `p340`**. Ojo para el futuro: la tarjeta sólo aparece si el plan geo tiene
+  **área** y un **permiso enlazado con fecha**; sin eso no hay día que consultar,
+  y la ausencia se lee como un despliegue fallido.
 - **`CSP_REPORT_ONLY=False`** — CSP a *enforcing*, verificado en demo con cero
   violaciones. Criterio de salida de `beta`.
 
@@ -72,6 +71,14 @@ el importador con `--apply`.
 
 **4. ~~Desplegar lo del 2026-08-12.~~ Hecho ese mismo día** — 7 migraciones,
 roles y los 2 timers nuevos. Todo lo de esa tanda ya corre en `p340`.
+
+**5. El clima, más visible (`R8.4`)** — pedido del usuario después de verlo
+andando. Es lo primero que quiere en la próxima sesión: **temperatura** (hoy no
+se pide a Open-Meteo), llevarlo **al panel** (ya es posible sin plan geo, porque
+el permiso tiene coordenadas propias desde `OPS-4`) y **poder elegir la
+ubicación**. Esa última parte necesita una decisión suya: la fila `R8.4` del
+plan tiene las tres opciones y por qué la geolocalización del navegador **no**
+es la buena.
 
 ### Estado de la Sesión B (avanzada el 2026-08-12)
 
