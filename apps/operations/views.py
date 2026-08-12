@@ -229,7 +229,19 @@ class FlightPermissionDetail(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["history"] = self.object.history.all()
+        # LV-72: the SIGO trace shows *who, with what role, when*. The role is
+        # the user's groups, prefetched here rather than resolved per row --
+        # `{{ h.changed_by_user.groups.all }}` in the template would be one
+        # query per history entry (the shape V.18/V.19 already cost this
+        # project twice).
+        # Oldest first, unlike the model's default: SIGO numbers the trace 1..N
+        # in the order things happened, and "in what order" is half of what the
+        # screen is for.
+        context["history"] = (
+            self.object.history.select_related("changed_by_user")
+            .prefetch_related("changed_by_user__groups")
+            .order_by("sequence")
+        )
         context["flight_records"] = self.object.records.filter(is_active=True)
         # OPS-5: attachments (additional letters/correspondence) through the
         # existing generic Document pipeline -- FlightPermission is already in

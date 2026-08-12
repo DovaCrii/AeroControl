@@ -79,8 +79,8 @@ producción.
 | Revisión meteorológica como evidencia (R8.2) | ✅ Hecho |
 | Los **5** KPI operacionales (R7.7a + R7.7b) | ✅ Hecho — completos. **Sólo la meta de flota (90%) está acordada**; los otros 4 muestran su valor sin marcar incumplimiento |
 | Límite de jornada de vuelo (R7.5a) | ✅ Hecho — 8 horas |
-| LV-72 (trazabilidad estilo SIGO) | ⬜ **Lo siguiente de la Sesión B** |
-| Decidir si el tablero Kanban se elimina | ⬜ Requiere decisión |
+| LV-72 (trazabilidad estilo SIGO) | ✅ Hecho — en la ficha del permiso. **Extensible** a la ficha de aeronave y al plan geoespacial con el mismo patrón |
+| Decidir si el tablero Kanban se elimina | ⬜ **Lo único que queda de la Sesión B, y requiere decisión tuya** |
 
 **Lo único que le falta a la cláusula 9.1.1 son las metas restantes** (precisión
 de levantamientos, tasa de re-vuelos, cumplimiento de plazos). Son decisiones de

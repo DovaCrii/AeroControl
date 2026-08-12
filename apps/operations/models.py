@@ -23,12 +23,23 @@ class FlightPermission(BaseModel):
     unit is unambiguous even when the crew/fleet is a roster.
     """
 
+    STATUS_REQUESTED = "requested"
+    STATUS_APPROVED = "approved"
+    STATUS_DENIED = "denied"
+    STATUS_COMPLETED = "completed"
     STATUS_CHOICES = [
-        ("requested", _("Requested")),
-        ("approved", _("Approved")),
-        ("denied", _("Denied")),
-        ("completed", _("Completed")),
+        (STATUS_REQUESTED, _("Requested")),
+        (STATUS_APPROVED, _("Approved")),
+        (STATUS_DENIED, _("Denied")),
+        (STATUS_COMPLETED, _("Completed")),
     ]
+    # LV-72: the order the statuses actually advance in. Declared here, next to
+    # the choices it draws from, and **never as a literal list in a template**
+    # -- that is precisely the R1.1 defect (the calendar carried 7 hand-written
+    # event types that drifted from the 9 real ones). `denied` is deliberately
+    # out of it: it is not a step on the way anywhere, it is where the flow
+    # stops.
+    STATUS_FLOW = [STATUS_REQUESTED, STATUS_APPROVED, STATUS_COMPLETED]
     # R2.6: DAN 151 (populated area) vs DAN 91 (unpopulated) is a real
     # normative distinction (ISO 9001/45001 audit guide, clause 6.1.3), not
     # a boolean -- a single survey can cross both, which "mixed" exists to
@@ -154,6 +165,52 @@ class FlightPermission(BaseModel):
         from django.urls import reverse
 
         return reverse("permission-detail", kwargs={"pk": self.pk})
+
+    def status_steps(self):
+        """LV-72: the permit's progress as a stepper, SIGO-style.
+
+        Mirrors the "Trazabilidad" screen operators already use with the DGAC
+        (Creación → Enviada → En revisión → Autorizada). Copying that shape is
+        not decoration: it removes the mental translation between the authority's
+        screen and this one, and it is the order an auditor reads evidence in.
+
+        Labels come from STATUS_CHOICES and the order from STATUS_FLOW, so
+        adding a status cannot leave this out of sync -- the R1.1 trap.
+
+        A denied permit does not render the full flow greyed out, which would
+        imply the remaining steps are still ahead of it. It shows how far it got
+        and where it stopped.
+        """
+        labels = dict(self.STATUS_CHOICES)
+        if self.status == self.STATUS_DENIED:
+            return [
+                {
+                    "code": self.STATUS_REQUESTED,
+                    "label": labels[self.STATUS_REQUESTED],
+                    "state": "done",
+                },
+                {
+                    "code": self.STATUS_DENIED,
+                    "label": labels[self.STATUS_DENIED],
+                    "state": "blocked",
+                },
+            ]
+
+        reached = (
+            self.STATUS_FLOW.index(self.status)
+            if self.status in self.STATUS_FLOW
+            else -1
+        )
+        steps = []
+        for index, code in enumerate(self.STATUS_FLOW):
+            if index < reached:
+                state = "done"
+            elif index == reached:
+                state = "current"
+            else:
+                state = "pending"
+            steps.append({"code": code, "label": labels[code], "state": state})
+        return steps
 
     @staticmethod
     def _next_internal_folio():
