@@ -144,6 +144,14 @@ registro de topología y seriales, `AL-304` un dashboard de inventario, pero
 ninguno publica una API para un consumidor externo. Es un ítem nuevo para su
 plan, y es chico al lado de M2/M3: los datos ya los tienen modelados.
 
+**Y sí hacía falta un plan de integración, no por formalidad**: el `AGENTS.md`
+de AeroLink dice que la integración *"está fuera de alcance hasta crear un plan
+separado"*, y su `ADR-0001` dice que ese plan vive en este repo. Escrito el
+2026-08-12 en
+[docs/dev/plan-integracion-aerolink.md](docs/dev/plan-integracion-aerolink.md).
+**Está pendiente de tu aprobación**; mientras no se apruebe, cualquier trabajo de
+integración del lado de AeroLink viola su propia guía.
+
 ## Despliegue pendiente del 2026-08-12 — secuencia lista
 
 Todo lo de esta tanda está en `origin/main` y **sin desplegar**. Copiar y pegar

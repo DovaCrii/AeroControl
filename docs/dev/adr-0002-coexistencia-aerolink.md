@@ -221,6 +221,11 @@ datos.
   publica una API para un consumidor externo. Es el ítem que hay que agregarles,
   y es chico comparado con M2/M3 — los datos ya los tienen modelados.
 
+  **Antes de que AeroLink pueda tomarlo hace falta aprobar el plan de
+  integración**, que es una precondición escrita en su propio `AGENTS.md`
+  (*"fuera de alcance hasta crear un plan separado"*). Ese plan está en
+  [plan-integracion-aerolink.md](plan-integracion-aerolink.md).
+
 La conciliación **no** es sustitución: un `FlightRecord` tiene datos que DJI no conoce
 (el permiso de vuelo bajo el que se voló, el propósito). La sesión de AeroLink aporta la
 medición; AeroControl aporta el encuadre normativo.
