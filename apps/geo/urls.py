@@ -37,4 +37,10 @@ urlpatterns = [
         views.GeoPlanReopen.as_view(),
         name="geo-plan-reopen",
     ),
+    # R8.1: recording the meteorological review (ISO 8.1).
+    path(
+        "plans/<uuid:pk>/weather-review/",
+        views.WeatherReviewCreate.as_view(),
+        name="weather-review-create",
+    ),
 ]

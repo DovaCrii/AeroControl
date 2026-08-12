@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -410,11 +410,38 @@ class Alert(BaseModel):
     # to ask, and stay reason-less); AlertResolveForm is what actually makes
     # it required for the one place a human clicks "Resolve".
     resolution_reason = models.TextField(blank=True)
+    # R7.6 (ISO 10.2): a corrective action is not finished when it is taken --
+    # the norm asks whether it *worked*. Until now resolving was terminal and
+    # nobody ever went back to look, so a reason on record could describe a fix
+    # that never held. Set on resolve() to resolved_at + EFFECTIVENESS_DAYS;
+    # `check_alert_effectiveness` escalates whatever is due and unverified.
+    # Nullable, so the alerts resolved before this existed are not retroactively
+    # overdue -- there is no honest due date to invent for them.
+    effectiveness_due_date = models.DateField(null=True, blank=True)
+    effectiveness_verified_at = models.DateTimeField(null=True, blank=True)
+    effectiveness_verified_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    effectiveness_note = models.TextField(blank=True)
+
+    # 30 days: one monthly cycle, matching the cadence the compliance review
+    # already runs on (R6.5), so verification lands in a rhythm the operation
+    # keeps rather than a new one. Decided with the user 2026-08-12.
+    EFFECTIVENESS_DAYS = 30
 
     class Meta:
         indexes = [
             models.Index(
                 fields=["is_resolved", "is_active"], name="compliance_alert_open_idx"
+            ),
+            # check_alert_effectiveness runs daily over exactly this pair.
+            models.Index(
+                fields=["effectiveness_due_date", "effectiveness_verified_at"],
+                name="compliance_alert_effect_idx",
             ),
             # generate_alerts dedupes and resolve_related_alerts filters on the
             # watched (type, id) pair.
@@ -560,6 +587,13 @@ class Alert(BaseModel):
         self.is_resolved = True
         self.resolved_at = timezone.now()
         self.resolution_reason = reason
+        # R7.6: the clock for "did this actually work?" starts here, for every
+        # caller including the automatic ones. An automatic close (a renewed
+        # expiry date, a completed maintenance) is still a corrective action
+        # whose effect the norm expects someone to confirm.
+        self.effectiveness_due_date = timezone.localdate() + timedelta(
+            days=self.EFFECTIVENESS_DAYS
+        )
         task = self.linked_task()
         completed_stage = None
         if task is not None:
@@ -582,6 +616,7 @@ class Alert(BaseModel):
                 "resolved_at",
                 "resolution_reason",
                 "resolved_from_stage",
+                "effectiveness_due_date",
                 "updated_at",
             ]
         )
@@ -609,6 +644,15 @@ class Alert(BaseModel):
         self.is_resolved = False
         self.resolved_at = None
         self.resolution_reason = ""
+        # R7.6: reopening *is* the answer to "did it work?" -- no. The pending
+        # verification goes with it; the alert is open again and will get its
+        # own new due date when it is next resolved. Any verification already
+        # recorded is cleared too: it attested to a resolution that no longer
+        # stands.
+        self.effectiveness_due_date = None
+        self.effectiveness_verified_at = None
+        self.effectiveness_verified_by = None
+        self.effectiveness_note = ""
         origin = self.resolved_from_stage
         self.resolved_from_stage = None
         self.save(
@@ -617,6 +661,10 @@ class Alert(BaseModel):
                 "resolved_at",
                 "resolution_reason",
                 "resolved_from_stage",
+                "effectiveness_due_date",
+                "effectiveness_verified_at",
+                "effectiveness_verified_by",
+                "effectiveness_note",
                 "updated_at",
             ]
         )
@@ -637,3 +685,39 @@ class Alert(BaseModel):
         task.stage = target
         task.save(update_fields=["stage", "updated_at"])
         return task
+
+    @property
+    def effectiveness_is_due(self):
+        """Resolved, past its due date, and nobody has confirmed it worked."""
+        return (
+            self.is_resolved
+            and self.effectiveness_due_date is not None
+            and self.effectiveness_verified_at is None
+            and self.effectiveness_due_date <= timezone.localdate()
+        )
+
+    def verify_effectiveness(self, *, user=None, note=""):
+        """R7.6: record that the corrective action was checked and held.
+
+        Deliberately *not* the inverse of reopen(): confirming effectiveness
+        leaves the alert resolved and its reason untouched. It adds a second,
+        later statement -- "and it worked" -- which is what ISO 10.2 asks for
+        beyond the fix itself.
+
+        Only meaningful on a resolved alert; verifying an open one would
+        attest to the effectiveness of an action nobody has taken.
+        """
+        if not self.is_resolved:
+            return False
+        self.effectiveness_verified_at = timezone.now()
+        self.effectiveness_verified_by = user
+        self.effectiveness_note = note
+        self.save(
+            update_fields=[
+                "effectiveness_verified_at",
+                "effectiveness_verified_by",
+                "effectiveness_note",
+                "updated_at",
+            ]
+        )
+        return True

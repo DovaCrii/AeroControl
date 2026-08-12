@@ -13,6 +13,7 @@ resumen corto), así que después se puede comprobar si realmente corrieron.
 | `notify_expiring_credentials` (opcional, LV-29) | Avisa por correo a **cada operador** de sus vigencias DGAC por vencer o ya vencidas (credencial + habilitaciones, ≤30 días) | Diario o semanal, si se quiere el aviso directo al operador |
 | `check_monthly_records` (LV-30) | El último día del mes, crea la **revisión de cumplimiento** pendiente por cada centro de costo que voló y avisa al grupo Dirección (vuelos vs registros del mes) | Diario (actúa solo el último día 28/29/30/31) |
 | `check_monthly_review_deadline` (R6.5) | El día 15, revisa las revisiones del mes anterior que sigan **pendientes** (nadie las marcó) y las escala al grupo Dirección en un segundo correo. No crea ni cambia ninguna revisión, solo persigue lo que quedó sin firmar | Diario (actúa solo el día 15) |
+| `check_alert_effectiveness` (R7.6) | Escala al grupo Dirección las acciones correctivas resueltas hace **30 días** cuya eficacia **nadie confirmó**. Nunca resuelve, reabre ni verifica por su cuenta: una máquina declarando que una acción correctiva fue eficaz es lo contrario de la evidencia que pide ISO 10.2 | Diario |
 | `snapshot_compliance` (R7.7) | Guarda los totales documentales del día (una fila por centro de costo más una consolidada). **Sin esto el reporte no puede mostrar tendencia**: los contadores se evalúan siempre "a hoy", así que comparar período contra período marca "sin cambio" por construcción. Idempotente: repetir la misma fecha la sobrescribe, no duplica | Diario, al final del día |
 
 El orden importa: `send_alert_digest` reporta lo que `generate_alerts` acaba de
@@ -159,6 +160,16 @@ el día 15**, escalando a Dirección en un segundo correo las revisiones del mes
 anterior que sigan pendientes. No crea ni cambia revisiones -- solo reporta lo
 que `check_monthly_records` ya dejó pendiente. Acepta los mismos flags
 (`--period YYYY-MM`, `--force`, `--dry-run`).
+
+La verificación de eficacia (R7.6) se agrega con `mkjob alert-effectiveness
+"check_alert_effectiveness" "*-*-* 08:30:00"`: corre a diario y escala lo que
+lleva **30 días resuelto sin que nadie confirme que la acción sirvió**. El plazo
+es `Alert.EFFECTIVENESS_DAYS` (decidido con el usuario el 2026-08-12, alineado
+con el ciclo mensual de R6.5); `--days N` lo cambia para una corrida puntual sin
+tocar el modelo, y `--dry-run` reporta sin enviar. **Las alertas resueltas antes
+de que este campo existiera no vencen nunca** — no hay fecha honesta que
+inventarles, y ponerlas todas en "vencidas hoy" habría estrenado la función con
+un atraso que nadie causó.
 
 El registro histórico de cumplimiento (R7.7) se agrega con `mkjob snapshot
 "snapshot_compliance" "*-*-* 23:00:00"`. **Conviene activarlo cuanto antes**: la

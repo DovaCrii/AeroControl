@@ -24,6 +24,14 @@ The list is self-contained: Resolve and Undo.{% endcomment %}{% for object in ob
   <td class="text-end">
     <div class="alert-actions">
     {% if object.is_resolved %}<span class="badge bg-success">{% translate "Resolved" %}</span>
+      {% comment %}R7.6 (ISO 10.2): resolving used to be terminal -- nobody ever
+      came back to ask whether the action held. The verification is a second,
+      later statement, so it sits next to "Resolved" rather than replacing it.
+      Saying it did *not* hold is what "Undo" already does.{% endcomment %}
+      {% if object.effectiveness_verified_at %}<span class="badge bg-primary-subtle text-primary-emphasis" title="{% blocktranslate with when=object.effectiveness_verified_at|date:'Y-m-d' who=object.effectiveness_verified_by|default:'—' %}Verified on {{ when }} by {{ who }}{% endblocktranslate %}">{% translate "Verified" %}</span>
+      {% elif object.effectiveness_is_due and perms.compliance.change_alert %}
+      <form method="post" action="{% url 'alert-verify-effectiveness' object.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-primary text-nowrap" title="{% translate 'Confirm the corrective action held (ISO 10.2)' %}">{% translate "Verify" %}</button></form>
+      {% endif %}
       <form method="post" action="{% url 'alert-reopen' object.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary text-nowrap" title="{% translate 'Reopen this alert and send its task back' %}">{% translate "Undo" %}</button></form>
     {% else %}
       <a class="btn btn-sm btn-outline-success text-nowrap" href="{% url 'alert-resolve' object.pk %}" hx-get="{% url 'alert-resolve' object.pk %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" title="{% translate 'Resolve, with a reason on record (ISO 10.2)' %}">{% translate "Resolve" %}</a>
