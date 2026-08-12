@@ -167,6 +167,60 @@ datos.
   los ciclos de batería, esas claves son parte del contrato y no un detalle de
   implementación del otro lado.
 
+- **Fase 2b (`X.4b`) — inventario de baterías: el lado consumidor está hecho
+  (2026-08-12).** Es la mitad de `X.4` que **sí se puede cerrar sin esperar**,
+  porque no depende de las sesiones de vuelo: AeroLink ya modela las baterías
+  como `Device` con `kind="battery"` y `serial_number` único, que es la misma
+  llave del §2.
+
+  AeroControl trae `sync_batteries`, que llena `registry.Battery` (el espejo de
+  `R7.2`, vacío a propósito hasta ahora). **Contrato que AeroControl espera**,
+  propuesto acá por el consumidor para que AeroLink lo implemente:
+
+  ```
+  GET {AEROLINK_API_URL}/devices/?kind=battery
+  Authorization: Token <token>
+
+  {"results": [
+    {"serial_number": "...",       # requerido, la llave del §2
+     "model": "...",               # opcional
+     "status": "active|retired",   # opcional
+     "cycle_count": 120,           # opcional
+     "health_percent": 93,         # opcional, 0-100
+     "firmware_version": "...",    # opcional
+     "aircraft_serial": "..."}     # opcional, "vista por última vez en"
+  ]}
+  ```
+
+  Se acepta también una lista pelada en vez del sobre `{"results": [...]}`: su
+  API todavía no existe y exigir la forma más elaborada sería imponerles un
+  requisito sin beneficio de este lado.
+
+  Decisiones del consumidor, por si alguna incomoda del otro lado:
+
+  - **Una clave ausente no es un cero.** Si el feed omite `cycle_count`, el
+    valor conocido se conserva; sobrescribirlo con 0 destruiría justo la
+    evidencia que la tabla existe para guardar.
+  - **Nunca borra.** Una batería que falta en una respuesta es mucho más
+    probablemente una respuesta parcial que una batería que dejó de existir, y
+    borrarla se llevaría su historial de ciclos. Se reportan las ausentes.
+  - **Un serial de aeronave desconocido no descarta la batería**: rotan entre
+    airframes y AeroLink puede conocer una que este padrón no.
+  - **Sin URL configurada el comando falla fuerte**, no reporta "0 baterías":
+    un inventario vacío y un gateway caído no pueden verse igual en el registro
+    del trabajo.
+
+  **`--from-file` lee el mismo JSON desde un archivo**, así que el flujo completo
+  se puede probar hoy, antes de que AeroLink exponga nada. Verificado el
+  2026-08-12 contra el demo: la batería quedó enlazada a `RPA-2002` por serial,
+  marcada como sincronizada, y una segunda corrida actualizó en vez de duplicar.
+
+  **Lo que falta del lado de AeroLink** es un endpoint que exponga el inventario
+  de dispositivos. **No está en su plan maestro**: `AL-203` cubre el registro de
+  topología y seriales y `AL-304` un dashboard de inventario, pero ninguno
+  publica una API para un consumidor externo. Es el ítem que hay que agregarles,
+  y es chico comparado con M2/M3 — los datos ya los tienen modelados.
+
 La conciliación **no** es sustitución: un `FlightRecord` tiene datos que DJI no conoce
 (el permiso de vuelo bajo el que se voló, el propósito). La sesión de AeroLink aporta la
 medición; AeroControl aporta el encuadre normativo.
