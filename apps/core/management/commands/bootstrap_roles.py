@@ -19,6 +19,11 @@ ROLE_PERMISSIONS = {
         "add_geoplan",
         "change_geoplan",
         "view_geoplan",
+        # R8.1: Operations flies, so Operations is who reviews the weather
+        # before a flight. Append-only, like the movement log above -- add and
+        # view are granted, change and delete never are.
+        "add_weatherreview",
+        "view_weatherreview",
         # Per-resource assignments (OPS-1). The movement log is append-only, so
         # only view is ever granted for it.
         "add_operatorassignment",
@@ -54,6 +59,8 @@ ROLE_PERMISSIONS = {
         # Compliance approves flight-planning geo plans; it does not draw them.
         "view_geoplan",
         "approve_geoplan",
+        # Reads the meteorological evidence (ISO 8.1) without producing it.
+        "view_weatherreview",
     },
     "Maintenance": {
         "add_maintenancerecord",

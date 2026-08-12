@@ -165,3 +165,104 @@ def test_page_still_renders_with_the_feature_disabled(settings):
 
     assert response.status_code == 200
     assert response.context["weather"] is None
+
+
+class TestRecordingTheReview:
+    """R8.1 evidence (ISO 8.1): showing a forecast is not proof anyone reviewed
+    it, and a forecast cannot be looked up again after the fact -- the provider
+    answers a later model run, or refuses a past date. So the numbers are
+    stored as read, on an explicit action."""
+
+    @pytest.mark.django_db
+    def test_records_the_numbers_as_read(self, monkeypatch):
+        from apps.core import weather
+        from apps.geo.models import WeatherReview
+
+        monkeypatch.setattr(weather, "forecast_for", lambda *a: FORECAST)
+        plan = _plan_with_area()
+        client = _client("view_geoplan", "add_weatherreview")
+
+        response = client.post(reverse("weather-review-create", args=[plan.pk]))
+
+        assert response.status_code == 302
+        review = WeatherReview.objects.get()
+        assert review.plan == plan
+        assert review.target_date == date(2026, 8, 20)
+        assert review.wind_speed_max == 18.4
+        assert review.wind_gusts_max == 31.0
+        # The units are part of the evidence: a bare "18.4" attests to nothing.
+        assert review.units["wind_speed_10m_max"] == "km/h"
+        # Centroid of the bbox, same place the panel showed.
+        assert float(review.latitude) == -33.5
+        assert float(review.longitude) == -70.5
+        assert review.flight_permission == plan.flight_permission
+        assert review.reviewed_by.username == "u-view_geoplan-add_weatherreview"
+
+    @pytest.mark.django_db
+    def test_survives_the_forecast_becoming_unavailable(self, monkeypatch):
+        """Evidence already on record must not vanish from the page because the
+        provider is down today -- that is precisely when it matters."""
+        from apps.core import weather
+        from apps.geo.models import WeatherReview
+
+        monkeypatch.setattr(weather, "forecast_for", lambda *a: FORECAST)
+        plan = _plan_with_area()
+        client = _client("view_geoplan", "add_weatherreview")
+        client.post(reverse("weather-review-create", args=[plan.pk]))
+
+        monkeypatch.setattr(weather, "forecast_for", lambda *a: None)
+        response = client.get(reverse("geo-plan-detail", args=[plan.pk]))
+        content = response.content.decode()
+
+        assert response.context["weather"] is None
+        assert list(response.context["weather_reviews"]) == [
+            WeatherReview.objects.get()
+        ]
+        assert "18,4" in content  # localized under LANGUAGE_CODE="es"
+
+    @pytest.mark.django_db
+    def test_nothing_is_filed_when_the_provider_gives_nothing(self, monkeypatch):
+        """A blank row would be worse than no row: it would read as a review
+        that happened and found nothing worth noting."""
+        from apps.core import weather
+        from apps.geo.models import WeatherReview
+
+        monkeypatch.setattr(weather, "forecast_for", lambda *a: None)
+        plan = _plan_with_area()
+        client = _client("view_geoplan", "add_weatherreview")
+
+        response = client.post(reverse("weather-review-create", args=[plan.pk]))
+
+        assert response.status_code == 302
+        assert WeatherReview.objects.count() == 0
+
+    @pytest.mark.django_db
+    def test_requires_the_add_permission(self, monkeypatch):
+        from apps.core import weather
+        from apps.geo.models import WeatherReview
+
+        monkeypatch.setattr(weather, "forecast_for", lambda *a: FORECAST)
+        plan = _plan_with_area()
+
+        response = _client("view_geoplan").post(
+            reverse("weather-review-create", args=[plan.pk])
+        )
+
+        assert response.status_code == 403
+        assert WeatherReview.objects.count() == 0
+
+    @pytest.mark.django_db
+    def test_get_does_not_record(self, monkeypatch):
+        """Recording is an act, never a side effect of navigation -- a GET that
+        wrote a row would attest to nobody having reviewed anything."""
+        from apps.core import weather
+        from apps.geo.models import WeatherReview
+
+        monkeypatch.setattr(weather, "forecast_for", lambda *a: FORECAST)
+        plan = _plan_with_area()
+        client = _client("view_geoplan", "add_weatherreview")
+
+        response = client.get(reverse("weather-review-create", args=[plan.pk]))
+
+        assert response.status_code == 405
+        assert WeatherReview.objects.count() == 0

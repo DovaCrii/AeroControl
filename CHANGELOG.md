@@ -17,6 +17,17 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   que un permiso antiguo cuyo papel sólo decía "Chuquicamata" no queda
   retroactivamente incompleto. Un punto a medio ingresar (latitud sin longitud)
   se rechaza: no se puede dibujar en un mapa y fallaría en silencio.
+- **Verificación de eficacia de las acciones correctivas (`R7.6a`, ISO 10.2).**
+  Resolver una alerta dejaba de ser el final: a los **30 días** el sistema
+  pregunta si la acción realmente sirvió, y escala a Dirección lo que nadie
+  confirmó. La confirmación la hace una persona; el trabajo programado sólo
+  persigue lo pendiente.
+- **La revisión meteorológica queda registrada como evidencia (`R8.2`, ISO 8.1).**
+  Hasta ahora el pronóstico se mostraba y se perdía: no había forma de acreditar
+  que se revisó el clima antes de volar, y un pronóstico **no se puede consultar
+  de nuevo después** (el proveedor responde otra corrida del modelo, o rechaza la
+  fecha pasada). Ahora se guardan los valores tal como se leyeron, con sus
+  unidades, por acción explícita de una persona.
 - **Filtro por tipo de entidad en la lista de alertas (`LV-76`).** La vista ya
   filtraba por tipo, pero no había forma de usarlo desde la pantalla.
 - **Exportación CSV donde faltaba.** Log de auditoría, usuarios y roles, planes

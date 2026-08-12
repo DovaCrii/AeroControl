@@ -6,6 +6,7 @@ per feature). Versions are append-only, mirroring AuditEvent.
 """
 
 import uuid
+from datetime import date
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -283,3 +284,87 @@ class GeoPlanPermissionLink(BaseModel):
             latest = GeoPlanPermissionLink.objects.order_by("-sequence").first()
             self.sequence = (latest.sequence if latest else 0) + 1
         return super().save(*args, **kwargs)
+
+
+class WeatherReview(BaseModel):
+    """R8.1: the meteorological review, on record (ISO 8.1).
+
+    R8.1 already *shows* the forecast over a plan's area for the day it is
+    flown, but showing is not evidence: the page recomputes it on every visit
+    and keeps nothing, so after the flight there is no way to answer "was the
+    weather reviewed beforehand, and what did it say" -- which is the actual
+    audit question. A forecast is also **not reproducible after the fact**: ask
+    the provider next month and it answers with a different model run, or
+    refuses a past date entirely.
+
+    So this stores the numbers **as they were read**, not a pointer to fetch
+    them again. Append-only, like GeoPlanPermissionLink and
+    ResourceMovementLog: a review is a statement about a moment, and editing it
+    later would defeat the point.
+
+    Recorded on an explicit action, never on page load. What the norm asks for
+    is that a responsible person reviewed the conditions; a row written because
+    someone happened to open a tab would attest to nobody having done so.
+    """
+
+    plan = models.ForeignKey(
+        GeoPlan, on_delete=models.CASCADE, related_name="weather_reviews"
+    )
+    # The permit whose start date the forecast was for. SET_NULL rather than
+    # PROTECT: losing the link must not erase the evidence that the review
+    # happened, and target_date below preserves the day either way.
+    flight_permission = models.ForeignKey(
+        "operations.FlightPermission",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    target_date = models.DateField()
+    latitude = models.DecimalField(max_digits=9, decimal_places=6)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6)
+    wind_speed_max = models.FloatField(null=True, blank=True)
+    wind_gusts_max = models.FloatField(null=True, blank=True)
+    precipitation_sum = models.FloatField(null=True, blank=True)
+    precipitation_probability_max = models.FloatField(null=True, blank=True)
+    # The provider states its units per response; a bare "12" is not evidence
+    # of anything, and Open-Meteo can be asked in km/h or m/s.
+    units = models.JSONField(default=dict, blank=True)
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+
+    class Meta:
+        verbose_name = _("weather review")
+        verbose_name_plural = _("weather reviews")
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.plan_id} @ {self.target_date}"
+
+    @classmethod
+    def from_forecast(cls, *, plan, forecast, latitude, longitude, user=None):
+        """Build (unsaved) a review from what `weather.forecast_for` returned.
+
+        Kept next to the model rather than in the view so the mapping from the
+        provider's field names to these columns lives in one place -- the view
+        should not have to know that "wind_speed_10m_max" is this model's
+        `wind_speed_max`.
+        """
+        return cls(
+            plan=plan,
+            flight_permission=plan.flight_permission,
+            target_date=date.fromisoformat(forecast["date"]),
+            latitude=latitude,
+            longitude=longitude,
+            wind_speed_max=forecast.get("wind_speed_10m_max"),
+            wind_gusts_max=forecast.get("wind_gusts_10m_max"),
+            precipitation_sum=forecast.get("precipitation_sum"),
+            precipitation_probability_max=forecast.get("precipitation_probability_max"),
+            units=forecast.get("units") or {},
+            reviewed_by=user,
+        )
