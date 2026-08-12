@@ -1,0 +1,44 @@
+{% load i18n %}
+{% comment %}LV-72: the traceability block, shaped like SIGO's -- the screen
+operators already read every day with the DGAC. Copying that shape removes the
+mental translation between the authority's screen and this one, and "who did
+what, in what capacity, when, in what order" is how an auditor reads evidence.
+
+Shared by the flight permit and the geo plan. Expects:
+  - `record`  : anything with StatusFlowMixin (so `status_steps` is derived
+                from the model, never from a literal list here -- the R1.1 trap)
+  - `history` : its status history, oldest first, with the actor's groups
+                prefetched by the view (unprefetched it is one query per row)
+{% endcomment %}
+<div class="card mt-3 p-4">
+  <h2 class="h5 mb-3">{% translate "Traceability" %}</h2>
+  <ol class="status-steps mb-4">
+    {% for step in record.status_steps %}
+    <li class="status-step is-{{ step.state }}">
+      <span class="status-step-badge">{% if step.state == 'done' %}✓{% elif step.state == 'blocked' %}✕{% else %}{{ forloop.counter }}{% endif %}</span>
+      <span class="status-step-label">{{ step.label }}</span>
+    </li>
+    {% endfor %}
+  </ol>
+
+  <h3 class="h6 mb-2">{% translate "Request history" %}</h3>
+  {% if history %}
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead><tr><th scope="col">#</th><th scope="col">{% translate "Action" %}</th><th scope="col">{% translate "User" %}</th><th scope="col">{% translate "Role" %}</th><th scope="col">{% translate "Date" %}</th><th scope="col">{% translate "Notes" %}</th></tr></thead>
+      <tbody>{% for h in history %}<tr>
+        <td class="text-muted">{{ forloop.counter }}</td>
+        <td><strong>{{ h.get_new_status_display|default:h.new_status }}</strong>
+          <div class="small text-muted">{% blocktranslate with previous=h.get_previous_status_display|default:h.previous_status %}from {{ previous }}{% endblocktranslate %}</div></td>
+        <td>{{ h.changed_by|default:"—" }}</td>
+        {% comment %}The role is the user's groups (Operations, Compliance…).
+        A trace that says who but not in what capacity answers half the
+        auditor's question.{% endcomment %}
+        <td>{% for group in h.changed_by_user.groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% empty %}<span class="text-muted">—</span>{% endfor %}</td>
+        <td><span class="text-nowrap">{{ h.created_at|date:"Y-m-d H:i" }}</span></td>
+        <td>{{ h.notes|default:"—" }}</td>
+      </tr>{% endfor %}</tbody>
+    </table>
+  </div>
+  {% else %}<p class="text-muted mb-0">{% translate "No status changes recorded yet." %}</p>{% endif %}
+</div>

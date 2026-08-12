@@ -17,6 +17,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   que un permiso antiguo cuyo papel sólo decía "Chuquicamata" no queda
   retroactivamente incompleto. Un punto a medio ingresar (latitud sin longitud)
   se rechaza: no se puede dibujar en un mapa y fallaría en silencio.
+- **Trazabilidad también en el plan geoespacial (`LV-72`).** El mismo bloque que
+  el permiso, porque un plan también avanza por revisión. La ficha de aeronave
+  no lo lleva: su estado va y vuelve entre activa y mantención, que no es un
+  avance.
 - **Trazabilidad del permiso al estilo SIGO (`LV-72`).** La ficha del permiso
   abre con el avance del trámite en pasos y, debajo, el historial numerado con
   **acción, usuario, rol, fecha y notas** — la misma forma que los operadores ya
