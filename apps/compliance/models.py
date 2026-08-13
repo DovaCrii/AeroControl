@@ -65,6 +65,12 @@ class DocumentType(BaseModel):
         ),
     )
 
+    class Meta:
+        # LV-80: without these the screen title falls back to Django's English
+        # derivation of the class name ("Document type" / "Document types").
+        verbose_name = _("document type")
+        verbose_name_plural = _("document types")
+
     def __str__(self):
         return self.name
 
@@ -180,6 +186,10 @@ class MonthlyComplianceReview(BaseModel):
     # generate_alerts stops alerting once the status is one of these (the
     # reviewer has acted); mirrors its ("completed", "denied") terminal set.
     RESOLVED_STATUSES = frozenset({STATUS_COMPLETED, STATUS_NON_COMPLIANT})
+    # LV-90: the same set under the name the alert engine reads. Declared here,
+    # next to the choices, instead of in a literal list inside generate_alerts
+    # that mixed three models' vocabularies -- see AlertRule/watchables.
+    TERMINAL_STATUSES = RESOLVED_STATUSES
 
     cost_center = models.ForeignKey(
         "registry.CostCenter",
@@ -395,6 +405,11 @@ class AlertRule(BaseModel):
     def watched_model(self):
         return resolve_model(self.entity_type)
 
+    class Meta:
+        # LV-80: same gap as DocumentType and Alert.
+        verbose_name = _("alert rule")
+        verbose_name_plural = _("alert rules")
+
 
 class EffectivenessVerificationMixin(models.Model):
     """R7.6 (ISO 10.2): "was the corrective action effective?", shared.
@@ -513,6 +528,10 @@ class Alert(EffectivenessVerificationMixin, BaseModel):
     # `check_alert_effectiveness` escalates whatever is due and unverified.
 
     class Meta:
+        # LV-80: without these the screen title falls back to Django's English
+        # derivation of the class name.
+        verbose_name = _("alert")
+        verbose_name_plural = _("alerts")
         indexes = [
             models.Index(
                 fields=["is_resolved", "is_active"], name="compliance_alert_open_idx"

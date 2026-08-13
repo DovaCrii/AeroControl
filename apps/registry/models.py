@@ -266,6 +266,13 @@ class Aircraft(BaseModel):
         ("maintenance", _("Maintenance")),
         ("retired", _("Retired")),
     ]
+    # LV-90: a retired aircraft left the fleet -- it is not a condition anyone
+    # can act on, so it must not keep raising alerts. The old literal list in
+    # generate_alerts never mentioned it (it only knew the permit's and the
+    # maintenance record's vocabularies), so a rule watching `status` alerted on
+    # retired airframes forever. `fleet_availability` already excludes them from
+    # its denominator for exactly this reason.
+    TERMINAL_STATUSES = frozenset({"retired"})
     registration = models.CharField(max_length=30, unique=True)
     type = models.CharField(max_length=100)
     model = models.CharField(max_length=100)

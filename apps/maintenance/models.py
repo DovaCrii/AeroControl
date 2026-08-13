@@ -38,6 +38,10 @@ class MaintenanceRecord(BaseModel):
     # status at the two edges of this set (entering at "sent", leaving at
     # "completed" from "in_transit"). `workshop_dwell_is_overdue` below flags
     # a record that has dwelled in one of these too long.
+    # LV-90: "completed" is the single terminal state both paths end at, which
+    # the comment above already said -- now the alert engine reads it from here
+    # instead of from a literal list of its own.
+    TERMINAL_STATUSES = frozenset({"completed"})
     WORKSHOP_STATUSES = frozenset({"sent", "at_workshop", "finished", "in_transit"})
     # How long is too long in one workshop state before it deserves a visual
     # flag (record_list.html/record_detail.html). A fixed constant, not an
@@ -177,7 +181,12 @@ class MaintenanceHistory(BaseModel):
     record = models.ForeignKey(
         MaintenanceRecord, on_delete=models.PROTECT, related_name="history"
     )
-    changed_at = models.DateTimeField(auto_now_add=True)
+    # LV-91: `changed_at` removed. It was a second `auto_now_add` beside the
+    # `created_at` this model already inherits from BaseModel -- two columns that
+    # always held the same value, so the next person had to work out which one
+    # was the real one, and an `ORDER BY` on the wrong one raises no error.
+    # `PermissionHistory` dropped its own in `operations/0003`; this is the same
+    # cleanup, four months late.
     # LV-82: `choices` added. This is the R2.5 defect, still open here after it
     # was fixed for the permit: without them Django never generates
     # `get_new_status_display`, so the history table on the maintenance fiche
