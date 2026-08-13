@@ -124,6 +124,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **El tablero Kanban dejó de aparecer donde todavía asomaba (`LV-78`).** Se dio
+  de baja el 2026-08-12, pero seguía dibujándose en el **panel** (un gráfico de
+  sus etapas, todos los días), en el **calendario**, en el **buscador** y en el
+  **centro de administración**. Ninguna de esas pantallas llevaba a ningún lado,
+  porque el tablero ya no está en el menú. **No se borró nada**: el tablero y sus
+  datos siguen ahí, sólo dejó de mostrarse.
 - **Dos listas más fáciles de barrer (`LV-87`, `LV-88`).** En **operadores**, si
   la credencial está adjunta pasa a ser **su propia columna** con una figura de
   sí/no, en vez de una insignia metida en la celda de la fecha (que parecía
