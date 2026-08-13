@@ -98,11 +98,20 @@ tarea Kanban apagada al inicio (el flag `create_kanban_task` de cada regla).
 Un rerun no duplica ni pisa reglas que hayas ajustado en la UI. También puedes
 crear o afinar reglas a mano desde `/compliance/alertrule/`.
 
-> **`init_dgac_board` ya no es necesario para operar** (2026-08-11, LV-69/69b).
-> El tablero "Seguimiento de alertas" salió del menú y la lista de alertas ya no
-> ofrece "Crear tarea"/"Ver tarea", así que no hay un botón que falle por falta
-> de tablero. El comando sigue existiendo y la vista sigue viva por URL; correrlo
-> es inocuo (`get_or_create`).
+> **No corras `init_dgac_board`** (LV-78, 2026-08-13). El tablero se **dio de
+> baja** el 2026-08-12 y hoy está congelado: sin menú, sin botones, sin gráfico
+> en el panel, sin carril en el calendario y fuera del buscador. El comando sigue
+> existiendo, pero **recrearía justo lo que se está retirando**, así que también
+> se sacó del procedimiento de despliegue.
+
+> **La creación automática de tarjetas salió del formulario de reglas** (LV-78).
+> Ya no se puede encender desde la interfaz. Una regla que **ya** la tenía
+> encendida sigue funcionando igual, y `generate_alerts` la nombra en su salida
+> para que se vea. Para saber si hay alguna en producción:
+>
+> ```bash
+> uv run python manage.py shell -c "from apps.compliance.models import AlertRule; print(list(AlertRule.objects.filter(create_kanban_task=True).values_list('name', flat=True)))"
+> ```
 
 ## Cómo se resuelve una alerta
 

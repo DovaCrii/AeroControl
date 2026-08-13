@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-13 12:32-0400\n"
+"POT-Creation-Date: 2026-08-13 13:27-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -32,12 +32,12 @@ msgid "Operator record"
 msgstr "Operador"
 
 #: .\apps\compliance\forms.py:99 .\apps\compliance\watchables.py:16
-#: .\apps\dashboard\views.py:45 .\templates\registry\operator_list.html:34
+#: .\apps\dashboard\views.py:44 .\templates\registry\operator_list.html:34
 msgid "Qualification"
 msgstr "Habilitación"
 
-#: .\apps\compliance\forms.py:100 .\apps\compliance\forms.py:520
-#: .\apps\compliance\forms.py:563 .\apps\geo\forms.py:45
+#: .\apps\compliance\forms.py:100 .\apps\compliance\forms.py:519
+#: .\apps\compliance\forms.py:562 .\apps\geo\forms.py:45
 #: .\apps\operations\forms.py:42 .\apps\registry\forms.py:342
 #: .\apps\registry\forms.py:436 .\apps\registry\forms.py:466
 #: .\apps\registry\forms.py:514 .\apps\registry\forms.py:572
@@ -64,7 +64,7 @@ msgid "Cost center"
 msgstr "Centro de costo"
 
 #: .\apps\compliance\forms.py:101 .\apps\compliance\watchables.py:25
-#: .\apps\dashboard\views.py:113 .\apps\geo\forms.py:51
+#: .\apps\dashboard\views.py:112 .\apps\geo\forms.py:51
 #: .\apps\operations\forms.py:113 .\templates\core\calendar.html:83
 #: .\templates\operations\record_list.html:6
 msgid "Flight permission"
@@ -84,7 +84,7 @@ msgid "Select an entity type"
 msgstr "Selecciona un tipo de entidad"
 
 #: .\apps\compliance\forms.py:150 .\apps\compliance\forms.py:268
-#: .\apps\compliance\forms.py:438 .\templates\compliance\alert_list.html:7
+#: .\apps\compliance\forms.py:447 .\templates\compliance\alert_list.html:7
 msgid "Entity type"
 msgstr "Tipo de entidad"
 
@@ -134,8 +134,8 @@ msgstr "Este tipo de documento exige una fecha de vencimiento."
 msgid "%(name)s: %(error)s"
 msgstr "%(name)s: %(error)s"
 
-#: .\apps\compliance\forms.py:259 .\apps\compliance\forms.py:519
-#: .\apps\compliance\forms.py:561 .\apps\geo\forms.py:36
+#: .\apps\compliance\forms.py:259 .\apps\compliance\forms.py:518
+#: .\apps\compliance\forms.py:560 .\apps\geo\forms.py:36
 #: .\apps\workboard\forms.py:77 .\apps\workboard\forms.py:133
 #: .\templates\compliance\_documents_section.html:29
 #: .\templates\compliance\company_documents.html:30
@@ -183,7 +183,7 @@ msgstr "Selecciona el registro operativo al que pertenece este documento."
 msgid "There are no active records of this type yet."
 msgstr "Aún no hay registros activos de este tipo."
 
-#: .\apps\compliance\forms.py:420 .\apps\compliance\forms.py:455
+#: .\apps\compliance\forms.py:420 .\apps\compliance\forms.py:461
 #: .\apps\geo\views.py:190 .\apps\registry\forms.py:85
 #: .\apps\workboard\forms.py:23 .\apps\workboard\forms.py:47
 #: .\apps\workboard\forms.py:122 .\templates\core\users_roles.html:24
@@ -204,83 +204,71 @@ msgstr "Requiere vencimiento"
 msgid "Is insurance"
 msgstr "Es un seguro"
 
-#: .\apps\compliance\forms.py:440
+#: .\apps\compliance\forms.py:449
 msgid "Field to watch"
 msgstr "Campo a vigilar"
 
-#: .\apps\compliance\forms.py:456
+#: .\apps\compliance\forms.py:462
 msgid "Days before expiry"
 msgstr "Días antes del vencimiento"
 
-#: .\apps\compliance\forms.py:457
+#: .\apps\compliance\forms.py:463
 msgid "Enabled"
 msgstr "Habilitada"
 
-#: .\apps\compliance\forms.py:462
-msgid "Create kanban task"
-msgstr "Crear tarea Kanban"
-
-#: .\apps\compliance\forms.py:463
-msgid "Target board"
-msgstr "Tablero destino"
-
-#: .\apps\compliance\forms.py:464
-msgid "Target stage"
-msgstr "Etapa destino"
-
-#: .\apps\compliance\forms.py:490
+#: .\apps\compliance\forms.py:489
 msgid "Alert rule"
 msgstr "Regla de alerta"
 
-#: .\apps\compliance\forms.py:491
+#: .\apps\compliance\forms.py:490
 msgid "Content type"
 msgstr "Tipo de contenido"
 
-#: .\apps\compliance\forms.py:492
+#: .\apps\compliance\forms.py:491
 msgid "Object id"
 msgstr "Id del objeto"
 
-#: .\apps\compliance\forms.py:493
+#: .\apps\compliance\forms.py:492
 msgid "Message"
 msgstr "Mensaje"
 
-#: .\apps\compliance\forms.py:521
+#: .\apps\compliance\forms.py:520
 #: .\templates\compliance\deliverable_detail.html:18
 #: .\templates\core\calendar.html:32 .\templates\core\calendar.html:43
 msgid "Flight permissions"
 msgstr "Permisos de vuelo"
 
-#: .\apps\compliance\forms.py:522
+#: .\apps\compliance\forms.py:521
 msgid "Achieved GSD (cm)"
 msgstr "GSD logrado (cm)"
 
-#: .\apps\compliance\forms.py:523 .\apps\compliance\models.py:1083
+#: .\apps\compliance\forms.py:522 .\apps\compliance\models.py:1083
 msgid "Horizontal RMSE (cm)"
 msgstr "RMSE horizontal (cm)"
 
-#: .\apps\compliance\forms.py:524 .\apps\compliance\models.py:1084
+#: .\apps\compliance\forms.py:523 .\apps\compliance\models.py:1084
 msgid "Vertical RMSE (cm)"
 msgstr "RMSE vertical (cm)"
 
-#: .\apps\compliance\forms.py:525
+#: .\apps\compliance\forms.py:524
 #: .\templates\compliance\deliverable_detail.html:19
 msgid "Control points"
 msgstr "Puntos de control"
 
-#: .\apps\compliance\forms.py:526
+#: .\apps\compliance\forms.py:525
 #: .\templates\compliance\deliverable_detail.html:24
 msgid "Check points"
 msgstr "Puntos de chequeo"
 
-#: .\apps\compliance\forms.py:527
+#: .\apps\compliance\forms.py:526
 msgid "Coverage (%)"
 msgstr "Cobertura (%)"
 
-#: .\apps\compliance\forms.py:528
+#: .\apps\compliance\forms.py:527
 msgid "Overlap (%)"
 msgstr "Traslape (%)"
 
-#: .\apps\compliance\forms.py:529 .\apps\compliance\forms.py:570
+#: .\apps\compliance\forms.py:528 .\apps\compliance\forms.py:569
 #: .\apps\registry\forms.py:96
 #: .\templates\compliance\deliverable_detail.html:28
 #: .\templates\compliance\nonconformity_detail.html:29
@@ -292,12 +280,12 @@ msgstr "Traslape (%)"
 msgid "Notes"
 msgstr "Notas"
 
-#: .\apps\compliance\forms.py:533
+#: .\apps\compliance\forms.py:532
 msgid "Compared against the cost center's required GSD, when set."
 msgstr ""
 "Se compara contra el GSD requerido del centro de costo, cuando está definido."
 
-#: .\apps\compliance\forms.py:536
+#: .\apps\compliance\forms.py:535
 msgid ""
 "Points held back from the adjustment. An RMSE computed only over control "
 "points is not an independent check."
@@ -305,18 +293,18 @@ msgstr ""
 "Puntos excluidos del ajuste. Un RMSE calculado sólo sobre los puntos de "
 "control no es una verificación independiente."
 
-#: .\apps\compliance\forms.py:562
+#: .\apps\compliance\forms.py:561
 #: .\templates\compliance\nonconformity_list.html:33
 #: .\templates\geo\plan_detail.html:133
 msgid "Source"
 msgstr "Origen"
 
-#: .\apps\compliance\forms.py:564
+#: .\apps\compliance\forms.py:563
 #: .\templates\compliance\nonconformity_detail.html:18
 msgid "Detected on"
 msgstr "Detectada el"
 
-#: .\apps\compliance\forms.py:565 .\apps\geo\views.py:191
+#: .\apps\compliance\forms.py:564 .\apps\geo\views.py:191
 #: .\apps\maintenance\forms.py:23 .\apps\workboard\forms.py:24
 #: .\apps\workboard\forms.py:78
 #: .\templates\compliance\nonconformity_detail.html:20
@@ -324,25 +312,25 @@ msgstr "Detectada el"
 msgid "Description"
 msgstr "Descripción"
 
-#: .\apps\compliance\forms.py:566
+#: .\apps\compliance\forms.py:565
 #: .\templates\compliance\nonconformity_detail.html:25
 msgid "Root cause"
 msgstr "Causa raíz"
 
-#: .\apps\compliance\forms.py:567
+#: .\apps\compliance\forms.py:566
 #: .\templates\compliance\nonconformity_detail.html:26
 msgid "Corrective action"
 msgstr "Acción correctiva"
 
-#: .\apps\compliance\forms.py:568
+#: .\apps\compliance\forms.py:567
 msgid "Reported to DGAC on"
 msgstr "Reportada a la DGAC el"
 
-#: .\apps\compliance\forms.py:569
+#: .\apps\compliance\forms.py:568
 msgid "DGAC report reference"
 msgstr "Referencia del reporte DGAC"
 
-#: .\apps\compliance\forms.py:574
+#: .\apps\compliance\forms.py:573
 msgid ""
 "Required before closing. Leave blank until it is actually investigated -- a "
 "placeholder looks answered."
@@ -350,15 +338,15 @@ msgstr ""
 "Requerida antes de cerrar. Dejar en blanco hasta investigarla de verdad: un "
 "texto de relleno parece una respuesta."
 
-#: .\apps\compliance\forms.py:578
+#: .\apps\compliance\forms.py:577
 msgid "Only when the event required notifying the authority."
 msgstr "Sólo cuando el evento exigió notificar a la autoridad."
 
-#: .\apps\compliance\forms.py:591
+#: .\apps\compliance\forms.py:590
 msgid "Reason / root cause"
 msgstr "Motivo / causa raíz"
 
-#: .\apps\compliance\forms.py:592
+#: .\apps\compliance\forms.py:591
 msgid "Why this happened and how it was addressed."
 msgstr "Por qué ocurrió y cómo se solucionó."
 
@@ -680,7 +668,7 @@ msgid "AeroControl — Compliance status report"
 msgstr "AeroControl — Reporte de estado documental"
 
 #: .\apps\compliance\report_views.py:268 .\apps\compliance\report_views.py:372
-#: .\apps\workboard\views.py:330
+#: .\apps\workboard\views.py:329
 #, python-format
 msgid "Generated: %(date)s"
 msgstr "Generado: %(date)s"
@@ -781,7 +769,7 @@ msgstr "Vigencia renovada al %(date)s (cierre automático)"
 
 #: .\apps\compliance\views.py:139 .\apps\core\test_lv80_screen_titles.py:137
 #: .\apps\maintenance\views.py:46 .\apps\operations\views.py:59
-#: .\apps\registry\views.py:145 .\apps\workboard\views.py:122
+#: .\apps\registry\views.py:145 .\apps\workboard\views.py:121
 #, python-format
 msgid "New %(record)s"
 msgstr "Nuevo: %(record)s"
@@ -957,7 +945,7 @@ msgstr "Operador"
 msgid "Aircraft"
 msgstr "Aeronaves"
 
-#: .\apps\compliance\watchables.py:22 .\apps\dashboard\views.py:97
+#: .\apps\compliance\watchables.py:22 .\apps\dashboard\views.py:96
 #: .\templates\registry\costcenter_detail.html:113
 msgid "Document"
 msgstr "Documento"
@@ -984,7 +972,7 @@ msgstr "En ejecución"
 
 #: .\apps\core\models.py:219 .\apps\maintenance\models.py:34
 #: .\apps\operations\models.py:42 .\apps\registry\models.py:752
-#: .\apps\workboard\models.py:34 .\apps\workboard\views.py:104
+#: .\apps\workboard\models.py:34 .\apps\workboard\views.py:103
 #: .\templates\registry\_assignment_table_body.html:8
 #: .\templates\registry\assignment_list.html:37
 msgid "Completed"
@@ -1006,174 +994,141 @@ msgstr "ejecuciones de tareas"
 msgid "Saved successfully."
 msgstr "Guardado correctamente."
 
-#: .\apps\core\views.py:510
+#: .\apps\core\views.py:512
 msgid "until"
 msgstr "hasta"
 
-#: .\apps\core\views.py:664 .\apps\dashboard\views.py:63
+#: .\apps\core\views.py:666 .\apps\dashboard\views.py:62
 #: .\apps\registry\forms.py:311
 #: .\apps\registry\management\commands\notify_expiring_credentials.py:129
 #: .\apps\registry\models.py:691 .\templates\registry\operator_list.html:26
 msgid "DGAC credential"
 msgstr "Credencial DGAC"
 
-#: .\apps\core\views.py:689 .\apps\dashboard\views.py:79
+#: .\apps\core\views.py:691 .\apps\dashboard\views.py:78
 #: .\templates\registry\aircraft_detail.html:30
 msgid "JAC insurance"
 msgstr "Seguro JAC"
 
-#: .\apps\core\views.py:881 .\templates\core\users_roles.html:7
+#: .\apps\core\views.py:852 .\templates\core\users_roles.html:7
 msgid "Organization"
 msgstr "Organización"
 
-#: .\apps\core\views.py:882
+#: .\apps\core\views.py:853
 msgid "Define the operational scope and who can access it."
 msgstr "Define el alcance operativo y quién puede acceder a él."
 
-#: .\apps\core\views.py:885
+#: .\apps\core\views.py:856
 msgid "Operational tenants"
 msgstr "Organizaciones operativas"
 
-#: .\apps\core\views.py:886
+#: .\apps\core\views.py:857
 msgid "Manage organizations and their data boundaries."
 msgstr "Gestiona organizaciones y sus límites de datos."
 
-#: .\apps\core\views.py:892
+#: .\apps\core\views.py:863
 msgid "Tenant memberships"
 msgstr "Membresías de organización"
 
-#: .\apps\core\views.py:893
+#: .\apps\core\views.py:864
 msgid "Assign users to an operational tenant."
 msgstr "Asigna usuarios a una organización operativa."
 
-#: .\apps\core\views.py:899 .\templates\core\users_roles.html:3
+#: .\apps\core\views.py:870 .\templates\core\users_roles.html:3
 #: .\templates\core\users_roles.html:8
 msgid "Users and roles"
 msgstr "Usuarios y roles"
 
-#: .\apps\core\views.py:900
+#: .\apps\core\views.py:871
 msgid "Read-only view of who holds which role."
 msgstr "Vista de solo lectura de quién tiene qué rol."
 
-#: .\apps\core\views.py:909
+#: .\apps\core\views.py:880
 msgid "Compliance configuration"
 msgstr "Configuración de cumplimiento"
 
-#: .\apps\core\views.py:911
+#: .\apps\core\views.py:882
 msgid "Prepare document and alert rules before loading records."
 msgstr "Prepara documentos y reglas de alerta antes de cargar registros."
 
-#: .\apps\core\views.py:915
+#: .\apps\core\views.py:886
 msgid "Document types"
 msgstr "Tipos de documento"
 
-#: .\apps\core\views.py:916
+#: .\apps\core\views.py:887
 msgid "Control expiry requirements and document categories."
 msgstr "Controla requisitos de vencimiento y categorías documentales."
 
-#: .\apps\core\views.py:922
+#: .\apps\core\views.py:893
 msgid "Alert rules"
 msgstr "Reglas de alerta"
 
-#: .\apps\core\views.py:923
+#: .\apps\core\views.py:894
 msgid "Define when AeroControl should generate an alert."
 msgstr "Define cuándo AeroControl debe generar una alerta."
 
-#: .\apps\core\views.py:929
+#: .\apps\core\views.py:900
 msgid "Qualification types"
 msgstr "Tipos de habilitación"
 
-#: .\apps\core\views.py:930
+#: .\apps\core\views.py:901
 msgid "Operator ratings and the aircraft models they cover."
 msgstr "Habilitaciones del operador y los modelos de aeronave que cubren."
 
-#: .\apps\core\views.py:938
-msgid "Workboard configuration"
-msgstr "Configuración del tablero de trabajo"
-
-#: .\apps\core\views.py:940
-msgid "Shape how teams organize and follow operational work."
-msgstr "Define cómo los equipos organizan y siguen el trabajo operativo."
-
-#: .\apps\core\views.py:944
-msgid "Boards"
-msgstr "Tableros"
-
-#: .\apps\core\views.py:945
-msgid "Create and archive operational boards."
-msgstr "Crea y archiva tableros operativos."
-
-#: .\apps\core\views.py:951
-msgid "Stages"
-msgstr "Etapas"
-
-#: .\apps\core\views.py:952
-msgid "Manage the workflow stages used by a board."
-msgstr "Gestiona las etapas de flujo utilizadas por un tablero."
-
-#: .\apps\core\views.py:958 .\apps\workboard\forms.py:82
-#: .\templates\workboard\task_list.html:18
-msgid "Labels"
-msgstr "Etiquetas"
-
-#: .\apps\core\views.py:959
-msgid "Create labels used to classify tasks."
-msgstr "Crea etiquetas para clasificar tareas."
-
-#: .\apps\core\views.py:969 .\templates\core\audit_log.html:7
+#: .\apps\core\views.py:915 .\templates\core\audit_log.html:7
 msgid "Backups and audit"
 msgstr "Respaldos y auditoría"
 
-#: .\apps\core\views.py:971
+#: .\apps\core\views.py:917
 msgid "Review backups and trace changes without editing audit records."
 msgstr "Revisa respaldos y rastrea cambios sin editar la auditoría."
 
-#: .\apps\core\views.py:975
+#: .\apps\core\views.py:921
 msgid "Backup configuration"
 msgstr "Configuración de respaldos"
 
-#: .\apps\core\views.py:976
+#: .\apps\core\views.py:922
 msgid "Review the local backup destination and schedule."
 msgstr "Revisa el destino y la programación de respaldos locales."
 
-#: .\apps\core\views.py:982 .\templates\core\audit_log.html:3
+#: .\apps\core\views.py:928 .\templates\core\audit_log.html:3
 #: .\templates\core\audit_log.html:8
 msgid "Audit log"
 msgstr "Registro de auditoría"
 
-#: .\apps\core\views.py:983
+#: .\apps\core\views.py:929
 msgid "Filterable, read-only audit trail inside the app."
 msgstr "Historial de auditoría filtrable y de solo lectura dentro de la app."
 
-#: .\apps\core\views.py:990
+#: .\apps\core\views.py:936
 msgid "Audit events (technical)"
 msgstr "Eventos de auditoría (técnico)"
 
-#: .\apps\core\views.py:991 .\templates\core\audit_log.html:9
+#: .\apps\core\views.py:937 .\templates\core\audit_log.html:9
 msgid "Read-only history of authenticated changes."
 msgstr "Historial de solo lectura de cambios autenticados."
 
-#: .\apps\core\views.py:1046
+#: .\apps\core\views.py:992
 msgid "Unresolved alerts"
 msgstr "Alertas sin resolver"
 
-#: .\apps\core\views.py:1063
+#: .\apps\core\views.py:1009
 msgid "Documents expiring in 30 days"
 msgstr "Documentos que vencen en 30 días"
 
-#: .\apps\core\views.py:1074
+#: .\apps\core\views.py:1020
 msgid "Active alert rules"
 msgstr "Reglas de alerta activas"
 
-#: .\apps\core\views.py:1086
+#: .\apps\core\views.py:1032
 msgid "Users without a role"
 msgstr "Usuarios sin rol"
 
-#: .\apps\core\views.py:1321
+#: .\apps\core\views.py:1267
 msgid "Status updated."
 msgstr "Estado actualizado."
 
-#: .\apps\core\views.py:1336
+#: .\apps\core\views.py:1282
 #, python-format
 msgid "Cannot transition from %(status)s"
 msgstr "No se puede cambiar desde %(status)s"
@@ -1216,7 +1171,7 @@ msgid "Editing"
 msgstr "En edición"
 
 #: .\apps\geo\models.py:37 .\apps\workboard\models.py:33
-#: .\apps\workboard\views.py:103
+#: .\apps\workboard\views.py:102
 msgid "In review"
 msgstr "En revisión"
 
@@ -1514,12 +1469,12 @@ msgid "Emergency"
 msgstr "Emergencia"
 
 #: .\apps\maintenance\models.py:28 .\apps\workboard\models.py:29
-#: .\apps\workboard\views.py:99
+#: .\apps\workboard\views.py:98
 msgid "Pending"
 msgstr "Pendiente"
 
 #: .\apps\maintenance\models.py:29 .\apps\workboard\models.py:31
-#: .\apps\workboard\views.py:101
+#: .\apps\workboard\views.py:100
 msgid "In progress"
 msgstr "En progreso"
 
@@ -2388,7 +2343,7 @@ msgid "operators"
 msgstr "operadores"
 
 #: .\apps\registry\models.py:750 .\apps\registry\models.py:936
-#: .\apps\workboard\models.py:30 .\apps\workboard\views.py:100
+#: .\apps\workboard\models.py:30 .\apps\workboard\views.py:99
 #: .\templates\registry\_assignment_table_body.html:8
 #: .\templates\registry\assignment_list.html:35
 msgid "Planned"
@@ -2666,7 +2621,7 @@ msgid "Tenant"
 msgstr "Organización"
 
 #: .\apps\workboard\forms.py:46 .\apps\workboard\forms.py:75
-#: .\apps\workboard\forms.py:121 .\apps\workboard\views.py:336
+#: .\apps\workboard\forms.py:121 .\apps\workboard\views.py:335
 msgid "Board"
 msgstr "Tablero"
 
@@ -2694,18 +2649,22 @@ msgstr "Asignado a"
 msgid "Due date"
 msgstr "Fecha límite"
 
-#: .\apps\workboard\forms.py:81 .\apps\workboard\views.py:339
+#: .\apps\workboard\forms.py:81 .\apps\workboard\views.py:338
 #: .\templates\workboard\task_list.html:12
 #: .\templates\workboard\task_list.html:15
 #: .\templates\workboard\task_list.html:18
 msgid "Priority"
 msgstr "Prioridad"
 
+#: .\apps\workboard\forms.py:82 .\templates\workboard\task_list.html:18
+msgid "Labels"
+msgstr "Etiquetas"
+
 #: .\apps\workboard\forms.py:111
 msgid "The stage must belong to the selected board."
 msgstr "La etapa debe pertenecer al tablero seleccionado."
 
-#: .\apps\workboard\models.py:32 .\apps\workboard\views.py:102
+#: .\apps\workboard\models.py:32 .\apps\workboard\views.py:101
 msgid "Blocked"
 msgstr "Bloqueado"
 
@@ -2745,38 +2704,38 @@ msgstr "Alta"
 msgid "Critical"
 msgstr "Crítica"
 
-#: .\apps\workboard\views.py:228 .\templates\registry\_aircraft_rows.html:7
+#: .\apps\workboard\views.py:227 .\templates\registry\_aircraft_rows.html:7
 #: .\templates\registry\_assignment_table_body.html:6
 #: .\templates\registry\_operator_rows.html:33
 #: .\templates\registry\_qualification_rows.html:7
 msgid "Unassigned"
 msgstr "Sin asignar"
 
-#: .\apps\workboard\views.py:235
+#: .\apps\workboard\views.py:234
 msgid "No cost center"
 msgstr "Sin centro de costo"
 
-#: .\apps\workboard\views.py:328
+#: .\apps\workboard\views.py:327
 msgid "AeroControl — Operational task report"
 msgstr "AeroControl — Reporte operativo de tareas"
 
-#: .\apps\workboard\views.py:335 .\templates\workboard\task_list.html:18
+#: .\apps\workboard\views.py:334 .\templates\workboard\task_list.html:18
 msgid "Task"
 msgstr "Tarea"
 
-#: .\apps\workboard\views.py:337 .\templates\workboard\task_list.html:11
+#: .\apps\workboard\views.py:336 .\templates\workboard\task_list.html:11
 #: .\templates\workboard\task_list.html:18
 msgid "State"
 msgstr "Estado"
 
-#: .\apps\workboard\views.py:338 .\templates\workboard\task_list.html:13
+#: .\apps\workboard\views.py:337 .\templates\workboard\task_list.html:13
 #: .\templates\workboard\task_list.html:14
 #: .\templates\workboard\task_list.html:15
 #: .\templates\workboard\task_list.html:18
 msgid "Assignee"
 msgstr "Responsable"
 
-#: .\apps\workboard\views.py:340 .\templates\workboard\task_list.html:15
+#: .\apps\workboard\views.py:339 .\templates\workboard\task_list.html:15
 #: .\templates\workboard\task_list.html:18
 msgid "Progress"
 msgstr "Avance"
@@ -2883,7 +2842,7 @@ msgstr "Planificación geoespacial"
 #: .\templates\compliance\email\monthly_review_deadline.txt:5
 #: .\templates\compliance\monthly_review.html:38
 #: .\templates\core\calendar.html:34 .\templates\core\calendar.html:45
-#: .\templates\dashboard\index.html:199
+#: .\templates\dashboard\index.html:196
 msgid "Flights"
 msgstr "Vuelos"
 
@@ -4326,15 +4285,7 @@ msgstr "Permisos por estado"
 msgid "Maintenance by Type"
 msgstr "Mantenimiento por tipo"
 
-#: .\templates\dashboard\index.html:190
-msgid "Tasks per Stage"
-msgstr "Tareas por etapa"
-
-#: .\templates\dashboard\index.html:191
-msgid "Tasks"
-msgstr "Tareas"
-
-#: .\templates\dashboard\index.html:198
+#: .\templates\dashboard\index.html:195
 msgid "Monthly Flights (6 months)"
 msgstr "Vuelos mensuales (6 meses)"
 

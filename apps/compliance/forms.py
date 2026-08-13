@@ -431,6 +431,15 @@ class AlertRuleForm(AeroModelForm):
     that model once one is selected (on a bound form or when editing); before
     that it offers every watchable field and the model's clean() rejects a
     mismatch.
+
+    **LV-78 step 3a:** `create_kanban_task`, `target_board` and `target_stage`
+    left this form. The board was decommissioned and frozen, and the form was
+    still the way to *switch on* automatic card creation into it -- a loaded gun
+    on a screen somebody edits for unrelated reasons. The columns stay (nothing
+    is deleted until the board itself goes); what is removed is the ability to
+    turn this on from the UI. A rule that already has it enabled keeps behaving
+    exactly as before, and `generate_alerts` now says so out loud instead of
+    filing cards into a board nobody opens.
     """
 
     entity_type = forms.ChoiceField(
@@ -447,21 +456,11 @@ class AlertRuleForm(AeroModelForm):
             "field_to_watch",
             "days_before_expiry",
             "enabled",
-            "create_kanban_task",
-            "target_board",
-            "target_stage",
         ]
         labels = {
             "name": _("Name"),
             "days_before_expiry": _("Days before expiry"),
             "enabled": _("Enabled"),
-            # Sentence case on purpose: AeroModelForm normalizes every label
-            # through translate_field_label() before the gettext lookup, so
-            # "Create Kanban task" would be normalized to this anyway and the
-            # catalog entry for the capitalized form would never be hit.
-            "create_kanban_task": _("Create kanban task"),
-            "target_board": _("Target board"),
-            "target_stage": _("Target stage"),
         }
 
     def __init__(self, *args, **kwargs):
