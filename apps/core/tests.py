@@ -1163,6 +1163,13 @@ class TestCalendarAndBoardReadPermissions:
             # still holds view_kanbantask -- the permission outlives the lane.
         }
         assert "task" not in set(all_types)
+        # LV-78: and the page must not advertise it either. Removing the lane
+        # from the backend while the legend kept promising "Acciones" was worse
+        # than leaving it: an empty category reads as "none this week" instead
+        # of "this no longer exists" -- found in production, not by a test.
+        content = response.content.decode()
+        assert "calendar-dot-task" not in content
+        assert 'value="task"' not in content
         assert (
             'data-all-types="{}"'.format(response.context["calendar_all_types"])
             in response.content.decode()

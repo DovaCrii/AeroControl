@@ -215,7 +215,25 @@ class Command(BaseCommand):
         aircraft = Aircraft.objects.filter(
             is_active=True, registration__iexact=key
         ).first()
-        return self._set_field(aircraft, "insurance_expiry", expiry, dry_run)
+        if aircraft is None:
+            return None
+        if aircraft.insurance_expiry == expiry:
+            return False
+        if not dry_run:
+            aircraft.insurance_expiry = expiry
+            # LV-81/LV-74: writing the date alone leaves the filing status
+            # contradicting it. `save(update_fields=...)` does not run `clean()`,
+            # so the aircraft ends up with a valid policy on file and still
+            # reading "Faltante o por renovar" -- which is exactly what happened
+            # to `RPA-3696` in production on 2026-08-13 (date 2026-12-21, status
+            # `missing`), found by looking at the data after the load, not by a
+            # test. The normalization lives on the model; this just has to call
+            # it and save the field it touches.
+            aircraft._normalize_insurance_status()
+            aircraft.save(
+                update_fields=["insurance_expiry", "insurance_status", "updated_at"]
+            )
+        return True
 
     @staticmethod
     def _set_field(instance, field, expiry, dry_run):
