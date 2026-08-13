@@ -32,7 +32,11 @@
         <span><i class="calendar-dot calendar-dot-flight"></i>{% translate "Flights" %}</span>
         <span><i class="calendar-dot calendar-dot-maintenance"></i>{% translate "Maintenance" %}</span>
         <span><i class="calendar-dot calendar-dot-compliance"></i>{% translate "Expirations" %}</span>
-        <span><i class="calendar-dot calendar-dot-task"></i>{% translate "Action items" %}</span>
+        {% comment %}LV-78 step 1 dejó a medias esto: el carril "Acciones" (las
+        tarjetas del Kanban dado de baja) se quitó del backend, pero la leyenda y
+        el filtro lo seguían anunciando. Una leyenda que promete una categoría
+        que **nunca** va a tener eventos es peor que no tenerla: se lee como
+        "esta semana no hay acciones" en vez de "esto ya no existe".{% endcomment %}
       </div>
     </div>
     <label class="calendar-filter-label">{% translate "Show" %}
@@ -43,7 +47,6 @@
         <option value="flight" {% if selected_calendar_types == "flight" %}selected{% endif %}>{% translate "Flights" %}</option>
         <option value="maintenance" {% if selected_calendar_types == "maintenance" %}selected{% endif %}>{% translate "Maintenance" %}</option>
         <option value="document,qualification,operator_credential,aircraft_insurance" {% if selected_calendar_types == "document,qualification,operator_credential,aircraft_insurance" %}selected{% endif %}>{% translate "Expirations" %}</option>
-        <option value="task" {% if selected_calendar_types == "task" %}selected{% endif %}>{% translate "Action items" %}</option>
       </select>
     </label>
     <div class="calendar-scope-filters">

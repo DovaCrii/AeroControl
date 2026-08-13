@@ -1211,7 +1211,7 @@ main {
 .calendar-dot-flight { background: #0ea5e9; }
 .calendar-dot-maintenance { background: #8b5cf6; }
 .calendar-dot-compliance { background: #ef4444; }
-.calendar-dot-task { background: #0f9f95; }
+/* LV-78: el punto del carril "Acciones" se fue con la leyenda. */
 .calendar-filter-label { display: flex; align-items: center; gap: 0.5rem; color: var(--ac-text-secondary); font-size: 0.8rem; font-weight: 650; }
 .calendar-filter-label .form-select { min-width: 170px; }
 .calendar-scope-filters { display: flex; flex: 1 1 100%; gap: 0.6rem; flex-wrap: wrap; }

@@ -38,6 +38,53 @@ Verificar: `systemctl list-timers 'aerocontrol-*' --no-pager`
 
 Notificaciones a `Dirección`: `aortega@jej.cl` + `cmunoz@jej.cl`.
 
+## Lo primero de la próxima sesión (2026-08-13, fin de ventana)
+
+**Desplegado en `p340` el 2026-08-13** ✅: las 7 migraciones, los 11 timers y la
+CSP en **enforcing** (verificada con `X-Forwarded-Proto: https`; sobre `http` no
+se ve porque un 301 se adelanta al middleware). ClamAV instalado y
+`DOCUMENTS_ANTIVIRUS_COMMAND=clamscan` activo.
+
+**Hay una segunda tanda chica en `main`, SIN desplegar y SIN migraciones.** Son
+dos arreglos encontrados mirando producción:
+
+1. **El calendario anunciaba "Acciones"** —el carril del Kanban dado de baja—
+   en su leyenda y su filtro, aunque `LV-78` ya lo había quitado del backend.
+   Una categoría que nunca puede tener eventos se lee como "esta semana no hay",
+   no como "esto ya no existe". Corregido, con test.
+2. **`load_dgac_vigencias` dejaba el seguro contradiciéndose**: escribe con
+   `save(update_fields=...)`, que **no corre `clean()`**, así que `RPA-3696`
+   quedó con fecha `2026-12-21` y estado `missing` a la vez. Corregido, 5 tests.
+
+```bash
+cd /opt/aerocontrol && git pull
+set -a; source <(sudo cat /etc/aerocontrol.env); set +a
+uv run python manage.py collectstatic --no-input
+sudo systemctl restart aerocontrol
+```
+
+**Después, tres correcciones de datos en la app** (desde la interfaz: al guardar
+la ficha corre `clean()` y el estado del seguro se normaliza solo):
+
+| Aeronave | Qué hacer | Por qué |
+|---|---|---|
+| `RPA-5532` | Vencimiento seguro JAC = **`2027-08-04`**, y avanzar la escalera hasta **"Póliza vigente"** | Res. Ex. **1.075** de la JAC aprueba el certificado 136 hasta esa fecha. La app tiene `2026-08-08`, que es anterior y ya vencida |
+| `RPA-7126` | Vencimiento = **`2027-08-13`**, escalera en **"Presentado en SIGO, esperando la JAC"**, y **serial → `1581F7FVC265Q00DM5QG`** | Certificado **161** (emitido 13-08-2026). La resolución **todavía no llega**, por eso no es "vigente". El serial se corrige porque **manda el certificado** (decisión del usuario, ver `LV-93`) |
+| `RPA-3696` | Abrir y guardar sin cambiar nada | Arrastra el estado inconsistente que dejó el cargador antes del arreglo |
+
+Los PDF de `RPA-7126` (certificado 161 y solicitud a la JAC) y el de `RPA-5532`
+(Res. Ex. 1.075) están en `D:\OneDrive - J.E.J. Ingeniería S.A\DGAC\` y hay que
+subirlos a la ficha de cada aeronave.
+
+**Y lo que sigue del lado del usuario**, en
+[docs/dev/pendientes-usuario-2026-08-13.md](docs/dev/pendientes-usuario-2026-08-13.md):
+ahora son **tres** carpetas por renombrar en `Z:` (las dos de `R4.1a` más la de
+`RPA-7126`, ver `LV-93`), el PR de AeroLink, y las vigencias que siguen sin dato
+(`RPA-2019` y 7 credenciales de operador — no están en ninguna captura).
+
+**Trabajo pendiente mío**: `LV-92` (ver el PDF sin salir de la ficha, ya
+elegido), `LV-81b` (certificado con endosos) y `LV-78` paso 3b.
+
 ## Pendientes inmediatos — empezar por acá
 
 > Los que **no dependen del código** (vigencias, CSP, antivirus, `Z:`, el PR de
