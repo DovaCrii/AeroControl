@@ -51,6 +51,48 @@ ALLOWED_UPLOAD_SIGNATURES = {
     "kml": (b"<?xml", b"<kml", b"\xef\xbb\xbf<?xml", b"\xef\xbb\xbf<kml"),
 }
 
+MAX_UPLOAD_BYTES = 20 * 1024 * 1024
+
+
+def upload_errors(uploaded):
+    """Every reason to refuse one uploaded file, as a list of messages.
+
+    Extracted from `DocumentForm.clean` when LV-86 added the bulk upload: the
+    two paths **must** apply the same guards, and a second copy is how one of
+    them quietly ends up accepting a renamed executable. Returns the errors
+    instead of raising so a batch can report file by file rather than dying on
+    the first bad one.
+    """
+    errors = []
+    extension = Path(uploaded.name).suffix.lower().lstrip(".")
+    if extension not in ALLOWED_UPLOAD_SIGNATURES:
+        # Built from the same mapping that validates the content, so the
+        # message cannot claim to accept something we reject.
+        return [
+            _("Allowed file types: %(types)s.")
+            % {"types": ", ".join(sorted(e.upper() for e in ALLOWED_UPLOAD_SIGNATURES))}
+        ]
+    if uploaded.size > MAX_UPLOAD_BYTES:
+        return [_("The maximum file size is 20 MB.")]
+    if not _signature_matches(uploaded, extension):
+        errors.append(_("The uploaded file content does not match its extension."))
+    try:
+        scan_uploaded_file(uploaded)
+    except RuntimeError as exc:
+        errors.append(str(exc))
+    return errors
+
+
+def _signature_matches(uploaded, extension):
+    """Whether the bytes start the way the extension promises."""
+    signatures = ALLOWED_UPLOAD_SIGNATURES[extension]
+    current_position = uploaded.tell()
+    uploaded.seek(0)
+    header = uploaded.read(16)
+    uploaded.seek(current_position)
+    return any(header.startswith(signature) for signature in signatures)
+
+
 DOCUMENTABLE_MODEL_LABELS = {
     ("registry", "aircraft"): _("Aircraft record"),
     ("registry", "operator"): _("Operator record"),
@@ -60,6 +102,151 @@ DOCUMENTABLE_MODEL_LABELS = {
     ("maintenance", "maintenancerecord"): _("Maintenance record"),
     ("core", "operationaltenant"): _("Company"),
 }
+
+
+class MultipleFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+
+class MultipleFileField(forms.FileField):
+    """A file field that keeps every selected file.
+
+    Django's `FileField` deliberately returns only the last file of a multiple
+    selection, so a `multiple` widget alone silently drops the rest -- the
+    documented way to accept several is this pair (Django docs, "Uploading
+    multiple files"). Each file is then validated on its own, so one bad file
+    reports itself instead of failing the batch anonymously.
+    """
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("widget", MultipleFileInput(attrs={"multiple": True}))
+        super().__init__(*args, **kwargs)
+
+    def clean(self, data, initial=None):
+        single = super().clean
+        if isinstance(data, (list, tuple)):
+            return [single(item, initial) for item in data]
+        return [single(data, initial)]
+
+
+class DocumentBulkUploadForm(forms.Form):
+    """LV-86: several files onto the same record, in one action.
+
+    Deliberately **one record and one document type per batch**, not a free
+    drop of unrelated files: the ambiguous case the user raised -- a file the
+    system cannot attribute -- simply cannot arise here, because the person
+    says up front what these belong to. That leaves the batch with only one
+    real failure mode (a file that is not an acceptable document), which is
+    reported per file rather than silently dropped.
+
+    Titles are generated per file the same way `DocumentForm` does when the
+    title is left blank, plus the file's own name to tell them apart -- twelve
+    documents called "Póliza · RPA-5534 · 2026-08-04" would be worse than none.
+    """
+
+    entity_type = forms.ModelChoiceField(
+        queryset=ContentType.objects.none(),
+        empty_label=_("Select an entity type"),
+        label=_("Entity type"),
+    )
+    object_id = forms.ChoiceField(choices=(), label=_("Related record"))
+    doc_type = forms.ModelChoiceField(
+        queryset=DocumentType.objects.none(), label=_("Document type")
+    )
+    files = MultipleFileField(
+        label=_("Files"),
+        help_text=_("Select several at once, or drop them here."),
+    )
+    issue_date = forms.DateField(
+        widget=forms.DateInput(attrs={"type": "date"}), label=_("Issue date")
+    )
+    expiry_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={"type": "date"}),
+        label=_("Expiry date"),
+        help_text=_("Applied to every file in this batch."),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        allowed_type_filter = Q()
+        for app_label, model in DOCUMENTABLE_MODELS:
+            allowed_type_filter |= Q(app_label=app_label, model=model)
+        self.fields["entity_type"].queryset = ContentType.objects.filter(
+            allowed_type_filter
+        ).order_by("app_label", "model")
+        self.fields["entity_type"].label_from_instance = lambda content_type: (
+            DOCUMENTABLE_MODEL_LABELS[(content_type.app_label, content_type.model)]
+        )
+        self.fields["doc_type"].queryset = DocumentType.objects.filter(is_active=True)
+        raw_entity_type = self.data.get("entity_type") or self.initial.get(
+            "entity_type"
+        )
+        if raw_entity_type:
+            self._populate_object_choices(raw_entity_type)
+
+    def _populate_object_choices(self, content_type_id):
+        try:
+            content_type = ContentType.objects.get(pk=content_type_id)
+        except (ContentType.DoesNotExist, TypeError, ValueError):
+            return
+        if (content_type.app_label, content_type.model) not in DOCUMENTABLE_MODELS:
+            return
+        model = content_type.model_class()
+        if model is None:
+            return
+        self.fields["object_id"].choices = [
+            (str(record.pk), str(record))
+            for record in model._default_manager.filter(is_active=True).order_by(
+                "created_at"
+            )
+        ]
+
+    def clean(self):
+        cleaned = super().clean()
+        entity_type, object_id = cleaned.get("entity_type"), cleaned.get("object_id")
+        if entity_type and object_id:
+            model = entity_type.model_class()
+            record = (
+                model._default_manager.filter(pk=object_id, is_active=True).first()
+                if model is not None
+                else None
+            )
+            if record is None:
+                self.add_error("object_id", _("Select an active existing record."))
+            else:
+                cleaned["record"] = record
+
+        doc_type = cleaned.get("doc_type")
+        if doc_type and doc_type.requires_expiry and not cleaned.get("expiry_date"):
+            self.add_error(
+                "expiry_date", _("This document type requires an expiry date.")
+            )
+
+        for uploaded in cleaned.get("files") or []:
+            for error in upload_errors(uploaded):
+                # Named, so a rejected file in a batch of twelve says which one.
+                self.add_error(
+                    "files",
+                    _("%(name)s: %(error)s")
+                    % {
+                        "name": uploaded.name,
+                        "error": error,
+                    },
+                )
+        return cleaned
+
+    def titles_for(self, record):
+        """One generated title per file, in the order they were submitted."""
+        base = DocumentForm._autogenerate_title(
+            record,
+            self.cleaned_data.get("doc_type"),
+            self.cleaned_data.get("issue_date"),
+        )
+        return [
+            f"{base} · {Path(uploaded.name).stem}"[:200]
+            for uploaded in self.cleaned_data["files"]
+        ]
 
 
 class DocumentForm(AeroModelForm):
@@ -197,30 +384,8 @@ class DocumentForm(AeroModelForm):
 
         uploaded = cleaned.get("file")
         if uploaded:
-            extension = Path(uploaded.name).suffix.lower().lstrip(".")
-            if extension not in ALLOWED_UPLOAD_SIGNATURES:
-                self.add_error(
-                    "file",
-                    # Built from the same mapping that validates the content, so
-                    # the message cannot claim to accept something we reject.
-                    _("Allowed file types: %(types)s.")
-                    % {
-                        "types": ", ".join(
-                            sorted(e.upper() for e in ALLOWED_UPLOAD_SIGNATURES)
-                        )
-                    },
-                )
-            elif uploaded.size > 20 * 1024 * 1024:
-                self.add_error("file", _("The maximum file size is 20 MB."))
-            else:
-                try:
-                    self._validate_file_signature(uploaded, extension)
-                except forms.ValidationError as exc:
-                    self.add_error("file", exc)
-                try:
-                    scan_uploaded_file(uploaded)
-                except RuntimeError as exc:
-                    self.add_error("file", str(exc))
+            for error in upload_errors(uploaded):
+                self.add_error("file", error)
         doc_type = cleaned.get("doc_type")
         if doc_type and doc_type.requires_expiry and not cleaned.get("expiry_date"):
             self.add_error(
@@ -235,18 +400,6 @@ class DocumentForm(AeroModelForm):
         if issue_date:
             parts.append(issue_date.isoformat())
         return " · ".join(parts)[:200]
-
-    @staticmethod
-    def _validate_file_signature(uploaded, extension):
-        signatures = ALLOWED_UPLOAD_SIGNATURES[extension]
-        current_position = uploaded.tell()
-        uploaded.seek(0)
-        header = uploaded.read(16)
-        uploaded.seek(current_position)
-        if not any(header.startswith(signature) for signature in signatures):
-            raise forms.ValidationError(
-                _("The uploaded file content does not match its extension.")
-            )
 
     def save(self, commit=True):
         document = super().save(commit=False)

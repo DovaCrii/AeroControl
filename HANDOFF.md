@@ -79,7 +79,7 @@ viento en **m/s** e icono de la condición del día; el filtro por centro de cos
 que ya existía cambia la ubicación. Verificado en el demo contra Open-Meteo real.
 **Sin desplegar todavía** — ver abajo.
 
-**6. Lote nuevo del 2026-08-13: `LV-81`, `LV-82` y `LV-83` hechos; `LV-84` a `LV-89` capturados.**
+**6. Lote nuevo del 2026-08-13: `LV-81` a `LV-86` hechos; `LV-87` a `LV-89` pendientes.**
 El usuario pidió "tomarlo de a poco" e investigar antes de programar, y marcó
 `LV-81` (el seguro) como lo clave: **está hecho** — cuatro estados, escalera y
 trazabilidad, más el bloqueo que impide marcar "autorizado" sin fecha de
@@ -97,10 +97,16 @@ caducar sin haber volado). **Agrega un trabajo programado nuevo**
 `p340` con el bloque `mkjob` — serían **11 timers**. El bloque de
 `docs/scheduled-operations.md` ya lo incluye.
 
+El bloque de documentos (`LV-84`/`LV-85`/`LV-86`) también está hecho: listado con
+acciones, **preview dentro de la página** y carga de varios archivos a la vez.
+Dos cosas de ese bloque que conviene no perder: la excepción de *framing* es
+**por respuesta** (sólo el archivo se deja enmarcar; la app sigue en `DENY`), y
+**`DOCUMENTS_ANTIVIRUS_COMMAND` sigue vacío** — la carga masiva multiplica
+archivos entrando al sistema, así que conviene configurarlo antes de usarla en
+producción.
+
 Lo que sigue, con el diagnóstico ya verificado contra el código en cada fila:
-la pantalla de carga de documentos (`LV-84`), preview de PDF (`LV-85`,
-compatible con la CSP actual porque el archivo es del mismo origen), carga masiva
-(`LV-86`), la columna propia de credencial adjunta (`LV-87`), movimientos de
+la columna propia de credencial adjunta (`LV-87`, barato), movimientos de
 recursos (`LV-88`) y la revisión del panel (`LV-89`, que incluye **un gráfico de
 un tablero Kanban dado de baja** todavía dibujándose en producción).
 

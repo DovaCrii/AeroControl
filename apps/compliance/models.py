@@ -120,6 +120,19 @@ class Document(BaseModel):
     def __str__(self):
         return self.title
 
+    @property
+    def is_expired(self):
+        """LV-84: past its expiry date.
+
+        A document with no expiry is **not** expired -- it simply does not
+        lapse (a procedure, a manual). Same reading as
+        `Aircraft.insurance_is_overdue`: a null is "does not apply", never
+        "overdue".
+        """
+        from django.utils import timezone
+
+        return self.expiry_date is not None and self.expiry_date < timezone.localdate()
+
     def resolve_related_alerts(self):
         """Resolve open alerts pointing at this document (B1.7).
 

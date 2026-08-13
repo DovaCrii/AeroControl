@@ -47,6 +47,12 @@ urlpatterns = [
         name="monthly-review-mark",
     ),
     path("document/new/", views.DocumentCreate.as_view(), name="document-create"),
+    # LV-86: several files onto one record in a single action.
+    path(
+        "document/upload-batch/",
+        views.DocumentBulkUpload.as_view(),
+        name="document-bulk-upload",
+    ),
     path(
         "document/entity-options/",
         views.DocumentEntityOptions.as_view(),
@@ -57,6 +63,13 @@ urlpatterns = [
         "document/<uuid:pk>/download/",
         views.DocumentDownload.as_view(),
         name="document-download",
+    ),
+    # LV-85: the same bytes, served for viewing inside the page instead of as a
+    # download. Same permission and tenant scope as the download above.
+    path(
+        "document/<uuid:pk>/preview/",
+        views.DocumentPreview.as_view(),
+        name="document-preview",
     ),
     path(
         "document/<uuid:pk>/replace/",

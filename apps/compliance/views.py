@@ -5,7 +5,7 @@ from django.db import transaction
 from django.http import FileResponse, Http404, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, ngettext
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -35,6 +35,7 @@ from .forms import (
     AlertResolveForm,
     AlertRuleForm,
     DeliverableForm,
+    DocumentBulkUploadForm,
     DocumentForm,
     DocumentTypeForm,
     NonConformityForm,
@@ -50,6 +51,39 @@ from .models import (
     document_upload_path,
 )
 from .storage import DocumentStorageNotFound, get_document_storage
+
+
+def document_home_url(document):
+    """LV-40: the entity's own fiche (its Documents tab), not the general
+    document list -- which is off the menu (LV-D8) and left the user stranded
+    after uploading from a fiche.
+
+    Module-level since LV-86: the bulk upload lands in the same place, and a
+    second copy of this mapping would drift from this one.
+    """
+    from django.urls import NoReverseMatch
+
+    content_type = document.content_type
+    key = f"{content_type.app_label}.{content_type.model}"
+    if key == "core.operationaltenant":
+        return reverse("company-documents")
+    detail_name = {
+        "registry.costcenter": "costcenter-detail",
+        "registry.aircraft": "aircraft-detail",
+        "registry.operator": "operator-detail",
+        "operations.flightpermission": "permission-detail",
+    }.get(key)
+    if detail_name:
+        try:
+            return f"{reverse(detail_name, args=[document.object_id])}#tab-documents"
+        except NoReverseMatch:
+            pass
+    # Operational records live in their own repository; everything else that is
+    # left falls back to the company documents view rather than the unlisted
+    # general document list.
+    if document.doc_type.is_operational_record:
+        return reverse("operational-records")
+    return reverse("company-documents")
 
 
 def save_uploaded_file(document, uploaded):
@@ -654,33 +688,7 @@ class DocumentCreate(ComplianceCreate):
                     initial[target] = value
 
     def get_success_url(self):
-        """LV-40: return to the entity's own fiche (its Documents tab), not the
-        general document list -- which is off the menu (LV-D8) and left the user
-        stranded after uploading from a fiche."""
-        from django.urls import NoReverseMatch
-
-        obj = self.object
-        content_type = obj.content_type
-        key = f"{content_type.app_label}.{content_type.model}"
-        if key == "core.operationaltenant":
-            return reverse("company-documents")
-        detail_name = {
-            "registry.costcenter": "costcenter-detail",
-            "registry.aircraft": "aircraft-detail",
-            "registry.operator": "operator-detail",
-            "operations.flightpermission": "permission-detail",
-        }.get(key)
-        if detail_name:
-            try:
-                return f"{reverse(detail_name, args=[obj.object_id])}#tab-documents"
-            except NoReverseMatch:
-                pass
-        # Operational records live in their own repository; everything else that
-        # is left falls back to the company documents view rather than the
-        # unlisted general document list.
-        if obj.doc_type.is_operational_record:
-            return reverse("operational-records")
-        return reverse("company-documents")
+        return document_home_url(self.object)
 
     def form_valid(self, form):
         with uploaded_file_cleanup() as stored:
@@ -724,6 +732,16 @@ class DocumentDetail(
             .exclude(pk=self.object.pk)
             .order_by("-created_at")
         )
+        # LV-85: "pdf", "image" or None -- which viewer the page embeds, decided
+        # from the same allowlist the preview view enforces so the page cannot
+        # offer a viewer for something that will come back as a download.
+        extension = self.object.file_path.rsplit(".", 1)[-1].lower()
+        content_type = INLINE_PREVIEW_TYPES.get(extension)
+        context["preview_kind"] = (
+            None
+            if content_type is None
+            else ("pdf" if content_type == "application/pdf" else "image")
+        )
         return context
 
 
@@ -745,6 +763,132 @@ class DocumentDownload(ModelPermissionRequiredMixin, View):
             raise Http404("Document file not found") from exc
         filename = document.file_path.rsplit("/", 1)[-1]
         return FileResponse(stream, as_attachment=True, filename=filename)
+
+
+# LV-85: the only kinds served **inline**. Everything else keeps coming back as
+# a download. This is not about what the browser can render -- it is that an
+# uploaded file displayed inline is executed in this app's origin if the browser
+# can be talked into treating it as HTML. PDFs and raster images have no such
+# reading; KML is XML and DOCX/XLSX are ZIPs, so they stay attachments.
+INLINE_PREVIEW_TYPES = {
+    "pdf": "application/pdf",
+    "png": "image/png",
+    "jpg": "image/jpeg",
+    "jpeg": "image/jpeg",
+}
+
+
+class DocumentPreview(ModelPermissionRequiredMixin, View):
+    """LV-85: serve the file for viewing inside the page, not as a download.
+
+    Same authorization as `DocumentDownload` -- `view_document` plus the tenant
+    scope -- because it is the same bytes: a "preview" that skipped the checks
+    would be a way around them (the F-05 finding, in a new wrapper).
+
+    Anything outside the inline allowlist redirects to the download instead of
+    being refused: the user asked to see a document, and handing them the file
+    is closer to that than an error page.
+    """
+
+    model = Document
+    permission_action = "view"
+
+    def get(self, request, pk):
+        document = get_object_or_404(
+            scope_queryset_to_tenant(Document.objects.all(), request.user),
+            pk=pk,
+            is_active=True,
+        )
+        filename = document.file_path.rsplit("/", 1)[-1]
+        extension = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+        content_type = INLINE_PREVIEW_TYPES.get(extension)
+        if content_type is None:
+            return redirect("document-download", pk=pk)
+        try:
+            stream = get_document_storage().open(document.file_path)
+        except (DocumentStorageNotFound, OSError) as exc:
+            raise Http404("Document file not found") from exc
+        response = FileResponse(
+            stream, as_attachment=False, filename=filename, content_type=content_type
+        )
+        # Belt and braces next to SECURE_CONTENT_TYPE_NOSNIFF: this response is
+        # the one that hands a user-supplied file to the browser with
+        # `Content-Disposition: inline`, so the type it is served as must be the
+        # type it is treated as.
+        response["X-Content-Type-Options"] = "nosniff"
+        # The app refuses to be framed anywhere (X_FRAME_OPTIONS=DENY plus
+        # `frame-ancestors 'none'`), which is the clickjacking protection and
+        # stays. **This one response** relaxes it to same-origin, because the
+        # fiche embeds it in an <iframe> of its own -- being framed by yourself
+        # is not that attack. Both headers, because either alone still blocks:
+        # the CSP directive is honoured by modern browsers and X-Frame-Options
+        # by everything else.
+        response["X-Frame-Options"] = "SAMEORIGIN"
+        response.frame_ancestors_self = True
+        return response
+
+
+class DocumentBulkUpload(ModelPermissionRequiredMixin, FormView):
+    """LV-86: several documents onto one record in a single action.
+
+    Requires `add_document`, like the single upload it batches.
+
+    Files are written **inside one transaction with the same cleanup guard** the
+    single upload uses: storage is not transactional, so a failure halfway
+    through a batch of twelve would otherwise leave stored files with no rows
+    pointing at them.
+    """
+
+    model = Document
+    permission_action = "add"
+    form_class = DocumentBulkUploadForm
+    template_name = "compliance/document_bulk_form.html"
+
+    def get_initial(self):
+        initial = super().get_initial()
+        for field in ("entity_type", "object_id", "doc_type"):
+            value = self.request.GET.get(field)
+            if value:
+                initial[field] = value
+        return initial
+
+    def form_valid(self, form):
+        record = form.cleaned_data["record"]
+        uploads = form.cleaned_data["files"]
+        titles = form.titles_for(record)
+        content_type = form.cleaned_data["entity_type"]
+        created = []
+        with uploaded_file_cleanup() as stored:
+            with transaction.atomic():
+                for uploaded, title in zip(uploads, titles):
+                    document = Document(
+                        title=title,
+                        doc_type=form.cleaned_data["doc_type"],
+                        content_type=content_type,
+                        object_id=record.pk,
+                        issue_date=form.cleaned_data["issue_date"],
+                        expiry_date=form.cleaned_data.get("expiry_date"),
+                    )
+                    set_audit_context(self.request, document)
+                    document.save()
+                    stored["path"] = save_uploaded_file(document, uploaded)
+                    created.append(document)
+        messages.success(
+            self.request,
+            ngettext(
+                "%(count)s document uploaded.",
+                "%(count)s documents uploaded.",
+                len(created),
+            )
+            % {"count": len(created)},
+        )
+        self.created = created
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        # Back to the record the batch was filed against, same reasoning as
+        # LV-40 for the single upload: the general document list is off the menu.
+        return document_home_url(self.created[0])
 
 
 class DocumentReplace(ModelPermissionRequiredMixin, FormView):
