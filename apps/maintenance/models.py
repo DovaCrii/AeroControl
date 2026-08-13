@@ -118,14 +118,75 @@ class MaintenanceRecord(BaseModel):
 
         return reverse("maintenance-detail", kwargs={"pk": self.pk})
 
+    # LV-82: the two paths a record can actually take. Both start at `pending`
+    # and end at `completed`; what differs is whether the equipment leaves the
+    # base. Declared here, next to STATUSES, and **never spelled out in a
+    # template** -- a hand-written list drifting from the real choices is the
+    # R1.1 defect.
+    IN_HOUSE_FLOW = ["pending", "in_progress", "completed"]
+    WORKSHOP_FLOW = [
+        "pending",
+        "sent",
+        "at_workshop",
+        "finished",
+        "in_transit",
+        "completed",
+    ]
+
+    def status_flow(self):
+        """Which of the two paths this record is on.
+
+        **This is why maintenance could not simply adopt `StatusFlowMixin`**
+        (LV-72/LV-81): that mixin takes one class-level flow, and here the flow
+        is a property of the individual record. Drawing all seven statuses as
+        one line would promise an in-house repair a trip to a workshop it is
+        never making -- the mixin's own rule is that a stepper must not claim a
+        progression that does not exist.
+
+        Decided by what the record *did*, not by what it might do: its current
+        status first, then its history, so a completed record still shows the
+        path it actually took. A record still at `pending` has not diverged yet
+        and shows the short path -- the common case -- and switches the moment
+        it is sent to a workshop.
+        """
+        if self.status in self.WORKSHOP_STATUSES:
+            return self.WORKSHOP_FLOW
+        if (
+            self.pk
+            and self.history.filter(new_status__in=self.WORKSHOP_STATUSES).exists()
+        ):
+            return self.WORKSHOP_FLOW
+        return self.IN_HOUSE_FLOW
+
+    def status_steps(self):
+        """[{code, label, state}] for the path this record is on."""
+        from apps.core.models import status_steps_for
+
+        return status_steps_for(
+            choices=self.STATUSES, flow=self.status_flow(), current=self.status
+        )
+
 
 class MaintenanceHistory(BaseModel):
+    # LV-82: same tie-breaker as PermissionHistory/InsuranceHistory. `created_at`
+    # alone cannot order two rows created moments apart -- on this machine
+    # `timezone.now()` returns the identical value across rapid successive calls
+    # and SQL gives no ordering guarantee for ties on a non-unique column, so a
+    # record moved twice in one action could print its own history backwards.
+    sequence = models.PositiveBigIntegerField(editable=False, default=0)
     record = models.ForeignKey(
         MaintenanceRecord, on_delete=models.PROTECT, related_name="history"
     )
     changed_at = models.DateTimeField(auto_now_add=True)
-    previous_status = models.CharField(max_length=20)
-    new_status = models.CharField(max_length=20)
+    # LV-82: `choices` added. This is the R2.5 defect, still open here after it
+    # was fixed for the permit: without them Django never generates
+    # `get_new_status_display`, so the history table on the maintenance fiche
+    # printed the raw stored codes ("at_workshop", "in_transit") inside an
+    # otherwise Spanish page.
+    previous_status = models.CharField(
+        max_length=20, choices=MaintenanceRecord.STATUSES
+    )
+    new_status = models.CharField(max_length=20, choices=MaintenanceRecord.STATUSES)
     changed_by = models.CharField(max_length=150)
     changed_by_user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -134,3 +195,17 @@ class MaintenanceHistory(BaseModel):
         blank=True,
         related_name="maintenance_history_events",
     )
+
+    class Meta:
+        verbose_name = _("maintenance history")
+        verbose_name_plural = _("maintenance histories")
+        ordering = ["-sequence"]
+
+    def __str__(self):
+        return f"{self.record_id}: {self.previous_status} → {self.new_status}"
+
+    def save(self, *args, **kwargs):
+        if self._state.adding:
+            latest = MaintenanceHistory.objects.order_by("-sequence").first()
+            self.sequence = (latest.sequence if latest else 0) + 1
+        return super().save(*args, **kwargs)

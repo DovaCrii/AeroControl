@@ -79,17 +79,19 @@ viento en **m/s** e icono de la condición del día; el filtro por centro de cos
 que ya existía cambia la ubicación. Verificado en el demo contra Open-Meteo real.
 **Sin desplegar todavía** — ver abajo.
 
-**6. Lote nuevo del 2026-08-13: `LV-81` hecho, `LV-82` a `LV-89` capturados.**
+**6. Lote nuevo del 2026-08-13: `LV-81` y `LV-82` hechos, `LV-83` a `LV-89` capturados.**
 El usuario pidió "tomarlo de a poco" e investigar antes de programar, y marcó
 `LV-81` (el seguro) como lo clave: **está hecho** — cuatro estados, escalera y
 trazabilidad, más el bloqueo que impide marcar "autorizado" sin fecha de
 vigencia. Quedó `LV-81b` para el certificado/endoso como registro, que es lo que
 se dejó fuera a propósito.
 
+`LV-82` también está hecho: la escalera de mantención dibuja **el camino que el
+registro tomó** (casa o taller), decidido por su propio historial, y de paso se
+corrigió que el historial mostraba códigos crudos en inglés.
+
 Lo que sigue, con el diagnóstico ya verificado contra el código en cada fila:
-trazabilidad en mantención (`LV-82`, la mitad del trabajo ya existe: tiene los 7
-estados y el historial, le falta la escalera, y **el flujo se bifurca** casa/
-taller, que es la decisión a tomar), cierre automático de permisos vencidos
+cierre automático de permisos vencidos
 (`LV-83`, y ojo: *caducado* y *completado* no son lo mismo, mezclarlos rompe un
 KPI), la pantalla de carga de documentos (`LV-84`), preview de PDF (`LV-85`,
 compatible con la CSP actual porque el archivo es del mismo origen), carga masiva
@@ -192,9 +194,9 @@ el guardado **no reescribe filas ya almacenadas**. La migración `registry/0032`
 las normaliza y **aborta si dos sólo difieren en mayúsculas** — eso lo resuelve
 el certificado RPAS de la DGAC, no una migración.
 
-## Sin desplegar: `R8.4` + `LV-81`
+## Sin desplegar: `R8.4` + `LV-81` + `LV-82`
 
-**Dos migraciones, ninguna riesgosa, pero la segunda toca datos:**
+**Tres migraciones, ninguna riesgosa, pero dos tocan datos:**
 
 - `registry/0033` (`R8.4`): dos columnas nulas en `CostCenter`. Sin backfill, sin
   restricción; no puede fallar sobre datos reales.
@@ -204,6 +206,9 @@ el certificado RPAS de la DGAC, no una migración.
   del pendiente 1** (`RPA-2019`, `RPA-3696`, `RPA-7126`), que hoy se ven
   "Vigente" sin fecha al lado. No toca las marcadas a mano como en trámite.
   Reversible: al revertir vuelven a decir `active`.
+- `maintenance/0008` (`LV-82`): agrega `sequence` al historial de mantención y
+  **numera las filas existentes** por orden de creación. Sin ese backfill todas
+  empatarían en cero y la ficha imprimiría su historial en orden arbitrario.
 
 Ninguna necesita `bootstrap_roles` (no hay permisos nuevos: las transiciones del
 seguro usan `change_aircraft`, que ya existe). El `.mo` está recompilado y

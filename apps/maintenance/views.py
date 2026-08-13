@@ -100,7 +100,11 @@ class MaintenanceRecordDetail(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["history"] = self.object.history.all()
+        # LV-82: the groups are prefetched because the shared traceability block
+        # prints the actor's role from them -- one query per row without this.
+        context["history"] = self.object.history.select_related(
+            "changed_by_user"
+        ).prefetch_related("changed_by_user__groups")
         context["completion_form"] = MaintenanceCompletionForm(instance=self.object)
         # R5.1: "pending" offers both paths -- most maintenance is resolved
         # in-house (short: start/complete) and forcing every record through

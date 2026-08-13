@@ -42,10 +42,13 @@
   </form>
 </div>
 {% endif %}
-<div class="card mt-3 p-4">
-  <h2 class="h5 mb-3">{% translate "Status history" %}</h2>
-  {% if record.history.exists %}<table class="table table-sm"><thead><tr><th>{% translate "Date" %}</th><th>{% translate "From" %}</th><th>{% translate "To" %}</th><th>{% translate "By" %}</th></tr></thead><tbody>
-    {% for h in record.history.all %}<tr><td>{{ h.changed_at|date:"Y-m-d H:i" }}</td><td>{{ h.previous_status }}</td><td>{{ h.new_status }}</td><td>{{ h.changed_by }}</td></tr>{% endfor %}
-  </tbody></table>{% else %}<p class="text-muted mb-0">{% translate "No status changes recorded yet." %}</p>{% endif %}
-</div>
+{% comment %}LV-82: la tabla que vivía acá a mano imprimía los códigos crudos
+("at_workshop", "in_transit") dentro de una página en español -- el mismo defecto
+R2.5 que ya se había arreglado en el permiso, todavía abierto acá -- y no decía
+en qué rol actuó cada persona. Ahora usa el mismo bloque que el permiso, el plan
+geoespacial y el seguro, así que la escalera sale del modelo y no de una lista
+escrita en la plantilla (la trampa R1.1). Los pasos son los del **camino que este
+registro tomó**: en casa o por taller.{% endcomment %}
+{% translate "Status history" as maintenance_history_title %}
+{% include "generic/_traceability.html" with steps=record.status_steps history_title=maintenance_history_title %}
 {% endblock %}
