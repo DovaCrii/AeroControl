@@ -47,6 +47,11 @@ class CostCenterForm(AeroModelForm):
         "responsible_operator",
         "responsible_contact_name",
         "responsible_contact_email",
+        # R8.4: above `notes` rather than at the end, where the (unordered)
+        # quality thresholds land -- the site's location is part of who this
+        # cost center is, not an acceptance criterion.
+        "latitude",
+        "longitude",
         "notes",
     ]
 
@@ -69,6 +74,10 @@ class CostCenterForm(AeroModelForm):
             "required_gsd_cm",
             "max_rmse_xy_cm",
             "max_rmse_z_cm",
+            # R8.4: the site's coordinates, so the dashboard can show the
+            # weather where the work happens.
+            "latitude",
+            "longitude",
             "notes",
         ]
         labels = {
@@ -82,6 +91,8 @@ class CostCenterForm(AeroModelForm):
             "required_gsd_cm": _("Required GSD (cm)"),
             "max_rmse_xy_cm": _("Maximum horizontal RMSE (cm)"),
             "max_rmse_z_cm": _("Maximum vertical RMSE (cm)"),
+            "latitude": _("Site latitude"),
+            "longitude": _("Site longitude"),
             "notes": _("Notes"),
         }
         help_texts = {
@@ -108,6 +119,11 @@ class CostCenterForm(AeroModelForm):
                 "Leave blank when none was agreed: a deliverable is then "
                 "recorded without a pass/fail verdict rather than judged "
                 "against an invented threshold."
+            ),
+            "latitude": _(
+                "Optional: decimal degrees for the site where this contract "
+                "operates (e.g. -33.4489). Used to show the weather on the "
+                "dashboard when no upcoming permit carries its own coordinates."
             ),
         }
 
