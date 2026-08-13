@@ -1,15 +1,32 @@
 {% load aero_tags i18n %}
+{% comment %}LV-88: la tabla decía lo mismo con más columnas. "Desde" y "Hasta"
+son un solo hecho -- de dónde a dónde -- y separarlos dejaba media tabla con "—"
+en todo movimiento inicial. El recurso ahora enlaza a su ficha: leer que
+`RPA-3696` se movió y tener que volver al padrón a buscarlo era el paso de más.
+{% endcomment %}
 {% for entry in objects %}
 <tr>
-  <td>{{ entry.get_resource_kind_display }}: {{ entry.resource_label }}</td>
-  <td>{{ entry.get_movement_display }}</td>
-  <td>{{ entry.from_cost_center|default:"—" }}</td>
-  <td>{{ entry.to_cost_center|default:"—" }}</td>
-  <td class="cell-truncate">{{ entry.detail|default:"—" }}</td>
+  <td>
+    {% if entry.resource_url %}<a href="{{ entry.resource_url }}" class="table-primary-value">{{ entry.resource_label }}</a>{% else %}<span class="table-primary-value">{{ entry.resource_label }}</span>{% endif %}
+    <span class="table-primary-sub">{{ entry.get_resource_kind_display }}</span>
+  </td>
+  <td><span class="badge bg-secondary-subtle text-secondary-emphasis">{{ entry.get_movement_display }}</span></td>
+  {% comment %}La flecha sólo cuando hay **dos** extremos. Un cambio de
+  ubicación dentro de una misma faena no tiene centro de costo de destino, y
+  pintar "CCDEMO-01 → —" inventa un viaje que no ocurrió; en esas filas el
+  trayecto real es el detalle ("Casa matriz → En faena"), que va debajo.
+  {% endcomment %}
+  <td class="movement-route">
+    {% if entry.from_cost_center and entry.to_cost_center %}{{ entry.from_cost_center.code }} <span class="movement-arrow" aria-hidden="true">→</span> {{ entry.to_cost_center.code }}
+    {% elif entry.to_cost_center %}{{ entry.to_cost_center.code }}
+    {% elif entry.from_cost_center %}{{ entry.from_cost_center.code }}
+    {% elif not entry.detail %}<span class="text-muted">—</span>{% endif %}
+    {% if entry.detail %}<span class="table-primary-sub">{{ entry.detail }}</span>{% endif %}
+  </td>
   <td>{{ entry.changed_by_user|default:"—" }}</td>
-  <td><span class="text-nowrap">{{ entry.created_at|date:'Y-m-d H:i' }}</span></td>
+  <td class="text-nowrap">{{ entry.created_at|date:'Y-m-d H:i' }}<span class="table-primary-sub">{% blocktranslate with since=entry.created_at|timesince %}{{ since }} ago{% endblocktranslate %}</span></td>
 </tr>
 {% empty %}
-<tr><td colspan="99" class="text-center text-muted py-4">{% translate "No movements recorded yet." %}</td></tr>
+<tr><td colspan="99" class="text-center text-muted py-4">{% translate "No movements in this period." %}</td></tr>
 {% endfor %}
 {% if is_htmx %}<div id="pagination-container" hx-swap-oob="true">{% render_pagination page_obj %}</div>{% endif %}

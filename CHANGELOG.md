@@ -10,6 +10,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Dos listas más fáciles de barrer (`LV-87`, `LV-88`).** En **operadores**, si
+  la credencial está adjunta pasa a ser **su propia columna** con una figura de
+  sí/no, en vez de una insignia metida en la celda de la fecha (que parecía
+  calificar a la fecha). En **movimientos de recursos**, la página muestra por
+  defecto **los últimos 30 días** —con un selector visible que llega hasta "todo
+  el registro"—, junta "desde/hasta" en una sola columna de **trayecto**, y cada
+  recurso enlaza a su ficha.
 - **Los documentos se ven y se cargan mejor (`LV-84`, `LV-85`, `LV-86`).** El
   listado de una ficha ahora dice emisión, vencimiento (con aviso si ya venció) y
   si esa versión fue reemplazada, y cada fila lleva **Ver** y **Descargar** al

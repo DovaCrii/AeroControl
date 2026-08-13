@@ -13,7 +13,11 @@
   <form method="post" enctype="multipart/form-data">{% csrf_token %}
     {{ form|crispy }}
     <button class="btn btn-primary">{% translate "Upload the files" %}</button>
-    <a href="{{ request.META.HTTP_REFERER|default:'/' }}" class="btn btn-outline-secondary ms-2">{% translate "Cancel" %}</a>
+    {% comment %}El destino lo calcula la vista desde los parámetros propios, no
+    desde `HTTP_REFERER`: una cabecera que manda el navegador es entrada no
+    confiable, y construir un enlace con ella pone una URL ajena dentro de
+    nuestra página.{% endcomment %}
+    <a href="{{ cancel_url }}" class="btn btn-outline-secondary ms-2">{% translate "Cancel" %}</a>
   </form>
 </div>
 {% endblock %}
