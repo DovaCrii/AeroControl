@@ -102,12 +102,22 @@ def on_time_execution(start, end):
     Only permits already past their window are counted: one still open has not
     failed anything yet, and including it would score the period lower the
     earlier you look at it.
+
+    **`expired` belongs in this filter (LV-83), and leaving it out would have
+    been a silent regression**: the daily job now moves a lapsed permit out of
+    `approved`, so without this line the KPI would quietly stop counting the
+    permits that ran out with nothing flown -- its own failures -- and drift up
+    towards a meaningless 100%.
     """
     from apps.operations.models import FlightPermission
 
     permits = FlightPermission.objects.filter(
         is_active=True,
-        status__in=("approved", "completed"),
+        status__in=(
+            FlightPermission.STATUS_APPROVED,
+            FlightPermission.STATUS_COMPLETED,
+            FlightPermission.STATUS_EXPIRED,
+        ),
         valid_until__gte=start,
         valid_until__lte=end,
     )

@@ -16,10 +16,14 @@ resumen corto), así que después se puede comprobar si realmente corrieron.
 | `sync_batteries` (X.4b) | Espeja el inventario de baterías de AeroLink en `registry.Battery` (ciclos, salud, firmware) para la evidencia ISO 7.1.3. **Sólo se programa cuando AeroLink publique su endpoint**; hasta entonces se corre a mano con `--from-file`. Nunca borra: una batería ausente del feed se reporta, no se elimina | Diario, una vez que exista el endpoint |
 | `check_flight_duty_limit` (R7.5) | Reporta al grupo Dirección los pilotos cuya **jornada de vuelo del día anterior** superó las **8 horas** (control de fatiga, ISO 45001 6.1.2). Sólo reporta: nunca edita ni rechaza un registro de vuelo | Diario |
 | `check_alert_effectiveness` (R7.6) | Escala al grupo Dirección las acciones correctivas resueltas hace **30 días** cuya eficacia **nadie confirmó**. Nunca resuelve, reabre ni verifica por su cuenta: una máquina declarando que una acción correctiva fue eficaz es lo contrario de la evidencia que pide ISO 10.2 | Diario |
+| `expire_permissions` (LV-83) | Marca como **Caducado** todo permiso de vuelo cuya vigencia terminó y que sigue en *Solicitado* o *Aprobado*. **No completa nada**: completar exige el PDF firmado de la DGAC (R2.4) y un permiso puede caducar sin haber volado nunca. No toca los denegados ni los completados. Cada cierre queda en el historial del permiso con `expire_permissions` como autor | Diario, temprano (antes de `generate_alerts`, para que un permiso ya cerrado no genere alerta ese mismo día) |
 | `snapshot_compliance` (R7.7) | Guarda los totales documentales del día (una fila por centro de costo más una consolidada). **Sin esto el reporte no puede mostrar tendencia**: los contadores se evalúan siempre "a hoy", así que comparar período contra período marca "sin cambio" por construcción. Idempotente: repetir la misma fecha la sobrescribe, no duplica | Diario, al final del día |
 
 El orden importa: `send_alert_digest` reporta lo que `generate_alerts` acaba de
-detectar, así que conviene dejar un margen entre ambos.
+detectar, así que conviene dejar un margen entre ambos. Por la misma razón
+`expire_permissions` va **antes** que `generate_alerts` (05:30 → 06:00): un
+permiso que caducó anoche queda cerrado antes de que el motor de alertas lo mire,
+y así no se anuncia como pendiente algo que ya se cerró esa misma mañana.
 
 `send_executive_report` va a los usuarios del grupo **Dirección** que tengan
 correo, o a los que se indiquen con `--to`. Si no hay ninguno, el comando falla
@@ -120,11 +124,12 @@ Persistent=true
 WantedBy=timers.target
 EOF
 }
+mkjob expire "expire_permissions"       "*-*-* 05:30:00"
 mkjob alerts "generate_alerts"          "*-*-* 06:00:00"
 mkjob digest "send_alert_digest"        "*-*-* 07:00:00"
 mkjob backup "backup"                   "*-*-* 22:00:00"
 systemctl daemon-reload
-systemctl enable --now aerocontrol-alerts.timer aerocontrol-digest.timer aerocontrol-backup.timer
+systemctl enable --now aerocontrol-expire.timer aerocontrol-alerts.timer aerocontrol-digest.timer aerocontrol-backup.timer
 '
 ```
 

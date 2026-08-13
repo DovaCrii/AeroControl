@@ -171,9 +171,15 @@ def panel_forecast(today, cost_center=None, user=None):
         longitude__isnull=False,
         valid_until__gte=today,
     ).exclude(
-        # Neither has a flight left to plan for: one already happened, the
-        # other is not going to.
-        status__in=[FlightPermission.STATUS_COMPLETED, FlightPermission.STATUS_DENIED]
+        # None of these has a flight left to plan for: one already happened,
+        # one is not going to, and one ran out of time (LV-83). The date filter
+        # above already rules the expired ones out; listing the status keeps the
+        # intent readable rather than relying on that coincidence.
+        status__in=[
+            FlightPermission.STATUS_COMPLETED,
+            FlightPermission.STATUS_DENIED,
+            FlightPermission.STATUS_EXPIRED,
+        ]
     )
     if cost_center:
         permissions = permissions.filter(cost_center=cost_center)
