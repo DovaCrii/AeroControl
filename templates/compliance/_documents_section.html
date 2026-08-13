@@ -2,28 +2,58 @@
 {% comment %}Reusable Documents section for a detail page. Expects, from
 compliance.attachments.attached_documents_context: `documents` (None hides the
 whole section) and `document_content_type_id` for the prefilled upload link.
-The subject record is the DetailView's `object`.{% endcomment %}
+The subject record is the DetailView's `object`.
+
+LV-84/LV-85: era un listado de tres columnas donde el título era el único
+enlace, así que ver un PDF costaba dos pantallas (ficha → detalle → descargar) y
+terminaba en el disco del usuario en vez de en pantalla. Ahora cada fila dice
+qué tipo de archivo es y lleva sus acciones al lado; **Ver** abre el documento
+dentro de la página cuando el navegador puede mostrarlo (PDF e imágenes) y cae a
+la descarga cuando no.{% endcomment %}
 {% if documents is not None %}
-<div class="card mt-3 p-4">
-  <div class="d-flex justify-content-between align-items-center mb-2">
+<div class="card mt-3 p-4" id="tab-documents">
+  <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
     <h2 class="h5 mb-0">{% translate "Documents" %}</h2>
     {% if perms.compliance.add_document and document_content_type_id %}
-    <a href="{% url 'document-create' %}?entity_type={{ document_content_type_id }}&object_id={{ object.pk }}" class="btn btn-sm btn-primary">+ {% translate "Upload document" %}</a>
+    <div class="d-flex gap-2">
+      <a href="{% url 'document-bulk-upload' %}?entity_type={{ document_content_type_id }}&object_id={{ object.pk }}" class="btn btn-sm btn-outline-primary">{% translate "Upload several" %}</a>
+      <a href="{% url 'document-create' %}?entity_type={{ document_content_type_id }}&object_id={{ object.pk }}" class="btn btn-sm btn-primary">+ {% translate "Upload document" %}</a>
+    </div>
     {% endif %}
   </div>
   {% if documents %}
-  <table class="table table-sm mb-0">
-    <thead><tr><th>{% translate "Title" %}</th><th>{% translate "Type" %}</th><th>{% translate "Expiry" %}</th></tr></thead>
-    <tbody>
-      {% for document in documents %}
-      <tr>
-        <td><a href="{% url 'document-detail' document.pk %}">{{ document.title }}</a></td>
-        <td>{{ document.doc_type }}</td>
-        <td>{{ document.expiry_date|date:"Y-m-d"|default:"—" }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+      <thead><tr>
+        <th scope="col">{% translate "Title" %}</th>
+        <th scope="col">{% translate "Type" %}</th>
+        <th scope="col">{% translate "Issued" %}</th>
+        <th scope="col">{% translate "Expiry" %}</th>
+        <th scope="col" class="text-end">{% translate "Actions" %}</th>
+      </tr></thead>
+      <tbody>
+        {% for document in documents %}
+        <tr>
+          <td>
+            <a href="{% url 'document-detail' document.pk %}">{{ document.title }}</a>
+            {% if not document.is_current_version %}<span class="badge bg-secondary-subtle text-secondary-emphasis ms-1">{% translate "Superseded" %}</span>{% endif %}
+          </td>
+          <td>{{ document.doc_type }}</td>
+          <td class="text-nowrap">{{ document.issue_date|date:"Y-m-d"|default:"—" }}</td>
+          {% comment %}La fecha por sí sola no dice si está vencida; la insignia
+          usa la misma escala de urgencia que el resto de la app.{% endcomment %}
+          <td class="text-nowrap">
+            {% if document.expiry_date %}{{ document.expiry_date|date:"Y-m-d" }}{% if document.is_expired %} <span class="badge bg-danger">{% translate "Expired" %}</span>{% endif %}{% else %}—{% endif %}
+          </td>
+          <td class="text-end text-nowrap">
+            <a class="btn btn-sm btn-outline-secondary" href="{% url 'document-preview' document.pk %}" target="_blank" rel="noopener">{% translate "View" %}</a>
+            <a class="btn btn-sm btn-outline-secondary" href="{% url 'document-download' document.pk %}">{% translate "Download" %}</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
   {% else %}
   <p class="text-muted mb-0">{% translate "No documents attached yet." %}</p>
   {% endif %}
