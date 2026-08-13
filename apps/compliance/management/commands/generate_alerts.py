@@ -83,10 +83,13 @@ class Command(BaseCommand):
                 # (alerts never auto-expire), so only a rule created more than
                 # a year after the record would miss it.
                 # Terminal statuses across the watchable models: a completed
-                # maintenance, a denied permit, a reviewed monthly compliance
-                # (LV-30: completed or non_compliant -- the reviewer acted).
+                # maintenance, a denied or expired permit, a reviewed monthly
+                # compliance (LV-30: completed or non_compliant -- the reviewer
+                # acted). `expired` joined the list with LV-83: without it a
+                # permit closed by the daily job would still count as open and
+                # keep raising alerts for an authorization that is over.
                 records = records.exclude(
-                    status__in=("completed", "denied", "non_compliant")
+                    status__in=("completed", "denied", "non_compliant", "expired")
                 ).filter(created_at__gte=timezone.now() - timedelta(days=365))
             for record in records:
                 if (rule.pk, record.pk) in open_alert_keys:

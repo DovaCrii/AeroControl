@@ -7,7 +7,7 @@ from django.db import models, transaction
 from django.db.models import Q
 from django.conf import settings
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, pgettext_lazy
 from apps.core.choices import PURPOSE_CHOICES
 from apps.core.models import BaseModel, StatusFlowMixin
 from apps.registry.models import Operator, Aircraft, CostCenter
@@ -27,11 +27,23 @@ class FlightPermission(StatusFlowMixin, BaseModel):
     STATUS_APPROVED = "approved"
     STATUS_DENIED = "denied"
     STATUS_COMPLETED = "completed"
+    # LV-83: the authorization's validity ran out. **Deliberately not the same
+    # as "completed"**, decided with the user: completed means the authorized
+    # work was flown and the signed DGAC authorization is on file (R2.4 refuses
+    # the transition without it), while expired only means the window closed --
+    # and a permit can expire having flown nothing at all. Merging them would
+    # also break `on_time_execution`, whose whole question is which expired
+    # permits had no flight against them.
+    STATUS_EXPIRED = "expired"
     STATUS_CHOICES = [
         (STATUS_REQUESTED, _("Requested")),
         (STATUS_APPROVED, _("Approved")),
         (STATUS_DENIED, _("Denied")),
         (STATUS_COMPLETED, _("Completed")),
+        # With context: "Expired" already exists in the catalog as the *plural*
+        # count of lapsed qualifications on the operator fiche ("Vencidos"), and
+        # without `msgctxt` this status would inherit that wording.
+        (STATUS_EXPIRED, pgettext_lazy("permit status", "Expired")),
     ]
     # LV-72: the order the statuses actually advance in, read by
     # StatusFlowMixin.status_steps(). Declared here, next to the choices it
@@ -40,7 +52,10 @@ class FlightPermission(StatusFlowMixin, BaseModel):
     # types that drifted from the 9 real ones). `denied` is deliberately out of
     # the flow: it is not a step on the way anywhere, it is where it stops.
     STATUS_FLOW = [STATUS_REQUESTED, STATUS_APPROVED, STATUS_COMPLETED]
-    STATUS_BLOCKED = STATUS_DENIED
+    # Two terminal states now (LV-83). They differ in one way that matters for
+    # the stepper: `denied` is only ever reached from the first step, while a
+    # permit can expire from anywhere -- see `status_steps` below.
+    STATUS_BLOCKED = [STATUS_DENIED, STATUS_EXPIRED]
     # R2.6: DAN 151 (populated area) vs DAN 91 (unpopulated) is a real
     # normative distinction (ISO 9001/45001 audit guide, clause 6.1.3), not
     # a boolean -- a single survey can cross both, which "mixed" exists to
@@ -166,6 +181,30 @@ class FlightPermission(StatusFlowMixin, BaseModel):
         from django.urls import reverse
 
         return reverse("permission-detail", kwargs={"pk": self.pk})
+
+    def status_steps(self):
+        """LV-83: how far it got before it stopped, not just that it stopped.
+
+        The mixin's default collapses a blocked record to "first step + where it
+        stopped", which was right while `denied` was the only terminal state --
+        it can only be reached from `requested`. An expired permit can have been
+        approved, and showing it as "Solicitado ✕ Caducado" would hide that the
+        DGAC had authorized it, which is exactly the fact an auditor is looking
+        for. The history knows which status it was moved away from.
+        """
+        from apps.core.models import status_steps_for
+
+        reached = None
+        if self.pk and self.status in self.STATUS_BLOCKED:
+            stopping_row = self.history.filter(new_status=self.status).first()
+            reached = stopping_row.previous_status if stopping_row else None
+        return status_steps_for(
+            choices=self.STATUS_CHOICES,
+            flow=self.STATUS_FLOW,
+            current=self.status,
+            blocked=self.STATUS_BLOCKED,
+            reached=reached,
+        )
 
     @staticmethod
     def _next_internal_folio():
