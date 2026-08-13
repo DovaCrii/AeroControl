@@ -16,6 +16,43 @@ class BaseModel(models.Model):
         abstract = True
 
 
+def status_steps_for(*, choices, flow, current, blocked=None):
+    """[{code, label, state}] for one flow, state in done/current/pending/blocked.
+
+    Extracted from `StatusFlowMixin.status_steps` when the insurance filing
+    (LV-81) became the third user and the first whose flow is **not** the
+    model's own `status` field: an aircraft's `status` (active/damaged/
+    maintenance) is not a progression -- the mixin's own docstring says so --
+    while its insurance filing is. Taking the flow as arguments is what lets one
+    model carry a stepper for a field other than `status`, without pretending
+    the model itself advances through a sequence.
+
+    A `current` value outside `flow` yields every step "pending", which is
+    exactly right for a flow that has not started (insurance "missing").
+    """
+    labels = dict(choices)
+    if blocked and current == blocked:
+        # Not the full flow greyed out: that would imply the remaining steps
+        # are still ahead of a record that is not going anywhere. Show how far
+        # it got and where it stopped.
+        return [
+            {"code": flow[0], "label": labels[flow[0]], "state": "done"},
+            {"code": blocked, "label": labels[blocked], "state": "blocked"},
+        ]
+
+    reached = flow.index(current) if current in flow else -1
+    steps = []
+    for index, code in enumerate(flow):
+        if index < reached:
+            state = "done"
+        elif index == reached:
+            state = "current"
+        else:
+            state = "pending"
+        steps.append({"code": code, "label": labels[code], "state": state})
+    return steps
+
+
 class StatusFlowMixin(models.Model):
     """LV-72: a record's progress as a stepper, SIGO-style.
 
@@ -44,39 +81,12 @@ class StatusFlowMixin(models.Model):
 
     def status_steps(self):
         """[{code, label, state}], state in done/current/pending/blocked."""
-        labels = dict(self.STATUS_CHOICES)
-        if self.STATUS_BLOCKED and self.status == self.STATUS_BLOCKED:
-            # Not the full flow greyed out: that would imply the remaining
-            # steps are still ahead of a record that is not going anywhere.
-            # Show how far it got and where it stopped.
-            return [
-                {
-                    "code": self.STATUS_FLOW[0],
-                    "label": labels[self.STATUS_FLOW[0]],
-                    "state": "done",
-                },
-                {
-                    "code": self.STATUS_BLOCKED,
-                    "label": labels[self.STATUS_BLOCKED],
-                    "state": "blocked",
-                },
-            ]
-
-        reached = (
-            self.STATUS_FLOW.index(self.status)
-            if self.status in self.STATUS_FLOW
-            else -1
+        return status_steps_for(
+            choices=self.STATUS_CHOICES,
+            flow=self.STATUS_FLOW,
+            current=self.status,
+            blocked=self.STATUS_BLOCKED,
         )
-        steps = []
-        for index, code in enumerate(self.STATUS_FLOW):
-            if index < reached:
-                state = "done"
-            elif index == reached:
-                state = "current"
-            else:
-                state = "pending"
-            steps.append({"code": code, "label": labels[code], "state": state})
-        return steps
 
 
 class BackupConfig(BaseModel):

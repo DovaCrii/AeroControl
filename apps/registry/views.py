@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.utils import timezone
 from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, FormView
@@ -18,6 +19,7 @@ from apps.core.views import (
     ModelPermissionRequiredMixin,
     ModelViewPermissionRequiredMixin,
     SearchMixin,
+    StatusTransitionView,
     TenantScopedQuerysetMixin,
     _CsvEchoBuffer,
 )
@@ -594,7 +596,115 @@ class AircraftDetail(RegistryDetail):
             )
         else:
             context["total_flight_hours"] = None
+        context.update(self._insurance_context())
         return context
+
+    def _insurance_context(self):
+        """LV-81: the insurance filing as a stepper plus its trace.
+
+        The history prefetches the actor's groups: the shared traceability
+        block prints the user's role from `changed_by_user.groups`, which is one
+        query per row without this (the LV-72 note says so, and it applies
+        identically here).
+
+        The transition buttons are gated on `change_aircraft`, the same
+        permission the transition views themselves require -- offering a button
+        that answers 403 is worse than not offering it.
+        """
+        aircraft = self.object
+        actions = []
+        if self.request.user.has_perm("registry.change_aircraft"):
+            # Only the one step forward from where it stands, so the page cannot
+            # be used to jump the flow (the views refuse it anyway, via
+            # valid_from_statuses -- this just does not invite it).
+            next_step = {
+                Aircraft.INSURANCE_STATUS_MISSING: (
+                    _("Start the filing"),
+                    "aircraft-insurance-pending",
+                ),
+                Aircraft.INSURANCE_STATUS_PENDING: (
+                    _("Filed in SIGO"),
+                    "aircraft-insurance-filed",
+                ),
+                Aircraft.INSURANCE_STATUS_FILED: (
+                    _("The JAC authorized it"),
+                    "aircraft-insurance-active",
+                ),
+                # From "active" the only move is a renewal, which starts the
+                # cycle again -- the user's "faltante para actualizar".
+                Aircraft.INSURANCE_STATUS_ACTIVE: (
+                    _("Start a renewal"),
+                    "aircraft-insurance-pending",
+                ),
+            }.get(aircraft.insurance_status)
+            if next_step:
+                label, route = next_step
+                actions.append((label, reverse(route, args=[aircraft.pk])))
+        return {
+            "insurance_steps": aircraft.insurance_steps(),
+            "insurance_history": aircraft.insurance_history.select_related(
+                "changed_by_user"
+            ).prefetch_related("changed_by_user__groups")[:20],
+            "insurance_actions": actions,
+        }
+
+
+class AircraftInsuranceTransition(StatusTransitionView):
+    """LV-81: advance the insurance filing, never the airframe's condition.
+
+    `status_field` is what keeps those apart: an aircraft's `status` is
+    active/damaged/maintenance, and pointing these transitions at it would
+    ground an aircraft as a side effect of its policy being authorized.
+    """
+
+    model = Aircraft
+    status_field = "insurance_status"
+
+
+class AircraftInsurancePending(AircraftInsuranceTransition):
+    target_status = Aircraft.INSURANCE_STATUS_PENDING
+    # From `active` too: renewing is where this cycle starts again.
+    valid_from_statuses = [
+        Aircraft.INSURANCE_STATUS_MISSING,
+        Aircraft.INSURANCE_STATUS_ACTIVE,
+    ]
+    success_message = gettext_lazy("Insurance filing started.")
+
+
+class AircraftInsuranceFiled(AircraftInsuranceTransition):
+    target_status = Aircraft.INSURANCE_STATUS_FILED
+    valid_from_statuses = [Aircraft.INSURANCE_STATUS_PENDING]
+    success_message = gettext_lazy("Recorded as filed in SIGO, awaiting the JAC.")
+
+
+class AircraftInsuranceActive(AircraftInsuranceTransition):
+    """The last step, guarded: found on the screen, not by a test.
+
+    Without the guard the fiche could read "Póliza vigente" and "Sin vigencia de
+    póliza en ficha" at once, because the transition writes only the status
+    (`update_fields`), so `clean()`'s normalization never runs. Same shape and
+    same reason as `RequireDgacPermitPdfMixin` on the permit (LV-51/LV-64/R2.4):
+    **this app's status must not outrun the real paperwork.** The person clicking
+    this is reading the certificate, which always states the validity period --
+    the JAC does not authorize a policy without one.
+    """
+
+    target_status = Aircraft.INSURANCE_STATUS_ACTIVE
+    valid_from_statuses = [Aircraft.INSURANCE_STATUS_FILED]
+    success_message = gettext_lazy("Insurance recorded as authorized.")
+
+    def post(self, request, pk):
+        aircraft = get_object_or_404(Aircraft, pk=pk, is_active=True)
+        if aircraft.insurance_expiry is None:
+            messages.error(
+                request,
+                _(
+                    "Enter the policy's validity date before recording the "
+                    "JAC's authorization."
+                ),
+            )
+            return redirect(aircraft)
+        return super().post(request, pk)
 
 
 class OperatorDetail(RegistryDetail):

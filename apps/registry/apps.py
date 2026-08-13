@@ -35,3 +35,14 @@ class RegistryConfig(AppConfig):
             sender=Aircraft,
             dispatch_uid="ops_track_aircraft_location",
         )
+        # LV-81: trace the insurance filing. A second pre_save receiver on the
+        # same sender, like maintenance already does -- both re-fetch the
+        # pre-save row independently and neither mutates the other's field, so
+        # the order they run in does not matter.
+        from apps.core.signals import track_status_changes
+
+        pre_save.connect(
+            track_status_changes,
+            sender=Aircraft,
+            dispatch_uid="registry.track_insurance_status",
+        )
