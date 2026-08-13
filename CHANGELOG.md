@@ -124,6 +124,16 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **El panel responde "¿puedo operar hoy?" (`LV-89`).** Los dos gráficos que
+  ocupaban un tercio de la pantalla para repetir números que ya estaban arriba
+  se reemplazan por **tres indicadores**: flota disponible (con su meta del 90%),
+  seguros al día y credenciales al día — cada uno con **cuántos faltan**, no sólo
+  el porcentaje, y cada uno clickeable hacia la lista que hay que arreglar. El
+  encabezado queda con un solo botón, "+ Nuevo permiso": los otros dos repetían
+  el menú lateral, y uno de ellos decía "Abrir registro" y llevaba a centros de
+  costo. La tarjeta de clima suma la **ventana de luz diurna** y el índice UV,
+  que no cuestan una consulta extra y sí importan: tu póliza cubre **jornada
+  diurna**.
 - **El tablero Kanban dejó de aparecer donde todavía asomaba (`LV-78`).** Se dio
   de baja el 2026-08-12, pero seguía dibujándose en el **panel** (un gráfico de
   sus etapas, todos los días), en el **calendario**, en el **buscador** y en el
