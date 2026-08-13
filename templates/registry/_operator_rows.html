@@ -10,7 +10,24 @@
       {% if object.credential_is_overdue %}<span class="badge bg-danger">{% translate "Overdue" %} · {{ object.credential_expiry|date:'Y-m-d' }}</span>
       {% else %}<span class="badge bg-warning-subtle text-warning-emphasis">{{ object.credential_expiry|date:'Y-m-d' }}</span>{% endif %}
     {% else %}<span class="text-muted">—</span>{% endif %}
-    {% if not object.has_credential_pdf %}<span class="badge bg-secondary-subtle text-secondary-emphasis" title="{% translate 'No DGAC credential PDF on file' %}">{% translate "No PDF" %}</span>{% endif %}
+  </td>
+  {% comment %}LV-87 (refina R4.7): columna propia, y una figura de sí/no en vez
+  de una insignia que sólo aparecía cuando faltaba. Que el respaldo **esté** es
+  información tan útil como que falte, y el icono se lee de un barrido sin tener
+  que leer texto fila por fila. Va inline, como el resto de los iconos: la CSP es
+  un `default-src 'self'` pelado.{% endcomment %}
+  <td class="cell-status">
+    {% if object.has_credential_pdf %}
+    <span class="credential-file is-present" title="{% translate 'DGAC credential PDF on file' %}">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6.5 9.6 17 4 11.4"/></svg>
+      <span class="visually-hidden">{% translate "Credential file on record" %}</span>
+    </span>
+    {% else %}
+    <span class="credential-file is-missing" title="{% translate 'No DGAC credential PDF on file' %}">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      <span class="visually-hidden">{% translate "No credential file" %}</span>
+    </span>
+    {% endif %}
   </td>
   <td class="cell-truncate">{% if object.cost_center %}<span title="{{ object.cost_center }}">{{ object.cost_center.code }}</span>{% else %}<span class="text-muted">{% translate "Unassigned" %}</span>{% endif %}</td>
   <td class="cell-status">

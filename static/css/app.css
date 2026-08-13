@@ -1320,6 +1320,36 @@ main {
    ninguno parezca más importante que otro. El icono usa el mismo trazo que el
    resto de la app y `currentColor`, así que sigue al tema claro/oscuro sin una
    segunda regla. */
+/* LV-88: el trayecto en una sola celda. La flecha es el separador, no un dato:
+   se atenúa para que los dos códigos de centro de costo sean lo que se lee. */
+.movement-arrow {
+  color: var(--ac-text-muted);
+  padding: 0 0.15rem;
+}
+
+/* LV-87: el respaldo de la credencial, como figura. Verde cuando está y gris
+   —no rojo— cuando falta: un PDF que no se subió es una tarea pendiente, no un
+   incumplimiento; el rojo de esta app está reservado para lo vencido. */
+.credential-file svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Bootstrap's own success emphasis, which already flips with data-bs-theme --
+   this app has no --ac-success token of its own to reuse. */
+.credential-file.is-present {
+  color: var(--bs-success-text-emphasis, #2e7d55);
+}
+
+.credential-file.is-missing {
+  color: var(--ac-text-muted);
+}
+
 /* LV-85: el visor del documento. Alto fijo y no "todo el alto del PDF": la
    ficha tiene contenido debajo (versiones anteriores) y un visor sin techo lo
    empuja fuera de la pantalla. El navegador pone su propia barra de

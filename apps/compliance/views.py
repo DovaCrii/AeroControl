@@ -852,6 +852,32 @@ class DocumentBulkUpload(ModelPermissionRequiredMixin, FormView):
                 initial[field] = value
         return initial
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Built from our own parameters, never from HTTP_REFERER: that header is
+        # untrusted input, and rendering a link out of it puts somebody else's
+        # URL inside our page.
+        context["cancel_url"] = self._cancel_url()
+        return context
+
+    def _cancel_url(self):
+        from django.contrib.contenttypes.models import ContentType
+
+        content_type = ContentType.objects.filter(
+            pk=self.request.GET.get("entity_type") or 0
+        ).first()
+        object_id = self.request.GET.get("object_id")
+        if content_type and object_id:
+            model = content_type.model_class()
+            record = (
+                model._default_manager.filter(pk=object_id).first() if model else None
+            )
+            if record is not None:
+                document = Document(content_type=content_type, object_id=record.pk)
+                with suppress(Exception):
+                    return document_home_url(document)
+        return reverse("company-documents")
+
     def form_valid(self, form):
         record = form.cleaned_data["record"]
         uploads = form.cleaned_data["files"]

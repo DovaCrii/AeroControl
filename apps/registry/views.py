@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Prefetch, Q
@@ -991,6 +993,17 @@ class ResourceMovementLogList(
         if kind in {"operator", "aircraft"}:
             queryset = queryset.filter(resource_kind=kind)
 
+        # LV-88: bounded by default. The question this page gets asked is "what
+        # moved recently", and answering it with every movement since the
+        # beginning of time buries this week's three rows under last year's
+        # eighty. The window is a visible selector, never an invisible cap --
+        # "Todo" is one click away, and the header says which window is on.
+        days = self.selected_days()
+        if days:
+            queryset = queryset.filter(
+                created_at__gte=timezone.now() - timedelta(days=days)
+            )
+
         tenant_ids = visible_tenant_ids(self.request.user)
         if tenant_ids is not None:
             aircraft_ids = Aircraft.objects.filter(
@@ -1023,6 +1036,26 @@ class ResourceMovementLogList(
 
         return queryset
 
+    # LV-88: the windows offered, and the default. 30 days covers "this month's
+    # moves" without hiding a fortnight-old one.
+    PERIODS = [(7, _("Last 7 days")), (30, _("Last 30 days")), (90, _("Last 90 days"))]
+    DEFAULT_DAYS = 30
+
+    def selected_days(self):
+        """The window in days, or None for "everything on record"."""
+        raw = self.request.GET.get("days")
+        if raw == "all":
+            return None
+        try:
+            days = int(raw)
+        except (TypeError, ValueError):
+            return self.DEFAULT_DAYS
+        return (
+            days
+            if days in {value for value, _label in self.PERIODS}
+            else (self.DEFAULT_DAYS)
+        )
+
     def get_context_data(self, **kwargs):
         from .selectors import label_movements
 
@@ -1030,6 +1063,13 @@ class ResourceMovementLogList(
         context["title"] = _("Resource movements")
         context["selected_kind"] = self.request.GET.get("resource_kind", "")
         context["objects"] = label_movements(context["objects"])
+        days = self.selected_days()
+        context["periods"] = self.PERIODS
+        context["selected_days"] = "all" if days is None else days
+        # The count of the *filtered* set, not of the page: "23 movements" over
+        # a paginated list of 50 has to mean the window, or the number is a
+        # statement about pagination rather than about the operation.
+        context["movement_count"] = self.get_queryset().count()
         return context
 
     def render_csv_response(self, queryset):
