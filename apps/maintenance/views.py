@@ -5,6 +5,7 @@ from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.generic import CreateView, DetailView, ListView, View
+from django.utils.text import capfirst
 
 from apps.core.audit import set_audit_context
 from apps.core.views import (
@@ -29,7 +30,7 @@ class MList(CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListV
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = _(self.model._meta.verbose_name_plural.title())
+        context["title"] = capfirst(self.model._meta.verbose_name_plural)
         return context
 
 
@@ -43,7 +44,7 @@ class MCreate(HtmxFormMixin, ModelPermissionRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = _("New %(record)s") % {
-            "record": _(self.model._meta.verbose_name.title())
+            "record": self.model._meta.verbose_name
         }
         return context
 

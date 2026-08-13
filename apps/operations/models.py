@@ -51,6 +51,11 @@ class FlightPermission(StatusFlowMixin, BaseModel):
     # precisely the R1.1 defect (the calendar carried 7 hand-written event
     # types that drifted from the 9 real ones). `denied` is deliberately out of
     # the flow: it is not a step on the way anywhere, it is where it stops.
+    # LV-90: where this record stops being "open" for the alert engine. Declared
+    # next to the choices, because a literal list living inside generate_alerts
+    # is a list somebody has to remember to edit -- and forgetting it fails
+    # silently, as alerts for an authorization that is already over.
+    TERMINAL_STATUSES = frozenset({STATUS_DENIED, STATUS_COMPLETED, STATUS_EXPIRED})
     STATUS_FLOW = [STATUS_REQUESTED, STATUS_APPROVED, STATUS_COMPLETED]
     # Two terminal states now (LV-83). They differ in one way that matters for
     # the stepper: `denied` is only ever reached from the first step, while a
@@ -267,6 +272,10 @@ class FlightRecord(BaseModel):
     )
 
     class Meta:
+        # LV-80: without these the screen title falls back to Django's English
+        # derivation of the class name ("Flight record" / "Flight records").
+        verbose_name = _("flight record")
+        verbose_name_plural = _("flight records")
         # The table that grows per flight; the calendar scans it by date.
         indexes = [
             models.Index(

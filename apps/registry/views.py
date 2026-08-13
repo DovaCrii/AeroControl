@@ -13,6 +13,7 @@ from django.utils.translation import gettext_lazy
 from django.utils import timezone
 from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, FormView
+from django.utils.text import capfirst
 import csv
 from apps.core.exports import neutralize
 from apps.core.views import (
@@ -77,7 +78,7 @@ class RegistryList(
         context = super().get_context_data(**kwargs)
         context["title"] = self.page_titles.get(
             self.model._meta.model_name,
-            _(self.model._meta.verbose_name_plural.title()),
+            capfirst(self.model._meta.verbose_name_plural),
         )
         return context
 
@@ -142,7 +143,7 @@ class RegistryCreate(HtmxFormMixin, ModelPermissionRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = _("New %(record)s") % {
-            "record": _(self.model._meta.verbose_name.title())
+            "record": self.model._meta.verbose_name
         }
         return context
 
@@ -170,7 +171,7 @@ class RegistryUpdate(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = _("Edit %(record)s") % {
-            "record": _(self.model._meta.verbose_name.title())
+            "record": self.model._meta.verbose_name
         }
         return context
 
