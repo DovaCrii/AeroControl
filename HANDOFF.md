@@ -79,7 +79,7 @@ viento en **m/s** e icono de la condición del día; el filtro por centro de cos
 que ya existía cambia la ubicación. Verificado en el demo contra Open-Meteo real.
 **Sin desplegar todavía** — ver abajo.
 
-**6. Lote nuevo del 2026-08-13: `LV-81` y `LV-82` hechos, `LV-83` a `LV-89` capturados.**
+**6. Lote nuevo del 2026-08-13: `LV-81`, `LV-82` y `LV-83` hechos; `LV-84` a `LV-89` capturados.**
 El usuario pidió "tomarlo de a poco" e investigar antes de programar, y marcó
 `LV-81` (el seguro) como lo clave: **está hecho** — cuatro estados, escalera y
 trazabilidad, más el bloqueo que impide marcar "autorizado" sin fecha de
@@ -90,10 +90,15 @@ se dejó fuera a propósito.
 registro tomó** (casa o taller), decidido por su propio historial, y de paso se
 corrigió que el historial mostraba códigos crudos en inglés.
 
+`LV-83` está hecho, con la decisión del usuario: **estado nuevo "Caducado"**, no
+auto-completar (completar exige el PDF firmado de la DGAC, y un permiso puede
+caducar sin haber volado). **Agrega un trabajo programado nuevo**
+(`expire_permissions`, 05:30, antes de `generate_alerts`) que hay que instalar en
+`p340` con el bloque `mkjob` — serían **11 timers**. El bloque de
+`docs/scheduled-operations.md` ya lo incluye.
+
 Lo que sigue, con el diagnóstico ya verificado contra el código en cada fila:
-cierre automático de permisos vencidos
-(`LV-83`, y ojo: *caducado* y *completado* no son lo mismo, mezclarlos rompe un
-KPI), la pantalla de carga de documentos (`LV-84`), preview de PDF (`LV-85`,
+la pantalla de carga de documentos (`LV-84`), preview de PDF (`LV-85`,
 compatible con la CSP actual porque el archivo es del mismo origen), carga masiva
 (`LV-86`), la columna propia de credencial adjunta (`LV-87`), movimientos de
 recursos (`LV-88`) y la revisión del panel (`LV-89`, que incluye **un gráfico de
@@ -194,9 +199,9 @@ el guardado **no reescribe filas ya almacenadas**. La migración `registry/0032`
 las normaliza y **aborta si dos sólo difieren en mayúsculas** — eso lo resuelve
 el certificado RPAS de la DGAC, no una migración.
 
-## Sin desplegar: `R8.4` + `LV-81` + `LV-82`
+## Sin desplegar: `R8.4` + `LV-81` + `LV-82` + `LV-83`
 
-**Tres migraciones, ninguna riesgosa, pero dos tocan datos:**
+**Cuatro migraciones, ninguna riesgosa, pero dos tocan datos:**
 
 - `registry/0033` (`R8.4`): dos columnas nulas en `CostCenter`. Sin backfill, sin
   restricción; no puede fallar sobre datos reales.
@@ -209,6 +214,11 @@ el certificado RPAS de la DGAC, no una migración.
 - `maintenance/0008` (`LV-82`): agrega `sequence` al historial de mantención y
   **numera las filas existentes** por orden de creación. Sin ese backfill todas
   empatarían en cero y la ficha imprimiría su historial en orden arbitrario.
+- `operations/0017` (`LV-83`): sólo amplía las opciones de estado del permiso.
+  No cambia ninguna fila — el cierre lo hace el trabajo programado, no la
+  migración. **Conviene correr `expire_permissions --dry-run` antes** de
+  habilitar el timer: dice cuántos permisos reales se van a cerrar en la primera
+  corrida, y en producción es probable que sean varios de golpe.
 
 Ninguna necesita `bootstrap_roles` (no hay permisos nuevos: las transiciones del
 seguro usan `change_aircraft`, que ya existe). El `.mo` está recompilado y

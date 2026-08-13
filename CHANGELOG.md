@@ -10,6 +10,14 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Los permisos vencidos se cierran solos (`LV-83`).** Un trabajo diario marca
+  como **Caducado** todo permiso cuya vigencia terminó y que seguía en
+  *Solicitado* o *Aprobado*, conservando entero su historial. **Caducado no es
+  Completado**: completar significa que se voló lo autorizado y que está el PDF
+  firmado de la DGAC, mientras que caducar sólo significa que se acabó el plazo
+  — y un permiso puede caducar sin haber volado nunca. La barra de estado
+  muestra hasta dónde llegó antes de cerrarse, así que un permiso caducado que
+  había sido aprobado sigue mostrando que la DGAC lo autorizó.
 - **Trazabilidad visible en mantención (`LV-82`).** La ficha de una mantención
   muestra ahora la misma barra de estado que el permiso y el seguro, **con el
   camino que ese registro realmente tomó**: el corto cuando se resuelve en casa,
