@@ -44,6 +44,25 @@ class Command(BaseCommand):
                 "alert_rule_id", "object_id"
             )
         )
+        # LV-78 step 3a: the board is frozen, and a rule that still has card
+        # creation switched on keeps filing work into it. Nothing is changed
+        # here -- changing somebody's configuration behind their back would be
+        # worse -- but it stops being silent: the daily job names the rules, so
+        # the situation is visible before the board is deleted rather than
+        # discovered by its absence afterwards.
+        for rule in AlertRule.objects.filter(
+            enabled=True, is_active=True, create_kanban_task=True
+        ):
+            self.stdout.write(
+                self.style.WARNING(
+                    f"Rule still creates Kanban tasks (LV-78): {rule.name}"
+                )
+            )
+            logger.warning(
+                "alert_rule_still_targets_retired_board",
+                extra={"rule_id": str(rule.pk), "rule_name": rule.name},
+            )
+
         for rule in AlertRule.objects.filter(enabled=True, is_active=True):
             model = resolve_model(rule.entity_type)
             if model is None:
