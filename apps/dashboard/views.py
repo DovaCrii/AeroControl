@@ -126,6 +126,92 @@ def upcoming_expirations(today, cutoff, cost_center=None):
     return items
 
 
+def panel_readiness(today, cost_center=None):
+    """LV-89: can we operate today? -- as three counts, not two pie charts.
+
+    Replaces "Aircraft by status" (two slices) and "Permissions by status" (one
+    bar), which took a third of the screen to restate numbers the tiles above
+    already showed. These three answer the question the panel is opened for, and
+    each is a **fraction with its shortfall named**: a percentage alone tells you
+    something is wrong without telling you how much work it is to fix.
+
+    Nothing here is new data. Fleet availability reuses the target agreed with
+    the user on 2026-08-12 (`FLEET_AVAILABILITY_TARGET`, 90%), and the other two
+    read the same fields the alert engine watches -- so a number on the panel and
+    an alert in the inbox can never disagree.
+
+    `retired` is excluded from the fleet denominator for the same reason
+    `kpis.fleet_availability` excludes it: a decommissioned aircraft is not
+    unavailable, it left the fleet, and counting it would make the figure sag
+    permanently for a good decision.
+    """
+    from apps.compliance.kpis import FLEET_AVAILABILITY_TARGET
+
+    horizon = today + timedelta(days=30)
+
+    fleet = Aircraft.objects.filter(is_active=True).exclude(status="retired")
+    operators = Operator.objects.filter(is_active=True)
+    if cost_center:
+        fleet = fleet.filter(cost_center=cost_center)
+        operators = operators.filter(cost_center=cost_center)
+
+    fleet_total = fleet.count()
+    flyable = fleet.filter(status="active").count()
+    # "Up to date" means the policy is on file *and* still valid. An aircraft
+    # whose insurance lapsed yesterday is not covered, whatever its status says.
+    insured = fleet.filter(
+        insurance_status=Aircraft.INSURANCE_STATUS_ACTIVE,
+        insurance_expiry__gte=today,
+    ).count()
+    operators_total = operators.count()
+    credentialed = operators.filter(credential_expiry__gte=today).count()
+
+    return {
+        "readiness": [
+            {
+                "label": _("Fleet available"),
+                "count": flyable,
+                "total": fleet_total,
+                "pct": round(flyable * 100 / fleet_total, 1) if fleet_total else None,
+                "target": FLEET_AVAILABILITY_TARGET,
+                "shortfall": fleet_total - flyable,
+                "shortfall_label": _("not flyable"),
+                "url": reverse("aircraft-list"),
+            },
+            {
+                "label": _("Insurance up to date"),
+                "count": insured,
+                "total": fleet_total,
+                "pct": round(insured * 100 / fleet_total, 1) if fleet_total else None,
+                "target": None,
+                "shortfall": fleet_total - insured,
+                "shortfall_label": _("missing or lapsed"),
+                "soon": fleet.filter(
+                    insurance_expiry__gte=today, insurance_expiry__lte=horizon
+                ).count(),
+                "url": reverse("aircraft-list"),
+            },
+            {
+                "label": _("Credentials up to date"),
+                "count": credentialed,
+                "total": operators_total,
+                "pct": (
+                    round(credentialed * 100 / operators_total, 1)
+                    if operators_total
+                    else None
+                ),
+                "target": None,
+                "shortfall": operators_total - credentialed,
+                "shortfall_label": _("missing or lapsed"),
+                "soon": operators.filter(
+                    credential_expiry__gte=today, credential_expiry__lte=horizon
+                ).count(),
+                "url": reverse("operator-list"),
+            },
+        ]
+    }
+
+
 def panel_forecast(today, cost_center=None, user=None):
     """R8.4: the weather for the operation's next flight, for the panel.
 
@@ -396,6 +482,7 @@ def dashboard(request):
         "selected_cost_center": selected_cost_center,
         "monthly_records": monthly_records,
     }
+    context.update(panel_readiness(today, selected_cost_center))
     # R8.4: after the rest of the context, so a provider hiccup cannot get in
     # the way of anything the panel already showed.
     context.update(panel_forecast(today, selected_cost_center, request.user))
