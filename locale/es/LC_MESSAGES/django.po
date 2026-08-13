@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-13 09:22-0400\n"
+"POT-Creation-Date: 2026-08-13 10:08-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -1498,61 +1498,69 @@ msgstr "registro de mantenimiento"
 msgid "maintenance records"
 msgstr "registros de mantenimiento"
 
-#: .\apps\maintenance\views.py:114
+#: .\apps\maintenance\models.py:200
+msgid "maintenance history"
+msgstr "historial de mantención"
+
+#: .\apps\maintenance\models.py:201
+msgid "maintenance histories"
+msgstr "historiales de mantención"
+
+#: .\apps\maintenance\views.py:118
 msgid "Start maintenance"
 msgstr "Iniciar mantenimiento"
 
-#: .\apps\maintenance\views.py:115
+#: .\apps\maintenance\views.py:119
 msgid "Send to workshop"
 msgstr "Enviar a taller"
 
-#: .\apps\maintenance\views.py:117
+#: .\apps\maintenance\views.py:121
 msgid "Arrived at workshop"
 msgstr "Llegó al taller"
 
-#: .\apps\maintenance\views.py:118
+#: .\apps\maintenance\views.py:122
 msgid "Finish repair"
 msgstr "Terminar reparación"
 
-#: .\apps\maintenance\views.py:119
+#: .\apps\maintenance\views.py:123
 msgid "Departed workshop"
 msgstr "Salió del taller"
 
-#: .\apps\maintenance\views.py:128
+#: .\apps\maintenance\views.py:132
 msgid "Maintenance started."
 msgstr "Mantenimiento iniciado."
 
-#: .\apps\maintenance\views.py:139
+#: .\apps\maintenance\views.py:143
 msgid "Aircraft sent to the workshop."
 msgstr "Aeronave enviada al taller."
 
-#: .\apps\maintenance\views.py:146
+#: .\apps\maintenance\views.py:150
 msgid "Aircraft arrived at the workshop."
 msgstr "Aeronave llegó al taller."
 
-#: .\apps\maintenance\views.py:153
+#: .\apps\maintenance\views.py:157
 msgid "Repair finished at the workshop."
 msgstr "Reparación terminada en el taller."
 
-#: .\apps\maintenance\views.py:160
+#: .\apps\maintenance\views.py:164
 msgid "Aircraft in transit back to headquarters."
 msgstr "Aeronave en tránsito de vuelta a casa matriz."
 
-#: .\apps\maintenance\views.py:172
+#: .\apps\maintenance\views.py:176
 msgid "Maintenance completed."
 msgstr "Mantenimiento completado."
 
-#: .\apps\maintenance\views.py:192 .\apps\operations\views.py:282
+#: .\apps\maintenance\views.py:196 .\apps\operations\views.py:282
 #: .\templates\maintenance\record_detail.html:41
 msgid "Complete"
 msgstr "Completar"
 
-#: .\apps\maintenance\views.py:248
+#: .\apps\maintenance\views.py:252
 msgid "Incident reported from the aircraft fiche. Pending assessment."
 msgstr ""
 "Incidente reportado desde la ficha de la aeronave. Pendiente de evaluación."
 
-#: .\apps\maintenance\views.py:255
+#: .\apps\maintenance\views.py:259
 msgid ""
 "Incident logged: aircraft marked as damaged and an emergency maintenance "
 "record was opened."
@@ -2543,7 +2551,6 @@ msgstr "Movimiento"
 
 #: .\apps\registry\views.py:1055 .\templates\compliance\report.html:36
 #: .\templates\core\audit_log.html:27 .\templates\geo\plan_detail.html:215
-#: .\templates\maintenance\record_detail.html:48
 #: .\templates\registry\aircraft_detail.html:120
 #: .\templates\registry\costcenter_detail.html:132
 #: .\templates\registry\operator_detail.html:57
@@ -2553,7 +2560,6 @@ msgstr "Desde"
 
 #: .\apps\registry\views.py:1056 .\templates\compliance\report.html:40
 #: .\templates\core\audit_log.html:28 .\templates\geo\plan_detail.html:215
-#: .\templates\maintenance\record_detail.html:48
 #: .\templates\registry\aircraft_detail.html:120
 #: .\templates\registry\costcenter_detail.html:132
 #: .\templates\registry\operator_detail.html:57
@@ -3630,7 +3636,6 @@ msgstr "Todos los tipos"
 
 #: .\templates\compliance\operational_records.html:49
 #: .\templates\generic\_traceability.html:38
-#: .\templates\maintenance\record_detail.html:48
 #: .\templates\operations\flightrecord_detail.html:26
 #: .\templates\operations\permission_detail.html:67
 #: .\templates\operations\record_list.html:5
@@ -4287,7 +4292,6 @@ msgid "from %(previous)s"
 msgstr "desde %(previous)s"
 
 #: .\templates\generic\_traceability.html:54
-#: .\templates\maintenance\record_detail.html:50
 msgid "No status changes recorded yet."
 msgstr "Aún no hay cambios de estado registrados."
 
@@ -4374,7 +4378,6 @@ msgid "For"
 msgstr "Para"
 
 #: .\templates\geo\plan_detail.html:95
-#: .\templates\maintenance\record_detail.html:48
 msgid "By"
 msgstr "Por"
 
@@ -4466,7 +4469,7 @@ msgstr "Fecha de finalización"
 msgid "Complete maintenance"
 msgstr "Completar mantenimiento"
 
-#: .\templates\maintenance\record_detail.html:47
+#: .\templates\maintenance\record_detail.html:54
 msgid "Status history"
 msgstr "Historial de estados"
 
