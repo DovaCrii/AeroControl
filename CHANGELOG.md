@@ -10,6 +10,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Trazabilidad visible en mantención (`LV-82`).** La ficha de una mantención
+  muestra ahora la misma barra de estado que el permiso y el seguro, **con el
+  camino que ese registro realmente tomó**: el corto cuando se resuelve en casa,
+  y la cadena completa de taller cuando el equipo sale. El historial pasa a
+  decir los estados **en español** (antes mostraba los códigos internos como
+  `at_workshop`) y **en qué rol** actuó cada persona.
 - **El seguro JAC con su ciclo real y su trazabilidad (`LV-81`).** El estado del
   seguro deja de ser "en trámite o vigente" y pasa a los cuatro pasos que existen
   de verdad: **faltante o por renovar → en trámite → presentado en SIGO,
