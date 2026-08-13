@@ -294,7 +294,10 @@ CALENDAR_EVENT_PERMISSIONS = {
     # the view permission of its own registry model.
     "operator_credential": "registry.view_operator",
     "aircraft_insurance": "registry.view_aircraft",
-    "task": "workboard.view_kanbantask",
+    # LV-78 step 1: "task" removed. The Kanban board was decommissioned on
+    # 2026-08-12 and its calendar lane linked to a screen that is off the menu,
+    # so an event there led nowhere anyone was meant to go. Nothing is deleted --
+    # the board simply stops having surfaces.
 }
 
 
@@ -441,7 +444,6 @@ class UnifiedCalendarEventsView(CalendarAccessMixin, View):
             Operator,
             Qualification,
         )
-        from apps.workboard.selectors import visible_tasks_for_user
 
         start, end = self.get_date_range(request)
         selected_types = set(filter(None, request.GET.get("types", "").split(",")))
@@ -732,38 +734,10 @@ class UnifiedCalendarEventsView(CalendarAccessMixin, View):
                 for document in documents
             )
 
-        if "task" in selected_types:
-            tasks = (
-                visible_tasks_for_user(request.user)
-                .filter(due_date__range=(start, end))
-                .select_related("board", "stage", "assigned_to")
-            )
-            board_id = request.GET.get("board")
-            if board_id:
-                tasks = tasks.filter(board_id=board_id)
-            if operator_id:
-                tasks = tasks.filter(assigned_to_id=operator_id)
-            if cost_center_id:
-                tasks = tasks.filter(assigned_to__cost_center_id=cost_center_id)
-            events.extend(
-                {
-                    "id": f"task-{task.pk}",
-                    "type": "task",
-                    # Month cells only fit ~2 short lines. The stage is already
-                    # conveyed by the event colour, so it moves to the tooltip
-                    # instead of doubling the title length.
-                    "title": task.title,
-                    "tooltip": f"{task.title} · {task.stage.name}",
-                    "start": task.due_date.isoformat(),
-                    "allDay": True,
-                    "color": self.EVENT_COLORS["task"],
-                    # The task detail endpoint is an HTMX fragment. Link calendar
-                    # events to the full Workboard view so direct navigation never
-                    # leaves the user on an unstyled fragment page.
-                    "url": f"{reverse('kanban')}?board={task.board_id}",
-                }
-                for task in tasks
-            )
+        # LV-78 step 1: the Kanban lane was here. It was the last place the
+        # retired board still surfaced, and its events linked to a screen that
+        # is no longer in the menu. Removed rather than disabled -- a branch
+        # nobody can reach is the same dead weight, only harder to notice.
 
         return JsonResponse(events, safe=False)
 
@@ -798,8 +772,9 @@ class GlobalSearchView(LoginRequiredMixin, TemplateView):
             "operator-detail",
             ("employee_id", "full_name", "email"),
         ),
-        ("workboard", "KanbanBoard", "board-list", None, ("name", "description")),
-        ("workboard", "KanbanTask", "workboard-list", None, ("title", "description")),
+        # LV-78 step 1: the board and its tasks left the global search. Finding
+        # a card here and landing on a screen that is off the menu is worse than
+        # not finding it.
         ("compliance", "Document", "document-list", None, ("title",)),
     )
 
@@ -811,14 +786,11 @@ class GlobalSearchView(LoginRequiredMixin, TemplateView):
             from django.db.models import Q
             from apps.compliance.models import Document
             from apps.registry.models import Aircraft, CostCenter, Operator
-            from apps.workboard.models import KanbanBoard, KanbanTask
 
             models = {
                 "CostCenter": CostCenter,
                 "Aircraft": Aircraft,
                 "Operator": Operator,
-                "KanbanBoard": KanbanBoard,
-                "KanbanTask": KanbanTask,
                 "Document": Document,
             }
             for (
@@ -874,7 +846,6 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
             TenantMembership,
         )
         from apps.registry.models import QualificationType
-        from apps.workboard.models import KanbanBoard, KanbanLabel, KanbanStage
 
         sections = [
             {
@@ -934,35 +905,10 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
                     ),
                 ],
             },
-            {
-                "title": _("Workboard configuration"),
-                "description": _(
-                    "Shape how teams organize and follow operational work."
-                ),
-                "items": [
-                    self.item(
-                        _("Boards"),
-                        _("Create and archive operational boards."),
-                        "board-list",
-                        KanbanBoard,
-                        icon="board",
-                    ),
-                    self.item(
-                        _("Stages"),
-                        _("Manage the workflow stages used by a board."),
-                        "stage-create",
-                        KanbanStage,
-                        icon="columns",
-                    ),
-                    self.item(
-                        _("Labels"),
-                        _("Create labels used to classify tasks."),
-                        "label-list",
-                        KanbanLabel,
-                        icon="tag",
-                    ),
-                ],
-            },
+            # LV-78 step 1: the "Workboard configuration" section (boards,
+            # stages, labels) is gone from the administration centre. It was the
+            # last way in: the board left the menu in LV-69, but this page still
+            # offered to configure it, which reads as a module still in use.
             {
                 # Was "System", which repeated the page's own eyebrow and said
                 # nothing about what is inside.
