@@ -39,6 +39,9 @@ def _payload(**daily):
         "precipitation_sum": [0.0],
         "precipitation_probability_max": [5],
         "weather_code": [3],
+        "uv_index_max": [7.2],
+        "sunrise": ["2026-08-20T08:12"],
+        "sunset": ["2026-08-20T18:44"],
     }
     base.update(daily)
     return {
@@ -175,6 +178,40 @@ class TestCondition:
         result = weather.forecast_for(-33.45, -70.66, date(2026, 8, 20))
 
         assert result["condition"] is None
+        assert result["wind_speed_10m_max"] == 8.1
+
+    def test_the_daylight_window_is_read_as_a_clock(self, enabled, monkeypatch):
+        """LV-89. Normalised here and not in the template: a template slicing
+        the string by position would keep working while silently producing
+        nonsense if the provider changed the layout."""
+        monkeypatch.setattr(weather, "_fetch", lambda *a: _payload())
+
+        result = weather.forecast_for(-33.45, -70.66, date(2026, 8, 20))
+
+        assert result["daylight"] == {"sunrise": "08:12", "sunset": "18:44"}
+        assert result["uv_index_max"] == 7.2
+
+    @pytest.mark.parametrize(
+        ("sunrise", "sunset"),
+        [
+            (["2026-08-20"], ["2026-08-20T18:44"]),  # a bare date, no time
+            (["not-a-time"], ["2026-08-20T18:44"]),
+            ([None], ["2026-08-20T18:44"]),
+            (["2026-08-20T08:12"], []),  # shorter than the time series
+        ],
+    )
+    def test_half_a_window_is_no_window(self, enabled, monkeypatch, sunrise, sunset):
+        """Both or neither: a lone sunset printed under "daylight" would read as
+        a window that starts at midnight."""
+        monkeypatch.setattr(
+            weather, "_fetch", lambda *a: _payload(sunrise=sunrise, sunset=sunset)
+        )
+
+        result = weather.forecast_for(-33.45, -70.66, date(2026, 8, 20))
+
+        assert result["daylight"] is None
+        # The rest of the forecast survives it -- daylight is context, not a
+        # precondition for showing wind and temperature.
         assert result["wind_speed_10m_max"] == 8.1
 
     def test_a_code_with_no_measurements_is_not_a_forecast(self, enabled, monkeypatch):

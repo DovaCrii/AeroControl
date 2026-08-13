@@ -47,6 +47,20 @@ que `makemessages` no puede extraer.{% endcomment %}
   {% endif %}
 </div>
 
+{% comment %}LV-89: la ventana de luz y el UV. No es adorno: el certificado de
+póliza de estas aeronaves dice "JORNADA DE OPERACIÓN: DIURNA", así que volar
+fuera de esta ventana es un problema de **cobertura**, no de comodidad. Y no
+cuesta una llamada nueva: viene en la misma respuesta que el resto.{% endcomment %}
+{% if weather.daylight or weather.uv_index_max is not None %}
+<p class="weather-daylight">
+  {% if weather.daylight %}
+  <svg class="weather-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="14" r="3.6"/><path d="M12 5.4v2M4.6 14h2M17.4 14h2M6.9 8.9l1.4 1.4M17.1 8.9l-1.4 1.4M2.5 19h19"/></svg>
+  {% blocktranslate with sunrise=weather.daylight.sunrise sunset=weather.daylight.sunset %}Daylight: {{ sunrise }} – {{ sunset }}{% endblocktranslate %}
+  {% endif %}
+  {% if weather.uv_index_max is not None %}<span class="weather-uv">{% blocktranslate with uv=weather.uv_index_max|floatformat:0 %}Max UV {{ uv }}{% endblocktranslate %}</span>{% endif %}
+</p>
+{% endif %}
+
 <div class="row g-3 weather-grid">
   <div class="col-6 col-lg-3"><div class="summary-card">
     <small><svg class="weather-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h11a3 3 0 1 0-3-3"/><path d="M3 12h15a3 3 0 1 1-3 3"/><path d="M3 16h9"/></svg>{% translate "Max wind" %}</small>
