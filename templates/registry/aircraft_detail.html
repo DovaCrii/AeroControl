@@ -19,6 +19,35 @@
   {% include "generic/_fields_detail_table.html" %}
 </div>
 
+{% comment %}LV-81: el seguro JAC con su ciclo real y su trazabilidad, con la
+misma forma que el permiso -- que es la pantalla que el usuario ya lee todos los
+días en SIGO. Va **antes** de los documentos porque el certificado se adjunta
+ahí abajo: primero en qué estado está el trámite, después el papel.{% endcomment %}
+<div class="card mt-3 p-4">
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+    <div>
+      <h2 class="h5 mb-1">{% translate "JAC insurance" %}</h2>
+      <p class="text-muted small mb-0">
+        {% if object.insurance_expiry %}
+          {% blocktranslate with date=object.insurance_expiry|date:"Y-m-d" %}Policy on file valid until {{ date }}.{% endblocktranslate %}
+          {% if object.insurance_is_overdue %}<span class="badge bg-danger ms-1">{% translate "Lapsed" %}</span>{% endif %}
+        {% else %}
+          {% translate "No policy validity on file." %}
+        {% endif %}
+      </p>
+    </div>
+    {% if object.is_active %}
+    <div class="d-flex gap-2 flex-wrap">
+      {% for label, url in insurance_actions %}
+      <form method="post" action="{{ url }}">{% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-primary">{{ label }}</button></form>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  {% translate "Filing history" as insurance_history_title %}
+  {% include "generic/_traceability.html" with steps=insurance_steps history=insurance_history history_title=insurance_history_title embedded=1 %}
+</div>
+
 {% include "compliance/_documents_section.html" %}
 
 {% if open_maintenance is not None %}

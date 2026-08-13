@@ -1309,6 +1309,12 @@ class StatusTransitionView(ModelPermissionRequiredMixin, View):
     permission_action = "change"
     target_status = None
     valid_from_statuses = []
+    # LV-81: which field advances. Defaults to `status`, so the permit, the geo
+    # plan and the maintenance record are unchanged; the insurance filing sets
+    # this to `insurance_status`, because on an aircraft `status` means the
+    # airframe's condition and moving it would ground the aircraft instead of
+    # recording that its policy came through.
+    status_field = "status"
     # Subclasses must set this with a *marked* literal (gettext_lazy):
     # `_(self.success_message)` on a variable is invisible to makemessages, so
     # every transition message rendered in English inside a Spanish UI.
@@ -1316,27 +1322,28 @@ class StatusTransitionView(ModelPermissionRequiredMixin, View):
 
     def post(self, request, pk):
         obj = get_object_or_404(self.model, pk=pk, is_active=True)
-        if obj.status not in self.valid_from_statuses:
+        field = self.status_field
+        from_status = getattr(obj, field)
+        if from_status not in self.valid_from_statuses:
             set_audit_context(
                 request,
                 obj,
                 action="status_transition_rejected",
-                metadata={"from_status": obj.status, "to_status": self.target_status},
+                metadata={"from_status": from_status, "to_status": self.target_status},
             )
             messages.error(
                 request,
                 _("Cannot transition from %(status)s")
-                % {"status": obj.get_status_display()},
+                % {"status": getattr(obj, f"get_{field}_display")()},
             )
             return redirect(obj)
 
-        from_status = obj.status
         with transaction.atomic():
-            obj.status = self.target_status
+            setattr(obj, field, self.target_status)
             obj._changed_by = request.user.get_username()
             obj._changed_by_user = request.user
             obj._transition_notes = request.POST.get("notes", "")
-            obj.save(update_fields=["status", "updated_at"])
+            obj.save(update_fields=[field, "updated_at"])
         set_audit_context(
             request,
             obj,

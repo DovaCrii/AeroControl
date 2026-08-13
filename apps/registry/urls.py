@@ -28,6 +28,24 @@ urlpatterns += [
     # R7.2: read-only battery inventory (AeroLink is the master, ADR-0002), so
     # it is registered here rather than in the per-model CRUD loop below.
     path("battery/", views.BatteryList.as_view(), name="battery-list"),
+    # LV-81: the insurance filing's transitions. Registered here and not in the
+    # CRUD loop below because they advance `insurance_status`, a flow the
+    # aircraft carries alongside its own condition, not the record's lifecycle.
+    path(
+        "aircraft/<uuid:pk>/insurance/pending/",
+        views.AircraftInsurancePending.as_view(),
+        name="aircraft-insurance-pending",
+    ),
+    path(
+        "aircraft/<uuid:pk>/insurance/filed/",
+        views.AircraftInsuranceFiled.as_view(),
+        name="aircraft-insurance-filed",
+    ),
+    path(
+        "aircraft/<uuid:pk>/insurance/active/",
+        views.AircraftInsuranceActive.as_view(),
+        name="aircraft-insurance-active",
+    ),
     # B4.3: qualification-type catalog (config model, list/create/update only).
     path(
         "qualificationtype/",

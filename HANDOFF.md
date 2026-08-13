@@ -79,15 +79,23 @@ viento en **m/s** e icono de la condición del día; el filtro por centro de cos
 que ya existía cambia la ubicación. Verificado en el demo contra Open-Meteo real.
 **Sin desplegar todavía** — ver abajo.
 
-**6. Lote nuevo del 2026-08-13, capturado y sin empezar: `LV-81` a `LV-89`.**
-El usuario pidió "tomarlo de a poco" e investigar antes de programar. El orden
-que él marcó: **`LV-81` (estado del seguro con flujo y trazabilidad) es "lo
-clave"**. Los demás: trazabilidad en mantención (`LV-82`), cierre automático de
-permisos vencidos (`LV-83`), la pantalla de carga de documentos (`LV-84`),
-preview de PDF en la página (`LV-85`), carga masiva (`LV-86`), la columna propia
-de credencial adjunta (`LV-87`), movimientos de recursos (`LV-88`) y una
-revisión del panel completo (`LV-89`). Cada fila lleva ya el diagnóstico
-verificado contra el código, no sólo el pedido.
+**6. Lote nuevo del 2026-08-13: `LV-81` hecho, `LV-82` a `LV-89` capturados.**
+El usuario pidió "tomarlo de a poco" e investigar antes de programar, y marcó
+`LV-81` (el seguro) como lo clave: **está hecho** — cuatro estados, escalera y
+trazabilidad, más el bloqueo que impide marcar "autorizado" sin fecha de
+vigencia. Quedó `LV-81b` para el certificado/endoso como registro, que es lo que
+se dejó fuera a propósito.
+
+Lo que sigue, con el diagnóstico ya verificado contra el código en cada fila:
+trazabilidad en mantención (`LV-82`, la mitad del trabajo ya existe: tiene los 7
+estados y el historial, le falta la escalera, y **el flujo se bifurca** casa/
+taller, que es la decisión a tomar), cierre automático de permisos vencidos
+(`LV-83`, y ojo: *caducado* y *completado* no son lo mismo, mezclarlos rompe un
+KPI), la pantalla de carga de documentos (`LV-84`), preview de PDF (`LV-85`,
+compatible con la CSP actual porque el archivo es del mismo origen), carga masiva
+(`LV-86`), la columna propia de credencial adjunta (`LV-87`), movimientos de
+recursos (`LV-88`) y la revisión del panel (`LV-89`, que incluye **un gráfico de
+un tablero Kanban dado de baja** todavía dibujándose en producción).
 
 ### Estado de la Sesión B (avanzada el 2026-08-12)
 
@@ -184,16 +192,28 @@ el guardado **no reescribe filas ya almacenadas**. La migración `registry/0032`
 las normaliza y **aborta si dos sólo difieren en mayúsculas** — eso lo resuelve
 el certificado RPAS de la DGAC, no una migración.
 
-## Sin desplegar: `R8.4` (rama `codex/clima-panel`)
+## Sin desplegar: `R8.4` + `LV-81`
 
-Trae **una migración** (`registry/0033`, dos columnas nulas en `CostCenter` —
-sin backfill, sin restricción, no puede fallar sobre datos reales) y **no**
-necesita `bootstrap_roles` (ningún permiso nuevo). El `.mo` está recompilado y
-versionado, así que no hace falta `compilemessages` en la VM. La tarjeta del
-panel sólo aparece si hay un permiso vigente **con coordenadas** o un centro de
-costo con coordenadas de faena: en `p340` hoy probablemente **no hay ninguno**,
-así que tras desplegar hay que cargar al menos una faena para verla — su
-ausencia se lee como un despliegue fallido, igual que pasó con `WEATHER_ENABLED`.
+**Dos migraciones, ninguna riesgosa, pero la segunda toca datos:**
+
+- `registry/0033` (`R8.4`): dos columnas nulas en `CostCenter`. Sin backfill, sin
+  restricción; no puede fallar sobre datos reales.
+- `registry/0034` (`LV-81`): amplía las opciones de `insurance_status`, crea
+  `InsuranceHistory` y **corrige filas** — las aeronaves que dicen `active` sin
+  ninguna fecha de vencimiento pasan a `missing`. En producción eso son las **3
+  del pendiente 1** (`RPA-2019`, `RPA-3696`, `RPA-7126`), que hoy se ven
+  "Vigente" sin fecha al lado. No toca las marcadas a mano como en trámite.
+  Reversible: al revertir vuelven a decir `active`.
+
+Ninguna necesita `bootstrap_roles` (no hay permisos nuevos: las transiciones del
+seguro usan `change_aircraft`, que ya existe). El `.mo` está recompilado y
+versionado, así que no hace falta `compilemessages` en la VM.
+
+**Ojo con lo que no se ve solo:** la tarjeta de clima del panel sólo aparece si
+hay un permiso vigente **con coordenadas** o un centro de costo con coordenadas
+de faena, y en `p340` hoy probablemente **no hay ninguno** — tras desplegar hay
+que cargar al menos una faena para verla, o su ausencia se lee como un despliegue
+fallido (igual que pasó con `WEATHER_ENABLED`).
 
 ## Despliegue del 2026-08-12 — hecho
 
