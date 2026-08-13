@@ -14,10 +14,13 @@ from apps.core.views import (
     UnifiedCalendarEventsView,
     UserRoleListView,
 )
-from apps.workboard.views import ApiIndexView
+
+# LV-78 step 1: the API index and the token endpoint come from core now. They
+# serve the whole JSON API (the padrón AeroLink reads, X.3/X.4b), so routing
+# them out of the app being retired is what makes that retirement possible.
+from apps.core.api import ApiIndexView, ThrottledObtainAuthToken
 from apps.workboard.api import (
     KanbanTaskApiView,
-    ThrottledObtainAuthToken,
     api_openapi_schema,
 )
 from apps.geo.api import (

@@ -109,10 +109,15 @@ producción.
 adjunta, y la lista de movimientos acotada a 30 días por defecto con selector
 visible, trayecto en una sola columna y enlace a la ficha del recurso.
 
-**Lo único del lote que queda es `LV-89`** (el panel), que arrastra dos cosas de
-otras filas: el gráfico del **tablero Kanban dado de baja** que sigue
-dibujándose en producción (limpieza de `LV-78`) y el botón "Abrir registro", que
-lleva a centros de costo.
+**`LV-78` avanzó al Paso 2 (congelado).** El tablero se quedó **sin superficies**
+—panel, calendario, buscador, centro de administración, índice de la API— sin
+borrar una fila. Lo que destrabó todo y no estaba escrito en ninguna parte: el
+**índice de la API y el endpoint de token vivían dentro de `apps.workboard`**, o
+sea que la integración con AeroLink colgaba del módulo a retirar; ahora están en
+`apps.core.api`. **El Paso 3 (borrar) sigue pendiente de decisión.**
+
+**De `LV-89` queda la parte de producto**: el botón "Abrir registro" (lleva a
+centros de costo) y qué poner en lugar de los gráficos que rinden poco.
 
 **Los dos hallazgos de la revisión del 2026-08-13 quedaron resueltos el mismo
 día**, y uno resultó peor de lo capturado: `LV-90` (los estados terminales ahora
