@@ -10,6 +10,18 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **El seguro JAC con su ciclo real y su trazabilidad (`LV-81`).** El estado del
+  seguro deja de ser "en trámite o vigente" y pasa a los cuatro pasos que existen
+  de verdad: **faltante o por renovar → en trámite → presentado en SIGO,
+  esperando la JAC → póliza vigente**, con la **misma barra de estado y el mismo
+  historial** que ya tiene el permiso de vuelo (quién movió cada paso, en qué
+  rol y cuándo). Con esto, un seguro comprado y esperando la autorización de la
+  JAC deja de verse igual que una aeronave sin seguro — en la ficha y en la
+  lista de aeronaves. **Se puede registrar una renovación** sin perder la
+  vigencia de la póliza actual, que antes era imposible. Marcar "la JAC lo
+  autorizó" ahora **exige la fecha de vigencia**, para que el estado de la app no
+  se adelante al papel. Las aeronaves que decían "vigente" sin ninguna fecha
+  quedan corregidas a "faltante" al migrar.
 - **El clima, en el panel y con temperatura (`R8.4`).** El pronóstico deja de
   estar sólo en la ficha de un plan geoespacial: el panel muestra el clima del
   **próximo vuelo**, tomando las coordenadas del propio permiso. Ahora incluye

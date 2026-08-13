@@ -12,11 +12,17 @@
     {% else %}<span class="badge bg-warning-subtle text-warning-emphasis">{% translate "In maintenance" %}</span>{% endif %}
   </td>
   <td class="cell-status">
+    {% comment %}LV-81: la fecha y el estado del trámite son dos hechos y se
+    muestran los dos. Antes sólo se veía la insignia para "pending", así que un
+    seguro **presentado en SIGO y esperando a la JAC** caía al "—" idéntico a
+    una aeronave sin seguro alguno -- y "faltante" no se veía nunca, que es
+    justamente lo que hay que poder barrer de un vistazo en la lista.{% endcomment %}
     {% if object.insurance_expiry %}
       {% if object.insurance_is_overdue %}<span class="badge bg-danger">{% translate "Overdue" %} · {{ object.insurance_expiry|date:'Y-m-d' }}</span>
       {% else %}<span class="badge bg-warning-subtle text-warning-emphasis">{{ object.insurance_expiry|date:'Y-m-d' }}</span>{% endif %}
-    {% elif object.insurance_status == "pending" %}<span class="badge bg-info-subtle text-info-emphasis">{{ object.get_insurance_status_display }}</span>
-    {% else %}<span class="text-muted">—</span>{% endif %}
+    {% endif %}
+    {% if object.insurance_status != "active" %}<span class="badge bg-info-subtle text-info-emphasis">{{ object.get_insurance_status_display }}</span>
+    {% elif not object.insurance_expiry %}<span class="text-muted">—</span>{% endif %}
   </td>
   <td class="text-end">
     <a href="{{ object.pk }}/edit/" hx-get="{{ object.pk }}/edit/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">{% translate "Edit" %}</a>

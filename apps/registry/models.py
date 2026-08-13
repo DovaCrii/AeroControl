@@ -300,16 +300,46 @@ class Aircraft(BaseModel):
     # -- both showed "-" on the list, since insurance_expiry was null either
     # way. This tracks the filing itself, a separate axis from
     # insurance_expiry (same pattern as CostCenter.contract_status, R3.3b).
-    # clean() below forces "active" once a real expiry date exists, so this
-    # cannot go stale and claim "pending" after the policy has arrived.
+    #
+    # LV-81 turned the two values into the **four the real cycle has**, as the
+    # user described it: missing or needing renewal -> being arranged with the
+    # broker -> filed in the DGAC portal, waiting for the JAC -> authorized.
+    # That last distinction is not invented here: SIGO shows each aircraft as
+    # "Pendiente" or "Autorizada", and the certificate the user provided
+    # (policy 95131 / certificate 136) sits on the one aircraft SIGO still
+    # lists as pending. Before this, "insurance bought and waiting for the
+    # authority" and "no insurance at all" were the same value.
+    #
+    # `pending` keeps its original code on purpose: renaming it to
+    # `in_progress` would buy nothing and cost a data migration over real rows.
+    INSURANCE_STATUS_MISSING = "missing"
+    INSURANCE_STATUS_PENDING = "pending"
+    INSURANCE_STATUS_FILED = "filed"
+    INSURANCE_STATUS_ACTIVE = "active"
     INSURANCE_STATUS_CHOICES = [
-        ("pending", _("Filing in progress")),
-        ("active", _("Active")),
+        (INSURANCE_STATUS_MISSING, _("Missing or to be renewed")),
+        (INSURANCE_STATUS_PENDING, _("Filing in progress")),
+        (INSURANCE_STATUS_FILED, _("Filed in SIGO, awaiting the JAC")),
+        # Not the bare "Active" it used to share with the airframe's status and
+        # the contract's: as the last step of this stepper "Activo" says nothing
+        # about *what* is active, and this page carries three other statuses.
+        (INSURANCE_STATUS_ACTIVE, _("Policy in force")),
+    ]
+    # The stepper's steps. `missing` is deliberately **not** one of them: it is
+    # the state before the flow starts, so it renders as three pending steps
+    # rather than as a first step already reached.
+    INSURANCE_FLOW = [
+        INSURANCE_STATUS_PENDING,
+        INSURANCE_STATUS_FILED,
+        INSURANCE_STATUS_ACTIVE,
     ]
     insurance_status = models.CharField(
         max_length=20,
         choices=INSURANCE_STATUS_CHOICES,
-        default="active",
+        # LV-81: was "active". A brand-new aircraft with nothing on file is not
+        # insured, and defaulting to "active" is how three production aircraft
+        # ended up reading "Vigente" with no date next to it.
+        default=INSURANCE_STATUS_MISSING,
         blank=True,
         verbose_name=_("Insurance status"),
     )
@@ -387,14 +417,73 @@ class Aircraft(BaseModel):
             )
         if errors:
             raise ValidationError(errors)
-        # R5.7: a real expiry date means the JAC policy already arrived --
-        # "pending" would be stale and contradict insurance_expiry, the
-        # field that actually drives the vigente/atrasado column. Same
-        # normalize-on-clean idiom as CostCenter.contract_status (R3.3b).
-        if self.insurance_expiry is not None:
-            self.insurance_status = "active"
-        elif not self.insurance_status:
-            self.insurance_status = "active"
+        self._normalize_insurance_status()
+
+    def _normalize_insurance_status(self):
+        """Keep the filing status and the expiry date from contradicting.
+
+        Normalizes rather than raising, the same idiom as
+        `CostCenter.contract_status` (R3.3b) -- a contradiction here must not
+        block someone from saving an unrelated edit on the aircraft.
+
+        **LV-81 removed the half of R5.7's rule that was wrong**: it used to
+        force `active` whenever an expiry date existed, which made a renewal
+        impossible to record. Renewing is precisely the case the user asked for
+        ("faltante para actualizar"): the current policy still has its end date
+        on file while the next one is being arranged, so `pending`/`filed`
+        alongside a date is a legitimate state, not stale data. Those two are
+        never overridden now.
+
+        The two combinations that really cannot coexist are still fixed:
+
+        - `active` with **no** date at all -- the DGAC does not authorize a
+          policy without a validity period, so this reads as nothing on file.
+          This is what three production aircraft look like today.
+        - `missing` while a policy is **still valid** -- "no insurance" cannot
+          be true when a current one is on record. An expiry already in the
+          past is left alone: that is exactly what `missing` should say.
+        """
+        from django.utils import timezone
+
+        expiry = self.insurance_expiry
+        if not self.insurance_status:
+            self.insurance_status = (
+                self.INSURANCE_STATUS_ACTIVE
+                if expiry
+                else self.INSURANCE_STATUS_MISSING
+            )
+        if self.insurance_status == self.INSURANCE_STATUS_ACTIVE and expiry is None:
+            self.insurance_status = self.INSURANCE_STATUS_MISSING
+        elif (
+            self.insurance_status == self.INSURANCE_STATUS_MISSING
+            and expiry is not None
+            and expiry >= timezone.localdate()
+        ):
+            self.insurance_status = self.INSURANCE_STATUS_ACTIVE
+
+    def get_absolute_url(self):
+        # LV-81: added when the insurance transitions needed somewhere to send
+        # the user back to. Same shape as FlightPermission/MaintenanceRecord,
+        # which is what lets them share `StatusTransitionView`.
+        from django.urls import reverse
+
+        return reverse("aircraft-detail", args=[self.pk])
+
+    def insurance_steps(self):
+        """LV-81: the filing as a stepper, the same shape the permit uses.
+
+        Not `StatusFlowMixin`: that mixin reads the model's own `status`, and on
+        an aircraft `status` is the airframe's condition (active/damaged/
+        maintenance), which is not a progression -- the mixin's docstring names
+        this exact case as what it must not be used for.
+        """
+        from apps.core.models import status_steps_for
+
+        return status_steps_for(
+            choices=self.INSURANCE_STATUS_CHOICES,
+            flow=self.INSURANCE_FLOW,
+            current=self.insurance_status,
+        )
 
     def save(self, *args, **kwargs):
         # X.1: the DJI serial never contains whitespace -- production has 2
@@ -406,6 +495,62 @@ class Aircraft(BaseModel):
         # do not collide on the unique index.
         self.serial_number = normalize_serial(self.serial_number)
         super().save(*args, **kwargs)
+
+
+class InsuranceHistory(BaseModel):
+    """LV-81: append-only trace of the JAC insurance filing, per aircraft.
+
+    Mirrors `operations.PermissionHistory` field for field, because the shared
+    `track_status_changes` signal writes all of them and the shared
+    `generic/_traceability.html` renders all of them -- a different shape here
+    would mean a fourth variant of the same table.
+
+    Why the trace matters beyond the current value: an auditor asking "when did
+    this aircraft's policy lapse, and how long did the renewal take" cannot get
+    that from a single status field, and the DGAC's own screen does not keep it
+    for us either. `changed_by`/`changed_by_user` answer *who*, and the user's
+    groups answer *in what capacity* (the LV-72 criterion).
+    """
+
+    # Same tie-breaker as PermissionHistory: `created_at` alone cannot order two
+    # rows created moments apart, because `timezone.now()` can return the
+    # identical value across rapid successive calls.
+    sequence = models.PositiveBigIntegerField(editable=False, default=0)
+    aircraft = models.ForeignKey(
+        Aircraft, on_delete=models.PROTECT, related_name="insurance_history"
+    )
+    # `choices` declared, unlike the R2.5 defect: without them Django never
+    # generates `get_new_status_display`, and the history table silently falls
+    # through to the raw stored code ("filed") inside a Spanish page.
+    previous_status = models.CharField(
+        max_length=20, choices=Aircraft.INSURANCE_STATUS_CHOICES
+    )
+    new_status = models.CharField(
+        max_length=20, choices=Aircraft.INSURANCE_STATUS_CHOICES
+    )
+    changed_by = models.CharField(max_length=150)
+    changed_by_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="insurance_history_events",
+    )
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = _("insurance history")
+        verbose_name_plural = _("insurance histories")
+        ordering = ["-sequence"]
+
+    def __str__(self):
+        return f"{self.aircraft}: {self.previous_status} → {self.new_status}"
+
+    def save(self, *args, **kwargs):
+        if self._state.adding:
+            latest = InsuranceHistory.objects.order_by("-sequence").first()
+            self.sequence = (latest.sequence if latest else 0) + 1
+        return super().save(*args, **kwargs)
 
 
 class Battery(BaseModel):
