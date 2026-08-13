@@ -1,9 +1,8 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
 import csv
 from itertools import groupby
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext as _
@@ -369,43 +368,10 @@ class TaskReportDocxView(TaskReportCsvView):
         return response
 
 
-class ApiIndexView(LoginRequiredMixin, View):
-    def get(self, request):
-        return JsonResponse(
-            {
-                "version": "v1",
-                "authentication": "Django session or configured API gateway",
-                "endpoints": {
-                    "tasks_list": {
-                        "method": "GET",
-                        "path": "/api/v1/workboard/tasks/",
-                        "permission": "workboard.view_kanbantask",
-                        "filters": [
-                            "board",
-                            "operator",
-                            "priority",
-                            "state",
-                            "label",
-                            "q",
-                            "page",
-                            "page_size",
-                        ],
-                    },
-                    "task_update": {
-                        "method": "PATCH",
-                        "path": "/api/v1/workboard/tasks/<uuid>/",
-                        "permission": "workboard.change_kanbantask",
-                        "fields": [
-                            "title",
-                            "description",
-                            "priority",
-                            "stage_id",
-                            "due_date",
-                        ],
-                    },
-                },
-            }
-        )
+# LV-78 step 1: `ApiIndexView` moved to `apps.core.api`. It documents the whole
+# JSON API -- including the padrón AeroLink reads -- so it cannot live in the app
+# being retired. Re-exported so an old import keeps working until the app goes.
+from apps.core.api import ApiIndexView  # noqa: E402, F401
 
 
 class TaskDetailView(ModelViewPermissionRequiredMixin, View):

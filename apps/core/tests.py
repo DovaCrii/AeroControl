@@ -91,9 +91,13 @@ class TestPublicURLs:
             scheduled_date=date(2026, 7, 25),
             performed_by="Team",
         )
+        # LV-78 step 1: a Kanban task used to be part of this feed. The board is
+        # retired and its lane was removed, so a task with a due date inside the
+        # window must now produce **no** event -- which is what the third
+        # assertion below pins, rather than the absence being untested.
         board = KanbanBoard.objects.create(name="Calendar board")
         stage = KanbanStage.objects.create(board=board, name="Planned")
-        task = KanbanTask.objects.create(
+        KanbanTask.objects.create(
             board=board, stage=stage, title="Calendar task", due_date=date(2026, 7, 26)
         )
 
@@ -103,16 +107,12 @@ class TestPublicURLs:
 
         assert response.status_code == 200
         payload = response.json()
-        assert {item["type"] for item in payload} == {
-            "permission",
-            "maintenance",
-            "task",
-        }
+        assert {item["type"] for item in payload} == {"permission", "maintenance"}
         assert {item["id"] for item in payload} == {
             f"permission-{permission.pk}",
             f"maintenance-{maintenance.pk}",
-            f"task-{task.pk}",
         }
+        assert not [item for item in payload if item["type"] == "task"]
 
     @pytest.mark.django_db
     def test_unified_calendar_events_include_dgac_vigencias(self, auth_client):
@@ -240,8 +240,11 @@ class TestPublicURLs:
         assert response.status_code == 200
         content = response.content.decode()
         assert "Centro de administración" in content
-        assert "Configuración del tablero de trabajo" in content
         assert "Administración técnica avanzada" in content
+        # LV-78 step 1: the "Workboard configuration" section is gone. It was the
+        # last way into a board that left the menu in LV-69 -- offering to
+        # configure it read as a module still in use.
+        assert "Configuración del tablero de trabajo" not in content
 
     def test_administration_center_shows_situation_panel(self, auth_client):
         # B5.1/B5.2: a superuser sees the metrics + the scheduled-jobs block.
@@ -1156,8 +1159,10 @@ class TestCalendarAndBoardReadPermissions:
             "qualification",
             "operator_credential",
             "aircraft_insurance",
-            "task",
+            # LV-78 step 1: "task" is no longer one of them, even for a user who
+            # still holds view_kanbantask -- the permission outlives the lane.
         }
+        assert "task" not in set(all_types)
         assert (
             'data-all-types="{}"'.format(response.context["calendar_all_types"])
             in response.content.decode()

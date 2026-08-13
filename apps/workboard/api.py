@@ -1,9 +1,7 @@
 from rest_framework import serializers
 from django.http import JsonResponse
-from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.throttling import AnonRateThrottle
 from rest_framework.viewsets import ViewSet
 from rest_framework.exceptions import NotAuthenticated, PermissionDenied
 import json
@@ -18,15 +16,10 @@ from .selectors import user_can_edit_board, visible_tasks_for_user
 from .models import KanbanStage
 
 
-class ThrottledObtainAuthToken(ObtainAuthToken):
-    """Token endpoint with the anon throttle it silently opted out of.
-
-    DRF's ObtainAuthToken sets ``throttle_classes = ()`` on the class, so the
-    project-wide DEFAULT_THROTTLE_CLASSES never applied to the one endpoint
-    that accepts unauthenticated credential guesses.
-    """
-
-    throttle_classes = (AnonRateThrottle,)
+# LV-78 step 1: `ThrottledObtainAuthToken` moved to `apps.core.api`. It is the
+# token endpoint for the whole API, not a Kanban feature, and it must outlive
+# this app. Re-exported here so an old import keeps working until the app goes.
+from apps.core.api import ThrottledObtainAuthToken  # noqa: F401
 
 
 class KanbanTaskSerializer(serializers.ModelSerializer):

@@ -13,7 +13,6 @@ from apps.compliance.models import Alert, AlertRule, Document, DocumentType
 from apps.maintenance.models import MaintenanceRecord
 from apps.operations.models import FlightPermission, FlightRecord
 from apps.registry.models import Aircraft, CostCenter, Operator, Qualification
-from apps.workboard.models import KanbanStage, KanbanTask
 
 
 def upcoming_expirations(today, cutoff, cost_center=None):
@@ -302,13 +301,12 @@ def dashboard(request):
             ).count(),
         }
 
-    # --- Kanban stages (archived tasks must not inflate the counts) ---
-    stages = KanbanStage.objects.filter(is_active=True).annotate(
-        active_task_count=Count("tasks", filter=Q(tasks__is_active=True))
-    )
-    tasks_by_stage = [
-        {"name": stage.name, "count": stage.active_task_count} for stage in stages
-    ]
+    # LV-78/LV-89: the two Kanban charts are gone. The board was decommissioned
+    # on 2026-08-12 and taken out of the menu, yet the panel kept drawing its
+    # stages ("Recopilando antecedentes", "Enviado a DGAC") every day -- a chart
+    # of a board nobody can reach, which reads as a live part of the operation.
+    # This is step 1 of the retirement: the board loses its last surface without
+    # a single row being deleted.
 
     # Charts label their slices with the human-readable choice, not the raw
     # database value (the legend used to read "active"/"in_progress"), and the
@@ -361,19 +359,6 @@ def dashboard(request):
         .count()
     )
 
-    # --- Chart: Tasks by priority ---
-    # Not filtered by cost center: Kanban boards scope by tenant/board access,
-    # a different axis (apps/core/views.py's calendar keeps the same split),
-    # not every task has an assignee with a cost center.
-    tasks_by_priority = labelled(
-        KanbanTask.objects.filter(is_active=True)
-        .values("priority")
-        .annotate(count=Count("id"))
-        .order_by("priority"),
-        "priority",
-        KanbanTask.PRIORITIES,
-    )
-
     # --- Chart: Monthly flight records (last 6 months) ---
     six_months_ago = timezone.localdate() - timedelta(days=180)
     flight_records_qs = FlightRecord.objects.filter(
@@ -394,8 +379,6 @@ def dashboard(request):
         "permissions_by_status": perms_by_status,
         "maintenance_by_type": maint_by_type,
         "aircraft_by_status": aircraft_by_status,
-        "tasks_by_priority": tasks_by_priority,
-        "tasks_by_stage": tasks_by_stage,
         "monthly_flights": monthly_flights,
     }
 
@@ -406,7 +389,6 @@ def dashboard(request):
         "incomplete_maintenance_count": incomplete_maintenance_count,
         "expirations": expirations,
         "expiring_count": expiring_count,
-        "stages": stages,
         "chart_data": chart_data,
         "compliance_setup": compliance_setup,
         "compliance_incomplete": compliance_incomplete,

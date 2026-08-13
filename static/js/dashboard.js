@@ -78,26 +78,9 @@
     }));
   }
 
-  // ── Tasks per Stage (bar) ──
-  var stageData = chartData.tasks_by_stage;
-  if (stageData.length) {
-    track(new Chart(document.getElementById('stagesChart'), {
-      type: 'bar',
-      data: {
-        labels: stageData.map(function (d) { return d.name; }),
-        datasets: [{
-          label: labelFor('stagesChart'),
-          data: stageData.map(function (d) { return d.count; }),
-          backgroundColor: '#2EC4B6',
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { color: textColor, stepSize: 1 } }, x: { ticks: { color: textColor } } }
-      }
-    }));
-  }
+  // LV-78/LV-89: "Tasks per Stage" removed with the Kanban board's retirement.
+  // The view no longer sends `tasks_by_stage`, so reading it here would throw on
+  // `.length` and take every chart below it down with the same script.
 
   // ── Monthly Flights (line) ──
   var flightData = chartData.monthly_flights;

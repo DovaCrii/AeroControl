@@ -181,14 +181,10 @@ solo el gráfico.{% endcomment %}
     </div>
   </div>
   {% endif %}
-  {% if chart_data.tasks_by_stage %}
-  <div class="col-lg-4">
-    <div class="card p-2 chart-container">
-      <h4 class="h6 section-title mb-2">{% translate "Tasks per Stage" %}</h4>
-      <canvas id="stagesChart" data-label="{% translate 'Tasks' %}"></canvas>
-    </div>
-  </div>
-  {% endif %}
+  {% comment %}LV-78/LV-89: acá vivía "Tareas por etapa", que dibujaba las
+  etapas del tablero Kanban **dado de baja el 2026-08-12** -- un gráfico de un
+  tablero al que ya nadie llega desde el menú, en la primera pantalla de la app.
+  {% endcomment %}
   {% if chart_data.monthly_flights %}
   <div class="col-lg-4">
     <div class="card p-2 chart-container">
