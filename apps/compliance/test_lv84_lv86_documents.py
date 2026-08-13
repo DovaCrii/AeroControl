@@ -315,6 +315,23 @@ class TestBulkUpload:
         assert response.status_code == 200
         assert not Document.objects.exists()
 
+    def test_cancel_points_at_our_own_page_not_at_a_header(self, aircraft, doc_type):
+        """`HTTP_REFERER` is untrusted input; a link built from it puts somebody
+        else's URL inside our page."""
+        url = (
+            f"{self._url()}?entity_type="
+            f"{ContentType.objects.get_for_model(Aircraft).pk}&object_id={aircraft.pk}"
+        )
+
+        response = _client("add_document", "view_document").get(
+            url, HTTP_REFERER="https://evil.example/phish"
+        )
+
+        assert response.context["cancel_url"].startswith(
+            reverse("aircraft-detail", args=[aircraft.pk])
+        )
+        assert "evil.example" not in response.content.decode()
+
     def test_the_dates_apply_to_every_file(self, aircraft, doc_type):
         payload = self._payload(
             aircraft, doc_type, [_upload("a.pdf"), _upload("b.pdf")]

@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-13 11:16-0400\n"
+"POT-Creation-Date: 2026-08-13 11:43-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -32,7 +32,7 @@ msgid "Operator record"
 msgstr "Operador"
 
 #: .\apps\compliance\forms.py:99 .\apps\compliance\watchables.py:16
-#: .\apps\dashboard\views.py:45 .\templates\registry\operator_list.html:26
+#: .\apps\dashboard\views.py:45 .\templates\registry\operator_list.html:34
 msgid "Qualification"
 msgstr "Habilitación"
 
@@ -56,7 +56,7 @@ msgstr "Habilitación"
 #: .\templates\registry\aircraft_list.html:25
 #: .\templates\registry\aircraftassignment_list.html:6
 #: .\templates\registry\assignment_list.html:51
-#: .\templates\registry\operator_list.html:25
+#: .\templates\registry\operator_list.html:33
 #: .\templates\registry\operatorassignment_list.html:6
 #: .\templates\registry\qualification_list.html:25
 #: .\templates\workboard\task_list.html:14
@@ -187,7 +187,7 @@ msgstr "Aún no hay registros activos de este tipo."
 #: .\apps\geo\views.py:190 .\apps\registry\forms.py:85
 #: .\apps\workboard\forms.py:23 .\apps\workboard\forms.py:47
 #: .\apps\workboard\forms.py:122 .\templates\core\users_roles.html:24
-#: .\templates\generic\list.html:35 .\templates\registry\operator_list.html:22
+#: .\templates\generic\list.html:35 .\templates\registry\operator_list.html:25
 msgid "Name"
 msgstr "Nombre"
 
@@ -764,7 +764,7 @@ msgid "Validity renewed to %(date)s (automatic closure)"
 msgstr "Vigencia renovada al %(date)s (cierre automático)"
 
 #: .\apps\compliance\views.py:138 .\apps\maintenance\views.py:45
-#: .\apps\operations\views.py:58 .\apps\registry\views.py:142
+#: .\apps\operations\views.py:58 .\apps\registry\views.py:144
 #: .\apps\workboard\views.py:121
 #, python-format
 msgid "New %(record)s"
@@ -842,7 +842,7 @@ msgstr "No conformidad reabierta."
 msgid "Only a closed finding can have its action verified."
 msgstr "Sólo una no conformidad cerrada puede tener su acción verificada."
 
-#: .\apps\compliance\views.py:425 .\apps\compliance\views.py:1126
+#: .\apps\compliance\views.py:425 .\apps\compliance\views.py:1135
 msgid "Corrective action verified."
 msgstr "Acción correctiva verificada."
 
@@ -859,54 +859,54 @@ msgstr "Documentos de la empresa"
 msgid "Operational records"
 msgstr "Registros operacionales"
 
-#: .\apps\compliance\views.py:870
+#: .\apps\compliance\views.py:879
 #, python-format
 msgid "%(count)s document uploaded."
 msgid_plural "%(count)s documents uploaded."
 msgstr[0] "%(count)s documento cargado."
 msgstr[1] "%(count)s documentos cargados."
 
-#: .\apps\compliance\views.py:950
+#: .\apps\compliance\views.py:959
 msgid "Document archived."
 msgstr "Documento archivado."
 
-#: .\apps\compliance\views.py:1046 .\apps\compliance\views.py:1056
+#: .\apps\compliance\views.py:1055 .\apps\compliance\views.py:1065
 msgid "Resolve alert"
 msgstr "Resolver alerta"
 
-#: .\apps\compliance\views.py:1068
+#: .\apps\compliance\views.py:1077
 msgid "Alert resolved."
 msgstr "Alerta resuelta."
 
-#: .\apps\compliance\views.py:1098
+#: .\apps\compliance\views.py:1107
 msgid "Alert reopened."
 msgstr "Alerta reabierta."
 
-#: .\apps\compliance\views.py:1122
+#: .\apps\compliance\views.py:1131
 msgid "Only a resolved alert can have its action verified."
 msgstr "Sólo una alerta resuelta puede tener su acción verificada."
 
-#: .\apps\compliance\views.py:1147
+#: .\apps\compliance\views.py:1156
 msgid "No Kanban board is available to hold the follow-up task."
 msgstr ""
 "No hay ningún tablero Kanban disponible para alojar la tarea de seguimiento."
 
-#: .\apps\compliance\views.py:1150
+#: .\apps\compliance\views.py:1159
 msgid "Follow-up task created."
 msgstr "Tarea de seguimiento creada."
 
-#: .\apps\compliance\views.py:1254 .\templates\base.html:117
+#: .\apps\compliance\views.py:1263 .\templates\base.html:117
 #: .\templates\compliance\monthly_review.html:3
 #: .\templates\compliance\monthly_review.html:8
 msgid "Monthly compliance"
 msgstr "Cumplimiento mensual"
 
-#: .\apps\compliance\views.py:1288
+#: .\apps\compliance\views.py:1297
 #, python-format
 msgid "%(center)s %(period)s marked."
 msgstr "%(center)s %(period)s marcado."
 
-#: .\apps\compliance\views.py:1315
+#: .\apps\compliance\views.py:1324
 #, python-format
 msgid "Edit %(name)s"
 msgstr "Editar %(name)s"
@@ -918,14 +918,14 @@ msgstr "Editar %(name)s"
 #: .\templates\registry\costcenter_detail.html:36
 #: .\templates\registry\operatorassignment_list.html:5
 #: .\templates\registry\qualification_list.html:24
-#: .\templates\registry\resourcemovementlog_list.html:17
+#: .\templates\registry\resourcemovementlog_list.html:23
 msgid "Operator"
 msgstr "Operador"
 
 #: .\apps\compliance\watchables.py:21 .\apps\maintenance\forms.py:21
 #: .\apps\operations\forms.py:118 .\apps\registry\forms.py:341
 #: .\apps\registry\forms.py:518 .\apps\registry\forms.py:571
-#: .\apps\registry\models.py:1080 .\apps\registry\views.py:65
+#: .\apps\registry\models.py:1080 .\apps\registry\views.py:67
 #: .\templates\base.html:135 .\templates\maintenance\record_detail.html:21
 #: .\templates\maintenance\record_list.html:18
 #: .\templates\operations\flightrecord_detail.html:30
@@ -937,7 +937,7 @@ msgstr "Operador"
 #: .\templates\registry\assignment_list.html:51
 #: .\templates\registry\costcenter_detail.html:62
 #: .\templates\registry\costcenter_list.html:27
-#: .\templates\registry\resourcemovementlog_list.html:18
+#: .\templates\registry\resourcemovementlog_list.html:24
 msgid "Aircraft"
 msgstr "Aeronaves"
 
@@ -997,7 +997,7 @@ msgstr "hasta"
 #: .\apps\core\views.py:664 .\apps\dashboard\views.py:63
 #: .\apps\registry\forms.py:311
 #: .\apps\registry\management\commands\notify_expiring_credentials.py:129
-#: .\apps\registry\models.py:684 .\templates\registry\operator_list.html:23
+#: .\apps\registry\models.py:684 .\templates\registry\operator_list.html:26
 msgid "DGAC credential"
 msgstr "Credencial DGAC"
 
@@ -1228,7 +1228,7 @@ msgstr "Editor"
 
 #: .\apps\geo\models.py:130 .\templates\generic\_table_body.html:16
 #: .\templates\generic\detail.html:22 .\templates\geo\plan_detail.html:151
-#: .\templates\registry\_operator_rows.html:25
+#: .\templates\registry\_operator_rows.html:43
 #: .\templates\registry\aircraft_detail.html:14
 #: .\templates\registry\costcenter_detail.html:14
 #: .\templates\registry\operator_detail.html:14
@@ -1477,8 +1477,8 @@ msgstr "Estado anterior"
 msgid "New status"
 msgstr "Estado nuevo"
 
-#: .\apps\maintenance\forms.py:50 .\apps\registry\views.py:1057
-#: .\templates\registry\resourcemovementlog_list.html:34
+#: .\apps\maintenance\forms.py:50 .\apps\registry\views.py:1097
+#: .\templates\registry\resourcemovementlog_list.html:50
 msgid "Changed by"
 msgstr "Modificado por"
 
@@ -1638,7 +1638,7 @@ msgid "Permission number"
 msgstr "Número de permiso"
 
 #: .\apps\operations\forms.py:40 .\apps\registry\forms.py:470
-#: .\apps\registry\views.py:66 .\templates\base.html:136
+#: .\apps\registry\views.py:68 .\templates\base.html:136
 #: .\templates\operations\permission_detail.html:55
 #: .\templates\operations\permission_list.html:35
 #: .\templates\registry\costcenter_detail.html:21
@@ -1857,7 +1857,7 @@ msgstr ""
 "%(operator)s no tiene una habilitación vigente que cubra: %(aircraft)s. El "
 "permiso se guardó igual; revisa las habilitaciones del operador."
 
-#: .\apps\operations\views.py:208 .\apps\registry\views.py:170
+#: .\apps\operations\views.py:208 .\apps\registry\views.py:172
 #, python-format
 msgid "Edit %(record)s"
 msgstr "Editar: %(record)s"
@@ -2490,145 +2490,154 @@ msgid "resource movements"
 msgstr "movimientos de recursos"
 
 #: .\apps\registry\test_r47_credential_pdf_flag.py:59
-#: .\templates\registry\_operator_rows.html:13
 msgid "No PDF"
 msgstr "Sin PDF"
 
-#: .\apps\registry\views.py:64
+#: .\apps\registry\views.py:66
 msgid "Cost centers"
 msgstr "Centros de costo"
 
-#: .\apps\registry\views.py:67 .\templates\registry\assignment_list.html:8
+#: .\apps\registry\views.py:69 .\templates\registry\assignment_list.html:8
 msgid "Resource planning"
 msgstr "Planificación de recursos"
 
-#: .\apps\registry\views.py:68 .\templates\base.html:145
+#: .\apps\registry\views.py:70 .\templates\base.html:145
 msgid "Operator assignments"
 msgstr "Asignaciones de operador"
 
-#: .\apps\registry\views.py:69 .\templates\base.html:146
+#: .\apps\registry\views.py:71 .\templates\base.html:146
 msgid "Aircraft assignments"
 msgstr "Asignaciones de aeronave"
 
-#: .\apps\registry\views.py:70 .\templates\registry\operator_detail.html:28
+#: .\apps\registry\views.py:72 .\templates\registry\operator_detail.html:28
 msgid "Qualifications"
 msgstr "Habilitaciones"
 
-#: .\apps\registry\views.py:71 .\templates\base.html:147
+#: .\apps\registry\views.py:73 .\templates\base.html:147
 msgid "Batteries"
 msgstr "Baterías"
 
-#: .\apps\registry\views.py:206
+#: .\apps\registry\views.py:208
 #, python-format
 msgid "%(name)s archived. It can be restored from the archived filter."
 msgstr "%(name)s archivado. Se puede restaurar desde el filtro de archivados."
 
-#: .\apps\registry\views.py:231
+#: .\apps\registry\views.py:233
 #, python-format
 msgid "%(name)s restored."
 msgstr "%(name)s restaurado."
 
-#: .\apps\registry\views.py:622
+#: .\apps\registry\views.py:624
 msgid "Start the filing"
 msgstr "Iniciar el trámite"
 
-#: .\apps\registry\views.py:626
+#: .\apps\registry\views.py:628
 msgid "Filed in SIGO"
 msgstr "Presentado en SIGO"
 
-#: .\apps\registry\views.py:630
+#: .\apps\registry\views.py:632
 msgid "The JAC authorized it"
 msgstr "La JAC lo autorizó"
 
-#: .\apps\registry\views.py:636
+#: .\apps\registry\views.py:638
 msgid "Start a renewal"
 msgstr "Iniciar una renovación"
 
-#: .\apps\registry\views.py:671
+#: .\apps\registry\views.py:673
 msgid "Insurance filing started."
 msgstr "Trámite del seguro iniciado."
 
-#: .\apps\registry\views.py:677
+#: .\apps\registry\views.py:679
 msgid "Recorded as filed in SIGO, awaiting the JAC."
 msgstr "Registrado como presentado en SIGO, esperando la JAC."
 
-#: .\apps\registry\views.py:694
+#: .\apps\registry\views.py:696
 msgid "Insurance recorded as authorized."
 msgstr "Seguro registrado como autorizado."
 
-#: .\apps\registry\views.py:702
+#: .\apps\registry\views.py:704
 msgid ""
 "Enter the policy's validity date before recording the JAC's authorization."
 msgstr ""
 "Ingresa la fecha de vigencia de la póliza antes de registrar la autorización"
 " de la JAC."
 
-#: .\apps\registry\views.py:864
+#: .\apps\registry\views.py:866
 msgid "Assign operators to a cost center"
 msgstr "Asignar operadores a un centro de costo"
 
-#: .\apps\registry\views.py:916
+#: .\apps\registry\views.py:918
 msgid "Assign aircraft to a cost center"
 msgstr "Asignar aeronaves a un centro de costo"
 
-#: .\apps\registry\views.py:1030 .\templates\base.html:148
+#: .\apps\registry\views.py:1041
+msgid "Last 7 days"
+msgstr "Últimos 7 días"
+
+#: .\apps\registry\views.py:1041
+msgid "Last 30 days"
+msgstr "Últimos 30 días"
+
+#: .\apps\registry\views.py:1041
+msgid "Last 90 days"
+msgstr "Últimos 90 días"
+
+#: .\apps\registry\views.py:1063 .\templates\base.html:148
 msgid "Resource movements"
 msgstr "Movimientos de recursos"
 
-#: .\apps\registry\views.py:1052
+#: .\apps\registry\views.py:1092
 msgid "Resource kind"
 msgstr "Tipo de recurso"
 
-#: .\apps\registry\views.py:1053
+#: .\apps\registry\views.py:1093
 #: .\templates\registry\costcenter_detail.html:132
-#: .\templates\registry\resourcemovementlog_list.html:29
+#: .\templates\registry\resourcemovementlog_list.html:47
 msgid "Resource"
 msgstr "Recurso"
 
-#: .\apps\registry\views.py:1054 .\templates\registry\aircraft_detail.html:120
+#: .\apps\registry\views.py:1094 .\templates\registry\aircraft_detail.html:120
 #: .\templates\registry\costcenter_detail.html:132
 #: .\templates\registry\operator_detail.html:57
-#: .\templates\registry\resourcemovementlog_list.html:30
+#: .\templates\registry\resourcemovementlog_list.html:48
 msgid "Movement"
 msgstr "Movimiento"
 
-#: .\apps\registry\views.py:1055 .\templates\compliance\report.html:36
+#: .\apps\registry\views.py:1095 .\templates\compliance\report.html:36
 #: .\templates\core\audit_log.html:27 .\templates\geo\plan_detail.html:215
 #: .\templates\registry\aircraft_detail.html:120
 #: .\templates\registry\costcenter_detail.html:132
 #: .\templates\registry\operator_detail.html:57
-#: .\templates\registry\resourcemovementlog_list.html:31
 msgid "From"
 msgstr "Desde"
 
-#: .\apps\registry\views.py:1056 .\templates\compliance\report.html:40
+#: .\apps\registry\views.py:1096 .\templates\compliance\report.html:40
 #: .\templates\core\audit_log.html:28 .\templates\geo\plan_detail.html:215
 #: .\templates\registry\aircraft_detail.html:120
 #: .\templates\registry\costcenter_detail.html:132
 #: .\templates\registry\operator_detail.html:57
-#: .\templates\registry\resourcemovementlog_list.html:32
 msgid "To"
 msgstr "Hasta"
 
-#: .\apps\registry\views.py:1058
+#: .\apps\registry\views.py:1098
 #: .\templates\compliance\deliverable_list.html:27
 #: .\templates\generic\list.html:36 .\templates\geo\plan_detail.html:135
 #: .\templates\geo\plan_detail.html:215 .\templates\geo\plan_list.html:22
 #: .\templates\registry\aircraft_detail.html:120
 #: .\templates\registry\costcenter_detail.html:132
 #: .\templates\registry\operator_detail.html:57
-#: .\templates\registry\resourcemovementlog_list.html:35
+#: .\templates\registry\resourcemovementlog_list.html:51
 msgid "Created"
 msgstr "Creado"
 
-#: .\apps\registry\views.py:1208
+#: .\apps\registry\views.py:1248
 #, python-format
 msgid "%(count)s %(name)s imported. You can undo this from the import page."
 msgstr ""
 "%(count)s %(name)s importados. Puedes deshacerlo desde la página de "
 "importación."
 
-#: .\apps\registry\views.py:1298
+#: .\apps\registry\views.py:1338
 #, python-format
 msgid "%(count)s imported records archived."
 msgstr "%(count)s registros importados archivados."
@@ -2719,7 +2728,7 @@ msgstr "Crítica"
 
 #: .\apps\workboard\views.py:229 .\templates\registry\_aircraft_rows.html:7
 #: .\templates\registry\_assignment_table_body.html:6
-#: .\templates\registry\_operator_rows.html:15
+#: .\templates\registry\_operator_rows.html:33
 #: .\templates\registry\_qualification_rows.html:7
 msgid "Unassigned"
 msgstr "Sin asignar"
@@ -2985,7 +2994,7 @@ msgstr "Cancelar"
 #: .\templates\compliance\document_list.html:16
 #: .\templates\compliance\document_list.html:19
 #: .\templates\geo\plan_detail.html:142
-#: .\templates\registry\_operator_rows.html:17
+#: .\templates\registry\_operator_rows.html:35
 msgid "Current"
 msgstr "Vigente"
 
@@ -3070,7 +3079,7 @@ msgstr "Reemplazado"
 #: .\templates\compliance\email\executive_report.html:54
 #: .\templates\compliance\report.html:52
 #: .\templates\compliance\report.html:140
-#: .\templates\registry\_operator_rows.html:18
+#: .\templates\registry\_operator_rows.html:36
 #: .\templates\registry\_qualification_rows.html:20
 #: .\templates\registry\costcenter_detail.html:45
 #: .\templates\registry\operator_detail.html:39
@@ -3131,7 +3140,7 @@ msgstr "Todos los tipos de entidad"
 #: .\templates\core\audit_log.html:29 .\templates\dashboard\index.html:24
 #: .\templates\maintenance\record_list.html:15
 #: .\templates\operations\permission_list.html:28
-#: .\templates\registry\resourcemovementlog_list.html:21
+#: .\templates\registry\resourcemovementlog_list.html:35
 msgid "Filter"
 msgstr "Filtrar"
 
@@ -3224,7 +3233,7 @@ msgstr ""
 #: .\templates\generic\list.html:17
 #: .\templates\operations\permission_list.html:16
 #: .\templates\registry\battery_list.html:21
-#: .\templates\registry\resourcemovementlog_list.html:13
+#: .\templates\registry\resourcemovementlog_list.html:19
 msgid "Searching…"
 msgstr "Buscando…"
 
@@ -3242,7 +3251,7 @@ msgstr "Todos los tipos de documento"
 #: .\templates\registry\_aircraftassignment_rows.html:10
 #: .\templates\registry\_assignment_table_body.html:9
 #: .\templates\registry\_costcenter_rows.html:23
-#: .\templates\registry\_operator_rows.html:23
+#: .\templates\registry\_operator_rows.html:41
 #: .\templates\registry\_operatorassignment_rows.html:10
 #: .\templates\registry\_qualification_rows.html:29
 #: .\templates\registry\aircraft_detail.html:10
@@ -4580,7 +4589,7 @@ msgstr "Lleva más tiempo del habitual en este estado"
 #: .\templates\registry\_aircraft_rows.html:33
 #: .\templates\registry\_aircraftassignment_rows.html:14
 #: .\templates\registry\_costcenter_rows.html:27
-#: .\templates\registry\_operator_rows.html:30
+#: .\templates\registry\_operator_rows.html:48
 #: .\templates\registry\_operatorassignment_rows.html:14
 #: .\templates\registry\_qualification_rows.html:33
 msgid "No records found."
@@ -4820,19 +4829,34 @@ msgstr "Responsable"
 msgid "Day-to-day"
 msgstr "Día a día"
 
-#: .\templates\registry\_operator_rows.html:13
+#: .\templates\registry\_operator_rows.html:22
+msgid "DGAC credential PDF on file"
+msgstr "PDF de credencial DGAC en archivo"
+
+#: .\templates\registry\_operator_rows.html:24
+msgid "Credential file on record"
+msgstr "Credencial adjunta"
+
+#: .\templates\registry\_operator_rows.html:27
 msgid "No DGAC credential PDF on file"
 msgstr "Sin PDF de credencial DGAC en archivo"
+
+#: .\templates\registry\_operator_rows.html:29
+msgid "No credential file"
+msgstr "Sin credencial adjunta"
 
 #: .\templates\registry\_qualification_rows.html:20
 msgid "Edit qualification"
 msgstr "Editar habilitación"
 
-#: .\templates\registry\_resourcemovementlog_rows.html:13
-#: .\templates\registry\aircraft_detail.html:133
-#: .\templates\registry\operator_detail.html:70
-msgid "No movements recorded yet."
-msgstr "Aún no hay movimientos registrados."
+#: .\templates\registry\_resourcemovementlog_rows.html:19
+#, python-format
+msgid "%(since)s ago"
+msgstr "hace %(since)s"
+
+#: .\templates\registry\_resourcemovementlog_rows.html:22
+msgid "No movements in this period."
+msgstr "Sin movimientos en este período."
 
 #: .\templates\registry\aircraft_detail.html:33
 #, python-format
@@ -4889,6 +4913,11 @@ msgstr "Horas de vuelo acumuladas registradas para esta aeronave:"
 #: .\templates\registry\operator_detail.html:54
 msgid "Movement history"
 msgstr "Historial de movimientos"
+
+#: .\templates\registry\aircraft_detail.html:133
+#: .\templates\registry\operator_detail.html:70
+msgid "No movements recorded yet."
+msgstr "Aún no hay movimientos registrados."
 
 #: .\templates\registry\aircraft_list.html:28
 msgid "Insurance"
@@ -5131,22 +5160,37 @@ msgstr "Renuévalas ante la DGAC para seguir operando."
 msgid "No qualifications recorded yet."
 msgstr "Aún no hay habilitaciones registradas."
 
-#: .\templates\registry\operator_list.html:24
+#: .\templates\registry\operator_list.html:27
 #: .\templates\registry\qualification_list.html:26
 msgid "Credential expiry"
 msgstr "Vence credencial"
+
+#: .\templates\registry\operator_list.html:32
+msgid "Credential file"
+msgstr "Credencial adjunta"
 
 #: .\templates\registry\qualification_list.html:27
 msgid "Qualified equipment"
 msgstr "Equipos habilitados"
 
-#: .\templates\registry\resourcemovementlog_list.html:16
+#: .\templates\registry\resourcemovementlog_list.html:22
 msgid "All resources"
 msgstr "Todos los recursos"
 
-#: .\templates\registry\resourcemovementlog_list.html:33
-msgid "Detail"
-msgstr "Detalle"
+#: .\templates\registry\resourcemovementlog_list.html:32
+msgid "Everything on record"
+msgstr "Todo el registro"
+
+#: .\templates\registry\resourcemovementlog_list.html:39
+#, python-format
+msgid "%(counter)s movement in this period."
+msgid_plural "%(counter)s movements in this period."
+msgstr[0] "%(counter)s movimiento en este período."
+msgstr[1] "%(counter)s movimientos en este período."
+
+#: .\templates\registry\resourcemovementlog_list.html:49
+msgid "Route"
+msgstr "Trayecto"
 
 #: .\templates\workboard\_board.html:4
 msgid ""

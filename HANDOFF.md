@@ -79,7 +79,7 @@ viento en **m/s** e icono de la condición del día; el filtro por centro de cos
 que ya existía cambia la ubicación. Verificado en el demo contra Open-Meteo real.
 **Sin desplegar todavía** — ver abajo.
 
-**6. Lote nuevo del 2026-08-13: `LV-81` a `LV-86` hechos; `LV-87` a `LV-89` pendientes.**
+**6. Lote nuevo del 2026-08-13: `LV-81` a `LV-88` hechos. Queda `LV-89`.**
 El usuario pidió "tomarlo de a poco" e investigar antes de programar, y marcó
 `LV-81` (el seguro) como lo clave: **está hecho** — cuatro estados, escalera y
 trazabilidad, más el bloqueo que impide marcar "autorizado" sin fecha de
@@ -105,10 +105,20 @@ Dos cosas de ese bloque que conviene no perder: la excepción de *framing* es
 archivos entrando al sistema, así que conviene configurarlo antes de usarla en
 producción.
 
-Lo que sigue, con el diagnóstico ya verificado contra el código en cada fila:
-la columna propia de credencial adjunta (`LV-87`, barato), movimientos de
-recursos (`LV-88`) y la revisión del panel (`LV-89`, que incluye **un gráfico de
-un tablero Kanban dado de baja** todavía dibujándose en producción).
+`LV-87` y `LV-88` también están hechos: columna propia para la credencial
+adjunta, y la lista de movimientos acotada a 30 días por defecto con selector
+visible, trayecto en una sola columna y enlace a la ficha del recurso.
+
+**Lo único del lote que queda es `LV-89`** (el panel), que arrastra dos cosas de
+otras filas: el gráfico del **tablero Kanban dado de baja** que sigue
+dibujándose en producción (limpieza de `LV-78`) y el botón "Abrir registro", que
+lleva a centros de costo.
+
+**Dos hallazgos nuevos capturados en la revisión del 2026-08-13**, ninguno
+urgente pero los dos silenciosos: `LV-90` (los estados terminales del motor de
+alertas viven en una **lista literal** que mezcla tres modelos, y ya hubo que
+acordarse de tocarla al agregar `expired`) y `LV-91` (`MaintenanceHistory` tiene
+**dos columnas de fecha de creación** que siempre valen lo mismo).
 
 ### Estado de la Sesión B (avanzada el 2026-08-12)
 

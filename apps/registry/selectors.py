@@ -8,6 +8,7 @@ resource_id gets resolved to a human label.
 from collections import defaultdict
 
 from django.db.models import Q
+from django.urls import reverse
 from django.utils import timezone
 
 from .models import Aircraft, Operator, Qualification, ResourceMovementLog
@@ -36,6 +37,15 @@ def label_movements(entries):
             else aircraft.get(entry.resource_id)
         )
         entry.resource_label = label or str(entry.resource_id)
+        # LV-88: the log named the resource in plain text, so reading "RPA-3696
+        # moved" and then opening it meant going back to the padrón and
+        # searching for it. None when the row points at something that no
+        # longer resolves -- the log is append-only and outlives its subject.
+        entry.resource_url = (
+            reverse(f"{entry.resource_kind}-detail", args=[entry.resource_id])
+            if label
+            else None
+        )
     return entries
 
 
