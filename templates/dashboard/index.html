@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% load i18n static %}
-{% block title %}Dashboard - AeroControl{% endblock %}
+{% comment %}LV-80: la pestaña del navegador también es texto visible. Decía
+"Dashboard" en una app en español, escrito a mano en vez de traducido.
+{% endcomment %}
+{% block title %}{% translate "Operations Dashboard" %} - AeroControl{% endblock %}
 
 {% block content %}
 <div class="page-header">
