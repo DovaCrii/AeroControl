@@ -4,7 +4,7 @@ from decimal import Decimal
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
@@ -140,6 +140,60 @@ class CostCenter(BaseModel):
         validators=[MinValueValidator(Decimal("0"))],
         verbose_name=_("Maximum vertical RMSE (cm)"),
     )
+    # R8.4: where this contract's work actually happens, so the dashboard can
+    # show the weather for the site when there is no upcoming permit to take
+    # coordinates from. Deliberately *here* and not on `Operator`: a person
+    # moves several times a day and nobody would keep that current, while a
+    # site does not move -- somebody types it once and it stays true. This is
+    # also why browser geolocation was rejected (R8.4 option (b)): it would
+    # send a person's position to the server, and an operator sitting in the
+    # office is not where the flight is.
+    #
+    # Same precision and pair rule as FlightPermission's structured location
+    # (OPS-4), so the two coordinate sources behave identically.
+    latitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+        validators=[
+            MinValueValidator(Decimal("-90")),
+            MaxValueValidator(Decimal("90")),
+        ],
+        verbose_name=_("Site latitude"),
+    )
+    longitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+        validators=[
+            MinValueValidator(Decimal("-180")),
+            MaxValueValidator(Decimal("180")),
+        ],
+        verbose_name=_("Site longitude"),
+    )
+
+    def clean(self):
+        """A lone coordinate cannot locate anything (same rule as
+        FlightPermission.clean): require the pair together so a half-entered
+        point does not silently fail to produce a forecast."""
+        super().clean()
+        if (self.latitude is None) != (self.longitude is None):
+            message = _("Latitude and longitude must be entered together.")
+            raise ValidationError({"latitude": message, "longitude": message})
+
+    @property
+    def coordinates(self):
+        """(latitude, longitude) as floats, or None when not on file.
+
+        Floats because the only consumer is the weather module, which rounds
+        them into a cache key; `Decimal` would make that key depend on how many
+        trailing zeros somebody typed.
+        """
+        if self.latitude is None or self.longitude is None:
+            return None
+        return (float(self.latitude), float(self.longitude))
 
     @property
     def has_quality_thresholds(self):

@@ -72,13 +72,22 @@ el importador con `--apply`.
 **4. ~~Desplegar lo del 2026-08-12.~~ Hecho ese mismo día** — 7 migraciones,
 roles y los 2 timers nuevos. Todo lo de esa tanda ya corre en `p340`.
 
-**5. El clima, más visible (`R8.4`)** — pedido del usuario después de verlo
-andando. Es lo primero que quiere en la próxima sesión: **temperatura** (hoy no
-se pide a Open-Meteo), llevarlo **al panel** (ya es posible sin plan geo, porque
-el permiso tiene coordenadas propias desde `OPS-4`) y **poder elegir la
-ubicación**. Esa última parte necesita una decisión suya: la fila `R8.4` del
-plan tiene las tres opciones y por qué la geolocalización del navegador **no**
-es la buena.
+**5. ~~El clima, más visible (`R8.4`).~~ Hecho el 2026-08-13**, con la decisión
+del usuario tomada: **(a) faena + (c) centro de costo**, no la geolocalización
+del navegador. El panel muestra el clima del próximo vuelo, con temperatura,
+viento en **m/s** e icono de la condición del día; el filtro por centro de costo
+que ya existía cambia la ubicación. Verificado en el demo contra Open-Meteo real.
+**Sin desplegar todavía** — ver abajo.
+
+**6. Lote nuevo del 2026-08-13, capturado y sin empezar: `LV-81` a `LV-89`.**
+El usuario pidió "tomarlo de a poco" e investigar antes de programar. El orden
+que él marcó: **`LV-81` (estado del seguro con flujo y trazabilidad) es "lo
+clave"**. Los demás: trazabilidad en mantención (`LV-82`), cierre automático de
+permisos vencidos (`LV-83`), la pantalla de carga de documentos (`LV-84`),
+preview de PDF en la página (`LV-85`), carga masiva (`LV-86`), la columna propia
+de credencial adjunta (`LV-87`), movimientos de recursos (`LV-88`) y una
+revisión del panel completo (`LV-89`). Cada fila lleva ya el diagnóstico
+verificado contra el código, no sólo el pedido.
 
 ### Estado de la Sesión B (avanzada el 2026-08-12)
 
@@ -174,6 +183,17 @@ uv run python manage.py audit_serial_case
 el guardado **no reescribe filas ya almacenadas**. La migración `registry/0032`
 las normaliza y **aborta si dos sólo difieren en mayúsculas** — eso lo resuelve
 el certificado RPAS de la DGAC, no una migración.
+
+## Sin desplegar: `R8.4` (rama `codex/clima-panel`)
+
+Trae **una migración** (`registry/0033`, dos columnas nulas en `CostCenter` —
+sin backfill, sin restricción, no puede fallar sobre datos reales) y **no**
+necesita `bootstrap_roles` (ningún permiso nuevo). El `.mo` está recompilado y
+versionado, así que no hace falta `compilemessages` en la VM. La tarjeta del
+panel sólo aparece si hay un permiso vigente **con coordenadas** o un centro de
+costo con coordenadas de faena: en `p340` hoy probablemente **no hay ninguno**,
+así que tras desplegar hay que cargar al menos una faena para verla — su
+ausencia se lee como un despliegue fallido, igual que pasó con `WEATHER_ENABLED`.
 
 ## Despliegue del 2026-08-12 — hecho
 
