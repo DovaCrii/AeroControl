@@ -73,6 +73,36 @@
   </ol>
 </section>
 {% else %}
+{% comment %}R8.4: el clima, arriba y sin tener que buscarlo. Antes sólo existía
+en la ficha de un plan geoespacial, y sólo si ese plan tenía área y un permiso
+con fecha -- enterrado, para algo que se consulta antes de cada vuelo. La
+ubicación es la del próximo vuelo; el filtro por centro de costo de arriba la
+cambia. Ausente por completo cuando no hay ubicación en ficha, la función está
+apagada o el proveedor no respondió: el clima es contexto, nunca un bloqueo.
+{% endcomment %}
+{% if weather %}
+<section class="card p-3 mb-3" aria-labelledby="panel-weather-title">
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+    <div>
+      <h2 id="panel-weather-title" class="h6 section-title mb-1">{% translate "Weather where you fly next" %}</h2>
+      <p class="text-muted small mb-0">
+        {% if weather_source == "permission" %}
+          {% blocktranslate with folio=weather_folio place=weather_place date=weather_date|date:"Y-m-d" %}{{ folio }} · {{ place }} · forecast for {{ date }}{% endblocktranslate %}
+          {% if weather_fleet %}· {{ weather_fleet }}{% endif %}
+        {% else %}
+          {% blocktranslate with place=weather_place date=weather_date|date:"Y-m-d" %}{{ place }} · forecast for {{ date }}{% endblocktranslate %}
+        {% endif %}
+      </p>
+    </div>
+    <a class="btn btn-sm btn-outline-primary" href="{{ weather_url }}">
+      {% if weather_source == "permission" %}{% translate "Open the permission" %}{% else %}{% translate "Open the cost center" %}{% endif %}
+    </a>
+  </div>
+  {% include "core/_weather_metrics.html" %}
+  <p class="text-muted small mb-0 mt-3">{% translate "Source: Open-Meteo. Reference only -- it does not replace the pre-flight check." %}</p>
+</section>
+{% endif %}
+
 {% if compliance_incomplete and perms.compliance.add_documenttype %}
 {% comment %}LV-D4: the registry is loaded but compliance is idle (0 types /
 documents / rules), so the digest, alerts and report have nothing to do while

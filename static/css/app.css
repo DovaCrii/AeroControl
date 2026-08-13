@@ -1314,6 +1314,50 @@ main {
   gap: 0.35rem;
 }
 
+/* R8.4: la cabecera del pronóstico. La temperatura y el dibujo del cielo son
+   lo que se lee de una mirada, así que van arriba y en grande; los cuatro
+   números de decisión quedan debajo, del mismo tamaño entre sí para que
+   ninguno parezca más importante que otro. El icono usa el mismo trazo que el
+   resto de la app y `currentColor`, así que sigue al tema claro/oscuro sin una
+   segunda regla. */
+.weather-hero {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.weather-hero-icon {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: var(--ac-primary);
+}
+
+.weather-temp {
+  display: block;
+  font-size: 2.25rem;
+  line-height: 1.1;
+  font-weight: 600;
+}
+
+.weather-temp-min {
+  font-size: 0.6em;
+  font-weight: 500;
+  color: var(--ac-text-muted);
+}
+
+.weather-condition {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--ac-text-secondary);
+}
+
 .status-steps {
   display: flex;
   list-style: none;

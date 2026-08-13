@@ -127,6 +127,104 @@ def upcoming_expirations(today, cutoff, cost_center=None):
     return items
 
 
+def panel_forecast(today, cost_center=None, user=None):
+    """R8.4: the weather for the operation's next flight, for the panel.
+
+    Until now the forecast only existed on a geo plan's page, and only when that
+    plan had an area *and* a linked permit with a date -- buried, for something
+    that gets consulted before every flight. What makes it reachable here is
+    OPS-4: the permit carries its own `latitude`/`longitude`, so no geo plan is
+    needed.
+
+    **One call, never N.** The panel is opened by everyone, every day, so this
+    resolves a single location and asks for a single (coordinate, day) -- the
+    same cached entry the whole office shares. Showing every upcoming permit
+    would be one outgoing request per permit per page load, which is the shape
+    this project already paid for twice (V.18/V.19).
+
+    Where the location comes from, in order:
+
+    1. the next permit that is not finished or denied and does carry
+       coordinates -- the actual next flight, and the day is clamped to today so
+       a permit whose window is already open forecasts today rather than a start
+       date in the past;
+    2. failing that, the selected cost center's own site coordinates (R8.4
+       option (c)) -- which is what makes the panel's cost-center filter double
+       as the location selector.
+
+    Returns a dict with `weather` set to None whenever the feature is off, no
+    location is on file, or the provider did not answer; the card then does not
+    render at all. Never raises: this feeds the page every login lands on.
+
+    Each source is gated on the `view_*` of the model it reads (AGENTS.md's
+    read contract): the card names a permit folio, its site and its aircraft, so
+    it must not become a way around `view_flightpermission`.
+    """
+    from apps.core.weather import forecast_for
+
+    def may_see(permission_codename):
+        return user is None or user.has_perm(permission_codename)
+
+    permissions = FlightPermission.objects.filter(
+        is_active=True,
+        latitude__isnull=False,
+        longitude__isnull=False,
+        valid_until__gte=today,
+    ).exclude(
+        # Neither has a flight left to plan for: one already happened, the
+        # other is not going to.
+        status__in=[FlightPermission.STATUS_COMPLETED, FlightPermission.STATUS_DENIED]
+    )
+    if cost_center:
+        permissions = permissions.filter(cost_center=cost_center)
+    permission = (
+        permissions.select_related("cost_center").order_by("valid_from").first()
+        if may_see("operations.view_flightpermission")
+        else None
+    )
+
+    if permission is not None:
+        # Bounded on purpose (one query, three values): the card names what is
+        # flying, but a permit with a large fleet must not turn into a wall.
+        fleet = list(
+            permission.aircraft_fleet.filter(is_active=True).values_list(
+                "registration", flat=True
+            )[:3]
+        )
+        return {
+            "weather": forecast_for(
+                permission.latitude,
+                permission.longitude,
+                max(permission.valid_from, today),
+            ),
+            "weather_date": max(permission.valid_from, today),
+            "weather_source": "permission",
+            "weather_place": permission.area_name or permission.location,
+            "weather_folio": permission.internal_folio,
+            "weather_fleet": ", ".join(fleet),
+            "weather_url": reverse("permission-detail", args=[permission.pk]),
+        }
+
+    coordinates = (
+        cost_center.coordinates
+        if cost_center and may_see("registry.view_costcenter")
+        else None
+    )
+    if coordinates is None:
+        # No upcoming located flight and no site on file. Deliberately not a
+        # guessed location: a forecast for the wrong place, next to a real date,
+        # is worse than no card.
+        return {"weather": None}
+    latitude, longitude = coordinates
+    return {
+        "weather": forecast_for(latitude, longitude, today),
+        "weather_date": today,
+        "weather_source": "cost_center",
+        "weather_place": str(cost_center),
+        "weather_url": reverse("costcenter-detail", args=[cost_center.pk]),
+    }
+
+
 @login_required
 def dashboard(request):
     # OPS-8: an optional global filter by cost center. Silently ignored if it
@@ -310,4 +408,7 @@ def dashboard(request):
         "selected_cost_center": selected_cost_center,
         "monthly_records": monthly_records,
     }
+    # R8.4: after the rest of the context, so a provider hiccup cannot get in
+    # the way of anything the panel already showed.
+    context.update(panel_forecast(today, selected_cost_center, request.user))
     return render(request, "dashboard/index.html", context)

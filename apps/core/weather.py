@@ -39,12 +39,64 @@ logger = logging.getLogger("aerocontrol.weather")
 # The daily fields ISO 8.1 actually asks about: wind (the limiting factor for
 # an RPAS), gusts, and precipitation. Requested as a fixed list, not built
 # from user input.
+#
+# R8.4: temperature joined the list. It is *not* a second call -- Open-Meteo
+# returns every requested daily field in the same response, so this costs one
+# extra query parameter and nothing else (same cache entry, same timeout, same
+# failure paths). Listed first because that is the reading order the card uses.
 DAILY_FIELDS = (
+    "temperature_2m_max",
+    "temperature_2m_min",
     "wind_speed_10m_max",
     "wind_gusts_10m_max",
     "precipitation_sum",
     "precipitation_probability_max",
 )
+
+# R8.4: asked for alongside DAILY_FIELDS but deliberately *not* one of them --
+# it is a condition code, not a measurement, so it must not count towards "the
+# provider answered with something usable" (see _parse). A response carrying
+# only a weather code and no numbers is not a forecast.
+CONDITION_FIELD = "weather_code"
+
+# R8.4, at the user's request: wind in m/s, not the provider's default km/h.
+# This is the unit the aircraft are specified in -- DJI publishes maximum wind
+# resistance in m/s -- so a pilot comparing the forecast against the airframe's
+# limit does not have to convert in their head, which is how a go/no-go call
+# gets made wrong. Open-Meteo reports the unit it used in `daily_units`, and
+# the card prints that back, so the number is never shown bare.
+WIND_SPEED_UNIT = "ms"
+
+# WMO 4677 weather codes, collapsed into the conditions worth telling apart
+# before a flight. The value is a plain slug (never a translated string): it
+# gets cached, and a cached label would freeze whichever language happened to
+# render first. The template maps slug -> icon + wording, where the literal is
+# extractable by makemessages (AGENTS.md forbids `_(variable)`).
+CONDITION_CODES = {
+    "clear": (0,),
+    "partly_cloudy": (1, 2),
+    "cloudy": (3,),
+    "fog": (45, 48),
+    "drizzle": (51, 53, 55, 56, 57),
+    "rain": (61, 63, 65, 66, 67, 80, 81, 82),
+    "snow": (71, 73, 75, 77, 85, 86),
+    "thunderstorm": (95, 96, 99),
+}
+
+
+def condition_for(code):
+    """Slug for a WMO weather code, or None when it is absent/unknown.
+
+    Unknown returns None rather than a catch-all "cloudy": inventing a
+    condition the provider did not report would put a wrong picture next to
+    real numbers.
+    """
+    if not isinstance(code, (int, float)) or isinstance(code, bool):
+        return None
+    for slug, codes in CONDITION_CODES.items():
+        if int(code) in codes:
+            return slug
+    return None
 
 
 def _rounded(value):
@@ -81,7 +133,9 @@ def forecast_for(latitude, longitude, target_date):
         return None
 
     iso_date = target_date.isoformat()
-    cache_key = f"weather:{latitude}:{longitude}:{iso_date}"
+    # The wind unit is part of the key: changing WIND_SPEED_UNIT must not serve
+    # numbers fetched in the old unit under the new label for up to an hour.
+    cache_key = f"weather:{latitude}:{longitude}:{iso_date}:{WIND_SPEED_UNIT}"
     cached = cache.get(cache_key)
     if cached is not None:
         # A cached miss is stored as the sentinel below, so a provider that is
@@ -103,7 +157,8 @@ def _fetch(latitude, longitude, iso_date):
         {
             "latitude": latitude,
             "longitude": longitude,
-            "daily": ",".join(DAILY_FIELDS),
+            "daily": ",".join(DAILY_FIELDS + (CONDITION_FIELD,)),
+            "wind_speed_unit": WIND_SPEED_UNIT,
             "timezone": "auto",
             "start_date": iso_date,
             "end_date": iso_date,
@@ -169,6 +224,9 @@ def _parse(payload, iso_date):
     result = {field: value(field) for field in DAILY_FIELDS}
     if all(entry is None for entry in result.values()):
         return None
+    # Added after the emptiness check on purpose: a payload with a condition
+    # code and no measurements is still nothing to show (see CONDITION_FIELD).
+    result["condition"] = condition_for(value(CONDITION_FIELD))
     units = payload.get("daily_units")
     result["units"] = units if isinstance(units, dict) else {}
     result["date"] = iso_date

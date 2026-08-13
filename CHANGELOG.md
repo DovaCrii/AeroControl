@@ -10,6 +10,17 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **El clima, en el panel y con temperatura (`R8.4`).** El pronóstico deja de
+  estar sólo en la ficha de un plan geoespacial: el panel muestra el clima del
+  **próximo vuelo**, tomando las coordenadas del propio permiso. Ahora incluye
+  **temperatura** máxima y mínima y un **icono de la condición real del día**
+  (despejado, nublado, lluvia, nieve…), y el **viento va en m/s**, la misma
+  unidad en que el fabricante publica la resistencia al viento del equipo. El
+  filtro por centro de costo que ya tenía el panel **cambia la ubicación** del
+  pronóstico, para lo cual el centro de costo pasa a tener coordenadas de faena
+  (opcionales). Sigue siendo **una sola llamada cacheada por página**, y la
+  tarjeta simplemente no aparece cuando no hay ubicación en ficha o el proveedor
+  no responde.
 - **Ubicación estructurada en el permiso de vuelo (`OPS-4`, diferido en su
   momento).** Región, comuna y nombre del área, más un par de coordenadas
   opcional con radio y altitud máxima. **Complementa** el campo de texto libre,

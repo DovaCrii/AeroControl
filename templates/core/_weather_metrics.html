@@ -1,0 +1,67 @@
+{% load i18n %}
+{% comment %}R8.4: el pronóstico de un día, en un solo lugar. Lo comparten el
+panel y la ficha del plan geoespacial, que antes tenían su propia copia del
+mismo bloque -- dos copias derivan, y la que menos se mira termina mostrando
+otras unidades que la otra.
+
+Orden deliberado, de arriba abajo: primero **qué día va a hacer** (la condición
+y la temperatura, que es lo que se lee de una mirada), después los números que
+deciden si se vuela. El viento va primero de los cuatro porque es el limitante
+de un RPA, y viene en m/s -- la misma unidad en que el fabricante publica la
+resistencia al viento del equipo, así que se compara sin convertir.
+
+Los iconos van inline, no como fuente ni imagen externa: la CSP es un
+`default-src 'self'` pelado y traer un set de iconos la obligaría a abrirse para
+todos. El icono de condición se elige por `weather.condition`, un slug que llega
+del proveedor -- la traducción vive acá como literal, nunca como `_(variable)`,
+que `makemessages` no puede extraer.{% endcomment %}
+<div class="weather-hero">
+  {% if weather.condition == "clear" %}
+    <svg class="weather-hero-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6"/></svg>
+    <div><strong class="weather-temp">{% include "core/_weather_temp.html" %}</strong><span class="weather-condition">{% comment %}Con contexto: "Clear" ya existe como el botón "Limpiar" del filtro de permisos, y sin `msgctxt` las dos comparten una traducción -- el cielo despejado diría "Limpiar".{% endcomment %}{% translate "Clear" context "weather condition" %}</span></div>
+  {% elif weather.condition == "partly_cloudy" %}
+    <svg class="weather-hero-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8.5" cy="8" r="3.2"/><path d="M8.5 2.4v1.6M2.9 8h1.6M4.5 4l1.1 1.1M12.5 4l-1.1 1.1"/><path d="M10.5 19a3.6 3.6 0 0 1 .4-7.2 5 5 0 0 1 9.6 1.4A2.9 2.9 0 0 1 20 19z"/></svg>
+    <div><strong class="weather-temp">{% include "core/_weather_temp.html" %}</strong><span class="weather-condition">{% translate "Partly cloudy" %}</span></div>
+  {% elif weather.condition == "cloudy" %}
+    <svg class="weather-hero-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18.5a4 4 0 0 1 .4-8A5.5 5.5 0 0 1 18 12a3.3 3.3 0 0 1-.4 6.5z"/></svg>
+    <div><strong class="weather-temp">{% include "core/_weather_temp.html" %}</strong><span class="weather-condition">{% translate "Cloudy" %}</span></div>
+  {% elif weather.condition == "fog" %}
+    <svg class="weather-hero-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14a4 4 0 0 1 .4-8A5.5 5.5 0 0 1 18 7.5a3.3 3.3 0 0 1-.4 6.5z"/><path d="M4 17.5h16M6.5 21h11"/></svg>
+    <div><strong class="weather-temp">{% include "core/_weather_temp.html" %}</strong><span class="weather-condition">{% translate "Fog" %}</span></div>
+  {% elif weather.condition == "drizzle" %}
+    <svg class="weather-hero-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14.5a4 4 0 0 1 .4-8A5.5 5.5 0 0 1 18 8a3.3 3.3 0 0 1-.4 6.5z"/><path d="M9 18v1.5M13 18v1.5M17 18v1.5"/></svg>
+    <div><strong class="weather-temp">{% include "core/_weather_temp.html" %}</strong><span class="weather-condition">{% translate "Drizzle" %}</span></div>
+  {% elif weather.condition == "rain" %}
+    <svg class="weather-hero-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14.5a4 4 0 0 1 .4-8A5.5 5.5 0 0 1 18 8a3.3 3.3 0 0 1-.4 6.5z"/><path d="M9 17.5l-1.2 3M13 17.5l-1.2 3M17 17.5l-1.2 3"/></svg>
+    <div><strong class="weather-temp">{% include "core/_weather_temp.html" %}</strong><span class="weather-condition">{% translate "Rain" %}</span></div>
+  {% elif weather.condition == "snow" %}
+    <svg class="weather-hero-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14.5a4 4 0 0 1 .4-8A5.5 5.5 0 0 1 18 8a3.3 3.3 0 0 1-.4 6.5z"/><path d="M9 18.2h.01M12.5 20.2h.01M16 18.2h.01"/></svg>
+    <div><strong class="weather-temp">{% include "core/_weather_temp.html" %}</strong><span class="weather-condition">{% translate "Snow" %}</span></div>
+  {% elif weather.condition == "thunderstorm" %}
+    <svg class="weather-hero-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 13.5a4 4 0 0 1 .4-8A5.5 5.5 0 0 1 18 7a3.3 3.3 0 0 1-.4 6.5z"/><path d="M13 15l-3 3.5h3l-1.5 3"/></svg>
+    <div><strong class="weather-temp">{% include "core/_weather_temp.html" %}</strong><span class="weather-condition">{% translate "Thunderstorm" %}</span></div>
+  {% else %}
+    {% comment %}Sin código de condición (o uno que el proveedor agregó después):
+    se muestra la temperatura sin inventar un dibujo del cielo.{% endcomment %}
+    <div><strong class="weather-temp">{% include "core/_weather_temp.html" %}</strong><span class="weather-condition">{% translate "Forecast" %}</span></div>
+  {% endif %}
+</div>
+
+<div class="row g-3 weather-grid">
+  <div class="col-6 col-lg-3"><div class="summary-card">
+    <small><svg class="weather-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h11a3 3 0 1 0-3-3"/><path d="M3 12h15a3 3 0 1 1-3 3"/><path d="M3 16h9"/></svg>{% translate "Max wind" %}</small>
+    <strong>{% if weather.wind_speed_10m_max is not None %}{{ weather.wind_speed_10m_max }} {{ weather.units.wind_speed_10m_max|default:"" }}{% else %}—{% endif %}</strong>
+  </div></div>
+  <div class="col-6 col-lg-3"><div class="summary-card">
+    <small><svg class="weather-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h10a3 3 0 1 0-3-3"/><path d="M3 12h7"/><path d="M14 12h4a3 3 0 1 1-3 3"/><path d="M3 17h6"/><path d="M17 6l3 3-3 3"/></svg>{% translate "Max gusts" %}</small>
+    <strong>{% if weather.wind_gusts_10m_max is not None %}{{ weather.wind_gusts_10m_max }} {{ weather.units.wind_gusts_10m_max|default:"" }}{% else %}—{% endif %}</strong>
+  </div></div>
+  <div class="col-6 col-lg-3"><div class="summary-card">
+    <small><svg class="weather-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 15a4 4 0 0 1 .4-8A5.5 5.5 0 0 1 18 8.5a3.5 3.5 0 0 1-.5 6.5"/><path d="M9 19l-1 2M13 19l-1 2M17 19l-1 2"/></svg>{% translate "Chance of rain" %}</small>
+    <strong>{% if weather.precipitation_probability_max is not None %}{{ weather.precipitation_probability_max }}%{% else %}—{% endif %}</strong>
+  </div></div>
+  <div class="col-6 col-lg-3"><div class="summary-card">
+    <small><svg class="weather-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3s5 6.2 5 9.4A5 5 0 0 1 7 12.4C7 9.2 12 3 12 3z"/></svg>{% translate "Precipitation" %}</small>
+    <strong>{% if weather.precipitation_sum is not None %}{{ weather.precipitation_sum }} {{ weather.units.precipitation_sum|default:"" }}{% else %}—{% endif %}</strong>
+  </div></div>
+</div>
