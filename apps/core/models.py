@@ -16,7 +16,7 @@ class BaseModel(models.Model):
         abstract = True
 
 
-def status_steps_for(*, choices, flow, current, blocked=None):
+def status_steps_for(*, choices, flow, current, blocked=None, reached=None):
     """[{code, label, state}] for one flow, state in done/current/pending/blocked.
 
     Extracted from `StatusFlowMixin.status_steps` when the insurance filing
@@ -29,16 +29,27 @@ def status_steps_for(*, choices, flow, current, blocked=None):
 
     A `current` value outside `flow` yields every step "pending", which is
     exactly right for a flow that has not started (insurance "missing").
+
+    `blocked` accepts one code or several. LV-83 added a second terminal state
+    to the permit ("expired" beside "denied"), and unlike "denied" -- which is
+    only ever reached from the first step -- a permit can expire from anywhere
+    in the flow. That is what `reached` is for: the caller passes the status the
+    record actually got to (its history knows), and the steps up to it are shown
+    as done instead of collapsing the whole run to the first one.
     """
     labels = dict(choices)
-    if blocked and current == blocked:
+    blocked_codes = {blocked} if isinstance(blocked, str) else set(blocked or ())
+    if current in blocked_codes:
         # Not the full flow greyed out: that would imply the remaining steps
         # are still ahead of a record that is not going anywhere. Show how far
         # it got and where it stopped.
-        return [
-            {"code": flow[0], "label": labels[flow[0]], "state": "done"},
-            {"code": blocked, "label": labels[blocked], "state": "blocked"},
+        stopped_at = flow.index(reached) if reached in flow else 0
+        steps = [
+            {"code": code, "label": labels[code], "state": "done"}
+            for code in flow[: stopped_at + 1]
         ]
+        steps.append({"code": current, "label": labels[current], "state": "blocked"})
+        return steps
 
     reached = flow.index(current) if current in flow else -1
     steps = []
@@ -65,8 +76,9 @@ class StatusFlowMixin(models.Model):
     - `STATUS_FLOW`: the codes in the order they advance. **Never spelled out
       in a template** -- a hand-written list drifting from the real choices is
       the R1.1 defect exactly.
-    - `STATUS_BLOCKED`: optional, the terminal status that is not a step on the
-      way anywhere but where the flow stops (denied, rejected).
+    - `STATUS_BLOCKED`: optional, the terminal status -- or several -- that is
+      not a step on the way anywhere but where the flow stops (denied,
+      rejected, expired).
 
     Only applies to records that really do advance through a sequence. An
     aircraft moves between active and maintenance and back; drawing that as a
