@@ -109,12 +109,21 @@ producción.
 adjunta, y la lista de movimientos acotada a 30 días por defecto con selector
 visible, trayecto en una sola columna y enlace a la ficha del recurso.
 
-**`LV-78` avanzó al Paso 2 (congelado).** El tablero se quedó **sin superficies**
-—panel, calendario, buscador, centro de administración, índice de la API— sin
-borrar una fila. Lo que destrabó todo y no estaba escrito en ninguna parte: el
-**índice de la API y el endpoint de token vivían dentro de `apps.workboard`**, o
-sea que la integración con AeroLink colgaba del módulo a retirar; ahora están en
-`apps.core.api`. **El Paso 3 (borrar) sigue pendiente de decisión.**
+**`LV-78` está en el Paso 2 (congelado), con las armas descargadas.** El tablero
+se quedó **sin superficies** —panel, calendario, buscador, centro de
+administración, índice de la API— sin borrar una fila. Lo que destrabó todo y no
+estaba escrito en ninguna parte: el **índice de la API y el endpoint de token
+vivían dentro de `apps.workboard`**, o sea que la integración con AeroLink
+colgaba del módulo a retirar; ahora están en `apps.core.api`. Además se quitaron
+las dos formas de reencenderlo sin querer: los campos de Kanban salieron del
+formulario de reglas de alerta, e **`init_dgac_board` salió del runbook**.
+
+**Queda el Paso 3b: borrar la app y los campos de `compliance`.** La
+recomendación es que **viaje de acompañante** de otra migración que ya toque esas
+tablas, no como despliegue propio: borrar compra orden, no capacidad. Antes de
+borrar, exportar el tablero (`TaskReportCsvView`/`TaskReportXlsxView`). Y si en
+producción alguna regla todavía tiene `create_kanban_task` encendido,
+`generate_alerts` lo dice en su salida diaria.
 
 **De `LV-89` queda la parte de producto**: el botón "Abrir registro" (lleva a
 centros de costo) y qué poner en lugar de los gráficos que rinden poco.
