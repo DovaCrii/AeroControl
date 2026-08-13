@@ -40,6 +40,12 @@ Notificaciones a `Dirección`: `aortega@jej.cl` + `cmunoz@jej.cl`.
 
 ## Pendientes inmediatos — empezar por acá
 
+> Los que **no dependen del código** (vigencias, CSP, antivirus, `Z:`, el PR de
+> AeroLink) están reducidos a un comando o un clic cada uno en
+> [docs/dev/pendientes-usuario-2026-08-13.md](docs/dev/pendientes-usuario-2026-08-13.md),
+> con lo verificable ya verificado — incluidos los dos nombres de carpeta de `Z:`
+> comprobados contra el disco real.
+
 **1. Cargar 10 vigencias que faltan (LV-74).** Es lo único con impacto de
 cumplimiento hoy. **No es un bug** — se verificó contra el respaldo que nunca
 estuvieron cargadas. Importa porque **un `NULL` no genera alerta** (decisión
