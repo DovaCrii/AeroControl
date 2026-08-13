@@ -8,7 +8,7 @@ logger = logging.getLogger("aerocontrol.request")
 csp_logger = logging.getLogger("aerocontrol.csp")
 
 
-def build_csp(report_uri=""):
+def build_csp(report_uri="", frame_ancestors="'none'"):
     """Assemble the Content-Security-Policy directive string.
 
     V.11/T5.9 vendored Bootstrap, htmx, Chart.js, FullCalendar and Sortable
@@ -16,6 +16,12 @@ def build_csp(report_uri=""):
     remains. V.10 extracted every inline <script>, so script-src is a bare
     'self' with no 'unsafe-inline'. 'unsafe-inline' stays on style-src only,
     for inline style attributes and the login page's <style> block.
+
+    `frame_ancestors` is a parameter for exactly one caller (LV-85, the document
+    preview). Everything this app serves refuses to be framed, which is the
+    clickjacking protection; a PDF shown inside its own document fiche has to be
+    framed **by this same origin**, which is not that attack. The exception is
+    per response and never global -- see `apps/compliance/views.py`.
     """
     directives = [
         "default-src 'self'",
@@ -28,7 +34,7 @@ def build_csp(report_uri=""):
         "font-src 'self'",
         "object-src 'none'",
         "base-uri 'self'",
-        "frame-ancestors 'none'",
+        f"frame-ancestors {frame_ancestors}",
         "form-action 'self'",
     ]
     if report_uri:
@@ -63,7 +69,17 @@ class RequestMetricsMiddleware:
         response["X-Request-ID"] = request_id
         from django.conf import settings
 
-        policy = build_csp(getattr(settings, "CSP_REPORT_URI", ""))
+        # LV-85: a view may ask to be framable by this same origin (the document
+        # preview, embedded in its own fiche). Opt-in, per response, and the
+        # only thing it can relax -- every other directive is still built here.
+        policy = build_csp(
+            getattr(settings, "CSP_REPORT_URI", ""),
+            frame_ancestors=(
+                "'self'"
+                if getattr(response, "frame_ancestors_self", False)
+                else "'none'"
+            ),
+        )
         # V.10: emit the *enforcing* header when CSP_REPORT_ONLY is False. The
         # old code only set the Report-Only header and, when enforcing was asked
         # for, wrote nothing at all -- so turning enforcing "on" silently removed

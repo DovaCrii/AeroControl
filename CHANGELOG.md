@@ -10,6 +10,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Los documentos se ven y se cargan mejor (`LV-84`, `LV-85`, `LV-86`).** El
+  listado de una ficha ahora dice emisión, vencimiento (con aviso si ya venció) y
+  si esa versión fue reemplazada, y cada fila lleva **Ver** y **Descargar** al
+  lado. **Ver abre el documento dentro de la página** —PDF e imágenes— con el
+  visor del propio navegador, sin traer nada de afuera. Y se pueden **subir
+  varios archivos de una vez** contra el mismo registro: si uno no sirve, el
+  aviso dice cuál y no se carga ninguno a medias.
 - **Los permisos vencidos se cierran solos (`LV-83`).** Un trabajo diario marca
   como **Caducado** todo permiso cuya vigencia terminó y que seguía en
   *Solicitado* o *Aprobado*, conservando entero su historial. **Caducado no es
