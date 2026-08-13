@@ -1,0 +1,5 @@
+{% load i18n %}{% comment %}R8.4: la temperatura del día, con la unidad que informó
+el proveedor (nunca un "°C" escrito a mano acá: Open-Meteo puede responder en
+otra escala y un número sin unidad, o con la equivocada, no es información).
+Máxima destacada y mínima atenuada -- son dos cifras del mismo día, no dos
+datos distintos.{% endcomment %}{% if weather.temperature_2m_max is not None %}{{ weather.temperature_2m_max|floatformat:0 }}{{ weather.units.temperature_2m_max|default:"°" }}<span class="visually-hidden"> {% translate "maximum" %}</span>{% if weather.temperature_2m_min is not None %}<span class="weather-temp-min"> / {{ weather.temperature_2m_min|floatformat:0 }}{{ weather.units.temperature_2m_min|default:"°" }}<span class="visually-hidden"> {% translate "minimum" %}</span></span>{% endif %}{% elif weather.temperature_2m_min is not None %}{{ weather.temperature_2m_min|floatformat:0 }}{{ weather.units.temperature_2m_min|default:"°" }}<span class="visually-hidden"> {% translate "minimum" %}</span>{% else %}—{% endif %}
