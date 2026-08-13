@@ -1,2 +1,6 @@
 {% extends "generic/form.html" %}
-{% block title %}New Flight Record - AeroControl{% endblock %}
+{% comment %}LV-80: este archivo existía **sólo** para escribir el título de la
+pestaña en inglés a mano. `generic/form.html` ya lo deriva del `title` de la
+vista, que sí está traducido, así que no queda nada que sobreescribir -- y el
+comentario va *después* del `extends`, que tiene que ser la primera etiqueta del
+archivo o la plantilla no compila.{% endcomment %}

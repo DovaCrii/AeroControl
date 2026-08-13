@@ -10,6 +10,7 @@ from django.utils.translation import gettext as _
 from django.utils import timezone
 from django.views import View
 from django.views.generic import ListView, CreateView, TemplateView, UpdateView
+from django.utils.text import capfirst
 from uuid import UUID
 
 from apps.core.views import (
@@ -75,7 +76,7 @@ class WList(CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListV
 
     def get_context_data(self, **kwargs):
         c = super().get_context_data(**kwargs)
-        c["title"] = _(self.model._meta.verbose_name_plural.title())
+        c["title"] = capfirst(self.model._meta.verbose_name_plural)
         return c
 
 
@@ -118,9 +119,7 @@ class WCreate(ModelPermissionRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         c = super().get_context_data(**kwargs)
-        c["title"] = _("New %(record)s") % {
-            "record": _(self.model._meta.verbose_name.title())
-        }
+        c["title"] = _("New %(record)s") % {"record": self.model._meta.verbose_name}
         return c
 
 

@@ -84,6 +84,24 @@ def watchable_fields(model):
     return names
 
 
+def terminal_statuses(model):
+    """The statuses that mean this record is closed, as the model declares them.
+
+    LV-90. A rule watching a `status` field alerts while the record is still
+    open, so "open" has to be defined somewhere -- and it used to be a literal
+    tuple inside `generate_alerts` holding the vocabularies of three different
+    models at once. Every new terminal status then depended on somebody
+    remembering that line, and forgetting it fails **silently**: alerts that
+    keep firing for something already closed.
+
+    Empty for a model that declares none, which is the honest reading of "no
+    status of this model ends anything" -- `test_watchable_models_declare_their
+    _terminal_statuses` is what stops that from silently meaning "nobody got
+    round to it".
+    """
+    return frozenset(getattr(model, "TERMINAL_STATUSES", frozenset()))
+
+
 def entity_type_choices():
     return [(key, label) for key, label in WATCHABLE_MODELS.items()]
 

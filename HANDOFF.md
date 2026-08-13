@@ -114,11 +114,17 @@ otras filas: el gráfico del **tablero Kanban dado de baja** que sigue
 dibujándose en producción (limpieza de `LV-78`) y el botón "Abrir registro", que
 lleva a centros de costo.
 
-**Dos hallazgos nuevos capturados en la revisión del 2026-08-13**, ninguno
-urgente pero los dos silenciosos: `LV-90` (los estados terminales del motor de
-alertas viven en una **lista literal** que mezcla tres modelos, y ya hubo que
-acordarse de tocarla al agregar `expired`) y `LV-91` (`MaintenanceHistory` tiene
-**dos columnas de fecha de creación** que siempre valen lo mismo).
+**Los dos hallazgos de la revisión del 2026-08-13 quedaron resueltos el mismo
+día**, y uno resultó peor de lo capturado: `LV-90` (los estados terminales ahora
+los declara cada modelo) destapó que la lista literal **ya había mordido dos
+veces** — `retired` no estaba nunca, así que una regla sobre el estado de una
+aeronave alertaba sobre aeronaves dadas de baja para siempre. `LV-91`
+(`MaintenanceHistory` con dos fechas de creación) también está cerrado.
+
+**`LV-80` cerrado, con la causa corregida**: la fila culpaba a la falta de
+traducción, pero la mayoría de esos modelos **sí** tenían `verbose_name`
+traducido — lo que rompía era el `.title()`, que evalúa el lazy a inglés y hace
+que el `_()` de afuera busque una cadena que no está en el catálogo.
 
 ### Estado de la Sesión B (avanzada el 2026-08-12)
 
@@ -215,9 +221,9 @@ el guardado **no reescribe filas ya almacenadas**. La migración `registry/0032`
 las normaliza y **aborta si dos sólo difieren en mayúsculas** — eso lo resuelve
 el certificado RPAS de la DGAC, no una migración.
 
-## Sin desplegar: `R8.4` + `LV-81` + `LV-82` + `LV-83`
+## Sin desplegar: `R8.4` y el lote `LV-80` a `LV-91`
 
-**Cuatro migraciones, ninguna riesgosa, pero dos tocan datos:**
+**Siete migraciones, ninguna riesgosa, pero dos tocan datos:**
 
 - `registry/0033` (`R8.4`): dos columnas nulas en `CostCenter`. Sin backfill, sin
   restricción; no puede fallar sobre datos reales.
@@ -230,6 +236,8 @@ el certificado RPAS de la DGAC, no una migración.
 - `maintenance/0008` (`LV-82`): agrega `sequence` al historial de mantención y
   **numera las filas existentes** por orden de creación. Sin ese backfill todas
   empatarían en cero y la ficha imprimiría su historial en orden arbitrario.
+- `compliance/0018`, `operations/0018` (`LV-80`) y `maintenance/0009` (`LV-91`):
+  sólo metadatos y una columna duplicada de menos. Ninguna toca datos.
 - `operations/0017` (`LV-83`): sólo amplía las opciones de estado del permiso.
   No cambia ninguna fila — el cierre lo hace el trabajo programado, no la
   migración. **Conviene correr `expire_permissions --dry-run` antes** de

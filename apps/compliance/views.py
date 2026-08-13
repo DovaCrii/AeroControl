@@ -18,6 +18,7 @@ from django.views.generic import (
 
 from django.contrib.contenttypes.models import ContentType
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.text import capfirst
 
 from apps.core.audit import set_audit_context
 from apps.workboard.models import KanbanTask
@@ -122,7 +123,7 @@ class ComplianceList(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = _(self.model._meta.verbose_name_plural.title())
+        context["title"] = capfirst(self.model._meta.verbose_name_plural)
         return context
 
 
@@ -136,7 +137,7 @@ class ComplianceCreate(HtmxFormMixin, ModelPermissionRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = _("New %(record)s") % {
-            "record": _(self.model._meta.verbose_name.title())
+            "record": self.model._meta.verbose_name
         }
         return context
 

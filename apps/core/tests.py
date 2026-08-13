@@ -628,10 +628,15 @@ class TestChapter1DocxImport:
     """Verify representative authenticated pages and shared template behavior."""
 
     def test_dashboard(self, auth_client):
+        """LV-80 changed what this asserts, not what it means. It looked for the
+        literal "Dashboard", which only ever appeared because the browser tab
+        title was hardcoded in English -- so the check was really "the page
+        rendered", pinned to a string that had no business being there. It now
+        looks for the heading the page actually shows."""
         response = auth_client.get(reverse("dashboard"))
 
         assert response.status_code == 200
-        assert "Dashboard" in response.content.decode()
+        assert "Panel de operaciones" in response.content.decode()
 
     def test_base_template_has_htmx(self, auth_client):
         response = auth_client.get(reverse("dashboard"))

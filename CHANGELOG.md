@@ -10,13 +10,6 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
-- **Dos listas más fáciles de barrer (`LV-87`, `LV-88`).** En **operadores**, si
-  la credencial está adjunta pasa a ser **su propia columna** con una figura de
-  sí/no, en vez de una insignia metida en la celda de la fecha (que parecía
-  calificar a la fecha). En **movimientos de recursos**, la página muestra por
-  defecto **los últimos 30 días** —con un selector visible que llega hasta "todo
-  el registro"—, junta "desde/hasta" en una sola columna de **trayecto**, y cada
-  recurso enlaza a su ficha.
 - **Los documentos se ven y se cargan mejor (`LV-84`, `LV-85`, `LV-86`).** El
   listado de una ficha ahora dice emisión, vencimiento (con aviso si ya venció) y
   si esa versión fue reemplazada, y cada fila lleva **Ver** y **Descargar** al
@@ -131,6 +124,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Dos listas más fáciles de barrer (`LV-87`, `LV-88`).** En **operadores**, si
+  la credencial está adjunta pasa a ser **su propia columna** con una figura de
+  sí/no, en vez de una insignia metida en la celda de la fecha (que parecía
+  calificar a la fecha). En **movimientos de recursos**, la página muestra por
+  defecto **los últimos 30 días** —con un selector visible que llega hasta "todo
+  el registro"—, junta "desde/hasta" en una sola columna de **trayecto**, y cada
+  recurso enlaza a su ficha.
 - **Una alerta, una fila (`LV-75`).** Se eliminó el agrupado por regla + fecha:
   su premisa ("misma fecha ⇒ misma causa") ya se había mostrado falsa contra
   datos reales, y la fila agrupada seguía afirmándola además de dejar su columna
@@ -139,6 +139,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **Pantallas que salían en inglés dentro de la interfaz en español (`LV-80`).**
+  Los títulos de crear/listar ("New Document") y el nombre de la pestaña del
+  navegador. Afectaba a 6 módulos.
+- **Alertas que no se callaban (`LV-90`).** Una regla que vigilara el estado de
+  una aeronave seguía alertando sobre aeronaves **dadas de baja**, para siempre.
+  Ahora cada modelo declara dónde termina su ciclo, en vez de que el motor de
+  alertas lleve una lista aparte que alguien tenía que acordarse de actualizar.
 - **Los números de serie se normalizan a mayúsculas (`X.4c`).** El contrato con
   AeroLink lo exigía desde el principio y sólo se aplicaba la parte de los
   espacios. Sin esto, una batería no habría encontrado su aeronave —y una

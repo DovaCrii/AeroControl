@@ -7,7 +7,11 @@ from django.db import models, transaction
 from django.utils import timezone
 
 from apps.compliance.models import Alert, AlertRule
-from apps.compliance.watchables import resolve_model, watchable_fields
+from apps.compliance.watchables import (
+    resolve_model,
+    terminal_statuses,
+    watchable_fields,
+)
 from apps.core.jobs import record_job_run
 
 logger = logging.getLogger("compliance.alerts")
@@ -82,15 +86,19 @@ class Command(BaseCommand):
                 # open status alerted while young and that alert stays open
                 # (alerts never auto-expire), so only a rule created more than
                 # a year after the record would miss it.
-                # Terminal statuses across the watchable models: a completed
-                # maintenance, a denied or expired permit, a reviewed monthly
-                # compliance (LV-30: completed or non_compliant -- the reviewer
-                # acted). `expired` joined the list with LV-83: without it a
-                # permit closed by the daily job would still count as open and
-                # keep raising alerts for an authorization that is over.
-                records = records.exclude(
-                    status__in=("completed", "denied", "non_compliant", "expired")
-                ).filter(created_at__gte=timezone.now() - timedelta(days=365))
+                #
+                # LV-90: which statuses are terminal now comes from **the model
+                # that owns them** (`TERMINAL_STATUSES`, declared beside its
+                # STATUS_CHOICES). This used to be a literal list here mixing
+                # three models' vocabularies, which meant every new terminal
+                # status needed somebody to remember this line -- and forgetting
+                # fails silently, as alerts for something already closed. It had
+                # already bitten twice: `expired` (LV-83) had to be added by
+                # hand, and `retired` was never there at all, so a rule watching
+                # an aircraft's status alerted on retired airframes forever.
+                records = records.exclude(status__in=terminal_statuses(model)).filter(
+                    created_at__gte=timezone.now() - timedelta(days=365)
+                )
             for record in records:
                 if (rule.pk, record.pk) in open_alert_keys:
                     duplicates += 1
