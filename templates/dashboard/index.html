@@ -6,13 +6,14 @@
 {% block title %}{% translate "Operations Dashboard" %} - AeroControl{% endblock %}
 
 {% block content %}
+{% comment %}LV-89: quedaban tres botones y dos eran **navegación duplicada** --
+"Centros de costo" y "Documentos de la empresa" ya están en el menú lateral, a
+dos centímetros. Un encabezado lleva acciones, no atajos a lo que ya está a la
+vista; y de paso desaparece "Abrir registro", que prometía el padrón y llevaba a
+centros de costo.{% endcomment %}
 <div class="page-header">
   <h1 class="mb-0">{% translate "Operations Dashboard" %}</h1>
-  <div class="d-flex gap-2">
-    <a class="btn btn-outline-secondary" href="{% url 'company-documents' %}">{% translate "Company documents" %}</a>
-    <a class="btn btn-outline-primary" href="{% url 'costcenter-list' %}">{% translate "Open registry" %}</a>
-    <a class="btn btn-primary" href="{% url 'permission-create' %}">+ {% translate "New permission" %}</a>
-  </div>
+  <a class="btn btn-primary" href="{% url 'permission-create' %}">+ {% translate "New permission" %}</a>
 </div>
 
 <form method="get" class="row g-2 mb-4">
@@ -76,6 +77,28 @@
   </ol>
 </section>
 {% else %}
+{% comment %}LV-89: "¿puedo operar hoy?", que es la pregunta con la que se abre
+esta pantalla. Cada indicador es una **fracción con su faltante nombrado**: un
+porcentaje solo te dice que algo anda mal sin decirte cuánto trabajo cuesta
+arreglarlo. Nada de esto es dato nuevo — sale de los mismos campos que vigila el
+motor de alertas, así que un número acá y una alerta en la bandeja no pueden
+contradecirse.{% endcomment %}
+<div class="readiness-strip mb-3">
+  {% for item in readiness %}
+  <a class="summary-card text-decoration-none" href="{{ item.url }}">
+    <small>{{ item.label }}</small>
+    <strong>
+      {{ item.count }}/{{ item.total }}
+      {% if item.pct is not None %}<span class="readiness-pct{% if item.target and item.pct < item.target %} is-below{% endif %}">{{ item.pct|floatformat:0 }}%</span>{% endif %}
+    </strong>
+    <small class="text-muted">
+      {% if item.shortfall %}{{ item.shortfall }} {{ item.shortfall_label }}{% elif item.target %}{% blocktranslate with target=item.target|floatformat:0 %}target {{ target }}%{% endblocktranslate %}{% else %}{% translate "all up to date" %}{% endif %}
+      {% if item.soon %}· {% blocktranslate count counter=item.soon %}{{ counter }} expires within 30 days{% plural %}{{ counter }} expire within 30 days{% endblocktranslate %}{% endif %}
+    </small>
+  </a>
+  {% endfor %}
+</div>
+
 {% comment %}R8.4: el clima, arriba y sin tener que buscarlo. Antes sólo existía
 en la ficha de un plan geoespacial, y sólo si ese plan tenía área y un permiso
 con fecha -- enterrado, para algo que se consulta antes de cada vuelo. La
@@ -157,22 +180,10 @@ when the three are done.{% endcomment %}
 (LV-D5). 'Tasks per Stage' vivía además como lista aparte (redundante); queda
 solo el gráfico.{% endcomment %}
 <div class="row g-3 mb-3">
-  {% if chart_data.aircraft_by_status %}
-  <div class="col-lg-4">
-    <div class="card p-2 chart-container">
-      <h4 class="h6 section-title mb-2">{% translate "Aircraft by Status" %}</h4>
-      <canvas id="chart-aircraft-status"></canvas>
-    </div>
-  </div>
-  {% endif %}
-  {% if chart_data.permissions_by_status %}
-  <div class="col-lg-4">
-    <div class="card p-2 chart-container">
-      <h4 class="h6 section-title mb-2">{% translate "Permissions by Status" %}</h4>
-      <canvas id="statusChart" data-label="{% translate 'Permissions' %}"></canvas>
-    </div>
-  </div>
-  {% endif %}
+  {% comment %}LV-89: acá vivían "Aeronaves por estado" (dos porciones) y
+  "Permisos por estado" (una sola barra). Ocupaban un tercio de la pantalla para
+  repetir números que las tarjetas de arriba ya daban. Los reemplaza la tira de
+  arriba, que responde la pregunta con la que se abre el panel.{% endcomment %}
   {% if chart_data.maintenance_by_type %}
   <div class="col-lg-4">
     <div class="card p-2 chart-container">

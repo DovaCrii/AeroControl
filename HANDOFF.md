@@ -125,8 +125,11 @@ borrar, exportar el tablero (`TaskReportCsvView`/`TaskReportXlsxView`). Y si en
 producción alguna regla todavía tiene `create_kanban_task` encendido,
 `generate_alerts` lo dice en su salida diaria.
 
-**De `LV-89` queda la parte de producto**: el botón "Abrir registro" (lleva a
-centros de costo) y qué poner en lugar de los gráficos que rinden poco.
+**`LV-89` está hecho**, con las tres decisiones del usuario tomadas el mismo día:
+encabezado con un solo botón, los dos gráficos flojos reemplazados por la tira
+de **flota disponible / seguros al día / credenciales al día**, y la **ventana de
+luz diurna** en la tarjeta de clima (sin llamada nueva; la póliza cubre jornada
+diurna). **Con esto el lote completo `LV-78`…`LV-91` está cerrado.**
 
 **Los dos hallazgos de la revisión del 2026-08-13 quedaron resueltos el mismo
 día**, y uno resultó peor de lo capturado: `LV-90` (los estados terminales ahora

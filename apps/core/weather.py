@@ -51,7 +51,20 @@ DAILY_FIELDS = (
     "wind_gusts_10m_max",
     "precipitation_sum",
     "precipitation_probability_max",
+    # LV-89: the UV index rides in the same response. Operationally it belongs
+    # next to the daylight window below -- both describe the sun, and a crew
+    # working a full day outdoors is the reason to show it.
+    "uv_index_max",
 )
+
+# LV-89: the daylight window, asked for at the user's request. Kept apart from
+# DAILY_FIELDS because the provider returns these as **ISO timestamps, not
+# numbers**, and `_parse`'s numeric guard would drop them silently.
+#
+# Not decoration: the insurance certificate for these aircraft states "JORNADA
+# DE OPERACIÓN: DIURNA", so flying outside this window is a **coverage**
+# problem, not a comfort one. And like the temperature, it costs no extra call.
+DAYLIGHT_FIELDS = ("sunrise", "sunset")
 
 # R8.4: asked for alongside DAILY_FIELDS but deliberately *not* one of them --
 # it is a condition code, not a measurement, so it must not count towards "the
@@ -157,7 +170,7 @@ def _fetch(latitude, longitude, iso_date):
         {
             "latitude": latitude,
             "longitude": longitude,
-            "daily": ",".join(DAILY_FIELDS + (CONDITION_FIELD,)),
+            "daily": ",".join(DAILY_FIELDS + (CONDITION_FIELD,) + DAYLIGHT_FIELDS),
             "wind_speed_unit": WIND_SPEED_UNIT,
             "timezone": "auto",
             "start_date": iso_date,
@@ -227,6 +240,32 @@ def _parse(payload, iso_date):
     # Added after the emptiness check on purpose: a payload with a condition
     # code and no measurements is still nothing to show (see CONDITION_FIELD).
     result["condition"] = condition_for(value(CONDITION_FIELD))
+
+    def clock(field):
+        """ "2026-08-13T08:12" -> "08:12", or None when it is not that.
+
+        Normalised here rather than in the template: a template slicing a string
+        by position would keep working while silently producing nonsense if the
+        provider ever returned a bare date or a different layout.
+        """
+        series = daily.get(field)
+        if not isinstance(series, list) or index >= len(series):
+            return None
+        entry = series[index]
+        if not isinstance(entry, str) or "T" not in entry:
+            return None
+        time_part = entry.split("T", 1)[1][:5]
+        hours, _, minutes = time_part.partition(":")
+        if not (hours.isdigit() and minutes.isdigit()):
+            return None
+        return time_part
+
+    sunrise, sunset = (clock(field) for field in DAYLIGHT_FIELDS)
+    # Both or neither: half a window cannot be read as one, and printing a lone
+    # sunset next to "daylight" would be worse than leaving it out.
+    result["daylight"] = (
+        {"sunrise": sunrise, "sunset": sunset} if sunrise and sunset else None
+    )
     units = payload.get("daily_units")
     result["units"] = units if isinstance(units, dict) else {}
     result["date"] = iso_date

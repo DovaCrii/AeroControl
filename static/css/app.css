@@ -1320,6 +1320,43 @@ main {
    ninguno parezca más importante que otro. El icono usa el mismo trazo que el
    resto de la app y `currentColor`, así que sigue al tema claro/oscuro sin una
    segunda regla. */
+/* LV-89: la tira de "¿puedo operar hoy?". Misma grilla pareja que las tarjetas
+   de arriba (LV-D9) para que se lean como una sola familia y no como dos
+   bloques que compiten. */
+.readiness-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.readiness-pct {
+  font-size: 0.8em;
+  font-weight: 500;
+  color: var(--ac-text-secondary);
+  margin-left: 0.35rem;
+}
+
+/* Bajo la meta acordada: el único rojo de la tira, y sólo donde hay una meta
+   contra la cual estar bajo. */
+.readiness-pct.is-below {
+  color: var(--ac-danger);
+}
+
+/* LV-89: la ventana de luz, bajo la temperatura y sobre las cifras. */
+.weather-daylight {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: -0.25rem 0 0.9rem;
+  font-size: 0.9rem;
+  color: var(--ac-text-secondary);
+}
+
+.weather-uv::before {
+  content: "·";
+  padding: 0 0.4rem;
+}
+
 /* LV-88: el trayecto en una sola celda. La flecha es el separador, no un dato:
    se atenúa para que los dos códigos de centro de costo sean lo que se lee. */
 .movement-arrow {
