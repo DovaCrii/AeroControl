@@ -10,6 +10,8 @@
   <col class="col-primary">
   <col class="col-compact">
   <col class="col-text">
+  {% comment %}LV-87: el respaldo adjunto es su propia columna.{% endcomment %}
+  <col class="col-status">
   <col class="col-flex">
   <col class="col-status">
   <col class="col-actions">
@@ -21,6 +23,11 @@
 <th>{% translate "Name" %}</th>
 <th>{% translate "DGAC credential" %}</th>
 <th class="cell-status">{% translate "Credential expiry" %}</th>
+{% comment %}LV-87: la insignia "Sin PDF" vivía **dentro** de la celda de la
+fecha, así que una sola celda mezclaba dos hechos distintos -- cuándo vence y si
+el respaldo está adjunto -- y a simple vista parecía calificar a la fecha.
+{% endcomment %}
+<th class="cell-status">{% translate "Credential file" %}</th>
 <th>{% translate "Cost center" %}</th>
 <th class="cell-status">{% translate "Qualification" %}</th>
 {% endblock %}

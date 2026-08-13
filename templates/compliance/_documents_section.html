@@ -34,10 +34,12 @@ la descarga cuando no.{% endcomment %}
       <tbody>
         {% for document in documents %}
         <tr>
-          <td>
-            <a href="{% url 'document-detail' document.pk %}">{{ document.title }}</a>
-            {% if not document.is_current_version %}<span class="badge bg-secondary-subtle text-secondary-emphasis ms-1">{% translate "Superseded" %}</span>{% endif %}
-          </td>
+          {% comment %}Sin insignia de "reemplazado": `attached_documents_context`
+          filtra por `is_current_version=True`, así que acá nunca hay una versión
+          superada -- dibujar la insignia sería marcado muerto que el próximo
+          lector creería que puede aparecer. Las versiones previas se ven en la
+          ficha del documento.{% endcomment %}
+          <td><a href="{% url 'document-detail' document.pk %}">{{ document.title }}</a></td>
           <td>{{ document.doc_type }}</td>
           <td class="text-nowrap">{{ document.issue_date|date:"Y-m-d"|default:"—" }}</td>
           {% comment %}La fecha por sí sola no dice si está vencida; la insignia
