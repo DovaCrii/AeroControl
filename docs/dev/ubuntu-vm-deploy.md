@@ -163,12 +163,14 @@ uv run python manage.py migrate --no-input
 uv run python manage.py bootstrap_roles
 uv run python manage.py collectstatic --no-input
 uv run python manage.py createsuperuser
-# Tablero Kanban "Cumplimiento DGAC": sin esto el botón manual "Crear tarea"
-# de /compliance/alert/ falla con "No hay ningún tablero Kanban disponible"
-# (LV-45) -- es independiente del flag automático create_kanban_task de cada
-# regla. Idempotente (get_or_create), seguro correr de más.
-uv run python manage.py init_dgac_board
 ```
+
+> **`init_dgac_board` salió de este procedimiento (LV-78, 2026-08-13).** Estaba
+> acá para que el botón "Crear tarea" de la lista de alertas no fallara por falta
+> de tablero — pero ese botón se quitó en `LV-69b` y el tablero se dio de baja el
+> 2026-08-12. Correrlo hoy **recrearía el tablero que se está retirando**, y en
+> un despliegue se sigue el procedimiento, no la nota al pie: por eso se saca de
+> la lista en vez de anotarse como "no correr". El comando sigue existiendo.
 
 Para **traer tus datos reales** desde el notebook: copia el snapshot `.sqlite3`
 verificado a `/srv/aerocontrol-data/db/aero_ops.sqlite3` **antes** del `migrate`
