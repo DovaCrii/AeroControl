@@ -95,6 +95,16 @@
   document.body.addEventListener('htmx:afterSwap', function (event) {
     if (event.detail.target.id !== 'modal-content') return;
     var modal = document.getElementById('generic-modal');
+    // LV-92: a PDF viewer inside the default dialog is a letterbox. Decided
+    // from what was actually swapped in, rather than by having each template
+    // declare its own width -- a flag the fragments had to remember to set
+    // would be wrong the first time somebody forgot it, and wrong silently.
+    var dialog = modal.querySelector('.modal-dialog');
+    var showsDocument = !!modal.querySelector(
+      '.document-preview, .document-preview-image'
+    );
+    dialog.classList.toggle('modal-xl', showsDocument);
+    dialog.classList.toggle('modal-lg', !showsDocument);
     bootstrap.Modal.getOrCreateInstance(modal).show();
     // LV-34: apply the responsible-type toggle to a form just loaded into the modal.
     if (window.initResponsibleType) window.initResponsibleType();

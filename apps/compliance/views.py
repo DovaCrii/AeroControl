@@ -996,6 +996,49 @@ class DocumentReplace(ModelPermissionRequiredMixin, FormView):
         return context
 
 
+class DocumentPreviewFrame(ModelPermissionRequiredMixin, View):
+    """LV-92: the document, on top of the file you were already reading.
+
+    `LV-85` put the viewer on the **document's own page**, so reviewing a
+    record's folder before an audit meant entering and coming back once per
+    file. The bytes and the authorization do not change -- this only wraps the
+    existing `document-preview` response in the generic modal, so the list
+    behind it stays where it was.
+
+    Same permission and tenant scope as the preview and the download: it is the
+    same document, and a wrapper that skipped them would be the F-05 finding
+    again. The iframe itself is what needs `document-preview`'s same-origin
+    framing exception, which already exists for the detail page.
+    """
+
+    model = Document
+    permission_action = "view"
+
+    def get(self, request, pk):
+        document = get_object_or_404(
+            scope_queryset_to_tenant(Document.objects.all(), request.user),
+            pk=pk,
+            is_active=True,
+        )
+        extension = document.file_path.rsplit(".", 1)[-1].lower()
+        content_type = INLINE_PREVIEW_TYPES.get(extension)
+        return render(
+            request,
+            "compliance/_document_preview_modal.html",
+            {
+                "document": document,
+                # Decided from the same allowlist the preview enforces, so the
+                # modal cannot offer a viewer for something that will come back
+                # as a download (LV-85's reasoning, reused rather than copied).
+                "preview_kind": (
+                    None
+                    if content_type is None
+                    else ("pdf" if content_type == "application/pdf" else "image")
+                ),
+            },
+        )
+
+
 class DocumentDelete(
     TenantScopedQuerysetMixin, ModelPermissionRequiredMixin, DeleteView
 ):

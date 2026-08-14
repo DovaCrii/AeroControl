@@ -1,0 +1,24 @@
+{% load i18n %}
+{% comment %}LV-92: el documento dentro del modal genérico, sobre la ficha que ya
+estabas mirando. El visor es el del navegador sobre un archivo servido por esta
+app -- mismo origen, así que la CSP no se toca.
+
+`preview_kind` nulo no es un error: es un tipo que **a propósito** no se muestra
+inline (KML es XML, DOCX y XLSX son ZIP; ver INLINE_PREVIEW_TYPES). En ese caso
+el modal ofrece la descarga en vez de un marco vacío, que se leería como un
+archivo roto.{% endcomment %}
+<h5 id="generic-modal-title" class="modal-title" hx-swap-oob="true">{{ document.title }}</h5>
+{% if preview_kind == "pdf" %}
+<iframe class="document-preview" src="{% url 'document-preview' document.pk %}" title="{{ document.title }}"></iframe>
+{% elif preview_kind == "image" %}
+<img class="document-preview-image" src="{% url 'document-preview' document.pk %}" alt="{{ document.title }}">
+{% else %}
+<p class="text-body-secondary">{% translate "This file type is not shown inside the page. Download it to open it." %}</p>
+{% endif %}
+<div class="d-flex flex-wrap gap-2 mt-3">
+  <a class="btn btn-primary" href="{% url 'document-download' document.pk %}">{% translate "Download" %}</a>
+  {% comment %}El detalle sigue a un clic: es donde viven las versiones previas y
+  el reemplazo, que no caben en un visor.{% endcomment %}
+  <a class="btn btn-outline-secondary" href="{% url 'document-detail' document.pk %}">{% translate "Open the document page" %}</a>
+  <button type="button" class="btn btn-outline-secondary ms-auto" data-bs-dismiss="modal">{% translate "Close" %}</button>
+</div>

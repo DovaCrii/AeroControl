@@ -56,6 +56,11 @@
           <td>{{ document.doc_type }}</td>
           <td><a href="{% url 'document-detail' document.pk %}" class="fw-semibold">{{ document.title }}</a></td>
           <td class="text-end">
+            {% comment %}LV-92: revisar una bitácora o un check list era bajarlo
+            al disco. Mismo modal que el resto.{% endcomment %}
+            <a href="{% url 'document-preview' document.pk %}" class="btn btn-sm btn-outline-secondary"
+               hx-get="{% url 'document-preview-frame' document.pk %}" hx-target="#modal-content"
+               data-bs-toggle="modal" data-bs-target="#generic-modal">{% translate "View" %}</a>
             <a href="{% url 'document-download' document.pk %}" class="btn btn-sm btn-outline-secondary" hx-boost="false">{% translate "Download" %}</a>
             {% if perms.compliance.add_document %}<a href="{% url 'document-replace' document.pk %}" hx-get="{% url 'document-replace' document.pk %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">{% translate "Replace" %}</a>{% endif %}
           </td>
