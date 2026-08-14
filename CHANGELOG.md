@@ -178,6 +178,16 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   estado"** que **exige un motivo escrito**, deja quién y por qué en el
   historial, y **mantiene la exigencia del PDF firmado** — corregir no es un
   atajo para saltarse el papeleo, es dejar claro que lo anotado estaba mal.
+- **Cancelar una carga de documento ya no te deja tirado (`LV-99`).** Volvía a
+  la lista general de documentos, que no está en el menú: desde ahí no había
+  cómo seguir. Ahora vuelve **a la ficha desde la que empezaste**, igual que si
+  hubieras guardado.
+- **La pantalla de reemplazo dejó de ofrecer dos campos que ignoraba
+  (`LV-100`).** "Tipo de entidad" y "Registro asociado" se veían editables, pero
+  reemplazar un documento nunca lo mueve de registro. Ahora el registro se
+  **muestra**, en vez de fingir que se elige.
+- **El botón "Filtrar" de Documentos de la empresa vuelve a su tamaño
+  (`LV-105`).** Se estiraba a lo alto de dos filas de controles.
 - **La bandeja de alertas deja de hacerse más lenta con cada alerta
   (`LV-106`).** Consultaba la base **una vez por fila** para resolver de qué
   registro hablaba cada alerta, así que la pantalla se degradaba justo con lo

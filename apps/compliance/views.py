@@ -89,6 +89,35 @@ def document_home_url(document):
     return reverse("company-documents")
 
 
+def upload_cancel_url(request):
+    """Where "Cancel" goes from an upload form: back where the person came from.
+
+    LV-99: the single-upload form sent Cancel to the general document list --
+    a screen LV-40 deliberately took off the menu, so cancelling stranded people
+    on a page they could not navigate back from. Saving already lands on the
+    record's own file (`document_home_url`); cancelling now agrees with it.
+
+    Built from **our own** query parameters, never from `HTTP_REFERER`: that
+    header is untrusted input, and rendering a link out of it puts somebody
+    else's URL inside our page. Falls back to the company documents repository
+    when the form was opened with no record in mind.
+    """
+    from django.contrib.contenttypes.models import ContentType
+
+    content_type = ContentType.objects.filter(
+        pk=request.GET.get("entity_type") or 0
+    ).first()
+    object_id = request.GET.get("object_id")
+    if content_type and object_id:
+        model = content_type.model_class()
+        record = model._default_manager.filter(pk=object_id).first() if model else None
+        if record is not None:
+            document = Document(content_type=content_type, object_id=record.pk)
+            with suppress(Exception):
+                return document_home_url(document)
+    return reverse("company-documents")
+
+
 def save_uploaded_file(document, uploaded):
     relative_path = document_upload_path(document, uploaded.name)
     get_document_storage().save(relative_path, uploaded)
@@ -693,6 +722,12 @@ class DocumentCreate(ComplianceCreate):
     def get_success_url(self):
         return document_home_url(self.object)
 
+    def get_context_data(self, **kwargs):
+        # LV-99: Cancel goes where Save goes, not to the unlisted document list.
+        context = super().get_context_data(**kwargs)
+        context["cancel_url"] = upload_cancel_url(self.request)
+        return context
+
     def form_valid(self, form):
         with uploaded_file_cleanup() as stored:
             with transaction.atomic():
@@ -857,29 +892,11 @@ class DocumentBulkUpload(ModelPermissionRequiredMixin, FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Built from our own parameters, never from HTTP_REFERER: that header is
-        # untrusted input, and rendering a link out of it puts somebody else's
-        # URL inside our page.
-        context["cancel_url"] = self._cancel_url()
+        # LV-99 moved this to `upload_cancel_url`, shared with the single
+        # upload: both screens answer the same question, and a second copy is
+        # how one of them drifts back to the unlisted document list.
+        context["cancel_url"] = upload_cancel_url(self.request)
         return context
-
-    def _cancel_url(self):
-        from django.contrib.contenttypes.models import ContentType
-
-        content_type = ContentType.objects.filter(
-            pk=self.request.GET.get("entity_type") or 0
-        ).first()
-        object_id = self.request.GET.get("object_id")
-        if content_type and object_id:
-            model = content_type.model_class()
-            record = (
-                model._default_manager.filter(pk=object_id).first() if model else None
-            )
-            if record is not None:
-                document = Document(content_type=content_type, object_id=record.pk)
-                with suppress(Exception):
-                    return document_home_url(document)
-        return reverse("company-documents")
 
     def form_valid(self, form):
         record = form.cleaned_data["record"]
@@ -969,7 +986,13 @@ class DocumentReplace(ModelPermissionRequiredMixin, FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update(title=f"Replace {self.document.title}", document=self.document)
+        # LV-100: `replacing` is what tells the shared field layout to show the
+        # record as a fact instead of as two pickers this view ignores.
+        context.update(
+            title=f"Replace {self.document.title}",
+            document=self.document,
+            replacing=self.document,
+        )
         return context
 
 

@@ -17,7 +17,10 @@ esta página sin el destino `#document-object-field` que htmx necesita.
     {% include "compliance/_document_form_fields.html" %}
     <div class="mt-4">
       <button class="btn btn-primary">{% translate "Upload document" %}</button>
-      <a href="{% url 'document-list' %}" class="btn btn-outline-secondary ms-2">{% translate "Cancel" %}</a>
+      {% comment %}LV-99: vuelve a la ficha de origen, igual que el guardado. El
+      destino lo calcula la vista desde sus propios parámetros, nunca desde
+      `HTTP_REFERER` (entrada no confiable).{% endcomment %}
+      <a href="{{ cancel_url }}" class="btn btn-outline-secondary ms-2">{% translate "Cancel" %}</a>
     </div>
   </form>
 </div>

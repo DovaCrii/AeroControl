@@ -27,8 +27,24 @@ después.{% endcomment %}
 {% endif %}
 
 <h2 class="h6 text-uppercase text-body-secondary border-bottom pb-2 mb-3">{% translate "What this document belongs to" %}</h2>
+{% comment %}LV-100: al reemplazar, el registro **no se elige**: `DocumentReplace`
+lo fuerza desde el documento original, así que ofrecer los dos selectores era
+prometer una decisión que la vista descarta sin avisar. Se muestra el dato, que
+sigue siendo información útil (a qué pertenece lo que estás reemplazando), pero
+como texto y no como control.{% endcomment %}
+{% if replacing %}
+<p class="mb-3"><span class="text-body-secondary">{% translate "Related record" %}:</span>
+  <strong>{{ replacing.content_object|default:_("Record unavailable") }}</strong>
+  <span class="text-body-secondary">· {% translate "It does not change when replacing a document." %}</span></p>
+{% comment %}Ocultos, no ausentes: los campos siguen siendo obligatorios en el
+formulario, así que omitirlos del todo haría fallar la validación por dos campos
+que la persona ya no ve. Y aunque alguien los manipule, la vista igual fuerza el
+registro del documento original.{% endcomment %}
+{{ form.entity_type.as_hidden }}{{ form.object_id.as_hidden }}
+{% else %}
 {{ form.entity_type|as_crispy_field }}
 {% include "compliance/_document_object_field.html" %}
+{% endif %}
 
 <h2 class="h6 text-uppercase text-body-secondary border-bottom pb-2 mb-3 mt-4">{% translate "What document it is" %}</h2>
 {{ form.doc_type|as_crispy_field }}

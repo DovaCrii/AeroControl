@@ -70,7 +70,17 @@ class TestRecordPickerCanBeFilled:
         assert HX_TARGET in html
         assert TARGET_ID in html
 
-    def test_the_replace_page_carries_it_too(self, doc_type):
+    def test_the_replace_page_no_longer_needs_it(self, doc_type):
+        """Premise changed by LV-100, not intention.
+
+        This asserted that the replace page carried the target too -- correct
+        while that page still offered the record as a picker. It does not any
+        more: replacing never moves a document between records, so the record is
+        shown as a fact and there is nothing for HTMX to fill. The pairing still
+        holds, in the only form that can be true here: **neither** half is
+        present, so the page cannot end up with a picker and no target again.
+        Its own guarantees live in test_lv99_lv100_upload_screens.py.
+        """
         aircraft = Aircraft.objects.create(
             registration="CC-LV94", type="RPA", model="M3", manufacturer="DJI"
         )
@@ -89,8 +99,8 @@ class TestRecordPickerCanBeFilled:
             .content.decode()
         )
 
-        assert HX_TARGET in html
-        assert TARGET_ID in html
+        assert HX_TARGET not in html
+        assert TARGET_ID not in html
 
     def test_the_fragment_the_endpoint_returns_is_that_target(self):
         """The two ends of the swap, checked against each other rather than

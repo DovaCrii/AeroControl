@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-14 10:23-0400\n"
+"POT-Creation-Date: 2026-08-14 11:31-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -89,6 +89,7 @@ msgid "Entity type"
 msgstr "Tipo de entidad"
 
 #: .\apps\compliance\forms.py:214 .\apps\compliance\forms.py:347
+#: .\templates\compliance\_document_form_fields.html:38
 msgid "Related record"
 msgstr "Registro asociado"
 
@@ -138,9 +139,9 @@ msgstr "%(name)s: %(error)s"
 #: .\apps\compliance\forms.py:655 .\apps\geo\forms.py:36
 #: .\apps\workboard\forms.py:77 .\apps\workboard\forms.py:133
 #: .\templates\compliance\_documents_section.html:29
-#: .\templates\compliance\company_documents.html:30
+#: .\templates\compliance\company_documents.html:36
 #: .\templates\compliance\deliverable_list.html:27
-#: .\templates\compliance\document_list.html:19
+#: .\templates\compliance\document_list.html:23
 #: .\templates\compliance\nonconformity_list.html:33
 #: .\templates\compliance\operational_records.html:49
 #: .\templates\geo\plan_list.html:18
@@ -409,6 +410,7 @@ msgid "Flight time accumulated with no incident on record."
 msgstr "Tiempo de vuelo acumulado sin ningún incidente registrado."
 
 #: .\apps\compliance\management\commands\check_alert_effectiveness.py:92
+#: .\templates\compliance\_document_form_fields.html:39
 #: .\templates\compliance\alert_list.html:20
 msgid "Record unavailable"
 msgstr "Registro no disponible"
@@ -477,7 +479,7 @@ msgstr "Documentos de la aeronave"
 msgid "DGAC filings and authorizations"
 msgstr "Presentaciones y autorizaciones DGAC"
 
-#: .\apps\compliance\models.py:66 .\apps\compliance\views.py:589
+#: .\apps\compliance\models.py:66 .\apps\compliance\views.py:620
 #: .\templates\base.html:116 .\templates\compliance\operational_records.html:3
 #: .\templates\compliance\operational_records.html:8
 msgid "Operational records"
@@ -487,7 +489,7 @@ msgstr "Registros operacionales"
 msgid "Maintenance and calibration"
 msgstr "Mantención y calibración"
 
-#: .\apps\compliance\models.py:68 .\apps\compliance\views.py:507
+#: .\apps\compliance\models.py:68 .\apps\compliance\views.py:538
 #: .\templates\base.html:120 .\templates\compliance\company_documents.html:3
 #: .\templates\compliance\company_documents.html:9
 msgid "Company documents"
@@ -846,30 +848,30 @@ msgstr ""
 msgid "Validity renewed to %(date)s (automatic closure)"
 msgstr "Vigencia renovada al %(date)s (cierre automático)"
 
-#: .\apps\compliance\views.py:139 .\apps\core\test_lv80_screen_titles.py:137
+#: .\apps\compliance\views.py:170 .\apps\core\test_lv80_screen_titles.py:137
 #: .\apps\maintenance\views.py:46 .\apps\operations\views.py:68
 #: .\apps\registry\views.py:145 .\apps\workboard\views.py:121
 #, python-format
 msgid "New %(record)s"
 msgstr "Nuevo: %(record)s"
 
-#: .\apps\compliance\views.py:194
+#: .\apps\compliance\views.py:225
 msgid "Edit deliverable"
 msgstr "Editar entregable"
 
-#: .\apps\compliance\views.py:212
+#: .\apps\compliance\views.py:243
 msgid "Only a draft deliverable can be validated."
 msgstr "Sólo un entregable en borrador puede validarse."
 
-#: .\apps\compliance\views.py:216
+#: .\apps\compliance\views.py:247
 msgid "Deliverable validated."
 msgstr "Entregable validado."
 
-#: .\apps\compliance\views.py:236
+#: .\apps\compliance\views.py:267
 msgid "Only a validated deliverable can be released."
 msgstr "Sólo un entregable validado puede liberarse."
 
-#: .\apps\compliance\views.py:249
+#: .\apps\compliance\views.py:280
 msgid ""
 "This deliverable is below the contract's acceptance criteria. Releasing it "
 "anyway requires a documented reason."
@@ -877,20 +879,20 @@ msgstr ""
 "Este entregable está bajo los criterios de aceptación del contrato. "
 "Liberarlo igualmente requiere un motivo documentado."
 
-#: .\apps\compliance\views.py:265
+#: .\apps\compliance\views.py:296
 msgid "Deliverable released."
 msgstr "Entregable liberado."
 
-#: .\apps\compliance\views.py:289
+#: .\apps\compliance\views.py:320
 msgid "A released deliverable cannot be rejected."
 msgstr "Un entregable liberado no puede rechazarse."
 
-#: .\apps\compliance\views.py:295
+#: .\apps\compliance\views.py:326
 #, python-format
 msgid "Rejected deliverable: %(title)s"
 msgstr "Entregable rechazado: %(title)s"
 
-#: .\apps\compliance\views.py:301
+#: .\apps\compliance\views.py:332
 msgid ""
 "Opened automatically when the deliverable was rejected. Record the root "
 "cause and the corrective action before closing it."
@@ -898,85 +900,85 @@ msgstr ""
 "Abierta automáticamente al rechazar el entregable. Registre la causa raíz y "
 "la acción correctiva antes de cerrarla."
 
-#: .\apps\compliance\views.py:313
+#: .\apps\compliance\views.py:344
 msgid "Deliverable rejected and a non-conformity opened."
 msgstr "Entregable rechazado; se abrió una no conformidad."
 
-#: .\apps\compliance\views.py:371
+#: .\apps\compliance\views.py:402
 msgid "Edit non-conformity"
 msgstr "Editar no conformidad"
 
-#: .\apps\compliance\views.py:387
+#: .\apps\compliance\views.py:418
 msgid ""
 "Record the root cause and the corrective action before closing this finding."
 msgstr ""
 "Registre la causa raíz y la acción correctiva antes de cerrar esta no "
 "conformidad."
 
-#: .\apps\compliance\views.py:393
+#: .\apps\compliance\views.py:424
 msgid "Non-conformity closed."
 msgstr "No conformidad cerrada."
 
-#: .\apps\compliance\views.py:405
+#: .\apps\compliance\views.py:436
 msgid "Non-conformity reopened."
 msgstr "No conformidad reabierta."
 
-#: .\apps\compliance\views.py:420
+#: .\apps\compliance\views.py:451
 msgid "Only a closed finding can have its action verified."
 msgstr "Sólo una no conformidad cerrada puede tener su acción verificada."
 
-#: .\apps\compliance\views.py:426 .\apps\compliance\views.py:1162
+#: .\apps\compliance\views.py:457 .\apps\compliance\views.py:1206
 msgid "Corrective action verified."
 msgstr "Acción correctiva verificada."
 
-#: .\apps\compliance\views.py:906
+#: .\apps\compliance\views.py:925
 #, python-format
 msgid "%(count)s document uploaded."
 msgid_plural "%(count)s documents uploaded."
 msgstr[0] "%(count)s documento cargado."
 msgstr[1] "%(count)s documentos cargados."
 
-#: .\apps\compliance\views.py:986
+#: .\apps\compliance\views.py:1011
 msgid "Document archived."
 msgstr "Documento archivado."
 
-#: .\apps\compliance\views.py:1082 .\apps\compliance\views.py:1092
+#: .\apps\compliance\views.py:1126 .\apps\compliance\views.py:1136
 msgid "Resolve alert"
 msgstr "Resolver alerta"
 
-#: .\apps\compliance\views.py:1104
+#: .\apps\compliance\views.py:1148
 msgid "Alert resolved."
 msgstr "Alerta resuelta."
 
-#: .\apps\compliance\views.py:1134
+#: .\apps\compliance\views.py:1178
 msgid "Alert reopened."
 msgstr "Alerta reabierta."
 
-#: .\apps\compliance\views.py:1158
+#: .\apps\compliance\views.py:1202
 msgid "Only a resolved alert can have its action verified."
 msgstr "Sólo una alerta resuelta puede tener su acción verificada."
 
-#: .\apps\compliance\views.py:1183
+#: .\apps\compliance\views.py:1227
 msgid "No Kanban board is available to hold the follow-up task."
 msgstr ""
 "No hay ningún tablero Kanban disponible para alojar la tarea de seguimiento."
 
-#: .\apps\compliance\views.py:1186
+#: .\apps\compliance\views.py:1230
 msgid "Follow-up task created."
 msgstr "Tarea de seguimiento creada."
 
-#: .\apps\compliance\views.py:1290 .\templates\base.html:117
+#: .\apps\compliance\views.py:1334 .\templates\base.html:117
 #: .\templates\compliance\monthly_review.html:3
 #: .\templates\compliance\monthly_review.html:8
 msgid "Monthly compliance"
 msgstr "Cumplimiento mensual"
 
-#: .\apps\compliance\views.py:1324
+#: .\apps\compliance\views.py:1368
 #, python-format
 msgid "%(center)s %(period)s marked."
 msgstr "%(center)s %(period)s marcado."
 
-#: .\apps\compliance\views.py:1351
+#: .\apps\compliance\views.py:1395
 #, python-format
 msgid "Edit %(name)s"
 msgstr "Editar %(name)s"
@@ -1978,7 +1980,7 @@ msgstr ""
 msgid "Correct the status"
 msgstr "Corregir el estado"
 
-#: .\apps\operations\views.py:430
+#: .\apps\operations\views.py:434
 msgid ""
 "Upload the DGAC operation authorization (the signed SIGO PDF) before "
 "correcting this permit to that status."
@@ -1986,16 +1988,16 @@ msgstr ""
 "Sube la Autorización de Operación RPA de la DGAC (el PDF firmado de SIGO) "
 "antes de corregir el permiso a ese estado."
 
-#: .\apps\operations\views.py:451
+#: .\apps\operations\views.py:455
 #, python-format
 msgid "Correction: %(reason)s"
 msgstr "Corrección: %(reason)s"
 
-#: .\apps\operations\views.py:463
+#: .\apps\operations\views.py:469
 msgid "Status corrected."
 msgstr "Estado corregido."
 
-#: .\apps\operations\views.py:506
+#: .\apps\operations\views.py:512
 #, python-format
 msgid ""
 "%(pilot)s now has %(total)s logged on %(date)s, over the %(limit)s daily "
@@ -2004,7 +2006,7 @@ msgstr ""
 "%(pilot)s acumula %(total)s el %(date)s, por sobre el límite diario de vuelo"
 " de %(limit)s."
 
-#: .\apps\operations\views.py:561
+#: .\apps\operations\views.py:567
 msgid "Flight record archived."
 msgstr "Registro de vuelo archivado."
 
@@ -2145,9 +2147,9 @@ msgstr "Matrícula"
 
 #: .\apps\registry\forms.py:232
 #: .\templates\compliance\_documents_section.html:30
-#: .\templates\compliance\company_documents.html:30
+#: .\templates\compliance\company_documents.html:36
 #: .\templates\compliance\document_detail.html:14
-#: .\templates\compliance\document_list.html:19
+#: .\templates\compliance\document_list.html:23
 #: .\templates\compliance\operational_records.html:29
 #: .\templates\compliance\operational_records.html:49
 #: .\templates\maintenance\record_detail.html:22
@@ -3074,7 +3076,7 @@ msgstr "Guardar"
 
 #: .\templates\compliance\_document_form_content.html:8
 #: .\templates\compliance\document_bulk_form.html:48
-#: .\templates\compliance\document_form.html:20
+#: .\templates\compliance\document_form.html:24
 #: .\templates\compliance\document_replace.html:12
 #: .\templates\generic\_form_content.html:13
 #: .\templates\generic\confirm_delete.html:6 .\templates\generic\form.html:15
@@ -3099,15 +3101,19 @@ msgstr "Crear uno"
 msgid "What this document belongs to"
 msgstr "A qué pertenece este documento"
 
-#: .\templates\compliance\_document_form_fields.html:34
+#: .\templates\compliance\_document_form_fields.html:40
+msgid "It does not change when replacing a document."
+msgstr "No cambia al reemplazar un documento."
+
+#: .\templates\compliance\_document_form_fields.html:52
 msgid "What document it is"
 msgstr "Qué documento es"
 
-#: .\templates\compliance\_document_form_fields.html:37
+#: .\templates\compliance\_document_form_fields.html:55
 msgid "The file"
 msgstr "El archivo"
 
-#: .\templates\compliance\_document_form_fields.html:40
+#: .\templates\compliance\_document_form_fields.html:58
 #: .\templates\compliance\document_bulk_form.html:35
 #: .\templates\operations\permission_detail.html:67
 #: .\templates\operations\permission_list.html:37
@@ -3115,13 +3121,13 @@ msgstr "El archivo"
 msgid "Validity"
 msgstr "Vigencia"
 
-#: .\templates\compliance\_document_form_fields.html:46
+#: .\templates\compliance\_document_form_fields.html:64
 msgid "Optional details"
 msgstr "Detalles opcionales"
 
 #: .\templates\compliance\_document_rows.html:8
 #: .\templates\compliance\document_list.html:16
-#: .\templates\compliance\document_list.html:19
+#: .\templates\compliance\document_list.html:23
 #: .\templates\geo\plan_detail.html:142
 #: .\templates\registry\_operator_rows.html:35
 msgid "Current"
@@ -3178,8 +3184,8 @@ msgstr "Emitido"
 
 #: .\templates\compliance\_documents_section.html:32
 #: .\templates\compliance\alert_list.html:7
-#: .\templates\compliance\company_documents.html:30
-#: .\templates\compliance\document_list.html:19
+#: .\templates\compliance\company_documents.html:36
+#: .\templates\compliance\document_list.html:23
 #: .\templates\operations\permission_detail.html:74
 #: .\templates\registry\costcenter_detail.html:113
 msgid "Expiry"
@@ -3187,9 +3193,9 @@ msgstr "Vencimiento"
 
 #: .\templates\compliance\_documents_section.html:33
 #: .\templates\compliance\alert_list.html:7
-#: .\templates\compliance\company_documents.html:30
+#: .\templates\compliance\company_documents.html:36
 #: .\templates\compliance\deliverable_detail.html:62
-#: .\templates\compliance\document_list.html:19
+#: .\templates\compliance\document_list.html:23
 #: .\templates\compliance\nonconformity_detail.html:54
 #: .\templates\compliance\operational_records.html:49
 #: .\templates\generic\list.html:39
@@ -3256,9 +3262,9 @@ msgid "All entity types"
 msgstr "Todos los tipos de entidad"
 
 #: .\templates\compliance\alert_list.html:7
-#: .\templates\compliance\company_documents.html:23
+#: .\templates\compliance\company_documents.html:29
 #: .\templates\compliance\deliverable_list.html:21
-#: .\templates\compliance\document_list.html:17
+#: .\templates\compliance\document_list.html:21
 #: .\templates\compliance\monthly_review.html:28
 #: .\templates\compliance\nonconformity_list.html:27
 #: .\templates\compliance\operational_records.html:40
@@ -3271,7 +3277,7 @@ msgstr "Filtrar"
 
 #: .\templates\compliance\alert_list.html:7
 #: .\templates\compliance\document_detail.html:15
-#: .\templates\compliance\document_list.html:19
+#: .\templates\compliance\document_list.html:23
 #: .\templates\compliance\email\alert_effectiveness.txt:5
 #: .\templates\compliance\report.html:178
 msgid "Entity"
