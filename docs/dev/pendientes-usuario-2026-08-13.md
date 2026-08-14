@@ -119,12 +119,18 @@ devuelve **2** hasta que `freshclam` termina de bajar la base de firmas, y con
 código 2 **toda subida se rechaza**.
 
 ```bash
-printf '%%PDF-1.4\ntest\n' > /tmp/av-check.pdf && sudo -u levdigital01 clamscan --no-summary /tmp/av-check.pdf; echo "código: $?"
+sudo -u levdigital01 clamscan --no-summary /etc/hostname; echo "código: $?"
 ```
 
+Escanea un archivo que ya existe **a propósito**: la primera versión de este
+comando fabricaba un PDF con `printf '%PDF...'` y fallaba antes de llegar al
+antivirus —`%P` no es un formato válido de `printf`—, así que el `&&` cortaba y
+el código que se leía era el de `printf`. Un chequeo que puede fallar por su
+propia sintaxis no sirve para descartar nada.
+
 `0` es lo que se espera. `2` significa escáner roto —revisa `sudo freshclam` y
-`systemctl status clamav-freshclam`—, y `1` sería una firma detectada, que en ese
-PDF de prueba no debería pasar.
+`systemctl status clamav-freshclam`—, y `1` sería una firma detectada, que en
+`/etc/hostname` no debería pasar.
 
 Desde `LV-96` los dos casos ya **no se ven iguales en pantalla**: un archivo
 infectado dice que la amenaza está en el archivo, y un escáner que no puede
