@@ -509,8 +509,12 @@ class TestAlertRows:
 
         content = client.get(reverse("alert-list")).content.decode()
 
-        assert 'class="small text-muted mt-1 alert-reason"' in content
+        # LV-110: se afirma que el motivo **está en la página**, no la lista
+        # exacta de clases de Bootstrap que lo envuelve -- eso hacía fallar el
+        # test por un cambio de color, que no es lo que este test protege.
+        assert "alert-reason" in content
         assert "Credencial renovada ante la DGAC" in content
+        assert 'title="Credencial renovada ante la DGAC"' not in content
 
     @pytest.mark.django_db
     def test_different_dates_never_group(self, two_qualifications):
