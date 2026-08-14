@@ -124,6 +124,18 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **La pantalla para subir documentos, ordenada (`LV-95`).** El selector de tipo
+  de documento deja de ser una lista plana de dieciocho nombres y queda
+  **agrupado**: documentos del personal, de la aeronave, presentaciones y
+  autorizaciones DGAC, registros operacionales, mantención y calibración, y
+  documentos de la empresa. El orden anterior no era orden — era el orden en que
+  se habían creado. El formulario, además, pregunta en el orden en que se
+  trabaja: **a qué pertenece → qué documento es → el archivo → su vigencia**, y
+  recién al final lo opcional; el **título pasó al final**, porque se genera solo
+  a partir de las tres primeras respuestas y antes abría la pantalla pidiendo
+  algo que todavía no se podía contestar. Los tipos que ya existían quedan
+  clasificados solos al actualizar; al crear un tipo nuevo, la categoría se elige
+  ahí mismo.
 - **El panel responde "¿puedo operar hoy?" (`LV-89`).** Los dos gráficos que
   ocupaban un tercio de la pantalla para repetir números que ya estaban arriba
   se reemplazan por **tres indicadores**: flota disponible (con su meta del 90%),
@@ -158,6 +170,14 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **No se podía subir un documento desde "Nuevo documento" (`LV-94`).** Al elegir
+  el tipo de entidad, la lista de **"Registro asociado" no se llenaba nunca**, y
+  sin registro no hay documento que guardar. Pasaba en la pantalla de carga, en
+  la de reemplazo y en la de carga por lote; **no** pasaba al entrar desde la
+  ficha de una aeronave u operador, porque ahí los dos datos vienen en el enlace
+  — por eso el problema podía convivir con un uso diario normal. La carga por
+  lote, además, ahora también permite elegir el registro cuando se llega a ella
+  directamente.
 - **Pantallas que salían en inglés dentro de la interfaz en español (`LV-80`).**
   Los títulos de crear/listar ("New Document") y el nombre de la pestaña del
   navegador. Afectaba a 6 módulos.

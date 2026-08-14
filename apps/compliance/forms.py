@@ -1,8 +1,10 @@
 from pathlib import Path
+from uuid import UUID
 
 from django import forms
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
+from django.forms.models import ModelChoiceIterator
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
@@ -93,6 +95,66 @@ def _signature_matches(uploaded, extension):
     return any(header.startswith(signature) for signature in signatures)
 
 
+class CategorizedDocumentTypeIterator(ModelChoiceIterator):
+    """The document-type options, as `<optgroup>`s in category order.
+
+    LV-95: the picker was eighteen names in a flat list, ordered by whoever
+    seeded them, so finding one meant reading all of them. Django renders a
+    grouped option list when the iterator yields `(group_label, [choices])`,
+    which is all this does.
+
+    A type whose category is not a declared choice (a value left behind by a
+    removed category) is **not** dropped -- it comes out under "Other". An
+    option that silently disappears from a picker reads as a deleted document
+    type, and the row it belongs to would become unselectable with nothing on
+    screen saying why.
+    """
+
+    def __iter__(self):
+        if self.field.empty_label is not None:
+            yield ("", self.field.empty_label)
+        grouped = {}
+        for document_type in self.queryset:
+            grouped.setdefault(document_type.category, []).append(
+                self.choice(document_type)
+            )
+        for value, label in DocumentType.CATEGORY_CHOICES:
+            options = grouped.pop(value, [])
+            if value == DocumentType.CATEGORY_OTHER:
+                # "Other" is declared last, so anything still ungrouped by now
+                # has nowhere else to go.
+                for orphans in grouped.values():
+                    options.extend(orphans)
+                grouped = {}
+            if options:
+                yield (label, options)
+
+
+class CategorizedDocumentTypeChoiceField(forms.ModelChoiceField):
+    """A document-type picker grouped by `DocumentType.category`."""
+
+    iterator = CategorizedDocumentTypeIterator
+
+
+def selectable_document_types(current_pk=None):
+    """The types a picker may offer, newest classification order aside.
+
+    Active types only -- an archived type means "stop filing under this".
+    `current_pk` keeps the type a document already carries, so archiving a type
+    never turns "replace this document" into an unfixable validation error on a
+    field the person did not touch.
+    """
+    condition = Q(is_active=True)
+    if current_pk:
+        try:
+            # `doc_type` can arrive from a URL parameter (DocumentCreate
+            # prefills from GET), so it is not necessarily a valid key.
+            condition |= Q(pk=UUID(str(current_pk)))
+        except (AttributeError, TypeError, ValueError):
+            pass
+    return DocumentType.objects.filter(condition).order_by("name")
+
+
 DOCUMENTABLE_MODEL_LABELS = {
     ("registry", "aircraft"): _("Aircraft record"),
     ("registry", "operator"): _("Operator record"),
@@ -150,7 +212,7 @@ class DocumentBulkUploadForm(forms.Form):
         label=_("Entity type"),
     )
     object_id = forms.ChoiceField(choices=(), label=_("Related record"))
-    doc_type = forms.ModelChoiceField(
+    doc_type = CategorizedDocumentTypeChoiceField(
         queryset=DocumentType.objects.none(), label=_("Document type")
     )
     files = MultipleFileField(
@@ -178,7 +240,20 @@ class DocumentBulkUploadForm(forms.Form):
         self.fields["entity_type"].label_from_instance = lambda content_type: (
             DOCUMENTABLE_MODEL_LABELS[(content_type.app_label, content_type.model)]
         )
-        self.fields["doc_type"].queryset = DocumentType.objects.filter(is_active=True)
+        self.fields["doc_type"].queryset = selectable_document_types()
+        # LV-94: the same HTMX wiring DocumentForm has. Without it this page
+        # only worked when opened from a record's own file (which fills both
+        # fields from the URL); reached any other way, "Related record" stayed
+        # empty with no way to fill it. The endpoint returns the field by name,
+        # so both forms can share it.
+        self.fields["entity_type"].widget.attrs.update(
+            {
+                "hx-get": reverse("document-entity-options"),
+                "hx-trigger": "change",
+                "hx-target": "#document-object-field",
+                "hx-swap": "outerHTML",
+            }
+        )
         raw_entity_type = self.data.get("entity_type") or self.initial.get(
             "entity_type"
         )
@@ -272,18 +347,26 @@ class DocumentForm(AeroModelForm):
         label=_("Related record"),
         help_text=_("Select an entity type first."),
     )
+    doc_type = CategorizedDocumentTypeChoiceField(
+        queryset=DocumentType.objects.none(), label=_("Document type")
+    )
     file = forms.FileField(required=True, label=_("File"))
 
     class Meta:
         model = Document
+        # LV-95: the order the person actually works in -- what this belongs to,
+        # what it is, the file, its validity -- and only then the optional
+        # fields. `title` used to come first while its own help text says it is
+        # derived from the three answers below it, so the form opened by asking
+        # for something that could not be answered yet.
         fields = (
-            "title",
-            "doc_type",
             "entity_type",
             "object_id",
+            "doc_type",
             "file",
             "issue_date",
             "expiry_date",
+            "title",
             "notes",
         )
         labels = {
@@ -325,6 +408,14 @@ class DocumentForm(AeroModelForm):
         )
         if self.instance and self.instance.pk and not self.instance._state.adding:
             self.fields["entity_type"].initial = self.instance.content_type
+        # The type already on the document survives even if it was archived
+        # (DocumentReplace prefills it) -- see selectable_document_types.
+        current_type = self.initial.get("doc_type") or getattr(
+            self.instance, "doc_type_id", None
+        )
+        self.fields["doc_type"].queryset = selectable_document_types(
+            current_pk=getattr(current_type, "pk", current_type)
+        )
         raw_entity_type = self.data.get("entity_type") or self.initial.get(
             "entity_type"
         )
@@ -412,13 +503,17 @@ class DocumentForm(AeroModelForm):
 class DocumentTypeForm(AeroModelForm):
     class Meta:
         model = DocumentType
-        fields = ["name", "code", "requires_expiry", "is_insurance"]
+        # LV-95: `category` is here, not left to its default -- a type created
+        # from this screen without one would land under "Other" and quietly
+        # undo the grouping for the next person who looks for it.
+        fields = ["name", "code", "category", "requires_expiry", "is_insurance"]
         # LV-22: without explicit labels Django auto-derives an English one
         # ("Requires expiry") whose msgid is in no catalog, so it renders in
         # English inside the Spanish UI.
         labels = {
             "name": _("Name"),
             "code": _("Code"),
+            "category": _("Category"),
             "requires_expiry": _("Requires expiry"),
             "is_insurance": _("Is insurance"),
         }
