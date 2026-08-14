@@ -68,6 +68,14 @@ Siembra el catálogo estándar (idempotente, no duplica si ya corriste antes):
 
 Si necesitas un tipo adicional, créalo desde la app (`/compliance/documenttype/new/`).
 
+**Elige bien la categoría** (LV-95). Es lo que agrupa el selector de tipo en las
+pantallas de carga —*documentos del personal*, *de la aeronave*, *presentaciones
+y autorizaciones DGAC*, *registros operacionales*, *mantención y calibración*,
+*documentos de la empresa*— y un tipo sin categoría queda bajo **"Otro"**, que es
+donde nadie lo va a buscar. Los tipos del catálogo estándar ya vienen
+clasificados, incluidos los de instalaciones que existían antes de LV-95 (la
+migración `compliance/0019` los clasifica por su `code`).
+
 ## Paso 3 — Reglas de alerta
 
 **Una sola regla sobre `compliance.document` / `expiry_date` cubre todos los
