@@ -37,8 +37,49 @@ def document_upload_path(instance, filename):
 
 
 class DocumentType(BaseModel):
+    # LV-95: what shelf this type lives on. The picker was a flat list of
+    # eighteen names in creation order, so finding "Certificado de
+    # aeronavegabilidad" meant reading every option -- and the order carried no
+    # meaning at all (it is the order somebody happened to seed them in).
+    #
+    # The grouping is by **what the document is about**, which is how a person
+    # looks for one: a credential belongs to a person, an airworthiness
+    # certificate to an aircraft, a permission letter to the DGAC dossier. It is
+    # deliberately *not* derived from the flags that already exist
+    # (`is_insurance`, `is_operational_record`): those answer "does the app do
+    # something special with this?", a different question, and only two of the
+    # seven groups would have an answer.
+    CATEGORY_PERSONNEL = "personnel"
+    CATEGORY_AIRCRAFT = "aircraft"
+    CATEGORY_DGAC = "dgac"
+    CATEGORY_OPERATIONAL = "operational"
+    CATEGORY_MAINTENANCE = "maintenance"
+    CATEGORY_COMPANY = "company"
+    CATEGORY_OTHER = "other"
+    # Order matters: this is the order the groups appear in every picker.
+    # "Other" is last on purpose -- it is where an unclassified type lands, not
+    # a shelf anybody looks in first.
+    CATEGORY_CHOICES = [
+        (CATEGORY_PERSONNEL, _("Personnel documents")),
+        (CATEGORY_AIRCRAFT, _("Aircraft documents")),
+        (CATEGORY_DGAC, _("DGAC filings and authorizations")),
+        (CATEGORY_OPERATIONAL, _("Operational records")),
+        (CATEGORY_MAINTENANCE, _("Maintenance and calibration")),
+        (CATEGORY_COMPANY, _("Company documents")),
+        (CATEGORY_OTHER, _("Other")),
+    ]
+
     name = models.CharField(max_length=150)
     code = models.CharField(max_length=50, unique=True)
+    # Defaults to "other" so a type created without thinking about it is
+    # visibly unclassified instead of silently filed under a real group.
+    category = models.CharField(
+        max_length=20,
+        choices=CATEGORY_CHOICES,
+        default=CATEGORY_OTHER,
+        verbose_name=_("Category"),
+        help_text=_("Groups this type inside the document-type picker."),
+    )
     requires_expiry = models.BooleanField(default=True)
     # LV-4: flags the type whose expiry the Aircraft list surfaces as a
     # column (e.g. liability insurance). Not unique by design -- a fleet may

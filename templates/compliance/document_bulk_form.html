@@ -8,16 +8,43 @@
   el motivo por el que acá no existe el caso ambiguo de un archivo que el
   sistema no puede atribuir: la persona dice de antemano a qué pertenecen. Lo
   único que puede fallar es que un archivo no sea un documento aceptable, y eso
-  se reporta archivo por archivo en vez de tumbar el lote entero.{% endcomment %}
+  se reporta archivo por archivo en vez de tumbar el lote entero.
+
+  LV-94: los campos van uno por uno, no con `{{ form|crispy }}`, porque
+  "Registro asociado" tiene que quedar dentro de `#document-object-field` -- es
+  el destino que htmx rellena cuando cambia el tipo de entidad. Con el formulario
+  dibujado de corrido, esta página sólo servía si se llegaba desde una ficha con
+  los dos datos en la URL.{% endcomment %}
   <p class="text-muted mb-4">{% translate "All the files in one batch are filed against the same record, with the same document type and dates. Each one is checked individually." %}</p>
   <form method="post" enctype="multipart/form-data">{% csrf_token %}
-    {{ form|crispy }}
-    <button class="btn btn-primary">{% translate "Upload the files" %}</button>
-    {% comment %}El destino lo calcula la vista desde los parámetros propios, no
-    desde `HTTP_REFERER`: una cabecera que manda el navegador es entrada no
-    confiable, y construir un enlace con ella pone una URL ajena dentro de
-    nuestra página.{% endcomment %}
-    <a href="{{ cancel_url }}" class="btn btn-outline-secondary ms-2">{% translate "Cancel" %}</a>
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <h2 class="h6 text-uppercase text-body-secondary border-bottom pb-2 mb-3">{% translate "What these documents belong to" %}</h2>
+    {{ form.entity_type|as_crispy_field }}
+    {% include "compliance/_document_object_field.html" %}
+
+    <h2 class="h6 text-uppercase text-body-secondary border-bottom pb-2 mb-3 mt-4">{% translate "What documents they are" %}</h2>
+    {{ form.doc_type|as_crispy_field }}
+
+    <h2 class="h6 text-uppercase text-body-secondary border-bottom pb-2 mb-3 mt-4">{% translate "The files" %}</h2>
+    {{ form.files|as_crispy_field }}
+
+    <h2 class="h6 text-uppercase text-body-secondary border-bottom pb-2 mb-3 mt-4">{% translate "Validity" %}</h2>
+    <div class="row">
+      <div class="col-md-6">{{ form.issue_date|as_crispy_field }}</div>
+      <div class="col-md-6">{{ form.expiry_date|as_crispy_field }}</div>
+    </div>
+
+    <div class="mt-4">
+      <button class="btn btn-primary">{% translate "Upload the files" %}</button>
+      {% comment %}El destino lo calcula la vista desde los parámetros propios, no
+      desde `HTTP_REFERER`: una cabecera que manda el navegador es entrada no
+      confiable, y construir un enlace con ella pone una URL ajena dentro de
+      nuestra página.{% endcomment %}
+      <a href="{{ cancel_url }}" class="btn btn-outline-secondary ms-2">{% translate "Cancel" %}</a>
+    </div>
   </form>
 </div>
 {% endblock %}
