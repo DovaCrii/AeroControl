@@ -3,15 +3,19 @@ from datetime import date, datetime, timedelta
 
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
-from django.shortcuts import get_object_or_404, redirect
+from django.db import transaction
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
+from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from django.utils.text import capfirst
 
 from apps.core.audit import set_audit_context
+from apps.core.tenancy import scope_queryset_to_tenant
 from apps.core.views import (
     CALENDAR_EVENT_PERMISSIONS,
     CalendarAccessMixin,
@@ -24,7 +28,12 @@ from apps.core.views import (
     TenantScopedQuerysetMixin,
     allowed_calendar_types,
 )
-from .forms import FlightPermissionForm, FlightRecordForm
+from .forms import (
+    FlightPermissionForm,
+    FlightPermissionUpdateForm,
+    FlightRecordForm,
+    StatusCorrectionForm,
+)
 from .models import FlightPermission, FlightRecord
 from .selectors import DAILY_FLIGHT_LIMIT, duty_time_for, format_duration
 from apps.registry.models import Aircraft, CostCenter, Operator
@@ -193,7 +202,9 @@ class FlightPermissionUpdate(
     override, same reason OCreate does."""
 
     model = FlightPermission
-    form_class = FlightPermissionForm
+    # LV-101: not FlightPermissionForm -- the update variant drops `status`,
+    # which turned this screen into a back door around every transition guard.
+    form_class = FlightPermissionUpdateForm
     template_name = "generic/form.html"
     permission_action = "change"
     tenant_path = "cost_center__tenant_id"
@@ -288,6 +299,28 @@ class FlightPermissionDetail(
         return context
 
 
+def has_dgac_authorization(permission):
+    """Whether the signed DGAC operation authorization is on file (LV-51/LV-64).
+
+    Extracted from the mixin below when LV-101 added the correction route: the
+    guard is about a fact in the world, so both routes have to ask the same
+    question. A second copy is how one of them quietly stops asking it.
+
+    Deliberately **not** "dgac-flight-permit" -- that is the letter that goes
+    *to* the DGAC as part of the request, and it can exist long before any
+    approval.
+    """
+    from apps.compliance.models import Document
+
+    return Document.objects.filter(
+        content_type=ContentType.objects.get_for_model(type(permission)),
+        object_id=permission.pk,
+        doc_type__code="dgac-rpa-operation-authorization",
+        is_current_version=True,
+        is_active=True,
+    ).exists()
+
+
 class RequireDgacPermitPdfMixin:
     """LV-51/LV-64/R2.4: the signed DGAC authorization ("Autorización de
     Operación RPA", the folio'd PDF that comes back once the DGAC actually
@@ -304,17 +337,8 @@ class RequireDgacPermitPdfMixin:
     missing_pdf_message = None
 
     def post(self, request, pk):
-        from apps.compliance.models import Document
-
         permission = get_object_or_404(self.model, pk=pk, is_active=True)
-        has_permit_pdf = Document.objects.filter(
-            content_type=ContentType.objects.get_for_model(self.model),
-            object_id=permission.pk,
-            doc_type__code="dgac-rpa-operation-authorization",
-            is_current_version=True,
-            is_active=True,
-        ).exists()
-        if not has_permit_pdf:
+        if not has_dgac_authorization(permission):
             messages.error(request, self.missing_pdf_message)
             return redirect(permission)
         return super().post(request, pk)
@@ -347,6 +371,103 @@ class FlightPermissionComplete(RequireDgacPermitPdfMixin, StatusTransitionView):
         "Upload the DGAC operation authorization (the signed SIGO PDF) "
         "before completing this permit."
     )
+
+
+class FlightPermissionCorrectStatus(ModelPermissionRequiredMixin, View):
+    """LV-101: the front door for fixing a status that is wrong.
+
+    The guarded transitions answer "what happens next". This answers "what was
+    recorded is not what happened" -- a different act, and one that has to exist:
+    the back door it replaces was found precisely because somebody used it to
+    undo a mistaken "completed".
+
+    Three things it does that the edit screen did not: it **demands a written
+    reason**, it records **who** (so the history stops saying `system`), and it
+    keeps the DGAC paperwork guard. That last one is deliberate: LV-51/LV-64 are
+    about a fact in the world -- whether the signed authorization exists -- not
+    about which screen the change came from. A correction that could reach
+    "approved" with no PDF on file would be the same hole with one more click.
+    """
+
+    model = FlightPermission
+    permission_action = "change"
+    title = gettext_lazy("Correct the status")
+    # The statuses whose paperwork guard applies, whatever route reaches them.
+    GUARDED_STATUSES = ("approved", "completed")
+
+    def _permission(self, pk):
+        return get_object_or_404(
+            scope_queryset_to_tenant(
+                FlightPermission.objects.all(),
+                self.request.user,
+                "cost_center__tenant_id",
+            ),
+            pk=pk,
+            is_active=True,
+        )
+
+    def _render(self, request, form, status=200):
+        return render(
+            request,
+            "generic/_form_content.html",
+            {"form": form, "title": self.title},
+            status=status,
+        )
+
+    def get(self, request, pk):
+        permission = self._permission(pk)
+        return self._render(
+            request, StatusCorrectionForm(current_status=permission.status)
+        )
+
+    def post(self, request, pk):
+        permission = self._permission(pk)
+        form = StatusCorrectionForm(request.POST, current_status=permission.status)
+        if not form.is_valid():
+            return self._render(request, form, status=422)
+
+        target = form.cleaned_data["status"]
+        if target in self.GUARDED_STATUSES and not has_dgac_authorization(permission):
+            form.add_error(
+                "status",
+                _(
+                    "Upload the DGAC operation authorization (the signed SIGO "
+                    "PDF) before correcting this permit to that status."
+                ),
+            )
+            set_audit_context(
+                request,
+                permission,
+                action="status_correction_rejected",
+                metadata={"from_status": permission.status, "to_status": target},
+            )
+            return self._render(request, form, status=422)
+
+        previous = permission.status
+        reason = form.cleaned_data["reason"]
+        with transaction.atomic():
+            permission.status = target
+            permission._changed_by = request.user.get_username()
+            permission._changed_by_user = request.user
+            # Prefixed so the history row reads as a correction and not as a
+            # transition that happened: the two mean different things to whoever
+            # audits this, and the notes column is where they are told apart.
+            permission._transition_notes = _("Correction: %(reason)s") % {
+                "reason": reason
+            }
+            permission.save(update_fields=["status", "updated_at"])
+        set_audit_context(
+            request,
+            permission,
+            action="status_corrected",
+            metadata={"from_status": previous, "to_status": target, "reason": reason},
+        )
+        if request.headers.get("HX-Request") == "true":
+            return HttpResponse(
+                status=204, headers={"HX-Trigger": "modal-form-success"}
+            )
+        messages.success(request, _("Status corrected."))
+        return redirect(permission)
 
 
 class FlightRecordList(OList):

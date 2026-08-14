@@ -43,6 +43,17 @@
   {% endcomment %}
   {% if perms.operations.change_flightpermission %}
   <a href="{% url 'permission-update' permission.pk %}" class="btn btn-outline-primary">{% translate "Edit" %}</a>
+  {% comment %}LV-101: corregir el estado dejó de ser un campo más del formulario
+  de edición -- por ahí se llegaba a "Aprobado" sin la autorización firmada y sin
+  que quedara quién lo hizo. Vive acá, aparte de "Cambiar estado", porque son
+  actos distintos: aquél dice qué pasó después, éste dice que lo anotado está
+  mal. Modal, como resolver una alerta, porque exige un motivo escrito.
+  {% endcomment %}
+  <a href="{% url 'permission-correct-status' permission.pk %}"
+     hx-get="{% url 'permission-correct-status' permission.pk %}"
+     hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal"
+     class="btn btn-outline-secondary"
+     title="{% translate 'Fix a status that was recorded by mistake, with a reason on record' %}">{% translate "Correct status" %}</a>
   {% endif %}
   <a href="{% url 'permission-list' %}" class="btn btn-outline-secondary">← {% translate "Back" %}</a>
 </div></div>

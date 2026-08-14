@@ -78,6 +78,20 @@
     var trigger = event.target.closest('[data-bs-target="#generic-modal"]');
     if (trigger) { modalTrigger = trigger; }
   });
+  // LV-108: htmx does not swap error responses -- by default only 2xx replaces
+  // anything. This app answers an invalid modal form with **422 plus the
+  // re-rendered form** (HtmxFormMixin.form_invalid, AlertResolve,
+  // FlightPermissionCorrectStatus), so without this the server said exactly
+  // what was wrong and the screen showed nothing at all: the person clicks
+  // "Save" and the modal just sits there. Verified in the browser, both ways.
+  // Only 422, which is this app's "your input is invalid, here is the form
+  // again" -- a 500 is not a form and must not be swapped into the page.
+  document.body.addEventListener('htmx:beforeSwap', function (event) {
+    if (event.detail.xhr && event.detail.xhr.status === 422) {
+      event.detail.shouldSwap = true;
+      event.detail.isError = false;
+    }
+  });
   document.body.addEventListener('htmx:afterSwap', function (event) {
     if (event.detail.target.id !== 'modal-content') return;
     var modal = document.getElementById('generic-modal');
