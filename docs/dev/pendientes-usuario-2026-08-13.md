@@ -89,9 +89,15 @@ curl -sI https://<host>/accounts/login/ | grep -i content-security-policy
 
 ---
 
-## 3. El antivirus (`DOCUMENTS_ANTIVIRUS_COMMAND`) — más urgente desde `LV-86`
+## 3. El antivirus (`DOCUMENTS_ANTIVIRUS_COMMAND`) — ✅ hecho y verificado
 
-Está **vacío en todos los ambientes**, y la carga masiva multiplica archivos
+> **Cerrado el 2026-08-14.** `clamscan` está instalado, configurado y
+> **verificado dando veredicto** en `p340` (código `0` sobre un archivo real),
+> así que quedó descartado como causa del fallo de carga que se investigó ese
+> día — ese era `LV-94`. Lo de abajo se conserva como referencia de instalación y
+> diagnóstico.
+
+Estaba **vacío en todos los ambientes**, y la carga masiva multiplica archivos
 entrando al sistema. El código espera un ejecutable compatible con ClamAV: lo
 resuelve con `shutil.which()` y lo invoca **sin shell**, con
 `<comando> --no-summary <archivo>`.

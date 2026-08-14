@@ -43,7 +43,10 @@ Notificaciones a `Dirección`: `aortega@jej.cl` + `cmunoz@jej.cl`.
 **Desplegado en `p340` el 2026-08-13** ✅: las 7 migraciones, los 11 timers y la
 CSP en **enforcing** (verificada con `X-Forwarded-Proto: https`; sobre `http` no
 se ve porque un 301 se adelanta al middleware). ClamAV instalado y
-`DOCUMENTS_ANTIVIRUS_COMMAND=clamscan` activo.
+`DOCUMENTS_ANTIVIRUS_COMMAND=clamscan` activo — **verificado dando veredicto el
+2026-08-14** (`clamscan` sobre un archivo real devuelve `0`, o sea que la base de
+firmas está cargada). Importa la distinción: instalado y *sirviendo* no son lo
+mismo, y un ClamAV con la base a medio bajar devuelve `2` y rechaza toda subida.
 
 **Hay una segunda tanda en `main`, SIN desplegar. Desde el 2026-08-14 lleva UNA
 migración** (`compliance/0019`, `LV-95`: la categoría de los tipos de documento,
