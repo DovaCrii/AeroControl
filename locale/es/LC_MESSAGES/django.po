@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-14 12:35-0400\n"
+"POT-Creation-Date: 2026-08-14 12:56-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -411,7 +411,7 @@ msgstr "Tiempo de vuelo acumulado sin ningún incidente registrado."
 
 #: .\apps\compliance\management\commands\check_alert_effectiveness.py:92
 #: .\templates\compliance\_document_form_fields.html:39
-#: .\templates\compliance\alert_list.html:20
+#: .\templates\compliance\alert_list.html:21
 msgid "Record unavailable"
 msgstr "Registro no disponible"
 
@@ -3206,7 +3206,7 @@ msgid "Expiry"
 msgstr "Vencimiento"
 
 #: .\templates\compliance\_documents_section.html:33
-#: .\templates\compliance\alert_list.html:7
+#: .\templates\compliance\alert_list.html:8
 #: .\templates\compliance\company_documents.html:36
 #: .\templates\compliance\deliverable_detail.html:62
 #: .\templates\compliance\document_list.html:23
@@ -3266,7 +3266,7 @@ msgid "Unresolved"
 msgstr "No resueltas"
 
 #: .\templates\compliance\alert_list.html:4
-#: .\templates\compliance\alert_list.html:29
+#: .\templates\compliance\alert_list.html:34
 #: .\templates\compliance\email\alert_effectiveness.txt:5
 msgid "Resolved"
 msgstr "Resuelta"
@@ -3308,7 +3308,11 @@ msgstr "Regla"
 msgid "Triggered"
 msgstr "Activada"
 
-#: .\templates\compliance\alert_list.html:23
+#: .\templates\compliance\alert_list.html:8
+msgid "Resolution"
+msgstr "Resolución"
+
+#: .\templates\compliance\alert_list.html:24
 #: .\templates\dashboard\index.html:173
 #: .\templates\registry\_aircraft_rows.html:22
 #: .\templates\registry\_operator_rows.html:10
@@ -3317,48 +3321,48 @@ msgstr "Activada"
 msgid "Overdue"
 msgstr "Atrasada"
 
-#: .\templates\compliance\alert_list.html:23
+#: .\templates\compliance\alert_list.html:24
 #: .\templates\workboard\_card.html:30 .\templates\workboard\task_list.html:18
 msgid "Due"
 msgstr "Vencimiento"
 
-#: .\templates\compliance\alert_list.html:35
+#: .\templates\compliance\alert_list.html:40
 #, python-format
 msgid "Verified on %(when)s by %(who)s"
 msgstr "Verificada el %(when)s por %(who)s"
 
-#: .\templates\compliance\alert_list.html:35
+#: .\templates\compliance\alert_list.html:40
 #: .\templates\compliance\nonconformity_detail.html:38
 #: .\templates\compliance\nonconformity_list.html:44
 msgid "Verified"
 msgstr "Verificada"
 
-#: .\templates\compliance\alert_list.html:37
+#: .\templates\compliance\alert_list.html:52
 msgid "Confirm the corrective action held (ISO 10.2)"
 msgstr "Confirmar que la acción correctiva se mantuvo (ISO 10.2)"
 
-#: .\templates\compliance\alert_list.html:37
+#: .\templates\compliance\alert_list.html:52
 msgid "Verify"
 msgstr "Verificar"
 
-#: .\templates\compliance\alert_list.html:39
+#: .\templates\compliance\alert_list.html:54
 msgid "Reopen this alert and send its task back"
 msgstr "Reabre esta alerta y devuelve su tarea a donde estaba"
 
-#: .\templates\compliance\alert_list.html:39
+#: .\templates\compliance\alert_list.html:54
 #: .\templates\geo\plan_detail.html:46
 msgid "Undo"
 msgstr "Deshacer"
 
-#: .\templates\compliance\alert_list.html:41
+#: .\templates\compliance\alert_list.html:56
 msgid "Resolve, with a reason on record (ISO 10.2)"
 msgstr "Resolver, dejando un motivo registrado (ISO 10.2)"
 
-#: .\templates\compliance\alert_list.html:41
+#: .\templates\compliance\alert_list.html:56
 msgid "Resolve"
 msgstr "Resolver"
 
-#: .\templates\compliance\alert_list.html:50
+#: .\templates\compliance\alert_list.html:60
 msgid "No alerts found."
 msgstr "No se encontraron alertas."
 

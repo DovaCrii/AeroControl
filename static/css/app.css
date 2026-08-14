@@ -1278,13 +1278,20 @@ main {
   min-height: 34px;
 }
 
-/* LV-75: the resolution reason under the "Resolved" badge. Capped and wrapped
-   so a long root cause does not stretch the actions column and push the
-   buttons off their alignment with the rest of the table. */
+/* LV-110: the buttons in this column are all the same width, not the width of
+   their own word. "Resolver", "Deshacer" and "Verificar" differ in length, so
+   without this the column looks ragged row to row -- and they are actions of
+   the same rank. */
+.alert-actions .btn {
+  min-width: 6.5rem;
+}
+
+/* LV-110: the resolution reason moved to its own column, so it reads
+   left-to-right like any other text instead of being pinned to the right edge
+   under the buttons. Still capped and wrapped: a long root cause must not
+   stretch the column past the rest of the table. */
 .alert-reason {
-  max-width: 26rem;
-  margin-left: auto;
-  text-align: right;
+  max-width: 28rem;
   overflow-wrap: anywhere;
 }
 

@@ -178,6 +178,11 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   estado"** que **exige un motivo escrito**, deja quién y por qué en el
   historial, y **mantiene la exigencia del PDF firmado** — corregir no es un
   atajo para saltarse el papeleo, es dejar claro que lo anotado estaba mal.
+- **La bandeja de alertas, mejor repartida (`LV-110`).** El motivo con que se
+  resolvió una alerta tiene ahora **columna propia** ("Resolución"), junto a su
+  estado, en vez de ir apretado en letra chica debajo de los botones. Y los
+  botones de acción miden todos lo mismo, así que la columna deja de verse
+  dentada.
 - **Ver un documento sin salir de la ficha (`LV-92`).** "Ver" abre el PDF o la
   imagen **encima** de la página que estabas mirando, así que revisar la carpeta
   de una aeronave antes de una auditoría deja de ser entrar y volver por cada
