@@ -57,7 +57,14 @@ def scan_uploaded_file(uploaded):
     command = getattr(settings, "DOCUMENTS_ANTIVIRUS_COMMAND", "")
     if not command:
         return
-    executable = shutil.which(command)
+    # LV-97: the setting may carry arguments ("clamdscan --fdpass"), not just a
+    # name. `--fdpass` is not optional with clamdscan: the daemon runs as its
+    # own user and cannot read the 0600 temporary file this function writes, so
+    # without it every scan errors out -- and fails closed, refusing every
+    # upload. Split on whitespace (an executable named with spaces would not
+    # resolve through PATH anyway); only the first token is resolved.
+    executable_name, *extra_args = command.split()
+    executable = shutil.which(executable_name)
     if not executable:
         logger.error("antivirus_command_missing", extra={"command": command})
         raise ScannerUnavailable(
@@ -86,7 +93,7 @@ def scan_uploaded_file(uploaded):
         # worker until the proxy gives up -- which the person sees as a page
         # that never answers, the least diagnosable failure of all.
         result = subprocess.run(  # nosec B603
-            [executable, "--no-summary", temporary_path],
+            [executable, *extra_args, "--no-summary", temporary_path],
             capture_output=True,
             check=False,
             timeout=getattr(settings, "DOCUMENTS_ANTIVIRUS_TIMEOUT", 120),
