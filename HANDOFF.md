@@ -141,8 +141,14 @@ del permiso** entra como `LV-107` (cola 1.x).
 por fila para resolver de qué registro hablaba cada una — 24 consultas con 5
 alertas, 84 con 25; ahora es plano. Sin migración y sin cambio visible.
 
-**Lo siguiente en mi cola**: `LV-99`/`LV-100`/`LV-105` juntos (son las mismas
-pantallas), y después `LV-92`/`LV-107`.
+**`LV-99`, `LV-100` y `LV-105` hechos** (2026-08-14, mismas pantallas, un solo
+viaje): cancelar una carga vuelve a la ficha de origen y no a la lista sin menú;
+el reemplazo muestra el registro en vez de ofrecer dos selectores que la vista
+descartaba; y el botón "Filtrar" dejó de estirarse (era la columna, no el botón).
+
+**Lo siguiente en mi cola**: `LV-92` (ver el PDF sin salir de la ficha) y
+`LV-107` (expediente operativo del permiso), que conviene mirar juntos porque el
+visor rinde dentro del expediente.
 
 **Del lado del usuario, al 2026-08-14**: `LV-97` cerrado —
 `DOCUMENTS_ANTIVIRUS_COMMAND="clamdscan --fdpass"` activo en `p340`, con el

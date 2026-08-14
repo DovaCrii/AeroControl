@@ -14,7 +14,10 @@
   <div class="col-md-3">{% include "generic/_search_input.html" with search_url=request.path search_placeholder=document_search_placeholder %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
   <div class="col-md-4"><select class="form-select" name="doc_type"><option value="">{% translate "All document types" %}</option>{% for item in document_types %}<option value="{{ item.pk }}" {% if request.GET.doc_type == item.pk|stringformat:'s' %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></div>
   <div class="col-md-3"><select class="form-select" name="is_current_version"><option value="">{% translate "All versions" %}</option><option value="true" {% if request.GET.is_current_version == 'true' %}selected{% endif %}>{% translate "Current" %}</option><option value="false" {% if request.GET.is_current_version == 'false' %}selected{% endif %}>{% translate "Previous" %}</option></select></div>
-  <div class="col-md-2 d-grid"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
+  {% comment %}LV-105: mismo caso que "Documentos de la empresa" -- sin
+  `align-self-start` la columna se estira hasta la altura de la de búsqueda, que
+  es mayor por el "Buscando…".{% endcomment %}
+  <div class="col-md-2 d-grid align-self-start"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
 </form>
 <div id="table-wrapper" class="card"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>{% translate "Title" %}</th><th>{% translate "Type" %}</th><th>{% translate "Entity" %}</th><th>{% translate "Expiry" %}</th><th>{% translate "Current" %}</th><th class="text-end">{% translate "Actions" %}</th></tr></thead><tbody id="table-body">{% include "compliance/_document_rows.html" %}</tbody></table></div><div id="pagination-container">{% include "generic/_pagination.html" %}</div></div>
 {% endblock %}
