@@ -137,8 +137,16 @@ acotado a 422. Ninguno de los dos lleva migración; **`LV-108` sí exige
 `collectstatic`** (cambia `static/js/app.js`); **(3)** el **expediente operativo
 del permiso** entra como `LV-107` (cola 1.x).
 
-**Lo siguiente en mi cola**: `LV-106` (el N+1 de la bandeja de alertas), luego
-`LV-99`/`LV-100`/`LV-105` juntos, y después `LV-92`/`LV-107`. La estrategia de escala quedó en
+**`LV-106` también hecho** (2026-08-14): la bandeja de alertas hacía una consulta
+por fila para resolver de qué registro hablaba cada una — 24 consultas con 5
+alertas, 84 con 25; ahora es plano. Sin migración y sin cambio visible.
+
+**Lo siguiente en mi cola**: `LV-99`/`LV-100`/`LV-105` juntos (son las mismas
+pantallas), y después `LV-92`/`LV-107`.
+
+**Del lado del usuario, al 2026-08-14**: `LV-97` cerrado —
+`DOCUMENTS_ANTIVIRUS_COMMAND="clamdscan --fdpass"` activo en `p340`, con el
+demonio arrancado— y **falta confirmar una subida real** contra ese antivirus. La estrategia de escala quedó en
 `docs/dev/analisis-competencia-2026-08-14.md` — resumen: la única brecha real
 contra AirData/DroneLogbook es la ingesta automática de vuelos (`X.4`); no
 comprar SaaS.

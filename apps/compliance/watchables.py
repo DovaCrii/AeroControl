@@ -102,6 +102,36 @@ def terminal_statuses(model):
     return frozenset(getattr(model, "TERMINAL_STATUSES", frozenset()))
 
 
+def alert_subject_querysets():
+    """One queryset per watchable model, with its foreign keys already joined.
+
+    LV-106. `prefetch_related("content_object")` alone resolves the generic
+    relation but hands back bare instances, and the alerts list renders each
+    subject by calling `str()` on it -- and several of those `__str__` cross a
+    relation (a qualification names its operator and its type). So the list went
+    from one query per row to two, which is not the fix anybody wanted.
+
+    The joins are **derived from each model**, not listed by hand: a hand list is
+    the shape this project has already been bitten by (the literal terminal
+    statuses of LV-90, the calendar's seven event types of R1.1). Every
+    many-to-one field is joined -- a couple of extra columns per row, against one
+    query per row.
+    """
+    querysets = []
+    for key in WATCHABLE_MODELS:
+        model = resolve_model(key)
+        if model is None:
+            continue
+        related = [
+            field.name
+            for field in model._meta.fields
+            if field.is_relation and field.many_to_one
+        ]
+        queryset = model._default_manager.all()
+        querysets.append(queryset.select_related(*related) if related else queryset)
+    return querysets
+
+
 def entity_type_choices():
     return [(key, label) for key, label in WATCHABLE_MODELS.items()]
 

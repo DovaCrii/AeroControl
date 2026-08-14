@@ -105,9 +105,27 @@ resuelve con `shutil.which()` y lo invoca **sin shell**, con
 ```bash
 sudo apt install -y clamav clamav-daemon
 sudo systemctl stop clamav-freshclam && sudo freshclam && sudo systemctl start clamav-freshclam
-sudo sh -c 'echo "DOCUMENTS_ANTIVIRUS_COMMAND=clamscan" >> /etc/aerocontrol.env'
+sudo systemctl enable --now clamav-daemon
+sudo sh -c 'echo "DOCUMENTS_ANTIVIRUS_COMMAND=\"clamdscan --fdpass\"" >> /etc/aerocontrol.env'
 sudo systemctl restart aerocontrol
 ```
+
+> **Las comillas no son opcionales** (`LV-97`, aprendido a golpes el 2026-08-14).
+> `systemd` lee `CLAVE=valor` hasta el fin de línea y no le molesta, pero el
+> `source <(sudo cat /etc/aerocontrol.env)` del procedimiento de despliegue es
+> **bash**, que sin comillas parte la línea: fija `DOCUMENTS_ANTIVIRUS_COMMAND=clamdscan`
+> e intenta ejecutar `--fdpass` como si fuera un comando (`--fdpass: command not
+> found`). El servicio queda bien; lo que queda mal es **cualquier comando manual
+> corrido después de ese `source`** — usaría `clamdscan` sin `--fdpass`, el
+> demonio no podría leer el archivo temporal, y **todo se rechazaría**.
+>
+> Y `--fdpass` tampoco es opcional con el demonio: `clamd` corre como su propio
+> usuario y no puede abrir el temporal `0600` que escribe el servicio; `--fdpass`
+> le pasa el descriptor ya abierto en vez de la ruta.
+
+`clamdscan` (demonio) en vez de `clamscan` porque este último **recarga toda la
+base de firmas en cada invocación** — con la carga por lote, doce archivos son
+doce recargas.
 
 Comprobar que el ejecutable existe **para el usuario del servicio**, que es lo
 que `shutil.which()` va a mirar:

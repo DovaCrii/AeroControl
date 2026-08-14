@@ -178,6 +178,11 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   estado"** que **exige un motivo escrito**, deja quién y por qué en el
   historial, y **mantiene la exigencia del PDF firmado** — corregir no es un
   atajo para saltarse el papeleo, es dejar claro que lo anotado estaba mal.
+- **La bandeja de alertas deja de hacerse más lenta con cada alerta
+  (`LV-106`).** Consultaba la base **una vez por fila** para resolver de qué
+  registro hablaba cada alerta, así que la pantalla se degradaba justo con lo
+  que la hace útil: medido, pasaba de 24 consultas con 5 alertas a 84 con 25.
+  Ahora el número no crece con las filas. No cambia nada de lo que se ve.
 - **Los errores de los formularios en ventana emergente ahora se ven
   (`LV-108`).** Al guardar un formulario inválido dentro de un modal —crear,
   editar, resolver una alerta— el servidor respondía diciendo qué estaba mal y

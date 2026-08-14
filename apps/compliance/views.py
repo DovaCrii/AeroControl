@@ -17,6 +17,7 @@ from django.views.generic import (
 )
 
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.prefetch import GenericPrefetch
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.text import capfirst
 
@@ -52,6 +53,7 @@ from .models import (
     document_upload_path,
 )
 from .storage import DocumentStorageNotFound, get_document_storage
+from .watchables import alert_subject_querysets
 
 
 def document_home_url(document):
@@ -1004,7 +1006,26 @@ class AlertList(ComplianceList):
     search_fields = ["message"]
 
     def get_queryset(self):
-        queryset = super().get_queryset().select_related("alert_rule", "content_type")
+        # LV-106: `content_object` is a GenericForeignKey, which no
+        # `select_related` can reach -- and every row reads it three times (the
+        # record's name, `watched_date`, `is_overdue`), so the list cost one
+        # query per alert. Measured on the demo: 62 queries for 21 alerts, while
+        # every other list in the app sits between 6 and 16. It is the third
+        # appearance of the shape V.18/V.19 already cost this project twice, and
+        # it lands on the screen the user says they live in.
+        # `GenericPrefetch` rather than a plain `prefetch_related`: the bare
+        # prefetch resolves the generic relation but hands back instances whose
+        # own `__str__` crosses a relation (a qualification names its operator
+        # and its type), so the row still cost two queries. The per-model
+        # querysets carry those joins -- see `alert_subject_querysets`.
+        queryset = (
+            super()
+            .get_queryset()
+            .select_related("alert_rule", "content_type")
+            .prefetch_related(
+                GenericPrefetch("content_object", alert_subject_querysets())
+            )
+        )
         resolved = self.request.GET.get("is_resolved")
         if resolved in ("true", "false"):
             queryset = queryset.filter(is_resolved=resolved == "true")
