@@ -178,6 +178,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   estado"** que **exige un motivo escrito**, deja quién y por qué en el
   historial, y **mantiene la exigencia del PDF firmado** — corregir no es un
   atajo para saltarse el papeleo, es dejar claro que lo anotado estaba mal.
+- **El calendario sale del menú (`LV-103`).** Decisión tomada: la mitad de lo
+  que mostraba eran vencimientos, que ya llegan a **Alertas** — donde además se
+  resuelven y queda registrado el motivo. **No se borró nada**: la pantalla
+  sigue existiendo para quien tenga el enlace, y devolverla al menú es revertir
+  un comentario. Si dentro de unas semanas nadie la echa de menos, se retira del
+  todo.
 - **La bandeja de alertas, mejor repartida (`LV-110`).** El motivo con que se
   resolvió una alerta tiene ahora **columna propia** ("Resolución"), junto a su
   estado, en vez de ir apretado en letra chica debajo de los botones. Y los
