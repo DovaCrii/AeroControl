@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-14 08:41-0400\n"
+"POT-Creation-Date: 2026-08-14 09:07-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -809,6 +809,37 @@ msgstr "Por vencer en 30 días"
 #: .\apps\compliance\reports.py:373
 msgid "Alerts resolved in the period"
 msgstr "Alertas resueltas en el período"
+
+#: .\apps\compliance\security.py:65
+msgid ""
+"This file could not be checked for viruses because the antivirus is "
+"unavailable, so it was not saved. This is a server problem, not a problem "
+"with your file: tell an administrator."
+msgstr ""
+"No se pudo revisar este archivo en busca de virus porque el antivirus no "
+"está disponible, así que no se guardó. Es un problema del servidor, no de tu"
+" archivo: avisa a un administrador."
+
+#: .\apps\compliance\security.py:98
+msgid ""
+"The virus check took too long, so this file was not saved. This is a server "
+"problem, not a problem with your file: tell an administrator."
+msgstr ""
+"La revisión de virus demoró demasiado, así que este archivo no se guardó. Es"
+" un problema del servidor, no de tu archivo: avisa a un administrador."
+
+#: .\apps\compliance\security.py:112
+msgid "The antivirus found a threat in this file, so it was not saved."
+msgstr ""
+"El antivirus encontró una amenaza en este archivo, así que no se guardó."
+
+#: .\apps\compliance\security.py:128
+msgid ""
+"This file could not be checked for viruses, so it was not saved. This is a "
+"server problem, not a problem with your file: tell an administrator."
+msgstr ""
+"No se pudo revisar este archivo en busca de virus, así que no se guardó. Es "
+"un problema del servidor, no de tu archivo: avisa a un administrador."
 
 #: .\apps\compliance\signals.py:84
 #, python-format
