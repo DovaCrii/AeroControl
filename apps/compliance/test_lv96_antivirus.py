@@ -159,6 +159,34 @@ def test_the_timeout_is_actually_passed_to_the_scanner(settings, monkeypatch, up
     assert seen["timeout"] == 7
 
 
+def test_the_command_may_carry_arguments(settings, monkeypatch, upload):
+    """LV-97: "clamdscan --fdpass" is one setting, not a name.
+
+    `--fdpass` is what lets the daemon scan a 0600 temporary file it cannot
+    open itself; without argument support the clamdscan decision cannot be
+    configured at all. Only the first token goes through `shutil.which`.
+    """
+    settings.DOCUMENTS_ANTIVIRUS_COMMAND = "clamdscan --fdpass"
+    resolved = {}
+    monkeypatch.setattr(
+        security.shutil,
+        "which",
+        lambda name: resolved.setdefault("name", name) and "/usr/bin/clamdscan",
+    )
+    seen = {}
+
+    def record(argv, **kwargs):
+        seen["argv"] = argv
+        return _Result(security.SCANNER_CLEAN)
+
+    monkeypatch.setattr(security.subprocess, "run", record)
+    scan_uploaded_file(upload)
+
+    assert resolved["name"] == "clamdscan"
+    assert seen["argv"][:2] == ["/usr/bin/clamdscan", "--fdpass"]
+    assert seen["argv"][2] == "--no-summary"
+
+
 def test_the_file_can_still_be_read_after_a_scan(scanner, upload):
     """`upload_errors` reads the file after scanning it, so the position the
     scan consumed has to come back."""
