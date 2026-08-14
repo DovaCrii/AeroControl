@@ -178,6 +178,14 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   estado"** que **exige un motivo escrito**, deja quién y por qué en el
   historial, y **mantiene la exigencia del PDF firmado** — corregir no es un
   atajo para saltarse el papeleo, es dejar claro que lo anotado estaba mal.
+- **Ver un documento sin salir de la ficha (`LV-92`).** "Ver" abre el PDF o la
+  imagen **encima** de la página que estabas mirando, así que revisar la carpeta
+  de una aeronave antes de una auditoría deja de ser entrar y volver por cada
+  archivo. También se agregó "Ver" en **Documentos de la empresa** y en
+  **Registros operacionales**, donde antes había que descargar para mirar.
+- **Los dos gráficos del panel vuelven a dibujarse (`LV-109`).** Estaban vacíos:
+  el panel intentaba construir dos gráficos que ya se habían retirado de la
+  página, y ese error impedía que se dibujaran los que sí quedaban.
 - **Cancelar una carga de documento ya no te deja tirado (`LV-99`).** Volvía a
   la lista general de documentos, que no está en el menú: desde ahí no había
   cómo seguir. Ahora vuelve **a la ficha desde la que empezaste**, igual que si

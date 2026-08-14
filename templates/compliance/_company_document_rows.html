@@ -5,6 +5,12 @@
   <td>{{ document.doc_type }}</td>
   <td>{% if document.expiry_date %}{{ document.expiry_date|date:"Y-m-d" }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
   <td class="text-end">
+    {% comment %}LV-92: este repositorio sólo ofrecía descargar o reemplazar, así
+    que revisar qué dice un procedimiento obligaba a bajarlo al disco. Ahora se
+    ve acá mismo, con el mismo modal que la ficha de una aeronave.{% endcomment %}
+    <a href="{% url 'document-preview' document.pk %}" class="btn btn-sm btn-outline-secondary"
+       hx-get="{% url 'document-preview-frame' document.pk %}" hx-target="#modal-content"
+       data-bs-toggle="modal" data-bs-target="#generic-modal">{% translate "View" %}</a>
     <a href="{% url 'document-download' document.pk %}" class="btn btn-sm btn-outline-secondary" hx-boost="false">{% translate "Download" %}</a>
     {% if perms.compliance.add_document %}<a href="{% url 'document-replace' document.pk %}" hx-get="{% url 'document-replace' document.pk %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">{% translate "Replace" %}</a>{% endif %}
   </td>

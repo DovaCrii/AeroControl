@@ -146,9 +146,17 @@ viaje): cancelar una carga vuelve a la ficha de origen y no a la lista sin menú
 el reemplazo muestra el registro en vez de ofrecer dos selectores que la vista
 descartaba; y el botón "Filtrar" dejó de estirarse (era la columna, no el botón).
 
-**Lo siguiente en mi cola**: `LV-92` (ver el PDF sin salir de la ficha) y
-`LV-107` (expediente operativo del permiso), que conviene mirar juntos porque el
-visor rinde dentro del expediente.
+**`LV-92` hecho** (2026-08-14): "Ver" abre el documento en un modal sobre la
+ficha, y el botón se agregó además a los dos repositorios que no lo tenían. **Y
+al verificarlo apareció `LV-109`, también hecho**: los dos gráficos del panel
+—"Mantenciones por tipo" y "Vuelos por mes"— **nunca se dibujaban** desde
+`LV-89`, porque el script seguía construyendo dos gráficos ya retirados y la
+excepción se llevaba a los demás. La primera pantalla de la app llevaba semanas
+con dos cajas vacías. **Ambos exigen `collectstatic`** (cambian `app.js` y
+`dashboard.js`).
+
+**Lo siguiente en mi cola**: `LV-107` (expediente operativo del permiso), que es
+el trabajo UX de más valor según el análisis de competencia.
 
 **Del lado del usuario, al 2026-08-14**: `LV-97` cerrado —
 `DOCUMENTS_ANTIVIRUS_COMMAND="clamdscan --fdpass"` activo en `p340`, con el

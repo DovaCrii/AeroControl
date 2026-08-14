@@ -71,6 +71,13 @@ urlpatterns = [
         views.DocumentPreview.as_view(),
         name="document-preview",
     ),
+    # LV-92: the same bytes as document-preview, wrapped in the generic modal so
+    # a folder can be reviewed without leaving the record's page.
+    path(
+        "document/<uuid:pk>/preview-frame/",
+        views.DocumentPreviewFrame.as_view(),
+        name="document-preview-frame",
+    ),
     path(
         "document/<uuid:pk>/replace/",
         views.DocumentReplace.as_view(),

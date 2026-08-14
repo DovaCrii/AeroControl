@@ -23,60 +23,38 @@
   var palette = isDark() ? palettes.dark : palettes.light;
   var textColor = getComputedStyle(document.body).color;
   var charts = [];
-  var track = function (chart) { if (chart) charts.push(chart); return chart; };
-
-  // ── Aircraft by Status (doughnut) ──
-  var acData = chartData.aircraft_by_status;
-  if (acData.length) {
-    track(new Chart(document.getElementById('chart-aircraft-status'), {
-      type: 'doughnut',
-      data: {
-        labels: acData.map(function (d) { return d.status; }),
-        datasets: [{
-          data: acData.map(function (d) { return d.count; }),
-          backgroundColor: palette.slice(0, acData.length),
-        }]
-      },
-      options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: textColor } } } }
-    }));
+  // LV-109: a chart is built only when **both** halves are there -- its data and
+  // its canvas. The panel kept building two charts LV-89 had already removed
+  // from the template, and Chart.js throwing on the missing canvas took down
+  // every chart declared after it: the two that *were* on the page never
+  // appeared, so the panel showed two empty boxes and two console errors on
+  // every load. The comment below already described this exact failure for
+  // missing **data**; this is its other half, and the half that actually bit.
+  function build(id, data, config) {
+    var canvas = document.getElementById(id);
+    if (!canvas || !data || !data.length) return;
+    charts.push(new Chart(canvas, config));
   }
 
-  // ── Permissions by Status (bar) ──
-  var permData = chartData.permissions_by_status;
-  if (permData.length) {
-    track(new Chart(document.getElementById('statusChart'), {
-      type: 'bar',
-      data: {
-        labels: permData.map(function (d) { return d.status; }),
-        datasets: [{
-          label: labelFor('statusChart'),
-          data: permData.map(function (d) { return d.count; }),
-          backgroundColor: palette.slice(0, permData.length),
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { color: textColor } }, x: { ticks: { color: textColor } } }
-      }
-    }));
-  }
+  // LV-89 replaced "Aircraft by status" and "Permissions by status" with the
+  // three-indicator strip; their canvases are gone from the template, so no
+  // chart is declared for them here either. The view still computes the two
+  // series (a test reads `permissions_by_status` as evidence of the cost-centre
+  // filter), which is why `chart-data` still carries them.
 
   // ── Maintenance by Type (doughnut) ──
   var maintData = chartData.maintenance_by_type;
-  if (maintData.length) {
-    track(new Chart(document.getElementById('chart-maint-type'), {
-      type: 'doughnut',
-      data: {
-        labels: maintData.map(function (d) { return d.maintenance_type; }),
-        datasets: [{
-          data: maintData.map(function (d) { return d.count; }),
-          backgroundColor: palette.slice(0, maintData.length),
-        }]
-      },
-      options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: textColor } } } }
-    }));
-  }
+  build('chart-maint-type', maintData, {
+    type: 'doughnut',
+    data: {
+      labels: maintData.map(function (d) { return d.maintenance_type; }),
+      datasets: [{
+        data: maintData.map(function (d) { return d.count; }),
+        backgroundColor: palette.slice(0, maintData.length),
+      }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: textColor } } } }
+  });
 
   // LV-78/LV-89: "Tasks per Stage" removed with the Kanban board's retirement.
   // The view no longer sends `tasks_by_stage`, so reading it here would throw on
@@ -84,8 +62,7 @@
 
   // ── Monthly Flights (line) ──
   var flightData = chartData.monthly_flights;
-  if (flightData.length) {
-    track(new Chart(document.getElementById('chart-monthly-flights'), {
+  build('chart-monthly-flights', flightData, {
       type: 'line',
       data: {
         labels: flightData.map(function (d) { return d.month ? new Date(d.month).toLocaleString('default', { month: 'short', year: '2-digit' }) : ''; }),
@@ -104,8 +81,7 @@
         plugins: { legend: { labels: { color: textColor } } },
         scales: { y: { beginAtZero: true, ticks: { color: textColor } }, x: { ticks: { color: textColor } } }
       }
-    }));
-  }
+  });
 
   // Recolour on theme change: base.html already emits aero:themechange, but
   // nothing listened, so axes/legends kept the previous theme's colours until

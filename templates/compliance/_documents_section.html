@@ -48,7 +48,13 @@ la descarga cuando no.{% endcomment %}
             {% if document.expiry_date %}{{ document.expiry_date|date:"Y-m-d" }}{% if document.is_expired %} <span class="badge bg-danger">{% translate "Expired" %}</span>{% endif %}{% else %}—{% endif %}
           </td>
           <td class="text-end text-nowrap">
-            <a class="btn btn-sm btn-outline-secondary" href="{% url 'document-preview' document.pk %}" target="_blank" rel="noopener">{% translate "View" %}</a>
+            {% comment %}LV-92: abre sobre la ficha, sin perder la lista. El
+            `href` sigue siendo el visor directo, así que sin JS —o con el enlace
+            abierto en otra pestaña a propósito— se comporta como antes.
+            {% endcomment %}
+            <a class="btn btn-sm btn-outline-secondary" href="{% url 'document-preview' document.pk %}"
+               hx-get="{% url 'document-preview-frame' document.pk %}" hx-target="#modal-content"
+               data-bs-toggle="modal" data-bs-target="#generic-modal">{% translate "View" %}</a>
             <a class="btn btn-sm btn-outline-secondary" href="{% url 'document-download' document.pk %}">{% translate "Download" %}</a>
           </td>
         </tr>
