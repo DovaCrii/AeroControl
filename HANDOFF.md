@@ -120,6 +120,20 @@ ahora son **tres** carpetas por renombrar en `Z:` (las dos de `R4.1a` más la de
 **Trabajo pendiente mío**: `LV-92` (ver el PDF sin salir de la ficha, ya
 elegido), `LV-81b` (certificado con endosos) y `LV-78` paso 3b.
 
+**Bloque de revisión del 2026-08-14 — capturado, sin implementar.** El barrido
+(652 páginas, cero errores duros) más las observaciones del usuario dejaron
+**diez filas nuevas**: `LV-97`–`LV-106` en MASTER_PLAN. Las que mandan:
+**`LV-101` es P1** — el formulario "Editar" del permiso salta las guardas de
+estado y atribuye el cambio a `system` (evidencia de producción: `JEJ-2026-001`
+retrocedió `Completado → Aprobado` el 2026-08-12); y **`LV-97`** — la carga por
+lote contra `clamscan` real puede colgar al worker (12 archivos = 12 recargas de
+la base de firmas; la salida simple es `clamdscan`, decisión del usuario). La
+estrategia de escala (AirData/DroneLogbook, evaluación de lo de Codex, ruta a
+2.0) quedó en `docs/dev/analisis-competencia-2026-08-14.md` — resumen: la única
+brecha real contra los referentes es la ingesta automática de vuelos, que es
+`X.4`; no comprar SaaS; el siguiente trabajo UX de más valor es el **expediente
+operativo del permiso**.
+
 ## Pendientes inmediatos — empezar por acá
 
 > Los que **no dependen del código** (vigencias, CSP, antivirus, `Z:`, el PR de
