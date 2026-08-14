@@ -35,9 +35,9 @@ Los 2 bloqueadores que `v0.4.0-beta` declaró para la 1.0 **están cerrados**
 
 | # | Criterio | Estado |
 |---|---|---|
-| 1 | CSP a *enforcing* en `p340` | Falta activar la variable |
-| 2 | Notificaciones llegando a personas reales (LV-66/LV-67) | Pendiente en `p340` |
-| 3 | Importador `R4` corrido con `--apply` de verdad | Bloqueado: 2 carpetas `Z:` + antivirus |
+| 1 | CSP a *enforcing* en `p340` | ✅ **Hecho 2026-08-13**, verificado con `X-Forwarded-Proto: https` |
+| 2 | Notificaciones llegando a personas reales (LV-66/LV-67) | Destinatarios configurados (`aortega@`, `cmunoz@`) y 11 timers corriendo; **falta confirmar recepción de un correo real** |
+| 3 | Importador `R4` corrido con `--apply` de verdad | Bloqueado sólo por **3 carpetas de `Z:`** (las 2 de `R4.1a` + la de `LV-93`). El antivirus dejó de ser bloqueador: instalado 2026-08-13 y **verificado dando veredicto el 2026-08-14** |
 | 4 | Ensayo de restauración como **rutina**, con cadencia escrita | Hecho 1 vez |
 | 5 | Monitoreo mínimo (uptime + errores) | **No existe** |
 | 6 | 30 días de operación estable post-0.5.0 sin incidente P0 | Corre desde 2026-08-11 |
