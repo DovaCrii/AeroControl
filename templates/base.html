@@ -84,7 +84,28 @@
       <a href="{% url 'permission-list' %}" class="nav-item nav-operations {% if url_name == 'permission-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 13l2 2 4-4"/></svg>{% translate "Permissions" %}</a>
       <a href="{% url 'geo-plan-list' %}" class="nav-item nav-operations {% if url_name == 'geo-plan-list' or url_name == 'geo-plan-detail' or url_name == 'geo-plan-import' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2z"/><path d="M9 3v16M15 5v16"/></svg>{% translate "Geospatial planning" %}</a>
       <a href="{% url 'record-list' %}" class="nav-item nav-operations {% if url_name == 'record-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H19v16H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M8 4v16M11 9h6M11 13h4"/></svg>{% translate "Flights" %}</a>
+      {% comment %}LV-103 paso 1 (2026-08-14, decisión del usuario): el
+      calendario se retira siguiendo el procedimiento de LV-78 -- primero sin
+      superficies, después congelado, y sólo al final se borra si nadie lo echa
+      de menos. Motivo del usuario: "no lo utilizo, me estoy guiando de alertas
+      principalmente".
+
+      Y hay una razón estructural detrás de esa costumbre: de los ocho tipos de
+      evento que dibujaba, **cuatro son vencimientos** (documentos,
+      habilitaciones, credenciales, seguros), o sea lo mismo que ya llega a la
+      bandeja de alertas -- donde además se resuelven, se comentan y quedan como
+      evidencia ISO 10.2. Dos pantallas contando lo mismo, y sólo una en la que
+      se trabaja. Los otros cuatro son agenda (permisos, vuelos, asignaciones,
+      mantenciones), que es lo único que se pierde y que hoy nadie estaba
+      mirando.
+
+      **Nada se borra**: las vistas `calendar`/`calendar-events`, su feed, sus
+      permisos por tipo y sus tests siguen enteros; con revertir este comentario
+      vuelve entero. A diferencia del Kanban, acá no había ninguna dependencia
+      escondida -- `CALENDAR_EVENT_PERMISSIONS` y `CalendarAccessMixin` viven en
+      `apps.core.views` y sólo los usa el propio calendario.
       <a href="{% url 'calendar' %}" class="nav-item nav-operations {% if url_name == 'calendar' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>{% translate "Calendar" %}</a>
+      {% endcomment %}
 
       <span class="sidebar-label">{% translate "Compliance" %}</span>
       {% comment %}LV-D8 (2026-08-03): la lista general de Documentos se ocultó

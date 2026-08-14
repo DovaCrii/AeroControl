@@ -155,6 +155,16 @@ excepción se llevaba a los demás. La primera pantalla de la app llevaba semana
 con dos cajas vacías. **Ambos exigen `collectstatic`** (cambian `app.js` y
 `dashboard.js`).
 
+**`LV-110` y `LV-103` paso 1 hechos** (2026-08-14): la bandeja de alertas tiene
+columna propia para el motivo de resolución y botones parejos; y **el calendario
+salió del menú** por decisión del usuario, con el procedimiento de `LV-78` — sin
+borrar nada, la URL sigue viva y devolverlo es revertir un comentario.
+
+> **`LV-103` paso 3 (borrar) no se toca todavía**, y no por prudencia genérica:
+> `LV-102` sigue abierto —el usuario reportó que "el calendario muestra errores"
+> y eso **no se ha verificado contra los datos corregidos**, que siguen
+> pendientes de su lado. Borrarlo antes sería enterrar un posible defecto.
+
 **Lo siguiente en mi cola**: `LV-107` (expediente operativo del permiso), que es
 el trabajo UX de más valor según el análisis de competencia.
 
