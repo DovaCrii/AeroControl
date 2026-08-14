@@ -71,6 +71,16 @@ mirando producción:
    defecto convivió con el uso diario.
 4. **El selector de tipo de documento, agrupado por categoría** (`LV-95`), más el
    formulario reordenado. Es lo que trae la migración.
+5. **El antivirus que no puede revisar ya no acusa al archivo** (`LV-96`). Todo
+   código de salida ≠ 0 se leía como "archivo rechazado", pero ClamAV usa **1**
+   para firma detectada y **cualquier otro** para escáner fallando — y un ClamAV
+   recién instalado devuelve **2** hasta que `freshclam` termina. Sigue fallando
+   cerrado; lo que cambia es que el mensaje distingue, está en español, y el
+   fallo del escáner queda en el log como `antivirus_scan_failed`.
+
+> **Ojo con el intento de despliegue del 2026-08-14**: dio `Already up to date` y
+> `No migrations to apply` porque esta tanda estaba en una rama sin subir. Ya está
+> fusionada y empujada a `main`, así que hay que **repetir la secuencia**.
 
 ```bash
 cd /opt/aerocontrol && git pull

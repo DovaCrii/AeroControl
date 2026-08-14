@@ -170,6 +170,14 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **Un antivirus que no puede revisar ya no acusa al archivo (`LV-96`).** Si el
+  escáner no logra dar un veredicto —típico en un ClamAV recién instalado,
+  mientras baja su base de firmas— la subida se sigue rechazando (nada se guarda
+  sin revisar), pero **el mensaje dice que es un problema del servidor**, no que
+  tu archivo tenga una amenaza. Antes los dos casos se veían idénticos, así que
+  la salida era reintentar con otro archivo para siempre. Los mensajes además
+  aparecen **en español**, y el fallo del escáner queda registrado con su código
+  de salida para poder responder "¿fue el antivirus?" mirando el log.
 - **No se podía subir un documento desde "Nuevo documento" (`LV-94`).** Al elegir
   el tipo de entidad, la lista de **"Registro asociado" no se llenaba nunca**, y
   sin registro no hay documento que guardar. Pasaba en la pantalla de carga, en

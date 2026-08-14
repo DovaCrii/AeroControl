@@ -134,6 +134,14 @@ DOCUMENTS_STORAGE_REGION = config("DOCUMENTS_STORAGE_REGION", default="")
 DOCUMENTS_STORAGE_ACCESS_KEY = config("DOCUMENTS_STORAGE_ACCESS_KEY", default="")
 DOCUMENTS_STORAGE_SECRET_KEY = config("DOCUMENTS_STORAGE_SECRET_KEY", default="")
 DOCUMENTS_ANTIVIRUS_COMMAND = config("DOCUMENTS_ANTIVIRUS_COMMAND", default="")
+# LV-96: seconds to wait for a verdict before treating the scan as failed.
+# `clamscan` reloads its whole signature database on every invocation, so a cold
+# call takes tens of seconds -- 120 leaves room for that while still bounding the
+# worker. A hung scanner with no timeout is a page that never answers, which is
+# the least diagnosable failure this path can produce.
+DOCUMENTS_ANTIVIRUS_TIMEOUT = config(
+    "DOCUMENTS_ANTIVIRUS_TIMEOUT", default=120, cast=int
+)
 
 # Upload limits made explicit: Django's defaults are 2.5 MB each and easy to hit
 # unknowingly. FILE_UPLOAD_MAX_MEMORY_SIZE only decides when a *file* upload
