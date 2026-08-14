@@ -10,14 +10,53 @@ from django.db import transaction
 
 from apps.compliance.models import DocumentType
 
-# (code, name, requires_expiry, is_insurance, is_operational_record)
+# LV-95: the category is part of the catalog definition, not an afterthought --
+# a type seeded without one lands under "Other", which is exactly what the
+# grouping exists to avoid. `test_the_seeded_catalog_leaves_nothing_under_other`
+# (test_lv94_lv95_upload_form.py) fails if any row here leaves it at the default.
+PERSONNEL = DocumentType.CATEGORY_PERSONNEL
+AIRCRAFT = DocumentType.CATEGORY_AIRCRAFT
+DGAC = DocumentType.CATEGORY_DGAC
+OPERATIONAL = DocumentType.CATEGORY_OPERATIONAL
+MAINTENANCE = DocumentType.CATEGORY_MAINTENANCE
+COMPANY = DocumentType.CATEGORY_COMPANY
+
+# (code, name, requires_expiry, is_insurance, is_operational_record, category)
 DOCUMENT_TYPES = [
-    ("dgac-credential", "Credencial DGAC", True, False, False),
-    ("medical-cert", "Certificado médico / aptitud", True, False, False),
-    ("aircraft-registration", "Registro / matrícula de aeronave", True, False, False),
-    ("airworthiness-cert", "Certificado de aeronavegabilidad", True, False, False),
-    ("liability-insurance", "Seguro de responsabilidad civil", True, True, False),
-    ("dgac-flight-permit", "Autorización DGAC (carta de permiso)", True, False, False),
+    ("dgac-credential", "Credencial DGAC", True, False, False, PERSONNEL),
+    ("medical-cert", "Certificado médico / aptitud", True, False, False, PERSONNEL),
+    (
+        "aircraft-registration",
+        "Registro / matrícula de aeronave",
+        True,
+        False,
+        False,
+        AIRCRAFT,
+    ),
+    (
+        "airworthiness-cert",
+        "Certificado de aeronavegabilidad",
+        True,
+        False,
+        False,
+        AIRCRAFT,
+    ),
+    (
+        "liability-insurance",
+        "Seguro de responsabilidad civil",
+        True,
+        True,
+        False,
+        AIRCRAFT,
+    ),
+    (
+        "dgac-flight-permit",
+        "Autorización DGAC (carta de permiso)",
+        True,
+        False,
+        False,
+        DGAC,
+    ),
     # LV-64: two distinct real documents, not one -- the letter above is what
     # goes *to* the DGAC as part of the request; this is what comes *back*,
     # signed and folio'd, once the DGAC actually approves the operation
@@ -31,25 +70,41 @@ DOCUMENT_TYPES = [
         True,
         False,
         False,
+        DGAC,
     ),
     # LV-30: the per-flight operational records. They do not expire (a record of
     # what happened, not a validity), so requires_expiry=False.
-    ("flight-log", "Bitácora de vuelo (REG-015)", False, False, True),
-    ("rpa-checklist", "Check list RPA (LVE-003)", False, False, True),
-    ("drone-inspection", "Inspección de dron (LVE-002)", False, False, True),
+    ("flight-log", "Bitácora de vuelo (REG-015)", False, False, True, OPERATIONAL),
+    ("rpa-checklist", "Check list RPA (LVE-003)", False, False, True, OPERATIONAL),
+    (
+        "drone-inspection",
+        "Inspección de dron (LVE-002)",
+        False,
+        False,
+        True,
+        OPERATIONAL,
+    ),
     # R4.1/R4.8: pulled forward from R4.8 because import_document_repository
     # cannot classify anything under the Z: repository's "02.-"/"03.-"/"04.-"
     # subfolders without them. Historical records, not validities that lapse
     # -- requires_expiry=False, same reasoning as the flight-log group above.
-    ("flight-request", "Solicitud de vuelo (histórico)", False, False, False),
+    ("flight-request", "Solicitud de vuelo (histórico)", False, False, False, DGAC),
     (
         "incident-investigation-record",
         "Registro de investigación de incidente",
         False,
         False,
         False,
+        OPERATIONAL,
     ),
-    ("maintenance-certificate", "Certificado de mantención", False, False, False),
+    (
+        "maintenance-certificate",
+        "Certificado de mantención",
+        False,
+        False,
+        False,
+        MAINTENANCE,
+    ),
     # R7.3 (ISO 7.1.5): GNSS/RTK and camera calibration certificates. A real
     # "Certificado Calibración.pdf" already sits in Z:\CC706-...\04.- Mantenciones
     # waiting for a place to live. requires_expiry=True -- unlike
@@ -61,6 +116,7 @@ DOCUMENT_TYPES = [
         True,
         False,
         False,
+        MAINTENANCE,
     ),
     # R4.6/R4.8: the remaining company-wide document types the new "Documentos
     # de la empresa" repository needs to actually be usable -- without these,
@@ -70,12 +126,19 @@ DOCUMENT_TYPES = [
     # document that is not periodically renewed/re-uploaded.
     # requires_expiry=False, same reasoning as company-procedure below (a
     # static reference document, not a vigencia to watch).
-    ("aoc-certificate", "Certificado AOC", False, False, False),
+    ("aoc-certificate", "Certificado AOC", False, False, False, COMPANY),
     # company-procedure: manuals and procedures (e.g. the flyaway/emergency
     # response procedure ISO 45001 8.2 asks for). Revised through
     # is_current_version, not a vigencia -- same reasoning as
     # maintenance-certificate above.
-    ("company-procedure", "Procedimiento o manual de la empresa", False, False, False),
+    (
+        "company-procedure",
+        "Procedimiento o manual de la empresa",
+        False,
+        False,
+        False,
+        COMPANY,
+    ),
     # monthly-non-operation-notice: the DGAC filing for a month with no RPAS
     # activity. A historical record of what (did not) happen, not a validity.
     (
@@ -84,6 +147,7 @@ DOCUMENT_TYPES = [
         False,
         False,
         False,
+        DGAC,
     ),
 ]
 
@@ -94,7 +158,14 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **options):
         created_count = 0
-        for code, name, requires_expiry, is_insurance, is_op_record in DOCUMENT_TYPES:
+        for (
+            code,
+            name,
+            requires_expiry,
+            is_insurance,
+            is_op_record,
+            category,
+        ) in DOCUMENT_TYPES:
             _obj, created = DocumentType.objects.get_or_create(
                 code=code,
                 defaults={
@@ -102,6 +173,7 @@ class Command(BaseCommand):
                     "requires_expiry": requires_expiry,
                     "is_insurance": is_insurance,
                     "is_operational_record": is_op_record,
+                    "category": category,
                 },
             )
             created_count += int(created)

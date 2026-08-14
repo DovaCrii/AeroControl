@@ -45,8 +45,12 @@ CSP en **enforcing** (verificada con `X-Forwarded-Proto: https`; sobre `http` no
 se ve porque un 301 se adelanta al middleware). ClamAV instalado y
 `DOCUMENTS_ANTIVIRUS_COMMAND=clamscan` activo.
 
-**Hay una segunda tanda chica en `main`, SIN desplegar y SIN migraciones.** Son
-dos arreglos encontrados mirando producción:
+**Hay una segunda tanda en `main`, SIN desplegar. Desde el 2026-08-14 lleva UNA
+migración** (`compliance/0019`, `LV-95`: la categoría de los tipos de documento,
+con su relleno) — ojo, porque hasta el 2026-08-13 esta tanda era "sin
+migraciones" y el bloque de comandos de abajo cambió por eso.
+
+Empezó con dos arreglos encontrados mirando producción:
 
 1. **El calendario anunciaba "Acciones"** —el carril del Kanban dado de baja—
    en su leyenda y su filtro, aunque `LV-78` ya lo había quitado del backend.
@@ -56,12 +60,30 @@ dos arreglos encontrados mirando producción:
    `save(update_fields=...)`, que **no corre `clean()`**, así que `RPA-3696`
    quedó con fecha `2026-12-21` y estado `missing` a la vez. Corregido, 5 tests.
 
+Y el 2026-08-14 se le sumó lo de la carga de documentos, que el usuario reportó
+mirando producción:
+
+3. **No se podía subir un documento desde "Nuevo documento"** (`LV-94`): el
+   selector de "Registro asociado" no se llenaba nunca, así que no había nada que
+   guardar. Reproducido en el navegador (`htmx:targetError`). Afectaba también al
+   reemplazo y a la carga por lote. **Desde la ficha de una aeronave sí
+   funcionaba** —el enlace lleva los dos datos en la URL—, que es por qué el
+   defecto convivió con el uso diario.
+4. **El selector de tipo de documento, agrupado por categoría** (`LV-95`), más el
+   formulario reordenado. Es lo que trae la migración.
+
 ```bash
 cd /opt/aerocontrol && git pull
 set -a; source <(sudo cat /etc/aerocontrol.env); set +a
+uv run python manage.py migrate
 uv run python manage.py collectstatic --no-input
 sudo systemctl restart aerocontrol
 ```
+
+`0019` agrega una columna con valor por defecto y clasifica los tipos del
+catálogo estándar por su `code`; no borra ni reescribe nada más. Si en `p340` hay
+tipos creados a mano (como la "Poliza JAC" del demo), quedan en **"Otro"** hasta
+que alguien les elija categoría desde `/compliance/documenttype/<id>/edit/`.
 
 **Después, tres correcciones de datos en la app** (desde la interfaz: al guardar
 la ficha corre `clean()` y el estado del seguro se normaliza solo):
