@@ -98,6 +98,83 @@ class FlightPermissionForm(AeroModelForm):
         return cleaned
 
 
+class FlightPermissionUpdateForm(FlightPermissionForm):
+    """LV-101: the same form, minus the status.
+
+    Editing a permit used to offer `status` as a free dropdown, which made the
+    edit screen a **back door around every guard the status flow has**: it could
+    reach "approved" without the signed DGAC authorization that
+    `RequireDgacPermitPdfMixin` demands, walk backwards through the flow, and --
+    because `FlightPermissionUpdate` never set `_changed_by` -- write the
+    resulting history row attributed to `"system"`. Found in production on
+    `JEJ-2026-001`: *"Aprobado desde Completado · system"*.
+
+    Creation keeps the field (LV-39's reason still holds: a permit is assembled
+    while it is still "requested"). Changing the status of an existing permit
+    now has exactly two doors, both of which record who and why: the guarded
+    transitions, and `FlightPermissionCorrectStatus` for genuine corrections.
+    """
+
+    class Meta(FlightPermissionForm.Meta):
+        fields = [
+            field for field in FlightPermissionForm.Meta.fields if field != "status"
+        ]
+
+    def clean(self):
+        # The parent rejects an approved permit with no DGAC folio, reading the
+        # status from cleaned_data -- absent here, so it comes from the instance
+        # instead. Dropping the field must not drop the rule with it.
+        cleaned = super().clean()
+        cleaned["status"] = self.instance.status
+        number = (cleaned.get("permission_number") or "").strip()
+        if self.instance.status == "approved" and not number:
+            self.add_error(
+                "permission_number",
+                _("An approved permission needs its DGAC number."),
+            )
+        return cleaned
+
+
+class StatusCorrectionForm(forms.Form):
+    """LV-101: fixing a status that is simply wrong, on the record.
+
+    Corrections are real -- the defect above was found *because* somebody used
+    the edit screen to undo a mistaken "completed". Removing the back door
+    without offering a front door would only push the same act into `/admin/`,
+    where it would still be unattributed. So the correction exists, but it costs
+    a written reason: the same trade `AlertResolveForm` makes for ISO 10.2, and
+    the difference between an audit trail that explains itself and one that says
+    "system".
+    """
+
+    status = forms.ChoiceField(choices=(), label=_("Corrected status"))
+    reason = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3}),
+        label=_("Reason for the correction"),
+        help_text=_(
+            "Why the recorded status was wrong. It stays in the permit's "
+            "history, so write it for whoever reads this a year from now."
+        ),
+    )
+
+    def __init__(self, *args, current_status=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Every status except the one it already has: "correcting" a permit to
+        # the status it is already in is not a correction, and would write a
+        # history row saying nothing happened.
+        self.fields["status"].choices = [
+            (value, label)
+            for value, label in FlightPermission.STATUS_CHOICES
+            if value != current_status
+        ]
+
+    def clean_reason(self):
+        reason = self.cleaned_data["reason"].strip()
+        if not reason:
+            raise ValidationError(_("Write why the status is being corrected."))
+        return reason
+
+
 class FlightRecordForm(AeroModelForm):
     class Meta:
         model = FlightRecord

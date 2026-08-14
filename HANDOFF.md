@@ -125,11 +125,20 @@ El barrido (652 páginas, cero errores duros) más las observaciones del usuario
 dejaron **once filas nuevas**: `LV-97`–`LV-107` en MASTER_PLAN. Decisiones del
 usuario, mismo día: **(1)** `LV-97` → `clamdscan` (el código ya acepta
 `DOCUMENTS_ANTIVIRUS_COMMAND` con argumentos; falta el cambio de variable en la
-VM, con `--fdpass` obligatorio — ver la fila); **(2)** `LV-101` (P1: "Editar" del
-permiso salta guardas y atribuye a `system`) → quitar `status` de la edición y
-agregar **acción "corregir estado" con motivo obligatorio**, patrón R6.2 — **es
-lo primero a implementar**; **(3)** el **expediente operativo del permiso** entra
-como `LV-107` (cola 1.x). La estrategia de escala quedó en
+VM, con `--fdpass` obligatorio — ver la fila); **(2)** `LV-101` → **hecho el mismo día**:
+`status` salió del formulario de edición y entró la acción **"Corregir estado"**
+con motivo obligatorio, que registra quién y por qué y **mantiene la exigencia
+del PDF firmado de la DGAC** (`has_dgac_authorization`, extraída para que ambos
+caminos hagan la misma pregunta). **Al verificarlo en el navegador apareció
+`LV-108`, también hecho**: htmx no aplica respuestas de error, y esta app
+contesta un formulario inválido de modal con **422**, así que **ningún error de
+validación de ningún modal se veía nunca** — se arregló con un `htmx:beforeSwap`
+acotado a 422. Ninguno de los dos lleva migración; **`LV-108` sí exige
+`collectstatic`** (cambia `static/js/app.js`); **(3)** el **expediente operativo
+del permiso** entra como `LV-107` (cola 1.x).
+
+**Lo siguiente en mi cola**: `LV-106` (el N+1 de la bandeja de alertas), luego
+`LV-99`/`LV-100`/`LV-105` juntos, y después `LV-92`/`LV-107`. La estrategia de escala quedó en
 `docs/dev/analisis-competencia-2026-08-14.md` — resumen: la única brecha real
 contra AirData/DroneLogbook es la ingesta automática de vuelos (`X.4`); no
 comprar SaaS.

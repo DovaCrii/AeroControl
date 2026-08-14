@@ -170,6 +170,19 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **Editar un permiso ya no permite cambiarle el estado por la puerta de atrás
+  (`LV-101`).** El formulario de edición ofrecía el estado como un desplegable
+  cualquiera: por ahí se podía marcar **Aprobado sin la autorización firmada de
+  la DGAC**, retroceder en el flujo, y el historial quedaba atribuido a
+  `system` en vez de a la persona. En su lugar hay un botón **"Corregir
+  estado"** que **exige un motivo escrito**, deja quién y por qué en el
+  historial, y **mantiene la exigencia del PDF firmado** — corregir no es un
+  atajo para saltarse el papeleo, es dejar claro que lo anotado estaba mal.
+- **Los errores de los formularios en ventana emergente ahora se ven
+  (`LV-108`).** Al guardar un formulario inválido dentro de un modal —crear,
+  editar, resolver una alerta— el servidor respondía diciendo qué estaba mal y
+  **la pantalla no mostraba nada**: la ventana se quedaba quieta, sin error y
+  sin cerrarse. Afectaba a todos los modales de la app.
 - **Un antivirus que no puede revisar ya no acusa al archivo (`LV-96`).** Si el
   escáner no logra dar un veredicto —típico en un ClamAV recién instalado,
   mientras baja su base de firmas— la subida se sigue rechazando (nada se guarda

@@ -34,6 +34,14 @@ urlpatterns = [
         views.FlightPermissionComplete.as_view(),
         name="permission-complete",
     ),
+    # LV-101: correcting a wrongly recorded status, with a reason on record.
+    # Separate from the transitions above because it is a different act: those
+    # say what happened next, this says what was written down was wrong.
+    path(
+        "permissions/<uuid:pk>/correct-status/",
+        views.FlightPermissionCorrectStatus.as_view(),
+        name="permission-correct-status",
+    ),
     # Flight Records
     path("records/", views.FlightRecordList.as_view(), name="record-list"),
     path("records/new/", views.FlightRecordCreate.as_view(), name="record-create"),
