@@ -1,0 +1,47 @@
+{% load crispy_forms_tags i18n %}
+{% comment %}LV-94/LV-95: **el único** lugar donde se dibuja el formulario de
+carga. Lo usan la página completa (`document_form.html`), el modal
+(`_document_form_content.html`) y el reemplazo (`document_replace.html`).
+
+Que sea uno solo no es orden por el orden: `LV-94` fue exactamente esto. El
+`<select>` de tipo de entidad pide por HTMX la lista de registros y la inyecta en
+`#document-object-field`, un `id` que sólo existía en el fragmento del modal. En
+la página completa —que dibujaba `{{ form|crispy }}` de corrido— el destino no
+existía, htmx respondía `targetError` en la consola y **el selector de "Registro
+asociado" nunca se llenaba**: no había forma de subir un documento desde ahí.
+Mientras el `id` viva junto al campo, y el campo en un solo archivo, el defecto
+no puede volver por copia desactualizada.
+
+`LV-95`: el orden es el del trabajo real —a qué pertenece, qué es, el archivo,
+su vigencia— y recién al final lo opcional. El título estaba primero, aunque su
+propia ayuda dice que se genera a partir de las tres respuestas que venían
+después.{% endcomment %}
+{% if form.non_field_errors %}
+<div class="alert alert-danger">{{ form.non_field_errors }}</div>
+{% endif %}
+{% if not form.fields.doc_type.queryset.exists %}
+<div class="alert alert-warning d-flex justify-content-between align-items-center">
+  <span>{% translate "No document types configured yet." %}</span>
+  <a href="{% url 'documenttype-create' %}" target="_blank" class="btn btn-sm btn-outline-dark text-nowrap">{% translate "Create one" %}</a>
+</div>
+{% endif %}
+
+<h2 class="h6 text-uppercase text-body-secondary border-bottom pb-2 mb-3">{% translate "What this document belongs to" %}</h2>
+{{ form.entity_type|as_crispy_field }}
+{% include "compliance/_document_object_field.html" %}
+
+<h2 class="h6 text-uppercase text-body-secondary border-bottom pb-2 mb-3 mt-4">{% translate "What document it is" %}</h2>
+{{ form.doc_type|as_crispy_field }}
+
+<h2 class="h6 text-uppercase text-body-secondary border-bottom pb-2 mb-3 mt-4">{% translate "The file" %}</h2>
+{{ form.file|as_crispy_field }}
+
+<h2 class="h6 text-uppercase text-body-secondary border-bottom pb-2 mb-3 mt-4">{% translate "Validity" %}</h2>
+<div class="row">
+  <div class="col-md-6">{{ form.issue_date|as_crispy_field }}</div>
+  <div class="col-md-6">{{ form.expiry_date|as_crispy_field }}</div>
+</div>
+
+<h2 class="h6 text-uppercase text-body-secondary border-bottom pb-2 mb-3 mt-4">{% translate "Optional details" %}</h2>
+{{ form.title|as_crispy_field }}
+{{ form.notes|as_crispy_field }}
