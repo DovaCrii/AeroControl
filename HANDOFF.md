@@ -38,207 +38,90 @@ Verificar: `systemctl list-timers 'aerocontrol-*' --no-pager`
 
 Notificaciones a `Dirección`: `aortega@jej.cl` + `cmunoz@jej.cl`.
 
-## Lo primero de la próxima sesión (2026-08-13, fin de ventana)
+## Estado al cierre del 2026-08-17
 
-**Desplegado en `p340` el 2026-08-13** ✅: las 7 migraciones, los 11 timers y la
-CSP en **enforcing** (verificada con `X-Forwarded-Proto: https`; sobre `http` no
-se ve porque un 301 se adelanta al middleware). ClamAV instalado y
-`DOCUMENTS_ANTIVIRUS_COMMAND=clamscan` activo — **verificado dando veredicto el
-2026-08-14** (`clamscan` sobre un archivo real devuelve `0`, o sea que la base de
-firmas está cargada). Importa la distinción: instalado y *sirviendo* no son lo
-mismo, y un ClamAV con la base a medio bajar devuelve `2` y rechaza toda subida.
+`main` = `origin/main`, árbol limpio, `pwsh scripts/verify.ps1` verde: **1440
+tests, cobertura 95.89%**. Las ramas fusionadas se podaron (quedan `main` y dos
+que **no** están fusionadas: `claude/amazing-bouman-1b3d09`, trabajo del Kanban
+que se dio de baja, y `claude/brave-benz-8580f9`, retenida por un *worktree*).
 
-**Hay una segunda tanda en `main`, SIN desplegar. Desde el 2026-08-14 lleva UNA
-migración** (`compliance/0019`, `LV-95`: la categoría de los tipos de documento,
-con su relleno) — ojo, porque hasta el 2026-08-13 esta tanda era "sin
-migraciones" y el bloque de comandos de abajo cambió por eso.
+### Desplegado y funcionando en `p340`
 
-Empezó con dos arreglos encontrados mirando producción:
+Todo lo de los días 13 al 17 está en producción, incluidas las migraciones
+`compliance/0019`, `0020` y `0021`. El antivirus quedó cerrado (`LV-97`):
+`DOCUMENTS_ANTIVIRUS_COMMAND="clamdscan --fdpass"`, con el demonio arrancado y
+verificado dando veredicto. **Las comillas no son opcionales** — `systemd` lee la
+línea entera, pero el `source` del despliegue es bash y sin ellas parte el valor.
 
-1. **El calendario anunciaba "Acciones"** —el carril del Kanban dado de baja—
-   en su leyenda y su filtro, aunque `LV-78` ya lo había quitado del backend.
-   Una categoría que nunca puede tener eventos se lee como "esta semana no hay",
-   no como "esto ya no existe". Corregido, con test.
-2. **`load_dgac_vigencias` dejaba el seguro contradiciéndose**: escribe con
-   `save(update_fields=...)`, que **no corre `clean()`**, así que `RPA-3696`
-   quedó con fecha `2026-12-21` y estado `missing` a la vez. Corregido, 5 tests.
+### Lo que falta hacer en la VM — y sin esto, código desplegado que no sirve
 
-Y el 2026-08-14 se le sumó lo de la carga de documentos, que el usuario reportó
-mirando producción:
+1. **Los dos timers nuevos** (serían **13**), con el bloque `mkjob` de
+   `docs/scheduled-operations.md`: `check_scheduled_jobs` (09:00) y
+   `verify_backup` (22:30). **Hasta que existan, `LV-114` y `LV-115` están
+   desplegados y no avisan a nadie** — exactamente el modo de fallo que
+   `AGENTS.md` documenta.
+2. **La hora del respaldo.** El sistema operativo está en UTC y Django sella los
+   nombres en hora de Chile, así que el respaldo "de las 22:00" corre a las
+   **18:00 hora local**, en plena jornada. Desde `LV-116` eso ya no arriesga la
+   integridad de la copia (se toma con la API de SQLite), así que es orden y no
+   urgencia: `mkjob backup "backup" "*-*-* 02:00:00"`.
+3. **Dos alertas duplicadas** que quedaron escritas antes de `LV-111`
+   (`Carlos Peñailillo` y `RPA-5532`): se resuelven a mano una vez y no vuelven.
+4. **Los tipos de documento creados a mano** quedaron en "Otro" (`LV-98`).
 
-3. **No se podía subir un documento desde "Nuevo documento"** (`LV-94`): el
-   selector de "Registro asociado" no se llenaba nunca, así que no había nada que
-   guardar. Reproducido en el navegador (`htmx:targetError`). Afectaba también al
-   reemplazo y a la carga por lote. **Desde la ficha de una aeronave sí
-   funcionaba** —el enlace lleva los dos datos en la URL—, que es por qué el
-   defecto convivió con el uso diario.
-4. **El selector de tipo de documento, agrupado por categoría** (`LV-95`), más el
-   formulario reordenado. Es lo que trae la migración.
-5. **El antivirus que no puede revisar ya no acusa al archivo** (`LV-96`). Todo
-   código de salida ≠ 0 se leía como "archivo rechazado", pero ClamAV usa **1**
-   para firma detectada y **cualquier otro** para escáner fallando — y un ClamAV
-   recién instalado devuelve **2** hasta que `freshclam` termina. Sigue fallando
-   cerrado; lo que cambia es que el mensaje distingue, está en español, y el
-   fallo del escáner queda en el log como `antivirus_scan_failed`.
+### Lo que sólo puede hacer el usuario, por impacto
 
-> **Ojo con el intento de despliegue del 2026-08-14**: dio `Already up to date` y
-> `No migrations to apply` porque esta tanda estaba en una rama sin subir. Ya está
-> fusionada y empujada a `main`, así que hay que **repetir la secuencia**.
+| Qué | Por qué importa |
+|---|---|
+| **8 vigencias sin dato** (`LV-74`) | Único con impacto de cumplimiento **hoy**: un nulo no genera alerta, así que son invisibles |
+| **3 correcciones de fichas** (`RPA-5532`, `7126`, `3696`) | Destraban `LV-102` — recién con datos correctos se puede ver si el calendario falla de verdad |
+| **3 carpetas en `Z:`** (`R4.1a` + `LV-93`) | Destraban `R4.4`: correr el importador con `--apply` |
+| **El PR de AeroLink** | Destraba `X.4`, que es la etapa 2.0 completa |
 
-```bash
-cd /opt/aerocontrol && git pull
-set -a; source <(sudo cat /etc/aerocontrol.env); set +a
-uv run python manage.py migrate
-uv run python manage.py collectstatic --no-input
-sudo systemctl restart aerocontrol
-```
+Los detalles operativos, con comandos, en
+[docs/dev/pendientes-usuario-2026-08-13.md](docs/dev/pendientes-usuario-2026-08-13.md).
 
-`0019` agrega una columna con valor por defecto y clasifica los tipos del
-catálogo estándar por su `code`; no borra ni reescribe nada más. Si en `p340` hay
-tipos creados a mano (como la "Poliza JAC" del demo), quedan en **"Otro"** hasta
-que alguien les elija categoría desde `/compliance/documenttype/<id>/edit/`.
+### Qué se hizo el 14 y el 17
 
-**Después, tres correcciones de datos en la app** (desde la interfaz: al guardar
-la ficha corre `clean()` y el estado del seguro se normaliza solo):
+Dieciocho filas cerradas. El detalle de cada una está en `MASTER_PLAN.md`; acá
+sólo lo que cambia cómo trabajar mañana:
 
-| Aeronave | Qué hacer | Por qué |
-|---|---|---|
-| `RPA-5532` | Vencimiento seguro JAC = **`2027-08-04`**, y avanzar la escalera hasta **"Póliza vigente"** | Res. Ex. **1.075** de la JAC aprueba el certificado 136 hasta esa fecha. La app tiene `2026-08-08`, que es anterior y ya vencida |
-| `RPA-7126` | Vencimiento = **`2027-08-13`**, escalera en **"Presentado en SIGO, esperando la JAC"**, y **serial → `1581F7FVC265Q00DM5QG`** | Certificado **161** (emitido 13-08-2026). La resolución **todavía no llega**, por eso no es "vigente". El serial se corrige porque **manda el certificado** (decisión del usuario, ver `LV-93`) |
-| `RPA-3696` | Abrir y guardar sin cambiar nada | Arrastra el estado inconsistente que dejó el cargador antes del arreglo |
+- **Documentos**: se arregló que no se pudiera subir uno (`LV-94`), el catálogo
+  se agrupa por categoría (`LV-95`), los listados agrupan y filtran por ella
+  (`LV-104`) y "Ver" abre el archivo sobre la ficha (`LV-92`).
+- **Alertas**: lo resuelto ya no reaparece (`LV-111`), no persiguen aeronaves
+  dadas de baja (`LV-113`), la bandeja tiene orden (`LV-112`) y el motivo tiene
+  columna propia (`LV-110`). Ya no cuestan una consulta por fila (`LV-106`).
+- **Permisos**: `LV-101` cerró una puerta trasera real —se llegaba a "Aprobado"
+  sin el PDF firmado y sin registrar quién— y la ficha abre con el **expediente
+  operativo** (`LV-107`).
+- **Infraestructura**: monitoreo de trabajos (`LV-114`), verificación diaria del
+  respaldo (`LV-115`) y respaldo consistente con la API de SQLite (`LV-116`).
+- **Tres defectos que nadie había reportado**, encontrados verificando en el
+  navegador: ningún error de modal se veía nunca (`LV-108`), los dos gráficos del
+  panel llevaban semanas vacíos (`LV-109`), y el calendario salió del menú por
+  decisión del usuario (`LV-103` paso 1).
 
-Los PDF de `RPA-7126` (certificado 161 y solicitud a la JAC) y el de `RPA-5532`
-(Res. Ex. 1.075) están en `D:\OneDrive - J.E.J. Ingeniería S.A\DGAC\` y hay que
-subirlos a la ficha de cada aeronave.
+Dos análisis nuevos, los dos pedidos por el usuario:
+[competencia y ruta de escala](docs/dev/analisis-competencia-2026-08-14.md) —la
+única brecha real contra AirData/DroneLogbook es la ingesta automática de vuelos
+(`X.4`), y no conviene comprar SaaS— y
+[la bandeja de alertas](docs/dev/analisis-alertas-2026-08-14.md), donde el ciclo
+de vida ya está por encima del promedio del sector y lo que faltaba era higiene.
 
-**Y lo que sigue del lado del usuario**, en
-[docs/dev/pendientes-usuario-2026-08-13.md](docs/dev/pendientes-usuario-2026-08-13.md):
-ahora son **tres** carpetas por renombrar en `Z:` (las dos de `R4.1a` más la de
-`RPA-7126`, ver `LV-93`), el PR de AeroLink, y las vigencias que siguen sin dato
-(`RPA-2019` y 7 credenciales de operador — no están en ninguna captura).
+### Lo siguiente en mi cola
 
-**Trabajo pendiente mío**: `LV-92` (ver el PDF sin salir de la ficha, ya
-elegido), `LV-81b` (certificado con endosos) y `LV-78` paso 3b.
+**Nada que pueda avanzar sin una decisión del usuario.** Lo que queda:
 
-**Bloque de revisión del 2026-08-14 — capturado y con las 3 decisiones tomadas.**
-El barrido (652 páginas, cero errores duros) más las observaciones del usuario
-dejaron **once filas nuevas**: `LV-97`–`LV-107` en MASTER_PLAN. Decisiones del
-usuario, mismo día: **(1)** `LV-97` → `clamdscan` (el código ya acepta
-`DOCUMENTS_ANTIVIRUS_COMMAND` con argumentos; falta el cambio de variable en la
-VM, con `--fdpass` obligatorio — ver la fila); **(2)** `LV-101` → **hecho el mismo día**:
-`status` salió del formulario de edición y entró la acción **"Corregir estado"**
-con motivo obligatorio, que registra quién y por qué y **mantiene la exigencia
-del PDF firmado de la DGAC** (`has_dgac_authorization`, extraída para que ambos
-caminos hagan la misma pregunta). **Al verificarlo en el navegador apareció
-`LV-108`, también hecho**: htmx no aplica respuestas de error, y esta app
-contesta un formulario inválido de modal con **422**, así que **ningún error de
-validación de ningún modal se veía nunca** — se arregló con un `htmx:beforeSwap`
-acotado a 422. Ninguno de los dos lleva migración; **`LV-108` sí exige
-`collectstatic`** (cambia `static/js/app.js`); **(3)** el **expediente operativo
-del permiso** entra como `LV-107` (cola 1.x).
+- **`LV-81b`, la mitad grande** (certificado de póliza con endosos): toca
+  `insurance_expiry`, la columna que alimenta alertas, calendario, panel, reporte
+  y `load_dgac_vigencias` **a la vez**, y el usuario pidió ir de a poco.
+- **Estado terminal del seguro por fecha**: aplicarle el criterio que `LV-83` ya
+  tomó para los permisos. Media hora, en cuanto se decida.
+- `LV-78` paso 3b y `LV-103` paso 3 esperan su condición de disparo; `T4.1` tiene
+  hecha la mitad del cliente autenticado y falta la de datos, que se hará cuando
+  haya un segundo lector real que la pida.
 
-**`LV-106` también hecho** (2026-08-14): la bandeja de alertas hacía una consulta
-por fila para resolver de qué registro hablaba cada una — 24 consultas con 5
-alertas, 84 con 25; ahora es plano. Sin migración y sin cambio visible.
-
-**`LV-99`, `LV-100` y `LV-105` hechos** (2026-08-14, mismas pantallas, un solo
-viaje): cancelar una carga vuelve a la ficha de origen y no a la lista sin menú;
-el reemplazo muestra el registro en vez de ofrecer dos selectores que la vista
-descartaba; y el botón "Filtrar" dejó de estirarse (era la columna, no el botón).
-
-**`LV-92` hecho** (2026-08-14): "Ver" abre el documento en un modal sobre la
-ficha, y el botón se agregó además a los dos repositorios que no lo tenían. **Y
-al verificarlo apareció `LV-109`, también hecho**: los dos gráficos del panel
-—"Mantenciones por tipo" y "Vuelos por mes"— **nunca se dibujaban** desde
-`LV-89`, porque el script seguía construyendo dos gráficos ya retirados y la
-excepción se llevaba a los demás. La primera pantalla de la app llevaba semanas
-con dos cajas vacías. **Ambos exigen `collectstatic`** (cambian `app.js` y
-`dashboard.js`).
-
-**`LV-110` y `LV-103` paso 1 hechos** (2026-08-14): la bandeja de alertas tiene
-columna propia para el motivo de resolución y botones parejos; y **el calendario
-salió del menú** por decisión del usuario, con el procedimiento de `LV-78` — sin
-borrar nada, la URL sigue viva y devolverlo es revertir un comentario.
-
-> **`LV-103` paso 3 (borrar) no se toca todavía**, y no por prudencia genérica:
-> `LV-102` sigue abierto —el usuario reportó que "el calendario muestra errores"
-> y eso **no se ha verificado contra los datos corregidos**, que siguen
-> pendientes de su lado. Borrarlo antes sería enterrar un posible defecto.
-
-**`LV-107` hecho** (2026-08-14): la ficha del permiso abre con el **expediente
-operativo** — siete renglones que contestan "¿esta operación está completa y
-documentada?" nombrando lo que falta, y distinguiendo *vencido* de *sin dato
-cargado*. Era el trabajo UX de más valor del análisis de competencia. Sin
-migración.
-
-**`LV-104` hecho** (2026-08-14): los documentos vienen agrupados por categoría en
-cada ficha, y el repositorio de la empresa filtra por categoría. Sin migración.
-
-**`LV-111` hecho** (2026-08-14, bug reportado con captura): una alerta resuelta
-volvía a crearse esa misma noche. **Trae migración `compliance/0020`**, y su
-relleno importa: sin él, cada alerta ya existente se duplicaría **una vez más**
-en la primera corrida después de desplegar. Al desplegar esto conviene mirar la
-bandeja de `p340`: las filas duplicadas que ya están escritas **no se borran
-solas** —son registros, no basura— así que las de la captura (`Carlos
-Peñailillo`, `RPA-5532`) hay que resolverlas o deshacerlas a mano una vez.
-
-**`LV-81b` a medias** (2026-08-14): hecha la mitad de presentación — una póliza
-vencida deja de dibujarse como vigente en la escalera de la ficha, derivándolo de
-la fecha sin escribir dato. **`LV-65` se cerró sin programar nada**: ya estaba
-hecho por `R5.5`, verificado en el navegador (sexta vez que el tablero da por
-pendiente algo hecho).
-
-**`LV-116` hecho** (2026-08-17, hallazgo al verificar `LV-115` contra `p340`):
-el respaldo se toma con la API de SQLite y no copiando bytes. **Detalle
-operativo que conviene no perder**: en `p340` el sistema operativo está en UTC y
-Django sella los nombres en hora de Chile, así que **el respaldo "de las 22:00"
-corre a las 18:00 hora local**, en plena jornada. Ya no arriesga la integridad de
-la copia, pero si se quiere que la hora signifique lo que dice:
-`mkjob backup "backup" "*-*-* 02:00:00"`.
-
-**`LV-115` hecho** (2026-08-14) — **la mitad automatizable del criterio 4**:
-`verify_backup` abre el último respaldo y lo consulta; si no es restaurable avisa
-a Dirección con los pasos. El checksum no bastaba: una copia tomada mientras la
-app escribía puede estar rota y tener el checksum correcto. **Falta su timer**
-(22:30, después del respaldo). El ensayo completo de restauración sigue siendo
-humano y sigue sin cadencia escrita.
-
-**`LV-114` hecho** (2026-08-14) — **monitoreo mínimo, el criterio 5 de 1.0**:
-`check_scheduled_jobs` avisa a Dirección cuando otro trabajo se atrasa o falla, y
-calla cuando todo está al día. Resultó que detectarlo ya estaba hecho (el panel
-de situación lo calculaba); faltaba **contarlo**. **Falta instalar su timer en
-`p340`** con el bloque `mkjob` de `docs/scheduled-operations.md` (09:00, después
-de los trabajos de la mañana) — serían **12 timers**. Sin ese paso, el código
-está desplegado y no avisa a nadie, que es exactamente el modo de fallo que
-`AGENTS.md` documenta.
-
-**Análisis de la bandeja de alertas** (2026-08-14, pedido del usuario tras
-`LV-111`): `docs/dev/analisis-alertas-2026-08-14.md`. Conclusión corta: el ciclo
-de vida de una alerta acá **está por encima del promedio del sector** (cierre
-automático al renovar con motivo trazable, causa raíz obligatoria, verificación
-de eficacia a 30 días) — lo que faltaba no era proceso sino higiene, y salieron
-dos defectos reales, **`LV-113`** (las reglas de fecha nunca excluyeron los
-registros dados de baja; `LV-90` corrigió sólo la otra mitad del motor) y
-**`LV-112`** (la bandeja no tenía orden declarado, lo que además hacía el
-paginado poco fiable). **Los dos hechos.** Quedan capturadas como ideas, sin
-defecto detrás: severidad derivada del vencimiento, posponer una alerta, dueño
-nominal y agrupación visual por regla.
-
-**Lo siguiente en mi cola**: la mitad grande de `LV-81b` (certificado de póliza
-con endosos), que **necesita una conversación antes de programar** — toca `insurance_expiry`, la
-columna que alimenta alertas, calendario, panel, reporte y `load_dgac_vigencias`
-a la vez, y el usuario pidió ir de a poco. Su "pendiente menor" (una póliza
-vencida sigue mostrando el paso "Póliza vigente" alcanzado) es **la misma
-decisión que `LV-83`** tomó para los permisos —estado terminal por fecha, con
-trabajo diario— y conviene tomarla una vez para los dos. `LV-78` paso 3b y
-`LV-103` paso 3 siguen esperando su condición de disparo.
-
-**Del lado del usuario, al 2026-08-14**: `LV-97` cerrado —
-`DOCUMENTS_ANTIVIRUS_COMMAND="clamdscan --fdpass"` activo en `p340`, con el
-demonio arrancado— y **falta confirmar una subida real** contra ese antivirus. La estrategia de escala quedó en
-`docs/dev/analisis-competencia-2026-08-14.md` — resumen: la única brecha real
-contra AirData/DroneLogbook es la ingesta automática de vuelos (`X.4`); no
-comprar SaaS.
 
 ## Pendientes inmediatos — empezar por acá
 
@@ -446,7 +329,11 @@ el guardado **no reescribe filas ya almacenadas**. La migración `registry/0032`
 las normaliza y **aborta si dos sólo difieren en mayúsculas** — eso lo resuelve
 el certificado RPAS de la DGAC, no una migración.
 
-## Sin desplegar: `R8.4` y el lote `LV-80` a `LV-91`
+## ~~Sin desplegar~~: `R8.4` y el lote `LV-80` a `LV-91` — **desplegado el 2026-08-13**
+
+> Se conserva por lo que documenta —**qué hizo cada migración a los datos**—, que
+> es lo que hace falta si alguna vez hay que explicar por qué una fila cambió. El
+> encabezado decía "sin desplegar" y ya no era cierto.
 
 **Siete migraciones, ninguna riesgosa, pero dos tocan datos:**
 
