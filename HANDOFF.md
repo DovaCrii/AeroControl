@@ -171,9 +171,17 @@ documentada?" nombrando lo que falta, y distinguiendo *vencido* de *sin dato
 cargado*. Era el trabajo UX de más valor del análisis de competencia. Sin
 migración.
 
-**Lo siguiente en mi cola**: `LV-81b` (certificado de póliza con endosos) y
-`LV-104` (documentos con facetas para cuando entre el volumen de `Z:`). `LV-78`
-paso 3b y `LV-103` paso 3 siguen esperando su condición de disparo.
+**`LV-104` hecho** (2026-08-14): los documentos vienen agrupados por categoría en
+cada ficha, y el repositorio de la empresa filtra por categoría. Sin migración.
+
+**Lo siguiente en mi cola**: `LV-81b` (certificado de póliza con endosos), que
+**necesita una conversación antes de programar** — toca `insurance_expiry`, la
+columna que alimenta alertas, calendario, panel, reporte y `load_dgac_vigencias`
+a la vez, y el usuario pidió ir de a poco. Su "pendiente menor" (una póliza
+vencida sigue mostrando el paso "Póliza vigente" alcanzado) es **la misma
+decisión que `LV-83`** tomó para los permisos —estado terminal por fecha, con
+trabajo diario— y conviene tomarla una vez para los dos. `LV-78` paso 3b y
+`LV-103` paso 3 siguen esperando su condición de disparo.
 
 **Del lado del usuario, al 2026-08-14**: `LV-97` cerrado —
 `DOCUMENTS_ANTIVIRUS_COMMAND="clamdscan --fdpass"` activo en `p340`, con el
