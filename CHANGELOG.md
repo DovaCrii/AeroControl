@@ -238,6 +238,11 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   la salida era reintentar con otro archivo para siempre. Los mensajes además
   aparecen **en español**, y el fallo del escáner queda registrado con su código
   de salida para poder responder "¿fue el antivirus?" mirando el log.
+- **`sqlparse` al día (dos CVE).** Dependencia interna de Django: 0.5.5 → 0.6.0.
+  Lo detectó el gate de seguridad del proyecto, no un incidente.
+- **Las tablas se leen bien con lector de pantalla (`T5.8`).** Los encabezados de
+  las 33 pantallas con tabla ahora declaran si encabezan una columna o una fila.
+  No cambia nada de lo que ves; cambia lo que oye quien usa la app sin mirarla.
 - **El respaldo se toma de forma consistente aunque estés usando la app
   (`LV-116`).** Antes se copiaba el archivo de la base tal cual, y si alguien
   guardaba algo mientras la copia avanzaba podía quedar a medio camino entre dos

@@ -33,16 +33,16 @@ column and a "+ New" button, and this inventory is read-only by design
     <table class="table table-hover mb-0">
       <thead>
         <tr>
-          <th>{% translate "Serial number" %}</th>
-          <th class="text-end">{% translate "Cycles" %}</th>
+          <th scope="col">{% translate "Serial number" %}</th>
+          <th scope="col" class="text-end">{% translate "Cycles" %}</th>
           {% comment %}"Health" reuses the msgid already in the catalog; a
           literal "Health (%)" here would become a second, python-format msgid
           ("Health (%%)") for the same concept.{% endcomment %}
-          <th class="text-end">{% translate "Health" %} (%)</th>
-          <th>{% translate "Last seen on aircraft" %}</th>
-          <th>{% translate "Firmware" %}</th>
-          <th class="cell-status">{% translate "Status" %}</th>
-          <th>{% translate "Last synced" %}</th>
+          <th scope="col" class="text-end">{% translate "Health" %} (%)</th>
+          <th scope="col">{% translate "Last seen on aircraft" %}</th>
+          <th scope="col">{% translate "Firmware" %}</th>
+          <th scope="col" class="cell-status">{% translate "Status" %}</th>
+          <th scope="col">{% translate "Last synced" %}</th>
         </tr>
       </thead>
       <tbody id="table-body">{% include "registry/_battery_rows.html" %}</tbody>

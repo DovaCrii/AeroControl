@@ -20,11 +20,11 @@
 registration -- this list already had the two-line block, it just sat in the
 second column; now it is the pattern the other three follow.{% endcomment %}
 {% block list_header %}
-<th>{% translate "Registration" %}</th>
-<th>{% translate "Cost center" %}</th>
-<th class="cell-status">{% translate "Status" %}</th>
-<th class="cell-status">{% translate "Location" %}</th>
-<th class="cell-status">{% translate "Insurance" %}</th>
+<th scope="col">{% translate "Registration" %}</th>
+<th scope="col">{% translate "Cost center" %}</th>
+<th scope="col" class="cell-status">{% translate "Status" %}</th>
+<th scope="col" class="cell-status">{% translate "Location" %}</th>
+<th scope="col" class="cell-status">{% translate "Insurance" %}</th>
 {% endblock %}
 
 {% block table_body %}{% include "registry/_aircraft_rows.html" %}{% endblock %}

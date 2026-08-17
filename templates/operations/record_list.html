@@ -2,11 +2,11 @@
 {% load i18n %}
 
 {% block list_header %}
-<th>{% translate "Date" %}</th>
-<th>{% translate "Flight permission" %}</th>
-<th>{% translate "Pilot" %}</th>
-<th>{% translate "Aircraft" %}</th>
-<th>{% translate "Duration" %}</th>
+<th scope="col">{% translate "Date" %}</th>
+<th scope="col">{% translate "Flight permission" %}</th>
+<th scope="col">{% translate "Pilot" %}</th>
+<th scope="col">{% translate "Aircraft" %}</th>
+<th scope="col">{% translate "Duration" %}</th>
 {% endblock %}
 
 {% block table_body %}{% include "operations/_record_rows.html" %}{% endblock %}

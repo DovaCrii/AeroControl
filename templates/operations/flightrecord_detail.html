@@ -21,13 +21,13 @@
 
   <table class="table table-bordered">
     <tbody>
-      <tr><th class="w-25">{% translate "Permission" %}</th><td><a href="{% url 'permission-detail' record.permission.pk %}">{{ record.permission }}</a></td></tr>
-      <tr><th>{% translate "Date" %}</th><td>{{ record.actual_date|date:"Y-m-d" }}</td></tr>
-      <tr><th>{% translate "Departure" %}</th><td>{{ record.departure_time|time:"H:i" }}</td></tr>
-      <tr><th>{% translate "Arrival" %}</th><td>{{ record.arrival_time|time:"H:i" }}</td></tr>
-      <tr><th>{% translate "Pilot" %}</th><td>{{ record.pilot }}</td></tr>
-      <tr><th>{% translate "Aircraft" %}</th><td>{{ record.aircraft }}</td></tr>
-      <tr><th>{% translate "Notes" %}</th><td>{{ record.notes|default:"—" }}</td></tr>
+      <tr><th scope="row" class="w-25">{% translate "Permission" %}</th><td><a href="{% url 'permission-detail' record.permission.pk %}">{{ record.permission }}</a></td></tr>
+      <tr><th scope="row">{% translate "Date" %}</th><td>{{ record.actual_date|date:"Y-m-d" }}</td></tr>
+      <tr><th scope="row">{% translate "Departure" %}</th><td>{{ record.departure_time|time:"H:i" }}</td></tr>
+      <tr><th scope="row">{% translate "Arrival" %}</th><td>{{ record.arrival_time|time:"H:i" }}</td></tr>
+      <tr><th scope="row">{% translate "Pilot" %}</th><td>{{ record.pilot }}</td></tr>
+      <tr><th scope="row">{% translate "Aircraft" %}</th><td>{{ record.aircraft }}</td></tr>
+      <tr><th scope="row">{% translate "Notes" %}</th><td>{{ record.notes|default:"—" }}</td></tr>
     </tbody>
   </table>
 </div>

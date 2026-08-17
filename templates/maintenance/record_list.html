@@ -15,7 +15,7 @@
   <div class="col-auto"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
 </form>
 <div class="card"><div class="table-responsive"><table class="table table-hover mb-0">
-  <thead><tr><th>{% translate "Aircraft" %}</th><th>{% translate "Type" %}</th><th>{% translate "Scheduled" %}</th><th>{% translate "Status" %}</th><th class="text-end">{% translate "Actions" %}</th></tr></thead>
+  <thead><tr><th scope="col">{% translate "Aircraft" %}</th><th scope="col">{% translate "Type" %}</th><th scope="col">{% translate "Scheduled" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col" class="text-end">{% translate "Actions" %}</th></tr></thead>
   <tbody>{% for object in objects %}<tr>
     <td><a href="{{ object.pk }}/">{{ object.aircraft }}</a></td><td>{{ object.get_maintenance_type_display }}</td><td>{{ object.scheduled_date|date:"Y-m-d" }}</td>
     <td>

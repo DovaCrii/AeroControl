@@ -89,7 +89,7 @@ the provider did not answer -- a forecast is context, never a blocker.{% endcomm
   <p class="text-muted small mb-3">{% translate "Append-only: each row is what the forecast said at the moment it was reviewed." %}</p>
   <div class="table-responsive">
     <table class="table table-sm mb-0">
-      <thead><tr><th>{% translate "Reviewed" %}</th><th>{% translate "For" %}</th><th>{% translate "Max wind" %}</th><th>{% translate "Max gusts" %}</th><th>{% translate "Precipitation" %}</th><th>{% translate "Chance of rain" %}</th><th>{% translate "By" %}</th></tr></thead>
+      <thead><tr><th scope="col">{% translate "Reviewed" %}</th><th scope="col">{% translate "For" %}</th><th scope="col">{% translate "Max wind" %}</th><th scope="col">{% translate "Max gusts" %}</th><th scope="col">{% translate "Precipitation" %}</th><th scope="col">{% translate "Chance of rain" %}</th><th scope="col">{% translate "By" %}</th></tr></thead>
       <tbody>{% for review in weather_reviews %}<tr>
         <td class="text-nowrap">{{ review.created_at|date:"Y-m-d H:i" }}</td>
         <td class="text-nowrap">{{ review.target_date|date:"Y-m-d" }}</td>
@@ -208,7 +208,7 @@ the provider did not answer -- a forecast is context, never a blocker.{% endcomm
       <div class="card-body">
         <h2 class="admin-section-title mb-2">{% translate "Flight permission link history" %}</h2>
         <table class="table table-sm mb-0">
-          <thead><tr><th>{% translate "From" %}</th><th>{% translate "To" %}</th><th>{% translate "Created" %}</th></tr></thead>
+          <thead><tr><th scope="col">{% translate "From" %}</th><th scope="col">{% translate "To" %}</th><th scope="col">{% translate "Created" %}</th></tr></thead>
           <tbody>
             {% for link in permission_links %}
             <tr>

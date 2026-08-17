@@ -20,10 +20,10 @@
 column -- rows that have one flag it next to the code and keep the full text in
 the cost center's detail page.{% endcomment %}
 {% block list_header %}
-<th>{% translate "Code" %}</th>
-<th>{% translate "Contract administrator name" %}</th>
-<th class="cell-numeric">{% translate "Operators" %}</th>
-<th class="cell-numeric">{% translate "Aircraft" %}</th>
+<th scope="col">{% translate "Code" %}</th>
+<th scope="col">{% translate "Contract administrator name" %}</th>
+<th scope="col" class="cell-numeric">{% translate "Operators" %}</th>
+<th scope="col" class="cell-numeric">{% translate "Aircraft" %}</th>
 {% endblock %}
 
 {% block table_body %}{% include "registry/_costcenter_rows.html" %}{% endblock %}

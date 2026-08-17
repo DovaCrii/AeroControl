@@ -30,11 +30,11 @@ sized for its own page, and that hasn't changed here.{% endcomment %}
 {% endblock %}
 
 {% block list_header %}
-<th>{% translate "Number" %}</th>
-<th>{% translate "Operators" %}</th>
-<th>{% translate "Aircraft" %}</th>
-<th>{% translate "Validity" %}</th>
-<th>{% translate "Status" %}</th>
+<th scope="col">{% translate "Number" %}</th>
+<th scope="col">{% translate "Operators" %}</th>
+<th scope="col">{% translate "Aircraft" %}</th>
+<th scope="col">{% translate "Validity" %}</th>
+<th scope="col">{% translate "Status" %}</th>
 {% endblock %}
 
 {% block table_body %}{% include "operations/_permission_rows.html" %}{% endblock %}

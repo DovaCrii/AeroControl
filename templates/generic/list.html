@@ -31,11 +31,11 @@
       <thead>
         <tr>
           {% block list_header %}
-          <th>{% translate "Name" %}</th>
-          <th>{% translate "Created" %}</th>
-          <th>{% translate "Status" %}</th>
+          <th scope="col">{% translate "Name" %}</th>
+          <th scope="col">{% translate "Created" %}</th>
+          <th scope="col">{% translate "Status" %}</th>
           {% endblock %}
-          <th class="text-end">{% translate "Actions" %}</th>
+          <th scope="col" class="text-end">{% translate "Actions" %}</th>
         </tr>
       </thead>
       <tbody id="table-body">{% block table_body %}{% include "generic/_table_body.html" %}{% endblock %}</tbody>

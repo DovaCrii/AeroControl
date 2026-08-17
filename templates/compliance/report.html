@@ -65,7 +65,7 @@ window closed) and renders "—": a 0% there would read as total failure.{% endc
   <div class="p-3 border-bottom"><h2 class="h5 mb-0">{% translate "Operational indicators" %}</h2></div>
   <div class="table-responsive">
     <table class="table mb-0">
-      <thead><tr><th>{% translate "Indicator" %}</th><th class="text-end">{% translate "Value" %}</th><th class="text-end">{% translate "Target" %}</th><th class="text-end">{% translate "Status" %}</th></tr></thead>
+      <thead><tr><th scope="col">{% translate "Indicator" %}</th><th scope="col" class="text-end">{% translate "Value" %}</th><th scope="col" class="text-end">{% translate "Target" %}</th><th scope="col" class="text-end">{% translate "Status" %}</th></tr></thead>
       <tbody>{% for kpi in report.operational_kpis %}<tr>
         <td><strong>{{ kpi.label }}</strong><div class="small text-muted">{{ kpi.help }}</div></td>
         {% comment %}Not every indicator is a percentage: the incident-free

@@ -2,11 +2,11 @@
 {% load i18n %}
 
 {% block list_header %}
-<th>{% translate "Aircraft" %}</th>
-<th>{% translate "Cost center" %}</th>
-<th>{% translate "Status" %}</th>
-<th>{% translate "Purpose" %}</th>
-<th>{% translate "Since" %}</th>
+<th scope="col">{% translate "Aircraft" %}</th>
+<th scope="col">{% translate "Cost center" %}</th>
+<th scope="col">{% translate "Status" %}</th>
+<th scope="col">{% translate "Purpose" %}</th>
+<th scope="col">{% translate "Since" %}</th>
 {% endblock %}
 
 {% block table_body %}{% include "registry/_aircraftassignment_rows.html" %}{% endblock %}
