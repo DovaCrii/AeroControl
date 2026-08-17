@@ -7,10 +7,9 @@ not a progression; this one *is* a progression, it just forks.
 """
 
 import pytest
-from django.contrib.auth.models import Permission, User
-from django.test import Client
 from django.urls import reverse
 
+from apps.core.testing import login_as
 from apps.maintenance.models import MaintenanceHistory, MaintenanceRecord
 from apps.registry.models import Aircraft
 
@@ -25,15 +24,6 @@ def _record(**kwargs):
     return MaintenanceRecord.objects.create(
         aircraft=aircraft, maintenance_type="preventive", **kwargs
     )
-
-
-def _client(*codenames):
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
 
 
 @pytest.mark.django_db
@@ -139,7 +129,7 @@ class TestOnThePage:
         record.save()
 
         content = (
-            _client("view_maintenancerecord")
+            login_as("view_maintenancerecord")
             .get(reverse("maintenance-detail", args=[record.pk]))
             .content.decode()
         )

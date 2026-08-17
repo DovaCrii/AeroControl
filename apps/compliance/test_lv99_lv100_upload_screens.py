@@ -14,26 +14,16 @@ it does is worse than no control.
 from datetime import date
 
 import pytest
-from django.contrib.auth.models import Permission, User
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import Client
 from django.urls import reverse
 
+from apps.core.testing import login_as
 from apps.compliance.models import Document, DocumentType
 from apps.registry.models import Aircraft, CostCenter
 
 PDF_BYTES = b"%PDF-1.4\nfor tests\n"
 TODAY = date(2026, 8, 14)
-
-
-def _client(*codenames):
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
 
 
 @pytest.fixture
@@ -68,7 +58,7 @@ class TestCancelGoesBackWhereSavingWould:
         content_type = ContentType.objects.get_for_model(Aircraft)
 
         html = (
-            _client("add_document")
+            login_as("add_document")
             .get(
                 reverse("document-create"),
                 {"entity_type": content_type.pk, "object_id": str(aircraft.pk)},
@@ -81,14 +71,14 @@ class TestCancelGoesBackWhereSavingWould:
 
     def test_without_a_record_it_falls_back_to_the_company_repository(self):
         """Not the unlisted general list: somewhere with a way out."""
-        html = _client("add_document").get(reverse("document-create")).content.decode()
+        html = login_as("add_document").get(reverse("document-create")).content.decode()
 
         assert reverse("company-documents") in html
         assert f'href="{reverse("document-list")}"' not in html
 
     def test_a_junk_record_in_the_url_does_not_break_the_page(self):
         """The parameters are untrusted -- they come from a URL."""
-        response = _client("add_document").get(
+        response = login_as("add_document").get(
             reverse("document-create"),
             {"entity_type": "999999", "object_id": "not-a-uuid"},
         )
@@ -101,7 +91,7 @@ class TestCancelGoesBackWhereSavingWould:
 class TestReplaceShowsTheRecordInsteadOfPretendingToOfferIt:
     def test_the_pickers_are_not_offered(self, document):
         html = (
-            _client("change_document")
+            login_as("change_document")
             .get(reverse("document-replace", args=[document.pk]))
             .content.decode()
         )
@@ -112,7 +102,7 @@ class TestReplaceShowsTheRecordInsteadOfPretendingToOfferIt:
 
     def test_the_record_is_still_named_on_screen(self, document, aircraft):
         html = (
-            _client("change_document")
+            login_as("change_document")
             .get(reverse("document-replace", args=[document.pk]))
             .content.decode()
         )
@@ -121,7 +111,7 @@ class TestReplaceShowsTheRecordInsteadOfPretendingToOfferIt:
 
     def test_replacing_still_works_with_the_fields_hidden(self, document, aircraft):
         """The whole risk of hiding them: the form must still validate."""
-        client = _client("change_document", "view_document", "add_document")
+        client = login_as("change_document", "view_document", "add_document")
         content_type = ContentType.objects.get_for_model(Aircraft)
 
         response = client.post(
@@ -147,7 +137,7 @@ class TestReplaceShowsTheRecordInsteadOfPretendingToOfferIt:
     def test_a_tampered_record_cannot_move_the_document(self, document, aircraft):
         """Hidden is not a guard -- the view forcing the values is."""
         other = CostCenter.objects.create(code="CC99", name="Otro")
-        client = _client("change_document", "view_document", "add_document")
+        client = login_as("change_document", "view_document", "add_document")
 
         client.post(
             reverse("document-replace", args=[document.pk]),

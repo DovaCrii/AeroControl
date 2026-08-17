@@ -10,23 +10,14 @@ sin el primero el retiro no ocurrió, y sin el segundo no es un retiro sino un
 borrado a medias, con una URL viva que ya nadie puede probar.
 """
 
+from apps.core.testing import login_as
 import pytest
-from django.contrib.auth.models import Permission, User
-from django.test import Client
 from django.urls import reverse
-
-
-def _client(*codenames):
-    user = User.objects.create_user("u-calendar", password="pw")
-    user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
 
 
 @pytest.mark.django_db
 def test_the_menu_no_longer_offers_the_calendar():
-    client = _client("view_flightpermission")
+    client = login_as("view_flightpermission")
 
     content = client.get(reverse("permission-list")).content.decode()
 
@@ -38,7 +29,7 @@ def test_but_the_calendar_still_works_for_whoever_goes_there_directly():
     """Congelado, no borrado. Si mañana se decide que hacía falta, alcanza con
     devolver el enlace -- y mientras tanto, quien tenga el enlace guardado no se
     encuentra con un 404 sin explicación."""
-    client = _client("view_flightpermission")
+    client = login_as("view_flightpermission")
 
     assert client.get(reverse("calendar")).status_code == 200
     assert client.get(reverse("calendar-events")).status_code == 200

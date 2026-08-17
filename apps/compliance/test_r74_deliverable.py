@@ -14,22 +14,13 @@ per contract, without a code change.
 from decimal import Decimal
 
 import pytest
-from django.contrib.auth.models import Permission, User
-from django.test import Client
+from django.contrib.auth.models import User
 from django.urls import reverse
 
+from apps.core.testing import login_as
 from apps.registry.models import CostCenter
 
 from .models import Deliverable
-
-
-def _client(*codenames):
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
 
 
 def _contract(**thresholds):
@@ -184,7 +175,7 @@ class TestTheViews:
         contract = _contract(max_rmse_xy_cm=Decimal("10.0"))
         deliverable = _deliverable(contract, rmse_xy_cm=Decimal("20.0"))
         deliverable.validate_quality(user=None)
-        client = _client("view_deliverable", "change_deliverable")
+        client = login_as("view_deliverable", "change_deliverable")
 
         response = client.post(reverse("deliverable-release", args=[deliverable.pk]))
 
@@ -197,7 +188,7 @@ class TestTheViews:
         contract = _contract(max_rmse_xy_cm=Decimal("10.0"))
         deliverable = _deliverable(contract, rmse_xy_cm=Decimal("20.0"))
         deliverable.validate_quality(user=None)
-        client = _client("view_deliverable", "change_deliverable")
+        client = login_as("view_deliverable", "change_deliverable")
 
         client.post(
             reverse("deliverable-release", args=[deliverable.pk]),
@@ -215,7 +206,7 @@ class TestTheViews:
         contract = _contract(max_rmse_xy_cm=Decimal("10.0"))
         deliverable = _deliverable(contract, rmse_xy_cm=Decimal("20.0"))
         deliverable.validate_quality(user=None)
-        client = _client("view_deliverable", "change_deliverable")
+        client = login_as("view_deliverable", "change_deliverable")
         client.post(
             reverse("deliverable-release", args=[deliverable.pk]),
             {"waiver_reason": "Cliente acepta con nota tecnica 4/2026"},
@@ -232,7 +223,7 @@ class TestTheViews:
         """ISO 8.6 asks for internal validation *before* release, so draft
         cannot jump the queue."""
         deliverable = _deliverable(_contract())
-        client = _client("view_deliverable", "change_deliverable")
+        client = login_as("view_deliverable", "change_deliverable")
 
         client.post(reverse("deliverable-release", args=[deliverable.pk]))
 
@@ -244,7 +235,7 @@ class TestTheViews:
         deliverable = _deliverable(_contract())
         deliverable.status = Deliverable.STATUS_RELEASED
         deliverable.save(update_fields=["status"])
-        client = _client("view_deliverable", "change_deliverable")
+        client = login_as("view_deliverable", "change_deliverable")
 
         client.post(reverse("deliverable-reject", args=[deliverable.pk]))
 
@@ -254,7 +245,7 @@ class TestTheViews:
     @pytest.mark.django_db
     def test_validating_requires_the_change_permission(self, db):
         deliverable = _deliverable(_contract())
-        client = _client("view_deliverable")
+        client = login_as("view_deliverable")
 
         response = client.post(reverse("deliverable-validate", args=[deliverable.pk]))
 
@@ -264,7 +255,7 @@ class TestTheViews:
 
     @pytest.mark.django_db
     def test_the_list_requires_view_permission(self, db):
-        response = _client().get(reverse("deliverable-list"))
+        response = login_as().get(reverse("deliverable-list"))
 
         assert response.status_code == 403
 
@@ -275,7 +266,7 @@ class TestTheViews:
         _deliverable(_contract2())
 
         content = (
-            _client("view_deliverable")
+            login_as("view_deliverable")
             .get(reverse("deliverable-list"))
             .content.decode()
         )

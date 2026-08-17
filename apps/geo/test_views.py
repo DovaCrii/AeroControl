@@ -4,11 +4,11 @@ import io
 import zipfile
 
 import pytest
-from django.contrib.auth.models import Permission, User
+from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import Client
 from django.urls import reverse
 
+from apps.core.testing import login_as
 from apps.compliance.models import Document
 from apps.geo.models import GeoPlan, GeoPlanHistory, GeoPlanVersion
 from apps.geo.test_kml import HAPPY_KML
@@ -19,15 +19,6 @@ DOCTYPE_KML = (
     b'<!DOCTYPE kml [ <!ENTITY lol "lol"> ]>\n'
     b"<kml><Document></Document></kml>"
 )
-
-
-def _client(*codenames):
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
 
 
 def _kml_upload(name="plan.kml", content=None):
@@ -73,7 +64,7 @@ class TestEmbeddedResource:
     def _import(self, settings, tmp_path):
         settings.DOCUMENTS_ROOT = str(tmp_path)
         center = CostCenter.objects.create(code="CCK", name="Kmz")
-        client = _client("add_geoplan", "view_geoplan")
+        client = login_as("add_geoplan", "view_geoplan")
         response = client.post(
             reverse("geo-plan-import"),
             {"title": "K", "cost_center": center.pk, "file": _kmz_with_icon()},
@@ -101,7 +92,7 @@ class TestEmbeddedResource:
     def test_requires_view_permission(self, db, settings, tmp_path):
         _client_with, plan = self._import(settings, tmp_path)
         url = reverse("api-v1-geo-plan-resource", args=[plan.pk])
-        assert _client().get(url, {"name": "files/icon.png"}).status_code in (401, 403)
+        assert login_as().get(url, {"name": "files/icon.png"}).status_code in (401, 403)
 
 
 class TestImport:
@@ -110,7 +101,7 @@ class TestImport:
         """LV-5: the import can take a few seconds on a large KMZ; the form
         carries the progressive-enhancement hook (static/js/app.js) that
         disables the button and shows a progress bar while it waits."""
-        client = _client("add_geoplan")
+        client = login_as("add_geoplan")
 
         response = client.get(reverse("geo-plan-import"))
 
@@ -148,7 +139,7 @@ class TestImport:
         )
         permission.operators.add(operator)
         permission.aircraft_fleet.add(aircraft)
-        client = _client("add_geoplan")
+        client = login_as("add_geoplan")
 
         response = client.get(
             reverse("geo-plan-import"), {"flight_permission": str(permission.pk)}
@@ -166,7 +157,7 @@ class TestImport:
         """LV-60 prefills the cost center by looking the permission up; a
         non-UUID in the query string must leave the field empty, not 500
         (same guard as the compliance report's filters, LV-54)."""
-        client = _client("add_geoplan")
+        client = login_as("add_geoplan")
 
         response = client.get(reverse("geo-plan-import"), {"flight_permission": "1"})
 
@@ -182,7 +173,7 @@ class TestImport:
         plan, both derived from the permission the user already chose."""
         settings.DOCUMENTS_ROOT = str(tmp_path)
         permission = _permission(CostCenter.objects.create(code="CC1", name="Uno"))
-        client = _client("add_geoplan")
+        client = login_as("add_geoplan")
 
         response = client.post(
             reverse("geo-plan-import"),
@@ -204,7 +195,7 @@ class TestImport:
     ):
         settings.DOCUMENTS_ROOT = str(tmp_path)
         center = CostCenter.objects.create(code="CC1", name="Uno")
-        client = _client("add_geoplan")
+        client = login_as("add_geoplan")
 
         response = client.post(
             reverse("geo-plan-import"),
@@ -218,7 +209,7 @@ class TestImport:
     def test_an_explicit_title_is_kept(self, db, settings, tmp_path):
         settings.DOCUMENTS_ROOT = str(tmp_path)
         permission = _permission(CostCenter.objects.create(code="CC1", name="Uno"))
-        client = _client("add_geoplan")
+        client = login_as("add_geoplan")
 
         client.post(
             reverse("geo-plan-import"),
@@ -240,7 +231,7 @@ class TestImport:
         settings.DOCUMENTS_ROOT = str(tmp_path)
         permission = _permission(CostCenter.objects.create(code="CC1", name="Uno"))
         other = CostCenter.objects.create(code="CC2", name="Dos")
-        client = _client("add_geoplan")
+        client = login_as("add_geoplan")
 
         response = client.post(
             reverse("geo-plan-import"),
@@ -258,7 +249,7 @@ class TestImport:
     @pytest.mark.django_db
     def test_neither_a_permission_nor_a_cost_center_is_rejected(self, db):
         """Nothing to inherit from, and GeoPlan.cost_center is not nullable."""
-        client = _client("add_geoplan")
+        client = login_as("add_geoplan")
 
         response = client.post(reverse("geo-plan-import"), {"file": _kml_upload()})
 
@@ -270,7 +261,7 @@ class TestImport:
     def test_import_requires_add_permission(self, db, settings, tmp_path):
         settings.DOCUMENTS_ROOT = str(tmp_path)
         center = CostCenter.objects.create(code="CC1", name="Uno")
-        client = _client("view_geoplan")  # can view, cannot add
+        client = login_as("view_geoplan")  # can view, cannot add
 
         response = client.post(
             reverse("geo-plan-import"),
@@ -286,7 +277,7 @@ class TestImport:
     ):
         settings.DOCUMENTS_ROOT = str(tmp_path)
         center = CostCenter.objects.create(code="CC1", name="Uno")
-        client = _client("add_geoplan")
+        client = login_as("add_geoplan")
 
         response = client.post(
             reverse("geo-plan-import"),
@@ -311,7 +302,7 @@ class TestImport:
     def test_malicious_upload_creates_nothing(self, db, settings, tmp_path):
         settings.DOCUMENTS_ROOT = str(tmp_path)
         center = CostCenter.objects.create(code="CC1", name="Uno")
-        client = _client("add_geoplan")
+        client = login_as("add_geoplan")
 
         response = client.post(
             reverse("geo-plan-import"),
@@ -340,13 +331,13 @@ class TestListAndDetail:
 
     @pytest.mark.django_db
     def test_list_requires_view_permission(self, db):
-        assert _client().get(reverse("geo-plan-list")).status_code == 403
-        assert _client("view_geoplan").get(reverse("geo-plan-list")).status_code == 200
+        assert login_as().get(reverse("geo-plan-list")).status_code == 403
+        assert login_as("view_geoplan").get(reverse("geo-plan-list")).status_code == 200
 
     @pytest.mark.django_db
     def test_list_export_csv(self, db):
         plan = self._plan(db)
-        response = _client("view_geoplan").get(
+        response = login_as("view_geoplan").get(
             reverse("geo-plan-list"), {"export": "csv"}
         )
         body = b"".join(response.streaming_content).decode("utf-8-sig")
@@ -356,8 +347,8 @@ class TestListAndDetail:
     def test_detail_requires_view_permission(self, db):
         plan = self._plan(db)
         url = reverse("geo-plan-detail", args=[plan.pk])
-        assert _client().get(url).status_code == 403
-        response = _client("view_geoplan").get(url)
+        assert login_as().get(url).status_code == 403
+        response = login_as("view_geoplan").get(url)
         assert response.status_code == 200
         assert "Plan" in response.content.decode()
 
@@ -375,7 +366,7 @@ class TestListAndDetail:
         plan.current_version = version
         plan.save(update_fields=["current_version", "updated_at"])
 
-        response = _client("view_geoplan").get(
+        response = login_as("view_geoplan").get(
             reverse("geo-plan-detail", args=[plan.pk])
         )
 
@@ -405,7 +396,7 @@ class TestListAndDetail:
     @pytest.mark.django_db
     def test_detail_without_version_has_no_content_url(self, db):
         plan = self._plan(db)  # no current_version
-        response = _client("view_geoplan").get(
+        response = login_as("view_geoplan").get(
             reverse("geo-plan-detail", args=[plan.pk])
         )
         assert response.status_code == 200
@@ -437,7 +428,7 @@ class TestEditorConfig:
     @pytest.mark.django_db
     def test_change_permission_and_editable_status_enables_editor(self, db):
         plan = self._plan(db, status="editing")
-        response = _client("view_geoplan", "change_geoplan").get(
+        response = login_as("view_geoplan", "change_geoplan").get(
             reverse("geo-plan-detail", args=[plan.pk])
         )
         config = response.context["map_config"]
@@ -452,7 +443,7 @@ class TestEditorConfig:
     @pytest.mark.django_db
     def test_view_only_user_gets_read_only(self, db):
         plan = self._plan(db, status="editing")
-        response = _client("view_geoplan").get(
+        response = login_as("view_geoplan").get(
             reverse("geo-plan-detail", args=[plan.pk])
         )
         config = response.context["map_config"]
@@ -463,7 +454,7 @@ class TestEditorConfig:
     @pytest.mark.django_db
     def test_approved_plan_is_not_editable_even_with_change_permission(self, db):
         plan = self._plan(db, status="approved")
-        response = _client("view_geoplan", "change_geoplan").get(
+        response = login_as("view_geoplan", "change_geoplan").get(
             reverse("geo-plan-detail", args=[plan.pk])
         )
         assert response.context["map_config"]["editable"] is False
@@ -483,8 +474,8 @@ class TestWorkflow:
     def test_start_editing_requires_change_permission(self, db):
         plan = self._plan(db, status="draft")
         url = reverse("geo-plan-start-editing", args=[plan.pk])
-        assert _client("view_geoplan").post(url).status_code == 403
-        assert _client("change_geoplan").post(url).status_code == 302
+        assert login_as("view_geoplan").post(url).status_code == 403
+        assert login_as("change_geoplan").post(url).status_code == 302
         plan.refresh_from_db()
         assert plan.status == "editing"
 
@@ -492,8 +483,8 @@ class TestWorkflow:
     def test_approve_needs_approve_permission_not_change(self, db):
         plan = self._plan(db, status="in_review")
         url = reverse("geo-plan-approve", args=[plan.pk])
-        assert _client("change_geoplan").post(url).status_code == 403
-        assert _client("approve_geoplan").post(url).status_code == 302
+        assert login_as("change_geoplan").post(url).status_code == 403
+        assert login_as("approve_geoplan").post(url).status_code == 302
         plan.refresh_from_db()
         assert plan.status == "approved"
 
@@ -501,14 +492,14 @@ class TestWorkflow:
     def test_reopen_from_approved_needs_approve_permission(self, db):
         plan = self._plan(db, status="approved")
         url = reverse("geo-plan-reopen", args=[plan.pk])
-        assert _client("approve_geoplan").post(url).status_code == 302
+        assert login_as("approve_geoplan").post(url).status_code == 302
         plan.refresh_from_db()
         assert plan.status == "editing"
 
     @pytest.mark.django_db
     def test_invalid_transition_leaves_status_unchanged(self, db):
         plan = self._plan(db, status="draft")  # approve is only valid from in_review
-        response = _client("approve_geoplan").post(
+        response = login_as("approve_geoplan").post(
             reverse("geo-plan-approve", args=[plan.pk])
         )
         assert response.status_code == 302  # redirected with an error message
@@ -518,7 +509,7 @@ class TestWorkflow:
     @pytest.mark.django_db
     def test_transition_writes_history(self, db):
         plan = self._plan(db, status="editing")
-        _client("change_geoplan").post(
+        login_as("change_geoplan").post(
             reverse("geo-plan-submit-review", args=[plan.pk])
         )
         plan.refresh_from_db()

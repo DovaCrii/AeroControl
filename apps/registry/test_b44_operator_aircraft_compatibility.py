@@ -9,11 +9,10 @@ no signal to compare against).
 from datetime import date, timedelta
 
 import pytest
-from django.contrib.auth.models import Permission, User
-from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.core.testing import login_as
 from apps.registry.models import (
     Aircraft,
     CostCenter,
@@ -22,15 +21,6 @@ from apps.registry.models import (
     QualificationType,
 )
 from apps.registry.selectors import operator_aircraft_compatibility_gaps
-
-
-def _client(*codenames):
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
 
 
 def _cc(code="CC1"):
@@ -145,7 +135,7 @@ class TestFlightPermissionCreateWarns:
         Qualification.objects.create(
             operator=operator, qualification_type=mavic, issue_date=date(2026, 1, 1)
         )
-        client = _client("add_flightpermission", "view_flightpermission")
+        client = login_as("add_flightpermission", "view_flightpermission")
 
         response = client.post(
             reverse("permission-create"),
@@ -182,7 +172,7 @@ class TestFlightPermissionCreateWarns:
         Qualification.objects.create(
             operator=operator, qualification_type=mavic, issue_date=date(2026, 1, 1)
         )
-        client = _client("add_flightpermission", "view_flightpermission")
+        client = login_as("add_flightpermission", "view_flightpermission")
 
         response = client.post(
             reverse("permission-create"),

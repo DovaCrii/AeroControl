@@ -7,26 +7,14 @@ through the UI.
 """
 
 import pytest
-from django.contrib.auth.models import Permission, User
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
-from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.core.testing import login_as
 from apps.core.models import OperationalTenant
 from apps.registry.models import Aircraft, Battery
-
-
-def _client(*codenames, member_of=None):
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    if member_of is not None:
-        member_of.members.add(user)
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
 
 
 class TestSerialIsTheJoinKey:
@@ -80,7 +68,7 @@ class TestProvenance:
             synced_at=synced_at,
         )
 
-        content = _client("view_battery").get(reverse("battery-list")).content.decode()
+        content = login_as("view_battery").get(reverse("battery-list")).content.decode()
 
         assert "NEVERSYNCED" in content
         assert "FRESH" in content
@@ -110,14 +98,14 @@ class TestHealthConstraint:
 class TestListSurface:
     @pytest.mark.django_db
     def test_requires_view_battery_permission(self):
-        assert _client().get(reverse("battery-list")).status_code == 403
-        assert _client("view_battery").get(reverse("battery-list")).status_code == 200
+        assert login_as().get(reverse("battery-list")).status_code == 403
+        assert login_as("view_battery").get(reverse("battery-list")).status_code == 200
 
     @pytest.mark.django_db
     def test_empty_state_explains_why_it_is_empty(self):
         """Until X.4 exists this list is empty; a bare "no records" would read
         as a bug rather than the designed state."""
-        response = _client("view_battery").get(reverse("battery-list"))
+        response = login_as("view_battery").get(reverse("battery-list"))
 
         content = response.content.decode()
         assert "AeroLink" in content
@@ -141,7 +129,7 @@ class TestListSurface:
     def test_list_offers_no_new_button(self):
         Battery.objects.create(serial_number="ABC123")
 
-        content = _client("view_battery").get(reverse("battery-list")).content.decode()
+        content = login_as("view_battery").get(reverse("battery-list")).content.decode()
 
         assert "+ Nuevo" not in content
         assert "+ New" not in content
@@ -153,7 +141,7 @@ class TestListSurface:
         )
         Battery.objects.create(serial_number="ABC123", aircraft=aircraft)
 
-        content = _client("view_battery").get(reverse("battery-list")).content.decode()
+        content = login_as("view_battery").get(reverse("battery-list")).content.decode()
 
         assert "RPA-4401" in content
 
@@ -162,7 +150,7 @@ class TestListSurface:
         Battery.objects.create(serial_number="AAA111", model="TB65")
         Battery.objects.create(serial_number="BBB222", model="BS60")
 
-        client = _client("view_battery")
+        client = login_as("view_battery")
         by_serial = client.get(reverse("battery-list"), {"q": "AAA"}).content.decode()
         assert "AAA111" in by_serial
         assert "BBB222" not in by_serial
@@ -175,7 +163,7 @@ class TestListSurface:
     def test_csv_export_works(self):
         Battery.objects.create(serial_number="ABC123", cycle_count=17)
 
-        response = _client("view_battery").get(
+        response = login_as("view_battery").get(
             reverse("battery-list"), {"export": "csv"}
         )
 
@@ -191,7 +179,7 @@ class TestTenantScoping:
         Battery.objects.create(serial_number="MINE", cycle_count=1)
         Battery.objects.create(serial_number="THEIRS", cycle_count=2, tenant=other)
 
-        content = _client("view_battery").get(reverse("battery-list")).content.decode()
+        content = login_as("view_battery").get(reverse("battery-list")).content.decode()
 
         assert "MINE" in content
         assert "THEIRS" not in content
@@ -203,7 +191,7 @@ class TestTenantScoping:
         Battery.objects.create(serial_number="THEIRS", cycle_count=2, tenant=other)
 
         content = (
-            _client("view_battery", member_of=other)
+            login_as("view_battery", member_of=other)
             .get(reverse("battery-list"))
             .content.decode()
         )

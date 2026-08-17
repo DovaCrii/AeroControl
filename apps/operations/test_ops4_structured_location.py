@@ -8,23 +8,13 @@ from datetime import date
 from decimal import Decimal
 
 import pytest
-from django.contrib.auth.models import Permission, User
 from django.core.exceptions import ValidationError
-from django.test import Client
 from django.urls import reverse
 
+from apps.core.testing import login_as
 from apps.registry.models import Aircraft, CostCenter, Operator
 
 from .models import FlightPermission
-
-
-def _client(*codenames):
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
 
 
 def _cc(code="CC1"):
@@ -109,7 +99,7 @@ class TestStructuredLocationForm:
         aircraft = Aircraft.objects.create(
             registration="CC-A1", type="RPA", model="M3", manufacturer="DJI"
         )
-        client = _client("add_flightpermission")
+        client = login_as("add_flightpermission")
 
         response = client.post(
             reverse("permission-create"),
@@ -132,7 +122,7 @@ class TestStructuredLocationForm:
         aircraft = Aircraft.objects.create(
             registration="CC-A1", type="RPA", model="M3", manufacturer="DJI"
         )
-        client = _client("add_flightpermission")
+        client = login_as("add_flightpermission")
 
         response = client.post(
             reverse("permission-create"),
@@ -178,7 +168,7 @@ class TestStructuredLocationDetailPage:
         permission.operators.add(operator)
         permission.aircraft_fleet.add(aircraft)
 
-        response = _client("view_flightpermission").get(
+        response = login_as("view_flightpermission").get(
             reverse("permission-detail", args=[permission.pk])
         )
         content = response.content.decode()
@@ -204,7 +194,7 @@ class TestStructuredLocationDetailPage:
         permission.operators.add(operator)
         permission.aircraft_fleet.add(aircraft)
 
-        response = _client("view_flightpermission").get(
+        response = login_as("view_flightpermission").get(
             reverse("permission-detail", args=[permission.pk])
         )
         content = response.content.decode()

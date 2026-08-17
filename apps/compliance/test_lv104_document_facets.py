@@ -16,11 +16,11 @@ grupos sea el declarado y no el alfabético del valor guardado en inglés.
 from datetime import date
 
 import pytest
-from django.contrib.auth.models import Permission, User
+from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
-from django.test import Client
 from django.urls import reverse
 
+from apps.core.testing import login_as
 from apps.compliance.attachments import attached_documents_context
 from apps.compliance.models import Document, DocumentType
 from apps.core.models import OperationalTenant
@@ -28,14 +28,6 @@ from apps.core.tenancy import get_default_tenant
 from apps.registry.models import Aircraft
 
 TODAY = date(2026, 8, 14)
-
-
-def _client(*codenames):
-    user = User.objects.create_user("u-facets", password="pw")
-    user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
 
 
 def _doc_type(code, category):
@@ -114,7 +106,7 @@ class TestTheFicheGroupsByCategory:
         _document(aircraft, _doc_type("cred", DocumentType.CATEGORY_PERSONNEL), "Cred")
 
         html = (
-            _client("view_aircraft", "view_document")
+            login_as("view_aircraft", "view_document")
             .get(reverse("aircraft-detail", args=[aircraft.pk]))
             .content.decode()
         )
@@ -128,7 +120,7 @@ class TestTheCompanyRepositoryFiltersByCategory:
     def test_it_narrows_the_list(self, tenant):
         _document(tenant, _doc_type("aoc", DocumentType.CATEGORY_COMPANY), "AOC")
         _document(tenant, _doc_type("cred", DocumentType.CATEGORY_PERSONNEL), "Cred")
-        client = _client("view_document")
+        client = login_as("view_document")
 
         html = client.get(
             reverse("company-documents"), {"category": DocumentType.CATEGORY_COMPANY}
@@ -143,7 +135,7 @@ class TestTheCompanyRepositoryFiltersByCategory:
         cambiar sin editar la URL."""
         _document(tenant, _doc_type("aoc", DocumentType.CATEGORY_COMPANY), "AOC")
         _document(tenant, _doc_type("cred", DocumentType.CATEGORY_PERSONNEL), "Cred")
-        client = _client("view_document")
+        client = login_as("view_document")
 
         response = client.get(
             reverse("company-documents"), {"category": DocumentType.CATEGORY_COMPANY}
@@ -158,7 +150,7 @@ class TestTheCompanyRepositoryFiltersByCategory:
     def test_it_only_offers_categories_that_have_documents(self, tenant):
         """Un filtro con opciones que devuelven vacío enseña a desconfiar."""
         _document(tenant, _doc_type("aoc", DocumentType.CATEGORY_COMPANY), "AOC")
-        client = _client("view_document")
+        client = login_as("view_document")
 
         response = client.get(reverse("company-documents"))
 
@@ -169,7 +161,7 @@ class TestTheCompanyRepositoryFiltersByCategory:
     def test_a_made_up_category_in_the_url_is_ignored_not_applied(self, tenant):
         """Los parámetros vienen de una URL, o sea que no son de fiar."""
         _document(tenant, _doc_type("aoc", DocumentType.CATEGORY_COMPANY), "AOC")
-        client = _client("view_document")
+        client = login_as("view_document")
 
         response = client.get(reverse("company-documents"), {"category": "inventada"})
 

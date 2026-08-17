@@ -9,6 +9,7 @@ from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.core.testing import login_as
 from apps.registry.models import (
     Aircraft,
     AircraftAssignment,
@@ -19,15 +20,6 @@ from apps.registry.models import (
 )
 
 TODAY = timezone.localdate()
-
-
-def _client(*codenames):
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
 
 
 def _operator(**kwargs):
@@ -167,8 +159,8 @@ class TestAppendOnlyLog:
 class TestOperatorAssignmentViews:
     @pytest.mark.django_db
     def test_list_requires_view_permission(self, db):
-        assert _client().get(reverse("operatorassignment-list")).status_code == 403
-        response = _client("view_operatorassignment").get(
+        assert login_as().get(reverse("operatorassignment-list")).status_code == 403
+        response = login_as("view_operatorassignment").get(
             reverse("operatorassignment-list")
         )
         assert response.status_code == 200
@@ -185,9 +177,9 @@ class TestOperatorAssignmentViews:
             "purpose": "",
         }
         url = reverse("operatorassignment-create")
-        assert _client("view_operatorassignment").post(url, payload).status_code == 403
+        assert login_as("view_operatorassignment").post(url, payload).status_code == 403
 
-        response = _client("add_operatorassignment").post(url, payload)
+        response = login_as("add_operatorassignment").post(url, payload)
         assert response.status_code == 302
         assert OperatorAssignment.objects.filter(operator=op, cost_center=cc).exists()
 
@@ -202,7 +194,7 @@ class TestOperatorAssignmentViews:
             "status": "active",
             "purpose": "",
         }
-        response = _client("add_operatorassignment").post(
+        response = login_as("add_operatorassignment").post(
             reverse("operatorassignment-create"), payload, HTTP_HX_REQUEST="true"
         )
         assert response.status_code == 204
@@ -228,7 +220,7 @@ class TestOperatorAssignmentViews:
             "status": "active",
             "purpose": "",
         }
-        response = _client("add_operatorassignment").post(
+        response = login_as("add_operatorassignment").post(
             reverse("operatorassignment-create"), payload, HTTP_HX_REQUEST="true"
         )
         assert response.status_code == 204
@@ -245,8 +237,8 @@ class TestOperatorAssignmentViews:
 class TestAircraftAssignmentViews:
     @pytest.mark.django_db
     def test_list_requires_view_permission(self, db):
-        assert _client().get(reverse("aircraftassignment-list")).status_code == 403
-        response = _client("view_aircraftassignment").get(
+        assert login_as().get(reverse("aircraftassignment-list")).status_code == 403
+        response = login_as("view_aircraftassignment").get(
             reverse("aircraftassignment-list")
         )
         assert response.status_code == 200
@@ -267,8 +259,8 @@ class TestAircraftAssignmentViews:
             "purpose": "",
         }
         url = reverse("aircraftassignment-create")
-        assert _client("view_aircraftassignment").post(url, payload).status_code == 403
-        response = _client("add_aircraftassignment").post(url, payload)
+        assert login_as("view_aircraftassignment").post(url, payload).status_code == 403
+        response = login_as("add_aircraftassignment").post(url, payload)
         assert response.status_code == 302
         assert AircraftAssignment.objects.filter(
             aircraft=aircraft, cost_center=cc
@@ -289,7 +281,7 @@ class TestAircraftAssignmentViews:
             "status": "active",
             "purpose": "",
         }
-        response = _client("add_aircraftassignment").post(
+        response = login_as("add_aircraftassignment").post(
             reverse("aircraftassignment-create"), payload, HTTP_HX_REQUEST="true"
         )
         assert response.status_code == 204
@@ -314,7 +306,7 @@ class TestAircraftAssignmentViews:
             "status": "active",
             "purpose": "",
         }
-        response = _client("add_aircraftassignment").post(
+        response = login_as("add_aircraftassignment").post(
             reverse("aircraftassignment-create"), payload, HTTP_HX_REQUEST="true"
         )
         assert response.status_code == 204
@@ -400,8 +392,8 @@ class TestResourceMovementLogView:
             operator=op, cost_center=_cc("CC1"), start_date=TODAY, status="active"
         )
         url = reverse("resourcemovementlog-list")
-        assert _client().get(url).status_code == 403
-        response = _client("view_resourcemovementlog").get(url)
+        assert login_as().get(url).status_code == 403
+        response = login_as("view_resourcemovementlog").get(url)
         assert response.status_code == 200
         assert op.full_name in response.content.decode()
 
@@ -418,7 +410,7 @@ class TestResourceMovementLogView:
         AircraftAssignment.objects.create(
             aircraft=aircraft, cost_center=cc, start_date=TODAY, status="active"
         )
-        client = _client("view_resourcemovementlog")
+        client = login_as("view_resourcemovementlog")
 
         response = client.get(
             reverse("resourcemovementlog-list"), {"resource_kind": "aircraft"}
@@ -440,7 +432,7 @@ class TestResourceMovementLogView:
         aircraft.current_site = cc
         aircraft.save(update_fields=["current_location", "current_site", "updated_at"])
 
-        response = _client("view_resourcemovementlog").get(
+        response = login_as("view_resourcemovementlog").get(
             reverse("resourcemovementlog-list")
         )
 
@@ -463,7 +455,7 @@ class TestResourceMovementLogView:
         AircraftAssignment.objects.create(
             aircraft=aircraft, cost_center=cc, start_date=TODAY, status="active"
         )
-        client = _client("view_resourcemovementlog")
+        client = login_as("view_resourcemovementlog")
 
         response = client.get(reverse("resourcemovementlog-list"), {"q": "4647"})
 
@@ -486,7 +478,7 @@ class TestResourceMovementLogView:
         AircraftAssignment.objects.create(
             aircraft=other, cost_center=cc, start_date=TODAY, status="active"
         )
-        client = _client("view_resourcemovementlog")
+        client = login_as("view_resourcemovementlog")
 
         response = client.get(reverse("resourcemovementlog-list"), {"q": "En faena"})
 
@@ -496,7 +488,7 @@ class TestResourceMovementLogView:
 
     @pytest.mark.django_db
     def test_export_link_is_present(self, db):
-        client = _client("view_resourcemovementlog")
+        client = login_as("view_resourcemovementlog")
         response = client.get(reverse("resourcemovementlog-list"))
         assert "export=csv" in response.content.decode()
 
@@ -506,7 +498,7 @@ class TestResourceMovementLogView:
         OperatorAssignment.objects.create(
             operator=op, cost_center=_cc("CC1"), start_date=TODAY, status="active"
         )
-        client = _client("view_resourcemovementlog")
+        client = login_as("view_resourcemovementlog")
 
         response = client.get(reverse("resourcemovementlog-list"), {"export": "csv"})
 

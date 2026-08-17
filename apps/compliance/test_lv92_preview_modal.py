@@ -12,24 +12,14 @@ must not become a way around its protection: the fragment answers with the same
 from datetime import date
 
 import pytest
-from django.contrib.auth.models import Permission, User
 from django.contrib.contenttypes.models import ContentType
-from django.test import Client
 from django.urls import reverse
 
+from apps.core.testing import login_as
 from apps.compliance.models import Document, DocumentType
 from apps.registry.models import Aircraft
 
 TODAY = date(2026, 8, 14)
-
-
-def _client(*codenames):
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
 
 
 @pytest.fixture
@@ -63,7 +53,7 @@ class TestTheFragment:
         document = _document(aircraft, doc_type, "policy/aircraft/x/policy.pdf")
 
         html = (
-            _client("view_document")
+            login_as("view_document")
             .get(reverse("document-preview-frame", args=[document.pk]))
             .content.decode()
         )
@@ -75,7 +65,7 @@ class TestTheFragment:
         document = _document(aircraft, doc_type, "policy/aircraft/x/scan.png")
 
         html = (
-            _client("view_document")
+            login_as("view_document")
             .get(reverse("document-preview-frame", args=[document.pk]))
             .content.decode()
         )
@@ -91,7 +81,7 @@ class TestTheFragment:
         document = _document(aircraft, doc_type, "plan/aircraft/x/area.kml")
 
         html = (
-            _client("view_document")
+            login_as("view_document")
             .get(reverse("document-preview-frame", args=[document.pk]))
             .content.decode()
         )
@@ -105,7 +95,7 @@ class TestTheFragment:
         document = _document(aircraft, doc_type, "policy/aircraft/x/policy.pdf")
 
         html = (
-            _client("view_document")
+            login_as("view_document")
             .get(reverse("document-preview-frame", args=[document.pk]))
             .content.decode()
         )
@@ -118,7 +108,7 @@ class TestItIsNotAWayAroundTheGuards:
     def test_without_view_permission_it_is_403(self, aircraft, doc_type):
         document = _document(aircraft, doc_type, "policy/aircraft/x/policy.pdf")
 
-        response = _client().get(reverse("document-preview-frame", args=[document.pk]))
+        response = login_as().get(reverse("document-preview-frame", args=[document.pk]))
 
         assert response.status_code == 403
 
@@ -127,7 +117,7 @@ class TestItIsNotAWayAroundTheGuards:
         document.is_active = False
         document.save(update_fields=["is_active"])
 
-        response = _client("view_document").get(
+        response = login_as("view_document").get(
             reverse("document-preview-frame", args=[document.pk])
         )
 
@@ -140,7 +130,7 @@ def test_the_record_page_opens_it_over_the_list(aircraft, doc_type):
     _document(aircraft, doc_type, "policy/aircraft/x/policy.pdf")
 
     html = (
-        _client("view_document", "view_aircraft")
+        login_as("view_document", "view_aircraft")
         .get(reverse("aircraft-detail", args=[aircraft.pk]))
         .content.decode()
     )

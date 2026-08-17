@@ -11,26 +11,17 @@ from datetime import timedelta
 from decimal import Decimal
 
 import pytest
-from django.contrib.auth.models import Group, Permission, User
+from django.contrib.auth.models import Group, User
 from django.core import mail
 from django.core.management import call_command
-from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.core.testing import login_as
 from apps.core.groups import REPORT_RECIPIENTS
 from apps.registry.models import CostCenter
 
 from .models import Deliverable, NonConformity
-
-
-def _client(*codenames):
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
 
 
 def _finding(**kwargs):
@@ -167,7 +158,7 @@ class TestTheRejectedDeliverableTrigger:
             cost_center=contract,
             rmse_xy_cm=Decimal("22.0"),
         )
-        client = _client("view_deliverable", "change_deliverable")
+        client = login_as("view_deliverable", "change_deliverable")
 
         client.post(reverse("deliverable-reject", args=[deliverable.pk]))
 
@@ -189,7 +180,7 @@ class TestTheRejectedDeliverableTrigger:
         )
         deliverable.status = Deliverable.STATUS_RELEASED
         deliverable.save(update_fields=["status"])
-        client = _client("view_deliverable", "change_deliverable")
+        client = login_as("view_deliverable", "change_deliverable")
 
         client.post(reverse("deliverable-reject", args=[deliverable.pk]))
 
@@ -200,7 +191,7 @@ class TestTheViews:
     @pytest.mark.django_db
     def test_closing_without_analysis_is_refused_by_the_view(self, db):
         finding = _finding()
-        client = _client("view_nonconformity", "change_nonconformity")
+        client = login_as("view_nonconformity", "change_nonconformity")
 
         client.post(reverse("nonconformity-close", args=[finding.pk]))
 
@@ -210,7 +201,7 @@ class TestTheViews:
     @pytest.mark.django_db
     def test_closing_with_analysis_works(self, db):
         finding = _finding(root_cause="Causa", corrective_action="Accion")
-        client = _client("view_nonconformity", "change_nonconformity")
+        client = login_as("view_nonconformity", "change_nonconformity")
 
         client.post(reverse("nonconformity-close", args=[finding.pk]))
 
@@ -220,7 +211,7 @@ class TestTheViews:
     @pytest.mark.django_db
     def test_the_detail_page_says_what_is_missing(self, db):
         finding = _finding()
-        client = _client("view_nonconformity", "change_nonconformity")
+        client = login_as("view_nonconformity", "change_nonconformity")
 
         content = client.get(
             reverse("nonconformity-detail", args=[finding.pk])
@@ -230,13 +221,13 @@ class TestTheViews:
 
     @pytest.mark.django_db
     def test_the_list_requires_view_permission(self, db):
-        assert _client().get(reverse("nonconformity-list")).status_code == 403
+        assert login_as().get(reverse("nonconformity-list")).status_code == 403
 
     @pytest.mark.django_db
     def test_verifying_requires_the_change_permission(self, db):
         finding = _finding(root_cause="Causa", corrective_action="Accion")
         finding.close()
-        client = _client("view_nonconformity")
+        client = login_as("view_nonconformity")
 
         response = client.post(
             reverse("nonconformity-verify-effectiveness", args=[finding.pk])
@@ -251,7 +242,7 @@ class TestTheViews:
         from apps.core.models import AuditEvent
 
         finding = _finding(root_cause="Causa", corrective_action="Accion")
-        client = _client("view_nonconformity", "change_nonconformity")
+        client = login_as("view_nonconformity", "change_nonconformity")
 
         client.post(reverse("nonconformity-close", args=[finding.pk]))
 

@@ -14,23 +14,11 @@ steps are **derived from the model** rather than written out in the template
 from datetime import date
 
 import pytest
-from django.contrib.auth.models import Group, Permission, User
-from django.test import Client
 from django.urls import reverse
 
+from apps.core.testing import login_as
 from apps.operations.models import FlightPermission, PermissionHistory
 from apps.registry.models import CostCenter
-
-
-def _client(*codenames, groups=()):
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    for name in groups:
-        user.groups.add(Group.objects.get_or_create(name=name)[0])
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client, user
 
 
 def _permit(status="requested", code=None):
@@ -98,7 +86,8 @@ class TestTheHistoryTable:
         """A trace that says who but not in what capacity answers half the
         auditor's question."""
         permit = _permit(status="approved")
-        client, user = _client("view_flightpermission", groups=["Compliance"])
+        client = login_as("view_flightpermission", groups=["Compliance"])
+        user = client.user
         PermissionHistory.objects.create(
             permission=permit,
             previous_status="requested",
@@ -122,7 +111,8 @@ class TestTheHistoryTable:
         what order" is half of what the screen is for -- so this overrides the
         model's newest-first default."""
         permit = _permit(status="completed")
-        client, user = _client("view_flightpermission")
+        client = login_as("view_flightpermission")
+        user = client.user
         for previous, new in (("requested", "approved"), ("approved", "completed")):
             PermissionHistory.objects.create(
                 permission=permit,
@@ -140,7 +130,8 @@ class TestTheHistoryTable:
     @pytest.mark.django_db
     def test_a_user_with_no_group_does_not_break_the_row(self, db):
         permit = _permit(status="approved")
-        client, user = _client("view_flightpermission")
+        client = login_as("view_flightpermission")
+        user = client.user
         PermissionHistory.objects.create(
             permission=permit,
             previous_status="requested",
@@ -162,7 +153,8 @@ class TestTheHistoryTable:
         page's query count must be the same. Pinning an absolute number instead
         would break on any unrelated change and say nothing about scaling.
         """
-        client, user = _client("view_flightpermission", groups=["Operations"])
+        client = login_as("view_flightpermission", groups=["Operations"])
+        user = client.user
         small = _entries_for(_permit(status="approved"), user, 2)
         large = _entries_for(_permit(status="approved"), user, 12)
 
@@ -200,7 +192,8 @@ class TestTheRenderedPage:
     @pytest.mark.django_db
     def test_the_stepper_renders_every_step_of_the_flow(self, db):
         permit = _permit(status="approved")
-        client, _user = _client("view_flightpermission")
+        client = login_as("view_flightpermission")
+        _user = client.user
 
         content = client.get(
             reverse("permission-detail", args=[permit.pk])
@@ -213,7 +206,8 @@ class TestTheRenderedPage:
     @pytest.mark.django_db
     def test_a_denied_permit_renders_the_blocked_step(self, db):
         permit = _permit(status="denied")
-        client, _user = _client("view_flightpermission")
+        client = login_as("view_flightpermission")
+        _user = client.user
 
         content = client.get(
             reverse("permission-detail", args=[permit.pk])

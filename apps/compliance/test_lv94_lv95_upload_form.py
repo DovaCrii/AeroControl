@@ -15,11 +15,10 @@ a deleted document type.
 """
 
 import pytest
-from django.contrib.auth.models import Permission, User
 from django.contrib.contenttypes.models import ContentType
-from django.test import Client
 from django.urls import reverse
 
+from apps.core.testing import login_as
 from apps.compliance.forms import DocumentForm, selectable_document_types
 from apps.compliance.management.commands.seed_document_types import DOCUMENT_TYPES
 from apps.compliance.models import Document, DocumentType
@@ -29,15 +28,6 @@ from apps.registry.models import Aircraft
 # name the same thing, and both have to be on the page.
 HX_TARGET = 'hx-target="#document-object-field"'
 TARGET_ID = 'id="document-object-field"'
-
-
-def _client(*codenames):
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
 
 
 @pytest.fixture
@@ -55,14 +45,14 @@ class TestRecordPickerCanBeFilled:
     """LV-94: every page that renders the upload form can reach its record list."""
 
     def test_the_create_page_carries_the_target_htmx_writes_into(self):
-        html = _client("add_document").get(reverse("document-create")).content.decode()
+        html = login_as("add_document").get(reverse("document-create")).content.decode()
 
         assert HX_TARGET in html
         assert TARGET_ID in html
 
     def test_the_batch_page_carries_it_too(self):
         html = (
-            _client("add_document")
+            login_as("add_document")
             .get(reverse("document-bulk-upload"))
             .content.decode()
         )
@@ -94,7 +84,7 @@ class TestRecordPickerCanBeFilled:
         )
 
         html = (
-            _client("change_document")
+            login_as("change_document")
             .get(reverse("document-replace", args=[document.pk]))
             .content.decode()
         )
@@ -107,7 +97,7 @@ class TestRecordPickerCanBeFilled:
         against a literal written twice."""
         content_type = ContentType.objects.get_for_model(Aircraft)
 
-        response = _client("add_document").get(
+        response = login_as("add_document").get(
             reverse("document-entity-options"), {"entity_type": content_type.pk}
         )
 

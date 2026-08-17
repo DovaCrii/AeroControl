@@ -3,12 +3,11 @@
 from datetime import timedelta
 
 import pytest
-from django.contrib.auth.models import Permission, User
 from django.contrib.contenttypes.models import ContentType
-from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.core.testing import login_as
 from apps.compliance.models import Document, DocumentType
 from apps.operations.models import FlightPermission
 from apps.registry.models import (
@@ -25,15 +24,6 @@ from apps.registry.models import (
 TODAY = timezone.localdate()
 
 
-def _client(*codenames):
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
-
-
 def _cc(code="CC1"):
     return CostCenter.objects.create(code=code, name=code)
 
@@ -46,15 +36,15 @@ class TestAccess:
     @pytest.mark.django_db
     def test_requires_view_costcenter_permission(self, db):
         cc = _cc()
-        assert _client().get(_url(cc)).status_code == 403
-        assert _client("view_costcenter").get(_url(cc)).status_code == 200
+        assert login_as().get(_url(cc)).status_code == 403
+        assert login_as("view_costcenter").get(_url(cc)).status_code == 200
 
 
 class TestTeamTab:
     @pytest.mark.django_db
     def test_hidden_without_operatorassignment_permission(self, db):
         cc = _cc()
-        response = _client("view_costcenter").get(_url(cc))
+        response = login_as("view_costcenter").get(_url(cc))
         assert response.context["operator_assignments"] is None
         assert 'id="tab-team"' not in response.content.decode()
 
@@ -78,7 +68,7 @@ class TestTeamTab:
             expiry_date=TODAY - timedelta(days=1),
         )
 
-        response = _client("view_costcenter", "view_operatorassignment").get(_url(cc))
+        response = login_as("view_costcenter", "view_operatorassignment").get(_url(cc))
 
         content = response.content.decode()
         assert "Expired Pilot" in content
@@ -97,7 +87,7 @@ class TestTeamTab:
         )
         assert not OperatorAssignment.objects.filter(cost_center=cc).exists()
 
-        response = _client("view_costcenter", "view_operatorassignment").get(_url(cc))
+        response = login_as("view_costcenter", "view_operatorassignment").get(_url(cc))
 
         assert "Imported Pilot" in response.content.decode()
         ids = {a.operator_id for a in response.context["operator_assignments"]}
@@ -108,7 +98,7 @@ class TestFleetTab:
     @pytest.mark.django_db
     def test_hidden_without_aircraftassignment_permission(self, db):
         cc = _cc()
-        response = _client("view_costcenter").get(_url(cc))
+        response = login_as("view_costcenter").get(_url(cc))
         assert response.context["aircraft_assignments"] is None
 
     @pytest.mark.django_db
@@ -120,7 +110,7 @@ class TestFleetTab:
         AircraftAssignment.objects.create(
             aircraft=aircraft, cost_center=cc, start_date=TODAY, status="active"
         )
-        response = _client("view_costcenter", "view_aircraftassignment").get(_url(cc))
+        response = login_as("view_costcenter", "view_aircraftassignment").get(_url(cc))
         assert "CC-XYZ" in response.content.decode()
 
 
@@ -128,7 +118,7 @@ class TestPermissionsTab:
     @pytest.mark.django_db
     def test_hidden_without_flightpermission_permission(self, db):
         cc = _cc()
-        response = _client("view_costcenter").get(_url(cc))
+        response = login_as("view_costcenter").get(_url(cc))
         assert response.context["flight_permissions"] is None
 
     @pytest.mark.django_db
@@ -148,7 +138,7 @@ class TestPermissionsTab:
         )
         permission.operators.add(operator)
         permission.aircraft_fleet.add(aircraft)
-        response = _client("view_costcenter", "view_flightpermission").get(_url(cc))
+        response = login_as("view_costcenter", "view_flightpermission").get(_url(cc))
         # R2.3: __str__ shows internal_folio now, not the DGAC folio ("P-1").
         assert permission.internal_folio in response.content.decode()
 
@@ -157,7 +147,7 @@ class TestDocumentsTab:
     @pytest.mark.django_db
     def test_hidden_without_document_permission(self, db):
         cc = _cc()
-        response = _client("view_costcenter").get(_url(cc))
+        response = login_as("view_costcenter").get(_url(cc))
         assert response.context["documents"] is None
 
     @pytest.mark.django_db
@@ -172,7 +162,7 @@ class TestDocumentsTab:
             issue_date=TODAY,
             file_path="x",
         )
-        response = _client("view_costcenter", "view_document").get(_url(cc))
+        response = login_as("view_costcenter", "view_document").get(_url(cc))
         assert "Signed contract" in response.content.decode()
 
 
@@ -180,7 +170,7 @@ class TestHistoryTab:
     @pytest.mark.django_db
     def test_hidden_without_resourcemovementlog_permission(self, db):
         cc = _cc()
-        response = _client("view_costcenter").get(_url(cc))
+        response = login_as("view_costcenter").get(_url(cc))
         assert response.context["movements"] is None
 
     @pytest.mark.django_db
@@ -190,7 +180,7 @@ class TestHistoryTab:
         OperatorAssignment.objects.create(
             operator=operator, cost_center=cc, start_date=TODAY, status="active"
         )
-        response = _client("view_costcenter", "view_resourcemovementlog").get(_url(cc))
+        response = login_as("view_costcenter", "view_resourcemovementlog").get(_url(cc))
         content = response.content.decode()
         assert "Moved Pilot" in content
         movements = response.context["movements"]

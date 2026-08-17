@@ -9,12 +9,12 @@ operation already writes down.
 from datetime import date, time, timedelta
 
 import pytest
-from django.contrib.auth.models import Group, Permission, User
+from django.contrib.auth.models import Group, User
 from django.core import mail
 from django.core.management import call_command
-from django.test import Client
 from django.urls import reverse
 
+from apps.core.testing import login_as
 from apps.core.groups import REPORT_RECIPIENTS
 from apps.operations.models import FlightPermission, FlightRecord
 from apps.operations.selectors import (
@@ -58,15 +58,6 @@ def _flight(permission, pilot, aircraft, departure, arrival, day=DAY):
         pilot=pilot,
         aircraft=aircraft,
     )
-
-
-def _client(*codenames):
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
 
 
 class TestTheAggregate:
@@ -135,7 +126,7 @@ class TestTheWarningOnSaving:
         the excess unrecorded, losing the evidence the clause exists for."""
         permission, pilot, aircraft = setup
         _flight(permission, pilot, aircraft, time(6, 0), time(13, 0))  # 7h already
-        client = _client("add_flightrecord", "view_flightrecord")
+        client = login_as("add_flightrecord", "view_flightrecord")
 
         response = client.post(
             reverse("record-create"),
@@ -158,7 +149,7 @@ class TestTheWarningOnSaving:
     @pytest.mark.django_db
     def test_no_warning_under_the_limit(self, setup):
         permission, pilot, aircraft = setup
-        client = _client("add_flightrecord", "view_flightrecord")
+        client = login_as("add_flightrecord", "view_flightrecord")
 
         response = client.post(
             reverse("record-create"),

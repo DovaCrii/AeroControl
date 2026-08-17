@@ -9,14 +9,14 @@ human confirmation, and the daily job that escalates what nobody signed off.
 from datetime import timedelta
 
 import pytest
-from django.contrib.auth.models import Permission, User
+from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.core import mail
 from django.core.management import call_command
-from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.core.testing import login_as
 from apps.core.groups import REPORT_RECIPIENTS
 from apps.registry.models import (
     CostCenter,
@@ -54,15 +54,6 @@ def alert(db):
         object_id=qualification.pk,
         message="Expiring soon",
     )
-
-
-def _client(*codenames):
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
 
 
 class TestTheDueDate:
@@ -158,7 +149,7 @@ class TestTheView:
     @pytest.mark.django_db
     def test_the_button_appears_only_once_verification_is_due(self, alert):
         alert.resolve(reason="Credencial renovada")
-        client = _client("view_alert", "change_alert")
+        client = login_as("view_alert", "change_alert")
         url = reverse("alert-verify-effectiveness", args=[alert.pk])
 
         not_due_yet = client.get(reverse("alert-list")).content.decode()
@@ -174,7 +165,7 @@ class TestTheView:
         alert.resolve(reason="Credencial renovada")
         alert.effectiveness_due_date = timezone.localdate() - timedelta(days=1)
         alert.save(update_fields=["effectiveness_due_date"])
-        client = _client("view_alert", "change_alert")
+        client = login_as("view_alert", "change_alert")
 
         response = client.post(
             reverse("alert-verify-effectiveness", args=[alert.pk]),
@@ -189,7 +180,7 @@ class TestTheView:
     @pytest.mark.django_db
     def test_requires_the_change_permission(self, alert):
         alert.resolve(reason="Credencial renovada")
-        client = _client("view_alert")
+        client = login_as("view_alert")
 
         response = client.post(reverse("alert-verify-effectiveness", args=[alert.pk]))
 
@@ -202,7 +193,7 @@ class TestTheView:
         from apps.core.models import AuditEvent
 
         alert.resolve(reason="Credencial renovada")
-        client = _client("view_alert", "change_alert")
+        client = login_as("view_alert", "change_alert")
 
         client.post(reverse("alert-verify-effectiveness", args=[alert.pk]))
 

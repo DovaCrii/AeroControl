@@ -9,27 +9,17 @@ inline only for types that cannot be talked into executing in this app's origin.
 from datetime import date, timedelta
 
 import pytest
-from django.contrib.auth.models import Permission, User
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import Client
 from django.urls import reverse
 
+from apps.core.testing import login_as
 from apps.compliance.models import Document, DocumentType
 from apps.registry.models import Aircraft
 
 PDF_BYTES = b"%PDF-1.4\n%fake pdf for tests\n"
 PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"0" * 32
 TODAY = date(2026, 8, 13)
-
-
-def _client(*codenames):
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
 
 
 @pytest.fixture
@@ -82,7 +72,7 @@ class TestPreview:
     def test_a_pdf_is_served_inline(self, aircraft, doc_type):
         document = _document(aircraft, doc_type)
 
-        response = _client("view_document").get(
+        response = login_as("view_document").get(
             reverse("document-preview", args=[document.pk])
         )
 
@@ -93,7 +83,7 @@ class TestPreview:
     def test_an_image_is_served_inline(self, aircraft, doc_type):
         document = _document(aircraft, doc_type, name="scan.png", content=PNG_BYTES)
 
-        response = _client("view_document").get(
+        response = login_as("view_document").get(
             reverse("document-preview", args=[document.pk])
         )
 
@@ -105,7 +95,7 @@ class TestPreview:
         type it is treated as."""
         document = _document(aircraft, doc_type)
 
-        response = _client("view_document").get(
+        response = login_as("view_document").get(
             reverse("document-preview", args=[document.pk])
         )
 
@@ -117,7 +107,7 @@ class TestPreview:
         be framed at all, which is the clickjacking protection. Both headers,
         because either one alone still blocks the load."""
         document = _document(aircraft, doc_type)
-        client = _client("view_document")
+        client = login_as("view_document")
 
         preview = client.get(reverse("document-preview", args=[document.pk]))
         page = client.get(reverse("document-detail", args=[document.pk]))
@@ -138,7 +128,7 @@ class TestPreview:
         rendered in this app's origin either."""
         document = _document(aircraft, doc_type, name=name, content=content)
 
-        response = _client("view_document").get(
+        response = login_as("view_document").get(
             reverse("document-preview", args=[document.pk])
         )
 
@@ -148,7 +138,7 @@ class TestPreview:
     def test_it_requires_view_document(self, aircraft, doc_type):
         document = _document(aircraft, doc_type)
 
-        response = _client().get(reverse("document-preview", args=[document.pk]))
+        response = login_as().get(reverse("document-preview", args=[document.pk]))
 
         assert response.status_code == 403
 
@@ -156,7 +146,7 @@ class TestPreview:
         document = _document(aircraft, doc_type)
         Document.objects.filter(pk=document.pk).update(file_path="gone/nothing.pdf")
 
-        response = _client("view_document").get(
+        response = login_as("view_document").get(
             reverse("document-preview", args=[document.pk])
         )
 
@@ -167,7 +157,7 @@ class TestPreview:
     ):
         pdf = _document(aircraft, doc_type)
         kml = _document(aircraft, doc_type, name="area.kml", content=b"<kml/>")
-        client = _client("view_document")
+        client = login_as("view_document")
 
         assert (
             client.get(reverse("document-detail", args=[pdf.pk])).context[
@@ -189,7 +179,7 @@ class TestTheList:
         document = _document(aircraft, doc_type)
 
         content = (
-            _client("view_aircraft", "view_document")
+            login_as("view_aircraft", "view_document")
             .get(reverse("aircraft-detail", args=[aircraft.pk]))
             .content.decode()
         )
@@ -205,7 +195,7 @@ class TestTheList:
         )
 
         content = (
-            _client("view_aircraft", "view_document")
+            login_as("view_aircraft", "view_document")
             .get(reverse("aircraft-detail", args=[aircraft.pk]))
             .content.decode()
         )
@@ -232,7 +222,7 @@ class TestBulkUpload:
         }
 
     def test_several_files_become_several_documents(self, aircraft, doc_type):
-        response = _client("add_document", "view_document").post(
+        response = login_as("add_document", "view_document").post(
             self._url(),
             self._payload(
                 aircraft,
@@ -252,7 +242,7 @@ class TestBulkUpload:
     ):
         """Twelve documents all called "Póliza · CC-DOC · 2026-08-04" would be
         worse than none."""
-        _client("add_document", "view_document").post(
+        login_as("add_document", "view_document").post(
             self._url(),
             self._payload(
                 aircraft, doc_type, [_upload("cert-136.pdf"), _upload("cert-137.pdf")]
@@ -269,7 +259,7 @@ class TestBulkUpload:
         """The batch fails as a whole rather than half-loading, and the message
         says *which* file -- a batch that silently drops one is worse than one
         that refuses."""
-        response = _client("add_document", "view_document").post(
+        response = login_as("add_document", "view_document").post(
             self._url(),
             self._payload(
                 aircraft,
@@ -285,7 +275,7 @@ class TestBulkUpload:
     def test_a_file_whose_bytes_contradict_its_name_is_refused(
         self, aircraft, doc_type
     ):
-        response = _client("add_document", "view_document").post(
+        response = login_as("add_document", "view_document").post(
             self._url(),
             self._payload(
                 aircraft, doc_type, [_upload("renamed.pdf", b"MZ\x90\x00not a pdf")]
@@ -296,7 +286,7 @@ class TestBulkUpload:
         assert not Document.objects.exists()
 
     def test_it_requires_add_document(self, aircraft, doc_type):
-        response = _client("view_document").post(
+        response = login_as("view_document").post(
             self._url(), self._payload(aircraft, doc_type, [_upload()])
         )
 
@@ -308,7 +298,7 @@ class TestBulkUpload:
             name="Seguro", code="ins", requires_expiry=True
         )
 
-        response = _client("add_document", "view_document").post(
+        response = login_as("add_document", "view_document").post(
             self._url(), self._payload(aircraft, doc_type, [_upload()])
         )
 
@@ -323,7 +313,7 @@ class TestBulkUpload:
             f"{ContentType.objects.get_for_model(Aircraft).pk}&object_id={aircraft.pk}"
         )
 
-        response = _client("add_document", "view_document").get(
+        response = login_as("add_document", "view_document").get(
             url, HTTP_REFERER="https://evil.example/phish"
         )
 
@@ -338,7 +328,7 @@ class TestBulkUpload:
         )
         payload["expiry_date"] = "2027-08-04"
 
-        _client("add_document", "view_document").post(self._url(), payload)
+        login_as("add_document", "view_document").post(self._url(), payload)
 
         assert set(Document.objects.values_list("expiry_date", flat=True)) == {
             date(2027, 8, 4)

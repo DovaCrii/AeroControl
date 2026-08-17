@@ -3,11 +3,10 @@
 from datetime import date, time
 
 import pytest
-from django.contrib.auth.models import Permission, User
-from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.core.testing import login_as
 from apps.registry.models import (
     Aircraft,
     AircraftAssignment,
@@ -19,20 +18,11 @@ from apps.registry.models import (
 TODAY = timezone.localdate()
 
 
-def _client(*codenames):
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
-
-
 class TestOperatorTimeline:
     @pytest.mark.django_db
     def test_hidden_without_permission(self, db):
         operator = Operator.objects.create(employee_id="E1", full_name="Pilot")
-        response = _client("view_operator").get(
+        response = login_as("view_operator").get(
             reverse("operator-detail", args=[operator.pk])
         )
         assert response.context["movements"] is None
@@ -53,7 +43,7 @@ class TestOperatorTimeline:
             operator=other, cost_center=cc2, start_date=TODAY, status="active"
         )
 
-        response = _client("view_operator", "view_resourcemovementlog").get(
+        response = login_as("view_operator", "view_resourcemovementlog").get(
             reverse("operator-detail", args=[operator.pk])
         )
 
@@ -69,7 +59,7 @@ class TestAircraftTimeline:
         aircraft = Aircraft.objects.create(
             registration="CC-A1", type="RPA", model="M3", manufacturer="DJI"
         )
-        response = _client("view_aircraft").get(
+        response = login_as("view_aircraft").get(
             reverse("aircraft-detail", args=[aircraft.pk])
         )
         assert response.context["movements"] is None
@@ -87,7 +77,7 @@ class TestAircraftTimeline:
         aircraft.current_site = cc
         aircraft.save(update_fields=["current_location", "current_site", "updated_at"])
 
-        response = _client("view_aircraft", "view_resourcemovementlog").get(
+        response = login_as("view_aircraft", "view_resourcemovementlog").get(
             reverse("aircraft-detail", args=[aircraft.pk])
         )
 
@@ -109,7 +99,7 @@ class TestAircraftMaintenanceHistory:
         aircraft = Aircraft.objects.create(
             registration="CC-A1", type="RPA", model="M3", manufacturer="DJI"
         )
-        response = _client("view_aircraft").get(
+        response = login_as("view_aircraft").get(
             reverse("aircraft-detail", args=[aircraft.pk])
         )
         assert response.context["open_maintenance"] is None
@@ -137,7 +127,7 @@ class TestAircraftMaintenanceHistory:
             performed_by="Taller JEJ",
         )
 
-        response = _client("view_aircraft", "view_maintenancerecord").get(
+        response = login_as("view_aircraft", "view_maintenancerecord").get(
             reverse("aircraft-detail", args=[aircraft.pk])
         )
 
@@ -181,7 +171,7 @@ class TestAircraftFlightHours:
     @pytest.mark.django_db
     def test_hidden_without_permission(self, db):
         aircraft = self._aircraft_with_records((time(9, 0), time(10, 0)))
-        response = _client("view_aircraft").get(
+        response = login_as("view_aircraft").get(
             reverse("aircraft-detail", args=[aircraft.pk])
         )
         assert response.context["total_flight_hours"] is None
@@ -193,7 +183,7 @@ class TestAircraftFlightHours:
             (time(11, 0), time(11, 45)),  # 45min
         )
 
-        response = _client("view_aircraft", "view_flightrecord").get(
+        response = login_as("view_aircraft", "view_flightrecord").get(
             reverse("aircraft-detail", args=[aircraft.pk])
         )
 
