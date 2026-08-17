@@ -188,6 +188,15 @@ la fecha sin escribir dato. **`LV-65` se cerró sin programar nada**: ya estaba
 hecho por `R5.5`, verificado en el navegador (sexta vez que el tablero da por
 pendiente algo hecho).
 
+**`LV-114` hecho** (2026-08-14) — **monitoreo mínimo, el criterio 5 de 1.0**:
+`check_scheduled_jobs` avisa a Dirección cuando otro trabajo se atrasa o falla, y
+calla cuando todo está al día. Resultó que detectarlo ya estaba hecho (el panel
+de situación lo calculaba); faltaba **contarlo**. **Falta instalar su timer en
+`p340`** con el bloque `mkjob` de `docs/scheduled-operations.md` (09:00, después
+de los trabajos de la mañana) — serían **12 timers**. Sin ese paso, el código
+está desplegado y no avisa a nadie, que es exactamente el modo de fallo que
+`AGENTS.md` documenta.
+
 **Análisis de la bandeja de alertas** (2026-08-14, pedido del usuario tras
 `LV-111`): `docs/dev/analisis-alertas-2026-08-14.md`. Conclusión corta: el ciclo
 de vida de una alerta acá **está por encima del promedio del sector** (cierre

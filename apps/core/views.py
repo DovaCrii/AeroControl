@@ -955,13 +955,11 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
     # ── BLOQUE 5: situation panel (read-only) ────────────────────────────────
     # Each block is gated by its own view_* permission, like the config rows and
     # the calendar tabs: no permission simply hides that block, never 403s.
-    DAILY_JOBS = {"generate_alerts": 48, "send_alert_digest": 48, "backup": 48}
-    WATCHED_JOBS = [
-        "generate_alerts",
-        "send_alert_digest",
-        "backup",
-        "send_executive_report",
-    ]
+    # LV-114: qué se vigila y con qué antigüedad vive ahora en `core.jobs`,
+    # junto al resto de la contabilidad de trabajos, porque el vigilante que
+    # avisa por correo necesita exactamente lo mismo. Una segunda copia acá se
+    # habría desincronizado en silencio, que es cómo un trabajo deja de estar
+    # vigilado sin que nadie lo note.
 
     def _build_situation(self, user):
         metrics = self._situation_metrics(user)
@@ -1039,31 +1037,9 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
     def _situation_jobs(self, user):
         if not user.has_perm("core.view_jobrun"):
             return None
-        from datetime import timedelta
+        from apps.core.jobs import job_health
 
-        from apps.core.models import JobRun
-
-        now = timezone.now()
-        rows = []
-        for command in self.WATCHED_JOBS:
-            run = JobRun.objects.filter(command=command).order_by("-started_at").first()
-            max_age = self.DAILY_JOBS.get(command)
-            if run is None:
-                rows.append(
-                    {"command": command, "result": None, "when": None, "stale": True}
-                )
-                continue
-            reference = run.finished_at or run.started_at
-            stale = max_age is not None and (now - reference) > timedelta(hours=max_age)
-            rows.append(
-                {
-                    "command": command,
-                    "result": run.result,
-                    "when": run.started_at,
-                    "stale": stale,
-                }
-            )
-        return rows
+        return job_health()
 
     @staticmethod
     def _situation_health():

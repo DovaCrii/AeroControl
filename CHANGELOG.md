@@ -238,6 +238,11 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   la salida era reintentar con otro archivo para siempre. Los mensajes además
   aparecen **en español**, y el fallo del escáner queda registrado con su código
   de salida para poder responder "¿fue el antivirus?" mirando el log.
+- **Aviso cuando un trabajo programado deja de correr (`LV-114`).** Si el
+  respaldo, el motor de alertas o el resumen diario se atrasan o fallan, ahora
+  llega un correo a Dirección diciendo cuál y desde cuándo — antes había que
+  entrar al centro de administración a mirarlo, que es lo que nadie hace cuando
+  todo parece estar bien. **Si todo está al día no escribe nada.**
 - **Las alertas dejan de perseguir aeronaves dadas de baja (`LV-113`).** Una
   aeronave retirada de la flota con el seguro vencido mantenía su alerta para
   siempre, y no había nada que hacer con ella. Ahora los registros que ya no

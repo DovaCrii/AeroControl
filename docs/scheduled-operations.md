@@ -17,6 +17,7 @@ resumen corto), así que después se puede comprobar si realmente corrieron.
 | `check_flight_duty_limit` (R7.5) | Reporta al grupo Dirección los pilotos cuya **jornada de vuelo del día anterior** superó las **8 horas** (control de fatiga, ISO 45001 6.1.2). Sólo reporta: nunca edita ni rechaza un registro de vuelo | Diario |
 | `check_alert_effectiveness` (R7.6) | Escala al grupo Dirección las acciones correctivas resueltas hace **30 días** cuya eficacia **nadie confirmó**. Nunca resuelve, reabre ni verifica por su cuenta: una máquina declarando que una acción correctiva fue eficaz es lo contrario de la evidencia que pide ISO 10.2 | Diario |
 | `expire_permissions` (LV-83) | Marca como **Caducado** todo permiso de vuelo cuya vigencia terminó y que sigue en *Solicitado* o *Aprobado*. **No completa nada**: completar exige el PDF firmado de la DGAC (R2.4) y un permiso puede caducar sin haber volado nunca. No toca los denegados ni los completados. Cada cierre queda en el historial del permiso con `expire_permissions` como autor | Diario, temprano (antes de `generate_alerts`, para que un permiso ya cerrado no genere alerta ese mismo día) |
+| `check_scheduled_jobs` (LV-114) | Avisa al grupo Dirección cuando **otro trabajo programado** está atrasado o terminó en error — incluido el que nunca corrió porque su timer no se instaló. **Calla cuando todo está al día**: un vigilante que escribe a diario se archiva sin leer. No arregla nada ni reintenta: sólo cuenta lo que el centro de administración ya sabía y nadie miraba | Diario, después de los trabajos de la mañana |
 | `snapshot_compliance` (R7.7) | Guarda los totales documentales del día (una fila por centro de costo más una consolidada). **Sin esto el reporte no puede mostrar tendencia**: los contadores se evalúan siempre "a hoy", así que comparar período contra período marca "sin cambio" por construcción. Idempotente: repetir la misma fecha la sobrescribe, no duplica | Diario, al final del día |
 
 El orden importa: `send_alert_digest` reporta lo que `generate_alerts` acaba de
@@ -128,10 +129,22 @@ mkjob expire "expire_permissions"       "*-*-* 05:30:00"
 mkjob alerts "generate_alerts"          "*-*-* 06:00:00"
 mkjob digest "send_alert_digest"        "*-*-* 07:00:00"
 mkjob backup "backup"                   "*-*-* 22:00:00"
+mkjob watchdog "check_scheduled_jobs"   "*-*-* 09:00:00"
 systemctl daemon-reload
-systemctl enable --now aerocontrol-expire.timer aerocontrol-alerts.timer aerocontrol-digest.timer aerocontrol-backup.timer
+systemctl enable --now aerocontrol-expire.timer aerocontrol-alerts.timer aerocontrol-digest.timer aerocontrol-backup.timer aerocontrol-watchdog.timer
 '
 ```
+
+> **`check_scheduled_jobs` (`LV-114`) va a las 09:00 a propósito**: después de
+> los trabajos de la mañana (05:30–07:00), para que lo que reporte sea el estado
+> del día y no una foto tomada antes de que corrieran. Y **es el único que hay
+> que instalar con prioridad**, porque es el que avisa cuando cualquiera de los
+> otros deja de correr — sin él, un timer caído se descubre entrando a mirar el
+> centro de administración, que es lo que nadie hace cuando todo parece bien.
+>
+> Lo que **no** puede hacer, y conviene tenerlo claro: si la VM está apagada,
+> este trabajo tampoco corre y nadie avisa. Ningún vigilante interno cubre ese
+> caso; para eso hace falta algo fuera de la máquina.
 
 Verificar y ver la próxima corrida:
 

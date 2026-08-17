@@ -1,0 +1,14 @@
+{% load i18n %}{% translate "A scheduled job needs attention" %}
+
+{% blocktranslate count total=rows|length %}One of AeroControl's scheduled jobs is overdue or failing:{% plural %}{{ total }} of AeroControl's scheduled jobs are overdue or failing:{% endblocktranslate %}
+
+{% for row in rows %}{{ row.command }} — {% if row.never_ran %}{% translate "never ran (the timer may not be installed)" %}{% elif row.result == "error" %}{% blocktranslate with when=row.when|date:"Y-m-d H:i" %}last run failed on {{ when }}{% endblocktranslate %}{% else %}{% blocktranslate with when=row.when|date:"Y-m-d H:i" %}last ran on {{ when }}, longer ago than expected{% endblocktranslate %}{% endif %}
+{% endfor %}
+{% comment %}Se distingue "nunca corrió" de "está atrasado" porque se arreglan
+distinto: lo primero es un timer que nadie instaló, lo segundo uno que se cayó.
+Este proyecto ya pagó esa confusión.{% endcomment %}{% translate "Check the situation panel:" %}
+{{ base_url }}{{ administration_path }}
+
+{% translate "On the server:" %} systemctl list-timers 'aerocontrol-*' --no-pager
+--
+{% translate "This is an automated message from AeroControl." %}
