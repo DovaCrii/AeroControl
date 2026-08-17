@@ -486,11 +486,36 @@ class Aircraft(BaseModel):
         """
         from apps.core.models import status_steps_for
 
-        return status_steps_for(
+        steps = status_steps_for(
             choices=self.INSURANCE_STATUS_CHOICES,
             flow=self.INSURANCE_FLOW,
             current=self.insurance_status,
         )
+        # LV-81b (la mitad de presentación): una póliza cuya fecha ya pasó no
+        # está "vigente", diga lo que diga el estado guardado. La insignia
+        # "Vencida" al lado ya lo decía y la escalera no, así que la misma ficha
+        # afirmaba dos cosas incompatibles -- y la que se lee de un vistazo es la
+        # escalera.
+        #
+        # Se corrige **lo que se muestra**, no el dato: mover el estado por
+        # fecha es la misma decisión que `LV-83` tomó para los permisos (estado
+        # terminal nuevo más un trabajo diario) y está pendiente de acordarse una
+        # vez para los dos. Hasta entonces, derivarlo de la fecha no escribe nada
+        # y no puede quedar desincronizado, porque se calcula al dibujar.
+        # La condición se apoya en el **estado**, no en el último paso: la
+        # escalera siempre dibuja los tres, así que mirar `steps[-1]` marcaría
+        # como vencida la póliza de un trámite que todavía está en SIGO y nunca
+        # llegó a estar vigente. Sólo puede vencer lo que dice estar en vigor.
+        if (
+            self.insurance_status == self.INSURANCE_STATUS_ACTIVE
+            and self.insurance_is_overdue
+        ):
+            steps[-1] = {
+                "code": self.INSURANCE_STATUS_ACTIVE,
+                "label": _("Policy lapsed"),
+                "state": "blocked",
+            }
+        return steps
 
     def save(self, *args, **kwargs):
         # X.1: the DJI serial never contains whitespace -- production has 2
