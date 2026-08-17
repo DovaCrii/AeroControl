@@ -1055,30 +1055,21 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
 
     @staticmethod
     def _latest_backup():
-        import json
+        # LV-115: la búsqueda del último respaldo se movió a `core.backups`, que
+        # es donde vive también su verificación -- segundo lector, que es cuando
+        # este repo extrae. La vista sigue mostrando lo mismo.
+        from apps.core.backups import latest_backup
 
-        from apps.core.management.commands.backup import backups_dir
-
-        directory = backups_dir()
-        try:
-            manifests = sorted(
-                directory.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True
-            )
-        except OSError:
+        backup = latest_backup()
+        if backup is None:
             return None
-        for manifest in manifests:
-            try:
-                data = json.loads(manifest.read_text(encoding="utf-8"))
-            except (OSError, ValueError):
-                continue
-            if "sha256" in data:
-                return {
-                    "name": data.get("backup", manifest.stem),
-                    "created_at": data.get("created_at", ""),
-                    "sha256": data.get("sha256", ""),
-                    "size": data.get("size"),
-                }
-        return None
+        manifest = backup["manifest"]
+        return {
+            "name": backup["name"],
+            "created_at": manifest.get("created_at", ""),
+            "sha256": manifest.get("sha256", ""),
+            "size": manifest.get("size"),
+        }
 
     def item(self, title, description, url_name, model, icon, read_only=False):
         """One row of the administration list.

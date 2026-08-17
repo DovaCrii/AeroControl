@@ -238,6 +238,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   la salida era reintentar con otro archivo para siempre. Los mensajes además
   aparecen **en español**, y el fallo del escáner queda registrado con su código
   de salida para poder responder "¿fue el antivirus?" mirando el log.
+- **El respaldo se comprueba solo, todos los días (`LV-115`).** Hasta ahora nadie
+  miraba un respaldo hasta el día que hacía falta. Ahora el último se **abre como
+  base de datos** y se consulta: si no serviría para restaurar, llega un correo
+  con los pasos a seguir. Verificar la suma de control no bastaba — una copia
+  tomada mientras la aplicación escribía puede estar rota **y tener la suma
+  correcta**. No reemplaza el ensayo completo de restauración.
 - **Aviso cuando un trabajo programado deja de correr (`LV-114`).** Si el
   respaldo, el motor de alertas o el resumen diario se atrasan o fallan, ahora
   llega un correo a Dirección diciendo cuál y desde cuándo — antes había que

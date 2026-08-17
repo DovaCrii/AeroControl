@@ -188,6 +188,13 @@ la fecha sin escribir dato. **`LV-65` se cerró sin programar nada**: ya estaba
 hecho por `R5.5`, verificado en el navegador (sexta vez que el tablero da por
 pendiente algo hecho).
 
+**`LV-115` hecho** (2026-08-14) — **la mitad automatizable del criterio 4**:
+`verify_backup` abre el último respaldo y lo consulta; si no es restaurable avisa
+a Dirección con los pasos. El checksum no bastaba: una copia tomada mientras la
+app escribía puede estar rota y tener el checksum correcto. **Falta su timer**
+(22:30, después del respaldo). El ensayo completo de restauración sigue siendo
+humano y sigue sin cadencia escrita.
+
 **`LV-114` hecho** (2026-08-14) — **monitoreo mínimo, el criterio 5 de 1.0**:
 `check_scheduled_jobs` avisa a Dirección cuando otro trabajo se atrasa o falla, y
 calla cuando todo está al día. Resultó que detectarlo ya estaba hecho (el panel

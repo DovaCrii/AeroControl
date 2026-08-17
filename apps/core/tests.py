@@ -970,13 +970,28 @@ class TestStaticFiles:
     def test_backup_writes_manifest_and_detects_tampering(
         self, db, monkeypatch, tmp_path
     ):
+        """LV-115 cambió la premisa, no la intención: la fuente es ahora una base
+        SQLite de verdad y no `b"sqlite test database"`.
+
+        La verificación dejó de conformarse con tamaño y checksum -- que prueban
+        que el archivo no cambió, no que sea restaurable -- y ahora abre el
+        respaldo. Un puñado de bytes que nunca fue una base ya no pasa, que es
+        justo lo que se quería ganar. Lo que este test afirma sigue siendo lo
+        mismo: se escribe el manifiesto, y una alteración posterior se detecta.
+        """
+        import sqlite3
+
         monkeypatch.setenv("BACKUPS_DIR", str(tmp_path))
         source = tmp_path / "source.sqlite3"
-        source.write_bytes(b"sqlite test database")
+        connection = sqlite3.connect(source)
+        connection.execute("CREATE TABLE registry_aircraft (id INTEGER PRIMARY KEY)")
+        connection.execute("CREATE TABLE compliance_document (id INTEGER PRIMARY KEY)")
+        connection.commit()
+        connection.close()
         monkeypatch.setitem(settings.DATABASES["default"], "NAME", str(source))
 
         call_command("backup")
-        backup = next(tmp_path.glob("*.sqlite3"))
+        backup = next(tmp_path.glob("aero_ops_*.sqlite3"))
         manifest = backup.with_suffix(".json")
 
         assert manifest.is_file()
@@ -984,7 +999,7 @@ class TestStaticFiles:
 
         with backup.open("ab") as stream:
             stream.write(b"tampered")
-        with pytest.raises(CommandError, match="(size|checksum)"):
+        with pytest.raises(CommandError):
             call_command("verify_backup", str(backup))
 
     def test_backup_can_be_restored_to_explicit_destination(

@@ -1,0 +1,18 @@
+{% load i18n %}{% translate "The latest backup did not verify" %}
+
+{% blocktranslate %}AeroControl checked the most recent backup ({{ name }}) and it is not in a state it could be restored from:{% endblocktranslate %}
+
+{% for problem in problems %}- {{ problem.message }}
+{% endfor %}
+{% comment %}Se dice qué hacer, porque un aviso que sólo informa de un respaldo
+roto deja a quien lo lee sin saber si perdió algo. El respaldo de ayer suele
+estar sano: lo urgente es correr uno nuevo y comprobar que ése sí sirva.
+{% endcomment %}{% translate "What to do, in this order:" %}
+
+1. {% translate "Run a new backup now:" %} uv run python manage.py backup
+2. {% translate "Verify it:" %} uv run python manage.py verify_backup
+3. {% translate "Keep the older backups until the new one verifies." %}
+
+{% translate "Full restore drill (still a human task):" %} docs/dev/ubuntu-vm-deploy.md
+--
+{% translate "This is an automated message from AeroControl." %}
