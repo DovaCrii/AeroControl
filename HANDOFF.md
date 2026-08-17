@@ -188,6 +188,14 @@ la fecha sin escribir dato. **`LV-65` se cerró sin programar nada**: ya estaba
 hecho por `R5.5`, verificado en el navegador (sexta vez que el tablero da por
 pendiente algo hecho).
 
+**`LV-116` hecho** (2026-08-17, hallazgo al verificar `LV-115` contra `p340`):
+el respaldo se toma con la API de SQLite y no copiando bytes. **Detalle
+operativo que conviene no perder**: en `p340` el sistema operativo está en UTC y
+Django sella los nombres en hora de Chile, así que **el respaldo "de las 22:00"
+corre a las 18:00 hora local**, en plena jornada. Ya no arriesga la integridad de
+la copia, pero si se quiere que la hora signifique lo que dice:
+`mkjob backup "backup" "*-*-* 02:00:00"`.
+
 **`LV-115` hecho** (2026-08-14) — **la mitad automatizable del criterio 4**:
 `verify_backup` abre el último respaldo y lo consulta; si no es restaurable avisa
 a Dirección con los pasos. El checksum no bastaba: una copia tomada mientras la

@@ -148,6 +148,21 @@ systemctl enable --now aerocontrol-expire.timer aerocontrol-alerts.timer aerocon
 > este trabajo tampoco corre y nadie avisa. Ningún vigilante interno cubre ese
 > caso; para eso hace falta algo fuera de la máquina.
 
+> **Las horas de arriba son las del reloj del sistema operativo, que en `p340`
+> está en UTC** — no en hora de Chile. Descubierto el 2026-08-17: el respaldo de
+> las `22:00` corre en realidad a las **18:00 hora chilena**, y el archivo lo
+> delata (`aero_ops_20260816_180037` para un timer que systemd registra a las
+> `22:00:37`). La causa es que Django fija `TZ` desde `TIME_ZONE`
+> (`America/Santiago`), así que **el nombre del archivo va en hora local y el
+> timer en UTC**; los segundos idénticos son la prueba.
+>
+> Para las alertas y el digest esto no molesta —06:00 y 07:00 UTC son las 02:00 y
+> 03:00 en Chile, todavía fuera de horario—, pero el respaldo cae **en plena
+> jornada**. Desde `LV-116` eso ya no arriesga la integridad de la copia (se toma
+> con la API de respaldo de SQLite, consistente aunque haya escritores), así que
+> corregir la hora es ordenar, no urgente. Si se quiere que "22:00" signifique
+> las 22:00 chilenas: `mkjob backup "backup" "*-*-* 02:00:00"`.
+
 Verificar y ver la próxima corrida:
 
 ```bash

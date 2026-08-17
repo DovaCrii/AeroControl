@@ -50,9 +50,17 @@ def test_generate_alerts_records_a_job_run():
 
 @pytest.mark.django_db
 def test_backup_records_a_job_run(tmp_path, monkeypatch):
+    # LV-116 cambió la premisa: el respaldo se toma con la API de SQLite, así
+    # que la fuente tiene que ser una base de verdad y no unos bytes con nombre
+    # de base. Lo que este test afirma no cambia: queda su fila de JobRun.
+    import sqlite3
+
     monkeypatch.setenv("BACKUPS_DIR", str(tmp_path))
     source = tmp_path / "source.sqlite3"
-    source.write_bytes(b"sqlite test database")
+    connection = sqlite3.connect(source)
+    connection.execute("CREATE TABLE registry_aircraft (id INTEGER PRIMARY KEY)")
+    connection.commit()
+    connection.close()
     monkeypatch.setitem(settings.DATABASES["default"], "NAME", str(source))
 
     call_command("backup")
