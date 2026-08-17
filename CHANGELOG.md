@@ -238,6 +238,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   la salida era reintentar con otro archivo para siempre. Los mensajes además
   aparecen **en español**, y el fallo del escáner queda registrado con su código
   de salida para poder responder "¿fue el antivirus?" mirando el log.
+- **Una póliza vencida ya no se dibuja como vigente (`LV-81b`).** En la ficha de
+  la aeronave, la insignia decía "Vencida" pero la barra de estado seguía
+  mostrando **"Póliza vigente"** como alcanzado — dos cosas incompatibles en la
+  misma pantalla. Ahora ese paso dice **"Póliza vencida"**, y los pasos
+  anteriores siguen en verde: que la póliza haya vencido no borra que el trámite
+  se hizo.
 - **Una alerta resuelta ya no vuelve a aparecer (`LV-111`).** Si resolvías una
   alerta, el trabajo nocturno la creaba de nuevo esa misma noche —el dato seguía
   vencido— y la bandeja mostraba dos filas del mismo caso, una resuelta y otra

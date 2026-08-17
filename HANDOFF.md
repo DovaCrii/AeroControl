@@ -182,8 +182,14 @@ bandeja de `p340`: las filas duplicadas que ya están escritas **no se borran
 solas** —son registros, no basura— así que las de la captura (`Carlos
 Peñailillo`, `RPA-5532`) hay que resolverlas o deshacerlas a mano una vez.
 
-**Lo siguiente en mi cola**: `LV-81b` (certificado de póliza con endosos), que
-**necesita una conversación antes de programar** — toca `insurance_expiry`, la
+**`LV-81b` a medias** (2026-08-14): hecha la mitad de presentación — una póliza
+vencida deja de dibujarse como vigente en la escalera de la ficha, derivándolo de
+la fecha sin escribir dato. **`LV-65` se cerró sin programar nada**: ya estaba
+hecho por `R5.5`, verificado en el navegador (sexta vez que el tablero da por
+pendiente algo hecho).
+
+**Lo siguiente en mi cola**: la mitad grande de `LV-81b` (certificado de póliza
+con endosos), que **necesita una conversación antes de programar** — toca `insurance_expiry`, la
 columna que alimenta alertas, calendario, panel, reporte y `load_dgac_vigencias`
 a la vez, y el usuario pidió ir de a poco. Su "pendiente menor" (una póliza
 vencida sigue mostrando el paso "Póliza vigente" alcanzado) es **la misma
