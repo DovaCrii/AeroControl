@@ -188,6 +188,18 @@ la fecha sin escribir dato. **`LV-65` se cerró sin programar nada**: ya estaba
 hecho por `R5.5`, verificado en el navegador (sexta vez que el tablero da por
 pendiente algo hecho).
 
+**Análisis de la bandeja de alertas** (2026-08-14, pedido del usuario tras
+`LV-111`): `docs/dev/analisis-alertas-2026-08-14.md`. Conclusión corta: el ciclo
+de vida de una alerta acá **está por encima del promedio del sector** (cierre
+automático al renovar con motivo trazable, causa raíz obligatoria, verificación
+de eficacia a 30 días) — lo que faltaba no era proceso sino higiene, y salieron
+dos defectos reales, **`LV-113`** (las reglas de fecha nunca excluyeron los
+registros dados de baja; `LV-90` corrigió sólo la otra mitad del motor) y
+**`LV-112`** (la bandeja no tenía orden declarado, lo que además hacía el
+paginado poco fiable). **Los dos hechos.** Quedan capturadas como ideas, sin
+defecto detrás: severidad derivada del vencimiento, posponer una alerta, dueño
+nominal y agrupación visual por regla.
+
 **Lo siguiente en mi cola**: la mitad grande de `LV-81b` (certificado de póliza
 con endosos), que **necesita una conversación antes de programar** — toca `insurance_expiry`, la
 columna que alimenta alertas, calendario, panel, reporte y `load_dgac_vigencias`

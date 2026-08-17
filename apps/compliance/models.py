@@ -591,6 +591,21 @@ class Alert(EffectivenessVerificationMixin, BaseModel):
         # derivation of the class name.
         verbose_name = _("alert")
         verbose_name_plural = _("alerts")
+        # LV-112: la bandeja no tenía orden declarado, así que salía en el que
+        # devolviera la base -- cronológico **por casualidad**. Dos problemas, y
+        # el segundo no es de producto sino de corrección: el triage quedaba al
+        # azar (nada garantizaba que lo vencido hace meses saliera antes que lo
+        # que vence en 30 días), y un `LIMIT/OFFSET` sin `ORDER BY` puede
+        # **repetir o saltarse filas entre páginas**. Con 8 alertas no se nota;
+        # con 50 sí.
+        #
+        # Lo abierto primero, y dentro de eso lo más antiguo: una alerta que
+        # lleva meses esperando es peor noticia que la de ayer. No se ordena por
+        # el vencimiento aunque sea lo más informativo, porque `watched_date` se
+        # calcula en Python leyendo el registro apuntado por una GenericForeign
+        # Key -- la base no puede ordenar por eso sin resolverlas todas, que es
+        # justo el N+1 que `LV-106` acaba de sacar de esta pantalla.
+        ordering = ["is_resolved", "triggered_at"]
         indexes = [
             models.Index(
                 fields=["is_resolved", "is_active"], name="compliance_alert_open_idx"
