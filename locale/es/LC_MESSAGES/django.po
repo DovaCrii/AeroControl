@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-17 10:06-0400\n"
+"POT-Creation-Date: 2026-08-17 11:28-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -247,11 +247,11 @@ msgstr "Permisos de vuelo"
 msgid "Achieved GSD (cm)"
 msgstr "GSD logrado (cm)"
 
-#: .\apps\compliance\forms.py:617 .\apps\compliance\models.py:1142
+#: .\apps\compliance\forms.py:617 .\apps\compliance\models.py:1157
 msgid "Horizontal RMSE (cm)"
 msgstr "RMSE horizontal (cm)"
 
-#: .\apps\compliance\forms.py:618 .\apps\compliance\models.py:1143
+#: .\apps\compliance\forms.py:618 .\apps\compliance\models.py:1158
 msgid "Vertical RMSE (cm)"
 msgstr "RMSE vertical (cm)"
 
@@ -624,66 +624,66 @@ msgstr "alerta"
 msgid "alerts"
 msgstr "alertas"
 
-#: .\apps\compliance\models.py:871
+#: .\apps\compliance\models.py:886
 msgid "Reflight"
 msgstr "Re-vuelo"
 
-#: .\apps\compliance\models.py:872
+#: .\apps\compliance\models.py:887
 msgid "Rejected deliverable"
 msgstr "Entregable rechazado"
 
-#: .\apps\compliance\models.py:873
+#: .\apps\compliance\models.py:888
 msgid "Incident"
 msgstr "Incidente"
 
-#: .\apps\compliance\models.py:874
+#: .\apps\compliance\models.py:889
 msgid "Audit finding"
 msgstr "Hallazgo de auditoría"
 
-#: .\apps\compliance\models.py:884
+#: .\apps\compliance\models.py:899
 msgctxt "non-conformity status"
 msgid "Open"
 msgstr "Abierta"
 
-#: .\apps\compliance\models.py:885
+#: .\apps\compliance\models.py:900
 msgctxt "non-conformity status"
 msgid "Closed"
 msgstr "Cerrada"
 
-#: .\apps\compliance\models.py:928
+#: .\apps\compliance\models.py:943
 msgid "non-conformity"
 msgstr "no conformidad"
 
-#: .\apps\compliance\models.py:929
+#: .\apps\compliance\models.py:944
 msgid "non-conformities"
 msgstr "no conformidades"
 
-#: .\apps\compliance\models.py:1024 .\apps\geo\models.py:35
+#: .\apps\compliance\models.py:1039 .\apps\geo\models.py:35
 msgid "Draft"
 msgstr "Borrador"
 
-#: .\apps\compliance\models.py:1025
+#: .\apps\compliance\models.py:1040
 #: .\templates\compliance\deliverable_detail.html:27
 msgid "Validated"
 msgstr "Validado"
 
-#: .\apps\compliance\models.py:1026 .\apps\registry\models.py:1116
+#: .\apps\compliance\models.py:1041 .\apps\registry\models.py:1116
 msgid "Released"
 msgstr "Liberado"
 
-#: .\apps\compliance\models.py:1027 .\apps\geo\models.py:39
+#: .\apps\compliance\models.py:1042 .\apps\geo\models.py:39
 msgid "Rejected"
 msgstr "Rechazado"
 
-#: .\apps\compliance\models.py:1095
+#: .\apps\compliance\models.py:1110
 msgid "deliverable"
 msgstr "entregable"
 
-#: .\apps\compliance\models.py:1096
+#: .\apps\compliance\models.py:1111
 msgid "deliverables"
 msgstr "entregables"
 
-#: .\apps\compliance\models.py:1141
+#: .\apps\compliance\models.py:1156
 msgid "GSD (cm)"
 msgstr "GSD (cm)"
 
@@ -1030,6 +1030,10 @@ msgstr "Procedimiento de Fotogrametría"
 msgid "Video Procedure"
 msgstr "Procedimiento de Videos"
 
+#: .\apps\core\management\commands\check_scheduled_jobs.py:106
+msgid "AeroControl · a scheduled job needs attention"
+msgstr "AeroControl · un trabajo programado necesita atención"
+
 #: .\apps\core\models.py:218 .\templates\core\administration.html:55
 msgid "Running"
 msgstr "En ejecución"
@@ -1172,27 +1176,27 @@ msgstr "Eventos de auditoría (técnico)"
 msgid "Read-only history of authenticated changes."
 msgstr "Historial de solo lectura de cambios autenticados."
 
-#: .\apps\core\views.py:992
+#: .\apps\core\views.py:990
 msgid "Unresolved alerts"
 msgstr "Alertas sin resolver"
 
-#: .\apps\core\views.py:1009
+#: .\apps\core\views.py:1007
 msgid "Documents expiring in 30 days"
 msgstr "Documentos que vencen en 30 días"
 
-#: .\apps\core\views.py:1020
+#: .\apps\core\views.py:1018
 msgid "Active alert rules"
 msgstr "Reglas de alerta activas"
 
-#: .\apps\core\views.py:1032
+#: .\apps\core\views.py:1030
 msgid "Users without a role"
 msgstr "Usuarios sin rol"
 
-#: .\apps\core\views.py:1267
+#: .\apps\core\views.py:1243
 msgid "Status updated."
 msgstr "Estado actualizado."
 
-#: .\apps\core\views.py:1282
+#: .\apps\core\views.py:1258
 #, python-format
 msgid "Cannot transition from %(status)s"
 msgstr "No se puede cambiar desde %(status)s"
@@ -3660,6 +3664,7 @@ msgstr "Total de elementos"
 #: .\templates\compliance\email\executive_report.txt:20
 #: .\templates\compliance\email\monthly_review.txt:11
 #: .\templates\compliance\email\monthly_review_deadline.txt:11
+#: .\templates\core\email\scheduled_jobs.txt:15
 #: .\templates\operations\email\duty_limit.txt:10
 #: .\templates\registry\email\credential_notice.txt:9
 msgid "This is an automated message from AeroControl."
@@ -4360,6 +4365,41 @@ msgstr "Sábado"
 #: .\templates\core\calendar.html:84
 msgid "Sunday"
 msgstr "Domingo"
+
+#: .\templates\core\email\scheduled_jobs.txt:1
+msgid "A scheduled job needs attention"
+msgstr "Un trabajo programado necesita atención"
+
+#: .\templates\core\email\scheduled_jobs.txt:3
+#, python-format
+msgid "One of AeroControl's scheduled jobs is overdue or failing:"
+msgid_plural ""
+"%(total)s of AeroControl's scheduled jobs are overdue or failing:"
+msgstr[0] "Un trabajo programado de AeroControl está atrasado o fallando:"
+msgstr[1] ""
+"%(total)s trabajos programados de AeroControl están atrasados o fallando:"
+
+#: .\templates\core\email\scheduled_jobs.txt:5
+msgid "never ran (the timer may not be installed)"
+msgstr "nunca corrió (puede que el timer no esté instalado)"
+
+#: .\templates\core\email\scheduled_jobs.txt:5
+#, python-format
+msgid "last run failed on %(when)s"
+msgstr "la última corrida falló el %(when)s"
+
+#: .\templates\core\email\scheduled_jobs.txt:5
+#, python-format
+msgid "last ran on %(when)s, longer ago than expected"
+msgstr "corrió por última vez el %(when)s, hace más de lo esperado"
+
+#: .\templates\core\email\scheduled_jobs.txt:10
+msgid "Check the situation panel:"
+msgstr "Revisa el panel de situación:"
+
+#: .\templates\core\email\scheduled_jobs.txt:13
+msgid "On the server:"
+msgstr "En el servidor:"
 
 #: .\templates\core\search.html:6
 msgid "AeroControl"
