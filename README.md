@@ -9,7 +9,9 @@
 [![Licencia: MIT](https://img.shields.io/badge/licencia-MIT-2EC4B6.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12-1B2A4A.svg)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/django-6.0-1B2A4A.svg)](https://www.djangoproject.com/)
-[![Estado](https://img.shields.io/badge/estado-v0.4.0--beta-2EC4B6.svg)](#estado-actual)
+[![Estado](https://img.shields.io/badge/estado-v0.5.0--beta-2EC4B6.svg)](#estado-actual)
+
+Aplicaciones hermanas: **[AeroLink](https://github.com/DovaCrii/AeroLink)** (telemetría y evidencia de vuelo) · **[AeroPlanner](https://github.com/DovaCrii/AeroPlanner)** (planificación de misiones) — funcionan por separado, se comunican cuando conviene
 
 </div>
 
@@ -42,10 +44,36 @@ con su documentación DGAC.
 Todo con auditoría de cada cambio, permisos por rol y la interfaz completa en
 español (con cambio directo a inglés).
 
+## Aplicaciones hermanas
+
+AeroControl es el registro: qué aeronaves y operadores hay, qué está al día y
+qué vence. A su lado viven dos aplicaciones **independientes** — cada una con su
+propia base de datos y su propio despliegue, ninguna escribe en el dominio de la
+otra:
+
+```
+        AeroPlanner                AeroControl                 AeroLink
+   planifica la misión    →     flota · operadores      ←    lo que pasó al volar
+   geometría · terreno          permisos · documentos        telemetría · evidencia
+   simulación · KMZ             centros de costo             sesiones con hash
+```
+
+- **[AeroPlanner](https://github.com/DovaCrii/AeroPlanner)** planifica y
+  visualiza misiones; entrega el KMZ que se vuela. Se comunican por KMZ primero
+  y por API después.
+- **[AeroLink](https://github.com/DovaCrii/AeroLink)** recoge lo que DJI Pilot 2
+  expone durante el vuelo y lo vuelve registro con evidencia verificable.
+  Comparte con AeroControl un único contrato HTTP versionado y de sólo lectura,
+  el inventario de baterías y payloads que AeroLink masterea — ver
+  [docs/dev/plan-integracion-aerolink.md](docs/dev/plan-integracion-aerolink.md).
+
+Las tres comparten la marca —el mismo dron, un motivo distinto por aplicación— y
+nada más: **ninguna comparte base de datos con otra**.
+
 ## Estado actual
 
-**`v0.4.0-beta`** — desplegada y operando con datos reales de la DGAC (flota,
-operadores y centros de costo reales). 709 pruebas automatizadas, revisadas
+**`v0.5.0-beta`** — desplegada y operando con datos reales de la DGAC (flota,
+operadores y centros de costo reales). 1440 pruebas automatizadas, revisadas
 con Ruff, Bandit y pip-audit en CI.
 
 El trabajo pendiente vive en dos documentos, no en este README:
