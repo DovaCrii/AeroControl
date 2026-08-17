@@ -33,7 +33,7 @@
     {% if operator_assignments is not None %}
     <div class="tab-pane fade" id="tab-team" role="tabpanel">
       <table class="table table-hover">
-        <thead><tr><th>{% translate "Operator" %}</th><th>{% translate "Since" %}</th><th>{% translate "Status" %}</th><th>{% translate "Credentials" %}</th></tr></thead>
+        <thead><tr><th scope="col">{% translate "Operator" %}</th><th scope="col">{% translate "Since" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Credentials" %}</th></tr></thead>
         <tbody>
           {% for a in operator_assignments %}
           <tr>
@@ -59,7 +59,7 @@
     {% if aircraft_assignments is not None %}
     <div class="tab-pane fade" id="tab-fleet" role="tabpanel">
       <table class="table table-hover">
-        <thead><tr><th>{% translate "Aircraft" %}</th><th>{% translate "Since" %}</th><th>{% translate "Assignment status" %}</th><th>{% translate "Condition" %}</th><th>{% translate "Location" %}</th></tr></thead>
+        <thead><tr><th scope="col">{% translate "Aircraft" %}</th><th scope="col">{% translate "Since" %}</th><th scope="col">{% translate "Assignment status" %}</th><th scope="col">{% translate "Condition" %}</th><th scope="col">{% translate "Location" %}</th></tr></thead>
         <tbody>
           {% for a in aircraft_assignments %}
           <tr>
@@ -88,7 +88,7 @@
     {% if flight_permissions is not None %}
     <div class="tab-pane fade" id="tab-permissions" role="tabpanel">
       <table class="table table-hover">
-        <thead><tr><th>{% translate "Permission" %}</th><th>{% translate "Validity" %}</th><th>{% translate "Status" %}</th></tr></thead>
+        <thead><tr><th scope="col">{% translate "Permission" %}</th><th scope="col">{% translate "Validity" %}</th><th scope="col">{% translate "Status" %}</th></tr></thead>
         <tbody>
           {% for permission in flight_permissions %}
           <tr>
@@ -110,7 +110,7 @@
       <div class="text-end mb-2"><a href="{% url 'document-create' %}?entity_type={{ document_content_type_id }}&object_id={{ object.pk }}" class="btn btn-sm btn-primary">+ {% translate "Upload document" %}</a></div>
       {% endif %}
       <table class="table table-hover">
-        <thead><tr><th>{% translate "Document" %}</th><th>{% translate "Type" %}</th><th>{% translate "Expiry" %}</th></tr></thead>
+        <thead><tr><th scope="col">{% translate "Document" %}</th><th scope="col">{% translate "Type" %}</th><th scope="col">{% translate "Expiry" %}</th></tr></thead>
         <tbody>
           {% for document in documents %}
           <tr>
@@ -129,7 +129,7 @@
     {% if movements is not None %}
     <div class="tab-pane fade" id="tab-history" role="tabpanel">
       <table class="table table-hover">
-        <thead><tr><th>{% translate "Resource" %}</th><th>{% translate "Movement" %}</th><th>{% translate "From" %}</th><th>{% translate "To" %}</th><th>{% translate "Created" %}</th></tr></thead>
+        <thead><tr><th scope="col">{% translate "Resource" %}</th><th scope="col">{% translate "Movement" %}</th><th scope="col">{% translate "From" %}</th><th scope="col">{% translate "To" %}</th><th scope="col">{% translate "Created" %}</th></tr></thead>
         <tbody>
           {% for entry in movements %}
           <tr>

@@ -20,10 +20,10 @@ read as "the operator list focused on equipment" instead of a separate table.
 They also earn their space: "qualified on 4 aircraft but the DGAC credential
 expires in 12 days" used to require jumping between two lists.{% endcomment %}
 {% block list_header %}
-<th>{% translate "Operator" %}</th>
-<th>{% translate "Cost center" %}</th>
-<th class="cell-status">{% translate "Credential expiry" %}</th>
-<th>{% translate "Qualified equipment" %}</th>
+<th scope="col">{% translate "Operator" %}</th>
+<th scope="col">{% translate "Cost center" %}</th>
+<th scope="col" class="cell-status">{% translate "Credential expiry" %}</th>
+<th scope="col">{% translate "Qualified equipment" %}</th>
 {% endblock %}
 
 {% block table_body %}{% include "registry/_qualification_rows.html" %}{% endblock %}

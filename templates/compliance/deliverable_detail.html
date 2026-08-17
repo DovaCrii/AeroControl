@@ -14,17 +14,17 @@
 
 <div class="card mb-3 p-4">
   <table class="table table-bordered mb-0"><tbody>
-    <tr><th class="w-25">{% translate "Status" %}</th><td><span class="badge bg-{% if deliverable.status == 'released' %}success{% elif deliverable.status == 'rejected' %}danger{% elif deliverable.status == 'validated' %}info{% else %}secondary{% endif %}">{{ deliverable.get_status_display }}</span></td></tr>
-    <tr><th>{% translate "Flight permissions" %}</th><td>{% for permission in deliverable.flight_permissions.all %}{{ permission }}{% if not forloop.last %}, {% endif %}{% empty %}<span class="text-muted">—</span>{% endfor %}</td></tr>
-    <tr><th>{% translate "Control points" %}</th><td>{{ deliverable.gcp_count|default:"—" }}</td></tr>
+    <tr><th scope="row" class="w-25">{% translate "Status" %}</th><td><span class="badge bg-{% if deliverable.status == 'released' %}success{% elif deliverable.status == 'rejected' %}danger{% elif deliverable.status == 'validated' %}info{% else %}secondary{% endif %}">{{ deliverable.get_status_display }}</span></td></tr>
+    <tr><th scope="row">{% translate "Flight permissions" %}</th><td>{% for permission in deliverable.flight_permissions.all %}{{ permission }}{% if not forloop.last %}, {% endif %}{% empty %}<span class="text-muted">—</span>{% endfor %}</td></tr>
+    <tr><th scope="row">{% translate "Control points" %}</th><td>{{ deliverable.gcp_count|default:"—" }}</td></tr>
     {% comment %}Kept next to the control points on purpose: an RMSE computed
     over the same points used to fit the model is not an independent check, so
     the two counts are read together or not at all.{% endcomment %}
-    <tr><th>{% translate "Check points" %}</th><td>{{ deliverable.checkpoint_count|default:"—" }}</td></tr>
-    <tr><th>{% translate "Coverage (%)" %}</th><td>{% if deliverable.coverage_pct is not None %}{{ deliverable.coverage_pct }}%{% else %}—{% endif %}</td></tr>
-    <tr><th>{% translate "Overlap (%)" %}</th><td>{% if deliverable.overlap_pct is not None %}{{ deliverable.overlap_pct }}%{% else %}—{% endif %}</td></tr>
-    {% if deliverable.validated_at %}<tr><th>{% translate "Validated" %}</th><td>{{ deliverable.validated_at|date:"Y-m-d H:i" }} · {{ deliverable.validated_by|default:"—" }}</td></tr>{% endif %}
-    <tr><th>{% translate "Notes" %}</th><td>{{ deliverable.notes|default:"—" }}</td></tr>
+    <tr><th scope="row">{% translate "Check points" %}</th><td>{{ deliverable.checkpoint_count|default:"—" }}</td></tr>
+    <tr><th scope="row">{% translate "Coverage (%)" %}</th><td>{% if deliverable.coverage_pct is not None %}{{ deliverable.coverage_pct }}%{% else %}—{% endif %}</td></tr>
+    <tr><th scope="row">{% translate "Overlap (%)" %}</th><td>{% if deliverable.overlap_pct is not None %}{{ deliverable.overlap_pct }}%{% else %}—{% endif %}</td></tr>
+    {% if deliverable.validated_at %}<tr><th scope="row">{% translate "Validated" %}</th><td>{{ deliverable.validated_at|date:"Y-m-d H:i" }} · {{ deliverable.validated_by|default:"—" }}</td></tr>{% endif %}
+    <tr><th scope="row">{% translate "Notes" %}</th><td>{{ deliverable.notes|default:"—" }}</td></tr>
   </tbody></table>
 </div>
 
@@ -41,7 +41,7 @@ are different statements.{% endcomment %}
   {% if deliverable.acceptance_checks %}
   <div class="table-responsive">
     <table class="table mb-0">
-      <thead><tr><th>{% translate "Criterion" %}</th><th class="text-end">{% translate "Achieved" %}</th><th class="text-end">{% translate "Required" %}</th><th class="text-end">{% translate "Result" %}</th></tr></thead>
+      <thead><tr><th scope="col">{% translate "Criterion" %}</th><th scope="col" class="text-end">{% translate "Achieved" %}</th><th scope="col" class="text-end">{% translate "Required" %}</th><th scope="col" class="text-end">{% translate "Result" %}</th></tr></thead>
       <tbody>{% for label, achieved, threshold, passed in deliverable.acceptance_checks %}<tr>
         <td>{{ label }}</td>
         <td class="text-end">{{ achieved }}</td>

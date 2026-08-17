@@ -67,7 +67,7 @@ ahí abajo: primero en qué estado está el trámite, después el papel.{% endco
   </div>
   {% if open_maintenance %}
   <table class="table table-sm mb-0">
-    <thead><tr><th>{% translate "Type" %}</th><th>{% translate "Status" %}</th><th>{% translate "Scheduled date" %}</th></tr></thead>
+    <thead><tr><th scope="col">{% translate "Type" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Scheduled date" %}</th></tr></thead>
     <tbody>
       {% for m in open_maintenance %}
       <tr>
@@ -87,7 +87,7 @@ ahí abajo: primero en qué estado está el trámite, después el papel.{% endco
   {% if maintenance_history %}
   <h3 class="h6 mt-3 mb-2 text-muted">{% translate "Maintenance history" %}</h3>
   <table class="table table-sm mb-0">
-    <thead><tr><th>{% translate "Type" %}</th><th>{% translate "Completed date" %}</th><th>{% translate "Performed by" %}</th></tr></thead>
+    <thead><tr><th scope="col">{% translate "Type" %}</th><th scope="col">{% translate "Completed date" %}</th><th scope="col">{% translate "Performed by" %}</th></tr></thead>
     <tbody>
       {% for m in maintenance_history %}
       <tr>
@@ -114,7 +114,7 @@ ahí abajo: primero en qué estado está el trámite, después el papel.{% endco
   <h2 class="h5 mb-3">{% translate "Movement history" %}</h2>
   {% if movements %}
   <table class="table table-sm">
-    <thead><tr><th>{% translate "Movement" %}</th><th>{% translate "From" %}</th><th>{% translate "To" %}</th><th>{% translate "Created" %}</th></tr></thead>
+    <thead><tr><th scope="col">{% translate "Movement" %}</th><th scope="col">{% translate "From" %}</th><th scope="col">{% translate "To" %}</th><th scope="col">{% translate "Created" %}</th></tr></thead>
     <tbody>
       {% for entry in movements %}
       <tr>

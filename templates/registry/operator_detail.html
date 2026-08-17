@@ -29,7 +29,7 @@
   </div>
   {% if qualifications %}
   <table class="table table-sm mb-0">
-    <thead><tr><th>{% translate "Qualification type" %}</th><th>{% translate "Issue date" %}</th><th>{% translate "Expiry date" %}</th><th></th></tr></thead>
+    <thead><tr><th scope="col">{% translate "Qualification type" %}</th><th scope="col">{% translate "Issue date" %}</th><th scope="col">{% translate "Expiry date" %}</th><th scope="col"></th></tr></thead>
     <tbody>
       {% for qualification in qualifications %}
       <tr>
@@ -53,7 +53,7 @@
   <h2 class="h5 mb-3">{% translate "Movement history" %}</h2>
   {% if movements %}
   <table class="table table-sm">
-    <thead><tr><th>{% translate "Movement" %}</th><th>{% translate "From" %}</th><th>{% translate "To" %}</th><th>{% translate "Created" %}</th></tr></thead>
+    <thead><tr><th scope="col">{% translate "Movement" %}</th><th scope="col">{% translate "From" %}</th><th scope="col">{% translate "To" %}</th><th scope="col">{% translate "Created" %}</th></tr></thead>
     <tbody>
       {% for entry in movements %}
       <tr>

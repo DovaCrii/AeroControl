@@ -41,7 +41,7 @@ la descarga cuando no.{% endcomment %}
         encontrar.{% endcomment %}
         {% ifchanged document.doc_type.category %}
         <tr class="table-active">
-          <th colspan="5" class="small text-uppercase text-body-secondary fw-semibold py-1">{{ document.doc_type.get_category_display }}</th>
+          <th scope="col" colspan="5" class="small text-uppercase text-body-secondary fw-semibold py-1">{{ document.doc_type.get_category_display }}</th>
         </tr>
         {% endifchanged %}
         <tr>

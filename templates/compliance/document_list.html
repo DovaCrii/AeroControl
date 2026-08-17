@@ -19,5 +19,5 @@
   es mayor por el "Buscando…".{% endcomment %}
   <div class="col-md-2 d-grid align-self-start"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
 </form>
-<div id="table-wrapper" class="card"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>{% translate "Title" %}</th><th>{% translate "Type" %}</th><th>{% translate "Entity" %}</th><th>{% translate "Expiry" %}</th><th>{% translate "Current" %}</th><th class="text-end">{% translate "Actions" %}</th></tr></thead><tbody id="table-body">{% include "compliance/_document_rows.html" %}</tbody></table></div><div id="pagination-container">{% include "generic/_pagination.html" %}</div></div>
+<div id="table-wrapper" class="card"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th scope="col">{% translate "Title" %}</th><th scope="col">{% translate "Type" %}</th><th scope="col">{% translate "Entity" %}</th><th scope="col">{% translate "Expiry" %}</th><th scope="col">{% translate "Current" %}</th><th scope="col" class="text-end">{% translate "Actions" %}</th></tr></thead><tbody id="table-body">{% include "compliance/_document_rows.html" %}</tbody></table></div><div id="pagination-container">{% include "generic/_pagination.html" %}</div></div>
 {% endblock %}
