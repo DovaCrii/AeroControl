@@ -178,6 +178,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   estado"** que **exige un motivo escrito**, deja quién y por qué en el
   historial, y **mantiene la exigencia del PDF firmado** — corregir no es un
   atajo para saltarse el papeleo, es dejar claro que lo anotado estaba mal.
+- **Expediente operativo del permiso (`LV-107`).** La ficha de un permiso abre
+  ahora con la respuesta a **"¿esta operación está completa y documentada?"**:
+  autorización DGAC firmada, carta de permiso, seguro de cada aeronave,
+  credencial de cada operador, plan geoespacial, revisión meteorológica y vuelos
+  registrados — todo en una lista, sin abrir cinco pantallas. **Lo que falta se
+  nombra**: no dice "faltan vigencias", dice qué aeronave y por qué. Y distingue
+  *vencido* (rojo) de *sin dato cargado* (ámbar), que son problemas distintos.
 - **El calendario sale del menú (`LV-103`).** Decisión tomada: la mitad de lo
   que mostraba eran vencimientos, que ya llegan a **Alertas** — donde además se
   resuelven y queda registrado el motivo. **No se borró nada**: la pantalla
