@@ -39,9 +39,17 @@ class Command(BaseCommand):
         today = timezone.localdate()
         # One query instead of an EXISTS per candidate record: the nightly run
         # grew linearly with history, holding SQLite's write lock the while.
-        open_alert_keys = set(
-            Alert.objects.filter(is_resolved=False, is_active=True).values_list(
-                "alert_rule_id", "object_id"
+        #
+        # LV-111: la clave incluye **el valor vigilado**, y mira *todas* las
+        # alertas, no sólo las abiertas. Antes sólo miraba las abiertas, así que
+        # una alerta resuelta volvía a crearse esa misma noche —el dato seguía
+        # vencido— y la bandeja mostraba dos filas del mismo caso. Con el valor
+        # en la clave, los dos casos que hay que distinguir se distinguen solos:
+        # mismo valor ya alertado (resuelto o no) no genera nada; un valor nuevo
+        # tras una renovación sí, que es una alerta legítima.
+        alerted_keys = set(
+            Alert.objects.filter(is_active=True).values_list(
+                "alert_rule_id", "object_id", "watched_value"
             )
         )
         # LV-78 step 3a: the board is frozen, and a rule that still has card
@@ -119,10 +127,13 @@ class Command(BaseCommand):
                     created_at__gte=timezone.now() - timedelta(days=365)
                 )
             for record in records:
-                if (rule.pk, record.pk) in open_alert_keys:
+                value = getattr(record, field, "")
+                # `str()` acá y al guardar, para que la comparación sea entre
+                # las mismas cosas: una fecha sale en ISO y un estado tal cual.
+                watched_value = "" if value is None else str(value)
+                if (rule.pk, record.pk, watched_value) in alerted_keys:
                     duplicates += 1
                     continue
-                value = getattr(record, field, "")
                 # Atomic per alert: if the process dies between creating the
                 # alert and its follow-up task, the dedupe above would count
                 # the orphan alert as a duplicate on the next run and the task
@@ -132,6 +143,7 @@ class Command(BaseCommand):
                         alert_rule=rule,
                         content_type=content_type,
                         object_id=record.pk,
+                        watched_value=watched_value,
                         message=f"{rule.name}: {record} ({field}: {value})",
                     )
                     task = alert.ensure_follow_up_task()

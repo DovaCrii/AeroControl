@@ -238,6 +238,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   la salida era reintentar con otro archivo para siempre. Los mensajes además
   aparecen **en español**, y el fallo del escáner queda registrado con su código
   de salida para poder responder "¿fue el antivirus?" mirando el log.
+- **Una alerta resuelta ya no vuelve a aparecer (`LV-111`).** Si resolvías una
+  alerta, el trabajo nocturno la creaba de nuevo esa misma noche —el dato seguía
+  vencido— y la bandeja mostraba dos filas del mismo caso, una resuelta y otra
+  abierta. Ahora se queda resuelta. **Con una excepción a propósito**: si el
+  documento o la credencial se renueva, el vencimiento siguiente **sí** genera
+  una alerta nueva, porque es un caso nuevo y esconderlo sería peor.
 - **No se podía subir un documento desde "Nuevo documento" (`LV-94`).** Al elegir
   el tipo de entidad, la lista de **"Registro asociado" no se llenaba nunca**, y
   sin registro no hay documento que guardar. Pasaba en la pantalla de carga, en

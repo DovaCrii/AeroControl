@@ -542,6 +542,24 @@ class Alert(EffectivenessVerificationMixin, BaseModel):
     object_id = models.UUIDField()
     content_object = GenericForeignKey("content_type", "object_id")
     message = models.TextField()
+    # LV-111: **de qué valor hablaba esta alerta**, congelado al crearla.
+    #
+    # Sin esto, `generate_alerts` sólo podía evitar duplicados mirando alertas
+    # **abiertas**, así que resolver una la hacía volver esa misma noche: el
+    # dato seguía vencido y la regla la creaba de nuevo. Una bandeja donde lo
+    # resuelto reaparece enseña a no resolver.
+    #
+    # No se puede calcular después: `watched_date` lee el campo del registro
+    # *hoy*, así que una alerta resuelta hace tres meses informa el valor
+    # actual, no el que la disparó. Guardarlo es lo que permite distinguir los
+    # dos casos que el usuario nombró: "esto ya lo resolví" (mismo valor, no se
+    # vuelve a crear) y "esto es nuevo tras una renovación" (valor distinto,
+    # alerta nueva y correcta).
+    #
+    # Texto y no fecha porque una regla puede vigilar un `status` además de una
+    # fecha; el valor se guarda con `str()`, que para una fecha es ISO y por lo
+    # tanto comparable.
+    watched_value = models.CharField(max_length=100, blank=True)
     is_resolved = models.BooleanField(default=False)
     # Where the linked Kanban task stood before resolving moved it to the
     # completed stage. Without it, undoing could only guess a destination.

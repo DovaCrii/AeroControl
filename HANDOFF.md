@@ -174,6 +174,14 @@ migración.
 **`LV-104` hecho** (2026-08-14): los documentos vienen agrupados por categoría en
 cada ficha, y el repositorio de la empresa filtra por categoría. Sin migración.
 
+**`LV-111` hecho** (2026-08-14, bug reportado con captura): una alerta resuelta
+volvía a crearse esa misma noche. **Trae migración `compliance/0020`**, y su
+relleno importa: sin él, cada alerta ya existente se duplicaría **una vez más**
+en la primera corrida después de desplegar. Al desplegar esto conviene mirar la
+bandeja de `p340`: las filas duplicadas que ya están escritas **no se borran
+solas** —son registros, no basura— así que las de la captura (`Carlos
+Peñailillo`, `RPA-5532`) hay que resolverlas o deshacerlas a mano una vez.
+
 **Lo siguiente en mi cola**: `LV-81b` (certificado de póliza con endosos), que
 **necesita una conversación antes de programar** — toca `insurance_expiry`, la
 columna que alimenta alertas, calendario, panel, reporte y `load_dgac_vigencias`
