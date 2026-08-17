@@ -508,7 +508,7 @@ class CompanyDocumentsView(CsvExportMixin, ModelViewPermissionRequiredMixin, Lis
             return [self.htmx_template_name]
         return super().get_template_names()
 
-    def get_queryset(self):
+    def _documents_before_category(self):
         from apps.core.models import OperationalTenant
         from apps.core.tenancy import visible_tenant_ids
 
@@ -530,6 +530,24 @@ class CompanyDocumentsView(CsvExportMixin, ModelViewPermissionRequiredMixin, Lis
             queryset = queryset.filter(doc_type_id=self.request.GET["doc_type"])
         return queryset
 
+    def get_queryset(self):
+        """LV-104: la categoría como faceta, encima del resto de los filtros.
+
+        Separada de `_documents_before_category` porque **las opciones que
+        ofrece el filtro se calculan sin él**: si se computaran sobre el
+        resultado ya filtrado, elegir "Documentos de la empresa" dejaría esa
+        como única opción del desplegable y no habría forma de cambiar de
+        categoría sin borrar la URL a mano. Es el defecto clásico de las
+        facetas, y se ve recién cuando alguien filtra.
+        """
+        queryset = self._documents_before_category()
+        category = self.request.GET.get("category")
+        # Validado contra las opciones declaradas: un valor inventado en la URL
+        # no filtra por un campo arbitrario, simplemente se ignora.
+        if category in dict(DocumentType.CATEGORY_CHOICES):
+            queryset = queryset.filter(doc_type__category=category)
+        return queryset
+
     def get_context_data(self, **kwargs):
         from apps.core.models import OperationalTenant
         from apps.core.tenancy import get_default_tenant, visible_tenant_ids
@@ -540,6 +558,20 @@ class CompanyDocumentsView(CsvExportMixin, ModelViewPermissionRequiredMixin, Lis
             OperationalTenant
         ).pk
         context["document_types"] = DocumentType.objects.filter(is_active=True)
+        # LV-104: sólo las categorías que **tienen** documentos acá. Un filtro
+        # que ofrece siete opciones de las que cinco devuelven vacío enseña a
+        # desconfiar del filtro.
+        used = set(
+            self._documents_before_category()
+            .values_list("doc_type__category", flat=True)
+            .distinct()
+        )
+        context["categories"] = [
+            (value, label)
+            for value, label in DocumentType.CATEGORY_CHOICES
+            if value in used
+        ]
+        context["selected_category"] = self.request.GET.get("category", "")
         context["is_htmx"] = self.request.headers.get("HX-Request") == "true"
         # get_default_tenant() returns the pk; resolve the instance so the
         # template can build the upload link from tenant.pk.

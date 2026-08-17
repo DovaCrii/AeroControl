@@ -33,6 +33,17 @@ la descarga cuando no.{% endcomment %}
       </tr></thead>
       <tbody>
         {% for document in documents %}
+        {% comment %}LV-104: una fila de encabezado cada vez que cambia la
+        categoría. `ifchanged` sobre una lista **ya ordenada por categoría**
+        (ver attachments.py) alcanza para agrupar sin construir estructuras
+        anidadas en la vista. Con una sola categoría se dibuja un encabezado
+        único, que no estorba; con seis, es la diferencia entre buscar y
+        encontrar.{% endcomment %}
+        {% ifchanged document.doc_type.category %}
+        <tr class="table-active">
+          <th colspan="5" class="small text-uppercase text-body-secondary fw-semibold py-1">{{ document.doc_type.get_category_display }}</th>
+        </tr>
+        {% endifchanged %}
         <tr>
           {% comment %}Sin insignia de "reemplazado": `attached_documents_context`
           filtra por `is_current_version=True`, así que acá nunca hay una versión

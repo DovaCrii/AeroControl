@@ -18,14 +18,19 @@
 </div>
 
 <form method="get" class="row g-2 mb-3">
-  <div class="col-md-5">{% include "generic/_search_input.html" with search_url=request.path search_placeholder=company_document_search_placeholder %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
-  <div class="col-md-4"><select class="form-select" name="doc_type"><option value="">{% translate "All document types" %}</option>{% for item in document_types %}<option value="{{ item.pk }}" {% if request.GET.doc_type == item.pk|stringformat:'s' %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></div>
+  <div class="col-md-4">{% include "generic/_search_input.html" with search_url=request.path search_placeholder=company_document_search_placeholder %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
+  {% comment %}LV-104: la categoría primero, porque es la pregunta más gruesa
+  ("de la empresa" / "del personal") y acota el tipo. Sólo aparecen las
+  categorías que tienen documentos acá: un filtro con cinco opciones vacías de
+  siete enseña a desconfiar del filtro.{% endcomment %}
+  <div class="col-md-3"><select class="form-select" name="category"><option value="">{% translate "All categories" %}</option>{% for value, label in categories %}<option value="{{ value }}" {% if selected_category == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+  <div class="col-md-3"><select class="form-select" name="doc_type"><option value="">{% translate "All document types" %}</option>{% for item in document_types %}<option value="{{ item.pk }}" {% if request.GET.doc_type == item.pk|stringformat:'s' %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></div>
   {% comment %}LV-105: `align-self-start` porque la columna, si no, se estira
   hasta la altura de la fila -- y la de búsqueda es más alta que las demás por el
   "Buscando…" que lleva debajo. El botón terminaba midiendo 65 px contra los 42
   de los campos, o sea una columna entera de alto. Medido en el navegador.
   {% endcomment %}
-  <div class="col-md-3 d-grid align-self-start"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
+  <div class="col-md-2 d-grid align-self-start"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
 </form>
 
 <div id="table-wrapper" class="card p-2">
