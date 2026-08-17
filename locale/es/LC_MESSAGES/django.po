@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-17 11:28-0400\n"
+"POT-Creation-Date: 2026-08-17 12:16-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -1022,6 +1022,30 @@ msgstr "Documento"
 msgid "Monthly compliance review"
 msgstr "Revisión de cumplimiento mensual"
 
+#: .\apps\core\backups.py:74
+msgid "The backup file named in the manifest is not there"
+msgstr "El archivo de respaldo que nombra el manifiesto no está"
+
+#: .\apps\core\backups.py:78
+msgid "The size does not match the manifest"
+msgstr "El tamaño no coincide con el manifiesto"
+
+#: .\apps\core\backups.py:81
+msgid "The checksum does not match the manifest"
+msgstr "La suma de verificación no coincide con el manifiesto"
+
+#: .\apps\core\backups.py:89
+msgid "The backup cannot be opened as a database"
+msgstr "El respaldo no se puede abrir como base de datos"
+
+#: .\apps\core\backups.py:94 .\apps\core\backups.py:105
+msgid "The database inside the backup is corrupt"
+msgstr "La base de datos dentro del respaldo está corrupta"
+
+#: .\apps\core\backups.py:103
+msgid "The backup opens but holds no application tables"
+msgstr "El respaldo abre pero no contiene las tablas de la aplicación"
+
 #: .\apps\core\choices.py:21
 msgid "Photogrammetry Procedure"
 msgstr "Procedimiento de Fotogrametría"
@@ -1030,9 +1054,17 @@ msgstr "Procedimiento de Fotogrametría"
 msgid "Video Procedure"
 msgstr "Procedimiento de Videos"
 
-#: .\apps\core\management\commands\check_scheduled_jobs.py:106
+#: .\apps\core\management\commands\check_scheduled_jobs.py:102
 msgid "AeroControl · a scheduled job needs attention"
 msgstr "AeroControl · un trabajo programado necesita atención"
+
+#: .\apps\core\management\commands\verify_backup.py:48
+msgid "There is no backup with a readable manifest"
+msgstr "No hay ningún respaldo con un manifiesto legible"
+
+#: .\apps\core\management\commands\verify_backup.py:88
+msgid "AeroControl · the latest backup did not verify"
+msgstr "AeroControl · el último respaldo no verificó"
 
 #: .\apps\core\models.py:218 .\templates\core\administration.html:55
 msgid "Running"
@@ -1192,11 +1224,11 @@ msgstr "Reglas de alerta activas"
 msgid "Users without a role"
 msgstr "Usuarios sin rol"
 
-#: .\apps\core\views.py:1243
+#: .\apps\core\views.py:1234
 msgid "Status updated."
 msgstr "Estado actualizado."
 
-#: .\apps\core\views.py:1258
+#: .\apps\core\views.py:1249
 #, python-format
 msgid "Cannot transition from %(status)s"
 msgstr "No se puede cambiar desde %(status)s"
@@ -3664,6 +3696,7 @@ msgstr "Total de elementos"
 #: .\templates\compliance\email\executive_report.txt:20
 #: .\templates\compliance\email\monthly_review.txt:11
 #: .\templates\compliance\email\monthly_review_deadline.txt:11
+#: .\templates\core\email\backup_verification.txt:18
 #: .\templates\core\email\scheduled_jobs.txt:15
 #: .\templates\operations\email\duty_limit.txt:10
 #: .\templates\registry\email\credential_notice.txt:9
@@ -4365,6 +4398,39 @@ msgstr "Sábado"
 #: .\templates\core\calendar.html:84
 msgid "Sunday"
 msgstr "Domingo"
+
+#: .\templates\core\email\backup_verification.txt:1
+msgid "The latest backup did not verify"
+msgstr "El último respaldo no verificó"
+
+#: .\templates\core\email\backup_verification.txt:3
+#, python-format
+msgid ""
+"AeroControl checked the most recent backup (%(name)s) and it is not in a "
+"state it could be restored from:"
+msgstr ""
+"AeroControl revisó el respaldo más reciente (%(name)s) y no está en "
+"condiciones de restaurarse:"
+
+#: .\templates\core\email\backup_verification.txt:10
+msgid "What to do, in this order:"
+msgstr "Qué hacer, en este orden:"
+
+#: .\templates\core\email\backup_verification.txt:12
+msgid "Run a new backup now:"
+msgstr "Corre un respaldo nuevo ahora:"
+
+#: .\templates\core\email\backup_verification.txt:13
+msgid "Verify it:"
+msgstr "Verifícalo:"
+
+#: .\templates\core\email\backup_verification.txt:14
+msgid "Keep the older backups until the new one verifies."
+msgstr "Conserva los respaldos anteriores hasta que el nuevo verifique."
+
+#: .\templates\core\email\backup_verification.txt:16
+msgid "Full restore drill (still a human task):"
+msgstr "Ensayo completo de restauración (sigue siendo tarea humana):"
 
 #: .\templates\core\email\scheduled_jobs.txt:1
 msgid "A scheduled job needs attention"
