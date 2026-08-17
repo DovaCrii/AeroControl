@@ -1,21 +1,12 @@
 """OPS-3: physical aircraft location, its validation, and the movement log."""
 
 import pytest
-from django.contrib.auth.models import Permission, User
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.test import Client
 from django.urls import reverse
 
+from apps.core.testing import login_as
 from apps.registry.models import Aircraft, CostCenter, ResourceMovementLog
-
-
-def _client(*codenames):
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
 
 
 def _aircraft(**kwargs):
@@ -130,7 +121,7 @@ class TestMovementLog:
         set `_changed_by_user` before saving."""
         aircraft = _aircraft()
         cc = CostCenter.objects.create(code="CC1", name="Site One")
-        client = _client("change_aircraft")
+        client = login_as("change_aircraft")
         user = User.objects.get(username="u-change_aircraft")
 
         client.post(
@@ -159,7 +150,7 @@ class TestListRendersLocationBadge:
         _aircraft(registration="CC-HQ")
         _aircraft(registration="CC-SITE", current_location="on_site", current_site=cc)
 
-        response = _client("view_aircraft").get(reverse("aircraft-list"))
+        response = login_as("view_aircraft").get(reverse("aircraft-list"))
 
         content = response.content.decode()
         assert response.status_code == 200

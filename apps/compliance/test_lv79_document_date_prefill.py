@@ -7,11 +7,10 @@ the permit was created with -- the same information looked up twice.
 from datetime import date
 
 import pytest
-from django.contrib.auth.models import Permission, User
 from django.contrib.contenttypes.models import ContentType
-from django.test import Client
 from django.urls import reverse
 
+from apps.core.testing import login_as
 from apps.operations.models import FlightPermission
 from apps.registry.models import (
     Aircraft,
@@ -20,14 +19,6 @@ from apps.registry.models import (
     Qualification,
     QualificationType,
 )
-
-
-def _client(*codenames):
-    user = User.objects.create_user("uploader", password="pw")
-    user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    client = Client()
-    assert client.login(username="uploader", password="pw")
-    return client
 
 
 def _permit():
@@ -56,7 +47,7 @@ class TestTheFlightPermitCase:
     def test_the_permits_validity_window_is_proposed(self, db):
         """The reported case: the permit already carries these dates."""
         permit = _permit()
-        client = _client("add_document", "view_document")
+        client = login_as("add_document", "view_document")
 
         initial = _initial_for(client, permit)
 
@@ -66,7 +57,7 @@ class TestTheFlightPermitCase:
     @pytest.mark.django_db
     def test_the_rendered_form_carries_the_dates(self, db):
         permit = _permit()
-        client = _client("add_document", "view_document")
+        client = login_as("add_document", "view_document")
         content_type = ContentType.objects.get_for_model(FlightPermission)
 
         content = client.get(
@@ -82,7 +73,7 @@ class TestTheFlightPermitCase:
         """A pre-filled field with no explanation reads as a value someone else
         entered, and nobody dares correct it."""
         permit = _permit()
-        client = _client("add_document", "view_document")
+        client = login_as("add_document", "view_document")
         content_type = ContentType.objects.get_for_model(FlightPermission)
 
         content = client.get(
@@ -96,7 +87,7 @@ class TestTheFlightPermitCase:
     def test_an_explicit_url_date_still_wins(self, db):
         """An explicit request beats a derived suggestion."""
         permit = _permit()
-        client = _client("add_document", "view_document")
+        client = login_as("add_document", "view_document")
         content_type = ContentType.objects.get_for_model(FlightPermission)
 
         response = client.get(
@@ -115,7 +106,7 @@ class TestTheFlightPermitCase:
         """The suggestion is editable: the DGAC can issue a resolution on a
         date of its own."""
         permit = _permit()
-        client = _client("add_document", "view_document")
+        client = login_as("add_document", "view_document")
         content_type = ContentType.objects.get_for_model(FlightPermission)
         doc_type = _doc_type()
 
@@ -150,7 +141,7 @@ class TestWhereTheMappingIsAmbiguous:
             issue_date=date(2026, 1, 15),
             expiry_date=date(2028, 1, 15),
         )
-        client = _client("add_document", "view_document")
+        client = login_as("add_document", "view_document")
 
         initial = _initial_for(client, qualification)
 
@@ -169,7 +160,7 @@ class TestWhereTheMappingIsAmbiguous:
             manufacturer="DJI",
             insurance_expiry=date(2026, 12, 31),
         )
-        client = _client("add_document", "view_document")
+        client = login_as("add_document", "view_document")
 
         initial = _initial_for(client, aircraft)
 
@@ -181,7 +172,7 @@ class TestWhereTheMappingIsAmbiguous:
         permit = _permit()
         permit.is_active = False
         permit.save(update_fields=["is_active"])
-        client = _client("add_document", "view_document")
+        client = login_as("add_document", "view_document")
 
         initial = _initial_for(client, permit)
 
@@ -190,7 +181,7 @@ class TestWhereTheMappingIsAmbiguous:
     @pytest.mark.django_db
     def test_no_linked_record_proposes_nothing(self, db):
         """Reaching the form from the menu, with nothing selected yet."""
-        client = _client("add_document", "view_document")
+        client = login_as("add_document", "view_document")
 
         response = client.get(reverse("document-create"))
 

@@ -3,23 +3,15 @@
 from datetime import date
 
 import pytest
-from django.contrib.auth.models import Permission, User
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.test import Client
 from django.urls import reverse
 
+from apps.core.testing import login_as
 from apps.registry.models import Aircraft, CostCenter, Operator
 
 from .models import FlightPermission
-
-
-def _client(*codenames):
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
 
 
 def _cc(code="CC1"):
@@ -98,7 +90,7 @@ class TestRoster:
         cc = _cc()
         op1, op2 = _operator("E1", cc), _operator("E2", cc)
         ac1 = _aircraft("CC-A1", cc)
-        client = _client("add_flightpermission")
+        client = login_as("add_flightpermission")
 
         response = client.post(
             reverse("permission-create"),
@@ -127,7 +119,7 @@ class TestRoster:
         cc = _cc()
         op1 = _operator("E1", cc)
         ac1 = _aircraft("CC-A1", cc)
-        client = _client("add_flightpermission")
+        client = login_as("add_flightpermission")
 
         response = client.post(
             reverse("permission-create"),
@@ -177,7 +169,7 @@ class TestCsvExportIncludesRoster:
         )
         permission.operators.set([op1, op2])
         permission.aircraft_fleet.set([ac1])
-        client = _client("view_flightpermission")
+        client = login_as("view_flightpermission")
 
         response = client.get(reverse("permission-list"), {"export": "csv"})
 
@@ -240,7 +232,7 @@ class TestCalendarSpansMultipleDays:
         )
         permission.operators.add(op)
         permission.aircraft_fleet.add(ac)
-        client = _client("view_flightpermission")
+        client = login_as("view_flightpermission")
 
         response = client.get(reverse("ops-calendar"), {"month": "2026-07"})
 

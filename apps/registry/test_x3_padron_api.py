@@ -6,26 +6,13 @@ no way to write.
 """
 
 import pytest
-from django.contrib.auth.models import Permission, User
+from django.contrib.auth.models import User
 from django.test import Client
 from django.urls import reverse
 
+from apps.core.testing import login_as
 from apps.core.models import OperationalTenant
 from apps.registry.models import Aircraft, CostCenter
-
-
-def _client(*codenames, member_of=None):
-    """A logged-in client. `member_of` adds the user to that tenant, which is
-    how visible_tenant_ids resolves scope (an `OperationalTenant.members` M2M,
-    not a user profile field)."""
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    if member_of is not None:
-        member_of.members.add(user)
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
 
 
 @pytest.fixture
@@ -53,7 +40,7 @@ def fleet(db):
 
 @pytest.mark.django_db
 def test_lists_the_fleet_with_the_fields_aerolink_needs(fleet):
-    response = _client("view_aircraft").get(reverse("api-v1-registry-aircraft"))
+    response = login_as("view_aircraft").get(reverse("api-v1-registry-aircraft"))
 
     assert response.status_code == 200
     payload = response.json()
@@ -68,7 +55,7 @@ def test_lists_the_fleet_with_the_fields_aerolink_needs(fleet):
 @pytest.mark.django_db
 def test_resolves_an_airframe_by_serial(fleet):
     """The lookup AeroLink actually performs: it holds a serial from DJI."""
-    response = _client("view_aircraft").get(
+    response = login_as("view_aircraft").get(
         reverse("api-v1-registry-aircraft"), {"serial": "1581F5FHC245700D181D"}
     )
 
@@ -82,7 +69,7 @@ def test_serial_lookup_normalizes_whitespace_like_the_model_does(fleet):
     """X.1 strips whitespace from stored serials (the real repository had two
     with a spurious space). A caller passing the spaced form must still
     resolve, rather than silently getting zero results."""
-    response = _client("view_aircraft").get(
+    response = login_as("view_aircraft").get(
         reverse("api-v1-registry-aircraft"), {"serial": "1581F5FHC2457 00D181D"}
     )
 
@@ -95,7 +82,7 @@ def test_serial_lookup_normalizes_whitespace_like_the_model_does(fleet):
 def test_a_partial_serial_resolves_nothing(fleet):
     """Matching a prefix would attach telemetry to the wrong airframe, which
     is worse than failing to resolve it."""
-    response = _client("view_aircraft").get(
+    response = login_as("view_aircraft").get(
         reverse("api-v1-registry-aircraft"), {"serial": "1581"}
     )
 
@@ -105,7 +92,7 @@ def test_a_partial_serial_resolves_nothing(fleet):
 @pytest.mark.django_db
 def test_requires_view_aircraft_permission(fleet):
     """A token is not a bypass: the read contract applies to the API too."""
-    assert _client().get(reverse("api-v1-registry-aircraft")).status_code == 403
+    assert login_as().get(reverse("api-v1-registry-aircraft")).status_code == 403
 
 
 @pytest.mark.django_db
@@ -118,7 +105,7 @@ def test_archived_aircraft_are_not_exposed(fleet):
     fleet["wingtra"].is_active = False
     fleet["wingtra"].save(update_fields=["is_active"])
 
-    response = _client("view_aircraft").get(reverse("api-v1-registry-aircraft"))
+    response = login_as("view_aircraft").get(reverse("api-v1-registry-aircraft"))
 
     registrations = {row["registration"] for row in response.json()["results"]}
     assert registrations == {"RPA-4401"}
@@ -146,7 +133,7 @@ def test_another_tenants_airframe_does_not_leak(fleet):
     other tenant's aircraft must be absent."""
     _other_tenant_aircraft()
 
-    response = _client("view_aircraft").get(reverse("api-v1-registry-aircraft"))
+    response = login_as("view_aircraft").get(reverse("api-v1-registry-aircraft"))
 
     registrations = {row["registration"] for row in response.json()["results"]}
     assert registrations == {"RPA-4401", "RPA-2198"}
@@ -159,7 +146,7 @@ def test_scoping_filters_both_ways(fleet):
     pass if scoping silently returned everything for everyone."""
     other_tenant, _aircraft = _other_tenant_aircraft()
 
-    response = _client("view_aircraft", member_of=other_tenant).get(
+    response = login_as("view_aircraft", member_of=other_tenant).get(
         reverse("api-v1-registry-aircraft")
     )
 
@@ -172,7 +159,7 @@ def test_serial_lookup_cannot_cross_tenants(fleet):
     """Resolving by serial must not become a way around the tenant boundary."""
     other_tenant, _aircraft = _other_tenant_aircraft()
 
-    response = _client("view_aircraft").get(
+    response = login_as("view_aircraft").get(
         reverse("api-v1-registry-aircraft"), {"serial": "OTHERTENANT1"}
     )
 
@@ -183,7 +170,7 @@ def test_serial_lookup_cannot_cross_tenants(fleet):
 def test_detail_of_another_tenants_airframe_is_404(fleet):
     _other_tenant, aircraft = _other_tenant_aircraft()
 
-    response = _client("view_aircraft").get(
+    response = login_as("view_aircraft").get(
         reverse("api-v1-registry-aircraft-detail", args=[aircraft.pk])
     )
 
@@ -192,7 +179,7 @@ def test_detail_of_another_tenants_airframe_is_404(fleet):
 
 @pytest.mark.django_db
 def test_detail_returns_one_airframe(fleet):
-    response = _client("view_aircraft").get(
+    response = login_as("view_aircraft").get(
         reverse("api-v1-registry-aircraft-detail", args=[fleet["m3e"].pk])
     )
 
@@ -224,7 +211,7 @@ def test_response_does_not_leak_compliance_fields(fleet):
     fleet["m3e"].insurance_expiry = "2027-01-01"
     fleet["m3e"].save(update_fields=["insurance_expiry"])
 
-    response = _client("view_aircraft").get(reverse("api-v1-registry-aircraft"))
+    response = login_as("view_aircraft").get(reverse("api-v1-registry-aircraft"))
 
     row = next(r for r in response.json()["results"] if r["registration"] == "RPA-4401")
     for leaked in (

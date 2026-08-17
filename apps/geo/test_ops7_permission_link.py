@@ -3,23 +3,14 @@
 from datetime import date
 
 import pytest
-from django.contrib.auth.models import Permission, User
-from django.test import Client
+from django.contrib.auth.models import User
 from django.urls import reverse
 
+from apps.core.testing import login_as
 from apps.operations.models import FlightPermission
 from apps.registry.models import CostCenter
 
 from .models import GeoPlan, GeoPlanPermissionLink
-
-
-def _client(*codenames):
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
 
 
 def _plan(cost_center, **kwargs):
@@ -111,7 +102,7 @@ class TestDetailPageShowsHistory:
         plan.flight_permission = permit
         plan.save(update_fields=["flight_permission", "updated_at"])
 
-        response = _client("view_geoplan").get(
+        response = login_as("view_geoplan").get(
             reverse("geo-plan-detail", args=[plan.pk])
         )
 

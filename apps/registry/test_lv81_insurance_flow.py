@@ -15,11 +15,10 @@ the new behaviour.
 from datetime import timedelta
 
 import pytest
-from django.contrib.auth.models import Permission, User
-from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.core.testing import login_as
 from apps.registry.models import Aircraft, InsuranceHistory
 
 TODAY = timezone.localdate()
@@ -33,15 +32,6 @@ def _aircraft(**kwargs):
         manufacturer="DJI",
         **kwargs,
     )
-
-
-def _client(*codenames):
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
 
 
 @pytest.mark.django_db
@@ -223,7 +213,7 @@ class TestTransitions:
         # The date is on file from the start here: the last step requires it
         # (see test_authorizing_requires_the_validity_date).
         aircraft = _aircraft(insurance_expiry=TODAY + timedelta(days=365))
-        client = _client("change_aircraft", "view_aircraft")
+        client = login_as("change_aircraft", "view_aircraft")
 
         client.post(self._url(aircraft, "pending"))
         aircraft.refresh_from_db()
@@ -245,7 +235,7 @@ class TestTransitions:
         paperwork."""
         aircraft = _aircraft(insurance_status=Aircraft.INSURANCE_STATUS_FILED)
 
-        response = _client("change_aircraft", "view_aircraft").post(
+        response = login_as("change_aircraft", "view_aircraft").post(
             self._url(aircraft, "active"), follow=True
         )
 
@@ -256,7 +246,7 @@ class TestTransitions:
     def test_skipping_a_step_is_refused(self):
         aircraft = _aircraft()
 
-        _client("change_aircraft", "view_aircraft").post(self._url(aircraft, "active"))
+        login_as("change_aircraft", "view_aircraft").post(self._url(aircraft, "active"))
 
         aircraft.refresh_from_db()
         assert aircraft.insurance_status == Aircraft.INSURANCE_STATUS_MISSING
@@ -267,7 +257,9 @@ class TestTransitions:
             insurance_expiry=TODAY + timedelta(days=15),
         )
 
-        _client("change_aircraft", "view_aircraft").post(self._url(aircraft, "pending"))
+        login_as("change_aircraft", "view_aircraft").post(
+            self._url(aircraft, "pending")
+        )
 
         aircraft.refresh_from_db()
         assert aircraft.insurance_status == Aircraft.INSURANCE_STATUS_PENDING
@@ -278,7 +270,7 @@ class TestTransitions:
     def test_it_requires_change_aircraft(self):
         aircraft = _aircraft()
 
-        response = _client("view_aircraft").post(self._url(aircraft, "pending"))
+        response = login_as("view_aircraft").post(self._url(aircraft, "pending"))
 
         assert response.status_code == 403
         aircraft.refresh_from_db()
@@ -290,7 +282,9 @@ class TestTransitions:
         being authorized."""
         aircraft = _aircraft(status="active")
 
-        _client("change_aircraft", "view_aircraft").post(self._url(aircraft, "pending"))
+        login_as("change_aircraft", "view_aircraft").post(
+            self._url(aircraft, "pending")
+        )
 
         aircraft.refresh_from_db()
         assert aircraft.status == "active"
@@ -298,7 +292,9 @@ class TestTransitions:
     def test_the_transition_is_attributed_to_the_user_who_made_it(self):
         aircraft = _aircraft()
 
-        _client("change_aircraft", "view_aircraft").post(self._url(aircraft, "pending"))
+        login_as("change_aircraft", "view_aircraft").post(
+            self._url(aircraft, "pending")
+        )
 
         entry = InsuranceHistory.objects.get(aircraft=aircraft)
         assert entry.changed_by == "u-change_aircraft-view_aircraft"
@@ -310,7 +306,7 @@ class TestOnThePage:
     def test_the_fiche_shows_the_stepper_and_the_next_action(self):
         aircraft = _aircraft(insurance_status=Aircraft.INSURANCE_STATUS_FILED)
 
-        response = _client("view_aircraft", "change_aircraft").get(
+        response = login_as("view_aircraft", "change_aircraft").get(
             reverse("aircraft-detail", args=[aircraft.pk])
         )
 
@@ -329,7 +325,7 @@ class TestOnThePage:
     def test_without_change_aircraft_there_are_no_buttons(self):
         aircraft = _aircraft()
 
-        response = _client("view_aircraft").get(
+        response = login_as("view_aircraft").get(
             reverse("aircraft-detail", args=[aircraft.pk])
         )
 
@@ -342,7 +338,7 @@ class TestOnThePage:
         )
 
         content = (
-            _client("view_aircraft")
+            login_as("view_aircraft")
             .get(reverse("aircraft-detail", args=[aircraft.pk]))
             .content.decode()
         )

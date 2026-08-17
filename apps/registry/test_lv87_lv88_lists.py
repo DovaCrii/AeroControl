@@ -10,21 +10,11 @@ from datetime import timedelta
 from unittest import mock
 
 import pytest
-from django.contrib.auth.models import Permission, User
-from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.core.testing import login_as
 from apps.registry.models import Aircraft, Operator, ResourceMovementLog
-
-
-def _client(*codenames):
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
 
 
 def _aircraft(registration="RPA-3696"):
@@ -60,7 +50,7 @@ class TestCredentialColumn:
         Operator.objects.create(employee_id="E1", full_name="René Herrera")
 
         content = (
-            _client("view_operator").get(reverse("operator-list")).content.decode()
+            login_as("view_operator").get(reverse("operator-list")).content.decode()
         )
 
         assert "credential-file" in content
@@ -72,7 +62,7 @@ class TestCredentialColumn:
         Operator.objects.create(employee_id="E1", full_name="Sin respaldo")
 
         content = (
-            _client("view_operator").get(reverse("operator-list")).content.decode()
+            login_as("view_operator").get(reverse("operator-list")).content.decode()
         )
 
         assert "is-missing" in content
@@ -91,7 +81,7 @@ class TestMovementWindow:
         _movement(aircraft, days_ago=2)
         _movement(aircraft, days_ago=200)
 
-        response = _client("view_resourcemovementlog").get(self._url())
+        response = login_as("view_resourcemovementlog").get(self._url())
 
         assert response.context["movement_count"] == 1
         assert response.context["selected_days"] == 30
@@ -103,7 +93,7 @@ class TestMovementWindow:
         _movement(aircraft, days_ago=2)
         _movement(aircraft, days_ago=200)
 
-        response = _client("view_resourcemovementlog").get(self._url(days="all"))
+        response = login_as("view_resourcemovementlog").get(self._url(days="all"))
 
         assert response.context["movement_count"] == 2
         assert response.context["selected_days"] == "all"
@@ -114,7 +104,7 @@ class TestMovementWindow:
         _movement(aircraft, days_ago=3)
         _movement(aircraft, days_ago=45)
 
-        response = _client("view_resourcemovementlog").get(self._url(days=days))
+        response = login_as("view_resourcemovementlog").get(self._url(days=days))
 
         assert response.context["movement_count"] == (1 if days == 7 else 2)
 
@@ -124,7 +114,7 @@ class TestMovementWindow:
         aircraft = _aircraft()
         _movement(aircraft, days_ago=2)
 
-        response = _client("view_resourcemovementlog").get(self._url(days="banana"))
+        response = login_as("view_resourcemovementlog").get(self._url(days="banana"))
 
         assert response.context["selected_days"] == 30
         assert response.context["movement_count"] == 1
@@ -136,7 +126,7 @@ class TestMovementWindow:
         for _ in range(55):
             _movement(aircraft, days_ago=1)
 
-        response = _client("view_resourcemovementlog").get(self._url())
+        response = login_as("view_resourcemovementlog").get(self._url())
 
         assert response.context["movement_count"] == 55
         assert len(response.context["objects"]) == 50
@@ -149,7 +139,7 @@ class TestMovementRows:
         _movement(aircraft, days_ago=1)
 
         content = (
-            _client("view_resourcemovementlog")
+            login_as("view_resourcemovementlog")
             .get(reverse("resourcemovementlog-list"))
             .content.decode()
         )

@@ -7,10 +7,11 @@ GEO-6: commit + restore (concurrency, plan_locked, validation, no_change).
 import json
 
 import pytest
-from django.contrib.auth.models import Permission, User
+from django.contrib.auth.models import User
 from django.test import Client
 from django.urls import reverse
 
+from apps.core.testing import login_as
 from apps.core.models import AuditEvent
 from apps.geo.kml import canonical
 from apps.geo.models import GeoPlan, GeoPlanVersion
@@ -31,15 +32,6 @@ def _doc_with_features(name, n):
         for i in range(n)
     ]
     return document
-
-
-def _client(*codenames):
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
 
 
 def _doc(name):
@@ -85,14 +77,14 @@ class TestPlanMeta:
     def test_requires_view_permission(self, db):
         plan = _plan_with_versions()
         url = reverse("api-v1-geo-plan", args=[plan.pk])
-        assert _client().get(url).status_code == 403
+        assert login_as().get(url).status_code == 403
 
     @pytest.mark.django_db
     def test_returns_meta_with_current_version(self, db):
         plan = _plan_with_versions(count=2)
         url = reverse("api-v1-geo-plan", args=[plan.pk])
 
-        response = _client("view_geoplan").get(url)
+        response = login_as("view_geoplan").get(url)
 
         assert response.status_code == 200
         payload = response.json()
@@ -109,14 +101,14 @@ class TestPlanMeta:
         import uuid
 
         url = reverse("api-v1-geo-plan", args=[uuid.uuid4()])
-        assert _client("view_geoplan").get(url).status_code == 404
+        assert login_as("view_geoplan").get(url).status_code == 404
 
     @pytest.mark.django_db
     def test_archived_plan_is_404(self, db):
         plan = _plan_with_versions()
         GeoPlan.objects.filter(pk=plan.pk).update(is_active=False)
         url = reverse("api-v1-geo-plan", args=[plan.pk])
-        assert _client("view_geoplan").get(url).status_code == 404
+        assert login_as("view_geoplan").get(url).status_code == 404
 
 
 class TestVersionList:
@@ -125,14 +117,14 @@ class TestVersionList:
         plan = _plan_with_versions()
         url = reverse("api-v1-geo-plan-versions", args=[plan.pk])
         assert Client().get(url).status_code == 401
-        assert _client().get(url).status_code == 403
+        assert login_as().get(url).status_code == 403
 
     @pytest.mark.django_db
     def test_lists_versions_newest_first_without_content(self, db):
         plan = _plan_with_versions(count=3)
         url = reverse("api-v1-geo-plan-versions", args=[plan.pk])
 
-        response = _client("view_geoplan").get(url)
+        response = login_as("view_geoplan").get(url)
 
         assert response.status_code == 200
         payload = response.json()
@@ -149,7 +141,7 @@ class TestVersionContent:
     def test_requires_view_permission(self, db):
         plan = _plan_with_versions()
         url = reverse("api-v1-geo-plan-version-content", args=[plan.pk, 1])
-        assert _client().get(url).status_code == 403
+        assert login_as().get(url).status_code == 403
 
     @pytest.mark.django_db
     def test_returns_canonical_and_etag(self, db):
@@ -157,7 +149,7 @@ class TestVersionContent:
         version = plan.versions.get(version_number=1)
         url = reverse("api-v1-geo-plan-version-content", args=[plan.pk, 1])
 
-        response = _client("view_geoplan").get(url)
+        response = login_as("view_geoplan").get(url)
 
         assert response.status_code == 200
         assert response.json() == version.content
@@ -170,7 +162,7 @@ class TestVersionContent:
         url = reverse("api-v1-geo-plan-version-content", args=[plan.pk, 1])
         etag = f'"{version.content_checksum}"'
 
-        response = _client("view_geoplan").get(url, HTTP_IF_NONE_MATCH=etag)
+        response = login_as("view_geoplan").get(url, HTTP_IF_NONE_MATCH=etag)
 
         assert response.status_code == 304
         assert response["ETag"] == etag
@@ -180,7 +172,7 @@ class TestVersionContent:
     def test_unknown_version_number_is_404(self, db):
         plan = _plan_with_versions(count=1)
         url = reverse("api-v1-geo-plan-version-content", args=[plan.pk, 99])
-        assert _client("view_geoplan").get(url).status_code == 404
+        assert login_as("view_geoplan").get(url).status_code == 404
 
 
 def _post(client, url, body, **extra):
@@ -201,7 +193,7 @@ class TestCommit:
         body = {"base_version": 1, "content": _doc("x")}
         assert _post(Client(), url, body).status_code == 401
         # view_geoplan is not enough to write.
-        assert _post(_client("view_geoplan"), url, body).status_code == 403
+        assert _post(login_as("view_geoplan"), url, body).status_code == 403
 
     @pytest.mark.django_db
     def test_commit_appends_version_and_recomputes_derived_fields(self, db):
@@ -215,7 +207,7 @@ class TestCommit:
             "feature_count": 999,
         }
 
-        response = _post(_client("change_geoplan"), self._url(plan), body)
+        response = _post(login_as("change_geoplan"), self._url(plan), body)
 
         assert response.status_code == 201
         payload = response.json()
@@ -235,7 +227,7 @@ class TestCommit:
     def test_stale_base_version_conflicts(self, db):
         plan = _plan_with_versions(count=1)
         body = {"base_version": 0, "content": _doc("x")}
-        response = _post(_client("change_geoplan"), self._url(plan), body)
+        response = _post(login_as("change_geoplan"), self._url(plan), body)
         assert response.status_code == 409
         assert response.json()["code"] == "conflict"
         assert plan.versions.count() == 1
@@ -248,7 +240,7 @@ class TestCommit:
         stale = (plan.updated_at - timedelta(seconds=1)).isoformat()
         body = {"base_version": 1, "content": _doc("x")}
         response = _post(
-            _client("change_geoplan"),
+            login_as("change_geoplan"),
             self._url(plan),
             body,
             HTTP_IF_UNMODIFIED_SINCE=stale,
@@ -261,7 +253,7 @@ class TestCommit:
         plan = _plan_with_versions(count=1)
         GeoPlan.objects.filter(pk=plan.pk).update(status="approved")
         body = {"base_version": 1, "content": _doc("x")}
-        response = _post(_client("change_geoplan"), self._url(plan), body)
+        response = _post(login_as("change_geoplan"), self._url(plan), body)
         assert response.status_code == 409
         assert response.json()["code"] == "plan_locked"
 
@@ -270,7 +262,7 @@ class TestCommit:
         plan = _plan_with_versions(count=1)
         # V1 content is _doc("v1"); re-sending it must not create a version.
         body = {"base_version": 1, "content": _doc("v1")}
-        response = _post(_client("change_geoplan"), self._url(plan), body)
+        response = _post(login_as("change_geoplan"), self._url(plan), body)
         assert response.status_code == 200
         assert response.json()["code"] == "no_change"
         assert plan.versions.count() == 1
@@ -299,14 +291,14 @@ class TestCommit:
     def test_invalid_documents_are_rejected(self, db, content):
         plan = _plan_with_versions(count=1)
         body = {"base_version": 1, "content": content}
-        response = _post(_client("change_geoplan"), self._url(plan), body)
+        response = _post(login_as("change_geoplan"), self._url(plan), body)
         assert response.status_code == 400
         assert plan.versions.count() == 1
 
     @pytest.mark.django_db
     def test_malformed_json_is_400(self, db):
         plan = _plan_with_versions(count=1)
-        response = _client("change_geoplan").post(
+        response = login_as("change_geoplan").post(
             self._url(plan), data="{bad", content_type="application/json"
         )
         assert response.status_code == 400
@@ -322,12 +314,12 @@ class TestRestore:
         plan = _plan_with_versions(count=2)
         url = self._url(plan, 1)
         assert _post(Client(), url, {}).status_code == 401
-        assert _post(_client("view_geoplan"), url, {}).status_code == 403
+        assert _post(login_as("view_geoplan"), url, {}).status_code == 403
 
     @pytest.mark.django_db
     def test_restore_copies_version_forward(self, db):
         plan = _plan_with_versions(count=2)  # v1="v1", v2="v2"; latest=2
-        response = _post(_client("change_geoplan"), self._url(plan, 1), {})
+        response = _post(login_as("change_geoplan"), self._url(plan, 1), {})
         assert response.status_code == 201
         payload = response.json()
         assert payload["version_number"] == 3
@@ -345,7 +337,7 @@ class TestRestore:
     @pytest.mark.django_db
     def test_restore_of_current_is_no_change(self, db):
         plan = _plan_with_versions(count=2)  # latest is v2
-        response = _post(_client("change_geoplan"), self._url(plan, 2), {})
+        response = _post(login_as("change_geoplan"), self._url(plan, 2), {})
         assert response.status_code == 200
         assert response.json()["code"] == "no_change"
         assert plan.versions.count() == 2
@@ -354,14 +346,14 @@ class TestRestore:
     def test_restore_on_locked_plan_is_409(self, db):
         plan = _plan_with_versions(count=2)
         GeoPlan.objects.filter(pk=plan.pk).update(status="approved")
-        response = _post(_client("change_geoplan"), self._url(plan, 1), {})
+        response = _post(login_as("change_geoplan"), self._url(plan, 1), {})
         assert response.status_code == 409
         assert response.json()["code"] == "plan_locked"
 
     @pytest.mark.django_db
     def test_restore_unknown_version_is_404(self, db):
         plan = _plan_with_versions(count=1)
-        response = _post(_client("change_geoplan"), self._url(plan, 99), {})
+        response = _post(login_as("change_geoplan"), self._url(plan, 99), {})
         assert response.status_code == 404
 
 
@@ -375,12 +367,12 @@ class TestExport:
         plan = _plan_with_versions(count=1)
         url = self._url(plan)
         assert Client().post(url, {"format": "kml"}).status_code == 401
-        assert _client().post(url, {"format": "kml"}).status_code == 403
+        assert login_as().post(url, {"format": "kml"}).status_code == 403
 
     @pytest.mark.django_db
     def test_export_kml(self, db):
         plan = _plan_with_versions(count=1)
-        response = _client("view_geoplan").post(
+        response = login_as("view_geoplan").post(
             self._url(plan), {"version": 1, "format": "kml"}
         )
         assert response.status_code == 200
@@ -397,7 +389,7 @@ class TestExport:
         import zipfile
 
         plan = _plan_with_versions(count=1)
-        response = _client("view_geoplan").post(
+        response = login_as("view_geoplan").post(
             self._url(plan), {"version": 1, "format": "kmz"}
         )
         assert response.status_code == 200
@@ -409,14 +401,14 @@ class TestExport:
     @pytest.mark.django_db
     def test_export_defaults_to_current_version(self, db):
         plan = _plan_with_versions(count=2)
-        response = _client("view_geoplan").post(self._url(plan), {"format": "kml"})
+        response = login_as("view_geoplan").post(self._url(plan), {"format": "kml"})
         assert response.status_code == 200
         assert "_v2.kml" in response["Content-Disposition"]
 
     @pytest.mark.django_db
     def test_export_rejects_unknown_format(self, db):
         plan = _plan_with_versions(count=1)
-        response = _client("view_geoplan").post(
+        response = login_as("view_geoplan").post(
             self._url(plan), {"version": 1, "format": "pdf"}
         )
         assert response.status_code == 400
@@ -424,7 +416,7 @@ class TestExport:
     @pytest.mark.django_db
     def test_export_unknown_version_is_404(self, db):
         plan = _plan_with_versions(count=1)
-        response = _client("view_geoplan").post(
+        response = login_as("view_geoplan").post(
             self._url(plan), {"version": 99, "format": "kml"}
         )
         assert response.status_code == 404

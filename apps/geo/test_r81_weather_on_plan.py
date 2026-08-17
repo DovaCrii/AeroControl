@@ -8,21 +8,12 @@ test_r81_weather.py covers.
 from datetime import date
 
 import pytest
-from django.contrib.auth.models import Permission, User
-from django.test import Client
+from django.contrib.auth.models import User
 from django.urls import reverse
 
+from apps.core.testing import login_as
 from apps.geo.models import GeoPlan, GeoPlanVersion
 from apps.registry.models import CostCenter
-
-
-def _client(*codenames):
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
 
 
 def _plan_with_area(*, with_permission=True, with_bbox=True):
@@ -93,7 +84,7 @@ def test_shows_the_forecast_for_the_permit_start_date(monkeypatch):
     monkeypatch.setattr(weather, "forecast_for", fake_forecast)
     plan = _plan_with_area()
 
-    response = _client("view_geoplan").get(reverse("geo-plan-detail", args=[plan.pk]))
+    response = login_as("view_geoplan").get(reverse("geo-plan-detail", args=[plan.pk]))
     content = response.content.decode()
 
     assert response.context["weather"] == FORECAST
@@ -116,7 +107,7 @@ def test_panel_absent_when_the_provider_gives_nothing(monkeypatch):
     monkeypatch.setattr(weather, "forecast_for", lambda *a: None)
     plan = _plan_with_area()
 
-    response = _client("view_geoplan").get(reverse("geo-plan-detail", args=[plan.pk]))
+    response = login_as("view_geoplan").get(reverse("geo-plan-detail", args=[plan.pk]))
 
     assert response.status_code == 200
     assert response.context["weather"] is None
@@ -132,7 +123,7 @@ def test_no_lookup_without_a_bounding_box(monkeypatch):
     monkeypatch.setattr(weather, "forecast_for", lambda *a: calls.append(a))
     plan = _plan_with_area(with_bbox=False)
 
-    response = _client("view_geoplan").get(reverse("geo-plan-detail", args=[plan.pk]))
+    response = login_as("view_geoplan").get(reverse("geo-plan-detail", args=[plan.pk]))
 
     assert response.context["weather"] is None
     assert calls == []
@@ -148,7 +139,7 @@ def test_no_lookup_without_a_linked_permit(monkeypatch):
     monkeypatch.setattr(weather, "forecast_for", lambda *a: calls.append(a))
     plan = _plan_with_area(with_permission=False)
 
-    response = _client("view_geoplan").get(reverse("geo-plan-detail", args=[plan.pk]))
+    response = login_as("view_geoplan").get(reverse("geo-plan-detail", args=[plan.pk]))
 
     assert response.context["weather"] is None
     assert calls == []
@@ -161,7 +152,7 @@ def test_page_still_renders_with_the_feature_disabled(settings):
     settings.WEATHER_ENABLED = False
     plan = _plan_with_area()
 
-    response = _client("view_geoplan").get(reverse("geo-plan-detail", args=[plan.pk]))
+    response = login_as("view_geoplan").get(reverse("geo-plan-detail", args=[plan.pk]))
 
     assert response.status_code == 200
     assert response.context["weather"] is None
@@ -180,7 +171,7 @@ class TestRecordingTheReview:
 
         monkeypatch.setattr(weather, "forecast_for", lambda *a: FORECAST)
         plan = _plan_with_area()
-        client = _client("view_geoplan", "add_weatherreview")
+        client = login_as("view_geoplan", "add_weatherreview")
 
         response = client.post(reverse("weather-review-create", args=[plan.pk]))
 
@@ -207,7 +198,7 @@ class TestRecordingTheReview:
 
         monkeypatch.setattr(weather, "forecast_for", lambda *a: FORECAST)
         plan = _plan_with_area()
-        client = _client("view_geoplan", "add_weatherreview")
+        client = login_as("view_geoplan", "add_weatherreview")
         client.post(reverse("weather-review-create", args=[plan.pk]))
 
         monkeypatch.setattr(weather, "forecast_for", lambda *a: None)
@@ -229,7 +220,7 @@ class TestRecordingTheReview:
 
         monkeypatch.setattr(weather, "forecast_for", lambda *a: None)
         plan = _plan_with_area()
-        client = _client("view_geoplan", "add_weatherreview")
+        client = login_as("view_geoplan", "add_weatherreview")
 
         response = client.post(reverse("weather-review-create", args=[plan.pk]))
 
@@ -244,7 +235,7 @@ class TestRecordingTheReview:
         monkeypatch.setattr(weather, "forecast_for", lambda *a: FORECAST)
         plan = _plan_with_area()
 
-        response = _client("view_geoplan").post(
+        response = login_as("view_geoplan").post(
             reverse("weather-review-create", args=[plan.pk])
         )
 
@@ -260,7 +251,7 @@ class TestRecordingTheReview:
 
         monkeypatch.setattr(weather, "forecast_for", lambda *a: FORECAST)
         plan = _plan_with_area()
-        client = _client("view_geoplan", "add_weatherreview")
+        client = login_as("view_geoplan", "add_weatherreview")
 
         response = client.get(reverse("weather-review-create", args=[plan.pk]))
 

@@ -8,23 +8,13 @@ back the expiry alerts and the operator-aircraft compatibility check)."""
 from datetime import date, timedelta
 
 import pytest
-from django.contrib.auth.models import Permission, User
-from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.core.testing import login_as
 from apps.registry.models import CostCenter, Operator, Qualification, QualificationType
 
 TODAY = timezone.localdate()
-
-
-def _client(*codenames):
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client
 
 
 @pytest.mark.django_db
@@ -44,7 +34,7 @@ def test_ficha_shows_qualifications_instead_of_free_text_authorizations():
         expiry_date=TODAY + timedelta(days=30),
     )
 
-    response = _client("view_operator", "view_qualification").get(
+    response = login_as("view_operator", "view_qualification").get(
         reverse("operator-detail", args=[operator.pk])
     )
     content = response.content.decode()
@@ -57,7 +47,7 @@ def test_ficha_shows_qualifications_instead_of_free_text_authorizations():
 def test_ficha_shows_empty_state_with_no_qualifications():
     operator = Operator.objects.create(employee_id="E1", full_name="Pilot One")
 
-    response = _client("view_operator").get(
+    response = login_as("view_operator").get(
         reverse("operator-detail", args=[operator.pk])
     )
 
@@ -74,7 +64,7 @@ def test_ficha_marks_an_expired_qualification():
         expiry_date=date(2000, 1, 1),
     )
 
-    response = _client("view_operator").get(
+    response = login_as("view_operator").get(
         reverse("operator-detail", args=[operator.pk])
     )
 
@@ -89,14 +79,14 @@ def test_ficha_edit_link_requires_change_qualification_permission():
         operator=operator, qualification_type=mavic
     )
 
-    without_perm = _client("view_operator").get(
+    without_perm = login_as("view_operator").get(
         reverse("operator-detail", args=[operator.pk])
     )
     assert reverse("qualification-update", args=[qualification.pk]) not in (
         without_perm.content.decode()
     )
 
-    with_perm = _client("view_operator", "change_qualification").get(
+    with_perm = login_as("view_operator", "change_qualification").get(
         reverse("operator-detail", args=[operator.pk])
     )
     assert reverse("qualification-update", args=[qualification.pk]) in (
@@ -106,7 +96,7 @@ def test_ficha_edit_link_requires_change_qualification_permission():
 
 @pytest.mark.django_db
 def test_sidebar_does_not_link_to_qualification_list_but_the_url_still_works():
-    client = _client("view_operator", "view_qualification")
+    client = login_as("view_operator", "view_qualification")
 
     response = client.get(reverse("operator-list"))
 

@@ -6,23 +6,12 @@ second user -- the repo extracts on the second use, not in anticipation.
 """
 
 import pytest
-from django.contrib.auth.models import Group, Permission, User
-from django.test import Client
+from django.contrib.auth.models import User
 from django.urls import reverse
 
+from apps.core.testing import login_as
 from apps.geo.models import GeoPlan, GeoPlanHistory
 from apps.registry.models import CostCenter
-
-
-def _client(*codenames, groups=()):
-    user = User.objects.create_user(f"u-{'-'.join(codenames) or 'none'}", password="pw")
-    if codenames:
-        user.user_permissions.add(*Permission.objects.filter(codename__in=codenames))
-    for name in groups:
-        user.groups.add(Group.objects.get_or_create(name=name)[0])
-    client = Client()
-    assert client.login(username=user.username, password="pw")
-    return client, user
 
 
 def _plan(status="draft"):
@@ -88,7 +77,8 @@ class TestTheRenderedBlock:
     @pytest.mark.django_db
     def test_the_plan_page_carries_the_traceability_block(self, db):
         plan = _plan(status="in_review")
-        client, user = _client("view_geoplan", groups=["Operations"])
+        client = login_as("view_geoplan", groups=["Operations"])
+        user = client.user
         GeoPlanHistory.objects.create(
             plan=plan,
             previous_status="editing",
@@ -109,7 +99,8 @@ class TestTheRenderedBlock:
     @pytest.mark.django_db
     def test_history_is_oldest_first(self, db):
         plan = _plan(status="approved")
-        client, user = _client("view_geoplan")
+        client = login_as("view_geoplan")
+        user = client.user
         for previous, new in (("draft", "editing"), ("editing", "in_review")):
             GeoPlanHistory.objects.create(
                 plan=plan,
@@ -130,7 +121,8 @@ class TestTheRenderedBlock:
     def test_the_roles_do_not_cost_a_query_per_row(self, db):
         """Same guard as on the permit: unprefetched, the role is one query per
         entry -- the shape this project already paid for twice (V.18/V.19)."""
-        client, user = _client("view_geoplan", groups=["Operations"])
+        client = login_as("view_geoplan", groups=["Operations"])
+        user = client.user
         small = _entries_for(_plan(status="editing"), user, 2)
         large = _entries_for(_plan(status="approved"), user, 12)
         client.get(reverse("geo-plan-detail", args=[small.pk]))
