@@ -1005,17 +1005,35 @@ class TestStaticFiles:
     def test_backup_can_be_restored_to_explicit_destination(
         self, db, monkeypatch, tmp_path
     ):
+        """LV-116 cambió la premisa: la fuente es una base SQLite real, porque el
+        respaldo se toma con la API de SQLite. Y la comprobación mejora con el
+        cambio: antes afirmaba que los bytes sobrevivían al viaje; ahora afirma
+        que **los datos** llegaron, que es lo que uno quiere de una restauración.
+        """
+        import sqlite3
+
         monkeypatch.setenv("BACKUPS_DIR", str(tmp_path))
         source = tmp_path / "source.sqlite3"
-        source.write_bytes(b"restore me")
+        connection = sqlite3.connect(source)
+        connection.execute("CREATE TABLE registry_aircraft (registration TEXT)")
+        connection.execute("INSERT INTO registry_aircraft VALUES ('RPA-5532')")
+        connection.commit()
+        connection.close()
         monkeypatch.setitem(settings.DATABASES["default"], "NAME", str(source))
 
         call_command("backup")
-        backup = next(tmp_path.glob("*.sqlite3"))
+        backup = next(tmp_path.glob("aero_ops_*.sqlite3"))
         destination = tmp_path / "restored" / "db.sqlite3"
         call_command("restore_backup", str(backup), str(destination))
 
-        assert destination.read_bytes() == b"restore me"
+        restored = sqlite3.connect(destination)
+        try:
+            rows = restored.execute(
+                "SELECT registration FROM registry_aircraft"
+            ).fetchall()
+        finally:
+            restored.close()
+        assert rows == [("RPA-5532",)]
 
     def test_cleanup_documents_dry_run_and_execute(self, monkeypatch, db, tmp_path):
         monkeypatch.setattr(settings, "DOCUMENTS_ROOT", tmp_path)

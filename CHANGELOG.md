@@ -238,6 +238,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   la salida era reintentar con otro archivo para siempre. Los mensajes además
   aparecen **en español**, y el fallo del escáner queda registrado con su código
   de salida para poder responder "¿fue el antivirus?" mirando el log.
+- **El respaldo se toma de forma consistente aunque estés usando la app
+  (`LV-116`).** Antes se copiaba el archivo de la base tal cual, y si alguien
+  guardaba algo mientras la copia avanzaba podía quedar a medio camino entre dos
+  estados. Importa porque el respaldo "de las 22:00" corre en realidad a las
+  **18:00 hora de Chile**, en plena jornada. Ahora se toma con el mecanismo
+  propio de SQLite, que garantiza un punto consistente.
 - **El respaldo se comprueba solo, todos los días (`LV-115`).** Hasta ahora nadie
   miraba un respaldo hasta el día que hacía falta. Ahora el último se **abre como
   base de datos** y se consulta: si no serviría para restaurar, llega un correo
