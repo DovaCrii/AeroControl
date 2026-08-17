@@ -34,6 +34,7 @@ from .forms import (
     FlightRecordForm,
     StatusCorrectionForm,
 )
+from .dossier import operational_dossier
 from .models import FlightPermission, FlightRecord
 from .selectors import DAILY_FLIGHT_LIMIT, duty_time_for, format_duration
 from apps.registry.models import Aircraft, CostCenter, Operator
@@ -241,6 +242,10 @@ class FlightPermissionDetail(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        # LV-107: "¿esta operación está completa y documentada?" respondida acá,
+        # en vez de abriendo cinco pantallas y acordándose de todas. Composición
+        # pura de lo que ya existe -- ver apps/operations/dossier.py.
+        context["dossier"] = operational_dossier(self.object)
         # LV-72: the SIGO trace shows *who, with what role, when*. The role is
         # the user's groups, prefetched here rather than resolved per row --
         # `{{ h.changed_by_user.groups.all }}` in the template would be one

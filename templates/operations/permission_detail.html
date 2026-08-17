@@ -66,6 +66,48 @@
   {% if permission.latitude and permission.longitude %}<tr><th>{% translate "Coordinates" %}</th><td>{{ permission.latitude }}, {{ permission.longitude }}{% if permission.radius_km %} · {% translate "radius" %} {{ permission.radius_km }} km{% endif %}</td></tr>{% endif %}
   {% if permission.max_altitude_ft %}<tr><th>{% translate "Maximum altitude" %}</th><td>{{ permission.max_altitude_ft }} ft</td></tr>{% endif %}<tr><th>{% translate "Area type" %}</th><td>{{ permission.get_area_type_display|default:"—" }}</td></tr><tr><th>{% translate "Notes" %}</th><td>{{ permission.notes|default:"—" }}</td></tr>
 </tbody></table></div>
+{% comment %}LV-107: el expediente operativo. Va **antes** de la trazabilidad
+porque contesta la pregunta con la que uno llega —"¿esto está completo?"—,
+mientras que la trazabilidad contesta cómo llegó hasta acá. Es sólo lectura: las
+compuertas reales (el PDF firmado para aprobar o completar) viven en la vista,
+donde tienen efecto; repetirlas acá sería una segunda copia de la regla que
+después se desincroniza.{% endcomment %}
+<div class="card mt-3 p-4">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h2 class="h5 mb-0">{% translate "Operational dossier" %}</h2>
+    {% if dossier.is_complete %}
+    <span class="badge bg-success">{% translate "Complete" %}</span>
+    {% else %}
+    <span class="d-flex gap-2">
+      {% if dossier.missing_count %}<span class="badge bg-danger">{% blocktranslate count counter=dossier.missing_count %}{{ counter }} missing{% plural %}{{ counter }} missing{% endblocktranslate %}</span>{% endif %}
+      {% if dossier.unknown_count %}<span class="badge bg-warning text-dark">{% blocktranslate count counter=dossier.unknown_count %}{{ counter }} to confirm{% plural %}{{ counter }} to confirm{% endblocktranslate %}</span>{% endif %}
+    </span>
+    {% endif %}
+  </div>
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+      <tbody>
+        {% for item in dossier.items %}
+        <tr>
+          <td class="text-nowrap" style="width: 3rem">
+            {% comment %}Icono con texto para lector de pantalla: un color solo
+            no es un estado legible. Ámbar y rojo dicen cosas distintas -- ver
+            la decisión 2 de dossier.py.{% endcomment %}
+            {% if item.status == "ok" %}<span class="text-success" aria-hidden="true">✓</span><span class="visually-hidden">{% translate "On file" %}</span>
+            {% elif item.status == "missing" %}<span class="text-danger" aria-hidden="true">✕</span><span class="visually-hidden">{% translate "Missing" %}</span>
+            {% else %}<span class="text-warning" aria-hidden="true">•</span><span class="visually-hidden">{% translate "To confirm" %}</span>{% endif %}
+          </td>
+          <td>{{ item.label }}</td>
+          <td class="text-body-secondary">
+            {{ item.detail }}{% if item.offenders %}: <strong>{{ item.offenders|join:", " }}</strong>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
 {% include "generic/_traceability.html" with record=permission steps=permission.status_steps %}
 {% if documents is not None %}
 <div class="card mt-3 p-4"><div class="d-flex justify-content-between align-items-center mb-2"><h2 class="h5 mb-0">{% translate "Documents" %}</h2>{% if perms.compliance.add_document %}<a href="{% url 'document-create' %}?entity_type={{ permission_content_type_id }}&object_id={{ permission.pk }}" class="btn btn-sm btn-primary">+ {% translate "Upload document" %}</a>{% endif %}</div>{% if documents %}<table class="table table-sm"><thead><tr><th>{% translate "Title" %}</th><th>{% translate "Type" %}</th><th>{% translate "Expiry" %}</th></tr></thead><tbody>{% for document in documents %}<tr><td><a href="{% url 'document-detail' document.pk %}">{{ document.title }}</a></td><td>{{ document.doc_type }}</td><td>{{ document.expiry_date|date:"Y-m-d"|default:"—" }}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="text-muted mb-0">{% translate "No documents attached to this permission." %}</p>{% endif %}</div>

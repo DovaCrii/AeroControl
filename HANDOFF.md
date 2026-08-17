@@ -165,8 +165,15 @@ borrar nada, la URL sigue viva y devolverlo es revertir un comentario.
 > y eso **no se ha verificado contra los datos corregidos**, que siguen
 > pendientes de su lado. Borrarlo antes sería enterrar un posible defecto.
 
-**Lo siguiente en mi cola**: `LV-107` (expediente operativo del permiso), que es
-el trabajo UX de más valor según el análisis de competencia.
+**`LV-107` hecho** (2026-08-14): la ficha del permiso abre con el **expediente
+operativo** — siete renglones que contestan "¿esta operación está completa y
+documentada?" nombrando lo que falta, y distinguiendo *vencido* de *sin dato
+cargado*. Era el trabajo UX de más valor del análisis de competencia. Sin
+migración.
+
+**Lo siguiente en mi cola**: `LV-81b` (certificado de póliza con endosos) y
+`LV-104` (documentos con facetas para cuando entre el volumen de `Z:`). `LV-78`
+paso 3b y `LV-103` paso 3 siguen esperando su condición de disparo.
 
 **Del lado del usuario, al 2026-08-14**: `LV-97` cerrado —
 `DOCUMENTS_ANTIVIRUS_COMMAND="clamdscan --fdpass"` activo en `p340`, con el
