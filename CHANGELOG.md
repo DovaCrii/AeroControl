@@ -124,6 +124,22 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **El logo pasa a ser de la misma familia que AeroLink y AeroPlanner.** Las tres
+  aplicaciones hermanas ya compartían un mismo dron dibujado igual —mismos
+  brazos, mismos cuatro rotores, mismo fuselaje— y cambiaban sólo el motivo de
+  abajo, que dice a qué se dedica cada una. El de AeroControl era otro dron: más
+  grande, con otra geometría, ocupando todo el lienzo, y por eso desentonaba
+  puesto al lado de los otros dos. Ahora usa el dron común y su motivo propio es
+  **un escudo con un visto bueno**, que es de lo que trata la aplicación:
+  conformidad y control. **El color no cambia**: sigue siendo el turquesa
+  `#2EC4B6` de siempre.
+- **El README dice en qué versión estamos y con quién convive.** Declaraba
+  `v0.4.0-beta` y 709 pruebas cuando ya se había cerrado `0.5.0-beta` y hay
+  1440; ambos números quedan corregidos. Además incorpora la sección
+  **Aplicaciones hermanas**, que hasta ahora no existía en ninguna parte del
+  README: qué hace AeroPlanner, qué hace AeroLink, por dónde se comunican con
+  AeroControl y —sobre todo— que **son independientes y no comparten base de
+  datos**.
 - **La pantalla para subir documentos, ordenada (`LV-95`).** El selector de tipo
   de documento deja de ser una lista plana de dieciocho nombres y queda
   **agrupado**: documentos del personal, de la aeronave, presentaciones y
