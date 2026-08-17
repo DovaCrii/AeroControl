@@ -238,6 +238,14 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   la salida era reintentar con otro archivo para siempre. Los mensajes además
   aparecen **en español**, y el fallo del escáner queda registrado con su código
   de salida para poder responder "¿fue el antivirus?" mirando el log.
+- **Las alertas dejan de perseguir aeronaves dadas de baja (`LV-113`).** Una
+  aeronave retirada de la flota con el seguro vencido mantenía su alerta para
+  siempre, y no había nada que hacer con ella. Ahora los registros que ya no
+  operan quedan fuera de todas las reglas, no sólo de algunas.
+- **La bandeja de alertas tiene un orden (`LV-112`).** Lo abierto primero y lo
+  más antiguo arriba, en vez del orden que quisiera la base de datos. De paso
+  esto hace fiable el paginado: sin un orden declarado, pasar de página podía
+  repetir o saltarse filas.
 - **Una póliza vencida ya no se dibuja como vigente (`LV-81b`).** En la ficha de
   la aeronave, la insignia decía "Vencida" pero la barra de estado seguía
   mostrando **"Póliza vigente"** como alcanzado — dos cosas incompatibles en la

@@ -97,6 +97,23 @@ class Command(BaseCommand):
             content_type = ContentType.objects.get_for_model(model)
             field = rule.field_to_watch
             records = model.objects.filter(is_active=True)
+            # LV-113: fuera los registros que ya no operan, **en las dos ramas**.
+            #
+            # `LV-90` documentó este defecto y lo corrigió sólo en la rama de
+            # `status`: "una regla que vigilara `status` alertaba sobre aeronaves
+            # dadas de baja para siempre". Pero las reglas de **fecha** —seguros,
+            # credenciales, habilitaciones, o sea casi todas las reales— nunca
+            # aplicaron esa exclusión, así que la mitad más usada del motor se
+            # quedó con el defecto original: una aeronave `retired` con el seguro
+            # vencido sostiene su alerta para siempre, y nadie puede hacer nada
+            # con ella porque ya no está en la flota.
+            #
+            # Se lee de `TERMINAL_STATUSES`, que cada modelo declara junto a sus
+            # `STATUS_CHOICES`: un literal acá sería el mismo defecto que `LV-90`
+            # vino a sacar. Un modelo sin estados terminales no se filtra.
+            retired = terminal_statuses(model)
+            if retired and any(f.name == "status" for f in model._meta.fields):
+                records = records.exclude(status__in=retired)
             # The field is known to be watchable at this point, so branch on its
             # actual type rather than guessing from the name.
             if isinstance(model._meta.get_field(field), models.DateField):
@@ -123,7 +140,10 @@ class Command(BaseCommand):
                 # already bitten twice: `expired` (LV-83) had to be added by
                 # hand, and `retired` was never there at all, so a rule watching
                 # an aircraft's status alerted on retired airframes forever.
-                records = records.exclude(status__in=terminal_statuses(model)).filter(
+                #
+                # LV-113: la exclusión en sí subió a las dos ramas; acá queda
+                # sólo el acotado por antigüedad, que es propio de esta.
+                records = records.filter(
                     created_at__gte=timezone.now() - timedelta(days=365)
                 )
             for record in records:
