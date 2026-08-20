@@ -37,6 +37,7 @@ from django.utils.translation import gettext as _
 from apps.core.backups import latest_backup, load_manifest, verify
 from apps.core.groups import REPORT_RECIPIENTS
 from apps.core.jobs import record_job_run
+from apps.core.mail import warn_undelivered_mail
 
 logger = logging.getLogger("aerocontrol.notifications")
 
@@ -97,6 +98,7 @@ class Command(BaseCommand):
                 problems = verify(backup)
                 name = backup["name"]
             mailed = self._notify(name, problems, dry_run) if problems else False
+            run["mailed"] = mailed and not dry_run  # LV-119
             run["summary"] = f"{'[dry-run] ' if dry_run else ''}{name}: " + (
                 f"{len(problems)} problem(s){', mailed' if mailed else ''}"
                 if problems
@@ -127,6 +129,7 @@ class Command(BaseCommand):
             )
             return False
         if not dry_run:
+            warn_undelivered_mail(self)  # LV-119
             EmailMessage(
                 subject=_("AeroControl · the latest backup did not verify"),
                 body=render_to_string(
