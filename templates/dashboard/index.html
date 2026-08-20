@@ -42,6 +42,17 @@ centros de costo.{% endcomment %}
     <small>{% translate "Pending Alerts" %}</small>
     <strong>{{ alert_count }}</strong>
   </a>
+  {% comment %}LV-120: lo ya vencido tiene tarjeta propia y sólo aparece cuando
+  existe. Antes no aparecía en ninguna parte del panel —ni acá ni en la lista de
+  abajo—, porque la consulta filtraba desde hoy; y sumarlo a "Vence en 30 días"
+  habría vuelto falsa esa tarjeta, que es el defecto que se está corrigiendo, no
+  otro para estrenar.{% endcomment %}
+  {% if overdue_count %}
+  <a class="summary-card summary-card-warning text-decoration-none" href="#upcoming-expirations">
+    <small>{% translate "Already expired" %}</small>
+    <strong>{{ overdue_count }}</strong>
+  </a>
+  {% endif %}
   <a class="summary-card text-decoration-none" href="#upcoming-expirations">
     <small>{% translate "Expiring in 30 days" %}</small>
     <strong>{{ expiring_count }}</strong>
@@ -153,7 +164,11 @@ when the three are done.{% endcomment %}
 <div class="row g-3 mb-3">
   <div class="col-12">
     <div class="card p-3" id="upcoming-expirations">
-      <h4 class="h6 section-title mb-2">{% translate "Upcoming Expirations" %}</h4>
+      {% comment %}LV-120: se llamaba "Próximos vencimientos" y listaba sólo el
+      futuro, así que un seguro vencido hace tres meses no tenía dónde salir. El
+      título cambia con los datos: ahora la sección es lo vencido **y** lo por
+      vencer, en ese orden.{% endcomment %}
+      <h4 class="h6 section-title mb-2">{% translate "Expiries" %}</h4>
       {% for item in expirations %}
       {% comment %}
         R1.1: this row used to be a flat gray badge regardless of how soon
@@ -170,7 +185,7 @@ when the three are done.{% endcomment %}
         </span>
       </a>
       {% empty %}
-      <p class="text-muted my-2">{% translate "No upcoming expirations." %}</p>
+      <p class="text-muted my-2">{% translate "Nothing expired or expiring." %}</p>
       {% endfor %}
     </div>
   </div>

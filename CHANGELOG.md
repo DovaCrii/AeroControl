@@ -20,6 +20,16 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **El panel escondía lo ya vencido (`LV-120`).** La sección de vencimientos
+  listaba sólo lo que está por vencer, así que un seguro que caducó hace un mes
+  —o tres— no aparecía en ninguna parte del Panel de operaciones, aunque su
+  alerta sí estuviera en la bandeja. Ahora **lo vencido va primero**, en rojo, y
+  tiene su propia tarjeta de conteo al lado de "Vence en 30 días", que sigue
+  contando sólo el futuro. La sección pasa a llamarse **Vencimientos**: seguía
+  diciendo "próximos" mientras mostraba el pasado. Lo que ya no aparece es lo
+  que tampoco genera alerta —una aeronave dada de baja, un permiso caducado y
+  cerrado—, con la misma regla que usa el motor de alertas, para que el panel y
+  la bandeja no puedan contradecirse.
 - **Una alerta resuelta decía mal por qué se había levantado (`LV-118`).**
   Mostraba el vencimiento que el registro tiene **hoy**, no el que la disparó:
   dos alertas de una aeronave, levantadas porque su póliza había vencido en

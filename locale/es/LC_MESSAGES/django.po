@@ -4660,12 +4660,12 @@ msgid "Define an alert rule"
 msgstr "Define una regla de alerta"
 
 #: .\templates\dashboard\index.html:159
-msgid "Upcoming Expirations"
-msgstr "Próximos vencimientos"
+msgid "Expiries"
+msgstr "Vencimientos"
 
 #: .\templates\dashboard\index.html:177
-msgid "No upcoming expirations."
-msgstr "No hay vencimientos próximos."
+msgid "Nothing expired or expiring."
+msgstr "Nada vencido ni por vencer."
 
 #: .\templates\dashboard\index.html:196
 msgid "Maintenance by Type"
