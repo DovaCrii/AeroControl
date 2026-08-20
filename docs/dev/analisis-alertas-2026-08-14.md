@@ -102,12 +102,37 @@ incorrección técnica, no sólo de producto.
 
 ## 4 · Orden propuesto
 
-1. **`LV-113`** (alertas sobre registros retirados) — es ruido inaccionable y
-   completa una corrección que quedó a medias.
-2. **`LV-112`** (orden de la bandeja) — barato, y arregla la paginación.
-3. Severidad derivada, que se apoya en el orden de `LV-112`.
+1. ~~**`LV-113`** (alertas sobre registros retirados)~~ — **hecho 2026-08-14**.
+2. ~~**`LV-112`** (orden de la bandeja)~~ — **hecho 2026-08-14**.
+3. ~~Severidad derivada~~ — **hecha 2026-08-20 en `LV-118`**, y resultó más
+   barata de lo previsto: esta lista daba por sentado que se apoyaría en el
+   orden de `LV-112`, pero `LV-111` había guardado el valor vigilado en una
+   **columna** sin que nadie notara la consecuencia — la base ya podía ordenar
+   por vencimiento sin el N+1 que hizo descartarlo. Los tramos son los del
+   digest (`bucket_for`), no unos propios.
 4. Posponer / dueño / agrupación: sólo si el volumen lo pide. Con ~6 alertas
    abiertas, agregarlos ahora sería resolver un problema que todavía no existe.
+   **Confirmado por el usuario el 2026-08-20**: quedan fuera por ahora.
+
+## 6 · Lo que este análisis no vio, y apareció después (2026-08-20)
+
+Dos cosas, las dos capturadas en `LV-118` al mirar la bandeja real:
+
+**El vencimiento que mostraba una alerta resuelta era el de hoy, no el que la
+disparó.** `LV-111` escribió en su propio comentario que `watched_date` "lee el
+campo del registro *hoy*, así que una alerta resuelta hace tres meses informa el
+valor actual" — y congeló el valor **sólo para deduplicar**. La pantalla siguió
+leyendo en vivo, así que dos alertas de `RPA-5532` levantadas por una póliza
+vencida el 2026-08-08 decían "vencimiento 2027-08-04". No es cosmético: es la
+evidencia ISO 10.2 afirmando algo que no ocurrió.
+
+**La bandeja abría en "Todas".** Este análisis discutió cómo ordenar y agrupar
+sin notar que la pantalla mezclaba pendientes con historial: ocho filas para
+cuatro trabajos. El arreglo más barato de los cuatro y el que más ruido saca.
+
+Lección para el próximo análisis de una pantalla: **mirar qué muestra por
+defecto**, no sólo qué puede mostrar. El filtro existía y funcionaba desde
+`LV-76`; lo que estaba mal era con cuál se llega.
 
 ## 5 · Lo que este análisis recomienda **no** hacer
 

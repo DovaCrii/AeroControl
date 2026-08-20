@@ -152,13 +152,19 @@ class TestTheView:
         client = login_as("view_alert", "change_alert")
         url = reverse("alert-verify-effectiveness", args=[alert.pk])
 
-        not_due_yet = client.get(reverse("alert-list")).content.decode()
+        # LV-118: las dos peticiones piden "todas" porque la bandeja abre en
+        # "Sin resolver" y esta alerta está resuelta. **Las dos**, no sólo la
+        # segunda: sin el filtro, la primera afirmación pasaría porque la fila
+        # no se dibuja en absoluto, y un test que pasa por la razón equivocada
+        # deja de proteger lo que dice proteger.
+        tray = {"is_resolved": "all"}
+        not_due_yet = client.get(reverse("alert-list"), tray).content.decode()
         assert url not in not_due_yet
 
         alert.effectiveness_due_date = timezone.localdate() - timedelta(days=1)
         alert.save(update_fields=["effectiveness_due_date"])
 
-        assert url in client.get(reverse("alert-list")).content.decode()
+        assert url in client.get(reverse("alert-list"), tray).content.decode()
 
     @pytest.mark.django_db
     def test_posting_records_the_verification(self, alert):

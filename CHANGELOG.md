@@ -8,6 +8,31 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Changed
+
+- **La bandeja de alertas abre en lo que hay que hacer (`LV-118`).** Abría
+  mostrando **todo**, resuelto incluido, así que la pantalla de trabajo diario
+  mezclaba los pendientes con el historial. Ahora abre en **"Sin resolver"** y
+  ordena por urgencia —lo vencido hace meses arriba, no lo que vence en 30
+  días—, con el color de cada fila bajando de intensidad según el tramo. Lo
+  resuelto **no se borró ni se escondió**: sigue a un clic en el filtro, que es
+  donde corresponde para una evidencia de auditoría.
+
+### Fixed
+
+- **Una alerta resuelta decía mal por qué se había levantado (`LV-118`).**
+  Mostraba el vencimiento que el registro tiene **hoy**, no el que la disparó:
+  dos alertas de una aeronave, levantadas porque su póliza había vencido en
+  agosto, aparecían diciendo "vencimiento 2027-08-04" después de que alguien
+  renovara el seguro. Para un auditor eso es una alerta levantada por una
+  vigencia del año siguiente, o sea nada. Ahora cada fila conserva la fecha que
+  la originó.
+- **El trabajo diario avisa si quedan alertas repetidas (`LV-118`).** Desde
+  `LV-111` el sistema ya no crea dos alertas del mismo caso, pero no decía nada
+  de las que habían quedado escritas antes — se descubrieron mirando la
+  pantalla. Ahora la corrida de las 06:00 las nombra. No borra ni resuelve
+  ninguna: sólo deja de depender de que alguien las vea.
+
 ### Added
 
 - **La Resolución Exenta de la JAC ya tiene dónde guardarse (`LV-117`).** El
