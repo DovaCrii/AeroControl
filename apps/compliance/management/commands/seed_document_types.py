@@ -73,6 +73,24 @@ DOCUMENT_TYPES = [
         False,
         AIRCRAFT,
     ),
+    # LV-121: la otra mitad del trámite. Mismo par que `LV-64` separó para la
+    # DGAC —la carta que va, la autorización que vuelve—: este es el formulario
+    # "Solicitud de aprobación de seguros para operaciones con RPA" que se manda
+    # a `segurosjac@jac.gob.cl`, y `jac-insurance-approval` es la resolución que
+    # contesta. Tenerlos juntos es lo que permite ver que una solicitud sigue
+    # sin respuesta, que es exactamente el estado `filed` de
+    # `Aircraft.insurance_status` (LV-81).
+    #
+    # requires_expiry=False: una solicitud no vence, ocurrió. Mismo criterio que
+    # `flight-request` y los registros operacionales.
+    (
+        "jac-insurance-request",
+        "Solicitud de aprobación de seguro RPA (a la JAC)",
+        False,
+        False,
+        False,
+        AIRCRAFT,
+    ),
     (
         "dgac-flight-permit",
         "Autorización DGAC (carta de permiso)",
