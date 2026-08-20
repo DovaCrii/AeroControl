@@ -291,7 +291,7 @@ def test_seed_document_types_creates_catalog_including_one_insurance_type():
     from django.core.management import call_command
 
     call_command("seed_document_types")
-    assert DocumentType.objects.count() == 18
+    assert DocumentType.objects.count() == 19
     # LV-117: sigue siendo **uno** aunque ahora existan dos tipos que hablan del
     # seguro. La resolución de la JAC no lleva la bandera: dos tipos marcados
     # harían competir dos documentos por la columna de la lista de aeronaves.
@@ -321,9 +321,20 @@ def test_seed_document_types_creates_catalog_including_one_insurance_type():
         == 3
     )
 
+    # LV-121: el par del trámite JAC, igual que la carta y la autorización DGAC
+    # de LV-64. Se afirman juntos porque su valor es estar juntos: con uno solo
+    # no se puede distinguir "presentado y esperando" de "aprobado".
+    jac_pair = DocumentType.objects.filter(
+        code__in=["jac-insurance-request", "jac-insurance-approval"]
+    )
+    assert jac_pair.count() == 2
+    assert set(jac_pair.values_list("category", flat=True)) == {
+        DocumentType.CATEGORY_AIRCRAFT
+    }
+
     # Idempotent: a second run does not duplicate or touch existing rows.
     call_command("seed_document_types")
-    assert DocumentType.objects.count() == 18
+    assert DocumentType.objects.count() == 19
 
 
 @pytest.mark.django_db

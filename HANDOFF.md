@@ -84,8 +84,8 @@ línea entera, pero el `source` del despliegue es bash y sin ellas parte el valo
 | Qué | Por qué importa |
 |---|---|
 | **8 vigencias sin dato** (`LV-74`) | Único con impacto de cumplimiento **hoy**: un nulo no genera alerta, así que son invisibles |
-| **3 correcciones de fichas** (`RPA-5532`, `7126`, `3696`) | Destraban `LV-102` — recién con datos correctos se puede ver si el calendario falla de verdad |
-| **3 carpetas en `Z:`** (`R4.1a` + `LV-93`) | Destraban `R4.4`: correr el importador con `--apply` |
+| ~~3~~ **1 corrección de ficha** (`RPA-3696`) | Destraba `LV-102`. `RPA-5532` lo corrigió el usuario el 2026-08-20; **`RPA-7126` ya no necesita corrección** — el certificado del Registro Nacional de RPA de la DGAC confirma la `C` que la app tiene, y `LV-93` quedó **anulada** (aplicarla habría metido el error) |
+| ~~3~~ **2 carpetas en `Z:`** (`R4.1a`) | Destraban `R4.4`: correr el importador con `--apply`. La tercera era de `LV-93` y **no hay que renombrarla**: `CC738-...DM5QC-M4E` estaba bien |
 | **El PR de AeroLink** | Destraba `X.4`, que es la etapa 2.0 completa |
 
 Los detalles operativos, con comandos, en
