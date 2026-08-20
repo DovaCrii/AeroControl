@@ -3,6 +3,12 @@
 <tr>
   <td><a href="{{ object.pk }}/" class="table-primary-value">{{ object.registration }}</a>
     {% if object.model or object.manufacturer %}<span class="table-primary-sub cell-truncate" title="{{ object.model }}{% if object.manufacturer %} · {{ object.manufacturer }}{% endif %}">{{ object.model|default:"—" }}{% if object.manufacturer %} · {{ object.manufacturer }}{% endif %}</span>{% endif %}
+    {% comment %}El número de serie, a la vista y no sólo en la ficha: es la
+    identidad con la que la aeronave aparece en la garantía, en el registro de la
+    DGAC y en las carpetas del repositorio documental, y buscarlo obligaba a
+    entrar aeronave por aeronave. La matrícula la ponemos nosotros; el serial lo
+    pone el fabricante, y es el que no se puede confundir.{% endcomment %}
+    {% if object.serial_number %}<span class="table-primary-sub cell-truncate font-monospace" title="{% translate "Serial number" %}: {{ object.serial_number }}">S/N {{ object.serial_number }}</span>{% endif %}
   </td>
   <td class="cell-truncate">{% if object.cost_center %}<span title="{{ object.cost_center }}">{{ object.cost_center.code }}</span>{% else %}<span class="text-muted">{% translate "Unassigned" %}</span>{% endif %}</td>
   <td class="cell-status">{% if object.status == "active" %}<span class="badge bg-success">{% translate "Active" %}</span>{% elif object.status == "damaged" %}<span class="badge bg-danger">{% translate "Damaged" %}</span>{% elif object.status == "maintenance" %}<span class="badge bg-warning text-dark">{% translate "Maintenance" %}</span>{% else %}<span class="badge bg-secondary">{% translate "Retired" %}</span>{% endif %}</td>

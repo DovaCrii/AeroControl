@@ -13,6 +13,7 @@ from decimal import Decimal
 import pytest
 from django.contrib.auth.models import Group, User
 from django.core import mail
+from django.db.models import Count
 from django.core.management import call_command
 from django.urls import reverse
 from django.utils import timezone
@@ -305,3 +306,60 @@ class TestTheScheduledJobCoversBoth:
         call_command("check_alert_effectiveness")
 
         assert mail.outbox == []
+
+
+class TestElOrigenYLaCausaSirvenParaAgrupar:
+    """LV: el origen dice **dónde apareció** la no conformidad y la categoría de
+    causa, **de qué fue**. Con cuatro orígenes había que meter en "Incidente" un
+    documento vencido o un reclamo, y entonces agrupar por origen no decía nada.
+    """
+
+    @pytest.mark.django_db
+    def test_los_origenes_cubren_lo_que_pasa_de_verdad(self, db):
+        valores = dict(NonConformity.SOURCE_CHOICES)
+
+        # Los cuatro originales siguen valiendo: hay no conformidades guardadas
+        # con ellos y cambiarles la clave las dejaría sin etiqueta.
+        for original in (
+            "reflight",
+            "rejected_deliverable",
+            "incident",
+            "audit_finding",
+        ):
+            assert original in valores
+
+        # Y los casos que antes no tenían dónde ir.
+        for nuevo in (
+            "client_complaint",
+            "expired_document",
+            "equipment_failure",
+            "procedure_deviation",
+            "field_observation",
+            "external_condition",
+        ):
+            assert nuevo in valores
+
+    @pytest.mark.django_db
+    def test_una_no_conformidad_nace_sin_causa_determinada(self, db):
+        """Obligar a elegir una categoría al abrirla produce categorías
+        inventadas: "sin determinar" es un estado real y es el de partida."""
+        finding = _finding()
+
+        assert finding.root_cause_category == NonConformity.CAUSE_UNDETERMINED
+        assert finding.get_root_cause_category_display() == "Not yet determined"
+
+    @pytest.mark.django_db
+    def test_la_categoria_se_guarda_y_se_puede_contar(self, db):
+        _finding(root_cause_category=NonConformity.CAUSE_PROCEDURE)
+        _finding(root_cause_category=NonConformity.CAUSE_PROCEDURE)
+        _finding(root_cause_category=NonConformity.CAUSE_EQUIPMENT)
+
+        por_categoria = {
+            fila["root_cause_category"]: fila["total"]
+            for fila in NonConformity.objects.values("root_cause_category").annotate(
+                total=Count("id")
+            )
+        }
+
+        assert por_categoria[NonConformity.CAUSE_PROCEDURE] == 2
+        assert por_categoria[NonConformity.CAUSE_EQUIPMENT] == 1
