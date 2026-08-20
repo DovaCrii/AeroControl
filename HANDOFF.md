@@ -71,6 +71,13 @@ línea entera, pero el `source` del despliegue es bash y sin ellas parte el valo
    ISO 10.2. Desde `LV-118` la bandeja abre en "Sin resolver", así que ya no
    estorban, y `generate_alerts` avisa si vuelve a quedar un residuo así.
 4. **Los tipos de documento creados a mano** quedaron en "Otro" (`LV-98`).
+5. **`EMAIL_HOST` (P1, `LV-119`, 2026-08-20).** Está **vacío**, así que el
+   backend es el de consola y **ningún correo ha salido nunca de la VM**: se
+   imprimen en el journal (el MIME crudo y los 79 guiones de Django están en la
+   salida de `aerocontrol-executive.service`). Deja sin canal las siete
+   notificaciones, incluidas las de `LV-114` y `LV-115`, que existen justamente
+   para avisar sin que nadie entre a mirar. Es lo primero de esta lista por
+   impacto: hasta que exista, cada timer nuevo es código que no avisa a nadie.
 
 ### Lo que sólo puede hacer el usuario, por impacto
 
