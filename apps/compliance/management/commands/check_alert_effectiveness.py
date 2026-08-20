@@ -33,6 +33,7 @@ from django.utils.translation import gettext as _
 from apps.compliance.models import Alert, NonConformity
 from apps.core.groups import REPORT_RECIPIENTS
 from apps.core.jobs import record_job_run
+from apps.core.mail import warn_undelivered_mail
 
 logger = logging.getLogger("aerocontrol.notifications")
 
@@ -64,6 +65,7 @@ class Command(BaseCommand):
         window = options["days"] or Alert.EFFECTIVENESS_DAYS
         with record_job_run("check_alert_effectiveness") as run:
             rows, mailed = self._run(window, dry_run)
+            run["mailed"] = mailed and not dry_run  # LV-119
             run["summary"] = (
                 f"{'[dry-run] ' if dry_run else ''}{len(rows)} awaiting "
                 f"verification, {'mailed' if mailed else 'nothing to escalate'}"
@@ -160,6 +162,7 @@ class Command(BaseCommand):
             "count": len(rows)
         }
         if not dry_run:
+            warn_undelivered_mail(self)  # LV-119
             EmailMessage(
                 subject=subject,
                 body=render_to_string(

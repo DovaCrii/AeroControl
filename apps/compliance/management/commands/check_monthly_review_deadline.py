@@ -40,6 +40,7 @@ from apps.compliance.monthly import (
 )
 from apps.core.groups import REPORT_RECIPIENTS
 from apps.core.jobs import record_job_run
+from apps.core.mail import warn_undelivered_mail
 
 logger = logging.getLogger("aerocontrol.notifications")
 
@@ -75,6 +76,7 @@ class Command(BaseCommand):
         dry_run = options["dry_run"]
         with record_job_run("check_monthly_review_deadline") as run:
             rows, mailed = self._run(period, dry_run)
+            run["mailed"] = mailed and not dry_run  # LV-119
             run["summary"] = (
                 f"{'[dry-run] ' if dry_run else ''}{period:%Y-%m}: "
                 f"{len(rows)} pending, {'mailed' if mailed else 'nothing to escalate'}"
@@ -153,6 +155,7 @@ class Command(BaseCommand):
             "period": period_start.strftime("%Y-%m")
         }
         if not dry_run:
+            warn_undelivered_mail(self)  # LV-119
             EmailMessage(
                 subject=subject,
                 body=render_to_string(

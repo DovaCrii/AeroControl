@@ -7,6 +7,12 @@ from datetime import timedelta
 from django.db import transaction
 from django.utils import timezone
 
+from apps.core.mail import (
+    UNDELIVERED_SUMMARY_PREFIX,
+    mail_is_delivered,
+    undelivered_reason,
+)
+
 logger = logging.getLogger("aerocontrol.jobs")
 
 SUMMARY_MAX_LENGTH = 300
@@ -103,6 +109,20 @@ def record_job_run(command):
         with record_job_run("generate_alerts") as run:
             run["summary"] = f"{created} alerts"
 
+    LV-119: un trabajo que **compuso correo** pone además `run["mailed"] = True`,
+    y si el backend configurado no entrega —`EMAIL_HOST` vacío, que es como
+    corrió `p340` durante meses— el resumen guardado lo dice **adelante**. Con
+    eso el centro de administración y el historial de trabajos dejan de mostrar
+    en verde una notificación que nadie recibió.
+
+    La comprobación vive acá, y no en cada comando, porque los nueve que mandan
+    correo pasan por esta función: nueve copias se habrían desincronizado, y
+    basta olvidarla en uno para que ese trabajo vuelva a mentir solo. Y depende
+    de `mailed` en vez de una bandera del llamador porque **la mayoría de estos
+    trabajos callan cuando no hay nada que decir**: marcar "no enviado" un día
+    en que no había qué enviar sería una segunda forma de mentir, y gastaría el
+    aviso justo antes del día en que importa.
+
     A raised exception is recorded as result="error" (with the exception text as
     the summary) and then re-raised, so the command still fails loudly for the
     scheduler while leaving a durable trace.
@@ -138,7 +158,14 @@ def record_job_run(command):
             job.save(update_fields=["result", "summary", "finished_at", "updated_at"])
         raise
     job.result = JobRun.RESULT_OK
-    job.summary = str(state.get("summary", ""))[:SUMMARY_MAX_LENGTH]
+    summary = str(state.get("summary", ""))
+    if state.get("mailed") and not mail_is_delivered():
+        summary = f"{UNDELIVERED_SUMMARY_PREFIX}{summary}"
+        logger.warning(
+            "job_mail_not_delivered",
+            extra={"job_command": command, "reason": undelivered_reason()},
+        )
+    job.summary = summary[:SUMMARY_MAX_LENGTH]
     job.finished_at = timezone.now()
     job.save(update_fields=["result", "summary", "finished_at", "updated_at"])
     logger.info(

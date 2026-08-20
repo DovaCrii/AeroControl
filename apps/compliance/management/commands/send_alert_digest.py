@@ -14,6 +14,7 @@ from apps.compliance.digest import (
     cost_centers_to_notify,
 )
 from apps.core.jobs import record_job_run
+from apps.core.mail import send_verb, warn_undelivered_mail
 
 logger = logging.getLogger("aerocontrol.notifications")
 
@@ -45,13 +46,17 @@ class Command(BaseCommand):
         dry_run = options["dry_run"]
         with record_job_run("send_alert_digest") as run:
             sent, skipped, items = self._run(dry_run)
+            # LV-119: `mailed` sólo si de verdad se compuso correo. Un día sin
+            # vencimientos no envía nada, y marcarlo "no enviado" sería mentir
+            # en la otra dirección.
+            run["mailed"] = bool(sent) and not dry_run
             run["summary"] = (
                 f"{'[dry-run] ' if dry_run else ''}"
                 f"{sent} digests, {items} items, {skipped} skipped"
             )
         self.stdout.write(
             self.style.SUCCESS(
-                f"{'Would send' if dry_run else 'Sent'} {sent} digests "
+                f"{send_verb(dry_run)} {sent} digests "
                 f"({items} items); skipped {skipped} cost centers."
             )
         )
@@ -116,6 +121,10 @@ class Command(BaseCommand):
                     f"[dry-run] {recipient} <- {cost_center.code}: {item_count} items"
                 )
             else:
+                # LV-119: antes del primer envío, no después -- puesto al final
+                # quedaría debajo del volcado del propio correo cuando el
+                # backend es el de consola, que es el único caso en que importa.
+                warn_undelivered_mail(self)
                 message = EmailMultiAlternatives(
                     subject=subject,
                     body=render_to_string("compliance/email/alert_digest.txt", context),

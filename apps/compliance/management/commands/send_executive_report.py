@@ -13,6 +13,7 @@ from apps.compliance.report_views import build_report_workbook_bytes
 from apps.compliance.reports import build_compliance_report, compare_periods
 from apps.core.groups import REPORT_RECIPIENTS
 from apps.core.jobs import record_job_run
+from apps.core.mail import send_verb, warn_undelivered_mail
 
 logger = logging.getLogger("aerocontrol.notifications")
 
@@ -53,6 +54,11 @@ class Command(BaseCommand):
                 self._print_preview(period, current, comparison, recipients)
             else:
                 self._send(period, current, comparison, recipients)
+            # LV-119: este trabajo siempre compone correo cuando no es un
+            # ensayo -- no tiene la salida "hoy no había nada que decir" que
+            # tienen los vigilantes, porque un informe de un período vacío
+            # sigue siendo un informe.
+            run["mailed"] = not dry_run
             run["summary"] = (
                 f"{'[dry-run] ' if dry_run else ''}{period}, "
                 f"{len(recipients)} recipient(s), "
@@ -60,7 +66,7 @@ class Command(BaseCommand):
             )
         self.stdout.write(
             self.style.SUCCESS(
-                f"{'Would send' if dry_run else 'Sent'} the {period} executive "
+                f"{send_verb(dry_run)} the {period} executive "
                 f"report to {len(recipients)} recipient(s)."
             )
         )
@@ -104,6 +110,10 @@ class Command(BaseCommand):
         }
 
     def _send(self, period, report, comparison, recipients):
+        # LV-119: antes de componer. El volcado de este correo son cientos de
+        # líneas de base64 (lleva el XLSX adjunto), así que un aviso posterior
+        # queda sepultado justo en el caso que lo hace necesario.
+        warn_undelivered_mail(self)
         context = self._context(period, report, comparison)
         subject = _("AeroControl · executive compliance report (%(period)s)") % {
             "period": context["period_label"]

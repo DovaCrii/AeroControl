@@ -30,6 +30,7 @@ from django.utils.translation import gettext as _
 
 from apps.core.groups import REPORT_RECIPIENTS
 from apps.core.jobs import record_job_run
+from apps.core.mail import warn_undelivered_mail
 from apps.operations.selectors import (
     DAILY_FLIGHT_LIMIT,
     format_duration,
@@ -58,6 +59,7 @@ class Command(BaseCommand):
         dry_run = options["dry_run"]
         with record_job_run("check_flight_duty_limit") as run:
             rows, mailed = self._run(day, dry_run)
+            run["mailed"] = mailed and not dry_run  # LV-119
             run["summary"] = (
                 f"{'[dry-run] ' if dry_run else ''}{day.isoformat()}: "
                 f"{len(rows)} over limit, "
@@ -127,6 +129,7 @@ class Command(BaseCommand):
             "day": day.isoformat()
         }
         if not dry_run:
+            warn_undelivered_mail(self)  # LV-119
             EmailMessage(
                 subject=subject,
                 body=render_to_string("operations/email/duty_limit.txt", context),

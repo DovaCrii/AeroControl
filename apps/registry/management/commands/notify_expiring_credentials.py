@@ -22,6 +22,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from apps.core.jobs import record_job_run
+from apps.core.mail import send_verb, warn_undelivered_mail
 from apps.registry.models import Operator, Qualification
 
 logger = logging.getLogger("aerocontrol.notifications")
@@ -50,13 +51,14 @@ class Command(BaseCommand):
         days = options["days"]
         with record_job_run("notify_expiring_credentials") as run:
             sent, skipped, items = self._run(days, dry_run)
+            run["mailed"] = bool(sent) and not dry_run  # LV-119
             run["summary"] = (
                 f"{'[dry-run] ' if dry_run else ''}"
                 f"{sent} notices, {items} items, {skipped} unreachable"
             )
         self.stdout.write(
             self.style.SUCCESS(
-                f"{'Would send' if dry_run else 'Sent'} {sent} notices "
+                f"{send_verb(dry_run)} {sent} notices "
                 f"({items} items); {skipped} operators had expiries but no email."
             )
         )
@@ -96,6 +98,7 @@ class Command(BaseCommand):
                     f"{len(items)} items"
                 )
             else:
+                warn_undelivered_mail(self)  # LV-119
                 body = render_to_string(
                     "registry/email/credential_notice.txt",
                     {"operator": operator, "items": items},

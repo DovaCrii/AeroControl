@@ -32,6 +32,7 @@ from django.utils.translation import gettext as _
 
 from apps.core.groups import REPORT_RECIPIENTS
 from apps.core.jobs import failing_jobs, record_job_run
+from apps.core.mail import warn_undelivered_mail
 
 logger = logging.getLogger("aerocontrol.notifications")
 
@@ -51,6 +52,11 @@ class Command(BaseCommand):
         with record_job_run("check_scheduled_jobs") as run:
             failing = failing_jobs()
             mailed = self._notify(failing, dry_run) if failing else False
+            # LV-119: este vigilante calla cuando todo está al día, así que sólo
+            # se marca el día que de verdad tenía algo que avisar. Y es el peor
+            # de los nueve para tener el correo cortado: existe precisamente
+            # para que nadie tenga que entrar a mirar.
+            run["mailed"] = mailed and not dry_run
             run["summary"] = f"{'[dry-run] ' if dry_run else ''}" + (
                 f"{len(failing)} job(s) need attention{', mailed' if mailed else ''}"
                 if failing
@@ -98,6 +104,7 @@ class Command(BaseCommand):
             "administration_path": reverse("administration"),
         }
         if not dry_run:
+            warn_undelivered_mail(self)  # LV-119
             EmailMessage(
                 subject=_("AeroControl · a scheduled job needs attention"),
                 body=render_to_string("core/email/scheduled_jobs.txt", context),
