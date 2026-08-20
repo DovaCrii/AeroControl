@@ -61,10 +61,11 @@ Siembra el catálogo estándar (idempotente, no duplica si ya corriste antes):
 | --- | --- | --- | --- |
 | Credencial DGAC | Operador | Sí | — |
 | Certificado médico / aptitud | Operador | Sí | — |
-| Registro / matrícula de aeronave | Aeronave | Sí | — |
+| Registro / matrícula de aeronave | Aeronave | **No** | LV-121: el "Certificado del Registro Nacional de RPA" de la DGAC **no trae fecha de término**. Exigirla obligaba a inventar un vencimiento, y esa fecha inventada después generaba alerta |
 | Certificado de aeronavegabilidad | Aeronave | Sí | — |
 | Seguro de responsabilidad civil | Aeronave o centro de costo | Sí | `is_insurance` (LV-4: su vencimiento aparece como columna en la lista de aeronaves) |
-| Resolución Exenta JAC (aprueba seguro RPA) | Aeronave | Sí | LV-117: el papel con que la JAC aprueba la póliza. **No** lleva `is_insurance` — la fecha canónica del seguro es `Aircraft.insurance_expiry` (LV-29) |
+| Solicitud de aprobación de seguro RPA (a la JAC) | Aeronave | No | LV-121: el formulario que va **a** `segurosjac@jac.gob.cl`. Par con la fila siguiente, igual que la carta y la autorización DGAC (LV-64) |
+| Resolución Exenta JAC (aprueba seguro RPA) | Aeronave | Sí | LV-117: el papel con que la JAC aprueba la póliza, y que **vuelve**. **No** lleva `is_insurance` — la fecha canónica del seguro es `Aircraft.insurance_expiry` (LV-29) |
 | Autorización DGAC (carta de permiso) | Permiso de vuelo | Sí | — |
 
 Si necesitas un tipo adicional, créalo desde la app (`/compliance/documenttype/new/`).

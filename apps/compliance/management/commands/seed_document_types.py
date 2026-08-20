@@ -25,10 +25,20 @@ COMPANY = DocumentType.CATEGORY_COMPANY
 DOCUMENT_TYPES = [
     ("dgac-credential", "Credencial DGAC", True, False, False, PERSONNEL),
     ("medical-cert", "Certificado médico / aptitud", True, False, False, PERSONNEL),
+    # LV-121: `requires_expiry=False` desde el 2026-08-20, con el papel a la
+    # vista. El "Certificado del Registro Nacional de RPA" que emite la DGAC
+    # **no trae fecha de término**: es una inscripción —marca, modelo, serie,
+    # propietario— y el propio documento aclara que "no constituye autorización
+    # para operación del RPA", que es lo que sí caduca y vive en otros tipos.
+    # Marcado como que la exige, el formulario rechazaba el PDF real y obligaba
+    # a inventar un vencimiento; esa fecha inventada después habría generado una
+    # alerta por algo que no vence. La migración `compliance/0023` lo corrige
+    # también en las instalaciones existentes: el seed es idempotente por
+    # `code`, así que por sí solo no toca una fila ya creada.
     (
         "aircraft-registration",
         "Registro / matrícula de aeronave",
-        True,
+        False,
         False,
         False,
         AIRCRAFT,

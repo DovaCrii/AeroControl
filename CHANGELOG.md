@@ -8,6 +8,36 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Added
+
+- **La causa de una no conformidad ahora se puede contar (`LV-127`).** Además del
+  texto libre —que es lo que lee un auditor y se queda— hay una **categoría de
+  causa raíz**: persona, procedimiento, equipo, material, entorno, planificación,
+  información, y "sin determinar" como valor de partida. Sin ella, "¿de qué se
+  repiten nuestras no conformidades?" sólo se responde leyéndolas todas, y por eso
+  no se responde. Migración `compliance.0022`.
+- **El número de serie, en la lista de aeronaves (`LV-126`).** Debajo de la
+  matrícula y el modelo. La matrícula la ponemos nosotros; el serial lo pone el
+  fabricante y es con el que la aeronave aparece en la garantía, en el registro
+  de la DGAC y en las carpetas del repositorio documental.
+
+### Changed
+
+- **Desde una alerta se llega a la ficha de la entidad (`LV-125`).** Clicar
+  `RPA-5534` abre su aeronave, que es donde están el estado del seguro, el
+  historial del trámite y los documentos. Antes había que ir al padrón, buscar la
+  matrícula y entrar: tres pasos hasta la única pantalla desde la que se resuelve.
+  El enlace sale de `get_absolute_url` del propio objeto, así que aparece para lo
+  que tiene ficha sin mantener un mapa de tipos.
+- **Diez orígenes de no conformidad en vez de cuatro (`LV-127`).** Entran reclamo
+  del cliente, documento vencido o faltante, falla de equipo, desviación de
+  procedimiento, observación en terreno y condición externa. Con los cuatro
+  anteriores había que meter en "Incidente" cosas que no lo son, y con eso
+  agrupar por origen dejaba de decir nada. Las claves originales se conservan.
+- **Entregables sale del menú (`LV-128`).** No se está usando y ocupaba sitio en
+  la columna de cumplimiento. La función queda entera —modelo, vistas, permisos y
+  URL—; volver a mostrarla es descomentar una línea.
+
 ### Changed
 
 - **La bandeja de alertas abre en lo que hay que hacer (`LV-118`).** Abría
@@ -20,6 +50,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **El registro DGAC de una aeronave ya se puede subir (`LV-121`).** El tipo
+  "Registro / matrícula de aeronave" exigía una fecha de vencimiento, pero el
+  certificado que emite la DGAC **no la trae** — es una inscripción, no una
+  vigencia. Había que inventar un vencimiento para poder adjuntar el PDF, y esa
+  fecha inventada terminaba generando una alerta por algo que no caduca. Ahora
+  el tipo no la pide. Los tipos que sí vencen (seguros, credenciales,
+  resoluciones) la siguen exigiendo igual.
 - **El panel escondía lo ya vencido (`LV-120`).** La sección de vencimientos
   listaba sólo lo que está por vencer, así que un seguro que caducó hace un mes
   —o tres— no aparecía en ninguna parte del Panel de operaciones, aunque su
@@ -45,6 +82,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **La solicitud de seguro a la JAC tiene dónde guardarse (`LV-121`).** Faltaba
+  la mitad que **va**: el formulario que se manda a la JAC pidiendo la
+  aprobación del seguro. Con sólo la resolución que vuelve, la carpeta de una
+  aeronave no podía mostrar que un trámite está **presentado y esperando** —
+  que es justamente uno de los cuatro estados que el seguro tiene en la ficha.
+  Mismo par que ya existe para la DGAC: la carta que va, la autorización que
+  vuelve.
 - **La Resolución Exenta de la JAC ya tiene dónde guardarse (`LV-117`).** El
   catálogo tenía la póliza y su certificado, pero no **el papel con que la JAC
   aprueba el seguro** —el que deja a la aeronave como *autorizada*—, así que no
