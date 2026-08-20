@@ -15,7 +15,13 @@ LV-69b: the workboard actions ("Create task"/"View task") were removed when
 that module left the menu -- they pushed work somewhere nobody navigates to.
 The list is self-contained: Resolve and Undo.{% endcomment %}{% for object in objects %}<tr>
   <td><span class="badge bg-secondary-subtle text-secondary-emphasis">{{ object.entity_label }}</span></td>
-  <td><strong>{{ object.content_object|default:_("Record unavailable") }}</strong></td>
+  {% comment %}La entidad lleva a su ficha, que es donde está el estado y los
+  documentos. Sin el enlace, una alerta decía "RPA-5534, seguro por vencer" y
+  para hacer algo al respecto había que ir al padrón, buscar la matrícula y
+  entrar: tres pasos para llegar a la única pantalla desde la que se resuelve.
+  El enlace sale de `get_absolute_url` del propio objeto, así que aparece para
+  las entidades que tienen ficha y no para las que no.{% endcomment %}
+  <td>{% with ficha=object.content_object.get_absolute_url %}{% if ficha %}<a href="{{ ficha }}" class="table-primary-value" title="{% translate "Open the record: status and documents" %}"><strong>{{ object.content_object }}</strong></a>{% else %}<strong>{{ object.content_object|default:_("Record unavailable") }}</strong>{% endif %}{% endwith %}</td>
   <td>{{ object.alert_rule.name }}</td>
   <td><span class="text-nowrap">{{ object.triggered_at|date:'Y-m-d' }}</span></td>
   {% comment %}LV-118: la fecha es la **congelada al crear la alerta**

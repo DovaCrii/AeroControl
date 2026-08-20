@@ -635,3 +635,36 @@ def test_resolve_is_atomic_with_the_task_move(qualification, monkeypatch):
     task.refresh_from_db()
     assert alert.is_resolved is False, "the alert flag must roll back too"
     assert task.stage.status_type != "completed"
+
+
+class TestLaEntidadLlevaASuFicha:
+    """La alerta dice qué pasa y con qué; el enlace es lo que permite hacer algo
+    al respecto. Sin él había que ir al padrón, buscar la matrícula y entrar:
+    tres pasos hasta la única pantalla donde está el estado y los documentos."""
+
+    @pytest.mark.django_db
+    def test_la_entidad_enlaza_a_su_ficha(self, db, qualification):
+        from apps.core.testing import login_as
+        from apps.registry.models import Aircraft
+
+        aeronave = Aircraft.objects.create(
+            registration="RPA-5534",
+            cost_center=qualification.operator.cost_center,
+        )
+        regla = AlertRule.objects.create(
+            name="Seguros JAC por vencer",
+            entity_type="aircraft",
+            field_to_watch="insurance_expiry",
+        )
+        Alert.objects.create(
+            alert_rule=regla,
+            content_type=ContentType.objects.get_for_model(Aircraft),
+            object_id=aeronave.pk,
+            message="Seguro por vencer",
+        )
+        client = login_as("view_alert")
+
+        cuerpo = client.get(reverse("alert-list")).content.decode()
+
+        assert aeronave.get_absolute_url() in cuerpo
+        assert "RPA-5534" in cuerpo

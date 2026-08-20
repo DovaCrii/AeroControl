@@ -935,15 +935,62 @@ class NonConformity(EffectivenessVerificationMixin, BaseModel):
     this records the fact and does not gate on it.
     """
 
+    # El origen es **dónde apareció** la no conformidad, no por qué ocurrió: eso
+    # es la causa raíz, que va aparte. Los cuatro primeros son los originales de
+    # R7.6; los demás se agregaron el 2026-08-20 porque la lista corta obligaba a
+    # meter en "Incidente" cosas que no lo son -- un documento que se dejó
+    # vencer, un reclamo que no llegó a rechazo, una falla de equipo sin evento
+    # de vuelo-- y con eso el campo dejaba de servir para agrupar nada.
     SOURCE_REFLIGHT = "reflight"
     SOURCE_REJECTED_DELIVERABLE = "rejected_deliverable"
     SOURCE_INCIDENT = "incident"
     SOURCE_AUDIT_FINDING = "audit_finding"
+    SOURCE_CLIENT_COMPLAINT = "client_complaint"
+    SOURCE_EXPIRED_DOCUMENT = "expired_document"
+    SOURCE_EQUIPMENT_FAILURE = "equipment_failure"
+    SOURCE_PROCEDURE_DEVIATION = "procedure_deviation"
+    SOURCE_FIELD_OBSERVATION = "field_observation"
+    SOURCE_EXTERNAL_CONDITION = "external_condition"
     SOURCE_CHOICES = [
         (SOURCE_REFLIGHT, _("Reflight")),
         (SOURCE_REJECTED_DELIVERABLE, _("Rejected deliverable")),
-        (SOURCE_INCIDENT, _("Incident")),
+        (SOURCE_CLIENT_COMPLAINT, _("Client complaint")),
+        (SOURCE_INCIDENT, _("Incident or accident")),
+        (SOURCE_EQUIPMENT_FAILURE, _("Equipment failure")),
+        (SOURCE_PROCEDURE_DEVIATION, _("Procedure deviation")),
+        (SOURCE_EXPIRED_DOCUMENT, _("Expired or missing document")),
+        (SOURCE_FIELD_OBSERVATION, _("Field observation")),
         (SOURCE_AUDIT_FINDING, _("Audit finding")),
+        (SOURCE_EXTERNAL_CONDITION, _("External condition")),
+    ]
+
+    # **La causa raíz, en categorías y en prosa.** El texto libre ya estaba y se
+    # queda: es lo que un auditor lee. La categoría se agrega para lo que el
+    # texto libre no permite -- contar. Sin ella, "¿de qué se repiten nuestras no
+    # conformidades?" solo se responde leyendo todas, una por una, y por eso no
+    # se responde nunca.
+    #
+    # Las categorías son las seis clásicas del análisis causal, dichas como se
+    # dicen en una operación aérea, más "sin determinar", que es un estado real:
+    # una no conformidad recién abierta no tiene causa todavía, y obligar a
+    # elegir una produce categorías inventadas.
+    CAUSE_UNDETERMINED = "undetermined"
+    CAUSE_PERSON = "person"
+    CAUSE_PROCEDURE = "procedure"
+    CAUSE_EQUIPMENT = "equipment"
+    CAUSE_MATERIAL = "material"
+    CAUSE_ENVIRONMENT = "environment"
+    CAUSE_PLANNING = "planning"
+    CAUSE_INFORMATION = "information"
+    ROOT_CAUSE_CATEGORY_CHOICES = [
+        (CAUSE_UNDETERMINED, _("Not yet determined")),
+        (CAUSE_PERSON, _("Person or competence")),
+        (CAUSE_PROCEDURE, _("Procedure or instruction")),
+        (CAUSE_EQUIPMENT, _("Equipment or tooling")),
+        (CAUSE_MATERIAL, _("Material or supply")),
+        (CAUSE_ENVIRONMENT, _("Environment or conditions")),
+        (CAUSE_PLANNING, _("Planning or management")),
+        (CAUSE_INFORMATION, _("Information or data")),
     ]
 
     STATUS_OPEN = "open"
@@ -983,6 +1030,14 @@ class NonConformity(EffectivenessVerificationMixin, BaseModel):
     # record, but demanding it at creation would push people to write "pending"
     # -- which is worse than an empty field, because it looks answered.
     root_cause = models.TextField(blank=True)
+    # Arranca "sin determinar" a propósito: una no conformidad recién abierta no
+    # tiene causa, y un valor por defecto que aparente análisis es peor que uno
+    # que admite no haberlo hecho todavía.
+    root_cause_category = models.CharField(
+        max_length=20,
+        choices=ROOT_CAUSE_CATEGORY_CHOICES,
+        default=CAUSE_UNDETERMINED,
+    )
     corrective_action = models.TextField(blank=True)
     detected_on = models.DateField(default=date.today)
     closed_at = models.DateTimeField(null=True, blank=True)

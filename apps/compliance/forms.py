@@ -645,6 +645,7 @@ class NonConformityForm(AeroModelForm):
             "cost_center",
             "detected_on",
             "description",
+            "root_cause_category",
             "root_cause",
             "corrective_action",
             "reported_to_dgac_at",
@@ -657,6 +658,7 @@ class NonConformityForm(AeroModelForm):
             "cost_center": _("Cost center"),
             "detected_on": _("Detected on"),
             "description": _("Description"),
+            "root_cause_category": _("Cause category"),
             "root_cause": _("Root cause"),
             "corrective_action": _("Corrective action"),
             "reported_to_dgac_at": _("Reported to DGAC on"),
@@ -664,6 +666,14 @@ class NonConformityForm(AeroModelForm):
             "notes": _("Notes"),
         }
         help_texts = {
+            "source": _(
+                "Where the finding appeared, not why it happened: the why is "
+                "the root cause."
+            ),
+            "root_cause_category": _(
+                "What kind of cause it was. It is what lets the report say "
+                "which cause repeats; the text below is what an auditor reads."
+            ),
             "root_cause": _(
                 "Required before closing. Leave blank until it is actually "
                 "investigated -- a placeholder looks answered."
