@@ -133,6 +133,42 @@ de vida ya está por encima del promedio del sector y lo que faltaba era higiene
   haya un segundo lector real que la pida.
 
 
+## Sin desplegar: `LV-125` a `LV-128` — **lleva migración**
+
+Cuatro cambios de la revisión en pantalla del **2026-08-20**, en `main`
+(`3536470`), verdes en local (703 tests de `compliance` y `registry`, ruff
+limpio) y **todavía no en `p340`**:
+
+| # | Qué | Se ve en |
+| --- | --- | --- |
+| `LV-125` | La entidad de una alerta enlaza a su ficha | Alertas |
+| `LV-126` | El número de serie, en la lista | Aeronaves |
+| `LV-127` | 10 orígenes de no conformidad y categoría de causa raíz | No conformidades |
+| `LV-128` | Entregables sale del menú | Barra lateral |
+
+**Lo único que exige cuidado es `compliance.0022`**, y es una migración benigna:
+añade `root_cause_category` con defecto `undetermined` y amplía los `choices` de
+`source` sin tocar los cuatro valores existentes. No borra, no renombra y no
+impone restricciones nuevas, así que **no hace falta el chequeo previo de datos**
+que sí piden las migraciones con `unique` o `NOT NULL` (ver la Parte D del
+runbook). El respaldo previo sigue siendo obligatorio igual.
+
+```bash
+ssh levdigital01@100.121.16.118
+cd /opt/aerocontrol && git pull
+set -a; source <(sudo cat /etc/aerocontrol.env); set +a
+echo "settings=$DJANGO_SETTINGS_MODULE  db=$DB_PATH"   # debe decir prod
+uv run python manage.py backup && uv run python manage.py verify_backup <ruta>
+uv sync && uv run python manage.py migrate --no-input
+uv run python manage.py collectstatic --no-input && sudo systemctl restart aerocontrol
+```
+
+**Qué mirar después**, en este orden: la bandeja de alertas —clicar `RPA-5534`
+tiene que abrir su aeronave—, la lista de aeronaves con su `S/N`, el formulario
+de nueva no conformidad con los diez orígenes y la categoría de causa, y que
+**Entregables** ya no esté en el menú. Ninguno de los cuatro toca los timers ni
+las notificaciones, así que nada de lo de `LV-119` cambia con este despliegue.
+
 ## Pendientes inmediatos — empezar por acá
 
 > Los que **no dependen del código** (vigencias, CSP, antivirus, `Z:`, el PR de
