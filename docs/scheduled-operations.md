@@ -31,6 +31,14 @@ y así no se anuncia como pendiente algo que ya se cerró esa misma mañana.
 correo, o a los que se indiquen con `--to`. Si no hay ninguno, el comando falla
 con un mensaje claro en vez de enviar a nadie en silencio.
 
+> **En `p340` el timer lleva `--to cmunoz@jej.cl`** (decisión del usuario,
+> 2026-08-20): mientras las revisiones las hace una sola persona, el informe va
+> sólo a ella. Se hizo en el timer y **no** sacando al otro destinatario del
+> grupo *Dirección*, porque ese grupo también recibe los avisos de
+> infraestructura (`check_scheduled_jobs`, `verify_backup`) y el escalamiento
+> del día 15 — sacarlo habría silenciado tres cosas para conseguir una. Cuando
+> haya un ADC por centro de costo, esto se revierte quitando el `--to`.
+
 ## Windows (Programador de tareas)
 
 ```powershell
@@ -175,9 +183,38 @@ Salida de la última ejecución de cualquiera de ellos:
 journalctl -u aerocontrol-alerts.service -n 30 --no-pager
 ```
 
-El informe ejecutivo semanal (`send_executive_report --period week`) se agrega
-igual, con `OnCalendar=Mon *-*-* 07:30:00`, cuando haya destinatarios en el
-grupo *Dirección*.
+El informe ejecutivo semanal se agrega igual, con
+`OnCalendar=Mon *-*-* 07:30:00`. En `p340` está instalado como
+`mkjob executive "send_executive_report --period week --to cmunoz@jej.cl"
+"Mon *-*-* 07:30:00"` — ver la nota de arriba sobre por qué el destinatario va
+en el timer y no en el grupo. Sin `--to` va a quienes tengan correo en
+*Dirección*.
+
+**Para cambiar el destinatario** basta reescribir ese par y recargar; no hace
+falta tocar el bloque completo:
+
+```bash
+sudo bash -c '
+cat >/etc/systemd/system/aerocontrol-executive.service <<EOF
+[Unit]
+Description=AeroControl executive
+After=network.target
+
+[Service]
+Type=oneshot
+User=levdigital01
+WorkingDirectory=/opt/aerocontrol
+EnvironmentFile=/etc/aerocontrol.env
+ExecStart=/home/levdigital01/.local/bin/uv run python manage.py send_executive_report --period week --to cmunoz@jej.cl
+EOF
+systemctl daemon-reload
+systemctl restart aerocontrol-executive.timer
+'
+```
+
+`daemon-reload` no basta por sí solo si el `.timer` ya estaba activo: sin el
+`restart` systemd sigue con la unidad vieja en memoria y el cambio se aplicaría
+recién al próximo arranque.
 
 El aviso opcional de vigencias al operador (LV-29) se agrega con el mismo patrón
 cuando se quiera activar —`mkjob credentials "notify_expiring_credentials"
