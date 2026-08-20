@@ -49,6 +49,30 @@ DOCUMENT_TYPES = [
         False,
         AIRCRAFT,
     ),
+    # LV-117: la Resolución Exenta con que la **JAC** aprueba el seguro RPA --
+    # el papel que cierra el ciclo que `Aircraft.insurance_status` modela
+    # (`filed` -> `active`). No existía tipo para él, así que el respaldo de una
+    # aeronave autorizada no tenía dónde vivir: la póliza y su certificado se
+    # cargaban como `liability-insurance` y la resolución que los aprueba, en
+    # ninguna parte.
+    #
+    # Va en AIRCRAFT y no en DGAC a propósito: la JAC no es la DGAC (esa
+    # categoría es de presentaciones y autorizaciones DGAC), y quien busca este
+    # papel lo busca junto al seguro de la aeronave, que es de lo que habla.
+    #
+    # requires_expiry=True -- la resolución trae "TÉRMINO DE VIGENCIA" y caduca
+    # con la póliza que aprueba. is_insurance=False: esa bandera pinta la
+    # columna de seguro de la lista de aeronaves, y desde LV-29 la fecha
+    # canónica es `Aircraft.insurance_expiry`; marcar un segundo tipo pondría
+    # dos documentos compitiendo por la misma columna (gana el que venza antes).
+    (
+        "jac-insurance-approval",
+        "Resolución Exenta JAC (aprueba seguro RPA)",
+        True,
+        False,
+        False,
+        AIRCRAFT,
+    ),
     (
         "dgac-flight-permit",
         "Autorización DGAC (carta de permiso)",

@@ -291,10 +291,16 @@ def test_seed_document_types_creates_catalog_including_one_insurance_type():
     from django.core.management import call_command
 
     call_command("seed_document_types")
-    assert DocumentType.objects.count() == 17
+    assert DocumentType.objects.count() == 18
+    # LV-117: sigue siendo **uno** aunque ahora existan dos tipos que hablan del
+    # seguro. La resolución de la JAC no lleva la bandera: dos tipos marcados
+    # harían competir dos documentos por la columna de la lista de aeronaves.
     insurance_types = DocumentType.objects.filter(is_insurance=True)
     assert insurance_types.count() == 1
     assert insurance_types.first().code == "liability-insurance"
+    jac_approval = DocumentType.objects.get(code="jac-insurance-approval")
+    assert jac_approval.category == DocumentType.CATEGORY_AIRCRAFT
+    assert jac_approval.requires_expiry is True
     # LV-30: the three per-flight operational-record types.
     op_records = DocumentType.objects.filter(is_operational_record=True)
     assert set(op_records.values_list("code", flat=True)) == {
@@ -317,7 +323,7 @@ def test_seed_document_types_creates_catalog_including_one_insurance_type():
 
     # Idempotent: a second run does not duplicate or touch existing rows.
     call_command("seed_document_types")
-    assert DocumentType.objects.count() == 17
+    assert DocumentType.objects.count() == 18
 
 
 @pytest.mark.django_db
