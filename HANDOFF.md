@@ -65,8 +65,11 @@ línea entera, pero el `source` del despliegue es bash y sin ellas parte el valo
    **18:00 hora local**, en plena jornada. Desde `LV-116` eso ya no arriesga la
    integridad de la copia (se toma con la API de SQLite), así que es orden y no
    urgencia: `mkjob backup "backup" "*-*-* 02:00:00"`.
-3. **Dos alertas duplicadas** que quedaron escritas antes de `LV-111`
-   (`Carlos Peñailillo` y `RPA-5532`): se resuelven a mano una vez y no vuelven.
+3. ~~**Dos alertas duplicadas** que quedaron escritas antes de `LV-111`.~~
+   **Resueltas a mano por el usuario** (verificado en la captura del
+   2026-08-20). Se conservan como historial, por decisión suya: son evidencia
+   ISO 10.2. Desde `LV-118` la bandeja abre en "Sin resolver", así que ya no
+   estorban, y `generate_alerts` avisa si vuelve a quedar un residuo así.
 4. **Los tipos de documento creados a mano** quedaron en "Otro" (`LV-98`).
 
 ### Lo que sólo puede hacer el usuario, por impacto

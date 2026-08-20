@@ -2,6 +2,7 @@ from contextlib import contextmanager, suppress
 
 from django.contrib import messages
 from django.db import transaction
+from django.db.models import Case, IntegerField, Value, When
 from django.http import FileResponse, Http404, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -1102,6 +1103,10 @@ class AlertList(ComplianceList):
     model = Alert
     template_name = "compliance/alert_list.html"
     search_fields = ["message"]
+    # LV-118: qué ve quien llega sin filtros. Constante y no un literal suelto
+    # porque el test que fija este comportamiento tiene que poder nombrarlo:
+    # es una decisión de producto, no un detalle de implementación.
+    DEFAULT_RESOLVED = "false"
 
     def get_queryset(self):
         # LV-106: `content_object` is a GenericForeignKey, which no
@@ -1124,14 +1129,45 @@ class AlertList(ComplianceList):
                 GenericPrefetch("content_object", alert_subject_querysets())
             )
         )
-        resolved = self.request.GET.get("is_resolved")
+        # LV-118: la bandeja **abre en "Sin resolver"**. Abría en "Todas", así
+        # que la pantalla donde se trabaja mezclaba los pendientes con todo lo
+        # ya cerrado: en producción eran 8 filas para 4 trabajos, y cuatro de
+        # ellas el residuo duplicado anterior a `LV-111`. Lo resuelto no se
+        # borra ni se esconde -- sigue a un clic, como historial y como
+        # evidencia ISO 10.2--, pero deja de competir por la atención con lo que
+        # hay que hacer hoy. `all` es explícito por eso mismo: si el valor vacío
+        # siguiera significando "todas", el defecto volvería cada vez que
+        # alguien llega sin parámetros, que es siempre.
+        resolved = self.request.GET.get("is_resolved") or self.DEFAULT_RESOLVED
         if resolved in ("true", "false"):
             queryset = queryset.filter(is_resolved=resolved == "true")
         if self.request.GET.get("entity_type"):
             queryset = queryset.filter(
                 content_type__model=self.request.GET["entity_type"]
             )
-        return queryset
+        # LV-118: severidad primero. `LV-112` dejó orden declarado (lo abierto
+        # antes, y dentro de eso lo más antiguo) y descartó ordenar por el
+        # vencimiento porque `watched_date` se calculaba en Python leyendo una
+        # GenericForeignKey -- la base no puede ordenar por eso sin resolverlas
+        # todas, que es el N+1 que `LV-106` sacó de esta pantalla.
+        #
+        # Eso cambió sin que nadie lo notara: `LV-111` guardó el valor vigilado
+        # en una **columna**, así que ahora la base sí puede ordenar por él. Y
+        # como se guarda con `str()`, una fecha queda en ISO y el orden
+        # lexicográfico **es** el cronológico. Resultado: lo vencido hace tres
+        # meses arriba, sin una sola consulta de más.
+        #
+        # Los valores vacíos van al final con una anotación y no con el orden
+        # natural de la columna: "" es lo primero que ordena, así que sin esto
+        # una alerta sin fecha (una regla sobre `status`) encabezaría la bandeja
+        # por delante de una póliza vencida.
+        return queryset.annotate(
+            _no_watched_value=Case(
+                When(watched_value="", then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+        ).order_by("is_resolved", "_no_watched_value", "watched_value", "triggered_at")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1151,6 +1187,13 @@ class AlertList(ComplianceList):
             entity_types.append((content_type.model, str(label).capitalize()))
         context["entity_types"] = sorted(entity_types, key=lambda pair: pair[1])
         context["selected_entity_type"] = self.request.GET.get("entity_type", "")
+        # LV-118: el selector tiene que dibujar el estado real, y llegar sin
+        # parámetros ya **no** significa "todas". Sin esto la bandeja filtraría
+        # por "Sin resolver" mostrando "Todas las alertas" seleccionado, que es
+        # peor que el defecto original: un listado que recorta sin decirlo.
+        context["selected_is_resolved"] = (
+            self.request.GET.get("is_resolved") or self.DEFAULT_RESOLVED
+        )
         # LV-69b: this used to resolve each alert's linked KanbanTask in one
         # query, so the row could offer "Create task" vs "View task". Those
         # actions were removed when the workboard left the menu (LV-69) --

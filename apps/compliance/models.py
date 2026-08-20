@@ -639,15 +639,72 @@ class Alert(EffectivenessVerificationMixin, BaseModel):
         return str(label).capitalize()
 
     @property
-    def watched_date(self):
-        """The watched value when it is a date, for display in listings."""
-        value = self._watched_value()
-        return value if isinstance(value, date) else None
+    def triggering_date(self):
+        """LV-118: la fecha **de la que hablaba esta alerta**, no la de hoy.
+
+        Reemplaza a `watched_date`, que leía el campo del registro en vivo. En
+        una alerta abierta las dos coinciden, así que la diferencia sólo se ve
+        justo donde importa: **una alerta resuelta informaba el valor actual y
+        no el que la disparó**. En producción eso se veía como dos alertas de
+        `RPA-5532` activadas el 2026-08-03 y el 2026-08-14 —porque la póliza
+        vencía el 2026-08-08— mostrando las dos "vencimiento 2027-08-04", que es
+        la fecha que dejó la renovación *después* de resolverlas. O sea que la
+        evidencia ISO 10.2 afirmaba que la alerta se levantó por una vigencia
+        del año siguiente, que es exactamente lo contrario de lo que pasó.
+
+        El dato correcto ya estaba guardado: `LV-111` congeló `watched_value`
+        para no duplicar, y esto es el segundo lector de ese mismo campo. Por
+        eso no hizo falta ni migración ni columna nueva.
+
+        `None` cuando la alerta no habla de una fecha, que son dos casos reales:
+        una regla puede vigilar un `status` (texto que no parsea como fecha), y
+        un valor ausente al crearla se guarda vacío.
+        """
+        if not self.watched_value:
+            return None
+        try:
+            return date.fromisoformat(self.watched_value)
+        except ValueError:
+            return None
+
+    # LV-118: la severidad **se deriva**, no se edita. El análisis de la bandeja
+    # (docs/dev/analisis-alertas-2026-08-14.md §5) lo recomienda explícitamente:
+    # un campo que alguien debe mantener se desactualiza y miente, y el dato ya
+    # se conoce. Las clases son de Bootstrap y bajan de intensidad con el tramo:
+    # lo vencido grita, lo de 2027 no.
+    URGENCY_CSS = {
+        "overdue": "bg-danger",
+        "due_7": "bg-warning text-dark",
+        "due_15": "bg-warning-subtle text-warning-emphasis",
+        "due_30": "bg-info-subtle text-info-emphasis",
+        "later": "bg-secondary-subtle text-secondary-emphasis",
+    }
 
     @property
-    def is_overdue(self):
-        watched = self.watched_date
-        return watched is not None and watched < timezone.localdate()
+    def urgency(self):
+        """LV-118: el tramo de urgencia del vencimiento congelado.
+
+        Los **mismos cortes que el digest diario** (`bucket_for`), a propósito:
+        dos pantallas que cuentan lo mismo con tramos distintos son dos
+        versiones de la verdad, y esta app ya paga bastante por mantener una.
+        El import es local porque `digest` importa de este módulo.
+
+        `later` es el tramo que el digest no necesita y esta pantalla sí: el
+        digest sólo mira 30 días hacia adelante, mientras que acá vive también
+        el historial, y una alerta resuelta puede apuntar a una vigencia de
+        2027. Sin él, `bucket_for` devuelve `None` y esa fila quedaría sin
+        insignia justo después de haber sido resuelta con éxito.
+        """
+        from apps.compliance.digest import bucket_for
+
+        expiry = self.triggering_date
+        if expiry is None:
+            return None
+        return bucket_for(expiry, timezone.localdate()) or "later"
+
+    @property
+    def urgency_css(self):
+        return self.URGENCY_CSS.get(self.urgency, "bg-secondary-subtle")
 
     def _derive_assigned_operator(self):
         """Best-effort responsible operator for the follow-up task.

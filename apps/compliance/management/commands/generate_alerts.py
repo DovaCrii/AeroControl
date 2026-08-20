@@ -23,14 +23,69 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         with record_job_run("generate_alerts") as run:
             generated, duplicates, tasks_created = self._generate()
+            repeated = self._report_repeated()
             run["summary"] = (
                 f"{generated} alerts, {duplicates} duplicates skipped, "
                 f"{tasks_created} follow-up tasks"
             )
+            # LV-118: sólo cuando hay algo que decir. Un resumen que dice "0
+            # repetidas" todos los días enseña a no leerlo, y este resumen es lo
+            # que el centro de administración muestra del último run.
+            if repeated:
+                run["summary"] += f", {repeated} repeated groups"
         self.stdout.write(
             f"Generated {generated} alerts, skipped {duplicates} duplicates, "
             f"created {tasks_created} follow-up tasks"
         )
+
+    def _report_repeated(self):
+        """LV-118: delatar las alertas repetidas que ya están escritas.
+
+        `LV-111` cerró la causa —la clave anti-duplicados incluye el valor
+        vigilado, así que el motor no vuelve a crear dos filas del mismo caso—
+        pero **no dice nada de las que quedaron escritas antes**. En producción
+        quedaron cuatro (`RPA-5532` y `Carlos Peñailillo`, duplicadas), y la
+        única forma de enterarse fue que el usuario las viera en pantalla el
+        2026-08-20, tres días después de desplegar el arreglo.
+
+        Esto no borra ni resuelve nada: un residuo resuelto es evidencia ISO
+        10.2, y limpiarlo automáticamente sería decidir por la persona. Lo que
+        hace es que **deje de depender de que alguien mire**. Mismo patrón que
+        el aviso de `LV-78` unas líneas más abajo: el trabajo diario nombra la
+        situación en su salida en vez de que se descubra por casualidad.
+
+        Cuenta sobre la misma clave que usa la deduplicación —(regla, registro,
+        valor)— a propósito: si contara otra cosa, podría delatar como repetido
+        lo que el motor considera legítimo, o callar lo que sí duplicó.
+        """
+        repeated = (
+            Alert.objects.filter(is_active=True)
+            .values("alert_rule_id", "alert_rule__name", "object_id", "watched_value")
+            .annotate(total=models.Count("id"))
+            .filter(total__gt=1)
+            .order_by("alert_rule__name")
+        )
+        count = 0
+        for row in repeated:
+            count += 1
+            value = row["watched_value"] or "(sin valor)"
+            self.stdout.write(
+                self.style.WARNING(
+                    f"Repeated alerts (LV-118): {row['alert_rule__name']} · "
+                    f"{value} — {row['total']} rows for the same record"
+                )
+            )
+            logger.warning(
+                "repeated_alerts_detected",
+                extra={
+                    "rule_id": str(row["alert_rule_id"]),
+                    "rule_name": row["alert_rule__name"],
+                    "object_id": str(row["object_id"]),
+                    "watched_value": row["watched_value"],
+                    "rows": row["total"],
+                },
+            )
+        return count
 
     def _generate(self):
         generated = 0

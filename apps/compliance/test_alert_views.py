@@ -507,7 +507,12 @@ class TestAlertRows:
         client = Client()
         assert client.login(username="admin", password="password")
 
-        content = client.get(reverse("alert-list")).content.decode()
+        # LV-118: la bandeja abre en "Sin resolver", así que una alerta resuelta
+        # hay que ir a buscarla. Cambia la premisa del test, no su intención:
+        # sigue afirmando que el motivo se lee donde la alerta se muestra.
+        content = client.get(
+            reverse("alert-list"), {"is_resolved": "all"}
+        ).content.decode()
 
         # LV-110: se afirma que el motivo **está en la página**, no la lista
         # exacta de clases de Bootstrap que lo envuelve -- eso hacía fallar el
@@ -571,7 +576,8 @@ class TestAlertRows:
         client = Client()
         assert client.login(username="admin", password="password")
 
-        response = client.get(reverse("alert-list"))
+        # LV-118: `alert_a` está resuelta y la bandeja abre en "Sin resolver".
+        response = client.get(reverse("alert-list"), {"is_resolved": "all"})
         content = response.content.decode()
 
         assert reverse("alert-reopen", args=[alert_a.pk]) in content
