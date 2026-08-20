@@ -64,6 +64,7 @@ Siembra el catálogo estándar (idempotente, no duplica si ya corriste antes):
 | Registro / matrícula de aeronave | Aeronave | Sí | — |
 | Certificado de aeronavegabilidad | Aeronave | Sí | — |
 | Seguro de responsabilidad civil | Aeronave o centro de costo | Sí | `is_insurance` (LV-4: su vencimiento aparece como columna en la lista de aeronaves) |
+| Resolución Exenta JAC (aprueba seguro RPA) | Aeronave | Sí | LV-117: el papel con que la JAC aprueba la póliza. **No** lleva `is_insurance` — la fecha canónica del seguro es `Aircraft.insurance_expiry` (LV-29) |
 | Autorización DGAC (carta de permiso) | Permiso de vuelo | Sí | — |
 
 Si necesitas un tipo adicional, créalo desde la app (`/compliance/documenttype/new/`).

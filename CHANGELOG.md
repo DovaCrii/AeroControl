@@ -10,6 +10,18 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **La Resolución Exenta de la JAC ya tiene dónde guardarse (`LV-117`).** El
+  catálogo tenía la póliza y su certificado, pero no **el papel con que la JAC
+  aprueba el seguro** —el que deja a la aeronave como *autorizada*—, así que no
+  había forma de adjuntarlo al historial de la aeronave. Nuevo tipo
+  **"Resolución Exenta JAC (aprueba seguro RPA)"**, en el grupo *Documentos de
+  la aeronave* (al lado del seguro, que es de lo que habla, y no entre las
+  presentaciones DGAC: la JAC es otro organismo) y **con vencimiento**, porque
+  la resolución trae término de vigencia y caduca con la póliza — la alerta de
+  documentos por vencer la vigila sin configurar nada. **No** reemplaza la
+  vigencia del seguro de la ficha: esa fecha sigue siendo la de la aeronave, y
+  cargar el PDF no la actualiza sola.
+
 - **Los documentos se ven y se cargan mejor (`LV-84`, `LV-85`, `LV-86`).** El
   listado de una ficha ahora dice emisión, vencimiento (con aviso si ya venció) y
   si esa versión fue reemplazada, y cada fila lleva **Ver** y **Descargar** al
