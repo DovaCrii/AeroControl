@@ -10,31 +10,53 @@ from django.utils.translation import gettext as _
 
 from apps.compliance.digest import bucket_for
 from apps.compliance.models import Alert, AlertRule, Document, DocumentType
+from apps.compliance.watchables import terminal_statuses
 from apps.maintenance.models import MaintenanceRecord
 from apps.operations.models import FlightPermission, FlightRecord
 from apps.registry.models import Aircraft, CostCenter, Operator, Qualification
 
 
 def upcoming_expirations(today, cutoff, cost_center=None):
-    """The real expiries in the [today, cutoff] window across the three things
-    that actually expire (T5.4/U4): operator qualifications, compliance
-    documents and flight permissions -- not just qualifications as before. Each
-    item carries a link so the dashboard lands the user on the record to act.
+    """Lo que expira **hasta** `cutoff`, incluido lo que ya expiró (T5.4/U4):
+    habilitaciones, credenciales DGAC, seguros JAC, documentos y permisos. Cada
+    ítem lleva su enlace para que el panel deje al usuario donde puede actuar.
 
-    Qualifications and permissions honour the cost-center filter; documents hang
-    off a generic relation with no direct cost center, so they are always
-    included (they are also watched by the alert engine and the report).
+    Las habilitaciones, credenciales, seguros y permisos respetan el filtro por
+    centro de costo; los documentos cuelgan de una relación genérica sin centro
+    de costo directo, así que van siempre (el motor de alertas y el reporte los
+    miran igual).
 
-    R1.1: each item's "bucket" reuses digest.bucket_for -- the same
-    overdue/due_7/due_15/due_30 scale as the compliance report and the Kanban
-    card (B3.3), instead of a fourth scale. The panel is a flat gray badge
-    today regardless of how soon something expires, which is exactly why the
-    live review flagged it as "pasa desapercibida" (easy to miss).
+    R1.1: el "bucket" de cada ítem reusa `digest.bucket_for` -- la misma escala
+    overdue/due_7/due_15/due_30 que el reporte de cumplimiento, en vez de una
+    cuarta escala propia.
+
+    **LV-120: ya no hay piso en `today`.** Las cinco consultas filtraban
+    `expiry >= today`, así que **nada vencido podía aparecer nunca** -- y el
+    reporte del usuario (2026-08-20) es exacto: la tarjeta decía "5 faltantes o
+    vencidos" y la lista de al lado sólo mostraba los dos del 2026-09-05,
+    mientras `RPA-5534` (vencido el 08-08) y `RPA-2198` (el 05-20, tres meses)
+    no salían en ninguna parte. La rama `overdue` de la plantilla estaba escrita
+    completa —en rojo y en negrita— y **no podía dibujarse jamás**, que es la
+    señal de que el hueco estaba en los datos y no en el diseño.
+
+    El piso no fue un descuido: el comentario que lo puso dice que sin él la
+    lista mostraba "todas las habilitaciones históricamente vencidas, en una
+    página que se abre en cada login". Era un problema real y la solución se
+    pasó de largo -- para sacar el ruido antiguo sacó también lo urgente.
+
+    Lo que acota ahora es **la misma regla que el motor de alertas**: se excluyen
+    los registros en estado terminal, leído de `TERMINAL_STATUSES` del propio
+    modelo vía `terminal_statuses()` (`LV-90`, `LV-113`). Así el panel y la
+    bandeja **no pueden discrepar por construcción**, que es justo lo que el
+    usuario notó al ver una alerta sin su fila en el panel; y una aeronave dada
+    de baja con el seguro vencido en 2024 deja de contar sin necesidad de una
+    ventana hacia atrás elegida a dedo. Un permiso vencido tampoco reaparece: al
+    caducar queda en `expired`, que es terminal (`LV-83`).
     """
     items = []
 
     quals = Qualification.objects.filter(
-        is_active=True, expiry_date__gte=today, expiry_date__lte=cutoff
+        is_active=True, expiry_date__lte=cutoff
     ).select_related("operator", "qualification_type")
     if cost_center:
         quals = quals.filter(operator__cost_center=cost_center)
@@ -51,9 +73,7 @@ def upcoming_expirations(today, cutoff, cost_center=None):
 
     # LV-29: the DGAC vigencias join the same window -- a lapsing credential or
     # JAC insurance is exactly what "upcoming expirations" is for.
-    credentials = Operator.objects.filter(
-        is_active=True, credential_expiry__gte=today, credential_expiry__lte=cutoff
-    )
+    credentials = Operator.objects.filter(is_active=True, credential_expiry__lte=cutoff)
     if cost_center:
         credentials = credentials.filter(cost_center=cost_center)
     for operator in credentials:
@@ -68,8 +88,8 @@ def upcoming_expirations(today, cutoff, cost_center=None):
         )
 
     insured = Aircraft.objects.filter(
-        is_active=True, insurance_expiry__gte=today, insurance_expiry__lte=cutoff
-    )
+        is_active=True, insurance_expiry__lte=cutoff
+    ).exclude(status__in=terminal_statuses(Aircraft))
     if cost_center:
         insured = insured.filter(cost_center=cost_center)
     for aircraft in insured:
@@ -87,7 +107,6 @@ def upcoming_expirations(today, cutoff, cost_center=None):
         is_active=True,
         is_current_version=True,
         expiry_date__isnull=False,
-        expiry_date__gte=today,
         expiry_date__lte=cutoff,
     ).select_related("doc_type")
     for document in documents:
@@ -102,8 +121,8 @@ def upcoming_expirations(today, cutoff, cost_center=None):
         )
 
     permissions = FlightPermission.objects.filter(
-        is_active=True, valid_until__gte=today, valid_until__lte=cutoff
-    )
+        is_active=True, valid_until__lte=cutoff
+    ).exclude(status__in=terminal_statuses(FlightPermission))
     if cost_center:
         permissions = permissions.filter(cost_center=cost_center)
     for permission in permissions:
@@ -352,13 +371,20 @@ def dashboard(request):
     compliance_incomplete = not all(compliance_setup.values())
 
     # --- Expirations ---
-    # Bounded on both ends: without the floor this listed every historically
-    # expired qualification, on a page opened at every login. The summary tile
-    # keeps the real count; only the visible list is capped.
+    # LV-120: acotado por arriba (30 días) y, por abajo, por el **estado
+    # terminal** del registro en vez de por la fecha de hoy -- ver
+    # `upcoming_expirations`. El piso en `today` es lo que hacía que un seguro
+    # vencido no apareciera nunca en el panel aunque su alerta sí estuviera en
+    # la bandeja. Sólo la lista visible se recorta; los contadores son reales.
     today = timezone.localdate()
     cutoff = today + timedelta(days=30)
     all_expirations = upcoming_expirations(today, cutoff, selected_cost_center)
-    expiring_count = len(all_expirations)
+    # Dos contadores y no uno: la tarjeta dice "Vence en 30 días", y meter ahí
+    # lo ya vencido la volvería falsa -- la misma forma de defecto que `LV-118`
+    # y `LV-119` corrigieron en la bandeja y en los correos. Lo vencido tiene
+    # tarjeta propia, y sólo aparece cuando hay algo que mostrar.
+    overdue_count = sum(1 for item in all_expirations if item["bucket"] == "overdue")
+    expiring_count = len(all_expirations) - overdue_count
     expirations = all_expirations[:10]
 
     # --- LV-30: monthly compliance snapshot (latest period on record) ---
@@ -475,6 +501,7 @@ def dashboard(request):
         "incomplete_maintenance_count": incomplete_maintenance_count,
         "expirations": expirations,
         "expiring_count": expiring_count,
+        "overdue_count": overdue_count,
         "chart_data": chart_data,
         "compliance_setup": compliance_setup,
         "compliance_incomplete": compliance_incomplete,
