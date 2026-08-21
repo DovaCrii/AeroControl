@@ -41,6 +41,39 @@ ROLE_PERMISSIONS = {
         "change_aircraftassignment",
         "view_aircraftassignment",
         "view_resourcemovementlog",
+        # R9: la solicitud de vuelo SIGO es preparación operacional -- quien
+        # vuela es quien la arma, la presenta y la persigue.
+        "add_flightrequest",
+        "change_flightrequest",
+        "view_flightrequest",
+        # El historial es append-only: sólo se lee, igual que el log de
+        # movimientos y por la misma razón.
+        "view_flightrequesthistory",
+        # Las notas de cambio también: se agregan y se leen, nunca se editan
+        # ni se borran -- mismo trato que `weatherreview`, y es lo que las hace
+        # servir como traza.
+        "add_flightrequestnote",
+        "view_flightrequestnote",
+        # Los pares (área de trabajo, objetivo) son filas hijas que se agregan y
+        # se quitan de la tabla mientras se arma la solicitud; `change` no
+        # existe como acto -- se quita el par equivocado y se pone el correcto.
+        "add_flightrequestworkitem",
+        "delete_flightrequestworkitem",
+        "view_flightrequestworkitem",
+        # R9.2: el catálogo de aeródromos lo completa quien opera, porque es
+        # quien tiene la carta AIP al frente cuando confirma un AMC.
+        "add_aerodrome",
+        "change_aerodrome",
+        "view_aerodrome",
+        # R9.3: los dos vocabularios de SIGO. Se sabe que están incompletos
+        # (las capturas venían cortadas), así que agregar el valor que falte
+        # tiene que poder hacerse sin desplegar.
+        "add_workareatype",
+        "change_workareatype",
+        "view_workareatype",
+        "add_flightobjective",
+        "change_flightobjective",
+        "view_flightobjective",
     },
     "Compliance": {
         "add_document",
@@ -80,6 +113,12 @@ ROLE_PERMISSIONS = {
         "add_nonconformity",
         "change_nonconformity",
         "view_nonconformity",
+        # R9: lee lo que se pidió y su traza como evidencia, sin producirla --
+        # el mismo trato que tiene con el plan geoespacial y la revisión
+        # meteorológica.
+        "view_flightrequest",
+        "view_flightrequesthistory",
+        "view_flightrequestnote",
     },
     "Maintenance": {
         "add_maintenancerecord",
@@ -117,6 +156,12 @@ ROLE_PERMISSIONS = {
         "view_kanbantasklabel",
         "view_kanbanchecklistitem",
         "view_geoplan",
+        # R9: la solicitud es parte del registro operacional que este rol lee.
+        # El catálogo de aeródromos no: es configuración de referencia, y la
+        # lección de esta lista es justamente que un rol de sólo lectura lee la
+        # operación, no la administración del sistema.
+        "view_flightrequest",
+        "view_flightrequesthistory",
     },
 }
 
