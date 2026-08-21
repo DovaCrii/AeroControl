@@ -182,6 +182,35 @@ def _flight_record_item(permission):
     return DossierItem("flights", label, UNKNOWN, _("None logged yet"))
 
 
+def _flight_request_item(permission):
+    """R9.6: de qué solicitud SIGO salió este permiso.
+
+    Cierra el círculo del expediente: hasta acá se podía ver el plan que dibujó
+    el área y el papel que la DGAC devolvió, pero no **lo que efectivamente se
+    pidió** — y esa es la pregunta que separa "la DGAC autorizó esto" de "la
+    DGAC autorizó lo que pedimos". Con la solicitud al lado, las coordenadas
+    presentadas y las del permiso se pueden comparar de un vistazo.
+
+    `UNKNOWN` y no `MISSING` cuando no hay ninguna, deliberadamente: los
+    permisos anteriores a R9 —todos los que existen hoy— se tramitaron sin que
+    la app registrara la solicitud, y marcarlos como incompletos los declararía
+    defectuosos de forma retroactiva por una función que no existía. Mismo
+    criterio que `LV-107` aplicó al plan geoespacial.
+    """
+    requests = list(permission.flight_requests.filter(is_active=True))
+    label = _("Originating SIGO request")
+    if not requests:
+        return DossierItem(
+            "flight_request", label, UNKNOWN, _("No request recorded for this permit")
+        )
+    return DossierItem(
+        "flight_request",
+        label,
+        OK,
+        detail=", ".join(str(request.title) for request in requests),
+    )
+
+
 def operational_dossier(permission):
     """Los renglones del expediente, en el orden en que se revisa una operación."""
     items = [
@@ -189,6 +218,7 @@ def operational_dossier(permission):
         _aircraft_insurance_item(permission),
         _operator_credential_item(permission),
         *_geo_plan_items(permission),
+        _flight_request_item(permission),
         _flight_record_item(permission),
     ]
     return {

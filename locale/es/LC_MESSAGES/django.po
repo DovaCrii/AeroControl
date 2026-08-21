@@ -6166,3 +6166,23 @@ msgid "%(days)s day waiting"
 msgid_plural "%(days)s days waiting"
 msgstr[0] "%(days)s día esperando"
 msgstr[1] "%(days)s días esperando"
+
+#: .\templates\dashboard\index.html
+msgid "Awaiting SIGO"
+msgstr "Esperando SIGO"
+
+#: .\templates\dashboard\index.html
+msgid "Filed in SIGO, awaiting an answer"
+msgstr "Presentadas en SIGO, esperando respuesta"
+
+#: .\templates\dashboard\index.html
+msgid "See all of them"
+msgstr "Verlas todas"
+
+#: .\apps\operations\dossier.py
+msgid "Originating SIGO request"
+msgstr "Solicitud SIGO de origen"
+
+#: .\apps\operations\dossier.py
+msgid "No request recorded for this permit"
+msgstr "Sin solicitud registrada para este permiso"
