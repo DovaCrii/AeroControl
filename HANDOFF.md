@@ -151,6 +151,7 @@ nada de esto está en `p340` todavía, salvo `LV-117`, que ya se sembró.
 | `LV-126` | El número de serie, en la lista | Aeronaves |
 | `LV-127` | 10 orígenes de no conformidad y categoría de causa raíz | No conformidades |
 | `LV-128` | Entregables sale del menú | Barra lateral |
+| **`R9.1`–`R9.5`** | **Solicitud de vuelo SIGO**: separar un KMZ multi-círculo en una solicitud por circunferencia, hoja copiable con las seis casillas del punto centro, AMC calculado, KMZ individual descargable, flujo con barra de progreso y vínculo al permiso | Menú **Solicitudes SIGO** (nuevo, bajo Vuelo) |
 
 **Las dos migraciones son benignas y ninguna necesita el chequeo previo de datos**
 que sí piden las de `unique`/`NOT NULL` (Parte D del runbook):
@@ -160,6 +161,9 @@ que sí piden las de `unique`/`NOT NULL` (Parte D del runbook):
   existentes. No borra, no renombra, no impone restricciones.
 - `compliance.0023` (`LV-121`): pone `requires_expiry=False` en **una** fila del
   catálogo (`aircraft-registration`). No borra vencimientos ya cargados.
+- `registry.0035` y `operations.0019` (**R9**): crean tablas nuevas
+  (`Aerodrome`, `FlightRequest` y sus tres acompañantes). No tocan ninguna fila
+  existente, así que no pueden fallar sobre datos reales.
 
 El respaldo previo sigue siendo obligatorio igual.
 
@@ -171,6 +175,8 @@ echo "settings=$DJANGO_SETTINGS_MODULE  db=$DB_PATH"   # debe decir prod
 uv run python manage.py backup && uv run python manage.py verify_backup <ruta>
 uv sync && uv run python manage.py migrate --no-input
 uv run python manage.py seed_document_types
+uv run python manage.py seed_aerodromes
+uv run python manage.py seed_sigo_catalogs
 uv run python manage.py collectstatic --no-input && sudo systemctl restart aerocontrol
 ```
 
@@ -197,6 +203,13 @@ el `.mo`, y hay plantillas cambiadas en cinco de las ocho filas.
 5. **Carga de documentos**: el selector con los dos tipos JAC bajo *Documentos de
    la aeronave*, y que el registro DGAC se deje subir **sin** fecha de
    vencimiento.
+6. **Solicitudes SIGO** (R9): subir el KMZ de MLP como plan geoespacial, abrir
+   *Separar en solicitudes de vuelo* y comprobar que da **47 filas con 6
+   avisos** — los tres pares de puntos con coordenadas repetidas. Los dos
+   comandos `seed_aerodromes` y `seed_sigo_catalogs` son nuevos y sin ellos el
+   AMC no se calcula y los desplegables de trabajo/objetivo salen vacíos.
+   `seed_aerodromes` debe decir **6 de 50 con coordenadas**: el resto se
+   completa desde la ficha cuando haga falta.
 
 Ninguna de las ocho toca los timers. `LV-119` **no arregla** el correo: hace que
 se note que no sale (pendiente 5 de la lista de arriba).
