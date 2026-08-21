@@ -5764,3 +5764,157 @@ msgstr "Ordenar"
 #: .\templates\workboard\task_list.html:20
 msgid "No tasks found."
 msgstr "No se encontraron tareas."
+
+#: .\apps\operations\models.py
+msgid "Regulatory chapter"
+msgstr "Capítulo normativo"
+
+#: .\apps\operations\models.py
+msgid "As SIGO shows it, with its DAN 137 chapter."
+msgstr "Como lo muestra SIGO, con su capítulo del DAN 137."
+
+#: .\apps\operations\models.py
+msgid "work area type"
+msgstr "área de trabajo"
+
+#: .\apps\operations\models.py
+msgid "work area types"
+msgstr "áreas de trabajo"
+
+#: .\apps\operations\models.py
+msgid "flight objective"
+msgstr "objetivo del vuelo"
+
+#: .\apps\operations\models.py
+msgid "flight objectives"
+msgstr "objetivos del vuelo"
+
+#: .\apps\operations\models.py
+msgid "Prepared"
+msgstr "Preparada"
+
+#: .\apps\operations\models.py
+msgid "Linked to permit"
+msgstr "Vinculada al permiso"
+
+#: .\apps\operations\models.py
+msgid "Unpopulated area operation"
+msgstr "Operación área no poblada"
+
+#: .\apps\operations\models.py
+msgid "Usually the section name from the KMZ, e.g. 'Quebrada km 13.760'."
+msgstr "Normalmente el nombre de la sección del KMZ, por ejemplo «Quebrada km 13.760»."
+
+#: .\apps\operations\models.py
+msgid "Nearest aerodrome (AMC)"
+msgstr "Aeródromo más cercano (AMC)"
+
+#: .\apps\operations\models.py
+msgid "Proposed by distance; confirm against the AIP chart."
+msgstr "Propuesto por distancia; confírmalo contra la carta AIP."
+
+#: .\apps\operations\models.py
+msgid "Distance to AMC (km)"
+msgstr "Distancia al AMC (km)"
+
+#: .\apps\operations\models.py
+msgid "Radius (m)"
+msgstr "Radio (m)"
+
+#: .\apps\operations\models.py
+msgid "Height (m)"
+msgstr "Altura (m)"
+
+#: .\apps\operations\models.py
+msgid "From (time)"
+msgstr "Hora desde"
+
+#: .\apps\operations\models.py
+msgid "To (time)"
+msgstr "Hora hasta"
+
+#: .\apps\operations\models.py
+msgid "The multi-circle plan this section was split from."
+msgstr "El plan con varias circunferencias del que se separó esta sección."
+
+#: .\apps\operations\models.py
+msgid "Filed in SIGO on"
+msgstr "Presentada en SIGO el"
+
+#: .\apps\operations\models.py
+msgid "Used to show how long it has been waiting for an answer."
+msgstr "Sirve para mostrar cuánto lleva esperando respuesta."
+
+#: .\apps\operations\models.py
+msgid "flight request"
+msgstr "solicitud de vuelo"
+
+#: .\apps\operations\models.py
+msgid "flight requests"
+msgstr "solicitudes de vuelo"
+
+#: .\apps\operations\models.py
+msgid "The end time must be after the start time."
+msgstr "La hora de término debe ser posterior a la de inicio."
+
+#: .\apps\operations\models.py
+msgid "The aerodrome and its distance must be entered together."
+msgstr "El aeródromo y su distancia deben ingresarse juntos."
+
+#: .\apps\operations\models.py
+msgid "work item"
+msgstr "par de trabajo"
+
+#: .\apps\operations\models.py
+msgid "work items"
+msgstr "pares de trabajo"
+
+#: .\apps\operations\models.py
+msgid "Note"
+msgstr "Nota"
+
+#: .\apps\operations\models.py
+msgid "flight request note"
+msgstr "nota de solicitud de vuelo"
+
+#: .\apps\operations\models.py
+msgid "flight request notes"
+msgstr "notas de solicitud de vuelo"
+
+#: .\apps\operations\models.py
+msgid "flight request history"
+msgstr "historial de solicitud de vuelo"
+
+#: .\apps\operations\models.py
+msgid "flight request histories"
+msgstr "historiales de solicitud de vuelo"
+
+#: .\apps\operations\models.py
+msgid "ICAO code"
+msgstr "Código OACI"
+
+#: .\apps\operations\models.py
+msgid "As SIGO lists it, e.g. SCEL."
+msgstr "Como lo lista SIGO, por ejemplo SCEL."
+
+#: .\apps\operations\models.py
+msgid "Leave blank if unverified: it will not be used to compute AMC."
+msgstr "Déjalo en blanco si no está verificada: no se usará para calcular el AMC."
+
+#: .\apps\operations\models.py
+msgid "aerodrome"
+msgstr "aeródromo"
+
+#: .\apps\operations\models.py
+msgid "aerodromes"
+msgstr "aeródromos"
+
+#: .\apps\operations\models.py
+msgctxt "flight request status"
+msgid "Filed in SIGO"
+msgstr "Presentada en SIGO"
+
+#: .\apps\operations\models.py
+msgctxt "flight request status"
+msgid "Closed"
+msgstr "Cerrada"

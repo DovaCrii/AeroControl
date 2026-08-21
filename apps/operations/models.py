@@ -360,3 +360,355 @@ class PermissionHistory(BaseModel):
             latest = PermissionHistory.objects.order_by("-sequence").first()
             self.sequence = (latest.sequence if latest else 0) + 1
         return super().save(*args, **kwargs)
+
+
+class WorkAreaType(BaseModel):
+    """R9.3: "Área de Trabajo" del formulario de SIGO.
+
+    Catálogo y no vocabulario cerrado en el código: la lista de las capturas
+    del usuario **venía cortada arriba** en el desplegable, así que declararla
+    como `choices` sería afirmar que está completa cuando se sabe que no. Un
+    valor nuevo se agrega desde la app, sin desplegar — mismo criterio que
+    `DocumentType` y `QualificationType`.
+
+    `chapter` guarda la referencia normativa que SIGO muestra entre paréntesis
+    ("Capítulo J - DAN 137"): es parte del nombre que hay que reconocer en el
+    selector del Estado, no un adorno.
+    """
+
+    code = models.CharField(max_length=50, unique=True)
+    name = models.CharField(max_length=150)
+    chapter = models.CharField(
+        max_length=60,
+        blank=True,
+        verbose_name=_("Regulatory chapter"),
+        help_text=_("As SIGO shows it, with its DAN 137 chapter."),
+    )
+
+    class Meta:
+        verbose_name = _("work area type")
+        verbose_name_plural = _("work area types")
+        ordering = ["name"]
+
+    def __str__(self):
+        return f"{self.name} ({self.chapter})" if self.chapter else self.name
+
+
+class FlightObjective(BaseModel):
+    """R9.3: "Objetivo del Vuelo" del formulario de SIGO.
+
+    Catálogo por la misma razón que `WorkAreaType`: en la captura el
+    desplegable estaba desplazado y "Batimetría" se leía a medias en el borde
+    superior. Se siembra lo que se pudo leer y el resto se agrega al verlo.
+    """
+
+    code = models.CharField(max_length=50, unique=True)
+    name = models.CharField(max_length=150)
+
+    class Meta:
+        verbose_name = _("flight objective")
+        verbose_name_plural = _("flight objectives")
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+class FlightRequest(StatusFlowMixin, BaseModel):
+    """R9.3: una solicitud de vuelo de SIGO — **una circunferencia**.
+
+    Espejo del formulario "Información Vuelo" de SIGO, que acepta un punto
+    centro con su radio por solicitud. Nace de separar un KMZ multi-círculo
+    (`apps.geo.sections`), y su razón de existir es que hoy ese trabajo se hace
+    a mano: aislar el círculo en Google Earth, pasar el centro a GMS, estimar
+    la distancia al aeródromo y transcribir doce casillas.
+
+    **No reemplaza al permiso de vuelo.** `FlightPermission` es el espejo del
+    papel que emite la DGAC (`LV-64`, `LV-101`); esto es la *preparación* de lo
+    que se pide y el *seguimiento* de lo pedido. Cuando la DGAC responde, la
+    solicitud se vincula al permiso y **rellena** su ubicación estructurada
+    (OPS-4) en vez de duplicarla.
+    """
+
+    STATUS_PREPARED = "prepared"
+    STATUS_FILED = "filed"
+    STATUS_LINKED = "linked"
+    STATUS_CLOSED = "closed"
+    STATUS_CHOICES = [
+        (STATUS_PREPARED, _("Prepared")),
+        # Con contexto: "Filed in SIGO" ya existe en el catálogo como el estado
+        # del **seguro** (`LV-81`), donde el sujeto es masculino ("presentado").
+        # Acá el sujeto es la solicitud y sin `msgctxt` heredaría esa redacción.
+        # Mismo caso que "Expired" en `FlightPermission` y "Registry" en LV-61.
+        (STATUS_FILED, pgettext_lazy("flight request status", "Filed in SIGO")),
+        (STATUS_LINKED, _("Linked to permit")),
+        # Y "Closed" sin contexto es "Cerrado" -- el contrato de un centro de
+        # costo. La no conformidad ya necesitó su propio `msgctxt` por lo
+        # mismo; esta es la tercera vez que la misma palabra inglesa cae en dos
+        # géneros distintos del español.
+        (STATUS_CLOSED, pgettext_lazy("flight request status", "Closed")),
+    ]
+    STATUS_FLOW = [STATUS_PREPARED, STATUS_FILED, STATUS_LINKED, STATUS_CLOSED]
+    # LV-90/LV-113: dónde deja de ser trabajo abierto, declarado junto a las
+    # opciones para que el motor de alertas y el panel no lleven su propia copia.
+    TERMINAL_STATUSES = frozenset({STATUS_CLOSED})
+    # El contenido sólo cambia mientras nadie la haya presentado: una vez
+    # ingresada en SIGO, el archivo que allá tienen ya no coincide con lo que se
+    # editaría acá.
+    EDITABLE_STATUSES = frozenset({STATUS_PREPARED})
+
+    # Sólo el tipo que las capturas muestran. No se inventan los otros que SIGO
+    # pueda ofrecer: lo que no se vio, no se declara.
+    REQUEST_TYPE_UNPOPULATED = "unpopulated_area"
+    REQUEST_TYPE_CHOICES = [
+        (REQUEST_TYPE_UNPOPULATED, _("Unpopulated area operation")),
+    ]
+
+    title = models.CharField(
+        max_length=200,
+        help_text=_(
+            "Usually the section name from the KMZ, e.g. 'Quebrada km 13.760'."
+        ),
+    )
+    cost_center = models.ForeignKey(
+        CostCenter, on_delete=models.PROTECT, related_name="flight_requests"
+    )
+    request_type = models.CharField(
+        max_length=30,
+        choices=REQUEST_TYPE_CHOICES,
+        default=REQUEST_TYPE_UNPOPULATED,
+    )
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default=STATUS_PREPARED
+    )
+
+    # --- Lo que SIGO pide, en el orden del formulario ---
+    commune = models.CharField(max_length=100, blank=True, verbose_name=_("Commune"))
+    area_name = models.CharField(max_length=200, blank=True, verbose_name=_("Area"))
+    amc = models.ForeignKey(
+        "registry.Aerodrome",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="flight_requests",
+        verbose_name=_("Nearest aerodrome (AMC)"),
+        help_text=_("Proposed by distance; confirm against the AIP chart."),
+    )
+    # Se guarda la distancia además del aeródromo, y no se recalcula al mostrar:
+    # es el número que se escribió en el formulario del Estado, y tiene que
+    # seguir diciendo lo mismo aunque mañana alguien corrija la coordenada del
+    # aeródromo en su ficha. Misma lección que `LV-118` dejó en las alertas.
+    amc_distance_km = models.DecimalField(
+        max_digits=7,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0"))],
+        verbose_name=_("Distance to AMC (km)"),
+    )
+    center_lat = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        validators=[
+            MinValueValidator(Decimal("-90")),
+            MaxValueValidator(Decimal("90")),
+        ],
+    )
+    center_lon = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        validators=[
+            MinValueValidator(Decimal("-180")),
+            MaxValueValidator(Decimal("180")),
+        ],
+    )
+    radius_m = models.PositiveIntegerField(
+        null=True, blank=True, verbose_name=_("Radius (m)")
+    )
+    altitude_m = models.PositiveIntegerField(
+        null=True, blank=True, verbose_name=_("Height (m)")
+    )
+    hour_from = models.TimeField(null=True, blank=True, verbose_name=_("From (time)"))
+    hour_to = models.TimeField(null=True, blank=True, verbose_name=_("To (time)"))
+
+    # --- Origen y destino ---
+    source_plan = models.ForeignKey(
+        "geo.GeoPlan",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="flight_requests",
+        help_text=_("The multi-circle plan this section was split from."),
+    )
+    # La geometría de la sección como JSON canónico, mismo patrón que
+    # `GeoPlanVersion.content`: el KMZ que se adjunta a SIGO se genera al
+    # descargar. Guardar 47 archivos para 47 solicitudes sería multiplicar
+    # binarios que se pueden reconstruir exactamente.
+    section_content = models.JSONField(null=True, blank=True)
+    flight_permission = models.ForeignKey(
+        FlightPermission,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="flight_requests",
+    )
+    filed_on = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name=_("Filed in SIGO on"),
+        help_text=_("Used to show how long it has been waiting for an answer."),
+    )
+
+    class Meta:
+        verbose_name = _("flight request")
+        verbose_name_plural = _("flight requests")
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["status", "is_active"], name="ops_request_status_idx"),
+            models.Index(
+                fields=["cost_center", "is_active"], name="ops_request_cc_idx"
+            ),
+        ]
+
+    def __str__(self):
+        return self.title
+
+    def get_absolute_url(self):
+        from django.urls import reverse
+
+        return reverse("flight-request-detail", kwargs={"pk": self.pk})
+
+    @property
+    def is_editable(self):
+        return self.status in self.EDITABLE_STATUSES
+
+    def clean(self):
+        errors = {}
+        if self.hour_from and self.hour_to and self.hour_to <= self.hour_from:
+            errors["hour_to"] = _("The end time must be after the start time.")
+        # El aeródromo sin su distancia (o al revés) deja media casilla que SIGO
+        # pide entera; se exigen juntos, mismo criterio que el par de
+        # coordenadas de `FlightPermission`.
+        if (self.amc_id is None) != (self.amc_distance_km is None):
+            message = _("The aerodrome and its distance must be entered together.")
+            errors["amc"] = message
+            errors["amc_distance_km"] = message
+        if errors:
+            raise ValidationError(errors)
+
+    def days_waiting(self):
+        """Cuántos días lleva presentada sin respuesta, o None.
+
+        El seguimiento que el usuario pidió: una solicitud "ingresada en SIGO"
+        que nadie contestó es trabajo detenido y no se ve en ninguna parte
+        —mismo hueco que el estado `filed` del seguro (`LV-81`) vino a tapar—.
+        `None` mientras no esté presentada o ya tenga permiso: preguntar cuánto
+        espera algo que ya llegó no significa nada.
+        """
+        if self.status != self.STATUS_FILED or not self.filed_on:
+            return None
+        return (timezone.localdate() - self.filed_on).days
+
+
+class FlightRequestWorkItem(BaseModel):
+    """Un par (Área de Trabajo, Objetivo del Vuelo) de la tabla de SIGO.
+
+    Modelo propio y no dos FK en `FlightRequest` porque el formulario **agrega
+    filas**: "Agregar" apila pares en una tabla, y una solicitud puede llevar
+    varios. Dos columnas en la solicitud sólo podrían representar el primero.
+    """
+
+    request = models.ForeignKey(
+        FlightRequest, on_delete=models.CASCADE, related_name="work_items"
+    )
+    work_area = models.ForeignKey(WorkAreaType, on_delete=models.PROTECT)
+    objective = models.ForeignKey(FlightObjective, on_delete=models.PROTECT)
+
+    class Meta:
+        verbose_name = _("work item")
+        verbose_name_plural = _("work items")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["request", "work_area", "objective"],
+                name="ops_request_workitem_unique",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.work_area} · {self.objective}"
+
+
+class FlightRequestNote(BaseModel):
+    """R9.4: nota de cambio, append-only.
+
+    La trazabilidad que el usuario pidió, con su límite explícito: *"no es
+    necesario la comparación entre modificaciones pero sí dejar nota de los
+    cambios o lo que se requiere"*. O sea: **no hay diff entre versiones** —
+    hay un registro de quién anotó qué y cuándo. Construir el diff habría sido
+    más código para responder una pregunta que nadie hizo.
+
+    El historial de *estados* no vive acá: lo escribe la señal compartida en
+    `FlightRequestHistory`, igual que en permiso, seguro y mantención.
+    """
+
+    # `change_notes` y no `notes`: `FlightRequestHistory` ya tiene un campo
+    # `notes` (lo exige la señal compartida), y Django rechaza el choque de
+    # accessors. El nombre largo además dice mejor lo que son.
+    request = models.ForeignKey(
+        FlightRequest, on_delete=models.PROTECT, related_name="change_notes"
+    )
+    text = models.TextField(verbose_name=_("Note"))
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="flight_request_notes",
+    )
+
+    class Meta:
+        verbose_name = _("flight request note")
+        verbose_name_plural = _("flight request notes")
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.request}: {self.text[:40]}"
+
+
+class FlightRequestHistory(BaseModel):
+    """Historial de estados, escrito por `track_status_changes`.
+
+    Los nombres de los campos son los que esa señal espera (`apps/core/
+    signals.py`); copiarlos es lo que permite reusarla en vez de escribir un
+    cuarto registrador de transiciones.
+    """
+
+    sequence = models.PositiveBigIntegerField(editable=False, default=0)
+    request = models.ForeignKey(
+        FlightRequest, on_delete=models.PROTECT, related_name="history"
+    )
+    previous_status = models.CharField(
+        max_length=20, choices=FlightRequest.STATUS_CHOICES
+    )
+    new_status = models.CharField(max_length=20, choices=FlightRequest.STATUS_CHOICES)
+    changed_by = models.CharField(max_length=150)
+    changed_by_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="flight_request_history_events",
+    )
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = _("flight request history")
+        verbose_name_plural = _("flight request histories")
+        ordering = ["-sequence"]
+
+    def __str__(self):
+        return f"{self.request}: {self.previous_status} → {self.new_status}"
+
+    def save(self, *args, **kwargs):
+        if self._state.adding:
+            latest = FlightRequestHistory.objects.order_by("-sequence").first()
+            self.sequence = (latest.sequence if latest else 0) + 1
+        return super().save(*args, **kwargs)

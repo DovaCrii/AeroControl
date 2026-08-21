@@ -9,7 +9,7 @@ def track_status_changes(sender, instance, **kwargs):
 
     from apps.geo.models import GeoPlanHistory
     from apps.maintenance.models import MaintenanceHistory
-    from apps.operations.models import PermissionHistory
+    from apps.operations.models import FlightRequestHistory, PermissionHistory
     from apps.registry.models import InsuranceHistory
 
     # (history model, its FK back to the record, the field being tracked).
@@ -19,6 +19,10 @@ def track_status_changes(sender, instance, **kwargs):
     # insurance filing does advance through a flow and needs the trace.
     history = {
         "flightpermission": (PermissionHistory, "permission", "status"),
+        # R9.4: quinto usuario de esta señal. Que agregar el seguimiento de una
+        # solicitud SIGO cueste una línea acá es la razón por la que `LV-72`
+        # extrajo esto de la vista del permiso.
+        "flightrequest": (FlightRequestHistory, "request", "status"),
         "maintenancerecord": (MaintenanceHistory, "record", "status"),
         "geoplan": (GeoPlanHistory, "plan", "status"),
         "aircraft": (InsuranceHistory, "aircraft", "insurance_status"),
