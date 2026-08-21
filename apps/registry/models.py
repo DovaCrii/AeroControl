@@ -855,6 +855,76 @@ class Assignment(BaseModel):
             raise ValidationError(errors)
 
 
+class Aerodrome(BaseModel):
+    """R9.2: el catálogo de aeródromos que SIGO ofrece en "Aeródromo más
+    Cercano (AMC)".
+
+    La solicitud de vuelo pide dos datos que hoy se sacan a mano: **cuál es el
+    aeródromo más cercano** al punto centro y **a cuántos kilómetros está**.
+    Para calcularlo hace falta la posición, y para ofrecer el mismo nombre que
+    SIGO espera hace falta su lista — de ahí este catálogo.
+
+    **La lista se copia de SIGO, no se inventa** (decisión del usuario,
+    2026-08-20: *"son solo esas las disponibles de momento, por lo cual se debe
+    respetar"*). Es una lista global: trae Abu Dhabi y Taranto junto a los
+    chilenos, porque así la muestra el sistema del Estado y ofrecer un nombre
+    que su selector no tiene sería inútil.
+
+    `latitude`/`longitude` son **opcionales a propósito**. Sembrar coordenadas
+    inventadas para cincuenta aeródromos produciría una distancia con dos
+    decimales y ningún respaldo; el seed sólo trae las de posición verificable
+    y el resto queda en blanco, visible como "sin coordenadas" y completable
+    desde la ficha. Un aeródromo sin posición no participa del cálculo, y la
+    pantalla dice cuántos quedaron fuera en vez de fingir que los consideró.
+
+    La regla que gobierna todo esto, y que `LV-93` dejó escrita a golpes: **la
+    app propone, el papel manda**. El AMC calculado se confirma contra la carta
+    AIP antes de presentar.
+    """
+
+    code = models.CharField(
+        max_length=10,
+        unique=True,
+        verbose_name=_("ICAO code"),
+        help_text=_("As SIGO lists it, e.g. SCEL."),
+    )
+    name = models.CharField(max_length=150)
+    latitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+        validators=[
+            MinValueValidator(Decimal("-90")),
+            MaxValueValidator(Decimal("90")),
+        ],
+        help_text=_("Leave blank if unverified: it will not be used to compute AMC."),
+    )
+    longitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+        validators=[
+            MinValueValidator(Decimal("-180")),
+            MaxValueValidator(Decimal("180")),
+        ],
+    )
+
+    class Meta:
+        verbose_name = _("aerodrome")
+        verbose_name_plural = _("aerodromes")
+        ordering = ["code"]
+
+    def __str__(self):
+        return f"{self.code} - {self.name}"
+
+    @property
+    def is_locatable(self):
+        """Si puede participar del cálculo de cercanía."""
+        return self.latitude is not None and self.longitude is not None
+
+
 class QualificationType(BaseModel):
     """Catalog of operator qualifications (B4.3), e.g. a DGAC rating per
     aircraft family.
