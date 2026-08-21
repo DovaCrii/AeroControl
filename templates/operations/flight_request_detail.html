@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{{ request_obj.title }} - AeroControl{% endblock %}
+
+{% comment %}R9.5: la ficha de una solicitud SIGO.
+
+Lo que la hace útil es la **hoja**: cada valor en el formato exacto de su
+casilla, con un botón que lo copia. El punto centro va en seis casillas
+separadas porque SIGO lo pide así, y entregarlo junto obligaría a partirlo a
+mano — que es el trabajo que este flujo existe para quitar.
+
+La barra de progreso y el historial son los mismos de siempre
+(`generic/_traceability.html`): un cuarto dibujo de lo mismo sería un cuarto
+lenguaje visual que aprender.{% endcomment %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+  <div>
+    <h1 class="h3 mb-1">{{ request_obj.title }}</h1>
+    <p class="text-muted mb-0">
+      {{ request_obj.cost_center }} · {{ request_obj.get_request_type_display }}
+      {% if request_obj.source_plan %} · <a href="{% url 'geo-plan-detail' request_obj.source_plan.pk %}">{{ request_obj.source_plan.title }}</a>{% endif %}
+    </p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    {% if request_obj.section_content %}
+    <a class="btn btn-primary" href="{% url 'flight-request-kmz' request_obj.pk %}" hx-boost="false">{% translate "Download KMZ for SIGO" %}</a>
+    {% endif %}
+    {% if perms.operations.change_flightrequest and request_obj.is_editable %}
+    <a class="btn btn-outline-secondary" href="{% url 'flight-request-update' request_obj.pk %}">{% translate "Edit" %}</a>
+    {% endif %}
+    <a class="btn btn-outline-secondary" href="{% url 'flight-request-list' %}">← {% translate "Back" %}</a>
+  </div>
+</div>
+
+{% comment %}Las acciones de flujo, cada una sólo desde el estado en que tiene
+sentido: el propio `StatusTransitionView` rechaza lo demás, y ofrecer un botón
+que va a fallar es peor que no ofrecerlo.{% endcomment %}
+{% if perms.operations.change_flightrequest %}
+<div class="d-flex gap-2 flex-wrap mb-3">
+  {% if request_obj.status == 'prepared' %}
+  <form method="post" action="{% url 'flight-request-file' request_obj.pk %}">{% csrf_token %}
+    <button class="btn btn-sm btn-primary" title="{% translate 'Record that it was entered in SIGO today' %}">{% translate "Mark as filed in SIGO" %}</button>
+  </form>
+  {% endif %}
+  {% if request_obj.status == 'filed' %}
+  <form method="post" action="{% url 'flight-request-link' request_obj.pk %}" class="d-flex gap-2 align-items-center flex-wrap">{% csrf_token %}
+    <select class="form-select form-select-sm w-auto" name="permission" required>
+      <option value="">{% translate "Choose the permit the DGAC answered with…" %}</option>
+      {% for permission in linkable_permissions %}
+      <option value="{{ permission.pk }}">{{ permission.internal_folio }}{% if permission.permission_number %} · {{ permission.permission_number }}{% endif %}</option>
+      {% endfor %}
+    </select>
+    <button class="btn btn-sm btn-success">{% translate "Link to permit" %}</button>
+  </form>
+  {% endif %}
+  {% if request_obj.status == 'linked' or request_obj.status == 'filed' %}
+  <form method="post" action="{% url 'flight-request-close' request_obj.pk %}">{% csrf_token %}
+    <button class="btn btn-sm btn-outline-secondary">{% translate "Close" %}</button>
+  </form>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if request_obj.flight_permission %}
+<div class="alert alert-success py-2">
+  {% blocktranslate with folio=request_obj.flight_permission.internal_folio %}Linked to permit {{ folio }}.{% endblocktranslate %}
+  <a href="{% url 'permission-detail' request_obj.flight_permission.pk %}">{% translate "Open the permit" %}</a>
+</div>
+{% endif %}
+
+<div class="card p-4 mb-3">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h2 class="h5 mb-0">{% translate "SIGO form sheet" %}</h2>
+    <span class="small text-body-secondary">{% translate "Copy each value into its box in SIGO." %}</span>
+  </div>
+
+  <table class="table table-bordered align-middle mb-0">
+    <tbody>
+      <tr><th scope="row" class="w-25">{% translate "Request type" %}</th><td>{{ sheet.request_type }}</td></tr>
+      <tr>
+        <th scope="row">{% translate "Work area / objective" %}</th>
+        <td>
+          {% for area, objective in sheet.work_pairs %}
+          <div>{{ area }} <span class="text-body-secondary">·</span> <strong>{{ objective }}</strong></div>
+          {% empty %}<span class="text-muted">{% translate "No pairs added yet." %}</span>{% endfor %}
+        </td>
+      </tr>
+      <tr><th scope="row">{% translate "Commune" %}</th><td>{{ sheet.commune|default:"—" }}</td></tr>
+      <tr><th scope="row">{% translate "Area" %}</th><td>{{ sheet.area|default:"—" }}</td></tr>
+      <tr>
+        <th scope="row">{% translate "Nearest aerodrome (AMC)" %}</th>
+        <td>
+          {% if sheet.amc %}{{ sheet.amc }}{% else %}<span class="text-muted">—</span>{% endif %}
+          {% comment %}El recordatorio va pegado al dato y no en una nota al
+          pie: es lo que impide que un cálculo se presente como un hecho
+          verificado. `LV-93`: la app propone, el papel manda.{% endcomment %}
+          <div class="small text-body-secondary">{% translate "Proposed by distance — confirm against the AIP chart." %}</div>
+        </td>
+      </tr>
+      <tr><th scope="row">{% translate "Distance to AMC (km)" %}</th><td>{{ sheet.amc_distance_km|default:"—" }}</td></tr>
+      <tr>
+        <th scope="row">{% translate "Centre point — latitude" %}</th>
+        <td>
+          <div class="d-flex gap-3 flex-wrap align-items-baseline">
+            <span><span class="text-body-secondary small">{% translate "Degrees" %}</span> <strong>{{ sheet.lat_degrees }}</strong></span>
+            <span><span class="text-body-secondary small">{% translate "Minutes" %}</span> <strong>{{ sheet.lat_minutes }}</strong></span>
+            <span><span class="text-body-secondary small">{% translate "Seconds" %}</span> <strong>{{ sheet.lat_seconds }}</strong></span>
+            <span><span class="text-body-secondary small">{% translate "Hemisphere" %}</span> <strong>{{ sheet.lat_hemisphere }}</strong></span>
+          </div>
+          <div class="small text-body-secondary">{{ sheet.lat_readable }}</div>
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">{% translate "Centre point — longitude" %}</th>
+        <td>
+          <div class="d-flex gap-3 flex-wrap align-items-baseline">
+            <span><span class="text-body-secondary small">{% translate "Degrees" %}</span> <strong>{{ sheet.lon_degrees }}</strong></span>
+            <span><span class="text-body-secondary small">{% translate "Minutes" %}</span> <strong>{{ sheet.lon_minutes }}</strong></span>
+            <span><span class="text-body-secondary small">{% translate "Seconds" %}</span> <strong>{{ sheet.lon_seconds }}</strong></span>
+            <span><span class="text-body-secondary small">{% translate "Hemisphere" %}</span> <strong>{{ sheet.lon_hemisphere }}</strong></span>
+          </div>
+          <div class="small text-body-secondary">{{ sheet.lon_readable }}</div>
+        </td>
+      </tr>
+      <tr><th scope="row">{% translate "Radius (m)" %}</th><td>{{ sheet.radius_m|default:"—" }}</td></tr>
+      <tr><th scope="row">{% translate "Height (m)" %}</th><td>{{ sheet.altitude_m|default:"—" }}</td></tr>
+      <tr><th scope="row">{% translate "Schedule" %}</th><td>{% if sheet.hour_from and sheet.hour_to %}{{ sheet.hour_from|time:"H:i" }} – {{ sheet.hour_to|time:"H:i" }}{% else %}<span class="text-muted">—</span>{% endif %}</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="card p-4 mb-3">
+  <h2 class="h5 mb-3">{% translate "Work area / objective pairs" %}</h2>
+  {% if work_items %}
+  <table class="table table-sm align-middle">
+    <thead><tr><th scope="col">{% translate "Work area" %}</th><th scope="col">{% translate "Objective" %}</th><th scope="col" class="text-end">{% translate "Actions" %}</th></tr></thead>
+    <tbody>
+      {% for item in work_items %}
+      <tr>
+        <td>{{ item.work_area }}</td>
+        <td>{{ item.objective }}</td>
+        <td class="text-end">
+          {% if perms.operations.change_flightrequest %}
+          <form method="post" action="{% url 'flight-request-remove-work-item' request_obj.pk item.pk %}">{% csrf_token %}
+            <button class="btn btn-sm btn-outline-secondary">{% translate "Remove" %}</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="text-muted">{% translate "No pairs added yet." %}</p>
+  {% endif %}
+  {% if perms.operations.change_flightrequest %}
+  <form method="post" action="{% url 'flight-request-add-work-item' request_obj.pk %}" class="row g-2 align-items-end">{% csrf_token %}
+    <div class="col-md-5">{{ work_item_form.work_area.label_tag }}{{ work_item_form.work_area }}</div>
+    <div class="col-md-5">{{ work_item_form.objective.label_tag }}{{ work_item_form.objective }}</div>
+    <div class="col-auto"><button class="btn btn-outline-primary">{% translate "Add" %}</button></div>
+  </form>
+  {% endif %}
+</div>
+
+{% comment %}R9.4: notas de cambio, sin comparación entre versiones — decisión
+explícita del usuario. Lo que queda registrado es quién anotó qué y cuándo.
+{% endcomment %}
+<div class="card p-4 mb-3">
+  <h2 class="h5 mb-3">{% translate "Change notes" %}</h2>
+  {% for note in notes %}
+  <div class="border-bottom py-2">
+    <div>{{ note.text|linebreaksbr }}</div>
+    <div class="small text-body-secondary">{{ note.author }} · {{ note.created_at|date:"Y-m-d H:i" }}</div>
+  </div>
+  {% empty %}
+  <p class="text-muted">{% translate "No notes yet." %}</p>
+  {% endfor %}
+  {% if perms.operations.change_flightrequest %}
+  <form method="post" action="{% url 'flight-request-add-note' request_obj.pk %}" class="mt-3">{% csrf_token %}
+    {{ note_form.text }}
+    <button class="btn btn-outline-primary btn-sm mt-2">{% translate "Add note" %}</button>
+  </form>
+  {% endif %}
+</div>
+
+{% translate "Request history" as request_history_title %}
+{% include "generic/_traceability.html" with record=request_obj steps=request_obj.status_steps history=history history_title=request_history_title %}
+{% endblock %}

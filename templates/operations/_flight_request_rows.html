@@ -1,0 +1,29 @@
+{% load i18n %}
+{% comment %}R9.5: parcial propio y no el genérico, misma razón que
+`_permission_rows.html` (LV-53/T5.6): una respuesta HTMX de búsqueda en vivo
+tiene que traer estas columnas, o el resultado colapsa a las genéricas.
+
+La columna de espera es la que hace visible lo que el usuario pidió seguir: una
+solicitud presentada en SIGO que nadie contestó.{% endcomment %}
+{% for object in objects %}
+<tr>
+  <td><a href="{% url 'flight-request-detail' object.pk %}" class="table-primary-value"><strong>{{ object.title }}</strong></a></td>
+  <td>{{ object.cost_center.code }}</td>
+  <td class="text-nowrap">{{ object.radius_m|default:"—" }}{% if object.radius_m %} m{% endif %}</td>
+  <td>{% if object.amc %}<span class="text-nowrap">{{ object.amc.code }}</span> <span class="text-body-secondary">{{ object.amc_distance_km }} km</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+  <td>
+    <span class="badge {% if object.status == 'closed' %}bg-secondary-subtle text-secondary-emphasis{% elif object.status == 'linked' %}bg-success-subtle text-success-emphasis{% elif object.status == 'filed' %}bg-info-subtle text-info-emphasis{% else %}bg-warning-subtle text-warning-emphasis{% endif %}">{{ object.get_status_display }}</span>
+    {% with waiting=object.days_waiting %}
+    {% if waiting is not None %}
+    {% comment %}Sin umbral inventado: se dice cuántos días lleva y quien mira
+    decide. Poner un "atrasada a los N días" exigiría un plazo de la DGAC que
+    nadie confirmó.{% endcomment %}
+    <div class="small text-body-secondary">{% blocktranslate count days=waiting %}{{ days }} day waiting{% plural %}{{ days }} days waiting{% endblocktranslate %}</div>
+    {% endif %}
+    {% endwith %}
+  </td>
+  <td>{% if object.flight_permission %}<a href="{% url 'permission-detail' object.flight_permission.pk %}">{{ object.flight_permission.internal_folio }}</a>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+</tr>
+{% empty %}
+<tr><td colspan="6" class="text-muted py-3">{% translate "No flight requests yet. Split a geospatial plan to create them." %}</td></tr>
+{% endfor %}

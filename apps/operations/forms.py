@@ -3,7 +3,13 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
 from apps.core.forms import AeroModelForm
-from .models import FlightPermission, FlightRecord
+from .models import (
+    FlightPermission,
+    FlightRecord,
+    FlightRequest,
+    FlightRequestNote,
+    FlightRequestWorkItem,
+)
 
 
 class FlightPermissionForm(AeroModelForm):
@@ -280,3 +286,73 @@ class FlightRecordForm(AeroModelForm):
                 "arrival_time", _("Arrival time must be later than departure time.")
             )
         return cleaned
+
+
+class FlightRequestForm(AeroModelForm):
+    """Los campos de la solicitud que la persona completa a mano.
+
+    Fuera quedan el centro, el radio y la geometría: los pone el motor al
+    separar el KMZ y editarlos a mano desincronizaría la solicitud de su
+    adjunto — el KMZ diría una cosa y las casillas otra, que es justamente el
+    error que este flujo existe para no cometer.
+
+    El AMC sí está: lo **propone** el cálculo y lo confirma la persona contra
+    la carta AIP (`LV-93`: la app propone, el papel manda).
+    """
+
+    class Meta:
+        model = FlightRequest
+        fields = [
+            "title",
+            "request_type",
+            "commune",
+            "area_name",
+            "amc",
+            "amc_distance_km",
+            "altitude_m",
+            "hour_from",
+            "hour_to",
+            "filed_on",
+        ]
+        labels = {
+            "title": _("Title"),
+            "request_type": _("Request type"),
+            "commune": _("Commune"),
+            "area_name": _("Area"),
+            "amc": _("Nearest aerodrome (AMC)"),
+            "amc_distance_km": _("Distance to AMC (km)"),
+            "altitude_m": _("Height (m)"),
+            "hour_from": _("From (time)"),
+            "hour_to": _("To (time)"),
+            "filed_on": _("Filed in SIGO on"),
+        }
+
+
+class FlightRequestWorkItemForm(AeroModelForm):
+    """Un par (Área de Trabajo, Objetivo del Vuelo) — el botón "Agregar" de SIGO."""
+
+    class Meta:
+        model = FlightRequestWorkItem
+        fields = ["work_area", "objective"]
+        # "Objective" y no "Flight objective": el catálogo ya tiene
+        # "flight objective" (el `verbose_name` del modelo) y una variante que
+        # sólo difiere en mayúsculas es una clave distinta para gettext -- el
+        # error que `test_every_translatable_string_is_in_the_catalog` existe
+        # para atrapar, y que en su día dejó "Document types" en inglés.
+        labels = {
+            "work_area": _("Work area"),
+            "objective": _("Objective"),
+        }
+
+
+class FlightRequestNoteForm(AeroModelForm):
+    """La nota de cambio. Un solo campo: el resto lo pone la vista.
+
+    Sin comparación entre versiones, por decisión del usuario -- lo que queda
+    es quién anotó qué y cuándo.
+    """
+
+    class Meta:
+        model = FlightRequestNote
+        fields = ["text"]
+        labels = {"text": _("Note")}

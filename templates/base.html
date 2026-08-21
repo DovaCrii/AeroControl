@@ -82,6 +82,12 @@
       assignments) is still out of the nav; its route stays.{% endcomment %}
       <span class="sidebar-label">{% translate "Flight" %}</span>
       <a href="{% url 'permission-list' %}" class="nav-item nav-operations {% if url_name == 'permission-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 13l2 2 4-4"/></svg>{% translate "Permissions" %}</a>
+      {% comment %}R9.5: sección propia y no una pestaña del plan ni del
+      permiso (decisión del usuario, 2026-08-20). La solicitud es una cosa
+      distinta de las dos: el plan es el dibujo, el permiso es el papel que
+      responde la DGAC, y esto es el trámite que va en medio. Va entre ambos
+      porque ése es el orden en que ocurre.{% endcomment %}
+      <a href="{% url 'flight-request-list' %}" class="nav-item nav-operations {% if url_name == 'flight-request-list' or url_name == 'flight-request-detail' or url_name == 'geo-plan-split' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="1.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>{% translate "SIGO requests" %}</a>
       <a href="{% url 'geo-plan-list' %}" class="nav-item nav-operations {% if url_name == 'geo-plan-list' or url_name == 'geo-plan-detail' or url_name == 'geo-plan-import' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2z"/><path d="M9 3v16M15 5v16"/></svg>{% translate "Geospatial planning" %}</a>
       <a href="{% url 'record-list' %}" class="nav-item nav-operations {% if url_name == 'record-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H19v16H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M8 4v16M11 9h6M11 13h4"/></svg>{% translate "Flights" %}</a>
       {% comment %}LV-103 paso 1 (2026-08-14, decisión del usuario): el

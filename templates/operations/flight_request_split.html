@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Split into flight requests" %} - AeroControl{% endblock %}
+
+{% comment %}R9.5: la vista previa antes de crear.
+
+No es un adorno ni una confirmación de cortesía. El KMZ real de MLP trajo seis
+secciones con problema de dato —tres pares de puntos sobre las mismas
+coordenadas, dos de ellos filas mal transcritas en la tabla de origen— y crear
+cuarenta y siete solicitudes sin haberlas mirado sería enterrar ese hallazgo
+bajo cuarenta y siete filas nuevas. Acá se ve antes de tocar nada.{% endcomment %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+  <div>
+    <h1 class="h3 mb-1">{% translate "Split into flight requests" %}</h1>
+    <p class="text-muted mb-0">{{ plan.title }} · {{ plan.cost_center }}</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{% url 'geo-plan-detail' plan.pk %}">← {% translate "Back to the plan" %}</a>
+</div>
+
+<div class="alert alert-info">
+  {% blocktranslate count count=sections|length %}This plan yields <strong>{{ count }} flight request</strong>: SIGO accepts one circle with its centre point per request.{% plural %}This plan yields <strong>{{ count }} flight requests</strong>: SIGO accepts one circle with its centre point per request.{% endblocktranslate %}
+</div>
+
+{% if existing %}
+{% comment %}Se avisa y no se bloquea: repetir puede ser legítimo (el KMZ se
+corrigió y se rehace la tanda). Lo que no puede pasar es que se dupliquen sin
+que nadie lo supiera.{% endcomment %}
+<div class="alert alert-warning">
+  {% blocktranslate count count=existing %}This plan already has {{ count }} request created from it. Splitting again will add more.{% plural %}This plan already has {{ count }} requests created from it. Splitting again will add more.{% endblocktranslate %}
+</div>
+{% endif %}
+
+<div class="card mb-3">
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+      <thead><tr>
+        <th scope="col">#</th>
+        <th scope="col">{% translate "Section" %}</th>
+        <th scope="col">{% translate "Centre point" %}</th>
+        <th scope="col">{% translate "Radius (m)" %}</th>
+        <th scope="col">{% translate "Check" %}</th>
+      </tr></thead>
+      <tbody>
+        {% for row in sections %}
+        <tr {% if row.warnings %}class="table-warning"{% endif %}>
+          <td class="text-muted">{{ forloop.counter }}</td>
+          <td><strong>{{ row.section.name }}</strong></td>
+          <td class="small text-nowrap">{{ row.lat }}<br>{{ row.lon }}</td>
+          <td class="text-nowrap">{% if row.section.radius_m %}{{ row.section.radius_m|floatformat:0 }} m{% else %}<span class="text-muted">—</span>{% endif %}</td>
+          <td>
+            {% for warning in row.warnings %}
+            <div class="small text-warning-emphasis">⚠ {{ warning }}</div>
+            {% empty %}
+            <span class="text-success small">✓</span>
+            {% endfor %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if perms.operations.add_flightrequest %}
+<form method="post">{% csrf_token %}
+  <button class="btn btn-primary">
+    {% blocktranslate count count=sections|length %}Create {{ count }} flight request{% plural %}Create {{ count }} flight requests{% endblocktranslate %}
+  </button>
+  <a class="btn btn-outline-secondary" href="{% url 'geo-plan-detail' plan.pk %}">{% translate "Cancel" %}</a>
+</form>
+{% endif %}
+{% endblock %}

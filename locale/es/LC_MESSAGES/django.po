@@ -5918,3 +5918,251 @@ msgstr "Presentada en SIGO"
 msgctxt "flight request status"
 msgid "Closed"
 msgstr "Cerrada"
+
+#: .\apps\operations\views.py
+msgid "Request type"
+msgstr "Tipo de solicitud"
+
+#: .\apps\operations\views.py
+msgid "Work area"
+msgstr "Área de trabajo"
+
+#: .\apps\operations\views.py
+msgid "Objective"
+msgstr "Objetivo"
+
+#: .\apps\operations\views.py
+msgid "No circle: this point has no circumference, so SIGO has nothing to draw."
+msgstr "Sin circunferencia: este punto no tiene círculo, así que SIGO no tendría qué dibujar."
+
+#: .\apps\operations\views.py
+msgid "No centre point: this circle has no point of its own."
+msgstr "Sin punto central: esta circunferencia no tiene su propio punto."
+
+#: .\apps\operations\views.py
+msgid "Not a circle: the polygon is not circular, and SIGO expects one."
+msgstr "No es circunferencia: el polígono no es circular y SIGO espera uno."
+
+#: .\apps\operations\views.py
+msgid "Duplicate centre: another section has these same coordinates. Check the source table before filing."
+msgstr "Centro duplicado: otra sección tiene estas mismas coordenadas. Revisa la tabla de origen antes de presentar."
+
+#: .\apps\operations\views.py
+msgid "Edit flight request"
+msgstr "Editar solicitud de vuelo"
+
+#: .\apps\operations\views.py
+msgid "This request has no geometry to export."
+msgstr "Esta solicitud no tiene geometría que exportar."
+
+#: .\apps\operations\views.py
+msgid "Note added."
+msgstr "Nota agregada."
+
+#: .\apps\operations\views.py
+msgid "Write the note before saving."
+msgstr "Escribe la nota antes de guardar."
+
+#: .\apps\operations\views.py
+msgid "That pair is already on the list."
+msgstr "Ese par ya está en la lista."
+
+#: .\apps\operations\views.py
+msgid "Pair added."
+msgstr "Par agregado."
+
+#: .\apps\operations\views.py
+msgid "Choose a work area and an objective."
+msgstr "Elige un área de trabajo y un objetivo."
+
+#: .\apps\operations\views.py
+msgid "Recorded as filed in SIGO."
+msgstr "Registrada como presentada en SIGO."
+
+#: .\apps\operations\views.py
+msgid "Request closed."
+msgstr "Solicitud cerrada."
+
+#: .\apps\operations\views.py
+msgid "Choose a permit from this cost center."
+msgstr "Elige un permiso de este centro de costo."
+
+#: .\apps\operations\views.py
+msgid "Linked to %(folio)s; it filled in: %(fields)s."
+msgstr "Vinculada a %(folio)s; rellenó: %(fields)s."
+
+#: .\apps\operations\views.py
+msgid "Linked to %(folio)s. The permit already had its location."
+msgstr "Vinculada a %(folio)s. El permiso ya tenía su ubicación."
+
+#: .\apps\operations\views.py
+msgid "Created %(count)s flight requests from this plan."
+msgstr "Se crearon %(count)s solicitudes de vuelo desde este plan."
+
+#: .\apps\operations\views.py
+msgid "SIGO requests"
+msgstr "Solicitudes SIGO"
+
+#: .\apps\operations\views.py
+msgid "Download KMZ for SIGO"
+msgstr "Descargar KMZ para SIGO"
+
+#: .\apps\operations\views.py
+msgid "Mark as filed in SIGO"
+msgstr "Marcar como presentada en SIGO"
+
+#: .\apps\operations\views.py
+msgid "Record that it was entered in SIGO today"
+msgstr "Registrar que se ingresó hoy en SIGO"
+
+#: .\apps\operations\views.py
+msgid "Choose the permit the DGAC answered with…"
+msgstr "Elige el permiso con que respondió la DGAC…"
+
+#: .\apps\operations\views.py
+msgid "Link to permit"
+msgstr "Vincular al permiso"
+
+#: .\apps\operations\views.py
+msgid "Open the permit"
+msgstr "Abrir el permiso"
+
+#: .\apps\operations\views.py
+msgid "SIGO form sheet"
+msgstr "Hoja del formulario SIGO"
+
+#: .\apps\operations\views.py
+msgid "Copy each value into its box in SIGO."
+msgstr "Copia cada valor en su casilla de SIGO."
+
+#: .\apps\operations\views.py
+msgid "Work area / objective"
+msgstr "Área de trabajo / objetivo"
+
+#: .\apps\operations\views.py
+msgid "No pairs added yet."
+msgstr "Aún no hay pares agregados."
+
+#: .\apps\operations\views.py
+msgid "Proposed by distance — confirm against the AIP chart."
+msgstr "Propuesto por distancia — confírmalo contra la carta AIP."
+
+#: .\apps\operations\views.py
+msgid "Centre point — latitude"
+msgstr "Punto centro — latitud"
+
+#: .\apps\operations\views.py
+msgid "Centre point — longitude"
+msgstr "Punto centro — longitud"
+
+#: .\apps\operations\views.py
+msgid "Degrees"
+msgstr "Grados"
+
+#: .\apps\operations\views.py
+msgid "Minutes"
+msgstr "Minutos"
+
+#: .\apps\operations\views.py
+msgid "Seconds"
+msgstr "Segundos"
+
+#: .\apps\operations\views.py
+msgid "Hemisphere"
+msgstr "Hemisferio"
+
+#: .\apps\operations\views.py
+msgid "Schedule"
+msgstr "Horario"
+
+#: .\apps\operations\views.py
+msgid "Work area / objective pairs"
+msgstr "Pares de área de trabajo y objetivo"
+
+#: .\apps\operations\views.py
+msgid "Remove"
+msgstr "Quitar"
+
+#: .\apps\operations\views.py
+msgid "Change notes"
+msgstr "Notas de cambio"
+
+#: .\apps\operations\views.py
+msgid "No notes yet."
+msgstr "Aún no hay notas."
+
+#: .\apps\operations\views.py
+msgid "Add note"
+msgstr "Agregar nota"
+
+#: .\apps\operations\views.py
+msgid "Split into flight requests"
+msgstr "Separar en solicitudes de vuelo"
+
+#: .\apps\operations\views.py
+msgid "Back to the plan"
+msgstr "Volver al plan"
+
+#: .\apps\operations\views.py
+msgid "Section"
+msgstr "Sección"
+
+#: .\apps\operations\views.py
+msgid "Centre point"
+msgstr "Punto centro"
+
+#: .\apps\operations\views.py
+msgid "Check"
+msgstr "Revisión"
+
+#: .\apps\operations\views.py
+msgid "One flight request per circle, as SIGO requires"
+msgstr "Una solicitud de vuelo por circunferencia, como exige SIGO"
+
+#: .\apps\operations\views.py
+msgid "Split a plan"
+msgstr "Separar un plan"
+
+#: .\apps\operations\views.py
+msgid "Search title, commune, area..."
+msgstr "Buscar título, comuna, área…"
+
+#: .\apps\operations\views.py
+msgid "AMC"
+msgstr "AMC"
+
+#: .\apps\operations\views.py
+msgid "Permit"
+msgstr "Permiso"
+
+#: .\apps\operations\views.py
+msgid "No flight requests yet. Split a geospatial plan to create them."
+msgstr "Aún no hay solicitudes de vuelo. Separa un plan geoespacial para crearlas."
+
+#: .\templates\operations\flight_request_detail.html
+msgid "Linked to permit %(folio)s."
+msgstr "Vinculada al permiso %(folio)s."
+
+#: .\templates\operations\flight_request_split.html
+msgid "This plan yields <strong>%(count)s flight request</strong>: SIGO accepts one circle with its centre point per request."
+msgid_plural "This plan yields <strong>%(count)s flight requests</strong>: SIGO accepts one circle with its centre point per request."
+msgstr[0] "Este plan da <strong>%(count)s solicitud de vuelo</strong>: SIGO acepta una circunferencia con su punto central por solicitud."
+msgstr[1] "Este plan da <strong>%(count)s solicitudes de vuelo</strong>: SIGO acepta una circunferencia con su punto central por solicitud."
+
+#: .\templates\operations\flight_request_split.html
+msgid "This plan already has %(count)s request created from it. Splitting again will add more."
+msgid_plural "This plan already has %(count)s requests created from it. Splitting again will add more."
+msgstr[0] "Este plan ya tiene %(count)s solicitud creada desde él. Separar de nuevo agregará más."
+msgstr[1] "Este plan ya tiene %(count)s solicitudes creadas desde él. Separar de nuevo agregará más."
+
+#: .\templates\operations\flight_request_split.html
+msgid "Create %(count)s flight request"
+msgid_plural "Create %(count)s flight requests"
+msgstr[0] "Crear %(count)s solicitud de vuelo"
+msgstr[1] "Crear %(count)s solicitudes de vuelo"
+
+#: .\templates\operations\flight_request_split.html
+msgid "%(days)s day waiting"
+msgid_plural "%(days)s days waiting"
+msgstr[0] "%(days)s día esperando"
+msgstr[1] "%(days)s días esperando"
