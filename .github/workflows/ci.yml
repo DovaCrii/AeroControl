@@ -10,13 +10,19 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DJANGO_SETTINGS_MODULE: config.settings.dev
-      DB_PATH: ${{ runner.temp }}/aero-ops.sqlite3
-      DOCUMENTS_DIR: ${{ runner.temp }}/documents
-      LOGS_DIR: ${{ runner.temp }}/logs
-      BACKUPS_DIR: ${{ runner.temp }}/backups
       SECRET_KEY: ci-only-not-for-production
     steps:
       - uses: actions/checkout@v7
+      # El contexto `runner` no existe en `jobs.<id>.env` (sólo github, needs,
+      # strategy, matrix, vars, secrets, inputs): usarlo ahí aborta el workflow
+      # al arrancar. Las rutas se exportan aquí, donde $RUNNER_TEMP sí existe.
+      - name: Prepare working paths
+        run: |
+          echo "DB_PATH=$RUNNER_TEMP/aero-ops.sqlite3" >> "$GITHUB_ENV"
+          echo "DOCUMENTS_DIR=$RUNNER_TEMP/documents" >> "$GITHUB_ENV"
+          echo "LOGS_DIR=$RUNNER_TEMP/logs" >> "$GITHUB_ENV"
+          echo "BACKUPS_DIR=$RUNNER_TEMP/backups" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/documents" "$RUNNER_TEMP/logs" "$RUNNER_TEMP/backups"
       - uses: astral-sh/setup-uv@v7
         with:
           python-version: "3.12"
@@ -34,4 +40,6 @@ jobs:
         run: |
           uv run python manage.py scale_readiness --json
           uv run python manage.py backup
-          uv run python manage.py verify_backup "$(ls \"$BACKUPS_DIR\"/*.sqlite3 | head -n 1)"
+          backup_file="$(ls -1 "$BACKUPS_DIR"/*.sqlite3 | head -n 1)"
+          test -f "$backup_file"
+          uv run python manage.py verify_backup "$backup_file"

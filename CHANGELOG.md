@@ -277,6 +277,22 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **El CI vuelve a arrancar: nunca había corrido una sola vez.** Desde que el
+  workflow nació (`8cfbd75`, 2026-07-22) las rutas de trabajo se definían con
+  `${{ runner.temp }}` en el bloque `env:` **del job**, donde ese contexto no
+  existe — sólo se permiten `github`, `needs`, `strategy`, `matrix`, `vars`,
+  `secrets` e `inputs`. GitHub abortaba el workflow al evaluarlo: fallo en 0 s,
+  sin jobs y sin log, con el mensaje genérico *"This run likely failed because
+  of a workflow file issue"*. Las **100 corridas** que devuelve el historial
+  están en `failure` por esta causa. Las rutas se exportan ahora vía
+  `$GITHUB_ENV` en un paso, donde `$RUNNER_TEMP` sí existe, y los directorios se
+  crean explícitamente. De paso, el *preflight* de staging llamaba a
+  `verify_backup` con comillas escapadas (`\"$BACKUPS_DIR\"`) dentro de un
+  bloque `run: |`, donde YAML no procesa escapes: bash recibía las barras
+  invertidas literales, el `ls` no encontraba nada y el comando se ejecutaba
+  **con la ruta vacía** sin que el paso fallara. Con esto, *"un PR por bloque,
+  con CI verde"* (`AGENTS.md`) deja de ser inalcanzable y la promesa del README
+  sobre Ruff, Bandit y pip-audit en CI pasa a ser cierta.
 - **Editar un permiso ya no permite cambiarle el estado por la puerta de atrás
   (`LV-101`).** El formulario de edición ofrecía el estado como un desplegable
   cualquiera: por ahí se podía marcar **Aprobado sin la autorización firmada de
