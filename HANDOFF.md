@@ -164,6 +164,13 @@ que sí piden las de `unique`/`NOT NULL` (Parte D del runbook):
 - `registry.0035` y `operations.0019` (**R9**): crean tablas nuevas
   (`Aerodrome`, `FlightRequest` y sus tres acompañantes). No tocan ninguna fila
   existente, así que no pueden fallar sobre datos reales.
+- `operations.0020` (**R9**): sólo un `help_text`. No toca la base.
+
+**Esta tanda sube Django de 6.0.7 a 6.0.8** (`PYSEC-2026-3717`, un aviso de
+GeoDjango que esta app no usa; se aplica igual porque es un parche de la misma
+minor). El `uv sync` del bloque de despliegue lo instala solo — no hay paso
+extra, pero conviene saber que el reinicio de `aerocontrol` levanta con una
+versión nueva del framework.
 
 El respaldo previo sigue siendo obligatorio igual.
 
