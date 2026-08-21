@@ -17,14 +17,16 @@ alertas —el estado terminal del registro—, así que el panel y la bandeja no
 pueden discrepar por construcción.
 """
 
-from datetime import timedelta
+from datetime import date, timedelta
 
 import pytest
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
 from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.compliance.models import Alert, AlertRule
 from apps.dashboard.views import upcoming_expirations
 from apps.operations.models import FlightPermission
 from apps.registry.models import Aircraft, CostCenter, Operator, Qualification
@@ -37,6 +39,33 @@ CUTOFF = TODAY + timedelta(days=30)
 @pytest.fixture
 def cost_center(db):
     return CostCenter.objects.create(code="CC1", name="One")
+
+
+def _resolve(record, field, watched_value, *, resolved=True):
+    """Deja una alerta sobre `record` en el estado que la bandeja tendría.
+
+    `watched_value` se pasa explícito y no se deriva del registro: es el valor
+    **congelado al crear la alerta** (`LV-111`), y toda la lógica de LV-122
+    depende de que sea el de entonces y no el de ahora.
+    """
+    rule, _created = AlertRule.objects.get_or_create(
+        name=f"Vencimientos de {field}",
+        defaults={
+            "entity_type": record._meta.label_lower,
+            "field_to_watch": field,
+            "days_before_expiry": 30,
+        },
+    )
+    alert = Alert.objects.create(
+        alert_rule=rule,
+        content_type=ContentType.objects.get_for_model(type(record)),
+        object_id=record.pk,
+        message="Vigencia por vencer",
+        watched_value=watched_value,
+    )
+    if resolved:
+        alert.resolve(reason="Fuera de CC con operación RPA")
+    return alert
 
 
 def _aircraft(cost_center, registration, expiry, status="active"):
@@ -144,6 +173,94 @@ class TestWhatBoundsItNow:
         )
 
         assert upcoming_expirations(TODAY, CUTOFF) == []
+
+
+class TestWhatTheTrayAlreadyClosed:
+    """LV-122: `LV-120` alineó el panel con la bandeja en una sola dirección.
+
+    Faltaba la otra, y el usuario la vio el mismo día: la credencial de
+    `Carlos Peñailillo`, vencida el 2025-05-02 y resuelta con el motivo *"Fuera
+    de CC con operación RPA"*, se instaló en el panel para siempre — esa fecha
+    ya no va a cambiar nunca. Textual: *"que sean las no resueltas nada más o si
+    no se llenará completo"*.
+    """
+
+    @pytest.mark.django_db
+    def test_a_resolved_expiry_leaves_the_panel(self, cost_center):
+        """El caso exacto de la captura."""
+        operator = Operator.objects.create(
+            employee_id="P1",
+            full_name="Carlos Peñailillo Latorre",
+            cost_center=cost_center,
+            credential_expiry=date(2025, 5, 2),
+        )
+        assert len(upcoming_expirations(TODAY, CUTOFF)) == 1
+
+        _resolve(operator, "credential_expiry", "2025-05-02")
+
+        assert upcoming_expirations(TODAY, CUTOFF) == []
+
+    @pytest.mark.django_db
+    def test_an_open_alert_does_not_hide_anything(self, cost_center):
+        """Sólo lo **resuelto** desaparece. Una alerta abierta es trabajo
+        pendiente y el panel existe para mostrarlo."""
+        operator = Operator.objects.create(
+            employee_id="P2",
+            full_name="Con alerta abierta",
+            cost_center=cost_center,
+            credential_expiry=date(2025, 5, 2),
+        )
+        _resolve(operator, "credential_expiry", "2025-05-02", resolved=False)
+
+        assert len(upcoming_expirations(TODAY, CUTOFF)) == 1
+
+    @pytest.mark.django_db
+    def test_something_the_engine_has_not_looked_at_yet_still_shows(self, cost_center):
+        """`generate_alerts` corre a las 06:00. Entre que un dato vence y esa
+        corrida no hay alerta ninguna, y esconder por "no tiene alerta abierta"
+        habría dejado ciego al panel justo en esa ventana."""
+        _aircraft(cost_center, "RPA-5534", TODAY - timedelta(days=12))
+
+        assert len(upcoming_expirations(TODAY, CUTOFF)) == 1
+
+    @pytest.mark.django_db
+    def test_a_renewal_brings_the_next_expiry_back(self, cost_center):
+        """La mitad que no se puede esconder, y la razón de filtrar por la clave
+        de `LV-111` y no por registro: tras renovar, el valor es otro, así que el
+        vencimiento siguiente es una fila nueva y tiene que verse."""
+        aircraft = _aircraft(cost_center, "RPA-5532", TODAY - timedelta(days=12))
+        _resolve(
+            aircraft,
+            "insurance_expiry",
+            (TODAY - timedelta(days=12)).isoformat(),
+        )
+        assert upcoming_expirations(TODAY, CUTOFF) == []
+
+        aircraft.insurance_expiry = TODAY + timedelta(days=20)
+        aircraft.save(update_fields=["insurance_expiry"])
+
+        labels = [item["label"] for item in upcoming_expirations(TODAY, CUTOFF)]
+        assert labels == ["RPA-5532"]
+
+    @pytest.mark.django_db
+    def test_the_tiles_agree_with_the_filtered_list(self, cost_center):
+        """Los contadores salen de la misma lista, así que una fila escondida no
+        puede seguir sumando en la tarjeta."""
+        overdue = _aircraft(cost_center, "RPA-5534", TODAY - timedelta(days=12))
+        _aircraft(cost_center, "RPA-2198", TODAY - timedelta(days=92))
+        _resolve(
+            overdue,
+            "insurance_expiry",
+            (TODAY - timedelta(days=12)).isoformat(),
+        )
+        User.objects.create_superuser("admin", "a@test.com", "password")
+        client = Client()
+        assert client.login(username="admin", password="password")
+
+        response = client.get(reverse("dashboard"))
+
+        assert response.context["overdue_count"] == 1
+        assert "RPA-5534" not in response.content.decode()
 
 
 class TestTheTilesStayHonest:

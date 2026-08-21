@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.contenttypes.models import ContentType
 from django.db.models import Count, Q
 from django.db.models.functions import TruncMonth
 from django.shortcuts import render
@@ -14,6 +15,22 @@ from apps.compliance.watchables import terminal_statuses
 from apps.maintenance.models import MaintenanceRecord
 from apps.operations.models import FlightPermission, FlightRecord
 from apps.registry.models import Aircraft, CostCenter, Operator, Qualification
+
+
+def resolved_alert_keys():
+    """LV-122: (tipo, registro, valor) de todo lo que la bandeja ya cerró.
+
+    Una consulta, no una por fila: el panel se abre en cada login y esto se
+    cruza contra cinco listados. Devuelve la **misma clave con que
+    `generate_alerts` deduplica** desde `LV-111` — y usarla textual es lo que
+    garantiza que el panel esconda ni más ni menos de lo que la bandeja
+    considera cerrado.
+    """
+    return set(
+        Alert.objects.filter(is_resolved=True, is_active=True).values_list(
+            "content_type_id", "object_id", "watched_value"
+        )
+    )
 
 
 def upcoming_expirations(today, cutoff, cost_center=None):
@@ -52,8 +69,43 @@ def upcoming_expirations(today, cutoff, cost_center=None):
     de baja con el seguro vencido en 2024 deja de contar sin necesidad de una
     ventana hacia atrás elegida a dedo. Un permiso vencido tampoco reaparece: al
     caducar queda en `expired`, que es terminal (`LV-83`).
+
+    **LV-122: y tampoco aparece lo que ya se revisó y se cerró.** `LV-120` alineó
+    el panel con la bandeja en una sola dirección —mostrar lo que la bandeja
+    muestra— y faltaba la otra: **esconder lo que la bandeja cerró**. El usuario
+    lo vio el mismo día: la credencial de `Carlos Peñailillo`, vencida el
+    2025-05-02 y resuelta con el motivo *"Fuera de CC con operación RPA"*, se
+    instaló en el panel para siempre — porque esa fecha ya no va a cambiar
+    nunca. Sus palabras: *"que sean las no resueltas nada más o si no se llenará
+    completo"*, y es literal: cada vencimiento resuelto y no renovado se queda
+    en la lista, así que el panel se llena de trabajo ya hecho hasta empujar
+    fuera del corte de diez filas lo que sí importa.
+
+    Se filtra con **la misma clave con que el motor deduplica** (`LV-111`):
+    (registro, valor vigilado). Eso importa por lo que **no** esconde -- una
+    renovación cambia el valor, así que el vencimiento siguiente es una fila
+    nueva y vuelve a mostrarse, que es exactamente la mitad que `LV-111` decidió
+    no suprimir. Y esconde sólo lo **resuelto**, no "lo que no tiene alerta
+    abierta": un vencimiento que el motor todavía no miró (se genera a las
+    06:00) no tiene alerta ninguna y tiene que verse igual.
     """
+    triaged = resolved_alert_keys()
     items = []
+
+    def add(model, record_pk, item):
+        """Agrega el ítem salvo que su alerta ya esté resuelta.
+
+        Se filtra acá y no al final para no construir la fila que se va a
+        descartar, y con `get_for_model` —que Django cachea por modelo— para no
+        pagar una consulta de `ContentType` por listado.
+        """
+        key = (
+            ContentType.objects.get_for_model(model).id,
+            record_pk,
+            item["date"].isoformat(),
+        )
+        if key not in triaged:
+            items.append(item)
 
     quals = Qualification.objects.filter(
         is_active=True, expiry_date__lte=cutoff
@@ -61,14 +113,16 @@ def upcoming_expirations(today, cutoff, cost_center=None):
     if cost_center:
         quals = quals.filter(operator__cost_center=cost_center)
     for qual in quals:
-        items.append(
+        add(
+            Qualification,
+            qual.pk,
             {
                 "kind": _("Qualification"),
                 "label": f"{qual.operator} — {qual.qualification_type}",
                 "date": qual.expiry_date,
                 "bucket": bucket_for(qual.expiry_date, today),
                 "url": reverse("operator-detail", args=[qual.operator_id]),
-            }
+            },
         )
 
     # LV-29: the DGAC vigencias join the same window -- a lapsing credential or
@@ -77,14 +131,16 @@ def upcoming_expirations(today, cutoff, cost_center=None):
     if cost_center:
         credentials = credentials.filter(cost_center=cost_center)
     for operator in credentials:
-        items.append(
+        add(
+            Operator,
+            operator.pk,
             {
                 "kind": _("DGAC credential"),
                 "label": operator.full_name,
                 "date": operator.credential_expiry,
                 "bucket": bucket_for(operator.credential_expiry, today),
                 "url": reverse("operator-detail", args=[operator.pk]),
-            }
+            },
         )
 
     insured = Aircraft.objects.filter(
@@ -93,14 +149,16 @@ def upcoming_expirations(today, cutoff, cost_center=None):
     if cost_center:
         insured = insured.filter(cost_center=cost_center)
     for aircraft in insured:
-        items.append(
+        add(
+            Aircraft,
+            aircraft.pk,
             {
                 "kind": _("JAC insurance"),
                 "label": aircraft.registration,
                 "date": aircraft.insurance_expiry,
                 "bucket": bucket_for(aircraft.insurance_expiry, today),
                 "url": reverse("aircraft-detail", args=[aircraft.pk]),
-            }
+            },
         )
 
     documents = Document.objects.filter(
@@ -110,14 +168,16 @@ def upcoming_expirations(today, cutoff, cost_center=None):
         expiry_date__lte=cutoff,
     ).select_related("doc_type")
     for document in documents:
-        items.append(
+        add(
+            Document,
+            document.pk,
             {
                 "kind": _("Document"),
                 "label": document.title,
                 "date": document.expiry_date,
                 "bucket": bucket_for(document.expiry_date, today),
                 "url": reverse("document-detail", args=[document.pk]),
-            }
+            },
         )
 
     permissions = FlightPermission.objects.filter(
@@ -126,7 +186,9 @@ def upcoming_expirations(today, cutoff, cost_center=None):
     if cost_center:
         permissions = permissions.filter(cost_center=cost_center)
     for permission in permissions:
-        items.append(
+        add(
+            FlightPermission,
+            permission.pk,
             {
                 "kind": _("Flight permission"),
                 # R1.2/R2.2/R2.3: used to be `permission_number or "Pending
@@ -138,7 +200,7 @@ def upcoming_expirations(today, cutoff, cost_center=None):
                 "date": permission.valid_until,
                 "bucket": bucket_for(permission.valid_until, today),
                 "url": reverse("permission-detail", args=[permission.pk]),
-            }
+            },
         )
 
     items.sort(key=lambda item: item["date"])

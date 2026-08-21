@@ -57,6 +57,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   fecha inventada terminaba generando una alerta por algo que no caduca. Ahora
   el tipo no la pide. Los tipos que sí vencen (seguros, credenciales,
   resoluciones) la siguen exigiendo igual.
+- **El panel ya no arrastra lo que se resolvió (`LV-122`).** Al empezar a
+  mostrar lo vencido, empezó también a mostrar lo vencido **que alguien ya
+  revisó y cerró** — como una credencial resuelta con el motivo "fuera de CC con
+  operación RPA", que se quedaba ahí para siempre porque esa fecha ya no cambia.
+  La lista sólo podía crecer. Ahora una fila desaparece del panel cuando su
+  alerta se resuelve, y **vuelve sola si el documento se renueva**: la
+  vigencia siguiente es un caso nuevo, no el mismo resuelto otra vez.
 - **El panel escondía lo ya vencido (`LV-120`).** La sección de vencimientos
   listaba sólo lo que está por vencer, así que un seguro que caducó hace un mes
   —o tres— no aparecía en ninguna parte del Panel de operaciones, aunque su
