@@ -133,7 +133,18 @@ de vida ya está por encima del promedio del sector y lo que faltaba era higiene
   haya un segundo lector real que la pida.
 
 
-## Sin desplegar: todo lo del **2026-08-20** — 8 filas, 2 migraciones, 1 seed
+## Listo para desplegar: todo lo del **2026-08-20/21** — 5 migraciones, 4 seeds
+
+> **Ensayado el 2026-08-21 y verde de punta a punta.** No es "debería
+> funcionar": se probó dos veces sobre bases desechables — una instalación
+> **desde cero** (todas las migraciones, roles y seeds), y el camino real, que
+> es una base **retrocedida al estado exacto de `p340`** (`compliance/0021`,
+> `registry/0034`, `operations/0018`), cargada con datos con la forma de los de
+> producción y migrada hacia adelante. Resultado: las 5 migraciones aplican
+> limpio, `compliance/0023` corrigió la fila preexistente (`requires_expiry`
+> pasó de `True` a `False`), el serial de `RPA-7126` quedó intacto y
+> `seed_document_types` creó 18 dejando en paz la que ya existía. El gate
+> completo (`verify.ps1`) pasa: **1598 tests, ruff, bandit y pip-audit**.
 
 Dos sesiones trabajaron el mismo día sobre el mismo árbol, así que **esta es la
 lista completa**, no la de una de las dos. Todo está en `main` y verde en local;
@@ -176,25 +187,56 @@ El respaldo previo sigue siendo obligatorio igual.
 
 ```bash
 ssh levdigital01@100.121.16.118
+```
+
+```bash
 cd /opt/aerocontrol && git pull
 set -a; source <(sudo cat /etc/aerocontrol.env); set +a
 echo "settings=$DJANGO_SETTINGS_MODULE  db=$DB_PATH"   # debe decir prod
-uv run python manage.py backup && uv run python manage.py verify_backup <ruta>
+```
+
+```bash
+uv run python manage.py backup
+```
+
+```bash
+uv run python manage.py verify_backup <la-ruta-que-imprimio-el-anterior>
+```
+
+```bash
 uv sync && uv run python manage.py migrate --no-input
+```
+
+```bash
+uv run python manage.py bootstrap_roles
 uv run python manage.py seed_document_types
 uv run python manage.py seed_aerodromes
 uv run python manage.py seed_sigo_catalogs
+```
+
+```bash
 uv run python manage.py collectstatic --no-input && sudo systemctl restart aerocontrol
 ```
 
-**`seed_document_types` no es opcional en esta tanda** y es fácil de olvidar
-porque las otras veces fue un paso aparte: trae el tipo nuevo
-`jac-insurance-request` de `LV-121`. Debe imprimir `Ensured 20 document types
-(1 created)`. El cambio de `aircraft-registration` **no** lo hace el seed —es
-idempotente por `code` y no toca filas existentes—, lo hace `compliance.0023`.
+**Los cuatro pasos del bloque de siembra, y por qué ninguno sobra:**
 
-`collectstatic` tampoco es opcional aunque no haya JS nuevo: `LV-120` recompiló
-el `.mo`, y hay plantillas cambiadas en cinco de las ocho filas.
+- **`bootstrap_roles` es obligatorio esta vez.** R9 trae seis modelos nuevos y
+  `ROLE_PERMISSIONS` es una **lista explícita**: sin correrlo, *Solicitudes
+  SIGO* da **403 a todo el mundo salvo al administrador**, y desde afuera eso se
+  lee como "el despliegue falló" — el modo de fallo que este mismo archivo
+  advierte desde el 2026-08-12. Hay tests que lo fijan
+  (`test_r9_roles_reach_the_screens.py`), así que la próxima vez la suite lo
+  caza antes que la VM.
+- **`seed_document_types`** trae `jac-insurance-request` (`LV-121`). Debe decir
+  `Ensured 20 document types (1 created)`. El cambio de `aircraft-registration`
+  **no** lo hace el seed —es idempotente por `code`—, lo hace `compliance/0023`.
+- **`seed_aerodromes`** debe decir **`6 of 50 have coordinates`**. Sin él el AMC
+  no se calcula y la casilla de SIGO queda vacía.
+- **`seed_sigo_catalogs`** debe decir `5 work areas` y `8 objectives`. Sin él los
+  dos desplegables de la solicitud salen vacíos.
+
+`collectstatic` tampoco es opcional aunque no haya JS nuevo: se recompiló el
+`.mo` y hay plantillas cambiadas en la mitad de las filas.
 
 **Qué mirar después**, en este orden:
 
@@ -210,13 +252,25 @@ el `.mo`, y hay plantillas cambiadas en cinco de las ocho filas.
 5. **Carga de documentos**: el selector con los dos tipos JAC bajo *Documentos de
    la aeronave*, y que el registro DGAC se deje subir **sin** fecha de
    vencimiento.
-6. **Solicitudes SIGO** (R9): subir el KMZ de MLP como plan geoespacial, abrir
-   *Separar en solicitudes de vuelo* y comprobar que da **47 filas con 6
-   avisos** — los tres pares de puntos con coordenadas repetidas. Los dos
-   comandos `seed_aerodromes` y `seed_sigo_catalogs` son nuevos y sin ellos el
-   AMC no se calcula y los desplegables de trabajo/objetivo salen vacíos.
-   `seed_aerodromes` debe decir **6 de 50 con coordenadas**: el resto se
-   completa desde la ficha cuando haga falta.
+6. **Solicitudes SIGO** (R9), que es lo nuevo de verdad: la entrada
+   **Solicitudes SIGO** en el menú, bajo Vuelo. Después subir el KMZ de MLP
+   como plan geoespacial, abrir *Separar en solicitudes de vuelo* y comprobar
+   que da **47 filas con 6 avisos** — los tres pares de puntos con coordenadas
+   repetidas. Crear una y mirar su hoja: el punto centro en seis casillas y el
+   AMC propuesto (`SCER`, ~120 km para MLP).
+
+### Si algo sale mal
+
+Ninguna de las cinco migraciones borra ni reescribe datos, así que **volver
+atrás es seguro** y se ensayó: las cinco revierten limpio.
+
+```bash
+uv run python manage.py migrate operations 0018 && uv run python manage.py migrate registry 0034 && uv run python manage.py migrate compliance 0021
+```
+
+Después `git checkout <commit-anterior> && uv sync && sudo systemctl restart
+aerocontrol`. El respaldo previo sigue siendo la red de verdad: revertir
+migraciones recupera el esquema, no un dato que alguien haya editado entremedio.
 
 Ninguna de las ocho toca los timers. `LV-119` **no arregla** el correo: hace que
 se note que no sale (pendiente 5 de la lista de arriba).
