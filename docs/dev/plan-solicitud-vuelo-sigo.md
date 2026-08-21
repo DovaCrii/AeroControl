@@ -165,9 +165,33 @@ Preparada ──> Ingresada en SIGO ──> Vinculada al permiso ──> Cerrada
 |---|---|---|
 | **R9.1** | Motor de secciones (`split_sections`, radio, GMS, haversine, KMZ individual) + `build_kmz` + tests contra la estructura del KMZ real | ✅ hecho 2026-08-20, 19 tests. El KMZ de MLP procesado como verificación |
 | **R9.2** | `Aerodrome` + `seed_aerodromes` (lista de las capturas) + `nearest_aerodromes` | ✅ hecho 2026-08-20, 8 tests. Migración `registry/0035` |
-| **R9.3** | `FlightRequest` + subir KMZ multi-círculo → secciones → **hoja SIGO** copiable + KMZ individual descargable | ⬜ |
-| **R9.4** | Flujo con stepper, vínculo a permiso (rellena OPS-4), notas de cambio, historial | ⬜ |
-| **R9.5** | Integración: expediente del permiso muestra su solicitud; seguimiento de "ingresada sin respuesta" | ⬜ |
+| **R9.3** | `FlightRequest` + catálogos SIGO + `create_requests_from_plan` + `sigo_sheet` + `section_kmz` | ✅ modelo y servicios hechos 2026-08-20, 19 tests. Migración `operations/0019`. **Falta la capa de pantallas** |
+| **R9.4** | Flujo con stepper, vínculo a permiso (rellena OPS-4), notas de cambio, historial | ✅ modelo y servicios hechos 2026-08-20. `link_to_permission` rellena sin pisar; quinto usuario de `track_status_changes`. **Falta la capa de pantallas** |
+| **R9.5** | Vistas, plantillas y menú · expediente del permiso muestra su solicitud · seguimiento de "presentada sin respuesta" | ⬜ Lo siguiente |
+
+**Verificado de punta a punta con el archivo real** (2026-08-20), contra la base:
+el KMZ de MLP produce **47 solicitudes**, las 47 con AMC propuesto
+(`SCER - Ad. Militar Quintero`, 125.9 km), la hoja SIGO entrega las seis
+casillas (`31° 53' 39.81" S` / `70° 42' 7.95" W`), el KMZ adjunto son 794 bytes
+con exactamente un punto y un polígono, y al vincular rellenó cinco campos del
+permiso (`latitude`, `longitude`, `radius_km`, `commune`, `max_altitude_ft`)
+dejando el historial `prepared → filed → linked`.
+
+### Decisiones que aparecieron al implementar
+
+- **La distancia al AMC se congela**, no se recalcula al mostrar: es el número
+  que se escribió en el formulario del Estado, y corregir mañana la coordenada
+  de un aeródromo no puede cambiar lo que dice una solicitud ya presentada.
+  Misma lección que `LV-118` dejó en la bandeja de alertas.
+- **`link_to_permission` rellena, nunca pisa**: si el permiso ya trae una
+  coordenada puede venir del papel DGAC, que tiene más autoridad que lo
+  preparado antes de presentar.
+- **Dos `msgctxt` nuevos**: "Filed in SIGO" y "Closed" ya existían en el
+  catálogo en masculino (el seguro, el contrato de un centro de costo) y acá el
+  sujeto es *la solicitud*. Tercera vez que la misma palabra inglesa cae en dos
+  géneros del español; el patrón ya estaba (`LV-61`, `LV-83`).
+- **El KMZ de sección se genera al descargar**, no se guarda: 47 solicitudes
+  serían 47 binarios reconstruibles exactamente desde el canónico.
 
 ## 5b · Lo que el KMZ real destapó al primer uso
 

@@ -9,10 +9,15 @@ class OperationsConfig(AppConfig):
     def ready(self):
         from django.db.models.signals import pre_save
         from apps.core.signals import track_status_changes
-        from .models import FlightPermission
+        from .models import FlightPermission, FlightRequest
 
         pre_save.connect(
             track_status_changes,
             sender=FlightPermission,
             dispatch_uid="operations.track_permission_status",
+        )
+        pre_save.connect(
+            track_status_changes,
+            sender=FlightRequest,
+            dispatch_uid="operations.track_request_status",
         )
