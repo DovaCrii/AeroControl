@@ -6186,3 +6186,79 @@ msgstr "Solicitud SIGO de origen"
 #: .\apps\operations\dossier.py
 msgid "No request recorded for this permit"
 msgstr "Sin solicitud registrada para este permiso"
+
+#: .\apps\compliance\models.py
+msgid "Cause category"
+msgstr "Categoría de la causa"
+
+#: .\apps\compliance\models.py
+msgid "Where the finding appeared, not why it happened: the why is the root cause."
+msgstr "Dónde apareció el hallazgo, no por qué ocurrió: el porqué es la causa raíz."
+
+#: .\apps\compliance\models.py
+msgid "What kind of cause it was. It is what lets the report say which cause repeats; the text below is what an auditor reads."
+msgstr "De qué tipo fue la causa. Es lo que permite que el reporte diga cuál se repite; el texto de abajo es lo que lee un auditor."
+
+#: .\apps\compliance\models.py
+msgid "Client complaint"
+msgstr "Reclamo de cliente"
+
+#: .\apps\compliance\models.py
+msgid "Incident or accident"
+msgstr "Incidente o accidente"
+
+#: .\apps\compliance\models.py
+msgid "Equipment failure"
+msgstr "Falla de equipo"
+
+#: .\apps\compliance\models.py
+msgid "Procedure deviation"
+msgstr "Desviación de procedimiento"
+
+#: .\apps\compliance\models.py
+msgid "Expired or missing document"
+msgstr "Documento vencido o faltante"
+
+#: .\apps\compliance\models.py
+msgid "Field observation"
+msgstr "Observación en terreno"
+
+#: .\apps\compliance\models.py
+msgid "External condition"
+msgstr "Condición externa"
+
+#: .\apps\compliance\models.py
+msgid "Not yet determined"
+msgstr "Aún sin determinar"
+
+#: .\apps\compliance\models.py
+msgid "Person or competence"
+msgstr "Persona o competencia"
+
+#: .\apps\compliance\models.py
+msgid "Procedure or instruction"
+msgstr "Procedimiento o instructivo"
+
+#: .\apps\compliance\models.py
+msgid "Equipment or tooling"
+msgstr "Equipo o herramienta"
+
+#: .\apps\compliance\models.py
+msgid "Material or supply"
+msgstr "Material o insumo"
+
+#: .\apps\compliance\models.py
+msgid "Environment or conditions"
+msgstr "Entorno o condiciones"
+
+#: .\apps\compliance\models.py
+msgid "Planning or management"
+msgstr "Planificación o gestión"
+
+#: .\apps\compliance\models.py
+msgid "Information or data"
+msgstr "Información o datos"
+
+#: .\apps\compliance\models.py
+msgid "Open the record: status and documents"
+msgstr "Abrir la ficha: estado y documentos"

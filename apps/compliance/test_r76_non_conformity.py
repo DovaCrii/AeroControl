@@ -346,7 +346,14 @@ class TestElOrigenYLaCausaSirvenParaAgrupar:
         finding = _finding()
 
         assert finding.root_cause_category == NonConformity.CAUSE_UNDETERMINED
-        assert finding.get_root_cause_category_display() == "Not yet determined"
+        # Se afirma el **código**, no la etiqueta. La segunda es traducible, así
+        # que la aserción original ("Not yet determined") sólo pasaba mientras
+        # la cadena estuviera **sin traducir**: se rompió sola al completar el
+        # catálogo. Es la fragilidad que `LV-95` documentó y que el resto de la
+        # suite evita afirmando códigos.
+        assert NonConformity.CAUSE_UNDETERMINED in dict(
+            NonConformity.ROOT_CAUSE_CATEGORY_CHOICES
+        )
 
     @pytest.mark.django_db
     def test_la_categoria_se_guarda_y_se_puede_contar(self, db):
