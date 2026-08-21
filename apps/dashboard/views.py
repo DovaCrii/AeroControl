@@ -13,7 +13,7 @@ from apps.compliance.digest import bucket_for
 from apps.compliance.models import Alert, AlertRule, Document, DocumentType
 from apps.compliance.watchables import terminal_statuses
 from apps.maintenance.models import MaintenanceRecord
-from apps.operations.models import FlightPermission, FlightRecord
+from apps.operations.models import FlightPermission, FlightRecord, FlightRequest
 from apps.registry.models import Aircraft, CostCenter, Operator, Qualification
 
 
@@ -533,6 +533,32 @@ def dashboard(request):
         .count()
     )
 
+    # --- R9.6: solicitudes SIGO presentadas y sin respuesta ---
+    # Trabajo detenido en manos de un tercero: se presentó y nadie contestó. No
+    # es una alerta —el motor vigila **vencimientos**, y acá no vence nada— sino
+    # el mismo hueco que `LV-8e` resuelve para la mantención sin planificar: una
+    # ausencia que ninguna regla de fecha puede ver.
+    #
+    # **Sin umbral inventado.** Se cuentan todas las presentadas y se muestra la
+    # más antigua; poner "atrasada a los N días" exigiría un plazo de respuesta
+    # de la DGAC que nadie confirmó, y un umbral inventado que resulta corto
+    # enseña a ignorar la tarjeta.
+    request_qs = FlightRequest.objects.filter(
+        is_active=True, status=FlightRequest.STATUS_FILED
+    )
+    if selected_cost_center:
+        request_qs = request_qs.filter(cost_center=selected_cost_center)
+    awaiting_requests = list(request_qs.order_by("filed_on")[:5])
+    awaiting_count = request_qs.count()
+    longest_wait = next(
+        (
+            request.days_waiting()
+            for request in awaiting_requests
+            if request.days_waiting() is not None
+        ),
+        None,
+    )
+
     # --- Chart: Monthly flight records (last 6 months) ---
     six_months_ago = timezone.localdate() - timedelta(days=180)
     flight_records_qs = FlightRecord.objects.filter(
@@ -561,6 +587,9 @@ def dashboard(request):
         "operator_count": operator_count,
         "alert_count": alert_count,
         "incomplete_maintenance_count": incomplete_maintenance_count,
+        "awaiting_requests": awaiting_requests,
+        "awaiting_count": awaiting_count,
+        "longest_wait": longest_wait,
         "expirations": expirations,
         "expiring_count": expiring_count,
         "overdue_count": overdue_count,

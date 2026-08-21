@@ -57,6 +57,15 @@ centros de costo.{% endcomment %}
     <small>{% translate "Expiring in 30 days" %}</small>
     <strong>{{ expiring_count }}</strong>
   </a>
+  {% comment %}R9.6: trabajo detenido en manos de un tercero — presentado en
+  SIGO y sin respuesta. Aparece sólo cuando hay algo, como la de vencidos: una
+  tarjeta en cero todos los días enseña a no mirar la fila.{% endcomment %}
+  {% if awaiting_count %}
+  <a class="summary-card text-decoration-none" href="{% url 'flight-request-list' %}?status=filed">
+    <small>{% translate "Awaiting SIGO" %}</small>
+    <strong>{{ awaiting_count }}</strong>
+  </a>
+  {% endif %}
   {% if incomplete_maintenance_count %}
   <a class="summary-card summary-card-warning text-decoration-none" href="{% url 'maintenance-list' %}">
     <small>{% translate "Maintenance to define" %}</small>
@@ -190,6 +199,34 @@ when the three are done.{% endcomment %}
     </div>
   </div>
 </div>
+
+{% comment %}R9.6: lo presentado y sin respuesta, con los días que lleva cada
+uno. Va junto a los vencimientos porque responde la misma pregunta —qué está
+pendiente— pero es de otra naturaleza: acá no vence nada, espera. Sin umbral de
+"atrasada": el plazo de la DGAC no está confirmado, y un número inventado que
+resulta corto enseña a ignorar la sección.{% endcomment %}
+{% if awaiting_requests %}
+<div class="row g-3 mb-3">
+  <div class="col-12">
+    <div class="card p-3" id="awaiting-sigo">
+      <h4 class="h6 section-title mb-2">{% translate "Filed in SIGO, awaiting an answer" %}</h4>
+      {% for item in awaiting_requests %}
+      <a href="{{ item.get_absolute_url }}" class="d-flex justify-content-between align-items-center border-bottom py-1 text-decoration-none text-body">
+        <span><span class="badge bg-secondary-subtle text-secondary-emphasis me-2">{{ item.cost_center.code }}</span>{{ item.title }}</span>
+        <span class="text-end text-nowrap">
+          {% with waiting=item.days_waiting %}
+          {% if waiting is not None %}<b>{% blocktranslate count days=waiting %}{{ days }} day waiting{% plural %}{{ days }} days waiting{% endblocktranslate %}</b>{% else %}<span class="text-muted">—</span>{% endif %}
+          {% endwith %}
+        </span>
+      </a>
+      {% endfor %}
+      {% if awaiting_count > awaiting_requests|length %}
+      <a class="small mt-2" href="{% url 'flight-request-list' %}?status=filed">{% translate "See all of them" %}</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
 
 {% comment %}Analítica: una grilla pareja; los gráficos sin datos se ocultan
 (LV-D5). 'Tasks per Stage' vivía además como lista aparte (redundante); queda

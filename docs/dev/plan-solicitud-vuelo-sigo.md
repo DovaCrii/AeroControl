@@ -168,7 +168,27 @@ Preparada ──> Ingresada en SIGO ──> Vinculada al permiso ──> Cerrada
 | **R9.3** | `FlightRequest` + catálogos SIGO + `create_requests_from_plan` + `sigo_sheet` + `section_kmz` | ✅ modelo y servicios hechos 2026-08-20, 19 tests. Migración `operations/0019`. **Falta la capa de pantallas** |
 | **R9.4** | Flujo con stepper, vínculo a permiso (rellena OPS-4), notas de cambio, historial | ✅ modelo y servicios hechos 2026-08-20. `link_to_permission` rellena sin pisar; quinto usuario de `track_status_changes`. **Falta la capa de pantallas** |
 | **R9.5** | Vistas, plantillas y menú · vista previa de separación · hoja SIGO · descarga del KMZ · vínculo desde la pantalla | ✅ hecho 2026-08-20, 23 tests. Verificado en el navegador con el KMZ real |
-| **R9.6** | El expediente del permiso (`LV-107`) muestra su solicitud de origen · aviso de "presentada hace N días sin respuesta" en el panel o la bandeja | ⬜ Lo siguiente |
+| **R9.6** | El expediente del permiso muestra su solicitud de origen · el panel muestra lo presentado y sin respuesta, con los días de espera | ✅ hecho 2026-08-20, 12 tests. Verificado en el navegador |
+
+**Con R9.6 el bloque R9 queda cerrado.** El círculo completo: el KMZ entra, se
+separa, cada sección se prepara y se presenta, el panel persigue lo que espera
+respuesta, y cuando la DGAC contesta la solicitud se vincula al permiso — cuyo
+expediente ya puede responder *"¿la DGAC autorizó lo que pedimos?"*.
+
+### Dos decisiones de R9.6
+
+- **La espera no es una alerta.** El motor de alertas vigila **vencimientos**, y
+  una solicitud presentada no vence: espera. Va en el panel, como la mantención
+  sin planificar de `LV-8e` — una ausencia que ninguna regla de fecha puede ver.
+- **Sin umbral de "atrasada".** Se cuentan todas las presentadas y se muestran
+  los días de cada una, ordenadas de más antigua a más reciente. Poner "atrasada
+  a los N días" exigiría un plazo de respuesta de la DGAC que nadie confirmó, y
+  un umbral inventado que resulta corto enseña a ignorar la tarjeta.
+- **Un permiso sin solicitud es "por confirmar", no "faltante".** Todos los
+  permisos que existen hoy se tramitaron antes de que la app registrara la
+  solicitud; marcarlos incompletos los declararía defectuosos de forma
+  retroactiva por una función que no existía. Mismo criterio que `LV-107` aplicó
+  al plan geoespacial.
 
 **Verificado de punta a punta con el archivo real** (2026-08-20), contra la base:
 el KMZ de MLP produce **47 solicitudes**, las 47 con AMC propuesto
