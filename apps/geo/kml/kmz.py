@@ -28,6 +28,22 @@ def _reject_unsafe_name(name):
         raise KmlImportError("The KMZ contains an unsafe entry name.")
 
 
+def build_kmz(kml_bytes, *, kml_name="doc.kml"):
+    """Empaquetar KML en un KMZ mínimo: un ZIP con `doc.kml` adentro.
+
+    R9.1: la contraparte de `read_kmz`, para los KMZ de sección que se generan
+    hacia SIGO. Sin recursos embebidos a propósito — una sección es un punto y
+    su circunferencia, y todo lo demás del archivo madre (iconos, estilos) es
+    contenido ajeno que no viaja a un formulario del Estado. `doc.kml` es el
+    nombre que Google Earth y el propio `_pick_main_kml` de este módulo buscan
+    primero, así que lo que se escribe acá se puede releer con `read_kmz`.
+    """
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr(kml_name, kml_bytes)
+    return buffer.getvalue()
+
+
 def read_kmz(data):
     """Return (main_kml_bytes, resource_names) from KMZ bytes.
 
