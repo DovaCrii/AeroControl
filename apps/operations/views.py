@@ -1,10 +1,11 @@
 import calendar
 from datetime import date, datetime, timedelta
+from urllib.parse import quote
 
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -12,7 +13,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
-from django.utils.text import capfirst
+from django.utils.text import capfirst, slugify
 
 from apps.core.audit import set_audit_context
 from apps.core.tenancy import scope_queryset_to_tenant
@@ -28,14 +29,30 @@ from apps.core.views import (
     TenantScopedQuerysetMixin,
     allowed_calendar_types,
 )
+from apps.geo.models import GeoPlan
+from apps.geo.sections import format_dms, split_sections
 from .forms import (
     FlightPermissionForm,
     FlightPermissionUpdateForm,
     FlightRecordForm,
+    FlightRequestForm,
+    FlightRequestNoteForm,
+    FlightRequestWorkItemForm,
     StatusCorrectionForm,
 )
 from .dossier import operational_dossier
-from .models import FlightPermission, FlightRecord
+from .flight_requests import (
+    create_requests_from_plan,
+    link_to_permission,
+    section_kmz,
+    sigo_sheet,
+)
+from .models import (
+    FlightPermission,
+    FlightRecord,
+    FlightRequest,
+    FlightRequestWorkItem,
+)
 from .selectors import DAILY_FLIGHT_LIMIT, duty_time_for, format_duration
 from apps.registry.models import Aircraft, CostCenter, Operator
 from apps.registry.selectors import operator_aircraft_compatibility_gaps
@@ -689,3 +706,323 @@ class CalendarView(CalendarAccessMixin, ListView):
             cal_month=month,
         )
         return context
+
+
+# ---------------------------------------------------------------------------
+# R9.5: solicitudes de vuelo SIGO
+# ---------------------------------------------------------------------------
+
+# Los avisos del motor de secciones, redactados. El motor devuelve códigos a
+# propósito (`apps.geo.sections`): la frase se traduce y vive acá, no allá.
+SECTION_WARNINGS = {
+    "no_circle": gettext_lazy(
+        "No circle: this point has no circumference, so SIGO has nothing to draw."
+    ),
+    "no_center_point": gettext_lazy(
+        "No centre point: this circle has no point of its own."
+    ),
+    "not_a_circle": gettext_lazy(
+        "Not a circle: the polygon is not circular, and SIGO expects one."
+    ),
+    "duplicate_center": gettext_lazy(
+        "Duplicate centre: another section has these same coordinates. "
+        "Check the source table before filing."
+    ),
+}
+
+
+class FlightRequestList(
+    CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListView
+):
+    model = FlightRequest
+    template_name = "operations/flight_request_list.html"
+    htmx_template_name = "operations/_flight_request_rows.html"
+    context_object_name = "objects"
+    paginate_by = 25
+    search_fields = ["title", "commune", "area_name"]
+
+    def get_queryset(self):
+        queryset = (
+            super()
+            .get_queryset()
+            .select_related("cost_center", "amc", "flight_permission")
+        )
+        status = self.request.GET.get("status", "")
+        if status in dict(FlightRequest.STATUS_CHOICES):
+            queryset = queryset.filter(status=status)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            # Del `verbose_name_plural` del modelo, no de un literal propio:
+            # "Flight requests" chocaría en mayúsculas con la entrada que ese
+            # verbose_name ya puso en el catálogo.
+            title=capfirst(FlightRequest._meta.verbose_name_plural),
+            status_choices=FlightRequest.STATUS_CHOICES,
+            current_status=self.request.GET.get("status", ""),
+        )
+        context["is_filtered"] = context["is_filtered"] or bool(
+            self.request.GET.get("status")
+        )
+        return context
+
+
+class FlightRequestDetail(
+    TenantScopedQuerysetMixin, ModelViewPermissionRequiredMixin, DetailView
+):
+    model = FlightRequest
+    template_name = "operations/flight_request_detail.html"
+    context_object_name = "request_obj"
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .select_related("cost_center", "amc", "flight_permission", "source_plan")
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        request_obj = self.object
+        context["sheet"] = sigo_sheet(request_obj)
+        context["note_form"] = FlightRequestNoteForm()
+        context["work_item_form"] = FlightRequestWorkItemForm()
+        context["notes"] = request_obj.change_notes.select_related("author")
+        context["history"] = request_obj.history.select_related("changed_by_user")
+        context["work_items"] = request_obj.work_items.select_related(
+            "work_area", "objective"
+        )
+        # Sólo los permisos del mismo centro de costo y todavía abiertos: ofrecer
+        # uno cerrado o de otra faena sería ofrecer un error.
+        context["linkable_permissions"] = FlightPermission.objects.filter(
+            cost_center=request_obj.cost_center, is_active=True
+        ).exclude(status__in=FlightPermission.TERMINAL_STATUSES)
+        return context
+
+
+class FlightRequestUpdate(
+    HtmxFormMixin, TenantScopedQuerysetMixin, ModelPermissionRequiredMixin, UpdateView
+):
+    model = FlightRequest
+    form_class = FlightRequestForm
+    template_name = "generic/form.html"
+    permission_action = "change"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = _("Edit flight request")
+        return context
+
+
+class FlightRequestKmz(ModelViewPermissionRequiredMixin, View):
+    """Descargar el KMZ de la sección: lo que se adjunta en SIGO."""
+
+    model = FlightRequest
+
+    def get(self, request, pk):
+        obj = get_object_or_404(FlightRequest, pk=pk, is_active=True)
+        if not obj.section_content:
+            messages.error(request, _("This request has no geometry to export."))
+            return redirect(obj)
+        response = HttpResponse(
+            section_kmz(obj), content_type="application/vnd.google-earth.kmz"
+        )
+        # `filename*` además del simple: el nombre lleva tildes ("Quebrada")
+        # y sin la forma RFC 5987 algunos navegadores lo mutilan.
+        name = slugify(obj.title) or "seccion"
+        response["Content-Disposition"] = (
+            f"attachment; filename=\"{name}.kmz\"; filename*=UTF-8''{quote(name)}.kmz"
+        )
+        return response
+
+
+class FlightRequestAddNote(ModelPermissionRequiredMixin, View):
+    model = FlightRequest
+    permission_action = "change"
+
+    def post(self, request, pk):
+        obj = get_object_or_404(FlightRequest, pk=pk, is_active=True)
+        form = FlightRequestNoteForm(request.POST)
+        if form.is_valid():
+            note = form.save(commit=False)
+            note.request = obj
+            note.author = request.user
+            note.save()
+            messages.success(request, _("Note added."))
+        else:
+            messages.error(request, _("Write the note before saving."))
+        return redirect(obj)
+
+
+class FlightRequestAddWorkItem(ModelPermissionRequiredMixin, View):
+    """El botón "Agregar" del formulario de SIGO, de este lado."""
+
+    model = FlightRequest
+    permission_action = "change"
+
+    def post(self, request, pk):
+        obj = get_object_or_404(FlightRequest, pk=pk, is_active=True)
+        form = FlightRequestWorkItemForm(request.POST)
+        if form.is_valid():
+            item = form.save(commit=False)
+            item.request = obj
+            # Consulta explícita y no `validate_unique()`: el formulario no
+            # incluye `request` (lo pone la vista), así que la comprobación del
+            # modelo no puede ver la tupla completa y el par repetido llegaba a
+            # la base como un 500 contra la restricción. Repetirlo no es un
+            # error del usuario, es un clic de más.
+            if FlightRequestWorkItem.objects.filter(
+                request=obj, work_area=item.work_area, objective=item.objective
+            ).exists():
+                messages.info(request, _("That pair is already on the list."))
+                return redirect(obj)
+            item.save()
+            messages.success(request, _("Pair added."))
+        else:
+            messages.error(request, _("Choose a work area and an objective."))
+        return redirect(obj)
+
+
+class FlightRequestRemoveWorkItem(ModelPermissionRequiredMixin, View):
+    model = FlightRequest
+    permission_action = "change"
+
+    def post(self, request, pk, item_pk):
+        obj = get_object_or_404(FlightRequest, pk=pk, is_active=True)
+        FlightRequestWorkItem.objects.filter(pk=item_pk, request=obj).delete()
+        return redirect(obj)
+
+
+class FlightRequestFile(StatusTransitionView):
+    """Marcar la solicitud como presentada en SIGO."""
+
+    model = FlightRequest
+    target_status = FlightRequest.STATUS_FILED
+    valid_from_statuses = [FlightRequest.STATUS_PREPARED]
+    success_message = gettext_lazy("Recorded as filed in SIGO.")
+
+    def post(self, request, pk):
+        response = super().post(request, pk)
+        # La fecha de presentación es lo que hace medible la espera
+        # (`days_waiting`). Se pone acá y no en el formulario porque el acto de
+        # presentar y la fecha en que ocurrió son el mismo hecho.
+        obj = get_object_or_404(FlightRequest, pk=pk)
+        if obj.status == FlightRequest.STATUS_FILED and not obj.filed_on:
+            obj.filed_on = timezone.localdate()
+            obj.save(update_fields=["filed_on", "updated_at"])
+        return response
+
+
+class FlightRequestClose(StatusTransitionView):
+    model = FlightRequest
+    target_status = FlightRequest.STATUS_CLOSED
+    valid_from_statuses = [FlightRequest.STATUS_LINKED, FlightRequest.STATUS_FILED]
+    success_message = gettext_lazy("Request closed.")
+
+
+class FlightRequestLink(ModelPermissionRequiredMixin, View):
+    """Vincular al permiso que la DGAC respondió."""
+
+    model = FlightRequest
+    permission_action = "change"
+
+    def post(self, request, pk):
+        obj = get_object_or_404(FlightRequest, pk=pk, is_active=True)
+        permission = FlightPermission.objects.filter(
+            pk=request.POST.get("permission"),
+            cost_center=obj.cost_center,
+            is_active=True,
+        ).first()
+        if permission is None:
+            messages.error(request, _("Choose a permit from this cost center."))
+            return redirect(obj)
+        filled = link_to_permission(
+            obj,
+            permission,
+            changed_by=request.user.get_username(),
+            user=request.user,
+        )
+        set_audit_context(
+            request,
+            obj,
+            action="flight_request_linked",
+            metadata={"permission": permission.internal_folio, "filled": filled},
+        )
+        if filled:
+            messages.success(
+                request,
+                _("Linked to %(folio)s; it filled in: %(fields)s.")
+                % {"folio": permission.internal_folio, "fields": ", ".join(filled)},
+            )
+        else:
+            # Decirlo importa: "no rellenó nada" no es un fallo, es que el
+            # permiso ya traía todo -- y sin el mensaje parecería que no pasó.
+            messages.success(
+                request,
+                _("Linked to %(folio)s. The permit already had its location.")
+                % {"folio": permission.internal_folio},
+            )
+        return redirect(obj)
+
+
+class GeoPlanSplitIntoRequests(ModelPermissionRequiredMixin, View):
+    """Separar un plan multi-círculo en solicitudes, una por circunferencia.
+
+    GET muestra la vista previa —cuántas secciones, con qué avisos— y POST las
+    crea. La vista previa no es un adorno: el KMZ real trajo seis secciones con
+    problema de dato, y crear cuarenta y siete filas sin haberlas mirado sería
+    enterrar ese hallazgo.
+    """
+
+    model = FlightRequest
+    permission_action = "add"
+
+    def get(self, request, pk):
+        plan = self._plan(pk)
+        sections = split_sections(plan.current_version.content)
+        return render(
+            request,
+            "operations/flight_request_split.html",
+            {
+                "plan": plan,
+                "sections": [
+                    {
+                        "section": section,
+                        "lat": format_dms(section.center[0], "lat"),
+                        "lon": format_dms(section.center[1], "lon"),
+                        "warnings": [
+                            SECTION_WARNINGS.get(code, code)
+                            for code in section.warnings
+                        ],
+                    }
+                    for section in sections
+                ],
+                "existing": FlightRequest.objects.filter(
+                    source_plan=plan, is_active=True
+                ).count(),
+            },
+        )
+
+    def post(self, request, pk):
+        plan = self._plan(pk)
+        requests, _sections = create_requests_from_plan(plan, created_by=request.user)
+        set_audit_context(
+            request,
+            plan,
+            action="geoplan_split_into_requests",
+            metadata={"created": len(requests)},
+        )
+        messages.success(
+            request,
+            _("Created %(count)s flight requests from this plan.")
+            % {"count": len(requests)},
+        )
+        return redirect("flight-request-list")
+
+    @staticmethod
+    def _plan(pk):
+        plan = get_object_or_404(GeoPlan, pk=pk, is_active=True)
+        if plan.current_version is None:
+            raise Http404("The plan has no content to split.")
+        return plan

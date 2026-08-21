@@ -31,6 +31,13 @@
       <button type="submit" class="btn btn-sm {{ action.css }}">{{ action.label }}</button>
     </form>
     {% endfor %}
+    {% comment %}R9.5: se entra por acá porque separar es una acción sobre el
+    KMZ madre, no sobre una solicitud que todavía no existe. Sólo con contenido
+    que separar: sin versión vigente el botón llevaría a un 404.{% endcomment %}
+    {% if perms.operations.add_flightrequest and plan.current_version %}
+    <a class="btn btn-sm btn-outline-primary" href="{% url 'geo-plan-split' plan.pk %}"
+       title="{% translate 'One flight request per circle, as SIGO requires' %}">{% translate "Split into flight requests" %}</a>
+    {% endif %}
     <a class="btn btn-outline-secondary" href="{% url 'geo-plan-list' %}">{% translate "Back to plans" %}</a>
   </div>
 </div>

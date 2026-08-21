@@ -167,7 +167,8 @@ Preparada ──> Ingresada en SIGO ──> Vinculada al permiso ──> Cerrada
 | **R9.2** | `Aerodrome` + `seed_aerodromes` (lista de las capturas) + `nearest_aerodromes` | ✅ hecho 2026-08-20, 8 tests. Migración `registry/0035` |
 | **R9.3** | `FlightRequest` + catálogos SIGO + `create_requests_from_plan` + `sigo_sheet` + `section_kmz` | ✅ modelo y servicios hechos 2026-08-20, 19 tests. Migración `operations/0019`. **Falta la capa de pantallas** |
 | **R9.4** | Flujo con stepper, vínculo a permiso (rellena OPS-4), notas de cambio, historial | ✅ modelo y servicios hechos 2026-08-20. `link_to_permission` rellena sin pisar; quinto usuario de `track_status_changes`. **Falta la capa de pantallas** |
-| **R9.5** | Vistas, plantillas y menú · expediente del permiso muestra su solicitud · seguimiento de "presentada sin respuesta" | ⬜ Lo siguiente |
+| **R9.5** | Vistas, plantillas y menú · vista previa de separación · hoja SIGO · descarga del KMZ · vínculo desde la pantalla | ✅ hecho 2026-08-20, 23 tests. Verificado en el navegador con el KMZ real |
+| **R9.6** | El expediente del permiso (`LV-107`) muestra su solicitud de origen · aviso de "presentada hace N días sin respuesta" en el panel o la bandeja | ⬜ Lo siguiente |
 
 **Verificado de punta a punta con el archivo real** (2026-08-20), contra la base:
 el KMZ de MLP produce **47 solicitudes**, las 47 con AMC propuesto
@@ -192,6 +193,18 @@ dejando el historial `prepared → filed → linked`.
   géneros del español; el patrón ya estaba (`LV-61`, `LV-83`).
 - **El KMZ de sección se genera al descargar**, no se guarda: 47 solicitudes
   serían 47 binarios reconstruibles exactamente desde el canónico.
+- **No hay "+ Nueva solicitud".** Una solicitud nace de separar un KMZ; el
+  formulario en blanco obligaría a tipear el centro y el radio —el trabajo que
+  este flujo quita— y dejaría la solicitud sin el adjunto que SIGO exige.
+- **La vista previa es obligatoria antes de crear.** Con el archivo real son 47
+  filas de las que 6 traen problema de dato; crear sin mirarlas enterraría ese
+  hallazgo bajo las otras 41.
+- **Un plural sin traducir pasa el gate y se ve en inglés.** El test del
+  catálogo mira los literales de `{% translate %}`, no los `blocktranslate` con
+  `count`, que gettext guarda como `msgid_plural`. Se descubrió mirando la
+  página, no la suite: el encabezado decía *"This plan yields 47 flight
+  requests"* dentro de una interfaz en español. Las cuatro entradas plurales
+  quedaron en el catálogo a mano.
 
 ## 5b · Lo que el KMZ real destapó al primer uso
 

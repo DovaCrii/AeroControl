@@ -1,0 +1,40 @@
+{% extends "generic/list.html" %}
+{% load i18n %}
+
+{% block list_primary_actions %}
+{% comment %}R9.5: no hay "+ Nueva". Una solicitud **nace de separar un KMZ**,
+no de un formulario en blanco: crearla a mano obligaría a tipear el centro y el
+radio, que es exactamente el trabajo de transcripción que este flujo quita — y
+dejaría la solicitud sin el KMZ que SIGO exige adjuntar. Se entra por el plan.
+{% endcomment %}
+<a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>
+<a class="btn btn-primary" href="{% url 'geo-plan-list' %}">{% translate "Split a plan" %}</a>
+{% endblock %}
+
+{% block list_filters %}
+{% translate "Search title, commune, area..." as request_search_placeholder %}
+<div class="col-md-5">{% include "generic/_search_input.html" with search_url=request.path search_placeholder=request_search_placeholder %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
+<div class="col-md-3">
+  <select class="form-select" name="status">
+    <option value="">{% translate "All statuses" %}</option>
+    {% for val, label in status_choices %}
+    <option value="{{ val }}" {% if current_status == val %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+</div>
+<div class="col-auto">
+  <button class="btn btn-outline-primary">{% translate "Filter" %}</button>
+  <a href="{{ request.path }}" class="btn btn-outline-secondary">{% translate "Clear" %}</a>
+</div>
+{% endblock %}
+
+{% block list_header %}
+<th scope="col">{% translate "Title" %}</th>
+<th scope="col">{% translate "Cost center" %}</th>
+<th scope="col">{% translate "Radius (m)" %}</th>
+<th scope="col">{% translate "AMC" %}</th>
+<th scope="col">{% translate "Status" %}</th>
+<th scope="col">{% translate "Permit" %}</th>
+{% endblock %}
+
+{% block table_body %}{% include "operations/_flight_request_rows.html" %}{% endblock %}
