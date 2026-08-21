@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Local-first operations desk for aviation teams."
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    "Django==6.0.7",
+    "Django==6.0.8",
     "crispy-bootstrap5==2026.3",
     "django-crispy-forms==2.7",
     "python-decouple==3.8",
@@ -29,6 +29,11 @@ dependencies = [
 [dependency-groups]
 dev = [
     "bandit==1.9.4",
+    # Declarado a propósito aunque nadie lo importe: `uv` restaura el entorno
+    # desde el lock en cada `uv run`, así que actualizar pip a mano se revierte
+    # solo y `pip-audit` -- que es parte del gate -- vuelve a fallar por
+    # PYSEC-2026-3721. Pinnearlo acá es lo que hace reproducible el arreglo.
+    "pip>=26.2",
     "pip-audit==2.10.1",
     "pytest==9.1.1",
     "pytest-cov==7.1.0",
