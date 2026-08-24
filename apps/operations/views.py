@@ -1180,6 +1180,17 @@ class GeoPlanLinkToPermission(ModelPermissionRequiredMixin, View):
             longitude=Decimal(f"{row['lon']:.6f}"),
             radius_m=row["radius_m"],
             area_name=row["name"],
+            # LV-137: el aeródromo más cercano y su distancia, que el plan ya
+            # calculó y el permiso no tenía dónde guardar. Con `LV-132`, si el
+            # área no es circular estos valores son los del círculo que la
+            # encierra -- o sea justo los que hay que declarar, medidos desde el
+            # centro que se declara.
+            amc=row["amc"],
+            amc_distance_km=(
+                Decimal(str(row["amc_distance_km"]))
+                if row["amc_distance_km"] is not None
+                else None
+            ),
         )
 
 

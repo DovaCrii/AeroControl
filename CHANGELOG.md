@@ -70,6 +70,17 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   centro de una con el radio de la otra, que es la combinación que **no** cubre
   el área. Ahora la fila muestra directamente lo que se puede declarar, y el
   radio promedio de lo dibujado queda como referencia en chico.
+- **El permiso guarda el aeródromo más cercano y su distancia (`LV-137`).** El plan
+  geoespacial los calcula y la solicitud SIGO los guardaba, pero el permiso —la
+  ficha donde uno consulta el trámite— los perdía en el camino: había que volver
+  al plan para saber qué se declaró. Al vincular un plan, ahora también llegan
+  esos dos datos. Y el expediente **ya no manda a importar un KMZ nuevo**: ofrece
+  vincular el plan que ya existe en la app, que es el que trae la información —
+  importar queda para cuando de verdad no hay ninguno en esa faena. Requiere la
+  migración `operations/0021`.
+- **La pestaña Flota dice qué aeronave es (`LV-139`).** Mostraba la matrícula pero
+  no el modelo ni el número de serie, y con cuatro Matrice 4 Enterprise en la
+  flota eso no identifica el equipo que está en faena.
 - **Se puede archivar un plan o un permiso, con doble verificador (`LV-135`).**
   No había ninguna forma de sacar un plan o un permiso de la lista: la única
   salida era el admin de Django. Ahora se **archivan** —no se borran: la fila

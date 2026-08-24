@@ -237,4 +237,9 @@ def link_to_permission(request, permission, *, changed_by="", user=None):
         commune=request.commune,
         area_name=request.area_name,
         altitude_m=request.altitude_m,
+        # LV-137: el aeródromo y la distancia que la solicitud ya declaró. Se
+        # pasan los **guardados** y no un recálculo: son los que se escribieron
+        # en el formulario del Estado, y el permiso tiene que decir lo mismo.
+        amc=request.amc,
+        amc_distance_km=request.amc_distance_km,
     )

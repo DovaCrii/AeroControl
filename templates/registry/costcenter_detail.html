@@ -59,11 +59,20 @@
     {% if aircraft_assignments is not None %}
     <div class="tab-pane fade" id="tab-fleet" role="tabpanel">
       <table class="table table-hover">
-        <thead><tr><th scope="col">{% translate "Aircraft" %}</th><th scope="col">{% translate "Since" %}</th><th scope="col">{% translate "Assignment status" %}</th><th scope="col">{% translate "Condition" %}</th><th scope="col">{% translate "Location" %}</th></tr></thead>
+        {% comment %}LV-139: modelo y número de serie al lado de la matrícula.
+        Pedido del usuario mirando esta pestaña: la matrícula sola no dice **qué**
+        aeronave está en la faena, y en una flota con cuatro Matrice 4 Enterprise
+        la diferencia es el serial. Es el mismo par que `LV-126` sumó al listado
+        de aeronaves, y por la misma razón: la matrícula la ponemos nosotros, el
+        serial lo pone el fabricante y es con el que la aeronave aparece en el
+        registro de la DGAC y en las carpetas del repositorio.{% endcomment %}
+        <thead><tr><th scope="col">{% translate "Aircraft" %}</th><th scope="col">{% translate "Model" %}</th><th scope="col">{% translate "Serial number" %}</th><th scope="col">{% translate "Since" %}</th><th scope="col">{% translate "Assignment status" %}</th><th scope="col">{% translate "Condition" %}</th><th scope="col">{% translate "Location" %}</th></tr></thead>
         <tbody>
           {% for a in aircraft_assignments %}
           <tr>
             <td><a href="{% url 'aircraft-detail' a.aircraft.pk %}">{{ a.aircraft.registration }}</a></td>
+            <td>{{ a.aircraft.manufacturer }} {{ a.aircraft.model }}</td>
+            <td><span class="font-monospace small">{{ a.aircraft.serial_number|default:"—" }}</span></td>
             <td>{{ a.start_date|date:'Y-m-d' }}</td>
             <td>{{ a.get_status_display }}</td>
             <td>
