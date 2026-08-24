@@ -55,6 +55,14 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   rellenó. Nunca pisa lo que ya estuviera escrito: si el permiso trae una
   coordenada del papel DGAC, esa manda. Y el historial del vínculo ya registra
   **quién** lo hizo.
+- **El plan geoespacial y la solicitud SIGO reciben documentos (`R10.5`).** Los
+  papeles llegan **antes** que el permiso —el KMZ del cliente, el correo que pide
+  el vuelo, la carta AIP con la que se confirmó el aeródromo, la constancia de lo
+  presentado en SIGO— y hasta ahora el único registro del que se podían colgar
+  era el permiso, que en esa etapa todavía no existe. Es la misma sección de
+  documentos que ya llevan la aeronave, el operador, el centro de costo y el
+  permiso: agrupada por categoría, con **Ver** sin salir de la ficha. Sin
+  migración.
 
 ### Changed
 
@@ -74,6 +82,16 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **Un KMZ de Trimble ya no se lee como "sin círculo" (`R10.4`).** Los archivos
+  que exporta **Trimble Business Center** dibujan la circunferencia como un
+  trazado cerrado y no como un polígono, y la app sólo miraba polígonos: siete
+  KMZ reales de una faena —con su círculo perfectamente dibujado— salían **sin
+  radio y con un aviso de "sin círculo" que era falso**, así que no había nada
+  que llevar a SIGO. Ahora cuenta como circunferencia cualquier anillo cerrado,
+  venga como polígono o como trazado. Un trazado **abierto** se sigue ignorando a
+  propósito: es un camino, no un área, y tomarlo por área convertiría una ruta en
+  una circunferencia de vuelo. La comprobación de que el anillo sea realmente
+  redondo no cambió.
 - **El panel deja de dar cinco respuestas a la misma pregunta (`LV-129`).**
   Seis lugares hablaban de vigencias con números que no cuadraban entre sí.
   Ahora **"vencidos" quiere decir lo mismo en todas partes**: los que aparecen

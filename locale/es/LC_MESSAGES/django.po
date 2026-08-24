@@ -6340,3 +6340,11 @@ msgstr "Plan %(title)s vinculado; rellenó: %(fields)s."
 #: .\apps\operations\views.py
 msgid "Plan %(title)s linked. The permit already had its location."
 msgstr "Plan %(title)s vinculado. El permiso ya tenía su ubicación."
+
+#: .\apps\compliance\forms.py
+msgid "Geospatial plan"
+msgstr "Plan geoespacial"
+
+#: .\apps\compliance\forms.py
+msgid "Flight request"
+msgstr "Solicitud de vuelo"
