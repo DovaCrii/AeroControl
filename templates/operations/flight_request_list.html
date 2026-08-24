@@ -6,9 +6,25 @@
 no de un formulario en blanco: crearla a mano obligaría a tipear el centro y el
 radio, que es exactamente el trabajo de transcripción que este flujo quita — y
 dejaría la solicitud sin el KMZ que SIGO exige adjuntar. Se entra por el plan.
+
+LV-131: y tampoco hay "Separar un plan", que era lo que quedaba acá. **No
+separaba nada**: llevaba al listado de planes, o sea navegación disfrazada de
+acción — el mismo patrón que `LV-89` ya sacó del encabezado de permisos, y que
+acá confundía dos pantallas: el usuario reportó que "Solicitudes SIGO te mueve a
+planificación geoespacial". Peor todavía desde `R10.1`, que dejó separar sólo
+para los KMZ con más de una circunferencia: el botón invitaba a partir algo que
+en el caso normal ya está entero. De dónde nacen las solicitudes se explica ahora
+en el subtítulo y en el estado vacío, que es donde se lee sin tener que clicar.
 {% endcomment %}
 <a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>
-<a class="btn btn-primary" href="{% url 'geo-plan-list' %}">{% translate "Split a plan" %}</a>
+{% endblock %}
+
+{% block list_intro %}
+{% comment %}Lo que esta pantalla hace y la del plan no: seguir lo presentado.
+Con `R10.1` los datos del KMZ (centro, radio, AMC) se leen en la ficha del plan,
+así que sin esta línea las dos pantallas se parecen más de lo que se diferencian.
+{% endcomment %}
+<p class="text-body-secondary mb-3">{% translate "What was filed in SIGO and how long it has been waiting. The data comes from a geospatial plan; a request is created by splitting one." %}</p>
 {% endblock %}
 
 {% block list_filters %}

@@ -101,6 +101,16 @@ después se desincroniza.{% endcomment %}
           <td class="text-body-secondary">
             {{ item.detail }}{% if item.offenders %}: <strong>{{ item.offenders|join:", " }}</strong>{% endif %}
           </td>
+          {% comment %}LV-130: el atajo que cierra el renglón. Va en su propia
+          columna y alineado a la derecha para que la columna se lea como una
+          lista de lo que hay que hacer; el permiso ya se comprobó al armar el
+          expediente, así que acá no hay `{% if perms %}` que pueda divergir de
+          lo que la vista decidió.{% endcomment %}
+          <td class="text-end text-nowrap">
+            {% if item.action_url %}
+            <a class="btn btn-sm btn-outline-primary" href="{{ item.action_url }}">{{ item.action_label }}</a>
+            {% endif %}
+          </td>
         </tr>
         {% endfor %}
       </tbody>

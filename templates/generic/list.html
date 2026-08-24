@@ -12,6 +12,10 @@
     {% endblock %}
   </div>
 </div>
+{% comment %}LV-131: una línea para decir de qué es esta pantalla, cuando el
+título no alcanza. Vacío por defecto: la mayoría de los listados se explican con
+su nombre, y un subtítulo obligatorio se llenaría de relleno.{% endcomment %}
+{% block list_intro %}{% endblock %}
 <form method="get" class="row g-2 mb-3">
   {% block list_filters %}
   <div class="col-md-5">{% include "generic/_search_input.html" with search_url=request.path %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>

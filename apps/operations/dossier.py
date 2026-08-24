@@ -23,10 +23,29 @@ Tres decisiones que dan forma a todo lo demás:
    `RequireDgacPermitPdfMixin`, donde tienen efecto. Un expediente que además
    prohibiera cosas duplicaría esa regla en un segundo lugar del que después se
    desincroniza.
+
+`LV-130` agrega la cuarta, que es la que convierte esto en trabajo:
+
+4. **Cada renglón que falta lleva el atajo que lo cierra.** Textual del usuario:
+   *"en el expediente de cada uno […] buscar un workflow mejor o cómo para ir
+   cubriendo y confirmando lo faltante para que esté completo"*. La pantalla
+   respondía "faltan cuatro cosas" y ahí terminaba: cerrar cada una exigía saber
+   **dónde** se cierra —la ficha de la aeronave para una vigencia, la del plan
+   para la revisión meteorológica, el formulario de carga con el tipo correcto
+   para un PDF— que es el conocimiento que esta pantalla existía para no exigir.
+   El destino es siempre **una pantalla que ya existía**: el expediente no gana
+   formularios propios, gana enlaces con lo que se puede prellenar ya puesto.
+
+   Y el atajo **respeta los permisos**: `operational_dossier(permission, user)`
+   omite la acción que ese usuario no podría ejecutar. Ofrecer un botón que
+   termina en 403 es peor que no ofrecerlo — enseña a desconfiar de la pantalla.
+   Sin `user` no se filtra nada, que es lo que necesitan los tests del renglón.
 """
 
 from dataclasses import dataclass, field
+from urllib.parse import urlencode
 
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 # Los tres estados que puede tener un renglón. `UNKNOWN` existe por la decisión
@@ -58,47 +77,128 @@ class DossierItem:
     detail: str = ""
     # Los registros concretos que fallan, para nombrarlos en vez de contarlos.
     offenders: list = field(default_factory=list)
+    # LV-130: dónde se cierra este renglón. Vacíos cuando está en verde, cuando
+    # el usuario no tiene el permiso, o cuando no hay una sola pantalla que lo
+    # resuelva (un permiso "completado" sin vuelos ya ocurrió: lo que falta ahí
+    # es una decisión, no un formulario).
+    action_label: str = ""
+    action_url: str = ""
 
     @property
     def is_ok(self):
         return self.status == OK
 
 
-def _aircraft_insurance_item(permission):
-    overdue, unknown = [], []
+def _allowed(user, codename):
+    """Sin usuario no se filtra; con usuario, manda su permiso."""
+    return user is None or user.has_perm(codename)
+
+
+def _open_record_action(records, *, user, codename, detail_url, list_url, one, many):
+    """LV-130: la ficha del registro que falla, o su listado si son varios.
+
+    Con **uno** se va derecho al lugar donde se carga el dato. Con varios no:
+    llevar al primero de tres escondería los otros dos detrás de un botón que
+    parece haber resuelto el renglón, y el listado los muestra a todos.
+    """
+    if not records or not _allowed(user, codename):
+        return "", ""
+    if len(records) == 1:
+        return one, reverse(detail_url, args=[records[0].pk])
+    return many, reverse(list_url)
+
+
+def _aircraft_insurance_item(permission, user=None):
+    overdue, unknown, offending = [], [], []
     for aircraft in permission.aircraft_fleet.all():
         if aircraft.insurance_expiry is None:
             unknown.append(str(aircraft.registration))
+            offending.append(aircraft)
         elif aircraft.insurance_is_overdue:
             overdue.append(str(aircraft.registration))
+            offending.append(aircraft)
     label = _("Insurance in force for every aircraft")
-    if overdue:
-        return DossierItem("insurance", label, MISSING, _("Lapsed insurance"), overdue)
-    if unknown:
-        return DossierItem("insurance", label, UNKNOWN, _("No expiry on file"), unknown)
-    return DossierItem("insurance", label, OK)
-
-
-def _operator_credential_item(permission):
-    overdue, unknown = [], []
-    for operator in permission.operators.all():
-        if operator.credential_expiry is None:
-            unknown.append(str(operator.full_name))
-        elif operator.credential_is_overdue:
-            overdue.append(str(operator.full_name))
-    label = _("DGAC credential in force for every operator")
+    action = _open_record_action(
+        offending,
+        user=user,
+        codename="registry.change_aircraft",
+        detail_url="aircraft-detail",
+        list_url="aircraft-list",
+        one=_("Open the aircraft"),
+        many=_("Open the fleet"),
+    )
     if overdue:
         return DossierItem(
-            "credential", label, MISSING, _("Lapsed credential"), overdue
+            "insurance", label, MISSING, _("Lapsed insurance"), overdue, *action
         )
     if unknown:
         return DossierItem(
-            "credential", label, UNKNOWN, _("No expiry on file"), unknown
+            "insurance", label, UNKNOWN, _("No expiry on file"), unknown, *action
+        )
+    return DossierItem("insurance", label, OK)
+
+
+def _operator_credential_item(permission, user=None):
+    overdue, unknown, offending = [], [], []
+    for operator in permission.operators.all():
+        if operator.credential_expiry is None:
+            unknown.append(str(operator.full_name))
+            offending.append(operator)
+        elif operator.credential_is_overdue:
+            overdue.append(str(operator.full_name))
+            offending.append(operator)
+    label = _("DGAC credential in force for every operator")
+    action = _open_record_action(
+        offending,
+        user=user,
+        codename="registry.change_operator",
+        detail_url="operator-detail",
+        list_url="operator-list",
+        one=_("Open the operator"),
+        many=_("Open the roster"),
+    )
+    if overdue:
+        return DossierItem(
+            "credential", label, MISSING, _("Lapsed credential"), overdue, *action
+        )
+    if unknown:
+        return DossierItem(
+            "credential", label, UNKNOWN, _("No expiry on file"), unknown, *action
         )
     return DossierItem("credential", label, OK)
 
 
-def _document_items(permission):
+def _upload_action(permission, code, user):
+    """LV-130: el formulario de carga con el tipo de documento ya elegido.
+
+    `DocumentCreate` prellena desde `entity_type`, `object_id` y `doc_type` en la
+    URL (OPS-5, LV-30), así que el atajo no agrega una vista: agrega los tres
+    datos que la persona tendría que elegir a mano sabiendo cuál es el correcto
+    —y "cuál es el correcto" es justo lo que `LV-64` demostró que se confunde.
+
+    Si el tipo no está en el catálogo el enlace va igual, sin prellenarlo: dejar
+    a alguien sin forma de subir el papel porque falta una fila de catálogo sería
+    peor que ofrecerle el formulario en blanco.
+    """
+    if not _allowed(user, "compliance.add_document"):
+        return "", ""
+    from django.contrib.contenttypes.models import ContentType
+
+    from apps.compliance.models import DocumentType
+
+    params = {
+        "entity_type": ContentType.objects.get_for_model(permission.__class__).pk,
+        "object_id": str(permission.pk),
+    }
+    doc_type_pk = (
+        DocumentType.objects.filter(code=code).values_list("pk", flat=True).first()
+    )
+    if doc_type_pk:
+        params["doc_type"] = doc_type_pk
+    return _("Upload it"), f"{reverse('document-create')}?{urlencode(params)}"
+
+
+def _document_items(permission, user=None):
     """Los dos papeles DGAC, que son documentos distintos y no intercambiables.
 
     `LV-64`: la carta es lo que va **hacia** la DGAC como parte de la solicitud;
@@ -118,23 +218,40 @@ def _document_items(permission):
             is_active=True,
         ).values_list("doc_type__code", flat=True)
     )
-    return [
-        DossierItem(
+    items = []
+    for key, label, code, missing_status, missing_detail in (
+        (
             "signed_authorization",
             _("Signed DGAC authorization on file"),
-            OK if SIGNED_AUTHORIZATION in codes else MISSING,
-            "" if SIGNED_AUTHORIZATION in codes else _("The folio'd SIGO PDF"),
+            SIGNED_AUTHORIZATION,
+            MISSING,
+            _("The folio'd SIGO PDF"),
         ),
-        DossierItem(
+        (
             "permit_letter",
             _("Permit letter on file"),
-            OK if PERMIT_LETTER in codes else UNKNOWN,
-            "" if PERMIT_LETTER in codes else _("Not on file"),
+            PERMIT_LETTER,
+            UNKNOWN,
+            _("Not on file"),
         ),
-    ]
+    ):
+        if code in codes:
+            items.append(DossierItem(key, label, OK))
+            continue
+        items.append(
+            DossierItem(
+                key,
+                label,
+                missing_status,
+                missing_detail,
+                [],
+                *_upload_action(permission, code, user),
+            )
+        )
+    return items
 
 
-def _geo_plan_items(permission):
+def _geo_plan_items(permission, user=None):
     """El plan y su revisión meteorológica.
 
     La revisión existe como evidencia desde `R8.2` y se escribe **por una acción
@@ -143,16 +260,42 @@ def _geo_plan_items(permission):
     """
     plans = list(permission.geo_plans.all())
     if not plans:
+        # R10.2 dejó dos caminos para llegar a tener plan: importar un KMZ nuevo
+        # o vincular uno ya subido. El atajo ofrece **importar** porque es el que
+        # sirve siempre; vincular exige que el plan exista y su selector ya vive
+        # en esta misma ficha, unos centímetros más abajo.
+        action = ("", "")
+        if _allowed(user, "geo.add_geoplan"):
+            action = (
+                _("Import a plan"),
+                f"{reverse('geo-plan-import')}?flight_permission={permission.pk}",
+            )
         return [
             DossierItem(
                 "geo_plan",
                 _("Geospatial plan linked"),
                 UNKNOWN,
                 _("No plan linked to this permit"),
+                [],
+                *action,
             )
         ]
     reviewed = [plan for plan in plans if plan.weather_reviews.exists()]
-    without = [str(plan.title) for plan in plans if plan not in reviewed]
+    pending = [plan for plan in plans if plan not in reviewed]
+    without = [str(plan.title) for plan in pending]
+    # La revisión se registra **con un botón que vive en la ficha del plan**
+    # (R8.1), así que el atajo lleva ahí y no a una acción propia: duplicar el
+    # registro de evidencia en dos lugares es cómo se termina con dos versiones
+    # de "quién revisó qué".
+    weather_action = _open_record_action(
+        pending,
+        user=user,
+        codename="geo.view_geoplan",
+        detail_url="geo-plan-detail",
+        list_url="geo-plan-list",
+        one=_("Open the plan"),
+        many=_("Open the plans"),
+    )
     return [
         DossierItem("geo_plan", _("Geospatial plan linked"), OK),
         DossierItem(
@@ -161,11 +304,12 @@ def _geo_plan_items(permission):
             OK if not without else UNKNOWN,
             "" if not without else _("No review on record"),
             without,
+            *weather_action,
         ),
     ]
 
 
-def _flight_record_item(permission):
+def _flight_record_item(permission, user=None):
     """Un permiso **completado** sin un solo vuelo registrado es la contradicción
     que esta pantalla existe para mostrar: se declaró que se voló lo autorizado y
     no hay bitácora que lo respalde. Antes de completarse, en cambio, no tener
@@ -175,14 +319,27 @@ def _flight_record_item(permission):
     label = _("Flights logged against this permit")
     if count:
         return DossierItem("flights", label, OK, detail=str(count))
+    action = ("", "")
+    if _allowed(user, "operations.add_flightrecord"):
+        # `FlightRecordCreate` prellena el permiso desde la URL, así que el
+        # atajo llega al formulario con la mitad del contexto ya puesta.
+        action = (
+            _("Log a flight"),
+            f"{reverse('record-create')}?permission={permission.pk}",
+        )
     if permission.status == "completed":
         return DossierItem(
-            "flights", label, MISSING, _("Completed with no flights logged")
+            "flights",
+            label,
+            MISSING,
+            _("Completed with no flights logged"),
+            [],
+            *action,
         )
-    return DossierItem("flights", label, UNKNOWN, _("None logged yet"))
+    return DossierItem("flights", label, UNKNOWN, _("None logged yet"), [], *action)
 
 
-def _flight_request_item(permission):
+def _flight_request_item(permission, user=None):
     """R9.6: de qué solicitud SIGO salió este permiso.
 
     Cierra el círculo del expediente: hasta acá se podía ver el plan que dibujó
@@ -200,8 +357,21 @@ def _flight_request_item(permission):
     requests = list(permission.flight_requests.filter(is_active=True))
     label = _("Originating SIGO request")
     if not requests:
+        # El vínculo se hace **desde la solicitud** (`FlightRequestLink`), porque
+        # es ahí donde están las coordenadas presentadas que hay que comparar
+        # antes de afirmar que este permiso responde a esa solicitud. El atajo
+        # lleva al listado, no vincula: vincular sin mirar es el error que ese
+        # formulario evita.
+        action = ("", "")
+        if _allowed(user, "operations.view_flightrequest"):
+            action = (_("See the requests"), reverse("flight-request-list"))
         return DossierItem(
-            "flight_request", label, UNKNOWN, _("No request recorded for this permit")
+            "flight_request",
+            label,
+            UNKNOWN,
+            _("No request recorded for this permit"),
+            [],
+            *action,
         )
     return DossierItem(
         "flight_request",
@@ -211,15 +381,21 @@ def _flight_request_item(permission):
     )
 
 
-def operational_dossier(permission):
-    """Los renglones del expediente, en el orden en que se revisa una operación."""
+def operational_dossier(permission, user=None):
+    """Los renglones del expediente, en el orden en que se revisa una operación.
+
+    `user` es opcional: con él, cada renglón trae sólo el atajo que esa persona
+    puede ejecutar (`LV-130`); sin él, trae todos. Se deja opcional para que los
+    tests del renglón —que afirman estado y detalle, no permisos— no tengan que
+    montar un usuario para nada.
+    """
     items = [
-        *_document_items(permission),
-        _aircraft_insurance_item(permission),
-        _operator_credential_item(permission),
-        *_geo_plan_items(permission),
-        _flight_request_item(permission),
-        _flight_record_item(permission),
+        *_document_items(permission, user),
+        _aircraft_insurance_item(permission, user),
+        _operator_credential_item(permission, user),
+        *_geo_plan_items(permission, user),
+        _flight_request_item(permission, user),
+        _flight_record_item(permission, user),
     ]
     return {
         "items": items,
