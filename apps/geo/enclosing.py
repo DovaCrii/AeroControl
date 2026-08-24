@@ -47,7 +47,12 @@ METERS_PER_DEGREE = 111_320.0
 # usa una semilla fija de todos modos: un número que se le muestra a una persona
 # y que puede terminar copiado en un formulario del Estado no debería moverse en
 # el último decimal entre dos visitas a la misma pantalla.
-_RNG = Random(20260824)
+#
+# `nosec B311`: barajar vértices de un polígono no protege nada. Lo que bandit
+# marca es usar `random` donde hace falta imprevisibilidad —tokens, contraseñas—,
+# y acá la aleatoriedad es una técnica de rendimiento sobre datos públicos: con
+# una semilla fija y determinista, que es lo contrario de un secreto.
+_RNG = Random(20260824)  # nosec B311
 
 # Tolerancia multiplicativa al preguntar "¿este punto está dentro?". Sin ella, el
 # punto que define el borde puede quedar fuera de su propio círculo por error de
