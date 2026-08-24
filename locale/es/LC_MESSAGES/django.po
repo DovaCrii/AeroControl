@@ -6586,3 +6586,8 @@ msgstr "Lat"
 msgid "Lon"
 msgstr "Lon"
 
+
+#: .\templates\geo\plan_detail.html
+msgid "The commune, province and region come from the BCN administrative boundaries, which that institution publishes as referential: near a boundary the answer may be the neighbouring commune. Confirm it before filing."
+msgstr "La comuna, la provincia y la región salen de los límites administrativos de la BCN, que esa institución publica como referenciales: cerca de un límite la respuesta puede ser la comuna vecina. Confírmala antes de presentar."
+

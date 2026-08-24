@@ -70,6 +70,15 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   centro de una con el radio de la otra, que es la combinación que **no** cubre
   el área. Ahora la fila muestra directamente lo que se puede declarar, y el
   radio promedio de lo dibujado queda como referencia en chico.
+- **El plan entrega la comuna, la provincia y la región del punto central
+  (`LV-141`).** SIGO pide la comuna como casilla propia y hasta ahora se tipeaba a
+  mano con el KMZ delante. Sale de los **límites oficiales de la Biblioteca del
+  Congreso Nacional**, que viajan con la app (no se consulta ningún servicio
+  externo). Verificado contra las faenas reales: los siete KMZ de CC 738 dan
+  Salamanca / Choapa / Coquimbo, El Mauro da Los Vilos, Talabre da **Calama**.
+  Como el aeródromo más cercano, **se propone y se confirma**: la BCN publica su
+  cartografía como referencial, así que cerca de un límite la respuesta puede ser
+  la comuna vecina, y la pantalla lo dice.
 - **Cada plan geoespacial tiene su número: `PG-2026-001` (`LV-138`).** El título
   hacía de identificador y venía en dos formas distintas según cómo se hubiera
   importado el plan, así que no se podía citar ni ordenar. Ahora el número va en

@@ -38,7 +38,75 @@ Verificar: `systemctl list-timers 'aerocontrol-*' --no-pager`
 
 Notificaciones a `Dirección`: `aortega@jej.cl` + `cmunoz@jej.cl`.
 
-## Estado al cierre del 2026-08-24 — **empezar por acá**
+## Cierre del 2026-08-24, sesión de tarde — **empezar por acá**
+
+`main` = `origin/main` = `<último>`, árbol limpio salvo `.vscode/`.
+`pwsh scripts/verify.ps1` verde: **1755 tests**, cobertura 96.56%, ruff, bandit y
+pip-audit sin hallazgos. De 1637 tests a 1755 en el día.
+
+### Lo que se cerró hoy, en orden
+
+`R10.4` (el KMZ de Trimble deja de leerse como "sin círculo") · `R10.5`
+(documentos en plan y solicitud) · `R10.6` (una sola sección de documentos en el
+permiso) · `R10.7` (el catálogo de aeródromos se posiciona con el AIP: de 6 a 15)
+· `R10.8` (la circunferencia mínima que encierra un área irregular) · `LV-130` (el
+expediente lleva a resolver lo que falta) · `LV-131` (fuera el botón que no
+separaba) · `LV-132` (una fila por circunferencia) · `LV-133`/`LV-134` (el
+Capítulo 1 Rev 17 se lee, y sin duplicar) · `LV-135` (archivar plan y permiso, con
+doble verificador y filtros) · `LV-136` (el mapa usa la pantalla, y se amplía) ·
+`LV-137` (el permiso recibe el AMC del plan que se vincula) · `LV-138` (folio
+`PG-2026-001`) · `LV-139` (modelo y serie en la pestaña Flota) · `LV-140` (rótulos
+Lat/Lon) · `LV-141` (comuna, provincia y región desde el pin central).
+
+### Lo que sigue, para retomar
+
+**Necesita al usuario** — nadie más puede:
+
+1. **Desplegar** lo que quedó (ver "Qué está en `p340` y qué no": esta tanda trae
+   migraciones y respaldo verificado antes).
+2. **Las capturas del resto del selector de SIGO**, de "Bermuda Intl" en adelante.
+   Es lo único que mejora el AMC: con 50 nombres, Quintero a 124 km seguirá siendo
+   la respuesta correcta para el Choapa aunque las posiciones ya sean exactas.
+3. **`SCSA`**: SIGO la llama "Alberto Santos Dumont" (Río de Janeiro) y el
+   AIP-Chile "Rungue Dr. C. Barría B.". Sin resolver eso queda sin posición.
+4. **Cargar `RPA-7213`** con sus cuatro PDF (datos en la fila `LV-121` y en el
+   punto 4 de la lista de arriba), y **corregir `RPA-7126`**: modelo escrito
+   "Matrice 4E" contra "MATRICE 4 ENTERPRISE" de sus tres hermanas, y seguro en
+   "Faltante o por renovar" teniendo los papeles.
+5. **`JEJ-2026-002` tiene la comuna equivocada**: dice "Antofagasta, Antofagasta"
+   y sus coordenadas caen en **Calama, provincia El Loa** (`LV-141` lo detecta).
+6. De la VM, de antes: `EMAIL_HOST` vacío, los dos timers sin instalar, y el
+   respaldo del día tomado y **sin verificar**.
+
+**Se puede hacer sin el usuario**, en orden de valor:
+
+7. **Al cargar la Resolución Exenta de la JAC, cerrar el círculo del seguro**:
+   pasar `insurance_status` a *autorizado* y tomar la vigencia del documento. Hoy
+   el estado se queda en "presentado" hasta que alguien lo cambie a mano y tipee
+   la fecha, teniendo el papel con la fecha adentro. **Pedido del usuario el
+   2026-08-24**, textual: *"mantener ahora en alerta pero presentado en SIGO se
+   espera la resolución de la JAC, ahí queda resuelto"*.
+8. **El centroide como centro cuando el círculo viene sin punto**:
+   `propuesta_completo.kmz` de CC 738 trae 54 así (los `CG-0N` individuales sí lo
+   traen).
+9. **Los pares "Área de trabajo / Objetivo del vuelo" en el plan**, si el usuario
+   los quiere ahí: hoy viven en la solicitud (`R9.6`) y el catálogo ya coincide
+   exactamente con lo que muestra SIGO. Reparo pendiente de conversar: el mismo
+   dato en plan, solicitud y permiso son tres copias que se desincronizan.
+10. **Higiene**: 7 ramas dependabot abiertas (Django 6.1 entre ellas), dos
+    worktrees viejas en `.claude/worktrees/`, y `.vscode/` sin versionar.
+
+### Dos cosas que conviene saber antes de tocar nada
+
+- **Desde una sesión de agente no hay acceso a `p340`**: `ssh` responde
+  `Permission denied (publickey,password)`. Toda escritura en producción la hace
+  el usuario; nosotros preparamos el bloque de comandos y verificamos con el gate
+  local, que es el único gate real (el CI de GitHub nunca ha estado verde).
+- **Correr `uv run ruff format apps` ANTES del gate.** `verify.ps1` pone
+  `ruff format --check` **después** de pytest, así que un archivo sin formatear
+  cuesta once minutos de suite antes de fallar por espacios. Costó dos gates hoy.
+
+## Estado al cierre del 2026-08-24 (mañana)
 
 `main` = `origin/main` (`3eba41d`), árbol limpio, `pwsh scripts/verify.ps1`
 verde: **1637 tests**, ruff, bandit y pip-audit sin hallazgos.

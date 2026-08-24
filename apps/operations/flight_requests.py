@@ -16,6 +16,7 @@ from decimal import Decimal
 
 from django.db import transaction
 
+from apps.geo.administrative import locate
 from apps.geo.kml.build import build_kml_bytes
 from apps.geo.kml.kmz import build_kmz
 from apps.geo.sections import (
@@ -94,6 +95,11 @@ def _row(section, aerodromes):
     nearest = nearest_aerodromes(center, aerodromes, limit=1)
     aerodrome, distance_km = nearest[0] if nearest else (None, None)
     lat, lon = center
+    # LV-141: las dos casillas administrativas que SIGO pide y que hasta acá se
+    # tipeaban a mano. Se resuelven desde el **mismo centro** que se declara, así
+    # que sobre un área irregular son las del círculo envolvente y no las del
+    # punto dibujado -- la misma coherencia que `LV-132` exigió al AMC.
+    place = locate(lat, lon) or {}
     return {
         "section": section,
         "name": section.name,
@@ -109,6 +115,9 @@ def _row(section, aerodromes):
         "amc": aerodrome,
         "amc_distance_km": (round(distance_km, 1) if distance_km is not None else None),
         "warnings": list(section.warnings),
+        "comuna": place.get("comuna", ""),
+        "provincia": place.get("provincia", ""),
+        "region": place.get("region", ""),
         "is_enclosing": is_enclosing,
         "drawn_radius_m": (
             round(section.radius_m) if is_enclosing and section.radius_m else None

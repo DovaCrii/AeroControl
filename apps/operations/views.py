@@ -1180,6 +1180,10 @@ class GeoPlanLinkToPermission(ModelPermissionRequiredMixin, View):
             longitude=Decimal(f"{row['lon']:.6f}"),
             radius_m=row["radius_m"],
             area_name=row["name"],
+            # LV-141: la comuna y la región que el polígono administrativo
+            # resolvió desde el punto que se declara.
+            commune=row["comuna"],
+            region=row["region"],
             # LV-137: el aeródromo más cercano y su distancia, que el plan ya
             # calculó y el permiso no tenía dónde guardar. Con `LV-132`, si el
             # área no es circular estos valores son los del círculo que la
