@@ -260,6 +260,8 @@ class FlightPermissionDetail(
         )
 
     def get_context_data(self, **kwargs):
+        from apps.compliance.attachments import attached_documents_context
+
         context = super().get_context_data(**kwargs)
         # LV-107: "¿esta operación está completa y documentada?" respondida acá,
         # en vez de abriendo cinco pantallas y acordándose de todas. Composición
@@ -295,21 +297,13 @@ class FlightPermissionDetail(
         # existing generic Document pipeline -- FlightPermission is already in
         # DOCUMENTABLE_MODELS (apps/compliance/forms.py), this just surfaces
         # them here and links to the existing upload form, pre-filled.
-        if self.request.user.has_perm("compliance.view_document"):
-            from django.contrib.contenttypes.models import ContentType
-
-            from apps.compliance.models import Document
-
-            content_type = ContentType.objects.get_for_model(FlightPermission)
-            context["permission_content_type_id"] = content_type.pk
-            context["documents"] = Document.objects.filter(
-                content_type=content_type,
-                object_id=self.object.pk,
-                is_current_version=True,
-                is_active=True,
-            ).order_by("-issue_date")
-        else:
-            context["documents"] = None
+        #
+        # R10.6: era una copia propia de esta consulta, escrita antes de que
+        # existiera `attached_documents_context`. Sobrevivió a LV-92 y LV-104,
+        # así que el permiso -- la ficha donde más papeles se acumulan -- era la
+        # única sin agrupación por categoría, sin "Subir varios" y sin el modal
+        # de "Ver". Una sección, una implementación.
+        context.update(attached_documents_context(self.request.user, self.object))
         # R2.5: a single dropdown instead of one button per transition -- most
         # visits do not change the status at all, and the previous row of
         # colour-coded buttons was more chrome than the decision warranted.
