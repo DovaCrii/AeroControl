@@ -16,7 +16,10 @@
 {% block content %}
 <div class="page-header">
   <div>
-    <p class="eyebrow mb-1">{% translate "Geospatial planning" %}</p>
+    {% comment %}LV-138: el folio encabeza y el título va debajo, igual que en la
+    ficha del permiso: lo que se cita arriba, lo que explica de qué es abajo.
+    {% endcomment %}
+    <p class="eyebrow mb-1">{% translate "Geospatial planning" %}{% if plan.folio %} · {{ plan.folio }}{% endif %}</p>
     <h1 class="h3">{{ plan.title }}</h1>
     <p class="text-muted mb-0">
       {{ plan.cost_center }}
@@ -101,7 +104,11 @@ escribe nada.{% endcomment %}
             <div class="small text-body-secondary">{% translate "Smallest circle that encloses the drawn area" %}{% if row.drawn_radius_m %} · {% blocktranslate with radius=row.drawn_radius_m %}drawn: {{ radius }} m average{% endblocktranslate %}{% endif %}</div>
             {% endif %}
           </td>
-          <td class="text-nowrap"><span class="font-monospace small">{{ row.lat_readable }}<br>{{ row.lon_readable }}</span></td>
+          {% comment %}LV-140: cada línea dice cuál es. La letra del hemisferio
+          (S / W) ya lo implicaba, pero implicar no es decir: SIGO pide latitud y
+          longitud en **casillas separadas**, y quien transcribe no debería tener
+          que deducir cuál va en cuál contando líneas.{% endcomment %}
+          <td class="text-nowrap"><span class="font-monospace small"><span class="text-body-secondary">{% translate "Lat" %}</span> {{ row.lat_readable }}<br><span class="text-body-secondary">{% translate "Lon" %}</span> {{ row.lon_readable }}</span></td>
           <td>{{ row.radius_m|default:"—" }}</td>
           <td>{% if row.amc %}{{ row.amc }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
           <td class="text-end">{{ row.amc_distance_km|default:"—" }}</td>
