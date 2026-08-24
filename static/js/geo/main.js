@@ -17,6 +17,7 @@ import {
   explodeMultiGeometry,
 } from "./doc.js";
 import { createMap } from "./map.js";
+import { installExpand } from "./expand.js";
 import { buildPanel, buildTree } from "./panel.js";
 import { diffDocuments, DIFF_COLORS } from "./diff.js";
 import { buildPopup, buildEditablePopup } from "./inspector.js";
@@ -61,6 +62,13 @@ async function init() {
     L.Icon.Default.imagePath = config.iconBase;
   }
   const map = createMap(mapEl, config.tileProviders);
+
+  // LV-136: se instala antes de cargar el contenido y no depende de él -- un
+  // plan sin versión también se puede ampliar para mirar el mapa base.
+  installExpand(map, {
+    card: document.getElementById("geo-map-card"),
+    button: document.getElementById("geo-expand"),
+  });
 
   if (!config.contentUrl) {
     setStatus(statusEl, labels.empty);

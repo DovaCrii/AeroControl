@@ -1586,22 +1586,28 @@ main {
 }
 
 /* ── BLOQUE GEO — read-only map island (GEO-7) ──────────────────────────── */
+/* LV-136: el mapa medía 480 px fijos, así que en una pantalla de 1080 sobraba
+   la mitad del alto y editar obligaba a arrastrar el lienzo en vez de mirarlo.
+   Ahora crece con la ventana -- `clamp` sube el techo sin colapsarlo en una
+   pantalla baja, donde 480 px sigue siendo el piso -- y la altura la fija el
+   contenedor para que el panel de capas mida siempre lo mismo que el mapa (antes
+   eran dos números que había que acordarse de mover juntos). */
 .geo-map-wrap {
   display: flex;
   gap: 0;
-  min-height: 480px;
+  height: clamp(480px, 68vh, 900px);
 }
 .geo-map {
   flex: 1 1 auto;
-  min-height: 480px;
-  height: 480px;
+  height: 100%;
+  min-height: 0;
   z-index: 0; /* keep Leaflet panes under the app sidebar/modals */
 }
 .geo-panel {
   flex: 0 0 240px;
   max-width: 240px;
   overflow-y: auto;
-  max-height: 480px;
+  max-height: 100%;
   border-left: 1px solid var(--ac-border);
   background: var(--ac-surface-raised);
   color: var(--ac-text);
@@ -1631,6 +1637,34 @@ main {
   flex: 0 0 auto;
   color: var(--ac-text-secondary);
   font-variant-numeric: tabular-nums;
+}
+/* LV-136: "Ampliar" -- la tarjeta del mapa ocupa la ventana entera para dibujar.
+   Es un estado de la tarjeta y no una ventana nueva, así que los controles de
+   edición, el panel de capas y los botones de Deshacer/Rehacer/Guardar siguen
+   siendo los mismos elementos: no hay una segunda copia del editor que después
+   se desincronice.
+
+   `z-index` 1045: sobre la barra lateral (1040) y bajo el modal de Bootstrap
+   (1055), para que un diálogo abierto desde el mapa siga quedando encima. */
+.geo-map-card.geo-expanded {
+  position: fixed;
+  inset: 0;
+  z-index: 1045;
+  margin: 0;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.geo-map-card.geo-expanded .geo-map-wrap {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+}
+/* El body no debe hacer scroll detrás de la tarjeta ampliada: arrastrar el mapa
+   movería la página en vez del lienzo. */
+body.geo-expanded-open {
+  overflow: hidden;
 }
 /* BLOQUE 5 situation metrics */
 .admin-metrics { display: flex; flex-wrap: wrap; gap: 0.75rem; }
@@ -1712,7 +1746,10 @@ a.admin-metric:hover { border-color: var(--ac-text-secondary); }
 .geo-popup-desc { margin: 0.25rem 0 0; white-space: pre-wrap; }
 .geo-popup-measure { margin: 0.25rem 0 0; font-variant-numeric: tabular-nums; }
 @media (max-width: 768px) {
-  .geo-map-wrap { flex-direction: column; }
+  /* En columna la altura la ponen los hijos: con la del contenedor fija, el
+     mapa y el panel se pelearían los mismos píxeles y el mapa perdería. */
+  .geo-map-wrap { flex-direction: column; height: auto; }
+  .geo-map { height: 60vh; min-height: 320px; }
   .geo-panel { flex-basis: auto; max-width: none; max-height: 160px; border-left: 0; border-top: 1px solid var(--ac-border); }
 }
 

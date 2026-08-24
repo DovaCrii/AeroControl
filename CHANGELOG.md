@@ -78,6 +78,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   presentadas; para un permiso, sus vuelos, planes, documentos y solicitudes.
   Nada se archiva en cascada. Y un permiso **ya aprobado por la autoridad** exige
   un motivo escrito que queda en la auditoría con tu nombre y la fecha.
+- **El mapa usa la pantalla que tiene, y se puede ampliar (`LV-136`).** Medía 480
+  píxeles fijos, así que en un monitor grande sobraba la mitad del alto y dibujar
+  era arrastrar el lienzo en vez de mirarlo. Ahora **crece con la ventana**, y el
+  botón **"Ampliar"** le da la pantalla completa para trabajar — con `Escape` para
+  volver. Es la misma tarjeta ocupando todo, no un mapa aparte: los controles de
+  dibujo, las capas y "Guardar" son los mismos, así que no hay dos editores que
+  puedan quedar diciendo cosas distintas.
 - **El listado de planes gana filtros (`LV-135`).** Era la única lista de la app
   sin ninguno: ahora busca por título y centro de costo, filtra por estado y deja
   ver lo archivado. Los dos listados muestran **lo vigente por defecto**.
