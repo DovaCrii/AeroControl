@@ -55,6 +55,15 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   rellenó. Nunca pisa lo que ya estuviera escrito: si el permiso trae una
   coordenada del papel DGAC, esa manda. Y el historial del vínculo ya registra
   **quién** lo hizo.
+- **El aeródromo más cercano se calcula sobre 15 posiciones, no 6 (`R10.7`).** El
+  catálogo copiado del selector de SIGO traía los nombres pero casi ninguna
+  coordenada, así que "el más cercano" se elegía entre seis. Las posiciones ahora
+  vienen del **AIP de la DGAC**, cruzadas por designador OACI, y de paso
+  corrigieron dos que estaban movidas (`SCEL` 737 m, `SCBA` 417 m). **No se
+  agregaron aeródromos nuevos**: la casilla de SIGO sólo acepta lo que su propio
+  selector ofrece, así que el AMC que la app propone es el más cercano **entre
+  esos**, y para mejorarlo hay que capturar el resto del selector. Requiere
+  correr `manage.py import_aip_aerodromes` una vez.
 - **El plan geoespacial y la solicitud SIGO reciben documentos (`R10.5`).** Los
   papeles llegan **antes** que el permiso —el KMZ del cliente, el correo que pide
   el vuelo, la carta AIP con la que se confirmó el aeródromo, la constancia de lo
