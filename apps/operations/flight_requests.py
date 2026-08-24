@@ -59,59 +59,60 @@ def plan_sections(plan):
     if plan.current_version is None:
         return []
     aerodromes = _locatable_aerodromes()
-    rows = []
-    for section in split_sections(plan.current_version.content):
-        nearest = nearest_aerodromes(section.center, aerodromes, limit=1)
-        aerodrome, distance_km = nearest[0] if nearest else (None, None)
-        lat, lon = section.center
-        rows.append(
-            {
-                "section": section,
-                "name": section.name,
-                "lat": lat,
-                "lon": lon,
-                # Las seis casillas de SIGO, y la lectura corrida para cotejar
-                # de un vistazo contra la carta.
-                "dms_lat": to_dms(lat, "lat"),
-                "dms_lon": to_dms(lon, "lon"),
-                "lat_readable": format_dms(lat, "lat"),
-                "lon_readable": format_dms(lon, "lon"),
-                "radius_m": round(section.radius_m) if section.radius_m else None,
-                "amc": aerodrome,
-                "amc_distance_km": (
-                    round(distance_km, 1) if distance_km is not None else None
-                ),
-                "warnings": list(section.warnings),
-                "enclosing": _enclosing_row(section, aerodromes),
-            }
-        )
-    return rows
+    return [
+        _row(section, aerodromes)
+        for section in split_sections(plan.current_version.content)
+    ]
 
 
-def _enclosing_row(section, aerodromes):
-    """R10.8: la circunferencia mínima que encierra un área que no es circular.
+def _row(section, aerodromes):
+    """Una fila por circunferencia, con **un solo** juego de casillas.
 
-    **Con su propio AMC**, y esa es la parte que importa: lo que se declara en
-    SIGO es este centro, no el punto original, así que la distancia al aeródromo
-    tiene que medirse desde acá. Devolver el AMC del punto declarado junto a un
-    centro distinto sería una fila internamente inconsistente — dos datos
-    correctos por separado que juntos describen una solicitud que no existe.
+    `LV-132`: R10.8 agregó una segunda fila con la circunferencia que encierra un
+    área irregular, al lado de la dibujada, y el usuario reportó lo que eso
+    produce: *"se ve como doble datos […] no es mejor dejar solo uno?"*. Sobre
+    `CC 716` las dos filas decían 3106 y 3115 m con el mismo aeródromo y la misma
+    distancia — ruido. Y algo peor que ruido: **invita a mezclar el centro de una
+    con el radio de la otra**, y el punto dibujado con el radio del círculo
+    envolvente no cubre el área.
+
+    Así que cuando el área no es circular la fila **es** la del círculo que la
+    encierra: centro, radio y AMC del mismo objeto, que es el único juego
+    coherente. El radio promedio de algo que no es un círculo no es un dato que
+    nadie deba copiar —es el artefacto de medir un no-círculo—, así que viaja
+    aparte (`drawn_radius_m`) sólo como referencia.
     """
-    if section.enclosing is None:
-        return None
-    latitude, longitude, radius_m = section.enclosing
-    nearest = nearest_aerodromes((latitude, longitude), aerodromes, limit=1)
+    center = section.center
+    radius_m = section.radius_m
+    is_enclosing = section.enclosing is not None
+    if is_enclosing:
+        latitude, longitude, radius_m = section.enclosing
+        center = (latitude, longitude)
+    # El AMC se mide desde el centro que se va a declarar. Medirlo desde el otro
+    # daría dos datos correctos por separado que juntos describen una solicitud
+    # que no existe.
+    nearest = nearest_aerodromes(center, aerodromes, limit=1)
     aerodrome, distance_km = nearest[0] if nearest else (None, None)
+    lat, lon = center
     return {
-        "lat": latitude,
-        "lon": longitude,
-        "dms_lat": to_dms(latitude, "lat"),
-        "dms_lon": to_dms(longitude, "lon"),
-        "lat_readable": format_dms(latitude, "lat"),
-        "lon_readable": format_dms(longitude, "lon"),
-        "radius_m": round(radius_m),
+        "section": section,
+        "name": section.name,
+        "lat": lat,
+        "lon": lon,
+        # Las seis casillas de SIGO, y la lectura corrida para cotejar de un
+        # vistazo contra la carta.
+        "dms_lat": to_dms(lat, "lat"),
+        "dms_lon": to_dms(lon, "lon"),
+        "lat_readable": format_dms(lat, "lat"),
+        "lon_readable": format_dms(lon, "lon"),
+        "radius_m": round(radius_m) if radius_m else None,
         "amc": aerodrome,
-        "amc_distance_km": round(distance_km, 1) if distance_km is not None else None,
+        "amc_distance_km": (round(distance_km, 1) if distance_km is not None else None),
+        "warnings": list(section.warnings),
+        "is_enclosing": is_enclosing,
+        "drawn_radius_m": (
+            round(section.radius_m) if is_enclosing and section.radius_m else None
+        ),
     }
 
 

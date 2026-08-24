@@ -6412,3 +6412,15 @@ msgstr "La circunferencia más chica que la encierra"
 #: .\templates/geo/plan_detail.html
 msgid "The ↳ row appears when the drawn area is not a circle: SIGO accepts one circle per request, and that is the smallest one covering the whole area."
 msgstr "La fila ↳ aparece cuando el área dibujada no es una circunferencia: SIGO acepta una por solicitud, y ésa es la más chica que cubre toda el área."
+
+#: .\templates/geo/plan_detail.html
+msgid "Smallest circle that encloses the drawn area"
+msgstr "La circunferencia más chica que encierra el área dibujada"
+
+#: .\templates/geo/plan_detail.html
+msgid "drawn: %(radius)s m average"
+msgstr "dibujado: %(radius)s m de promedio"
+
+#: .\templates/geo/plan_detail.html
+msgid "When the drawn area is not a circle, the row shows the smallest circle that covers it: SIGO accepts one circle per request, and the average radius of a non-circle is not a figure to file."
+msgstr "Cuando el área dibujada no es una circunferencia, la fila muestra la más chica que la cubre: SIGO acepta una por solicitud, y el radio promedio de algo que no es un círculo no es una cifra para presentar."

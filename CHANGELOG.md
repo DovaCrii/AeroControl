@@ -55,6 +55,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   rellenó. Nunca pisa lo que ya estuviera escrito: si el permiso trae una
   coordenada del papel DGAC, esa manda. Y el historial del vínculo ya registra
   **quién** lo hizo.
+- **Una sola fila por circunferencia (`LV-132`).** `R10.8` mostraba la
+  circunferencia envolvente **al lado** de la dibujada, y en un área casi
+  circular eso se leía como el mismo dato dos veces — con el riesgo de mezclar el
+  centro de una con el radio de la otra, que es la combinación que **no** cubre
+  el área. Ahora la fila muestra directamente lo que se puede declarar, y el
+  radio promedio de lo dibujado queda como referencia en chico.
 - **Un área que no es circunferencia ya trae la que hay que declarar (`R10.8`).**
   SIGO acepta una circunferencia con su punto central por solicitud, y la mayoría
   de las áreas reales son polígonos a mano alzada: la app avisaba y dejaba el
