@@ -40,7 +40,7 @@ Notificaciones a `Dirección`: `aortega@jej.cl` + `cmunoz@jej.cl`.
 
 ## Cierre del 2026-08-24, sesión de tarde — **empezar por acá**
 
-`main` = `origin/main` = `<último>`, árbol limpio salvo `.vscode/`.
+`main` = `origin/main` = `9db1f12`, árbol limpio salvo `.vscode/`.
 `pwsh scripts/verify.ps1` verde: **1755 tests**, cobertura 96.56%, ruff, bandit y
 pip-audit sin hallazgos. De 1637 tests a 1755 en el día.
 
