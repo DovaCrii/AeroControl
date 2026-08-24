@@ -280,6 +280,11 @@ the provider did not answer -- a forecast is context, never a blocker.{% endcomm
   </div>
 </div>
 
+{% comment %}R10.5: los papeles que acompañan al KMZ. La sección es la misma que
+llevan la aeronave, el operador, el centro de costo y el permiso -- una sola
+implementación, y el `object` que necesita es el plan.{% endcomment %}
+{% include "compliance/_documents_section.html" %}
+
 {{ map_config|json_script:"geo-map-config" }}
 {% endblock %}
 

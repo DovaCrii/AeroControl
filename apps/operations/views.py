@@ -795,8 +795,14 @@ class FlightRequestDetail(
         )
 
     def get_context_data(self, **kwargs):
+        from apps.compliance.attachments import attached_documents_context
+
         context = super().get_context_data(**kwargs)
         request_obj = self.object
+        # R10.5: la constancia de lo presentado en SIGO cuelga de la solicitud,
+        # que es el registro que existe en ese momento -- el permiso llega
+        # después, si llega.
+        context.update(attached_documents_context(self.request.user, request_obj))
         context["sheet"] = sigo_sheet(request_obj)
         context["note_form"] = FlightRequestNoteForm()
         context["work_item_form"] = FlightRequestWorkItemForm()

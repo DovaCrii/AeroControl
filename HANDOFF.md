@@ -71,29 +71,50 @@ de MLP, con 47).
 ### Lo siguiente, por valor
 
 1. **Coordenadas de aeródromos — es el que hace útil al resto.** `seed_aerodromes`
-   dejó **6 de 50** georreferenciados, así que "la base más cercana" elige entre
+   dejó **6 de 51** georreferenciados, así que "la base más cercana" elige entre
    seis y la pantalla tiene que advertirlo. Fuente probable: el mapa que aportó
    el usuario
    (`google.com/maps/d/u/0/viewer?mid=1T3wWBnClwim-qP1isEKxBO4Xc1Dt6z4`).
-   Regla que se mantiene: **la app propone, la carta AIP manda**.
-2. **Documentos en plan y solicitud** — `DOCUMENTABLE_MODELS`
-   (`apps/compliance/forms.py:29`) no incluye `geo.geoplan` ni
-   `operations.flightrequest`, así que no se les puede adjuntar nada. El molde a
-   copiar es cómo `FlightPermission` obtuvo su sección (OPS-5).
+   Regla que se mantiene: **la app propone, la carta AIP manda**. El hueco real
+   es menor de lo que suena: **17 entradas son de código chileno (`SC*`/`SH*`) y
+   6 ya están, así que faltan 11**; las otras 34 son extranjeras (Abu Dhabi,
+   Anchorage, Taranto) y nunca van a ser el AMC de un vuelo en Chile. **Y ya hay
+   un caso que lo prueba**: para los siete KMZ de CC 738 la app propone `SCER`
+   (Quintero) a **111–124 km**, estando esas faenas en el interior del Choapa.
+   Ojo con `SCSA`, rotulada "Alberto Santos Dumont" (que es Río de Janeiro,
+   `SBRJ`): confirmar antes de georreferenciarla.
+2. ~~**Documentos en plan y solicitud**~~ — **hecho el 2026-08-24 (`R10.5`)**,
+   con la sección compartida. Queda una deuda relacionada: la ficha del permiso
+   sigue con su propia copia anterior a `attached_documents_context`, así que hoy
+   hay dos implementaciones de la misma sección.
 3. **Botón "Separar un plan"** del listado de solicitudes: lleva al listado de
    planes, no a una acción. Con `R10.1` su lugar cambió y conviene revisarlo.
 4. **Crear `RPA-7213` en CC 743 = "Candelaria"** y `RPA-7126` en CC 738, con sus
    PDF. Datos verificados contra los papeles en la fila `LV-121` del plan.
+
+### Los siete KMZ de CC 738, y el bug que destaparon
+
+El usuario aportó `CG-01`…`CG-07_circunferencia_grande.kmz`
+(`D:\OneDrive - J.E.J. Ingeniería S.A\DGAC\Permisos\CC 738\08-2026\KMZ\KMZ_circunferencias_grandes\`)
+para sacar los permisos con ellos. **Los exporta Trimble Business Center, no
+Google Earth**, y ahí el círculo es un `LineString` cerrado en vez de un
+`Polygon`: los siete daban "sin círculo" y sin radio (`R10.4`, corregido). Uno
+por permiso, una circunferencia cada uno, radios de **252 m a 2396 m**, así que
+**no hay que separar ninguno** — con `R10.1` la ficha del plan ya muestra sus
+datos para SIGO. Conviene probar contra estos archivos y no sólo contra el KMZ
+de MLP (47 círculos, `Polygon`): las dos formas existen en producción.
 
 ### Qué está en `p340` y qué no
 
 **Desplegado hoy** (hasta `6c98842`): `LV-117`…`LV-128` y **R9 completo**, con
 sus migraciones, `bootstrap_roles` y los cuatro seeds. Verificado funcionando.
 
-**Sin desplegar**, y son sólo dos commits posteriores:
+**Sin desplegar**, y son cuatro commits posteriores:
 
 - `f8f0211` — `LV-129` (los números del panel) y el guardián de URLs.
 - `3eba41d` — `R10` completo.
+- `R10.4` — el KMZ de Trimble deja de leerse como "sin círculo".
+- `R10.5` — plan y solicitud reciben documentos.
 
 **Ninguno trae migraciones.** El despliegue es el bloque de abajo **sin** el
 paso de `migrate` ni los seeds; sí hacen falta `collectstatic` y el reinicio,

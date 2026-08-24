@@ -184,6 +184,11 @@ explícita del usuario. Lo que queda registrado es quién anotó qué y cuándo.
   {% endif %}
 </div>
 
+{% comment %}R10.5: la constancia de lo presentado en SIGO, el correo que pidió el
+vuelo, el KMZ de la sección tal como se subió. Misma sección compartida que
+llevan el permiso y las fichas del registro.{% endcomment %}
+{% include "compliance/_documents_section.html" %}
+
 {% translate "Request history" as request_history_title %}
 {% include "generic/_traceability.html" with record=request_obj steps=request_obj.status_steps history=history history_title=request_history_title %}
 {% endblock %}

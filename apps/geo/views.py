@@ -105,8 +105,15 @@ class GeoPlanDetailView(ModelViewPermissionRequiredMixin, DetailView):
         from django.urls import reverse
         from django.utils.translation import gettext as _
 
+        from apps.compliance.attachments import attached_documents_context
+
         context = super().get_context_data(**kwargs)
         plan = self.object
+        # R10.5: los papeles que acompañan al KMZ -- el correo que pidió el
+        # vuelo, el plano del cliente, la carta AIP con la que se confirmó el
+        # AMC. Antes sólo se podían colgar del permiso, que en la etapa del plan
+        # todavía no existe.
+        context.update(attached_documents_context(self.request.user, plan))
         context["versions"] = plan.versions.order_by("-version_number")
         # LV-72: same traceability block as the flight permit. Oldest first
         # (SIGO numbers 1..N in the order things happened) with the actor's

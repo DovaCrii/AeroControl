@@ -33,6 +33,13 @@ DOCUMENTABLE_MODELS = {
     ("registry", "costcenter"),
     ("operations", "flightpermission"),
     ("maintenance", "maintenancerecord"),
+    # R10.5: el plan geoespacial y la solicitud SIGO. Los papeles de una faena
+    # llegan **antes** que el permiso —el KMZ del cliente, el correo que pide el
+    # vuelo, la constancia de lo presentado en SIGO— y hasta acá el único
+    # colgadero era `flightpermission`, que en esa etapa todavía no existe. Sin
+    # esto, ese archivo se guardaba en el disco de alguien.
+    ("geo", "geoplan"),
+    ("operations", "flightrequest"),
     # Company-wide documents (AOC, procedures, forms) hang off the tenant.
     ("core", "operationaltenant"),
 }
@@ -162,6 +169,8 @@ DOCUMENTABLE_MODEL_LABELS = {
     ("registry", "costcenter"): _("Cost center"),
     ("operations", "flightpermission"): _("Flight permission"),
     ("maintenance", "maintenancerecord"): _("Maintenance record"),
+    ("geo", "geoplan"): _("Geospatial plan"),
+    ("operations", "flightrequest"): _("Flight request"),
     ("core", "operationaltenant"): _("Company"),
 }
 
