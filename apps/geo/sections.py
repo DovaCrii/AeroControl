@@ -186,21 +186,56 @@ def estimate_radius_m(center, ring):
     return mean, deviation
 
 
+def closed_ring_of(placemark):
+    """El anillo exterior de un placemark que encierra un área, o None.
+
+    R10.4: un `Polygon` la trae en su primer anillo, pero **no es la única forma
+    en que llega una circunferencia**. Los KMZ de Trimble Business Center — los
+    que usa el usuario para los permisos de CC 738 — exportan el círculo como un
+    `LineString` cerrado de cientos de vértices, y mirando sólo `Polygon` la app
+    daba "sin círculo" sobre siete archivos que traían el círculo perfectamente
+    dibujado: sin radio, sin datos para SIGO y con un aviso falso encima.
+
+    Cerrado quiere decir que el último vértice repite el primero, que es como lo
+    cierran las herramientas que exportan anillos. Un `LineString` **abierto** se
+    ignora a propósito: es un trazado —un camino, una quebrada, un perfil— y
+    tomarlo por área convertiría una ruta en una circunferencia de vuelo. El
+    umbral de `MAX_RADIUS_DEVIATION` decide después si el anillo es un círculo o
+    un polígono cualquiera; esta función sólo distingue área de trazado.
+    """
+    geometry = placemark.get("geometry") or {}
+    coordinates = geometry.get("coordinates")
+    if not coordinates:
+        return None
+    if geometry.get("type") == "Polygon":
+        return coordinates[0]
+    if geometry.get("type") == "LineString":
+        # Cuatro vértices es el mínimo de un anillo cerrado: tres distintos más
+        # la repetición del primero. Con tres, `[p, q, p]` es ida y vuelta entre
+        # dos puntos —cerrado y sin área—, y medirle un radio daría un número
+        # sin significado.
+        if len(coordinates) >= 4 and coordinates[0][:2] == coordinates[-1][:2]:
+            return coordinates
+    return None
+
+
 def split_sections(document):
     """Separar un documento canónico en secciones punto+circunferencia.
 
     Devuelve una lista de `Section` en el orden de los puntos en el documento
     (que es el orden en que la persona los dibujó y espera verlos). Los
-    polígonos huérfanos van al final, cada uno como sección con aviso.
+    anillos huérfanos van al final, cada uno como sección con aviso.
     """
     points = []
-    polygons = []
+    rings = []  # (placemark, anillo exterior) -- ver closed_ring_of
     for placemark in iter_placemarks(document):
         geometry = placemark.get("geometry") or {}
         if geometry.get("type") == "Point" and geometry.get("coordinates"):
             points.append(placemark)
-        elif geometry.get("type") == "Polygon" and geometry.get("coordinates"):
-            polygons.append(placemark)
+            continue
+        ring = closed_ring_of(placemark)
+        if ring is not None:
+            rings.append((placemark, ring))
 
     # Todos los pares (polígono, punto) dentro del umbral, no sólo el punto más
     # cercano de cada polígono. La versión "sólo el más cercano" falló al
@@ -211,10 +246,9 @@ def split_sections(document):
     # pares en la mesa, el reclamo voraz por distancia deja a cada uno con el
     # suyo, y el duplicado se delata aparte (`WARNING_DUPLICATE_CENTER`) en vez
     # de disfrazarse de desemparejado.
-    candidates = []  # (distance_m, polygon_index, point_index)
-    measured = []  # (centroid, radius_m, deviation) por polígono
-    for poly_index, polygon in enumerate(polygons):
-        ring = polygon["geometry"]["coordinates"][0]
+    candidates = []  # (distance_m, ring_index, point_index)
+    measured = []  # (centroid, radius_m, deviation) por anillo
+    for ring_index, (_placemark, ring) in enumerate(rings):
         centroid = _centroid(ring)
         radius_m, deviation = estimate_radius_m(centroid, ring)
         measured.append((centroid, radius_m, deviation))
@@ -225,14 +259,14 @@ def split_sections(document):
                 haversine_km(centroid[0], centroid[1], coords[1], coords[0]) * 1000
             )
             if distance_m <= threshold:
-                candidates.append((distance_m, poly_index, point_index))
+                candidates.append((distance_m, ring_index, point_index))
 
     claimed_by_point = {}
-    claimed_polygons = set()
-    for _distance_m, poly_index, point_index in sorted(candidates):
-        if point_index not in claimed_by_point and poly_index not in claimed_polygons:
-            claimed_by_point[point_index] = poly_index
-            claimed_polygons.add(poly_index)
+    claimed_rings = set()
+    for _distance_m, ring_index, point_index in sorted(candidates):
+        if point_index not in claimed_by_point and ring_index not in claimed_rings:
+            claimed_by_point[point_index] = ring_index
+            claimed_rings.add(ring_index)
 
     sections = []
     for point_index, point in enumerate(points):
@@ -242,17 +276,16 @@ def split_sections(document):
             center=(coords[1], coords[0]),
             point=point,
         )
-        poly_index = claimed_by_point.get(point_index)
-        if poly_index is None:
+        ring_index = claimed_by_point.get(point_index)
+        if ring_index is None:
             section.warnings.append(WARNING_NO_CIRCLE)
         else:
-            polygon = polygons[poly_index]
+            placemark, ring = rings[ring_index]
             # El radio se mide desde el punto declarado, no desde el centroide:
             # el punto es lo que la persona afirmó como centro y lo que SIGO
             # recibirá como tal.
-            ring = polygon["geometry"]["coordinates"][0]
             radius_m, deviation = estimate_radius_m(section.center, ring)
-            section.circle = polygon
+            section.circle = placemark
             section.radius_m = radius_m
             section.radius_deviation = deviation
             if deviation > MAX_RADIUS_DEVIATION:
@@ -260,16 +293,16 @@ def split_sections(document):
         sections.append(section)
 
     matched = set(claimed_by_point.values())
-    for poly_index, polygon in enumerate(polygons):
-        if poly_index in matched:
+    for ring_index, (placemark, _ring) in enumerate(rings):
+        if ring_index in matched:
             continue
-        centroid, radius_m, deviation = measured[poly_index]
+        centroid, radius_m, deviation = measured[ring_index]
         orphan = Section(
-            name=polygon.get("name") or f"Circunferencia {poly_index + 1}",
+            name=placemark.get("name") or f"Circunferencia {ring_index + 1}",
             center=centroid,
             radius_m=radius_m,
             radius_deviation=deviation,
-            circle=polygon,
+            circle=placemark,
             warnings=[WARNING_NO_CENTER_POINT],
         )
         if deviation > MAX_RADIUS_DEVIATION:
