@@ -6284,3 +6284,59 @@ msgid "%(counter)s within 30 days"
 msgid_plural "%(counter)s within 30 days"
 msgstr[0] "%(counter)s en 30 días"
 msgstr[1] "%(counter)s en 30 días"
+
+#: .\templates\geo\plan_detail.html
+msgid "Data for SIGO"
+msgstr "Datos para SIGO"
+
+#: .\templates\geo\plan_detail.html
+msgid "Circle"
+msgstr "Circunferencia"
+
+#: .\templates\geo\plan_detail.html
+msgid "Distance (km)"
+msgstr "Distancia (km)"
+
+#: .\templates\geo\plan_detail.html
+msgid "This circle has a data problem — see Split for the detail"
+msgstr "Esta circunferencia tiene un problema de dato — ver Separar para el detalle"
+
+#: .\templates\geo\plan_detail.html
+msgid ""
+"The aerodrome is proposed by distance, among those with coordinates on file "
+"— confirm it against the AIP chart before filing."
+msgstr ""
+"El aeródromo se propone por distancia, entre los que tienen coordenadas "
+"cargadas — confírmalo contra la carta AIP antes de presentar."
+
+#: .\templates\geo\plan_detail.html
+msgid "%(counter)s circle in this file"
+msgid_plural "%(counter)s circles in this file"
+msgstr[0] "%(counter)s circunferencia en este archivo"
+msgstr[1] "%(counter)s circunferencias en este archivo"
+
+#: .\templates\geo\plan_detail.html
+msgid "Split into %(counter)s request"
+msgid_plural "Split into %(counter)s requests"
+msgstr[0] "Separar en %(counter)s solicitud"
+msgstr[1] "Separar en %(counter)s solicitudes"
+
+#: .\templates\operations\permission_detail.html
+msgid "Link a plan already uploaded…"
+msgstr "Vincular un plan ya subido…"
+
+#: .\templates\operations\permission_detail.html
+msgid "Link plan"
+msgstr "Vincular plan"
+
+#: .\apps\operations\views.py
+msgid "Choose a plan from this cost center."
+msgstr "Elige un plan de este centro de costo."
+
+#: .\apps\operations\views.py
+msgid "Plan %(title)s linked; it filled in: %(fields)s."
+msgstr "Plan %(title)s vinculado; rellenó: %(fields)s."
+
+#: .\apps\operations\views.py
+msgid "Plan %(title)s linked. The permit already had its location."
+msgstr "Plan %(title)s vinculado. El permiso ya tenía su ubicación."

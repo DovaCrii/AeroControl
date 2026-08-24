@@ -157,6 +157,10 @@ nada de esto está en `p340` todavía, salvo `LV-117`, que ya se sembró.
 | `LV-119` | Un trabajo deja de decir "Sent" cuando sólo imprimió | Salida de los timers y resumen del trabajo |
 | `LV-120` | Lo ya vencido vuelve a aparecer, con tarjeta propia | Panel |
 | `LV-122` | …y lo que la bandeja ya cerró deja de aparecer | Panel |
+| `LV-129` | Los números del panel dejan de contradecirse; *Alertas pendientes* respeta el filtro por centro de costo | Panel |
+| `R10.1` | **"Datos para SIGO" en la ficha del plan**: punto centro, radio, AMC y distancia — sin separar nada. Separar sólo aparece con más de una circunferencia | Planificación geoespacial |
+| `R10.2` | **"Vincular plan ya subido"** en la ficha del permiso, y el plan rellena su ubicación | Permisos |
+| `R10.3` | Iconos del menú que ya no se repiten | Barra lateral |
 | `LV-121` | El registro DGAC ya no exige vencimiento · tipo nuevo "Solicitud a la JAC" | Carga de documentos |
 | `LV-125` | La entidad de una alerta enlaza a su ficha | Alertas |
 | `LV-126` | El número de serie, en la lista | Aeronaves |
@@ -176,6 +180,12 @@ que sí piden las de `unique`/`NOT NULL` (Parte D del runbook):
   (`Aerodrome`, `FlightRequest` y sus tres acompañantes). No tocan ninguna fila
   existente, así que no pueden fallar sobre datos reales.
 - `operations.0020` (**R9**): sólo un `help_text`. No toca la base.
+
+**`R10` no trae migraciones**: los datos que muestra la ficha del plan se
+calculan al vuelo desde la versión vigente del KMZ, y el vínculo plan↔permiso
+usa un campo (`GeoPlan.flight_permission`) y una bitácora
+(`GeoPlanPermissionLink`) que existen desde OPS-7. Lo único que hacía falta era
+la puerta.
 
 **Esta tanda sube Django de 6.0.7 a 6.0.8** (`PYSEC-2026-3717`, un aviso de
 GeoDjango que esta app no usa; se aplica igual porque es un parche de la misma

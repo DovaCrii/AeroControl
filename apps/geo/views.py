@@ -123,6 +123,16 @@ class GeoPlanDetailView(ModelViewPermissionRequiredMixin, DetailView):
             "previous_permission", "new_permission", "changed_by_user"
         )
         current = plan.current_version
+        # R10.1: lo que este KMZ dice para SIGO, **en la etapa del KMZ**. Antes
+        # sólo se veía al separar el plan en solicitudes, lo que obligaba al
+        # caso normal —un archivo con una circunferencia— a pasar por una acción
+        # pensada para el excepcional. Se calcula al vuelo y no toca la base.
+        #
+        # Import local: `operations` importa de `geo` (los planes son suyos), y
+        # subirlo al encabezado cerraría el círculo.
+        from apps.operations.flight_requests import plan_sections
+
+        context["sigo_rows"] = plan_sections(plan)
         # Status buttons the user may use from the current status (GEO-9).
         context["status_actions"] = [
             {

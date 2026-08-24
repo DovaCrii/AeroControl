@@ -31,16 +31,64 @@
       <button type="submit" class="btn btn-sm {{ action.css }}">{{ action.label }}</button>
     </form>
     {% endfor %}
-    {% comment %}R9.5: se entra por acá porque separar es una acción sobre el
-    KMZ madre, no sobre una solicitud que todavía no existe. Sólo con contenido
-    que separar: sin versión vigente el botón llevaría a un 404.{% endcomment %}
-    {% if perms.operations.add_flightrequest and plan.current_version %}
+    {% comment %}R10.1: separar es la **excepción**, no la puerta principal, así
+    que el botón sólo aparece cuando de verdad hay varias circunferencias que
+    separar. Con una sola —el caso normal— los datos ya se leen en la tarjeta de
+    abajo y no hay nada que partir: ofrecerlo ahí invitaba a "separar" algo que
+    no estaba junto.{% endcomment %}
+    {% if perms.operations.add_flightrequest and sigo_rows|length > 1 %}
     <a class="btn btn-sm btn-outline-primary" href="{% url 'geo-plan-split' plan.pk %}"
-       title="{% translate 'One flight request per circle, as SIGO requires' %}">{% translate "Split into flight requests" %}</a>
+       title="{% translate 'One flight request per circle, as SIGO requires' %}">{% blocktranslate count counter=sigo_rows|length %}Split into {{ counter }} request{% plural %}Split into {{ counter }} requests{% endblocktranslate %}</a>
     {% endif %}
     <a class="btn btn-outline-secondary" href="{% url 'geo-plan-list' %}">{% translate "Back to plans" %}</a>
   </div>
 </div>
+
+{% comment %}R10.1: los datos que SIGO pide, leídos del KMZ y visibles acá — en
+la etapa del KMZ, que es donde el usuario los necesita. Antes sólo aparecían al
+**separar** el plan en solicitudes, de modo que un archivo con una sola
+circunferencia (el caso normal) tenía que pasar por una acción diseñada para el
+excepcional. Se calculan al vuelo desde la versión vigente: esta tarjeta no
+escribe nada.{% endcomment %}
+{% if sigo_rows %}
+<div class="card mb-3 p-3" id="sigo-data">
+  <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+    <h2 class="h5 mb-0">{% translate "Data for SIGO" %}</h2>
+    {% if sigo_rows|length > 1 %}
+    <span class="badge bg-warning-subtle text-warning-emphasis">{% blocktranslate count counter=sigo_rows|length %}{{ counter }} circle in this file{% plural %}{{ counter }} circles in this file{% endblocktranslate %}</span>
+    {% endif %}
+  </div>
+  {% comment %}Con varias circunferencias se listan todas, pero la ficha no
+  finge que el plan "es" una de ellas: para eso está separar.{% endcomment %}
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+      <thead><tr>
+        <th scope="col">{% translate "Circle" %}</th>
+        <th scope="col">{% translate "Centre point" %}</th>
+        <th scope="col">{% translate "Radius (m)" %}</th>
+        <th scope="col">{% translate "Nearest aerodrome (AMC)" %}</th>
+        <th scope="col" class="text-end">{% translate "Distance (km)" %}</th>
+      </tr></thead>
+      <tbody>
+        {% for row in sigo_rows %}
+        <tr>
+          <td>{{ row.name }}{% if row.warnings %} <span class="badge bg-warning-subtle text-warning-emphasis" title="{% translate 'This circle has a data problem — see Split for the detail' %}">!</span>{% endif %}</td>
+          <td class="text-nowrap"><span class="font-monospace small">{{ row.lat_readable }}<br>{{ row.lon_readable }}</span></td>
+          <td>{{ row.radius_m|default:"—" }}</td>
+          <td>{% if row.amc %}{{ row.amc }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+          <td class="text-end">{{ row.amc_distance_km|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% comment %}El aviso no es adorno: `seed_aerodromes` deja sin coordenadas los
+  aeródromos que no se pudieron verificar, así que "el más cercano" se elige
+  entre los que sí las tienen. Decirlo evita que un dato propuesto se lea como
+  un dato confirmado.{% endcomment %}
+  <p class="text-muted small mb-0 mt-2">{% translate "The aerodrome is proposed by distance, among those with coordinates on file — confirm it against the AIP chart before filing." %}</p>
+</div>
+{% endif %}
 
 <div class="card mb-3">
   <div class="admin-section-header">
