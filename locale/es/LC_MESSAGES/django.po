@@ -6424,3 +6424,143 @@ msgstr "dibujado: %(radius)s m de promedio"
 #: .\templates/geo/plan_detail.html
 msgid "When the drawn area is not a circle, the row shows the smallest circle that covers it: SIGO accepts one circle per request, and the average radius of a non-circle is not a figure to file."
 msgstr "Cuando el área dibujada no es una circunferencia, la fila muestra la más chica que la cubre: SIGO acepta una por solicitud, y el radio promedio de algo que no es un círculo no es una cifra para presentar."
+
+#: .\apps/geo/views.py
+msgid "Plan archived. Use the Archived filter to find or restore it."
+msgstr "Plan archivado. Búscalo o restáuralo con el filtro Archivados."
+
+#: .\apps/geo/views.py
+msgid "Plan restored."
+msgstr "Plan restaurado."
+
+#: .\apps/operations/views.py
+msgid "Permit archived. Use the Archived filter to find or restore it."
+msgstr "Permiso archivado. Búscalo o restáuralo con el filtro Archivados."
+
+#: .\apps/operations/views.py
+msgid "Permit restored."
+msgstr "Permiso restaurado."
+
+#: .\templates/geo/plan_archive_confirm.html
+msgid "Archive plan?"
+msgstr "¿Archivar el plan?"
+
+#: .\templates/geo/plan_archive_confirm.html
+msgid "This plan still has records attached to it:"
+msgstr "Este plan todavía tiene registros colgando:"
+
+#: .\templates/geo/plan_archive_confirm.html
+msgid "Archiving hides the plan from the listings; nothing is deleted and nothing cascades. Its SIGO requests stay where they are — they record what was filed with the authority — and this plan will still be reachable from them."
+msgstr "Archivar lo saca de los listados; no se borra nada y nada se archiva en cascada. Sus solicitudes SIGO se quedan donde están —son el registro de lo que se presentó ante la autoridad— y este plan seguirá alcanzable desde ellas."
+
+#: .\templates/geo/plan_archive_confirm.html
+msgid "At least one of its requests is already filed in SIGO: the authority holds a file that this plan explains. Archive it only if you are sure nobody will need to look it up."
+msgstr "Al menos una de sus solicitudes ya está presentada en SIGO: la autoridad tiene un expediente que este plan explica. Archívalo sólo si estás seguro de que nadie va a necesitar consultarlo."
+
+#: .\templates/geo/plan_list.html
+msgid "Search title or cost center..."
+msgstr "Buscar título o centro de costo..."
+
+#: .\templates/geo/plan_list.html
+msgid "In force"
+msgstr "Vigentes"
+
+#: .\templates/geo/plan_list.html
+msgid "In force only"
+msgstr "Sólo vigentes"
+
+#: .\templates/geo/_plan_rows.html
+msgid "No plans match this filter."
+msgstr "Ningún plan coincide con este filtro."
+
+#: .\templates/geo/_plan_rows.html
+msgid "Clear it"
+msgstr "Límpialo"
+
+#: .\templates/operations/permission_archive_confirm.html
+msgid "Archive permit?"
+msgstr "¿Archivar el permiso?"
+
+#: .\templates/operations/permission_archive_confirm.html
+msgid "It still has these records attached:"
+msgstr "Todavía tiene estos registros colgando:"
+
+#: .\templates/operations/permission_archive_confirm.html
+msgid "Nothing else is attached to it."
+msgstr "No tiene nada más colgando."
+
+#: .\templates/operations/permission_archive_confirm.html
+msgid "Archiving hides the permit from the listings; nothing is deleted and nothing cascades. Its flights and requests stay as the record of what happened and what was filed."
+msgstr "Archivar lo saca de los listados; no se borra nada y nada se archiva en cascada. Sus vuelos y solicitudes se quedan como el registro de lo que pasó y de lo que se presentó."
+
+#: .\templates/operations/permission_archive_confirm.html
+msgid "This permit is already approved by the authority: archiving it needs a written reason, which stays in the audit trail with your name and the date."
+msgstr "Este permiso ya está aprobado por la autoridad: archivarlo exige un motivo escrito, que queda en la auditoría con tu nombre y la fecha."
+
+#: .\templates/operations/permission_archive_confirm.html
+msgid "Reason for archiving"
+msgstr "Motivo para archivar"
+
+#: .\templates/operations/permission_archive_confirm.html
+msgid "Write the reason before archiving."
+msgstr "Escribe el motivo antes de archivar."
+
+#: .\templates/operations/permission_archive_confirm.html
+msgid "Write it for whoever reads this a year from now."
+msgstr "Escríbelo para quien lea esto en un año."
+
+#: .\templates/operations/permission_archive_confirm.html
+msgid "Archive %(folio)s?"
+msgstr "¿Archivar %(folio)s?"
+
+#: .\templates/geo/plan_archive_confirm.html
+msgid "linked to permit %(folio)s"
+msgstr "vinculado al permiso %(folio)s"
+
+#: .\templates/geo/plan_archive_confirm.html
+msgid "%(counter)s SIGO request created from it"
+msgid_plural "%(counter)s SIGO requests created from it"
+msgstr[0] "%(counter)s solicitud SIGO nacida de él"
+msgstr[1] "%(counter)s solicitudes SIGO nacidas de él"
+
+#: .\templates/geo/plan_archive_confirm.html
+msgid "%(counter)s already filed"
+msgid_plural "%(counter)s already filed"
+msgstr[0] "%(counter)s ya presentada"
+msgstr[1] "%(counter)s ya presentadas"
+
+#: .\templates/geo/plan_archive_confirm.html
+msgid "%(counter)s version"
+msgid_plural "%(counter)s versions"
+msgstr[0] "%(counter)s versión"
+msgstr[1] "%(counter)s versiones"
+
+#: .\templates/geo/plan_archive_confirm.html
+msgid "%(counter)s recorded weather review"
+msgid_plural "%(counter)s recorded weather reviews"
+msgstr[0] "%(counter)s revisión meteorológica registrada"
+msgstr[1] "%(counter)s revisiones meteorológicas registradas"
+
+#: .\templates/operations/permission_archive_confirm.html
+msgid "%(counter)s logged flight"
+msgid_plural "%(counter)s logged flights"
+msgstr[0] "%(counter)s vuelo registrado"
+msgstr[1] "%(counter)s vuelos registrados"
+
+#: .\templates/operations/permission_archive_confirm.html
+msgid "%(counter)s geospatial plan"
+msgid_plural "%(counter)s geospatial plans"
+msgstr[0] "%(counter)s plan geoespacial"
+msgstr[1] "%(counter)s planes geoespaciales"
+
+#: .\templates/operations/permission_archive_confirm.html
+msgid "%(counter)s attached document"
+msgid_plural "%(counter)s attached documents"
+msgstr[0] "%(counter)s documento adjunto"
+msgstr[1] "%(counter)s documentos adjuntos"
+
+#: .\templates/operations/permission_archive_confirm.html
+msgid "%(counter)s SIGO request"
+msgid_plural "%(counter)s SIGO requests"
+msgstr[0] "%(counter)s solicitud SIGO"
+msgstr[1] "%(counter)s solicitudes SIGO"

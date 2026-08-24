@@ -70,6 +70,17 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   centro de una con el radio de la otra, que es la combinación que **no** cubre
   el área. Ahora la fila muestra directamente lo que se puede declarar, y el
   radio promedio de lo dibujado queda como referencia en chico.
+- **Se puede archivar un plan o un permiso, con doble verificador (`LV-135`).**
+  No había ninguna forma de sacar un plan o un permiso de la lista: la única
+  salida era el admin de Django. Ahora se **archivan** —no se borran: la fila
+  sigue ahí y vuelve con "Restaurar"— y antes de hacerlo la app muestra **qué
+  cuelga**: para un plan, las solicitudes SIGO nacidas de él y cuántas ya están
+  presentadas; para un permiso, sus vuelos, planes, documentos y solicitudes.
+  Nada se archiva en cascada. Y un permiso **ya aprobado por la autoridad** exige
+  un motivo escrito que queda en la auditoría con tu nombre y la fecha.
+- **El listado de planes gana filtros (`LV-135`).** Era la única lista de la app
+  sin ninguno: ahora busca por título y centro de costo, filtra por estado y deja
+  ver lo archivado. Los dos listados muestran **lo vigente por defecto**.
 - **Un área que no es circunferencia ya trae la que hay que declarar (`R10.8`).**
   SIGO acepta una circunferencia con su punto central por solicitud, y la mayoría
   de las áreas reales son polígonos a mano alzada: la app avisaba y dejaba el

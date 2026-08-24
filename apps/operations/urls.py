@@ -34,6 +34,18 @@ urlpatterns = [
         views.FlightPermissionComplete.as_view(),
         name="permission-complete",
     ),
+    # LV-135: archivar es el "borrar" de este proyecto. Con confirmación
+    # siempre, y con motivo escrito si el permiso ya estaba aprobado.
+    path(
+        "permissions/<uuid:pk>/archive/",
+        views.FlightPermissionArchive.as_view(),
+        name="permission-archive",
+    ),
+    path(
+        "permissions/<uuid:pk>/restore/",
+        views.FlightPermissionRestore.as_view(),
+        name="permission-restore",
+    ),
     # LV-101: correcting a wrongly recorded status, with a reason on record.
     # Separate from the transitions above because it is a different act: those
     # say what happened next, this says what was written down was wrong.

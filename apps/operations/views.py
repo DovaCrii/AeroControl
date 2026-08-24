@@ -156,6 +156,12 @@ class FlightPermissionList(
             queryset = queryset.filter(valid_until__gte=self.request.GET["date_from"])
         if self.request.GET.get("date_to"):
             queryset = queryset.filter(valid_from__lte=self.request.GET["date_to"])
+        # LV-135: **el defecto es lo vigente.** `SearchMixin` sin el parámetro no
+        # filtra nada, y desde que un permiso se puede archivar eso mostraría lo
+        # archivado mezclado con lo activo -- justo lo que archivar viene a
+        # evitar. Se ve archivado sólo al pedirlo, y desde ahí se restaura.
+        if self.request.GET.get("is_active") not in {"active", "archived"}:
+            queryset = queryset.filter(is_active=True)
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -164,6 +170,7 @@ class FlightPermissionList(
             title=_("Permissions"),
             status_choices=FlightPermission.STATUS_CHOICES,
             current_status=self.request.GET.get("status", ""),
+            current_is_active=self.request.GET.get("is_active", ""),
         )
         # LV-53: SearchMixin's is_filtered only knows about q/is_active, not
         # this list's own status/date_from/date_to -- widen it so "cleared
@@ -401,6 +408,120 @@ class FlightPermissionComplete(RequireDgacPermitPdfMixin, StatusTransitionView):
         "Upload the DGAC operation authorization (the signed SIGO PDF) "
         "before completing this permit."
     )
+
+
+class FlightPermissionArchive(ModelPermissionRequiredMixin, View):
+    """LV-135: retirar un permiso de la lista, sin borrarlo y sin callarlo.
+
+    **Archiva, no borra** (`is_active=False`): la fila sale de los listados y
+    vuelve con el filtro "Archivados". En una app de cumplimiento lo que no se
+    puede deshacer no se ofrece con un botón.
+
+    **Siempre confirma**, aunque no cuelgue nada. A diferencia del plan —donde un
+    borrador sin versiones no tiene nada que mirar—, un permiso es el espejo de un
+    trámite ante la DGAC desde el momento en que se crea, y la pantalla de
+    confirmación es la que muestra qué se va a llevar consigo: vuelos
+    registrados, planes vinculados, documentos, solicitudes SIGO.
+
+    **Y si está aprobado o completado, cuesta un motivo escrito.** Decisión del
+    usuario, tomada sobre las tres alternativas: un permiso que la DGAC aprobó no
+    desaparece de la lista sin explicación. Es el mismo trato que `LV-101` hizo
+    para corregir un estado mal registrado, y por la misma razón: la diferencia
+    entre una auditoría que se explica sola y una que dice "archivado" y nada más.
+    Nada se archiva en cascada: los vuelos y las solicitudes son registros de lo
+    que pasó y de lo que se pidió.
+    """
+
+    model = FlightPermission
+    permission_action = "delete"
+    # Los estados donde el permiso ya es evidencia frente a la autoridad.
+    REASON_REQUIRED_STATUSES = ("approved", "completed")
+
+    def _permission(self, pk):
+        return get_object_or_404(
+            scope_queryset_to_tenant(
+                FlightPermission.objects.all(),
+                self.request.user,
+                "cost_center__tenant_id",
+            ),
+            pk=pk,
+            is_active=True,
+        )
+
+    def _dependents(self, permission):
+        from django.contrib.contenttypes.models import ContentType
+
+        from apps.compliance.models import Document
+
+        return {
+            "flights": permission.records.filter(is_active=True).count(),
+            "plans": permission.geo_plans.filter(is_active=True).count(),
+            "documents": Document.objects.filter(
+                content_type=ContentType.objects.get_for_model(FlightPermission),
+                object_id=permission.pk,
+                is_current_version=True,
+                is_active=True,
+            ).count(),
+            "requests": permission.flight_requests.filter(is_active=True).count(),
+        }
+
+    def post(self, request, pk):
+        permission = self._permission(pk)
+        needs_reason = permission.status in self.REASON_REQUIRED_STATUSES
+        reason = (request.POST.get("reason") or "").strip()
+        confirmed = request.POST.get("confirm") == "1"
+        if not confirmed or (needs_reason and not reason):
+            return render(
+                request,
+                "operations/permission_archive_confirm.html",
+                {
+                    "object": permission,
+                    "permission": permission,
+                    "dependents": self._dependents(permission),
+                    "needs_reason": needs_reason,
+                    # Sólo se marca el error cuando ya lo intentó: pedir el
+                    # motivo en rojo antes de que nadie escriba nada regaña sin
+                    # motivo.
+                    "reason_missing": confirmed and needs_reason and not reason,
+                },
+            )
+        permission.is_active = False
+        permission.save(update_fields=["is_active", "updated_at"])
+        set_audit_context(
+            request,
+            permission,
+            action="archived",
+            metadata={"reason": reason} if reason else None,
+        )
+        messages.success(
+            request,
+            _("Permit archived. Use the Archived filter to find or restore it."),
+        )
+        return redirect("permission-list")
+
+
+class FlightPermissionRestore(ModelPermissionRequiredMixin, View):
+    """Traer de vuelta un permiso archivado: basta el permiso de cambio, porque
+    reactivar no crea nada (molde de `RegistryRestore`)."""
+
+    model = FlightPermission
+    permission_action = "change"
+
+    def post(self, request, pk):
+        permission = get_object_or_404(
+            scope_queryset_to_tenant(
+                FlightPermission.objects.all(),
+                request.user,
+                "cost_center__tenant_id",
+            ),
+            pk=pk,
+            is_active=False,
+        )
+        permission.is_active = True
+        permission.save(update_fields=["is_active", "updated_at"])
+        set_audit_context(request, permission, action="restored")
+        messages.success(request, _("Permit restored."))
+        return redirect("permission-detail", pk=permission.pk)
 
 
 class FlightPermissionCorrectStatus(ModelPermissionRequiredMixin, View):

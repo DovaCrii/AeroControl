@@ -55,6 +55,24 @@
      class="btn btn-outline-secondary"
      title="{% translate 'Fix a status that was recorded by mistake, with a reason on record' %}">{% translate "Correct status" %}</a>
   {% endif %}
+  {% comment %}LV-135: archivar va al final y en gris — es lo que se hace una vez
+  y con cuidado, no parte del flujo. Cuesta el permiso de borrado y pasa por una
+  confirmación que muestra qué cuelga del permiso; aprobado o completado, además,
+  exige un motivo escrito que queda en la auditoría.{% endcomment %}
+  {% if permission.is_active %}
+  {% if perms.operations.delete_flightpermission %}
+  <form method="post" action="{% url 'permission-archive' permission.pk %}" style="display:inline">{% csrf_token %}
+    <button type="submit" class="btn btn-outline-secondary">{% translate "Archive" %}</button>
+  </form>
+  {% endif %}
+  {% else %}
+  <span class="badge bg-secondary-subtle text-secondary-emphasis align-self-center">{% translate "Archived" %}</span>
+  {% if perms.operations.change_flightpermission %}
+  <form method="post" action="{% url 'permission-restore' permission.pk %}" style="display:inline">{% csrf_token %}
+    <button type="submit" class="btn btn-outline-secondary">{% translate "Restore" %}</button>
+  </form>
+  {% endif %}
+  {% endif %}
   <a href="{% url 'permission-list' %}" class="btn btn-outline-secondary">← {% translate "Back" %}</a>
 </div></div>
 <table class="table table-bordered"><tbody>
