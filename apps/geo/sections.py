@@ -30,6 +30,7 @@ Decisiones:
 import math
 from dataclasses import dataclass, field
 
+from .enclosing import enclosing_circle_of_ring
 from .kml.canonical import empty_document, iter_placemarks, new_uid
 
 # Radio medio terrestre (IUGG). Para distancias al aeródromo (decenas a cientos
@@ -130,6 +131,11 @@ class Section:
     point: dict | None = None
     circle: dict | None = None
     warnings: list = field(default_factory=list)
+    # R10.8: `(lat, lon, radio_m)` de la circunferencia **mínima** que encierra
+    # el anillo, y sólo cuando el anillo no es un círculo (`WARNING_NOT_A_CIRCLE`).
+    # Sobre un círculo sería el círculo mismo, o sea ruido; sobre un polígono es
+    # la única forma de llevarlo a la casilla de SIGO sin dibujarlo a mano.
+    enclosing: tuple | None = None
 
 
 def _ring_vertices(ring):
@@ -184,6 +190,20 @@ def estimate_radius_m(center, ring):
         return 0.0, 0.0
     deviation = (max(distances) - min(distances)) / mean
     return mean, deviation
+
+
+def _flag_shape(section, ring, deviation):
+    """Marcar "no es un círculo" y, con eso, proponer el que lo encierra.
+
+    Las dos cosas van juntas siempre: un aviso sin la salida al lado es lo que
+    `R10.8` vino a corregir. Extraído porque hay dos caminos que llegan acá —la
+    sección con punto declarado y el anillo huérfano— y una copia más era la
+    forma de que uno de los dos se quedara sin la propuesta.
+    """
+    if deviation is None or deviation <= MAX_RADIUS_DEVIATION:
+        return
+    section.warnings.append(WARNING_NOT_A_CIRCLE)
+    section.enclosing = enclosing_circle_of_ring(ring)
 
 
 def closed_ring_of(placemark):
@@ -288,12 +308,11 @@ def split_sections(document):
             section.circle = placemark
             section.radius_m = radius_m
             section.radius_deviation = deviation
-            if deviation > MAX_RADIUS_DEVIATION:
-                section.warnings.append(WARNING_NOT_A_CIRCLE)
+            _flag_shape(section, ring, deviation)
         sections.append(section)
 
     matched = set(claimed_by_point.values())
-    for ring_index, (placemark, _ring) in enumerate(rings):
+    for ring_index, (placemark, ring) in enumerate(rings):
         if ring_index in matched:
             continue
         centroid, radius_m, deviation = measured[ring_index]
@@ -305,8 +324,7 @@ def split_sections(document):
             circle=placemark,
             warnings=[WARNING_NO_CENTER_POINT],
         )
-        if deviation > MAX_RADIUS_DEVIATION:
-            orphan.warnings.append(WARNING_NOT_A_CIRCLE)
+        _flag_shape(orphan, ring, deviation)
         sections.append(orphan)
 
     # Dos secciones sobre las mismas coordenadas (redondeadas al sexto decimal,

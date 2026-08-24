@@ -78,6 +78,20 @@ escribe nada.{% endcomment %}
           <td>{% if row.amc %}{{ row.amc }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
           <td class="text-end">{{ row.amc_distance_km|default:"—" }}</td>
         </tr>
+        {% comment %}R10.8: cuando el área no es una circunferencia, la fila de
+        arriba dice qué se dibujó y ésta qué se puede declarar. Va como segunda
+        fila del mismo grupo y no como columna nueva: son las mismas cinco
+        casillas de SIGO, medidas sobre otra geometría, y presentarlas al lado
+        invitaría a mezclar un centro con el radio del otro.{% endcomment %}
+        {% if row.enclosing %}
+        <tr class="table-active">
+          <td class="small">↳ {% translate "Smallest circle that encloses it" %}</td>
+          <td class="text-nowrap"><span class="font-monospace small">{{ row.enclosing.lat_readable }}<br>{{ row.enclosing.lon_readable }}</span></td>
+          <td>{{ row.enclosing.radius_m }}</td>
+          <td>{% if row.enclosing.amc %}{{ row.enclosing.amc }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+          <td class="text-end">{{ row.enclosing.amc_distance_km|default:"—" }}</td>
+        </tr>
+        {% endif %}
         {% endfor %}
       </tbody>
     </table>
@@ -87,6 +101,11 @@ escribe nada.{% endcomment %}
   entre los que sí las tienen. Decirlo evita que un dato propuesto se lea como
   un dato confirmado.{% endcomment %}
   <p class="text-muted small mb-0 mt-2">{% translate "The aerodrome is proposed by distance, among those with coordinates on file — confirm it against the AIP chart before filing." %}</p>
+  {% comment %}R10.8: se explica sólo cuando hay una fila así, porque en el caso
+  normal —un círculo dibujado como círculo— la frase sobraría.{% endcomment %}
+  {% if has_enclosing %}
+  <p class="text-muted small mb-0 mt-1">{% translate "The ↳ row appears when the drawn area is not a circle: SIGO accepts one circle per request, and that is the smallest one covering the whole area." %}</p>
+  {% endif %}
 </div>
 {% endif %}
 

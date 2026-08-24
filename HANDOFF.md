@@ -90,15 +90,13 @@ de MLP, con 47).
    estado vacío explica de dónde nacen las solicitudes.
 4. **Crear `RPA-7213` en CC 743 = "Candelaria"** y `RPA-7126` en CC 738, con sus
    PDF. Datos verificados contra los papeles en la fila `LV-121` del plan.
-5. **La circunferencia que encierra un polígono.** Barridos los KMZ vigentes el
-   2026-08-24, el patrón es claro: los siete de CC 738 y los de CC 691 y CC 664
-   salen limpios, pero **CC 716, CC 861 (×2), PMCHS y Caren son polígonos
-   irregulares** — `not_a_circle`, con radios equivalentes de 100 m a 12 km. SIGO
-   pide una circunferencia, así que hoy la app detecta el problema y deja el
-   trabajo ahí. Proponer el centro y el radio del círculo mínimo que encierra el
-   polígono es lo que convierte ese aviso en dato presentable. **Y `propuesta_completo.kmz`
-   de CC 738** trae 54 círculos **sin punto centro** (los individuales `CG-0N`
-   sí lo traen), lo que sugiere ofrecer el centroide como centro cuando falta.
+5. ~~**La circunferencia que encierra un polígono**~~ — **hecha el 2026-08-24
+   (`R10.8`)**. Lo que queda alrededor: **(a)** la solicitud sigue naciendo con
+   el centro y radio *dibujados*, no con los de la propuesta — sustituirlos es
+   decisión del usuario y no se hizo en silencio; si la quiere automática, es una
+   fila nueva. **(b)** `propuesta_completo.kmz` de CC 738 trae **54 círculos sin
+   punto centro** (los individuales `CG-0N` sí lo traen), así que ofrecer el
+   centroide como centro cuando falta el punto sigue pendiente.
 
 ### Los siete KMZ de CC 738, y el bug que destaparon
 
