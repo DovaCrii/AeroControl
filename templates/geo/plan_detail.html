@@ -123,12 +123,24 @@ escribe nada.{% endcomment %}
 </div>
 {% endif %}
 
-<div class="card mb-3">
+{% comment %}LV-136: la tarjeta lleva id porque "Ampliar" le agrega una clase para
+ocupar la ventana entera. Es un estado de **esta** tarjeta, no un mapa nuevo: los
+controles de dibujo y el panel de capas siguen siendo los mismos elementos, así
+que no hay un segundo editor que se desincronice.{% endcomment %}
+<div class="card mb-3 geo-map-card" id="geo-map-card">
   <div class="admin-section-header">
     <h2 class="admin-section-title">{% translate "Map" %}</h2>
     <div class="d-flex align-items-center gap-2 flex-wrap">
       <span id="geo-diff" class="geo-diff-bar small"></span>
       <span id="geo-map-status" class="text-muted small"></span>
+      {% comment %}Sin `{% if editable %}`: mirar un mapa grande sirve igual que
+      dibujar en uno grande. El texto del botón cambia por JS, y las dos
+      etiquetas viajan en `data-` para que se traduzcan del lado del
+      servidor.{% endcomment %}
+      <button type="button" id="geo-expand" class="btn btn-sm btn-outline-secondary"
+              aria-pressed="false"
+              data-label-expand="{% translate 'Expand' %}"
+              data-label-collapse="{% translate 'Exit full screen' %}">{% translate "Expand" %}</button>
       {% if editable %}
       <span id="geo-dirty" class="text-warning small"></span>
       <button type="button" id="geo-undo" class="btn btn-sm btn-outline-secondary" disabled>{% translate "Undo" %}</button>

@@ -6564,3 +6564,11 @@ msgid "%(counter)s SIGO request"
 msgid_plural "%(counter)s SIGO requests"
 msgstr[0] "%(counter)s solicitud SIGO"
 msgstr[1] "%(counter)s solicitudes SIGO"
+
+#: .\templates/geo/plan_detail.html
+msgid "Expand"
+msgstr "Ampliar"
+
+#: .\templates/geo/plan_detail.html
+msgid "Exit full screen"
+msgstr "Salir de pantalla completa"
