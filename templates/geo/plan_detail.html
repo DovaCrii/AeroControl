@@ -72,26 +72,22 @@ escribe nada.{% endcomment %}
       <tbody>
         {% for row in sigo_rows %}
         <tr>
-          <td>{{ row.name }}{% if row.warnings %} <span class="badge bg-warning-subtle text-warning-emphasis" title="{% translate 'This circle has a data problem — see Split for the detail' %}">!</span>{% endif %}</td>
+          <td>
+            {{ row.name }}{% if row.warnings %} <span class="badge bg-warning-subtle text-warning-emphasis" title="{% translate 'This circle has a data problem — see Split for the detail' %}">!</span>{% endif %}
+            {% comment %}LV-132: cuando el área no es circular la fila muestra el
+            círculo que la encierra, y hay que decirlo **acá**, en la misma fila:
+            una segunda fila al lado invitaba a mezclar el centro de una con el
+            radio de la otra. El radio dibujado va como referencia, en chico,
+            porque el promedio de un no-círculo no es para copiar.{% endcomment %}
+            {% if row.is_enclosing %}
+            <div class="small text-body-secondary">{% translate "Smallest circle that encloses the drawn area" %}{% if row.drawn_radius_m %} · {% blocktranslate with radius=row.drawn_radius_m %}drawn: {{ radius }} m average{% endblocktranslate %}{% endif %}</div>
+            {% endif %}
+          </td>
           <td class="text-nowrap"><span class="font-monospace small">{{ row.lat_readable }}<br>{{ row.lon_readable }}</span></td>
           <td>{{ row.radius_m|default:"—" }}</td>
           <td>{% if row.amc %}{{ row.amc }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
           <td class="text-end">{{ row.amc_distance_km|default:"—" }}</td>
         </tr>
-        {% comment %}R10.8: cuando el área no es una circunferencia, la fila de
-        arriba dice qué se dibujó y ésta qué se puede declarar. Va como segunda
-        fila del mismo grupo y no como columna nueva: son las mismas cinco
-        casillas de SIGO, medidas sobre otra geometría, y presentarlas al lado
-        invitaría a mezclar un centro con el radio del otro.{% endcomment %}
-        {% if row.enclosing %}
-        <tr class="table-active">
-          <td class="small">↳ {% translate "Smallest circle that encloses it" %}</td>
-          <td class="text-nowrap"><span class="font-monospace small">{{ row.enclosing.lat_readable }}<br>{{ row.enclosing.lon_readable }}</span></td>
-          <td>{{ row.enclosing.radius_m }}</td>
-          <td>{% if row.enclosing.amc %}{{ row.enclosing.amc }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
-          <td class="text-end">{{ row.enclosing.amc_distance_km|default:"—" }}</td>
-        </tr>
-        {% endif %}
         {% endfor %}
       </tbody>
     </table>
@@ -104,7 +100,7 @@ escribe nada.{% endcomment %}
   {% comment %}R10.8: se explica sólo cuando hay una fila así, porque en el caso
   normal —un círculo dibujado como círculo— la frase sobraría.{% endcomment %}
   {% if has_enclosing %}
-  <p class="text-muted small mb-0 mt-1">{% translate "The ↳ row appears when the drawn area is not a circle: SIGO accepts one circle per request, and that is the smallest one covering the whole area." %}</p>
+  <p class="text-muted small mb-0 mt-1">{% translate "When the drawn area is not a circle, the row shows the smallest circle that covers it: SIGO accepts one circle per request, and the average radius of a non-circle is not a figure to file." %}</p>
   {% endif %}
 </div>
 {% endif %}

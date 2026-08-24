@@ -140,8 +140,11 @@ class GeoPlanDetailView(ModelViewPermissionRequiredMixin, DetailView):
         from apps.operations.flight_requests import plan_sections
 
         context["sigo_rows"] = plan_sections(plan)
-        # R10.8: la nota que explica la fila "↳" sólo cuando hay alguna.
-        context["has_enclosing"] = any(row["enclosing"] for row in context["sigo_rows"])
+        # R10.8/LV-132: la nota que explica la fila, sólo cuando alguna muestra
+        # el círculo envolvente en vez de lo dibujado.
+        context["has_enclosing"] = any(
+            row["is_enclosing"] for row in context["sigo_rows"]
+        )
         # Status buttons the user may use from the current status (GEO-9).
         context["status_actions"] = [
             {
