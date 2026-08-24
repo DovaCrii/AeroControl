@@ -42,21 +42,26 @@ centros de costo.{% endcomment %}
     <small>{% translate "Pending Alerts" %}</small>
     <strong>{{ alert_count }}</strong>
   </a>
-  {% comment %}LV-120: lo ya vencido tiene tarjeta propia y sólo aparece cuando
-  existe. Antes no aparecía en ninguna parte del panel —ni acá ni en la lista de
-  abajo—, porque la consulta filtraba desde hoy; y sumarlo a "Vence en 30 días"
-  habría vuelto falsa esa tarjeta, que es el defecto que se está corrigiendo, no
-  otro para estrenar.{% endcomment %}
-  {% if overdue_count %}
-  <a class="summary-card summary-card-warning text-decoration-none" href="#upcoming-expirations">
-    <small>{% translate "Already expired" %}</small>
-    <strong>{{ overdue_count }}</strong>
+  {% comment %}LV-129: **una** tarjeta de vencimientos, no dos. `LV-120` separó
+  lo vencido de lo por vencer con razón —sumarlos habría vuelto falsa la de "30
+  días"— pero eso dejó dos tarjetas contiguas que son las dos mitades de la
+  misma lista y que además sólo hacen scroll hasta ella. Juntas en una fila,
+  cada número conserva su nombre y se libera un espacio de la grilla.
+
+  El total grande es el trabajo pendiente de vigencias; el desglose de abajo
+  dice de qué está hecho. Lo vencido va primero porque es lo que hay que hacer
+  primero.{% endcomment %}
+  {% if overdue_count or expiring_count %}
+  <a class="summary-card{% if overdue_count %} summary-card-warning{% endif %} text-decoration-none" href="#upcoming-expirations">
+    <small>{% translate "Expiries" %}</small>
+    <strong>{{ overdue_count|add:expiring_count }}</strong>
+    <small class="text-muted">
+      {% if overdue_count %}{% blocktranslate count counter=overdue_count %}{{ counter }} lapsed{% plural %}{{ counter }} lapsed{% endblocktranslate %}{% endif %}
+      {% if overdue_count and expiring_count %}·{% endif %}
+      {% if expiring_count %}{% blocktranslate count counter=expiring_count %}{{ counter }} within 30 days{% plural %}{{ counter }} within 30 days{% endblocktranslate %}{% endif %}
+    </small>
   </a>
   {% endif %}
-  <a class="summary-card text-decoration-none" href="#upcoming-expirations">
-    <small>{% translate "Expiring in 30 days" %}</small>
-    <strong>{{ expiring_count }}</strong>
-  </a>
   {% comment %}R9.6: trabajo detenido en manos de un tercero — presentado en
   SIGO y sin respuesta. Aparece sólo cuando hay algo, como la de vencidos: una
   tarjeta en cero todos los días enseña a no mirar la fila.{% endcomment %}
@@ -111,8 +116,19 @@ contradecirse.{% endcomment %}
       {{ item.count }}/{{ item.total }}
       {% if item.pct is not None %}<span class="readiness-pct{% if item.target and item.pct < item.target %} is-below{% endif %}">{{ item.pct|floatformat:0 }}%</span>{% endif %}
     </strong>
+    {% comment %}LV-129: "5 faltantes o vencidos" era una cifra para dos cosas
+    que se arreglan distinto — cargar una fecha que nadie ingresó, o renovar una
+    póliza que caducó — y que además no cuadraba con ninguna otra tarjeta: los
+    faltantes no generan alerta (un nulo es "nunca se ingresó", `LV-29`) ni
+    salen en la lista de abajo. Separadas, cada número tiene con quién
+    conversar: **vencidos** es el de la tarjeta de vencimientos, y **sin fecha**
+    es el trabajo invisible que ninguna alerta va a recordarte.{% endcomment %}
     <small class="text-muted">
-      {% if item.shortfall %}{{ item.shortfall }} {{ item.shortfall_label }}{% elif item.target %}{% blocktranslate with target=item.target|floatformat:0 %}target {{ target }}%{% endblocktranslate %}{% else %}{% translate "all up to date" %}{% endif %}
+      {% if item.lapsed or item.missing %}
+        {% if item.lapsed %}{% blocktranslate count counter=item.lapsed %}{{ counter }} lapsed{% plural %}{{ counter }} lapsed{% endblocktranslate %}{% endif %}
+        {% if item.lapsed and item.missing %}·{% endif %}
+        {% if item.missing %}{% blocktranslate count counter=item.missing %}{{ counter }} with no date on file{% plural %}{{ counter }} with no date on file{% endblocktranslate %}{% endif %}
+      {% elif item.shortfall %}{{ item.shortfall }} {{ item.shortfall_label }}{% elif item.target %}{% blocktranslate with target=item.target|floatformat:0 %}target {{ target }}%{% endblocktranslate %}{% else %}{% translate "all up to date" %}{% endif %}
       {% if item.soon %}· {% blocktranslate count counter=item.soon %}{{ counter }} expires within 30 days{% plural %}{{ counter }} expire within 30 days{% endblocktranslate %}{% endif %}
     </small>
   </a>
@@ -177,7 +193,16 @@ when the three are done.{% endcomment %}
       futuro, así que un seguro vencido hace tres meses no tenía dónde salir. El
       título cambia con los datos: ahora la sección es lo vencido **y** lo por
       vencer, en ese orden.{% endcomment %}
-      <h4 class="h6 section-title mb-2">{% translate "Expiries" %}</h4>
+      {% comment %}LV-129: la sección enlaza a la bandeja en vez de traerse su
+      filtro. La bandeja ya filtra, ordena por urgencia, resuelve con motivo
+      (ISO 10.2) y guarda historial; un segundo selector acá serían dos
+      pantallas que aprender para hacer lo mismo peor, y el panel es para mirar.
+      El enlace es lo que convierte "esto está pendiente" en "acá se
+      trabaja".{% endcomment %}
+      <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+        <h4 class="h6 section-title mb-0">{% translate "Expiries" %}</h4>
+        {% if perms.compliance.view_alert %}<a class="small" href="{% url 'alert-list' %}">{% translate "Work on these in the alert tray" %}</a>{% endif %}
+      </div>
       {% for item in expirations %}
       {% comment %}
         R1.1: this row used to be a flat gray badge regardless of how soon

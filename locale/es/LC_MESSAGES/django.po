@@ -6262,3 +6262,25 @@ msgstr "Información o datos"
 #: .\apps\compliance\models.py
 msgid "Open the record: status and documents"
 msgstr "Abrir la ficha: estado y documentos"
+
+#: .\templates\dashboard\index.html
+msgid "Work on these in the alert tray"
+msgstr "Trabajar en la bandeja de alertas"
+
+#: .\templates\dashboard\index.html
+msgid "%(counter)s lapsed"
+msgid_plural "%(counter)s lapsed"
+msgstr[0] "%(counter)s vencido"
+msgstr[1] "%(counter)s vencidos"
+
+#: .\templates\dashboard\index.html
+msgid "%(counter)s with no date on file"
+msgid_plural "%(counter)s with no date on file"
+msgstr[0] "%(counter)s sin fecha cargada"
+msgstr[1] "%(counter)s sin fecha cargada"
+
+#: .\templates\dashboard\index.html
+msgid "%(counter)s within 30 days"
+msgid_plural "%(counter)s within 30 days"
+msgstr[0] "%(counter)s en 30 días"
+msgstr[1] "%(counter)s en 30 días"

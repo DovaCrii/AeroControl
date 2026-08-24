@@ -50,6 +50,18 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **El panel deja de dar cinco respuestas a la misma pregunta (`LV-129`).**
+  Seis lugares hablaban de vigencias con números que no cuadraban entre sí.
+  Ahora **"vencidos" quiere decir lo mismo en todas partes**: los que aparecen
+  en seguros y credenciales suman exactamente los de la tarjeta de
+  vencimientos. Lo que antes iba sumado como *"faltantes o vencidos"* se separa
+  en **vencidos** y **sin fecha cargada**, que son dos trabajos distintos — y el
+  segundo es el que ninguna alerta va a recordarte, porque una vigencia que
+  nadie cargó no vence. Las dos tarjetas de vencimientos se funden en una, con
+  el desglose debajo, y la sección enlaza a la bandeja de alertas en vez de
+  traerse su filtro: ahí es donde se resuelve con motivo y queda historial.
+  Además, **"Alertas pendientes" ya respeta el filtro por centro de costo** —
+  antes elegir una faena cambiaba todas las tarjetas menos ésa.
 - **El registro DGAC de una aeronave ya se puede subir (`LV-121`).** El tipo
   "Registro / matrícula de aeronave" exigía una fecha de vencimiento, pero el
   certificado que emite la DGAC **no la trae** — es una inscripción, no una
