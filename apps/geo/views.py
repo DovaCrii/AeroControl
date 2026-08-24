@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
@@ -17,6 +17,7 @@ from apps.core.views import (
     CsvExportMixin,
     ModelPermissionRequiredMixin,
     ModelViewPermissionRequiredMixin,
+    SearchMixin,
     StatusTransitionView,
 )
 
@@ -75,18 +76,126 @@ PLAN_TRANSITIONS = [
 ]
 
 
-class GeoPlanListView(CsvExportMixin, ModelViewPermissionRequiredMixin, ListView):
+class GeoPlanListView(
+    CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListView
+):
+    """LV-135: el listado gana buscador, filtro de estado y ver lo archivado.
+
+    Pedido del usuario con la pantalla al frente: *"al momento de tener muchas
+    planificaciones se podría dejar también un filtro […] y ahí se prende y apaga
+    el filtro y se deja ver lo necesario, además si estaba archivada"*. Con siete
+    planes de una sola faena ya cuesta encontrar uno, y esta pantalla era la única
+    lista de la app **sin un solo filtro**: ni buscador, ni estado, ni nada.
+
+    Y sin este filtro el archivado no serviría de nada: un plan archivado no
+    tendría desde dónde restaurarse (`SearchMixin` ya trae el par `q` +
+    `is_active`, así que no se inventa nada acá).
+    """
+
     model = GeoPlan
     template_name = "geo/plan_list.html"
+    htmx_template_name = "geo/_plan_rows.html"
     context_object_name = "plans"
     paginate_by = 25
+    search_fields = ["title", "cost_center__code", "cost_center__name"]
 
     def get_queryset(self):
-        return (
-            GeoPlan.objects.filter(is_active=True)
-            .select_related("cost_center", "current_version")
-            .order_by("-created_at")
+        queryset = super().get_queryset()
+        # **El defecto sigue siendo lo vigente.** `SearchMixin` sin parámetro no
+        # filtra nada, y eso acá mostraría lo archivado mezclado con lo activo --
+        # justo lo que archivar viene a evitar. Se ve archivado sólo al pedirlo.
+        if self.request.GET.get("is_active") not in {"active", "archived"}:
+            queryset = queryset.filter(is_active=True)
+        status = self.request.GET.get("status")
+        if status:
+            queryset = queryset.filter(status=status)
+        return queryset.select_related("cost_center", "current_version").order_by(
+            "-created_at"
         )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["status_choices"] = GeoPlan.STATUS_CHOICES
+        context["current_status"] = self.request.GET.get("status", "")
+        context["current_is_active"] = self.request.GET.get("is_active", "")
+        return context
+
+
+class GeoPlanArchive(ModelPermissionRequiredMixin, View):
+    """LV-135: retirar un plan de la lista, sin borrarlo.
+
+    Hasta acá **no había forma** de sacar un plan desde la app: los siete
+    borradores de una carga de prueba se quedaban a la vista para siempre, y la
+    única salida era el admin de Django — que no deja rastro en la auditoría de la
+    app y no es un procedimiento que se le pueda pedir a nadie.
+
+    **Archiva, no borra** (`is_active=False`), que es el "borrar" de este
+    proyecto: la fila no se va, sale de los listados y vuelve con el filtro
+    "Archivados". En una app de cumplimiento, lo que no se puede deshacer no se
+    ofrece con un botón.
+
+    **Y no archiva de golpe si el plan dejó rastro.** Muestra primero qué cuelga
+    de él —solicitudes SIGO nacidas del plan, si alguna ya se presentó, el permiso
+    vinculado, versiones y revisiones meteorológicas— el mismo molde que
+    `CostCenterArchive` usa desde `V.31`. Decisión del usuario, textual: *avisar y
+    dejar decidir*; las solicitudes **no se archivan en cascada**, porque son el
+    registro de lo que se le pidió al Estado y esconderlas de un golpe sería
+    esconder eso.
+    """
+
+    model = GeoPlan
+    permission_action = "delete"
+
+    def _dependents(self, plan):
+        from apps.operations.models import FlightRequest
+
+        requests = FlightRequest.objects.filter(source_plan=plan, is_active=True)
+        return {
+            "requests": requests.count(),
+            # Presentada en SIGO es cualquier cosa menos "preparada": una vez
+            # ingresada, allá existe un expediente que este plan explica.
+            "filed_requests": requests.exclude(
+                status=FlightRequest.STATUS_PREPARED
+            ).count(),
+            "permission": plan.flight_permission,
+            "versions": plan.versions.count(),
+            "weather_reviews": plan.weather_reviews.count(),
+        }
+
+    def post(self, request, pk):
+        plan = get_object_or_404(GeoPlan, pk=pk, is_active=True)
+        dependents = self._dependents(plan)
+        if any(bool(value) for value in dependents.values()):
+            if request.POST.get("confirm") != "1":
+                return render(
+                    request,
+                    "geo/plan_archive_confirm.html",
+                    {"object": plan, "plan": plan, "dependents": dependents},
+                )
+        plan.is_active = False
+        plan.save(update_fields=["is_active", "updated_at"])
+        set_audit_context(request, plan, action="archived")
+        messages.success(
+            request,
+            _("Plan archived. Use the Archived filter to find or restore it."),
+        )
+        return redirect("geo-plan-list")
+
+
+class GeoPlanRestore(ModelPermissionRequiredMixin, View):
+    """Traer de vuelta un plan archivado. Basta el permiso de cambio: reactivar
+    no crea nada, y el molde es el de `RegistryRestore`."""
+
+    model = GeoPlan
+    permission_action = "change"
+
+    def post(self, request, pk):
+        plan = get_object_or_404(GeoPlan, pk=pk, is_active=False)
+        plan.is_active = True
+        plan.save(update_fields=["is_active", "updated_at"])
+        set_audit_context(request, plan, action="restored")
+        messages.success(request, _("Plan restored."))
+        return redirect("geo-plan-detail", pk=plan.pk)
 
 
 class GeoPlanDetailView(ModelViewPermissionRequiredMixin, DetailView):

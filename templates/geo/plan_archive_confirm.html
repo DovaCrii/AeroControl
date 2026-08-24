@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Archive plan?" %} - AeroControl{% endblock %}
+{% block content %}
+{% comment %}LV-135: confirmación del servidor, no un `confirm()` de JavaScript.
+El molde es el de `costcenter_archive_confirm.html` (V.31) y la razón es la misma:
+la decisión se toma **mirando lo que cuelga del plan**, y eso no cabe en un
+diálogo del navegador.
+
+Decisión del usuario: avisar y dejar decidir. Las solicitudes SIGO **no** se
+archivan en cascada -- son el registro de lo que se le pidió al Estado.
+{% endcomment %}
+<div class="card p-4">
+  <h1 class="h3">{% blocktranslate with name=plan.title %}Archive {{ name }}?{% endblocktranslate %}</h1>
+  <p>{% translate "This plan still has records attached to it:" %}</p>
+  <ul>
+    {% if dependents.requests %}<li>{% blocktranslate count counter=dependents.requests %}{{ counter }} SIGO request created from it{% plural %}{{ counter }} SIGO requests created from it{% endblocktranslate %}{% if dependents.filed_requests %} — <strong>{% blocktranslate count counter=dependents.filed_requests %}{{ counter }} already filed{% plural %}{{ counter }} already filed{% endblocktranslate %}</strong>{% endif %}</li>{% endif %}
+    {% if dependents.permission %}<li>{% blocktranslate with folio=dependents.permission %}linked to permit {{ folio }}{% endblocktranslate %}</li>{% endif %}
+    {% if dependents.versions %}<li>{% blocktranslate count counter=dependents.versions %}{{ counter }} version{% plural %}{{ counter }} versions{% endblocktranslate %}</li>{% endif %}
+    {% if dependents.weather_reviews %}<li>{% blocktranslate count counter=dependents.weather_reviews %}{{ counter }} recorded weather review{% plural %}{{ counter }} recorded weather reviews{% endblocktranslate %}</li>{% endif %}
+  </ul>
+  <div class="alert alert-warning">
+    {% translate "Archiving hides the plan from the listings; nothing is deleted and nothing cascades. Its SIGO requests stay where they are — they record what was filed with the authority — and this plan will still be reachable from them." %}
+  </div>
+  {% if dependents.filed_requests %}
+  <div class="alert alert-danger">
+    {% translate "At least one of its requests is already filed in SIGO: the authority holds a file that this plan explains. Archive it only if you are sure nobody will need to look it up." %}
+  </div>
+  {% endif %}
+  <form method="post" class="d-flex gap-2">{% csrf_token %}
+    <input type="hidden" name="confirm" value="1">
+    <button class="btn btn-danger" type="submit">{% translate "Archive anyway" %}</button>
+    <a href="{% url 'geo-plan-detail' plan.pk %}" class="btn btn-outline-secondary">{% translate "Cancel" %}</a>
+  </form>
+</div>
+{% endblock %}

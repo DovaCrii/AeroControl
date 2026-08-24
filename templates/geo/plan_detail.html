@@ -40,6 +40,24 @@
     <a class="btn btn-sm btn-outline-primary" href="{% url 'geo-plan-split' plan.pk %}"
        title="{% translate 'One flight request per circle, as SIGO requires' %}">{% blocktranslate count counter=sigo_rows|length %}Split into {{ counter }} request{% plural %}Split into {{ counter }} requests{% endblocktranslate %}</a>
     {% endif %}
+    {% comment %}LV-135: archivar va al final y en gris, no compitiendo con las
+    acciones de estado: es lo que se hace una vez y con cuidado, no parte del
+    flujo. Exige el permiso de borrado y pasa por una confirmación que muestra qué
+    cuelga del plan.{% endcomment %}
+    {% if plan.is_active %}
+    {% if perms.geo.delete_geoplan %}
+    <form method="post" action="{% url 'geo-plan-archive' plan.pk %}" style="display:inline">{% csrf_token %}
+      <button type="submit" class="btn btn-sm btn-outline-secondary">{% translate "Archive" %}</button>
+    </form>
+    {% endif %}
+    {% else %}
+    <span class="badge bg-secondary-subtle text-secondary-emphasis">{% translate "Archived" %}</span>
+    {% if perms.geo.change_geoplan %}
+    <form method="post" action="{% url 'geo-plan-restore' plan.pk %}" style="display:inline">{% csrf_token %}
+      <button type="submit" class="btn btn-sm btn-outline-secondary">{% translate "Restore" %}</button>
+    </form>
+    {% endif %}
+    {% endif %}
     <a class="btn btn-outline-secondary" href="{% url 'geo-plan-list' %}">{% translate "Back to plans" %}</a>
   </div>
 </div>

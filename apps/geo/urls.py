@@ -6,6 +6,18 @@ urlpatterns = [
     path("plans/", views.GeoPlanListView.as_view(), name="geo-plan-list"),
     path("plans/import/", views.GeoPlanImportView.as_view(), name="geo-plan-import"),
     path("plans/<uuid:pk>/", views.GeoPlanDetailView.as_view(), name="geo-plan-detail"),
+    # LV-135: archivar es el "borrar" de este proyecto -- la fila no se va, sale
+    # de los listados y vuelve con el filtro "Archivados".
+    path(
+        "plans/<uuid:pk>/archive/",
+        views.GeoPlanArchive.as_view(),
+        name="geo-plan-archive",
+    ),
+    path(
+        "plans/<uuid:pk>/restore/",
+        views.GeoPlanRestore.as_view(),
+        name="geo-plan-restore",
+    ),
     # GEO-9 status transitions.
     path(
         "plans/<uuid:pk>/start-editing/",

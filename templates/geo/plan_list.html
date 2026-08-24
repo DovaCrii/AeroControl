@@ -10,6 +10,34 @@
   </div>
 </div>
 
+{% comment %}LV-135: esta era la única lista de la app sin un solo filtro, y con
+siete planes de una misma faena ya cuesta encontrar uno. El selector de estado
+usa las opciones del modelo, y el de vigencia es el que deja ver lo archivado --
+sin él, archivar no tendría vuelta.{% endcomment %}
+<form method="get" class="row g-2 mb-3">
+  {% translate "Search title or cost center..." as plan_search_placeholder %}
+  <div class="col-md-5">{% include "generic/_search_input.html" with search_url=request.path search_placeholder=plan_search_placeholder %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
+  <div class="col-md-3">
+    <select class="form-select" name="status">
+      <option value="">{% translate "All statuses" %}</option>
+      {% for value, label in status_choices %}
+      <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <select class="form-select" name="is_active">
+      <option value="">{% translate "In force" %}</option>
+      <option value="archived" {% if current_is_active == "archived" %}selected{% endif %}>{% translate "Archived" %}</option>
+      <option value="active" {% if current_is_active == "active" %}selected{% endif %}>{% translate "In force only" %}</option>
+    </select>
+  </div>
+  <div class="col-auto">
+    <button class="btn btn-outline-primary">{% translate "Filter" %}</button>
+    <a href="{{ request.path }}" class="btn btn-outline-secondary">{% translate "Clear" %}</a>
+  </div>
+</form>
+
 <div class="card">
   <div class="table-responsive">
     <table class="table table-hover mb-0">
@@ -20,23 +48,10 @@
           <th scope="col">{% translate "Status" %}</th>
           <th scope="col">{% translate "Version" %}</th>
           <th scope="col">{% translate "Created" %}</th>
+          <th scope="col"></th>
         </tr>
       </thead>
-      <tbody>
-        {% for plan in plans %}
-        <tr>
-          <td><a href="{% url 'geo-plan-detail' plan.pk %}"><strong>{{ plan.title }}</strong></a></td>
-          <td>{{ plan.cost_center }}</td>
-          <td>{% include "geo/_status_badge.html" with status=plan.status label=plan.get_status_display %}</td>
-          <td>{% if plan.current_version %}v{{ plan.current_version.version_number }}{% else %}—{% endif %}</td>
-          <td><span class="text-nowrap">{{ plan.created_at|date:'Y-m-d' }}</span></td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="99" class="text-center text-muted py-4">
-          {% translate "No plans yet. Import a KMZ or KML to create the first one." %}
-        </td></tr>
-        {% endfor %}
-      </tbody>
+      <tbody>{% include "geo/_plan_rows.html" %}</tbody>
     </table>
   </div>
   {% render_pagination page_obj %}

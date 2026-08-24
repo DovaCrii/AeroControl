@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Archive permit?" %} - AeroControl{% endblock %}
+{% block content %}
+{% comment %}LV-135: confirmación del servidor, no un `confirm()` del navegador.
+Un permiso es el espejo de un trámite ante la DGAC desde que se crea, así que la
+confirmación aparece **siempre** y no sólo cuando algo cuelga de él: lo que hay
+que ver antes de decidir es qué se lleva consigo de la vista.
+
+Aprobado o completado cuesta además un motivo escrito -- decisión del usuario, y
+el mismo trato que LV-101 hizo para corregir un estado.{% endcomment %}
+<div class="card p-4">
+  <h1 class="h3">{% blocktranslate with folio=permission.internal_folio %}Archive {{ folio }}?{% endblocktranslate %}</h1>
+  <p class="text-muted">{{ permission.cost_center }} · {{ permission.get_status_display }}</p>
+
+  {% if dependents.flights or dependents.plans or dependents.documents or dependents.requests %}
+  <p>{% translate "It still has these records attached:" %}</p>
+  <ul>
+    {% if dependents.flights %}<li>{% blocktranslate count counter=dependents.flights %}{{ counter }} logged flight{% plural %}{{ counter }} logged flights{% endblocktranslate %}</li>{% endif %}
+    {% if dependents.plans %}<li>{% blocktranslate count counter=dependents.plans %}{{ counter }} geospatial plan{% plural %}{{ counter }} geospatial plans{% endblocktranslate %}</li>{% endif %}
+    {% if dependents.documents %}<li>{% blocktranslate count counter=dependents.documents %}{{ counter }} attached document{% plural %}{{ counter }} attached documents{% endblocktranslate %}</li>{% endif %}
+    {% if dependents.requests %}<li>{% blocktranslate count counter=dependents.requests %}{{ counter }} SIGO request{% plural %}{{ counter }} SIGO requests{% endblocktranslate %}</li>{% endif %}
+  </ul>
+  {% else %}
+  <p>{% translate "Nothing else is attached to it." %}</p>
+  {% endif %}
+
+  <div class="alert alert-warning">
+    {% translate "Archiving hides the permit from the listings; nothing is deleted and nothing cascades. Its flights and requests stay as the record of what happened and what was filed." %}
+  </div>
+
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="confirm" value="1">
+    {% if needs_reason %}
+    {% comment %}El motivo va en la auditoría con quién y cuándo. Se pide sólo
+    acá: un borrador o una solicitud se archivan sin explicación, un permiso que
+    la DGAC aprobó no.{% endcomment %}
+    <div class="alert alert-danger">
+      {% translate "This permit is already approved by the authority: archiving it needs a written reason, which stays in the audit trail with your name and the date." %}
+    </div>
+    <div class="mb-3">
+      <label class="form-label" for="reason">{% translate "Reason for archiving" %}</label>
+      <textarea class="form-control {% if reason_missing %}is-invalid{% endif %}" id="reason" name="reason" rows="3" required></textarea>
+      {% if reason_missing %}
+      <div class="invalid-feedback">{% translate "Write the reason before archiving." %}</div>
+      {% endif %}
+      <div class="form-text">{% translate "Write it for whoever reads this a year from now." %}</div>
+    </div>
+    {% endif %}
+    <div class="d-flex gap-2">
+      <button class="btn btn-danger" type="submit">{% translate "Archive anyway" %}</button>
+      <a href="{% url 'permission-detail' permission.pk %}" class="btn btn-outline-secondary">{% translate "Cancel" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

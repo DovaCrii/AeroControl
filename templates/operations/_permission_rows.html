@@ -6,7 +6,17 @@
   <td>{% for aircraft in object.aircraft_fleet.all %}{{ aircraft }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
   <td>{{ object.valid_from|date:"Y-m-d" }} – {{ object.valid_until|date:"Y-m-d" }}</td>
   <td><span class="badge bg-{% if object.status == 'approved' %}success{% elif object.status == 'denied' %}danger{% elif object.status == 'completed' %}info{% else %}warning{% endif %}">{{ object.get_status_display }}</span></td>
-  <td class="text-end">
+  <td class="text-end text-nowrap">
+    {% comment %}LV-135: la fila archivada se distingue y ofrece volver. Sin
+    "Restaurar" acá, el filtro "Archivados" sería una lista sin salida.{% endcomment %}
+    {% if not object.is_active %}
+    <span class="badge bg-secondary-subtle text-secondary-emphasis">{% translate "Archived" %}</span>
+    {% if perms.operations.change_flightpermission %}
+    <form method="post" action="{% url 'permission-restore' object.pk %}" style="display:inline">{% csrf_token %}
+      <button class="btn btn-sm btn-outline-secondary">{% translate "Restore" %}</button>
+    </form>
+    {% endif %}
+    {% endif %}
     <a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">{% translate "View" %}</a>
   </td>
 </tr>

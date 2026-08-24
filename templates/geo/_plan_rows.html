@@ -1,0 +1,34 @@
+{% load i18n %}
+{% comment %}LV-135: parcial propio y no el genérico, misma razón que
+`_permission_rows.html` (LV-53/T5.6): una respuesta HTMX de búsqueda en vivo tiene
+que traer **estas** columnas, o el resultado colapsa a las genéricas.
+
+La fila archivada se distingue y ofrece "Restaurar": sin eso, el filtro
+"Archivados" sería una lista de la que no se puede volver.{% endcomment %}
+{% for plan in plans %}
+<tr {% if not plan.is_active %}class="opacity-75"{% endif %}>
+  <td>
+    <a href="{% url 'geo-plan-detail' plan.pk %}" class="table-primary-value"><strong>{{ plan.title }}</strong></a>
+    {% if not plan.is_active %} <span class="badge bg-secondary-subtle text-secondary-emphasis">{% translate "Archived" %}</span>{% endif %}
+  </td>
+  <td>{{ plan.cost_center }}</td>
+  <td>{% include "geo/_status_badge.html" with status=plan.status label=plan.get_status_display %}</td>
+  <td>{% if plan.current_version %}v{{ plan.current_version.version_number }}{% else %}—{% endif %}</td>
+  <td><span class="text-nowrap">{{ plan.created_at|date:'Y-m-d' }}</span></td>
+  <td class="text-end text-nowrap">
+    {% if not plan.is_active and perms.geo.change_geoplan %}
+    <form method="post" action="{% url 'geo-plan-restore' plan.pk %}" style="display:inline">{% csrf_token %}
+      <button class="btn btn-sm btn-outline-secondary">{% translate "Restore" %}</button>
+    </form>
+    {% endif %}
+  </td>
+</tr>
+{% empty %}
+<tr><td colspan="99" class="text-center text-muted py-4">
+  {% if is_filtered %}
+  {% translate "No plans match this filter." %} <a href="{{ request.path }}">{% translate "Clear it" %}</a>
+  {% else %}
+  {% translate "No plans yet. Import a KMZ or KML to create the first one." %}
+  {% endif %}
+</td></tr>
+{% endfor %}
