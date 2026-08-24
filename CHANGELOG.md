@@ -38,8 +38,32 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   la columna de cumplimiento. La función queda entera —modelo, vistas, permisos y
   URL—; volver a mostrarla es descomentar una línea.
 
+### Added
+
+- **El KMZ entrega sus datos apenas se sube, sin separarlo (`R10.1`).** La
+  ficha del plan geoespacial trae ahora **"Datos para SIGO"**: el punto centro
+  en grados, minutos y segundos, el radio en metros, y el **aeródromo más
+  cercano con su distancia en kilómetros**. Antes esa información sólo aparecía
+  al **separar** el plan en solicitudes, así que un archivo con una sola
+  circunferencia —el caso normal— tenía que pasar por una acción pensada para
+  el excepcional. **Separar queda para lo que es**: el botón sólo aparece cuando
+  hay más de una circunferencia, y dice cuántas.
+- **Un plan ya subido se puede cruzar con su permiso (`R10.2`).** La ficha del
+  permiso sólo dejaba **importar** un KMZ nuevo; ahora también se puede vincular
+  uno que ya está en la app. Al vincularlo, **el plan rellena la ubicación del
+  permiso** —coordenadas, radio y nombre del área— y dice exactamente qué
+  rellenó. Nunca pisa lo que ya estuviera escrito: si el permiso trae una
+  coordenada del papel DGAC, esa manda. Y el historial del vínculo ya registra
+  **quién** lo hizo.
+
 ### Changed
 
+- **Los iconos del menú dejan de repetirse (`R10.3`).** Cuatro pares se veían
+  iguales — *Operadores* con *Asignaciones de operador*, *Aeronaves* con
+  *Asignaciones de aeronave*, *Permisos* con *Mantenciones*, y las dos entradas
+  de administración. Las asignaciones conservan su sujeto (la persona, el dron)
+  y ganan una **flecha** común que las identifica como asignación; Mantención
+  pasa a una llave inglesa y el centro de administración a un medidor.
 - **La bandeja de alertas abre en lo que hay que hacer (`LV-118`).** Abría
   mostrando **todo**, resuelto incluido, así que la pantalla de trabajo diario
   mezclaba los pendientes con el historial. Ahora abre en **"Sin resolver"** y

@@ -258,6 +258,76 @@ class FlightPermission(StatusFlowMixin, BaseModel):
         if errors:
             raise ValidationError(errors)
 
+    def fill_location_gaps(
+        self,
+        *,
+        latitude=None,
+        longitude=None,
+        radius_m=None,
+        commune="",
+        area_name="",
+        altitude_m=None,
+        save=True,
+    ):
+        """R10: completar la ubicación con lo que trae el KMZ, sin pisar nada.
+
+        Vive en el modelo porque es **el permiso rellenándose a sí mismo**, y
+        porque la regla que lo restringe —`clean()`, tres líneas más arriba: la
+        latitud y la longitud van juntas, y un radio sin par de coordenadas es
+        error— tiene que quedar a la vista de quien toque esto.
+
+        `R10.2`: se extrajo de `link_to_permission`, que lo hacía sólo para una
+        solicitud SIGO. Ahora las dos fuentes que existen —la solicitud, y el
+        plan geoespacial que se vincula directamente— llaman acá, en vez de
+        llevar cada una su copia de la aritmética. Una segunda copia es
+        exactamente cómo una de las dos habría dejado de convertir los metros.
+
+        **Rellenar y no pisar**: si el permiso ya trae una coordenada, la que
+        manda es la suya — puede venir del papel DGAC, que es de más autoridad
+        que lo que se preparó antes de presentar. Devuelve la lista de campos
+        que completó, para que la pantalla diga qué cambió en vez de dejar a la
+        persona comparando.
+
+        Las coordenadas se escriben **de a par** (`clean()` lo exige), así que
+        se completan sólo cuando faltan las dos: media coordenada nueva sobre
+        media vieja sería un punto que no existe.
+        """
+        from decimal import Decimal
+
+        filled = []
+        if (
+            self.latitude is None
+            and self.longitude is None
+            and latitude is not None
+            and longitude is not None
+        ):
+            self.latitude = latitude
+            self.longitude = longitude
+            filled += ["latitude", "longitude"]
+        # El radio va después y mira `self.latitude`, no el argumento: si el
+        # permiso no quedó con coordenadas, guardar un radio lo dejaría
+        # inválido para su propio `clean()`.
+        if self.radius_km is None and radius_m and self.latitude is not None:
+            self.radius_km = Decimal(radius_m) / Decimal(1000)
+            filled.append("radius_km")
+        if not self.commune and commune:
+            self.commune = commune
+            filled.append("commune")
+        if not self.area_name and area_name:
+            self.area_name = area_name
+            filled.append("area_name")
+        if self.max_altitude_ft is None and altitude_m:
+            # SIGO acepta metros o pies y el operador trabaja en metros; el
+            # permiso guarda pies desde OPS-4. 1 m = 3.28084 ft, redondeado al
+            # pie porque la casilla no admite decimales. **La conversión es
+            # obligatoria**: copiar el número tal cual convertiría 120 m en 120
+            # ft, un tercio de la altura real y sin que nada avise.
+            self.max_altitude_ft = round(altitude_m * 3.28084)
+            filled.append("max_altitude_ft")
+        if filled and save:
+            self.save(update_fields=filled + ["updated_at"])
+        return filled
+
 
 class FlightRecord(BaseModel):
     permission = models.ForeignKey(

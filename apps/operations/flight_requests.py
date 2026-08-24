@@ -38,6 +38,55 @@ def _locatable_aerodromes():
     )
 
 
+def plan_sections(plan):
+    """R10.1: lo que el KMZ de un plan dice, **sin separarlo ni crear nada**.
+
+    Corrige una premisa equivocada de R9: la única puerta para que un KMZ
+    entregara su información (centro, radio, aeródromo más cercano y distancia)
+    era **separarlo** en solicitudes. Eso convertía el caso excepcional —un
+    archivo con cuarenta y siete circunferencias, como el de MLP— en el camino
+    obligatorio del caso normal, que es **una sola circunferencia**: quien subía
+    un KMZ corriente tenía que "separar" algo que no estaba junto.
+
+    Ahora los datos se leen en la etapa del KMZ, que es donde el usuario los
+    pidió. Devuelve una lista de dicts listos para pintar, uno por
+    circunferencia — casi siempre uno.
+
+    Es de sólo lectura y no toca la base: se puede llamar al dibujar una ficha
+    sin efectos. Quien quiera persistir usa `create_requests_from_plan`, que
+    reusa esta misma derivación.
+    """
+    if plan.current_version is None:
+        return []
+    aerodromes = _locatable_aerodromes()
+    rows = []
+    for section in split_sections(plan.current_version.content):
+        nearest = nearest_aerodromes(section.center, aerodromes, limit=1)
+        aerodrome, distance_km = nearest[0] if nearest else (None, None)
+        lat, lon = section.center
+        rows.append(
+            {
+                "section": section,
+                "name": section.name,
+                "lat": lat,
+                "lon": lon,
+                # Las seis casillas de SIGO, y la lectura corrida para cotejar
+                # de un vistazo contra la carta.
+                "dms_lat": to_dms(lat, "lat"),
+                "dms_lon": to_dms(lon, "lon"),
+                "lat_readable": format_dms(lat, "lat"),
+                "lon_readable": format_dms(lon, "lon"),
+                "radius_m": round(section.radius_m) if section.radius_m else None,
+                "amc": aerodrome,
+                "amc_distance_km": (
+                    round(distance_km, 1) if distance_km is not None else None
+                ),
+                "warnings": list(section.warnings),
+            }
+        )
+    return rows
+
+
 @transaction.atomic
 def create_requests_from_plan(plan, *, created_by, document=None):
     """Crear una `FlightRequest` por cada sección del plan.
@@ -148,25 +197,15 @@ def link_to_permission(request, permission, *, changed_by="", user=None):
     request._changed_by_user = user
     request.save(update_fields=["flight_permission", "status", "updated_at"])
 
-    filled = []
-    if permission.latitude is None and permission.longitude is None:
-        permission.latitude = request.center_lat
-        permission.longitude = request.center_lon
-        filled += ["latitude", "longitude"]
-    if permission.radius_km is None and request.radius_m:
-        permission.radius_km = Decimal(request.radius_m) / Decimal(1000)
-        filled.append("radius_km")
-    if not permission.commune and request.commune:
-        permission.commune = request.commune
-        filled.append("commune")
-    if not permission.area_name and request.area_name:
-        permission.area_name = request.area_name
-        filled.append("area_name")
-    if permission.max_altitude_ft is None and request.altitude_m:
-        # SIGO acepta metros o pies; el permiso guarda pies (OPS-4). 1 m =
-        # 3.28084 ft, redondeado al pie: la casilla no admite decimales.
-        permission.max_altitude_ft = round(request.altitude_m * 3.28084)
-        filled.append("max_altitude_ft")
-    if filled:
-        permission.save(update_fields=filled + ["updated_at"])
-    return filled
+    # R10.2: la aritmética vive en `FlightPermission.fill_location_gaps`, junto
+    # al `clean()` que la restringe. Antes estaba acá, y era la única copia —
+    # hasta que apareció la segunda fuente (vincular un plan directamente), que
+    # es cuando este repo extrae.
+    return permission.fill_location_gaps(
+        latitude=request.center_lat,
+        longitude=request.center_lon,
+        radius_m=request.radius_m,
+        commune=request.commune,
+        area_name=request.area_name,
+        altitude_m=request.altitude_m,
+    )

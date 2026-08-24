@@ -1,5 +1,6 @@
 import calendar
 from datetime import date, datetime, timedelta
+from decimal import Decimal
 from urllib.parse import quote
 
 from django.contrib import messages
@@ -44,6 +45,7 @@ from .dossier import operational_dossier
 from .flight_requests import (
     create_requests_from_plan,
     link_to_permission,
+    plan_sections,
     section_kmz,
     sigo_sheet,
 )
@@ -263,6 +265,16 @@ class FlightPermissionDetail(
         # en vez de abriendo cinco pantallas y acordándose de todas. Composición
         # pura de lo que ya existe -- ver apps/operations/dossier.py.
         context["dossier"] = operational_dossier(self.object)
+        # R10.2: los planes que se pueden cruzar con este permiso -- los de su
+        # mismo centro de costo que todavía no están vinculados a ninguno.
+        # Excluir los ya vinculados a **otro** permiso es deliberado: reasignar
+        # un plan de un permiso a otro es un movimiento distinto, y ofrecerlo
+        # entre iguales invitaría a hacerlo sin querer.
+        context["linkable_plans"] = GeoPlan.objects.filter(
+            cost_center=self.object.cost_center,
+            flight_permission__isnull=True,
+            is_active=True,
+        ).order_by("-created_at")
         # LV-72: the SIGO trace shows *who, with what role, when*. The role is
         # the user's groups, prefetched here rather than resolved per row --
         # `{{ h.changed_by_user.groups.all }}` in the template would be one
@@ -964,6 +976,88 @@ class FlightRequestLink(ModelPermissionRequiredMixin, View):
                 % {"folio": permission.internal_folio},
             )
         return redirect(obj)
+
+
+class GeoPlanLinkToPermission(ModelPermissionRequiredMixin, View):
+    """R10.2: vincular a un permiso un plan geoespacial **que ya está subido**.
+
+    Faltaba la puerta. La ficha del permiso sólo ofrecía "+ Importar plan", o
+    sea subir un KMZ nuevo, y `GeoPlan.flight_permission` no se podía reasignar
+    después de creado el plan salvo por el admin de Django. El usuario lo pidió
+    así: *"el permiso de vuelo con lo geoespacial debemos cruzarlo con el que ya
+    se subió en la app"*.
+
+    Al vincular, el plan **rellena la ubicación del permiso** con lo que dice su
+    KMZ — centro, radio y, cuando el plan trae una sola circunferencia, también
+    el nombre del área. Sólo los huecos: ver `fill_location_gaps`.
+
+    `permission_action = "change"` sobre `GeoPlan` y no sobre el permiso: lo que
+    esta acción modifica es el plan (su FK); que de paso complete campos vacíos
+    del permiso es consecuencia, no el acto.
+    """
+
+    model = GeoPlan
+    permission_action = "change"
+
+    def post(self, request, pk):
+        permission = get_object_or_404(FlightPermission, pk=pk, is_active=True)
+        plan = GeoPlan.objects.filter(
+            pk=request.POST.get("plan"),
+            cost_center=permission.cost_center,
+            is_active=True,
+        ).first()
+        if plan is None:
+            messages.error(request, _("Choose a plan from this cost center."))
+            return redirect(permission)
+
+        plan.flight_permission = permission
+        # Sin esto la bitácora `GeoPlanPermissionLink` nace muda: su señal lee
+        # este atributo y nadie lo seteaba, así que `changed_by_user` quedaba
+        # siempre nulo -- el mismo defecto que `LV-101` encontró como "system".
+        plan._changed_by_user = request.user
+        plan.save(update_fields=["flight_permission", "updated_at"])
+
+        filled = self._fill_from(plan, permission)
+        set_audit_context(
+            request,
+            plan,
+            action="geoplan_linked_to_permission",
+            metadata={"permission": permission.internal_folio, "filled": filled},
+        )
+        if filled:
+            messages.success(
+                request,
+                _("Plan %(title)s linked; it filled in: %(fields)s.")
+                % {"title": plan.title, "fields": ", ".join(filled)},
+            )
+        else:
+            messages.success(
+                request,
+                _("Plan %(title)s linked. The permit already had its location.")
+                % {"title": plan.title},
+            )
+        return redirect(permission)
+
+    @staticmethod
+    def _fill_from(plan, permission):
+        """Lo que el KMZ aporta, cuando aporta algo que no sea ambiguo.
+
+        Con **una** circunferencia el centro y el radio del permiso son los de
+        esa circunferencia, sin discusión. Con varias no: elegir una sería
+        inventar cuál manda, y ahí el camino correcto es separarlas en
+        solicitudes. Por eso un plan multi-círculo se vincula igual —el vínculo
+        es válido— pero no rellena coordenadas.
+        """
+        rows = plan_sections(plan)
+        if len(rows) != 1:
+            return []
+        row = rows[0]
+        return permission.fill_location_gaps(
+            latitude=Decimal(f"{row['lat']:.6f}"),
+            longitude=Decimal(f"{row['lon']:.6f}"),
+            radius_m=row["radius_m"],
+            area_name=row["name"],
+        )
 
 
 class GeoPlanSplitIntoRequests(ModelPermissionRequiredMixin, View):

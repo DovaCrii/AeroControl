@@ -109,4 +109,12 @@ urlpatterns = [
         views.GeoPlanSplitIntoRequests.as_view(),
         name="geo-plan-split",
     ),
+    # R10.2: el `pk` es el del **permiso**, no el del plan -- se entra desde la
+    # ficha del permiso, que es donde la persona está cuando quiere cruzarlo con
+    # algo que ya subió, y ahí vuelve.
+    path(
+        "permissions/<uuid:pk>/link-plan/",
+        views.GeoPlanLinkToPermission.as_view(),
+        name="permission-link-plan",
+    ),
 ]
