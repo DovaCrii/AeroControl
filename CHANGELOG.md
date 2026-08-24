@@ -91,6 +91,14 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   de administración. Las asignaciones conservan su sujeto (la persona, el dron)
   y ganan una **flecha** común que las identifica como asignación; Mantención
   pasa a una llave inglesa y el centro de administración a un medidor.
+- **Los documentos del permiso se ven como en el resto de la app (`R10.6`).** La
+  ficha del permiso de vuelo armaba su bloque "Documentos" con marcado propio,
+  anterior a la sección compartida que usan la aeronave, el operador y el centro
+  de costo — y por eso era la única que se había quedado sin la **agrupación por
+  categoría**, sin **"Subir varios"** y sin el **"Ver"** que abre el PDF sobre la
+  ficha en vez de bajarlo al disco. Justamente la ficha donde más papeles se
+  juntan: carta a la DGAC, autorización de operación, resolución de la JAC,
+  correspondencia. Ahora es la misma sección, una sola vez.
 - **La bandeja de alertas abre en lo que hay que hacer (`LV-118`).** Abría
   mostrando **todo**, resuelto incluido, así que la pantalla de trabajo diario
   mezclaba los pendientes con el historial. Ahora abre en **"Sin resolver"** y

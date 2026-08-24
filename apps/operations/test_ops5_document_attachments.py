@@ -78,6 +78,33 @@ class TestDocumentsSection:
         ).get(reverse("permission-detail", args=[permission.pk]))
         assert upload_href in with_add.content.decode()
 
+    @pytest.mark.django_db
+    def test_uses_the_shared_documents_section(self, db):
+        # R10.6: la ficha del permiso tenía su propia copia de esta sección, y
+        # por eso se quedó atrás dos veces (LV-92, LV-104) sin que nada fallara.
+        # Estas tres señales son de la plantilla compartida y de ninguna otra:
+        # si el permiso vuelve a tener marcado propio, esto se cae.
+        permission = _permission()
+        doc_type = DocumentType.objects.create(code="LETTER", name="Letter")
+        document = Document.objects.create(
+            content_type=ContentType.objects.get_for_model(FlightPermission),
+            object_id=permission.pk,
+            doc_type=doc_type,
+            title="Authorization letter",
+            issue_date=date(2026, 7, 1),
+            file_path="x",
+        )
+        response = login_as(
+            "view_flightpermission", "view_document", "add_document"
+        ).get(reverse("permission-detail", args=[permission.pk]))
+        body = response.content.decode()
+
+        assert reverse("document-bulk-upload") in body
+        # LV-92: el modal de "Ver" -- el `hx-get` al marco del visor.
+        assert reverse("document-preview-frame", args=[document.pk]) in body
+        # LV-104: el encabezado de categoría que agrupa el listado.
+        assert doc_type.get_category_display() in body
+
 
 class TestUploadFormPrefill:
     @pytest.mark.django_db
