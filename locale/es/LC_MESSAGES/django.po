@@ -6572,3 +6572,8 @@ msgstr "Ampliar"
 #: .\templates/geo/plan_detail.html
 msgid "Exit full screen"
 msgstr "Salir de pantalla completa"
+
+#: .\apps\operations\dossier.py
+msgid "Link a plan"
+msgstr "Vincular un plan"
+

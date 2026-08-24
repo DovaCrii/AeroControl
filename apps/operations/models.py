@@ -117,6 +117,36 @@ class FlightPermission(StatusFlowMixin, BaseModel):
     region = models.CharField(max_length=100, blank=True)
     commune = models.CharField(max_length=100, blank=True)
     area_name = models.CharField(max_length=200, blank=True)
+    # LV-137: el aeródromo más cercano y su distancia, que hasta acá sólo existían
+    # en la solicitud SIGO. Textual del usuario, sobre el expediente del permiso:
+    # *"ese tiene además la información faltante para llenar el permiso, sobre
+    # todo el tema de distancia punto central la distancia al aeródromo"*. El plan
+    # geoespacial los calcula y la solicitud los guardaba; el permiso —que es la
+    # ficha donde se consulta el trámite— no tenía dónde ponerlos, así que el dato
+    # se perdía en el camino y había que volver al plan a buscarlo.
+    #
+    # Definidos igual que en `FlightRequest`, a propósito: dos formas distintas
+    # del mismo dato en el mismo proyecto es cómo empiezan a discrepar.
+    amc = models.ForeignKey(
+        "registry.Aerodrome",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="flight_permissions",
+        verbose_name=_("Nearest aerodrome (AMC)"),
+        help_text=_("Proposed by distance; confirm against the AIP chart."),
+    )
+    # Se guarda además de calcularse: es el número que quedó en el papel, y tiene
+    # que seguir diciendo lo mismo aunque mañana alguien corrija la coordenada del
+    # aeródromo en su ficha (misma lección que `LV-118` dejó en las alertas).
+    amc_distance_km = models.DecimalField(
+        max_digits=7,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0"))],
+        verbose_name=_("Distance to AMC (km)"),
+    )
     latitude = models.DecimalField(
         max_digits=9,
         decimal_places=6,
@@ -267,6 +297,8 @@ class FlightPermission(StatusFlowMixin, BaseModel):
         commune="",
         area_name="",
         altitude_m=None,
+        amc=None,
+        amc_distance_km=None,
         save=True,
     ):
         """R10: completar la ubicación con lo que trae el KMZ, sin pisar nada.
@@ -324,6 +356,18 @@ class FlightPermission(StatusFlowMixin, BaseModel):
             # ft, un tercio de la altura real y sin que nada avise.
             self.max_altitude_ft = round(altitude_m * 3.28084)
             filled.append("max_altitude_ft")
+        # LV-137: el aeródromo y su distancia van **de a par**, por la misma razón
+        # que las coordenadas: una distancia sin aeródromo no se puede leer, y un
+        # aeródromo sin distancia obliga a recalcularla para saber qué declarar.
+        if (
+            self.amc_id is None
+            and self.amc_distance_km is None
+            and amc is not None
+            and amc_distance_km is not None
+        ):
+            self.amc = amc
+            self.amc_distance_km = amc_distance_km
+            filled += ["amc", "amc_distance_km"]
         if filled and save:
             self.save(update_fields=filled + ["updated_at"])
         return filled

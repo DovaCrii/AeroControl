@@ -260,12 +260,33 @@ def _geo_plan_items(permission, user=None):
     """
     plans = list(permission.geo_plans.all())
     if not plans:
-        # R10.2 dejó dos caminos para llegar a tener plan: importar un KMZ nuevo
-        # o vincular uno ya subido. El atajo ofrece **importar** porque es el que
-        # sirve siempre; vincular exige que el plan exista y su selector ya vive
-        # en esta misma ficha, unos centímetros más abajo.
+        # **LV-137: primero vincular, y sólo importar si no hay nada que
+        # vincular.** El atajo ofrecía importar, y eso estaba mal en lo que más
+        # importa: importar crea un plan nuevo desde un KMZ, mientras que el plan
+        # que hace falta **ya existe en la app** y al vincularlo *rellena la
+        # ubicación del permiso* — centro, radio, área y, desde esta fila, el
+        # aeródromo más cercano con su distancia. Textual del usuario: *"el plan
+        # geoespacial no se debe importar, se debe llamar desde el geoespacial que
+        # se crea dentro de la app, y ese tiene además la información faltante
+        # para llenar el permiso"*.
+        #
+        # El destino es el selector de R10.2, que vive en esta misma ficha: un
+        # ancla y no una pantalla nueva, porque vincular es un `<select>` con los
+        # planes de este centro de costo y ya está dibujado unos centímetros más
+        # abajo.
+        from apps.geo.models import GeoPlan
+
+        linkable = GeoPlan.objects.filter(
+            cost_center=permission.cost_center,
+            flight_permission__isnull=True,
+            is_active=True,
+        ).exists()
         action = ("", "")
-        if _allowed(user, "geo.add_geoplan"):
+        if linkable and _allowed(user, "geo.change_geoplan"):
+            action = (_("Link a plan"), "#tab-geo-plans")
+        elif _allowed(user, "geo.add_geoplan"):
+            # Sin planes sueltos en esta faena, importar es lo único que queda —
+            # y ahí sí es la acción correcta, no un atajo equivocado.
             action = (
                 _("Import a plan"),
                 f"{reverse('geo-plan-import')}?flight_permission={permission.pk}",
