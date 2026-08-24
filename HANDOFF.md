@@ -38,6 +38,74 @@ Verificar: `systemctl list-timers 'aerocontrol-*' --no-pager`
 
 Notificaciones a `Dirección`: `aortega@jej.cl` + `cmunoz@jej.cl`.
 
+## Estado al cierre del 2026-08-24 — **empezar por acá**
+
+`main` = `origin/main` (`3eba41d`), árbol limpio, `pwsh scripts/verify.ps1`
+verde: **1637 tests**, ruff, bandit y pip-audit sin hallazgos.
+
+### Lo que pasó hoy, en orden
+
+1. **Se desplegó R9 completo en `p340`.** El 500 que se reportó al importar un
+   KMZ **no era el archivo**: era el despliegue a medias — `git pull` sin
+   reiniciar. Ver el aviso destacado más abajo; es la trampa que conviene no
+   volver a pisar.
+2. **`LV-129`** — el panel daba cinco respuestas distintas a la misma pregunta.
+3. **Django 6.0.7 → 6.0.8** y `pip` 26.2 (`pip-audit` en verde).
+4. **`R10.1`–`R10.3`** — la corrección de fondo del flujo geoespacial.
+
+### `R10`: qué cambió y por qué importa
+
+El usuario corrigió una premisa equivocada de R9: *separar* era la **única**
+puerta para que un KMZ entregara centro, radio, aeródromo más cercano y
+distancia, lo que obligaba al caso normal —**un** KMZ con **una**
+circunferencia— a pasar por una acción diseñada para el excepcional (el archivo
+de MLP, con 47).
+
+- **La ficha del plan trae "Datos para SIGO"**, calculado al vuelo. Separar sólo
+  aparece con más de una circunferencia.
+- **Un plan ya subido se vincula a su permiso** y le rellena la ubicación. La
+  aritmética vive en `FlightPermission.fill_location_gaps()`, junto al `clean()`
+  que la restringe.
+- Sin migraciones: todo se apoya en campos que ya existían desde OPS-7.
+
+### Lo siguiente, por valor
+
+1. **Coordenadas de aeródromos — es el que hace útil al resto.** `seed_aerodromes`
+   dejó **6 de 50** georreferenciados, así que "la base más cercana" elige entre
+   seis y la pantalla tiene que advertirlo. Fuente probable: el mapa que aportó
+   el usuario
+   (`google.com/maps/d/u/0/viewer?mid=1T3wWBnClwim-qP1isEKxBO4Xc1Dt6z4`).
+   Regla que se mantiene: **la app propone, la carta AIP manda**.
+2. **Documentos en plan y solicitud** — `DOCUMENTABLE_MODELS`
+   (`apps/compliance/forms.py:29`) no incluye `geo.geoplan` ni
+   `operations.flightrequest`, así que no se les puede adjuntar nada. El molde a
+   copiar es cómo `FlightPermission` obtuvo su sección (OPS-5).
+3. **Botón "Separar un plan"** del listado de solicitudes: lleva al listado de
+   planes, no a una acción. Con `R10.1` su lugar cambió y conviene revisarlo.
+4. **Crear `RPA-7213` en CC 743 = "Candelaria"** y `RPA-7126` en CC 738, con sus
+   PDF. Datos verificados contra los papeles en la fila `LV-121` del plan.
+
+### Qué está en `p340` y qué no
+
+**Desplegado hoy** (hasta `6c98842`): `LV-117`…`LV-128` y **R9 completo**, con
+sus migraciones, `bootstrap_roles` y los cuatro seeds. Verificado funcionando.
+
+**Sin desplegar**, y son sólo dos commits posteriores:
+
+- `f8f0211` — `LV-129` (los números del panel) y el guardián de URLs.
+- `3eba41d` — `R10` completo.
+
+**Ninguno trae migraciones.** El despliegue es el bloque de abajo **sin** el
+paso de `migrate` ni los seeds; sí hacen falta `collectstatic` y el reinicio,
+porque cambiaron plantillas y el `.mo`.
+
+### Lo que sigue faltando en la VM, de antes
+
+`EMAIL_HOST` sigue vacío (`LV-119`: ningún correo ha salido nunca), los dos
+timers (`check_scheduled_jobs`, `verify_backup`) siguen sin instalar, y el
+respaldo del 2026-08-24 se tomó pero **no se verificó**
+(`aero_ops_20260824_093724`).
+
 ## Estado al cierre del 2026-08-17
 
 `main` = `origin/main`, árbol limpio, `pwsh scripts/verify.ps1` verde: **1440
