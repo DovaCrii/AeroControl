@@ -88,8 +88,19 @@ de MLP, con 47).
 3. ~~**Botón "Separar un plan"**~~ — **hecho el 2026-08-24 (`LV-131`)**: era
    navegación disfrazada de acción. La pantalla ahora dice para qué es, y el
    estado vacío explica de dónde nacen las solicitudes.
-4. **Crear `RPA-7213` en CC 743 = "Candelaria"** y `RPA-7126` en CC 738, con sus
-   PDF. Datos verificados contra los papeles en la fila `LV-121` del plan.
+4. **Crear `RPA-7213` en CC 743 = "Candelaria"**, con sus cuatro PDF. `RPA-7126`
+   ya está cargada. Los datos salen del Rev 17 del manual y de los papeles:
+   `DJI / MATRICE 4 ENTERPRISE`, serie `1581F7FVC266P00DEDA2`, 1.420 kg, seguro
+   JAC vigente hasta **18-08-2027** (`RES. EX. 1.183`), estado del seguro
+   *Autorizado*. Los cuatro tipos de documento y sus fechas están en la fila
+   `LV-121`. **Ojo con `RPA-7126`**: quedó con el modelo escrito "Matrice 4E" (del
+   certificado DGAC) mientras sus tres hermanas dicen "MATRICE 4 ENTERPRISE" (del
+   manual), y su seguro sigue en "Faltante o por renovar" aunque los papeles
+   existen. `import_aip_aerodromes` no arregla eso y `chapter1_docx_import
+   --skip-existing` tampoco: saltar no actualiza, lo reporta como discrepancia.
+   **Nadie con acceso a `p340` desde una sesión de agente**: `ssh` desde esta
+   máquina responde `Permission denied (publickey)`, así que toda escritura en
+   producción la hace el usuario.
 5. ~~**La circunferencia que encierra un polígono**~~ — **hecha el 2026-08-24
    (`R10.8`)**. Lo que queda alrededor: **(a)** la solicitud sigue naciendo con
    el centro y radio *dibujados*, no con los de la propuesta — sustituirlos es
@@ -112,19 +123,32 @@ de MLP (47 círculos, `Polygon`): las dos formas existen en producción.
 
 ### Qué está en `p340` y qué no
 
-**Desplegado hoy** (hasta `6c98842`): `LV-117`…`LV-128` y **R9 completo**, con
-sus migraciones, `bootstrap_roles` y los cuatro seeds. Verificado funcionando.
+**Desplegado y verificado en pantalla hasta `b3fb8c0`** (2026-08-24, tarde). La
+evidencia son las capturas del usuario: los filtros del listado de planes
+(`LV-135`), el botón "Ampliar" en la tarjeta del mapa (`LV-136`) y la fila del
+círculo envolvente en `CC 716` (`R10.8`, `LV-132`). O sea `R10.4`…`R10.8`,
+`LV-129`…`LV-136` y `R10.6` ya corren allá, con `import_aip_aerodromes` ejecutado
+(el AMC se calcula sobre 15 posiciones, no 6).
 
-**Sin desplegar**, y son cuatro commits posteriores:
+**Sin desplegar** al cierre: `814301f`, `<folio>` y `<coords>` — o sea `LV-137`,
+`LV-139`, `LV-138` y `LV-140`.
 
-- `f8f0211` — `LV-129` (los números del panel) y el guardián de URLs.
-- `3eba41d` — `R10` completo.
-- `R10.4` — el KMZ de Trimble deja de leerse como "sin círculo".
-- `R10.5` — plan y solicitud reciben documentos.
+**Y esta tanda SÍ trae migraciones**, a diferencia de las anteriores:
 
-**Ninguno trae migraciones.** El despliegue es el bloque de abajo **sin** el
-paso de `migrate` ni los seeds; sí hacen falta `collectstatic` y el reinicio,
-porque cambiaron plantillas y el `.mo`.
+- `operations/0021` — el `amc` y su distancia en el permiso (`LV-137`).
+- `geo/0005` — el folio `PG-2026-001` del plan, **con relleno de datos**: asigna
+  su número a los planes que ya existen, en orden de creación por año.
+
+Así que el bloque de despliegue va **con `migrate`**. El paso de datos
+(`import_aip_aerodromes`) ya corrió y es idempotente, pero repetirlo no cuesta
+nada y cubre el caso de que alguien lo haya salteado:
+
+```bash
+cd /opt/aerocontrol && git pull && set -a; source <(sudo cat /etc/aerocontrol.env); set +a && uv sync && uv run python manage.py migrate --no-input && uv run python manage.py collectstatic --no-input && sudo systemctl restart aerocontrol && uv run python manage.py import_aip_aerodromes
+```
+
+**Antes de migrar, respaldar y verificar el respaldo** (`manage.py backup`,
+`verify_backup <ruta>`): `geo/0005` escribe en todas las filas de `geo_geoplan`.
 
 ### Lo que sigue faltando en la VM, de antes
 

@@ -46,6 +46,23 @@ class GeoPlan(StatusFlowMixin, BaseModel):
     # commit API is the authoritative enforcement (see GEO-6).
     EDITABLE_STATUSES = frozenset({"draft", "editing"})
 
+    # LV-138: el identificador del plan. Pedido del usuario mirando el listado,
+    # donde el título hacía de identificador y venía armado de **dos formas
+    # distintas** según cómo se hubiera importado: "CC738 - MLP · Juan Quiroz ·
+    # CG-01_circunferencia_grande" cuando no había permiso, y "JEJ-2026-002 ·
+    # CC861_area_permiso" cuando sí. Ninguna de las dos es un identificador:
+    # cambian de forma, se repiten y no se pueden citar por teléfono.
+    #
+    # Correlativo **anual**, la misma forma que `FlightPermission.internal_folio`
+    # ("JEJ-2026-001") y que las resoluciones de la DGAC que la operación ya
+    # maneja: el año ubica el plan en el tiempo y el número crece del 1 al
+    # infinito dentro de él. Decisión del usuario entre tres alternativas.
+    #
+    # Asignado una vez en `save()`, nunca en blanco, nunca editable: un
+    # identificador que alguien pueda cambiar deja de identificar.
+    folio = models.CharField(max_length=20, unique=True, editable=False, blank=True)
+    # El título deja de ser el identificador y vuelve a ser lo que dice su
+    # nombre: el comentario que describe el plan (la faena y el archivo).
     title = models.CharField(max_length=200)
     cost_center = models.ForeignKey(
         "registry.CostCenter",
@@ -89,8 +106,51 @@ class GeoPlan(StatusFlowMixin, BaseModel):
             models.Index(fields=["cost_center", "is_active"], name="geo_plan_cc_idx"),
         ]
 
+    @staticmethod
+    def _next_folio():
+        """Correlativo anual, a prueba de creaciones simultáneas.
+
+        Copiado en estructura de `FlightPermission._next_internal_folio` a
+        propósito: es el mismo problema y merece la misma solución, y dos
+        mecanismos distintos para numerar dos cosas del mismo flujo es cómo uno
+        de los dos termina con un hueco que nadie explica.
+
+        `select_for_update()` bloquea las filas del año dentro de esta
+        transacción, así que dos planes creados en el mismo instante no pueden
+        calcular el mismo número: el segundo espera a que el primero confirme.
+        El único hueco que no cierra es el primer plan de un año nuevo —no hay
+        nada que bloquear todavía— y ahí la restricción `unique` convierte esa
+        carrera rarísima en un guardado que falla en vez de un duplicado
+        silencioso.
+        """
+        from django.db import transaction  # noqa: F401  (documenta el contrato)
+        from django.utils import timezone
+
+        prefix = f"PG-{timezone.now().year}-"
+        last = (
+            GeoPlan.objects.select_for_update()
+            .filter(folio__startswith=prefix)
+            .order_by("-folio")
+            .first()
+        )
+        next_seq = int(last.folio[len(prefix) :]) + 1 if last else 1
+        return f"{prefix}{next_seq:03d}"
+
+    def save(self, *args, **kwargs):
+        from django.db import transaction
+
+        if self._state.adding and not self.folio:
+            with transaction.atomic():
+                self.folio = self._next_folio()
+                return super().save(*args, **kwargs)
+        return super().save(*args, **kwargs)
+
     def __str__(self):
-        return self.title
+        # El folio primero y el título después: el identificador es lo que se
+        # cita, y el título lo que explica de qué es. Sin el folio —un plan
+        # anterior a LV-138 que aún no lo tenga— cae al título, que es lo que
+        # esta cadena decía antes.
+        return f"{self.folio} · {self.title}" if self.folio else self.title
 
     def get_absolute_url(self):
         from django.urls import reverse

@@ -90,19 +90,26 @@ class GeoPlanImportForm(forms.Form):
 
         if not cleaned.get("title"):
             uploaded = cleaned.get("file")
-            anchor = permission or cost_center
-            if anchor and uploaded:
-                cleaned["title"] = self._autogenerate_title(anchor, uploaded.name)
+            if cost_center and uploaded:
+                cleaned["title"] = self._autogenerate_title(cost_center, uploaded.name)
         return cleaned
 
     @staticmethod
-    def _autogenerate_title(anchor, file_name):
-        """`<permission or cost center> · <file name>`.
+    def _autogenerate_title(cost_center, file_name):
+        """`<código del centro de costo> · <nombre del archivo>`.
 
-        The anchor carries the identity the user already chose; the file name
-        keeps two plans of the same permission apart (the link is 1:N).
+        `LV-138`: el título **dejó de ser el identificador**. Antes se anclaba en
+        el permiso cuando había uno y en el centro de costo cuando no, así que el
+        listado mostraba dos formas distintas —"JEJ-2026-002 · CC861_area_permiso"
+        y "CC738 - MLP · Juan Quiroz · CG-01_circunferencia_grande"— y ninguna
+        servía para citar un plan. Eso lo hace ahora `folio` (`PG-2026-001`).
+
+        Lo que queda es el comentario que pidió el usuario: **el CC y el nombre
+        del KMZ**. Se usa el `code` y no el `str()` del centro de costo porque
+        éste arrastra el nombre de la faena y el responsable — tres datos que ya
+        están en su propia columna, repetidos en cada fila.
         """
-        return f"{anchor} · {Path(file_name).stem}"[:200]
+        return f"{cost_center.code} · {Path(file_name).stem}"[:200]
 
     def clean_file(self):
         uploaded = self.cleaned_data["file"]

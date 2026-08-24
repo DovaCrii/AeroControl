@@ -6577,3 +6577,12 @@ msgstr "Salir de pantalla completa"
 msgid "Link a plan"
 msgstr "Vincular un plan"
 
+
+#: .\templates\geo\plan_detail.html
+msgid "Lat"
+msgstr "Lat"
+
+#: .\templates\geo\plan_detail.html
+msgid "Lon"
+msgstr "Lon"
+

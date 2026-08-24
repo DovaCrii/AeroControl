@@ -165,12 +165,19 @@ class TestImport:
         assert "cost_center" not in response.context["form"].initial
 
     @pytest.mark.django_db
-    def test_a_plan_linked_to_a_permission_inherits_its_title_and_cost_center(
+    def test_a_plan_linked_to_a_permission_inherits_its_cost_center(
         self, db, settings, tmp_path
     ):
         """LV-60: importing against a permission is not a separate record --
         posting neither a title nor a cost center still produces a coherent
-        plan, both derived from the permission the user already chose."""
+        plan, both derived from the permission the user already chose.
+
+        `LV-138` cambió **la forma del título**, no esta herencia: el título ya no
+        se ancla en el permiso porque dejó de ser el identificador (eso lo hace
+        `folio`), y anclarlo ahí producía dos formas distintas en el mismo
+        listado. Queda el comentario que el usuario pidió: código del centro de
+        costo y nombre del archivo.
+        """
         settings.DOCUMENTS_ROOT = str(tmp_path)
         permission = _permission(CostCenter.objects.create(code="CC1", name="Uno"))
         client = login_as("add_geoplan")
@@ -187,12 +194,21 @@ class TestImport:
         plan = GeoPlan.objects.get()
         assert plan.flight_permission_id == permission.pk
         assert plan.cost_center_id == permission.cost_center_id
-        assert plan.title == f"{permission} · area-norte"
+        assert plan.title == f"{permission.cost_center.code} · area-norte"
+        # Y el identificador que sí lo identifica.
+        assert plan.folio.startswith("PG-")
 
     @pytest.mark.django_db
     def test_a_plan_without_a_permission_derives_its_title_from_the_cost_center(
         self, db, settings, tmp_path
     ):
+        """LV-138: el **código** del centro de costo, no su `str()`.
+
+        Éste arrastra el nombre de la faena y el responsable —"CC1 - Uno · Juan
+        Quiroz"—, tres datos que ya están en su propia columna del listado y que
+        repetidos en cada fila empujaban fuera de la vista el nombre del KMZ, que
+        es lo único que distingue un plan de otro de la misma faena.
+        """
         settings.DOCUMENTS_ROOT = str(tmp_path)
         center = CostCenter.objects.create(code="CC1", name="Uno")
         client = login_as("add_geoplan")
@@ -203,7 +219,7 @@ class TestImport:
         )
 
         assert response.status_code == 302
-        assert GeoPlan.objects.get().title == f"{center} · area-sur"
+        assert GeoPlan.objects.get().title == "CC1 · area-sur"
 
     @pytest.mark.django_db
     def test_an_explicit_title_is_kept(self, db, settings, tmp_path):

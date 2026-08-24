@@ -7,10 +7,14 @@ La fila archivada se distingue y ofrece "Restaurar": sin eso, el filtro
 "Archivados" sería una lista de la que no se puede volver.{% endcomment %}
 {% for plan in plans %}
 <tr {% if not plan.is_active %}class="opacity-75"{% endif %}>
+  {% comment %}LV-138: el folio es la columna que identifica, y el título pasa a
+  ser el comentario debajo -- el mismo reparto que usa el listado de permisos
+  (número arriba, folio DGAC como subtítulo).{% endcomment %}
   <td>
-    <a href="{% url 'geo-plan-detail' plan.pk %}" class="table-primary-value"><strong>{{ plan.title }}</strong></a>
+    <a href="{% url 'geo-plan-detail' plan.pk %}" class="table-primary-value"><strong>{{ plan.folio|default:"—" }}</strong></a>
     {% if not plan.is_active %} <span class="badge bg-secondary-subtle text-secondary-emphasis">{% translate "Archived" %}</span>{% endif %}
   </td>
+  <td><span class="cell-truncate">{{ plan.title }}</span></td>
   <td>{{ plan.cost_center }}</td>
   <td>{% include "geo/_status_badge.html" with status=plan.status label=plan.get_status_display %}</td>
   <td>{% if plan.current_version %}v{{ plan.current_version.version_number }}{% else %}—{% endif %}</td>

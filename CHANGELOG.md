@@ -70,6 +70,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   centro de una con el radio de la otra, que es la combinación que **no** cubre
   el área. Ahora la fila muestra directamente lo que se puede declarar, y el
   radio promedio de lo dibujado queda como referencia en chico.
+- **Cada plan geoespacial tiene su número: `PG-2026-001` (`LV-138`).** El título
+  hacía de identificador y venía en dos formas distintas según cómo se hubiera
+  importado el plan, así que no se podía citar ni ordenar. Ahora el número va en
+  su **propia columna** —correlativo anual, como el folio del permiso— y el título
+  vuelve a ser el comentario: el código del centro de costo y el nombre del KMZ.
+  Los planes que ya existían reciben su número en orden de creación. Requiere la
+  migración `geo/0005`.
 - **El permiso guarda el aeródromo más cercano y su distancia (`LV-137`).** El plan
   geoespacial los calcula y la solicitud SIGO los guardaba, pero el permiso —la
   ficha donde uno consulta el trámite— los perdía en el camino: había que volver
