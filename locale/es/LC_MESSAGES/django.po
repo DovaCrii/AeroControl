@@ -6348,3 +6348,59 @@ msgstr "Plan geoespacial"
 #: .\apps\compliance\forms.py
 msgid "Flight request"
 msgstr "Solicitud de vuelo"
+
+#: .\apps/operations/dossier.py
+msgid "Upload it"
+msgstr "Subirlo"
+
+#: .\apps/operations/dossier.py
+msgid "Open the aircraft"
+msgstr "Abrir la aeronave"
+
+#: .\apps/operations/dossier.py
+msgid "Open the fleet"
+msgstr "Abrir la flota"
+
+#: .\apps/operations/dossier.py
+msgid "Open the operator"
+msgstr "Abrir el operador"
+
+#: .\apps/operations/dossier.py
+msgid "Open the roster"
+msgstr "Abrir los operadores"
+
+#: .\apps/operations/dossier.py
+msgid "Import a plan"
+msgstr "Importar un plan"
+
+#: .\apps/operations/dossier.py
+msgid "Open the plan"
+msgstr "Abrir el plan"
+
+#: .\apps/operations/dossier.py
+msgid "Open the plans"
+msgstr "Abrir los planes"
+
+#: .\apps/operations/dossier.py
+msgid "See the requests"
+msgstr "Ver las solicitudes"
+
+#: .\apps/operations/dossier.py
+msgid "Log a flight"
+msgstr "Registrar un vuelo"
+
+#: .\templates/operations/flight_request_list.html
+msgid "What was filed in SIGO and how long it has been waiting. The data comes from a geospatial plan; a request is created by splitting one."
+msgstr "Lo presentado en SIGO y cuánto lleva esperando. Los datos vienen de un plan geoespacial; una solicitud se crea separándolo."
+
+#: .\templates/operations/_flight_request_rows.html
+msgid "No flight requests yet."
+msgstr "Todavía no hay solicitudes de vuelo."
+
+#: .\templates/operations/_flight_request_rows.html
+msgid "Open a geospatial plan"
+msgstr "Abre un plan geoespacial"
+
+#: .\templates/operations/_flight_request_rows.html
+msgid "and split it into requests -- only needed when its KMZ has more than one circle."
+msgstr "y sepáralo en solicitudes -- sólo hace falta cuando su KMZ trae más de una circunferencia."

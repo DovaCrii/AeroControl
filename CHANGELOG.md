@@ -91,6 +91,20 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **El expediente del permiso ahora lleva a resolver lo que falta (`LV-130`).**
+  Decía "faltan cuatro cosas" y ahí terminaba: cerrar cada una exigía saber dónde
+  se cierra. Cada renglón pendiente trae ahora **el atajo que lo cierra** — el
+  formulario de carga con el tipo de documento ya elegido, la ficha de la
+  aeronave o del operador cuya vigencia falta, la del plan al que le falta la
+  revisión meteorológica, el formulario de vuelo con el permiso puesto. Si son
+  varios los registros que fallan, el atajo lleva al listado y no al primero, y
+  no se ofrece nunca un atajo que tu usuario no pueda ejecutar.
+- **"Solicitudes SIGO" ya no te manda al listado de planes (`LV-131`).** El botón
+  "Separar un plan" del encabezado no separaba nada: era navegación con cara de
+  acción, y desde que el KMZ entrega sus datos solo, separar sirve únicamente
+  cuando el archivo trae más de una circunferencia. En su lugar la pantalla dice
+  para qué es —**lo presentado en SIGO y cuánto lleva esperando**— y el estado
+  vacío explica de dónde nacen las solicitudes, con el enlace ahí.
 - **Un KMZ de Trimble ya no se lee como "sin círculo" (`R10.4`).** Los archivos
   que exporta **Trimble Business Center** dibujan la circunferencia como un
   trazado cerrado y no como un polígono, y la app sólo miraba polígonos: siete

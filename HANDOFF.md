@@ -85,10 +85,20 @@ de MLP, con 47).
    con la sección compartida. Queda una deuda relacionada: la ficha del permiso
    sigue con su propia copia anterior a `attached_documents_context`, así que hoy
    hay dos implementaciones de la misma sección.
-3. **Botón "Separar un plan"** del listado de solicitudes: lleva al listado de
-   planes, no a una acción. Con `R10.1` su lugar cambió y conviene revisarlo.
+3. ~~**Botón "Separar un plan"**~~ — **hecho el 2026-08-24 (`LV-131`)**: era
+   navegación disfrazada de acción. La pantalla ahora dice para qué es, y el
+   estado vacío explica de dónde nacen las solicitudes.
 4. **Crear `RPA-7213` en CC 743 = "Candelaria"** y `RPA-7126` en CC 738, con sus
    PDF. Datos verificados contra los papeles en la fila `LV-121` del plan.
+5. **La circunferencia que encierra un polígono.** Barridos los KMZ vigentes el
+   2026-08-24, el patrón es claro: los siete de CC 738 y los de CC 691 y CC 664
+   salen limpios, pero **CC 716, CC 861 (×2), PMCHS y Caren son polígonos
+   irregulares** — `not_a_circle`, con radios equivalentes de 100 m a 12 km. SIGO
+   pide una circunferencia, así que hoy la app detecta el problema y deja el
+   trabajo ahí. Proponer el centro y el radio del círculo mínimo que encierra el
+   polígono es lo que convierte ese aviso en dato presentable. **Y `propuesta_completo.kmz`
+   de CC 738** trae 54 círculos **sin punto centro** (los individuales `CG-0N`
+   sí lo traen), lo que sugiere ofrecer el centroide como centro cuando falta.
 
 ### Los siete KMZ de CC 738, y el bug que destaparon
 

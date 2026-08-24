@@ -264,7 +264,9 @@ class FlightPermissionDetail(
         # LV-107: "¿esta operación está completa y documentada?" respondida acá,
         # en vez de abriendo cinco pantallas y acordándose de todas. Composición
         # pura de lo que ya existe -- ver apps/operations/dossier.py.
-        context["dossier"] = operational_dossier(self.object)
+        # LV-130: con el usuario, para que cada renglón traiga sólo el atajo que
+        # esta persona puede ejecutar.
+        context["dossier"] = operational_dossier(self.object, self.request.user)
         # R10.2: los planes que se pueden cruzar con este permiso -- los de su
         # mismo centro de costo que todavía no están vinculados a ninguno.
         # Excluir los ya vinculados a **otro** permiso es deliberado: reasignar

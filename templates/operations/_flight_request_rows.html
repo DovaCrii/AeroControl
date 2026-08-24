@@ -25,5 +25,8 @@ solicitud presentada en SIGO que nadie contestó.{% endcomment %}
   <td>{% if object.flight_permission %}<a href="{% url 'permission-detail' object.flight_permission.pk %}">{{ object.flight_permission.internal_folio }}</a>{% else %}<span class="text-muted">—</span>{% endif %}</td>
 </tr>
 {% empty %}
-<tr><td colspan="6" class="text-muted py-3">{% translate "No flight requests yet. Split a geospatial plan to create them." %}</td></tr>
+{% comment %}LV-131: el estado vacío es el que tiene que explicar de dónde salen
+las solicitudes, porque es cuando la persona no lo sabe. El enlace va acá y no en
+el encabezado: en el encabezado era un botón que parecía una acción.{% endcomment %}
+<tr><td colspan="6" class="text-muted py-3">{% translate "No flight requests yet." %} <a href="{% url 'geo-plan-list' %}">{% translate "Open a geospatial plan" %}</a> {% translate "and split it into requests -- only needed when its KMZ has more than one circle." %}</td></tr>
 {% endfor %}
