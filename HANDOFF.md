@@ -70,19 +70,17 @@ de MLP, con 47).
 
 ### Lo siguiente, por valor
 
-1. **Coordenadas de aeródromos — es el que hace útil al resto.** `seed_aerodromes`
-   dejó **6 de 51** georreferenciados, así que "la base más cercana" elige entre
-   seis y la pantalla tiene que advertirlo. Fuente probable: el mapa que aportó
-   el usuario
-   (`google.com/maps/d/u/0/viewer?mid=1T3wWBnClwim-qP1isEKxBO4Xc1Dt6z4`).
-   Regla que se mantiene: **la app propone, la carta AIP manda**. El hueco real
-   es menor de lo que suena: **17 entradas son de código chileno (`SC*`/`SH*`) y
-   6 ya están, así que faltan 11**; las otras 34 son extranjeras (Abu Dhabi,
-   Anchorage, Taranto) y nunca van a ser el AMC de un vuelo en Chile. **Y ya hay
-   un caso que lo prueba**: para los siete KMZ de CC 738 la app propone `SCER`
-   (Quintero) a **111–124 km**, estando esas faenas en el interior del Choapa.
-   Ojo con `SCSA`, rotulada "Alberto Santos Dumont" (que es Río de Janeiro,
-   `SBRJ`): confirmar antes de georreferenciarla.
+1. ~~**Coordenadas de aeródromos**~~ — **hecho el 2026-08-24 (`R10.7`)**: de
+   **6 de 50** a **15 de 50**, con las posiciones del AIP-Chile cruzadas por
+   designador OACI. Lo que **no** se hizo, por decisión del usuario reafirmada
+   ese día: agregar aeródromos que el AIP publica y el selector de SIGO no
+   ofrece. Corolario para leer cualquier distancia: **el AMC es el más cercano
+   entre los que SIGO ofrece**, no el del país — para CC 738 eso da Quintero a
+   124 km teniendo Pichidangui a 79. **Lo que queda**: capturar el resto del
+   selector de SIGO (las imágenes del 2026-08-20 llegaban de la "A" a "Bermuda
+   Intl") y volver a correr `import_aip_aerodromes`. Y `SCSA` sigue sin
+   posición: SIGO la llama "Alberto Santos Dumont" (Río de Janeiro) y el AIP,
+   "Rungue Dr. C. Barría B." — una de las dos fuentes está equivocada.
 2. ~~**Documentos en plan y solicitud**~~ — **hecho el 2026-08-24 (`R10.5`)**,
    con la sección compartida. Queda una deuda relacionada: la ficha del permiso
    sigue con su propia copia anterior a `attached_documents_context`, así que hoy
