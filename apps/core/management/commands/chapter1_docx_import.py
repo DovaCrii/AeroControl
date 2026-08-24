@@ -19,8 +19,21 @@ FIELD_LABELS = re.compile(
     r"Direcci[^\s:]*n|Tel[^\s:]*fono|Email)\s*:\s*",
     re.IGNORECASE,
 )
+# El comienzo de una ficha de operador dentro de la sección 1.5.
+#
+# `LV-133`: **el número es opcional**. Hasta la Rev 16 cada ficha venía numerada
+# ("1.- NOMBRE : …") y este patrón lo exigía; el Capítulo 1 **Rev 17** las escribe
+# derecho, con la numeración movida al grupo ("1) PERMANENTES") y tabulaciones
+# delante de cada etiqueta. Con el número obligatorio el importador no encontraba
+# ni una ficha y moría con "No permanent operators were extracted" — sobre un
+# documento que trae dieciséis. Un cambio de formato del manual no debería
+# parecer un archivo vacío.
+#
+# `[ \t]*` y no `\s*`: con `MULTILINE`, `\s` cruza saltos de línea y el comienzo
+# de una ficha podría "empezar" en la línea anterior, partiendo el bloque en el
+# lugar equivocado.
 RECORD_START = re.compile(
-    r"^\s*\d{1,3}\s*[-.]?\s*[-.]?\s*NOMBRE\b",
+    r"^[ \t]*(?:\d{1,3}[ \t]*[-.]?[ \t]*[-.]?[ \t]*)?NOMBRE\b",
     re.IGNORECASE | re.MULTILINE,
 )
 
@@ -51,6 +64,14 @@ class Command(BaseCommand):
         parser.add_argument("--cost-centers", type=Path)
         parser.add_argument("--export-dir", type=Path)
         parser.add_argument("--apply", action="store_true")
+        parser.add_argument(
+            "--skip-existing",
+            action="store_true",
+            help=(
+                "Add only what is missing: leave every record already on file "
+                "untouched instead of refusing the whole run."
+            ),
+        )
         parser.add_argument("--json", action="store_true", dest="as_json")
 
     def read_cost_centers(self, path):
@@ -253,31 +274,93 @@ class Command(BaseCommand):
                     {field: row.get(field, "") for field in fields} for row in rows
                 )
 
-    def apply_report(self, report):
-        existing_aircraft = set(Aircraft.objects.values_list("registration", flat=True))
+    def partition(self, report):
+        """Qué falta, qué ya está, y qué no se puede decidir sin una persona.
+
+        `LV-134`: hasta acá `--apply` era todo o nada. Con **un** registro ya
+        presente abortaba la corrida entera, y por eso servía sólo contra una
+        base vacía — que es como se usó la primera vez y nunca más, porque una
+        base en producción nunca vuelve a estar vacía. Cargar una aeronave nueva
+        desde el manual exigía entonces tipearla a mano, teniendo el documento
+        oficial en la mano.
+
+        **Saltar no es sobrescribir.** Lo que ya está no se toca: si el manual y
+        la base discrepan en algo, la decisión es de una persona con el papel al
+        frente, no de un importador que "actualiza".
+
+        La aeronave se busca por **matrícula y por número de serie**, no sólo por
+        matrícula, y ésa es la parte que evita el duplicado real: `serial_number`
+        es único desde `X.1`, así que una fila cuya matrícula no está pero cuya
+        serie sí **no es nueva** — es la misma aeronave reinscrita o un dato mal
+        transcrito, y crearla explotaría contra el índice único. Sale como
+        conflicto, con los dos valores, para que se resuelva mirando el registro
+        DGAC.
+        """
+        by_registration = dict(Aircraft.objects.values_list("registration", "pk"))
+        by_serial = {
+            serial: pk
+            for serial, pk in Aircraft.objects.values_list("serial_number", "pk")
+            if serial
+        }
         existing_operators = set(Operator.objects.values_list("employee_id", flat=True))
         existing_centers = set(CostCenter.objects.values_list("code", flat=True))
-        collisions = [
-            *(
-                f"aircraft:{row['registration']}"
-                for row in report["aircraft"]
-                if row["registration"] in existing_aircraft
-            ),
-            *(
-                f"operator:RUT-{rut_key(row['rut'])}"
-                for row in report["operators"]
-                if f"RUT-{rut_key(row['rut'])}" in existing_operators
-            ),
-            *(
-                f"cost_center:{row['code']}"
-                for row in report["cost_centers"]
-                if row["code"] in existing_centers
-            ),
-        ]
-        if collisions:
+
+        missing = {"cost_centers": [], "aircraft": [], "operators": []}
+        skipped, conflicts = [], []
+
+        for row in report["cost_centers"]:
+            if row["code"] in existing_centers:
+                skipped.append(f"cost_center:{row['code']}")
+            else:
+                missing["cost_centers"].append(row)
+
+        for row in report["aircraft"]:
+            registration, serial = row["registration"], row["serial_number"]
+            known_by_registration = by_registration.get(registration)
+            known_by_serial = by_serial.get(serial) if serial else None
+            if known_by_registration and known_by_serial == known_by_registration:
+                skipped.append(f"aircraft:{registration}")
+            elif known_by_registration or known_by_serial:
+                conflicts.append(
+                    f"aircraft:{registration}/{serial or '—'} "
+                    f"(matrícula {'ya existe' if known_by_registration else 'nueva'}, "
+                    f"serie {'ya existe' if known_by_serial else 'nueva'})"
+                )
+            else:
+                missing["aircraft"].append(row)
+
+        for row in report["operators"]:
+            employee_id = f"RUT-{rut_key(row['rut'])}"
+            if employee_id in existing_operators:
+                skipped.append(f"operator:{employee_id}")
+            else:
+                missing["operators"].append(row)
+
+        return missing, skipped, conflicts
+
+    def apply_report(self, report, skip_existing=False):
+        missing, skipped, conflicts = self.partition(report)
+        if skipped and not skip_existing:
             raise CommandError(
-                "Existing records would be overwritten: " + ", ".join(collisions)
+                "Existing records would be overwritten: "
+                + ", ".join(skipped)
+                + ". Use --skip-existing to add only what is missing."
             )
+        # Un conflicto detiene la corrida **siempre**, con o sin la bandera: no
+        # es "ya está", es "la base y el manual no coinciden", y adivinar cuál
+        # manda sobre una aeronave es cómo se crea el registro fantasma que
+        # después nadie sabe de dónde salió.
+        if conflicts:
+            raise CommandError(
+                "The manual and the database disagree; resolve these first: "
+                + ", ".join(conflicts)
+            )
+        report = report | {
+            "cost_centers": missing["cost_centers"],
+            "aircraft": missing["aircraft"],
+            "operators": missing["operators"],
+            "skipped": skipped,
+        }
         created_ids = []
         with transaction.atomic():
             for row in report["cost_centers"]:
@@ -316,9 +399,17 @@ class Command(BaseCommand):
         )
         if options.get("export_dir"):
             self.export_report(report, options["export_dir"])
+        applied = None
         if options["apply"]:
-            self.apply_report(report)
+            applied = self.apply_report(report, options["skip_existing"])
+        else:
+            # Sin `--apply` la corrida es un informe, y decir **qué haría** es
+            # justo lo que se quiere leer antes de tocar producción.
+            _missing, skipped, conflicts = self.partition(report)
+            report = report | {"skipped": skipped, "conflicts": conflicts}
         output = report | {"apply": options["apply"]}
+        if applied is not None:
+            output = output | {"created": len(applied.created_ids)}
         if options["as_json"]:
             self.stdout.write(json.dumps(output, ensure_ascii=False, default=str))
             return
@@ -328,3 +419,13 @@ class Command(BaseCommand):
             self.stdout.write(f"{key}: {value}")
         for duplicate in report["duplicate_groups"]:
             self.stdout.write(f"duplicate {duplicate['kind']} RUT {duplicate['rut']}")
+        # LV-134: lo que ya está y lo que no cuadra, contado y nombrado. "Cuántos
+        # se saltaron" es la cifra que dice si esta corrida iba a crear algo.
+        skipped = report.get("skipped") or []
+        self.stdout.write(f"already_on_file: {len(skipped)}")
+        for entry in skipped:
+            self.stdout.write(f"  skipped {entry}")
+        for entry in report.get("conflicts") or []:
+            self.stdout.write(f"  CONFLICT {entry}")
+        if applied is not None:
+            self.stdout.write(f"created: {len(applied.created_ids)}")

@@ -55,6 +55,15 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   rellenó. Nunca pisa lo que ya estuviera escrito: si el permiso trae una
   coordenada del papel DGAC, esa manda. Y el historial del vínculo ya registra
   **quién** lo hizo.
+- **El Capítulo 1 del manual se puede cargar de nuevo sin duplicar nada
+  (`LV-133`, `LV-134`).** La **Rev 17** dejó de numerar las fichas de dotación y
+  el importador la leía como un archivo vacío — decía "no se extrajo ningún
+  operador" sobre un documento con 48. Corregido, y verificado contra el archivo
+  real: 17 aeronaves y 48 operadores. Y ahora **agrega sólo lo que falta**
+  (`--skip-existing`): lo que ya está en la base se salta y se informa, sin
+  tocarlo. Si una serie ya existe bajo otra matrícula, la corrida se detiene y lo
+  nombra: eso no es un registro nuevo, es la misma aeronave con dos datos que no
+  coinciden.
 - **Una sola fila por circunferencia (`LV-132`).** `R10.8` mostraba la
   circunferencia envolvente **al lado** de la dibujada, y en un área casi
   circular eso se leía como el mismo dato dos veces — con el riesgo de mezclar el
