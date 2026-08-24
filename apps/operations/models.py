@@ -295,6 +295,7 @@ class FlightPermission(StatusFlowMixin, BaseModel):
         longitude=None,
         radius_m=None,
         commune="",
+        region="",
         area_name="",
         altitude_m=None,
         amc=None,
@@ -345,6 +346,14 @@ class FlightPermission(StatusFlowMixin, BaseModel):
         if not self.commune and commune:
             self.commune = commune
             filled.append("commune")
+        # LV-141: la región, que existía como campo desde OPS-4 y **nunca se
+        # rellenaba** porque no había de dónde sacarla. Ahora sale del mismo
+        # polígono administrativo que la comuna, así que van a la par -- pero cada
+        # una respeta lo que ya estuviera escrito, por separado: un permiso puede
+        # traer la región del papel y la comuna en blanco.
+        if not self.region and region:
+            self.region = region
+            filled.append("region")
         if not self.area_name and area_name:
             self.area_name = area_name
             filled.append("area_name")

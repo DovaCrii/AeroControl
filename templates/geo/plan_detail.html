@@ -85,6 +85,10 @@ escribe nada.{% endcomment %}
     <table class="table table-sm align-middle mb-0">
       <thead><tr>
         <th scope="col">{% translate "Circle" %}</th>
+        {% comment %}LV-141: la comuna es casilla propia en el formulario de SIGO,
+        y la provincia y la región van debajo en chico -- tres columnas más habrían
+        hecho ocho y la tabla ya no cabría en pantalla.{% endcomment %}
+        <th scope="col">{% translate "Commune" %}</th>
         <th scope="col">{% translate "Centre point" %}</th>
         <th scope="col">{% translate "Radius (m)" %}</th>
         <th scope="col">{% translate "Nearest aerodrome (AMC)" %}</th>
@@ -102,6 +106,17 @@ escribe nada.{% endcomment %}
             porque el promedio de un no-círculo no es para copiar.{% endcomment %}
             {% if row.is_enclosing %}
             <div class="small text-body-secondary">{% translate "Smallest circle that encloses the drawn area" %}{% if row.drawn_radius_m %} · {% blocktranslate with radius=row.drawn_radius_m %}drawn: {{ radius }} m average{% endblocktranslate %}{% endif %}</div>
+            {% endif %}
+          </td>
+          <td>
+            {% if row.comuna %}
+            {{ row.comuna }}
+            <div class="small text-body-secondary">{{ row.provincia }}{% if row.provincia and row.region %} · {% endif %}{{ row.region }}</div>
+            {% else %}
+            {% comment %}Fuera de la cobertura de la capa: no se inventa. Decir
+            "—" es la respuesta honesta cuando el punto cae en el mar o en
+            territorio que el archivo de BCN no trae.{% endcomment %}
+            <span class="text-muted">—</span>
             {% endif %}
           </td>
           {% comment %}LV-140: cada línea dice cuál es. La letra del hemisferio
@@ -122,6 +137,10 @@ escribe nada.{% endcomment %}
   entre los que sí las tienen. Decirlo evita que un dato propuesto se lea como
   un dato confirmado.{% endcomment %}
   <p class="text-muted small mb-0 mt-2">{% translate "The aerodrome is proposed by distance, among those with coordinates on file — confirm it against the AIP chart before filing." %}</p>
+  {% comment %}LV-141: la misma honestidad que con el AMC. BCN declara su
+  cartografía referencial, y la capa está simplificada a ~111 m: cerca de un
+  límite comunal el resultado puede ser el vecino, y eso se dice.{% endcomment %}
+  <p class="text-muted small mb-0 mt-1">{% translate "The commune, province and region come from the BCN administrative boundaries, which that institution publishes as referential: near a boundary the answer may be the neighbouring commune. Confirm it before filing." %}</p>
   {% comment %}R10.8: se explica sólo cuando hay una fila así, porque en el caso
   normal —un círculo dibujado como círculo— la frase sobraría.{% endcomment %}
   {% if has_enclosing %}
