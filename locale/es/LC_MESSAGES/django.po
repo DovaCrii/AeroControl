@@ -6404,3 +6404,11 @@ msgstr "Abre un plan geoespacial"
 #: .\templates/operations/_flight_request_rows.html
 msgid "and split it into requests -- only needed when its KMZ has more than one circle."
 msgstr "y sepáralo en solicitudes -- sólo hace falta cuando su KMZ trae más de una circunferencia."
+
+#: .\templates/geo/plan_detail.html
+msgid "Smallest circle that encloses it"
+msgstr "La circunferencia más chica que la encierra"
+
+#: .\templates/geo/plan_detail.html
+msgid "The ↳ row appears when the drawn area is not a circle: SIGO accepts one circle per request, and that is the smallest one covering the whole area."
+msgstr "La fila ↳ aparece cuando el área dibujada no es una circunferencia: SIGO acepta una por solicitud, y ésa es la más chica que cubre toda el área."

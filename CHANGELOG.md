@@ -55,6 +55,16 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   rellenó. Nunca pisa lo que ya estuviera escrito: si el permiso trae una
   coordenada del papel DGAC, esa manda. Y el historial del vínculo ya registra
   **quién** lo hizo.
+- **Un área que no es circunferencia ya trae la que hay que declarar (`R10.8`).**
+  SIGO acepta una circunferencia con su punto central por solicitud, y la mayoría
+  de las áreas reales son polígonos a mano alzada: la app avisaba y dejaba el
+  trabajo de sacar centro y radio en Google Earth. La ficha del plan agrega ahora
+  una fila **"↳ la circunferencia más chica que la encierra"**, con sus mismas
+  cinco casillas y **su propio aeródromo más cercano** —porque la distancia se
+  mide desde el centro que se va a declarar—. Es la circunferencia **mínima**, no
+  una aproximación: un radio de más pide espacio aéreo que después hay que
+  justificar. Sobre un círculo no aparece nada, y la solicitud sigue naciendo con
+  lo dibujado: cambiar lo que se presenta al Estado es decisión tuya.
 - **El aeródromo más cercano se calcula sobre 15 posiciones, no 6 (`R10.7`).** El
   catálogo copiado del selector de SIGO traía los nombres pero casi ninguna
   coordenada, así que "el más cercano" se elegía entre seis. Las posiciones ahora

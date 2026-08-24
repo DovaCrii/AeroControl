@@ -82,9 +82,37 @@ def plan_sections(plan):
                     round(distance_km, 1) if distance_km is not None else None
                 ),
                 "warnings": list(section.warnings),
+                "enclosing": _enclosing_row(section, aerodromes),
             }
         )
     return rows
+
+
+def _enclosing_row(section, aerodromes):
+    """R10.8: la circunferencia mínima que encierra un área que no es circular.
+
+    **Con su propio AMC**, y esa es la parte que importa: lo que se declara en
+    SIGO es este centro, no el punto original, así que la distancia al aeródromo
+    tiene que medirse desde acá. Devolver el AMC del punto declarado junto a un
+    centro distinto sería una fila internamente inconsistente — dos datos
+    correctos por separado que juntos describen una solicitud que no existe.
+    """
+    if section.enclosing is None:
+        return None
+    latitude, longitude, radius_m = section.enclosing
+    nearest = nearest_aerodromes((latitude, longitude), aerodromes, limit=1)
+    aerodrome, distance_km = nearest[0] if nearest else (None, None)
+    return {
+        "lat": latitude,
+        "lon": longitude,
+        "dms_lat": to_dms(latitude, "lat"),
+        "dms_lon": to_dms(longitude, "lon"),
+        "lat_readable": format_dms(latitude, "lat"),
+        "lon_readable": format_dms(longitude, "lon"),
+        "radius_m": round(radius_m),
+        "amc": aerodrome,
+        "amc_distance_km": round(distance_km, 1) if distance_km is not None else None,
+    }
 
 
 @transaction.atomic
