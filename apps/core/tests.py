@@ -500,6 +500,220 @@ class TestAuthenticatedPages:
 
 class TestChapter1DocxImport:
     @pytest.mark.django_db
+    def test_it_reads_records_that_are_not_numbered(self, tmp_path, capsys):
+        """LV-133: el Capítulo 1 **Rev 17** dejó de numerar cada ficha.
+
+        Hasta la Rev 16 venían como "1.- NOMBRE : X"; la Rev 17 mueve la
+        numeración al grupo ("1) PERMANENTES") y escribe cada ficha derecho, con
+        tabulaciones delante de las etiquetas. El patrón exigía el número, así
+        que sobre el documento real —dieciséis fichas— extraía **cero** y moría
+        con "No permanent operators were extracted": un cambio de formato del
+        manual se veía igual que un archivo vacío.
+
+        Las tabulaciones van a propósito: son las que trae el documento de
+        verdad, y son la razón por la que el patrón usa `[ \\t]*` en vez de
+        `\\s*` (con `\\s*` y `MULTILINE` el comienzo de una ficha puede
+        "empezar" en la línea anterior y partir el bloque en el lugar
+        equivocado).
+        """
+        document = DocxDocument()
+        document.add_paragraph("1.5-\tDOTACIÓN OPERADOR RPA")
+        document.add_paragraph("\t1)\tPERMANENTES")
+        document.add_paragraph("\t\t\tNOMBRE\t\t:\tCristobal Muñoz Montiel")
+        document.add_paragraph("RUT\t\t:\t17.816.266-7")
+        document.add_paragraph("Credencial N°\t:\t8172")
+        document.add_paragraph("Tipo\t\t:\tOperador RPA")
+        document.add_paragraph("Habilitaciones\t:\tMatrice Series")
+        document.add_paragraph("Dirección\t:\tDiagonal Santa Elena 2605")
+        document.add_paragraph("Teléfono\t:\t987282880")
+        document.add_paragraph("Email\t\t:\tcmunoz@jej.cl")
+        document.add_paragraph("\t\t\tNOMBRE\t\t:\tAriel Ortega Ramirez")
+        document.add_paragraph("RUT\t\t:\t13.553.607-5")
+        document.add_paragraph("Credencial N°\t:\t15532")
+        document.add_paragraph("Tipo\t\t:\tOperador RPA")
+        document.add_paragraph("Habilitaciones\t:\tMatrice 30 T")
+        document.add_paragraph("Dirección\t:\tSergio Valdovinos 01788")
+        document.add_paragraph("Teléfono\t:\t939358818")
+        document.add_paragraph("Email\t\t:\taortega@jej.cl")
+        document.add_paragraph("2) EVENTUALES (NO APLICA)")
+        service_table = document.add_table(rows=2, cols=3)
+        service_table.rows[0].cells[0].text = "AERONAVES"
+        service_table.rows[1].cells[2].text = "Fotografía"
+        inventory = document.add_table(rows=2, cols=8)
+        inventory.rows[0].cells[0].text = "Propietario"
+        for index, value in enumerate(
+            [
+                "J.E.J. Ingeniería S.A",
+                "DJI / MATRICE 4 ENTERPRISE",
+                "1581F7FVC266P00DEDA2",
+                "RPA-7213",
+                "1.420",
+                "1.420",
+                "VLOS",
+                "NO",
+            ]
+        ):
+            inventory.rows[1].cells[index].text = value
+        source = tmp_path / "chapter1_rev17.docx"
+        document.save(source)
+
+        call_command("chapter1_docx_import", "--source", str(source), "--json")
+
+        payload = json.loads(capsys.readouterr().out)
+        assert payload["counts"]["operators_extracted"] == 2
+        assert [o["full_name"] for o in payload["operators"]] == [
+            "Cristobal Muñoz Montiel",
+            "Ariel Ortega Ramirez",
+        ]
+        # Y la aeronave que motivó la carga, con la serie del registro DGAC.
+        assert payload["aircraft"][0]["registration"] == "RPA-7213"
+        assert payload["aircraft"][0]["serial_number"] == "1581F7FVC266P00DEDA2"
+        assert payload["aircraft"][0]["model"] == "MATRICE 4 ENTERPRISE"
+
+    def _rev17_source(self, tmp_path, *, registration="RPA-7213", serial="SER-7213"):
+        """Un Capítulo 1 mínimo con la forma de la Rev 17: una ficha, una nave."""
+        document = DocxDocument()
+        document.add_paragraph("1.5-\tDOTACIÓN OPERADOR RPA")
+        document.add_paragraph("\t1)\tPERMANENTES")
+        document.add_paragraph("\t\t\tNOMBRE\t\t:\tCristobal Muñoz Montiel")
+        document.add_paragraph("RUT\t\t:\t17.816.266-7")
+        document.add_paragraph("Credencial N°\t:\t8172")
+        document.add_paragraph("Tipo\t\t:\tOperador RPA")
+        document.add_paragraph("Habilitaciones\t:\tMatrice Series")
+        document.add_paragraph("Dirección\t:\tDiagonal Santa Elena 2605")
+        document.add_paragraph("Teléfono\t:\t987282880")
+        document.add_paragraph("Email\t\t:\tcmunoz@jej.cl")
+        document.add_paragraph("2) EVENTUALES (NO APLICA)")
+        service_table = document.add_table(rows=2, cols=3)
+        service_table.rows[0].cells[0].text = "AERONAVES"
+        service_table.rows[1].cells[2].text = "Fotografía"
+        inventory = document.add_table(rows=2, cols=8)
+        inventory.rows[0].cells[0].text = "Propietario"
+        for index, value in enumerate(
+            [
+                "J.E.J. Ingeniería S.A",
+                "DJI / MATRICE 4 ENTERPRISE",
+                serial,
+                registration,
+                "1.420",
+                "1.420",
+                "VLOS",
+                "NO",
+            ]
+        ):
+            inventory.rows[1].cells[index].text = value
+        source = tmp_path / "chapter1_rev17.docx"
+        document.save(source)
+        return source
+
+    @pytest.mark.django_db
+    def test_apply_refuses_when_something_already_exists(self, tmp_path):
+        """El comportamiento de antes, intacto: sin la bandera, todo o nada.
+
+        Se conserva a propósito. Es la guarda que impide media carga por
+        accidente, y el mensaje ahora dice cómo seguir.
+        """
+        from django.core.management.base import CommandError
+
+        Aircraft.objects.create(
+            registration="RPA-7213",
+            type="RPA",
+            model="MATRICE 4 ENTERPRISE",
+            manufacturer="DJI",
+            serial_number="SER-7213",
+        )
+        source = self._rev17_source(tmp_path)
+
+        with pytest.raises(CommandError, match="--skip-existing"):
+            call_command("chapter1_docx_import", "--source", str(source), "--apply")
+
+    @pytest.mark.django_db
+    def test_skip_existing_adds_only_what_is_missing(self, tmp_path):
+        """LV-134: lo que ya está no se toca ni se duplica.
+
+        La aeronave ya existe con **otro modelo** que el manual: sigue con el
+        suyo al terminar. Saltar no es actualizar — si el manual y la base
+        discrepan, la decide una persona con el papel al frente.
+        """
+        Aircraft.objects.create(
+            registration="RPA-7213",
+            type="RPA",
+            model="MODELO QUE YA ESTABA",
+            manufacturer="DJI",
+            serial_number="SER-7213",
+        )
+        source = self._rev17_source(tmp_path)
+
+        call_command(
+            "chapter1_docx_import",
+            "--source",
+            str(source),
+            "--apply",
+            "--skip-existing",
+        )
+
+        assert Aircraft.objects.filter(registration="RPA-7213").count() == 1
+        assert (
+            Aircraft.objects.get(registration="RPA-7213").model
+            == "MODELO QUE YA ESTABA"
+        )
+        # Y el operador que no estaba sí entró: "sólo lo que falta", no "nada".
+        assert Operator.objects.filter(employee_id="RUT-178162667").exists()
+
+    @pytest.mark.django_db
+    def test_a_serial_that_exists_under_another_registration_is_a_conflict(
+        self, tmp_path
+    ):
+        """La parte que evita el duplicado de verdad.
+
+        `serial_number` es único desde `X.1`, así que una fila cuya matrícula no
+        está pero cuya serie sí **no es una aeronave nueva**: es la misma
+        reinscrita, o un dato mal transcrito. Crearla explotaría contra el índice
+        único; se detiene incluso con `--skip-existing`, porque no es "ya está".
+        """
+        from django.core.management.base import CommandError
+
+        Aircraft.objects.create(
+            registration="RPA-0001",
+            type="RPA",
+            model="MATRICE 4 ENTERPRISE",
+            manufacturer="DJI",
+            serial_number="SER-7213",
+        )
+        source = self._rev17_source(tmp_path)
+
+        with pytest.raises(CommandError, match="disagree"):
+            call_command(
+                "chapter1_docx_import",
+                "--source",
+                str(source),
+                "--apply",
+                "--skip-existing",
+            )
+
+        assert not Aircraft.objects.filter(registration="RPA-7213").exists()
+
+    @pytest.mark.django_db
+    def test_the_report_says_what_it_would_skip_before_touching_anything(
+        self, tmp_path, capsys
+    ):
+        Aircraft.objects.create(
+            registration="RPA-7213",
+            type="RPA",
+            model="MATRICE 4 ENTERPRISE",
+            manufacturer="DJI",
+            serial_number="SER-7213",
+        )
+        source = self._rev17_source(tmp_path)
+
+        call_command("chapter1_docx_import", "--source", str(source), "--json")
+
+        payload = json.loads(capsys.readouterr().out)
+        assert payload["skipped"] == ["aircraft:RPA-7213"]
+        assert payload["conflicts"] == []
+        assert payload["apply"] is False
+
+    @pytest.mark.django_db
     def test_docx_source_reports_aircraft_and_duplicate_operators(
         self, tmp_path, capsys
     ):
