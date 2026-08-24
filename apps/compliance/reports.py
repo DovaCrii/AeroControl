@@ -52,6 +52,74 @@ def documents_for_cost_center(cost_center, queryset=None):
     return base.filter(scope)
 
 
+# LV-129: cómo se llega al centro de costo desde cada modelo que una alerta
+# puede apuntar. Declarado como mapa y no como cadena de `if`s porque el día que
+# `WATCHABLE_MODELS` crezca, lo que hay que revisar es esta tabla — y un modelo
+# que falte se ve, mientras que un `elif` olvidado no.
+#
+# `compliance.document` no está acá a propósito: cuelga de una relación genérica
+# y su centro de costo se resuelve al revés, con `documents_for_cost_center`,
+# que ya existe justo arriba.
+ALERT_COST_CENTER_PATHS = {
+    "registry.aircraft": "cost_center",
+    "registry.operator": "cost_center",
+    "registry.qualification": "operator__cost_center",
+    "operations.flightpermission": "cost_center",
+    "maintenance.maintenancerecord": "aircraft__cost_center",
+    "compliance.monthlycompliancereview": "cost_center",
+}
+
+
+def alerts_for_cost_center(queryset, cost_center):
+    """Acotar alertas a un centro de costo, resolviendo la GenericForeignKey.
+
+    LV-129: la tarjeta "Alertas pendientes" del panel **ignoraba el filtro por
+    centro de costo**. Elegir una faena cambiaba todas las tarjetas menos ésa,
+    porque la consulta contaba las alertas de toda la operación — un número
+    ajeno al filtro, presentado junto a otros que sí lo respetan.
+
+    Mismo problema y misma forma que `documents_for_cost_center`: no hay join
+    posible hacia el sujeto, así que se resuelven los ids por modelo y se
+    emparejan por `content_type`. Una consulta por modelo con alertas, no una
+    por alerta.
+
+    Un modelo sin ruta declarada **queda fuera** cuando hay filtro. Es la
+    lectura honesta: si no se puede atribuir a una faena, no es de esa faena.
+    Sin filtro no se toca nada.
+    """
+    from django.apps import apps as django_apps
+
+    if cost_center is None:
+        return queryset
+
+    scope = Q(pk__in=[])
+    for label, path in ALERT_COST_CENTER_PATHS.items():
+        app_label, model_name = label.split(".", 1)
+        try:
+            model = django_apps.get_model(app_label, model_name)
+        except LookupError:  # pragma: no cover - un modelo retirado del registro
+            continue
+        ids = list(
+            model.objects.filter(**{path: cost_center}).values_list("pk", flat=True)
+        )
+        if ids:
+            scope |= Q(
+                content_type=ContentType.objects.get_for_model(model),
+                object_id__in=ids,
+            )
+
+    documents = documents_for_cost_center(
+        cost_center, Document.objects.filter(is_active=True)
+    )
+    document_ids = list(documents.values_list("pk", flat=True))
+    if document_ids:
+        scope |= Q(
+            content_type=ContentType.objects.get_for_model(Document),
+            object_id__in=document_ids,
+        )
+    return queryset.filter(scope)
+
+
 def _cost_center_row(cost_center, doc_type, today):
     documents = documents_for_cost_center(
         cost_center,

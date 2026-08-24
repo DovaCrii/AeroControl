@@ -185,6 +185,25 @@ versión nueva del framework.
 
 El respaldo previo sigue siendo obligatorio igual.
 
+> ### ⚠ Un `git pull` a medias deja el sitio caído, y en segundos
+>
+> **Ocurrió el 2026-08-24.** Se hizo `git pull` y ahí se paró: sin `migrate`,
+> sin `collectstatic`, **sin reiniciar**. El sitio empezó a devolver 500
+> (`NoReverseMatch: Reverse for 'geo-plan-split' not found`) y el síntoma que se
+> vio fue *"falla al importar un KMZ"*, que no tenía nada que ver.
+>
+> La causa es una asimetría que conviene tener presente: esta app usa los
+> cargadores de plantillas **sin caché** (`APP_DIRS`, sin `cached.Loader`), así
+> que **las plantillas se leen del disco en cada petición** — quedan activas
+> apenas termina el `pull` — mientras que el **código Python, incluido el mapa
+> de URLs, se carga al arrancar el proceso**. Entre el `pull` y el `restart` la
+> app corre con plantillas nuevas sobre código viejo, y cualquier `{% url %}`
+> que apunte a una ruta nueva revienta.
+>
+> **Por eso los pasos de abajo son un bloque, no una lista de la que se elige.**
+> Si hay que interrumpir a la mitad, lo seguro es volver atrás
+> (`git checkout <commit-anterior>`), no dejarlo a medias.
+
 ```bash
 ssh levdigital01@100.121.16.118
 ```
@@ -228,7 +247,9 @@ uv run python manage.py collectstatic --no-input && sudo systemctl restart aeroc
   (`test_r9_roles_reach_the_screens.py`), así que la próxima vez la suite lo
   caza antes que la VM.
 - **`seed_document_types`** trae `jac-insurance-request` (`LV-121`). Debe decir
-  `Ensured 20 document types (1 created)`. El cambio de `aircraft-registration`
+  `Ensured 19 document types (1 created)` — **19, no 20**: la cifra estaba mal
+  escrita acá y la corrigió el despliegue real del 2026-08-24. El del
+  `aircraft-registration`
   **no** lo hace el seed —es idempotente por `code`—, lo hace `compliance/0023`.
 - **`seed_aerodromes`** debe decir **`6 of 50 have coordinates`**. Sin él el AMC
   no se calcula y la casilla de SIGO queda vacía.

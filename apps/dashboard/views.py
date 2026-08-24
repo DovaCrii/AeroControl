@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from apps.compliance.digest import bucket_for
+from apps.compliance.reports import alerts_for_cost_center
 from apps.compliance.models import Alert, AlertRule, Document, DocumentType
 from apps.compliance.watchables import terminal_statuses
 from apps.maintenance.models import MaintenanceRecord
@@ -250,6 +251,11 @@ def panel_readiness(today, cost_center=None):
     return {
         "readiness": [
             {
+                # LV-129: clave estable para direccionar la tarjeta sin pasar
+                # por su etiqueta, que es traducible -- un test que compare
+                # contra el texto pasa o falla según el idioma activo, que es lo
+                # que `LV-95` dejó escrito y este archivo volvió a pagar.
+                "key": "fleet",
                 "label": _("Fleet available"),
                 "count": flyable,
                 "total": fleet_total,
@@ -260,19 +266,29 @@ def panel_readiness(today, cost_center=None):
                 "url": reverse("aircraft-list"),
             },
             {
+                "key": "insurance",
                 "label": _("Insurance up to date"),
                 "count": insured,
                 "total": fleet_total,
                 "pct": round(insured * 100 / fleet_total, 1) if fleet_total else None,
                 "target": None,
                 "shortfall": fleet_total - insured,
-                "shortfall_label": _("missing or lapsed"),
+                # LV-129: "faltantes o vencidos" era una sola cifra para dos
+                # cosas que se arreglan distinto -- cargar una fecha que nadie
+                # ingresó, o renovar una póliza que caducó. Sumadas, además, no
+                # cuadraban con ninguna otra tarjeta del panel: los "faltantes"
+                # no generan alerta (`LV-29`: un nulo es "nunca se ingresó") ni
+                # aparecen en la lista de vencimientos, así que el 5 de acá no
+                # tenía cómo conversar con el 3 de más arriba.
+                "missing": fleet.filter(insurance_expiry__isnull=True).count(),
+                "lapsed": fleet.filter(insurance_expiry__lt=today).count(),
                 "soon": fleet.filter(
                     insurance_expiry__gte=today, insurance_expiry__lte=horizon
                 ).count(),
                 "url": reverse("aircraft-list"),
             },
             {
+                "key": "credentials",
                 "label": _("Credentials up to date"),
                 "count": credentialed,
                 "total": operators_total,
@@ -283,7 +299,8 @@ def panel_readiness(today, cost_center=None):
                 ),
                 "target": None,
                 "shortfall": operators_total - credentialed,
-                "shortfall_label": _("missing or lapsed"),
+                "missing": operators.filter(credential_expiry__isnull=True).count(),
+                "lapsed": operators.filter(credential_expiry__lt=today).count(),
                 "soon": operators.filter(
                     credential_expiry__gte=today, credential_expiry__lte=horizon
                 ).count(),
@@ -418,7 +435,13 @@ def dashboard(request):
         operator_qs = operator_qs.filter(cost_center=selected_cost_center)
     aircraft_count = aircraft_qs.filter(status="active").count()
     operator_count = operator_qs.count()
-    alert_count = Alert.objects.filter(is_active=True, is_resolved=False).count()
+    # LV-129: respeta el filtro por centro de costo, como el resto de la fila.
+    # Antes contaba las alertas de toda la operación, así que elegir una faena
+    # cambiaba todas las tarjetas menos ésta — un número ajeno al filtro puesto
+    # al lado de otros que sí lo obedecen.
+    alert_count = alerts_for_cost_center(
+        Alert.objects.filter(is_active=True, is_resolved=False), selected_cost_center
+    ).count()
 
     # --- Compliance module setup state ---
     # The old onboarding card required *everything* to be empty, so with the
