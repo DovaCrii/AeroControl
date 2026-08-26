@@ -1,8 +1,30 @@
 from django.urls import path
-from . import assessment_views, views
+from . import assessment_views, report_views, views
 
 urlpatterns = []
 urlpatterns += [
+    # LV-145: el catastro de flota y personal. Va antes del bucle CRUD de abajo
+    # para que `roster/` no quede a la sombra de un patrón genérico.
+    path(
+        "roster/",
+        report_views.CatastroReportView.as_view(),
+        name="registry-roster",
+    ),
+    path(
+        "roster/pdf/",
+        report_views.CatastroReportPdfView.as_view(),
+        name="registry-roster-pdf",
+    ),
+    path(
+        "roster/xlsx/",
+        report_views.CatastroReportXlsxView.as_view(),
+        name="registry-roster-xlsx",
+    ),
+    path(
+        "roster/csv/",
+        report_views.CatastroReportCsvView.as_view(),
+        name="registry-roster-csv",
+    ),
     # LV-158: la prueba de conocimientos. Va antes del bucle CRUD para que
     # `assessment/` no quede a la sombra de un patrón genérico.
     path(

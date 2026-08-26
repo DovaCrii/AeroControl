@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Fleet and personnel roster" %} - AeroControl{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <p class="page-eyebrow mb-1">{% translate "Registry" %}</p>
+    <h1 class="mb-0">{% translate "Fleet and personnel roster" %}</h1>
+    <p class="page-description mb-0">{% translate "Everything on the books at a cut-off date, ready to hand over when someone asks for it." %}</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a class="btn btn-outline-primary" href="{% url 'registry-roster-pdf' %}{% if export_query %}?{{ export_query }}{% endif %}">{% translate "PDF" %}</a>
+    <a class="btn btn-outline-primary" href="{% url 'registry-roster-xlsx' %}{% if export_query %}?{{ export_query }}{% endif %}">{% translate "Excel" %}</a>
+    <a class="btn btn-outline-secondary" href="{% url 'registry-roster-csv' %}{% if export_query %}?{{ export_query }}{% endif %}">{% translate "CSV" %}</a>
+  </div>
+</div>
+
+<form method="get" class="card p-3 mb-4">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-4">
+      <label class="form-label" for="cost_center">{% translate "Cost center" %}</label>
+      <select class="form-select" id="cost_center" name="cost_center">
+        <option value="">{% translate "All cost centers" %}</option>
+        {% for center in cost_centers %}<option value="{{ center.pk }}" {% if filter_params.cost_center == center.pk|stringformat:"s" %}selected{% endif %}>{{ center.code }} - {{ center.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label" for="status">{% translate "Aircraft status" %}</label>
+      <select class="form-select" id="status" name="status">
+        <option value="">{% translate "Any status" %}</option>
+        {% for code, label in statuses %}<option value="{{ code }}" {% if filter_params.status == code %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" value="1" id="include_terminal" name="include_terminal" {% if catastro.filters.include_terminal %}checked{% endif %}>
+        <label class="form-check-label" for="include_terminal">{% translate "Include retired aircraft" %}</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" value="1" id="include_archived" name="include_archived" {% if catastro.filters.include_archived %}checked{% endif %}>
+        <label class="form-check-label" for="include_archived">{% translate "Include archived records" %}</label>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-primary w-100">{% translate "Apply" %}</button>
+    </div>
+  </div>
+</form>
+
+{% comment %}The cut-off date and what the filters left out, in the same words
+the PDF, the spreadsheet and the CSV carry. A cost-center filter drops
+everything unassigned without saying so -- `cost_center` is nullable on both
+models -- so the second sentence exists to say how much.{% endcomment %}
+<div class="alert alert-light border mb-4">
+  {% for sentence in sentences %}<p class="mb-0 {% if not forloop.first %}text-muted small mt-1{% endif %}">{{ sentence }}</p>{% endfor %}
+</div>
+
+<div class="card mb-4">
+  <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+    <h2 class="h5 mb-0">{% translate "Fleet" %}</h2>
+    <span class="badge bg-secondary-subtle text-secondary-emphasis">{{ catastro.totals.aircraft }}</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead><tr>{% for header in aircraft_headers %}<th scope="col">{{ header }}</th>{% endfor %}</tr></thead>
+      <tbody>
+      {% for aircraft, row in aircraft_table %}<tr>
+        <th scope="row" class="fw-semibold"><a href="{% url 'aircraft-detail' aircraft.pk %}">{{ row.0 }}</a></th>
+        {% for cell in row|slice:"1:" %}<td>{{ cell }}</td>{% endfor %}
+      </tr>{% empty %}<tr><td colspan="{{ aircraft_headers|length }}" class="text-muted">{% translate "No aircraft registered." %}</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+    <h2 class="h5 mb-0">{% translate "Personnel" %}</h2>
+    <span class="badge bg-secondary-subtle text-secondary-emphasis">{{ catastro.totals.operators }}</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead><tr>{% for header in operator_headers %}<th scope="col">{{ header }}</th>{% endfor %}</tr></thead>
+      <tbody>
+      {% for operator, row in operator_table %}<tr>
+        <th scope="row" class="fw-semibold">{{ row.0 }}</th>
+        <td><a href="{% url 'operator-detail' operator.pk %}">{{ row.1 }}</a></td>
+        {% for cell in row|slice:"2:" %}<td>{{ cell }}</td>{% endfor %}
+      </tr>{% empty %}<tr><td colspan="{{ operator_headers|length }}" class="text-muted">{% translate "No operators registered." %}</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
