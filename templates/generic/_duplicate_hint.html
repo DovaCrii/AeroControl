@@ -1,0 +1,23 @@
+{% load i18n %}
+{% comment %}LV-142: el registro que ya ocupa el valor, con su ficha a un clic.
+
+Va **encima** de los campos porque es la respuesta a lo que la persona acaba de
+intentar: si estuviera al pie, el error del campo la mandaría a buscar arriba y
+abajo. El enlace lo decide la vista (`HtmxFormMixin._duplicate_hint`), que es
+quien sabe si esta persona puede leer esa ficha; acá no se gatea nada.
+
+El texto del error lo pone el propio campo y no se repite acá: esto agrega lo
+que un mensaje de validación no puede llevar sin abrir la puerta al HTML dentro
+de un `ValidationError`.{% endcomment %}
+{% if duplicate_hint %}
+<div class="alert alert-warning d-flex flex-wrap gap-2 align-items-center" role="alert">
+  <span>
+    {% translate "A record with that value already exists:" %}
+    <strong>{{ duplicate_hint.label }}</strong>
+    {% if duplicate_hint.archived %}
+    <span class="badge bg-secondary-subtle text-secondary-emphasis">{% translate "Archived" %}</span>
+    {% endif %}
+  </span>
+  <a class="btn btn-sm btn-outline-secondary" href="{{ duplicate_hint.url }}">{% translate "Open the existing record" %}</a>
+</div>
+{% endif %}

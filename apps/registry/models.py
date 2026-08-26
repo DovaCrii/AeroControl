@@ -40,6 +40,22 @@ def normalize_serial(raw):
     return "".join((raw or "").split()).upper() or None
 
 
+def normalize_registration(raw):
+    """La matrícula en su forma canónica: sin espacios sobrantes y en mayúsculas.
+
+    LV-142: `registration` es `unique=True`, pero el índice distingue
+    mayúsculas, así que `rpa-7126` y `RPA-7126` eran **dos aeronaves distintas**
+    para la base y un duplicado escrito en minúsculas entraba sin aviso. Las 16
+    filas de producción ya están en mayúsculas, así que normalizar no cambia
+    ningún dato existente: sólo cierra la puerta de aquí en adelante.
+
+    A diferencia del serial, los espacios **internos** se conservan: una
+    matrícula es un rótulo que pone la empresa y podría llevarlos; lo que no
+    puede es diferir sólo por caja.
+    """
+    return (raw or "").strip().upper()
+
+
 class CostCenter(BaseModel):
     tenant = models.ForeignKey(
         OperationalTenant,
@@ -415,6 +431,16 @@ class Aircraft(BaseModel):
         )
 
     def clean(self):
+        # X.1/LV-142: normalizar **acá** y no sólo en `save()`. `full_clean`
+        # corre `clean()` antes de `validate_unique()`, así que la comprobación
+        # de unicidad ve el valor canónico; hacerlo en `save()` la dejaba
+        # comparando el crudo, y un serial con un espacio de más pasaba la
+        # validación para morir en el INSERT. Va como primera línea: si fuera
+        # después del `raise` de `current_site`, un error de sitio impediría que
+        # la normalización corriera. `save()` la conserva como respaldo de los
+        # caminos que no llaman `full_clean` (importadores, `objects.create`).
+        self.registration = normalize_registration(self.registration)
+        self.serial_number = normalize_serial(self.serial_number)
         errors = {}
         if self.current_location == "on_site" and not self.current_site_id:
             errors["current_site"] = _("Select the site the aircraft is deployed to.")
@@ -526,6 +552,9 @@ class Aircraft(BaseModel):
         # `None`, not `""`, so several aircraft without a serial on file
         # do not collide on the unique index.
         self.serial_number = normalize_serial(self.serial_number)
+        # LV-142: la matrícula también, por el mismo motivo y para los mismos
+        # caminos que no pasan por `full_clean`.
+        self.registration = normalize_registration(self.registration)
         super().save(*args, **kwargs)
 
 
