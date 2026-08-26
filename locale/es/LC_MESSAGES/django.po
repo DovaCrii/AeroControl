@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-26 13:44-0400\n"
+"POT-Creation-Date: 2026-08-26 14:12-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -252,6 +252,7 @@ msgstr "Mensaje"
 #: .\apps\compliance\forms.py:624
 #: .\templates\compliance\deliverable_detail.html:18
 #: .\templates\core\calendar.html:32 .\templates\core\calendar.html:48
+#: .\templates\dashboard\index.html:198
 msgid "Flight permissions"
 msgstr "Permisos de vuelo"
 
@@ -465,17 +466,17 @@ msgid "Already expired"
 msgstr "Vencidos"
 
 #: .\apps\compliance\management\commands\send_alert_digest.py:25
-#: .\templates\dashboard\index.html:238 .\templates\workboard\_card.html:30
+#: .\templates\dashboard\index.html:290 .\templates\workboard\_card.html:30
 msgid "Due within 7 days"
 msgstr "Vence en 7 días"
 
 #: .\apps\compliance\management\commands\send_alert_digest.py:26
-#: .\templates\dashboard\index.html:238 .\templates\workboard\_card.html:30
+#: .\templates\dashboard\index.html:290 .\templates\workboard\_card.html:30
 msgid "Due within 15 days"
 msgstr "Vence en 15 días"
 
 #: .\apps\compliance\management\commands\send_alert_digest.py:27
-#: .\templates\dashboard\index.html:238 .\templates\workboard\_card.html:30
+#: .\templates\dashboard\index.html:290 .\templates\workboard\_card.html:30
 msgid "Due within 30 days"
 msgstr "Vence en 30 días"
 
@@ -3315,7 +3316,7 @@ msgstr "movimientos de recursos"
 msgid "No PDF"
 msgstr "Sin PDF"
 
-#: .\apps\registry\views.py:67
+#: .\apps\registry\views.py:67 .\templates\dashboard\index.html:203
 msgid "Cost centers"
 msgstr "Centros de costo"
 
@@ -3695,7 +3696,7 @@ msgstr "Planificación geoespacial"
 #: .\templates\compliance\email\monthly_review_deadline.txt:5
 #: .\templates\compliance\monthly_review.html:38
 #: .\templates\core\calendar.html:34 .\templates\core\calendar.html:50
-#: .\templates\dashboard\index.html:304
+#: .\templates\dashboard\index.html:356
 msgid "Flights"
 msgstr "Vuelos"
 
@@ -3986,7 +3987,7 @@ msgstr "Todos los tipos de entidad"
 #: .\templates\compliance\monthly_review.html:28
 #: .\templates\compliance\nonconformity_list.html:27
 #: .\templates\compliance\operational_records.html:40
-#: .\templates\core\audit_log.html:29 .\templates\dashboard\index.html:29
+#: .\templates\core\audit_log.html:29 .\templates\dashboard\index.html:36
 #: .\templates\geo\plan_list.html:37
 #: .\templates\maintenance\record_list.html:15
 #: .\templates\operations\flight_request_list.html:42
@@ -4004,7 +4005,7 @@ msgid "Open the record: status and documents"
 msgstr "Abrir la ficha: estado y documentos"
 
 #: .\templates\compliance\alert_list.html:53
-#: .\templates\dashboard\index.html:238
+#: .\templates\dashboard\index.html:290
 #: .\templates\registry\_aircraft_rows.html:29
 #: .\templates\registry\_operator_rows.html:10
 #: .\templates\registry\_qualification_rows.html:10
@@ -4638,7 +4639,7 @@ msgstr "CSV"
 msgid "Current documents"
 msgstr "Documentos vigentes"
 
-#: .\templates\compliance\report.html:55 .\templates\dashboard\index.html:79
+#: .\templates\compliance\report.html:55 .\templates\dashboard\index.html:86
 msgid "Maintenance to define"
 msgstr "Mantenciones por definir"
 
@@ -4926,7 +4927,7 @@ msgstr "Asignaciones"
 msgid "Expirations"
 msgstr "Vencimientos"
 
-#: .\templates\core\calendar.html:45
+#: .\templates\core\calendar.html:45 .\templates\dashboard\index.html:208
 msgid "Show"
 msgstr "Mostrar"
 
@@ -5130,53 +5131,53 @@ msgstr "Panel de operaciones"
 msgid "New permission"
 msgstr "Nuevo permiso"
 
-#: .\templates\dashboard\index.html:35
+#: .\templates\dashboard\index.html:42
 msgid "Active Aircraft"
 msgstr "Aeronaves activas"
 
-#: .\templates\dashboard\index.html:39
+#: .\templates\dashboard\index.html:46
 msgid "Active Operators"
 msgstr "Operadores activos"
 
-#: .\templates\dashboard\index.html:43
+#: .\templates\dashboard\index.html:50
 msgid "Pending Alerts"
 msgstr "Alertas pendientes"
 
-#: .\templates\dashboard\index.html:58 .\templates\dashboard\index.html:211
+#: .\templates\dashboard\index.html:65 .\templates\dashboard\index.html:263
 msgid "Expiries"
 msgstr "Vencimientos"
 
-#: .\templates\dashboard\index.html:61 .\templates\dashboard\index.html:133
+#: .\templates\dashboard\index.html:68 .\templates\dashboard\index.html:140
 #, python-format
 msgid "%(counter)s lapsed"
 msgid_plural "%(counter)s lapsed"
 msgstr[0] "%(counter)s vencido"
 msgstr[1] "%(counter)s vencidos"
 
-#: .\templates\dashboard\index.html:63
+#: .\templates\dashboard\index.html:70
 #, python-format
 msgid "%(counter)s within 30 days"
 msgid_plural "%(counter)s within 30 days"
 msgstr[0] "%(counter)s en 30 días"
 msgstr[1] "%(counter)s en 30 días"
 
-#: .\templates\dashboard\index.html:73
+#: .\templates\dashboard\index.html:80
 msgid "Awaiting SIGO"
 msgstr "Esperando SIGO"
 
-#: .\templates\dashboard\index.html:85
+#: .\templates\dashboard\index.html:92
 msgid "Monthly records"
 msgstr "Registros del mes"
 
-#: .\templates\dashboard\index.html:87
+#: .\templates\dashboard\index.html:94
 msgid "cost centers up to date"
 msgstr "centros de costo al día"
 
-#: .\templates\dashboard\index.html:96
+#: .\templates\dashboard\index.html:103
 msgid "Start your operation"
 msgstr "Comienza tu operación"
 
-#: .\templates\dashboard\index.html:97
+#: .\templates\dashboard\index.html:104
 msgid ""
 "Load the operational records below to activate indicators, alerts and "
 "planning."
@@ -5184,64 +5185,84 @@ msgstr ""
 "Carga los registros operativos para activar indicadores, alertas y "
 "planificación."
 
-#: .\templates\dashboard\index.html:99 .\templates\dashboard\index.html:102
+#: .\templates\dashboard\index.html:106 .\templates\dashboard\index.html:109
 msgid "Create a cost center"
 msgstr "Crea un centro de costo"
 
-#: .\templates\dashboard\index.html:103
+#: .\templates\dashboard\index.html:110
 msgid "Register an aircraft and an operator"
 msgstr "Registra una aeronave y un operador"
 
-#: .\templates\dashboard\index.html:104
+#: .\templates\dashboard\index.html:111
 msgid "Create a flight permission to begin tracking operations"
 msgstr "Crea un permiso de vuelo para comenzar el seguimiento operativo"
 
-#: .\templates\dashboard\index.html:135
+#: .\templates\dashboard\index.html:142
 #, python-format
 msgid "%(counter)s with no date on file"
 msgid_plural "%(counter)s with no date on file"
 msgstr[0] "%(counter)s sin fecha cargada"
 msgstr[1] "%(counter)s sin fecha cargada"
 
-#: .\templates\dashboard\index.html:136
+#: .\templates\dashboard\index.html:143
 #, python-format
 msgid "target %(target)s%%"
 msgstr "meta %(target)s%%"
 
-#: .\templates\dashboard\index.html:136
+#: .\templates\dashboard\index.html:143
 msgid "all up to date"
 msgstr "todo al día"
 
-#: .\templates\dashboard\index.html:137
+#: .\templates\dashboard\index.html:144
 #, python-format
 msgid "%(counter)s expires within 30 days"
 msgid_plural "%(counter)s expire within 30 days"
 msgstr[0] "%(counter)s vence en 30 días"
 msgstr[1] "%(counter)s vencen en 30 días"
 
-#: .\templates\dashboard\index.html:154
+#: .\templates\dashboard\index.html:171
+msgid "Weather for the selected permission"
+msgstr "El clima del permiso elegido"
+
+#: .\templates\dashboard\index.html:172
+msgid "Weather at the cost center site"
+msgstr "El clima en la faena"
+
+#: .\templates\dashboard\index.html:173
 msgid "Weather where you fly next"
 msgstr "El clima donde vuelas ahora"
 
-#: .\templates\dashboard\index.html:157
+#: .\templates\dashboard\index.html:177
 #, python-format
 msgid "%(folio)s · %(place)s · forecast for %(date)s"
 msgstr "%(folio)s · %(place)s · pronóstico para el %(date)s"
 
-#: .\templates\dashboard\index.html:160
+#: .\templates\dashboard\index.html:180
 #, python-format
 msgid "%(place)s · forecast for %(date)s"
 msgstr "%(place)s · pronóstico para el %(date)s"
 
-#: .\templates\dashboard\index.html:165
+#: .\templates\dashboard\index.html:194
+msgid "Forecast location"
+msgstr "Ubicación del pronóstico"
+
+#: .\templates\dashboard\index.html:196
+msgid "Next flight (automatic)"
+msgstr "Próximo vuelo (automático)"
+
+#: .\templates\dashboard\index.html:212
 msgid "Open the permission"
 msgstr "Abrir el permiso"
 
-#: .\templates\dashboard\index.html:165
+#: .\templates\dashboard\index.html:212
 msgid "Open the cost center"
 msgstr "Abrir el centro de costo"
 
-#: .\templates\dashboard\index.html:169 .\templates\geo\plan_detail.html:214
+#: .\templates\dashboard\index.html:219
+msgid "Forecast unavailable right now."
+msgstr "El pronóstico no está disponible por ahora."
+
+#: .\templates\dashboard\index.html:221 .\templates\geo\plan_detail.html:214
 msgid ""
 "Source: Open-Meteo. Reference only -- it does not replace the pre-flight "
 "check."
@@ -5249,58 +5270,58 @@ msgstr ""
 "Fuente: Open-Meteo. Solo de referencia -- no reemplaza el chequeo "
 "preoperacional."
 
-#: .\templates\dashboard\index.html:183
+#: .\templates\dashboard\index.html:235
 msgid "Activate compliance monitoring"
 msgstr "Activa el monitoreo de cumplimiento"
 
-#: .\templates\dashboard\index.html:184
+#: .\templates\dashboard\index.html:236
 msgid ""
 "The registry is loaded, but nothing is being watched yet. Three steps in "
 "order:"
 msgstr ""
 "El padrón está cargado, pero todavía no se vigila nada. Tres pasos en orden:"
 
-#: .\templates\dashboard\index.html:187
+#: .\templates\dashboard\index.html:239
 msgid "Document types created"
 msgstr "Tipos de documento creados"
 
-#: .\templates\dashboard\index.html:187
+#: .\templates\dashboard\index.html:239
 msgid "Create the document types"
 msgstr "Crea los tipos de documento"
 
-#: .\templates\dashboard\index.html:188
+#: .\templates\dashboard\index.html:240
 msgid "Documents loaded"
 msgstr "Documentos cargados"
 
-#: .\templates\dashboard\index.html:188
+#: .\templates\dashboard\index.html:240
 msgid "Load the documents with their expiry dates"
 msgstr "Carga los documentos con sus fechas de vencimiento"
 
-#: .\templates\dashboard\index.html:189
+#: .\templates\dashboard\index.html:241
 msgid "Alert rules defined"
 msgstr "Reglas de alerta definidas"
 
-#: .\templates\dashboard\index.html:189
+#: .\templates\dashboard\index.html:241
 msgid "Define an alert rule"
 msgstr "Define una regla de alerta"
 
-#: .\templates\dashboard\index.html:212
+#: .\templates\dashboard\index.html:264
 msgid "Work on these in the alert tray"
 msgstr "Trabajar en la bandeja de alertas"
 
-#: .\templates\dashboard\index.html:236
+#: .\templates\dashboard\index.html:288
 msgid "No cost center on file"
 msgstr "Sin centro de costo asignado"
 
-#: .\templates\dashboard\index.html:242
+#: .\templates\dashboard\index.html:294
 msgid "Nothing expired or expiring."
 msgstr "Nada vencido ni por vencer."
 
-#: .\templates\dashboard\index.html:258
+#: .\templates\dashboard\index.html:310
 msgid "Filed in SIGO, awaiting an answer"
 msgstr "Presentadas en SIGO, esperando respuesta"
 
-#: .\templates\dashboard\index.html:264
+#: .\templates\dashboard\index.html:316
 #: .\templates\operations\_flight_request_rows.html:23
 #, python-format
 msgid "%(days)s day waiting"
@@ -5308,15 +5329,15 @@ msgid_plural "%(days)s days waiting"
 msgstr[0] "%(days)s día esperando"
 msgstr[1] "%(days)s días esperando"
 
-#: .\templates\dashboard\index.html:270
+#: .\templates\dashboard\index.html:322
 msgid "See all of them"
 msgstr "Verlas todas"
 
-#: .\templates\dashboard\index.html:290
+#: .\templates\dashboard\index.html:342
 msgid "Maintenance by Type"
 msgstr "Mantenimiento por tipo"
 
-#: .\templates\dashboard\index.html:303
+#: .\templates\dashboard\index.html:355
 msgid "Monthly Flights (6 months)"
 msgstr "Vuelos mensuales (6 meses)"
 

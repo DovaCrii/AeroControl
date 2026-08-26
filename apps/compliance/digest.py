@@ -21,6 +21,32 @@ BUCKETS = [
 ]
 HORIZON_DAYS = 30
 
+# LV-148: una escala, dos representaciones. El mismo tramo se pintaba distinto en
+# dos pantallas —insignia en la bandeja de alertas, texto de color en el panel— y
+# no sólo distinto: **discrepaban**, porque `due_30` era azul allá y ámbar acá.
+# Las dos tablas viven junto a `bucket_for`, que es el dueño de los cortes, así
+# que un tramo nuevo obliga a decidir sus dos colores en el mismo lugar.
+#
+# `later` es el tramo que el digest no necesita y la bandeja sí: ahí vive también
+# el historial, y una alerta resuelta puede apuntar a una vigencia de 2027.
+BUCKET_BADGE_CSS = {
+    "overdue": "bg-danger",
+    "due_7": "bg-warning text-dark",
+    "due_15": "bg-warning-subtle text-warning-emphasis",
+    "due_30": "bg-info-subtle text-info-emphasis",
+    "later": "bg-secondary-subtle text-secondary-emphasis",
+}
+# En la fila del panel la fecha va como **texto** y no dentro de una píldora: con
+# el chip de faena de `LV-146` la fila ya lleva dos pastillas, y una fecha se lee
+# mejor suelta. Lo que se unifica es la paleta, no la forma.
+BUCKET_TEXT_CSS = {
+    "overdue": "text-danger fw-bold",
+    "due_7": "text-warning-emphasis fw-bold",
+    "due_15": "text-warning-emphasis fw-semibold",
+    "due_30": "text-info-emphasis",
+    "later": "",
+}
+
 
 def bucket_for(expiry, today):
     """Return the urgency bucket key for an expiry date."""
