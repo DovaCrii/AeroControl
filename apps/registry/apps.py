@@ -46,3 +46,21 @@ class RegistryConfig(AppConfig):
             sender=Aircraft,
             dispatch_uid="registry.track_insurance_status",
         )
+        # LV-159: la Resolución de la JAC pone la vigencia (y el estado) del
+        # seguro en la aeronave de la que cuelga. Va por señal y no en cada vista
+        # de carga porque hay **tres** caminos por los que un documento entra
+        # —alta, "Subir varios" y reemplazo de versión— y una regla escrita tres
+        # veces es una regla que uno de los tres deja de cumplir.
+        #
+        # El modelo se resuelve por etiqueta: importar los modelos de otra app
+        # dentro de `ready()` es cómo aparece `AppRegistryNotReady` (mismo
+        # cuidado que en `ComplianceConfig.ready`).
+        from django.apps import apps as django_apps
+
+        from .signals import sync_insurance_when_jac_resolution_lands
+
+        post_save.connect(
+            sync_insurance_when_jac_resolution_lands,
+            sender=django_apps.get_model("compliance.Document"),
+            dispatch_uid="registry.sync_insurance_from_jac_resolution",
+        )
