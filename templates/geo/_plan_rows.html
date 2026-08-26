@@ -14,7 +14,12 @@ La fila archivada se distingue y ofrece "Restaurar": sin eso, el filtro
     <a href="{% url 'geo-plan-detail' plan.pk %}" class="table-primary-value"><strong>{{ plan.folio|default:"—" }}</strong></a>
     {% if not plan.is_active %} <span class="badge bg-secondary-subtle text-secondary-emphasis">{% translate "Archived" %}</span>{% endif %}
   </td>
-  <td><span class="cell-truncate">{{ plan.title }}</span></td>
+  {% comment %}LV-149: la columna muestra sólo el nombre del KMZ, que es lo único
+  que distingue dos planes de la misma faena -- el código de faena ya está en la
+  columna siguiente y el folio es la ancla de la izquierda. Cae al título cuando
+  no hay archivo de origen o cuando alguien escribió el título a mano
+  (`display_title` no reescribe nada).{% endcomment %}
+  <td><span class="cell-truncate">{{ plan.source_file_stem|default:plan.display_title }}</span></td>
   <td>{{ plan.cost_center }}</td>
   <td>{% include "geo/_status_badge.html" with status=plan.status label=plan.get_status_display %}</td>
   <td>{% if plan.current_version %}v{{ plan.current_version.version_number }}{% else %}—{% endif %}</td>
