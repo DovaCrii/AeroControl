@@ -7134,6 +7134,66 @@ msgstr "Ref. %(prefix)s-%(stamp)s"
 msgid "Page %(page)s of %(total)s"
 msgstr "Página %(page)s de %(total)s"
 
+#: .\apps\registry\catastro.py
+#, python-format
+msgid "%(aircraft)s aircraft and %(operators)s operators registered as of %(date)s."
+msgstr "%(aircraft)s aeronaves y %(operators)s operadores inscritos al %(date)s."
+
+#: .\apps\registry\catastro.py
+#, python-format
+msgid "Filtered by cost center: %(aircraft)s aircraft and %(operators)s operators with no cost center are not listed."
+msgstr "Filtrado por centro de costo: %(aircraft)s aeronaves y %(operators)s operadores sin centro de costo no aparecen en el listado."
+
+#: .\apps\registry\catastro.py
+#, python-format
+msgid "Of these, %(aircraft)s aircraft and %(operators)s operators have no cost center assigned."
+msgstr "De estos, %(aircraft)s aeronaves y %(operators)s operadores no tienen centro de costo asignado."
+
+#: .\apps\registry\report_views.py
+msgid "Fleet and personnel roster"
+msgstr "Catastro de flota y personal"
+
+#: .\apps\registry\report_views.py
+msgid "AeroControl — Fleet and personnel roster"
+msgstr "AeroControl — Catastro de flota y personal"
+
+#: .\apps\registry\report_views.py
+msgid "No aircraft registered."
+msgstr "Sin aeronaves inscritas."
+
+#: .\apps\registry\report_views.py
+msgid "Personnel"
+msgstr "Personal"
+
+#: .\apps\registry\report_views.py
+msgid "No operators registered."
+msgstr "Sin operadores inscritos."
+
+#: .\templates\base.html
+msgid "Roster report"
+msgstr "Informe de catastro"
+
+#: .\templates\registry\catastro.html
+msgid "Everything on the books at a cut-off date, ready to hand over when someone asks for it."
+msgstr "Todo lo inscrito a una fecha de corte, listo para entregar cuando lo soliciten."
+
+#: .\templates\registry\catastro.html
+msgid "Aircraft status"
+msgstr "Estado de la aeronave"
+
+#: .\templates\registry\catastro.html
+msgid "Any status"
+msgstr "Cualquier estado"
+
+#: .\templates\registry\catastro.html
+msgid "Include retired aircraft"
+msgstr "Incluir aeronaves retiradas"
+
+#: .\templates\registry\catastro.html
+msgid "Include archived records"
+msgstr "Incluir registros archivados"
+
+
 #, fuzzy, python-format
 #~ msgid "Score (%%)"
 #~ msgstr "Cobertura (%%)"

@@ -10,6 +10,16 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Informe de catastro de flota y personal (`LV-145`).** "Padrón → Informe de
+  catastro": las dos tablas base —aeronaves y operadores— con la **fecha de corte
+  declarada**, en pantalla, PDF con membrete, Excel y CSV. Filtros por centro de
+  costo y estado, con la opción de incluir retiradas y archivadas. Cuando un
+  filtro por faena deja fuera lo no asignado, el informe **dice cuánto**: el
+  centro de costo es opcional en los dos modelos, así que filtrar escondía filas
+  sin avisar. La pantalla muestra exactamente las celdas que imprime el papel.
+  Exige los dos permisos de lectura (aeronaves **y** operadores), porque el
+  documento lleva las dos mitades. Sin correo ni teléfono de las personas: se
+  pidió el catastro, no una lista de contactos.
 - **Los PDF llevan el membrete corporativo JEJ (`LV-144`).** Logo, azul de marca
   `#1E418C` (PANTONE 661 C), Helvetica, y un pie con la razón social, la dirección
   y "Página X de Y". El membrete es un helper compartido (`apps/core/branding.py`
