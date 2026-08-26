@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
-from apps.compliance.digest import bucket_for
+from apps.compliance.digest import BUCKET_TEXT_CSS, bucket_for
 from apps.compliance.reports import (
     alerts_for_cost_center,
     cost_centers_for_refs,
@@ -128,6 +128,10 @@ def upcoming_expirations(today, cutoff, cost_center=None):
             item["date"].isoformat(),
         )
         if key not in triaged:
+            # LV-148: el color del tramo sale de la misma tabla que la insignia de
+            # la bandeja. Antes era una cadena de cuatro `{% if %}` en la
+            # plantilla, y por eso `due_30` era ámbar acá y azul allá.
+            item["tone"] = BUCKET_TEXT_CSS.get(item["bucket"], "")
             items.append(item)
 
     quals = Qualification.objects.filter(
@@ -364,7 +368,90 @@ def panel_readiness(today, cost_center=None):
     }
 
 
-def panel_forecast(today, cost_center=None, user=None):
+# LV-147: cuántas ubicaciones ofrece el selector. Es una lista para **elegir**,
+# no un listado: con veinte ya se recorre a ojo, y el resto se alcanza filtrando
+# por faena arriba.
+WEATHER_CHOICE_LIMIT = 20
+
+
+def _weather_candidates(today, cost_center, user, may_see):
+    """`(permisos, sitios)` que pueden ser ubicación del pronóstico.
+
+    LV-147: los permisos son **la misma consulta** que ya elegía el próximo
+    vuelo — activo, con coordenadas, vigencia abierta y sin los tres estados
+    terminales—, ordenada por `valid_from`. Una segunda consulta para la lista
+    sería la forma de que un día el selector ofrezca algo que el automático no
+    elegiría nunca.
+
+    Los sitios son los centros de costo con coordenadas en ficha. Cada lista va
+    vacía sin el `view_*` del modelo que lee: la tarjeta nombra folios y faenas,
+    así que no puede convertirse en un camino alrededor de esos permisos.
+
+    El filtro de faena de arriba manda sobre las dos: si estás mirando CC738, el
+    selector no ofrece el permiso de otra faena.
+    """
+    permissions = FlightPermission.objects.filter(
+        is_active=True,
+        latitude__isnull=False,
+        longitude__isnull=False,
+        valid_until__gte=today,
+    ).exclude(
+        # None of these has a flight left to plan for: one already happened,
+        # one is not going to, and one ran out of time (LV-83). The date filter
+        # above already rules the expired ones out; listing the status keeps the
+        # intent readable rather than relying on that coincidence.
+        status__in=[
+            FlightPermission.STATUS_COMPLETED,
+            FlightPermission.STATUS_DENIED,
+            FlightPermission.STATUS_EXPIRED,
+        ]
+    )
+    if cost_center:
+        permissions = permissions.filter(cost_center=cost_center)
+    permits = (
+        list(
+            permissions.select_related("cost_center").order_by("valid_from")[
+                :WEATHER_CHOICE_LIMIT
+            ]
+        )
+        if may_see("operations.view_flightpermission")
+        else []
+    )
+
+    sites = []
+    if may_see("registry.view_costcenter"):
+        site_qs = CostCenter.objects.filter(
+            is_active=True, latitude__isnull=False, longitude__isnull=False
+        )
+        if cost_center:
+            site_qs = site_qs.filter(pk=cost_center.pk)
+        sites = list(site_qs.order_by("code")[:WEATHER_CHOICE_LIMIT])
+    return permits, sites
+
+
+def _resolve_weather_choice(selection, permits, sites):
+    """`(kind, registro)` de lo elegido, o `(None, None)` para el automático.
+
+    LV-147: se busca **dentro de las listas ya cargadas**, nunca con un `get()`
+    fresco. Ése es el punto: un pk inexistente, archivado, de otra faena, en
+    estado terminal o de un permiso que esta persona no puede ver caen todos al
+    automático por el mismo camino, sin una consulta extra y sin filtrar un
+    folio. Un `get()` habría necesitado repetir cada uno de esos filtros, y
+    olvidar uno es una fuga.
+    """
+    if not selection or ":" not in selection:
+        return None, None
+    kind, _, raw_pk = selection.partition(":")
+    pool = {"permission": permits, "cost_center": sites}.get(kind)
+    if not pool or not raw_pk:
+        return None, None
+    for record in pool:
+        if str(record.pk) == raw_pk:
+            return kind, record
+    return None, None
+
+
+def panel_forecast(today, cost_center=None, user=None, selection=None):
     """R8.4: the weather for the operation's next flight, for the panel.
 
     Until now the forecast only existed on a geo plan's page, and only when that
@@ -396,34 +483,69 @@ def panel_forecast(today, cost_center=None, user=None):
     Each source is gated on the `view_*` of the model it reads (AGENTS.md's
     read contract): the card names a permit folio, its site and its aircraft, so
     it must not become a way around `view_flightpermission`.
+
+    **LV-147: la ubicación se puede elegir.** El pedido textual fue *"¿es
+    recomendado? porque sale tan directo […] donde yo pueda elegir la ubicación
+    del permiso e ir actualizando, algo más dinámico, ya que pierde sentido tener
+    el último solamente"*. `selection` es el valor crudo del GET
+    (`"permission:<pk>"` o `"cost_center:<pk>"`); vacío o inválido significa
+    automático, que es el comportamiento anterior intacto. La elección **nunca
+    abre una puerta**: se resuelve dentro de la lista de candidatos, que ya está
+    acotada por permiso, estado y filtro de faena.
+
+    Sigue siendo **una sola llamada a Open-Meteo por carga**, elija o no.
     """
     from apps.core.weather import forecast_for
 
     def may_see(permission_codename):
         return user is None or user.has_perm(permission_codename)
 
-    permissions = FlightPermission.objects.filter(
-        is_active=True,
-        latitude__isnull=False,
-        longitude__isnull=False,
-        valid_until__gte=today,
-    ).exclude(
-        # None of these has a flight left to plan for: one already happened,
-        # one is not going to, and one ran out of time (LV-83). The date filter
-        # above already rules the expired ones out; listing the status keeps the
-        # intent readable rather than relying on that coincidence.
-        status__in=[
-            FlightPermission.STATUS_COMPLETED,
-            FlightPermission.STATUS_DENIED,
-            FlightPermission.STATUS_EXPIRED,
-        ]
-    )
-    if cost_center:
-        permissions = permissions.filter(cost_center=cost_center)
+    permits, sites = _weather_candidates(today, cost_center, user, may_see)
+    chosen_kind, chosen = _resolve_weather_choice(selection, permits, sites)
+
+    # LV-147: las dos listas para el desplegable. Van separadas y no como una
+    # sola con clave "grupo" para que los rótulos de los `<optgroup>` sean
+    # literales traducibles en la plantilla: `_(variable)` no lo extrae
+    # `makemessages`.
+    choices = {
+        "weather_permit_choices": [
+            {
+                "value": f"permission:{permit.pk}",
+                # Con el filtro de faena puesto el código sobra; sin él hace
+                # falta, porque dos faenas pueden tener sitios homónimos.
+                "label": " · ".join(
+                    part
+                    for part in (
+                        None if cost_center else permit.cost_center.code,
+                        permit.internal_folio,
+                        permit.area_name or permit.location,
+                    )
+                    if part
+                ),
+            }
+            for permit in permits
+        ],
+        "weather_site_choices": [
+            {"value": f"cost_center:{site.pk}", "label": f"{site.code} - {site.name}"}
+            for site in sites
+        ],
+    }
+
+    if chosen_kind == "cost_center":
+        return {
+            **choices,
+            "weather": forecast_for(*chosen.coordinates, today),
+            "weather_date": today,
+            "weather_source": "cost_center",
+            "weather_scope": "site",
+            "weather_place": str(chosen),
+            "weather_selection": f"cost_center:{chosen.pk}",
+            "weather_card": True,
+            "weather_url": reverse("costcenter-detail", args=[chosen.pk]),
+        }
+
     permission = (
-        permissions.select_related("cost_center").order_by("valid_from").first()
-        if may_see("operations.view_flightpermission")
-        else None
+        chosen if chosen_kind == "permission" else (permits[0] if permits else None)
     )
 
     if permission is not None:
@@ -435,6 +557,7 @@ def panel_forecast(today, cost_center=None, user=None):
             )[:3]
         )
         return {
+            **choices,
             "weather": forecast_for(
                 permission.latitude,
                 permission.longitude,
@@ -442,9 +565,15 @@ def panel_forecast(today, cost_center=None, user=None):
             ),
             "weather_date": max(permission.valid_from, today),
             "weather_source": "permission",
+            # LV-147: el título depende de esto. "El clima donde vuelas ahora"
+            # ya mentía en el camino de respaldo por faena —donde no hay vuelo
+            # ninguno— y con selector mentiría siempre que se elija otra cosa.
+            "weather_scope": "permission" if chosen_kind else "next",
             "weather_place": permission.area_name or permission.location,
             "weather_folio": permission.internal_folio,
             "weather_fleet": ", ".join(fleet),
+            "weather_selection": (f"permission:{permission.pk}" if chosen_kind else ""),
+            "weather_card": True,
             "weather_url": reverse("permission-detail", args=[permission.pk]),
         }
 
@@ -456,14 +585,19 @@ def panel_forecast(today, cost_center=None, user=None):
     if coordinates is None:
         # No upcoming located flight and no site on file. Deliberately not a
         # guessed location: a forecast for the wrong place, next to a real date,
-        # is worse than no card.
-        return {"weather": None}
+        # is worse than no card. LV-147: y sin ninguna ubicación tampoco hay nada
+        # que elegir, así que la tarjeta desaparece entera, selector incluido.
+        return {**choices, "weather": None, "weather_card": False}
     latitude, longitude = coordinates
     return {
+        **choices,
         "weather": forecast_for(latitude, longitude, today),
         "weather_date": today,
         "weather_source": "cost_center",
+        "weather_scope": "site",
         "weather_place": str(cost_center),
+        "weather_selection": "",
+        "weather_card": True,
         "weather_url": reverse("costcenter-detail", args=[cost_center.pk]),
     }
 
@@ -690,5 +824,13 @@ def dashboard(request):
     context.update(panel_readiness(today, selected_cost_center))
     # R8.4: after the rest of the context, so a provider hiccup cannot get in
     # the way of anything the panel already showed.
-    context.update(panel_forecast(today, selected_cost_center, request.user))
+    context.update(
+        panel_forecast(
+            today,
+            selected_cost_center,
+            request.user,
+            # LV-147: la ubicación elegida en el desplegable de la tarjeta.
+            request.GET.get("weather"),
+        )
+    )
     return render(request, "dashboard/index.html", context)

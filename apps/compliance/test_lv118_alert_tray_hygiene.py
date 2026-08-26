@@ -190,8 +190,15 @@ class TestSeverityIsDerivedNotEdited:
         value = (TODAY + timedelta(days=days_out)).isoformat()
         alert = _alert(rule, aircraft, watched_value=value)
 
+        # LV-148: la tabla de colores se movió de `Alert.URGENCY_CSS` a
+        # `digest.BUCKET_BADGE_CSS`, junto a los cortes que ya vivían ahí -- el
+        # panel tenía la suya y `due_30` llegó a ser azul en una pantalla y ámbar
+        # en la otra. Lo que este test afirma no cambia: la insignia sale de la
+        # misma escala que el digest.
+        from apps.compliance.digest import BUCKET_BADGE_CSS
+
         assert alert.urgency == expected
-        assert alert.urgency_css == Alert.URGENCY_CSS[expected]
+        assert alert.urgency_css == BUCKET_BADGE_CSS[expected]
 
     @pytest.mark.django_db
     def test_the_tray_puts_the_worst_first(self, rule, cost_center):
