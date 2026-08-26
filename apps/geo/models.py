@@ -161,6 +161,71 @@ class GeoPlan(StatusFlowMixin, BaseModel):
     def is_editable(self):
         return self.status in self.EDITABLE_STATUSES
 
+    @property
+    def source_file_stem(self):
+        """The imported file's name without its extension, or `""` if none.
+
+        LV-149. The import view stores the uploaded file's name verbatim in
+        `source_document.title`, and that name is the one part of a plan's
+        title that distinguishes two plans of the same faena -- which is why it
+        is worth a column of its own and the head of the ficha.
+
+        The basename is taken by hand rather than with `pathlib`: `Path` is
+        platform-aware, so a name that arrived with backslashes would split on
+        Linux and not on Windows, and the answer must not depend on the server.
+        """
+        document = self.source_document
+        if document is None:
+            return ""
+        name = (document.title or "").strip().replace("\\", "/").rsplit("/", 1)[-1]
+        stem, _dot, extension = name.rpartition(".")
+        return stem if extension and stem else name
+
+    @property
+    def heading(self):
+        """The stored title, read as `{code, name, text}` for the ficha's h1.
+
+        LV-149. The user asked the head of the ficha to say **cost centre and
+        KMZ name**, which is what `LV-138` made the title mean. But titles from
+        before that carry three parts, and a title someone typed by hand carries
+        whatever they wrote.
+
+        So this is a *reading*, never a rewrite: `code` and `name` when the file
+        name is recognisable inside the title, and `text` -- the title verbatim
+        -- when it is not. That last branch is the lesson of `LV-70`, where a
+        "refresh the titles" pass overwrote text nobody had asked it to touch.
+        A hand-written title that does not mention the file is somebody's own
+        words about the plan, and shortening it would delete information.
+        """
+        title = (self.title or "").strip()
+        stem = self.source_file_stem
+        if not stem or stem not in title:
+            return {"code": "", "name": "", "text": title}
+        # Covers both the LV-138 form ("CC738 · CG-01") and a legacy
+        # three-part title that contains the file name: in either case the two
+        # parts worth keeping are the faena's code and the file, and the rest
+        # (faena name, responsible, folio) already has its own place on screen.
+        return {
+            "code": self.cost_center.code if self.cost_center_id else "",
+            "name": stem,
+            "text": "",
+        }
+
+    @property
+    def display_title(self):
+        """One line for the h1. Calculated; `title` in the database is untouched.
+
+        LV-149: a shorter reading that gets saved back is a data migration
+        nobody approved.
+        """
+        heading = self.heading
+        if heading["text"]:
+            return heading["text"]
+        shortened = " · ".join(
+            part for part in (heading["code"], heading["name"]) if part
+        )
+        return shortened or (self.title or "")
+
 
 class AppendOnlyVersionQuerySet(models.QuerySet):
     """Prevent application code from mutating or deleting plan versions."""

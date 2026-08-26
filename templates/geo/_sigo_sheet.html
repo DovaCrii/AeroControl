@@ -1,0 +1,114 @@
+{% load i18n %}
+{% comment %}LV-149: la hoja de campo, para el caso de UNA circunferencia.
+
+Con una sola —el caso normal— una tabla de seis columnas es la forma
+equivocada: el trabajo real no es comparar filas, es transcribir casilla por
+casilla en el formulario del Estado, y ahí una tabla obliga a buscar el dato
+dentro de una celda ancha. La ficha de la solicitud (R9.4) ya había resuelto
+esto con cajas rotuladas; esto lleva la misma forma a la etapa del KMZ, y le
+suma el botón de copiar que aquélla nunca tuvo.
+
+Con varias circunferencias la tabla se queda: con cuarenta y siete filas la
+pregunta pasa a ser "cuál separo", y para eso una tabla sí es la forma.
+
+**Cero cambios en el Python de los datos**: `plan_sections()` ya devuelve
+`dms_lat`/`dms_lon` desglosados y las lecturas corridas.
+
+Los tres avisos de honestidad son los mismos, palabra por palabra, que en la
+tabla. El del AMC va pegado al dato en vez de al pie, que es lo único que
+cambia de sitio.{% endcomment %}
+{% with row=sigo_rows.0 %}
+{% translate "Area" as label_area %}
+{% translate "Commune" as label_commune %}
+{% translate "Province" as label_province %}
+{% translate "Region" as label_region %}
+{% translate "Degrees" as label_degrees %}
+{% translate "Minutes" as label_minutes %}
+{% translate "Seconds" as label_seconds %}
+{% translate "Hemisphere" as label_hemisphere %}
+{% translate "Radius (m)" as label_radius %}
+{% translate "Nearest aerodrome (AMC)" as label_amc %}
+{% translate "Distance (km)" as label_distance %}
+
+<p class="small text-body-secondary mb-2">{% translate "Copy each value into its SIGO box." %}</p>
+
+{% comment %}El nombre de la circunferencia **es** la casilla "Área" del
+formulario de SIGO -- de ahí sale (LV-141), y la ficha de la solicitud la rotula
+igual. Va primero porque es lo que identifica de qué circunferencia habla el
+resto de la hoja. Sin esta casilla el rediseño perdía un dato que la tabla sí
+mostraba en su columna "Circunferencia": lo cazó
+`test_r10_plan_feeds_the_permit::test_it_shows_on_the_plan_page`, que afirma que
+el nombre del placemark llega a la pantalla.{% endcomment %}
+<div class="row g-2">
+  {% include "geo/_sigo_field.html" with label=label_area value=row.name copy=row.name width="col-12 col-md-6" %}
+</div>
+{% if row.is_enclosing %}
+{% comment %}LV-132: en la tabla este aviso va dentro de la celda del nombre,
+por la misma razón por la que acá va debajo de la casilla: el centro y el radio
+que siguen son los del círculo envolvente, no los del área dibujada, y hay que
+decirlo antes de que alguien los copie.{% endcomment %}
+<p class="small text-body-secondary mb-0 mt-1">{% translate "Smallest circle that encloses the drawn area" %}{% if row.drawn_radius_m %} · {% blocktranslate with radius=row.drawn_radius_m %}drawn: {{ radius }} m average{% endblocktranslate %}{% endif %}</p>
+{% endif %}
+
+<h3 class="h6 text-body-secondary mt-3">{% translate "Administrative location" %}</h3>
+{% comment %}Provincia y región van en cajas propias y no pegadas a la comuna
+como una línea en chico: concatenarlas en la plantilla obliga a un separador
+que sobra cuando una de las dos falta, y en el mar faltan las tres. Cada una
+con su botón, porque el rótulo de la casilla es lo que dice cuál es cuál.
+{% endcomment %}
+<div class="row g-2">
+  {% include "geo/_sigo_field.html" with label=label_commune value=row.comuna copy=row.comuna width="col-12 col-md-6" %}
+  {% include "geo/_sigo_field.html" with label=label_province value=row.provincia copy=row.provincia %}
+  {% include "geo/_sigo_field.html" with label=label_region value=row.region copy=row.region %}
+</div>
+{% comment %}LV-141: BCN declara su cartografía referencial y la capa está
+simplificada a ~111 m. Literalmente el mismo aviso que la tabla.{% endcomment %}
+<p class="text-muted small mb-0 mt-1">{% translate "The commune, province and region come from the BCN administrative boundaries, which that institution publishes as referential: near a boundary the answer may be the neighbouring commune. Confirm it before filing." %}</p>
+
+<h3 class="h6 text-body-secondary mt-3">{% translate "Latitude" %}</h3>
+<div class="row g-2">
+  {% include "geo/_sigo_field.html" with label=label_degrees value=row.dms_lat.degrees copy=row.dms_lat.degrees %}
+  {% include "geo/_sigo_field.html" with label=label_minutes value=row.dms_lat.minutes copy=row.dms_lat.minutes %}
+  {% comment %}`floatformat:"2u"` y no `floatformat:2`: con el locale español
+  activo Django escribe la coma decimal ("4,80"), y la lectura corrida de abajo
+  —que la arma `format_dms` en Python— escribe el punto ("4.80"). Dos formas del
+  mismo número en la misma pantalla, y el botón copiaría la que la casilla de
+  SIGO puede no aceptar. La `u` desactiva la localización.{% endcomment %}
+  {% include "geo/_sigo_field.html" with label=label_seconds value=row.dms_lat.seconds|floatformat:"2u" copy=row.dms_lat.seconds|floatformat:"2u" %}
+  {% include "geo/_sigo_field.html" with label=label_hemisphere value=row.dms_lat.hemisphere copy=row.dms_lat.hemisphere %}
+</div>
+<p class="small text-body-secondary mb-0 mt-1 font-monospace">{{ row.lat_readable }}</p>
+
+<h3 class="h6 text-body-secondary mt-3">{% translate "Longitude" %}</h3>
+<div class="row g-2">
+  {% include "geo/_sigo_field.html" with label=label_degrees value=row.dms_lon.degrees copy=row.dms_lon.degrees %}
+  {% include "geo/_sigo_field.html" with label=label_minutes value=row.dms_lon.minutes copy=row.dms_lon.minutes %}
+  {% include "geo/_sigo_field.html" with label=label_seconds value=row.dms_lon.seconds|floatformat:"2u" copy=row.dms_lon.seconds|floatformat:"2u" %}
+  {% include "geo/_sigo_field.html" with label=label_hemisphere value=row.dms_lon.hemisphere copy=row.dms_lon.hemisphere %}
+</div>
+<p class="small text-body-secondary mb-0 mt-1 font-monospace">{{ row.lon_readable }}</p>
+
+<h3 class="h6 text-body-secondary mt-3">{% translate "Circle and aerodrome" %}</h3>
+<div class="row g-2">
+  {% include "geo/_sigo_field.html" with label=label_radius value=row.radius_m copy=row.radius_m %}
+  {% include "geo/_sigo_field.html" with label=label_amc value=row.amc copy=row.amc width="col-12 col-md-6" %}
+  {% include "geo/_sigo_field.html" with label=label_distance value=row.amc_distance_km copy=row.amc_distance_km %}
+</div>
+{% comment %}`seed_aerodromes` deja sin coordenadas los aeródromos que no se
+pudieron verificar, así que "el más cercano" se elige entre los que sí las
+tienen. Va pegado al dato y no al pie de la tarjeta: en la hoja el AMC es una
+casilla más y el aviso tiene que llegar antes de que alguien la copie.
+{% endcomment %}
+<p class="text-muted small mb-0 mt-1">{% translate "The aerodrome is proposed by distance, among those with coordinates on file — confirm it against the AIP chart before filing." %}</p>
+
+{% if row.is_enclosing %}
+{% comment %}R10.8 / LV-132: el mismo aviso que la tabla, y por la misma razón --
+el radio promedio de un no-círculo no es un dato que nadie deba copiar, y acá
+hay un botón que lo copiaría.{% endcomment %}
+<p class="text-muted small mb-0 mt-1">{% translate "When the drawn area is not a circle, the row shows the smallest circle that covers it: SIGO accepts one circle per request, and the average radius of a non-circle is not a figure to file." %}</p>
+{% endif %}
+
+{% comment %}Una sola región `role="status"` para toda la hoja: diez regiones
+compitiendo se anuncian una encima de otra.{% endcomment %}
+<p id="copy-status" role="status" aria-live="polite" class="small text-success mb-0 mt-2"></p>
+{% endwith %}

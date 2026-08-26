@@ -20,10 +20,19 @@
     ficha del permiso: lo que se cita arriba, lo que explica de qué es abajo.
     {% endcomment %}
     <p class="eyebrow mb-1">{% translate "Geospatial planning" %}{% if plan.folio %} · {{ plan.folio }}{% endif %}</p>
-    <h1 class="h3">{{ plan.title }}</h1>
+    {% comment %}LV-149: el h1 baja de `.h3` a `.h4` y dice código de faena +
+    nombre del KMZ, que es lo que el usuario pidió. `display_title` es un
+    **cálculo**: el título guardado no se reescribe, así que un plan cuyo título
+    escribió una persona lo conserva entero (la lección de LV-70).
+
+    La tercera línea deja de repetir el `str(cost_center)` completo: el código ya
+    está arriba y el responsable vive en la ficha de la faena, así que acá va el
+    nombre de la faena en palabras. El permiso pasa a ser enlace -- desde el plan
+    a su papel había que volver al listado.{% endcomment %}
+    <h1 class="h4">{{ plan.display_title }}</h1>
     <p class="text-muted mb-0">
-      {{ plan.cost_center }}
-      {% if plan.flight_permission %} · {{ plan.flight_permission }}{% endif %}
+      {{ plan.cost_center.name|default:plan.cost_center.code }}
+      {% if plan.flight_permission %} · <a href="{% url 'permission-detail' plan.flight_permission.pk %}">{{ plan.flight_permission }}</a>{% endif %}
     </p>
   </div>
   <div class="d-flex gap-2 align-items-center flex-wrap">
@@ -79,8 +88,24 @@ escribe nada.{% endcomment %}
     <span class="badge bg-warning-subtle text-warning-emphasis">{% blocktranslate count counter=sigo_rows|length %}{{ counter }} circle in this file{% plural %}{{ counter }} circles in this file{% endblocktranslate %}</span>
     {% endif %}
   </div>
+  {% comment %}LV-149: dos formas para dos preguntas distintas.
+
+  Con **una** circunferencia —el caso normal— el trabajo es transcribir casilla
+  por casilla en el formulario del Estado, y para eso una tabla de seis columnas
+  es la forma equivocada: hay que ir a buscar el dato dentro de una celda ancha.
+  Va una hoja de campo con cada valor rotulado y su botón de copiar.
+
+  Con **varias** la tabla se queda: con cuarenta y siete filas la pregunta pasa a
+  ser "cuál separo", y comparar filas es exactamente lo que una tabla hace bien.
+  Ahí el botón de copiar entra sólo en la celda de coordenadas, que es la que se
+  tipea mal.{% endcomment %}
+  {% if sigo_rows|length == 1 %}
+  {% include "geo/_sigo_sheet.html" %}
+  {% else %}
   {% comment %}Con varias circunferencias se listan todas, pero la ficha no
   finge que el plan "es" una de ellas: para eso está separar.{% endcomment %}
+  {% translate "Latitude" as lat_axis_label %}
+  {% translate "Longitude" as lon_axis_label %}
   <div class="table-responsive">
     <table class="table table-sm align-middle mb-0">
       <thead><tr>
@@ -123,7 +148,19 @@ escribe nada.{% endcomment %}
           (S / W) ya lo implicaba, pero implicar no es decir: SIGO pide latitud y
           longitud en **casillas separadas**, y quien transcribe no debería tener
           que deducir cuál va en cuál contando líneas.{% endcomment %}
-          <td class="text-nowrap"><span class="font-monospace small"><span class="text-body-secondary">{% translate "Lat" %}</span> {{ row.lat_readable }}<br><span class="text-body-secondary">{% translate "Lon" %}</span> {{ row.lon_readable }}</span></td>
+          {% comment %}LV-149: en la tabla el botón de copiar entra **sólo acá**.
+          Con cuarenta y siete filas un botón por celda son doscientos ochenta
+          botones y la tabla deja de leerse; la coordenada es la casilla que se
+          tipea mal, y es la única que lo justifica. Se copia la lectura
+          corrida de cada eje, que es lo que hay en la celda: partirla en
+          grados/minutos/segundos es lo que hace la hoja de campo del caso de
+          una sola circunferencia.{% endcomment %}
+          <td class="text-nowrap"><span class="font-monospace small">
+            <span class="text-body-secondary">{% translate "Lat" %}</span> {{ row.lat_readable }}
+            {% include "geo/_sigo_copy_button.html" with value=row.lat_readable label=lat_axis_label %}
+            <br><span class="text-body-secondary">{% translate "Lon" %}</span> {{ row.lon_readable }}
+            {% include "geo/_sigo_copy_button.html" with value=row.lon_readable label=lon_axis_label %}
+          </span></td>
           <td>{{ row.radius_m|default:"—" }}</td>
           <td>{% if row.amc %}{{ row.amc }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
           <td class="text-end">{{ row.amc_distance_km|default:"—" }}</td>
@@ -145,6 +182,10 @@ escribe nada.{% endcomment %}
   normal —un círculo dibujado como círculo— la frase sobraría.{% endcomment %}
   {% if has_enclosing %}
   <p class="text-muted small mb-0 mt-1">{% translate "When the drawn area is not a circle, the row shows the smallest circle that covers it: SIGO accepts one circle per request, and the average radius of a non-circle is not a figure to file." %}</p>
+  {% endif %}
+  {% comment %}Una sola región para toda la tabla: una por fila se anunciarían
+  unas encima de otras.{% endcomment %}
+  <p id="copy-status" role="status" aria-live="polite" class="small text-success mb-0 mt-2"></p>
   {% endif %}
 </div>
 {% endif %}
@@ -369,4 +410,10 @@ implementación, y el `object` que necesita es el plan.{% endcomment %}
         crossorigin="anonymous"></script>
 {% endif %}
 <script type="module" src="{% static 'js/geo/main.js' %}"></script>
+{% comment %}LV-149: los botones de copiar de "Datos para SIGO". Servido con
+`{% templatetag openblock %} static {% templatetag closeblock %}` como todo lo
+demás, así que la CSP `script-src 'self'` no se toca — y sin `onclick=` en la
+plantilla, que sí la violaría. Se carga aunque no haya circunferencias: el
+archivo no hace nada si no encuentra un `[data-copy]`.{% endcomment %}
+<script src="{% static 'js/sigo-copy.js' %}"></script>
 {% endblock %}
