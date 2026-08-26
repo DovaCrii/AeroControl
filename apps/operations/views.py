@@ -332,12 +332,17 @@ class FlightPermissionDetail(
                 (_("Approve"), reverse("permission-approve", args=[self.object.pk])),
                 (_("Deny"), reverse("permission-deny", args=[self.object.pk])),
             ]
-        elif self.object.status == "approved" and self.request.user.has_perm(
-            "operations.change_flightpermission"
-        ):
-            actions = [
-                (_("Complete"), reverse("permission-complete", args=[self.object.pk]))
-            ]
+        # LV-155: acá se ofrecía "Completar" a un permiso aprobado. Retirado a
+        # pedido del usuario, textual: *"completado no debe salir luego de
+        # aprobado; es caducado y final se archiva, o se deja en el filtro con
+        # vuelos ya terminado el período y listo, esa es la línea"*. Un permiso
+        # aprobado ya no tiene siguiente paso que apretar: caduca solo cuando se
+        # cierra su vigencia (`expire_permissions`, LV-83) y de ahí se archiva.
+        #
+        # Paso 1 del retiro, como `LV-78` y `LV-103`: **nada se borra**. La vista
+        # `FlightPermissionComplete`, su URL y su compuerta del PDF siguen
+        # enteras, y el valor sigue en `STATUS_CHOICES` para que el filtro del
+        # listado encuentre las filas que ya lo tienen. Revertir es descomentar.
         else:
             actions = []
         context["status_actions"] = actions
