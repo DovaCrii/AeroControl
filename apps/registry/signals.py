@@ -105,3 +105,20 @@ def track_aircraft_location(sender, instance, **kwargs):
         detail=f"{old.get_current_location_display()} → {instance.get_current_location_display()}",
         changed_by_user=getattr(instance, "_changed_by_user", None),
     )
+
+
+def sync_insurance_when_jac_resolution_lands(sender, instance, **kwargs):
+    """LV-159: la Resolucion Exenta de la JAC pone la vigencia en la aeronave.
+
+    Receptor de `post_save` sobre `compliance.Document`, conectado en
+    `RegistryConfig.ready`. Toda la decision vive en `insurance.py`; esto es solo
+    el cable, y por eso no filtra nada por su cuenta: un filtro repetido aca y
+    alla es como los dos dejan de coincidir.
+
+    `post_save` y no `pre_save` porque el receptor **escribe otra fila** (la
+    aeronave), y con `pre_save` esa escritura corre contra un guardado que
+    todavia no aterrizo: la leccion de `R6.1`, que esta en AGENTS.md.
+    """
+    from .insurance import sync_insurance_from_document
+
+    sync_insurance_from_document(instance)
