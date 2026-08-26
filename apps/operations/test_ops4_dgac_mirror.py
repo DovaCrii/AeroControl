@@ -144,13 +144,40 @@ class TestRoster:
 
     @pytest.mark.django_db
     def test_approved_permission_requires_a_number(self, db):
-        from apps.operations.forms import FlightPermissionForm
+        # LV-157: el alta ya no ofrece "Aprobado" -- aprobar exige la
+        # autorización firmada de la DGAC en ficha, y en el alta no hay dónde
+        # adjuntarla. Este test afirmaba la regla de `LV-39` a través de esa
+        # puerta, que ahora está cerrada: el error aterriza en `status`, que es
+        # una garantía **más** fuerte que la que se afirmaba.
+        from apps.operations.forms import (
+            FlightPermissionForm,
+            FlightPermissionUpdateForm,
+        )
 
         form = FlightPermissionForm(
             data={"status": "approved", "permission_number": ""}
         )
         assert not form.is_valid()
-        assert "permission_number" in form.errors
+        assert "status" in form.errors
+
+        # Y la regla de `LV-39` sigue viva donde ahora vive: editando un permiso
+        # que ya está aprobado, el número no se puede vaciar.
+        cc = _cc()
+        permission = FlightPermission.objects.create(
+            permission_number="P-9",
+            cost_center=cc,
+            purpose="photogrammetry",
+            valid_from=date(2026, 7, 1),
+            valid_until=date(2026, 7, 10),
+            location="Site",
+            status="approved",
+            area_type="unpopulated",
+        )
+        update = FlightPermissionUpdateForm(
+            data={"permission_number": ""}, instance=permission
+        )
+        assert not update.is_valid()
+        assert "permission_number" in update.errors
 
 
 class TestCsvExportIncludesRoster:

@@ -389,7 +389,36 @@ class RequireDgacPermitPdfMixin:
         return super().post(request, pk)
 
 
-class FlightPermissionApprove(RequireDgacPermitPdfMixin, StatusTransitionView):
+class RequireDgacFolioMixin:
+    """LV-156: un permiso aprobado sin número de la DGAC es un permiso que la
+    lista muestra como "En proceso" cuando ya está autorizado.
+
+    La regla *"un permiso aprobado necesita su número"* existía desde `LV-39`
+    pero **sólo en `FlightPermissionForm.clean`**, y el camino por el que un
+    permiso se aprueba de verdad es este botón, que no la comprobaba. Una regla
+    forms-only es una regla evadible: la misma clase de defecto que `LV-142`
+    cerró en el padrón.
+
+    El número **no se lee del PDF**: `Document` no tiene campo de folio (sólo
+    título), así que sacarlo del archivo exigiría parsear el PDF —dependencia
+    nueva que la política del repo no admite— o adivinar del nombre. Se pide en
+    su casilla, que es un teclazo con el papel ya en pantalla, y esta compuerta
+    es la que garantiza que nadie se saltee ese teclazo.
+    """
+
+    missing_folio_message = None
+
+    def post(self, request, pk):
+        permission = get_object_or_404(self.model, pk=pk, is_active=True)
+        if not (permission.permission_number or "").strip():
+            messages.error(request, self.missing_folio_message)
+            return redirect(permission)
+        return super().post(request, pk)
+
+
+class FlightPermissionApprove(
+    RequireDgacPermitPdfMixin, RequireDgacFolioMixin, StatusTransitionView
+):
     model = FlightPermission
     target_status = "approved"
     valid_from_statuses = ["requested"]
@@ -397,6 +426,10 @@ class FlightPermissionApprove(RequireDgacPermitPdfMixin, StatusTransitionView):
     missing_pdf_message = gettext_lazy(
         "Upload the DGAC operation authorization (the signed SIGO PDF) "
         "before approving this permit."
+    )
+    missing_folio_message = gettext_lazy(
+        "Enter the DGAC permit number before approving. It is on the "
+        "authorization you just uploaded: edit the permit and type it in."
     )
 
 
