@@ -20,7 +20,13 @@ from apps.compliance.models import Alert, AlertRule, Document, DocumentType
 from apps.compliance.watchables import terminal_statuses
 from apps.maintenance.models import MaintenanceRecord
 from apps.operations.models import FlightPermission, FlightRecord, FlightRequest
-from apps.registry.models import Aircraft, CostCenter, Operator, Qualification
+from apps.registry.models import (
+    Aircraft,
+    CostCenter,
+    KnowledgeAssessment,
+    Operator,
+    Qualification,
+)
 
 
 def resolved_alert_keys():
@@ -195,6 +201,36 @@ def upcoming_expirations(today, cutoff, cost_center=None):
                 "bucket": bucket_for(aircraft.insurance_expiry, today),
                 "cost_center_code": code(aircraft.cost_center),
                 "url": reverse("aircraft-detail", args=[aircraft.pk]),
+            },
+        )
+
+    # LV-158: la prueba de conocimientos vence a los 12 meses y entra a la misma
+    # lista que las credenciales -- el usuario pidió que el resultado sirviera
+    # para "saber cómo está la condición de los profesionales", y una vigencia
+    # que nadie ve venir no sirve para eso. Sólo la **última** de cada operador:
+    # los intentos anteriores son historial, y su vencimiento ya no es trabajo.
+    assessments = (
+        KnowledgeAssessment.objects.filter(is_active=True, expires_on__lte=cutoff)
+        .select_related("operator__cost_center")
+        .order_by("operator_id", "-taken_at")
+    )
+    if cost_center:
+        assessments = assessments.filter(operator__cost_center=cost_center)
+    seen_operators = set()
+    for assessment in assessments:
+        if assessment.operator_id in seen_operators:
+            continue
+        seen_operators.add(assessment.operator_id)
+        add(
+            KnowledgeAssessment,
+            assessment.pk,
+            {
+                "kind": _("Knowledge assessment"),
+                "label": str(assessment.operator),
+                "date": assessment.expires_on,
+                "bucket": bucket_for(assessment.expires_on, today),
+                "cost_center_code": code(assessment.operator.cost_center),
+                "url": reverse("operator-detail", args=[assessment.operator_id]),
             },
         )
 
