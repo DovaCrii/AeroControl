@@ -52,6 +52,11 @@ cada cosa.{% endcomment %}
 
     <fieldset class="cc-form-section mb-4">
       <legend class="h6 section-title mb-3">{% translate "Where it flies" %}</legend>
+      {% comment %}LV-153: el atajo va **arriba** del bloque que rellena, no al
+      final: leído después de tipear las ocho casillas a mano, llega tarde. Sólo
+      en el alta; un permiso que ya existe tiene su selector en la ficha.
+      {% endcomment %}
+      {% if "source_plan" in form.fields %}{{ form.source_plan|as_crispy_field }}{% endif %}
       {{ form.location|as_crispy_field }}
       {{ form.region|as_crispy_field }}
       {{ form.commune|as_crispy_field }}
@@ -63,8 +68,33 @@ cada cosa.{% endcomment %}
       {{ form.area_type|as_crispy_field }}
     </fieldset>
 
-    <div class="form-actions d-flex gap-2 mt-4">
+    {% comment %}LV-154: el borrador vive en **este navegador**, decisión del
+    usuario. Un borrador de verdad —una fila incompleta en la base— habría
+    exigido hacer nulos el centro de costo, el propósito y el tipo de área con su
+    migración, y decidir qué hacen con un permiso sin faena el panel, las
+    alertas, el calendario y el informe, que hoy asumen que la tiene.
+
+    Por eso el aviso dice de qué navegador se trata: un borrador que se promete
+    en todas partes y sólo está en uno es peor que no tenerlo.{% endcomment %}
+    <div class="form-draft mt-4" data-form-draft data-form-draft-key="permission-form">
+      <div class="alert alert-info d-flex flex-wrap gap-2 align-items-center" role="alert"
+           data-form-draft-notice hidden>
+        <span>
+          {% translate "You have a draft saved in this browser" %}
+          (<span data-form-draft-when></span>).
+        </span>
+        <button type="button" class="btn btn-sm btn-outline-primary" data-form-draft-restore>{% translate "Recover it" %}</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-form-draft-discard>{% translate "Discard it" %}</button>
+      </div>
+      <span class="form-draft-saved small text-body-secondary" data-form-draft-saved hidden></span>
+    </div>
+
+    <div class="form-actions d-flex gap-2 mt-3 flex-wrap align-items-center">
       <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+      <button type="button" class="btn btn-outline-primary" data-form-draft-save
+              data-saved-label="{% translate 'Draft saved in this browser.' %}"
+              data-failed-label="{% translate 'This browser is not letting the draft be saved.' %}"
+              title="{% translate 'It stays in this browser until you save or discard it. Nobody else sees it.' %}">{% translate "Save draft" %}</button>
       <a href="{% url 'permission-list' %}" data-history-back class="btn btn-outline-secondary">{% translate "Cancel" %}</a>
     </div>
   </form>
@@ -73,4 +103,5 @@ cada cosa.{% endcomment %}
 
 {% block extrascripts %}
 <script defer src="{% static 'js/roster-filter.js' %}"></script>
+<script defer src="{% static 'js/form-draft.js' %}"></script>
 {% endblock %}

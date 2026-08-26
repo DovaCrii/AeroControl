@@ -4,6 +4,7 @@ from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
 from apps.core.forms import AeroModelForm
+from apps.geo.models import GeoPlan
 from apps.registry.models import Aircraft, Operator
 from .models import (
     FlightPermission,
@@ -15,6 +16,31 @@ from .models import (
 
 
 class FlightPermissionForm(AeroModelForm):
+    # LV-153: el alta pedía a mano las ocho casillas de geografía que el plan
+    # geoespacial ya sabe. Textual del usuario: *"el permiso de vuelo: estos
+    # datos debe extraerlos desde el KMZ […] para que saque esta información
+    # faltante"*. La mitad existía y llegaba tarde: `R10.2`/`LV-137` rellenan
+    # esos huecos **al vincular un plan**, pero eso ocurre en la ficha del
+    # permiso ya creado.
+    #
+    # Se elige un plan **ya subido**, no se sube un KMZ: la dirección la fijó el
+    # propio usuario en `LV-137` — *"el plan geoespacial no se debe importar, se
+    # debe llamar desde el geoespacial que se crea dentro de la app"*.
+    #
+    # El relleno ocurre **al guardar**, no al elegir. Recargar la página para
+    # rellenar habría borrado todo lo demás que la persona ya tipeó, que es
+    # justamente lo que `LV-154` viene a evitar.
+    source_plan = forms.ModelChoiceField(
+        queryset=None,
+        required=False,
+        label=_("Bring the data from a geospatial plan"),
+        help_text=_(
+            "On save, the boxes you leave empty are filled from that plan's "
+            "KMZ: centre point, radius, commune, region and nearest aerodrome. "
+            "Nothing you typed is overwritten."
+        ),
+    )
+
     class Meta:
         model = FlightPermission
         # LV-39: status first, then the number -- a permit is built while it is
@@ -85,8 +111,24 @@ class FlightPermissionForm(AeroModelForm):
             "aircraft_fleet": forms.CheckboxSelectMultiple,
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
+        # LV-153: sólo los planes que no están ya vinculados a otro permiso --
+        # reasignar un plan es un movimiento distinto y tiene su propia puerta en
+        # la ficha (`R10.2`). Y sólo con `geo.change_geoplan`, porque vincular
+        # **modifica el plan**: es el mismo permiso que exige
+        # `GeoPlanLinkToPermission`, y ofrecer un selector que después va a
+        # fallar es lo que `LV-130` llama enseñar a desconfiar de la pantalla.
+        # Sin `user` (tests, shell) no se recorta: la vista es la que decide.
+        plans = GeoPlan.objects.filter(is_active=True, flight_permission__isnull=True)
+        if user is not None and not user.has_perm("geo.change_geoplan"):
+            plans = plans.none()
+        self.fields["source_plan"].queryset = plans.select_related(
+            "cost_center"
+        ).order_by("-folio")
+        self.fields["source_plan"].label_from_instance = lambda plan: (
+            f"{plan.folio} · {plan.title}"
+        )
         # LV-39: the folio is only demanded once approved (see clean); until then
         # the permit can be assembled without it.
         self.fields["permission_number"].required = False
@@ -137,6 +179,21 @@ class FlightPermissionForm(AeroModelForm):
 
     def clean(self):
         cleaned = super().clean()
+        # LV-153/LV-137: un plan alimenta un permiso **de su misma faena**. Es la
+        # regla que `GeoPlanLinkToPermission` ya aplica al vincular; sin ella el
+        # alta podría cruzar la geografía de un contrato con otro.
+        plan = cleaned.get("source_plan")
+        cost_center = cleaned.get("cost_center")
+        if plan is not None and cost_center is not None:
+            if plan.cost_center_id != cost_center.pk:
+                self.add_error(
+                    "source_plan",
+                    _(
+                        "That plan belongs to cost center %(code)s. A plan can "
+                        "only fill in a permit of its own cost center."
+                    )
+                    % {"code": plan.cost_center.code},
+                )
         status = cleaned.get("status")
         number = (cleaned.get("permission_number") or "").strip()
         if status == "approved" and not number:
@@ -172,6 +229,14 @@ class FlightPermissionUpdateForm(FlightPermissionForm):
         fields = [
             field for field in FlightPermissionForm.Meta.fields if field != "status"
         ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # LV-153: traer los datos de un plan es del **alta**. Un permiso que ya
+        # existe tiene su propio selector en la ficha (`R10.2`), que además
+        # muestra qué rellenó y escribe la bitácora del vínculo; ofrecerlo también
+        # acá serían dos puertas para lo mismo, y una se queda atrás.
+        self.fields.pop("source_plan", None)
 
     def clean(self):
         # The parent rejects an approved permit with no DGAC folio, reading the
