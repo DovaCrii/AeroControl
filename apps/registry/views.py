@@ -422,8 +422,9 @@ _OperatorAutoList, _OperatorAutoDetail, OperatorCreate, OperatorUpdate = make_vi
 class OperatorList(RegistryList):
     """LV-9: a useful operator list instead of Name/Created/Status.
 
-    Shows RUT, DGAC credential, cost center and a qualification badge
-    (current / expired), all resolved in one annotated query.
+    Shows RUT, DGAC credential, cost center and the qualifications as the DGAC
+    states them (LV-152 replaced the derived current/expired badge, which read
+    "current" for every undated qualification).
     """
 
     model = Operator
@@ -439,7 +440,6 @@ class OperatorList(RegistryList):
 
         from apps.compliance.models import Document
 
-        today = timezone.localdate()
         # R4.7: credential_expiry is a date the user typed in from the DGAC
         # capture (LV-29) -- it says nothing about whether the licence PDF
         # itself was ever uploaded. Without this, a row with a vigencia badge
@@ -455,26 +455,14 @@ class OperatorList(RegistryList):
             super()
             .get_queryset()
             .select_related("cost_center")
-            .annotate(
-                current_quals=Count(
-                    "qualifications",
-                    filter=Q(qualifications__is_active=True)
-                    & (
-                        Q(qualifications__expiry_date__isnull=True)
-                        | Q(qualifications__expiry_date__gte=today)
-                    ),
-                    distinct=True,
-                ),
-                expired_quals=Count(
-                    "qualifications",
-                    filter=Q(
-                        qualifications__is_active=True,
-                        qualifications__expiry_date__lt=today,
-                    ),
-                    distinct=True,
-                ),
-                has_credential_pdf=Exists(credential_pdf),
-            )
+            # LV-152: se fueron las dos anotaciones de habilitaciones
+            # (`current_quals`/`expired_quals`). Contaban como **vigente** una
+            # habilitación con vencimiento `NULL`, que es como quedaron todas las
+            # importadas, así que la columna pintaba verde a casi todo el padrón
+            # — el error que `LV-29` nombró para las vigencias: un nulo es "nunca
+            # se ingresó", no "está bien". La columna muestra ahora el texto de
+            # `authorizations`, que ya viene en la fila y no cuesta consulta.
+            .annotate(has_credential_pdf=Exists(credential_pdf))
             # R3.2: no Meta.ordering fell back to created_at (SearchMixin's
             # fallback), i.e. insertion order -- alphabetical by full name.
             .order_by("full_name")

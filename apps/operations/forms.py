@@ -1,8 +1,10 @@
 from django import forms
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
 from apps.core.forms import AeroModelForm
+from apps.registry.models import Aircraft, Operator
 from .models import (
     FlightPermission,
     FlightRecord,
@@ -87,6 +89,36 @@ class FlightPermissionForm(AeroModelForm):
         self.fields["aircraft_fleet"].label_from_instance = lambda obj: (
             obj.selector_label
         )
+        # LV-151: el roster se ofrecía **en el orden en que la base devolvía las
+        # filas**. Ni `Operator` ni `Aircraft` declaran `Meta.ordering`, así que
+        # con 41 operadores el formulario era una grilla sin orden que sólo se
+        # puede recorrer a ojo -- el pedido textual fue "tengo problemas a buscar
+        # los operadores". Y el queryset por defecto **no filtra `is_active`**:
+        # un operador archivado y una aeronave dada de baja seguían ofreciéndose
+        # para un permiso nuevo.
+        #
+        # Lo ya elegido se conserva aunque hoy no calificaría: si una aeronave se
+        # retiró después de que el permiso la incluyó, sacarla del queryset la
+        # borraría del permiso al guardar cualquier otra edición. Misma
+        # normalización blanda que `AircraftForm._make_choice_field` (LV-25).
+        self.fields["operators"].queryset = self._roster(
+            Operator.objects.filter(is_active=True), "operators"
+        ).order_by("full_name")
+        self.fields["aircraft_fleet"].queryset = self._roster(
+            Aircraft.objects.filter(is_active=True).exclude(
+                status__in=Aircraft.TERMINAL_STATUSES
+            ),
+            "aircraft_fleet",
+        ).order_by("registration")
+
+    def _roster(self, queryset, field_name):
+        """`queryset`, más lo que este permiso ya tiene elegido en ese campo."""
+        if not self.instance.pk:
+            return queryset
+        chosen = getattr(self.instance, field_name).values_list("pk", flat=True)
+        return (
+            queryset.model.objects.filter(Q(pk__in=queryset) | Q(pk__in=chosen))
+        ).distinct()
 
     def clean(self):
         cleaned = super().clean()

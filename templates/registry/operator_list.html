@@ -13,7 +13,9 @@
   {% comment %}LV-87: el respaldo adjunto es su propia columna.{% endcomment %}
   <col class="col-status">
   <col class="col-flex">
-  <col class="col-status">
+  {% comment %}LV-152: la habilitación pasa de insignia a texto, así que la
+  columna deja de ser de estado y necesita ancho para leerse.{% endcomment %}
+  <col class="col-text">
   <col class="col-actions">
 </colgroup>
 {% endblock %}
@@ -29,7 +31,14 @@ el respaldo está adjunto -- y a simple vista parecía calificar a la fecha.
 {% endcomment %}
 <th scope="col" class="cell-status">{% translate "Credential file" %}</th>
 <th scope="col">{% translate "Cost center" %}</th>
-<th scope="col" class="cell-status">{% translate "Qualification" %}</th>
+{% comment %}LV-152: decía "Habilitación" y mostraba una insignia verde "Vigente"
+derivada de las habilitaciones estructuradas. Con el vencimiento en `NULL` —como
+quedaron todas las importadas— la anotación las contaba como vigentes, así que la
+columna decía "Vigente" para casi todo el padrón: el mismo error que `LV-29`
+nombró para las vigencias, un nulo leído como "está bien" en vez de "nunca se
+ingresó". Ahora muestra lo que la credencial de la DGAC dice, textual.
+{% endcomment %}
+<th scope="col">{% translate "Qualifications" %}</th>
 {% endblock %}
 
 {% block table_body %}{% include "registry/_operator_rows.html" %}{% endblock %}

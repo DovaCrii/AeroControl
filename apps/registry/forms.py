@@ -399,12 +399,37 @@ class OperatorForm(AeroModelForm):
             "cost_center": _("Cost Center"),
             "user": _("Linked user account"),
         }
-        # LV-143: el formato esperado se dice en la pantalla, no sólo en el
-        # mensaje de error. Va en el formulario y no en el modelo: un `help_text`
-        # de campo costaría una migración de metadatos por un texto de interfaz.
+        # LV-143 y LV-152: el formato esperado se dice en la pantalla, no sólo en
+        # el mensaje de error. Van en el formulario y no en el modelo: un
+        # `help_text` de campo costaría una migración de metadatos por un texto
+        # de interfaz.
         help_texts = {
             "rut": _("With its check digit, e.g. 12345678-5. Dots are optional."),
+            "authorizations": _(
+                "Copy them exactly as the DGAC credential states them. They are "
+                "not standardised on purpose: the wording varies."
+            ),
         }
+
+    # LV-152: la habilitación queda **junto a la credencial** de la que sale.
+    # Estaba al final, después de la dirección, así que al dar de alta a alguien
+    # con la credencial de la DGAC delante no aparecía donde se la busca -- el
+    # pedido fue textual: "al momento de agregar un operador nuevo deben salir
+    # las habilitaciones". No cambia `Meta.fields` ni lo que se guarda.
+    field_order = [
+        "employee_id",
+        "full_name",
+        "rut",
+        "email",
+        "phone",
+        "dgac_credential",
+        "credential_expiry",
+        "authorizations",
+        "operator_type",
+        "cost_center",
+        "address",
+        "user",
+    ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
