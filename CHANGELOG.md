@@ -40,6 +40,22 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **Un permiso no puede nacer aprobado sin la autorización de la DGAC
+  (`LV-157`).** La regla existía desde `LV-64` pero sólo en el botón de aprobar,
+  y `Estado` es un campo del formulario de alta: crear el permiso eligiendo
+  "Aprobado" en el desplegable lo dejaba aprobado sin pasar nunca por la
+  compuerta — y en el alta esa compuerta no se puede cumplir, porque no hay dónde
+  adjuntar un documento a un permiso que todavía no existe. El alta ahora ofrece
+  sólo "Solicitado" y "Denegado"; aprobar es siempre la transición guardada. Es la
+  misma puerta trasera que `LV-101` cerró en la pantalla de edición.
+- **Aprobar exige el número de la DGAC (`LV-156`).** La regla "un permiso aprobado
+  necesita su número" vivía sólo en el formulario, y el botón que aprueba de verdad
+  no la comprobaba: de ahí un permiso aprobado —y luego completado— que la lista
+  mostraba como `DGAC: En proceso`. Ahora se rechaza con un mensaje que dice de
+  dónde sale el número, y el campo explica que es el folio de la autorización
+  firmada. No se lee del PDF: eso exigiría una dependencia de parseo que el
+  proyecto no tiene, y con el papel en pantalla el número es un teclazo — lo que
+  faltaba era que nadie pudiera saltárselo.
 - **El roster del permiso se puede buscar, y ofrece sólo lo que puede volar
   (`LV-151`).** Los 41 operadores y las 16 aeronaves se ofrecían **en el orden en
   que la base devolvía las filas** —ni `Operator` ni `Aircraft` declaran orden— y

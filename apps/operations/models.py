@@ -57,6 +57,15 @@ class FlightPermission(StatusFlowMixin, BaseModel):
     # silently, as alerts for an authorization that is already over.
     TERMINAL_STATUSES = frozenset({STATUS_DENIED, STATUS_COMPLETED, STATUS_EXPIRED})
     STATUS_FLOW = [STATUS_REQUESTED, STATUS_APPROVED, STATUS_COMPLETED]
+    # LV-157: con qué estado puede **nacer** un permiso. Aprobar y completar
+    # exigen la autorización firmada de la DGAC en ficha
+    # (`RequireDgacPermitPdfMixin`), y en el alta esa compuerta no se puede
+    # cumplir: no hay dónde adjuntar un documento a un permiso que todavía no
+    # existe. Ofrecer "Aprobado" en el desplegable del alta era entonces una
+    # puerta trasera alrededor de la única regla que el usuario llamó crítica --
+    # exactamente la que `LV-101` cerró en la pantalla de edición y que nadie fue
+    # a mirar en el alta. Aprobar es siempre la transición guardada.
+    CREATABLE_STATUSES = frozenset({STATUS_REQUESTED, STATUS_DENIED})
     # Two terminal states now (LV-83). They differ in one way that matters for
     # the stepper: `denied` is only ever reached from the first step, while a
     # permit can expire from anywhere -- see `status_steps` below.
@@ -271,6 +280,16 @@ class FlightPermission(StatusFlowMixin, BaseModel):
 
     def clean(self):
         errors = {}
+        # LV-157: espejo en el modelo de la regla del formulario, como exige
+        # AGENTS.md. `objects.create()` sigue libre a propósito -- no llama
+        # `full_clean`, y es el camino de los importadores y de los tests que
+        # necesitan montar un permiso ya aprobado sin simular el trámite.
+        if self._state.adding and self.status not in self.CREATABLE_STATUSES:
+            errors["status"] = _(
+                "A new permit starts as requested or denied. Approving requires "
+                "the signed DGAC authorization on file, which can only be "
+                "attached once the permit exists."
+            )
         if self.valid_until and self.valid_from and self.valid_until < self.valid_from:
             errors["valid_until"] = _("The end date cannot be before the start date.")
         if self.purpose == "other" and not self.purpose_detail:
