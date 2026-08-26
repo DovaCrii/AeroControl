@@ -18,6 +18,7 @@ from django.views.generic import TemplateView, View
 from apps.core.exports import neutralize
 from apps.core.views import ModelViewPermissionRequiredMixin
 from apps.registry.models import CostCenter
+from .digest import BUCKETS
 from .models import Document, DocumentType
 from .reports import (
     ALERT_HEADERS,
@@ -347,32 +348,28 @@ class ComplianceReportPdfView(ComplianceReportMixin, View):
     receiving app installed; a PDF opens the same everywhere and is what
     ISO auditors expect to be handed. Built with reportlab (pure Python,
     no system package like Cairo/Pango or wkhtmltopdf on the Ubuntu VM
-    deploy) rather than rendering the HTML template."""
+    deploy) rather than rendering the HTML template.
+
+    LV-144: wears the corporate letterhead from `apps.core.pdf`. The furniture
+    changed -- logo, brand palette, footer, "page X of Y" -- and the content did
+    not, bar one deletion: the body's own "Generated:" line went, because the
+    letterhead now prints that date on *every* page and two of them on page one
+    reads like a bug."""
 
     def get(self, request):
-        from reportlab.lib import colors
-        from reportlab.lib.pagesizes import letter
-        from reportlab.lib.styles import getSampleStyleSheet
         from reportlab.lib.units import inch
-        from reportlab.platypus import (
-            Paragraph,
-            SimpleDocTemplate,
-            Spacer,
-            Table,
-            TableStyle,
-        )
+        from reportlab.platypus import Paragraph, Spacer, Table
+
+        from apps.core import pdf as corepdf
 
         report, comparison, _snapshot = self.report_and_comparison_for(request)
-        styles = getSampleStyleSheet()
+        styles = corepdf.executive_stylesheet()
+        title = str(_("AeroControl — Compliance status report"))
+        letterhead = corepdf.Letterhead(
+            title=title, reference=corepdf.derived_reference("CUM")
+        )
         elements = [
-            Paragraph(
-                str(_("AeroControl — Compliance status report")), styles["Title"]
-            ),
-            Paragraph(
-                str(_("Generated: %(date)s"))
-                % {"date": timezone.localdate().isoformat()},
-                styles["Normal"],
-            ),
+            Paragraph(title, styles["Title"]),
             Paragraph(
                 str(_("Period analysed: %(start)s to %(end)s"))
                 % {
@@ -384,29 +381,14 @@ class ComplianceReportPdfView(ComplianceReportMixin, View):
             Spacer(1, 0.2 * inch),
         ]
 
-        def add_table(heading, headers, rows, empty_message):
+        def add_table(heading, headers, rows, empty_message, extra=()):
             elements.append(Paragraph(str(heading), styles["Heading2"]))
             if rows:
                 data = [[str(cell) for cell in headers]] + [
                     [str(neutralize(cell)) for cell in row] for row in rows
                 ]
                 table = Table(data, repeatRows=1)
-                table.setStyle(
-                    TableStyle(
-                        [
-                            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1b2a4a")),
-                            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                            ("FONTSIZE", (0, 0), (-1, -1), 8),
-                            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#dde3ec")),
-                            (
-                                "ROWBACKGROUNDS",
-                                (0, 1),
-                                (-1, -1),
-                                [colors.white, colors.HexColor("#f4f6f9")],
-                            ),
-                        ]
-                    )
-                )
+                table.setStyle(corepdf.executive_table_style(extra))
                 elements.append(table)
             else:
                 elements.append(Paragraph(str(empty_message), styles["Normal"]))
@@ -444,11 +426,29 @@ class ComplianceReportPdfView(ComplianceReportMixin, View):
             ],
             _("No comparison available."),
         )
+        # LV-144: the last four columns of COST_CENTER_HEADERS *are* the
+        # digest's buckets, in the digest's own order, so each is tinted with
+        # the colour its dates already carry on the dashboard -- a "3" under
+        # Vencidos reads red on paper too. Derived from BUCKETS rather than
+        # written as 5..8: a fifth bucket adds a fifth column, and
+        # `test_lv144_report_pdf_letterhead` pins the alignment so the
+        # derivation cannot quietly tint the wrong columns.
+        centers = cost_center_rows(report)
+        bucket_keys = [key for key, _bound in BUCKETS]
+        first_bucket_column = len(COST_CENTER_HEADERS) - len(bucket_keys)
         add_table(
             _("By cost center"),
             COST_CENTER_HEADERS,
-            cost_center_rows(report),
+            centers,
             _("No cost centers to report."),
+            corepdf.urgency_commands(
+                (
+                    key,
+                    (first_bucket_column + offset, 1),
+                    (first_bucket_column + offset, len(centers)),
+                )
+                for offset, key in enumerate(bucket_keys)
+            ),
         )
 
         resolution = report["resolution"]
@@ -481,13 +481,4 @@ class ComplianceReportPdfView(ComplianceReportMixin, View):
             _("No open alerts."),
         )
 
-        output = BytesIO()
-        SimpleDocTemplate(
-            output,
-            pagesize=letter,
-            leftMargin=0.6 * inch,
-            rightMargin=0.6 * inch,
-        ).build(elements)
-        response = HttpResponse(output.getvalue(), content_type="application/pdf")
-        response["Content-Disposition"] = f'attachment; filename="{FILENAME_STEM}.pdf"'
-        return response
+        return corepdf.pdf_response(elements, letterhead, f"{FILENAME_STEM}.pdf")
