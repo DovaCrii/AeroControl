@@ -15,7 +15,7 @@ from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.conf import settings
 from django.db import connection
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
+from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
@@ -211,6 +211,43 @@ class HtmxFormMixin:
         if self.request.headers.get("HX-Request") == "true":
             return [self.htmx_template_name]
         return super().get_template_names()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["duplicate_hint"] = self._duplicate_hint(context.get("form"))
+        return context
+
+    def _duplicate_hint(self, form):
+        """LV-142: `{label, url, archived}` del registro que ya existe, o None.
+
+        El formulario encuentra la fila (`form.duplicate_of`); acá se decide si
+        se puede **ofrecer**. La separación no es ceremonia: el formulario no
+        tiene el `request`, así que no puede saber si esta persona tiene lectura
+        sobre ese modelo, y un enlace que termina en 403 enseña a desconfiar de
+        la pantalla (LV-130). Sin el permiso el mensaje igual nombra el registro
+        — que es información que quien tipeó el valor ya tenía.
+
+        No abre nada cross-tenant: la consulta del formulario ya estaba acotada
+        al tenant en que se escribe, la vista de detalle lleva
+        `TenantScopedQuerysetMixin`, y el enlace sólo se emite con `view_*`.
+        """
+        existing = getattr(form, "duplicate_of", None)
+        if existing is None:
+            return None
+        meta = existing._meta
+        if not self.request.user.has_perm(f"{meta.app_label}.view_{meta.model_name}"):
+            return None
+        try:
+            url = reverse(f"{meta.model_name}-detail", args=[existing.pk])
+        except NoReverseMatch:
+            # Un modelo sin ficha propia: no hay a dónde enlazar y el mensaje de
+            # error, que nombra el registro, es todo lo que se puede ofrecer.
+            return None
+        return {
+            "label": str(existing),
+            "url": url,
+            "archived": not existing.is_active,
+        }
 
     def form_invalid(self, form):
         if self.request.headers.get("HX-Request") == "true":
