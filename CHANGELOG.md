@@ -10,6 +10,18 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Los PDF llevan el membrete corporativo JEJ (`LV-144`).** Logo, azul de marca
+  `#1E418C` (PANTONE 661 C), Helvetica, y un pie con la razón social, la dirección
+  y "Página X de Y". El membrete es un helper compartido (`apps/core/branding.py`
+  y `apps/core/pdf.py`) y el Reporte de cumplimiento es su primer consumidor: el
+  mobiliario cambió y el contenido no, salvo la línea "Generado:" del cuerpo, que
+  se fue porque el membrete ya imprime esa fecha en todas las páginas. En la tabla
+  por centro de costo las cuatro columnas de vencimiento se pintan con los mismos
+  colores que el panel. El correlativo `J.E.J. N° 00x-26` **no** se inventa: lo
+  asigna una persona, así que el PDF lleva una referencia derivada y rotulada
+  (`Ref. CUM-20260826`). El logo se lee del disco y nunca por URL, y si el archivo
+  falta el informe sale igual con la razón social en su lugar. Requiere
+  `collectstatic` al desplegar.
 - **La causa de una no conformidad ahora se puede contar (`LV-127`).** Además del
   texto libre —que es lo que lee un auditor y se queda— hay una **categoría de
   causa raíz**: persona, procedimiento, equipo, material, entorno, planificación,
