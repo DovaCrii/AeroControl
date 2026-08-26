@@ -724,6 +724,17 @@ class OperatorDetail(RegistryDetail):
             .order_by("qualification_type__name")
         )
         context["today"] = timezone.localdate()
+        # LV-158: el historial de pruebas de conocimientos, que es donde el
+        # usuario pidió que quedara: *"al operador quedar en el historial […] con
+        # un aprobado o insuficiente"*. Va en la ficha y no en una pantalla
+        # aparte porque la pregunta que responde —"cómo está este profesional"—
+        # se hace mirando a la persona, junto a su credencial y sus
+        # habilitaciones.
+        context["assessments"] = (
+            self.object.knowledge_assessments.filter(is_active=True)
+            if self.request.user.has_perm("registry.view_knowledgeassessment")
+            else None
+        )
         context.update(attached_documents_context(self.request.user, self.object))
         return context
 

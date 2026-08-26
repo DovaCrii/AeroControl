@@ -46,6 +46,51 @@
   {% endif %}
 </div>
 
+{% comment %}LV-158: el historial de pruebas de conocimientos, en la ficha de la
+persona. Va acá y no en una pantalla aparte porque la pregunta que responde —*"cómo
+está la condición del profesional"*— se hace mirando a alguien, junto a su
+credencial y sus habilitaciones. Cada fila enlaza a su revisión, que es donde está
+lo que hay que reforzar.{% endcomment %}
+{% if assessments is not None %}
+<div class="card mt-3 p-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="h5 mb-0">{% translate "Knowledge assessments" %}</h2>
+    {% if perms.registry.add_knowledgeassessment and object.user == request.user %}
+    <a href="{% url 'assessment-take' %}" class="btn btn-sm btn-outline-primary">{% translate "Take the assessment" %}</a>
+    {% endif %}
+  </div>
+  {% if assessments %}
+  <table class="table table-sm mb-0">
+    <thead><tr>
+      <th scope="col">{% translate "Taken at" %}</th>
+      <th scope="col">{% translate "Result" %}</th>
+      {% comment %}LV-158: "Score" y no "Score (%)": `makemessages` duplica el `%`
+      de una cadena de plantilla (`Score (%%)` en el catálogo) y la búsqueda en
+      tiempo de ejecución no la encontraría nunca — el encabezado saldría en
+      inglés sin que ningún guardián lo notara. El símbolo va en la celda.
+      {% endcomment %}
+      <th scope="col">{% translate "Score" %}</th>
+      <th scope="col">{% translate "Valid until" %}</th>
+      <th scope="col"></th>
+    </tr></thead>
+    <tbody>
+      {% for assessment in assessments %}
+      <tr>
+        <td>{{ assessment.taken_at|date:'Y-m-d' }}</td>
+        <td>{% if assessment.passed %}<span class="badge bg-success">{% translate "Passed" %}</span>{% else %}<span class="badge bg-danger">{% translate "Insufficient" %}</span>{% endif %}</td>
+        <td>{{ assessment.score_percent }}% <span class="text-body-secondary small">({{ assessment.correct_count }}/{{ assessment.question_count }})</span></td>
+        <td>{{ assessment.expires_on|date:'Y-m-d' }}{% if assessment.is_expired %} <span class="badge bg-danger">{% translate "Overdue" %}</span>{% endif %}</td>
+        <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="{% url 'assessment-detail' assessment.pk %}">{% translate "Review" %}</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="text-muted mb-0">{% translate "No assessment taken yet." %}</p>
+  {% endif %}
+</div>
+{% endif %}
+
 {% include "compliance/_documents_section.html" %}
 
 {% if movements is not None %}

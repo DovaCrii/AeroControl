@@ -17,6 +17,12 @@ COST_CENTER_READERS = ("Operations", "Compliance", "Maintenance")
 ROLE_PERMISSIONS = {
     "Operations": {
         "view_costcenter",
+        # LV-158: quien vuela es quien rinde la prueba de conocimientos, y ve la
+        # suya. `change` y `delete` no existen como acto: una prueba se rinde de
+        # nuevo, no se corrige -- si se pudiera editar el resultado, el historial
+        # dejaría de ser evidencia de nada.
+        "add_knowledgeassessment",
+        "view_knowledgeassessment",
         "add_flightpermission",
         "change_flightpermission",
         "view_flightpermission",
@@ -88,6 +94,10 @@ ROLE_PERMISSIONS = {
     },
     "Compliance": {
         "view_costcenter",
+        # LV-158: Compliance **lee** las pruebas de todos -- es quien responde
+        # "cómo está la condición de los profesionales" ante una auditoría-- pero
+        # no las rinde por nadie: `add` es de quien se sienta a responderla.
+        "view_knowledgeassessment",
         "add_document",
         "change_document",
         "delete_document",

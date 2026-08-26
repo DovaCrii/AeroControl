@@ -24,6 +24,10 @@ WATCHABLE_MODELS = {
     "compliance.monthlycompliancereview": _("Monthly compliance review"),
     "operations.flightpermission": _("Flight permission"),
     "maintenance.maintenancerecord": _("Maintenance record"),
+    # LV-158: la prueba de conocimientos vence a los 12 meses, decisión del
+    # usuario, y por eso entra al mismo motor que las credenciales y los seguros
+    # en vez de tener su propio recordatorio. Se vigila por `expires_on`.
+    "registry.knowledgeassessment": _("Knowledge assessment"),
 }
 
 # Timestamps every model inherits from BaseModel: watching them is never what
