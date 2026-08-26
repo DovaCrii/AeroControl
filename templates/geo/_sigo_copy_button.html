@@ -1,0 +1,35 @@
+{% load i18n %}
+{% comment %}LV-149: el botón que copia un valor de "Datos para SIGO".
+
+Partial propio porque lo usan las dos formas de la tarjeta —la hoja de campo del
+caso de una circunferencia y la celda de coordenadas de la tabla— y las
+etiquetas que lee el lector de pantalla, más la que anuncia la región
+`role="status"`, tienen que estar escritas en un solo lugar. Repetidas en cada
+sitio, la última queda sin traducir.
+
+Las tres cadenas se resuelven a variables **antes** del atributo y con comillas
+dobles: `apps/core/test_translations.py` sólo reconoce literales entre comillas
+dobles, así que un `{% templatetag openblock %} translate '…' {% templatetag closeblock %}`
+dentro de un atributo se le escapa al guardián y puede quedar sin traducir sin
+que nada falle.
+
+No lleva texto propio: `static/js/sigo-copy.js` toma las etiquetas de los
+`data-label-*`, que es lo que le permite no tener ni un literal en inglés.
+{% endcomment %}
+{% if value %}
+{% blocktranslate asvar copy_label with field=label %}Copy {{ field }}{% endblocktranslate %}
+{% comment %}"Copiado: Segundos" y no "Segundos copiado": el participio tendría
+que concordar en género y número con el rótulo, y con "Comuna", "Segundos" y
+"Radio (m)" en la misma hoja ninguna forma sirve para todos. Poniendo el
+participio delante y fijo, la concordancia desaparece del problema.{% endcomment %}
+{% blocktranslate asvar copied_label with field=label %}Copied: {{ field }}{% endblocktranslate %}
+{% translate "Could not copy: select the value and copy it by hand." as failed_label %}
+<button type="button" class="btn btn-sm btn-outline-secondary copy-btn"
+        data-copy="{{ value }}"
+        aria-label="{{ copy_label }}"
+        title="{{ copy_label }}"
+        data-label-copied="{{ copied_label }}"
+        data-label-failed="{{ failed_label }}">
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>
+</button>
+{% endif %}

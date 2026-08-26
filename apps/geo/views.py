@@ -97,7 +97,16 @@ class GeoPlanListView(
     htmx_template_name = "geo/_plan_rows.html"
     context_object_name = "plans"
     paginate_by = 25
-    search_fields = ["title", "cost_center__code", "cost_center__name"]
+    # LV-149: `source_document__title` es el nombre del archivo subido, y desde
+    # que la columna 2 muestra **ese** nombre, buscar por lo que se ve en
+    # pantalla tenía que dejar de fallar. `title` se conserva: los planes con
+    # título escrito a mano siguen siendo buscables por él.
+    search_fields = [
+        "title",
+        "source_document__title",
+        "cost_center__code",
+        "cost_center__name",
+    ]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -109,9 +118,11 @@ class GeoPlanListView(
         status = self.request.GET.get("status")
         if status:
             queryset = queryset.filter(status=status)
-        return queryset.select_related("cost_center", "current_version").order_by(
-            "-created_at"
-        )
+        # LV-149: `source_document` entra al join porque la columna del archivo
+        # lo lee en cada fila -- sin esto son 25 consultas extra por página.
+        return queryset.select_related(
+            "cost_center", "current_version", "source_document"
+        ).order_by("-created_at")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
