@@ -30,6 +30,7 @@ from apps.core.views import (
     TenantScopedQuerysetMixin,
     allowed_calendar_types,
 )
+from apps.core.views import filter_options as core_filter_options
 from apps.geo.models import GeoPlan
 from apps.geo.sections import format_dms, split_sections
 from .forms import (
@@ -812,10 +813,13 @@ class CalendarView(CalendarAccessMixin, ListView):
         return []
 
     def filter_options(self, model, permission, order_field):
-        """Active rows for a filter dropdown, empty without the permission."""
-        if not self.request.user.has_perm(permission):
-            return model.objects.none()
-        return model.objects.filter(is_active=True).order_by(order_field)
+        """Active rows for a filter dropdown, empty without the permission.
+
+        LV-146: la implementación se movió a `apps.core.views.filter_options`
+        cuando la bandeja de alertas la necesitó. Este método queda delegando
+        para no tocar las cuatro llamadas de esta vista ni sus tests.
+        """
+        return core_filter_options(self.request.user, model, permission, order_field)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

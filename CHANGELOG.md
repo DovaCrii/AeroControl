@@ -67,6 +67,21 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **Cada fila dice a qué centro de costo pertenece, y la bandeja se puede filtrar
+  por faena (`LV-146`).** En las alertas el código va como chip bajo el nombre de
+  la entidad; en los vencimientos del panel, al principio de la fila, con un guion
+  cuando el registro no tiene faena asignada. El selector de faena de la bandeja
+  reusa el mismo resolvedor que el filtro del panel, así que la columna y el filtro
+  no pueden contradecirse. El CSV de alertas, que exportaba un nombre de tabla y un
+  UUID en vez del registro, pasa a doce columnas legibles que empiezan por faena y
+  entidad. Los documentos ahora respetan el filtro por faena: antes elegir un
+  centro de costo recortaba las otras cuatro fuentes y dejaba los documentos de las
+  demás faenas en la lista. **Despliegue: correr `bootstrap_roles`** — Operations,
+  Compliance y Maintenance necesitan leer el padrón de faenas para que el filtro les
+  aparezca (el del calendario ya estaba vacío para ellos sin que nadie lo notara).
+- **El panel ya no se cae con un filtro mal escrito en la URL (`LV-146`).**
+  `?cost_center=abc` era un error 500: un valor que no es UUID revienta dentro de
+  la consulta, y eso no lo cubría el "filtro que no resuelve es un no-op".
 - **Un permiso no puede nacer aprobado sin la autorización de la DGAC
   (`LV-157`).** La regla existía desde `LV-64` pero sólo en el botón de aprobar,
   y `Estado` es un campo del formulario de alta: crear el permiso eligiendo

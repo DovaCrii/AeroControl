@@ -212,8 +212,18 @@ when the three are done.{% endcomment %}
         report instead of a fourth urgency scale, so "urgent" reads the same
         everywhere in the app.
       {% endcomment %}
+      {% comment %}LV-146: la faena **primero**, antes del badge de tipo. Los
+      códigos son de ancho casi uniforme (`CC738`) y los tipos no ("Credencial
+      DGAC" contra "Documento"), así que con el chip segundo caería en una x
+      distinta en cada fila y se perdería justo lo que el usuario pidió:
+      "ubicarlo rápido visualmente". Igual que la sección de SIGO más abajo, que
+      ya abre con el código.
+
+      Sin faena va un guion y no un vacío: acá el chip está **en línea**, así que
+      omitirlo correría el badge y el label hacia la izquierda y rompería la
+      columna en las filas de documentos de empresa.{% endcomment %}
       <a href="{{ item.url }}" class="d-flex justify-content-between align-items-center border-bottom py-1 text-decoration-none text-body">
-        <span><span class="badge bg-secondary-subtle text-secondary-emphasis me-2">{{ item.kind }}</span>{{ item.label }}</span>
+        <span>{% if item.cost_center_code %}<span class="cc-chip me-2">{{ item.cost_center_code }}</span>{% else %}<span class="cc-chip is-empty me-2" title="{% translate 'No cost center on file' %}">—</span>{% endif %}<span class="badge bg-secondary-subtle text-secondary-emphasis me-2">{{ item.kind }}</span>{{ item.label }}</span>
         <span class="text-end{% if item.bucket == 'overdue' %} text-danger fw-bold{% elif item.bucket == 'due_7' %} text-warning-emphasis fw-bold{% elif item.bucket == 'due_15' %} text-warning-emphasis fw-semibold{% elif item.bucket == 'due_30' %} text-warning-emphasis{% endif %}">
           <b>{{ item.date|date:"Y-m-d" }}</b>{% if item.bucket == "overdue" %} · {% translate "Overdue" %}{% elif item.bucket == "due_7" %} · {% translate "Due within 7 days" %}{% elif item.bucket == "due_15" %} · {% translate "Due within 15 days" %}{% elif item.bucket == "due_30" %} · {% translate "Due within 30 days" %}{% endif %}
         </span>

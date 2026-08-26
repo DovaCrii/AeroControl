@@ -1,6 +1,7 @@
 from contextlib import contextmanager, suppress
 
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Case, IntegerField, Value, When
 from django.http import FileResponse, Http404, HttpResponse, HttpResponseBadRequest
@@ -25,14 +26,18 @@ from django.utils.text import capfirst
 from apps.core.audit import set_audit_context
 from apps.workboard.models import KanbanTask
 from apps.core.views import (
+    CsvColumn,
     CsvExportMixin,
     HtmxFormMixin,
     ModelPermissionRequiredMixin,
     ModelViewPermissionRequiredMixin,
     SearchMixin,
     TenantScopedQuerysetMixin,
+    filter_options,
 )
 from apps.core.tenancy import scope_queryset_to_tenant
+from apps.registry.models import CostCenter
+from .reports import alerts_for_cost_center, cost_centers_for_refs
 from .forms import (
     AlertForm,
     AlertResolveForm,
@@ -1108,6 +1113,29 @@ class AlertList(ComplianceList):
     # es una decisión de producto, no un detalle de implementación.
     DEFAULT_RESOLVED = "false"
 
+    def selected_cost_center(self):
+        """El centro de costo del filtro, o None. Memoizado: lo piden dos veces.
+
+        LV-146: `None` también cuando quien mira no tiene `registry.view_costcenter`
+        — sin el permiso no se le dibuja el selector, así que el parámetro no
+        puede tener efecto (misma convención que OPS-8: un filtro que no resuelve
+        es un no-op, no un error).
+
+        El `try/except` no es paranoia: `?cost_center=abc` sobre una pk `UUIDField`
+        levanta `ValidationError` **dentro** de `filter()`, o sea un 500. Es el
+        mismo defecto que este bloque arregla en el panel.
+        """
+        if not hasattr(self, "_selected_cost_center"):
+            raw = self.request.GET.get("cost_center")
+            resolved = None
+            if raw and self.request.user.has_perm("registry.view_costcenter"):
+                try:
+                    resolved = CostCenter.objects.filter(pk=raw, is_active=True).first()
+                except (ValueError, ValidationError):
+                    resolved = None
+            self._selected_cost_center = resolved
+        return self._selected_cost_center
+
     def get_queryset(self):
         # LV-106: `content_object` is a GenericForeignKey, which no
         # `select_related` can reach -- and every row reads it three times (the
@@ -1145,6 +1173,20 @@ class AlertList(ComplianceList):
             queryset = queryset.filter(
                 content_type__model=self.request.GET["entity_type"]
             )
+        # LV-146: el filtro por faena, reusando la misma función que el panel.
+        # `alerts_for_cost_center` ya decide qué pasa con las alertas que no se
+        # pueden atribuir: quedan fuera cuando hay filtro ("si no se puede
+        # atribuir a una faena, no es de esa faena"), y sin filtro no se toca
+        # nada. Es la regla que hace que la tarjeta del panel y esta bandeja den
+        # el mismo número, que es lo que LV-129 arregló.
+        #
+        # `search_fields` **no** se toca: el `q` construye `Q(campo__icontains=)`
+        # sobre `Alert`, y desde ahí no hay join posible al centro de costo -- es
+        # justo el problema que `alerts_for_cost_center` existe para resolver.
+        # `cost_center__code` en `search_fields` daría `FieldError`.
+        cost_center = self.selected_cost_center()
+        if cost_center is not None:
+            queryset = alerts_for_cost_center(queryset, cost_center)
         # LV-118: severidad primero. `LV-112` dejó orden declarado (lo abierto
         # antes, y dentro de eso lo más antiguo) y descartó ordenar por el
         # vencimiento porque `watched_date` se calculaba en Python leyendo una
@@ -1194,6 +1236,25 @@ class AlertList(ComplianceList):
         context["selected_is_resolved"] = (
             self.request.GET.get("is_resolved") or self.DEFAULT_RESOLVED
         )
+        # LV-146: el selector de faena y el chip de cada fila. El pedido textual
+        # fue *"las alarmas y el dashboard debe tener claro a qué centro de costo
+        # está siendo afectada, para buscarlo, visualizar más rápido"*.
+        context["cost_centers"] = filter_options(
+            self.request.user, CostCenter, "registry.view_costcenter", "code"
+        )
+        context["selected_cost_center"] = self.selected_cost_center()
+        # El mapa se resuelve sobre **las 25 filas de la página**, no sobre el
+        # queryset, y se estampa en la instancia (`Alert` no tiene campo
+        # `cost_center`, así que no hay colisión). Hay que reasignar la lista:
+        # la plantilla itera `objects`.
+        rows = list(context.get("objects") or [])
+        if rows:
+            mapping = cost_centers_for_refs(
+                (row.content_type_id, row.object_id) for row in rows
+            )
+            for row in rows:
+                row.cost_center = mapping.get((row.content_type_id, row.object_id))
+            context["objects"] = rows
         # LV-69b: this used to resolve each alert's linked KanbanTask in one
         # query, so the row could offer "Create task" vs "View task". Those
         # actions were removed when the workboard left the menu (LV-69) --
@@ -1201,6 +1262,104 @@ class AlertList(ComplianceList):
         # query went with them rather than costing one lookup per page load for
         # a value no template reads. Restoring the buttons means restoring this.
         return context
+
+    def _cost_center_code(self, alert):
+        """El código de la faena de esta alerta, para la pantalla o el export.
+
+        En la pantalla el mapa viene estampado en la fila; en el export vive en
+        `self._csv_cost_centers`, porque ahí los objetos salen frescos del
+        `iterator()` y nadie los estampó.
+        """
+        mapping = getattr(self, "_csv_cost_centers", None)
+        if mapping is not None:
+            cost_center = mapping.get((alert.content_type_id, alert.object_id))
+        else:
+            cost_center = getattr(alert, "cost_center", None)
+        return getattr(cost_center, "code", "")
+
+    @property
+    def csv_fields(self):
+        """LV-146: el CSV de la bandeja decía `content_type` y `object_id` crudos.
+
+        Sin `csv_fields` el mixin exporta los campos concretos del modelo, o sea
+        un nombre de tabla y un UUID donde debería ir el registro — más
+        `resolved_from_stage`, una FK al Kanban dado de baja el 2026-08-12. Nada
+        de eso sirve a quien abre el archivo.
+
+        Se pierde la traza técnica del UUID a propósito: es un CSV para una
+        persona, y la alerta queda identificada por (faena, tipo, entidad, regla,
+        fecha).
+
+        **Las doce son `CsvColumn`, incluidas las que salen de un campo.** El
+        mixin titula un campo con `verbose_name.title()`, y estos campos no
+        declaran `verbose_name`, así que Django lo derivaba del nombre en
+        inglés: la fila de encabezados salía mitad en español (las calculadas) y
+        mitad en inglés ("Alert Rule", "Triggered At"). Declarar `verbose_name`
+        en el modelo costaría una migración de metadatos por un texto que sólo
+        vive en un encabezado; nombrarlos acá los deja iguales a los de la tabla
+        en pantalla, que es con lo que se comparan.
+        """
+        return [
+            CsvColumn(header=str(_("Cost center")), value=self._cost_center_code),
+            CsvColumn(
+                header=str(_("Entity type")),
+                value=lambda alert: alert.entity_label,
+            ),
+            CsvColumn(
+                header=str(_("Entity")),
+                value=lambda alert: alert.content_object,
+            ),
+            CsvColumn(
+                header=str(_("Rule")),
+                value=lambda alert: alert.alert_rule,
+            ),
+            CsvColumn(
+                header=str(_("Triggered")),
+                value=lambda alert: alert.triggered_at,
+            ),
+            CsvColumn(
+                header=str(_("Expiry")),
+                value=lambda alert: alert.triggering_date,
+            ),
+            CsvColumn(
+                header=str(_("Resolved")),
+                value=lambda alert: alert.is_resolved,
+            ),
+            CsvColumn(
+                header=str(_("Resolved at")),
+                value=lambda alert: alert.resolved_at,
+            ),
+            CsvColumn(
+                header=str(_("Resolution reason")),
+                value=lambda alert: alert.resolution_reason,
+            ),
+            CsvColumn(
+                header=str(_("Verified at")),
+                value=lambda alert: alert.effectiveness_verified_at,
+            ),
+            CsvColumn(
+                header=str(_("Message")),
+                value=lambda alert: alert.message,
+            ),
+            CsvColumn(
+                header=str(_("Watched value")),
+                value=lambda alert: alert.watched_value,
+            ),
+        ]
+
+    def render_csv_response(self, queryset):
+        """El mapa de faenas, una vez y no por fila.
+
+        El export recorre **todo** el queryset con `iterator()`, así que el mapa
+        por página del contexto no sirve acá. `values_list` y no instancias: un
+        par por alerta, del mismo orden de magnitud que las listas de ids que
+        `alerts_for_cost_center` ya materializa.
+        """
+        mapping = cost_centers_for_refs(
+            queryset.values_list("content_type_id", "object_id")
+        )
+        self._csv_cost_centers = mapping
+        return super().render_csv_response(queryset)
 
 
 def _redirect_back(request, fallback="alert-list"):
