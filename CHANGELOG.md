@@ -40,6 +40,23 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **El roster del permiso se puede buscar, y ofrece sólo lo que puede volar
+  (`LV-151`).** Los 41 operadores y las 16 aeronaves se ofrecían **en el orden en
+  que la base devolvía las filas** —ni `Operator` ni `Aircraft` declaran orden— y
+  sin filtrar lo archivado, así que un operador archivado y una aeronave retirada
+  seguían apareciendo en un permiso nuevo. Ahora van en orden (nombre y matrícula),
+  con un buscador que filtra las casillas en vivo, un contador de elegidas y un
+  "sólo los elegidos" para verlas juntas. Busca sin tildes. Lo que el permiso ya
+  eligió se conserva aunque hoy no calificaría: si una aeronave se retira después,
+  sacarla del roster la habría borrado del permiso al guardar. El formulario, de
+  paso, queda agrupado en cinco tramos en vez de diecisiete campos en una columna.
+- **La columna "Habilitación" del padrón deja de decir "Vigente" para todos
+  (`LV-152`).** Contaba como vigente toda habilitación con vencimiento vacío — o
+  sea todas las que entraron por el import—, así que casi todo el padrón salía en
+  verde con un dato que nadie había ingresado. Ahora la columna muestra la
+  habilitación **tal como la dice la DGAC**, en texto libre, y ese campo subió en
+  el formulario a donde se lo busca: justo después de la credencial. No se
+  estandariza a propósito: la redacción varía.
 - **Un duplicado avisa quién tiene el valor, en vez de devolver 500 (`LV-142`).**
   Tres caminos morían con `IntegrityError` y sin mensaje: el número de empleado de
   un operador, el código de un centro de costo —los dos porque su restricción de

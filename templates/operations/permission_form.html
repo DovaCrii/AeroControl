@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags i18n static %}
+{% block title %}{{ title|default:'Form' }} - AeroControl{% endblock %}
+{% block content %}
+{% comment %}LV-151: el formulario del permiso deja de ser una columna de
+diecisiete campos sueltos y se agrupa por la pregunta que responde cada tramo.
+Es el formulario más largo de la app —roster, flota, contrato, vigencia y ocho
+casillas de geografía— y el pedido fue "mejorar el orden y cómo se presenta en la
+página, más optimizado para los permisos de vuelo".
+
+Misma forma que `LV-36` le dio al centro de costo: `fieldset` con `legend`, los
+campos ordinarios por `as_crispy_field` y los dos rosters por su propio partial.
+No se toca `Meta.fields` ni el orden de guardado; lo que cambia es dónde se lee
+cada cosa.{% endcomment %}
+<div class="form-shell card p-4">
+  <div class="page-header">
+    <h1 class="h3">{% if title %}{{ title }}{% elif view.object %}{{ view.object }}{% else %}{% translate "New record" %}{% endif %}</h1>
+  </div>
+
+  <form method="post" {% if form.is_multipart %}enctype="multipart/form-data"{% endif %}>
+    {% csrf_token %}
+    {% include "generic/_duplicate_hint.html" %}
+    {{ form.non_field_errors }}
+    {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+
+    <fieldset class="cc-form-section mb-4">
+      <legend class="h6 section-title mb-3">{% translate "The permit" %}</legend>
+      {% comment %}LV-101 saca `status` del formulario de edición, así que el
+      tramo se pregunta por el campo en vez de asumirlo.{% endcomment %}
+      {% if "status" in form.fields %}{{ form.status|as_crispy_field }}{% endif %}
+      {{ form.permission_number|as_crispy_field }}
+    </fieldset>
+
+    <fieldset class="cc-form-section mb-4">
+      <legend class="h6 section-title mb-3">{% translate "Who flies" %}</legend>
+      {% include "operations/_roster_field.html" with field=form.operators %}
+      {% include "operations/_roster_field.html" with field=form.aircraft_fleet %}
+    </fieldset>
+
+    <fieldset class="cc-form-section mb-4">
+      <legend class="h6 section-title mb-3">{% translate "Contract and purpose" %}</legend>
+      {{ form.cost_center|as_crispy_field }}
+      {{ form.purpose|as_crispy_field }}
+      {{ form.purpose_detail|as_crispy_field }}
+    </fieldset>
+
+    <fieldset class="cc-form-section mb-4">
+      <legend class="h6 section-title mb-3">{% translate "Validity" %}</legend>
+      {{ form.valid_from|as_crispy_field }}
+      {{ form.valid_until|as_crispy_field }}
+    </fieldset>
+
+    <fieldset class="cc-form-section mb-4">
+      <legend class="h6 section-title mb-3">{% translate "Where it flies" %}</legend>
+      {{ form.location|as_crispy_field }}
+      {{ form.region|as_crispy_field }}
+      {{ form.commune|as_crispy_field }}
+      {{ form.area_name|as_crispy_field }}
+      {{ form.latitude|as_crispy_field }}
+      {{ form.longitude|as_crispy_field }}
+      {{ form.radius_km|as_crispy_field }}
+      {{ form.max_altitude_ft|as_crispy_field }}
+      {{ form.area_type|as_crispy_field }}
+    </fieldset>
+
+    <div class="form-actions d-flex gap-2 mt-4">
+      <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+      <a href="{% url 'permission-list' %}" data-history-back class="btn btn-outline-secondary">{% translate "Cancel" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extrascripts %}
+<script defer src="{% static 'js/roster-filter.js' %}"></script>
+{% endblock %}
