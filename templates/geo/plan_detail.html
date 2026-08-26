@@ -52,6 +52,15 @@
     <a class="btn btn-sm btn-outline-primary" href="{% url 'geo-plan-split' plan.pk %}"
        title="{% translate 'One flight request per circle, as SIGO requires' %}">{% blocktranslate count counter=sigo_rows|length %}Split into {{ counter }} request{% plural %}Split into {{ counter }} requests{% endblocktranslate %}</a>
     {% endif %}
+    {% comment %}LV-150: "Solicitudes SIGO" sale del menú, y sin este enlace las
+    solicitudes que salieron de este plan quedarían sin puerta desde acá -- el
+    retiro no puede destruir el descubrimiento. Sólo aparece cuando hay alguna:
+    ofrecer "0 solicitudes" sería un enlace a una lista vacía. `request_count` ya
+    viene en 0 sin `view_flightrequest`, así que el gate del permiso está del lado
+    de la vista y no repetido acá.{% endcomment %}
+    {% if request_count %}
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'flight-request-list' %}?plan={{ plan.pk }}">{% blocktranslate count counter=request_count %}{{ counter }} request from this plan{% plural %}{{ counter }} requests from this plan{% endblocktranslate %}</a>
+    {% endif %}
     {% comment %}LV-135: archivar va al final y en gris, no compitiendo con las
     acciones de estado: es lo que se hace una vez y con cuidado, no parte del
     flujo. Exige el permiso de borrado y pasa por una confirmación que muestra qué
