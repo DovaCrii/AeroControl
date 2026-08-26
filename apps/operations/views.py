@@ -187,6 +187,11 @@ class FlightPermissionCreate(OCreate):
     model = FlightPermission
     form_class = FlightPermissionForm
     success_url_name = "permission-list"
+    # LV-151: plantilla propia, agrupada por tramos. `generic/form.html` dibuja
+    # diecisiete campos en una columna y no deja poner la barra de búsqueda
+    # arriba de los dos rosters (crispy dibuja el checkbox múltiple con su propia
+    # plantilla del paquete). Mismo camino que LV-36 tomó con el centro de costo.
+    template_name = "operations/permission_form.html"
 
     def form_valid(self, form):
         """B4.4: warn (do not block) when an assigned operator has no current
@@ -232,7 +237,10 @@ class FlightPermissionUpdate(
     # LV-101: not FlightPermissionForm -- the update variant drops `status`,
     # which turned this screen into a back door around every transition guard.
     form_class = FlightPermissionUpdateForm
-    template_name = "generic/form.html"
+    # LV-151: la misma plantilla que el alta -- el tramo del roster es donde más
+    # se trabaja al corregir un permiso, y dos formas distintas de la misma
+    # pantalla es cómo una de las dos se queda atrás.
+    template_name = "operations/permission_form.html"
     permission_action = "change"
     tenant_path = "cost_center__tenant_id"
 

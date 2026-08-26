@@ -93,12 +93,21 @@ class TestMaintenanceToBeDefined:
 # ── LV-9: enriched lists ──────────────────────────────────────────────────────
 class TestEnrichedLists:
     @pytest.mark.django_db
-    def test_operator_list_shows_rut_and_qualification_badge(self, admin_client):
+    def test_operator_list_shows_rut_and_the_qualifications_the_dgac_states(
+        self, admin_client
+    ):
+        # LV-152: este test afirmaba la insignia derivada ("Vigente"), que era
+        # correcta cuando la columna la mostraba. La insignia se retiró porque
+        # contaba como vigente toda habilitación con vencimiento `NULL` -- o sea
+        # todas las importadas-- y la columna terminaba diciendo "Vigente" para
+        # casi todo el padrón. Lo que se afirma ahora es lo que la columna
+        # muestra: el texto tal como lo escribe la DGAC. El RUT sigue igual.
         cc = CostCenter.objects.create(code="CC1", name="One")
         operator = Operator.objects.create(
             employee_id="OP-1",
             full_name="Pilot One",
             rut="11.111.111-1",
+            authorizations="Serie Mavic · VLOS",
             cost_center=cc,
         )
         qt = QualificationType.objects.create(code="mavic", name="Serie Mavic")
@@ -111,7 +120,7 @@ class TestEnrichedLists:
         response = admin_client.get(reverse("operator-list"))
         content = response.content.decode()
         assert "11.111.111-1" in content
-        assert "Current" in content or "Vigente" in content
+        assert "Serie Mavic · VLOS" in content
 
     @pytest.mark.django_db
     def test_cost_center_list_shows_resource_counts(self, admin_client):
