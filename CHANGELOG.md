@@ -38,6 +38,23 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   la columna de cumplimiento. La función queda entera —modelo, vistas, permisos y
   URL—; volver a mostrarla es descomentar una línea.
 
+### Added
+
+- **El permiso nuevo trae los datos del plan geoespacial (`LV-153`).** En el alta
+  hay un selector "Traer los datos de un plan geoespacial": al guardar, las
+  casillas que dejaste en blanco se llenan con lo que dice ese KMZ — punto centro,
+  radio, comuna, región y aeródromo más cercano con su distancia— y lo que
+  escribiste a mano no se toca. Antes eso sólo pasaba al vincular un plan **desde
+  la ficha del permiso ya creado**, así que al darlo de alta las ocho casillas se
+  tipeaban con el KMZ delante. Se elige un plan ya subido, no se sube un archivo.
+- **Botón "Guardar borrador" en el permiso (`LV-154`).** El formulario más largo de
+  la app ya no es todo o nada: se puede dejar a medio llenar, salir, y al volver un
+  aviso ofrece recuperar lo tipeado (con su fecha y hora) o descartarlo. Guardar el
+  permiso de verdad borra el borrador. **Queda en ese navegador y nadie más lo ve**,
+  y la pantalla lo dice: un borrador de verdad en la base habría exigido admitir
+  permisos sin centro de costo, sin propósito y sin tipo de área, y decidir qué
+  hacen con ellos el panel, las alertas, el calendario y el informe.
+
 ### Changed
 
 - **La línea del permiso es solicitado → aprobado → caducado → archivado
