@@ -168,6 +168,14 @@
       juntas), igual que el patrón de LV-7 con Kanban y LV-D8 con Documentos.
       <a href="{% url 'qualification-list' %}" class="nav-item nav-registry {% if url_name == 'qualification-list' or url_name == 'qualification-detail' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="5"/><path d="M9.5 13.2 8 21l4-2.2L16 21l-1.5-7.8"/><path d="M12 6.7l.9 1.8 2 .3-1.45 1.4.35 2L12 11.3l-1.8.9.35-2L9.1 8.8l2-.3z"/></svg>{% translate "Qualifications" %}</a>
       {% endcomment %}
+      {% comment %}LV-158: la prueba de conocimientos, para quien la rinde. Va en
+      Padrón porque es un dato de la persona, junto a operadores; y sólo aparece
+      con `add_knowledgeassessment`, porque quien no la rinde no tiene nada que
+      hacer ahí -- el historial de todos se lee en la ficha de cada operador.
+      {% endcomment %}
+      {% if perms.registry.add_knowledgeassessment %}
+      <a href="{% url 'assessment-take' %}" class="nav-item nav-registry {% if url_name == 'assessment-take' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M8.5 12.5l2 2 4-4.5"/></svg>{% translate "Knowledge assessment" %}</a>
+      {% endif %}
       <a href="{% url 'operatorassignment-list' %}" class="nav-item nav-registry {% if url_name == 'operatorassignment-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="7.5" r="3"/><path d="M2.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 12h5M18.5 9.5 21 12l-2.5 2.5"/></svg>{% translate "Operator assignments" %}</a>
       <a href="{% url 'aircraftassignment-list' %}" class="nav-item nav-registry {% if url_name == 'aircraftassignment-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5.5" y="8.5" width="4.5" height="4.5" rx="1.4"/><path d="M5.8 8.8 4.1 7.1M9.7 8.8l1.7-1.7M5.8 12.7l-1.7 1.7M9.7 12.7l1.7 1.7"/><circle cx="3.3" cy="6.3" r="1.5"/><circle cx="12.2" cy="6.3" r="1.5"/><circle cx="3.3" cy="15.2" r="1.5"/><circle cx="12.2" cy="15.2" r="1.5"/><path d="M16 12h5M18.5 9.5 21 12l-2.5 2.5"/></svg>{% translate "Aircraft assignments" %}</a>
       <a href="{% url 'battery-list' %}" class="nav-item nav-registry {% if url_name == 'battery-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="8" width="16" height="9" rx="2"/><path d="M20 11v3"/><path d="M6.5 12.5h5"/></svg>{% translate "Batteries" %}</a>

@@ -40,6 +40,14 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Prueba interna de conocimientos por operador (`LV-158`).** Cada operador rinde
+  desde su propia sesión —el resultado se archiva en su ficha, junto a la credencial
+  y las habilitaciones— y la revisión dice **en qué se equivocó y cuál era la
+  respuesta correcta**, que es lo que sirve para reforzar. 25 preguntas del banco
+  propio de 100, 80% para aprobar, y el resultado vale 12 meses: al vencer entra en
+  las alertas y en la lista de vencimientos del panel, igual que una credencial. Una
+  prueba no se corrige, se rinde de nuevo: el historial de intentos es justamente lo
+  que responde cómo está cada profesional. **Despliegue: correr `bootstrap_roles`.**
 - **El permiso nuevo trae los datos del plan geoespacial (`LV-153`).** En el alta
   hay un selector "Traer los datos de un plan geoespacial": al guardar, las
   casillas que dejaste en blanco se llenan con lo que dice ese KMZ — punto centro,

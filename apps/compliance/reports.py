@@ -64,6 +64,9 @@ ALERT_COST_CENTER_PATHS = {
     "registry.aircraft": "cost_center",
     "registry.operator": "cost_center",
     "registry.qualification": "operator__cost_center",
+    # LV-158: la prueba de conocimientos es de una persona, así que su faena es
+    # la de esa persona -- el mismo camino que la habilitación.
+    "registry.knowledgeassessment": "operator__cost_center",
     "operations.flightpermission": "cost_center",
     "maintenance.maintenancerecord": "aircraft__cost_center",
     "compliance.monthlycompliancereview": "cost_center",
