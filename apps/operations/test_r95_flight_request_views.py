@@ -420,25 +420,37 @@ class TestTheListAndTheMenu:
         assert "Quebrada km 13.760" not in content
 
     @pytest.mark.django_db
-    def test_the_menu_offers_it_between_permits_and_plans(
+    def test_the_menu_no_longer_offers_it_but_the_url_is_still_alive(
         self, client_in, flight_request
     ):
-        """Se mira **el orden dentro del menú**, no la primera aparición del
-        enlace en la página: en la propia lista de solicitudes su URL sale antes
-        en el formulario de filtros, y afirmar sobre el documento entero medía
-        eso en vez del menú."""
+        """LV-150 paso 1: el enlace sale del menú y **nada más se retira**.
+
+        Antes esta prueba fijaba el orden dentro del menú (entre Permisos y
+        Planificación, que es el orden en que ocurre el trámite). La premisa de
+        R9.5 sigue siendo cierta —la solicitud es un objeto distinto del plan y
+        del permiso—; lo que cambió es dónde se trabaja: desde `R10.1` los datos
+        de SIGO se leen en la ficha del plan y con `LV-149` se copian de ahí, así
+        que con una sola circunferencia no hay nada que separar y esta lista era
+        una pantalla a la que se llegaba sin tener nada que hacer en ella.
+
+        Se mira **el menú** y no el documento entero: la URL de esta lista
+        aparece igual en el formulario de filtros de su propia página, y afirmar
+        sobre todo el HTML mediría eso en vez del menú.
+        """
         content = client_in.get(reverse("flight-request-list")).content.decode()
 
         nav_hrefs = re.findall(
             r'<a href="([^"]+)" class="nav-item nav-operations', content
         )
 
-        assert reverse("flight-request-list") in nav_hrefs
-        assert (
-            nav_hrefs.index(reverse("permission-list"))
-            < nav_hrefs.index(reverse("flight-request-list"))
-            < nav_hrefs.index(reverse("geo-plan-list"))
+        assert reverse("flight-request-list") not in nav_hrefs
+        # Los dos vecinos siguen ahí y ahora quedan juntos.
+        assert nav_hrefs.index(reverse("permission-list")) < nav_hrefs.index(
+            reverse("geo-plan-list")
         )
+        # Y la vista sigue viva: se llega desde el panel, desde el expediente del
+        # permiso, desde el POST de separar y desde la ficha del plan.
+        assert client_in.get(reverse("flight-request-list")).status_code == 200
 
 
 class TestPermissions:

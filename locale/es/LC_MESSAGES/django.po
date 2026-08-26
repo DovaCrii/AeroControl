@@ -7227,6 +7227,14 @@ msgstr "No se pudo copiar: seleccione el valor y cópielo a mano."
 msgid "Search file, title or cost center..."
 msgstr "Buscar archivo, título o centro de costo..."
 
+#: .\templates\geo\plan_detail.html
+#, python-format
+msgid "%(counter)s request from this plan"
+msgid_plural "%(counter)s requests from this plan"
+msgstr[0] "%(counter)s solicitud de este plan"
+msgstr[1] "%(counter)s solicitudes de este plan"
+
+
 
 
 

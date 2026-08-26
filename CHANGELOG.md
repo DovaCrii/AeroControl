@@ -10,6 +10,15 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **"Solicitudes SIGO" sale del menú (`LV-150`, paso 1).** Desde que los datos de
+  SIGO se leen y se copian en la ficha del plan, con una sola circunferencia no
+  hay nada que separar y la lista era una pantalla a la que se llegaba sin tener
+  nada que hacer en ella. **Nada se borra**: la vista, la URL y los permisos
+  siguen enteros, y se llega igual desde el panel, desde el expediente del
+  permiso y desde la ficha del plan, que gana un enlace contextual — "N
+  solicitudes de este plan" — con un filtro nuevo por plan en el listado.
+  Reversible descomentando una línea. Si en un mes aparece al menos una
+  solicitud creada, el retiro se revierte en vez de avanzar.
 - **"Datos para SIGO" se copia con un botón (`LV-149`).** Cuando el KMZ trae una
   sola circunferencia —el caso normal— la tarjeta deja de ser una tabla de seis
   columnas y pasa a ser una hoja de campo: área, comuna, provincia, región,

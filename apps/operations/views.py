@@ -29,6 +29,7 @@ from apps.core.views import (
     StatusTransitionView,
     TenantScopedQuerysetMixin,
     allowed_calendar_types,
+    lookup_by_pk,
 )
 from apps.core.views import filter_options as core_filter_options
 from apps.geo.models import GeoPlan
@@ -968,6 +969,20 @@ class FlightRequestList(
         status = self.request.GET.get("status", "")
         if status in dict(FlightRequest.STATUS_CHOICES):
             queryset = queryset.filter(status=status)
+        # LV-150: `?plan=<uuid>` es el destino del enlace contextual que la ficha
+        # del plan gana al salir esta lista del menú -- llegar acá y ver las
+        # solicitudes de *otros* planes sería un enlace que no cumple lo que
+        # ofrece.
+        #
+        # Un plan que no existe (URL vieja, valor malformado) devuelve **vacío** y
+        # no "sin filtro": el listado ya dice "ninguna solicitud coincide con este
+        # filtro" y ofrece limpiarlo, mientras mostrar todas afirmaría que ésas son
+        # las del plan pedido. `lookup_by_pk` es lo que evita el 500 sobre un valor
+        # que no es UUID.
+        raw_plan = self.request.GET.get("plan")
+        if raw_plan:
+            plan = lookup_by_pk(GeoPlan.objects.all(), raw_plan)
+            queryset = queryset.filter(source_plan=plan) if plan else queryset.none()
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -981,7 +996,7 @@ class FlightRequestList(
             current_status=self.request.GET.get("status", ""),
         )
         context["is_filtered"] = context["is_filtered"] or bool(
-            self.request.GET.get("status")
+            self.request.GET.get("status") or self.request.GET.get("plan")
         )
         return context
 
