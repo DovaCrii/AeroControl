@@ -91,6 +91,16 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **Subir la Resolución de la JAC ya arregla la póliza "vencida" (`LV-159`).** La
+  ficha de una aeronave decía "Póliza en ficha vigente hasta el 2026-08-08 ·
+  Vencida" teniendo adjunta, dos secciones más abajo, la Resolución Exenta que la
+  aprueba hasta 2027-08-24: nadie llevaba la fecha del papel al campo. Ahora la
+  resolución manda —es el verificador de que la aeronave está autorizada hoy— y
+  al cargarla la ficha toma su vigencia y queda como póliza vigente, con el salto
+  registrado en el historial del trámite. No tira la fecha hacia atrás con un
+  papel viejo, no reacciona a otros documentos y no cruza aeronaves. **Despliegue:
+  correr `manage.py sync_jac_insurance` (primero sin `--apply`)** para las
+  resoluciones que ya están cargadas — la señal sólo actúa al guardar.
 - **Cada fila dice a qué centro de costo pertenece, y la bandeja se puede filtrar
   por faena (`LV-146`).** En las alertas el código va como chip bajo el nombre de
   la entidad; en los vencimientos del panel, al principio de la fila, con un guion
