@@ -70,6 +70,99 @@ ALERT_COST_CENTER_PATHS = {
 }
 
 
+def _direct_cost_center_ids(ids_by_content_type):
+    """`{(ct_id, pk): cost_center_id}` para los modelos con ruta declarada.
+
+    Una consulta por modelo presente, con `values_list("pk", path)` — que para
+    `"operator__cost_center"` devuelve el id del centro de costo sin traer el
+    objeto. Sin filtro `is_active`, igual que `alerts_for_cost_center`: una
+    alerta sobre un registro archivado sigue perteneciendo a su faena.
+    """
+    from django.apps import apps as django_apps
+
+    resolved = {}
+    for label, path in ALERT_COST_CENTER_PATHS.items():
+        app_label, model_name = label.split(".", 1)
+        try:
+            model = django_apps.get_model(app_label, model_name)
+        except LookupError:  # pragma: no cover - un modelo retirado del registro
+            continue
+        content_type_id = ContentType.objects.get_for_model(model).id
+        ids = ids_by_content_type.get(content_type_id)
+        if not ids:
+            continue
+        for pk, cost_center_id in model.objects.filter(pk__in=ids).values_list(
+            "pk", path
+        ):
+            if cost_center_id is not None:
+                resolved[(content_type_id, pk)] = cost_center_id
+    return resolved
+
+
+def _group_by_content_type(refs):
+    grouped = {}
+    for content_type_id, object_id in refs:
+        grouped.setdefault(content_type_id, []).append(object_id)
+    return grouped
+
+
+def cost_centers_for_refs(refs):
+    """`{(content_type_id, object_id): CostCenter}` para referencias genéricas.
+
+    LV-146: la inversa de `alerts_for_cost_center`. Esa acota un queryset a una
+    faena; ésta dice a qué faena pertenece cada fila, que es lo que la bandeja
+    de alertas y los vencimientos del panel necesitan para **mostrarlo**.
+
+    Va sobre la **misma** `ALERT_COST_CENTER_PATHS`, así que la columna nueva y
+    el filtro que ya existe no pueden discrepar por construcción — y el día que
+    `WATCHABLE_MODELS` crezca hay un solo lugar que revisar.
+
+    `refs` es un iterable de `(content_type_id, object_id)`: sirve tanto para
+    una página de alertas como para una lista de documentos.
+
+    Coste: una consulta por modelo presente, más una por los documentos y su
+    segunda vuelta, más una por los centros de costo. **Nunca una por fila.**
+
+    El caso `Document` se resuelve en dos pasos y no con recursión: el sujeto de
+    un documento es una aeronave, un operador o un centro de costo, nunca otro
+    documento, así que la terminación es estructural y no una suposición.
+
+    Devuelve la clave **sólo cuando hay faena resuelta**, así `mapa.get(ref) is
+    None` cubre los tres casos de "sin faena" con una sola rama en la plantilla:
+    modelo sin ruta declarada, FK nula (la de `Aircraft` y `Operator` lo es), y
+    documento de empresa.
+    """
+    refs = list(refs)
+    if not refs:
+        return {}
+    resolved = _direct_cost_center_ids(_group_by_content_type(refs))
+
+    document_ct = ContentType.objects.get_for_model(Document).id
+    document_ids = _group_by_content_type(refs).get(document_ct)
+    if document_ids:
+        subjects = {}
+        for pk, subject_ct, subject_id in Document.objects.filter(
+            pk__in=document_ids
+        ).values_list("pk", "content_type_id", "object_id"):
+            subjects.setdefault((subject_ct, subject_id), []).append(pk)
+        subject_cost_centers = _direct_cost_center_ids(
+            _group_by_content_type(subjects.keys())
+        )
+        for subject_ref, document_pks in subjects.items():
+            cost_center_id = subject_cost_centers.get(subject_ref)
+            if cost_center_id is None:
+                continue
+            for pk in document_pks:
+                resolved[(document_ct, pk)] = cost_center_id
+
+    cost_centers = CostCenter.objects.in_bulk(set(resolved.values()))
+    return {
+        ref: cost_centers[cost_center_id]
+        for ref, cost_center_id in resolved.items()
+        if cost_center_id in cost_centers
+    }
+
+
 def alerts_for_cost_center(queryset, cost_center):
     """Acotar alertas a un centro de costo, resolviendo la GenericForeignKey.
 
