@@ -38,7 +38,92 @@ Verificar: `systemctl list-timers 'aerocontrol-*' --no-pager`
 
 Notificaciones a `Dirección`: `aortega@jej.cl` + `cmunoz@jej.cl`.
 
-## Cierre del 2026-08-24, sesión de tarde — **empezar por acá**
+## Cierre del 2026-08-26 — **empezar por acá**
+
+`main` = `origin/main`, árbol limpio salvo `.vscode/` (sin versionar).
+`pwsh scripts/verify.ps1` verde: **1997 tests**, cobertura 96.73%, ruff, bandit y
+pip-audit sin hallazgos. De 1755 a 1997 tests en el día.
+
+**Desplegado en `p340` hoy** ✅, de punta a punta y verificado con datos: respaldo
+previo (`aero_ops_20260826_165944`), `registry.0036` aplicada, `bootstrap_roles`
+corrido (hay permisos nuevos: `view_costcenter` para tres roles y los dos de la
+evaluación), `collectstatic`, y `sync_jac_insurance --apply` que corrigió **dos**
+aeronaves: `RPA-5534` de 2026-08-08 a **2027-08-24** (el caso que el usuario
+reportó) y `RPA-5532` de 2027-08-04 a 2027-08-06.
+
+### Dos cambios de infraestructura que hay que saber
+
+- **El repositorio es privado desde hoy** (a pedido del usuario). No tiene forks,
+  así que no quedó copia pública. Consecuencia práctica: la VM ya no puede clonar
+  ni tirar por HTTPS anónimo.
+- **`p340` tira por SSH con una llave de despliegue de solo lectura**
+  (`p340-aerocontrol`, id 161420193). La llave se llama `~/.ssh/aerocontrol_deploy`
+  —nombre no estándar— así que el repo tiene
+  `core.sshCommand = ssh -i ~/.ssh/aerocontrol_deploy -o IdentitiesOnly=yes`
+  configurado localmente. Sin eso, `git pull` responde
+  `Permission denied (publickey)` aunque la llave esté cargada en GitHub.
+
+### Lo que se cerró hoy, en orden
+
+`LV-142` (el duplicado avisa quién tiene el valor en vez de reventar con 500) ·
+`LV-143` (el RUT validado) · `LV-151` (el roster del permiso se busca) · `LV-152`
+(la habilitación dice lo que dice la DGAC) · `LV-156`/`LV-157` (aprobar exige el
+PDF **y** el número; el alta no puede nacer aprobada) · `LV-155` (la línea del
+permiso termina en caducado) · `LV-153` (el permiso trae los datos del plan) ·
+`LV-154` (borrador local del formulario) · `LV-146` (el centro de costo se ve y se
+filtra) · `LV-147` (el clima se elige) · `LV-148` (reorden del panel; cierra
+`LV-31`) · `LV-158` (la prueba interna de conocimientos) · `LV-159` (la Resolución
+de la JAC pone la vigencia del seguro; cierra el pendiente de `LV-81b`).
+
+El plan del lote, con el contexto de cada decisión, está en
+`C:\Users\cmunoz\.claude\plans\d-onedrive-j-e-j-ingenier-a-parallel-map.md`.
+
+### Lo que quedó del lote, sin empezar
+
+Cuatro filas del plan aprobado que no se alcanzaron, en orden de valor:
+
+1. **`LV-144` — membrete corporativo JEJ en los PDF.** Decidido y diseñado:
+   azul `#1E418C`, Helvetica (base-14 de reportlab, nada que embeber), logo desde
+   `static/img/` leído por `finders.find()` **nunca por URL** (los estáticos llevan
+   hash en prod), pie con "Página X de Y" vía `canvasmaker`. El logo original está
+   en `D:\OneDrive - J.E.J. Ingeniería S.A\APLICACIONES NUEVO LOGO…\2023\`.
+2. **`LV-145` — informe de catastro de flota y personal.** Lo que el usuario dijo
+   que necesita "cuando me soliciten algo". Alcance ya acotado por él: **sólo** las
+   dos tablas base más una línea de totales, tres salidas (PDF con el membrete,
+   XLSX, CSV) y fecha de corte declarada en las cuatro.
+3. **`LV-149` — ficha del plan geoespacial**: encabezado más chico (CC + nombre del
+   KMZ, `display_title` calculado **sin reescribir** el título guardado) y "Datos
+   para SIGO" como hoja de campo con botón de copiar cuando hay una sola
+   circunferencia. Los tres avisos de honestidad se conservan en las dos formas.
+4. **`LV-150` — "Solicitudes SIGO" fuera del menú** (paso 1, reversible en una
+   línea). Los ocho enlaces entrantes ya están decididos uno por uno en la fila del
+   tablero.
+
+Y **`LV-119`** (P1): `EMAIL_HOST` vacío en `p340`, ningún correo salió nunca. Se
+decidió "preparar el camino y esperar credenciales" y **no se alcanzó a hacer**:
+sigue entero.
+
+### Filas nuevas capturadas hoy y sin resolver
+
+- **`LV-119`, `LV-74`, `LV-98`, `LV-102`, `LV-78`/`LV-103` (pasos 2 y 3), `LV-11b`**
+  siguen como estaban.
+- Nada más quedó capturado sin decidir: los cuatro pedidos que llegaron durante la
+  sesión (`LV-151` a `LV-154`) y los cinco del reporte en vivo (`LV-155` a `LV-159`)
+  se cerraron el mismo día.
+
+### Pendientes del usuario, actualizados
+
+Del cierre anterior siguen: las capturas del selector de SIGO de "Bermuda Intl" en
+adelante, `SCSA`, cargar `RPA-7213`, corregir `RPA-7126`, y la comuna equivocada de
+`JEJ-2026-002`. **Ya no está pendiente** el despliegue (se hizo hoy) ni el cierre
+del círculo del seguro (`LV-159`).
+
+Y uno nuevo, chico: si la ficha de una aeronave sigue diciendo "Vencida" después de
+esto, es porque **su Resolución Exenta de la JAC no está adjunta**. No es defecto:
+sin el verificador la app no se inventa una vigencia. `sync_jac_insurance` sólo
+mueve la fecha cuando hay Resolución en ficha.
+
+## Cierre del 2026-08-24, sesión de tarde
 
 `main` = `origin/main`, árbol limpio salvo `.vscode/` (sin sha a propósito: una
 línea que nombra su propio commit queda obsoleta con el commit siguiente).
@@ -494,7 +579,7 @@ migraciones recupera el esquema, no un dato que alguien haya editado entremedio.
 Ninguna de las ocho toca los timers. `LV-119` **no arregla** el correo: hace que
 se note que no sale (pendiente 5 de la lista de arriba).
 
-## Pendientes inmediatos — empezar por acá
+## Pendientes inmediatos del 2026-08-13 (histórico)
 
 > Los que **no dependen del código** (vigencias, CSP, antivirus, `Z:`, el PR de
 > AeroLink) están reducidos a un comando o un clic cada uno en
