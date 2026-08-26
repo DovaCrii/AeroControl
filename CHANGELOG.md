@@ -51,6 +51,14 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   ficha cuando quien mira puede leerla. La matrícula además se guarda y se compara
   en mayúsculas: `rpa-7126` y `RPA-7126` eran dos aeronaves distintas para la base.
   Sin migración: las 16 aeronaves de producción ya están en mayúsculas.
+- **El RUT del operador se valida y se compara (`LV-143`).** Se guarda en una sola
+  forma (`12345678-K`, sin puntos), se comprueba el dígito verificador y se avisa
+  si otro operador de la misma organización ya lo tiene. Antes admitía cualquier
+  texto y dos fichas de la misma persona con el RUT escrito distinto eran dos
+  personas para la app. **Sin restricción de base de datos y sólo cuando el valor
+  cambia**: en producción hay duplicados que vinieron del import del Capítulo 1, y
+  exigir un RUT válido para guardar cualquier edición habría dejado esas fichas
+  congeladas. Se resuelven con `find_duplicate_operators --apply`.
 
 ### Added
 

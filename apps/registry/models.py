@@ -787,6 +787,62 @@ class Operator(BaseModel):
     def __str__(self):
         return self.full_name
 
+    def clean(self):
+        """LV-143: el RUT se guarda canónico y se valida cuando cambia.
+
+        Es la llave natural chilena y admitía duplicados y basura. La regla vive
+        acá y no sólo en el formulario porque AGENTS.md prohíbe la validación
+        forms-only: el formulario es evadible desde el admin, la API o un import.
+
+        **Sólo cuando el valor cambia**, y eso no es una concesión: el import del
+        Capítulo 1 exige RUT para leer una ficha y en producción hay operadores
+        duplicados que vinieron de ahí. Exigir un RUT válido y único para guardar
+        *cualquier* edición dejaría esas fichas congeladas — no se les podría
+        corregir ni el teléfono. Los duplicados se resuelven con
+        `find_duplicate_operators --apply`, que es una decisión de persona con el
+        papel delante, no bloqueando pantallas.
+
+        La normalización sí corre siempre: una ficha que se edita queda con el
+        RUT canónico, y así el padrón converge sin migración de datos.
+        """
+        from .duplicates import operator_with_rut
+        from .rut import normalize_rut, rut_is_valid
+
+        super().clean()
+        self.rut = normalize_rut(self.rut)
+        if not self.rut or not self._rut_changed():
+            return
+        if not rut_is_valid(self.rut):
+            raise ValidationError(
+                {"rut": _("Enter the RUT as 12345678-5, including its check digit.")}
+            )
+        existing = operator_with_rut(
+            self.rut, tenant_id=self.tenant_id, exclude_pk=self.pk
+        )
+        if existing is not None:
+            raise ValidationError(
+                {
+                    "rut": _("RUT %(rut)s already belongs to %(name)s.")
+                    % {"rut": self.rut, "name": existing.full_name}
+                }
+            )
+
+    def _rut_changed(self):
+        """True en un alta, o cuando el RUT guardado difiere del que se va a escribir.
+
+        `values_list` y no `.all()`: la lección de AGENTS.md sobre chequeos que
+        corren con el código nuevo sobre la base vieja vale igual acá, y de paso
+        no se instancia un operador entero para leer un campo.
+        """
+        from .rut import normalize_rut
+
+        if self._state.adding or self.pk is None:
+            return True
+        previous = (
+            Operator.objects.filter(pk=self.pk).values_list("rut", flat=True).first()
+        )
+        return normalize_rut(previous) != self.rut
+
     @property
     def credential_is_overdue(self):
         """LV-29: the DGAC credential lapsed. ``None`` -- no date on file -- is
