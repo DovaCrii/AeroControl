@@ -7124,6 +7124,16 @@ msgstr "Ordenar"
 msgid "No tasks found."
 msgstr "No se encontraron tareas."
 
+#: .\apps\core\pdf.py
+#, python-format
+msgid "Ref. %(prefix)s-%(stamp)s"
+msgstr "Ref. %(prefix)s-%(stamp)s"
+
+#: .\apps\core\pdf.py
+#, python-format
+msgid "Page %(page)s of %(total)s"
+msgstr "Página %(page)s de %(total)s"
+
 #, fuzzy, python-format
 #~ msgid "Score (%%)"
 #~ msgstr "Cobertura (%%)"
