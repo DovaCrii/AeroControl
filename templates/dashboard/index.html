@@ -25,66 +25,14 @@ centros de costo.{% endcomment %}
       {% endfor %}
     </select>
   </div>
+  {% comment %}LV-147: el camino de vuelta. Cambiar de faena no debería perder la
+  ubicación elegida para el clima. Y como `weather_selection` es lo
+  **efectivamente resuelto**, si la elección deja de ser válida en la faena nueva
+  la resolución cae al automático y este input desaparece del render siguiente:
+  el estado se sana solo, sin código de limpieza.{% endcomment %}
+  {% if weather_selection %}<input type="hidden" name="weather" value="{{ weather_selection }}">{% endif %}
   <noscript><div class="col-auto"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div></noscript>
 </form>
-
-{# ── Summary cards (LV-D9: grilla pareja que reparte las tarjetas por igual) ── #}
-<div class="kpi-grid mb-3">
-  <a class="summary-card text-decoration-none" href="{% url 'aircraft-list' %}">
-    <small>{% translate "Active Aircraft" %}</small>
-    <strong>{{ aircraft_count }}</strong>
-  </a>
-  <a class="summary-card text-decoration-none" href="{% url 'operator-list' %}">
-    <small>{% translate "Active Operators" %}</small>
-    <strong>{{ operator_count }}</strong>
-  </a>
-  <a class="summary-card text-decoration-none" href="{% url 'alert-list' %}">
-    <small>{% translate "Pending Alerts" %}</small>
-    <strong>{{ alert_count }}</strong>
-  </a>
-  {% comment %}LV-129: **una** tarjeta de vencimientos, no dos. `LV-120` separó
-  lo vencido de lo por vencer con razón —sumarlos habría vuelto falsa la de "30
-  días"— pero eso dejó dos tarjetas contiguas que son las dos mitades de la
-  misma lista y que además sólo hacen scroll hasta ella. Juntas en una fila,
-  cada número conserva su nombre y se libera un espacio de la grilla.
-
-  El total grande es el trabajo pendiente de vigencias; el desglose de abajo
-  dice de qué está hecho. Lo vencido va primero porque es lo que hay que hacer
-  primero.{% endcomment %}
-  {% if overdue_count or expiring_count %}
-  <a class="summary-card{% if overdue_count %} summary-card-warning{% endif %} text-decoration-none" href="#upcoming-expirations">
-    <small>{% translate "Expiries" %}</small>
-    <strong>{{ overdue_count|add:expiring_count }}</strong>
-    <small class="text-muted">
-      {% if overdue_count %}{% blocktranslate count counter=overdue_count %}{{ counter }} lapsed{% plural %}{{ counter }} lapsed{% endblocktranslate %}{% endif %}
-      {% if overdue_count and expiring_count %}·{% endif %}
-      {% if expiring_count %}{% blocktranslate count counter=expiring_count %}{{ counter }} within 30 days{% plural %}{{ counter }} within 30 days{% endblocktranslate %}{% endif %}
-    </small>
-  </a>
-  {% endif %}
-  {% comment %}R9.6: trabajo detenido en manos de un tercero — presentado en
-  SIGO y sin respuesta. Aparece sólo cuando hay algo, como la de vencidos: una
-  tarjeta en cero todos los días enseña a no mirar la fila.{% endcomment %}
-  {% if awaiting_count %}
-  <a class="summary-card text-decoration-none" href="{% url 'flight-request-list' %}?status=filed">
-    <small>{% translate "Awaiting SIGO" %}</small>
-    <strong>{{ awaiting_count }}</strong>
-  </a>
-  {% endif %}
-  {% if incomplete_maintenance_count %}
-  <a class="summary-card summary-card-warning text-decoration-none" href="{% url 'maintenance-list' %}">
-    <small>{% translate "Maintenance to define" %}</small>
-    <strong>{{ incomplete_maintenance_count }}</strong>
-  </a>
-  {% endif %}
-  {% if monthly_records %}
-  <a class="summary-card{% if monthly_records.pending %} summary-card-warning{% endif %} text-decoration-none" href="{% url 'monthly-review' %}">
-    <small>{% translate "Monthly records" %} ({{ monthly_records.period }})</small>
-    <strong>{{ monthly_records.compliant }}/{{ monthly_records.total }}</strong>
-    <small class="text-muted">{% translate "cost centers up to date" %}</small>
-  </a>
-  {% endif %}
-</div>
 
 {% if not aircraft_count and not operator_count and not alert_count and not stages %}
 <section class="card onboarding-card p-3 mb-3" aria-labelledby="onboarding-title">
@@ -135,35 +83,75 @@ contradecirse.{% endcomment %}
   {% endfor %}
 </div>
 
-{% comment %}R8.4: el clima, arriba y sin tener que buscarlo. Antes sólo existía
-en la ficha de un plan geoespacial, y sólo si ese plan tenía área y un permiso
-con fecha -- enterrado, para algo que se consulta antes de cada vuelo. La
-ubicación es la del próximo vuelo; el filtro por centro de costo de arriba la
-cambia. Ausente por completo cuando no hay ubicación en ficha, la función está
-apagada o el proveedor no respondió: el clima es contexto, nunca un bloqueo.
+{% comment %}LV-148: **qué hay que hacer**, después de "¿podemos operar hoy?".
+
+Este bloque estaba **arriba de la tira de readiness** y mezclaba tres
+naturalezas presentándolas como iguales: inventario que casi no cambia
+("Aeronaves activas", "Operadores activos"), trabajo pendiente (vencimientos,
+alertas, mantención, SIGO) y cierre de período (registros mensuales). Y las dos
+que nunca cambian ocupaban las **dos primeras posiciones**, que son las más
+leídas.
+
+Las dos de inventario se van, y eso no pierde nada: eran el **denominador** de la
+tira de arriba dicho dos veces —"Aeronaves activas: 15" contra "Flota disponible
+15/16"— y sus enlaces (`aircraft-list`, `operator-list`) son los mismos que las
+tarjetas de flota y credenciales ya llevan. Misma redundancia que `LV-89`
+eliminó al sacar los dos gráficos de estado.
+
+Se conserva la regla de `LV-122`/`R9.6` de ocultar en cero, con **una excepción
+declarada**: Alertas se muestra siempre, porque representa la bandeja y un 0 ahí
+es información -- "no hay nada pendiente" es justo lo que se viene a leer.
 {% endcomment %}
-{% if weather %}
-<section class="card p-3 mb-3" aria-labelledby="panel-weather-title">
-  <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
-    <div>
-      <h2 id="panel-weather-title" class="h6 section-title mb-1">{% translate "Weather where you fly next" %}</h2>
-      <p class="text-muted small mb-0">
-        {% if weather_source == "permission" %}
-          {% blocktranslate with folio=weather_folio place=weather_place date=weather_date|date:"Y-m-d" %}{{ folio }} · {{ place }} · forecast for {{ date }}{% endblocktranslate %}
-          {% if weather_fleet %}· {{ weather_fleet }}{% endif %}
-        {% else %}
-          {% blocktranslate with place=weather_place date=weather_date|date:"Y-m-d" %}{{ place }} · forecast for {{ date }}{% endblocktranslate %}
-        {% endif %}
-      </p>
-    </div>
-    <a class="btn btn-sm btn-outline-primary" href="{{ weather_url }}">
-      {% if weather_source == "permission" %}{% translate "Open the permission" %}{% else %}{% translate "Open the cost center" %}{% endif %}
-    </a>
-  </div>
-  {% include "core/_weather_metrics.html" %}
-  <p class="text-muted small mb-0 mt-3">{% translate "Source: Open-Meteo. Reference only -- it does not replace the pre-flight check." %}</p>
-</section>
-{% endif %}
+<div class="kpi-grid mb-3">
+  <a class="summary-card text-decoration-none" href="{% url 'alert-list' %}">
+    <small>{% translate "Pending Alerts" %}</small>
+    <strong>{{ alert_count }}</strong>
+  </a>
+  {% comment %}LV-129: **una** tarjeta de vencimientos, no dos. `LV-120` separó
+  lo vencido de lo por vencer con razón —sumarlos habría vuelto falsa la de "30
+  días"— pero eso dejó dos tarjetas contiguas que son las dos mitades de la
+  misma lista y que además sólo hacen scroll hasta ella. Juntas en una fila,
+  cada número conserva su nombre y se libera un espacio de la grilla.
+
+  El total grande es el trabajo pendiente de vigencias; el desglose de abajo
+  dice de qué está hecho. Lo vencido va primero porque es lo que hay que hacer
+  primero.{% endcomment %}
+  {% if overdue_count or expiring_count %}
+  <a class="summary-card{% if overdue_count %} summary-card-warning{% endif %} text-decoration-none" href="#upcoming-expirations">
+    <small>{% translate "Expiries" %}</small>
+    <strong>{{ overdue_count|add:expiring_count }}</strong>
+    <small class="text-muted">
+      {% if overdue_count %}{% blocktranslate count counter=overdue_count %}{{ counter }} lapsed{% plural %}{{ counter }} lapsed{% endblocktranslate %}{% endif %}
+      {% if overdue_count and expiring_count %}·{% endif %}
+      {% if expiring_count %}{% blocktranslate count counter=expiring_count %}{{ counter }} within 30 days{% plural %}{{ counter }} within 30 days{% endblocktranslate %}{% endif %}
+    </small>
+  </a>
+  {% endif %}
+  {% if incomplete_maintenance_count %}
+  <a class="summary-card summary-card-warning text-decoration-none" href="{% url 'maintenance-list' %}">
+    <small>{% translate "Maintenance to define" %}</small>
+    <strong>{{ incomplete_maintenance_count }}</strong>
+  </a>
+  {% endif %}
+  {% comment %}R9.6: trabajo detenido en manos de un tercero — presentado en
+  SIGO y sin respuesta. Aparece sólo cuando hay algo, como la de vencidos: una
+  tarjeta en cero todos los días enseña a no mirar la fila.{% endcomment %}
+  {% if awaiting_count %}
+  <a class="summary-card text-decoration-none" href="{% url 'flight-request-list' %}?status=filed">
+    <small>{% translate "Awaiting SIGO" %}</small>
+    <strong>{{ awaiting_count }}</strong>
+  </a>
+  {% endif %}
+  {% if monthly_records %}
+  <a class="summary-card{% if monthly_records.pending %} summary-card-warning{% endif %} text-decoration-none" href="{% url 'monthly-review' %}">
+    <small>{% translate "Monthly records" %} ({{ monthly_records.period }})</small>
+    <strong>{{ monthly_records.compliant }}/{{ monthly_records.total }}</strong>
+    <small class="text-muted">{% translate "cost centers up to date" %}</small>
+  </a>
+  {% endif %}
+</div>
+
+
 
 {% if compliance_incomplete and perms.compliance.add_documenttype %}
 {% comment %}LV-D4: the registry is loaded but compliance is idle (0 types /
@@ -224,7 +212,12 @@ when the three are done.{% endcomment %}
       columna en las filas de documentos de empresa.{% endcomment %}
       <a href="{{ item.url }}" class="d-flex justify-content-between align-items-center border-bottom py-1 text-decoration-none text-body">
         <span>{% if item.cost_center_code %}<span class="cc-chip me-2">{{ item.cost_center_code }}</span>{% else %}<span class="cc-chip is-empty me-2" title="{% translate 'No cost center on file' %}">—</span>{% endif %}<span class="badge bg-secondary-subtle text-secondary-emphasis me-2">{{ item.kind }}</span>{{ item.label }}</span>
-        <span class="text-end{% if item.bucket == 'overdue' %} text-danger fw-bold{% elif item.bucket == 'due_7' %} text-warning-emphasis fw-bold{% elif item.bucket == 'due_15' %} text-warning-emphasis fw-semibold{% elif item.bucket == 'due_30' %} text-warning-emphasis{% endif %}">
+        {% comment %}LV-148: el color sale de `item.tone`, que viene de la misma
+        tabla que la insignia de la bandeja (`digest.BUCKET_TEXT_CSS`). Acá vivía
+        una cadena de cuatro `{% templatetag openblock %} if {% templatetag closeblock %}`
+        con su propia paleta, y por eso `due_30` era ámbar en esta pantalla y azul
+        en la otra: dos versiones de la misma escala.{% endcomment %}
+        <span class="text-end {{ item.tone }}">
           <b>{{ item.date|date:"Y-m-d" }}</b>{% if item.bucket == "overdue" %} · {% translate "Overdue" %}{% elif item.bucket == "due_7" %} · {% translate "Due within 7 days" %}{% elif item.bucket == "due_15" %} · {% translate "Due within 15 days" %}{% elif item.bucket == "due_30" %} · {% translate "Due within 30 days" %}{% endif %}
         </span>
       </a>
@@ -261,6 +254,80 @@ resulta corto enseña a ignorar la sección.{% endcomment %}
     </div>
   </div>
 </div>
+{% endif %}
+
+{% comment %}R8.4: el clima, sin tener que buscarlo. Antes sólo existía en la
+ficha de un plan geoespacial, y sólo si ese plan tenía área y un permiso con
+fecha -- enterrado, para algo que se consulta antes de cada vuelo.
+
+LV-147: **la ubicación se elige.** El pedido fue textual: *"pierde sentido tener
+el último solamente"*. El automático sigue siendo el próximo vuelo; el
+desplegable ofrece los permisos vigentes y las faenas con coordenadas en ficha.
+
+Y la tarjeta ahora se dibuja con `weather_card` y no con `weather`, que es un
+cambio deliberado sobre la decisión de R8.4 ("ausente cuando el proveedor no
+respondió"). Esa decisión era correcta cuando la tarjeta era **sólo un dato**:
+sin dato, no hay tarjeta. Ahora la tarjeta es **también el control**, y
+esconderla porque el proveedor no contestó deja a la persona sin forma de elegir
+otra ubicación ni de volver al automático. Con la función apagada o sin ninguna
+ubicación en ficha sigue desapareciendo entera: ahí no hay nada que elegir.
+{% endcomment %}
+{% if weather_card %}
+<section class="card p-3 mb-3" aria-labelledby="panel-weather-title">
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+    <div>
+      <h2 id="panel-weather-title" class="h6 section-title mb-1">
+        {% if weather_scope == "permission" %}{% translate "Weather for the selected permission" %}
+        {% elif weather_scope == "site" %}{% translate "Weather at the cost center site" %}
+        {% else %}{% translate "Weather where you fly next" %}{% endif %}
+      </h2>
+      <p class="text-muted small mb-0">
+        {% if weather_source == "permission" %}
+          {% blocktranslate with folio=weather_folio place=weather_place date=weather_date|date:"Y-m-d" %}{{ folio }} · {{ place }} · forecast for {{ date }}{% endblocktranslate %}
+          {% if weather_fleet %}· {{ weather_fleet }}{% endif %}
+        {% else %}
+          {% blocktranslate with place=weather_place date=weather_date|date:"Y-m-d" %}{{ place }} · forecast for {{ date }}{% endblocktranslate %}
+        {% endif %}
+      </p>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      {% comment %}LV-147: formulario propio, con `data-autosubmit` -- que ya está
+      cableado en app.js para todo `[data-autosubmit]` de la página, así que no
+      hay JS nuevo y la CSP no se toca. El `<input hidden>` del centro de costo es
+      lo que hace que elegir ubicación **no borre el filtro de arriba**: este
+      formulario reemplaza el query string completo al enviarse.{% endcomment %}
+      {% if weather_permit_choices or weather_site_choices %}
+      <form method="get" class="d-flex align-items-center gap-2">
+        {% if selected_cost_center %}<input type="hidden" name="cost_center" value="{{ selected_cost_center.pk }}">{% endif %}
+        <label class="visually-hidden" for="weather-location">{% translate "Forecast location" %}</label>
+        <select class="form-select form-select-sm" id="weather-location" name="weather" data-autosubmit>
+          <option value="">{% translate "Next flight (automatic)" %}</option>
+          {% if weather_permit_choices %}
+          <optgroup label="{% translate 'Flight permissions' %}">
+            {% for choice in weather_permit_choices %}<option value="{{ choice.value }}" {% if weather_selection == choice.value %}selected{% endif %}>{{ choice.label }}</option>{% endfor %}
+          </optgroup>
+          {% endif %}
+          {% if weather_site_choices %}
+          <optgroup label="{% translate 'Cost centers' %}">
+            {% for choice in weather_site_choices %}<option value="{{ choice.value }}" {% if weather_selection == choice.value %}selected{% endif %}>{{ choice.label }}</option>{% endfor %}
+          </optgroup>
+          {% endif %}
+        </select>
+        <noscript><button class="btn btn-sm btn-outline-primary">{% translate "Show" %}</button></noscript>
+      </form>
+      {% endif %}
+      <a class="btn btn-sm btn-outline-primary" href="{{ weather_url }}">
+        {% if weather_source == "permission" %}{% translate "Open the permission" %}{% else %}{% translate "Open the cost center" %}{% endif %}
+      </a>
+    </div>
+  </div>
+  {% if weather %}
+  {% include "core/_weather_metrics.html" %}
+  {% else %}
+  <p class="text-muted small mb-0">{% translate "Forecast unavailable right now." %}</p>
+  {% endif %}
+  <p class="text-muted small mb-0 mt-3">{% translate "Source: Open-Meteo. Reference only -- it does not replace the pre-flight check." %}</p>
+</section>
 {% endif %}
 
 {% comment %}Analítica: una grilla pareja; los gráficos sin datos se ocultan

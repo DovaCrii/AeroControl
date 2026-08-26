@@ -57,6 +57,22 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **El clima del panel: ahora eliges la ubicación (`LV-147`).** Un desplegable en
+  la tarjeta ofrece los permisos vigentes y las faenas con coordenadas en ficha;
+  el automático sigue siendo el próximo vuelo. El título cambia con lo elegido, así
+  que "el clima donde vuelas ahora" dice la verdad — antes también lo decía cuando
+  el pronóstico venía de una faena y no de ningún vuelo. Elegir ubicación no pierde
+  el filtro por centro de costo, ni al revés. Sigue siendo una sola consulta al
+  proveedor por carga de página, y la tarjeta ya no desaparece cuando el proveedor
+  no responde: ahí es donde está el selector para probar otra ubicación.
+- **El panel se ordena por lo que hay que hacer (`LV-148`).** Primero "¿podemos
+  operar hoy?", después el trabajo pendiente, después la lista de vencimientos, y
+  el clima más abajo — donde se consulta antes de volar, no al abrir sesión. Se van
+  "Aeronaves activas" y "Operadores activos": eran el denominador de la tira de
+  abajo dicho dos veces, y sus enlaces siguen en las tarjetas de flota y
+  credenciales. Y el mismo tramo de urgencia se pinta igual en las dos pantallas:
+  "vence en 30 días" era azul en la bandeja y ámbar en el panel.
+
 - **La línea del permiso es solicitado → aprobado → caducado → archivado
   (`LV-155`).** "Completar" sale de la ficha: un permiso aprobado ya no tiene un
   botón de siguiente paso, caduca solo cuando se cierra su vigencia y de ahí se
