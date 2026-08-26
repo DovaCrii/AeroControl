@@ -672,13 +672,12 @@ class Alert(EffectivenessVerificationMixin, BaseModel):
     # un campo que alguien debe mantener se desactualiza y miente, y el dato ya
     # se conoce. Las clases son de Bootstrap y bajan de intensidad con el tramo:
     # lo vencido grita, lo de 2027 no.
-    URGENCY_CSS = {
-        "overdue": "bg-danger",
-        "due_7": "bg-warning text-dark",
-        "due_15": "bg-warning-subtle text-warning-emphasis",
-        "due_30": "bg-info-subtle text-info-emphasis",
-        "later": "bg-secondary-subtle text-secondary-emphasis",
-    }
+    #
+    # LV-148: la tabla se movió a `digest.py`, junto a `bucket_for`, que es el
+    # dueño de los cortes. El panel pintaba el mismo tramo con otros colores —
+    # `due_30` llegó a ser azul acá y ámbar allá—, y dos tablas para una escala es
+    # cómo una de las dos se queda atrás. Se lee con import diferido dentro de
+    # `urgency_css`, porque `digest` importa de este módulo.
 
     @property
     def urgency(self):
@@ -704,7 +703,9 @@ class Alert(EffectivenessVerificationMixin, BaseModel):
 
     @property
     def urgency_css(self):
-        return self.URGENCY_CSS.get(self.urgency, "bg-secondary-subtle")
+        from apps.compliance.digest import BUCKET_BADGE_CSS
+
+        return BUCKET_BADGE_CSS.get(self.urgency, "bg-secondary-subtle")
 
     def _derive_assigned_operator(self):
         """Best-effort responsible operator for the follow-up task.
