@@ -193,6 +193,13 @@ class FlightPermissionCreate(OCreate):
     # plantilla del paquete). Mismo camino que LV-36 tomó con el centro de costo.
     template_name = "operations/permission_form.html"
 
+    def get_form_kwargs(self):
+        # LV-153: el formulario recorta los planes que ofrece a los que esta
+        # persona puede vincular (`geo.change_geoplan`).
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
     def form_valid(self, form):
         """B4.4: warn (do not block) when an assigned operator has no current
         qualification matching an assigned aircraft's model.
@@ -202,6 +209,38 @@ class FlightPermissionCreate(OCreate):
         super().form_valid() -- so the check has to come after it, not before.
         """
         response = super().form_valid(form)
+        # LV-153: el plan elegido en el alta rellena los huecos de ubicación,
+        # **después** de que el permiso existe: no se puede vincular un plan a
+        # una fila que todavía no tiene pk. Misma función que usa la puerta de la
+        # ficha, así que las dos escriben la misma bitácora.
+        plan = form.cleaned_data.get("source_plan")
+        if plan is not None:
+            filled = link_plan_to_permission(plan, self.object, self.request.user)
+            set_audit_context(
+                self.request,
+                plan,
+                action="geoplan_linked_to_permission",
+                metadata={
+                    "permission": self.object.internal_folio,
+                    "filled": filled,
+                },
+            )
+            if filled:
+                messages.success(
+                    self.request,
+                    _("Plan %(title)s linked; it filled in: %(fields)s.")
+                    % {"title": plan.title, "fields": ", ".join(filled)},
+                )
+            else:
+                messages.info(
+                    self.request,
+                    _(
+                        "Plan %(title)s linked. It filled nothing in: the permit "
+                        "already had its location, or the plan has more than one "
+                        "circle."
+                    )
+                    % {"title": plan.title},
+                )
         gaps = operator_aircraft_compatibility_gaps(
             self.object.operators.all(), self.object.aircraft_fleet.all()
         )
@@ -1147,6 +1186,59 @@ class FlightRequestLink(ModelPermissionRequiredMixin, View):
         return redirect(obj)
 
 
+def link_plan_to_permission(plan, permission, user):
+    """Vincular el plan al permiso y rellenar los huecos de ubicación.
+
+    Devuelve la lista de campos que el plan aportó. Extraída de
+    `GeoPlanLinkToPermission.post` cuando `LV-153` la necesitó como segundo
+    usuario: el alta del permiso puede traer un plan, y el vínculo tiene que
+    hacerse igual desde las dos puertas. Una segunda copia es cómo una de ellas
+    deja de escribir la bitácora.
+    """
+    plan.flight_permission = permission
+    # Sin esto la bitácora `GeoPlanPermissionLink` nace muda: su señal lee este
+    # atributo y nadie lo seteaba, así que `changed_by_user` quedaba siempre
+    # nulo -- el mismo defecto que `LV-101` encontró como "system".
+    plan._changed_by_user = user
+    plan.save(update_fields=["flight_permission", "updated_at"])
+    return fill_permission_from_plan(plan, permission)
+
+
+def fill_permission_from_plan(plan, permission):
+    """Lo que el KMZ aporta, cuando aporta algo que no sea ambiguo.
+
+    Con **una** circunferencia el centro y el radio del permiso son los de esa
+    circunferencia, sin discusión. Con varias no: elegir una sería inventar cuál
+    manda, y ahí el camino correcto es separarlas en solicitudes. Por eso un plan
+    multi-círculo se vincula igual —el vínculo es válido— pero no rellena
+    coordenadas.
+    """
+    rows = plan_sections(plan)
+    if len(rows) != 1:
+        return []
+    row = rows[0]
+    return permission.fill_location_gaps(
+        latitude=Decimal(f"{row['lat']:.6f}"),
+        longitude=Decimal(f"{row['lon']:.6f}"),
+        radius_m=row["radius_m"],
+        area_name=row["name"],
+        # LV-141: la comuna y la región que el polígono administrativo resolvió
+        # desde el punto que se declara.
+        commune=row["comuna"],
+        region=row["region"],
+        # LV-137: el aeródromo más cercano y su distancia, que el plan ya calculó
+        # y el permiso no tenía dónde guardar. Con `LV-132`, si el área no es
+        # circular estos valores son los del círculo que la encierra -- o sea
+        # justo los que hay que declarar, medidos desde el centro que se declara.
+        amc=row["amc"],
+        amc_distance_km=(
+            Decimal(str(row["amc_distance_km"]))
+            if row["amc_distance_km"] is not None
+            else None
+        ),
+    )
+
+
 class GeoPlanLinkToPermission(ModelPermissionRequiredMixin, View):
     """R10.2: vincular a un permiso un plan geoespacial **que ya está subido**.
 
@@ -1179,14 +1271,7 @@ class GeoPlanLinkToPermission(ModelPermissionRequiredMixin, View):
             messages.error(request, _("Choose a plan from this cost center."))
             return redirect(permission)
 
-        plan.flight_permission = permission
-        # Sin esto la bitácora `GeoPlanPermissionLink` nace muda: su señal lee
-        # este atributo y nadie lo seteaba, así que `changed_by_user` quedaba
-        # siempre nulo -- el mismo defecto que `LV-101` encontró como "system".
-        plan._changed_by_user = request.user
-        plan.save(update_fields=["flight_permission", "updated_at"])
-
-        filled = self._fill_from(plan, permission)
+        filled = link_plan_to_permission(plan, permission, request.user)
         set_audit_context(
             request,
             plan,
@@ -1206,42 +1291,6 @@ class GeoPlanLinkToPermission(ModelPermissionRequiredMixin, View):
                 % {"title": plan.title},
             )
         return redirect(permission)
-
-    @staticmethod
-    def _fill_from(plan, permission):
-        """Lo que el KMZ aporta, cuando aporta algo que no sea ambiguo.
-
-        Con **una** circunferencia el centro y el radio del permiso son los de
-        esa circunferencia, sin discusión. Con varias no: elegir una sería
-        inventar cuál manda, y ahí el camino correcto es separarlas en
-        solicitudes. Por eso un plan multi-círculo se vincula igual —el vínculo
-        es válido— pero no rellena coordenadas.
-        """
-        rows = plan_sections(plan)
-        if len(rows) != 1:
-            return []
-        row = rows[0]
-        return permission.fill_location_gaps(
-            latitude=Decimal(f"{row['lat']:.6f}"),
-            longitude=Decimal(f"{row['lon']:.6f}"),
-            radius_m=row["radius_m"],
-            area_name=row["name"],
-            # LV-141: la comuna y la región que el polígono administrativo
-            # resolvió desde el punto que se declara.
-            commune=row["comuna"],
-            region=row["region"],
-            # LV-137: el aeródromo más cercano y su distancia, que el plan ya
-            # calculó y el permiso no tenía dónde guardar. Con `LV-132`, si el
-            # área no es circular estos valores son los del círculo que la
-            # encierra -- o sea justo los que hay que declarar, medidos desde el
-            # centro que se declara.
-            amc=row["amc"],
-            amc_distance_km=(
-                Decimal(str(row["amc_distance_km"]))
-                if row["amc_distance_km"] is not None
-                else None
-            ),
-        )
 
 
 class GeoPlanSplitIntoRequests(ModelPermissionRequiredMixin, View):
