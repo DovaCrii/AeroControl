@@ -1,0 +1,19 @@
+{% comment %}LV-149: una casilla de la hoja de campo para SIGO.
+
+Rótulo arriba, valor abajo y el botón que lo copia. Partial propio porque la
+hoja tiene once casillas y todas se dibujan igual.
+
+`value` es lo que se muestra; `copy` lo que se copia, que no siempre es lo mismo
+(los segundos se muestran redondeados a dos decimales y se copian así). Cuando
+no hay valor no hay botón: copiar un guion no es copiar nada útil, y ese guion
+es la respuesta honesta cuando el punto cae fuera de la capa de BCN.
+{% endcomment %}
+<div class="{{ width|default:'col-6 col-md-3' }}">
+  <div class="border rounded p-2 h-100">
+    <div class="small text-body-secondary text-uppercase">{{ label }}</div>
+    <div class="d-flex align-items-center justify-content-between gap-2">
+      <span class="font-monospace">{{ value|default:"—" }}</span>
+      {% include "geo/_sigo_copy_button.html" with value=copy label=label %}
+    </div>
+  </div>
+</div>

@@ -7193,6 +7193,42 @@ msgstr "Incluir aeronaves retiradas"
 msgid "Include archived records"
 msgstr "Incluir registros archivados"
 
+#: .\templates\geo\_sigo_sheet.html
+msgid "Province"
+msgstr "Provincia"
+
+#: .\templates\geo\_sigo_sheet.html
+msgid "Copy each value into its SIGO box."
+msgstr "Copia cada valor en su casilla de SIGO."
+
+#: .\templates\geo\_sigo_sheet.html
+msgid "Administrative location"
+msgstr "Ubicación administrativa"
+
+#: .\templates\geo\_sigo_sheet.html
+msgid "Circle and aerodrome"
+msgstr "Circunferencia y aeródromo"
+
+#: .\templates\geo\_sigo_copy_button.html
+#, python-format
+msgid "Copy %(field)s"
+msgstr "Copiar %(field)s"
+
+#: .\templates\geo\_sigo_copy_button.html
+#, python-format
+msgid "Copied: %(field)s"
+msgstr "Copiado: %(field)s"
+
+#: .\templates\geo\_sigo_copy_button.html
+msgid "Could not copy: select the value and copy it by hand."
+msgstr "No se pudo copiar: seleccione el valor y cópielo a mano."
+
+#: .\templates\geo\plan_list.html
+msgid "Search file, title or cost center..."
+msgstr "Buscar archivo, título o centro de costo..."
+
+
+
 
 #, fuzzy, python-format
 #~ msgid "Score (%%)"

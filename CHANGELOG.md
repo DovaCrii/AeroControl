@@ -10,6 +10,22 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **"Datos para SIGO" se copia con un botón (`LV-149`).** Cuando el KMZ trae una
+  sola circunferencia —el caso normal— la tarjeta deja de ser una tabla de seis
+  columnas y pasa a ser una hoja de campo: área, comuna, provincia, región,
+  latitud y longitud partidas en grados/minutos/segundos/hemisferio, radio,
+  aeródromo y distancia, cada una en su caja rotulada y con un botón que la
+  copia. Con varias circunferencias la tabla se queda —ahí la pregunta es cuál
+  separar— y el botón entra sólo en la celda de coordenadas. Los tres avisos de
+  honestidad (aeródromo propuesto, cartografía BCN referencial, círculo
+  envolvente) siguen en las dos formas, palabra por palabra. Requiere
+  `collectstatic` al desplegar.
+- **La ficha del plan geoespacial dice de qué faena y de qué archivo es
+  (`LV-149`).** El encabezado es más chico y muestra el código del centro de
+  costo y el nombre del KMZ; el título guardado **no** se reescribe, así que un
+  plan cuyo título escribió una persona lo conserva entero. El permiso enlazado
+  pasa a ser un enlace. En el listado la segunda columna muestra el nombre del
+  archivo y se puede buscar por él.
 - **Informe de catastro de flota y personal (`LV-145`).** "Padrón → Informe de
   catastro": las dos tablas base —aeronaves y operadores— con la **fecha de corte
   declarada**, en pantalla, PDF con membrete, Excel y CSV. Filtros por centro de
