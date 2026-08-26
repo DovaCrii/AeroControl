@@ -63,7 +63,13 @@ class FlightPermissionForm(AeroModelForm):
             "area_type": _("Area type"),
         }
         help_texts = {
-            "permission_number": _("Optional until the permission is approved."),
+            # LV-156: dice **de dónde sale** el número, no sólo que hace falta.
+            # Es el folio de la autorización firmada que la DGAC devuelve, el
+            # mismo PDF que la compuerta de aprobación exige tener en ficha.
+            "permission_number": _(
+                "Optional until the permission is approved. It is the folio on "
+                "the signed DGAC authorization."
+            ),
             "area_type": _("DAN 151 (populated) vs. DAN 91 (unpopulated)."),
             "purpose_detail": _("Required when purpose is 'Other'."),
             "region": _(
@@ -101,6 +107,15 @@ class FlightPermissionForm(AeroModelForm):
         # retiró después de que el permiso la incluyó, sacarla del queryset la
         # borraría del permiso al guardar cualquier otra edición. Misma
         # normalización blanda que `AircraftForm._make_choice_field` (LV-25).
+        # LV-157: el alta ofrece sólo los estados con los que un permiso puede
+        # nacer. Ver `FlightPermission.CREATABLE_STATUSES`: aprobar exige la
+        # autorización firmada de la DGAC, y en el alta no hay dónde adjuntarla.
+        if "status" in self.fields:
+            self.fields["status"].choices = [
+                (value, label)
+                for value, label in FlightPermission.STATUS_CHOICES
+                if value in FlightPermission.CREATABLE_STATUSES
+            ]
         self.fields["operators"].queryset = self._roster(
             Operator.objects.filter(is_active=True), "operators"
         ).order_by("full_name")

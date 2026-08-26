@@ -332,12 +332,17 @@ class FlightPermissionDetail(
                 (_("Approve"), reverse("permission-approve", args=[self.object.pk])),
                 (_("Deny"), reverse("permission-deny", args=[self.object.pk])),
             ]
-        elif self.object.status == "approved" and self.request.user.has_perm(
-            "operations.change_flightpermission"
-        ):
-            actions = [
-                (_("Complete"), reverse("permission-complete", args=[self.object.pk]))
-            ]
+        # LV-155: acá se ofrecía "Completar" a un permiso aprobado. Retirado a
+        # pedido del usuario, textual: *"completado no debe salir luego de
+        # aprobado; es caducado y final se archiva, o se deja en el filtro con
+        # vuelos ya terminado el período y listo, esa es la línea"*. Un permiso
+        # aprobado ya no tiene siguiente paso que apretar: caduca solo cuando se
+        # cierra su vigencia (`expire_permissions`, LV-83) y de ahí se archiva.
+        #
+        # Paso 1 del retiro, como `LV-78` y `LV-103`: **nada se borra**. La vista
+        # `FlightPermissionComplete`, su URL y su compuerta del PDF siguen
+        # enteras, y el valor sigue en `STATUS_CHOICES` para que el filtro del
+        # listado encuentre las filas que ya lo tienen. Revertir es descomentar.
         else:
             actions = []
         context["status_actions"] = actions
@@ -389,7 +394,36 @@ class RequireDgacPermitPdfMixin:
         return super().post(request, pk)
 
 
-class FlightPermissionApprove(RequireDgacPermitPdfMixin, StatusTransitionView):
+class RequireDgacFolioMixin:
+    """LV-156: un permiso aprobado sin número de la DGAC es un permiso que la
+    lista muestra como "En proceso" cuando ya está autorizado.
+
+    La regla *"un permiso aprobado necesita su número"* existía desde `LV-39`
+    pero **sólo en `FlightPermissionForm.clean`**, y el camino por el que un
+    permiso se aprueba de verdad es este botón, que no la comprobaba. Una regla
+    forms-only es una regla evadible: la misma clase de defecto que `LV-142`
+    cerró en el padrón.
+
+    El número **no se lee del PDF**: `Document` no tiene campo de folio (sólo
+    título), así que sacarlo del archivo exigiría parsear el PDF —dependencia
+    nueva que la política del repo no admite— o adivinar del nombre. Se pide en
+    su casilla, que es un teclazo con el papel ya en pantalla, y esta compuerta
+    es la que garantiza que nadie se saltee ese teclazo.
+    """
+
+    missing_folio_message = None
+
+    def post(self, request, pk):
+        permission = get_object_or_404(self.model, pk=pk, is_active=True)
+        if not (permission.permission_number or "").strip():
+            messages.error(request, self.missing_folio_message)
+            return redirect(permission)
+        return super().post(request, pk)
+
+
+class FlightPermissionApprove(
+    RequireDgacPermitPdfMixin, RequireDgacFolioMixin, StatusTransitionView
+):
     model = FlightPermission
     target_status = "approved"
     valid_from_statuses = ["requested"]
@@ -397,6 +431,10 @@ class FlightPermissionApprove(RequireDgacPermitPdfMixin, StatusTransitionView):
     missing_pdf_message = gettext_lazy(
         "Upload the DGAC operation authorization (the signed SIGO PDF) "
         "before approving this permit."
+    )
+    missing_folio_message = gettext_lazy(
+        "Enter the DGAC permit number before approving. It is on the "
+        "authorization you just uploaded: edit the permit and type it in."
     )
 
 
