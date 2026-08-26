@@ -4,8 +4,19 @@ from django.core.management.base import BaseCommand
 from apps.core.groups import REPORT_RECIPIENTS
 
 
+# LV-146: el centro de costo es la unidad operativa **dentro** de la que
+# trabajan estos tres roles, y los tres ya leen la aeronave, el operador y el
+# permiso que lo nombran. `view_costcenter` estaba sólo en `Viewer`, así que el
+# filtro por faena de la bandeja de alertas no le habría aparecido a Compliance
+# —que es justo quien la trabaja— y el del calendario ya estaba vacío para los
+# tres sin que nadie lo notara (`filter_options` devuelve `none()` sin el
+# permiso). Es lectura del padrón, no escritura: crear o editar una faena sigue
+# siendo de otro rol.
+COST_CENTER_READERS = ("Operations", "Compliance", "Maintenance")
+
 ROLE_PERMISSIONS = {
     "Operations": {
+        "view_costcenter",
         "add_flightpermission",
         "change_flightpermission",
         "view_flightpermission",
@@ -76,6 +87,7 @@ ROLE_PERMISSIONS = {
         "view_flightobjective",
     },
     "Compliance": {
+        "view_costcenter",
         "add_document",
         "change_document",
         "delete_document",
@@ -121,6 +133,7 @@ ROLE_PERMISSIONS = {
         "view_flightrequestnote",
     },
     "Maintenance": {
+        "view_costcenter",
         "add_maintenancerecord",
         "change_maintenancerecord",
         "view_maintenancerecord",

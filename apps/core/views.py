@@ -1,8 +1,10 @@
 import csv
 import json
 import logging
+from collections.abc import Callable
 from datetime import date, timedelta
 from pathlib import Path
+from typing import Any, NamedTuple
 
 from django.contrib import messages
 from django.utils.decorators import method_decorator
@@ -22,6 +24,7 @@ from django.utils.translation import gettext_lazy
 from django.views import View
 from django.views.generic import ListView, TemplateView
 from .audit import set_audit_context
+from .exports import neutralize
 
 
 class SearchMixin:
@@ -120,6 +123,34 @@ class _CsvEchoBuffer:
         return value
 
 
+def filter_options(user, model, permission, order_field):
+    """Filas activas para un desplegable de filtro, vacío sin el permiso.
+
+    LV-146: extraído de `CalendarView.filter_options` cuando la bandeja de
+    alertas se volvió su segundo usuario — el repo extrae en el segundo uso, no
+    antes. Un filtro que no resuelve es un no-op, no un error: sin el permiso el
+    desplegable no se dibuja y el parámetro no puede tener efecto.
+    """
+    if not user.has_perm(permission):
+        return model.objects.none()
+    return model.objects.filter(is_active=True).order_by(order_field)
+
+
+class CsvColumn(NamedTuple):
+    """LV-146: una columna calculada de un export, con su encabezado ya traducido.
+
+    `csv_fields` sólo sabe de campos del modelo —lee `verbose_name`,
+    `is_relation`, `many_to_many` y hace `getattr(obj, field.name)`—, y hay
+    columnas que no lo son: el sujeto de una `GenericForeignKey`, o el centro de
+    costo que se resuelve fuera del ORM. Acá se aporta el valor; **la
+    neutralización de fórmulas y el formato de fecha siguen siendo los del
+    mixin**, que es lo que AGENTS.md exige no reimplementar.
+    """
+
+    header: str
+    value: Callable[[Any], Any]
+
+
 class CsvExportMixin:
     """Add ``?export=csv`` support to list views."""
 
@@ -145,25 +176,40 @@ class CsvExportMixin:
         # stream in chunks instead. select_related only accepts forward FK/O2O,
         # never M2M (OPS-4's FlightPermission.operators/aircraft_fleet), so
         # those are prefetched instead.
+        # LV-146: las columnas calculadas (`CsvColumn`) no son campos del modelo,
+        # as\u00ed que no pueden entrar ac\u00e1 -- `field.is_relation` sobre una de ellas
+        # ser\u00eda un AttributeError.
+        model_fields = [field for field in fields if not isinstance(field, CsvColumn)]
         related = [
             field.name
-            for field in fields
+            for field in model_fields
             if field.is_relation and not field.many_to_many
         ]
         if related:
             queryset = queryset.select_related(*related)
-        many_related = [field.name for field in fields if field.many_to_many]
+        many_related = [field.name for field in model_fields if field.many_to_many]
         if many_related:
             queryset = queryset.prefetch_related(*many_related)
+
+        def header_for(field):
+            # El encabezado de una columna calculada viene ya traducido: `.title()`
+            # sobre una cadena en espa\u00f1ol la estropear\u00eda ("Centro De Costo").
+            if isinstance(field, CsvColumn):
+                return field.header
+            return field.verbose_name.title()
 
         def rows():
             yield "\ufeff"  # the BOM makes UTF-8 CSV open correctly in Excel
             buffer = _CsvEchoBuffer()
             writer = csv.writer(buffer, lineterminator="\r\n")
-            yield writer.writerow([field.verbose_name.title() for field in fields])
+            yield writer.writerow([header_for(field) for field in fields])
             for obj in queryset.iterator(chunk_size=2000):
                 row = []
                 for field in fields:
+                    if isinstance(field, CsvColumn):
+                        value = field.value(obj)
+                        row.append(neutralize(value))
+                        continue
                     if field.many_to_many:
                         # getattr() on a M2M field returns a manager, not a
                         # value; a plain str(value) would print a repr like
@@ -173,19 +219,12 @@ class CsvExportMixin:
                         )
                         row.append(value)
                         continue
-                    value = getattr(obj, field.name)
-                    if value is None:
-                        row.append("")
-                    elif hasattr(value, "strftime"):
-                        row.append(value.strftime("%Y-%m-%d"))
-                    else:
-                        value = str(value)
-                        # Excel/LibreOffice interpret leading formula characters.
-                        row.append(
-                            f"'{value}"
-                            if value.startswith(("=", "+", "-", "@"))
-                            else value
-                        )
+                    # LV-146: acá vivía una segunda copia de `neutralize` --
+                    # misma lógica campo por campo (None → "", fecha → ISO,
+                    # prefijo `'` para = + - @), escrita dos veces en el repo.
+                    # AGENTS.md pide no reimplementar la neutralización, y dos
+                    # implementaciones es cómo una de ellas se queda atrás.
+                    row.append(neutralize(getattr(obj, field.name)))
                 yield writer.writerow(row)
 
         response = StreamingHttpResponse(rows(), content_type="text/csv; charset=utf-8")

@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
 from django.db.models import Count, Q
 from django.db.models.functions import TruncMonth
 from django.shortcuts import render
@@ -10,7 +11,11 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from apps.compliance.digest import bucket_for
-from apps.compliance.reports import alerts_for_cost_center
+from apps.compliance.reports import (
+    alerts_for_cost_center,
+    cost_centers_for_refs,
+    documents_for_cost_center,
+)
 from apps.compliance.models import Alert, AlertRule, Document, DocumentType
 from apps.compliance.watchables import terminal_statuses
 from apps.maintenance.models import MaintenanceRecord
@@ -39,10 +44,18 @@ def upcoming_expirations(today, cutoff, cost_center=None):
     habilitaciones, credenciales DGAC, seguros JAC, documentos y permisos. Cada
     ítem lleva su enlace para que el panel deje al usuario donde puede actuar.
 
-    Las habilitaciones, credenciales, seguros y permisos respetan el filtro por
-    centro de costo; los documentos cuelgan de una relación genérica sin centro
-    de costo directo, así que van siempre (el motor de alertas y el reporte los
-    miran igual).
+    **LV-146: las cinco fuentes respetan el filtro por centro de costo, y cada
+    fila dice a qué faena pertenece.** Los documentos también: el párrafo que
+    estaba acá decía que iban siempre "porque cuelgan de una relación genérica
+    sin centro de costo directo", y esa premisa dejó de ser cierta cuando
+    `LV-129` escribió `documents_for_cost_center` — que la tarjeta "Alertas
+    pendientes" de la misma pantalla ya usa. Elegir una faena recortaba cuatro
+    fuentes y dejaba los documentos de las otras en la lista: el mismo defecto
+    que LV-129 arregló en la tarjeta y no en la lista de al lado.
+
+    "Sin faena" es un caso real y se dice: `Aircraft.cost_center` y
+    `Operator.cost_center` son nulos, y un documento de empresa cuelga del
+    tenant, no de una faena.
 
     R1.1: el "bucket" de cada ítem reusa `digest.bucket_for` -- la misma escala
     overdue/due_7/due_15/due_30 que el reporte de cumplimiento, en vez de una
@@ -93,6 +106,15 @@ def upcoming_expirations(today, cutoff, cost_center=None):
     triaged = resolved_alert_keys()
     items = []
 
+    def code(cost_center_of_the_row):
+        """El código de la faena, o "" cuando la fila no tiene ninguna.
+
+        LV-146: `Aircraft.cost_center` y `Operator.cost_center` son `null=True`,
+        así que "sin faena" es un caso real también en las fuentes directas y no
+        sólo en los documentos de empresa.
+        """
+        return cost_center_of_the_row.code if cost_center_of_the_row else ""
+
     def add(model, record_pk, item):
         """Agrega el ítem salvo que su alerta ya esté resuelta.
 
@@ -109,8 +131,11 @@ def upcoming_expirations(today, cutoff, cost_center=None):
             items.append(item)
 
     quals = Qualification.objects.filter(
-        is_active=True, expiry_date__lte=cutoff
-    ).select_related("operator", "qualification_type")
+        is_active=True,
+        expiry_date__lte=cutoff,
+        # LV-146: `operator__cost_center` en el `select_related`, o leer la faena
+        # de cada fila costaría una consulta por fila.
+    ).select_related("operator__cost_center", "qualification_type")
     if cost_center:
         quals = quals.filter(operator__cost_center=cost_center)
     for qual in quals:
@@ -122,13 +147,16 @@ def upcoming_expirations(today, cutoff, cost_center=None):
                 "label": f"{qual.operator} — {qual.qualification_type}",
                 "date": qual.expiry_date,
                 "bucket": bucket_for(qual.expiry_date, today),
+                "cost_center_code": code(qual.operator.cost_center),
                 "url": reverse("operator-detail", args=[qual.operator_id]),
             },
         )
 
     # LV-29: the DGAC vigencias join the same window -- a lapsing credential or
     # JAC insurance is exactly what "upcoming expirations" is for.
-    credentials = Operator.objects.filter(is_active=True, credential_expiry__lte=cutoff)
+    credentials = Operator.objects.filter(
+        is_active=True, credential_expiry__lte=cutoff
+    ).select_related("cost_center")
     if cost_center:
         credentials = credentials.filter(cost_center=cost_center)
     for operator in credentials:
@@ -140,13 +168,16 @@ def upcoming_expirations(today, cutoff, cost_center=None):
                 "label": operator.full_name,
                 "date": operator.credential_expiry,
                 "bucket": bucket_for(operator.credential_expiry, today),
+                "cost_center_code": code(operator.cost_center),
                 "url": reverse("operator-detail", args=[operator.pk]),
             },
         )
 
-    insured = Aircraft.objects.filter(
-        is_active=True, insurance_expiry__lte=cutoff
-    ).exclude(status__in=terminal_statuses(Aircraft))
+    insured = (
+        Aircraft.objects.filter(is_active=True, insurance_expiry__lte=cutoff)
+        .exclude(status__in=terminal_statuses(Aircraft))
+        .select_related("cost_center")
+    )
     if cost_center:
         insured = insured.filter(cost_center=cost_center)
     for aircraft in insured:
@@ -158,16 +189,33 @@ def upcoming_expirations(today, cutoff, cost_center=None):
                 "label": aircraft.registration,
                 "date": aircraft.insurance_expiry,
                 "bucket": bucket_for(aircraft.insurance_expiry, today),
+                "cost_center_code": code(aircraft.cost_center),
                 "url": reverse("aircraft-detail", args=[aircraft.pk]),
             },
         )
 
-    documents = Document.objects.filter(
+    document_qs = Document.objects.filter(
         is_active=True,
         is_current_version=True,
         expiry_date__isnull=False,
         expiry_date__lte=cutoff,
     ).select_related("doc_type")
+    # LV-146: los documentos **pasan a respetar el filtro por faena**. El
+    # docstring de esta función decía que iban siempre "porque cuelgan de una
+    # relación genérica sin centro de costo directo", y esa premisa ya no se
+    # sostiene: `documents_for_cost_center` sabe atribuirlos desde `LV-129`, y la
+    # tarjeta "Alertas pendientes" de la misma pantalla ya los descuenta con ella.
+    # Elegir CC738 recortaba cuatro fuentes y dejaba los documentos de las otras
+    # faenas en la lista — el mismo defecto que LV-129 arregló en la tarjeta y no
+    # en la lista de al lado.
+    if cost_center:
+        document_qs = documents_for_cost_center(cost_center, document_qs)
+    documents = list(document_qs)
+    # Una vuelta para todos los documentos, no una por documento: el sujeto de
+    # cada uno se resuelve con el mismo mapa que usa la bandeja de alertas.
+    document_centers = cost_centers_for_refs(
+        (document.content_type_id, document.object_id) for document in documents
+    )
     for document in documents:
         add(
             Document,
@@ -177,13 +225,18 @@ def upcoming_expirations(today, cutoff, cost_center=None):
                 "label": document.title,
                 "date": document.expiry_date,
                 "bucket": bucket_for(document.expiry_date, today),
+                "cost_center_code": code(
+                    document_centers.get((document.content_type_id, document.object_id))
+                ),
                 "url": reverse("document-detail", args=[document.pk]),
             },
         )
 
-    permissions = FlightPermission.objects.filter(
-        is_active=True, valid_until__lte=cutoff
-    ).exclude(status__in=terminal_statuses(FlightPermission))
+    permissions = (
+        FlightPermission.objects.filter(is_active=True, valid_until__lte=cutoff)
+        .exclude(status__in=terminal_statuses(FlightPermission))
+        .select_related("cost_center")
+    )
     if cost_center:
         permissions = permissions.filter(cost_center=cost_center)
     for permission in permissions:
@@ -200,6 +253,7 @@ def upcoming_expirations(today, cutoff, cost_center=None):
                 "label": permission.internal_folio,
                 "date": permission.valid_until,
                 "bucket": bucket_for(permission.valid_until, today),
+                "cost_center_code": code(permission.cost_center),
                 "url": reverse("permission-detail", args=[permission.pk]),
             },
         )
@@ -422,9 +476,19 @@ def dashboard(request):
     selected_cost_center = None
     cost_center_id = request.GET.get("cost_center")
     if cost_center_id:
-        selected_cost_center = CostCenter.objects.filter(
-            pk=cost_center_id, is_active=True
-        ).first()
+        # LV-146: el `try/except` arregla un 500 vigente. "No-op silencioso"
+        # cubría el UUID válido que no existe, el archivado y el de otro tenant —
+        # pero no `?cost_center=abc`: un valor que no es UUID hace que
+        # `filter(pk=...)` sobre una pk `UUIDField` levante `ValidationError`
+        # **dentro** de la consulta, y eso no lo atrapa el `.first()`. Una URL
+        # guardada, un autocompletado del navegador o un bot probando query
+        # strings tiraban la primera pantalla de la app.
+        try:
+            selected_cost_center = CostCenter.objects.filter(
+                pk=cost_center_id, is_active=True
+            ).first()
+        except (ValueError, ValidationError):
+            selected_cost_center = None
     cost_centers = CostCenter.objects.filter(is_active=True).order_by("code")
 
     # --- Summary counts ---

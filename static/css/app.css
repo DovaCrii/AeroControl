@@ -1226,6 +1226,35 @@ main {
 .roster-search { max-width: 22rem; }
 .roster-empty { margin-top: 0.4rem; }
 
+/* ── LV-146: la faena como chip de identidad ───────────────────────────────
+   Contorno sin relleno a propósito: en la fila del panel el chip convive con el
+   badge de tipo (`bg-secondary-subtle`), y dos pastillas rellenas del mismo gris
+   se leen como una sola cosa partida en dos. El contorno lo separa sin agregar
+   un color nuevo al vocabulario.
+
+   0.76rem es el piso documentado para metadatos en este archivo: por debajo de
+   eso ningún contraste rescata el texto. Todo con tokens `--ac-*`, que se
+   redefinen por tema, así que el chip sigue al tema claro y al oscuro sin una
+   segunda regla.
+
+   `--ac-text-secondary` sobre `--ac-surface`/`--ac-surface-raised` es el par que
+   ya usan `.roster-count` y `.table-primary-sub`, o sea contraste ya medido en
+   los dos temas; el guion de la variante vacía baja a `--ac-text-muted` porque
+   es ausencia de dato, no dato. */
+.cc-chip {
+  display: inline-block;
+  font-size: 0.76rem;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  padding: 0.14rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--ac-border);
+  background: transparent;
+  color: var(--ac-text-secondary);
+  white-space: nowrap;
+}
+.cc-chip.is-empty { color: var(--ac-text-muted); }
+
 /* ── Calendar ─────────────────────────────────────── */
 /* LV-47: .calendar-noscript (wraps .legacy-calendar-header + .calendar-fallback)
    is hidden by calendar.js once FullCalendar renders, not by CSS -- a static
