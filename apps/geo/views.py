@@ -260,6 +260,19 @@ class GeoPlanDetailView(ModelViewPermissionRequiredMixin, DetailView):
         from apps.operations.flight_requests import plan_sections
 
         context["sigo_rows"] = plan_sections(plan)
+        # LV-150: la lista de solicitudes sale del menú, así que el
+        # descubrimiento pasa a ser contextual -- desde el plan que las originó,
+        # que es de donde se llega a ellas. Gateado por `view_flightrequest`: un
+        # enlace que termina en 403 enseña a desconfiar de la pantalla (LV-130).
+        # Import local por la misma razón que el de arriba: `operations` importa
+        # de `geo`.
+        from apps.operations.models import FlightRequest
+
+        context["request_count"] = (
+            FlightRequest.objects.filter(source_plan=plan, is_active=True).count()
+            if self.request.user.has_perm("operations.view_flightrequest")
+            else 0
+        )
         # R10.8/LV-132: la nota que explica la fila, sólo cuando alguna muestra
         # el círculo envolvente en vez de lo dibujado.
         context["has_enclosing"] = any(
