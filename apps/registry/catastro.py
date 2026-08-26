@@ -1,0 +1,220 @@
+"""Fleet and personnel roster -- the "catastro" of LV-145.
+
+The user's words: *"que me permita sacar un catastro de todos los RPA y todos
+los operadores hoy inscritos a la fecha […] lo necesito cuando me soliciten
+algo"*. Before this, the closest thing was `?export=csv` on each list
+separately, which also **drops `is_active`** through the export mixin's default
+exclusion list -- precisely the field that says whether something is still in
+inventory.
+
+Data only, no rendering: the screen, the PDF, the spreadsheet and the CSV all
+read this module, so a number cannot differ between the paper handed to a client
+and the file attached to the mail. Scope, set by the user: **the two base tables
+plus a totals line** -- no qualifications, no technical annexes, no separate
+summary page.
+"""
+
+from dataclasses import dataclass
+
+from django.utils import timezone
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _lazy
+
+from apps.core.tenancy import scope_queryset_to_tenant
+from .models import Aircraft, CostCenter, Operator
+
+# Ordered as they are read out loud: what identifies the airframe, then who
+# made it, then its condition and where it is assigned.
+AIRCRAFT_HEADERS = [
+    _lazy("Registration"),
+    _lazy("Type"),
+    _lazy("Model"),
+    _lazy("Manufacturer"),
+    _lazy("Serial number"),
+    _lazy("Year"),
+    _lazy("Status"),
+    _lazy("Cost center"),
+]
+
+# Identity and credential, and nothing else. Email and phone are deliberately
+# **not** here: this document is written to be handed to whoever asked for it,
+# the user asked for the roster and not for a contact list, and personal contact
+# details are the kind of column that is easy to add and impossible to recall.
+OPERATOR_HEADERS = [
+    _lazy("Employee ID"),
+    _lazy("Full name"),
+    _lazy("RUT"),
+    _lazy("DGAC credential"),
+    _lazy("Operator type"),
+    _lazy("Cost center"),
+]
+
+BLANK = "—"
+
+
+@dataclass(frozen=True)
+class CatastroFilters:
+    """What narrows the roster, and what each choice hides.
+
+    Defaults are the roster as the operation understands it: everything on the
+    books, retired airframes excluded, archived rows excluded. Both exclusions
+    are opt-in rather than opt-out because "how many aircraft do we have" is
+    almost never asked about the ones that left.
+    """
+
+    cost_center: CostCenter | None = None
+    status: str = ""
+    include_terminal: bool = False
+    include_archived: bool = False
+
+
+def _base(queryset, filters, user):
+    queryset = scope_queryset_to_tenant(queryset, user)
+    if not filters.include_archived:
+        queryset = queryset.filter(is_active=True)
+    return queryset
+
+
+def build_catastro(user, filters=None):
+    """The roster as of today, ready for any of the four outputs.
+
+    Two queries -- one per table -- plus two counts **only** when a cost-center
+    filter is on, because that is the case where the rows it hides are outside
+    the result set and cannot be counted in Python. Pinned with
+    `django_assert_num_queries` in both shapes.
+
+    `user` is required and comes first, with no default: it is what scopes both
+    tables to the tenant, and a default would make "unscoped" the thing you get
+    by forgetting -- which is the shape of the F-03/F-06 findings.
+    """
+    filters = filters or CatastroFilters()
+    as_of = timezone.localdate()
+
+    aircraft = _base(Aircraft.objects.all(), filters, user).select_related(
+        "cost_center"
+    )
+    if filters.status:
+        aircraft = aircraft.filter(status=filters.status)
+    elif not filters.include_terminal:
+        # `TERMINAL_STATUSES`, never the literal "retired": the day a second
+        # terminal status exists, a hard-coded string here would keep counting
+        # airframes that left the fleet. An explicit status filter wins over
+        # this, so asking for "Retired" still answers.
+        aircraft = aircraft.exclude(status__in=Aircraft.TERMINAL_STATUSES)
+
+    operators = _base(Operator.objects.all(), filters, user).select_related(
+        "cost_center"
+    )
+
+    filtered_by_cost_center = filters.cost_center is not None
+    if filtered_by_cost_center:
+        # Counted before the filter narrows the set: afterwards these rows are
+        # outside the queryset and there is nothing left in Python to count.
+        unassigned_aircraft = aircraft.filter(cost_center__isnull=True).count()
+        unassigned_operators = operators.filter(cost_center__isnull=True).count()
+        aircraft = aircraft.filter(cost_center=filters.cost_center)
+        operators = operators.filter(cost_center=filters.cost_center)
+
+    aircraft = list(aircraft.order_by("registration"))
+    operators = list(operators.order_by("full_name"))
+
+    if not filtered_by_cost_center:
+        # No filter, so the unassigned rows are *in* the table: counted from
+        # what was already fetched, at the cost of no query at all.
+        unassigned_aircraft = sum(1 for row in aircraft if row.cost_center_id is None)
+        unassigned_operators = sum(1 for row in operators if row.cost_center_id is None)
+
+    return {
+        # The cut-off date is part of the answer, not decoration: a roster
+        # without one cannot be filed, and the four outputs all declare it.
+        "as_of": as_of,
+        "filters": filters,
+        "aircraft": aircraft,
+        "operators": operators,
+        "totals": {
+            "aircraft": len(aircraft),
+            "operators": len(operators),
+            "aircraft_without_cost_center": unassigned_aircraft,
+            "operators_without_cost_center": unassigned_operators,
+            # Which of the two meanings the numbers above carry. Without this
+            # the sentence would have to guess, and "3 sin faena" reads very
+            # differently depending on whether those three are on the page.
+            "unassigned_are_hidden": filtered_by_cost_center,
+        },
+    }
+
+
+def aircraft_rows(catastro):
+    return [
+        [
+            aircraft.registration,
+            aircraft.type or BLANK,
+            aircraft.model or BLANK,
+            aircraft.manufacturer or BLANK,
+            aircraft.serial_number or BLANK,
+            aircraft.year or BLANK,
+            aircraft.get_status_display(),
+            aircraft.cost_center.code if aircraft.cost_center_id else BLANK,
+        ]
+        for aircraft in catastro["aircraft"]
+    ]
+
+
+def operator_rows(catastro):
+    return [
+        [
+            operator.employee_id,
+            operator.full_name,
+            operator.rut or BLANK,
+            operator.dgac_credential or BLANK,
+            operator.operator_type or BLANK,
+            operator.cost_center.code if operator.cost_center_id else BLANK,
+        ]
+        for operator in catastro["operators"]
+    ]
+
+
+def totals_sentence(catastro):
+    """The one line every output carries, cut-off date included.
+
+    Returns a list of sentences rather than one string: the second only exists
+    when something was left out, and gluing them would put a dangling clause on
+    a roster that has nothing to disclose.
+    """
+    totals = catastro["totals"]
+    sentences = [
+        _(
+            "%(aircraft)s aircraft and %(operators)s operators registered as of %(date)s."
+        )
+        % {
+            "aircraft": totals["aircraft"],
+            "operators": totals["operators"],
+            "date": catastro["as_of"].isoformat(),
+        }
+    ]
+    without = (
+        totals["aircraft_without_cost_center"],
+        totals["operators_without_cost_center"],
+    )
+    if not any(without):
+        return sentences
+
+    # A cost-center filter drops everything unassigned, silently, because
+    # `cost_center` is nullable on both models. The report says how much.
+    if totals["unassigned_are_hidden"]:
+        sentences.append(
+            _(
+                "Filtered by cost center: %(aircraft)s aircraft and "
+                "%(operators)s operators with no cost center are not listed."
+            )
+            % {"aircraft": without[0], "operators": without[1]}
+        )
+    else:
+        sentences.append(
+            _(
+                "Of these, %(aircraft)s aircraft and %(operators)s operators "
+                "have no cost center assigned."
+            )
+            % {"aircraft": without[0], "operators": without[1]}
+        )
+    return sentences

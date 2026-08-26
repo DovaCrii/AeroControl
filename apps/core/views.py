@@ -11,7 +11,11 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.views import redirect_to_login
-from django.core.exceptions import ImproperlyConfigured, PermissionDenied
+from django.core.exceptions import (
+    ImproperlyConfigured,
+    PermissionDenied,
+    ValidationError,
+)
 from django.db import transaction
 from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.conf import settings
@@ -121,6 +125,26 @@ class _CsvEchoBuffer:
 
     def write(self, value):
         return value
+
+
+def lookup_by_pk(queryset, raw_pk):
+    """`queryset.filter(pk=raw_pk).first()`, treating a malformed UUID the same
+    as "not found" instead of a 500.
+
+    A bookmarked URL, browser autofill, or a bot probing query strings can hand
+    this a value that is not a UUID at all -- and `.filter(pk=...)` on a
+    UUIDField raises ValidationError (uncaught, a 500) rather than just finding
+    nothing, unlike every other mismatch (wrong-but-valid UUID, wrong tenant,
+    archived row).
+
+    LV-145: promoted here from `apps.compliance.report_views._lookup_by_pk` when
+    the catastro report became its second user -- the repo extracts on the
+    second use, not before.
+    """
+    try:
+        return queryset.filter(pk=raw_pk).first()
+    except (ValueError, ValidationError):
+        return None
 
 
 def filter_options(user, model, permission, order_field):
