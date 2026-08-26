@@ -5,6 +5,12 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.core.choices import PURPOSE_CHOICES
 from apps.core.forms import AeroModelForm
+from .duplicates import (
+    aircraft_with_registration,
+    aircraft_with_serial,
+    cost_center_with_code,
+    operator_with_employee_id,
+)
 from .models import (
     Aircraft,
     AircraftAssignment,
@@ -14,6 +20,8 @@ from .models import (
     OperatorAssignment,
     Qualification,
     QualificationType,
+    normalize_registration,
+    normalize_serial,
 )
 
 
@@ -202,7 +210,31 @@ class CostCenterForm(AeroModelForm):
         remainder = remainder.strip()
         if not remainder:
             raise forms.ValidationError(_("Enter the cost-center number."))
-        return f"CC{remainder}"
+        code = f"CC{remainder}"
+        # LV-142: la comprobación va **después** de normalizar, sobre el valor
+        # que de verdad se guarda -- escribir "738" teniendo "CC738" es el mismo
+        # centro de costo. La `UniqueConstraint(["tenant", "code"])` existe desde
+        # T3.2 pero nunca se validaba desde acá (ver
+        # `AeroModelForm.validate_constraints`), así que un código repetido
+        # llegaba al INSERT y devolvía 500 sin decir nada.
+        existing = cost_center_with_code(
+            code, tenant_id=self.instance.tenant_id, exclude_pk=self.instance.pk
+        )
+        if existing is not None:
+            self.duplicate_of = existing
+            values = {"code": existing.code, "name": existing.name or existing.code}
+            if not existing.is_active:
+                raise forms.ValidationError(
+                    _(
+                        "Cost center %(code)s exists as an archived record "
+                        "(%(name)s). Restore it instead of creating a second one."
+                    )
+                    % values
+                )
+            raise forms.ValidationError(
+                _("Cost center %(code)s already exists (%(name)s).") % values
+            )
+        return code
 
 
 class AircraftForm(AeroModelForm):
@@ -273,6 +305,55 @@ class AircraftForm(AeroModelForm):
             choices=choices, required=False, label=label
         )
 
+    def clean_registration(self):
+        """LV-142: la matrícula se compara en mayúsculas, no como se tipeó.
+
+        `registration` es `unique=True` y Django ya atrapaba el duplicado
+        **exacto**, pero el índice distingue caja: `rpa-7126` entraba conviviendo
+        con `RPA-7126`. Normalizando antes de comparar, las dos son la misma, y
+        el mensaje dice cuál es la que ya existe en vez del genérico de Django.
+        """
+        value = normalize_registration(self.cleaned_data.get("registration"))
+        if not value:
+            raise forms.ValidationError(_("Enter the registration."))
+        existing = aircraft_with_registration(value, exclude_pk=self.instance.pk)
+        if existing is not None:
+            self.duplicate_of = existing
+            raise forms.ValidationError(
+                _(
+                    "Registration %(value)s already belongs to another aircraft "
+                    "(%(name)s). Registrations are compared in upper case."
+                )
+                % {"value": value, "name": existing.selector_label}
+            )
+        return value
+
+    def clean_serial_number(self):
+        """X.1/LV-142: se normaliza **antes** de validar, no en `save()`.
+
+        `Aircraft.save()` pone el serial en mayúsculas y sin espacios, o sea
+        **después** de que el formulario comprobó la unicidad. Existiendo
+        `1581F5FHC245`, escribir `1581f5 fhc245` pasaba la validación y reventaba
+        en el INSERT con un 500. Comparando el valor real, el error sale por el
+        campo y dice de qué aeronave es el serial.
+        """
+        value = normalize_serial(self.cleaned_data.get("serial_number"))
+        if value is None:
+            # Nulo, no cadena vacía: varias aeronaves sin serial en ficha no
+            # pueden colisionar en el índice único (X.1).
+            return None
+        existing = aircraft_with_serial(value, exclude_pk=self.instance.pk)
+        if existing is not None:
+            self.duplicate_of = existing
+            raise forms.ValidationError(
+                _(
+                    "Serial number %(serial)s already belongs to %(name)s. "
+                    "Serials are compared without spaces and in upper case."
+                )
+                % {"serial": value, "name": existing.registration}
+            )
+        return value
+
     def clean(self):
         # LV-20: a "site" only means something when the aircraft is on site.
         # The model guards this too, but on the form the raised error made
@@ -321,6 +402,46 @@ class OperatorForm(AeroModelForm):
         super().__init__(*args, **kwargs)
         self.fields["user"].required = False
         self.fields["user"].queryset = get_user_model().objects.order_by("username")
+
+    def clean_employee_id(self):
+        """LV-142: el número de empleado repetido se avisa, no se estrella.
+
+        `UniqueConstraint(["tenant", "employee_id"])` existe desde T3.2 pero
+        nunca se validaba desde acá — `tenant` no está en el formulario y Django
+        omite la constraint entera (ver `AeroModelForm.validate_constraints`), así
+        que un duplicado llegaba al INSERT y devolvía 500 sin mensaje. Este
+        chequeo existe **además** de esa red porque el mensaje tiene que decir de
+        quién es el número; el genérico de Django no lo dice.
+
+        La comparación es `__iexact`, más estricta que el índice de la base, así
+        que un legado que difiera sólo en caja también se avisa. Por eso se valida
+        **sólo cuando el valor cambia**: si no, editar el teléfono de una ficha
+        cuyo número difiere en caja de otra existente sería imposible.
+        """
+        value = (self.cleaned_data.get("employee_id") or "").strip()
+        if not value:
+            raise forms.ValidationError(_("Enter the employee ID."))
+        if value == (self.initial.get("employee_id") or "").strip():
+            return value
+        existing = operator_with_employee_id(
+            value, tenant_id=self.instance.tenant_id, exclude_pk=self.instance.pk
+        )
+        if existing is not None:
+            self.duplicate_of = existing
+            values = {"value": value, "name": existing.full_name}
+            if not existing.is_active:
+                raise forms.ValidationError(
+                    _(
+                        "Employee ID %(value)s belongs to %(name)s, an archived "
+                        "record. Restore that record instead of creating a "
+                        "second one."
+                    )
+                    % values
+                )
+            raise forms.ValidationError(
+                _("Employee ID %(value)s already belongs to %(name)s.") % values
+            )
+        return value
 
 
 class AssignmentForm(AeroModelForm):

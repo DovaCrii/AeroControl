@@ -38,6 +38,20 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   la columna de cumplimiento. La función queda entera —modelo, vistas, permisos y
   URL—; volver a mostrarla es descomentar una línea.
 
+### Fixed
+
+- **Un duplicado avisa quién tiene el valor, en vez de devolver 500 (`LV-142`).**
+  Tres caminos morían con `IntegrityError` y sin mensaje: el número de empleado de
+  un operador, el código de un centro de costo —los dos porque su restricción de
+  unicidad incluye el tenant, que no está en el formulario, y Django omite la
+  restricción entera cuando alguno de sus campos falta— y el número de serie de una
+  aeronave, que se normalizaba **después** de validar, así que `1581f5 fhc245`
+  pasaba el formulario y reventaba contra `1581F5FHC245`. Ahora el error sale por
+  el campo, nombra el registro que ya lo tiene, dice si está archivado y ofrece su
+  ficha cuando quien mira puede leerla. La matrícula además se guarda y se compara
+  en mayúsculas: `rpa-7126` y `RPA-7126` eran dos aeronaves distintas para la base.
+  Sin migración: las 16 aeronaves de producción ya están en mayúsculas.
+
 ### Added
 
 - **El KMZ entrega sus datos apenas se sube, sin separarlo (`R10.1`).** La
