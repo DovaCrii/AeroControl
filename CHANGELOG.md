@@ -38,6 +38,16 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   la columna de cumplimiento. La función queda entera —modelo, vistas, permisos y
   URL—; volver a mostrarla es descomentar una línea.
 
+### Changed
+
+- **La línea del permiso es solicitado → aprobado → caducado → archivado
+  (`LV-155`).** "Completar" sale de la ficha: un permiso aprobado ya no tiene un
+  botón de siguiente paso, caduca solo cuando se cierra su vigencia y de ahí se
+  archiva. **Nada se borra**: el estado sigue existiendo para las filas que ya lo
+  tienen y el filtro del listado lo sigue ofreciendo, así que los permisos con el
+  período ya terminado se encuentran igual. Un permiso completado de antes muestra
+  en su ficha hasta dónde llegó, no un flujo sin empezar.
+
 ### Fixed
 
 - **Un permiso no puede nacer aprobado sin la autorización de la DGAC

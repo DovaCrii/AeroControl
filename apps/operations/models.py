@@ -56,7 +56,18 @@ class FlightPermission(StatusFlowMixin, BaseModel):
     # is a list somebody has to remember to edit -- and forgetting it fails
     # silently, as alerts for an authorization that is already over.
     TERMINAL_STATUSES = frozenset({STATUS_DENIED, STATUS_COMPLETED, STATUS_EXPIRED})
-    STATUS_FLOW = [STATUS_REQUESTED, STATUS_APPROVED, STATUS_COMPLETED]
+    # LV-155: la línea que el usuario declaró, textual: *"completado no debe
+    # salir luego de aprobado; es caducado y final se archiva […] esa es la
+    # línea"*. `Solicitado → Aprobado`, y de ahí caduca (lo hace solo
+    # `expire_permissions`, LV-83) o se archiva.
+    #
+    # Revierte la mitad de `LV-83` que distinguía completado de caducado. Se
+    # retira **de la pantalla, no de la base**: el valor sigue en
+    # `STATUS_CHOICES` porque hay filas en producción que lo tienen
+    # (`JEJ-2026-003`) y porque el filtro del listado tiene que poder
+    # encontrarlas — decisión del usuario, paso 1 del retiro, igual que `LV-78`
+    # y `LV-103`. Sin migración de datos y reversible.
+    STATUS_FLOW = [STATUS_REQUESTED, STATUS_APPROVED]
     # LV-157: con qué estado puede **nacer** un permiso. Aprobar y completar
     # exigen la autorización firmada de la DGAC en ficha
     # (`RequireDgacPermitPdfMixin`), y en el alta esa compuerta no se puede
@@ -69,7 +80,14 @@ class FlightPermission(StatusFlowMixin, BaseModel):
     # Two terminal states now (LV-83). They differ in one way that matters for
     # the stepper: `denied` is only ever reached from the first step, while a
     # permit can expire from anywhere -- see `status_steps` below.
-    STATUS_BLOCKED = [STATUS_DENIED, STATUS_EXPIRED]
+    #
+    # LV-155: `completed` se suma acá al salir de `STATUS_FLOW`. Sin esto, un
+    # permiso legado que quedó completado tiene un estado que no está ni en el
+    # flujo ni entre los bloqueados, y `status_steps_for` dibuja **todos** los
+    # pasos en "pendiente" — la ficha diría que un permiso terminado no ha
+    # empezado. Como bloqueado se dibuja lo que de verdad pasó: llegó hasta
+    # aprobado y ahí se detuvo.
+    STATUS_BLOCKED = [STATUS_DENIED, STATUS_EXPIRED, STATUS_COMPLETED]
     # R2.6: DAN 151 (populated area) vs DAN 91 (unpopulated) is a real
     # normative distinction (ISO 9001/45001 audit guide, clause 6.1.3), not
     # a boolean -- a single survey can cross both, which "mixed" exists to
