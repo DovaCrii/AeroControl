@@ -1,0 +1,58 @@
+{% load i18n %}
+{% comment %}LV-151: un roster de decenas de casillas con buscador y contador.
+
+El pedido fue textual: *"tengo problemas a buscar los operadores"*. `LV-38` había
+convertido la lista en grilla multicolumna —eso resolvió el alto de la página—
+pero encontrar a una persona entre 41 casillas seguía siendo un barrido a ojo, y
+las dos que estaban marcadas caían en columnas distintas sin forma de verlas
+juntas.
+
+Se renderiza a mano y no con `as_crispy_field` porque crispy dibuja un
+`CheckboxSelectMultiple` con su propia plantilla del paquete
+(`bootstrap5/layout/radio_checkbox_select.html`) e ignora la del widget: no hay
+gancho para meter la barra sin sobrescribir una plantilla de terceros, que
+afectaría a **todos** los checkbox y radios de la app.
+
+El filtrado es del lado del navegador a propósito: las opciones ya están en la
+página, así que buscar no debería costar una petición. Los rótulos viajan en
+`data-*` para que el servidor los traduzca y `roster-filter.js` no lleve texto
+(la CSP es `script-src 'self'`, nada de JS inline).{% endcomment %}
+{% translate "Search…" as roster_search_placeholder %}
+{% comment %}Los marcadores van entre llaves y no como `%(x)s`: `makemessages`
+duplica los `%` de una cadena de plantilla (`%%(x)s` en el catálogo), así que la
+búsqueda en tiempo de ejecución no la encontraría nunca y el rótulo saldría en
+inglés sin que ningún test lo notara. Las llaves pasan intactas.{% endcomment %}
+<div class="roster mb-3" data-roster
+     data-roster-count-label="{% translate '{selected} of {total} selected' %}"
+     data-roster-matches-label="{% translate '{matches} of {total} shown' %}">
+  <div class="roster-head">
+    <span class="form-label mb-0">{{ field.label }}{% if field.field.required %}<span class="asteriskField">*</span>{% endif %}</span>
+    <span class="roster-count" data-roster-count aria-live="polite"></span>
+  </div>
+  <div class="roster-tools">
+    <label class="visually-hidden" for="roster-search-{{ field.name }}">{{ roster_search_placeholder }}</label>
+    <input type="search" id="roster-search-{{ field.name }}" class="form-control form-control-sm roster-search"
+           placeholder="{{ roster_search_placeholder }}" autocomplete="off" data-roster-search>
+    <div class="form-check mb-0">
+      <input type="checkbox" class="form-check-input" id="roster-only-{{ field.name }}" data-roster-only-selected>
+      <label class="form-check-label" for="roster-only-{{ field.name }}">{% translate "Only the selected ones" %}</label>
+    </div>
+  </div>
+  <div class="roster-options{% if field.errors %} is-invalid{% endif %}" data-roster-options>
+    {% for option in field %}
+    <div class="form-check roster-option" data-roster-item data-roster-text="{{ option.choice_label }}">
+      {{ option.tag }}
+      <label class="form-check-label" for="{{ option.id_for_label }}">{{ option.choice_label }}</label>
+    </div>
+    {% empty %}
+    <p class="text-muted small mb-0">{% translate "Nothing to choose from yet." %}</p>
+    {% endfor %}
+  </div>
+  {% comment %}El estado vacío del **filtro** es distinto del roster vacío de
+  arriba: "no hay nadie cargado" y "tu búsqueda no encontró a nadie" se resuelven
+  de formas distintas, y decirlo con la misma frase manda al lugar equivocado.
+  {% endcomment %}
+  <p class="roster-empty text-muted small mb-0" data-roster-empty hidden>{% translate "Nobody matches that search." %}</p>
+  {% if field.errors %}<div class="invalid-feedback d-block">{{ field.errors }}</div>{% endif %}
+  {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+</div>

@@ -30,9 +30,15 @@
     {% endif %}
   </td>
   <td class="cell-truncate">{% if object.cost_center %}<span title="{{ object.cost_center }}">{{ object.cost_center.code }}</span>{% else %}<span class="text-muted">{% translate "Unassigned" %}</span>{% endif %}</td>
-  <td class="cell-status">
-    {% if object.current_quals %}<span class="badge bg-success">{% translate "Current" %}</span>
-    {% elif object.expired_quals %}<span class="badge bg-danger">{% translate "Expired" %}</span>
+  {% comment %}LV-152: la habilitación, tal como la escribe la DGAC. Era una
+  insignia derivada de las habilitaciones estructuradas que decía "Vigente"
+  siempre que el vencimiento fuera nulo, o sea para todas las importadas — un
+  dato con cara de verificado y sin nada detrás. La decisión del usuario fue no
+  estandarizar: *"lo importante de la habilitación es poner directamente en el
+  recuadro lo que dice la DGAC, no más […] ya que es variable el asunto"*.
+  {% endcomment %}
+  <td class="cell-truncate">
+    {% if object.authorizations %}<span title="{{ object.authorizations }}">{{ object.authorizations }}</span>
     {% else %}<span class="text-muted">—</span>{% endif %}
   </td>
   <td class="text-end">

@@ -1173,15 +1173,21 @@ main {
   height: 100%;
 }
 
-/* ── LV-38: roster checkboxes as a scrollable multi-column grid ────────────
-   The flight-permission form lists ~40 operators and ~14 aircraft as
-   CheckboxSelectMultiple; stacked one per line they pushed the rest of the form
-   off-screen (revisión en vivo 2026-08-03). Crispy renders each group as
-   #div_id_<field> > fieldset > div.form-check…, so the inner div flows the
-   checks into responsive columns inside a bounded, scrollable box; the fieldset
-   legend (the field label) stays above it. Multiple selection is unchanged. */
-#div_id_operators fieldset > div,
-#div_id_aircraft_fleet fieldset > div {
+/* ── LV-38 / LV-151: roster de casillas con buscador ───────────────────────
+   El formulario del permiso lista ~40 operadores y ~16 aeronaves como
+   CheckboxSelectMultiple; apilados de a uno por línea empujaban el resto del
+   formulario fuera de la pantalla (revisión en vivo 2026-08-03), y LV-38 los
+   pasó a columnas dentro de una caja acotada con scroll.
+
+   LV-151 mueve estos estilos de `#div_id_operators fieldset > div` a la clase
+   `.roster-options`. No es cosmética: la caja la dibuja ahora
+   `operations/_roster_field.html`, que renderiza el campo a mano para poder
+   ponerle la barra de búsqueda arriba -- crispy dibuja un checkbox múltiple con
+   su propia plantilla del paquete y no deja gancho. De paso el selector deja de
+   depender de la forma del DOM de una librería de terceros, que era lo frágil:
+   una versión nueva de crispy que cambiara `fieldset > div` habría dejado el
+   roster sin caja y sin que ningún test lo notara. */
+.roster-options {
   column-width: 210px;
   column-gap: 1.25rem;
   max-height: 15rem;
@@ -1191,10 +1197,34 @@ main {
   border-radius: 0.5rem;
   background: var(--ac-surface-raised);
 }
-#div_id_operators .form-check,
-#div_id_aircraft_fleet .form-check {
+.roster-options.is-invalid { border-color: var(--bs-danger); }
+.roster-option {
   break-inside: avoid;
 }
+.roster-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.35rem;
+}
+/* El contador va junto al rótulo y no bajo la caja: con la caja en scroll, lo
+   que está debajo puede quedar fuera de la vista justo cuando hace falta. */
+.roster-count {
+  color: var(--ac-text-secondary);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+.roster-tools {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+.roster-search { max-width: 22rem; }
+.roster-empty { margin-top: 0.4rem; }
 
 /* ── Calendar ─────────────────────────────────────── */
 /* LV-47: .calendar-noscript (wraps .legacy-calendar-header + .calendar-fallback)
