@@ -10,6 +10,7 @@ from .duplicates import (
     aircraft_with_serial,
     cost_center_with_code,
     operator_with_employee_id,
+    operator_with_rut,
 )
 from .models import (
     Aircraft,
@@ -23,6 +24,7 @@ from .models import (
     normalize_registration,
     normalize_serial,
 )
+from .rut import normalize_rut
 
 
 class CostCenterForm(AeroModelForm):
@@ -397,6 +399,12 @@ class OperatorForm(AeroModelForm):
             "cost_center": _("Cost Center"),
             "user": _("Linked user account"),
         }
+        # LV-143: el formato esperado se dice en la pantalla, no sólo en el
+        # mensaje de error. Va en el formulario y no en el modelo: un `help_text`
+        # de campo costaría una migración de metadatos por un texto de interfaz.
+        help_texts = {
+            "rut": _("With its check digit, e.g. 12345678-5. Dots are optional."),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -441,6 +449,24 @@ class OperatorForm(AeroModelForm):
             raise forms.ValidationError(
                 _("Employee ID %(value)s already belongs to %(name)s.") % values
             )
+        return value
+
+    def clean_rut(self):
+        """LV-143: normaliza, y deja el duplicado a la vista para el enlace.
+
+        El error **no se levanta acá**: lo levanta `Operator.clean()`, que es
+        donde tiene que estar para que el admin, la API y un import queden
+        cubiertos. Lo que este método agrega es lo que el modelo no puede dar —
+        la fila concreta, para que la vista pueda ofrecer su ficha— y el valor ya
+        canónico, así el formulario se re-dibuja con lo que se va a guardar.
+        """
+        value = normalize_rut(self.cleaned_data.get("rut"))
+        if value and value != normalize_rut(self.initial.get("rut")):
+            existing = operator_with_rut(
+                value, tenant_id=self.instance.tenant_id, exclude_pk=self.instance.pk
+            )
+            if existing is not None:
+                self.duplicate_of = existing
         return value
 
 

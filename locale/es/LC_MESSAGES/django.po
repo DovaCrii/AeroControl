@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-26 10:16-0400\n"
+"POT-Creation-Date: 2026-08-26 11:06-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -38,9 +38,9 @@ msgstr "Habilitación"
 
 #: .\apps\compliance\forms.py:169 .\apps\compliance\forms.py:623
 #: .\apps\compliance\forms.py:667 .\apps\geo\forms.py:45
-#: .\apps\operations\forms.py:48 .\apps\registry\forms.py:463
-#: .\apps\registry\forms.py:557 .\apps\registry\forms.py:587
-#: .\apps\registry\forms.py:635 .\apps\registry\forms.py:693
+#: .\apps\operations\forms.py:48 .\apps\registry\forms.py:489
+#: .\apps\registry\forms.py:583 .\apps\registry\forms.py:613
+#: .\apps\registry\forms.py:661 .\apps\registry\forms.py:719
 #: .\templates\compliance\deliverable_list.html:27
 #: .\templates\compliance\email\alert_digest.txt:2
 #: .\templates\compliance\email\executive_report.html:52
@@ -116,13 +116,13 @@ msgid "Select several at once, or drop them here."
 msgstr "Selecciona varios de una vez, o suéltalos aquí."
 
 #: .\apps\compliance\forms.py:232 .\apps\compliance\forms.py:384
-#: .\apps\registry\forms.py:717 .\templates\compliance\document_detail.html:16
+#: .\apps\registry\forms.py:743 .\templates\compliance\document_detail.html:16
 #: .\templates\registry\operator_detail.html:33
 msgid "Issue date"
 msgstr "Fecha de emisión"
 
 #: .\apps\compliance\forms.py:237 .\apps\compliance\forms.py:385
-#: .\apps\registry\forms.py:718 .\templates\compliance\document_detail.html:17
+#: .\apps\registry\forms.py:744 .\templates\compliance\document_detail.html:17
 #: .\templates\registry\operator_detail.html:33
 msgid "Expiry date"
 msgstr "Fecha de vencimiento"
@@ -195,14 +195,14 @@ msgid "There are no active records of this type yet."
 msgstr "Aún no hay registros activos de este tipo."
 
 #: .\apps\compliance\forms.py:523 .\apps\compliance\forms.py:565
-#: .\apps\geo\views.py:321 .\apps\registry\forms.py:93
+#: .\apps\geo\views.py:321 .\apps\registry\forms.py:95
 #: .\apps\workboard\forms.py:23 .\apps\workboard\forms.py:47
 #: .\apps\workboard\forms.py:122 .\templates\core\users_roles.html:24
 #: .\templates\generic\list.html:40 .\templates\registry\operator_list.html:25
 msgid "Name"
 msgstr "Nombre"
 
-#: .\apps\compliance\forms.py:524 .\apps\registry\forms.py:92
+#: .\apps\compliance\forms.py:524 .\apps\registry\forms.py:94
 #: .\templates\registry\costcenter_list.html:24
 msgid "Code"
 msgstr "Código"
@@ -284,7 +284,7 @@ msgid "Overlap (%)"
 msgstr "Traslape (%)"
 
 #: .\apps\compliance\forms.py:632 .\apps\compliance\forms.py:675
-#: .\apps\registry\forms.py:104
+#: .\apps\registry\forms.py:106
 #: .\templates\compliance\deliverable_detail.html:28
 #: .\templates\compliance\nonconformity_detail.html:33
 #: .\templates\generic\_traceability.html:38
@@ -751,7 +751,7 @@ msgstr "Borrador"
 msgid "Validated"
 msgstr "Validado"
 
-#: .\apps\compliance\models.py:1153 .\apps\registry\models.py:1215
+#: .\apps\compliance\models.py:1153 .\apps\registry\models.py:1275
 msgid "Released"
 msgstr "Liberado"
 
@@ -1067,9 +1067,9 @@ msgstr "%(center)s %(period)s marcado."
 msgid "Edit %(name)s"
 msgstr "Editar %(name)s"
 
-#: .\apps\compliance\watchables.py:20 .\apps\registry\forms.py:37
-#: .\apps\registry\forms.py:461 .\apps\registry\forms.py:556
-#: .\apps\registry\forms.py:715 .\apps\registry\models.py:1211
+#: .\apps\compliance\watchables.py:20 .\apps\registry\forms.py:39
+#: .\apps\registry\forms.py:487 .\apps\registry\forms.py:582
+#: .\apps\registry\forms.py:741 .\apps\registry\models.py:1271
 #: .\templates\registry\assignment_list.html:51
 #: .\templates\registry\costcenter_detail.html:36
 #: .\templates\registry\operatorassignment_list.html:5
@@ -1079,9 +1079,9 @@ msgid "Operator"
 msgstr "Operador"
 
 #: .\apps\compliance\watchables.py:21 .\apps\maintenance\forms.py:21
-#: .\apps\operations\forms.py:201 .\apps\registry\forms.py:462
-#: .\apps\registry\forms.py:639 .\apps\registry\forms.py:692
-#: .\apps\registry\models.py:1211 .\apps\registry\views.py:68
+#: .\apps\operations\forms.py:201 .\apps\registry\forms.py:488
+#: .\apps\registry\forms.py:665 .\apps\registry\forms.py:718
+#: .\apps\registry\models.py:1271 .\apps\registry\views.py:68
 #: .\templates\base.html:170 .\templates\maintenance\record_detail.html:21
 #: .\templates\maintenance\record_list.html:18
 #: .\templates\operations\flightrecord_detail.html:30
@@ -1155,7 +1155,7 @@ msgid "Running"
 msgstr "En ejecución"
 
 #: .\apps\core\models.py:219 .\apps\maintenance\models.py:34
-#: .\apps\operations\models.py:42 .\apps\registry\models.py:806
+#: .\apps\operations\models.py:42 .\apps\registry\models.py:866
 #: .\apps\workboard\models.py:34 .\apps\workboard\views.py:103
 #: .\templates\registry\_assignment_table_body.html:8
 #: .\templates\registry\assignment_list.html:37
@@ -1183,7 +1183,7 @@ msgid "until"
 msgstr "hasta"
 
 #: .\apps\core\views.py:703 .\apps\dashboard\views.py:139
-#: .\apps\registry\forms.py:392
+#: .\apps\registry\forms.py:394
 #: .\apps\registry\management\commands\notify_expiring_credentials.py:132
 #: .\apps\registry\models.py:745 .\templates\registry\operator_list.html:26
 msgid "DGAC credential"
@@ -1904,10 +1904,10 @@ msgstr "Ver las solicitudes"
 msgid "No request recorded for this permit"
 msgstr "Sin solicitud registrada para este permiso"
 
-#: .\apps\operations\forms.py:44 .\apps\registry\forms.py:277
-#: .\apps\registry\forms.py:468 .\apps\registry\forms.py:558
-#: .\apps\registry\forms.py:601 .\apps\registry\forms.py:649
-#: .\apps\registry\forms.py:696
+#: .\apps\operations\forms.py:44 .\apps\registry\forms.py:279
+#: .\apps\registry\forms.py:494 .\apps\registry\forms.py:584
+#: .\apps\registry\forms.py:627 .\apps\registry\forms.py:675
+#: .\apps\registry\forms.py:722
 #: .\templates\compliance\deliverable_detail.html:17
 #: .\templates\compliance\deliverable_list.html:27
 #: .\templates\compliance\email\monthly_review.txt:5
@@ -1939,7 +1939,7 @@ msgstr "Estado"
 msgid "Permission number"
 msgstr "Número de permiso"
 
-#: .\apps\operations\forms.py:46 .\apps\registry\forms.py:591
+#: .\apps\operations\forms.py:46 .\apps\registry\forms.py:617
 #: .\apps\registry\views.py:69 .\templates\base.html:171
 #: .\templates\operations\permission_detail.html:86
 #: .\templates\operations\permission_list.html:45
@@ -1959,9 +1959,9 @@ msgstr "Flota de aeronaves"
 msgid "Purpose"
 msgstr "Propósito"
 
-#: .\apps\operations\forms.py:50 .\apps\registry\forms.py:465
-#: .\apps\registry\forms.py:560 .\apps\registry\forms.py:614
-#: .\apps\registry\forms.py:659 .\apps\registry\forms.py:698
+#: .\apps\operations\forms.py:50 .\apps\registry\forms.py:491
+#: .\apps\registry\forms.py:586 .\apps\registry\forms.py:640
+#: .\apps\registry\forms.py:685 .\apps\registry\forms.py:724
 msgid "Purpose detail"
 msgstr "Detalle del propósito"
 
@@ -2024,9 +2024,9 @@ msgstr "Opcional hasta que el permiso esté aprobado."
 msgid "DAN 151 (populated) vs. DAN 91 (unpopulated)."
 msgstr "DAN 151 (poblada) vs. DAN 91 (no poblada)."
 
-#: .\apps\operations\forms.py:66 .\apps\registry\forms.py:471
-#: .\apps\registry\forms.py:563 .\apps\registry\forms.py:615
-#: .\apps\registry\forms.py:660 .\apps\registry\forms.py:701
+#: .\apps\operations\forms.py:66 .\apps\registry\forms.py:497
+#: .\apps\registry\forms.py:589 .\apps\registry\forms.py:641
+#: .\apps\registry\forms.py:686 .\apps\registry\forms.py:727
 msgid "Required when purpose is 'Other'."
 msgstr "Requerido cuando el propósito es 'Otro'."
 
@@ -2200,14 +2200,14 @@ msgstr "permiso de vuelo"
 msgid "flight permissions"
 msgstr "permisos de vuelo"
 
-#: .\apps\operations\models.py:275 .\apps\registry\models.py:860
-#: .\apps\registry\models.py:1109
+#: .\apps\operations\models.py:275 .\apps\registry\models.py:920
+#: .\apps\registry\models.py:1169
 msgid "The end date cannot be before the start date."
 msgstr "La fecha final no puede ser anterior a la fecha inicial."
 
-#: .\apps\operations\models.py:278 .\apps\registry\forms.py:622
-#: .\apps\registry\forms.py:672 .\apps\registry\models.py:863
-#: .\apps\registry\models.py:1112
+#: .\apps\operations\models.py:278 .\apps\registry\forms.py:648
+#: .\apps\registry\forms.py:698 .\apps\registry\models.py:923
+#: .\apps\registry\models.py:1172
 msgid "Describe the purpose when 'Other' is selected."
 msgstr "Describe el propósito cuando se selecciona 'Otro'."
 
@@ -2519,20 +2519,20 @@ msgstr "Plan %(title)s vinculado. El permiso ya tenía su ubicación."
 msgid "Created %(count)s flight requests from this plan."
 msgstr "Se crearon %(count)s solicitudes de vuelo desde este plan."
 
-#: .\apps\registry\forms.py:36
+#: .\apps\registry\forms.py:38
 msgid "Same as administrator"
 msgstr "El mismo administrador"
 
-#: .\apps\registry\forms.py:38
+#: .\apps\registry\forms.py:40
 msgid "External contact"
 msgstr "Contacto externo"
 
 # LV-34: responsable del centro de costo por tipo.
-#: .\apps\registry\forms.py:42
+#: .\apps\registry\forms.py:44
 msgid "Responsible type"
 msgstr "Tipo de responsable"
 
-#: .\apps\registry\forms.py:45
+#: .\apps\registry\forms.py:47
 msgid ""
 "Optional: pick this only if the day-to-day responsible contact differs from "
 "the contract administrator above."
@@ -2540,51 +2540,51 @@ msgstr ""
 "Opcional: elige esto solo si el contacto responsable del día a día es "
 "distinto del administrador de contrato de arriba."
 
-#: .\apps\registry\forms.py:94
+#: .\apps\registry\forms.py:96
 msgid "Contract status"
 msgstr "Estado del contrato"
 
-#: .\apps\registry\forms.py:95 .\templates\registry\costcenter_list.html:25
+#: .\apps\registry\forms.py:97 .\templates\registry\costcenter_list.html:25
 msgid "Contract administrator name"
 msgstr "Nombre de Administrador de contrato"
 
-#: .\apps\registry\forms.py:96
+#: .\apps\registry\forms.py:98
 msgid "Responsible operator"
 msgstr "Operador responsable"
 
-#: .\apps\registry\forms.py:97 .\apps\registry\models.py:117
+#: .\apps\registry\forms.py:99 .\apps\registry\models.py:117
 msgid "External contact name"
 msgstr "Nombre del contacto externo"
 
-#: .\apps\registry\forms.py:98 .\apps\registry\models.py:120
+#: .\apps\registry\forms.py:100 .\apps\registry\models.py:120
 msgid "External contact email"
 msgstr "Correo del contacto externo"
 
-#: .\apps\registry\forms.py:99 .\apps\registry\models.py:141
+#: .\apps\registry\forms.py:101 .\apps\registry\models.py:141
 msgid "Required GSD (cm)"
 msgstr "GSD requerido (cm)"
 
-#: .\apps\registry\forms.py:100 .\apps\registry\models.py:149
+#: .\apps\registry\forms.py:102 .\apps\registry\models.py:149
 msgid "Maximum horizontal RMSE (cm)"
 msgstr "RMSE horizontal máximo (cm)"
 
-#: .\apps\registry\forms.py:101 .\apps\registry\models.py:157
+#: .\apps\registry\forms.py:103 .\apps\registry\models.py:157
 msgid "Maximum vertical RMSE (cm)"
 msgstr "RMSE vertical máximo (cm)"
 
-#: .\apps\registry\forms.py:102 .\apps\registry\models.py:179
+#: .\apps\registry\forms.py:104 .\apps\registry\models.py:179
 msgid "Site latitude"
 msgstr "Latitud del sitio"
 
-#: .\apps\registry\forms.py:103 .\apps\registry\models.py:190
+#: .\apps\registry\forms.py:105 .\apps\registry\models.py:190
 msgid "Site longitude"
 msgstr "Longitud del sitio"
 
-#: .\apps\registry\forms.py:107
+#: .\apps\registry\forms.py:109
 msgid "Optional descriptive name (e.g. Casa Matriz)."
 msgstr "Nombre descriptivo opcional (p. ej. Casa Matriz)."
 
-#: .\apps\registry\forms.py:109
+#: .\apps\registry\forms.py:111
 msgid ""
 "Closed keeps the cost center on the list (greyed, grouped after the active "
 "ones) instead of archiving it."
@@ -2592,7 +2592,7 @@ msgstr ""
 "Cerrado mantiene el centro de costo en la lista (atenuado, agrupado después "
 "de los activos) en vez de archivarlo."
 
-#: .\apps\registry\forms.py:113
+#: .\apps\registry\forms.py:115
 msgid ""
 "Recipient of expiry digests. Use when the responsible person is in the "
 "operator roster."
@@ -2600,7 +2600,7 @@ msgstr ""
 "Destinatario de los resúmenes de vencimientos. Úsalo cuando el responsable "
 "está en el padrón de operadores."
 
-#: .\apps\registry\forms.py:117
+#: .\apps\registry\forms.py:119
 msgid ""
 "Use instead of the operator when the responsible person is external to the "
 "system (an administrator, secretary, or safety officer). Also used for the "
@@ -2610,11 +2610,11 @@ msgstr ""
 "administrador, secretaría o un SSO). También se usa para el resumen si el "
 "operador de arriba no tiene un correo válido."
 
-#: .\apps\registry\forms.py:124
+#: .\apps\registry\forms.py:126
 msgid "Enter the number only; the CC prefix is added automatically."
 msgstr "Ingresa solo el número; el prefijo CC se agrega automáticamente."
 
-#: .\apps\registry\forms.py:126
+#: .\apps\registry\forms.py:128
 msgid ""
 "Survey acceptance criteria (ISO 9001 8.6), from the contract. Leave blank "
 "when none was agreed: a deliverable is then recorded without a pass/fail "
@@ -2624,7 +2624,7 @@ msgstr ""
 "contrato. Dejar en blanco si no se acordó ninguno: el entregable se registra"
 " sin veredicto en vez de juzgarse contra un umbral inventado."
 
-#: .\apps\registry\forms.py:132
+#: .\apps\registry\forms.py:134
 msgid ""
 "Optional: decimal degrees for the site where this contract operates (e.g. "
 "-33.4489). Used to show the weather on the dashboard when no upcoming permit"
@@ -2634,23 +2634,23 @@ msgstr ""
 "-33,4489). Se usa para mostrar el clima en el panel cuando ningún permiso "
 "próximo trae sus propias coordenadas."
 
-#: .\apps\registry\forms.py:179
+#: .\apps\registry\forms.py:181
 msgid "Enter the contract administrator name."
 msgstr "Ingresa el nombre del administrador de contrato."
 
-#: .\apps\registry\forms.py:184
+#: .\apps\registry\forms.py:186
 msgid "Select the responsible operator."
 msgstr "Selecciona el operador responsable."
 
-#: .\apps\registry\forms.py:191
+#: .\apps\registry\forms.py:193
 msgid "Enter the external contact name."
 msgstr "Ingresa el nombre del contacto externo."
 
-#: .\apps\registry\forms.py:212
+#: .\apps\registry\forms.py:214
 msgid "Enter the cost-center number."
 msgstr "Ingresa el número del centro de costo."
 
-#: .\apps\registry\forms.py:229
+#: .\apps\registry\forms.py:231
 #, python-format
 msgid ""
 "Cost center %(code)s exists as an archived record (%(name)s). Restore it "
@@ -2659,16 +2659,16 @@ msgstr ""
 "El centro de costo %(code)s existe como registro archivado (%(name)s). "
 "Restáuralo en vez de crear un segundo."
 
-#: .\apps\registry\forms.py:235
+#: .\apps\registry\forms.py:237
 #, python-format
 msgid "Cost center %(code)s already exists (%(name)s)."
 msgstr "El centro de costo %(code)s ya existe (%(name)s)."
 
-#: .\apps\registry\forms.py:263 .\templates\registry\aircraft_list.html:24
+#: .\apps\registry\forms.py:265 .\templates\registry\aircraft_list.html:24
 msgid "Registration"
 msgstr "Matrícula"
 
-#: .\apps\registry\forms.py:264
+#: .\apps\registry\forms.py:266
 #: .\templates\compliance\_documents_section.html:30
 #: .\templates\compliance\company_documents.html:42
 #: .\templates\compliance\document_detail.html:14
@@ -2683,73 +2683,73 @@ msgstr "Matrícula"
 msgid "Type"
 msgstr "Tipo"
 
-#: .\apps\registry\forms.py:265 .\templates\core\audit_log.html:22
+#: .\apps\registry\forms.py:267 .\templates\core\audit_log.html:22
 #: .\templates\core\audit_log.html:40
 #: .\templates\registry\costcenter_detail.html:70
 msgid "Model"
 msgstr "Modelo"
 
-#: .\apps\registry\forms.py:266
+#: .\apps\registry\forms.py:268
 msgid "Manufacturer"
 msgstr "Fabricante"
 
-#: .\apps\registry\forms.py:267
+#: .\apps\registry\forms.py:269
 msgid "Year"
 msgstr "Año"
 
-#: .\apps\registry\forms.py:268 .\apps\registry\models.py:665
+#: .\apps\registry\forms.py:270 .\apps\registry\models.py:665
 #: .\templates\registry\_aircraft_rows.html:12
 #: .\templates\registry\battery_list.html:37
 #: .\templates\registry\costcenter_detail.html:70
 msgid "Serial number"
 msgstr "Número de serie"
 
-#: .\apps\registry\forms.py:269
+#: .\apps\registry\forms.py:271
 msgid "Maximum takeoff weight (kg)"
 msgstr "Peso máximo de despegue (kg)"
 
-#: .\apps\registry\forms.py:270
+#: .\apps\registry\forms.py:272
 msgid "Basic weight (kg)"
 msgstr "Peso básico (kg)"
 
-#: .\apps\registry\forms.py:271 .\apps\registry\forms.py:292
+#: .\apps\registry\forms.py:273 .\apps\registry\forms.py:294
 #: .\apps\registry\models.py:310
 msgid "VLOS"
 msgstr "VLOS"
 
-#: .\apps\registry\forms.py:272 .\apps\registry\forms.py:293
+#: .\apps\registry\forms.py:274 .\apps\registry\forms.py:295
 msgid "Parachute"
 msgstr "Paracaídas"
 
-#: .\apps\registry\forms.py:273 .\apps\registry\models.py:367
+#: .\apps\registry\forms.py:275 .\apps\registry\models.py:367
 msgid "Insurance status"
 msgstr "Estado del seguro"
 
-#: .\apps\registry\forms.py:274 .\apps\registry\models.py:319
+#: .\apps\registry\forms.py:276 .\apps\registry\models.py:319
 msgid "JAC insurance expiry"
 msgstr "Vencimiento seguro JAC"
 
-#: .\apps\registry\forms.py:275
+#: .\apps\registry\forms.py:277
 msgid "Authorized services"
 msgstr "Servicios autorizados"
 
-#: .\apps\registry\forms.py:276 .\apps\registry\forms.py:397
+#: .\apps\registry\forms.py:278 .\apps\registry\forms.py:399
 msgid "Cost Center"
 msgstr "Centro de costo"
 
-#: .\apps\registry\forms.py:278
+#: .\apps\registry\forms.py:280
 msgid "Current location"
 msgstr "Ubicación actual"
 
-#: .\apps\registry\forms.py:279
+#: .\apps\registry\forms.py:281
 msgid "Current site"
 msgstr "Faena actual"
 
-#: .\apps\registry\forms.py:318
+#: .\apps\registry\forms.py:320
 msgid "Enter the registration."
 msgstr "Ingresa la matrícula."
 
-#: .\apps\registry\forms.py:324
+#: .\apps\registry\forms.py:326
 #, python-format
 msgid ""
 "Registration %(value)s already belongs to another aircraft (%(name)s). "
@@ -2758,7 +2758,7 @@ msgstr ""
 "La matrícula %(value)s ya es de otra aeronave (%(name)s). Las matrículas se "
 "comparan en mayúsculas."
 
-#: .\apps\registry\forms.py:350
+#: .\apps\registry\forms.py:352
 #, python-format
 msgid ""
 "Serial number %(serial)s already belongs to %(name)s. Serials are compared "
@@ -2767,52 +2767,58 @@ msgstr ""
 "El número de serie %(serial)s ya es de %(name)s. Los seriales se comparan "
 "sin espacios y en mayúsculas."
 
-#: .\apps\registry\forms.py:387 .\apps\registry\models.py:739
+#: .\apps\registry\forms.py:389 .\apps\registry\models.py:739
 msgid "Employee ID"
 msgstr "ID de empleado"
 
-#: .\apps\registry\forms.py:388
+#: .\apps\registry\forms.py:390
 msgid "Full name"
 msgstr "Nombre completo"
 
-#: .\apps\registry\forms.py:389 .\templates\core\users_roles.html:25
+#: .\apps\registry\forms.py:391 .\templates\core\users_roles.html:25
 msgid "Email"
 msgstr "Correo electrónico"
 
-#: .\apps\registry\forms.py:390
+#: .\apps\registry\forms.py:392
 msgid "Phone"
 msgstr "Teléfono"
 
-#: .\apps\registry\forms.py:391 .\apps\registry\models.py:743
+#: .\apps\registry\forms.py:393 .\apps\registry\models.py:743
 msgid "RUT"
 msgstr "RUT"
 
 # LV-29: DGAC vigencias.
-#: .\apps\registry\forms.py:393 .\apps\registry\models.py:751
+#: .\apps\registry\forms.py:395 .\apps\registry\models.py:751
 msgid "DGAC credential expiry"
 msgstr "Vencimiento credencial DGAC"
 
-#: .\apps\registry\forms.py:394
+#: .\apps\registry\forms.py:396
 msgid "Operator type"
 msgstr "Tipo de operador"
 
-#: .\apps\registry\forms.py:395
+#: .\apps\registry\forms.py:397
 msgid "Address"
 msgstr "Dirección"
 
-#: .\apps\registry\forms.py:396
+#: .\apps\registry\forms.py:398
 msgid "Authorizations"
 msgstr "Habilitaciones"
 
-#: .\apps\registry\forms.py:398 .\apps\registry\models.py:773
+#: .\apps\registry\forms.py:400 .\apps\registry\models.py:773
 msgid "Linked user account"
 msgstr "Cuenta de usuario vinculada"
 
-#: .\apps\registry\forms.py:423
+#: .\apps\registry\forms.py:406
+msgid "With its check digit, e.g. 12345678-5. Dots are optional."
+msgstr ""
+"Con su dígito verificador, por ejemplo 12345678-5. Los puntos son "
+"opcionales."
+
+#: .\apps\registry\forms.py:431
 msgid "Enter the employee ID."
 msgstr "Ingresa el ID de empleado."
 
-#: .\apps\registry\forms.py:435
+#: .\apps\registry\forms.py:443
 #, python-format
 msgid ""
 "Employee ID %(value)s belongs to %(name)s, an archived record. Restore that "
@@ -2821,38 +2827,38 @@ msgstr ""
 "El ID de empleado %(value)s es de %(name)s, un registro archivado. Restaura "
 "ese registro en vez de crear un segundo."
 
-#: .\apps\registry\forms.py:442
+#: .\apps\registry\forms.py:450
 #, python-format
 msgid "Employee ID %(value)s already belongs to %(name)s."
 msgstr "El ID de empleado %(value)s ya es de %(name)s."
 
-#: .\apps\registry\forms.py:464 .\apps\registry\forms.py:559
-#: .\apps\registry\forms.py:609 .\apps\registry\forms.py:654
-#: .\apps\registry\forms.py:697
+#: .\apps\registry\forms.py:490 .\apps\registry\forms.py:585
+#: .\apps\registry\forms.py:635 .\apps\registry\forms.py:680
+#: .\apps\registry\forms.py:723
 msgid "Operation or purpose"
 msgstr "Operación o propósito"
 
-#: .\apps\registry\forms.py:466 .\apps\registry\forms.py:694
+#: .\apps\registry\forms.py:492 .\apps\registry\forms.py:720
 msgid "Start date"
 msgstr "Fecha de inicio"
 
-#: .\apps\registry\forms.py:467 .\apps\registry\forms.py:695
+#: .\apps\registry\forms.py:493 .\apps\registry\forms.py:721
 msgid "End date"
 msgstr "Fecha de término"
 
-#: .\apps\registry\forms.py:498
+#: .\apps\registry\forms.py:524
 msgid "A confirmed assignment requires a cost center."
 msgstr "Una asignación confirmada requiere un centro de costo."
 
-#: .\apps\registry\forms.py:512
+#: .\apps\registry\forms.py:538
 msgid "This operator already has a confirmed assignment in this period."
 msgstr "El operador ya tiene una asignación confirmada en este período."
 
-#: .\apps\registry\forms.py:529
+#: .\apps\registry\forms.py:555
 msgid "This aircraft already has a confirmed assignment in this period."
 msgstr "La aeronave ya tiene una asignación confirmada en este período."
 
-#: .\apps\registry\forms.py:594
+#: .\apps\registry\forms.py:620
 msgid ""
 "Select one or more. Each is assigned to the cost center above; an operator "
 "already assigned elsewhere is moved here."
@@ -2860,7 +2866,7 @@ msgstr ""
 "Selecciona uno o más. Cada uno se asigna al centro de costo de arriba; un "
 "operador ya asignado en otro centro de costo se mueve aquí."
 
-#: .\apps\registry\forms.py:642
+#: .\apps\registry\forms.py:668
 msgid ""
 "Select one or more. Each is assigned to the cost center above; an aircraft "
 "already assigned elsewhere is moved here."
@@ -2868,11 +2874,11 @@ msgstr ""
 "Selecciona una o más. Cada una se asigna al centro de costo de arriba; una "
 "aeronave ya asignada en otro centro de costo se mueve aquí."
 
-#: .\apps\registry\forms.py:716 .\templates\registry\operator_detail.html:33
+#: .\apps\registry\forms.py:742 .\templates\registry\operator_detail.html:33
 msgid "Qualification type"
 msgstr "Tipo de habilitación"
 
-#: .\apps\registry\forms.py:727
+#: .\apps\registry\forms.py:753
 msgid "No qualification types configured yet. Create one first."
 msgstr "Aún no hay tipos de habilitación configurados. Crea uno primero."
 
@@ -2881,7 +2887,7 @@ msgid "AeroControl · your DGAC validities are expiring"
 msgstr "AeroControl · tus vigencias DGAC están por vencer"
 
 #: .\apps\registry\models.py:78 .\apps\registry\models.py:277
-#: .\apps\registry\models.py:652 .\apps\registry\models.py:1061
+#: .\apps\registry\models.py:652 .\apps\registry\models.py:1121
 #: .\templates\core\users_roles.html:40
 #: .\templates\generic\_table_body.html:10 .\templates\generic\list.html:23
 #: .\templates\registry\_aircraft_rows.html:15
@@ -3040,76 +3046,85 @@ msgstr "operador"
 msgid "operators"
 msgstr "operadores"
 
-#: .\apps\registry\models.py:804 .\apps\registry\models.py:1060
+#: .\apps\registry\models.py:819
+msgid "Enter the RUT as 12345678-5, including its check digit."
+msgstr "Ingresa el RUT como 12345678-5, con su dígito verificador."
+
+#: .\apps\registry\models.py:829
+#, python-format
+msgid "RUT %(rut)s already belongs to %(name)s."
+msgstr "El RUT %(rut)s ya es de %(name)s."
+
+#: .\apps\registry\models.py:864 .\apps\registry\models.py:1120
 #: .\apps\workboard\models.py:30 .\apps\workboard\views.py:99
 #: .\templates\registry\_assignment_table_body.html:8
 #: .\templates\registry\assignment_list.html:35
 msgid "Planned"
 msgstr "Planificado"
 
-#: .\apps\registry\models.py:805
+#: .\apps\registry\models.py:865
 #: .\templates\registry\_assignment_table_body.html:8
 #: .\templates\registry\assignment_list.html:19
 #: .\templates\registry\assignment_list.html:36
 msgid "Confirmed"
 msgstr "Confirmada"
 
-#: .\apps\registry\models.py:807 .\apps\registry\models.py:1063
+#: .\apps\registry\models.py:867 .\apps\registry\models.py:1123
 #: .\templates\registry\_assignment_table_body.html:8
 #: .\templates\registry\assignment_list.html:38
 msgid "Cancelled"
 msgstr "Cancelada"
 
-#: .\apps\registry\models.py:836
+#: .\apps\registry\models.py:896
 msgid "assignment"
 msgstr "asignación"
 
-#: .\apps\registry\models.py:837
+#: .\apps\registry\models.py:897
 msgid "assignments"
 msgstr "asignaciones"
 
-#: .\apps\registry\models.py:866
+#: .\apps\registry\models.py:926
 msgid "The selected operator is inactive."
 msgstr "El operador seleccionado está inactivo."
 
-#: .\apps\registry\models.py:870
+#: .\apps\registry\models.py:930
 msgid "The selected aircraft is not available."
 msgstr "La aeronave seleccionada no está disponible."
 
-#: .\apps\registry\models.py:876
+#: .\apps\registry\models.py:936
 msgid "The cost center does not match the operator's."
 msgstr "El centro de costo no coincide con el del operador."
 
-#: .\apps\registry\models.py:882
+#: .\apps\registry\models.py:942
 msgid "The cost center does not match the aircraft's."
 msgstr "El centro de costo no coincide con el de la aeronave."
 
-#: .\apps\registry\models.py:917
+#: .\apps\registry\models.py:977
 msgid "ICAO code"
 msgstr "Código OACI"
 
-#: .\apps\registry\models.py:918
+#: .\apps\registry\models.py:978
 msgid "As SIGO lists it, e.g. SCEL."
 msgstr "Como lo lista SIGO, por ejemplo SCEL."
 
-#: .\apps\registry\models.py:930
+#: .\apps\registry\models.py:990
 msgid "Leave blank if unverified: it will not be used to compute AMC."
 msgstr ""
 "Déjalo en blanco si no está verificada: no se usará para calcular el AMC."
 
-#: .\apps\registry\models.py:944
+#: .\apps\registry\models.py:1004
 msgid "aerodrome"
 msgstr "aeródromo"
 
-#: .\apps\registry\models.py:945
+#: .\apps\registry\models.py:1005
 msgid "aerodromes"
 msgstr "aeródromos"
 
-#: .\apps\registry\models.py:977
+#: .\apps\registry\models.py:1037
 msgid "Aircraft model keywords"
 msgstr "Palabras clave de modelo de aeronave"
 
-#: .\apps\registry\models.py:979
+#: .\apps\registry\models.py:1039
 msgid ""
 "Comma-separated fragments matched against the aircraft model (e.g. 'mavic, "
 "matrice'). Used to check operator–aircraft fit."
@@ -3118,67 +3133,67 @@ msgstr ""
 "(p. ej. 'mavic, matrice'). Se usa para verificar la compatibilidad operador-"
 "aeronave."
 
-#: .\apps\registry\models.py:997
+#: .\apps\registry\models.py:1057
 msgid "qualification type"
 msgstr "tipo de habilitación"
 
-#: .\apps\registry\models.py:998
+#: .\apps\registry\models.py:1058
 msgid "qualification types"
 msgstr "tipos de habilitación"
 
-#: .\apps\registry\models.py:1035
+#: .\apps\registry\models.py:1095
 msgid "qualification"
 msgstr "habilitación"
 
-#: .\apps\registry\models.py:1036
+#: .\apps\registry\models.py:1096
 msgid "qualifications"
 msgstr "habilitaciones"
 
-#: .\apps\registry\models.py:1062
+#: .\apps\registry\models.py:1122
 msgid "Ended"
 msgstr "Finalizada"
 
-#: .\apps\registry\models.py:1116
+#: .\apps\registry\models.py:1176
 msgid "The selected resource is inactive."
 msgstr "El recurso seleccionado está inactivo."
 
-#: .\apps\registry\models.py:1123
+#: .\apps\registry\models.py:1183
 msgid "This resource already has an overlapping active assignment."
 msgstr "Este recurso ya tiene una asignación activa que se superpone."
 
-#: .\apps\registry\models.py:1139
+#: .\apps\registry\models.py:1199
 msgid "operator assignment"
 msgstr "asignación de operador"
 
-#: .\apps\registry\models.py:1140
+#: .\apps\registry\models.py:1200
 msgid "operator assignments"
 msgstr "asignaciones de operador"
 
-#: .\apps\registry\models.py:1172
+#: .\apps\registry\models.py:1232
 msgid "aircraft assignment"
 msgstr "asignación de aeronave"
 
-#: .\apps\registry\models.py:1173
+#: .\apps\registry\models.py:1233
 msgid "aircraft assignments"
 msgstr "asignaciones de aeronave"
 
-#: .\apps\registry\models.py:1213
+#: .\apps\registry\models.py:1273
 msgid "Assigned"
 msgstr "Asignado"
 
-#: .\apps\registry\models.py:1214
+#: .\apps\registry\models.py:1274
 msgid "Reassigned"
 msgstr "Reasignado"
 
-#: .\apps\registry\models.py:1216
+#: .\apps\registry\models.py:1276
 msgid "Location changed"
 msgstr "Cambio de ubicación"
 
-#: .\apps\registry\models.py:1249
+#: .\apps\registry\models.py:1309
 msgid "resource movement"
 msgstr "movimiento de recurso"
 
-#: .\apps\registry\models.py:1250
+#: .\apps\registry\models.py:1310
 msgid "resource movements"
 msgstr "movimientos de recursos"
 
