@@ -1101,6 +1101,93 @@ class Qualification(BaseModel):
         return f"{self.qualification_type} · {self.operator}"
 
 
+class KnowledgeAssessment(BaseModel):
+    """LV-158: una prueba interna de conocimientos rendida por un operador.
+
+    Pedido del usuario: *"una prueba interna para ver las capacidades […] al
+    operador quedar en el historial […] con un aprobado o insuficiente, y en qué
+    se equivocó, qué reforzar"*. Reglas suyas, del 2026-08-26: 25 preguntas, 80%
+    para aprobar, vigencia de 12 meses.
+
+    **`answers` guarda la copia de lo que se preguntó**, con lo marcado y lo
+    correcto por fila. No es redundancia: el banco de preguntas es un archivo de
+    datos que se va a corregir y ampliar, y sin la copia editar una redacción
+    reescribiría lo que alguien rindió el año pasado. Es la misma decisión que
+    `WeatherReview`, que guarda los números tal como se leyeron.
+
+    **Append-only en la práctica**: no hay pantalla de edición. Una prueba se
+    rinde de nuevo, no se corrige — y el historial de intentos es justamente lo
+    que responde "cómo está la condición del profesional".
+    """
+
+    operator = models.ForeignKey(
+        Operator,
+        on_delete=models.PROTECT,
+        related_name="knowledge_assessments",
+        verbose_name=_("Operator"),
+    )
+    # Quién estaba con la sesión abierta al rendirla. Casi siempre es el usuario
+    # del propio operador (`Operator.user`), pero se guarda aparte: la respuesta a
+    # "quién rindió esto" no puede depender de que ese vínculo no cambie después.
+    taken_by_user = models.ForeignKey(
+        get_user_model(),
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="knowledge_assessments_taken",
+        verbose_name=_("Taken by"),
+    )
+    taken_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Taken at"))
+    question_count = models.PositiveIntegerField(verbose_name=_("Questions"))
+    correct_count = models.PositiveIntegerField(verbose_name=_("Correct answers"))
+    score_percent = models.DecimalField(
+        max_digits=5, decimal_places=1, verbose_name=_("Score (%)")
+    )
+    passed = models.BooleanField(verbose_name=_("Passed"))
+    # La vigencia se guarda y no se calcula al leer: si mañana la regla cambia de
+    # 12 a 24 meses, lo ya rendido conserva la vigencia con que se rindió. Mismo
+    # criterio con que `R7.4` congela los umbrales al validar un entregable.
+    expires_on = models.DateField(verbose_name=_("Valid until"))
+    answers = models.JSONField(default=list, verbose_name=_("Answers"))
+
+    class Meta:
+        verbose_name = _("knowledge assessment")
+        verbose_name_plural = _("knowledge assessments")
+        ordering = ["-taken_at"]
+        # El motor de alertas, el panel y la ficha barren la vigencia, igual que
+        # con las habilitaciones.
+        indexes = [
+            models.Index(
+                fields=["expires_on", "is_active"], name="reg_assessment_exp_idx"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.operator} · {self.taken_at:%Y-%m-%d}"
+
+    @property
+    def verdict(self):
+        """ "Aprobado" o "Insuficiente", que son las dos palabras que pidió el usuario."""
+        return _("Passed") if self.passed else _("Insufficient")
+
+    @property
+    def is_expired(self):
+        """LV-29: una vigencia vencida. Nunca hay nulo acá, así que no hay tercer caso."""
+        from django.utils import timezone
+
+        return self.expires_on < timezone.localdate()
+
+    @property
+    def wrong_answers(self):
+        """Las filas incorrectas: lo que hay que reforzar.
+
+        Es la mitad del pedido —*"en qué se equivocó, qué reforzar"*— y sale de la
+        copia guardada, no de recorrer el banco: así una pregunta corregida
+        después no cambia lo que la revisión dice que pasó.
+        """
+        return [row for row in self.answers if not row.get("correct")]
+
+
 # ── BLOQUE OPS (OPS-1): per-resource assignments + movement log ───────────────
 # The old `Assignment` (operator+aircraft pair) stays for now; these anchor a
 # single resource to a cost center over a period, so an operator can rotate

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Knowledge assessment" %} - AeroControl{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <p class="eyebrow mb-1">{{ assessment.operator }} · {{ assessment.taken_at|date:"Y-m-d H:i" }}</p>
+    <h1 class="h3 mb-0">{% translate "Knowledge assessment" %}</h1>
+  </div>
+  <a class="btn btn-outline-secondary" href="{% url 'operator-detail' assessment.operator.pk %}">{% translate "Open the operator" %}</a>
+</div>
+
+{% comment %}LV-158: el veredicto en las dos palabras que pidió el usuario
+—aprobado o insuficiente— y el puntaje al lado, para que el número no quede
+solo: "72%" no dice nada sin saber que el corte es 80.{% endcomment %}
+<div class="card p-3 mb-3">
+  <div class="d-flex flex-wrap align-items-center gap-3">
+    {% if assessment.passed %}
+    <span class="badge bg-success fs-6">{% translate "Passed" %}</span>
+    {% else %}
+    <span class="badge bg-danger fs-6">{% translate "Insufficient" %}</span>
+    {% endif %}
+    <strong class="h4 mb-0">{{ assessment.score_percent }}%</strong>
+    <span class="text-body-secondary">
+      {% blocktranslate with correct=assessment.correct_count total=assessment.question_count percent=pass_percent %}{{ correct }} of {{ total }} correct · {{ percent }}% required{% endblocktranslate %}
+    </span>
+    <span class="text-body-secondary">
+      {% blocktranslate with date=assessment.expires_on|date:"Y-m-d" %}Valid until {{ date }}{% endblocktranslate %}
+      {% if assessment.is_expired %}<span class="badge bg-danger ms-1">{% translate "Overdue" %}</span>{% endif %}
+    </span>
+  </div>
+</div>
+
+{% comment %}LV-158: **en qué se equivocó, qué reforzar** — la otra mitad del
+pedido. Sólo las incorrectas: una lista de cien filas donde noventa dicen "bien"
+esconde justo lo que se viene a leer. Sale de la copia que el intento guardó, así
+que sigue diciendo lo que pasó aunque el banco se haya corregido después.
+{% endcomment %}
+<div class="card p-3">
+  <h2 class="h5 mb-3">
+    {% blocktranslate count counter=assessment.wrong_answers|length %}{{ counter }} question to reinforce{% plural %}{{ counter }} questions to reinforce{% endblocktranslate %}
+  </h2>
+  {% for row in assessment.wrong_answers %}
+  <div class="border-bottom py-2">
+    <p class="mb-1">{{ row.text }}</p>
+    <p class="small mb-0">
+      <span class="text-danger">{% translate "You answered" %}:</span>
+      {% if row.given %}{% for option in row.options %}{% if option.key == row.given %}{{ option.text }}{% endif %}{% endfor %}
+      {% else %}<em>{% translate "not answered" %}</em>{% endif %}
+    </p>
+    <p class="small mb-0">
+      <span class="text-success">{% translate "Correct answer" %}:</span>
+      {% for option in row.options %}{% if option.key == row.answer %}{{ option.text }}{% endif %}{% endfor %}
+    </p>
+  </div>
+  {% empty %}
+  <p class="text-muted mb-0">{% translate "Every answer was correct." %}</p>
+  {% endfor %}
+</div>
+{% endblock %}

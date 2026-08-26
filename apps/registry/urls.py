@@ -1,8 +1,25 @@
 from django.urls import path
-from . import views
+from . import assessment_views, views
 
 urlpatterns = []
 urlpatterns += [
+    # LV-158: la prueba de conocimientos. Va antes del bucle CRUD para que
+    # `assessment/` no quede a la sombra de un patrón genérico.
+    path(
+        "assessment/take/",
+        assessment_views.KnowledgeAssessmentTake.as_view(),
+        name="assessment-take",
+    ),
+    path(
+        "assessment/start/",
+        assessment_views.KnowledgeAssessmentStart.as_view(),
+        name="assessment-start",
+    ),
+    path(
+        "assessment/<uuid:pk>/",
+        assessment_views.KnowledgeAssessmentDetail.as_view(),
+        name="assessment-detail",
+    ),
     path(
         "costcenter/import/",
         views.CostCenterImportView.as_view(),
