@@ -5,6 +5,10 @@ as_crispy_field so the div_id_* wrappers stay intact -- the LV-34 responsible-
 type toggle (app.js) targets #div_id_responsible / #div_id_responsible_operator
 / #div_id_responsible_contact_name / #div_id_responsible_contact_email.
 Shared by the full-page template and the HTMX modal fragment.{% endcomment %}
+{% comment %}LV-142: el aviso de duplicado va acá, en el partial compartido, y
+no en las dos plantillas que lo incluyen -- así la página completa y el modal no
+pueden quedar diciendo cosas distintas.{% endcomment %}
+{% include "generic/_duplicate_hint.html" %}
 {{ form.non_field_errors }}
 {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
 <fieldset class="cc-form-section mb-4">

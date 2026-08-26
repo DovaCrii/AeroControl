@@ -6,6 +6,7 @@ permission") instead of the generic "Form".{% endcomment %}
 <form class="form-shell" method="post" action="{{ request.path }}" {% if form.is_multipart %}enctype="multipart/form-data"{% endif %}
       hx-post="{{ request.path }}" hx-target="#modal-content" hx-swap="innerHTML">
   {% csrf_token %}
+  {% include "generic/_duplicate_hint.html" %}
   {{ form|crispy }}
   <div class="form-actions d-flex gap-2 mt-4">
     <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
