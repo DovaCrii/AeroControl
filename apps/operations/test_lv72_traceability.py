@@ -37,24 +37,31 @@ def _permit(status="requested", code=None):
 
 
 class TestTheStepperComesFromTheModel:
+    # LV-155: el flujo pasó de tres pasos a dos. "Completado" salió a pedido del
+    # usuario --*"completado no debe salir luego de aprobado […] esa es la
+    # línea"*-- y estos tres tests afirmaban la forma de tres pasos, que era
+    # correcta mientras ésa era la línea. Se conservan afirmando lo mismo sobre
+    # el flujo real; el tercero cambia de pregunta, porque un permiso completado
+    # ya no está "en el último paso" sino detenido en uno que no se ofrece.
     @pytest.mark.django_db
     def test_a_new_permit_is_on_its_first_step(self, db):
         steps = _permit().status_steps()
 
         assert [step["code"] for step in steps] == FlightPermission.STATUS_FLOW
-        assert [step["state"] for step in steps] == ["current", "pending", "pending"]
+        assert [step["state"] for step in steps] == ["current", "pending"]
 
     @pytest.mark.django_db
-    def test_an_approved_permit_has_its_first_step_done(self, db):
+    def test_an_approved_permit_is_on_its_last_step(self, db):
         steps = _permit(status="approved").status_steps()
 
-        assert [step["state"] for step in steps] == ["done", "current", "pending"]
+        assert [step["state"] for step in steps] == ["done", "current"]
 
     @pytest.mark.django_db
-    def test_a_completed_permit_is_on_the_last_step(self, db):
+    def test_a_legacy_completed_permit_shows_where_it_stopped(self, db):
         steps = _permit(status="completed").status_steps()
 
-        assert [step["state"] for step in steps] == ["done", "done", "current"]
+        assert [step["code"] for step in steps][-1] == "completed"
+        assert [step["state"] for step in steps][-1] == "blocked"
 
     @pytest.mark.django_db
     def test_a_denied_permit_shows_where_it_stopped(self, db):
