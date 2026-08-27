@@ -99,6 +99,18 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **La prueba de conocimientos se lee (`LV-163`).** Se veía plana porque **todo
+  pesaba igual**: la pregunta y las cuatro opciones en negrita, en mayúsculas y a
+  todo el ancho de la pantalla. Ahora el único elemento pesado es el número de
+  la pregunta, el enunciado tiene ancho de lectura acotado e interlínea holgada,
+  y cada opción es una fila clicable que se pinta al elegirla. Se agrega el
+  avance —barra y "n / 25"— en un pie fijo junto al botón de enviar, y un aviso
+  si quedan preguntas sin responder, que cuentan como incorrectas. Las tres
+  reglas (25 preguntas, 80%, 12 meses) pasan de una frase gris a tres datos.
+  **Las mayúsculas del banco no se tocan**: vienen del documento de la DGAC y
+  llevan METAR, DAN 151, RPA — bajarles la caja cambiaría el sentido de una
+  pregunta de examen. Lo único que se normaliza son los saltos de línea que el
+  PDF de origen dejó a mitad de frase. Requiere `collectstatic` al desplegar.
 - **En Operadores el encabezado "Centro de costo" se salía encima de
   "Habilitaciones" (`LV-162`).** La columna que absorbe el sobrante se le había
   dado al dato más corto —el código de la faena— así que se quedó con 93 px para
