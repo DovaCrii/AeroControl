@@ -99,6 +99,17 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **El permiso deja de pedir lo que el plan ya provee (`LV-166`).** Al editar un
+  permiso con un plan geoespacial vinculado, las casillas de región, comuna,
+  nombre del área, latitud, longitud y radio desaparecen del formulario: el dato
+  sale del KMZ y el formulario dice de qué plan. La ficha las sigue mostrando y
+  ahora nombra el plan de origen, con enlace. **Se esconde una casilla sólo si el
+  permiso ya tiene ese valor**, no por estar en una lista: un plan con varias
+  circunferencias no aporta coordenadas y la altitud máxima no está en ningún
+  KMZ, así que esos campos siguen a la vista porque siguen haciendo falta. Y
+  queda la puerta para el papel: «Ajustar según la resolución DGAC» los devuelve,
+  porque una resolución puede traer otra coordenada y tiene más autoridad que lo
+  que se preparó antes de presentar.
 - **El contraste de la paleta queda vigilado (`LV-165`).** Se midió el tema
   oscuro contra WCAG AA y **ya cumplía**: el peor par da 5.35:1 contra un mínimo
   de 4.5, y en las pantallas reales no hay un solo texto ni un solo icono por
