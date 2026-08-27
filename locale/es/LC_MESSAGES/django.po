@@ -7248,6 +7248,23 @@ msgstr "Filtrado por centro de costo: %(fleet)s y %(personnel)s sin centro de co
 msgid "Of these, %(fleet)s and %(personnel)s have no cost center assigned."
 msgstr "De estos, %(fleet)s y %(personnel)s no tienen centro de costo asignado."
 
+#: .\templates\registry\assessment_take.html
+msgid "To pass"
+msgstr "Para aprobar"
+
+#: .\templates\registry\assessment_take.html
+msgid "Months of validity"
+msgstr "Meses de vigencia"
+
+#: .\templates\registry\assessment_take.html
+msgid "The result is filed on your record and feeds the same expiry warnings as your DGAC credential."
+msgstr "El resultado queda en tu ficha y entra al mismo aviso de vencimientos que tu credencial DGAC."
+
+#: .\templates\registry\assessment_take.html
+msgid "Send with {count} unanswered? They count as incorrect."
+msgstr "¿Enviar con {count} sin responder? Cuentan como incorrectas."
+
+
 
 
 

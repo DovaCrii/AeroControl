@@ -37,6 +37,26 @@ VALID_MONTHS = 12
 BANK_PATH = Path(__file__).resolve().parent / "data" / "rpas_knowledge_bank.json"
 
 
+def _unwrapped(text):
+    """El texto con los espacios colapsados, **sin cambiar una sola palabra**.
+
+    LV-163: el banco se extrajo de un documento de la DGAC y trae los saltos de
+    línea de ese PDF metidos a mitad de frase ("PREVIO AL INICIO DE UN VUELO
+    SERÁ RESPONSABILIDAD DEL\\nOPERADOR DE UN RPA…"). En pantalla eso cortaba
+    los renglones en puntos arbitrarios, sin relación con el ancho de la caja, y
+    era la mitad de por qué la prueba se leía plana.
+
+    Colapsar espacios es la **única** normalización que se le hace al banco, y
+    por eso: no toca ninguna palabra. Bajar las mayúsculas sería lo obvio y está
+    descartado a propósito — el banco lleva `METAR SCVD 211400Z 12003KT 4000
+    VCFG BKN020 04/03 Q1026=`, `DAN 151`, `RPA`, `DGAC`, y un normalizador que
+    les baje la caja le cambia el sentido a una pregunta de examen. La fidelidad
+    al documento de la DGAC es lo que hace que la prueba valga; el remedio para
+    que se lea bien es tipográfico, no textual.
+    """
+    return " ".join(text.split())
+
+
 @lru_cache(maxsize=1)
 def _bank():
     """El banco completo, leído una vez por proceso.
@@ -44,9 +64,24 @@ def _bank():
     `lru_cache` y no una constante de módulo: así el archivo no se lee al
     importar (los comandos y las migraciones no lo necesitan) y un test puede
     limpiar la caché si quiere sustituirlo.
+
+    Los espacios se colapsan **acá y una sola vez**, así que todo lo que sale de
+    este módulo —lo que se muestra, lo que se corrige y la copia que se archiva
+    en `answers`— ve el mismo texto. Normalizar en la plantilla habría dejado la
+    copia archivada con los saltos del PDF adentro.
     """
     payload = json.loads(BANK_PATH.read_text(encoding="utf-8"))
-    return payload["questions"]
+    return [
+        {
+            **question,
+            "text": _unwrapped(question["text"]),
+            "options": [
+                {**option, "text": _unwrapped(option["text"])}
+                for option in question["options"]
+            ],
+        }
+        for question in payload["questions"]
+    ]
 
 
 def bank_size():
