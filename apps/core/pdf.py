@@ -271,6 +271,15 @@ def executive_stylesheet():
     styles["Heading2"].leading = 14
     styles["Heading2"].spaceBefore = 12
     styles["Heading2"].spaceAfter = 5
+    # LV-164: un encabezado nunca se queda solo al pie de una página. Es el
+    # defecto que el usuario vio en el catastro el 2026-08-27 -- "Personal" al
+    # final de la hoja y su tabla empezando en la siguiente-- y no se arregla con
+    # un salto de página puesto a mano: reaparece en cuanto cambian las filas.
+    # `keepWithNext` lo resuelve en el estilo, así que vale para los dos informes
+    # y para el que venga.
+    styles["Heading2"].keepWithNext = True
+    styles["Heading1"].keepWithNext = True
+    styles["Heading3"].keepWithNext = True
 
     for name in ("Normal", "BodyText"):
         styles[name].fontName = branding.FONT_REGULAR

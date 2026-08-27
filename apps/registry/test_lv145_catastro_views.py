@@ -55,6 +55,30 @@ def reader(world):
     return _client("reader", "view_aircraft", "view_operator")
 
 
+@pytest.fixture
+def capture(monkeypatch):
+    """Record the flowables the view hands the shared PDF helper, and render.
+
+    Patching on `apps.core.pdf` and not on the view is what makes this work: the
+    view imports the module inside `get()`, so the attribute is looked up per
+    request. LV-164 needs the flowables themselves -- a page break and a
+    `keepWithNext` are decisions in the story, and neither survives into the
+    compressed output where an assertion could read it.
+    """
+    from apps.core import pdf as corepdf
+
+    recorded = {}
+    real_response = corepdf.pdf_response
+
+    def pdf_response(elements, letterhead, filename):
+        recorded["elements"] = list(elements)
+        recorded["letterhead"] = letterhead
+        return real_response(elements, letterhead, filename)
+
+    monkeypatch.setattr(corepdf, "pdf_response", pdf_response)
+    return recorded
+
+
 # -- who may read it -------------------------------------------------------
 
 
@@ -130,6 +154,36 @@ def test_the_pdf_wears_the_letterhead(reader):
     # Metadata is the only part of a reportlab PDF that is not compressed.
     assert b"J.E.J. Ingenier" in response.content
     assert b"Ref. CAT-" in response.content
+
+
+def test_the_personnel_table_starts_on_a_new_page(reader, capture):
+    """LV-164: son dos padrones de cosas distintas, y en un documento que se
+    entrega cada tabla se lee y se firma por separado. Con dos filas de fixture
+    el PDF cabría en una hoja, así que el salto es lo único que puede producir
+    la segunda -- y por eso se cuenta."""
+    from reportlab.platypus import PageBreak
+
+    response = reader.get(reverse("registry-roster-pdf"))
+
+    saltos = [e for e in capture["elements"] if isinstance(e, PageBreak)]
+    assert len(saltos) == 1
+    assert response.content.count(b"/Type /Page\n") == 2
+
+
+def test_no_heading_can_be_orphaned_at_the_foot_of_a_page(reader, capture):
+    """El defecto que el usuario vio: "Personal" al pie de la hoja con su tabla
+    empezando en la siguiente. Un salto puesto a mano no lo arregla —reaparece
+    en cuanto cambian las filas— así que la regla vive en el estilo."""
+    reader.get(reverse("registry-roster-pdf"))
+
+    encabezados = [
+        element
+        for element in capture["elements"]
+        if getattr(getattr(element, "style", None), "name", "") == "Heading2"
+    ]
+
+    assert encabezados, "no se encontró ningún encabezado de sección"
+    assert all(element.style.keepWithNext for element in encabezados)
 
 
 def test_the_screen_shows_the_same_cells_the_pdf_prints(reader, world):
