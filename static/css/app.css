@@ -1942,3 +1942,204 @@ a.admin-metric:hover { border-color: var(--ac-text-secondary); }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ── LV-163: la prueba de conocimientos se lee ──────────────────────────────
+   Pedido del usuario el 2026-08-27, mirando la pantalla: *"se ve muy apagado y
+   plano la lectura"*.
+
+   El diagnóstico no era el color del tema: era que **todo pesaba igual**. La
+   pregunta y las cuatro opciones salían en negrita, en MAYÚSCULAS —que vienen
+   del banco de la DGAC, no del CSS— y a todo el ancho. Con todo gritando no hay
+   jerarquía, y sin jerarquía el ojo no tiene por dónde entrar.
+
+   Las mayúsculas **no se tocan**: el banco lleva METAR, DAN 151, RPA, DGAC, y
+   bajarles la caja le cambiaría el sentido a una pregunta de examen (ver
+   `assessments._unwrapped`). El remedio es tipográfico. */
+
+/* Las tres reglas como datos y no como una frase corrida: es lo que se quiere
+   saber antes de empezar, y en un párrafo gris había que leer toda la línea
+   para encontrar el 80%. */
+.quiz-rules {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.75rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--ac-border);
+  border-left: 4px solid var(--ac-primary);
+  border-radius: var(--ac-radius);
+  background: var(--ac-surface);
+}
+.quiz-rule { display: flex; flex-direction: column; line-height: 1.1; }
+.quiz-rule-value {
+  color: var(--ac-primary);
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.quiz-rule-label {
+  color: var(--ac-text-secondary);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.quiz-rules-note {
+  flex: 1 1 18rem;
+  color: var(--ac-text-secondary);
+  font-size: 0.85rem;
+}
+
+.quiz-card { padding: 1.25rem 1.4rem; }
+
+/* El número es el ÚNICO elemento pesado de la pregunta. Antes lo eran el número,
+   el enunciado y las cuatro opciones a la vez. */
+.quiz-question {
+  display: flex;
+  gap: 0.9rem;
+  align-items: baseline;
+  float: none; /* Bootstrap pone float:left en <legend> y rompe el flex */
+  width: auto;
+  margin-bottom: 1rem;
+  padding: 0;
+  font-size: 1rem;
+}
+.quiz-number {
+  flex: 0 0 auto;
+  min-width: 1.9rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: var(--ac-primary-soft);
+  color: var(--ac-primary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+/* Peso normal e interlínea holgada. El ancho de lectura se acota: un renglón de
+   1500 px en mayúsculas obliga al ojo a barrer de punta a punta y perder la
+   línea al volver. */
+.quiz-text {
+  max-width: 76ch;
+  color: var(--ac-text);
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+.quiz-options { display: flex; flex-direction: column; gap: 0.45rem; }
+
+/* La opción es superficie clicable con estado propio. Antes el blanco del clic
+   era el `radio` de 16 px, y la elegida no se distinguía de un barrido. */
+.quiz-option {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  margin: 0;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--ac-border);
+  border-radius: 10px;
+  background: var(--ac-surface-raised);
+  cursor: pointer;
+  transition: border-color 0.12s ease, background-color 0.12s ease;
+}
+.quiz-option:hover { border-color: var(--ac-primary); }
+/* El `radio` sigue en el DOM —teclado y lector de pantalla— y sale de la vista;
+   el estado se dibuja en la fila con el selector **hermano**: el `input` va
+   antes de la etiqueta y el `for` mantiene toda la fila como blanco del clic.
+
+   `:has()` haría lo mismo envolviendo el input en la etiqueta. Se prefiere el
+   hermano por compatibilidad —anda en navegadores anteriores a `:has()`— y
+   nada más: la primera versión lo cambió culpando a `:has()` de que el estado
+   no se pintaba, y ése **no** era el motivo. El motivo era que el panel de
+   navegador de esta máquina congela las transiciones CSS, así que el color
+   nuevo nunca avanzaba desde el de partida; con `transition: none` los dos
+   selectores dan el valor correcto. Queda escrito para que nadie vuelva a
+   perseguir el fantasma: si un estado no se pinta al verificar acá, sospechar
+   de la transición antes que del selector. */
+.quiz-option-row { position: relative; }
+.quiz-option-input {
+  position: absolute;
+  top: 50%;
+  left: 0.85rem;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.quiz-option-input:focus-visible + .quiz-option {
+  outline: 2px solid var(--ac-primary);
+  outline-offset: 2px;
+}
+.quiz-option-input:checked + .quiz-option {
+  border-color: var(--ac-primary);
+  background: var(--ac-primary-soft);
+}
+.quiz-option-key {
+  flex: 0 0 auto;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--ac-border);
+  border-radius: 50%;
+  background: var(--ac-surface);
+  color: var(--ac-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.quiz-option-input:checked + .quiz-option .quiz-option-key {
+  border-color: var(--ac-primary);
+  background: var(--ac-primary);
+  color: var(--ac-surface);
+}
+.quiz-option-text {
+  color: var(--ac-text);
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+/* El pie se queda a la vista: con 25 preguntas el botón de enviar estaba a
+   varias pantallas de scroll del avance, así que las dos cosas que se necesitan
+   al final vivían separadas. */
+.quiz-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1.25rem;
+  padding: 0.85rem 1.1rem;
+  border: 1px solid var(--ac-border);
+  border-radius: var(--ac-radius);
+  background: var(--ac-surface);
+  box-shadow: var(--ac-shadow);
+}
+.quiz-progress { display: flex; gap: 0.75rem; align-items: center; min-width: 14rem; }
+.quiz-progress-bar {
+  flex: 1 1 8rem;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--ac-border);
+  overflow: hidden;
+}
+.quiz-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ac-primary);
+  transition: width 0.15s ease;
+}
+.quiz-progress-text {
+  color: var(--ac-text-secondary);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* Completa: el color dice "podés enviar" sin agregar una frase más. */
+.quiz-footer.is-complete .quiz-progress-text { color: var(--ac-primary); font-weight: 650; }
+
+@media (max-width: 640px) {
+  .quiz-rules { gap: 1.1rem; }
+  .quiz-footer { flex-direction: column; align-items: stretch; }
+}
