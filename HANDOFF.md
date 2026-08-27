@@ -49,22 +49,34 @@ pantalla por pantalla y se cerraron seis filas (`LV-162` a `LV-167`).
   `LV-167` ya mergeado (`git merge --no-ff` de `codex/catastro-vigencias`) y
   **`pwsh scripts/verify.ps1` verde sobre el merge**: 2170 tests, cobertura
   96.86%, ruff, bandit y pip-audit sin hallazgos.
-- **`p340` sigue en `9c4d063`: falta desplegar.** El lote está pusheado pero no
-  servido. **Desde una sesión de agente no hay acceso a `p340`** (`ssh` responde
-  `Permission denied (publickey,password)`, verificado otra vez el 2026-08-27),
-  así que el bloque de abajo lo pega el usuario en su sesión SSH.
+- **Desplegado en `p340` el 2026-08-27** ✅ — `git log -1` en la VM dice
+  `94f308f`, `collectstatic` copió los 2 estáticos del lote y post-procesó 378,
+  y el servicio reinició limpio. **Desde una sesión de agente no hay acceso a
+  `p340`** (`ssh` responde `Permission denied (publickey,password)`, verificado
+  otra vez ese día), así que el bloque lo pega el usuario en su sesión SSH.
+- **⚠️ `p340` estaba en HEAD desprendido en `9c4d063`, y por eso las tandas del
+  2026-08-26 y del 2026-08-27 nunca se habían desplegado.** Un rollback viejo
+  (`git checkout <commit>`) dejó la VM sin rama: `git pull` fallaba con *"You are
+  not currently on a branch"*, pero `collectstatic` y el `restart` corrían igual
+  y el despliegue parecía exitoso. Se arregló con `git checkout main && git pull`
+  (14 commits de fast-forward). `9c4d063` era ancestro de `main`, así que no se
+  perdió nada. La lección quedó en `AGENTS.md`: **el primer comando de todo
+  despliegue es `git status --short --branch`.**
 - **Sin migraciones** en todo el lote. El paso extra al desplegar es
   **`collectstatic`**: cambian `static/css/app.css` y entra
   `static/js/quiz-progress.js`. Sin él, con el `STORAGES` de `prod.py` toda
   etiqueta `{% static %}` falla.
 
+Por pasos, mirando la salida de cada uno — **no como una sola línea encadenada**,
+que es como se produjo el despliegue fantasma del 2026-08-27:
+
 ```bash
-cd /opt/aerocontrol && git pull
+cd /opt/aerocontrol
+git status --short --branch     # 1. debe decir "## main...origin/main", NO "## HEAD (no branch)"
+git checkout main && git pull && git log --oneline -1   # 2. debe terminar en el commit pusheado
 set -a; source <(sudo cat /etc/aerocontrol.env); set +a
-echo "settings=$DJANGO_SETTINGS_MODULE  db=$DB_PATH"   # debe decir config.settings.prod
-uv sync
-uv run python manage.py collectstatic --no-input
-sudo systemctl restart aerocontrol
+echo "settings=$DJANGO_SETTINGS_MODULE  db=$DB_PATH"    # 3. debe decir config.settings.prod
+uv sync && uv run python manage.py collectstatic --no-input && sudo systemctl restart aerocontrol
 ```
 
 Después del restart, las dos pantallas que conviene mirar con ojo crítico son
