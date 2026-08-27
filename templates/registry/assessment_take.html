@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n static %}
 {% block title %}{% translate "Knowledge assessment" %} - AeroControl{% endblock %}
 {% block content %}
 {% comment %}LV-158: la prueba en una sola página, un envío. Una pregunta por
@@ -9,6 +9,22 @@ que este diseño evita— y no mide nada distinto.
 Las opciones son `radio` y **ninguna viene marcada**: un valor por omisión
 convertiría el no responder en una respuesta, y esta prueba cuenta lo que la
 persona eligió. Una pregunta sin responder cuenta como incorrecta y se dice.
+
+LV-163 (pedido del usuario, 2026-08-27: *"se ve muy apagado y plano la lectura"*):
+el problema no era el color del tema sino que **todo pesaba igual**. La pregunta
+y las cuatro opciones salían en negrita, en MAYÚSCULAS —que vienen del banco, no
+del CSS— y a todo el ancho de la pantalla. Con todo gritando no hay jerarquía, y
+sin jerarquía el ojo no sabe dónde entrar.
+
+Lo que cambia, y ninguna de las tres es decoración:
+1. **Un solo elemento pesado por pregunta**: el número. La pregunta baja a peso
+   normal con interlínea holgada y ancho de lectura acotado; las opciones dejan
+   de ser negrita.
+2. **Las opciones son superficie clicable** con estado propio (reposo, hover,
+   elegida). Antes el `radio` de 16 px era el único blanco y la elegida no se
+   distinguía de un barrido.
+3. **El avance se ve**: cuántas van de 25, con barra. Es lo que le falta a una
+   sola página con 25 preguntas -- sin eso no hay forma de saber si terminaste.
 {% endcomment %}
 <div class="page-header">
   <div>
@@ -17,29 +33,79 @@ persona eligió. Una pregunta sin responder cuenta como incorrecta y se dice.
   </div>
 </div>
 
-<div class="card p-3 mb-3">
-  <p class="mb-0">
-    {% blocktranslate count counter=questions|length with percent=pass_percent months=valid_months %}{{ counter }} question, {{ percent }}% to pass. The result is valid for {{ months }} months and is filed on your record.{% plural %}{{ counter }} questions, {{ percent }}% to pass. The result is valid for {{ months }} months and is filed on your record.{% endblocktranslate %}
-  </p>
+{% comment %}Las tres reglas, cada una como un dato y no como una frase corrida:
+son lo que la persona quiere saber antes de empezar, y en un párrafo gris había
+que leerlas enteras para encontrar el 80%.{% endcomment %}
+<div class="quiz-rules mb-4">
+  <div class="quiz-rule">
+    <span class="quiz-rule-value">{{ questions|length }}</span>
+    <span class="quiz-rule-label">{% translate "Questions" %}</span>
+  </div>
+  <div class="quiz-rule">
+    <span class="quiz-rule-value">{{ pass_percent }}%</span>
+    <span class="quiz-rule-label">{% translate "To pass" %}</span>
+  </div>
+  <div class="quiz-rule">
+    <span class="quiz-rule-value">{{ valid_months }}</span>
+    <span class="quiz-rule-label">{% translate "Months of validity" %}</span>
+  </div>
+  <p class="quiz-rules-note mb-0">{% translate "The result is filed on your record and feeds the same expiry warnings as your DGAC credential." %}</p>
 </div>
 
-<form method="post">
+<form method="post" id="quiz-form">
   {% csrf_token %}
   {% for question in questions %}
-  <fieldset class="card p-3 mb-3">
-    <legend class="h6 mb-3">{{ forloop.counter }}. {{ question.text }}</legend>
-    {% for option in question.options %}
-    <div class="form-check">
-      <input class="form-check-input" type="radio" name="q{{ question.id }}"
-             id="q{{ question.id }}{{ option.key }}" value="{{ option.key }}">
-      <label class="form-check-label" for="q{{ question.id }}{{ option.key }}">{{ option.text }}</label>
+  <fieldset class="card quiz-card mb-3" id="q-{{ forloop.counter }}">
+    <legend class="quiz-question">
+      <span class="quiz-number" aria-hidden="true">{{ forloop.counter }}</span>
+      <span class="quiz-text">{{ question.text }}</span>
+    </legend>
+    <div class="quiz-options">
+      {% for option in question.options %}
+      {% comment %}El `input` va **antes** de la etiqueta y como su hermano, no
+      envuelto por ella: así el estado se pinta con `input:checked + label`, que
+      anda en navegadores anteriores a `:has()`. La etiqueta con `for` hace que
+      la fila entera siga siendo el blanco del clic. Ver el comentario de
+      `app.css` para por qué no es `:has()` -- y para el fantasma que se
+      persiguió antes de entenderlo.{% endcomment %}
+      <div class="quiz-option-row">
+        <input class="quiz-option-input" type="radio" name="q{{ question.id }}"
+               id="q{{ question.id }}{{ option.key }}" value="{{ option.key }}">
+        <label class="quiz-option" for="q{{ question.id }}{{ option.key }}">
+          <span class="quiz-option-key" aria-hidden="true">{{ option.key|upper }}</span>
+          <span class="quiz-option-text">{{ option.text }}</span>
+        </label>
+      </div>
+      {% endfor %}
     </div>
-    {% endfor %}
   </fieldset>
   {% endfor %}
-  <div class="form-actions d-flex gap-2 mt-4">
-    <button type="submit" class="btn btn-primary">{% translate "Submit the assessment" %}</button>
-    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">{% translate "Cancel" %}</a>
+
+  {% comment %}El pie queda pegado abajo: con 25 preguntas el botón de enviar
+  estaba a cinco pantallas de scroll del avance, así que las dos cosas que se
+  necesitan al final vivían separadas.{% endcomment %}
+  {% comment %}El marcador va entre **llaves** y no como `%(count)s`:
+  `makemessages` duplica el `%` literal al extraer de una plantilla, así que la
+  búsqueda en el catálogo falla en tiempo de ejecución y la cadena sale en
+  inglés. Es la trampa que este repo ya pagó dos veces.{% endcomment %}
+  {% translate "Send with {count} unanswered? They count as incorrect." as label_remaining %}
+  <div class="quiz-footer" data-total="{{ questions|length }}"
+       data-label-remaining="{{ label_remaining }}">
+    <div class="quiz-progress" role="status" aria-live="polite">
+      <div class="quiz-progress-bar"><span class="quiz-progress-fill" style="width:0%"></span></div>
+      <span class="quiz-progress-text">0 / {{ questions|length }}</span>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">{% translate "Cancel" %}</a>
+      <button type="submit" class="btn btn-primary">{% translate "Submit the assessment" %}</button>
+    </div>
   </div>
 </form>
+{% endblock %}
+
+{% block extrascripts %}
+{% comment %}LV-163: el avance y el aviso de preguntas sin responder. Servido con
+`static` como todo lo demás, así que la CSP `script-src 'self'` no se toca, y sin
+`onclick=` en la plantilla, que sí la violaría.{% endcomment %}
+<script src="{% static 'js/quiz-progress.js' %}"></script>
 {% endblock %}
