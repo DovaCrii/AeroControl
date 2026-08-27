@@ -22,6 +22,7 @@ no literales sueltos: **25 preguntas, 80% para aprobar, vigencia de 12 meses.**
 
 import json
 import random
+import re
 from functools import lru_cache
 from pathlib import Path
 
@@ -55,6 +56,44 @@ def _unwrapped(text):
     que se lea bien es tipográfico, no textual.
     """
     return " ".join(text.split())
+
+
+# La enumeración romana tal como la escribe el banco de la DGAC, y el orden en
+# que tiene que aparecer para que se la trate como enumeración.
+_ROMAN_SEQUENCE = ("I.", "II.", "III.", "IV.", "V.", "VI.", "VII.", "VIII.")
+_ENUMERATOR = re.compile(r"(?<=\s)(?:I{1,3}|IV|VI{0,3})\.(?=\s)")
+
+
+def enumerated_lines(text):
+    """El enunciado partido en renglones cuando enumera `I.`/`II.`/`III.`.
+
+    LV-168, y es una regresión de LV-163. Al colapsar los espacios para sacar
+    los saltos que el PDF de la DGAC metía a mitad de frase, `_unwrapped` se
+    llevó también los saltos **buenos**: los que separaban los ítems de una
+    enumeración. Seis preguntas del banco quedaron como un párrafo corrido donde
+    hay que rastrear con el ojo dónde empieza cada ítem — justo en las preguntas
+    cuyas opciones son "SÓLO I Y II" contra "SÓLO II Y III", que es donde el
+    corte importa más.
+
+    Se parte **en presentación y no en el dato**: lo que se corrige y la copia
+    que el intento archiva en `answers` siguen siendo la línea colapsada, así que
+    esto también arregla los intentos ya rendidos, que guardan ese mismo texto.
+    Sigue sin tocarse una sola palabra ni la caja: unir lo que devuelve esta
+    función con un espacio reproduce el texto de entrada.
+
+    El disparo es conservador a propósito: hacen falta **dos marcadores o más y
+    en orden desde `I.`**. Con un solo `I.` suelto no parte nada, porque un
+    número romano puede aparecer en una frase sin ser una enumeración, y partir
+    de más un enunciado de examen se lee como si faltara texto.
+    """
+    matches = list(_ENUMERATOR.finditer(text))
+    markers = tuple(match.group(0) for match in matches)
+    if len(markers) < 2 or markers != _ROMAN_SEQUENCE[: len(markers)]:
+        return [text]
+    starts = [match.start() for match in matches]
+    bounds = [0, *starts, len(text)]
+    segments = (text[start:end].strip() for start, end in zip(bounds, bounds[1:]))
+    return [segment for segment in segments if segment]
 
 
 @lru_cache(maxsize=1)

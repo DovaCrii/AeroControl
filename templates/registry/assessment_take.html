@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n static %}
+{% load i18n static assessment_extras %}
 {% block title %}{% translate "Knowledge assessment" %} - AeroControl{% endblock %}
 {% block content %}
 {% comment %}LV-158: la prueba en una sola página, un envío. Una pregunta por
@@ -58,7 +58,7 @@ que leerlas enteras para encontrar el 80%.{% endcomment %}
   <fieldset class="card quiz-card mb-3" id="q-{{ forloop.counter }}">
     <legend class="quiz-question">
       <span class="quiz-number" aria-hidden="true">{{ forloop.counter }}</span>
-      <span class="quiz-text">{{ question.text }}</span>
+      <span class="quiz-text">{% for line in question.text|enumerated_lines %}<span class="quiz-text-line">{{ line }}</span>{% endfor %}</span>
     </legend>
     <div class="quiz-options">
       {% for option in question.options %}
