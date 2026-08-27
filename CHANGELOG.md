@@ -99,6 +99,16 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **El contraste de la paleta queda vigilado (`LV-165`).** Se midió el tema
+  oscuro contra WCAG AA y **ya cumplía**: el peor par da 5.35:1 contra un mínimo
+  de 4.5, y en las pantallas reales no hay un solo texto ni un solo icono por
+  debajo del umbral. No se aclaró ningún gris — subirlos los acercaría entre sí
+  y la pantalla quedaría **más** plana. Lo que faltaba era el guardián: una
+  matriz de los cuatro tokens de texto contra las tres superficies en los dos
+  temas, más un test que exige que los tres niveles de gris sigan separados,
+  para que un futuro "subamos el contraste" no aplane la jerarquía. De paso
+  quedó a la vista que en el tema **claro** el color primario sobre el fondo
+  pasa por 0.03 (4.53:1), así que cualquier retoque lo habría roto en silencio.
 - **En el catastro el personal arranca en hoja nueva (`LV-164`).** Flota y
   personal son dos padrones de cosas distintas, y en un documento que se entrega
   cada tabla se lee y se firma por separado. Y de paso lo que estaba mal de
