@@ -99,6 +99,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **El catastro decía "1 aeronaves" (`LV-161`).** Lo encontró el padrón real el
+  día que se desplegó: la flota tiene exactamente una aeronave sin faena, y los
+  fixtures de los tests tenían dos o tres de cada cosa. Cada oración lleva dos
+  conteos independientes y `ngettext` maneja uno, así que ahora las frases
+  contadas se arman por separado y las oraciones las componen. El verbo se queda
+  en plural aunque los dos conteos sean 1, que es lo correcto en español con dos
+  sujetos unidos por "y".
 - **El guardián de i18n no veía las comillas simples (`LV-160`).** Los dos tests
   que existen para que ninguna cadena salga en inglés dentro de la interfaz en
   español sólo miraban literales entre comillas **dobles**, así que las 72 formas

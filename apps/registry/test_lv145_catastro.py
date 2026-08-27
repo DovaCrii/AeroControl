@@ -181,6 +181,56 @@ def test_without_a_filter_the_unassigned_rows_are_on_the_page_and_counted(world,
     )
 
 
+@pytest.mark.django_db
+def test_a_single_row_reads_in_the_singular(root):
+    """Lo encontró el padrón real el día que se desplegó: con una sola aeronave
+    sin faena el informe decía **"1 aeronaves"**.
+
+    Los dos conteos se interpolaban en un mensaje solo, y `ngettext` maneja uno.
+    Ahora cada frase contada se arma aparte y la oración las compone. Ninguno de
+    los fixtures anteriores lo habría cazado: todos tenían dos de cada cosa, que
+    es el descuido que hace que un caso límite llegue a producción.
+    """
+    center = CostCenter.objects.create(code="CC001", name="Una sola")
+    Aircraft.objects.create(
+        registration="RPA-UNO",
+        type="Multirotor",
+        model="M",
+        manufacturer="DJI",
+        cost_center=center,
+    )
+    Operator.objects.create(full_name="Solo Uno", employee_id="E-1")
+
+    first, second = totals_sentence(build_catastro(root))
+
+    assert "1 aeronave " in first and "1 aeronaves" not in first
+    assert "1 operador " in first and "1 operadores" not in first
+    # El operador suelto es el que la segunda frase cuenta, también en singular.
+    assert "1 operador " in second and "1 operadores" not in second
+    # El verbo se queda en plural, y eso es correcto: dos sujetos unidos por "y"
+    # llevan verbo plural en español.
+    assert "no tienen" in second
+
+
+@pytest.mark.django_db
+def test_several_rows_read_in_the_plural(world, root):
+    """La otra mitad del acuerdo, para que el arreglo no se pase de largo."""
+    sentence = totals_sentence(build_catastro(root))[0]
+
+    assert "3 aeronaves" in sentence
+    assert "3 operadores" in sentence
+
+
+@pytest.mark.django_db
+def test_an_empty_roster_reads_in_the_plural_too(root):
+    """Cero es plural en español ("0 aeronaves"), que es lo que la forma plural
+    de gettext devuelve para `n != 1`."""
+    sentence = totals_sentence(build_catastro(root))[0]
+
+    assert "0 aeronaves" in sentence
+    assert "0 operadores" in sentence
+
+
 def test_a_roster_with_nothing_left_out_carries_no_dangling_clause(db, root):
     center = CostCenter.objects.create(code="CC730", name="Salares")
     Aircraft.objects.create(

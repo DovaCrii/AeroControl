@@ -7134,21 +7134,6 @@ msgstr "Ref. %(prefix)s-%(stamp)s"
 msgid "Page %(page)s of %(total)s"
 msgstr "Página %(page)s de %(total)s"
 
-#: .\apps\registry\catastro.py
-#, python-format
-msgid "%(aircraft)s aircraft and %(operators)s operators registered as of %(date)s."
-msgstr "%(aircraft)s aeronaves y %(operators)s operadores inscritos al %(date)s."
-
-#: .\apps\registry\catastro.py
-#, python-format
-msgid "Filtered by cost center: %(aircraft)s aircraft and %(operators)s operators with no cost center are not listed."
-msgstr "Filtrado por centro de costo: %(aircraft)s aeronaves y %(operators)s operadores sin centro de costo no aparecen en el listado."
-
-#: .\apps\registry\catastro.py
-#, python-format
-msgid "Of these, %(aircraft)s aircraft and %(operators)s operators have no cost center assigned."
-msgstr "De estos, %(aircraft)s aeronaves y %(operators)s operadores no tienen centro de costo asignado."
-
 #: .\apps\registry\report_views.py
 msgid "Fleet and personnel roster"
 msgstr "Catastro de flota y personal"
@@ -7233,6 +7218,36 @@ msgid "%(counter)s request from this plan"
 msgid_plural "%(counter)s requests from this plan"
 msgstr[0] "%(counter)s solicitud de este plan"
 msgstr[1] "%(counter)s solicitudes de este plan"
+
+#: .\apps\registry\catastro.py
+#, python-format
+msgid "%(count)s aircraft"
+msgid_plural "%(count)s aircraft"
+msgstr[0] "%(count)s aeronave"
+msgstr[1] "%(count)s aeronaves"
+
+#: .\apps\registry\catastro.py
+#, python-format
+msgid "%(count)s operator"
+msgid_plural "%(count)s operators"
+msgstr[0] "%(count)s operador"
+msgstr[1] "%(count)s operadores"
+
+#: .\apps\registry\catastro.py
+#, python-format
+msgid "%(fleet)s and %(personnel)s registered as of %(date)s."
+msgstr "%(fleet)s y %(personnel)s inscritos al %(date)s."
+
+#: .\apps\registry\catastro.py
+#, python-format
+msgid "Filtered by cost center: %(fleet)s and %(personnel)s with no cost center are not listed."
+msgstr "Filtrado por centro de costo: %(fleet)s y %(personnel)s sin centro de costo no aparecen en el listado."
+
+#: .\apps\registry\catastro.py
+#, python-format
+msgid "Of these, %(fleet)s and %(personnel)s have no cost center assigned."
+msgstr "De estos, %(fleet)s y %(personnel)s no tienen centro de costo asignado."
+
 
 
 
