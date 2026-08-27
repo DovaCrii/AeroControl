@@ -22,8 +22,27 @@ PO_PATH = Path(settings.BASE_DIR) / "locale" / "es" / "LC_MESSAGES" / "django.po
 # Literal in a .po file, honouring escaped quotes. Two forms: the capturing one
 # extracts the text, the non-capturing one is safe to nest inside a larger
 # pattern without turning findall results into tuples.
+#
+# **Double quotes only, and that is not an oversight**: a `.po` file quotes with
+# `"` and nothing else, so widening these would make the catalog parser accept a
+# file gettext itself would reject. The source side has its own pair below.
 _LITERAL = r'"((?:[^"\\]|\\.)*)"'
 _LITERAL_NC = r'"(?:[^"\\]|\\.)*"'
+
+# Literal in *source*, where Python and the Django template language both accept
+# either quote style. Kept separate from the `.po` pair above rather than
+# widening it, which is what the 2026-08-26 blind spot came down to: every
+# `_SOURCE_PATTERNS` entry was built on the `.po` literal, so
+# `{% translate 'Text' %}` was invisible to the whole file. Seventy-two of those
+# existed in the templates at the time -- typically inside an HTML attribute,
+# where double quotes would have to be escaped by eye -- and each one could be
+# missing from the catalog, render in English inside the Spanish interface, and
+# fail nothing.
+_SRC_LITERAL_NC = r"(?:\"(?:[^\"\\]|\\.)*\"|'(?:[^'\\]|\\.)*')"
+# Two capture groups, one per quote style: exactly one matches, and `_literals`
+# below picks whichever it is. An alternation with a backreference would need
+# only one group but reads like a puzzle for no gain.
+_SRC_LITERAL = r"\"((?:[^\"\\]|\\.)*)\"|'((?:[^'\\]|\\.)*)'"
 
 # Strings marked for translation in Python and in templates. The Python pattern
 # takes one or more adjacent literals, because a long message is usually split
@@ -39,20 +58,45 @@ _LITERAL_NC = r'"(?:[^"\\]|\\.)*"'
 # The leading `\b` on the plain pattern is what keeps it from matching inside
 # `pgettext_lazy` in the first place.
 _SOURCE_PATTERNS = [
-    re.compile(r"\b(?:_|gettext|gettext_lazy)\(\s*((?:" + _LITERAL_NC + r"\s*)+)"),
+    re.compile(r"\b(?:_|gettext|gettext_lazy)\(\s*((?:" + _SRC_LITERAL_NC + r"\s*)+)"),
     re.compile(
         r"\bpgettext(?:_lazy)?\(\s*"
-        + _LITERAL_NC
+        + _SRC_LITERAL_NC
         + r"\s*,\s*((?:"
-        + _LITERAL_NC
+        + _SRC_LITERAL_NC
         + r"\s*)+)"
     ),
-    re.compile(r"\{%\s*(?:translate|trans)\s+(" + _LITERAL_NC + r")"),
+    re.compile(r"\{%\s*(?:translate|trans)\s+(" + _SRC_LITERAL_NC + r")"),
 ]
 
 
 def _unescape(value):
-    return value.replace('\\"', '"').replace("\\\\", "\\")
+    # `\'` is source-only: a `.po` never needs it, since it quotes with `"`.
+    return value.replace('\\"', '"').replace("\\'", "'").replace("\\\\", "\\")
+
+
+def _literals(text):
+    """Every string literal in `text`, either quote style, unescaped.
+
+    Adjacent literals are returned in order so the caller can join them, which
+    is what Python does with `_("a" "b")` before gettext ever sees it.
+    """
+    return [
+        _unescape(double or single) for double, single in re.findall(_SRC_LITERAL, text)
+    ]
+
+
+def _marked_literals(content):
+    """The literals `content` asks gettext to translate, with their offsets.
+
+    Split out of `_source_strings` so the guard-of-the-guard below can drive the
+    **same** scan over a handful of one-line fixtures. Asserting on a copy of
+    this loop would let the copy stay right while this one drifted, which is the
+    shape of the bug it exists to prevent.
+    """
+    for pattern in _SOURCE_PATTERNS:
+        for match in pattern.finditer(content):
+            yield match.start(), "".join(_literals(match.group(1)))
 
 
 def _entries():
@@ -91,17 +135,95 @@ def _source_strings():
         if "migrations" in path.parts or path.name.startswith("test"):
             continue
         content = path.read_text(encoding="utf-8", errors="replace")
-        for pattern in _SOURCE_PATTERNS:
-            for match in pattern.finditer(content):
-                literal = _unescape("".join(re.findall(_LITERAL, match.group(1))))
-                line = content.count("\n", 0, match.start()) + 1
-                found.setdefault(literal, f"{path.relative_to(root).as_posix()}:{line}")
+        for offset, literal in _marked_literals(content):
+            line = content.count("\n", 0, offset) + 1
+            found.setdefault(literal, f"{path.relative_to(root).as_posix()}:{line}")
     return found
 
 
 @pytest.fixture(scope="module")
 def catalog():
     return list(_entries())
+
+
+@pytest.mark.parametrize(
+    "source, expected",
+    [
+        # Las cuatro formas, con las dos comillas cada una. Las de comillas
+        # simples son las que el guardián no veía hasta el 2026-08-26.
+        ('{% translate "Double in a template" %}', "Double in a template"),
+        ("{% translate 'Single in a template' %}", "Single in a template"),
+        ('{% trans "Old double form" %}', "Old double form"),
+        ("{% trans 'Old single form' %}", "Old single form"),
+        ('_("Double in python")', "Double in python"),
+        ("_('Single in python')", "Single in python"),
+        ('gettext_lazy("Lazy double")', "Lazy double"),
+        ("gettext_lazy('Lazy single')", "Lazy single"),
+        ('pgettext("context", "Double after a context")', "Double after a context"),
+        ("pgettext('context', 'Single after a context')", "Single after a context"),
+        # Literales adyacentes: Python los une antes de que gettext los vea, y
+        # un mensaje largo casi siempre viene partido en varias líneas.
+        ('_("first half " "second half")', "first half second half"),
+        ("_('first half ' 'second half')", "first half second half"),
+        # Comillas escapadas dentro del literal, cada una en su propia forma.
+        (r'_("she said \"hi\"")', 'she said "hi"'),
+        (r"_('it\'s here')", "it's here"),
+        # El caso que motivó el patrón propio de `pgettext`: el contexto NO es
+        # una cadena traducible, y leerlo lo reportaría como msgid ausente.
+        ("{% translate 'X' context 'eyebrow' %}", "X"),
+    ],
+)
+def test_both_quote_styles_are_scanned(source, expected):
+    """El guardián del guardián.
+
+    Todo `_SOURCE_PATTERNS` estaba construido sobre el literal del `.po`, que
+    sólo acepta comillas dobles, así que `{% translate 'Texto' %}` era invisible
+    para el archivo entero: podía faltar del catálogo, salir en inglés dentro de
+    una interfaz en español, y no fallar nada. Había 72 formas así en las
+    plantillas el día que se encontró.
+
+    Se afirma sobre `_marked_literals`, que es **el mismo** escaneo que usa
+    `_source_strings` -- una copia de ese bucle acá podría quedar bien mientras
+    el original se desviaba, que es justo la forma del defecto que este test
+    existe para impedir.
+    """
+    found = [literal for _offset, literal in _marked_literals(source)]
+
+    assert expected in found, f"{source!r} no fue escaneado"
+
+
+def test_every_single_quoted_translate_in_the_tree_is_scanned():
+    """La otra mitad: que lo que hay **de verdad** en el árbol esté cubierto.
+
+    La expectativa se deriva del árbol y no de una lista escrita a mano, así que
+    no se queda vieja cuando alguien agrega una forma con comillas simples. El
+    `assert expected` de arriba es lo que evita que el test pase en verde el día
+    que un refactor deje cero: sin él, "todo lo esperado está cubierto" sería
+    cierto sobre un conjunto vacío.
+    """
+    root = Path(settings.BASE_DIR)
+    single_quoted = re.compile(r"\{%\s*(?:translate|trans)\s+'((?:[^'\\]|\\.)*)'")
+    expected = set()
+    for path in (root / "templates").rglob("*.html"):
+        expected.update(
+            _unescape(literal)
+            for literal in single_quoted.findall(
+                path.read_text(encoding="utf-8", errors="replace")
+            )
+        )
+
+    assert expected, "no hay formas con comillas simples: este test ya no vigila nada"
+    assert expected <= set(_source_strings())
+
+
+def test_the_catalog_side_still_only_accepts_double_quotes():
+    """El lado del `.po` **no** se ensanchó, y eso es deliberado: gettext quota
+    con `"` y nada más, así que aceptar `'...'` acá haría que el parser del
+    catálogo tragara un archivo que gettext rechaza."""
+    assert "'" not in _LITERAL
+    assert "'" not in _LITERAL_NC
+    assert re.fullmatch(_LITERAL_NC, '"texto"')
+    assert not re.fullmatch(_LITERAL_NC, "'texto'")
 
 
 def test_catalog_has_no_duplicate_msgids(catalog):

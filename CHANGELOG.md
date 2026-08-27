@@ -99,6 +99,15 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **El guardián de i18n no veía las comillas simples (`LV-160`).** Los dos tests
+  que existen para que ninguna cadena salga en inglés dentro de la interfaz en
+  español sólo miraban literales entre comillas **dobles**, así que las 72 formas
+  `{% translate 'Texto' %}` que hay en las plantillas —casi todas dentro de un
+  atributo HTML— podían faltar del catálogo sin que nada fallara. Ensanchado el
+  escaneo del lado del código, dejando el del `.po` como estaba (gettext quota
+  con `"` y nada más). **Resultado: cero cadenas ausentes** — ya estaban todas,
+  lo que faltaba era poder comprobarlo. Con un guardián del guardián de 16 casos
+  para que el arreglo no pueda regresar en silencio.
 - **Un test de baterías fallaba todas las noches desde `R7.2`.** Comparaba la
   fecha de sincronización en UTC contra lo que la plantilla renderiza en hora de
   Santiago, así que entre las 20:00 y la medianoche eran dos días distintos.
