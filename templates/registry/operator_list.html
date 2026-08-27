@@ -5,17 +5,34 @@
 
 {% block list_table_class %}table-normalized{% endblock %}
 
+{% comment %}LV-162 (pedido del usuario con captura, 2026-08-27): el reparto
+estaba al revés de lo que pide el contenido. `col-flex` existe para absorber el
+sobrante y se le había dado al dato **más corto** —el código de la faena, cinco
+caracteres— así que absorbió el sobrante más chico: 93 px medidos, para un
+encabezado de 125. De ahí que "CENTRO DE COSTO" se saliera encima de
+"HABILITACIONES". Y al revés: "Vence credencial", que es una fecha, se quedaba
+con 281 px, y la habilitación —texto libre de la DGAC, lo único que de verdad
+necesita ancho— se truncaba con los mismos 281.
+
+Ahora cada columna pide lo que su dato mide y **la de texto libre es la que
+absorbe el sobrante**, que es para lo que `col-flex` está en el sistema. Medido
+en el navegador: la habilitación pasa de 281 a 436 px.{% endcomment %}
 {% block list_colgroup %}
 <colgroup>
   <col class="col-primary">
-  <col class="col-compact">
-  <col class="col-text">
-  {% comment %}LV-87: el respaldo adjunto es su propia columna.{% endcomment %}
+  {% comment %}Un número de cuatro o cinco dígitos.{% endcomment %}
+  <col class="col-numeric">
+  {% comment %}Una fecha dentro de una insignia; no crece.{% endcomment %}
   <col class="col-status">
+  {% comment %}LV-87: el respaldo adjunto es su propia columna, y su dato es un
+  icono centrado -- de ahí `col-icon` y no `col-status`.{% endcomment %}
+  <col class="col-icon">
+  {% comment %}El código de la faena, o "Sin asignar".{% endcomment %}
+  <col class="col-compact">
+  {% comment %}LV-152: la habilitación pasa de insignia a texto libre, así que es
+  la columna que necesita ancho -- y por eso es la que absorbe el sobrante.
+  {% endcomment %}
   <col class="col-flex">
-  {% comment %}LV-152: la habilitación pasa de insignia a texto, así que la
-  columna deja de ser de estado y necesita ancho para leerse.{% endcomment %}
-  <col class="col-text">
   <col class="col-actions">
 </colgroup>
 {% endblock %}

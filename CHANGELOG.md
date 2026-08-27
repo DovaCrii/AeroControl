@@ -99,6 +99,14 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **En Operadores el encabezado "Centro de costo" se salía encima de
+  "Habilitaciones" (`LV-162`).** La columna que absorbe el sobrante se le había
+  dado al dato más corto —el código de la faena— así que se quedó con 93 px para
+  un rótulo de 125, mientras la habilitación, que es texto libre de la DGAC, se
+  truncaba en cuatro de cada diez filas. Ahora cada columna pide lo que su dato
+  mide y la de texto libre absorbe el sobrante: pasa de 281 a 436 px. Además el
+  encabezado de estas tablas envuelve en vez de desbordar, así que la colisión no
+  vuelve al angostar la ventana. Requiere `collectstatic` al desplegar.
 - **El catastro decía "1 aeronaves" (`LV-161`).** Lo encontró el padrón real el
   día que se desplegó: la flota tiene exactamente una aeronave sin faena, y los
   fixtures de los tests tenían dos o tres de cada cosa. Cada oración lleva dos
