@@ -45,19 +45,33 @@ pantalla por pantalla y se cerraron seis filas (`LV-162` a `LV-167`).
 
 ### ⚠️ Estado exacto, y qué falta para desplegar
 
-- **`origin/main` = `b986828`**, con `pwsh scripts/verify.ps1` **verde**
-  (2167 tests, cobertura 96.85%) hasta `LV-166` inclusive.
-- **`LV-167` está en la rama `codex/catastro-vigencias`** (pusheada,
-  `2e7ebd5`), **terminada y con sus tests en verde** (516 de `registry` +
-  `core/test_translations` + el del membrete), pero **sin el gate completo y sin
-  mergear**. Es lo primero que hay que hacer: `git merge --no-ff`, gate, push.
-- **`p340` sigue en `9c4d063`.** Nada de esta sesión está desplegado. **El
-  usuario pidió expresamente terminar todo el lote antes de subir**, textual:
-  *"no le veo sentido subidas parciales, terminá los bloques, cerrás los commits
-  y mandamos a producción"*. Así que **no desplegar por partes.**
+- **`origin/main` = `0d19e94`** — el lote completo `LV-162`..`LV-167`, con
+  `LV-167` ya mergeado (`git merge --no-ff` de `codex/catastro-vigencias`) y
+  **`pwsh scripts/verify.ps1` verde sobre el merge**: 2170 tests, cobertura
+  96.86%, ruff, bandit y pip-audit sin hallazgos.
+- **`p340` sigue en `9c4d063`: falta desplegar.** El lote está pusheado pero no
+  servido. **Desde una sesión de agente no hay acceso a `p340`** (`ssh` responde
+  `Permission denied (publickey,password)`, verificado otra vez el 2026-08-27),
+  así que el bloque de abajo lo pega el usuario en su sesión SSH.
 - **Sin migraciones** en todo el lote. El paso extra al desplegar es
   **`collectstatic`**: cambian `static/css/app.css` y entra
-  `static/js/quiz-progress.js`.
+  `static/js/quiz-progress.js`. Sin él, con el `STORAGES` de `prod.py` toda
+  etiqueta `{% static %}` falla.
+
+```bash
+cd /opt/aerocontrol && git pull
+set -a; source <(sudo cat /etc/aerocontrol.env); set +a
+echo "settings=$DJANGO_SETTINGS_MODULE  db=$DB_PATH"   # debe decir config.settings.prod
+uv sync
+uv run python manage.py collectstatic --no-input
+sudo systemctl restart aerocontrol
+```
+
+Después del restart, las dos pantallas que conviene mirar con ojo crítico son
+las de `LV-165` (modo oscuro: **no se aclaró ningún gris**, se agregó el
+guardián que faltaba) y `LV-166` (el permiso ahora **omite** los campos que el
+plan no provee — el KMZ no trae altitud, y un plan multi-círculo no aporta
+coordenadas).
 
 ### Lo que se cerró, y en una línea cada una
 
