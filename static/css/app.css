@@ -1879,9 +1879,38 @@ a.admin-metric:hover { border-color: var(--ac-text-secondary); }
 .table-normalized .col-compact { width: 12%; }
 .table-normalized .col-numeric { width: 8%; }
 .table-normalized .col-status { width: 13%; }
+/* LV-162: una columna cuyo dato es UN icono centrado (el sí/no del respaldo
+   adjunto, LV-87). Estaba declarada .col-status, y 13% son 203 px para dibujar
+   una cruz de 14 px: ese ancho salía del sobrante de la columna de texto libre
+   de al lado, que es la que de verdad lo necesita. El encabezado sí es largo
+   ("Credencial adjunta") y por eso envuelve -- ver la regla de thead abajo. */
+.table-normalized .col-icon { width: 6%; }
 .table-normalized .col-flex,
 .table-normalized .col-chips { width: auto; }
 .table-normalized .col-actions { width: 110px; }
+
+/* LV-162: en una tabla de anchos fijos el encabezado envuelve en vez de
+   desbordar.
+
+   `.table th` fija `nowrap` a propósito y con dos razones escritas (un
+   encabezado de dos líneas junto a vecinos de una, y Bootstrap alineándolos
+   abajo mientras las celdas van al medio). La primera sigue valiendo; la
+   segunda ya no, porque `.table th` declara `vertical-align: middle` desde
+   entonces. Pero la premisa que cierra ese comentario -- "la tabla vive en
+   .table-responsive, así que un encabezado ancho scrollea en vez de romper el
+   layout" -- es cierta con reparto automático y **falsa acá**: con
+   `table-layout: fixed` el encabezado no ensancha la tabla, así que no
+   scrollea, se sale encima de la columna vecina. Es lo que el usuario reportó
+   el 2026-08-27 con "CENTRO DE COSTO" pisando "HABILITACIONES".
+
+   Y no alcanza con repartir bien los anchos: a 900 px (el `min-width` de esta
+   tabla) un 12% son 108 px y ese rótulo mide 125, así que la colisión volvería
+   en cuanto alguien angoste la ventana. Envolver convierte el peor caso en un
+   encabezado de dos líneas, que se lee. */
+.table-normalized thead th {
+  white-space: normal;
+  overflow-wrap: break-word;
+}
 
 /* IDENTIDAD: la línea 1 es el identificador con el que se habla del registro
    (código, matrícula, nombre) y no se parte; la línea 2 desambigua y trunca. */
