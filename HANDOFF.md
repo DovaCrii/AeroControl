@@ -45,11 +45,16 @@ pantalla por pantalla y se cerraron siete filas (`LV-162` a `LV-168`).
 
 ### Estado exacto
 
-- **`origin/main` = `8df7265`**, y **`p340` está en `8df7265`** ✅ — el lote
-  completo `LV-162`..`LV-168b` desplegado y verificado el 2026-08-27
-  (`systemctl status` en `active (running)`, `git log -1` coincidiendo con el
-  `main` pusheado). **`pwsh scripts/verify.ps1` verde**: 2182 tests, cobertura
-  96.87%, ruff, bandit y pip-audit sin hallazgos.
+- **`origin/main` = `0f18305`**, y **`p340` está en `0f18305`** ✅ — el lote
+  completo `LV-162`..`LV-169` desplegado y verificado el 2026-08-27
+  (`git log -1` coincidiendo con el `main` pusheado, `registry.0037` aplicada y
+  `showmigrations` en `[X]`). **`pwsh scripts/verify.ps1` verde**: 2199 tests,
+  cobertura 96.89%, ruff, bandit y pip-audit sin hallazgos.
+- **`LV-169` fue el primero del lote con migración**, y el `migrate` se saltó en
+  el primer intento —se fue del `echo` derecho al `collectstatic`— y se aplicó
+  después. No hubo daño porque `0037` no emite SQL, pero la lección es del
+  runbook: **cuando el lote trae migración, el `migrate` es un paso propio y hay
+  que verlo aplicar**, no darlo por incluido en la cadena de `&&`.
 - **Desde una sesión de agente no hay acceso a `p340`** (`ssh` responde
   `Permission denied (publickey,password)`, verificado otra vez ese día), así
   que el bloque de despliegue lo pega el usuario en su sesión SSH.
@@ -147,14 +152,13 @@ que volver a preguntarlas:
 2. **Tablero SIGO menos gris.** Mismo diagnóstico que `LV-163`: once cajas
    idénticas en peso y color. El valor tiene que ser lo fuerte, el rótulo lo
    quieto, y cada grupo con su acento. **No aclarar grises** — ver `LV-165`.
-3. **ID de empleado automático desde el RUT.** Decisión ya tomada y comunicada:
-   se rellena `RUT-<rut sin puntos ni guion>` **cuando hay RUT y el ID está en
-   blanco**, y queda editable si no hay RUT. **No** se hace el RUT obligatorio:
-   eso congelaría las fichas legadas duplicadas, la trampa que `LV-143` evitó a
-   propósito. Ojo: `employee_id` es la clave única por tenant y
-   `chapter1_docx_import` lo setea él mismo (no llama `full_clean`).
-   La segunda mitad del pedido —"el RUT directo en las tablas"— **ya está hecha**
-   en `LV-167`.
+3. ~~**ID de empleado automático desde el RUT.**~~ ✅ **Hecho y desplegado el
+   2026-08-27 (`LV-169`).** Quedó como estaba decidido, y con dos hallazgos que
+   valen para lo que sigue: la derivación se mudó a `apps/registry/rut.py`
+   **porque `chapter1_docx_import` armaba la suya**, y dos copias del mismo
+   formato terminan duplicando fichas en silencio; y el aviso de duplicado hubo
+   que hacerlo correr **sobre el valor derivado**, porque la unicidad por tenant
+   no la valida Django desde el formulario y el choque llegaba como 500.
 4. **Root archiva intentos de la prueba.** **No es un borrado**, y hay que
    decírselo al usuario otra vez si pregunta: `AGENTS.md` prohíbe borrar filas
    operativas, y encima un intento aprobado **alimenta el motor de
