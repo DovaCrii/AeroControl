@@ -41,8 +41,16 @@ Notificaciones a `Dirección`: `aortega@jej.cl` + `cmunoz@jej.cl`.
 ## Cierre del 2026-08-26 — **empezar por acá**
 
 `main` = `origin/main`, árbol limpio salvo `.vscode/` (sin versionar).
-`pwsh scripts/verify.ps1` verde: **2102 tests**, cobertura 96.83%, ruff, bandit y
-pip-audit sin hallazgos. De 1755 a 2102 tests en el día, en dos tandas.
+`pwsh scripts/verify.ps1` verde: **2114 tests**, cobertura 96.83%, ruff, bandit y
+pip-audit sin hallazgos. De 1755 a 2114 tests en el día, en dos tandas.
+
+Y el gate encontró un bug que llevaba meses escondido: `test_r72_batteries.py`
+comparaba una fecha en UTC contra lo que la plantilla renderiza en hora de
+Santiago, así que **fallaba entre las 20:00 y la medianoche** y pasaba el resto
+del día. Sobrevivió desde `R7.2` porque el gate rara vez corre en esa ventana; se
+arregló en su propio commit, comprobado en los dos sentidos. Si alguna vez el
+gate falla de noche en un test de fechas, es esta forma de defecto: comparar
+contra `timezone.now()` en vez de `timezone.localtime(...)`.
 
 ### ⚠️ Qué está desplegado y qué no
 
@@ -58,10 +66,10 @@ se construyeron encima). **Verificá contra la VM, nunca contra este párrafo.**
   2026-08-08 a **2027-08-24** (el caso que el usuario reportó) y `RPA-5532` de
   2027-08-04 a 2027-08-06.
 - **La segunda tanda está en `origin/main` y NO desplegada.** Son cuatro filas
-  (`LV-144`, `LV-145`, `LV-149`, `LV-150`) más el comando de `LV-119`, de
-  `2f71763` a `0391d7d`. **El usuario pidió expresamente confirmar antes de
-  mandar a operación**, así que el despliegue quedó esperando su visto bueno, no
-  olvidado.
+  (`LV-144`, `LV-145`, `LV-149`, `LV-150`), el comando de `LV-119` y el arreglo
+  del test de baterías, desde `2f71763`. **El usuario pidió expresamente
+  confirmar antes de mandar a operación**, así que el despliegue quedó esperando
+  su visto bueno, no olvidado.
 - **Sin migraciones en la segunda tanda.** El paso extra es **`collectstatic`**:
   entran `static/img/jej-logo-blue.png` (el logo del membrete) y
   `static/js/sigo-copy.js` (los botones de copiar). Sin él, en producción los
