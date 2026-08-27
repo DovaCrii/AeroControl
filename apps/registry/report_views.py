@@ -109,7 +109,7 @@ class CatastroReportView(CatastroMixin, TemplateView):
 class CatastroReportPdfView(CatastroMixin, View):
     def get(self, request):
         from django.utils.html import escape
-        from reportlab.platypus import Paragraph, Spacer, Table
+        from reportlab.platypus import PageBreak, Paragraph, Spacer, Table
 
         from apps.core import pdf as corepdf
 
@@ -160,7 +160,13 @@ class CatastroReportPdfView(CatastroMixin, View):
                 _("No aircraft registered."),
             )
         )
-        elements.append(Spacer(1, 18))
+        # LV-164 (pedido del usuario, 2026-08-27): el personal arranca en hoja
+        # nueva. Son dos padrones de cosas distintas, y en un documento que se
+        # entrega cada tabla se lee —y se fotocopia, y se firma— por separado.
+        # El `keepWithNext` del estilo evita además que cualquiera de los dos
+        # títulos quede huérfano al pie; el salto es la decisión editorial, no
+        # el parche.
+        elements.append(PageBreak())
         elements.append(Paragraph(escape(str(_("Personnel"))), styles["Heading2"]))
         elements.append(
             table(
