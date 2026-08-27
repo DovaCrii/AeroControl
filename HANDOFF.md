@@ -38,7 +38,107 @@ Verificar: `systemctl list-timers 'aerocontrol-*' --no-pager`
 
 Notificaciones a `Dirección`: `aortega@jej.cl` + `cmunoz@jej.cl`.
 
-## Cierre del 2026-08-26 — **empezar por acá**
+## Cierre del 2026-08-27 — **empezar por acá**
+
+Sesión de revisión en vivo sobre la app desplegada: el usuario fue reportando
+pantalla por pantalla y se cerraron seis filas (`LV-162` a `LV-167`).
+
+### ⚠️ Estado exacto, y qué falta para desplegar
+
+- **`origin/main` = `b986828`**, con `pwsh scripts/verify.ps1` **verde**
+  (2167 tests, cobertura 96.85%) hasta `LV-166` inclusive.
+- **`LV-167` está en la rama `codex/catastro-vigencias`** (pusheada,
+  `2e7ebd5`), **terminada y con sus tests en verde** (516 de `registry` +
+  `core/test_translations` + el del membrete), pero **sin el gate completo y sin
+  mergear**. Es lo primero que hay que hacer: `git merge --no-ff`, gate, push.
+- **`p340` sigue en `9c4d063`.** Nada de esta sesión está desplegado. **El
+  usuario pidió expresamente terminar todo el lote antes de subir**, textual:
+  *"no le veo sentido subidas parciales, terminá los bloques, cerrás los commits
+  y mandamos a producción"*. Así que **no desplegar por partes.**
+- **Sin migraciones** en todo el lote. El paso extra al desplegar es
+  **`collectstatic`**: cambian `static/css/app.css` y entra
+  `static/js/quiz-progress.js`.
+
+### Lo que se cerró, y en una línea cada una
+
+`LV-162` el reparto de columnas de Operadores (la habilitación pasa de 281 a
+436 px medidos; el encabezado ya no pisa al vecino) · `LV-163` la prueba de
+conocimientos se lee (un solo elemento pesado por pregunta, opciones clicables,
+barra de avance) · `LV-164` el catastro corta bien las hojas y ningún encabezado
+queda huérfano en ningún PDF · `LV-165` el contraste de la paleta queda vigilado
+—**ya cumplía AA**, no se aclaró ningún gris— · `LV-166` el permiso deja de pedir
+lo que el plan provee · `LV-167` el catastro con las dos vigencias, en horizontal.
+
+### La cola que queda, con lo ya decidido
+
+En el orden que el usuario aprobó. **Las decisiones ya están tomadas**, no hay
+que volver a preguntarlas:
+
+1. **Navegación.** Partir *Padrón* (hoy nueve entradas de veinte) en *Padrón*
+   (faenas, aeronaves, operadores) e *Inventario y movimientos* (baterías,
+   asignaciones, movimientos). Un grupo **Informes** con el catastro y el reporte
+   juntos: el usuario los fue a buscar ahí y por eso los confundió. Grupos
+   colapsables con el estado recordado, barra más ancha (hoy 248 px corta
+   "Documentos de la empresa" y "Evaluación de conocimient…"), y `title` en lo
+   que igual se corte.
+2. **Tablero SIGO menos gris.** Mismo diagnóstico que `LV-163`: once cajas
+   idénticas en peso y color. El valor tiene que ser lo fuerte, el rótulo lo
+   quieto, y cada grupo con su acento. **No aclarar grises** — ver `LV-165`.
+3. **ID de empleado automático desde el RUT.** Decisión ya tomada y comunicada:
+   se rellena `RUT-<rut sin puntos ni guion>` **cuando hay RUT y el ID está en
+   blanco**, y queda editable si no hay RUT. **No** se hace el RUT obligatorio:
+   eso congelaría las fichas legadas duplicadas, la trampa que `LV-143` evitó a
+   propósito. Ojo: `employee_id` es la clave única por tenant y
+   `chapter1_docx_import` lo setea él mismo (no llama `full_clean`).
+   La segunda mitad del pedido —"el RUT directo en las tablas"— **ya está hecha**
+   en `LV-167`.
+4. **Root archiva intentos de la prueba.** **No es un borrado**, y hay que
+   decírselo al usuario otra vez si pregunta: `AGENTS.md` prohíbe borrar filas
+   operativas, y encima un intento aprobado **alimenta el motor de
+   vencimientos**, así que borrar el último aprobado le cambia el estado de
+   cumplimiento a esa persona sin dejar rastro. Va archivado (`is_active`, que
+   `BaseModel` ya trae), con auditoría y visible. Falta la pantalla y el permiso.
+5. **«Geo source» a un nombre en español.** Sugerido: **"Archivo KMZ/KML de
+   origen"**. Ojo con dos cosas: el `name` se fija sólo en los `defaults` del
+   `get_or_create` (`apps/geo/views.py:454`), así que **hace falta una migración
+   de datos** para renombrar la fila que ya existe en producción; y el **código**
+   es `GEO_SOURCE` (no `geo-source`) y **no conviene cambiarlo** — el usuario ve
+   el nombre, y el código lo referencian otras partes. `test_lv149_...:117` usa
+   `geo-source` por error y conviene alinearlo.
+6. **Clima de Casa Matriz como opción base del selector.** Ya está el
+   reconocimiento hecho: `_weather_candidates` devuelve `(permits, sites)` y
+   `_resolve_weather_choice` mapea `kind ∈ {permission, cost_center}` buscando
+   **dentro de las listas ya cargadas** (nunca un `get()` fresco, ver `LV-147`).
+   Para la casa matriz hace falta un tercer `kind` = `"hq"` que se resuelve
+   **sin registro**: hay que interceptarlo **antes** de la guarda del `":"`, con
+   valor `"hq"` a secas. Las coordenadas van en `apps/core/branding.py` junto al
+   resto de la identidad, **rotuladas como aproximadas y sólo para el
+   pronóstico** — ninguna decisión aeronáutica las lee. Es la única opción del
+   selector que no necesita permiso, porque no revela ningún registro.
+
+### Dos preguntas del usuario que quedaron contestadas, para no reabrirlas
+
+- **Catastro y Reporte se quedan separados.** Responden preguntas distintas: el
+  reporte es una foto de un **período** con comparación y tendencia ("¿están
+  vigentes mis papeles?"), el catastro una foto a una **fecha de corte** sin
+  período ("¿qué tengo inscrito?"). La prueba: el catastro no tiene sentido con
+  un rango de fechas y el reporte no tiene sentido sin él. Lo que sí había que
+  arreglar era el **nombre** que lo mandó al lugar equivocado, y eso lo resuelve
+  el grupo *Informes* del punto 1.
+- **Los grises del modo oscuro no se tocan.** Ver `LV-165`: la paleta cumple AA
+  con holgura y hay tests que lo vigilan. Lo que se percibe como "apagado" es
+  falta de jerarquía y color.
+
+### Una trampa nueva de este entorno, ya escrita en el código
+
+**El panel de navegador congela las transiciones CSS.** Costó una persecución en
+`LV-163`: el estado de una opción elegida no se pintaba y se culpó a `:has()`,
+que no tenía nada malo. Con `transition: none` los dos selectores dan el valor
+correcto. Está escrito en `static/css/app.css`, junto a `.quiz-option`. **Si un
+estado no se pinta al verificar ahí, sospechar de la transición antes que del
+selector.**
+
+## Cierre del 2026-08-26
 
 `main` = `origin/main`, árbol limpio salvo `.vscode/` (sin versionar).
 `pwsh scripts/verify.ps1` verde: **2114 tests**, cobertura 96.83%, ruff, bandit y
