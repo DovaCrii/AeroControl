@@ -99,6 +99,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **En el catastro el personal arranca en hoja nueva (`LV-164`).** Flota y
+  personal son dos padrones de cosas distintas, y en un documento que se entrega
+  cada tabla se lee y se firma por separado. Y de paso lo que estaba mal de
+  verdad: **ningún encabezado de sección puede quedar huérfano** al pie de una
+  hoja con su tabla en la siguiente. Eso vale para los dos informes en PDF, no
+  sólo para el catastro — un salto de página puesto a mano acierta con las filas
+  de hoy y vuelve a fallar mañana.
 - **La prueba de conocimientos se lee (`LV-163`).** Se veía plana porque **todo
   pesaba igual**: la pregunta y las cuatro opciones en negrita, en mayúsculas y a
   todo el ancho de la pantalla. Ahora el único elemento pesado es el número de
