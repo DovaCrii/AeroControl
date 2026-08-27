@@ -21,9 +21,27 @@ Las propiedades que estos tests sostienen, y por qué cada una:
   rendidos también se benefician.
 """
 
+import re
+from pathlib import Path
+
+from django.conf import settings
 from django.template import Context, Template
 
 from apps.registry import assessments
+
+CSS = Path(settings.BASE_DIR) / "static" / "css" / "app.css"
+TAKE = Path(settings.BASE_DIR) / "templates" / "registry" / "assessment_take.html"
+
+
+def _rule(selector):
+    """El cuerpo de una regla de `app.css`, por selector exacto."""
+    match = re.search(
+        r"(?<![\w.-])" + re.escape(selector) + r"\s*\{(.*?)\}",
+        CSS.read_text("utf-8"),
+        re.DOTALL,
+    )
+    return match.group(1) if match else ""
+
 
 CODIGO_AERONAUTICO = (
     "MENCIONE LAS SANCIONES ESTABLECIDAS EN EL CÓDIGO AERONÁUTICO, ART 185. "
@@ -113,3 +131,37 @@ def test_the_filter_leaves_a_plain_question_as_one_element():
     ).render(Context({"text": text}))
 
     assert rendered.count('<span class="quiz-text-line">') == 1
+
+
+# LV-168b: el enunciado se salía del recuadro. Un `<legend>` sin flotar es el
+# "rendered legend" del navegador — se monta sobre el borde superior del
+# `<fieldset>`, ignora su relleno y borra el borde por detrás. Medido en el
+# navegador: sin flotar el enunciado arranca a **0 px** del borde de la caja;
+# flotado, a los **21** que le corresponden (1 de borde + 20 de relleno). Con una
+# línea apenas se notaba; con las seis de una pregunta enumerada la pregunta se
+# ve suelta, fuera de su tarjeta. Estos dos tests son el guardián: el arreglo son
+# dos piezas que sólo funcionan juntas, y separarlas devuelve el defecto.
+
+
+def test_the_question_legend_keeps_floating_so_it_stays_inside_the_card():
+    rule = _rule(".quiz-question")
+
+    assert "float: left" in rule, (
+        "un legend sin flotar se monta sobre el borde del fieldset y deja el "
+        "enunciado fuera del recuadro: ver LV-168b"
+    )
+    assert "float: none" not in rule
+
+
+def test_the_flex_lives_in_the_inner_row_and_not_in_the_legend():
+    """El flex del número va adentro; en el `<legend>` obliga a quitar el float."""
+    assert "display: flex" in _rule(".quiz-question-row")
+    assert "display: block" in _rule(".quiz-question")
+
+
+def test_the_take_template_wraps_the_question_in_that_inner_row():
+    markup = TAKE.read_text("utf-8")
+
+    row = markup.index('<span class="quiz-question-row">')
+    assert row < markup.index('<span class="quiz-number"')
+    assert row < markup.index('<span class="quiz-text">')

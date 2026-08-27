@@ -56,9 +56,15 @@ que leerlas enteras para encontrar el 80%.{% endcomment %}
   {% csrf_token %}
   {% for question in questions %}
   <fieldset class="card quiz-card mb-3" id="q-{{ forloop.counter }}">
+    {% comment %}El envoltorio `quiz-question-row` no es decorativo: el flex va
+    ahí y no en el `<legend>`, porque un legend sin flotar se monta sobre el
+    borde del fieldset y deja el enunciado fuera del recuadro. Ver el comentario
+    de `app.css` (LV-168b), con la medición.{% endcomment %}
     <legend class="quiz-question">
-      <span class="quiz-number" aria-hidden="true">{{ forloop.counter }}</span>
-      <span class="quiz-text">{% for line in question.text|enumerated_lines %}<span class="quiz-text-line">{{ line }}</span>{% endfor %}</span>
+      <span class="quiz-question-row">
+        <span class="quiz-number" aria-hidden="true">{{ forloop.counter }}</span>
+        <span class="quiz-text">{% for line in question.text|enumerated_lines %}<span class="quiz-text-line">{{ line }}</span>{% endfor %}</span>
+      </span>
     </legend>
     <div class="quiz-options">
       {% for option in question.options %}

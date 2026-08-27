@@ -1993,15 +1993,32 @@ a.admin-metric:hover { border-color: var(--ac-text-secondary); }
 
 /* El número es el ÚNICO elemento pesado de la pregunta. Antes lo eran el número,
    el enunciado y las cuatro opciones a la vez. */
+/* LV-168b: el `float` de Bootstrap se **conserva**, y es lo que mete el
+   enunciado dentro de la tarjeta. Un `<legend>` sin flotar es el "rendered
+   legend" del navegador: se monta sobre el borde superior del `<fieldset>`,
+   ignora su relleno y borra el borde por detrás. Medido: sin flotar el
+   enunciado arranca a 0 px del borde de la caja; flotado, a los 21 px que le
+   corresponden (1 de borde + 20 de relleno). Con una o dos líneas apenas se
+   notaba; con las seis de una pregunta enumerada la pregunta se ve suelta,
+   fuera del recuadro. `LV-163` había puesto `float: none` para que el flex del
+   número anduviera: la salida no era quitar el float sino mudar el flex a
+   `.quiz-question-row`, adentro. */
 .quiz-question {
+  display: block;
+  float: left;
+  width: 100%;
+  /* 2.25rem y no 1rem: el hueco hasta las opciones medía 36 px en la pantalla
+     que se aprobó, y 20 de esos los ponía el propio defecto del rendered
+     legend. Al corregirlo, un `1rem` literal habría apretado la pregunta
+     contra sus opciones sin que nadie lo pidiera. */
+  margin-bottom: 2.25rem;
+  padding: 0;
+  font-size: 1rem;
+}
+.quiz-question-row {
   display: flex;
   gap: 0.9rem;
   align-items: baseline;
-  float: none; /* Bootstrap pone float:left en <legend> y rompe el flex */
-  width: auto;
-  margin-bottom: 1rem;
-  padding: 0;
-  font-size: 1rem;
 }
 .quiz-number {
   flex: 0 0 auto;
