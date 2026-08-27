@@ -111,8 +111,33 @@ class FlightPermissionForm(AeroModelForm):
             "aircraft_fleet": forms.CheckboxSelectMultiple,
         }
 
-    def __init__(self, *args, user=None, **kwargs):
+    # LV-166: los campos de ubicación que un plan geoespacial **provee de
+    # verdad**. Salen de `link_to_permission` (`operations/views.py`), que es la
+    # única fuente: latitud, longitud, radio, nombre del área, comuna y región.
+    #
+    # `max_altitude_ft` NO está en la lista y eso es el punto: el KMZ no trae
+    # altitud, así que esconderlo lo dejaría sin ninguna forma de cargarse. Y
+    # `location` tampoco -- es el texto libre obligatorio, y el usuario no lo
+    # pidió. Una lista escrita de memoria en vez de leída de quien rellena es
+    # cómo se esconde un campo que nada llena.
+    PLAN_PROVIDED_FIELDS = (
+        "region",
+        "commune",
+        "area_name",
+        "latitude",
+        "longitude",
+        "radius_km",
+    )
+
+    def __init__(self, *args, user=None, manual_location=False, **kwargs):
         super().__init__(*args, **kwargs)
+        # Siempre presentes para que la plantilla no tenga que preguntar si
+        # existen: sin plan vinculado quedan vacíos y el formulario es el de
+        # antes, campo por campo.
+        self.plan_providing_location = None
+        self.hidden_plan_fields = []
+        if not manual_location:
+            self._hide_what_the_plan_provides()
         # LV-153: sólo los planes que no están ya vinculados a otro permiso --
         # reasignar un plan es un movimiento distinto y tiene su propia puerta en
         # la ficha (`R10.2`). Y sólo con `geo.change_geoplan`, porque vincular
@@ -167,6 +192,45 @@ class FlightPermissionForm(AeroModelForm):
             ),
             "aircraft_fleet",
         ).order_by("registration")
+
+    def _hide_what_the_plan_provides(self):
+        """Sacar del formulario los datos de ubicación que ya vienen del plan.
+
+        LV-166, pedido del usuario: *"en el permiso de vuelo quitar región,
+        comuna, nombre, latitud, longitud, radio, altitud; toda información la
+        debe sacar sí o sí al momento de vincular el plan de vuelo, así
+        ahorramos espacio y mejoramos el permiso"*.
+
+        **Se esconde un campo sólo si el permiso ya tiene ese valor**, y no por
+        estar en una lista. Suena más tímido y es lo contrario: una lista fija
+        habría escondido casillas que nada rellena, y hay dos casos reales donde
+        eso pasa. Un plan con **varias** circunferencias no rellena coordenadas
+        —elegir una sería inventar cuál manda, ver `link_to_permission`— y la
+        altitud máxima no está en ningún KMZ. Con la regla atada al valor, esos
+        campos siguen a la vista porque siguen haciendo falta.
+
+        En el **alta** nunca actúa: no hay `pk`, y el plan se elige en el mismo
+        formulario, así que todavía no hay nada de dónde sacar el dato. Es la
+        pantalla de edición la que se limpia, que es donde el usuario los estaba
+        viendo de más.
+
+        Lo escondido **no se pierde de vista**: la ficha ya muestra los siete
+        datos, y ahora dice de qué plan salieron. Y queda la puerta para el papel
+        de la DGAC (`?ubicacion=manual`), que es la razón por la que
+        `fill_location_gaps` rellena sin pisar: una resolución puede traer otra
+        coordenada, y tiene más autoridad que lo que se preparó antes.
+        """
+        if not self.instance.pk:
+            return
+        plan = self.instance.geo_plans.filter(is_active=True).first()
+        if plan is None:
+            return
+        self.plan_providing_location = plan
+        for name in self.PLAN_PROVIDED_FIELDS:
+            value = getattr(self.instance, name, None)
+            if name in self.fields and value not in (None, ""):
+                del self.fields[name]
+                self.hidden_plan_fields.append(name)
 
     def _roster(self, queryset, field_name):
         """`queryset`, más lo que este permiso ya tiene elegido en ese campo."""

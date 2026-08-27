@@ -291,6 +291,15 @@ class FlightPermissionUpdate(
     def get_success_url(self):
         return reverse("permission-list")
 
+    def get_form_kwargs(self):
+        # LV-166: `?ubicacion=manual` devuelve las casillas de ubicación que el
+        # plan provee. Es la puerta para el papel de la DGAC, que es de más
+        # autoridad que lo que se preparó antes de presentar -- la misma razón
+        # por la que `fill_location_gaps` rellena sin pisar.
+        kwargs = super().get_form_kwargs()
+        kwargs["manual_location"] = self.request.GET.get("ubicacion") == "manual"
+        return kwargs
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = _("Edit %(record)s") % {

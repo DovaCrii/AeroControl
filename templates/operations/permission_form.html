@@ -58,12 +58,29 @@ cada cosa.{% endcomment %}
       {% endcomment %}
       {% if "source_plan" in form.fields %}{{ form.source_plan|as_crispy_field }}{% endif %}
       {{ form.location|as_crispy_field }}
-      {{ form.region|as_crispy_field }}
-      {{ form.commune|as_crispy_field }}
-      {{ form.area_name|as_crispy_field }}
-      {{ form.latitude|as_crispy_field }}
-      {{ form.longitude|as_crispy_field }}
-      {{ form.radius_km|as_crispy_field }}
+      {% comment %}LV-166: lo que el plan provee no se vuelve a pedir. El
+      formulario dice **qué** se sacó y **de dónde**, porque una casilla que
+      desaparece sin explicación se lee como un campo que falta. El enlace es la
+      puerta para el papel de la DGAC: una resolución puede traer otra coordenada
+      y tiene más autoridad que lo que se preparó antes de presentar, que es la
+      misma razón por la que `fill_location_gaps` rellena sin pisar.{% endcomment %}
+      {% if form.hidden_plan_fields %}
+      <div class="alert alert-light border d-flex flex-wrap gap-2 justify-content-between align-items-center">
+        <span>{% blocktranslate with folio=form.plan_providing_location.folio count counter=form.hidden_plan_fields|length %}{{ counter }} location box comes from the plan {{ folio }} and is not asked again.{% plural %}{{ counter }} location boxes come from the plan {{ folio }} and are not asked again.{% endblocktranslate %}</span>
+        <a class="btn btn-sm btn-outline-secondary" href="?ubicacion=manual">{% translate "Adjust to the DGAC resolution" %}</a>
+      </div>
+      {% endif %}
+      {% comment %}Uno por uno y con su guarda, igual que `source_plan` arriba:
+      `{{ form.region }}` sobre un campo que se borró no falla, resuelve a cadena
+      vacía y `as_crispy_field` recibe basura. El bucle con un filtro propio sería
+      más corto y agregaría dos filtros al proyecto para ahorrar cinco líneas.
+      {% endcomment %}
+      {% if "region" in form.fields %}{{ form.region|as_crispy_field }}{% endif %}
+      {% if "commune" in form.fields %}{{ form.commune|as_crispy_field }}{% endif %}
+      {% if "area_name" in form.fields %}{{ form.area_name|as_crispy_field }}{% endif %}
+      {% if "latitude" in form.fields %}{{ form.latitude|as_crispy_field }}{% endif %}
+      {% if "longitude" in form.fields %}{{ form.longitude|as_crispy_field }}{% endif %}
+      {% if "radius_km" in form.fields %}{{ form.radius_km|as_crispy_field }}{% endif %}
       {{ form.max_altitude_ft|as_crispy_field }}
       {{ form.area_type|as_crispy_field }}
     </fieldset>
