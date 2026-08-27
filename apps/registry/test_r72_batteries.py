@@ -75,7 +75,15 @@ class TestProvenance:
         # The synced row shows its timestamp; the never-synced one falls back to
         # its source label. Compared against what Django itself renders, so the
         # assertion does not depend on the translation being in place.
-        assert synced_at.strftime("%Y-%m-%d") in content
+        #
+        # `localtime`, not the raw UTC value: with USE_TZ the template renders
+        # the date in the project timezone, so between 20:00 and 24:00 in
+        # Santiago (UTC-4) `timezone.now()` is already tomorrow in UTC and this
+        # assertion compared two different days. It is the same four-hour window
+        # `apps/compliance/test_reports.py` documents at the top of the file --
+        # this test was written the other way and only failed after 20:00, which
+        # is why it survived since R7.2.
+        assert timezone.localtime(synced_at).strftime("%Y-%m-%d") in content
         assert str(never.get_source_display()) in content
 
 
