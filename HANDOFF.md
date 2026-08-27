@@ -45,10 +45,10 @@ pantalla por pantalla y se cerraron siete filas (`LV-162` a `LV-168`).
 
 ### Estado exacto
 
-- **`origin/main` = `37564d1`**, y **`p340` está en `37564d1`** ✅ — el lote
-  completo `LV-162`..`LV-168` desplegado y verificado el 2026-08-27
+- **`origin/main` = `8df7265`**, y **`p340` está en `8df7265`** ✅ — el lote
+  completo `LV-162`..`LV-168b` desplegado y verificado el 2026-08-27
   (`systemctl status` en `active (running)`, `git log -1` coincidiendo con el
-  `main` pusheado). **`pwsh scripts/verify.ps1` verde**: 2179 tests, cobertura
+  `main` pusheado). **`pwsh scripts/verify.ps1` verde**: 2182 tests, cobertura
   96.87%, ruff, bandit y pip-audit sin hallazgos.
 - **Desde una sesión de agente no hay acceso a `p340`** (`ssh` responde
   `Permission denied (publickey,password)`, verificado otra vez ese día), así
@@ -59,6 +59,15 @@ pantalla por pantalla y se cerraron siete filas (`LV-162` a `LV-168`).
   que preguntan "SÓLO I Y II" contra "SÓLO II Y III". Vale como aviso: una
   normalización de texto que "no cambia ninguna palabra" **sí puede cambiar
   dónde corta el renglón**, y eso en una pregunta de examen es contenido.
+- **`LV-168b` salió de ahí mismo**: cortar los ítems destapó que el enunciado se
+  dibujaba **fuera** de su tarjeta, porque un `<legend>` sin flotar se monta
+  sobre el borde del `<fieldset>`. Vale como método más que como arreglo: la
+  duda se cerró **midiendo en el navegador** (0 px contra 21 de sangría
+  superior), después de que una lectura a ojo de una captura me hiciera afirmar
+  primero que el borde cruzaba el texto —lo que era falso— y antes negar que
+  hubiera un problema —lo que también era falso—. Para medir así, `.claude/launch.json`
+  admite un servidor estático temporal sobre la raíz del repo; el panel del
+  navegador **no ejecuta JS sobre `file://`**, sólo sobre `http://`.
 - **⚠️ `p340` estaba en HEAD desprendido en `9c4d063`, y por eso las tandas del
   2026-08-26 y del 2026-08-27 nunca se habían desplegado.** Un rollback viejo
   (`git checkout <commit>`) dejó la VM sin rama: `git pull` fallaba con *"You are
