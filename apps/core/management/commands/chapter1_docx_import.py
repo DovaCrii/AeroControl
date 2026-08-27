@@ -12,6 +12,7 @@ from docx import Document
 
 from apps.core.models import ImportBatch
 from apps.registry.models import Aircraft, CostCenter, Operator
+from apps.registry.rut import employee_id_from_rut
 
 
 FIELD_LABELS = re.compile(
@@ -43,6 +44,14 @@ def clean_text(value):
 
 
 def rut_key(value):
+    """Sólo para **agrupar** fichas del documento por persona.
+
+    LV-169: el ID de empleado ya **no** se arma acá. Lo deriva
+    `apps.registry.rut.employee_id_from_rut`, que es la misma función que usa el
+    formulario de alta: con dos derivaciones separadas, tocar una habría hecho
+    que este import dejara de reconocer las fichas dadas de alta por la app y las
+    duplicara en silencio.
+    """
     return re.sub(r"[^0-9K]", "", value.upper())
 
 
@@ -330,7 +339,7 @@ class Command(BaseCommand):
                 missing["aircraft"].append(row)
 
         for row in report["operators"]:
-            employee_id = f"RUT-{rut_key(row['rut'])}"
+            employee_id = employee_id_from_rut(row["rut"])
             if employee_id in existing_operators:
                 skipped.append(f"operator:{employee_id}")
             else:
@@ -374,7 +383,7 @@ class Command(BaseCommand):
                 rut = operator_data["rut"]
                 payload = {
                     **operator_data,
-                    "employee_id": f"RUT-{rut_key(rut)}",
+                    "employee_id": employee_id_from_rut(rut),
                     "notes": source_note,
                 }
                 payload.pop("source_index", None)

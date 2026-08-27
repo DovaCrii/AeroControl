@@ -24,7 +24,7 @@ from .models import (
     normalize_registration,
     normalize_serial,
 )
-from .rut import normalize_rut
+from .rut import employee_id_from_rut, normalize_rut, rut_is_valid
 
 
 class CostCenterForm(AeroModelForm):
@@ -404,6 +404,9 @@ class OperatorForm(AeroModelForm):
         # `help_text` de campo costaría una migración de metadatos por un texto
         # de interfaz.
         help_texts = {
+            "employee_id": _(
+                "Leave it blank and it is derived from the RUT, as RUT-123456785."
+            ),
             "rut": _("With its check digit, e.g. 12345678-5. Dots are optional."),
             "authorizations": _(
                 "Copy them exactly as the DGAC credential states them. They are "
@@ -435,6 +438,60 @@ class OperatorForm(AeroModelForm):
         super().__init__(*args, **kwargs)
         self.fields["user"].required = False
         self.fields["user"].queryset = get_user_model().objects.order_by("username")
+        # LV-169: deja de ser obligatorio en la pantalla porque `Operator.clean()`
+        # lo deriva del RUT. Sigue siendo obligatorio como dato: si no hay RUT
+        # válido del que sacarlo, el modelo lo exige igual.
+        self.fields["employee_id"].required = False
+
+    def clean(self):
+        """LV-169: el aviso de duplicado corre sobre el ID **derivado**.
+
+        Es la mitad que se puede pasar por alto. `Operator.clean()` deriva el ID
+        del RUT, pero la unicidad por tenant **no la valida Django desde acá**:
+        `tenant` no está en el formulario, así que omite la constraint entera
+        (ver `AeroModelForm.validate_constraints`). Sin este paso, un ID derivado
+        que choque con uno existente viajaba hasta el `INSERT` y devolvía un 500
+        sin decir de quién era el número — exactamente el 500 que `LV-142` fue a
+        arreglar para el ID escrito a mano.
+
+        Se deriva acá y no en `clean_employee_id` porque ahí el RUT todavía no
+        está limpio: Django corre los `clean_<campo>` en el orden de
+        `Meta.fields`, y `employee_id` va antes que `rut`.
+        """
+        cleaned = super().clean()
+        if cleaned.get("employee_id") or self.errors.get("rut"):
+            return cleaned
+        derived = employee_id_from_rut(cleaned.get("rut"))
+        if not derived or not rut_is_valid(cleaned.get("rut")):
+            return cleaned
+        error = self._duplicate_employee_id_error(derived)
+        if error is not None:
+            self.add_error("employee_id", error)
+        else:
+            cleaned["employee_id"] = derived
+        return cleaned
+
+    def _duplicate_employee_id_error(self, value):
+        """El aviso de ID repetido, o `None`. Lo comparten el escrito y el derivado."""
+        existing = operator_with_employee_id(
+            value, tenant_id=self.instance.tenant_id, exclude_pk=self.instance.pk
+        )
+        if existing is None:
+            return None
+        self.duplicate_of = existing
+        values = {"value": value, "name": existing.full_name}
+        if not existing.is_active:
+            return forms.ValidationError(
+                _(
+                    "Employee ID %(value)s belongs to %(name)s, an archived "
+                    "record. Restore that record instead of creating a "
+                    "second one."
+                )
+                % values
+            )
+        return forms.ValidationError(
+            _("Employee ID %(value)s already belongs to %(name)s.") % values
+        )
 
     def clean_employee_id(self):
         """LV-142: el número de empleado repetido se avisa, no se estrella.
@@ -450,30 +507,19 @@ class OperatorForm(AeroModelForm):
         que un legado que difiera sólo en caja también se avisa. Por eso se valida
         **sólo cuando el valor cambia**: si no, editar el teléfono de una ficha
         cuyo número difiere en caja de otra existente sería imposible.
+
+        **LV-169**: en blanco ya no es un error acá. Lo deriva `clean()` del RUT,
+        y si no hay RUT válido del que sacarlo lo exige `Operator.clean()` — que
+        es donde tiene que estar para cubrir también al admin y a un import.
         """
         value = (self.cleaned_data.get("employee_id") or "").strip()
         if not value:
-            raise forms.ValidationError(_("Enter the employee ID."))
+            return value
         if value == (self.initial.get("employee_id") or "").strip():
             return value
-        existing = operator_with_employee_id(
-            value, tenant_id=self.instance.tenant_id, exclude_pk=self.instance.pk
-        )
-        if existing is not None:
-            self.duplicate_of = existing
-            values = {"value": value, "name": existing.full_name}
-            if not existing.is_active:
-                raise forms.ValidationError(
-                    _(
-                        "Employee ID %(value)s belongs to %(name)s, an archived "
-                        "record. Restore that record instead of creating a "
-                        "second one."
-                    )
-                    % values
-                )
-            raise forms.ValidationError(
-                _("Employee ID %(value)s already belongs to %(name)s.") % values
-            )
+        error = self._duplicate_employee_id_error(value)
+        if error is not None:
+            raise error
         return value
 
     def clean_rut(self):

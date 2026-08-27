@@ -124,6 +124,32 @@ def _entries():
         yield msgctxt, msgid, msgstr, "#, fuzzy" in block
 
 
+_TEMPLATE_COMMENT = re.compile(
+    r"\{%\s*comment\s*%\}.*?\{%\s*endcomment\s*%\}", re.DOTALL
+)
+
+
+def _without_template_comments(content):
+    """`{% comment %}` blocks blanked out, **keeping every offset**.
+
+    LV-169: `makemessages` no extrae de dentro de un `{% comment %}`, así que una
+    cadena ahí adentro **no puede** estar en el catálogo: en cuanto alguien
+    regenera, gettext la manda a obsoleta. Este guardián la exigía igual, y con
+    eso le pedía al catálogo algo que el propio extractor de Django se niega a
+    poner. Quedó latente desde `LV-150`, que sacó "Solicitudes SIGO" del menú
+    envolviéndola en `{% comment %}` sin borrar nada: el gate siguió verde
+    porque nadie corrió `makemessages` en el medio, y estalló en la primera
+    regeneración. Un guardián que sólo pasa mientras no se use el flujo
+    documentado no está vigilando, está esperando.
+
+    Se reemplaza por espacios en vez de recortar para que los números de línea
+    que este archivo reporta sigan apuntando al lugar real.
+    """
+    return _TEMPLATE_COMMENT.sub(
+        lambda match: re.sub(r"[^\n]", " ", match.group(0)), content
+    )
+
+
 def _source_strings():
     """Every literal the code asks gettext to translate, with where it came from."""
     root = Path(settings.BASE_DIR)
@@ -135,6 +161,8 @@ def _source_strings():
         if "migrations" in path.parts or path.name.startswith("test"):
             continue
         content = path.read_text(encoding="utf-8", errors="replace")
+        if path.suffix == ".html":
+            content = _without_template_comments(content)
         for offset, literal in _marked_literals(content):
             line = content.count("\n", 0, offset) + 1
             found.setdefault(literal, f"{path.relative_to(root).as_posix()}:{line}")
@@ -253,6 +281,31 @@ def test_every_entry_is_translated_and_not_fuzzy(catalog):
 
     assert not empty, f"sin traducir: {empty}"
     assert not fuzzy, f"marcadas fuzzy, Django las ignora: {fuzzy}"
+
+
+def test_a_string_inside_a_template_comment_is_not_demanded():
+    """LV-169, guardián del guardián: es lo que `makemessages` hace, no un permiso.
+
+    Y el número de línea de lo que viene después **no se corre**, que es lo que
+    haría inútil el mensaje de error de este archivo.
+    """
+    content = (
+        '{% translate "Visible" %}\n'
+        "{% comment %}\n"
+        '{% translate "Retirada del menu" %}\n'
+        "{% endcomment %}\n"
+        '{% translate "Despues del bloque" %}\n'
+    )
+
+    blanked = _without_template_comments(content)
+    found = dict(
+        (literal, blanked.count("\n", 0, offset) + 1)
+        for offset, literal in _marked_literals(blanked)
+    )
+
+    assert "Retirada del menu" not in found
+    assert found["Visible"] == 1
+    assert found["Despues del bloque"] == 5
 
 
 def test_every_translatable_string_is_in_the_catalog(catalog):
