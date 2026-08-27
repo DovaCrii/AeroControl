@@ -99,6 +99,15 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **Las preguntas que enumeran vuelven a leerse como enumeración (`LV-168`).**
+  Regresión de `LV-163`: al colapsar los espacios para sacar los saltos que el
+  PDF de la DGAC metía a mitad de frase se fueron también los que separaban
+  `I.`, `II.`, `III.`, y seis preguntas quedaron como un párrafo corrido. Son
+  justo aquellas cuyas opciones son «SÓLO I Y II» contra «SÓLO II Y III», donde
+  no ver dónde empieza cada ítem convierte la pregunta en un ejercicio de
+  rastreo visual. El corte es **de presentación**: no cambia el texto que se
+  corrige ni la copia que el intento archiva, así que los intentos ya rendidos
+  también se leen bien. Sigue sin tocarse una palabra ni la caja.
 - **El catastro dice si los papeles están vigentes (`LV-167`).** Dos columnas
   nuevas: vigencia del seguro JAC en la flota y de la credencial DGAC en el
   personal, pintadas con **la misma escala de colores que el panel**. Una fecha

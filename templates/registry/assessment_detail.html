@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n assessment_extras %}
 {% block title %}{% translate "Knowledge assessment" %} - AeroControl{% endblock %}
 {% block content %}
 <div class="page-header">
@@ -42,7 +42,7 @@ que sigue diciendo lo que pasó aunque el banco se haya corregido después.
   </h2>
   {% for row in assessment.wrong_answers %}
   <div class="border-bottom py-2">
-    <p class="mb-1">{{ row.text }}</p>
+    <p class="mb-1">{% for line in row.text|enumerated_lines %}<span class="quiz-text-line">{{ line }}</span>{% endfor %}</p>
     <p class="small mb-0">
       <span class="text-danger">{% translate "You answered" %}:</span>
       {% if row.given %}{% for option in row.options %}{% if option.key == row.given %}{{ option.text }}{% endif %}{% endfor %}

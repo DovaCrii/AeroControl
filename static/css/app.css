@@ -2025,6 +2025,19 @@ a.admin-metric:hover { border-color: var(--ac-text-secondary); }
   line-height: 1.55;
 }
 
+/* LV-168: cuando el enunciado enumera, cada ítem es un renglón con sangría
+   francesa — el número romano queda solo a la izquierda y lo que se desborda se
+   alinea bajo el texto, no bajo el número. Sin esto los ítems corren dentro del
+   párrafo y hay que rastrear dónde empieza cada uno para poder elegir entre
+   "SÓLO I Y II" y "SÓLO II Y III". */
+.quiz-text-line { display: block; }
+
+.quiz-text-line + .quiz-text-line {
+  margin-top: 0.3rem;
+  padding-left: 2.4rem;
+  text-indent: -0.9rem;
+}
+
 .quiz-options { display: flex; flex-direction: column; gap: 0.45rem; }
 
 /* La opción es superficie clicable con estado propio. Antes el blanco del clic
