@@ -97,6 +97,15 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   la columna de cumplimiento. La función queda entera —modelo, vistas, permisos y
   URL—; volver a mostrarla es descomentar una línea.
 
+### Fixed
+
+- **Un test de baterías fallaba todas las noches desde `R7.2`.** Comparaba la
+  fecha de sincronización en UTC contra lo que la plantilla renderiza en hora de
+  Santiago, así que entre las 20:00 y la medianoche eran dos días distintos.
+  Sobrevivió meses porque el gate rara vez corre en esa ventana; lo delató el
+  gate del 2026-08-26 a las 00:17 UTC. Es la misma trampa que
+  `apps/compliance/test_reports.py` documenta en su encabezado.
+
 ### Added
 
 - **Prueba interna de conocimientos por operador (`LV-158`).** Cada operador rinde
