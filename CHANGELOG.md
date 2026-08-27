@@ -99,6 +99,21 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **El ID de empleado se deriva del RUT (`LV-169`).** El alta de operador pedía
+  el mismo número dos veces: `RUT-192135974` arriba y `19213597-4` tres campos
+  más abajo. Ahora se deja en blanco y se rellena solo, y sigue editable. El
+  formato es el que el import del Capítulo 1 ya escribía —de hecho ese import
+  pasa a usar la misma función, para que no puedan divergir y terminar
+  duplicando fichas—. Sólo se rellena si está vacío, y sólo desde un RUT válido:
+  de uno inválido saldría un ID inválido y único, basura en la llave del padrón.
+  El RUT **no** se vuelve obligatorio. Un ID derivado que choque con otro avisa
+  de quién es, en vez del 500 que devolvía antes. Migración `registry.0037`,
+  que **no emite SQL**.
+- **El guardián de i18n vuelve a coincidir con el extractor.** Exigía que
+  estuvieran en el catálogo cadenas que viven dentro de un `{% comment %}`, de
+  donde Django no extrae — así que pedía algo imposible. Estaba latente desde
+  que `LV-150` retiró "Solicitudes SIGO" del menú comentándola, y sólo se veía
+  al regenerar el catálogo, que es el flujo documentado.
 - **Las preguntas que enumeran vuelven a leerse como enumeración (`LV-168`).**
   Regresión de `LV-163`: al colapsar los espacios para sacar los saltos que el
   PDF de la DGAC metía a mitad de frase se fueron también los que separaban

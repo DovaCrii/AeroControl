@@ -38,6 +38,29 @@ def normalize_rut(raw):
     return f"{cleaned[:-1]}-{cleaned[-1]}"
 
 
+def employee_id_from_rut(value):
+    """`"19.213.597-4"` -> `"RUT-192135974"`. `""` cuando no hay RUT.
+
+    LV-169: el ID de empleado se deriva del RUT en vez de pedirse a mano. **El
+    formato no se eligió acá**: es el que el import del Capítulo 1 viene
+    escribiendo desde su primera corrida, y en producción hay fichas que ya lo
+    llevan. Cambiarlo habría partido el padrón en dos convenciones y roto el
+    "saltar los que ya están" de ese import, que compara contra este texto.
+
+    Vive junto a `normalize_rut` y no en el comando **porque ahora lo usan los
+    dos**: si el formulario y el import derivaran cada uno el suyo, bastaría con
+    que alguien tocara un `f"..."` para que el import dejara de reconocer como
+    existentes las fichas que la app dio de alta, y las duplicara en silencio.
+
+    Se limpia con `_KEEP` y **no** pasando por `normalize_rut`: ante un texto sin
+    un solo dígito, `normalize_rut` devuelve lo que vino —a propósito, para no
+    vaciar en silencio lo que alguien escribió— y eso habría convertido un RUT
+    ilegible en un ID de empleado ilegible. Acá interesa la clave, no el eco.
+    """
+    key = _KEEP.sub("", (value or "").strip()).upper()
+    return f"RUT-{key}" if key else ""
+
+
 def rut_is_valid(value):
     """Cuerpo de 6 a 8 dígitos y dígito verificador módulo 11 (0-9 o K).
 

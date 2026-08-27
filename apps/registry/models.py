@@ -736,7 +736,13 @@ class Operator(BaseModel):
     # Django's derived labels would be "Employee id"/"Dgac credential".
     # T3.2 Fase 3: unique per tenant (global unique dropped; see
     # Meta.constraints) -- an employee id is an organization-internal id.
-    employee_id = models.CharField(max_length=50, verbose_name=_("Employee ID"))
+    # LV-169: `blank=True` para que `clean_fields()` no corte antes de que
+    # `clean()` pueda derivarlo del RUT. **No lo vuelve opcional**: `clean()`
+    # exige que quede con valor, y la unicidad por tenant sigue en pie. El
+    # cambio es de validación, no de esquema -- la migración no emite SQL.
+    employee_id = models.CharField(
+        max_length=50, blank=True, verbose_name=_("Employee ID")
+    )
     full_name = models.CharField(max_length=150)
     email = models.EmailField(blank=True)
     phone = models.CharField(max_length=50, blank=True)
@@ -804,12 +810,36 @@ class Operator(BaseModel):
 
         La normalización sí corre siempre: una ficha que se edita queda con el
         RUT canónico, y así el padrón converge sin migración de datos.
+
+        **LV-169: el ID de empleado se deriva del RUT cuando está en blanco.**
+        En producción convivían `RUT-192135974` y la columna de al lado diciendo
+        `19213597-4` — el mismo número dos veces, tipeado a mano, con el error de
+        transcripción incluido en el precio. Se rellena **sólo si está vacío**:
+        un ID ya escrito es la llave con la que esa persona figura en otros
+        sistemas y sobrescribirlo rompería esas referencias sin avisar.
+
+        Y se deriva **sólo de un RUT válido**. De uno inválido saldría un ID
+        inválido y único —basura que pasa la constraint— justo en el campo que es
+        la llave del padrón. Sin RUT utilizable el ID se sigue pidiendo, que es
+        lo que ya pasaba. **El RUT no se vuelve obligatorio**: eso congelaría las
+        fichas legadas duplicadas, la trampa que `LV-143` evitó a propósito.
         """
         from .duplicates import operator_with_rut
-        from .rut import normalize_rut, rut_is_valid
+        from .rut import employee_id_from_rut, normalize_rut, rut_is_valid
 
         super().clean()
         self.rut = normalize_rut(self.rut)
+        self.employee_id = (self.employee_id or "").strip()
+        if not self.employee_id and rut_is_valid(self.rut):
+            self.employee_id = employee_id_from_rut(self.rut)
+        if not self.employee_id:
+            raise ValidationError(
+                {
+                    "employee_id": _(
+                        "Enter the employee ID, or a valid RUT to derive it from."
+                    )
+                }
+            )
         if not self.rut or not self._rut_changed():
             return
         if not rut_is_valid(self.rut):

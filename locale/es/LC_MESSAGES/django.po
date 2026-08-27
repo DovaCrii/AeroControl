@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-26 15:13-0400\n"
+"POT-Creation-Date: 2026-08-27 13:41-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -39,9 +39,9 @@ msgstr "Habilitación"
 #: .\apps\compliance\forms.py:169 .\apps\compliance\forms.py:623
 #: .\apps\compliance\forms.py:667 .\apps\compliance\views.py:1303
 #: .\apps\geo\forms.py:45 .\apps\operations\forms.py:76
-#: .\apps\registry\forms.py:514 .\apps\registry\forms.py:608
-#: .\apps\registry\forms.py:638 .\apps\registry\forms.py:686
-#: .\apps\registry\forms.py:744 .\templates\compliance\alert_list.html:11
+#: .\apps\registry\forms.py:560 .\apps\registry\forms.py:654
+#: .\apps\registry\forms.py:684 .\apps\registry\forms.py:732
+#: .\apps\registry\forms.py:790 .\templates\compliance\alert_list.html:11
 #: .\templates\compliance\deliverable_list.html:27
 #: .\templates\compliance\email\alert_digest.txt:2
 #: .\templates\compliance\email\executive_report.html:52
@@ -51,14 +51,15 @@ msgstr "Habilitación"
 #: .\templates\compliance\nonconformity_list.html:33
 #: .\templates\compliance\operational_records.html:22
 #: .\templates\compliance\operational_records.html:49
-#: .\templates\compliance\report.html:22
-#: .\templates\compliance\report.html:137 .\templates\geo\plan_list.html:49
+#: .\templates\compliance\report.html:22 .\templates\compliance\report.html:137
+#: .\templates\geo\plan_list.html:56
 #: .\templates\operations\flight_request_list.html:49
 #: .\templates\operations\permission_detail.html:86
 #: .\templates\registry\aircraft_list.html:25
 #: .\templates\registry\aircraftassignment_list.html:6
 #: .\templates\registry\assignment_list.html:51
-#: .\templates\registry\operator_list.html:36
+#: .\templates\registry\catastro.html:21
+#: .\templates\registry\operator_list.html:57
 #: .\templates\registry\operatorassignment_list.html:6
 #: .\templates\registry\qualification_list.html:25
 #: .\templates\workboard\task_list.html:14
@@ -67,7 +68,7 @@ msgstr "Centro de costo"
 
 #: .\apps\compliance\forms.py:170 .\apps\compliance\watchables.py:25
 #: .\apps\dashboard\views.py:287 .\apps\geo\forms.py:51
-#: .\apps\operations\forms.py:308 .\templates\core\calendar.html:87
+#: .\apps\operations\forms.py:372 .\templates\core\calendar.html:87
 #: .\templates\operations\record_list.html:6
 msgid "Flight permission"
 msgstr "Permiso de vuelo"
@@ -118,13 +119,13 @@ msgid "Select several at once, or drop them here."
 msgstr "Selecciona varios de una vez, o suéltalos aquí."
 
 #: .\apps\compliance\forms.py:232 .\apps\compliance\forms.py:384
-#: .\apps\registry\forms.py:768 .\templates\compliance\document_detail.html:16
+#: .\apps\registry\forms.py:814 .\templates\compliance\document_detail.html:16
 #: .\templates\registry\operator_detail.html:33
 msgid "Issue date"
 msgstr "Fecha de emisión"
 
 #: .\apps\compliance\forms.py:237 .\apps\compliance\forms.py:385
-#: .\apps\registry\forms.py:769 .\templates\compliance\document_detail.html:17
+#: .\apps\registry\forms.py:815 .\templates\compliance\document_detail.html:17
 #: .\templates\registry\operator_detail.html:33
 msgid "Expiry date"
 msgstr "Fecha de vencimiento"
@@ -148,7 +149,7 @@ msgstr "%(name)s: %(error)s"
 
 #: .\apps\compliance\forms.py:343 .\apps\compliance\forms.py:622
 #: .\apps\compliance\forms.py:665 .\apps\geo\forms.py:36
-#: .\apps\operations\forms.py:430 .\apps\workboard\forms.py:77
+#: .\apps\operations\forms.py:494 .\apps\workboard\forms.py:77
 #: .\apps\workboard\forms.py:133
 #: .\templates\compliance\_documents_section.html:29
 #: .\templates\compliance\company_documents.html:42
@@ -156,9 +157,8 @@ msgstr "%(name)s: %(error)s"
 #: .\templates\compliance\document_list.html:23
 #: .\templates\compliance\nonconformity_list.html:33
 #: .\templates\compliance\operational_records.html:49
-#: .\templates\geo\plan_list.html:48
 #: .\templates\operations\flight_request_list.html:48
-#: .\templates\operations\permission_detail.html:165
+#: .\templates\operations\permission_detail.html:171
 msgid "Title"
 msgstr "Título"
 
@@ -175,6 +175,7 @@ msgid "Select an entity type first."
 msgstr "Selecciona primero un tipo de entidad."
 
 #: .\apps\compliance\forms.py:362 .\apps\compliance\forms.py:383
+#: .\templates\geo\plan_list.html:55
 msgid "File"
 msgstr "Archivo"
 
@@ -197,10 +198,10 @@ msgid "There are no active records of this type yet."
 msgstr "Aún no hay registros activos de este tipo."
 
 #: .\apps\compliance\forms.py:523 .\apps\compliance\forms.py:565
-#: .\apps\geo\views.py:321 .\apps\registry\forms.py:95
+#: .\apps\geo\views.py:345 .\apps\registry\forms.py:95
 #: .\apps\workboard\forms.py:23 .\apps\workboard\forms.py:47
 #: .\apps\workboard\forms.py:122 .\templates\core\users_roles.html:24
-#: .\templates\generic\list.html:40 .\templates\registry\operator_list.html:28
+#: .\templates\generic\list.html:40 .\templates\registry\operator_list.html:49
 msgid "Name"
 msgstr "Nombre"
 
@@ -293,7 +294,7 @@ msgstr "Traslape (%)"
 #: .\templates\generic\_traceability.html:38
 #: .\templates\maintenance\record_detail.html:31
 #: .\templates\operations\flightrecord_detail.html:31
-#: .\templates\operations\permission_detail.html:95
+#: .\templates\operations\permission_detail.html:101
 #: .\templates\registry\_costcenter_form_fields.html:31
 msgid "Notes"
 msgstr "Notas"
@@ -301,8 +302,7 @@ msgstr "Notas"
 #: .\apps\compliance\forms.py:636
 msgid "Compared against the cost center's required GSD, when set."
 msgstr ""
-"Se compara contra el GSD requerido del centro de costo, cuando está "
-"definido."
+"Se compara contra el GSD requerido del centro de costo, cuando está definido."
 
 #: .\apps\compliance\forms.py:639
 msgid ""
@@ -314,7 +314,7 @@ msgstr ""
 
 #: .\apps\compliance\forms.py:666
 #: .\templates\compliance\nonconformity_list.html:33
-#: .\templates\geo\plan_detail.html:273
+#: .\templates\geo\plan_detail.html:328
 msgid "Source"
 msgstr "Origen"
 
@@ -323,7 +323,7 @@ msgstr "Origen"
 msgid "Detected on"
 msgstr "Detectada el"
 
-#: .\apps\compliance\forms.py:669 .\apps\geo\views.py:322
+#: .\apps\compliance\forms.py:669 .\apps\geo\views.py:346
 #: .\apps\maintenance\forms.py:23 .\apps\workboard\forms.py:24
 #: .\apps\workboard\forms.py:78
 #: .\templates\compliance\nonconformity_detail.html:20
@@ -511,7 +511,7 @@ msgid "DGAC filings and authorizations"
 msgstr "Presentaciones y autorizaciones DGAC"
 
 #: .\apps\compliance\models.py:66 .\apps\compliance\views.py:658
-#: .\templates\base.html:145 .\templates\compliance\operational_records.html:3
+#: .\templates\base.html:175 .\templates\compliance\operational_records.html:3
 #: .\templates\compliance\operational_records.html:8
 msgid "Operational records"
 msgstr "Registros operacionales"
@@ -521,7 +521,7 @@ msgid "Maintenance and calibration"
 msgstr "Mantención y calibración"
 
 #: .\apps\compliance\models.py:68 .\apps\compliance\views.py:562
-#: .\templates\base.html:155 .\templates\compliance\company_documents.html:3
+#: .\templates\base.html:185 .\templates\compliance\company_documents.html:3
 #: .\templates\compliance\company_documents.html:9
 msgid "Company documents"
 msgstr "Documentos de la empresa"
@@ -615,7 +615,7 @@ msgstr "registros históricos de cumplimiento"
 #: .\apps\compliance\models.py:367 .\templates\compliance\alert_list.html:11
 #: .\templates\compliance\operational_records.html:24
 #: .\templates\compliance\report.html:24 .\templates\core\calendar.html:56
-#: .\templates\dashboard\index.html:23
+#: .\templates\dashboard\index.html:23 .\templates\registry\catastro.html:23
 msgid "All cost centers"
 msgstr "Todos los centros de costo"
 
@@ -626,8 +626,7 @@ msgstr ""
 
 #: .\apps\compliance\models.py:426
 #, python-format
-msgid ""
-"%(field)s is not a watchable field of %(model)s. Available: %(allowed)s"
+msgid "%(field)s is not a watchable field of %(model)s. Available: %(allowed)s"
 msgstr ""
 "%(field)s no es un campo vigilable de %(model)s. Disponibles: %(allowed)s"
 
@@ -754,7 +753,7 @@ msgstr "Borrador"
 msgid "Validated"
 msgstr "Validado"
 
-#: .\apps\compliance\models.py:1154 .\apps\registry\models.py:1358
+#: .\apps\compliance\models.py:1154 .\apps\registry\models.py:1388
 msgid "Released"
 msgstr "Liberado"
 
@@ -774,43 +773,43 @@ msgstr "entregables"
 msgid "GSD (cm)"
 msgstr "GSD (cm)"
 
-#: .\apps\compliance\report_views.py:137 .\apps\compliance\report_views.py:153
+#: .\apps\compliance\report_views.py:121 .\apps\compliance\report_views.py:137
 #: .\templates\compliance\report.html:3 .\templates\compliance\report.html:8
 msgid "Compliance status report"
 msgstr "Reporte de estado documental"
 
-#: .\apps\compliance\report_views.py:154
+#: .\apps\compliance\report_views.py:138
 msgid "Generated"
 msgstr "Generado"
 
-#: .\apps\compliance\report_views.py:162 .\apps\compliance\report_views.py:196
+#: .\apps\compliance\report_views.py:146 .\apps\compliance\report_views.py:180
 msgid "TOTAL"
 msgstr "TOTAL"
 
-#: .\apps\compliance\report_views.py:174 .\apps\compliance\report_views.py:315
-#: .\apps\compliance\report_views.py:478
+#: .\apps\compliance\report_views.py:158 .\apps\compliance\report_views.py:299
+#: .\apps\compliance\report_views.py:461
+#: .\apps\compliance\test_lv144_report_pdf_letterhead.py:148
 #: .\templates\compliance\email\executive_report.html:30
-#: .\templates\compliance\report.html:53
-#: .\templates\compliance\report.html:174
+#: .\templates\compliance\report.html:53 .\templates\compliance\report.html:174
 msgid "Open alerts"
 msgstr "Alertas abiertas"
 
-#: .\apps\compliance\report_views.py:266 .\apps\compliance\report_views.py:369
+#: .\apps\compliance\report_views.py:250 .\apps\compliance\report_views.py:350
 msgid "AeroControl — Compliance status report"
 msgstr "AeroControl — Reporte de estado documental"
 
-#: .\apps\compliance\report_views.py:268 .\apps\compliance\report_views.py:372
+#: .\apps\compliance\report_views.py:252 .\apps\core\pdf.py:106
 #: .\apps\workboard\views.py:329
 #, python-format
 msgid "Generated: %(date)s"
 msgstr "Generado: %(date)s"
 
-#: .\apps\compliance\report_views.py:272 .\apps\compliance\report_views.py:377
+#: .\apps\compliance\report_views.py:256 .\apps\compliance\report_views.py:357
 #, python-format
 msgid "Period analysed: %(start)s to %(end)s"
 msgstr "Período analizado: %(start)s a %(end)s"
 
-#: .\apps\compliance\report_views.py:278 .\apps\compliance\report_views.py:420
+#: .\apps\compliance\report_views.py:262 .\apps\compliance\report_views.py:385
 #, python-format
 msgid ""
 "%(valid)s of %(total)s current documents are valid (%(pct)s%%). %(expired)s "
@@ -819,67 +818,66 @@ msgstr ""
 "%(valid)s de %(total)s documentos vigentes están al día (%(pct)s%%). "
 "%(expired)s vencidos, %(due)s por vencer en %(horizon)s días."
 
-#: .\apps\compliance\report_views.py:292 .\apps\compliance\report_views.py:448
+#: .\apps\compliance\report_views.py:276 .\apps\compliance\report_views.py:423
+#: .\apps\compliance\test_lv144_report_pdf_letterhead.py:146
 #: .\templates\compliance\email\executive_report.html:49
 #: .\templates\compliance\email\executive_report.txt:13
 #: .\templates\compliance\report.html:125
 msgid "By cost center"
 msgstr "Por centro de costo"
 
-#: .\apps\compliance\report_views.py:303 .\apps\compliance\report_views.py:456
+#: .\apps\compliance\report_views.py:287 .\apps\compliance\report_views.py:439
+#: .\apps\compliance\test_lv144_report_pdf_letterhead.py:147
 #: .\templates\compliance\report.html:165
 msgid "Alert resolution in the period"
 msgstr "Resolución de alertas en el período"
 
-#: .\apps\compliance\report_views.py:306 .\apps\compliance\report_views.py:461
+#: .\apps\compliance\report_views.py:290 .\apps\compliance\report_views.py:444
 #: .\templates\compliance\report.html:167
 #, python-format
 msgid "%(count)s alerts resolved, %(days)s days on average."
 msgstr "%(count)s alertas resueltas, %(days)s días en promedio."
 
-#: .\apps\compliance\report_views.py:313 .\apps\compliance\report_views.py:472
+#: .\apps\compliance\report_views.py:297 .\apps\compliance\report_views.py:455
 #: .\templates\compliance\report.html:169
 msgid "No alerts were resolved in this period."
 msgstr "No se resolvieron alertas en este período."
 
-#: .\apps\compliance\report_views.py:326 .\apps\compliance\report_views.py:481
+#: .\apps\compliance\report_views.py:310 .\apps\compliance\report_views.py:464
+#: .\apps\compliance\test_lv144_report_pdf_letterhead.py:157
 #: .\templates\compliance\report.html:192
 msgid "No open alerts."
 msgstr "Sin alertas abiertas."
 
-#: .\apps\compliance\report_views.py:439
+#: .\apps\compliance\report_views.py:404
+#: .\apps\compliance\test_lv144_report_pdf_letterhead.py:145
 #: .\templates\compliance\email\executive_report.html:35
 #: .\templates\compliance\email\executive_report.txt:10
 #: .\templates\compliance\report.html:87
 msgid "Compared with the previous period"
 msgstr "Comparado con el período anterior"
 
-#: .\apps\compliance\report_views.py:440
-#: .\templates\compliance\report.html:102
+#: .\apps\compliance\report_views.py:405 .\templates\compliance\report.html:102
 msgid "KPI"
 msgstr "KPI"
 
-#: .\apps\compliance\report_views.py:440
-#: .\templates\compliance\report.html:103
+#: .\apps\compliance\report_views.py:405 .\templates\compliance\report.html:103
 msgid "This period"
 msgstr "Este período"
 
-#: .\apps\compliance\report_views.py:440
-#: .\templates\compliance\report.html:104
+#: .\apps\compliance\report_views.py:405 .\templates\compliance\report.html:104
 msgid "Change"
 msgstr "Variación"
 
-#: .\apps\compliance\report_views.py:440
-#: .\templates\compliance\report.html:105
+#: .\apps\compliance\report_views.py:405 .\templates\compliance\report.html:105
 msgid "Previous period"
 msgstr "Período anterior"
 
-#: .\apps\compliance\report_views.py:445
+#: .\apps\compliance\report_views.py:410
 msgid "No comparison available."
 msgstr "No hay comparación disponible."
 
-#: .\apps\compliance\report_views.py:451
-#: .\templates\compliance\report.html:157
+#: .\apps\compliance\report_views.py:426 .\templates\compliance\report.html:157
 msgid "No cost centers to report."
 msgstr "No hay centros de costo que informar."
 
@@ -906,16 +904,16 @@ msgid ""
 "with your file: tell an administrator."
 msgstr ""
 "No se pudo revisar este archivo en busca de virus porque el antivirus no "
-"está disponible, así que no se guardó. Es un problema del servidor, no de tu"
-" archivo: avisa a un administrador."
+"está disponible, así que no se guardó. Es un problema del servidor, no de tu "
+"archivo: avisa a un administrador."
 
 #: .\apps\compliance\security.py:105
 msgid ""
 "The virus check took too long, so this file was not saved. This is a server "
 "problem, not a problem with your file: tell an administrator."
 msgstr ""
-"La revisión de virus demoró demasiado, así que este archivo no se guardó. Es"
-" un problema del servidor, no de tu archivo: avisa a un administrador."
+"La revisión de virus demoró demasiado, así que este archivo no se guardó. Es "
+"un problema del servidor, no de tu archivo: avisa a un administrador."
 
 #: .\apps\compliance\security.py:119
 msgid "The antivirus found a threat in this file, so it was not saved."
@@ -936,7 +934,7 @@ msgid "Validity renewed to %(date)s (automatic closure)"
 msgstr "Vigencia renovada al %(date)s (cierre automático)"
 
 #: .\apps\compliance\views.py:176 .\apps\core\test_lv80_screen_titles.py:137
-#: .\apps\maintenance\views.py:46 .\apps\operations\views.py:89
+#: .\apps\maintenance\views.py:46 .\apps\operations\views.py:90
 #: .\apps\registry\views.py:145 .\apps\workboard\views.py:121
 #, python-format
 msgid "New %(record)s"
@@ -1104,7 +1102,7 @@ msgstr ""
 msgid "Follow-up task created."
 msgstr "Tarea de seguimiento creada."
 
-#: .\apps\compliance\views.py:1611 .\templates\base.html:146
+#: .\apps\compliance\views.py:1611 .\templates\base.html:176
 #: .\templates\compliance\monthly_review.html:3
 #: .\templates\compliance\monthly_review.html:8
 msgid "Monthly compliance"
@@ -1121,9 +1119,9 @@ msgid "Edit %(name)s"
 msgstr "Editar %(name)s"
 
 #: .\apps\compliance\watchables.py:20 .\apps\registry\forms.py:39
-#: .\apps\registry\forms.py:512 .\apps\registry\forms.py:607
-#: .\apps\registry\forms.py:766 .\apps\registry\models.py:1127
-#: .\apps\registry\models.py:1354 .\templates\registry\assignment_list.html:51
+#: .\apps\registry\forms.py:558 .\apps\registry\forms.py:653
+#: .\apps\registry\forms.py:812 .\apps\registry\models.py:1157
+#: .\apps\registry\models.py:1384 .\templates\registry\assignment_list.html:51
 #: .\templates\registry\costcenter_detail.html:36
 #: .\templates\registry\operatorassignment_list.html:5
 #: .\templates\registry\qualification_list.html:24
@@ -1132,14 +1130,14 @@ msgid "Operator"
 msgstr "Operador"
 
 #: .\apps\compliance\watchables.py:21 .\apps\maintenance\forms.py:21
-#: .\apps\operations\forms.py:313 .\apps\registry\forms.py:513
-#: .\apps\registry\forms.py:690 .\apps\registry\forms.py:743
-#: .\apps\registry\models.py:1354 .\apps\registry\views.py:68
-#: .\templates\base.html:170 .\templates\maintenance\record_detail.html:21
+#: .\apps\operations\forms.py:377 .\apps\registry\forms.py:559
+#: .\apps\registry\forms.py:736 .\apps\registry\forms.py:789
+#: .\apps\registry\models.py:1384 .\apps\registry\views.py:68
+#: .\templates\base.html:212 .\templates\maintenance\record_detail.html:21
 #: .\templates\maintenance\record_list.html:18
 #: .\templates\operations\flightrecord_detail.html:30
 #: .\templates\operations\permission_detail.html:86
-#: .\templates\operations\permission_detail.html:167
+#: .\templates\operations\permission_detail.html:173
 #: .\templates\operations\permission_list.html:46
 #: .\templates\operations\record_list.html:8
 #: .\templates\registry\aircraftassignment_list.html:5
@@ -1161,11 +1159,11 @@ msgstr "Revisión de cumplimiento mensual"
 
 #: .\apps\compliance\watchables.py:30 .\apps\dashboard\views.py:228
 #: .\apps\registry\assessment_views.py:91
-#: .\apps\registry\assessment_views.py:160 .\templates\base.html:187
+#: .\apps\registry\assessment_views.py:160 .\templates\base.html:229
 #: .\templates\registry\assessment_detail.html:3
 #: .\templates\registry\assessment_detail.html:8
 #: .\templates\registry\assessment_take.html:3
-#: .\templates\registry\assessment_take.html:16
+#: .\templates\registry\assessment_take.html:32
 msgid "Knowledge assessment"
 msgstr "Evaluación de conocimientos"
 
@@ -1218,7 +1216,7 @@ msgid "Running"
 msgstr "En ejecución"
 
 #: .\apps\core\models.py:219 .\apps\maintenance\models.py:34
-#: .\apps\operations\models.py:42 .\apps\registry\models.py:862
+#: .\apps\operations\models.py:42 .\apps\registry\models.py:892
 #: .\apps\workboard\models.py:34 .\apps\workboard\views.py:103
 #: .\templates\registry\_assignment_table_body.html:8
 #: .\templates\registry\assignment_list.html:37
@@ -1237,145 +1235,155 @@ msgstr "ejecución de tarea"
 msgid "job runs"
 msgstr "ejecuciones de tareas"
 
-#: .\apps\core\views.py:304
+#: .\apps\core\pdf.py:83
+#, python-format
+msgid "Ref. %(prefix)s-%(stamp)s"
+msgstr "Ref. %(prefix)s-%(stamp)s"
+
+#: .\apps\core\pdf.py:117
+#, python-format
+msgid "Page %(page)s of %(total)s"
+msgstr "Página %(page)s de %(total)s"
+
+#: .\apps\core\views.py:328
 msgid "Saved successfully."
 msgstr "Guardado correctamente."
 
-#: .\apps\core\views.py:588
+#: .\apps\core\views.py:612
 msgid "until"
 msgstr "hasta"
 
-#: .\apps\core\views.py:742 .\apps\dashboard\views.py:177
+#: .\apps\core\views.py:766 .\apps\dashboard\views.py:177
 #: .\apps\registry\forms.py:394
 #: .\apps\registry\management\commands\notify_expiring_credentials.py:132
-#: .\apps\registry\models.py:745 .\templates\registry\operator_list.html:29
+#: .\apps\registry\models.py:751 .\templates\registry\operator_list.html:50
 msgid "DGAC credential"
 msgstr "Credencial DGAC"
 
-#: .\apps\core\views.py:767 .\apps\dashboard\views.py:198
+#: .\apps\core\views.py:791 .\apps\dashboard\views.py:198
 #: .\templates\registry\aircraft_detail.html:30
 msgid "JAC insurance"
 msgstr "Seguro JAC"
 
-#: .\apps\core\views.py:928 .\templates\core\users_roles.html:7
+#: .\apps\core\views.py:952 .\templates\core\users_roles.html:7
 msgid "Organization"
 msgstr "Organización"
 
-#: .\apps\core\views.py:929
+#: .\apps\core\views.py:953
 msgid "Define the operational scope and who can access it."
 msgstr "Define el alcance operativo y quién puede acceder a él."
 
-#: .\apps\core\views.py:932
+#: .\apps\core\views.py:956
 msgid "Operational tenants"
 msgstr "Organizaciones operativas"
 
-#: .\apps\core\views.py:933
+#: .\apps\core\views.py:957
 msgid "Manage organizations and their data boundaries."
 msgstr "Gestiona organizaciones y sus límites de datos."
 
-#: .\apps\core\views.py:939
+#: .\apps\core\views.py:963
 msgid "Tenant memberships"
 msgstr "Membresías de organización"
 
-#: .\apps\core\views.py:940
+#: .\apps\core\views.py:964
 msgid "Assign users to an operational tenant."
 msgstr "Asigna usuarios a una organización operativa."
 
-#: .\apps\core\views.py:946 .\templates\core\users_roles.html:3
+#: .\apps\core\views.py:970 .\templates\core\users_roles.html:3
 #: .\templates\core\users_roles.html:8
 msgid "Users and roles"
 msgstr "Usuarios y roles"
 
-#: .\apps\core\views.py:947
+#: .\apps\core\views.py:971
 msgid "Read-only view of who holds which role."
 msgstr "Vista de solo lectura de quién tiene qué rol."
 
-#: .\apps\core\views.py:956
+#: .\apps\core\views.py:980
 msgid "Compliance configuration"
 msgstr "Configuración de cumplimiento"
 
-#: .\apps\core\views.py:958
+#: .\apps\core\views.py:982
 msgid "Prepare document and alert rules before loading records."
 msgstr "Prepara documentos y reglas de alerta antes de cargar registros."
 
-#: .\apps\core\views.py:962
+#: .\apps\core\views.py:986
 msgid "Document types"
 msgstr "Tipos de documento"
 
-#: .\apps\core\views.py:963
+#: .\apps\core\views.py:987
 msgid "Control expiry requirements and document categories."
 msgstr "Controla requisitos de vencimiento y categorías documentales."
 
-#: .\apps\core\views.py:969
+#: .\apps\core\views.py:993
 msgid "Alert rules"
 msgstr "Reglas de alerta"
 
-#: .\apps\core\views.py:970
+#: .\apps\core\views.py:994
 msgid "Define when AeroControl should generate an alert."
 msgstr "Define cuándo AeroControl debe generar una alerta."
 
-#: .\apps\core\views.py:976
+#: .\apps\core\views.py:1000
 msgid "Qualification types"
 msgstr "Tipos de habilitación"
 
-#: .\apps\core\views.py:977
+#: .\apps\core\views.py:1001
 msgid "Operator ratings and the aircraft models they cover."
 msgstr "Habilitaciones del operador y los modelos de aeronave que cubren."
 
-#: .\apps\core\views.py:991 .\templates\core\audit_log.html:7
+#: .\apps\core\views.py:1015 .\templates\core\audit_log.html:7
 msgid "Backups and audit"
 msgstr "Respaldos y auditoría"
 
-#: .\apps\core\views.py:993
+#: .\apps\core\views.py:1017
 msgid "Review backups and trace changes without editing audit records."
 msgstr "Revisa respaldos y rastrea cambios sin editar la auditoría."
 
-#: .\apps\core\views.py:997
+#: .\apps\core\views.py:1021
 msgid "Backup configuration"
 msgstr "Configuración de respaldos"
 
-#: .\apps\core\views.py:998
+#: .\apps\core\views.py:1022
 msgid "Review the local backup destination and schedule."
 msgstr "Revisa el destino y la programación de respaldos locales."
 
-#: .\apps\core\views.py:1004 .\templates\core\audit_log.html:3
+#: .\apps\core\views.py:1028 .\templates\core\audit_log.html:3
 #: .\templates\core\audit_log.html:8
 msgid "Audit log"
 msgstr "Registro de auditoría"
 
-#: .\apps\core\views.py:1005
+#: .\apps\core\views.py:1029
 msgid "Filterable, read-only audit trail inside the app."
 msgstr "Historial de auditoría filtrable y de solo lectura dentro de la app."
 
-#: .\apps\core\views.py:1012
+#: .\apps\core\views.py:1036
 msgid "Audit events (technical)"
 msgstr "Eventos de auditoría (técnico)"
 
-#: .\apps\core\views.py:1013 .\templates\core\audit_log.html:9
+#: .\apps\core\views.py:1037 .\templates\core\audit_log.html:9
 msgid "Read-only history of authenticated changes."
 msgstr "Historial de solo lectura de cambios autenticados."
 
-#: .\apps\core\views.py:1066
+#: .\apps\core\views.py:1090
 msgid "Unresolved alerts"
 msgstr "Alertas sin resolver"
 
-#: .\apps\core\views.py:1083
+#: .\apps\core\views.py:1107
 msgid "Documents expiring in 30 days"
 msgstr "Documentos que vencen en 30 días"
 
-#: .\apps\core\views.py:1094
+#: .\apps\core\views.py:1118
 msgid "Active alert rules"
 msgstr "Reglas de alerta activas"
 
-#: .\apps\core\views.py:1106
+#: .\apps\core\views.py:1130
 msgid "Users without a role"
 msgstr "Usuarios sin rol"
 
-#: .\apps\core\views.py:1310
+#: .\apps\core\views.py:1334
 msgid "Status updated."
 msgstr "Estado actualizado."
 
-#: .\apps\core\views.py:1325
+#: .\apps\core\views.py:1349
 #, python-format
 msgid "Cannot transition from %(status)s"
 msgstr "No se puede cambiar desde %(status)s"
@@ -1450,19 +1458,19 @@ msgstr "plan geoespacial"
 msgid "geo plans"
 msgstr "planes geoespaciales"
 
-#: .\apps\geo\models.py:188 .\templates\registry\aircraft_list.html:4
+#: .\apps\geo\models.py:253 .\templates\registry\aircraft_list.html:4
 #: .\templates\registry\costcenter_list.html:4
 #: .\templates\registry\operator_list.html:4
 msgid "Import"
 msgstr "Importación"
 
-#: .\apps\geo\models.py:189 .\apps\workboard\models.py:84
+#: .\apps\geo\models.py:254 .\apps\workboard\models.py:84
 msgid "Editor"
 msgstr "Editor"
 
-#: .\apps\geo\models.py:190 .\templates\generic\_table_body.html:16
-#: .\templates\generic\detail.html:22 .\templates\geo\_plan_rows.html:27
-#: .\templates\geo\plan_detail.html:63 .\templates\geo\plan_detail.html:291
+#: .\apps\geo\models.py:255 .\templates\generic\_table_body.html:16
+#: .\templates\generic\detail.html:22 .\templates\geo\_plan_rows.html:33
+#: .\templates\geo\plan_detail.html:83 .\templates\geo\plan_detail.html:346
 #: .\templates\operations\_permission_rows.html:17
 #: .\templates\operations\permission_detail.html:76
 #: .\templates\registry\_operator_rows.html:50
@@ -1472,39 +1480,39 @@ msgstr "Editor"
 msgid "Restore"
 msgstr "Restaurar"
 
-#: .\apps\geo\models.py:222
+#: .\apps\geo\models.py:287
 msgid "geo plan version"
 msgstr "versión de plan geoespacial"
 
-#: .\apps\geo\models.py:223
+#: .\apps\geo\models.py:288
 msgid "geo plan versions"
 msgstr "versiones de plan geoespacial"
 
-#: .\apps\geo\models.py:254
+#: .\apps\geo\models.py:319
 msgid "This plan cannot be edited in its current state."
 msgstr "Este plan no puede editarse en su estado actual."
 
-#: .\apps\geo\models.py:291
+#: .\apps\geo\models.py:356
 msgid "geo plan history entry"
 msgstr "entrada del historial del plan geoespacial"
 
-#: .\apps\geo\models.py:292
+#: .\apps\geo\models.py:357
 msgid "geo plan history"
 msgstr "historial del plan geoespacial"
 
-#: .\apps\geo\models.py:342
+#: .\apps\geo\models.py:407
 msgid "geo plan permission link"
 msgstr "vínculo de permiso del plan geoespacial"
 
-#: .\apps\geo\models.py:343
+#: .\apps\geo\models.py:408
 msgid "geo plan permission links"
 msgstr "vínculos de permiso del plan geoespacial"
 
-#: .\apps\geo\models.py:411
+#: .\apps\geo\models.py:476
 msgid "weather review"
 msgstr "revisión meteorológica"
 
-#: .\apps\geo\models.py:412
+#: .\apps\geo\models.py:477
 msgid "weather reviews"
 msgstr "revisiones meteorológicas"
 
@@ -1516,7 +1524,7 @@ msgstr "Comenzar edición"
 msgid "Submit for review"
 msgstr "Enviar a revisión"
 
-#: .\apps\geo\views.py:51 .\apps\operations\views.py:372
+#: .\apps\geo\views.py:51 .\apps\operations\views.py:382
 msgid "Approve"
 msgstr "Aprobar"
 
@@ -1532,63 +1540,64 @@ msgstr "Reanudar edición"
 msgid "Reopen for editing"
 msgstr "Reabrir para edición"
 
-#: .\apps\geo\views.py:180
+#: .\apps\geo\views.py:191
 msgid "Plan archived. Use the Archived filter to find or restore it."
 msgstr "Plan archivado. Búscalo o restáuralo con el filtro Archivados."
 
-#: .\apps\geo\views.py:197
+#: .\apps\geo\views.py:208
 msgid "Plan restored."
 msgstr "Plan restaurado."
 
-#: .\apps\geo\views.py:313
+#: .\apps\geo\views.py:337
 msgid "Untitled"
 msgstr "Sin título"
 
-#: .\apps\geo\views.py:314
+#: .\apps\geo\views.py:338
 msgid "Length"
 msgstr "Longitud"
 
-#: .\apps\geo\views.py:315 .\apps\operations\forms.py:433
-#: .\apps\operations\models.py:647
+#: .\apps\geo\views.py:339 .\apps\operations\forms.py:497
+#: .\apps\operations\models.py:647 .\templates\geo\_sigo_sheet.html:22
 #: .\templates\operations\flight_request_detail.html:92
 msgid "Area"
 msgstr "Área"
 
-#: .\apps\geo\views.py:316 .\templates\geo\plan_detail.html:197
+#: .\apps\geo\views.py:340 .\templates\geo\plan_detail.html:252
 msgid "Layers"
 msgstr "Capas"
 
-#: .\apps\geo\views.py:317 .\templates\geo\plan_detail.html:274
+#: .\apps\geo\views.py:341 .\templates\geo\plan_detail.html:329
 msgid "Features"
 msgstr "Elementos"
 
-#: .\apps\geo\views.py:318
+#: .\apps\geo\views.py:342
 msgid "Loading map…"
 msgstr "Cargando el mapa…"
 
-#: .\apps\geo\views.py:319
+#: .\apps\geo\views.py:343
 msgid "The map could not be loaded."
 msgstr "No se pudo cargar el mapa."
 
-#: .\apps\geo\views.py:320
+#: .\apps\geo\views.py:344
 msgid "This version has no geometry to show."
 msgstr "Esta versión no tiene geometría para mostrar."
 
-#: .\apps\geo\views.py:323 .\templates\compliance\report.html:44
+#: .\apps\geo\views.py:347 .\templates\compliance\report.html:44
 #: .\templates\operations\permission_detail.html:28
+#: .\templates\registry\catastro.html:45
 #: .\templates\workboard\task_list.html:16
 msgid "Apply"
 msgstr "Aplicar"
 
-#: .\apps\geo\views.py:324
+#: .\apps\geo\views.py:348
 msgid "Unsaved changes"
 msgstr "Cambios sin guardar"
 
-#: .\apps\geo\views.py:325
+#: .\apps\geo\views.py:349
 msgid "Saving…"
 msgstr "Guardando…"
 
-#: .\apps\geo\views.py:327
+#: .\apps\geo\views.py:351
 msgid ""
 "The plan changed on the server. Reload to get the latest version, then "
 "reapply your changes."
@@ -1596,98 +1605,98 @@ msgstr ""
 "El plan cambió en el servidor. Recarga para obtener la última versión y "
 "vuelve a aplicar tus cambios."
 
-#: .\apps\geo\views.py:330
+#: .\apps\geo\views.py:354
 msgid "This plan can no longer be edited."
 msgstr "Este plan ya no puede editarse."
 
-#: .\apps\geo\views.py:331
+#: .\apps\geo\views.py:355
 msgid "The change was rejected:"
 msgstr "El cambio fue rechazado:"
 
-#: .\apps\geo\views.py:332
+#: .\apps\geo\views.py:356
 msgid "Too many saves in a row. Wait a moment."
 msgstr "Demasiados guardados seguidos. Espera un momento."
 
-#: .\apps\geo\views.py:333
+#: .\apps\geo\views.py:357
 msgid "Download your local copy"
 msgstr "Descargar tu copia local"
 
-#: .\apps\geo\views.py:335
+#: .\apps\geo\views.py:359
 msgid "Visible"
 msgstr "Visible"
 
-#: .\apps\geo\views.py:336
+#: .\apps\geo\views.py:360
 msgid "Duplicate"
 msgstr "Duplicar"
 
-#: .\apps\geo\views.py:337
+#: .\apps\geo\views.py:361
 msgid "Split into parts"
 msgstr "Separar en partes"
 
-#: .\apps\geo\views.py:338
+#: .\apps\geo\views.py:362
 msgid "Root — drop here or click to add new here"
 msgstr "Raíz — suelta aquí o haz clic para agregar aquí"
 
-#: .\apps\geo\views.py:340
+#: .\apps\geo\views.py:364
 msgid "Compare"
 msgstr "Comparar"
 
-#: .\apps\geo\views.py:341
+#: .\apps\geo\views.py:365
 msgid "Exit comparison"
 msgstr "Salir de la comparación"
 
-#: .\apps\geo\views.py:342
+#: .\apps\geo\views.py:366
 msgid "Added"
 msgstr "Agregado"
 
-#: .\apps\geo\views.py:343
+#: .\apps\geo\views.py:367
 msgid "Removed"
 msgstr "Eliminado"
 
-#: .\apps\geo\views.py:344
+#: .\apps\geo\views.py:368
 msgid "Changed"
 msgstr "Modificado"
 
-#: .\apps\geo\views.py:345 .\templates\geo\plan_detail.html:272
-#: .\templates\geo\plan_list.html:51
+#: .\apps\geo\views.py:369 .\templates\geo\plan_detail.html:327
+#: .\templates\geo\plan_list.html:58
 msgid "Version"
 msgstr "Versión"
 
-#: .\apps\geo\views.py:486
+#: .\apps\geo\views.py:510
 msgid "Editing started."
 msgstr "Edición iniciada."
 
-#: .\apps\geo\views.py:494
+#: .\apps\geo\views.py:518
 msgid "Plan submitted for review."
 msgstr "Plan enviado a revisión."
 
-#: .\apps\geo\views.py:502
+#: .\apps\geo\views.py:526
 msgid "Plan approved."
 msgstr "Plan aprobado."
 
-#: .\apps\geo\views.py:510
+#: .\apps\geo\views.py:534
 msgid "Plan rejected."
 msgstr "Plan rechazado."
 
-#: .\apps\geo\views.py:518
+#: .\apps\geo\views.py:542
 msgid "Editing resumed."
 msgstr "Edición reanudada."
 
-#: .\apps\geo\views.py:526
+#: .\apps\geo\views.py:550
 msgid "Plan reopened for editing."
 msgstr "Plan reabierto para edición."
 
-#: .\apps\geo\views.py:553
+#: .\apps\geo\views.py:577
 msgid "This plan has no area or no linked permit date to review."
 msgstr "Este plan no tiene área ni fecha de permiso enlazada para revisar."
 
-#: .\apps\geo\views.py:565
+#: .\apps\geo\views.py:589
 msgid "The forecast is unavailable right now, so nothing was recorded."
 msgstr ""
 "El pronóstico no está disponible en este momento, así que no se registró "
 "nada."
 
-#: .\apps\geo\views.py:578
+#: .\apps\geo\views.py:602
 msgid "Weather review recorded."
 msgstr "Revisión meteorológica registrada."
 
@@ -1695,14 +1704,12 @@ msgstr "Revisión meteorológica registrada."
 msgid "Maintenance type"
 msgstr "Tipo de mantenimiento"
 
-#: .\apps\maintenance\forms.py:24
-#: .\templates\maintenance\record_detail.html:28
+#: .\apps\maintenance\forms.py:24 .\templates\maintenance\record_detail.html:28
 #: .\templates\registry\aircraft_detail.html:72
 msgid "Scheduled date"
 msgstr "Fecha programada"
 
-#: .\apps\maintenance\forms.py:25
-#: .\templates\maintenance\record_detail.html:30
+#: .\apps\maintenance\forms.py:25 .\templates\maintenance\record_detail.html:30
 #: .\templates\registry\aircraft_detail.html:93
 msgid "Performed by"
 msgstr "Realizado por"
@@ -1834,7 +1841,7 @@ msgstr "Mantenimiento completado."
 
 #: .\apps\maintenance\views.py:197
 #: .\templates\maintenance\record_detail.html:41
-#: .\templates\operations\permission_detail.html:108
+#: .\templates\operations\permission_detail.html:114
 msgid "Complete"
 msgstr "Completar"
 
@@ -1983,9 +1990,9 @@ msgstr ""
 "cercano. Nada de lo que hayas escrito se sobrescribe."
 
 #: .\apps\operations\forms.py:72 .\apps\registry\forms.py:279
-#: .\apps\registry\forms.py:519 .\apps\registry\forms.py:609
-#: .\apps\registry\forms.py:652 .\apps\registry\forms.py:700
-#: .\apps\registry\forms.py:747
+#: .\apps\registry\forms.py:565 .\apps\registry\forms.py:655
+#: .\apps\registry\forms.py:698 .\apps\registry\forms.py:746
+#: .\apps\registry\forms.py:793
 #: .\templates\compliance\deliverable_detail.html:17
 #: .\templates\compliance\deliverable_list.html:27
 #: .\templates\compliance\email\monthly_review.txt:5
@@ -1995,12 +2002,12 @@ msgstr ""
 #: .\templates\compliance\nonconformity_list.html:33
 #: .\templates\compliance\report.html:69 .\templates\core\audit_log.html:42
 #: .\templates\core\users_roles.html:27 .\templates\generic\list.html:42
-#: .\templates\geo\plan_list.html:50
+#: .\templates\geo\plan_list.html:57
 #: .\templates\maintenance\record_detail.html:23
 #: .\templates\maintenance\record_list.html:18
 #: .\templates\operations\flight_request_list.html:52
 #: .\templates\operations\permission_detail.html:85
-#: .\templates\operations\permission_detail.html:165
+#: .\templates\operations\permission_detail.html:171
 #: .\templates\operations\permission_list.html:48
 #: .\templates\registry\aircraft_detail.html:72
 #: .\templates\registry\aircraft_list.html:26
@@ -2017,8 +2024,8 @@ msgstr "Estado"
 msgid "Permission number"
 msgstr "Número de permiso"
 
-#: .\apps\operations\forms.py:74 .\apps\registry\forms.py:642
-#: .\apps\registry\views.py:69 .\templates\base.html:171
+#: .\apps\operations\forms.py:74 .\apps\registry\forms.py:688
+#: .\apps\registry\views.py:69 .\templates\base.html:213
 #: .\templates\operations\permission_detail.html:86
 #: .\templates\operations\permission_list.html:45
 #: .\templates\registry\costcenter_detail.html:21
@@ -2037,9 +2044,9 @@ msgstr "Flota de aeronaves"
 msgid "Purpose"
 msgstr "Propósito"
 
-#: .\apps\operations\forms.py:78 .\apps\registry\forms.py:516
-#: .\apps\registry\forms.py:611 .\apps\registry\forms.py:665
-#: .\apps\registry\forms.py:710 .\apps\registry\forms.py:749
+#: .\apps\operations\forms.py:78 .\apps\registry\forms.py:562
+#: .\apps\registry\forms.py:657 .\apps\registry\forms.py:711
+#: .\apps\registry\forms.py:756 .\apps\registry\forms.py:795
 msgid "Purpose detail"
 msgstr "Detalle del propósito"
 
@@ -2047,7 +2054,7 @@ msgstr "Detalle del propósito"
 msgid "Valid from"
 msgstr "Vigente desde"
 
-#: .\apps\operations\forms.py:80 .\apps\registry\models.py:1150
+#: .\apps\operations\forms.py:80 .\apps\registry\models.py:1180
 #: .\templates\registry\operator_detail.html:76
 msgid "Valid until"
 msgstr "Vigente hasta"
@@ -2059,12 +2066,13 @@ msgstr "Vigente hasta"
 msgid "Location"
 msgstr "Ubicación"
 
-#: .\apps\operations\forms.py:82
+#: .\apps\operations\forms.py:82 .\templates\geo\_sigo_sheet.html:25
 msgid "Region"
 msgstr "Región"
 
-#: .\apps\operations\forms.py:83 .\apps\operations\forms.py:432
-#: .\apps\operations\models.py:646 .\templates\geo\plan_detail.html:97
+#: .\apps\operations\forms.py:83 .\apps\operations\forms.py:496
+#: .\apps\operations\models.py:646 .\templates\geo\_sigo_sheet.html:23
+#: .\templates\geo\plan_detail.html:134
 #: .\templates\operations\flight_request_detail.html:91
 msgid "Commune"
 msgstr "Comuna"
@@ -2073,11 +2081,13 @@ msgstr "Comuna"
 msgid "Area or site name"
 msgstr "Nombre del área o faena"
 
-#: .\apps\operations\forms.py:85
+#: .\apps\operations\forms.py:85 .\templates\geo\_sigo_sheet.html:72
+#: .\templates\geo\plan_detail.html:124
 msgid "Latitude"
 msgstr "Latitud"
 
-#: .\apps\operations\forms.py:86
+#: .\apps\operations\forms.py:86 .\templates\geo\_sigo_sheet.html:87
+#: .\templates\geo\plan_detail.html:125
 msgid "Longitude"
 msgstr "Longitud"
 
@@ -2090,7 +2100,7 @@ msgid "Maximum altitude (ft)"
 msgstr "Altitud máxima (ft)"
 
 #: .\apps\operations\forms.py:89
-#: .\templates\operations\permission_detail.html:95
+#: .\templates\operations\permission_detail.html:101
 msgid "Area type"
 msgstr "Tipo de área"
 
@@ -2107,16 +2117,15 @@ msgstr ""
 msgid "DAN 151 (populated) vs. DAN 91 (unpopulated)."
 msgstr "DAN 151 (poblada) vs. DAN 91 (no poblada)."
 
-#: .\apps\operations\forms.py:100 .\apps\registry\forms.py:522
-#: .\apps\registry\forms.py:614 .\apps\registry\forms.py:666
-#: .\apps\registry\forms.py:711 .\apps\registry\forms.py:752
+#: .\apps\operations\forms.py:100 .\apps\registry\forms.py:568
+#: .\apps\registry\forms.py:660 .\apps\registry\forms.py:712
+#: .\apps\registry\forms.py:757 .\apps\registry\forms.py:798
 msgid "Required when purpose is 'Other'."
 msgstr "Requerido cuando el propósito es 'Otro'."
 
 #: .\apps\operations\forms.py:102
 msgid ""
-"Structured location, in addition to the free-text location above -- "
-"optional."
+"Structured location, in addition to the free-text location above -- optional."
 msgstr ""
 "Ubicación estructurada, además de la ubicación en texto libre de arriba: "
 "opcional."
@@ -2129,7 +2138,7 @@ msgstr "Grados decimales. Ingresar junto con la longitud."
 msgid "Decimal degrees. Enter together with latitude."
 msgstr "Grados decimales. Ingresar junto con la latitud."
 
-#: .\apps\operations\forms.py:192
+#: .\apps\operations\forms.py:256
 #, python-format
 msgid ""
 "That plan belongs to cost center %(code)s. A plan can only fill in a permit "
@@ -2138,19 +2147,19 @@ msgstr ""
 "Ese plan es del centro de costo %(code)s. Un plan sólo puede llenar un "
 "permiso de su propio centro de costo."
 
-#: .\apps\operations\forms.py:202 .\apps\operations\forms.py:251
+#: .\apps\operations\forms.py:266 .\apps\operations\forms.py:315
 msgid "An approved permission needs its DGAC number."
 msgstr "Un permiso aprobado necesita su número DGAC."
 
-#: .\apps\operations\forms.py:268
+#: .\apps\operations\forms.py:332
 msgid "Corrected status"
 msgstr "Estado corregido"
 
-#: .\apps\operations\forms.py:271
+#: .\apps\operations\forms.py:335
 msgid "Reason for the correction"
 msgstr "Motivo de la corrección"
 
-#: .\apps\operations\forms.py:273
+#: .\apps\operations\forms.py:337
 msgid ""
 "Why the recorded status was wrong. It stays in the permit's history, so "
 "write it for whoever reads this a year from now."
@@ -2158,95 +2167,95 @@ msgstr ""
 "Por qué el estado anotado estaba equivocado. Queda en el historial del "
 "permiso, así que escríbelo pensando en quien lo lea dentro de un año."
 
-#: .\apps\operations\forms.py:292
+#: .\apps\operations\forms.py:356
 msgid "Write why the status is being corrected."
 msgstr "Escribe por qué se está corrigiendo el estado."
 
-#: .\apps\operations\forms.py:309
+#: .\apps\operations\forms.py:373
 msgid "Flight date"
 msgstr "Fecha de vuelo"
 
-#: .\apps\operations\forms.py:310
+#: .\apps\operations\forms.py:374
 msgid "Departure time"
 msgstr "Hora de salida"
 
-#: .\apps\operations\forms.py:311
+#: .\apps\operations\forms.py:375
 msgid "Arrival time"
 msgstr "Hora de llegada"
 
-#: .\apps\operations\forms.py:312
-#: .\templates\operations\email\duty_limit.txt:5
+#: .\apps\operations\forms.py:376 .\templates\operations\email\duty_limit.txt:5
 #: .\templates\operations\flightrecord_detail.html:29
-#: .\templates\operations\permission_detail.html:167
+#: .\templates\operations\permission_detail.html:173
 #: .\templates\operations\record_list.html:7
 msgid "Pilot"
 msgstr "Piloto"
 
-#: .\apps\operations\forms.py:374
+#: .\apps\operations\forms.py:438
 msgid "The aircraft must be part of the flight permission's fleet."
 msgstr "La aeronave debe ser parte de la flota del permiso de vuelo."
 
-#: .\apps\operations\forms.py:383
+#: .\apps\operations\forms.py:447
 msgid "The pilot must be one of the flight permission's operators."
 msgstr "El piloto debe ser uno de los operadores del permiso de vuelo."
 
-#: .\apps\operations\forms.py:393
+#: .\apps\operations\forms.py:457
 msgid ""
 "The flight date must fall within the flight permission's validity range."
 msgstr ""
 "La fecha del vuelo debe estar dentro del rango de vigencia del permiso de "
 "vuelo."
 
-#: .\apps\operations\forms.py:398
+#: .\apps\operations\forms.py:462
 msgid "Arrival time must be later than departure time."
 msgstr "La hora de llegada debe ser posterior a la hora de salida."
 
-#: .\apps\operations\forms.py:431
+#: .\apps\operations\forms.py:495
 #: .\templates\operations\flight_request_detail.html:82
 msgid "Request type"
 msgstr "Tipo de solicitud"
 
-#: .\apps\operations\forms.py:434 .\apps\operations\models.py:163
-#: .\apps\operations\models.py:654 .\templates\geo\plan_detail.html:100
+#: .\apps\operations\forms.py:498 .\apps\operations\models.py:163
+#: .\apps\operations\models.py:654 .\templates\geo\_sigo_sheet.html:31
+#: .\templates\geo\plan_detail.html:137
 #: .\templates\operations\flight_request_detail.html:94
-#: .\templates\operations\permission_detail.html:94
+#: .\templates\operations\permission_detail.html:100
 msgid "Nearest aerodrome (AMC)"
 msgstr "Aeródromo más cercano (AMC)"
 
-#: .\apps\operations\forms.py:435 .\apps\operations\models.py:175
+#: .\apps\operations\forms.py:499 .\apps\operations\models.py:175
 #: .\apps\operations\models.py:667
 #: .\templates\operations\flight_request_detail.html:104
 msgid "Distance to AMC (km)"
 msgstr "Distancia al AMC (km)"
 
-#: .\apps\operations\forms.py:436 .\apps\operations\models.py:689
+#: .\apps\operations\forms.py:500 .\apps\operations\models.py:689
 #: .\templates\operations\flight_request_detail.html:130
 msgid "Height (m)"
 msgstr "Altura (m)"
 
-#: .\apps\operations\forms.py:437 .\apps\operations\models.py:691
+#: .\apps\operations\forms.py:501 .\apps\operations\models.py:691
 msgid "From (time)"
 msgstr "Hora desde"
 
-#: .\apps\operations\forms.py:438 .\apps\operations\models.py:692
+#: .\apps\operations\forms.py:502 .\apps\operations\models.py:692
 msgid "To (time)"
 msgstr "Hora hasta"
 
-#: .\apps\operations\forms.py:439 .\apps\operations\models.py:718
+#: .\apps\operations\forms.py:503 .\apps\operations\models.py:718
 msgid "Filed in SIGO on"
 msgstr "Presentada en SIGO el"
 
-#: .\apps\operations\forms.py:455
+#: .\apps\operations\forms.py:519
 #: .\templates\operations\flight_request_detail.html:140
 msgid "Work area"
 msgstr "Área de trabajo"
 
-#: .\apps\operations\forms.py:456
+#: .\apps\operations\forms.py:520
 #: .\templates\operations\flight_request_detail.html:140
 msgid "Objective"
 msgstr "Objetivo"
 
-#: .\apps\operations\forms.py:470 .\apps\operations\models.py:820
+#: .\apps\operations\forms.py:534 .\apps\operations\models.py:820
 msgid "Note"
 msgstr "Nota"
 
@@ -2302,14 +2311,14 @@ msgstr ""
 "firmada de la DGAC en ficha, y sólo se puede adjuntar cuando el permiso ya "
 "existe."
 
-#: .\apps\operations\models.py:312 .\apps\registry\models.py:916
-#: .\apps\registry\models.py:1252
+#: .\apps\operations\models.py:312 .\apps\registry\models.py:946
+#: .\apps\registry\models.py:1282
 msgid "The end date cannot be before the start date."
 msgstr "La fecha final no puede ser anterior a la fecha inicial."
 
-#: .\apps\operations\models.py:315 .\apps\registry\forms.py:673
-#: .\apps\registry\forms.py:723 .\apps\registry\models.py:919
-#: .\apps\registry\models.py:1255
+#: .\apps\operations\models.py:315 .\apps\registry\forms.py:719
+#: .\apps\registry\forms.py:769 .\apps\registry\models.py:949
+#: .\apps\registry\models.py:1285
 msgid "Describe the purpose when 'Other' is selected."
 msgstr "Describe el propósito cuando se selecciona 'Otro'."
 
@@ -2381,7 +2390,8 @@ msgstr ""
 "Normalmente el nombre de la sección del KMZ, por ejemplo «Quebrada km "
 "13.760»."
 
-#: .\apps\operations\models.py:686 .\templates\geo\plan_detail.html:99
+#: .\apps\operations\models.py:686 .\templates\geo\_sigo_sheet.html:30
+#: .\templates\geo\plan_detail.html:136
 #: .\templates\operations\flight_request_detail.html:129
 #: .\templates\operations\flight_request_list.html:50
 #: .\templates\operations\flight_request_split.html:44
@@ -2436,26 +2446,26 @@ msgstr "historial de solicitud de vuelo"
 msgid "flight request histories"
 msgstr "historiales de solicitud de vuelo"
 
-#: .\apps\operations\views.py:171 .\templates\base.html:85
+#: .\apps\operations\views.py:172 .\templates\base.html:85
 #: .\templates\registry\costcenter_detail.html:23
 msgid "Permissions"
 msgstr "Permisos"
 
-#: .\apps\operations\views.py:232 .\apps\operations\views.py:1288
+#: .\apps\operations\views.py:233 .\apps\operations\views.py:1312
 #, python-format
 msgid "Plan %(title)s linked; it filled in: %(fields)s."
 msgstr "Plan %(title)s vinculado; rellenó: %(fields)s."
 
-#: .\apps\operations\views.py:239
+#: .\apps\operations\views.py:240
 #, python-format
 msgid ""
 "Plan %(title)s linked. It filled nothing in: the permit already had its "
 "location, or the plan has more than one circle."
 msgstr ""
-"Plan %(title)s vinculado. No llenó nada: el permiso ya tenía su ubicación, o"
-" el plan trae más de una circunferencia."
+"Plan %(title)s vinculado. No llenó nada: el permiso ya tenía su ubicación, o "
+"el plan trae más de una circunferencia."
 
-#: .\apps\operations\views.py:255
+#: .\apps\operations\views.py:256
 #, python-format
 msgid ""
 "%(operator)s has no current qualification matching: %(aircraft)s. The "
@@ -2464,28 +2474,28 @@ msgstr ""
 "%(operator)s no tiene una habilitación vigente que cubra: %(aircraft)s. El "
 "permiso se guardó igual; revisa las habilitaciones del operador."
 
-#: .\apps\operations\views.py:295 .\apps\registry\views.py:173
+#: .\apps\operations\views.py:305 .\apps\registry\views.py:173
 #, python-format
 msgid "Edit %(record)s"
 msgstr "Editar: %(record)s"
 
-#: .\apps\operations\views.py:373
+#: .\apps\operations\views.py:383
 msgid "Deny"
 msgstr "Rechazar"
 
-#: .\apps\operations\views.py:470
+#: .\apps\operations\views.py:480
 msgid "Permission approved."
 msgstr "Permiso aprobado."
 
-#: .\apps\operations\views.py:472
+#: .\apps\operations\views.py:482
 msgid ""
 "Upload the DGAC operation authorization (the signed SIGO PDF) before "
 "approving this permit."
 msgstr ""
-"Sube la autorización de operación de la DGAC (el PDF firmado del SIGO) antes"
-" de aprobar este permiso."
+"Sube la autorización de operación de la DGAC (el PDF firmado del SIGO) antes "
+"de aprobar este permiso."
 
-#: .\apps\operations\views.py:476
+#: .\apps\operations\views.py:486
 msgid ""
 "Enter the DGAC permit number before approving. It is on the authorization "
 "you just uploaded: edit the permit and type it in."
@@ -2493,35 +2503,35 @@ msgstr ""
 "Ingresa el número del permiso de la DGAC antes de aprobar. Está en la "
 "autorización que acabas de cargar: edita el permiso y escríbelo."
 
-#: .\apps\operations\views.py:485
+#: .\apps\operations\views.py:495
 msgid "Permission denied."
 msgstr "Permiso rechazado."
 
-#: .\apps\operations\views.py:492
+#: .\apps\operations\views.py:502
 msgid "Permission completed."
 msgstr "Permiso completado."
 
-#: .\apps\operations\views.py:494
+#: .\apps\operations\views.py:504
 msgid ""
 "Upload the DGAC operation authorization (the signed SIGO PDF) before "
 "completing this permit."
 msgstr ""
-"Sube la autorización de operación de la DGAC (el PDF firmado del SIGO) antes"
-" de completar este permiso."
+"Sube la autorización de operación de la DGAC (el PDF firmado del SIGO) antes "
+"de completar este permiso."
 
-#: .\apps\operations\views.py:584
+#: .\apps\operations\views.py:594
 msgid "Permit archived. Use the Archived filter to find or restore it."
 msgstr "Permiso archivado. Búscalo o restáuralo con el filtro Archivados."
 
-#: .\apps\operations\views.py:609
+#: .\apps\operations\views.py:619
 msgid "Permit restored."
 msgstr "Permiso restaurado."
 
-#: .\apps\operations\views.py:631
+#: .\apps\operations\views.py:641
 msgid "Correct the status"
 msgstr "Corregir el estado"
 
-#: .\apps\operations\views.py:671
+#: .\apps\operations\views.py:681
 msgid ""
 "Upload the DGAC operation authorization (the signed SIGO PDF) before "
 "correcting this permit to that status."
@@ -2529,44 +2539,44 @@ msgstr ""
 "Sube la Autorización de Operación RPA de la DGAC (el PDF firmado de SIGO) "
 "antes de corregir el permiso a ese estado."
 
-#: .\apps\operations\views.py:692
+#: .\apps\operations\views.py:702
 #, python-format
 msgid "Correction: %(reason)s"
 msgstr "Corrección: %(reason)s"
 
-#: .\apps\operations\views.py:706
+#: .\apps\operations\views.py:716
 msgid "Status corrected."
 msgstr "Estado corregido."
 
-#: .\apps\operations\views.py:749
+#: .\apps\operations\views.py:759
 #, python-format
 msgid ""
 "%(pilot)s now has %(total)s logged on %(date)s, over the %(limit)s daily "
 "flight limit."
 msgstr ""
-"%(pilot)s acumula %(total)s el %(date)s, por sobre el límite diario de vuelo"
-" de %(limit)s."
+"%(pilot)s acumula %(total)s el %(date)s, por sobre el límite diario de vuelo "
+"de %(limit)s."
 
-#: .\apps\operations\views.py:804
+#: .\apps\operations\views.py:814
 msgid "Flight record archived."
 msgstr "Registro de vuelo archivado."
 
-#: .\apps\operations\views.py:937
+#: .\apps\operations\views.py:947
 msgid ""
 "No circle: this point has no circumference, so SIGO has nothing to draw."
 msgstr ""
-"Sin circunferencia: este punto no tiene círculo, así que SIGO no tendría qué"
-" dibujar."
+"Sin circunferencia: este punto no tiene círculo, así que SIGO no tendría qué "
+"dibujar."
 
-#: .\apps\operations\views.py:940
+#: .\apps\operations\views.py:950
 msgid "No centre point: this circle has no point of its own."
 msgstr "Sin punto central: esta circunferencia no tiene su propio punto."
 
-#: .\apps\operations\views.py:943
+#: .\apps\operations\views.py:953
 msgid "Not a circle: the polygon is not circular, and SIGO expects one."
 msgstr "No es circunferencia: el polígono no es circular y SIGO espera uno."
 
-#: .\apps\operations\views.py:946
+#: .\apps\operations\views.py:956
 msgid ""
 "Duplicate centre: another section has these same coordinates. Check the "
 "source table before filing."
@@ -2574,66 +2584,66 @@ msgstr ""
 "Centro duplicado: otra sección tiene estas mismas coordenadas. Revisa la "
 "tabla de origen antes de presentar."
 
-#: .\apps\operations\views.py:1038
+#: .\apps\operations\views.py:1062
 msgid "Edit flight request"
 msgstr "Editar solicitud de vuelo"
 
-#: .\apps\operations\views.py:1050
+#: .\apps\operations\views.py:1074
 msgid "This request has no geometry to export."
 msgstr "Esta solicitud no tiene geometría que exportar."
 
-#: .\apps\operations\views.py:1076
+#: .\apps\operations\views.py:1100
 msgid "Note added."
 msgstr "Nota agregada."
 
-#: .\apps\operations\views.py:1078
+#: .\apps\operations\views.py:1102
 msgid "Write the note before saving."
 msgstr "Escribe la nota antes de guardar."
 
-#: .\apps\operations\views.py:1102
+#: .\apps\operations\views.py:1126
 msgid "That pair is already on the list."
 msgstr "Ese par ya está en la lista."
 
-#: .\apps\operations\views.py:1105
+#: .\apps\operations\views.py:1129
 msgid "Pair added."
 msgstr "Par agregado."
 
-#: .\apps\operations\views.py:1107
+#: .\apps\operations\views.py:1131
 msgid "Choose a work area and an objective."
 msgstr "Elige un área de trabajo y un objetivo."
 
-#: .\apps\operations\views.py:1127
+#: .\apps\operations\views.py:1151
 msgid "Recorded as filed in SIGO."
 msgstr "Registrada como presentada en SIGO."
 
-#: .\apps\operations\views.py:1145
+#: .\apps\operations\views.py:1169
 msgid "Request closed."
 msgstr "Solicitud cerrada."
 
-#: .\apps\operations\views.py:1162
+#: .\apps\operations\views.py:1186
 msgid "Choose a permit from this cost center."
 msgstr "Elige un permiso de este centro de costo."
 
-#: .\apps\operations\views.py:1179
+#: .\apps\operations\views.py:1203
 #, python-format
 msgid "Linked to %(folio)s; it filled in: %(fields)s."
 msgstr "Vinculada a %(folio)s; rellenó: %(fields)s."
 
-#: .\apps\operations\views.py:1187
+#: .\apps\operations\views.py:1211
 #, python-format
 msgid "Linked to %(folio)s. The permit already had its location."
 msgstr "Vinculada a %(folio)s. El permiso ya tenía su ubicación."
 
-#: .\apps\operations\views.py:1275
+#: .\apps\operations\views.py:1299
 msgid "Choose a plan from this cost center."
 msgstr "Elige un plan de este centro de costo."
 
-#: .\apps\operations\views.py:1294
+#: .\apps\operations\views.py:1318
 #, python-format
 msgid "Plan %(title)s linked. The permit already had its location."
 msgstr "Plan %(title)s vinculado. El permiso ya tenía su ubicación."
 
-#: .\apps\operations\views.py:1349
+#: .\apps\operations\views.py:1373
 #, python-format
 msgid "Created %(count)s flight requests from this plan."
 msgstr "Se crearon %(count)s solicitudes de vuelo desde este plan."
@@ -2658,9 +2668,43 @@ msgstr "La evaluación expiró. Acá va un juego nuevo de preguntas."
 msgid "You do not have permission to take the assessment."
 msgstr "No tienes permiso para rendir la evaluación."
 
-#: .\apps\registry\assessments.py:101
+#: .\apps\registry\assessments.py:186
 msgid "This question is no longer in the bank."
 msgstr "Esta pregunta ya no está en el banco."
+
+#: .\apps\registry\catastro.py:239
+#, python-format
+msgid "%(count)s aircraft"
+msgid_plural "%(count)s aircraft"
+msgstr[0] "%(count)s aeronave"
+msgstr[1] "%(count)s aeronaves"
+
+#: .\apps\registry\catastro.py:241
+#, python-format
+msgid "%(count)s operator"
+msgid_plural "%(count)s operators"
+msgstr[0] "%(count)s operador"
+msgstr[1] "%(count)s operadores"
+
+#: .\apps\registry\catastro.py:256
+#, python-format
+msgid "%(fleet)s and %(personnel)s registered as of %(date)s."
+msgstr "%(fleet)s y %(personnel)s inscritos al %(date)s."
+
+#: .\apps\registry\catastro.py:276
+#, python-format
+msgid ""
+"Filtered by cost center: %(fleet)s and %(personnel)s with no cost center are "
+"not listed."
+msgstr ""
+"Filtrado por centro de costo: %(fleet)s y %(personnel)s sin centro de costo "
+"no aparecen en el listado."
+
+#: .\apps\registry\catastro.py:283
+#, python-format
+msgid "Of these, %(fleet)s and %(personnel)s have no cost center assigned."
+msgstr ""
+"De estos, %(fleet)s y %(personnel)s no tienen centro de costo asignado."
 
 #: .\apps\registry\forms.py:38
 msgid "Same as administrator"
@@ -2764,14 +2808,14 @@ msgid ""
 "verdict rather than judged against an invented threshold."
 msgstr ""
 "Criterios de aceptación del levantamiento (ISO 9001 8.6), tomados del "
-"contrato. Dejar en blanco si no se acordó ninguno: el entregable se registra"
-" sin veredicto en vez de juzgarse contra un umbral inventado."
+"contrato. Dejar en blanco si no se acordó ninguno: el entregable se registra "
+"sin veredicto en vez de juzgarse contra un umbral inventado."
 
 #: .\apps\registry\forms.py:134
 msgid ""
 "Optional: decimal degrees for the site where this contract operates (e.g. "
-"-33.4489). Used to show the weather on the dashboard when no upcoming permit"
-" carries its own coordinates."
+"-33.4489). Used to show the weather on the dashboard when no upcoming permit "
+"carries its own coordinates."
 msgstr ""
 "Opcional: grados decimales del lugar donde opera este contrato (por ejemplo "
 "-33,4489). Se usa para mostrar el clima en el panel cuando ningún permiso "
@@ -2910,7 +2954,7 @@ msgstr ""
 "El número de serie %(serial)s ya es de %(name)s. Los seriales se comparan "
 "sin espacios y en mayúsculas."
 
-#: .\apps\registry\forms.py:389 .\apps\registry\models.py:739
+#: .\apps\registry\forms.py:389 .\apps\registry\models.py:744
 msgid "Employee ID"
 msgstr "ID de empleado"
 
@@ -2926,12 +2970,12 @@ msgstr "Correo electrónico"
 msgid "Phone"
 msgstr "Teléfono"
 
-#: .\apps\registry\forms.py:393 .\apps\registry\models.py:743
+#: .\apps\registry\forms.py:393 .\apps\registry\models.py:749
 msgid "RUT"
 msgstr "RUT"
 
 # LV-29: DGAC vigencias.
-#: .\apps\registry\forms.py:395 .\apps\registry\models.py:751
+#: .\apps\registry\forms.py:395 .\apps\registry\models.py:757
 msgid "DGAC credential expiry"
 msgstr "Vencimiento credencial DGAC"
 
@@ -2947,17 +2991,20 @@ msgstr "Dirección"
 msgid "Authorizations"
 msgstr "Habilitaciones"
 
-#: .\apps\registry\forms.py:400 .\apps\registry\models.py:773
+#: .\apps\registry\forms.py:400 .\apps\registry\models.py:779
 msgid "Linked user account"
 msgstr "Cuenta de usuario vinculada"
 
-#: .\apps\registry\forms.py:407
+#: .\apps\registry\forms.py:408
+msgid "Leave it blank and it is derived from the RUT, as RUT-123456785."
+msgstr "Déjalo en blanco y se deriva del RUT, como RUT-123456785."
+
+#: .\apps\registry\forms.py:410
 msgid "With its check digit, e.g. 12345678-5. Dots are optional."
 msgstr ""
-"Con su dígito verificador, por ejemplo 12345678-5. Los puntos son "
-"opcionales."
+"Con su dígito verificador, por ejemplo 12345678-5. Los puntos son opcionales."
 
-#: .\apps\registry\forms.py:409
+#: .\apps\registry\forms.py:412
 msgid ""
 "Copy them exactly as the DGAC credential states them. They are not "
 "standardised on purpose: the wording varies."
@@ -2965,11 +3012,7 @@ msgstr ""
 "Cópialas tal como las dice la credencial de la DGAC. No se estandarizan a "
 "propósito: la redacción varía."
 
-#: .\apps\registry\forms.py:456
-msgid "Enter the employee ID."
-msgstr "Ingresa el ID de empleado."
-
-#: .\apps\registry\forms.py:468
+#: .\apps\registry\forms.py:486
 #, python-format
 msgid ""
 "Employee ID %(value)s belongs to %(name)s, an archived record. Restore that "
@@ -2978,38 +3021,38 @@ msgstr ""
 "El ID de empleado %(value)s es de %(name)s, un registro archivado. Restaura "
 "ese registro en vez de crear un segundo."
 
-#: .\apps\registry\forms.py:475
+#: .\apps\registry\forms.py:493
 #, python-format
 msgid "Employee ID %(value)s already belongs to %(name)s."
 msgstr "El ID de empleado %(value)s ya es de %(name)s."
 
-#: .\apps\registry\forms.py:515 .\apps\registry\forms.py:610
-#: .\apps\registry\forms.py:660 .\apps\registry\forms.py:705
-#: .\apps\registry\forms.py:748
+#: .\apps\registry\forms.py:561 .\apps\registry\forms.py:656
+#: .\apps\registry\forms.py:706 .\apps\registry\forms.py:751
+#: .\apps\registry\forms.py:794
 msgid "Operation or purpose"
 msgstr "Operación o propósito"
 
-#: .\apps\registry\forms.py:517 .\apps\registry\forms.py:745
+#: .\apps\registry\forms.py:563 .\apps\registry\forms.py:791
 msgid "Start date"
 msgstr "Fecha de inicio"
 
-#: .\apps\registry\forms.py:518 .\apps\registry\forms.py:746
+#: .\apps\registry\forms.py:564 .\apps\registry\forms.py:792
 msgid "End date"
 msgstr "Fecha de término"
 
-#: .\apps\registry\forms.py:549
+#: .\apps\registry\forms.py:595
 msgid "A confirmed assignment requires a cost center."
 msgstr "Una asignación confirmada requiere un centro de costo."
 
-#: .\apps\registry\forms.py:563
+#: .\apps\registry\forms.py:609
 msgid "This operator already has a confirmed assignment in this period."
 msgstr "El operador ya tiene una asignación confirmada en este período."
 
-#: .\apps\registry\forms.py:580
+#: .\apps\registry\forms.py:626
 msgid "This aircraft already has a confirmed assignment in this period."
 msgstr "La aeronave ya tiene una asignación confirmada en este período."
 
-#: .\apps\registry\forms.py:645
+#: .\apps\registry\forms.py:691
 msgid ""
 "Select one or more. Each is assigned to the cost center above; an operator "
 "already assigned elsewhere is moved here."
@@ -3017,7 +3060,7 @@ msgstr ""
 "Selecciona uno o más. Cada uno se asigna al centro de costo de arriba; un "
 "operador ya asignado en otro centro de costo se mueve aquí."
 
-#: .\apps\registry\forms.py:693
+#: .\apps\registry\forms.py:739
 msgid ""
 "Select one or more. Each is assigned to the cost center above; an aircraft "
 "already assigned elsewhere is moved here."
@@ -3025,11 +3068,11 @@ msgstr ""
 "Selecciona una o más. Cada una se asigna al centro de costo de arriba; una "
 "aeronave ya asignada en otro centro de costo se mueve aquí."
 
-#: .\apps\registry\forms.py:767 .\templates\registry\operator_detail.html:33
+#: .\apps\registry\forms.py:813 .\templates\registry\operator_detail.html:33
 msgid "Qualification type"
 msgstr "Tipo de habilitación"
 
-#: .\apps\registry\forms.py:778
+#: .\apps\registry\forms.py:824
 msgid "No qualification types configured yet. Create one first."
 msgstr "Aún no hay tipos de habilitación configurados. Crea uno primero."
 
@@ -3038,10 +3081,9 @@ msgid "AeroControl · your DGAC validities are expiring"
 msgstr "AeroControl · tus vigencias DGAC están por vencer"
 
 #: .\apps\registry\models.py:78 .\apps\registry\models.py:277
-#: .\apps\registry\models.py:652 .\apps\registry\models.py:1204
-#: .\templates\core\users_roles.html:40
-#: .\templates\generic\_table_body.html:10 .\templates\generic\list.html:23
-#: .\templates\registry\_aircraft_rows.html:15
+#: .\apps\registry\models.py:652 .\apps\registry\models.py:1234
+#: .\templates\core\users_roles.html:40 .\templates\generic\_table_body.html:10
+#: .\templates\generic\list.html:23 .\templates\registry\_aircraft_rows.html:15
 #: .\templates\registry\assignment_list.html:32
 #: .\templates\registry\battery_list.html:25
 #: .\templates\registry\costcenter_detail.html:80
@@ -3056,8 +3098,7 @@ msgstr "Cerrado"
 
 #: .\apps\registry\models.py:98
 msgid "Recipient of expiry digests for this cost center."
-msgstr ""
-"Destinatario de los resúmenes de vencimientos de este centro de costo."
+msgstr "Destinatario de los resúmenes de vencimientos de este centro de costo."
 
 #: .\apps\registry\models.py:235
 msgid "cost center"
@@ -3071,7 +3112,7 @@ msgstr "centros de costo"
 msgid "Damaged"
 msgstr "Mal estado"
 
-#: .\apps\registry\models.py:282 .\templates\base.html:157
+#: .\apps\registry\models.py:282 .\templates\base.html:187
 #: .\templates\core\calendar.html:35 .\templates\core\calendar.html:51
 #: .\templates\core\calendar.html:87
 #: .\templates\maintenance\record_detail.html:3
@@ -3185,97 +3226,102 @@ msgstr "Batería"
 msgid "A battery needs its serial number."
 msgstr "Una batería necesita su número de serie."
 
-#: .\apps\registry\models.py:774
+#: .\apps\registry\models.py:780
 msgid "Optional. Lets this person see \"My work\" filtered to them."
-msgstr "Opcional. Permite que esta persona vea \"Mi trabajo\" filtrado a lo suyo."
+msgstr ""
+"Opcional. Permite que esta persona vea \"Mi trabajo\" filtrado a lo suyo."
 
-#: .\apps\registry\models.py:778
+#: .\apps\registry\models.py:784
 msgid "operator"
 msgstr "operador"
 
-#: .\apps\registry\models.py:779
+#: .\apps\registry\models.py:785
 msgid "operators"
 msgstr "operadores"
 
-#: .\apps\registry\models.py:817
+#: .\apps\registry\models.py:839
+msgid "Enter the employee ID, or a valid RUT to derive it from."
+msgstr "Ingresa el ID de empleado, o un RUT válido del que derivarlo."
+
+#: .\apps\registry\models.py:847
 msgid "Enter the RUT as 12345678-5, including its check digit."
 msgstr "Ingresa el RUT como 12345678-5, con su dígito verificador."
 
-#: .\apps\registry\models.py:825
+#: .\apps\registry\models.py:855
 #, python-format
 msgid "RUT %(rut)s already belongs to %(name)s."
 msgstr "El RUT %(rut)s ya es de %(name)s."
 
-#: .\apps\registry\models.py:860 .\apps\registry\models.py:1203
+#: .\apps\registry\models.py:890 .\apps\registry\models.py:1233
 #: .\apps\workboard\models.py:30 .\apps\workboard\views.py:99
 #: .\templates\registry\_assignment_table_body.html:8
 #: .\templates\registry\assignment_list.html:35
 msgid "Planned"
 msgstr "Planificado"
 
-#: .\apps\registry\models.py:861
+#: .\apps\registry\models.py:891
 #: .\templates\registry\_assignment_table_body.html:8
 #: .\templates\registry\assignment_list.html:19
 #: .\templates\registry\assignment_list.html:36
 msgid "Confirmed"
 msgstr "Confirmada"
 
-#: .\apps\registry\models.py:863 .\apps\registry\models.py:1206
+#: .\apps\registry\models.py:893 .\apps\registry\models.py:1236
 #: .\templates\registry\_assignment_table_body.html:8
 #: .\templates\registry\assignment_list.html:38
 msgid "Cancelled"
 msgstr "Cancelada"
 
-#: .\apps\registry\models.py:892
+#: .\apps\registry\models.py:922
 msgid "assignment"
 msgstr "asignación"
 
-#: .\apps\registry\models.py:893
+#: .\apps\registry\models.py:923
 msgid "assignments"
 msgstr "asignaciones"
 
-#: .\apps\registry\models.py:922
+#: .\apps\registry\models.py:952
 msgid "The selected operator is inactive."
 msgstr "El operador seleccionado está inactivo."
 
-#: .\apps\registry\models.py:926
+#: .\apps\registry\models.py:956
 msgid "The selected aircraft is not available."
 msgstr "La aeronave seleccionada no está disponible."
 
-#: .\apps\registry\models.py:932
+#: .\apps\registry\models.py:962
 msgid "The cost center does not match the operator's."
 msgstr "El centro de costo no coincide con el del operador."
 
-#: .\apps\registry\models.py:938
+#: .\apps\registry\models.py:968
 msgid "The cost center does not match the aircraft's."
 msgstr "El centro de costo no coincide con el de la aeronave."
 
-#: .\apps\registry\models.py:973
+#: .\apps\registry\models.py:1003
 msgid "ICAO code"
 msgstr "Código OACI"
 
-#: .\apps\registry\models.py:974
+#: .\apps\registry\models.py:1004
 msgid "As SIGO lists it, e.g. SCEL."
 msgstr "Como lo lista SIGO, por ejemplo SCEL."
 
-#: .\apps\registry\models.py:986
+#: .\apps\registry\models.py:1016
 msgid "Leave blank if unverified: it will not be used to compute AMC."
 msgstr ""
 "Déjalo en blanco si no está verificada: no se usará para calcular el AMC."
 
-#: .\apps\registry\models.py:1000
+#: .\apps\registry\models.py:1030
 msgid "aerodrome"
 msgstr "aeródromo"
 
-#: .\apps\registry\models.py:1001
+#: .\apps\registry\models.py:1031
 msgid "aerodromes"
 msgstr "aeródromos"
 
-#: .\apps\registry\models.py:1033
+#: .\apps\registry\models.py:1063
 msgid "Aircraft model keywords"
 msgstr "Palabras clave de modelo de aeronave"
 
-#: .\apps\registry\models.py:1035
+#: .\apps\registry\models.py:1065
 msgid ""
 "Comma-separated fragments matched against the aircraft model (e.g. 'mavic, "
 "matrice'). Used to check operator–aircraft fit."
@@ -3284,113 +3330,141 @@ msgstr ""
 "(p. ej. 'mavic, matrice'). Se usa para verificar la compatibilidad operador-"
 "aeronave."
 
-#: .\apps\registry\models.py:1053
+#: .\apps\registry\models.py:1083
 msgid "qualification type"
 msgstr "tipo de habilitación"
 
-#: .\apps\registry\models.py:1054
+#: .\apps\registry\models.py:1084
 msgid "qualification types"
 msgstr "tipos de habilitación"
 
-#: .\apps\registry\models.py:1091
+#: .\apps\registry\models.py:1121
 msgid "qualification"
 msgstr "habilitación"
 
-#: .\apps\registry\models.py:1092
+#: .\apps\registry\models.py:1122
 msgid "qualifications"
 msgstr "habilitaciones"
 
-#: .\apps\registry\models.py:1138
+#: .\apps\registry\models.py:1168
 msgid "Taken by"
 msgstr "Rendida por"
 
-#: .\apps\registry\models.py:1140 .\templates\registry\operator_detail.html:67
+#: .\apps\registry\models.py:1170 .\templates\registry\operator_detail.html:67
 msgid "Taken at"
 msgstr "Rendida el"
 
-#: .\apps\registry\models.py:1141
+#: .\apps\registry\models.py:1171 .\templates\registry\assessment_take.html:43
 msgid "Questions"
 msgstr "Preguntas"
 
-#: .\apps\registry\models.py:1142
+#: .\apps\registry\models.py:1172
 msgid "Correct answers"
 msgstr "Respuestas correctas"
 
-#: .\apps\registry\models.py:1144
+#: .\apps\registry\models.py:1174
 msgid "Score (%)"
 msgstr "Puntaje (%)"
 
-#: .\apps\registry\models.py:1146 .\apps\registry\models.py:1171
+#: .\apps\registry\models.py:1176 .\apps\registry\models.py:1201
 #: .\templates\registry\assessment_detail.html:20
 #: .\templates\registry\operator_detail.html:83
 msgid "Passed"
 msgstr "Aprobado"
 
-#: .\apps\registry\models.py:1151
+#: .\apps\registry\models.py:1181
 msgid "Answers"
 msgstr "Respuestas"
 
-#: .\apps\registry\models.py:1154
+#: .\apps\registry\models.py:1184
 msgid "knowledge assessment"
 msgstr "evaluación de conocimientos"
 
-#: .\apps\registry\models.py:1155
+#: .\apps\registry\models.py:1185
 msgid "knowledge assessments"
 msgstr "evaluaciones de conocimientos"
 
-#: .\apps\registry\models.py:1171
+#: .\apps\registry\models.py:1201
 #: .\templates\registry\assessment_detail.html:22
 #: .\templates\registry\operator_detail.html:83
 msgid "Insufficient"
 msgstr "Insuficiente"
 
-#: .\apps\registry\models.py:1205
+#: .\apps\registry\models.py:1235
 msgid "Ended"
 msgstr "Finalizada"
 
-#: .\apps\registry\models.py:1259
+#: .\apps\registry\models.py:1289
 msgid "The selected resource is inactive."
 msgstr "El recurso seleccionado está inactivo."
 
-#: .\apps\registry\models.py:1266
+#: .\apps\registry\models.py:1296
 msgid "This resource already has an overlapping active assignment."
 msgstr "Este recurso ya tiene una asignación activa que se superpone."
 
-#: .\apps\registry\models.py:1282
+#: .\apps\registry\models.py:1312
 msgid "operator assignment"
 msgstr "asignación de operador"
 
-#: .\apps\registry\models.py:1283
+#: .\apps\registry\models.py:1313
 msgid "operator assignments"
 msgstr "asignaciones de operador"
 
-#: .\apps\registry\models.py:1315
+#: .\apps\registry\models.py:1345
 msgid "aircraft assignment"
 msgstr "asignación de aeronave"
 
-#: .\apps\registry\models.py:1316
+#: .\apps\registry\models.py:1346
 msgid "aircraft assignments"
 msgstr "asignaciones de aeronave"
 
-#: .\apps\registry\models.py:1356
+#: .\apps\registry\models.py:1386
 msgid "Assigned"
 msgstr "Asignado"
 
-#: .\apps\registry\models.py:1357
+#: .\apps\registry\models.py:1387
 msgid "Reassigned"
 msgstr "Reasignado"
 
-#: .\apps\registry\models.py:1359
+#: .\apps\registry\models.py:1389
 msgid "Location changed"
 msgstr "Cambio de ubicación"
 
-#: .\apps\registry\models.py:1392
+#: .\apps\registry\models.py:1422
 msgid "resource movement"
 msgstr "movimiento de recurso"
 
-#: .\apps\registry\models.py:1393
+#: .\apps\registry\models.py:1423
 msgid "resource movements"
 msgstr "movimientos de recursos"
+
+#: .\apps\registry\report_views.py:108 .\apps\registry\report_views.py:296
+#: .\templates\registry\catastro.html:3 .\templates\registry\catastro.html:8
+msgid "Fleet and personnel roster"
+msgstr "Catastro de flota y personal"
+
+#: .\apps\registry\report_views.py:126
+msgid "AeroControl — Fleet and personnel roster"
+msgstr "AeroControl — Catastro de flota y personal"
+
+#: .\apps\registry\report_views.py:186 .\apps\registry\report_views.py:302
+#: .\templates\registry\catastro.html:61
+#: .\templates\registry\costcenter_detail.html:22
+msgid "Fleet"
+msgstr "Flota"
+
+#: .\apps\registry\report_views.py:192 .\templates\registry\catastro.html:71
+msgid "No aircraft registered."
+msgstr "Sin aeronaves inscritas."
+
+#: .\apps\registry\report_views.py:203 .\apps\registry\report_views.py:303
+#: .\templates\registry\catastro.html:79
+msgid "Personnel"
+msgstr "Personal"
+
+#: .\apps\registry\report_views.py:209 .\templates\registry\catastro.html:94
+msgid "No operators registered."
+msgstr "Sin operadores inscritos."
 
 #: .\apps\registry\test_r47_credential_pdf_flag.py:59
 msgid "No PDF"
@@ -3404,20 +3478,20 @@ msgstr "Centros de costo"
 msgid "Resource planning"
 msgstr "Planificación de recursos"
 
-#: .\apps\registry\views.py:71 .\templates\base.html:189
+#: .\apps\registry\views.py:71 .\templates\base.html:231
 msgid "Operator assignments"
 msgstr "Asignaciones de operador"
 
-#: .\apps\registry\views.py:72 .\templates\base.html:190
+#: .\apps\registry\views.py:72 .\templates\base.html:232
 msgid "Aircraft assignments"
 msgstr "Asignaciones de aeronave"
 
 #: .\apps\registry\views.py:73 .\templates\registry\operator_detail.html:28
-#: .\templates\registry\operator_list.html:44
+#: .\templates\registry\operator_list.html:65
 msgid "Qualifications"
 msgstr "Habilitaciones"
 
-#: .\apps\registry\views.py:74 .\templates\base.html:191
+#: .\apps\registry\views.py:74 .\templates\base.html:233
 msgid "Batteries"
 msgstr "Baterías"
 
@@ -3463,8 +3537,8 @@ msgstr "Seguro registrado como autorizado."
 msgid ""
 "Enter the policy's validity date before recording the JAC's authorization."
 msgstr ""
-"Ingresa la fecha de vigencia de la póliza antes de registrar la autorización"
-" de la JAC."
+"Ingresa la fecha de vigencia de la póliza antes de registrar la autorización "
+"de la JAC."
 
 #: .\apps\registry\views.py:866
 msgid "Assign operators to a cost center"
@@ -3486,7 +3560,7 @@ msgstr "Últimos 30 días"
 msgid "Last 90 days"
 msgstr "Últimos 90 días"
 
-#: .\apps\registry\views.py:1063 .\templates\base.html:192
+#: .\apps\registry\views.py:1063 .\templates\base.html:234
 msgid "Resource movements"
 msgstr "Movimientos de recursos"
 
@@ -3508,7 +3582,7 @@ msgid "Movement"
 msgstr "Movimiento"
 
 #: .\apps\registry\views.py:1095 .\templates\compliance\report.html:36
-#: .\templates\core\audit_log.html:27 .\templates\geo\plan_detail.html:355
+#: .\templates\core\audit_log.html:27 .\templates\geo\plan_detail.html:410
 #: .\templates\registry\aircraft_detail.html:120
 #: .\templates\registry\costcenter_detail.html:142
 #: .\templates\registry\operator_detail.html:104
@@ -3516,7 +3590,7 @@ msgid "From"
 msgstr "Desde"
 
 #: .\apps\registry\views.py:1096 .\templates\compliance\report.html:40
-#: .\templates\core\audit_log.html:28 .\templates\geo\plan_detail.html:355
+#: .\templates\core\audit_log.html:28 .\templates\geo\plan_detail.html:410
 #: .\templates\registry\aircraft_detail.html:120
 #: .\templates\registry\costcenter_detail.html:142
 #: .\templates\registry\operator_detail.html:104
@@ -3525,8 +3599,8 @@ msgstr "Hasta"
 
 #: .\apps\registry\views.py:1098
 #: .\templates\compliance\deliverable_list.html:27
-#: .\templates\generic\list.html:41 .\templates\geo\plan_detail.html:275
-#: .\templates\geo\plan_detail.html:355 .\templates\geo\plan_list.html:52
+#: .\templates\generic\list.html:41 .\templates\geo\plan_detail.html:330
+#: .\templates\geo\plan_detail.html:410 .\templates\geo\plan_list.html:59
 #: .\templates\registry\aircraft_detail.html:120
 #: .\templates\registry\costcenter_detail.html:142
 #: .\templates\registry\operator_detail.html:104
@@ -3762,17 +3836,13 @@ msgstr "Panel"
 msgid "Flight"
 msgstr "Vuelo"
 
-#: .\templates\base.html:92
-msgid "SIGO requests"
-msgstr "Solicitudes SIGO"
-
-#: .\templates\base.html:93 .\templates\geo\plan_detail.html:23
+#: .\templates\base.html:123 .\templates\geo\plan_detail.html:23
 #: .\templates\geo\plan_import.html:7 .\templates\geo\plan_list.html:3
 #: .\templates\geo\plan_list.html:6
 msgid "Geospatial planning"
 msgstr "Planificación geoespacial"
 
-#: .\templates\base.html:94 .\templates\compliance\email\monthly_review.txt:5
+#: .\templates\base.html:124 .\templates\compliance\email\monthly_review.txt:5
 #: .\templates\compliance\email\monthly_review_deadline.txt:5
 #: .\templates\compliance\monthly_review.html:38
 #: .\templates\core\calendar.html:34 .\templates\core\calendar.html:50
@@ -3780,63 +3850,66 @@ msgstr "Planificación geoespacial"
 msgid "Flights"
 msgstr "Vuelos"
 
-#: .\templates\base.html:119 .\templates\compliance\company_documents.html:8
+#: .\templates\base.html:149 .\templates\compliance\company_documents.html:8
 #: .\templates\compliance\monthly_review.html:7
 #: .\templates\compliance\operational_records.html:7
 #: .\templates\compliance\report.html:7
 msgid "Compliance"
 msgstr "Cumplimiento"
 
-#: .\templates\base.html:129 .\templates\compliance\alert_list.html:3
+#: .\templates\base.html:159 .\templates\compliance\alert_list.html:3
 #: .\templates\compliance\alert_list.html:4
 msgid "Alerts"
 msgstr "Alertas"
 
-#: .\templates\base.html:144
+#: .\templates\base.html:174
 msgid "Report"
 msgstr "Reporte"
 
-#: .\templates\base.html:154 .\templates\compliance\nonconformity_list.html:3
+#: .\templates\base.html:184 .\templates\compliance\nonconformity_list.html:3
 #: .\templates\compliance\nonconformity_list.html:6
 msgid "Non-conformities"
 msgstr "No conformidades"
 
-#: .\templates\base.html:162
+#: .\templates\base.html:192
 msgid "Maintenance jobs"
 msgstr "Mantenciones"
 
-#: .\templates\base.html:168
+#: .\templates\base.html:198
 msgctxt "sidebar group"
 msgid "Registry"
 msgstr "Padrón"
 
-#: .\templates\base.html:169
+#: .\templates\base.html:209
+msgid "Roster report"
+msgstr "Informe de catastro"
+
+#: .\templates\base.html:211
 msgid "Cost Centers"
 msgstr "Centros de costo"
 
-#: .\templates\base.html:200 .\templates\core\administration.html:3
+#: .\templates\base.html:242 .\templates\core\administration.html:3
 #: .\templates\core\administration.html:24
 msgid "Administration center"
 msgstr "Centro de administración"
 
-#: .\templates\base.html:201
+#: .\templates\base.html:243
 msgid "Admin"
 msgstr "Administración"
 
-#: .\templates\base.html:208 .\templates\base.html:215
+#: .\templates\base.html:250 .\templates\base.html:257
 #: .\templates\compliance\_document_preview_modal.html:25
 #: .\templates\compliance\nonconformity_detail.html:62
 #: .\templates\operations\flight_request_detail.html:61
-#: .\templates\workboard\kanban.html:52
-#: .\templates\workboard\task_list.html:23
+#: .\templates\workboard\kanban.html:52 .\templates\workboard\task_list.html:23
 msgid "Close"
 msgstr "Cerrar"
 
-#: .\templates\base.html:215
+#: .\templates\base.html:257
 msgid "Form"
 msgstr "Formulario"
 
-#: .\templates\base.html:215
+#: .\templates\base.html:257
 msgid "Loading…"
 msgstr "Cargando…"
 
@@ -3877,8 +3950,8 @@ msgstr "Subir el primero"
 
 #: .\templates\compliance\_document_form_content.html:7
 #: .\templates\generic\_form_content.html:13 .\templates\generic\form.html:15
-#: .\templates\geo\plan_detail.html:188 .\templates\geo\plan_detail.html:258
-#: .\templates\operations\permission_form.html:97
+#: .\templates\geo\plan_detail.html:243 .\templates\geo\plan_detail.html:313
+#: .\templates\operations\permission_form.html:116
 #: .\templates\registry\_costcenter_form_content.html:12
 #: .\templates\registry\costcenter_form.html:14
 #: .\templates\workboard\_task_form.html:6
@@ -3892,13 +3965,13 @@ msgstr "Guardar"
 #: .\templates\generic\_form_content.html:14
 #: .\templates\generic\confirm_delete.html:6 .\templates\generic\form.html:16
 #: .\templates\geo\plan_archive_confirm.html:33
-#: .\templates\geo\plan_detail.html:257 .\templates\geo\plan_import.html:22
+#: .\templates\geo\plan_detail.html:312 .\templates\geo\plan_import.html:22
 #: .\templates\operations\flight_request_split.html:73
 #: .\templates\operations\permission_archive_confirm.html:54
-#: .\templates\operations\permission_form.html:102
+#: .\templates\operations\permission_form.html:121
 #: .\templates\registration\password_change_form.html:14
 #: .\templates\registry\_costcenter_form_content.html:13
-#: .\templates\registry\assessment_take.html:42
+#: .\templates\registry\assessment_take.html:110
 #: .\templates\registry\costcenter_archive_confirm.html:22
 #: .\templates\registry\costcenter_form.html:15
 #: .\templates\workboard\_task_form.html:6
@@ -3955,7 +4028,7 @@ msgstr "Abrir la ficha del documento"
 #: .\templates\compliance\_document_rows.html:8
 #: .\templates\compliance\document_list.html:16
 #: .\templates\compliance\document_list.html:23
-#: .\templates\geo\plan_detail.html:282
+#: .\templates\geo\plan_detail.html:337
 msgid "Current"
 msgstr "Vigente"
 
@@ -4003,8 +4076,7 @@ msgstr "Emitido"
 #: .\templates\compliance\document_list.html:23
 #: .\templates\compliance\nonconformity_detail.html:58
 #: .\templates\compliance\operational_records.html:49
-#: .\templates\generic\list.html:44
-#: .\templates\maintenance\record_list.html:18
+#: .\templates\generic\list.html:44 .\templates\maintenance\record_list.html:18
 #: .\templates\operations\flight_request_detail.html:140
 #: .\templates\registry\assignment_list.html:51
 msgid "Actions"
@@ -4014,8 +4086,7 @@ msgstr "Acciones"
 #: .\templates\compliance\document_detail.html:18
 #: .\templates\compliance\email\executive_report.html:20
 #: .\templates\compliance\email\executive_report.html:54
-#: .\templates\compliance\report.html:52
-#: .\templates\compliance\report.html:140
+#: .\templates\compliance\report.html:52 .\templates\compliance\report.html:140
 #: .\templates\registry\_qualification_rows.html:20
 #: .\templates\registry\costcenter_detail.html:45
 #: .\templates\registry\operator_detail.html:39
@@ -4069,7 +4140,7 @@ msgstr "Todos los tipos de entidad"
 #: .\templates\compliance\nonconformity_list.html:27
 #: .\templates\compliance\operational_records.html:40
 #: .\templates\core\audit_log.html:29 .\templates\dashboard\index.html:36
-#: .\templates\geo\plan_list.html:37
+#: .\templates\geo\plan_list.html:41
 #: .\templates\maintenance\record_list.html:15
 #: .\templates\operations\flight_request_list.html:42
 #: .\templates\operations\permission_list.html:38
@@ -4125,7 +4196,7 @@ msgid "Reopen this alert and send its task back"
 msgstr "Reabre esta alerta y devuelve su tarea a donde estaba"
 
 #: .\templates\compliance\alert_list.html:83
-#: .\templates\geo\plan_detail.html:186
+#: .\templates\geo\plan_detail.html:241
 msgid "Undo"
 msgstr "Deshacer"
 
@@ -4154,7 +4225,7 @@ msgstr ""
 
 #: .\templates\compliance\company_documents.html:21
 #: .\templates\compliance\document_list.html:14
-#: .\templates\generic\list.html:22 .\templates\geo\plan_list.html:20
+#: .\templates\generic\list.html:22 .\templates\geo\plan_list.html:24
 #: .\templates\operations\flight_request_list.html:32
 #: .\templates\operations\permission_list.html:16
 #: .\templates\registry\battery_list.html:21
@@ -4254,8 +4325,8 @@ msgid ""
 "This deliverable is below the contract's criteria. State the reason for "
 "releasing it anyway:"
 msgstr ""
-"Este entregable está bajo los criterios del contrato. Indique el motivo para"
-" liberarlo igualmente:"
+"Este entregable está bajo los criterios del contrato. Indique el motivo para "
+"liberarlo igualmente:"
 
 #: .\templates\compliance\deliverable_detail.html:79
 msgid "Release"
@@ -4276,7 +4347,7 @@ msgstr "Nuevo entregable"
 
 #: .\templates\compliance\deliverable_list.html:17
 #: .\templates\compliance\nonconformity_list.html:17
-#: .\templates\generic\list.html:23 .\templates\geo\plan_list.html:23
+#: .\templates\generic\list.html:23 .\templates\geo\plan_list.html:27
 #: .\templates\maintenance\record_list.html:13
 #: .\templates\operations\flight_request_list.html:35
 #: .\templates\operations\permission_list.html:19
@@ -4306,9 +4377,8 @@ msgid ""
 "All the files in one batch are filed against the same record, with the same "
 "document type and dates. Each one is checked individually."
 msgstr ""
-"Todos los archivos de un lote quedan archivados en el mismo registro, con el"
-" mismo tipo de documento y las mismas fechas. Cada uno se revisa por "
-"separado."
+"Todos los archivos de un lote quedan archivados en el mismo registro, con el "
+"mismo tipo de documento y las mismas fechas. Cada uno se revisa por separado."
 
 #: .\templates\compliance\document_bulk_form.html:25
 msgid "What these documents belong to"
@@ -4432,8 +4502,7 @@ msgid "prev."
 msgstr "ant."
 
 #: .\templates\compliance\email\executive_report.html:53
-#: .\templates\compliance\report.html:51
-#: .\templates\compliance\report.html:139
+#: .\templates\compliance\report.html:51 .\templates\compliance\report.html:139
 msgid "Valid"
 msgstr "Vigentes"
 
@@ -4510,8 +4579,8 @@ msgstr "Revisión de registros del mes — %(period)s"
 
 #: .\templates\compliance\email\monthly_review.txt:3
 msgid ""
-"For each cost center that flew this month, flights vs operational records on"
-" file:"
+"For each cost center that flew this month, flights vs operational records on "
+"file:"
 msgstr ""
 "Por cada centro de costo que voló este mes, vuelos vs registros "
 "operacionales en archivo:"
@@ -4527,8 +4596,7 @@ msgstr "Registros"
 #, python-format
 msgid "Review %(total)s cost center and mark it Compliant or Non-compliant:"
 msgid_plural ""
-"Review these %(total)s cost centers and mark each Compliant or Non-"
-"compliant:"
+"Review these %(total)s cost centers and mark each Compliant or Non-compliant:"
 msgstr[0] "Revisa %(total)s centro de costo y márcalo Cumple o No cumple:"
 msgstr[1] ""
 "Revisa estos %(total)s centros de costo y marca cada uno Cumple o No cumple:"
@@ -4548,8 +4616,8 @@ msgid_plural ""
 msgstr[0] ""
 "Este centro de costo todavía no tiene su revisión de %(period)s firmada:"
 msgstr[1] ""
-"Estos %(total)s centros de costo todavía no tienen su revisión de %(period)s"
-" firmada:"
+"Estos %(total)s centros de costo todavía no tienen su revisión de %(period)s "
+"firmada:"
 
 #: .\templates\compliance\email\monthly_review_deadline.txt:8
 msgid "Mark each Compliant or Non-compliant:"
@@ -4615,8 +4683,7 @@ msgid ""
 "ISO 10.2 asks whether the corrective action worked, not only that it was "
 "taken."
 msgstr ""
-"ISO 10.2 pregunta si la acción correctiva sirvió, no sólo que se haya "
-"tomado."
+"ISO 10.2 pregunta si la acción correctiva sirvió, no sólo que se haya tomado."
 
 #: .\templates\compliance\nonconformity_detail.html:47
 msgid "Note (optional)"
@@ -4688,7 +4755,7 @@ msgstr "Todos los tipos"
 #: .\templates\compliance\operational_records.html:49
 #: .\templates\generic\_traceability.html:38
 #: .\templates\operations\flightrecord_detail.html:26
-#: .\templates\operations\permission_detail.html:167
+#: .\templates\operations\permission_detail.html:173
 #: .\templates\operations\record_list.html:5
 msgid "Date"
 msgstr "Fecha"
@@ -4703,11 +4770,11 @@ msgstr ""
 "Vigencia documental, próximos vencimientos y tiempos de resolución de "
 "alertas."
 
-#: .\templates\compliance\report.html:12
+#: .\templates\compliance\report.html:12 .\templates\registry\catastro.html:12
 msgid "PDF"
 msgstr "PDF"
 
-#: .\templates\compliance\report.html:13
+#: .\templates\compliance\report.html:13 .\templates\registry\catastro.html:13
 msgid "Excel"
 msgstr "Excel"
 
@@ -4715,7 +4782,7 @@ msgstr "Excel"
 msgid "Word"
 msgstr "Word"
 
-#: .\templates\compliance\report.html:15
+#: .\templates\compliance\report.html:15 .\templates\registry\catastro.html:14
 msgid "CSV"
 msgstr "CSV"
 
@@ -4755,8 +4822,7 @@ msgstr "Bajo la meta"
 #, python-format
 msgid "Document counters compared against the stored snapshot of %(date)s."
 msgstr ""
-"Contadores documentales comparados contra el registro histórico del "
-"%(date)s."
+"Contadores documentales comparados contra el registro histórico del %(date)s."
 
 #: .\templates\compliance\report.html:96
 msgid ""
@@ -4770,11 +4836,11 @@ msgstr ""
 
 #: .\templates\compliance\report.html:131
 msgid ""
-"Includes DGAC vigencias (operator credentials, aircraft insurance) alongside"
-" uploaded documents."
+"Includes DGAC vigencias (operator credentials, aircraft insurance) alongside "
+"uploaded documents."
 msgstr ""
-"Incluye vigencias DGAC (credenciales de operador, seguros de aeronave) junto"
-" con los documentos subidos."
+"Incluye vigencias DGAC (credenciales de operador, seguros de aeronave) junto "
+"con los documentos subidos."
 
 #: .\templates\compliance\report.html:181
 msgid "Age"
@@ -4842,22 +4908,22 @@ msgid "Max UV %(uv)s"
 msgstr "UV máx %(uv)s"
 
 #: .\templates\core\_weather_metrics.html:70
-#: .\templates\geo\plan_detail.html:235
+#: .\templates\geo\plan_detail.html:290
 msgid "Max wind"
 msgstr "Viento máximo"
 
 #: .\templates\core\_weather_metrics.html:74
-#: .\templates\geo\plan_detail.html:235
+#: .\templates\geo\plan_detail.html:290
 msgid "Max gusts"
 msgstr "Ráfagas máximas"
 
 #: .\templates\core\_weather_metrics.html:78
-#: .\templates\geo\plan_detail.html:235
+#: .\templates\geo\plan_detail.html:290
 msgid "Chance of rain"
 msgstr "Probabilidad de lluvia"
 
 #: .\templates\core\_weather_metrics.html:82
-#: .\templates\geo\plan_detail.html:235
+#: .\templates\geo\plan_detail.html:290
 msgid "Precipitation"
 msgstr "Precipitación"
 
@@ -4956,8 +5022,7 @@ msgstr "Todos los modelos"
 msgid "When"
 msgstr "Cuándo"
 
-#: .\templates\core\audit_log.html:39
-#: .\templates\generic\_traceability.html:38
+#: .\templates\core\audit_log.html:39 .\templates\generic\_traceability.html:38
 msgid "Action"
 msgstr "Acción"
 
@@ -5401,7 +5466,7 @@ msgstr "Abrir el centro de costo"
 msgid "Forecast unavailable right now."
 msgstr "El pronóstico no está disponible por ahora."
 
-#: .\templates\dashboard\index.html:343 .\templates\geo\plan_detail.html:214
+#: .\templates\dashboard\index.html:343 .\templates\geo\plan_detail.html:269
 msgid ""
 "Source: Open-Meteo. Reference only -- it does not replace the pre-flight "
 "check."
@@ -5424,7 +5489,7 @@ msgstr "Ya existe un registro con ese valor:"
 #: .\templates\generic\_duplicate_hint.html:19
 #: .\templates\generic\_table_body.html:10 .\templates\generic\detail.html:12
 #: .\templates\generic\list.html:23 .\templates\geo\_plan_rows.html:17
-#: .\templates\geo\plan_detail.html:60 .\templates\geo\plan_list.html:32
+#: .\templates\geo\plan_detail.html:80 .\templates\geo\plan_list.html:36
 #: .\templates\operations\_permission_rows.html:14
 #: .\templates\operations\permission_detail.html:73
 #: .\templates\operations\permission_list.html:33
@@ -5504,8 +5569,8 @@ msgstr "¿Archivar documento?"
 msgid "This will hide the document without deleting its file."
 msgstr "El documento quedará oculto sin eliminar su archivo."
 
-#: .\templates\generic\confirm_delete.html:6
-#: .\templates\generic\detail.html:18 .\templates\geo\plan_detail.html:56
+#: .\templates\generic\confirm_delete.html:6 .\templates\generic\detail.html:18
+#: .\templates\geo\plan_detail.html:76
 #: .\templates\operations\flightrecord_detail.html:12
 #: .\templates\operations\permission_detail.html:69
 #: .\templates\registry\aircraft_detail.html:12
@@ -5528,17 +5593,112 @@ msgstr "Volver a la lista"
 msgid "New record"
 msgstr "Nuevo registro"
 
-#: .\templates\geo\_plan_rows.html:35
+#: .\templates\geo\_plan_rows.html:41
 msgid "No plans match this filter."
 msgstr "Ningún plan coincide con este filtro."
 
-#: .\templates\geo\_plan_rows.html:35
+#: .\templates\geo\_plan_rows.html:41
 msgid "Clear it"
 msgstr "Límpialo"
 
-#: .\templates\geo\_plan_rows.html:37
+#: .\templates\geo\_plan_rows.html:43
 msgid "No plans yet. Import a KMZ or KML to create the first one."
 msgstr "Aún no hay planes. Importa un KMZ o KML para crear el primero."
+
+#: .\templates\geo\_sigo_copy_button.html:20
+#, python-format
+msgid "Copy %(field)s"
+msgstr "Copiar %(field)s"
+
+#: .\templates\geo\_sigo_copy_button.html:26
+#, python-format
+msgid "Copied: %(field)s"
+msgstr "Copiado: %(field)s"
+
+#: .\templates\geo\_sigo_copy_button.html:27
+msgid "Could not copy: select the value and copy it by hand."
+msgstr "No se pudo copiar: seleccione el valor y cópielo a mano."
+
+#: .\templates\geo\_sigo_sheet.html:24
+msgid "Province"
+msgstr "Provincia"
+
+#: .\templates\geo\_sigo_sheet.html:26
+#: .\templates\operations\flight_request_detail.html:109
+#: .\templates\operations\flight_request_detail.html:121
+msgid "Degrees"
+msgstr "Grados"
+
+#: .\templates\geo\_sigo_sheet.html:27
+#: .\templates\operations\flight_request_detail.html:110
+#: .\templates\operations\flight_request_detail.html:122
+msgid "Minutes"
+msgstr "Minutos"
+
+#: .\templates\geo\_sigo_sheet.html:28
+#: .\templates\operations\flight_request_detail.html:111
+#: .\templates\operations\flight_request_detail.html:123
+msgid "Seconds"
+msgstr "Segundos"
+
+#: .\templates\geo\_sigo_sheet.html:29
+#: .\templates\operations\flight_request_detail.html:112
+#: .\templates\operations\flight_request_detail.html:124
+msgid "Hemisphere"
+msgstr "Hemisferio"
+
+#: .\templates\geo\_sigo_sheet.html:32 .\templates\geo\plan_detail.html:138
+msgid "Distance (km)"
+msgstr "Distancia (km)"
+
+#: .\templates\geo\_sigo_sheet.html:34
+msgid "Copy each value into its SIGO box."
+msgstr "Copia cada valor en su casilla de SIGO."
+
+#: .\templates\geo\_sigo_sheet.html:53 .\templates\geo\plan_detail.html:152
+msgid "Smallest circle that encloses the drawn area"
+msgstr "La circunferencia más chica que encierra el área dibujada"
+
+#: .\templates\geo\_sigo_sheet.html:53 .\templates\geo\plan_detail.html:152
+#, python-format
+msgid "drawn: %(radius)s m average"
+msgstr "dibujado: %(radius)s m de promedio"
+
+#: .\templates\geo\_sigo_sheet.html:56
+msgid "Administrative location"
+msgstr "Ubicación administrativa"
+
+#: .\templates\geo\_sigo_sheet.html:70 .\templates\geo\plan_detail.html:204
+msgid ""
+"The commune, province and region come from the BCN administrative "
+"boundaries, which that institution publishes as referential: near a boundary "
+"the answer may be the neighbouring commune. Confirm it before filing."
+msgstr ""
+"La comuna, la provincia y la región salen de los límites administrativos de "
+"la BCN, que esa institución publica como referenciales: cerca de un límite "
+"la respuesta puede ser la comuna vecina. Confírmala antes de presentar."
+
+#: .\templates\geo\_sigo_sheet.html:96
+msgid "Circle and aerodrome"
+msgstr "Circunferencia y aeródromo"
+
+#: .\templates\geo\_sigo_sheet.html:107 .\templates\geo\plan_detail.html:199
+msgid ""
+"The aerodrome is proposed by distance, among those with coordinates on file "
+"— confirm it against the AIP chart before filing."
+msgstr ""
+"El aeródromo se propone por distancia, entre los que tienen coordenadas "
+"cargadas — confírmalo contra la carta AIP antes de presentar."
+
+#: .\templates\geo\_sigo_sheet.html:114 .\templates\geo\plan_detail.html:209
+msgid ""
+"When the drawn area is not a circle, the row shows the smallest circle that "
+"covers it: SIGO accepts one circle per request, and the average radius of a "
+"non-circle is not a figure to file."
+msgstr ""
+"Cuando el área dibujada no es una circunferencia, la fila muestra la más "
+"chica que la cubre: SIGO acepta una por solicitud, y el radio promedio de "
+"algo que no es un círculo no es una cifra para presentar."
 
 #: .\templates\geo\plan_archive_confirm.html:3
 msgid "Archive plan?"
@@ -5590,8 +5750,8 @@ msgstr[1] "%(counter)s revisiones meteorológicas registradas"
 #: .\templates\geo\plan_archive_confirm.html:23
 msgid ""
 "Archiving hides the plan from the listings; nothing is deleted and nothing "
-"cascades. Its SIGO requests stay where they are — they record what was filed"
-" with the authority — and this plan will still be reachable from them."
+"cascades. Its SIGO requests stay where they are — they record what was filed "
+"with the authority — and this plan will still be reachable from them."
 msgstr ""
 "Archivar lo saca de los listados; no se borra nada y nada se archiva en "
 "cascada. Sus solicitudes SIGO se quedan donde están —son el registro de lo "
@@ -5600,13 +5760,13 @@ msgstr ""
 
 #: .\templates\geo\plan_archive_confirm.html:27
 msgid ""
-"At least one of its requests is already filed in SIGO: the authority holds a"
-" file that this plan explains. Archive it only if you are sure nobody will "
+"At least one of its requests is already filed in SIGO: the authority holds a "
+"file that this plan explains. Archive it only if you are sure nobody will "
 "need to look it up."
 msgstr ""
 "Al menos una de sus solicitudes ya está presentada en SIGO: la autoridad "
-"tiene un expediente que este plan explica. Archívalo sólo si estás seguro de"
-" que nadie va a necesitar consultarlo."
+"tiene un expediente que este plan explica. Archívalo sólo si estás seguro de "
+"que nadie va a necesitar consultarlo."
 
 #: .\templates\geo\plan_archive_confirm.html:32
 #: .\templates\operations\permission_archive_confirm.html:53
@@ -5614,203 +5774,168 @@ msgstr ""
 msgid "Archive anyway"
 msgstr "Archivar de todos modos"
 
-#: .\templates\geo\plan_detail.html:46
+#: .\templates\geo\plan_detail.html:56
 msgid "One flight request per circle, as SIGO requires"
 msgstr "Una solicitud de vuelo por circunferencia, como exige SIGO"
 
-#: .\templates\geo\plan_detail.html:46
+#: .\templates\geo\plan_detail.html:56
 #, python-format
 msgid "Split into %(counter)s request"
 msgid_plural "Split into %(counter)s requests"
 msgstr[0] "Separar en %(counter)s solicitud"
 msgstr[1] "Separar en %(counter)s solicitudes"
 
-#: .\templates\geo\plan_detail.html:67 .\templates\geo\plan_import.html:11
+#: .\templates\geo\plan_detail.html:66
+#, python-format
+msgid "%(counter)s request from this plan"
+msgid_plural "%(counter)s requests from this plan"
+msgstr[0] "%(counter)s solicitud de este plan"
+msgstr[1] "%(counter)s solicitudes de este plan"
+
+#: .\templates\geo\plan_detail.html:87 .\templates\geo\plan_import.html:11
 msgid "Back to plans"
 msgstr "Volver a los planes"
 
-#: .\templates\geo\plan_detail.html:81
+#: .\templates\geo\plan_detail.html:101
 msgid "Data for SIGO"
 msgstr "Datos para SIGO"
 
-#: .\templates\geo\plan_detail.html:83
+#: .\templates\geo\plan_detail.html:103
 #, python-format
 msgid "%(counter)s circle in this file"
 msgid_plural "%(counter)s circles in this file"
 msgstr[0] "%(counter)s circunferencia en este archivo"
 msgstr[1] "%(counter)s circunferencias en este archivo"
 
-#: .\templates\geo\plan_detail.html:92
+#: .\templates\geo\plan_detail.html:129
 msgid "Circle"
 msgstr "Circunferencia"
 
-#: .\templates\geo\plan_detail.html:98
+#: .\templates\geo\plan_detail.html:135
 #: .\templates\operations\flight_request_split.html:43
 msgid "Centre point"
 msgstr "Punto centro"
 
-#: .\templates\geo\plan_detail.html:101
-msgid "Distance (km)"
-msgstr "Distancia (km)"
-
-#: .\templates\geo\plan_detail.html:107
+#: .\templates\geo\plan_detail.html:144
 msgid "This circle has a data problem — see Split for the detail"
 msgstr ""
 "Esta circunferencia tiene un problema de dato — ver Separar para el detalle"
 
-#: .\templates\geo\plan_detail.html:115
-msgid "Smallest circle that encloses the drawn area"
-msgstr "La circunferencia más chica que encierra el área dibujada"
-
-#: .\templates\geo\plan_detail.html:115
-#, python-format
-msgid "drawn: %(radius)s m average"
-msgstr "dibujado: %(radius)s m de promedio"
-
-#: .\templates\geo\plan_detail.html:135
+#: .\templates\geo\plan_detail.html:181
 msgid "Lat"
 msgstr "Lat"
 
-#: .\templates\geo\plan_detail.html:135
+#: .\templates\geo\plan_detail.html:183
 msgid "Lon"
 msgstr "Lon"
 
-#: .\templates\geo\plan_detail.html:149
-msgid ""
-"The aerodrome is proposed by distance, among those with coordinates on file "
-"— confirm it against the AIP chart before filing."
-msgstr ""
-"El aeródromo se propone por distancia, entre los que tienen coordenadas "
-"cargadas — confírmalo contra la carta AIP antes de presentar."
-
-#: .\templates\geo\plan_detail.html:154
-msgid ""
-"The commune, province and region come from the BCN administrative "
-"boundaries, which that institution publishes as referential: near a boundary"
-" the answer may be the neighbouring commune. Confirm it before filing."
-msgstr ""
-"La comuna, la provincia y la región salen de los límites administrativos de "
-"la BCN, que esa institución publica como referenciales: cerca de un límite "
-"la respuesta puede ser la comuna vecina. Confírmala antes de presentar."
-
-#: .\templates\geo\plan_detail.html:159
-msgid ""
-"When the drawn area is not a circle, the row shows the smallest circle that "
-"covers it: SIGO accepts one circle per request, and the average radius of a "
-"non-circle is not a figure to file."
-msgstr ""
-"Cuando el área dibujada no es una circunferencia, la fila muestra la más "
-"chica que la cubre: SIGO acepta una por solicitud, y el radio promedio de "
-"algo que no es un círculo no es una cifra para presentar."
-
-#: .\templates\geo\plan_detail.html:171
+#: .\templates\geo\plan_detail.html:226
 msgid "Map"
 msgstr "Mapa"
 
-#: .\templates\geo\plan_detail.html:182 .\templates\geo\plan_detail.html:183
+#: .\templates\geo\plan_detail.html:237 .\templates\geo\plan_detail.html:238
 msgid "Expand"
 msgstr "Ampliar"
 
-#: .\templates\geo\plan_detail.html:183
+#: .\templates\geo\plan_detail.html:238
 msgid "Exit full screen"
 msgstr "Salir de pantalla completa"
 
-#: .\templates\geo\plan_detail.html:187
+#: .\templates\geo\plan_detail.html:242
 msgid "Redo"
 msgstr "Rehacer"
 
-#: .\templates\geo\plan_detail.html:207
+#: .\templates\geo\plan_detail.html:262
 msgid "Weather forecast"
 msgstr "Pronóstico meteorológico"
 
-#: .\templates\geo\plan_detail.html:208
+#: .\templates\geo\plan_detail.html:263
 #, python-format
-msgid ""
-"Forecast over this area for %(date)s, the day the linked permit begins."
+msgid "Forecast over this area for %(date)s, the day the linked permit begins."
 msgstr ""
 "Pronóstico sobre esta área para el %(date)s, el día en que empieza el "
 "permiso vinculado."
 
-#: .\templates\geo\plan_detail.html:222
+#: .\templates\geo\plan_detail.html:277
 msgid "Record this review"
 msgstr "Registrar esta revisión"
 
-#: .\templates\geo\plan_detail.html:223
+#: .\templates\geo\plan_detail.html:278
 msgid ""
 "Files these numbers as evidence that the weather was reviewed before the "
 "flight."
 msgstr ""
 "Deja estos valores como evidencia de que se revisó el clima antes del vuelo."
 
-#: .\templates\geo\plan_detail.html:231
+#: .\templates\geo\plan_detail.html:286
 msgid "Recorded weather reviews"
 msgstr "Revisiones meteorológicas registradas"
 
-#: .\templates\geo\plan_detail.html:232
+#: .\templates\geo\plan_detail.html:287
 msgid ""
 "Append-only: each row is what the forecast said at the moment it was "
 "reviewed."
 msgstr ""
-"Sólo se agrega: cada fila es lo que decía el pronóstico en el momento en que"
-" se revisó."
+"Sólo se agrega: cada fila es lo que decía el pronóstico en el momento en que "
+"se revisó."
 
-#: .\templates\geo\plan_detail.html:235
+#: .\templates\geo\plan_detail.html:290
 msgid "Reviewed"
 msgstr "Revisada"
 
-#: .\templates\geo\plan_detail.html:235
+#: .\templates\geo\plan_detail.html:290
 msgid "For"
 msgstr "Para"
 
-#: .\templates\geo\plan_detail.html:235
+#: .\templates\geo\plan_detail.html:290
 msgid "By"
 msgstr "Por"
 
-#: .\templates\geo\plan_detail.html:253
+#: .\templates\geo\plan_detail.html:308
 msgid "Save a new version"
 msgstr "Guardar una nueva versión"
 
-#: .\templates\geo\plan_detail.html:254
+#: .\templates\geo\plan_detail.html:309
 msgid "Describe your change"
 msgstr "Describe tu cambio"
 
-#: .\templates\geo\plan_detail.html:267
+#: .\templates\geo\plan_detail.html:322
 msgid "Versions"
 msgstr "Versiones"
 
-#: .\templates\geo\plan_detail.html:298
+#: .\templates\geo\plan_detail.html:353
 msgid "No versions yet."
 msgstr "Aún no hay versiones."
 
-#: .\templates\geo\plan_detail.html:317
+#: .\templates\geo\plan_detail.html:372
 msgid "Export"
 msgstr "Exportar"
 
-#: .\templates\geo\plan_detail.html:318
+#: .\templates\geo\plan_detail.html:373
 msgid "Download the current version to open in Google Earth."
 msgstr "Descarga la versión vigente para abrirla en Google Earth."
 
-#: .\templates\geo\plan_detail.html:324
+#: .\templates\geo\plan_detail.html:379
 msgid "Export KML"
 msgstr "Exportar KML"
 
-#: .\templates\geo\plan_detail.html:330
+#: .\templates\geo\plan_detail.html:385
 msgid "Export KMZ"
 msgstr "Exportar KMZ"
 
-#: .\templates\geo\plan_detail.html:338
+#: .\templates\geo\plan_detail.html:393
 msgid "Source file"
 msgstr "Archivo de origen"
 
-#: .\templates\geo\plan_detail.html:342
+#: .\templates\geo\plan_detail.html:397
 msgid "Download original"
 msgstr "Descargar original"
 
-#: .\templates\geo\plan_detail.html:345
+#: .\templates\geo\plan_detail.html:400
 msgid "No source file."
 msgstr "Sin archivo de origen."
 
-#: .\templates\geo\plan_detail.html:353
+#: .\templates\geo\plan_detail.html:408
 msgid "Flight permission link history"
 msgstr "Historial de vínculo con el permiso de vuelo"
 
@@ -5834,27 +5959,27 @@ msgstr "Importando…"
 msgid "Import file"
 msgstr "Importar archivo"
 
-#: .\templates\geo\plan_list.html:19
-msgid "Search title or cost center..."
-msgstr "Buscar título o centro de costo..."
+#: .\templates\geo\plan_list.html:23
+msgid "Search file, title or cost center..."
+msgstr "Buscar archivo, título o centro de costo..."
 
-#: .\templates\geo\plan_list.html:31
+#: .\templates\geo\plan_list.html:35
 #: .\templates\operations\permission_list.html:32
 msgid "In force"
 msgstr "Vigentes"
 
-#: .\templates\geo\plan_list.html:33
+#: .\templates\geo\plan_list.html:37
 #: .\templates\operations\permission_list.html:34
 msgid "In force only"
 msgstr "Sólo vigentes"
 
-#: .\templates\geo\plan_list.html:38
+#: .\templates\geo\plan_list.html:42
 #: .\templates\operations\flight_request_list.html:43
 #: .\templates\operations\permission_list.html:39
 msgid "Clear"
 msgstr "Limpiar"
 
-#: .\templates\geo\plan_list.html:47
+#: .\templates\geo\plan_list.html:51
 #: .\templates\operations\permission_list.html:44
 msgid "Number"
 msgstr "Número"
@@ -5979,8 +6104,8 @@ msgid ""
 "Flight time only: the real duty day (travel, setup, waiting on weather) is "
 "longer, so this is a floor."
 msgstr ""
-"Sólo tiempo de vuelo: la jornada real (traslados, montaje, espera de ventana"
-" meteorológica) es más larga, así que esto es un piso."
+"Sólo tiempo de vuelo: la jornada real (traslados, montaje, espera de ventana "
+"meteorológica) es más larga, así que esto es un piso."
 
 #: .\templates\operations\flight_request_detail.html:28
 msgid "Download KMZ for SIGO"
@@ -6036,26 +6161,6 @@ msgstr "Propuesto por distancia — confírmalo contra la carta AIP."
 msgid "Centre point — latitude"
 msgstr "Punto centro — latitud"
 
-#: .\templates\operations\flight_request_detail.html:109
-#: .\templates\operations\flight_request_detail.html:121
-msgid "Degrees"
-msgstr "Grados"
-
-#: .\templates\operations\flight_request_detail.html:110
-#: .\templates\operations\flight_request_detail.html:122
-msgid "Minutes"
-msgstr "Minutos"
-
-#: .\templates\operations\flight_request_detail.html:111
-#: .\templates\operations\flight_request_detail.html:123
-msgid "Seconds"
-msgstr "Segundos"
-
-#: .\templates\operations\flight_request_detail.html:112
-#: .\templates\operations\flight_request_detail.html:124
-msgid "Hemisphere"
-msgstr "Hemisferio"
-
 #: .\templates\operations\flight_request_detail.html:118
 msgid "Centre point — longitude"
 msgstr "Punto centro — longitud"
@@ -6091,8 +6196,8 @@ msgstr "Agregar nota"
 
 #: .\templates\operations\flight_request_list.html:27
 msgid ""
-"What was filed in SIGO and how long it has been waiting. The data comes from"
-" a geospatial plan; a request is created by splitting one."
+"What was filed in SIGO and how long it has been waiting. The data comes from "
+"a geospatial plan; a request is created by splitting one."
 msgstr ""
 "Lo presentado en SIGO y cuánto lleva esperando. Los datos vienen de un plan "
 "geoespacial; una solicitud se crea separándolo."
@@ -6121,8 +6226,8 @@ msgstr "Volver al plan"
 #: .\templates\operations\flight_request_split.html:24
 #, python-format
 msgid ""
-"This plan yields <strong>%(count)s flight request</strong>: SIGO accepts one"
-" circle with its centre point per request."
+"This plan yields <strong>%(count)s flight request</strong>: SIGO accepts one "
+"circle with its centre point per request."
 msgid_plural ""
 "This plan yields <strong>%(count)s flight requests</strong>: SIGO accepts "
 "one circle with its centre point per request."
@@ -6178,12 +6283,12 @@ msgid "Permission"
 msgstr "Permiso"
 
 #: .\templates\operations\flightrecord_detail.html:27
-#: .\templates\operations\permission_detail.html:167
+#: .\templates\operations\permission_detail.html:173
 msgid "Departure"
 msgstr "Salida"
 
 #: .\templates\operations\flightrecord_detail.html:28
-#: .\templates\operations\permission_detail.html:167
+#: .\templates\operations\permission_detail.html:173
 msgid "Arrival"
 msgstr "Llegada"
 
@@ -6234,8 +6339,8 @@ msgstr "No tiene nada más colgando."
 
 #: .\templates\operations\permission_archive_confirm.html:30
 msgid ""
-"Archiving hides the permit from the listings; nothing is deleted and nothing"
-" cascades. Its flights and requests stay as the record of what happened and "
+"Archiving hides the permit from the listings; nothing is deleted and nothing "
+"cascades. Its flights and requests stay as the record of what happened and "
 "what was filed."
 msgstr ""
 "Archivar lo saca de los listados; no se borra nada y nada se archiva en "
@@ -6298,69 +6403,73 @@ msgstr "Coordenadas"
 msgid "radius"
 msgstr "radio"
 
-#: .\templates\operations\permission_detail.html:95
+#: .\templates\operations\permission_detail.html:94
+msgid "Source of the location"
+msgstr "Origen de la ubicación"
+
+#: .\templates\operations\permission_detail.html:101
 msgid "Maximum altitude"
 msgstr "Altitud máxima"
 
-#: .\templates\operations\permission_detail.html:106
+#: .\templates\operations\permission_detail.html:112
 msgid "Operational dossier"
 msgstr "Expediente operativo"
 
-#: .\templates\operations\permission_detail.html:111
+#: .\templates\operations\permission_detail.html:117
 #, python-format
 msgid "%(counter)s missing"
 msgid_plural "%(counter)s missing"
 msgstr[0] "%(counter)s falta"
 msgstr[1] "%(counter)s faltan"
 
-#: .\templates\operations\permission_detail.html:112
+#: .\templates\operations\permission_detail.html:118
 #, python-format
 msgid "%(counter)s to confirm"
 msgid_plural "%(counter)s to confirm"
 msgstr[0] "%(counter)s por confirmar"
 msgstr[1] "%(counter)s por confirmar"
 
-#: .\templates\operations\permission_detail.html:126
+#: .\templates\operations\permission_detail.html:132
 msgid "On file"
 msgstr "Está"
 
-#: .\templates\operations\permission_detail.html:127
+#: .\templates\operations\permission_detail.html:133
 msgid "Missing"
 msgstr "Falta"
 
-#: .\templates\operations\permission_detail.html:128
+#: .\templates\operations\permission_detail.html:134
 msgid "To confirm"
 msgstr "Por confirmar"
 
-#: .\templates\operations\permission_detail.html:164
+#: .\templates\operations\permission_detail.html:170
 msgid "Geospatial plans"
 msgstr "Planes geoespaciales"
 
-#: .\templates\operations\permission_detail.html:165
+#: .\templates\operations\permission_detail.html:171
 msgid "Link a plan already uploaded…"
 msgstr "Vincular un plan ya subido…"
 
-#: .\templates\operations\permission_detail.html:165
+#: .\templates\operations\permission_detail.html:171
 msgid "Link plan"
 msgstr "Vincular plan"
 
-#: .\templates\operations\permission_detail.html:165
+#: .\templates\operations\permission_detail.html:171
 msgid "Import plan"
 msgstr "Importar plan"
 
-#: .\templates\operations\permission_detail.html:165
+#: .\templates\operations\permission_detail.html:171
 msgid "No geospatial plans linked to this permission."
 msgstr "No hay planes geoespaciales vinculados a este permiso."
 
-#: .\templates\operations\permission_detail.html:167
+#: .\templates\operations\permission_detail.html:173
 msgid "Flight records"
 msgstr "Registros de vuelo"
 
-#: .\templates\operations\permission_detail.html:167
+#: .\templates\operations\permission_detail.html:173
 msgid "Add record"
 msgstr "Agregar registro"
 
-#: .\templates\operations\permission_detail.html:167
+#: .\templates\operations\permission_detail.html:173
 msgid "No flight records for this permission."
 msgstr "No hay registros de vuelo para este permiso."
 
@@ -6380,33 +6489,52 @@ msgstr "Contrato y propósito"
 msgid "Where it flies"
 msgstr "Dónde vuela"
 
-#: .\templates\operations\permission_form.html:87
+#: .\templates\operations\permission_form.html:73
+#, python-format
+msgid ""
+"%(counter)s location box comes from the plan %(folio)s and is not asked "
+"again."
+msgid_plural ""
+"%(counter)s location boxes come from the plan %(folio)s and are not asked "
+"again."
+msgstr[0] ""
+"%(counter)s casilla de ubicación viene del plan %(folio)s y no se vuelve a "
+"pedir."
+msgstr[1] ""
+"%(counter)s casillas de ubicación vienen del plan %(folio)s y no se vuelven "
+"a pedir."
+
+#: .\templates\operations\permission_form.html:74
+msgid "Adjust to the DGAC resolution"
+msgstr "Ajustar según la resolución DGAC"
+
+#: .\templates\operations\permission_form.html:106
 msgid "You have a draft saved in this browser"
 msgstr "Tienes un borrador guardado en este navegador"
 
-#: .\templates\operations\permission_form.html:90
+#: .\templates\operations\permission_form.html:109
 msgid "Recover it"
 msgstr "Recuperarlo"
 
-#: .\templates\operations\permission_form.html:91
+#: .\templates\operations\permission_form.html:110
 msgid "Discard it"
 msgstr "Descartarlo"
 
-#: .\templates\operations\permission_form.html:99
+#: .\templates\operations\permission_form.html:118
 msgid "Draft saved in this browser."
 msgstr "Borrador guardado en este navegador."
 
-#: .\templates\operations\permission_form.html:100
+#: .\templates\operations\permission_form.html:119
 msgid "This browser is not letting the draft be saved."
 msgstr "Este navegador no está dejando guardar el borrador."
 
-#: .\templates\operations\permission_form.html:101
+#: .\templates\operations\permission_form.html:120
 msgid ""
 "It stays in this browser until you save or discard it. Nobody else sees it."
 msgstr ""
 "Queda en este navegador hasta que guardes o lo descartes. Nadie más lo ve."
 
-#: .\templates\operations\permission_form.html:101
+#: .\templates\operations\permission_form.html:120
 msgid "Save draft"
 msgstr "Guardar borrador"
 
@@ -6426,8 +6554,7 @@ msgstr "Hasta fecha"
 msgid "Duration"
 msgstr "Duración"
 
-#: .\templates\registration\login.html:8
-#: .\templates\registration\login.html:48
+#: .\templates\registration\login.html:8 .\templates\registration\login.html:48
 msgid "Sign In"
 msgstr "Iniciar sesión"
 
@@ -6550,8 +6677,7 @@ msgid "Maintenance & status"
 msgstr "Mantenimiento y estado"
 
 #: .\templates\registry\aircraft_detail.html:64
-msgid ""
-"Mark this aircraft as damaged and open an emergency maintenance record?"
+msgid "Mark this aircraft as damaged and open an emergency maintenance record?"
 msgstr ""
 "¿Marcar esta aeronave en Mal estado y abrir una mantención de emergencia?"
 
@@ -6633,22 +6759,28 @@ msgstr "Respuesta correcta"
 msgid "Every answer was correct."
 msgstr "Todas las respuestas fueron correctas."
 
-#: .\templates\registry\assessment_take.html:22
-#, python-format
-msgid ""
-"%(counter)s question, %(percent)s%% to pass. The result is valid for "
-"%(months)s months and is filed on your record."
-msgid_plural ""
-"%(counter)s questions, %(percent)s%% to pass. The result is valid for "
-"%(months)s months and is filed on your record."
-msgstr[0] ""
-"%(counter)s pregunta, %(percent)s%% para aprobar. El resultado vale "
-"%(months)s meses y queda en tu ficha."
-msgstr[1] ""
-"%(counter)s preguntas, %(percent)s%% para aprobar. El resultado vale "
-"%(months)s meses y queda en tu ficha."
+#: .\templates\registry\assessment_take.html:47
+msgid "To pass"
+msgstr "Para aprobar"
 
-#: .\templates\registry\assessment_take.html:41
+#: .\templates\registry\assessment_take.html:51
+msgid "Months of validity"
+msgstr "Meses de vigencia"
+
+#: .\templates\registry\assessment_take.html:53
+msgid ""
+"The result is filed on your record and feeds the same expiry warnings as "
+"your DGAC credential."
+msgstr ""
+"El resultado queda en tu ficha y entra al mismo aviso de vencimientos que tu "
+"credencial DGAC."
+
+#: .\templates\registry\assessment_take.html:102
+#, python-brace-format
+msgid "Send with {count} unanswered? They count as incorrect."
+msgstr "¿Enviar con {count} sin responder? Cuentan como incorrectas."
+
+#: .\templates\registry\assessment_take.html:111
 msgid "Submit the assessment"
 msgstr "Enviar la evaluación"
 
@@ -6675,8 +6807,7 @@ msgstr "Planificaciones activas"
 #: .\templates\registry\assignment_list.html:25
 msgid ""
 "There are assignments without a cost center. Review them before confirming."
-msgstr ""
-"Hay asignaciones sin centro de costo. Revísalas antes de confirmarlas."
+msgstr "Hay asignaciones sin centro de costo. Revísalas antes de confirmarlas."
 
 #: .\templates\registry\assignment_list.html:26
 msgid "Review pending assignments"
@@ -6717,6 +6848,35 @@ msgstr ""
 msgid "Firmware"
 msgstr "Firmware"
 
+#: .\templates\registry\catastro.html:7
+#: .\templates\registry\costcenter_import.html:6
+msgid "Registry"
+msgstr "Registro"
+
+#: .\templates\registry\catastro.html:9
+msgid ""
+"Everything on the books at a cut-off date, ready to hand over when someone "
+"asks for it."
+msgstr ""
+"Todo lo inscrito a una fecha de corte, listo para entregar cuando lo "
+"soliciten."
+
+#: .\templates\registry\catastro.html:28
+msgid "Aircraft status"
+msgstr "Estado de la aeronave"
+
+#: .\templates\registry\catastro.html:30
+msgid "Any status"
+msgstr "Cualquier estado"
+
+#: .\templates\registry\catastro.html:37
+msgid "Include retired aircraft"
+msgstr "Incluir aeronaves retiradas"
+
+#: .\templates\registry\catastro.html:41
+msgid "Include archived records"
+msgstr "Incluir registros archivados"
+
 #: .\templates\registry\costcenter_archive_confirm.html:3
 msgid "Archive cost center?"
 msgstr "¿Archivar centro de costo?"
@@ -6748,10 +6908,6 @@ msgstr ""
 "Un centro de costo archivado sale del resumen diario de vencimientos y del "
 "informe de cumplimiento: los documentos y habilitaciones de estos registros "
 "dejarán de vigilarse hasta que se reasignen."
-
-#: .\templates\registry\costcenter_detail.html:22
-msgid "Fleet"
-msgstr "Flota"
 
 #: .\templates\registry\costcenter_detail.html:25
 msgid "History"
@@ -6793,10 +6949,6 @@ msgstr "No hay movimientos registrados para este centro de costo."
 #: .\templates\registry\costcenter_import.html:6
 msgid "Import cost centers"
 msgstr "Importar centros de costo"
-
-#: .\templates\registry\costcenter_import.html:6
-msgid "Registry"
-msgstr "Registro"
 
 #: .\templates\registry\costcenter_import.html:6
 msgid "Import aircraft"
@@ -6893,12 +7045,12 @@ msgstr "Revisar"
 msgid "No assessment taken yet."
 msgstr "Todavía no se ha rendido ninguna evaluación."
 
-#: .\templates\registry\operator_list.html:30
+#: .\templates\registry\operator_list.html:51
 #: .\templates\registry\qualification_list.html:26
 msgid "Credential expiry"
 msgstr "Vence credencial"
 
-#: .\templates\registry\operator_list.html:35
+#: .\templates\registry\operator_list.html:56
 msgid "Credential file"
 msgstr "Credencial adjunta"
 
@@ -7081,8 +7233,7 @@ msgstr "Crea un tablero para organizar tareas, responsables y vencimientos."
 msgid "Create board"
 msgstr "Crear tablero"
 
-#: .\templates\workboard\kanban.html:52
-#: .\templates\workboard\task_list.html:23
+#: .\templates\workboard\kanban.html:52 .\templates\workboard\task_list.html:23
 msgid "Task details"
 msgstr "Detalle de tarea"
 
@@ -7124,171 +7275,31 @@ msgstr "Ordenar"
 msgid "No tasks found."
 msgstr "No se encontraron tareas."
 
-#: .\apps\core\pdf.py
+#~ msgid "Enter the employee ID."
+#~ msgstr "Ingresa el ID de empleado."
+
+#~ msgid "SIGO requests"
+#~ msgstr "Solicitudes SIGO"
+
+#~ msgid "Search title or cost center..."
+#~ msgstr "Buscar título o centro de costo..."
+
 #, python-format
-msgid "Ref. %(prefix)s-%(stamp)s"
-msgstr "Ref. %(prefix)s-%(stamp)s"
+#~ msgid ""
+#~ "%(counter)s question, %(percent)s%% to pass. The result is valid for "
+#~ "%(months)s months and is filed on your record."
+#~ msgid_plural ""
+#~ "%(counter)s questions, %(percent)s%% to pass. The result is valid for "
+#~ "%(months)s months and is filed on your record."
+#~ msgstr[0] ""
+#~ "%(counter)s pregunta, %(percent)s%% para aprobar. El resultado vale "
+#~ "%(months)s meses y queda en tu ficha."
+#~ msgstr[1] ""
+#~ "%(counter)s preguntas, %(percent)s%% para aprobar. El resultado vale "
+#~ "%(months)s meses y queda en tu ficha."
 
-#: .\apps\core\pdf.py
-#, python-format
-msgid "Page %(page)s of %(total)s"
-msgstr "Página %(page)s de %(total)s"
-
-#: .\apps\registry\report_views.py
-msgid "Fleet and personnel roster"
-msgstr "Catastro de flota y personal"
-
-#: .\apps\registry\report_views.py
-msgid "AeroControl — Fleet and personnel roster"
-msgstr "AeroControl — Catastro de flota y personal"
-
-#: .\apps\registry\report_views.py
-msgid "No aircraft registered."
-msgstr "Sin aeronaves inscritas."
-
-#: .\apps\registry\report_views.py
-msgid "Personnel"
-msgstr "Personal"
-
-#: .\apps\registry\report_views.py
-msgid "No operators registered."
-msgstr "Sin operadores inscritos."
-
-#: .\templates\base.html
-msgid "Roster report"
-msgstr "Informe de catastro"
-
-#: .\templates\registry\catastro.html
-msgid "Everything on the books at a cut-off date, ready to hand over when someone asks for it."
-msgstr "Todo lo inscrito a una fecha de corte, listo para entregar cuando lo soliciten."
-
-#: .\templates\registry\catastro.html
-msgid "Aircraft status"
-msgstr "Estado de la aeronave"
-
-#: .\templates\registry\catastro.html
-msgid "Any status"
-msgstr "Cualquier estado"
-
-#: .\templates\registry\catastro.html
-msgid "Include retired aircraft"
-msgstr "Incluir aeronaves retiradas"
-
-#: .\templates\registry\catastro.html
-msgid "Include archived records"
-msgstr "Incluir registros archivados"
-
-#: .\templates\geo\_sigo_sheet.html
-msgid "Province"
-msgstr "Provincia"
-
-#: .\templates\geo\_sigo_sheet.html
-msgid "Copy each value into its SIGO box."
-msgstr "Copia cada valor en su casilla de SIGO."
-
-#: .\templates\geo\_sigo_sheet.html
-msgid "Administrative location"
-msgstr "Ubicación administrativa"
-
-#: .\templates\geo\_sigo_sheet.html
-msgid "Circle and aerodrome"
-msgstr "Circunferencia y aeródromo"
-
-#: .\templates\geo\_sigo_copy_button.html
-#, python-format
-msgid "Copy %(field)s"
-msgstr "Copiar %(field)s"
-
-#: .\templates\geo\_sigo_copy_button.html
-#, python-format
-msgid "Copied: %(field)s"
-msgstr "Copiado: %(field)s"
-
-#: .\templates\geo\_sigo_copy_button.html
-msgid "Could not copy: select the value and copy it by hand."
-msgstr "No se pudo copiar: seleccione el valor y cópielo a mano."
-
-#: .\templates\geo\plan_list.html
-msgid "Search file, title or cost center..."
-msgstr "Buscar archivo, título o centro de costo..."
-
-#: .\templates\geo\plan_detail.html
-#, python-format
-msgid "%(counter)s request from this plan"
-msgid_plural "%(counter)s requests from this plan"
-msgstr[0] "%(counter)s solicitud de este plan"
-msgstr[1] "%(counter)s solicitudes de este plan"
-
-#: .\apps\registry\catastro.py
-#, python-format
-msgid "%(count)s aircraft"
-msgid_plural "%(count)s aircraft"
-msgstr[0] "%(count)s aeronave"
-msgstr[1] "%(count)s aeronaves"
-
-#: .\apps\registry\catastro.py
-#, python-format
-msgid "%(count)s operator"
-msgid_plural "%(count)s operators"
-msgstr[0] "%(count)s operador"
-msgstr[1] "%(count)s operadores"
-
-#: .\apps\registry\catastro.py
-#, python-format
-msgid "%(fleet)s and %(personnel)s registered as of %(date)s."
-msgstr "%(fleet)s y %(personnel)s inscritos al %(date)s."
-
-#: .\apps\registry\catastro.py
-#, python-format
-msgid "Filtered by cost center: %(fleet)s and %(personnel)s with no cost center are not listed."
-msgstr "Filtrado por centro de costo: %(fleet)s y %(personnel)s sin centro de costo no aparecen en el listado."
-
-#: .\apps\registry\catastro.py
-#, python-format
-msgid "Of these, %(fleet)s and %(personnel)s have no cost center assigned."
-msgstr "De estos, %(fleet)s y %(personnel)s no tienen centro de costo asignado."
-
-#: .\templates\registry\assessment_take.html
-msgid "To pass"
-msgstr "Para aprobar"
-
-#: .\templates\registry\assessment_take.html
-msgid "Months of validity"
-msgstr "Meses de vigencia"
-
-#: .\templates\registry\assessment_take.html
-msgid "The result is filed on your record and feeds the same expiry warnings as your DGAC credential."
-msgstr "El resultado queda en tu ficha y entra al mismo aviso de vencimientos que tu credencial DGAC."
-
-#: .\templates\registry\assessment_take.html
-msgid "Send with {count} unanswered? They count as incorrect."
-msgstr "¿Enviar con {count} sin responder? Cuentan como incorrectas."
-
-#: .\templates\operations\permission_detail.html
-msgid "Source of the location"
-msgstr "Origen de la ubicación"
-
-#: .\templates\operations\permission_form.html
-msgid "Adjust to the DGAC resolution"
-msgstr "Ajustar según la resolución DGAC"
-
-#: .\templates\operations\permission_form.html
-#, python-format
-msgid "%(counter)s location box comes from the plan %(folio)s and is not asked again."
-msgid_plural "%(counter)s location boxes come from the plan %(folio)s and are not asked again."
-msgstr[0] "%(counter)s casilla de ubicación viene del plan %(folio)s y no se vuelve a pedir."
-msgstr[1] "%(counter)s casillas de ubicación vienen del plan %(folio)s y no se vuelven a pedir."
-
-
-
-
-
-
-
-
-#, fuzzy, python-format
 #~ msgid "Score (%%)"
-#~ msgstr "Cobertura (%%)"
+#~ msgstr ""
 
 #~ msgid "Active Aircraft"
 #~ msgstr "Aeronaves activas"
