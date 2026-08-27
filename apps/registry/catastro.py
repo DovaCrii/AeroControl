@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy as _lazy
+from django.utils.translation import ngettext
 
 from apps.core.tenancy import scope_queryset_to_tenant
 from .models import Aircraft, CostCenter, Operator
@@ -174,6 +175,32 @@ def operator_rows(catastro):
     ]
 
 
+def _counted(aircraft, operators):
+    """The two counted phrases, each agreeing with its own number.
+
+    Spanish agrees the noun with its count, and every sentence here carries
+    **two** independent counts -- while `ngettext` handles one. So each phrase is
+    built on its own and the sentences compose them.
+
+    Interpolating the numbers straight into one message is what the first
+    version did, and the real roster in production caught it on the day it
+    shipped: with a single unassigned airframe it read *"1 aeronaves"*. That is
+    the kind of thing that makes a document handed to a client look careless,
+    and no test of mine would have found it -- the fixtures all had two.
+
+    In English "aircraft" is invariant, so its singular and plural msgids are
+    the same string. That is not a copy-paste slip: it is exactly the case
+    gettext's plural machinery exists for, a source language that does not
+    inflect where the target does.
+    """
+    return {
+        "fleet": ngettext("%(count)s aircraft", "%(count)s aircraft", aircraft)
+        % {"count": aircraft},
+        "personnel": ngettext("%(count)s operator", "%(count)s operators", operators)
+        % {"count": operators},
+    }
+
+
 def totals_sentence(catastro):
     """The one line every output carries, cut-off date included.
 
@@ -182,15 +209,10 @@ def totals_sentence(catastro):
     a roster that has nothing to disclose.
     """
     totals = catastro["totals"]
+    counted = _counted(totals["aircraft"], totals["operators"])
     sentences = [
-        _(
-            "%(aircraft)s aircraft and %(operators)s operators registered as of %(date)s."
-        )
-        % {
-            "aircraft": totals["aircraft"],
-            "operators": totals["operators"],
-            "date": catastro["as_of"].isoformat(),
-        }
+        _("%(fleet)s and %(personnel)s registered as of %(date)s.")
+        % {**counted, "date": catastro["as_of"].isoformat()}
     ]
     without = (
         totals["aircraft_without_cost_center"],
@@ -201,20 +223,22 @@ def totals_sentence(catastro):
 
     # A cost-center filter drops everything unassigned, silently, because
     # `cost_center` is nullable on both models. The report says how much.
+    #
+    # The verb stays plural in both sentences even when each count is 1: two
+    # subjects joined by "y" take a plural verb in Spanish, so "1 aeronave y 1
+    # operador no tienen centro de costo" is right.
+    hidden = _counted(*without)
     if totals["unassigned_are_hidden"]:
         sentences.append(
             _(
-                "Filtered by cost center: %(aircraft)s aircraft and "
-                "%(operators)s operators with no cost center are not listed."
+                "Filtered by cost center: %(fleet)s and %(personnel)s with no "
+                "cost center are not listed."
             )
-            % {"aircraft": without[0], "operators": without[1]}
+            % hidden
         )
     else:
         sentences.append(
-            _(
-                "Of these, %(aircraft)s aircraft and %(operators)s operators "
-                "have no cost center assigned."
-            )
-            % {"aircraft": without[0], "operators": without[1]}
+            _("Of these, %(fleet)s and %(personnel)s have no cost center assigned.")
+            % hidden
         )
     return sentences
