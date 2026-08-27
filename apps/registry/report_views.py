@@ -15,14 +15,19 @@ from django.http import HttpResponse
 from django.utils.translation import gettext as _
 from django.views.generic import TemplateView, View
 
+from apps.compliance.digest import bucket_for
 from apps.core.exports import neutralize
 from apps.core.views import ModelPermissionRequiredMixin, lookup_by_pk
 from .catastro import (
+    AIRCRAFT_EXPIRY_COLUMN,
     AIRCRAFT_HEADERS,
+    OPERATOR_EXPIRY_COLUMN,
     OPERATOR_HEADERS,
     CatastroFilters,
+    aircraft_expiries,
     aircraft_rows,
     build_catastro,
+    operator_expiries,
     operator_rows,
     totals_sentence,
 )
@@ -30,12 +35,15 @@ from .models import Aircraft, CostCenter
 
 FILENAME_STEM = "aerocontrol-catastro"
 
-# Letter portrait, 0.6in side margins (apps/core/pdf.SIDE_MARGIN): 525.6pt of
-# usable width, split explicitly rather than left to reportlab's equal shares --
-# "Year" needs 30pt and "Model" needs a hundred, and equal columns spend the
-# page on the short ones and wrap the long ones to three lines.
-AIRCRAFT_COL_WIDTHS = [66, 58, 100, 68, 92, 30, 56, 55.6]
-OPERATOR_COL_WIDTHS = [70, 150, 85, 90, 75, 55.6]
+# LV-167: carta **horizontal**. Con la columna de vigencia la flota pasa a nueve
+# columnas, y en vertical (525.6 pt útiles) la matrícula y el número de serie se
+# cortaban -- justo los dos datos con los que se identifica una aeronave. En
+# horizontal hay 705.6, y los anchos se reparten a mano en vez de dejarlos a las
+# partes iguales de reportlab: "Año" necesita 34 pt y "Modelo" ciento doce, y con
+# columnas iguales la página se gasta en las cortas y las largas cortan a tres
+# líneas.
+AIRCRAFT_COL_WIDTHS = [72, 58, 112, 74, 112, 34, 66, 60, 117.6]
+OPERATOR_COL_WIDTHS = [190, 100, 100, 130, 85, 100.6]
 
 
 class CatastroMixin(ModelPermissionRequiredMixin):
@@ -122,7 +130,31 @@ class CatastroReportPdfView(CatastroMixin, View):
             generated_on=catastro["as_of"],
         )
 
-        def table(headers, rows, widths, empty_message):
+        def urgency(expiries, column):
+            """El color de urgencia de la celda de vigencia, fila por fila.
+
+            LV-167: **la misma escala que el panel y el digest** -- una fecha
+            ámbar en pantalla es ámbar en el papel. El tramo lo calcula acá con
+            `bucket_for`, que es el dueño de los cortes, y `catastro.py` sólo
+            entrega las fechas: que el padrón importara `apps.compliance` para
+            colorear una celda sería atarlo al cumplimiento por el color.
+
+            Un nulo **no entra en ningún tramo** y por lo tanto no se pinta: es
+            la lección de `LV-29`, un nulo es "nunca se ingresó" y no "vigente".
+
+            Y acá se ve por qué `urgency_commands` toma **rangos**: esto pinta
+            una celda por fila (cada fila tiene su fecha y su tramo), mientras el
+            informe de cumplimiento pinta columnas enteras. Cualquiera de las dos
+            orientaciones fijada en el helper habría tenido que reescribirse.
+            """
+            today = catastro["as_of"]
+            return corepdf.urgency_commands(
+                (bucket_for(expiry, today), (column, index), (column, index))
+                for index, expiry in enumerate(expiries, start=1)
+                if expiry is not None
+            )
+
+        def table(headers, rows, widths, empty_message, extra=()):
             if not rows:
                 return Paragraph(escape(str(empty_message)), styles["Normal"])
             # Every cell is a Paragraph, headers included: at these widths
@@ -141,7 +173,7 @@ class CatastroReportPdfView(CatastroMixin, View):
                 for row in rows
             ]
             grid = Table(data, colWidths=widths, repeatRows=1)
-            grid.setStyle(corepdf.executive_table_style())
+            grid.setStyle(corepdf.executive_table_style(extra))
             return grid
 
         elements = [Paragraph(escape(title), styles["Title"])]
@@ -158,6 +190,7 @@ class CatastroReportPdfView(CatastroMixin, View):
                 aircraft_rows(catastro),
                 AIRCRAFT_COL_WIDTHS,
                 _("No aircraft registered."),
+                urgency(aircraft_expiries(catastro), AIRCRAFT_EXPIRY_COLUMN),
             )
         )
         # LV-164 (pedido del usuario, 2026-08-27): el personal arranca en hoja
@@ -174,10 +207,17 @@ class CatastroReportPdfView(CatastroMixin, View):
                 operator_rows(catastro),
                 OPERATOR_COL_WIDTHS,
                 _("No operators registered."),
+                urgency(operator_expiries(catastro), OPERATOR_EXPIRY_COLUMN),
             )
         )
 
-        return corepdf.pdf_response(elements, letterhead, f"{FILENAME_STEM}.pdf")
+        # LV-167: horizontal. Ver el comentario de los anchos: con nueve columnas
+        # la vertical cortaba la matrícula y el número de serie.
+        from reportlab.lib.pagesizes import landscape, letter
+
+        return corepdf.pdf_response(
+            elements, letterhead, f"{FILENAME_STEM}.pdf", pagesize=landscape(letter)
+        )
 
 
 class CatastroReportXlsxView(CatastroMixin, View):

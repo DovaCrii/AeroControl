@@ -70,10 +70,14 @@ def capture(monkeypatch):
     recorded = {}
     real_response = corepdf.pdf_response
 
-    def pdf_response(elements, letterhead, filename):
+    def pdf_response(elements, letterhead, filename, **kwargs):
         recorded["elements"] = list(elements)
         recorded["letterhead"] = letterhead
-        return real_response(elements, letterhead, filename)
+        # `**kwargs` y no la firma copiada: LV-167 le agregó `pagesize` y una
+        # copia de la firma convierte cada parámetro nuevo del helper en dos
+        # tests rotos que no tienen nada que ver con lo que afirman.
+        recorded["kwargs"] = kwargs
+        return real_response(elements, letterhead, filename, **kwargs)
 
     monkeypatch.setattr(corepdf, "pdf_response", pdf_response)
     return recorded
