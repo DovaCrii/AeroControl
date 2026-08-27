@@ -108,6 +108,14 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   rastreo visual. El corte es **de presentación**: no cambia el texto que se
   corrige ni la copia que el intento archiva, así que los intentos ya rendidos
   también se leen bien. Sigue sin tocarse una palabra ni la caja.
+- **El enunciado de la prueba vuelve a estar dentro de su recuadro (`LV-168b`).**
+  Un `<legend>` sin flotar se monta sobre el borde del `<fieldset>`: ignora su
+  relleno y borra el borde por detrás, así que la pregunta se dibujaba fuera de
+  la tarjeta. Con una línea apenas se notaba; con las seis de una pregunta
+  enumerada quedaba a la vista. Medido: sin flotar arranca a 0 px del borde de
+  la caja, flotado a los 21 que le corresponden. Se conservan el `<fieldset>` y
+  el `<legend>` nativos —lo mejor para un lector de pantalla— mudando el flex
+  del número a un envoltorio interno.
 - **El catastro dice si los papeles están vigentes (`LV-167`).** Dos columnas
   nuevas: vigencia del seguro JAC en la flota y de la credencial DGAC en el
   personal, pintadas con **la misma escala de colores que el panel**. Una fecha
