@@ -215,7 +215,13 @@ EMAIL_HOST = config("EMAIL_HOST", default="")
 EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
 EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
-EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
+# LV-119: implicit SSL on 465 is a legitimate configuration and there was no
+# variable for it. Django rejects TLS and SSL together with a ValueError raised
+# *when sending* -- i.e. in production, at night, inside the scheduled job -- so
+# TLS stops being the default as soon as someone asks for SSL, rather than
+# demanding they also remember to turn TLS off by hand.
+EMAIL_USE_SSL = config("EMAIL_USE_SSL", default=False, cast=bool)
+EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=not EMAIL_USE_SSL, cast=bool)
 EMAIL_TIMEOUT = config("EMAIL_TIMEOUT", default=20, cast=int)
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="aerocontrol@localhost")
 EMAIL_BACKEND = config(
