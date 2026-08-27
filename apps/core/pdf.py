@@ -381,10 +381,15 @@ def build_pdf(elements, letterhead, pagesize=letter):
     return output.getvalue()
 
 
-def pdf_response(elements, letterhead, filename):
-    """`build_pdf` as a download response."""
+def pdf_response(elements, letterhead, filename, pagesize=letter):
+    """`build_pdf` as a download response.
+
+    LV-167: `pagesize` travels through because the roster went landscape when it
+    gained the expiry columns, and the compliance report stays portrait. The
+    letterhead does not care -- it measures the page it is handed.
+    """
     response = HttpResponse(
-        build_pdf(elements, letterhead), content_type="application/pdf"
+        build_pdf(elements, letterhead, pagesize), content_type="application/pdf"
     )
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
