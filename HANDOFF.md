@@ -41,19 +41,24 @@ Notificaciones a `Dirección`: `aortega@jej.cl` + `cmunoz@jej.cl`.
 ## Cierre del 2026-08-27 — **empezar por acá**
 
 Sesión de revisión en vivo sobre la app desplegada: el usuario fue reportando
-pantalla por pantalla y se cerraron seis filas (`LV-162` a `LV-167`).
+pantalla por pantalla y se cerraron siete filas (`LV-162` a `LV-168`).
 
-### ⚠️ Estado exacto, y qué falta para desplegar
+### Estado exacto
 
-- **`origin/main` = `0d19e94`** — el lote completo `LV-162`..`LV-167`, con
-  `LV-167` ya mergeado (`git merge --no-ff` de `codex/catastro-vigencias`) y
-  **`pwsh scripts/verify.ps1` verde sobre el merge**: 2170 tests, cobertura
-  96.86%, ruff, bandit y pip-audit sin hallazgos.
-- **Desplegado en `p340` el 2026-08-27** ✅ — `git log -1` en la VM dice
-  `94f308f`, `collectstatic` copió los 2 estáticos del lote y post-procesó 378,
-  y el servicio reinició limpio. **Desde una sesión de agente no hay acceso a
-  `p340`** (`ssh` responde `Permission denied (publickey,password)`, verificado
-  otra vez ese día), así que el bloque lo pega el usuario en su sesión SSH.
+- **`origin/main` = `37564d1`**, y **`p340` está en `37564d1`** ✅ — el lote
+  completo `LV-162`..`LV-168` desplegado y verificado el 2026-08-27
+  (`systemctl status` en `active (running)`, `git log -1` coincidiendo con el
+  `main` pusheado). **`pwsh scripts/verify.ps1` verde**: 2179 tests, cobertura
+  96.87%, ruff, bandit y pip-audit sin hallazgos.
+- **Desde una sesión de agente no hay acceso a `p340`** (`ssh` responde
+  `Permission denied (publickey,password)`, verificado otra vez ese día), así
+  que el bloque de despliegue lo pega el usuario en su sesión SSH.
+- **`LV-168` es una regresión propia de `LV-163`, encontrada por el usuario en
+  producción el mismo día.** Colapsar los espacios del banco se llevó los saltos
+  que separaban los ítems `I.`/`II.`/`III.` en 6 preguntas de 100 — justo las
+  que preguntan "SÓLO I Y II" contra "SÓLO II Y III". Vale como aviso: una
+  normalización de texto que "no cambia ninguna palabra" **sí puede cambiar
+  dónde corta el renglón**, y eso en una pregunta de examen es contenido.
 - **⚠️ `p340` estaba en HEAD desprendido en `9c4d063`, y por eso las tandas del
   2026-08-26 y del 2026-08-27 nunca se habían desplegado.** Un rollback viejo
   (`git checkout <commit>`) dejó la VM sin rama: `git pull` fallaba con *"You are
@@ -62,10 +67,33 @@ pantalla por pantalla y se cerraron seis filas (`LV-162` a `LV-167`).
   (14 commits de fast-forward). `9c4d063` era ancestro de `main`, así que no se
   perdió nada. La lección quedó en `AGENTS.md`: **el primer comando de todo
   despliegue es `git status --short --branch`.**
-- **Sin migraciones** en todo el lote. El paso extra al desplegar es
-  **`collectstatic`**: cambian `static/css/app.css` y entra
+- **Sin migraciones** en todo el lote. El paso extra al desplegar fue
+  **`collectstatic`**: cambia `static/css/app.css` y entra
   `static/js/quiz-progress.js`. Sin él, con el `STORAGES` de `prod.py` toda
   etiqueta `{% static %}` falla.
+
+### Lo único que quedó abierto de esta sesión
+
+**Habilitaciones en la ficha del operador**, esperando decisión del usuario. En
+producción se ven tres filas (`Serie Matrice`, `Serie Phantom`, `sensefly eBee`)
+con emisión y vencimiento en `—`: son las que sembró `seed_operator_qualifications`
+(`LV-12b`) parseando el texto libre de `authorizations`, sin fechas. Es el mismo
+`NULL` que `LV-152` definió como *"nunca se ingresó"*. Y hay dos decisiones
+suyas que apuntan distinto: `R5.8` dice mostrar el catálogo estructurado en la
+ficha, y `LV-152` dice *"poner directamente en el recuadro lo que dice la DGAC,
+no más; no buscar más allá de estandarizar"*. Las tres salidas que se le
+plantearon, con la segunda como recomendada:
+
+1. Dejarlo y cargar las fechas a mano por operador.
+2. Mostrar en la ficha el texto libre de la DGAC y **ocultar** el bloque
+   estructurado con el patrón de siempre (se oculta la vista, no se borra el
+   dato, así `Qualification` sigue alimentando el aviso de compatibilidad de
+   `B4.4` y las alertas de vencimiento). Sin migración.
+3. Mostrar sólo las habilitaciones con fecha — el arreglo más chico, pero deja
+   habilitaciones invisibles sin avisar.
+
+**No implementar ninguna sin que el usuario elija**: cuál de las dos pantallas
+manda es decisión de negocio.
 
 Por pasos, mirando la salida de cada uno — **no como una sola línea encadenada**,
 que es como se produjo el despliegue fantasma del 2026-08-27:
