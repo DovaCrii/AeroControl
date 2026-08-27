@@ -35,20 +35,34 @@ AIRCRAFT_HEADERS = [
     _lazy("Year"),
     _lazy("Status"),
     _lazy("Cost center"),
+    # LV-167: la vigencia va **última** en las dos tablas, y no es estética: así
+    # su índice es `len(headers) - 1` y quien pinta el color de urgencia no
+    # necesita una constante aparte que se pueda desincronizar del orden.
+    _lazy("JAC insurance expiry"),
 ]
 
 # Identity and credential, and nothing else. Email and phone are deliberately
 # **not** here: this document is written to be handed to whoever asked for it,
 # the user asked for the roster and not for a contact list, and personal contact
 # details are the kind of column that is easy to add and impossible to recall.
+# LV-167: se fue `Employee ID`. En producción vale `RUT-192135974` y la columna
+# de al lado dice `19213597-4`: el mismo número dos veces, en dos formatos, que
+# es exactamente la confusión que el usuario reportó. El RUT es la llave natural
+# chilena (`LV-143`) y es el que se pide cuando alguien pregunta por una persona.
 OPERATOR_HEADERS = [
-    _lazy("Employee ID"),
     _lazy("Full name"),
     _lazy("RUT"),
     _lazy("DGAC credential"),
     _lazy("Operator type"),
     _lazy("Cost center"),
+    _lazy("DGAC credential expiry"),
 ]
+
+# El índice de la columna de vigencia en cada tabla, derivado y no escrito: es la
+# última, así que no puede quedar apuntando a otra si mañana se agrega una
+# columna en el medio.
+AIRCRAFT_EXPIRY_COLUMN = len(AIRCRAFT_HEADERS) - 1
+OPERATOR_EXPIRY_COLUMN = len(OPERATOR_HEADERS) - 1
 
 BLANK = "—"
 
@@ -156,6 +170,7 @@ def aircraft_rows(catastro):
             aircraft.year or BLANK,
             aircraft.get_status_display(),
             aircraft.cost_center.code if aircraft.cost_center_id else BLANK,
+            _date(aircraft.insurance_expiry),
         ]
         for aircraft in catastro["aircraft"]
     ]
@@ -164,15 +179,42 @@ def aircraft_rows(catastro):
 def operator_rows(catastro):
     return [
         [
-            operator.employee_id,
             operator.full_name,
             operator.rut or BLANK,
             operator.dgac_credential or BLANK,
             operator.operator_type or BLANK,
             operator.cost_center.code if operator.cost_center_id else BLANK,
+            _date(operator.credential_expiry),
         ]
         for operator in catastro["operators"]
     ]
+
+
+def _date(value):
+    """La fecha en ISO, o un guion cuando no hay.
+
+    LV-167: **un nulo no se convierte en nada más que un guion.** Buena parte del
+    padrón no tiene la fecha cargada (el panel de producción cuenta 7 credenciales
+    y 2 seguros sin fecha), y ahí la lección de `LV-29` es la que manda: un nulo
+    es "nunca se ingresó", no "está vigente". No se pinta de ningún color y no
+    entra en ningún tramo de urgencia.
+    """
+    return value.isoformat() if value else BLANK
+
+
+def aircraft_expiries(catastro):
+    """La fecha de vigencia de cada fila de flota, en el orden de la tabla.
+
+    Se devuelve la **fecha** y no el tramo de urgencia: el tramo lo calcula quien
+    pinta, con `bucket_for` del digest, que es el dueño de los cortes. Que este
+    módulo importara `apps.compliance` para colorear una celda sería atar el
+    padrón al cumplimiento por una cuestión de color.
+    """
+    return [aircraft.insurance_expiry for aircraft in catastro["aircraft"]]
+
+
+def operator_expiries(catastro):
+    return [operator.credential_expiry for operator in catastro["operators"]]
 
 
 def _counted(aircraft, operators):
