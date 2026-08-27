@@ -99,6 +99,15 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **El catastro dice si los papeles están vigentes (`LV-167`).** Dos columnas
+  nuevas: vigencia del seguro JAC en la flota y de la credencial DGAC en el
+  personal, pintadas con **la misma escala de colores que el panel**. Una fecha
+  sin cargar muestra un guion y no se pinta: un nulo es "nunca se ingresó", no
+  "está vigente". Se fue la columna «ID de empleado», que repetía el RUT en otro
+  formato — queda el RUT, que es lo que se pide cuando alguien pregunta por una
+  persona. El PDF pasa a horizontal: con nueve columnas la vertical cortaba la
+  matrícula y el número de serie. Con esto el catastro se puede entregar sin
+  adjuntar además el reporte de cumplimiento.
 - **El permiso deja de pedir lo que el plan ya provee (`LV-166`).** Al editar un
   permiso con un plan geoespacial vinculado, las casillas de región, comuna,
   nombre del área, latitud, longitud y radio desaparecen del formulario: el dato

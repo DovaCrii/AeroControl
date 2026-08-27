@@ -331,3 +331,98 @@ def test_another_tenants_rows_are_out_of_scope(world, root):
     # A superuser sees every tenant, which is what `scope_queryset_to_tenant`
     # promises -- asserted so the test above cannot pass by over-filtering.
     assert "ZZZ-999" in _registrations(build_catastro(root))
+
+
+# -- LV-167: las vigencias -------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_the_fleet_row_ends_with_the_insurance_expiry(root):
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from .catastro import AIRCRAFT_EXPIRY_COLUMN, aircraft_expiries
+
+    center = CostCenter.objects.create(code="CC900", name="Con seguro")
+    vence = timezone.localdate() + timedelta(days=20)
+    Aircraft.objects.create(
+        registration="RPA-CON",
+        type="Multirotor",
+        model="M",
+        manufacturer="DJI",
+        cost_center=center,
+        insurance_expiry=vence,
+    )
+    Aircraft.objects.create(
+        registration="RPA-SIN",
+        type="Multirotor",
+        model="M",
+        manufacturer="DJI",
+        cost_center=center,
+    )
+
+    catastro = build_catastro(root)
+    rows = aircraft_rows(catastro)
+
+    con = next(row for row in rows if row[0] == "RPA-CON")
+    sin = next(row for row in rows if row[0] == "RPA-SIN")
+    assert con[AIRCRAFT_EXPIRY_COLUMN] == vence.isoformat()
+    # Un nulo es "nunca se ingresó", no "vigente": guion, y fuera de todo tramo.
+    assert sin[AIRCRAFT_EXPIRY_COLUMN] == BLANK
+    assert aircraft_expiries(catastro) == [vence, None] or aircraft_expiries(
+        catastro
+    ) == [None, vence]
+
+
+@pytest.mark.django_db
+def test_the_personnel_row_ends_with_the_credential_expiry_and_drops_the_id(root):
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from .catastro import OPERATOR_EXPIRY_COLUMN, OPERATOR_HEADERS, operator_expiries
+
+    vence = timezone.localdate() + timedelta(days=400)
+    Operator.objects.create(
+        full_name="Ana Rivas",
+        employee_id="RUT-123456785",
+        rut="12345678-5",
+        credential_expiry=vence,
+    )
+
+    catastro = build_catastro(root)
+    row = operator_rows(catastro)[0]
+
+    # El nombre pasa a ser la primera columna: se fue el ID de empleado, que en
+    # producción repetía el RUT en otro formato.
+    assert row[0] == "Ana Rivas"
+    assert row[1] == "12345678-5"
+    assert "RUT-123456785" not in row
+    assert row[OPERATOR_EXPIRY_COLUMN] == vence.isoformat()
+    assert operator_expiries(catastro) == [vence]
+    encabezados = [str(header).lower() for header in OPERATOR_HEADERS]
+    assert not [h for h in encabezados if "employee" in h or "empleado" in h]
+
+
+def test_the_expiry_column_index_is_derived_from_the_headers():
+    """Los dos índices se calculan como "la última", no se escriben. Una
+    constante escrita a mano apuntaría a otra columna el día que alguien agregue
+    una en el medio, y el color de urgencia se pintaría sobre el dato
+    equivocado -- que es peor que no pintarlo."""
+    from .catastro import (
+        AIRCRAFT_EXPIRY_COLUMN,
+        AIRCRAFT_HEADERS,
+        OPERATOR_EXPIRY_COLUMN,
+        OPERATOR_HEADERS,
+    )
+
+    from django.utils.translation import override
+
+    assert AIRCRAFT_EXPIRY_COLUMN == len(AIRCRAFT_HEADERS) - 1
+    assert OPERATOR_EXPIRY_COLUMN == len(OPERATOR_HEADERS) - 1
+    # Sobre el msgid y no sobre la traducción: la suite corre en español, así que
+    # afirmar "expiry" mediría el catálogo en vez del orden de las columnas.
+    with override("en"):
+        assert "expiry" in str(AIRCRAFT_HEADERS[AIRCRAFT_EXPIRY_COLUMN]).lower()
+        assert "expiry" in str(OPERATOR_HEADERS[OPERATOR_EXPIRY_COLUMN]).lower()
