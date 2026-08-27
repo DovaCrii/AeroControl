@@ -41,15 +41,33 @@ Notificaciones a `Dirección`: `aortega@jej.cl` + `cmunoz@jej.cl`.
 ## Cierre del 2026-08-26 — **empezar por acá**
 
 `main` = `origin/main`, árbol limpio salvo `.vscode/` (sin versionar).
-`pwsh scripts/verify.ps1` verde: **1997 tests**, cobertura 96.73%, ruff, bandit y
-pip-audit sin hallazgos. De 1755 a 1997 tests en el día.
+`pwsh scripts/verify.ps1` verde: **2102 tests**, cobertura 96.83%, ruff, bandit y
+pip-audit sin hallazgos. De 1755 a 2102 tests en el día, en dos tandas.
 
-**Desplegado en `p340` hoy** ✅, de punta a punta y verificado con datos: respaldo
-previo (`aero_ops_20260826_165944`), `registry.0036` aplicada, `bootstrap_roles`
-corrido (hay permisos nuevos: `view_costcenter` para tres roles y los dos de la
-evaluación), `collectstatic`, y `sync_jac_insurance --apply` que corrigió **dos**
-aeronaves: `RPA-5534` de 2026-08-08 a **2027-08-24** (el caso que el usuario
-reportó) y `RPA-5532` de 2027-08-04 a 2027-08-06.
+### ⚠️ Qué está desplegado y qué no
+
+**Esto es lo primero que hay que mirar, y es donde este archivo se puso rancio
+antes** (el 2026-08-24 dijo un sha que ya no era y dos mensajes de planificación
+se construyeron encima). **Verificá contra la VM, nunca contra este párrafo.**
+
+- **`p340` está en `684ef79`** — la primera tanda del día, desplegada de punta a
+  punta y verificada con datos: respaldo previo (`aero_ops_20260826_165944`),
+  `registry.0036` aplicada, `bootstrap_roles` corrido (permisos nuevos:
+  `view_costcenter` para tres roles y los dos de la evaluación), `collectstatic`,
+  y `sync_jac_insurance --apply` que corrigió **dos** aeronaves: `RPA-5534` de
+  2026-08-08 a **2027-08-24** (el caso que el usuario reportó) y `RPA-5532` de
+  2027-08-04 a 2027-08-06.
+- **La segunda tanda está en `origin/main` y NO desplegada.** Son cuatro filas
+  (`LV-144`, `LV-145`, `LV-149`, `LV-150`) más el comando de `LV-119`, de
+  `2f71763` a `0391d7d`. **El usuario pidió expresamente confirmar antes de
+  mandar a operación**, así que el despliegue quedó esperando su visto bueno, no
+  olvidado.
+- **Sin migraciones en la segunda tanda.** El paso extra es **`collectstatic`**:
+  entran `static/img/jej-logo-blue.png` (el logo del membrete) y
+  `static/js/sigo-copy.js` (los botones de copiar). Sin él, en producción los
+  estáticos llevan hash y `{% static %}` falla — pero el logo del PDF **no** se
+  lee por URL a propósito, así que un `collectstatic` olvidado rompe el JS de
+  copiar y no el membrete.
 
 ### Dos cambios de infraestructura que hay que saber
 
@@ -75,41 +93,84 @@ filtra) · `LV-147` (el clima se elige) · `LV-148` (reorden del panel; cierra
 `LV-31`) · `LV-158` (la prueba interna de conocimientos) · `LV-159` (la Resolución
 de la JAC pone la vigencia del seguro; cierra el pendiente de `LV-81b`).
 
+**Segunda tanda, la que cerró el lote** (pusheada, sin desplegar): `LV-144` (el
+membrete corporativo JEJ en los PDF, como helper compartido) · `LV-145` (el
+informe de catastro de flota y personal, cuatro salidas) · `LV-149` (la ficha del
+plan geoespacial y la hoja de campo para SIGO con botones de copiar) · `LV-150`
+(Solicitudes SIGO fuera del menú, paso 1) · `LV-119` 🔄 (el comando `check_email`;
+el correo sigue sin salir hasta que alguien pegue las credenciales).
+
 El plan del lote, con el contexto de cada decisión, está en
 `C:\Users\cmunoz\.claude\plans\d-onedrive-j-e-j-ingenier-a-parallel-map.md`.
 
-### Lo que quedó del lote, sin empezar
+### El lote quedó completo
 
-Cuatro filas del plan aprobado que no se alcanzaron, en orden de valor:
+Las cuatro filas que faltaban se cerraron en la segunda tanda, y `LV-119` quedó
+en 🔄 con el código entero. El detalle de cada decisión está en su fila del
+tablero; acá va sólo lo que la próxima sesión necesita para no repreguntar.
 
-1. **`LV-144` — membrete corporativo JEJ en los PDF.** Decidido y diseñado:
-   azul `#1E418C`, Helvetica (base-14 de reportlab, nada que embeber), logo desde
-   `static/img/` leído por `finders.find()` **nunca por URL** (los estáticos llevan
-   hash en prod), pie con "Página X de Y" vía `canvasmaker`. El logo original está
-   en `D:\OneDrive - J.E.J. Ingeniería S.A\APLICACIONES NUEVO LOGO…\2023\`.
-2. **`LV-145` — informe de catastro de flota y personal.** Lo que el usuario dijo
-   que necesita "cuando me soliciten algo". Alcance ya acotado por él: **sólo** las
-   dos tablas base más una línea de totales, tres salidas (PDF con el membrete,
-   XLSX, CSV) y fecha de corte declarada en las cuatro.
-3. **`LV-149` — ficha del plan geoespacial**: encabezado más chico (CC + nombre del
-   KMZ, `display_title` calculado **sin reescribir** el título guardado) y "Datos
-   para SIGO" como hoja de campo con botón de copiar cuando hay una sola
-   circunferencia. Los tres avisos de honestidad se conservan en las dos formas.
-4. **`LV-150` — "Solicitudes SIGO" fuera del menú** (paso 1, reversible en una
-   línea). Los ocho enlaces entrantes ya están decididos uno por uno en la fila del
-   tablero.
+**Lo único que queda de `LV-119`, y no se puede hacer desde una sesión de
+agente**: pegar las credenciales del SMTP de JEJ en el entorno del servicio en
+`p340` y probarlo. El procedimiento, para pegar en la sesión SSH:
 
-Y **`LV-119`** (P1): `EMAIL_HOST` vacío en `p340`, ningún correo salió nunca. Se
-decidió "preparar el camino y esperar credenciales" y **no se alcanzó a hacer**:
-sigue entero.
+```bash
+sudo -e /etc/aerocontrol.env      # EMAIL_HOST, EMAIL_PORT, EMAIL_HOST_USER,
+                                  # EMAIL_HOST_PASSWORD, DEFAULT_FROM_EMAIL
+sudo systemctl restart aerocontrol
+cd /opt/aerocontrol && set -a && . /etc/aerocontrol.env && set +a
+.venv/bin/python manage.py check_email
+.venv/bin/python manage.py check_email --to cmunoz@jej.cl
+```
+
+Cuatro cosas que conviene saber antes de escribir esas cinco variables:
+
+- **`set -a` no es opcional** (la lección de siempre): `source` sobre un archivo
+  `CLAVE=valor` define variables de *shell*, no de entorno, y `manage.py` cae a
+  `config.settings.dev` con la base equivocada.
+- **`DEFAULT_FROM_EMAIL` suele tener que ser igual a `EMAIL_HOST_USER`.** Un
+  buzón que autentica bien puede no tener permiso para retransmitir con otra
+  dirección de remitente, y eso **no se ve al abrir la conexión**: sale sólo al
+  enviar, que es para lo que existe el `--to`.
+- **Si el buzón tiene MFA hace falta una contraseña de aplicación**, no la del
+  usuario. El comando lo dice cuando el servidor rechaza las credenciales.
+- **Puerto 465 con SSL implícito**: poné `EMAIL_USE_SSL=True` y **no** toques
+  `EMAIL_USE_TLS`. Django rechaza las dos juntas con un `ValueError` en el
+  momento de enviar, o sea de noche y dentro del trabajo programado.
+
+`check_email` sale con código distinto de cero si algo falla y **nunca imprime la
+contraseña** (sólo si está y cuántos caracteres tiene, que es lo que delata un
+salto de línea pegado de más). Mientras las variables estén vacías, el estado de
+hoy es el que informa: la configuración, qué falta y salida 1.
+
+Cuando el correo salga, lo que empieza a llegar son las **nueve notificaciones**
+que hoy se imprimen en el journal, incluido el informe ejecutivo de los lunes con
+su XLSX. Vale avisarle a Dirección antes de encenderlo.
 
 ### Filas nuevas capturadas hoy y sin resolver
 
-- **`LV-119`, `LV-74`, `LV-98`, `LV-102`, `LV-78`/`LV-103` (pasos 2 y 3), `LV-11b`**
-  siguen como estaban.
+- **`LV-74`, `LV-98`, `LV-102`, `LV-78`/`LV-103` (pasos 2 y 3), `LV-11b`** siguen
+  como estaban. `LV-119` pasó a 🔄 (ver arriba).
 - Nada más quedó capturado sin decidir: los cuatro pedidos que llegaron durante la
   sesión (`LV-151` a `LV-154`) y los cinco del reporte en vivo (`LV-155` a `LV-159`)
   se cerraron el mismo día.
+- **`LV-150` deja escrita su condición de reversión**: si en un mes (o sea desde
+  el **2026-09-26**) hay al menos una solicitud SIGO creada en producción, el
+  retiro del menú se revierte descomentando una línea de `templates/base.html` en
+  vez de avanzar al paso 2. Conviene hacer los tres retiros (`LV-78`, `LV-103`,
+  `LV-150`) juntos cuando cumplan el mes.
+
+### Dos preguntas para el usuario, chicas y con consecuencia
+
+1. **¿La casilla "Distancia al AMC" de SIGO acepta coma o punto decimal?** La
+   ficha del plan la muestra `110,9` (locale español) y el botón de copiar copia
+   eso. Los segundos de la coordenada sí se forzaron a punto, porque la lectura
+   corrida de al lado usa punto y dos formas del mismo número en la misma
+   pantalla es un error esperando. La distancia se dejó **como estaba antes** —el
+   botón reproduce exactamente lo que ya se leía en la pantalla, así que no
+   introduce un riesgo nuevo—, pero si SIGO exige punto, es una línea.
+2. **¿El membrete queda así?** Se envió el PDF de muestra en el chat. Si el logo
+   va muy grande o muy chico, o la franja azul molesta, son constantes en
+   `apps/core/pdf.py` (`_LOGO_WIDTH`, `_HEADER_TOP`, `_RULE_GAP`).
 
 ### Pendientes del usuario, actualizados
 

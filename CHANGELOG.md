@@ -10,6 +10,18 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **`manage.py check_email`: probar que el correo sale, no suponerlo (`LV-119`).**
+  `manage.py check` pasa con el tubo cortado, que es cómo `p340` corrió meses
+  imprimiendo cada notificación en el log. El comando nuevo informa la
+  configuración —**nunca la contraseña**, sólo si está y cuántos caracteres
+  tiene—, abre la conexión SMTP para probar host, puerto, TLS y credenciales, y
+  con `--to` envía un mensaje real: un servidor puede autenticar y negarse a
+  retransmitir con esa dirección de remitente, y eso sólo se ve enviando. Cada
+  error nombra la variable que hay que revisar, y sale con código distinto de
+  cero para que un paso de despliegue pueda apoyarse en él. Entra `EMAIL_USE_SSL`
+  para el 465 con SSL implícito, que no tenía variable. **El correo sigue sin
+  salir hasta que las credenciales estén en el entorno de `p340`**: el
+  procedimiento quedó en `HANDOFF.md`.
 - **"Solicitudes SIGO" sale del menú (`LV-150`, paso 1).** Desde que los datos de
   SIGO se leen y se copian en la ficha del plan, con una sola circunferencia no
   hay nada que separar y la lista era una pantalla a la que se llegaba sin tener
