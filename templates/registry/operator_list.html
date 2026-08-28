@@ -40,13 +40,20 @@ en el navegador: la habilitación pasa de 281 a 436 px.{% endcomment %}
 {% comment %}LV-57: "RUT" folds into the identity column under the name.{% endcomment %}
 {% block list_header %}
 <th scope="col">{% translate "Name" %}</th>
-<th scope="col">{% translate "DGAC credential" %}</th>
+<th scope="col" class="cell-numeric">{% translate "DGAC credential" %}</th>
 <th scope="col" class="cell-status">{% translate "Credential expiry" %}</th>
 {% comment %}LV-87: la insignia "Sin PDF" vivía **dentro** de la celda de la
 fecha, así que una sola celda mezclaba dos hechos distintos -- cuándo vence y si
 el respaldo está adjunto -- y a simple vista parecía calificar a la fecha.
 {% endcomment %}
-<th scope="col" class="cell-status">{% translate "Credential file" %}</th>
+{% comment %}LV-177: el rótulo se acorta a una palabra. `LV-162` angostó esta
+columna al 6% —su dato es un icono de 14 px— pero le dejó adentro "Credencial
+adjunta": a 900 px son 54 px para una palabra que mide 80, y el navegador la
+partía **a mitad de palabra** ("CREDENCIA / L ADJUNTA"). Ensancharla habría sido
+regalarle espacio a una cruz quitándoselo a la habilitación, que es justo lo que
+`LV-162` vino a corregir. El significado completo vive en el `title` y en el
+texto para lector de pantalla de cada celda, que ya lo decían.{% endcomment %}
+<th scope="col" class="cell-status" title="{% translate 'DGAC credential file' %}">{% translate "File" %}</th>
 <th scope="col">{% translate "Cost center" %}</th>
 {% comment %}LV-152: decía "Habilitación" y mostraba una insignia verde "Vigente"
 derivada de las habilitaciones estructuradas. Con el vencimiento en `NULL` —como

@@ -374,6 +374,12 @@ class OperatorForm(AeroModelForm):
         fields = [
             "employee_id",
             "full_name",
+            # LV-177: auxiliares de orden y presentación, no el nombre de
+            # registro. Van en el formulario porque el corte lo tiene que poder
+            # arreglar quien mira la ficha: el comando propone, pero los casos
+            # que no calzan en el patrón sólo los sabe una persona.
+            "given_names",
+            "surnames",
             "email",
             "phone",
             "rut",
@@ -388,6 +394,8 @@ class OperatorForm(AeroModelForm):
         labels = {
             "employee_id": _("Employee ID"),
             "full_name": _("Full name"),
+            "given_names": _("Given names"),
+            "surnames": _("Surnames"),
             "email": _("Email"),
             "phone": _("Phone"),
             "rut": _("RUT"),
@@ -407,6 +415,10 @@ class OperatorForm(AeroModelForm):
             "employee_id": _(
                 "Leave it blank and it is derived from the RUT, as RUT-123456785."
             ),
+            "surnames": _(
+                "Optional. Only used to sort and show the roster by surname; "
+                "the full name above is the one on record."
+            ),
             "rut": _("With its check digit, e.g. 12345678-5. Dots are optional."),
             "authorizations": _(
                 "Copy them exactly as the DGAC credential states them. They are "
@@ -422,6 +434,8 @@ class OperatorForm(AeroModelForm):
     field_order = [
         "employee_id",
         "full_name",
+        "given_names",
+        "surnames",
         "rut",
         "email",
         "phone",
