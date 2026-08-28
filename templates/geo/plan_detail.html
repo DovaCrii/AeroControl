@@ -30,9 +30,21 @@
     nombre de la faena en palabras. El permiso pasa a ser enlace -- desde el plan
     a su papel había que volver al listado.{% endcomment %}
     <h1 class="h4">{{ plan.display_title }}</h1>
+    {% comment %}LV-183: el tamaño del área, acá arriba. El radio vivía sólo al
+    final de la hoja de campo —bajo "Circunferencia y aeródromo"—, porque esa
+    hoja sigue el orden del formulario de SIGO: correcto para transcribir, malo
+    para responder "¿de qué tamaño es esto?" al abrir el plan.
+
+    Con el círculo envolvente se **dice** que lo es: el radio del círculo que
+    cubre un área dibujada no es el radio del área, y afirmarlo a secas sería el
+    error que `LV-132` nombró. Con varias circunferencias se muestra cuántas, no
+    el radio de una: elegir una sería afirmar que las demás no están.{% endcomment %}
     <p class="text-muted mb-0">
       {{ plan.cost_center.name|default:plan.cost_center.code }}
       {% if plan.flight_permission %} · <a href="{% url 'permission-detail' plan.flight_permission.pk %}">{{ plan.flight_permission }}</a>{% endif %}
+      {% if heading_extent.count %} · {% blocktranslate count counter=heading_extent.count %}{{ counter }} circle{% plural %}{{ counter }} circles{% endblocktranslate %}
+      {% elif heading_extent.radius_m %} · {% blocktranslate with radius=heading_extent.radius_m %}radius {{ radius }} m{% endblocktranslate %}{% if heading_extent.is_enclosing %} <span title="{% translate 'Smallest circle that encloses the drawn area' %}">({% translate "enclosing" %})</span>{% endif %}
+      {% endif %}
     </p>
   </div>
   <div class="d-flex gap-2 align-items-center flex-wrap">
