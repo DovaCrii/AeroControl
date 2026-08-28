@@ -16,11 +16,32 @@
     </div>
   </div>
 
-  {% comment %}R5.8: authorizations (free text) is superseded by the
-  structured Qualifications card below -- showing both would just repeat the
-  same information twice on the same page.{% endcomment %}
-  {% include "generic/_fields_detail_table.html" with exclude="authorizations" %}
+  {% comment %}LV-175: `authorizations` **vuelve** a la ficha. R5.8 lo había
+  sacado porque el bloque estructurado de abajo lo reemplazaba; en producción
+  ese bloque terminó mostrando tres filas con emisión y vencimiento en guion
+  —las que sembró `seed_operator_qualifications` parseando este mismo texto, sin
+  fechas—, o sea afirmando tres habilitaciones sin respaldar ninguna. Es el
+  mismo nulo que `LV-29` definió como "nunca se ingresó" y que `LV-152` ya había
+  sacado del listado.
+
+  Manda la regla del usuario, que es la de `LV-152`: *"lo importante de la
+  habilitación es poner directamente en el recuadro lo que dice la DGAC, no más;
+  no buscar más allá de estandarizar"*. El texto literal de la credencial es el
+  dato; el catálogo es la interpretación.{% endcomment %}
+  {% include "generic/_fields_detail_table.html" %}
 </div>
+
+{% comment %}LV-175: el bloque de habilitaciones estructuradas se **oculta**, con
+el patrón de siempre (LV-7 con Kanban, LV-D8 con Documentos, R5.8 con el enlace
+del menú): se comenta la superficie, **no se borra nada**. `Qualification` y
+`QualificationType` siguen enteros y siguen siendo lo que alimenta el aviso de
+compatibilidad operador↔aeronave de `B4.4` y las alertas de vencimiento de las
+que sí tienen fecha; `qualification-list` y `qualification-update` siguen vivas.
+Con descomentar este bloque vuelve entero.
+
+Condición de reversión escrita: si alguien empieza a cargar fechas reales de
+emisión y vencimiento por habilitación, esto se revierte en vez de avanzar —
+con fechas, el bloque estructurado dice algo que el texto libre no puede decir.
 
 <div class="card mt-3 p-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
@@ -45,6 +66,7 @@
   <p class="text-muted mb-0">{% translate "No qualifications recorded yet." %}</p>
   {% endif %}
 </div>
+{% endcomment %}
 
 {% comment %}LV-158: el historial de pruebas de conocimientos, en la ficha de la
 persona. Va acá y no en una pantalla aparte porque la pregunta que responde —*"cómo

@@ -116,6 +116,19 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **La tipografía dice lo mismo en toda la app (`LV-174`).** La hoja declaraba
+  **siete** pesos y el navegador dibujaba **cuatro**: `650` y `750` se dibujan
+  exactamente como `700`, y `500` como `600` — medido con la fuente real. De ahí
+  la sensación de que el engrosado estaba puesto al azar: lo estaba. Cada peso
+  se reemplazó por el que ya se dibujaba, así que **no se movió un píxel**. Los
+  tamaños del texto chico pasan de veintiséis valores a cuatro escalones; los
+  títulos no se tocaron.
+- **La ficha del operador muestra la habilitación como la escribe la DGAC
+  (`LV-175`).** El bloque estructurado mostraba tres filas con emisión y
+  vencimiento en guion —sembradas desde ese mismo texto libre, sin fechas—, o
+  sea afirmaba tres habilitaciones sin respaldar ninguna. Ahora se ve el texto
+  literal de la credencial. **No se borró nada**: el subsistema sigue entero y
+  sigue alimentando el aviso de compatibilidad operador↔aeronave.
 - **La hoja de campo de SIGO gana jerarquía (`LV-171`).** Eran once casillas
   idénticas en peso y color. Ahora el valor —que es lo que se transcribe— manda,
   el rótulo se achica y se aquieta, una casilla vacía deja de gritar, y cada
