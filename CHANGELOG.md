@@ -143,6 +143,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Django 6.0.8 → 6.1 (`LV-181`).** Los mismos 2284 tests en verde, sin un solo
+  cambio en nuestro código. El único bloqueo fue de terceros: Django 6.1 quitó
+  `cc_delim_re` y el DRF instalado lo importaba, así que el piso sube a
+  `djangorestframework>=3.18`. **El salto avisa que la familia `EMAIL_*` está
+  deprecada en favor de `MAILERS`, con retiro en Django 7.0** — el correo
+  saliente, que sigue pendiente de configurar, debe apuntar directamente a la
+  API nueva.
 - **«Geo source» pasa a llamarse «Archivo KMZ/KML de origen» (`LV-180`).** Era
   el único anglicismo entre tipos de documento que nombran papeles reales. Va
   con **migración de datos**: el nombre se fijaba en los `defaults` de un
