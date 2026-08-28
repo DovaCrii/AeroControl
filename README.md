@@ -34,12 +34,14 @@ con su documentación DGAC.
 
 | Módulo | Qué hace |
 | --- | --- |
-| **Registro** | Centros de costo, aeronaves, operadores, asignaciones y habilitaciones — con estados visibles (activo, retirado, contrato cerrado) |
-| **Cumplimiento** | Documentos con vencimiento, alertas automáticas y resumen diario/semanal por correo |
-| **Operaciones** | Permisos de vuelo (folio, vigencia, zona poblada/no poblada) y registro de vuelos realizados |
+| **Padrón** | Centros de costo, aeronaves y operadores, con estados visibles (activo, retirado, contrato cerrado) y el RUT como llave |
+| **Inventario y movimientos** | Baterías, asignaciones de operador y de aeronave, y la bitácora de dónde está cada recurso |
+| **Cumplimiento** | Documentos con vencimiento, alertas automáticas, no conformidades y revisión mensual |
+| **Vuelo** | Permisos de vuelo (folio, vigencia, zona poblada/no poblada) y registro de vuelos realizados |
 | **Mantenimiento** | Programada y no programada, con historial de estados |
-| **Planificación geoespacial** | Importa y versiona planes de vuelo KMZ/KML; editor interactivo en el mapa |
-| **Tablero (Kanban)** | Seguimiento de tareas y alertas en vista tablero, lista y calendario unificado |
+| **Planificación geoespacial** | Importa y versiona planes KMZ/KML, con editor en el mapa y la hoja de campo para transcribir a SIGO |
+| **Informes** | Catastro de flota y personal con vigencias, e informe de cumplimiento — en pantalla, PDF, Excel y CSV |
+| **Prueba de conocimientos** | Evaluación interna de 25 preguntas con historial por persona, que vence a los 12 meses como una credencial más |
 
 Todo con auditoría de cada cambio, permisos por rol y la interfaz completa en
 español (con cambio directo a inglés).
@@ -72,9 +74,14 @@ nada más: **ninguna comparte base de datos con otra**.
 
 ## Estado actual
 
-**`v0.5.0-beta`** — desplegada y operando con datos reales de la DGAC (flota,
-operadores y centros de costo reales). 1440 pruebas automatizadas, revisadas
-con Ruff, Bandit y pip-audit en CI.
+**`v0.5.0-beta`** — desplegada y operando con datos reales (flota, operadores y
+centros de costo de la organización). **2247 pruebas automatizadas**, con Ruff,
+Bandit y pip-audit.
+
+La puerta de calidad es **`pwsh scripts/verify.ps1`, y corre en la máquina de
+quien desarrolla**, no en CI: el workflow de GitHub Actions existe pero todavía
+no está verde, así que decir que las revisiones "corren en CI" sería adornar.
+Ningún cambio se sube sin esa corrida completa en verde.
 
 El trabajo pendiente vive en dos documentos, no en este README:
 
@@ -106,8 +113,14 @@ para activar alertas y resúmenes.
 ### Comandos frecuentes
 
 ```powershell
-uv run pytest                          # suite de pruebas
-uv run ruff check . && uv run ruff format --check .   # lint y formato
+pwsh scripts/verify.ps1                # la puerta completa: obligatoria antes de subir
+```
+
+```powershell
+uv run pytest apps/<app>/tests.py      # iterar rápido dentro de una app
+```
+
+```powershell
 powershell -File ./scripts/backup.ps1  # respaldo con manifiesto verificable
 ```
 
