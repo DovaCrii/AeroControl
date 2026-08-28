@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-28 08:07-0400\n"
+"POT-Creation-Date: 2026-08-28 08:28-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -935,7 +935,7 @@ msgstr "Vigencia renovada al %(date)s (cierre automático)"
 
 #: .\apps\compliance\views.py:176 .\apps\core\test_lv80_screen_titles.py:137
 #: .\apps\maintenance\views.py:46 .\apps\operations\views.py:90
-#: .\apps\registry\views.py:145 .\apps\workboard\views.py:121
+#: .\apps\registry\views.py:146 .\apps\workboard\views.py:121
 #, python-format
 msgid "New %(record)s"
 msgstr "Nuevo: %(record)s"
@@ -1132,7 +1132,7 @@ msgstr "Operador"
 #: .\apps\compliance\watchables.py:21 .\apps\maintenance\forms.py:21
 #: .\apps\operations\forms.py:377 .\apps\registry\forms.py:559
 #: .\apps\registry\forms.py:736 .\apps\registry\forms.py:789
-#: .\apps\registry\models.py:1384 .\apps\registry\views.py:68
+#: .\apps\registry\models.py:1384 .\apps\registry\views.py:69
 #: .\templates\base.html:252 .\templates\maintenance\record_detail.html:21
 #: .\templates\maintenance\record_list.html:18
 #: .\templates\operations\flightrecord_detail.html:30
@@ -1477,6 +1477,7 @@ msgstr "Editor"
 #: .\templates\registry\aircraft_detail.html:14
 #: .\templates\registry\costcenter_detail.html:14
 #: .\templates\registry\operator_detail.html:14
+#: .\templates\registry\operator_detail.html:122
 msgid "Restore"
 msgstr "Restaurar"
 
@@ -1731,7 +1732,7 @@ msgstr "Estado anterior"
 msgid "New status"
 msgstr "Estado nuevo"
 
-#: .\apps\maintenance\forms.py:50 .\apps\registry\views.py:1097
+#: .\apps\maintenance\forms.py:50 .\apps\registry\views.py:1195
 #: .\templates\registry\resourcemovementlog_list.html:50
 msgid "Changed by"
 msgstr "Modificado por"
@@ -2025,7 +2026,7 @@ msgid "Permission number"
 msgstr "Número de permiso"
 
 #: .\apps\operations\forms.py:74 .\apps\registry\forms.py:688
-#: .\apps\registry\views.py:69 .\templates\base.html:253
+#: .\apps\registry\views.py:70 .\templates\base.html:253
 #: .\templates\operations\permission_detail.html:86
 #: .\templates\operations\permission_list.html:45
 #: .\templates\registry\costcenter_detail.html:21
@@ -2474,7 +2475,7 @@ msgstr ""
 "%(operator)s no tiene una habilitación vigente que cubra: %(aircraft)s. El "
 "permiso se guardó igual; revisa las habilitaciones del operador."
 
-#: .\apps\operations\views.py:305 .\apps\registry\views.py:173
+#: .\apps\operations\views.py:305 .\apps\registry\views.py:174
 #, python-format
 msgid "Edit %(record)s"
 msgstr "Editar: %(record)s"
@@ -3374,6 +3375,7 @@ msgstr "Puntaje (%)"
 #: .\apps\registry\models.py:1176 .\apps\registry\models.py:1201
 #: .\templates\registry\assessment_detail.html:20
 #: .\templates\registry\operator_detail.html:83
+#: .\templates\registry\operator_detail.html:118
 msgid "Passed"
 msgstr "Aprobado"
 
@@ -3392,6 +3394,7 @@ msgstr "evaluaciones de conocimientos"
 #: .\apps\registry\models.py:1201
 #: .\templates\registry\assessment_detail.html:22
 #: .\templates\registry\operator_detail.html:83
+#: .\templates\registry\operator_detail.html:118
 msgid "Insufficient"
 msgstr "Insuficiente"
 
@@ -3475,152 +3478,152 @@ msgstr "Sin operadores inscritos."
 msgid "No PDF"
 msgstr "Sin PDF"
 
-#: .\apps\registry\views.py:67 .\templates\dashboard\index.html:325
+#: .\apps\registry\views.py:68 .\templates\dashboard\index.html:325
 msgid "Cost centers"
 msgstr "Centros de costo"
 
-#: .\apps\registry\views.py:70 .\templates\registry\assignment_list.html:8
+#: .\apps\registry\views.py:71 .\templates\registry\assignment_list.html:8
 msgid "Resource planning"
 msgstr "Planificación de recursos"
 
-#: .\apps\registry\views.py:71 .\templates\base.html:283
+#: .\apps\registry\views.py:72 .\templates\base.html:283
 msgid "Operator assignments"
 msgstr "Asignaciones de operador"
 
-#: .\apps\registry\views.py:72 .\templates\base.html:284
+#: .\apps\registry\views.py:73 .\templates\base.html:284
 msgid "Aircraft assignments"
 msgstr "Asignaciones de aeronave"
 
-#: .\apps\registry\views.py:73 .\templates\registry\operator_detail.html:28
+#: .\apps\registry\views.py:74 .\templates\registry\operator_detail.html:28
 #: .\templates\registry\operator_list.html:65
 msgid "Qualifications"
 msgstr "Habilitaciones"
 
-#: .\apps\registry\views.py:74 .\templates\base.html:285
+#: .\apps\registry\views.py:75 .\templates\base.html:285
 msgid "Batteries"
 msgstr "Baterías"
 
-#: .\apps\registry\views.py:209
+#: .\apps\registry\views.py:210
 #, python-format
 msgid "%(name)s archived. It can be restored from the archived filter."
 msgstr "%(name)s archivado. Se puede restaurar desde el filtro de archivados."
 
-#: .\apps\registry\views.py:234
+#: .\apps\registry\views.py:244
 #, python-format
 msgid "%(name)s restored."
 msgstr "%(name)s restaurado."
 
-#: .\apps\registry\views.py:613
+#: .\apps\registry\views.py:700
 msgid "Start the filing"
 msgstr "Iniciar el trámite"
 
-#: .\apps\registry\views.py:617
+#: .\apps\registry\views.py:704
 msgid "Filed in SIGO"
 msgstr "Presentado en SIGO"
 
-#: .\apps\registry\views.py:621
+#: .\apps\registry\views.py:708
 msgid "The JAC authorized it"
 msgstr "La JAC lo autorizó"
 
-#: .\apps\registry\views.py:627
+#: .\apps\registry\views.py:714
 msgid "Start a renewal"
 msgstr "Iniciar una renovación"
 
-#: .\apps\registry\views.py:662
+#: .\apps\registry\views.py:749
 msgid "Insurance filing started."
 msgstr "Trámite del seguro iniciado."
 
-#: .\apps\registry\views.py:668
+#: .\apps\registry\views.py:755
 msgid "Recorded as filed in SIGO, awaiting the JAC."
 msgstr "Registrado como presentado en SIGO, esperando la JAC."
 
-#: .\apps\registry\views.py:685
+#: .\apps\registry\views.py:772
 msgid "Insurance recorded as authorized."
 msgstr "Seguro registrado como autorizado."
 
-#: .\apps\registry\views.py:693
+#: .\apps\registry\views.py:780
 msgid ""
 "Enter the policy's validity date before recording the JAC's authorization."
 msgstr ""
 "Ingresa la fecha de vigencia de la póliza antes de registrar la autorización "
 "de la JAC."
 
-#: .\apps\registry\views.py:866
+#: .\apps\registry\views.py:964
 msgid "Assign operators to a cost center"
 msgstr "Asignar operadores a un centro de costo"
 
-#: .\apps\registry\views.py:918
+#: .\apps\registry\views.py:1016
 msgid "Assign aircraft to a cost center"
 msgstr "Asignar aeronaves a un centro de costo"
 
-#: .\apps\registry\views.py:1041
+#: .\apps\registry\views.py:1139
 msgid "Last 7 days"
 msgstr "Últimos 7 días"
 
-#: .\apps\registry\views.py:1041
+#: .\apps\registry\views.py:1139
 msgid "Last 30 days"
 msgstr "Últimos 30 días"
 
-#: .\apps\registry\views.py:1041
+#: .\apps\registry\views.py:1139
 msgid "Last 90 days"
 msgstr "Últimos 90 días"
 
-#: .\apps\registry\views.py:1063 .\templates\base.html:286
+#: .\apps\registry\views.py:1161 .\templates\base.html:286
 msgid "Resource movements"
 msgstr "Movimientos de recursos"
 
-#: .\apps\registry\views.py:1092
+#: .\apps\registry\views.py:1190
 msgid "Resource kind"
 msgstr "Tipo de recurso"
 
-#: .\apps\registry\views.py:1093
+#: .\apps\registry\views.py:1191
 #: .\templates\registry\costcenter_detail.html:142
 #: .\templates\registry\resourcemovementlog_list.html:47
 msgid "Resource"
 msgstr "Recurso"
 
-#: .\apps\registry\views.py:1094 .\templates\registry\aircraft_detail.html:120
+#: .\apps\registry\views.py:1192 .\templates\registry\aircraft_detail.html:120
 #: .\templates\registry\costcenter_detail.html:142
-#: .\templates\registry\operator_detail.html:104
+#: .\templates\registry\operator_detail.html:140
 #: .\templates\registry\resourcemovementlog_list.html:48
 msgid "Movement"
 msgstr "Movimiento"
 
-#: .\apps\registry\views.py:1095 .\templates\compliance\report.html:36
+#: .\apps\registry\views.py:1193 .\templates\compliance\report.html:36
 #: .\templates\core\audit_log.html:27 .\templates\geo\plan_detail.html:410
 #: .\templates\registry\aircraft_detail.html:120
 #: .\templates\registry\costcenter_detail.html:142
-#: .\templates\registry\operator_detail.html:104
+#: .\templates\registry\operator_detail.html:140
 msgid "From"
 msgstr "Desde"
 
-#: .\apps\registry\views.py:1096 .\templates\compliance\report.html:40
+#: .\apps\registry\views.py:1194 .\templates\compliance\report.html:40
 #: .\templates\core\audit_log.html:28 .\templates\geo\plan_detail.html:410
 #: .\templates\registry\aircraft_detail.html:120
 #: .\templates\registry\costcenter_detail.html:142
-#: .\templates\registry\operator_detail.html:104
+#: .\templates\registry\operator_detail.html:140
 msgid "To"
 msgstr "Hasta"
 
-#: .\apps\registry\views.py:1098
+#: .\apps\registry\views.py:1196
 #: .\templates\compliance\deliverable_list.html:27
 #: .\templates\generic\list.html:41 .\templates\geo\plan_detail.html:330
 #: .\templates\geo\plan_detail.html:410 .\templates\geo\plan_list.html:59
 #: .\templates\registry\aircraft_detail.html:120
 #: .\templates\registry\costcenter_detail.html:142
-#: .\templates\registry\operator_detail.html:104
+#: .\templates\registry\operator_detail.html:140
 #: .\templates\registry\resourcemovementlog_list.html:51
 msgid "Created"
 msgstr "Creado"
 
-#: .\apps\registry\views.py:1248
+#: .\apps\registry\views.py:1346
 #, python-format
 msgid "%(count)s %(name)s imported. You can undo this from the import page."
 msgstr ""
 "%(count)s %(name)s importados. Puedes deshacerlo desde la página de "
 "importación."
 
-#: .\apps\registry\views.py:1338
+#: .\apps\registry\views.py:1436
 #, python-format
 msgid "%(count)s imported records archived."
 msgstr "%(count)s registros importados archivados."
@@ -3984,6 +3987,7 @@ msgstr "Guardar"
 #: .\templates\operations\permission_form.html:121
 #: .\templates\registration\password_change_form.html:14
 #: .\templates\registry\_costcenter_form_content.html:13
+#: .\templates\registry\assessment_archive_confirm.html:29
 #: .\templates\registry\assessment_take.html:110
 #: .\templates\registry\costcenter_archive_confirm.html:22
 #: .\templates\registry\costcenter_form.html:15
@@ -5589,6 +5593,7 @@ msgstr "El documento quedará oculto sin eliminar su archivo."
 #: .\templates\registry\aircraft_detail.html:12
 #: .\templates\registry\costcenter_detail.html:12
 #: .\templates\registry\operator_detail.html:12
+#: .\templates\registry\operator_detail.html:94
 #: .\templates\workboard\_card.html:36
 msgid "Archive"
 msgstr "Archivar"
@@ -5783,6 +5788,7 @@ msgstr ""
 
 #: .\templates\geo\plan_archive_confirm.html:32
 #: .\templates\operations\permission_archive_confirm.html:53
+#: .\templates\registry\assessment_archive_confirm.html:28
 #: .\templates\registry\costcenter_archive_confirm.html:21
 msgid "Archive anyway"
 msgstr "Archivar de todos modos"
@@ -6719,12 +6725,12 @@ msgid "Cumulative flight time recorded for this aircraft:"
 msgstr "Horas de vuelo acumuladas registradas para esta aeronave:"
 
 #: .\templates\registry\aircraft_detail.html:117
-#: .\templates\registry\operator_detail.html:101
+#: .\templates\registry\operator_detail.html:137
 msgid "Movement history"
 msgstr "Historial de movimientos"
 
 #: .\templates\registry\aircraft_detail.html:133
-#: .\templates\registry\operator_detail.html:117
+#: .\templates\registry\operator_detail.html:153
 msgid "No movements recorded yet."
 msgstr "Aún no hay movimientos registrados."
 
@@ -6738,6 +6744,42 @@ msgstr "Seguro"
 #: .\templates\registry\operatorassignment_list.html:9
 msgid "Since"
 msgstr "Desde"
+
+#: .\templates\registry\assessment_archive_confirm.html:3
+msgid "Archive this assessment?"
+msgstr "¿Archivar esta evaluación?"
+
+#: .\templates\registry\assessment_archive_confirm.html:15
+#, python-format
+msgid "Archive the assessment of %(name)s?"
+msgstr "¿Archivar la evaluación de %(name)s?"
+
+#: .\templates\registry\assessment_archive_confirm.html:16
+#, python-format
+msgid "Taken on %(date)s, scored %(score)s%%."
+msgstr "Rendida el %(date)s, con %(score)s%%."
+
+#: .\templates\registry\assessment_archive_confirm.html:18
+msgid "This is the only assessment keeping this person up to date."
+msgstr "Es la única evaluación que mantiene vigente a esta persona."
+
+#: .\templates\registry\assessment_archive_confirm.html:19
+msgid ""
+"Archiving it leaves them with no valid assessment, and the expiry alert for "
+"it stops being generated — their compliance status changes without any "
+"screen saying so."
+msgstr ""
+"Al archivarla queda sin evaluación vigente, y su alerta de vencimiento deja "
+"de generarse: su estado de cumplimiento cambia sin que ninguna pantalla lo "
+"diga."
+
+#: .\templates\registry\assessment_archive_confirm.html:25
+msgid ""
+"Nothing is deleted: the attempt stays on the record, marked as archived, and "
+"can be restored from the person's file."
+msgstr ""
+"No se borra nada: el intento queda en el historial, marcado como archivado, "
+"y se puede restaurar desde la ficha de la persona."
 
 #: .\templates\registry\assessment_detail.html:26
 #, python-format
@@ -7050,13 +7092,17 @@ msgstr "Rendir la evaluación"
 msgid "Score"
 msgstr "Puntaje"
 
-#: .\templates\registry\operator_detail.html:86
+#: .\templates\registry\operator_detail.html:87
 msgid "Review"
 msgstr "Revisar"
 
-#: .\templates\registry\operator_detail.html:92
+#: .\templates\registry\operator_detail.html:103
 msgid "No assessment taken yet."
 msgstr "Todavía no se ha rendido ninguna evaluación."
+
+#: .\templates\registry\operator_detail.html:112
+msgid "Archived attempts"
+msgstr "Intentos archivados"
 
 #: .\templates\registry\operator_list.html:51
 #: .\templates\registry\qualification_list.html:26

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Archive this assessment?" %} - AeroControl{% endblock %}
+{% block content %}
+{% comment %}LV-173: confirmación del lado del servidor, no un `confirm()` de
+JavaScript, y por la misma razón que la de centro de costo: la consecuencia no
+está a la vista en la pantalla desde donde se aprieta el botón.
+
+Acá esa consecuencia es concreta y verificada: `generate_alerts` filtra
+`is_active=True`, así que archivar el intento que sostiene la vigencia **apaga
+la alerta de vencimiento de esa persona**. Su estado de cumplimiento cambia y
+ninguna pantalla lo dice. Esta página es la que lo dice.{% endcomment %}
+<div class="card p-4">
+  <h1 class="h3">{% blocktranslate with name=operator.full_name %}Archive the assessment of {{ name }}?{% endblocktranslate %}</h1>
+  <p>{% blocktranslate with date=object.taken_at|date:'Y-m-d' score=object.score_percent %}Taken on {{ date }}, scored {{ score }}%.{% endblocktranslate %}</p>
+  <div class="alert alert-warning">
+    <p class="mb-1"><strong>{% translate "This is the only assessment keeping this person up to date." %}</strong></p>
+    <p class="mb-0">{% translate "Archiving it leaves them with no valid assessment, and the expiry alert for it stops being generated — their compliance status changes without any screen saying so." %}</p>
+  </div>
+  {% comment %}Se dice que no es un borrado, porque el botón se llama "archivar"
+  y quien llega acá puede estar buscando borrar. El intento sigue entero, se ve
+  en la ficha marcado como archivado, y se restaura desde ahí.{% endcomment %}
+  <p class="text-body-secondary small">{% translate "Nothing is deleted: the attempt stays on the record, marked as archived, and can be restored from the person's file." %}</p>
+  <form method="post" class="d-flex gap-2">{% csrf_token %}
+    <input type="hidden" name="confirm" value="1">
+    <button class="btn btn-danger" type="submit">{% translate "Archive anyway" %}</button>
+    <a href="{% url 'operator-detail' operator.pk %}" class="btn btn-outline-secondary">{% translate "Cancel" %}</a>
+  </form>
+</div>
+{% endblock %}

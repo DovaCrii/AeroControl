@@ -80,13 +80,47 @@ lo que hay que reforzar.{% endcomment %}
         <td>{% if assessment.passed %}<span class="badge bg-success">{% translate "Passed" %}</span>{% else %}<span class="badge bg-danger">{% translate "Insufficient" %}</span>{% endif %}</td>
         <td>{{ assessment.score_percent }}% <span class="text-body-secondary small">({{ assessment.correct_count }}/{{ assessment.question_count }})</span></td>
         <td>{{ assessment.expires_on|date:'Y-m-d' }}{% if assessment.is_expired %} <span class="badge bg-danger">{% translate "Overdue" %}</span>{% endif %}</td>
-        <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="{% url 'assessment-detail' assessment.pk %}">{% translate "Review" %}</a></td>
+        <td class="text-end">
+          <a class="btn btn-sm btn-outline-secondary" href="{% url 'assessment-detail' assessment.pk %}">{% translate "Review" %}</a>
+          {% comment %}LV-173: archivar, nunca borrar. Va como formulario POST y
+          no como enlace: cambia estado, y un GET que cambia estado lo dispara
+          cualquier precarga del navegador.{% endcomment %}
+          {% if perms.registry.delete_knowledgeassessment %}
+          <form method="post" action="{% url 'assessment-archive' assessment.pk %}" class="d-inline">{% csrf_token %}
+            <button class="btn btn-sm btn-outline-danger" type="submit">{% translate "Archive" %}</button>
+          </form>
+          {% endif %}
+        </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
   {% else %}
   <p class="text-muted mb-0">{% translate "No assessment taken yet." %}</p>
+  {% endif %}
+
+  {% comment %}LV-173: los intentos archivados quedan a la vista, apagados y
+  aparte. Esconderlos los volvería indistinguibles de un borrado justo en la
+  pantalla donde alguien va a preguntarse qué pasó con uno que ya no está — y
+  el motivo de archivar en lugar de borrar es que quede el rastro.{% endcomment %}
+  {% if archived_assessments %}
+  <h3 class="h6 text-body-secondary mt-4">{% translate "Archived attempts" %}</h3>
+  <table class="table table-sm mb-0 text-body-secondary">
+    <tbody>
+      {% for assessment in archived_assessments %}
+      <tr>
+        <td>{{ assessment.taken_at|date:'Y-m-d' }}</td>
+        <td>{% if assessment.passed %}{% translate "Passed" %}{% else %}{% translate "Insufficient" %}{% endif %}</td>
+        <td>{{ assessment.score_percent }}%</td>
+        <td class="text-end">
+          <form method="post" action="{% url 'assessment-restore' assessment.pk %}" class="d-inline">{% csrf_token %}
+            <button class="btn btn-sm btn-outline-secondary" type="submit">{% translate "Restore" %}</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
   {% endif %}
 </div>
 {% endif %}
