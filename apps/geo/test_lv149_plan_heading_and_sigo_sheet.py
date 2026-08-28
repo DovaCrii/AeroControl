@@ -20,6 +20,7 @@ from apps.compliance.models import Document, DocumentType
 from apps.registry.models import CostCenter
 from .kml.canonical import empty_document, new_uid
 from .models import GeoPlan, GeoPlanVersion
+from .views import GEO_SOURCE_DOC_TYPE_CODE, GEO_SOURCE_DOC_TYPE_NAME
 
 DETAIL = Path(settings.BASE_DIR) / "templates" / "geo" / "plan_detail.html"
 SHEET = Path(settings.BASE_DIR) / "templates" / "geo" / "_sigo_sheet.html"
@@ -113,8 +114,14 @@ def _plan(center, author, title, file_name=None, content=ONE_CIRCLE):
             created_by=author,
         )
     if file_name:
+        # LV-180: el código real es `GEO_SOURCE`, no `geo-source`. El fixture
+        # llevaba el segundo desde `LV-149`, así que creaba un tipo de documento
+        # que la app nunca usa — pasaba igual, porque nada acá mira el código,
+        # pero un fixture que no se parece a producción es una red con un agujero
+        # del tamaño exacto de lo que no comprueba.
         doc_type, _created = DocumentType.objects.get_or_create(
-            code="geo-source", defaults={"name": "Geo source", "requires_expiry": False}
+            code=GEO_SOURCE_DOC_TYPE_CODE,
+            defaults={"name": GEO_SOURCE_DOC_TYPE_NAME, "requires_expiry": False},
         )
         plan.source_document = Document.objects.create(
             doc_type=doc_type,
