@@ -97,6 +97,18 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   la columna de cumplimiento. La función queda entera —modelo, vistas, permisos y
   URL—; volver a mostrarla es descomentar una línea.
 
+### Changed
+
+- **El menú se reparte y se pliega (`LV-170`).** Padrón se llevaba nueve de las
+  veinte entradas: se queda con lo que se da de alta una vez y el resto pasa a
+  **Inventario y movimientos**, que es otra pregunta —dónde está y quién lo
+  tiene— hecha por otra gente. El catastro y el reporte de cumplimiento se
+  juntan en **Informes**: estaban separados y por eso se confundían. Los grupos
+  ahora se pliegan y **recuerdan** su estado; el de la página actual se abre
+  solo, y con la barra en modo icono se muestran siempre, para que un grupo
+  plegado no quede inalcanzable. La barra pasa de 248 a 280 px: a 248 se
+  cortaban cuatro filas, medido en el navegador.
+
 ### Fixed
 
 - **El ID de empleado se deriva del RUT (`LV-169`).** El alta de operador pedía
