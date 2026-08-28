@@ -22,3 +22,12 @@ backups/
 .tmp-*.sqlite3
 .coverage
 htmlcov/
+
+# Sourcemaps que bajan junto a los vendored, y que nadie commiteó a propósito.
+# No se ignoran por tamaño: se ignoran porque dejaban el `git status` de la VM
+# sucio de forma permanente, y ese comando es con el que se responde "¿quedó el
+# despliegue a medias?" -- la pregunta del incidente del 2026-08-24. Un estado
+# siempre sucio no puede contestarla. Regla acotada a `static/vendor/` a
+# propósito: un `*.map` global escondería también un sourcemap que algún día
+# queramos versionar de verdad.
+static/vendor/**/*.map
