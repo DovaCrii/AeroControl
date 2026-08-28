@@ -27,6 +27,7 @@ from .catastro import (
     aircraft_expiries,
     aircraft_rows,
     build_catastro,
+    closing_total,
     operator_expiries,
     operator_rows,
     totals_sentence,
@@ -105,6 +106,7 @@ class CatastroReportView(CatastroMixin, TemplateView):
             aircraft_headers=AIRCRAFT_HEADERS,
             operator_headers=OPERATOR_HEADERS,
             sentences=totals_sentence(catastro),
+            closing=closing_total(catastro),
             title=_("Fleet and personnel roster"),
             cost_centers=CostCenter.objects.filter(is_active=True).order_by("code"),
             statuses=Aircraft.STATUS_CHOICES,
@@ -208,6 +210,18 @@ class CatastroReportPdfView(CatastroMixin, View):
                 OPERATOR_COL_WIDTHS,
                 _("No operators registered."),
                 urgency(operator_expiries(catastro), OPERATOR_EXPIRY_COLUMN),
+            )
+        )
+
+        # LV-172: el total de cierre, al final del documento y no sólo en el
+        # encabezado. Con la flota y el personal ocupando varias páginas, quien
+        # recibe el catastro termina de leer a varias páginas del número que lo
+        # resume -- y es al final donde se comprueba que no se cortó nada. Va en
+        # negrita, que es lo que lo separa de las notas al pie de cada tabla.
+        elements.append(Spacer(1, 12))
+        elements.append(
+            Paragraph(
+                f"<b>{escape(str(closing_total(catastro)))}</b>", styles["Normal"]
             )
         )
 

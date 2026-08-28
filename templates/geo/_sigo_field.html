@@ -8,11 +8,18 @@ hoja tiene once casillas y todas se dibujan igual.
 no hay valor no hay botón: copiar un guion no es copiar nada útil, y ese guion
 es la respuesta honesta cuando el punto cae fuera de la capa de BCN.
 {% endcomment %}
+{% comment %}LV-171: el valor es lo que se transcribe, así que es lo que pesa.
+Antes el rótulo y el dato se dibujaban con el mismo tamaño y el mismo gris, y
+once casillas idénticas no dan por dónde entrar. **No se aclaró ningún gris**
+(ver LV-165): lo que cambia es la jerarquía, que es lo que faltaba.
+
+Un guion no es un dato: cuando no hay valor la casilla se queda quieta en vez
+de gritar un vacío.{% endcomment %}
 <div class="{{ width|default:'col-6 col-md-3' }}">
-  <div class="border rounded p-2 h-100">
-    <div class="small text-body-secondary text-uppercase">{{ label }}</div>
-    <div class="d-flex align-items-center justify-content-between gap-2">
-      <span class="font-monospace">{{ value|default:"—" }}</span>
+  <div class="sigo-field h-100">
+    <div class="sigo-field-label">{{ label }}</div>
+    <div class="sigo-field-row">
+      <span class="sigo-field-value{% if not value %} is-empty{% endif %}">{{ value|default:"—" }}</span>
       {% include "geo/_sigo_copy_button.html" with value=copy label=label %}
     </div>
   </div>

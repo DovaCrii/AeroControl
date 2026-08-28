@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-28 07:47-0400\n"
+"POT-Creation-Date: 2026-08-28 08:07-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -2081,12 +2081,12 @@ msgstr "Comuna"
 msgid "Area or site name"
 msgstr "Nombre del área o faena"
 
-#: .\apps\operations\forms.py:85 .\templates\geo\_sigo_sheet.html:72
+#: .\apps\operations\forms.py:85 .\templates\geo\_sigo_sheet.html:79
 #: .\templates\geo\plan_detail.html:124
 msgid "Latitude"
 msgstr "Latitud"
 
-#: .\apps\operations\forms.py:86 .\templates\geo\_sigo_sheet.html:87
+#: .\apps\operations\forms.py:86 .\templates\geo\_sigo_sheet.html:94
 #: .\templates\geo\plan_detail.html:125
 msgid "Longitude"
 msgstr "Longitud"
@@ -2686,12 +2686,17 @@ msgid_plural "%(count)s operators"
 msgstr[0] "%(count)s operador"
 msgstr[1] "%(count)s operadores"
 
-#: .\apps\registry\catastro.py:256
+#: .\apps\registry\catastro.py:268
+#, python-format
+msgid "Total: %(fleet)s and %(personnel)s."
+msgstr "Total: %(fleet)s y %(personnel)s."
+
+#: .\apps\registry\catastro.py:281
 #, python-format
 msgid "%(fleet)s and %(personnel)s registered as of %(date)s."
 msgstr "%(fleet)s y %(personnel)s inscritos al %(date)s."
 
-#: .\apps\registry\catastro.py:276
+#: .\apps\registry\catastro.py:301
 #, python-format
 msgid ""
 "Filtered by cost center: %(fleet)s and %(personnel)s with no cost center are "
@@ -2700,7 +2705,7 @@ msgstr ""
 "Filtrado por centro de costo: %(fleet)s y %(personnel)s sin centro de costo "
 "no aparecen en el listado."
 
-#: .\apps\registry\catastro.py:283
+#: .\apps\registry\catastro.py:308
 #, python-format
 msgid "Of these, %(fleet)s and %(personnel)s have no cost center assigned."
 msgstr ""
@@ -3438,31 +3443,31 @@ msgstr "movimiento de recurso"
 msgid "resource movements"
 msgstr "movimientos de recursos"
 
-#: .\apps\registry\report_views.py:108 .\apps\registry\report_views.py:296
+#: .\apps\registry\report_views.py:110 .\apps\registry\report_views.py:310
 #: .\templates\registry\catastro.html:3 .\templates\registry\catastro.html:8
 msgid "Fleet and personnel roster"
 msgstr "Catastro de flota y personal"
 
-#: .\apps\registry\report_views.py:126
+#: .\apps\registry\report_views.py:128
 msgid "AeroControl — Fleet and personnel roster"
 msgstr "AeroControl — Catastro de flota y personal"
 
-#: .\apps\registry\report_views.py:186 .\apps\registry\report_views.py:302
+#: .\apps\registry\report_views.py:188 .\apps\registry\report_views.py:316
 #: .\templates\registry\catastro.html:61
 #: .\templates\registry\costcenter_detail.html:22
 msgid "Fleet"
 msgstr "Flota"
 
-#: .\apps\registry\report_views.py:192 .\templates\registry\catastro.html:71
+#: .\apps\registry\report_views.py:194 .\templates\registry\catastro.html:71
 msgid "No aircraft registered."
 msgstr "Sin aeronaves inscritas."
 
-#: .\apps\registry\report_views.py:203 .\apps\registry\report_views.py:303
+#: .\apps\registry\report_views.py:205 .\apps\registry\report_views.py:317
 #: .\templates\registry\catastro.html:79
 msgid "Personnel"
 msgstr "Personal"
 
-#: .\apps\registry\report_views.py:209 .\templates\registry\catastro.html:94
+#: .\apps\registry\report_views.py:211 .\templates\registry\catastro.html:94
 msgid "No operators registered."
 msgstr "Sin operadores inscritos."
 
@@ -5663,20 +5668,20 @@ msgstr "Distancia (km)"
 msgid "Copy each value into its SIGO box."
 msgstr "Copia cada valor en su casilla de SIGO."
 
-#: .\templates\geo\_sigo_sheet.html:53 .\templates\geo\plan_detail.html:152
+#: .\templates\geo\_sigo_sheet.html:60 .\templates\geo\plan_detail.html:152
 msgid "Smallest circle that encloses the drawn area"
 msgstr "La circunferencia más chica que encierra el área dibujada"
 
-#: .\templates\geo\_sigo_sheet.html:53 .\templates\geo\plan_detail.html:152
+#: .\templates\geo\_sigo_sheet.html:60 .\templates\geo\plan_detail.html:152
 #, python-format
 msgid "drawn: %(radius)s m average"
 msgstr "dibujado: %(radius)s m de promedio"
 
-#: .\templates\geo\_sigo_sheet.html:56
+#: .\templates\geo\_sigo_sheet.html:63
 msgid "Administrative location"
 msgstr "Ubicación administrativa"
 
-#: .\templates\geo\_sigo_sheet.html:70 .\templates\geo\plan_detail.html:204
+#: .\templates\geo\_sigo_sheet.html:77 .\templates\geo\plan_detail.html:204
 msgid ""
 "The commune, province and region come from the BCN administrative "
 "boundaries, which that institution publishes as referential: near a boundary "
@@ -5686,11 +5691,11 @@ msgstr ""
 "la BCN, que esa institución publica como referenciales: cerca de un límite "
 "la respuesta puede ser la comuna vecina. Confírmala antes de presentar."
 
-#: .\templates\geo\_sigo_sheet.html:96
+#: .\templates\geo\_sigo_sheet.html:103
 msgid "Circle and aerodrome"
 msgstr "Circunferencia y aeródromo"
 
-#: .\templates\geo\_sigo_sheet.html:107 .\templates\geo\plan_detail.html:199
+#: .\templates\geo\_sigo_sheet.html:114 .\templates\geo\plan_detail.html:199
 msgid ""
 "The aerodrome is proposed by distance, among those with coordinates on file "
 "— confirm it against the AIP chart before filing."
@@ -5698,7 +5703,7 @@ msgstr ""
 "El aeródromo se propone por distancia, entre los que tienen coordenadas "
 "cargadas — confírmalo contra la carta AIP antes de presentar."
 
-#: .\templates\geo\_sigo_sheet.html:114 .\templates\geo\plan_detail.html:209
+#: .\templates\geo\_sigo_sheet.html:121 .\templates\geo\plan_detail.html:209
 msgid ""
 "When the drawn area is not a circle, the row shows the smallest circle that "
 "covers it: SIGO accepts one circle per request, and the average radius of a "
