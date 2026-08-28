@@ -27,10 +27,35 @@ archivan en cascada -- son el registro de lo que se le pidió al Estado.
     {% translate "At least one of its requests is already filed in SIGO: the authority holds a file that this plan explains. Archive it only if you are sure nobody will need to look it up." %}
   </div>
   {% endif %}
-  <form method="post" class="d-flex gap-2">{% csrf_token %}
+  <form method="post" class="d-flex flex-column gap-3">{% csrf_token %}
     <input type="hidden" name="confirm" value="1">
-    <button class="btn btn-danger" type="submit">{% translate "Archive anyway" %}</button>
-    <a href="{% url 'geo-plan-detail' plan.pk %}" class="btn btn-outline-secondary">{% translate "Cancel" %}</a>
+    {% comment %}LV-176: cerrar el plan **junto con** sus permisos, en el mismo
+    paso y sin cascada. Las casillas van desmarcadas: sin marcar no pasa nada,
+    y eso es lo que hace que cada permiso se cierre porque alguien lo decidió y
+    no por arrastre. Un permiso es un papel de la DGAC; un cambio de estado que
+    nadie eligió es el que después nadie puede explicar.
+
+    Sólo se ofrecen si además se tiene el permiso de archivar permisos — quien
+    puede archivar planes no necesariamente puede cerrar papeles del Estado— y
+    el servidor lo vuelve a comprobar al recibir.{% endcomment %}
+    {% if linked_permissions and may_archive_permits %}
+    <fieldset>
+      <legend class="h6 text-body-secondary">{% translate "Close its linked permits too?" %}</legend>
+      {% for permission in linked_permissions %}
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="archive_permission" value="{{ permission.pk }}" id="permit-{{ permission.pk }}">
+        <label class="form-check-label" for="permit-{{ permission.pk }}">
+          {{ permission }} <span class="text-body-secondary">· {{ permission.get_status_display }}</span>
+        </label>
+      </div>
+      {% endfor %}
+      <p class="text-body-secondary small mb-0 mt-2">{% translate "Whatever you leave unticked stays open. Each permit you tick is archived on its own record, with its own audit entry." %}</p>
+    </fieldset>
+    {% endif %}
+    <div class="d-flex gap-2">
+      <button class="btn btn-danger" type="submit">{% translate "Archive anyway" %}</button>
+      <a href="{% url 'geo-plan-detail' plan.pk %}" class="btn btn-outline-secondary">{% translate "Cancel" %}</a>
+    </div>
   </form>
 </div>
 {% endblock %}

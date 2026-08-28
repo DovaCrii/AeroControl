@@ -5,14 +5,14 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_lazy, ngettext
 from django.views import View
 from django.views.generic import DetailView, FormView, ListView
 
 from apps.compliance.models import Document, DocumentType
 from apps.operations.models import FlightPermission
 from apps.compliance.views import save_uploaded_file, uploaded_file_cleanup
-from apps.core.audit import set_audit_context
+from apps.core.audit import add_audit_sibling, set_audit_context
 from apps.core.views import (
     CsvExportMixin,
     ModelPermissionRequiredMixin,
@@ -173,16 +173,55 @@ class GeoPlanArchive(ModelPermissionRequiredMixin, View):
             "weather_reviews": plan.weather_reviews.count(),
         }
 
+    def _linked_permissions(self, plan):
+        """Los permisos vivos que cuelgan del plan, por los **dos** caminos.
+
+        LV-176: uno es `plan.flight_permission`; el otro son los permisos de las
+        solicitudes SIGO que nacieron de este plan (`FlightRequest.source_plan`
+        → `flight_permission`). Mirar sólo el primero dejaría fuera justo el
+        caso de un plan multi-círculo, que es donde hay varios papeles y donde
+        cerrarlos de a uno cuesta.
+        """
+        from apps.operations.models import FlightRequest
+
+        pks = {plan.flight_permission_id} | set(
+            FlightRequest.objects.filter(source_plan=plan).values_list(
+                "flight_permission_id", flat=True
+            )
+        )
+        pks.discard(None)
+        return FlightPermission.objects.filter(pk__in=pks, is_active=True).order_by(
+            "internal_folio"
+        )
+
     def post(self, request, pk):
         plan = get_object_or_404(GeoPlan, pk=pk, is_active=True)
         dependents = self._dependents(plan)
+        # LV-176, pedido del usuario: poder cerrar el plan **junto con** sus
+        # permisos. Acompañado y no en cascada, decisión tomada con él: cada
+        # permiso se archiva porque alguien marcó su casilla, no por arrastre.
+        # Un permiso es un papel de la DGAC, y un cambio de estado que nadie
+        # eligió es el que después nadie puede explicar.
+        may_archive_permits = request.user.has_perm(
+            "operations.delete_flightpermission"
+        )
+        linked = self._linked_permissions(plan)
         if any(bool(value) for value in dependents.values()):
             if request.POST.get("confirm") != "1":
                 return render(
                     request,
                     "geo/plan_archive_confirm.html",
-                    {"object": plan, "plan": plan, "dependents": dependents},
+                    {
+                        "object": plan,
+                        "plan": plan,
+                        "dependents": dependents,
+                        "linked_permissions": linked,
+                        "may_archive_permits": may_archive_permits,
+                    },
                 )
+        archived = self._archive_chosen_permissions(
+            request, linked, may_archive_permits
+        )
         plan.is_active = False
         plan.save(update_fields=["is_active", "updated_at"])
         set_audit_context(request, plan, action="archived")
@@ -190,7 +229,44 @@ class GeoPlanArchive(ModelPermissionRequiredMixin, View):
             request,
             _("Plan archived. Use the Archived filter to find or restore it."),
         )
+        if archived:
+            messages.success(
+                request,
+                ngettext(
+                    "%(count)s linked permit archived as well.",
+                    "%(count)s linked permits archived as well.",
+                    archived,
+                )
+                % {"count": archived},
+            )
         return redirect("geo-plan-list")
+
+    def _archive_chosen_permissions(self, request, linked, may_archive_permits):
+        """Archiva los permisos marcados. Devuelve cuántos.
+
+        **El permiso de archivar permisos se vuelve a comprobar acá**, y no sólo
+        al dibujar las casillas: quien puede archivar planes no necesariamente
+        puede archivar papeles de la DGAC, y esa distinción no puede depender de
+        que el formulario que llega la haya respetado.
+
+        Cada uno escribe **su propia** entrada de auditoría, no la del plan: si
+        mañana alguien pregunta por qué se cerró ese permiso, la respuesta tiene
+        que estar en el permiso.
+        """
+        if not may_archive_permits:
+            return 0
+        chosen = set(request.POST.getlist("archive_permission"))
+        if not chosen:
+            return 0
+        count = 0
+        for permission in linked:
+            if str(permission.pk) not in chosen:
+                continue
+            permission.is_active = False
+            permission.save(update_fields=["is_active", "updated_at"])
+            add_audit_sibling(request, permission, action="archived")
+            count += 1
+        return count
 
 
 class GeoPlanRestore(ModelPermissionRequiredMixin, View):

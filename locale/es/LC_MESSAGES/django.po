@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-28 08:28-0400\n"
+"POT-Creation-Date: 2026-08-28 09:09-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -120,13 +120,11 @@ msgstr "Selecciona varios de una vez, o suéltalos aquí."
 
 #: .\apps\compliance\forms.py:232 .\apps\compliance\forms.py:384
 #: .\apps\registry\forms.py:814 .\templates\compliance\document_detail.html:16
-#: .\templates\registry\operator_detail.html:33
 msgid "Issue date"
 msgstr "Fecha de emisión"
 
 #: .\apps\compliance\forms.py:237 .\apps\compliance\forms.py:385
 #: .\apps\registry\forms.py:815 .\templates\compliance\document_detail.html:17
-#: .\templates\registry\operator_detail.html:33
 msgid "Expiry date"
 msgstr "Fecha de vencimiento"
 
@@ -198,7 +196,7 @@ msgid "There are no active records of this type yet."
 msgstr "Aún no hay registros activos de este tipo."
 
 #: .\apps\compliance\forms.py:523 .\apps\compliance\forms.py:565
-#: .\apps\geo\views.py:345 .\apps\registry\forms.py:95
+#: .\apps\geo\views.py:421 .\apps\registry\forms.py:95
 #: .\apps\workboard\forms.py:23 .\apps\workboard\forms.py:47
 #: .\apps\workboard\forms.py:122 .\templates\core\users_roles.html:24
 #: .\templates\generic\list.html:40 .\templates\registry\operator_list.html:49
@@ -323,7 +321,7 @@ msgstr "Origen"
 msgid "Detected on"
 msgstr "Detectada el"
 
-#: .\apps\compliance\forms.py:669 .\apps\geo\views.py:346
+#: .\apps\compliance\forms.py:669 .\apps\geo\views.py:422
 #: .\apps\maintenance\forms.py:23 .\apps\workboard\forms.py:24
 #: .\apps\workboard\forms.py:78
 #: .\templates\compliance\nonconformity_detail.html:20
@@ -1477,7 +1475,7 @@ msgstr "Editor"
 #: .\templates\registry\aircraft_detail.html:14
 #: .\templates\registry\costcenter_detail.html:14
 #: .\templates\registry\operator_detail.html:14
-#: .\templates\registry\operator_detail.html:122
+#: .\templates\registry\operator_detail.html:144
 msgid "Restore"
 msgstr "Restaurar"
 
@@ -1541,64 +1539,71 @@ msgstr "Reanudar edición"
 msgid "Reopen for editing"
 msgstr "Reabrir para edición"
 
-#: .\apps\geo\views.py:191
+#: .\apps\geo\views.py:230
 msgid "Plan archived. Use the Archived filter to find or restore it."
 msgstr "Plan archivado. Búscalo o restáuralo con el filtro Archivados."
 
-#: .\apps\geo\views.py:208
+#: .\apps\geo\views.py:236
+#, python-format
+msgid "%(count)s linked permit archived as well."
+msgid_plural "%(count)s linked permits archived as well."
+msgstr[0] "%(count)s permiso ligado archivado también."
+msgstr[1] "%(count)s permisos ligados archivados también."
+
+#: .\apps\geo\views.py:284
 msgid "Plan restored."
 msgstr "Plan restaurado."
 
-#: .\apps\geo\views.py:337
+#: .\apps\geo\views.py:413
 msgid "Untitled"
 msgstr "Sin título"
 
-#: .\apps\geo\views.py:338
+#: .\apps\geo\views.py:414
 msgid "Length"
 msgstr "Longitud"
 
-#: .\apps\geo\views.py:339 .\apps\operations\forms.py:497
+#: .\apps\geo\views.py:415 .\apps\operations\forms.py:497
 #: .\apps\operations\models.py:647 .\templates\geo\_sigo_sheet.html:22
 #: .\templates\operations\flight_request_detail.html:92
 msgid "Area"
 msgstr "Área"
 
-#: .\apps\geo\views.py:340 .\templates\geo\plan_detail.html:252
+#: .\apps\geo\views.py:416 .\templates\geo\plan_detail.html:252
 msgid "Layers"
 msgstr "Capas"
 
-#: .\apps\geo\views.py:341 .\templates\geo\plan_detail.html:329
+#: .\apps\geo\views.py:417 .\templates\geo\plan_detail.html:329
 msgid "Features"
 msgstr "Elementos"
 
-#: .\apps\geo\views.py:342
+#: .\apps\geo\views.py:418
 msgid "Loading map…"
 msgstr "Cargando el mapa…"
 
-#: .\apps\geo\views.py:343
+#: .\apps\geo\views.py:419
 msgid "The map could not be loaded."
 msgstr "No se pudo cargar el mapa."
 
-#: .\apps\geo\views.py:344
+#: .\apps\geo\views.py:420
 msgid "This version has no geometry to show."
 msgstr "Esta versión no tiene geometría para mostrar."
 
-#: .\apps\geo\views.py:347 .\templates\compliance\report.html:44
+#: .\apps\geo\views.py:423 .\templates\compliance\report.html:44
 #: .\templates\operations\permission_detail.html:28
 #: .\templates\registry\catastro.html:45
 #: .\templates\workboard\task_list.html:16
 msgid "Apply"
 msgstr "Aplicar"
 
-#: .\apps\geo\views.py:348
+#: .\apps\geo\views.py:424
 msgid "Unsaved changes"
 msgstr "Cambios sin guardar"
 
-#: .\apps\geo\views.py:349
+#: .\apps\geo\views.py:425
 msgid "Saving…"
 msgstr "Guardando…"
 
-#: .\apps\geo\views.py:351
+#: .\apps\geo\views.py:427
 msgid ""
 "The plan changed on the server. Reload to get the latest version, then "
 "reapply your changes."
@@ -1606,98 +1611,98 @@ msgstr ""
 "El plan cambió en el servidor. Recarga para obtener la última versión y "
 "vuelve a aplicar tus cambios."
 
-#: .\apps\geo\views.py:354
+#: .\apps\geo\views.py:430
 msgid "This plan can no longer be edited."
 msgstr "Este plan ya no puede editarse."
 
-#: .\apps\geo\views.py:355
+#: .\apps\geo\views.py:431
 msgid "The change was rejected:"
 msgstr "El cambio fue rechazado:"
 
-#: .\apps\geo\views.py:356
+#: .\apps\geo\views.py:432
 msgid "Too many saves in a row. Wait a moment."
 msgstr "Demasiados guardados seguidos. Espera un momento."
 
-#: .\apps\geo\views.py:357
+#: .\apps\geo\views.py:433
 msgid "Download your local copy"
 msgstr "Descargar tu copia local"
 
-#: .\apps\geo\views.py:359
+#: .\apps\geo\views.py:435
 msgid "Visible"
 msgstr "Visible"
 
-#: .\apps\geo\views.py:360
+#: .\apps\geo\views.py:436
 msgid "Duplicate"
 msgstr "Duplicar"
 
-#: .\apps\geo\views.py:361
+#: .\apps\geo\views.py:437
 msgid "Split into parts"
 msgstr "Separar en partes"
 
-#: .\apps\geo\views.py:362
+#: .\apps\geo\views.py:438
 msgid "Root — drop here or click to add new here"
 msgstr "Raíz — suelta aquí o haz clic para agregar aquí"
 
-#: .\apps\geo\views.py:364
+#: .\apps\geo\views.py:440
 msgid "Compare"
 msgstr "Comparar"
 
-#: .\apps\geo\views.py:365
+#: .\apps\geo\views.py:441
 msgid "Exit comparison"
 msgstr "Salir de la comparación"
 
-#: .\apps\geo\views.py:366
+#: .\apps\geo\views.py:442
 msgid "Added"
 msgstr "Agregado"
 
-#: .\apps\geo\views.py:367
+#: .\apps\geo\views.py:443
 msgid "Removed"
 msgstr "Eliminado"
 
-#: .\apps\geo\views.py:368
+#: .\apps\geo\views.py:444
 msgid "Changed"
 msgstr "Modificado"
 
-#: .\apps\geo\views.py:369 .\templates\geo\plan_detail.html:327
+#: .\apps\geo\views.py:445 .\templates\geo\plan_detail.html:327
 #: .\templates\geo\plan_list.html:58
 msgid "Version"
 msgstr "Versión"
 
-#: .\apps\geo\views.py:510
+#: .\apps\geo\views.py:586
 msgid "Editing started."
 msgstr "Edición iniciada."
 
-#: .\apps\geo\views.py:518
+#: .\apps\geo\views.py:594
 msgid "Plan submitted for review."
 msgstr "Plan enviado a revisión."
 
-#: .\apps\geo\views.py:526
+#: .\apps\geo\views.py:602
 msgid "Plan approved."
 msgstr "Plan aprobado."
 
-#: .\apps\geo\views.py:534
+#: .\apps\geo\views.py:610
 msgid "Plan rejected."
 msgstr "Plan rechazado."
 
-#: .\apps\geo\views.py:542
+#: .\apps\geo\views.py:618
 msgid "Editing resumed."
 msgstr "Edición reanudada."
 
-#: .\apps\geo\views.py:550
+#: .\apps\geo\views.py:626
 msgid "Plan reopened for editing."
 msgstr "Plan reabierto para edición."
 
-#: .\apps\geo\views.py:577
+#: .\apps\geo\views.py:653
 msgid "This plan has no area or no linked permit date to review."
 msgstr "Este plan no tiene área ni fecha de permiso enlazada para revisar."
 
-#: .\apps\geo\views.py:589
+#: .\apps\geo\views.py:665
 msgid "The forecast is unavailable right now, so nothing was recorded."
 msgstr ""
 "El pronóstico no está disponible en este momento, así que no se registró "
 "nada."
 
-#: .\apps\geo\views.py:602
+#: .\apps\geo\views.py:678
 msgid "Weather review recorded."
 msgstr "Revisión meteorológica registrada."
 
@@ -2056,7 +2061,7 @@ msgid "Valid from"
 msgstr "Vigente desde"
 
 #: .\apps\operations\forms.py:80 .\apps\registry\models.py:1180
-#: .\templates\registry\operator_detail.html:76
+#: .\templates\registry\operator_detail.html:98
 msgid "Valid until"
 msgstr "Vigente hasta"
 
@@ -3074,7 +3079,7 @@ msgstr ""
 "Selecciona una o más. Cada una se asigna al centro de costo de arriba; una "
 "aeronave ya asignada en otro centro de costo se mueve aquí."
 
-#: .\apps\registry\forms.py:813 .\templates\registry\operator_detail.html:33
+#: .\apps\registry\forms.py:813
 msgid "Qualification type"
 msgstr "Tipo de habilitación"
 
@@ -3356,7 +3361,7 @@ msgstr "habilitaciones"
 msgid "Taken by"
 msgstr "Rendida por"
 
-#: .\apps\registry\models.py:1170 .\templates\registry\operator_detail.html:67
+#: .\apps\registry\models.py:1170 .\templates\registry\operator_detail.html:89
 msgid "Taken at"
 msgstr "Rendida el"
 
@@ -3374,8 +3379,8 @@ msgstr "Puntaje (%)"
 
 #: .\apps\registry\models.py:1176 .\apps\registry\models.py:1201
 #: .\templates\registry\assessment_detail.html:20
-#: .\templates\registry\operator_detail.html:83
-#: .\templates\registry\operator_detail.html:118
+#: .\templates\registry\operator_detail.html:105
+#: .\templates\registry\operator_detail.html:140
 msgid "Passed"
 msgstr "Aprobado"
 
@@ -3393,8 +3398,8 @@ msgstr "evaluaciones de conocimientos"
 
 #: .\apps\registry\models.py:1201
 #: .\templates\registry\assessment_detail.html:22
-#: .\templates\registry\operator_detail.html:83
-#: .\templates\registry\operator_detail.html:118
+#: .\templates\registry\operator_detail.html:105
+#: .\templates\registry\operator_detail.html:140
 msgid "Insufficient"
 msgstr "Insuficiente"
 
@@ -3494,8 +3499,7 @@ msgstr "Asignaciones de operador"
 msgid "Aircraft assignments"
 msgstr "Asignaciones de aeronave"
 
-#: .\apps\registry\views.py:74 .\templates\registry\operator_detail.html:28
-#: .\templates\registry\operator_list.html:65
+#: .\apps\registry\views.py:74 .\templates\registry\operator_list.html:65
 msgid "Qualifications"
 msgstr "Habilitaciones"
 
@@ -3584,7 +3588,7 @@ msgstr "Recurso"
 
 #: .\apps\registry\views.py:1192 .\templates\registry\aircraft_detail.html:120
 #: .\templates\registry\costcenter_detail.html:142
-#: .\templates\registry\operator_detail.html:140
+#: .\templates\registry\operator_detail.html:162
 #: .\templates\registry\resourcemovementlog_list.html:48
 msgid "Movement"
 msgstr "Movimiento"
@@ -3593,7 +3597,7 @@ msgstr "Movimiento"
 #: .\templates\core\audit_log.html:27 .\templates\geo\plan_detail.html:410
 #: .\templates\registry\aircraft_detail.html:120
 #: .\templates\registry\costcenter_detail.html:142
-#: .\templates\registry\operator_detail.html:140
+#: .\templates\registry\operator_detail.html:162
 msgid "From"
 msgstr "Desde"
 
@@ -3601,7 +3605,7 @@ msgstr "Desde"
 #: .\templates\core\audit_log.html:28 .\templates\geo\plan_detail.html:410
 #: .\templates\registry\aircraft_detail.html:120
 #: .\templates\registry\costcenter_detail.html:142
-#: .\templates\registry\operator_detail.html:140
+#: .\templates\registry\operator_detail.html:162
 msgid "To"
 msgstr "Hasta"
 
@@ -3611,7 +3615,7 @@ msgstr "Hasta"
 #: .\templates\geo\plan_detail.html:410 .\templates\geo\plan_list.html:59
 #: .\templates\registry\aircraft_detail.html:120
 #: .\templates\registry\costcenter_detail.html:142
-#: .\templates\registry\operator_detail.html:140
+#: .\templates\registry\operator_detail.html:162
 #: .\templates\registry\resourcemovementlog_list.html:51
 msgid "Created"
 msgstr "Creado"
@@ -3980,7 +3984,7 @@ msgstr "Guardar"
 #: .\templates\compliance\document_replace.html:12
 #: .\templates\generic\_form_content.html:14
 #: .\templates\generic\confirm_delete.html:6 .\templates\generic\form.html:16
-#: .\templates\geo\plan_archive_confirm.html:33
+#: .\templates\geo\plan_archive_confirm.html:58
 #: .\templates\geo\plan_detail.html:312 .\templates\geo\plan_import.html:22
 #: .\templates\operations\flight_request_split.html:73
 #: .\templates\operations\permission_archive_confirm.html:54
@@ -4106,7 +4110,6 @@ msgstr "Acciones"
 #: .\templates\compliance\report.html:52 .\templates\compliance\report.html:140
 #: .\templates\registry\_qualification_rows.html:20
 #: .\templates\registry\costcenter_detail.html:45
-#: .\templates\registry\operator_detail.html:39
 msgid "Expired"
 msgstr "Vencidos"
 
@@ -4179,7 +4182,7 @@ msgstr "Abrir la ficha: estado y documentos"
 #: .\templates\registry\_operator_rows.html:10
 #: .\templates\registry\_qualification_rows.html:10
 #: .\templates\registry\assessment_detail.html:30
-#: .\templates\registry\operator_detail.html:85
+#: .\templates\registry\operator_detail.html:107
 #: .\templates\workboard\_card.html:30
 msgid "Overdue"
 msgstr "Atrasada"
@@ -4275,7 +4278,6 @@ msgstr "Todos los tipos de documento"
 #: .\templates\registry\aircraft_detail.html:10
 #: .\templates\registry\costcenter_detail.html:10
 #: .\templates\registry\operator_detail.html:10
-#: .\templates\registry\operator_detail.html:40
 #: .\templates\workboard\_task_detail.html:4
 msgid "Edit"
 msgstr "Editar"
@@ -4311,7 +4313,7 @@ msgid "Required"
 msgstr "Requerido"
 
 #: .\templates\compliance\deliverable_detail.html:46
-#: .\templates\registry\operator_detail.html:68
+#: .\templates\registry\operator_detail.html:90
 msgid "Result"
 msgstr "Resultado"
 
@@ -4433,7 +4435,6 @@ msgstr "No hay versiones anteriores."
 #: .\templates\compliance\document_list.html:10
 #: .\templates\generic\list.html:11 .\templates\maintenance\record_list.html:8
 #: .\templates\operations\permission_list.html:11
-#: .\templates\registry\operator_detail.html:29
 msgid "New"
 msgstr "Nuevo"
 
@@ -5593,7 +5594,7 @@ msgstr "El documento quedará oculto sin eliminar su archivo."
 #: .\templates\registry\aircraft_detail.html:12
 #: .\templates\registry\costcenter_detail.html:12
 #: .\templates\registry\operator_detail.html:12
-#: .\templates\registry\operator_detail.html:94
+#: .\templates\registry\operator_detail.html:116
 #: .\templates\workboard\_card.html:36
 msgid "Archive"
 msgstr "Archivar"
@@ -5786,7 +5787,19 @@ msgstr ""
 "tiene un expediente que este plan explica. Archívalo sólo si estás seguro de "
 "que nadie va a necesitar consultarlo."
 
-#: .\templates\geo\plan_archive_confirm.html:32
+#: .\templates\geo\plan_archive_confirm.html:44
+msgid "Close its linked permits too?"
+msgstr "¿Cerrar también sus permisos ligados?"
+
+#: .\templates\geo\plan_archive_confirm.html:53
+msgid ""
+"Whatever you leave unticked stays open. Each permit you tick is archived on "
+"its own record, with its own audit entry."
+msgstr ""
+"Lo que dejes sin marcar sigue abierto. Cada permiso que marques se archiva en "
+"su propio registro, con su propia entrada de auditoría."
+
+#: .\templates\geo\plan_archive_confirm.html:57
 #: .\templates\operations\permission_archive_confirm.html:53
 #: .\templates\registry\assessment_archive_confirm.html:28
 #: .\templates\registry\costcenter_archive_confirm.html:21
@@ -6725,12 +6738,12 @@ msgid "Cumulative flight time recorded for this aircraft:"
 msgstr "Horas de vuelo acumuladas registradas para esta aeronave:"
 
 #: .\templates\registry\aircraft_detail.html:117
-#: .\templates\registry\operator_detail.html:137
+#: .\templates\registry\operator_detail.html:159
 msgid "Movement history"
 msgstr "Historial de movimientos"
 
 #: .\templates\registry\aircraft_detail.html:133
-#: .\templates\registry\operator_detail.html:153
+#: .\templates\registry\operator_detail.html:175
 msgid "No movements recorded yet."
 msgstr "Aún no hay movimientos registrados."
 
@@ -7076,31 +7089,27 @@ msgstr "ya vencida"
 msgid "Please renew them with the DGAC to keep operating."
 msgstr "Renuévalas ante la DGAC para seguir operando."
 
-#: .\templates\registry\operator_detail.html:46
-msgid "No qualifications recorded yet."
-msgstr "Aún no hay habilitaciones registradas."
-
-#: .\templates\registry\operator_detail.html:59
+#: .\templates\registry\operator_detail.html:81
 msgid "Knowledge assessments"
 msgstr "Evaluaciones de conocimientos"
 
-#: .\templates\registry\operator_detail.html:61
+#: .\templates\registry\operator_detail.html:83
 msgid "Take the assessment"
 msgstr "Rendir la evaluación"
 
-#: .\templates\registry\operator_detail.html:75
+#: .\templates\registry\operator_detail.html:97
 msgid "Score"
 msgstr "Puntaje"
 
-#: .\templates\registry\operator_detail.html:87
+#: .\templates\registry\operator_detail.html:109
 msgid "Review"
 msgstr "Revisar"
 
-#: .\templates\registry\operator_detail.html:103
+#: .\templates\registry\operator_detail.html:125
 msgid "No assessment taken yet."
 msgstr "Todavía no se ha rendido ninguna evaluación."
 
-#: .\templates\registry\operator_detail.html:112
+#: .\templates\registry\operator_detail.html:134
 msgid "Archived attempts"
 msgstr "Intentos archivados"
 
@@ -7333,6 +7342,9 @@ msgstr "Ordenar"
 #: .\templates\workboard\task_list.html:20
 msgid "No tasks found."
 msgstr "No se encontraron tareas."
+
+#~ msgid "No qualifications recorded yet."
+#~ msgstr "Aún no hay habilitaciones registradas."
 
 #~ msgid "Enter the employee ID."
 #~ msgstr "Ingresa el ID de empleado."
