@@ -38,7 +38,57 @@ Verificar: `systemctl list-timers 'aerocontrol-*' --no-pager`
 
 Notificaciones a `Dirección`: `aortega@jej.cl` + `cmunoz@jej.cl`.
 
-## Cierre del 2026-08-27 — **empezar por acá**
+## Cierre del 2026-08-28 — **empezar por acá**
+
+Segunda jornada de revisión en vivo. Se cerraron cinco filas más
+(`LV-170`..`LV-173` y el contador del catastro), todas desplegadas salvo la
+última.
+
+### Estado exacto
+
+- **`origin/main` = ver el último commit**; **`p340` estaba en `134798f`** al
+  cierre, con `LV-170`, `LV-171` y `LV-172` desplegados y verificados
+  (`systemctl` en `active (running)`).
+- **`LV-173` (archivar intentos de la prueba) quedó pusheado pero SIN
+  desplegar.** Es lo primero: `git pull`, `collectstatic`, `restart`. **Sin
+  migración.**
+- **Sin migraciones pendientes.** La única del lote fue `registry.0037`
+  (`LV-169`), ya aplicada en producción.
+
+### Lo que queda de la cola, con las decisiones ya tomadas
+
+1. **«Geo source» a un nombre en español.** Sugerido: *"Archivo KMZ/KML de
+   origen"*. **Lleva migración de datos**, así que ese despliegue **no** será
+   sólo `collectstatic` — el `name` se fija sólo en los `defaults` del
+   `get_or_create` (`apps/geo/views.py`), y la fila que ya existe en producción
+   no se renombra sola. El **código** sigue siendo `GEO_SOURCE`: lo referencian
+   otras partes y el usuario ve el nombre, no el código.
+2. **Clima de Casa Matriz.** Reconocimiento hecho, incluida la parte delicada:
+   las coordenadas de la oficina van **rotuladas como aproximadas y sólo para
+   el pronóstico**, porque ninguna decisión aeronáutica puede leerlas.
+
+### La decisión que sigue esperando al usuario
+
+**Habilitaciones en la ficha del operador** — las tres filas con `—`/`—`. Las
+tres salidas están escritas más abajo, con la segunda recomendada. **No
+implementar ninguna sin que elija**: cuál de las dos pantallas manda es decisión
+de negocio, no técnica.
+
+### Dos cosas aprendidas hoy que valen para mañana
+
+- **`makemessages` inventó traducciones en cada una de las tres corridas del
+  día**, y una era peligrosa: copió en un mensaje nuevo una traducción con
+  `%(date)s`, un marcador que ese mensaje no tiene — habría reventado con
+  `KeyError` al renderizar el catastro. Otra tradujo *"¿Archivar esta
+  evaluación?"* como *"Rendir la evaluación"*, que es lo contrario. **El
+  procedimiento de `AGENTS.md` no es opcional**: después de cada corrida, grep
+  `fuzzy` y corregir a mano.
+- **Un guardián que sólo pasa mientras nadie use el flujo documentado no está
+  vigilando, está esperando.** El de i18n exigía cadenas que viven dentro de un
+  `{% comment %}`, de donde Django no extrae; llevaba latente desde `LV-150` y
+  estalló en la primera regeneración del catálogo.
+
+## Cierre del 2026-08-27
 
 Sesión de revisión en vivo sobre la app desplegada: el usuario fue reportando
 pantalla por pantalla y se cerraron siete filas (`LV-162` a `LV-168`).
@@ -142,16 +192,20 @@ lo que el plan provee · `LV-167` el catastro con las dos vigencias, en horizont
 En el orden que el usuario aprobó. **Las decisiones ya están tomadas**, no hay
 que volver a preguntarlas:
 
-1. **Navegación.** Partir *Padrón* (hoy nueve entradas de veinte) en *Padrón*
+1. ~~**Navegación.**~~ ✅ **Hecha y desplegada el 2026-08-28 (`LV-170`).** El
+   ancho se **midió** (272 px es el mínimo real, quedó en 280) y el `title` de
+   las filas largas ya lo ponía `app.js`, así que esa mitad no necesitó código.
+   Texto original, por si hace falta el contexto: partir *Padrón* (nueve entradas de veinte) en *Padrón*
    (faenas, aeronaves, operadores) e *Inventario y movimientos* (baterías,
    asignaciones, movimientos). Un grupo **Informes** con el catastro y el reporte
    juntos: el usuario los fue a buscar ahí y por eso los confundió. Grupos
    colapsables con el estado recordado, barra más ancha (hoy 248 px corta
    "Documentos de la empresa" y "Evaluación de conocimient…"), y `title` en lo
    que igual se corte.
-2. **Tablero SIGO menos gris.** Mismo diagnóstico que `LV-163`: once cajas
-   idénticas en peso y color. El valor tiene que ser lo fuerte, el rótulo lo
-   quieto, y cada grupo con su acento. **No aclarar grises** — ver `LV-165`.
+2. ~~**Tablero SIGO menos gris.**~~ ✅ **Hecho y desplegado el 2026-08-28
+   (`LV-171`).** No se aclaró ningún gris, como estaba decidido: lo que cambió
+   fue la jerarquía (el valor manda, el rótulo se aquieta) y el acento por
+   tramo. Latitud y longitud comparten acento porque son una sola coordenada.
 3. ~~**ID de empleado automático desde el RUT.**~~ ✅ **Hecho y desplegado el
    2026-08-27 (`LV-169`).** Quedó como estaba decidido, y con dos hallazgos que
    valen para lo que sigue: la derivación se mudó a `apps/registry/rut.py`
@@ -159,12 +213,13 @@ que volver a preguntarlas:
    formato terminan duplicando fichas en silencio; y el aviso de duplicado hubo
    que hacerlo correr **sobre el valor derivado**, porque la unicidad por tenant
    no la valida Django desde el formulario y el choque llegaba como 500.
-4. **Root archiva intentos de la prueba.** **No es un borrado**, y hay que
-   decírselo al usuario otra vez si pregunta: `AGENTS.md` prohíbe borrar filas
-   operativas, y encima un intento aprobado **alimenta el motor de
-   vencimientos**, así que borrar el último aprobado le cambia el estado de
-   cumplimiento a esa persona sin dejar rastro. Va archivado (`is_active`, que
-   `BaseModel` ya trae), con auditoría y visible. Falta la pantalla y el permiso.
+4. ~~**Root archiva intentos de la prueba.**~~ ✅ **Hecho el 2026-08-28
+   (`LV-173`), pendiente de desplegar.** La premisa se **verificó**:
+   `generate_alerts` filtra `is_active=True`, así que archivar el intento que
+   sostiene la vigencia sí le apaga la alerta a esa persona. Por eso hay
+   confirmación, y **sólo** cuando al archivar la persona queda sin prueba
+   vigente: advertir en los otros casos sería ruido, y el ruido enseña a no
+   leer.
 5. **«Geo source» a un nombre en español.** Sugerido: **"Archivo KMZ/KML de
    origen"**. Ojo con dos cosas: el `name` se fija sólo en los `defaults` del
    `get_or_create` (`apps/geo/views.py:454`), así que **hace falta una migración

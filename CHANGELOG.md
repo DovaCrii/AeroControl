@@ -99,6 +99,14 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Un intento de la prueba se puede retirar, archivándolo (`LV-173`).** Nunca
+  borrándolo: además de la regla del proyecto, un intento aprobado alimenta el
+  motor de vencimientos, y `generate_alerts` sólo mira los activos. Si al
+  archivar la persona queda **sin prueba vigente**, se avisa antes con su
+  nombre y con la consecuencia escrita —su alerta deja de generarse—; si el
+  intento no sostenía ninguna vigencia, se archiva directo. Los archivados
+  quedan a la vista en la ficha, con su botón para restaurarlos, y tanto
+  archivar como restaurar quedan en la auditoría.
 - **El catastro cierra con su total (`LV-172`).** Cuántas aeronaves y cuántos
   operadores, al final del documento y no sólo en el encabezado: con varias
   páginas de tablas, el total del cierre es lo que confirma que no se cortó

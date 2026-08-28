@@ -42,6 +42,18 @@ urlpatterns += [
         assessment_views.KnowledgeAssessmentDetail.as_view(),
         name="assessment-detail",
     ),
+    # LV-173: retirar un intento es **archivarlo**, nunca borrarlo. Van antes
+    # del genérico por la misma razón que los de arriba.
+    path(
+        "assessment/<uuid:pk>/archive/",
+        views.KnowledgeAssessmentArchive.as_view(),
+        name="assessment-archive",
+    ),
+    path(
+        "assessment/<uuid:pk>/restore/",
+        views.KnowledgeAssessmentRestore.as_view(),
+        name="assessment-restore",
+    ),
     path(
         "costcenter/import/",
         views.CostCenterImportView.as_view(),

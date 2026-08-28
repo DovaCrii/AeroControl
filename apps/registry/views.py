@@ -31,6 +31,7 @@ from .models import (
     Aircraft,
     AircraftAssignment,
     Battery,
+    KnowledgeAssessment,
     Operator,
     OperatorAssignment,
     Assignment,
@@ -209,7 +210,16 @@ class RegistryArchive(ModelPermissionRequiredMixin, View):
             _("%(name)s archived. It can be restored from the archived filter.")
             % {"name": self.model._meta.verbose_name.capitalize()},
         )
-        return redirect(f"{self.model._meta.model_name}-list")
+        return redirect(self.success_url(obj))
+
+    def success_url(self, obj):
+        """A dónde volver después de archivar.
+
+        LV-173: es un método y no un literal porque no todo lo archivable tiene
+        listado propio — la prueba de conocimientos vive en la ficha de su
+        persona, y `knowledgeassessment-list` no existe.
+        """
+        return reverse(f"{self.model._meta.model_name}-list")
 
 
 class RegistryRestore(ModelPermissionRequiredMixin, View):
@@ -234,7 +244,10 @@ class RegistryRestore(ModelPermissionRequiredMixin, View):
             _("%(name)s restored.")
             % {"name": self.model._meta.verbose_name.capitalize()},
         )
-        return redirect(f"{self.model._meta.model_name}-list")
+        return redirect(self.success_url(obj))
+
+    def success_url(self, obj):
+        return reverse(f"{self.model._meta.model_name}-list")
 
 
 class CostCenterArchive(RegistryArchive):
@@ -256,6 +269,80 @@ class CostCenterArchive(RegistryArchive):
                 {"object": obj, "dependents": dependents},
             )
         return super().post(request, pk)
+
+
+class KnowledgeAssessmentArchive(RegistryArchive):
+    """LV-173: root puede retirar un intento de la prueba — **archivándolo**.
+
+    Pedido del usuario. Lo que **no** se hace es borrarlo, y no es una
+    formalidad: `AGENTS.md` prohíbe borrar filas operativas, y encima un intento
+    aprobado **alimenta el motor de vencimientos**
+    (`registry.knowledgeassessment` está en `watchables.WATCHABLE_MODELS`, y
+    `generate_alerts` filtra `is_active=True`). O sea que retirar el último
+    intento vigente **le apaga la alerta de vencimiento a esa persona**: su
+    estado de cumplimiento cambia sin que quede rastro en ninguna pantalla.
+
+    Por eso hay confirmación, con el mismo patrón que `CostCenterArchive`: si
+    después de archivar la persona se queda **sin prueba vigente**, se dice antes
+    de hacerlo, con el nombre de quién y qué deja de vigilarse. Un intento que no
+    sostiene la vigencia —uno insuficiente, uno vencido, uno superado por otro
+    posterior— se archiva directo, porque ahí no hay nada que advertir.
+
+    Vuelve a la ficha de la persona: es donde vive el historial y desde donde se
+    archiva, y `knowledgeassessment-list` no existe.
+    """
+
+    model = KnowledgeAssessment
+
+    def post(self, request, pk):
+        obj = get_object_or_404(
+            KnowledgeAssessment.objects.select_related("operator"),
+            pk=pk,
+            is_active=True,
+        )
+        if request.POST.get("confirm") != "1" and self._is_the_valid_one(obj):
+            return render(
+                request,
+                "registry/assessment_archive_confirm.html",
+                {"object": obj, "operator": obj.operator},
+            )
+        return super().post(request, pk)
+
+    def _is_the_valid_one(self, obj):
+        """¿Archivar esto deja a la persona sin prueba vigente?
+
+        Se pregunta por el **resultado**, no por la fila: no importa si este
+        intento es "el último", importa si al sacarlo queda otro aprobado y sin
+        vencer. Preguntarlo así cubre solo el caso de dos aprobados vigentes,
+        donde archivar uno no cambia nada y advertir sería ruido.
+        """
+        if not obj.passed:
+            return False
+        today = timezone.localdate()
+        if obj.expires_on and obj.expires_on < today:
+            return False
+        return not (
+            KnowledgeAssessment.objects.filter(
+                operator=obj.operator,
+                is_active=True,
+                passed=True,
+                expires_on__gte=today,
+            )
+            .exclude(pk=obj.pk)
+            .exists()
+        )
+
+    def success_url(self, obj):
+        return reverse("operator-detail", args=[obj.operator_id])
+
+
+class KnowledgeAssessmentRestore(RegistryRestore):
+    """Devolver un intento archivado. Vuelve a contar para el vencimiento."""
+
+    model = KnowledgeAssessment
+
+    def success_url(self, obj):
+        return reverse("operator-detail", args=[obj.operator_id])
 
 
 # One archive/restore pair per registry model, same pattern as make_views.
@@ -733,6 +820,17 @@ class OperatorDetail(RegistryDetail):
         context["assessments"] = (
             self.object.knowledge_assessments.filter(is_active=True)
             if self.request.user.has_perm("registry.view_knowledgeassessment")
+            else None
+        )
+        # LV-173: los archivados se **ven**, aparte y en gris. Un intento
+        # retirado que desaparece de la pantalla es indistinguible de uno
+        # borrado para quien mira la ficha, y el punto de archivar en vez de
+        # borrar es justamente que quede el rastro. Sólo para quien puede
+        # retirarlos: para el resto son ruido sobre una ficha que se lee para
+        # saber cómo está la persona hoy.
+        context["archived_assessments"] = (
+            self.object.knowledge_assessments.filter(is_active=False)
+            if self.request.user.has_perm("registry.delete_knowledgeassessment")
             else None
         )
         context.update(attached_documents_context(self.request.user, self.object))
