@@ -45,9 +45,13 @@ cerradas y desplegadas** (`LV-169` a `LV-179`).
 
 ### Estado exacto
 
-- **`origin/main` = `a2c7008`, y `p340` está en `a2c7008`** ✅ — todo desplegado
-  y verificado el mismo día. **`pwsh scripts/verify.ps1` verde**: 2280 tests,
-  cobertura 96.95%.
+- **`p340` está en `a2c7008`**, desplegado y verificado. **`origin/main` siguió
+  avanzando después** con `LV-180` y `LV-181`, que **quedaron SIN desplegar**:
+  son lo primero al retomar. `LV-180` **lleva `migrate`** (`compliance.0024`,
+  renombra una fila); `LV-181` es el salto a Django 6.1, así que el `uv sync` de
+  la VM va a instalar Django 6.1 y DRF 3.18.
+- **`pwsh scripts/verify.ps1` verde sobre lo último**: 2284 tests, cobertura
+  96.96%, ya con Django 6.1.
 - **Tres migraciones aplicadas hoy**, todas limpias: `registry.0037` (`LV-169`,
   sin SQL), `registry.0038` (`LV-177`, reconstruye la tabla de operadores) y
   `geo.0006` (`LV-178`, dos columnas vacías). Respaldos previos tomados **y
@@ -103,21 +107,30 @@ donde queda registrado.
    aproximadas y sólo para el pronóstico**, porque ninguna decisión aeronáutica
    puede leerlas.
 
-### Brechas conocidas, para decidir cuándo
+### Brechas: cuatro cerradas el 2026-08-28, una abierta y con forma nueva
 
-Salieron del repaso del 2026-08-28 y ninguna está tomada:
-
-- **El CI de GitHub nunca estuvo verde.** La única puerta real corre en la
-  máquina de quien desarrolla. El README ya no afirma lo contrario.
-- **4 ramas dependabot**, una es **Django 6.1** — actualización mayor, merece
-  sesión propia con el gate.
-- **6 ramas viejas sin mergear** (`codex/ci-arranque`, `claude/docs-remote-vm-ops`
-  y cuatro del 2026-07-24). Media hora de limpieza.
-- **`docs/dev/remote-vm-operations.md` existe sólo en `p340`**, sin versionar:
-  cualquier limpieza lo borra.
-- **El correo saliente sigue sin salir**: `EMAIL_HOST` vacío en `p340`, así que
-  las siete notificaciones se imprimen en el journal. Es el bloqueador del
-  criterio 2 de "Rumbo a 1.0".
+- ~~El CI nunca estuvo verde~~ ✅ **Causa encontrada y arreglada (`LV-180`)**:
+  `${{ runner.temp }}` **no existe en `jobs.<id>.env`**, así que el workflow
+  **abortaba al arrancar** — nunca corrió un test. **Falta confirmar la primera
+  corrida real en GitHub**, que desde una sesión de agente no se ve.
+- ~~4 ramas dependabot, una es Django 6.1~~ ✅ **Hecho (`LV-181`)**: 6.0.8 → 6.1
+  con el gate verde y **sin un solo cambio en nuestro código**. El único bloqueo
+  fue de terceros — Django 6.1 quitó `cc_delim_re` y el DRF instalado lo
+  importaba; el piso sube a `djangorestframework>=3.18`.
+- ~~6 ramas viejas sin mergear~~ ✅ **Quedan dos** (`LV-180`), y están
+  documentadas en `BACKLOG.md` junto al ítem B-06 que implementan. Las borradas
+  tienen su SHA anotado ahí.
+- ~~`docs/dev/remote-vm-operations.md` sólo en `p340`~~ ✅ **Versionado**,
+  reconciliando dos contradicciones: usaba el nombre DNS que no resuelve, y su
+  bloque de despliegue **no incluía el respaldo ni su verificación**.
+- ⚠️ **El correo saliente sigue sin salir, y el trabajo cambió de forma.**
+  `EMAIL_HOST` sigue vacío en `p340`: las siete notificaciones se imprimen en el
+  journal. Sigue siendo el bloqueador del criterio 2. **Pero Django 6.1 deprecó
+  la familia `EMAIL_*` completa en favor de `MAILERS`, con retiro en Django
+  7.0** (27 avisos nuevos en la suite; toca `config/settings/base.py:214-231` y
+  el `get_connection()` de `check_email`). **El orden correcto es: primero
+  migrar la configuración a `MAILERS`, después cargar las credenciales** —
+  hacerlo al revés es configurar hoy una API que Django 7.0 borra, y rehacerlo.
 
 ## Cierre del 2026-08-27
 
