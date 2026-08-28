@@ -32,17 +32,40 @@ SMTP = "django.core.mail.backends.smtp.EmailBackend"
 LOCMEM = "django.core.mail.backends.locmem.EmailBackend"
 
 
+def _mail(backend, *, host=""):
+    """Los dos ajustes que reemplazan a la familia `EMAIL_*`. LV-182.
+
+    Django 6.1 deprecó `EMAIL_BACKEND`/`EMAIL_HOST` en favor de `MAILERS`. El
+    mailer sólo lleva `OPTIONS` cuando el backend es el de SMTP —pasárselas al de
+    consola levanta `InvalidMailer`—, y la foto del entorno va aparte porque el
+    diagnóstico tiene que poder hablar del host aunque el mailer no lo use.
+    """
+    options = {
+        "host": host,
+        "port": 587,
+        "username": "",
+        "password": "",
+        "use_ssl": False,
+        "use_tls": True,
+        "timeout": 20,
+    }
+    mailer = {"BACKEND": backend}
+    if backend == SMTP:
+        mailer["OPTIONS"] = options
+    return {"MAILERS": {"default": mailer}, "MAIL_OPTIONS_FROM_ENV": options}
+
+
 class TestDetectingTheBackend:
-    @override_settings(EMAIL_BACKEND=CONSOLE, EMAIL_HOST="")
+    @override_settings(**_mail(CONSOLE))
     def test_the_console_backend_does_not_deliver(self):
         assert mail_is_delivered() is False
 
-    @override_settings(EMAIL_BACKEND=SMTP, EMAIL_HOST="smtp.example.com")
+    @override_settings(**_mail(SMTP, host="smtp.example.com"))
     def test_smtp_delivers(self):
         assert mail_is_delivered() is True
         assert undelivered_reason() == ""
 
-    @override_settings(EMAIL_BACKEND=LOCMEM, EMAIL_HOST="")
+    @override_settings(**_mail(LOCMEM))
     def test_locmem_counts_as_delivered_on_purpose(self):
         """Django instala `locmem` él mismo durante los tests, donde la entrega
         se verifica con `mail.outbox`. Tratarlo como "no entrega" encendería la
@@ -51,7 +74,7 @@ class TestDetectingTheBackend:
         agregándolo a la lista."""
         assert mail_is_delivered() is True
 
-    @override_settings(EMAIL_BACKEND=CONSOLE, EMAIL_HOST="")
+    @override_settings(**_mail(CONSOLE))
     def test_the_reason_names_the_missing_variable(self):
         """Quien lee esto en un log necesita saber qué escribir en el entorno,
         no cómo se llama la clase que Django eligió por él."""
@@ -59,7 +82,7 @@ class TestDetectingTheBackend:
         assert "EMAIL_HOST" in reason
         assert "LV-119" in reason
 
-    @override_settings(EMAIL_BACKEND=CONSOLE, EMAIL_HOST="smtp.example.com")
+    @override_settings(**_mail(CONSOLE, host="smtp.example.com"))
     def test_a_host_with_a_hand_set_backend_says_so_instead(self):
         """El consejo de "falta EMAIL_HOST" no aplica y repetirlo mandaría a
         revisar una variable que ya está bien."""
@@ -69,17 +92,17 @@ class TestDetectingTheBackend:
 
 
 class TestTheVerbDoesNotLie:
-    @override_settings(EMAIL_BACKEND=SMTP, EMAIL_HOST="smtp.example.com")
+    @override_settings(**_mail(SMTP, host="smtp.example.com"))
     def test_sent_when_it_was_sent(self):
         assert send_verb() == "Sent"
 
-    @override_settings(EMAIL_BACKEND=CONSOLE, EMAIL_HOST="")
+    @override_settings(**_mail(CONSOLE))
     def test_never_the_word_sent_alone_when_it_only_printed(self):
         verb = send_verb()
         assert verb == "PRINTED, NOT SENT:"
         assert not verb.startswith("Sent")
 
-    @override_settings(EMAIL_BACKEND=CONSOLE, EMAIL_HOST="")
+    @override_settings(**_mail(CONSOLE))
     def test_a_dry_run_says_would_send_either_way(self):
         """Un ensayo no envió nada por definición, así que el estado del backend
         no cambia lo que hay que decir -- y decir "no enviado" ahí confundiría
@@ -89,7 +112,7 @@ class TestTheVerbDoesNotLie:
 
 class TestTheJobSummaryCarriesIt:
     @pytest.mark.django_db
-    @override_settings(EMAIL_BACKEND=CONSOLE, EMAIL_HOST="")
+    @override_settings(**_mail(CONSOLE))
     def test_a_job_that_mailed_is_marked(self):
         with record_job_run("send_alert_digest") as run:
             run["mailed"] = True
@@ -101,7 +124,7 @@ class TestTheJobSummaryCarriesIt:
         assert "1 digests, 3 items, 0 skipped" in summary
 
     @pytest.mark.django_db
-    @override_settings(EMAIL_BACKEND=CONSOLE, EMAIL_HOST="")
+    @override_settings(**_mail(CONSOLE))
     def test_a_job_that_had_nothing_to_send_is_not_marked(self):
         """La mitad que evita el falso positivo: seis de los nueve trabajos
         callan cuando todo está en orden, y marcarlos "no enviado" un día en que
@@ -115,7 +138,7 @@ class TestTheJobSummaryCarriesIt:
         assert summary == "every watched job is current"
 
     @pytest.mark.django_db
-    @override_settings(EMAIL_BACKEND=SMTP, EMAIL_HOST="smtp.example.com")
+    @override_settings(**_mail(SMTP, host="smtp.example.com"))
     def test_a_delivered_job_is_not_marked(self):
         with record_job_run("send_alert_digest") as run:
             run["mailed"] = True
@@ -124,7 +147,7 @@ class TestTheJobSummaryCarriesIt:
         assert JobRun.objects.get(command="send_alert_digest").summary == "1 digests"
 
     @pytest.mark.django_db
-    @override_settings(EMAIL_BACKEND=CONSOLE, EMAIL_HOST="")
+    @override_settings(**_mail(CONSOLE))
     def test_a_job_that_does_not_mail_at_all_is_untouched(self):
         """`backup` y `generate_alerts` no mandan correo. Nunca ponen `mailed`,
         así que el estado del backend no puede contaminar su resumen."""
@@ -138,7 +161,7 @@ class TestTheJobSummaryCarriesIt:
 
 class TestEndToEndThroughARealCommand:
     @pytest.mark.django_db
-    @override_settings(EMAIL_BACKEND=CONSOLE, EMAIL_HOST="")
+    @override_settings(**_mail(CONSOLE))
     def test_the_executive_report_refuses_to_claim_it_sent(self, capsys):
         """El caso exacto del 2026-08-20: el comando terminaba en `Sent the week
         executive report to 1 recipient(s)` con el correo yendo al journal."""
@@ -153,7 +176,7 @@ class TestEndToEndThroughARealCommand:
         )
 
     @pytest.mark.django_db
-    @override_settings(EMAIL_BACKEND=LOCMEM, EMAIL_HOST="smtp.example.com")
+    @override_settings(**_mail(LOCMEM, host="smtp.example.com"))
     def test_with_a_working_backend_it_says_sent_and_stays_quiet(self, capsys):
         call_command("send_executive_report", "--to", "cmunoz@jej.cl")
 
@@ -166,7 +189,7 @@ class TestEndToEndThroughARealCommand:
         ).summary.startswith(UNDELIVERED_SUMMARY_PREFIX)
 
     @pytest.mark.django_db
-    @override_settings(EMAIL_BACKEND=CONSOLE, EMAIL_HOST="")
+    @override_settings(**_mail(CONSOLE))
     def test_a_dry_run_does_not_cry_wolf(self, capsys):
         """No compuso correo, así que no hay nada que no se haya enviado."""
         call_command("send_executive_report", "--to", "cmunoz@jej.cl", "--dry-run")

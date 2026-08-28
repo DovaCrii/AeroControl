@@ -360,7 +360,9 @@ def test_command_rejects_an_unknown_cost_center(world):
 
 @pytest.mark.django_db
 def test_executive_report_emails_the_direccion_group(world, settings):
-    settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+    settings.MAILERS = {
+        "default": {"BACKEND": "django.core.mail.backends.locmem.EmailBackend"}
+    }
     group = Group.objects.create(name="Dirección")
     user = User.objects.create_user(
         "jefa", email="jefa@example.test", password="password"
@@ -379,7 +381,9 @@ def test_executive_report_emails_the_direccion_group(world, settings):
 
 @pytest.mark.django_db
 def test_executive_report_without_recipients_is_refused(world, settings):
-    settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+    settings.MAILERS = {
+        "default": {"BACKEND": "django.core.mail.backends.locmem.EmailBackend"}
+    }
 
     with pytest.raises(CommandError, match="No recipients"):
         call_command("send_executive_report")
@@ -389,7 +393,9 @@ def test_executive_report_without_recipients_is_refused(world, settings):
 
 @pytest.mark.django_db
 def test_executive_report_dry_run_sends_nothing(world, settings, capsys):
-    settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+    settings.MAILERS = {
+        "default": {"BACKEND": "django.core.mail.backends.locmem.EmailBackend"}
+    }
 
     call_command("send_executive_report", "--dry-run", "--to", "jefa@example.test")
 
@@ -399,7 +405,9 @@ def test_executive_report_dry_run_sends_nothing(world, settings, capsys):
 
 @pytest.mark.django_db
 def test_executive_report_compares_against_the_previous_period(world, settings, capsys):
-    settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+    settings.MAILERS = {
+        "default": {"BACKEND": "django.core.mail.backends.locmem.EmailBackend"}
+    }
 
     call_command(
         "send_executive_report",

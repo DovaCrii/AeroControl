@@ -41,32 +41,51 @@ UNDELIVERED_BACKENDS = (
 UNDELIVERED_SUMMARY_PREFIX = "NO ENVIADO (correo sin configurar) · "
 
 
+def _default_mailer():
+    """La configuración del mailer por defecto. LV-182.
+
+    Se lee de `MAILERS` y ya no de `EMAIL_BACKEND`/`EMAIL_HOST`, que Django 6.1
+    deprecó y 7.0 elimina. Un solo lugar la resuelve para que el resto del módulo
+    no repita el `get`.
+    """
+    return settings.MAILERS.get("default", {})
+
+
 def mail_is_delivered():
     """True si el backend configurado entrega de verdad."""
-    return settings.EMAIL_BACKEND not in UNDELIVERED_BACKENDS
+    return _default_mailer().get("BACKEND") not in UNDELIVERED_BACKENDS
 
 
 def undelivered_reason():
     """Por qué no se entrega, en una línea, o `""` si sí se entrega.
 
-    Nombra **la variable que falta**, no el backend: quien lee esto en un log a
-    las 3 AM necesita saber qué escribir en `/etc/aerocontrol.env`, no cómo se
-    llama la clase de Python que Django eligió por él.
+    Nombra **la variable de entorno que falta**, no el ajuste de Django ni el
+    backend: quien lee esto en un log a las 3 AM necesita saber qué escribir en
+    `/etc/aerocontrol.env`. LV-182 movió la configuración a `MAILERS`, pero **los
+    nombres de las variables no cambiaron**, así que este texto sigue siendo
+    exacto — y esa es justamente la razón por la que no se renombraron.
     """
     if mail_is_delivered():
         return ""
-    if not settings.EMAIL_HOST:
+    mailer = _default_mailer()
+    # El host se lee de **la foto del entorno** y no de las `OPTIONS` del mailer:
+    # con un backend que no es SMTP el mailer no las lleva, así que preguntarle
+    # ahí diría "falta EMAIL_HOST" incluso cuando está puesto — y mandaría a
+    # revisar una variable que ya está bien. El caso real es alguien que fijó
+    # `EMAIL_BACKEND` a mano teniendo el host cargado, y ahí el consejo correcto
+    # es otro.
+    if not settings.MAIL_OPTIONS_FROM_ENV["host"]:
         return (
             "EMAIL_HOST no está configurado, así que el correo se imprime en el "
             "log en vez de enviarse (LV-119). Falta EMAIL_HOST / EMAIL_PORT / "
             "EMAIL_HOST_USER / EMAIL_HOST_PASSWORD / DEFAULT_FROM_EMAIL en el "
             "entorno."
         )
-    # EMAIL_HOST puesto y aun así un backend que no entrega: alguien fijó
+    # Host puesto y aun así un backend que no entrega: alguien fijó
     # EMAIL_BACKEND a mano. Decirlo tal cual, porque el consejo de arriba no
     # aplica y repetirlo mandaría a revisar una variable que ya está bien.
     return (
-        f"EMAIL_BACKEND={settings.EMAIL_BACKEND} no entrega correo: se imprime o "
+        f"EMAIL_BACKEND={mailer.get('BACKEND')} no entrega correo: se imprime o "
         "se descarta (LV-119), aunque EMAIL_HOST esté configurado."
     )
 

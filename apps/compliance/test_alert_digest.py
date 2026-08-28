@@ -124,7 +124,9 @@ def test_build_digest_includes_documents_of_the_cost_centers_aircraft(cost_cente
 
 @pytest.mark.django_db
 def test_digest_is_emailed_to_the_responsible_operator(cost_center, settings):
-    settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+    settings.MAILERS = {
+        "default": {"BACKEND": "django.core.mail.backends.locmem.EmailBackend"}
+    }
     _qualification(cost_center, 3, "Credencial urgente")
 
     call_command("send_alert_digest")
@@ -140,7 +142,9 @@ def test_digest_is_emailed_to_the_responsible_operator(cost_center, settings):
 
 @pytest.mark.django_db
 def test_dry_run_sends_nothing_but_reports(cost_center, settings, capsys):
-    settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+    settings.MAILERS = {
+        "default": {"BACKEND": "django.core.mail.backends.locmem.EmailBackend"}
+    }
     _qualification(cost_center, 3)
 
     call_command("send_alert_digest", "--dry-run")
@@ -153,7 +157,9 @@ def test_dry_run_sends_nothing_but_reports(cost_center, settings, capsys):
 
 @pytest.mark.django_db
 def test_cost_center_without_responsible_email_is_skipped(cost_center, settings):
-    settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+    settings.MAILERS = {
+        "default": {"BACKEND": "django.core.mail.backends.locmem.EmailBackend"}
+    }
     cost_center.responsible_operator = None
     cost_center.save(update_fields=["responsible_operator"])
     _qualification(cost_center, 3)
@@ -168,7 +174,9 @@ def test_cost_center_without_responsible_email_is_skipped(cost_center, settings)
 @pytest.mark.django_db
 def test_digest_reaches_an_external_contact_with_no_operator(cost_center, settings):
     """The responsible person for a cost center is not always an operator."""
-    settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+    settings.MAILERS = {
+        "default": {"BACKEND": "django.core.mail.backends.locmem.EmailBackend"}
+    }
     cost_center.responsible_operator = None
     cost_center.responsible_contact_email = "secretaria@example.test"
     cost_center.save(
@@ -184,7 +192,9 @@ def test_digest_reaches_an_external_contact_with_no_operator(cost_center, settin
 
 @pytest.mark.django_db
 def test_cost_center_without_expiring_items_gets_no_email(cost_center, settings):
-    settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+    settings.MAILERS = {
+        "default": {"BACKEND": "django.core.mail.backends.locmem.EmailBackend"}
+    }
     _qualification(cost_center, 200)
 
     call_command("send_alert_digest")
@@ -194,7 +204,9 @@ def test_cost_center_without_expiring_items_gets_no_email(cost_center, settings)
 
 @pytest.mark.django_db
 def test_digest_records_a_job_run(cost_center, settings):
-    settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+    settings.MAILERS = {
+        "default": {"BACKEND": "django.core.mail.backends.locmem.EmailBackend"}
+    }
     _qualification(cost_center, 2)
 
     call_command("send_alert_digest")

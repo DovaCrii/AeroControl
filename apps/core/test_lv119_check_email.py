@@ -24,6 +24,31 @@ LOCMEM = "django.core.mail.backends.locmem.EmailBackend"
 MODULE = "apps.core.management.commands.check_email"
 
 
+def _mail(backend, *, host="", password="", use_tls=True, use_ssl=False):
+    """Los dos ajustes que reemplazan a la familia `EMAIL_*`. LV-182.
+
+    Django 6.1 la deprecó entera en favor de `MAILERS`, así que los tests
+    configuran lo mismo que configura `base.py`: el mailer y **la foto del
+    entorno**, que son cosas distintas a propósito — con el host vacío el mailer
+    no lleva `OPTIONS` ninguna (pasárselas al backend de consola levanta
+    `InvalidMailer`) y el informe igual tiene que poder decir que la contraseña
+    está puesta. Ése es el caso de "la pegué y me olvidé del host".
+    """
+    options = {
+        "host": host,
+        "port": 587,
+        "username": "",
+        "password": password,
+        "use_ssl": use_ssl,
+        "use_tls": use_tls,
+        "timeout": 20,
+    }
+    mailer = {"BACKEND": backend}
+    if backend == "django.core.mail.backends.smtp.EmailBackend":
+        mailer["OPTIONS"] = options
+    return {"MAILERS": {"default": mailer}, "MAIL_OPTIONS_FROM_ENV": options}
+
+
 class _Connection:
     """Un backend de correo que falla al abrir, con la excepción que se le pida."""
 
@@ -41,7 +66,7 @@ class _Connection:
 # -- el caso que existe hoy en producción ----------------------------------
 
 
-@override_settings(EMAIL_BACKEND=CONSOLE, EMAIL_HOST="")
+@override_settings(**_mail(CONSOLE))
 def test_it_refuses_when_the_backend_only_prints(capsys):
     """El estado real de `p340` y la primera corrida esperable del comando.
 
@@ -59,9 +84,7 @@ def test_it_refuses_when_the_backend_only_prints(capsys):
     assert "EMAIL_BACKEND" in capsys.readouterr().out
 
 
-@override_settings(
-    EMAIL_BACKEND=CONSOLE, EMAIL_HOST="", EMAIL_HOST_PASSWORD="s3cr3t-de-verdad"
-)
+@override_settings(**_mail(CONSOLE, password="s3cr3t-de-verdad"))
 def test_the_password_is_never_printed(capsys):
     """Un comando de runbook que escupe una contraseña al journal crea un
     problema nuevo mientras diagnostica el viejo. El largo sí se informa: es lo
@@ -77,7 +100,7 @@ def test_the_password_is_never_printed(capsys):
 # -- camino feliz ----------------------------------------------------------
 
 
-@override_settings(EMAIL_BACKEND=LOCMEM, EMAIL_HOST="smtp.example.com")
+@override_settings(**_mail(LOCMEM, host="smtp.example.com"))
 def test_without_a_recipient_it_stops_after_the_connection(capsys):
     """Enviar exige un `--to` explícito. Un destinatario por omisión pondría un
     mensaje de prueba delante de Dirección, y no probar el envío en silencio
@@ -92,7 +115,7 @@ def test_without_a_recipient_it_stops_after_the_connection(capsys):
     assert mail.outbox == []
 
 
-@override_settings(EMAIL_BACKEND=LOCMEM, EMAIL_HOST="smtp.example.com")
+@override_settings(**_mail(LOCMEM, host="smtp.example.com"))
 def test_with_a_recipient_it_sends_a_real_message(capsys):
     mail.outbox.clear()
 
@@ -102,11 +125,11 @@ def test_with_a_recipient_it_sends_a_real_message(capsys):
     message = mail.outbox[0]
     assert message.to == ["cmunoz@jej.cl", "aortega@jej.cl"]
     assert "prueba de correo saliente" in message.subject
-    assert settings.EMAIL_HOST in message.body
+    assert settings.MAIL_OPTIONS_FROM_ENV["host"] in message.body
     assert "Enviado a cmunoz@jej.cl, aortega@jej.cl" in capsys.readouterr().out
 
 
-@override_settings(EMAIL_BACKEND=LOCMEM, EMAIL_HOST="smtp.example.com")
+@override_settings(**_mail(LOCMEM, host="smtp.example.com"))
 def test_a_blank_recipient_is_not_a_recipient(capsys):
     """`--to ""` desde un script mal armado no debe mandar un correo sin
     destinatario, que el backend acepta y nadie recibe."""
@@ -121,10 +144,10 @@ def test_a_blank_recipient_is_not_a_recipient(capsys):
 # -- caminos de error, uno por variable que hay que revisar ----------------
 
 
-@override_settings(EMAIL_BACKEND=LOCMEM, EMAIL_HOST="smtp.example.com")
+@override_settings(**_mail(LOCMEM, host="smtp.example.com"))
 def test_an_authentication_failure_names_the_credentials(monkeypatch):
     error = smtplib.SMTPAuthenticationError(535, b"5.7.139 Authentication failed")
-    monkeypatch.setattr(MODULE + ".get_connection", lambda: _Connection(error))
+    monkeypatch.setattr(MODULE + ".mailers", {"default": _Connection(error)})
 
     with pytest.raises(CommandError) as failure:
         call_command("check_email")
@@ -136,12 +159,12 @@ def test_an_authentication_failure_names_the_credentials(monkeypatch):
     assert "contraseña de aplicación" in message
 
 
-@override_settings(EMAIL_BACKEND=LOCMEM, EMAIL_HOST="smtp.example.com", EMAIL_PORT=587)
+@override_settings(**_mail(LOCMEM, host="smtp.example.com"))
 def test_an_unreachable_host_names_the_network_variables(monkeypatch):
     """Host inexistente, puerto cerrado por el firewall, timeout o TLS mal
     elegido llegan todos como OSError, y todos se arreglan en el entorno."""
     error = TimeoutError("timed out")
-    monkeypatch.setattr(MODULE + ".get_connection", lambda: _Connection(error))
+    monkeypatch.setattr(MODULE + ".mailers", {"default": _Connection(error)})
 
     with pytest.raises(CommandError) as failure:
         call_command("check_email")
@@ -152,10 +175,10 @@ def test_an_unreachable_host_names_the_network_variables(monkeypatch):
     assert "firewall" in message
 
 
-@override_settings(EMAIL_BACKEND=LOCMEM, EMAIL_HOST="smtp.example.com")
+@override_settings(**_mail(LOCMEM, host="smtp.example.com"))
 def test_an_smtp_level_refusal_is_reported_with_its_class(monkeypatch):
     error = smtplib.SMTPConnectError(421, b"service not available")
-    monkeypatch.setattr(MODULE + ".get_connection", lambda: _Connection(error))
+    monkeypatch.setattr(MODULE + ".mailers", {"default": _Connection(error)})
 
     with pytest.raises(CommandError) as failure:
         call_command("check_email")
@@ -164,9 +187,7 @@ def test_an_smtp_level_refusal_is_reported_with_its_class(monkeypatch):
 
 
 @override_settings(
-    EMAIL_BACKEND=LOCMEM,
-    EMAIL_HOST="smtp.example.com",
-    DEFAULT_FROM_EMAIL="aerocontrol@jej.cl",
+    **_mail(LOCMEM, host="smtp.example.com"), DEFAULT_FROM_EMAIL="aerocontrol@jej.cl"
 )
 def test_a_refused_sender_explains_the_relay_case(monkeypatch):
     """La falla típica de un buzón recién creado: autentica y no tiene permiso
@@ -193,7 +214,7 @@ def test_a_refused_sender_explains_the_relay_case(monkeypatch):
     assert "DEFAULT_FROM_EMAIL" in message
 
 
-@override_settings(EMAIL_BACKEND=LOCMEM, EMAIL_HOST="smtp.example.com")
+@override_settings(**_mail(LOCMEM, host="smtp.example.com"))
 def test_a_backend_that_accepts_and_discards_is_a_failure(monkeypatch):
     """`send()` devuelve cuántos entregó. Un 0 sin excepción es un backend que
     aceptó y descartó, y terminar en verde ahí sería el mismo error de LV-119
@@ -216,7 +237,8 @@ def test_tls_and_ssl_are_never_both_on():
     producción, de noche, dentro del trabajo programado. `EMAIL_USE_TLS` deja de
     ser el valor por omisión cuando alguien pide SSL, así que un 465 con SSL es
     una configuración legítima que no exige además apagar TLS a mano."""
-    assert not (settings.EMAIL_USE_TLS and getattr(settings, "EMAIL_USE_SSL", False))
+    options = settings.MAIL_OPTIONS_FROM_ENV
+    assert not (options["use_tls"] and options["use_ssl"])
 
 
 def test_every_mail_variable_is_documented_in_the_env_example():
