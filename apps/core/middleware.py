@@ -108,19 +108,33 @@ class RequestMetricsMiddleware:
             context = getattr(request, "_audit_context", {})
             metadata = {"query_keys": sorted(request.GET.keys())}
             metadata.update(context.get("metadata", {}))
+            default_action = f"{request.method.lower()}_{outcome}"
+            # LV-176: una petición puede mutar varias filas -- archivar un plan
+            # junto con sus permisos ligados son N+1 mutaciones en un POST. Cada
+            # una necesita su propia entrada o la respuesta a "por qué se cerró
+            # esto" no está donde alguien la va a buscar. Comparten `request_id`,
+            # que es lo que después deja ver que fue un solo acto.
+            rows = [
+                {
+                    "model_label": context.get("model_label", ""),
+                    "object_id": context.get("object_id", ""),
+                    "action": context.get("action"),
+                }
+            ]
+            rows.extend(getattr(request, "_audit_siblings", []))
             try:
-                AuditEvent.objects.create(
-                    actor=request.user,
-                    action=context.get("action")
-                    or f"{request.method.lower()}_{outcome}",
-                    method=request.method,
-                    path=request.path[:500],
-                    status_code=response.status_code,
-                    model_label=context.get("model_label", ""),
-                    object_id=context.get("object_id", ""),
-                    request_id=request_id,
-                    metadata=metadata,
-                )
+                for row in rows:
+                    AuditEvent.objects.create(
+                        actor=request.user,
+                        action=row["action"] or default_action,
+                        method=request.method,
+                        path=request.path[:500],
+                        status_code=response.status_code,
+                        model_label=row["model_label"],
+                        object_id=row["object_id"],
+                        request_id=request_id,
+                        metadata=metadata,
+                    )
             except Exception:
                 logger.exception(
                     "audit_write_failed",
