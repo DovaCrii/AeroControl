@@ -151,6 +151,38 @@ class GeoPlanListView(
         return context
 
 
+def _heading_extent(rows):
+    """El tamaño del área, para el encabezado del plan. LV-183.
+
+    Pedido del usuario mirando la hoja de campo: el radio estaba **al final**,
+    bajo "Circunferencia y aeródromo", porque la hoja sigue el orden del
+    formulario de SIGO — que es correcto para transcribir y malo para responder
+    "¿de qué tamaño es esto?" al abrir el plan. Acá arriba no había nada del
+    tamaño.
+
+    **No se repite el número en la hoja**, que era la otra opción: son dos radios
+    distintos en juego —el envolvente y el dibujado— y en una pantalla cuyo
+    propósito es copiar sin equivocarse, el mismo dato dos veces a dos
+    centímetros es una oportunidad de copiar el que no era.
+
+    Con varias circunferencias devuelve **cuántas** en vez de un radio: ahí la
+    pregunta del encabezado deja de ser el tamaño y pasa a ser cuántas hay que
+    separar, y elegir el radio de una de ellas sería afirmar que las demás no
+    existen.
+    """
+    if not rows:
+        return None
+    if len(rows) > 1:
+        return {"count": len(rows)}
+    row = rows[0]
+    if row.get("radius_m") is None:
+        return None
+    # `is_enclosing` viaja para que la plantilla pueda decir que ese radio es el
+    # del círculo que **cubre** el área y no el del área: afirmarlo a secas sería
+    # el error que `LV-132` nombró.
+    return {"radius_m": row["radius_m"], "is_enclosing": row["is_enclosing"]}
+
+
 class GeoPlanArchive(ModelPermissionRequiredMixin, View):
     """LV-135: retirar un plan de la lista, sin borrarlo.
 
@@ -419,6 +451,7 @@ class GeoPlanDetailView(ModelViewPermissionRequiredMixin, DetailView):
         context["has_enclosing"] = any(
             row["is_enclosing"] for row in context["sigo_rows"]
         )
+        context["heading_extent"] = _heading_extent(context["sigo_rows"])
         # Status buttons the user may use from the current status (GEO-9).
         context["status_actions"] = [
             {

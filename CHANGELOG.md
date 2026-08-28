@@ -143,6 +143,17 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **El encabezado del plan dice de qué tamaño es el área (`LV-183`).** El radio
+  vivía sólo al final de la hoja de campo, que sigue el orden del formulario de
+  SIGO. Ahora está arriba, junto a la faena y el permiso. Cuando es el círculo
+  **envolvente** lo declara —el radio del círculo que cubre un área no es el
+  radio del área— y con varias circunferencias dice cuántas en vez de elegir
+  una. No se repite dentro de la hoja: hay dos radios en juego y copiar el que
+  no era es el error que esa pantalla existe para evitar.
+- **La configuración de correo pasa a `MAILERS` (`LV-182`).** Django 6.1 deprecó
+  la familia `EMAIL_*` entera, con retiro en 7.0. Se migró **antes** de cargar
+  las credenciales, para no configurar dos veces. **Los nombres de las variables
+  de entorno no cambian**, así que el archivo de la VM sigue sirviendo tal cual.
 - **Django 6.0.8 → 6.1 (`LV-181`).** Los mismos 2284 tests en verde, sin un solo
   cambio en nuestro código. El único bloqueo fue de terceros: Django 6.1 quitó
   `cc_delim_re` y el DRF instalado lo importaba, así que el piso sube a
