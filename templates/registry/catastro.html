@@ -94,4 +94,12 @@ models -- so the second sentence exists to say how much.{% endcomment %}
     </table>
   </div>
 </div>
+
+{% comment %}LV-172: el total de cierre. El mismo número está arriba, y aun así
+esto no es repetirlo: con las dos tablas ocupando la pantalla entera, quien
+termina de leer quedó lejos del encabezado, y en un listado que se entrega el
+total del final es lo que confirma que no se cortó nada. Sale de
+`closing_total`, la misma función que escribe el pie del PDF, así que el papel
+y la pantalla no pueden decir cifras distintas.{% endcomment %}
+<p class="catastro-closing">{{ closing }}</p>
 {% endblock %}

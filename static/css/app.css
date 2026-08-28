@@ -2033,6 +2033,106 @@ a.admin-metric:hover { border-color: var(--ac-text-secondary); }
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
+/* LV-172: el total de cierre del catastro. Alineado a la derecha y con el acento
+   de la marca, como el total de un documento entregable: es lo último que se
+   lee, y se busca al pie. */
+.catastro-closing {
+  margin: 0 0 1.5rem;
+  padding-top: 0.75rem;
+  border-top: 2px solid var(--ac-border);
+  color: var(--ac-text);
+  font-size: 1.05rem;
+  font-weight: 650;
+  text-align: right;
+}
+
+/* LV-171: la hoja de campo de SIGO dibujaba once casillas idénticas -- rótulo y
+   valor con el mismo tamaño y el mismo gris, todas con el mismo borde. Con todo
+   pesando igual el ojo no tiene por dónde entrar, que es el mismo diagnóstico de
+   `LV-163` y no un problema de contraste: **ningún gris se aclaró** (ver
+   `LV-165`, que midió que ya cumplían AA y que aclararlos dejaría la pantalla
+   más plana todavía). Lo que faltaba era jerarquía y color.
+
+   El valor manda porque es lo que se transcribe casilla por casilla en el
+   formulario del Estado; el rótulo sólo dice cuál es cuál, así que se achica y
+   se queda quieto. */
+.sigo-field {
+  height: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--ac-border);
+  border-left: 3px solid var(--sigo-accent, var(--ac-border));
+  border-radius: 8px;
+  background: var(--ac-surface-raised);
+}
+
+.sigo-field-label {
+  color: var(--ac-text-secondary);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sigo-field-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.15rem;
+}
+
+.sigo-field-value {
+  color: var(--ac-text);
+  font-family: var(--bs-font-monospace, monospace);
+  font-size: 1.05rem;
+  font-weight: 600;
+  /* Los grados, minutos y segundos se leen en columna: sin cifras de ancho fijo
+     los números bailan de casilla en casilla y comparar dos cuesta más. */
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+/* Un guion no es un dato: la casilla vacía se queda quieta en vez de gritar. */
+.sigo-field-value.is-empty { color: var(--ac-text-muted); font-weight: 400; }
+
+/* Cuatro acentos para cinco tramos, y la excepción es deliberada: latitud y
+   longitud comparten el suyo porque son las dos mitades de una coordenada.
+   Los tonos son los que el menú ya usa para separar familias, así que esta
+   pantalla no estrena un idioma de color propio. */
+.sigo-section-area { --sigo-accent: #0d9488; }
+.sigo-section-admin { --sigo-accent: #2463b8; }
+.sigo-section-coords { --sigo-accent: #7c3aed; }
+.sigo-section-circle { --sigo-accent: #b15d00; }
+
+[data-theme="dark"] .sigo-section-area, [data-bs-theme="dark"] .sigo-section-area { --sigo-accent: #55d6c8; }
+[data-theme="dark"] .sigo-section-admin, [data-bs-theme="dark"] .sigo-section-admin { --sigo-accent: #82b1ff; }
+[data-theme="dark"] .sigo-section-coords, [data-bs-theme="dark"] .sigo-section-coords { --sigo-accent: #c4a5ff; }
+[data-theme="dark"] .sigo-section-circle, [data-bs-theme="dark"] .sigo-section-circle { --sigo-accent: #ffc66d; }
+
+/* El título del tramo lleva el mismo acento en una marca corta a la izquierda:
+   así el color dice a qué tramo pertenece cada fila sin repetirlo en cada
+   casilla, y quien no distingue esos tonos sigue teniendo el título escrito. */
+.sigo-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1.25rem 0 0.5rem;
+  color: var(--ac-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sigo-section-title::before {
+  content: "";
+  width: 3px;
+  height: 0.9rem;
+  border-radius: 2px;
+  background: var(--sigo-accent, var(--ac-border));
+}
+
 .quiz-rules-note {
   flex: 1 1 18rem;
   color: var(--ac-text-secondary);

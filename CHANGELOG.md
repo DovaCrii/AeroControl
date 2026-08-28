@@ -97,8 +97,23 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   la columna de cumplimiento. La función queda entera —modelo, vistas, permisos y
   URL—; volver a mostrarla es descomentar una línea.
 
+### Added
+
+- **El catastro cierra con su total (`LV-172`).** Cuántas aeronaves y cuántos
+  operadores, al final del documento y no sólo en el encabezado: con varias
+  páginas de tablas, el total del cierre es lo que confirma que no se cortó
+  nada. Sale de la misma función en pantalla y en el PDF, así que no pueden
+  decir cifras distintas. **No** se agrega al CSV ni a la planilla: una fila de
+  totales dentro de un archivo de datos rompe ordenar, filtrar y sumar.
+
 ### Changed
 
+- **La hoja de campo de SIGO gana jerarquía (`LV-171`).** Eran once casillas
+  idénticas en peso y color. Ahora el valor —que es lo que se transcribe— manda,
+  el rótulo se achica y se aquieta, una casilla vacía deja de gritar, y cada
+  tramo lleva un acento lateral con los mismos colores que ya usa el menú.
+  Latitud y longitud comparten acento porque son una sola coordenada. **Ningún
+  gris se aclaró**: el problema era jerarquía, no contraste.
 - **El menú se reparte y se pliega (`LV-170`).** Padrón se llevaba nueve de las
   veinte entradas: se queda con lo que se da de alta una vez y el resto pasa a
   **Inventario y movimientos**, que es otra pregunta —dónde está y quién lo

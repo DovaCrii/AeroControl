@@ -243,6 +243,31 @@ def _counted(aircraft, operators):
     }
 
 
+def closing_total(catastro):
+    """El total de cierre, para el pie del documento.
+
+    LV-172, pedido del usuario: *"sumar al catastro de flota y personal al final
+    un contador con la cantidad de equipos totales y personal total"*. El número
+    ya estaba **arriba**, y eso no es lo mismo: quien recibe un listado oficial
+    llega al final y ahí quiere el total, porque es lo que confirma que no se
+    cortó nada en el camino. Con nueve páginas de flota y personal, el
+    encabezado quedó a nueve páginas de distancia de lo que se está mirando.
+
+    Reutiliza `_counted` en vez de armar sus propias frases, y no es economía:
+    es la concordancia que `LV-161` arregló después de que producción mostrara
+    *"1 aeronaves"* el día del despliegue. Una segunda copia de esa lógica se
+    desincroniza, y el error vuelve por el lado que nadie está mirando.
+
+    **No va en el CSV ni en la planilla.** Una fila de totales dentro de un
+    archivo de datos es una fila más para quien ordena, filtra o suma la
+    columna: rompe justamente lo que esos dos formatos existen para permitir.
+    El total de cierre es del documento que se entrega, no de la tabla.
+    """
+    totals = catastro["totals"]
+    counted = _counted(totals["aircraft"], totals["operators"])
+    return _("Total: %(fleet)s and %(personnel)s.") % counted
+
+
 def totals_sentence(catastro):
     """The one line every output carries, cut-off date included.
 

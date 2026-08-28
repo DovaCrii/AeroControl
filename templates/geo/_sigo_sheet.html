@@ -39,7 +39,13 @@ resto de la hoja. Sin esta casilla el rediseño perdía un dato que la tabla sí
 mostraba en su columna "Circunferencia": lo cazó
 `test_r10_plan_feeds_the_permit::test_it_shows_on_the_plan_page`, que afirma que
 el nombre del placemark llega a la pantalla.{% endcomment %}
-<div class="row g-2">
+{% comment %}LV-171: cada tramo lleva su acento, y **son cuatro para cinco
+tramos** a propósito: latitud y longitud comparten el suyo porque son las dos
+mitades de una misma coordenada, y darles colores distintos afirmaría una
+diferencia que no existe. Los tonos no se inventaron: son los cuatro que el menú
+ya usa para separar familias, así que la pantalla no estrena un idioma de color
+propio.{% endcomment %}
+<div class="row g-2 sigo-section sigo-section-area">
   {% include "geo/_sigo_field.html" with label=label_area value=row.name copy=row.name width="col-12 col-md-6" %}
 </div>
 {% if row.is_enclosing %}
@@ -50,13 +56,13 @@ decirlo antes de que alguien los copie.{% endcomment %}
 <p class="small text-body-secondary mb-0 mt-1">{% translate "Smallest circle that encloses the drawn area" %}{% if row.drawn_radius_m %} · {% blocktranslate with radius=row.drawn_radius_m %}drawn: {{ radius }} m average{% endblocktranslate %}{% endif %}</p>
 {% endif %}
 
-<h3 class="h6 text-body-secondary mt-3">{% translate "Administrative location" %}</h3>
+<h3 class="sigo-section-title sigo-section-admin">{% translate "Administrative location" %}</h3>
 {% comment %}Provincia y región van en cajas propias y no pegadas a la comuna
 como una línea en chico: concatenarlas en la plantilla obliga a un separador
 que sobra cuando una de las dos falta, y en el mar faltan las tres. Cada una
 con su botón, porque el rótulo de la casilla es lo que dice cuál es cuál.
 {% endcomment %}
-<div class="row g-2">
+<div class="row g-2 sigo-section sigo-section-admin">
   {% include "geo/_sigo_field.html" with label=label_commune value=row.comuna copy=row.comuna width="col-12 col-md-6" %}
   {% include "geo/_sigo_field.html" with label=label_province value=row.provincia copy=row.provincia %}
   {% include "geo/_sigo_field.html" with label=label_region value=row.region copy=row.region %}
@@ -65,8 +71,8 @@ con su botón, porque el rótulo de la casilla es lo que dice cuál es cuál.
 simplificada a ~111 m. Literalmente el mismo aviso que la tabla.{% endcomment %}
 <p class="text-muted small mb-0 mt-1">{% translate "The commune, province and region come from the BCN administrative boundaries, which that institution publishes as referential: near a boundary the answer may be the neighbouring commune. Confirm it before filing." %}</p>
 
-<h3 class="h6 text-body-secondary mt-3">{% translate "Latitude" %}</h3>
-<div class="row g-2">
+<h3 class="sigo-section-title sigo-section-coords">{% translate "Latitude" %}</h3>
+<div class="row g-2 sigo-section sigo-section-coords">
   {% include "geo/_sigo_field.html" with label=label_degrees value=row.dms_lat.degrees copy=row.dms_lat.degrees %}
   {% include "geo/_sigo_field.html" with label=label_minutes value=row.dms_lat.minutes copy=row.dms_lat.minutes %}
   {% comment %}`floatformat:"2u"` y no `floatformat:2`: con el locale español
@@ -79,8 +85,8 @@ simplificada a ~111 m. Literalmente el mismo aviso que la tabla.{% endcomment %}
 </div>
 <p class="small text-body-secondary mb-0 mt-1 font-monospace">{{ row.lat_readable }}</p>
 
-<h3 class="h6 text-body-secondary mt-3">{% translate "Longitude" %}</h3>
-<div class="row g-2">
+<h3 class="sigo-section-title sigo-section-coords">{% translate "Longitude" %}</h3>
+<div class="row g-2 sigo-section sigo-section-coords">
   {% include "geo/_sigo_field.html" with label=label_degrees value=row.dms_lon.degrees copy=row.dms_lon.degrees %}
   {% include "geo/_sigo_field.html" with label=label_minutes value=row.dms_lon.minutes copy=row.dms_lon.minutes %}
   {% include "geo/_sigo_field.html" with label=label_seconds value=row.dms_lon.seconds|floatformat:"2u" copy=row.dms_lon.seconds|floatformat:"2u" %}
@@ -88,8 +94,8 @@ simplificada a ~111 m. Literalmente el mismo aviso que la tabla.{% endcomment %}
 </div>
 <p class="small text-body-secondary mb-0 mt-1 font-monospace">{{ row.lon_readable }}</p>
 
-<h3 class="h6 text-body-secondary mt-3">{% translate "Circle and aerodrome" %}</h3>
-<div class="row g-2">
+<h3 class="sigo-section-title sigo-section-circle">{% translate "Circle and aerodrome" %}</h3>
+<div class="row g-2 sigo-section sigo-section-circle">
   {% include "geo/_sigo_field.html" with label=label_radius value=row.radius_m copy=row.radius_m %}
   {% include "geo/_sigo_field.html" with label=label_amc value=row.amc copy=row.amc width="col-12 col-md-6" %}
   {% include "geo/_sigo_field.html" with label=label_distance value=row.amc_distance_km copy=row.amc_distance_km %}
