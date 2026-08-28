@@ -120,6 +120,44 @@ body {
   font-weight: 600;
 }
 
+/* LV-170: el rótulo de grupo ahora es un `<button>`, así que hay que devolverle
+   la apariencia de rótulo que el navegador le quita -- sin esto llega con fondo,
+   borde, texto centrado y la tipografía del sistema. Ancho completo y `text-align`
+   explícito: un botón centra por defecto y el menú entero se leería torcido. */
+.nav-group-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+}
+
+.nav-group-toggle:hover { color: var(--ac-text-secondary); }
+
+.nav-group-toggle:focus-visible {
+  outline: 2px solid var(--ac-primary);
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+
+/* La flecha gira, y es lo único que dice si el grupo está plegado cuando sus
+   filas no se ven. Sin transición a propósito no: acá sí se quiere, es un
+   cambio que la persona provoca y espera ver. */
+.nav-group-chevron {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  transition: transform 0.15s ease;
+}
+
+.nav-group-toggle[aria-expanded="false"] .nav-group-chevron { transform: rotate(-90deg); }
+
+.nav-group-items { display: flex; flex-direction: column; gap: 0.15rem; }
+
 .sidebar hr {
   margin: 0.5rem 0.8rem;
   opacity: 0.15;
@@ -698,7 +736,12 @@ body, .card, .form-control, .form-select, .page-link, .table,
 /* The single source of design tokens. Light values here, dark overrides in the
    [data-theme="dark"] block below. */
 :root {
-  --ac-sidebar-width: 248px;
+  /* LV-170: 248 px cortaba **cuatro** filas del menú. Medido en el navegador con
+     esta misma hoja: la más larga, "Evaluación de conocimientos", pide 248 px
+     ella sola, y la barra incluye sus 24 px de relleno — así que el mínimo real
+     son 272. Los 8 de más son colchón para que una métrica de fuente apenas
+     distinta no vuelva a recortar la última letra, no un número al azar. */
+  --ac-sidebar-width: 280px;
   /* Brand palette. Kept apart from --ac-primary, which is the accessible
      action colour: the brand turquoise does not clear 4.5:1 on white. */
   --ac-navy: #1B2A4A;
@@ -806,6 +849,13 @@ main {
   .sidebar.is-collapsed .sidebar-collapse svg { transform: rotate(180deg); }
   .sidebar.is-collapsed .nav-item { position: relative; justify-content: center; padding-inline: 0; font-size: 0; }
   .sidebar.is-collapsed .nav-icon { margin: 0; }
+  /* LV-170: con la barra en modo icono el rótulo del grupo no se dibuja (regla
+     de arriba), así que no habría con qué volver a desplegarlo y las filas de un
+     grupo plegado quedarían **inalcanzables**. En ese modo los grupos se
+     muestran siempre; el estado plegado se conserva y vuelve al expandir la
+     barra. Gana al `hidden` del JS porque `[hidden]` es `display:none` de la
+     hoja del navegador y esto es más específico. */
+  .sidebar.is-collapsed .nav-group-items[hidden] { display: flex; }
 
   /* Keep the pending-alert count visible while collapsed: it is the one piece
      of live state in the nav, so hiding it removed the reason to glance at

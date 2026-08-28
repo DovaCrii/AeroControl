@@ -50,6 +50,58 @@
     }
   }
 
+  // LV-170: los grupos del menú se pliegan y **recuerdan** su estado, uno por
+  // uno. Va en `localStorage` y no en la sesión del servidor a propósito: es una
+  // preferencia de esta persona en este navegador, no un dato de la cuenta, y
+  // guardarla en el servidor costaría una petición por click.
+  //
+  // Se guarda **sólo lo plegado**, no lo abierto. Así un grupo nuevo aparece
+  // abierto sin que nadie tenga que migrar nada: lo que no está en la lista, se
+  // ve. Al revés —guardar los abiertos— el grupo que se agregue mañana nacería
+  // invisible para todos los que ya usaron el menú, que es la clase de estreno
+  // que nadie descubre.
+  function collapsedGroups() {
+    try {
+      var raw = localStorage.getItem('nav-groups-collapsed');
+      return raw ? JSON.parse(raw) : [];
+    } catch (error) {
+      return [];  // localStorage bloqueado o JSON viejo: el menú abre entero.
+    }
+  }
+  function setGroup(toggle, expanded) {
+    var items = document.getElementById(toggle.getAttribute('aria-controls'));
+    toggle.setAttribute('aria-expanded', String(expanded));
+    if (items) items.hidden = !expanded;
+  }
+  var navToggles = document.querySelectorAll('.nav-group-toggle');
+  if (navToggles.length) {
+    var collapsed = collapsedGroups();
+    navToggles.forEach(function (toggle) {
+      setGroup(toggle, collapsed.indexOf(toggle.dataset.navGroup) === -1);
+      toggle.addEventListener('click', function () {
+        var expanded = toggle.getAttribute('aria-expanded') === 'true';
+        setGroup(toggle, !expanded);
+        var names = collapsedGroups().filter(function (name) {
+          return name !== toggle.dataset.navGroup;
+        });
+        if (expanded) names.push(toggle.dataset.navGroup);
+        try {
+          localStorage.setItem('nav-groups-collapsed', JSON.stringify(names));
+        } catch (error) {
+          /* Sin poder guardar, el plegado sigue andando en esta página. */
+        }
+      });
+    });
+    // El grupo que contiene la página actual se abre aunque estuviera plegado:
+    // si no, la pantalla en la que estás parado no aparece en el menú y el menú
+    // pasa a contradecir a la página.
+    var active = document.querySelector('.nav-group-items .nav-item.active');
+    if (active) {
+      var owner = active.closest('.nav-group').querySelector('.nav-group-toggle');
+      if (owner) setGroup(owner, true);
+    }
+  }
+
   var themeToggle = document.getElementById('theme-toggle');
   if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
   // Selects that submit their form on change (former inline onchange handlers).
