@@ -211,27 +211,66 @@ CSP_REPORT_URI = config("CSP_REPORT_URI", default="/csp-report/")
 # passwords come from the environment. With no EMAIL_HOST configured the
 # console backend is used, so a misconfigured deployment prints the digest
 # instead of failing or silently dropping it.
-EMAIL_HOST = config("EMAIL_HOST", default="")
-EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
-EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
-EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
+# LV-182: esto era la familia `EMAIL_*`, que **Django 6.1 deprecó entera** en
+# favor de `MAILERS` y que 7.0 elimina. Se migró antes de cargar las credenciales
+# reales y no después, porque configurarlas sobre la API vieja habría sido
+# hacerlo dos veces.
+#
+# **Los nombres de las variables de entorno NO cambian.** Lo que cambia es cómo
+# Django las lee: `/etc/aerocontrol.env` en `p340` sigue sirviendo tal cual, y
+# ese archivo es 600 root — un renombre habría exigido editarlo a mano en la VM
+# para no perder el correo justo cuando se lo va a encender.
+SMTP_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+_EMAIL_HOST = config("EMAIL_HOST", default="")
 # LV-119: implicit SSL on 465 is a legitimate configuration and there was no
 # variable for it. Django rejects TLS and SSL together with a ValueError raised
 # *when sending* -- i.e. in production, at night, inside the scheduled job -- so
 # TLS stops being the default as soon as someone asks for SSL, rather than
 # demanding they also remember to turn TLS off by hand.
-EMAIL_USE_SSL = config("EMAIL_USE_SSL", default=False, cast=bool)
-EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=not EMAIL_USE_SSL, cast=bool)
-EMAIL_TIMEOUT = config("EMAIL_TIMEOUT", default=20, cast=int)
-DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="aerocontrol@localhost")
-EMAIL_BACKEND = config(
+_EMAIL_USE_SSL = config("EMAIL_USE_SSL", default=False, cast=bool)
+# Con `EMAIL_HOST` vacío, el backend de consola: un despliegue mal configurado
+# **imprime** el digest en vez de fallar o de tragárselo en silencio.
+_EMAIL_BACKEND = config(
     "EMAIL_BACKEND",
     default=(
-        "django.core.mail.backends.smtp.EmailBackend"
-        if EMAIL_HOST
+        SMTP_BACKEND
+        if _EMAIL_HOST
         else "django.core.mail.backends.console.EmailBackend"
     ),
 )
+
+# Lo que el entorno dice del servidor SMTP, construido **una vez**. Lo leen dos:
+# `MAILERS` para configurar el mailer, y `check_email` para informar qué hay
+# cargado.
+#
+# Que `check_email` lo lea de acá y no de `MAILERS` no es un rodeo: con
+# `EMAIL_HOST` vacío el backend es el de consola y `MAILERS` **no lleva
+# `OPTIONS`**, así que informar desde ahí diría que la contraseña está vacía
+# aunque esté puesta — que es exactamente el caso de "la pegué y me olvidé del
+# host", el que el informe existe para distinguir.
+MAIL_OPTIONS_FROM_ENV = {
+    "host": _EMAIL_HOST,
+    "port": config("EMAIL_PORT", default=587, cast=int),
+    "username": config("EMAIL_HOST_USER", default=""),
+    "password": config("EMAIL_HOST_PASSWORD", default=""),
+    "use_ssl": _EMAIL_USE_SSL,
+    "use_tls": config("EMAIL_USE_TLS", default=not _EMAIL_USE_SSL, cast=bool),
+    "timeout": config("EMAIL_TIMEOUT", default=20, cast=int),
+}
+
+# **`OPTIONS` sólo cuando el backend es el de SMTP**, y no es una elegancia:
+# `MAILERS` es más estricto que los ajustes viejos, que ignoraban en silencio lo
+# que no les correspondía. Pasarle `host`/`port`/`username` al backend de consola
+# levanta `InvalidMailer` — y ése es justamente el backend que corre hoy en
+# `p340`, así que la traducción ingenua habría hecho reventar los trabajos
+# nocturnos en vez de imprimir. Verificado antes de escribir esto.
+MAILERS = {"default": {"BACKEND": _EMAIL_BACKEND}}
+if _EMAIL_BACKEND == SMTP_BACKEND:
+    MAILERS["default"]["OPTIONS"] = MAIL_OPTIONS_FROM_ENV
+
+# `DEFAULT_FROM_EMAIL` **no** está deprecado: no es de los once que Django 6.1
+# marcó, y sigue siendo el remitente por defecto.
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="aerocontrol@localhost")
 # Absolute base for links inside notification emails (no request available).
 SITE_BASE_URL = config("SITE_BASE_URL", default="http://localhost:8000").rstrip("/")
 

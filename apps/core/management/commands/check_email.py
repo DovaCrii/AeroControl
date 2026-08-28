@@ -27,7 +27,7 @@ la lee un operador en una sesión SSH, no un usuario en la interfaz.
 import smtplib
 
 from django.conf import settings
-from django.core.mail import EmailMessage, get_connection
+from django.core.mail import EmailMessage, mailers
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
@@ -79,12 +79,26 @@ class Command(BaseCommand):
     # -- 1. la configuración ------------------------------------------------
 
     def _report_configuration(self):
-        password = settings.EMAIL_HOST_PASSWORD
+        # LV-182: los ajustes `EMAIL_*` ya no existen — Django 6.1 los deprecó y
+        # 7.0 los elimina. **Los rótulos siguen diciendo `EMAIL_HOST` y compañía
+        # a propósito**: son los nombres de las **variables de entorno**, que no
+        # cambiaron, y este comando existe para que alguien frente al servidor
+        # sepa qué variable tocar. Rotularlo "host" a secas lo dejaría buscando
+        # en `/etc/aerocontrol.env` una clave que no existe.
+        #
+        # **Se informa lo que hay en el entorno, no lo que Django armó**, y la
+        # diferencia importa: con `EMAIL_HOST` vacío el backend es el de consola
+        # y `MAILERS` no lleva `OPTIONS` ninguna, así que leer de ahí diría que
+        # la contraseña está vacía **aunque esté puesta** — justo el caso de "la
+        # pegué y me olvidé del host", que este informe existe para distinguir.
+        # El backend sí sale de `MAILERS`, porque es lo que Django resolvió.
+        options = settings.MAIL_OPTIONS_FROM_ENV
+        password = options["password"]
         rows = [
-            ("EMAIL_BACKEND", settings.EMAIL_BACKEND),
-            ("EMAIL_HOST", settings.EMAIL_HOST or "(vacío)"),
-            ("EMAIL_PORT", settings.EMAIL_PORT),
-            ("EMAIL_HOST_USER", settings.EMAIL_HOST_USER or "(vacío)"),
+            ("EMAIL_BACKEND", settings.MAILERS["default"]["BACKEND"]),
+            ("EMAIL_HOST", options["host"] or "(vacío)"),
+            ("EMAIL_PORT", options["port"]),
+            ("EMAIL_HOST_USER", options["username"] or "(vacío)"),
             # **Nunca el valor.** Un comando de runbook que escupe una
             # contraseña al journal crea un problema nuevo mientras diagnostica
             # el viejo. El largo alcanza para distinguir "no la pegué" de "la
@@ -93,9 +107,9 @@ class Command(BaseCommand):
                 "EMAIL_HOST_PASSWORD",
                 f"({len(password)} caracteres)" if password else "(vacío)",
             ),
-            ("EMAIL_USE_TLS", settings.EMAIL_USE_TLS),
-            ("EMAIL_USE_SSL", getattr(settings, "EMAIL_USE_SSL", False)),
-            ("EMAIL_TIMEOUT", settings.EMAIL_TIMEOUT),
+            ("EMAIL_USE_TLS", options["use_tls"]),
+            ("EMAIL_USE_SSL", options["use_ssl"]),
+            ("EMAIL_TIMEOUT", options["timeout"]),
             ("DEFAULT_FROM_EMAIL", settings.DEFAULT_FROM_EMAIL),
         ]
         width = max(len(name) for name, _value in rows)
@@ -105,8 +119,23 @@ class Command(BaseCommand):
 
     # -- 2. la conexión -----------------------------------------------------
 
+    def _smtp_target(self):
+        """`host:puerto`, o el aviso de que no hay SMTP configurado.
+
+        LV-182: con `MAILERS`, un backend que no es el de SMTP **no tiene**
+        `host` ni `port` — antes existían igual como ajustes globales aunque no
+        se usaran. Devolver aquí un `:None` sería peor que decirlo.
+        """
+        options = settings.MAIL_OPTIONS_FROM_ENV
+        if not options["host"]:
+            return "(sin SMTP configurado)"
+        return f"{options['host']}:{options['port']}"
+
     def _open_connection(self):
-        connection = get_connection()
+        # LV-182: `mailers["default"]` en vez de `get_connection()`, que Django
+        # 6.1 deprecó. Es el mismo objeto de backend; lo que cambia es de dónde
+        # sale su configuración.
+        connection = mailers["default"]
         try:
             connection.open()
         except smtplib.SMTPAuthenticationError as error:
@@ -126,7 +155,7 @@ class Command(BaseCommand):
             # mal elegido: todos llegan por acá y todos se arreglan en el
             # entorno, así que el mensaje nombra las variables.
             raise CommandError(
-                f"No se pudo llegar a {settings.EMAIL_HOST}:{settings.EMAIL_PORT} "
+                f"No se pudo llegar a {self._smtp_target()} "
                 f"-- {type(error).__name__}: {error}. Revisá EMAIL_HOST, "
                 "EMAIL_PORT y EMAIL_USE_TLS / EMAIL_USE_SSL, y que el firewall "
                 "del servidor deje salir ese puerto."
@@ -135,8 +164,7 @@ class Command(BaseCommand):
             connection.close()
         self.stdout.write(
             self.style.SUCCESS(
-                f"Conexión abierta con {settings.EMAIL_HOST}:{settings.EMAIL_PORT} "
-                "y credenciales aceptadas."
+                f"Conexión abierta con {self._smtp_target()} y credenciales aceptadas."
             )
         )
 
@@ -149,7 +177,7 @@ class Command(BaseCommand):
             body=(
                 "Este mensaje lo envió `manage.py check_email` para comprobar "
                 "que el correo saliente de AeroControl funciona.\n\n"
-                f"Servidor: {settings.EMAIL_HOST}:{settings.EMAIL_PORT}\n"
+                f"Servidor: {self._smtp_target()}\n"
                 f"Remitente: {settings.DEFAULT_FROM_EMAIL}\n"
                 f"Fecha: {stamp}\n\n"
                 "Si recibiste esto, las nueve notificaciones de la aplicación "
@@ -182,7 +210,7 @@ class Command(BaseCommand):
         if not delivered:
             raise CommandError(
                 "El backend no entregó ningún mensaje y tampoco falló. "
-                f"Revisá EMAIL_BACKEND={settings.EMAIL_BACKEND}."
+                f"Revisá EMAIL_BACKEND={settings.MAILERS['default']['BACKEND']}."
             )
         self.stdout.write(
             self.style.SUCCESS(
