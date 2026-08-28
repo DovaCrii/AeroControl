@@ -99,6 +99,19 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **El plan geoespacial se cierra junto con sus permisos, sin cascada
+  (`LV-176`).** Al archivar un plan aparece una casilla por cada permiso ligado
+  y vivo —los del plan y los de las solicitudes SIGO nacidas de él—, todas
+  desmarcadas: lo que no marcás sigue abierto. Cada permiso cerrado deja su
+  propia entrada de auditoría, y todas comparten el identificador de la
+  petición, así que se ve que fue un solo acto.
+- **El padrón se ordena por apellido (`LV-177`).** Estaba ordenado por el nombre
+  de pila, porque el nombre vive en un solo campo. Entran dos campos auxiliares
+  —nombres y apellidos— que **nacen vacíos**: mientras no estén cargados, la
+  ficha ordena por su nombre completo y no desaparece de donde se la busca. El
+  comando `split_operator_names` propone el corte y sólo escribe con `--apply`,
+  dejando a mano los que no calzan en el patrón. El nombre completo sigue siendo
+  el de registro.
 - **Un intento de la prueba se puede retirar, archivándolo (`LV-173`).** Nunca
   borrándolo: además de la regla del proyecto, un intento aprobado alimenta el
   motor de vencimientos, y `generate_alerts` sólo mira los activos. Si al

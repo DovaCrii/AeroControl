@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Count, Prefetch, Q
+from django.db.models import Case, CharField, Count, F, Prefetch, Q, When
 from django.db.models.functions import Length
 from django.http import HttpResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -552,7 +552,24 @@ class OperatorList(RegistryList):
             .annotate(has_credential_pdf=Exists(credential_pdf))
             # R3.2: no Meta.ordering fell back to created_at (SearchMixin's
             # fallback), i.e. insertion order -- alphabetical by full name.
-            .order_by("full_name")
+            #
+            # LV-177: y por nombre completo se ordena por el **nombre de pila**,
+            # porque es un solo campo y lo primero que trae es el nombre. A
+            # alguien se lo busca por el apellido, así que con 42 personas había
+            # que barrer la lista entera. Ahora manda `surnames` cuando está
+            # cargado; las fichas sin cortar caen por su nombre completo en vez
+            # de agruparse al principio, que es lo que haría un `''` ordenando
+            # como cadena vacía — y desaparecerían del lugar donde alguien las
+            # busca. `full_name` queda de desempate: dos hermanos comparten
+            # apellidos y la lista no puede quedar en orden arbitrario.
+            .annotate(
+                sort_name=Case(
+                    When(surnames="", then=F("full_name")),
+                    default=F("surnames"),
+                    output_field=CharField(),
+                )
+            )
+            .order_by("sort_name", "full_name")
         )
 
 

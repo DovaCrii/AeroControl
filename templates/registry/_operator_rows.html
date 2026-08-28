@@ -1,10 +1,20 @@
 {% load aero_tags i18n %}
 {% for object in objects %}
 <tr>
-  <td><a href="{{ object.pk }}/" class="table-primary-value">{{ object.full_name }}</a>{% if not object.is_active %} <span class="badge bg-secondary">{% translate "Archived" %}</span>{% endif %}
+  {% comment %}LV-177: el apellido adelante cuando el corte está hecho. La lista
+  se lee de a filas y es lo que deja encontrar a alguien de un vistazo; mientras
+  haya fichas sin cortar conviven las dos formas, y eso es correcto — cada fila
+  dice la verdad de lo que se sabe de ese nombre en vez de inventar un corte para
+  que todas se vean iguales. El `title` lleva siempre el nombre de registro, que
+  es el que aparece en el permiso y en el catastro.{% endcomment %}
+  <td><a href="{{ object.pk }}/" class="table-primary-value" title="{{ object.full_name }}">{{ object.listing_name }}</a>{% if not object.is_active %} <span class="badge bg-secondary">{% translate "Archived" %}</span>{% endif %}
     {% if object.rut %}<span class="table-primary-sub cell-truncate">{{ object.rut }}</span>{% endif %}
   </td>
-  <td class="cell-truncate">{{ object.dgac_credential|default:"—" }}</td>
+  {% comment %}LV-177: el folio de la credencial es un número y se alineaba a la
+  izquierda como texto, con cifras de ancho variable. Alineado a la derecha y con
+  `tabular-nums`, comparar dos folios de la lista deja de exigir leerlos
+  dígito por dígito.{% endcomment %}
+  <td class="cell-truncate cell-numeric">{{ object.dgac_credential|default:"—" }}</td>
   <td class="cell-status">
     {% if object.credential_expiry %}
       {% if object.credential_is_overdue %}<span class="badge bg-danger">{% translate "Overdue" %} · {{ object.credential_expiry|date:'Y-m-d' }}</span>

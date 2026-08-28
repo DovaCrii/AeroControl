@@ -1959,8 +1959,22 @@ a.admin-metric:hover { border-color: var(--ac-text-secondary); }
    encabezado de dos líneas, que se lee. */
 .table-normalized thead th {
   white-space: normal;
+  /* LV-177: `break-word` corta **a mitad de palabra** cuando una sola no cabe,
+     y eso fue lo que el usuario reportó el 2026-08-28: "CREDENCIA / L ADJUNTA"
+     en la columna del 6%. Se conserva porque es el último recurso correcto —sin
+     él la palabra desborda y pisa a la vecina, que es peor— pero deja de hacer
+     falta en cuanto un rótulo entra en su columna. La regla real es la del
+     rótulo: si necesita partirse, está mal elegido para el ancho que tiene. */
   overflow-wrap: break-word;
 }
+
+/* LV-177: una columna de números se lee comparando, y para comparar las cifras
+   tienen que estar alineadas por unidad y medir lo mismo. */
+.cell-numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.table-normalized thead th.cell-numeric { text-align: right; }
 
 /* IDENTIDAD: la línea 1 es el identificador con el que se habla del registro
    (código, matrícula, nombre) y no se parte; la línea 2 desambigua y trunca. */

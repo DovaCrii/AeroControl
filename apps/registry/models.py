@@ -744,6 +744,27 @@ class Operator(BaseModel):
         max_length=50, blank=True, verbose_name=_("Employee ID")
     )
     full_name = models.CharField(max_length=150)
+    # LV-177: el padrón se busca por apellido y estaba ordenado por nombre de
+    # pila, porque `full_name` es un solo campo y ordenarlo alfabéticamente
+    # ordena por lo primero que trae. Con 42 personas eso obliga a barrer la
+    # lista entera para encontrar a alguien.
+    #
+    # **`full_name` sigue siendo el nombre de registro**, y estos dos son
+    # auxiliares de orden y presentación. La distinción no es un matiz: el
+    # nombre completo aparece en permisos, catastro, PDF y correos, y cambiarle
+    # el origen habría tocado todo eso por una mejora de listado.
+    #
+    # Nacen **vacíos y opcionales a propósito**: dónde empieza el apellido no es
+    # deducible sin equivocarse —"Bernardine Von Irmer Helle", "Jose Luis Ogalde
+    # Henríquez"— y un corte inventado es peor que ninguno, porque ordena mal
+    # justo los casos raros. La lista ordena por apellido cuando está cargado y
+    # por nombre completo cuando no, así que nadie desaparece mientras se
+    # completan. El comando `split_operator_names` propone el corte; escribirlo
+    # exige `--apply`.
+    given_names = models.CharField(
+        max_length=100, blank=True, verbose_name=_("Given names")
+    )
+    surnames = models.CharField(max_length=100, blank=True, verbose_name=_("Surnames"))
     email = models.EmailField(blank=True)
     phone = models.CharField(max_length=50, blank=True)
     rut = models.CharField(max_length=20, blank=True, verbose_name=_("RUT"))
@@ -828,6 +849,7 @@ class Operator(BaseModel):
         from .rut import employee_id_from_rut, normalize_rut, rut_is_valid
 
         super().clean()
+        self._check_name_parts_belong_to_the_full_name()
         self.rut = normalize_rut(self.rut)
         self.employee_id = (self.employee_id or "").strip()
         if not self.employee_id and rut_is_valid(self.rut):
@@ -856,6 +878,54 @@ class Operator(BaseModel):
                     % {"rut": self.rut, "name": existing.full_name}
                 }
             )
+
+    def _check_name_parts_belong_to_the_full_name(self):
+        """LV-177: nombres y apellidos tienen que salir del nombre de registro.
+
+        No impone **orden ni cantidad** —eso es justamente lo que no se puede
+        deducir— pero caza el caso que sí importa: que alguien escriba en estos
+        campos un apellido que no está en `full_name` y la ficha quede diciendo
+        dos nombres distintos para la misma persona, con la lista ordenada por
+        uno y todo lo demás mostrando el otro.
+
+        Se compara sin tildes ni caja: quien complete el corte va a tipearlo a
+        mano, y rechazarlo por un acento sería convertir un guardián en un
+        estorbo.
+        """
+        import unicodedata
+
+        def words(text):
+            plain = unicodedata.normalize("NFKD", text or "")
+            plain = "".join(c for c in plain if not unicodedata.combining(c))
+            return set(plain.casefold().split())
+
+        available = words(self.full_name)
+        stray = (words(self.given_names) | words(self.surnames)) - available
+        if stray:
+            raise ValidationError(
+                {
+                    # El `%` va **fuera** de `gettext`: interpolando adentro, la
+                    # búsqueda se haría sobre el texto ya sustituido y jamás
+                    # encontraría la entrada del catálogo — el mensaje saldría
+                    # siempre en inglés y ningún test lo delataría.
+                    "surnames": _("%(words)s is not part of the full name on file.")
+                    % {"words": ", ".join(sorted(stray))}
+                }
+            )
+
+    @property
+    def listing_name(self):
+        """ "Apellidos, Nombres" cuando el corte está hecho; si no, el completo.
+
+        LV-177: la lista se lee de a filas y el apellido adelante es lo que deja
+        encontrar a alguien de un vistazo. Mientras haya fichas sin cortar
+        conviven las dos formas, y eso es correcto: cada fila dice la verdad de
+        lo que se sabe de ese nombre, en vez de inventar un corte para que todas
+        se vean iguales.
+        """
+        if self.surnames and self.given_names:
+            return f"{self.surnames}, {self.given_names}"
+        return self.full_name
 
     def _rut_changed(self):
         """True en un alta, o cuando el RUT guardado difiere del que se va a escribir.
