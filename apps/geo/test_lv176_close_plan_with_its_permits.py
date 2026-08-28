@@ -96,7 +96,7 @@ def test_ticking_nothing_leaves_every_permit_open(world):
     """Es lo que separa "acompañado" de "cascada"."""
     client = login_as("delete_geoplan", "delete_flightpermission", "view_geoplan")
 
-    _archive(client, world["plan"], confirm="1")
+    _archive(client, world["plan"], confirm="1", close_reason="internal_change")
 
     world["plan"].refresh_from_db()
     world["permit"].refresh_from_db()
@@ -111,6 +111,7 @@ def test_ticking_a_permit_closes_it_with_the_plan(world):
         client,
         world["plan"],
         confirm="1",
+        close_reason="internal_change",
         archive_permission=str(world["permit"].pk),
     )
 
@@ -128,6 +129,7 @@ def test_each_closed_permit_leaves_its_own_audit_entry(world):
         client,
         world["plan"],
         confirm="1",
+        close_reason="internal_change",
         archive_permission=str(world["permit"].pk),
     )
 
@@ -148,6 +150,7 @@ def test_the_plan_and_its_permits_are_recorded_as_one_act(world):
         client,
         world["plan"],
         confirm="1",
+        close_reason="internal_change",
         archive_permission=str(world["permit"].pk),
     )
 
@@ -172,6 +175,7 @@ def test_without_the_permit_permission_a_forged_post_changes_nothing(world):
         client,
         world["plan"],
         confirm="1",
+        close_reason="internal_change",
         archive_permission=str(world["permit"].pk),
     )
 

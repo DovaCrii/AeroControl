@@ -206,8 +206,17 @@ class GeoPlanArchive(ModelPermissionRequiredMixin, View):
             "operations.delete_flightpermission"
         )
         linked = self._linked_permissions(plan)
+        reason = request.POST.get("close_reason", "")
+        detail = request.POST.get("close_reason_detail", "").strip()
         if any(bool(value) for value in dependents.values()):
-            if request.POST.get("confirm") != "1":
+            # LV-178: el motivo se pide **en esta pantalla**, la que ya existía,
+            # y no se fuerza una confirmación nueva para los planes sin nada
+            # colgando: `LV-135` decidió que ésos se archivan de una, con la
+            # razón escrita —"una confirmación vacía sólo enseña a apretar sí sin
+            # leer"— y sigue valiendo. En la práctica casi todo plan tiene al
+            # menos una versión, así que casi todos pasan por acá.
+            error = self._reason_error(reason, detail)
+            if request.POST.get("confirm") != "1" or error:
                 return render(
                     request,
                     "geo/plan_archive_confirm.html",
@@ -217,14 +226,36 @@ class GeoPlanArchive(ModelPermissionRequiredMixin, View):
                         "dependents": dependents,
                         "linked_permissions": linked,
                         "may_archive_permits": may_archive_permits,
+                        "close_reason_choices": GeoPlan.CLOSE_REASON_CHOICES,
+                        "close_reason": reason,
+                        "close_reason_detail": detail,
+                        "reason_error": error if request.POST.get("confirm") else None,
                     },
                 )
+            plan.close_reason = reason
+            plan.close_reason_detail = detail if reason == GeoPlan.CLOSE_OTHER else ""
         archived = self._archive_chosen_permissions(
             request, linked, may_archive_permits
         )
         plan.is_active = False
-        plan.save(update_fields=["is_active", "updated_at"])
-        set_audit_context(request, plan, action="archived")
+        plan.save(
+            update_fields=[
+                "is_active",
+                "close_reason",
+                "close_reason_detail",
+                "updated_at",
+            ]
+        )
+        # LV-178: el motivo entra en la auditoría, y como el middleware comparte
+        # el `metadata` entre la fila principal y sus hermanas, cada permiso
+        # cerrado en este acto queda registrado con el mismo motivo. Es lo
+        # correcto: se cerraron por eso.
+        set_audit_context(
+            request,
+            plan,
+            action="archived",
+            metadata={"close_reason": plan.close_reason} if plan.close_reason else None,
+        )
         messages.success(
             request,
             _("Plan archived. Use the Archived filter to find or restore it."),
@@ -240,6 +271,21 @@ class GeoPlanArchive(ModelPermissionRequiredMixin, View):
                 % {"count": archived},
             )
         return redirect("geo-plan-list")
+
+    def _reason_error(self, reason, detail):
+        """El aviso a mostrar, o `None`. LV-178.
+
+        Se valida acá **además** de en `GeoPlan.clean()` porque el motivo llega
+        de un POST suelto y no de un `ModelForm`: sin este paso, un motivo
+        ausente pasaría al `save()` sin que nadie lo mire, y `clean()` sólo lo
+        atraparía si alguien lo llamara.
+        """
+        valid = {code for code, _label in GeoPlan.CLOSE_REASON_CHOICES}
+        if reason not in valid:
+            return _("Choose why this plan is being closed.")
+        if reason == GeoPlan.CLOSE_OTHER and not detail:
+            return _("Say what the other reason was.")
+        return None
 
     def _archive_chosen_permissions(self, request, linked, may_archive_permits):
         """Archiva los permisos marcados. Devuelve cuántos.

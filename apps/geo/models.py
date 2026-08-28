@@ -77,6 +77,43 @@ class GeoPlan(StatusFlowMixin, BaseModel):
         related_name="geo_plans",
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
+    # LV-178: por qué se cerró el expediente, para poder contarlo. Pedido del
+    # usuario: *"poder clasificar igual cuando fallan"*, y los dos motivos son
+    # suyos — *"existe rechazo por ejemplo casos por la DGAC, modificación
+    # interna"*.
+    #
+    # **Son cosas distintas y por eso se cuentan aparte**: diez rechazos de la
+    # autoridad dicen que estamos presentando mal; diez modificaciones internas
+    # son trabajo normal. Un solo número que sume las dos no sirve para decidir
+    # nada.
+    #
+    # **No se cuelga del estado**, que ya tiene `rejected` acá y `denied` en el
+    # permiso: eso es el resultado del trámite, no el motivo del cierre. Un plan
+    # aprobado puede archivarse por modificación interna, y ese caso se perdería.
+    #
+    # `other` con detalle libre existe para **no inventar categorías**: si en
+    # unos meses el detalle repite siempre la misma frase, esa frase es un motivo
+    # que faltaba y se agrega con el dato en la mano. La lista es del usuario.
+    CLOSE_DGAC_REJECTED = "dgac_rejected"
+    CLOSE_INTERNAL_CHANGE = "internal_change"
+    CLOSE_OTHER = "other"
+    CLOSE_REASON_CHOICES = [
+        (CLOSE_DGAC_REJECTED, _("Rejected by the DGAC")),
+        (CLOSE_INTERNAL_CHANGE, _("Internal modification")),
+        (CLOSE_OTHER, _("Other")),
+    ]
+    # En blanco a propósito: los planes archivados antes de esta fila no tienen
+    # motivo y **no se les puede inventar uno**. Un informe que los cuente como
+    # "otro" mentiría sobre datos que nadie registró.
+    close_reason = models.CharField(
+        max_length=20,
+        choices=CLOSE_REASON_CHOICES,
+        blank=True,
+        verbose_name=_("Reason for closing"),
+    )
+    close_reason_detail = models.CharField(
+        max_length=250, blank=True, verbose_name=_("Reason detail")
+    )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
@@ -151,6 +188,24 @@ class GeoPlan(StatusFlowMixin, BaseModel):
         # anterior a LV-138 que aún no lo tenga— cae al título, que es lo que
         # esta cadena decía antes.
         return f"{self.folio} · {self.title}" if self.folio else self.title
+
+    def clean(self):
+        """LV-178: "Otro" sin decir cuál no clasifica nada.
+
+        La opción existe para no inventar categorías, no para tener un cajón
+        donde tirar lo que da pereza explicar: sin el detalle, un "otro" es
+        exactamente igual de informativo que no haber preguntado. Y el detalle
+        sobra en los dos motivos con nombre — ahí la categoría ya lo dice.
+
+        Vive en el modelo y no sólo en el formulario porque la regla vale
+        también para el admin y para cualquier import, que es lo que pide
+        `AGENTS.md`.
+        """
+        super().clean()
+        if self.close_reason == self.CLOSE_OTHER and not self.close_reason_detail:
+            raise ValidationError(
+                {"close_reason_detail": _("Say what the other reason was.")}
+            )
 
     def get_absolute_url(self):
         from django.urls import reverse
