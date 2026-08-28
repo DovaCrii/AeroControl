@@ -487,6 +487,29 @@ def _resolve_weather_choice(selection, permits, sites):
     return None, None
 
 
+def _weather_plan_url(permission):
+    """La ficha del plan geoespacial de este permiso, o `None`.
+
+    LV-179: el panel muestra el pronóstico y **no lo guarda**; la ficha del plan
+    lo muestra sobre el área dibujada y ahí se puede archivar como evidencia
+    (`R8.1`). Este es el puente entre la pantalla que se mira por costumbre y la
+    que deja constancia.
+
+    Se elige el plan **activo más reciente**, y si hay varios no se listan: la
+    tarjeta es un atajo, no un índice. Sin plan ligado devuelve `None` y el
+    enlace no se dibuja — un botón que lleva a ninguna parte enseña a no
+    apretar botones.
+    """
+    from apps.geo.models import GeoPlan
+
+    plan = (
+        GeoPlan.objects.filter(flight_permission=permission, is_active=True)
+        .order_by("-created_at")
+        .first()
+    )
+    return reverse("geo-plan-detail", args=[plan.pk]) if plan else None
+
+
 def panel_forecast(today, cost_center=None, user=None, selection=None):
     """R8.4: the weather for the operation's next flight, for the panel.
 
@@ -611,6 +634,22 @@ def panel_forecast(today, cost_center=None, user=None, selection=None):
             "weather_selection": (f"permission:{permission.pk}" if chosen_kind else ""),
             "weather_card": True,
             "weather_url": reverse("permission-detail", args=[permission.pk]),
+            # LV-179: el camino a donde el clima **queda registrado**.
+            #
+            # Esta tarjeta se recalcula en cada visita y no guarda nada — su
+            # propio pie lo dice: sólo de referencia, no reemplaza el chequeo
+            # preoperacional. Donde el pronóstico se archiva como evidencia
+            # (`R8.1`, `WeatherReview`) es en la ficha del plan geoespacial, y
+            # eso importa porque **un pronóstico no es reproducible después**:
+            # preguntarle al proveedor por una fecha pasada devuelve otra corrida
+            # del modelo, o nada.
+            #
+            # Se resolvió así, con un enlace, y **no** repitiendo las cifras en
+            # la ficha del plan —que ya las tiene— ni sumando una tercera
+            # pantalla: dos superficies mostrando el mismo pronóstico y sólo una
+            # que deja constancia es una invitación a mirar la que no registra y
+            # creer que se hizo el chequeo.
+            "weather_plan_url": _weather_plan_url(permission),
         }
 
     coordinates = (

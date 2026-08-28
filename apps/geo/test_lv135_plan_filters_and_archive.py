@@ -190,8 +190,12 @@ class TestArchiving:
             created_by=plan.created_by,
         )
 
+        # LV-178: confirmar ahora incluye **por qué** se cierra. La pantalla ya
+        # existía y ahí se pide el motivo, así que confirmar sin él vuelve al
+        # formulario en vez de archivar — ver `test_lv178`.
         response = login_as("view_geoplan", "delete_geoplan").post(
-            reverse("geo-plan-archive", args=[plan.pk]), {"confirm": "1"}
+            reverse("geo-plan-archive", args=[plan.pk]),
+            {"confirm": "1", "close_reason": "internal_change"},
         )
 
         assert response.status_code == 302

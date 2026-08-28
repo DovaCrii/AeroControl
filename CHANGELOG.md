@@ -99,6 +99,20 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Se registra por qué se cerró un plan, para poder contarlo (`LV-178`).** Dos
+  motivos: **rechazo de la DGAC** y **modificación interna**, más *Otro* que
+  exige decir cuál. Son cosas distintas y por eso se cuentan aparte: diez
+  rechazos de la autoridad dicen que estamos presentando mal, diez
+  modificaciones internas son trabajo normal. No se deduce del estado —un plan
+  aprobado puede archivarse por modificación interna— y los planes archivados
+  antes de esto quedan **sin motivo**, porque inventarles uno haría mentir a
+  cualquier informe.
+- **Del clima del panel a donde ese clima queda registrado (`LV-179`).** La
+  tarjeta del panel se recalcula en cada visita y no guarda nada; la ficha del
+  plan muestra el pronóstico sobre el área dibujada y ahí se archiva como
+  evidencia. Ahora hay un enlace entre las dos. No se repiten las cifras: dos
+  pantallas con el mismo pronóstico y una sola que deja constancia invita a
+  mirar la que no registra y creer que se hizo el chequeo.
 - **El plan geoespacial se cierra junto con sus permisos, sin cascada
   (`LV-176`).** Al archivar un plan aparece una casilla por cada permiso ligado
   y vivo —los del plan y los de las solicitudes SIGO nacidas de él—, todas

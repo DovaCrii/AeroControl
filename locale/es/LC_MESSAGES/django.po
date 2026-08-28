@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-28 09:33-0400\n"
+"POT-Creation-Date: 2026-08-28 10:10-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -196,7 +196,7 @@ msgid "There are no active records of this type yet."
 msgstr "Aún no hay registros activos de este tipo."
 
 #: .\apps\compliance\forms.py:523 .\apps\compliance\forms.py:565
-#: .\apps\geo\views.py:421 .\apps\registry\forms.py:95
+#: .\apps\geo\views.py:467 .\apps\registry\forms.py:95
 #: .\apps\workboard\forms.py:23 .\apps\workboard\forms.py:47
 #: .\apps\workboard\forms.py:122 .\templates\core\users_roles.html:24
 #: .\templates\generic\list.html:40 .\templates\registry\operator_list.html:49
@@ -321,7 +321,7 @@ msgstr "Origen"
 msgid "Detected on"
 msgstr "Detectada el"
 
-#: .\apps\compliance\forms.py:669 .\apps\geo\views.py:422
+#: .\apps\compliance\forms.py:669 .\apps\geo\views.py:468
 #: .\apps\maintenance\forms.py:23 .\apps\workboard\forms.py:24
 #: .\apps\workboard\forms.py:78
 #: .\templates\compliance\nonconformity_detail.html:20
@@ -525,6 +525,7 @@ msgid "Company documents"
 msgstr "Documentos de la empresa"
 
 #: .\apps\compliance\models.py:69 .\apps\core\choices.py:23
+#: .\apps\geo\models.py:103
 msgid "Other"
 msgstr "Otro"
 
@@ -1449,24 +1450,44 @@ msgid "Approved"
 msgstr "Aprobado"
 
 #: .\apps\geo\models.py:101
+msgid "Rejected by the DGAC"
+msgstr "Rechazado por la DGAC"
+
+#: .\apps\geo\models.py:102
+msgid "Internal modification"
+msgstr "Modificación interna"
+
+#: .\apps\geo\models.py:112
+msgid "Reason for closing"
+msgstr "Motivo del cierre"
+
+#: .\apps\geo\models.py:115
+msgid "Reason detail"
+msgstr "Detalle del motivo"
+
+#: .\apps\geo\models.py:138
 msgid "geo plan"
 msgstr "plan geoespacial"
 
-#: .\apps\geo\models.py:102
+#: .\apps\geo\models.py:139
 msgid "geo plans"
 msgstr "planes geoespaciales"
 
-#: .\apps\geo\models.py:253 .\templates\registry\aircraft_list.html:4
+#: .\apps\geo\models.py:207 .\apps\geo\views.py:287
+msgid "Say what the other reason was."
+msgstr "Indica cuál fue el otro motivo."
+
+#: .\apps\geo\models.py:308 .\templates\registry\aircraft_list.html:4
 #: .\templates\registry\costcenter_list.html:4
 #: .\templates\registry\operator_list.html:4
 msgid "Import"
 msgstr "Importación"
 
-#: .\apps\geo\models.py:254 .\apps\workboard\models.py:84
+#: .\apps\geo\models.py:309 .\apps\workboard\models.py:84
 msgid "Editor"
 msgstr "Editor"
 
-#: .\apps\geo\models.py:255 .\templates\generic\_table_body.html:16
+#: .\apps\geo\models.py:310 .\templates\generic\_table_body.html:16
 #: .\templates\generic\detail.html:22 .\templates\geo\_plan_rows.html:33
 #: .\templates\geo\plan_detail.html:83 .\templates\geo\plan_detail.html:346
 #: .\templates\operations\_permission_rows.html:17
@@ -1479,39 +1500,39 @@ msgstr "Editor"
 msgid "Restore"
 msgstr "Restaurar"
 
-#: .\apps\geo\models.py:287
+#: .\apps\geo\models.py:342
 msgid "geo plan version"
 msgstr "versión de plan geoespacial"
 
-#: .\apps\geo\models.py:288
+#: .\apps\geo\models.py:343
 msgid "geo plan versions"
 msgstr "versiones de plan geoespacial"
 
-#: .\apps\geo\models.py:319
+#: .\apps\geo\models.py:374
 msgid "This plan cannot be edited in its current state."
 msgstr "Este plan no puede editarse en su estado actual."
 
-#: .\apps\geo\models.py:356
+#: .\apps\geo\models.py:411
 msgid "geo plan history entry"
 msgstr "entrada del historial del plan geoespacial"
 
-#: .\apps\geo\models.py:357
+#: .\apps\geo\models.py:412
 msgid "geo plan history"
 msgstr "historial del plan geoespacial"
 
-#: .\apps\geo\models.py:407
+#: .\apps\geo\models.py:462
 msgid "geo plan permission link"
 msgstr "vínculo de permiso del plan geoespacial"
 
-#: .\apps\geo\models.py:408
+#: .\apps\geo\models.py:463
 msgid "geo plan permission links"
 msgstr "vínculos de permiso del plan geoespacial"
 
-#: .\apps\geo\models.py:476
+#: .\apps\geo\models.py:531
 msgid "weather review"
 msgstr "revisión meteorológica"
 
-#: .\apps\geo\models.py:477
+#: .\apps\geo\models.py:532
 msgid "weather reviews"
 msgstr "revisiones meteorológicas"
 
@@ -1539,71 +1560,75 @@ msgstr "Reanudar edición"
 msgid "Reopen for editing"
 msgstr "Reabrir para edición"
 
-#: .\apps\geo\views.py:230
+#: .\apps\geo\views.py:261
 msgid "Plan archived. Use the Archived filter to find or restore it."
 msgstr "Plan archivado. Búscalo o restáuralo con el filtro Archivados."
 
-#: .\apps\geo\views.py:236
+#: .\apps\geo\views.py:267
 #, python-format
 msgid "%(count)s linked permit archived as well."
 msgid_plural "%(count)s linked permits archived as well."
 msgstr[0] "%(count)s permiso ligado archivado también."
 msgstr[1] "%(count)s permisos ligados archivados también."
 
-#: .\apps\geo\views.py:284
+#: .\apps\geo\views.py:285
+msgid "Choose why this plan is being closed."
+msgstr "Elige por qué se cierra este plan."
+
+#: .\apps\geo\views.py:330
 msgid "Plan restored."
 msgstr "Plan restaurado."
 
-#: .\apps\geo\views.py:413
+#: .\apps\geo\views.py:459
 msgid "Untitled"
 msgstr "Sin título"
 
-#: .\apps\geo\views.py:414
+#: .\apps\geo\views.py:460
 msgid "Length"
 msgstr "Longitud"
 
-#: .\apps\geo\views.py:415 .\apps\operations\forms.py:497
+#: .\apps\geo\views.py:461 .\apps\operations\forms.py:497
 #: .\apps\operations\models.py:647 .\templates\geo\_sigo_sheet.html:22
 #: .\templates\operations\flight_request_detail.html:92
 msgid "Area"
 msgstr "Área"
 
-#: .\apps\geo\views.py:416 .\templates\geo\plan_detail.html:252
+#: .\apps\geo\views.py:462 .\templates\geo\plan_detail.html:252
 msgid "Layers"
 msgstr "Capas"
 
-#: .\apps\geo\views.py:417 .\templates\geo\plan_detail.html:329
+#: .\apps\geo\views.py:463 .\templates\geo\plan_detail.html:329
 msgid "Features"
 msgstr "Elementos"
 
-#: .\apps\geo\views.py:418
+#: .\apps\geo\views.py:464
 msgid "Loading map…"
 msgstr "Cargando el mapa…"
 
-#: .\apps\geo\views.py:419
+#: .\apps\geo\views.py:465
 msgid "The map could not be loaded."
 msgstr "No se pudo cargar el mapa."
 
-#: .\apps\geo\views.py:420
+#: .\apps\geo\views.py:466
 msgid "This version has no geometry to show."
 msgstr "Esta versión no tiene geometría para mostrar."
 
-#: .\apps\geo\views.py:423 .\templates\compliance\report.html:44
+#: .\apps\geo\views.py:469 .\templates\compliance\report.html:44
 #: .\templates\operations\permission_detail.html:28
 #: .\templates\registry\catastro.html:45
 #: .\templates\workboard\task_list.html:16
 msgid "Apply"
 msgstr "Aplicar"
 
-#: .\apps\geo\views.py:424
+#: .\apps\geo\views.py:470
 msgid "Unsaved changes"
 msgstr "Cambios sin guardar"
 
-#: .\apps\geo\views.py:425
+#: .\apps\geo\views.py:471
 msgid "Saving…"
 msgstr "Guardando…"
 
-#: .\apps\geo\views.py:427
+#: .\apps\geo\views.py:473
 msgid ""
 "The plan changed on the server. Reload to get the latest version, then "
 "reapply your changes."
@@ -1611,98 +1636,98 @@ msgstr ""
 "El plan cambió en el servidor. Recarga para obtener la última versión y "
 "vuelve a aplicar tus cambios."
 
-#: .\apps\geo\views.py:430
+#: .\apps\geo\views.py:476
 msgid "This plan can no longer be edited."
 msgstr "Este plan ya no puede editarse."
 
-#: .\apps\geo\views.py:431
+#: .\apps\geo\views.py:477
 msgid "The change was rejected:"
 msgstr "El cambio fue rechazado:"
 
-#: .\apps\geo\views.py:432
+#: .\apps\geo\views.py:478
 msgid "Too many saves in a row. Wait a moment."
 msgstr "Demasiados guardados seguidos. Espera un momento."
 
-#: .\apps\geo\views.py:433
+#: .\apps\geo\views.py:479
 msgid "Download your local copy"
 msgstr "Descargar tu copia local"
 
-#: .\apps\geo\views.py:435
+#: .\apps\geo\views.py:481
 msgid "Visible"
 msgstr "Visible"
 
-#: .\apps\geo\views.py:436
+#: .\apps\geo\views.py:482
 msgid "Duplicate"
 msgstr "Duplicar"
 
-#: .\apps\geo\views.py:437
+#: .\apps\geo\views.py:483
 msgid "Split into parts"
 msgstr "Separar en partes"
 
-#: .\apps\geo\views.py:438
+#: .\apps\geo\views.py:484
 msgid "Root — drop here or click to add new here"
 msgstr "Raíz — suelta aquí o haz clic para agregar aquí"
 
-#: .\apps\geo\views.py:440
+#: .\apps\geo\views.py:486
 msgid "Compare"
 msgstr "Comparar"
 
-#: .\apps\geo\views.py:441
+#: .\apps\geo\views.py:487
 msgid "Exit comparison"
 msgstr "Salir de la comparación"
 
-#: .\apps\geo\views.py:442
+#: .\apps\geo\views.py:488
 msgid "Added"
 msgstr "Agregado"
 
-#: .\apps\geo\views.py:443
+#: .\apps\geo\views.py:489
 msgid "Removed"
 msgstr "Eliminado"
 
-#: .\apps\geo\views.py:444
+#: .\apps\geo\views.py:490
 msgid "Changed"
 msgstr "Modificado"
 
-#: .\apps\geo\views.py:445 .\templates\geo\plan_detail.html:327
+#: .\apps\geo\views.py:491 .\templates\geo\plan_detail.html:327
 #: .\templates\geo\plan_list.html:58
 msgid "Version"
 msgstr "Versión"
 
-#: .\apps\geo\views.py:586
+#: .\apps\geo\views.py:632
 msgid "Editing started."
 msgstr "Edición iniciada."
 
-#: .\apps\geo\views.py:594
+#: .\apps\geo\views.py:640
 msgid "Plan submitted for review."
 msgstr "Plan enviado a revisión."
 
-#: .\apps\geo\views.py:602
+#: .\apps\geo\views.py:648
 msgid "Plan approved."
 msgstr "Plan aprobado."
 
-#: .\apps\geo\views.py:610
+#: .\apps\geo\views.py:656
 msgid "Plan rejected."
 msgstr "Plan rechazado."
 
-#: .\apps\geo\views.py:618
+#: .\apps\geo\views.py:664
 msgid "Editing resumed."
 msgstr "Edición reanudada."
 
-#: .\apps\geo\views.py:626
+#: .\apps\geo\views.py:672
 msgid "Plan reopened for editing."
 msgstr "Plan reabierto para edición."
 
-#: .\apps\geo\views.py:653
+#: .\apps\geo\views.py:699
 msgid "This plan has no area or no linked permit date to review."
 msgstr "Este plan no tiene área ni fecha de permiso enlazada para revisar."
 
-#: .\apps\geo\views.py:665
+#: .\apps\geo\views.py:711
 msgid "The forecast is unavailable right now, so nothing was recorded."
 msgstr ""
 "El pronóstico no está disponible en este momento, así que no se registró "
 "nada."
 
-#: .\apps\geo\views.py:678
+#: .\apps\geo\views.py:724
 msgid "Weather review recorded."
 msgstr "Revisión meteorológica registrada."
 
@@ -3879,7 +3904,7 @@ msgstr "Planificación geoespacial"
 #: .\templates\compliance\email\monthly_review_deadline.txt:5
 #: .\templates\compliance\monthly_review.html:38
 #: .\templates\core\calendar.html:34 .\templates\core\calendar.html:50
-#: .\templates\dashboard\index.html:374
+#: .\templates\dashboard\index.html:386
 msgid "Flights"
 msgstr "Vuelos"
 
@@ -4005,7 +4030,7 @@ msgstr "Guardar"
 #: .\templates\compliance\document_replace.html:12
 #: .\templates\generic\_form_content.html:14
 #: .\templates\generic\confirm_delete.html:6 .\templates\generic\form.html:16
-#: .\templates\geo\plan_archive_confirm.html:58
+#: .\templates\geo\plan_archive_confirm.html:80
 #: .\templates\geo\plan_detail.html:312 .\templates\geo\plan_import.html:22
 #: .\templates\operations\flight_request_split.html:73
 #: .\templates\operations\permission_archive_confirm.html:54
@@ -5493,19 +5518,23 @@ msgstr "Ubicación del pronóstico"
 msgid "Next flight (automatic)"
 msgstr "Próximo vuelo (automático)"
 
-#: .\templates\dashboard\index.html:334
+#: .\templates\dashboard\index.html:343
+msgid "Review and file it on the plan"
+msgstr "Revisar y dejarlo registrado en el plan"
+
+#: .\templates\dashboard\index.html:346
 msgid "Open the permission"
 msgstr "Abrir el permiso"
 
-#: .\templates\dashboard\index.html:334
+#: .\templates\dashboard\index.html:346
 msgid "Open the cost center"
 msgstr "Abrir el centro de costo"
 
-#: .\templates\dashboard\index.html:341
+#: .\templates\dashboard\index.html:353
 msgid "Forecast unavailable right now."
 msgstr "El pronóstico no está disponible por ahora."
 
-#: .\templates\dashboard\index.html:343 .\templates\geo\plan_detail.html:269
+#: .\templates\dashboard\index.html:355 .\templates\geo\plan_detail.html:269
 msgid ""
 "Source: Open-Meteo. Reference only -- it does not replace the pre-flight "
 "check."
@@ -5513,11 +5542,11 @@ msgstr ""
 "Fuente: Open-Meteo. Solo de referencia -- no reemplaza el chequeo "
 "preoperacional."
 
-#: .\templates\dashboard\index.html:360
+#: .\templates\dashboard\index.html:372
 msgid "Maintenance by Type"
 msgstr "Mantenimiento por tipo"
 
-#: .\templates\dashboard\index.html:373
+#: .\templates\dashboard\index.html:385
 msgid "Monthly Flights (6 months)"
 msgstr "Vuelos mensuales (6 meses)"
 
@@ -5808,11 +5837,19 @@ msgstr ""
 "tiene un expediente que este plan explica. Archívalo sólo si estás seguro de "
 "que nadie va a necesitar consultarlo."
 
-#: .\templates\geo\plan_archive_confirm.html:44
+#: .\templates\geo\plan_archive_confirm.html:43
+msgid "Why is it being closed?"
+msgstr "¿Por qué se cierra?"
+
+#: .\templates\geo\plan_archive_confirm.html:51
+msgid "If it is another reason, say which"
+msgstr "Si es otro motivo, indica cuál"
+
+#: .\templates\geo\plan_archive_confirm.html:66
 msgid "Close its linked permits too?"
 msgstr "¿Cerrar también sus permisos ligados?"
 
-#: .\templates\geo\plan_archive_confirm.html:53
+#: .\templates\geo\plan_archive_confirm.html:75
 msgid ""
 "Whatever you leave unticked stays open. Each permit you tick is archived on "
 "its own record, with its own audit entry."
@@ -5820,7 +5857,7 @@ msgstr ""
 "Lo que dejes sin marcar sigue abierto. Cada permiso que marques se archiva "
 "en su propio registro, con su propia entrada de auditoría."
 
-#: .\templates\geo\plan_archive_confirm.html:57
+#: .\templates\geo\plan_archive_confirm.html:79
 #: .\templates\operations\permission_archive_confirm.html:53
 #: .\templates\registry\assessment_archive_confirm.html:28
 #: .\templates\registry\costcenter_archive_confirm.html:21

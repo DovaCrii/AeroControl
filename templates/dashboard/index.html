@@ -316,6 +316,17 @@ ubicación en ficha sigue desapareciendo entera: ahí no hay nada que elegir.
         <noscript><button class="btn btn-sm btn-outline-primary">{% translate "Show" %}</button></noscript>
       </form>
       {% endif %}
+      {% comment %}LV-179: el camino a donde el clima **queda registrado**. Esta
+      tarjeta se recalcula en cada visita y no guarda nada —su pie lo dice—;
+      la ficha del plan muestra el pronóstico sobre el área dibujada y ahí se
+      archiva como evidencia. Se resolvió con un enlace y no repitiendo las
+      cifras: dos pantallas con el mismo pronóstico y sólo una que deja
+      constancia invita a mirar la que no registra y creer que se hizo el
+      chequeo. Sin plan ligado el botón no se dibuja — uno que lleva a ninguna
+      parte enseña a no apretar botones.{% endcomment %}
+      {% if weather_plan_url %}
+      <a class="btn btn-sm btn-outline-secondary" href="{{ weather_plan_url }}">{% translate "Review and file it on the plan" %}</a>
+      {% endif %}
       <a class="btn btn-sm btn-outline-primary" href="{{ weather_url }}">
         {% if weather_source == "permission" %}{% translate "Open the permission" %}{% else %}{% translate "Open the cost center" %}{% endif %}
       </a>

@@ -29,6 +29,27 @@ archivan en cascada -- son el registro de lo que se le pidió al Estado.
   {% endif %}
   <form method="post" class="d-flex flex-column gap-3">{% csrf_token %}
     <input type="hidden" name="confirm" value="1">
+    {% comment %}LV-178: por qué se cierra, para poder contarlo. Los dos motivos
+    son del usuario —rechazo de la DGAC y modificación interna— y son cosas
+    distintas: diez rechazos de la autoridad dicen que estamos presentando mal,
+    diez modificaciones internas son trabajo normal. Un número que sume las dos
+    no sirve para decidir nada.
+
+    "Otro" pide detalle porque un "otro" en blanco es igual de informativo que no
+    haber preguntado. Existe para **no inventar categorías**: si el detalle
+    repite siempre la misma frase, ésa es una categoría que falta.{% endcomment %}
+    <fieldset>
+      <legend class="h6 text-body-secondary">{% translate "Why is it being closed?" %}</legend>
+      {% if reason_error %}<p class="text-danger small mb-2">{{ reason_error }}</p>{% endif %}
+      {% for code, label in close_reason_choices %}
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="close_reason" value="{{ code }}" id="reason-{{ code }}" {% if close_reason == code %}checked{% endif %}>
+        <label class="form-check-label" for="reason-{{ code }}">{{ label }}</label>
+      </div>
+      {% endfor %}
+      <label class="form-label mt-2 small" for="close_reason_detail">{% translate "If it is another reason, say which" %}</label>
+      <input class="form-control form-control-sm" type="text" name="close_reason_detail" id="close_reason_detail" maxlength="250" value="{{ close_reason_detail }}">
+    </fieldset>
     {% comment %}LV-176: cerrar el plan **junto con** sus permisos, en el mismo
     paso y sin cascada. Las casillas van desmarcadas: sin marcar no pasa nada,
     y eso es lo que hace que cada permiso se cierre porque alguien lo decidió y
