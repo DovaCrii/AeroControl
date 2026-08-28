@@ -40,20 +40,49 @@ Notificaciones a `Dirección`: `aortega@jej.cl` + `cmunoz@jej.cl`.
 
 ## Cierre del 2026-08-28 — **empezar por acá**
 
-Segunda jornada de revisión en vivo. Se cerraron cinco filas más
-(`LV-170`..`LV-173` y el contador del catastro), todas desplegadas salvo la
-última.
+Segunda jornada de revisión en vivo, y la más larga hasta ahora: **once filas
+cerradas y desplegadas** (`LV-169` a `LV-179`).
 
 ### Estado exacto
 
-- **`origin/main` = ver el último commit**; **`p340` estaba en `134798f`** al
-  cierre, con `LV-170`, `LV-171` y `LV-172` desplegados y verificados
-  (`systemctl` en `active (running)`).
-- **`LV-173` (archivar intentos de la prueba) quedó pusheado pero SIN
-  desplegar.** Es lo primero: `git pull`, `collectstatic`, `restart`. **Sin
-  migración.**
-- **Sin migraciones pendientes.** La única del lote fue `registry.0037`
-  (`LV-169`), ya aplicada en producción.
+- **`origin/main` = `a2c7008`, y `p340` está en `a2c7008`** ✅ — todo desplegado
+  y verificado el mismo día. **`pwsh scripts/verify.ps1` verde**: 2280 tests,
+  cobertura 96.95%.
+- **Tres migraciones aplicadas hoy**, todas limpias: `registry.0037` (`LV-169`,
+  sin SQL), `registry.0038` (`LV-177`, reconstruye la tabla de operadores) y
+  `geo.0006` (`LV-178`, dos columnas vacías). Respaldos previos tomados **y
+  verificados** (`aero_ops_20260828_095511` y `aero_ops_20260828_102722`).
+- **`split_operator_names --apply` corrió en producción**: 41 de 42 fichas con
+  el corte nombres/apellidos hecho. **Queda una a mano: Boris Santibáñez** —
+  dos palabras, y ahí no se puede saber si falta el apellido materno. Mientras
+  tanto aparece ordenado por su nombre completo.
+
+### Lo que se cerró, en una línea cada una
+
+`LV-169` el ID de empleado se deriva del RUT · `LV-170` el menú en seis grupos
+plegables con estado recordado · `LV-171` jerarquía en la hoja de campo de SIGO
+· `LV-172` el catastro cierra con su total · `LV-173` root archiva un intento de
+la prueba, nunca lo borra · `LV-174` la tipografía normalizada · `LV-175` la
+habilitación como la escribe la DGAC · `LV-176` cerrar el plan junto con sus
+permisos, sin cascada · `LV-177` el padrón ordenado por apellido · `LV-178` el
+motivo del cierre, para poder contarlo · `LV-179` el clima del panel enlaza a
+donde queda registrado.
+
+### Tres cosas del día que valen para mañana
+
+- **`makemessages` inventó traducciones en las SEIS corridas del día**, y dos
+  eran graves: una copió en un mensaje nuevo una traducción con `%(date)s` —un
+  marcador que ese mensaje no tiene, habría reventado con `KeyError` al
+  renderizar el catastro— y otra tradujo *"Rejected by the DGAC"* como
+  *"Reportada a la DGAC"*, que en cumplimiento es lo contrario. **El
+  procedimiento de `AGENTS.md` no es opcional**: después de cada corrida, grep
+  `fuzzy` y corregir a mano. El guardián las cazó todas.
+- **`verify_backup` sin argumentos verifica el último respaldo.** Ahorra el
+  copiar-pegar de la ruta, que es donde se rompió el primer intento del día.
+- **Un guardián que sólo pasa mientras nadie use el flujo documentado no está
+  vigilando, está esperando.** El de i18n exigía cadenas que viven dentro de un
+  `{% comment %}`, de donde Django no extrae; llevaba latente desde `LV-150` y
+  estalló en la primera regeneración del catálogo.
 
 ### Lo que queda de la cola, con las decisiones ya tomadas
 
@@ -63,30 +92,32 @@ Segunda jornada de revisión en vivo. Se cerraron cinco filas más
    `get_or_create` (`apps/geo/views.py`), y la fila que ya existe en producción
    no se renombra sola. El **código** sigue siendo `GEO_SOURCE`: lo referencian
    otras partes y el usuario ve el nombre, no el código.
-2. **Clima de Casa Matriz.** Reconocimiento hecho, incluida la parte delicada:
-   las coordenadas de la oficina van **rotuladas como aproximadas y sólo para
-   el pronóstico**, porque ninguna decisión aeronáutica puede leerlas.
+2. ~~**Clima de Casa Matriz.**~~ **Resuelto de otra manera el 2026-08-28
+   (`LV-179`), y conviene saber por qué**: el usuario preguntó si sumar la
+   temperatura al plan, y la respuesta fue que **el plan ya la tiene** —`R8.1`
+   muestra el pronóstico sobre el área dibujada y ahí se archiva como evidencia.
+   Duplicar cifras habría creado dos pantallas con el mismo pronóstico y una
+   sola que deja constancia, que es una invitación a mirar la que no registra.
+   Se resolvió con un enlace. **Si vuelve a pedirse el clima de la oficina**, la
+   condición sigue en pie: las coordenadas de Casa Matriz van **rotuladas como
+   aproximadas y sólo para el pronóstico**, porque ninguna decisión aeronáutica
+   puede leerlas.
 
-### La decisión que sigue esperando al usuario
+### Brechas conocidas, para decidir cuándo
 
-**Habilitaciones en la ficha del operador** — las tres filas con `—`/`—`. Las
-tres salidas están escritas más abajo, con la segunda recomendada. **No
-implementar ninguna sin que elija**: cuál de las dos pantallas manda es decisión
-de negocio, no técnica.
+Salieron del repaso del 2026-08-28 y ninguna está tomada:
 
-### Dos cosas aprendidas hoy que valen para mañana
-
-- **`makemessages` inventó traducciones en cada una de las tres corridas del
-  día**, y una era peligrosa: copió en un mensaje nuevo una traducción con
-  `%(date)s`, un marcador que ese mensaje no tiene — habría reventado con
-  `KeyError` al renderizar el catastro. Otra tradujo *"¿Archivar esta
-  evaluación?"* como *"Rendir la evaluación"*, que es lo contrario. **El
-  procedimiento de `AGENTS.md` no es opcional**: después de cada corrida, grep
-  `fuzzy` y corregir a mano.
-- **Un guardián que sólo pasa mientras nadie use el flujo documentado no está
-  vigilando, está esperando.** El de i18n exigía cadenas que viven dentro de un
-  `{% comment %}`, de donde Django no extrae; llevaba latente desde `LV-150` y
-  estalló en la primera regeneración del catálogo.
+- **El CI de GitHub nunca estuvo verde.** La única puerta real corre en la
+  máquina de quien desarrolla. El README ya no afirma lo contrario.
+- **4 ramas dependabot**, una es **Django 6.1** — actualización mayor, merece
+  sesión propia con el gate.
+- **6 ramas viejas sin mergear** (`codex/ci-arranque`, `claude/docs-remote-vm-ops`
+  y cuatro del 2026-07-24). Media hora de limpieza.
+- **`docs/dev/remote-vm-operations.md` existe sólo en `p340`**, sin versionar:
+  cualquier limpieza lo borra.
+- **El correo saliente sigue sin salir**: `EMAIL_HOST` vacío en `p340`, así que
+  las siete notificaciones se imprimen en el journal. Es el bloqueador del
+  criterio 2 de "Rumbo a 1.0".
 
 ## Cierre del 2026-08-27
 
@@ -1150,8 +1181,16 @@ Lo esencial y los dos errores que costaron tiempo el 2026-08-11:
 - Antes de una migración que imponga una restricción, **chequear los datos
   reales primero** con `values_list` (no `.all()`, que hace `SELECT *` de
   columnas que aún no existen). Ejemplo vigente en la Parte D del runbook.
-- Tomar un respaldo (`manage.py backup`) y **verificarlo**
-  (`verify_backup <ruta>`) antes de migrar.
+- Tomar un respaldo (`manage.py backup`) y **verificarlo** antes de migrar.
+  **`verify_backup` sin argumentos verifica el último**, y es lo que conviene
+  pegar: el 2026-08-28 el paso se saltó porque el bloque llevaba un marcador
+  literal (`<la-ruta-que-imprimio>`) que bash rechazó, y se migró sin haber
+  verificado nada. Un procedimiento que exige copiar y pegar una ruta a mano es
+  un procedimiento que alguien va a saltarse.
+  ```bash
+  uv run python manage.py backup
+  uv run python manage.py verify_backup
+  ```
 
 ## Punteros
 
