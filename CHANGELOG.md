@@ -143,6 +143,17 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **«Geo source» pasa a llamarse «Archivo KMZ/KML de origen» (`LV-180`).** Era
+  el único anglicismo entre tipos de documento que nombran papeles reales. Va
+  con **migración de datos**: el nombre se fijaba en los `defaults` de un
+  `get_or_create`, que sólo se usan al crear, así que la fila de producción se
+  habría quedado con el nombre viejo mientras el código decía otro. No pisa un
+  nombre puesto a mano. El código `GEO_SOURCE` no cambia.
+- **El CI arranca por primera vez (`LV-180`).** Nunca estuvo verde porque
+  `${{ runner.temp }}` no existe a nivel de `job`: el workflow abortaba antes de
+  correr un solo test. También se limpiaron cuatro ramas viejas — dos mergeadas,
+  dos borradas por superadas con su SHA anotado, y las dos que quedan
+  documentadas junto al ítem del backlog que implementan.
 - **La tipografía dice lo mismo en toda la app (`LV-174`).** La hoja declaraba
   **siete** pesos y el navegador dibujaba **cuatro**: `650` y `750` se dibujan
   exactamente como `700`, y `500` como `600` — medido con la fuente real. De ahí

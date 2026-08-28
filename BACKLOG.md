@@ -48,6 +48,27 @@ base activa. El detalle operativo está en `docs/backend-follow-up.md`.
   operador–aeronave antes de confirmar permisos.
 - [ ] Probar Supabase CLI con datos sintéticos/anónimos, sin antecedentes
   privados ni secretos en el repositorio.
+  > **Ya hay trabajo hecho para esto, en dos ramas sin mergear** (2026-07-24), y
+  > se anotan acá porque si no son ruido anónimo en `git branch`: alguien las va
+  > a borrar por viejas sin saber que implementan este ítem.
+  > `codex/anonymized-snapshot-clean` trae `apps/core/anonymized_snapshot.py`
+  > con sus dos comandos y tests; `codex/supabase-cli-operations` trae el flujo
+  > de respaldo y `docs/supabase-cli.md`. **No se mergearon a `main` a
+  > propósito**: sería código sin uso en la rama que se despliega, para un
+  > frente que está parado. Cuando este ítem se retome, se parte de ahí.
+
+### Ramas retiradas el 2026-08-28, con su SHA
+
+Se borraron por **superadas**, no por viejas, y quedan acá porque un commit
+borrado sigue siendo recuperable mientras alguien tenga su SHA:
+
+- `claude/amazing-bouman-1b3d09` = `1dec958dad638d4b63eec056c1ac3167b237134a` —
+  traía la ubicación estructurada de `FlightPermission` (OPS-4). **`main` ya
+  tiene `region`, `commune` y `area_name`**, resueltos por otro camino, así que
+  la rama era una segunda implementación de lo mismo.
+- `codex/backend-remote-plan` = `67dfb504307deaef947d8518347de8830b117072` —
+  agregaba `docs/backend-plan.md`; ese documento ya vive en `main` como
+  `docs/dev/backend-plan.md`.
 - [ ] Ejecutar ensayo PostgreSQL con backup, migración, verificación y rollback
   antes de cualquier necesidad multiusuario.
 

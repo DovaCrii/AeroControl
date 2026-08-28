@@ -26,6 +26,25 @@ from .kml import canonical
 from .models import GeoPlan, GeoPlanVersion, WeatherReview
 
 GEO_SOURCE_DOC_TYPE_CODE = "GEO_SOURCE"
+# LV-180: el nombre que ve la gente. Era "Geo source" —inglés y jerga— en una
+# app cuya interfaz es española y donde ese tipo de documento es, literalmente,
+# el KMZ o KML que alguien subió.
+#
+# **El código NO se toca.** `GEO_SOURCE` lo referencian otras partes y no lo ve
+# nadie; renombrarlo sería cambiar la llave por cambiar la etiqueta.
+#
+# **En español, y no es una excepción a la regla del proyecto.** Las cadenas
+# fuente van en inglés porque el catálogo las traduce; esto es **dato**, no
+# cadena fuente: viaja a la base y sale por `DocumentType.name`, que ningún
+# `gettext` toca. Los demás tipos ya están en español porque nombran documentos
+# reales —"Autorización de Operación RPA"—, así que "Geo source" era el único
+# anglicismo del conjunto, y encima jerga: ese tipo de documento es, literal, el
+# KMZ o KML que alguien subió.
+#
+# Va como constante y no como literal dentro del `get_or_create` porque la
+# migración de datos renombra **exactamente** este texto, y dos copias de una
+# cadena que deben coincidir son una que alguien va a actualizar sola.
+GEO_SOURCE_DOC_TYPE_NAME = "Archivo KMZ/KML de origen"
 
 # The status buttons offered on the plan detail, per current status. Each row is
 # (from_status, url_name, label, css_class, permission). Un-approving requires
@@ -574,7 +593,10 @@ class GeoPlanImportView(ModelPermissionRequiredMixin, FormView):
             )
             doc_type, _created = DocumentType.objects.get_or_create(
                 code=GEO_SOURCE_DOC_TYPE_CODE,
-                defaults={"name": "Geo source", "requires_expiry": False},
+                defaults={
+                    "name": GEO_SOURCE_DOC_TYPE_NAME,
+                    "requires_expiry": False,
+                },
             )
             document = Document(
                 doc_type=doc_type,

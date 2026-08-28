@@ -40,6 +40,9 @@ jobs:
         run: |
           uv run python manage.py scale_readiness --json
           uv run python manage.py backup
-          backup_file="$(ls -1 "$BACKUPS_DIR"/*.sqlite3 | head -n 1)"
-          test -f "$backup_file"
-          uv run python manage.py verify_backup "$backup_file"
+          # `verify_backup` sin argumento verifica el último respaldo, así que no
+          # hace falta pescarlo con `ls | head` -- un canal que además elegía
+          # "el primero por nombre" y no "el recién creado", y que en un runner
+          # con un solo respaldo acertaba por casualidad. Comprobado en `p340`
+          # el 2026-08-28, que es donde se descubrió la forma sin argumento.
+          uv run python manage.py verify_backup
