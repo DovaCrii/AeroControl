@@ -31,6 +31,26 @@
     }
   }
 
+  // LV-209: **`hidden` no oculta un elemento con `d-flex`**, y por eso el botón
+  // "Descartarlo" parecía no hacer nada.
+  //
+  // El borrador **sí** se borraba de `localStorage`; lo que no se iba era el
+  // aviso, así que en pantalla no pasaba nada. La causa está en el bundle de
+  // Bootstrap y se puede medir: `[hidden]{display:none!important}` vive en la
+  // posición ~10.129 y `.d-flex{display:flex!important}` en la ~163.993. Los dos
+  // selectores tienen la misma especificidad (un atributo y una clase valen
+  // igual) y los dos son `!important`, así que **gana el que viene después** —
+  // `d-flex`. El atributo se aplicaba y no servía de nada.
+  //
+  // `d-none` (~164.069) está **después** de `d-flex`, así que ésa sí gana: es la
+  // única de las tres que puede ocultar este elemento. Se pone junto al atributo
+  // y no en su lugar, porque `hidden` es lo que leen los lectores de pantalla.
+  function setHidden(element, value) {
+    if (!element) return;
+    element.hidden = value;
+    element.classList.toggle('d-none', value);
+  }
+
   function fields(form) {
     return Array.prototype.filter.call(
       form.querySelectorAll('input, select, textarea'),
@@ -102,7 +122,7 @@
     function show(message) {
       if (!saved) return;
       saved.textContent = message;
-      saved.hidden = false;
+      setHidden(saved, false);
     }
 
     function stored() {
@@ -119,7 +139,7 @@
       } catch (error) {
         /* nada que hacer: el borrador ya no se puede borrar ni leer */
       }
-      if (notice) notice.hidden = true;
+      setHidden(notice, true);
     }
 
     var draft = stored();
@@ -131,9 +151,9 @@
       var wrap = panel.querySelector('[data-form-draft-when-wrap]');
       if (when && draft.at) {
         when.textContent = new Date(draft.at).toLocaleString();
-        if (wrap) wrap.hidden = false;
+        setHidden(wrap, false);
       }
-      notice.hidden = false;
+      setHidden(notice, false);
     }
 
     // El listener va en el **formulario**, no en el panel: el botón "Guardar
@@ -149,7 +169,7 @@
             JSON.stringify({ at: Date.now(), values: collect(form) })
           );
           show(save.dataset.savedLabel || '');
-          if (notice) notice.hidden = true;
+          setHidden(notice, true);
         } catch (error) {
           show(save.dataset.failedLabel || '');
         }
@@ -158,7 +178,7 @@
       if (event.target.closest('[data-form-draft-restore]')) {
         var current = stored();
         if (current && current.values) restore(form, current.values);
-        if (notice) notice.hidden = true;
+        setHidden(notice, true);
         return;
       }
       if (event.target.closest('[data-form-draft-discard]')) drop();
@@ -207,7 +227,7 @@
         found.length === 1 ? box.dataset.oneLabel : box.dataset.manyLabel;
       count.textContent = (template || '').replace('%(count)s', found.length);
     }
-    box.hidden = false;
+    setHidden(box, false);
   }
 
   function init() {

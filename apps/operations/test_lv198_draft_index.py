@@ -90,6 +90,11 @@ class TestTheEmptyParenthesesAreGone:
         assert "(<span data-form-draft-when></span>)" in template
 
     def test_the_script_only_reveals_it_with_a_date(self):
+        """**LV-209** cambió la línea que este test fijaba**: la visibilidad pasa
+        ahora por `setHidden`, porque el atributo `hidden` no oculta un elemento
+        con `d-flex` — ver `test_lv209_hidden_does_not_hide_a_flex_box.py`. Lo que
+        este test defiende sigue siendo lo mismo: el envoltorio de la fecha se
+        revela **sólo** cuando hay fecha."""
         from django.conf import settings
 
         script = (settings.BASE_DIR / "static" / "js" / "form-draft.js").read_text(
@@ -97,4 +102,5 @@ class TestTheEmptyParenthesesAreGone:
         )
 
         assert "data-form-draft-when-wrap" in script
-        assert "if (wrap) wrap.hidden = false;" in script
+        # Dentro del `if (when && draft.at)`, o sea sólo con fecha.
+        assert "setHidden(wrap, false);" in script
