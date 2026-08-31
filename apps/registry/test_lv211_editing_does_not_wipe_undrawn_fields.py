@@ -107,6 +107,46 @@ class TestEditingKeepsWhatItDoesNotShow:
         center.refresh_from_db()
         assert center.operates_flights is False
 
+    def test_lv213_the_retired_fields_keep_their_values(self):
+        """**LV-213**: el usuario retiró de la ficha las coordenadas del sitio y los
+        criterios de calidad del contrato (*"no va por acá"*). Se quitaron **del
+        formulario** y no sólo de la plantilla, y este test es el que sostiene esa
+        distinción: fuera de `Meta.fields` el `ModelForm` no los toca, así que lo
+        que ya está en la base sobrevive a cualquier edición.
+
+        Sacarlos sólo del HTML habría vaciado exactamente lo que se quería dejar
+        de mostrar — que es el defecto de `LV-211` con otro nombre.
+        """
+        center = CostCenter.objects.create(
+            code="CC738",
+            name="MLP",
+            responsible="Juan Quiroz",
+            latitude="-31.700000",
+            longitude="-70.600000",
+            required_gsd_cm=5,
+        )
+
+        self._edit(center, name="Minera Los Pelambres")
+
+        center.refresh_from_db()
+        assert center.name == "Minera Los Pelambres"
+        assert float(center.latitude) == -31.7
+        assert float(center.longitude) == -70.6
+        assert center.required_gsd_cm == 5
+
+    def test_lv213_they_are_not_on_the_page_any_more(self):
+        center = CostCenter.objects.create(code="CC738", name="MLP")
+
+        content = (
+            login_as("change_costcenter", "view_costcenter")
+            .get(reverse("costcenter-update", args=[center.pk]))
+            .content.decode()
+        )
+
+        assert "Criterios de calidad" not in content
+        assert "required_gsd_cm" not in content
+        assert "Latitud del sitio" not in content
+
     def test_the_field_reaches_the_page(self):
         center = CostCenter.objects.create(code="CC738", name="MLP")
 
