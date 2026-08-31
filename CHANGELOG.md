@@ -154,6 +154,15 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **El vencimiento de un documento dice de qué cuelga (`LV-186`).** La fila del
+  panel decía "Documento · Carta Permiso" y nada más, y hay una carta por
+  permiso: para saber a cuál se refería había que abrirla, que es justo lo que
+  una lista de vencimientos existe para evitar. Ahora la fila nombra el sujeto
+  — "· JEJ-2026-004" — y con eso el chip de faena deja de ser el único camino
+  para ubicarlo. Es el único de los cinco orígenes que lo necesitaba: en un
+  seguro la etiqueta ya es la matrícula, y en una credencial el nombre de la
+  persona. Un documento de empresa cuelga del tenant y no de un registro, y ahí
+  la fila queda como estaba: no se le inventa un sujeto.
 - **Los enlaces usan el color de la app y no el azul de Bootstrap (`LV-185`).**
   La app nunca había definido su color de enlace, así que todo enlace fuera de
   las columnas de listado salía en el azul por defecto, sin relación con el
