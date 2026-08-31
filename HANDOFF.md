@@ -177,6 +177,26 @@ Dos filas más, **sin desplegar**:
 
 **Paso de despliegue: `collectstatic`.** Sin migración.
 
+### Quinta tanda: los dos pendientes, dos pedidos nuevos y un defecto
+
+Desplegados ya `068ccfa` y `d09a758`. Después de eso, **sin desplegar**:
+
+- **`LV-209`** — el botón "Descartarlo" del borrador. **Hacía la mitad**: borraba
+  el borrador y no ocultaba el aviso, así que parecía muerto. La causa era CSS y
+  medible: `[hidden]` está en la posición ~10.129 del bundle de Bootstrap y
+  `.d-flex` en la ~163.993 — misma especificidad, los dos `!important`, gana el
+  último. **El atributo `hidden` no oculta un elemento con `d-flex`.** `.d-none`
+  (~164.069) sí, y de ese orden depende el arreglo, así que hay un test que lo
+  vigila. **El mismo defecto lo tenía el aviso que `LV-198` había agregado.**
+- **`LV-205`** y **`LV-206`** — ver arriba, ya desplegados en `d09a758`.
+
+Y quedaron **registradas sin implementar**: `LV-207` (los colores del menú lateral
+se mezclan dentro de una misma sección, así que el color no agrupa ni distingue) y
+`LV-208` (el ancho de la barra de navegación no se puede regular: hoy hay dos
+estados y nada en medio).
+
+**Paso de despliegue: `collectstatic`.** Sin migración.
+
 **Desplegado `6dc2acb` en `p340`** (0 estáticos copiados, que es lo correcto: esa
 tanda tocó plantillas y Python, nada bajo `static/`).
 

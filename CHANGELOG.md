@@ -168,6 +168,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **El botón "Descartarlo" del borrador ya surte efecto (`LV-209`).** Borraba el
+  borrador pero el aviso seguía en pantalla, así que parecía muerto. La causa era
+  de estilos: el atributo que lo escondía perdía contra la clase de disposición
+  del propio aviso, las dos con la misma prioridad y ganando la última. Ahora la
+  visibilidad pasa por un solo lugar, y hay un test que vigila el orden de esas
+  reglas — de él depende que el arreglo siga funcionando.
 - **El panel muestra los permisos de vuelo faena por faena (`LV-206`).** Incluidas
   las que **no** tienen ninguno vigente, que son las que interesan mirar. Las
   faenas que sólo tienen equipos a cargo y no vuelan quedan fuera con una casilla
