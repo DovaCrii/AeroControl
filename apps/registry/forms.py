@@ -84,15 +84,27 @@ class CostCenterForm(AeroModelForm):
             "responsible_operator",
             "responsible_contact_name",
             "responsible_contact_email",
-            # R7.4: the survey acceptance criteria are part of the contract,
-            # so they are captured here rather than typed per deliverable.
-            "required_gsd_cm",
-            "max_rmse_xy_cm",
-            "max_rmse_z_cm",
-            # R8.4: the site's coordinates, so the dashboard can show the
-            # weather where the work happens.
-            "latitude",
-            "longitude",
+            # LV-213: **cinco campos salen de este formulario**, decisión del
+            # usuario mirando la ficha: *"quitar del centro de costo esta
+            # información, no va por acá"*. Eran los criterios de aceptación del
+            # levantamiento (`R7.4`: `required_gsd_cm`, `max_rmse_xy_cm`,
+            # `max_rmse_z_cm`) y las coordenadas del sitio (`R8.4`: `latitude`,
+            # `longitude`).
+            #
+            # **Se quitan del formulario y no sólo de la plantilla, y esa
+            # distinción es toda la fila.** `LV-211` acaba de mostrar que un campo
+            # declarado acá y ausente del HTML **se borra al guardar**, porque el
+            # navegador no lo envía. Fuera de `fields`, el `ModelForm` no lo toca:
+            # los valores que ya están en la base se conservan intactos, y era la
+            # única forma de sacarlos de la pantalla sin perderlos.
+            #
+            # ⚠️ Lo que esto cuesta, y quedó dicho al usuario: las coordenadas de
+            # la faena son lo que la pone en el selector de clima del panel
+            # (`R8.4`/`LV-147`) cuando ningún permiso próximo trae las suyas. Una
+            # faena nueva ya no podrá cargarlas desde la app —sólo por importación
+            # o por el admin—, así que no aparecerá en ese selector. Los criterios
+            # en blanco hacen que un entregable se registre **sin veredicto**, que
+            # es lo que su propio texto de ayuda ya prometía.
             "notes",
         ]
         labels = {

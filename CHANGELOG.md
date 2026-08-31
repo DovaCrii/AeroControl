@@ -168,6 +168,14 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **La ficha del centro de costo ya no pide coordenadas ni criterios de calidad
+  (`LV-213`).** Salieron del formulario a pedido: esa información no va ahí. Los
+  valores que ya estaban cargados **se conservan** — quitar un campo del
+  formulario, y no sólo de la pantalla, es justamente lo que evita borrarlos. Con
+  esto, las coordenadas de una faena nueva sólo se pueden cargar por importación,
+  así que no aparecerá en el selector de clima del panel hasta que las tenga.
+- **Las cifras de la tabla del panel quedan bajo su título (`LV-214`).** Iban
+  pegadas al borde derecho de la celda, lejos de la palabra que las nombra.
 - **Editar un centro de costo ya no borra lo que la pantalla no muestra
   (`LV-211`).** La ficha dibuja sus campos uno por uno, y cinco del formulario no
   estaban ahí: la casilla nueva de "en esta faena se vuela", las coordenadas del

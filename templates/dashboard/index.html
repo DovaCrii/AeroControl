@@ -305,11 +305,18 @@ en `CostCenter`).{% endcomment %}
           poder leerse en vertical, que es para lo que existe una tabla. Es el
           mismo criterio con el que `LV-129` separó "vencidos" de "sin fecha".
           {% endcomment %}
+          {% comment %}LV-214: las cuatro columnas de cifras van **centradas**, no
+          a la derecha. Pedido del usuario: *"centrar número en sus columnas con
+          las palabras para que no se vea extraño, como desalineado"*. Con
+          `text-end` el número se pegaba al borde de la celda mientras el
+          encabezado empezaba a la izquierda del suyo, así que cada cifra caía
+          lejos del título que la nombra — y son celdas anchas, de una sola cifra.
+          Centrado, el número queda bajo su palabra.{% endcomment %}
           <th scope="col">{% translate "Cost center" %}</th>
-          <th scope="col" class="text-end">{% translate "In force" %}</th>
-          <th scope="col" class="text-end">{% translate "Expiring soon" %}</th>
-          <th scope="col" class="text-end">{% translate "Awaiting" %}</th>
-          <th scope="col" class="text-end">{% translate "Past validity" %}</th>
+          <th scope="col" class="text-center">{% translate "In force" %}</th>
+          <th scope="col" class="text-center">{% translate "Expiring soon" %}</th>
+          <th scope="col" class="text-center">{% translate "Awaiting" %}</th>
+          <th scope="col" class="text-center">{% translate "Past validity" %}</th>
         </tr>
       </thead>
       <tbody>
@@ -324,10 +331,10 @@ en `CostCenter`).{% endcomment %}
               <span class="cc-chip me-2">{{ row.cost_center.code }}</span>{{ row.cost_center.name }}
             </a>
           </td>
-          <td class="text-end">{% if row.in_force %}<b>{{ row.in_force }}</b>{% else %}<span class="text-warning-emphasis">{% translate "None" %}</span>{% endif %}</td>
-          <td class="text-end">{% if row.soon %}<span class="text-warning-emphasis">{{ row.soon }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
-          <td class="text-end">{% if row.awaiting %}{{ row.awaiting }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
-          <td class="text-end">{% if row.lapsed %}<span class="text-danger-emphasis">{{ row.lapsed }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+          <td class="text-center">{% if row.in_force %}<b>{{ row.in_force }}</b>{% else %}<span class="text-warning-emphasis">{% translate "None" %}</span>{% endif %}</td>
+          <td class="text-center">{% if row.soon %}<span class="text-warning-emphasis">{{ row.soon }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+          <td class="text-center">{% if row.awaiting %}{{ row.awaiting }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+          <td class="text-center">{% if row.lapsed %}<span class="text-danger-emphasis">{{ row.lapsed }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
         </tr>
         {% endfor %}
       </tbody>

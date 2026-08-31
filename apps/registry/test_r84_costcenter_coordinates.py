@@ -52,19 +52,39 @@ class TestPairRule:
 
         assert set(raised.value.message_dict) == {"latitude", "longitude"}
 
-    def test_the_form_surfaces_the_same_rule(self):
-        form = CostCenterForm(data=_form_data(latitude="-22.3"))
+    def test_lv213_the_form_no_longer_offers_the_pair(self):
+        """**Estos dos tests cambiaron de signo con `LV-213`**, y el cambio es una
+        decisión del usuario mirando la ficha: *"quitar del centro de costo esta
+        información, no va por acá"*.
 
-        assert not form.is_valid()
-        assert "latitude" in form.errors and "longitude" in form.errors
+        Se llamaban `test_the_form_surfaces_the_same_rule` y
+        `test_the_form_saves_the_pair`, y afirmaban que el formulario del centro de
+        costo pedía las coordenadas y validaba el par. Ya no las pide.
 
-    def test_the_form_saves_the_pair(self):
-        form = CostCenterForm(data=_form_data(latitude="-22.3", longitude="-68.9"))
+        **La regla no se fue con ellos**: vive en `CostCenter.clean` y la prueban
+        los cuatro tests de arriba, que es donde importa — cualquier camino que
+        llame a `full_clean` la ejerce. Lo que se retiró es la pantalla, no la
+        validación.
+        """
+        assert "latitude" not in CostCenterForm().fields
+        assert "longitude" not in CostCenterForm().fields
 
+    def test_lv213_editing_does_not_wipe_coordinates_already_on_file(self):
+        """Y la mitad que hacía falta cuidar: fuera de `Meta.fields`, el
+        `ModelForm` **no toca** esas columnas, así que lo ya cargado sobrevive a
+        cualquier edición. Sacarlas sólo de la plantilla las habría vaciado — el
+        defecto de `LV-211`, que es lo que esta fila usó al revés."""
+        cost_center = CostCenter.objects.create(
+            code="CC1",
+            latitude=Decimal("-22.300000"),
+            longitude=Decimal("-68.900000"),
+        )
+
+        form = CostCenterForm(data=_form_data(), instance=cost_center)
         assert form.is_valid(), form.errors
-        cost_center = form.save()
+        saved = form.save()
 
-        assert cost_center.coordinates == (-22.3, -68.9)
+        assert saved.coordinates == (-22.3, -68.9)
 
     def test_a_cost_center_without_a_site_has_no_coordinates(self):
         assert CostCenter(code="CC1").coordinates is None
