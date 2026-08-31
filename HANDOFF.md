@@ -56,7 +56,7 @@ en el panel (`LV-191`). Ninguno de los cuatro se buscó.
 ### Estado exacto
 
 - **`origin/main` = `4acc1e6` + el commit de este cierre** (mirar `git log`).
-  **`p340` sigue en `22f379f`**: ahora le faltan **`LV-184` a `LV-194`**.
+  **`p340` sigue en `22f379f`**: ahora le faltan **`LV-184` a `LV-195`**.
 - El paso de despliegue no cambió: **`migrate` + `bootstrap_roles` +
   `collectstatic`**, y sin `bootstrap_roles` media fila de `LV-184` queda sin
   efecto. Después, el rol `Compliance` a Ariel y a Cristóbal.
@@ -87,6 +87,14 @@ en el panel (`LV-191`). Ninguno de los cuatro se buscó.
   número de empleado, creaba con `create()` (que no pasa por `clean()`, donde vive
   la comprobación de RUT repetido) y `Operator.rut` no tiene índice único. Salió
   al preparar el cruce del manual que pidió el usuario.
+- **`LV-195`, `P1`**: y éste salió **al correr el cruce de verdad**, no leyendo
+  código. El Rev 17 trae dos seriales partidos por un espacio (`RPA-4401`,
+  `RPA-4436`) y el importador los comparaba en crudo contra los de la base, que
+  se guardan sin espacios: salían como "serie nueva", y **un conflicto detiene la
+  corrida entera**, así que un salto de línea dentro de una celda del Word
+  impedía cargar también las 48 fichas de personal. Es la misma forma de defecto
+  que `LV-190` y en la misma función — una llave comparada sin la función
+  canónica que la app ya usa en todos los otros caminos.
 - **`LV-188`, `P1`**: la atribución de faena de un documento conocía **siete**
   modelos y el filtro **dos**. La Carta Permiso salía con el chip `CC738` y
   **desaparecía al filtrar por `CC738`**. Y no era sólo esa pantalla: la misma
@@ -130,12 +138,58 @@ son un hecho fechado, igual que una migración.
   del menú en `LV-150`; la bitácora de vuelos se lleva contra la faena), así que
   el encabezado decía "2 por confirmar" en todo permiso para siempre y ningún
   expediente podía leerse como completo.
+  **Y la decisión que ese retiro volvió urgente, tomada por el usuario el mismo
+  día: la revisión meteorológica es necesaria y se queda como está.** Al irse los
+  otros dos pasa a ser el único renglón que puede quedar en ámbar, y la
+  diferencia es la que importa: **ésta sí se puede cerrar**, con el botón de la
+  ficha del plan. Un ámbar que se resuelve es lo que un checklist debe tener.
+  No se hizo bloqueante: el expediente no bloquea nada a propósito (`LV-107`).
 - **El cruce del Capítulo 1 Rev 17** — ver abajo, que tiene su propia sección.
 
-### El cruce del manual: listo para correr en la VM
+### El despliegue, por pasos
 
-El comando ya existía (`chapter1_docx_import`, con `LV-133` adaptado a la Rev 17)
-y **`LV-190` era lo que faltaba para poder confiar en él**. Verificado sobre
+`p340` está en `22f379f` y le faltan `LV-184` a `LV-195`. **Por pasos y no
+encadenado**: el `;` que necesita la carga del entorno corta un `&&`, y esa es la
+forma exacta en que se produjeron los dos despliegues fantasma del 2026-08-27.
+
+```
+cd /opt/aerocontrol && git status --short --branch
+```
+
+La primera línea tiene que decir `## main...origin/main` y **no** `## HEAD (no
+branch)`. Después `git pull`, `uv sync`, y el entorno **antes** de cualquier
+`manage.py`:
+
+```
+set -a; source <(sudo cat /etc/aerocontrol.env); set +a
+echo $DJANGO_SETTINGS_MODULE; echo $DB_PATH
+```
+
+Tiene que decir `config.settings.prod` y `/srv/aerocontrol-data/db/aero_ops.sqlite3`.
+Sin `set -a`, `source` define variables de shell y no de entorno, y `manage.py`
+cae a `config.settings.dev` — que acá no sería un error visible sino trabajar
+sobre la base equivocada. Luego, con respaldo previo:
+
+```
+uv run python manage.py backup && uv run python manage.py verify_backup
+uv run python manage.py migrate --no-input
+uv run python manage.py bootstrap_roles
+uv run python manage.py collectstatic --no-input
+sudo systemctl restart aerocontrol
+git log --oneline -1
+```
+
+**`bootstrap_roles` no es opcional**: sin él, el permiso `view_assessment_answers`
+de `LV-184` existe y no lo tiene nadie salvo `root`, así que media fila queda sin
+efecto. Y después, en la app: **el rol `Compliance` a Ariel Ortega y a
+Cristóbal**. La única migración de la tanda es `registry.0039` (`LV-184`, sólo el
+permiso; `sqlmigrate` la reporta `(no-op)`).
+
+### El cruce del manual, después de desplegar
+
+El comando ya existía (`chapter1_docx_import`, con `LV-133` adaptado a la Rev 17);
+lo que faltaba para poder confiar en él eran **`LV-190` y `LV-195`**, así que va
+después del despliegue. Verificado sobre
 `1 Capítulo 1 202608_R17_reparado.docx`: **17 aeronaves** (las 16 de producción
 más `RPA-7213`) y **48 fichas permanentes**, los 48 RUT válidos con su dígito
 verificador, 48 números de empleado distintos, ningún campo vacío, y la sección
@@ -145,19 +199,28 @@ crea alrededor de seis.
 
 **El cruce contra `p340` no se puede hacer desde una sesión de agente** (`ssh`
 responde `Permission denied (publickey)`, y la base local está vacía), así que va
-en la VM, y **el informe primero**:
+en la VM. El documento tampoco está allá — vive en OneDrive—, así que primero se
+copia, con nombre simple para no pelear con espacios y acentos:
 
 ```
-uv run python manage.py chapter1_docx_import --source "<ruta al docx>" --export-dir /tmp/cap1
+scp "D:\OneDrive - J.E.J. Ingeniería S.A\DGAC\Manual\ManualRev17\1 Capítulo 1 202608_R17_reparado.docx" levdigital01@p340:/tmp/cap1.docx
 ```
 
-Leer `already_on_file`, `CONFLICT` y `operators_ready` antes de aplicar. **Un
-`CONFLICT` no se fuerza**: significa que el manual y el padrón no coinciden sobre
-una persona, y la fila dice qué ficha tiene ese RUT. Sólo cuando no haya
-conflictos:
+Y **el informe primero**, que no escribe nada:
 
 ```
-uv run python manage.py chapter1_docx_import --source "<ruta al docx>" --apply --skip-existing
+cd /opt/aerocontrol && uv run python manage.py chapter1_docx_import --source /tmp/cap1.docx --export-dir /tmp/cap1
+```
+
+Leer `already_on_file`, `operators_ready` y cualquier línea `CONFLICT` antes de
+aplicar. **Un `CONFLICT` no se fuerza**: significa que el manual y el padrón no
+coinciden sobre una persona o una aeronave, y la línea dice qué ficha ocupa el
+valor. Con 42 fichas en el padrón, lo esperable es que la mayoría salga saltada:
+un `already_on_file: 0` sería señal de que el entorno no apunta donde se cree.
+Sólo cuando no haya conflictos:
+
+```
+cd /opt/aerocontrol && uv run python manage.py chapter1_docx_import --source /tmp/cap1.docx --apply --skip-existing
 ```
 
 ⚠️ **Y una deuda que `LV-190` deja a la vista**: las fichas que este import creó
