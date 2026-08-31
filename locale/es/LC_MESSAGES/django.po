@@ -1676,6 +1676,30 @@ msgstr "Separar en partes"
 msgid "Root — drop here or click to add new here"
 msgstr "Raíz — suelta aquí o haz clic para agregar aquí"
 
+#. LV-199: deshacer el vínculo entre un plan y un permiso.
+#: .\templates\operations\permission_detail.html:1
+msgid "Unlink"
+msgstr "Desvincular"
+
+#. LV-199: la confirmación dice **qué pasa con la ubicación** antes de aceptar,
+#. no después: se queda en el permiso.
+#: .\templates\operations\permission_detail.html:2
+msgid "Unlink this plan? The location it filled in stays on the permit."
+msgstr ""
+"¿Desvincular este plan? La ubicación que rellenó se queda en el permiso."
+
+#: .\apps\operations\views.py:1
+msgid "That plan is not linked to this permit."
+msgstr "Ese plan no está vinculado a este permiso."
+
+#: .\apps\operations\views.py:2
+msgid ""
+"Plan %(title)s unlinked. The location it filled in stays on the permit: "
+"correct it by editing the permit if it is wrong."
+msgstr ""
+"Plan %(title)s desvinculado. La ubicación que rellenó se queda en el permiso: "
+"si está equivocada, corrígela editando el permiso."
+
 #. LV-201: la cuarta fila de indicadores del panel y su tarjeta en el informe.
 #: .\apps\dashboard\views.py:1
 msgid "Permits in force"

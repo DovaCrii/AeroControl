@@ -129,4 +129,11 @@ urlpatterns = [
         views.GeoPlanLinkToPermission.as_view(),
         name="permission-link-plan",
     ),
+    # LV-199: la inversa. Vincular se puede equivocar, y hasta acá no había cómo
+    # deshacerlo salvo por el admin de Django.
+    path(
+        "permissions/<uuid:pk>/unlink-plan/",
+        views.GeoPlanUnlinkFromPermission.as_view(),
+        name="permission-unlink-plan",
+    ),
 ]

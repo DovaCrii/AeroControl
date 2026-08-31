@@ -30,6 +30,29 @@ La fila archivada se distingue y ofrece "Restaurar": sin eso, el filtro
       <button class="btn btn-sm btn-outline-secondary">{% translate "Restore" %}</button>
     </form>
     {% endif %}
+    {% comment %}LV-203: **el camino de ida, que era lo que faltaba.** Pedido del
+    usuario mirando esta pantalla: poder sacar un plan cuando se equivocó al
+    dibujarlo. Archivar existía desde `LV-135` —con su permiso propio y su
+    pantalla de confirmación— y esta columna sólo ofrecía "Restaurar": la vuelta
+    sin la ida, así que desde el listado no había cómo llegar y había que entrar
+    al plan sabiendo que la acción estaba ahí.
+
+    **No se agrega una confirmación nueva de escribir "BORRAR"**, y la razón está
+    en el código que ya existe: cuando el plan dejó rastro —solicitudes SIGO,
+    versiones, revisiones, un permiso vinculado— `GeoPlanArchive` exige **un
+    motivo escrito** (`LV-178`), que es un freno más fuerte que teclear una
+    palabra: dice *por qué*, no sólo que alguien leyó. Y `LV-135` ya decidió que
+    un plan sin nada colgando se archiva de una, textual: "una confirmación vacía
+    sólo enseña a apretar sí sin leer". Sumar "escriba BORRAR" encima sería
+    fricción sin información nueva.
+
+    Va con `delete_geoplan` y no con `change_geoplan`: es la puerta de salida, y
+    ése es el permiso especial que la vista ya exige.{% endcomment %}
+    {% if plan.is_active and perms.geo.delete_geoplan %}
+    <form method="post" action="{% url 'geo-plan-archive' plan.pk %}" style="display:inline">{% csrf_token %}
+      <button class="btn btn-sm btn-outline-danger">{% translate "Archive" %}</button>
+    </form>
+    {% endif %}
   </td>
 </tr>
 {% empty %}
