@@ -161,16 +161,34 @@ def test_an_archived_plan_does_not_count(world):
     assert form.hidden_plan_fields == []
 
 
-def test_creating_a_permit_never_hides_anything(world):
-    """En el alta el plan se elige en el mismo formulario, así que todavía no hay
-    nada de dónde sacar el dato -- y el relleno ocurre al guardar (LV-153)."""
+def test_creating_a_permit_hides_them_too_since_lv197(world):
+    """**Este test cambió de signo, y el cambio es la fila `LV-197`.**
+
+    Se llamaba `test_creating_a_permit_never_hides_anything` y afirmaba lo
+    contrario, con esta razón: en el alta el plan se elige en el mismo formulario,
+    así que todavía no hay nada de dónde sacar el dato. La observación sigue
+    siendo cierta; lo que cambió es la política que se deduce de ella, y la pidió
+    el usuario volviendo a mirar esa pantalla: *"que el operador no la llene, pero
+    que siempre se llene con el geoespacial es clave"*.
+
+    Que el dato no esté **todavía** no es razón para pedirlo a mano, porque hay
+    tres caminos y ninguno es tipearlo: `source_plan` acá mismo, vincular después
+    en la ficha, o editar el permiso — que es donde siguen a la vista mientras
+    estén vacíos, y por eso esto no cierra ninguna puerta. El detalle está en
+    `test_lv197_creation_does_not_ask_for_the_plan_data.py`.
+
+    Se renombra en vez de dejarlo describiendo lo contrario de lo que ocurre.
+    """
     from apps.operations.forms import FlightPermissionForm
 
     form = FlightPermissionForm()
 
     for name in LOCATION_FIELDS:
-        assert name in form.fields, name
-    assert form.hidden_plan_fields == []
+        assert name not in form.fields, name
+    # `max_altitude_ft` no está en `PLAN_PROVIDED_FIELDS` y sigue pidiéndose:
+    # ningún KMZ trae altitud, que es la razón que esta fila escribió al elegir
+    # su lista y que `LV-197` no tocó.
+    assert "max_altitude_ft" in form.fields
 
 
 # -- la puerta del papel de la DGAC ----------------------------------------

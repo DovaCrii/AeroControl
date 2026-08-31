@@ -188,6 +188,20 @@ class FlightPermissionList(
             or self.request.GET.get("date_from")
             or self.request.GET.get("date_to")
         )
+        # LV-198: los rótulos del índice de borradores, **traducidos acá y no con
+        # `{% translate %}` en la plantilla**, y no por gusto: ese tag **no traduce
+        # un literal que contiene `%(count)s`** — devuelve el inglés mientras
+        # `gettext` con la misma cadena devuelve el español, comprobado en
+        # aislamiento con `Template(...).render()` contra `gettext()` lado a lado.
+        # El JS necesita la cadena **con** su marcador para poder poner el número,
+        # así que el marcador no se puede evitar; lo que se evita es el tag.
+        #
+        # Las dos formas del plural van sueltas y no por `ngettext` porque quien
+        # elige es el JS: no sabe cuántos hay hasta leer `localStorage`.
+        context["draft_index_labels"] = {
+            "one": _("You have %(count)s unfinished draft in this browser."),
+            "many": _("You have %(count)s unfinished drafts in this browser."),
+        }
         return context
 
 
@@ -206,6 +220,14 @@ class FlightPermissionCreate(OCreate):
         # persona puede vincular (`geo.change_geoplan`).
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
+        # LV-197: el alta deja de pedir las casillas que el plan provee, así que
+        # necesita **la misma puerta de escape** que la edición tiene desde
+        # `LV-166`. Sin esto, el escape existiría en una de las dos pantallas y no
+        # en la otra: exactamente la mitad que falta y que este día ya corrigió
+        # tres veces (`R10.2` al vincular, `LV-199` al desvincular, `LV-203` al
+        # archivar). El caso es el mismo que motivó el escape: una resolución de
+        # la DGAC que trae otra coordenada.
+        kwargs["manual_location"] = self.request.GET.get("ubicacion") == "manual"
         return kwargs
 
     def form_valid(self, form):

@@ -138,6 +138,7 @@ class FlightPermissionForm(AeroModelForm):
         self.hidden_plan_fields = []
         if not manual_location:
             self._hide_what_the_plan_provides()
+            self._hide_at_creation()
         # LV-153: sólo los planes que no están ya vinculados a otro permiso --
         # reasignar un plan es un movimiento distinto y tiene su propia puerta en
         # la ficha (`R10.2`). Y sólo con `geo.change_geoplan`, porque vincular
@@ -229,6 +230,52 @@ class FlightPermissionForm(AeroModelForm):
         for name in self.PLAN_PROVIDED_FIELDS:
             value = getattr(self.instance, name, None)
             if name in self.fields and value not in (None, ""):
+                del self.fields[name]
+                self.hidden_plan_fields.append(name)
+
+    def _hide_at_creation(self):
+        """LV-197: y en el **alta** tampoco se piden.
+
+        Segunda mitad del mismo pedido de `LV-166`, hecha cuando el usuario volvió
+        a mirar el formulario de alta: *"quitar esos elementos del permiso […] ya
+        que saldrán automáticos […] que el operador no la llene, pero que siempre
+        se llene con el geoespacial es clave, así ahorra espacio en la propuesta"*.
+
+        `LV-166` había excluido el alta **a propósito**, y su razón era buena en su
+        momento: no hay `pk`, el plan se elige en este mismo formulario, así que al
+        dibujarlo todavía no hay nada de dónde sacar el dato. Lo que cambia no es
+        esa observación sino la política que se deduce de ella: que el dato no esté
+        *todavía* no es razón para pedirlo a mano, porque **hay tres caminos para
+        llenarlo y ninguno es tipearlo** — elegir el plan acá mismo (`source_plan`,
+        que rellena al guardar), vincularlo después en la ficha (`R10.2`), o
+        editar el permiso, que es donde `_hide_what_the_plan_provides` los deja a
+        la vista mientras sigan vacíos.
+
+        Esa última es la que hace que esto no cierre ninguna puerta: si el plan no
+        trajo la comuna, la pantalla de edición la pide. Y queda además el escape
+        explícito de `LV-166`, `?ubicacion=manual`, para el caso que lo motivó — una
+        resolución de la DGAC que trae otra coordenada y tiene más autoridad que lo
+        que se preparó antes.
+
+        **`max_altitude_ft` y `location` no se tocan**, por lo que `LV-166` ya
+        escribió y sigue valiendo: ningún KMZ trae altitud, así que esconderla la
+        dejaría sin forma de cargarse, y `location` es el texto libre obligatorio —
+        con él, un permiso nunca nace sin decir dónde vuela.
+
+        ⚠️ **`_state.adding` y no `not self.instance.pk`**, que es lo que estaba
+        escrito dos métodos más arriba y no comprueba lo que parece: `BaseModel.id`
+        es un `UUIDField` con `default=uuid.uuid4`, así que **una instancia nueva
+        ya tiene `pk`** antes de guardarse y esa guarda nunca se cumple. Escrita
+        así, esta función no habría escondido nada y el test lo dijo de inmediato.
+        `_hide_what_the_plan_provides` y `_roster` llevan la misma comprobación y
+        siguen siendo correctas **por otra razón** —una instancia sin guardar no
+        tiene `geo_plans` ni rosters que traer—, así que no se tocan; queda dicho
+        acá para que el próximo no deduzca de ellas que la guarda funciona.
+        """
+        if not self.instance._state.adding:
+            return
+        for name in self.PLAN_PROVIDED_FIELDS:
+            if name in self.fields:
                 del self.fields[name]
                 self.hidden_plan_fields.append(name)
 

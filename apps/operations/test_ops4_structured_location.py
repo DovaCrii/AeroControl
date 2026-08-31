@@ -92,6 +92,22 @@ class TestStructuredLocationValidation:
 
 
 class TestStructuredLocationForm:
+    """LV-197: el alta dejó de pedir las casillas de ubicación —las rellena el
+    plan—, así que estos dos postean **con `?ubicacion=manual`**, que es el modo en
+    que el alta las sigue aceptando y la puerta que `LV-166` dejó para el papel de
+    la DGAC.
+
+    No es un ajuste para que el test pase: **la regla que afirman sigue viva y
+    sigue siendo del alta**, sólo que ahora se ejerce donde el alta ofrece esos
+    campos. Sin el modo manual, un `latitude` posteado a mano simplemente no
+    existe en el formulario y se ignora, que es el comportamiento normal de Django
+    y no un dato inválido aceptado — pero tampoco sirve para comprobar la
+    validación, y un test que no puede fallar no protege nada.
+    """
+
+    # LV-197: el alta con las casillas a la vista.
+    MANUAL = "?ubicacion=manual"
+
     @pytest.mark.django_db
     def test_create_form_rejects_lone_latitude(self, db):
         cc = _cc()
@@ -102,7 +118,7 @@ class TestStructuredLocationForm:
         client = login_as("add_flightpermission")
 
         response = client.post(
-            reverse("permission-create"),
+            reverse("permission-create") + self.MANUAL,
             _FORM_BASE
             | {
                 "operators": [operator.pk],
@@ -125,7 +141,7 @@ class TestStructuredLocationForm:
         client = login_as("add_flightpermission")
 
         response = client.post(
-            reverse("permission-create"),
+            reverse("permission-create") + self.MANUAL,
             _FORM_BASE
             | {
                 "operators": [operator.pk],

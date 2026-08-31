@@ -96,9 +96,13 @@ cada cosa.{% endcomment %}
     <div class="form-draft mt-4" data-form-draft data-form-draft-key="permission-form">
       <div class="alert alert-info d-flex flex-wrap gap-2 align-items-center" role="alert"
            data-form-draft-notice hidden>
+        {% comment %}LV-198: los paréntesis van **dentro** del envoltorio que se
+        oculta, no sueltos en el texto. Estaban fuera, así que un borrador sin
+        fecha —los que se guardaron antes de que `at` existiera— dibujaba
+        "guardado en este navegador ()", con el paréntesis vacío a la vista. Un
+        dato ausente sin explicación se lee como pantalla rota.{% endcomment %}
         <span>
-          {% translate "You have a draft saved in this browser" %}
-          (<span data-form-draft-when></span>).
+          {% translate "You have a draft saved in this browser" %}<span data-form-draft-when-wrap hidden> (<span data-form-draft-when></span>)</span>.
         </span>
         <button type="button" class="btn btn-sm btn-outline-primary" data-form-draft-restore>{% translate "Recover it" %}</button>
         <button type="button" class="btn btn-sm btn-outline-secondary" data-form-draft-discard>{% translate "Discard it" %}</button>

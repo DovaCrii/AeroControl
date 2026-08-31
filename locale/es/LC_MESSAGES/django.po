@@ -1676,6 +1676,40 @@ msgstr "Separar en partes"
 msgid "Root — drop here or click to add new here"
 msgstr "Raíz — suelta aquí o haz clic para agregar aquí"
 
+#. LV-200: el archivo subido es idéntico a uno que ya está cargado. Avisa y no
+#. bloquea: la misma carta cubriendo varios permisos es el caso que el usuario
+#. describió, no un error. Nombra el documento existente, porque "ya existe" sin
+#. el nombre manda a buscarlo a mano por toda la app.
+#: .\apps\compliance\views.py:1
+#, python-format
+msgid ""
+"This file is byte-for-byte the same as %(title)s, already on file. It was "
+"uploaded anyway: if it is the same paper covering both records, that is "
+"expected."
+msgstr ""
+"Este archivo es idéntico, byte por byte, a %(title)s, que ya está cargado. Se "
+"subió igual: si es el mismo papel que cubre los dos registros, es lo esperado."
+
+#. LV-198: el aviso de que hay borradores sin terminar, en el listado de
+#. permisos. Dice "en este navegador" porque es la verdad: el borrador vive en
+#. localStorage por la decisión de LV-154, y prometer un listado que otra
+#. persona no va a ver sería peor que no tenerlo. Las dos formas van como
+#. cadenas separadas y no con `ngettext` porque el plural lo elige el JS.
+#: .\templates\operations\permission_list.html:1
+#, python-format
+msgid "You have %(count)s unfinished draft in this browser."
+msgstr "Tienes %(count)s borrador sin terminar en este navegador."
+
+#: .\templates\operations\permission_list.html:2
+#, python-format
+msgid "You have %(count)s unfinished drafts in this browser."
+msgstr "Tienes %(count)s borradores sin terminar en este navegador."
+
+#. LV-198: vuelve al formulario de alta, donde el borrador se recupera.
+#: .\templates\operations\permission_list.html:3
+msgid "Pick it up"
+msgstr "Retomarlo"
+
 #. LV-199: deshacer el vínculo entre un plan y un permiso.
 #: .\templates\operations\permission_detail.html:1
 msgid "Unlink"

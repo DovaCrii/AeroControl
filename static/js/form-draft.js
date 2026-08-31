@@ -124,9 +124,14 @@
 
     var draft = stored();
     if (draft && draft.values && notice) {
+      // LV-198: la fecha y **sus paréntesis** aparecen juntos o no aparecen. El
+      // envoltorio estaba fuera del span, así que un borrador sin `at` dejaba a
+      // la vista un "()" que se lee como pantalla rota.
       var when = panel.querySelector('[data-form-draft-when]');
+      var wrap = panel.querySelector('[data-form-draft-when-wrap]');
       if (when && draft.at) {
         when.textContent = new Date(draft.at).toLocaleString();
+        if (wrap) wrap.hidden = false;
       }
       notice.hidden = false;
     }
@@ -164,8 +169,50 @@
     form.addEventListener('submit', drop);
   }
 
+  // LV-198: el índice de borradores, para que existan **fuera del formulario**.
+  //
+  // Pedido del usuario: *"el borrador no quedar abajo, si no generar un listado
+  // fuera que existen borradores"*. El aviso vivía al pie del formulario de alta,
+  // así que sólo se descubría volviendo a esa misma pantalla — y un borrador que
+  // hay que recordar para encontrarlo no cumple el pedido que lo creó (`LV-154`:
+  // "por si toca salir y avanzar en otros temas").
+  //
+  // **Es por navegador, y no puede ser de otra forma**: el borrador vive en
+  // `localStorage` por la decisión de `LV-154`, que está escrita arriba con su
+  // razón — una fila incompleta en la base habría exigido hacer nulas tres
+  // columnas obligatorias y decidir qué hacen con un permiso sin faena el panel,
+  // las alertas, el calendario y el informe. Un índice compartido entre personas
+  // es esa otra decisión, no esta fila.
+  //
+  // Vive en **este** archivo y no en uno propio a propósito: comparte
+  // `STORE_PREFIX` y `storage()` con quien los escribe. Con el prefijo duplicado
+  // en dos archivos, el día que cambie el índice deja de encontrar los
+  // borradores — y lo haría en silencio, que es la peor forma.
+  function setUpIndex(box) {
+    var store = storage();
+    if (!store) return;
+    var found = [];
+    try {
+      for (var index = 0; index < store.length; index += 1) {
+        var key = store.key(index);
+        if (key && key.indexOf(STORE_PREFIX) === 0) found.push(key);
+      }
+    } catch (error) {
+      return;
+    }
+    if (!found.length) return;
+    var count = box.querySelector('[data-draft-index-count]');
+    if (count) {
+      var template =
+        found.length === 1 ? box.dataset.oneLabel : box.dataset.manyLabel;
+      count.textContent = (template || '').replace('%(count)s', found.length);
+    }
+    box.hidden = false;
+  }
+
   function init() {
     document.querySelectorAll('[data-form-draft]').forEach(setUp);
+    document.querySelectorAll('[data-draft-index]').forEach(setUpIndex);
   }
 
   if (document.readyState === 'loading') {

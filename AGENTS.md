@@ -124,6 +124,10 @@ Cada una costó tiempo real al menos una vez. Consolidadas 2026-08-11.
 
 **Traducción nueva: escribirla a mano en el `.po`, no con `makemessages`.** La regla ya estaba implícita en los siete fuzzy peligrosos que este repo lleva contados; queda explícita: `makemessages` propone traducciones por parecido y una entrada `#, fuzzy` aceptada sin mirar puso en pantalla lo contrario de lo que decía el código (`LV-183`). Escribir el `msgid`/`msgstr` a mano cuesta un minuto y no adivina.
 
+**`{% translate %}` NO traduce un literal que contiene `%(algo)s`.** Devuelve el inglés, mientras `gettext()` con la **misma** cadena devuelve el español — comprobado en aislamiento con `Template(...).render()` contra `gettext()` lado a lado. Se descubrió con un rótulo que el JS necesita con su marcador para poner un número (`LV-198`). Cuando la cadena tiene que llevar un `%(...)s`, traducirla **en la vista** y pasarla por contexto; el tag sirve para todo lo demás.
+
+**Antes de agregar un método a una clase larga, listar los que ya tiene.** Pasó **dos veces el mismo día**: se insertó un `get_context_data` en `FlightPermissionList` y un `save` en `DocumentForm`, y las dos clases ya tenían uno más abajo — Python se queda con la última definición, así que el método nuevo **no se ejecuta y no hay error ninguno**. El síntoma es una clave que no llega al contexto o un campo que se guarda vacío, y se busca en el lugar equivocado. Un `Select-String "^    def "` sobre el rango de la clase cuesta un segundo.
+
 **Chequeos previos a una migración: `values_list`, nunca `.all()`.** Corren con el código nuevo sobre la base vieja, así que un `SELECT *` intenta leer columnas que la migración todavía no creó y falla antes de comprobar nada.
 
 **El gate verifica código, nadie verifica el cableado de producción.** Tres funciones con tests verdes no llegaban a nadie porque el grupo destinatario no tenía correos y un trabajo programado nunca se registró. Al terminar una función que notifica, comprobar el camino completo **en producción** (`--dry-run`, `list-timers`), no sólo el test.
