@@ -13,7 +13,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from apps.compliance.digest import HORIZON_DAYS
-from apps.compliance.kpis import operational_kpis
+from apps.compliance.kpis import operational_kpis, permit_counts
 from apps.compliance.models import Alert, Document
 from apps.registry.models import Aircraft, CostCenter, Operator
 
@@ -36,6 +36,25 @@ ALERT_COST_CENTER_PATHS = {
     "operations.flightpermission": "cost_center",
     "maintenance.maintenancerecord": "aircraft__cost_center",
     "compliance.monthlycompliancereview": "cost_center",
+    # LV-204: los tres que faltaban, y faltaban contra una lista que ya existía.
+    # Pedido del usuario mirando la bandeja: *"la alerta debe mostrar de qué CC
+    # pertenece la entidad, en todo tipo de caso"* — la fila de la aeronave
+    # llevaba su chip `CC633` y la del documento no llevaba ninguno.
+    #
+    # `DOCUMENTABLE_MODELS` (`apps/compliance/forms.py`) declara a qué puede
+    # colgar un documento, y esta tabla no la seguía: `geoplan` y `flightrequest`
+    # los agregó `R10.5` precisamente porque los papeles de una faena llegan
+    # **antes** que el permiso, así que son de los más probables en la etapa
+    # temprana — y eran justo los que quedaban sin faena. Hay un test que cruza
+    # las dos listas para que no vuelva a desalinearse; es el mismo tipo de
+    # desalineación que `LV-188` acabó de pagar entre el filtro y la atribución.
+    #
+    # `"pk"` en el centro de costo no es un truco: la faena de un centro de costo
+    # es él mismo, y escribirlo como ruta lo mete por la puerta normal en vez de
+    # exigir un caso especial en las dos funciones que recorren esta tabla.
+    "registry.costcenter": "pk",
+    "geo.geoplan": "cost_center",
+    "operations.flightrequest": "cost_center",
 }
 
 
@@ -84,7 +103,13 @@ def _subject_scope(cost_center, *, only_active):
             model = django_apps.get_model(app_label, model_name)
         except LookupError:  # pragma: no cover - un modelo retirado del registro
             continue
-        subjects = model.objects.filter(**{path: cost_center})
+        # Se filtra por **el pk y no por la instancia**: para una ruta de FK
+        # (`cost_center`, `operator__cost_center`) Django acepta las dos, pero
+        # `LV-204` agregó `"pk"` como ruta —la faena de un centro de costo es él
+        # mismo— y ahí el campo es un `UUIDField`, no una relación: pasarle la
+        # instancia hace que intente leer su `__str__` como UUID y levanta
+        # `"CC738 - MLP" no es un UUID válido`. El pk sirve para las tres formas.
+        subjects = model.objects.filter(**{path: cost_center.pk})
         if only_active:
             subjects = subjects.filter(is_active=True)
         scope |= Q(
@@ -514,6 +539,14 @@ def build_compliance_report(start=None, end=None, cost_center=None, doc_type=Non
         # or NonConformity (R7.6). Fleet-wide on purpose -- availability is a
         # property of the fleet, not of a cost center's slice of it.
         "operational_kpis": operational_kpis(start, end),
+        # LV-201: los permisos vigentes, atrasados y esperando a la DGAC, con la
+        # **misma función que dibuja el panel** (`kpis.permit_counts`). El pedido
+        # del usuario nombraba las dos pantallas, y dos cálculos separados de la
+        # misma cifra es cómo el informe que alguien imprime y el panel que otro
+        # mira dejan de coincidir. A diferencia de `operational_kpis`, éste **sí**
+        # respeta el filtro por faena: un permiso pertenece a una, y la pregunta
+        # "cuántos tengo vigentes" se hace por faena.
+        "permits": permit_counts(today, cost_center),
     }
 
 

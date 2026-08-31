@@ -534,6 +534,10 @@ class GeoPlanDetailView(ModelViewPermissionRequiredMixin, DetailView):
                 "duplicate": _("Duplicate"),
                 "explode": _("Split into parts"),
                 "rootDrop": _("Root — drop here or click to add new here"),
+                # LV-202: el nombre del punto central que deja una circunferencia
+                # dibujada. Va acá y no en el JS porque los módulos del mapa no
+                # llevan cadenas visibles: se traducen en el servidor.
+                "circleCenter": _("Center"),
                 # GEO-12a version diff
                 "compare": _("Compare"),
                 "diffExit": _("Exit comparison"),

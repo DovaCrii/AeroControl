@@ -121,6 +121,45 @@ arreglo. O se arregla antes de graficar —ya está arreglado— o el gráfico d
 desde qué fecha la serie es comparable. Los snapshots viejos **no se recalculan**:
 son un hecho fechado, igual que una migración.
 
+### Segunda tanda del 2026-08-31: el crítico y cuatro más
+
+Desplegado `3315933` en `p340` (respaldo `aero_ops_20260831_123616` verificado,
+`registry.0039` aplicada, `bootstrap_roles` corrido). **Queda el paso manual:
+asignar el rol `Compliance` a Ariel y a Cristóbal**, o media fila de `LV-184`
+sigue sin efecto. Después de ese despliegue se cerraron cinco filas más, **sin
+desplegar todavía**:
+
+- **`LV-202`, `P0`, declarado crítico por el usuario** — el mapa no podía dibujar
+  una circunferencia. **No había nada roto**: el botón redondo de la barra es el
+  de punto (`drawCircleMarker`, que es cómo se dibuja un KML Point) y no existía
+  herramienta de círculo, apagada con la razón *"no faithful KML representation"*.
+  Cierto a medias: KML no tiene un círculo pero sí lo tiene **poligonalizado**,
+  que es cómo llegan los de Trimble. Se dibuja como anillo de 64 lados con el
+  mismo radio terrestre que usa el servidor, más el **pin central** al terminar.
+  Verificado ejecutando el JS con node: error de radio −0,06% y desviación 0,12%
+  contra el umbral de 10%, en las cuatro latitudes de la operación.
+- **`LV-204`, `P1`** — la alerta de un documento no decía de qué faena era.
+  Faltaban tres rutas (`costcenter`, `geoplan`, `flightrequest`) contra una lista
+  que ya existía, `DOCUMENTABLE_MODELS`. **Aquí se cobró lo que `LV-188`
+  invirtió**: con filtro y atribución unificados, las tres llegan al chip, al
+  filtro, al correo y al informe con la misma línea.
+- **`LV-201`** — el panel y el informe dicen cuántos permisos hay vigentes,
+  esperando aprobación y con la vigencia pasada. Un solo cálculo para las dos
+  pantallas.
+- **`LV-196`** — "Patrullaje" en el vocabulario de propósito. **Lleva `migrate`**
+  (`operations.0022`, `registry.0040`, las dos `(no-op)`).
+- **`LV-195`** — el espacio en la celda del Word (ver arriba).
+
+**Paso de despliegue de la tanda: `migrate` + `collectstatic`.** No hace falta
+`compilemessages`: el `.mo` va versionado.
+
+⚠️ **Tres tests pasaban por la razón equivocada y se corrigieron con su razón
+escrita**, todos destapados por estas filas: el de `LV-129` colgaba su "documento
+de la empresa" del centro de costo en vez del tenant; el de `R7.7` atrapó la
+tarjeta nueva imprimiendo "0/0" con la base vacía; y el de `LV-188` falló con
+`KeyError` sobre los tres modelos nuevos, que es **exactamente** lo que su
+docstring prometía hacer.
+
 ### Los cuatro pedidos del usuario de hoy, cerrados
 
 - **`LV-192`** — el listado de permisos abre con folio y **faena** (chip `CC738`,

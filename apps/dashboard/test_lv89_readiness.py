@@ -162,7 +162,10 @@ class TestOnThePage:
         content = response.content.decode()
 
         assert response.status_code == 200
-        assert len(response.context["readiness"]) == 3
+        # LV-201: cuatro, no tres. La fila de permisos se suma a flota, seguros y
+        # credenciales — y vuelve al lugar de donde `LV-89` retiró un gráfico
+        # "Permissions by status", ahora con la forma que esta fila fijó.
+        assert len(response.context["readiness"]) == 4
         assert "readiness-strip" in content
         # The two charts LV-89 replaced, and the header button that promised the
         # registry and opened cost centers.

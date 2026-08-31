@@ -86,6 +86,59 @@ def fleet_availability():
     }
 
 
+def permit_counts(today, cost_center=None):
+    """LV-201: cuántos permisos hay vigentes, atrasados y esperando a la DGAC.
+
+    Pedido del usuario: *"es importante mencionar tanto en los reportes como en el
+    dashboard la cantidad de permisos vigentes, atrasados, o el indicador en
+    general"*. Las dos palabras del pedido —reportes **y** dashboard— son la razón
+    de que esto viva acá y no en `dashboard/views.py`: **una sola función para los
+    dos lectores**, o el gerente lee una cifra en el PDF y la pantalla le muestra
+    otra. Es la misma regla que `documents_for_cost_center` acaba de aprender a la
+    mala en `LV-188`, cuando dos mitades del mismo cálculo se separaron.
+
+    **El denominador son los permisos vivos** (`requested` + `approved`) y no
+    todos los que existen. Con la historia acumulada, incluir los caducados haría
+    caer el porcentaje para siempre: es el mismo error que `fleet_availability`
+    evita excluyendo `retired`, y por la misma razón — un permiso que caducó no es
+    un permiso incumplido, terminó.
+
+    Los dos faltantes van **separados** porque se arreglan distinto, que es la
+    lección de `LV-129`: `awaiting` espera a la DGAC y no hay nada más que hacer;
+    `lapsed` es un permiso aprobado cuya vigencia ya pasó y que nadie cerró, y ése
+    sí es trabajo. `lapsed` normalmente vale cero porque `expire_permissions`
+    (`LV-83`) los cierra cada noche — y justamente por eso vale mirarlo: un número
+    ahí significa que ese trabajo nocturno no corrió.
+    """
+    from apps.operations.models import FlightPermission
+
+    permits = FlightPermission.objects.filter(
+        is_active=True,
+        status__in=(
+            FlightPermission.STATUS_REQUESTED,
+            FlightPermission.STATUS_APPROVED,
+        ),
+    )
+    if cost_center:
+        permits = permits.filter(cost_center=cost_center)
+    approved = permits.filter(status=FlightPermission.STATUS_APPROVED)
+    total = permits.count()
+    # Se mira `valid_until` y no `valid_from`, igual que el resto de la app: lo
+    # que vence es la autorización, y un permiso aprobado que empieza la semana
+    # que viene ya está autorizado — no es trabajo pendiente de nadie.
+    in_force = approved.filter(valid_until__gte=today).count()
+    return {
+        "total": total,
+        "in_force": in_force,
+        "pct": round(in_force * 100 / total, 1) if total else None,
+        "lapsed": approved.filter(valid_until__lt=today).count(),
+        "awaiting": permits.filter(status=FlightPermission.STATUS_REQUESTED).count(),
+        "soon": approved.filter(
+            valid_until__gte=today, valid_until__lte=today + timedelta(days=30)
+        ).count(),
+    }
+
+
 def on_time_execution(start, end):
     """Percentage of committed work that was flown inside its own window.
 

@@ -223,14 +223,24 @@ class TestPendingAlertsObeysTheCostCentreFilter:
     ):
         """Un documento de la empresa no cuelga de ninguna faena. Con filtro
         puesto no es de esa faena, que es la lectura honesta -- y sin filtro
-        vuelve a contarse."""
+        vuelve a contarse.
+
+        **LV-204: el sujeto pasa a ser el tenant, que es lo que este test quiso
+        decir siempre.** Colgaba del `CostCenter` y pasaba porque la tabla de
+        rutas no tenía entrada para ese modelo — o sea, por la razón equivocada:
+        un documento colgado de un centro de costo **sí** es de esa faena, de esa
+        misma. Los documentos de empresa cuelgan del tenant, y así lo declara
+        `DOCUMENTABLE_MODELS` con esas palabras. Al agregar la ruta que faltaba,
+        el fixture quedó afirmando lo contrario de su propio docstring.
+        """
         from apps.compliance.models import Document, DocumentType
+        from apps.core.models import OperationalTenant
 
         doc_type = DocumentType.objects.create(code="aoc", name="AOC")
         aircraft = _aircraft(cost_center, "RPA-MIA", TODAY - timedelta(days=10))
         document = Document.objects.create(
-            content_type=ContentType.objects.get_for_model(CostCenter),
-            object_id=cost_center.pk,
+            content_type=ContentType.objects.get_for_model(OperationalTenant),
+            object_id=OperationalTenant.objects.first().pk,
             doc_type=doc_type,
             title="Procedimiento",
             file_path="x.pdf",

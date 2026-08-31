@@ -504,6 +504,8 @@ async function init() {
       render,
       onChange,
       getActiveFolder: () => activeFolderUid,
+      // LV-202: el rótulo del punto central de una circunferencia dibujada.
+      labels,
     });
     if (saveBtn && dialog && summaryInput) {
       saveBtn.addEventListener("click", () => {

@@ -36,8 +36,11 @@ from apps.compliance.reports import (
     build_compliance_report,
     documents_for_cost_center,
 )
+from django.contrib.auth.models import User
+
+from apps.geo.models import GeoPlan
 from apps.maintenance.models import MaintenanceRecord
-from apps.operations.models import FlightPermission
+from apps.operations.models import FlightPermission, FlightRequest
 from apps.registry.models import (
     Aircraft,
     CostCenter,
@@ -145,6 +148,21 @@ def _subject_factories():
             lambda cc: MonthlyComplianceReview.objects.create(
                 cost_center=cc, period=TODAY.replace(day=1)
             )
+        ),
+        # LV-204 amplió la tabla con tres modelos, y **este test fue el que lo
+        # avisó**: falló con `KeyError` sobre los tres, que es exactamente lo que
+        # su docstring prometía. Un caso por modelo, agregados acá.
+        "registry.costcenter": lambda cc: cc,
+        "geo.geoplan": lambda cc: GeoPlan.objects.create(
+            title=f"CG-{cc.code}",
+            cost_center=cc,
+            created_by=User.objects.get_or_create(username="autor-188")[0],
+        ),
+        "operations.flightrequest": lambda cc: FlightRequest.objects.create(
+            title=f"Quebrada {cc.code}",
+            cost_center=cc,
+            center_lat=-31.7,
+            center_lon=-70.6,
         ),
     }
 

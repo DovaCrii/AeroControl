@@ -363,7 +363,7 @@ def panel_readiness(today, cost_center=None):
     unavailable, it left the fleet, and counting it would make the figure sag
     permanently for a good decision.
     """
-    from apps.compliance.kpis import FLEET_AVAILABILITY_TARGET
+    from apps.compliance.kpis import FLEET_AVAILABILITY_TARGET, permit_counts
 
     horizon = today + timedelta(days=30)
 
@@ -383,6 +383,24 @@ def panel_readiness(today, cost_center=None):
     ).count()
     operators_total = operators.count()
     credentialed = operators.filter(credential_expiry__gte=today).count()
+
+    # LV-201: los permisos vuelven a la fila, y vuelven porque el usuario los
+    # pidió: *"es importante mencionar tanto en los reportes como en el dashboard
+    # la cantidad de permisos vigentes, atrasados, o el indicador en general"*. La
+    # fila mostraba flota, seguros y credenciales — y ninguna cifra del objeto que
+    # esta aplicación existe para tramitar.
+    #
+    # No es una tarjeta nueva suelta: el docstring de arriba cuenta que `LV-89`
+    # **retiró** un gráfico "Permissions by status" porque restataba números sin
+    # decir qué hacer. Vuelven con la forma que esa fila fijó, una fracción con su
+    # faltante nombrado.
+    #
+    # **El cálculo vive en `kpis.permit_counts` y no acá**, aunque acá sea el único
+    # lugar donde hoy se dibuja: el pedido nombraba el panel **y** los informes, y
+    # dos cálculos separados de la misma cifra es exactamente cómo el panel y el
+    # informe terminan diciendo números distintos. `LV-188` acabó de mostrar el
+    # costo de esa separación en otra función.
+    permits = permit_counts(today, cost_center)
 
     return {
         "readiness": [
@@ -441,6 +459,23 @@ def panel_readiness(today, cost_center=None):
                     credential_expiry__gte=today, credential_expiry__lte=horizon
                 ).count(),
                 "url": reverse("operator-list"),
+            },
+            {
+                "key": "permits",
+                "label": _("Permits in force"),
+                "count": permits["in_force"],
+                "total": permits["total"],
+                "pct": permits["pct"],
+                "target": None,
+                "shortfall": permits["total"] - permits["in_force"],
+                "lapsed": permits["lapsed"],
+                # `awaiting` es propio de esta fila: las otras tres no tienen a
+                # quién esperar. La plantilla lo dibuja junto a `lapsed` en vez de
+                # en su lugar, porque son dos trabajos distintos y sumarlos sería
+                # el defecto que `LV-129` corrigió en la tarjeta de seguros.
+                "awaiting": permits["awaiting"],
+                "soon": permits["soon"],
+                "url": reverse("permission-list"),
             },
         ]
     }
