@@ -17,9 +17,21 @@ from django.utils.translation import gettext_lazy as _
 # is not clean enough to force into just these two (see PURPOSE_LEGACY_MAP
 # below and R3.1a's report output: every real historical value found mixed
 # more than one concept, e.g. "Fotogrametría - Fotos - Videos").
+#
+# LV-196: **"Patrullaje" entra**, pedido del usuario mirando el selector del
+# permiso: *"sumar Patrullaje ya que se usará mucho"*. No corrige nada de R3.1 —
+# es una decisión de negocio suya, y la razón es medible: hoy un patrullaje se
+# registra como "Otro" con el texto en `purpose_detail`, así que no se puede
+# contar ni filtrar, que es exactamente lo que el vocabulario cerrado vino a
+# permitir. Un tercer procedimiento no rompe la premisa; que quedara fuera del
+# catálogo sí la vaciaba.
+#
+# Va **último antes de "Otro"**: "Otro" tiene que quedar al final del
+# desplegable, porque es el escape y no una opción más.
 PURPOSE_CHOICES = [
     ("photogrammetry", _("Photogrammetry Procedure")),
     ("video", _("Video Procedure")),
+    ("patrol", _("Patrol")),
     ("other", _("Other")),
 ]
 
@@ -32,4 +44,15 @@ PURPOSE_LEGACY_MAP: dict[str, str] = {
     "fotogrametria": "photogrammetry",
     "videos": "video",
     "video": "video",
+    # LV-196: las dos formas exactas, con y sin tilde, igual que arriba. **No se
+    # agrega "patrullaje aéreo" ni variantes**: la regla de este mapa es
+    # coincidencia exacta y nunca adivinar, y su comentario explica por qué —
+    # cada valor histórico real encontrado mezclaba más de un concepto.
+    #
+    # ⚠️ Esto **no reclasifica lo que ya está en la base**. El mapa lo usan
+    # `report_purpose_mapping` y las migraciones de relleno de R3.1, que ya
+    # corrieron; los permisos que hoy dicen "Otro" con un patrullaje en el
+    # detalle se quedan así hasta que alguien decida moverlos, y esa decisión es
+    # del usuario con el listado a la vista, no de una migración que adivine.
+    "patrullaje": "patrol",
 }

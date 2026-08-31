@@ -152,6 +152,30 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   y qué contestó — lo que sirve para estudiar, sin el examen resuelto.
   **Al desplegar hay que correr `bootstrap_roles`.**
 
+### Added
+
+- **El panel y el informe dicen cuántos permisos hay vigentes (`LV-201`).** La
+  fila de indicadores mostraba flota, seguros y credenciales, y ninguna cifra del
+  objeto que la aplicación existe para tramitar. Ahora hay una cuarta: permisos
+  vigentes sobre los que están vivos, con los que esperan aprobación de la DGAC y
+  los que ya pasaron su vigencia contados aparte, porque se resuelven distinto.
+  La misma cifra aparece en el informe y sale de la misma función, así que las dos
+  pantallas no pueden discrepar.
+- **"Patrullaje" entra al vocabulario de propósito (`LV-196`).** Hasta ahora un
+  patrullaje se registraba como "Otro" con el detalle en texto libre, así que no
+  se podía contar ni filtrar. Los permisos ya guardados no se reclasifican: mover
+  una fila histórica es decisión de quien la mira, no de una migración.
+
+### Fixed
+
+- **Toda entidad dice de qué faena es, incluida la que cuelga de otra
+  (`LV-204`).** La alerta de una aeronave mostraba su centro de costo y la de un
+  documento no mostraba ninguno. Faltaban tres caminos en la tabla de rutas
+  —centro de costo, plan geoespacial y solicitud de vuelo—, y los dos últimos son
+  los más probables al principio de una faena, cuando los papeles llegan antes
+  que el permiso. Ahora el chip, el filtro por faena, el resumen por correo y el
+  informe de cumplimiento los conocen todos.
+
 ### Security
 
 - **La lista de vencimientos del panel respeta los permisos del usuario
@@ -198,6 +222,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   el encabezado decía "2 por confirmar" en todo permiso, para siempre, y ningún
   expediente podía leerse como completo. Retiro de pantalla, no de base:
   registrar un vuelo sigue en su propio módulo.
+- **El mapa ya permite dibujar una circunferencia, con su centro (`LV-202`).** No
+  había herramienta de círculo: el botón redondo de la barra es el de punto, así
+  que apretarlo dejaba un marcador. Ahora se dibuja la circunferencia y, al
+  terminar, queda también su pin central — que es lo que el backend usa para
+  medir el radio y lo que se copia a la hoja de SIGO. Se guarda como anillo
+  cerrado de 64 lados, la misma forma en que llegan los círculos de los KMZ de
+  Trimble, así que dibujar y importar producen lo mismo.
 - **Un espacio en una celda del manual ya no bloquea la carga completa
   (`LV-195`).** El Capítulo 1 Rev 17 trae dos números de serie partidos por un
   espacio, y el importador los comparaba en crudo contra los de la base, que se

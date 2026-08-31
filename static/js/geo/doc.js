@@ -321,6 +321,58 @@ export function geometryFromLayer(layer) {
   return gj && gj.geometry ? gj.geometry : null;
 }
 
+// LV-202: los lados con que se poligonaliza una circunferencia dibujada.
+//
+// Importa el número, no es decorativo: el backend **mide** el radio desde el
+// anillo (`estimate_radius_m`) y descarta como "no es un círculo" lo que se
+// aparte del radio medio más de `MAX_RADIUS_DEVIATION` (0.10). El comentario de
+// esa constante dice que "el círculo de 36 lados que dibujan las herramientas
+// queda muy por debajo"; 64 deja el doble de margen y se dibuja igual de rápido.
+export const CIRCLE_SIDES = 64;
+
+// El mismo radio terrestre que `apps/geo/sections.py` (IUGG), y por la misma
+// razón por la que esa constante está escrita ahí y no aproximada: el radio que
+// el usuario dibuja tiene que ser el que el servidor mide y el que después se
+// copia a la casilla "Radio (m)" del formulario de SIGO. Con dos constantes
+// distintas, la cifra de la hoja de campo no sería la del mapa.
+const EARTH_RADIUS_M = 6371008.8;
+const DEG = Math.PI / 180;
+
+// LV-202: una circunferencia como anillo cerrado de [lon, lat].
+//
+// **KML no tiene círculo**, y por eso el editor lo tenía apagado ("no faithful
+// KML representation"). Sí lo tiene poligonalizado, que es exactamente cómo
+// llegan los círculos reales: los KMZ de Trimble Business Center que el usuario
+// usa para CC 738 exportan cada circunferencia como un anillo cerrado, y `R10.4`
+// aprendió a leerlos. Dibujar produce ahora lo mismo que importar, así que el
+// radio, el centro y la hoja de SIGO salen por el mismo camino ya probado.
+//
+// La proyección es plana con corrección por latitud, la misma aproximación que
+// `estimate_radius_m` usa para los puntos medios de arista: a la escala de una
+// solicitud SIGO (decenas o cientos de metros, hasta pocos km) el error queda muy
+// por debajo de lo que la casilla del formulario puede expresar.
+export function circleRing(center, radiusM, sides = CIRCLE_SIDES) {
+  const metersPerDegree = EARTH_RADIUS_M * DEG;
+  const dLat = radiusM / metersPerDegree;
+  const cos = Math.cos(center.lat * DEG);
+  // En un polo `cos` es 0 y la corrección se va al infinito. No hay operación
+  // aérea ahí, pero una división por cero produciría `NaN` en las coordenadas y
+  // un plan corrupto en vez de un error: se cae al radio en latitud.
+  const dLon = Math.abs(cos) < 1e-9 ? dLat : radiusM / (metersPerDegree * cos);
+  const ring = [];
+  for (let index = 0; index < sides; index += 1) {
+    const angle = (2 * Math.PI * index) / sides;
+    ring.push([
+      center.lng + dLon * Math.cos(angle),
+      center.lat + dLat * Math.sin(angle),
+    ]);
+  }
+  // Cerrado explícitamente repitiendo el primer vértice: es lo que
+  // `closed_ring_of` comprueba para aceptar el anillo.
+  ring.push(ring[0].slice());
+  return ring;
+}
+
 let uidCounter = 0;
 export function newUid() {
   uidCounter += 1;

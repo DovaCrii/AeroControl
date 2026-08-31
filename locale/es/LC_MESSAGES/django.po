@@ -1198,6 +1198,14 @@ msgstr "Procedimiento de Fotogrametría"
 msgid "Video Procedure"
 msgstr "Procedimiento de Videos"
 
+#. LV-196: "Patrullaje" a secas, sin "Procedimiento de" delante. Los otros dos
+#. lo llevan porque nombran los procedimientos SIGO del DAN 137 Cap. J, que se
+#. llaman así en el papel; el patrullaje es un propósito de vuelo y no uno de
+#. esos dos procedimientos, y ponerle el mismo prefijo lo haría pasar por uno.
+#: .\apps\core\choices.py:23
+msgid "Patrol"
+msgstr "Patrullaje"
+
 #: .\apps\core\management\commands\check_scheduled_jobs.py:109
 msgid "AeroControl · a scheduled job needs attention"
 msgstr "AeroControl · un trabajo programado necesita atención"
@@ -1667,6 +1675,34 @@ msgstr "Separar en partes"
 #: .\apps\geo\views.py:536
 msgid "Root — drop here or click to add new here"
 msgstr "Raíz — suelta aquí o haz clic para agregar aquí"
+
+#. LV-201: la cuarta fila de indicadores del panel y su tarjeta en el informe.
+#: .\apps\dashboard\views.py:1
+msgid "Permits in force"
+msgstr "Permisos vigentes"
+
+#. LV-201: los permisos aprobados cuya vigencia ya pasó y que nadie cerró.
+#. "Vencidos" a secas se confundiría con la tarjeta de vencimientos de al lado,
+#. que es de documentos y vigencias; esto es otra cosa y por eso se nombra
+#. completo.
+#: .\templates\compliance\report.html:1
+msgid "Permits past their validity"
+msgstr "Permisos con la vigencia pasada"
+
+#. LV-201: los solicitados que esperan respuesta de la DGAC.
+#: .\templates\dashboard\index.html:1
+msgid "%(counter)s awaiting approval"
+msgid_plural "%(counter)s awaiting approval"
+msgstr[0] "%(counter)s esperando aprobación"
+msgstr[1] "%(counter)s esperando aprobación"
+
+#. LV-202: el nombre del punto central de una circunferencia dibujada. "Centro"
+#. y no "Centro del círculo": va como nombre del elemento en el panel de capas,
+#. junto a la circunferencia que lo explica, y la app ya usa "Centro de costo"
+#. para otra cosa en pantallas vecinas.
+#: .\apps\geo\views.py:541
+msgid "Center"
+msgstr "Centro"
 
 #: .\apps\geo\views.py:538
 msgid "Compare"

@@ -34,11 +34,32 @@ def _permission_kwargs(cost_center, **overrides):
 
 
 @pytest.mark.django_db
-def test_purpose_choices_are_exactly_the_two_sigo_procedures_plus_other():
+def test_purpose_is_a_closed_vocabulary_with_other_last():
+    """R3.1: vocabulario cerrado, y "Otro" al final porque es el escape.
+
+    **LV-196 agregó "Patrullaje"**, pedido del usuario porque va a usarse mucho —
+    hoy un patrullaje se registra como "Otro" con el detalle en texto y así no se
+    puede contar ni filtrar, que es lo que un vocabulario cerrado existe para
+    permitir.
+
+    Se llamaba `..._are_exactly_the_two_sigo_procedures_plus_other` y afirmaba la
+    lista literal. El nombre cambia con el contenido: lo que R3.1 defiende no es
+    que sean **dos** procedimientos, es que la lista sea **cerrada** —nadie
+    escribe texto libre— y que los dos del DAN 137 Cap. J estén y no se toquen.
+    Un test que fija la lista entera convierte cada decisión de negocio del
+    usuario en un fallo rojo que no dice nada.
+    """
     codes = [
         code for code, _label in FlightPermission._meta.get_field("purpose").choices
     ]
-    assert codes == ["photogrammetry", "video", "other"]
+
+    # Los dos procedimientos SIGO, primeros y en su orden.
+    assert codes[:2] == ["photogrammetry", "video"]
+    # "Otro" último: es la salida, no una opción al mismo nivel que las reales.
+    assert codes[-1] == "other"
+    # Cerrado: sin duplicados y sin el vacío que dejaría entrar texto libre.
+    assert len(codes) == len(set(codes))
+    assert "" not in codes
 
 
 @pytest.mark.django_db

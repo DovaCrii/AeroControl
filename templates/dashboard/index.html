@@ -76,11 +76,18 @@ contradecirse.{% endcomment %}
     salen en la lista de abajo. Separadas, cada número tiene con quién
     conversar: **vencidos** es el de la tarjeta de vencimientos, y **sin fecha**
     es el trabajo invisible que ninguna alerta va a recordarte.{% endcomment %}
+    {% comment %}LV-201: `awaiting` se suma como tercer término y no reemplaza a
+    ninguno. Es de la fila de permisos: los otros tres indicadores no tienen a
+    quién esperar, mientras que un permiso solicitado espera a la DGAC — y eso no
+    es lo mismo que uno aprobado cuya vigencia pasó. Mostrar uno **en lugar** del
+    otro sería la cifra única para dos trabajos distintos que el comentario de
+    arriba acaba de describir.{% endcomment %}
     <small class="text-muted">
-      {% if item.lapsed or item.missing %}
+      {% if item.lapsed or item.missing or item.awaiting %}
         {% if item.lapsed %}{% blocktranslate count counter=item.lapsed %}{{ counter }} lapsed{% plural %}{{ counter }} lapsed{% endblocktranslate %}{% endif %}
         {% if item.lapsed and item.missing %}·{% endif %}
         {% if item.missing %}{% blocktranslate count counter=item.missing %}{{ counter }} with no date on file{% plural %}{{ counter }} with no date on file{% endblocktranslate %}{% endif %}
+        {% if item.awaiting %}{% if item.lapsed or item.missing %}·{% endif %} {% blocktranslate count counter=item.awaiting %}{{ counter }} awaiting approval{% plural %}{{ counter }} awaiting approval{% endblocktranslate %}{% endif %}
       {% elif item.shortfall %}{{ item.shortfall }} {{ item.shortfall_label }}{% elif item.target %}{% blocktranslate with target=item.target|floatformat:0 %}target {{ target }}%{% endblocktranslate %}{% else %}{% translate "all up to date" %}{% endif %}
       {% if item.soon %}· {% blocktranslate count counter=item.soon %}{{ counter }} expires within 30 days{% plural %}{{ counter }} expire within 30 days{% endblocktranslate %}{% endif %}
     </small>

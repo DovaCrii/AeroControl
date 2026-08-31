@@ -54,6 +54,27 @@
   {% if report.incomplete_maintenance %}
   <div class="col-md-3 col-sm-6"><div class="summary-card summary-card-warning"><small>{% translate "Maintenance to define" %}</small><strong>{{ report.incomplete_maintenance }}</strong></div></div>
   {% endif %}
+  {% comment %}LV-201: los permisos, pedidos por el usuario para las dos
+  pantallas — *"tanto en los reportes como en el dashboard"*—. La cifra sale de
+  `kpis.permit_counts`, la **misma** que dibuja la fila del panel: con dos
+  cálculos, el informe que alguien imprime y el panel que otro mira dejarían de
+  coincidir, y el número impreso es el que se discute en una reunión.
+
+  Los dos faltantes van separados porque se arreglan distinto (`LV-129`):
+  "esperando" es la DGAC y no hay nada que hacer; "vencidos" son permisos
+  aprobados que ya caducaron y que nadie cerró — y ésos deberían ser cero, porque
+  el trabajo nocturno los cierra, así que un número ahí es la señal de que no
+  corrió. La tarjeta de vencidos sólo aparece cuando hay: una en cero todos los
+  días enseña a no mirar la fila.{% endcomment %}
+  {% comment %}Sin un solo permiso vivo va un guion y **no "0/0"**: es la regla
+  que el test de R7.7 defiende para los indicadores de esta misma pantalla —un
+  cero ahí se lee como fracaso total cuando la verdad es que la pregunta no
+  aplica— y fue ese test el que atrapó esta tarjeta imprimiendo "0/0" contra una
+  base sin permisos.{% endcomment %}
+  <div class="col-md-3 col-sm-6"><div class="summary-card"><small>{% translate "Permits in force" %}</small><strong>{% if report.permits.total %}{{ report.permits.in_force }}/{{ report.permits.total }}{% else %}<span class="text-muted">—</span>{% endif %}</strong>{% if report.permits.total %}<small class="text-muted">{% blocktranslate count counter=report.permits.awaiting %}{{ counter }} awaiting approval{% plural %}{{ counter }} awaiting approval{% endblocktranslate %}{% if report.permits.soon %} · {% blocktranslate count counter=report.permits.soon %}{{ counter }} expires within 30 days{% plural %}{{ counter }} expire within 30 days{% endblocktranslate %}{% endif %}</small>{% endif %}</div></div>
+  {% if report.permits.lapsed %}
+  <div class="col-md-3 col-sm-6"><div class="summary-card summary-card-warning"><small>{% translate "Permits past their validity" %}</small><strong>{{ report.permits.lapsed }}</strong></div></div>
+  {% endif %}
 </div>
 
 {% comment %}R7.7 (ISO 9001 9.1.1): a KPI needs a target and an action when it
