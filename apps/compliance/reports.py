@@ -166,6 +166,48 @@ def cost_centers_for_refs(refs):
     }
 
 
+def document_subjects(documents):
+    """`{pk del documento: de qué cuelga, en palabras}`. LV-186.
+
+    Pedido del usuario mirando los vencimientos del panel: una fila decía
+    *"Documento · Carta Permiso"* y nada más. El título de un documento no dice
+    **de cuál** es — hay una carta por permiso— así que la fila obligaba a abrir
+    para saber a qué se refiere, que es justo lo que una lista de vencimientos
+    existe para evitar.
+
+    Las otras cuatro fuentes no tienen este problema porque su etiqueta **es**
+    el sujeto: la matrícula para un seguro, el nombre para una credencial. El
+    documento es el único que cuelga de otra cosa.
+
+    Una consulta por tipo de sujeto presente y **ninguna por fila**, la misma
+    disciplina que `cost_centers_for_refs`: esto se dibuja en el panel, que se
+    abre en cada inicio de sesión.
+
+    Devuelve la clave **sólo cuando el sujeto existe**, así una entrada ausente
+    cubre de una sola forma los dos casos honestos: el documento de empresa, que
+    cuelga del tenant y no de un registro, y el sujeto borrado.
+    """
+    documents = list(documents)
+    if not documents:
+        return {}
+    by_type = {}
+    for document in documents:
+        by_type.setdefault(document.content_type_id, {}).setdefault(
+            str(document.object_id), []
+        ).append(document.pk)
+
+    labels = {}
+    for content_type_id, ids in by_type.items():
+        content_type = ContentType.objects.get_for_id(content_type_id)
+        model = content_type.model_class()
+        if model is None:
+            continue
+        for subject in model._default_manager.filter(pk__in=list(ids)):
+            for pk in ids.get(str(subject.pk), []):
+                labels[pk] = str(subject)
+    return labels
+
+
 def alerts_for_cost_center(queryset, cost_center):
     """Acotar alertas a un centro de costo, resolviendo la GenericForeignKey.
 

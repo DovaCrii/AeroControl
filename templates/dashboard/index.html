@@ -211,7 +211,11 @@ when the three are done.{% endcomment %}
       omitirlo correría el badge y el label hacia la izquierda y rompería la
       columna en las filas de documentos de empresa.{% endcomment %}
       <a href="{{ item.url }}" class="d-flex justify-content-between align-items-center border-bottom py-1 text-decoration-none text-body">
-        <span>{% if item.cost_center_code %}<span class="cc-chip me-2">{{ item.cost_center_code }}</span>{% else %}<span class="cc-chip is-empty me-2" title="{% translate 'No cost center on file' %}">—</span>{% endif %}<span class="badge bg-secondary-subtle text-secondary-emphasis me-2">{{ item.kind }}</span>{{ item.label }}</span>
+        <span>{% if item.cost_center_code %}<span class="cc-chip me-2">{{ item.cost_center_code }}</span>{% else %}<span class="cc-chip is-empty me-2" title="{% translate 'No cost center on file' %}">—</span>{% endif %}<span class="badge bg-secondary-subtle text-secondary-emphasis me-2">{{ item.kind }}</span>{{ item.label }}{% comment %}LV-186: de qué cuelga, cuando la etiqueta no lo dice. Un documento se
+        llama "Carta Permiso" y hay uno por permiso, así que sin esto la fila obliga a
+        abrirla para saber a cuál se refiere — justo lo que una lista de vencimientos
+        existe para evitar. Las otras cuatro fuentes no lo llevan porque su etiqueta
+        **es** el sujeto: la matrícula, el nombre de la persona.{% endcomment %}{% if item.subject %} <span class="text-body-secondary">· {{ item.subject }}</span>{% endif %}</span>
         {% comment %}LV-148: el color sale de `item.tone`, que viene de la misma
         tabla que la insignia de la bandeja (`digest.BUCKET_TEXT_CSS`). Acá vivía
         una cadena de cuatro `{% templatetag openblock %} if {% templatetag closeblock %}`

@@ -38,7 +38,67 @@ Verificar: `systemctl list-timers 'aerocontrol-*' --no-pager`
 
 Notificaciones a `Dirección`: `aortega@jej.cl` + `cmunoz@jej.cl`.
 
-## Cierre del 2026-08-28 — **empezar por acá**
+## Cierre del 2026-08-28 (tarde) — **empezar por acá**
+
+Continuación del mismo día. Se cerraron `LV-184` a `LV-186` y quedan **cuatro
+pedidos del usuario abiertos, con el camino ya acordado**.
+
+### Estado exacto
+
+- **`origin/main` = `b0037f3`** (más el commit de `LV-186` si su gate cerró
+  verde — mirar `git log`). **`p340` está en `22f379f`**: le faltan `LV-184`,
+  `LV-185` y `LV-186`.
+- **Ese despliegue lleva `migrate` + `bootstrap_roles` + `collectstatic`.** Sin
+  `bootstrap_roles`, el permiso `view_assessment_answers` de `LV-184` existe y no
+  lo tiene nadie salvo `root`, así que **Compliance no vería la clave de
+  respuestas** — media fila sin efecto.
+- Después de desplegar, el usuario tiene que **darles el rol `Compliance` a
+  Ariel Ortega y a Cristóbal** para que vean las respuestas correctas.
+
+### Lo que el usuario pidió y quedó acordado, sin hacer
+
+1. **Colores por elemento en el mapa del plan.** Hoy `static/js/geo/main.js`
+   dibuja **todo** con un único `STROKE = "#0f9f95"`: círculos, líneas, polígonos
+   y puntos. En un plan de siete circunferencias las siete son idénticas y el
+   panel de capas no ayuda a distinguirlas. Acordado: un color por elemento
+   ciclando **la paleta que la app ya tiene** (los cuatro tonos del menú y de la
+   hoja SIGO, no una nueva), **la misma marca de color en el panel de capas**
+   —que es el verdadero valor: hoy la lista dice "CG-07 | Circunferencia gran…" y
+   el mapa no dice cuál es—, y un centro que se distinga del borde. El modo
+   *diff* conserva sus colores por encima: ahí el color significa estado.
+2. **Tendencia en el panel** (el usuario eligió este camino, textual: *"un panel
+   de cumplimiento se vuelve interesante cuando muestra una tendencia"*).
+   **El dato ya existe y nunca se mostró**: `ComplianceSnapshot` (`R7.7`) guarda
+   `total`/`valid`/`expired`/`due_7`/`due_15`/`due_30` por fecha y faena, con
+   índice hecho para "el snapshot más reciente antes de X", y su propio docstring
+   dice que existe *"para hacer posible la tendencia"*. El timer `snapshot` corre
+   a las 23:00 desde el 2026-08-12, así que hay **unas dos semanas** de historia
+   real. **Por eso la ventana no puede ser fija**: comparar contra "hace 30 días"
+   inventaría una línea base. Comparar contra el snapshot más viejo disponible
+   dentro de la ventana **y decir contra qué fecha compara**.
+3. **La hoja de SIGO aprovecha mal el ancho.** El usuario dijo que se lee bien y
+   que sirve para copiar, pero que sobra espacio. **Lo que NO hay que hacer es
+   apretar las casillas**: están ordenadas como el formulario del Estado y su
+   trabajo es que se copie sin equivocarse de fila; ganar densidad se paga en
+   errores de transcripción, que es lo que `LV-171` vino a reducir. Lo propuesto
+   y no confirmado: en pantallas anchas, **el mapa al lado** de los datos en vez
+   de debajo.
+4. **El test de punta a punta de `LV-186`, y el hallazgo que puede esconder.**
+   Ver el comentario al final de `apps/dashboard/test_lv186_...py`: un documento
+   vigente, dentro de la ventana y con `is_current_version=True`, sale del panel
+   con `expirations == []` incluso con `admin_user`. Si eso se reproduce en
+   producción **no es un fixture mal armado sino documentos por vencer que la
+   pantalla no muestra** — la familia de `LV-120` y `LV-146`. Averiguarlo antes
+   de dar la fila por buena.
+
+### Y lo de siempre, que sigue mandando
+
+El **correo** es el único criterio en rojo y ahora está listo para encenderse:
+`LV-182` migró la configuración a `MAILERS`, así que sólo faltan las credenciales
+SMTP con **los mismos nombres de variable de siempre**. Y los dos timers
+(`check_scheduled_jobs`, `verify_backup`) siguen sin instalar.
+
+## Cierre del 2026-08-28 (mañana)
 
 Segunda jornada de revisión en vivo, y la más larga hasta ahora: **once filas
 cerradas y desplegadas** (`LV-169` a `LV-179`).
