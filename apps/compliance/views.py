@@ -767,12 +767,31 @@ class DocumentCreate(ComplianceCreate):
         return context
 
     def form_valid(self, form):
+        # LV-200: se lee **antes** de guardar, porque el documento nuevo pasa a
+        # tener la misma huella y después sería su propio duplicado.
+        duplicate = getattr(form, "duplicate_of", None)
         with uploaded_file_cleanup() as stored:
             with transaction.atomic():
                 response = super().form_valid(form)
                 stored["path"] = save_uploaded_file(
                     self.object, form.cleaned_data["file"]
                 )
+        # LV-200: avisar y no bloquear. Un archivo idéntico ya cargado es casi
+        # siempre lo que el usuario describió —la misma carta cubriendo varios
+        # permisos— y no un error, así que la subida se completa y el mensaje
+        # nombra el documento que ya lo tiene, con su enlace: sin el nombre, "ya
+        # existe" manda a buscarlo a mano por toda la app, que es lo que
+        # `duplicates.py` decidió no hacer para los avisos de unicidad.
+        if duplicate is not None:
+            messages.warning(
+                self.request,
+                _(
+                    "This file is byte-for-byte the same as %(title)s, already on "
+                    "file. It was uploaded anyway: if it is the same paper covering "
+                    "both records, that is expected."
+                )
+                % {"title": duplicate.title},
+            )
         return response
 
 

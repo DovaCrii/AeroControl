@@ -177,6 +177,39 @@ Dos filas más, **sin desplegar**:
 
 **Paso de despliegue: `collectstatic`.** Sin migración.
 
+**Desplegado `6dc2acb` en `p340`** (0 estáticos copiados, que es lo correcto: esa
+tanda tocó plantillas y Python, nada bajo `static/`).
+
+### Cuarta tanda: los tres pedidos que tenían una decisión adentro
+
+El usuario pidió avanzar y **decidir cada una**. Sin desplegar:
+
+- **`LV-197`** — el alta deja de pedir las seis casillas que el plan rellena.
+  **Este pedido ya era el de `LV-166`**, con su frase casi idéntica, resuelto
+  entonces sólo en la edición. Lo que cambió es la política: que el dato no esté
+  *todavía* no es razón para pedirlo a mano, porque hay tres caminos y ninguno es
+  tipearlo. La edición los sigue ofreciendo mientras estén vacíos, y el escape
+  `?ubicacion=manual` —que existía sólo en la edición— se le agrega al alta.
+- **`LV-198`** — el listado de Permisos dice cuántos borradores hay. **Por
+  navegador**, porque `localStorage` es la decisión de `LV-154` y prometer un
+  listado que otro no ve sería peor. Más el paréntesis vacío, arreglado.
+- **`LV-200`** — 🔶 **paso 1**. `content_sha256` estaba a medias: sólo lo escribía
+  el importador de `Z:`, así que **todo lo subido por la app lo tenía vacío**.
+  Ahora se calcula al subir y avisa —sin bloquear— nombrando el documento que ya
+  tiene ese archivo. **El paso 2 sigue siendo una decisión de modelo** y está
+  escrita en la fila: multi-sujeto toca el informe de cumplimiento; compartir el
+  blob pone dos filas sobre el mismo archivo.
+
+⚠️ **Tres tropiezos propios de esta tanda, los tres en `AGENTS.md`**:
+`{% translate %}` **no traduce un literal con `%(count)s`** (devuelve el inglés
+donde `gettext` devuelve el español); **`self.instance.pk` nunca es falsy** en
+este proyecto porque `BaseModel.id` tiene `default=uuid.uuid4`, así que la guarda
+`if not self.instance.pk` no comprueba lo que dice; y **agregué dos veces un
+método que la clase ya tenía más abajo** (`get_context_data`, `save`) — Python se
+queda con el último y el nuevo no corre, sin error ninguno.
+
+**Paso de despliegue: `collectstatic`.** Sin migración.
+
 ⚠️ **Tres tests pasaban por la razón equivocada y se corrigieron con su razón
 escrita**, todos destapados por estas filas: el de `LV-129` colgaba su "documento
 de la empresa" del centro de costo en vez del tenant; el de `R7.7` atrapó la

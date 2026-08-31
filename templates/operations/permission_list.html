@@ -1,5 +1,5 @@
 {% extends "generic/list.html" %}
-{% load i18n %}
+{% load i18n static %}
 
 {% block list_primary_actions %}
 {% comment %}LV-53: keep the plain full-page "+ Nuevo" link -- the base
@@ -38,6 +38,34 @@ archivado no tendría desde dónde restaurarse.{% endcomment %}
 </div>
 {% endblock %}
 
+{% block list_intro %}
+{% comment %}LV-198: el aviso de que hay borradores sin terminar, **fuera del
+formulario**. Pedido del usuario: el aviso vivía al pie del alta, así que sólo se
+descubría volviendo a esa pantalla — y un borrador que hay que recordar para
+encontrarlo no cumple el pedido que lo creó (`LV-154`: "por si toca salir y
+avanzar en otros temas, para no perder lo llenado").
+
+Dice **"en este navegador"** porque es la verdad y `LV-154` la eligió a
+conciencia: el borrador vive en `localStorage`, no en la base. Prometer un
+listado que otra persona no va a ver sería peor que no tenerlo.
+
+Los rótulos van en `data-*` traducidos por el servidor —incluidas las dos formas
+del plural, que el JS elige— porque en `form-draft.js` no se escriben cadenas
+visibles: no habría cómo traducirlas.
+
+⚠️ Y llegan **desde la vista**, no con `{% translate %}`: ese tag **no traduce un
+literal que contiene `%(count)s`** —devuelve el inglés donde `gettext` devuelve el
+español, comprobado en aislamiento—, y el JS necesita la cadena con su marcador
+para poder poner el número. Lo que se evita es el tag, no el marcador.{% endcomment %}
+<div class="alert alert-info d-flex flex-wrap gap-2 align-items-center" role="alert"
+     data-draft-index hidden
+     data-one-label="{{ draft_index_labels.one }}"
+     data-many-label="{{ draft_index_labels.many }}">
+  <span data-draft-index-count></span>
+  <a class="btn btn-sm btn-outline-primary" href="new/">{% translate "Pick it up" %}</a>
+</div>
+{% endblock %}
+
 {% block list_header %}
 <th scope="col">{% translate "Number" %}</th>
 {% comment %}LV-192: la faena, pedida por el usuario mirando este listado. Iba
@@ -58,3 +86,9 @@ x en todas las filas y se puede barrer con la vista.{% endcomment %}
 {% endblock %}
 
 {% block table_body %}{% include "operations/_permission_rows.html" %}{% endblock %}
+
+{% comment %}LV-198: el mismo script del formulario, porque el índice comparte con
+él el prefijo de `localStorage` y el acceso defensivo al almacenamiento. Dos
+archivos con el prefijo duplicado es cómo el índice deja de encontrar los
+borradores el día que ese prefijo cambie, y en silencio.{% endcomment %}
+{% block extrascripts %}<script defer src="{% static 'js/form-draft.js' %}"></script>{% endblock %}

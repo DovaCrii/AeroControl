@@ -486,12 +486,64 @@ class DocumentForm(AeroModelForm):
         if uploaded:
             for error in upload_errors(uploaded):
                 self.add_error("file", error)
+            self._fingerprint(uploaded)
         doc_type = cleaned.get("doc_type")
         if doc_type and doc_type.requires_expiry and not cleaned.get("expiry_date"):
             self.add_error(
                 "expiry_date", _("This document type requires an expiry date.")
             )
         return cleaned
+
+    def _fingerprint(self, uploaded):
+        """LV-200, paso 1: la huella del archivo, y quién ya la tiene.
+
+        Pedido del usuario: *"en ocasiones una carta puede estar ligada a varios
+        permisos; buscar una forma de optimizar y no subir/repetir el mismo
+        archivo muchas veces"*.
+
+        **`content_sha256` ya existía y estaba a medias**: lo escribe únicamente el
+        importador del repositorio `Z:` (`R4.2`), así que **todo lo subido desde la
+        app lo tenía vacío** — el campo servía para detectar una reimportación y
+        para nada más. Llenarlo al subir es lo que vuelve posible cualquier cosa
+        que quiera reconocer un archivo repetido, y por eso es el paso 1: sin la
+        huella, "no repetir el archivo" no tiene con qué compararse.
+
+        Se calcula por trozos y no con `uploaded.read()`: un PDF de la DGAC entra
+        por `TemporaryUploadedFile` cuando pasa el umbral de memoria de Django, y
+        leerlo entero para hashearlo lo cargaría dos veces. Y se rebobina al
+        terminar — quien guarda el archivo después lee el mismo objeto, y dejarlo
+        consumido escribiría un archivo de cero bytes.
+
+        **Avisa, no bloquea.** Un archivo idéntico ya cargado es casi siempre lo
+        que el usuario describe —la misma carta que cubre varios permisos— y no un
+        error: es información para quien está subiendo, no una puerta cerrada. El
+        aviso lo emite la vista, que es la que tiene `messages`; el formulario sólo
+        deja el hallazgo a la vista en `self.duplicate_of`. Es el mismo reparto que
+        `B4.4` usa para la habilitación que no calza con la aeronave.
+
+        ⚠️ **Lo que hoy no puede detectar**: los documentos cargados antes de esta
+        fila no tienen huella, así que subir de nuevo uno de ellos no avisa nada
+        hasta que se calcule la de los existentes — una corrida de datos aparte,
+        que hay que medir antes porque lee todos los archivos del almacenamiento.
+        """
+        import hashlib
+
+        digest = hashlib.sha256()
+        try:
+            for chunk in uploaded.chunks():
+                digest.update(chunk)
+        finally:
+            # `seek(0)` y no `open()`: el archivo ya está abierto y quien lo
+            # guarda espera encontrarlo al principio.
+            if hasattr(uploaded, "seek"):
+                uploaded.seek(0)
+        self.content_sha256 = digest.hexdigest()
+        self.duplicate_of = (
+            Document.objects.filter(content_sha256=self.content_sha256, is_active=True)
+            .exclude(pk=self.instance.pk)
+            .order_by("created_at")
+            .first()
+        )
 
     @staticmethod
     def _autogenerate_title(record, doc_type, issue_date):
@@ -504,6 +556,11 @@ class DocumentForm(AeroModelForm):
     def save(self, commit=True):
         document = super().save(commit=False)
         document.content_type = self.cleaned_data["entity_type"]
+        # LV-200: la huella viaja al registro. Sin esto, el cálculo del `clean` se
+        # perdería y `content_sha256` seguiría vacío para todo lo que sube la app —
+        # que es justo el estado que esta fila vino a cambiar.
+        if getattr(self, "content_sha256", ""):
+            document.content_sha256 = self.content_sha256
         if commit:
             document.save()
         return document

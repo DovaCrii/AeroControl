@@ -168,6 +168,23 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **El alta del permiso ya no pide los datos que trae el plan (`LV-197`).** Región,
+  comuna, nombre del área, latitud, longitud y radio salen del KMZ al elegir o
+  vincular el plan, así que el formulario dejó de pedirlos a mano. La altitud
+  máxima y la ubicación en palabras se siguen pidiendo: ningún KMZ trae altitud.
+  La pantalla de edición los ofrece mientras estén vacíos, y `?ubicacion=manual`
+  los devuelve cuando la resolución de la DGAC trae otra coordenada.
+- **Los borradores se ven desde el listado de permisos (`LV-198`).** El aviso
+  vivía al pie del formulario, así que un borrador sólo se descubría volviendo a
+  esa pantalla. Ahora el listado dice cuántos hay y lleva a retomarlos — en este
+  navegador, que es donde viven. De paso, el aviso ya no muestra un paréntesis
+  vacío cuando el borrador no tiene fecha.
+- **Un archivo repetido se reconoce al subirlo (`LV-200`, primer paso).** La huella
+  del contenido se calculaba sólo al importar del repositorio, así que todo lo
+  subido desde la app no la tenía. Ahora se calcula al subir y, si el archivo es
+  idéntico a uno ya cargado, se avisa nombrándolo — sin impedir la subida, porque
+  la misma carta cubriendo dos permisos es lo normal. Los documentos cargados
+  antes no tienen huella todavía.
 - **Un plan vinculado a un permiso se puede desvincular (`LV-199`).** Vincular no
   tenía inversa, así que un vínculo hecho por error sólo se deshacía por el admin
   de Django. La ubicación que el plan rellenó **se queda en el permiso** y el
