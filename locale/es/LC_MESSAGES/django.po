@@ -1676,6 +1676,68 @@ msgstr "Separar en partes"
 msgid "Root — drop here or click to add new here"
 msgstr "Raíz — suelta aquí o haz clic para agregar aquí"
 
+#. LV-206: la tabla de permisos por faena, en el panel.
+#: .\templates\dashboard\index.html:1
+msgid "Flight permits by cost center"
+msgstr "Permisos de vuelo por centro de costo"
+
+#: .\templates\dashboard\index.html:2
+msgid "Open the permits"
+msgstr "Abrir los permisos"
+
+#. LV-206: los encabezados de la tabla. "In force" **no se agrega acá**: ya
+#. existe traducido como "Vigentes" para el filtro del listado de permisos, y
+#. reusarlo es lo correcto — tres formas de nombrar lo mismo es cómo alguien
+#. termina creyendo que son tres cosas. (`msgfmt` lo rechaza como duplicado, que
+#. es la red que lo atajó.)
+#: .\templates\dashboard\index.html:4
+msgid "Awaiting"
+msgstr "Esperando"
+
+#: .\templates\dashboard\index.html:5
+msgid "Past validity"
+msgstr "Vigencia pasada"
+
+#. LV-206: la faena que no tiene ningún permiso vigente. "Ninguno" y no un cero:
+#. es la fila que la tabla existe para mostrar, y un 0 se lee como dato ausente.
+#: .\templates\dashboard\index.html:6
+msgid "None"
+msgstr "Ninguno"
+
+#: .\templates\dashboard\index.html:7
+#, python-format
+msgid "%(counter)s expires soon"
+msgid_plural "%(counter)s expire soon"
+msgstr[0] "%(counter)s vence pronto"
+msgstr[1] "%(counter)s vencen pronto"
+
+#. LV-206: el eje que dice si en la faena se vuela. `CC110` (casa matriz) y
+#. `CC410` administran equipos, y listarlas como "sin permisos vigentes" las
+#. declararía incumplidas por una operación que no les toca.
+#: .\apps\registry\models.py:1
+msgid "Flies in this cost center"
+msgstr "En esta faena se vuela"
+
+#: .\apps\registry\models.py:2
+msgid ""
+"Uncheck for cost centers that only hold equipment and never fly: they stay "
+"out of the flight-permit status table."
+msgstr ""
+"Desmárcalo en las faenas que sólo tienen equipos a cargo y no vuelan: quedan "
+"fuera de la tabla de estado de permisos de vuelo."
+
+#. LV-205: el aviso al archivar a alguien que se retira, con la faena de la que
+#. venía. Quien archiva es quien puede corregir en el momento si se equivocó de
+#. persona, y el nombre de la faena es lo que se lo dice.
+#: .\apps\registry\views.py:1
+#, python-format
+msgid ""
+"%(name)s archived. Came from %(centers)s; the assignment was closed today and "
+"it is on record."
+msgstr ""
+"%(name)s archivado. Venía de %(centers)s; su asignación se cerró hoy y quedó "
+"registrada."
+
 #. LV-200: el archivo subido es idéntico a uno que ya está cargado. Avisa y no
 #. bloquea: la misma carta cubriendo varios permisos es el caso que el usuario
 #. describió, no un error. Nombra el documento existente, porque "ya existe" sin

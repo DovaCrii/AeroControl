@@ -85,6 +85,34 @@ class CostCenter(BaseModel):
     contract_status = models.CharField(
         max_length=20, choices=CONTRACT_STATUS_CHOICES, default="active", blank=True
     )
+    # LV-206: si en esta faena **se vuela**. Pedido del usuario mirando el estado
+    # de los permisos por faena: *"el CC110 de casa matriz o 410, por ejemplo,
+    # estamos a cargo más de los equipos que volar"*.
+    #
+    # Es un eje propio y no se deduce de nada existente: no es `is_active` (la
+    # faena existe y opera), no es `contract_status` (el contrato está vigente), y
+    # no es "no tiene permisos" — que es justamente la conclusión que hay que
+    # evitar. Una faena que administra equipos y no vuela, listada como "sin
+    # permisos vigentes", queda declarada incumplida por una operación que no le
+    # toca; es el mismo error de forma que contar las aeronaves `retired` en la
+    # disponibilidad de la flota, y `fleet_availability` lo evita por la misma
+    # razón escrita en su comentario.
+    #
+    # **Campo declarado y no una lista de códigos en el código**: `CC110` y `CC410`
+    # son los de hoy, y una constante con esos dos se desactualiza el día que
+    # alguien abre una faena nueva de bodega — en silencio, y del lado que declara
+    # incumplimientos falsos.
+    #
+    # `default=True` porque la mayoría vuela: el valor por defecto tiene que ser el
+    # que no cambia nada para las faenas que ya existen.
+    operates_flights = models.BooleanField(
+        default=True,
+        verbose_name=_("Flies in this cost center"),
+        help_text=_(
+            "Uncheck for cost centers that only hold equipment and never fly: "
+            "they stay out of the flight-permit status table."
+        ),
+    )
     # Free-text name kept from the Chapter 1 import. It cannot be used to reach
     # anyone (the imported values do not match operator names), so notifications
     # use responsible_operator; this stays as the historical record.

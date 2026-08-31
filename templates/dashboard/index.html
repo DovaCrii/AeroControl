@@ -272,6 +272,62 @@ resulta corto enseña a ignorar la sección.{% endcomment %}
 </div>
 {% endif %}
 
+{% comment %}LV-206: **el estado de los permisos por faena, en el lugar que el
+usuario pidió** — arriba del clima, que baja al final de la pantalla. Textual:
+*"necesito una opción de poner los CC que hoy tienen y los que no tienen permisos
+vigentes, quitar el clima ahí y poner una tabla interactiva"*.
+
+El clima **se mueve y no se quita**, y la razón no es cariño por la tarjeta: es el
+único lugar desde donde se registra la revisión meteorológica —el botón "Revisar y
+dejarlo registrado en el plan"—, y el usuario **acaba de confirmar en `LV-194` que
+esa revisión es necesaria** en el expediente. Quitándola, ese renglón del
+expediente quedaría sin la pantalla que lo cierra. Baja al final, donde sigue
+alcanzable y deja de competir por el lugar destacado.
+
+La tabla parte de **las faenas** y no de los permisos: las que interesan son las
+que **no** tienen ninguno, y un recorrido sobre permisos no las devolvería. Y sólo
+las que vuelan — `CC110` y `CC410` administran equipos, y listarlas acá las
+declararía incumplidas por una operación que no les toca (ver `operates_flights`
+en `CostCenter`).{% endcomment %}
+{% if permit_status_rows %}
+<section class="card p-3 mb-3" aria-labelledby="panel-permit-status-title">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+    <h2 id="panel-permit-status-title" class="h6 mb-0">{% translate "Flight permits by cost center" %}</h2>
+    <a class="small" href="{% url 'permission-list' %}">{% translate "Open the permits" %}</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-sm table-hover mb-0">
+      <thead>
+        <tr>
+          <th scope="col">{% translate "Cost center" %}</th>
+          <th scope="col" class="text-end">{% translate "In force" %}</th>
+          <th scope="col" class="text-end">{% translate "Awaiting" %}</th>
+          <th scope="col" class="text-end">{% translate "Past validity" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in permit_status_rows %}
+        {% comment %}La fila sin permisos vigentes se distingue, que es la razón de
+        existir de la tabla. En ámbar y no en rojo: no tener permiso vigente no es
+        un incumplimiento por sí mismo —puede que no haya trabajo esa semana— y
+        pintarlo de rojo enseñaría a ignorar el rojo.{% endcomment %}
+        <tr{% if not row.in_force %} class="table-warning-subtle"{% endif %}>
+          <td>
+            <a href="{% url 'permission-list' %}?cost_center={{ row.cost_center.pk }}" class="text-decoration-none">
+              <span class="cc-chip me-2">{{ row.cost_center.code }}</span>{{ row.cost_center.name }}
+            </a>
+          </td>
+          <td class="text-end">{% if row.in_force %}<b>{{ row.in_force }}</b>{% if row.soon %} <span class="small text-warning-emphasis">· {% blocktranslate count counter=row.soon %}{{ counter }} expires soon{% plural %}{{ counter }} expire soon{% endblocktranslate %}</span>{% endif %}{% else %}<span class="text-warning-emphasis">{% translate "None" %}</span>{% endif %}</td>
+          <td class="text-end">{% if row.awaiting %}{{ row.awaiting }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+          <td class="text-end">{% if row.lapsed %}<span class="text-danger-emphasis">{{ row.lapsed }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
 {% comment %}R8.4: el clima, sin tener que buscarlo. Antes sólo existía en la
 ficha de un plan geoespacial, y sólo si ese plan tenía área y un permiso con
 fecha -- enterrado, para algo que se consulta antes de cada vuelo.

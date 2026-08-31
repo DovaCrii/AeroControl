@@ -202,15 +202,33 @@ class RegistryArchive(ModelPermissionRequiredMixin, View):
             pk=pk,
             is_active=True,
         )
+        # LV-205: lo que hay que cerrar y anotar **antes** de apagar la fila. Se
+        # lee ahora porque después de archivar la procedencia ya no se distingue
+        # de un dato viejo cualquiera.
+        movement = self.before_archive(request, obj)
         obj.is_active = False
         obj.save(update_fields=["is_active", "updated_at"])
-        set_audit_context(request, obj, action="archived")
+        set_audit_context(request, obj, action="archived", metadata=movement or None)
         messages.success(
             request,
-            _("%(name)s archived. It can be restored from the archived filter.")
-            % {"name": self.model._meta.verbose_name.capitalize()},
+            self.archived_message(obj, movement),
         )
         return redirect(self.success_url(obj))
+
+    def archived_message(self, obj, movement):
+        return _("%(name)s archived. It can be restored from the archived filter.") % {
+            "name": self.model._meta.verbose_name.capitalize()
+        }
+
+    def before_archive(self, request, obj):
+        """Gancho para lo que hay que cerrar **antes** de que la fila se apague.
+
+        LV-205: existe porque archivar un operador no es sólo esconderlo, y
+        meterlo dentro de `post` con un `if isinstance(...)` habría puesto la regla
+        de un modelo en el archivador de todos. Vacío por defecto: para el resto
+        de los registros archivar sigue siendo lo que era.
+        """
+        return None
 
     def success_url(self, obj):
         """A dónde volver después de archivar.
@@ -347,9 +365,13 @@ class KnowledgeAssessmentRestore(RegistryRestore):
 
 # One archive/restore pair per registry model, same pattern as make_views.
 # CostCenterArchive above is the hand-written exception (dependent check).
+# LV-205: `Operator` **sale de este bucle** y tiene su clase propia más abajo.
+# Archivar a una persona que se retira no es sólo esconder la fila: hay que cerrar
+# su asignación y dejar anotado de qué faena venía. Se saca del bucle en vez de
+# reasignar el `globals()` después, que habría dejado dos definiciones del mismo
+# nombre y la de arriba muerta sin que se vea.
 for _model, _name in (
     (Aircraft, "Aircraft"),
-    (Operator, "Operator"),
     (Assignment, "Assignment"),
     (OperatorAssignment, "OperatorAssignment"),
     (AircraftAssignment, "AircraftAssignment"),
@@ -370,6 +392,80 @@ for _model, _name in (
     globals()[f"{_name}Restore"] = type(
         f"{_name}Restore", (RegistryRestore,), {"model": _model}
     )
+
+
+class OperatorArchive(RegistryArchive):
+    """LV-205: archivar a alguien que se retira deja **de dónde venía**.
+
+    Pedido del usuario: *"tenemos operadores que ahora se están retirando; debemos
+    dejar la trazabilidad […] al sacarlo del contrato o de la empresa dejar anotado
+    el movimiento y qué centro de costo estuvo ligado, así dejamos un registro de
+    dónde provenía"*.
+
+    Tres de las cuatro piezas ya existían — archivar, el historial de
+    `OperatorAssignment`, y que un archivado no afecte al manual (el import del
+    Capítulo 1 cruza por `employee_id` **sin** filtrar `is_active`, así que lo salta
+    en vez de recrearlo). Lo que faltaba es esto: **cerrar el movimiento**.
+
+    Sin cerrarlo, un operador retirado se queda con una asignación **abierta** a
+    una faena, o sea contando como dotación de un contrato en el que ya no está —
+    y ése es justo el registro que el usuario quiere poder leer al revés.
+
+    **La faena se anota en el movimiento y no se deduce de la ficha**, y eso es lo
+    que hace que el registro sirva dentro de un año: `Operator.cost_center` puede
+    cambiar después (o quedar nulo), y entonces "de dónde venía" contestaría con el
+    dato de hoy en vez del de la salida. Va en la metadata de la auditoría, que es
+    donde el resto de la app deja los hechos fechados.
+
+    Se cierran las asignaciones **abiertas** (`planned` y `active`, la misma
+    definición de "tiene faena" que `ACTIVE_STATUSES` ya usa) y se suma la faena de
+    la ficha si no estaba entre ellas: hay operadores con `cost_center` cargado y
+    sin asignación formal, y perder esa procedencia por no tener fila sería perder
+    justo el caso más común del padrón viejo.
+    """
+
+    model = Operator
+
+    def before_archive(self, request, obj):
+        from django.utils import timezone
+
+        today = timezone.localdate()
+        open_assignments = list(
+            obj.cc_assignments.filter(
+                is_active=True, status__in=OperatorAssignment.ACTIVE_STATUSES
+            ).select_related("cost_center")
+        )
+        codes = []
+        for assignment in open_assignments:
+            # `end_date` nunca antes de `start_date`: una asignación `planned` que
+            # empieza la semana próxima se cierra en su propia fecha de inicio, no
+            # en el pasado. `save(update_fields=...)` no pasa por `clean()`, así
+            # que la fila inválida no la atajaría nadie.
+            assignment.end_date = max(today, assignment.start_date)
+            assignment.status = "ended"
+            assignment.save(update_fields=["end_date", "status", "updated_at"])
+            if assignment.cost_center.code not in codes:
+                codes.append(assignment.cost_center.code)
+        if obj.cost_center and obj.cost_center.code not in codes:
+            codes.append(obj.cost_center.code)
+        if not codes:
+            return None
+        return {
+            "cost_centers": codes,
+            "assignments_closed": len(open_assignments),
+            "left_on": today.isoformat(),
+        }
+
+    def archived_message(self, obj, movement):
+        if not movement:
+            return super().archived_message(obj, movement)
+        # Nombra la faena en el aviso, no sólo en la auditoría: quien archiva es
+        # quien puede corregir en el momento si se equivocó de persona, y "venía
+        # de CC738" es lo que se lo dice. Mismo criterio que `duplicates.py`.
+        return _(
+            "%(name)s archived. Came from %(centers)s; the assignment was closed "
+            "today and it is on record."
+        ) % {"name": obj.full_name, "centers": ", ".join(movement["cost_centers"])}
 
 
 def make_views(model, form, prefix):
