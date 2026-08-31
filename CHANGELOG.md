@@ -168,6 +168,19 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **El panel muestra los permisos de vuelo faena por faena (`LV-206`).** Incluidas
+  las que **no** tienen ninguno vigente, que son las que interesan mirar. Las
+  faenas que sólo tienen equipos a cargo y no vuelan quedan fuera con una casilla
+  en su ficha: listarlas ahí las declararía incumplidas por una operación que no
+  les toca. La tabla ocupa el lugar del clima, que baja al final de la pantalla —
+  no se quita, porque es desde donde se registra la revisión meteorológica que el
+  expediente pide.
+- **Archivar a un operador que se retira deja de dónde venía (`LV-205`).** Se
+  cierra su asignación con la fecha y queda registrado de qué centro de costo
+  venía, con esa faena guardada **en el movimiento** y no leída de la ficha: la
+  ficha puede cambiar después, y entonces el registro contaría otra cosa. El aviso
+  nombra la faena, para poder corregir en el momento si se archivó a la persona
+  equivocada.
 - **El alta del permiso ya no pide los datos que trae el plan (`LV-197`).** Región,
   comuna, nombre del área, latitud, longitud y radio salen del KMZ al elegir o
   vincular el plan, así que el formulario dejó de pedirlos a mano. La altitud

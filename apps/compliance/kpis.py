@@ -139,6 +139,83 @@ def permit_counts(today, cost_center=None):
     }
 
 
+def permit_status_by_cost_center(today):
+    """LV-206: una fila por faena, con sus permisos vigentes — y las que no tienen.
+
+    Pedido del usuario: *"necesito una opción de poner los CC que hoy tienen y los
+    que no tienen permisos vigentes […] una tabla interactiva"*.
+
+    **Se parte de las faenas y no de los permisos**, y eso es el punto: un `GROUP
+    BY` sobre permisos sólo devuelve las faenas que tienen alguno, y las que
+    interesan son justamente **las que no tienen ninguno**. Con el recorrido al
+    revés, esas filas no existirían y la tabla contestaría lo contrario de la
+    pregunta.
+
+    **Sólo las que vuelan** (`operates_flights`): `CC110` y `CC410` administran
+    equipos, así que listarlas como "sin permisos vigentes" las declararía
+    incumplidas por una operación que no les toca. Ver el comentario del campo en
+    `CostCenter`.
+
+    **Dos consultas, no una por faena.** La primera trae las faenas; la segunda
+    agrega los permisos de todas de un golpe. Recorrer `permit_counts` por faena
+    habría costado cuatro consultas por fila en una pantalla que se abre en cada
+    inicio de sesión — el mismo cuidado que `upcoming_expirations` documenta.
+    """
+    from django.db.models import Count, Q
+
+    from apps.operations.models import FlightPermission
+    from apps.registry.models import CostCenter
+
+    horizon = today + timedelta(days=30)
+    centers = list(
+        CostCenter.objects.filter(is_active=True, operates_flights=True).order_by(
+            "code"
+        )
+    )
+    counted = {
+        row["cost_center"]: row
+        for row in FlightPermission.objects.filter(
+            is_active=True,
+            status__in=(
+                FlightPermission.STATUS_REQUESTED,
+                FlightPermission.STATUS_APPROVED,
+            ),
+        )
+        .values("cost_center")
+        .annotate(
+            in_force=Count(
+                "pk",
+                filter=Q(
+                    status=FlightPermission.STATUS_APPROVED, valid_until__gte=today
+                ),
+            ),
+            lapsed=Count(
+                "pk",
+                filter=Q(
+                    status=FlightPermission.STATUS_APPROVED, valid_until__lt=today
+                ),
+            ),
+            awaiting=Count("pk", filter=Q(status=FlightPermission.STATUS_REQUESTED)),
+            soon=Count(
+                "pk",
+                filter=Q(
+                    status=FlightPermission.STATUS_APPROVED,
+                    valid_until__gte=today,
+                    valid_until__lte=horizon,
+                ),
+            ),
+        )
+    }
+    empty = {"in_force": 0, "lapsed": 0, "awaiting": 0, "soon": 0}
+    return [
+        {
+            "cost_center": center,
+            **{key: counted.get(center.pk, empty).get(key, 0) for key in empty},
+        }
+        for center in centers
+    ]
+
+
 def on_time_execution(start, end):
     """Percentage of committed work that was flown inside its own window.
 

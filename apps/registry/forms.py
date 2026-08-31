@@ -52,6 +52,7 @@ class CostCenterForm(AeroModelForm):
         "code",
         "name",
         "contract_status",
+        "operates_flights",
         "responsible",
         "responsible_type",
         "responsible_operator",
@@ -75,6 +76,10 @@ class CostCenterForm(AeroModelForm):
             "code",
             "name",
             "contract_status",
+            # LV-206: si en esta faena se vuela. Va junto a `contract_status`
+            # porque son los dos ejes del mismo tipo —qué es esta faena hoy— y no
+            # entre los datos de contacto.
+            "operates_flights",
             "responsible",
             "responsible_operator",
             "responsible_contact_name",

@@ -811,6 +811,10 @@ def dashboard(request):
     # `upcoming_expirations`. El piso en `today` es lo que hacía que un seguro
     # vencido no apareciera nunca en el panel aunque su alerta sí estuviera en
     # la bandeja. Sólo la lista visible se recorta; los contadores son reales.
+    # LV-206: el estado por faena sale de `kpis`, la misma casa que
+    # `permit_counts` — un solo lugar donde vive "qué es un permiso vigente".
+    from apps.compliance.kpis import permit_status_by_cost_center
+
     today = timezone.localdate()
     cutoff = today + timedelta(days=30)
     # LV-191: `request.user`, o la lista nombra permisos, matrículas, personas y
@@ -1004,6 +1008,10 @@ def dashboard(request):
         "expiring_count": expiring_count,
         "overdue_count": overdue_count,
         "show_onboarding": show_onboarding,
+        # LV-206: el estado de los permisos faena por faena, incluidas las que no
+        # tienen ninguno — que son las que el usuario quiere ver. Sólo las que
+        # vuelan: ver `operates_flights` en `CostCenter`.
+        "permit_status_rows": permit_status_by_cost_center(today),
         "chart_data": chart_data,
         "compliance_setup": compliance_setup,
         "compliance_incomplete": compliance_incomplete,
