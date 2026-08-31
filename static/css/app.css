@@ -760,6 +760,24 @@ body, .card, .form-control, .form-select, .page-link, .table,
   --ac-primary: #087f78;
   --ac-primary-hover: #06655f;
   --ac-primary-soft: #d8f5f1;
+  /* LV-185: los mismos dos colores en RGB, porque Bootstrap 5.3 arma el color
+     de enlace con `rgba(var(--bs-link-color-rgb), …)` y **ignora**
+     `--bs-link-color`. Comprobado en el navegador: fijar sólo la forma hex no
+     mueve un píxel, que es la peor clase de arreglo — el CSS parece decir algo y
+     no dice nada.
+
+     Duplicar un color en dos notaciones es exactamente la deriva que este repo
+     ya arrastró con los tokens, así que hay un test que exige que el triplete y
+     el hex sean el mismo color. Sin ese guardián esto se desincroniza y nadie
+     lo nota hasta que un enlace queda de otro color. */
+  --ac-primary-rgb: 8, 127, 120;
+  --ac-primary-hover-rgb: 6, 101, 95;
+  /* En claro manda el paso **oscuro**: `--ac-primary` da 4.53 sobre el fondo,
+     que cumple AA por 0,03 y no deja nada para un monitor distinto; el oscuro
+     da 6.44. Medido, no elegido a ojo. El hover invierte el par, que es lo que
+     hace que el enlace se aclare al pasar por encima. */
+  --bs-link-color-rgb: var(--ac-primary-hover-rgb);
+  --bs-link-hover-color-rgb: var(--ac-primary-rgb);
   --ac-danger: #c53b4d;
   --ac-shadow: 0 10px 30px rgba(18, 34, 59, 0.08);
   --ac-radius: 12px;
@@ -1044,6 +1062,13 @@ main {
   --ac-primary: #42d4c6;
   --ac-primary-hover: #6be0d5;
   --ac-primary-soft: #193a43;
+  /* LV-185: en oscuro el par se invierte respecto al claro — acá el turquesa
+     base ya da 8.24 sobre la superficie más clara, así que el enlace usa ése y
+     el hover **aclara**. En claro no se podía: ahí el base roza el mínimo. */
+  --ac-primary-rgb: 66, 212, 198;
+  --ac-primary-hover-rgb: 107, 224, 213;
+  --bs-link-color-rgb: var(--ac-primary-rgb);
+  --bs-link-hover-color-rgb: var(--ac-primary-hover-rgb);
   --ac-danger: #ff7b8b;
   --ac-shadow: 0 12px 32px rgba(0, 0, 0, 0.24);
 }

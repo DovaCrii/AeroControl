@@ -48,13 +48,29 @@ que sigue diciendo lo que pasó aunque el banco se haya corregido después.
       {% if row.given %}{% for option in row.options %}{% if option.key == row.given %}{{ option.text }}{% endif %}{% endfor %}
       {% else %}<em>{% translate "not answered" %}</em>{% endif %}
     </p>
+    {% comment %}LV-184: la respuesta correcta **sólo para quien puede ver la
+    clave**. Mostrársela a quien acaba de rendir la prueba le entrega el examen
+    entero: se memoriza y se rinde de nuevo, y lo que era una medición pasa a ser
+    un trámite. Y como un intento aprobado alimenta el motor de vencimientos, lo
+    que se degrada no es una pantalla sino el estado de cumplimiento de una
+    persona.
+
+    **Lo que sí sigue viendo quien rindió**: qué preguntas falló y qué contestó.
+    Eso es "en qué se equivocó, qué reforzar" —el pedido original de `LV-158`—
+    sin entregar la clave: alcanza para saber qué estudiar y no para aprobar de
+    memoria.{% endcomment %}
+    {% if perms.registry.view_assessment_answers %}
     <p class="small mb-0">
       <span class="text-success">{% translate "Correct answer" %}:</span>
       {% for option in row.options %}{% if option.key == row.answer %}{{ option.text }}{% endif %}{% endfor %}
     </p>
+    {% endif %}
   </div>
   {% empty %}
   <p class="text-muted mb-0">{% translate "Every answer was correct." %}</p>
   {% endfor %}
+  {% if not perms.registry.view_assessment_answers and assessment.wrong_answers %}
+  <p class="text-body-secondary small mb-0 mt-3">{% translate "The correct answers are not shown here: they are the exam itself, and this assessment can be taken again." %}</p>
+  {% endif %}
 </div>
 {% endblock %}

@@ -1254,6 +1254,24 @@ class KnowledgeAssessment(BaseModel):
         verbose_name = _("knowledge assessment")
         verbose_name_plural = _("knowledge assessments")
         ordering = ["-taken_at"]
+        # LV-184: ver la **clave de respuestas** es un privilegio propio, no un
+        # efecto secundario de poder leer la prueba.
+        #
+        # Hasta acá la revisión mostraba la respuesta correcta de cada pregunta
+        # fallada **a quien acababa de rendirla**. Con eso se memoriza la clave y
+        # se vuelve a rendir, y la prueba deja de medir: no queda un examen sino
+        # un trámite. Y como un intento aprobado alimenta el motor de
+        # vencimientos (`LV-173`), lo que se degrada no es una pantalla sino el
+        # estado de cumplimiento de una persona.
+        #
+        # **Permiso propio y no `view_operator`**: quien supervisa el padrón no
+        # es necesariamente quien puede ver la clave, y colgarlo de un permiso
+        # existente lo repartiría a quien nunca se lo dieron. Va a `Compliance`
+        # en `bootstrap_roles` y **no a `Operations`**, que es el rol de quien
+        # rinde.
+        permissions = [
+            ("view_assessment_answers", "Can see the assessment answer key"),
+        ]
         # El motor de alertas, el panel y la ficha barren la vigencia, igual que
         # con las habilitaciones.
         indexes = [

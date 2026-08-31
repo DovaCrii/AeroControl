@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AeroControl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-28 12:13-0400\n"
+"POT-Creation-Date: 2026-08-28 12:43-0400\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -752,7 +752,7 @@ msgstr "Borrador"
 msgid "Validated"
 msgstr "Validado"
 
-#: .\apps\compliance\models.py:1154 .\apps\registry\models.py:1458
+#: .\apps\compliance\models.py:1154 .\apps\registry\models.py:1476
 msgid "Released"
 msgstr "Liberado"
 
@@ -1120,7 +1120,7 @@ msgstr "Editar %(name)s"
 #: .\apps\compliance\watchables.py:20 .\apps\registry\forms.py:39
 #: .\apps\registry\forms.py:572 .\apps\registry\forms.py:667
 #: .\apps\registry\forms.py:826 .\apps\registry\models.py:1227
-#: .\apps\registry\models.py:1454 .\templates\registry\assignment_list.html:51
+#: .\apps\registry\models.py:1472 .\templates\registry\assignment_list.html:51
 #: .\templates\registry\costcenter_detail.html:36
 #: .\templates\registry\operatorassignment_list.html:5
 #: .\templates\registry\qualification_list.html:24
@@ -1131,7 +1131,7 @@ msgstr "Operador"
 #: .\apps\compliance\watchables.py:21 .\apps\maintenance\forms.py:21
 #: .\apps\operations\forms.py:377 .\apps\registry\forms.py:573
 #: .\apps\registry\forms.py:750 .\apps\registry\forms.py:803
-#: .\apps\registry\models.py:1454 .\apps\registry\views.py:69
+#: .\apps\registry\models.py:1472 .\apps\registry\views.py:69
 #: .\templates\base.html:252 .\templates\maintenance\record_detail.html:21
 #: .\templates\maintenance\record_list.html:18
 #: .\templates\operations\flightrecord_detail.html:30
@@ -2343,13 +2343,13 @@ msgstr ""
 "existe."
 
 #: .\apps\operations\models.py:312 .\apps\registry\models.py:1016
-#: .\apps\registry\models.py:1352
+#: .\apps\registry\models.py:1370
 msgid "The end date cannot be before the start date."
 msgstr "La fecha final no puede ser anterior a la fecha inicial."
 
 #: .\apps\operations\models.py:315 .\apps\registry\forms.py:733
 #: .\apps\registry\forms.py:783 .\apps\registry\models.py:1019
-#: .\apps\registry\models.py:1355
+#: .\apps\registry\models.py:1373
 msgid "Describe the purpose when 'Other' is selected."
 msgstr "Describe el propósito cuando se selecciona 'Otro'."
 
@@ -3133,7 +3133,7 @@ msgid "AeroControl · your DGAC validities are expiring"
 msgstr "AeroControl · tus vigencias DGAC están por vencer"
 
 #: .\apps\registry\models.py:78 .\apps\registry\models.py:277
-#: .\apps\registry\models.py:652 .\apps\registry\models.py:1304
+#: .\apps\registry\models.py:652 .\apps\registry\models.py:1322
 #: .\templates\core\users_roles.html:40 .\templates\generic\_table_body.html:10
 #: .\templates\generic\list.html:23 .\templates\registry\_aircraft_rows.html:15
 #: .\templates\registry\assignment_list.html:32
@@ -3309,7 +3309,7 @@ msgstr "El RUT %(rut)s ya es de %(name)s."
 msgid "%(words)s is not part of the full name on file."
 msgstr "%(words)s no forma parte del nombre completo registrado."
 
-#: .\apps\registry\models.py:960 .\apps\registry\models.py:1303
+#: .\apps\registry\models.py:960 .\apps\registry\models.py:1321
 #: .\apps\workboard\models.py:30 .\apps\workboard\views.py:99
 #: .\templates\registry\_assignment_table_body.html:8
 #: .\templates\registry\assignment_list.html:35
@@ -3323,7 +3323,7 @@ msgstr "Planificado"
 msgid "Confirmed"
 msgstr "Confirmada"
 
-#: .\apps\registry\models.py:963 .\apps\registry\models.py:1306
+#: .\apps\registry\models.py:963 .\apps\registry\models.py:1324
 #: .\templates\registry\_assignment_table_body.html:8
 #: .\templates\registry\assignment_list.html:38
 msgid "Cancelled"
@@ -3423,7 +3423,7 @@ msgstr "Respuestas correctas"
 msgid "Score (%)"
 msgstr "Puntaje (%)"
 
-#: .\apps\registry\models.py:1246 .\apps\registry\models.py:1271
+#: .\apps\registry\models.py:1246 .\apps\registry\models.py:1289
 #: .\templates\registry\assessment_detail.html:20
 #: .\templates\registry\operator_detail.html:105
 #: .\templates\registry\operator_detail.html:140
@@ -3442,58 +3442,58 @@ msgstr "evaluación de conocimientos"
 msgid "knowledge assessments"
 msgstr "evaluaciones de conocimientos"
 
-#: .\apps\registry\models.py:1271
+#: .\apps\registry\models.py:1289
 #: .\templates\registry\assessment_detail.html:22
 #: .\templates\registry\operator_detail.html:105
 #: .\templates\registry\operator_detail.html:140
 msgid "Insufficient"
 msgstr "Insuficiente"
 
-#: .\apps\registry\models.py:1305
+#: .\apps\registry\models.py:1323
 msgid "Ended"
 msgstr "Finalizada"
 
-#: .\apps\registry\models.py:1359
+#: .\apps\registry\models.py:1377
 msgid "The selected resource is inactive."
 msgstr "El recurso seleccionado está inactivo."
 
-#: .\apps\registry\models.py:1366
+#: .\apps\registry\models.py:1384
 msgid "This resource already has an overlapping active assignment."
 msgstr "Este recurso ya tiene una asignación activa que se superpone."
 
-#: .\apps\registry\models.py:1382
+#: .\apps\registry\models.py:1400
 msgid "operator assignment"
 msgstr "asignación de operador"
 
-#: .\apps\registry\models.py:1383
+#: .\apps\registry\models.py:1401
 msgid "operator assignments"
 msgstr "asignaciones de operador"
 
-#: .\apps\registry\models.py:1415
+#: .\apps\registry\models.py:1433
 msgid "aircraft assignment"
 msgstr "asignación de aeronave"
 
-#: .\apps\registry\models.py:1416
+#: .\apps\registry\models.py:1434
 msgid "aircraft assignments"
 msgstr "asignaciones de aeronave"
 
-#: .\apps\registry\models.py:1456
+#: .\apps\registry\models.py:1474
 msgid "Assigned"
 msgstr "Asignado"
 
-#: .\apps\registry\models.py:1457
+#: .\apps\registry\models.py:1475
 msgid "Reassigned"
 msgstr "Reasignado"
 
-#: .\apps\registry\models.py:1459
+#: .\apps\registry\models.py:1477
 msgid "Location changed"
 msgstr "Cambio de ubicación"
 
-#: .\apps\registry\models.py:1492
+#: .\apps\registry\models.py:1510
 msgid "resource movement"
 msgstr "movimiento de recurso"
 
-#: .\apps\registry\models.py:1493
+#: .\apps\registry\models.py:1511
 msgid "resource movements"
 msgstr "movimientos de recursos"
 
@@ -6894,13 +6894,21 @@ msgstr "Respondiste"
 msgid "not answered"
 msgstr "sin responder"
 
-#: .\templates\registry\assessment_detail.html:53
+#: .\templates\registry\assessment_detail.html:66
 msgid "Correct answer"
 msgstr "Respuesta correcta"
 
-#: .\templates\registry\assessment_detail.html:58
+#: .\templates\registry\assessment_detail.html:72
 msgid "Every answer was correct."
 msgstr "Todas las respuestas fueron correctas."
+
+#: .\templates\registry\assessment_detail.html:75
+msgid ""
+"The correct answers are not shown here: they are the exam itself, and this "
+"assessment can be taken again."
+msgstr ""
+"Las respuestas correctas no se muestran acá: son el examen mismo, y esta "
+"evaluación se puede volver a rendir."
 
 #: .\templates\registry\assessment_take.html:47
 msgid "To pass"

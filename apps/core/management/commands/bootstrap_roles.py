@@ -98,6 +98,12 @@ ROLE_PERMISSIONS = {
         # "cómo está la condición de los profesionales" ante una auditoría-- pero
         # no las rinde por nadie: `add` es de quien se sienta a responderla.
         "view_knowledgeassessment",
+        # LV-184: y es el único rol que ve la **clave de respuestas**.
+        # `Operations` —quien rinde— no la tiene, y ésa es toda la fila: con la
+        # clave delante, la prueba se memoriza y se vuelve a rendir. Quien rindió
+        # sigue viendo qué falló y qué contestó, que es lo que sirve para
+        # estudiar; lo que no ve es el examen resuelto.
+        "view_assessment_answers",
         "add_document",
         "change_document",
         "delete_document",
