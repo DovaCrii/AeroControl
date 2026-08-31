@@ -11,7 +11,7 @@ from django.db import transaction
 from docx import Document
 
 from apps.core.models import ImportBatch
-from apps.registry.models import Aircraft, CostCenter, Operator
+from apps.registry.models import Aircraft, CostCenter, Operator, normalize_serial
 from apps.registry.rut import employee_id_from_rut, normalize_rut
 
 
@@ -326,8 +326,18 @@ class Command(BaseCommand):
         comando cargó.
         """
         by_registration = dict(Aircraft.objects.values_list("registration", "pk"))
+        # LV-195: el serial se compara **normalizado**, con la misma función que
+        # `Aircraft.save()` usa para guardarlo (`normalize_serial`: mayúsculas y
+        # sin espacios, ADR-0002 §2). Comparar en crudo era comparar contra una
+        # forma que la base nunca tiene, y el Rev 17 lo demuestra: trae dos
+        # seriales partidos por un espacio —`RPA-4401` y `RPA-4436`, seguramente
+        # un salto de línea dentro de la celda del Word—, así que las dos
+        # aeronaves salían como "matrícula ya existe, serie nueva". **Y un
+        # conflicto detiene la corrida entera**, con o sin `--skip-existing`, de
+        # modo que un espacio en el documento bloqueaba la carga completa y con
+        # un mensaje que acusaba al registro DGAC de una discrepancia inexistente.
         by_serial = {
-            serial: pk
+            normalize_serial(serial): pk
             for serial, pk in Aircraft.objects.values_list("serial_number", "pk")
             if serial
         }
@@ -352,7 +362,8 @@ class Command(BaseCommand):
         for row in report["aircraft"]:
             registration, serial = row["registration"], row["serial_number"]
             known_by_registration = by_registration.get(registration)
-            known_by_serial = by_serial.get(serial) if serial else None
+            normalized = normalize_serial(serial or "")
+            known_by_serial = by_serial.get(normalized) if normalized else None
             if known_by_registration and known_by_serial == known_by_registration:
                 skipped.append(f"aircraft:{registration}")
             elif known_by_registration or known_by_serial:

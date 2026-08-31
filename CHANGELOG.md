@@ -198,6 +198,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   el encabezado decía "2 por confirmar" en todo permiso, para siempre, y ningún
   expediente podía leerse como completo. Retiro de pantalla, no de base:
   registrar un vuelo sigue en su propio módulo.
+- **Un espacio en una celda del manual ya no bloquea la carga completa
+  (`LV-195`).** El Capítulo 1 Rev 17 trae dos números de serie partidos por un
+  espacio, y el importador los comparaba en crudo contra los de la base, que se
+  guardan sin espacios: las dos aeronaves salían como "serie nueva", y un
+  conflicto detiene la corrida entera — así que un salto de línea en el Word
+  impedía cargar también las 48 fichas de personal. Ahora la comparación usa la
+  misma normalización que el resto de la app.
 - **El importador del Capítulo 1 ya no puede duplicar una persona (`LV-190`).** El
   cruce iba sólo por número de empleado, así que una ficha dada de alta a mano
   —con otro número— no se reconocía y la persona se creaba de nuevo, sin que la
