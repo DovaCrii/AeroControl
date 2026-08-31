@@ -16,7 +16,7 @@ from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
 
-from apps.operations.dossier import operational_dossier
+from apps.operations.dossier import _flight_request_item, operational_dossier
 from apps.operations.models import FlightPermission, FlightRequest
 from apps.registry.models import Aircraft, CostCenter
 
@@ -69,13 +69,26 @@ def admin_client_in(db):
     return client
 
 
-class TestTheDossierClosesTheCircle:
+class TestTheOriginatingRequestRow:
+    """**LV-194: este renglón está retirado del expediente.** Pedido del usuario:
+    *"SIGO, el módulo, ya no existe"* — y no existe desde `LV-150`, que lo sacó
+    del menú; sin solicitudes nuevas, el renglón nacía en ámbar en todo permiso y
+    no había forma de cerrarlo.
+
+    Se llamaba `TestTheDossierClosesTheCircle` porque R9.6 lo agregó justamente
+    para cerrar el círculo del expediente. El nombre se cambia en vez de dejarlo
+    describiendo algo que ya no ocurre.
+
+    Los tests de la lógica se conservan y pasan a llamar la función directa: el
+    retiro es de pantalla y no de base (paso 1, como `LV-150`), y volver a
+    ponerlo cuesta descomentar una línea — que sin estos tests volvería sin red.
+    """
+
     @pytest.mark.django_db
     def test_it_names_the_originating_request(self, permission, cost_center):
         _request(cost_center, flight_permission=permission)
 
-        dossier = operational_dossier(permission)
-        item = next(i for i in dossier["items"] if i.key == "flight_request")
+        item = _flight_request_item(permission)
 
         assert item.status == "ok"
         assert "Quebrada km 13.760" in item.detail
@@ -85,11 +98,7 @@ class TestTheDossierClosesTheCircle:
         """Todos los permisos que existen hoy se tramitaron antes de que la app
         registrara la solicitud. Marcarlos incompletos los declararía
         defectuosos de forma retroactiva por una función que no existía."""
-        dossier = operational_dossier(permission)
-        item = next(i for i in dossier["items"] if i.key == "flight_request")
-
-        assert item.status == "unknown"
-        assert dossier["missing_count"] == 1  # sólo la autorización firmada
+        assert _flight_request_item(permission).status == "unknown"
 
     @pytest.mark.django_db
     def test_several_requests_on_one_permit_are_all_named(
@@ -100,11 +109,7 @@ class TestTheDossierClosesTheCircle:
         _request(cost_center, "Quebrada km 13.760", flight_permission=permission)
         _request(cost_center, "Quebrada km 14.508", flight_permission=permission)
 
-        item = next(
-            i
-            for i in operational_dossier(permission)["items"]
-            if i.key == "flight_request"
-        )
+        item = _flight_request_item(permission)
 
         assert "13.760" in item.detail and "14.508" in item.detail
 
@@ -112,25 +117,21 @@ class TestTheDossierClosesTheCircle:
     def test_an_archived_request_does_not_count(self, permission, cost_center):
         _request(cost_center, flight_permission=permission, is_active=False)
 
-        item = next(
-            i
-            for i in operational_dossier(permission)["items"]
-            if i.key == "flight_request"
-        )
-
-        assert item.status == "unknown"
+        assert _flight_request_item(permission).status == "unknown"
 
     @pytest.mark.django_db
-    def test_it_shows_on_the_permit_page(
+    def test_it_no_longer_shows_on_the_permit_page(
         self, admin_client_in, permission, cost_center
     ):
+        """El retiro en sí, y con él el contador que no podía llegar a cero: los
+        dos renglones retirados eran los únicos en ámbar de un permiso completo,
+        así que el encabezado decía "2 por confirmar" para siempre."""
         _request(cost_center, flight_permission=permission)
 
-        content = admin_client_in.get(
-            reverse("permission-detail", args=[permission.pk])
-        ).content.decode()
+        dossier = operational_dossier(permission)
 
-        assert "Quebrada km 13.760" in content
+        assert "flight_request" not in {item.key for item in dossier["items"]}
+        assert dossier["missing_count"] == 1  # sólo la autorización firmada
 
 
 class TestThePanelShowsWhatIsWaiting:

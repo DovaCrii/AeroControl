@@ -28,6 +28,7 @@ from apps.operations.dossier import (
     PERMIT_LETTER,
     SIGNED_AUTHORIZATION,
     UNKNOWN,
+    _flight_record_item,
     operational_dossier,
 )
 from apps.operations.models import FlightPermission
@@ -175,14 +176,31 @@ class TestTheTwoDgacPapersAreDifferentDocuments:
 
 @pytest.mark.django_db
 class TestFlightsAgainstThePermit:
+    """**LV-194: este renglón está retirado del expediente** —los vuelos se
+    ligan al centro de costo y no al permiso— así que estos tests llaman a la
+    función directamente en vez de buscar la clave en `operational_dossier`.
+
+    Se conservan a propósito: el retiro es de pantalla y no de base (paso 1, como
+    `LV-150`), y volver a ponerlo cuesta descomentar una línea. Si al retirarlo se
+    hubieran borrado sus tests, esa línea volvería sin red — y lo que afirman
+    sigue siendo cierto sobre la función.
+    """
+
     def test_a_completed_permit_with_no_flights_is_a_contradiction(self, permission):
         permission.status = "completed"
         permission.save(update_fields=["status"])
 
-        assert _item(permission, "flights").status == MISSING
+        assert _flight_record_item(permission).status == MISSING
 
     def test_an_open_permit_with_no_flights_is_merely_pending(self, permission):
-        assert _item(permission, "flights").status == UNKNOWN
+        assert _flight_record_item(permission).status == UNKNOWN
+
+    def test_it_is_no_longer_a_row_of_the_dossier(self, permission):
+        """El retiro en sí. Nacía en ámbar y no podía cerrarse nunca, así que el
+        encabezado decía "por confirmar" en todo permiso, para siempre."""
+        keys = {item.key for item in operational_dossier(permission)["items"]}
+
+        assert "flights" not in keys
 
 
 @pytest.mark.django_db
@@ -194,8 +212,10 @@ def test_a_fully_documented_permit_reads_as_complete(permission, cost_center):
 
     dossier = operational_dossier(permission)
 
-    # Sin plan geo ni vuelos, "completo" no puede ser cierto -- y ese es el
-    # punto: el expediente cuenta lo que falta, no lo que uno quiere oír.
+    # Sin plan geo, "completo" no puede ser cierto -- y ese es el punto: el
+    # expediente cuenta lo que falta, no lo que uno quiere oír. (Antes de
+    # `LV-194` los vuelos también contaban acá; retirarlos no cambia lo que este
+    # test afirma, porque el plan sigue sin vincular.)
     assert not dossier["is_complete"]
     assert dossier["missing_count"] == 0
     assert dossier["unknown_count"] > 0

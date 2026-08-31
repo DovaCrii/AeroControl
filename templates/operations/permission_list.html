@@ -40,6 +40,17 @@ archivado no tendría desde dónde restaurarse.{% endcomment %}
 
 {% block list_header %}
 <th scope="col">{% translate "Number" %}</th>
+{% comment %}LV-192: la faena, pedida por el usuario mirando este listado. Iba
+**en el CSV desde `LV-53`** y no en la tabla, así que el dato con el que se
+agrupa el trabajo estaba en el archivo exportado y no en la pantalla donde se
+decide qué abrir.
+
+Segunda columna y no primera: el folio es el valor primario y el enlace de la
+fila, y moverlo del borde izquierdo rompería la lectura de las otras cuatro
+listas. Va antes de Operadores por la razón de `LV-146` —los códigos son de
+ancho casi uniforme (`CC738`) y los nombres no, así que el chip cae en la misma
+x en todas las filas y se puede barrer con la vista.{% endcomment %}
+<th scope="col">{% translate "Cost center" %}</th>
 <th scope="col">{% translate "Operators" %}</th>
 <th scope="col">{% translate "Aircraft" %}</th>
 <th scope="col">{% translate "Validity" %}</th>

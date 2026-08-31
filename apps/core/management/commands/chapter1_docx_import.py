@@ -12,7 +12,7 @@ from docx import Document
 
 from apps.core.models import ImportBatch
 from apps.registry.models import Aircraft, CostCenter, Operator
-from apps.registry.rut import employee_id_from_rut
+from apps.registry.rut import employee_id_from_rut, normalize_rut
 
 
 FIELD_LABELS = re.compile(
@@ -304,6 +304,26 @@ class Command(BaseCommand):
         transcrito, y crearla explotaría contra el índice único. Sale como
         conflicto, con los dos valores, para que se resuelva mirando el registro
         DGAC.
+
+        **LV-190: la persona también va por dos llaves, y le hacía más falta que
+        a la aeronave.** Hasta acá se cruzaba sólo por `employee_id`, y el RUT
+        —que `LV-143` declaró la llave natural— no participaba. Tres piezas se
+        alineaban mal: una ficha creada a mano antes de `LV-169` lleva un
+        `employee_id` que no es `RUT-…`, así que no se reconocía; `apply_report`
+        crea con `Operator.objects.create()`, que **no llama a `clean()`**, donde
+        vive la única comprobación de RUT repetido (`operator_with_rut`); y
+        `Operator.rut` es `CharField(blank=True)` **sin `unique=True`**, así que
+        la base tampoco lo frenaba. La aeronave duplicada revienta contra un
+        índice; la persona duplicada **entraba en silencio**, que es exactamente
+        lo que `LV-143` vino a cerrar — *"dos fichas de la misma persona con el
+        RUT escrito distinto eran para la app dos personas"*—, reintroducido por
+        la puerta de atrás, y en el padrón que la DGAC espeja.
+
+        El RUT se compara **normalizado en los dos lados**, y eso no es
+        precaución teórica: como `create()` no pasa por `clean()`, las fichas que
+        este import ya creó tienen el RUT tal como viene del manual, con puntos.
+        Comparar en crudo no habría encontrado justamente a las personas que este
+        comando cargó.
         """
         by_registration = dict(Aircraft.objects.values_list("registration", "pk"))
         by_serial = {
@@ -312,6 +332,12 @@ class Command(BaseCommand):
             if serial
         }
         existing_operators = set(Operator.objects.values_list("employee_id", flat=True))
+        # LV-190: quién tiene ya cada RUT. Una consulta, no una por ficha.
+        employee_id_by_rut = {
+            normalize_rut(rut): employee_id
+            for rut, employee_id in Operator.objects.values_list("rut", "employee_id")
+            if rut
+        }
         existing_centers = set(CostCenter.objects.values_list("code", flat=True))
 
         missing = {"cost_centers": [], "aircraft": [], "operators": []}
@@ -340,8 +366,24 @@ class Command(BaseCommand):
 
         for row in report["operators"]:
             employee_id = employee_id_from_rut(row["rut"])
-            if employee_id in existing_operators:
+            known_by_id = employee_id in existing_operators
+            # Quién tiene el RUT de esta ficha, si alguien lo tiene.
+            owner_of_rut = employee_id_by_rut.get(normalize_rut(row["rut"]))
+            if known_by_id and owner_of_rut in (None, employee_id):
+                # La misma persona: el ID coincide, y el RUT o coincide o no
+                # está cargado en la ficha (que es el caso de las fichas viejas).
                 skipped.append(f"operator:{employee_id}")
+            elif known_by_id or owner_of_rut:
+                conflicts.append(
+                    f"operator:{row['full_name']} / {row['rut']} "
+                    f"(ID {'ya existe' if known_by_id else 'nuevo'}, "
+                    + (
+                        f"RUT ya lo tiene {owner_of_rut}"
+                        if owner_of_rut
+                        else "RUT nuevo"
+                    )
+                    + ")"
+                )
             else:
                 missing["operators"].append(row)
 
@@ -383,6 +425,14 @@ class Command(BaseCommand):
                 rut = operator_data["rut"]
                 payload = {
                     **operator_data,
+                    # LV-190: el RUT entra en su forma canónica. `create()` no
+                    # pasa por `clean()`, que es donde `normalize_rut` se aplica,
+                    # así que hasta acá este comando sembraba RUT con puntos —
+                    # valores que `operator_with_rut` (comparación exacta contra
+                    # la forma canónica) no encuentra, de modo que el formulario
+                    # de alta habría dejado crear a mano el duplicado de una
+                    # persona cargada desde el manual.
+                    "rut": normalize_rut(rut),
                     "employee_id": employee_id_from_rut(rut),
                     "notes": source_note,
                 }

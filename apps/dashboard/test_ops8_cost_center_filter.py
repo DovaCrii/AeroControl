@@ -262,10 +262,27 @@ def test_expiring_soon_kpi_tile_links_to_the_panel_with_severity(auth_client):
     """R1.1: "Expiring in 30 days" was the one KPI tile that was not a link,
     and every row below it was a flat gray badge no matter how urgent. Both
     were true regardless of how the auditor's guide reads: this is exactly
-    the panel meant to surface DGAC/JAC compliance state at a glance."""
+    the panel meant to surface DGAC/JAC compliance state at a glance.
+
+    **LV-191: el permiso se agrega acá, y no es un ajuste de fontanería.**
+    `auth_client` no tiene ninguno, así que este test venía afirmando que un
+    usuario sin permisos ve el nombre de una persona y su credencial por vencer
+    — la fuga que `LV-191` cerró, escrita como expectativa. Lo que este test
+    existe para sostener es otra cosa (que la tarjeta enlaza y que el color dice
+    la urgencia), y para eso hace falta que la fila exista: se le da el permiso
+    de lectura que corresponde a la fuente, no se afloja el gate.
+    """
     from datetime import timedelta
 
+    from django.contrib.auth.models import Permission
     from django.utils import timezone
+
+    user = User.objects.get(username="dash-user")
+    user.user_permissions.add(
+        Permission.objects.get(
+            content_type__app_label="registry", codename="view_operator"
+        )
+    )
 
     cc = CostCenter.objects.create(code="CC1", name="One")
     Operator.objects.create(

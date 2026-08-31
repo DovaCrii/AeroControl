@@ -2,6 +2,15 @@
 {% for object in objects %}
 <tr>
   <td><a href="{{ object.pk }}/" class="table-primary-value">{{ object }}</a><span class="table-primary-sub cell-truncate">{% translate "DGAC" %}: {% if object.permission_number %}{{ object.permission_number }}{% else %}{% translate "In process" %}{% endif %}</span></td>
+  {% comment %}LV-192: el mismo `cc-chip` de la bandeja de alertas y del panel, y
+  no texto suelto: un código de faena se reconoce por su forma, y si acá fuera
+  texto plano sería el tercer dibujo del mismo dato en la app.
+
+  Sin la rama "sin faena" que esas dos pantallas necesitan: `FlightPermission
+  .cost_center` es una FK **obligatoria**, así que un permiso sin faena no
+  existe. En `Aircraft` y `Operator` sí es nula, y de ahí viene el guion de esas
+  otras vistas.{% endcomment %}
+  <td><span class="cc-chip">{{ object.cost_center.code }}</span></td>
   <td>{% for operator in object.operators.all %}{{ operator }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
   <td>{% for aircraft in object.aircraft_fleet.all %}{{ aircraft }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
   <td>{{ object.valid_from|date:"Y-m-d" }} – {{ object.valid_until|date:"Y-m-d" }}</td>

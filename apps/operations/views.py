@@ -146,7 +146,13 @@ class FlightPermissionList(
 
     def get_queryset(self):
         queryset = (
-            super().get_queryset().prefetch_related("operators", "aircraft_fleet")
+            super()
+            .get_queryset()
+            .prefetch_related("operators", "aircraft_fleet")
+            # LV-192: la columna de faena lee `cost_center.code`, que sin esto
+            # cuesta una consulta por fila — 25 por página, en el listado que se
+            # abre para elegir qué permiso mirar.
+            .select_related("cost_center")
         )
         status = self.request.GET.get("status", "")
         if status in dict(FlightPermission.STATUS_CHOICES):

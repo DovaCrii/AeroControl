@@ -152,8 +152,69 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   y qué contestó — lo que sirve para estudiar, sin el examen resuelto.
   **Al desplegar hay que correr `bootstrap_roles`.**
 
+### Security
+
+- **La lista de vencimientos del panel respeta los permisos del usuario
+  (`LV-191`).** Las cinco fuentes se listaban sin comprobar si el usuario podía
+  ver ese tipo de registro, y cada fila nombra su sujeto: el folio de un permiso,
+  la matrícula de una aeronave, **el nombre de una persona junto a su credencial
+  DGAC por vencer**, el título de un documento. En una pantalla que se abre en
+  cada inicio de sesión, lo veía cualquiera que pudiera entrar. Ahora cada fuente
+  pide el permiso de lectura de su propio modelo — ninguno nuevo: quien puede ver
+  la ficha de una aeronave puede ver que su seguro vence. Lo tapaba por accidente
+  el guard de bienvenida, que escondía la sección entera cuando la base parecía
+  vacía; en producción, donde no lo está, no tapaba nada.
+
+### Fixed
+
+- **Un documento pertenece a la faena del registro del que cuelga (`LV-188`).**
+  La atribución conocía siete modelos y el filtro sólo dos, así que la Carta
+  Permiso del panel salía con el chip `CC738` y **desaparecía al filtrar por
+  `CC738`**: la fila afirmaba una faena y el filtro de esa misma faena la
+  negaba. No era sólo esa pantalla: la misma función alimenta la tarjeta de
+  alertas pendientes, el resumen diario por correo y el informe de cumplimiento
+  por faena — y ahí no hay filtro de usuario de por medio, así que los
+  documentos colgados de un permiso, de un mantenimiento, de una habilitación o
+  de una revisión mensual **no contaban en el cumplimiento de ninguna faena**.
+  Las dos mitades pasan ahora por un solo recorrido de la misma tabla, con un
+  test que falla si alguien agrega un modelo y no su caso. **El informe y el
+  histórico de `ComplianceSnapshot` van a mover sus números con este arreglo**:
+  lo que cambia es el universo contado, no el cumplimiento real.
+- **La tarjeta de bienvenida ya no esconde la operación (`LV-187`).** El panel
+  envolvía todo su contenido en una condición de primera pantalla que miraba
+  aeronaves, operadores y alertas — los tres respetan el filtro por faena y los
+  vencimientos no entraban. Elegir una faena sin flota ni padrón reemplazaba el
+  panel completo por "Comienza tu operación", con vencimientos reales de esa
+  faena detrás. Ahora el guard mira también los vencimientos y **sólo aplica sin
+  filtro**: con una faena elegida se ve el panel con sus vacíos propios, que
+  dice la verdad sobre esa faena en vez de sobre la operación.
+
 ### Changed
 
+- **El expediente operativo pierde los dos renglones que no podían cerrarse
+  (`LV-194`).** "Solicitud SIGO de origen" y "Vuelos registrados contra este
+  permiso" nacían en ámbar y no había forma de resolverlos — el módulo SIGO salió
+  del menú en `LV-150` y la bitácora de vuelos se lleva contra la faena—, así que
+  el encabezado decía "2 por confirmar" en todo permiso, para siempre, y ningún
+  expediente podía leerse como completo. Retiro de pantalla, no de base:
+  registrar un vuelo sigue en su propio módulo.
+- **El importador del Capítulo 1 ya no puede duplicar una persona (`LV-190`).** El
+  cruce iba sólo por número de empleado, así que una ficha dada de alta a mano
+  —con otro número— no se reconocía y la persona se creaba de nuevo, sin que la
+  base pudiera impedirlo. Ahora cruza también por RUT y se detiene con un
+  conflicto que nombra la ficha existente, y guarda el RUT en su forma canónica.
+- **El listado de permisos dice de qué faena es cada uno (`LV-192`).** El dato ya
+  iba en el CSV y no en la tabla, así que el criterio con el que se agrupa el
+  trabajo estaba en el archivo exportado y no en la pantalla donde se decide qué
+  permiso abrir. Va segunda, después del folio y antes de Operadores, con el
+  mismo chip de faena que la bandeja de alertas y el panel.
+- **"Completado" ya no se ofrece al corregir el estado de un permiso
+  (`LV-193`).** `LV-155` retiró ese estado del flujo — *"completado no debe salir
+  luego de aprobado; es caducado y final se archiva"* — y el selector de
+  corrección se quedó ofreciéndolo, que era la única pantalla capaz de volver a
+  escribirlo. Los permisos que ya lo tienen se siguen encontrando con el filtro
+  del listado y se pueden corregir hacia otro estado: es retiro de pantalla, no
+  de base.
 - **El vencimiento de un documento dice de qué cuelga (`LV-186`).** La fila del
   panel decía "Documento · Carta Permiso" y nada más, y hay una carta por
   permiso: para saber a cuál se refería había que abrirla, que es justo lo que

@@ -38,7 +38,150 @@ Verificar: `systemctl list-timers 'aerocontrol-*' --no-pager`
 
 Notificaciones a `Dirección`: `aortega@jej.cl` + `cmunoz@jej.cl`.
 
-## Cierre del 2026-08-28 (tarde) — **empezar por acá**
+## Cierre del 2026-08-31 — **empezar por acá**
+
+Se fue a cerrar **un pendiente anotado en un test** y la jornada terminó en
+**ocho filas**, tres de ellas defectos que nadie había pedido arreglar porque
+nadie sabía que existían — uno de seguridad y dos que llegaban al cálculo de
+cumplimiento y al padrón. Más cuatro pedidos del usuario, todos con captura.
+
+**La cadena, porque importa cómo se encontró cada cosa:** el pendiente del test
+de `LV-186` decía que un documento vigente salía del panel; al escribir el test
+resultó que el ítem sí llegaba y lo tapaba un guard de plantilla (`LV-187`); al
+verificar *eso* con filtro por faena apareció un defecto de atribución que llega
+al informe de cumplimiento (`LV-188`); y al arreglar el guard, **el gate cayó en
+un test cuyo nombre era el diagnóstico** y destapó una fuga de datos personales
+en el panel (`LV-191`). Ninguno de los cuatro se buscó.
+
+### Estado exacto
+
+- **`origin/main` = `4acc1e6` + el commit de este cierre** (mirar `git log`).
+  **`p340` sigue en `22f379f`**: ahora le faltan **`LV-184` a `LV-194`**.
+- El paso de despliegue no cambió: **`migrate` + `bootstrap_roles` +
+  `collectstatic`**, y sin `bootstrap_roles` media fila de `LV-184` queda sin
+  efecto. Después, el rol `Compliance` a Ariel y a Cristóbal.
+- **Ninguna de las filas nuevas trae migración.** La única de la tanda que
+  migraba sigue siendo `LV-184` (`registry.0039`, sólo el permiso).
+
+### Lo que se cerró
+
+- **`LV-186` no tenía fila ni entrada de `CHANGELOG`** aunque su commit sí.
+  Escritas. **Una fila fantasma es el espejo de un despliegue fantasma** — el
+  trabajo hecho y el registro sin hacer, y sólo se descubre si alguien busca la
+  fila. Anotado en `AGENTS.md`.
+- **`LV-187`**: el panel envolvía todo su contenido en un guard de primera
+  pantalla que no miraba los vencimientos y sí respetaba el filtro por faena, así
+  que **elegir una faena sin flota ni padrón reemplazaba el panel entero por
+  "Comienza tu operación"** y se comía vencimientos reales de esa faena. De paso,
+  su cuarto término (`stages`) no existía en el contexto: condición muerta.
+- **`LV-191`, `P1` y de seguridad**: la lista de vencimientos del panel **nunca
+  filtró por los permisos del usuario**. Cada fila nombra su sujeto, así que se
+  filtraban folios de permisos, matrículas y **nombres de personas junto a su
+  credencial DGAC por vencer**, en la pantalla que se abre en cada inicio de
+  sesión. El guard de `LV-187` lo tapaba sólo con la base vacía, o sea en los
+  tests y nunca en producción: **estaba haciendo de control de acceso sin ser
+  uno**, y por eso dos tests pasaban por la razón equivocada. Cerrado con el
+  permiso de lectura del modelo de cada fuente, en un único punto de control.
+- **`LV-190`, `P1`**: el importador del Capítulo 1 podía **duplicar una persona**
+  en el padrón que la DGAC espeja, y nada lo habría detenido — cruzaba sólo por
+  número de empleado, creaba con `create()` (que no pasa por `clean()`, donde vive
+  la comprobación de RUT repetido) y `Operator.rut` no tiene índice único. Salió
+  al preparar el cruce del manual que pidió el usuario.
+- **`LV-188`, `P1`**: la atribución de faena de un documento conocía **siete**
+  modelos y el filtro **dos**. La Carta Permiso salía con el chip `CC738` y
+  **desaparecía al filtrar por `CC738`**. Y no era sólo esa pantalla: la misma
+  función alimenta la tarjeta de alertas, el resumen por correo y **el informe de
+  cumplimiento por faena**, donde no hay filtro de usuario de por medio.
+
+### ⚠️ Lo que hay que mirar al desplegar `LV-188`
+
+**El informe de cumplimiento va a mover sus números**, y no porque el
+cumplimiento haya cambiado: cambia el universo contado. Conviene medir el antes
+y el después **en la VM**, que es donde están los documentos (el demo no tiene
+ninguno cargado, así que ahí no se puede medir). El desglose por tipo de sujeto
+dice todo — lo que no sea `registry.aircraft` ni `registry.operator` es lo que
+antes no contaba en ninguna faena:
+
+```
+uv run python manage.py shell -c "from collections import Counter; from django.contrib.contenttypes.models import ContentType as CT; from apps.compliance.models import Document; print(Counter(str(CT.objects.get_for_id(i)) for i in Document.objects.filter(is_active=True, is_current_version=True).values_list('content_type_id', flat=True)))"
+```
+
+**Y esto ordena el pedido de la tendencia**: `ComplianceSnapshot` viene guardando
+desde el 2026-08-12 una serie calculada sobre el universo incompleto. Graficarla
+sin más metería un salto que se lee como "el cumplimiento mejoró" cuando es el
+arreglo. O se arregla antes de graficar —ya está arreglado— o el gráfico dice
+desde qué fecha la serie es comparable. Los snapshots viejos **no se recalculan**:
+son un hecho fechado, igual que una migración.
+
+### Los cuatro pedidos del usuario de hoy, cerrados
+
+- **`LV-192`** — el listado de permisos abre con folio y **faena** (chip `CC738`,
+  el mismo de la bandeja y del panel). El dato iba en el CSV desde `LV-53`, o sea
+  que estaba en el archivo exportado y no en la pantalla.
+- **`LV-193`** — "Completado" fuera del selector de "Corregir el estado".
+  `LV-155` lo había retirado del flujo y **esa pantalla quedó fuera**: era la
+  única capaz de volver a escribir el estado retirado. `JEJ-2026-003` se sigue
+  encontrando con el filtro y se puede corregir hacia otro estado.
+  **"Rechazado" se queda, confirmado por el usuario**: es un hecho de la DGAC y
+  está en `CREATABLE_STATUSES`, así que retirarlo dejaría sin forma de corregir
+  un permiso marcado así por error.
+- **`LV-194`** — los dos últimos renglones del expediente operativo, retirados.
+  **No era una limpieza**: nacían en ámbar y ninguno podía cerrarse (SIGO salió
+  del menú en `LV-150`; la bitácora de vuelos se lleva contra la faena), así que
+  el encabezado decía "2 por confirmar" en todo permiso para siempre y ningún
+  expediente podía leerse como completo.
+- **El cruce del Capítulo 1 Rev 17** — ver abajo, que tiene su propia sección.
+
+### El cruce del manual: listo para correr en la VM
+
+El comando ya existía (`chapter1_docx_import`, con `LV-133` adaptado a la Rev 17)
+y **`LV-190` era lo que faltaba para poder confiar en él**. Verificado sobre
+`1 Capítulo 1 202608_R17_reparado.docx`: **17 aeronaves** (las 16 de producción
+más `RPA-7213`) y **48 fichas permanentes**, los 48 RUT válidos con su dígito
+verificador, 48 números de empleado distintos, ningún campo vacío, y la sección
+1.5 cerrando en `EVENTUALES (NO APLICA)` sin nada después — o sea que 48 es la
+dotación real y no un parser desbordado. Producción tiene 42, así que la corrida
+crea alrededor de seis.
+
+**El cruce contra `p340` no se puede hacer desde una sesión de agente** (`ssh`
+responde `Permission denied (publickey)`, y la base local está vacía), así que va
+en la VM, y **el informe primero**:
+
+```
+uv run python manage.py chapter1_docx_import --source "<ruta al docx>" --export-dir /tmp/cap1
+```
+
+Leer `already_on_file`, `CONFLICT` y `operators_ready` antes de aplicar. **Un
+`CONFLICT` no se fuerza**: significa que el manual y el padrón no coinciden sobre
+una persona, y la fila dice qué ficha tiene ese RUT. Sólo cuando no haya
+conflictos:
+
+```
+uv run python manage.py chapter1_docx_import --source "<ruta al docx>" --apply --skip-existing
+```
+
+⚠️ **Y una deuda que `LV-190` deja a la vista**: las fichas que este import creó
+antes de hoy tienen el **RUT con puntos**, porque `create()` no pasa por
+`clean()`. `operator_with_rut` compara contra la forma canónica, así que el
+formulario de alta no encuentra a esas personas y dejaría crear su duplicado a
+mano. Normalizarlas es una corrida de datos aparte y hay que medirla primero.
+
+### Lo que sigue abierto, con el camino ya acordado
+
+Tres de los cuatro pedidos del 2026-08-28 siguen en pie —**colores por elemento
+en el mapa**, **la tendencia en el panel** y **el ancho de la hoja SIGO**— con el
+detalle en la sección de abajo, que no cambió. El cuarto era el pendiente del
+test y quedó cerrado. Y nueva: **`LV-189`**, el estado terminal en el
+cumplimiento, que `LV-188` destapó y deliberadamente no hizo — está en el tablero
+con el porqué de no haberlas mezclado.
+
+### Y lo de siempre, que sigue mandando
+
+El **correo**: único criterio en rojo, listo para encenderse desde `LV-182`, sólo
+faltan las credenciales SMTP con los nombres de variable de siempre. Y los dos
+timers (`check_scheduled_jobs`, `verify_backup`) siguen sin instalar.
+
+## Cierre del 2026-08-28 (tarde)
 
 Continuación del mismo día. Se cerraron `LV-184` a `LV-186` y quedan **cuatro
 pedidos del usuario abiertos, con el camino ya acordado**.
