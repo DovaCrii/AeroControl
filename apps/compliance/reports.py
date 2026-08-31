@@ -18,40 +18,6 @@ from apps.compliance.models import Alert, Document
 from apps.registry.models import Aircraft, CostCenter, Operator
 
 
-def documents_for_cost_center(cost_center, queryset=None):
-    """Current documents attached to a cost center's aircraft or operators.
-
-    Document points at its subject through a generic foreign key, so the owning
-    cost center cannot be reached with a join: the ids are resolved first and
-    matched per content type.
-    """
-    aircraft_ids = list(
-        Aircraft.objects.filter(cost_center=cost_center, is_active=True).values_list(
-            "pk", flat=True
-        )
-    )
-    operator_ids = list(
-        Operator.objects.filter(cost_center=cost_center, is_active=True).values_list(
-            "pk", flat=True
-        )
-    )
-    base = queryset if queryset is not None else Document.objects.all()
-    if not aircraft_ids and not operator_ids:
-        return base.none()
-    scope = Q(pk__in=[])
-    if aircraft_ids:
-        scope |= Q(
-            content_type=ContentType.objects.get_for_model(Aircraft),
-            object_id__in=aircraft_ids,
-        )
-    if operator_ids:
-        scope |= Q(
-            content_type=ContentType.objects.get_for_model(Operator),
-            object_id__in=operator_ids,
-        )
-    return base.filter(scope)
-
-
 # LV-129: cómo se llega al centro de costo desde cada modelo que una alerta
 # puede apuntar. Declarado como mapa y no como cadena de `if`s porque el día que
 # `WATCHABLE_MODELS` crezca, lo que hay que revisar es esta tabla — y un modelo
@@ -59,7 +25,7 @@ def documents_for_cost_center(cost_center, queryset=None):
 #
 # `compliance.document` no está acá a propósito: cuelga de una relación genérica
 # y su centro de costo se resuelve al revés, con `documents_for_cost_center`,
-# que ya existe justo arriba.
+# que la usa a través de `_subject_scope`.
 ALERT_COST_CENTER_PATHS = {
     "registry.aircraft": "cost_center",
     "registry.operator": "cost_center",
@@ -71,6 +37,74 @@ ALERT_COST_CENTER_PATHS = {
     "maintenance.maintenancerecord": "aircraft__cost_center",
     "compliance.monthlycompliancereview": "cost_center",
 }
+
+
+def _subject_scope(cost_center, *, only_active):
+    """`Q` sobre `(content_type, object_id)` para lo atribuible a `cost_center`.
+
+    LV-188: **la única forma de recorrer los modelos con faena declarada.** Antes
+    había dos recorridos: `alerts_for_cost_center` iteraba
+    `ALERT_COST_CENTER_PATHS` completa y `documents_for_cost_center` mantenía su
+    propia lista escrita a mano — `Aircraft` y `Operator`, dos de siete. La
+    consecuencia era visible en el panel: un documento colgado de un permiso de
+    vuelo salía con el chip de su faena y **desaparecía al filtrar por esa misma
+    faena**, porque el chip lo pone `cost_centers_for_refs` (que sí va sobre la
+    tabla) y el filtro lo ponía la lista corta. Y no era sólo la pantalla: la
+    misma función alimenta el informe de cumplimiento por faena, donde no hay
+    filtro de usuario de por medio, así que los documentos que cuelgan de un
+    permiso, de un mantenimiento, de una habilitación o de una revisión mensual
+    **no contaban en el cumplimiento de ninguna faena**.
+
+    Con subconsulta y no con `list(values_list("pk"))`: una consulta en total en
+    vez de una por modelo, y sin traer a Python ids que sólo van a volver a la
+    base. Importa acá porque el informe llama a esto **una vez por faena**.
+
+    `only_active` es el criterio de quien pregunta, no una preferencia:
+    - los **documentos** se cuentan como trabajo de cumplimiento, así que un
+      sujeto archivado no aporta (criterio que ya tenía la lista corta);
+    - las **alertas** se atribuyen, no se cuentan: una alerta sobre un registro
+      archivado sigue perteneciendo a su faena, igual que en
+      `_direct_cost_center_ids`.
+
+    `Q(pk__in=[])` es el neutro del `|`: sin ningún sujeto, el resultado es vacío
+    y no "todo".
+
+    ⚠️ Lo que **no** hace, y quedó como `LV-189`: excluir sujetos en estado
+    terminal. Una aeronave `retired` sigue `is_active=True`, así que sus
+    documentos ya contaban antes de esta fila; extender la tabla suma a esa
+    cuenta las cartas de permisos cerrados. Es la regla de `LV-120` y merece su
+    propia fila porque cambia números del informe por una razón distinta.
+    """
+    from django.apps import apps as django_apps
+
+    scope = Q(pk__in=[])
+    for label, path in ALERT_COST_CENTER_PATHS.items():
+        app_label, model_name = label.split(".", 1)
+        try:
+            model = django_apps.get_model(app_label, model_name)
+        except LookupError:  # pragma: no cover - un modelo retirado del registro
+            continue
+        subjects = model.objects.filter(**{path: cost_center})
+        if only_active:
+            subjects = subjects.filter(is_active=True)
+        scope |= Q(
+            content_type=ContentType.objects.get_for_model(model),
+            object_id__in=subjects.values("pk"),
+        )
+    return scope
+
+
+def documents_for_cost_center(cost_center, queryset=None):
+    """Los documentos que cuelgan de un registro de esta faena.
+
+    `Document` apunta a su sujeto por una relación genérica, así que la faena no
+    se alcanza con un join: se emparejan `(content_type, object_id)` contra los
+    sujetos de la faena. **Los sujetos posibles son los de
+    `ALERT_COST_CENTER_PATHS`** — ver `_subject_scope`, y `LV-188` por qué esta
+    función tenía su propia lista de dos.
+    """
+    base = queryset if queryset is not None else Document.objects.all()
+    return base.filter(_subject_scope(cost_center, only_active=True))
 
 
 def _direct_cost_center_ids(ids_by_content_type):
@@ -217,44 +251,31 @@ def alerts_for_cost_center(queryset, cost_center):
     ajeno al filtro, presentado junto a otros que sí lo respetan.
 
     Mismo problema y misma forma que `documents_for_cost_center`: no hay join
-    posible hacia el sujeto, así que se resuelven los ids por modelo y se
-    emparejan por `content_type`. Una consulta por modelo con alertas, no una
-    por alerta.
+    posible hacia el sujeto, así que se emparejan `(content_type, object_id)`
+    contra los sujetos de la faena. **Las dos van por `_subject_scope`** desde
+    `LV-188`, que es lo que impide que vuelvan a discrepar en qué modelos
+    conocen.
 
     Un modelo sin ruta declarada **queda fuera** cuando hay filtro. Es la
     lectura honesta: si no se puede atribuir a una faena, no es de esa faena.
     Sin filtro no se toca nada.
-    """
-    from django.apps import apps as django_apps
 
+    Acá los sujetos archivados **entran**: una alerta sobre un registro
+    archivado sigue perteneciendo a su faena, y esconderla del filtro la
+    escondería de la única pantalla donde alguien la cerraría.
+    """
     if cost_center is None:
         return queryset
 
-    scope = Q(pk__in=[])
-    for label, path in ALERT_COST_CENTER_PATHS.items():
-        app_label, model_name = label.split(".", 1)
-        try:
-            model = django_apps.get_model(app_label, model_name)
-        except LookupError:  # pragma: no cover - un modelo retirado del registro
-            continue
-        ids = list(
-            model.objects.filter(**{path: cost_center}).values_list("pk", flat=True)
-        )
-        if ids:
-            scope |= Q(
-                content_type=ContentType.objects.get_for_model(model),
-                object_id__in=ids,
-            )
+    scope = _subject_scope(cost_center, only_active=False)
 
     documents = documents_for_cost_center(
         cost_center, Document.objects.filter(is_active=True)
     )
-    document_ids = list(documents.values_list("pk", flat=True))
-    if document_ids:
-        scope |= Q(
-            content_type=ContentType.objects.get_for_model(Document),
-            object_id__in=document_ids,
-        )
+    scope |= Q(
+        content_type=ContentType.objects.get_for_model(Document),
+        object_id__in=documents.values("pk"),
+    )
     return queryset.filter(scope)
 
 

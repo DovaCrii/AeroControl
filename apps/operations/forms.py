@@ -344,10 +344,18 @@ class StatusCorrectionForm(forms.Form):
         # Every status except the one it already has: "correcting" a permit to
         # the status it is already in is not a correction, and would write a
         # history row saying nothing happened.
+        #
+        # LV-193: y tampoco los retirados. `LV-155` sacó "Completado" del flujo
+        # —*"completado no debe salir luego de aprobado; es caducado y final se
+        # archiva"*— y este selector se quedó ofreciéndolo, así que la pantalla
+        # que arregla un estado equivocado era la única que podía volver a
+        # escribirlo. `RETIRED_STATUSES` vive en el modelo para que el próximo
+        # retiro no vuelva a dejar una pantalla atrás.
         self.fields["status"].choices = [
             (value, label)
             for value, label in FlightPermission.STATUS_CHOICES
             if value != current_status
+            and value not in FlightPermission.RETIRED_STATUSES
         ]
 
     def clean_reason(self):

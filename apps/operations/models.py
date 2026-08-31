@@ -68,6 +68,25 @@ class FlightPermission(StatusFlowMixin, BaseModel):
     # encontrarlas — decisión del usuario, paso 1 del retiro, igual que `LV-78`
     # y `LV-103`. Sin migración de datos y reversible.
     STATUS_FLOW = [STATUS_REQUESTED, STATUS_APPROVED]
+    # LV-193: los estados que ninguna pantalla vuelve a **ofrecer**, aunque haya
+    # filas que los tengan. `LV-155` sacó `completed` del flujo y del stepper y
+    # **el selector de "Corregir el estado" quedó fuera**: seguía listando
+    # `STATUS_CHOICES` completo, así que la pantalla que existe para arreglar un
+    # estado equivocado era la que podía volver a escribir el estado retirado —
+    # y el defecto que `LV-101` encontró era, textual, alguien deshaciendo un
+    # "completado" puesto por error. El usuario lo vio en `JEJ-2026-003`, que es
+    # justamente la fila que tiene el valor en producción.
+    #
+    # Declarado acá y no como un `if` en el formulario, por lo mismo que
+    # `STATUS_FLOW`: el retiro de un estado toca varias pantallas y ya se
+    # demostró que una se queda atrás. El día que se retire otro, esto es lo
+    # único que se edita.
+    #
+    # Sigue siendo **retiro de pantalla y no de base**: el valor permanece en
+    # `STATUS_CHOICES` para que el filtro del listado encuentre las filas que lo
+    # tienen, y corregir un permiso *desde* `completed` hacia otro estado sigue
+    # siendo posible — es lo único que se puede hacer con esas filas.
+    RETIRED_STATUSES = frozenset({STATUS_COMPLETED})
     # LV-157: con qué estado puede **nacer** un permiso. Aprobar y completar
     # exigen la autorización firmada de la DGAC en ficha
     # (`RequireDgacPermitPdfMixin`), y en el alta esa compuerta no se puede

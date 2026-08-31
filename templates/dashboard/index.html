@@ -34,7 +34,12 @@ centros de costo.{% endcomment %}
   <noscript><div class="col-auto"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div></noscript>
 </form>
 
-{% if not aircraft_count and not operator_count and not alert_count and not stages %}
+{% comment %}LV-187: la condición se calcula en la vista (`show_onboarding`) y no
+acá. Eran cuatro términos, uno de ellos —`stages`— inexistente en este contexto
+desde algún refactor, y faltaban los vencimientos: con una faena elegida sin
+flota ni padrón esta tarjeta reemplazaba el panel entero y se comía vencimientos
+reales de esa faena. El porqué de cada término está en `views.py`.{% endcomment %}
+{% if show_onboarding %}
 <section class="card onboarding-card p-3 mb-3" aria-labelledby="onboarding-title">
   <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
     <div>

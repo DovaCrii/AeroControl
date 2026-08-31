@@ -21,7 +21,12 @@ from django.utils import timezone
 from apps.compliance.models import DocumentType
 from apps.core.testing import login_as
 from apps.geo.models import GeoPlan
-from apps.operations.dossier import SIGNED_AUTHORIZATION, operational_dossier
+from apps.operations.dossier import (
+    SIGNED_AUTHORIZATION,
+    _flight_record_item,
+    _flight_request_item,
+    operational_dossier,
+)
 from apps.operations.models import FlightPermission
 from apps.registry.models import Aircraft, CostCenter, Operator
 
@@ -156,8 +161,13 @@ class TestWhereEachGapIsClosed:
     def test_no_request_links_to_the_requests_list(self, permission):
         """No vincula desde acá: el vínculo se hace en la solicitud, donde están
         las coordenadas presentadas que hay que comparar antes de afirmar que
-        este permiso responde a esa solicitud."""
-        item = _item(permission, "flight_request")
+        este permiso responde a esa solicitud.
+
+        **LV-194 retiró este renglón del expediente**, así que el atajo se
+        comprueba sobre la función: el retiro es reversible y su atajo tiene que
+        seguir llevando donde llevaba.
+        """
+        item = _flight_request_item(permission)
 
         assert item.action_url == reverse("flight-request-list")
 
@@ -165,7 +175,9 @@ class TestWhereEachGapIsClosed:
     def test_no_flights_links_to_the_log_form_with_the_permit_prefilled(
         self, permission
     ):
-        item = _item(permission, "flights")
+        """Igual que el de arriba: renglón retirado por `LV-194`, atajo probado
+        sobre la función."""
+        item = _flight_record_item(permission)
 
         assert item.action_url == (
             f"{reverse('record-create')}?permission={permission.pk}"
@@ -205,8 +217,14 @@ class TestWhenThereIsNoActionToOffer:
     def test_without_a_user_nothing_is_filtered(self, permission):
         """La firma de un argumento es un contrato: `operational_dossier` sin
         usuario devuelve todos los atajos, que es lo que necesitan los tests del
-        renglón y lo que mantiene compatible a quien ya la llamaba."""
-        assert _item(permission, "flights").action_url != ""
+        renglón y lo que mantiene compatible a quien ya la llamaba.
+
+        Se comprueba sobre la autorización firmada y no sobre los vuelos, que es
+        el renglón que usaba antes de que `LV-194` lo retirara: lo que este test
+        afirma es el contrato de la firma, así que sirve cualquier renglón con
+        atajo — y uno que siga en el expediente lo prueba de punta a punta.
+        """
+        assert _item(permission, "signed_authorization").action_url != ""
 
 
 class TestTheRequestsListStopsPretendingToSplit:

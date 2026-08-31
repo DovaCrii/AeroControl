@@ -46,7 +46,27 @@ def resolved_alert_keys():
     )
 
 
-def upcoming_expirations(today, cutoff, cost_center=None):
+# LV-191: qué permiso hace falta para ver cada fuente de la lista de
+# vencimientos. Declarado como mapa y no como seis `if` repartidos por la función
+# por la misma razón que `ALERT_COST_CENTER_PATHS`: acá un `if` olvidado no se ve
+# y es una fuga, mientras una fuente que falte en esta tabla salta a la vista —
+# y la tabla se lee de una vez para saber qué gatea qué.
+#
+# Son los permisos por defecto de Django sobre el modelo del que sale cada fila.
+# No se inventa un permiso nuevo: si alguien puede ver la ficha de una aeronave,
+# puede ver que su seguro vence; y si no puede, la fila del panel no es el lugar
+# por donde enterarse.
+EXPIRATION_PERMISSIONS = {
+    Qualification: "registry.view_qualification",
+    Operator: "registry.view_operator",
+    Aircraft: "registry.view_aircraft",
+    KnowledgeAssessment: "registry.view_knowledgeassessment",
+    Document: "compliance.view_document",
+    FlightPermission: "operations.view_flightpermission",
+}
+
+
+def upcoming_expirations(today, cutoff, cost_center=None, user=None):
     """Lo que expira **hasta** `cutoff`, incluido lo que ya expiró (T5.4/U4):
     habilitaciones, credenciales DGAC, seguros JAC, documentos y permisos. Cada
     ítem lleva su enlace para que el panel deje al usuario donde puede actuar.
@@ -123,12 +143,27 @@ def upcoming_expirations(today, cutoff, cost_center=None):
         return cost_center_of_the_row.code if cost_center_of_the_row else ""
 
     def add(model, record_pk, item):
-        """Agrega el ítem salvo que su alerta ya esté resuelta.
+        """Agrega el ítem salvo que su alerta ya esté resuelta o el usuario no
+        pueda ver esa fuente.
 
         Se filtra acá y no al final para no construir la fila que se va a
         descartar, y con `get_for_model` —que Django cachea por modelo— para no
         pagar una consulta de `ContentType` por listado.
+
+        **LV-191: el gate de permisos va acá, en un solo lugar.** Cuesta ejecutar
+        la consulta de una fuente que se va a descartar —seis consultas acotadas
+        en el peor caso, no una por fila—, y se paga a propósito: seis `if`
+        repartidos por la función son seis lugares donde olvidarse de uno, y
+        olvidarse de uno es una fuga que nadie ve. `model` ya llega acá por el
+        filtro de `LV-122`, así que el punto de control existía y estaba sin usar.
+
+        `user is None` **no gatea nada**, y es deliberado: los tests y los
+        llamadores internos que preguntan "qué vence" sin una sesión detrás están
+        probando la consulta, no la autorización. La vista pasa siempre
+        `request.user`.
         """
+        if user is not None and not user.has_perm(EXPIRATION_PERMISSIONS[model]):
+            return
         key = (
             ContentType.objects.get_for_model(model).id,
             record_pk,
@@ -743,7 +778,13 @@ def dashboard(request):
     # la bandeja. Sólo la lista visible se recorta; los contadores son reales.
     today = timezone.localdate()
     cutoff = today + timedelta(days=30)
-    all_expirations = upcoming_expirations(today, cutoff, selected_cost_center)
+    # LV-191: `request.user`, o la lista nombra permisos, matrículas, personas y
+    # documentos que los permisos del usuario no le dan. Lo tapaba por accidente
+    # el guard del onboarding, que escondía la sección entera cuando la base
+    # estaba vacía — un control de acceso que no era uno, y que `LV-187` retiró.
+    all_expirations = upcoming_expirations(
+        today, cutoff, selected_cost_center, request.user
+    )
     # Dos contadores y no uno: la tarjeta dice "Vence en 30 días", y meter ahí
     # lo ya vencido la volvería falsa -- la misma forma de defecto que `LV-118`
     # y `LV-119` corrigieron en la bandeja y en los correos. Lo vencido tiene
@@ -751,6 +792,37 @@ def dashboard(request):
     overdue_count = sum(1 for item in all_expirations if item["bucket"] == "overdue")
     expiring_count = len(all_expirations) - overdue_count
     expirations = all_expirations[:10]
+
+    # LV-187: si se dibuja la tarjeta "Comienza tu operación" en vez del panel.
+    #
+    # Se calcula acá y no en la plantilla porque son cinco términos y ya iba mal
+    # con cuatro: la condición vivía como `{% if not aircraft_count and not
+    # operator_count and not alert_count and not stages %}`, y **`stages` nunca
+    # existió en este contexto** — un cuarto término que parecía proteger algo y
+    # era condición muerta desde algún refactor. Un `{% if %}` que nadie puede
+    # leer de un vistazo es donde se esconde eso.
+    #
+    # **Los vencimientos entran en la condición.** No entraban, y el guard es
+    # una decisión sobre si mostrar el panel: sin ellos, una operación con
+    # documentos cargados y sin flota todavía —el orden real en que se carga,
+    # porque los documentos de empresa no esperan a las aeronaves— veía el
+    # onboarding con vencimientos reales detrás. La familia de `LV-120`.
+    #
+    # **Y sólo sin filtro por faena.** Los tres contadores lo respetan, así que
+    # elegir una faena sin flota ni padrón cumplía la condición y escondía el
+    # panel entero: "Comienza tu operación" y "1. Crear un centro de costo" a una
+    # operación con 16 aeronaves, mientras la lista de al lado tenía vencimientos
+    # de esa faena que no se dibujaban. Con una faena elegida lo que corresponde
+    # es el panel con sus vacíos propios —"Nada expirado ni por vencer"—, que
+    # dice la verdad: esta faena no tiene registros, no "no tienes operación".
+    show_onboarding = not (
+        selected_cost_center
+        or aircraft_count
+        or operator_count
+        or alert_count
+        or overdue_count
+        or expiring_count
+    )
 
     # --- LV-30: monthly compliance snapshot (latest period on record) ---
     # Compliant / total cost centers for the most recent reviewed month, with a
@@ -896,6 +968,7 @@ def dashboard(request):
         "expirations": expirations,
         "expiring_count": expiring_count,
         "overdue_count": overdue_count,
+        "show_onboarding": show_onboarding,
         "chart_data": chart_data,
         "compliance_setup": compliance_setup,
         "compliance_incomplete": compliance_incomplete,

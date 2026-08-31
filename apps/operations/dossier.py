@@ -410,13 +410,32 @@ def operational_dossier(permission, user=None):
     tests del renglón —que afirman estado y detalle, no permisos— no tengan que
     montar un usuario para nada.
     """
+    # LV-194: **los dos últimos renglones se retiran**, pedido del usuario
+    # mirando esta pantalla: *"los últimos dos puntos no son necesarios: SIGO, el
+    # módulo, ya no existe, y los vuelos registrados se ligan al centro de costo
+    # más que al permiso de vuelo"*.
+    #
+    # Lo que hacían no era neutro: los dos nacían en ámbar y **ninguno de los dos
+    # podía cerrarse**. La solicitud SIGO, porque el módulo salió del menú en
+    # `LV-150` y ya no se crean solicitudes; los vuelos, porque la bitácora se
+    # lleva contra la faena. Así que el encabezado decía "2 por confirmar" en todo
+    # permiso, para siempre — un expediente cuyo contador no puede llegar a cero
+    # enseña a ignorar el contador, y con él los renglones que sí importan. El
+    # daño es exactamente el que `LV-118`/`LV-119` corrigieron en la bandeja y en
+    # los correos: una cifra que siempre dice lo mismo deja de leerse.
+    #
+    # **Retiro de pantalla y no de base**, paso 1, como `LV-150`, `LV-78` y
+    # `LV-103`: las dos funciones quedan enteras y con sus tests, los modelos y
+    # las vistas no se tocan, y volver a ponerlos cuesta descomentar dos líneas.
+    # Registrar un vuelo sigue estando en su propio módulo del menú, que es donde
+    # vive esa tarea.
     items = [
         *_document_items(permission, user),
         _aircraft_insurance_item(permission, user),
         _operator_credential_item(permission, user),
         *_geo_plan_items(permission, user),
-        _flight_request_item(permission, user),
-        _flight_record_item(permission, user),
+        # _flight_request_item(permission, user),  # LV-194
+        # _flight_record_item(permission, user),  # LV-194
     ]
     return {
         "items": items,
