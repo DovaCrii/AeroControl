@@ -153,6 +153,30 @@ desplegar todavía**:
 **Paso de despliegue de la tanda: `migrate` + `collectstatic`.** No hace falta
 `compilemessages`: el `.mo` va versionado.
 
+**Desplegado `fe73561` en `p340`** (respaldo `aero_ops_20260831_135710` verificado,
+`operations.0022` y `registry.0040` aplicadas, 3 estáticos copiados — los tres JS
+del mapa, o sea que el círculo llegó).
+
+### Tercera tanda: deshacer lo que se hizo mal
+
+Dos filas más, **sin desplegar**:
+
+- **`LV-199`** — desvincular un plan del permiso. Vincular no tenía inversa. **La
+  ubicación que el plan rellenó se queda**, y el aviso lo dice antes de aceptar:
+  borrarla dejaría un permiso aprobado sin coordenadas. No hizo falta escribir
+  bitácora — `GeoPlanPermissionLink` (`OPS-7`) ya registra todo cambio de esa FK,
+  incluido el paso a nulo.
+- **`LV-203`** — archivar un plan desde el listado. **El pedido estaba cumplido en
+  sus dos tercios y nadie lo sabía**: archivar existe desde `LV-135` con permiso
+  propio (`delete_geoplan`) y con motivo escrito obligatorio cuando el plan dejó
+  rastro (`LV-178`). Lo que faltaba era llegar: la columna ofrecía "Restaurar" y
+  nada más. **No se agregó el "escriba BORRAR"** que el usuario propuso: el motivo
+  escrito es un freno más fuerte —dice *por qué*, no sólo que alguien leyó— y
+  `LV-135` ya había decidido que "una confirmación vacía sólo enseña a apretar sí
+  sin leer". Queda dicho: si lo quiere igual, es un cambio chico.
+
+**Paso de despliegue: `collectstatic`.** Sin migración.
+
 ⚠️ **Tres tests pasaban por la razón equivocada y se corrigieron con su razón
 escrita**, todos destapados por estas filas: el de `LV-129` colgaba su "documento
 de la empresa" del centro de costo en vez del tenant; el de `R7.7` atrapó la

@@ -1327,6 +1327,69 @@ class GeoPlanLinkToPermission(ModelPermissionRequiredMixin, View):
         return redirect(permission)
 
 
+class GeoPlanUnlinkFromPermission(ModelPermissionRequiredMixin, View):
+    """LV-199: deshacer el vínculo, porque vincular se puede equivocar.
+
+    Pedido del usuario: *"agregar un botón o algo para desvincular cuando exista
+    algún error o equivocación"*. La ficha ofrecía vincular e importar, y ninguna
+    de las dos tenía inversa: una operación sin su recíproca, que es lo mismo que
+    `R10.2` vino a corregir cuando sólo se podía importar.
+
+    **Los datos que el vínculo escribió se quedan, y el mensaje lo dice.** Ésa es
+    la decisión de la fila y no es obvia: al vincular, el plan rellena la
+    ubicación del permiso (`fill_location_gaps`), así que desvincular plantea qué
+    hacer con eso. Borrarla dejaría el permiso sin coordenadas —y un permiso
+    aprobado sin ubicación es peor que uno con la ubicación de un plan que ya no
+    está—; conservarla en silencio dejaría un dato sin fuente visible. Se
+    conserva **y se avisa**, que es el mismo trato que `LV-166` le dio a la
+    procedencia: el dato se muestra con de dónde vino, y si ya no hay de dónde,
+    se dice. Corregir la ubicación a mano sigue estando en el formulario.
+
+    No hace falta escribir la bitácora del desvínculo: `GeoPlanPermissionLink`
+    (`OPS-7`) registra todo cambio de esa FK por sí solo, incluido el paso a
+    nulo, así que un registro propio acá serían dos versiones del mismo hecho.
+
+    `permission_action = "change"` sobre `GeoPlan`, igual que al vincular: lo que
+    se modifica es el plan.
+    """
+
+    model = GeoPlan
+    permission_action = "change"
+
+    def post(self, request, pk):
+        permission = get_object_or_404(FlightPermission, pk=pk, is_active=True)
+        plan = GeoPlan.objects.filter(
+            pk=request.POST.get("plan"),
+            flight_permission=permission,
+            is_active=True,
+        ).first()
+        if plan is None:
+            # Mismo criterio que al vincular: un plan que no es de este permiso
+            # no es un error del sistema sino un formulario viejo o una URL
+            # armada a mano, y se responde diciéndolo.
+            messages.error(request, _("That plan is not linked to this permit."))
+            return redirect(permission)
+
+        plan.flight_permission = None
+        plan._changed_by_user = request.user
+        plan.save(update_fields=["flight_permission", "updated_at"])
+        set_audit_context(
+            request,
+            plan,
+            action="geoplan_unlinked_from_permission",
+            metadata={"permission": permission.internal_folio},
+        )
+        messages.success(
+            request,
+            _(
+                "Plan %(title)s unlinked. The location it filled in stays on the "
+                "permit: correct it by editing the permit if it is wrong."
+            )
+            % {"title": plan.title},
+        )
+        return redirect(permission)
+
+
 class GeoPlanSplitIntoRequests(ModelPermissionRequiredMixin, View):
     """Separar un plan multi-círculo en solicitudes, una por circunferencia.
 

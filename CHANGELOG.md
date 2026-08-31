@@ -168,6 +168,15 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **Un plan vinculado a un permiso se puede desvincular (`LV-199`).** Vincular no
+  tenía inversa, así que un vínculo hecho por error sólo se deshacía por el admin
+  de Django. La ubicación que el plan rellenó **se queda en el permiso** y el
+  aviso lo dice: borrarla dejaría un permiso aprobado sin coordenadas. El
+  desvínculo queda en la bitácora que ya registraba los cambios de ese vínculo.
+- **Archivar un plan se puede hacer desde el listado (`LV-203`).** La acción
+  existía —con su permiso propio y su confirmación con motivo escrito— pero la
+  columna de acciones sólo ofrecía "Restaurar": la vuelta sin la ida. Ahora está
+  el camino completo, y sigue pasando por la misma confirmación.
 - **Toda entidad dice de qué faena es, incluida la que cuelga de otra
   (`LV-204`).** La alerta de una aeronave mostraba su centro de costo y la de un
   documento no mostraba ninguno. Faltaban tres caminos en la tabla de rutas
