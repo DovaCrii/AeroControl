@@ -117,6 +117,41 @@ class TestTheNoticesOnScreen:
 
         assert "d-flex" in notice
 
+    def test_both_start_hidden_with_the_class_that_wins(self):
+        """**LV-210: lo que a `LV-209` le faltaba.** Arreglar el *ocultar* por JS no
+        arreglaba el *estado inicial*: las dos cajas llegaban del HTML con `hidden`
+        y `d-flex`, así que se dibujaban desde el primer píxel —vacías, con el
+        botón suelto— y `setUpIndex` volvía temprano cuando no había borradores,
+        de modo que nunca llegaba a apagarlas. El usuario lo vio en el listado.
+
+        `d-none` va **en el HTML**: sin JS, o antes de que cargue, no se promete
+        nada. El JS la quita cuando encuentra un borrador.
+        """
+        from django.urls import reverse
+
+        from apps.core.testing import login_as
+
+        pages = (
+            ("permission-create", "data-form-draft-notice", "add_flightpermission"),
+            ("permission-list", "data-draft-index", "view_flightpermission"),
+        )
+        for url_name, marker, permission in pages:
+            content = (
+                login_as(permission, "view_flightpermission")
+                .get(reverse(url_name))
+                .content.decode()
+            )
+            box = content[max(0, content.find(marker) - 220) :][:300]
+
+            assert "d-none" in box, url_name
+
+    def test_the_script_turns_the_index_off_explicitly(self):
+        """Y el JS **apaga** en vez de volver temprano: así es la única autoridad
+        sobre la visibilidad y no importa con qué clases llegue el HTML."""
+        script = SCRIPT.read_text(encoding="utf-8")
+
+        assert "setHidden(box, true);" in script
+
     def test_the_draft_index_notice_is_one_too(self):
         """El que `LV-198` agregó: mismo `alert d-flex`, mismo defecto, y por eso
         pasa por el mismo helper."""

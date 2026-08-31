@@ -177,6 +177,42 @@ Dos filas más, **sin desplegar**:
 
 **Paso de despliegue: `collectstatic`.** Sin migración.
 
+### ⚠️ Producción se cayó con un 500, y la causa fue mía en la comunicación
+
+Después de desplegar `d20057d` el panel devolvía `Server Error (500)`:
+`no such column: registry_costcenter.operates_flights`. **`registry.0041` no
+estaba aplicada.** El commit anterior (`d09a758`) traía esa migración; el
+siguiente no traía ninguna propia, así que se entregó "sólo `collectstatic`" — y
+se corrió eso sobre una VM que no había migrado. Se resolvió con `backup` +
+`verify_backup` + `migrate` + `restart`.
+
+**La regla quedó en `AGENTS.md`**: el paso de despliegue es el de **todo lo que
+falta en la VM**, comparando su `git log -1` contra lo que se sube y uniendo los
+pasos de las filas que hay en medio. Una advertencia al final del mensaje no
+cuenta. Y `showmigrations <app> | tail -6` es el diagnóstico de treinta segundos
+ante un 500 tras desplegar: una migración sin `[X]` con código que ya la usa lo
+explica sin leer un traceback.
+
+### Sexta tanda: tres defectos, dos de ellos míos del mismo día
+
+Sin desplegar:
+
+- **`LV-211`, `P1`** — **editar un centro de costo borraba cinco campos.** La
+  ficha dibuja campo por campo desde `LV-36`, y un campo que no se dibuja **no se
+  envía**: un checkbox ausente vale `False`. Le pasó al usuario a los minutos —
+  editó `CC410` y la faena desapareció de la tabla sin que él la desmarcara. Al
+  escribir el test aparecieron **otros cuatro preexistentes**: `latitude`,
+  `longitude` (de donde sale el pronóstico de una faena) y los tres criterios de
+  aceptación del contrato (`R7.4`). Bastaba corregir un nombre para perderlos, y
+  venía de antes de esta jornada. El test recorre `Meta.fields` y exige la
+  plantilla completa.
+- **`LV-210`** — la caja de borradores del listado se dibujaba vacía con el botón
+  suelto. Es la mitad que `LV-209` no arregló: resolvió el *ocultar* y no el
+  *estado inicial*. `d-none` pasa al HTML y el JS apaga explícitamente.
+- **`LV-212`** — "vence pronto" en su propia columna, dejando el total limpio.
+
+**Paso de despliegue: `collectstatic`.** Sin migración.
+
 ### Quinta tanda: los dos pendientes, dos pedidos nuevos y un defecto
 
 Desplegados ya `068ccfa` y `d09a758`. Después de eso, **sin desplegar**:

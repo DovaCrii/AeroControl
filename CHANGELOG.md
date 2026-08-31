@@ -168,6 +168,19 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **Editar un centro de costo ya no borra lo que la pantalla no muestra
+  (`LV-211`).** La ficha dibuja sus campos uno por uno, y cinco del formulario no
+  estaban ahí: la casilla nueva de "en esta faena se vuela", las coordenadas del
+  sitio —de las que sale su pronóstico— y los tres criterios de calidad del
+  contrato. Un campo que no se dibuja no se envía, así que bastaba corregir un
+  nombre para perderlos. Ahora están todos, y un test exige que la plantilla siga
+  completa cuando alguien agregue el próximo.
+- **La caja de borradores ya no aparece cuando no hay ninguno (`LV-210`).** Se
+  dibujaba vacía, con el botón "Retomarlo" suelto: el arreglo anterior corregía
+  el ocultar pero no el estado inicial.
+- **"Vence pronto" tiene su propia columna en la tabla del panel (`LV-212`).**
+  Iba pegado al total en la misma celda, y así la columna no se podía leer de un
+  barrido.
 - **El botón "Descartarlo" del borrador ya surte efecto (`LV-209`).** Borraba el
   borrador pero el aviso seguía en pantalla, así que parecía muerto. La causa era
   de estilos: el atributo que lo escondía perdía contra la clase de disposición

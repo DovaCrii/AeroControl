@@ -57,7 +57,17 @@ visibles: no habría cómo traducirlas.
 literal que contiene `%(count)s`** —devuelve el inglés donde `gettext` devuelve el
 español, comprobado en aislamiento—, y el JS necesita la cadena con su marcador
 para poder poner el número. Lo que se evita es el tag, no el marcador.{% endcomment %}
-<div class="alert alert-info d-flex flex-wrap gap-2 align-items-center" role="alert"
+{% comment %}LV-210: **`d-none` en el HTML y no sólo `hidden`.** El atributo pierde
+contra `d-flex` en el bundle de Bootstrap (`LV-209` lo midió: `[hidden]` en la
+posición ~10.129, `.d-flex` en la ~163.993, misma especificidad y ambos
+`!important`, gana el último), así que esta caja se dibujaba **siempre** — vacía y
+con el botón suelto, que es como el usuario la vio. `LV-209` arregló el *ocultar*
+por JS y no el *estado inicial*: `setUpIndex` vuelve temprano cuando no hay
+borradores, de modo que nunca llegaba a ocultarla.
+
+Arranca oculta de verdad y el JS **quita** `d-none` cuando encuentra alguno. Ése
+es el orden correcto: sin JS —o antes de que cargue— no se promete nada.{% endcomment %}
+<div class="alert alert-info d-none d-flex flex-wrap gap-2 align-items-center" role="alert"
      data-draft-index hidden
      data-one-label="{{ draft_index_labels.one }}"
      data-many-label="{{ draft_index_labels.many }}">
