@@ -28,6 +28,7 @@ from datetime import timedelta
 
 import pytest
 from django.contrib.contenttypes.models import ContentType
+from django.urls import reverse
 from django.utils import timezone
 
 from apps.compliance.models import Document, DocumentType
@@ -109,14 +110,32 @@ def test_it_does_not_query_once_per_row(permit, django_assert_num_queries):
     assert len(labels) == 3
 
 
-# PENDIENTE, y anotado porque puede no ser un fixture mal armado: falta el test
-# de punta a punta que afirme que el sujeto llega a la fila dibujada. Al
-# escribirlo, un documento **vigente, con `expiry_date` dentro de la ventana e
-# `is_current_version=True`**, con `admin_user`, sale del panel con
-# `expirations == []`. Si eso se reproduce en producción, el hueco no está en el
-# test sino en la lista: habría documentos por vencer que la pantalla no muestra,
-# que es la familia de defectos de `LV-120` —la rama `overdue` escrita y nunca
-# dibujable— y de `LV-146`. **Averiguar antes de dar por buena esta fila.**
-#
-# Lo que sí está probado arriba: `document_subjects` resuelve el sujeto, respeta
-# el presupuesto de consultas y calla cuando no hay sujeto.
+@pytest.mark.django_db
+def test_the_subject_reaches_the_drawn_row(permit, client, django_user_model):
+    """De punta a punta: el sujeto llega a la fila **dibujada**, no sólo al
+    contexto. Que `document_subjects` resuelva el sujeto no sirve de nada si la
+    plantilla no lo imprime.
+
+    **La aeronave no es decoración del fixture.** El panel envuelve todo su
+    contenido —vencimientos incluidos— en un `{% if %}` de primera pantalla que
+    se cumple cuando no hay aeronaves activas ni operadores ni alertas: con la
+    base vacía se dibuja la tarjeta "Comienza tu operación" y esta lista no
+    existe en el HTML. Ese guard **esconde vencimientos reales cuando se filtra
+    por una faena sin flota ni padrón** — ver `LV-187`; acá se le da a la
+    operación lo mínimo para que el panel sea el panel.
+    """
+    Aircraft.objects.create(
+        registration="RPA-4401", serial_number="S1", status="active"
+    )
+    _document(permit, "Carta Permiso", 10)
+    django_user_model.objects.create_superuser("admin", "a@test.com", "password")
+    assert client.login(username="admin", password="password")
+
+    response = client.get(reverse("dashboard"))
+    html = response.content.decode()
+
+    assert [item["label"] for item in response.context["expirations"]] == [
+        "Carta Permiso"
+    ]
+    # La fila dice de qué cuelga: "Documento · Carta Permiso · JEJ-2026-004".
+    assert f"· {permit.internal_folio}" in html
