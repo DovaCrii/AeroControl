@@ -14,6 +14,7 @@ from apps.compliance.digest import BUCKET_TEXT_CSS, bucket_for
 from apps.compliance.reports import (
     alerts_for_cost_center,
     cost_centers_for_refs,
+    document_subjects,
     documents_for_cost_center,
 )
 from apps.compliance.models import Alert, AlertRule, Document, DocumentType
@@ -256,6 +257,11 @@ def upcoming_expirations(today, cutoff, cost_center=None):
     document_centers = cost_centers_for_refs(
         (document.content_type_id, document.object_id) for document in documents
     )
+    # LV-186: de qué cuelga cada documento. El título no lo dice —hay una "Carta
+    # Permiso" por permiso— así que la fila obligaba a abrir para saber a cuál se
+    # refiere. Es el único de los cinco orígenes con ese problema: en los otros
+    # la etiqueta **es** el sujeto (la matrícula, el nombre de la persona).
+    document_labels = document_subjects(documents)
     for document in documents:
         add(
             Document,
@@ -263,6 +269,7 @@ def upcoming_expirations(today, cutoff, cost_center=None):
             {
                 "kind": _("Document"),
                 "label": document.title,
+                "subject": document_labels.get(document.pk, ""),
                 "date": document.expiry_date,
                 "bucket": bucket_for(document.expiry_date, today),
                 "cost_center_code": code(
