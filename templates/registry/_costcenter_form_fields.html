@@ -16,6 +16,16 @@ pueden quedar diciendo cosas distintas.{% endcomment %}
   {{ form.code|as_crispy_field }}
   {{ form.name|as_crispy_field }}
   {{ form.contract_status|as_crispy_field }}
+  {% comment %}LV-211: **esta plantilla dibuja campo por campo, así que un campo
+  del formulario que no esté acá no es sólo invisible: se borra al guardar.** Un
+  checkbox que el navegador no envía vale `False`, así que `operates_flights`
+  quedó en el formulario de `LV-206` y no en el HTML, y **editar cualquier faena
+  la sacaba de la tabla del panel sin que nadie lo pidiera** — le pasó al usuario
+  con `CC410` a los minutos de desplegar.
+
+  Va junto a "Estado del contrato" porque son los dos ejes de lo mismo: qué es
+  esta faena hoy.{% endcomment %}
+  {{ form.operates_flights|as_crispy_field }}
 </fieldset>
 <fieldset class="cc-form-section mb-4">
   <legend class="h6 section-title mb-3">{% translate "Responsible" %}</legend>
@@ -24,6 +34,34 @@ pueden quedar diciendo cosas distintas.{% endcomment %}
   {{ form.responsible_operator|as_crispy_field }}
   {{ form.responsible_contact_name|as_crispy_field }}
   {{ form.responsible_contact_email|as_crispy_field }}
+</fieldset>
+{% comment %}LV-211: **estos cinco campos estaban en el formulario y en ninguna
+plantilla**, y esta plantilla dibuja campo por campo — así que no eran invisibles,
+se **borraban en cada edición**. Un campo ausente del POST llega vacío, y para
+`latitude`/`longitude` (`R8.4`, de donde sale el pronóstico de una faena) y los
+tres criterios de calidad del contrato (`R7.4`, con los que se aceptan los
+entregables) eso significa que bastaba corregir un nombre para perderlos.
+
+Se descubrió persiguiendo el checkbox de `LV-206`, que tenía el mismo problema y
+llegó a producción: el usuario editó `CC410` y la faena desapareció de la tabla
+del panel sin que él la desmarcara. El test de la fila recorre `Meta.fields` y
+exige que la plantilla los dibuje todos, así que el próximo campo que alguien
+agregue al formulario y olvide acá falla en el gate en vez de borrar datos.
+
+Las secciones siguen el criterio de `LV-36`: agrupadas por lo que son. La
+ubicación es parte de **quién es** esta faena —lo dice el comentario de `R8.4` en
+`field_order`— y los criterios de calidad son parte del **contrato**, no
+propiedades del sitio.{% endcomment %}
+<fieldset class="cc-form-section mb-4">
+  <legend class="h6 section-title mb-3">{% translate "Location" %}</legend>
+  {{ form.latitude|as_crispy_field }}
+  {{ form.longitude|as_crispy_field }}
+</fieldset>
+<fieldset class="cc-form-section mb-4">
+  <legend class="h6 section-title mb-3">{% translate "Quality criteria" %}</legend>
+  {{ form.required_gsd_cm|as_crispy_field }}
+  {{ form.max_rmse_xy_cm|as_crispy_field }}
+  {{ form.max_rmse_z_cm|as_crispy_field }}
 </fieldset>
 <fieldset class="cc-form-section mb-0">
   <legend class="h6 section-title mb-3">{% translate "Notes" %}</legend>

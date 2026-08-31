@@ -154,6 +154,11 @@
         setHidden(wrap, false);
       }
       setHidden(notice, false);
+    } else {
+      // LV-210: y sin borrador se apaga explícitamente, por lo mismo que el
+      // índice: el `hidden` del HTML no basta contra `d-flex`, así que el aviso
+      // se veía en un formulario en blanco.
+      setHidden(notice, true);
     }
 
     // El listener va en el **formulario**, no en el panel: el botón "Guardar
@@ -220,7 +225,15 @@
     } catch (error) {
       return;
     }
-    if (!found.length) return;
+    // LV-210: se oculta **explícitamente** cuando no hay ninguno, en vez de
+    // volver temprano confiando en el estado del HTML. Volver temprano fue el
+    // defecto: la caja arrancaba visible por el `d-flex` y nadie la apagaba. Con
+    // esta línea, el JS es la única autoridad sobre su visibilidad y no importa
+    // con qué clases llegue.
+    if (!found.length) {
+      setHidden(box, true);
+      return;
+    }
     var count = box.querySelector('[data-draft-index-count]');
     if (count) {
       var template =

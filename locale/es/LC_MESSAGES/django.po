@@ -1676,6 +1676,20 @@ msgstr "Separar en partes"
 msgid "Root — drop here or click to add new here"
 msgstr "Raíz — suelta aquí o haz clic para agregar aquí"
 
+#. LV-212: la columna propia de "vence pronto" en la tabla del panel. Iba pegada
+#. al total ("1 · 1 vence pronto") y dos cifras en una celda impiden leer la
+#. columna en vertical, que es para lo que existe una tabla.
+#: .\templates\dashboard\index.html:8
+msgid "Expiring soon"
+msgstr "Vence pronto"
+
+#. LV-211: la sección de los criterios de aceptación del contrato en la ficha de
+#. la faena (R7.4). Son del **contrato** y no propiedades del sitio, y por eso van
+#. en su propia sección y no bajo "Ubicación".
+#: .\templates\registry\_costcenter_form_fields.html:1
+msgid "Quality criteria"
+msgstr "Criterios de calidad"
+
 #. LV-206: la tabla de permisos por faena, en el panel.
 #: .\templates\dashboard\index.html:1
 msgid "Flight permits by cost center"

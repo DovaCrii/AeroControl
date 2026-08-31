@@ -94,7 +94,11 @@ cada cosa.{% endcomment %}
     Por eso el aviso dice de qué navegador se trata: un borrador que se promete
     en todas partes y sólo está en uno es peor que no tenerlo.{% endcomment %}
     <div class="form-draft mt-4" data-form-draft data-form-draft-key="permission-form">
-      <div class="alert alert-info d-flex flex-wrap gap-2 align-items-center" role="alert"
+      {% comment %}LV-210: `d-none` además de `hidden`, por lo mismo que la caja
+      del listado — el atributo pierde contra `d-flex` y este aviso se dibujaba
+      aunque no hubiera borrador. El JS quita la clase cuando encuentra uno.
+      {% endcomment %}
+      <div class="alert alert-info d-none d-flex flex-wrap gap-2 align-items-center" role="alert"
            data-form-draft-notice hidden>
         {% comment %}LV-198: los paréntesis van **dentro** del envoltorio que se
         oculta, no sueltos en el texto. Estaban fuera, así que un borrador sin

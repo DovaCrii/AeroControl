@@ -299,8 +299,15 @@ en `CostCenter`).{% endcomment %}
     <table class="table table-sm table-hover mb-0">
       <thead>
         <tr>
+          {% comment %}LV-212: "vence pronto" tiene **su propia columna**. Iba
+          pegado al total —"1 · 1 vence pronto"— y el usuario pidió separarlo
+          dejando el total: dos cifras en una celda hacen que la columna deje de
+          poder leerse en vertical, que es para lo que existe una tabla. Es el
+          mismo criterio con el que `LV-129` separó "vencidos" de "sin fecha".
+          {% endcomment %}
           <th scope="col">{% translate "Cost center" %}</th>
           <th scope="col" class="text-end">{% translate "In force" %}</th>
+          <th scope="col" class="text-end">{% translate "Expiring soon" %}</th>
           <th scope="col" class="text-end">{% translate "Awaiting" %}</th>
           <th scope="col" class="text-end">{% translate "Past validity" %}</th>
         </tr>
@@ -317,7 +324,8 @@ en `CostCenter`).{% endcomment %}
               <span class="cc-chip me-2">{{ row.cost_center.code }}</span>{{ row.cost_center.name }}
             </a>
           </td>
-          <td class="text-end">{% if row.in_force %}<b>{{ row.in_force }}</b>{% if row.soon %} <span class="small text-warning-emphasis">· {% blocktranslate count counter=row.soon %}{{ counter }} expires soon{% plural %}{{ counter }} expire soon{% endblocktranslate %}</span>{% endif %}{% else %}<span class="text-warning-emphasis">{% translate "None" %}</span>{% endif %}</td>
+          <td class="text-end">{% if row.in_force %}<b>{{ row.in_force }}</b>{% else %}<span class="text-warning-emphasis">{% translate "None" %}</span>{% endif %}</td>
+          <td class="text-end">{% if row.soon %}<span class="text-warning-emphasis">{{ row.soon }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
           <td class="text-end">{% if row.awaiting %}{{ row.awaiting }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
           <td class="text-end">{% if row.lapsed %}<span class="text-danger-emphasis">{{ row.lapsed }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
         </tr>
