@@ -141,8 +141,25 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   decir cifras distintas. **No** se agrega al CSV ni a la planilla: una fila de
   totales dentro de un archivo de datos rompe ordenar, filtrar y sumar.
 
+### Security
+
+- **La clave de respuestas deja de mostrársele a quien rindió la prueba
+  (`LV-184`).** La revisión listaba la respuesta correcta de cada pregunta
+  fallada, a la persona que acaba de rendir y puede volver a rendir: con eso se
+  memoriza y se aprueba, y un intento aprobado alimenta el motor de
+  vencimientos. Ahora hace falta el permiso `view_assessment_answers`, que va al
+  rol **Compliance** y no al de quien rinde. Quien rindió sigue viendo qué falló
+  y qué contestó — lo que sirve para estudiar, sin el examen resuelto.
+  **Al desplegar hay que correr `bootstrap_roles`.**
+
 ### Changed
 
+- **Los enlaces usan el color de la app y no el azul de Bootstrap (`LV-185`).**
+  La app nunca había definido su color de enlace, así que todo enlace fuera de
+  las columnas de listado salía en el azul por defecto, sin relación con el
+  turquesa de la identidad. En claro se usa el paso oscuro (6.44 de contraste)
+  porque el base roza el mínimo con 4.53; en oscuro, el base. Medido en ambos
+  temas, con guardián contra la deriva entre el hex y su triplete RGB.
 - **El encabezado del plan dice de qué tamaño es el área (`LV-183`).** El radio
   vivía sólo al final de la hoja de campo, que sigue el orden del formulario de
   SIGO. Ahora está arriba, junto a la faena y el permiso. Cuando es el círculo

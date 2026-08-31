@@ -315,7 +315,18 @@ class TestReadingTheResult:
             ],
         )
 
-    def test_the_review_says_what_was_wrong_and_what_was_right(self):
+    def test_the_review_says_what_was_wrong_but_not_what_was_right(self):
+        """LV-184 dio vuelta la mitad de esta afirmación, y estaba bien escrita.
+
+        Cuando se escribió, mostrar la respuesta correcta era el objetivo: *"en
+        qué se equivocó, qué reforzar"*. Lo que cambió es quién mira: es **la
+        misma persona que rindió** y que puede volver a rendir, así que la
+        revisión le estaba entregando el examen resuelto.
+
+        Lo que se conserva es lo que sirve para estudiar —la pregunta y lo que
+        contestó— y lo que se va es la clave. La afirmación completa, para quien
+        sí tiene el permiso, vive en `test_lv184`.
+        """
         client, operator = _client_for_operator(
             "view_knowledgeassessment", "view_operator"
         )
@@ -326,8 +337,10 @@ class TestReadingTheResult:
         ).content.decode()
 
         assert "DENSIDAD DEL AIRE" in content
-        assert "Verdadero" in content
-        assert "Falso" in content
+        assert "Falso" in content, (
+            "lo que contestó sí se ve: es lo que hay que corregir"
+        )
+        assert "Verdadero" not in content, "la respuesta correcta es el examen"
 
     def test_only_the_wrong_ones_are_listed(self):
         operator = _operator()
