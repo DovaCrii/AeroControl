@@ -291,7 +291,11 @@ def test_seed_document_types_creates_catalog_including_one_insurance_type():
     from django.core.management import call_command
 
     call_command("seed_document_types")
-    assert DocumentType.objects.count() == 19
+    # LV-225: 20 y no 19 — entró la carta del mandante, el tercer papel del
+    # trámite del permiso y el único que no emite la DGAC. El catálogo creció a
+    # propósito; el número de abajo, en la comprobación de idempotencia, sube por
+    # lo mismo.
+    assert DocumentType.objects.count() == 20
     # LV-117: sigue siendo **uno** aunque ahora existan dos tipos que hablan del
     # seguro. La resolución de la JAC no lleva la bandera: dos tipos marcados
     # harían competir dos documentos por la columna de la lista de aeronaves.
@@ -334,16 +338,23 @@ def test_seed_document_types_creates_catalog_including_one_insurance_type():
 
     # Idempotent: a second run does not duplicate or touch existing rows.
     call_command("seed_document_types")
-    assert DocumentType.objects.count() == 19
+    assert DocumentType.objects.count() == 20
 
 
 @pytest.mark.django_db
-def test_seed_alert_rules_creates_the_two_essential_rules_idempotently():
-    """The recommended rule set seeds cleanly, stays valid, and is idempotent."""
+def test_seed_alert_rules_creates_the_essential_rules_idempotently():
+    """The recommended rule set seeds cleanly, stays valid, and is idempotent.
+
+    **Renombrado en `LV-226`**: el nombre decía "the two essential rules" y ahora
+    son cuatro — se sumaron los umbrales T-45 y T-15 de la cadena de renovación
+    del permiso, que el informe mensual RPA pide (`SPEC_REPORTE_MENSUAL_RPA.md`
+    §4.1). El conteo crece a propósito, y el nombre se corrige en vez de quedar
+    mintiendo sobre lo que el test comprueba.
+    """
     from django.core.management import call_command
 
     call_command("seed_alert_rules")
-    assert AlertRule.objects.count() == 2
+    assert AlertRule.objects.count() == 4
     essential = AlertRule.objects.get(name="Documentos por vencer")
     assert essential.entity_type == "compliance.document"
     assert essential.field_to_watch == "expiry_date"
@@ -356,8 +367,14 @@ def test_seed_alert_rules_creates_the_two_essential_rules_idempotently():
         rule.full_clean()
 
     # Idempotent: a second run does not duplicate.
+    #
+    # LV-226: esta línea es la que más importa de las cuatro que cambiaron de
+    # número. El sembrado es idempotente **por nombre**, así que sumar umbrales a
+    # una cadena existente es seguro sólo mientras nadie renombre una regla ya
+    # sembrada — hacerlo crearía una quinta y dejaría la vieja activa, duplicando
+    # los avisos de todos los permisos.
     call_command("seed_alert_rules")
-    assert AlertRule.objects.count() == 2
+    assert AlertRule.objects.count() == 4
 
 
 @pytest.mark.django_db
@@ -365,7 +382,9 @@ def test_seed_alert_rules_with_optional_adds_qualification_and_maintenance():
     from django.core.management import call_command
 
     call_command("seed_alert_rules", "--with-optional")
-    assert AlertRule.objects.count() == 8
+    # LV-226: 10 = las 4 esenciales (con los umbrales T-45 y T-15 nuevos) más las
+    # 6 opcionales, que no cambiaron.
+    assert AlertRule.objects.count() == 10
     assert AlertRule.objects.filter(
         entity_type="registry.qualification", field_to_watch="expiry_date"
     ).exists()

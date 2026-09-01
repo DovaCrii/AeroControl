@@ -168,6 +168,22 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **La app ya conoce el plazo de la DGAC: 3 meses (`LV-224`).** El máximo se lee
+  en la casilla de "Vigente hasta" antes de escribir nada, y una vigencia más
+  larga se rechaza diciendo cuál es la última fecha posible. Si la DGAC otorgó de
+  verdad un plazo distinto, se puede guardar escribiendo el motivo, que queda
+  registrado — la app no obliga a falsear una fecha para cargar el papel que
+  existe.
+- **La carta del mandante entra al expediente del permiso (`LV-225`).** Es el
+  tercer papel del trámite y el único que no es de la DGAC: la emite el cliente, y
+  sin ella la DGAC no renueva. Aparece en el expediente como los otros dos y no
+  bloquea la aprobación, porque lo que autoriza a volar sigue siendo la
+  autorización firmada.
+- **Avisos de renovación a 45, 30 y 15 días (`LV-226`).** El primero sale a 45 y no
+  a 30 porque la carta del mandante hay que pedírsela a un tercero y eso toma
+  tiempo. Cada umbral deja su propio aviso, así que un permiso próximo a vencer
+  acumula tres — que es la señal de que ya no queda holgura. Además, un chequeo
+  diario lista los permisos por vencer **sin** la carta cargada.
 - **Pedir un permiso ya no obliga a inventar dos fechas (`LV-219`).** "Vigente
   desde" y "Vigente hasta" eran obligatorios en el alta, pero la vigencia la fija
   la DGAC al responder: antes de eso nadie la sabe. Ahora quedan vacías mientras

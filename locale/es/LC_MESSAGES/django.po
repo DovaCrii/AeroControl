@@ -7740,3 +7740,41 @@ msgstr "Esperando a la DGAC"
 #: templates/operations/permission_detail.html
 msgid "Not recorded"
 msgstr "Sin informar"
+
+#: apps/operations/models.py apps/operations/forms.py
+msgid "Reason for exceeding the maximum validity"
+msgstr "Motivo para exceder la vigencia máxima"
+
+#: apps/operations/models.py apps/operations/forms.py
+msgid ""
+"The DGAC authorises three months at most, so this window cannot end after "
+"%(limit)s. If the authorisation really says otherwise, write the reason in "
+"the field below and it will be recorded."
+msgstr ""
+"La DGAC autoriza tres meses como máximo, así que esta vigencia no puede "
+"terminar después del %(limit)s. Si la autorización dice otra cosa, escribe el "
+"motivo en el campo de abajo y quedará registrado."
+
+#: apps/operations/forms.py
+msgid ""
+"Optional until the permission is approved. The DGAC authorises three months "
+"at most, counted from the start date."
+msgstr ""
+"Opcional hasta que el permiso esté aprobado. La DGAC autoriza tres meses como "
+"máximo, contados desde la fecha de inicio."
+
+#: apps/operations/forms.py
+msgid ""
+"Only if the DGAC granted a different term. Leave it empty for a normal three-"
+"month permit."
+msgstr ""
+"Solo si la DGAC otorgó un plazo distinto. Déjalo vacío para un permiso normal "
+"de tres meses."
+
+#: apps/operations/dossier.py
+msgid "Client authorization letter on file"
+msgstr "Carta del mandante en ficha"
+
+#: apps/operations/dossier.py
+msgid "Needed to renew the permit"
+msgstr "Necesaria para renovar el permiso"

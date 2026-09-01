@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
@@ -124,6 +124,21 @@ class FlightPermission(StatusFlowMixin, BaseModel):
     REQUIRE_VALIDITY_STATUSES = frozenset(
         {STATUS_APPROVED, STATUS_COMPLETED, STATUS_EXPIRED}
     )
+    # LV-224: la DGAC autoriza **3 meses** como máximo. Dato de dominio que el
+    # usuario aportó al armar el informe mensual de reportabilidad
+    # (`SPEC_REPORTE_MENSUAL_RPA.md` §4.1), y que gobierna todo el calendario:
+    # la renovación no es automática, exige una carta nueva del mandante.
+    #
+    # **Meses calendario, no 90 días.** El criterio de aceptación del informe lo
+    # fija con un ejemplo —un permiso emitido el 2026-07-04 vence el
+    # 2026-10-04— y eso es `+3 meses`, no `+90 días`, que caería el 02-10. La
+    # diferencia son dos días de vigencia real, y con ella la fecha en que
+    # `expire_permissions` cierra el permiso y en que se dispara cada alerta.
+    #
+    # Es el techo del **rango declarado** (`valid_until - valid_from`), no de la
+    # fecha de emisión: `FlightPermission` guarda la ventana que dice la
+    # autorización, y es esa ventana la que no puede pasar de tres meses.
+    MAX_VALIDITY_MONTHS = 3
     # Two terminal states now (LV-83). They differ in one way that matters for
     # the stepper: `denied` is only ever reached from the first step, while a
     # permit can expire from anywhere -- see `status_steps` below.
@@ -191,6 +206,24 @@ class FlightPermission(StatusFlowMixin, BaseModel):
     # de vuelo (`FlightRecordForm.clean`) y la compuerta de aprobación.
     valid_from = models.DateField(null=True, blank=True)
     valid_until = models.DateField(null=True, blank=True)
+    # LV-224: la salida para el caso excepcional, con el mismo criterio que
+    # `LV-101` usó para corregir un estado — lo excepcional se permite, pero deja
+    # un motivo escrito.
+    #
+    # **Sin esto, la regla de los 3 meses obligaría a falsear una fecha** el día
+    # que la DGAC otorgue un plazo distinto (una prórroga, una resolución
+    # particular), que es exactamente el mal que `LV-219` acaba de quitar del
+    # alta. La app registra lo que dice el papel; si el papel dice otra cosa,
+    # tiene que poder cargarse y quedar dicho por qué.
+    #
+    # Vacío no es "no aplica" sino "no hizo falta": sólo se lee cuando el rango
+    # excede el máximo. Un motivo escrito con un rango normal no cambia nada.
+    validity_override_reason = models.CharField(
+        max_length=250,
+        blank=True,
+        default="",
+        verbose_name=_("Reason for exceeding the maximum validity"),
+    )
     location = models.CharField(max_length=250)
     # OPS-4 structured location (docs/dev/ops-contract-tracking-plan.md §1.4),
     # deferred when the rest of OPS-4 landed and picked up here. It
@@ -355,6 +388,35 @@ class FlightPermission(StatusFlowMixin, BaseModel):
                 return super().save(*args, **kwargs)
         return super().save(*args, **kwargs)
 
+    def latest_allowed_valid_until(self):
+        """La última fecha de término que la DGAC podría haber autorizado (LV-224).
+
+        `valid_from` más `MAX_VALIDITY_MONTHS` meses **calendario**. Devuelve
+        `None` si no hay fecha de inicio, porque sin ella no hay techo que medir —
+        y eso pasa a menudo desde `LV-219`.
+
+        **Suma de meses a mano, con `calendar`, y no `relativedelta`.**
+        `python-dateutil` está en el árbol pero sólo de forma transitiva (lo trae
+        `openpyxl`), así que usarlo obligaría a declararlo — que es lo que se hizo
+        con `lxml` cuando el parser de KML pasó a depender de él. Para **una**
+        operación, seis líneas de biblioteca estándar cuestan menos que una
+        dependencia declarada más, y es el mismo criterio con el que este repo
+        eligió `reportlab` sobre `weasyprint`.
+
+        El recorte del día (`min` contra el último del mes) da el mismo resultado
+        que `relativedelta`: el 30 de noviembre más tres meses es el 28 (o 29) de
+        febrero, no un 30 que no existe.
+        """
+        import calendar
+
+        if self.valid_from is None:
+            return None
+        month_index = self.valid_from.month - 1 + self.MAX_VALIDITY_MONTHS
+        year = self.valid_from.year + month_index // 12
+        month = month_index % 12 + 1
+        day = min(self.valid_from.day, calendar.monthrange(year, month)[1])
+        return date(year, month, day)
+
     def clean(self):
         errors = {}
         # LV-157: espejo en el modelo de la regla del formulario, como exige
@@ -369,6 +431,18 @@ class FlightPermission(StatusFlowMixin, BaseModel):
             )
         if self.valid_until and self.valid_from and self.valid_until < self.valid_from:
             errors["valid_until"] = _("The end date cannot be before the start date.")
+        # LV-224: el techo de 3 meses, y su salida.
+        if (
+            self.valid_from
+            and self.valid_until
+            and self.valid_until > self.latest_allowed_valid_until()
+            and not self.validity_override_reason.strip()
+        ):
+            errors["valid_until"] = _(
+                "The DGAC authorises three months at most, so this window cannot "
+                "end after %(limit)s. If the authorisation really says otherwise, "
+                "write the reason in the field below and it will be recorded."
+            ) % {"limit": self.latest_allowed_valid_until().isoformat()}
         # LV-219: la vigencia puede faltar mientras la DGAC no responda, pero un
         # permiso autorizado sin vigencia sería una autorización sin plazo — y el
         # motor de vencimientos no tendría de dónde agarrarse para cerrarlo.

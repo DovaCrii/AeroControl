@@ -207,13 +207,64 @@ para conectarse a sí misma. No hubo daño —`cd` falló y el `&&` detuvo el re
 pero se perdió una vuelta. **Cuando se dicten comandos de despliegue, copiarlos de
 § "El despliegue, por pasos" en vez de escribirlos de memoria.**
 
-#### ⚠️ El próximo despliegue lleva migración
+#### ⚠️ El próximo despliegue lleva migraciones **y dos sembrados**
 
-`LV-219` trae **`operations.0023`** (la vigencia del permiso pasa a admitir
-nulos). El paso es `migrate` + `collectstatic`, **con respaldo previo**, y no sólo
-`collectstatic` como los tres anteriores. Es exactamente la situación que tumbó
-producción el 2026-08-31: una migración sin aplicar detrás de un despliegue que se
-dictó como "sólo estáticos".
+Dos migraciones: **`operations.0023`** (`LV-219`, la vigencia admite nulos) y
+**`operations.0024`** (`LV-224`, el motivo de excepción del plazo). El paso es
+`migrate` + `collectstatic` **con respaldo previo**, no sólo `collectstatic` como
+los tres anteriores — la situación que tumbó producción el 2026-08-31.
+
+Y algo que **`migrate` no hace y es fácil de olvidar**, porque no falla, sólo no
+aparece:
+
+```
+uv run python manage.py seed_document_types
+uv run python manage.py seed_alert_rules
+```
+
+Sin el primero, la **carta del mandante** (`LV-225`) no existe como tipo y no se
+puede cargar: el expediente pediría un papel que la app no ofrece subir. Sin el
+segundo, las alertas **T-45 y T-15** (`LV-226`) no se crean y la cadena de
+renovación se queda en el aviso de 30 días que ya había. Los dos son idempotentes
+—`get_or_create` por `code` y por `name`— así que correrlos de nuevo no rompe nada
+ni pisa una regla que alguien haya ajustado a mano.
+
+Es el mismo error que ya costó una vez: `LV-184` quedó a medias en producción
+porque `bootstrap_roles` no se corrió, y la lección está en `AGENTS.md` como *"el
+gate verifica código, nadie verifica el cableado de producción"*.
+
+Después de desplegar, el chequeo nuevo dice de un vistazo si la operación real
+tiene las cartas al día:
+
+```
+uv run python manage.py check_client_letters
+```
+
+#### El informe mensual RPA para la DGAC — R1 hecho
+
+Entró un frente nuevo: JEJ debe emitir cada mes un informe de reportabilidad RPA
+(estándar `JEJ-GRI-SS-INS-096`). El diseño y la especificación están fuera del
+repo, en `OneDrive/DGAC/INFORMES/Agosto2026/`
+(`plantilla-informe-rpa-aerocontrol.zip` con 6 artboards A4, y
+`SPEC_REPORTE_MENSUAL_RPA.md`). **El plan aprobado está en
+`~/.claude/plans/distributed-cooking-axolotl.md`** y el mapeo campo→modelo en
+`apps/reporting/MAPPING.md`.
+
+**Lo más importante que dejó la investigación**: la §6 del SPEC lista siete datos
+"que probablemente falten" y **acertó en dos de siete, errando en el que marcaba
+como bloqueante**. El modelo de permisos con emisión, vencimiento y carta ya
+existía (`FlightPermission`); faltaban la carta del mandante y el plazo, que son
+`LV-225` y `LV-224`. Antes de construir cualquier bloque del informe, leer
+`MAPPING.md`: `kpis.py`, `upcoming_expirations`, `ComplianceSnapshot`,
+`apps/core/pdf.py` y `openpyxl` ya cubren buena parte de lo que el SPEC propone
+crear de cero.
+
+Decisiones ya tomadas con el usuario, para no reabrirlas: **no se usa WeasyPrint**
+(el repo eligió `reportlab` a propósito, sin paquetes de sistema en la VM) y el
+informe se ve en HTML dentro de la app primero, con el PDF automático después.
+
+R2–R7 siguen pendientes. ⚠️ **R6 (envío por correo) está bloqueado por el SMTP**,
+no por prioridad.
 
 #### Lo que quedó en cola, en orden de valor
 
