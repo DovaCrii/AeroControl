@@ -180,17 +180,32 @@ Dos filas más, **sin desplegar**:
 ### Cierre del 2026-09-01 — **empezar por acá**
 
 Continuación de la jornada del 31. **Desplegado en `p340`: `0a7a2ce`.** Lo que
-sigue está commiteado y **sin desplegar** (`LV-215`, `LV-216`): sólo
-`collectstatic`, sin migración.
+sigue está commiteado y **sin desplegar** (`9a84c48`: `LV-215`, `LV-216`,
+`LV-223`): sólo `collectstatic`, sin migración y sin `bootstrap_roles`.
 
 **Antes de dictar cualquier despliegue**, la lección que costó una caída:
 
 ```
-uv run python manage.py showmigrations | grep -c "\[ \]"
+uv run python manage.py showmigrations | grep -c '\[ \]'
 ```
 
 Tiene que devolver `0`. El paso de despliegue es el de **todo lo que falta en la
 VM**, no el del último commit.
+
+⚠️ **Ese comando sólo vale con el entorno ya cargado**, y en la primera versión de
+este bloque no se decía. Sin `set -a; source <(sudo cat /etc/aerocontrol.env);
+set +a`, `manage.py` cae a `config.settings.dev` y `showmigrations` responde por
+la base de **desarrollo**: un `0` tranquilizador sobre la base equivocada, que es
+peor que un error. El orden correcto está en § "El despliegue, por pasos" —
+entorno primero, diagnóstico después.
+
+⚠️ **Y los comandos van sin `ssh` y sobre `/opt/aerocontrol`.** En el cierre del
+2026-09-01 se dictaron con `ssh p340 "cd /srv/aerocontrol && ..."`: la ruta no
+existe (es `/opt`, no `/srv` — `/srv/aerocontrol-data` es sólo la base) y el `ssh`
+sobraba porque quien despliega ya está dentro de la VM, así que pidió contraseña
+para conectarse a sí misma. No hubo daño —`cd` falló y el `&&` detuvo el resto—
+pero se perdió una vuelta. **Cuando se dicten comandos de despliegue, copiarlos de
+§ "El despliegue, por pasos" en vez de escribirlos de memoria.**
 
 #### Lo que quedó en cola, en orden de valor
 
