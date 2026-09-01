@@ -391,15 +391,31 @@ class TestTheFillRuleItself:
     misma aritmética. Estos tests fijan la regla, sin pasar por una vista."""
 
     @pytest.mark.django_db
-    def test_metres_become_feet(self, cost_center):
-        """Copiar el número tal cual convertiría 120 m en 120 ft: un tercio de
-        la altura real, y sin que nada avise."""
+    def test_metres_arrive_as_metres(self, cost_center):
+        """**Renombrado en `LV-221`: la conversión que este test protegía ya no existe.**
+
+        Se llamaba `test_metres_become_feet` y afirmaba
+        `max_altitude_ft == 394`, con este docstring: *"copiar el número tal cual
+        convertiría 120 m en 120 ft: un tercio de la altura real, y sin que nada
+        avise"*. El razonamiento era correcto y la defensa funcionaba **en este
+        camino** — pero el formulario manual no tenía ninguna, y por ahí entraron
+        los tres permisos que producción tenía cargados con `120 ft` donde se
+        querían 120 m.
+
+        Con el permiso guardando metros (`LV-221`), la conversión desaparece en
+        vez de quedar cubierta en una ruta y descubierta en la otra: el plan trae
+        metros y el permiso los recibe sin tocar. Los pies siguen existiendo para
+        el formulario del SIGO, pero **calculados** en
+        `max_altitude_ft_equivalent`, no guardados.
+        """
         permission = _permission(cost_center)
 
         permission.fill_location_gaps(altitude_m=120)
 
         permission.refresh_from_db()
-        assert permission.max_altitude_ft == 394
+        assert permission.max_altitude_m == 120
+        # Y los 394 ft siguen disponibles para transcribir, sin ser el dato.
+        assert permission.max_altitude_ft_equivalent == 394
 
     @pytest.mark.django_db
     def test_a_radius_is_never_saved_without_its_coordinates(self, cost_center):

@@ -94,7 +94,7 @@ cada cosa.{% endcomment %}
       {% if "latitude" in form.fields %}{{ form.latitude|as_crispy_field }}{% endif %}
       {% if "longitude" in form.fields %}{{ form.longitude|as_crispy_field }}{% endif %}
       {% if "radius_km" in form.fields %}{{ form.radius_km|as_crispy_field }}{% endif %}
-      {{ form.max_altitude_ft|as_crispy_field }}
+      {{ form.max_altitude_m|as_crispy_field }}
       {{ form.area_type|as_crispy_field }}
     </fieldset>
 

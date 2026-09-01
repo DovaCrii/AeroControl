@@ -80,7 +80,7 @@ class TestStructuredLocationValidation:
             latitude=Decimal("-22.298"),
             longitude=Decimal("-68.9"),
             radius_km=Decimal("1.5"),
-            max_altitude_ft=400,
+            max_altitude_m=400,
         )
         permission.clean()  # must not raise
 
@@ -153,14 +153,14 @@ class TestStructuredLocationForm:
                 "latitude": "-22.298",
                 "longitude": "-68.9",
                 "radius_km": "1.5",
-                "max_altitude_ft": "400",
+                "max_altitude_m": "400",
             },
         )
 
         assert response.status_code == 302
         permission = FlightPermission.objects.get(permission_number="P-1")
         assert permission.region == "Antofagasta"
-        assert permission.max_altitude_ft == 400
+        assert permission.max_altitude_m == 400
 
 
 class TestStructuredLocationDetailPage:
@@ -179,7 +179,7 @@ class TestStructuredLocationDetailPage:
             latitude=Decimal("-22.298"),
             longitude=Decimal("-68.9"),
             radius_km=Decimal("1.5"),
-            max_altitude_ft=400,
+            max_altitude_m=400,
         )
         permission.operators.add(operator)
         permission.aircraft_fleet.add(aircraft)

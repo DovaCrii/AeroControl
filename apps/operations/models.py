@@ -293,6 +293,33 @@ class FlightPermission(StatusFlowMixin, BaseModel):
         blank=True,
         validators=[MinValueValidator(Decimal("0"))],
     )
+    # LV-221: la altitud pasa a **metros**, que es como se opera. Textual del
+    # usuario: *"sumar eso, la altitud es en unidad metros como trabajamos"*.
+    #
+    # **La unidad anterior no era un rótulo desafortunado, era una fábrica de
+    # errores, y el propio repo lo tenía escrito.** El comentario de
+    # `fill_location_gaps` (más abajo) advertía que copiar el número tal cual
+    # *"convertiría 120 m en 120 ft, un tercio de la altura real y sin que nada
+    # avise"* — y eso es exactamente lo que pasó, porque esa conversión protegía
+    # la ruta del KMZ y **el formulario manual no tenía ninguna**. Medido en
+    # producción: los tres permisos con el campo cargado decían `120`, y los tres
+    # eran metros (confirmado por el usuario).
+    #
+    # Tercera señal de que la unidad estaba mal elegida: `FlightRequest.altitude_m`
+    # **ya guardaba metros**, así que dos modelos que describen el mismo vuelo
+    # usaban unidades distintas.
+    #
+    # La conversión a pies se calcula para mostrar (`max_altitude_ft_equivalent`),
+    # porque el formulario del SIGO la pide así y transcribirla a mano es la clase
+    # de error que `LV-171` vino a reducir. Pero lo que se **guarda** es lo que la
+    # persona escribió.
+    max_altitude_m = models.PositiveIntegerField(null=True, blank=True)
+    # ⚠️ **Se conserva, y no es un descuido: es el valor original tal como se
+    # escribió.** Retiro de pantalla y no de base, el patrón de `LV-78`, `LV-103`
+    # y `LV-155`: sale del formulario y de la ficha, la migración copia su número
+    # a `max_altitude_m`, y la columna queda por si alguna de las tres solicitudes
+    # ya se presentó al SIGO con el valor de antes y hay que reconstruir qué se
+    # declaró. Nada la vuelve a escribir.
     max_altitude_ft = models.PositiveIntegerField(null=True, blank=True)
     # Nullable so the permissions created before this field existed are not
     # retroactively broken; the form requires it (blank=False, the default)
@@ -387,6 +414,27 @@ class FlightPermission(StatusFlowMixin, BaseModel):
                 self.internal_folio = self._next_internal_folio()
                 return super().save(*args, **kwargs)
         return super().save(*args, **kwargs)
+
+    @property
+    def max_altitude_ft_equivalent(self):
+        """LV-221: la altitud en pies, para transcribir al formulario del SIGO.
+
+        Se **calcula** y no se guarda: el dato es el que la persona escribió en
+        metros, y una segunda columna con el mismo hecho en otra unidad es dos
+        columnas que se desincronizan. La app tenía justamente ese problema al
+        revés —`FlightPermission` en pies y `FlightRequest.altitude_m` en metros—
+        y de ahí salió esta fila.
+
+        Se muestra al lado del valor en metros porque el trámite pide pies, y
+        calcularlo a mano cada vez es la clase de error que `LV-171` vino a
+        reducir. `round` porque la casilla del SIGO no admite decimales.
+
+        1 m = 3.28084 ft, el mismo factor que usaba la conversión que esta fila
+        eliminó y que `check_altitudes` usa para el diagnóstico.
+        """
+        if self.max_altitude_m is None:
+            return None
+        return round(self.max_altitude_m * 3.28084)
 
     def latest_allowed_valid_until(self):
         """La última fecha de término que la DGAC podría haber autorizado (LV-224).
@@ -537,14 +585,21 @@ class FlightPermission(StatusFlowMixin, BaseModel):
         if not self.area_name and area_name:
             self.area_name = area_name
             filled.append("area_name")
-        if self.max_altitude_ft is None and altitude_m:
-            # SIGO acepta metros o pies y el operador trabaja en metros; el
-            # permiso guarda pies desde OPS-4. 1 m = 3.28084 ft, redondeado al
-            # pie porque la casilla no admite decimales. **La conversión es
-            # obligatoria**: copiar el número tal cual convertiría 120 m en 120
-            # ft, un tercio de la altura real y sin que nada avise.
-            self.max_altitude_ft = round(altitude_m * 3.28084)
-            filled.append("max_altitude_ft")
+        if self.max_altitude_m is None and altitude_m:
+            # LV-221: **ya no hay conversión que hacer, y eso es el punto.**
+            #
+            # Acá vivía `round(altitude_m * 3.28084)` con un comentario que
+            # explicaba que la conversión era obligatoria porque copiar el número
+            # tal cual "convertiría 120 m en 120 ft, un tercio de la altura real y
+            # sin que nada avise". El razonamiento era correcto y la defensa
+            # funcionaba — en este camino. El del formulario manual no la tenía, y
+            # por ahí entraron los tres `120` que producción tenía cargados.
+            #
+            # Con el permiso guardando metros, el plan trae metros y el permiso
+            # los recibe sin tocar: la clase de error desaparece en vez de quedar
+            # cubierta en una ruta y descubierta en la otra.
+            self.max_altitude_m = altitude_m
+            filled.append("max_altitude_m")
         # LV-137: el aeródromo y su distancia van **de a par**, por la misma razón
         # que las coordenadas: una distancia sin aeródromo no se puede leer, y un
         # aeródromo sin distancia obliga a recalcularla para saber qué declarar.

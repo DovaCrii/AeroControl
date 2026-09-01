@@ -352,7 +352,12 @@ class TestLinkingToThePermit:
         permission.refresh_from_db()
         assert float(permission.latitude) == pytest.approx(LAT, abs=1e-6)
         assert permission.commune == "Salamanca"
-        assert permission.max_altitude_ft == 394  # 120 m
+        # LV-221: los 120 m de la solicitud llegan al permiso **como 120 m**.
+        # Antes esta línea decía `max_altitude_ft == 394`, porque el permiso
+        # guardaba pies y la solicitud metros — dos modelos del mismo vuelo con
+        # unidades distintas, que es de donde vino el defecto de los tres
+        # permisos cargados con `120 ft`. Ahora los dos hablan en metros.
+        assert permission.max_altitude_m == 120
         assert float(permission.radius_km) == 0.03
         assert set(filled) >= {"latitude", "longitude", "commune"}
 

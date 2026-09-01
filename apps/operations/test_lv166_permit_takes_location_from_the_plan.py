@@ -100,7 +100,7 @@ def test_what_the_plan_never_provides_stays(world):
 
     form = FlightPermissionUpdateForm(instance=world["permission"])
 
-    assert "max_altitude_ft" in form.fields
+    assert "max_altitude_m" in form.fields
     assert "location" in form.fields
     assert "area_type" in form.fields
 
@@ -185,10 +185,10 @@ def test_creating_a_permit_hides_them_too_since_lv197(world):
 
     for name in LOCATION_FIELDS:
         assert name not in form.fields, name
-    # `max_altitude_ft` no está en `PLAN_PROVIDED_FIELDS` y sigue pidiéndose:
+    # `max_altitude_m` no está en `PLAN_PROVIDED_FIELDS` y sigue pidiéndose:
     # ningún KMZ trae altitud, que es la razón que esta fila escribió al elegir
     # su lista y que `LV-197` no tocó.
-    assert "max_altitude_ft" in form.fields
+    assert "max_altitude_m" in form.fields
 
 
 # -- la puerta del papel de la DGAC ----------------------------------------

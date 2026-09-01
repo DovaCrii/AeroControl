@@ -110,3 +110,128 @@ class TestTheHeuristicFlagsWhatLooksLikeMetres:
 
         permit.refresh_from_db()
         assert permit.max_altitude_ft == 120
+
+
+class TestThePermitNowStoresMetres:
+    """Paso 2: la unidad cambia, y con ella desaparece una clase de error."""
+
+    @pytest.mark.django_db
+    def test_the_form_asks_for_metres(self, cc):
+        from .forms import FlightPermissionForm
+
+        fields = FlightPermissionForm().fields
+
+        assert "max_altitude_m" in fields
+        # El viejo sale de la pantalla y se queda en la base (ver el modelo).
+        assert "max_altitude_ft" not in fields
+
+    @pytest.mark.django_db
+    def test_the_label_says_metres(self, cc):
+        from .forms import FlightPermissionForm
+
+        label = str(FlightPermissionForm().fields["max_altitude_m"].label)
+
+        assert "m)" in label
+        assert "ft" not in label
+
+    @pytest.mark.django_db
+    def test_the_feet_equivalent_is_calculated_not_stored(self, cc):
+        """El caso del usuario: 120 m se transcriben al SIGO como 394 ft."""
+        permit = FlightPermission.objects.create(
+            cost_center=cc,
+            purpose="photogrammetry",
+            status=FlightPermission.STATUS_REQUESTED,
+            location="Site",
+            area_type="unpopulated",
+            max_altitude_m=120,
+        )
+
+        assert permit.max_altitude_ft_equivalent == 394
+        # Y no se guardó en ninguna columna: dos columnas con el mismo hecho en
+        # distinta unidad son dos columnas que se desincronizan — el estado del
+        # que viene esta fila.
+        assert permit.max_altitude_ft is None
+
+    @pytest.mark.django_db
+    def test_no_altitude_means_no_equivalent(self, cc):
+        permit = FlightPermission.objects.create(
+            cost_center=cc,
+            purpose="photogrammetry",
+            status=FlightPermission.STATUS_REQUESTED,
+            location="Site",
+            area_type="unpopulated",
+        )
+
+        assert permit.max_altitude_ft_equivalent is None
+
+    @pytest.mark.django_db
+    def test_the_plan_no_longer_converts(self, cc):
+        """La conversión que protegía una ruta y faltaba en la otra, eliminada.
+
+        `fill_location_gaps` hacía `round(altitude_m * 3.28084)`. Ahora copia, y
+        por eso el formulario manual ya no puede producir el error que el KMZ
+        tenía cubierto.
+        """
+        permit = FlightPermission.objects.create(
+            cost_center=cc,
+            purpose="photogrammetry",
+            status=FlightPermission.STATUS_REQUESTED,
+            location="Site",
+            area_type="unpopulated",
+        )
+
+        filled = permit.fill_location_gaps(altitude_m=120)
+
+        assert permit.max_altitude_m == 120
+        assert "max_altitude_m" in filled
+
+    @pytest.mark.django_db
+    def test_the_fiche_shows_both_units(self, cc):
+        """Metros porque es como se opera; pies porque es lo que pide el SIGO."""
+        from django.urls import reverse
+
+        from apps.core.testing import login_as
+
+        permit = FlightPermission.objects.create(
+            cost_center=cc,
+            purpose="photogrammetry",
+            status=FlightPermission.STATUS_REQUESTED,
+            location="Site",
+            area_type="unpopulated",
+            max_altitude_m=120,
+        )
+        body = (
+            login_as("view_flightpermission")
+            .get(reverse("permission-detail", args=[permit.pk]))
+            .content.decode()
+        )
+
+        assert "120 m" in body
+        assert "394 ft" in body
+
+
+class TestTheMigrationCorrectedTheLabelNotTheNumber:
+    @pytest.mark.django_db
+    def test_the_migration_copies_without_converting(self, cc):
+        """**Lo contrario de una conversión de unidades, y a propósito.**
+
+        No se convirtieron pies a metros: se corrigió la etiqueta de un dato que
+        siempre estuvo en metros. Aplicar `/ 3.28084` habría dejado 36 m donde la
+        operación quiso 120 — el error que esta fila vino a cerrar.
+
+        Sólo era válido porque se midió primero (`check_altitudes`): 3 filas,
+        todas con el mismo valor y ninguna aprobada. Este test fija el criterio
+        para que nadie "arregle" la migración añadiéndole la conversión.
+        """
+        from pathlib import Path
+
+        source = Path(
+            "apps/operations/migrations/0025_flightpermission_max_altitude_m.py"
+        ).read_text(encoding="utf-8")
+        # Se mira **el código y no el archivo entero**: el docstring del módulo
+        # menciona el factor a propósito, para explicar por qué no se aplica.
+        # Buscarlo en todo el texto reprobaba la explicación junto con el error.
+        code = source.split('"""', 2)[2]
+
+        assert "3.28084" not in code
+        assert "max_altitude_m = row.max_altitude_ft" in code

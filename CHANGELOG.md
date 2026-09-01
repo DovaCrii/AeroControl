@@ -168,6 +168,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **La altitud del permiso se pide en metros (`LV-221`).** El campo decía pies, y
+  la operación piensa y vuela en metros: los tres permisos que tenían el dato
+  cargado decían 120 pensando en metros, o sea un tercio de la altura real. Ahora
+  se escribe en metros y la ficha muestra al lado el equivalente en pies —394 ft
+  para 120 m— listo para copiar al formulario del SIGO sin calcular. Los valores
+  ya cargados se corrigieron, y el número original queda guardado por si alguna
+  solicitud ya se había presentado con él.
 - **Las etiquetas de tipo ahora tienen color (`LV-217`).** En la lista de
   vencimientos y en la bandeja de alertas, los tipos iban todos del mismo gris, así
   que había que leer cada etiqueta para saber de qué hablaba la fila. Ahora el

@@ -139,7 +139,11 @@ class FlightPermissionList(
             "latitude",
             "longitude",
             "radius_km",
-            "max_altitude_ft",
+            # LV-221: la exportación lleva **metros**, la unidad en que se opera y
+            # en que ahora se guarda. `max_altitude_ft` queda fuera a propósito:
+            # es el valor histórico tal como se escribió, y exportar las dos
+            # columnas invitaría a leer la vieja como si siguiera vigente.
+            "max_altitude_m",
             "status",
         )
     ]

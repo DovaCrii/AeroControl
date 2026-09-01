@@ -7790,3 +7790,19 @@ msgstr ""
 #: templates/base.html
 msgid "Drag to set the width · double-click to reset"
 msgstr "Arrastra para ajustar el ancho · doble clic para restablecer"
+
+#: apps/operations/forms.py
+msgid "Maximum altitude (m)"
+msgstr "Altitud máxima (m)"
+
+#: apps/operations/forms.py
+msgid ""
+"In metres, as flown. The DAN 151 ceiling is 130 m AGL. The permit fiche shows "
+"the equivalent in feet for the SIGO form."
+msgstr ""
+"En metros, como se vuela. El techo de la DAN 151 son 130 m AGL. La ficha del "
+"permiso muestra el equivalente en pies para el formulario del SIGO."
+
+#: templates/operations/permission_detail.html
+msgid "for the SIGO form"
+msgstr "para el formulario del SIGO"

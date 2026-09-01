@@ -15,7 +15,7 @@ caminos para llenarlo y ninguno es tipearlo**: elegir el plan en el alta
 (`R10.2`), o editar el permiso — que es donde siguen a la vista mientras estén
 vacíos, y por eso esto no cierra ninguna puerta.
 
-Los dos que no se tocan, por lo que `LV-166` ya había escrito: `max_altitude_ft`
+Los dos que no se tocan, por lo que `LV-166` ya había escrito: `max_altitude_m`
 porque **ningún KMZ trae altitud** —esconderla la dejaría sin forma de cargarse—
 y `location`, el texto libre obligatorio, con el que un permiso nunca nace sin
 decir dónde vuela.
@@ -66,7 +66,7 @@ class TestTheCreationForm:
     def test_it_still_asks_for_the_altitude(self):
         """Ningún KMZ la trae. Esconderla la dejaría sin ninguna forma de
         cargarse, que es lo que `LV-166` dejó escrito al elegir su lista."""
-        assert "max_altitude_ft" in FlightPermissionForm().fields
+        assert "max_altitude_m" in FlightPermissionForm().fields
 
     def test_it_still_asks_where_it_flies_in_words(self):
         """`location` es el texto libre obligatorio: con él, un permiso no puede

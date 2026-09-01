@@ -66,7 +66,9 @@ class FlightPermissionForm(AeroModelForm):
             "latitude",
             "longitude",
             "radius_km",
-            "max_altitude_ft",
+            # LV-221: metros, no pies. `max_altitude_ft` sale del formulario y se
+            # queda en la base como el valor original (ver el modelo).
+            "max_altitude_m",
             "area_type",
         ]
         # LV-22: without explicit labels the auto-generated English ones ("Permission
@@ -90,7 +92,7 @@ class FlightPermissionForm(AeroModelForm):
             "latitude": _("Latitude"),
             "longitude": _("Longitude"),
             "radius_km": _("Radius (km)"),
-            "max_altitude_ft": _("Maximum altitude (ft)"),
+            "max_altitude_m": _("Maximum altitude (m)"),
             "area_type": _("Area type"),
         }
         help_texts = {
@@ -118,6 +120,12 @@ class FlightPermissionForm(AeroModelForm):
             "validity_override_reason": _(
                 "Only if the DGAC granted a different term. Leave it empty for a "
                 "normal three-month permit."
+            ),
+            # LV-221: dice la unidad **y** el techo, que es el otro dato que
+            # alguien necesita al escribir acá. 130 m es el tope de la DAN 151.
+            "max_altitude_m": _(
+                "In metres, as flown. The DAN 151 ceiling is 130 m AGL. The permit "
+                "fiche shows the equivalent in feet for the SIGO form."
             ),
             "area_type": _("DAN 151 (populated) vs. DAN 91 (unpopulated)."),
             "purpose_detail": _("Required when purpose is 'Other'."),
