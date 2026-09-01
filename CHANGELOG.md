@@ -168,6 +168,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **El panel ya no cuenta como brecha los equipos que están en bodega
+  (`LV-229`).** Una aeronave de un centro administrativo, que no opera, figuraba
+  como "sin seguro al día" y bajaba el indicador por una decisión correcta. La
+  tabla de permisos por faena ya excluía esos centros; ahora el contador de flota
+  también, así que las dos cifras del panel dicen lo mismo sobre la misma faena.
+  Una aeronave **sin** faena asignada sigue contando: eso es un dato que falta, no
+  un equipo que no vuela.
 - **La ficha del permiso enlaza a los NOTAM de su aeródromo (`LV-218`).** Un clic
   desde el permiso a la consulta oficial del IFIS de la DGAC para el aeródromo más
   cercano que el permiso declara. **La app no resume ni interpreta los avisos**:
