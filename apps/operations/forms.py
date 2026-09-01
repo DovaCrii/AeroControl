@@ -96,6 +96,17 @@ class FlightPermissionForm(AeroModelForm):
                 "Optional until the permission is approved. It is the folio on "
                 "the signed DGAC authorization."
             ),
+            # LV-219: mismo criterio que el folio de arriba — dice **de dónde
+            # sale** la fecha, no sólo que puede quedar vacía. La entrega la DGAC
+            # al responder, y hasta entonces nadie la sabe.
+            "valid_from": _(
+                "Optional until the permission is approved. The DGAC sets the "
+                "validity window on the authorization it issues."
+            ),
+            "valid_until": _(
+                "Optional until the permission is approved. Leave it empty while "
+                "the request is still with the DGAC."
+            ),
             "area_type": _("DAN 151 (populated) vs. DAN 91 (unpopulated)."),
             "purpose_detail": _("Required when purpose is 'Other'."),
             "region": _(
@@ -316,6 +327,30 @@ class FlightPermissionForm(AeroModelForm):
         # unique index.
         cleaned["permission_number"] = number or None
         self.instance.permission_number = cleaned["permission_number"]
+        # LV-219: espejo de `REQUIRE_VALIDITY_STATUSES`. Mientras el permiso está
+        # solicitado la vigencia puede faltar —la DGAC no la ha dado—, pero un
+        # permiso aprobado sin vigencia es una autorización sin plazo.
+        #
+        # El estado se lee de `cleaned_data` **o de la instancia**, y eso no es
+        # defensa de más: `FlightPermissionUpdateForm` saca `status` de los
+        # campos, así que acá llega vacío al editar. La regla del folio, unas
+        # líneas arriba, resolvió lo mismo repitiéndose en la subclase; leer de
+        # las dos fuentes evita que un día se edite una copia y no la otra, que es
+        # el defecto que `LV-156` encontró en esta misma regla.
+        effective_status = cleaned.get("status") or self.instance.status
+        if effective_status in FlightPermission.REQUIRE_VALIDITY_STATUSES:
+            for field in ("valid_from", "valid_until"):
+                if cleaned.get(field) is None:
+                    self.add_error(
+                        field,
+                        # Mismo literal que el `clean()` del modelo, a propósito:
+                        # dos redacciones para la misma regla son dos entradas de
+                        # catálogo que se traducen distinto y se desincronizan.
+                        _(
+                            "An approved permit needs its validity window: it is "
+                            "on the DGAC authorization."
+                        ),
+                    )
         return cleaned
 
 
@@ -501,17 +536,35 @@ class FlightRecordForm(AeroModelForm):
                 "pilot",
                 _("The pilot must be one of the flight permission's operators."),
             )
-        if (
-            permission
-            and actual_date
-            and not (permission.valid_from <= actual_date <= permission.valid_until)
-        ):
-            self.add_error(
-                "actual_date",
-                _(
-                    "The flight date must fall within the flight permission's validity range."
-                ),
-            )
+        # LV-219: **el único sitio que hacía aritmética con las fechas sin que un
+        # filtro SQL le quitara los nulos por delante.** El selector de permisos
+        # (arriba, línea del `queryset`) ofrece todos los activos sin mirar el
+        # estado, así que un permiso todavía solicitado llegaba acá y
+        # `None <= actual_date` levantaba un TypeError — un 500 al registrar un
+        # vuelo, no un error de formulario.
+        #
+        # Y no se resuelve dejándolo pasar: si la DGAC no ha dado la vigencia, no
+        # hay autorización contra la cual registrar un vuelo. Se rechaza con su
+        # propio motivo, que es distinto del de la fecha fuera de rango — decir
+        # "la fecha debe caer dentro de la vigencia" cuando no hay vigencia manda
+        # a corregir la fecha, que no es el problema.
+        if permission and actual_date:
+            if permission.valid_from is None or permission.valid_until is None:
+                self.add_error(
+                    "permission",
+                    _(
+                        "That permission has no validity window yet, so no flight "
+                        "can be recorded against it. It arrives with the DGAC "
+                        "authorization."
+                    ),
+                )
+            elif not (permission.valid_from <= actual_date <= permission.valid_until):
+                self.add_error(
+                    "actual_date",
+                    _(
+                        "The flight date must fall within the flight permission's validity range."
+                    ),
+                )
         if departure and arrival and arrival <= departure:
             self.add_error(
                 "arrival_time", _("Arrival time must be later than departure time.")

@@ -79,8 +79,25 @@
   <tr><th scope="row" class="w-25">{% translate "Internal folio" %}</th><td>{{ permission.internal_folio }}</td></tr>
   <tr><th scope="row">{% translate "DGAC folio" %}</th><td>{% if permission.permission_number %}{{ permission.permission_number }}{% else %}<span class="text-muted">{% translate "In process" %}</span>{% endif %}</td></tr>
   <tr><th scope="row">{% translate "Status" %}</th><td><span class="badge bg-{% if permission.status == 'approved' %}success{% elif permission.status == 'denied' %}danger{% elif permission.status == 'completed' %}info{% else %}warning{% endif %}">{{ permission.get_status_display }}</span></td></tr>
-  <tr><th scope="row">{% translate "Operators" %}</th><td>{% for operator in permission.operators.all %}{{ operator }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr><tr><th scope="row">{% translate "Aircraft" %}</th><td>{% for aircraft in permission.aircraft_fleet.all %}{{ aircraft }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr><tr><th scope="row">{% translate "Cost center" %}</th><td>{{ permission.cost_center }}</td></tr><tr><th scope="row">{% translate "Purpose" %}</th><td>{{ permission.get_purpose_display }}{% if permission.purpose == "other" %}: {{ permission.purpose_detail }}{% endif %}</td></tr><tr><th scope="row">{% translate "Validity" %}</th><td>{{ permission.valid_from|date:"Y-m-d" }} – {{ permission.valid_until|date:"Y-m-d" }}</td></tr><tr><th scope="row">{% translate "Location" %}</th><td>{{ permission.location }}</td></tr>
-  {% if permission.region or permission.commune or permission.area_name %}<tr><th scope="row">{% translate "Region / Commune" %}</th><td>{% if permission.area_name %}{{ permission.area_name }}{% if permission.region or permission.commune %} · {% endif %}{% endif %}{{ permission.region|default:"" }}{% if permission.region and permission.commune %}, {% endif %}{{ permission.commune|default:"" }}</td></tr>{% endif %}
+  <tr><th scope="row">{% translate "Operators" %}</th><td>{% for operator in permission.operators.all %}{{ operator }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr><tr><th scope="row">{% translate "Aircraft" %}</th><td>{% for aircraft in permission.aircraft_fleet.all %}{{ aircraft }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr><tr><th scope="row">{% translate "Cost center" %}</th><td>{{ permission.cost_center }}</td></tr><tr><th scope="row">{% translate "Purpose" %}</th><td>{{ permission.get_purpose_display }}{% if permission.purpose == "other" %}: {{ permission.purpose_detail }}{% endif %}</td></tr><tr><th scope="row">{% translate "Validity" %}</th><td>{% if permission.valid_from and permission.valid_until %}{{ permission.valid_from|date:"Y-m-d" }} – {{ permission.valid_until|date:"Y-m-d" }}{% else %}<span class="text-body-secondary fst-italic">{% translate "Awaiting the DGAC" %}</span>{% endif %}</td></tr><tr><th scope="row">{% translate "Location" %}</th><td>{{ permission.location }}</td></tr>
+  {% comment %}LV-220: la fila **siempre** se dibuja, y si falta lo dice.
+
+  Antes existía sólo con `{% templatetag openblock %} if region or commune or
+  area_name {% templatetag closeblock %}`, así que en un permiso sin ninguno de
+  los tres la fila desaparecía entera — y desaparecen a menudo, porque `LV-197`
+  sacó esas casillas del alta y ahora sólo las trae un plan vinculado. El usuario
+  lo vio en `JEJ-2026-001`: *"sumar ahí que debe aparecer la región"*.
+
+  **Una fila ausente no se distingue de un dato que no aplica**, y la región sí
+  aplica: la DGAC la pide en el formulario del SIGO. Es la misma lectura que
+  `LV-146` fijó para el chip de faena — el caso vacío es un caso real y se dice.
+
+  No se **deduce** de las coordenadas, aunque el permiso las tenga. Presentar una
+  región derivada con el mismo aspecto que una declarada es peor que dejarla
+  vacía: quien lee la ficha para llenar el SIGO no podría distinguir el dato del
+  papel de una inferencia nuestra. Si algún día se deriva, tiene que decir que se
+  derivó (mitad (b) de la fila, sin hacer).{% endcomment %}
+  <tr><th scope="row">{% translate "Region / Commune" %}</th><td>{% if permission.region or permission.commune or permission.area_name %}{% if permission.area_name %}{{ permission.area_name }}{% if permission.region or permission.commune %} · {% endif %}{% endif %}{{ permission.region|default:"" }}{% if permission.region and permission.commune %}, {% endif %}{{ permission.commune|default:"" }}{% else %}<span class="text-body-secondary fst-italic">{% translate "Not recorded" %}</span>{% endif %}</td></tr>
   {% if permission.latitude and permission.longitude %}<tr><th scope="row">{% translate "Coordinates" %}</th><td>{{ permission.latitude }}, {{ permission.longitude }}{% if permission.radius_km %} · {% translate "radius" %} {{ permission.radius_km }} km{% endif %}</td></tr>{% endif %}
   {% comment %}LV-166: la procedencia. Desde que el formulario dejó de pedir estos
   datos cuando hay un plan vinculado, la ficha es el único lugar donde se ven — y

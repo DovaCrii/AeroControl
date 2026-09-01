@@ -96,6 +96,34 @@ class FlightPermission(StatusFlowMixin, BaseModel):
     # exactamente la que `LV-101` cerró en la pantalla de edición y que nadie fue
     # a mirar en el alta. Aprobar es siempre la transición guardada.
     CREATABLE_STATUSES = frozenset({STATUS_REQUESTED, STATUS_DENIED})
+    # LV-219: los estados en los que la vigencia **ya tiene que estar**, y por
+    # contraste los dos en que puede faltar.
+    #
+    # Textual del usuario: *"voy a pedir un permiso pero no sé cuándo parte la
+    # vigencia; ésta me la da cuando entro al SIGO de la DGAC, antes yo no lo
+    # sé"*. La vigencia **no es un dato del solicitante**: la fija la DGAC al
+    # responder. Exigirla en el alta obligaba a inventar dos fechas, y esas
+    # fechas no se quedan quietas — alimentan el motor de vencimientos, la lista
+    # del panel, el informe y `expire_permissions`, así que una invención se
+    # convierte en avisos falsos y en un permiso que "caduca" sin que la DGAC lo
+    # haya dicho.
+    #
+    # Es el mismo caso que `LV-39` resolvió para `permission_number` (opcional
+    # hasta que llega el folio, porque *"un permiso se arma mientras está todavía
+    # solicitado"*) y que `LV-157` resolvió para el estado de nacimiento. Las
+    # fechas eran el tercer dato de ese mismo trámite y quedaron fuera.
+    #
+    # `denied` también admite nulos, y no por descuido: un permiso rechazado
+    # **nunca tuvo vigencia**, porque no hubo autorización. Escribirle fechas
+    # sería inventar una autorización que no existió.
+    #
+    # Declarado acá y no como un `if` en el formulario por lo que ya pasó dos
+    # veces en este modelo: `LV-156` encontró que la regla del folio vivía sólo
+    # en `FlightPermissionForm.clean` y el botón que aprueba de verdad no la
+    # comprobaba. Una regla forms-only es una regla evadible.
+    REQUIRE_VALIDITY_STATUSES = frozenset(
+        {STATUS_APPROVED, STATUS_COMPLETED, STATUS_EXPIRED}
+    )
     # Two terminal states now (LV-83). They differ in one way that matters for
     # the stepper: `denied` is only ever reached from the first step, while a
     # permit can expire from anywhere -- see `status_steps` below.
@@ -149,8 +177,20 @@ class FlightPermission(StatusFlowMixin, BaseModel):
     purpose_legacy = models.CharField(
         max_length=250, blank=True, default="", editable=False
     )
-    valid_from = models.DateField()
-    valid_until = models.DateField()
+    # LV-219: nulas mientras la DGAC no haya respondido. Ver
+    # `REQUIRE_VALIDITY_STATUSES` arriba para el por qué y para dónde se exigen.
+    #
+    # **Un nulo acá significa "todavía no se sabe", y no es ni "vigente" ni
+    # "vencido"** — el mismo tercer estado que `LV-29` fijó para una vigencia que
+    # nunca se ingresó. Sale gratis en casi todos los lectores porque SQL no hace
+    # coincidir un NULL en una comparación: `expire_permissions` no lo caduca,
+    # `permit_counts` no lo cuenta como vigente ni como vencido (y ya tenía
+    # `awaiting`, que es exactamente este grupo), el calendario no lo dibuja y la
+    # lista de vencimientos no lo anuncia. Los dos sitios que **sí** hacían
+    # aritmética con las fechas están tratados a mano: la validación del registro
+    # de vuelo (`FlightRecordForm.clean`) y la compuerta de aprobación.
+    valid_from = models.DateField(null=True, blank=True)
+    valid_until = models.DateField(null=True, blank=True)
     location = models.CharField(max_length=250)
     # OPS-4 structured location (docs/dev/ops-contract-tracking-plan.md §1.4),
     # deferred when the rest of OPS-4 landed and picked up here. It
@@ -329,6 +369,16 @@ class FlightPermission(StatusFlowMixin, BaseModel):
             )
         if self.valid_until and self.valid_from and self.valid_until < self.valid_from:
             errors["valid_until"] = _("The end date cannot be before the start date.")
+        # LV-219: la vigencia puede faltar mientras la DGAC no responda, pero un
+        # permiso autorizado sin vigencia sería una autorización sin plazo — y el
+        # motor de vencimientos no tendría de dónde agarrarse para cerrarlo.
+        if self.status in self.REQUIRE_VALIDITY_STATUSES:
+            for field in ("valid_from", "valid_until"):
+                if getattr(self, field) is None:
+                    errors[field] = _(
+                        "An approved permit needs its validity window: it is "
+                        "on the DGAC authorization."
+                    )
         if self.purpose == "other" and not self.purpose_detail:
             errors["purpose_detail"] = _(
                 "Describe the purpose when 'Other' is selected."
