@@ -168,6 +168,17 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **El ancho de la barra de navegación se regula arrastrando su borde (`LV-208`).**
+  Antes había dos estados y nada en medio: abierta o en modo icono. Ahora el borde
+  se arrastra, el ancho se recuerda entre visitas, y un doble clic lo devuelve al
+  valor original. Funciona también con el teclado (flechas, `Inicio` y `Fin`), y el
+  botón de colapsar sigue haciendo lo mismo de siempre.
+- **Los listados de operadores y aeronaves se leen parejos (`LV-222`).** Al buscar,
+  las casillas quedaban a distintas alturas y un nombre largo desordenaba la
+  columna entera; con las aeronaves era peor, porque su etiqueta lleva matrícula,
+  modelo y número de serie. Ahora cada fila queda alineada y el texto que ocupa
+  dos líneas se indenta bajo sí mismo, no bajo la casilla. El buscador y el
+  contador "3 de 42 elegidos" siguen igual.
 - **La app ya conoce el plazo de la DGAC: 3 meses (`LV-224`).** El máximo se lee
   en la casilla de "Vigente hasta" antes de escribir nada, y una vigencia más
   larga se rechaza diciendo cuál es la última fecha posible. Si la DGAC otorgó de

@@ -8,11 +8,41 @@
 (function () {
   var modalTrigger = null;
 
+  // LV-208: `localStorage` **lanza** —no devuelve null— en una ventana privada o
+  // con el almacenamiento de sitio bloqueado. Encontrado escribiendo el tirador
+  // del ancho, que sí llevaba su `try/catch`. En este archivo **dos de los
+  // cuatro accesos ya estaban protegidos** —los de `nav-groups-collapsed`, con
+  // su comentario y todo— y los otros dos no, que es la forma en que este tipo
+  // de defecto sobrevive: el patrón correcto está a la vista unas líneas más
+  // abajo. Una excepción acá no deja un ajuste sin recordar, **corta la función
+  // entera**. En `applyTheme` habría dejado el tema
+  // aplicado a medias (los atributos ya escritos, el botón sin actualizar); en
+  // `setSidebarCollapsed`, el `classList.toggle` ya ejecutado y el botón sin
+  // rotular — o sea, el menú colapsado y su botón diciendo lo contrario.
+  //
+  // Envolver sólo el acceso y no el cuerpo: si no se puede guardar, la
+  // preferencia vale para esta visita, que es mucho mejor que no funcionar.
+  function remember(key, value) {
+    try {
+      localStorage.setItem(key, value);
+    } catch (error) {
+      /* sin almacenamiento la preferencia no sobrevive a la recarga */
+    }
+  }
+
+  function recall(key) {
+    try {
+      return localStorage.getItem(key);
+    } catch (error) {
+      return null;
+    }
+  }
+
   function applyTheme(theme) {
     var html = document.documentElement;
     html.setAttribute('data-theme', theme);
     html.setAttribute('data-bs-theme', theme);
-    localStorage.setItem('theme', theme);
+    remember('theme', theme);
     var toggle = document.getElementById('theme-toggle');
     if (toggle) {
       toggle.setAttribute('aria-pressed', String(theme === 'dark'));
@@ -37,7 +67,7 @@
     var sidebar = document.getElementById('sidebar');
     if (!sidebar) return;
     sidebar.classList.toggle('is-collapsed', collapsed);
-    localStorage.setItem('sidebar-collapsed', String(collapsed));
+    remember('sidebar-collapsed', String(collapsed));
     var toggle = document.getElementById('sidebar-toggle');
     var innerToggle = document.getElementById('sidebar-collapse');
     if (toggle && window.innerWidth >= 769) toggle.setAttribute('aria-expanded', String(!collapsed));
@@ -120,7 +150,7 @@
     setSidebarCollapsed(!document.getElementById('sidebar').classList.contains('is-collapsed'));
   });
   applyTheme(document.documentElement.getAttribute('data-theme') || 'light');
-  if (window.innerWidth >= 769 && localStorage.getItem('sidebar-collapsed') === 'true') setSidebarCollapsed(true);
+  if (window.innerWidth >= 769 && recall('sidebar-collapsed') === 'true') setSidebarCollapsed(true);
   document.querySelectorAll('#sidebar a').forEach(function (link) {
     link.title = link.textContent.replace(/\s+/g, ' ').trim();
     link.addEventListener('click', function () { setSidebar(false); });
