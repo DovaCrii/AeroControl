@@ -7691,3 +7691,52 @@ msgstr "No se encontraron tareas."
 #~ msgstr ""
 #~ "La fila ↳ aparece cuando el área dibujada no es una circunferencia: SIGO "
 #~ "acepta una por solicitud, y ésa es la más chica que cubre toda el área."
+
+#: apps/operations/forms.py
+msgid ""
+"Optional until the permission is approved. The DGAC sets the validity window "
+"on the authorization it issues."
+msgstr ""
+"Opcional hasta que el permiso esté aprobado. La DGAC fija la vigencia en la "
+"autorización que emite."
+
+#: apps/operations/forms.py
+msgid ""
+"Optional until the permission is approved. Leave it empty while the request "
+"is still with the DGAC."
+msgstr ""
+"Opcional hasta que el permiso esté aprobado. Déjalo vacío mientras la "
+"solicitud sigue en la DGAC."
+
+#: apps/operations/forms.py apps/operations/models.py
+msgid ""
+"An approved permit needs its validity window: it is on the DGAC "
+"authorization."
+msgstr ""
+"Un permiso aprobado necesita su vigencia: viene en la autorización de la "
+"DGAC."
+
+#: apps/operations/forms.py
+msgid ""
+"That permission has no validity window yet, so no flight can be recorded "
+"against it. It arrives with the DGAC authorization."
+msgstr ""
+"Ese permiso todavía no tiene vigencia, así que no se puede registrar un "
+"vuelo contra él. Llega con la autorización de la DGAC."
+
+#: apps/operations/views.py
+msgid ""
+"Enter the permit's validity window before approving. The DGAC sets it on the "
+"authorization you just uploaded: edit the permit and type the two dates in."
+msgstr ""
+"Ingresa la vigencia del permiso antes de aprobar. La DGAC la fija en la "
+"autorización que acabas de subir: edita el permiso y escribe las dos fechas."
+
+#: templates/operations/_permission_rows.html
+#: templates/operations/permission_detail.html
+msgid "Awaiting the DGAC"
+msgstr "Esperando a la DGAC"
+
+#: templates/operations/permission_detail.html
+msgid "Not recorded"
+msgstr "Sin informar"

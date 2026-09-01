@@ -13,7 +13,10 @@
   <td><span class="cc-chip">{{ object.cost_center.code }}</span></td>
   <td>{% for operator in object.operators.all %}{{ operator }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
   <td>{% for aircraft in object.aircraft_fleet.all %}{{ aircraft }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-  <td>{{ object.valid_from|date:"Y-m-d" }} – {{ object.valid_until|date:"Y-m-d" }}</td>
+  {% comment %}LV-219: sin vigencia la celda mostraba un guion suelto entre dos
+  huecos, que se lee como un dato que falta por descuido. Dice qué es: la DGAC
+  todavía no ha respondido, y por eso no hay fechas que poner.{% endcomment %}
+  <td>{% if object.valid_from and object.valid_until %}{{ object.valid_from|date:"Y-m-d" }} – {{ object.valid_until|date:"Y-m-d" }}{% else %}<span class="text-body-secondary fst-italic">{% translate "Awaiting the DGAC" %}</span>{% endif %}</td>
   <td><span class="badge bg-{% if object.status == 'approved' %}success{% elif object.status == 'denied' %}danger{% elif object.status == 'completed' %}info{% else %}warning{% endif %}">{{ object.get_status_display }}</span></td>
   <td class="text-end text-nowrap">
     {% comment %}LV-135: la fila archivada se distingue y ofrece volver. Sin

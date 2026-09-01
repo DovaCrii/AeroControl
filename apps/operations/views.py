@@ -499,12 +499,52 @@ class RequireDgacFolioMixin:
         return super().post(request, pk)
 
 
+class RequireValidityWindowMixin:
+    """LV-219: aprobar exige la vigencia, porque acá es donde ya se conoce.
+
+    La vigencia dejó de ser obligatoria en el alta: la fija la DGAC al responder,
+    y antes de eso el solicitante no la sabe (`REQUIRE_VALIDITY_STATUSES` en el
+    modelo tiene el razonamiento). Pero **aflojar el alta sin cerrar la
+    aprobación** dejaría permisos aprobados sin plazo: `expire_permissions` no
+    tendría de dónde agarrarse para cerrarlos, y en el panel no contarían ni como
+    vigentes ni como vencidos — quedarían invisibles justo cuando pasan a ser
+    reales.
+
+    Es la misma compuerta y el mismo lugar que `RequireDgacFolioMixin`, y por la
+    misma razón: éste es el camino por el que un permiso se aprueba de verdad. La
+    regla también está en `clean()`, pero una regla que sólo vive en el
+    formulario es evadible — es literalmente el defecto que `LV-156` encontró en
+    la regla del folio, que existía desde `LV-39` y este botón no comprobaba.
+
+    El mensaje manda a editar el permiso, que es donde están las dos casillas: la
+    vigencia viene en la misma autorización firmada que el mixin de al lado acaba
+    de exigir, así que quien aprueba tiene el papel en pantalla.
+    """
+
+    missing_validity_message = None
+
+    def post(self, request, pk):
+        permission = get_object_or_404(self.model, pk=pk, is_active=True)
+        if permission.valid_from is None or permission.valid_until is None:
+            messages.error(request, self.missing_validity_message)
+            return redirect(permission)
+        return super().post(request, pk)
+
+
 class FlightPermissionApprove(
-    RequireDgacPermitPdfMixin, RequireDgacFolioMixin, StatusTransitionView
+    RequireDgacPermitPdfMixin,
+    RequireDgacFolioMixin,
+    RequireValidityWindowMixin,
+    StatusTransitionView,
 ):
     model = FlightPermission
     target_status = "approved"
     valid_from_statuses = ["requested"]
+    missing_validity_message = gettext_lazy(
+        "Enter the permit's validity window before approving. The DGAC sets it "
+        "on the authorization you just uploaded: edit the permit and type the "
+        "two dates in."
+    )
     success_message = gettext_lazy("Permission approved.")
     missing_pdf_message = gettext_lazy(
         "Upload the DGAC operation authorization (the signed SIGO PDF) "

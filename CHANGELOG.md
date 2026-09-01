@@ -168,6 +168,21 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **Pedir un permiso ya no obliga a inventar dos fechas (`LV-219`).** "Vigente
+  desde" y "Vigente hasta" eran obligatorios en el alta, pero la vigencia la fija
+  la DGAC al responder: antes de eso nadie la sabe. Ahora quedan vacías mientras
+  el permiso está solicitado, y se exigen al aprobarlo, que es cuando ya vienen
+  en la autorización firmada. Un permiso sin vigencia **no caduca solo, no cuenta
+  como vigente ni como vencido, y no aparece en el calendario ni entre los
+  vencimientos próximos** — queda en "esperando a la DGAC", que es lo que de
+  verdad es. Tampoco se le puede registrar un vuelo: sin autorización no hay
+  vuelo que registrar, y ahora lo dice en vez de fallar.
+- **La ficha del permiso ya muestra la región, incluso cuando falta (`LV-220`).**
+  La fila sólo se dibujaba si había región, comuna o nombre de área, así que en un
+  permiso sin los tres desaparecía entera y no se distinguía de un dato que no
+  aplica. Ahora dice "Sin informar", que es lo que corresponde: la DGAC pide la
+  región en el formulario del SIGO. No se deduce de las coordenadas — una región
+  inferida no debe verse igual que una declarada.
 - **El clima sale del panel (`LV-216`).** No se miraba ahí y además mostraba "el
   pronóstico no está disponible" cuando el proveedor no responde. La revisión
   meteorológica que el expediente pide se sigue registrando en la ficha del plan,

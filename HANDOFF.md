@@ -207,16 +207,16 @@ para conectarse a sí misma. No hubo daño —`cd` falló y el `&&` detuvo el re
 pero se perdió una vuelta. **Cuando se dicten comandos de despliegue, copiarlos de
 § "El despliegue, por pasos" en vez de escribirlos de memoria.**
 
+#### ⚠️ El próximo despliegue lleva migración
+
+`LV-219` trae **`operations.0023`** (la vigencia del permiso pasa a admitir
+nulos). El paso es `migrate` + `collectstatic`, **con respaldo previo**, y no sólo
+`collectstatic` como los tres anteriores. Es exactamente la situación que tumbó
+producción el 2026-08-31: una migración sin aplicar detrás de un despliegue que se
+dictó como "sólo estáticos".
+
 #### Lo que quedó en cola, en orden de valor
 
-0. **`LV-219`, `P1` — el alta exige una vigencia que la DGAC todavía no dio.** Es
-   lo más importante de la cola porque **hoy obliga a inventar dos fechas** para
-   poder guardar un permiso, y esas fechas alimentan el motor de vencimientos, el
-   panel, el informe y `expire_permissions`. El patrón a seguir ya existe:
-   `LV-39` hizo opcional el folio DGAC por esta misma razón. Lo que hay que
-   decidir antes de tocar es qué significa una vigencia nula para cada uno de esos
-   lectores — ni "vencido" ni "vigente", sino un tercer estado que hay que
-   nombrar.
 1. **`LV-218` — cruzar los NOTAM de la DGAC con el sector del permiso.** La idea
    más valiosa que dejó el usuario y la más grande. Lo primero es averiguar si
    `aipchile.dgac.gob.cl/notam` ofrece API o feed; **el riesgo manda el diseño**:
