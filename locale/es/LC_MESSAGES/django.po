@@ -7778,3 +7778,15 @@ msgstr "Carta del mandante en ficha"
 #: apps/operations/dossier.py
 msgid "Needed to renew the permit"
 msgstr "Necesaria para renovar el permiso"
+
+#: templates/base.html
+msgid ""
+"Drag, or use the arrow keys, to set the navigation width. Double-click to "
+"reset it."
+msgstr ""
+"Arrastra, o usa las flechas del teclado, para ajustar el ancho de la "
+"navegación. Doble clic para volver al valor original."
+
+#: templates/base.html
+msgid "Drag to set the width · double-click to reset"
+msgstr "Arrastra para ajustar el ancho · doble clic para restablecer"

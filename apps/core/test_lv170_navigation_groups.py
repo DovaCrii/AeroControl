@@ -133,8 +133,28 @@ def test_a_folded_group_stays_reachable_with_the_bar_in_icon_mode():
 
 
 def test_the_sidebar_is_wide_enough_for_its_longest_row():
-    match = re.search(r"--ac-sidebar-width:\s*(\d+)px", CSS.read_text("utf-8"))
+    """El ancho **por defecto** no puede cortar la fila más larga.
 
+    LV-208: el patrón cambió y el regex viejo (`--ac-sidebar-width:\\s*(\\d+)px`)
+    pasó a encontrar el **72px del estado colapsado** en vez del valor por
+    defecto, así que el test empezó a fallar midiendo otra cosa. Ahora el valor
+    por defecto vive en el fallback del `var()`, porque el ancho que el usuario
+    fije arrastrando el borde tiene que poder ganarle.
+
+    Sigue midiendo el **default** a propósito: que alguien elija estrechar la
+    barra por debajo de estos 272 px es su decisión —el arrastre lo permite hasta
+    240 y ahí los rótulos largos pasan a dos líneas—, pero nadie debería
+    encontrarse la barra cortada sin haberla tocado.
+    """
+    match = re.search(
+        r"--ac-sidebar-width:\s*var\(--ac-sidebar-width-user,\s*(\d+)px\)",
+        CSS.read_text("utf-8"),
+    )
+
+    assert match, (
+        "no se encontró el ancho por defecto de la barra: si el patrón del token "
+        "volvió a cambiar, actualizar este regex -- ver LV-170 y LV-208"
+    )
     assert int(match.group(1)) >= MIN_SIDEBAR_WIDTH, (
         f"medido en el navegador: hacen falta {MIN_SIDEBAR_WIDTH}px o se corta "
         '"Evaluación de conocimientos" -- ver LV-170'

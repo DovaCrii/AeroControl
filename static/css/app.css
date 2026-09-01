@@ -61,6 +61,65 @@ body {
     box-shadow 0.2s ease, transform 0.2s ease;
 }
 
+/* LV-208: el borde arrastrable. Pedido del usuario: *"se podía poner que la
+   navegación poder agrandar o desplazar para poder regular el ancho de la
+   barra"*. Hasta acá la barra tenía dos estados y nada en medio, y con nombres
+   como "Planificación geoespacial" el ancho fijo obliga a elegir entre texto
+   cortado y quitarle sitio al contenido — que es distinto de colapsar.
+
+   Se dibuja **sobre** el borde derecho y no ocupa lugar en el flujo: la barra ya
+   tiene `border-right`, y meter un elemento de 6 px en el layout habría movido
+   todo el contenido. De ahí `position:absolute` con `right:-3px`, centrado sobre
+   la línea que ya existe.
+
+   `touch-action:none` es lo que impide que el navegador interprete el arrastre
+   como desplazamiento de la página en un táctil. */
+.sidebar-resizer {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  z-index: 3;
+}
+
+/* Sólo se insinúa al apuntarlo o al enfocarlo: un tirador siempre visible
+   compite con el borde de la barra por la atención, y no es un control que se
+   use a diario. El foco **sí** se dibuja siempre que llega por teclado, porque
+   si no, quien navega con tabulador no sabría dónde está. */
+.sidebar-resizer:hover,
+.sidebar-resizer:focus-visible {
+  background: var(--ac-primary);
+}
+
+.sidebar-resizer:focus-visible {
+  outline: 2px solid var(--ac-primary);
+  outline-offset: 1px;
+}
+
+/* Mientras se arrastra, nada de selección de texto ni de cursores cambiando
+   según lo que haya debajo del puntero. */
+body.is-resizing-sidebar {
+  cursor: col-resize;
+  user-select: none;
+}
+
+/* Con la barra colapsada el tirador no aplica: el ancho lo manda el estado, y
+   dejarlo agarrable permitiría estirar una barra en modo icono a 400 px de
+   iconos centrados. El botón `<` es lo que devuelve el estado abierto. */
+.sidebar.is-collapsed .sidebar-resizer { display: none; }
+
+/* El cajón móvil se abre a `min(86vw, ...)`: ahí el ancho no se regula, se
+   abre o se cierra. */
+@media (max-width: 768px) {
+  .sidebar-resizer { display: none; }
+}
+
 .sidebar a {
   display: flex;
   align-items: center;
@@ -741,7 +800,18 @@ body, .card, .form-control, .form-select, .page-link, .table,
      ella sola, y la barra incluye sus 24 px de relleno — así que el mínimo real
      son 272. Los 8 de más son colchón para que una métrica de fuente apenas
      distinta no vuelva a recortar la última letra, no un número al azar. */
-  --ac-sidebar-width: 280px;
+  /* LV-208: el ancho que el usuario haya fijado arrastrando el borde manda, y
+     los 280 quedan como valor por defecto.
+
+     **Va en `:root` y no en `.sidebar`, y eso no es indiferente.** Una custom
+     property se resuelve en el elemento donde se *usa*, así que si el valor del
+     usuario se escribiera inline en `.sidebar` ganaría por especificidad de
+     estilo inline y **anularía `--ac-sidebar-width: 72px` del estado colapsado**
+     — el botón `<` dejaría de hacer nada en cuanto alguien tocara el borde una
+     vez. Escribiéndolo en `documentElement`, la regla `.sidebar.is-collapsed`
+     sigue ganando sobre `:root` por ser más específica, y los dos controles
+     conviven: el arrastre fija el ancho abierto, el botón sigue colapsando. */
+  --ac-sidebar-width: var(--ac-sidebar-width-user, 280px);
   /* Brand palette. Kept apart from --ac-primary, which is the accessible
      action colour: the brand turquoise does not clear 4.5:1 on white. */
   --ac-navy: #1B2A4A;
@@ -1262,9 +1332,44 @@ main {
    depender de la forma del DOM de una librería de terceros, que era lo frágil:
    una versión nueva de crispy que cambiara `fieldset > div` habría dejado el
    roster sin caja y sin que ningún test lo notara. */
+/* LV-222: de multicolumna a rejilla, que es la causa del desalineado.
+
+   Pedido del usuario con captura: *"sigue viendo desalineado al buscar operador y
+   RPA; buscar una forma de que el orden sea prolijo en las listas"*. Al filtrar
+   "fran" quedaban "Francisca Fredes Araya" y "Franco Cereceda Espinoza" en
+   columnas de **alturas distintas**, con el nombre largo partido en dos líneas y
+   la casilla del vecino a media altura. Con la aeronave pasaba igual, porque su
+   etiqueta lleva matrícula, modelo y número de serie (`R5.5`) y ocupa tres.
+
+   **La culpa era de `column-width`.** El layout multicolumna hace fluir cada
+   elemento por su cuenta: nada relaciona la altura de un elemento con la del que
+   está a su lado, así que una etiqueta de dos líneas corre todo lo que sigue en
+   su columna y desalinea respecto a la de al lado. `break-inside: avoid` evitaba
+   que un elemento se partiera en dos columnas, que es otro problema.
+
+   En una rejilla, en cambio, **las celdas de una misma fila comparten altura por
+   definición**, así que las casillas quedan alineadas sin importar cuántas líneas
+   ocupe cada rótulo. `align-items: start` es lo que las pega arriba de su fila:
+   sin eso, `.form-check` se centraría verticalmente y una casilla volvería a
+   quedar a media altura de su vecina alta — el síntoma exacto de la captura.
+
+   **No se cambió al desplegable con buscador que el usuario propuso**, y no por
+   descarte: estos dos campos son de selección múltiple —un permiso lleva varios
+   operadores y varias aeronaves (`OPS-4`)— y `LV-151` eligió la rejilla de
+   casillas justamente para que lo ya elegido se vea de un vistazo, tras el pedido
+   literal *"tengo problemas a buscar los operadores"*. Un desplegable múltiple
+   esconde lo elegido detrás de un clic, que es lo que esa fila vino a arreglar.
+   La rejilla con filas parejas da el orden pedido sin perder lo ganado.
+
+   `auto-fill` con `minmax` conserva la medida de `LV-38`: 210 px es el ancho
+   mínimo con el que un nombre completo entra sin partirse, y las columnas que
+   caben las decide el ancho disponible — que ahora además cambia con la barra de
+   navegación (`LV-208`). */
 .roster-options {
-  column-width: 210px;
-  column-gap: 1.25rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 0.1rem 1.25rem;
+  align-items: start;
   max-height: 15rem;
   overflow-y: auto;
   padding: 0.6rem 0.85rem;
@@ -1273,8 +1378,44 @@ main {
   background: var(--ac-surface-raised);
 }
 .roster-options.is-invalid { border-color: var(--bs-danger); }
+/* El estado vacío (`{% empty %}`) es un `<p>` suelto dentro de la rejilla: que
+   ocupe la fila entera en vez de una celda de 210 px. */
+.roster-options > p { grid-column: 1 / -1; }
+
+/* LV-222, segunda mitad: **el desorden que quedaba no lo veía la medición.**
+   Con la rejilla puesta, los `top` de todas las casillas de una fila ya
+   coincidían al milímetro — y en pantalla la lista seguía torcida. `.form-check`
+   de Bootstrap coloca el input con `float: left` y compensa con `padding-left`
+   en el contenedor, así que **una etiqueta que no entra en una línea baja por
+   debajo del float** y arranca pegada al margen izquierdo, con la casilla
+   flotando sola arriba. Con "Alvaro Andres Arias Malermo" en una celda de 235 px,
+   o con la etiqueta de una aeronave —matrícula, modelo y número de serie
+   (`R5.5`)— eso es la mayoría de las filas.
+
+   Se reemplaza el float por flex: la casilla y el texto quedan lado a lado y el
+   texto que envuelve lo hace **indentado bajo sí mismo**, no bajo la casilla.
+   `align-items: flex-start` lo pega a la primera línea del rótulo, y `min-width:
+   0` es lo que permite al texto encogerse dentro de la celda en vez de forzarla
+   a crecer.
+
+   `margin-top` en la casilla y no `align-items: center`: centrarla contra un
+   rótulo de tres líneas la dejaría a media altura, que es justo el síntoma que el
+   usuario fotografió. Los 0.2 rem la alinean con la primera línea del texto. */
 .roster-option {
-  break-inside: avoid;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  padding-left: 0;
+  margin-bottom: 0;
+}
+.roster-option .form-check-input {
+  float: none;
+  flex: 0 0 auto;
+  margin: 0.2rem 0 0 0;
+}
+.roster-option .form-check-label {
+  min-width: 0;
+  cursor: pointer;
 }
 .roster-head {
   display: flex;

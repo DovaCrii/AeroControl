@@ -282,6 +282,23 @@
       {% if perms.core.view_operationaltenant or perms.core.view_tenantmembership or perms.compliance.view_documenttype or perms.compliance.view_alertrule or perms.workboard.view_kanbanboard or perms.workboard.view_kanbanstage or perms.workboard.view_kanbanlabel or perms.core.view_backupconfig or perms.core.view_auditevent %}<a href="{% url 'administration' %}" class="nav-item nav-admin"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17a9 9 0 0 1 18 0"/><path d="M12 17l4.5-5"/><circle cx="12" cy="17" r="1.3"/></svg>{% translate "Administration center" %}</a>{% endif %}
       <a href="{% url 'admin:index' %}" class="nav-item nav-admin"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2 2-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.04 1.56V20h-2.8v-.1A1.7 1.7 0 0 0 11 18.34a1.7 1.7 0 0 0-1.88.34l-.06.06-2-2 .06-.06A1.7 1.7 0 0 0 7.46 15 1.7 1.7 0 0 0 5.9 14H5.8v-2.8h.1a1.7 1.7 0 0 0 1.56-1.04 1.7 1.7 0 0 0-.34-1.88l-.06-.06 2-2 .06.06A1.7 1.7 0 0 0 11 6.62a1.7 1.7 0 0 0 1.04-1.56V5h2.8v.1a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06 2 2-.06.06a1.7 1.7 0 0 0-.34 1.88A1.7 1.7 0 0 0 21 11.2h.1V14H21a1.7 1.7 0 0 0-1.6 1z"/></svg>{% translate "Admin" %}</a>
       {% endwith %}
+      {% comment %}LV-208: el tirador del ancho, pedido del usuario para poder
+      regular la barra en vez de sólo abrirla o colapsarla.
+
+      Va **dentro** del `<aside>` y al final: se posiciona sobre el borde derecho
+      con `position:absolute`, y el contexto lo da el `position:sticky` de la
+      propia barra. Al final del contenido para que el orden de tabulación lo
+      encuentre después de los enlaces del menú — un control de layout antes de
+      la navegación sería un obstáculo en el camino de todos los días.
+
+      `role="separator"` con `tabindex="0"` es lo que lo vuelve alcanzable por
+      teclado y lo que un lector de pantalla anuncia como movible; los
+      `aria-value*` los mantiene el JS. Sin esto sería un control exclusivo del
+      ratón, y `LV-185` fijó que eso no se da por bueno.{% endcomment %}
+      <button class="sidebar-resizer" type="button" role="separator"
+              aria-orientation="vertical" tabindex="0"
+              aria-label="{% translate 'Drag, or use the arrow keys, to set the navigation width. Double-click to reset it.' %}"
+              title="{% translate 'Drag to set the width · double-click to reset' %}"></button>
     </aside>
 
     <main class="container-fluid p-4" id="main-content" tabindex="-1">
@@ -299,6 +316,11 @@
           integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
           crossorigin="anonymous"></script>
   <script src="{% static 'js/app.js' %}"></script>
+  {% comment %}LV-208: después de `app.js`, que es quien restaura el estado
+  colapsado desde `localStorage`. El orden importa poco para el ancho —cada uno
+  escribe una cosa distinta— pero deja el layout resuelto en una sola pasada en
+  vez de que la barra se dibuje, se colapse y se reajuste.{% endcomment %}
+  <script src="{% static 'js/sidebar-resize.js' %}"></script>
   {% block extrascripts %}{% endblock %}
 </body>
 </html>
