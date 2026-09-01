@@ -109,7 +109,16 @@
   muestran juntos porque juntos se declaran, y sólo cuando están: un permiso viejo
   sin ellos no es un permiso incompleto.{% endcomment %}
   {% if permission.amc %}<tr><th scope="row">{% translate "Nearest aerodrome (AMC)" %}</th><td>{{ permission.amc }}{% if permission.amc_distance_km is not None %} · {{ permission.amc_distance_km }} km{% endif %}</td></tr>{% endif %}
-  {% if permission.max_altitude_ft %}<tr><th scope="row">{% translate "Maximum altitude" %}</th><td>{{ permission.max_altitude_ft }} ft</td></tr>{% endif %}<tr><th scope="row">{% translate "Area type" %}</th><td>{{ permission.get_area_type_display|default:"—" }}</td></tr><tr><th scope="row">{% translate "Notes" %}</th><td>{{ permission.notes|default:"—" }}</td></tr>
+  {% comment %}LV-221: metros primero, porque es como se opera, y los pies al
+  lado en gris porque es lo que pide el formulario del SIGO. Tener las dos
+  unidades a la vista evita el cálculo a mano al transcribir, que es la clase de
+  error que `LV-171` vino a reducir — y el que produjo los tres permisos con
+  `120 ft` donde se querían 120 m.
+
+  Los pies **no se guardan**: los calcula `max_altitude_ft_equivalent`. Dos
+  columnas con el mismo hecho en distinta unidad son dos columnas que se
+  desincronizan, que es exactamente el estado del que viene esta fila.{% endcomment %}
+  {% if permission.max_altitude_m %}<tr><th scope="row">{% translate "Maximum altitude" %}</th><td>{{ permission.max_altitude_m }} m <span class="text-body-secondary">· {{ permission.max_altitude_ft_equivalent }} ft {% translate "for the SIGO form" %}</span></td></tr>{% endif %}<tr><th scope="row">{% translate "Area type" %}</th><td>{{ permission.get_area_type_display|default:"—" }}</td></tr><tr><th scope="row">{% translate "Notes" %}</th><td>{{ permission.notes|default:"—" }}</td></tr>
 </tbody></table></div>
 {% comment %}LV-107: el expediente operativo. Va **antes** de la trazabilidad
 porque contesta la pregunta con la que uno llega —"¿esto está completo?"—,
