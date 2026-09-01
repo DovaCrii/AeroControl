@@ -408,7 +408,15 @@ class TestThePanelRowsSayTheirCostCenter:
             .content.decode()
         )
 
-        assert content.index("cc-chip") < content.index("bg-secondary-subtle")
+        # LV-217: se pregunta por **el tono que le toca a esta fila**, no por un
+        # color literal. El test usaba `bg-secondary-subtle` como proxy del badge
+        # de tipo, y dejó de servir cuando los tipos pasaron a tener color propio:
+        # esta fila es de una aeronave, así que su píldora ya no es la gris. Lo
+        # que el test comprueba —que el chip de faena va **antes** que el tipo— no
+        # cambió; cambió por dónde se localiza el tipo.
+        from apps.compliance.digest import SUBJECT_TONE_CSS
+
+        assert content.index("cc-chip") < content.index(SUBJECT_TONE_CSS["aircraft"])
 
     def test_a_malformed_cost_center_param_does_not_500_the_panel(self):
         response = login_as("view_aircraft").get(

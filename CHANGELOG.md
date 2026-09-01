@@ -168,6 +168,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **Las etiquetas de tipo ahora tienen color (`LV-217`).** En la lista de
+  vencimientos y en la bandeja de alertas, los tipos iban todos del mismo gris, así
+  que había que leer cada etiqueta para saber de qué hablaba la fila. Ahora el
+  color dice de qué cuelga el vencimiento: de una persona, de una aeronave, del
+  permiso, o de un documento. Los colores de urgencia (rojo y ámbar) siguen siendo
+  solo de la urgencia, para que no compitan.
 - **El ancho de la barra de navegación se regula arrastrando su borde (`LV-208`).**
   Antes había dos estados y nada en medio: abierta o en modo icono. Ahora el borde
   se arrastra, el ancho se recuerda entre visitas, y un doble clic lo devuelve al

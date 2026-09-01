@@ -48,6 +48,101 @@ BUCKET_TEXT_CSS = {
 }
 
 
+# LV-217: el color del **tipo**, que es otra pregunta que la urgencia.
+#
+# Pedido del usuario con captura: *"a los vencimientos y alertas poner colores
+# para diferenciar los tag de qué es cada uno; hoy no tiene y es gris"*. Los cinco
+# orígenes de la lista llevaban el mismo `bg-secondary-subtle`, así que había que
+# leer el texto de cada píldora para saber de qué hablaba la fila — justo lo que
+# una píldora de color existe para evitar.
+#
+# **Cuatro tonos y no uno por tipo, y es una decisión.** Hay seis orígenes
+# (habilitación, credencial DGAC, evaluación, seguro JAC, documento, permiso), y
+# seis colores serían seis cosas que memorizar sin que el color diga nada por sí
+# mismo. Agrupados por **de qué cuelga el vencimiento**, el color contesta algo
+# verdadero de un vistazo —"esto es de una persona", "esto es de una aeronave"— y
+# el texto de la píldora sigue precisando cuál. Cuatro categorías se aprenden
+# solas; seis colores arbitrarios se consultan.
+#
+# ⚠️ **Ninguno de los cuatro usa `danger`, `warning` ni `info`**, y eso es lo que
+# los hace convivir con la fila: esos tres son la escala de urgencia de `LV-148`
+# (arriba), que en el panel se dibuja sobre la fecha. Un tipo y una urgencia
+# compitiendo por el mismo canal es cómo se pierde el rojo, que es la única señal
+# que tiene que gritar.
+#
+# ⚠️ **Medido en el navegador, y el resultado corrige la intuición: lo que
+# distingue estas píldoras es el color del TEXTO, no el del fondo.**
+#
+# Los fondos `-subtle` de Bootstrap en tema claro son cuatro blancos casi iguales
+# —`rgb(231,239,255)`, `rgb(228,246,234)`, `rgb(236,229,248)`, `rgb(236,239,244)`—
+# separados por distancias RGB de **11 a 23**, o sea imperceptibles de un vistazo.
+# Quien diseñe esto pensando en "fondos de colores distintos" se equivoca, y es
+# fácil equivocarse: fue el primer diseño de esta fila.
+#
+# La señal está en los `-emphasis`: azul `rgb(27,79,156)`, verde `rgb(31,122,67)`,
+# púrpura `rgb(74,44,143)` y gris `rgb(56,66,82)`, con distancias de **60 a 117**
+# en tema claro y de **51 a 136** en oscuro. El par más cercano es permiso/aeronave
+# (azul contra púrpura), y es el que hay que cuidar si algún día se retoca.
+#
+# El fondo suave hace de píldora; el texto hace de identidad. **No sustituir el
+# texto de énfasis por un gris uniforme "para que se lea mejor": ahí se pierde
+# todo lo que esta fila logró.**
+#
+# Contraste de texto sobre su propio fondo, medido en los dos temas: 6.88 / 4.76 /
+# 8.36 / 8.80 en claro y 7.45 / 7.63 / 8.44 / 8.21 en oscuro — los ocho sobre el
+# 4.5:1 que pide AA para texto pequeño. El más justo es el verde de `person`.
+SUBJECT_TONE_CSS = {
+    # El trámite en sí: el permiso de vuelo y su vigencia. Azul, el más
+    # distinguible, porque es el objeto central de la app.
+    "permit": "bg-primary-subtle text-primary-emphasis",
+    # De una persona: su habilitación, su credencial DGAC, su evaluación.
+    "person": "bg-success-subtle text-success-emphasis",
+    # De una aeronave: el seguro JAC, y el registro DGAC cuando exista.
+    #
+    # ⚠️ **El único que no es un par de Bootstrap, y por medición.** Empezó siendo
+    # `bg-dark-subtle`, y medido en el navegador resultó ser `rgb(233,235,238)`
+    # contra el `rgb(236,239,244)` de `document`: dos grises separados por tres
+    # puntos de canal, o sea el mismo gris a la vista. Dos de los cuatro tipos no
+    # se distinguían — exactamente lo que esta fila vino a arreglar.
+    #
+    # Bootstrap ofrece ocho familias y tres están reservadas a la urgencia
+    # (`danger`, `warning`, `info`), así que sólo quedan **dos** cromáticas
+    # (`primary`, `success`) y tres grises. Con cuatro tipos que conviven en la
+    # misma lista hacía falta un tercer color, y se define en `app.css` como
+    # `.badge-kind-aircraft` con su variante de tema oscuro.
+    "aircraft": "badge-kind-aircraft",
+    # Un documento del expediente. Se queda con el gris que tenían todos: es el
+    # origen más genérico y el que menos gana con un color propio.
+    "document": "bg-secondary-subtle text-secondary-emphasis",
+}
+
+
+# LV-217, segunda mitad: lo mismo en la bandeja de alertas, pedido del usuario en
+# un segundo mensaje: *"lo mismo en alerta, el tipo de entidad"*.
+#
+# Va por `"app_label.model"` y no por la clase, porque acá el modelo llega desde
+# el `content_type` de la alerta y las reglas las configura el usuario
+# (`AlertRule.entity_type` es texto).
+#
+# ⚠️ **Y por eso este mapeo lleva fallback y el del panel no.** Las fuentes del
+# panel están codificadas: una fuente nueva sin color es un olvido del
+# programador, y conviene que levante. Acá, en cambio, cualquiera puede crear una
+# regla sobre un modelo que esta tabla no conozca, y una bandeja que revienta por
+# un color es peor que una píldora gris. La asimetría es deliberada.
+ENTITY_TONES = {
+    "operations.flightpermission": "permit",
+    "registry.qualification": "person",
+    "registry.operator": "person",
+    "registry.knowledgeassessment": "person",
+    "registry.aircraft": "aircraft",
+    # La mantención cuelga de una aeronave, así que comparte su tono: para quien
+    # mira la bandeja, las dos filas hablan del mismo equipo.
+    "maintenance.maintenancerecord": "aircraft",
+    "compliance.document": "document",
+    "compliance.monthlycompliancereview": "document",
+}
+
+
 def bucket_for(expiry, today):
     """Return the urgency bucket key for an expiry date."""
     if expiry < today:

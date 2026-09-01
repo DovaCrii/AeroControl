@@ -240,6 +240,29 @@ tiene las cartas al día:
 uv run python manage.py check_client_letters
 ```
 
+#### ⚠️ El informe de agosto ya se emitió, y es la referencia real
+
+`OneDrive/DGAC/INFORMES/Agosto2026/JEJ-GTE-CT-INF-RPA-2026-08_Agosto2026.pdf`.
+**Ese PDF manda sobre la especificación**: son 5 páginas con otra división que los
+6 artboards del SPEC, y la estructura real está volcada en
+`apps/reporting/MAPPING.md` junto con los indicadores del cierre de agosto, que
+sirven de caso de prueba para los colectores.
+
+Tres cosas que salieron de leerlo:
+
+1. ✅ **La Fase 1 del plan del informe, comprometida para octubre, ya está
+   implementada y desplegada** (`LV-224`, `LV-225`, `LV-226`). El informe la
+   describe con el mismo reparto de roles que llevan las reglas sembradas.
+2. ⚠️ **"7 de 11 permisos fueron autorizados por 3 meses y 4 por 2 meses."** Por
+   eso `LV-224` **valida** el techo en vez de calcular el vencimiento: calcularlo
+   habría falseado 4 de 11 vigencias reales.
+3. **La mitad de la Fase 2 (noviembre) también está**: `LV-219` ya rechaza
+   registrar un vuelo contra un permiso sin vigencia.
+
+**Buena parte del informe es narrativa escrita a mano** —resumen ejecutivo,
+hallazgos, la observación del período, las cuatro fases— y eso es lo que `LV-227`
+tiene que resolver, no un editor de plantillas.
+
 #### El informe mensual RPA para la DGAC — R1 hecho
 
 Entró un frente nuevo: JEJ debe emitir cada mes un informe de reportabilidad RPA

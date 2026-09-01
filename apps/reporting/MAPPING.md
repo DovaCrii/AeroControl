@@ -14,6 +14,44 @@ bloqueante**. Sin este mapeo, R2–R4 vuelven a construir lo que ya está.
 
 ---
 
+## ⚠️ La estructura real del informe emitido, que difiere del SPEC
+
+El informe de agosto **ya se emitió** a la DGAC:
+`OneDrive/DGAC/INFORMES/Agosto2026/JEJ-GTE-CT-INF-RPA-2026-08_Agosto2026.pdf`.
+**Ese PDF, y no la especificación, es la referencia de qué hay que producir** — el
+SPEC describe 6 artboards y el informe emitido tiene **5 páginas** con otra
+división:
+
+| Página | Contenido | De dónde sale |
+|---|---|---|
+| 1 | Portada: código, período, elaborado por / dirigido a, alcance del ciclo, fecha de corte, estándar `JEJ-GRI-SS-INS-096 Rev. 0` | Constantes + período |
+| 2 | **1 Resumen ejecutivo**: 6 indicadores en tarjetas + 4 hallazgos redactados | Cifras de la base; **hallazgos escritos a mano** |
+| 3 | **2 Permisos vigentes**: el ciclo de 4 pasos, una observación del período, y la tabla de 11 permisos (N° JEJ, N° DGAC, CC, operadores, aeronaves, vigencia, días) + las solicitudes en trámite | Tabla de la base; **observación escrita a mano** |
+| 4 | **3 Cobertura por Centro de Costo**: tabla de 12 faenas con permisos vigentes, próximo vencimiento, días y estado; más cobertura del padrón y concentración operacional | Todo de la base |
+| 5 | **4 Plan de normalización**: 4 fases con criterio de cierre + tabla de exigibilidad progresiva | **Todo escrito a mano** (ver `LV-227`) |
+
+**Los indicadores reales del cierre de agosto**, útiles como caso de prueba de los
+colectores: 12 faenas registradas con operación RPA, 11 permisos vigentes, 7 de 12
+faenas **sin** permiso vigente, 4 permisos por vencer en 60 días (uno en 17), 3
+solicitudes en trámite, 0 incidentes. Del padrón de 41 operadores y 14 aeronaves,
+sólo 10 y 6 están designados en permisos vigentes.
+
+⚠️ **El dato que evita corromper datos reales**: *"la vigencia otorgada no es
+uniforme. De los 11 permisos vigentes, 7 fueron autorizados por 3 meses y 4 por 2
+meses. El calendario de renovación debe construirse sobre la fecha real de cada
+resolución, nunca sobre un plazo supuesto."* Por eso `LV-224` **valida** el techo
+de 3 meses y no calcula el vencimiento: calcularlo habría falseado 4 de 11.
+
+✅ **La Fase 1 del plan (comprometida para octubre) ya está implementada**:
+`LV-224` (vencimiento sobre la fecha real de cada resolución), `LV-225` (carta del
+mandante) y `LV-226` (alertas 45/30/15 con el escalamiento del reparto de roles que
+el informe describe). Desplegado el 2026-09-01.
+
+Y la Fase 2 (noviembre) pide que *"el sistema no admita registrar un vuelo sin
+permiso vigente en esa fecha"* — la mitad de eso la dejó puesta `LV-219`, que
+rechaza un vuelo contra un permiso sin vigencia; la validación del rango de fechas
+ya existía.
+
 ## Estado de la §6 del SPEC
 
 | § | Dato | Estado | Dónde |

@@ -1442,6 +1442,34 @@ main {
 .roster-search { max-width: 22rem; }
 .roster-empty { margin-top: 0.4rem; }
 
+/* ── LV-217: el tercer color de tipo, el que Bootstrap no da ───────────────
+   La píldora del tipo usa cuatro tonos (ver `digest.SUBJECT_TONE_CSS`), y tres
+   salen de pares `-subtle`/`-emphasis` de Bootstrap. Éste no puede: de las ocho
+   familias, tres están reservadas a la escala de urgencia (`danger`, `warning`,
+   `info`) y de las cinco restantes sólo dos son cromáticas — las otras tres son
+   grises que, medidos en el navegador, quedan a tres puntos de canal unos de
+   otros. `bg-dark-subtle` daba `rgb(233,235,238)` contra el `rgb(236,239,244)` de
+   `secondary`: el mismo gris a la vista, y dos de los cuatro tipos sin distinguir.
+
+   Púrpura y no el turquesa de marca: el turquesa está demasiado cerca del verde
+   de `success`, que ya se usa para los vencimientos de personas.
+
+   Los cuatro valores están medidos, no elegidos a ojo — ver el registro de la
+   fila. El mínimo que tienen que cumplir es 4.5:1 de texto sobre su propio fondo
+   (AA para texto pequeño), en los dos temas. */
+.badge-kind-aircraft {
+  background-color: #ece5f8;
+  color: #4a2c8f;
+}
+
+/* El tema oscuro se declara por `[data-theme]` y no sólo por
+   `prefers-color-scheme`: la app tiene su propio interruptor, y `theme-init.js`
+   escribe el atributo en `<html>`. */
+[data-theme="dark"] .badge-kind-aircraft {
+  background-color: #2a1f45;
+  color: #cbb8f0;
+}
+
 /* ── LV-146: la faena como chip de identidad ───────────────────────────────
    Contorno sin relleno a propósito: en la fila del panel el chip convive con el
    badge de tipo (`bg-secondary-subtle`), y dos pastillas rellenas del mismo gris

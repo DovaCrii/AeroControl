@@ -639,6 +639,31 @@ class Alert(EffectivenessVerificationMixin, BaseModel):
         return str(label).capitalize()
 
     @property
+    def entity_tone_css(self):
+        """LV-217: el color de la píldora del tipo de entidad.
+
+        Pedido del usuario: *"lo mismo en alerta, el tipo de entidad"*. Toda la
+        columna llevaba el mismo gris, así que había que leer cada píldora para
+        saber de qué hablaba la fila.
+
+        Sale de la **misma tabla** que la lista de vencimientos del panel
+        (`digest.SUBJECT_TONE_CSS`), y eso es el punto: las dos pantallas nombran
+        los mismos tipos, y con dos tablas una se habría desincronizado — es
+        exactamente lo que `LV-148` corrigió con la escala de urgencia, que era
+        ámbar en el panel y azul en la bandeja.
+
+        Con fallback al gris a propósito: las reglas las configura el usuario, así
+        que puede haber una sobre un modelo que la tabla no conozca, y una bandeja
+        que revienta por un color sería peor que una píldora sin color.
+        """
+        from apps.compliance.digest import ENTITY_TONES, SUBJECT_TONE_CSS
+
+        key = f"{self.content_type.app_label}.{self.content_type.model}"
+        return SUBJECT_TONE_CSS.get(
+            ENTITY_TONES.get(key, "document"), SUBJECT_TONE_CSS["document"]
+        )
+
+    @property
     def triggering_date(self):
         """LV-118: la fecha **de la que hablaba esta alerta**, no la de hoy.
 
