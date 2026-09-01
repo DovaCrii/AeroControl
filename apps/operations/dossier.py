@@ -58,6 +58,9 @@ UNKNOWN = "unknown"
 # catálogo, la misma sobre la que `seed_document_types` es idempotente).
 SIGNED_AUTHORIZATION = "dgac-rpa-operation-authorization"
 PERMIT_LETTER = "dgac-flight-permit"
+# LV-225: el tercer papel, y el único que no es de la DGAC. Lo emite el cliente
+# autorizando a operar en su faena, y sin él la DGAC no renueva.
+CLIENT_LETTER = "client-authorization-letter"
 
 
 @dataclass
@@ -199,12 +202,22 @@ def _upload_action(permission, code, user):
 
 
 def _document_items(permission, user=None):
-    """Los dos papeles DGAC, que son documentos distintos y no intercambiables.
+    """Los tres papeles del trámite, que no son intercambiables.
 
-    `LV-64`: la carta es lo que va **hacia** la DGAC como parte de la solicitud;
-    la autorización firmada es lo que **vuelve**, con folio, cuando la DGAC
-    aprueba de verdad. Sólo la segunda certifica la aprobación, y por eso es la
-    que la compuerta de `R2.4` exige.
+    `LV-64`: la carta de permiso es lo que va **hacia** la DGAC como parte de la
+    solicitud; la autorización firmada es lo que **vuelve**, con folio, cuando la
+    DGAC aprueba de verdad. Sólo la segunda certifica la aprobación, y por eso es
+    la que la compuerta de `R2.4` exige.
+
+    `LV-225`: la carta del mandante es el tercero, y el único que **no es de la
+    DGAC** — la emite el cliente autorizando a operar en su faena. Gobierna la
+    *renovación*, no la aprobación: sin ella la DGAC no renueva el permiso.
+
+    **Ninguno de los tres se suma a la compuerta de aprobación por estar acá.**
+    La carta del mandante entra como `UNKNOWN` y no como `MISSING`, igual que la
+    carta de permiso: un permiso vigente cuya carta no se digitalizó no es un
+    permiso incumplido, y marcarlo en rojo enseñaría a ignorar el rojo. Lo que
+    sí hace es que la cadena de alertas de `LV-226` pueda preguntar si está.
     """
     from django.contrib.contenttypes.models import ContentType
 
@@ -233,6 +246,13 @@ def _document_items(permission, user=None):
             PERMIT_LETTER,
             UNKNOWN,
             _("Not on file"),
+        ),
+        (
+            "client_letter",
+            _("Client authorization letter on file"),
+            CLIENT_LETTER,
+            UNKNOWN,
+            _("Needed to renew the permit"),
         ),
     ):
         if code in codes:

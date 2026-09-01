@@ -55,6 +55,10 @@ class FlightPermissionForm(AeroModelForm):
             "purpose_detail",
             "valid_from",
             "valid_until",
+            # LV-224: va **inmediatamente después** de las dos fechas, porque el
+            # mensaje de error remite a "el campo de abajo". Un campo de escape
+            # separado de la regla que lo activa es un campo que nadie encuentra.
+            "validity_override_reason",
             "location",
             "region",
             "commune",
@@ -78,6 +82,7 @@ class FlightPermissionForm(AeroModelForm):
             "purpose_detail": _("Purpose detail"),
             "valid_from": _("Valid from"),
             "valid_until": _("Valid until"),
+            "validity_override_reason": _("Reason for exceeding the maximum validity"),
             "location": _("Location"),
             "region": _("Region"),
             "commune": _("Commune"),
@@ -103,9 +108,16 @@ class FlightPermissionForm(AeroModelForm):
                 "Optional until the permission is approved. The DGAC sets the "
                 "validity window on the authorization it issues."
             ),
+            # LV-224: el máximo se dice **siempre**, no sólo cuando alguien se
+            # equivoca. Un tope que se aprende chocando con un error de validación
+            # es un tope que ya costó un intento.
             "valid_until": _(
-                "Optional until the permission is approved. Leave it empty while "
-                "the request is still with the DGAC."
+                "Optional until the permission is approved. The DGAC authorises "
+                "three months at most, counted from the start date."
+            ),
+            "validity_override_reason": _(
+                "Only if the DGAC granted a different term. Leave it empty for a "
+                "normal three-month permit."
             ),
             "area_type": _("DAN 151 (populated) vs. DAN 91 (unpopulated)."),
             "purpose_detail": _("Required when purpose is 'Other'."),
@@ -337,6 +349,25 @@ class FlightPermissionForm(AeroModelForm):
         # líneas arriba, resolvió lo mismo repitiéndose en la subclase; leer de
         # las dos fuentes evita que un día se edite una copia y no la otra, que es
         # el defecto que `LV-156` encontró en esta misma regla.
+        # LV-224: espejo del techo de 3 meses. Se calcula sobre los valores del
+        # formulario y no sobre la instancia, porque acá lo que se juzga es lo que
+        # la persona acaba de escribir.
+        start, end = cleaned.get("valid_from"), cleaned.get("valid_until")
+        reason = (cleaned.get("validity_override_reason") or "").strip()
+        if start and end and not reason:
+            probe = FlightPermission(valid_from=start)
+            limit = probe.latest_allowed_valid_until()
+            if end > limit:
+                self.add_error(
+                    "valid_until",
+                    _(
+                        "The DGAC authorises three months at most, so this window "
+                        "cannot end after %(limit)s. If the authorisation really "
+                        "says otherwise, write the reason in the field below and "
+                        "it will be recorded."
+                    )
+                    % {"limit": limit.isoformat()},
+                )
         effective_status = cleaned.get("status") or self.instance.status
         if effective_status in FlightPermission.REQUIRE_VALIDITY_STATUSES:
             for field in ("valid_from", "valid_until"):

@@ -20,6 +20,42 @@ from apps.compliance.models import AlertRule
 ESSENTIAL_RULES = [
     ("Documentos por vencer", "compliance.document", "expiry_date", 30),
     ("Permisos de vuelo por vencer", "operations.flightpermission", "valid_until", 30),
+    # LV-226: la cadena de renovación del permiso, que el informe mensual pide
+    # (`SPEC_REPORTE_MENSUAL_RPA.md` §4.1). Un permiso dura 3 meses (`LV-224`) y
+    # **renovarlo exige una carta nueva del mandante**, que hay que pedirle a un
+    # tercero: por eso el primer aviso sale a 45 días y no a 30. A 30 el trámite
+    # ya tiene que estar presentado en el SIGO.
+    #
+    # **Son tres reglas y no una con lógica adentro, y eso es deliberado.** La
+    # clave anti-duplicados del motor es `(regla, registro, valor vigilado)`
+    # (`LV-111`), así que tres reglas sobre el mismo campo producen **tres
+    # alertas escalonadas** del mismo permiso, cada una al entrar en su ventana,
+    # y las anteriores siguen abiertas. Tres alertas abiertas sobre un permiso es
+    # precisamente el escalamiento que el SPEC describe, y sale de configuración
+    # sin tocar una línea del motor.
+    #
+    # La regla de 30 días **no se renombra a propósito**: el sembrado es
+    # idempotente *por nombre*, así que cambiarle el nombre crearía una cuarta
+    # regla y dejaría la vieja activa, duplicando los avisos de todos los
+    # permisos. Se queda como está y las dos nuevas se suman alrededor.
+    #
+    # ⚠️ El destinatario va **en el nombre** porque `AlertRule` no tiene a quién
+    # dirigir: tiene `target_board`/`target_stage` y nada más. Enrutar por rol
+    # (ADC → Jefe Seguridad Aérea → Gerente, como pide el SPEC) es un mecanismo
+    # que la app todavía no tiene; nombrarlo acá al menos dice de quién es el
+    # trabajo cuando la alerta aparece en la bandeja.
+    (
+        "Permisos: pedir carta del mandante (T-45 · ADC)",
+        "operations.flightpermission",
+        "valid_until",
+        45,
+    ),
+    (
+        "Permisos: renovación vencida de plazo (T-15 · Gerencia)",
+        "operations.flightpermission",
+        "valid_until",
+        15,
+    ),
 ]
 
 OPTIONAL_RULES = [

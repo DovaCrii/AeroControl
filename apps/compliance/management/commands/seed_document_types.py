@@ -124,6 +124,32 @@ DOCUMENT_TYPES = [
         False,
         DGAC,
     ),
+    # LV-225: la carta del mandante, que es el tercer papel del trámite y el que
+    # **gobierna la renovación**.
+    #
+    # Los dos de arriba son de la DGAC: uno va y el otro vuelve. Éste no es de la
+    # DGAC ni de JEJ — lo emite el **cliente** autorizando a operar en su faena, y
+    # sin él la DGAC no renueva el permiso (`SPEC_REPORTE_MENSUAL_RPA.md` §4.1:
+    # *"la renovación exige una nueva carta del mandante; no es un trámite
+    # automático"*). De ahí que la cadena de alertas de `LV-226` empiece 45 días
+    # antes: pedirle la carta al mandante toma tiempo que no controlamos.
+    #
+    # **`requires_expiry=False`, y es una decisión, no un descuido.** El informe
+    # quiere reportar cartas por vencer (§3, `vencimientos_60d.cartas_mandante`),
+    # lo que invita a marcarlo `True`; pero no toda carta trae plazo escrito, y
+    # exigir la fecha obligaría a **inventarla** para poder cargar el papel — que
+    # es exactamente el mal que `LV-219` acaba de quitar del alta del permiso. La
+    # fecha queda opcional: cuando la carta la trae, se anota y el motor de
+    # vencimientos la ve; cuando no, la carta se puede cargar igual. Si algún día
+    # se confirma que toda carta lleva plazo, esto pasa a `True` y nada más cambia.
+    (
+        "client-authorization-letter",
+        "Carta del mandante (autorización para operar)",
+        False,
+        False,
+        False,
+        DGAC,
+    ),
     # LV-30: the per-flight operational records. They do not expire (a record of
     # what happened, not a validity), so requires_expiry=False.
     ("flight-log", "Bitácora de vuelo (REG-015)", False, False, True, OPERATIONAL),
