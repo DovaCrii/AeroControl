@@ -309,6 +309,17 @@ LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = LOGIN_URL
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
+# LV-215: la pantalla propia para el fallo de CSRF, en vez del 403 amarillo de
+# Django. Pedido del usuario después de encontrárselo: dejó la página de login
+# abierta de un día para otro, la envió con el token de ayer y recibió "Prohibido
+# (403) · La verificación CSRF ha fallado" — un mensaje correcto que **no dice qué
+# hacer**, en la pantalla de entrada y sobre un caso perfectamente normal.
+#
+# Sigue siendo un 403 y no se afloja ninguna comprobación: lo que cambia es que la
+# página explica que la suya caducó y ofrece el camino de vuelta. El mismo criterio
+# con el que `LV-120` trató la rama que no se podía dibujar — el mecanismo estaba
+# bien, faltaba que se pudiera leer.
+CSRF_FAILURE_VIEW = "apps.core.views.csrf_failure"
 SECURE_CONTENT_TYPE_NOSNIFF = True
 # V.12 session policy for shared field devices: the cookie dies when the
 # browser closes, the server-side session is capped regardless of activity, and

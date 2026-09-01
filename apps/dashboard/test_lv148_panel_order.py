@@ -77,26 +77,25 @@ class TestTheOrderOfTheSections:
 
         assert content.index("readiness-strip") < content.index("kpi-grid")
 
-    def test_the_expiry_list_comes_before_the_weather_card(self):
-        # LV-D5 lo pedía ("lo accionable primero") y el clima seguía arriba. El
-        # permiso con coordenadas es lo que hace que la tarjeta exista: con la
-        # función apagada se dibuja igual, diciendo que el pronóstico no está.
+    def test_lv216_the_weather_card_is_no_longer_on_the_panel(self):
+        """**Estos dos tests se funden en uno con `LV-216`.** Afirmaban que la
+        lista de vencimientos y la fila de trabajo iban **antes** que la tarjeta
+        del clima — lo que `LV-D5` pedía ("lo accionable primero") y que el clima
+        no cumplía.
+
+        El usuario retiró la tarjeta del panel, así que ya no hay nada después de
+        lo que ponerse: la pregunta que estos tests hacían dejó de existir. Lo que
+        queda por afirmar es el retiro, y que lo accionable sigue estando.
+        """
         _aircraft(insurance_expiry=TODAY)
         _located_permission()
 
         content = _panel()
 
-        assert content.index("upcoming-expirations") < content.index(
-            "panel-weather-title"
-        )
-
-    def test_the_work_row_comes_before_the_weather_card(self):
-        _aircraft(insurance_expiry=TODAY)
-        _located_permission()
-
-        content = _panel()
-
-        assert content.index("kpi-grid") < content.index("panel-weather-title")
+        assert "panel-weather-title" not in content
+        assert "upcoming-expirations" in content
+        assert "kpi-grid" in content
+        assert content.index("kpi-grid") < content.index("upcoming-expirations")
 
 
 @pytest.mark.django_db

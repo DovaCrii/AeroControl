@@ -168,6 +168,15 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **El clima sale del panel (`LV-216`).** No se miraba ahí y además mostraba "el
+  pronóstico no está disponible" cuando el proveedor no responde. La revisión
+  meteorológica que el expediente pide se sigue registrando en la ficha del plan,
+  que es donde siempre estuvo el botón.
+- **Un formulario caducado ya no responde con un 403 en blanco (`LV-215`).**
+  Cuando una pestaña queda abierta de un día para otro, su ficha de seguridad
+  caduca y el envío se rechaza — correctamente, pero antes con un mensaje que no
+  decía qué hacer. Ahora la página explica que caducó y ofrece volver a cargarla o
+  entrar de nuevo. El rechazo no cambió: sigue siendo un 403.
 - **La ficha del centro de costo ya no pide coordenadas ni criterios de calidad
   (`LV-213`).** Salieron del formulario a pedido: esa información no va ahí. Los
   valores que ya estaban cargados **se conservan** — quitar un campo del

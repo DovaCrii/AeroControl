@@ -134,6 +134,10 @@ Cada una costó tiempo real al menos una vez. Consolidadas 2026-08-11.
 
 **Chequeos previos a una migración: `values_list`, nunca `.all()`.** Corren con el código nuevo sobre la base vieja, así que un `SELECT *` intenta leer columnas que la migración todavía no creó y falla antes de comprobar nada.
 
+**`render(request, ...)` corre los context processors, así que una página de error no es autónoma por no extender `base.html`.** La pantalla de CSRF (`LV-215`) tenía la plantilla limpia y seguía pidiendo `request.user.has_perm(...)` y una consulta a la base, por el context processor de `compliance`. En el servidor no estalla —`AuthenticationMiddleware` deja un `AnonymousUser`— pero es apoyar la página de error en el orden de los middleware. En una vista de error, `render_to_string` **sin** `request`: no ejecuta ningún context processor.
+
+**Un test cuyo verde depende del día en que se corre falla disfrazado de regresión.** `test_only_assessable_deliverables_count` (`LV-223`) empezó a dar `assert 0 == 2` sin que nadie tocara la función medida: el módulo fija la ventana en agosto de 2026 y el test dejaba que el modelo sellara la fecha con **ahora**, así que pasó el 31 de agosto y cayó el 1 de septiembre. Apareció en la misma corrida que un cambio no relacionado y parecía su consecuencia. Cuando un test falla y **el diff no toca nada de lo que afirma**, mirar la fecha antes que el diff. Al escribir un test con ventana fija, **fijar también la fecha del dato**: la fecha es andamio y hay que declararla.
+
 **El gate verifica código, nadie verifica el cableado de producción.** Tres funciones con tests verdes no llegaban a nadie porque el grupo destinatario no tenía correos y un trabajo programado nunca se registró. Al terminar una función que notifica, comprobar el camino completo **en producción** (`--dry-run`, `list-timers`), no sólo el test.
 
 ## Referencias

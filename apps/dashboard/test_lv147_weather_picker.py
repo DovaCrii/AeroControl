@@ -306,33 +306,32 @@ class TestTheTitleDoesNotLie:
 
 @pytest.mark.django_db
 class TestOnThePage:
-    def test_the_resolved_choice_is_the_selected_option(
+    def test_lv216_the_resolution_still_happens_without_the_card(
         self, asked, client_with_everything
     ):
+        """**LV-216 retiró la tarjeta del panel** —*"no es necesario que muestre el
+        clima […] además está fallando"*— así que estos tests pasan de afirmar el
+        HTML del selector a afirmar que **la resolución sigue ocurriendo**.
+
+        Se llamaban `test_the_resolved_choice_is_the_selected_option` y
+        `test_the_cost_center_filter_travels_in_a_hidden_input`, y comprobaban dos
+        cosas del formulario del selector: cuál opción salía marcada y que el
+        filtro de faena viajaba en un input oculto. Los dos elementos vivían dentro
+        del bloque retirado.
+
+        Lo que sigue vivo es lo que importa para reponer la tarjeta: `LV-147`
+        resuelve la ubicación a partir del parámetro y deja el resultado en el
+        contexto. 37 de sus tests no se tocaron.
+        """
         _fleet()
         cost_center = _cc("CC738")
         permit = _permission(cost_center)
 
-        content = _panel(
-            client_with_everything, weather=f"permission:{permit.pk}"
-        ).content.decode()
+        response = _panel(client_with_everything, weather=f"permission:{permit.pk}")
 
-        assert f'value="permission:{permit.pk}" selected' in content
-
-    def test_the_cost_center_filter_travels_in_a_hidden_input(
-        self, asked, client_with_everything
-    ):
-        cost_center = _cc("CC738", latitude=-33.4, longitude=-70.6)
-        # La aeronave lleva la faena: con el filtro puesto, el panel cuenta sólo
-        # lo de esa faena, y con el padrón vacío dibuja la guía inicial.
-        _fleet(cost_center)
-        _permission(cost_center)
-
-        content = _panel(
-            client_with_everything, cost_center=cost_center.pk
-        ).content.decode()
-
-        assert f'type="hidden" name="cost_center" value="{cost_center.pk}"' in content
+        assert response.context["weather_selection"] == f"permission:{permit.pk}"
+        # Y el selector ya no se dibuja: es el retiro.
+        assert 'name="weather"' not in response.content.decode().split("</form>")[1]
 
     def test_the_filter_form_carries_the_weather_choice_back(
         self, asked, client_with_everything
@@ -347,12 +346,22 @@ class TestOnThePage:
 
         assert f'name="weather" value="permission:{permit.pk}"' in content
 
-    def test_the_card_stays_when_the_provider_is_down(
+    def test_lv216_the_card_is_gone_and_the_context_survives(
         self, monkeypatch, client_with_everything
     ):
-        # Contrapeso del cambio de `{% if weather %}` a `{% if weather_card %}`:
-        # la tarjeta es también el control, y esconderla porque el proveedor no
-        # respondió deja sin forma de elegir otra ubicación.
+        """Se llamaba `test_the_card_stays_when_the_provider_is_down` y defendía
+        el cambio de `{% if weather %}` a `{% if weather_card %}`: la tarjeta era
+        también el control, así que esconderla porque el proveedor no respondía
+        dejaba sin forma de elegir otra ubicación.
+
+        **`LV-216` retiró la tarjeta entera**, así que esa defensa ya no aplica —
+        y fue justamente ese estado, "El pronóstico no está disponible por ahora",
+        el que el usuario tenía en pantalla al pedir el retiro.
+
+        `weather_card` sigue calculándose y sigue siendo `True` con el proveedor
+        caído: es la decisión de `R8.4` intacta, y lo que permite reponer la
+        tarjeta recuperando el bloque de git.
+        """
         monkeypatch.setattr(
             "apps.core.weather.forecast_for", lambda *args, **kwargs: None
         )
@@ -363,7 +372,7 @@ class TestOnThePage:
 
         assert response.context["weather"] is None
         assert response.context["weather_card"] is True
-        assert 'name="weather"' in response.content.decode()
+        assert "EL CLIMA" not in response.content.decode().upper()
 
     def test_the_card_is_absent_when_there_is_no_location_at_all(
         self, asked, client_with_everything

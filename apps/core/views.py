@@ -21,6 +21,7 @@ from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.conf import settings
 from django.db import connection
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -1365,3 +1366,59 @@ class StatusTransitionView(ModelPermissionRequiredMixin, View):
         )
         messages.success(request, self.success_message)
         return redirect(obj)
+
+
+def csrf_failure(request, reason=""):
+    """LV-215: la pantalla del fallo de CSRF, en vez del 403 crudo de Django.
+
+    Pedido del usuario después de encontrárselo en producción: dejó la página de
+    login abierta de un día para otro, la envió con el token de ayer y recibió
+    *"Prohibido (403) · La verificación CSRF ha fallado. Solicitud abortada."*
+    sobre fondo amarillo. El mensaje es correcto y **no dice qué hacer** — en la
+    pantalla de entrada, y sobre un caso perfectamente normal: una pestaña que
+    pasó la noche abierta.
+
+    **No se afloja ninguna comprobación.** Sigue siendo un 403 y el POST sigue
+    rechazado; lo que cambia es que la respuesta explica que la página caducó y
+    ofrece volver a cargarla. Es el mismo criterio de `LV-120`: el mecanismo
+    estaba bien, faltaba que se pudiera leer.
+
+    `reason` lo pasa Django y **no se muestra**: dice cosas como "CSRF token from
+    POST incorrect", que es exacto para el log y ruido para quien mira la
+    pantalla. Se registra y no se imprime.
+
+    Sin `base.html` a propósito: esta página tiene que dibujarse cuando la sesión
+    ya no vale, y la plantilla base cuenta con el menú, los permisos y el
+    contador de alertas — todo lo que depende de un usuario que acá puede no
+    haber. Una página de error que falla al renderizarse deja un 500 encima del
+    403.
+
+    **Y se renderiza sin `request` por la misma razón, que no era obvia.** No
+    alcanza con no extender `base.html`: `render(request, ...)` corre los
+    *context processors* del proyecto, y el de `compliance` pide
+    `request.user.has_perm(...)` para el contador de alertas. O sea que la página
+    seguía dependiendo del usuario y de una consulta a la base **por una vía
+    lateral**, con la plantilla ya limpia. Lo destapó el test que la llama con un
+    `RequestFactory` (`AttributeError: 'WSGIRequest' object has no attribute
+    'user'`); en el servidor no estallaba porque `AuthenticationMiddleware` deja
+    un `AnonymousUser` antes de que se rechace el token, pero apoyar la última
+    página que le queda a alguien en ese detalle del orden de los middleware es
+    exactamente lo que esta vista quería no hacer.
+
+    `render_to_string` sin `request` no ejecuta ningún context processor. La
+    plantilla no pierde nada: `{% static %}` no necesita `request`, y
+    `LANGUAGE_CODE` ya traía su `default:'es'` para este caso.
+    """
+    # `getLogger` en el sitio, como el aviso de CSP unas líneas arriba: este
+    # módulo no tiene un logger de módulo y crear uno sólo para esto sería una
+    # convención nueva para un solo llamador.
+    logging.getLogger("aerocontrol.csrf").warning(
+        "csrf_failure %s: %s", request.path, reason
+    )
+    return HttpResponse(
+        render_to_string(
+            "core/csrf_failure.html",
+            {"login_url": settings.LOGIN_URL, "path": request.path},
+        ),
+        status=403,
+    )

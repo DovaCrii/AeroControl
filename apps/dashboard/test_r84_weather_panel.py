@@ -281,15 +281,20 @@ class TestOnThePage:
         response = _client(_user("view_flightpermission")).get(reverse("dashboard"))
 
         assert response.status_code == 200
+        # LV-216: **el pronóstico sigue calculándose y ya no se dibuja.** El
+        # usuario retiró la tarjeta del panel — *"no es necesario que muestre el
+        # clima […] además está fallando"*—, así que este test pasa de afirmar el
+        # HTML a afirmar el contexto: la lógica de `R8.4` queda entera y protegida,
+        # que es lo que permite reponer la tarjeta recuperando el bloque de git.
+        #
+        # Se conserva el cálculo a propósito: `apps/core/weather.py` cachea por
+        # (coordenada, fecha) e incluso cachea los fallos, así que dejarlo no
+        # cuesta una llamada por carga. La revisión meteorológica que el
+        # expediente pide se registra en la ficha del plan, no acá.
         assert response.context["weather"] == FORECAST
         body = response.content.decode()
-        # The value itself is rendered through Django's locale formatting
-        # ("8,1" under es), so what is asserted here is the unit and the
-        # temperature -- the two things R8.4 added to this card.
-        assert "m/s" in body
-        assert "17°C" in body
-        assert "RPA-2002" in body
-        assert "Tranque Talabre" in body
+        assert "17°C" not in body
+        assert "m/s" not in body
 
     def test_the_page_renders_fine_when_the_provider_is_down(self, monkeypatch):
         monkeypatch.setattr("apps.core.weather.forecast_for", lambda *a: None)

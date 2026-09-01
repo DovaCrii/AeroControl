@@ -1676,6 +1676,38 @@ msgstr "Separar en partes"
 msgid "Root — drop here or click to add new here"
 msgstr "Raíz — suelta aquí o haz clic para agregar aquí"
 
+#. LV-215: la pantalla del fallo de CSRF. "Caducó" y no "falló": lo que pasó es
+#. que la página llevaba demasiado tiempo abierta, y decir "error" invita a
+#. reportar un problema que no existe.
+#: .\templates\core\csrf_failure.html:1
+msgid "The page expired"
+msgstr "La página caducó"
+
+#: .\templates\core\csrf_failure.html:2
+msgid ""
+"This page had been open long enough for its security token to lapse, so the "
+"form was not sent. Nothing was saved and nothing was lost."
+msgstr ""
+"Esta página llevaba abierta el tiempo suficiente para que caducara su ficha de "
+"seguridad, así que el formulario no se envió. No se guardó nada y no se perdió "
+"nada."
+
+#: .\templates\core\csrf_failure.html:3
+msgid ""
+"It happens when a tab stays open from one day to the next. Load the page again "
+"and it will work."
+msgstr ""
+"Pasa cuando una pestaña queda abierta de un día para otro. Vuelve a cargar la "
+"página y funcionará."
+
+#: .\templates\core\csrf_failure.html:4
+msgid "Load the page again"
+msgstr "Volver a cargar la página"
+
+#: .\templates\core\csrf_failure.html:5
+msgid "Sign in again"
+msgstr "Entrar de nuevo"
+
 #. LV-212: la columna propia de "vence pronto" en la tabla del panel. Iba pegada
 #. al total ("1 · 1 vence pronto") y dos cifras en una celda impiden leer la
 #. columna en vertical, que es para lo que existe una tabla.
