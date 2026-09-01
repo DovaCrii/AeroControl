@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
-from apps.compliance.digest import BUCKET_TEXT_CSS, bucket_for
+from apps.compliance.digest import BUCKET_TEXT_CSS, SUBJECT_TONE_CSS, bucket_for
 from apps.compliance.reports import (
     alerts_for_cost_center,
     cost_centers_for_refs,
@@ -63,6 +63,23 @@ EXPIRATION_PERMISSIONS = {
     KnowledgeAssessment: "registry.view_knowledgeassessment",
     Document: "compliance.view_document",
     FlightPermission: "operations.view_flightpermission",
+}
+# LV-217: de qué cuelga cada vencimiento, que es lo que decide el color de su
+# píldora. Los tonos viven en `digest.SUBJECT_TONE_CSS`, junto a la escala de
+# urgencia que no deben canibalizar.
+#
+# **Declarado con la misma clave que la tabla de arriba, y al lado, a propósito.**
+# Los dos datos que necesita una fuente nueva —qué permiso la gatea y de qué
+# cuelga— quedan a la vista uno sobre otro: agregar una fuente y olvidar el color
+# se nota leyendo diez líneas, y `add()` lo delata en el momento porque busca la
+# clave sin `get`.
+EXPIRATION_SUBJECT_TONES = {
+    Qualification: "person",
+    Operator: "person",
+    Aircraft: "aircraft",
+    KnowledgeAssessment: "person",
+    Document: "document",
+    FlightPermission: "permit",
 }
 
 
@@ -174,6 +191,12 @@ def upcoming_expirations(today, cutoff, cost_center=None, user=None):
             # la bandeja. Antes era una cadena de cuatro `{% if %}` en la
             # plantilla, y por eso `due_30` era ámbar acá y azul allá.
             item["tone"] = BUCKET_TEXT_CSS.get(item["bucket"], "")
+            # LV-217: el color del **tipo**, que contesta otra pregunta que el
+            # tramo de urgencia de la línea de arriba. Sin `get` y sin valor por
+            # defecto: una fuente nueva sin entrada en la tabla levanta acá, en el
+            # momento, en vez de dibujarse gris para siempre — que es el estado
+            # que esta fila vino a arreglar y el que nadie reportaría dos veces.
+            item["kind_css"] = SUBJECT_TONE_CSS[EXPIRATION_SUBJECT_TONES[model]]
             items.append(item)
 
     quals = Qualification.objects.filter(

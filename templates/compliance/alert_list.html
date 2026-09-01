@@ -17,7 +17,7 @@ different places depending on whether a neighbouring record shared a date.
 LV-69b: the workboard actions ("Create task"/"View task") were removed when
 that module left the menu -- they pushed work somewhere nobody navigates to.
 The list is self-contained: Resolve and Undo.{% endcomment %}{% for object in objects %}<tr>
-  <td><span class="badge bg-secondary-subtle text-secondary-emphasis">{{ object.entity_label }}</span></td>
+  <td><span class="badge {{ object.entity_tone_css }}">{{ object.entity_label }}</span></td>
   {% comment %}La entidad lleva a su ficha, que es donde está el estado y los
   documentos. Sin el enlace, una alerta decía "RPA-5534, seguro por vencer" y
   para hacer algo al respecto había que ir al padrón, buscar la matrícula y
