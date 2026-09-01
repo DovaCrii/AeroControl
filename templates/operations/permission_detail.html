@@ -108,7 +108,19 @@
   y hasta acá se perdían en el camino: había que volver al plan para saberlos. Se
   muestran juntos porque juntos se declaran, y sólo cuando están: un permiso viejo
   sin ellos no es un permiso incompleto.{% endcomment %}
-  {% if permission.amc %}<tr><th scope="row">{% translate "Nearest aerodrome (AMC)" %}</th><td>{{ permission.amc }}{% if permission.amc_distance_km is not None %} · {{ permission.amc_distance_km }} km{% endif %}</td></tr>{% endif %}
+  {% comment %}LV-218: el enlace a los NOTAM vigentes del aeródromo declarado.
+
+  **Es un enlace y no un resultado, a propósito.** El IFIS de la DGAC no tiene API
+  —todo es HTML— y un parseo que falla se lee con demasiada facilidad como "no hay
+  avisos", que es justo lo que esta fila no puede permitir. Un enlace no afirma
+  nada: lleva a la fuente oficial. El texto dice "consultar" por lo mismo.
+
+  Va pegado al aeródromo porque es su dato: la búsqueda del IFIS es por designador
+  OACI, así que sin `amc` no hay a qué enlazar.
+
+  `rel="noopener noreferrer"` con `target="_blank"`: el sitio destino no tiene por
+  qué recibir acceso a `window.opener` ni saber de dónde viene el clic.{% endcomment %}
+  {% if permission.amc %}<tr><th scope="row">{% translate "Nearest aerodrome (AMC)" %}</th><td>{{ permission.amc }}{% if permission.amc_distance_km is not None %} · {{ permission.amc_distance_km }} km{% endif %}{% if permission.notam_url %} · <a href="{{ permission.notam_url }}" target="_blank" rel="noopener noreferrer">{% translate "Check its NOTAMs at the DGAC" %} ↗</a>{% endif %}</td></tr>{% endif %}
   {% comment %}LV-221: metros primero, porque es como se opera, y los pies al
   lado en gris porque es lo que pide el formulario del SIGO. Tener las dos
   unidades a la vista evita el cálculo a mano al transcribir, que es la clase de

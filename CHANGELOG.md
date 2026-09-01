@@ -168,6 +168,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **La ficha del permiso enlaza a los NOTAM de su aeródromo (`LV-218`).** Un clic
+  desde el permiso a la consulta oficial del IFIS de la DGAC para el aeródromo más
+  cercano que el permiso declara. **La app no resume ni interpreta los avisos**:
+  lleva a la fuente, porque un aviso mal leído o una consulta fallida no pueden
+  parecer "no hay NOTAM". Si el permiso no tiene aeródromo declarado, no se ofrece
+  el enlace.
 - **La altitud del permiso se pide en metros (`LV-221`).** El campo decía pies, y
   la operación piensa y vuela en metros: los tres permisos que tenían el dato
   cargado decían 120 pensando en metros, o sea un tercio de la altura real. Ahora

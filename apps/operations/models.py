@@ -13,6 +13,16 @@ from apps.core.models import BaseModel, StatusFlowMixin
 from apps.registry.models import Operator, Aircraft, CostCenter
 
 
+# LV-218: el IFIS de la DGAC, donde se consultan los NOTAM vigentes.
+#
+# Constante y no `settings`: es una dirección pública de un organismo del Estado,
+# no una configuración de despliegue — no cambia entre desarrollo y producción, y
+# ponerla en el entorno obligaría a declararla en cada instalación para que el
+# enlace funcione. Si algún día la DGAC la muda, se cambia acá y hay un test que
+# lo nota.
+NOTAM_QUERY_BASE = "https://aipchile.dgac.gob.cl/notam"
+
+
 class FlightPermission(StatusFlowMixin, BaseModel):
     """A flight authorization, mirroring the real DGAC document (OPS-4).
 
@@ -414,6 +424,46 @@ class FlightPermission(StatusFlowMixin, BaseModel):
                 self.internal_folio = self._next_internal_folio()
                 return super().save(*args, **kwargs)
         return super().save(*args, **kwargs)
+
+    @property
+    def notam_url(self):
+        """LV-218, paso (a): la consulta de NOTAM del IFIS para este permiso.
+
+        Idea del usuario: *"no sé si existe una forma de cruzar el clima con las
+        NOTAM y el sector del permiso para informar la situación"*.
+
+        **Devuelve un enlace y no un resultado, y eso es la decisión de la fila.**
+        Investigado el 2026-09-01: el IFIS de la DGAC
+        (`aipchile.dgac.gob.cl`, Symfony operado por VIA56) **no tiene API ni
+        feed** — todo son `GET` con respuesta HTML. Consultar y parsear es
+        posible, y de hecho cada NOTAM trae centro y radio en su campo `Q)`
+        (`3324S07048W005` son 33°24'S, 70°48'W y radio 5 NM), así que el cruce
+        geométrico contra la coordenada del permiso se puede calcular.
+
+        Lo que hace preferible el enlace **primero** es el riesgo asimétrico: un
+        parseo que falla —porque el sitio cambió su HTML, o no respondió— se lee
+        con demasiada facilidad como *"no hay avisos"*, y esta fila declaró desde
+        el principio que eso es lo que no puede pasar. Un enlace no afirma nada:
+        lleva a la fuente oficial y quien decide vuela mirándola. Además evita
+        consultar un servicio público del Estado en cada carga de página, que es
+        una cuestión de trato y no sólo de rendimiento.
+
+        Se apoya en el aeródromo que el permiso **ya declara** (`amc`, de
+        `LV-137`) porque la búsqueda del IFIS es por designador OACI y no por
+        coordenadas: `Aerodrome.code` es exactamente lo que el formulario pide.
+        Sin aeródromo declarado no hay enlace — devuelve `None` y la ficha no lo
+        dibuja, en vez de mandar a una búsqueda vacía.
+        """
+        if self.amc_id is None:
+            return None
+        code = (self.amc.code or "").strip()
+        if not code:
+            return None
+        # `quote` aunque un designador OACI sea alfanumérico: el día que alguien
+        # cargue un código con un espacio, esto no arma una URL rota.
+        from urllib.parse import quote
+
+        return f"{NOTAM_QUERY_BASE}?designador={quote(code)}&metodo=designador"
 
     @property
     def max_altitude_ft_equivalent(self):
