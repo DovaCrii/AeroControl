@@ -391,6 +391,23 @@ def panel_readiness(today, cost_center=None):
     horizon = today + timedelta(days=30)
 
     fleet = Aircraft.objects.filter(is_active=True).exclude(status="retired")
+    # LV-229: fuera los equipos de una faena que **no vuela**.
+    #
+    # Encontrado midiendo `LV-74`: `RPA-2019` figuraba como "sin seguro JAC" y
+    # está en `CC110`, uno de los centros administrativos que `LV-205` distinguió
+    # a pedido del usuario (*"el CC110 de casa matriz o 410, por ejemplo, estamos
+    # a cargo más de los equipos que volar"*). Confirmado con él: ese equipo está
+    # en bodega y no opera, así que **no es una brecha de seguro** — y contarlo
+    # como falta bajaba el indicador por una decisión correcta.
+    #
+    # Es el mismo criterio que `permit_status_by_cost_center` ya aplicaba a los
+    # permisos, y que a este contador le faltaba: dos indicadores del mismo panel
+    # respondían distinto a la misma pregunta sobre la misma faena.
+    #
+    # `cost_center__isnull=True` **entra**, no se excluye: una aeronave sin faena
+    # no es una aeronave que no vuela, es una aeronave cuya pertenencia falta —y
+    # eso sí es una brecha que hay que ver, no una que ocultar.
+    fleet = fleet.exclude(cost_center__operates_flights=False)
     operators = Operator.objects.filter(is_active=True)
     if cost_center:
         fleet = fleet.filter(cost_center=cost_center)
