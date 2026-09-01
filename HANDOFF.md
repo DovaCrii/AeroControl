@@ -177,6 +177,78 @@ Dos filas más, **sin desplegar**:
 
 **Paso de despliegue: `collectstatic`.** Sin migración.
 
+### Cierre del 2026-09-01 — **empezar por acá**
+
+Continuación de la jornada del 31. **Desplegado en `p340`: `0a7a2ce`.** Lo que
+sigue está commiteado y **sin desplegar** (`LV-215`, `LV-216`): sólo
+`collectstatic`, sin migración.
+
+**Antes de dictar cualquier despliegue**, la lección que costó una caída:
+
+```
+uv run python manage.py showmigrations | grep -c "\[ \]"
+```
+
+Tiene que devolver `0`. El paso de despliegue es el de **todo lo que falta en la
+VM**, no el del último commit.
+
+#### Lo que quedó en cola, en orden de valor
+
+0. **`LV-219`, `P1` — el alta exige una vigencia que la DGAC todavía no dio.** Es
+   lo más importante de la cola porque **hoy obliga a inventar dos fechas** para
+   poder guardar un permiso, y esas fechas alimentan el motor de vencimientos, el
+   panel, el informe y `expire_permissions`. El patrón a seguir ya existe:
+   `LV-39` hizo opcional el folio DGAC por esta misma razón. Lo que hay que
+   decidir antes de tocar es qué significa una vigencia nula para cada uno de esos
+   lectores — ni "vencido" ni "vigente", sino un tercer estado que hay que
+   nombrar.
+1. **`LV-218` — cruzar los NOTAM de la DGAC con el sector del permiso.** La idea
+   más valiosa que dejó el usuario y la más grande. Lo primero es averiguar si
+   `aipchile.dgac.gob.cl/notam` ofrece API o feed; **el riesgo manda el diseño**:
+   un fallo de consulta no puede leerse como "no hay avisos". La fila tiene el
+   detalle.
+2. **`LV-217` — los badges de tipo son todos grises**, en vencimientos y en
+   alertas. Ojo: la urgencia ya usa color en la misma fila (`LV-148`), así que hay
+   que elegir el canal sin canibalizar el rojo.
+3. **`LV-207` — los colores del menú.** **Diagnóstico terminado**: sólo dos
+   secciones mezclan color adentro (Informes: azul + ámbar; Inventario: azul +
+   gris) porque el color se asigna por app de destino y no por sección; y Padrón
+   comparte azul con Inventario, Cumplimiento comparte ámbar con Informes.
+   **Medido**: en tema claro **5 de 7 familias no llegan a 3:1** (`overview` 2.55,
+   `workboard` 2.36, `maintenance` 2.50, `registry` 2.41, `admin` 2.41); en oscuro
+   todas están sobre 8. Hay 8 grupos y 7 colores, así que falta uno: el mejor
+   candidato medido es **`#65a30d` / `#bef264`** (4.60 sobre navy y 14.04 sobre el
+   fondo oscuro), que además supera a todos los existentes en claro.
+4. **`LV-221`, `P1` — la altitud se pide en pies y la operación piensa en
+   metros.** **Medir producción antes de tocar el campo**: en la captura del
+   usuario hay un `120` en un campo rotulado `(ft)`, y 120 ft son 36 m. Puede
+   haber permisos con la altitud mal cargada, y eso no se deduce desde acá.
+5. **`LV-222` — los rosters de operadores y aeronaves se ven desalineados** al
+   buscar, porque la rejilla asume etiquetas cortas y estas ocupan tres líneas. El
+   usuario propone un desplegable con buscador; **evaluarlo sin adoptarlo de una**:
+   son campos de selección múltiple y `LV-151` eligió la rejilla justamente para
+   eso. La fila tiene dos alternativas que conservan lo ganado.
+6. **`LV-220` — la región no aparece en la ficha del permiso**, porque `LV-197`
+   sacó esas casillas del alta y el plan no siempre las trae.
+7. **`LV-208` — el ancho de la barra de navegación no se puede regular** (hoy dos
+   estados y nada en medio).
+8. **`LV-189`** (estado terminal en el cumplimiento) y **`LV-200` paso 2** (un
+   documento con varios sujetos), las dos con su decisión escrita en la fila.
+
+Y lo de siempre: **el correo** sigue siendo el único criterio en rojo, esperando
+las credenciales SMTP.
+
+#### Un test caducó al cambiar el mes (`LV-223`), y vale saberlo
+
+El gate de cierre falló con un test que **nadie había tocado**:
+`test_only_assessable_deliverables_count` daba `assert 0 == 2`. No era regresión:
+el módulo fija su ventana en agosto de 2026 y el test dejaba que el modelo sellara
+la fecha con **ahora**, así que pasó el 31 de agosto y cayó el 1 de septiembre.
+Costó diagnóstico porque apareció junto a `LV-213` y parecía su consecuencia.
+
+**La señal a recordar**: si un test falla y el diff no toca nada de lo que ese
+test afirma, mirar la fecha antes que el diff. Quedó anotado en `AGENTS.md`.
+
 ### ⚠️ Producción se cayó con un 500, y la causa fue mía en la comunicación
 
 Después de desplegar `d20057d` el panel devolvía `Server Error (500)`:

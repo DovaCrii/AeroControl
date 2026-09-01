@@ -8,12 +8,13 @@ Three of the five became computable only once R7.4 (`Deliverable`) and R7.6
 (`NonConformity`) existed.
 """
 
-from datetime import date, time, timedelta
+from datetime import date, datetime, time, timedelta
 
 import pytest
 from django.contrib.auth.models import Permission, User
 from django.test import Client
 from django.urls import reverse
+from django.utils import timezone
 
 from apps.compliance.kpis import (
     FLEET_AVAILABILITY_TARGET,
@@ -199,6 +200,21 @@ class TestSurveyAccuracy:
         )
         for deliverable in (passing, failing, unassessable):
             deliverable.validate_quality(user=None)
+
+        # LV-223: **este test caducó al cambiar el mes, y por eso la fecha se
+        # declara.** `validate_quality` sella `validated_at` con **ahora**, y la
+        # ventana de este módulo es fija (agosto de 2026), así que el 31 de agosto
+        # pasaba y el 1 de septiembre daba `total == 0`: los tres entregables
+        # quedaban fuera del filtro por fecha, no por criterios.
+        #
+        # Un test cuyo resultado depende del día en que se corre no protege nada
+        # el resto del año. Se fija la fecha **dentro** de la ventana que el propio
+        # test declara, en vez de mover la ventana: lo que se afirma acá es la
+        # regla de los criterios (un entregable sin umbrales no es aprobado ni
+        # reprobado), y la fecha es andamio.
+        Deliverable.objects.filter(
+            pk__in=[passing.pk, failing.pk, unassessable.pk]
+        ).update(validated_at=timezone.make_aware(datetime(2026, 8, 15, 12, 0)))
 
         result = survey_accuracy(START, END)
 

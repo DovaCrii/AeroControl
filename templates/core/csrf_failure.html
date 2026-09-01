@@ -1,0 +1,46 @@
+{% load i18n static %}
+{% comment %}LV-215: la pantalla del fallo de CSRF.
+
+**Sin `base.html` a propósito.** Esta página tiene que dibujarse justo cuando la
+sesión ya no vale, y la plantilla base cuenta con el menú, los permisos y el
+contador de alertas — todo lo que depende de un usuario que acá puede no haber.
+Una página de error que falla al renderizarse deja un 500 encima del 403.
+
+Dice **qué pasó y qué hacer**, que es lo que faltaba: el 403 de Django decía "La
+verificación CSRF ha fallado. Solicitud abortada.", correcto y sin salida, en la
+pantalla de entrada y sobre el caso más común — una pestaña que pasó la noche
+abierta. No se afloja nada: el POST sigue rechazado y la respuesta sigue siendo
+403.
+
+No se muestra el `reason` de Django ("CSRF token from POST incorrect"): es exacto
+para el log, donde queda, y ruido para quien mira la pantalla.{% endcomment %}
+<!doctype html>
+<html lang="{{ LANGUAGE_CODE|default:'es' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% translate "The page expired" %} — AeroControl</title>
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body class="d-flex align-items-center justify-content-center" style="min-height:100vh">
+  <main class="card p-4 p-md-5" style="max-width:34rem">
+    <h1 class="h4 mb-3">{% translate "The page expired" %}</h1>
+    {% comment %}Cadenas de una línea con `{% templatetag openblock %} translate
+    {% templatetag closeblock %}` y no `blocktranslate`: el `msgid` que genera un
+    bloque multilínea depende de cómo quedó el sangrado, y el guardián de
+    traducciones de este repo compara contra el catálogo. Una línea, un msgid
+    predecible.{% endcomment %}
+    <p class="mb-2">{% translate "This page had been open long enough for its security token to lapse, so the form was not sent. Nothing was saved and nothing was lost." %}</p>
+    <p class="text-body-secondary mb-4">{% translate "It happens when a tab stays open from one day to the next. Load the page again and it will work." %}</p>
+    <div class="d-flex flex-wrap gap-2">
+      {% comment %}Recargar **la misma ruta** y no el inicio: si estaba en un
+      formulario, la recarga lo devuelve donde estaba con un token nuevo. El
+      enlace de entrada va al lado para el caso en que la sesión también haya
+      caducado, que es el que motivó esta fila.{% endcomment %}
+      <a class="btn btn-primary" href="{{ path }}">{% translate "Load the page again" %}</a>
+      <a class="btn btn-outline-secondary" href="{{ login_url }}">{% translate "Sign in again" %}</a>
+    </div>
+  </main>
+</body>
+</html>
