@@ -154,12 +154,45 @@ body.is-resizing-sidebar {
   stroke-width: 1.8;
 }
 
+/* LV-207: **un color por sección del menú**, no por app de destino.
+
+   Pedido del usuario con captura: *"panel lateral, los colores por región
+   mantenerlos separados, con cada uno para ser diferentes, no mezclar"*. La
+   clase se asignaba por la app a la que apunta cada fila, así que el color no
+   agrupaba ni distinguía: **Informes** mezclaba azul y ámbar adentro,
+   **Inventario** mezclaba azul y gris, y tres secciones compartían el azul.
+   Ahora la clase la da la sección, y las ocho son distintas.
+
+   Dos de los ocho nombres son nuevos y dos colores se reciclaron: `nav-reports`
+   hereda el magenta que `nav-workboard` dejó libre cuando `LV-78` retiró el
+   tablero, y `nav-inventory` el teal que usaba `nav-operations`. El único color
+   nuevo es el verde de `nav-flight`.
+
+   ⚠️ **Los siete colores anteriores cumplían 3:1 y no se tocaron.** El
+   diagnóstico registrado en la fila decía que cinco no llegaban —con cifras como
+   `registry 2.41`— y **eso era falso**: calculado sobre los hex del CSS contra
+   `--ac-surface`, los ratios reales son 5.59 / 5.91 / 4.73 / 3.74 / 5.70 / 6.04 /
+   5.90 en claro y 7.6 a 10.7 en oscuro. Los números del diagnóstico se habían
+   medido contra el fondo equivocado. El umbral es 3:1 porque un icono es un
+   elemento gráfico (WCAG 1.4.11), el mismo criterio de `LV-185`.
+
+   El verde nuevo se eligió calculando, no a ojo: `#15803d` da **5.02** sobre
+   blanco y `#86efac` **11.79** sobre el navy del tema oscuro. El candidato que
+   proponía el diagnóstico anterior (`#65a30d`) daba 3.09 en claro — pasaba por
+   nueve centésimas, y con cualquier ajuste de fondo dejaba de pasar.
+
+   ⚠️ **Lo que queda sin resolver, y conviene saberlo**: `nav-overview` (teal
+   oscuro) y `nav-inventory` (teal) están a distancia RGB 34, así que son los dos
+   más parecidos entre sí. Se dejan porque ocupan los **extremos** del menú —Panel
+   arriba, Inventario abajo— y nunca se ven contiguos; si algún día molesta, el
+   que hay que mover es `overview`, no `inventory`. */
 .nav-overview .nav-icon { color: #0b7285; }
-.nav-registry .nav-icon { color: #2463b8; }
+.nav-flight .nav-icon { color: #15803d; }
 .nav-compliance .nav-icon { color: #b15d00; }
-.nav-operations .nav-icon { color: #0d9488; }
+.nav-reports .nav-icon { color: #be185d; }
 .nav-maintenance .nav-icon { color: #7c3aed; }
-.nav-workboard .nav-icon { color: #be185d; }
+.nav-registry .nav-icon { color: #2463b8; }
+.nav-inventory .nav-icon { color: #0d9488; }
 .nav-admin .nav-icon { color: #596579; }
 
 .sidebar a.active {
@@ -596,12 +629,17 @@ body.is-resizing-sidebar {
   color: #a9b6c9;
 }
 
+/* LV-207: los mismos ocho, en su variante para fondo oscuro. Ratios calculados
+   contra `--ac-surface` del tema oscuro (`#161f2d`): entre 7.6 y 11.8, todos
+   holgados. El orden repite el de arriba a propósito, para que se lea de un
+   golpe que las dos listas cubren las mismas ocho secciones. */
 [data-theme="dark"] .nav-overview .nav-icon { color: #6ed4e3; }
-[data-theme="dark"] .nav-registry .nav-icon { color: #82b1ff; }
+[data-theme="dark"] .nav-flight .nav-icon { color: #86efac; }
 [data-theme="dark"] .nav-compliance .nav-icon { color: #ffc66d; }
-[data-theme="dark"] .nav-operations .nav-icon { color: #55d6c8; }
+[data-theme="dark"] .nav-reports .nav-icon { color: #f2a1c2; }
 [data-theme="dark"] .nav-maintenance .nav-icon { color: #c4a5ff; }
-[data-theme="dark"] .nav-workboard .nav-icon { color: #f2a1c2; }
+[data-theme="dark"] .nav-registry .nav-icon { color: #82b1ff; }
+[data-theme="dark"] .nav-inventory .nav-icon { color: #55d6c8; }
 [data-theme="dark"] .nav-admin .nav-icon { color: #b9c4d2; }
 
 [data-theme="dark"] .card {

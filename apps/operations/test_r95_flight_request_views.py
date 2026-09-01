@@ -439,9 +439,14 @@ class TestTheListAndTheMenu:
         """
         content = client_in.get(reverse("flight-request-list")).content.decode()
 
-        nav_hrefs = re.findall(
-            r'<a href="([^"]+)" class="nav-item nav-operations', content
-        )
+        # LV-207: **cualquier familia de color, no una en concreto.** Este regex
+        # decía `nav-operations`, y esa clase dejó de existir cuando los colores
+        # del menú pasaron a asignarse por sección en vez de por app de destino:
+        # el test no encontraba ninguna fila y fallaba con un `ValueError` que no
+        # hablaba del menú. Lo que quiere mirar es "las filas del menú", así que
+        # eso es lo que pregunta — y así un renombre de familia no vuelve a
+        # romperlo.
+        nav_hrefs = re.findall(r'<a href="([^"]+)" class="nav-item nav-[a-z]+', content)
 
         assert reverse("flight-request-list") not in nav_hrefs
         # Los dos vecinos siguen ahí y ahora quedan juntos.

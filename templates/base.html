@@ -90,7 +90,7 @@
       <div class="nav-group">
         <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="flight" aria-expanded="true" aria-controls="nav-group-flight">{% translate "Flight" %}<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
         <div class="nav-group-items" id="nav-group-flight">
-      <a href="{% url 'permission-list' %}" class="nav-item nav-operations {% if url_name == 'permission-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 13l2 2 4-4"/></svg>{% translate "Permissions" %}</a>
+      <a href="{% url 'permission-list' %}" class="nav-item nav-flight {% if url_name == 'permission-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 13l2 2 4-4"/></svg>{% translate "Permissions" %}</a>
       {% comment %}LV-150 paso 1 (2026-08-26, decisión del usuario): "Solicitudes
       SIGO" se retira del menú siguiendo el procedimiento de LV-78 y LV-103 --
       primero sin superficie propia, después congelado, y sólo al final se borra
@@ -125,10 +125,10 @@
       trámite que va en medio. Va entre ambos porque ése es el orden en que
       ocurre.
 
-      <a href="{% url 'flight-request-list' %}" class="nav-item nav-operations {% if url_name == 'flight-request-list' or url_name == 'flight-request-detail' or url_name == 'geo-plan-split' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="1.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>{% translate "SIGO requests" %}</a>
+      <a href="{% url 'flight-request-list' %}" class="nav-item nav-flight {% if url_name == 'flight-request-list' or url_name == 'flight-request-detail' or url_name == 'geo-plan-split' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="1.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>{% translate "SIGO requests" %}</a>
       {% endcomment %}
-      <a href="{% url 'geo-plan-list' %}" class="nav-item nav-operations {% if url_name == 'geo-plan-list' or url_name == 'geo-plan-detail' or url_name == 'geo-plan-import' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2z"/><path d="M9 3v16M15 5v16"/></svg>{% translate "Geospatial planning" %}</a>
-      <a href="{% url 'record-list' %}" class="nav-item nav-operations {% if url_name == 'record-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H19v16H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M8 4v16M11 9h6M11 13h4"/></svg>{% translate "Flights" %}</a>
+      <a href="{% url 'geo-plan-list' %}" class="nav-item nav-flight {% if url_name == 'geo-plan-list' or url_name == 'geo-plan-detail' or url_name == 'geo-plan-import' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2z"/><path d="M9 3v16M15 5v16"/></svg>{% translate "Geospatial planning" %}</a>
+      <a href="{% url 'record-list' %}" class="nav-item nav-flight {% if url_name == 'record-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H19v16H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M8 4v16M11 9h6M11 13h4"/></svg>{% translate "Flights" %}</a>
       {% comment %}LV-103 paso 1 (2026-08-14, decisión del usuario): el
       calendario se retira siguiendo el procedimiento de LV-78 -- primero sin
       superficies, después congelado, y sólo al final se borra si nadie lo echa
@@ -149,7 +149,7 @@
       vuelve entero. A diferencia del Kanban, acá no había ninguna dependencia
       escondida -- `CALENDAR_EVENT_PERMISSIONS` y `CalendarAccessMixin` viven en
       `apps.core.views` y sólo los usa el propio calendario.
-      <a href="{% url 'calendar' %}" class="nav-item nav-operations {% if url_name == 'calendar' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>{% translate "Calendar" %}</a>
+      <a href="{% url 'calendar' %}" class="nav-item nav-flight {% if url_name == 'calendar' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>{% translate "Calendar" %}</a>
       {% endcomment %}
         </div>
       </div>
@@ -208,9 +208,9 @@
         <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="reports" aria-expanded="true" aria-controls="nav-group-reports">{% translate "Reports" %}<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
         <div class="nav-group-items" id="nav-group-reports">
       {% if perms.registry.view_aircraft and perms.registry.view_operator %}
-      <a href="{% url 'registry-roster' %}" class="nav-item nav-registry {% if url_name == 'registry-roster' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M9 9h7M9 13h7M9 17h4"/></svg>{% translate "Roster report" %}</a>
+      <a href="{% url 'registry-roster' %}" class="nav-item nav-reports {% if url_name == 'registry-roster' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M9 9h7M9 13h7M9 17h4"/></svg>{% translate "Roster report" %}</a>
       {% endif %}
-      <a href="{% url 'compliance-report' %}" class="nav-item nav-compliance {% if url_name == 'compliance-report' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="M8 16v-4M12 16V8M16 16v-6"/></svg>{% translate "Report" %}</a>
+      <a href="{% url 'compliance-report' %}" class="nav-item nav-reports {% if url_name == 'compliance-report' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="M8 16v-4M12 16V8M16 16v-6"/></svg>{% translate "Report" %}</a>
         </div>
       </div>
 
@@ -267,10 +267,10 @@
       <div class="nav-group">
         <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="inventory" aria-expanded="true" aria-controls="nav-group-inventory">{% translate "Inventory and movements" %}<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
         <div class="nav-group-items" id="nav-group-inventory">
-      <a href="{% url 'operatorassignment-list' %}" class="nav-item nav-registry {% if url_name == 'operatorassignment-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="7.5" r="3"/><path d="M2.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 12h5M18.5 9.5 21 12l-2.5 2.5"/></svg>{% translate "Operator assignments" %}</a>
-      <a href="{% url 'aircraftassignment-list' %}" class="nav-item nav-registry {% if url_name == 'aircraftassignment-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5.5" y="8.5" width="4.5" height="4.5" rx="1.4"/><path d="M5.8 8.8 4.1 7.1M9.7 8.8l1.7-1.7M5.8 12.7l-1.7 1.7M9.7 12.7l1.7 1.7"/><circle cx="3.3" cy="6.3" r="1.5"/><circle cx="12.2" cy="6.3" r="1.5"/><circle cx="3.3" cy="15.2" r="1.5"/><circle cx="12.2" cy="15.2" r="1.5"/><path d="M16 12h5M18.5 9.5 21 12l-2.5 2.5"/></svg>{% translate "Aircraft assignments" %}</a>
-      <a href="{% url 'battery-list' %}" class="nav-item nav-registry {% if url_name == 'battery-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="8" width="16" height="9" rx="2"/><path d="M20 11v3"/><path d="M6.5 12.5h5"/></svg>{% translate "Batteries" %}</a>
-      <a href="{% url 'resourcemovementlog-list' %}" class="nav-item nav-registry {% if url_name == 'resourcemovementlog-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>{% translate "Resource movements" %}</a>
+      <a href="{% url 'operatorassignment-list' %}" class="nav-item nav-inventory {% if url_name == 'operatorassignment-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="7.5" r="3"/><path d="M2.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 12h5M18.5 9.5 21 12l-2.5 2.5"/></svg>{% translate "Operator assignments" %}</a>
+      <a href="{% url 'aircraftassignment-list' %}" class="nav-item nav-inventory {% if url_name == 'aircraftassignment-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5.5" y="8.5" width="4.5" height="4.5" rx="1.4"/><path d="M5.8 8.8 4.1 7.1M9.7 8.8l1.7-1.7M5.8 12.7l-1.7 1.7M9.7 12.7l1.7 1.7"/><circle cx="3.3" cy="6.3" r="1.5"/><circle cx="12.2" cy="6.3" r="1.5"/><circle cx="3.3" cy="15.2" r="1.5"/><circle cx="12.2" cy="15.2" r="1.5"/><path d="M16 12h5M18.5 9.5 21 12l-2.5 2.5"/></svg>{% translate "Aircraft assignments" %}</a>
+      <a href="{% url 'battery-list' %}" class="nav-item nav-inventory {% if url_name == 'battery-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="8" width="16" height="9" rx="2"/><path d="M20 11v3"/><path d="M6.5 12.5h5"/></svg>{% translate "Batteries" %}</a>
+      <a href="{% url 'resourcemovementlog-list' %}" class="nav-item nav-inventory {% if url_name == 'resourcemovementlog-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>{% translate "Resource movements" %}</a>
         </div>
       </div>
 

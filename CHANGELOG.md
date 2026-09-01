@@ -168,6 +168,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **Cada sección del menú tiene su propio color (`LV-207`).** Antes el color lo
+  daba la pantalla de destino, no la sección, así que Informes mezclaba azul y
+  ámbar, Inventario mezclaba azul y gris, y tres secciones compartían el azul —el
+  color no servía para agrupar ni para distinguir. Ahora las ocho secciones se
+  diferencian entre sí, y los iconos siguen cumpliendo el contraste mínimo en los
+  dos temas.
 - **El panel ya no cuenta como brecha los equipos que están en bodega
   (`LV-229`).** Una aeronave de un centro administrativo, que no opera, figuraba
   como "sin seguro al día" y bajaba el indicador por una decisión correcta. La
