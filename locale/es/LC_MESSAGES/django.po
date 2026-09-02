@@ -7885,3 +7885,91 @@ msgid "%(counter)s field had no data at the cutoff."
 msgid_plural "%(counter)s fields had no data at the cutoff."
 msgstr[0] "%(counter)s campo sin dato a la fecha de corte."
 msgstr[1] "%(counter)s campos sin dato a la fecha de corte."
+
+#: apps/reporting/forms.py
+msgid "Severity"
+msgstr "Gravedad"
+
+#: apps/reporting/forms.py
+msgid "Warning"
+msgstr "Atención"
+
+#: apps/reporting/forms.py
+msgid "Heading"
+msgstr "Encabezado"
+
+#: apps/reporting/forms.py
+msgid "Finding"
+msgstr "Hallazgo"
+
+#: templates/reporting/narrative_form.html
+msgid "Findings"
+msgstr "Hallazgos"
+
+#: apps/reporting/forms.py
+msgid "Note for the period"
+msgstr "Observación del período"
+
+#: apps/reporting/forms.py
+msgid ""
+"Shown on the permits page. Leave it empty and the report says the note is "
+"pending, never that there is nothing to say."
+msgstr ""
+"Se muestra en la página de permisos. Si queda vacía, el informe dice que la "
+"observación está pendiente, nunca que no hay nada que decir."
+
+#: apps/reporting/forms.py
+msgid "Leave no empty finding between two written ones."
+msgstr "No dejes un hallazgo vacío entre dos escritos."
+
+#: apps/reporting/models.py
+msgid "Findings must be a list."
+msgstr "Los hallazgos deben ser una lista."
+
+#: apps/reporting/models.py
+msgid "Each finding needs a severity, title and text."
+msgstr "Cada hallazgo necesita gravedad, encabezado y texto."
+
+#: apps/reporting/models.py
+msgid "Unknown finding severity."
+msgstr "Gravedad de hallazgo desconocida."
+
+#: apps/reporting/views.py
+msgid "Draft frozen. You can now write its narrative."
+msgstr "Borrador congelado. Ya podés escribir su narrativa."
+
+#: apps/reporting/views.py
+msgid "An approved report is not edited: issue a new revision instead."
+msgstr "Un informe aprobado no se edita: emití una revisión nueva."
+
+#: apps/reporting/views.py
+msgid "This period already had a report; opening the latest one."
+msgstr "Este período ya tenía un informe; se abre el más reciente."
+
+#: templates/reporting/monthly_report.html
+msgid "Write the narrative"
+msgstr "Escribir la narrativa"
+
+#: templates/reporting/monthly_report.html
+msgid "Freeze this period as a draft"
+msgstr "Congelar este período como borrador"
+
+#: templates/reporting/narrative_form.html
+msgid "Back to the report"
+msgstr "Volver al informe"
+
+#: templates/reporting/narrative_form.html
+msgid ""
+"Findings and the note for the period. The figures come from the database and "
+"are not edited here."
+msgstr ""
+"Hallazgos y observación del período. Las cifras salen de la base de datos y "
+"no se editan acá."
+
+#: templates/reporting/narrative_form.html
+msgid ""
+"A finding is a judgement about the figures, not a query: it is written by "
+"whoever signs the report."
+msgstr ""
+"Un hallazgo es un juicio sobre las cifras, no una consulta: lo escribe quien "
+"firma el informe."

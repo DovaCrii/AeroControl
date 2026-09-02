@@ -78,9 +78,25 @@ sobre las cifras, y el informe va firmado.{% endcomment %}
       </div>
     </div>
 
+    {% comment %}`LV-227`: los hallazgos salen del informe guardado, no de la
+    base. Un hallazgo es un **juicio sobre** las cifras y va firmado, así que se
+    escribe. Sin ninguno escrito la página dice que están pendientes y no que no
+    hay: un resumen ejecutivo sin hallazgos afirmaría que el período no tuvo
+    ninguno, que es lo contrario de "todavía nadie los redactó".{% endcomment %}
     <div>
       <div class="rpt-label" style="margin-bottom: 10px;">Hallazgos del período</div>
+      {% if run.findings %}
+      <div class="rpt-stack-8">
+        {% for finding in run.findings %}
+        <div style="display: flex; gap: 12px; align-items: flex-start; background: #F4F7FA; padding: 11px 14px;">
+          <div class="rpt-swatch" style="margin-top: 4px; flex-shrink: 0; background: {% if finding.severity == 'critical' %}#B23B34{% else %}#B8791A{% endif %};"></div>
+          <div style="color: #0F1B2D; font-size: 11.5px; line-height: 1.55;"><strong>{{ finding.title }} —</strong> {{ finding.text }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
       {% pending "los hallazgos se redactan y se aprueban antes de emitir" "LV-227" %}
+      {% endif %}
     </div>
 
     {% comment %}**La brecha va partida en dos y es deliberado.** El informe

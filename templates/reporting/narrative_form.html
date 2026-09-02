@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{{ run.code }} - AeroControl{% endblock %}
+
+{% comment %}LV-227: la narrativa del informe, escrita dentro de la aplicación.
+
+**No es un editor de plantillas.** Lo que se edita son los dos bloques que el
+informe emitido trae redactados y que cambian todos los meses. Las cifras no
+están acá a propósito: salen de la base, y corregir una cifra es corregir el
+dato — si estuvieran, el informe dejaría de poder afirmar de dónde sale cada
+número, que es la garantía que lo hace firmable.{% endcomment %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <p class="page-eyebrow mb-1">{% translate "Reports" %}</p>
+    <h1 class="h3 mb-0">{{ run.code }}</h1>
+    <p class="page-description mb-0">{% translate "Findings and the note for the period. The figures come from the database and are not edited here." %}</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{% url 'monthly-report' %}?period={{ run.period|date:'Y-m' }}">{% translate "Back to the report" %}</a>
+</div>
+
+<form method="post" class="card p-3">
+  {% csrf_token %}
+
+  <h2 class="h5">{% translate "Findings" %}</h2>
+  <p class="text-muted small">{% translate "A finding is a judgement about the figures, not a query: it is written by whoever signs the report." %}</p>
+
+  {{ finding_formset.management_form }}
+  {% if finding_formset.non_form_errors %}
+  <div class="alert alert-danger" role="alert">{{ finding_formset.non_form_errors }}</div>
+  {% endif %}
+
+  {% for form in finding_formset %}
+  <div class="border rounded p-3 mb-3">
+    <div class="row g-2">
+      <div class="col-md-3">
+        <label class="form-label" for="{{ form.severity.id_for_label }}">{{ form.severity.label }}</label>
+        {{ form.severity }}
+        {{ form.severity.errors }}
+      </div>
+      <div class="col-md-9">
+        <label class="form-label" for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
+        {{ form.title }}
+        {{ form.title.errors }}
+      </div>
+      <div class="col-12">
+        <label class="form-label" for="{{ form.text.id_for_label }}">{{ form.text.label }}</label>
+        {{ form.text }}
+        {{ form.text.errors }}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+  <hr>
+
+  <h2 class="h5">{{ note_form.period_note.label }}</h2>
+  {{ note_form.period_note }}
+  <p class="form-text">{{ note_form.period_note.help_text }}</p>
+  {{ note_form.period_note.errors }}
+
+  <div class="d-flex gap-2 mt-3">
+    <button class="btn btn-primary">{% translate "Save" %}</button>
+    <a class="btn btn-outline-secondary" href="{% url 'monthly-report' %}?period={{ run.period|date:'Y-m' }}">{% translate "Cancel" %}</a>
+  </div>
+</form>
+{% endblock %}

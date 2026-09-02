@@ -230,7 +230,7 @@ mostrar las que **no** pueden volar.
 | La tabla permiso a permiso (folio JEJ, N° DGAC, operadores, aeronaves, días) | `R4` |
 | Próximo vencimiento y días por faena | `R4` |
 | Concentración operacional (permisos con un solo operador) | `R4` |
-| Los hallazgos y la observación del período | `LV-227` |
+| ~~Los hallazgos y la observación del período~~ | ~~`LV-227`~~ — **hecho el mismo día**, ver más abajo |
 
 ⚠️ **Y una diferencia deliberada con el informe emitido, que hay que cerrar en
 `R4`**: su cuarta tarjeta decía *"Permisos por vencer en 60 días"* y el payload
@@ -270,6 +270,34 @@ contar lo que todavía no existía, **no reconstruye** el padrón de esa fecha. 
 historial de `is_active`, archivar una ficha la saca también de los informes
 anteriores — hay un test que fija exactamente eso. La cifra sólo queda estable
 cuando el informe se **congela** (`R5`), y por eso `R5` no es un lujo.
+
+#### `LV-227`: la narrativa se escribe dentro de la app
+
+El usuario preguntó por usar **LibreOffice o similar** para editar el informe.
+**Descartado, y con motivo:** el repo ya rechazó una dependencia de sistema más
+chica —WeasyPrint, por Cairo/Pango— al elegir `reportlab`; LibreOffice headless
+son ~1 GB en `p340`; y **no resuelve el problema difícil**, que es el viaje de
+vuelta de un `.docx` editado a dato estructurado. Ese viaje es con pérdida y
+rompería la garantía de que el informe no inventa un dato: dejaría de poder
+distinguirse qué cifra salió de la base y cuál escribió alguien encima. El
+usuario eligió **campos en la app**.
+
+Se editan los **dos bloques que cambian todos los meses**: los hallazgos
+(gravedad + encabezado + texto, hasta 8) y la observación del período. Antes hay
+que **congelar el borrador**, con un botón propio — es un paso explícito porque
+congelar es lo que separa "esto se mueve con la base" de "esto es el informe de
+agosto". Eso es **media `R5`**: regenerar, comparar y aprobar sigue pendiente.
+
+🔶 **Fuera a propósito**: la página 5 (el plan y su matriz de exigibilidad) sigue
+escrita en la plantilla. Cambia una vez por trimestre, no todos los meses, y su
+matriz es una tabla de 4×4. Si hace falta editarla, es una fila aparte.
+
+⚠️ **Y una trampa de test que vale para todo el repo**: la prueba de que el
+formulario no expone el modelo entero **no puede ser un POST**. Con `"__all__"`
+puesto, el POST sale inválido por un campo que no trae (`is_active`) y el test
+queda verde sin haber medido nada. El guardián real afirma sobre
+`set(PeriodNoteForm().fields)`. Comprobado dejando el `"__all__"`: cae ése y no
+el otro.
 
 #### Dos defectos que salieron de escribir los tests, no de leer código
 

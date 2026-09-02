@@ -10,6 +10,7 @@ especificación de la automatización y el mapeo campo→modelo real están en
 aeronaves ni operadores: recolecta lo que ya existe y lo congela.
 """
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -58,6 +59,16 @@ class ReportRun(BaseModel):
     # `LV-90` fijó en el resto del proyecto: la lista vive junto a las choices.
     TERMINAL_STATUSES = frozenset({STATUS_SUPERSEDED})
 
+    # La severidad de un hallazgo, en el vocabulario del informe emitido: sus
+    # cuatro llevan un cuadrado rojo o ámbar. No se reutilizan los tokens
+    # `--sev-*` de la aplicación (`UX-01`) porque el informe tiene su propia
+    # paleta de papel: sale firmado hacia la DGAC y no puede depender del tema
+    # de quien lo abrió. Ver la cabecera de `report-a4.css`.
+    FINDING_CRITICAL = "critical"
+    FINDING_WARNING = "warning"
+    FINDING_SEVERITIES = frozenset({FINDING_CRITICAL, FINDING_WARNING})
+    FINDING_FIELDS = frozenset({"severity", "title", "text"})
+
     COMPLETENESS_OK = "ok"
     COMPLETENESS_PARTIAL = "partial"
     COMPLETENESS_CHOICES = [
@@ -93,6 +104,20 @@ class ReportRun(BaseModel):
     completeness = models.CharField(
         max_length=20, choices=COMPLETENESS_CHOICES, default=COMPLETENESS_PARTIAL
     )
+    # **La narrativa: lo único del informe que no sale de la base y no podría.**
+    #
+    # `LV-227`. Un hallazgo es un **juicio sobre** las cifras —"la renovación
+    # debía haber comenzado ya"—, no una consulta; el informe va firmado y quien
+    # firma es quien lo escribe. Por eso se guarda y no se genera.
+    #
+    # Va en el `ReportRun` y no en una tabla aparte porque **es parte del
+    # documento**: un informe aprobado tiene que seguir diciendo lo que decía,
+    # narrativa incluida, y con la redacción colgando de otro lado se editaría
+    # por detrás de un documento ya emitido.
+    findings = models.JSONField(default=list, blank=True)
+    # La observación del período (página 3 del informe emitido). Un párrafo, no
+    # una lista: en el informe de agosto es uno solo, sobre la vigencia otorgada.
+    period_note = models.TextField(blank=True, default="")
     approved_at = models.DateTimeField(null=True, blank=True)
     approved_by = models.CharField(max_length=64, blank=True, default="")
 
@@ -123,6 +148,26 @@ class ReportRun(BaseModel):
         que puede discrepar de su propia fecha.
         """
         return f"JEJ-GTE-CT-INF-RPA-{self.period:%Y-%m}"
+
+    def clean(self):
+        """`findings` tiene forma, y se comprueba también acá.
+
+        El formulario no es el único camino a esta columna: el admin, un
+        `loaddata` y una corrida de datos escriben igual, y un `JSONField` acepta
+        cualquier cosa. Una lista mal formada no revienta al guardar — revienta
+        al **renderizar el informe**, que es el peor momento posible. Es la regla
+        de `AGENTS.md`: validar en el formulario *y* en el modelo.
+        """
+        super().clean()
+        if not isinstance(self.findings, list):
+            raise ValidationError({"findings": _("Findings must be a list.")})
+        for entry in self.findings:
+            if not isinstance(entry, dict) or set(entry) != self.FINDING_FIELDS:
+                raise ValidationError(
+                    {"findings": _("Each finding needs a severity, title and text.")}
+                )
+            if entry["severity"] not in self.FINDING_SEVERITIES:
+                raise ValidationError({"findings": _("Unknown finding severity.")})
 
     @property
     def is_editable(self):
