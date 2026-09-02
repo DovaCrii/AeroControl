@@ -356,6 +356,31 @@ class FlightPermissionDetail(
             .prefetch_related("operators", "aircraft_fleet")
         )
 
+    @staticmethod
+    def _derived_location(permission):
+        """`LV-220` (b): la comuna y la región deducidas de las coordenadas.
+
+        **Sólo cuando la ficha no las tiene declaradas.** Un permiso con región
+        en el papel no necesita que se la deduzcan, y sobreponerle una inferencia
+        sería reemplazar el dato bueno por uno aproximado.
+
+        **Se calcula al dibujar y no se guarda**, que es la mitad de por qué la
+        (a) dejó esto sin hacer: `FlightPermission.region` no tiene ningún campo
+        de procedencia, así que una región escrita ahí es indistinguible de una
+        copiada del papel DGAC. Mientras el modelo no sepa distinguirlas, lo
+        derivado vive en el contexto de la vista y la plantilla lo rotula.
+
+        `locate` devuelve `None` fuera de cobertura, y ese `None` se propaga: la
+        ficha vuelve a decir "Sin informar", que es la respuesta honesta.
+        """
+        if permission.region or permission.commune:
+            return None
+        if permission.latitude is None or permission.longitude is None:
+            return None
+        from apps.geo.administrative import locate
+
+        return locate(float(permission.latitude), float(permission.longitude))
+
     def get_context_data(self, **kwargs):
         from apps.compliance.attachments import attached_documents_context
 
@@ -366,6 +391,7 @@ class FlightPermissionDetail(
         # LV-130: con el usuario, para que cada renglón traiga sólo el atajo que
         # esta persona puede ejecutar.
         context["dossier"] = operational_dossier(self.object, self.request.user)
+        context["derived_location"] = self._derived_location(self.object)
         # R10.2: los planes que se pueden cruzar con este permiso -- los de su
         # mismo centro de costo que todavía no están vinculados a ninguno.
         # Excluir los ya vinculados a **otro** permiso es deliberado: reasignar

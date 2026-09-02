@@ -11,6 +11,8 @@ la DGAC la pide en el formulario del SIGO. Misma lectura que `LV-146` para el ch
 de faena — el caso vacío es un caso real y se dice.
 """
 
+from decimal import Decimal
+
 import pytest
 from django.urls import reverse
 
@@ -70,20 +72,73 @@ class TestTheRowIsAlwaysThere:
         assert "Coquimbo" in body
 
 
-class TestTheRegionIsNeverDerived:
+class TestADerivedRegionSaysThatItWasDerived:
+    """**Mitad (b), hecha — y este archivo es el que la fila mandaba cambiar.**
+
+    Antes decía `TestTheRegionIsNeverDerived` y afirmaba que un permiso con
+    coordenadas seguía mostrando "Sin informar". Su docstring anunciaba
+    literalmente que *"el día que se derive, tendrá que decir que se derivó, y
+    este test es el que hay que cambiar a propósito"*. Ese día es hoy, y lo que
+    se conserva es **la condición**, no la prohibición: lo derivado se dibuja
+    con su propio rótulo y con el aviso de la BCN, nunca con el aspecto de un
+    dato declarado.
+    """
+
+    # Santiago centro. Se usa un punto **verificado contra la capa real** en vez
+    # de uno elegido a ojo: las coordenadas del test anterior (-31.90, -71.51,
+    # cerca de Los Vilos) devuelven `None`, porque la capa de la BCN está
+    # simplificada a ~111 m y ahí no cubre. O sea que aquel test pasaba en parte
+    # por la razón vecina — no sólo porque no se derivara.
+    COVERED = (Decimal("-33.45"), Decimal("-70.66"))
+    # Verificado que cae fuera de la cobertura, y sirve mejor que un punto en
+    # medio del Pacífico: es un lugar donde alguien podría volar de verdad.
+    UNCOVERED = (Decimal("-31.90"), Decimal("-71.51"))
+
     @pytest.mark.django_db
-    def test_coordinates_alone_do_not_produce_a_region(self, db):
-        """Mitad (b) de la fila, deliberadamente sin hacer.
+    def test_coordinates_produce_a_region_that_is_labelled_as_derived(self, db):
+        latitude, longitude = self.COVERED
 
-        El permiso tiene coordenadas y aun así la región queda "sin informar".
-        Derivarla de la coordenada y dibujarla igual que una declarada haría que
-        quien llena el SIGO no pueda distinguir el dato del papel de una
-        inferencia nuestra. Este test fija esa decisión: el día que se derive,
-        tendrá que decir que se derivó, y este test es el que hay que cambiar
-        **a propósito**.
+        body = _fiche(_permit(latitude=latitude, longitude=longitude))
+
+        assert "Santiago" in body
+        # Y **no** se disfraza de dato declarado: la fila sigue diciendo que no
+        # hay nada informado, y lo deducido va aparte, rotulado y con el aviso
+        # de la BCN.
+        assert "Sin informar" in body or "Not recorded" in body
+        assert "Derivada de las coordenadas" in body or "Derived from" in body
+        assert "BCN" in body
+
+    @pytest.mark.django_db
+    def test_a_declared_region_is_not_overwritten_by_the_derivation(self, db):
+        """Un permiso con región en el papel no necesita que se la deduzcan, y
+        sobreponerle una inferencia sería reemplazar el dato bueno por uno
+        aproximado."""
+        latitude, longitude = self.COVERED
+
+        body = _fiche(
+            _permit(
+                region="Región de Coquimbo",
+                commune="Los Vilos",
+                latitude=latitude,
+                longitude=longitude,
+            )
+        )
+
+        assert "Región de Coquimbo" in body
+        assert "Derivada de las coordenadas" not in body
+        assert "Derived from" not in body
+
+    @pytest.mark.django_db
+    def test_outside_the_covered_area_it_says_nothing_instead_of_guessing(self, db):
+        """`locate` devuelve `None` fuera de cobertura y ese `None` se propaga.
+
+        La respuesta honesta es la misma que antes: "Sin informar". Deducir algo
+        aproximado ahí sería peor que no deducir nada.
         """
-        from decimal import Decimal
+        latitude, longitude = self.UNCOVERED
 
-        body = _fiche(_permit(latitude=Decimal("-31.90"), longitude=Decimal("-71.51")))
+        body = _fiche(_permit(latitude=latitude, longitude=longitude))
 
-        assert "Coquimbo" not in body
+        assert "Sin informar" in body or "Not recorded" in body
+        assert "Derivada de las coordenadas" not in body
+        assert "Derived from" not in body
