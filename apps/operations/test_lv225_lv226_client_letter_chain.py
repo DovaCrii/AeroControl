@@ -7,12 +7,24 @@ tercero. De ahí que la cadena de avisos empiece 45 días antes y no 30.
 
 Dos piezas y dos naturalezas distintas, que estos tests mantienen separadas:
 
-- **La carta es un tipo de documento más** (`LV-225`), no un campo ni un modelo.
-  Así hereda el expediente, las versiones, el hash de `LV-200` y el motor de
-  vencimientos, sin código nuevo.
-- **T-45 y T-30 son configuración** (`LV-226`): filas de `AlertRule`. Sólo el
-  escalamiento condicional —*si a T-15 no hay carta*— necesita lógica, porque
-  "existe un documento de este tipo" no es un campo que `AlertRule` pueda vigilar.
+- **La carta es un tipo de documento** —`dgac-flight-permit`—, no un campo ni un
+  modelo. Así hereda el expediente, las versiones, el hash de `LV-200` y el motor
+  de vencimientos, sin código nuevo.
+- **T-45 y T-30 son configuración** (`LV-226`): dos filas de `AlertRule`. El
+  escalamiento condicional —*si no hay carta*— necesita lógica, porque "existe un
+  documento de este tipo" no es un campo que `AlertRule` pueda vigilar, y vive en
+  `check_client_letters`.
+
+⚠️ **Dos correcciones posteriores cambiaron este archivo, y las dos vinieron de
+que el usuario mirara la app:**
+
+- `LV-230`: `LV-225` había creado un tipo nuevo (`client-authorization-letter`)
+  para la carta del mandante **sin ver que `dgac-flight-permit` ya era ese papel**
+  — su nombre decía "Autorización DGAC", que apuntaba al revés. El expediente
+  pedía dos documentos siendo uno.
+- `LV-232`: la cadena era de **tres** umbrales. No lo son: el de 15 días repetía
+  lo que decía el de 30 y sólo cambiaba el destinatario, y en la bandeja eso era
+  ruido y no escalamiento.
 """
 
 from datetime import date, timedelta
@@ -27,7 +39,7 @@ from django.utils import timezone
 from apps.core.testing import login_as
 from apps.registry.models import CostCenter
 
-from .dossier import CLIENT_LETTER, PERMIT_LETTER, SIGNED_AUTHORIZATION
+from .dossier import PERMIT_LETTER, SIGNED_AUTHORIZATION
 from .models import FlightPermission
 
 
@@ -72,33 +84,41 @@ class TestTheLetterIsInTheDossier:
             item.key: item for item in operational_dossier(_permit(_cc()))["items"]
         }
 
-        assert "client_letter" in items
+        assert "permit_letter" in items
 
     @pytest.mark.django_db
     def test_it_is_recognised_once_uploaded(self, db):
         from .dossier import OK, operational_dossier
 
         permit = _permit(_cc())
-        _attach(permit, CLIENT_LETTER)
-
-        items = {item.key: item for item in operational_dossier(permit)["items"]}
-
-        assert items["client_letter"].status == OK
-
-    @pytest.mark.django_db
-    def test_it_is_not_the_same_paper_as_either_dgac_one(self, db):
-        """Tres papeles distintos: uno va, uno vuelve y uno lo emite el cliente."""
-        from .dossier import OK, operational_dossier
-
-        permit = _permit(_cc())
-        _attach(permit, SIGNED_AUTHORIZATION)
         _attach(permit, PERMIT_LETTER)
 
         items = {item.key: item for item in operational_dossier(permit)["items"]}
 
-        # Los dos de la DGAC están, y la del mandante sigue faltando.
+        assert items["permit_letter"].status == OK
+
+    @pytest.mark.django_db
+    def test_the_two_papers_are_tracked_apart(self, db):
+        """Dos papeles: uno lo emite el cliente y va, y otro vuelve firmado.
+
+        **Renombrado en `LV-230`.** Se llamaba
+        `test_it_is_not_the_same_paper_as_either_dgac_one` y afirmaba que había
+        *tres* papeles distintos — que era precisamente el error de `LV-225`: el
+        tercero era este mismo. Lo que queda por proteger es que los **dos** que
+        sí existen se sigan por separado, porque sólo uno certifica la aprobación
+        (`R2.4`).
+        """
+        from .dossier import OK, operational_dossier
+
+        permit = _permit(_cc())
+        _attach(permit, SIGNED_AUTHORIZATION)
+
+        items = {item.key: item for item in operational_dossier(permit)["items"]}
+
+        # La autorización firmada está; la carta del mandante todavía no, y el
+        # expediente las cuenta como cosas distintas.
         assert items["signed_authorization"].status == OK
-        assert items["client_letter"].status != OK
+        assert items["permit_letter"].status != OK
 
     @pytest.mark.django_db
     def test_a_missing_letter_does_not_block_approval(self, db):
@@ -127,7 +147,7 @@ class TestTheLetterIsInTheDossier:
 
         call_command("seed_document_types")
 
-        assert DocumentType.objects.filter(code=CLIENT_LETTER).exists()
+        assert DocumentType.objects.filter(code=PERMIT_LETTER).exists()
 
     @pytest.mark.django_db
     def test_the_seeded_type_does_not_demand_an_expiry_date(self, db):
@@ -140,12 +160,24 @@ class TestTheLetterIsInTheDossier:
 
         call_command("seed_document_types")
 
-        assert not DocumentType.objects.get(code=CLIENT_LETTER).requires_expiry
+        assert not DocumentType.objects.get(code=PERMIT_LETTER).requires_expiry
 
 
 class TestTheChainIsConfiguration:
     @pytest.mark.django_db
-    def test_the_three_thresholds_are_seeded_rules(self, db):
+    def test_the_two_thresholds_are_seeded_rules(self, db):
+        """**Dos umbrales y no tres: `LV-232` retiró el de 15 días.**
+
+        `LV-226` sembró tres argumentando que "tres alertas abiertas *son* el
+        escalamiento". El usuario mandó la bandeja y no lo eran: un permiso tenía
+        cuatro filas para un solo hecho, y con la tercera regla serían cinco. La de
+        15 días decía lo mismo que la de 30 y sólo cambiaba el destinatario, así
+        que el escalamiento se quedó en `check_client_letters`, que es de solo
+        lectura y no ensucia la bandeja.
+
+        Los dos que quedan tienen **cada uno su acción**: pedir la carta (45) y
+        renovar el permiso (30).
+        """
         from apps.compliance.models import AlertRule
 
         call_command("seed_alert_rules")
@@ -156,7 +188,7 @@ class TestTheChainIsConfiguration:
                 field_to_watch="valid_until",
             ).values_list("days_before_expiry", flat=True)
         )
-        assert {45, 30, 15} <= days
+        assert days == {45, 30}
 
     @pytest.mark.django_db
     def test_seeding_twice_does_not_duplicate_the_chain(self, db):
@@ -176,16 +208,21 @@ class TestTheChainIsConfiguration:
                 entity_type="operations.flightpermission",
                 field_to_watch="valid_until",
             ).count()
-            == 3
+            == 2
         )
 
     @pytest.mark.django_db
     def test_each_threshold_produces_its_own_alert(self, db):
-        """Tres reglas sobre el mismo campo = tres alertas escalonadas.
+        """Dos reglas sobre el mismo campo = dos alertas, una por acción.
 
         Es lo que hace posible la cadena sin tocar el motor: su clave
         anti-duplicados es `(regla, registro, valor)` (`LV-111`), así que cada
         regla escribe la suya.
+
+        **Este test afirmaba tres, y ese número era el defecto de `LV-232`.** Que
+        el motor pueda emitir una alerta por regla no significa que deba: dos
+        avisos con acciones distintas informan, tres diciendo la misma fecha
+        enseñan a no mirar la bandeja.
         """
         from apps.compliance.models import Alert
 
@@ -200,7 +237,7 @@ class TestTheChainIsConfiguration:
 
         call_command("generate_alerts")
 
-        assert Alert.objects.filter(object_id=permit.pk, is_active=True).count() == 3
+        assert Alert.objects.filter(object_id=permit.pk, is_active=True).count() == 2
 
     @pytest.mark.django_db
     def test_a_permit_with_no_validity_gets_no_alert(self, db):
@@ -256,7 +293,7 @@ class TestTheConditionalEscalation:
             valid_from=today - timedelta(days=60),
             valid_until=today + timedelta(days=40),
         )
-        _attach(permit, CLIENT_LETTER)
+        _attach(permit, PERMIT_LETTER)
         out = StringIO()
 
         call_command("check_client_letters", stdout=out)

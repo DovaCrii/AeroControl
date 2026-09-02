@@ -50,12 +50,24 @@ ESSENTIAL_RULES = [
         "valid_until",
         45,
     ),
-    (
-        "Permisos: renovación vencida de plazo (T-15 · Gerencia)",
-        "operations.flightpermission",
-        "valid_until",
-        15,
-    ),
+    # LV-232: **la tercera regla se retira, y el razonamiento que la puso era
+    # equivocado.**
+    #
+    # `LV-226` la sembró a 15 días argumentando que "tres alertas abiertas *son*
+    # el escalamiento". El usuario mandó la bandeja y no lo son: `JEJ-2026-011`
+    # tenía cuatro filas para un solo hecho —*"este permiso vence el 18-09"*— y
+    # con esta regla serían cinco. El repo ya tenía la respuesta escrita en
+    # `LV-118`: *"un aviso que sale todos los días enseña a no leerlo"*, y
+    # `LV-119` y `LV-194` cerraron dos veces el mismo defecto.
+    #
+    # Quedan dos avisos y **cada uno con su propia acción**: pedir la carta
+    # (T-45) y renovar el permiso (T-30, la regla que ya existía). El
+    # escalamiento a Gerencia lo entrega `check_client_letters`, que es de solo
+    # lectura y no ensucia la bandeja — que es donde debía haber estado desde el
+    # principio.
+    #
+    # ⚠️ Este sembrado **sólo crea**, nunca borra: quitarla de acá no la saca de
+    # una instalación donde ya se sembró. Hay que desactivarla o borrarla allá.
 ]
 
 OPTIONAL_RULES = [

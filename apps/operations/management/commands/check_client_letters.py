@@ -5,10 +5,10 @@ mandante** (`SPEC_REPORTE_MENSUAL_RPA.md` §4.1): no es un trámite que dependa
 sólo de nosotros, hay que pedírsela a un tercero. Por eso la cadena de avisos del
 motor empieza a 45 días (`seed_alert_rules`).
 
-Pero esas tres reglas avisan **por fecha**, y lo que de verdad decide si la
-renovación va a llegar a tiempo es una condición que ninguna regla de `AlertRule`
-puede expresar: *si la carta está o no*. `AlertRule` vigila un campo contra una
-fecha; "existe un documento de este tipo colgado de este permiso" no es un campo.
+Pero esas reglas avisan **por fecha**, y lo que de verdad decide si la renovación
+va a llegar a tiempo es una condición que ninguna regla de `AlertRule` puede
+expresar: *si la carta está o no*. `AlertRule` vigila un campo contra una fecha;
+"existe un documento de este tipo colgado de este permiso" no es un campo.
 
 Así que el escalamiento condicional del SPEC —*"si a T-15 no hay carta
 registrada, la alerta escala al Gerente de Operaciones Aéreas"*— vive acá, y
@@ -16,9 +16,16 @@ registrada, la alerta escala al Gerente de Operaciones Aéreas"*— vive acá, y
 `generate_alerts` obligaría a que `AlertRule` supiera de documentos, y ese motor
 es genérico sobre siete modelos. Es el mismo reparto que los otros `check_*`.
 
+⚠️ **Desde `LV-232`, este comando es el único lugar donde vive ese escalamiento.**
+`LV-226` había sembrado además una regla de `AlertRule` a 15 días para el mismo
+propósito, y era ruido: repetía la fecha que ya decía la regla de 30 días y sólo
+cambiaba el destinatario, así que un permiso próximo a vencer acumulaba cuatro o
+cinco filas en la bandeja para un solo hecho. La regla se retiró; la pregunta
+condicional se queda acá, que es donde se podía responder de verdad.
+
 **Read-only.** No crea alertas ni escribe nada: informa. Crear una alerta desde
-acá duplicaría la fila que la regla T-15 ya escribió por fecha, y `LV-111`/`LV-118`
-son dos filas gastadas justamente en alertas repetidas.
+acá volvería a poner en la bandeja lo que `LV-232` acaba de sacar, y
+`LV-111`/`LV-118` son dos filas gastadas justamente en alertas repetidas.
 """
 
 from datetime import timedelta
@@ -45,7 +52,10 @@ class Command(BaseCommand):
         from django.contrib.contenttypes.models import ContentType
 
         from apps.compliance.models import Document
-        from apps.operations.dossier import CLIENT_LETTER
+
+        # LV-230: la carta del mandante es `PERMIT_LETTER`. `CLIENT_LETTER` era el
+        # tipo duplicado que `LV-225` creó para este mismo papel.
+        from apps.operations.dossier import PERMIT_LETTER
         from apps.operations.models import FlightPermission
 
         horizon = options["days"]
@@ -70,7 +80,7 @@ class Command(BaseCommand):
             Document.objects.filter(
                 content_type=ContentType.objects.get_for_model(FlightPermission),
                 object_id__in=permits.values("pk"),
-                doc_type__code=CLIENT_LETTER,
+                doc_type__code=PERMIT_LETTER,
                 is_current_version=True,
                 is_active=True,
             ).values_list("object_id", flat=True)
