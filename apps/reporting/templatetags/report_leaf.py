@@ -16,9 +16,36 @@ Hay **dos** clases de pendiente y conviene no confundirlas al leer una página:
    rótulo dice qué fila del plan la va a llenar.
 """
 
+from datetime import date
+
 from django import template
 
 register = template.Library()
+
+
+@register.filter
+def as_date(value):
+    """Una fecha ISO del payload como `date`, para poder darle formato.
+
+    **El payload guarda ISO porque es JSON, y el documento se lee en
+    `dd-mm-aaaa`.** Sin esta conversión la plantilla imprime el ISO crudo, y ahí
+    aparece el defecto que motivó el filtro: `2026-08-01` recortado a sus cinco
+    últimos caracteres da **`08-01`**, que en un documento chileno se lee como
+    el 8 de enero. En un informe que va a la DGAC, una fecha que se puede leer
+    al revés no es un detalle de formato.
+
+    Formatear en la plantilla y no guardar la cadena ya formateada en el payload
+    es deliberado: el payload es **dato**, y un informe congelado se
+    re-renderiza con la plantilla de hoy — si guardara "01-08-2026", un cambio
+    de convención dejaría los informes viejos con el formato viejo y no habría
+    forma de saber cuál es cuál.
+    """
+    if isinstance(value, date):
+        return value
+    try:
+        return date.fromisoformat(value)
+    except (TypeError, ValueError):
+        return None
 
 
 @register.inclusion_tag("reporting/_leaf.html")

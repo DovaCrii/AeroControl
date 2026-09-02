@@ -50,6 +50,48 @@ UNIT_PERCENT = "percent"
 UNIT_DURATION = "duration"
 
 
+# R4: la escala del **permiso**, que no es la del documento y por eso vive acá.
+#
+# `digest.bucket_for` corta en 7/15/30 y llama "later" a todo lo que pase de un
+# mes. Para un permiso eso es tarde: su renovación exige **una carta nueva del
+# mandante** y el trámite ante la DGAC, que es por lo que la cadena de `LV-226`
+# empieza a avisar a **45** días. El informe emitido dibuja su leyenda en 30/60
+# — crítico, por vencer, vigente — y ésa es la escala del documento.
+#
+# ⚠️ **No es una tercera paleta**, que era el riesgo anotado en el plan: los
+# nombres son los mismos cinco niveles de severidad que `UX-01` fijó, y de ellos
+# se usan tres. Lo que cambia es el **corte**, no el vocabulario — así el rojo
+# significa lo mismo en la bandeja, en el panel y en el informe. El color de
+# papel lo pone `report-a4.css`, porque un documento firmado no puede depender
+# del tema de quien lo abrió.
+PERMIT_CRITICAL_DAYS = 30
+PERMIT_WARNING_DAYS = 60
+PERMIT_BAND_CRITICAL = "critical"
+PERMIT_BAND_WARNING = "warning"
+PERMIT_BAND_NOMINAL = "nominal"
+
+
+def permit_band(days_left):
+    """El tramo de un permiso según los días que le quedan.
+
+    `None` cuando no hay días que contar —un permiso **solicitado** no tiene
+    vigencia (`LV-219`)— y eso no es lo mismo que "vencido": la DGAC todavía no
+    resolvió. Devolver `critical` ahí pintaría de rojo una espera que no es
+    incumplimiento de nadie.
+
+    Un permiso ya vencido cae en `critical` junto con los de menos de 30 días, y
+    es deliberado: los dos piden la misma acción —renovar ya— y el informe
+    distingue el caso vencido por su cifra en negativo, no por un cuarto color.
+    """
+    if days_left is None:
+        return None
+    if days_left <= PERMIT_CRITICAL_DAYS:
+        return PERMIT_BAND_CRITICAL
+    if days_left <= PERMIT_WARNING_DAYS:
+        return PERMIT_BAND_WARNING
+    return PERMIT_BAND_NOMINAL
+
+
 def _met(value, target, direction):
     """None when there is nothing to judge -- no value, or no agreed target."""
     if value is None or target is None:
@@ -136,6 +178,16 @@ def permit_counts(today, cost_center=None):
         "soon": approved.filter(
             valid_until__gte=today, valid_until__lte=today + timedelta(days=30)
         ).count(),
+        # R4: la ventana de **60 días**, que es la que cuenta el informe emitido
+        # ("4 permisos por vencer en 60 días, uno de ellos en 17"). Va como clave
+        # aparte y no reemplaza a `soon`: el panel pregunta "qué se me viene este
+        # mes" y el informe pregunta "qué hay que empezar a tramitar", y son dos
+        # preguntas con dos horizontes. Reemplazar `soon` por 60 habría movido el
+        # número del panel sin que nadie lo pidiera.
+        "soon_60": approved.filter(
+            valid_until__gte=today,
+            valid_until__lte=today + timedelta(days=PERMIT_WARNING_DAYS),
+        ).count(),
     }
 
 
@@ -161,7 +213,7 @@ def permit_status_by_cost_center(today):
     habría costado cuatro consultas por fila en una pantalla que se abre en cada
     inicio de sesión — el mismo cuidado que `upcoming_expirations` documenta.
     """
-    from django.db.models import Count, Q
+    from django.db.models import Count, Min, Q
 
     from apps.operations.models import FlightPermission
     from apps.registry.models import CostCenter
@@ -204,16 +256,39 @@ def permit_status_by_cost_center(today):
                     valid_until__lte=horizon,
                 ),
             ),
+            # R4: la fecha del **primer** permiso que vence, que es la que manda
+            # la renovación. Se agrega acá y no en una segunda consulta por
+            # faena: esta pantalla se abre en cada inicio de sesión, y una
+            # consulta por fila es lo que el docstring de arriba documenta
+            # evitar.
+            #
+            # `Min` y no `Max`: con siete permisos vigentes el que obliga a
+            # actuar es el primero en caer. `Max` habría mostrado la fecha más
+            # cómoda y escondido justamente la urgente.
+            next_expiry=Min(
+                "valid_until",
+                filter=Q(
+                    status=FlightPermission.STATUS_APPROVED, valid_until__gte=today
+                ),
+            ),
         )
     }
     empty = {"in_force": 0, "lapsed": 0, "awaiting": 0, "soon": 0}
-    return [
-        {
-            "cost_center": center,
-            **{key: counted.get(center.pk, empty).get(key, 0) for key in empty},
-        }
-        for center in centers
-    ]
+    rows = []
+    for center in centers:
+        counts = counted.get(center.pk, empty)
+        # `None` cuando la faena no tiene ningún permiso vigente, y se propaga
+        # como `None` hasta la plantilla: "sin fecha" no es "vence hoy".
+        next_expiry = counts.get("next_expiry")
+        rows.append(
+            {
+                "cost_center": center,
+                **{key: counts.get(key, 0) for key in empty},
+                "next_expiry": next_expiry,
+                "days_remaining": (next_expiry - today).days if next_expiry else None,
+            }
+        )
+    return rows
 
 
 def on_time_execution(start, end):

@@ -161,10 +161,48 @@ aprobación), R6 (XLSX y envío, bloqueado por SMTP) y R7 (bitácoras, depende d
 §6.6). La narrativa —hallazgos y observación del período— es `LV-227`, no un
 bloque R.
 
-⚠️ **Deuda declarada de R3 que R4 tiene que cerrar**: el informe emitido cuenta
-los permisos por vencer en **60 días** y el payload sólo trae la ventana de
-**30**, que es la que `permit_counts` calcula. La tarjeta se rotula por lo que
-mide; sumar la ventana de 60 va con los semáforos.
+**R4 hecho** (2026-09-02): `collect_permits` (la tabla permiso a permiso),
+`collect_concentration`, el próximo vencimiento por faena dentro de
+`permit_status_by_cost_center`, la ventana de 60 días en `permit_counts` y
+`permit_band`. 23 tests más. **Las cuatro páginas quedan sin bloques pendientes
+salvo la narrativa**, que es `LV-227` y ya se escribe en la app.
+
+### La escala del permiso, y por qué no es la del documento
+
+`digest.bucket_for` corta en **7/15/30** y llama "later" a todo lo que pase de
+un mes. Para un permiso eso es tarde: su renovación exige **carta nueva del
+mandante** y trámite ante la DGAC, que es por lo que la cadena de `LV-226`
+empieza a avisar a los **45**. El informe emitido dibuja su leyenda en **30/60**
+y ésa es la escala del documento — `permit_band` en `apps/compliance/kpis.py`.
+
+⚠️ **No es una tercera paleta**, que era el riesgo que el plan anotó antes de
+`UX-01`: los nombres son los mismos niveles de severidad de la aplicación
+(`critical`, `warning`, `nominal`) y hay un test que lo fija contra
+`BUCKET_BADGE_CSS`. **Lo que cambia es el corte, no el vocabulario**, así que el
+rojo significa lo mismo en la bandeja, en el panel y en el papel. El color de
+papel lo pone `report-a4.css`, porque un documento firmado no puede depender del
+tema de quien lo abrió.
+
+`soon_60` entra **junto a** `soon` y no en su lugar: el panel pregunta "qué se
+me viene este mes" y el informe "qué hay que empezar a tramitar". Reemplazar
+`soon` habría movido una cifra del panel sin que nadie lo pidiera.
+
+### Definiciones que se decidieron acá y conviene no reabrir
+
+| Qué | Cómo se define, y por qué así |
+|---|---|
+| Semáforo de la faena | El **peor** de sus habilitantes (§4.2), nunca el promedio. Sin permiso vigente es `critical` y no "sin banda": no poder volar es lo peor de la escala, no la ausencia de una |
+| Próximo vencimiento | `Min(valid_until)` entre los vigentes. Con siete permisos el que obliga a actuar es **el primero en caer**; `Max` habría mostrado la fecha cómoda y escondido la urgente |
+| Faena que depende de una persona | La **unión** de los operadores de todos sus permisos vigentes tiene un solo miembro. Contar "faenas con algún permiso de un solo operador" habría inflado la cifra con faenas que sí tienen suplente |
+| Solicitud en trámite | Se lista en **su propio bloque**, con días en guion y sin banda. Mezclarla con los vigentes sugeriría que un trámite habilita a volar |
+
+⚠️ **Las fechas del payload son ISO y el documento se lee `dd-mm-aaaa`.** El
+filtro `as_date` existe por un defecto encontrado mirando la pantalla:
+`{{ valor|slice:"5:" }}` sobre `2026-08-01` da `08-01`, que en un documento
+chileno se lee como el 8 de enero. **No se guarda la cadena ya formateada en el
+payload**: el payload es dato, y un informe congelado se re-renderiza con la
+plantilla de hoy — con el formato guardado, un cambio de convención dejaría los
+informes viejos con el formato viejo y sin forma de saber cuál es cuál.
 
 ## El corte temporal, y hasta dónde llega
 
