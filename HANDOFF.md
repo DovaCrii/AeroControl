@@ -177,7 +177,89 @@ Dos filas más, **sin desplegar**:
 
 **Paso de despliegue: `collectstatic`.** Sin migración.
 
-### Cierre del 2026-09-01 (tarde) — **empezar por acá**
+### Cierre del 2026-09-02 — **empezar por acá**
+
+⚠️ **Hay trabajo commiteado y SIN desplegar, por decisión del usuario:** *"no
+vamos a desplegar hasta que quede todo validado y funcionando"*. Producción sigue
+en **`4528dfe`**.
+
+#### Lo primero: el despliegue pendiente
+
+Los pasos van copiados de § "El despliegue, por pasos", **no escritos de
+memoria** (eso ya costó una vuelta). Lleva **una migración** —
+`compliance.0025` — así que va con respaldo previo, y **dos sembrados**:
+
+```
+uv run python manage.py seed_document_types
+uv run python manage.py seed_alert_rules
+```
+
+Sin el primero, el tipo de documento sigue con el nombre viejo. Sin el segundo, no
+pasa nada malo — pero conviene correrlo por consistencia.
+
+⚠️ **Y algo que ninguna migración hace, porque no debe hacerlo:** la regla de
+alerta *"Permisos: renovación vencida de plazo (T-15 · Gerencia)"* sigue **activa
+en `p340`**. `seed_alert_rules` sólo crea, nunca borra. Hay que desactivarla a
+mano desde `/compliance/alertrule/` o el admin. **Las alertas que ya emitió se
+quedan**: una alerta es evidencia ISO 10.2 y borrarlas desde una migración
+eliminaría el rastro de que existieron — resolverlas es del usuario.
+
+#### ⚠️ Lo primero de todo: falta cerrar un gate
+
+**El commit de `LV-200` paso 2 se hizo con su gate a mitad de camino** (iba por el
+36%) porque se agotaba la ventana de contexto. Lo que sí está verificado de ese
+commit: sus **8 tests propios en verde** —incluidos los dos de la guarda,
+comprobados desactivándola—, `ruff check` y `ruff format` limpios, y la suite de
+`compliance` que lo rodea. Lo que **no** se llegó a ver es el gate completo, o sea
+las otras siete apps.
+
+**Antes de desplegar, correr:**
+
+```
+pwsh scripts/verify.ps1
+```
+
+El riesgo concreto a vigilar, si algo falla: `save_uploaded_file` cambió de firma
+(ganó un parámetro opcional `reuse_of`) y tiene **tres** llamadores en
+`apps/compliance/views.py` — el alta, la carga masiva y el reemplazo de versión.
+Sólo el primero pasa el parámetro nuevo; los otros dos deberían seguir igual, pero
+eso es exactamente lo que el gate completo iba a confirmar.
+
+#### Lo que se hizo el 2026-09-02
+
+| Fila | Qué |
+|---|---|
+| `UX-01`, `UX-03` | La severidad como token en cinco niveles, reutilizando los valores que `LV-D10` ya había medido para AA. Las clases nuevas **no llevan `!important`** |
+| `LV-230` | **Defecto propio**: `LV-225` duplicó un tipo de documento. Fusionado, con migración de datos |
+| `LV-232` | **Defecto propio**: la cadena de tres alertas era ruido. Se retira el umbral de 15 días |
+| `LV-200` paso 2 | La misma carta en varios permisos = un solo archivo, con la guarda de `cleanup_documents` |
+| Registradas | `LV-231` (folio desde el PDF), `LV-227`, `LV-228`, `LV-229` |
+
+#### El plan vigente está fuera del repo
+
+**`~/.claude/plans/distributed-cooking-axolotl.md`** — plan consolidado y aprobado
+que junta los tres frentes: el informe mensual, el `docs/ux-ui-plan.md` (31 filas
+`UX-nn`) y la deuda del `MASTER_PLAN`. Tiene el orden por bloques, los riesgos y
+la sección de depuración.
+
+**Lo siguiente en ese orden es el bloque 2: `R3` + `UX-06` juntos** — extraer las
+seis plantillas A4 del ZIP a `apps/reporting/templates/` y el `@media print`. El
+payload ya devuelve las cifras correctas en producción (12 faenas, 11 permisos
+vigentes, 3 en trámite, 14 aeronaves), así que hay contenido real que mostrar.
+
+Antes de `R4` (semáforos) va `UX-01`, que ya está hecho: los tokens existen.
+
+#### Dos cosas que el 2026-09-02 dejó aprendidas
+
+1. **Un nombre que miente cuesta un tipo duplicado.** `LV-230` no salió de leer
+   mal: el tipo se llamaba "Autorización DGAC (carta de permiso)" y su propia
+   documentación decía que va *hacia* la DGAC. Cuando un nombre y su comentario se
+   contradicen, el nombre gana en la cabeza de quien lee.
+2. **Que el motor pueda emitir una alerta por regla no significa que deba.**
+   `LV-232`. Dos avisos con acciones distintas informan; tres diciendo la misma
+   fecha enseñan a no mirar la bandeja.
+
+### Cierre del 2026-09-01 (tarde)
 
 **Desplegado en `p340`: `2d04482`.** Nada pendiente de desplegar, `showmigrations`
 en 0. **14 filas cerradas** en la jornada, en seis despliegues, con tres

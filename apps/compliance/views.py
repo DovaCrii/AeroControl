@@ -124,7 +124,46 @@ def upload_cancel_url(request):
     return reverse("company-documents")
 
 
-def save_uploaded_file(document, uploaded):
+def save_uploaded_file(document, uploaded, reuse_of=None):
+    """Guarda el archivo, **o reutiliza el de un documento idéntico** (`LV-200`).
+
+    Pedido del usuario, repetido: *"en ocasiones una carta puede estar ligada a
+    varios permisos; buscar una forma de optimizar y no subir/repetir el mismo
+    archivo muchas veces"* y *"en permisos similares debo subir varias veces la
+    misma carta"*.
+
+    `LV-200` paso 1 dejó la mitad hecha: `content_sha256` se calcula al subir y el
+    formulario deja el documento idéntico en `duplicate_of`. Hasta acá eso sólo se
+    avisaba. Ahora, cuando el archivo es **byte por byte el mismo**, la fila nueva
+    apunta al `file_path` que ya existe y **no se escribe una segunda copia**.
+
+    **Se eligió reutilizar el archivo y no compartir la fila**, y esa es la
+    decisión de fondo. Un `Document` por permiso mantiene intacto todo lo que
+    cuelga de esa relación uno-a-uno: el expediente (`operational_dossier`), la
+    atribución por faena (`cost_centers_for_refs`, `LV-146`), el sujeto de cada
+    documento (`document_subjects`, `LV-186`) y —lo que más importa— los
+    porcentajes del informe de cumplimiento, donde un documento contado dos veces
+    o ninguna mueve una cifra que va a la DGAC. El pedido habla del **archivo**, y
+    es el archivo el que deja de repetirse.
+
+    ⚠️ **Compartir `file_path` obliga a la guarda de `cleanup_documents`**: ese
+    trabajo borra el archivo de los documentos archivados pasada la retención, y
+    sin comprobar quién más lo usa, archivar una fila borraría el papel de otra.
+    La guarda está allá y tiene test, porque es una pérdida de evidencia
+    silenciosa y a diez años vista.
+
+    No hace falta confirmación de nadie: el usuario ya eligió *este* archivo, y
+    que el sistema guarde una copia o reutilice la que tiene es una decisión de
+    almacenamiento, no del trámite. Lo que sí se le dice —el aviso del paso 1—
+    es que ese papel ya estaba cargado en otro registro.
+    """
+    if reuse_of is not None and reuse_of.file_path:
+        document.file_path = reuse_of.file_path
+        document.save(update_fields=["file_path", "updated_at"])
+        # Se devuelve `None` y no la ruta: quien llama usa el valor para saber qué
+        # archivo borrar si la transacción falla, y este archivo **no es de este
+        # documento** — borrarlo dejaría sin papel al registro que ya lo tenía.
+        return None
     relative_path = document_upload_path(document, uploaded.name)
     get_document_storage().save(relative_path, uploaded)
     document.file_path = relative_path
@@ -773,8 +812,13 @@ class DocumentCreate(ComplianceCreate):
         with uploaded_file_cleanup() as stored:
             with transaction.atomic():
                 response = super().form_valid(form)
+                # LV-200 paso 2: si el archivo es byte por byte el mismo que uno
+                # ya cargado, la fila nueva apunta a **ese** archivo y no se
+                # escribe una segunda copia. `stored["path"]` queda en `None`,
+                # que es lo correcto: si la transacción falla, no hay que borrar
+                # un archivo que pertenece a otro documento.
                 stored["path"] = save_uploaded_file(
-                    self.object, form.cleaned_data["file"]
+                    self.object, form.cleaned_data["file"], reuse_of=duplicate
                 )
         # LV-200: avisar y no bloquear. Un archivo idéntico ya cargado es casi
         # siempre lo que el usuario describió —la misma carta cubriendo varios
