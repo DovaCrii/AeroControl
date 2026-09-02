@@ -106,6 +106,10 @@ def collect_kpis(cutoff, cost_centres):
         "permits_awaiting": leaf(permits["awaiting"], "operations", cutoff),
         "permits_lapsed": leaf(permits["lapsed"], "operations", cutoff),
         "permits_expiring_30d": leaf(permits["soon"], "operations", cutoff),
+        # R4: la ventana que cuenta el informe emitido. `R3` había dejado la
+        # tarjeta rotulada por lo que medía —30 días— porque relabelar 30 como
+        # 60 habría sido inventar el dato; ahora mide lo que dice.
+        "permits_expiring_60d": leaf(permits["soon_60"], "operations", cutoff),
         "fleet_total": leaf(readiness["fleet"]["total"], "registry", cutoff),
         "fleet_flyable": leaf(readiness["fleet"]["count"], "registry", cutoff),
         "insurance_up_to_date": leaf(
@@ -147,7 +151,7 @@ def collect_cost_centres(cutoff):
     informe de agosto lista 12 faenas y 7 sin habilitación; con el recorrido al
     revés esas 7 no existirían.
     """
-    from apps.compliance.kpis import permit_status_by_cost_center
+    from apps.compliance.kpis import permit_band, permit_status_by_cost_center
 
     return [
         {
@@ -158,9 +162,118 @@ def collect_cost_centres(cutoff):
             "permits_awaiting": row["awaiting"],
             "permits_lapsed": row["lapsed"],
             "permits_expiring_30d": row["soon"],
+            # R4: el vencimiento que manda es el **primero** de la faena.
+            "next_expiry": (
+                row["next_expiry"].isoformat() if row["next_expiry"] else None
+            ),
+            "days_remaining": row["days_remaining"],
+            # Una faena sin ningún permiso vigente es `critical` y no "sin
+            # banda": no poder volar es la peor situación de la escala, no la
+            # ausencia de una. Es el §4.2 del SPEC —el semáforo de la faena es
+            # **el peor** de sus habilitantes, nunca el promedio— aplicado al
+            # único habilitante que el informe cuenta hoy.
+            "band": (
+                permit_band(row["days_remaining"])
+                if row["in_force"]
+                else permit_band(0)
+            ),
         }
         for row in permit_status_by_cost_center(cutoff)
     ]
+
+
+def collect_permits(cutoff):
+    """R4: una fila por permiso vivo, como la tabla de la página 3.
+
+    **Vivos son los vigentes y los que esperan a la DGAC**, y van juntos en una
+    consulta pero separados en la salida por `in_force`: el informe emitido los
+    lista en dos bloques —"vigentes" y "solicitudes en trámite, sin habilitación
+    hasta su aprobación"— y mezclarlos sugeriría que un trámite habilita a
+    volar. Los caducados no entran: un permiso que terminó no es un permiso
+    incumplido, es historia (mismo criterio que `permit_counts`).
+
+    ⚠️ **Dos `prefetch_related` y no una consulta por fila.** Cada permiso nombra
+    sus operadores y sus aeronaves, así que sin esto son 2N consultas para once
+    permisos — y el payload se construye también desde un trabajo nocturno,
+    donde nadie mira el reloj.
+    """
+    from apps.compliance.kpis import permit_band
+    from apps.operations.models import FlightPermission
+
+    permits = (
+        FlightPermission.objects.filter(
+            is_active=True,
+            status__in=(
+                FlightPermission.STATUS_REQUESTED,
+                FlightPermission.STATUS_APPROVED,
+            ),
+        )
+        .select_related("cost_center")
+        .prefetch_related("operators", "aircraft_fleet")
+        .order_by("valid_until", "internal_folio")
+    )
+
+    rows = []
+    for permit in permits:
+        approved = permit.status == FlightPermission.STATUS_APPROVED
+        # Un permiso solicitado no tiene vigencia (`LV-219`), así que sus días
+        # son `None` y no cero: cero afirmaría que vence hoy.
+        days = (permit.valid_until - cutoff).days if permit.valid_until else None
+        rows.append(
+            {
+                "folio": permit.internal_folio,
+                # El número de la DGAC no existe hasta que la DGAC resuelve.
+                "dgac_number": permit.permission_number or None,
+                "cost_centre": permit.cost_center.code,
+                "operators": [o.full_name for o in permit.operators.all()],
+                "aircraft": [a.registration for a in permit.aircraft_fleet.all()],
+                "valid_from": permit.valid_from.isoformat()
+                if permit.valid_from
+                else None,
+                "valid_until": (
+                    permit.valid_until.isoformat() if permit.valid_until else None
+                ),
+                "days_remaining": days,
+                "band": permit_band(days),
+                "in_force": approved
+                and permit.valid_until
+                and permit.valid_until >= cutoff,
+            }
+        )
+    return rows
+
+
+def collect_concentration(permits):
+    """R4: cuánto depende la operación de una sola persona.
+
+    El hallazgo del informe emitido: *"8 de los 11 permisos vigentes designan a
+    un solo operador. La ausencia o indisponibilidad de esa persona detiene la
+    operación de dos Centros de Costo."*
+
+    **La faena depende de una persona cuando la unión de los operadores de todos
+    sus permisos vigentes tiene un solo miembro**, y esa definición es la que
+    responde al riesgo real: si alguno de sus permisos designa a otra persona,
+    la faena sigue pudiendo volar sin la primera. Contar "faenas con algún
+    permiso de un solo operador" habría inflado la cifra con faenas que tienen
+    suplente.
+
+    Se calcula sobre las filas ya recolectadas y no con otra consulta, por lo
+    mismo que `collect_kpis` recibe las faenas: dos recorridos del mismo dato es
+    cómo dos páginas del informe empiezan a discrepar.
+    """
+    in_force = [row for row in permits if row["in_force"]]
+    single = [row for row in in_force if len(row["operators"]) == 1]
+
+    by_centre = {}
+    for row in in_force:
+        by_centre.setdefault(row["cost_centre"], set()).update(row["operators"])
+    dependent = sorted(code for code, people in by_centre.items() if len(people) == 1)
+
+    return {
+        "permits_in_force": len(in_force),
+        "permits_with_one_operator": len(single),
+        "cost_centres_on_one_person": dependent,
+    }
 
 
 def find_missing(node, path=""):
@@ -195,9 +308,12 @@ def build(period, cutoff=None):
     _start, end = month_bounds(period)
     cutoff = cutoff or end
     cost_centres = collect_cost_centres(cutoff)
+    permits = collect_permits(cutoff)
     payload = {
         "meta": collect_meta(period, cutoff),
         "kpis": collect_kpis(cutoff, cost_centres),
         "cost_centres": cost_centres,
+        "permits": permits,
+        "concentration": collect_concentration(permits),
     }
     return payload, find_missing(payload)

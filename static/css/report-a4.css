@@ -163,6 +163,24 @@
 .rpt-legend > span { display: flex; align-items: center; gap: 5px; }
 .rpt-swatch { width: 9px; height: 9px; }
 
+/* La tabla permiso a permiso: siete columnas, las del informe emitido. Las
+ * medidas salen del artboard `p3_permisos` del ZIP. */
+.rpt-grid-permits { display: grid; grid-template-columns: 74px 46px 44px 1fr 84px 108px 34px; }
+.rpt-grid-permits .th {
+  color: #ffffff;
+  font-size: 8.4px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 7px 5px;
+}
+.rpt-grid-permits .c { padding: 6px 5px; font-size: 9px; color: var(--rpt-ink); border-bottom: 1px solid var(--rpt-hair); }
+.rpt-num { font-weight: bold; color: var(--rpt-navy); }
+/* Cuatro nombres completos en una celda de una hoja A4: el cuerpo baja y la
+ * interlínea se cierra, igual que en el documento emitido. */
+.rpt-people { font-size: 8.2px; line-height: 1.35; }
+.rpt-tail { font-size: 8.4px; }
+
 /* -- página 4 · cobertura por Centro de Costo ---------------------------- */
 
 .rpt-table { border: 1px solid var(--rpt-rule); }
@@ -175,14 +193,27 @@
   padding: 8px;
 }
 .rpt-table .c { padding: 7px 8px; font-size: 10px; color: var(--rpt-ink); border-bottom: 1px solid var(--rpt-hair); }
-.rpt-grid { display: grid; grid-template-columns: 62px 1fr 74px 62px 92px 106px; }
+.rpt-grid { display: grid; grid-template-columns: 56px 1fr 66px 54px 84px 36px 100px; }
 .rpt-grid-head { background: var(--rpt-navy); }
 .rpt-code { font-weight: bold; color: var(--rpt-navy); }
 .rpt-dash { color: var(--rpt-faint); }
 .rpt-est { font-size: 8.6px; font-weight: bold; padding: 2px 7px; border-radius: 2px; display: inline-block; }
-.rpt-est-ok { background: #dcefe6; color: #0e7a5f; }
-.rpt-est-soon { background: var(--rpt-amber-bg); color: var(--rpt-amber-ink); }
-.rpt-est-none { background: #f7e2e0; color: #b23b34; }
+
+/* **Un solo vocabulario de severidad en todo el informe** (R4).
+ *
+ * Los nombres son los mismos que `UX-01` fijó para la aplicación —`critical`,
+ * `warning`, `nominal`— y de eso se trata: el rojo significa lo mismo en la
+ * bandeja, en el panel y en el papel. Lo que cambia son dos cosas, las dos a
+ * propósito: el **corte** (30/60 días para un permiso, porque su renovación
+ * exige carta nueva del mandante y empieza a avisar a los 45) y el **color**,
+ * que acá es de papel y no de tema.
+ *
+ * Antes eran `-ok`/`-soon`/`-none`, tres nombres que decían de qué color eran y
+ * no qué significaban — y `-none` se usaba para la faena sin permiso, que no es
+ * "sin nivel" sino el peor de todos. */
+.rpt-sev-nominal { background: #dcefe6; color: #0e7a5f; }
+.rpt-sev-warning { background: var(--rpt-amber-bg); color: var(--rpt-amber-ink); }
+.rpt-sev-critical { background: #f7e2e0; color: #b23b34; }
 .rpt-total { background: var(--rpt-wash); border-top: 2px solid var(--rpt-navy); }
 .rpt-total > div { padding: 8px; font-size: 10px; }
 

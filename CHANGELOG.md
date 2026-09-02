@@ -23,6 +23,23 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   cero") y la ausencia no afirma nada. Entra al menú el mismo día que gana
   pantalla, y exige `reporting.view_reportrun` — nombra cada faena y si está
   habilitada para volar.
+- **El informe trae la tabla permiso a permiso y sus semáforos (`R4`).** La
+  página 3 lista cada permiso con su folio JEJ, su número DGAC, la faena, los
+  operadores designados, las aeronaves, la vigencia y los días que le quedan; la
+  página 4 gana el **próximo vencimiento** de cada faena con sus días, y la
+  concentración operacional deja de estar pendiente. **Los vigentes y las
+  solicitudes en trámite van en dos bloques separados**: una solicitud no
+  habilita a volar, y una tabla que los junte lo sugiere — sus días son un guion
+  y nunca un cero, porque un cero se leería como "vence hoy". El semáforo del
+  permiso corta en **30/60 días** y no en los 7/15/30 de los documentos, porque
+  una renovación exige carta nueva del mandante y el aviso arranca a los 45; los
+  **nombres** son los mismos niveles de severidad que ya usa el resto de la
+  aplicación, así que el rojo significa lo mismo en la bandeja, en el panel y en
+  el papel. El semáforo de una faena es **el peor** de sus habilitantes, nunca
+  el promedio, y una faena sin permiso vigente es lo peor de la escala y no la
+  ausencia de una. Y la tarjeta de "por vencer" pasa a contar **60 días**, que es
+  lo que el informe emitido cuenta: hasta ahora se rotulaba por lo que medía —30—
+  porque relabelarla habría sido inventar el dato.
 - **La narrativa del informe se escribe dentro de la aplicación (`LV-227`).** Los
   dos bloques que el informe emitido trae redactados y que cambian todos los
   meses —los hallazgos y la observación del período— se guardan en el informe y

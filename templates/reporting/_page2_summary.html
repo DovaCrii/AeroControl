@@ -53,10 +53,15 @@ sobre las cifras, y el informe va firmado.{% endcomment %}
           <div class="rpt-kpi-note">No pueden operar RPA legalmente</div>
         </div>
 
+        {% comment %}R4 cierra la deuda que R3 dejó declarada: la tarjeta del
+        informe emitido cuenta **60 días**, y hasta ahora el payload sólo traía
+        la ventana de 30, así que se rotulaba por lo que medía. El horizonte es
+        60 y no 30 porque la renovación exige carta nueva del mandante y el
+        aviso arranca a los 45 (`LV-226`): a 30 días ya se va tarde.{% endcomment %}
         <div class="rpt-kpi rpt-kpi-warn">
-          <div class="rpt-kpi-value">{% leaf payload.kpis.permits_expiring_30d %}</div>
-          <div class="rpt-kpi-name">Permisos por vencer en 30 días</div>
-          <div class="rpt-kpi-note">Su renovación exige una carta nueva del mandante</div>
+          <div class="rpt-kpi-value">{% leaf payload.kpis.permits_expiring_60d %}</div>
+          <div class="rpt-kpi-name">Permisos por vencer en 60 días</div>
+          <div class="rpt-kpi-note">{% leaf payload.kpis.permits_expiring_30d %} de ellos en 30 días o menos</div>
         </div>
 
         <div class="rpt-kpi rpt-kpi-info">

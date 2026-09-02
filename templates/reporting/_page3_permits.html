@@ -6,12 +6,15 @@
 instructivo, igual en todos los informes, así que va escrito y no calculado. Lo
 que sí cambia son las cifras, y ésas salen del payload.
 
-**La tabla permiso a permiso queda pendiente y es deliberado.** Necesita un
-colector que hoy no existe —folio JEJ, número DGAC, operadores designados,
-aeronaves y días restantes por permiso—, y ese colector es `R4` según
-`MAPPING.md`. Dibujarla acá con la fila de agosto quemada haría que el informe
-de septiembre mostrara los permisos de agosto, que es la única forma de fallar
-que un informe ante la autoridad no puede permitirse.{% endcomment %}
+**La tabla permiso a permiso sale de `collect_permits` (`R4`)**, nunca escrita.
+Dibujarla con la fila de agosto quemada haría que el informe de septiembre
+mostrara los permisos de agosto, que es la única forma de fallar que un informe
+ante la autoridad no puede permitirse.
+
+⚠️ **Las fechas pasan por `as_date` y no por un recorte de la cadena ISO.**
+`{{ valor|slice:"5:" }}` sobre `2026-08-01` da **`08-01`**, que en un documento
+chileno se lee como el 8 de enero. Una fecha que se puede leer al revés no es un
+detalle de formato en un papel que va a la DGAC.{% endcomment %}
 <div class="rpt-page">
 
   {% include "reporting/_head.html" %}
@@ -63,8 +66,8 @@ que un informe ante la autoridad no puede permitirse.{% endcomment %}
           <div class="rpt-kpi-name">Vigentes</div>
         </div>
         <div class="rpt-kpi rpt-kpi-warn" style="padding: 10px 12px;">
-          <div class="rpt-kpi-value" style="font-size: 26px;">{% leaf payload.kpis.permits_expiring_30d %}</div>
-          <div class="rpt-kpi-name">Por vencer en 30 días</div>
+          <div class="rpt-kpi-value" style="font-size: 26px;">{% leaf payload.kpis.permits_expiring_60d %}</div>
+          <div class="rpt-kpi-name">Por vencer en 60 días</div>
         </div>
         <div class="rpt-kpi rpt-kpi-info" style="padding: 10px 12px;">
           <div class="rpt-kpi-value" style="font-size: 26px;">{% leaf payload.kpis.permits_awaiting %}</div>
@@ -77,9 +80,56 @@ que un informe ante la autoridad no puede permitirse.{% endcomment %}
       </div>
     </div>
 
+    {% comment %}R4: la tabla del informe emitido, ahora desde la base.
+
+    **Los vigentes y los que esperan a la DGAC van en dos bloques**, no
+    mezclados: una solicitud en trámite no habilita a volar, y una tabla que los
+    junte lo sugiere. El segundo bloque lleva su propio rótulo, igual que en el
+    documento emitido.{% endcomment %}
     <div>
       <div class="rpt-label" style="margin-bottom: 10px;">Detalle permiso a permiso</div>
-      {% pending "folio JEJ, número DGAC, operadores designados, aeronaves, vigencia y días restantes de cada permiso" "R4" %}
+      <div class="rpt-table">
+        <div class="rpt-grid-permits rpt-grid-head">
+          <div class="th">N° JEJ</div>
+          <div class="th">N° DGAC</div>
+          <div class="th">CC</div>
+          <div class="th">Operadores designados</div>
+          <div class="th">Aeronaves</div>
+          <div class="th">Vigencia</div>
+          <div class="th" style="text-align: center;">Días</div>
+        </div>
+
+        <div class="rpt-grid-permits">
+          {% for permit in payload.permits %}{% if permit.in_force %}
+          <div class="c rpt-num">{{ permit.folio }}</div>
+          <div class="c">{% if permit.dgac_number %}{{ permit.dgac_number }}{% else %}<span class="rpt-dash">—</span>{% endif %}</div>
+          <div class="c">{{ permit.cost_centre }}</div>
+          <div class="c rpt-people">{% for name in permit.operators %}{{ name }}{% if not forloop.last %} · {% endif %}{% empty %}<span class="rpt-dash">—</span>{% endfor %}</div>
+          <div class="c rpt-tail">{% for tail in permit.aircraft %}{{ tail }}{% if not forloop.last %}<br>{% endif %}{% empty %}<span class="rpt-dash">—</span>{% endfor %}</div>
+          <div class="c rpt-tail">{{ permit.valid_from|as_date|date:"d-m"|default:"—" }} → <strong{% if permit.band == 'critical' %} style="color: #B23B34;"{% endif %}>{{ permit.valid_until|as_date|date:"d-m-Y" }}</strong></div>
+          <div class="c rpt-sev-{{ permit.band }}" style="text-align: center; font-weight: bold;">{{ permit.days_remaining }}</div>
+          {% endif %}{% empty %}
+          <div class="c" style="grid-column: 1 / -1; text-align: center; color: #98A2B0; padding: 18px;">Ningún permiso vigente al corte.</div>
+          {% endfor %}
+        </div>
+
+        {% if payload.kpis.permits_awaiting.value %}
+        <div style="background: #F4F7FA; border-top: 1px solid #D7DEE6; padding: 6px 10px; color: #124384; font-size: 8.6px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em;">Solicitudes en trámite — sin habilitación hasta su aprobación</div>
+        <div class="rpt-grid-permits">
+          {% for permit in payload.permits %}{% if not permit.in_force %}
+          <div class="c rpt-num">{{ permit.folio }}</div>
+          <div class="c" style="color: #B8791A; font-size: 8.2px;">En proceso</div>
+          <div class="c">{{ permit.cost_centre }}</div>
+          <div class="c rpt-people">{% for name in permit.operators %}{{ name }}{% if not forloop.last %} · {% endif %}{% empty %}<span class="rpt-dash">—</span>{% endfor %}</div>
+          <div class="c rpt-tail">{% for tail in permit.aircraft %}{{ tail }}{% if not forloop.last %}<br>{% endif %}{% empty %}<span class="rpt-dash">—</span>{% endfor %}</div>
+          <div class="c rpt-tail">{% if permit.valid_until %}{{ permit.valid_from|as_date|date:"d-m"|default:"—" }} → {{ permit.valid_until|as_date|date:"d-m-Y" }}{% else %}<span class="rpt-dash">Sin vigencia resuelta</span>{% endif %}</div>
+          {% comment %}Guion y no cero: la DGAC todavía no resolvió, y un cero
+          ahí se leería como "vence hoy" (`LV-219`).{% endcomment %}
+          <div class="c rpt-dash" style="text-align: center;">—</div>
+          {% endif %}{% endfor %}
+        </div>
+        {% endif %}
+      </div>
     </div>
 
     <div>
