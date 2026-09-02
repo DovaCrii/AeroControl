@@ -57,10 +57,15 @@ UNKNOWN = "unknown"
 # Los dos documentos DGAC del expediente, por `code` (identidad estable del
 # catálogo, la misma sobre la que `seed_document_types` es idempotente).
 SIGNED_AUTHORIZATION = "dgac-rpa-operation-authorization"
+# LV-230: **la carta del mandante.** El `code` dice "dgac" por su nombre viejo,
+# que era equivocado: no la emite la DGAC sino el cliente, autorizando a operar en
+# su faena, y sin ella la DGAC no renueva el permiso. El nombre visible ya lo dice;
+# el `code` se conserva porque es la llave de los documentos ya guardados.
+#
+# Acá vivía además `CLIENT_LETTER`, que `LV-225` creó para este mismo papel sin
+# ver que ya existía. Se retiró: el expediente vuelve a pedir **dos** papeles y no
+# tres, que es lo que el usuario vio duplicado en pantalla.
 PERMIT_LETTER = "dgac-flight-permit"
-# LV-225: el tercer papel, y el único que no es de la DGAC. Lo emite el cliente
-# autorizando a operar en su faena, y sin él la DGAC no renueva.
-CLIENT_LETTER = "client-authorization-letter"
 
 
 @dataclass
@@ -202,22 +207,27 @@ def _upload_action(permission, code, user):
 
 
 def _document_items(permission, user=None):
-    """Los tres papeles del trámite, que no son intercambiables.
+    """Los dos papeles del trámite, que no son intercambiables.
 
-    `LV-64`: la carta de permiso es lo que va **hacia** la DGAC como parte de la
-    solicitud; la autorización firmada es lo que **vuelve**, con folio, cuando la
-    DGAC aprueba de verdad. Sólo la segunda certifica la aprobación, y por eso es
-    la que la compuerta de `R2.4` exige.
+    - **La carta del mandante** (`PERMIT_LETTER`): la emite el cliente
+      autorizando a operar en su faena, y va **hacia** la DGAC como parte de la
+      solicitud (`LV-64`). Gobierna la *renovación*: sin ella la DGAC no renueva.
+    - **La autorización firmada** (`SIGNED_AUTHORIZATION`): lo que **vuelve**, con
+      folio, cuando la DGAC aprueba de verdad. Sólo ésta certifica la aprobación,
+      y por eso es la que la compuerta de `R2.4` exige.
 
-    `LV-225`: la carta del mandante es el tercero, y el único que **no es de la
-    DGAC** — la emite el cliente autorizando a operar en su faena. Gobierna la
-    *renovación*, no la aprobación: sin ella la DGAC no renueva el permiso.
+    ⚠️ **Eran tres hasta `LV-230`, y el tercero era un duplicado.** `LV-225` creó
+    una fila aparte para "la carta del mandante" sin ver que la "carta de permiso"
+    de arriba ya era ese papel — el nombre del tipo decía "Autorización DGAC",
+    que apuntaba en la dirección contraria. El usuario lo vio en pantalla: el
+    expediente le pedía dos documentos siendo uno, subió el mismo PDF dos veces y
+    la bandeja mostró dos alertas por un solo vencimiento.
 
-    **Ninguno de los tres se suma a la compuerta de aprobación por estar acá.**
-    La carta del mandante entra como `UNKNOWN` y no como `MISSING`, igual que la
-    carta de permiso: un permiso vigente cuya carta no se digitalizó no es un
-    permiso incumplido, y marcarlo en rojo enseñaría a ignorar el rojo. Lo que
-    sí hace es que la cadena de alertas de `LV-226` pueda preguntar si está.
+    **Ninguno de los dos se suma a la compuerta de aprobación por estar acá.** La
+    carta entra como `UNKNOWN` y no como `MISSING`: un permiso vigente cuya carta
+    no se digitalizó no es un permiso incumplido, y marcarlo en rojo enseñaría a
+    ignorar el rojo (`LV-194`). Lo que sí hace es que el aviso de renovación de
+    `LV-226` pueda preguntar si está.
     """
     from django.contrib.contenttypes.models import ContentType
 
@@ -242,16 +252,15 @@ def _document_items(permission, user=None):
         ),
         (
             "permit_letter",
-            _("Permit letter on file"),
+            # LV-230: el rótulo pasa a nombrar el papel por lo que es. Decía
+            # "Carta de permiso en ficha", que junto a la fila de la carta del
+            # mandante que `LV-225` agregó hacía que el expediente pareciera pedir
+            # dos documentos distintos siendo el mismo.
+            _("Client authorization letter on file"),
             PERMIT_LETTER,
             UNKNOWN,
-            _("Not on file"),
-        ),
-        (
-            "client_letter",
-            _("Client authorization letter on file"),
-            CLIENT_LETTER,
-            UNKNOWN,
+            # El detalle que heredó de `LV-225` y que sigue siendo el útil: dice
+            # **para qué** hace falta, no sólo que falta.
             _("Needed to renew the permit"),
         ),
     ):

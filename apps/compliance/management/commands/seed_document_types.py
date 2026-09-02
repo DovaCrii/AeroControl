@@ -101,10 +101,28 @@ DOCUMENT_TYPES = [
         False,
         AIRCRAFT,
     ),
+    # LV-230: **renombrado, porque el nombre viejo hizo inventar un tipo
+    # duplicado.**
+    #
+    # Se llamaba "Autorización DGAC (carta de permiso)" mientras el comentario de
+    # `LV-64` decía que es *"lo que va **hacia** la DGAC como parte de la
+    # solicitud"* — el nombre y la documentación se contradecían. Leyendo el
+    # nombre, "carta de permiso" parecía un papel **de** la DGAC, así que `LV-225`
+    # creó `client-authorization-letter` para la carta del mandante sin ver que
+    # era este mismo documento. Confirmado con el usuario: **son el mismo papel.**
+    #
+    # El daño no fue teórico: el expediente pedía los dos, el usuario subió el
+    # mismo PDF dos veces, y la bandeja mostró dos alertas por un solo hecho.
+    #
+    # ⚠️ **El `code` no se toca.** Dice "dgac" para algo que no es de la DGAC, y
+    # eso chirría — pero es la llave con la que están guardados los documentos de
+    # producción y con la que lo buscan los tests. Cambiarlo obligaría a una
+    # migración de datos por una mejora cosmética de un identificador interno. Lo
+    # que la gente lee es el nombre, y el nombre ya dice la verdad.
     (
         "dgac-flight-permit",
-        "Autorización DGAC (carta de permiso)",
-        True,
+        "Carta del mandante (autorización para operar)",
+        False,
         False,
         False,
         DGAC,
@@ -124,32 +142,18 @@ DOCUMENT_TYPES = [
         False,
         DGAC,
     ),
-    # LV-225: la carta del mandante, que es el tercer papel del trámite y el que
-    # **gobierna la renovación**.
+    # LV-230: acá vivía `client-authorization-letter`, que `LV-225` creó para la
+    # carta del mandante sin ver que `dgac-flight-permit` (arriba) ya era ese
+    # papel. Se retira y sus documentos se trasladan en `compliance.0025`.
     #
-    # Los dos de arriba son de la DGAC: uno va y el otro vuelve. Éste no es de la
-    # DGAC ni de JEJ — lo emite el **cliente** autorizando a operar en su faena, y
-    # sin él la DGAC no renueva el permiso (`SPEC_REPORTE_MENSUAL_RPA.md` §4.1:
-    # *"la renovación exige una nueva carta del mandante; no es un trámite
-    # automático"*). De ahí que la cadena de alertas de `LV-226` empiece 45 días
-    # antes: pedirle la carta al mandante toma tiempo que no controlamos.
+    # De esa fila sobrevive una decisión que sigue valiendo y por eso se mudó
+    # arriba: **`requires_expiry=False`**. El informe quiere reportar cartas por
+    # vencer (`SPEC_REPORTE_MENSUAL_RPA.md` §3), lo que invita a marcarlo `True`,
+    # pero no toda carta trae plazo escrito y exigir la fecha obligaría a
+    # **inventarla** para poder cargar el papel — el mal que `LV-219` quitó del
+    # alta del permiso. Nótese que el tipo de arriba decía `True`: eso quedaba de
+    # cuando se creía que era una autorización de la DGAC, que sí vence.
     #
-    # **`requires_expiry=False`, y es una decisión, no un descuido.** El informe
-    # quiere reportar cartas por vencer (§3, `vencimientos_60d.cartas_mandante`),
-    # lo que invita a marcarlo `True`; pero no toda carta trae plazo escrito, y
-    # exigir la fecha obligaría a **inventarla** para poder cargar el papel — que
-    # es exactamente el mal que `LV-219` acaba de quitar del alta del permiso. La
-    # fecha queda opcional: cuando la carta la trae, se anota y el motor de
-    # vencimientos la ve; cuando no, la carta se puede cargar igual. Si algún día
-    # se confirma que toda carta lleva plazo, esto pasa a `True` y nada más cambia.
-    (
-        "client-authorization-letter",
-        "Carta del mandante (autorización para operar)",
-        False,
-        False,
-        False,
-        DGAC,
-    ),
     # LV-30: the per-flight operational records. They do not expire (a record of
     # what happened, not a validity), so requires_expiry=False.
     ("flight-log", "Bitácora de vuelo (REG-015)", False, False, True, OPERATIONAL),
