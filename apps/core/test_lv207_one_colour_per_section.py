@@ -77,8 +77,23 @@ def _sections_with_their_classes():
     Recorre el HTML llevando la cuenta de los `<div>` para saber cuándo termina un
     `nav-group-items`: los ítems de fuera de los grupos (Panel arriba,
     Administración abajo) no pertenecen a ninguna sección.
+
+    ⚠️ **Los `{% comment %}` se blanquean antes de escanear.** El menú lleva
+    cinco enlaces comentados —los retiros de `LV-D8`, `R5.8`, `LV-69`, `LV-103`
+    y `LV-150`— que este escaneo contaba como si se dibujaran. Hoy no cambia
+    ningún veredicto, porque cada uno usa la clase de su propio grupo; pero un
+    ítem comentado con otra clase habría hecho fallar el test por una fila que
+    nadie ve, o —peor— habría tapado una mezcla real al aportar el color que
+    faltaba. **Un test que mide una entrada distinta de la que el usuario recibe
+    da su veredicto por casualidad.**
+
+    Se reutiliza el blanqueador de `test_translations`, que se escribió para
+    exactamente este riesgo en `LV-169`, en vez de copiar la expresión: dos
+    copias del mismo recorte es cómo una se queda vieja.
     """
-    source = TEMPLATE.read_text(encoding="utf-8")
+    from apps.core.test_translations import _without_template_comments
+
+    source = _without_template_comments(TEMPLATE.read_text(encoding="utf-8"))
     token = re.compile(
         r'data-nav-group="(?P<group>[^"]+)"'
         r"|(?P<open><div\b)"
@@ -102,6 +117,35 @@ def _sections_with_their_classes():
             else:
                 sections.setdefault(section, set()).add(match.group("cls"))
     return sections, loose
+
+
+class TestTheScanSeesWhatTheUserSees:
+    """El guardián del guardián, y lo que vuelve al arreglo de arriba algo más
+    que un comentario."""
+
+    def test_the_commented_out_links_are_not_scanned(self):
+        """Cinco enlaces del menú están dentro de `{% comment %}` y no se
+        dibujan. Contarlos hacía que este archivo afirmara sobre filas que el
+        usuario no recibe.
+
+        Se compara el recuento crudo con el blanqueado en vez de fijar un número:
+        un `assert == 23` se rompería la próxima vez que alguien agregue un ítem
+        —o retire otro— por una razón que no tiene nada que ver con lo que este
+        test protege.
+        """
+        from apps.core.test_translations import _without_template_comments
+
+        source = TEMPLATE.read_text(encoding="utf-8")
+        anchors = re.compile(r'class="nav-item (nav-[a-z]+)')
+        raw = anchors.findall(source)
+        live = anchors.findall(_without_template_comments(source))
+
+        assert live, "no quedó ningún ítem de menú: ¿cambió el marcado?"
+        assert len(live) < len(raw), (
+            "ya no hay enlaces comentados en el menú. Si los retiros se "
+            "completaron, este test sobra; si no, alguien borró el ancla en vez "
+            "de comentarla y la reversión anunciada ya no se puede ejecutar."
+        )
 
 
 class TestOneColourPerSection:

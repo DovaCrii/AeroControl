@@ -1352,6 +1352,39 @@ class TestBootstrapRoles:
 
         assert user.groups.filter(name=REPORT_RECIPIENTS).exists()
 
+    @pytest.mark.django_db
+    def test_a_role_can_reach_the_monthly_report(self, client):
+        """**El cableado, que es lo que el gate no mira.**
+
+        `AGENTS.md` lo dice con todas las letras: *"el gate verifica código,
+        nadie verifica el cableado de producción"*. `R3`, `R4` y `R5` pasaron el
+        gate con la pantalla **fuera del alcance de todos menos un
+        superusuario**, porque ningún rol tenía los permisos de `ReportRun` —
+        tres bloques de trabajo invisibles para las personas que tienen que
+        firmar el informe.
+
+        Se comprueba **abriendo la pantalla con el rol puesto**, no listando
+        permisos: un `assert "view_reportrun" in group.permissions` habría
+        pasado también el día que la vista pida otro permiso distinto.
+        """
+        call_command("bootstrap_roles")
+        user = User.objects.create_user("cumplimiento", password="password")
+        user.groups.add(Group.objects.get(name="Compliance"))
+        assert client.login(username="cumplimiento", password="password")
+
+        assert client.get(reverse("monthly-report")).status_code == 200
+
+    @pytest.mark.django_db
+    def test_the_read_only_role_sees_it_but_cannot_freeze_it(self, client):
+        """Ver es lectura; congelar y aprobar son actos, y este rol no los hace."""
+        call_command("bootstrap_roles")
+        user = User.objects.create_user("lectura", password="password")
+        user.groups.add(Group.objects.get(name="Viewer"))
+        assert client.login(username="lectura", password="password")
+
+        assert client.get(reverse("monthly-report")).status_code == 200
+        assert client.post(reverse("monthly-report-draft")).status_code == 403
+
 
 class TestCalendarAndBoardReadPermissions:
     """F-06: these views only required a login, so any account saw the registry."""

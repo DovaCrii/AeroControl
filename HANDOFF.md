@@ -179,6 +179,151 @@ Dos filas más, **sin desplegar**:
 
 ### Cierre del 2026-09-02 (tarde) — **empezar por acá**
 
+## ⚠️ EL DESPLIEGUE DE ESTA TANDA
+
+**Ocho commits**, del `f2eb099` al `00e3f29`. Los pasos van copiados de
+§ "El despliegue, por pasos", **no escritos de memoria** — eso ya costó una
+vuelta, y el `;` de la carga del entorno corta un `&&`, que es la forma exacta
+de los dos despliegues fantasma del 2026-08-27.
+
+### Paso 0 — averiguar qué tiene la VM, antes de dictar nada
+
+**No asumir desde qué commit viene.** `AGENTS.md`: *"el paso de despliegue es el
+de TODO lo que falta en la VM, no el del último commit"*, y esa suposición tiró
+producción el 2026-08-31.
+
+```
+cd /opt/aerocontrol && git status --short --branch && git log --oneline -1
+```
+
+La primera línea tiene que decir `## main...origin/main` y **no**
+`## HEAD (no branch)`: después de un rollback la VM queda en HEAD desprendido y
+todo `git pull` posterior falla mientras el resto del despliegue **parece**
+correr.
+
+### Paso 1 — traer el código y el entorno
+
+```
+git pull
+uv sync
+```
+
+```
+set -a; source <(sudo cat /etc/aerocontrol.env); set +a
+echo $DJANGO_SETTINGS_MODULE; echo $DB_PATH
+```
+
+Tiene que decir `config.settings.prod` y
+`/srv/aerocontrol-data/db/aero_ops.sqlite3`. Sin `set -a`, `source` define
+variables de shell y no de entorno, y `manage.py` cae a `config.settings.dev` —
+que acá no sería un error visible sino **trabajar sobre la base equivocada**.
+
+### Paso 2 — cuántas migraciones faltan, con el entorno ya cargado
+
+```
+uv run python manage.py showmigrations | grep -c '\[ \]'
+```
+
+La tanda trae **dos**: `compliance.0025` (`LV-230`, fusiona el tipo de documento
+duplicado y **renombra** el que se queda) y `reporting.0002` (`LV-227`, la
+narrativa del informe). Si `cd61e53` ya se desplegó, `compliance.0025` ya está y
+el contador dirá **1**. Las dos son idempotentes por definición de `migrate`.
+
+### Paso 3 — respaldo, y recién después migrar
+
+```
+uv run python manage.py backup && uv run python manage.py verify_backup
+uv run python manage.py migrate --no-input
+uv run python manage.py seed_document_types
+uv run python manage.py seed_alert_rules
+uv run python manage.py bootstrap_roles
+uv run python manage.py collectstatic --no-input
+sudo systemctl restart aerocontrol
+git log --oneline -1
+```
+
+**Los tres que `migrate` no hace y sin los cuales media tanda no llega:**
+
+| Comando | Qué pasa si falta |
+|---|---|
+| `bootstrap_roles` | ⚠️ **El más importante de esta tanda.** Los permisos de `ReportRun` son nuevos: sin esto **nadie salvo `root` puede abrir el informe mensual**, y `R3`, `R4` y `R5` quedan invisibles para quien tiene que firmarlo. Ahora hay un test que lo vigila |
+| `seed_document_types` | El tipo de documento sigue con el nombre viejo (`LV-230`) |
+| `collectstatic` | Entran `report-a4.css`, `login.css`, `login.js` y dos PNG. Sin él, en producción **toda etiqueta `{% static %}` falla** — el informe y el acceso salen sin estilos |
+
+`seed_alert_rules` es por consistencia; no pasa nada malo si falta.
+
+### Paso 4 — lo que ninguna migración hace, porque no debe
+
+⚠️ **Desactivar a mano la regla *"Permisos: renovación vencida de plazo
+(T-15 · Gerencia)"*** desde `/compliance/alertrule/` o el admin, si no se hizo
+en el despliegue anterior. `seed_alert_rules` **sólo crea, nunca borra**. Las
+alertas que ya emitió se quedan: una alerta es evidencia ISO 10.2 y borrarlas
+desde una migración eliminaría el rastro de que existieron.
+
+### Paso 5 — comprobar en la VM lo que acá no se puede
+
+**a) El corte temporal del padrón (bloque 3).** El criterio del plan es que el
+payload de agosto devuelva **41** operadores y no 42:
+
+```
+uv run python manage.py shell -c "from datetime import date; from apps.dashboard.views import panel_readiness; print({c['key']: (c['count'], c['total']) for c in panel_readiness(date(2026,8,31))['readiness']})"
+```
+
+Si **no** baja, la causa no es el arreglo: es que `created_at` refleja la fecha
+de **carga masiva** y no la del hecho, y el corte no alcanza para ese dato.
+
+**b) El informe, de punta a punta.** Abrir `/reporting/monthly/`, congelar el
+borrador de agosto y comparar contra el PDF emitido: **12 faenas, 11 permisos
+vigentes, 3 en trámite, 14 aeronaves**. O desde la consola:
+
+```
+uv run python manage.py generate_monthly_report --period 2026-08 --dry-run
+```
+
+**c) El acceso**, con una cuenta que **no** sea superusuario: que se vea la
+línea del entorno, la ayuda y el botón de mostrar contraseña.
+
+### Lo que este despliegue NO lleva
+
+- **El timer del informe.** El comando corre a mano; ponerlo en `systemd` es un
+  paso aparte. El informe se emite el **día 5** con corte al último día del mes
+  anterior, así que el disparo natural es el **día 1 o 2** — no el último día
+  del mes, que es cuando el corte todavía no cerró.
+- **`SUPPORT_CONTACT`** en `/etc/aerocontrol.env`, opcional: sin él la pantalla
+  de acceso dice qué hacer sin nombrar a nadie.
+- **Los bloques 8 y 9 del plan** (`UX-02`, `UX-04`, `UX-05` y la tanda de la
+  tabla). Quedan fuera a propósito: el bloque 9 toca **26 listas** y es el de
+  riesgo alto del plan. Meterlo en el mismo lote haría indistinguible la causa
+  si algo falla — que es justo lo que §6.1 del plan viene a evitar.
+- **`LV-189`** (documentos de sujetos en estado terminal). Está **medida y lista
+  para escribir** —son cuatro líneas en `_subject_scope`— y se dejó fuera **a
+  propósito**: mueve los porcentajes de cumplimiento igual que `LV-188`, y su
+  propia fila pide medir antes y después **en producción**, lo que exige que
+  este despliegue ya haya ocurrido. Dos cambios que mueven cifras en el mismo
+  lote hacen indistinguible la causa. 🆕 Antes de escribirla hay que decidir un
+  hueco que la fila no tenía: `geo.geoplan` tiene `status` con `rejected` y
+  **no declara `TERMINAL_STATUSES`**, así que el arreglo tal como está escrito
+  dejaría los planes rechazados contando **en silencio**.
+- **`LV-220`(b)**. Al medirla apareció que **el principio de la fila ya está
+  violado**: `fill_permission_from_plan` escribe región y comuna derivadas en
+  los campos del permiso, que no tienen ningún marcador de procedencia. La (b)
+  no evita que haya regiones derivadas presentadas como declaradas; sólo evita
+  agregar más. Cerrarlo de verdad exige un campo de procedencia y migración, y
+  **eso es una decisión aparte**, no lo que la fila pide.
+
+### Después de desplegar, el orden sugerido
+
+1. **Medir** lo del paso 5 y anotar los números en el `MASTER_PLAN`.
+2. **`LV-189`**, ya con la medición previa hecha y el hueco de `geo.geoplan`
+   decidido. Sola en su lote, porque vuelve a mover cifras.
+3. **El timer** del informe, y `SUPPORT_CONTACT` si se quiere.
+4. **Bloque 8** (`UX-02`, `UX-04`, `UX-05`) y recién después el **9**. ⚠️ El
+   plan avisa que antes de `UX-07` hay que **barrer los tests que localizan
+   cosas por clase de presentación**: si no, la tanda se va en arreglarlos.
+
+---
+
+
 **El usuario informó que el despliegue pendiente quedó hecho**, así que la
 sección de abajo ("Cierre del 2026-09-02") ya no describe una cola: describe lo
 que se desplegó. ⚠️ **Lo único que ninguna migración hizo y hay que comprobar
