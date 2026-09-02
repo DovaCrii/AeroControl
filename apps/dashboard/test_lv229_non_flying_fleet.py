@@ -137,15 +137,26 @@ class TestTheTwoPanelIndicatorsNowAgree:
         from apps.compliance.kpis import permit_status_by_cost_center
         from apps.dashboard.views import panel_readiness
 
-        CostCenter.objects.create(
+        warehouse = CostCenter.objects.create(
             code="CC110", name="Casa matriz", operates_flights=False
         )
-        warehouse = CostCenter.objects.get(code="CC110")
         _aircraft("RPA-2019", warehouse)
+        # **Una faena que sí vuela, para que la comprobación de abajo ejercite
+        # algo.** La primera versión de este test sólo creaba la de bodega, así
+        # que `permit_status_by_cost_center` devolvía una lista vacía y la
+        # comprensión no evaluaba su cuerpo: el test pasaba sin comprobar nada, y
+        # de hecho pasaba con la clave equivocada (`row["code"]`, cuando la fila
+        # trae el objeto `cost_center`). Encontrado al escribir el colector del
+        # informe, que sí lee esas filas de verdad.
+        site = CostCenter.objects.create(
+            code="CC738", name="MLP", operates_flights=True
+        )
+        _aircraft("RPA-7126", site)
 
         rows = permit_status_by_cost_center(today)
         figures = _by_key(panel_readiness(today))
 
-        # Ninguno de los dos ve la faena que no vuela.
-        assert not [row for row in rows if row["code"] == "CC110"]
-        assert figures["fleet"]["total"] == 0
+        codes = [row["cost_center"].code for row in rows]
+        # La faena que vuela está y la de bodega no, en los dos indicadores.
+        assert codes == ["CC738"]
+        assert figures["fleet"]["total"] == 1
