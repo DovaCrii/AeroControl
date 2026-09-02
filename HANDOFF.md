@@ -177,7 +177,59 @@ Dos filas más, **sin desplegar**:
 
 **Paso de despliegue: `collectstatic`.** Sin migración.
 
-### Cierre del 2026-09-01 — **empezar por acá**
+### Cierre del 2026-09-01 (tarde) — **empezar por acá**
+
+**Desplegado en `p340`: `2d04482`.** Nada pendiente de desplegar, `showmigrations`
+en 0. **14 filas cerradas** en la jornada, en seis despliegues, con tres
+migraciones (`operations.0023`, `0024`, `0025`) y dos sembrados. Gate final: 2579
+tests, cobertura 97.20%.
+
+#### Lo que quedó en la cola
+
+**Código:**
+
+| Fila | Qué falta |
+|---|---|
+| `LV-218`(b) | El cruce **automático** de NOTAM. El (a) —el enlace— ya está. Antes de codificar: que un fallo de consulta no se lea como "no hay avisos", política de caché, y **preguntar a la DGAC si hay vía oficial** (eso es una conversación, no código) |
+| `LV-227` | La narrativa del informe editable en la app. **No** un editor de plantillas: ver la fila |
+| `LV-220`(b) | Derivar la región de las coordenadas. Decidido no hacerlo sin marcar que es derivada |
+| `LV-200` paso 2 | Un documento con varios sujetos |
+| `LV-189` | Estado terminal en el cumplimiento |
+| R0/R2–R7 | Los bloques del informe mensual. **Leer `apps/reporting/MAPPING.md` primero** |
+
+**Datos, sin código** — y es lo que más impacto de cumplimiento tiene:
+
+| Fila | Qué falta |
+|---|---|
+| `LV-74` | **1 aeronave** (`RPA-7126`) sin seguro y **7 credenciales** DGAC sin fecha. Re-medido hoy: eran 3 aeronaves y una ya se cargó; `RPA-2019` no aplica (bodega, ver `LV-229`) |
+| `LV-228` | Cuatro operadores sin faena: René Herrera, Natalia Ramos, Jimmy Andrade, David Vidal |
+| `LV-98`, `LV-102` | Tipos de documento bajo "Otro", y el calendario — que depende de los dos anteriores |
+
+Y **el correo** sigue siendo el único criterio en rojo, esperando SMTP.
+
+#### ⚠️ Dos diagnósticos escritos resultaron falsos, y conviene no repetirlo
+
+Lo más útil que dejó la jornada no es una fila, es esto:
+
+1. **`LV-207` traía registrado que 5 de 7 colores del menú no llegaban a 3:1**, con
+   cifras concretas (`registry 2.41`). Calculado sobre los hex del CSS, `registry`
+   da **5.91** y los siete cumplen. Fiarse habría significado "corregir" siete
+   colores correctos.
+2. **La §6 del SPEC del informe daba por inexistente el modelo de permisos** y lo
+   marcaba como bloqueante. Existía desde antes (`FlightPermission`).
+
+En los dos casos el error fue medir o mirar contra la referencia equivocada. **Un
+diagnóstico escrito —incluido uno propio de hace semanas— se re-verifica antes de
+actuar sobre él**, sobre todo si va a cambiar datos o revertir una decisión. Está
+en `AGENTS.md` junto a la razón técnica: un ratio de contraste se calcula, no se
+lee de un navegador.
+
+Y el corolario del entorno: **el navegador integrado devuelve valores que no se
+corresponden con el CSS para `#sidebar`** (un `!important` inline no cambia el
+computado, que es imposible). Un `div` de control sí computa bien, así que sirve
+para elementos creados al vuelo y no para ese.
+
+### Cierre del 2026-09-01 (mañana)
 
 Continuación de la jornada del 31. **Desplegado en `p340`: `0a7a2ce`.** Lo que
 sigue está commiteado y **sin desplegar** (`9a84c48`: `LV-215`, `LV-216`,
