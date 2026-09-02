@@ -850,6 +850,41 @@ body, .card, .form-control, .form-select, .page-link, .table,
      sigue ganando sobre `:root` por ser más específica, y los dos controles
      conviven: el arrastre fija el ancho abierto, el botón sigue colapsando. */
   --ac-sidebar-width: var(--ac-sidebar-width-user, 280px);
+  /* == UX-02 · La escala tipográfica y de espaciado, como tokens =============
+   *
+   * Hoy hay **311 valores `rem` literales** en este archivo, y doce de ellos se
+   * repiten entre 9 y 26 veces. El problema no es la repetición: es que
+   * `0.78rem` y `0.8rem` conviven sin que nadie pueda decir si son dos
+   * decisiones o un dedazo, y que subir "el cuerpo de las tablas" obliga a
+   * buscar cuál de las cinco medidas parecidas era.
+   *
+   * ⚠️ **Los literales NO se migran de una pasada, y eso es la fila.** Un
+   * reemplazo masivo de 311 valores es un diff que nadie puede revisar y en el
+   * que un `0.85rem` cambiado a `0.8rem` por descuido no lo caza ningún test —
+   * este CSS no tiene pruebas de píxel. Se migran **al tocar cada bloque por
+   * otra razón**, que es la misma política incremental que el `MASTER_PLAN`
+   * aplica a `core/views.py`. Lo que entra ahora es la escala: a partir de acá
+   * un valor nuevo usa el token, y el que no exista en la escala es una
+   * decisión que hay que justificar en vez de teclear.
+   *
+   * La escala sale de **lo que el archivo ya usa**, no de una tabla traída de
+   * fuera: los pasos son los valores más repetidos, redondeados a los que ya
+   * dominan. Inventar una escala nueva habría obligado a mover todo el archivo
+   * el día que se migre, que es justo lo que se está evitando. */
+  --fs-xs: 0.72rem;   /* pies de tabla, notas al pie */
+  --fs-sm: 0.78rem;   /* el cuerpo de las listas -- 22 usos hoy */
+  --fs-md: 0.85rem;   /* texto secundario -- 26 usos hoy */
+  --fs-base: 1rem;    /* el cuerpo */
+  --fs-lg: 1.25rem;
+  --fs-xl: 1.5rem;
+
+  --sp-1: 0.15rem;
+  --sp-2: 0.35rem;    /* 19 usos hoy */
+  --sp-3: 0.5rem;     /* 26 usos hoy */
+  --sp-4: 0.75rem;
+  --sp-5: 1rem;
+  --sp-6: 1.5rem;
+
   /* Brand palette. Kept apart from --ac-primary, which is the accessible
      action colour: the brand turquoise does not clear 4.5:1 on white. */
   --ac-navy: #1B2A4A;
