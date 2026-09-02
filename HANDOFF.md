@@ -204,26 +204,21 @@ mano desde `/compliance/alertrule/` o el admin. **Las alertas que ya emitió se
 quedan**: una alerta es evidencia ISO 10.2 y borrarlas desde una migración
 eliminaría el rastro de que existieron — resolverlas es del usuario.
 
-#### ⚠️ Lo primero de todo: falta cerrar un gate
+#### ✅ El gate está verde, incluido el último commit
 
-**El commit de `LV-200` paso 2 se hizo con su gate a mitad de camino** (iba por el
-36%) porque se agotaba la ventana de contexto. Lo que sí está verificado de ese
-commit: sus **8 tests propios en verde** —incluidos los dos de la guarda,
-comprobados desactivándola—, `ruff check` y `ruff format` limpios, y la suite de
-`compliance` que lo rodea. Lo que **no** se llegó a ver es el gate completo, o sea
-las otras siete apps.
+El commit de `LV-200` paso 2 (`1aea5c1`) se escribió advirtiendo que su gate había
+quedado a mitad por agotarse la ventana. **Terminó después y pasó**: 2625 tests,
+cobertura 97.24%, `verify.ps1: all checks passed`. La advertencia que lleva ese
+mensaje de commit **ya no aplica** — se deja acá dicho porque el mensaje no se
+puede reescribir sin rehacer el commit, y una advertencia obsoleta hace perder más
+tiempo que ninguna.
 
-**Antes de desplegar, correr:**
+Lo que aquel aviso pedía vigilar quedó comprobado: `save_uploaded_file` ganó un
+parámetro opcional y sus **tres** llamadores de `apps/compliance/views.py` —alta,
+carga masiva y reemplazo de versión— siguen funcionando; sólo el primero pasa el
+parámetro nuevo.
 
-```
-pwsh scripts/verify.ps1
-```
-
-El riesgo concreto a vigilar, si algo falla: `save_uploaded_file` cambió de firma
-(ganó un parámetro opcional `reuse_of`) y tiene **tres** llamadores en
-`apps/compliance/views.py` — el alta, la carga masiva y el reemplazo de versión.
-Sólo el primero pasa el parámetro nuevo; los otros dos deberían seguir igual, pero
-eso es exactamente lo que el gate completo iba a confirmar.
+Así que los tres commits pendientes están verificados y **listos para desplegar**.
 
 #### Lo que se hizo el 2026-09-02
 
