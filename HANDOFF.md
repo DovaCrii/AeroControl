@@ -223,20 +223,31 @@ indicadores del resumen, la situación de los permisos al corte, y **la tabla de
 faenas fila por fila con su estado de habilitación** — la página que existe para
 mostrar las que **no** pueden volar.
 
-**Lo que queda pendiente y por qué** (ámbar punteado, cada uno con su fila):
+**Lo que quedaba pendiente se cerró el mismo día.** `R4` (la tabla permiso a
+permiso, el próximo vencimiento por faena, la concentración operacional y la
+ventana de 60 días) y `LV-227` (los hallazgos y la observación). **El informe ya
+no tiene bloques en ámbar punteado**: lo único que se dibuja como pendiente es
+la narrativa cuando todavía nadie la escribió, que es lo correcto.
 
-| Qué falta | Fila |
+#### `R4`: los semáforos, y la escala que NO se copió
+
+⚠️ **La escala del permiso no es la del documento, y conviene no "unificarlas"
+después.** `digest.bucket_for` corta en 7/15/30; el permiso corta en **30/60**,
+porque su renovación exige carta nueva del mandante y el aviso arranca a los 45
+(`LV-226`). Vive en `permit_band`, junto al resto del dominio de permisos.
+
+**No es una tercera paleta** —el riesgo que el plan anotó antes de `UX-01`—: los
+**nombres** son los mismos niveles de severidad de la aplicación y hay un test
+que lo fija contra `BUCKET_BADGE_CSS`. Cambia el umbral, no el vocabulario.
+
+Cuatro definiciones que se decidieron y no conviene reabrir sin motivo:
+
+| Qué | Cómo quedó |
 |---|---|
-| La tabla permiso a permiso (folio JEJ, N° DGAC, operadores, aeronaves, días) | `R4` |
-| Próximo vencimiento y días por faena | `R4` |
-| Concentración operacional (permisos con un solo operador) | `R4` |
-| ~~Los hallazgos y la observación del período~~ | ~~`LV-227`~~ — **hecho el mismo día**, ver más abajo |
-
-⚠️ **Y una diferencia deliberada con el informe emitido, que hay que cerrar en
-`R4`**: su cuarta tarjeta decía *"Permisos por vencer en 60 días"* y el payload
-sólo trae la ventana de **30**, que es la que `permit_counts` calcula. Se rotula
-por lo que mide. Rotular 30 como 60 habría sido exactamente el dato inventado que
-la regla del SPEC prohíbe.
+| Semáforo de la faena | El **peor** de sus habilitantes (§4.2). Sin permiso vigente es `critical`, no "sin banda" |
+| Próximo vencimiento | `Min` y no `Max`: el que obliga a actuar es el primero en caer |
+| Faena que depende de una persona | La **unión** de operadores de sus permisos vigentes tiene un solo miembro — si alguno designa a otro, hay suplente |
+| Solicitud en trámite | Bloque aparte, días en guion. Mezclarla sugeriría que un trámite habilita |
 
 #### El bloque 3 del plan: la exactitud del informe
 
@@ -308,6 +319,13 @@ el otro.
 2. **`|lower` convertía "DGAC" en "dgac"** en el resumen ejecutivo — el
    regulador en minúscula dentro del documento que se le dirige. Salió mirando la
    pantalla, no corriendo tests: es el caso de "medir y además mirar".
+3. **Las fechas del informe salían en orden ISO.** `{{ valor|slice:"5:" }}` sobre
+   `2026-08-01` da **`08-01`**, que en un documento chileno se lee como el 8 de
+   enero. En un papel que va a la DGAC, una fecha que se puede leer al revés no
+   es un detalle de formato. Se arregla con el filtro `as_date`, y **el payload
+   sigue guardando ISO**: guardar la cadena ya formateada dejaría los informes
+   viejos con el formato viejo el día que cambie la convención. Los tres salieron
+   de mirar la pantalla o de escribir el test, ninguno de leer código.
 
 #### El registro que faltaba de la mañana
 

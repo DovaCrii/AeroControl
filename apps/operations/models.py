@@ -330,6 +330,14 @@ class FlightPermission(StatusFlowMixin, BaseModel):
     # a `max_altitude_m`, y la columna queda por si alguna de las tres solicitudes
     # ya se presentó al SIGO con el valor de antes y hay que reconstruir qué se
     # declaró. Nada la vuelve a escribir.
+    #
+    # **CONDICIÓN DE CIERRE** (escrita el 2026-09-02, que es cuando todavía se
+    # sabe por qué existe): cuando se confirme que **ninguna de las tres
+    # solicitudes de `CC691` se presentó al SIGO con el valor viejo**, esta
+    # columna se puede borrar con su migración. Un paso 1 sin condición de cierre
+    # es deuda con intereses: el repo lleva seis retiros "de pantalla y no de
+    # base" y el paso 2 no se decidió ninguna vez, porque para cuando alguien
+    # mira la columna ya nadie recuerda de qué dependía.
     max_altitude_ft = models.PositiveIntegerField(null=True, blank=True)
     # Nullable so the permissions created before this field existed are not
     # retroactively broken; the form requires it (blank=False, the default)
