@@ -7973,3 +7973,111 @@ msgid ""
 msgstr ""
 "Un hallazgo es un juicio sobre las cifras, no una consulta: lo escribe quien "
 "firma el informe."
+
+#: apps/reporting/models.py
+msgid "Only a draft can be approved; issue a new revision instead."
+msgstr "Sólo un borrador se puede aprobar: emití una revisión nueva."
+
+#: apps/reporting/views.py
+msgid "Report approved. It is now read-only."
+msgstr "Informe aprobado. Queda de sólo lectura."
+
+#: templates/reporting/monthly_report.html
+msgid ""
+"Approving closes the report: it stops being editable and a correction has to "
+"be issued as a new revision. Continue?"
+msgstr ""
+"Aprobar cierra el informe: deja de ser editable y una corrección hay que "
+"emitirla como revisión nueva. ¿Continuar?"
+
+#: apps/reporting/models.py
+msgctxt "report completeness"
+msgid "Complete"
+msgstr "Completo"
+
+#: apps/reporting/models.py
+msgctxt "report completeness"
+msgid "Partial"
+msgstr "Parcial"
+
+#: templates/registration/login.html
+msgid "Hide"
+msgstr "Ocultar"
+
+#: templates/registration/login.html
+msgid "Caps Lock is on."
+msgstr "Bloq Mayús está activado."
+
+#: templates/registration/login.html
+msgid "Can't get in?"
+msgstr "¿No podés entrar?"
+
+#: templates/registration/login.html
+msgid "Test environment"
+msgstr "Entorno de prueba"
+
+#: templates/registration/login.html
+msgid ""
+"Wrong username or password. After several failed attempts the account is held "
+"for a while, so check the keyboard layout before trying again."
+msgstr ""
+"Usuario o contraseña incorrectos. Tras varios intentos fallidos la cuenta "
+"queda retenida un rato, así que revisá el teclado antes de volver a probar."
+
+#: templates/registration/login.html
+#, python-format
+msgid "The password is reset by the administrator: write to %(contact)s."
+msgstr "La contraseña la reinicia el administrador: escribí a %(contact)s."
+
+#: templates/registration/login.html
+msgid ""
+"There is no self-service reset: the administrator resets the password from "
+"the administration centre."
+msgstr ""
+"No hay recuperación por cuenta propia: el administrador reinicia la "
+"contraseña desde el centro de administración."
+
+#: templates/registration/login.html templates/registration/lockout.html
+msgid "Internal system"
+msgstr "Sistema interno"
+
+#: templates/registration/lockout.html
+msgid "Account held"
+msgstr "Cuenta retenida"
+
+#: templates/registration/lockout.html
+msgid "Too many failed sign-in attempts."
+msgstr "Demasiados intentos de acceso fallidos."
+
+#: templates/registration/lockout.html
+msgid "Why this happened"
+msgstr "Por qué pasó esto"
+
+#: templates/registration/lockout.html
+#, python-format
+msgid "Try again in %(minutes)s minute."
+msgid_plural "Try again in %(minutes)s minutes."
+msgstr[0] "Volvé a probar en %(minutes)s minuto."
+msgstr[1] "Volvé a probar en %(minutes)s minutos."
+
+#: templates/registration/lockout.html
+msgid ""
+"The hold is on the username, not on this device, so signing in from another "
+"computer will not lift it. It clears on its own when the wait is over."
+msgstr ""
+"La retención es sobre el nombre de usuario y no sobre este equipo, así que "
+"entrar desde otro computador no la levanta. Se libera sola cuando termina la "
+"espera."
+
+#: templates/registration/lockout.html
+#, python-format
+msgid "If you need it lifted sooner, write to %(contact)s."
+msgstr "Si necesitás levantarla antes, escribí a %(contact)s."
+
+#: templates/registration/lockout.html
+msgid ""
+"If you need it lifted sooner, the administrator can clear it from the "
+"administration centre."
+msgstr ""
+"Si necesitás levantarla antes, el administrador puede liberarla desde el "
+"centro de administración."

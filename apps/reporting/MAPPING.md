@@ -155,11 +155,37 @@ congelado si hay `ReportRun` del período y una vista previa en vivo si no, y lo
 3. **`build_pdf.py` usa WeasyPrint**, que este repo descartó a propósito. No es
    la ruta del PDF: sirve como referencia de en qué orden van las páginas.
 
-Lo que **falta**: R4 (semáforos, la tabla permiso a permiso, el próximo
-vencimiento por faena y la concentración operacional), R5 (command y vista de
-aprobación), R6 (XLSX y envío, bloqueado por SMTP) y R7 (bitácoras, depende de
-§6.6). La narrativa —hallazgos y observación del período— es `LV-227`, no un
-bloque R.
+**R5 hecho** (2026-09-02): `manage.py generate_monthly_report` (idempotente,
+`--force`, `--dry-run`), `ReportRun.freeze` y `ReportRun.approve`, más la vista
+de aprobación. 22 tests más.
+
+- **`freeze` vive en el modelo** porque lo llaman **los dos** caminos: el botón
+  de la pantalla y el trabajo programado. Dos copias es cómo el informe que
+  genera el timer y el que genera una persona empiezan a diferir.
+- **El comando congela y no aprueba.** Aprobar es un acto de una persona.
+- **`--force` emite revisión y nunca sobrescribe**; las anteriores quedan
+  `superseded` con su `approved_by` intacto.
+- **La narrativa viaja** a la revisión nueva. Borrarla obligaría a reescribir de
+  cero, y ahí nadie nota que un hallazgo dejó de ser cierto.
+- **Un mes mal escrito falla** en el comando y **cae al valor por omisión** en
+  la pantalla, al revés a propósito: en la pantalla el parámetro llega de un
+  enlace pegado a mano; en el comando alguien tecleó `--period` con una
+  intención, y congelar otro mes en silencio es peor que no congelar ninguno.
+
+⚠️ **Segregación de funciones, pendiente de decisión del usuario**: hoy alcanza
+con `change_reportrun`, así que quien redacta la narrativa puede además
+aprobarla. Para una evidencia ISO eso es una pregunta organizacional —a qué rol
+va el permiso de aprobar— y no la decide el código. Separarla exige un permiso
+propio y un cambio de `bootstrap_roles`.
+
+Lo que **falta**: R6 (XLSX y envío, bloqueado por SMTP) y R7 (bitácoras, depende
+de §6.6). La narrativa —hallazgos y observación del período— es `LV-227`, ya
+hecha.
+
+⚠️ **El timer no está cableado.** El comando existe y corre a mano; ponerlo en
+`systemd` es paso de despliegue, no de código. El informe se emite **el día 5**
+con corte al último día del mes anterior, así que el disparo natural es el día 1
+o 2 — no el último día del mes, que es cuando el corte todavía no cerró.
 
 **R4 hecho** (2026-09-02): `collect_permits` (la tabla permiso a permiso),
 `collect_concentration`, el próximo vencimiento por faena dentro de

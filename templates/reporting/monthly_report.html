@@ -32,6 +32,23 @@ la barra y los botones, y quedan las cinco hojas A4 solas.{% endcomment %}
     {% if run %}
       {% if run.is_editable and perms.reporting.change_reportrun %}
       <a class="btn btn-outline-primary" href="{% url 'monthly-report-narrative' run.pk %}">{% translate "Write the narrative" %}</a>
+      {% comment %}R5. Aprobar cierra el informe: deja de ser editable y una
+      corrección nace como revisión siguiente. Por eso pide confirmación.
+
+      La pregunta la engancha `app.js` leyendo `data-confirm`, y **no** un
+      `onsubmit=` en el atributo: la política de seguridad de contenido de esta
+      aplicación no lleva `unsafe-inline` en `script-src`, así que un manejador
+      en línea no se ejecutaría en producción y el botón aprobaría sin
+      preguntar — peor que no tener la pregunta, porque parecería tenerla. Hay
+      un test que lo vigila (`test_base_template_has_no_inline_script_or_handlers`).
+
+      Y si el navegador no corre JS, el POST pasa igual: la confirmación es una
+      cortesía, el guard de verdad vive en el modelo.{% endcomment %}
+      <form method="post" action="{% url 'monthly-report-approve' run.pk %}"
+            data-confirm="{% translate 'Approving closes the report: it stops being editable and a correction has to be issued as a new revision. Continue?' %}">
+        {% csrf_token %}
+        <button class="btn btn-primary">{% translate "Approve" %}</button>
+      </form>
       {% endif %}
     {% elif perms.reporting.add_reportrun %}
     <form method="post" action="{% url 'monthly-report-draft' %}">
