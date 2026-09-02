@@ -3,11 +3,8 @@
 {% block title %}{% translate "Compliance status report" %} - AeroControl{% endblock %}
 {% block content %}
 <div class="page-header">
-  <div>
-    <p class="page-eyebrow mb-1">{% translate "Compliance" %}</p>
-    <h1 class="mb-0">{% translate "Compliance status report" %}</h1>
-    <p class="page-description mb-0">{% translate "Document validity, upcoming expiries and alert resolution times." %}</p>
-  </div>
+  {% translate "Compliance" as page_eyebrow %}{% translate "Compliance status report" as page_title %}{% translate "Document validity, upcoming expiries and alert resolution times." as page_description %}
+  {% include "generic/_page_header.html" %}
   <div class="d-flex gap-2 flex-wrap">
     <a class="btn btn-outline-primary" href="{% url 'compliance-report-pdf' %}{% if export_query %}?{{ export_query }}{% endif %}">{% translate "PDF" %}</a>
     <a class="btn btn-outline-primary" href="{% url 'compliance-report-xlsx' %}{% if export_query %}?{{ export_query }}{% endif %}">{% translate "Excel" %}</a>

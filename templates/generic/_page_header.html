@@ -1,0 +1,31 @@
+{% comment %}`UX-04`: el encabezado de página, en un solo lugar.
+
+Antes había **ocho formas** de escribir el `<h1>` —`h3`, `h3 mb-0`, `h3 mb-1`,
+`h3 mb-3`, `mb-0`, `h4`, `h4 mb-3` y pelado— repartidas en 59 apariciones, así
+que el título de una pantalla era más grande o más chico según qué plantilla lo
+dibujara. No es una preferencia estética: un encabezado que cambia de tamaño al
+navegar hace dudar de si cambiaste de sección.
+
+**Sólo la columna izquierda.** Los botones de acción se quedan en la plantilla
+que llama, dentro del mismo `.page-header`, porque Django no puede pasar un
+bloque a un `{% templatetag openblock %} include {% templatetag closeblock %}` y
+fingirlo con una variable habría obligado a escribir el HTML de los botones
+como cadena — peor que la repetición que se viene a quitar.
+
+Uso:
+
+    {% templatetag openblock %} translate "Alerts" as page_eyebrow {% templatetag closeblock %}
+    {% templatetag openblock %} translate "Alert inbox" as page_title {% templatetag closeblock %}
+    <div class="page-header">
+      {% templatetag openblock %} include "generic/_page_header.html" {% templatetag closeblock %}
+      <div class="d-flex gap-2">…</div>
+    </div>
+
+`{% templatetag openblock %} translate … as var {% templatetag closeblock %}` y
+no un literal: `makemessages` extrae igual esa forma, así que las cadenas siguen
+en el catálogo y el guardián de traducciones las sigue viendo.{% endcomment %}
+<div>
+  {% if page_eyebrow %}<p class="page-eyebrow mb-1">{{ page_eyebrow }}</p>{% endif %}
+  <h1 class="page-title mb-0">{{ page_title }}</h1>
+  {% if page_description %}<p class="page-description mb-0">{{ page_description }}</p>{% endif %}
+</div>

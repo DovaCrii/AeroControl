@@ -3,11 +3,8 @@
 {% block title %}{% translate "Fleet and personnel roster" %} - AeroControl{% endblock %}
 {% block content %}
 <div class="page-header">
-  <div>
-    <p class="page-eyebrow mb-1">{% translate "Registry" %}</p>
-    <h1 class="mb-0">{% translate "Fleet and personnel roster" %}</h1>
-    <p class="page-description mb-0">{% translate "Everything on the books at a cut-off date, ready to hand over when someone asks for it." %}</p>
-  </div>
+  {% translate "Registry" as page_eyebrow %}{% translate "Fleet and personnel roster" as page_title %}{% translate "Everything on the books at a cut-off date, ready to hand over when someone asks for it." as page_description %}
+  {% include "generic/_page_header.html" %}
   <div class="d-flex gap-2 flex-wrap">
     <a class="btn btn-outline-primary" href="{% url 'registry-roster-pdf' %}{% if export_query %}?{{ export_query }}{% endif %}">{% translate "PDF" %}</a>
     <a class="btn btn-outline-primary" href="{% url 'registry-roster-xlsx' %}{% if export_query %}?{{ export_query }}{% endif %}">{% translate "Excel" %}</a>
