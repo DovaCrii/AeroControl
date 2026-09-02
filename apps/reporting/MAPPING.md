@@ -132,13 +132,39 @@ compromisos del mes anterior se leen del `ReportRun` previo, no se recalculan.
 
 ---
 
+## Estado de la implementación
+
+**R0/R2 hechos** (2026-09-01): `apps/reporting/` con `ReportRun` (migración
+`reporting.0001`) y `builder.py`, que arma `meta`, `kpis` y `cost_centres`
+llamando a las funciones que ya existían. 20 tests.
+
+Lo que **falta** para tener el informe: los bloques R3 (plantillas), R4 (semáforos
+y páginas 2–3), R5 (command y vista de aprobación), R6 (XLSX y envío, bloqueado
+por SMTP) y R7 (bitácoras, depende de §6.6).
+
 ## Notas de arquitectura que ya están decididas
 
-1. **`ComplianceSnapshot` existe y hace lo que `ReportRun.payload` quiere**: es
-   append-only, una fila por (fecha, centro de costo) más la consolidada, y su
-   docstring dice que existe "to make trend possible". Antes de crear
-   `ReportRun`, ver si el snapshot cubre el congelado y `ReportRun` sólo necesita
-   referenciarlo.
+1. ~~**`ComplianceSnapshot` existe y hace lo que `ReportRun.payload` quiere**~~ —
+   **verificado y descartado**: ese modelo guarda seis contadores documentales en
+   **columnas fijas** (`total`, `valid`, `expired`, `due_7/15/30`) por (fecha,
+   faena), y existe para dar tendencia **diaria**. El informe es un payload
+   heterogéneo emitido una vez al mes y sujeto a aprobación; meterlo ahí obligaría
+   a colgar un JSON de una tabla de contadores y a convertir un registro diario en
+   mensual. `ReportRun` **lee** snapshots cuando necesite tendencia: son fuentes,
+   no rivales.
+1. ⚠️ **El SPEC se contradice sobre la unicidad del período**, y se resolvió: su
+   §1.1 pide `unique_together = [("periodo",)]` y su §5.1 dice que `--force`
+   *"crea una versión nueva, no sobrescribe"*. `ReportRun` usa `(period,
+   revision)`: el informe es un documento controlado —la portada del de agosto
+   dice "Revisión 0"—, así que la revisión es parte de su identidad.
+1. **`missing_fields` se guarda, no se recalcula.** El informe tiene que seguir
+   diciendo qué faltaba **cuando se emitió**: si se recalculara, el de agosto
+   mejoraría solo al cargarse los datos en septiembre y desaparecería la evidencia
+   de la brecha que reportó. Misma lección que `LV-118` dejó en las alertas.
+1. **Cero no es ausente.** Un cero afirma ("hay cero"), `None` es la ausencia de
+   afirmación ("no se sabe"). Un `if not value` en `find_missing` los mezcla, y
+   con ellos el informe puede declarar cumplimiento sobre un hueco de carga — va
+   firmado ante la DGAC. Hay un test que lo fija, verificado rompiéndolo.
 2. **El PDF no usa WeasyPrint.** El repo eligió `reportlab` a propósito: "pure
    Python, no system package (Cairo/Pango, wkhtmltopdf) required on the Ubuntu VM
    deploy". `apps/core/pdf.py` ya genera PDF con el membrete JEJ (`LV-144`).

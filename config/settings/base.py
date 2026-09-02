@@ -28,6 +28,9 @@ INSTALLED_APPS = [
     "apps.workboard",
     "apps.geo",
     "apps.dashboard",
+    # R0 del informe mensual RPA. Va al final porque **sólo lee**: no define
+    # dominio ni lo modifica, así que ninguna app anterior depende de ella.
+    "apps.reporting",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
