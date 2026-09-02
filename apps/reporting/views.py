@@ -19,12 +19,20 @@ impresión.
 import re
 from datetime import date
 
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, View
 
-from apps.core.views import ModelViewPermissionRequiredMixin
+from apps.core.audit import set_audit_context
+from apps.core.views import (
+    ModelPermissionRequiredMixin,
+    ModelViewPermissionRequiredMixin,
+)
 from apps.reporting.builder import build, month_bounds
+from apps.reporting.forms import FindingFormSet, PeriodNoteForm
 from apps.reporting.models import ReportRun
 
 # Cuatro dígitos de año y dos de mes, exactos. Partir por el guion y confiar en
@@ -121,3 +129,108 @@ def _iso(value):
         return date.fromisoformat(value)
     except (TypeError, ValueError):
         return None
+
+
+class ReportDraftCreate(ModelPermissionRequiredMixin, View):
+    """Congela el borrador del período, que es lo que habilita escribir en él.
+
+    **La narrativa necesita dónde vivir.** Se guarda en el `ReportRun` porque es
+    parte del documento —un informe aprobado tiene que seguir diciendo lo que
+    decía, redacción incluida—, así que antes de escribir hay que crear la fila.
+
+    **Es un paso explícito y no un efecto secundario de guardar el texto**, y
+    ésa es la decisión: congelar el payload es el acto que separa "esto se mueve
+    con la base" de "esto es el informe de agosto". Que ocurriera de refilón al
+    escribir el primer hallazgo dejaría la cifra congelada en un instante que
+    nadie eligió.
+
+    Crea sólo el borrador de la revisión 0. Regenerar, comparar y aprobar es
+    `R5`; esto es la mitad que `LV-227` necesita para existir.
+    """
+
+    model = ReportRun
+    permission_action = "add"
+
+    def post(self, request):
+        period = parse_period(request.POST.get("period"), timezone.localdate())
+        existing = ReportRun.objects.filter(period=period).order_by("-revision").first()
+        if existing:
+            # Sin `get_or_create`: la respuesta correcta a "ya existe" no es
+            # devolverlo callando, es decir que ya estaba — quien apretó el
+            # botón dos veces tiene que saber cuál de las dos cosas pasó.
+            messages.info(
+                request, _("This period already had a report; opening the latest one.")
+            )
+            return redirect(f"{reverse('monthly-report')}?period={period:%Y-%m}")
+
+        payload, missing = build(period)
+        run = ReportRun.objects.create(
+            period=period,
+            generated_by=request.user.get_username(),
+            payload=payload,
+            missing_fields=missing,
+            completeness=(
+                ReportRun.COMPLETENESS_PARTIAL if missing else ReportRun.COMPLETENESS_OK
+            ),
+        )
+        set_audit_context(request, run, action="create")
+        messages.success(request, _("Draft frozen. You can now write its narrative."))
+        return redirect(f"{reverse('monthly-report')}?period={period:%Y-%m}")
+
+
+class ReportNarrativeUpdate(ModelPermissionRequiredMixin, View):
+    """Los hallazgos y la observación del período, escritos a mano.
+
+    **Un informe aprobado no se edita**: es el documento que se envió, y
+    reescribirlo dejaría a la DGAC con una copia que ya no existe de este lado.
+    Se comprueba con `is_editable`, la misma propiedad que el modelo ya definía
+    — no con una condición nueva que pueda desviarse de ella.
+    """
+
+    model = ReportRun
+    permission_action = "change"
+
+    def get(self, request, pk):
+        run = get_object_or_404(ReportRun, pk=pk)
+        return self._render(request, run, self._note(run), self._findings(run))
+
+    def post(self, request, pk):
+        run = get_object_or_404(ReportRun, pk=pk)
+        if not run.is_editable:
+            messages.error(
+                request,
+                _("An approved report is not edited: issue a new revision instead."),
+            )
+            return redirect(f"{reverse('monthly-report')}?period={run.period:%Y-%m}")
+
+        note = self._note(run, request.POST)
+        findings = self._findings(run, request.POST)
+        if not (note.is_valid() and findings.is_valid()):
+            return self._render(request, run, note, findings)
+
+        run = note.save(commit=False)
+        run.findings = findings.entries
+        # `full_clean` y no sólo `save`: la comprobación de forma vive en el
+        # modelo justamente para que ningún camino la esquive, y la vista es un
+        # camino más.
+        run.full_clean()
+        run.save(update_fields=["period_note", "findings", "updated_at"])
+        set_audit_context(request, run, action="update")
+        messages.success(request, _("Saved successfully."))
+        return redirect(f"{reverse('monthly-report')}?period={run.period:%Y-%m}")
+
+    @staticmethod
+    def _note(run, data=None):
+        return PeriodNoteForm(data, instance=run)
+
+    @staticmethod
+    def _findings(run, data=None):
+        return FindingFormSet(data, initial=run.findings, prefix="findings")
+
+    @staticmethod
+    def _render(request, run, note, findings):
+        return render(
+            request,
+            "reporting/narrative_form.html",
+            {"run": run, "note_form": note, "finding_formset": findings},
+        )

@@ -23,6 +23,22 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   cero") y la ausencia no afirma nada. Entra al menú el mismo día que gana
   pantalla, y exige `reporting.view_reportrun` — nombra cada faena y si está
   habilitada para volar.
+- **La narrativa del informe se escribe dentro de la aplicación (`LV-227`).** Los
+  dos bloques que el informe emitido trae redactados y que cambian todos los
+  meses —los hallazgos y la observación del período— se guardan en el informe y
+  se editan en un formulario. **No es un editor de plantillas**, y la distinción
+  es la fila entera: las cifras no están ahí porque salen de la base, y corregir
+  una cifra es corregir el dato. Si el formulario pudiera tocarlas, el informe
+  dejaría de poder afirmar de dónde viene cada número, que es la garantía que lo
+  hace firmable. Un hallazgo es **un juicio sobre** las cifras —"la renovación
+  exige una nueva carta del mandante, cuya gestión debía haber comenzado ya"— y
+  no se deriva de ninguna columna: lo escribe quien firma. Escribir necesita un
+  informe donde guardar, así que aparece antes un botón que **congela el
+  borrador del período**; es un paso explícito y no un efecto secundario de
+  teclear el primer hallazgo, porque congelar es lo que separa "esto se mueve
+  con la base" de "esto es el informe de agosto". **Un informe aprobado no se
+  edita**: es el documento que se envió, y una corrección nace como revisión
+  siguiente.
 - **El informe cuenta el padrón que existía al corte, no el de hoy.** La función
   que da flota, seguros y credenciales recibía la fecha de corte y la usaba sólo
   para comparar vencimientos: la **población** era siempre la actual. Medido en

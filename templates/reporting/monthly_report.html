@@ -26,6 +26,20 @@ la barra y los botones, y quedan las cinco hojas A4 solas.{% endcomment %}
       </div>
       <button class="btn btn-primary">{% translate "Apply" %}</button>
     </form>
+    {% comment %}LV-227: escribir la narrativa necesita un informe donde
+    guardarla, y congelar el borrador es un acto explícito — no un efecto
+    secundario de teclear el primer hallazgo.{% endcomment %}
+    {% if run %}
+      {% if run.is_editable and perms.reporting.change_reportrun %}
+      <a class="btn btn-outline-primary" href="{% url 'monthly-report-narrative' run.pk %}">{% translate "Write the narrative" %}</a>
+      {% endif %}
+    {% elif perms.reporting.add_reportrun %}
+    <form method="post" action="{% url 'monthly-report-draft' %}">
+      {% csrf_token %}
+      <input type="hidden" name="period" value="{{ period_date|date:'Y-m' }}">
+      <button class="btn btn-outline-primary">{% translate "Freeze this period as a draft" %}</button>
+    </form>
+    {% endif %}
   </div>
 </div>
 

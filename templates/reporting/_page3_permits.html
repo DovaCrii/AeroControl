@@ -84,7 +84,11 @@ que un informe ante la autoridad no puede permitirse.{% endcomment %}
 
     <div>
       <div class="rpt-label" style="margin-bottom: 10px;">Observación del período</div>
+      {% if run.period_note %}
+      <div style="border: 1px solid #D7DEE6; border-left: 3px solid #00A7BC; background: #F4F7FA; padding: 9px 12px; color: #0F1B2D; font-size: 10.5px; line-height: 1.55;">{{ run.period_note|linebreaksbr }}</div>
+      {% else %}
       {% pending "la observación se redacta y se aprueba antes de emitir" "LV-227" %}
+      {% endif %}
     </div>
 
     <div class="rpt-legend">
