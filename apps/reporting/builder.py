@@ -55,11 +55,29 @@ def collect_meta(period, cutoff):
         "issued_by": "Gerente de Operaciones Aéreas ante la DGAC",
         "jointly_with": "Jefe Seguridad Aérea ante la DGAC",
         "standard": "JEJ-GRI-SS-INS-096 Rev. 0",
+        # R3: los tres campos que faltaban de la portada del informe emitido.
+        # Van acá y no en la plantilla por la misma razón que los dos de arriba:
+        # son texto del **documento**, y el documento se re-renderiza desde el
+        # payload congelado. Escritos en la plantilla, un cambio de cargo
+        # reescribiría en silencio los informes ya emitidos.
+        "addressed_to": (
+            "Gerencia General · Gerencia de Riesgo · "
+            "Gerencia de Ingeniería · Administradores de Contrato"
+        ),
+        "scope": "Vigencia de permisos de vuelo ante la DGAC",
+        "sources": "AeroControl · SIGO — DGAC",
     }
 
 
-def collect_kpis(cutoff):
-    """Los indicadores de portada, cada uno de su función de siempre."""
+def collect_kpis(cutoff, cost_centres):
+    """Los indicadores de portada, cada uno de su función de siempre.
+
+    `cost_centres` llega ya calculado en vez de volver a consultarlo: la faena
+    sin permiso vigente es el indicador **7 de 12** de la página 2, y su
+    denominador tiene que ser exactamente el mismo universo que
+    `cost_centres_with_operation` — dos recorridos separados es cómo el informe
+    empieza a decir "7 de 12" en una página y "7 de 11" en la siguiente.
+    """
     from apps.compliance.kpis import permit_counts
     from apps.dashboard.views import panel_readiness
     from apps.registry.models import CostCenter
@@ -74,6 +92,16 @@ def collect_kpis(cutoff):
 
     return {
         "cost_centres_with_operation": leaf(flying.count(), "registry", cutoff),
+        # El hallazgo que abre el informe emitido: "solo 5 de 12 Centros de Costo
+        # cuentan con permiso de vuelo vigente". Se cuenta sobre las filas ya
+        # recolectadas, que salen de `permit_status_by_cost_center` — la consulta
+        # que parte de las faenas justamente para que las que no tienen ningún
+        # permiso existan como fila (`LV-206`).
+        "cost_centres_without_permit": leaf(
+            sum(1 for row in cost_centres if not row["permits_in_force"]),
+            "operations",
+            cutoff,
+        ),
         "permits_in_force": leaf(permits["in_force"], "operations", cutoff),
         "permits_awaiting": leaf(permits["awaiting"], "operations", cutoff),
         "permits_lapsed": leaf(permits["lapsed"], "operations", cutoff),
@@ -147,9 +175,10 @@ def build(period, cutoff=None):
     """
     _start, end = month_bounds(period)
     cutoff = cutoff or end
+    cost_centres = collect_cost_centres(cutoff)
     payload = {
         "meta": collect_meta(period, cutoff),
-        "kpis": collect_kpis(cutoff),
-        "cost_centres": collect_cost_centres(cutoff),
+        "kpis": collect_kpis(cutoff, cost_centres),
+        "cost_centres": cost_centres,
     }
     return payload, find_missing(payload)

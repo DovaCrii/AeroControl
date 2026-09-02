@@ -74,8 +74,18 @@ def test_the_six_groups_are_there(groups):
 
 
 def test_reports_holds_the_roster_and_the_compliance_report_together(groups):
-    """El usuario los confundió justamente porque estaban en grupos distintos."""
-    assert groups["reports"] == {"registry-roster", "compliance-report"}
+    """El usuario los confundió justamente porque estaban en grupos distintos.
+
+    `monthly-report` se suma con `R3`: es el informe que se emite a la DGAC, y
+    su lugar es junto a los otros dos y no en una sección propia. Que este test
+    cayera al agregarlo es lo que se le pide — una fila nueva en el menú tiene
+    que costar una decisión sobre en qué grupo va, no colarse.
+    """
+    assert groups["reports"] == {
+        "registry-roster",
+        "compliance-report",
+        "monthly-report",
+    }
 
 
 def test_the_compliance_group_no_longer_holds_the_report(groups):

@@ -177,11 +177,91 @@ Dos filas más, **sin desplegar**:
 
 **Paso de despliegue: `collectstatic`.** Sin migración.
 
-### Cierre del 2026-09-02 — **empezar por acá**
+### Cierre del 2026-09-02 (tarde) — **empezar por acá**
 
-⚠️ **Hay trabajo commiteado y SIN desplegar, por decisión del usuario:** *"no
-vamos a desplegar hasta que quede todo validado y funcionando"*. Producción sigue
-en **`4528dfe`**.
+**El usuario informó que el despliegue pendiente quedó hecho**, así que la
+sección de abajo ("Cierre del 2026-09-02") ya no describe una cola: describe lo
+que se desplegó. ⚠️ **Lo único que ninguna migración hizo y hay que comprobar
+que se haya hecho a mano**: desactivar la regla *"Permisos: renovación vencida de
+plazo (T-15 · Gerencia)"* en `/compliance/alertrule/`. `seed_alert_rules` sólo
+crea, nunca borra. Si sigue activa, `LV-232` no cerró en producción aunque el
+código sí esté.
+
+#### El bloque 2 del plan: el informe visible
+
+**`R3` + `UX-06`**, las dos filas juntas como el plan las agrupa. El informe
+mensual RPA se ve **dentro de la aplicación**, en `/reporting/monthly/`, y entró
+al menú el mismo día que ganó pantalla — el repo lleva seis vistas vivas sin
+puerta y ésta no suma la séptima.
+
+**Lo que hay que saber para seguir:**
+
+1. ⚠️ **El ZIP trae ocho plantillas, no seis.** El `HANDOFF` y el plan decían
+   "seis artboards A4". Contadas: `p1_portada`, `p2_resumen`, `p3_habilitantes`,
+   `p3_permisos`, `p4_cobertura`, `p4_dotacion`, `p5_plan` y `dato_ejecutivo`.
+   **`p3_habilitantes` y `p4_dotacion` son variantes que NO llegaron al PDF
+   emitido** —`build_pdf.py` del propio ZIP arma la secuencia
+   `Main · Resumen · Permisos · Cobertura · Plan`—, y `dato_ejecutivo` es otro
+   documento: una hoja mensual aparte, con su propio PDF
+   (`JEJ_Dato_Ejecutivo_RPA_PLANTILLA.pdf`). Son **cinco** las páginas del
+   informe. Es la tercera cifra citada de memoria que al recontarse no cuadra;
+   la regla del plan —"recontar al empezar cada tanda, no citar"— vale también
+   para sus propias cifras.
+2. **El ZIP vive en `D:\OneDrive - J.E.J. Ingeniería S.A\DGAC\INFORMES\Agosto2026\`**,
+   no en el `OneDrive` del perfil. Ahí están también el PDF emitido, el borrador
+   y el SPEC.
+3. **Las plantillas van a `templates/reporting/`, no a `apps/reporting/templates/`**
+   como decía el plan. Ninguna app de este repo tiene carpeta propia de
+   plantillas: todas viven bajo la raíz. Se reconcilió a favor del repo, como
+   manda `AGENTS.md` §"Precedencia documental".
+4. **Ningún número de agosto quedó quemado en las plantillas.** Todo sale del
+   payload o se dibuja en ámbar punteado. Dejar la tabla de agosto escrita
+   habría hecho que el informe de septiembre mostrara los permisos de agosto.
+
+**Lo que el informe ya muestra de verdad**: la portada entera, los seis
+indicadores del resumen, la situación de los permisos al corte, y **la tabla de
+faenas fila por fila con su estado de habilitación** — la página que existe para
+mostrar las que **no** pueden volar.
+
+**Lo que queda pendiente y por qué** (ámbar punteado, cada uno con su fila):
+
+| Qué falta | Fila |
+|---|---|
+| La tabla permiso a permiso (folio JEJ, N° DGAC, operadores, aeronaves, días) | `R4` |
+| Próximo vencimiento y días por faena | `R4` |
+| Concentración operacional (permisos con un solo operador) | `R4` |
+| Los hallazgos y la observación del período | `LV-227` |
+
+⚠️ **Y una diferencia deliberada con el informe emitido, que hay que cerrar en
+`R4`**: su cuarta tarjeta decía *"Permisos por vencer en 60 días"* y el payload
+sólo trae la ventana de **30**, que es la que `permit_counts` calcula. Se rotula
+por lo que mide. Rotular 30 como 60 habría sido exactamente el dato inventado que
+la regla del SPEC prohíbe.
+
+#### Dos defectos que salieron de escribir los tests, no de leer código
+
+1. **`?period=26-8` devolvía un informe del año 26.** Partir por el guion y
+   confiar en `int()` acepta dos dígitos de año y compone una portada y un código
+   con una fecha dieciocho siglos atrás, sin que nada avise. Ahora el formato es
+   estricto (`\d{4}-\d{2}`) y lo que no calza cae al período por defecto.
+2. **`|lower` convertía "DGAC" en "dgac"** en el resumen ejecutivo — el
+   regulador en minúscula dentro del documento que se le dirige. Salió mirando la
+   pantalla, no corriendo tests: es el caso de "medir y además mirar".
+
+#### El registro que faltaba de la mañana
+
+`LV-200`, `LV-230` y `LV-232` estaban **cerradas y commiteadas** y sus filas
+seguían en `⬜`/`🔶`, y **ninguna de las cinco filas del 2026-09-02 tenía entrada
+en `CHANGELOG.md`**. Es la fila fantasma que `AGENTS.md` describe, cinco veces
+seguidas y en la misma jornada. Corregido. **Y se versiona `docs/ux-ui-plan.md`**,
+que estaba sin seguimiento: es la fuente de las 31 filas `UX-nn` y sin él la
+mitad de este plan no existe desde el repo.
+
+### Cierre del 2026-09-02 (mañana)
+
+⚠️ **Esta sección describía trabajo commiteado y sin desplegar. Ya se desplegó**
+(ver la sección de arriba). Se conserva porque sus pasos y advertencias siguen
+siendo la referencia de qué llevó ese despliegue.
 
 #### Lo primero: el despliegue pendiente
 

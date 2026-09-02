@@ -1,0 +1,71 @@
+{% load i18n static report_leaf %}
+{% comment %}Página 1 · Portada.
+
+Del `plantilla-informe-rpa-aerocontrol.zip`, artboard `p1_portada`. Todo su
+contenido variable sale de `payload.meta`, que es lo que `ReportRun` congela: la
+portada de un informe emitido tiene que seguir diciendo lo que decía, aunque los
+cargos cambien después.
+
+El texto fijo —el título del documento, el nombre del instructivo, la dirección
+de la empresa— va en español y sin `{% translate %}` a propósito: no es
+interfaz, es **el documento**. Es un papel controlado que se emite en español
+ante la DGAC, y traducirlo lo convertiría en otro documento.{% endcomment %}
+<div class="rpt-page">
+
+  <div style="position: absolute; left: 0; top: 0; width: 10px; height: 1123px; background: #124384;"></div>
+  <img src="{% static 'reporting/jej-arte.png' %}" alt="" style="position: absolute; right: -8px; bottom: 92px; width: 368px; height: auto;">
+
+  <div style="padding: 52px 48px 0 56px;">
+
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 24px;">
+      <img src="{% static 'reporting/jej-logo.png' %}" alt="J.E.J. Ingeniería" style="width: 168px; height: auto;">
+      <div class="rpt-head-code" style="font-size: 10.5px;">
+        {{ payload.meta.code }}<br>
+        INFORME MENSUAL DE REPORTABILIDAD<br>
+        OPERACIONES RPA / DRONES
+      </div>
+    </div>
+
+    <div style="margin-top: 78px; border-left: 5px solid #00A7BC; padding-left: 19px;">
+      <div style="color: #00A7BC; font-size: 12px; font-weight: bold; letter-spacing: 0.16em; text-transform: uppercase;">Gerencia de Ingeniería · Levantamientos Digitales</div>
+      <div style="color: #124384; font-size: 38px; font-weight: bold; line-height: 1.12; margin-top: 10px;">Informe Mensual de<br>Reportabilidad RPA</div>
+    </div>
+
+    <div style="margin-top: 30px; padding-left: 24px; width: 560px; color: #0F1B2D; font-size: 19px; line-height: 1.35;">Normalización de las operaciones aéreas con aeronaves pilotadas a distancia en Centros de Costo</div>
+
+    <div style="margin-top: 24px; padding-left: 24px;">
+      <span style="display: inline-block; background: #124384; color: #FFFFFF; font-size: 20px; font-weight: bold; padding: 7px 18px; letter-spacing: 0.04em;">{{ period_date|date:"F Y"|upper }}</span>
+      <span style="color: #52606D; font-size: 12.5px; padding-left: 12px;">Período {{ covers_from|date:"d" }}–{{ covers_to|date:"d" }} de {{ covers_to|date:"F" }} de {{ covers_to|date:"Y" }}</span>
+    </div>
+
+    <div style="margin-top: 34px; padding-left: 24px;">
+      <table class="rpt-meta">
+        <tr><th scope="row">Elaborado por</th><td>{{ payload.meta.issued_by }}</td></tr>
+        <tr><th scope="row">En conjunto con</th><td>{{ payload.meta.jointly_with }}</td></tr>
+        <tr><th scope="row">Dirigido a</th><td>{{ payload.meta.addressed_to }}</td></tr>
+        <tr><th scope="row">Alcance del ciclo</th><td>{{ payload.meta.scope }}</td></tr>
+        <tr><th scope="row">Fuente de datos</th><td>{{ payload.meta.sources }}</td></tr>
+        <tr><th scope="row">Fecha de corte</th><td>{{ cutoff_date|date:"d-m-Y" }}</td></tr>
+      </table>
+    </div>
+
+    <div style="margin-top: 46px; padding-left: 24px;">
+      <div style="width: 340px; border-left: 3px solid #00A7BC; padding: 4px 0 4px 14px;">
+        <div style="color: #124384; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.06em;">Estándar de referencia</div>
+        <div style="color: #52606D; font-size: 11.5px; line-height: 1.5; margin-top: 5px;">{{ payload.meta.standard }} — Instructivo Gestión Centralizada de Drones o RPA en Centros de Costo</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="position: absolute; left: 56px; right: 48px; bottom: 36px; border-top: 2px solid #124384; padding-top: 10px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 20px;">
+      <div style="color: #124384; font-size: 10px; line-height: 1.5;">
+        <span style="font-weight: bold;">J.E.J. INGENIERÍA S.A.</span><br>
+        <span style="color: #52606D;">Av. Apoquindo 2930, Piso 11, Las Condes – Santiago de Chile<br>Fono +56 2 2722 5000 · jej@jej.cl · www.jej.cl</span>
+      </div>
+      <div style="color: #52606D; font-size: 9.5px; text-align: right; line-height: 1.5;">{{ revision_label }} · Página 1<br>Documento de gestión interna</div>
+    </div>
+  </div>
+
+</div>

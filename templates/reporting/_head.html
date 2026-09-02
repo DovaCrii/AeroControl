@@ -1,0 +1,11 @@
+{% load i18n static report_leaf %}
+{% comment %}El encabezado que repiten las páginas 2 a 5 del informe emitido.
+Una sola copia: en el ZIP estaba escrito cuatro veces, y cuatro copias de un
+código de documento es cómo una página termina diciendo otro período.{% endcomment %}
+<div class="rpt-head">
+  <img src="{% static 'reporting/jej-logo.png' %}" alt="J.E.J. Ingeniería" style="width: 108px; height: auto;">
+  <div class="rpt-head-code">
+    {{ payload.meta.code }} · {{ period_date|date:"F Y"|upper }}<br>
+    REPORTABILIDAD OPERACIONES RPA / DRONES
+  </div>
+</div>

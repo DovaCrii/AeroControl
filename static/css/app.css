@@ -2675,3 +2675,69 @@ a.admin-metric:hover { border-color: var(--ac-text-secondary); }
   .quiz-rules { gap: 1.1rem; }
   .quiz-footer { flex-direction: column; align-items: stretch; }
 }
+
+/* == UX-06 · Impresión ======================================================
+ *
+ * Criterio de la fila: imprimir un informe no incluye menú, barra ni botones;
+ * las tablas no se cortan a mitad de fila; sale el sello de generación.
+ *
+ * Va acá y no en cada pantalla porque el problema no era de una: el árbol
+ * tenía **cero** reglas `@media print`, así que toda impresión salía con la
+ * navegación entera encima y el contenido estrujado en la columna que le
+ * dejaba la barra lateral.
+ *
+ * No se fija `@page` acá a propósito: los márgenes por omisión de la impresora
+ * son los correctos para una pantalla normal. La única que los quiere en cero
+ * es la hoja A4 del informe mensual, y eso lo declara `report-a4.css`, que se
+ * carga sólo en esa pantalla.
+ */
+
+/* El sello sólo existe en papel: en pantalla la fecha y la URL están a la
+ * vista, y repetirlas abajo de cada página sería ruido. */
+.print-stamp { display: none; }
+
+@media print {
+  /* La navegación, los diálogos y los controles no son el documento. */
+  .navbar,
+  .sidebar,
+  .sidebar-resizer,
+  .skip-link,
+  .modal,
+  .modal-backdrop,
+  .btn,
+  .btn-close,
+  .pagination,
+  .d-print-none { display: none !important; }
+
+  /* Sin la barra lateral, el contenido ocupa la hoja. */
+  body { background: #ffffff; }
+  .container-fluid,
+  main { display: block !important; width: auto !important; max-width: none !important; margin: 0 !important; padding: 0 !important; }
+
+  /* El contenedor que hace scroll en pantalla recorta la tabla en papel. */
+  .table-responsive { overflow: visible !important; }
+
+  /* Ninguna fila partida entre dos páginas, y el encabezado repetido arriba de
+   * cada una: una tabla larga sin esto deja la segunda página sin decir qué
+   * columna es cuál. */
+  table { break-inside: auto; width: 100% !important; }
+  thead { display: table-header-group; }
+  tfoot { display: table-footer-group; }
+  tr, .card, .summary-card { break-inside: avoid; }
+
+  /* Las insignias de estado son información: sin esto el navegador descarta su
+   * fondo y una fila "Vencido" sale igual que una "Vigente". */
+  .badge,
+  [class*="sev-"] { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+
+  /* El sello: qué se imprimió, de dónde y cuándo. Un papel sin fecha de
+   * generación no se puede contrastar contra la pantalla de nadie. */
+  .print-stamp {
+    display: block !important;
+    margin-top: 1rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #999999;
+    font-size: 9px;
+    color: #555555;
+  }
+}

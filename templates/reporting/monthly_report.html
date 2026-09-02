@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load i18n static report_leaf %}
+{% block title %}{{ payload.meta.code }} - AeroControl{% endblock %}
+
+{% comment %}R3 · El informe mensual RPA, visible dentro de la aplicación.
+
+Va dentro de `base.html` y no como documento suelto porque así se decidió con
+el usuario: **HTML en la app primero, PDF automático después.** Al imprimir,
+`report-a4.css` y el bloque `@media print` de `app.css` (`UX-06`) sacan el menú,
+la barra y los botones, y quedan las cinco hojas A4 solas.{% endcomment %}
+
+{% block extrahead %}<link rel="stylesheet" href="{% static 'css/report-a4.css' %}">{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <p class="page-eyebrow mb-1">{% translate "Reports" %}</p>
+    <h1 class="h3 mb-0">{{ payload.meta.code }}</h1>
+    <p class="page-description mb-0">{% translate "Monthly RPA reportability report to the DGAC." %}</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap align-items-end">
+    <form method="get" class="d-flex gap-2 align-items-end">
+      <div>
+        <label class="form-label" for="period">{% translate "Period" %}</label>
+        <input class="form-control" type="month" id="period" name="period" value="{{ period_date|date:'Y-m' }}">
+      </div>
+      <button class="btn btn-primary">{% translate "Apply" %}</button>
+    </form>
+  </div>
+</div>
+
+{% comment %}El estado se dice arriba y sin rodeos: un borrador que alguien
+imprima y firme creyéndolo emitido es el peor resultado posible de esta
+pantalla. `missing_fields` se muestra tal como quedó guardado en el informe
+congelado -- es la evidencia de qué faltaba **al emitirse**, no de qué falta
+hoy.{% endcomment %}
+<div class="alert {% if run %}alert-info{% else %}alert-warning{% endif %} d-print-none" role="status">
+  {% if run %}
+  {% blocktranslate with status=run.get_status_display revision=run.revision %}Frozen report, revision {{ revision }} — {{ status }}.{% endblocktranslate %}
+  {% else %}
+  {% translate "Live preview: nothing is frozen yet for this period, so these figures move with the database. Freezing and approval come with the generation command." %}
+  {% endif %}
+  {% if missing_fields %}
+  <span class="ms-1">{% blocktranslate count counter=missing_fields|length %}{{ counter }} field had no data at the cutoff.{% plural %}{{ counter }} fields had no data at the cutoff.{% endblocktranslate %}</span>
+  {% endif %}
+</div>
+
+<div class="rpt-doc">
+  {% include "reporting/_page1_cover.html" %}
+  {% include "reporting/_page2_summary.html" %}
+  {% include "reporting/_page3_permits.html" %}
+  {% include "reporting/_page4_coverage.html" %}
+  {% include "reporting/_page5_plan.html" %}
+</div>
+{% endblock %}

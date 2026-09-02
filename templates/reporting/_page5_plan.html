@@ -1,0 +1,123 @@
+{% load i18n static report_leaf %}
+{% comment %}Página 5 · Plan de normalización. Artboard `p5_plan` del ZIP.
+
+Es la única página **enteramente redactada**: cuatro fases con su criterio de
+cierre y la matriz de exigibilidad progresiva. No sale de la base ni podría —es
+un compromiso de gestión, no una medición— y por eso `LV-227` la pide editable
+dentro de la aplicación en vez de generada.
+
+Va escrita acá, con los meses del plan comprometido en el informe de agosto,
+porque **el plan es el mismo documento todos los meses hasta que alguien lo
+cambie**; lo que cambia es en qué fase se está. Cuando `LV-227` entre, este
+bloque pasa a ser el texto guardado del `ReportRun` y esta plantilla deja de
+tenerlo escrito.{% endcomment %}
+<div class="rpt-page">
+
+  {% include "reporting/_head.html" %}
+
+  <div class="rpt-body rpt-stack-16">
+
+    <div>
+      <div class="rpt-h2"><span class="rpt-h2-num">4</span><span class="rpt-h2-text">Plan de normalización de operaciones aéreas</span></div>
+      <div class="rpt-h2-rule"></div>
+    </div>
+
+    <div class="rpt-lede">Cuatro fases de un mes. Ninguna exige lo que la anterior no dejó instalado: primero se cierra la habilitación vigente, luego se automatiza su renovación, después se instala el registro de vuelo y solo al final se exige completitud.</div>
+
+    <div class="rpt-stack-9">
+
+      <div class="rpt-fase rpt-fase-now">
+        <div class="rpt-fase-when">
+          <div class="rpt-fase-n">FASE 0</div>
+          <div class="rpt-fase-month">Sep 2026</div>
+        </div>
+        <div class="rpt-fase-body">
+          <div class="rpt-fase-title">Cierre de brechas de habilitación</div>
+          <div class="rpt-fase-text">Renovar los permisos que vencen dentro del período. Definir cuáles de los Centros de Costo sin permiso tendrán operación aérea y tramitar su carta del mandante y su solicitud en SIGO.</div>
+          <div class="rpt-fase-close"><strong style="color: #124384;">Cierre:</strong> ningún CC con operación prevista opera sin permiso vigente.</div>
+        </div>
+      </div>
+
+      <div class="rpt-fase">
+        <div class="rpt-fase-when">
+          <div class="rpt-fase-n">FASE 1</div>
+          <div class="rpt-fase-month">Oct 2026</div>
+        </div>
+        <div class="rpt-fase-body">
+          <div class="rpt-fase-title">Calendario de renovación automático</div>
+          <div class="rpt-fase-text">AeroControl calcula el vencimiento sobre la <strong>fecha real de cada resolución</strong> —no sobre un plazo supuesto— y dispara alertas a 45 y 30 días: a los 45 el ADC solicita la carta del mandante; a los 30 el Jefe Seguridad Aérea presenta en SIGO y, sin carta, escala al Gerente Operaciones Aéreas.</div>
+          <div class="rpt-fase-close"><strong style="color: #124384;">Cierre:</strong> ninguna renovación depende de que alguien la recuerde.</div>
+        </div>
+      </div>
+
+      <div class="rpt-fase">
+        <div class="rpt-fase-when">
+          <div class="rpt-fase-n">FASE 2</div>
+          <div class="rpt-fase-month">Nov 2026</div>
+        </div>
+        <div class="rpt-fase-body">
+          <div class="rpt-fase-title">Bitácora digital de vuelo</div>
+          <div class="rpt-fase-text">Se habilita el registro por vuelo: bitácora (JEJ-GTE-CT-REG-015), check list pre-vuelo (LVE-003) e inspección (LVE-002). Cada vuelo se asocia al permiso que lo autoriza, de modo que el sistema no admita registrar un vuelo sin permiso vigente en esa fecha.</div>
+          <div class="rpt-fase-close"><strong style="color: #124384;">Cierre:</strong> completitud reportada como línea base, sin sanción interna.</div>
+        </div>
+      </div>
+
+      <div class="rpt-fase rpt-fase-last">
+        <div class="rpt-fase-when">
+          <div class="rpt-fase-n">FASE 3</div>
+          <div class="rpt-fase-month">Dic 2026</div>
+        </div>
+        <div class="rpt-fase-body">
+          <div class="rpt-fase-title">Exigibilidad plena y auditoría</div>
+          <div class="rpt-fase-text">La completitud de bitácoras pasa a <strong>indicador exigible</strong> por Centro de Costo y se contrasta la coherencia entre vuelos ejecutados y vuelos autorizados. Auditoría interna regulatoria conforme al numeral 5.4.2 del INS-096.</div>
+          <div class="rpt-fase-close"><strong style="color: #124384;">Cierre:</strong> informe anual consolidado y plan de acción 2027.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div>
+      <div class="rpt-label" style="margin-bottom: 9px;">Exigibilidad progresiva de la reportabilidad</div>
+      <div style="border: 1px solid #D7DEE6; border-bottom: none;">
+        <div class="rpt-matrix rpt-matrix-head">
+          <div>Qué se reporta</div><div>SEP</div><div>OCT</div><div>NOV</div><div>DIC</div>
+        </div>
+        <div class="rpt-matrix">
+          <div class="rpt-matrix-row">Permisos de vuelo vigentes por CC</div>
+          <div class="rpt-cell rpt-cell-due">Exigible</div>
+          <div class="rpt-cell rpt-cell-due">Exigible</div>
+          <div class="rpt-cell rpt-cell-due">Exigible</div>
+          <div class="rpt-cell rpt-cell-due rpt-cell-end">Exigible</div>
+
+          <div class="rpt-matrix-row">Renovación anticipada (carta + solicitud)</div>
+          <div class="rpt-cell rpt-cell-info">Informativo</div>
+          <div class="rpt-cell rpt-cell-due">Exigible</div>
+          <div class="rpt-cell rpt-cell-due">Exigible</div>
+          <div class="rpt-cell rpt-cell-due rpt-cell-end">Exigible</div>
+
+          <div class="rpt-matrix-row"><strong>Bitácora, check list e inspección por vuelo</strong></div>
+          <div class="rpt-cell rpt-cell-na">No aplica</div>
+          <div class="rpt-cell rpt-cell-na">No aplica</div>
+          <div class="rpt-cell rpt-cell-info">Informativo</div>
+          <div class="rpt-cell rpt-cell-due rpt-cell-end">Exigible</div>
+
+          <div class="rpt-matrix-row">Coherencia vuelos ejecutados vs. autorizados</div>
+          <div class="rpt-cell rpt-cell-na">No aplica</div>
+          <div class="rpt-cell rpt-cell-na">No aplica</div>
+          <div class="rpt-cell rpt-cell-info">Informativo</div>
+          <div class="rpt-cell rpt-cell-due rpt-cell-end">Exigible</div>
+        </div>
+      </div>
+      <div style="background: #F4F7FA; border: 1px solid #D7DEE6; padding: 8px 10px; font-size: 9.5px; color: #52606D; line-height: 1.5;"><strong style="color: #124384;">Informativo</strong> = se reporta el dato y se identifican brechas, sin consecuencia para el CC. <strong style="color: #124384;">Exigible</strong> = la brecha se escala a la Gerencia de Ingeniería y a la Gerencia de Riesgo con plazo de cierre comprometido.</div>
+    </div>
+
+  </div>
+
+  <div class="rpt-foot">
+    <div>
+      <span>El informe mensual es obligación del {{ payload.meta.issued_by }} en conjunto con el {{ payload.meta.jointly_with }} (INS-096, 5.4.2 y 6.5).</span>
+      <span>J.E.J. Ingeniería S.A. · Página 5</span>
+    </div>
+  </div>
+
+</div>
