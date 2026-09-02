@@ -92,12 +92,18 @@
   aplica: la DGAC la pide en el formulario del SIGO. Es la misma lectura que
   `LV-146` fijó para el chip de faena — el caso vacío es un caso real y se dice.
 
-  No se **deduce** de las coordenadas, aunque el permiso las tenga. Presentar una
-  región derivada con el mismo aspecto que una declarada es peor que dejarla
-  vacía: quien lee la ficha para llenar el SIGO no podría distinguir el dato del
-  papel de una inferencia nuestra. Si algún día se deriva, tiene que decir que se
-  derivó (mitad (b) de la fila, sin hacer).{% endcomment %}
-  <tr><th scope="row">{% translate "Region / Commune" %}</th><td>{% if permission.region or permission.commune or permission.area_name %}{% if permission.area_name %}{{ permission.area_name }}{% if permission.region or permission.commune %} · {% endif %}{% endif %}{{ permission.region|default:"" }}{% if permission.region and permission.commune %}, {% endif %}{{ permission.commune|default:"" }}{% else %}<span class="text-body-secondary fst-italic">{% translate "Not recorded" %}</span>{% endif %}</td></tr>
+  **Mitad (b), hecha: ahora se deduce — y se dice que se dedujo.** La condición
+  que la (a) puso sigue mandando: presentar una región derivada con el mismo
+  aspecto que una declarada es peor que dejarla vacía, porque quien lee la ficha
+  para llenar el SIGO no podría distinguir el dato del papel de una inferencia
+  nuestra. Así que lo derivado va con su propio rótulo y con el aviso de la BCN,
+  el mismo que la hoja SIGO usa desde `LV-141`.
+
+  **Sólo cuando no hay dato declarado**, y **sin guardarlo**: `FlightPermission`
+  no tiene campo de procedencia, así que una región escrita en la columna es
+  indistinguible de una copiada del papel. Mientras el modelo no sepa
+  distinguirlas, lo derivado vive en el contexto de la vista.{% endcomment %}
+  <tr><th scope="row">{% translate "Region / Commune" %}</th><td>{% if permission.region or permission.commune or permission.area_name %}{% if permission.area_name %}{{ permission.area_name }}{% if permission.region or permission.commune %} · {% endif %}{% endif %}{{ permission.region|default:"" }}{% if permission.region and permission.commune %}, {% endif %}{{ permission.commune|default:"" }}{% elif derived_location %}<span class="text-body-secondary fst-italic">{% translate "Not recorded" %}</span><div class="small mt-1"><span class="badge sev-caution">{% translate "Derived from the coordinates" %}</span> {{ derived_location.region }}, {{ derived_location.comuna }}</div><div class="small text-body-secondary mt-1">{% translate "The commune, province and region come from the BCN administrative boundaries, which that institution publishes as referential: near a boundary the answer may be the neighbouring commune. Confirm it before filing." %}</div>{% else %}<span class="text-body-secondary fst-italic">{% translate "Not recorded" %}</span>{% endif %}</td></tr>
   {% if permission.latitude and permission.longitude %}<tr><th scope="row">{% translate "Coordinates" %}</th><td>{{ permission.latitude }}, {{ permission.longitude }}{% if permission.radius_km %} · {% translate "radius" %} {{ permission.radius_km }} km{% endif %}</td></tr>{% endif %}
   {% comment %}LV-166: la procedencia. Desde que el formulario dejó de pedir estos
   datos cuando hay un plan vinculado, la ficha es el único lugar donde se ven — y

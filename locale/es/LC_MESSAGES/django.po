@@ -8081,3 +8081,7 @@ msgid ""
 msgstr ""
 "Si necesitás levantarla antes, el administrador puede liberarla desde el "
 "centro de administración."
+
+#: templates/operations/permission_detail.html
+msgid "Derived from the coordinates"
+msgstr "Derivada de las coordenadas"
