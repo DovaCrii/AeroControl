@@ -10,6 +10,33 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **El informe mensual RPA se ve dentro de la aplicación (`R3`).** Las cinco
+  hojas A4 del documento que se emite a la DGAC —portada, resumen ejecutivo,
+  permisos, cobertura por Centro de Costo y plan de normalización— salen de las
+  plantillas del diseño con el que se emitió el de agosto, y no de una
+  reinterpretación. La pantalla dibuja el **payload congelado** del período
+  cuando hay un `ReportRun`, y una vista previa en vivo cuando todavía no lo
+  hay; el aviso de arriba dice cuál de los dos se está mirando, porque en el
+  papel los dos son idénticos y un borrador firmado como emitido es el peor
+  resultado posible. **Lo que no tiene dato sale en ámbar punteado y nunca como
+  cero**, que es la regla que manda sobre todo el informe: un cero afirma ("hay
+  cero") y la ausencia no afirma nada. Entra al menú el mismo día que gana
+  pantalla, y exige `reporting.view_reportrun` — nombra cada faena y si está
+  habilitada para volar.
+- **Todo lo que se imprime deja de llevar el menú encima (`UX-06`).** El árbol
+  tenía **cero** reglas `@media print`, así que cualquier impresión salía con la
+  navegación entera arriba y el contenido estrujado en la columna que le dejaba
+  la barra lateral. Ahora la navegación, los diálogos y los botones no se
+  imprimen; ninguna fila de tabla se parte entre dos páginas y el encabezado se
+  repite arriba de cada una; los fondos de las insignias de estado sobreviven,
+  que es lo que distingue un "Vencido" de un "Vigente" en papel. Y sale un
+  **sello de generación** —de qué pantalla, de qué servidor, cuándo y quién—,
+  porque un papel que circula en una reunión sin eso no se contrasta con nada, y
+  las cifras de cumplimiento cambian todos los días.
+- **La severidad es un token, en cinco niveles (`UX-01`, `UX-03`).** Reutiliza
+  los valores que `LV-D10` ya había medido para AA, y las clases nuevas **no
+  llevan `!important`**. `UX-03` alinea las cifras con `tabular-nums`.
+
 - **`manage.py check_email`: probar que el correo sale, no suponerlo (`LV-119`).**
   `manage.py check` pasa con el tubo cortado, que es cómo `p340` corrió meses
   imprimiendo cada notificación en el log. El comando nuevo informa la
@@ -168,6 +195,30 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **La misma carta en varios permisos deja de subirse varias veces (`LV-200`,
+  segundo paso).** El primer paso sabía reconocer el archivo repetido y sólo lo
+  comentaba. Ahora, cuando el archivo es byte por byte el mismo, la fila del
+  permiso nuevo apunta al que ya está cargado y no se escribe una segunda copia:
+  **dos permisos, dos filas de documento, un solo archivo.** Se reutiliza el
+  archivo y **no** se comparte la fila, y ésa es la decisión de fondo — un
+  documento por permiso deja intacto el expediente, la atribución por faena y
+  los porcentajes del informe de cumplimiento, donde un documento contado dos
+  veces o ninguna mueve una cifra que va a la DGAC. La limpieza de documentos
+  archivados comprueba ahora que ninguna otra fila viva use ese archivo antes de
+  borrarlo: sin esa guarda, archivar un permiso se habría llevado el papel de
+  otro sin avisar, a diez años de retención vista.
+- **Dos papeles que eran el mismo vuelven a ser uno (`LV-230`).** El expediente
+  pedía dos veces la carta del mandante y la bandeja mostraba dos alertas por un
+  solo vencimiento. La causa no fue una lectura descuidada: el tipo que ya
+  existía se llamaba "Autorización DGAC (carta de permiso)" mientras su propia
+  documentación decía que es lo que va **hacia** la DGAC. **Un nombre equivocado
+  hizo inventar un tipo nuevo**, así que el arreglo de fondo es el nombre. El
+  catálogo vuelve a 19 tipos, su valor original.
+- **Tres alertas por el mismo vencimiento eran ruido, no escalamiento
+  (`LV-232`).** Se retira el aviso a 15 días, que repetía la fecha del de 30 y
+  sólo cambiaba el destinatario. Quedan dos, cada uno con su propia acción:
+  pedir la carta y renovar el permiso. El escalamiento a Gerencia se queda en
+  `check_client_letters`, que es de solo lectura y no ensucia la bandeja.
 - **Cada sección del menú tiene su propio color (`LV-207`).** Antes el color lo
   daba la pantalla de destino, no la sección, así que Informes mezclaba azul y
   ámbar, Inventario mezclaba azul y gris, y tres secciones compartían el azul —el
