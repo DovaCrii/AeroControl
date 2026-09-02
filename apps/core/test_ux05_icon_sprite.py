@@ -100,3 +100,42 @@ class TestTheSymbolsDoNotCarryTheirOwnColour:
         )
 
         assert ".nav-icon" in css
+
+
+class TestNoTwoSymbolsDrawTheSameThing:
+    """⚠️ **Una garantía que este mismo cambio debilitó, restaurada donde ahora
+    vive.**
+
+    `R103` nació de un defecto que el usuario reportó: dos entradas del menú con
+    el mismo icono. Su test compara el **dibujo** de cada `<a class="nav-item">`,
+    y mientras el `<svg>` estaba en línea ese dibujo eran los trazos de verdad.
+
+    Al mover los iconos al sprite, lo que ese test compara pasó a ser el
+    `<use href="…#icon-X">`, o sea **el identificador**. Sigue cazando dos
+    entradas que apunten al mismo símbolo —y con eso el gate siguió verde, sin
+    que nada avisara— pero **dejó de ver dos símbolos distintos con el mismo
+    trazo dentro**, que es exactamente el defecto original con otra forma.
+
+    Así que la comparación de trazos se hace acá, sobre el sprite. Es el mismo
+    modo de fallo del que este repo ya se quemó: un guardián que sigue en verde
+    porque mide otra cosa.
+    """
+
+    def test_every_symbol_has_its_own_drawing(self):
+        symbols = re.findall(
+            r'<symbol id="([^"]+)"[^>]*>(.*?)</symbol>', _sprite(), re.DOTALL
+        )
+        assert len(symbols) == 28
+
+        by_drawing = {}
+        for sid, drawing in symbols:
+            # Sin espacios: dos trazos que sólo difieren en saltos de línea son
+            # el mismo icono para quien lo mira, y un reformateo no debería
+            # hacer pasar el test por casualidad. Mismo criterio que `R103`.
+            by_drawing.setdefault(re.sub(r"\s+", "", drawing), []).append(sid)
+
+        repeated = {ids[0]: ids for ids in by_drawing.values() if len(ids) > 1}
+
+        assert not repeated, "símbolos con el mismo dibujo:\n" + "\n".join(
+            "  " + " ≡ ".join(ids) for ids in repeated.values()
+        )
