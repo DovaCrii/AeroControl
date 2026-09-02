@@ -147,6 +147,23 @@ ROLE_PERMISSIONS = {
         "view_flightrequest",
         "view_flightrequesthistory",
         "view_flightrequestnote",
+        # R3/R5: el informe mensual RPA. **Sin esto no lo ve nadie salvo un
+        # superusuario**, que es exactamente el defecto que `AGENTS.md` describe
+        # como "el gate verifica código, nadie verifica el cableado de
+        # producción": tres bloques con los tests verdes y la pantalla fuera del
+        # alcance de las personas que tienen que firmarla.
+        #
+        # Va a `Compliance` y no a `Operations` porque el informe **es** el
+        # documento de cumplimiento que se emite ante la DGAC, el mismo trato
+        # que ya tiene el entregable de `R7.4`: quien produce la operación no es
+        # quien firma su informe.
+        #
+        # ⚠️ `change_reportrun` habilita **escribir la narrativa y aprobar**, las
+        # dos cosas. Separarlas es una pregunta de segregación de funciones que
+        # decide el usuario, no el código, y exigiría un permiso propio.
+        "add_reportrun",
+        "change_reportrun",
+        "view_reportrun",
     },
     "Maintenance": {
         "view_costcenter",
@@ -191,6 +208,10 @@ ROLE_PERMISSIONS = {
         # operación, no la administración del sistema.
         "view_flightrequest",
         "view_flightrequesthistory",
+        # El informe mensual, de sólo lectura: es el registro operacional
+        # consolidado, la misma naturaleza que el resto de esta lista. Ver y
+        # **no** congelar ni aprobar — emitirlo es un acto, no una lectura.
+        "view_reportrun",
     },
 }
 
