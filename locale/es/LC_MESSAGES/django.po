@@ -7843,3 +7843,45 @@ msgstr "informe emitido"
 msgid "report runs"
 msgstr "informes emitidos"
 
+
+#: apps/reporting/views.py
+#, python-format
+msgid "Revision %(number)s"
+msgstr "Revisión %(number)s"
+
+#: templates/base.html
+msgid "Monthly RPA report"
+msgstr "Informe mensual RPA"
+
+#: templates/base.html
+msgid "Printed from AeroControl"
+msgstr "Impreso desde AeroControl"
+
+#: templates/reporting/monthly_report.html
+msgid "Monthly RPA reportability report to the DGAC."
+msgstr "Informe mensual de reportabilidad RPA ante la DGAC."
+
+#: templates/reporting/_leaf.html
+msgid "No data at the cutoff: the report does not invent a figure."
+msgstr "Sin dato a la fecha de corte: el informe no inventa una cifra."
+
+#: templates/reporting/monthly_report.html
+#, python-format
+msgid "Frozen report, revision %(revision)s — %(status)s."
+msgstr "Informe congelado, revisión %(revision)s — %(status)s."
+
+#: templates/reporting/monthly_report.html
+msgid ""
+"Live preview: nothing is frozen yet for this period, so these figures move "
+"with the database. Freezing and approval come with the generation command."
+msgstr ""
+"Vista previa en vivo: todavía no hay nada congelado para este período, así "
+"que estas cifras se mueven con la base de datos. Congelar y aprobar llegan "
+"con el comando de generación."
+
+#: templates/reporting/monthly_report.html
+#, python-format
+msgid "%(counter)s field had no data at the cutoff."
+msgid_plural "%(counter)s fields had no data at the cutoff."
+msgstr[0] "%(counter)s campo sin dato a la fecha de corte."
+msgstr[1] "%(counter)s campos sin dato a la fecha de corte."

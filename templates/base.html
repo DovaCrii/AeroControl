@@ -211,6 +211,12 @@
       <a href="{% url 'registry-roster' %}" class="nav-item nav-reports {% if url_name == 'registry-roster' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M9 9h7M9 13h7M9 17h4"/></svg>{% translate "Roster report" %}</a>
       {% endif %}
       <a href="{% url 'compliance-report' %}" class="nav-item nav-reports {% if url_name == 'compliance-report' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="M8 16v-4M12 16V8M16 16v-6"/></svg>{% translate "Report" %}</a>
+      {% comment %}R3: el informe mensual RPA entra al menú el mismo día que
+      gana pantalla. El repo lleva seis vistas vivas sin puerta, todas por
+      haberse construido antes que su enlace; ésta no suma la séptima.{% endcomment %}
+      {% if perms.reporting.view_reportrun %}
+      <a href="{% url 'monthly-report' %}" class="nav-item nav-reports {% if url_name == 'monthly-report' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>{% translate "Monthly RPA report" %}</a>
+      {% endif %}
         </div>
       </div>
 
@@ -308,6 +314,11 @@
       </div>
       {% endif %}
       {% block content %}{% endblock %}
+      {% comment %}UX-06: el sello de generación. Sólo se ve al imprimir (ver
+      `.print-stamp` en `app.css`). Un papel que circula en una reunión sin
+      decir de qué pantalla y de qué momento salió no se puede contrastar con
+      nada, y las cifras de cumplimiento cambian todos los días.{% endcomment %}
+      <div class="print-stamp">{% translate "Printed from AeroControl" %} · {{ request.get_host }}{{ request.get_full_path }} · {% now "Y-m-d H:i" %} · {{ request.user.get_username }}</div>
     </main>
   </div>
 

@@ -138,9 +138,33 @@ compromisos del mes anterior se leen del `ReportRun` previo, no se recalculan.
 `reporting.0001`) y `builder.py`, que arma `meta`, `kpis` y `cost_centres`
 llamando a las funciones que ya existían. 20 tests.
 
-Lo que **falta** para tener el informe: los bloques R3 (plantillas), R4 (semáforos
-y páginas 2–3), R5 (command y vista de aprobación), R6 (XLSX y envío, bloqueado
-por SMTP) y R7 (bitácoras, depende de §6.6).
+**R3 hecho** (2026-09-02), junto con `UX-06`: las cinco páginas en
+`templates/reporting/`, la hoja A4 en `static/css/report-a4.css` y la vista
+`/reporting/monthly/` (`reporting.view_reportrun`). Dibuja el `payload`
+congelado si hay `ReportRun` del período y una vista previa en vivo si no, y lo
+**declara en pantalla**: en el papel los dos son idénticos. 20 tests más.
+
+⚠️ **Tres cosas del ZIP que conviene no volver a averiguar:**
+
+1. **Son ocho plantillas y cinco páginas.** `p3_habilitantes` y `p4_dotacion`
+   son variantes que no llegaron al PDF emitido —el `build_pdf.py` del propio
+   ZIP arma `Main · Resumen · Permisos · Cobertura · Plan`— y `dato_ejecutivo`
+   es **otro documento**, una hoja mensual aparte con su propio PDF.
+2. **Las plantillas ya venían con `{% load static %}`** y `{% static %}`, así
+   que el ZIP se escribió pensando en Django.
+3. **`build_pdf.py` usa WeasyPrint**, que este repo descartó a propósito. No es
+   la ruta del PDF: sirve como referencia de en qué orden van las páginas.
+
+Lo que **falta**: R4 (semáforos, la tabla permiso a permiso, el próximo
+vencimiento por faena y la concentración operacional), R5 (command y vista de
+aprobación), R6 (XLSX y envío, bloqueado por SMTP) y R7 (bitácoras, depende de
+§6.6). La narrativa —hallazgos y observación del período— es `LV-227`, no un
+bloque R.
+
+⚠️ **Deuda declarada de R3 que R4 tiene que cerrar**: el informe emitido cuenta
+los permisos por vencer en **60 días** y el payload sólo trae la ventana de
+**30**, que es la que `permit_counts` calcula. La tarjeta se rotula por lo que
+mide; sumar la ventana de 60 va con los semáforos.
 
 ## Notas de arquitectura que ya están decididas
 

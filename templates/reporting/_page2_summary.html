@@ -1,0 +1,111 @@
+{% load i18n static report_leaf %}
+{% comment %}Página 2 · Resumen ejecutivo. Artboard `p2_resumen` del ZIP.
+
+**Las seis tarjetas del informe emitido, con una diferencia declarada.** La
+cuarta decía "Permisos por vencer en 60 días"; el payload trae la ventana de
+**30**, que es la que `permit_counts` calcula y la que el panel muestra. Se
+rotula por lo que mide y no por lo que decía agosto: relabelar 30 como 60 es
+exactamente la clase de dato inventado que la regla del SPEC prohíbe. Sumar la
+ventana de 60 días es trabajo de `R4`, junto con los semáforos.
+
+Los cuatro hallazgos van redactados a mano en el informe emitido, así que acá
+son un bloque pendiente hasta `LV-227`. No se generan: un hallazgo es un juicio
+sobre las cifras, y el informe va firmado.{% endcomment %}
+<div class="rpt-page">
+
+  {% include "reporting/_head.html" %}
+
+  <div class="rpt-body rpt-stack-20" style="padding-top: 26px;">
+
+    <div>
+      <div class="rpt-h2"><span class="rpt-h2-num">1</span><span class="rpt-h2-text">Resumen ejecutivo</span></div>
+      <div class="rpt-h2-rule"></div>
+    </div>
+
+    <div style="color: #0F1B2D; font-size: 12.5px; line-height: 1.6;">
+      Este informe corresponde al <strong>ciclo de reportabilidad mensual de operaciones aéreas RPA</strong> de J.E.J. Ingeniería, conforme al instructivo {{ payload.meta.standard }}. Su objetivo es <strong>normalizar la operación</strong>, no auditar el desempeño de vuelo.
+      <br><br>
+      {% comment %}Sin `|lower`: el alcance trae siglas —"ante la DGAC"— y
+      bajarlas a minúscula convierte al regulador en "dgac" dentro de un
+      documento que se le dirige.{% endcomment %}
+      El alcance de este ciclo: <strong>{{ payload.meta.scope }}</strong>. Las cifras salen de AeroControl con corte al {{ cutoff_date|date:"d-m-Y" }}; los campos en ámbar punteado son los que no tenían dato a esa fecha, y se informan como pendientes en vez de como cero.
+    </div>
+
+    <div>
+      <div class="rpt-label" style="margin-bottom: 10px;">Indicadores al {{ cutoff_date|date:"d" }} de {{ cutoff_date|date:"F" }} de {{ cutoff_date|date:"Y" }}</div>
+      <div class="rpt-kpis">
+
+        <div class="rpt-kpi">
+          <div class="rpt-kpi-value">{% leaf payload.kpis.cost_centres_with_operation %}</div>
+          <div class="rpt-kpi-name">Centros de Costo registrados</div>
+          <div class="rpt-kpi-note">Con operación RPA asociada</div>
+        </div>
+
+        <div class="rpt-kpi rpt-kpi-good">
+          <div class="rpt-kpi-value">{% leaf payload.kpis.permits_in_force %}</div>
+          <div class="rpt-kpi-name">Permisos de vuelo vigentes</div>
+          <div class="rpt-kpi-note">Aprobados por la DGAC al cierre</div>
+        </div>
+
+        <div class="rpt-kpi rpt-kpi-bad">
+          <div class="rpt-kpi-value">{% leaf payload.kpis.cost_centres_without_permit %}<span class="rpt-kpi-of"> / {% leaf payload.kpis.cost_centres_with_operation %}</span></div>
+          <div class="rpt-kpi-name">Centros de Costo sin permiso vigente</div>
+          <div class="rpt-kpi-note">No pueden operar RPA legalmente</div>
+        </div>
+
+        <div class="rpt-kpi rpt-kpi-warn">
+          <div class="rpt-kpi-value">{% leaf payload.kpis.permits_expiring_30d %}</div>
+          <div class="rpt-kpi-name">Permisos por vencer en 30 días</div>
+          <div class="rpt-kpi-note">Su renovación exige una carta nueva del mandante</div>
+        </div>
+
+        <div class="rpt-kpi rpt-kpi-info">
+          <div class="rpt-kpi-value">{% leaf payload.kpis.permits_awaiting %}</div>
+          <div class="rpt-kpi-name">Solicitudes en trámite ante la DGAC</div>
+          <div class="rpt-kpi-note">Sin habilitación hasta su aprobación</div>
+        </div>
+
+        {% comment %}`lapsed` normalmente vale cero porque `expire_permissions`
+        los cierra cada noche, y por eso vale mirarlo: un número acá significa
+        que ese trabajo nocturno no corrió (`LV-83`, misma lectura que hace la
+        pantalla de cumplimiento).{% endcomment %}
+        <div class="rpt-kpi {% if payload.kpis.permits_lapsed.value %}rpt-kpi-bad{% else %}rpt-kpi-good{% endif %}">
+          <div class="rpt-kpi-value">{% leaf payload.kpis.permits_lapsed %}</div>
+          <div class="rpt-kpi-name">Permisos vencidos sin cerrar</div>
+          <div class="rpt-kpi-note">Aprobados cuya vigencia ya pasó</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div>
+      <div class="rpt-label" style="margin-bottom: 10px;">Hallazgos del período</div>
+      {% pending "los hallazgos se redactan y se aprueban antes de emitir" "LV-227" %}
+    </div>
+
+    <div>
+      <div class="rpt-label" style="margin-bottom: 10px;">Dotación al corte</div>
+      <div style="display: flex; gap: 12px;">
+        <div class="rpt-kpi" style="flex: 1;">
+          <div class="rpt-kpi-value" style="font-size: 26px;">{% leaf payload.kpis.fleet_total %}</div>
+          <div class="rpt-kpi-name">Aeronaves en el padrón</div>
+          <div class="rpt-kpi-note">{% leaf payload.kpis.insurance_up_to_date %} con seguro JAC al día</div>
+        </div>
+        <div class="rpt-kpi" style="flex: 1;">
+          <div class="rpt-kpi-value" style="font-size: 26px;">{% leaf payload.kpis.operators_total %}</div>
+          <div class="rpt-kpi-name">Operadores en el padrón</div>
+          <div class="rpt-kpi-note">{% leaf payload.kpis.operators_credentialed %} con credencial DGAC vigente</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="rpt-foot">
+    <div>
+      <span>Fuente: AeroControl, corte al {{ cutoff_date|date:"d-m-Y" }}.</span>
+      <span>J.E.J. Ingeniería S.A. · Página 2</span>
+    </div>
+  </div>
+
+</div>

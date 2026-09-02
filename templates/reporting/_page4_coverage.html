@@ -1,0 +1,94 @@
+{% load i18n static report_leaf %}
+{% comment %}Página 4 · Cobertura por Centro de Costo. Artboard `p4_cobertura`.
+
+**Es la página que hoy trae datos reales fila por fila**, y la que más importa
+que se recorra al derecho: `permit_status_by_cost_center` (`LV-206`) parte de
+las faenas y no de los permisos, precisamente para que las que **no tienen
+ninguno** aparezcan. Un `GROUP BY` sobre permisos habría devuelto sólo las cinco
+habilitadas y la página habría contestado lo contrario de la pregunta.
+
+El estado no es un semáforo nuevo: es la lectura directa de dos cifras que la
+fila ya trae —vigentes y por vencer en 30 días—, no un umbral inventado acá.
+Las columnas de próximo vencimiento y días esperan al colector de `R4`.{% endcomment %}
+<div class="rpt-page">
+
+  {% include "reporting/_head.html" %}
+
+  <div class="rpt-body rpt-stack-16">
+
+    <div>
+      <div class="rpt-h2"><span class="rpt-h2-num">3</span><span class="rpt-h2-text">Cobertura por Centro de Costo</span></div>
+      <div class="rpt-h2-rule"></div>
+    </div>
+
+    <div class="rpt-lede">Un Centro de Costo sin permiso vigente no está habilitado para ejecutar operaciones con RPA. La columna de estado refleja la situación al cierre del período, no la actividad prevista.</div>
+
+    <div class="rpt-table">
+      <div class="rpt-grid rpt-grid-head">
+        <div class="th">Código</div>
+        <div class="th">Centro de Costo</div>
+        <div class="th" style="text-align: center;">Permisos<br>vigentes</div>
+        <div class="th" style="text-align: center;">En<br>trámite</div>
+        <div class="th">Próximo<br>vencimiento</div>
+        <div class="th">Estado</div>
+      </div>
+      <div class="rpt-grid">
+        {% for row in payload.cost_centres %}
+        <div class="c rpt-code">{{ row.code }}</div>
+        <div class="c" style="color: #52606D;">{{ row.name }}</div>
+        <div class="c" style="text-align: center; font-weight: bold;{% if not row.permits_in_force %} color: #B23B34;{% endif %}">{{ row.permits_in_force }}</div>
+        <div class="c" style="text-align: center;">{% if row.permits_awaiting %}{{ row.permits_awaiting }}{% else %}<span class="rpt-dash">—</span>{% endif %}</div>
+        <div class="c"><span class="rpt-pending" title="{% translate "No data at the cutoff: the report does not invent a figure." %}">{% translate "Pending" %}</span></div>
+        <div class="c">
+          {% if not row.permits_in_force %}<span class="rpt-est rpt-est-none">Sin habilitación</span>
+          {% elif row.permits_expiring_30d %}<span class="rpt-est rpt-est-soon">Por vencer</span>
+          {% else %}<span class="rpt-est rpt-est-ok">Vigente</span>{% endif %}
+        </div>
+        {% empty %}
+        <div class="c" style="grid-column: 1 / -1; text-align: center; color: #98A2B0; padding: 18px;">Ninguna faena con operación RPA registrada al corte.</div>
+        {% endfor %}
+      </div>
+      <div class="rpt-grid rpt-total">
+        <div style="font-weight: bold; color: #124384;">Total</div>
+        <div style="color: #52606D;">{% leaf payload.kpis.cost_centres_with_operation %} Centros de Costo · {% leaf payload.kpis.cost_centres_without_permit %} sin habilitación</div>
+        <div style="font-weight: bold; color: #124384; text-align: center; font-size: 11px;">{% leaf payload.kpis.permits_in_force %}</div>
+        <div style="font-weight: bold; color: #124384; text-align: center; font-size: 11px;">{% leaf payload.kpis.permits_awaiting %}</div>
+        <div></div>
+        <div></div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;">
+
+      <div style="border: 1px solid #D7DEE6; border-top: 3px solid #00A7BC;">
+        <div class="rpt-label" style="padding: 10px 14px 4px; letter-spacing: 0.06em;">Cobertura del padrón</div>
+        <div style="padding: 0 14px 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; border-bottom: 1px solid #E4EAF0; font-size: 11px;">
+            <span>Aeronaves con seguro JAC al día</span><span style="font-weight: bold; color: #124384; font-size: 15px;">{% leaf payload.kpis.insurance_up_to_date %} / {% leaf payload.kpis.fleet_total %}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; border-bottom: 1px solid #E4EAF0; font-size: 11px;">
+            <span>Operadores con credencial DGAC vigente</span><span style="font-weight: bold; color: #124384; font-size: 15px;">{% leaf payload.kpis.operators_credentialed %} / {% leaf payload.kpis.operators_total %}</span>
+          </div>
+          <div style="color: #52606D; font-size: 9.4px; line-height: 1.5; margin-top: 8px;">Padrón completo en plataforma. Cuántos de ellos están <em>designados</em> en un permiso vigente es otra cifra, y todavía no se recolecta.</div>
+        </div>
+      </div>
+
+      <div style="border: 1px solid #D7DEE6; border-top: 3px solid #B8791A;">
+        <div class="rpt-label" style="padding: 10px 14px 4px; letter-spacing: 0.06em;">Concentración operacional</div>
+        <div style="padding: 0 14px 12px;">
+          {% pending "permisos con un único operador designado, y faenas que dependen de esa persona" "R4" %}
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="rpt-foot">
+    <div>
+      <span>Fuente: AeroControl — módulo Permisos, corte al {{ cutoff_date|date:"d-m-Y" }}.</span>
+      <span>J.E.J. Ingeniería S.A. · Página 4</span>
+    </div>
+  </div>
+
+</div>

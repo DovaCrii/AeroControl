@@ -1,0 +1,283 @@
+/* R3 · Informe Mensual de Reportabilidad RPA — las hojas A4 del documento.
+ *
+ * Sale de `plantilla-informe-rpa-aerocontrol.zip`, el diseño con el que se
+ * emitió `JEJ-GTE-CT-INF-RPA-2026-08`. Ese PDF, y no la especificación, es la
+ * referencia de qué hay que producir.
+ *
+ * **Este archivo no usa los tokens de tema de `app.css` a propósito.** El
+ * informe es papel: sale de la aplicación firmado hacia la DGAC y tiene que
+ * verse igual en pantalla clara, en pantalla oscura y en la impresora. Un
+ * documento controlado cuyo color dependiera de la preferencia de quien lo
+ * abrió no sería el mismo documento. Por eso la paleta va literal —los mismos
+ * hex del PDF emitido— y por eso `report-a4.css` se carga sólo en esta pantalla.
+ *
+ * Las cinco páginas repetían su propio `<style>` en el ZIP, con `.th` y `.c`
+ * definidos **distinto** en la 3 y en la 4; acá quedan separados por página en
+ * vez de fusionados, que habría cambiado el documento sin querer.
+ */
+
+/* -- la hoja ------------------------------------------------------------ */
+
+/* 794 × 1123 px son A4 a 96 dpi, la medida en la que se dibujó el diseño. */
+.rpt-doc {
+  --rpt-navy: #124384;
+  --rpt-cyan: #00a7bc;
+  --rpt-ink: #0f1b2d;
+  --rpt-muted: #52606d;
+  --rpt-faint: #98a2b0;
+  --rpt-rule: #d7dee6;
+  --rpt-hair: #e4eaf0;
+  --rpt-wash: #f4f7fa;
+  --rpt-amber: #b8791a;
+  --rpt-amber-ink: #8a5a08;
+  --rpt-amber-bg: #fbf0d9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  overflow-x: auto;
+  padding-bottom: 1rem;
+}
+
+.rpt-page {
+  position: relative;
+  width: 794px;
+  min-width: 794px;
+  height: 1123px;
+  background: #ffffff;
+  color: var(--rpt-ink);
+  overflow: hidden;
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  box-shadow: 0 2px 12px rgb(15 27 45 / 18%);
+}
+
+.rpt-page a { color: var(--rpt-cyan); }
+.rpt-page a:hover { color: var(--rpt-navy); }
+
+/* Encabezado y pie repetidos de las páginas 2 a 5. */
+.rpt-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 22px 48px 12px 56px;
+  border-bottom: 2px solid var(--rpt-navy);
+}
+.rpt-head-code {
+  text-align: right;
+  color: var(--rpt-navy);
+  font-size: 9px;
+  font-weight: bold;
+  line-height: 1.45;
+  letter-spacing: 0.02em;
+}
+.rpt-foot { position: absolute; left: 56px; right: 48px; bottom: 20px; }
+.rpt-foot > div {
+  border-top: 1px solid var(--rpt-rule);
+  padding-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--rpt-muted);
+  font-size: 9px;
+}
+
+/* Título numerado de sección. */
+.rpt-body { padding: 22px 48px 0 56px; display: block; }
+.rpt-h2 { display: flex; align-items: baseline; gap: 12px; }
+.rpt-h2-num { color: var(--rpt-cyan); font-size: 22px; font-weight: bold; }
+.rpt-h2-text { color: var(--rpt-navy); font-size: 21px; font-weight: bold; }
+.rpt-h2-rule { height: 3px; background: var(--rpt-cyan); width: 54px; margin-top: 8px; }
+.rpt-label {
+  color: var(--rpt-navy);
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.rpt-lede { color: var(--rpt-muted); font-size: 11px; line-height: 1.55; }
+
+/* Los espaciadores verticales del diseño, uno por página. */
+.rpt-stack-8 > * { margin-bottom: 8px; }
+.rpt-stack-9 > * { margin-bottom: 9px; }
+.rpt-stack-14 > * { margin-bottom: 14px; }
+.rpt-stack-16 > * { margin-bottom: 16px; }
+.rpt-stack-20 > * { margin-bottom: 20px; }
+.rpt-stack-8 > :last-child,
+.rpt-stack-9 > :last-child,
+.rpt-stack-14 > :last-child,
+.rpt-stack-16 > :last-child,
+.rpt-stack-20 > :last-child { margin-bottom: 0; }
+
+/* -- página 1 · portada -------------------------------------------------- */
+
+.rpt-meta { width: 420px; border-collapse: collapse; border-top: 2px solid var(--rpt-navy); }
+.rpt-meta th {
+  text-align: left;
+  vertical-align: top;
+  width: 132px;
+  padding: 9px 12px 9px 0;
+  border-bottom: 1px solid var(--rpt-rule);
+  color: var(--rpt-navy);
+  font-size: 10.5px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.rpt-meta td {
+  vertical-align: top;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--rpt-rule);
+  color: var(--rpt-ink);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+/* -- página 2 · resumen ejecutivo ---------------------------------------- */
+
+.rpt-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.rpt-kpi { border: 1px solid var(--rpt-rule); border-top: 3px solid var(--rpt-navy); padding: 13px 14px; }
+.rpt-kpi-value { color: var(--rpt-navy); font-size: 34px; font-weight: bold; line-height: 1; }
+.rpt-kpi-of { color: var(--rpt-faint); font-size: 20px; }
+.rpt-kpi-name { color: var(--rpt-ink); font-size: 11.5px; font-weight: bold; margin-top: 7px; }
+.rpt-kpi-note { color: var(--rpt-muted); font-size: 9.5px; margin-top: 3px; }
+.rpt-kpi-good { border-top-color: #0e7a5f; }
+.rpt-kpi-good .rpt-kpi-value { color: #0e7a5f; }
+.rpt-kpi-bad { border-top-color: #b23b34; }
+.rpt-kpi-bad .rpt-kpi-value { color: #b23b34; }
+.rpt-kpi-warn { border-top-color: var(--rpt-amber); }
+.rpt-kpi-warn .rpt-kpi-value { color: var(--rpt-amber); }
+.rpt-kpi-info { border-top-color: var(--rpt-cyan); }
+
+/* -- página 3 · permisos ------------------------------------------------- */
+
+.rpt-cycle { border: 1px solid var(--rpt-rule); border-left: 3px solid var(--rpt-navy); background: var(--rpt-wash); }
+.rpt-cycle-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 6px 12px 8px; }
+.rpt-step { background: #ffffff; border: 1px solid var(--rpt-rule); padding: 8px 10px; }
+.rpt-step-last { border-color: #b23b34; }
+.rpt-step-n { color: var(--rpt-cyan); font-size: 8.4px; font-weight: bold; letter-spacing: 0.06em; }
+.rpt-step-last .rpt-step-n { color: #b23b34; }
+.rpt-step-name { color: var(--rpt-ink); font-size: 10px; font-weight: bold; margin-top: 3px; }
+.rpt-step-text { color: var(--rpt-muted); font-size: 8.6px; line-height: 1.4; margin-top: 3px; }
+.rpt-legend { display: flex; gap: 16px; align-items: center; font-size: 9px; color: var(--rpt-muted); }
+.rpt-legend > span { display: flex; align-items: center; gap: 5px; }
+.rpt-swatch { width: 9px; height: 9px; }
+
+/* -- página 4 · cobertura por Centro de Costo ---------------------------- */
+
+.rpt-table { border: 1px solid var(--rpt-rule); }
+.rpt-table .th {
+  color: #ffffff;
+  font-size: 8.6px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 8px;
+}
+.rpt-table .c { padding: 7px 8px; font-size: 10px; color: var(--rpt-ink); border-bottom: 1px solid var(--rpt-hair); }
+.rpt-grid { display: grid; grid-template-columns: 62px 1fr 74px 62px 92px 106px; }
+.rpt-grid-head { background: var(--rpt-navy); }
+.rpt-code { font-weight: bold; color: var(--rpt-navy); }
+.rpt-dash { color: var(--rpt-faint); }
+.rpt-est { font-size: 8.6px; font-weight: bold; padding: 2px 7px; border-radius: 2px; display: inline-block; }
+.rpt-est-ok { background: #dcefe6; color: #0e7a5f; }
+.rpt-est-soon { background: var(--rpt-amber-bg); color: var(--rpt-amber-ink); }
+.rpt-est-none { background: #f7e2e0; color: #b23b34; }
+.rpt-total { background: var(--rpt-wash); border-top: 2px solid var(--rpt-navy); }
+.rpt-total > div { padding: 8px; font-size: 10px; }
+
+/* -- página 5 · plan de normalización ------------------------------------ */
+
+.rpt-fase { display: grid; grid-template-columns: 96px 1fr; border-left: 3px solid var(--rpt-cyan); background: var(--rpt-wash); }
+.rpt-fase-now { border-left-color: #b23b34; }
+.rpt-fase-last { background: #edf6f8; border-left-color: var(--rpt-navy); }
+.rpt-fase-when { padding: 12px 10px; text-align: center; }
+.rpt-fase-n { color: var(--rpt-navy); font-size: 10px; font-weight: bold; letter-spacing: 0.05em; }
+.rpt-fase-month { color: var(--rpt-cyan); font-size: 12.5px; font-weight: bold; margin-top: 3px; }
+.rpt-fase-now .rpt-fase-month { color: #b23b34; }
+.rpt-fase-last .rpt-fase-month { color: var(--rpt-navy); }
+.rpt-fase-body { padding: 11px 14px 12px 6px; }
+.rpt-fase-title { color: var(--rpt-navy); font-size: 13px; font-weight: bold; }
+.rpt-fase-text { color: var(--rpt-ink); font-size: 10.5px; line-height: 1.5; margin-top: 4px; }
+.rpt-fase-close { color: var(--rpt-muted); font-size: 9.5px; margin-top: 6px; }
+.rpt-matrix { display: grid; grid-template-columns: 1.9fr repeat(4, minmax(0, 1fr)); }
+.rpt-matrix-head { background: var(--rpt-navy); }
+.rpt-matrix-head > div {
+  padding: 7px 4px;
+  font-size: 8.8px;
+  font-weight: bold;
+  color: #ffffff;
+  text-align: center;
+}
+.rpt-matrix-head > :first-child { padding: 7px 10px; text-align: left; text-transform: uppercase; letter-spacing: 0.04em; }
+.rpt-matrix-row {
+  padding: 6px 10px;
+  font-size: 10px;
+  color: var(--rpt-ink);
+  border-bottom: 1px solid var(--rpt-hair);
+  border-right: 1px solid var(--rpt-hair);
+}
+.rpt-cell {
+  padding: 6px 8px;
+  font-size: 9.4px;
+  text-align: center;
+  border-bottom: 1px solid var(--rpt-hair);
+  border-right: 1px solid var(--rpt-hair);
+}
+.rpt-cell-due { background: #dcefe6; color: #0e7a5f; font-weight: bold; }
+.rpt-cell-info { background: var(--rpt-amber-bg); color: var(--rpt-amber-ink); }
+.rpt-cell-na { background: #f1f4f7; color: var(--rpt-faint); }
+.rpt-cell-end { border-right: none; }
+
+/* -- el dato que todavía no hay ------------------------------------------ */
+
+/* Ámbar punteado: la convención que el propio lienzo del diseño anotó para
+ * "se completa con el corte de AeroControl". Se dibuja igual en pantalla y en
+ * papel — un informe impreso tiene que mostrar sus huecos, no esconderlos. */
+.rpt-pending {
+  display: inline-block;
+  border: 1px dashed var(--rpt-amber);
+  background: var(--rpt-amber-bg);
+  color: var(--rpt-amber-ink);
+  font-size: 9.5px;
+  font-weight: bold;
+  padding: 1px 6px;
+  border-radius: 2px;
+}
+.rpt-pending-block {
+  display: block;
+  border: 1px dashed var(--rpt-amber);
+  background: var(--rpt-amber-bg);
+  color: var(--rpt-amber-ink);
+  font-size: 10px;
+  line-height: 1.5;
+  padding: 10px 12px;
+  border-radius: 2px;
+}
+.rpt-pending-row { color: var(--rpt-muted); font-weight: normal; }
+
+/* -- impresión (UX-06) ---------------------------------------------------- */
+
+@media print {
+  /* Sólo el documento se imprime, así que la hoja **es** la página: sin margen
+   * de impresora encima del margen que el diseño ya trae dibujado. */
+  @page { size: A4; margin: 0; }
+
+  .rpt-doc { display: block; gap: 0; overflow: visible; padding: 0; }
+
+  .rpt-page {
+    box-shadow: none;
+    /* Cada hoja es una página y ninguna se parte: el diseño posiciona el pie
+     * en absoluto contra los 1123 px, así que una hoja repartida en dos
+     * páginas deja el pie en medio de la segunda. */
+    break-inside: avoid;
+    break-after: page;
+  }
+  .rpt-page:last-child { break-after: auto; }
+
+  /* Los fondos de las insignias de estado y de la marca de pendiente son
+   * información, no decoración: sin esto el navegador los descarta y una celda
+   * "Sin habilitación" sale igual que una "Vigente". */
+  .rpt-page,
+  .rpt-page * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}

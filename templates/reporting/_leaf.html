@@ -1,0 +1,1 @@
+{% load i18n %}{% if value is not None %}{{ value }}{{ suffix }}{% else %}<span class="rpt-pending" title="{% translate "No data at the cutoff: the report does not invent a figure." %}">{% translate "Pending" %}</span>{% endif %}

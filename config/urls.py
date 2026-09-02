@@ -152,4 +152,5 @@ urlpatterns = [
     path("maintenance/", include("apps.maintenance.urls")),
     path("workboard/", include("apps.workboard.urls")),
     path("geo/", include("apps.geo.urls")),
+    path("reporting/", include("apps.reporting.urls")),
 ]

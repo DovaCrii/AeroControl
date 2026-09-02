@@ -1,0 +1,123 @@
+"""R3: el informe mensual RPA, visible dentro de la aplicación.
+
+Una sola pantalla que dibuja las cinco hojas A4 del documento emitido. Sirve dos
+casos y **dice cuál está mirando**:
+
+- **Un `ReportRun` congelado** del período: se dibuja su `payload` tal como
+  quedó guardado. Es lo que hace posible que un informe de agosto siga diciendo
+  en diciembre lo que decía en agosto.
+- **Sin informe congelado**: se construye el payload al vuelo y se rotula como
+  vista previa. Congelar y aprobar es `R5`; verlo no depende de eso.
+
+⚠️ **La distinción se declara en la pantalla y no es cosmética.** Un borrador
+que alguien imprima y firme creyéndolo emitido es el peor resultado posible de
+esta vista, y la diferencia entre uno y otro no se ve en el papel: las mismas
+cinco páginas, las mismas cifras. Por eso el aviso va arriba y fuera de la
+impresión.
+"""
+
+import re
+from datetime import date
+
+from django.utils import timezone
+from django.utils.translation import gettext as _
+from django.views.generic import TemplateView
+
+from apps.core.views import ModelViewPermissionRequiredMixin
+from apps.reporting.builder import build, month_bounds
+from apps.reporting.models import ReportRun
+
+# Cuatro dígitos de año y dos de mes, exactos. Partir por el guion y confiar en
+# `int()` acepta `26-8` y devuelve **el año 26**: un informe fechado dieciocho
+# siglos atrás, con su portada y su código, y sin nada que avise. Un formato que
+# se ensancha en silencio es peor que uno que rechaza.
+PERIOD = re.compile(r"^(\d{4})-(\d{2})$")
+
+
+def previous_month(today):
+    """El mes cerrado anterior a `today`.
+
+    Es el período por defecto porque un informe mensual describe un mes
+    terminado: abrir la pantalla el 2 de septiembre y encontrar septiembre a
+    medio correr invita a leer como cierre lo que todavía se está moviendo.
+    """
+    first, _last = month_bounds(today)
+    return date.fromordinal(first.toordinal() - 1).replace(day=1)
+
+
+def parse_period(raw, today):
+    """`?period=YYYY-MM` → el primer día de ese mes.
+
+    Una cadena que no es un mes cae al período por defecto en vez de reventar:
+    el parámetro llega de un `<input type="month">` y de enlaces pegados a mano,
+    y un 500 por un mes mal escrito no le dice nada a nadie.
+    """
+    match = PERIOD.match(raw or "")
+    if not match:
+        return previous_month(today)
+    try:
+        return date(int(match[1]), int(match[2]), 1)
+    except ValueError:  # mes 00 o 13
+        return previous_month(today)
+
+
+class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
+    """Las cinco hojas del informe del período pedido.
+
+    Lectura pura: ni congela, ni aprueba, ni escribe nada. El permiso es el de
+    ver el informe (`reporting.view_reportrun`) y no un `LoginRequiredMixin` a
+    secas, como manda el contrato de permisos de `AGENTS.md` para toda vista de
+    lectura — y acá pesa más que en otras: la pantalla nombra faenas, cifras de
+    cobertura y el estado de habilitación de cada una.
+    """
+
+    template_name = "reporting/monthly_report.html"
+    model = ReportRun
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        today = timezone.localdate()
+        period = parse_period(self.request.GET.get("period"), today)
+        # La última revisión del período, que es la que vale: una corrección
+        # nace como revisión siguiente y deja la anterior como `superseded`.
+        run = ReportRun.objects.filter(period=period).order_by("-revision").first()
+        if run:
+            payload, missing = run.payload, run.missing_fields
+        else:
+            payload, missing = build(period)
+
+        context.update(
+            {
+                "run": run,
+                "payload": payload,
+                "missing_fields": missing,
+                "period_date": period,
+                # Las fechas del payload vienen en ISO porque el payload es
+                # JSON. Se convierten **desde el payload** y no desde la base:
+                # un informe congelado tiene que fechar lo que congeló, no lo
+                # que la consulta devolvería hoy.
+                "cutoff_date": _iso(payload.get("meta", {}).get("cutoff")),
+                "covers_from": _iso(
+                    payload.get("meta", {}).get("covers", {}).get("from")
+                ),
+                "covers_to": _iso(payload.get("meta", {}).get("covers", {}).get("to")),
+                "revision_label": (
+                    _("Revision %(number)s") % {"number": run.revision}
+                    if run
+                    else _("Draft")
+                ),
+            }
+        )
+        return context
+
+
+def _iso(value):
+    """Una fecha ISO del payload como `date`, o `None` si no la trae.
+
+    `None` y no "hoy": una plantilla que recibe la fecha de hoy donde faltaba la
+    del corte imprime un informe fechado hoy sin que nada avise.
+    """
+    try:
+        return date.fromisoformat(value)
+    except (TypeError, ValueError):
+        return None
