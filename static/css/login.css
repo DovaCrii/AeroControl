@@ -1,0 +1,211 @@
+/* La pantalla de acceso y la de bloqueo, que comparten chapa.
+ *
+ * Sale del `<style>` embebido que tenía `login.html`. Estaba bien que fuera
+ * propio —no hereda barra ni menú, y carga rápido—, pero desde que hay **dos**
+ * pantallas sin sesión (entrar y quedar bloqueado) una copia del bloque en cada
+ * una es cómo terminan pareciéndose sólo a medias.
+ *
+ * El parámetro `?v=20260724-legibility` que arrastraba el `<link>` no vuelve:
+ * en producción `ManifestStaticFilesStorage` ya versiona por hash, así que no
+ * hacía nada y sugería una política de cache que no existe.
+ */
+
+:root {
+  --login-page-bg: #0d1727;
+  --login-card-bg: #ffffff;
+  --login-card-border: rgb(255 255 255 / 16%);
+  --login-heading: #14213a;
+  --login-muted: #5b6675;
+  --login-label: #34425a;
+  --login-input-border: #cbd5e1;
+  /* **Una sola fuente para el color de marca.** Estaba escrito a mano como
+   * `#087f78`, que es exactamente el valor de `--ac-primary` en tema claro: dos
+   * declaraciones del mismo color es la deriva que este CSS ya documenta haber
+   * sufrido con los `:root` duplicados.
+   *
+   * ⚠️ Pero el texto del botón **no** puede ser blanco en los dos temas, y eso
+   * es lo que impedía unificarlo sin más: en oscuro `--ac-primary` vale
+   * `#42d4c6`, y blanco sobre ese verde da 1,9:1. Calculado, no mirado. Por eso
+   * el primer plano es un token aparte que cambia con el tema — en claro,
+   * blanco sobre #087f78 da 4,87:1 (AA); en oscuro, tinta sobre #42d4c6 da
+   * 10,0:1. Hay un test que recalcula los dos. */
+  --login-accent: var(--ac-primary, #087f78);
+  --login-accent-hover: var(--ac-primary-hover, #06655f);
+  --login-accent-ink: #ffffff;
+  --login-footer: #788394;
+  --login-help-bg: #f1f5f9;
+}
+
+[data-theme="dark"] {
+  --login-page-bg: #080f1a;
+  --login-card-bg: #161f2d;
+  --login-card-border: #33435b;
+  --login-heading: #edf3fb;
+  --login-muted: #b5c1d1;
+  --login-label: #edf3fb;
+  --login-input-border: #33435b;
+  --login-accent-ink: #0d1520;
+  --login-footer: #b5c1d1;
+  --login-help-bg: #1b2737;
+}
+
+.login-page {
+  background: var(--login-page-bg);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.login-card {
+  background: var(--login-card-bg);
+  border: 1px solid var(--login-card-border);
+  border-radius: 16px;
+  padding: 2.25rem 2rem 1.75rem;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 20px 60px rgb(0 0 0 / 30%);
+  /* La franja de marca arriba: da profundidad sin agregar un elemento, y hace
+   * que la tarjeta se lea como un documento con encabezado en vez de como una
+   * caja. */
+  border-top: 4px solid var(--login-accent);
+}
+
+.login-logo { text-align: center; margin-bottom: 1rem; }
+.login-logo img { width: 64px; height: 64px; }
+.login-title {
+  font-weight: 700;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  color: var(--login-heading);
+  text-align: center;
+  margin: 0 0 0.35rem;
+}
+.login-subtitle {
+  color: var(--login-muted);
+  font-size: 1rem;
+  line-height: 1.45;
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+/* A qué instancia estás entrando. En una aplicación local-first hay demo,
+ * respaldo y producción con la misma cara, y cargar evidencia en la máquina
+ * equivocada es la peor equivocación posible de esta pantalla. */
+.login-where {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.85rem;
+  color: var(--login-muted);
+}
+.login-where code {
+  color: var(--login-heading);
+  background: var(--login-help-bg);
+  border-radius: 4px;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.85rem;
+}
+.login-where-warn { color: #8a5a08; font-weight: 700; }
+[data-theme="dark"] .login-where-warn { color: #e6c079; }
+
+.login-card .form-label {
+  display: block;
+  font-weight: 650;
+  font-size: 1rem;
+  color: var(--login-label);
+  margin-bottom: 0.45rem;
+}
+.login-card input {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--login-input-border);
+  font-size: 1rem;
+}
+.login-card input:focus {
+  border-color: var(--login-accent);
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgb(8 127 120 / 18%);
+}
+.login-card input:focus-visible,
+.login-card .btn-primary:focus-visible {
+  outline: 3px solid rgb(8 127 120 / 45%);
+  outline-offset: 2px;
+}
+[data-theme="dark"] .login-card input { background: #1b2737; color: #edf3fb; }
+
+.login-card .btn-primary {
+  background: var(--login-accent);
+  color: var(--login-accent-ink);
+  border: none;
+  border-radius: 8px;
+  padding: 0.7rem;
+  font-weight: 650;
+  font-size: 1rem;
+  transition: background 0.15s ease;
+}
+.login-card .btn-primary:hover {
+  background: var(--login-accent-hover);
+  color: var(--login-accent-ink);
+}
+
+/* Mostrar / ocultar la contraseña. En faena, con guantes y un teclado táctil,
+ * escribir a ciegas es la primera fricción del día — y con el bloqueo a los
+ * cinco intentos, además es la primera causa de quedarse afuera. */
+.login-field { position: relative; }
+.login-reveal {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.35rem;
+  min-height: 36px;
+  padding: 0 0.6rem;
+  border: 0;
+  background: none;
+  color: var(--login-muted);
+  font-size: 0.85rem;
+  font-weight: 650;
+  cursor: pointer;
+  border-radius: 6px;
+}
+.login-reveal:hover { color: var(--login-heading); }
+.login-card .login-field input { padding-right: 5.5rem; }
+
+.login-alert { border-radius: 8px; font-size: 1rem; padding: 0.5rem 0.75rem; }
+
+/* El aviso de Bloq Mayús. Aparece sólo cuando la tecla está puesta, así que
+ * ocupa cero espacio el resto del tiempo. */
+.login-caps {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #8a5a08;
+  font-weight: 650;
+}
+[data-theme="dark"] .login-caps { color: #e6c079; }
+
+/* La ayuda: qué hacer si no podés entrar. No hay recuperación de contraseña
+ * por cuenta propia —`password_change` exige estar dentro—, así que la única
+ * respuesta honesta es a quién pedirle el reinicio. */
+.login-help {
+  margin-top: 1.5rem;
+  padding: 0.85rem 1rem;
+  background: var(--login-help-bg);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--login-muted);
+}
+.login-help strong { color: var(--login-heading); }
+.login-help a { color: var(--login-accent); }
+
+.login-footer {
+  text-align: center;
+  margin-top: 1.25rem;
+  font-size: 0.85rem;
+  color: var(--login-footer);
+}

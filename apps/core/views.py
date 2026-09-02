@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, NamedTuple
 
 from django.contrib import messages
+from django.contrib.auth import views as auth_views
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
@@ -332,6 +333,33 @@ class HtmxFormMixin:
                 status=204, headers={"HX-Trigger": "modal-form-success"}
             )
         return response
+
+
+class SignInView(auth_views.LoginView):
+    """La pantalla de acceso, con la ayuda y el entorno.
+
+    **Los dos valores se leen en cada petición y no al importar**, y eso es la
+    razón de que exista esta subclase en vez de un `extra_context` en las URLs:
+    `extra_context={"support_contact": settings.SUPPORT_CONTACT}` congela el
+    ajuste al cargar el módulo. En producción daría igual, pero un ajuste que
+    "no se aplica hasta reiniciar" sin decirlo es de las cosas que se descubren
+    tarde y mal — y ningún test podría comprobarlo.
+
+    No es un context processor por lo contrario: son dos valores que sólo usa
+    esta pantalla, y un processor los calcularía en cada petición de la
+    aplicación entera para que no los lea nadie.
+    """
+
+    template_name = "registration/login.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["support_contact"] = getattr(settings, "SUPPORT_CONTACT", "")
+        # Marca la instancia que no es producción. `DEBUG` es la señal que ya
+        # distingue la demo y el entorno local del servidor real, así que no se
+        # inventa un ajuste nuevo para lo mismo.
+        context["debug"] = settings.DEBUG
+        return context
 
 
 class ModelPermissionRequiredMixin(LoginRequiredMixin, PermissionRequiredMixin):

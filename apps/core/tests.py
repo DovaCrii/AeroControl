@@ -334,14 +334,28 @@ class TestPublicURLs:
         assert response.url == "/"
 
     def test_login_post_invalid(self, client, db):
+        """El aviso ahora **nombra el bloqueo**, porque existe: a los cinco
+        intentos la cuenta queda retenida quince minutos, y "probá de nuevo" a
+        secas manda a hacer justo lo que reinicia la espera.
+
+        Se compara contra `gettext` del msgid y no contra un texto tecleado a
+        mano: así el test sigue midiendo la cadena que la plantilla pide, y no
+        una copia que se queda vieja en cuanto alguien retoca la redacción.
+        """
+        from django.utils.translation import gettext
+
         response = client.post(
             reverse("login"),
             {"username": "unknown", "password": "wrong"},
         )
 
         assert response.status_code == 200
-        content = response.content.decode()
-        assert "Usuario o contraseña no válidos" in content
+        expected = gettext(
+            "Wrong username or password. After several failed attempts the "
+            "account is held for a while, so check the keyboard layout before "
+            "trying again."
+        )
+        assert expected in response.content.decode()
 
 
 class TestLoginLockout:

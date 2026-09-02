@@ -23,6 +23,35 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   cero") y la ausencia no afirma nada. Entra al menú el mismo día que gana
   pantalla, y exige `reporting.view_reportrun` — nombra cada faena y si está
   habilitada para volar.
+- **El informe se congela solo y se aprueba a mano (`R5`).**
+  `manage.py generate_monthly_report` deja el borrador del período con sus
+  cifras fijas, para que quien firma llegue a una pantalla quieta en vez de a
+  una vista previa que se mueve mientras la lee. **Congela y no aprueba**:
+  aprobar es un acto de una persona —el informe va firmado ante la DGAC— y un
+  trabajo nocturno que aprobara estaría firmando en nombre de alguien. **Es
+  idempotente**, que es lo que le permite ser un timer: correrlo dos veces no
+  crea dos informes. `--force` **emite la revisión siguiente y nunca
+  sobrescribe**; las anteriores quedan marcadas como reemplazadas, no borradas,
+  porque lo que se envió sigue siendo evidencia — y quién aprobó la revisión 0
+  sigue siendo un hecho después de que exista la 1. La narrativa **viaja** a la
+  revisión nueva: si las cifras se corrigen los hallazgos pueden quedar
+  desactualizados, pero borrarlos obliga a reescribir de cero y ahí nadie nota
+  que uno dejó de ser cierto. Aprobar cierra el informe y una corrección nace
+  como revisión.
+- **La pantalla de acceso dice qué hacer, y el bloqueo se explica.** Tras cinco
+  intentos fallidos la cuenta queda retenida quince minutos, y hasta ahora eso
+  devolvía **un 403 pelado en inglés** mientras el formulario decía "probá de
+  nuevo" — justo lo que no funciona y lo que reinicia la espera. Ahora hay una
+  pantalla propia que dice qué pasó, **cuánto dura** (leído del ajuste, no
+  escrito a mano) y que la retención es sobre el nombre de usuario y no sobre el
+  equipo, así que cambiar de computador no la levanta. El acceso gana además:
+  **mostrar/ocultar la contraseña** y **aviso de Bloq Mayús** —las dos causas
+  más comunes de gastar intentos, y con el bloqueo a los cinco eso cuesta la
+  mañana—, una línea de ayuda que dice a quién pedirle el reinicio (no hay
+  recuperación por cuenta propia), y **a qué instancia estás entrando**: la
+  demo, el respaldo y producción tienen la misma cara, y cargar evidencia en la
+  máquina equivocada es la peor equivocación posible de esa pantalla. Se quita
+  el eslogan que estaba impreso **dos veces**, palabra por palabra.
 - **El informe trae la tabla permiso a permiso y sus semáforos (`R4`).** La
   página 3 lista cada permiso con su folio JEJ, su número DGAC, la faena, los
   operadores designados, las aeronaves, la vigencia y los días que le quedan; la
