@@ -291,10 +291,20 @@ línea del entorno, la ayuda y el botón de mostrar contraseña.
   del mes, que es cuando el corte todavía no cerró.
 - **`SUPPORT_CONTACT`** en `/etc/aerocontrol.env`, opcional: sin él la pantalla
   de acceso dice qué hacer sin nombrar a nadie.
-- **Los bloques 8 y 9 del plan** (`UX-02`, `UX-04`, `UX-05` y la tanda de la
-  tabla). Quedan fuera a propósito: el bloque 9 toca **26 listas** y es el de
-  riesgo alto del plan. Meterlo en el mismo lote haría indistinguible la causa
-  si algo falla — que es justo lo que §6.1 del plan viene a evitar.
+- **`UX-04` y `UX-05`, y el bloque 9 entero.** Medido antes de decidir, no
+  estimado:
+
+  | Fila | Alcance real medido el 2026-09-02 |
+  |---|---|
+  | `UX-04` · encabezado único | **59 `<h1>`** en plantillas, en **8 formas** distintas (`h3`, `h3 mb-0`, sin clase, `h3 mb-1`, `mb-0`, `h3 mb-3`, `h4`…) y 25 `.page-header`. Mecánico pero toca ~30 plantillas |
+  | `UX-05` · sprite SVG | **55 `<path>`** en línea sólo en `base.html` |
+  | `UX-07`…`UX-12` · la tabla | **58 `<table>`** escritos a mano, 12 listas sobre `generic/list.html`, y **31 acoplamientos de tests a clases de presentación** en 15 archivos — el barrido que §6.3 del plan marca como bloqueante. Además `UX-09` (columnas por persona) y `UX-12` (vistas guardadas, propias o compartidas) **necesitan modelo y migración** |
+
+  Los tres son **refactores sin efecto visible para el usuario** y con riesgo de
+  regresión repartido en decenas de plantillas. Meterlos en el mismo lote que
+  `LV-189` —que mueve las cifras del cumplimiento— agranda el radio de impacto
+  sin ganancia operativa, y si algo sale mal en producción no se sabría cuál de
+  los dos fue.
 - **`LV-189`** (documentos de sujetos en estado terminal). Está **medida y lista
   para escribir** —son cuatro líneas en `_subject_scope`— y se dejó fuera **a
   propósito**: mueve los porcentajes de cumplimiento igual que `LV-188`, y su
