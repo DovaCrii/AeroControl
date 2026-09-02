@@ -1277,6 +1277,112 @@ main {
    the generic bump enlarge it. */
 .sidebar a .badge { font-size: 0.72rem; padding: 0.2em 0.5em; }
 
+/* ── UX-01: la severidad como token, en cinco niveles ──────────────────────
+   Del plan UX (`docs/ux-ui-plan.md` §6): hoy la severidad se escribe con
+   utilidades de Bootstrap y **nada garantiza que ámbar signifique lo mismo en la
+   tabla de alertas, en el panel y en el informe**. En una app de cumplimiento
+   aeronáutico eso no es estética.
+
+   **Los valores no son nuevos: son los de `LV-D10`**, que ya los eligió y midió
+   para cumplir AA de texto sobre relleno en los dos temas. Lo que cambia es que
+   dejan de estar amarrados al nombre de una utilidad de Bootstrap (`warning`,
+   `info`) y pasan a llamarse por lo que significan. Inventar colores nuevos acá
+   habría tirado a la basura una medición hecha.
+
+   Los cinco niveles y el tramo de vencimiento al que corresponden — el mapeo lo
+   fijó `LV-148` y esto sólo le pone nombre:
+
+   | nivel      | tramo      | qué dice                                  |
+   |------------|------------|-------------------------------------------|
+   | `critical` | `overdue`  | ya venció; hay incumplimiento hoy         |
+   | `warning`  | `due_7`    | vence esta semana                         |
+   | `caution`  | `due_15`   | vence en quince días                      |
+   | `advisory` | `due_30`   | vence en el mes; hay tiempo de gestionarlo|
+   | `nominal`  | `later`    | sin urgencia                              |
+
+   ⚠️ **Esto es severidad y NADA más.** El tono de tipo (`SUBJECT_TONE_CSS`,
+   `LV-217`) y el color de sección del menú (`.nav-*`, `LV-207`) contestan otras
+   preguntas y **no** se migran acá: un tipo y una severidad compitiendo por el
+   mismo canal es cómo se pierde el rojo, que es la única señal que tiene que
+   gritar. Por eso ningún nivel de abajo se usa para hablar de otra cosa. */
+:root {
+  --sev-critical-bg: #fce4e6;
+  --sev-critical-border: #f0b0b6;
+  --sev-critical-text: #a52834;
+  --sev-warning-bg: #fdf1dc;
+  --sev-warning-border: #ecc98a;
+  --sev-warning-text: #8a5a12;
+  /* `caution` comparte familia con `warning` a propósito: los dos son ámbar
+     porque los dos dicen "esta quincena". Se distinguen por el peso del texto en
+     la fila, no por el matiz — dos ámbares separados por poco serían dos avisos
+     que nadie distingue, y ya se midió hoy (`LV-217`) que dos fondos suaves a
+     distancia RGB corta son indistinguibles. */
+  --sev-caution-bg: #fdf1dc;
+  --sev-caution-border: #ecc98a;
+  --sev-caution-text: #8a5a12;
+  --sev-advisory-bg: #e0f4f8;
+  --sev-advisory-border: #9fd6e2;
+  --sev-advisory-text: #14707f;
+  --sev-nominal-bg: #eceff4;
+  --sev-nominal-border: #c4ccd8;
+  --sev-nominal-text: #384252;
+}
+
+[data-theme="dark"] {
+  --sev-critical-bg: #3d1a1e;
+  --sev-critical-border: #7a343c;
+  --sev-critical-text: #f0a0a8;
+  --sev-warning-bg: #3d2f14;
+  --sev-warning-border: #7a5f26;
+  --sev-warning-text: #e6c079;
+  --sev-caution-bg: #3d2f14;
+  --sev-caution-border: #7a5f26;
+  --sev-caution-text: #e6c079;
+  --sev-advisory-bg: #123a42;
+  --sev-advisory-border: #2a6b78;
+  --sev-advisory-text: #79d6e6;
+  /* LV-42: en oscuro los neutros se fundían con la tarjeta, así que este nivel
+     lleva relleno más alto y borde más claro que su equivalente en claro. */
+  --sev-nominal-bg: #37455c;
+  --sev-nominal-border: #657793;
+  --sev-nominal-text: #e6edf6;
+}
+
+/* Las clases que consumen los tokens. **Sin `!important`, y eso es el punto**:
+   las quince reglas de arriba lo necesitan porque pelean contra las utilidades de
+   Bootstrap, que vienen con `!important` de fábrica. Una clase propia no compite
+   con nadie. */
+.badge.sev-critical { background-color: var(--sev-critical-bg); border-color: var(--sev-critical-border); color: var(--sev-critical-text); }
+.badge.sev-warning  { background-color: var(--sev-warning-bg);  border-color: var(--sev-warning-border);  color: var(--sev-warning-text); }
+.badge.sev-caution  { background-color: var(--sev-caution-bg);  border-color: var(--sev-caution-border);  color: var(--sev-caution-text); }
+.badge.sev-advisory { background-color: var(--sev-advisory-bg); border-color: var(--sev-advisory-border); color: var(--sev-advisory-text); }
+.badge.sev-nominal  { background-color: var(--sev-nominal-bg);  border-color: var(--sev-nominal-border);  color: var(--sev-nominal-text); }
+
+/* La variante de **texto suelto**, para la fila del panel: ahí la fecha va sin
+   pastilla porque la fila ya lleva dos (`LV-148`), así que se unifica la paleta y
+   no la forma. El peso es lo que separa `warning` de `caution`. */
+.sev-text-critical { color: var(--sev-critical-text); font-weight: 700; }
+.sev-text-warning  { color: var(--sev-warning-text);  font-weight: 700; }
+.sev-text-caution  { color: var(--sev-caution-text);  font-weight: 600; }
+.sev-text-advisory { color: var(--sev-advisory-text); }
+.sev-text-nominal  { color: inherit; }
+
+/* UX-03: cifras que se comparan tienen que alinearse.
+   `11/14` sobre `8/16` en dos tarjetas contiguas se leen mal si cada dígito mide
+   distinto. Se aplica donde hay números que se contrastan entre filas o
+   tarjetas, no globalmente: en prosa, `tabular-nums` empeora el ritmo. */
+.table td,
+.table th,
+.readiness-value,
+.kpi-value,
+time,
+.sev-text-critical,
+.sev-text-warning,
+.sev-text-caution,
+.sev-text-advisory {
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── LV-D2: cabeceras y botones legibles en oscuro ─────────────────────────
    El th en gris tenue se leía "apagado" y el borde del botón outline
    (--ac-border) era casi invisible sobre el fondo oscuro, así que los botones

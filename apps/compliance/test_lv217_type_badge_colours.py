@@ -20,12 +20,7 @@ import pytest
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 
-from apps.compliance.digest import (
-    BUCKET_BADGE_CSS,
-    BUCKET_TEXT_CSS,
-    ENTITY_TONES,
-    SUBJECT_TONE_CSS,
-)
+from apps.compliance.digest import BUCKET_BADGE_CSS, ENTITY_TONES, SUBJECT_TONE_CSS
 
 
 class TestTheTwoScalesDoNotCollide:
@@ -44,12 +39,23 @@ class TestTheTwoScalesDoNotCollide:
                     "de urgencia de LV-148"
                 )
 
-    def test_the_urgency_scale_still_owns_those_colours(self):
-        """La guarda por el otro lado: que la urgencia no se haya quedado sin ellos."""
-        todas = " ".join(BUCKET_TEXT_CSS.values()) + " ".join(BUCKET_BADGE_CSS.values())
+    def test_the_urgency_scale_owns_its_own_levels(self):
+        """La guarda por el otro lado: que la urgencia siga teniendo escala propia.
 
-        assert "danger" in todas
-        assert "warning" in todas
+        **Renombrado y reorientado en `UX-01`.** Se llamaba
+        `test_the_urgency_scale_still_owns_those_colours` y comprobaba que las
+        tablas de urgencia contuvieran las palabras `danger` y `warning` — o sea,
+        se apoyaba en los nombres de las utilidades de Bootstrap. Desde `UX-01` la
+        urgencia se escribe con tokens de severidad (`sev-critical`…), así que la
+        afirmación correcta es que **tiene sus cinco niveles y ninguno se solapa
+        con los tonos de tipo**, que es lo que este archivo protege.
+        """
+        niveles = {css.removeprefix("sev-") for css in BUCKET_BADGE_CSS.values()}
+
+        assert niveles == {"critical", "warning", "caution", "advisory", "nominal"}
+        # Y el punto de siempre: los tonos de tipo no invaden esa escala.
+        for css in SUBJECT_TONE_CSS.values():
+            assert "sev-" not in css
 
     def test_three_tones_are_bootstrap_pairs_and_one_is_ours(self):
         """Tres pares de Bootstrap y un color propio, **por medición**.

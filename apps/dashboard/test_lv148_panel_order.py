@@ -144,10 +144,25 @@ class TestOneScaleTwoRepresentations:
         assert set(BUCKET_TEXT_CSS) == declared
 
     def test_the_scale_no_longer_disagrees_with_itself(self):
-        # `due_30` era `bg-info-subtle` en la bandeja y ámbar en el panel. Ahora
-        # las dos representaciones del mismo tramo salen de la misma familia.
-        assert "info" in BUCKET_BADGE_CSS["due_30"]
-        assert "info" in BUCKET_TEXT_CSS["due_30"]
+        """El defecto original: `due_30` era azul en la bandeja y ámbar en el panel.
+
+        **UX-01 permite comprobarlo mejor de lo que se podía antes.** Este test
+        preguntaba `"info" in ...` en las dos tablas — o sea, se apoyaba en que
+        las dos usaran el nombre de la misma utilidad de Bootstrap, que es una
+        coincidencia de nomenclatura y no una garantía. Con los tokens de
+        severidad, cada tramo declara su **nivel**, así que se puede exigir lo que
+        de verdad importa: que los cinco tramos coincidan de nivel en las dos
+        representaciones, no sólo el que se rompió una vez.
+        """
+        de_pastilla = {
+            bucket: css.removeprefix("sev-") for bucket, css in BUCKET_BADGE_CSS.items()
+        }
+        de_texto = {
+            bucket: css.removeprefix("sev-text-")
+            for bucket, css in BUCKET_TEXT_CSS.items()
+        }
+
+        assert de_pastilla == de_texto
 
 
 @pytest.mark.django_db
