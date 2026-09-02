@@ -154,6 +154,10 @@ Cada una costó tiempo real al menos una vez. Consolidadas 2026-08-11.
 
 **El gate verifica código, nadie verifica el cableado de producción.** Tres funciones con tests verdes no llegaban a nadie porque el grupo destinatario no tenía correos y un trabajo programado nunca se registró. Al terminar una función que notifica, comprobar el camino completo **en producción** (`--dry-run`, `list-timers`), no sólo el test.
 
+**Todo retiro "de pantalla y no de base" lleva su condición de cierre, escrita el mismo día.** El patrón se aplicó al menos seis veces —`LV-78`, `LV-103`, `LV-150`, `LV-155`, `LV-193`, `LV-221`— siempre con buen criterio y siempre como *paso 1*, y **el paso 2 no se decidió ninguna vez**. El saldo son vistas vivas sin puerta, valores retirados que los filtros deben seguir entendiendo, y columnas que nadie sabe si se pueden borrar. La causa no es descuido: cuando alguien vuelve a mirar la columna, ya nadie recuerda de qué dependía. Así que la fila (y el comentario del campo, si lo hay) tiene que decir **qué tiene que ser cierto para ejecutar el paso 2** — ver `max_altitude_ft` en `apps/operations/models.py` como ejemplo del formato. Un paso 1 sin condición de cierre es deuda con intereses.
+
+**Las migraciones se squashean cuando el gate lo pida, no antes.** Medido el 2026-09-02: **124 migraciones** (registry 41, operations 25, compliance 25, resto 33) y el gate entre **17 y 22 minutos**. La condición de cierre es que el gate **pase de 25 minutos** o que **`registry` supere las 50**; entonces, un squash por app con el respaldo delante. Antes de eso el squash cuesta más de lo que ahorra, y cada corrida de tests reconstruye la base aplicándolas — el crecimiento es lineal, así que la cifra de arriba sirve para comparar.
+
 ## Referencias
 
 - Plan de trabajo y seguimiento por bloques: `MASTER_PLAN.md` (fuente de verdad de qué sigue).

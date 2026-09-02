@@ -184,9 +184,21 @@
       {% comment %}Los entregables salen del menú a pedido del usuario
       (2026-08-20): no se están usando todavía y ocupaban un sitio en la columna
       de cumplimiento, que es la que se mira a diario. **La función sigue
-      entera** —modelo, vistas, permisos y la URL `deliverable-list`—, así que
-      devolverla al menú es descomentar esta línea; y las no conformidades que
-      nacen de un entregable rechazado siguen funcionando igual.{% endcomment %}
+      entera** —modelo, vistas, permisos y la URL `deliverable-list`—, y las no
+      conformidades que nacen de un entregable rechazado siguen funcionando
+      igual.
+
+      ⚠️ **Corregido el 2026-09-02: este bloque decía "devolverla al menú es
+      descomentar esta línea" y no hay línea que descomentar.** El ancla se
+      borró, no se comentó — es la única de los retiros que no siguió el patrón
+      de `LV-7`/`LV-D8`, y la instrucción escrita no se podía ejecutar. Para
+      devolverla hay que **escribir** el enlace, con `perms.compliance.
+      view_deliverable` y apuntando a `deliverable-list`.
+
+      **CONDICIÓN DE CIERRE**: en cuanto se cree **un** entregable en
+      producción, el enlace vuelve; si no se crea ninguno, se retira de verdad
+      —vista, URL, plantillas y tests— salvo que `NonConformity` siga
+      dependiendo del rechazo de entregables, que hoy es el caso.{% endcomment %}
       {% if perms.compliance.view_nonconformity %}<a href="{% url 'nonconformity-list' %}" class="nav-item nav-compliance {% if url_name == 'nonconformity-list' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 16H3z"/><path d="M12 9v5M12 17h.01"/></svg>{% translate "Non-conformities" %}</a>{% endif %}
       <a href="{% url 'company-documents' %}" class="nav-item nav-compliance {% if url_name == 'company-documents' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>{% translate "Company documents" %}</a>
         </div>
@@ -212,8 +224,9 @@
       {% endif %}
       <a href="{% url 'compliance-report' %}" class="nav-item nav-reports {% if url_name == 'compliance-report' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="M8 16v-4M12 16V8M16 16v-6"/></svg>{% translate "Report" %}</a>
       {% comment %}R3: el informe mensual RPA entra al menú el mismo día que
-      gana pantalla. El repo lleva seis vistas vivas sin puerta, todas por
-      haberse construido antes que su enlace; ésta no suma la séptima.{% endcomment %}
+      gana pantalla. El repo arrastra vistas vivas a las que sólo se llega
+      tecleando la URL (ver §4b del plan y las condiciones de cierre en
+      `MASTER_PLAN.md`); ésta no suma otra.{% endcomment %}
       {% if perms.reporting.view_reportrun %}
       <a href="{% url 'monthly-report' %}" class="nav-item nav-reports {% if url_name == 'monthly-report' %}active{% endif %}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>{% translate "Monthly RPA report" %}</a>
       {% endif %}
