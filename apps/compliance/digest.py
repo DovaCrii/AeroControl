@@ -29,22 +29,40 @@ HORIZON_DAYS = 30
 #
 # `later` es el tramo que el digest no necesita y la bandeja sí: ahí vive también
 # el historial, y una alerta resuelta puede apuntar a una vigencia de 2027.
+#
+# UX-01: las dos tablas pasan a **tokens de severidad** (`.sev-*` en `app.css`) y
+# dejan de nombrar utilidades de Bootstrap. El mapeo tramo→nivel es el que
+# `LV-148` ya había fijado; lo único que cambia es que ahora el nombre dice qué
+# significa en vez de de qué color es.
+#
+# Lo que se gana no es estético: `bg-warning-subtle` puede aparecer en cualquier
+# plantilla queriendo decir cualquier cosa, y `sev-caution` no. Cuando el informe
+# mensual pinte su semáforo (`R4`) va a leer de acá, así que la app entera dirá
+# ámbar por la misma razón o no lo dirá.
+#
+# ⚠️ `overdue` pierde el relleno sólido rojo y pasa a la pastilla suave de su
+# nivel, como los demás. Es deliberado: la escala se lee por **nivel** y un
+# formato distinto para el peor tramo hacía que el rojo compitiera consigo mismo
+# —la pastilla sólida ya grita— justo en la fila donde también hay tipo y faena.
+# La urgencia sigue distinguiéndose, ahora por color y peso y no por relleno.
 BUCKET_BADGE_CSS = {
-    "overdue": "bg-danger",
-    "due_7": "bg-warning text-dark",
-    "due_15": "bg-warning-subtle text-warning-emphasis",
-    "due_30": "bg-info-subtle text-info-emphasis",
-    "later": "bg-secondary-subtle text-secondary-emphasis",
+    "overdue": "sev-critical",
+    "due_7": "sev-warning",
+    "due_15": "sev-caution",
+    "due_30": "sev-advisory",
+    "later": "sev-nominal",
 }
 # En la fila del panel la fecha va como **texto** y no dentro de una píldora: con
 # el chip de faena de `LV-146` la fila ya lleva dos pastillas, y una fecha se lee
 # mejor suelta. Lo que se unifica es la paleta, no la forma.
 BUCKET_TEXT_CSS = {
-    "overdue": "text-danger fw-bold",
-    "due_7": "text-warning-emphasis fw-bold",
-    "due_15": "text-warning-emphasis fw-semibold",
-    "due_30": "text-info-emphasis",
-    "later": "",
+    "overdue": "sev-text-critical",
+    "due_7": "sev-text-warning",
+    "due_15": "sev-text-caution",
+    "due_30": "sev-text-advisory",
+    # Sin urgencia no hay nada que destacar: la fecha se lee con el color del
+    # cuerpo. La clase existe igual para que la plantilla no tenga que preguntar.
+    "later": "sev-text-nominal",
 }
 
 
