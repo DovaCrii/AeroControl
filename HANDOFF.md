@@ -238,6 +238,39 @@ sólo trae la ventana de **30**, que es la que `permit_counts` calcula. Se rotul
 por lo que mide. Rotular 30 como 60 habría sido exactamente el dato inventado que
 la regla del SPEC prohíbe.
 
+#### El bloque 3 del plan: la exactitud del informe
+
+Las dos brechas de la §4 del plan, las dos de exactitud en un documento que va
+firmado a la autoridad.
+
+1. **El padrón que se contaba era el de hoy.** `panel_readiness` recibía la
+   fecha de corte y la usaba **sólo para comparar vencimientos**; la población
+   salía de `filter(is_active=True)`. Ahora la flota y el padrón se acotan
+   además con `created_at__date <= cutoff`. **Va sin parámetro y siempre**: con
+   la fecha de hoy la condición es verdadera para toda fila, así que el panel no
+   cambia — y una segunda función "igual pero con corte" es cómo el panel y el
+   informe empiezan a discrepar.
+2. **"Sin fecha" y "vencida" iban sumadas.** El payload gana
+   `insurance_missing`/`insurance_lapsed` y
+   `credentials_missing`/`credentials_lapsed`, y las páginas 2 y 4 las muestran
+   partidas por lo que hay que hacer con cada mitad.
+
+⚠️ **Lo que hay que medir en la VM al desplegar, porque acá no se puede.** El
+criterio de verificación del plan es que el payload de agosto devuelva **41**
+operadores y no 42. Si **no baja**, la causa es que `created_at` refleja la
+fecha de **carga masiva** y no la del hecho, y entonces el corte no alcanza para
+ese dato — no es que el arreglo esté mal, es que la base no tiene el historial:
+
+```
+uv run python manage.py shell -c "from datetime import date; from apps.dashboard.views import panel_readiness; print({c['key']: (c['count'], c['total']) for c in panel_readiness(date(2026,8,31))['readiness']})"
+```
+
+⚠️ **Y el límite del corte, escrito para que nadie lo lea de más**: deja de
+contar lo que todavía no existía, **no reconstruye** el padrón de esa fecha. Sin
+historial de `is_active`, archivar una ficha la saca también de los informes
+anteriores — hay un test que fija exactamente eso. La cifra sólo queda estable
+cuando el informe se **congela** (`R5`), y por eso `R5` no es un lujo.
+
 #### Dos defectos que salieron de escribir los tests, no de leer código
 
 1. **`?period=26-8` devolvía un informe del año 26.** Partir por el guion y

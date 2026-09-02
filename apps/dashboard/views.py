@@ -409,6 +409,31 @@ def panel_readiness(today, cost_center=None):
     # eso sí es una brecha que hay que ver, no una que ocultar.
     fleet = fleet.exclude(cost_center__operates_flights=False)
     operators = Operator.objects.filter(is_active=True)
+
+    # **El padrón que se cuenta es el que existía en `today`, no el de hoy.**
+    #
+    # `today` ya mandaba sobre las comparaciones de vencimiento —una credencial
+    # vence *respecto de* esa fecha— pero no sobre la población: los dos
+    # `filter(is_active=True)` de arriba traían el padrón **actual**. Con la
+    # fecha de hoy da igual; con la de un mes cerrado, no. Medido en producción:
+    # el payload de agosto devolvía **42 operadores** y el informe emitido a la
+    # DGAC decía **41**. Un informe de agosto generado en diciembre habría dado
+    # otra cifra todavía, que es justo lo que congelar el dato viene a evitar.
+    #
+    # Va sin parámetro y siempre: `created_at__date <= today` es verdadero para
+    # toda fila cuando `today` es hoy, así que **el panel no cambia** — y una
+    # segunda función "igual pero con corte" es cómo el panel y el informe
+    # empiezan a discrepar, la lección que `LV-188` y `LV-201` ya dejaron.
+    #
+    # ⚠️ **Lo que este corte NO hace, y hay que decirlo porque el informe va
+    # firmado**: no reconstruye el padrón de esa fecha, sólo **deja de contar lo
+    # que todavía no existía**. Sin historial de `is_active` no se sabe quién
+    # estaba archivado entonces, y si una ficha se cargó a destiempo su
+    # `created_at` es la fecha de carga y no la del hecho. Es una cota superior
+    # honesta, no una foto.
+    fleet = fleet.filter(created_at__date__lte=today)
+    operators = operators.filter(created_at__date__lte=today)
+
     if cost_center:
         fleet = fleet.filter(cost_center=cost_center)
         operators = operators.filter(cost_center=cost_center)

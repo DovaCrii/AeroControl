@@ -23,6 +23,24 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   cero") y la ausencia no afirma nada. Entra al menú el mismo día que gana
   pantalla, y exige `reporting.view_reportrun` — nombra cada faena y si está
   habilitada para volar.
+- **El informe cuenta el padrón que existía al corte, no el de hoy.** La función
+  que da flota, seguros y credenciales recibía la fecha de corte y la usaba sólo
+  para comparar vencimientos: la **población** era siempre la actual. Medido en
+  producción, el payload de agosto devolvía 42 operadores y el informe emitido a
+  la DGAC decía 41 — y uno generado en diciembre habría dado otra cifra más, que
+  es justo lo que congelar el dato viene a evitar. **El panel no cambia**: con la
+  fecha de hoy la condición es verdadera para toda fila, y una segunda función
+  "igual pero con corte" es cómo el panel y el informe empiezan a discrepar.
+  ⚠️ Lo que el corte **no** hace: no reconstruye el padrón de esa fecha, sólo
+  deja de contar lo que todavía no existía. Sin historial de archivado no hay
+  más, y hay un test que fija ese límite para que nadie lo lea de más.
+- **El informe distingue una fecha ausente de una vencida.** Los "8 sin
+  credencial vigente" del informe emitido eran **7 sin fecha cargada más una
+  vencida**, y no se arreglan igual: una es cargar un dato que nadie ingresó, la
+  otra es un trámite ante la DGAC. Sumadas, la cifra no dice a quién llamar — y
+  encima no conversa con el resto del documento, porque una fecha ausente no
+  genera alerta ni aparece en la lista de vencimientos. El panel ya hacía esta
+  distinción; el informe la heredaba sumada.
 - **Todo lo que se imprime deja de llevar el menú encima (`UX-06`).** El árbol
   tenía **cero** reglas `@media print`, así que cualquier impresión salía con la
   navegación entera arriba y el contenido estrujado en la columna que le dejaba

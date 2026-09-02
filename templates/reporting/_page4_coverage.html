@@ -69,7 +69,16 @@ Las columnas de próximo vencimiento y días esperan al colector de `R4`.{% endc
           <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; border-bottom: 1px solid #E4EAF0; font-size: 11px;">
             <span>Operadores con credencial DGAC vigente</span><span style="font-weight: bold; color: #124384; font-size: 15px;">{% leaf payload.kpis.operators_credentialed %} / {% leaf payload.kpis.operators_total %}</span>
           </div>
-          <div style="color: #52606D; font-size: 9.4px; line-height: 1.5; margin-top: 8px;">Padrón completo en plataforma. Cuántos de ellos están <em>designados</em> en un permiso vigente es otra cifra, y todavía no se recolecta.</div>
+          {% comment %}La brecha, partida por lo que hay que hacer con cada
+          mitad: cargar una fecha que nadie ingresó, o renovar ante la DGAC.
+          Sumadas no dicen a quién llamar.{% endcomment %}
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px;">
+            <div class="rpt-est rpt-est-soon" style="text-align: center; padding: 5px;">{% leaf payload.kpis.credentials_missing %} credenciales sin fecha</div>
+            <div class="rpt-est rpt-est-none" style="text-align: center; padding: 5px;">{% leaf payload.kpis.credentials_lapsed %} credenciales vencidas</div>
+            <div class="rpt-est rpt-est-soon" style="text-align: center; padding: 5px;">{% leaf payload.kpis.insurance_missing %} seguros sin fecha</div>
+            <div class="rpt-est rpt-est-none" style="text-align: center; padding: 5px;">{% leaf payload.kpis.insurance_lapsed %} seguros vencidos</div>
+          </div>
+          <div style="color: #52606D; font-size: 9.4px; line-height: 1.5; margin-top: 8px;">Una fecha ausente y una vencida se arreglan distinto, así que van separadas: la primera es un dato que nadie cargó —y por eso no genera alerta ni aparece en la lista de vencimientos—, la segunda es un trámite ante la DGAC. El padrón es el que existía al corte.</div>
         </div>
       </div>
 
