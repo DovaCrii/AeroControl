@@ -9,28 +9,10 @@
   <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}"
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
         crossorigin="anonymous">
-  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260724-legibility">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="stylesheet" href="{% static 'css/login.css' %}">
   <link rel="icon" type="image/svg+xml" href="{% static 'img/aerocontrol-mark.svg' %}">
   <script src="{% static 'js/theme-init.js' %}"></script>
-  <style>
-    :root { --login-page-bg: #0d1727; --login-card-bg: #fff; --login-card-border: rgba(255,255,255,.16); --login-heading: #14213a; --login-muted: #5b6675; --login-label: #34425a; --login-input-border: #cbd5e1; --login-accent: #087f78; --login-accent-hover: #06655f; --login-footer: #788394; }
-    .login-page { background: var(--login-page-bg); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
-    .login-card { background: var(--login-card-bg); border: 1px solid var(--login-card-border); border-radius: 16px; padding: 2.5rem 2rem; width: 100%; max-width: 440px; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
-    .login-logo { text-align: center; margin-bottom: 1.25rem; }
-    .login-logo img { width: 64px; height: 64px; }
-    .login-title { font-weight: 700; font-size: 1.5rem; line-height: 1.2; color: var(--login-heading); text-align: center; margin: 0 0 .35rem; }
-    .login-subtitle { color: var(--login-muted); font-size: 1rem; line-height: 1.45; text-align: center; margin-bottom: 1.75rem; }
-    .login-card .form-label { display: block; font-weight: 650; font-size: 1rem; color: var(--login-label); margin-bottom: .45rem; }
-    .login-card input { display: block; width: 100%; min-height: 44px; border-radius: 8px; padding: .6rem .9rem; border: 1px solid var(--login-input-border); font-size: 1rem; }
-    .login-card input:focus { border-color: var(--login-accent); outline: 0; box-shadow: 0 0 0 .2rem rgba(8,127,120,.18); }
-    .login-card input:focus-visible, .login-card .btn-primary:focus-visible { outline: 3px solid rgba(8,127,120,.45); outline-offset: 2px; }
-    .login-card .btn-primary { background: var(--login-accent); border: none; border-radius: 8px; padding: .7rem; font-weight: 650; font-size: 1rem; transition: background .15s ease; }
-    .login-card .btn-primary:hover { background: var(--login-accent-hover); }
-    .login-alert { border-radius: 8px; font-size: 1rem; padding: .5rem .75rem; }
-    .login-footer { text-align: center; margin-top: 1.5rem; font-size: 1rem; color: var(--login-footer); }
-    [data-theme="dark"] .login-page { --login-page-bg: #080f1a; --login-card-bg: #161f2d; --login-card-border: #33435b; --login-heading: #edf3fb; --login-muted: #b5c1d1; --login-label: #edf3fb; --login-input-border: #33435b; --login-footer: #b5c1d1; }
-    [data-theme="dark"] .login-card input { background: #1b2737; color: #edf3fb; }
-  </style>
 </head>
 <body>
   <div class="login-page">
@@ -38,17 +20,54 @@
       <div class="login-logo"><img src="{% static 'img/aerocontrol-mark.svg' %}" alt="AeroControl"></div>
       <h1 class="login-title">AeroControl</h1>
       <div class="login-subtitle">{% translate "Air Operations Control Center" %}</div>
+
+      {% comment %}A qué instancia estás entrando. La demo, el respaldo y
+      producción tienen la misma cara, y cargar evidencia en la máquina
+      equivocada es la peor equivocación posible de esta pantalla. El host sale
+      de la petición y no de un ajuste: un ajuste puede quedar viejo, el host
+      es lo que el navegador tiene delante.{% endcomment %}
+      <div class="login-where">
+        {% if debug %}<span class="login-where-warn">{% translate "Test environment" %}</span> ·{% endif %}
+        <code>{{ request.get_host }}</code>
+      </div>
+
       <form method="post">
         {% csrf_token %}
         {% if form.errors %}
-          <div class="alert alert-danger login-alert" role="alert" aria-live="assertive">{% translate "Invalid username or password. Try again." %}</div>
+          {% comment %}El aviso nombra el bloqueo porque existe: a los cinco
+          intentos fallidos la cuenta queda retenida quince minutos, y "probá de
+          nuevo" a secas manda a hacer justo lo que reinicia la espera.{% endcomment %}
+          <div class="alert alert-danger login-alert" role="alert" aria-live="assertive">{% translate "Wrong username or password. After several failed attempts the account is held for a while, so check the keyboard layout before trying again." %}</div>
         {% endif %}
         <div class="mb-3"><label for="id_username" class="form-label">{{ form.username.label }}</label>{{ form.username }}</div>
-        <div class="mb-3"><label for="id_password" class="form-label">{{ form.password.label }}</label>{{ form.password }}</div>
+        <div class="mb-3 login-field">
+          <label for="id_password" class="form-label">{{ form.password.label }}</label>
+          {{ form.password }}
+          <button type="button" class="login-reveal" id="login-reveal"
+                  data-show="{% translate 'Show' %}" data-hide="{% translate 'Hide' %}"
+                  aria-controls="id_password" aria-pressed="false">{% translate "Show" %}</button>
+          <div class="login-caps" id="login-caps" hidden role="status">{% translate "Caps Lock is on." %}</div>
+        </div>
         <button type="submit" class="btn btn-primary w-100">{% translate "Sign In" %}</button>
       </form>
-      <div class="login-footer">AeroControl &mdash; {% translate "Air Operations Control Center" %}</div>
+
+      {% comment %}No hay recuperación por cuenta propia: `password_change`
+      existe pero exige estar dentro. La única respuesta honesta es a quién
+      pedirle el reinicio, y la dirección sale de la configuración — inventarla
+      acá sería mandar correo a un buzón que quizá no existe. Sin configurar, la
+      línea dice qué hacer sin nombrar a nadie.{% endcomment %}
+      <div class="login-help">
+        <strong>{% translate "Can't get in?" %}</strong>
+        {% if support_contact %}
+        {% blocktranslate with contact=support_contact %}The password is reset by the administrator: write to {{ contact }}.{% endblocktranslate %}
+        {% else %}
+        {% translate "There is no self-service reset: the administrator resets the password from the administration centre." %}
+        {% endif %}
+      </div>
+
+      <div class="login-footer">{% translate "Internal system" %} · J.E.J. Ingeniería S.A.</div>
     </div>
   </div>
+  <script src="{% static 'js/login.js' %}"></script>
 </body>
 </html>

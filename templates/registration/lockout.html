@@ -1,0 +1,57 @@
+{% load static i18n %}
+{% get_current_language as CURRENT_LANGUAGE %}
+<!doctype html>
+<html lang="{{ CURRENT_LANGUAGE }}" data-theme="light" data-bs-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% translate "Account held" %} — AeroControl</title>
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+        crossorigin="anonymous">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="stylesheet" href="{% static 'css/login.css' %}">
+  <link rel="icon" type="image/svg+xml" href="{% static 'img/aerocontrol-mark.svg' %}">
+  <script src="{% static 'js/theme-init.js' %}"></script>
+</head>
+
+{% comment %}Hasta ahora, cinco intentos fallidos devolvían el **403 pelado** de
+`django-axes`: un párrafo en inglés, sin chapa, sin decir cuánto dura ni qué
+hacer. Y el formulario de al lado decía "probá de nuevo", que es exactamente lo
+que no funciona y lo que reinicia la espera.
+
+Esta pantalla dice las tres cosas que faltaban: qué pasó, **cuánto dura** y a
+quién pedirle ayuda si la espera no alcanza. Se renderiza con
+`render_to_string` sin `request` desde el manejador de `axes`, así que no
+depende de ningún context processor — la lección de `LV-215`, donde una página
+de error terminó apoyada en el orden de los middleware.{% endcomment %}
+
+<body>
+  <div class="login-page">
+    <div class="login-card">
+      <div class="login-logo"><img src="{% static 'img/aerocontrol-mark.svg' %}" alt="AeroControl"></div>
+      <h1 class="login-title">{% translate "Account held" %}</h1>
+      <div class="login-subtitle">{% translate "Too many failed sign-in attempts." %}</div>
+
+      <div class="alert alert-warning login-alert" role="alert">
+        {% blocktranslate count minutes=cooloff_minutes %}Try again in {{ minutes }} minute.{% plural %}Try again in {{ minutes }} minutes.{% endblocktranslate %}
+      </div>
+
+      {% comment %}Se dice que el bloqueo es por nombre de usuario y no por
+      equipo, porque cambiar de máquina es lo primero que alguien intenta y
+      no sirve — ahorra el intento y la llamada.{% endcomment %}
+      <div class="login-help">
+        <strong>{% translate "Why this happened" %}</strong>
+        {% translate "The hold is on the username, not on this device, so signing in from another computer will not lift it. It clears on its own when the wait is over." %}
+        {% if support_contact %}
+        <br>{% blocktranslate with contact=support_contact %}If you need it lifted sooner, write to {{ contact }}.{% endblocktranslate %}
+        {% else %}
+        <br>{% translate "If you need it lifted sooner, the administrator can clear it from the administration centre." %}
+        {% endif %}
+      </div>
+
+      <div class="login-footer">{% translate "Internal system" %} · J.E.J. Ingeniería S.A.</div>
+    </div>
+  </div>
+</body>
+</html>

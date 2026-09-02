@@ -229,6 +229,54 @@ ventana de 60 días) y `LV-227` (los hallazgos y la observación). **El informe 
 no tiene bloques en ámbar punteado**: lo único que se dibuja como pendiente es
 la narrativa cuando todavía nadie la escribió, que es lo correcto.
 
+#### `R5`: el informe se congela solo y lo aprueba una persona
+
+`manage.py generate_monthly_report`, idempotente, con `--force` y `--dry-run`.
+**Congela, no aprueba** — un trabajo nocturno que aprobara estaría firmando en
+nombre de alguien. `freeze` vive en el modelo porque lo llaman el botón **y** el
+comando.
+
+⚠️ **Dos cosas que quedan fuera del código y hay que resolver al desplegar:**
+
+1. **El timer no está cableado.** El comando corre a mano. El informe se emite
+   el **día 5** con corte al último día del mes anterior, así que el disparo
+   natural es el **día 1 o 2** — no el último día del mes, que es cuando el
+   corte todavía no cerró. Va como unidad nueva de `systemd`, con el mismo
+   patrón de los otros diez.
+2. **Segregación de funciones, decisión del usuario.** Hoy alcanza con
+   `change_reportrun`, así que quien redacta la narrativa puede además
+   aprobarla. Para una evidencia ISO eso es una pregunta organizacional —a qué
+   rol va el permiso de aprobar— y no la decide el código. Separarla exige un
+   permiso propio y tocar `bootstrap_roles`.
+
+#### La pantalla de acceso: la ayuda que faltaba, y el bloqueo que no se explicaba
+
+Sale de la §2.1 del plan UX (cinco carencias) más **dos que el plan no tenía**:
+
+1. ⚠️ **El bloqueo devolvía un 403 pelado en inglés** mientras el formulario
+   decía "probá de nuevo". A los cinco intentos `django-axes` retiene la cuenta
+   **quince minutos por nombre de usuario**, así que reintentar es exactamente
+   lo que no funciona — y lo que reinicia la espera. Ahora hay pantalla propia
+   con la chapa de la app, y **el plazo se lee de `AXES_COOLOFF_TIME`**: escrito
+   a mano se desincroniza el día que alguien cambie el ajuste.
+2. **El eslogan estaba impreso dos veces**, palabra por palabra, en el subtítulo
+   y en el pie.
+
+Entran además: mostrar/ocultar contraseña, aviso de Bloq Mayús, la línea de
+ayuda (**no hay recuperación por cuenta propia**) y **a qué instancia estás
+entrando**.
+
+⚠️ **Una corrección al plan UX**: su hallazgo (c) proponía reemplazar el
+`#087f78` escrito a mano por `--ac-primary`. Es el mismo valor **en claro**;
+**en oscuro** `--ac-primary` vale `#42d4c6`, y blanco sobre ese verde da
+**1,9:1**. Se unifica el color y el **primer plano** cambia con el tema —
+calculado, no mirado: claro 4,87:1, oscuro 10,0:1, con test que recalcula los
+tres.
+
+**Ajuste nuevo, opcional:** `SUPPORT_CONTACT`. Vacío por omisión a propósito —
+una dirección inventada manda correo a un buzón que puede no existir. Sin él la
+pantalla dice qué hacer sin nombrar a nadie.
+
 #### `R4`: los semáforos, y la escala que NO se copió
 
 ⚠️ **La escala del permiso no es la del documento, y conviene no "unificarlas"

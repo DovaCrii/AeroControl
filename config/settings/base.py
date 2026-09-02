@@ -360,6 +360,20 @@ AXES_RESET_ON_SUCCESS = True
 # Username-only lockout stops credential brute force reliably; the cooloff and
 # an admin reset bound the only downside (a targeted username being held out).
 AXES_LOCKOUT_PARAMETERS = ["username"]
+# La pantalla de cuenta retenida, con la chapa de la aplicación y la espera real.
+# Antes el bloqueo devolvía el 403 pelado de `axes` —un párrafo en inglés, sin
+# decir cuánto dura— mientras el formulario decía "probá de nuevo", que es
+# exactamente lo que no funciona. Se usa el callable y no `AXES_LOCKOUT_TEMPLATE`
+# porque la plantilla necesita el plazo, y ése vive en `AXES_COOLOFF_TIME`:
+# escrito a mano se desincroniza el día que alguien cambie el ajuste.
+AXES_LOCKOUT_CALLABLE = "apps.core.lockout.lockout_response"
+
+# A quién escribirle cuando alguien no puede entrar. **No hay recuperación de
+# contraseña por cuenta propia** —`password_change` exige estar dentro—, así que
+# sin esto la pantalla sólo puede decir "pedíselo al administrador" sin nombrarlo.
+# Vacío por omisión a propósito: una dirección inventada manda correo a un buzón
+# que puede no existir, y quien queda afuera no se entera.
+SUPPORT_CONTACT = config("SUPPORT_CONTACT", default="")
 # Record the forwarded client address in the access log for forensics even
 # though it is not part of the lockout key.
 AXES_IPWARE_META_PRECEDENCE_ORDER = ["HTTP_X_FORWARDED_FOR", "REMOTE_ADDR"]
