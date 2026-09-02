@@ -83,18 +83,23 @@ sobre las cifras, y el informe va firmado.{% endcomment %}
       {% pending "los hallazgos se redactan y se aprueban antes de emitir" "LV-227" %}
     </div>
 
+    {% comment %}**La brecha va partida en dos y es deliberado.** El informe
+    emitido decía "8 sin credencial vigente"; eran 7 sin fecha cargada más una
+    vencida, y no se arreglan igual: una es cargar un dato que nadie ingresó, la
+    otra es renovar ante la DGAC. Una sola cifra no dice a quién llamar. Es la
+    misma distinción que `LV-129` hizo en el panel.{% endcomment %}
     <div>
       <div class="rpt-label" style="margin-bottom: 10px;">Dotación al corte</div>
       <div style="display: flex; gap: 12px;">
         <div class="rpt-kpi" style="flex: 1;">
           <div class="rpt-kpi-value" style="font-size: 26px;">{% leaf payload.kpis.fleet_total %}</div>
           <div class="rpt-kpi-name">Aeronaves en el padrón</div>
-          <div class="rpt-kpi-note">{% leaf payload.kpis.insurance_up_to_date %} con seguro JAC al día</div>
+          <div class="rpt-kpi-note">{% leaf payload.kpis.insurance_up_to_date %} con seguro JAC al día · <strong>{% leaf payload.kpis.insurance_missing %}</strong> sin fecha cargada · <strong>{% leaf payload.kpis.insurance_lapsed %}</strong> vencido</div>
         </div>
         <div class="rpt-kpi" style="flex: 1;">
           <div class="rpt-kpi-value" style="font-size: 26px;">{% leaf payload.kpis.operators_total %}</div>
           <div class="rpt-kpi-name">Operadores en el padrón</div>
-          <div class="rpt-kpi-note">{% leaf payload.kpis.operators_credentialed %} con credencial DGAC vigente</div>
+          <div class="rpt-kpi-note">{% leaf payload.kpis.operators_credentialed %} con credencial DGAC vigente · <strong>{% leaf payload.kpis.credentials_missing %}</strong> sin fecha cargada · <strong>{% leaf payload.kpis.credentials_lapsed %}</strong> vencida</div>
         </div>
       </div>
     </div>

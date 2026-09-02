@@ -111,9 +111,28 @@ def collect_kpis(cutoff, cost_centres):
         "insurance_up_to_date": leaf(
             readiness["insurance"]["count"], "registry", cutoff
         ),
+        # **"Sin fecha" y "vencida" van separadas, y no es un detalle de
+        # presentación.** El informe emitido decía "8 sin credencial vigente";
+        # esos 8 eran **7 sin fecha cargada más 1 vencida**, y se arreglan
+        # distinto: una es cargar un dato que nadie ingresó y la otra es renovar
+        # ante la DGAC. Sumadas, la cifra no dice a quién llamar — y además no
+        # conversa con el resto del documento, porque una fecha ausente no
+        # genera alerta (`LV-29`: un nulo es "nunca se ingresó") ni aparece en
+        # la lista de vencimientos. El panel ya hacía esta distinción desde
+        # `LV-129`; el informe la heredaba sumada.
+        "insurance_missing": leaf(
+            readiness["insurance"]["missing"], "registry", cutoff
+        ),
+        "insurance_lapsed": leaf(readiness["insurance"]["lapsed"], "registry", cutoff),
         "operators_total": leaf(readiness["credentials"]["total"], "registry", cutoff),
         "operators_credentialed": leaf(
             readiness["credentials"]["count"], "registry", cutoff
+        ),
+        "credentials_missing": leaf(
+            readiness["credentials"]["missing"], "registry", cutoff
+        ),
+        "credentials_lapsed": leaf(
+            readiness["credentials"]["lapsed"], "registry", cutoff
         ),
     }
 

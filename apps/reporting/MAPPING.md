@@ -166,6 +166,53 @@ los permisos por vencer en **60 días** y el payload sólo trae la ventana de
 **30**, que es la que `permit_counts` calcula. La tarjeta se rotula por lo que
 mide; sumar la ventana de 60 va con los semáforos.
 
+## El corte temporal, y hasta dónde llega
+
+**Hecho el 2026-09-02.** `panel_readiness` recibía la fecha de corte y la usaba
+sólo para **comparar vencimientos**; la población salía de
+`filter(is_active=True)`, o sea el padrón **actual**. Medido en producción: el
+payload de agosto devolvía **42 operadores** y el informe emitido a la DGAC
+decía **41**. Ahora la flota y el padrón se acotan además con
+`created_at__date <= cutoff`.
+
+**Va sin parámetro y siempre**, y eso es deliberado: con la fecha de hoy la
+condición es verdadera para toda fila, así que **el panel no cambia** — y una
+segunda función "igual pero con corte" es cómo el panel y el informe empiezan a
+discrepar (`LV-188`, `LV-201`).
+
+⚠️ **Lo que el corte NO hace, y hay que decirlo porque el informe va firmado:**
+
+| Sí | No |
+|---|---|
+| Deja de contar lo que todavía no existía en la base | Reconstruir el padrón de esa fecha |
+| Impide que un informe emitido engorde al cargarse fichas después | Saber quién estaba archivado entonces (no hay historial de `is_active`) |
+| — | Distinguir la fecha del hecho de la fecha de carga: una ficha cargada a destiempo lleva su `created_at` de carga |
+
+Es una **cota superior honesta, no una foto**. Archivar una ficha la saca
+también de los informes anteriores, y hay un test que fija exactamente eso para
+que nadie lea de más. **La cifra sólo queda estable cuando el informe se
+congela** (`R5`): un `ReportRun` dibuja su payload guardado y ya no depende de
+esta consulta.
+
+**Cómo medirlo en la VM antes y después de desplegar** — el número tiene que
+bajar de 42 a 41, y si no baja es que `created_at` refleja la fecha de carga
+masiva y no la del hecho:
+
+```
+uv run python manage.py shell -c "from datetime import date; from apps.dashboard.views import panel_readiness; print({c['key']: (c['count'], c['total']) for c in panel_readiness(date(2026,8,31))['readiness']})"
+```
+
+## "Sin fecha" no es "vencida"
+
+El informe emitido decía **8 sin credencial vigente**; eran **7 sin fecha más 1
+vencida**, y se arreglan distinto — una es cargar un dato que nadie ingresó, la
+otra es un trámite ante la DGAC. Sumadas, la cifra no dice a quién llamar, y
+además no conversa con el resto del documento: una fecha ausente **no genera
+alerta** (`LV-29`: un nulo es "nunca se ingresó") ni aparece en la lista de
+vencimientos. El panel ya hacía la distinción desde `LV-129`; el payload la
+heredaba sumada y ahora trae `insurance_missing`/`insurance_lapsed` y
+`credentials_missing`/`credentials_lapsed`.
+
 ## Notas de arquitectura que ya están decididas
 
 1. ~~**`ComplianceSnapshot` existe y hace lo que `ReportRun.payload` quiere**~~ —
