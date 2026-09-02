@@ -88,13 +88,36 @@ def _subject_scope(cost_center, *, only_active):
     `Q(pk__in=[])` es el neutro del `|`: sin ningún sujeto, el resultado es vacío
     y no "todo".
 
-    ⚠️ Lo que **no** hace, y quedó como `LV-189`: excluir sujetos en estado
-    terminal. Una aeronave `retired` sigue `is_active=True`, así que sus
-    documentos ya contaban antes de esta fila; extender la tabla suma a esa
-    cuenta las cartas de permisos cerrados. Es la regla de `LV-120` y merece su
-    propia fila porque cambia números del informe por una razón distinta.
+    **`LV-189`: un sujeto en estado terminal tampoco aporta.** Una aeronave
+    `retired` sigue `is_active=True`, así que sus documentos contaban; y desde
+    que `LV-188` ensanchó la tabla, contaban también las cartas de permisos
+    caducados y denegados. **Un registro que terminó no es cumplimiento
+    pendiente de nadie** — es la misma regla que `LV-120` y `LV-83` ya
+    aplicaron al cerrar permisos por fecha, y que `fleet_availability` aplica
+    excluyendo `retired` del denominador: contarlo hace que el porcentaje baje
+    para siempre por una decisión correcta.
+
+    Va **sólo en la rama de documentos**, no en la de alertas, por lo mismo que
+    `only_active`: una alerta sobre un registro cerrado sigue **perteneciendo**
+    a su faena aunque ya no sea trabajo.
+
+    El `if statuses` no es defensivo por si acaso: de los diez modelos de la
+    tabla, **cuatro no tienen campo `status`** (`CostCenter`, `Operator`,
+    `Qualification`, `KnowledgeAssessment`), y un `exclude(status__in=())` a
+    ciegas sobre ellos es un `FieldError`. `terminal_statuses` devuelve el
+    conjunto vacío para todos ellos, así que la comprobación es la que traduce
+    "este modelo no declara ninguno" en "no filtres".
+
+    ⚠️ **`geo.geoplan` declara el conjunto vacío y está bien**, aunque tenga
+    `status` con `rejected`: de ahí se sale con "Reanudar edición"
+    (`PLAN_TRANSITIONS`), así que un plan rechazado es trabajo que **volvió**, no
+    trabajo que terminó. `STATUS_BLOCKED` responde otra pregunta —dónde se
+    detiene el flujo— y confundirlo con lo terminal habría sacado del
+    cumplimiento documentos de planes vivos.
     """
     from django.apps import apps as django_apps
+
+    from apps.compliance.watchables import terminal_statuses
 
     scope = Q(pk__in=[])
     for label, path in ALERT_COST_CENTER_PATHS.items():
@@ -112,6 +135,12 @@ def _subject_scope(cost_center, *, only_active):
         subjects = model.objects.filter(**{path: cost_center.pk})
         if only_active:
             subjects = subjects.filter(is_active=True)
+            # Dentro de la subconsulta y no en un bucle de Python: el informe
+            # llama a esto una vez por faena, y hay un test que fija que todo
+            # esto sea **una sola** consulta.
+            statuses = terminal_statuses(model)
+            if statuses:
+                subjects = subjects.exclude(status__in=statuses)
         scope |= Q(
             content_type=ContentType.objects.get_for_model(model),
             object_id__in=subjects.values("pk"),
