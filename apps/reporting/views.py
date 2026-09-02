@@ -20,6 +20,7 @@ import re
 from datetime import date
 
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -153,28 +154,22 @@ class ReportDraftCreate(ModelPermissionRequiredMixin, View):
 
     def post(self, request):
         period = parse_period(request.POST.get("period"), timezone.localdate())
-        existing = ReportRun.objects.filter(period=period).order_by("-revision").first()
-        if existing:
-            # Sin `get_or_create`: la respuesta correcta a "ya existe" no es
-            # devolverlo callando, es decir que ya estaba — quien apretó el
-            # botón dos veces tiene que saber cuál de las dos cosas pasó.
+        # **El mismo `freeze` que usa el trabajo programado** (`R5`), no una
+        # copia: dos caminos que congelan por separado es cómo el informe que
+        # genera el timer y el que genera una persona empiezan a diferir.
+        run, created = ReportRun.freeze(period, request.user.get_username())
+        if not created:
+            # La respuesta correcta a "ya existe" no es devolverlo callando:
+            # quien apretó el botón dos veces tiene que saber cuál de las dos
+            # cosas pasó.
             messages.info(
                 request, _("This period already had a report; opening the latest one.")
             )
-            return redirect(f"{reverse('monthly-report')}?period={period:%Y-%m}")
-
-        payload, missing = build(period)
-        run = ReportRun.objects.create(
-            period=period,
-            generated_by=request.user.get_username(),
-            payload=payload,
-            missing_fields=missing,
-            completeness=(
-                ReportRun.COMPLETENESS_PARTIAL if missing else ReportRun.COMPLETENESS_OK
-            ),
-        )
-        set_audit_context(request, run, action="create")
-        messages.success(request, _("Draft frozen. You can now write its narrative."))
+        else:
+            set_audit_context(request, run, action="create")
+            messages.success(
+                request, _("Draft frozen. You can now write its narrative.")
+            )
         return redirect(f"{reverse('monthly-report')}?period={period:%Y-%m}")
 
 
@@ -234,3 +229,38 @@ class ReportNarrativeUpdate(ModelPermissionRequiredMixin, View):
             "reporting/narrative_form.html",
             {"run": run, "note_form": note, "finding_formset": findings},
         )
+
+
+class ReportApprove(ModelPermissionRequiredMixin, View):
+    """R5: aprobar es lo que convierte el borrador en el documento emitido.
+
+    **Lo hace una persona y nunca el trabajo programado.** El informe va firmado
+    ante la DGAC: un timer que aprobara en nombre de alguien estaría firmando, y
+    la fecha y el nombre que quedan en la fila son evidencia de quién respondió
+    por esas cifras.
+
+    Aprobar **cierra** el informe: deja de ser editable y una corrección nace
+    como revisión siguiente (`--force` del comando). Por eso no se re-aprueba —
+    el guard vive en `ReportRun.approve` y no acá, para que el admin y el shell
+    tropiecen con el mismo.
+
+    ⚠️ **Hoy alcanza con `change_reportrun`**, o sea que quien redacta la
+    narrativa puede además aprobarla. Para una evidencia ISO eso es una pregunta
+    de segregación de funciones y **no la decide el código**: separarla exige un
+    permiso propio y decidir a qué rol va, que es del usuario. Anotado en la
+    fila; mientras tanto, la auditoría registra quién aprobó.
+    """
+
+    model = ReportRun
+    permission_action = "change"
+
+    def post(self, request, pk):
+        run = get_object_or_404(ReportRun, pk=pk)
+        try:
+            run.approve(request.user.get_username())
+        except ValidationError as error:
+            messages.error(request, error.messages[0])
+        else:
+            set_audit_context(request, run, action="approve")
+            messages.success(request, _("Report approved. It is now read-only."))
+        return redirect(f"{reverse('monthly-report')}?period={run.period:%Y-%m}")

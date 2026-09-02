@@ -12,7 +12,7 @@ aeronaves ni operadores: recolecta lo que ya existe y lo congela.
 
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, pgettext_lazy
 
 from apps.core.models import BaseModel
 
@@ -71,9 +71,15 @@ class ReportRun(BaseModel):
 
     COMPLETENESS_OK = "ok"
     COMPLETENESS_PARTIAL = "partial"
+    # ⚠️ **Con contexto, y no por prolijidad.** `_("Complete")` a secas comparte
+    # msgid con el **botón** de completar una mantención y un permiso, así que el
+    # catálogo lo traduce como *"Completar"* — un verbo. Acá es un **estado**, y
+    # el comando imprimía "0 campos sin dato al corte (Completar)", que se lee
+    # como una instrucción sobre un informe que ya está entero. Encontrado
+    # corriendo el comando, no leyendo el código.
     COMPLETENESS_CHOICES = [
-        (COMPLETENESS_OK, _("Complete")),
-        (COMPLETENESS_PARTIAL, _("Partial")),
+        (COMPLETENESS_OK, pgettext_lazy("report completeness", "Complete")),
+        (COMPLETENESS_PARTIAL, pgettext_lazy("report completeness", "Partial")),
     ]
 
     # Primer día del mes reportado. `DateField` y no dos enteros: así el orden y
@@ -148,6 +154,77 @@ class ReportRun(BaseModel):
         que puede discrepar de su propia fecha.
         """
         return f"JEJ-GTE-CT-INF-RPA-{self.period:%Y-%m}"
+
+    @classmethod
+    def freeze(cls, period, generated_by, *, force=False):
+        """Congela el informe del período. Devuelve `(run, creado)`.
+
+        **Es idempotente a propósito, y de eso depende que pueda correr desde un
+        trabajo programado.** Sin `force`, un período que ya tiene informe
+        devuelve el que hay y no escribe nada: el timer mensual corre el último
+        día del mes, y un reintento —o dos timers solapados— no puede convertir
+        un informe en dos.
+
+        **`force` emite la revisión siguiente; nunca sobrescribe.** Es la
+        contradicción del SPEC ya resuelta: su §1.1 pedía que el período fuera
+        único y su §5.1 que `--force` creara una versión nueva. Un informe es un
+        documento controlado, así que la corrección **nace como revisión** y las
+        anteriores quedan `superseded` — no se borran, porque lo que se envió en
+        su momento es evidencia y tiene que seguir consultable. `approved_at` y
+        `approved_by` sobreviven al reemplazo: quién aprobó la revisión 0 sigue
+        siendo un hecho después de que exista la 1.
+
+        ⚠️ **La narrativa viaja a la revisión nueva.** Es una decisión, no un
+        descuido: si las cifras se corrigen, los hallazgos escritos pueden
+        quedar desactualizados — pero borrarlos es peor, porque obliga a
+        reescribir de cero y ahí nadie nota que un hallazgo dejó de ser cierto.
+        Copiados, quedan a la vista para corregirlos.
+
+        Vive en el modelo y no en la vista ni en el comando porque **los dos lo
+        llaman**: el botón de la pantalla y el trabajo programado. Dos copias de
+        esta lógica es cómo el informe que genera el timer y el que genera una
+        persona empiezan a diferir.
+        """
+        from apps.reporting.builder import build
+
+        latest = cls.objects.filter(period=period).order_by("-revision").first()
+        if latest and not force:
+            return latest, False
+
+        payload, missing = build(period)
+        run = cls.objects.create(
+            period=period,
+            revision=(latest.revision + 1) if latest else 0,
+            generated_by=generated_by,
+            payload=payload,
+            missing_fields=missing,
+            completeness=(cls.COMPLETENESS_PARTIAL if missing else cls.COMPLETENESS_OK),
+            findings=latest.findings if latest else [],
+            period_note=latest.period_note if latest else "",
+        )
+        if latest:
+            cls.objects.filter(period=period).exclude(pk=run.pk).update(
+                status=cls.STATUS_SUPERSEDED
+            )
+        return run, True
+
+    def approve(self, approved_by):
+        """Marca el informe como el documento emitido.
+
+        Aprobar es lo que lo vuelve inmutable, así que **no se re-aprueba**: un
+        segundo intento movería `approved_at` y `approved_by` de un documento
+        que ya se envió, y con ellos la evidencia de quién y cuándo lo firmó.
+        """
+        from django.utils import timezone
+
+        if self.status != self.STATUS_DRAFT:
+            raise ValidationError(
+                _("Only a draft can be approved; issue a new revision instead.")
+            )
+        self.status = self.STATUS_APPROVED
+        self.approved_at = timezone.now()
+        self.approved_by = approved_by
+        self.save(update_fields=["status", "approved_at", "approved_by", "updated_at"])
 
     def clean(self):
         """`findings` tiene forma, y se comprueba también acá.

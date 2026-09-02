@@ -292,3 +292,23 @@
   });
   window.initResponsibleType();
 })();
+
+/* Formularios que preguntan antes de enviar (`R5`).
+ *
+ * `<form data-confirm="…">` y no `onsubmit="…"`: la política de seguridad de
+ * contenido de esta aplicación no lleva `unsafe-inline` en `script-src`, así
+ * que un manejador escrito en el atributo **no se ejecuta en producción** — el
+ * formulario se enviaría sin preguntar y la pantalla parecería tener una
+ * confirmación que no tiene. Peor que no tenerla.
+ *
+ * Delegado en `document` y no enganchado a cada formulario: los que llegan por
+ * htmx después de la carga quedan cubiertos sin volver a inicializar nada.
+ */
+(function () {
+  'use strict';
+  document.addEventListener('submit', function (event) {
+    var form = event.target;
+    if (!form || !form.dataset || !form.dataset.confirm) return;
+    if (!window.confirm(form.dataset.confirm)) event.preventDefault();
+  });
+})();
