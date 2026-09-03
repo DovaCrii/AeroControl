@@ -215,7 +215,7 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(
                 f"Enviado a {', '.join(recipients)}. Confirmá que llegó a la "
-                "bandeja (y revisá la carpeta de correo no deseado): el "
+                "bandeja (y revise la carpeta de correo no deseado): el "
                 "servidor lo aceptó, que no es lo mismo que entregado."
             )
         )

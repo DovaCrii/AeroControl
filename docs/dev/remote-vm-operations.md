@@ -92,7 +92,7 @@ git fetch origin && git log --oneline HEAD..origin/main
 
 ## 5. Reversión segura
 
-Si una actualización falla, **no borres datos**. Detené y mirá el log:
+Si una actualización falla, **no borrar datos**. Detener y mirar el log:
 
 ```bash
 sudo journalctl -u aerocontrol -n 100 --no-pager

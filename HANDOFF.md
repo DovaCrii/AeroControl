@@ -1502,7 +1502,7 @@ Cuatro cosas que conviene saber antes de escribir esas cinco variables:
   enviar, que es para lo que existe el `--to`.
 - **Si el buzón tiene MFA hace falta una contraseña de aplicación**, no la del
   usuario. El comando lo dice cuando el servidor rechaza las credenciales.
-- **Puerto 465 con SSL implícito**: poné `EMAIL_USE_SSL=True` y **no** toques
+- **Puerto 465 con SSL implícito**: fijar `EMAIL_USE_SSL=True` y **no** tocar
   `EMAIL_USE_TLS`. Django rechaza las dos juntas con un `ValueError` en el
   momento de enviar, o sea de noche y dentro del trabajo programado.
 

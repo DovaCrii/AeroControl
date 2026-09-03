@@ -39,7 +39,7 @@ class TestTheFormOffersADraft:
         assert "form-draft.js" in content
 
     def test_the_notice_starts_hidden(self):
-        # El aviso de "tenés un borrador" lo destapa el JS sólo si hay uno: en un
+        # El aviso de "hay un borrador" lo destapa el JS sólo si hay uno: en un
         # formulario recién abierto no puede haber una alerta afirmando que sí.
         content = (
             login_as("add_flightpermission")
