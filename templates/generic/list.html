@@ -38,9 +38,9 @@ only bind where a colgroup exists.{% endcomment %}
 {% block worktable_colgroup %}{% block list_colgroup %}{% endblock %}{% endblock %}
 {% block worktable_header %}
           {% block list_header %}
-          {% sortable_th _("Name") "name" %}
-          {% sortable_th _("Created") "created" %}
-          {% sortable_th _("Status") "status" %}
+          {% worktable_th _("Name") "name" %}
+          {% worktable_th _("Created") "created" %}
+          {% worktable_th _("Status") "status" %}
           {% endblock %}
           <th scope="col" class="text-end">{% translate "Actions" %}</th>
 {% endblock %}

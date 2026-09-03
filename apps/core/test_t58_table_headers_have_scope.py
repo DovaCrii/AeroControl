@@ -30,7 +30,9 @@ TH_WITHOUT_SCOPE = re.compile(r"<th(?![a-z])(?![^>]*\bscope=)", re.I)
 #
 # Se reemplaza por espacios en vez de recortar, para que los números de línea que
 # este archivo reporta sigan apuntando al lugar real.
-TEMPLATE_COMMENT = re.compile(r"\{%\s*comment\s*%\}.*?\{%\s*endcomment\s*%\}", re.DOTALL)
+TEMPLATE_COMMENT = re.compile(
+    r"\{%\s*comment\s*%\}.*?\{%\s*endcomment\s*%\}", re.DOTALL
+)
 
 
 def _without_comments(text):

@@ -151,14 +151,151 @@
     });
   }
 
+  /* `UX-09`: el selector de columnas, y aplicarlas.
+   *
+   * **La identidad de la columna viaja del `<th data-col>` a cada celda por
+   * posición**, igual que el rótulo de `UX-10`. Es lo que permite esconder una
+   * columna sin tocar ninguno de los dieciséis parciales de filas: la
+   * alternativa era escribir `data-col` en cada `<td>`, con el mismo problema de
+   * duplicación que ya se descartó ahí.
+   *
+   * El menú se llena **leyendo el encabezado**, no una segunda lista declarada
+   * en la plantilla. Dos listas es cómo el selector y la tabla terminan
+   * discrepando.
+   */
+  var COL_ATTR = "data-col";
+
+  function columnsOf(table) {
+    return [].map.call(table.querySelectorAll("thead th"), function (th) {
+      return th.getAttribute(COL_ATTR) || "";
+    });
+  }
+
+  function stampColumns(table) {
+    var keys = columnsOf(table);
+    if (!keys.length) return;
+    [].forEach.call(table.querySelectorAll("tbody tr"), function (row) {
+      [].forEach.call(row.children, function (cell, index) {
+        // Igual que con el rótulo: una celda que abarca varias columnas no
+        // pertenece a ninguna, y marcarla con la primera la escondería entera
+        // -- justo la fila de "sin resultados", que es la que hay que ver.
+        if (cell.colSpan > 1) return;
+        if (keys[index]) cell.setAttribute(COL_ATTR, keys[index]);
+      });
+    });
+  }
+
+  function applyHidden(table, hidden) {
+    // El estado vivo se devuelve al atributo, y no es cosmético: htmx reemplaza
+    // `#table-body` al paginar, y si el atributo siguiera con el valor que trajo
+    // el servidor, la columna que alguien acaba de esconder reaparecería en la
+    // página 2 -- y quien la escondió no entendería por qué.
+    table.dataset.hiddenColumns = hidden.join(",");
+    stampColumns(table);
+    [].forEach.call(table.querySelectorAll("[" + COL_ATTR + "]"), function (cell) {
+      cell.hidden = hidden.indexOf(cell.getAttribute(COL_ATTR)) !== -1;
+    });
+    // El cuerpo esperaba escondido para no mostrar un salto; ya se puede ver.
+    table.classList.remove("wt-pending");
+  }
+
+  function hiddenOf(table) {
+    return (table.dataset.hiddenColumns || "")
+      .split(",")
+      .filter(function (key) {
+        return key;
+      });
+  }
+
+  function persist(key, hidden) {
+    var token = document.querySelector("[name=csrfmiddlewaretoken]");
+    if (!token) return;
+    var body = new FormData();
+    body.append("csrfmiddlewaretoken", token.value);
+    body.append("list_key", key);
+    hidden.forEach(function (one) {
+      body.append("hidden", one);
+    });
+    // Sin `catch` visible: esconder una columna es una comodidad, y una alerta
+    // de red por ella interrumpiría el trabajo para avisar de nada importante.
+    // Lo que se pierde es que la preferencia no sobreviva a la recarga.
+    fetch("/listas/columnas/", { method: "POST", body: body }).catch(function () {});
+  }
+
+  function columnPicker() {
+    var bar = document.querySelector(".worktable-toolbar");
+    var table = document.querySelector("#table-wrapper table");
+    if (!bar || !table) return;
+    var picker = bar.querySelector(".worktable-columns");
+    var menu = bar.querySelector(".worktable-columns-menu");
+    if (!picker || !menu) return;
+
+    var hidden = hiddenOf(table);
+    applyHidden(table, hidden);
+
+    var any = false;
+    [].forEach.call(table.querySelectorAll("thead th[" + COL_ATTR + "]"), function (th) {
+      var key = th.getAttribute(COL_ATTR);
+      var row = document.createElement("label");
+      row.className = "form-check worktable-column-option";
+      var input = document.createElement("input");
+      input.type = "checkbox";
+      input.className = "form-check-input";
+      input.checked = hidden.indexOf(key) === -1;
+      input.addEventListener("change", function () {
+        var at = hidden.indexOf(key);
+        if (input.checked && at !== -1) hidden.splice(at, 1);
+        if (!input.checked && at === -1) hidden.push(key);
+        applyHidden(table, hidden);
+        persist(bar.dataset.listKey, hidden);
+      });
+      row.appendChild(input);
+      // El rótulo sale del propio encabezado, así que no puede discrepar con lo
+      // que la columna dice. `textContent` y no `innerHTML`: el `<th>` lleva la
+      // flechita de orden, y copiarla acá pondría una flecha en cada casilla.
+      row.appendChild(document.createTextNode(" " + th.textContent.trim()));
+      menu.appendChild(row);
+      any = true;
+    });
+    // Sin ninguna columna con nombre no hay nada que ofrecer, y un menú vacío es
+    // peor que ningún menú.
+    picker.hidden = !any;
+
+    // `UX-12`: el formulario de guardar vista lleva el filtro que la persona
+    // está mirando **y** sus columnas, para que volver a la vista devuelva lo
+    // que guardó y no la mitad.
+    var form = bar.querySelector(".worktable-save-menu");
+    if (form) {
+      form.addEventListener("submit", function () {
+        var field = form.querySelector("[data-worktable-query]");
+        if (field) field.value = window.location.search;
+        [].forEach.call(form.querySelectorAll("[data-worktable-hidden]"), function (old) {
+          old.remove();
+        });
+        hidden.forEach(function (one) {
+          var input = document.createElement("input");
+          input.type = "hidden";
+          input.name = "hidden";
+          input.value = one;
+          input.setAttribute("data-worktable-hidden", "1");
+          form.appendChild(input);
+        });
+      });
+    }
+  }
+
   run(document);
   wire(document);
+  columnPicker();
   // htmx reemplaza `#table-body` al paginar y al filtrar; sin esto las filas
   // nuevas llegarían sin rótulo y sin casilla.
   document.body.addEventListener("htmx:afterSwap", function (event) {
     var table = event.target.closest ? event.target.closest("table") : null;
     if (table) {
       label(table);
+      // Las filas nuevas llegan sin `data-col`, así que una columna escondida
+      // reaparecería al paginar -- y quien la escondió no entendería por qué.
+      applyHidden(table, hiddenOf(table));
       // La tabla ya tiene su columna, pero las filas nuevas no: se rehace.
       table.dataset.bulkReady = "";
       selectable(table);

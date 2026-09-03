@@ -21,7 +21,7 @@ Lo que el componente trae de una vez, que es lo que `UX-07` pedía:
   que la barra — y sin la barra las casillas no aparecían.
 - `#table-body` y `#pagination-container` con sus identificadores, que es de
   donde HTMX cuelga los reemplazos parciales.
-- **El orden por columna**, vía `{% templatetag openblock %} sortable_th
+- **El orden por columna**, vía `{% templatetag openblock %} worktable_th
   {% templatetag closeblock %}`: la parte de `UX-07` que no existía en ninguna
   de las 26 listas.
 
@@ -44,9 +44,21 @@ sobreescriben.{% endcomment %}
 {% block worktable_intro %}{% endblock %}
 {% block worktable_filters %}{% endblock %}
 {% include "generic/_bulk_bar.html" %}
+{% include "generic/_worktable_toolbar.html" %}
 <div id="table-wrapper" class="card">
   <div class="table-responsive">
-    <table class="table table-hover mb-0 {% block worktable_table_class %}{% endblock %}">
+    {% comment %}`UX-09`: `wt-pending` sólo cuando **hay** columnas que esconder.
+    Sin él, la tabla se dibujaría entera y el JS le sacaría columnas encima, o
+    sea un salto a la vista en cada carga; con él, el cuerpo espera un cuadro y
+    aparece ya acomodado. Es la misma razón por la que `theme-init.js` aplica el
+    tema antes de pintar.
+
+    Y sólo cuando hay algo escondido, para que la enorme mayoría de las cargas
+    —nadie escondió nada— no dependa de que el JS corra para mostrar la tabla.
+
+    El nombre de las columnas escondidas viaja en `data-hidden-columns` y no en
+    una etiqueta `<script>`: la CSP del proyecto no admite JS embebido.{% endcomment %}
+    <table class="table table-hover mb-0 {% if worktable_prefs.hidden %}wt-pending {% endif %}{% block worktable_table_class %}{% endblock %}" data-hidden-columns="{{ worktable_prefs.hidden|join:"," }}">
       {% block worktable_colgroup %}{% endblock %}
       <thead>
         <tr>{% block worktable_header %}{% endblock %}</tr>

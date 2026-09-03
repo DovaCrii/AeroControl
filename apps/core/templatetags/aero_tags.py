@@ -82,15 +82,24 @@ def render_pagination(page_obj):
     return {"page_obj": page_obj}
 
 
-@register.inclusion_tag("generic/_sortable_th.html", takes_context=True)
-def sortable_th(context, label, column="", align="", css=""):
-    """UX-07: a column header that sorts, when the view says the column can.
+@register.inclusion_tag("generic/_worktable_th.html", takes_context=True)
+def worktable_th(context, label, column="", align="", css=""):
+    """UX-07/UX-09: a column header, with whatever the view lets it do.
 
-    `column` is the **key the view declared**, never an ORM path written in the
-    template. The view owns the allow-list (`SortableColumnsMixin`), so a header
-    cannot reach a field the view did not offer -- `?sort=` lands in `order_by`,
-    and an unvalidated one there is a way to order by, and so probe, a related
-    table nobody meant to expose.
+    `column` is **the column's name**, and it does two separate jobs:
+
+    - identity, for hiding it (`UX-09`). The name travels to the browser as
+      `data-col`, and `worktable.js` copies it onto every cell in the column, so
+      hiding needs no change in any row partial.
+    - the sort key, **only if the view listed it** in `sortable_columns`.
+
+    Splitting the two is what lets a column be hideable without being sortable:
+    "Entidad" in the alert list is a generic relation with nothing to order by,
+    and it is still one of the columns somebody would want out of the way.
+
+    The allow-list lives in the view and never in the template: `?sort=` lands in
+    `order_by`, and an unvalidated one there is a way to order by -- and so probe
+    -- a related table nobody meant to expose.
 
     Degrades to a plain `<th>` when the column is not sortable, rather than
     drawing a link that does nothing.
@@ -98,7 +107,7 @@ def sortable_th(context, label, column="", align="", css=""):
     sort = context.get("worktable_sort") or {}
     columns = sort.get("columns") or {}
     if not column or column not in columns:
-        return {"label": label, "align": align, "css": css, "url": ""}
+        return {"label": label, "align": align, "css": css, "column": column, "url": ""}
     state = sort.get("column") == column and sort.get("direction") or ""
     # Clicking the column you are already on flips it; a fresh column starts
     # ascending, which is what every table on the planet does.
@@ -107,6 +116,7 @@ def sortable_th(context, label, column="", align="", css=""):
         "label": label,
         "align": align,
         "css": css,
+        "column": column,
         "state": state,
         "url": f"?{sort['base_query']}sort={column}&dir={nxt}",
     }

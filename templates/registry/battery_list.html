@@ -25,17 +25,17 @@ la tabla, no la barra de acciones.{% endcomment %}
 </form>
 {% endblock %}
 {% block worktable_header %}
-          {% sortable_th _("Serial number") "serial" %}
-          {% sortable_th _("Cycles") "cycles" "end" %}
+          {% worktable_th _("Serial number") "serial" %}
+          {% worktable_th _("Cycles") "cycles" "end" %}
           {% comment %}"Health" reuses the msgid already in the catalog; a
           literal "Health (%)" here would become a second, python-format msgid
           ("Health (%%)") for the same concept. La unidad se pega afuera, por eso
           mismo, en vez de renunciar a ordenar la columna.{% endcomment %}
           {% translate "Health" as health_word %}
-          {% with health_label=health_word|add:" (%)" %}{% sortable_th health_label "health" "end" %}{% endwith %}
-          {% sortable_th _("Last seen on aircraft") "aircraft" %}
-          {% sortable_th _("Firmware") "firmware" %}
-          {% sortable_th _("Status") "status" "" "cell-status" %}
-          {% sortable_th _("Last synced") "synced" %}
+          {% with health_label=health_word|add:" (%)" %}{% worktable_th health_label "health" "end" %}{% endwith %}
+          {% worktable_th _("Last seen on aircraft") "aircraft" %}
+          {% worktable_th _("Firmware") "firmware" %}
+          {% worktable_th _("Status") "status" "" "cell-status" %}
+          {% worktable_th _("Last synced") "synced" %}
 {% endblock %}
 {% block worktable_rows %}{% include "registry/_battery_rows.html" %}{% endblock %}

@@ -23,13 +23,13 @@ principal por la que alguien abre esta lista.{% endcomment %}
 </form>
 {% endblock %}
 {% block worktable_header %}
-  {% sortable_th _("Title") "title" %}
-  {% sortable_th _("Type") "type" %}
+  {% worktable_th _("Title") "title" %}
+  {% worktable_th _("Type") "type" %}
   {% comment %}"Entidad" no ordena: es la relación genérica del documento, así
   que no hay columna por la cual ordenar.{% endcomment %}
-  <th scope="col">{% translate "Entity" %}</th>
-  {% sortable_th _("Expiry") "expiry" %}
-  {% sortable_th _("Current") "current" %}
+  {% worktable_th _("Entity") "entity" %}
+  {% worktable_th _("Expiry") "expiry" %}
+  {% worktable_th _("Current") "current" %}
   <th scope="col" class="text-end">{% translate "Actions" %}</th>
 {% endblock %}
 {% block worktable_rows %}{% include "compliance/_document_rows.html" %}{% endblock %}

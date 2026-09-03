@@ -42,10 +42,10 @@ decirlo es peor que uno largo.{% endcomment %}
           genérica -- ordenar por el id daría un orden por UUID, o sea aleatorio
           con aspecto de orden. Lo que sí ordena es el **tipo** de recurso, que
           es la pregunta real ("muéstrame los movimientos de aeronaves").{% endcomment %}
-          <th scope="col">{% translate "Resource" %}</th>
-          {% sortable_th _("Movement") "movement" %}
-          <th scope="col">{% translate "Route" %}</th>
-          {% sortable_th _("Changed by") "changed_by" %}
-          {% sortable_th _("Created") "created" %}
+          {% worktable_th _("Resource") "resource" %}
+          {% worktable_th _("Movement") "movement" %}
+          {% worktable_th _("Route") "route" %}
+          {% worktable_th _("Changed by") "changed_by" %}
+          {% worktable_th _("Created") "created" %}
 {% endblock %}
 {% block worktable_rows %}{% include "registry/_resourcemovementlog_rows.html" %}{% endblock %}

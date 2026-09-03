@@ -2826,6 +2826,79 @@ tr[data-sev="warning"] > td:first-child { box-shadow: inset 3px 0 0 0 var(--sev-
 tr[data-sev="caution"] > td:first-child { box-shadow: inset 3px 0 0 0 var(--sev-caution-border); }
 tr[data-sev="advisory"] > td:first-child { box-shadow: inset 3px 0 0 0 var(--sev-advisory-border); }
 
+/* == UX-09 / UX-12 · Columnas por persona y vistas guardadas ===============
+ *
+ * El cuerpo espera escondido **sólo cuando hay columnas que esconder**, para no
+ * mostrar la tabla entera y sacarle columnas encima. Es la misma razón por la
+ * que el tema se aplica antes de pintar; y como es condicional, la enorme
+ * mayoría de las cargas —nadie escondió nada— no depende de que el JS corra
+ * para ver la tabla. */
+.wt-pending tbody { visibility: hidden; }
+
+.worktable-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-3);
+}
+.worktable-views { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+.worktable-view-wrap { display: inline-flex; align-items: center; }
+.worktable-view {
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--ac-text-secondary);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  text-decoration: none;
+}
+.worktable-view:hover { color: var(--ac-primary); background: var(--ac-primary-soft); }
+.worktable-view.is-active {
+  color: var(--ac-primary);
+  border-color: var(--ac-primary);
+  background: var(--ac-primary-soft);
+}
+/* El rombo dice "compartida". Va como marca y no como palabra porque la
+ * pestaña ya lleva el nombre que alguien eligió, y sumarle "(compartida)"
+ * duplicaría el largo de cada una. */
+.worktable-view-shared { opacity: 0.65; font-size: 0.8em; }
+.worktable-view-delete {
+  border: 0;
+  background: none;
+  color: var(--ac-text-secondary);
+  line-height: 1;
+  padding: 0 var(--sp-2);
+  cursor: pointer;
+}
+.worktable-view-delete:hover { color: var(--sev-critical-text); }
+
+.worktable-toolbar-actions { display: flex; gap: var(--sp-2); }
+/* `<details>` como menú: sin JS para abrirlo y cerrarlo, y con el foco que el
+ * navegador ya gestiona. El marcador propio se saca porque el resumen es un
+ * botón, y un triangulito dentro de un botón se lee como dos controles. */
+.worktable-columns summary::-webkit-details-marker,
+.worktable-save-view summary::-webkit-details-marker { display: none; }
+.worktable-columns summary,
+.worktable-save-view summary { list-style: none; cursor: pointer; }
+.worktable-columns,
+.worktable-save-view { position: relative; }
+.worktable-columns-menu,
+.worktable-save-menu {
+  position: absolute;
+  right: 0;
+  z-index: 4;
+  min-width: 240px;
+  margin-top: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--ac-border);
+  border-radius: 8px;
+  background: var(--ac-surface);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+}
+.worktable-column-option { margin-bottom: var(--sp-2); }
+
 /* La columna de casillas no necesita ancho: encoge a su contenido. */
 .bulk-cell { margin: 0; }
 .table th:has(> .bulk-cell),
