@@ -144,10 +144,15 @@ def _without_template_comments(content):
 
     Se reemplaza por espacios en vez de recortar para que los números de línea
     que este archivo reporta sigan apuntando al lugar real.
+
+    `UX-09b`: el recorte se fue a `apps.core.testing` cuando fue el **tercer**
+    guardián que lo necesitaba —éste, el de `scope` y el de `UX-07`— y las tres
+    veces por el mismo tropiezo: alguien documenta una decisión nombrando la
+    etiqueta de la que habla y el guardián lo trata como código.
     """
-    return _TEMPLATE_COMMENT.sub(
-        lambda match: re.sub(r"[^\n]", " ", match.group(0)), content
-    )
+    from apps.core.testing import without_template_comments
+
+    return without_template_comments(content)
 
 
 def _source_strings():

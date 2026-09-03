@@ -19,6 +19,8 @@ eso una sustitución produce `<th scope="col"ead>`.
 import re
 from pathlib import Path
 
+from apps.core.testing import without_template_comments
+
 TEMPLATES = Path(__file__).resolve().parents[2] / "templates"
 TH_WITHOUT_SCOPE = re.compile(r"<th(?![a-z])(?![^>]*\bscope=)", re.I)
 # `UX-07`: un `{% comment %}` no se renderiza, así que un `<th>` escrito ahí
@@ -28,17 +30,9 @@ TH_WITHOUT_SCOPE = re.compile(r"<th(?![a-z])(?![^>]*\bscope=)", re.I)
 # dibuja como se dibuja. Es el mismo hueco que `LV-169` cerró en el guardián de
 # traducciones, y por la misma razón.
 #
-# Se reemplaza por espacios en vez de recortar, para que los números de línea que
-# este archivo reporta sigan apuntando al lugar real.
-TEMPLATE_COMMENT = re.compile(
-    r"\{%\s*comment\s*%\}.*?\{%\s*endcomment\s*%\}", re.DOTALL
-)
-
-
-def _without_comments(text):
-    return TEMPLATE_COMMENT.sub(
-        lambda match: re.sub(r"[^\n]", " ", match.group(0)), text
-    )
+# El recorte vive en `apps.core.testing` desde que fue el **tercer** guardián que
+# lo necesitaba: tres copias del mismo recorte es cómo una se queda sin arreglar.
+_without_comments = without_template_comments
 
 
 def test_every_table_header_declares_its_scope():

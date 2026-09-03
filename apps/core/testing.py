@@ -15,6 +15,8 @@ está moviendo. Las fixtures de datos (`two_tenant_world`) siguen pendientes y s
 harán cuando haya un segundo lector real que las pida.
 """
 
+import re
+
 from django.contrib.auth.models import Group, Permission, User
 from django.test import Client
 
@@ -53,3 +55,30 @@ def login_as(*codenames, groups=(), member_of=None):
     assert client.login(username=user.username, password="pw")  # nosec B106
     client.user = user
     return client
+
+
+_TEMPLATE_COMMENT = re.compile(
+    r"\{%\s*comment\s*%\}.*?\{%\s*endcomment\s*%\}", re.DOTALL
+)
+
+
+def without_template_comments(text):
+    """Los `{% comment %}` de una plantilla, en blanco — **conservando líneas**.
+
+    Todo guardián que lee plantillas como texto lo necesita, porque un comentario
+    **no se renderiza**: exigirle `scope` a un `<th>` escrito ahí adentro, o
+    prohibir la palabra `<table>` porque aparece explicando por qué la tabla se
+    dibuja como se dibuja, es pedirle algo a marcado que no existe en la página.
+
+    Estaba escrito **tres veces** cuando se extrajo —en el guardián de
+    traducciones (`LV-169`), en el de `scope` y en el de `UX-07`— y las tres
+    veces por el mismo tropiezo: alguien documenta una decisión nombrando la
+    etiqueta de la que habla, y el guardián lo trata como código. Tres copias del
+    mismo recorte es cómo una de ellas se queda sin arreglar.
+
+    Se reemplaza por espacios y no se recorta, para que los números de línea que
+    los guardianes reportan sigan apuntando al lugar real del archivo.
+    """
+    return _TEMPLATE_COMMENT.sub(
+        lambda match: re.sub(r"[^\n]", " ", match.group(0)), text
+    )
