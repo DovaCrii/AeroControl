@@ -10,6 +10,37 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Las tablas se ordenan por columna, se acomodan y se guardan como vistas
+  (`UX-07`, `UX-09`, `UX-12`).** Las 16 listas de la aplicación pasan ahora por
+  un mismo componente. Con eso: **ordenar apretando el encabezado** —que no
+  existía en ninguna—, **esconder las columnas que uno no usa**, y **guardar un
+  filtro con nombre** que aparece como pestaña sobre la tabla ("Seguros
+  vencidos", "Credenciales a 60 días"), propia o compartida con todos. Cada
+  persona tiene sus columnas y sus vistas; compartir una vista es ofrecerla, no
+  cederla: la borra quien la creó. De paso, siete listas que se escribían la
+  tabla a mano ganan la **selección múltiple** que ya tenían las demás — sus
+  filas estaban preparadas y les faltaba sólo la barra. **El orden se ofrece
+  únicamente donde corresponde a lo que la celda muestra**: no se puede ordenar
+  por "Entidad" en alertas, porque ahí el orden sería por identificador interno,
+  o sea azaroso con aspecto de orden.
+- **El número del permiso se toma de la autorización de la DGAC (`LV-231`).**
+  Pedido del usuario: es siempre el mismo PDF y trae el número escrito, así que
+  transcribirlo a mano era abrirle la puerta a un error en un dato que va a la
+  autoridad. Ahora la ficha lo **propone**, rotulado con su procedencia, y se
+  escribe sólo al confirmarlo — nunca solo, porque leer un PDF es heurística y un
+  número equivocado escrito por la máquina nadie lo revisa. Si no se puede leer,
+  o si el PDF trae dos números distintos, no propone nada y la casilla se teclea
+  como siempre.
+- **La región y la comuna de un permiso dicen de dónde salieron (`LV-220`).**
+  Cuando se deducen de las coordenadas del plan, la ficha lo advierte con el
+  mismo aviso de la BCN que ya usa la hoja SIGO; una escrita del papel de la DGAC
+  no lleva aviso. Antes eran indistinguibles, y la capa administrativa está
+  simplificada a ~111 m: cerca de un límite devuelve la comuna vecina. Corregir a
+  mano una región deducida **le quita el aviso**, porque después de esa
+  corrección ya no es deducida. Los permisos cargados antes de esto quedan sin
+  marca —"no se sabe"— y se ven como siempre: inventarles una procedencia sería
+  el mismo defecto al revés.
+
 - **El informe mensual RPA se ve dentro de la aplicación (`R3`).** Las cinco
   hojas A4 del documento que se emite a la DGAC —portada, resumen ejecutivo,
   permisos, cobertura por Centro de Costo y plan de normalización— salen de las
@@ -309,6 +340,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   una fila histórica es decisión de quien la mira, no de una migración.
 
 ### Fixed
+
+- **Una novena frase con tono rioplatense en la interfaz, y el guardián que
+  faltaba.** El aviso de cuenta bloqueada decía "si necesitás levantarla antes".
+  El día anterior se habían neutralizado ocho frases y el trabajo se dio por
+  cerrado, con ésta viva: una revisión manual que se declara completa y no lo
+  está es peor que no haberla hecho, porque nadie vuelve a mirar. Ahora una
+  prueba automática revisa el catálogo entero en cada entrega.
 
 - **La misma carta en varios permisos deja de subirse varias veces (`LV-200`,
   segundo paso).** El primer paso sabía reconocer el archivo repetido y sólo lo
