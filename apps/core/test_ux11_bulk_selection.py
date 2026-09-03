@@ -218,6 +218,62 @@ class TestTheSelectionIsExplicitInTheMarkup:
 
         assert '{% include "generic/_bulk_bar.html" %}' in shell
 
+    def test_the_injected_column_brings_its_own_col(self):
+        """⚠️ **La regresión que se vio en producción el 2026-09-03.**
+
+        Cuatro listas declaran `<colgroup>` y `.table-normalized`, que usa
+        `table-layout: fixed` — ahí los `<col>` se aplican **por posición**.
+        `worktable.js` inyectaba la casilla como columna nueva **sin** su `<col>`,
+        así que todos los anchos se corrían un lugar: la casilla se quedaba con el
+        26 % de `.col-primary` y la última columna sin ancho. El usuario lo vio en
+        centros de costo, aeronaves y operadores — una primera columna enorme y
+        vacía.
+
+        No lo agarró ningún test porque es un efecto de maquetación del navegador,
+        y en este entorno lo visual no se puede medir. Lo que **sí** se puede fijar
+        es la causa: que el archivo inserte el `<col>` en el mismo lugar donde
+        inserta el `<th>`, y que el ancho exista en la hoja.
+        """
+        from pathlib import Path
+
+        from django.conf import settings
+
+        root = Path(settings.BASE_DIR)
+        script = (root / "static" / "js" / "worktable.js").read_text(encoding="utf-8")
+        css = (root / "static" / "css" / "app.css").read_text(encoding="utf-8")
+
+        assert 'querySelector("colgroup")' in script
+        assert "col-select" in script
+        # Y dentro de la **misma** guarda que crea el `<th>`, no en otra función:
+        # separarlos es cómo uno de los dos se hace y el otro no.
+        head_block = script.split('var head = table.querySelector("thead tr");')[1]
+        guard = head_block.split("head.insertBefore")[0]
+        assert "colgroup" in guard
+
+        assert ".table-normalized .col-select" in css
+
+    def test_the_lists_that_declare_widths_are_the_ones_at_risk(self):
+        """Fija **cuáles** son, para que el día que una quinta lista adopte
+        `<colgroup>` este archivo diga que hay algo que revisar en vez de que se
+        descubra en producción como esta vez."""
+        from pathlib import Path
+
+        from django.conf import settings
+
+        templates = Path(settings.BASE_DIR) / "templates"
+        with_widths = sorted(
+            path.name
+            for path in templates.rglob("*_list.html")
+            if "<colgroup>" in path.read_text(encoding="utf-8")
+        )
+
+        assert with_widths == [
+            "aircraft_list.html",
+            "costcenter_list.html",
+            "operator_list.html",
+            "qualification_list.html",
+        ]
+
     def test_every_list_partial_declares_the_identity(self):
         """**Sin esto la función alcanzaba una sola lista.**
 
