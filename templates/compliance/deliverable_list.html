@@ -20,15 +20,15 @@
 </form>
 {% endblock %}
 {% block worktable_header %}
-  {% sortable_th _("Title") "title" %}
-  {% sortable_th _("Cost center") "cost_center" %}
-  {% sortable_th _("Status") "status" %}
+  {% worktable_th _("Title") "title" %}
+  {% worktable_th _("Cost center") "cost_center" %}
+  {% worktable_th _("Status") "status" %}
   {% comment %}"Aceptación" no ordena, y no es un olvido: `meets_acceptance_criteria`
   se **deriva** de comparar las métricas contra los umbrales congelados, así que
   no es una columna de la base. Ordenar por algo parecido —el estado, digamos—
   daría un orden que no corresponde a lo que la celda dibuja, y un orden que
   miente es peor que ninguno.{% endcomment %}
-  <th scope="col">{% translate "Acceptance" %}</th>
-  {% sortable_th _("Created") "created" %}
+  {% worktable_th _("Acceptance") "acceptance" %}
+  {% worktable_th _("Created") "created" %}
 {% endblock %}
 {% block worktable_rows %}{% include "compliance/_deliverable_rows.html" %}{% endblock %}

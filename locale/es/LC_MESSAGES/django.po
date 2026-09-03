@@ -8115,15 +8115,71 @@ msgstr "La autorización DGAC no declara un número que se pueda leer."
 msgid "DGAC folio %(folio)s taken from the authorization PDF."
 msgstr "Número %(folio)s de la DGAC tomado del PDF de la autorización."
 
-#: templates/generic/_sortable_th.html
+#: templates/generic/_worktable_toolbar.html
+msgid "Saved views"
+msgstr "Vistas guardadas"
+
+#: templates/generic/_worktable_toolbar.html
+msgid "Shared with everyone"
+msgstr "Compartida con todos"
+
+#: templates/generic/_worktable_toolbar.html
+msgid "Delete this view"
+msgstr "Borrar esta vista"
+
+#: templates/generic/_worktable_toolbar.html
+#, python-brace-format
+msgid "Delete the saved view “{name}”?"
+msgstr "¿Borrar la vista guardada «{name}»?"
+
+#: templates/generic/_worktable_toolbar.html
+msgid "Columns"
+msgstr "Columnas"
+
+#: templates/generic/_worktable_toolbar.html
+msgid "Save view"
+msgstr "Guardar vista"
+
+#: templates/generic/_worktable_toolbar.html
+msgid "Share it with everyone"
+msgstr "Compartirla con todos"
+
+#: apps/core/models.py
+msgid "Shared"
+msgstr "Compartida"
+
+#: apps/core/models.py
+msgid "A shared view needs a name."
+msgstr "Una vista compartida necesita un nombre."
+
+#: apps/core/views.py
+msgid "A saved view needs a name."
+msgstr "Una vista guardada necesita un nombre."
+
+#: apps/core/views.py
+#, python-format
+msgid "View “%(name)s” saved."
+msgstr "Vista «%(name)s» guardada."
+
+#: apps/core/views.py
+#, python-format
+msgid "View “%(name)s” updated."
+msgstr "Vista «%(name)s» actualizada."
+
+#: apps/core/views.py
+#, python-format
+msgid "View “%(name)s” deleted."
+msgstr "Vista «%(name)s» borrada."
+
+#: templates/generic/_worktable_th.html
 msgid "Sort by this column"
 msgstr "Ordenar por esta columna"
 
-#: templates/generic/_sortable_th.html
+#: templates/generic/_worktable_th.html
 msgid "Sorted ascending. Sort descending"
 msgstr "Ordenado de menor a mayor. Ordenar de mayor a menor"
 
-#: templates/generic/_sortable_th.html
+#: templates/generic/_worktable_th.html
 msgid "Sorted descending. Sort ascending"
 msgstr "Ordenado de mayor a menor. Ordenar de menor a mayor"
 

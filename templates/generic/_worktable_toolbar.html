@@ -1,0 +1,63 @@
+{% load i18n %}
+{% comment %}`UX-09` y `UX-12`: las pestañas de vistas guardadas y el selector de
+columnas, en una sola barra sobre la tabla.
+
+Van juntas porque son la misma pregunta —*con qué estado vuelvo a esta lista*— y
+porque separarlas habría puesto dos barras encima de la tabla, comiéndose la
+altura que la lista necesita.
+
+**Toda la barra desaparece para quien no inició sesión**: no hay preferencias que
+leer ni que guardar, y una barra con controles muertos es peor que ninguna.{% endcomment %}
+{% if worktable_prefs.can_save %}
+<div class="worktable-toolbar" data-list-key="{{ worktable_prefs.key }}">
+  {% comment %}`UX-12`: *"Seguros vencidos" y "Credenciales a 60 días" se guardan
+  y aparecen como pestañas sobre la tabla*. "Todo" es la primera y no una vista
+  guardada: es el camino de vuelta, y sin él salir de una vista exigiría borrar
+  el parámetro a mano en la barra de direcciones.{% endcomment %}
+  <nav class="worktable-views" aria-label="{% translate 'Saved views' %}">
+    <a class="worktable-view{% if not worktable_prefs.active %} is-active{% endif %}" href="{{ request.path }}">{% translate "All" %}</a>
+    {% for view in worktable_prefs.views %}
+    <span class="worktable-view-wrap">
+      <a class="worktable-view{% if worktable_prefs.active.pk == view.pk %} is-active{% endif %}" href="{{ request.path }}?{% if view.query %}{{ view.query }}&amp;{% endif %}view={{ view.pk }}">{{ view.name }}{% if view.is_shared %} <span class="worktable-view-shared" title="{% translate 'Shared with everyone' %}" aria-hidden="true">◈</span>{% endif %}</a>
+      {% comment %}Borrar sólo la propia. Compartir es ofrecer, no ceder: una
+      vista que cualquiera puede borrar es una vista en la que nadie confía.{% endcomment %}
+      {% if view.user_id == request.user.pk %}
+      <form method="post" action="{% url 'list-view-delete' view.pk %}" class="d-inline">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="worktable-view-delete" data-confirm="{% blocktranslate with name=view.name %}Delete the saved view “{{ name }}”?{% endblocktranslate %}" title="{% translate 'Delete this view' %}">&times;</button></form>
+      {% endif %}
+    </span>
+    {% endfor %}
+  </nav>
+
+  <div class="worktable-toolbar-actions">
+    {% comment %}`UX-09`: el selector de columnas. Se llena desde el propio
+    encabezado de la tabla (`worktable.js` lee cada `<th data-col>`), así que no
+    hay una segunda lista de columnas en ninguna plantilla — y una segunda lista
+    es cómo el selector y la tabla terminan discrepando.
+
+    Vacío en el marcado y `hidden`: si el JS no corre, no queda un botón que no
+    hace nada.{% endcomment %}
+    <details class="worktable-columns" hidden>
+      <summary class="btn btn-sm btn-outline-secondary">{% translate "Columns" %}</summary>
+      <div class="worktable-columns-menu" role="group" aria-label="{% translate 'Columns' %}"></div>
+    </details>
+
+    <details class="worktable-save-view">
+      <summary class="btn btn-sm btn-outline-secondary">{% translate "Save view" %}</summary>
+      <form method="post" action="{% url 'list-view-save' %}" class="worktable-save-menu">
+        {% csrf_token %}
+        <input type="hidden" name="list_key" value="{{ worktable_prefs.key }}">
+        <input type="hidden" name="next" value="{{ request.path }}">
+        {% comment %}La query se rellena con `location.search` desde el JS: el
+        formulario tiene que guardar **el filtro que la persona está mirando**, y
+        eso incluye lo que escribió en la búsqueda en vivo, que no llega al
+        servidor como parte de esta petición.{% endcomment %}
+        <input type="hidden" name="query" value="" data-worktable-query>
+        <label class="form-label small mb-1" for="worktable-view-name">{% translate "Name" %}</label>
+        <input class="form-control form-control-sm mb-2" id="worktable-view-name" name="name" maxlength="80" required>
+        <label class="form-check small mb-2"><input class="form-check-input" type="checkbox" name="is_shared"> {% translate "Share it with everyone" %}</label>
+        <button class="btn btn-sm btn-primary w-100">{% translate "Save" %}</button>
+      </form>
+    </details>
+  </div>
+</div>
+{% endif %}

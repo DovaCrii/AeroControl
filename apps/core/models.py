@@ -264,3 +264,69 @@ class ImportBatch(BaseModel):
 
     class Meta:
         ordering = ["-created_at"]
+
+
+class ListPreference(BaseModel):
+    """UX-09 y UX-12: cómo mira **esta persona** una lista, y sus vistas guardadas.
+
+    **Un solo modelo para las dos filas, y es deliberado.** `UX-09` pide un
+    selector de columnas "persistido por lista y por persona"; `UX-12` pide un
+    filtro con nombre, propio o compartido. Las dos son *el estado con el que
+    alguien vuelve a una lista*, y separarlas habría dado dos tablas con la misma
+    llave (persona + lista) que después hay que leer juntas en cada render.
+    Juntas, además, una vista guardada recuerda **también sus columnas**, que es
+    como funciona en cualquier herramienta que tenga las dos cosas -- guardar
+    "Seguros vencidos" y que vuelva con las columnas de otra vista sería raro.
+
+    `name` vacío es el registro de `UX-09`: *las columnas por omisión de esta
+    persona en esta lista*. Con nombre es una vista guardada de `UX-12`. La
+    restricción única cubre las dos formas de una vez.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="list_preferences",
+    )
+    # El nombre de la ruta del listado (`alert-list`, `battery-list`). Se guarda
+    # el nombre y no la URL porque una URL cambia cuando alguien reorganiza
+    # `urls.py`, y ahí las preferencias de todos apuntarían a una pantalla que ya
+    # no existe -- sin ningún error, simplemente dejando de aplicarse.
+    list_key = models.CharField(max_length=100)
+    name = models.CharField(max_length=80, blank=True, verbose_name=_("Name"))
+    # ⚠️ Se guardan las columnas **ocultas**, no las visibles, y esa es la
+    # decisión del campo. Con las visibles, una columna nueva sería invisible
+    # para todo el que alguna vez haya guardado una preferencia: la lista
+    # estrenaría la columna mostrándosela sólo a quien nunca la configuró, que es
+    # exactamente al revés. Con las ocultas, lo nuevo aparece para todos y lo que
+    # alguien escondió sigue escondido.
+    hidden_columns = models.JSONField(default=list, blank=True)
+    # La query guardada de `UX-12`, sin el `?`. Texto y no JSON porque es lo que
+    # se pega en el enlace de la pestaña: convertirla a estructura y volver a
+    # armarla es una ida y vuelta en la que se pierden los parámetros repetidos.
+    query = models.CharField(max_length=500, blank=True)
+    # UX-12, *"propia o compartida"*. Compartida es de lectura para los demás:
+    # sólo quien la creó la edita o la borra. Una vista que cualquiera puede
+    # reescribir es una vista en la que nadie confía.
+    is_shared = models.BooleanField(default=False, verbose_name=_("Shared"))
+
+    class Meta:
+        ordering = ["name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "list_key", "name"],
+                name="unique_list_preference_per_person",
+            )
+        ]
+
+    def __str__(self):
+        return self.name or self.list_key
+
+    def clean(self):
+        # Una vista compartida sin nombre sería el registro de columnas por
+        # omisión de alguien, compartido con todos: no es una vista, es la
+        # configuración personal de una persona impuesta al resto.
+        if self.is_shared and not self.name:
+            raise ValidationError(
+                {"name": _("A shared view needs a name.")},
+            )

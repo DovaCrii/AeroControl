@@ -1,0 +1,25 @@
+{% load i18n %}
+{% comment %}`UX-07`/`UX-09`: un encabezado de la tabla de trabajo.
+
+`data-col` es **la identidad de la columna**, y es lo que hace posible esconderla
+sin tocar un solo parcial de filas: `worktable.js` copia ese nombre a cada celda
+de la columna por posición, igual que ya hacía con `data-label`.
+
+Ordena **sólo si la vista lo declaró** en `sortable_columns`. Una columna puede
+tener nombre y no ordenar —"Entidad" en alertas es una relación genérica, no hay
+por qué ordenar— y sigue siendo una de las que alguien querría sacar del medio.
+Sin nombre y sin orden, degrada a un `<th>` a secas, en vez de dibujar un enlace
+que no hace nada.
+
+`aria-sort` es lo que un lector de pantalla anuncia; sin él la flechita es
+información que existe sólo para quien ve. Y el enlace lleva **el resto de la
+query intacta** (`base_query`, o sea todo menos `sort`, `dir` y `page`), así que
+ordenar no descarta el filtro que la persona acaba de aplicar — y vuelve a la
+página 1, porque la página 3 de otro orden es un lugar que nadie pidió.{% endcomment %}
+{% if url %}
+<th scope="col"{% if column %} data-col="{{ column }}"{% endif %}{% if align or css %} class="{% if align %}text-{{ align }} {% endif %}{{ css }}"{% endif %} aria-sort="{% if state == 'asc' %}ascending{% elif state == 'desc' %}descending{% else %}none{% endif %}">
+  <a class="worktable-sort{% if state %} is-sorted{% endif %}" href="{{ url }}" title="{% if state == 'asc' %}{% translate "Sorted ascending. Sort descending" %}{% elif state == 'desc' %}{% translate "Sorted descending. Sort ascending" %}{% else %}{% translate "Sort by this column" %}{% endif %}">{{ label }}<span class="worktable-sort-mark" aria-hidden="true">{% if state == 'asc' %}&#9650;{% elif state == 'desc' %}&#9660;{% else %}&#8693;{% endif %}</span></a>
+</th>
+{% else %}
+<th scope="col"{% if column %} data-col="{{ column }}"{% endif %}{% if align or css %} class="{% if align %}text-{{ align }} {% endif %}{{ css }}"{% endif %}>{{ label }}</th>
+{% endif %}

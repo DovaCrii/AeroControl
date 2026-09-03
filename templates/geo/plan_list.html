@@ -44,14 +44,14 @@ sin él, archivar no tendría vuelta.{% endcomment %}
 </form>
 {% endblock %}
 {% block worktable_header %}
-          {% sortable_th _("Number") "number" %}
+          {% worktable_th _("Number") "number" %}
           {% comment %}LV-149: la columna dejó de ser el título completo y pasó a
           ser el nombre del KMZ, así que el encabezado tiene que decirlo.{% endcomment %}
-          {% sortable_th _("File") "file" %}
-          {% sortable_th _("Cost center") "cost_center" %}
-          {% sortable_th _("Status") "status" %}
-          <th scope="col">{% translate "Version" %}</th>
-          {% sortable_th _("Created") "created" %}
+          {% worktable_th _("File") "file" %}
+          {% worktable_th _("Cost center") "cost_center" %}
+          {% worktable_th _("Status") "status" %}
+          {% worktable_th _("Version") "version" %}
+          {% worktable_th _("Created") "created" %}
           <th scope="col"></th>
 {% endblock %}
 {% block worktable_rows %}{% include "geo/_plan_rows.html" %}{% endblock %}

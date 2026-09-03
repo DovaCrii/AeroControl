@@ -29,17 +29,17 @@ entrar por esa puerta, y que se escribía a mano o faltaba:
 </form>
 {% endblock %}
 {% block worktable_header %}
-  {% sortable_th _("Entity type") "entity_type" %}
-  <th scope="col">{% translate "Entity" %}</th>
-  {% sortable_th _("Rule") "rule" %}
-  {% sortable_th _("Triggered") "triggered" %}
-  {% sortable_th _("Expiry") "expiry" %}
+  {% worktable_th _("Entity type") "entity_type" %}
+  {% worktable_th _("Entity") "entity" %}
+  {% worktable_th _("Rule") "rule" %}
+  {% worktable_th _("Triggered") "triggered" %}
+  {% worktable_th _("Expiry") "expiry" %}
   {% comment %}LV-110: la resolución y su motivo tienen columna propia. Vivían
   dentro de "Acciones", debajo de los botones, así que la evidencia que el modal
   de resolver insiste en pedir (ISO 10.2) quedaba apretada contra el borde
   derecho y en letra chica -- y la columna de acciones mezclaba dos cosas
   distintas: qué pasó con la alerta y qué puedes hacer con ella.{% endcomment %}
-  {% sortable_th _("Resolution") "resolution" %}
+  {% worktable_th _("Resolution") "resolution" %}
   <th scope="col" class="text-end">{% translate "Actions" %}</th>
 {% endblock %}
 {% block worktable_rows %}{% include "compliance/_alert_rows.html" %}{% endblock %}

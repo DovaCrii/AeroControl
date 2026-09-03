@@ -18,7 +18,7 @@ from django.core.exceptions import (
     PermissionDenied,
     ValidationError,
 )
-from django.db import transaction
+from django.db import models, transaction
 from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.conf import settings
 from django.db import connection
@@ -100,7 +100,71 @@ class SortableColumnsMixin:
         return context
 
 
-class SearchMixin(SortableColumnsMixin):
+class ListPreferenceMixin:
+    """UX-09/UX-12: las columnas de esta persona y sus vistas guardadas.
+
+    Un solo mixin para las dos filas porque un solo modelo las guarda, y la
+    lectura es la misma consulta: *qué guardó esta persona para esta lista*.
+    Hacerlo en dos habría significado dos consultas por render para responder la
+    misma pregunta.
+
+    `list_key` es **el nombre de la ruta**, no la URL: una URL cambia cuando
+    alguien reorganiza `urls.py`, y ahí las preferencias de todos apuntarían a una
+    pantalla que ya no existe -- sin ningún error, simplemente dejando de
+    aplicarse.
+
+    Una vista anónima no tiene preferencias que leer y tampoco falla: devuelve el
+    estado vacío, que dibuja la lista como siempre.
+    """
+
+    def list_key(self):
+        match = getattr(self.request, "resolver_match", None)
+        return getattr(match, "url_name", "") or ""
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from apps.core.models import ListPreference
+
+        key = self.list_key()
+        user = self.request.user
+        if not key or not user.is_authenticated:
+            context["worktable_prefs"] = {"hidden": [], "views": [], "key": key}
+            return context
+        # Las propias más las compartidas por otros, en una sola consulta. Lo
+        # compartido es de lectura: quien no la creó no la edita ni la borra, y
+        # por eso cada fila viaja sabiendo si es suya.
+        rows = list(
+            ListPreference.objects.filter(
+                models.Q(user=user) | models.Q(is_shared=True),
+                list_key=key,
+                is_active=True,
+            ).select_related("user")
+        )
+        mine_default = next(
+            (row for row in rows if row.user_id == user.pk and not row.name), None
+        )
+        views = [row for row in rows if row.name]
+        active = self.request.GET.get("view", "")
+        current = next((row for row in views if str(row.pk) == active), None)
+        # Una vista activa manda sobre las columnas por omisión: si alguien
+        # guardó "Seguros vencidos" con tres columnas, volver a ella con las
+        # columnas de otra vista sería devolver algo que no es lo que guardó.
+        hidden = (
+            list((current or mine_default).hidden_columns)
+            if (current or mine_default)
+            else []
+        )
+        context["worktable_prefs"] = {
+            "key": key,
+            "hidden": hidden,
+            "views": views,
+            "active": current,
+            "can_save": True,
+        }
+        return context
+
+
+class SearchMixin(ListPreferenceMixin, SortableColumnsMixin):
     """Add text search and the common active/archive filter to list views."""
 
     search_fields = []
@@ -598,6 +662,134 @@ class AlertCountPartial(LoginRequiredMixin, View):
         return render(
             request, "core/_alert_badge.html", {"unresolved_alert_count": count}
         )
+
+
+def _safe_next(request, fallback="/"):
+    """El `next` del formulario, **sólo si apunta a esta app**.
+
+    Sin esta comprobación, `next=https://otro-sitio/` convertiría "guardar una
+    vista" en un redirector abierto: un enlace que sale de AeroControl y por eso
+    parece de confianza, hacia una pantalla de acceso copiada. Django trae la
+    comprobación hecha (`url_has_allowed_host_and_scheme`) y es la misma que usa
+    su propio `LoginView`; escribirla a mano sería la ocasión de escribirla mal.
+    """
+    from django.utils.http import url_has_allowed_host_and_scheme
+
+    candidate = request.POST.get("next") or ""
+    if candidate and url_has_allowed_host_and_scheme(
+        candidate,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return candidate
+    return fallback
+
+
+class ListColumnsSave(LoginRequiredMixin, View):
+    """UX-09: guardar qué columnas esconde **esta persona** en esta lista.
+
+    Sin permiso de modelo, y a propósito: no cambia ningún dato del negocio, sólo
+    cómo alguien mira su propia pantalla. Pedir `change_alert` para esconder una
+    columna de la lista de alertas convertiría una preferencia personal en un
+    privilegio, y quien sólo puede ver es justamente quien más necesita acomodar
+    la vista.
+
+    `list_key` viene del formulario, y eso está acotado por el largo del campo:
+    es una llave de agrupación, no una ruta que se resuelva ni una consulta que
+    se arme. Lo peor que consigue una llave inventada es guardarle a esa persona
+    una preferencia que ninguna pantalla lee.
+    """
+
+    def post(self, request):
+        from apps.core.models import ListPreference
+
+        key = (request.POST.get("list_key") or "").strip()[:100]
+        if not key:
+            return JsonResponse({"saved": False}, status=400)
+        hidden = [
+            value.strip()[:60]
+            for value in request.POST.getlist("hidden")
+            if value.strip()
+        ]
+        ListPreference.objects.update_or_create(
+            user=request.user,
+            list_key=key,
+            name="",
+            defaults={"hidden_columns": hidden, "is_active": True},
+        )
+        return JsonResponse({"saved": True, "hidden": hidden})
+
+
+class ListViewSave(LoginRequiredMixin, View):
+    """UX-12: guardar el filtro actual con un nombre.
+
+    Guarda la query que la persona tiene puesta, y le saca `page` y `view`: una
+    vista guardada que arrastra "página 3" devuelve la página 3 de un conjunto
+    que ya cambió, y una que arrastra `view` se apuntaría a sí misma.
+
+    Guardar de nuevo con el mismo nombre **actualiza**, no duplica. Dos vistas
+    llamadas "Seguros vencidos" con filtros distintos es la forma más rápida de
+    que nadie confíe en ninguna.
+    """
+
+    def post(self, request):
+        from urllib.parse import parse_qsl, urlencode
+
+        from apps.core.models import ListPreference
+
+        key = (request.POST.get("list_key") or "").strip()[:100]
+        name = (request.POST.get("name") or "").strip()[:80]
+        if not key or not name:
+            messages.error(request, _("A saved view needs a name."))
+            return redirect(_safe_next(request))
+        pairs = [
+            (field, value)
+            for field, value in parse_qsl((request.POST.get("query") or "").lstrip("?"))
+            if field not in {"page", "view"}
+        ]
+        hidden = [
+            value.strip()[:60]
+            for value in request.POST.getlist("hidden")
+            if value.strip()
+        ]
+        view, created = ListPreference.objects.update_or_create(
+            user=request.user,
+            list_key=key,
+            name=name,
+            defaults={
+                "query": urlencode(pairs)[:500],
+                "hidden_columns": hidden,
+                "is_shared": request.POST.get("is_shared") == "on",
+                "is_active": True,
+            },
+        )
+        messages.success(
+            request,
+            _("View “%(name)s” saved.") % {"name": view.name}
+            if created
+            else _("View “%(name)s” updated.") % {"name": view.name},
+        )
+        return redirect(_safe_next(request))
+
+
+class ListViewDelete(LoginRequiredMixin, View):
+    """UX-12: borrar una vista guardada.
+
+    **Sólo la propia.** Una vista compartida la borra quien la creó y nadie más:
+    compartir es ofrecer, no ceder. El filtro por `user` está en la consulta y no
+    en un `if` posterior, que es la diferencia entre no encontrarla y encontrarla
+    y decidir no tocarla -- la segunda forma es la que alguien "simplifica"
+    después.
+    """
+
+    def post(self, request, pk):
+        from apps.core.models import ListPreference
+
+        view = get_object_or_404(ListPreference, pk=pk, user=request.user)
+        name = view.name
+        view.delete()
+        messages.success(request, _("View “%(name)s” deleted.") % {"name": name})
+        return redirect(_safe_next(request))
 
 
 class HealthCheckView(View):

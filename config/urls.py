@@ -11,6 +11,9 @@ from apps.core.views import (
     CspReportView,
     GlobalSearchView,
     HealthCheckView,
+    ListColumnsSave,
+    ListViewDelete,
+    ListViewSave,
     SignInView,
     UnifiedCalendarEventsView,
     UserRoleListView,
@@ -64,6 +67,21 @@ urlpatterns = [
     ),
     path("i18n/setlang/", set_language, name="set_language"),
     path("alerts/count/", AlertCountPartial.as_view(), name="alert-count"),
+    # UX-09/UX-12: las preferencias de lista. Fuera de cualquier app de negocio a
+    # propósito -- no son datos de una faena ni de un permiso, son cómo una
+    # persona mira cualquier listado, y colgarlas de `compliance` habría atado
+    # una función transversal a un módulo.
+    path(
+        "listas/columnas/",
+        ListColumnsSave.as_view(),
+        name="list-columns-save",
+    ),
+    path("listas/vistas/", ListViewSave.as_view(), name="list-view-save"),
+    path(
+        "listas/vistas/<uuid:pk>/borrar/",
+        ListViewDelete.as_view(),
+        name="list-view-delete",
+    ),
     path("health/", HealthCheckView.as_view(), name="health"),
     path("csp-report/", CspReportView.as_view(), name="csp-report"),
     path(

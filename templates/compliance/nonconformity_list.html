@@ -26,16 +26,16 @@
 </form>
 {% endblock %}
 {% block worktable_header %}
-  {% sortable_th _("Title") "title" %}
-  {% sortable_th _("Source") "source" %}
-  {% sortable_th _("Cost center") "cost_center" %}
-  {% sortable_th _("Detected") "detected" %}
-  {% sortable_th _("Status") "status" %}
+  {% worktable_th _("Title") "title" %}
+  {% worktable_th _("Source") "source" %}
+  {% worktable_th _("Cost center") "cost_center" %}
+  {% worktable_th _("Detected") "detected" %}
+  {% worktable_th _("Status") "status" %}
   {% comment %}"Eficacia" no ordena: la celda dibuja **cuatro** cosas distintas
   según el caso (verificada, vencida, la fecha comprometida, o nada porque la
   pregunta todavía no aplica), y no hay una columna cuyo orden reproduzca esa
   secuencia. Ordenar por `effectiveness_due_date` mezclaría las verificadas con
   las que nunca tuvieron fecha.{% endcomment %}
-  <th scope="col">{% translate "Effectiveness" %}</th>
+  {% worktable_th _("Effectiveness") "effectiveness" %}
 {% endblock %}
 {% block worktable_rows %}{% include "compliance/_nonconformity_rows.html" %}{% endblock %}
