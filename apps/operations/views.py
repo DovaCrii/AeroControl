@@ -1,4 +1,5 @@
 import calendar
+import logging
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from urllib.parse import quote
@@ -60,6 +61,8 @@ from .models import (
 from .selectors import DAILY_FLIGHT_LIMIT, duty_time_for, format_duration
 from apps.registry.models import Aircraft, CostCenter, Operator
 from apps.registry.selectors import operator_aircraft_compatibility_gaps
+
+logger = logging.getLogger(__name__)
 
 
 class OList(CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListView):
@@ -381,10 +384,30 @@ class FlightPermissionDetail(
 
         return locate(float(permission.latitude), float(permission.longitude))
 
+    @staticmethod
+    def _suggested_folio(permission):
+        """LV-231: el número que la autorización DGAC trae escrito.
+
+        **Sólo cuando la casilla está vacía.** Un permiso que ya tiene folio no
+        necesita que se lo sugieran, y sobreponerle una lectura del PDF sería
+        reemplazar un dato que alguien verificó por una heurística -- el mismo
+        criterio que `LV-220` fija para la región.
+
+        **Se calcula al dibujar y no se guarda**, y esa es la decisión de la
+        fila: extraer de un PDF es heurística, así que el número se **propone**
+        para confirmar, con su origen a la vista, y el camino de teclearlo sigue
+        intacto si la extracción falla. Un folio equivocado escrito solo es peor
+        que un folio en blanco, porque el equivocado nadie lo revisa.
+        """
+        if (permission.permission_number or "").strip():
+            return None
+        return read_dgac_folio(permission)
+
     def get_context_data(self, **kwargs):
         from apps.compliance.attachments import attached_documents_context
 
         context = super().get_context_data(**kwargs)
+        context["suggested_folio"] = self._suggested_folio(self.object)
         # LV-107: "¿esta operación está completa y documentada?" respondida acá,
         # en vez de abriendo cinco pantallas y acordándose de todas. Composición
         # pura de lo que ya existe -- ver apps/operations/dossier.py.
@@ -477,6 +500,86 @@ def has_dgac_authorization(permission):
         is_current_version=True,
         is_active=True,
     ).exists()
+
+
+def read_dgac_folio(permission):
+    """LV-231: el folio que declara la autorización DGAC adjunta a este permiso.
+
+    Vive al lado de `has_dgac_authorization` y busca **el mismo documento**, por
+    la misma razón que aquélla se extrajo del mixin: es un hecho del mundo, y una
+    segunda forma de preguntar por el mismo papel es cómo una de las dos deja de
+    encontrarlo.
+
+    Devuelve `None` ante cualquier duda -- sin PDF, con el archivo ilegible, o
+    cuando el patrón encuentra dos números distintos.
+    """
+    from apps.compliance.models import Document
+    from apps.compliance.storage import get_document_storage
+
+    from .dgac_pdf import folio_from_pdf
+
+    document = (
+        Document.objects.filter(
+            content_type=ContentType.objects.get_for_model(type(permission)),
+            object_id=permission.pk,
+            doc_type__code="dgac-rpa-operation-authorization",
+            is_current_version=True,
+            is_active=True,
+        )
+        .exclude(file_path="")
+        .order_by("-created_at")
+        .first()
+    )
+    if document is None:
+        return None
+    try:
+        with get_document_storage().open(document.file_path) as stream:
+            return folio_from_pdf(stream)
+    except Exception:  # noqa: BLE001 - un archivo ausente es "sin sugerencia"
+        logger.info("dgac_folio_file_unavailable", exc_info=True)
+        return None
+
+
+class PermissionFolioFromPdf(ModelPermissionRequiredMixin, View):
+    """LV-231: escribir el folio que el PDF de la DGAC trae, al confirmarlo.
+
+    ⚠️ **Vuelve a leer el PDF y no acepta ningún número del formulario.** Ese es
+    el punto de seguridad de esta vista: si el botón llevara el valor sugerido en
+    un campo oculto, "confirmar la sugerencia" sería un camino para escribir
+    cualquier folio -- y encima uno que la ficha presentaría después como leído
+    del papel. El cliente manda la intención; el número lo pone el servidor.
+
+    **No pisa un folio ya escrito**, por la misma razón por la que la sugerencia
+    no se dibuja cuando la casilla tiene algo: lo tecleado con el papel en
+    pantalla vale más que una heurística.
+    """
+
+    model = FlightPermission
+    permission_action = "change"
+
+    def post(self, request, pk):
+        permission = get_object_or_404(self.model, pk=pk, is_active=True)
+        if (permission.permission_number or "").strip():
+            messages.info(
+                request,
+                _("This permit already has a DGAC folio; it was left untouched."),
+            )
+            return redirect(permission)
+        folio = read_dgac_folio(permission)
+        if not folio:
+            messages.error(
+                request,
+                _("The DGAC authorization does not state a number that can be read."),
+            )
+            return redirect(permission)
+        permission.permission_number = folio
+        permission.save(update_fields=["permission_number", "updated_at"])
+        messages.success(
+            request,
+            _("DGAC folio %(folio)s taken from the authorization PDF.")
+            % {"folio": folio},
+        )
+        return redirect(permission)
 
 
 class RequireDgacPermitPdfMixin:

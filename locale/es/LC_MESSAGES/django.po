@@ -8090,6 +8090,31 @@ msgstr "Derivada de las coordenadas"
 msgid "Declared"
 msgstr "Declarada"
 
+#: templates/operations/permission_detail.html
+msgid "Read from the DGAC authorization"
+msgstr "Leído de la autorización DGAC"
+
+#: templates/operations/permission_detail.html
+msgid "Check it against the PDF before confirming"
+msgstr "Contrástelo con el PDF antes de confirmar"
+
+#: templates/operations/permission_detail.html
+msgid "Use this number"
+msgstr "Usar este número"
+
+#: apps/operations/views.py
+msgid "This permit already has a DGAC folio; it was left untouched."
+msgstr "Este permiso ya tiene número de la DGAC; no se modificó."
+
+#: apps/operations/views.py
+msgid "The DGAC authorization does not state a number that can be read."
+msgstr "La autorización DGAC no declara un número que se pueda leer."
+
+#: apps/operations/views.py
+#, python-format
+msgid "DGAC folio %(folio)s taken from the authorization PDF."
+msgstr "Número %(folio)s de la DGAC tomado del PDF de la autorización."
+
 #: templates/generic/_sortable_th.html
 msgid "Sort by this column"
 msgstr "Ordenar por esta columna"

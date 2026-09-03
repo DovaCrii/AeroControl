@@ -34,6 +34,14 @@ urlpatterns = [
         views.FlightPermissionComplete.as_view(),
         name="permission-complete",
     ),
+    # LV-231: tomar el folio del PDF de la autorización DGAC. `POST` y no `GET`
+    # porque escribe, y sin ningún parámetro: el número lo vuelve a leer el
+    # servidor del propio archivo, nunca llega del formulario.
+    path(
+        "permissions/<uuid:pk>/folio-from-pdf/",
+        views.PermissionFolioFromPdf.as_view(),
+        name="permission-folio-from-pdf",
+    ),
     # LV-135: archivar es el "borrar" de este proyecto. Con confirmación
     # siempre, y con motivo escrito si el permiso ya estaba aprobado.
     path(
