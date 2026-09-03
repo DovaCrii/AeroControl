@@ -291,20 +291,27 @@ línea del entorno, la ayuda y el botón de mostrar contraseña.
   del mes, que es cuando el corte todavía no cerró.
 - **`SUPPORT_CONTACT`** en `/etc/aerocontrol.env`, opcional: sin él la pantalla
   de acceso dice qué hacer sin nombrar a nadie.
-- **`UX-04` y `UX-05`, y el bloque 9 entero.** Medido antes de decidir, no
-  estimado:
+- **El bloque 9 salvo su primera pieza.** `UX-02`, `UX-04` y `UX-05` están
+  hechos; de `UX-07` entró *"mostrando N–M de T"*, que es la parte que aplica a
+  las doce listas sin tocar ninguna. Medido antes de decidir, no estimado:
 
-  | Fila | Alcance real medido el 2026-09-02 |
-  |---|---|
-  | `UX-04` · encabezado único | **59 `<h1>`** en plantillas, en **8 formas** distintas (`h3`, `h3 mb-0`, sin clase, `h3 mb-1`, `mb-0`, `h3 mb-3`, `h4`…) y 25 `.page-header`. Mecánico pero toca ~30 plantillas |
-  | `UX-05` · sprite SVG | **55 `<path>`** en línea sólo en `base.html` |
-  | `UX-07`…`UX-12` · la tabla | **58 `<table>`** escritos a mano, 12 listas sobre `generic/list.html`, y **31 acoplamientos de tests a clases de presentación** en 15 archivos — el barrido que §6.3 del plan marca como bloqueante. Además `UX-09` (columnas por persona) y `UX-12` (vistas guardadas, propias o compartidas) **necesitan modelo y migración** |
+  | Fila | Alcance real medido el 2026-09-02 | Estado |
+  |---|---|---|
+  | `UX-02` · escala | 311 literales `rem`, 12 repetidos entre 9 y 26 veces | ✅ tokens + techo |
+  | `UX-04` · encabezado único | **59 `<h1>`** en **8 formas** distintas | ✅ tamaño; marcado incremental |
+  | `UX-05` · sprite SVG | **55 `<path>`** en línea en `base.html` | ✅ 28 símbolos |
+  | `UX-07` · "mostrando N–M de T" | Las 12 listas comparten `_pagination.html` | ✅ |
+  | `UX-07` · componente de tabla | **58 `<table>`** a mano; ~12 asserts acoplados a clases de presentación (el resto de los 31 son comentarios) | ⬜ |
+  | `UX-08`, `UX-10`, `UX-11` | Densidad, fila-tarjeta móvil, acciones en lote | ⬜ |
+  | `UX-09`, `UX-12` | Columnas por persona y vistas guardadas — **modelo nuevo y migración cada una** | ⬜ |
 
-  Los tres son **refactores sin efecto visible para el usuario** y con riesgo de
-  regresión repartido en decenas de plantillas. Meterlos en el mismo lote que
-  `LV-189` —que mueve las cifras del cumplimiento— agranda el radio de impacto
-  sin ganancia operativa, y si algo sale mal en producción no se sabría cuál de
-  los dos fue.
+  Lo que queda de la tanda de la tabla **no es una fila más**: son dos modelos
+  con migración y un componente que sustituye 58 tablas. El propio plan lo
+  estima en 1–2 sesiones y es el único que marca de **riesgo alto**.
+
+  ⚠️ **Y antes de `UX-07`, el barrido de §6.3.** Los ~12 asserts que localizan
+  por clase de presentación se rompen todos con un componente de tabla nuevo; si
+  no se barren primero, la tanda se va en arreglarlos. La lista está arriba.
 - **`LV-189`** (documentos de sujetos en estado terminal). Está **medida y lista
   para escribir** —son cuatro líneas en `_subject_scope`— y se dejó fuera **a
   propósito**: mueve los porcentajes de cumplimiento igual que `LV-188`, y su
