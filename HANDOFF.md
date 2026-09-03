@@ -308,6 +308,20 @@ se aplican **una vez por sesión de pruebas**, no por prueba. El detalle y las
 otras razones (26 `RunPython` sin `elidable`) están en `MASTER_PLAN.md` §
 "Migraciones". **No squashear.**
 
+#### Después del despliegue, el mismo día
+
+- **`c58dace`** — arreglo de la primera columna enorme y vacía en centros de
+  costo, aeronaves y operadores. Desplegado (2 estáticos). Era la casilla de
+  selección inyectándose sin su `<col>`; con `table-layout: fixed` eso corría
+  todos los anchos un lugar. **Sin migración.**
+- **`LV-200c`** — "Usar uno ya cargado" en el expediente del permiso, para no
+  volver a subir la misma carta del mandante. **Sin migración**, pero necesita
+  `collectstatic` no; sólo `git pull` y reiniciar (cambian plantillas y
+  catálogo, no estáticos).
+- 🆕 **`LV-233` y `LV-234` abiertas**, las dos sobre el informe mensual: revisar
+  cómo se edita y se cambia, y **si el cruce de información es correcto**. La
+  segunda es el hallazgo que bloquea a la primera — ver abajo.
+
 #### Lo que sigue abierto
 
 - **`LV-218(b)`, el cruce automático de NOTAM: bloqueado fuera del código.** La

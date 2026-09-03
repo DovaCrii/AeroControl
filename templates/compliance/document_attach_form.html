@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% comment %}`LV-200` paso 3: elegir un papel ya cargado en vez de volver a
+subirlo.
+
+La lista la arma `reusable_documents`, que sólo ofrece **el mismo tipo de
+documento, de la misma faena, sobre otro registro del mismo tipo, y vigente**.
+Que la lista sea corta no es una limitación: una carta del mandante de otra faena
+no es un atajo, es un documento falso en el expediente.
+
+Cada opción muestra **de dónde viene y hasta cuándo vale**, porque adjuntar un
+papel al expediente de un permiso es una afirmación ante la DGAC y quien la hace
+tiene que poder ver qué está afirmando. Un selector con sólo el título obligaría
+a confiar en que el sistema eligió bien.{% endcomment %}
+{% block title %}{% translate "Attach a document already on file" %} - AeroControl{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="h3">{% translate "Attach a document already on file" %}</h1>
+    <p class="page-description mb-0">{% blocktranslate with record=entity %}It will be attached to {{ record }}, sharing the same file.{% endblocktranslate %}</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    {% if candidates %}
+    <form method="post" action="{% url 'document-attach-existing' %}">
+      {% csrf_token %}
+      <input type="hidden" name="entity_type" value="{{ content_type_id }}">
+      <input type="hidden" name="object_id" value="{{ entity.pk }}">
+      <input type="hidden" name="doc_type" value="{{ doc_type_code }}">
+      {% for candidate in candidates %}
+      <label class="form-check d-block mb-3">
+        <input class="form-check-input" type="radio" name="document" value="{{ candidate.pk }}" {% if forloop.first %}checked{% endif %} required>
+        <strong>{{ candidate.title }}</strong>
+        <div class="small text-body-secondary">
+          {% blocktranslate with origin=candidate.content_object %}On file at {{ origin }}{% endblocktranslate %}
+          {% comment %}Los rótulos van con la mayúscula que **ya tiene el
+          catálogo**: escribirlos en minúscula creaba un segundo msgid para la
+          misma palabra, y el guardián de traducciones lo marcó. Separados por
+          `·` se leen como etiquetas, no como frase, así que la mayúscula no
+          desentona.{% endcomment %}
+          · {% translate "Issued" %} {{ candidate.issue_date|date:"Y-m-d" }}
+          {% if candidate.expiry_date %} · {% translate "Valid until" %} {{ candidate.expiry_date|date:"Y-m-d" }}{% else %} · {% translate "No expiry" %}{% endif %}
+        </div>
+      </label>
+      {% endfor %}
+      <div class="d-flex gap-2 mt-3">
+        <button class="btn btn-primary">{% translate "Attach it" %}</button>
+        <a class="btn btn-outline-secondary" href="{{ cancel_url }}">{% translate "Cancel" %}</a>
+      </div>
+    </form>
+    {% else %}
+    {% comment %}El caso vacío es un caso real y se dice, en vez de mostrar un
+    formulario sin opciones. Y se dice **por qué** puede estar vacío, porque "no
+    hay ninguno" a secas manda a buscar un problema que no existe.{% endcomment %}
+    <p class="mb-2">{% translate "There is no document on file that can be reused here." %}</p>
+    <p class="small text-body-secondary">{% translate "Only the same document type, from another record of the same cost centre, and still valid, can be reused." %}</p>
+    <a class="btn btn-outline-secondary" href="{{ cancel_url }}">{% translate "Back" %}</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

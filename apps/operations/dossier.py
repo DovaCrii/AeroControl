@@ -91,6 +91,13 @@ class DossierItem:
     # es una decisión, no un formulario).
     action_label: str = ""
     action_url: str = ""
+    # LV-200 paso 3: la segunda salida del mismo renglón, cuando existe. Se
+    # llena **sólo si hay algo que reutilizar**, así que un botón "usar uno ya
+    # cargado" nunca abre una lista vacía. Es un par aparte y no una lista de
+    # acciones porque son dos y con papeles distintos: la primera es la que
+    # siempre sirve, la segunda es el atajo.
+    alt_action_label: str = ""
+    alt_action_url: str = ""
 
     @property
     def is_ok(self):
@@ -275,9 +282,40 @@ def _document_items(permission, user=None):
                 missing_detail,
                 [],
                 *_upload_action(permission, code, user),
+                *_attach_existing_action(permission, code, user),
             )
         )
     return items
+
+
+def _attach_existing_action(permission, code, user):
+    """LV-200 paso 3: el atajo, **sólo cuando hay algo que reutilizar**.
+
+    Pedido del usuario: *"cuando ya tengo otro documento de la carta en otro
+    permiso del mismo período, para no tener que subirlos siempre"*.
+
+    Se consulta si existe candidato antes de ofrecer el botón, en vez de
+    ofrecerlo siempre y mostrar una lista vacía. Cuesta un `exists()` por
+    renglón y evita el peor resultado de una función así: que quien la aprieta
+    dos veces seguidas y no encuentra nada deje de apretarla el día que sí
+    habría algo.
+    """
+    if not _allowed(user, "compliance.add_document"):
+        return "", ""
+    from django.contrib.contenttypes.models import ContentType
+
+    from apps.compliance.reuse import reusable_documents
+
+    if not reusable_documents(permission, code).exists():
+        return "", ""
+    params = {
+        "entity_type": ContentType.objects.get_for_model(permission.__class__).pk,
+        "object_id": str(permission.pk),
+        "doc_type": code,
+    }
+    return _("Use one already on file"), (
+        f"{reverse('document-attach-existing')}?{urlencode(params)}"
+    )
 
 
 def _geo_plan_items(permission, user=None):

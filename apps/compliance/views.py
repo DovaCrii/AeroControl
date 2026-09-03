@@ -38,6 +38,7 @@ from apps.core.views import (
 from apps.core.tenancy import scope_queryset_to_tenant
 from apps.registry.models import CostCenter
 from .reports import alerts_for_cost_center, cost_centers_for_refs
+from .reuse import reusable_documents
 from .forms import (
     AlertForm,
     AlertResolveForm,
@@ -865,6 +866,102 @@ class DocumentCreate(ComplianceCreate):
                 % {"title": duplicate.title},
             )
         return response
+
+
+class DocumentAttachExisting(ModelPermissionRequiredMixin, View):
+    """LV-200, paso 3: adjuntar un papel ya cargado, sin volver a subirlo.
+
+    Pedido del usuario: *"cuando ya tengo otro documento de la carta en otro
+    permiso del mismo período, para no tener que subirlos siempre"*. Los pasos 1
+    y 2 dejaron de **guardar** dos copias; éste deja de pedir el archivo.
+
+    `add_document` y no `change_`: lo que hace es crear un `Document`, igual que
+    subirlo. Que el archivo ya exista es una circunstancia del almacenamiento, no
+    un permiso distinto.
+
+    ⚠️ **El candidato se vuelve a resolver contra `reusable_documents` en el
+    `POST`, y no se confía en el `pk` que llega del formulario.** Es la misma
+    guarda que `LV-231`: sin ella, "adjuntar uno ya cargado" sería un camino para
+    colgarle a un permiso cualquier documento de la base con sólo conocer su
+    identificador — incluido el de otra faena, que es justo lo que la lista de
+    candidatos existe para impedir.
+    """
+
+    model = Document
+    permission_action = "add"
+
+    def _target(self, request):
+        """La entidad a la que se adjunta, y el tipo de papel."""
+        content_type = ContentType.objects.filter(
+            pk=request.GET.get("entity_type") or request.POST.get("entity_type")
+        ).first()
+        if content_type is None:
+            return None, ""
+        model = content_type.model_class()
+        if model is None:
+            return None, ""
+        object_id = request.GET.get("object_id") or request.POST.get("object_id")
+        try:
+            entity = model._default_manager.filter(pk=object_id, is_active=True).first()
+        except (ValueError, ValidationError):
+            return None, ""
+        code = (request.GET.get("doc_type") or request.POST.get("doc_type") or "")[:100]
+        return entity, code
+
+    def get(self, request):
+        entity, code = self._target(request)
+        if entity is None or not code:
+            return HttpResponseBadRequest()
+        return render(
+            request,
+            "compliance/document_attach_form.html",
+            {
+                "entity": entity,
+                "doc_type_code": code,
+                "content_type_id": ContentType.objects.get_for_model(
+                    entity.__class__
+                ).pk,
+                "candidates": reusable_documents(entity, code),
+                "cancel_url": upload_cancel_url(request),
+            },
+        )
+
+    def post(self, request):
+        entity, code = self._target(request)
+        if entity is None or not code:
+            return HttpResponseBadRequest()
+        chosen = (
+            reusable_documents(entity, code)
+            .filter(pk=request.POST.get("document") or None)
+            .first()
+        )
+        if chosen is None:
+            messages.error(
+                request,
+                _("That document is no longer available to attach."),
+            )
+            return redirect(entity)
+
+        document = Document.objects.create(
+            content_type=ContentType.objects.get_for_model(entity.__class__),
+            object_id=entity.pk,
+            doc_type=chosen.doc_type,
+            title=chosen.title,
+            # El archivo **se comparte**, no se copia: es literalmente el mismo
+            # papel. `cleanup_documents` ya tiene la guarda que impide que
+            # archivar una fila borre el archivo que otra sigue usando.
+            file_path=chosen.file_path,
+            issue_date=chosen.issue_date,
+            expiry_date=chosen.expiry_date,
+            content_sha256=chosen.content_sha256,
+            source_reference=chosen.source_reference,
+        )
+        messages.success(
+            request,
+            _("%(title)s attached from %(origin)s, without uploading it again.")
+            % {"title": document.title, "origin": str(chosen.content_object)},
+        )
+        return redirect(entity)
 
 
 class DocumentEntityOptions(ModelPermissionRequiredMixin, View):
