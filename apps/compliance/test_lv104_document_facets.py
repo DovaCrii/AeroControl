@@ -111,7 +111,12 @@ class TestTheFicheGroupsByCategory:
             .content.decode()
         )
 
-        assert html.count('class="table-active"') == 2
+        # `UX-07`, barrido previo: se localiza por `doc-group-heading` —el
+        # nombre de **lo que es**— y no por `table-active`, que es la clase con
+        # que Bootstrap la pinta. Lo que este test afirma es que hay dos grupos,
+        # no que sean de ese color; con la clase de presentación, un componente
+        # de tabla nuevo lo rompería sin que nada hubiera cambiado de sentido.
+        assert html.count("doc-group-heading") == 2
         assert "Matrícula" in html and "Cred" in html
 
 
