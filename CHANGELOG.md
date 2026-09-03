@@ -23,6 +23,41 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   cero") y la ausencia no afirma nada. Entra al menú el mismo día que gana
   pantalla, y exige `reporting.view_reportrun` — nombra cada faena y si está
   habilitada para volar.
+- **Las listas dicen cuántos registros hay, y se puede exportar lo marcado.**
+  La paginación desaparecía con una sola página, así que una lista de ocho filas
+  no decía si eran ocho de ocho o **ocho de doscientas filtradas** — y es la
+  lista corta la que más invita a creer que se está viendo todo. Ahora cada lista
+  paginada muestra "mostrando N–M de T". Y se puede **marcar filas por casilla y
+  exportar sólo esas**: la selección es explícita, nunca inferida por fecha ni
+  por regla, y la barra aparece sólo cuando hay algo marcado.
+- **La fila se apila como tarjeta en el teléfono.** La lista de aeronaves medía
+  **900 px de tabla dentro de un contenedor de 356** en una pantalla de 390:
+  leer una fila en faena obligaba a arrastrar de lado, con guantes, y volver a
+  empezar en la siguiente. Ahora cada fila se apila con el nombre de su columna
+  delante de cada dato, y no hay desplazamiento horizontal. En escritorio no
+  cambia nada.
+- **Las filas se pueden ver compactas.** Un botón junto al del tema alterna
+  entre cómoda y compacta, y recuerda la elección de cada persona. Sólo cambia
+  el espacio: bajar además el cuerpo de letra habría hecho que "compacta"
+  significara también "más difícil de leer".
+- **Un solo tamaño de título en toda la aplicación.** Había ocho formas de
+  escribir el encabezado de página repartidas en 59 pantallas, así que el título
+  cambiaba de tamaño al navegar y hacía dudar de si se había cambiado de
+  sección. Los 28 iconos del menú pasan además a un solo archivo, referenciados
+  por nombre.
+- **El informe cuenta bien los registros que ya terminaron (`LV-189`).** Un
+  documento colgado de una aeronave retirada, o de un permiso caducado, seguía
+  contando en el cumplimiento de su faena: se excluían los archivados, no los
+  terminados, y son cosas distintas — una aeronave `retired` sigue activa en la
+  base. Contar lo que terminó hace que el porcentaje baje para siempre por una
+  decisión correcta. ⚠️ **Esto mueve las cifras del informe de cumplimiento**,
+  igual que el arreglo anterior de la atribución por faena.
+- **La región del permiso se deduce de las coordenadas, y dice que se dedujo
+  (`LV-220`).** Presentar una región derivada con el mismo aspecto que una
+  declarada es peor que dejarla vacía: quien lee la ficha para llenar el SIGO no
+  podría distinguir el dato del papel de una inferencia. Va con su propio rótulo
+  y con el aviso de la BCN, sólo cuando no hay dato declarado, y fuera de la
+  cobertura cartográfica vuelve a decir "sin informar" en vez de adivinar.
 - **El informe se congela solo y se aprueba a mano (`R5`).**
   `manage.py generate_monthly_report` deja el borrador del período con sus
   cifras fijas, para que quien firma llegue a una pantalla quieta en vez de a
