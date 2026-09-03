@@ -6,7 +6,7 @@ que traer **estas** columnas, o el resultado colapsa a las genéricas.
 La fila archivada se distingue y ofrece "Restaurar": sin eso, el filtro
 "Archivados" sería una lista de la que no se puede volver.{% endcomment %}
 {% for plan in plans %}
-<tr {% if not plan.is_active %}class="opacity-75"{% endif %}>
+<tr data-pk="{{ plan.pk }}" {% if not plan.is_active %}class="opacity-75"{% endif %}>
   {% comment %}LV-138: el folio es la columna que identifica, y el título pasa a
   ser el comentario debajo -- el mismo reparto que usa el listado de permisos
   (número arriba, folio DGAC como subtítulo).{% endcomment %}

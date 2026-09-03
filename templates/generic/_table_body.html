@@ -2,8 +2,19 @@
 {% comment %}has_detail_url / has_update_url come from SearchMixin: they probe
 whether the relative row URLs actually resolve, because this table used to
 offer View/Edit unconditionally and four lists 404ed on them.{% endcomment %}
+{% comment %}`UX-11`: la fila lleva su identidad. Sin esto, la selección tendría
+que deducir el pk del `href` de la primera celda — que no existe en las listas
+sin ficha de detalle, y que se rompería el día que alguien cambie el enlace.
+
+Marca la frontera de la selección: **donde la fila no sabe quién es, no se
+ofrece seleccionar** — mejor sin casilla que con una que no sabe qué manda.
+
+⚠️ Al medirlo resultó que **diez de las once listas reescriben `table_body`** y
+delegan sus filas en un parcial `_*_rows.html`, así que tocar sólo este archivo
+habría dejado la función alcanzando **una** lista. Los catorce parciales llevan
+ahora el mismo atributo.{% endcomment %}
 {% for object in objects %}
-<tr>
+<tr data-pk="{{ object.pk }}">
   <td>{% if has_detail_url %}<a href="{{ object.pk }}/">{{ object }}</a>{% else %}{{ object }}{% endif %}</td>
   <td>{{ object.created_at|date:'Y-m-d' }}</td>
   <td>{% if object.is_active %}<span class="badge bg-success">{% translate "Active" %}</span>{% else %}<span class="badge bg-secondary">{% translate "Archived" %}</span>{% endif %}</td>

@@ -1,6 +1,6 @@
 {% load aero_tags i18n %}
 {% for object in objects %}
-<tr>
+<tr data-pk="{{ object.pk }}">
   <td><a href="{{ object.pk }}/" class="table-primary-value">{{ object.registration }}</a>
     {% if object.model or object.manufacturer %}<span class="table-primary-sub cell-truncate" title="{{ object.model }}{% if object.manufacturer %} · {{ object.manufacturer }}{% endif %}">{{ object.model|default:"—" }}{% if object.manufacturer %} · {{ object.manufacturer }}{% endif %}</span>{% endif %}
     {% comment %}El número de serie, a la vista y no sólo en la ficha: es la
