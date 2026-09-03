@@ -2126,7 +2126,7 @@ que el `_()` de afuera busque una cadena que no está en el catálogo.
 |---|---|
 | Verificación de eficacia (R7.6a) | ✅ Hecho — 30 días, decidido por el usuario |
 | Revisión meteorológica como evidencia (R8.2) | ✅ Hecho |
-| Los **5** KPI operacionales (R7.7a + R7.7b) | ✅ Hecho — completos. **Sólo la meta de flota (90%) está acordada**; los otros 4 muestran su valor sin marcar incumplimiento |
+| Los **5** KPI operacionales (R7.7a + R7.7b) | ✅ Hecho — completos. **Sólo la meta de flota (90%) está acordada**; los otros 4 muestran su valor sin marcar incumplimiento. ✅ **Confirmado el 2026-09-02**: el usuario no puede fijar todavía las 4 metas restantes, así que **se quedan sin meta a propósito y no es deuda**. La conducta actual ya es la correcta —se muestra el valor y no se marca incumplimiento— justo porque una línea inventada convertiría el KPI en ruido. **Lo que se hace cuando lleguen**: son constantes documentadas en `apps/compliance/kpis.py`; `KpiTarget` sigue sin crearse hasta que haya una meta con dueño distinto al del resto (una tabla de configuración de una sola fila es una tabla que nadie mantiene) |
 | Límite de jornada de vuelo (R7.5a) | ✅ Hecho — 8 horas |
 | LV-72 (trazabilidad estilo SIGO) | ✅ Hecho — permiso **y** plan geoespacial. La ficha de aeronave se dejó fuera a propósito (su estado no es una progresión) |
 | Decidir si el tablero Kanban se elimina | ✅ **Decidido: se da de baja** (usuario, 2026-08-12). Queda la limpieza, ver `LV-78` |
