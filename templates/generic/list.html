@@ -24,6 +24,30 @@ su nombre, y un subtítulo obligatorio se llenaría de relleno.{% endcomment %}
   {% endblock %}
 </form>
 
+{% comment %}`UX-11`: la barra contextual. Vive en la plantilla y no en el JS
+porque lleva texto traducible, y aparece **sólo con algo seleccionado** — una
+barra permanente que dice "0 seleccionados" ocupa sitio todos los días para
+avisar de nada.
+
+⚠️ **La selección es explícita, casilla por casilla, y eso es la fila.** `LV-68`
+retiró la resolución en lote que agrupaba por regla y fecha sobre la premisa de
+que una fecha compartida implicaba una causa compartida; contra los datos reales
+resultó falsa. Acá no se infiere nada: lo que se exporta es lo que la persona
+marcó.{% endcomment %}
+{% comment %}El marcador va como variable para que la cadena traducible salga
+entera y con su hueco: `{% templatetag openblock %} blocktranslate with n="{n}"
+{% templatetag closeblock %}` deja "{n} seleccionados" en el catálogo, y el JS
+sólo sustituye el número. Armar la frase en JS habría dejado ese texto fuera del
+catálogo, que es la mitad de la interfaz bilingüe.{% endcomment %}
+{% blocktranslate asvar bulk_template with n="{n}" %}{{ n }} selected{% endblocktranslate %}
+<div id="bulk-bar" class="bulk-bar" hidden role="status">
+  <span class="bulk-count" data-template="{{ bulk_template }}"></span>
+  <div class="d-flex gap-2">
+    <button type="button" class="btn btn-sm btn-outline-secondary" id="bulk-clear">{% translate "Clear selection" %}</button>
+    <a class="btn btn-sm btn-primary" id="bulk-export" href="#" hx-boost="false">{% translate "Export the selection" %}</a>
+  </div>
+</div>
+
 <div id="table-wrapper" class="card">
   <div class="table-responsive">
     {% comment %}LV-57: both blocks are empty by default, so every list that

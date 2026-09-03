@@ -1,6 +1,6 @@
 {% load aero_tags i18n %}
 {% for document in documents %}
-<tr>
+<tr data-pk="{{ document.pk }}">
   <td><a href="{% url 'document-detail' document.pk %}" class="fw-semibold">{{ document.title }}</a></td>
   <td>{{ document.doc_type }}</td>
   <td>{% if document.expiry_date %}{{ document.expiry_date|date:"Y-m-d" }}{% else %}<span class="text-muted">—</span>{% endif %}</td>

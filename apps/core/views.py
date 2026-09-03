@@ -1,6 +1,7 @@
 import csv
 import json
 import logging
+import uuid
 from collections.abc import Callable
 from datetime import date, timedelta
 from pathlib import Path
@@ -259,11 +260,43 @@ class CsvExportMixin:
         )
         return response
 
+    def selected_queryset(self, request):
+        """El `queryset` de la lista, acotado a lo que la persona marcó.
+
+        `UX-11`. Sin `ids` se exporta todo lo filtrado, que es lo que esta
+        exportación hacía y sigue haciendo: la selección **añade** un camino, no
+        reemplaza el que había.
+
+        **Se parte del `queryset` de la vista y se le aplica `pk__in`, nunca al
+        revés.** Un `Model.objects.filter(pk__in=ids)` construido desde el
+        parámetro se saltaría el filtro por tenant y el de permisos que
+        `get_queryset` ya aplica, y convertiría una lista de ids pegada a mano en
+        una forma de exportar filas de otra faena. Acá los ids sólo pueden
+        recortar lo que la persona ya podía ver.
+
+        Los ids que no son UUID válidos se descartan en silencio: llegan de la
+        URL, y una lista con basura tiene que exportar lo que sí existe en vez de
+        devolver un 500 — pero **una selección entera inválida exporta cero
+        filas**, no todo, porque "no encontré nada de lo que marcaste" no es lo
+        mismo que "no marcaste nada".
+        """
+        queryset = self.get_queryset()
+        raw = request.GET.getlist("ids")
+        if not raw:
+            return queryset
+        valid = []
+        for value in raw:
+            try:
+                valid.append(uuid.UUID(value))
+            except (AttributeError, TypeError, ValueError):
+                continue
+        return queryset.filter(pk__in=valid)
+
     def get(self, request, *args, **kwargs):
         if request.GET.get("export") == "csv":
             if hasattr(self, "has_permission") and not self.has_permission():
                 return self.handle_no_permission()
-            return self.render_csv_response(self.get_queryset())
+            return self.render_csv_response(self.selected_queryset(request))
         return super().get(request, *args, **kwargs)
 
 

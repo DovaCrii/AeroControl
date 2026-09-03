@@ -1,6 +1,6 @@
 {% load aero_tags i18n %}
 {% for object in objects %}
-<tr>
+<tr data-pk="{{ object.pk }}">
   <td><a href="{% url 'operator-detail' object.pk %}" class="table-primary-value">{{ object.full_name }}</a>
     {% if object.rut %}<span class="table-primary-sub cell-truncate">{{ object.rut }}</span>{% endif %}
   </td>

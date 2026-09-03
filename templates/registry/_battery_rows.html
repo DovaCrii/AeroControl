@@ -1,6 +1,6 @@
 {% load aero_tags i18n %}
 {% for object in objects %}
-<tr>
+<tr data-pk="{{ object.pk }}">
   <td><span class="table-primary-value">{{ object.serial_number }}</span>
     {% if object.model or object.manufacturer %}<span class="table-primary-sub cell-truncate">{{ object.manufacturer }} {{ object.model }}</span>{% endif %}
   </td>

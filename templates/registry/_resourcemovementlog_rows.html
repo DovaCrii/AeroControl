@@ -5,7 +5,7 @@ en todo movimiento inicial. El recurso ahora enlaza a su ficha: leer que
 `RPA-3696` se movió y tener que volver al padrón a buscarlo era el paso de más.
 {% endcomment %}
 {% for entry in objects %}
-<tr>
+<tr data-pk="{{ entry.pk }}">
   <td>
     {% if entry.resource_url %}<a href="{{ entry.resource_url }}" class="table-primary-value">{{ entry.resource_label }}</a>{% else %}<span class="table-primary-value">{{ entry.resource_label }}</span>{% endif %}
     <span class="table-primary-sub">{{ entry.get_resource_kind_display }}</span>

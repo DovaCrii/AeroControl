@@ -1,6 +1,6 @@
 {% load aero_tags i18n %}
 {% for object in objects %}
-<tr>
+<tr data-pk="{{ object.pk }}">
   {% comment %}LV-177: el apellido adelante cuando el corte está hecho. La lista
   se lee de a filas y es lo que deja encontrar a alguien de un vistazo; mientras
   haya fichas sin cortar conviven las dos formas, y eso es correcto — cada fila

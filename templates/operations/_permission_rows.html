@@ -1,6 +1,6 @@
 {% load aero_tags i18n %}
 {% for object in objects %}
-<tr>
+<tr data-pk="{{ object.pk }}">
   <td><a href="{{ object.pk }}/" class="table-primary-value">{{ object }}</a><span class="table-primary-sub cell-truncate">{% translate "DGAC" %}: {% if object.permission_number %}{{ object.permission_number }}{% else %}{% translate "In process" %}{% endif %}</span></td>
   {% comment %}LV-192: el mismo `cc-chip` de la bandeja de alertas y del panel, y
   no texto suelto: un código de faena se reconoce por su forma, y si acá fuera

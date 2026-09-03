@@ -6,7 +6,7 @@ tiene que traer estas columnas, o el resultado colapsa a las genéricas.
 La columna de espera es la que hace visible lo que el usuario pidió seguir: una
 solicitud presentada en SIGO que nadie contestó.{% endcomment %}
 {% for object in objects %}
-<tr>
+<tr data-pk="{{ object.pk }}">
   <td><a href="{% url 'flight-request-detail' object.pk %}" class="table-primary-value"><strong>{{ object.title }}</strong></a></td>
   <td>{{ object.cost_center.code }}</td>
   <td class="text-nowrap">{{ object.radius_m|default:"—" }}{% if object.radius_m %} m{% endif %}</td>
