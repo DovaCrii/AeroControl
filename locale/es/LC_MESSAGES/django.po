@@ -7920,7 +7920,7 @@ msgstr ""
 
 #: apps/reporting/forms.py
 msgid "Leave no empty finding between two written ones."
-msgstr "No dejes un hallazgo vacío entre dos escritos."
+msgstr "No deje un hallazgo vacío entre dos escritos."
 
 #: apps/reporting/models.py
 msgid "Findings must be a list."
@@ -7936,11 +7936,11 @@ msgstr "Gravedad de hallazgo desconocida."
 
 #: apps/reporting/views.py
 msgid "Draft frozen. You can now write its narrative."
-msgstr "Borrador congelado. Ya podés escribir su narrativa."
+msgstr "Borrador congelado. Ya se puede escribir su narrativa."
 
 #: apps/reporting/views.py
 msgid "An approved report is not edited: issue a new revision instead."
-msgstr "Un informe aprobado no se edita: emití una revisión nueva."
+msgstr "Un informe aprobado no se edita: emita una revisión nueva."
 
 #: apps/reporting/views.py
 msgid "This period already had a report; opening the latest one."
@@ -7976,7 +7976,7 @@ msgstr ""
 
 #: apps/reporting/models.py
 msgid "Only a draft can be approved; issue a new revision instead."
-msgstr "Sólo un borrador se puede aprobar: emití una revisión nueva."
+msgstr "Sólo un borrador se puede aprobar: emita una revisión nueva."
 
 #: apps/reporting/views.py
 msgid "Report approved. It is now read-only."
@@ -8010,7 +8010,7 @@ msgstr "Bloq Mayús está activado."
 
 #: templates/registration/login.html
 msgid "Can't get in?"
-msgstr "¿No podés entrar?"
+msgstr "¿No puede entrar?"
 
 #: templates/registration/login.html
 msgid "Test environment"
@@ -8022,12 +8022,12 @@ msgid ""
 "for a while, so check the keyboard layout before trying again."
 msgstr ""
 "Usuario o contraseña incorrectos. Tras varios intentos fallidos la cuenta "
-"queda retenida un rato, así que revisá el teclado antes de volver a probar."
+"queda retenida un rato, así que conviene revisar el teclado antes de volver a probar."
 
 #: templates/registration/login.html
 #, python-format
 msgid "The password is reset by the administrator: write to %(contact)s."
-msgstr "La contraseña la reinicia el administrador: escribí a %(contact)s."
+msgstr "La contraseña la reinicia el administrador: escriba a %(contact)s."
 
 #: templates/registration/login.html
 msgid ""
@@ -8057,8 +8057,8 @@ msgstr "Por qué pasó esto"
 #, python-format
 msgid "Try again in %(minutes)s minute."
 msgid_plural "Try again in %(minutes)s minutes."
-msgstr[0] "Volvé a probar en %(minutes)s minuto."
-msgstr[1] "Volvé a probar en %(minutes)s minutos."
+msgstr[0] "Vuelva a probar en %(minutes)s minuto."
+msgstr[1] "Vuelva a probar en %(minutes)s minutos."
 
 #: templates/registration/lockout.html
 msgid ""
@@ -8072,7 +8072,7 @@ msgstr ""
 #: templates/registration/lockout.html
 #, python-format
 msgid "If you need it lifted sooner, write to %(contact)s."
-msgstr "Si necesitás levantarla antes, escribí a %(contact)s."
+msgstr "Si necesita levantarla antes, escriba a %(contact)s."
 
 #: templates/registration/lockout.html
 msgid ""
@@ -8104,3 +8104,16 @@ msgstr "Usar filas compactas"
 #: templates/base.html
 msgid "Use comfortable rows"
 msgstr "Usar filas cómodas"
+
+#: templates/generic/list.html
+#, python-format
+msgid "%(n)s selected"
+msgstr "%(n)s seleccionados"
+
+#: templates/generic/list.html
+msgid "Clear selection"
+msgstr "Quitar la selección"
+
+#: templates/generic/list.html
+msgid "Export the selection"
+msgstr "Exportar la selección"
