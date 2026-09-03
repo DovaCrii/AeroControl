@@ -8079,12 +8079,16 @@ msgid ""
 "If you need it lifted sooner, the administrator can clear it from the "
 "administration centre."
 msgstr ""
-"Si necesitás levantarla antes, el administrador puede liberarla desde el "
+"Si necesita levantarla antes, el administrador puede liberarla desde el "
 "centro de administración."
 
 #: templates/operations/permission_detail.html
 msgid "Derived from the coordinates"
 msgstr "Derivada de las coordenadas"
+
+#: apps/operations/models.py
+msgid "Declared"
+msgstr "Declarada"
 
 #: templates/generic/_pagination.html
 #, python-format

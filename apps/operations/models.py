@@ -246,6 +246,41 @@ class FlightPermission(StatusFlowMixin, BaseModel):
     region = models.CharField(max_length=100, blank=True)
     commune = models.CharField(max_length=100, blank=True)
     area_name = models.CharField(max_length=200, blank=True)
+    # LV-220: de dónde salió cada una de las dos de arriba.
+    #
+    # El hallazgo que obligó a esto: `fill_permission_from_plan` escribe región y
+    # comuna **deducidas** de las coordenadas —punto en polígono sobre la capa de
+    # la BCN— en estos mismos campos, así que una región que salió de un polígono
+    # y una copiada del papel DGAC quedaban **indistinguibles** en la base y en la
+    # ficha. Y la capa está simplificada a ~111 m: cerca del borde devuelve la
+    # comuna vecina, y fuera de cobertura no devuelve nada. Presentar eso como si
+    # lo hubiera declarado la autoridad es exactamente lo que `LV-141` vino a
+    # evitar en la hoja SIGO, donde el aviso de procedencia sí está a la vista.
+    #
+    # Sólo estas dos llevan marcador, y no las demás que `fill_location_gaps`
+    # completa, porque **sólo estas dos son una inferencia**: el centro, el radio
+    # y el nombre del área se transcriben del KMZ que alguien preparó y subió, que
+    # es un documento declarado. La región y la comuna no vienen en el KMZ: las
+    # calcula `geo.administrative.locate()`.
+    LOCATION_DECLARED = "declared"
+    LOCATION_DERIVED = "derived"
+    LOCATION_SOURCE_CHOICES = [
+        (LOCATION_DECLARED, _("Declared")),
+        (LOCATION_DERIVED, _("Derived from the coordinates")),
+    ]
+    # Vacío es un **tercer estado con significado: no se sabe**, y es el defecto a
+    # propósito. Los permisos que ya existen se cargaron antes de que hubiera
+    # marcador, así que no hay forma honesta de saber cuáles se teclearon y cuáles
+    # salieron del polígono: poner `declared` en la migración inventaría una
+    # procedencia para miles de filas, que es justo el defecto que esta fila
+    # denuncia. Vacío se dibuja como hoy —el valor a secas, sin aviso—, así que
+    # nada retrocede y lo nuevo sí queda marcado.
+    region_source = models.CharField(
+        max_length=10, blank=True, choices=LOCATION_SOURCE_CHOICES
+    )
+    commune_source = models.CharField(
+        max_length=10, blank=True, choices=LOCATION_SOURCE_CHOICES
+    )
     # LV-137: el aeródromo más cercano y su distancia, que hasta acá sólo existían
     # en la solicitud SIGO. Textual del usuario, sobre el expediente del permiso:
     # *"ese tiene además la información faltante para llenar el permiso, sobre
@@ -426,7 +461,70 @@ class FlightPermission(StatusFlowMixin, BaseModel):
         next_seq = int(last.internal_folio[len(prefix) :]) + 1 if last else 1
         return f"{prefix}{next_seq:03d}"
 
+    @classmethod
+    def from_db(cls, db, field_names, values, **kwargs):
+        """LV-220: recordar con qué región y comuna vino la fila desde la base.
+
+        Es la mitad que hace honesto al marcador de procedencia. Marcar
+        `derived` al deducir no alcanza: si después alguien **corrige a mano** una
+        región mal deducida —y se deduce mal, la capa de la BCN está simplificada
+        a ~111 m y cerca del borde devuelve la vecina—, el marcador viejo seguiría
+        diciendo "deducido de las coordenadas" sobre un valor que ya no lo es. Un
+        aviso de procedencia equivocado es peor que ninguno: el primero se cree.
+
+        Se compara contra lo cargado y no contra un `update_fields`, porque el
+        formulario, el admin y los comandos guardan de tres formas distintas y
+        sólo dos de ellas lo pasan.
+
+        `**kwargs` y no la firma explícita: Django 6.1 le sumó `fetch_mode`, y
+        copiar la firma de esta versión es cómo el próximo parámetro que agreguen
+        rompe cada lectura de permisos con un `TypeError`.
+        """
+        instance = super().from_db(db, field_names, values, **kwargs)
+        for name in ("region", "commune"):
+            if name in field_names:
+                setattr(instance, f"_loaded_{name}", getattr(instance, name))
+        return instance
+
+    def _reconcile_location_sources(self):
+        """Un valor cambiado a mano deja de ser deducido.
+
+        Devuelve qué columnas de procedencia tocó, porque quien guarda con
+        `update_fields` tiene que sumarlas: sin eso el marcador se corrige en
+        memoria y no llega a la base, que es la clase de falla que no se nota
+        hasta que alguien lee la ficha meses después.
+        """
+        touched = []
+        for name in ("region", "commune"):
+            value = getattr(self, name)
+            # Un permiso recién creado con región **no puede** traerla deducida:
+            # `fill_location_gaps` sólo rellena huecos de permisos que ya
+            # existen, así que lo único que escribe una región al crear es
+            # alguien copiándola del papel o un importador que lee ese papel. Sin
+            # esto quedarían todos en blanco —"no se sabe"— cuando sí se sabe.
+            if self._state.adding:
+                if value and not getattr(self, f"{name}_source"):
+                    setattr(self, f"{name}_source", self.LOCATION_DECLARED)
+                continue
+            loaded = getattr(self, f"_loaded_{name}", None)
+            if loaded is None or value == loaded:
+                continue
+            # Vaciarlo no es declararlo: un campo en blanco no tiene procedencia,
+            # y dejarle `declared` afirmaría que alguien declaró la nada.
+            setattr(
+                self,
+                f"{name}_source",
+                self.LOCATION_DECLARED if getattr(self, name) else "",
+            )
+            setattr(self, f"_loaded_{name}", getattr(self, name))
+            touched.append(f"{name}_source")
+        return touched
+
     def save(self, *args, **kwargs):
+        touched = self._reconcile_location_sources()
+        update_fields = kwargs.get("update_fields")
+        if touched and update_fields is not None:
+            kwargs["update_fields"] = list(dict.fromkeys([*update_fields, *touched]))
         if self._state.adding and not self.internal_folio:
             with transaction.atomic():
                 self.internal_folio = self._next_internal_folio()
@@ -629,9 +727,26 @@ class FlightPermission(StatusFlowMixin, BaseModel):
         if self.radius_km is None and radius_m and self.latitude is not None:
             self.radius_km = Decimal(radius_m) / Decimal(1000)
             filled.append("radius_km")
+        # LV-220: la procedencia se marca **en el mismo lugar donde se escribe el
+        # valor**. Separarlas es cómo una de las dos se olvida.
+        #
+        # `_loaded_*` se pone al día junto con el valor para que
+        # `_reconcile_location_sources` no lea esta escritura como una corrección
+        # a mano y le dé vuelta el marcador que acabamos de poner. Y las dos
+        # columnas viajan aparte de `filled`, porque `filled` es lo que la
+        # pantalla le enumera a la persona: un "se completó region_source" no le
+        # dice nada a nadie.
+        sources = []
+
+        def _mark_derived(name):
+            setattr(self, f"{name}_source", self.LOCATION_DERIVED)
+            setattr(self, f"_loaded_{name}", getattr(self, name))
+            sources.append(f"{name}_source")
+
         if not self.commune and commune:
             self.commune = commune
             filled.append("commune")
+            _mark_derived("commune")
         # LV-141: la región, que existía como campo desde OPS-4 y **nunca se
         # rellenaba** porque no había de dónde sacarla. Ahora sale del mismo
         # polígono administrativo que la comuna, así que van a la par -- pero cada
@@ -640,6 +755,7 @@ class FlightPermission(StatusFlowMixin, BaseModel):
         if not self.region and region:
             self.region = region
             filled.append("region")
+            _mark_derived("region")
         if not self.area_name and area_name:
             self.area_name = area_name
             filled.append("area_name")
@@ -671,7 +787,7 @@ class FlightPermission(StatusFlowMixin, BaseModel):
             self.amc_distance_km = amc_distance_km
             filled += ["amc", "amc_distance_km"]
         if filled and save:
-            self.save(update_fields=filled + ["updated_at"])
+            self.save(update_fields=filled + sources + ["updated_at"])
         return filled
 
 
