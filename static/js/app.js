@@ -293,6 +293,45 @@
   window.initResponsibleType();
 })();
 
+/* `UX-08`: la densidad de las tablas, recordada por persona.
+ *
+ * El estado inicial lo pone `theme-init.js` antes de pintar; acá sólo vive el
+ * conmutador. Mismo reparto que el tema, y por el mismo motivo: aplicarlo
+ * después de la primera pintura haría saltar la lista a la vista.
+ *
+ * `localStorage` **lanza** en una ventana privada, así que la escritura va
+ * envuelta y el fallo es benigno: la preferencia no se recuerda entre visitas,
+ * pero el botón sigue funcionando en ésta. Lo que no puede pasar es que la
+ * excepción corte la función y deje el botón rotulado al revés.
+ */
+(function () {
+  'use strict';
+  var toggle = document.getElementById('density-toggle');
+  if (!toggle) return;
+
+  function paint() {
+    var compact =
+      document.documentElement.getAttribute('data-density') === 'compact';
+    toggle.setAttribute('aria-pressed', compact ? 'true' : 'false');
+    toggle.title = compact ? toggle.dataset.labelComfortable : toggle.dataset.labelCompact;
+  }
+
+  toggle.addEventListener('click', function () {
+    var h = document.documentElement;
+    var compact = h.getAttribute('data-density') === 'compact';
+    if (compact) h.removeAttribute('data-density');
+    else h.setAttribute('data-density', 'compact');
+    try {
+      localStorage.setItem('density', compact ? 'comfortable' : 'compact');
+    } catch (error) {
+      /* Ventana privada: no se recuerda, pero la vista actual ya cambió. */
+    }
+    paint();
+  });
+
+  paint();
+})();
+
 /* Formularios que preguntan antes de enviar (`R5`).
  *
  * `<form data-confirm="…">` y no `onsubmit="…"`: la política de seguridad de

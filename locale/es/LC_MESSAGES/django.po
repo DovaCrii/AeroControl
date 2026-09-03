@@ -8092,3 +8092,15 @@ msgid "Showing %(first)s–%(last)s of %(total)s record."
 msgid_plural "Showing %(first)s–%(last)s of %(total)s records."
 msgstr[0] "Mostrando %(first)s–%(last)s de %(total)s registro."
 msgstr[1] "Mostrando %(first)s–%(last)s de %(total)s registros."
+
+#: templates/base.html
+msgid "Toggle row density"
+msgstr "Cambiar la densidad de las filas"
+
+#: templates/base.html
+msgid "Use compact rows"
+msgstr "Usar filas compactas"
+
+#: templates/base.html
+msgid "Use comfortable rows"
+msgstr "Usar filas cómodas"
