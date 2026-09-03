@@ -206,6 +206,78 @@ propia pantalla, no un privilegio— y los campos de `FlightPermission` viajan c
 los permisos que ese modelo ya tiene. Lo que sí hace falta es **`collectstatic`**:
 cambiaron `app.css` y `worktable.js`.
 
+#### ⚠️ EL DESPLIEGUE DE ESTA TANDA (`355f6c1`)
+
+⚠️ **Los comandos van SIN `ssh` y sobre `/opt/aerocontrol`**, porque quien
+despliega ya está dentro de la VM. Dictarlos con `ssh p340 "…"` hace que la
+máquina se pida contraseña a sí misma — pasó el 2026-09-01 y costó una vuelta.
+El 2026-09-03 volvió a costar otra, por lo contrario: el Paso 0 se pegó en la
+**PowerShell de Windows**, que buscó `C:\opt\aerocontrol`. **El bloque se pega en
+la sesión de `p340`, no en la del escritorio.**
+
+##### ⛔ Paso 0 corrido el 2026-09-03: **la tanda del 02 por la tarde nunca se desplegó**
+
+Medido, no supuesto:
+
+```
+## main...origin/main
+3fb556d (HEAD -> main, origin/main, origin/HEAD) docs(handoff): el gate del ultimo commit termino verde
+```
+
+`3fb556d` es del **2026-09-02 a las 11:38**, y `main` va en `355f6c1`
+(2026-09-03, 15:31). **Son 34 commits, no 11.** La VM está limpia y en `main`
+—no en HEAD desprendido—, así que el `git pull` va a funcionar; lo que no pasó
+fue el despliegue de la tarde.
+
+**Cómo se llegó a creer que sí**: el cierre del 02 registró el despliegue de la
+**mañana** y a continuación escribió las instrucciones de la tarde, que nadie
+ejecutó. Nada las marcó como pendientes, así que "quedó desplegado lo pendiente"
+describía la mañana. Es la tercera vez que este documento pierde la respuesta a
+*"¿qué corre en `p340`?"*, y las tres veces el costo fue el mismo: una tanda que
+se creía en producción y no estaba. **La regla que faltaba y ahora está escrita:
+el commit desplegado se anota en el momento, o no se anotó.**
+
+Lo confirma un detalle: `compliance.0025` **no** está entre las pendientes, o sea
+que ya se aplicó. Sólo faltan las tres de abajo.
+
+##### Lo que hay que desplegar, entonces
+
+Es **la tanda del 02 por la tarde más la del 03**, no sólo la del 03.
+
+| | |
+|---|---|
+| Migraciones pendientes | **tres**: `reporting.0002` (la narrativa del informe, `LV-227` — quedó de la tanda no desplegada), `operations.0026` y `core.0008`. Las de hoy son columnas nuevas con defecto vacío: **no tocan una fila**, no hay backfill |
+| `collectstatic` | ⚠️ **Crítico, y por partida doble.** Faltan **diez** archivos estáticos —`app.css`, `worktable.js`, `login.css`, `login.js`, `report-a4.css`, `icons.svg`, `theme-init.js`, `app.js` y los dos PNG del informe—. Con `ManifestStaticFilesStorage` el hash viejo deja de resolver: no es un estilo feo, es **500** |
+| `bootstrap_roles` | ⚠️ **Vuelve a ser el crítico.** Por las dos filas de hoy no haría falta —`ListPreference` no declara permisos de rol a propósito—, **pero los permisos de `ReportRun` están en la tanda que no llegó**: sin esto nadie salvo `root` abre el informe mensual, y `R3`/`R4`/`R5` quedan invisibles para quien tiene que firmarlo |
+| `seed_document_types` | También de la tanda no desplegada (`LV-230`): sin él, el tipo de documento sigue con el nombre viejo |
+| Regla T-15 | Sigue pendiente de desactivar a mano — ver Paso 4. `seed_alert_rules` sólo crea, nunca borra |
+
+Son además **49 plantillas** y `generate_monthly_report`, que no piden ningún
+paso extra pero explican por qué la comprobación de abajo mira una lista **y** el
+informe.
+
+##### Las comprobaciones que importan acá
+
+1. **Una lista** (`/compliance/alerts/` o `/registry/batteries/`), **no el
+   panel**: el panel no ejercita nada de lo que cambió. Tienen que verse las tres
+   cosas nuevas — el encabezado ordena al apretarlo, y aparecen los botones
+   "Columnas" y "Guardar vista". **Si la lista da 500, la causa casi segura es
+   `collectstatic`.**
+2. **El informe mensual** (`/reporting/monthly/`) **con una cuenta que no sea
+   `root`**. Es lo que prueba que `bootstrap_roles` corrió: si pide permisos, no
+   corrió.
+3. **El acceso**, también sin ser superusuario: la línea del entorno, la ayuda y
+   el botón de mostrar contraseña — todo eso viene en la tanda no desplegada.
+4. **El corte del padrón de agosto**, que era la comprobación pendiente del 02:
+
+```
+uv run python manage.py shell -c "from datetime import date; from apps.dashboard.views import panel_readiness; print({c['key']: (c['count'], c['total']) for c in panel_readiness(date(2026,8,31))['readiness']})"
+```
+
+   El criterio es que devuelva **41** operadores y no 42. Si no baja, la causa no
+   es el arreglo: es que `created_at` refleja la fecha de carga masiva y no la
+   del hecho.
+
 #### ⛔ El squash de migraciones queda retirado, y hay que saber por qué
 
 La condición decía *"se squashean cuando el gate pase de 25 minutos"*, y el
