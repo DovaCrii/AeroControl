@@ -142,3 +142,158 @@ class TestADerivedRegionSaysThatItWasDerived:
         assert "Sin informar" in body or "Not recorded" in body
         assert "Derivada de las coordenadas" not in body
         assert "Derived from" not in body
+
+
+class TestASavedRegionAlsoKnowsWhereItCameFrom:
+    """La contradicción que la mitad (b) dejó abierta, cerrada.
+
+    La (b) sólo avisaba cuando la región se calculaba **al dibujar**. Pero
+    `fill_permission_from_plan` venía escribiendo región y comuna deducidas del
+    polígono **en los campos del permiso**, sin marca, así que una región que
+    salió de un polígono y una copiada del papel DGAC eran indistinguibles en la
+    base y en la ficha — y esas sí se presentaban como declaradas, que es
+    exactamente lo que la fila prohibía.
+
+    Ahora la procedencia es un campo (`operations.0026`), así que el aviso deja de
+    depender de que la columna esté vacía.
+    """
+
+    @pytest.mark.django_db
+    def test_filling_from_a_plan_marks_the_two_as_derived(self, db):
+        permit = _permit()
+
+        filled = permit.fill_location_gaps(
+            latitude=Decimal("-33.450000"),
+            longitude=Decimal("-70.660000"),
+            radius_m=500,
+            commune="Santiago",
+            region="Región Metropolitana de Santiago",
+        )
+
+        permit.refresh_from_db()
+        assert permit.region_source == FlightPermission.LOCATION_DERIVED
+        assert permit.commune_source == FlightPermission.LOCATION_DERIVED
+        # Y la procedencia **no** se le enumera a la persona como un campo que se
+        # completó: `filled` es lo que la pantalla lista, y "se completó
+        # region_source" no le dice nada a nadie.
+        assert "region_source" not in filled
+        assert "commune" in filled
+
+    @pytest.mark.django_db
+    def test_a_saved_derived_region_carries_the_bcn_warning(self, db):
+        permit = _permit()
+        permit.fill_location_gaps(
+            latitude=Decimal("-33.450000"),
+            longitude=Decimal("-70.660000"),
+            radius_m=500,
+            commune="Santiago",
+            region="Región Metropolitana de Santiago",
+        )
+
+        body = _fiche(permit)
+
+        assert "Santiago" in body
+        assert "Derivada de las coordenadas" in body or "Derived from" in body
+        assert "BCN" in body
+
+    @pytest.mark.django_db
+    def test_correcting_it_by_hand_stops_calling_it_derived(self, db):
+        """El aviso que sobrevive a la corrección es peor que no tener aviso.
+
+        La capa de la BCN está simplificada a ~111 m: cerca del borde devuelve la
+        comuna vecina, y alguien la corrige. Si el marcador quedara en `derived`,
+        la ficha seguiría diciendo "deducido de las coordenadas" sobre un valor
+        que una persona verificó contra el papel — y ese aviso se cree.
+        """
+        permit = _permit()
+        permit.fill_location_gaps(
+            latitude=Decimal("-33.450000"),
+            longitude=Decimal("-70.660000"),
+            radius_m=500,
+            commune="Santiago",
+            region="Región Metropolitana de Santiago",
+        )
+
+        fresh = FlightPermission.objects.get(pk=permit.pk)
+        fresh.commune = "Providencia"
+        fresh.save()
+
+        fresh.refresh_from_db()
+        assert fresh.commune_source == FlightPermission.LOCATION_DECLARED
+        # La región no se tocó, así que sigue siendo deducida: los dos campos se
+        # razonan por separado, igual que al rellenarlos.
+        assert fresh.region_source == FlightPermission.LOCATION_DERIVED
+
+    @pytest.mark.django_db
+    def test_the_correction_survives_an_update_fields_save(self, db):
+        """Quien guarda con `update_fields` no tiene por qué acordarse del
+        marcador; si el modelo no lo suma, la corrección se pierde en silencio."""
+        permit = _permit()
+        permit.fill_location_gaps(
+            latitude=Decimal("-33.450000"),
+            longitude=Decimal("-70.660000"),
+            radius_m=500,
+            commune="Santiago",
+            region="Región Metropolitana de Santiago",
+        )
+
+        fresh = FlightPermission.objects.get(pk=permit.pk)
+        fresh.commune = "Providencia"
+        fresh.save(update_fields=["commune"])
+
+        fresh.refresh_from_db()
+        assert fresh.commune_source == FlightPermission.LOCATION_DECLARED
+
+    @pytest.mark.django_db
+    def test_emptying_it_is_not_declaring_it(self, db):
+        """Un campo en blanco no tiene procedencia. Dejarle `declared`
+        afirmaría que alguien declaró la nada."""
+        permit = _permit()
+        permit.fill_location_gaps(
+            latitude=Decimal("-33.450000"),
+            longitude=Decimal("-70.660000"),
+            radius_m=500,
+            commune="Santiago",
+            region="Región Metropolitana de Santiago",
+        )
+
+        fresh = FlightPermission.objects.get(pk=permit.pk)
+        fresh.commune = ""
+        fresh.save()
+
+        fresh.refresh_from_db()
+        assert fresh.commune_source == ""
+
+    @pytest.mark.django_db
+    def test_a_permit_that_predates_the_field_shows_no_warning(self, db):
+        """Vacío es *no se sabe*, y se dibuja como siempre.
+
+        La migración no rellena nada a propósito: no hay forma honesta de saber
+        cuáles de los permisos ya cargados se teclearon del papel y cuáles las
+        escribió el plan. Lo que sí tiene que cumplirse es que **nada
+        retroceda**: sin marcador, la ficha se ve como antes.
+        """
+        permit = _permit(region="Coquimbo", commune="Los Vilos")
+        # Se fuerza el estado anterior a la migración por la vía que no dispara
+        # el modelo, porque crear ya marca `declared` -- y lo que se quiere
+        # reproducir acá es justamente una fila sin marcador.
+        FlightPermission.objects.filter(pk=permit.pk).update(
+            region_source="", commune_source=""
+        )
+
+        body = _fiche(permit)
+
+        assert "Coquimbo" in body
+        assert "Derivada de las coordenadas" not in body
+        assert "Derived from" not in body
+
+    @pytest.mark.django_db
+    def test_creating_a_permit_with_a_region_records_it_as_declared(self, db):
+        """`fill_location_gaps` sólo rellena huecos de permisos que ya existen,
+        así que lo único que escribe una región al crear es alguien copiándola
+        del papel. Dejarla en "no se sabe" descartaría algo que sí se sabe."""
+        permit = _permit(region="Coquimbo")
+
+        assert permit.region_source == FlightPermission.LOCATION_DECLARED
+        # La comuna quedó vacía, y vacío no tiene procedencia.
+        assert permit.commune_source == ""

@@ -399,3 +399,98 @@ def test_source_strings_are_written_in_english():
     ]
 
     assert not offenders, "cadenas fuente en espanol:\n  " + "\n  ".join(offenders)
+
+
+# Formas del voseo rioplatense. La lista es de **verbos conjugados**, no de un
+# patrón sobre la tilde: `-ás/-és/-ís` acentuados aparecen en un montón de
+# palabras legítimas (`además`, `después`, `país`, `interés`), así que un patrón
+# genérico daría falsos positivos en cada revisión y terminaría desactivado.
+#
+# Dos grupos: el presente (`necesitás`, `podés`) y el imperativo (`usá`, `elegí`,
+# `revisá`), que es el que más se cuela porque en un mensaje de ayuda suena
+# natural escribir "usá --force".
+_VOSEO = [
+    # Presente de indicativo.
+    # `ves`, `estás` y `sos` **no van**: los dos primeros son tuteo normal y el
+    # tercero choca con "SOS" al comparar en minúsculas. Un guardián que marca
+    # español correcto es un guardián que alguien termina desactivando.
+    "necesitás",
+    "podés",
+    "tenés",
+    "querés",
+    "debés",
+    "hacés",
+    "sabés",
+    "elegís",
+    "vivís",
+    "escribís",
+    "seguís",
+    "venís",
+    "andás",
+    "creés",
+    "ponés",
+    "salís",
+    "decís",
+    "pedís",
+    # Imperativo.
+    "usá",
+    "elegí",
+    "escribí",
+    "revisá",
+    "mirá",
+    "andá",
+    "poné",
+    "dejá",
+    "fijate",
+    "acordate",
+    "tené",
+    "entrá",
+    "cargá",
+    "subí",
+    "volvé",
+    "marcá",
+    "guardá",
+    "apretá",
+    "seleccioná",
+    "ingresá",
+    "probá",
+    "esperá",
+    "avisá",
+    "cerrá",
+    "abrí",
+    "buscá",
+    "agregá",
+    "quitá",
+    "corregí",
+    "completá",
+]
+
+
+def test_the_spanish_catalog_has_no_voseo(catalog):
+    """El español del producto es **neutral**, nunca rioplatense.
+
+    Instrucción del usuario, textual: *"ojo el español o la información está con
+    un tono argentino, debe ser neutral siempre"*. La app la usa una empresa
+    chilena y su interlocutor es la DGAC: un "necesitás" en una pantalla que
+    después se imprime como evidencia ISO suena a que el sistema lo escribió
+    alguien de afuera.
+
+    **Este guardián existe porque revisarlo a ojo ya falló.** El 2026-09-02 se
+    neutralizaron ocho cadenas y se dio el trabajo por cerrado; al día siguiente
+    apareció una novena viva en el catálogo, en el mensaje de bloqueo del
+    acceso. Una revisión manual que se declara completa y no lo está es peor que
+    no haberla hecho, porque nadie vuelve a mirar.
+    """
+    offenders = []
+    for _, msgid, msgstr, fuzzy in catalog:
+        if not msgstr or fuzzy:
+            continue
+        lowered = msgstr.lower()
+        for form in _VOSEO:
+            # Con límites de palabra para que `usá` no marque `usuario` ni
+            # `causá`, y `tené` no marque `tenés` dos veces.
+            if re.search(rf"\b{re.escape(form)}\b", lowered):
+                offenders.append(f"{form!r} en {msgid[:60]!r}: {msgstr[:80]!r}")
+                break
+
+    assert not offenders, "voseo en el catalogo espanol:\n  " + "\n  ".join(offenders)
