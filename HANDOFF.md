@@ -177,7 +177,51 @@ Dos filas más, **sin desplegar**:
 
 **Paso de despliegue: `collectstatic`.** Sin migración.
 
-### Cierre del 2026-09-02 (tarde) — **empezar por acá**
+### Cierre del 2026-09-03 — **empezar por acá**
+
+**Lo que entró hoy, en cinco commits sobre `1598fef`:**
+
+| | |
+|---|---|
+| `3106b99` | **Las tres decisiones que esperaban al usuario**, respondidas y con el porqué escrito: metas de KPI (4 de 5 se quedan sin meta **a propósito**, no es deuda), segregación de funciones en el informe (**no se separa**: redactor y firmante son la misma persona, y queda escrita la condición para reabrirlo), y `LV-232` (**un solo aviso**, con la implementación segura especificada como fila propia). |
+| `322a479` | **`LV-220`: la región guardada dice de dónde salió** (`operations.0026`). Cierra la contradicción que la mitad (b) dejó anotada. Sin backfill, y ése es el punto: no hay forma honesta de saber qué se tecleó y qué escribió el plan. Con el guardián de voseo, que apareció porque **se escapó una novena cadena** un día después de dar la revisión por cerrada. |
+| `532e597` | **`UX-07`: la tabla de trabajo, una sola vez.** Las 16 listas por un mismo componente, más el orden por columna que no existía en ninguna. |
+| `f108528` | **`LV-231`: el folio sale del PDF de la DGAC.** Propone, nunca escribe solo; la vista que confirma **vuelve a leer el PDF y no acepta ningún número del formulario**. Suma `pypdf`. |
+| `dc87527` | **`UX-09` + `UX-12`: columnas por persona y vistas guardadas** (`core.0008`), en un solo modelo. |
+
+**Dos migraciones nuevas para esta tanda: `operations.0026` y `core.0008`.**
+Ninguna hace backfill; las dos son columnas nuevas con defecto vacío, así que
+aplican sobre producción sin tocar una fila.
+
+**No hace falta `bootstrap_roles` por estas dos filas**: `ListPreference` no
+declara permisos de rol a propósito —esconder una columna es cómo alguien mira su
+propia pantalla, no un privilegio— y los campos de `FlightPermission` viajan con
+los permisos que ese modelo ya tiene. Lo que sí hace falta es **`collectstatic`**:
+cambiaron `app.css` y `worktable.js`.
+
+#### ⛔ El squash de migraciones queda retirado, y hay que saber por qué
+
+La condición decía *"se squashean cuando el gate pase de 25 minutos"*, y el
+2026-09-02 el gate marcó 26m03s. **Se midió antes de tocar nada y la premisa es
+falsa: 158 migraciones desde cero tardan 4,3 segundos** sobre un gate de ~1560, y
+se aplican **una vez por sesión de pruebas**, no por prueba. El detalle y las
+otras razones (26 `RunPython` sin `elidable`) están en `MASTER_PLAN.md` §
+"Migraciones". **No squashear.**
+
+#### Lo que sigue abierto
+
+- **`LV-218(b)`, el cruce automático de NOTAM: bloqueado fuera del código.** La
+  propia fila lo dice — *"requiere hablar con la DGAC primero"*. El paso (a) está
+  hecho (el enlace al IFIS) y el (b) exige una conversación con la autoridad
+  antes de escribir nada.
+- **`LV-232`**, ahora con criterio decidido y forma especificada: ver su fila.
+- Del plan UX, la fase C en adelante (`UX-13` … `UX-31`).
+- Las filas de datos (`LV-74`, `LV-228`, `LV-98`, `LV-102`) y `R6`/`R7`, que
+  esperan SMTP y datos que todavía no existen.
+
+---
+
+### Cierre del 2026-09-02 (tarde)
 
 ## ⚠️ EL DESPLIEGUE DE ESTA TANDA
 

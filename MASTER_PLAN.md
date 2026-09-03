@@ -132,10 +132,38 @@ pestaña «Vista de calendario»: **sigue viva** en `task_list.html:7`.
 - **`max_altitude_ft`** — condición escrita en la fila `LV-221` y en el
   comentario del campo: cuando se confirme que ninguna de las tres solicitudes
   de `CC691` se presentó al SIGO con el valor viejo, la columna se borra.
-- **Migraciones** — **124 hoy** (registry 41, operations 25, compliance 25,
-  resto 33), gate entre **17 y 22 minutos**. Se squashean cuando el gate pase de
-  **25 minutos** o `registry` supere las **50**, con el respaldo delante. Antes
-  de eso el squash cuesta más de lo que ahorra.
+- **Migraciones** — ⛔ **NO se squashean, y la condición que decía lo contrario
+  queda retirada porque se midió y su premisa es falsa** (2026-09-03).
+
+  La condición era: *"124 hoy, gate entre 17 y 22 minutos; se squashean cuando el
+  gate pase de **25 minutos** o `registry` supere las **50**"*. El 2026-09-02 el
+  gate marcó 26m03s y con eso el disparador se dio por cumplido. **Pero el
+  disparador supone que las migraciones son parte de lo que hace largo al gate, y
+  no lo son.** Medido antes de tocar nada, sobre una base desechable:
+
+  > **158 migraciones desde cero: 4,3 segundos.** El gate son ~1560. O sea
+  > **0,28 %**.
+
+  Y se aplican **una vez por sesión de pruebas**, no por prueba: `pytest-django`
+  crea la base de prueba una sola vez. La comprobación está en los propios
+  números de hoy — 712 pruebas de `core` en 164 s; si cada una migrara, el piso
+  sería 712 × 4,3 s ≈ 51 minutos.
+
+  Squashear no puede acortar el gate de forma perceptible, y sí cuesta: hay **26
+  operaciones `RunPython` sin `elidable=True`**, y el optimizador de Django no
+  compacta a través de ellas, así que el squash conservaría casi todo lo que hay.
+  Además es un cambio cuyo modo de falla es *"producción no puede migrar"*. Pagar
+  ese riesgo por un 0,3 % es un mal negocio.
+
+  **Lo que sí sigue siendo una razón válida para squashear** —y la única— es la
+  legibilidad de `registry` si pasa de 50 archivos: ahí el problema no es el
+  tiempo sino que nadie encuentre nada. Hoy tiene 41. Y si alguna vez se
+  squashea, el paso previo es marcar `elidable=True` en las `RunPython` cuyo
+  efecto ya esté consolidado en producción, o el squash no compacta nada.
+
+  **Lo que sí acortaría el gate**, si alguna vez urge, es el propio suite: ~2800
+  pruebas a ~0,23 s cada una. Eso es paralelismo (`pytest-xdist`) o base en
+  memoria, no migraciones.
 
 ⚠️ **`AUDIT_CLAUDE.md` `F-14` está caducado**: agrupa `qualification-list` con la
 búsqueda global como «sin ningún enlace», y la búsqueda global está viva en

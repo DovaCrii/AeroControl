@@ -501,18 +501,52 @@ las tablas no se cortan a mitad de fila; sale el sello de generación.
 
 ### Fase B — La tabla de trabajo
 
-**`UX-07` · Componente `_worktable.html`.** Reemplaza el `<table>` a mano de
-`generic/list.html` y de las listas específicas. Trae de una vez: orden por
-columna, "mostrando N–M de T", selección múltiple, y el borde de severidad.
+**`UX-07` · Componente `_worktable.html`.** ✅ **Hecho el 2026-09-03**, como
+`generic/worktable.html`. Reemplaza el `<table>` a mano de `generic/list.html` y
+de las listas específicas. Trae de una vez: orden por columna, "mostrando N–M de
+T", selección múltiple, y el borde de severidad.
 *Criterio:* las 26 listas lo usan; ninguna pierde función; la suite sigue verde.
+
+⚠️ **Al medirlo, "las 26 listas" resultaron ser 16**, y conviene anotarlo porque
+el número de esta fila se venía repitiendo sin contarlo: nueve ya pasaban por
+`generic/list.html` y siete se escribían la cáscara a mano. Las dieciséis pasan
+ahora por el componente. De las 58 `<table>` del árbol, el resto son fichas
+—tablas de dato/valor— y no listas.
+
+🔶 **Y `workboard/task_list.html` queda fuera a propósito, con test que lo fija.**
+Tres razones: el tablero se da de baja por decisión del usuario (`LV-78`); su
+tabla no tiene la forma de una tabla de trabajo (filas de agrupamiento,
+`offcanvas`, `container-fluid`); y sobre todo **ya usa `?sort=` con otra
+semántica**, así que migrarla haría que dos mecanismos se pisen sobre la misma
+llave y el que perdiera fallaría en silencio.
+
+**Es plantilla base y no `include`**, porque un `include` recibe variables y no
+bloques: las nueve listas genéricas sobreescriben `list_header`, `list_colgroup` y
+`table_body`, y convertirlas habría exigido aplanar cada encabezado a una lista
+de diccionarios armada en Python.
 
 **`UX-08` · Densidad conmutable (cómoda 40 px / compacta 32 px),** recordada por
 persona en `localStorage` con el `try/catch` que el proyecto ya usa.
 
 **`UX-09` · Selector de columnas,** persistido por lista y por persona.
+✅ **Hecho el 2026-09-03**, con `UX-12`: las dos son *con qué estado alguien
+vuelve a una lista*, así que las guarda un solo modelo (`core.ListPreference`,
+migración `core.0008`).
 *Criterio:* la lista de alertas puede mostrar la faena como **columna** en
 escritorio y esconderla en pantalla angosta, en vez de vivir como *chip* de
 segunda línea (que fue el parche de `LV-146`).
+
+⚠️ **Se guardan las columnas ocultas, no las visibles**, y es la decisión que no
+se ve al leer el campo: con las visibles, una columna nueva sería invisible para
+todo el que alguna vez guardó una preferencia — la lista estrenaría la columna
+mostrándosela sólo a quien nunca la configuró.
+
+🔶 **El criterio de esta fila queda a medias, y hay que decirlo.** La mitad
+"esconderla en pantalla angosta" **no** está: lo que hay es esconderla por
+decisión de la persona, no automáticamente por ancho. Esconder por ancho es
+`UX-10`, que ya apila la fila como tarjeta bajo 768 px, y la faena sigue siendo
+un *chip* de segunda línea en la lista de alertas. Convertirla en columna es un
+cambio de esa lista, no del selector, y no se hizo.
 
 **`UX-10` · Fila-tarjeta bajo 768 px.** Cada fila se apila mostrando las tres
 columnas que importan más su severidad. *Criterio:* ninguna lista requiere
@@ -523,9 +557,20 @@ exportar la selección y resolver alertas. *Criterio:* la barra contextual apare
 sólo con algo seleccionado y dice cuántos; **la selección es explícita, nunca
 inferida por fecha o regla** (la lección de `LV-68`).
 
-**`UX-12` · Vistas guardadas.** Un filtro con nombre, propia o compartida.
+**`UX-12` · Vistas guardadas.** ✅ **Hecho el 2026-09-03**, junto con `UX-09` y en
+el mismo modelo. Un filtro con nombre, propia o compartida.
 *Criterio:* "Seguros vencidos" y "Credenciales a 60 días" se guardan y aparecen
-como pestañas sobre la tabla.
+como pestañas sobre la tabla. **Cumplido**, con test que lo comprueba en la lista
+de alertas.
+
+Una vista guarda **también sus columnas**: volver a "Seguros vencidos" con las
+columnas de otra vista sería devolver algo que no es lo que se guardó. Y
+compartir es **ofrecer, no ceder** — la ve todo el mundo, la edita y la borra sólo
+quien la creó, con el filtro por autor en la consulta y no en un `if` posterior.
+
+⚠️ Se adelantó a la fase 5 donde el plan la tenía, porque `UX-07` acababa de
+crear el lugar donde vive la pestaña: hacerla después habría significado abrir
+las mismas dieciséis plantillas dos veces.
 
 ### Fase C — La bandeja y el panel
 
