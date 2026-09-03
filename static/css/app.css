@@ -2297,6 +2297,12 @@ a.admin-metric:hover { border-color: var(--ac-text-secondary); }
    (.col-flex o .col-chips) que absorbe el sobrante, de modo que los
    porcentajes no tienen que sumar exacto pese a que cada lista tiene un
    número distinto de columnas. */
+/* `UX-11`/`UX-07`: la columna de casillas, que **inyecta `worktable.js`** junto
+   con su `<col>`. Sin ella declarada acá, `table-layout: fixed` le repartía el
+   26 % de `.col-primary` -- que es exactamente lo que se vio en producción: una
+   primera columna enorme y vacía, con todo lo demás corrido un lugar. Sólo la
+   casilla y su aire; no hay contenido que ajustar. */
+.table-normalized .col-select { width: 3%; }
 .table-normalized .col-primary { width: 26%; }
 .table-normalized .col-text { width: 18%; }
 .table-normalized .col-compact { width: 12%; }

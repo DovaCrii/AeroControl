@@ -109,6 +109,23 @@
 
     var head = table.querySelector("thead tr");
     if (head && !head.querySelector("." + BULK_CLASS)) {
+      // ⚠️ Si la tabla declara `<colgroup>`, la columna nueva necesita **su
+      // propio `<col>`**, y esto no es cosmético: `.table-normalized` usa
+      // `table-layout: fixed`, donde los `<col>` se aplican **por posición**.
+      // Sin esta línea, insertar la casilla corre todos los anchos un lugar --
+      // la casilla se queda con el 26 % de `.col-primary` y la última columna
+      // sin ancho declarado. En producción se vio como una primera columna
+      // enorme y vacía en centros de costo, aeronaves y operadores.
+      //
+      // Va acá, dentro de la misma guarda que inserta el `<th>`, porque el
+      // `<col>` y la columna son el mismo hecho: separarlos es cómo uno de los
+      // dos se hace y el otro no.
+      var group = table.querySelector("colgroup");
+      if (group && !group.querySelector(".col-select")) {
+        var col = document.createElement("col");
+        col.className = "col-select";
+        group.insertBefore(col, group.firstChild);
+      }
       var th = document.createElement("th");
       th.scope = "col";
       var all = box(false);
