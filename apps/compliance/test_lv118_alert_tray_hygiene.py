@@ -220,8 +220,28 @@ class TestSeverityIsDerivedNotEdited:
         content = response.content.decode()
 
         assert [alert.watched_value for alert in response.context["objects"]] == order
+
         # Y el color acompaña al orden: lo vencido grita, lo de septiembre no.
-        assert "bg-danger" in content
+        #
+        # ⚠️ **Esta afirmación decía `"bg-danger" in content` y llevaba desde
+        # `UX-01` pasando por la razón equivocada.** Esa tanda movió
+        # `BUCKET_BADGE_CSS` de las clases de Bootstrap a los tokens `sev-*`, así
+        # que la fila pasó a dibujarse con `sev-critical` — y el `bg-danger` que
+        # el test seguía encontrando era el del **contador de alertas de la
+        # barra lateral** (`#alert-badge`), que es rojo mientras haya una alerta
+        # sin resolver. O sea que habría pasado igual con toda la bandeja en
+        # gris. Encontrado en el barrido previo a `UX-07`, no por un test rojo.
+        #
+        # Se compara contra `BUCKET_BADGE_CSS` y no contra un nombre de clase
+        # tecleado: así el test sigue el vocabulario cuando cambie, en vez de
+        # quedarse midiendo una cadena que ya no se usa. Y se busca en el
+        # **cuerpo de la tabla**, para que ningún adorno del armazón pueda
+        # satisfacerlo.
+        from apps.compliance.digest import BUCKET_BADGE_CSS
+
+        table = content.split('id="table-body"', 1)[-1]
+
+        assert BUCKET_BADGE_CSS["overdue"] in table
 
     @pytest.mark.django_db
     def test_an_alert_without_a_value_does_not_head_the_tray(

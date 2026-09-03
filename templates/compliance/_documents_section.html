@@ -39,8 +39,14 @@ la descarga cuando no.{% endcomment %}
         anidadas en la vista. Con una sola categoría se dibuja un encabezado
         único, que no estorba; con seis, es la diferencia entre buscar y
         encontrar.{% endcomment %}
+        {% comment %}`UX-07`, barrido previo: la fila lleva un nombre que dice
+        **qué es** —un encabezado de grupo— además de la clase de Bootstrap que
+        la pinta. El test la localizaba por `table-active`, y esa clase es
+        presentación: un componente de tabla que la cambie rompería un test que
+        en realidad afirma sobre el agrupamiento, no sobre el color. Es el
+        barrido que §6.3 del plan pide **antes** de tocar las tablas.{% endcomment %}
         {% ifchanged document.doc_type.category %}
-        <tr class="table-active">
+        <tr class="doc-group-heading table-active">
           <th scope="col" colspan="5" class="small text-uppercase text-body-secondary fw-semibold py-1">{{ document.doc_type.get_category_display }}</th>
         </tr>
         {% endifchanged %}
