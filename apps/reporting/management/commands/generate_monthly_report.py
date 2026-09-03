@@ -72,7 +72,7 @@ class Command(BaseCommand):
                 message = (
                     f"{latest.code} rev. {latest.revision} ya existe "
                     f"({latest.get_status_display()}). Sin cambios; "
-                    f"usá --force para emitir la revisión siguiente."
+                    f"use --force para emitir la revisión siguiente."
                 )
                 run["summary"] = message
                 self.stdout.write(message)

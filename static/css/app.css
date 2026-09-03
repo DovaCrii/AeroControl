@@ -2703,7 +2703,7 @@ a.admin-metric:hover { border-color: var(--ac-text-secondary); }
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-/* Completa: el color dice "podés enviar" sin agregar una frase más. */
+/* Completa: el color dice "se puede enviar" sin agregar una frase más. */
 .quiz-footer.is-complete .quiz-progress-text { color: var(--ac-primary); font-weight: 700; }
 
 @media (max-width: 640px) {
