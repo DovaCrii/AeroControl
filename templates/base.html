@@ -47,6 +47,12 @@
         </select>
       </form>
       <form method="post" action="{% url 'logout' %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-light" type="submit">{% translate "Sign out" %}</button></form>
+      {% comment %}UX-08: la densidad de las tablas. Junto al del tema porque son
+      la misma clase de cosa —una preferencia de quien mira, no del dato— y
+      buscarlas en dos sitios distintos sería peor que tenerlas juntas.{% endcomment %}
+      <button class="btn btn-sm btn-outline-light" id="density-toggle" type="button" aria-pressed="false" aria-label="{% translate 'Toggle row density' %}" data-label-compact="{% translate 'Use compact rows' %}" data-label-comfortable="{% translate 'Use comfortable rows' %}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
       <button class="btn btn-sm btn-outline-light theme-toggle" id="theme-toggle" type="button" aria-pressed="false" aria-label="{% translate 'Toggle theme' %}" title="{% translate 'Toggle theme' %}" data-label-light="{% translate 'Use light theme' %}" data-label-dark="{% translate 'Use dark theme' %}">
         <svg class="theme-icon theme-icon-moon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.6 10.4A6.1 6.1 0 0 1 5.6 2.4a6.5 6.5 0 1 0 8 8z"/></svg>
         <svg class="theme-icon theme-icon-sun" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3.1"/><path d="M8 1.2v1.5M8 13.3v1.5M1.2 8h1.5M13.3 8h1.5M3.2 3.2l1.1 1.1M11.7 11.7l1.1 1.1M3.2 12.8l1.1-1.1M11.7 4.3l1.1-1.1"/></svg>
