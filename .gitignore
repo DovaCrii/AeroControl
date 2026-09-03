@@ -16,6 +16,16 @@ backups/
 
 # Local tooling config; holds machine-specific absolute paths
 .claude/
+# Mismo motivo, y ya se coló una vez: el `settings.json` que VS Code escribe
+# solo apunta a `.venv\Scripts\python.exe`, una ruta de Windows que en la VM
+# `p340` no existe. Versionarla le rompería el intérprete a quien trabaje en
+# Linux, que es donde corre esto en producción.
+.vscode/
+
+# Caché de pytest. No es sólo ruido en `git status`: en Windows queda con
+# permisos que ni `git` puede leer, así que cada `git add -A` imprime un
+# `Permission denied` que parece un error del commit y no lo es.
+.pytest_cache/
 
 # Temp artifacts (runtime checks)
 .tmp-*/
