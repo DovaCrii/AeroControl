@@ -1,21 +1,27 @@
-{% extends "base.html" %}
+{% extends "generic/worktable.html" %}
 {% load aero_tags i18n %}
+{% comment %}`UX-07`: la cáscara —tarjeta, tabla, paginación y barra de
+selección— se fue a `generic/worktable.html`, que ahora comparten también las
+ocho listas que se la escribían a mano.
+
+Los bloques `list_*` se conservan **con sus mismos nombres**: nueve listas los
+sobreescriben, y renombrarlos habría sido un cambio invisible que rompe cada una
+en silencio —la plantilla hija seguiría declarando un bloque que ya no existe, y
+Django no dice nada—. Acá se mapean uno a uno a los `worktable_*`.{% endcomment %}
 {% block title %}{{ title|default:'Records' }} - AeroControl{% endblock %}
-{% block content %}
-<div class="page-header">
-  <h1 class="h3">{% if title %}{{ title }}{% else %}{% translate "Records" %}{% endif %}</h1>
-  <div class="d-flex gap-2">
+{% block worktable_heading %}{% if title %}{{ title }}{% else %}{% translate "Records" %}{% endif %}{% endblock %}
+{% block worktable_actions %}
     {% block list_actions %}{% endblock %}
     {% block list_primary_actions %}
     <a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>
     <a class="btn btn-primary" href="new/" hx-get="new/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal">+ {% translate "New" %}</a>
     {% endblock %}
-  </div>
-</div>
+{% endblock %}
 {% comment %}LV-131: una línea para decir de qué es esta pantalla, cuando el
 título no alcanza. Vacío por defecto: la mayoría de los listados se explican con
 su nombre, y un subtítulo obligatorio se llenaría de relleno.{% endcomment %}
-{% block list_intro %}{% endblock %}
+{% block worktable_intro %}{% block list_intro %}{% endblock %}{% endblock %}
+{% block worktable_filters %}
 <form method="get" class="row g-2 mb-3">
   {% block list_filters %}
   <div class="col-md-5">{% include "generic/_search_input.html" with search_url=request.path %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
@@ -23,52 +29,19 @@ su nombre, y un subtítulo obligatorio se llenaría de relleno.{% endcomment %}
   <div class="col-auto"><button class="btn btn-outline-primary">{% translate "Search" %}</button></div>
   {% endblock %}
 </form>
-
-{% comment %}`UX-11`: la barra contextual. Vive en la plantilla y no en el JS
-porque lleva texto traducible, y aparece **sólo con algo seleccionado** — una
-barra permanente que dice "0 seleccionados" ocupa sitio todos los días para
-avisar de nada.
-
-⚠️ **La selección es explícita, casilla por casilla, y eso es la fila.** `LV-68`
-retiró la resolución en lote que agrupaba por regla y fecha sobre la premisa de
-que una fecha compartida implicaba una causa compartida; contra los datos reales
-resultó falsa. Acá no se infiere nada: lo que se exporta es lo que la persona
-marcó.{% endcomment %}
-{% comment %}El marcador va como variable para que la cadena traducible salga
-entera y con su hueco: `{% templatetag openblock %} blocktranslate with n="{n}"
-{% templatetag closeblock %}` deja "{n} seleccionados" en el catálogo, y el JS
-sólo sustituye el número. Armar la frase en JS habría dejado ese texto fuera del
-catálogo, que es la mitad de la interfaz bilingüe.{% endcomment %}
-{% blocktranslate asvar bulk_template with n="{n}" %}{{ n }} selected{% endblocktranslate %}
-<div id="bulk-bar" class="bulk-bar" hidden role="status">
-  <span class="bulk-count" data-template="{{ bulk_template }}"></span>
-  <div class="d-flex gap-2">
-    <button type="button" class="btn btn-sm btn-outline-secondary" id="bulk-clear">{% translate "Clear selection" %}</button>
-    <a class="btn btn-sm btn-primary" id="bulk-export" href="#" hx-boost="false">{% translate "Export the selection" %}</a>
-  </div>
-</div>
-
-<div id="table-wrapper" class="card">
-  <div class="table-responsive">
-    {% comment %}LV-57: both blocks are empty by default, so every list that
-    does not override them renders exactly as before. A list opts into the
-    normalized column widths by declaring its <colgroup> here and adding
-    table-normalized -- the widths only bind where a colgroup exists.{% endcomment %}
-    <table class="table table-hover mb-0 {% block list_table_class %}{% endblock %}">
-      {% block list_colgroup %}{% endblock %}
-      <thead>
-        <tr>
+{% endblock %}
+{% comment %}LV-57: both blocks are empty by default, so every list that does not
+override them renders exactly as before. A list opts into the normalized column
+widths by declaring its <colgroup> here and adding table-normalized -- the widths
+only bind where a colgroup exists.{% endcomment %}
+{% block worktable_table_class %}{% block list_table_class %}{% endblock %}{% endblock %}
+{% block worktable_colgroup %}{% block list_colgroup %}{% endblock %}{% endblock %}
+{% block worktable_header %}
           {% block list_header %}
-          <th scope="col">{% translate "Name" %}</th>
-          <th scope="col">{% translate "Created" %}</th>
-          <th scope="col">{% translate "Status" %}</th>
+          {% sortable_th _("Name") "name" %}
+          {% sortable_th _("Created") "created" %}
+          {% sortable_th _("Status") "status" %}
           {% endblock %}
           <th scope="col" class="text-end">{% translate "Actions" %}</th>
-        </tr>
-      </thead>
-      <tbody id="table-body">{% block table_body %}{% include "generic/_table_body.html" %}{% endblock %}</tbody>
-    </table>
-  </div>
-  <div id="pagination-container">{% render_pagination page_obj %}</div>
-</div>
 {% endblock %}
+{% block worktable_rows %}{% block table_body %}{% include "generic/_table_body.html" %}{% endblock %}{% endblock %}

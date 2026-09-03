@@ -173,13 +173,19 @@ class TestTheSelectionIsExplicitInTheMarkup:
 
     def test_the_bar_is_hidden_until_something_is_chosen(self):
         """Una barra permanente que dice "0 seleccionados" ocupa sitio todos los
-        días para avisar de nada."""
+        días para avisar de nada.
+
+        `UX-07`: la barra se mudó de `generic/list.html` a su propia parcial,
+        porque las ocho listas que se escribían la tabla a mano nunca la
+        tuvieron -- sus filas llevaban `data-pk` y las casillas no aparecían,
+        porque el JS sólo las dibuja cuando existe la barra que las gobierna.
+        """
         from pathlib import Path
 
         from django.conf import settings
 
         markup = (
-            Path(settings.BASE_DIR) / "templates" / "generic" / "list.html"
+            Path(settings.BASE_DIR) / "templates" / "generic" / "_bulk_bar.html"
         ).read_text(encoding="utf-8")
 
         assert 'id="bulk-bar"' in markup
@@ -193,10 +199,24 @@ class TestTheSelectionIsExplicitInTheMarkup:
         from django.conf import settings
 
         markup = (
-            Path(settings.BASE_DIR) / "templates" / "generic" / "list.html"
+            Path(settings.BASE_DIR) / "templates" / "generic" / "_bulk_bar.html"
         ).read_text(encoding="utf-8")
 
         assert 'blocktranslate asvar bulk_template with n="{n}"' in markup
+
+    def test_the_component_puts_the_bar_on_every_list_that_uses_it(self):
+        """Lo que la mudanza tenía que conseguir, y que leer la parcial sola no
+        prueba: que la cáscara compartida la incluya, o se habría movido a un
+        archivo que nadie dibuja."""
+        from pathlib import Path
+
+        from django.conf import settings
+
+        shell = (
+            Path(settings.BASE_DIR) / "templates" / "generic" / "worktable.html"
+        ).read_text(encoding="utf-8")
+
+        assert '{% include "generic/_bulk_bar.html" %}' in shell
 
     def test_every_list_partial_declares_the_identity(self):
         """**Sin esto la función alcanzaba una sola lista.**

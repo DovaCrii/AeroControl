@@ -1,0 +1,80 @@
+{% load i18n %}
+{% comment %}LV-75: one alert, one row. R6.3 used to fold same-rule, same-date
+alerts together on the premise that a shared date meant a shared cause (a fleet
+policy covering several aircraft); LV-68 found that false against production data
+and removed the bulk resolve, but the row itself kept making the claim -- and a
+grouped row had no button in its Actions column while its members got a text link
+instead, so the same action sat in two different places depending on whether a
+neighbouring record shared a date.
+
+LV-69b: the workboard actions ("Create task"/"View task") were removed when that
+module left the menu -- they pushed work somewhere nobody navigates to. The list
+is self-contained: Resolve and Undo.
+
+`UX-07`: sale de `alert_list.html` a su propio parcial, como las otras catorce
+listas. Y la fila lleva `data-sev`, que es lo que dibuja el borde de severidad en
+el canto izquierdo: es la única señal que se lee **sin leer**, al recorrer la
+lista hacia abajo. El nivel se deriva del mismo mapa que la píldora de
+vencimiento (`urgency_level`), así que el borde y la píldora de una fila no
+pueden decir cosas distintas.{% endcomment %}
+{% for object in objects %}<tr data-pk="{{ object.pk }}"{% if object.urgency_level %} data-sev="{{ object.urgency_level }}"{% endif %}>
+  <td><span class="badge {{ object.entity_tone_css }}">{{ object.entity_label }}</span></td>
+  {% comment %}La entidad lleva a su ficha, que es donde está el estado y los
+  documentos. Sin el enlace, una alerta decía "RPA-5534, seguro por vencer" y
+  para hacer algo al respecto había que ir al padrón, buscar la matrícula y
+  entrar: tres pasos para llegar a la única pantalla desde la que se resuelve.
+  El enlace sale de `get_absolute_url` del propio objeto, así que aparece para
+  las entidades que tienen ficha y no para las que no.{% endcomment %}
+  {% comment %}LV-146: la faena va como chip en **segunda línea dentro de esta
+  celda**, no como octava columna. El centro de costo es un atributo de la
+  entidad, no un hecho paralelo; y la tabla ya tiene siete columnas dentro de un
+  `.table-responsive`, así que una octava manda a scroll horizontal justo en la
+  pantalla que el usuario dice que trabaja. La celda "Resolución" ya usa el mismo
+  recurso para el motivo.
+
+  Sin faena no se dibuja nada: acá el chip va **debajo** del nombre, así que su
+  ausencia no desalinea ninguna columna (en el panel se decide al revés, y por
+  eso mismo).{% endcomment %}
+  <td>{% with ficha=object.content_object.get_absolute_url %}{% if ficha %}<a href="{{ ficha }}" class="table-primary-value" title="{% translate "Open the record: status and documents" %}"><strong>{{ object.content_object }}</strong></a>{% else %}<strong>{{ object.content_object|default:_("Record unavailable") }}</strong>{% endif %}{% endwith %}{% if object.cost_center %}<div class="mt-1"><span class="cc-chip" title="{{ object.cost_center }}">{{ object.cost_center.code }}</span></div>{% endif %}</td>
+  <td>{{ object.alert_rule.name }}</td>
+  <td><span class="text-nowrap">{{ object.triggered_at|date:'Y-m-d' }}</span></td>
+  {% comment %}LV-118: la fecha es la **congelada al crear la alerta**
+  (`triggering_date`), no la que el registro tiene hoy. Antes se leía en vivo, y
+  por eso una alerta resuelta mostraba el valor que dejó la renovación en vez
+  del que la disparó -- dos filas de `RPA-5532` levantadas por una póliza
+  vencida el 2026-08-08 decían "vencimiento 2027-08-04". El color sale del
+  tramo de urgencia, con los mismos cortes que el digest diario.{% endcomment %}
+  <td>{% if object.triggering_date %}<span class="badge {{ object.urgency_css }}">{% if object.urgency == 'overdue' %}{% translate "Overdue" %} · {{ object.triggering_date|date:'Y-m-d' }}{% else %}{% translate "Due" %} {{ object.triggering_date|date:'Y-m-d' }}{% endif %}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+  {% comment %}LV-110: el estado de la alerta y su motivo, juntos y con espacio
+  propio. El motivo vivía sólo en un `title` (invisible al tacto), después pasó a
+  una línea diminuta debajo de los botones -- la evidencia ISO 10.2 seguía siendo
+  de facto ilegible. Las insignias de estado vienen acá con él porque describen
+  **qué pasó con la alerta**, que es lo mismo que cuenta el motivo; "Acciones"
+  queda sólo con lo que se puede hacer.{% endcomment %}
+  <td>
+    {% if object.is_resolved %}
+    <span class="badge bg-success">{% translate "Resolved" %}</span>
+    {% comment %}R7.6 (ISO 10.2): resolver dejó de ser terminal -- nadie volvía a
+    preguntar si la acción se sostuvo. La verificación es una segunda afirmación,
+    posterior, así que acompaña a "Resuelta" en vez de reemplazarla. Decir que
+    **no** se sostuvo es lo que ya hace "Deshacer".{% endcomment %}
+    {% if object.effectiveness_verified_at %}<span class="badge bg-primary-subtle text-primary-emphasis" title="{% blocktranslate with when=object.effectiveness_verified_at|date:'Y-m-d' who=object.effectiveness_verified_by|default:'—' %}Verified on {{ when }} by {{ who }}{% endblocktranslate %}">{% translate "Verified" %}</span>{% endif %}
+    {% if object.resolution_reason %}<div class="small text-body-secondary mt-1 alert-reason">{{ object.resolution_reason }}</div>{% endif %}
+    {% else %}<span class="text-muted">—</span>{% endif %}
+  </td>
+  {% comment %}Un solo envoltorio para las dos ramas y botones que no se parten,
+  así una fila resuelta conserva la altura del resto en vez de encogerse.
+  {% endcomment %}
+  <td class="text-end">
+    <div class="alert-actions">
+    {% if object.is_resolved %}
+      {% if not object.effectiveness_verified_at and object.effectiveness_is_due and perms.compliance.change_alert %}
+      <form method="post" action="{% url 'alert-verify-effectiveness' object.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-primary text-nowrap" title="{% translate 'Confirm the corrective action held (ISO 10.2)' %}">{% translate "Verify" %}</button></form>
+      {% endif %}
+      <form method="post" action="{% url 'alert-reopen' object.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary text-nowrap" title="{% translate 'Reopen this alert and send its task back' %}">{% translate "Undo" %}</button></form>
+    {% else %}
+      <a class="btn btn-sm btn-outline-success text-nowrap" href="{% url 'alert-resolve' object.pk %}" hx-get="{% url 'alert-resolve' object.pk %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" title="{% translate 'Resolve, with a reason on record (ISO 10.2)' %}">{% translate "Resolve" %}</a>
+    {% endif %}
+    </div>
+  </td>
+</tr>{% empty %}<tr><td colspan="99" class="text-center text-muted py-4">{% translate "No alerts found." %}</td></tr>{% endfor %}

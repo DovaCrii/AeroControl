@@ -732,6 +732,22 @@ class Alert(EffectivenessVerificationMixin, BaseModel):
 
         return BUCKET_BADGE_CSS.get(self.urgency, "bg-secondary-subtle")
 
+    @property
+    def urgency_level(self):
+        """UX-07: el nivel de severidad a secas, para el borde de la fila.
+
+        Se **deriva** del mismo mapa que la insignia en vez de declarar un
+        segundo: dos mapas es cómo el borde y la píldora de la misma fila
+        terminan diciendo cosas distintas el día que alguien mueve un corte.
+
+        Devuelve cadena vacía cuando el tramo no está mapeado, y el borde
+        entonces no se dibuja -- que es lo correcto: sin fecha congelada no hay
+        urgencia que mostrar.
+        """
+        from apps.compliance.digest import BUCKET_BADGE_CSS
+
+        return BUCKET_BADGE_CSS.get(self.urgency, "").removeprefix("sev-")
+
     def _derive_assigned_operator(self):
         """Best-effort responsible operator for the follow-up task.
 

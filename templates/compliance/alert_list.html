@@ -1,79 +1,45 @@
-{% extends "base.html" %}
+{% extends "generic/worktable.html" %}
 {% load aero_tags i18n %}
-{% block title %}{% translate "Alerts" %} - AeroControl{% endblock %}
-{% block content %}<div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h3">{% translate "Alerts" %}</h1><a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a></div><form method="get" class="row g-2 mb-3"><div class="col-md-4"><input class="form-control" name="q" value="{{ request.GET.q }}" placeholder="{% translate 'Search alerts...' %}"></div><div class="col-md-3"><select class="form-select" name="is_resolved"><option value="false" {% if selected_is_resolved == 'false' %}selected{% endif %}>{% translate "Unresolved" %}</option><option value="true" {% if selected_is_resolved == 'true' %}selected{% endif %}>{% translate "Resolved" %}</option><option value="all" {% if selected_is_resolved == 'all' %}selected{% endif %}>{% translate "All alerts" %}</option></select></div>{% comment %}LV-76: the view has filtered on ?entity_type since it was
-written, but nothing ever rendered the picker -- a working filter with no way
-to reach it.{% endcomment %}<div class="col-md-3"><select class="form-select" name="entity_type"><option value="">{% translate "All entity types" %}</option>{% for value, label in entity_types %}<option value="{{ value }}" {% if selected_entity_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>{% comment %}LV-146: el filtro por faena. Sólo se dibuja con
-`registry.view_costcenter`, y sin él el parámetro tampoco tiene efecto en la
-vista. Se muestra `code - name` y no `{{ cc }}`, porque el `__str__` agrega el
-responsable y alarga cada opción hasta hacerla ilegible.{% endcomment %}{% if cost_centers %}<div class="col-md-3"><select class="form-select" name="cost_center" aria-label="{% translate 'Cost center' %}"><option value="">{% translate "All cost centers" %}</option>{% for cc in cost_centers %}<option value="{{ cc.pk }}" {% if selected_cost_center.pk == cc.pk %}selected{% endif %}>{{ cc.code }} - {{ cc.name }}</option>{% endfor %}</select></div>{% endif %}<div class="col-auto"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div></form><div class="card"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th scope="col">{% translate "Entity type" %}</th><th scope="col">{% translate "Entity" %}</th><th scope="col">{% translate "Rule" %}</th><th scope="col">{% translate "Triggered" %}</th><th scope="col">{% translate "Expiry" %}</th>{% comment %}LV-110: la resolución y su motivo tienen columna propia. Vivían dentro de "Acciones", debajo de los botones, así que la evidencia que el modal de resolver insiste en pedir (ISO 10.2) quedaba apretada contra el borde derecho y en letra chica -- y la columna de acciones mezclaba dos cosas distintas: qué pasó con la alerta y qué puedes hacer con ella.{% endcomment %}<th scope="col">{% translate "Resolution" %}</th><th scope="col" class="text-end">{% translate "Actions" %}</th></tr></thead><tbody>{% comment %}LV-75: one alert, one row. R6.3 used to fold same-rule,
-same-date alerts together on the premise that a shared date meant a shared
-cause (a fleet policy covering several aircraft); LV-68 found that false
-against production data and removed the bulk resolve, but the row itself kept
-making the claim -- and a grouped row had no button in its Actions column
-while its members got a text link instead, so the same action sat in two
-different places depending on whether a neighbouring record shared a date.
+{% comment %}`UX-07`: pasa a la tabla de trabajo compartida. Lo que gana al
+entrar por esa puerta, y que se escribía a mano o faltaba:
 
-LV-69b: the workboard actions ("Create task"/"View task") were removed when
-that module left the menu -- they pushed work somewhere nobody navigates to.
-The list is self-contained: Resolve and Undo.{% endcomment %}{% for object in objects %}<tr>
-  <td><span class="badge {{ object.entity_tone_css }}">{{ object.entity_label }}</span></td>
-  {% comment %}La entidad lleva a su ficha, que es donde está el estado y los
-  documentos. Sin el enlace, una alerta decía "RPA-5534, seguro por vencer" y
-  para hacer algo al respecto había que ir al padrón, buscar la matrícula y
-  entrar: tres pasos para llegar a la única pantalla desde la que se resuelve.
-  El enlace sale de `get_absolute_url` del propio objeto, así que aparece para
-  las entidades que tienen ficha y no para las que no.{% endcomment %}
-  {% comment %}LV-146: la faena va como chip en **segunda línea dentro de esta
-  celda**, no como octava columna. El centro de costo es un atributo de la
-  entidad, no un hecho paralelo; y la tabla ya tiene siete columnas dentro de un
-  `.table-responsive`, así que una octava manda a scroll horizontal justo en la
-  pantalla que el usuario dice que trabaja. La celda "Resolución" ya usa el mismo
-  recurso para el motivo.
-
-  Sin faena no se dibuja nada: acá el chip va **debajo** del nombre, así que su
-  ausencia no desalinea ninguna columna (en el panel se decide al revés, y por
-  eso mismo).{% endcomment %}
-  <td>{% with ficha=object.content_object.get_absolute_url %}{% if ficha %}<a href="{{ ficha }}" class="table-primary-value" title="{% translate "Open the record: status and documents" %}"><strong>{{ object.content_object }}</strong></a>{% else %}<strong>{{ object.content_object|default:_("Record unavailable") }}</strong>{% endif %}{% endwith %}{% if object.cost_center %}<div class="mt-1"><span class="cc-chip" title="{{ object.cost_center }}">{{ object.cost_center.code }}</span></div>{% endif %}</td>
-  <td>{{ object.alert_rule.name }}</td>
-  <td><span class="text-nowrap">{{ object.triggered_at|date:'Y-m-d' }}</span></td>
-  {% comment %}LV-118: la fecha es la **congelada al crear la alerta**
-  (`triggering_date`), no la que el registro tiene hoy. Antes se leía en vivo, y
-  por eso una alerta resuelta mostraba el valor que dejó la renovación en vez
-  del que la disparó -- dos filas de `RPA-5532` levantadas por una póliza
-  vencida el 2026-08-08 decían "vencimiento 2027-08-04". El color sale del
-  tramo de urgencia, con los mismos cortes que el digest diario.{% endcomment %}
-  <td>{% if object.triggering_date %}<span class="badge {{ object.urgency_css }}">{% if object.urgency == 'overdue' %}{% translate "Overdue" %} · {{ object.triggering_date|date:'Y-m-d' }}{% else %}{% translate "Due" %} {{ object.triggering_date|date:'Y-m-d' }}{% endif %}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
-  {% comment %}LV-110: el estado de la alerta y su motivo, juntos y con espacio
-  propio. El motivo vivía sólo en un `title` (invisible al tacto), después pasó a
-  una línea diminuta debajo de los botones -- la evidencia ISO 10.2 seguía siendo
-  de facto ilegible. Las insignias de estado vienen acá con él porque describen
-  **qué pasó con la alerta**, que es lo mismo que cuenta el motivo; "Acciones"
-  queda sólo con lo que se puede hacer.{% endcomment %}
-  <td>
-    {% if object.is_resolved %}
-    <span class="badge bg-success">{% translate "Resolved" %}</span>
-    {% comment %}R7.6 (ISO 10.2): resolver dejó de ser terminal -- nadie volvía a
-    preguntar si la acción se sostuvo. La verificación es una segunda afirmación,
-    posterior, así que acompaña a "Resuelta" en vez de reemplazarla. Decir que
-    **no** se sostuvo es lo que ya hace "Deshacer".{% endcomment %}
-    {% if object.effectiveness_verified_at %}<span class="badge bg-primary-subtle text-primary-emphasis" title="{% blocktranslate with when=object.effectiveness_verified_at|date:'Y-m-d' who=object.effectiveness_verified_by|default:'—' %}Verified on {{ when }} by {{ who }}{% endblocktranslate %}">{% translate "Verified" %}</span>{% endif %}
-    {% if object.resolution_reason %}<div class="small text-body-secondary mt-1 alert-reason">{{ object.resolution_reason }}</div>{% endif %}
-    {% else %}<span class="text-muted">—</span>{% endif %}
-  </td>
-  {% comment %}Un solo envoltorio para las dos ramas y botones que no se parten,
-  así una fila resuelta conserva la altura del resto en vez de encogerse.
-  {% endcomment %}
-  <td class="text-end">
-    <div class="alert-actions">
-    {% if object.is_resolved %}
-      {% if not object.effectiveness_verified_at and object.effectiveness_is_due and perms.compliance.change_alert %}
-      <form method="post" action="{% url 'alert-verify-effectiveness' object.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-primary text-nowrap" title="{% translate 'Confirm the corrective action held (ISO 10.2)' %}">{% translate "Verify" %}</button></form>
-      {% endif %}
-      <form method="post" action="{% url 'alert-reopen' object.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary text-nowrap" title="{% translate 'Reopen this alert and send its task back' %}">{% translate "Undo" %}</button></form>
-    {% else %}
-      <a class="btn btn-sm btn-outline-success text-nowrap" href="{% url 'alert-resolve' object.pk %}" hx-get="{% url 'alert-resolve' object.pk %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" title="{% translate 'Resolve, with a reason on record (ISO 10.2)' %}">{% translate "Resolve" %}</a>
-    {% endif %}
-    </div>
-  </td>
-</tr>{% empty %}<tr><td colspan="99" class="text-center text-muted py-4">{% translate "No alerts found." %}</td></tr>{% endfor %}</tbody></table></div>{% render_pagination page_obj %}</div>{% endblock %}
+- La barra de selección múltiple. Las filas ya llevaban `data-pk` desde `UX-11`,
+  así que `worktable.js` estaba listo para inyectar las casillas — y no aparecía
+  ninguna, porque la barra vivía sólo en `generic/list.html`.
+- El `.page-header`, en vez del `d-flex` propio que esta pantalla arrastraba.
+- El borde de severidad en la fila, con los mismos cortes que la píldora de
+  vencimiento y que el digest diario.{% endcomment %}
+{% block worktable_title %}{% translate "Alerts" %}{% endblock %}
+{% block worktable_heading %}{% translate "Alerts" %}{% endblock %}
+{% block worktable_actions %}<a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>{% endblock %}
+{% block worktable_filters %}
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-4"><input class="form-control" name="q" value="{{ request.GET.q }}" placeholder="{% translate 'Search alerts...' %}"></div>
+  <div class="col-md-3"><select class="form-select" name="is_resolved"><option value="false" {% if selected_is_resolved == 'false' %}selected{% endif %}>{% translate "Unresolved" %}</option><option value="true" {% if selected_is_resolved == 'true' %}selected{% endif %}>{% translate "Resolved" %}</option><option value="all" {% if selected_is_resolved == 'all' %}selected{% endif %}>{% translate "All alerts" %}</option></select></div>
+  {% comment %}LV-76: the view has filtered on ?entity_type since it was written,
+  but nothing ever rendered the picker -- a working filter with no way to reach
+  it.{% endcomment %}
+  <div class="col-md-3"><select class="form-select" name="entity_type"><option value="">{% translate "All entity types" %}</option>{% for value, label in entity_types %}<option value="{{ value }}" {% if selected_entity_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+  {% comment %}LV-146: el filtro por faena. Sólo se dibuja con
+  `registry.view_costcenter`, y sin él el parámetro tampoco tiene efecto en la
+  vista. Se muestra `code - name` y no `{{ cc }}`, porque el `__str__` agrega el
+  responsable y alarga cada opción hasta hacerla ilegible.{% endcomment %}
+  {% if cost_centers %}<div class="col-md-3"><select class="form-select" name="cost_center" aria-label="{% translate 'Cost center' %}"><option value="">{% translate "All cost centers" %}</option>{% for cc in cost_centers %}<option value="{{ cc.pk }}" {% if selected_cost_center.pk == cc.pk %}selected{% endif %}>{{ cc.code }} - {{ cc.name }}</option>{% endfor %}</select></div>{% endif %}
+  <div class="col-auto"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
+</form>
+{% endblock %}
+{% block worktable_header %}
+  {% sortable_th _("Entity type") "entity_type" %}
+  <th scope="col">{% translate "Entity" %}</th>
+  {% sortable_th _("Rule") "rule" %}
+  {% sortable_th _("Triggered") "triggered" %}
+  {% sortable_th _("Expiry") "expiry" %}
+  {% comment %}LV-110: la resolución y su motivo tienen columna propia. Vivían
+  dentro de "Acciones", debajo de los botones, así que la evidencia que el modal
+  de resolver insiste en pedir (ISO 10.2) quedaba apretada contra el borde
+  derecho y en letra chica -- y la columna de acciones mezclaba dos cosas
+  distintas: qué pasó con la alerta y qué puedes hacer con ella.{% endcomment %}
+  {% sortable_th _("Resolution") "resolution" %}
+  <th scope="col" class="text-end">{% translate "Actions" %}</th>
+{% endblock %}
+{% block worktable_rows %}{% include "compliance/_alert_rows.html" %}{% endblock %}

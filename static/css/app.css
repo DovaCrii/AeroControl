@@ -2785,6 +2785,47 @@ main h1[class],
   border-color: var(--ac-primary);
 }
 
+/* == UX-07 · La tabla de trabajo ===========================================
+ *
+ * Encabezado que ordena. El enlace ocupa la celda entera y no sólo el texto:
+ * un objetivo de clic del tamaño de la palabra "Creado" es de los que se
+ * fallan, y en táctil se falla siempre.
+ *
+ * La marca de orden va **siempre**, incluso sin ordenar (con la flecha doble),
+ * porque es lo que dice que la columna se puede ordenar. Dibujarla sólo al
+ * ordenar convierte la función en algo que hay que descubrir por accidente. */
+.worktable-sort {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  color: inherit;
+  text-decoration: none;
+}
+.worktable-sort:hover { color: var(--ac-primary); }
+.worktable-sort:hover .worktable-sort-mark { opacity: 1; }
+/* Atenuada mientras no ordena, para que en una tabla de siete columnas las
+ * flechas no compitan con los rótulos. La que está activa va entera. */
+.worktable-sort-mark { opacity: 0.35; font-size: 0.75em; }
+.worktable-sort.is-sorted { color: var(--ac-primary); font-weight: 600; }
+.worktable-sort.is-sorted .worktable-sort-mark { opacity: 1; }
+
+/* El borde de severidad, en la fila y no en una insignia suelta.
+ *
+ * `UX-01` dejó los cinco niveles como tokens; acá se usan para teñir el canto
+ * izquierdo de la fila. Es la única señal que se lee **sin leer**: al recorrer
+ * cincuenta permisos, lo vencido salta antes de que el ojo llegue a la columna
+ * de fecha. Se pinta con `box-shadow` en la primera celda y no con
+ * `border-left` en el `<tr>`, porque un borde en la fila no se dibuja con
+ * `border-collapse` y quedaría invisible justo en las tablas del proyecto. */
+tr[data-sev] > td:first-child {
+  box-shadow: inset 3px 0 0 0 transparent;
+}
+tr[data-sev="critical"] > td:first-child { box-shadow: inset 3px 0 0 0 var(--sev-critical-border); }
+tr[data-sev="warning"] > td:first-child { box-shadow: inset 3px 0 0 0 var(--sev-warning-border); }
+tr[data-sev="caution"] > td:first-child { box-shadow: inset 3px 0 0 0 var(--sev-caution-border); }
+tr[data-sev="advisory"] > td:first-child { box-shadow: inset 3px 0 0 0 var(--sev-advisory-border); }
+
 /* La columna de casillas no necesita ancho: encoge a su contenido. */
 .bulk-cell { margin: 0; }
 .table th:has(> .bulk-cell),

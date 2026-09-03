@@ -1,19 +1,21 @@
-{% extends "base.html" %}
+{% extends "generic/worktable.html" %}
 {% load aero_tags i18n %}
-{% block title %}{% translate "Geospatial planning" %} - AeroControl{% endblock %}
-{% block content %}
-<div class="page-header">
-  <h1 class="h3">{% translate "Geospatial planning" %}</h1>
-  <div class="d-flex gap-2">
+{% comment %}`UX-07`: entra por la tabla de trabajo compartida. Además del orden
+por columna y de la barra de selección, gana los dos identificadores que le
+faltaban —`#table-body` y `#pagination-container`—, que es de donde HTMX cuelga
+sus reemplazos parciales: esta lista declaraba `htmx_template_name` y no tenía
+dónde recibirlo.{% endcomment %}
+{% block worktable_title %}{% translate "Geospatial planning" %}{% endblock %}
+{% block worktable_heading %}{% translate "Geospatial planning" %}{% endblock %}
+{% block worktable_actions %}
     <a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>
     <a class="btn btn-primary" href="{% url 'geo-plan-import' %}">+ {% translate "Import KMZ/KML" %}</a>
-  </div>
-</div>
-
+{% endblock %}
 {% comment %}LV-135: esta era la única lista de la app sin un solo filtro, y con
 siete planes de una misma faena ya cuesta encontrar uno. El selector de estado
 usa las opciones del modelo, y el de vigencia es el que deja ver lo archivado --
 sin él, archivar no tendría vuelta.{% endcomment %}
+{% block worktable_filters %}
 <form method="get" class="row g-2 mb-3">
   {% comment %}LV-149: el buscador cubre ahora `source_document__title`, así que
   el marcador de posición tiene que nombrar el archivo -- si no, buscar por lo
@@ -40,26 +42,16 @@ sin él, archivar no tendría vuelta.{% endcomment %}
     <a href="{{ request.path }}" class="btn btn-outline-secondary">{% translate "Clear" %}</a>
   </div>
 </form>
-
-<div class="card">
-  <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead>
-        <tr>
-          <th scope="col">{% translate "Number" %}</th>
+{% endblock %}
+{% block worktable_header %}
+          {% sortable_th _("Number") "number" %}
           {% comment %}LV-149: la columna dejó de ser el título completo y pasó a
           ser el nombre del KMZ, así que el encabezado tiene que decirlo.{% endcomment %}
-          <th scope="col">{% translate "File" %}</th>
-          <th scope="col">{% translate "Cost center" %}</th>
-          <th scope="col">{% translate "Status" %}</th>
+          {% sortable_th _("File") "file" %}
+          {% sortable_th _("Cost center") "cost_center" %}
+          {% sortable_th _("Status") "status" %}
           <th scope="col">{% translate "Version" %}</th>
-          <th scope="col">{% translate "Created" %}</th>
+          {% sortable_th _("Created") "created" %}
           <th scope="col"></th>
-        </tr>
-      </thead>
-      <tbody>{% include "geo/_plan_rows.html" %}</tbody>
-    </table>
-  </div>
-  {% render_pagination page_obj %}
-</div>
 {% endblock %}
+{% block worktable_rows %}{% include "geo/_plan_rows.html" %}{% endblock %}

@@ -80,3 +80,33 @@ def model_verbose_name_plural(model):
 def render_pagination(page_obj):
     """Render pagination controls for a page object."""
     return {"page_obj": page_obj}
+
+
+@register.inclusion_tag("generic/_sortable_th.html", takes_context=True)
+def sortable_th(context, label, column="", align="", css=""):
+    """UX-07: a column header that sorts, when the view says the column can.
+
+    `column` is the **key the view declared**, never an ORM path written in the
+    template. The view owns the allow-list (`SortableColumnsMixin`), so a header
+    cannot reach a field the view did not offer -- `?sort=` lands in `order_by`,
+    and an unvalidated one there is a way to order by, and so probe, a related
+    table nobody meant to expose.
+
+    Degrades to a plain `<th>` when the column is not sortable, rather than
+    drawing a link that does nothing.
+    """
+    sort = context.get("worktable_sort") or {}
+    columns = sort.get("columns") or {}
+    if not column or column not in columns:
+        return {"label": label, "align": align, "css": css, "url": ""}
+    state = sort.get("column") == column and sort.get("direction") or ""
+    # Clicking the column you are already on flips it; a fresh column starts
+    # ascending, which is what every table on the planet does.
+    nxt = "desc" if state == "asc" else "asc"
+    return {
+        "label": label,
+        "align": align,
+        "css": css,
+        "state": state,
+        "url": f"?{sort['base_query']}sort={column}&dir={nxt}",
+    }
