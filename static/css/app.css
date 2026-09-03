@@ -2756,6 +2756,40 @@ main h1[class],
   line-height: 1.2;
 }
 
+/* == UX-11 · La barra de la selección ======================================
+ *
+ * Aparece **sólo con algo marcado** y dice cuántos. Una barra permanente que
+ * dice "0 seleccionados" ocupa sitio todos los días para avisar de nada.
+ *
+ * Pegajosa arriba: la selección se hace recorriendo la lista hacia abajo, y una
+ * barra que se va con el scroll obliga a volver para usarla. */
+.bulk-bar {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--ac-primary);
+  border-radius: 8px;
+  background: var(--ac-primary-soft);
+  color: var(--ac-text);
+}
+.bulk-count { font-weight: 600; }
+[data-theme="dark"] .bulk-bar {
+  background: var(--ac-surface-raised);
+  border-color: var(--ac-primary);
+}
+
+/* La columna de casillas no necesita ancho: encoge a su contenido. */
+.bulk-cell { margin: 0; }
+.table th:has(> .bulk-cell),
+.table td:has(> .bulk-cell) { width: 1%; }
+
 /* == UX-08 · Densidad conmutable ===========================================
  *
  * Cómoda (por omisión) y compacta. La diferencia real es cuántas filas caben

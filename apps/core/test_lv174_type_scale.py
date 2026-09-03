@@ -68,6 +68,24 @@ def test_only_the_weights_the_browser_can_draw():
     )
 
 
+def test_the_rule_reaches_every_stylesheet_of_the_application():
+    """⚠️ **El guardián nació cuando había una sola hoja, y ya no la hay.**
+
+    Al extraer los estilos del acceso a `login.css` (`UX-06`), sus cuatro
+    `font-weight: 650` salieron del alcance de la comprobación de arriba, que
+    mira `app.css` y nada más — así que el peso que el navegador **no puede
+    dibujar distinto** siguió ahí sin que nada avisara. `report-a4.css` queda
+    fuera a propósito: es papel, con su propia pila tipográfica, y la medición
+    de `LV-174` se hizo sobre la fuente de la aplicación.
+    """
+    static = Path(settings.BASE_DIR) / "static" / "css"
+    used = set()
+    for sheet in (static / "app.css", static / "login.css"):
+        used |= set(re.findall(r"font-weight:\s*(\d+)", sheet.read_text("utf-8")))
+
+    assert used <= RENDERED_WEIGHTS, sorted(used - RENDERED_WEIGHTS)
+
+
 def test_the_small_text_band_uses_the_scale():
     """Dos tamaños separados por 0,32 px no son un matiz, son una moneda al aire."""
     used = {
