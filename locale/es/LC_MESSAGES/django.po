@@ -8115,6 +8115,53 @@ msgstr "La autorización DGAC no declara un número que se pueda leer."
 msgid "DGAC folio %(folio)s taken from the authorization PDF."
 msgstr "Número %(folio)s de la DGAC tomado del PDF de la autorización."
 
+#: templates/compliance/document_attach_form.html
+msgid "Attach a document already on file"
+msgstr "Adjuntar un documento ya cargado"
+
+#: templates/compliance/document_attach_form.html
+#, python-brace-format
+msgid "It will be attached to {record}, sharing the same file."
+msgstr "Se adjuntará a {record}, compartiendo el mismo archivo."
+
+#: templates/compliance/document_attach_form.html
+#, python-brace-format
+msgid "On file at {origin}"
+msgstr "Cargado en {origin}"
+
+#: templates/compliance/document_attach_form.html
+msgid "No expiry"
+msgstr "Sin vencimiento"
+
+#: templates/compliance/document_attach_form.html
+msgid "Attach it"
+msgstr "Adjuntarlo"
+
+#: templates/compliance/document_attach_form.html
+msgid "There is no document on file that can be reused here."
+msgstr "No hay ningún documento cargado que se pueda reutilizar acá."
+
+#: templates/compliance/document_attach_form.html
+msgid ""
+"Only the same document type, from another record of the same cost centre, "
+"and still valid, can be reused."
+msgstr ""
+"Sólo se puede reutilizar el mismo tipo de documento, de otro registro de la "
+"misma faena, y que siga vigente."
+
+#: apps/operations/dossier.py
+msgid "Use one already on file"
+msgstr "Usar uno ya cargado"
+
+#: apps/compliance/views.py
+msgid "That document is no longer available to attach."
+msgstr "Ese documento ya no está disponible para adjuntar."
+
+#: apps/compliance/views.py
+#, python-format
+msgid "%(title)s attached from %(origin)s, without uploading it again."
+msgstr "%(title)s adjuntado desde %(origin)s, sin volver a subirlo."
+
 #: templates/generic/_worktable_toolbar.html
 msgid "Saved views"
 msgstr "Vistas guardadas"

@@ -199,6 +199,14 @@ después se desincroniza.{% endcomment %}
           expediente, así que acá no hay `{% if perms %}` que pueda divergir de
           lo que la vista decidió.{% endcomment %}
           <td class="text-end text-nowrap">
+            {% comment %}LV-200 paso 3: el atajo va **antes** del botón de subir y
+            en tono secundario. Antes porque cuando existe es casi siempre lo que
+            corresponde —la misma carta cubriendo otro permiso de la faena—; y
+            secundario porque subir sigue siendo el camino que siempre
+            funciona.{% endcomment %}
+            {% if item.alt_action_url %}
+            <a class="btn btn-sm btn-outline-secondary" href="{{ item.alt_action_url }}">{{ item.alt_action_label }}</a>
+            {% endif %}
             {% if item.action_url %}
             <a class="btn btn-sm btn-outline-primary" href="{{ item.action_url }}">{{ item.action_label }}</a>
             {% endif %}

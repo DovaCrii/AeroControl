@@ -47,6 +47,14 @@ urlpatterns = [
         name="monthly-review-mark",
     ),
     path("document/new/", views.DocumentCreate.as_view(), name="document-create"),
+    # LV-200 paso 3: adjuntar un papel ya cargado. Vive al lado de "nuevo"
+    # porque es la otra mitad de la misma acción -- dejar el documento en la
+    # ficha--, y lo que cambia es de dónde sale el archivo.
+    path(
+        "document/attach/",
+        views.DocumentAttachExisting.as_view(),
+        name="document-attach-existing",
+    ),
     # LV-86: several files onto one record in a single action.
     path(
         "document/upload-batch/",
