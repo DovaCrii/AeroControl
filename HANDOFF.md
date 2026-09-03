@@ -319,7 +319,8 @@ línea del entorno, la ayuda y el botón de mostrar contraseña.
   | `UX-05` · sprite SVG | **55 `<path>`** en línea en `base.html` | ✅ 28 símbolos |
   | `UX-07` · "mostrando N–M de T" | Las 12 listas comparten `_pagination.html` | ✅ |
   | `UX-07` · componente de tabla | **58 `<table>`** a mano; ~12 asserts acoplados a clases de presentación (el resto de los 31 son comentarios) | ⬜ |
-  | `UX-08`, `UX-10`, `UX-11` | Densidad, fila-tarjeta móvil, acciones en lote | ⬜ |
+  | `UX-10` · fila-tarjeta móvil | La lista de aeronaves medía **900 px de tabla en un contenedor de 356** a 390 px de pantalla | ✅ 900 → 356 |
+  | `UX-08`, `UX-11` | Densidad conmutable, acciones en lote | ⬜ |
   | `UX-09`, `UX-12` | Columnas por persona y vistas guardadas — **modelo nuevo y migración cada una** | ⬜ |
 
   Lo que queda de la tanda de la tabla **no es una fila más**: son dos modelos

@@ -2756,6 +2756,108 @@ main h1[class],
   line-height: 1.2;
 }
 
+/* == UX-10 · La fila se apila como tarjeta bajo 768 px =====================
+ *
+ * Medido: la lista de aeronaves mide **900 px de tabla dentro de un contenedor
+ * de 356** en una pantalla de 390. Leer una fila en faena obliga a arrastrar de
+ * lado, con guantes, y volver a empezar en la siguiente.
+ *
+ * El rótulo de cada celda lo pone `worktable.js` leyéndolo del `<th>`, así que
+ * no hay que escribir `data-label` en las 58 tablas ni mantener el encabezado
+ * duplicado en dos sitios. Acá sólo se dibuja.
+ *
+ * El encabezado se oculta con `position: absolute` y no con `display: none`:
+ * `display:none` lo saca del árbol de accesibilidad, y un lector de pantalla
+ * perdería los nombres de columna que la vista sí sigue usando. */
+@media (max-width: 767.98px) {
+  /* ⚠️ **Esto revierte una decisión deliberada de `LV-162`, y conviene decirlo.**
+   * Esa fila puso `min-width: 900px` en `.table-normalized` con el motivo
+   * escrito: *"con anchos en porcentaje, una pantalla estrecha aplastaría las
+   * columnas hasta hacerlas ilegibles; por debajo de esto scrollea"*. Era la
+   * elección correcta **cuando la única alternativa era aplastar**. Con la fila
+   * apilada como tarjeta ya no hay columnas que aplastar, así que el mínimo
+   * dejó de proteger algo y sólo obliga a arrastrar de lado: 900 px de tabla en
+   * un contenedor de 356, medido. */
+  .table-responsive .table-normalized {
+    min-width: 0;
+    table-layout: auto;
+  }
+
+  .table-responsive table,
+  .table-responsive tbody,
+  .table-responsive tr,
+  .table-responsive td { display: block; width: auto; }
+
+  /* El `<colgroup>` reparte anchos entre columnas que ya no existen como tales. */
+  .table-responsive colgroup { display: none; }
+
+  .table-responsive thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* Cada fila es una tarjeta con su propio borde: sin él, veinte filas
+   * apiladas se leen como un solo bloque de texto. */
+  .table-responsive tbody tr {
+    border: 1px solid var(--ac-border);
+    border-radius: 8px;
+    margin-bottom: var(--sp-4);
+    padding: var(--sp-3);
+    background: var(--ac-surface);
+  }
+
+  .table-responsive tbody td {
+    border: 0;
+    padding: var(--sp-1) 0;
+    display: flex;
+    gap: var(--sp-3);
+    align-items: baseline;
+    /* ⚠️ Los tres juntos, y ninguno sobra. Un ítem flex trae
+     * `min-width: auto`, así que **no encoge por debajo de su contenido**: sin
+     * esto la celda de Seguro medía 447 px en un contenedor de 356 y la tabla
+     * seguía desbordando aunque las filas ya fueran bloques. Medido. */
+    flex-wrap: wrap;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .table-responsive tbody td > * { min-width: 0; }
+
+  /* El nombre de la columna, delante del dato. Ancho fijo para que los valores
+   * queden alineados entre sí dentro de la tarjeta. */
+  .table-responsive tbody td[data-label]::before {
+    content: attr(data-label);
+    flex: 0 0 40%;
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--ac-text-muted);
+    /* Las columnas numéricas llevan `.text-end`, y el rótulo lo heredaba: en la
+     * tarjeta quedaban unos pegados a la izquierda y otros a la derecha, que es
+     * lo contrario de una columna de rótulos que se barre de un vistazo. */
+    text-align: start;
+  }
+
+  /* La celda de acciones no lleva rótulo (ver `worktable.js`) y ocupa el ancho
+   * entero, debajo de los datos. */
+  .table-responsive tbody td:not([data-label]) {
+    justify-content: flex-end;
+    padding-top: var(--sp-3);
+  }
+
+  /* Las filas de agrupación y la de "sin resultados" abarcan varias columnas:
+   * no son tarjetas, son separadores. */
+  .table-responsive tbody tr:has(td[colspan]),
+  .table-responsive tbody tr:has(th[colspan]) {
+    border: 0;
+    padding: 0;
+    margin-bottom: var(--sp-2);
+  }
+}
+
 /* El sello sólo existe en papel: en pantalla la fecha y la URL están a la
  * vista, y repetirlas abajo de cada página sería ruido. */
 .print-stamp { display: none; }

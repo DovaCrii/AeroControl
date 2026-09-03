@@ -345,6 +345,10 @@
   escribe una cosa distinta— pero deja el layout resuelto en una sola pasada en
   vez de que la barra se dibuje, se colapse y se reajuste.{% endcomment %}
   <script src="{% static 'js/sidebar-resize.js' %}"></script>
+  {% comment %}UX-10: rotula cada celda con el nombre de su columna para que la
+  fila se pueda apilar como tarjeta en pantalla angosta. Va después de `app.js`,
+  que es quien engancha htmx.{% endcomment %}
+  <script src="{% static 'js/worktable.js' %}"></script>
   {% block extrascripts %}{% endblock %}
 </body>
 </html>
