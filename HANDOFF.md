@@ -189,6 +189,13 @@ Dos filas más, **sin desplegar**:
 | `f108528` | **`LV-231`: el folio sale del PDF de la DGAC.** Propone, nunca escribe solo; la vista que confirma **vuelve a leer el PDF y no acepta ningún número del formulario**. Suma `pypdf`. |
 | `dc87527` | **`UX-09` + `UX-12`: columnas por persona y vistas guardadas** (`core.0008`), en un solo modelo. |
 
+**Gate verde sobre `ecb8984`**: 2893 pruebas, 97,35 % de cobertura, **27m37s**,
+`ruff check`, `ruff format --check`, `bandit` y `pip-audit` limpios. Lo último
+importa hoy más que otras veces: `pypdf` es dependencia nueva.
+
+(El gate pasó de 26m03s a 27m37s con las 77 pruebas nuevas. Eso **no** es motivo
+para squashear migraciones — ver más abajo.)
+
 **Dos migraciones nuevas para esta tanda: `operations.0026` y `core.0008`.**
 Ninguna hace backfill; las dos son columnas nuevas con defecto vacío, así que
 aplican sobre producción sin tocar una fila.
