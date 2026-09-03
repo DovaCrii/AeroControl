@@ -8090,6 +8090,18 @@ msgstr "Derivada de las coordenadas"
 msgid "Declared"
 msgstr "Declarada"
 
+#: templates/generic/_sortable_th.html
+msgid "Sort by this column"
+msgstr "Ordenar por esta columna"
+
+#: templates/generic/_sortable_th.html
+msgid "Sorted ascending. Sort descending"
+msgstr "Ordenado de menor a mayor. Ordenar de mayor a menor"
+
+#: templates/generic/_sortable_th.html
+msgid "Sorted descending. Sort ascending"
+msgstr "Ordenado de mayor a menor. Ordenar de menor a mayor"
+
 #: templates/generic/_pagination.html
 #, python-format
 msgid "Showing %(first)s–%(last)s of %(total)s record."

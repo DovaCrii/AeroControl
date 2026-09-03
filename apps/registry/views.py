@@ -1180,6 +1180,17 @@ class ResourceMovementLogList(
     htmx_template_name = "registry/_resourcemovementlog_rows.html"
     context_object_name = "objects"
     paginate_by = 50
+    # UX-07. "Recurso" no está: la columna muestra el operador o la aeronave
+    # resueltos desde `(resource_kind, resource_id)`, que es una referencia
+    # genérica -- ordenar por `resource_id` daría un orden por UUID, o sea
+    # aleatorio con aspecto de orden. Y ordenar por `resource_kind` agruparía
+    # aeronaves y operadores sin ordenar dentro de cada grupo, que es lo que el
+    # selector "Todos los recursos" ya resuelve mejor.
+    sortable_columns = {
+        "movement": "movement",
+        "changed_by": "changed_by_user",
+        "created": "created_at",
+    }
     search_fields = [
         "detail",
         "from_cost_center__code",
@@ -1416,6 +1427,18 @@ class BatteryList(RegistryList):
     template_name = "registry/battery_list.html"
     htmx_template_name = "registry/_battery_rows.html"
     search_fields = ["serial_number", "model", "manufacturer", "firmware_version"]
+    # UX-07. Ordenar por ciclos y por salud es la razón por la que esta pantalla
+    # existe: la pregunta que se le hace es "cuál batería está por salir", y sin
+    # orden había que leer las cincuenta filas.
+    sortable_columns = {
+        "serial": "serial_number",
+        "cycles": "cycle_count",
+        "health": "health_percent",
+        "aircraft": "aircraft__registration",
+        "firmware": "firmware_version",
+        "status": "status",
+        "synced": "synced_at",
+    }
 
     def get_queryset(self):
         return self.scope_by_tenant(super().get_queryset().select_related("aircraft"))

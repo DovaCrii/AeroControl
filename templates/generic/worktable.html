@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load aero_tags i18n %}
+{% comment %}`UX-07` · La tabla de trabajo, una sola vez.
+
+**Por qué es una plantilla base y no un `{% templatetag openblock %} include
+{% templatetag closeblock %}`.** Un `include` recibe variables, no bloques: las
+nueve listas que ya pasan por `generic/list.html` sobreescriben `list_header`,
+`list_colgroup` y `table_body`, y convertirlas a `include` habría exigido
+aplanar cada encabezado a una lista de diccionarios armada en Python. Herencia
+conserva todo lo que ya funciona y deja que las ocho listas que se escribían la
+tabla a mano entren por la misma puerta.
+
+Lo que el componente trae de una vez, que es lo que `UX-07` pedía:
+
+- La cáscara: `.card` + `.table-responsive` + `<table>` + paginación. Ocho
+  listas la tenían copiada, cada una con su variante; `alert_list` había perdido
+  el `.page-header` por el camino y usaba un `d-flex` propio.
+- **La barra de selección múltiple**, que hasta acá existía sólo en
+  `generic/list.html`. `worktable.js` inyecta las casillas en cualquier tabla
+  cuyas filas lleven `data-pk`, así que a esas ocho listas les faltaba nada más
+  que la barra — y sin la barra las casillas no aparecían.
+- `#table-body` y `#pagination-container` con sus identificadores, que es de
+  donde HTMX cuelga los reemplazos parciales.
+- **El orden por columna**, vía `{% templatetag openblock %} sortable_th
+  {% templatetag closeblock %}`: la parte de `UX-07` que no existía en ninguna
+  de las 26 listas.
+
+Los bloques llevan prefijo `worktable_` a propósito, para no chocar con los
+`list_*` que `generic/list.html` ya define y que sus nueve hijas
+sobreescriben.{% endcomment %}
+{% block title %}{% block worktable_title %}{{ title|default:_("Records") }}{% endblock %} - AeroControl{% endblock %}
+{% block content %}
+<div class="page-header">
+  {% comment %}El título y su bajada van juntos dentro de un envoltorio, porque
+  `.page-header` es un `flex` con `justify-content: space-between`: sueltos, la
+  bajada se iría al centro y los botones al borde. `mb-0` sobra —`.page-header
+  h1` ya lleva `margin: 0`— y por eso no está.{% endcomment %}
+  <div>
+    <h1 class="h3">{% block worktable_heading %}{{ title|default:_("Records") }}{% endblock %}</h1>
+    {% block worktable_description %}{% endblock %}
+  </div>
+  <div class="d-flex gap-2">{% block worktable_actions %}{% endblock %}</div>
+</div>
+{% block worktable_intro %}{% endblock %}
+{% block worktable_filters %}{% endblock %}
+{% include "generic/_bulk_bar.html" %}
+<div id="table-wrapper" class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0 {% block worktable_table_class %}{% endblock %}">
+      {% block worktable_colgroup %}{% endblock %}
+      <thead>
+        <tr>{% block worktable_header %}{% endblock %}</tr>
+      </thead>
+      <tbody id="table-body">{% block worktable_rows %}{% endblock %}</tbody>
+    </table>
+  </div>
+  <div id="pagination-container">{% block worktable_pagination %}{% render_pagination page_obj %}{% endblock %}</div>
+</div>
+{% endblock %}

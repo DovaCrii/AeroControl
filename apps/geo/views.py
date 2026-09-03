@@ -116,6 +116,16 @@ class GeoPlanListView(
     htmx_template_name = "geo/_plan_rows.html"
     context_object_name = "plans"
     paginate_by = 25
+    # UX-07. `folio` y no `created_at` para la columna "Número": es lo que la
+    # celda dibuja, y ordenar por una cosa mostrando otra es lo que hace que
+    # alguien deje de confiar en el orden.
+    sortable_columns = {
+        "number": "folio",
+        "file": "source_document__title",
+        "cost_center": "cost_center__code",
+        "status": "status",
+        "created": "created_at",
+    }
     # LV-149: `source_document__title` es el nombre del archivo subido, y desde
     # que la columna 2 muestra **ese** nombre, buscar por lo que se ve en
     # pantalla tenía que dejar de fallar. `title` se conserva: los planes con

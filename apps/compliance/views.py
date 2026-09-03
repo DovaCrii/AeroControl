@@ -224,6 +224,16 @@ class DeliverableList(ComplianceList):
     model = Deliverable
     template_name = "compliance/deliverable_list.html"
     search_fields = ["title", "cost_center__code", "cost_center__name"]
+    # UX-07. "Aceptación" no está: `meets_acceptance_criteria` se **deriva** de
+    # comparar las métricas contra los umbrales congelados, así que no hay
+    # columna que ordenar, y ordenar por algo parecido daría un orden que no
+    # corresponde a lo que la celda dibuja.
+    sortable_columns = {
+        "title": "title",
+        "cost_center": "cost_center__code",
+        "status": "status",
+        "created": "created_at",
+    }
 
     def get_queryset(self):
         queryset = super().get_queryset().select_related("cost_center")
@@ -397,6 +407,15 @@ class NonConformityList(ComplianceList):
     model = NonConformity
     template_name = "compliance/nonconformity_list.html"
     search_fields = ["title", "description", "root_cause"]
+    # UX-07. "Eficacia" no está: la celda dibuja cuatro cosas distintas según el
+    # caso, y no hay una columna cuyo orden reproduzca esa secuencia.
+    sortable_columns = {
+        "title": "title",
+        "source": "source",
+        "cost_center": "cost_center__code",
+        "detected": "detected_on",
+        "status": "status",
+    }
 
     def get_queryset(self):
         queryset = super().get_queryset().select_related("cost_center")
@@ -508,6 +527,15 @@ class DocumentList(ComplianceList):
     template_name = "compliance/document_list.html"
     search_fields = ["title"]
     htmx_template_name = "compliance/_document_rows.html"
+    # UX-07. "Entidad" queda fuera: es la relación genérica del documento, así
+    # que no hay columna por la cual ordenar. Ordenar por vencimiento sí es la
+    # razón principal de esta pantalla.
+    sortable_columns = {
+        "title": "title",
+        "type": "doc_type__name",
+        "expiry": "expiry_date",
+        "current": "is_current_version",
+    }
 
     def get_queryset(self):
         queryset = super().get_queryset().select_related("doc_type", "content_type")
@@ -1171,6 +1199,26 @@ class AlertList(ComplianceList):
     model = Alert
     template_name = "compliance/alert_list.html"
     search_fields = ["message"]
+    # UX-07: qué columnas ordenan, declarado acá y no en la plantilla. La lista
+    # es una **lista blanca**: `?sort=` viene de la URL y termina en `order_by`,
+    # y dejarla pasar sin filtrar permitiría ordenar por una tabla relacionada
+    # que nadie quiso exponer -- ordenar es un oráculo de lectura, porque la
+    # secuencia resultante habla de valores que no se mostraron.
+    #
+    # "Entidad" **no está**, a propósito: es una relación genérica
+    # (`content_object`), así que no hay columna por la cual ordenar. Ordenar
+    # por `object_id` daría un orden por UUID, o sea aleatorio con aspecto de
+    # orden, que es peor que no ofrecerlo.
+    sortable_columns = {
+        "entity_type": "content_type__model",
+        "rule": "alert_rule__name",
+        "triggered": "triggered_at",
+        # LV-118: la fecha **congelada al crear la alerta**, que es la que la
+        # columna dibuja. Ordenar por la vigencia que el registro tiene hoy
+        # daría un orden que no corresponde a lo que se lee.
+        "expiry": "triggering_date",
+        "resolution": "is_resolved",
+    }
     # LV-118: qué ve quien llega sin filtros. Constante y no un literal suelto
     # porque el test que fija este comportamiento tiene que poder nombrarlo:
     # es una decisión de producto, no un detalle de implementación.

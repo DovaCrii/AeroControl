@@ -34,11 +34,105 @@ from .audit import set_audit_context
 from .exports import neutralize
 
 
-class SearchMixin:
+class SortableColumnsMixin:
+    """UX-07: order a list by clicking its column headers.
+
+    `sortable_columns` maps the key that travels in `?sort=` to the ORM path it
+    orders by. **It is an allow-list and that is the whole point**: `?sort=`
+    comes from the URL and lands in `order_by`, so passing it through would let
+    anyone order by a related table's column -- and ordering is a read oracle,
+    since the resulting sequence tells you about values you were never shown. An
+    unknown key is ignored, not rejected: a stale bookmark should render the
+    list, not an error page.
+
+    Declaring nothing keeps a view exactly as it was, which is why this can sit
+    on the shared mixin without touching the 26 lists one by one.
+
+    The chosen order is applied **on top of** whatever the view already had, not
+    instead of it: a list ordered by `-created_at` keeps that as the tiebreaker,
+    so two rows sharing a value do not shuffle between pages. Without a stable
+    tiebreaker, paginating an ordering with ties can show the same row twice and
+    drop another -- and nothing in the page would say so.
+    """
+
+    sortable_columns = {}
+
+    def get_sortable_columns(self):
+        """Override to compute the allow-list; the attribute is the simple case."""
+        return self.sortable_columns
+
+    def _requested_sort(self):
+        column = self.request.GET.get("sort", "")
+        if column not in self.get_sortable_columns():
+            return "", ""
+        direction = "desc" if self.request.GET.get("dir") == "desc" else "asc"
+        return column, direction
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        column, direction = self._requested_sort()
+        if not column:
+            return queryset
+        field = self.get_sortable_columns()[column]
+        prefix = "-" if direction == "desc" else ""
+        previous = list(queryset.query.order_by) or list(queryset.model._meta.ordering)
+        # `pk` cierra la lista siempre, y no es un detalle: un orden con empates
+        # no define una secuencia, y paginar una secuencia indefinida puede
+        # repetir una fila en la página 2 y perder otra sin que nada lo diga.
+        return queryset.order_by(f"{prefix}{field}", *previous, "pk")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        column, direction = self._requested_sort()
+        # Everything in the query except the three keys this owns, so ordering
+        # keeps the filter the person just applied and never keeps them on a
+        # page number that belonged to the previous order.
+        query = self.request.GET.copy()
+        for key in ("sort", "dir", "page"):
+            query.pop(key, None)
+        base = query.urlencode()
+        context["worktable_sort"] = {
+            "columns": self.get_sortable_columns(),
+            "column": column,
+            "direction": direction,
+            "base_query": f"{base}&" if base else "",
+        }
+        return context
+
+
+class SearchMixin(SortableColumnsMixin):
     """Add text search and the common active/archive filter to list views."""
 
     search_fields = []
     htmx_template_name = "generic/_table_body.html"
+
+    def get_sortable_columns(self):
+        """UX-07: the three columns the generic table always draws, when the
+        model really has them.
+
+        Derived from the model's own fields instead of listed per view, because
+        listing them 26 times is 26 chances to name a field that does not exist
+        -- and a bad ORM path in `order_by` raises `FieldError` at request time,
+        on a screen nobody opened during the change.
+
+        **"Name" only appears where the model really has a `name` column.** That
+        header renders `{{ object }}`, which is `__str__` and not a field: on
+        `Aircraft` it is registration plus model, on `CostCenter` code plus name
+        plus the person responsible. Where there is no `name` to order by, the
+        header stays a plain `<th>` -- an order that does not match what the eye
+        reads down the column is worse than no order at all.
+        """
+        if self.sortable_columns:
+            return self.sortable_columns
+        names = {f.name for f in self.model._meta.fields}
+        columns = {}
+        if "name" in names:
+            columns["name"] = "name"
+        if "created_at" in names:
+            columns["created"] = "created_at"
+        if "is_active" in names:
+            columns["status"] = "is_active"
+        return columns
 
     def get_template_names(self):
         if self.request.headers.get("HX-Request") == "true":

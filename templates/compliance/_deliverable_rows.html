@@ -1,0 +1,14 @@
+{% load i18n %}
+{% comment %}`UX-07`: las filas salen a su propio parcial, como en las otras
+quince listas, y llevan `data-pk` — que es lo que habilita la selección múltiple
+que `worktable.js` inyecta.{% endcomment %}
+{% for object in objects %}<tr data-pk="{{ object.pk }}">
+  <td><a href="{{ object.get_absolute_url }}"><strong>{{ object.title }}</strong></a></td>
+  <td>{{ object.cost_center }}</td>
+  <td><span class="badge bg-{% if object.status == 'released' %}success{% elif object.status == 'rejected' %}danger{% elif object.status == 'validated' %}info{% else %}secondary{% endif %}">{{ object.get_status_display }}</span></td>
+  {% comment %}R7.4: "not assessed" is a third state, not a pass. The contract
+  may set no thresholds, or the metrics may not be in yet -- showing either as
+  compliant is how a quality gate quietly stops gating.{% endcomment %}
+  <td>{% if object.meets_acceptance_criteria is None %}<span class="text-muted">{% translate "Not assessed" %}</span>{% elif object.meets_acceptance_criteria %}<span class="badge bg-success">{% translate "Meets criteria" %}</span>{% else %}<span class="badge bg-danger">{% translate "Below criteria" %}</span>{% endif %}</td>
+  <td><span class="text-nowrap">{{ object.created_at|date:"Y-m-d" }}</span></td>
+</tr>{% empty %}<tr><td colspan="99" class="text-center text-muted py-4">{% translate "No deliverables recorded yet." %}</td></tr>{% endfor %}
