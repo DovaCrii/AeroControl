@@ -172,11 +172,20 @@ de aprobación. 22 tests más.
   enlace pegado a mano; en el comando alguien tecleó `--period` con una
   intención, y congelar otro mes en silencio es peor que no congelar ninguno.
 
-⚠️ **Segregación de funciones, pendiente de decisión del usuario**: hoy alcanza
-con `change_reportrun`, así que quien redacta la narrativa puede además
-aprobarla. Para una evidencia ISO eso es una pregunta organizacional —a qué rol
-va el permiso de aprobar— y no la decide el código. Separarla exige un permiso
-propio y un cambio de `bootstrap_roles`.
+✅ **Segregación de funciones: decidida el 2026-09-02, y no se separa.** Hoy
+alcanza con `change_reportrun`, así que quien redacta la narrativa puede además
+aprobarla — y **eso es correcto mientras redactor y firmante sean la misma
+persona**, que es el caso: el usuario redacta y aprueba, como `root` o `cmunoz`.
+Un permiso propio para aprobar habría creado una separación que no existe en la
+organización, y una barrera que la única persona que la cruza tendría que
+saltarse todos los meses.
+
+⚠️ **La condición para reabrirlo, escrita ahora que se sabe por qué**: cuando
+redactar y firmar dejen de ser la misma persona —por ejemplo si el Jefe de
+Seguridad Aérea empieza a redactar y el Gerente de Operaciones Aéreas firma—,
+entonces sí hace falta un permiso `approve_reportrun` propio y su fila en
+`bootstrap_roles`. Mientras tanto, **la auditoría ya registra quién aprobó**, que
+es lo que una evidencia ISO necesita.
 
 Lo que **falta**: R6 (XLSX y envío, bloqueado por SMTP) y R7 (bitácoras, depende
 de §6.6). La narrativa —hallazgos y observación del período— es `LV-227`, ya
