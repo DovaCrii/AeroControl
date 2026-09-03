@@ -14,7 +14,7 @@ import pytest
 from django.conf import settings
 from django.urls import reverse
 
-from apps.core.testing import login_as
+from apps.core.testing import login_as, without_template_comments
 
 TEMPLATES = Path(settings.BASE_DIR) / "templates"
 
@@ -46,7 +46,15 @@ class TestEveryListGoesThroughTheComponent:
         su propia `<table>` adentro: el `extends` pasaría y la duplicación
         seguiría ahí, que es exactamente lo que esta fila vino a sacar.
         """
-        content = (TEMPLATES / name).read_text(encoding="utf-8")
+        # Los `{% comment %}` se recortan: un comentario no se renderiza, así que
+        # nombrar `<table>` al explicar por qué una lista se dibuja como se
+        # dibuja no es escribirse una tabla. Pasó apenas se documentó la reversión
+        # de `LV-146` en `alert_list.html`, y es el mismo tropiezo que ya habían
+        # tenido el guardián de traducciones y el de `scope` — por eso el recorte
+        # vive en `apps.core.testing` y no copiado acá.
+        content = without_template_comments(
+            (TEMPLATES / name).read_text(encoding="utf-8")
+        )
 
         assert "<table" not in content
         assert "table-responsive" not in content

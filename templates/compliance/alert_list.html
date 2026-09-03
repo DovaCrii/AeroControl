@@ -31,6 +31,24 @@ entrar por esa puerta, y que se escribía a mano o faltaba:
 {% block worktable_header %}
   {% worktable_th _("Entity type") "entity_type" %}
   {% worktable_th _("Entity") "entity" %}
+  {% comment %}`UX-09b`: la faena pasa a ser **columna**, que era la mitad del
+  criterio de `UX-09` que había quedado sin cumplir.
+
+  ⚠️ **Esto revierte a propósito la decisión de `LV-146`**, y su razón hay que
+  mirarla, no ignorarla: puso el chip en segunda línea porque *"la tabla ya tiene
+  siete columnas dentro de un `.table-responsive`, así que una octava manda a
+  scroll horizontal justo en la pantalla que el usuario dice que trabaja"*. Esa
+  objeción ya no se sostiene, y por dos cosas que llegaron después: `UX-10` apila
+  la fila como tarjeta bajo 768 px —o sea que en angosto no hay tabla que
+  desplazar— y `UX-09` deja **esconder la columna** a quien no la quiera. El
+  criterio de `UX-09` pedía exactamente esto: la faena como columna en escritorio,
+  fuera de vista en angosto.
+
+  **No ordena, y no es un olvido**: `cost_center` se asigna en Python desde
+  `cost_centers_for_refs` —la alerta cuelga de una relación genérica— así que no
+  hay columna por la cual ordenar. Tiene nombre igual, que es lo que la vuelve
+  ocultable: son dos capacidades distintas.{% endcomment %}
+  {% worktable_th _("Cost center") "cost_centre" %}
   {% worktable_th _("Rule") "rule" %}
   {% worktable_th _("Triggered") "triggered" %}
   {% worktable_th _("Expiry") "expiry" %}

@@ -541,12 +541,25 @@ se ve al leer el campo: con las visibles, una columna nueva sería invisible par
 todo el que alguna vez guardó una preferencia — la lista estrenaría la columna
 mostrándosela sólo a quien nunca la configuró.
 
-🔶 **El criterio de esta fila queda a medias, y hay que decirlo.** La mitad
-"esconderla en pantalla angosta" **no** está: lo que hay es esconderla por
-decisión de la persona, no automáticamente por ancho. Esconder por ancho es
-`UX-10`, que ya apila la fila como tarjeta bajo 768 px, y la faena sigue siendo
-un *chip* de segunda línea en la lista de alertas. Convertirla en columna es un
-cambio de esa lista, no del selector, y no se hizo.
+✅ **`UX-09b`, el 2026-09-03: el criterio queda completo.** Quedaba sin cumplir
+la mitad literal —*"la lista de alertas puede mostrar la faena como **columna**"*—
+porque seguía siendo un *chip* de segunda línea. Ya es columna propia, con nombre
+(`cost_centre`) y por lo tanto ocultable.
+
+⚠️ **Revierte una decisión de `LV-146`, y a propósito.** Su razón era buena
+entonces: siete columnas dentro de un `.table-responsive`, y una octava mandaba a
+desplazamiento horizontal *"justo en la pantalla que el usuario dice que
+trabaja"*. **Lo que cambió es el entorno, no la opinión**: `UX-10` apila la fila
+como tarjeta bajo 768 px —o sea que en angosto ya no hay tabla que desplazar— y
+`UX-09` deja esconder la columna a quien no la quiera. Lo que `LV-146` quería —que
+la faena se vea en la bandeja— se conserva entero, y sus 31 tests siguen verdes:
+lo único que cambia es dónde.
+
+🔶 **No ordena, y eso sí es una limitación real**: `cost_center` se asigna en
+Python desde `cost_centers_for_refs`, porque la alerta cuelga de una relación
+genérica. Tener nombre sin ordenar es el reparto que `worktable_th` permite a
+propósito, pero quien quiera *ordenar* por faena todavía no puede — para eso
+haría falta desnormalizar la faena en `Alert`, que es una decisión aparte.
 
 **`UX-10` · Fila-tarjeta bajo 768 px.** Cada fila se apila mostrando las tres
 columnas que importan más su severidad. *Criterio:* ninguna lista requiere

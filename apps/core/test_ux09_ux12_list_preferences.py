@@ -328,6 +328,62 @@ class TestNextIsNotAnOpenRedirect:
         assert response["Location"] == reverse("alert-list")
 
 
+class TestTheCostCentreIsAColumnNow:
+    """`UX-09b`: la mitad del criterio de `UX-09` que había quedado sin cumplir.
+
+    Decía, literal: *"la lista de alertas puede mostrar la faena como **columna**
+    en escritorio y esconderla en pantalla angosta, en vez de vivir como *chip* de
+    segunda línea (que fue el parche de `LV-146`)"*.
+
+    ⚠️ **Esto revierte una decisión de `LV-146`, y a propósito.** Su razón era
+    buena entonces: siete columnas dentro de un `.table-responsive`, y una octava
+    mandaba a desplazamiento horizontal. Lo que cambió es el entorno, no la
+    opinión — `UX-10` apila la fila como tarjeta bajo 768 px y `UX-09` deja
+    esconder la columna. Lo que `LV-146` quería (que la faena se vea en la
+    bandeja) se conserva entero; lo que cambia es dónde.
+    """
+
+    @pytest.mark.django_db
+    def test_it_has_its_own_column_with_a_name(self, db):
+        client = login_as("view_alert", "view_costcenter")
+
+        head = client.get(reverse("alert-list")).content.decode().split("</thead>")[0]
+
+        assert 'data-col="cost_centre"' in head
+
+    @pytest.mark.django_db
+    def test_it_is_hideable_but_not_sortable(self, db):
+        """`cost_center` se asigna en Python desde `cost_centers_for_refs` —la
+        alerta cuelga de una relación genérica— así que no hay columna por la cual
+        ordenar. Tener nombre y no ordenar es exactamente el reparto que
+        `worktable_th` permite, y la razón por la que el nombre va aparte de la
+        lista blanca de orden."""
+        from apps.compliance.views import AlertList
+
+        client = login_as("view_alert", "view_costcenter")
+        head = client.get(reverse("alert-list")).content.decode().split("</thead>")[0]
+
+        assert "cost_centre" not in AlertList.sortable_columns
+        cell = head.split('data-col="cost_centre"')[1].split("</th>")[0]
+        assert "worktable-sort" not in cell
+
+    @pytest.mark.django_db
+    def test_the_chip_left_the_entity_cell(self, db):
+        """Si siguiera adentro, habría dos lugares que responden "¿de qué faena
+        es esto?" — y el chip de segunda línea era justo lo que esta fila vino a
+        reemplazar."""
+        from pathlib import Path
+
+        from django.conf import settings
+
+        rows = (
+            Path(settings.BASE_DIR) / "templates" / "compliance" / "_alert_rows.html"
+        ).read_text(encoding="utf-8")
+
+        entity_cell = rows.split("content_object.get_absolute_url")[1].split("</td>")[0]
+        assert "cc-chip" not in entity_cell
+
+
 class TestAViewCarriesItsOwnColumns:
     @pytest.mark.django_db
     def test_opening_a_view_uses_the_columns_it_was_saved_with(self, db):

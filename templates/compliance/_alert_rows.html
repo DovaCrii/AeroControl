@@ -25,17 +25,22 @@ pueden decir cosas distintas.{% endcomment %}
   entrar: tres pasos para llegar a la única pantalla desde la que se resuelve.
   El enlace sale de `get_absolute_url` del propio objeto, así que aparece para
   las entidades que tienen ficha y no para las que no.{% endcomment %}
-  {% comment %}LV-146: la faena va como chip en **segunda línea dentro de esta
-  celda**, no como octava columna. El centro de costo es un atributo de la
-  entidad, no un hecho paralelo; y la tabla ya tiene siete columnas dentro de un
-  `.table-responsive`, así que una octava manda a scroll horizontal justo en la
-  pantalla que el usuario dice que trabaja. La celda "Resolución" ya usa el mismo
-  recurso para el motivo.
+  {% comment %}`UX-09b`: la faena sale de esta celda y pasa a la suya.
 
-  Sin faena no se dibuja nada: acá el chip va **debajo** del nombre, así que su
-  ausencia no desalinea ninguna columna (en el panel se decide al revés, y por
-  eso mismo).{% endcomment %}
-  <td>{% with ficha=object.content_object.get_absolute_url %}{% if ficha %}<a href="{{ ficha }}" class="table-primary-value" title="{% translate "Open the record: status and documents" %}"><strong>{{ object.content_object }}</strong></a>{% else %}<strong>{{ object.content_object|default:_("Record unavailable") }}</strong>{% endif %}{% endwith %}{% if object.cost_center %}<div class="mt-1"><span class="cc-chip" title="{{ object.cost_center }}">{{ object.cost_center.code }}</span></div>{% endif %}</td>
+  `LV-146` la había puesto acá como chip de segunda línea, y su razón era buena en
+  su momento: *"la tabla ya tiene siete columnas dentro de un
+  `.table-responsive`, así que una octava manda a scroll horizontal justo en la
+  pantalla que el usuario dice que trabaja"*. Lo que cambió es el entorno, no la
+  opinión: `UX-10` apila la fila como tarjeta bajo 768 px y `UX-09` deja esconder
+  la columna. Con eso, el criterio de `UX-09` —la faena **como columna** en
+  escritorio, fuera de vista en angosto— pasa a ser alcanzable, y el chip dejaba
+  de ser la mejor forma: obligaba a leer dos cosas apiladas en una celda para
+  responder "¿de qué faena es esto?".{% endcomment %}
+  <td>{% with ficha=object.content_object.get_absolute_url %}{% if ficha %}<a href="{{ ficha }}" class="table-primary-value" title="{% translate "Open the record: status and documents" %}"><strong>{{ object.content_object }}</strong></a>{% else %}<strong>{{ object.content_object|default:_("Record unavailable") }}</strong>{% endif %}{% endwith %}</td>
+  {% comment %}Sin faena se dibuja un guion y no una celda vacía: una celda en
+  blanco se lee como "todavía no cargó" y el guion dice "no tiene", que en una
+  alerta sobre un documento de empresa es la respuesta correcta.{% endcomment %}
+  <td>{% if object.cost_center %}<span class="cc-chip" title="{{ object.cost_center }}">{{ object.cost_center.code }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
   <td>{{ object.alert_rule.name }}</td>
   <td><span class="text-nowrap">{{ object.triggered_at|date:'Y-m-d' }}</span></td>
   {% comment %}LV-118: la fecha es la **congelada al crear la alerta**
