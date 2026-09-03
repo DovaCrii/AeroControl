@@ -215,6 +215,27 @@ El 2026-09-03 volvió a costar otra, por lo contrario: el Paso 0 se pegó en la
 **PowerShell de Windows**, que buscó `C:\opt\aerocontrol`. **El bloque se pega en
 la sesión de `p340`, no en la del escritorio.**
 
+##### ✅ DESPLEGADO EN `p340`: **`7fa2ce0`**, el 2026-09-03
+
+Respaldo previo tomado **y verificado**: `aero_ops_20260903_155818.sqlite3`
+(*"restorable"*). `git log --oneline -1` en la VM dice `7fa2ce0`.
+
+Las tres migraciones aplicaron limpio —`core.0008`, `operations.0026`,
+`reporting.0002`—, que son exactamente las tres que el Paso 2 había contado.
+`bootstrap_roles` configuró los cinco roles y el grupo de notificación (era el
+crítico: traía los permisos de `ReportRun`), y `collectstatic` copió **10**
+archivos con 398 post-procesados — los diez que faltaban. `uv sync` instaló
+`pypdf 6.16.2`, la dependencia nueva de `LV-231`.
+
+`seed_document_types` y `seed_alert_rules` reportaron **0 creados**, que es lo
+esperado: los dos son idempotentes y lo suyo ya estaba.
+
+⚠️ **Queda pendiente en la VM, y no lo hace ningún comando**: desactivar a mano la
+regla *"Permisos: renovación vencida de plazo (T-15 · Gerencia)"*.
+`seed_alert_rules` sólo crea, nunca borra, y por eso dijo "0 creados" sin tocarla.
+
+---
+
 ##### ⛔ Paso 0 corrido el 2026-09-03: **la tanda del 02 por la tarde nunca se desplegó**
 
 Medido, no supuesto:
