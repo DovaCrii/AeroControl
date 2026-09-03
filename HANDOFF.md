@@ -181,6 +181,23 @@ Dos filas más, **sin desplegar**:
 
 ## ⚠️ EL DESPLIEGUE DE ESTA TANDA
 
+### La etiqueta ya existe, y eso pone una condición
+
+**`v0.6.0-beta` está creada y empujada, sobre `e894b06`** (= `origin/main` al
+2026-09-02). En este repo la etiqueta ha significado *"esto es lo que está en
+producción"* — así quedó `v0.5.0-beta` —, así que:
+
+- **Desplegar `e894b06` exactamente.** Si la etiqueta y lo desplegado divergen,
+  la próxima persona que quiera saber qué corre en `p340` mirará la etiqueta y
+  leerá otra cosa.
+- **Si entra algún commit antes de desplegar**, hay dos salidas honestas: mover
+  la etiqueta al commit que sí se despliega (`git tag -f` y `push --force` **de
+  la etiqueta**, no de la rama), o dejarla donde está y etiquetar el despliegue
+  real como `v0.6.1-beta`. Lo que no sirve es dejarla apuntando a algo que nunca
+  llegó a la VM.
+- Al terminar, `git log --oneline -1` en la VM tiene que decir `e894b06`. Ésa es
+  la única prueba de que la etiqueta dice la verdad.
+
 **Ocho commits**, del `f2eb099` al `00e3f29`. Los pasos van copiados de
 § "El despliegue, por pasos", **no escritos de memoria** — eso ya costó una
 vuelta, y el `;` de la carga del entorno corta un `&&`, que es la forma exacta
