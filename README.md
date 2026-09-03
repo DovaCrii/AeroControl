@@ -9,7 +9,7 @@
 [![Licencia: MIT](https://img.shields.io/badge/licencia-MIT-2EC4B6.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12-1B2A4A.svg)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/django-6.0-1B2A4A.svg)](https://www.djangoproject.com/)
-[![Estado](https://img.shields.io/badge/estado-v0.5.0--beta-2EC4B6.svg)](#estado-actual)
+[![Estado](https://img.shields.io/badge/estado-v0.6.0--beta-2EC4B6.svg)](#estado-actual)
 
 Aplicaciones hermanas: **[AeroLink](https://github.com/DovaCrii/AeroLink)** (telemetría y evidencia de vuelo) · **[AeroPlanner](https://github.com/DovaCrii/AeroPlanner)** (planificación de misiones) — funcionan por separado, se comunican cuando conviene
 
@@ -41,6 +41,7 @@ con su documentación DGAC.
 | **Mantenimiento** | Programada y no programada, con historial de estados |
 | **Planificación geoespacial** | Importa y versiona planes KMZ/KML, con editor en el mapa y la hoja de campo para transcribir a SIGO |
 | **Informes** | Catastro de flota y personal con vigencias, e informe de cumplimiento — en pantalla, PDF, Excel y CSV |
+| **Informe mensual RPA** | El informe de reportabilidad que se emite cada mes a la DGAC, congelado como dato: sus cifras salen del padrón, la narrativa se escribe en la app, y una vez aprobado queda inmutable — una corrección nace como revisión nueva |
 | **Prueba de conocimientos** | Evaluación interna de 25 preguntas con historial por persona, que vence a los 12 meses como una credencial más |
 
 Todo con auditoría de cada cambio, permisos por rol y la interfaz completa en
@@ -74,9 +75,20 @@ nada más: **ninguna comparte base de datos con otra**.
 
 ## Estado actual
 
-**`v0.5.0-beta`** — desplegada y operando con datos reales (flota, operadores y
-centros de costo de la organización). **2247 pruebas automatizadas**, con Ruff,
-Bandit y pip-audit.
+**`v0.6.0-beta`** — desplegada y operando con datos reales (flota, operadores y
+centros de costo de la organización). **2787 pruebas automatizadas**, cobertura
+97%, con Ruff, Bandit y pip-audit.
+
+Lo que trae esta versión sobre la anterior es, sobre todo, **el informe mensual
+RPA**: el documento que la organización debe emitir cada mes ante la DGAC pasa
+de armarse a mano a construirse desde el padrón, con su narrativa escrita en la
+aplicación y su aprobación como acto registrado.
+
+**No es 1.0, y lo que falta no es código.** El propio tablero lo dice: quedan
+puntos de operación —el correo saliente sigue siendo el único criterio en rojo—
+y decisiones de negocio que sólo la organización puede tomar, como las metas de
+KPI que faltan y los umbrales de contrato. Escribir 1.0 con esos huecos sería
+llamar terminado a algo que no lo está.
 
 La puerta de calidad es **`pwsh scripts/verify.ps1`, y corre en la máquina de
 quien desarrolla**, no en CI: el workflow de GitHub Actions existe pero todavía
