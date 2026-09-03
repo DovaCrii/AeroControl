@@ -77,7 +77,21 @@
 </div></div>
 <table class="table table-bordered"><tbody>
   <tr><th scope="row" class="w-25">{% translate "Internal folio" %}</th><td>{{ permission.internal_folio }}</td></tr>
-  <tr><th scope="row">{% translate "DGAC folio" %}</th><td>{% if permission.permission_number %}{{ permission.permission_number }}{% else %}<span class="text-muted">{% translate "In process" %}</span>{% endif %}</td></tr>
+  {% comment %}LV-231: el número que la autorización DGAC trae escrito, ofrecido
+  para confirmar. Pedido del usuario con la captura del encabezado a la vista:
+  *"que el número del permiso de vuelo lo pueda sacar de la autorización DGAC; es
+  el mismo PDF que siempre sube la DGAC, de ahí que sea automático"*.
+
+  ⚠️ **Propone, nunca escribe solo.** Extraer de un PDF es heurística: si la DGAC
+  cambia el encabezado, el patrón lee otra cosa o nada. Por eso el número se
+  muestra rotulado con su origen, el botón es un `POST` que la persona aprieta, y
+  la casilla de teclearlo sigue intacta. Un folio equivocado escrito solo es peor
+  que uno en blanco, porque el equivocado nadie lo revisa.
+
+  El botón **no lleva el número**: el servidor vuelve a leer el PDF. Si lo llevara
+  en un campo oculto, "confirmar la sugerencia" sería un camino para escribir
+  cualquier folio, y encima uno que la ficha presentaría como leído del papel.{% endcomment %}
+  <tr><th scope="row">{% translate "DGAC folio" %}</th><td>{% if permission.permission_number %}{{ permission.permission_number }}{% else %}<span class="text-muted">{% translate "In process" %}</span>{% if suggested_folio and perms.operations.change_flightpermission %}<div class="small mt-2"><span class="badge sev-advisory">{% translate "Read from the DGAC authorization" %}</span> <strong>{{ suggested_folio }}</strong></div><form method="post" action="{% url 'permission-folio-from-pdf' permission.pk %}" class="mt-1">{% csrf_token %}<button class="btn btn-sm btn-outline-primary" title="{% translate 'Check it against the PDF before confirming' %}">{% translate "Use this number" %}</button></form>{% endif %}{% endif %}</td></tr>
   <tr><th scope="row">{% translate "Status" %}</th><td><span class="badge bg-{% if permission.status == 'approved' %}success{% elif permission.status == 'denied' %}danger{% elif permission.status == 'completed' %}info{% else %}warning{% endif %}">{{ permission.get_status_display }}</span></td></tr>
   <tr><th scope="row">{% translate "Operators" %}</th><td>{% for operator in permission.operators.all %}{{ operator }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr><tr><th scope="row">{% translate "Aircraft" %}</th><td>{% for aircraft in permission.aircraft_fleet.all %}{{ aircraft }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr><tr><th scope="row">{% translate "Cost center" %}</th><td>{{ permission.cost_center }}</td></tr><tr><th scope="row">{% translate "Purpose" %}</th><td>{{ permission.get_purpose_display }}{% if permission.purpose == "other" %}: {{ permission.purpose_detail }}{% endif %}</td></tr><tr><th scope="row">{% translate "Validity" %}</th><td>{% if permission.valid_from and permission.valid_until %}{{ permission.valid_from|date:"Y-m-d" }} – {{ permission.valid_until|date:"Y-m-d" }}{% else %}<span class="text-body-secondary fst-italic">{% translate "Awaiting the DGAC" %}</span>{% endif %}</td></tr><tr><th scope="row">{% translate "Location" %}</th><td>{{ permission.location }}</td></tr>
   {% comment %}LV-220: la fila **siempre** se dibuja, y si falta lo dice.

@@ -24,6 +24,15 @@ dependencies = [
     "gunicorn>=23,<27",
     "whitenoise>=6.9,<7",
     "django-axes>=7,<9",
+    # LV-231: leer el número de la autorización DGAC desde su PDF, en vez de
+    # teclearlo. `LV-156` había cerrado esta puerta con el argumento de que
+    # "parsear el PDF exigiría una dependencia nueva que la política del repo no
+    # admite", y hay que revisarlo, no ignorarlo: **el criterio real del repo no
+    # es "ninguna dependencia"**, es ninguna que exija paquetes de sistema, y
+    # está escrito tres líneas más arriba al elegir `reportlab`. `pypdf` es puro
+    # Python y cumple el mismo criterio, con `pip-audit` vigilándolo como exige
+    # `SECURITY.md`.
+    "pypdf>=6,<7",
 ]
 
 [dependency-groups]
