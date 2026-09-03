@@ -1,3 +1,19 @@
+{% load i18n %}
+{% comment %}`UX-07`: "mostrando N–M de T", y va **fuera** del `if` de abajo.
+
+Ésa es toda la pieza: la paginación entera desaparecía con una sola página, así
+que una lista de ocho filas no decía si eran ocho de ocho o **ocho de doscientas
+filtradas**. El número que falta no es el de páginas: es el total, y es el que
+contesta "¿me estoy perdiendo algo?" — la pregunta que alguien se hace justo
+antes de dar por buena una revisión.
+
+Con cero resultados no se dibuja: la tabla ya tiene su propia fila de vacío, y
+dos mensajes para el mismo hecho es ruido.{% endcomment %}
+{% if page_obj.paginator.count %}
+<p class="list-count small text-body-secondary mt-2 mb-0">
+  {% blocktranslate with first=page_obj.start_index last=page_obj.end_index total=page_obj.paginator.count count counter=page_obj.paginator.count %}Showing {{ first }}–{{ last }} of {{ total }} record.{% plural %}Showing {{ first }}–{{ last }} of {{ total }} records.{% endblocktranslate %}
+</p>
+{% endif %}
 {% if page_obj.has_other_pages %}
 <nav class="mt-3">
   <ul class="pagination pagination-sm">
