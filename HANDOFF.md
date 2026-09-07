@@ -177,7 +177,13 @@ Dos filas más, **sin desplegar**:
 
 **Paso de despliegue: `collectstatic`.** Sin migración.
 
-### Cierre del 2026-09-03 — **empezar por acá**
+### Cierre del 2026-09-03 al 2026-09-07 — **empezar por acá**
+
+⚠️ **Esta sección abarca dos jornadas y conviene leerla sabiéndolo**, porque el
+despliegue las separa: lo del **03** está en `p340` desde ese día; lo del **07**
+—`LV-233` y `LV-218(b)`— no. Las fechas de las filas se corrigieron contra
+`git log`, no de memoria: durante el trabajo del 07 se venían fechando como 03
+por arrastre del día anterior.
 
 **Lo que entró hoy, en cinco commits sobre `1598fef`:**
 
@@ -324,8 +330,14 @@ servicio reiniciado. (Anotado en el momento, que es la regla que esta misma
 sección escribió después de perder tres veces la respuesta a *"¿qué corre en
 `p340`?"*.)
 
-⏳ **`30bc2e6` (`LV-233`) queda commiteado y sin desplegar**, esperando el gate
-completo. Cuando entre, hay que saber una cosa antes de mirar el panel:
+⏳ **Del 2026-09-07 quedan cuatro commits subidos y SIN desplegar**, del
+`30bc2e6` al `a5988fc`: las tres partes de `LV-233`, `LV-218(b)` y la consulta a
+la DGAC. **Llevan dos migraciones** (`operations.0027` y `0028`) y
+**`bootstrap_roles` es obligatorio** — sin él el botón de registrar la revisión
+de NOTAM aparece y nadie puede usarlo, el mismo defecto que `R3` pagó con los
+permisos de `ReportRun`.
+
+Y hay que saber una cosa antes de mirar el panel:
 
 > ⚠️ **El "Vigentes" del panel puede bajar.** `LV-233` cambió la definición: un
 > permiso aprobado que **todavía no empieza** dejó de contarse como vigente y
