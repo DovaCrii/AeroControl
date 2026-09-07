@@ -587,13 +587,13 @@ las mismas dieciséis plantillas dos veces.
 
 ### Fase C — La bandeja y el panel
 
-**`UX-13` · Bandeja de trabajo `/bandeja/`.** Vista unificada sobre alertas, no
+**`UX-13` · Bandeja de trabajo `/bandeja/`.** ✅ **Hecha el 2026-09-07.** Cuatro fuentes: alertas sin resolver, no conformidades abiertas, permisos esperando a la DGAC y entregables sin liberar. ⚠️ **Mantención queda fuera y el plan ya lo anticipaba** (*"mantención por definir"*): `MaintenanceRecord` tiene `status` pero **sin `STATUS_CHOICES` declarado**, así que no hay vocabulario del que leer qué estado es "pendiente" — elegirlo en la pantalla sería inventarlo ahí en vez de en el modelo, el defecto que `LV-90` sacó del motor de alertas. Entra sin tocar nada cuando ese modelo declare sus estados. **El criterio se cumple por construcción**: `tray.py` no escribe —hay un test que lo comprueba sobre el código, no sobre el render— y cada fila enlaza a la pantalla que ya resuelve. **La severidad no se inventa**: sólo las alertas traen su escala real y las no conformidades con verificación vencida; un permiso esperando a la autoridad no lleva color, porque esperar no es incumplimiento de nadie. Y cada fuente se lee **sólo si quien mira tiene su permiso**, que es la lección de `LV-191`. 18 tests. **Historia original:** Vista unificada sobre alertas, no
 conformidades, mantención por definir, permisos esperando respuesta y entregables
 sin liberar, con **dueño, severidad y acción en la fila**. *Criterio:* resolver
 desde la bandeja produce exactamente la misma evidencia ISO 10.2 que resolver
 desde la lista de alertas — es la misma vista, no un segundo camino.
 
-**`UX-14` · Asignación de responsable** en alerta y no conformidad. *Por qué:* es
+**`UX-14` · Asignación de responsable** ✅ **hecha el 2026-09-07** (`compliance.0026`) en alerta y no conformidad. ⚠️ **A un `User` y no a un `Operator`**: la alerta ya derivaba un operador para su tarea de seguimiento, pero esa pregunta es *de quién es la credencial que vence*; ésta es *quién se hace cargo*, y quien resuelve es alguien con permiso en la app — Cumplimiento, que no vuela, habría quedado con "Mis pendientes" vacío. **Historia original:** *Por qué:* es
 el patrón que AirHub ya tiene (investigador asignado) y lo que convierte una lista
 en trabajo. *Criterio:* "Mis pendientes" filtra por persona.
 

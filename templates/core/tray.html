@@ -1,0 +1,78 @@
+{% extends "generic/worktable.html" %}
+{% load i18n %}
+{% comment %}`UX-13` · La bandeja de trabajo.
+
+Extiende `generic/worktable.html` como cualquier otra lista, así que hereda de
+una vez la cáscara, el borde de severidad y —el día que alguien las quiera— las
+columnas ocultables. Escribirle su propia tabla habría sido la copia número
+diecisiete que `UX-07` acaba de eliminar.
+
+⚠️ **Ninguna fila resuelve acá.** El criterio de la fila: *"resolver desde la
+bandeja produce exactamente la misma evidencia ISO 10.2 que resolver desde la
+lista de alertas — es la misma vista, no un segundo camino"*. Cada acción enlaza
+a la pantalla que ya existe y que ya comprueba lo suyo. Un segundo camino para
+resolver sería un segundo lugar donde registrar (o no registrar) la causa raíz.
+
+Sin orden por columna a propósito: las filas vienen de cuatro consultas distintas
+y se ordenan en Python por fecha, así que un `?sort=` no tendría a qué
+traducirse. Los encabezados van llanos, que es como `worktable_th` degrada.{% endcomment %}
+{% block worktable_title %}{% translate "Work tray" %}{% endblock %}
+{% block worktable_heading %}{% translate "Work tray" %}{% endblock %}
+{% block worktable_description %}<p class="page-description mb-0">{% translate "Everything pending, from every module, in one list." %}</p>{% endblock %}
+{% block worktable_filters %}
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-3">
+    <select class="form-select" name="owner" aria-label="{% translate 'Owner' %}">
+      <option value="">{% translate "Any owner" %}</option>
+      <option value="me" {% if selected_owner == 'me' %}selected{% endif %}>{% translate "My pending items" %}</option>
+      <option value="unassigned" {% if selected_owner == 'unassigned' %}selected{% endif %}>{% translate "Unassigned" %}</option>
+    </select>
+  </div>
+  <div class="col-auto"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
+</form>
+{% endblock %}
+{% block worktable_header %}
+  <th scope="col">{% translate "Type" %}</th>
+  <th scope="col">{% translate "What is pending" %}</th>
+  <th scope="col">{% translate "Cost center" %}</th>
+  <th scope="col">{% translate "Owner" %}</th>
+  <th scope="col">{% translate "Due" %}</th>
+  <th scope="col" class="text-end">{% translate "Actions" %}</th>
+{% endblock %}
+{% block worktable_rows %}
+{% for row in rows %}
+<tr{% if row.severity %} data-sev="{{ row.severity }}"{% endif %}>
+  {% comment %}Los rótulos se guardan en minúscula y se capitalizan acá, para
+  reusar los msgid que el catálogo ya tiene ("alerta", "no conformidad") en vez
+  de crear un segundo par que difiere sólo en la mayúscula — lo que el guardián
+  de traducciones marcó apenas se escribieron.{% endcomment %}
+  <td><span class="badge bg-secondary-subtle text-body">{{ row.label|capfirst }}</span></td>
+  <td>
+    <strong>{{ row.title }}</strong>
+    {% comment %}El sujeto va debajo y no en columna propia: es lo que identifica
+    la fila —la aeronave, el origen del hallazgo, el sitio del permiso— y con
+    seis columnas ya llenas, una séptima manda a desplazamiento horizontal.{% endcomment %}
+    {% if row.subject %}<div class="small text-body-secondary">{{ row.subject }}</div>{% endif %}
+  </td>
+  <td>{% if row.cost_centre %}<span class="cc-chip" title="{{ row.cost_centre }}">{{ row.cost_centre.code }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+  {% comment %}"Sin asignar" sólo donde el dueño **puede** existir. Un permiso
+  esperando a la DGAC no está sin asignar: es que no se asigna, y decir lo
+  contrario inventaría un pendiente de gestión que no existe.{% endcomment %}
+  <td>{% if row.owner %}{{ row.owner.get_full_name|default:row.owner.username }}{% elif row.source == 'alert' or row.source == 'nonconformity' %}<span class="text-muted fst-italic">{% translate "Unassigned" %}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+  <td>{% if row.due %}<span class="text-nowrap">{{ row.due|date:"Y-m-d" }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+  <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ row.url }}">{% translate "Open" %}</a></td>
+</tr>
+{% empty %}
+{% comment %}`UX-18` anticipado acá porque es la pantalla donde más importa:
+"nada pendiente" es una **buena noticia** y se dice como tal. Un "No results
+found" en la bandeja de trabajo lee como si algo hubiera fallado.{% endcomment %}
+<tr><td colspan="99" class="text-center py-5">
+  <div class="h5 mb-1">{% translate "Nothing pending." %}</div>
+  <div class="text-body-secondary small">{% translate "No open alerts, findings, permits awaiting the DGAC or unreleased deliverables." %}</div>
+</td></tr>
+{% endfor %}
+{% endblock %}
+{% comment %}Sin paginación: la bandeja es corta por definición —lo pendiente de
+una operación de catorce aeronaves— y paginarla escondería debajo justo lo que
+alguien viene a ver. Si algún día crece, la respuesta es filtrar, no paginar.{% endcomment %}
+{% block worktable_pagination %}{% endblock %}

@@ -792,6 +792,48 @@ class ListViewDelete(LoginRequiredMixin, View):
         return redirect(_safe_next(request))
 
 
+class WorkTrayView(LoginRequiredMixin, TemplateView):
+    """UX-13: la bandeja de trabajo — todo lo pendiente en una lista.
+
+    `LoginRequiredMixin` a secas **y no un permiso de modelo**, que es la
+    excepción a la regla de `AGENTS.md` y por eso se explica: la bandeja no tiene
+    un modelo propio del cual pedir permiso, y cruza cuatro. El control está
+    donde tiene que estar — **cada fuente se lee sólo si quien mira puede verla**
+    (`tray.SOURCES`), así que alguien sin `view_alert` sencillamente no recibe
+    alertas. Un permiso único acá habría sido más laxo o más estricto que la suma
+    de los cuatro, y las dos formas están mal.
+
+    ⚠️ **No resuelve nada.** El criterio de la fila: *"resolver desde la bandeja
+    produce exactamente la misma evidencia ISO 10.2 que resolver desde la lista
+    de alertas — es la misma vista, no un segundo camino"*. Cada fila enlaza a la
+    acción que ya existe.
+    """
+
+    template_name = "core/tray.html"
+
+    def get_context_data(self, **kwargs):
+        from apps.core.tray import pending_for
+
+        context = super().get_context_data(**kwargs)
+        rows = pending_for(self.request.user)
+        # "Mis pendientes" en la bandeja, con la misma llave que en la lista de
+        # alertas (`?owner=me`): dos nombres para el mismo filtro es cómo alguien
+        # copia un enlace y obtiene otra cosa.
+        if self.request.GET.get("owner") == "me":
+            rows = [row for row in rows if row["owner"] == self.request.user]
+        elif self.request.GET.get("owner") == "unassigned":
+            # Sólo entre lo que **puede** tener dueño: un permiso esperando a la
+            # DGAC no está "sin asignar", es que no se asigna.
+            rows = [
+                row
+                for row in rows
+                if row["owner"] is None and row["source"] in {"alert", "nonconformity"}
+            ]
+        context["rows"] = rows
+        context["selected_owner"] = self.request.GET.get("owner", "")
+        return context
+
+
 class HealthCheckView(View):
     """Small dependency health endpoint for local monitors and reverse proxies."""
 
