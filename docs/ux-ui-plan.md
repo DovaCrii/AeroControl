@@ -620,9 +620,17 @@ un formulario en blanco sino el mismo con los errores y **todo lo escrito**, o
 sea el momento con más que perder. Y `modal-form-success` sí la reinicia, porque
 una guardia que pregunta después de guardar enseña a contestar que sí sin leer.
 
-**`UX-20` · Formularios largos en página completa, no en modal.** Umbral: más de
-ocho campos o cualquier campo de selección múltiple. *Criterio:* el permiso de
+**`UX-20` · Formularios largos en página completa, no en modal** ✅ **hecho el 2026-09-07**. Umbral: más de
+ocho campos **visibles** —los ocultos no ocupan pantalla— o cualquier campo de
+selección múltiple, que trae su propia barra sin importar el total. *Criterio:* el permiso de
 vuelo y la carga de documentos dejan de anidar tres barras de desplazamiento.
+Se decide en `HtmxFormMixin.get()` y no en cada plantilla: el disparador del
+cuadro está escrito en decenas de listados, y una regla que cada uno tiene que
+recordar estaría mal la primera vez que alguien la olvide, y en silencio. Se
+responde con `HX-Redirect`, que es como htmx entiende "esto no va a ser un
+fragmento". ⚠️ **Sólo si la página completa existe**: hay vistas que sólo viven
+en el cuadro y no declaran `template_name`, y redirigir a ciegas cambiaría un
+cuadro incómodo por un 500.
 
 **`UX-21` · `inputmode`, `enterkeyhint` y `autocomplete`** en todos los campos ✅ **hecho el 2026-09-07**.
 *Criterio:* un campo numérico abre teclado numérico en móvil — resuelto en
@@ -638,49 +646,122 @@ formulario, y eso lo decide la plantilla, no el formulario — un `next` en el
 a guardar el dato de otro.
 
 **`UX-22` · "Guardar y crear otro"** en los formularios de alta repetitiva
-(vuelos, documentos, movimientos).
+(vuelos, documentos, movimientos) ✅ **hecho el 2026-09-07**. `SaveAndAddAnotherMixin`,
+puesto **por vista y a mano**: no toda alta es repetitiva, y un centro de costo
+se crea una vez al año. Vuelve a la misma URL **con su query**, porque de ahí
+salen los valores iniciales — quien carga diez vuelos del mismo permiso quiere el
+siguiente ya apuntado. ⚠️ **Sólo en el alta**: en una edición el formulario que
+quedaría abierto vendría cargado con los datos del registro recién modificado,
+que es la forma más limpia de duplicarlo sin querer. 🔶 Las asignaciones de
+operador y aeronave quedan fuera porque ya son en lote (`OperatorBulkAssign`).
 
-**`UX-23` · Borrador generalizado.** Extender `form-draft.js` más allá del
-formulario de permiso.
+**`UX-23` · Borrador generalizado** ✅ **hecho el 2026-09-07**. Resultó no ser
+trabajo de JS: `form-draft.js` ya era genérico —se engancha en
+`[data-form-draft]` y no sabe nada del permiso— y lo que faltaba era la
+plantilla. Ahora `generic/_form_draft.html` lo sirve a todo formulario de página
+completa, **y sólo a los largos**: el mismo umbral de `UX-20`, porque son la misma
+pregunta hecha dos veces — uno de tres campos se vuelve a escribir en veinte
+segundos. ⚠️ **Sin `data-form-draft-key`**, a diferencia del formulario de
+permiso: el JS cae entonces en `window.location.pathname`, que separa el alta de
+cada edición; una clave fija compartida ofrece en la ficha del registro 3 el
+borrador que quedó del 5.
 
 ### Fase E — Terreno
 
-**`UX-24` · Búsqueda global en móvil.** Hoy desaparece bajo 768 px. *Criterio:*
-un icono de lupa en la barra que abre la búsqueda a pantalla completa.
+**`UX-24` · Búsqueda global en móvil** ✅ **hecho el 2026-09-07**. Desaparecía bajo 768 px. *Criterio:*
+un icono de lupa en la barra que abre la búsqueda a pantalla completa —
+verificado en el navegador a 375×812: el panel mide exactamente el alto y el
+ancho de la pantalla. **Es el mismo componente que `UX-25`**: una sola cosa que
+mantener, y en una pantalla angosta la paleta ya es pantalla completa.
 
-**`UX-25` · Paleta de comandos (`Ctrl/⌘+K`).** Navegar, buscar entidad y ejecutar
-acción. *Por qué:* quien trabaja alertas entra veinte veces al día; y **ningún
+**`UX-25` · Paleta de comandos (`Ctrl/⌘+K`)** ✅ **hecho el 2026-09-07**. Navegar y buscar entidad. *Por qué:* quien trabaja alertas entra veinte veces al día; y **ningún
 competidor del sector la documenta**, así que además se ve en una demostración.
+⚠️ **Los destinos se leen del menú lateral al abrir**, no de una lista propia: el
+menú ya esconde lo que esta persona no puede ver, así que la paleta hereda los
+permisos sin preguntarle nada al servidor y no hay una segunda lista que se
+desincronice. Una lista propia habría ofrecido rutas que terminan en 403 —
+`LV-130`. Compara sin acentos y sin caja ("mantencion" encuentra "Mantenciones").
+🔶 **Ejecutar acción queda fuera**: navegar y buscar salen del menú y de la
+búsqueda global, que ya existen; un catálogo de acciones es una lista escrita a
+mano, que es justo lo que esta fila evita.
 
-**`UX-26` · PWA instalable con caché de sólo lectura.** Manifiesto, iconos y un
-*service worker* que sirva **lo último consultado** cuando no hay señal, marcado
-claramente como "datos del <fecha>". *Criterio:* en avión o sin señal se puede
+**`UX-26` · PWA instalable con caché de sólo lectura** ✅ **hecho el 2026-09-07**. Manifiesto, iconos y un
+*service worker* que sirve **lo último consultado** cuando no hay señal, marcado
+como "datos del <fecha>". *Criterio:* en avión o sin señal se puede
 consultar la última ficha de aeronave vista; **nunca se permite escribir sin
 conexión** — un registro de cumplimiento creado offline y sincronizado tarde es
-peor que no tenerlo.
+peor que no tenerlo. ⚠️ Todo lo que no sea `GET` **no se intercepta**: va a la red
+y falla a la vista, sin cola ni reintento. Hay un guardián que vigila que no
+aparezca maquinaria de escritura diferida — parece una funcionalidad y es un
+defecto de cumplimiento. La fecha se lee del sello que el worker pone al guardar
+(`X-Aero-Cached-At`) y no de la cabecera `Date`, que dice cuándo el servidor
+generó el HTML y no cuándo esta persona lo miró. `/sw.js` se sirve **desde la
+raíz**: el alcance de un worker es el directorio del que se descarga. 🔶 Cerrar
+sesión borra la caché, que es la contrapartida de guardar fichas de personas en
+un equipo compartido en faena.
 
-**`UX-27` · Pantalla "¿puedo volar?"** para el operador en faena: una sola
+**`UX-27` · Pantalla "¿puedo volar?"** ✅ **hecho el 2026-09-07** para el operador en faena: una sola
 respuesta con aeronave, operador y faena, y el motivo del bloqueo si lo hay, con
-enlace a resolverlo.
+enlace a resolverlo. **La regla es «vencido bloquea, por vencer avisa»**, que no
+es un criterio nuevo sino la escala de `UX-01` — que el panel, la bandeja y esta
+pantalla respondan igual importa más que la elección en sí. ⚠️ **La fecha ausente
+bloquea**: sin fecha nadie puede afirmar que la vigencia está al día, y contestar
+«sí» porque *no se sabe* es peor que no contestar. 🔶 **Dos cosas nunca
+bloquean**: la brecha de compatibilidad (acordado el 2026-07-30, es una
+coincidencia de palabras clave) y pertenecer a otra faena (prestar un equipo es
+una operación normal). ⚠️ Y la pantalla **no autoriza nada**, y lo dice en el
+papel: un «sí» significa *"en los registros no hay nada que lo impida"*.
 
-**`UX-28` · Alternativa sin arrastre en el editor geo** (WCAG 2.2 §2.5.7): tabla
-de coordenadas editable junto al lienzo. *Beneficio doble:* es también lo que se
-transcribe a SIGO.
+**`UX-28` · Alternativa sin arrastre en el editor geo** (WCAG 2.2 §2.5.7) ✅ **hecho el 2026-09-07**: tabla
+de coordenadas editable, dentro del globo del elemento. *Beneficio doble:* es también lo que se
+transcribe a SIGO — leer los números exigía abrir el KMZ aparte. ⚠️ **El vértice
+que cierra un anillo KML no se muestra**: repite el primero, y mostrarlo
+obligaría a editar la misma esquina dos veces; olvidar la segunda deja el
+polígono abierto, o sea un archivo que el validador rechaza por un descuido que
+la pantalla invitó a cometer. Se vuelve a cerrar solo al aplicar. ⚠️ **Y una
+celda vacía se rechaza como inválida**: un `<input type="number">` con basura
+dentro devuelve `""`, `Number("")` es **0**, y sin esa comprobación escribir una
+letra en una latitud mandaba el vértice al ecuador en silencio — encontrado en el
+navegador con la tabla recién escrita, no por el test.
 
 ### Fase F — Producto
 
-**`UX-29` · Checklist prevuelo digital.** Es el estándar universal del mercado y
+**`UX-29` · Checklist prevuelo digital** ✅ **hecho el 2026-09-07**. Es el estándar universal del mercado y
 la única brecha funcional grande que **no** depende de la telemetría. Formulario
 configurable por tipo de aeronave, firmado, que queda como evidencia adjunta al
-vuelo.
+vuelo (`operations.0029`). ⚠️ **La respuesta copia el texto del punto**: es
+`LV-233` aplicado antes de que duela — editar la plantilla el mes que viene
+reescribiría lo que alguien firmó el mes pasado. ⚠️ **Firmado se congela**, por lo
+mismo que `ReportRun.freeze`. 🔶 **Un «no conforme» no impide firmar, y es
+deliberado**: la lista registra lo que se comprobó, no decide si se vuela — eso lo
+decide quien opera, a veces con razón, y bloquear la firma habría tenido el
+efecto contrario (la gente vuela igual y no firma nada). Lo que sí se exige es
+que nada quede sin contestar: un punto en blanco no dice "estaba bien", dice "no
+se miró". 🔶 Las listas se configuran en el **centro de administración** y no en
+pantalla propia: es un acto raro, de una sola persona, y el menú ya tuvo que
+plegarse por tener veinte entradas. `PreflightCheck` y `PreflightAnswer` **no** se
+registran ahí — dejar editable la evidencia sería una puerta trasera a lo que la
+clase prohíbe.
 
 **`UX-30` · Clasificador de categoría DAN 151 Ed. 4** en el flujo del permiso,
 con justificación visible y bifurcación del flujo. **Sujeto a verificar el texto
 oficial primero.**
 
-**`UX-31` · Vistas por rol.** Distinta página de inicio y distinto orden de menú
+**`UX-31` · Vistas por rol** ✅ **hecho el 2026-09-07**. Distinta página de inicio y distintos accesos primeros
 para jefatura, cumplimiento y operador — **sin ocultar** lo que el permiso
 autoriza. *Por qué:* ocultar genera desconfianza; priorizar genera velocidad.
+Los roles son **los grupos que ya crea `bootstrap_roles`** y no una taxonomía
+nueva: un segundo juego "para la interfaz" sería una lista paralela que se
+desincroniza, y desincronizada quiere decir aterrizar donde no se tiene permiso.
+`Operations` entra por «¿Puedo volar?», `Compliance` por la bandeja,
+`Maintenance` por mantenciones. ⚠️ **Sólo al iniciar sesión, y un `?next=` gana
+siempre**: no hay redirección desde `/`, porque eso habría vuelto el panel
+inalcanzable para tres de los cinco roles — esconder con otro nombre. 🔶 Los
+atajos del menú son un **añadido**, no un recorte: cada destino sigue en su grupo
+de siempre, más abajo. 🔶 **El orden de los grupos del menú no cambia**: hacerlo
+exigía convertir el menú en un bucle, y su guardián de secciones (`LV-207`) lee
+la plantilla escrita; se hizo la forma aditiva, que da el mismo efecto —lo que se
+alcanza primero difiere por rol— con mucho menos riesgo.
 
 ---
 
@@ -694,9 +775,17 @@ lo que se puede verificar sin desplegar.
 | **1 · Cimiento** | `UX-01` `UX-02` `UX-03` `UX-04` `UX-05` `UX-06` | Todo lo demás se escribe contra estos tokens. Es CSS y plantillas genéricas: riesgo bajo, sin migraciones, y `UX-01` **borra deuda** (las 15+ reglas `!important`). | 1 sesión |
 | **2 · La tabla** | `UX-07` … `UX-11` | Un componente que arregla 26 pantallas. `UX-10` es lo que vuelve usable el móvil sin escribir una app. | 1–2 sesiones |
 | **3 · La bandeja** | `UX-13` `UX-14` `UX-18` `UX-15` `UX-16` `UX-17` | El mayor cambio de experiencia con el menor código nuevo: son vistas sobre datos que ya existen. | 1 sesión |
-| **4 · Entrada** | `UX-19` … `UX-23` | Independiente de todo lo anterior; se puede intercalar. | 0,5 sesión |
-| **5 · Terreno** | `UX-24` `UX-25` `UX-12` `UX-28` | `UX-28` cierra la brecha WCAG 2.2. | 1 sesión |
+| **4 · Entrada** ✅ 2026-09-07 | `UX-19` … `UX-23` | Independiente de todo lo anterior; se puede intercalar. | 0,5 sesión |
+| **5 · Terreno** ✅ 2026-09-07 | `UX-24` `UX-25` `UX-12` `UX-28` | `UX-28` cierra la brecha WCAG 2.2. | 1 sesión |
 | **6 · Producto** | `UX-26` `UX-27` `UX-29` `UX-30` `UX-31` | Requieren decisión de negocio, no sólo diseño. **No empezar sin acordar alcance.** | por definir |
+
+**Estado de la tanda 6 al 2026-09-07**: alcance acordado con el usuario ese día,
+que eligió las cuatro filas que no dependen de un texto externo. `UX-26`,
+`UX-27`, `UX-29` y `UX-31` ✅ **hechas**. **`UX-30` sigue sin empezar** y su
+propia fila dice por qué: *"sujeto a verificar el texto oficial primero"* — el
+clasificador de categoría DAN 151 Ed. 4 no se puede escribir contra una norma que
+no se tiene delante, y adivinar la clasificación de una operación es peor que no
+clasificarla.
 
 **Regla de trabajo:** cada tanda entra con `pwsh scripts/verify.ps1` en verde,
 igual que todo lo demás. Ninguna fila de la tanda 6 empieza sin instrucción

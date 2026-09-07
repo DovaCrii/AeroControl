@@ -1,0 +1,27 @@
+{
+  "name": "AeroControl",
+  "short_name": "AeroControl",
+  "description": "Control de operaciones aéreas con RPA. Sin conexión sólo se consulta: nunca se escribe.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0d131d",
+  "theme_color": "#1B2A4A",
+  "lang": "es",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/static/img/aerocontrol-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/img/aerocontrol-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

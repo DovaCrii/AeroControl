@@ -112,11 +112,26 @@ def _sections_with_their_classes():
             if depth <= 0:
                 section = None
         elif match.group("cls"):
+            if match.group("cls") in NOT_A_SECTION:
+                continue
             if section is None:
                 loose.add(match.group("cls"))
             else:
                 sections.setdefault(section, set()).add(match.group("cls"))
     return sections, loose
+
+
+#: Clases `nav-*` que **no** nombran una sección del menú, y por eso no llevan
+#: color propio.
+#:
+#: `nav-shortcut` es de `UX-31`: los atajos del rol repiten destinos que ya están
+#: más abajo, cada uno en su sección y con el color de esa sección. Darles un
+#: color propio habría inventado una novena sección que no existe; darles el
+#: color de su destino habría puesto cuatro colores en una tira de tres
+#: renglones. Se distinguen por sangría y peso, no por color — y por eso el
+#: escaneo tiene que saltearlos: si no, este guardián exige un color para algo
+#: cuya decisión de diseño fue justamente no tenerlo.
+NOT_A_SECTION = frozenset({"nav-shortcut"})
 
 
 class TestTheScanSeesWhatTheUserSees:

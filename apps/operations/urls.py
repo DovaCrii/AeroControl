@@ -2,6 +2,10 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    # `UX-27`: la pregunta de quien está en faena, y por eso encabeza la lista.
+    # Todo por `GET`, así que la terna es enlazable: un supervisor manda el
+    # enlace exacto en vez de dictar tres desplegables por radio.
+    path("can-i-fly/", views.CanIFlyView.as_view(), name="can-i-fly"),
     # Permission
     path("permissions/", views.FlightPermissionList.as_view(), name="permission-list"),
     path(
@@ -75,6 +79,20 @@ urlpatterns = [
     path("records/new/", views.FlightRecordCreate.as_view(), name="record-create"),
     path(
         "records/<uuid:pk>/", views.FlightRecordDetail.as_view(), name="record-detail"
+    ),
+    # `UX-29`: el chequeo prevuelo cuelga del **vuelo** y no tiene lista propia.
+    # No es un objeto que alguien vaya a buscar por su cuenta: es evidencia
+    # adjunta, y se llega a ella por el vuelo al que pertenece — igual que un
+    # documento se llega por su ficha.
+    path(
+        "records/<uuid:pk>/preflight/",
+        views.PreflightCheckView.as_view(),
+        name="preflight-check",
+    ),
+    path(
+        "records/<uuid:pk>/preflight/sign/",
+        views.PreflightSignView.as_view(),
+        name="preflight-sign",
     ),
     path(
         "records/<uuid:pk>/delete/",

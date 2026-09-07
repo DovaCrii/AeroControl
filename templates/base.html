@@ -14,11 +14,30 @@
           integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V"
           crossorigin="anonymous"></script>
   <link rel="icon" type="image/svg+xml" href="{% static 'img/aerocontrol-mark.svg' %}">
+  {% comment %}`UX-26`: instalable. El manifiesto es un archivo estático porque
+  no lleva nada variable; el service worker, en cambio, lo sirve una vista desde
+  la raíz — su alcance es el directorio del que se descarga, y desde `/static/`
+  no podría interceptar nada de lo que importa.{% endcomment %}
+  <link rel="manifest" href="{% static 'manifest.webmanifest' %}">
+  <meta name="theme-color" content="#1B2A4A">
   <script src="{% static 'js/theme-init.js' %}"></script>
   {% block extrahead %}{% endblock %}
 </head>
 <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
   <a class="skip-link" href="#main-content">{% translate "Skip to main content" %}</a>
+  {% comment %}`UX-26`: el aviso de que esto no es de ahora.
+
+  Va **arriba de todo y en toda página**, porque una aplicación que muestra
+  vencimientos sirviendo una pantalla de ayer sin decirlo no está degradando con
+  gracia: está mintiendo con buena letra. Nace oculto y lo enciende `pwa.js`
+  sólo cuando el navegador afirma que no hay red **y** esta URL salió de la
+  caché.
+
+  `d-none` además de `hidden` por lo de siempre (`LV-209`): el atributo pierde
+  contra las utilidades de Bootstrap que ponen `display` con `!important`.
+  {% endcomment %}
+  <div class="offline-banner d-none" id="offline-banner" role="status" hidden
+       data-stale-label="{% translate 'No connection. You are looking at data saved on %(when)s; nothing can be saved until it comes back.' %}"></div>
   <nav class="navbar navbar-dark navy px-3">
     <button class="btn btn-sm btn-outline-light sidebar-toggle" type="button" id="sidebar-toggle" aria-controls="sidebar" aria-expanded="false" aria-label="{% translate 'Toggle sidebar' %}" title="{% translate 'Toggle sidebar' %}">
       <span class="visually-hidden">{% translate "Toggle navigation" %}</span>
@@ -36,6 +55,18 @@
         </button>
       </div>
     </form>
+    {% comment %}UX-24: bajo 768 px la búsqueda global desaparecía y no quedaba
+    nada en su lugar — o sea que en el teléfono, que es donde se trabaja en
+    faena, la aplicación no tenía búsqueda. Esta lupa la devuelve, y abre la
+    misma paleta que `Ctrl/⌘+K` en el escritorio (`UX-25`): una sola cosa que
+    mantener, y en una pantalla angosta la paleta **es** pantalla completa.
+
+    `ms-auto` porque sin el formulario centrado la barra no tiene con qué empujar
+    el bloque de la derecha.{% endcomment %}
+    <button class="btn btn-sm btn-outline-light d-md-none ms-auto me-2" type="button" id="palette-open"
+            aria-label="{% translate 'Search in AeroControl' %}" title="{% translate 'Search in AeroControl' %}">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+    </button>
     <span class="text-white d-flex align-items-center gap-2 small">
       <span class="opacity-75">{{ user.get_username }}</span>
       <a class="btn btn-sm btn-outline-light" href="{% url 'password_change' %}">{% translate "Change password" %}</a>
@@ -71,6 +102,29 @@
       {% with request.resolver_match.url_name as url_name %}
       <a href="{% url 'dashboard' %}" class="nav-item nav-overview {% if url_name == 'dashboard' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-dashboard"/></svg>{% translate "Dashboard" %}</a>
 
+      {% comment %}`UX-31` · Los atajos del rol.
+
+      ⚠️ **Son un añadido, no un menú recortado.** Cada uno de estos destinos
+      sigue estando más abajo, en su grupo de siempre: lo que hace esta tira es
+      ponerlos primero para quien los usa todos los días. La fila del plan lo
+      dice y es la regla que gobierna toda la implementación — *"ocultar genera
+      desconfianza; priorizar genera velocidad"*.
+
+      Por eso también van **sin icono**: repetir el símbolo de la entrada de más
+      abajo haría creer que el menú se duplicó, y `UX-05` fijó un icono por
+      destino, no por enlace. Un atajo es el mismo destino, escrito antes.
+
+      Quien no tiene rol no ve nada: la lista llega vacía y el bloque entero
+      desaparece, así que el menú de siempre queda igual de siempre.{% endcomment %}
+      {% if role_shortcuts %}
+      <div class="nav-shortcuts">
+        <span class="sidebar-label nav-shortcuts-label">{% translate "Your day" %}</span>
+        {% for shortcut in role_shortcuts %}
+        <a href="{{ shortcut.url }}" class="nav-item nav-shortcut {% if url_name == shortcut.url_name %}active{% endif %}">{% translate shortcut.label %}</a>
+        {% endfor %}
+      </div>
+      {% endif %}
+
       {% comment %}LV-61 (2026-08-04): the menu used to be ordered by data
       model -- what you configure once (registry, assignments) sat in the top
       two groups, and the work done every day (permissions, alerts) was buried
@@ -96,6 +150,11 @@
       <div class="nav-group">
         <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="flight" aria-expanded="true" aria-controls="nav-group-flight">{% translate "Flight" %}<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
         <div class="nav-group-items" id="nav-group-flight">
+      {% comment %}`UX-27`: encabeza el grupo de vuelo porque es la pregunta con
+      la que empieza la jornada de quien está en faena. Las demás entradas del
+      grupo son listas de trabajo; ésta es una sola respuesta, y ponerla después
+      de tres listas sería enterrarla bajo lo que vino a resumir.{% endcomment %}
+      <a href="{% url 'can-i-fly' %}" class="nav-item nav-flight {% if url_name == 'can-i-fly' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-can-i-fly"/></svg>{% translate "Can I fly?" %}</a>
       <a href="{% url 'permission-list' %}" class="nav-item nav-flight {% if url_name == 'permission-list' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-permission-list"/></svg>{% translate "Permissions" %}</a>
       {% comment %}LV-150 paso 1 (2026-08-26, decisión del usuario): "Solicitudes
       SIGO" se retira del menú siguiendo el procedimiento de LV-78 y LV-103 --
@@ -352,12 +411,46 @@ menú deja de leerse de un vistazo.{% endcomment %}
   mismo camino que ya usan `data-confirm` y los rótulos del tirador de la barra.
   Sin esto el aviso saldría siempre en inglés, que en una pregunta de «¿perdés lo
   escrito?» es exactamente donde no se puede dudar.{% endcomment %}
+  {% comment %}`UX-25` · La paleta de comandos, y con ella la búsqueda móvil de
+  `UX-24`.
+
+  *Por qué está en el plan:* quien trabaja alertas entra veinte veces al día, y
+  ningún competidor del sector la documenta — así que además se ve en una
+  demostración.
+
+  **Los destinos no se escriben acá.** `command-palette.js` los lee del menú
+  lateral en el momento de abrir, y eso resuelve dos cosas de una: el menú ya
+  esconde lo que esta persona no puede ver, así que la paleta **hereda los
+  permisos sin preguntarle nada al servidor**; y no hay una segunda lista que se
+  desincronice el día que alguien agregue una pantalla. Una lista propia habría
+  ofrecido rutas a un 403 — que es `LV-130`, enseñar a desconfiar de la pantalla.
+
+  Los rótulos viajan en `data-*` por lo de siempre: el JS es estático y no pasa
+  por gettext, y la CSP no lleva `unsafe-inline` en `script-src`.{% endcomment %}
+  <div class="command-palette" id="command-palette" hidden
+       data-search-url="{% url 'global-search' %}"
+       data-search-label="{% translate 'Search everywhere for' %}"
+       data-empty-label="{% translate 'Nothing matches that.' %}">
+    <div class="command-palette-backdrop" data-palette-close></div>
+    <div class="command-palette-panel" role="dialog" aria-modal="true" aria-label="{% translate 'Search in AeroControl' %}">
+      <input class="command-palette-input" type="search" id="command-palette-input" autocomplete="off"
+             placeholder="{% translate 'Search or jump to a screen' %}" aria-label="{% translate 'Search in AeroControl' %}"
+             aria-controls="command-palette-results" role="combobox" aria-expanded="true">
+      <ul class="command-palette-results list-unstyled" id="command-palette-results" role="listbox"></ul>
+      <div class="command-palette-foot small">
+        {% translate "Enter to open · Esc to close" %}
+      </div>
+    </div>
+  </div>
+
   <div class="modal fade" id="generic-modal" tabindex="-1" aria-labelledby="generic-modal-title" aria-hidden="true"
        data-unsaved-message="{% translate 'This form has changes that have not been saved. Close it and lose them?' %}"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="generic-modal-title">{% translate "Form" %}</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% translate 'Close' %}"></button></div><div class="modal-body" id="modal-content"><div class="text-center text-muted py-4" role="status">{% translate "Loading…" %}</div></div></div></div></div>
   <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"
           integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
           crossorigin="anonymous"></script>
   <script src="{% static 'js/app.js' %}"></script>
+  <script src="{% static 'js/command-palette.js' %}"></script>
+  <script src="{% static 'js/pwa.js' %}"></script>
   {% comment %}LV-208: después de `app.js`, que es quien restaura el estado
   colapsado desde `localStorage`. El orden importa poco para el ancho —cada uno
   escribe una cosa distinta— pero deja el layout resuelto en una sola pasada en

@@ -61,7 +61,7 @@ class TestTodaysPulse:
 
         body = client.get(reverse("dashboard")).content.decode()
 
-        assert "1 operaciones hoy" in body or "1 operations today" in body
+        assert "1 operaciones hoy" in body
 
     @pytest.mark.django_db
     def test_yesterdays_flight_is_not(self, centre):
@@ -70,7 +70,7 @@ class TestTodaysPulse:
 
         body = client.get(reverse("dashboard")).content.decode()
 
-        assert "0 operaciones hoy" in body or "0 operations today" in body
+        assert "0 operaciones hoy" in body
 
     @pytest.mark.django_db
     def test_it_counts_by_the_day_flown_and_not_by_the_day_logged(self, centre):
@@ -86,7 +86,24 @@ class TestTodaysPulse:
 
         body = client.get(reverse("dashboard")).content.decode()
 
-        assert "1 operaciones hoy" in body or "1 operations today" in body
+        assert "1 operaciones hoy" in body
+
+    @pytest.mark.django_db
+    def test_and_it_is_in_spanish(self, centre):
+        """⚠️ Esta afirmación existe porque los tres tests de arriba decían
+        `«1 operaciones hoy» o «1 operations today»`, y esa disyunción los volvió
+        ciegos a lo único que se rompió: la entrada del catálogo estaba escrita
+        con `{flights}` mientras `blocktranslate` emite `%(flights)s`, así que
+        **la línea nunca se tradujo** y salió en inglés en producción desde que
+        se escribió. Un test con una alternativa de más pasa por los dos caminos
+        y no vigila ninguno."""
+        _flight(centre, timezone.localdate())
+        client = login_as("view_flightrecord", "view_flightpermission")
+
+        body = client.get(reverse("dashboard")).content.decode()
+
+        assert "operations today" not in body
+        assert "permits in force" not in body
 
 
 class TestExternalDataDeclaresItsAge:

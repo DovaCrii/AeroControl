@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Can I fly?" %} - AeroControl{% endblock %}
+
+{% comment %}`UX-27` · «¿Puedo volar?»
+
+La pantalla de quien está parado junto al equipo, no la de quien coordina. El
+panel, la bandeja y las alertas contestan *"¿cuánto trabajo hay?"*; ésta contesta
+*"¿esta aeronave, con esta persona, en esta faena, hoy?"* — y hasta ahora había
+que armar la respuesta a mano abriendo tres fichas.
+
+⚠️ **No autoriza nada, y lo dice en la propia pantalla.** Un «sí» significa *"en
+los registros no hay nada que lo impida"*, no *"volá". Quien firma sigue siendo
+quien firma, y esa frase no es cortesía: si la pantalla se leyera como permiso,
+el día que un dato esté sin cargar habría autorizado un vuelo por omisión.
+
+Se dibujan **las cuatro comprobaciones, también las que pasaron**. Un «sí» sin
+decir qué se miró no se puede contrastar, y quien opera necesita poder decir ante
+una fiscalización qué dio por comprobado.{% endcomment %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <p class="page-eyebrow mb-1">{% translate "Operations" %}</p>
+    <h1 class="h3 mb-0">{% translate "Can I fly?" %}</h1>
+    <p class="page-description mb-0">{% translate "One answer for one aircraft, one operator and one cost centre, today." %}</p>
+  </div>
+</div>
+
+<form method="get" class="card p-3 mb-3">
+  <div class="row g-2 align-items-end">
+    <div class="col-12 col-md-4">
+      <label class="form-label" for="aircraft">{% translate "Aircraft" %}</label>
+      <select class="form-select" id="aircraft" name="aircraft">
+        <option value="">{% translate "Choose one…" %}</option>
+        {% for row in rosters.aircraft %}
+        <option value="{{ row.pk }}" {% if chosen.aircraft.pk == row.pk %}selected{% endif %}>{{ row.registration }} — {{ row.model }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-md-4">
+      <label class="form-label" for="operator">{% translate "Operator" %}</label>
+      <select class="form-select" id="operator" name="operator">
+        <option value="">{% translate "Choose one…" %}</option>
+        {% for row in rosters.operator %}
+        <option value="{{ row.pk }}" {% if chosen.operator.pk == row.pk %}selected{% endif %}>{{ row.full_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-md-3">
+      <label class="form-label" for="cost_center">{% translate "Cost center" %}</label>
+      <select class="form-select" id="cost_center" name="cost_center">
+        <option value="">{% translate "Choose one…" %}</option>
+        {% for row in rosters.cost_center %}
+        <option value="{{ row.pk }}" {% if chosen.cost_center.pk == row.pk %}selected{% endif %}>{{ row.code }} — {{ row.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-md-1 d-grid">
+      <button class="btn btn-primary">{% translate "Check" %}</button>
+    </div>
+  </div>
+</form>
+
+{% if verdict %}
+{% comment %}El veredicto primero y grande. Quien mira esto en un teléfono, al
+sol, con guantes, tiene que resolverlo en un vistazo: si hay que leer una tabla
+para saber si se puede volar, la pantalla no sirve para lo que se hizo.{% endcomment %}
+<div class="card p-4 mb-3 {% if verdict.can_fly %}can-fly-yes{% else %}can-fly-no{% endif %}">
+  <p class="can-fly-answer mb-1">{% if verdict.can_fly %}{% translate "Yes" %}{% else %}{% translate "No" %}{% endif %}</p>
+  <p class="mb-0">
+    {% if verdict.can_fly %}
+    {% blocktranslate with aircraft=chosen.aircraft.registration operator=chosen.operator.full_name centre=chosen.cost_center.code %}Nothing on record stops {{ aircraft }} flying with {{ operator }} in {{ centre }} today.{% endblocktranslate %}
+    {% else %}
+    {% blocktranslate count counter=verdict.blockers|length %}One thing on record stops this flight.{% plural %}{{ counter }} things on record stop this flight.{% endblocktranslate %}
+    {% endif %}
+  </p>
+  {% comment %}La aclaración va **siempre**, también cuando la respuesta es que
+  sí, y ahí es donde más falta hace.{% endcomment %}
+  <p class="can-fly-caveat mb-0 mt-2">{% translate "This screen reads the records; it does not authorise the flight." %}</p>
+</div>
+
+{% if verdict.blockers %}
+<div class="card p-3 mb-3">
+  <h2 class="h6 text-uppercase mb-2">{% translate "What stops it" %}</h2>
+  <ul class="list-unstyled mb-0">
+    {% for item in verdict.blockers %}
+    <li class="can-fly-item can-fly-item-blocker">
+      <a href="{{ item.url }}">{{ item.label }}</a> — {{ item.detail }}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% if verdict.warnings %}
+<div class="card p-3 mb-3">
+  <h2 class="h6 text-uppercase mb-2">{% translate "Worth knowing" %}</h2>
+  {% comment %}Lo ámbar no impide despegar y por eso va en su propia caja y
+  debajo: mezclarlo con los bloqueos haría dudar de cuál era cuál justo cuando
+  hay que decidir rápido.{% endcomment %}
+  <p class="page-description small mb-2">{% blocktranslate with date=horizon|date:"d-m-Y" %}These do not stop the flight. Dates shown reach up to {{ date }}.{% endblocktranslate %}</p>
+  <ul class="list-unstyled mb-0">
+    {% for item in verdict.warnings %}
+    <li class="can-fly-item can-fly-item-warning">
+      <a href="{{ item.url }}">{{ item.label }}</a> — {{ item.detail }}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<div class="card p-3">
+  <h2 class="h6 text-uppercase mb-2">{% translate "What was checked" %}</h2>
+  <ul class="list-unstyled mb-0">
+    {% for check in verdict.checks %}
+    <li class="can-fly-check">
+      <span class="can-fly-check-mark {% if check.passed %}is-ok{% else %}is-bad{% endif %}" aria-hidden="true">{% if check.passed %}✓{% else %}✕{% endif %}</span>
+      {{ check.name }}
+      {% comment %}⚠️ Frases propias y no `Passed`/`Failed`, que el catálogo ya
+      tiene traducidos como «Aprobado» y «Con error» — el vocabulario de estado
+      de un permiso. En pantalla salía «Permiso de vuelo Aprobado», que en una
+      aplicación de cumplimiento se lee como el estado del permiso y no como el
+      resultado de la comprobación. Visto en el navegador: la cadena existía y
+      estaba bien traducida, sólo que para otra cosa.{% endcomment %}
+      <span class="visually-hidden">{% if check.passed %}{% translate "nothing blocking" %}{% else %}{% translate "has something blocking" %}{% endif %}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% else %}
+<div class="alert alert-secondary" role="status">
+  {% translate "Choose an aircraft, an operator and a cost centre. The three of them: half a set has no answer." %}
+</div>
+{% endif %}
+{% endblock %}
