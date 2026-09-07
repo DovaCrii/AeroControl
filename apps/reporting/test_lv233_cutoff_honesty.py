@@ -21,8 +21,10 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.core.management.base import CommandError
+from django.urls import reverse
 from django.utils import timezone
 
+from apps.core.testing import login_as
 from apps.reporting.builder import build, month_bounds
 from apps.reporting.models import ReportRun
 
@@ -271,6 +273,116 @@ class TestTheStatusIsTheOneItHadAtTheCutoff:
         rows = collect_permits(self.CUTOFF)
 
         assert rows[0]["status"] == "approved"
+
+
+class TestArchivingAfterTheCutoffDoesNotEraseThePast:
+    """LV-233, tercera parte. **Lo que se corrige es una omisión**, y por eso
+    valía una columna nueva: un estado equivocado se ve en la fila, y una fila que
+    falta no se ve en ninguna parte.
+
+    `is_active` dice si está archivado **ahora** y no guarda cuándo dejó de
+    estarlo, así que un permiso vivo en agosto y archivado en septiembre
+    desaparecía del informe de agosto.
+    """
+
+    CUTOFF = date(2026, 8, 31)
+
+    def _permit(self, *, archived_at):
+        from datetime import datetime, time
+
+        from apps.operations.models import FlightPermission
+        from apps.registry.models import CostCenter
+
+        centre, _made = CostCenter.objects.get_or_create(
+            code="CC738", defaults={"name": "MLP", "operates_flights": True}
+        )
+        permit = FlightPermission.objects.create(
+            cost_center=centre,
+            purpose="photogrammetry",
+            status=FlightPermission.STATUS_APPROVED,
+            permission_number="6700",
+            location="Site",
+            area_type="unpopulated",
+            valid_from=date(2026, 7, 1),
+            valid_until=date(2026, 10, 1),
+        )
+        FlightPermission.objects.filter(pk=permit.pk).update(
+            created_at=timezone.make_aware(
+                datetime.combine(date(2026, 6, 1), time(12, 0))
+            ),
+            is_active=archived_at is None,
+            archived_at=(
+                timezone.make_aware(datetime.combine(archived_at, time(12, 0)))
+                if archived_at
+                else None
+            ),
+        )
+        return permit
+
+    @pytest.mark.django_db
+    def test_archived_after_the_cutoff_still_appears(self, db):
+        from apps.reporting.builder import collect_permits
+
+        self._permit(archived_at=date(2026, 9, 2))
+
+        assert len(collect_permits(self.CUTOFF)) == 1
+
+    @pytest.mark.django_db
+    def test_archived_before_the_cutoff_does_not(self, db):
+        from apps.reporting.builder import collect_permits
+
+        self._permit(archived_at=date(2026, 8, 10))
+
+        assert collect_permits(self.CUTOFF) == []
+
+    @pytest.mark.django_db
+    def test_one_still_live_appears(self, db):
+        from apps.reporting.builder import collect_permits
+
+        self._permit(archived_at=None)
+
+        assert len(collect_permits(self.CUTOFF)) == 1
+
+    @pytest.mark.django_db
+    def test_archiving_records_when_and_restoring_clears_it(self, db):
+        """Un permiso vivo con fecha de archivo diría que sigue archivado, y el
+        informe lo dejaría fuera de todo corte posterior — el defecto al revés."""
+
+        permit = self._permit(archived_at=None)
+        client = login_as(
+            "delete_flightpermission",
+            "change_flightpermission",
+            "view_flightpermission",
+        )
+
+        client.post(
+            reverse("permission-archive", args=[permit.pk]),
+            {"confirm": "1", "reason": "Trámite desistido"},
+        )
+        permit.refresh_from_db()
+        assert permit.is_active is False
+        assert permit.archived_at is not None
+
+        client.post(reverse("permission-restore", args=[permit.pk]))
+        permit.refresh_from_db()
+        assert permit.is_active is True
+        assert permit.archived_at is None
+
+    @pytest.mark.django_db
+    def test_an_archive_without_a_date_stays_out(self, db):
+        """Nulo es *no se sabe cuándo* —se archivó antes de que existiera la
+        columna— y entonces queda fuera, que es lo que la consulta hacía siempre.
+        La limitación está declarada en el pie del informe y **se achica sola**:
+        cada archivo nuevo trae su fecha."""
+        from apps.operations.models import FlightPermission
+        from apps.reporting.builder import collect_permits
+
+        permit = self._permit(archived_at=None)
+        FlightPermission.objects.filter(pk=permit.pk).update(
+            is_active=False, archived_at=None
+        )
+
+        assert collect_permits(self.CUTOFF) == []
 
 
 class TestInForceMeansInForce:

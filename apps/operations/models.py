@@ -275,6 +275,23 @@ class FlightPermission(StatusFlowMixin, BaseModel):
     # procedencia para miles de filas, que es justo el defecto que esta fila
     # denuncia. Vacío se dibuja como hoy —el valor a secas, sin aviso—, así que
     # nada retrocede y lo nuevo sí queda marcado.
+    # LV-233: **cuándo** se archivó, que es lo único que faltaba para que el
+    # informe pueda reconstruir su población a una fecha pasada.
+    #
+    # `is_active` dice si está archivado **ahora** y no guarda cuándo dejó de
+    # estarlo, así que un permiso vivo en agosto y archivado en septiembre
+    # desaparecía del informe de agosto — una omisión, que es peor que un estado
+    # equivocado porque no se ve.
+    #
+    # No sirve `updated_at`: cambia con cada guardado, así que un permiso
+    # archivado y tocado después reportaría una fecha que no es la del archivo.
+    #
+    # Nulo es el tercer estado —*no se sabe cuándo*— y es el defecto a propósito,
+    # igual que en `region_source`: los que ya están archivados lo fueron antes
+    # de que existiera esta columna, y ponerles una fecha inventada sería
+    # exactamente el defecto que se viene corrigiendo. La limitación se declara
+    # en el informe y **se achica sola**: cada archivo nuevo sí trae su fecha.
+    archived_at = models.DateTimeField(null=True, blank=True, editable=False)
     region_source = models.CharField(
         max_length=10, blank=True, choices=LOCATION_SOURCE_CHOICES
     )

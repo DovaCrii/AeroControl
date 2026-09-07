@@ -158,14 +158,16 @@ existían y los que todavía no regían— y el **estado** de cada uno, leído d
 `PermissionHistory`. Es lo que devuelve los "3 en trámite" de agosto que la app
 mostraba como aprobados.
 
-Lo que **no** se reconstruye, y por eso sigue declarado: si un permiso estaba
-archivado entonces. `is_active` no tiene historial, así que uno archivado después
-del corte no aparece acá aunque ese día estuviera vivo.
+Y desde `operations.0028` también el **archivado**: un permiso archivado después
+del corte estaba vivo entonces y vuelve a aparecer. Lo que sigue sin poder
+reconstruirse son los que ya estaban archivados antes de que existiera esa
+columna — su fecha es nula, o sea *no se sabe cuándo*, y quedan fuera. **Esa
+limitación se achica sola**: cada archivo nuevo trae su fecha.
 
 Decirlo en el papel no es una disculpa: es la diferencia entre una cota honesta y
 una foto, y quien firma tiene que saber cuál de las dos está firmando. Mismo
 criterio con el que el corte del padrón declara su límite.{% endcomment %}
-<span>Días calculados al {{ cutoff_date|date:"d-m-Y" }}. Población y estado reconstruidos al corte; no se reconstruye el archivado posterior. Referencia: DAN 91, DAN 137, DAN 151 · INS-096 numeral 6.4.1.</span>
+<span>Días calculados al {{ cutoff_date|date:"d-m-Y" }}. Población, estado y archivado reconstruidos al corte; quedan fuera los archivados sin fecha registrada. Referencia: DAN 91, DAN 137, DAN 151 · INS-096 numeral 6.4.1.</span>
       <span>J.E.J. Ingeniería S.A. · Página 3</span>
     </div>
   </div>
