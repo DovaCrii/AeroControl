@@ -8158,6 +8158,98 @@ msgstr ""
 "El período %(period)s todavía no termina: un informe mensual no se puede "
 "congelar antes del cierre de su mes."
 
+#: apps/operations/models.py
+msgid "No NOTAM published for the area"
+msgstr "Sin NOTAM publicados para el área"
+
+#: apps/operations/models.py
+msgid "NOTAM published, none affects the operation"
+msgstr "Hay NOTAM publicados; ninguno afecta a la operación"
+
+#: apps/operations/models.py
+msgid "A NOTAM affects the operation"
+msgstr "Un NOTAM afecta a la operación"
+
+#: apps/operations/models.py
+msgid "NOTAM review"
+msgstr "revisión de NOTAM"
+
+#: apps/operations/models.py
+msgid "NOTAM reviews"
+msgstr "revisiones de NOTAM"
+
+#: apps/operations/models.py
+msgid "Date reviewed for"
+msgstr "Día por el que se revisa"
+
+#: apps/operations/models.py
+msgid "Outcome"
+msgstr "Resultado"
+
+#: apps/operations/models.py
+msgid "What it said"
+msgstr "Qué decía"
+
+#: apps/operations/models.py
+msgid ""
+"Say which NOTAM affects the operation and how; the record is the evidence."
+msgstr ""
+"Indique qué NOTAM afecta a la operación y de qué forma; el registro es la "
+"evidencia."
+
+#: apps/operations/forms.py
+msgid "Required when a NOTAM affects the operation: say which one and how."
+msgstr "Obligatorio cuando un NOTAM afecta a la operación: cuál y de qué forma."
+
+#: apps/operations/forms.py
+msgid "Choose what the review found"
+msgstr "Elija qué encontró la revisión"
+
+#: apps/operations/views.py
+msgid "NOTAM review recorded."
+msgstr "Revisión de NOTAM registrada."
+
+#: apps/operations/dossier.py
+msgid "Record it"
+msgstr "Registrarla"
+
+#: apps/operations/dossier.py
+msgid "NOTAM reviewed and on record"
+msgstr "Revisión de NOTAM registrada"
+
+#: apps/operations/dossier.py
+msgid "No NOTAM review on record"
+msgstr "Sin revisión de NOTAM registrada"
+
+#: templates/operations/notam_review_form.html
+msgid "Record the NOTAM review"
+msgstr "Registrar la revisión de NOTAM"
+
+#: templates/operations/notam_review_form.html
+msgid "Consult the official source first."
+msgstr "Consulte primero la fuente oficial."
+
+#: templates/operations/notam_review_form.html
+msgid "Open the DGAC NOTAM query"
+msgstr "Abrir la consulta de NOTAM de la DGAC"
+
+#: templates/operations/notam_review_form.html
+msgid ""
+"AeroControl does not query the IFIS: it has no API, and a failed parse reads "
+"too easily as “no advisories”. What is recorded here is what you read there."
+msgstr ""
+"AeroControl no consulta el IFIS: no tiene API, y una lectura fallida se "
+"interpreta con demasiada facilidad como «sin avisos». Lo que se registra acá "
+"es lo que usted leyó allá."
+
+#: templates/operations/notam_review_form.html
+msgid ""
+"This permit does not declare its nearest aerodrome, so the query cannot be "
+"built. Consult the IFIS directly and record the result here."
+msgstr ""
+"Este permiso no declara su aeródromo más cercano, así que la consulta no se "
+"puede armar. Consulte el IFIS directamente y registre acá el resultado."
+
 #: apps/operations/dossier.py
 msgid "Use one already on file"
 msgstr "Usar uno ya cargado"

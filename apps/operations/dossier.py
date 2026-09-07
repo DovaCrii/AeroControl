@@ -397,6 +397,61 @@ def _geo_plan_items(permission, user=None):
     ]
 
 
+def _notam_items(permission, user=None):
+    """LV-218(b): que los NOTAM se revisaron, en el expediente.
+
+    ⚠️ **Sólo en un permiso aprobado o completado, y ésa es la decisión del
+    renglón.** Un permiso `solicitado` no autoriza a volar, así que no hay nada
+    que revisar todavía: dibujarle un renglón ámbar le pondría un pendiente a
+    cada borrador, y ese es exactamente el daño que `LV-194` acaba de corregir
+    acá mismo — un contador que nunca puede llegar a cero enseña a ignorar el
+    contador, y con él los renglones que sí importan.
+
+    `UNKNOWN` y no `MISSING`, como la revisión meteorológica: no haber
+    digitalizado la revisión no es una infracción, y pintarlo de rojo enseñaría a
+    ignorar el rojo. Lo que hace es que se pueda registrar y quede consultable.
+    """
+    from .models import FlightPermission
+
+    if permission.status not in (
+        FlightPermission.STATUS_APPROVED,
+        FlightPermission.STATUS_COMPLETED,
+    ):
+        return []
+
+    latest = permission.notam_reviews.order_by("-created_at").first()
+    label = _("NOTAM reviewed and on record")
+    if latest is not None:
+        return [
+            DossierItem(
+                "notam",
+                label,
+                OK,
+                # Qué se encontró, no sólo que se revisó: "se revisó" con un
+                # aviso que afecta y sin decirlo sería peor que no haber
+                # revisado, porque parece resuelto.
+                detail=f"{latest.get_outcome_display()} · {latest.target_date:%Y-%m-%d}",
+            )
+        ]
+
+    action = ("", "")
+    if _allowed(user, "operations.add_notamreview"):
+        action = (
+            _("Record it"),
+            reverse("notam-review-create", args=[permission.pk]),
+        )
+    return [
+        DossierItem(
+            "notam",
+            label,
+            UNKNOWN,
+            _("No NOTAM review on record"),
+            [],
+            *action,
+        )
+    ]
+
+
 def _flight_record_item(permission, user=None):
     """Un permiso **completado** sin un solo vuelo registrado es la contradicción
     que esta pantalla existe para mostrar: se declaró que se voló lo autorizado y
@@ -501,6 +556,7 @@ def operational_dossier(permission, user=None):
         _aircraft_insurance_item(permission, user),
         _operator_credential_item(permission, user),
         *_geo_plan_items(permission, user),
+        *_notam_items(permission, user),
         # _flight_request_item(permission, user),  # LV-194
         # _flight_record_item(permission, user),  # LV-194
     ]

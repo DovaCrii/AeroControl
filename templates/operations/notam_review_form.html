@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags i18n %}
+{% comment %}`LV-218(b)`: registrar la revisión de NOTAM.
+
+**El enlace al IFIS va arriba y bien visible**, porque la pantalla no sirve para
+inventar una respuesta: sirve para dejar constancia de lo que se leyó **allá**.
+Sin el enlace a la vista, esto sería un formulario que invita a responder de
+memoria.
+
+La app no consulta el IFIS: no tiene API, y un parseo que falla se lee como "no
+hay avisos" con demasiada facilidad — el riesgo asimétrico que `LV-218` declaró
+desde el paso (a). Acá lo que se guarda es **una afirmación humana**, que es lo
+que la norma pide.{% endcomment %}
+{% block title %}{% translate "Record the NOTAM review" %} - AeroControl{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="h3">{% translate "Record the NOTAM review" %}</h1>
+    <p class="page-description mb-0">{{ permission }}</p>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <p class="mb-2"><strong>{% translate "Consult the official source first." %}</strong></p>
+    {% if permission.notam_url %}
+    <a class="btn btn-outline-primary" href="{{ permission.notam_url }}" target="_blank" rel="noopener noreferrer">{% translate "Open the DGAC NOTAM query" %} ↗</a>
+    <p class="small text-body-secondary mt-2 mb-0">{% translate "AeroControl does not query the IFIS: it has no API, and a failed parse reads too easily as “no advisories”. What is recorded here is what you read there." %}</p>
+    {% else %}
+    {% comment %}Sin aeródromo declarado no hay consulta que armar (`notam_url`
+    se apoya en `amc`). Se dice, en vez de dibujar un botón muerto — y se dice
+    **qué falta**, no sólo que falta.{% endcomment %}
+    <p class="small text-body-secondary mb-0">{% translate "This permit does not declare its nearest aerodrome, so the query cannot be built. Consult the IFIS directly and record the result here." %}</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+      {{ form|crispy }}
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary">{% translate "Record it" %}</button>
+        <a class="btn btn-outline-secondary" href="{{ permission.get_absolute_url }}">{% translate "Cancel" %}</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

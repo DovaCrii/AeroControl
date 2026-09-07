@@ -12,6 +12,7 @@ from .models import (
     FlightRequest,
     FlightRequestNote,
     FlightRequestWorkItem,
+    NotamReview,
 )
 
 
@@ -679,3 +680,34 @@ class FlightRequestNoteForm(AeroModelForm):
         model = FlightRequestNote
         fields = ["text"]
         labels = {"text": _("Note")}
+
+
+class NotamReviewForm(AeroModelForm):
+    """LV-218(b): lo que la persona declara haber leído en el IFIS.
+
+    ⚠️ **`outcome` sin valor por omisión y con `empty_label`, a propósito.** Si
+    el selector llegara con "no afecta" ya elegido, guardar sin mirar afirmaría
+    que ningún aviso afecta al vuelo — que es el fallo silencioso que toda esta
+    fila viene evitando desde el paso (a). Hay que elegir.
+
+    El día se propone desde el permiso en la vista, no acá: la fecha por la que
+    se revisa es la del vuelo autorizado, y el permiso ya la sabe.
+    """
+
+    class Meta:
+        model = NotamReview
+        fields = ["target_date", "outcome", "findings"]
+        labels = {
+            "target_date": _("Date reviewed for"),
+            "outcome": _("Outcome"),
+            "findings": _("What it said"),
+        }
+        help_texts = {
+            "findings": _(
+                "Required when a NOTAM affects the operation: say which one and how."
+            )
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["outcome"].empty_label = _("Choose what the review found")

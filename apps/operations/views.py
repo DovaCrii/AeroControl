@@ -42,6 +42,7 @@ from .forms import (
     FlightRequestForm,
     FlightRequestNoteForm,
     FlightRequestWorkItemForm,
+    NotamReviewForm,
     StatusCorrectionForm,
 )
 from .dossier import operational_dossier
@@ -57,6 +58,7 @@ from .models import (
     FlightRecord,
     FlightRequest,
     FlightRequestWorkItem,
+    NotamReview,
 )
 from .selectors import DAILY_FLIGHT_LIMIT, duty_time_for, format_duration
 from apps.registry.models import Aircraft, CostCenter, Operator
@@ -579,6 +581,64 @@ class PermissionFolioFromPdf(ModelPermissionRequiredMixin, View):
             _("DGAC folio %(folio)s taken from the authorization PDF.")
             % {"folio": folio},
         )
+        return redirect(permission)
+
+
+class NotamReviewCreate(ModelPermissionRequiredMixin, View):
+    """LV-218(b): dejar en el expediente que alguien revisó los NOTAM.
+
+    **Es la mitad de `LV-218` que no depende de la DGAC.** El paso (a) puso el
+    enlace al IFIS; el cruce automático espera saber si hay una fuente
+    estructurada. Mientras tanto, esto cierra el renglón con **una afirmación
+    humana**, que es exactamente lo que la norma pide y lo contrario de una
+    máquina que puede leer "no hay avisos" cuando no pudo leer nada.
+
+    Lleva formulario, al revés que `WeatherReviewCreate`: ahí los números los
+    trae el proveedor, y acá lo que se registra es **lo que la persona leyó**.
+    Por eso `GET` dibuja y `POST` guarda, en vez de ser sólo `POST`.
+
+    El día se **propone** desde la vigencia del permiso —que es el día que se
+    vuela— y queda editable: se puede revisar el lunes lo que se vuela el jueves.
+    """
+
+    model = NotamReview
+    permission_action = "add"
+
+    def _permission(self, pk):
+        return get_object_or_404(FlightPermission, pk=pk, is_active=True)
+
+    def get(self, request, pk):
+        permission = self._permission(pk)
+        form = NotamReviewForm(
+            initial={
+                "target_date": permission.valid_from or timezone.localdate(),
+            }
+        )
+        return render(
+            request,
+            "operations/notam_review_form.html",
+            {"permission": permission, "form": form},
+        )
+
+    def post(self, request, pk):
+        permission = self._permission(pk)
+        form = NotamReviewForm(request.POST)
+        if not form.is_valid():
+            return render(
+                request,
+                "operations/notam_review_form.html",
+                {"permission": permission, "form": form},
+            )
+        review = form.save(commit=False)
+        review.permission = permission
+        review.reviewed_by = request.user
+        # La consulta tal como estaba al revisar. Si el aeródromo declarado del
+        # permiso cambia después, el expediente tiene que seguir diciendo qué se
+        # consultó de verdad y no lo que se consultaría hoy.
+        review.consulted_url = (permission.notam_url or "")[:500]
+        set_audit_context(request, review)
+        review.save()
+        messages.success(request, _("NOTAM review recorded."))
         return redirect(permission)
 
 
