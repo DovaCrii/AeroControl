@@ -151,7 +151,19 @@ detalle de formato en un papel que va a la DGAC.{% endcomment %}
 
   <div class="rpt-foot">
     <div>
-      <span>Días calculados al {{ cutoff_date|date:"d-m-Y" }}. Referencia: DAN 91, DAN 137, DAN 151 · INS-096 numeral 6.4.1.</span>
+      {% comment %}LV-233: el pie dice ahora **qué se pudo reconstruir y qué no**.
+
+Esta tabla se reconstruye al corte: quedan fuera los permisos que ese día no
+existían y los que todavía no habían empezado a regir. Lo que **no** se
+reconstruye es el estado que cada permiso tenía entonces — uno que en agosto
+estaba en trámite y hoy está aprobado se lista con su estado de hoy, porque el
+estado histórico vive en `PermissionHistory` y todavía no se lee acá.
+
+Decirlo en el papel no es una disculpa: es la diferencia entre una cota superior
+honesta y una foto, y quien firma tiene que saber cuál de las dos está
+firmando. Es el mismo criterio con el que el corte del padrón declara su
+limitación.{% endcomment %}
+<span>Días calculados al {{ cutoff_date|date:"d-m-Y" }}. Población reconstruida al corte; el estado de cada permiso es el vigente a la fecha de emisión. Referencia: DAN 91, DAN 137, DAN 151 · INS-096 numeral 6.4.1.</span>
       <span>J.E.J. Ingeniería S.A. · Página 3</span>
     </div>
   </div>

@@ -107,6 +107,13 @@ class TestTheCoverFollowsThePeriod:
     repiten las páginas 2 a 5—, y basta que una se quede fija para que el
     informe se contradiga a sí mismo. El caso que las separa es febrero: el día
     de corte no es una constante, es el último del mes que se pida.
+
+    ⚠️ **`LV-233` separó la fecha de corte de las otras cuatro, y hay que saber
+    por qué**: las otras cuatro describen **lo que el informe cubre** —el mes
+    entero, haya terminado o no— y el corte describe **hasta dónde miró**. Son la
+    misma cosa sólo cuando el mes ya cerró. Mientras estaban juntas, la portada de
+    un mes en curso fechaba su corte en el futuro. Los dos casos tienen ahora su
+    test propio, abajo.
     """
 
     @pytest.mark.django_db
@@ -129,11 +136,49 @@ class TestTheCoverFollowsThePeriod:
 
         body = client.get(reverse(URL), {"period": period}).content.decode()
 
-        year, month = period.split("-")
         assert f"JEJ-GTE-CT-INF-RPA-{period}" in body
         assert band in body
+        # Lo que el informe **cubre** sigue siendo el mes entero, haya terminado
+        # o no: eso es el período, no el corte.
         assert f"Período 01–{last_day} de" in body
-        assert f"{last_day}-{month}-{year}" in body
+
+    @pytest.mark.django_db
+    def test_a_closed_month_is_cut_at_its_last_day(self, client, reader, site):
+        """La regla de siempre, para el caso que el informe describe: un mes
+        cerrado se corta el día que cerró, y no "hoy" — usar hoy haría que el
+        mismo período diera cifras distintas según cuándo se generara."""
+        client.force_login(reader)
+
+        body = client.get(reverse(URL), {"period": "2026-08"}).content.decode()
+
+        assert "31-08-2026" in body
+        assert "período en curso" not in body
+
+    @pytest.mark.django_db
+    def test_an_unfinished_month_is_cut_today_and_says_so(self, client, reader, site):
+        """⚠️ **Este es el test que `LV-233` mandaba cambiar, y se cambia a
+        propósito.**
+
+        Antes esta clase afirmaba que el corte es el último día del mes **para
+        cualquier período**, incluidos los que no han terminado. El usuario lo vio
+        en pantalla el 2026-09-03: la portada de septiembre, abierta el día 3,
+        declaraba *"FECHA DE CORTE 30-09-2026"* — una fecha que no había ocurrido,
+        sobre datos que eran los de ese día.
+
+        Lo que se conserva es **la condición**, no la afirmación: la portada sigue
+        moviéndose con el período. Lo que cambia es que ya no puede fechar el
+        corte en el futuro, y que cuando el período sigue abierto **lo dice en el
+        papel**, que es donde tiene que constar porque esta hoja se firma.
+        """
+        from django.utils import timezone
+
+        today = timezone.localdate()
+        client.force_login(reader)
+
+        body = client.get(reverse(URL), {"period": f"{today:%Y-%m}"}).content.decode()
+
+        assert f"{today:%d-%m-%Y}" in body
+        assert "período en curso" in body
 
     @pytest.mark.django_db
     def test_the_header_of_every_page_carries_the_same_period(

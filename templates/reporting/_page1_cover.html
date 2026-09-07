@@ -45,7 +45,20 @@ ante la DGAC, y traducirlo lo convertiría en otro documento.{% endcomment %}
         <tr><th scope="row">Dirigido a</th><td>{{ payload.meta.addressed_to }}</td></tr>
         <tr><th scope="row">Alcance del ciclo</th><td>{{ payload.meta.scope }}</td></tr>
         <tr><th scope="row">Fuente de datos</th><td>{{ payload.meta.sources }}</td></tr>
-        <tr><th scope="row">Fecha de corte</th><td>{{ cutoff_date|date:"d-m-Y" }}</td></tr>
+        {% comment %}LV-233: la fecha de corte es la real, y cuando el período
+        sigue abierto **lo dice en el mismo renglón**.
+
+        Antes se rotulaba siempre el último día del mes, así que la portada de
+        septiembre abierta el día 3 declaraba "30-09-2026": una fecha que no había
+        ocurrido, sobre datos que eran los de ese día. Y no era cosmético — el
+        mismo defecto explica el 41 contra 42 del padrón de agosto (`LV-234`): el
+        informe emitido se hizo antes del 26 y decía "corte al 31-08", afirmando
+        cinco días que no había mirado.
+
+        El aviso va **acá y no en un banner de pantalla**, porque esta hoja se
+        imprime y se firma: en el papel es donde tiene que constar que el período
+        estaba abierto.{% endcomment %}
+        <tr><th scope="row">Fecha de corte</th><td>{{ cutoff_date|date:"d-m-Y" }}{% if payload.meta.in_progress %} <span style="color: #8A5A12;">· período en curso, {{ payload.meta.days_remaining }} día{{ payload.meta.days_remaining|pluralize:"s" }} por transcurrir</span>{% endif %}</td></tr>
       </table>
     </div>
 

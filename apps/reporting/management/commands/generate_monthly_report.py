@@ -19,6 +19,7 @@ documento controlado.
 import logging
 from datetime import date
 
+from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
@@ -85,7 +86,19 @@ class Command(BaseCommand):
                 self.stdout.write(message)
                 return
 
-            report, created = ReportRun.freeze(period, ACTOR, force=force)
+            # LV-233: `--period` con un mes que no terminó se rechaza, y acá
+            # como `CommandError` — al revés que en la pantalla, que avisa y
+            # sigue. Es la misma asimetría deliberada que ya tiene `--period`
+            # mal escrito: un trabajo programado que se equivoca de mes tiene
+            # que **fallar**, para que el timer lo reporte, en vez de dejar un
+            # informe a medias que nadie sabe que está a medias.
+            #
+            # El caso normal no lo toca: sin `--period` congela el mes recién
+            # cerrado.
+            try:
+                report, created = ReportRun.freeze(period, ACTOR, force=force)
+            except ValidationError as refused:
+                raise CommandError(refused.messages[0]) from refused
             # `created` no puede ser falso acá —los dos caminos que devuelven el
             # existente ya salieron arriba— y se afirma en vez de suponerse: si
             # `freeze` cambiara, esto lo dice en la corrida y no tres meses

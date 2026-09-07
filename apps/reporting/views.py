@@ -157,7 +157,15 @@ class ReportDraftCreate(ModelPermissionRequiredMixin, View):
         # **El mismo `freeze` que usa el trabajo programado** (`R5`), no una
         # copia: dos caminos que congelan por separado es cómo el informe que
         # genera el timer y el que genera una persona empiezan a diferir.
-        run, created = ReportRun.freeze(period, request.user.get_username())
+        try:
+            run, created = ReportRun.freeze(period, request.user.get_username())
+        except ValidationError as refused:
+            # LV-233: el mes todavía no terminó. Se dice y se vuelve a la
+            # pantalla, que sigue mostrando la vista previa en vivo -- mirar el
+            # mes en curso está bien; lo que no se puede es convertirlo en
+            # documento.
+            messages.error(request, refused.messages[0])
+            return redirect(f"{reverse('monthly-report')}?period={period:%Y-%m}")
         if not created:
             # La respuesta correcta a "ya existe" no es devolverlo callando:
             # quien apretó el botón dos veces tiene que saber cuál de las dos

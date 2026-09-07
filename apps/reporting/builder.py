@@ -51,6 +51,12 @@ def collect_meta(period, cutoff):
         "code": f"JEJ-GTE-CT-INF-RPA-{period:%Y-%m}",
         "cutoff": cutoff.isoformat(),
         "covers": {"from": start.isoformat(), "to": end.isoformat()},
+        # LV-233: que el período siga abierto es un hecho **del documento**, así
+        # que viaja en el payload congelado y no se recalcula al dibujar. Un
+        # informe que se congeló a mitad de mes tiene que seguir diciendo que se
+        # congeló a mitad de mes, aunque se lea en diciembre.
+        "in_progress": cutoff < end,
+        "days_remaining": max((end - cutoff).days, 0),
         # Del estándar, no de la base: son los cargos que firman.
         "issued_by": "Gerente de Operaciones Aéreas ante la DGAC",
         "jointly_with": "Jefe Seguridad Aérea ante la DGAC",
@@ -197,6 +203,8 @@ def collect_permits(cutoff):
     permisos — y el payload se construye también desde un trabajo nocturno,
     donde nadie mira el reloj.
     """
+    from django.db import models
+
     from apps.compliance.kpis import permit_band
     from apps.operations.models import FlightPermission
 
@@ -208,6 +216,29 @@ def collect_permits(cutoff):
                 FlightPermission.STATUS_APPROVED,
             ),
         )
+        # ⚠️ **LV-233: al corte, no a hoy.** Hasta acá `cutoff` sólo se usaba para
+        # calcular la columna "Días" y **no filtraba nada**, así que la página 3
+        # listaba todos los permisos vivos *hoy* bajo un encabezado que dice
+        # "SITUACIÓN DE LOS PERMISOS AL CORTE". El usuario lo vio en el informe de
+        # agosto: `JEJ-2026-012` y `013`, con vigencia 06-09 → 05-12, aparecían
+        # ahí — permisos que el 31 de agosto no existían todavía.
+        #
+        # Dos condiciones, y son distintas:
+        #
+        # - `created_at__date <= cutoff`: no estaba en el sistema. Es el mismo
+        #   corte de población que `panel_readiness` ya aplica, y arrastra su
+        #   misma limitación honesta -- si una ficha se cargó a destiempo, su
+        #   `created_at` es la fecha de carga.
+        # - `valid_from <= cutoff`: existía, pero **todavía no habilitaba a
+        #   volar**. Un permiso aprobado que empieza la semana siguiente al corte
+        #   no era una autorización vigente ese día, y decir que sí es una
+        #   afirmación falsa ante la DGAC.
+        #
+        # Un permiso **solicitado** no tiene vigencia (`LV-219`), así que
+        # `valid_from` nulo pasa: lo que lo hace pertenecer al corte es haber
+        # existido, y su bloque en el informe ya dice que no habilita.
+        .filter(created_at__date__lte=cutoff)
+        .filter(models.Q(valid_from__isnull=True) | models.Q(valid_from__lte=cutoff))
         .select_related("cost_center")
         .prefetch_related("operators", "aircraft_fleet")
         .order_by("valid_until", "internal_folio")
@@ -304,9 +335,26 @@ def build(period, cutoff=None):
     mes cerrado, y usar "hoy" haría que el mismo período diera cifras distintas
     según cuándo se generara — que es justo lo que congelar el dato viene a
     evitar.
+
+    ⚠️ **Salvo que el mes todavía no haya terminado, y ahí el corte es hoy.**
+    `LV-233`: el usuario lo vio en pantalla el 2026-09-03 — la portada de
+    septiembre, abierta el día 3, declaraba *"FECHA DE CORTE 30-09-2026"*, una
+    fecha que no había ocurrido, sobre datos que eran los de ese día. En un
+    informe cuya regla es que **nunca inventa un dato**, una fecha de corte
+    futura es exactamente eso.
+
+    Y no es cosmético: el mismo defecto explica el 41 contra 42 del padrón de
+    agosto (`LV-234`). El informe emitido se hizo antes del 26 de agosto y decía
+    "corte al 31-08", afirmando cinco días que no había mirado.
+
+    `min` y no un `if` sobre el mes en curso, porque cubre de una vez el caso que
+    importa y el que nadie piensa: pedir el informe de un mes **futuro**, donde
+    "hoy" también es la única fecha honesta.
     """
+    from django.utils import timezone
+
     _start, end = month_bounds(period)
-    cutoff = cutoff or end
+    cutoff = cutoff or min(end, timezone.localdate())
     cost_centres = collect_cost_centres(cutoff)
     permits = collect_permits(cutoff)
     payload = {
