@@ -13,8 +13,16 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ValidationError
 from django.views import View
-from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from django.views.generic import (
+    CreateView,
+    DetailView,
+    ListView,
+    TemplateView,
+    UpdateView,
+)
 from django.utils.text import capfirst, slugify
 
 from apps.core.audit import set_audit_context
@@ -26,6 +34,7 @@ from apps.core.views import (
     HtmxFormMixin,
     ModelPermissionRequiredMixin,
     ModelViewPermissionRequiredMixin,
+    SaveAndAddAnotherMixin,
     SearchMixin,
     StatusTransitionView,
     TenantScopedQuerysetMixin,
@@ -59,6 +68,9 @@ from .models import (
     FlightRequest,
     FlightRequestWorkItem,
     NotamReview,
+    PreflightAnswer,
+    PreflightCheck,
+    PreflightChecklist,
 )
 from .selectors import DAILY_FLIGHT_LIMIT, duty_time_for, format_duration
 from apps.registry.models import Aircraft, CostCenter, Operator
@@ -1039,7 +1051,15 @@ class DutyLimitWarningMixin:
         return response
 
 
-class FlightRecordCreate(DutyLimitWarningMixin, OCreate):
+class FlightRecordCreate(SaveAndAddAnotherMixin, DutyLimitWarningMixin, OCreate):
+    """`UX-22`: la bitácora es el alta repetitiva por excelencia.
+
+    Una jornada de faena son seis u ocho vuelos del mismo permiso, con la misma
+    aeronave y el mismo piloto, y hasta acá cada uno costaba volver al listado y
+    buscar "Nuevo" otra vez. El botón vuelve a esta misma URL **con su query**,
+    así que el `?permission=` que trajo el primero sigue puesto en el siguiente.
+    """
+
     model = FlightRecord
     form_class = FlightRecordForm
     template_name = "operations/flightrecord_form.html"
@@ -1714,3 +1734,210 @@ class GeoPlanSplitIntoRequests(ModelPermissionRequiredMixin, View):
         if plan.current_version is None:
             raise Http404("The plan has no content to split.")
         return plan
+
+
+class PreflightCheckView(ModelPermissionRequiredMixin, View):
+    """`UX-29` · El chequeo prevuelo de un vuelo: verlo, contestarlo, y nada más.
+
+    **El permiso es el del vuelo** (`operations.change_flightrecord`) y no uno
+    propio: el chequeo *es* parte del expediente del vuelo, y un permiso separado
+    habría creado la situación de alguien que puede editar la bitácora pero no
+    su chequeo — dos mitades del mismo hecho con dos llaves distintas.
+
+    ⚠️ **La lista se materializa al abrir, no al crear el vuelo.** Un vuelo
+    cargado antes de que existiera la lista tiene que poder recibir la suya, y
+    una señal en `FlightRecord.save` habría dejado sin chequeo a todo lo cargado
+    hasta hoy. El costo es que abrir esta pantalla escribe la primera vez; se
+    paga a propósito, y por eso las respuestas nacen en «sin contestar» y no en
+    «conforme»: lo que se crea es el formulario en blanco, no una declaración.
+    """
+
+    model = FlightRecord
+    permission_action = "change"
+
+    def _record(self, pk):
+        return get_object_or_404(
+            FlightRecord.objects.select_related("aircraft", "pilot", "permission"),
+            pk=pk,
+            is_active=True,
+        )
+
+    def get(self, request, pk):
+        record = self._record(pk)
+        check = self._ensure(record)
+        return render(
+            request,
+            "operations/preflight_check.html",
+            {
+                "record": record,
+                "check": check,
+                "answers": check.answers.all() if check else [],
+                # ⚠️ «Sin contestar» **no se ofrece como opción**, y por eso se
+                # filtra acá y no en la plantilla. No es una respuesta: es el
+                # estado inicial. Ofrecerlo contradecía a `sign()`, que
+                # justamente exige que no quede ninguno — y dejaba elegir
+                # activamente "no lo miré" en la pantalla que existe para
+                # registrar que sí se miró. Sin contestar = ningún radio marcado.
+                "values": [
+                    (value, label)
+                    for value, label in PreflightAnswer.VALUE_CHOICES
+                    if value != PreflightAnswer.PENDING
+                ],
+            },
+        )
+
+    def post(self, request, pk):
+        record = self._record(pk)
+        check = self._ensure(record)
+        if check is None:
+            raise Http404("There is no checklist for this aircraft.")
+        if check.is_signed:
+            # Firmado es firmado. El guard de verdad vive acá y no en la
+            # plantilla: esconder el botón no impide un POST.
+            messages.error(request, _("This preflight check is already signed."))
+            return redirect("preflight-check", pk=record.pk)
+
+        allowed = {value for value, _label in PreflightAnswer.VALUE_CHOICES}
+        for answer in check.answers.all():
+            value = request.POST.get(f"value-{answer.pk}")
+            if value in allowed:
+                answer.value = value
+            answer.comment = request.POST.get(f"comment-{answer.pk}", "").strip()
+            answer.save(update_fields=["value", "comment", "updated_at"])
+        set_audit_context(request, check, action="preflight_answered")
+        messages.success(request, _("Saved successfully."))
+        return redirect("preflight-check", pk=record.pk)
+
+    @staticmethod
+    def _ensure(record):
+        """El chequeo de este vuelo, creándolo desde la plantilla si hace falta.
+
+        Devuelve `None` cuando **no hay ninguna lista configurada** que aplique.
+        Es un caso real —una instalación recién puesta no tiene listas— y la
+        pantalla lo dice en vez de inventar una lista vacía que alguien podría
+        firmar creyendo que comprobó algo.
+        """
+        existing = getattr(record, "preflight_check", None)
+        if existing is not None:
+            return existing
+        checklist = PreflightChecklist.for_aircraft(record.aircraft)
+        if checklist is None:
+            return None
+        with transaction.atomic():
+            check = PreflightCheck.objects.create(
+                flight_record=record,
+                checklist=checklist,
+                # Copiado, no leído: renombrar la lista no puede cambiar lo que
+                # dice un chequeo ya firmado.
+                checklist_name=checklist.name,
+            )
+            PreflightAnswer.objects.bulk_create(
+                PreflightAnswer(
+                    preflight_check=check,
+                    text=item.text,
+                    order=item.order,
+                    is_required=item.is_required,
+                )
+                for item in checklist.items.filter(is_active=True)
+            )
+        return check
+
+
+class PreflightSignView(ModelPermissionRequiredMixin, View):
+    """Firmar cierra el chequeo. Por eso es un POST propio y no un campo más.
+
+    Firmar es un acto, no un dato: mezclarlo con "guardar respuestas" habría
+    hecho que quien contesta el último punto firmara sin querer.
+    """
+
+    model = FlightRecord
+    permission_action = "change"
+
+    def post(self, request, pk):
+        record = get_object_or_404(FlightRecord, pk=pk, is_active=True)
+        check = getattr(record, "preflight_check", None)
+        if check is None:
+            raise Http404("There is no preflight check on this flight.")
+        try:
+            check.sign(request.user)
+        except ValidationError as error:
+            messages.error(request, error.messages[0])
+        else:
+            set_audit_context(request, check, action="preflight_signed")
+            messages.success(request, _("Preflight check signed."))
+        return redirect("preflight-check", pk=record.pk)
+
+
+class CanIFlyView(LoginRequiredMixin, TemplateView):
+    """`UX-27` · «¿Puedo volar?» — una respuesta, para una terna, hoy.
+
+    `LoginRequiredMixin` a secas y **no** un permiso de modelo, que es la misma
+    excepción que la bandeja de trabajo (`UX-13`) y por eso se explica igual:
+    esta pantalla no tiene modelo propio del cual pedir permiso y cruza cuatro.
+    El control está en los desplegables — cada uno se llena **sólo si quien mira
+    puede ver ese padrón**, así que alguien sin `registry.view_operator` no puede
+    ni elegir una persona, y sin terna no hay veredicto que filtre nada.
+
+    Todo por `GET` y sin escribir una fila: la pantalla lee. Eso la vuelve
+    enlazable —un supervisor puede mandar el enlace de la terna exacta— y deja
+    fuera cualquier duda sobre si consultar «¿puedo volar?» deja rastro de haber
+    autorizado algo. No autoriza: dice lo que los registros dicen.
+    """
+
+    template_name = "operations/can_i_fly.html"
+
+    #: Qué permiso gatea cada desplegable. Declarado como tabla y no como tres
+    #: `if` por el mismo motivo que `EXPIRATION_PERMISSIONS` del panel: un `if`
+    #: olvidado no se ve, una fila que falta en la tabla salta a la vista.
+    ROSTER_PERMISSIONS = {
+        "aircraft": "registry.view_aircraft",
+        "operator": "registry.view_operator",
+        "cost_center": "registry.view_costcenter",
+    }
+
+    def get_context_data(self, **kwargs):
+        from apps.registry.models import Aircraft, CostCenter, Operator
+
+        from .readiness import can_fly, horizon
+
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        today = timezone.localdate()
+
+        rosters = {
+            "aircraft": Aircraft.objects.filter(is_active=True)
+            .exclude(status="retired")
+            .order_by("registration"),
+            "operator": Operator.objects.filter(is_active=True).order_by("full_name"),
+            "cost_center": CostCenter.objects.filter(
+                is_active=True, operates_flights=True
+            ).order_by("code"),
+        }
+        chosen = {}
+        for key, queryset in rosters.items():
+            if not user.has_perm(self.ROSTER_PERMISSIONS[key]):
+                # Sin permiso el desplegable llega vacío en vez de omitirse: la
+                # pantalla tiene que poder decir *por qué* no se puede preguntar,
+                # y un hueco silencioso se lee como pantalla rota (`LV-130`).
+                rosters[key] = queryset.none()
+                continue
+            rosters[key] = scope_queryset_to_tenant(queryset, user)
+            raw = self.request.GET.get(key)
+            if raw:
+                chosen[key] = rosters[key].filter(pk=raw).first()
+
+        context.update(
+            {
+                "rosters": rosters,
+                "chosen": chosen,
+                "today": today,
+                "horizon": horizon(today),
+            }
+        )
+        # Las tres o ninguna: media terna no tiene veredicto, y dar uno parcial
+        # invitaría a leerlo como completo.
+        if len(chosen) == 3 and all(chosen.values()):
+            context["verdict"] = can_fly(
+                chosen["aircraft"], chosen["operator"], chosen["cost_center"], today
+            )
+        return context

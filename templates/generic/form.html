@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load crispy_forms_tags i18n %}
+{% load crispy_forms_tags i18n static %}
 {% block title %}{{ title|default:'Form' }} - AeroControl{% endblock %}
 {% block content %}
 <div class="form-shell card p-4">
@@ -11,10 +11,37 @@
     {% csrf_token %}
     {% include "generic/_duplicate_hint.html" %}
     {{ form|crispy }}
-    <div class="form-actions d-flex gap-2 mt-4">
+
+    {% comment %}`UX-23`: el borrador sólo en los formularios que lo justifican.
+
+    El umbral es el mismo de `UX-20` (`UX20_FIELD_THRESHOLD`, en
+    `apps/core/views.py`) y no por comodidad: son la misma pregunta hecha dos
+    veces. Un formulario largo es el que no cabe en un cuadro **y** el que duele
+    perder a medio llenar; uno de tres campos se vuelve a escribir en veinte
+    segundos, y ofrecerle un panel de borrador es ruido en toda pantalla de alta
+    del proyecto. Hay un test que vigila que los dos números no se separen.{% endcomment %}
+    {% if form.visible_fields|length > 8 %}{% include "generic/_form_draft.html" %}{% endif %}
+
+    <div class="form-actions d-flex gap-2 mt-4 flex-wrap align-items-center">
       <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+      {% comment %}`UX-22`. Sólo en el alta y sólo donde la vista lo declara
+      (`SaveAndAddAnotherMixin`): en una edición, el formulario que quedaría
+      abierto vendría cargado con los datos del registro recién modificado, que
+      es la forma más limpia de duplicarlo sin querer.{% endcomment %}
+      {% if view.save_and_add_another and not view.object %}
+      <button type="submit" name="_save_and_add_another" value="1" class="btn btn-outline-primary">{% translate "Save and add another" %}</button>
+      {% endif %}
+      {% if form.visible_fields|length > 8 %}{% include "generic/_form_draft_button.html" %}{% endif %}
       <a href="{% url 'dashboard' %}" data-history-back class="btn btn-outline-secondary">{% translate "Cancel" %}</a>
     </div>
   </form>
 </div>
+{% endblock %}
+
+{% block extrascripts %}
+{% comment %}`UX-23`: se carga siempre y no sólo cuando hay panel. `form-draft.js`
+no hace nada sin un `[data-form-draft]` en la página —recorre, no encuentra y
+termina— y además es quien dibuja el índice de borradores de `LV-198`, que puede
+tener que aparecer en una pantalla cuyo formulario es corto.{% endcomment %}
+<script defer src="{% static 'js/form-draft.js' %}"></script>
 {% endblock %}

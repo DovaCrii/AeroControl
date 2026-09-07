@@ -23,7 +23,8 @@ from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.conf import settings
 from django.db import connection
 from django.shortcuts import get_object_or_404, redirect, render
-from django.template.loader import render_to_string
+from django.template import TemplateDoesNotExist
+from django.template.loader import render_to_string, select_template
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -458,6 +459,14 @@ class CsvExportMixin:
         return super().get(request, *args, **kwargs)
 
 
+#: `UX-20`. Más de ocho campos visibles y el formulario deja de caber en un
+#: cuadro: el permiso de vuelo llegó a anidar tres barras de desplazamiento —la
+#: de la página, la del cuadro y la de un `<select>` múltiple— y ahí ya no se ve
+#: dónde está uno. El umbral sale del plan, no de una medición: es el punto donde
+#: el cuadro deja de ser una interrupción corta y pasa a ser la tarea.
+UX20_FIELD_THRESHOLD = 8
+
+
 class HtmxFormMixin:
     """Return form fragments for HTMX while preserving normal form behavior."""
 
@@ -467,6 +476,53 @@ class HtmxFormMixin:
         if self.request.headers.get("HX-Request") == "true":
             return [self.htmx_template_name]
         return super().get_template_names()
+
+    def form_is_long(self, form):
+        """`UX-20`: si este formulario merece página propia en vez del cuadro.
+
+        Dos criterios, los del plan. Los **campos visibles**, porque los ocultos
+        no ocupan pantalla y contarlos mandaría a página completa formularios que
+        se ven de tres renglones. Y **cualquier selección múltiple**, sin importar
+        el total: un `<select multiple>` trae su propio desplazamiento, y una
+        barra dentro de otra dentro de otra es exactamente lo que la fila nombra.
+        """
+        visible = [field for field in form if not field.is_hidden]
+        if any(
+            getattr(field.field.widget, "allow_multiple_selected", False)
+            for field in visible
+        ):
+            return True
+        return len(visible) > UX20_FIELD_THRESHOLD
+
+    def get(self, request, *args, **kwargs):
+        """`UX-20`: un formulario largo no se abre en el cuadro, se navega.
+
+        Se decide **acá y no en cada plantilla** porque el disparador del cuadro
+        está escrito en decenas de listados, y una regla que cada uno tiene que
+        recordar estaría mal la primera vez que alguien la olvide, y en silencio.
+        Se responde con `HX-Redirect`, que es como htmx entiende "esto no va a
+        ser un fragmento": el navegador va a la misma URL sin la cabecera y la
+        vista sirve su página completa.
+
+        ⚠️ **Sólo si esa página existe de verdad.** Hay vistas que sólo viven en
+        el cuadro y no declaran `template_name`; ahí el nombre por defecto de
+        Django apunta a una plantilla que nadie escribió, y redirigir a ciegas
+        cambiaría un cuadro incómodo por un 500. Sin página a la que ir, el
+        cuadro se abre como siempre.
+        """
+        response = super().get(request, *args, **kwargs)
+        if request.headers.get("HX-Request") != "true":
+            return response
+        form = getattr(response, "context_data", {}).get("form")
+        if form is None or not self.form_is_long(form):
+            return response
+        try:
+            select_template([name for name in super().get_template_names() if name])
+        except TemplateDoesNotExist:
+            return response
+        redirect_response = HttpResponse(status=204)
+        redirect_response["HX-Redirect"] = request.get_full_path()
+        return redirect_response
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -515,15 +571,66 @@ class HtmxFormMixin:
             )
         return super().form_invalid(form)
 
+    def get_success_message(self):
+        """El aviso de guardado, en un gancho para que se pueda matizar.
+
+        Existe por `UX-22`: quien guarda y sigue cargando necesita que el aviso
+        diga que el formulario en blanco que apareció es el siguiente y no el que
+        acaba de escribir. Empujar un segundo `messages.success` habría dejado
+        dos avisos apilados diciendo casi lo mismo.
+        """
+        return _("Saved successfully.")
+
     def form_valid(self, form):
         response = super().form_valid(form)
         set_audit_context(self.request, getattr(self, "object", None))
-        messages.success(self.request, _("Saved successfully."))
+        messages.success(self.request, self.get_success_message())
         if self.request.headers.get("HX-Request") == "true":
             return HttpResponse(
                 status=204, headers={"HX-Trigger": "modal-form-success"}
             )
         return response
+
+
+#: `UX-22`. El nombre del botón viaja en el POST, así que es contrato entre la
+#: plantilla y la vista: en un solo sitio para que no se separen.
+SAVE_AND_ADD_ANOTHER = "_save_and_add_another"
+
+
+class SaveAndAddAnotherMixin:
+    """`UX-22`: "Guardar y crear otro" en las altas repetitivas.
+
+    Se pone **por vista y a mano**, no en todas las de alta, porque no toda alta
+    es repetitiva: un centro de costo se crea una vez al año y ofrecerle el botón
+    sólo agrega ruido. Las repetitivas son las que el plan nombra — vuelos,
+    documentos y movimientos— y ahí cargar diez seguidos es la jornada normal:
+    hoy cada uno cuesta volver al listado y buscar "Nuevo" otra vez.
+
+    ⚠️ **Sólo en el alta.** Un "guardar y crear otro" en una edición diría que
+    modificar un registro y crear otro son el mismo gesto, y el formulario que
+    quedaría abierto vendría cargado con los datos del que se acaba de editar —
+    la forma más limpia de duplicar un registro sin querer.
+    """
+
+    save_and_add_another = True
+
+    def get_success_url(self):
+        if SAVE_AND_ADD_ANOTHER in self.request.POST:
+            # La misma URL de alta, o sea el formulario en blanco. Se conserva la
+            # query porque de ahí salen los valores iniciales (`get_initial()` de
+            # `FlightRecordCreate` y de `DocumentCreate` leen `?permission=`,
+            # `?aircraft=`…): quien está cargando diez vuelos del mismo permiso
+            # quiere el siguiente ya apuntando al mismo permiso.
+            return self.request.get_full_path()
+        return super().get_success_url()
+
+    def get_success_message(self):
+        # El aviso por defecto —"Guardado correctamente"— es cierto, pero deja la
+        # duda de si el formulario en blanco que apareció es el mismo que no se
+        # guardó. Decirlo cierra esa duda.
+        if SAVE_AND_ADD_ANOTHER in self.request.POST:
+            return _("Saved. You can enter the next one.")
+        return super().get_success_message()
 
 
 class SignInView(auth_views.LoginView):
@@ -551,6 +658,27 @@ class SignInView(auth_views.LoginView):
         # inventa un ajuste nuevo para lo mismo.
         context["debug"] = settings.DEBUG
         return context
+
+    def get_success_url(self):
+        """`UX-31`: cada rol entra por su pantalla.
+
+        ⚠️ **Sólo acá, y sólo cuando nadie pidió otra cosa.** Un `?next=` gana
+        siempre: quien siguió un enlace a una ficha y tuvo que autenticarse
+        quiere esa ficha, no su pantalla de rol — pisarlo convertiría cada enlace
+        compartido en un viaje al inicio.
+
+        Y no hay redirección desde `/`. El panel sigue exactamente donde estaba y
+        su entrada de menú sigue llevando ahí: redirigir la raíz lo habría vuelto
+        inalcanzable para tres de los cinco roles, que es esconder con otro
+        nombre. La fila dice lo contrario — *"ocultar genera desconfianza;
+        priorizar genera velocidad"*.
+        """
+        from .roles import landing_url_name
+
+        if self.get_redirect_url():
+            return super().get_success_url()
+        landing = landing_url_name(self.request.user)
+        return reverse(landing) if landing else super().get_success_url()
 
 
 class ModelPermissionRequiredMixin(LoginRequiredMixin, PermissionRequiredMixin):

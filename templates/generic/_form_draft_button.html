@@ -1,0 +1,14 @@
+{% load i18n %}
+{% comment %}`UX-23`: el botón "Guardar borrador", separado del panel del aviso.
+
+Van en dos archivos porque van en dos sitios del formulario: el aviso arriba,
+junto a los campos que va a rellenar; el botón abajo, en la fila de acciones,
+junto a "Guardar". Es la misma disposición que ya tenía el formulario de permiso.
+
+`form-draft.js` los une igual — escucha el clic en el **formulario**, no en el
+panel, precisamente porque el botón vive fuera de él. Eso ya costó una vez: el
+DOM estaba entero y el clic no llegaba nunca.{% endcomment %}
+<button type="button" class="btn btn-outline-primary" data-form-draft-save
+        data-saved-label="{% translate 'Draft saved in this browser.' %}"
+        data-failed-label="{% translate 'This browser is not letting the draft be saved.' %}"
+        title="{% translate 'It stays in this browser until you save or discard it. Nobody else sees it.' %}">{% translate "Save draft" %}</button>

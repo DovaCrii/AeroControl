@@ -1021,7 +1021,11 @@ class TestChapter1DocxImport:
             reverse("set_language"), {"language": "es", "next": reverse("dashboard")}
         )
 
-        response = auth_client.get(reverse("costcenter-create"), HTTP_HX_REQUEST="true")
+        # Sin `HX-Request`: desde `UX-20` este formulario pasa de los ocho campos
+        # y el cuadro responde con `HX-Redirect` a su página completa. Lo que
+        # este test mide son los rótulos, y están en las dos salidas — pedir la
+        # página es medir lo mismo sin quedar atado a por dónde se abre.
+        response = auth_client.get(reverse("costcenter-create"))
         content = response.content.decode()
 
         assert response.status_code == 200

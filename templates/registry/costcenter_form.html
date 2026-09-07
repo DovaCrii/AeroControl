@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n static %}
 {% block title %}{{ title|default:'Form' }} - AeroControl{% endblock %}
 {% block content %}
 <div class="form-shell card p-4">
@@ -10,10 +10,20 @@
   <form method="post" {% if form.is_multipart %}enctype="multipart/form-data"{% endif %}>
     {% csrf_token %}
     {% include "registry/_costcenter_form_fields.html" %}
-    <div class="form-actions d-flex gap-2 mt-4">
+    {% comment %}`UX-23`: es de los largos de verdad —pasa los ocho campos, que
+    es lo que `UX-20` lo saca del cuadro— y además el que más cuesta rehacer: la
+    ficha de una faena se llena con datos que hay que ir a buscar al contrato.
+    {% endcomment %}
+    {% include "generic/_form_draft.html" %}
+    <div class="form-actions d-flex gap-2 mt-4 flex-wrap align-items-center">
       <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+      {% include "generic/_form_draft_button.html" %}
       <a href="{% url 'dashboard' %}" data-history-back class="btn btn-outline-secondary">{% translate "Cancel" %}</a>
     </div>
   </form>
 </div>
+{% endblock %}
+
+{% block extrascripts %}
+<script defer src="{% static 'js/form-draft.js' %}"></script>
 {% endblock %}

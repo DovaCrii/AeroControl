@@ -31,6 +31,7 @@ from apps.core.views import (
     HtmxFormMixin,
     ModelPermissionRequiredMixin,
     ModelViewPermissionRequiredMixin,
+    SaveAndAddAnotherMixin,
     SearchMixin,
     TenantScopedQuerysetMixin,
     filter_options,
@@ -751,7 +752,15 @@ class OperationalRecordsView(
         return queryset.order_by("code")
 
 
-class DocumentCreate(ComplianceCreate):
+class DocumentCreate(SaveAndAddAnotherMixin, ComplianceCreate):
+    """`UX-22`: cargar documentos es lo otro que se hace de a muchos.
+
+    Quien normaliza una faena sube la carta del mandante, el seguro, las
+    credenciales de cuatro operadores y los certificados de dos aeronaves en una
+    sentada. La query se conserva al volver, así que el `?entity_type=` y el
+    `?entity_id=` con los que se entró desde la ficha siguen puestos.
+    """
+
     model = Document
     form_class = DocumentForm
     template_name = "compliance/document_form.html"
