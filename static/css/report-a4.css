@@ -312,3 +312,49 @@
   .rpt-page,
   .rpt-page * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }
+
+/* == LV-235 · Dato Ejecutivo, la hoja de una página =========================
+ *
+ * Vive en esta hoja y no en `app.css` por lo mismo que las cinco páginas: es
+ * papel. Sale firmado hacia la DGAC, así que no puede depender del tema claro u
+ * oscuro de quien lo abrió -- los colores van literales, como en el resto del
+ * archivo. */
+.rpt-brief { padding: 26px 30px; }
+.rpt-brief-head { border-bottom: 2px solid #124384; padding-bottom: 10px; margin-bottom: 14px; }
+.rpt-brief-eyebrow { color: #124384; font-size: 8.5px; font-weight: bold; letter-spacing: 0.12em; text-transform: uppercase; }
+.rpt-brief-title { color: #124384; font-size: 22px; font-weight: bold; margin: 4px 0 2px; }
+.rpt-brief-sub { color: #52606D; font-size: 10.5px; }
+.rpt-brief-meta { display: flex; gap: 14px; flex-wrap: wrap; align-items: baseline; margin-top: 8px; color: #52606D; font-size: 9.5px; }
+.rpt-brief-month { background: #124384; color: #FFFFFF; font-weight: bold; font-size: 11px; padding: 3px 10px; letter-spacing: 0.04em; }
+.rpt-brief-code { margin-left: auto; font-family: monospace; }
+
+/* Seis en una fila: son los seis que la plantilla en papel pide, y partirlos en
+ * dos filas de tres rompería la lectura de un vistazo que es su único
+ * propósito. */
+.rpt-brief-kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; margin-bottom: 16px; }
+.rpt-brief-kpi { border-top: 3px solid #00A7BC; background: #F4F7FA; padding: 8px 9px; }
+.rpt-brief-kpi-v { color: #124384; font-size: 20px; font-weight: bold; line-height: 1.1; }
+.rpt-brief-kpi-n { color: #52606D; font-size: 8px; line-height: 1.25; margin-top: 3px; }
+
+.rpt-brief-table { font-size: 8.6px; margin-bottom: 14px; }
+.rpt-brief-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 4px; }
+.rpt-brief-list { margin: 0 0 12px; padding-left: 15px; font-size: 9px; line-height: 1.55; }
+/* El detalle que matiza una cifra -- "3 en 30 días o menos", "+7 sin fecha
+ * cargada" -- en el ámbar de la escala del informe y no en rojo: matiza, no
+ * alarma. El rojo está reservado para el nivel crítico de `permit_band`. */
+.rpt-brief-crit { color: #8A5A12; font-weight: bold; }
+.rpt-brief-empty { color: #52606D; font-size: 9px; font-style: italic; margin: 0 0 12px; }
+.rpt-brief-foot { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; border-top: 1px solid #D7DEE6; margin-top: 12px; padding-top: 7px; color: #52606D; font-size: 7.8px; }
+
+/* LV-235: el estado de cada fase del plan, ahora que la página 5 es variable.
+ *
+ * `rpt-fase-now` ya existía y marcaba la fase vigente; lo que faltaba era decir
+ * cuáles quedaron atrás. Se atenúan en vez de ocultarse: el plan completo es
+ * parte del compromiso, y esconder lo cumplido dejaría al lector sin saber de
+ * dónde viene la fase en curso. */
+.rpt-fase-done { opacity: 0.55; }
+.rpt-fase-state { color: #124384; font-size: 7.4px; font-weight: bold; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 3px; }
+.rpt-fase-done .rpt-fase-state { color: #52606D; }
+/* El caso que el plan escrito a mano no tenía: ninguna fase vigente, porque el
+ * plan terminó o todavía no empieza. */
+.rpt-fase-note { border-left: 3px solid #00A7BC; background: #F4F7FA; padding: 8px 12px; margin-top: 10px; color: #52606D; font-size: 9px; }

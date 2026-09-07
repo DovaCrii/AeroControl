@@ -80,6 +80,22 @@ sobre las cifras, y el informe va firmado.{% endcomment %}
           <div class="rpt-kpi-note">Aprobados cuya vigencia ya pasó</div>
         </div>
 
+        {% comment %}LV-235: los incidentes del período, que el informe emitido
+        llevaba **escrito a mano** ("0 Incidentes en el período") y el payload no
+        producía. Ahora se cuentan de `NonConformity` con origen `incident` —no
+        todas las no conformidades: un re-vuelo es un hallazgo de calidad, y
+        sumarlo inflaría ante la DGAC una cifra que ella lee como incidentes de
+        vuelo—, y por **fecha de detección**, así que un evento del 20 de agosto
+        cargado el 2 de septiembre pertenece a agosto.
+
+        La nota de abajo distingue los abiertos, porque cero incidentes y cero
+        abiertos no son lo mismo que dos ya cerrados.{% endcomment %}
+        <div class="rpt-kpi {% if payload.kpis.incidents.value %}rpt-kpi-warn{% else %}rpt-kpi-good{% endif %}">
+          <div class="rpt-kpi-value">{% leaf payload.kpis.incidents %}</div>
+          <div class="rpt-kpi-name">Incidentes del período</div>
+          <div class="rpt-kpi-note">{% if payload.kpis.incidents_open.value %}{% leaf payload.kpis.incidents_open %} sin cerrar al corte{% else %}Sin eventos operacionales que reportar{% endif %}</div>
+        </div>
+
       </div>
     </div>
 

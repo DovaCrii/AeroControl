@@ -69,6 +69,11 @@ class ReportRun(BaseModel):
     FINDING_WARNING = "warning"
     FINDING_SEVERITIES = frozenset({FINDING_CRITICAL, FINDING_WARNING})
     FINDING_FIELDS = frozenset({"severity", "title", "text"})
+    # LV-235: qué lleva una fila de "Acciones requeridas este mes". `due` puede
+    # ir vacío —hay acciones sin fecha comprometida todavía— pero la llave tiene
+    # que estar, para que una fila incompleta se distinga de una fila con otra
+    # forma.
+    ACTION_FIELDS = frozenset({"action", "owner", "due"})
 
     COMPLETENESS_OK = "ok"
     COMPLETENESS_PARTIAL = "partial"
@@ -125,6 +130,21 @@ class ReportRun(BaseModel):
     # La observación del período (página 3 del informe emitido). Un párrafo, no
     # una lista: en el informe de agosto es uno solo, sobre la vigencia otorgada.
     period_note = models.TextField(blank=True, default="")
+    # LV-235: **"Acciones requeridas este mes"**, del Dato Ejecutivo — la única
+    # sección de ese documento que no se puede calcular.
+    #
+    # Todo el resto de esa hoja sale del payload: los seis indicadores, la tabla
+    # por faena, los vencimientos a 60 días, las solicitudes en trámite y hasta
+    # el detalle de los incidentes, que `NonConformity` ya guarda con su reporte
+    # a la DGAC. Lo que ninguna consulta puede producir es **qué se decide hacer
+    # este mes, quién lo hace y para cuándo**: eso es una asignación, y la toma
+    # quien firma.
+    #
+    # Cada fila es `{"action", "owner", "due"}`. Lista y no tres campos sueltos
+    # porque la plantilla pide tres y podrían ser dos o cuatro; y JSON y no tabla
+    # aparte por lo mismo que `findings`: **es parte del documento**, y colgando
+    # de otro lado se editaría por detrás de un informe ya aprobado.
+    actions = models.JSONField(default=list, blank=True)
     approved_at = models.DateTimeField(null=True, blank=True)
     approved_by = models.CharField(max_length=64, blank=True, default="")
 
@@ -267,6 +287,28 @@ class ReportRun(BaseModel):
                 )
             if entry["severity"] not in self.FINDING_SEVERITIES:
                 raise ValidationError({"findings": _("Unknown finding severity.")})
+
+        # LV-235: `actions` con la misma vara, y por la misma razón. Una fila mal
+        # formada no revienta al guardar sino **al dibujar el Dato Ejecutivo**,
+        # que es la hoja que se lleva a la reunión.
+        if not isinstance(self.actions, list):
+            raise ValidationError({"actions": _("Actions must be a list.")})
+        for entry in self.actions:
+            if not isinstance(entry, dict) or set(entry) != self.ACTION_FIELDS:
+                raise ValidationError(
+                    {
+                        "actions": _(
+                            "Each action needs a description, an owner and a date."
+                        )
+                    }
+                )
+            # Una acción sin responsable es una acción que nadie hace, y sin
+            # plazo es una que se hace algún día. El texto solo no alcanza: es
+            # exactamente lo que la plantilla en papel dejaba pasar.
+            if not str(entry["action"]).strip() or not str(entry["owner"]).strip():
+                raise ValidationError(
+                    {"actions": _("An action needs both a description and an owner.")}
+                )
 
     @property
     def is_editable(self):

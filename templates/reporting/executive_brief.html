@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% load i18n static report_leaf %}
+{% comment %}`LV-235` · **Dato Ejecutivo RPA**, la hoja de una página.
+
+Pedido del usuario con los dos documentos base: *"el otro lo genero de forma
+automática de manera diferente, yo lo voy llenando"*. Ésta es esa hoja, generada.
+
+**Es una segunda salida del mismo payload, no un informe aparte**, y ésa es la
+decisión: los seis indicadores, la tabla por faena, los vencimientos y las
+solicitudes en trámite ya estaban calculados para las cinco páginas. Dos
+recolecciones separadas es cómo la hoja de una página y el informe empiezan a
+decir cifras distintas del mismo mes — el error que `LV-188` costó y que
+`collect_kpis` ya evita contando sobre las filas recolectadas.
+
+De la plantilla en papel, **lo único que sigue siendo manual son las acciones**:
+qué se decide hacer, quién y para cuándo. Eso no lo produce ninguna consulta. El
+detalle de incidentes **sí** se calcula, porque `NonConformity` ya guarda el
+evento con su fecha, su faena y su reporte a la DGAC.{% endcomment %}
+{% block title %}{% translate "Executive brief" %} {{ payload.meta.code }} - AeroControl{% endblock %}
+{% block extrahead %}<link rel="stylesheet" href="{% static 'css/report-a4.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header no-print">
+  <div>
+    <p class="page-eyebrow mb-1">{% translate "Reports" %}</p>
+    <h1 class="h3 mb-0">{% translate "Executive brief" %}</h1>
+    <p class="page-description mb-0">{{ payload.meta.code }}</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap align-items-end">
+    <form method="get" class="d-flex gap-2 align-items-end">
+      <div>
+        <label class="form-label" for="period">{% translate "Period" %}</label>
+        <input class="form-control" type="month" id="period" name="period" value="{{ period_date|date:'Y-m' }}">
+      </div>
+      <button class="btn btn-primary">{% translate "Apply" %}</button>
+    </form>
+    <a class="btn btn-outline-secondary" href="{% url 'monthly-report' %}?period={{ period_date|date:'Y-m' }}">{% translate "Full report" %}</a>
+  </div>
+</div>
+
+{% comment %}El mismo aviso que las cinco páginas: en el papel el borrador y el
+emitido son idénticos, así que la pantalla tiene que decir cuál se mira.{% endcomment %}
+<div class="alert {% if run %}alert-secondary{% else %}alert-warning{% endif %} no-print">
+  {% if run %}{% blocktranslate with label=revision_label %}Frozen payload · {{ label }}{% endblocktranslate %}{% else %}{% translate "Live preview: nothing is frozen for this period yet." %}{% endif %}
+</div>
+
+<div class="rpt-sheet rpt-brief">
+  <div class="rpt-brief-head">
+    <div class="rpt-brief-eyebrow">J.E.J. INGENIERÍA S.A. · OPERACIONES AÉREAS</div>
+    <h2 class="rpt-brief-title">Dato Ejecutivo RPA</h2>
+    <div class="rpt-brief-sub">Reporte mensual de operaciones con aeronaves pilotadas a distancia</div>
+    <div class="rpt-brief-meta">
+      <span class="rpt-brief-month">{{ period_date|date:"F Y"|upper }}</span>
+      <span>Corte al {{ cutoff_date|date:"d-m-Y" }}{% if payload.meta.in_progress %} · período en curso, {{ payload.meta.days_remaining }} día{{ payload.meta.days_remaining|pluralize:"s" }} por transcurrir{% endif %}</span>
+      <span class="rpt-brief-code">{{ payload.meta.code }}</span>
+    </div>
+  </div>
+
+  {% comment %}Los seis indicadores de la plantilla, en su mismo orden. Cada uno
+  pasa por `{% templatetag openblock %} leaf {% templatetag closeblock %}`, así
+  que un hueco sale en ámbar punteado y **nunca como cero** — la regla que manda
+  sobre todo el informe.{% endcomment %}
+  <div class="rpt-brief-kpis">
+    <div class="rpt-brief-kpi"><div class="rpt-brief-kpi-v">{% leaf payload.kpis.cost_centres_with_operation %}</div><div class="rpt-brief-kpi-n">Centros de Costo registrados</div></div>
+    <div class="rpt-brief-kpi"><div class="rpt-brief-kpi-v">{{ habilitados }}</div><div class="rpt-brief-kpi-n">CC habilitados para operar</div></div>
+    <div class="rpt-brief-kpi"><div class="rpt-brief-kpi-v">{% leaf payload.kpis.permits_in_force %}</div><div class="rpt-brief-kpi-n">Permisos de vuelo vigentes</div></div>
+    <div class="rpt-brief-kpi"><div class="rpt-brief-kpi-v">{% leaf payload.kpis.permits_expiring_60d %}</div><div class="rpt-brief-kpi-n">Por vencer en 60 días</div></div>
+    <div class="rpt-brief-kpi"><div class="rpt-brief-kpi-v">{% leaf payload.kpis.permits_awaiting %}</div><div class="rpt-brief-kpi-n">Solicitudes en trámite</div></div>
+    <div class="rpt-brief-kpi"><div class="rpt-brief-kpi-v">{% leaf payload.kpis.incidents %}</div><div class="rpt-brief-kpi-n">Incidentes del período</div></div>
+  </div>
+
+  <div class="rpt-label">Estado por Centro de Costo</div>
+  <table class="rpt-table rpt-brief-table">
+    <colgroup><col style="width: 14%"><col><col style="width: 12%"><col style="width: 18%"></colgroup>
+    <thead><tr><th scope="col">Código</th><th scope="col">Centro de Costo</th><th scope="col">Perm.</th><th scope="col">Vence</th></tr></thead>
+    <tbody>
+      {% for row in payload.cost_centres %}
+      <tr>
+        <td><strong>{{ row.code }}</strong></td>
+        <td>{{ row.name }}</td>
+        <td>{{ row.permits_in_force }}</td>
+        {% comment %}Sin próximo vencimiento va raya y no vacío: la faena sin
+        permiso vigente no tiene fecha, y una celda en blanco se lee como dato
+        que no cargó.{% endcomment %}
+        <td>{% if row.next_expiry %}{{ row.next_expiry|as_date|date:"d-m-Y" }}{% else %}—{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="rpt-brief-cols">
+    <div>
+      <div class="rpt-label">Vencimientos próximos 60 días</div>
+      <ul class="rpt-brief-list">
+        <li>Permisos por vencer · <strong>{% leaf payload.kpis.permits_expiring_60d %}</strong>{% if payload.kpis.permits_expiring_30d.value %} <span class="rpt-brief-crit">({% leaf payload.kpis.permits_expiring_30d %} en 30 días o menos)</span>{% endif %}</li>
+        {% comment %}Los seguros y las credenciales salen de los mismos
+        contadores que la página 2, y **separando "sin fecha" de "vencida"**: en
+        el informe emitido los 8 "sin credencial vigente" eran 7 sin fecha
+        cargada más 1 vencida, y se arreglan distinto — una se carga, la otra se
+        renueva.{% endcomment %}
+        <li>Seguros JAC por renovar · <strong>{% leaf payload.kpis.insurance_lapsed %}</strong>{% if payload.kpis.insurance_missing.value %} <span class="rpt-brief-crit">(+{% leaf payload.kpis.insurance_missing %} sin fecha cargada)</span>{% endif %}</li>
+        <li>Credenciales DGAC por renovar · <strong>{% leaf payload.kpis.credentials_lapsed %}</strong>{% if payload.kpis.credentials_missing.value %} <span class="rpt-brief-crit">(+{% leaf payload.kpis.credentials_missing %} sin fecha cargada)</span>{% endif %}</li>
+      </ul>
+    </div>
+    <div>
+      <div class="rpt-label">Solicitudes en trámite ante la DGAC</div>
+      {% if awaiting %}
+      <ul class="rpt-brief-list">
+        {% for row in awaiting %}
+        <li><strong>{{ row.folio }}</strong> · {{ row.cost_centre }}{% if row.valid_from %} · desde {{ row.valid_from|as_date|date:"d-m-Y" }}{% endif %}</li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="rpt-brief-empty">Sin solicitudes pendientes de resolución al corte.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="rpt-label">Incidentes y eventos operacionales</div>
+  {% if payload.incidents %}
+  <table class="rpt-table rpt-brief-table">
+    <thead><tr><th scope="col">Evento</th><th scope="col">Fecha</th><th scope="col">CC</th><th scope="col">Estado</th><th scope="col">Reporte DGAC</th></tr></thead>
+    <tbody>
+      {% for row in payload.incidents %}
+      <tr>
+        <td>{{ row.title }}</td>
+        <td>{{ row.detected_on|as_date|date:"d-m-Y" }}</td>
+        <td>{{ row.cost_centre|default:"—" }}</td>
+        <td>{{ row.status_label }}</td>
+        {% comment %}"No reportado" y "reportado sin folio" son dos cosas
+        distintas, y para un evento notificable el folio **es** la evidencia.{% endcomment %}
+        <td>{% if row.reported_to_dgac %}{{ row.reported_to_dgac|as_date|date:"d-m-Y" }}{% if row.dgac_reference %} · {{ row.dgac_reference }}{% endif %}{% else %}<span class="rpt-brief-crit">No reportado</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="rpt-brief-empty">Sin eventos que reportar en el período.</p>
+  {% endif %}
+
+  <div class="rpt-label">Acciones requeridas este mes</div>
+  {% if actions %}
+  <table class="rpt-table rpt-brief-table">
+    <colgroup><col><col style="width: 26%"><col style="width: 18%"></colgroup>
+    <thead><tr><th scope="col">Acción</th><th scope="col">Responsable</th><th scope="col">Plazo</th></tr></thead>
+    <tbody>
+      {% for row in actions %}
+      <tr><td>{{ row.action }}</td><td>{{ row.owner }}</td><td>{{ row.due|default:"—" }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  {% comment %}El único hueco que la hoja no puede rellenar sola, y lo dice en
+  vez de dejar una tabla vacía con tres filas numeradas: qué se decide hacer este
+  mes es una asignación, y la toma quien firma.{% endcomment %}
+  <p class="rpt-brief-empty">{% if run %}Sin acciones registradas para el período. Se escriben en «{% translate "Write the narrative" %}».{% else %}Las acciones se escriben sobre un informe congelado; este período todavía no lo está.{% endif %}</p>
+  {% endif %}
+
+  <div class="rpt-brief-foot">
+    <span>Emite: {{ payload.meta.issued_by }}, en conjunto con el {{ payload.meta.jointly_with }} (INS-096, 5.4.2).</span>
+    <span>Fuente: {{ payload.meta.sources }} · corte al {{ cutoff_date|date:"d-m-Y" }}</span>
+  </div>
+</div>
+{% endblock %}

@@ -8158,6 +8158,50 @@ msgstr ""
 "El período %(period)s todavía no termina: un informe mensual no se puede "
 "congelar antes del cierre de su mes."
 
+#: apps/reporting/forms.py
+msgid "Owner"
+msgstr "Responsable"
+
+#: apps/reporting/forms.py
+msgid "Leave no empty action between two written ones."
+msgstr "No deje una acción vacía entre dos escritas."
+
+#: apps/reporting/models.py
+msgid "Actions must be a list."
+msgstr "Las acciones tienen que ser una lista."
+
+#: apps/reporting/models.py
+msgid "Each action needs a description, an owner and a date."
+msgstr "Cada acción necesita descripción, responsable y fecha."
+
+#: apps/reporting/models.py
+msgid "An action needs both a description and an owner."
+msgstr "Una acción necesita descripción y responsable."
+
+#: templates/reporting/executive_brief.html
+msgid "Executive brief"
+msgstr "Dato Ejecutivo"
+
+#: templates/reporting/executive_brief.html
+msgid "Full report"
+msgstr "Informe completo"
+
+#: templates/reporting/executive_brief.html
+msgid "Live preview: nothing is frozen for this period yet."
+msgstr "Vista previa en vivo: todavía no hay nada congelado para este período."
+
+#: templates/reporting/narrative_form.html
+msgid "Actions required this month"
+msgstr "Acciones requeridas este mes"
+
+#: templates/reporting/narrative_form.html
+msgid ""
+"The only part of the executive brief that cannot be computed: what gets "
+"done, by whom, and by when."
+msgstr ""
+"Lo único del Dato Ejecutivo que no se puede calcular: qué se hace, quién lo "
+"hace y para cuándo."
+
 #: apps/operations/models.py
 msgid "No NOTAM published for the area"
 msgstr "Sin NOTAM publicados para el área"

@@ -90,8 +90,14 @@ def collect_kpis(cutoff, cost_centres, permit_rows):
     Con eso el encabezado decía "0 en trámite" sobre una tabla que listaba tres.
     """
     from apps.compliance.kpis import PERMIT_CRITICAL_DAYS, PERMIT_WARNING_DAYS
+    from apps.compliance.models import NonConformity
     from apps.dashboard.views import panel_readiness
     from apps.registry.models import CostCenter
+
+    # El primer día del mes al que pertenece el corte: los incidentes se cuentan
+    # **del período**, no acumulados, y sin esto un informe de agosto sumaría los
+    # de todo el año.
+    period_start = cutoff.replace(day=1)
 
     readiness = {card["key"]: card for card in panel_readiness(cutoff)["readiness"]}
     # `operates_flights`: `CC110` y `CC410` administran equipos y no vuelan
@@ -160,6 +166,43 @@ def collect_kpis(cutoff, cost_centres, permit_rows):
                 if row["in_force"] and row["days_remaining"] <= PERMIT_WARNING_DAYS
             ),
             "operations",
+            cutoff,
+        ),
+        # LV-235: **incidentes del período**, el indicador que los dos documentos
+        # de referencia piden y que el payload no producía. El informe emitido lo
+        # llevaba escrito a mano ("0 Incidentes en el período") y la plantilla del
+        # Dato Ejecutivo lo deja como raya.
+        #
+        # Se cuenta sobre `NonConformity` con `source="incident"` y no sobre todas
+        # las no conformidades: un re-vuelo o un entregable rechazado son
+        # hallazgos de calidad, no eventos operacionales notificables, y sumarlos
+        # inflaría ante la DGAC una cifra que ella lee como incidentes de vuelo.
+        #
+        # Por **fecha de detección** y no de creación: un evento del 20 de agosto
+        # cargado el 2 de septiembre pertenece a agosto, que es de lo que el
+        # informe habla. Es la misma distinción que `NotamReview.target_date`.
+        "incidents": leaf(
+            NonConformity.objects.filter(
+                is_active=True,
+                source=NonConformity.SOURCE_INCIDENT,
+                detected_on__gte=period_start,
+                detected_on__lte=cutoff,
+            ).count(),
+            "compliance",
+            cutoff,
+        ),
+        # Los que siguen abiertos al corte, que es la pregunta que sigue a la
+        # anterior: cero incidentes y cero abiertos no son lo mismo que dos
+        # incidentes ya cerrados.
+        "incidents_open": leaf(
+            NonConformity.objects.filter(
+                is_active=True,
+                source=NonConformity.SOURCE_INCIDENT,
+                detected_on__lte=cutoff,
+            )
+            .exclude(status="closed")
+            .count(),
+            "compliance",
             cutoff,
         ),
         "fleet_total": leaf(readiness["fleet"]["total"], "registry", cutoff),
@@ -390,6 +433,175 @@ def collect_permits(cutoff):
     return rows
 
 
+# LV-235: **el plan de normalización, como dato.**
+#
+# Textual del usuario mirando la página 5: *"el actual es estático, sólo cambia
+# la fecha, lo cual lo vuelve inútil"*. Y era exacto para esta página y sólo para
+# ésta: 124 líneas de plantilla con **dos** interpolaciones, y las dos eran la
+# firma. Sus cuatro fases llevaban los meses escritos a mano, así que en enero de
+# 2027 el informe iba a seguir diciendo *"FASE 0 · Sep 2026 · renovar los
+# permisos que vencen"* — un plan vencido impreso como si fuera vigente.
+#
+# Las fases **siguen viviendo en el código y no en la base**, y eso es
+# deliberado: son un compromiso de gestión que cambia una vez al año, no un dato
+# de operación. Una tabla de configuración para cuatro filas que nadie edita es
+# una tabla que nadie mantiene, el mismo criterio con el que `KpiTarget` no se
+# creó. Lo que se saca de la plantilla es **en qué fase se está**, que sí cambia
+# cada mes.
+PLAN_PHASES = [
+    (
+        (2026, 9),
+        "Cierre de brechas de habilitación",
+        "Renovar los permisos que vencen dentro del período. Definir cuáles de "
+        "los Centros de Costo sin permiso tendrán operación aérea y tramitar su "
+        "carta del mandante y su solicitud en SIGO.",
+        "ningún CC con operación prevista opera sin permiso vigente.",
+    ),
+    (
+        (2026, 10),
+        "Calendario de renovación automático",
+        "AeroControl calcula el vencimiento sobre la fecha real de cada "
+        "resolución —no sobre un plazo supuesto— y dispara alertas a 45 y 30 "
+        "días: a los 45 el ADC solicita la carta del mandante; a los 30 el Jefe "
+        "Seguridad Aérea presenta en SIGO y, sin carta, escala al Gerente "
+        "Operaciones Aéreas.",
+        "ninguna renovación depende de que alguien la recuerde.",
+    ),
+    (
+        (2026, 11),
+        "Bitácora digital de vuelo",
+        "Se habilita el registro por vuelo: bitácora (JEJ-GTE-CT-REG-015), "
+        "check list pre-vuelo (LVE-003) e inspección (LVE-002). Cada vuelo se "
+        "asocia al permiso que lo autoriza, de modo que el sistema no admita "
+        "registrar un vuelo sin permiso vigente en esa fecha.",
+        "completitud reportada como línea base, sin sanción interna.",
+    ),
+    (
+        (2026, 12),
+        "Exigibilidad plena y auditoría",
+        "La completitud de bitácoras pasa a indicador exigible por Centro de "
+        "Costo y se contrasta la coherencia entre vuelos ejecutados y vuelos "
+        "autorizados. Auditoría interna regulatoria conforme al numeral 5.4.2 "
+        "del INS-096.",
+        "informe anual consolidado y plan de acción 2027.",
+    ),
+]
+
+MONTH_ABBR = [
+    "",
+    "Ene",
+    "Feb",
+    "Mar",
+    "Abr",
+    "May",
+    "Jun",
+    "Jul",
+    "Ago",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dic",
+]
+
+
+def collect_plan(period):
+    """Las fases del plan, cada una sabiendo si ya pasó, es la de ahora, o viene.
+
+    **Es lo que vuelve variable la página 5.** El estado se calcula contra el
+    período del informe y no contra hoy, por lo mismo que el corte: reimprimir el
+    informe de agosto en diciembre tiene que devolver la página que agosto vio,
+    no la de diciembre.
+
+    Viaja en el payload, así que un informe congelado guarda **su** foto del
+    plan. Si el plan cambia el año que viene, los informes ya emitidos siguen
+    diciendo lo que dijeron — que es la razón de existir de `ReportRun`.
+
+    `concluded` es el caso que el plan escrito a mano no tenía: pasado diciembre
+    de 2026 no hay fase vigente, y decirlo es mejor que dejar la primera pintada
+    como actual para siempre.
+    """
+    key = (period.year, period.month)
+    rows = []
+    for index, (when, title, text, close) in enumerate(PLAN_PHASES):
+        if when < key:
+            state = "done"
+        elif when == key:
+            state = "current"
+        else:
+            state = "pending"
+        rows.append(
+            {
+                "number": index,
+                "month": f"{MONTH_ABBR[when[1]]} {when[0]}",
+                "title": title,
+                "text": text,
+                "close": close,
+                "state": state,
+            }
+        )
+    return {
+        "phases": rows,
+        # Ninguna fase es la actual: o el período es anterior al plan, o el plan
+        # ya terminó. Las dos se dicen, en vez de fingir una fase vigente.
+        "concluded": key > PLAN_PHASES[-1][0],
+        "not_started": key < PLAN_PHASES[0][0],
+    }
+
+
+def collect_incidents(cutoff):
+    """LV-235: los eventos operacionales del período, uno por fila.
+
+    La plantilla del Dato Ejecutivo pide *"detalle del evento, fecha, CC,
+    aeronave y estado del reporte a la DGAC"*, y el informe emitido lo llevaba
+    como una frase escrita a mano. **Todo eso ya está en `NonConformity`**
+    —incluido el reporte a la DGAC, que `R7.6` guarda como fecha y folio
+    justamente porque es la evidencia que pide un auditor— así que la sección se
+    calcula en vez de redactarse.
+
+    Sólo `source="incident"`: un re-vuelo o un entregable rechazado son hallazgos
+    de calidad, y listarlos acá los presentaría ante la DGAC como eventos
+    notificables.
+
+    Por **fecha de detección**, no de creación: un evento del 20 de agosto
+    cargado el 2 de septiembre pertenece a agosto, que es de lo que el informe
+    habla.
+    """
+    from apps.compliance.models import NonConformity
+
+    rows = []
+    for finding in (
+        NonConformity.objects.filter(
+            is_active=True,
+            source=NonConformity.SOURCE_INCIDENT,
+            detected_on__gte=cutoff.replace(day=1),
+            detected_on__lte=cutoff,
+        )
+        .select_related("cost_center")
+        .order_by("detected_on")
+    ):
+        rows.append(
+            {
+                "title": finding.title,
+                "detected_on": finding.detected_on.isoformat(),
+                "cost_centre": (
+                    finding.cost_center.code if finding.cost_center_id else None
+                ),
+                "status": finding.status,
+                "status_label": finding.get_status_display(),
+                # El reporte a la DGAC, que para un evento notificable **es** la
+                # evidencia. `None` y no cadena vacía: no reportado y reportado
+                # sin folio son dos cosas distintas.
+                "reported_to_dgac": (
+                    finding.reported_to_dgac_at.isoformat()
+                    if finding.reported_to_dgac_at
+                    else None
+                ),
+                "dgac_reference": finding.dgac_report_reference or None,
+            }
+        )
+    return rows
+
+
 def collect_concentration(permits):
     """R4: cuánto depende la operación de una sola persona.
 
@@ -479,5 +691,12 @@ def build(period, cutoff=None):
         "cost_centres": cost_centres,
         "permits": permits,
         "concentration": collect_concentration(permits),
+        # LV-235: el detalle de los eventos del período, para la sección que la
+        # plantilla del Dato Ejecutivo pedía escribir a mano.
+        "incidents": collect_incidents(cutoff),
+        # LV-235: el plan de la página 5, con la fase que corresponde al período.
+        # Contra el **período** y no contra hoy: reimprimir agosto en diciembre
+        # tiene que devolver la página que agosto vio.
+        "plan": collect_plan(period),
     }
     return payload, find_missing(payload)

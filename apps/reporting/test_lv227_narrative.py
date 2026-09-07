@@ -68,12 +68,21 @@ def draft(db):
     )
 
 
-def _post(count=1, **overrides):
+def _post(count=1, actions=0, **overrides):
     data = {
         "findings-TOTAL_FORMS": str(count),
         "findings-INITIAL_FORMS": "0",
         "findings-MIN_NUM_FORMS": "0",
         "findings-MAX_NUM_FORMS": "8",
+        # LV-235: la pantalla lleva ahora una segunda sección —las acciones del
+        # Dato Ejecutivo— y su `management_form` viaja siempre, aunque no se
+        # escriba ninguna. Sin él, Django rechaza el envío entero: es lo que la
+        # plantilla dibuja, así que un `POST` sin esto no reproduce el
+        # formulario real.
+        "actions-TOTAL_FORMS": str(actions),
+        "actions-INITIAL_FORMS": "0",
+        "actions-MIN_NUM_FORMS": "0",
+        "actions-MAX_NUM_FORMS": "6",
         "period_note": "",
     }
     data.update(overrides)
