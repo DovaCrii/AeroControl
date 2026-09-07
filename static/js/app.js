@@ -174,9 +174,53 @@
       event.detail.isError = false;
     }
   });
+  // UX-19: la guardia de cambios sin guardar del modal genérico.
+  //
+  // El criterio de la fila es literal -- cerrar con `Esc` o con "Cancelar"
+  // habiendo tocado un campo pide confirmación -- y hasta acá el modal se
+  // cerraba callado. Importa porque el modal es donde se cargan los formularios
+  // largos del proyecto: un permiso de vuelo a medio llenar, un `Esc` de más, y
+  // no queda nada.
+  //
+  // Se engancha en `hide.bs.modal` y no en cada botón porque ese evento es
+  // **cancelable** y cubre las cuatro salidas de una sola vez: `Esc`, la cruz,
+  // cualquier `data-bs-dismiss="modal"` y el clic fuera del cuadro. Enganchar
+  // botón por botón habría dejado `Esc` sin cubrir, que es justo el accidente
+  // más común.
+  var modalDirty = false;
+  // "Tocado" y no "distinto del original", tal como está escrito el criterio.
+  // Se decidió así a propósito: comparar contra un estado inicial obliga a
+  // serializar el formulario, y con `<input type="file">` y los campos que otro
+  // script muestra u oculta esa comparación miente en los dos sentidos. Escribir
+  // y borrar deja el aviso puesto -- es el falso positivo, y es el barato: sobra
+  // una pregunta, no se pierde lo escrito.
+  document.body.addEventListener('input', function (event) {
+    if (event.target.closest('#modal-content')) modalDirty = true;
+  });
+  document.body.addEventListener('change', function (event) {
+    if (event.target.closest('#modal-content')) modalDirty = true;
+  });
+  document.getElementById('generic-modal').addEventListener('hide.bs.modal', function (event) {
+    if (!modalDirty) return;
+    var message = this.dataset.unsavedMessage;
+    if (message && !window.confirm(message)) {
+      event.preventDefault();
+      return;
+    }
+    modalDirty = false;
+  });
   document.body.addEventListener('htmx:afterSwap', function (event) {
     if (event.detail.target.id !== 'modal-content') return;
     var modal = document.getElementById('generic-modal');
+    // Contenido nuevo, formulario nuevo: lo tecleado en el anterior ya no está
+    // en pantalla.
+    //
+    // ⚠️ **Salvo en el 422**, que es el caso que importa. Ese swap no trae un
+    // formulario en blanco: trae el mismo, con los errores marcados y **con todo
+    // lo que la persona escribió**. Reiniciar ahí dejaría sin guardia
+    // precisamente el momento en que hay más escrito y más ganas de cerrar.
+    var failed = event.detail.xhr && event.detail.xhr.status === 422;
+    if (!failed) modalDirty = false;
     // LV-92: a PDF viewer inside the default dialog is a letterbox. Decided
     // from what was actually swapped in, rather than by having each template
     // declare its own width -- a flag the fragments had to remember to set
@@ -209,6 +253,11 @@
     if (modalTrigger) { modalTrigger.focus(); }
   });
   document.body.addEventListener('modal-form-success', function () {
+    // UX-19: guardado quiere decir que ya no hay nada que perder. Sin esto, el
+    // camino feliz terminaría preguntando "¿cerrar y perder los cambios?" justo
+    // después de guardarlos — una guardia que miente es peor que no tenerla,
+    // porque enseña a contestar que sí sin leer.
+    modalDirty = false;
     bootstrap.Modal.getOrCreateInstance(document.getElementById('generic-modal')).hide();
     window.location.reload();
   });

@@ -413,8 +413,13 @@ publicó. Entra con esto todo lo del 07: `LV-233` completo (las tres partes),
 `LV-218(b)`, `LV-235` y `UX-14`.
 
 ⚠️ **Sin respaldo previo**, por el orden mal dictado que se explica más abajo. Se
-tomó uno **después**. No hubo daño —las cuatro migraciones son aditivas— pero
-queda anotado porque es la clase de atajo que un día sí importa.
+tomó uno **después** (`aero_ops_20260907_132346`, verificado). No hubo daño —las
+cuatro migraciones son aditivas— pero queda anotado porque es la clase de atajo
+que un día sí importa.
+
+✅ **Y la segunda tanda del 2026-09-07 desplegada: `c6ded72`.** Sin migraciones:
+`UX-13` (la bandeja de trabajo), `UX-14` (responsable), y `UX-15` a `UX-18`, que
+cierran la fase C del plan UX. Sólo `git pull` + `collectstatic` + reinicio.
 
 ⏳ **Del 2026-09-07 quedan cuatro commits subidos y SIN desplegar**, del
 `30bc2e6` al `a5988fc`: las tres partes de `LV-233`, `LV-218(b)` y la consulta a

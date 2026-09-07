@@ -23,6 +23,73 @@ def translate_field_label(label):
     )
 
 
+#: `UX-21`. Nombres de campo que son un teléfono aunque su tipo sea `CharField`.
+#: Se comprueba por subcadena porque en el proyecto conviven `phone`,
+#: `contact_phone` y `emergency_phone`.
+_TEL_FIELD_HINTS = ("phone", "telefono", "movil", "celular")
+
+
+def _set_mobile_input_hints(name, field):
+    """`UX-21`: `inputmode` y `autocomplete` según lo que el campo **es**.
+
+    El criterio de la fila es literal: *"un campo numérico abre teclado numérico
+    en móvil"*. Y pesa más acá que en una aplicación de escritorio, porque quien
+    carga una bitácora lo hace en faena, en un teléfono: un teclado alfabético
+    para escribir una altura de vuelo o una coordenada es fricción en cada dato,
+    varias veces por jornada.
+
+    Se deduce del **tipo del campo**, no de su nombre — un `DecimalField` es
+    decimal en todos los modelos— con una sola excepción declarada: "teléfono"
+    no tiene tipo propio en Django y sólo se sabe por cómo se llama.
+
+    ⚠️ **`enterkeyhint` no se pone, y es deliberado.** Su valor correcto depende
+    de si el campo es el último del formulario —ahí `done`, si no `next`— y eso
+    el formulario no lo sabe: el orden final lo arma la plantilla, y varias
+    reordenan u ocultan campos. Un `enterkeyhint="next"` en el último campo
+    promete un salto que no ocurre, y una promesa falsa en el teclado es peor
+    que ninguna pista.
+
+    ⚠️ **Y `autocomplete` sólo se levanta donde el navegador acierta.** El
+    defecto del proyecto es `off` y se conserva: en un formulario de cumplimiento
+    casi todo campo describe un registro *ajeno* —la matrícula de una aeronave,
+    el folio de un permiso, el correo del titular— así que ofrecer ahí lo que la
+    persona escribió en otro formulario invita a guardar el dato de otro. Se abre
+    sólo donde lo sugerido sería de quien escribe.
+    """
+    widget = field.widget
+    # Sin caja de texto no hay teclado que dirigir; y `HiddenInput` no se toca
+    # porque su valor no lo escribe nadie.
+    if isinstance(
+        widget,
+        (forms.CheckboxInput, forms.Select, forms.Textarea, forms.FileInput),
+    ):
+        return
+    # `getattr`: `input_type` lo declaran las subclases de `Input`, no `Widget`,
+    # y un formulario puede traer un widget propio que no lo tenga.
+    if getattr(widget, "input_type", "") in {
+        "hidden",
+        "date",
+        "datetime-local",
+        "time",
+    }:
+        # Las de fecha ya las fijó `AeroModelForm.__init__`, y el teclado de un
+        # `<input type="date">` lo elige el sistema operativo: un `inputmode`
+        # encima sólo puede empeorarlo.
+        return
+
+    attrs = widget.attrs
+    if isinstance(field, (forms.DecimalField, forms.FloatField)):
+        # `decimal` y no `numeric`: acá viajan coordenadas, radios y horas de
+        # vuelo, y un teclado sin separador decimal los vuelve inescribibles.
+        attrs.setdefault("inputmode", "decimal")
+    elif isinstance(field, forms.IntegerField):
+        attrs.setdefault("inputmode", "numeric")
+    elif isinstance(field, forms.EmailField):
+        attrs.setdefault("inputmode", "email")
+    elif any(hint in name.lower() for hint in _TEL_FIELD_HINTS):
+        attrs.setdefault("inputmode", "tel")
+
+
 class AeroModelForm(forms.ModelForm):
     """Shared form behavior for translated, correctly typed operational fields."""
 
@@ -32,7 +99,7 @@ class AeroModelForm(forms.ModelForm):
         # la encuentra. La deja acá para que la vista pueda ofrecer su ficha; el
         # mensaje de error se levanta igual, no depende de esto.
         self.duplicate_of = None
-        for field in self.fields.values():
+        for name, field in self.fields.items():
             if field.label:
                 field.label = _(translate_field_label(field.label))
             # LV-73 [bug de pérdida de datos]: cambiar `input_type` sin fijar
@@ -61,6 +128,7 @@ class AeroModelForm(forms.ModelForm):
                 # can still drag to grow them.
                 field.widget.attrs.setdefault("rows", 3)
             field.widget.attrs.setdefault("autocomplete", "off")
+            _set_mobile_input_hints(name, field)
 
     def validate_constraints(self):
         """LV-142: una `UniqueConstraint` que menciona `tenant` no se validaba nunca.

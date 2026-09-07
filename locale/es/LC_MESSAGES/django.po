@@ -8489,3 +8489,7 @@ msgstr "Quitar la selección"
 #: templates/generic/list.html
 msgid "Export the selection"
 msgstr "Exportar la selección"
+
+#: templates/base.html
+msgid "This form has changes that have not been saved. Close it and lose them?"
+msgstr "Este formulario tiene cambios sin guardar. ¿Cerrarlo y perderlos?"
