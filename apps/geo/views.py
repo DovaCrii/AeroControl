@@ -555,6 +555,17 @@ class GeoPlanDetailView(ModelViewPermissionRequiredMixin, DetailView):
                 "diffRemoved": _("Removed"),
                 "diffChanged": _("Changed"),
                 "diffVersion": _("Version"),
+                # `UX-28` (WCAG 2.2 §2.5.7): la tabla de coordenadas, que es la
+                # alternativa sin arrastre a mover vértices con el ratón. Los
+                # rótulos se traducen acá como el resto: los módulos del mapa no
+                # llevan cadenas visibles.
+                "coordinates": _("Coordinates"),
+                "latitude": _("Latitude"),
+                "longitude": _("Longitude"),
+                "vertex": _("Vertex"),
+                "coordinatesHint": _(
+                    "Edit the numbers and apply: nothing here needs dragging."
+                ),
             },
         }
         context.update(self._weather_context(plan, current))
