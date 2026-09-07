@@ -71,16 +71,57 @@
   line-height: 1.45;
   letter-spacing: 0.02em;
 }
-.rpt-foot { position: absolute; left: 56px; right: 48px; bottom: 20px; }
-.rpt-foot > div {
+/* El pie, uno solo para las cinco hojas (ver `reporting/_foot.html`).
+ *
+ * Se ancla por `bottom` y no por `top`: la portada lleva tres renglones de
+ * domicilio y las otras cuatro uno o dos, así que igualar la regla de arriba
+ * dejaría los textos a alturas distintas contra el borde del papel — que es lo
+ * que el lector compara al pasar la hoja. Lo que se alinea es la **línea de
+ * base**. */
+.rpt-foot {
+  position: absolute;
+  left: 56px;
+  right: 48px;
+  bottom: 28px;
   border-top: 1px solid var(--rpt-rule);
   padding-top: 8px;
   display: flex;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 16px;
+  gap: 18px;
   color: var(--rpt-muted);
   font-size: 9px;
+  line-height: 1.45;
 }
+
+/* ⚠️ Acá estaba el traslape. Los dos lados eran `<span>` sueltos en un flex sin
+ * base declarada, así que el reparto lo decidía el contenido: la nota de la
+ * página 3 —población, estado, archivado y tres normas, más de doscientos
+ * caracteres— se quedaba con el ancho, y el rótulo de la derecha se encogía
+ * hasta partirse en dos renglones que se metían debajo. Y como el bloque crece
+ * hacia arriba desde `bottom`, esa segunda línea empujaba la regla contra la
+ * tabla.
+ *
+ * El rótulo es corto y de largo conocido: se le da el ancho que pide y no cede
+ * (`flex: none`, sin quiebre). La nota se lleva el resto y envuelve dentro de su
+ * columna. `min-width: 0` es lo que permite que envuelva de verdad: sin eso el
+ * mínimo de un ítem flex es el ancho de su contenido, y volvería a desbordar. */
+.rpt-foot-note { flex: 1 1 auto; min-width: 0; }
+.rpt-foot-id {
+  flex: none;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.rpt-foot-cover {
+  border-top-width: 2px;
+  border-top-color: var(--rpt-navy);
+  padding-top: 10px;
+  font-size: 9.5px;
+  line-height: 1.5;
+}
+.rpt-foot-cover .rpt-foot-note { font-size: 10px; }
+.rpt-foot-firm { color: var(--rpt-navy); font-weight: bold; }
 
 /* Título numerado de sección. */
 .rpt-body { padding: 22px 48px 0 56px; display: block; }
@@ -344,7 +385,11 @@
  * alarma. El rojo está reservado para el nivel crítico de `permit_band`. */
 .rpt-brief-crit { color: #8A5A12; font-weight: bold; }
 .rpt-brief-empty { color: #52606D; font-size: 9px; font-style: italic; margin: 0 0 12px; }
-.rpt-brief-foot { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; border-top: 1px solid #D7DEE6; margin-top: 12px; padding-top: 7px; color: #52606D; font-size: 7.8px; }
+/* `flex-wrap` fuera: era lo que dejaba caer la identidad a un renglón propio
+ * cuando la nota crecía, y una hoja de una página no tiene margen que regalar.
+ * Con el mismo reparto que `.rpt-foot` —nota elástica, identidad fija— la nota
+ * envuelve dentro de su columna y la fecha de corte se queda donde está. */
+.rpt-brief-foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; border-top: 1px solid #D7DEE6; margin-top: 12px; padding-top: 7px; color: #52606D; font-size: 7.8px; line-height: 1.45; }
 
 /* LV-235: el estado de cada fase del plan, ahora que la página 5 es variable.
  *

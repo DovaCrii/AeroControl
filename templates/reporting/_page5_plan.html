@@ -107,11 +107,6 @@ devolver la página que agosto vio.{% endcomment %}
 
   </div>
 
-  <div class="rpt-foot">
-    <div>
-      <span>El informe mensual es obligación del {{ payload.meta.issued_by }} en conjunto con el {{ payload.meta.jointly_with }} (INS-096, 5.4.2 y 6.5).</span>
-      <span>J.E.J. Ingeniería S.A. · Página 5</span>
-    </div>
-  </div>
+  {% include "reporting/_foot.html" with page=5 %}
 
 </div>

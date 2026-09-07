@@ -155,9 +155,13 @@ emitido son idénticos, así que la pantalla tiene que decir cuál se mira.{% en
   <p class="rpt-brief-empty">{% if run %}Sin acciones registradas para el período. Se escriben en «{% translate "Write the narrative" %}».{% else %}Las acciones se escriben sobre un informe congelado; este período todavía no lo está.{% endif %}</p>
   {% endif %}
 
+  {% comment %}Mismo reparto que el pie de las cinco hojas: la nota se lleva el
+  ancho sobrante y envuelve, la identidad no cede. Y lleva la revisión, que antes
+  sólo estaba en el aviso de pantalla — o sea que la hoja impresa, que es la que
+  circula, no declaraba de qué versión salió.{% endcomment %}
   <div class="rpt-brief-foot">
-    <span>Emite: {{ payload.meta.issued_by }}, en conjunto con el {{ payload.meta.jointly_with }} (INS-096, 5.4.2).</span>
-    <span>Fuente: {{ payload.meta.sources }} · corte al {{ cutoff_date|date:"d-m-Y" }}</span>
+    <div class="rpt-foot-note">Emite: {{ payload.meta.issued_by }}, en conjunto con el {{ payload.meta.jointly_with }} (INS-096, 5.4.2). Fuente: {{ payload.meta.sources }}.</div>
+    <div class="rpt-foot-id">{{ revision_label }} · corte al {{ cutoff_date|date:"d-m-Y" }}</div>
   </div>
 </div>
 {% endblock %}

@@ -143,11 +143,6 @@ sobre las cifras, y el informe va firmado.{% endcomment %}
 
   </div>
 
-  <div class="rpt-foot">
-    <div>
-      <span>Fuente: AeroControl, corte al {{ cutoff_date|date:"d-m-Y" }}.</span>
-      <span>J.E.J. Ingeniería S.A. · Página 2</span>
-    </div>
-  </div>
+  {% include "reporting/_foot.html" with page=2 %}
 
 </div>
