@@ -301,11 +301,27 @@ def collect_permits(cutoff):
 
     permits = (
         FlightPermission.objects.filter(
-            is_active=True,
             status__in=(
                 FlightPermission.STATUS_REQUESTED,
                 FlightPermission.STATUS_APPROVED,
             ),
+        )
+        # LV-233, tercera parte: **vivo al corte**, no vivo hoy. Un permiso
+        # archivado *después* del corte estaba vivo entonces y tiene que
+        # aparecer; uno archivado antes, no.
+        #
+        # Es una omisión lo que se corrige, y por eso valía la columna: un estado
+        # equivocado se ve en la fila, y una fila que falta no se ve en ninguna
+        # parte.
+        #
+        # `archived_at` nulo en una fila archivada significa *no se sabe cuándo*
+        # —se archivó antes de que existiera la columna— y entonces se la deja
+        # fuera, que es lo que esta consulta hacía siempre. La limitación se
+        # declara en el pie del informe y se achica sola: cada archivo nuevo trae
+        # su fecha.
+        .filter(
+            models.Q(is_active=True)
+            | models.Q(archived_at__isnull=False, archived_at__date__gt=cutoff)
         )
         # ⚠️ **LV-233: al corte, no a hoy.** Hasta acá `cutoff` sólo se usaba para
         # calcular la columna "Días" y **no filtraba nada**, así que la página 3

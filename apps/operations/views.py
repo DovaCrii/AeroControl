@@ -843,7 +843,12 @@ class FlightPermissionArchive(ModelPermissionRequiredMixin, View):
                 },
             )
         permission.is_active = False
-        permission.save(update_fields=["is_active", "updated_at"])
+        # LV-233: la fecha del archivo, para que el informe pueda reconstruir su
+        # población a un corte pasado. Sin esto, un permiso vivo en agosto y
+        # archivado en septiembre desaparecía del informe de agosto -- una
+        # omisión, peor que un estado equivocado porque no se ve.
+        permission.archived_at = timezone.now()
+        permission.save(update_fields=["is_active", "archived_at", "updated_at"])
         set_audit_context(
             request,
             permission,
@@ -875,7 +880,11 @@ class FlightPermissionRestore(ModelPermissionRequiredMixin, View):
             is_active=False,
         )
         permission.is_active = True
-        permission.save(update_fields=["is_active", "updated_at"])
+        # Se limpia al restaurar: un permiso vivo con fecha de archivo diría que
+        # sigue archivado, y el informe lo dejaría fuera de todo corte posterior
+        # a esa fecha -- justo el defecto al revés.
+        permission.archived_at = None
+        permission.save(update_fields=["is_active", "archived_at", "updated_at"])
         set_audit_context(request, permission, action="restored")
         messages.success(request, _("Permit restored."))
         return redirect("permission-detail", pk=permission.pk)
