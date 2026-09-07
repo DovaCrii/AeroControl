@@ -1,0 +1,67 @@
+{% comment %}El pie de las cinco hojas del informe. Una sola copia.
+
+Antes había cinco pies distintos y ninguno igual al otro:
+
+- La **portada** lo dibujaba con `style=` propio, anclada a `bottom: 36px` y con
+  regla navy de 2 px; las páginas 2 a 5 usaban `.rpt-foot` a `bottom: 20px` con
+  regla gris de 1 px. Al pasar la hoja, el pie **saltaba 16 px**.
+- La portada rotulaba `{{ revision_label }} · Página 1`; las otras cuatro,
+  `J.E.J. Ingeniería S.A. · Página N`. O sea que la **revisión** —el dato que
+  distingue una versión de otra en un documento controlado— aparecía en una hoja
+  de cinco. Si alguien imprime sólo la página 3 para adjuntarla, no hay forma de
+  saber de qué revisión salió.
+- Ninguna decía de cuántas páginas, así que una hoja suelta tampoco declaraba si
+  el juego estaba completo.
+
+Ahora la geometría, la regla, el rótulo **y las notas** se escriben acá. Las
+notas también: son el texto que declara de dónde salió cada cifra, o sea la parte
+del pie que un cambio de criterio obliga a revisar entera, y tenerlas en cinco
+archivos es cómo una hoja termina declarando un corte que otra ya no usa. Es el
+mismo motivo por el que `_head.html` existe.
+
+El texto va en español y sin `{% translate %}`, igual que el resto del documento:
+no es interfaz, es el papel que se firma ante la DGAC.{% endcomment %}
+<div class="rpt-foot{% if cover %} rpt-foot-cover{% endif %}">
+  <div class="rpt-foot-note">
+    {% if page == 1 %}
+    <span class="rpt-foot-firm">J.E.J. INGENIERÍA S.A.</span><br>
+    Av. Apoquindo 2930, Piso 11, Las Condes – Santiago de Chile<br>
+    Fono +56 2 2722 5000 · jej@jej.cl · www.jej.cl
+    {% elif page == 2 %}
+    Fuente: AeroControl, corte al {{ cutoff_date|date:"d-m-Y" }}.
+    {% elif page == 3 %}
+    {% comment %}LV-233: el pie dice **qué se reconstruye y qué no**.
+
+    Se reconstruye al corte la población —quedan fuera los permisos que ese día
+    no existían y los que todavía no regían— y el **estado** de cada uno, leído
+    de `PermissionHistory`. Es lo que devuelve los "3 en trámite" de agosto que
+    la app mostraba como aprobados.
+
+    Y desde `operations.0028` también el **archivado**: un permiso archivado
+    después del corte estaba vivo entonces y vuelve a aparecer. Lo que sigue sin
+    poder reconstruirse son los que ya estaban archivados antes de que existiera
+    esa columna — su fecha es nula, o sea *no se sabe cuándo*, y quedan fuera.
+    **Esa limitación se achica sola**: cada archivo nuevo trae su fecha.
+
+    Decirlo en el papel no es una disculpa: es la diferencia entre una cota
+    honesta y una foto, y quien firma tiene que saber cuál de las dos está
+    firmando. Mismo criterio con el que el corte del padrón declara su
+    límite.{% endcomment %}
+    Días calculados al {{ cutoff_date|date:"d-m-Y" }}. Población, estado y archivado
+    reconstruidos al corte; quedan fuera los archivados sin fecha registrada.
+    Referencia: DAN 91, DAN 137, DAN 151 · INS-096 numeral 6.4.1.
+    {% elif page == 4 %}
+    Fuente: AeroControl — módulo Permisos, corte al {{ cutoff_date|date:"d-m-Y" }}.
+    {% elif page == 5 %}
+    El informe mensual es obligación del {{ payload.meta.issued_by }} en conjunto
+    con el {{ payload.meta.jointly_with }} (INS-096, 5.4.2 y 6.5).
+    {% endif %}
+  </div>
+  {% comment %}«de 5» va literal porque el juego es de cinco hojas por estructura
+  del documento, no por configuración: `monthly_report.html` incluye exactamente
+  esas cinco. Hay un test que vigila que las dos cosas no se separen.{% endcomment %}
+  <div class="rpt-foot-id">
+    {{ revision_label }} · Página {{ page }} de 5
+    {% if cover %}<br>Documento de gestión interna{% endif %}
+  </div>
+</div>

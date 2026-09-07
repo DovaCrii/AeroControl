@@ -71,14 +71,7 @@ ante la DGAC, y traducirlo lo convertiría en otro documento.{% endcomment %}
 
   </div>
 
-  <div style="position: absolute; left: 56px; right: 48px; bottom: 36px; border-top: 2px solid #124384; padding-top: 10px;">
-    <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 20px;">
-      <div style="color: #124384; font-size: 10px; line-height: 1.5;">
-        <span style="font-weight: bold;">J.E.J. INGENIERÍA S.A.</span><br>
-        <span style="color: #52606D;">Av. Apoquindo 2930, Piso 11, Las Condes – Santiago de Chile<br>Fono +56 2 2722 5000 · jej@jej.cl · www.jej.cl</span>
-      </div>
-      <div style="color: #52606D; font-size: 9.5px; text-align: right; line-height: 1.5;">{{ revision_label }} · Página 1<br>Documento de gestión interna</div>
-    </div>
-  </div>
+  {% include "reporting/_foot.html" with page=1 cover=True %}
+
 
 </div>

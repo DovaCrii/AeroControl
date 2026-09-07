@@ -385,3 +385,93 @@ class TestTheStampAndThePrintRules:
 
         assert "@page { size: A4; margin: 0; }" in css
         assert "break-inside: avoid" in css
+
+
+class TestTheFooterIsTheSameOnEveryPage:
+    """El pie estaba escrito cinco veces y no coincidía consigo mismo: la
+    portada anclada 16 px más arriba que las demás, con otra regla y otro
+    rótulo, y sólo ella declaraba la revisión.
+
+    Importa porque el informe **circula en papel**: alguien imprime la página 3
+    para adjuntarla a un permiso, y esa hoja suelta tiene que decir de qué
+    revisión salió y si el juego venía completo.
+    """
+
+    @pytest.mark.django_db
+    def test_every_page_declares_its_number_and_the_total(self, client, reader, site):
+        client.force_login(reader)
+
+        body = client.get(reverse(URL)).content.decode()
+
+        labels = [
+            " ".join(match.split())
+            for match in re.findall(
+                r'class="rpt-foot-id"[^>]*>(.*?)</div>', body, re.DOTALL
+            )
+        ]
+
+        assert len(labels) == 5
+        for number, label in enumerate(labels, start=1):
+            assert f"Página {number} de 5" in label
+
+    @pytest.mark.django_db
+    def test_every_page_declares_the_revision(self, client, reader, site):
+        """Sin congelar es «Borrador», y decirlo también es declarar la
+        revisión: lo que no puede pasar es que una hoja no diga nada."""
+        client.force_login(reader)
+
+        body = client.get(reverse(URL)).content.decode()
+
+        assert body.count("Borrador ·") == 5
+
+    def test_the_footer_page_count_matches_the_pages_included(self):
+        """`_foot.html` escribe «de 5» literal. Si mañana se agrega una hoja al
+        documento, este test cae antes de que salga un informe donde la página 6
+        diga «de 5»."""
+        from pathlib import Path
+
+        from django.conf import settings
+
+        templates = Path(settings.BASE_DIR) / "templates" / "reporting"
+        document = (templates / "monthly_report.html").read_text(encoding="utf-8")
+        foot = (templates / "_foot.html").read_text(encoding="utf-8")
+
+        included = len(re.findall(r'{% include "reporting/_page\d', document))
+
+        assert f"de {included}" in foot
+
+    def test_the_long_note_cannot_squeeze_the_page_label(self):
+        """⚠️ El traslape. Los dos lados eran `<span>` sueltos en un flex sin
+        base declarada: la nota de la página 3 —más de doscientos caracteres— se
+        quedaba con el ancho y el rótulo se partía en dos renglones metidos bajo
+        ella, empujando además la regla contra la tabla.
+
+        Se afirma sobre el CSS porque es donde vive el reparto; medirlo en un
+        navegador mediría la tipografía del que corra el test.
+        """
+        from pathlib import Path
+
+        from django.conf import settings
+
+        css = (Path(settings.BASE_DIR) / "static" / "css" / "report-a4.css").read_text(
+            encoding="utf-8"
+        )
+
+        assert ".rpt-foot-note { flex: 1 1 auto; min-width: 0; }" in css
+        # `flex: none` y sin quiebre: el rótulo pide su ancho y no lo cede.
+        assert re.search(
+            r"\.rpt-foot-id\s*{[^}]*flex:\s*none;[^}]*white-space:\s*nowrap;", css
+        )
+
+    def test_no_page_draws_its_own_footer_anymore(self):
+        """La regla que mantiene lo anterior cierto: cinco copias vuelven a
+        divergir en cuanto una se toca sola."""
+        from pathlib import Path
+
+        from django.conf import settings
+
+        templates = Path(settings.BASE_DIR) / "templates" / "reporting"
+        for page in sorted(templates.glob("_page*.html")):
+            source = page.read_text(encoding="utf-8")
+            assert '{% include "reporting/_foot.html"' in source, page.name
+            assert 'class="rpt-foot"' not in source, page.name
