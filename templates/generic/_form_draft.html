@@ -1,0 +1,33 @@
+{% load i18n %}
+{% comment %}`UX-23`: el borrador, generalizado.
+
+`form-draft.js` ya era genérico —se engancha en `[data-form-draft]` y no sabe
+nada del permiso— así que lo que faltaba no era código sino este archivo: el
+panel estaba escrito a mano dentro de `operations/permission_form.html` y por eso
+existía en una pantalla sola.
+
+**Sin `data-form-draft-key`, a propósito.** El JS cae entonces en
+`window.location.pathname`, que es exactamente la clave correcta: `/vuelos/new/`
+para el alta y `/vuelos/<id>/edit/` para cada edición. Una clave fija compartida
+entre alta y edición —como la que usa el formulario de permiso, `permission-form`—
+ofrece en la ficha del registro 3 el borrador que quedó del 5.
+
+**El borrador vive en este navegador**, decisión de `LV-154`, y el aviso lo dice:
+un borrador que se promete en todas partes y sólo está en uno es peor que no
+tenerlo.{% endcomment %}
+<div class="form-draft mt-4" data-form-draft>
+  {% comment %}`LV-210`: `d-none` además de `hidden`. El atributo pierde contra
+  `d-flex` —los dos son `!important` con la misma especificidad y gana el que
+  viene después en el bundle de Bootstrap— así que sin la clase el aviso se
+  dibuja aunque no haya ningún borrador. El JS la quita cuando encuentra
+  uno.{% endcomment %}
+  <div class="alert alert-info d-none d-flex flex-wrap gap-2 align-items-center" role="alert"
+       data-form-draft-notice hidden>
+    <span>
+      {% translate "You have a draft saved in this browser" %}<span data-form-draft-when-wrap hidden> (<span data-form-draft-when></span>)</span>.
+    </span>
+    <button type="button" class="btn btn-sm btn-outline-primary" data-form-draft-restore>{% translate "Recover it" %}</button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-form-draft-discard>{% translate "Discard it" %}</button>
+  </div>
+  <span class="form-draft-saved small text-body-secondary" data-form-draft-saved hidden></span>
+</div>

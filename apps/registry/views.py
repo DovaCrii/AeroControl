@@ -21,6 +21,7 @@ from apps.core.views import (
     HtmxFormMixin,
     ModelPermissionRequiredMixin,
     ModelViewPermissionRequiredMixin,
+    SaveAndAddAnotherMixin,
     SearchMixin,
     StatusTransitionView,
     TenantScopedQuerysetMixin,
@@ -1008,9 +1009,15 @@ AssignmentDetail, AssignmentCreate, AssignmentUpdate = (
         (RegistryDetail,),
         {"model": Assignment, "tenant_path": _CC_TENANT_PATH},
     ),
+    # `UX-22`: la tercera alta repetitiva que nombra el plan, "movimientos".
+    # Mover recursos entre faenas se hace por tandas —una faena que arranca se
+    # lleva varias asignaciones de una vez— y cada una deja su fila en
+    # `ResourceMovementLog`. Las de operador y aeronave no lo llevan porque ya
+    # son en lote (`OperatorBulkAssign`): asignan varios en un solo envío, que
+    # resuelve lo mismo de otra forma.
     type(
         "AssignmentCreate",
-        (RegistryCreate,),
+        (SaveAndAddAnotherMixin, RegistryCreate),
         {"model": Assignment, "form_class": AssignmentForm},
     ),
     type(
