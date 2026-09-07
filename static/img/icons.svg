@@ -17,6 +17,11 @@
   <symbol id="icon-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></symbol>
   <symbol id="icon-document-list" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></symbol>
   <symbol id="icon-alert-list" viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 22h4"/></symbol>
+  <!-- UX-13: la bandeja de trabajo. Símbolo propio y no el de alertas, que era
+       lo que yo iba a hacer: `R103` exige un icono distinto por entrada del menú
+       justamente para que se lea de un vistazo, y el guardián lo atajó. Una
+       bandeja de entrada, que es lo que la pantalla es. -->
+  <symbol id="icon-work-tray" viewBox="0 0 24 24"><path d="M3 13h5l2 3h4l2-3h5"/><path d="M5 5h14l2 8v6H3v-6z"/></symbol>
   <symbol id="icon-kanban" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 8v8M13 8v5M18 8v8"/></symbol>
   <symbol id="icon-operational-records" viewBox="0 0 24 24"><path d="M4 4h11l5 5v11H4z"/><path d="M8 12h8M8 16h8M8 8h4"/></symbol>
   <symbol id="icon-monthly-review" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4M9 15l2 2 4-4"/></symbol>

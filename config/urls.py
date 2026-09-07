@@ -17,6 +17,7 @@ from apps.core.views import (
     SignInView,
     UnifiedCalendarEventsView,
     UserRoleListView,
+    WorkTrayView,
 )
 
 # LV-78 step 1: the API index and the token endpoint come from core now. They
@@ -67,6 +68,10 @@ urlpatterns = [
     ),
     path("i18n/setlang/", set_language, name="set_language"),
     path("alerts/count/", AlertCountPartial.as_view(), name="alert-count"),
+    # UX-13: la bandeja de trabajo. En la raíz y no dentro de una app, porque
+    # cruza cuatro: colgarla de `compliance` diría que es de cumplimiento, y la
+    # mitad de sus filas no lo son.
+    path("bandeja/", WorkTrayView.as_view(), name="work-tray"),
     # UX-09/UX-12: las preferencias de lista. Fuera de cualquier app de negocio a
     # propósito -- no son datos de una faena ni de un permiso, son cómo una
     # persona mira cualquier listado, y colgarlas de `compliance` habría atado

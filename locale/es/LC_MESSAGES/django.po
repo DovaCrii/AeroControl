@@ -8183,6 +8183,38 @@ msgstr "Asignada a %(who)s."
 msgid "Left without an owner."
 msgstr "Quedó sin responsable."
 
+#: apps/core/tray.py
+msgid "permit awaiting the DGAC"
+msgstr "permiso esperando a la DGAC"
+
+#: apps/core/tray.py
+msgid "deliverable not released"
+msgstr "entregable sin liberar"
+
+#: templates/core/tray.html
+msgid "Work tray"
+msgstr "Bandeja de trabajo"
+
+#: templates/core/tray.html
+msgid "Everything pending, from every module, in one list."
+msgstr "Todo lo pendiente, de todos los módulos, en una sola lista."
+
+#: templates/core/tray.html
+msgid "What is pending"
+msgstr "Qué está pendiente"
+
+#: templates/core/tray.html
+msgid "Nothing pending."
+msgstr "Nada pendiente."
+
+#: templates/core/tray.html
+msgid ""
+"No open alerts, findings, permits awaiting the DGAC or unreleased "
+"deliverables."
+msgstr ""
+"Sin alertas abiertas, hallazgos, permisos esperando a la DGAC ni entregables "
+"sin liberar."
+
 #: templates/compliance/alert_list.html
 msgid "Any owner"
 msgstr "Cualquier responsable"

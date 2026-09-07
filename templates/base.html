@@ -171,7 +171,13 @@
       quita el enlace, igual que el patrón de LV-7 con Kanban.
       <a href="{% url 'document-list' %}" class="nav-item nav-compliance {% if url_name == 'document-list' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-document-list"/></svg>{% translate "Documents" %}</a>
       {% endcomment %}
-      <a href="{% url 'alert-list' %}" class="nav-item nav-compliance {% if url_name == 'alert-list' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-alert-list"/></svg>{% translate "Alerts" %} {% include "core/_alert_badge.html" %}</a>
+      {% comment %}`UX-13`: la bandeja va **primera** en esta sección y encima de las
+alertas, porque es la pantalla con la que se empieza el día: alertas es una de
+sus cuatro fuentes, no su reemplazo. Reusa el icono de alertas a propósito —
+`UX-05` fijó el juego de símbolos y un icono nuevo por pantalla nueva es cómo el
+menú deja de leerse de un vistazo.{% endcomment %}
+<a href="{% url 'work-tray' %}" class="nav-item nav-compliance {% if url_name == 'work-tray' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-work-tray"/></svg>{% translate "Work tray" %}</a>
+<a href="{% url 'alert-list' %}" class="nav-item nav-compliance {% if url_name == 'alert-list' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-alert-list"/></svg>{% translate "Alerts" %} {% include "core/_alert_badge.html" %}</a>
       {% comment %}LV-69 (2026-08-11): "Seguimiento de alertas" se ocultó del menú
       por decisión del usuario, que no reconocía qué hacía y lo veía duplicado.
       Es la tercera vuelta de este módulo (LV-7 lo ocultó, LV-48 lo renombró y lo
