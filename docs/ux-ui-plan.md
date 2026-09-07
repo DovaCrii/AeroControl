@@ -610,15 +610,32 @@ enlace a las resueltas del mes, no "No alerts found."
 
 ### Fase D — Formularios y entrada
 
-**`UX-19` · Guardia de cambios sin guardar en el modal genérico.** *Criterio:*
-cerrar con `Esc` o con "Cancelar" habiendo tocado un campo pide confirmación.
+**`UX-19` · Guardia de cambios sin guardar en el modal genérico** ✅ **hecho el 2026-09-07**. *Criterio:*
+cerrar con `Esc` o con "Cancelar" habiendo tocado un campo pide confirmación. Se
+engancha en `hide.bs.modal` y no en cada botón: ese evento es **cancelable** y
+cubre las cuatro salidas de una vez —`Esc`, la cruz, cualquier `data-bs-dismiss`
+y el clic fuera del cuadro—; botón por botón habría dejado `Esc` sin cubrir, que
+es el accidente más común. ⚠️ El swap de un **422** no reinicia la marca: no trae
+un formulario en blanco sino el mismo con los errores y **todo lo escrito**, o
+sea el momento con más que perder. Y `modal-form-success` sí la reinicia, porque
+una guardia que pregunta después de guardar enseña a contestar que sí sin leer.
 
 **`UX-20` · Formularios largos en página completa, no en modal.** Umbral: más de
 ocho campos o cualquier campo de selección múltiple. *Criterio:* el permiso de
 vuelo y la carga de documentos dejan de anidar tres barras de desplazamiento.
 
-**`UX-21` · `inputmode`, `enterkeyhint` y `autocomplete`** en todos los campos.
-*Criterio:* un campo numérico abre teclado numérico en móvil.
+**`UX-21` · `inputmode`, `enterkeyhint` y `autocomplete`** en todos los campos ✅ **hecho el 2026-09-07**.
+*Criterio:* un campo numérico abre teclado numérico en móvil — resuelto en
+`AeroModelForm`, o sea una vez para todo el proyecto, deduciendo del **tipo** del
+campo y no de su nombre (única excepción: "teléfono", que en Django no tiene tipo
+propio). Decimal para `DecimalField`/`FloatField` y no `numeric`: por ahí viajan
+coordenadas, radios y horas de vuelo. 🔶 **`enterkeyhint` queda fuera a
+propósito**: su valor correcto depende de si el campo es el último del
+formulario, y eso lo decide la plantilla, no el formulario — un `next` en el
+último campo promete un salto que no ocurre. 🔶 **Y `autocomplete` se queda en
+`off`**: en un formulario de cumplimiento casi todo campo describe un registro
+*ajeno*, así que sugerir ahí lo que la persona escribió en otro formulario invita
+a guardar el dato de otro.
 
 **`UX-22` · "Guardar y crear otro"** en los formularios de alta repetitiva
 (vuelos, documentos, movimientos).

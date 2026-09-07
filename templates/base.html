@@ -347,7 +347,13 @@ menú deja de leerse de un vistazo.{% endcomment %}
     </main>
   </div>
 
-  <div class="modal fade" id="generic-modal" tabindex="-1" aria-labelledby="generic-modal-title" aria-hidden="true"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="generic-modal-title">{% translate "Form" %}</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% translate 'Close' %}"></button></div><div class="modal-body" id="modal-content"><div class="text-center text-muted py-4" role="status">{% translate "Loading…" %}</div></div></div></div></div>
+  {% comment %}UX-19: el aviso de cambios sin guardar viaja en un `data-*` y no
+  dentro de `app.js` porque el archivo es estático y no pasa por gettext — el
+  mismo camino que ya usan `data-confirm` y los rótulos del tirador de la barra.
+  Sin esto el aviso saldría siempre en inglés, que en una pregunta de «¿perdés lo
+  escrito?» es exactamente donde no se puede dudar.{% endcomment %}
+  <div class="modal fade" id="generic-modal" tabindex="-1" aria-labelledby="generic-modal-title" aria-hidden="true"
+       data-unsaved-message="{% translate 'This form has changes that have not been saved. Close it and lose them?' %}"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="generic-modal-title">{% translate "Form" %}</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% translate 'Close' %}"></button></div><div class="modal-body" id="modal-content"><div class="text-center text-muted py-4" role="status">{% translate "Loading…" %}</div></div></div></div></div>
   <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"
           integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
           crossorigin="anonymous"></script>
