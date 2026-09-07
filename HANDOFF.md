@@ -214,7 +214,33 @@ cambiaron `app.css` y `worktable.js`.
 
 #### ⚠️ EL DESPLIEGUE DE ESTA TANDA (`355f6c1`)
 
-##### ⛔ Antes de pegar cualquier bloque de despliegue, correr esto solo
+##### Cómo se entra a `p340`
+
+```
+ssh levdigital01@100.121.16.118
+```
+
+Es la IP de Tailscale (`p340.tailccd107.ts.net`). **Esto se corre en la terminal
+de Windows**; todo lo demás, ya dentro.
+
+Y **entrar deja en `/home/levdigital01`, no en el proyecto**, así que el primer
+comando de adentro es siempre:
+
+```
+cd /opt/aerocontrol && hostname && pwd
+```
+
+Sin el `cd`, `git pull` responde *"not a git repository"* — que es un fallo
+limpio y visible, a diferencia del de Windows.
+
+⚠️ **Faltaba escrito, y por eso se perdieron tres intentos.** Esta sección decía
+*"los comandos van sin `ssh` porque quien despliega ya está dentro de la VM"* —
+cierto, pero daba por sabido el paso que lleva adentro. Sin él, los bloques se
+pegaban en la PowerShell de Windows, donde **parecen funcionar**: `git pull`
+responde, `migrate` aplica (sobre la base de desarrollo) y el fallo sólo aparece
+en el último renglón, cuando `sudo` no existe.
+
+##### ⛔ Y antes de pegar cualquier bloque, correr esto solo
 
 ```
 hostname && pwd
