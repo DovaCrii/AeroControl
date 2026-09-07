@@ -75,7 +75,7 @@ def collect_meta(period, cutoff):
     }
 
 
-def collect_kpis(cutoff, cost_centres):
+def collect_kpis(cutoff, cost_centres, permit_rows):
     """Los indicadores de portada, cada uno de su función de siempre.
 
     `cost_centres` llega ya calculado en vez de volver a consultarlo: la faena
@@ -83,12 +83,16 @@ def collect_kpis(cutoff, cost_centres):
     denominador tiene que ser exactamente el mismo universo que
     `cost_centres_with_operation` — dos recorridos separados es cómo el informe
     empieza a decir "7 de 12" en una página y "7 de 11" en la siguiente.
+
+    `permit_rows` llega por lo mismo, y `LV-233` lo demostró en producción: los
+    cuatro contadores del encabezado salían de `permit_counts`, que resuelve el
+    estado de **hoy**, mientras la tabla de abajo se reconstruye **al corte**.
+    Con eso el encabezado decía "0 en trámite" sobre una tabla que listaba tres.
     """
-    from apps.compliance.kpis import permit_counts
+    from apps.compliance.kpis import PERMIT_CRITICAL_DAYS, PERMIT_WARNING_DAYS
     from apps.dashboard.views import panel_readiness
     from apps.registry.models import CostCenter
 
-    permits = permit_counts(cutoff)
     readiness = {card["key"]: card for card in panel_readiness(cutoff)["readiness"]}
     # `operates_flights`: `CC110` y `CC410` administran equipos y no vuelan
     # (`LV-205`), así que contarlas como faenas con operación las declararía
@@ -108,14 +112,56 @@ def collect_kpis(cutoff, cost_centres):
             "operations",
             cutoff,
         ),
-        "permits_in_force": leaf(permits["in_force"], "operations", cutoff),
-        "permits_awaiting": leaf(permits["awaiting"], "operations", cutoff),
-        "permits_lapsed": leaf(permits["lapsed"], "operations", cutoff),
-        "permits_expiring_30d": leaf(permits["soon"], "operations", cutoff),
+        # LV-233: los cuatro contadores del encabezado **se cuentan sobre las
+        # filas ya recolectadas**, igual que la faena sin permiso de arriba y por
+        # la misma razón. `permit_counts` resuelve el estado de *hoy*, así que
+        # decía "0 en trámite" sobre una tabla que abajo listaba tres — el
+        # contraste contra el papel emitido lo dejó a la vista: 11 vigentes y 3
+        # en trámite en agosto, 14 y 0 en la app. Un encabezado que contradice a
+        # su propia tabla es peor que un encabezado ausente.
+        "permits_in_force": leaf(
+            sum(1 for row in permit_rows if row["in_force"]), "operations", cutoff
+        ),
+        "permits_awaiting": leaf(
+            sum(1 for row in permit_rows if row["status"] == "requested"),
+            "operations",
+            cutoff,
+        ),
+        # Aprobado al corte y con la vigencia ya pasada: nadie lo cerró.
+        # Normalmente cero, porque `expire_permissions` los cierra cada noche --
+        # y por eso mismo vale mirarlo.
+        "permits_lapsed": leaf(
+            sum(
+                1
+                for row in permit_rows
+                if row["status"] == "approved"
+                and row["days_remaining"] is not None
+                and row["days_remaining"] < 0
+            ),
+            "operations",
+            cutoff,
+        ),
+        "permits_expiring_30d": leaf(
+            sum(
+                1
+                for row in permit_rows
+                if row["in_force"] and row["days_remaining"] <= PERMIT_CRITICAL_DAYS
+            ),
+            "operations",
+            cutoff,
+        ),
         # R4: la ventana que cuenta el informe emitido. `R3` había dejado la
         # tarjeta rotulada por lo que medía —30 días— porque relabelar 30 como
         # 60 habría sido inventar el dato; ahora mide lo que dice.
-        "permits_expiring_60d": leaf(permits["soon_60"], "operations", cutoff),
+        "permits_expiring_60d": leaf(
+            sum(
+                1
+                for row in permit_rows
+                if row["in_force"] and row["days_remaining"] <= PERMIT_WARNING_DAYS
+            ),
+            "operations",
+            cutoff,
+        ),
         "fleet_total": leaf(readiness["fleet"]["total"], "registry", cutoff),
         "fleet_flyable": leaf(readiness["fleet"]["count"], "registry", cutoff),
         "insurance_up_to_date": leaf(
@@ -188,6 +234,51 @@ def collect_cost_centres(cutoff):
     ]
 
 
+def status_at_cutoff(permits, cutoff):
+    """`{pk: estado}` — el estado que cada permiso tenía **al corte**.
+
+    ⚠️ **Lo que esto arregla**, y que el contraste contra el papel emitido dejó a
+    la vista: el informe de agosto decía *11 vigentes y 3 en trámite*, y la app
+    mostraba *14 vigentes y 0 en trámite*. Los mismos catorce permisos — los tres
+    que en agosto esperaban a la DGAC ya fueron aprobados, y la tabla los listaba
+    con su estado de hoy bajo un encabezado que dice "al corte".
+
+    Se reconstruye desde `PermissionHistory`, que guarda estado anterior, estado
+    nuevo y fecha desde `R2.5`. Tres casos, y el tercero es el que se olvida:
+
+    1. hay movimientos hasta el corte → el `new_status` del último;
+    2. hay movimientos, pero **todos posteriores** al corte → el
+       `previous_status` del **primero**, que es literalmente lo que el permiso
+       era antes de moverse;
+    3. no hay ninguno → nunca cambió, así que su estado de hoy **es** el de
+       entonces.
+
+    **Una sola consulta para todos los permisos**, y por eso recibe la lista en
+    vez de un permiso: catorce consultas sueltas acá se convierten en una por
+    fila cuando la operación crezca, y este payload se arma también desde un
+    trabajo nocturno donde nadie mira el reloj.
+    """
+    from apps.operations.models import PermissionHistory
+
+    by_permit = {}
+    for entry in PermissionHistory.objects.filter(
+        permission__in=[permit.pk for permit in permits]
+    ).order_by("permission_id", "sequence"):
+        by_permit.setdefault(entry.permission_id, []).append(entry)
+
+    resolved = {}
+    for permit in permits:
+        entries = by_permit.get(permit.pk, [])
+        upto = [e for e in entries if e.created_at.date() <= cutoff]
+        if upto:
+            resolved[permit.pk] = upto[-1].new_status
+        elif entries:
+            resolved[permit.pk] = entries[0].previous_status
+        else:
+            resolved[permit.pk] = permit.status
+    return resolved
+
+
 def collect_permits(cutoff):
     """R4: una fila por permiso vivo, como la tabla de la página 3.
 
@@ -244,9 +335,12 @@ def collect_permits(cutoff):
         .order_by("valid_until", "internal_folio")
     )
 
+    permits = list(permits)
+    was = status_at_cutoff(permits, cutoff)
+
     rows = []
     for permit in permits:
-        approved = permit.status == FlightPermission.STATUS_APPROVED
+        approved = was[permit.pk] == FlightPermission.STATUS_APPROVED
         # Un permiso solicitado no tiene vigencia (`LV-219`), así que sus días
         # son `None` y no cero: cero afirmaría que vence hoy.
         days = (permit.valid_until - cutoff).days if permit.valid_until else None
@@ -255,6 +349,12 @@ def collect_permits(cutoff):
                 "folio": permit.internal_folio,
                 # El número de la DGAC no existe hasta que la DGAC resuelve.
                 "dgac_number": permit.permission_number or None,
+                # El estado **al corte**, reconstruido, no el de hoy. Va al
+                # payload y no sólo a `in_force` porque los contadores de la
+                # página 3 se cuentan sobre estas filas: dos recorridos separados
+                # es cómo el encabezado dice "0 en trámite" y la tabla de abajo
+                # lista tres.
+                "status": was[permit.pk],
                 "cost_centre": permit.cost_center.code,
                 "operators": [o.full_name for o in permit.operators.all()],
                 "aircraft": [a.registration for a in permit.aircraft_fleet.all()],
@@ -359,7 +459,7 @@ def build(period, cutoff=None):
     permits = collect_permits(cutoff)
     payload = {
         "meta": collect_meta(period, cutoff),
-        "kpis": collect_kpis(cutoff, cost_centres),
+        "kpis": collect_kpis(cutoff, cost_centres, permits),
         "cost_centres": cost_centres,
         "permits": permits,
         "concentration": collect_concentration(permits),

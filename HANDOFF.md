@@ -315,9 +315,23 @@ otras razones (26 `RunPython` sin `elidable`) están en `MASTER_PLAN.md` §
   selección inyectándose sin su `<col>`; con `table-layout: fixed` eso corría
   todos los anchos un lugar. **Sin migración.**
 - **`LV-200c`** — "Usar uno ya cargado" en el expediente del permiso, para no
-  volver a subir la misma carta del mandante. **Sin migración**, pero necesita
-  `collectstatic` no; sólo `git pull` y reiniciar (cambian plantillas y
-  catálogo, no estáticos).
+  volver a subir la misma carta del mandante. **Sin migración.**
+- **`UX-09b`** — la faena como columna en la bandeja de alertas. **Sin
+  migración.**
+
+✅ **Los tres desplegados en `p340`: `676be11`.** `collectstatic` corrido y
+servicio reiniciado. (Anotado en el momento, que es la regla que esta misma
+sección escribió después de perder tres veces la respuesta a *"¿qué corre en
+`p340`?"*.)
+
+⏳ **`30bc2e6` (`LV-233`) queda commiteado y sin desplegar**, esperando el gate
+completo. Cuando entre, hay que saber una cosa antes de mirar el panel:
+
+> ⚠️ **El "Vigentes" del panel puede bajar.** `LV-233` cambió la definición: un
+> permiso aprobado que **todavía no empieza** dejó de contarse como vigente y
+> pasa a `not_started`. No se perdió nada — estaba contado en la casilla
+> equivocada, y mirando una fecha de corte pasada eso era una afirmación falsa
+> ante la DGAC. Si el número baja, es esto y no un dato perdido.
 - 🆕 **`LV-233` y `LV-234` abiertas**, las dos sobre el informe mensual: revisar
   cómo se edita y se cambia, y **si el cruce de información es correcto**. La
   segunda es el hallazgo que bloquea a la primera — ver abajo.
