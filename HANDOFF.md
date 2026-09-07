@@ -233,6 +233,34 @@ cd /opt/aerocontrol && hostname && pwd
 Sin el `cd`, `git pull` responde *"not a git repository"* — que es un fallo
 limpio y visible, a diferencia del de Windows.
 
+##### ⚠️ Y el orden es: **entorno primero, respaldo después**
+
+El 2026-09-07 se dictó al revés —`git pull && uv sync && manage.py backup`— y
+`backup` murió con `SECRET_KEY not found`: sin el entorno cargado, `manage.py`
+cae a `config.settings.dev`, que no tiene la clave. El `&&` cortó la cadena ahí,
+así que **ni el respaldo ni su verificación corrieron**, y las cuatro migraciones
+entraron sin red de seguridad.
+
+No hubo daño —eran aditivas y el fallo fue limpio— pero el paso existe
+justamente para el caso en que sí lo haya. **El orden correcto ya estaba escrito
+en § "El despliegue, por pasos"**; se dictó de memoria y por eso salió mal, que
+es el mismo error que esa sección advierte dos veces.
+
+La secuencia buena, entera:
+
+```
+ssh levdigital01@100.121.16.118
+cd /opt/aerocontrol && hostname && pwd
+git pull && uv sync
+set -a; source <(sudo cat /etc/aerocontrol.env); set +a
+echo $DJANGO_SETTINGS_MODULE; echo $DB_PATH
+uv run python manage.py backup && uv run python manage.py verify_backup
+uv run python manage.py migrate --no-input
+uv run python manage.py bootstrap_roles
+uv run python manage.py collectstatic --no-input
+sudo systemctl restart aerocontrol && git log --oneline -1
+```
+
 ⚠️ **Faltaba escrito, y por eso se perdieron tres intentos.** Esta sección decía
 *"los comandos van sin `ssh` porque quien despliega ya está dentro de la VM"* —
 cierto, pero daba por sabido el paso que lleva adentro. Sin él, los bloques se
@@ -377,6 +405,16 @@ otras razones (26 `RunPython` sin `elidable`) están en `MASTER_PLAN.md` §
 servicio reiniciado. (Anotado en el momento, que es la regla que esta misma
 sección escribió después de perder tres veces la respuesta a *"¿qué corre en
 `p340`?"*.)
+
+✅ **Y la tanda del 2026-09-07 desplegada: `69eab52`.** Las cuatro migraciones
+—`compliance.0026`, `operations.0027`, `operations.0028`, `reporting.0003`—
+aplicaron limpio, `bootstrap_roles` configuró los cinco roles y `collectstatic`
+publicó. Entra con esto todo lo del 07: `LV-233` completo (las tres partes),
+`LV-218(b)`, `LV-235` y `UX-14`.
+
+⚠️ **Sin respaldo previo**, por el orden mal dictado que se explica más abajo. Se
+tomó uno **después**. No hubo daño —las cuatro migraciones son aditivas— pero
+queda anotado porque es la clase de atajo que un día sí importa.
 
 ⏳ **Del 2026-09-07 quedan cuatro commits subidos y SIN desplegar**, del
 `30bc2e6` al `a5988fc`: las tres partes de `LV-233`, `LV-218(b)` y la consulta a
