@@ -26,6 +26,10 @@ la barra y los botones, y quedan las cinco hojas A4 solas.{% endcomment %}
       </div>
       <button class="btn btn-primary">{% translate "Apply" %}</button>
     </form>
+    {% comment %}LV-235: la hoja de una página, del mismo payload. El enlace va
+    acá y no en el menú porque es **otra salida del mismo informe**, no otro
+    informe: quien la busca ya está mirando el período.{% endcomment %}
+    <a class="btn btn-outline-secondary" href="{% url 'monthly-report-brief' %}?period={{ period_date|date:'Y-m' }}">{% translate "Executive brief" %}</a>
     {% comment %}LV-227: escribir la narrativa necesita un informe donde
     guardarla, y congelar el borrador es un acto explícito — no un efecto
     secundario de teclear el primer hallazgo.{% endcomment %}

@@ -1,16 +1,23 @@
 {% load i18n static report_leaf %}
 {% comment %}Página 5 · Plan de normalización. Artboard `p5_plan` del ZIP.
 
-Es la única página **enteramente redactada**: cuatro fases con su criterio de
-cierre y la matriz de exigibilidad progresiva. No sale de la base ni podría —es
-un compromiso de gestión, no una medición— y por eso `LV-227` la pide editable
-dentro de la aplicación en vez de generada.
+Cuatro fases con su criterio de cierre, y la matriz de exigibilidad progresiva.
+No salen de la base ni podrían: son un compromiso de gestión, no una medición.
 
-Va escrita acá, con los meses del plan comprometido en el informe de agosto,
-porque **el plan es el mismo documento todos los meses hasta que alguien lo
-cambie**; lo que cambia es en qué fase se está. Cuando `LV-227` entre, este
-bloque pasa a ser el texto guardado del `ReportRun` y esta plantilla deja de
-tenerlo escrito.{% endcomment %}
+⚠️ **`LV-235`: pero sí sale del payload en qué fase se está**, y ésa era la
+mitad que faltaba. Hasta acá las fases estaban escritas en esta plantilla con
+sus meses a mano y la primera con `rpt-fase-now` fija, así que en enero de 2027
+el informe iba a seguir diciendo *"FASE 0 · Sep 2026 · renovar los permisos que
+vencen"* — un plan vencido impreso como si fuera vigente. Textual del usuario
+mirando esta página: *"el actual es estático, sólo cambia la fecha, lo cual lo
+vuelve inútil"*, y para esta página era exacto.
+
+El texto de las fases sigue viviendo en el código (`builder.PLAN_PHASES`) y no
+en la base: cambia una vez al año, y una tabla de configuración de cuatro filas
+que nadie edita es una tabla que nadie mantiene — el mismo criterio con el que
+`KpiTarget` no se creó. Lo que se calcula es el **estado** de cada fase, contra
+el período del informe y no contra hoy: reimprimir agosto en diciembre tiene que
+devolver la página que agosto vio.{% endcomment %}
 <div class="rpt-page">
 
   {% include "reporting/_head.html" %}
@@ -26,53 +33,40 @@ tenerlo escrito.{% endcomment %}
 
     <div class="rpt-stack-9">
 
-      <div class="rpt-fase rpt-fase-now">
-        <div class="rpt-fase-when">
-          <div class="rpt-fase-n">FASE 0</div>
-          <div class="rpt-fase-month">Sep 2026</div>
-        </div>
-        <div class="rpt-fase-body">
-          <div class="rpt-fase-title">Cierre de brechas de habilitación</div>
-          <div class="rpt-fase-text">Renovar los permisos que vencen dentro del período. Definir cuáles de los Centros de Costo sin permiso tendrán operación aérea y tramitar su carta del mandante y su solicitud en SIGO.</div>
-          <div class="rpt-fase-close"><strong style="color: #124384;">Cierre:</strong> ningún CC con operación prevista opera sin permiso vigente.</div>
-        </div>
-      </div>
+      {% comment %}LV-235: las fases salen del payload, y **cada una sabe si ya
+      pasó, si es la de este período o si viene**.
 
-      <div class="rpt-fase">
-        <div class="rpt-fase-when">
-          <div class="rpt-fase-n">FASE 1</div>
-          <div class="rpt-fase-month">Oct 2026</div>
-        </div>
-        <div class="rpt-fase-body">
-          <div class="rpt-fase-title">Calendario de renovación automático</div>
-          <div class="rpt-fase-text">AeroControl calcula el vencimiento sobre la <strong>fecha real de cada resolución</strong> —no sobre un plazo supuesto— y dispara alertas a 45 y 30 días: a los 45 el ADC solicita la carta del mandante; a los 30 el Jefe Seguridad Aérea presenta en SIGO y, sin carta, escala al Gerente Operaciones Aéreas.</div>
-          <div class="rpt-fase-close"><strong style="color: #124384;">Cierre:</strong> ninguna renovación depende de que alguien la recuerde.</div>
-        </div>
-      </div>
+      Antes estaban escritas acá con sus meses a mano, y la primera llevaba
+      `rpt-fase-now` fija: en enero de 2027 el informe iba a seguir diciendo
+      "FASE 0 · Sep 2026 · renovar los permisos que vencen" — un plan vencido
+      impreso como vigente. Textual del usuario: *"sólo cambia la fecha, lo cual
+      lo vuelve inútil"*.
 
-      <div class="rpt-fase">
+      El estado se calcula contra **el período del informe** y no contra hoy, por
+      lo mismo que el corte: reimprimir agosto en diciembre tiene que devolver la
+      página que agosto vio.{% endcomment %}
+      {% for phase in payload.plan.phases %}
+      <div class="rpt-fase{% if phase.state == 'current' %} rpt-fase-now{% endif %}{% if phase.state == 'done' %} rpt-fase-done{% endif %}{% if forloop.last %} rpt-fase-last{% endif %}">
         <div class="rpt-fase-when">
-          <div class="rpt-fase-n">FASE 2</div>
-          <div class="rpt-fase-month">Nov 2026</div>
+          <div class="rpt-fase-n">FASE {{ phase.number }}</div>
+          <div class="rpt-fase-month">{{ phase.month }}</div>
+          {% if phase.state == 'done' %}<div class="rpt-fase-state">Cumplida</div>{% elif phase.state == 'current' %}<div class="rpt-fase-state">En curso</div>{% endif %}
         </div>
         <div class="rpt-fase-body">
-          <div class="rpt-fase-title">Bitácora digital de vuelo</div>
-          <div class="rpt-fase-text">Se habilita el registro por vuelo: bitácora (JEJ-GTE-CT-REG-015), check list pre-vuelo (LVE-003) e inspección (LVE-002). Cada vuelo se asocia al permiso que lo autoriza, de modo que el sistema no admita registrar un vuelo sin permiso vigente en esa fecha.</div>
-          <div class="rpt-fase-close"><strong style="color: #124384;">Cierre:</strong> completitud reportada como línea base, sin sanción interna.</div>
+          <div class="rpt-fase-title">{{ phase.title }}</div>
+          <div class="rpt-fase-text">{{ phase.text }}</div>
+          <div class="rpt-fase-close"><strong style="color: #124384;">Cierre:</strong> {{ phase.close }}</div>
         </div>
       </div>
+      {% endfor %}
 
-      <div class="rpt-fase rpt-fase-last">
-        <div class="rpt-fase-when">
-          <div class="rpt-fase-n">FASE 3</div>
-          <div class="rpt-fase-month">Dic 2026</div>
-        </div>
-        <div class="rpt-fase-body">
-          <div class="rpt-fase-title">Exigibilidad plena y auditoría</div>
-          <div class="rpt-fase-text">La completitud de bitácoras pasa a <strong>indicador exigible</strong> por Centro de Costo y se contrasta la coherencia entre vuelos ejecutados y vuelos autorizados. Auditoría interna regulatoria conforme al numeral 5.4.2 del INS-096.</div>
-          <div class="rpt-fase-close"><strong style="color: #124384;">Cierre:</strong> informe anual consolidado y plan de acción 2027.</div>
-        </div>
-      </div>
+      {% comment %}Los dos casos que el plan escrito a mano no tenía. Decirlos es
+      mejor que dejar la primera fase pintada como actual para siempre.{% endcomment %}
+      {% if payload.plan.concluded %}
+      {% with last_phase=payload.plan.phases|last %}<div class="rpt-fase-note">El plan de normalización concluyó en {{ last_phase.month }}. El ciclo siguiente se define en el informe anual consolidado.</div>{% endwith %}
+      {% elif payload.plan.not_started %}
+      <div class="rpt-fase-note">El plan de normalización comienza en {{ payload.plan.phases.0.month }}; este período es anterior a su primera fase.</div>
+      {% endif %}
 
     </div>
 

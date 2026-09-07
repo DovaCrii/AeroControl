@@ -118,3 +118,66 @@ class PeriodNoteForm(forms.ModelForm):
                 "the note is pending, never that there is nothing to say."
             )
         }
+
+
+class ActionForm(forms.Form):
+    """Una fila de "Acciones requeridas este mes", del Dato Ejecutivo.
+
+    `due` es opcional y las otras dos no, y eso es la forma del documento: una
+    acción sin responsable es una acción que nadie hace, mientras que una sin
+    plazo todavía puede estar pendiente de acordarse. La plantilla en papel
+    dejaba pasar las tres vacías; acá una fila escrita a medias no se guarda.
+    """
+
+    action = forms.CharField(label=_("Action"), max_length=200)
+    owner = forms.CharField(label=_("Owner"), max_length=100)
+    due = forms.CharField(label=_("Due"), max_length=40, required=False)
+
+
+class BaseActionFormSet(forms.BaseFormSet):
+    """Mismo trato que los hallazgos: sin huecos en medio.
+
+    Una fila vacía entre dos llenas dibuja un renglón en blanco en una hoja que
+    se lleva a la reunión. Se rechaza en vez de compactarla en silencio, porque
+    compactar cambiaría el orden que eligió quien la escribe.
+    """
+
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+        seen_blank = False
+        for is_filled in (bool(form.cleaned_data) for form in self.forms):
+            if not is_filled:
+                seen_blank = True
+            elif seen_blank:
+                raise forms.ValidationError(
+                    _("Leave no empty action between two written ones.")
+                )
+
+    @property
+    def entries(self):
+        return [
+            {
+                "action": form.cleaned_data["action"],
+                "owner": form.cleaned_data["owner"],
+                "due": form.cleaned_data.get("due", ""),
+            }
+            for form in self.forms
+            if form.cleaned_data
+        ]
+
+
+# Tres es lo que la plantilla en papel numera, y el tope es deliberado: una lista
+# de acciones que crece sin fin deja de ser un compromiso del mes y pasa a ser un
+# inventario de pendientes, que ya tiene su lugar en el tablero de alertas.
+MAX_ACTIONS = 6
+
+ActionFormSet = formset_factory(
+    ActionForm,
+    formset=BaseActionFormSet,
+    extra=1,
+    max_num=MAX_ACTIONS,
+    validate_max=True,
+    can_delete=False,
+)

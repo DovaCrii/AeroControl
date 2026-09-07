@@ -33,7 +33,7 @@ from apps.core.views import (
     ModelViewPermissionRequiredMixin,
 )
 from apps.reporting.builder import build, month_bounds
-from apps.reporting.forms import FindingFormSet, PeriodNoteForm
+from apps.reporting.forms import ActionFormSet, FindingFormSet, PeriodNoteForm
 from apps.reporting.models import ReportRun
 
 # Cuatro dígitos de año y dos de mes, exactos. Partir por el guion y confiar en
@@ -120,6 +120,48 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
         return context
 
 
+class ExecutiveBriefView(MonthlyReportView):
+    """LV-235: el **Dato Ejecutivo**, la hoja de una página, generada.
+
+    Pedido del usuario con la plantilla en papel a la vista: *"el otro lo genero
+    de forma automática de manera diferente, yo lo voy llenando"*.
+
+    **Hereda de `MonthlyReportView` a propósito y no repite su contexto.** Es una
+    segunda salida del **mismo payload**: dos recolecciones separadas es cómo la
+    hoja de una página y el informe de cinco empiezan a decir cifras distintas
+    del mismo mes, que es lo que `LV-188` costó y lo que `collect_kpis` ya evita
+    contando sobre las filas recolectadas.
+
+    Lo único que agrega son las dos vistas del mismo dato que esta hoja pide y el
+    informe largo no: cuántas faenas están habilitadas (la plantilla lo pide como
+    indicador propio) y las solicitudes en trámite como lista.
+    """
+
+    template_name = "reporting/executive_brief.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        payload = context["payload"]
+        centres = payload.get("cost_centres") or []
+        context["habilitados"] = sum(
+            1 for row in centres if row.get("permits_in_force")
+        )
+        # Las solicitudes en trámite, desde las mismas filas de permisos que la
+        # página 3 dibuja. `status` es el reconstruido **al corte** (`LV-233`),
+        # así que un permiso aprobado en septiembre sigue apareciendo como
+        # trámite en el informe de agosto, que es lo que ese mes decía.
+        context["awaiting"] = [
+            row
+            for row in (payload.get("permits") or [])
+            if row.get("status") == "requested"
+        ]
+        # Las acciones viven en el `ReportRun`, no en el payload: son narrativa,
+        # como los hallazgos. Sin informe congelado no hay dónde escribirlas, y
+        # la hoja lo dice en vez de dibujar una tabla vacía.
+        context["actions"] = context["run"].actions if context["run"] else []
+        return context
+
+
 def _iso(value):
     """Una fecha ISO del payload como `date`, o `None` si no la trae.
 
@@ -195,7 +237,9 @@ class ReportNarrativeUpdate(ModelPermissionRequiredMixin, View):
 
     def get(self, request, pk):
         run = get_object_or_404(ReportRun, pk=pk)
-        return self._render(request, run, self._note(run), self._findings(run))
+        return self._render(
+            request, run, self._note(run), self._findings(run), self._actions(run)
+        )
 
     def post(self, request, pk):
         run = get_object_or_404(ReportRun, pk=pk)
@@ -208,16 +252,18 @@ class ReportNarrativeUpdate(ModelPermissionRequiredMixin, View):
 
         note = self._note(run, request.POST)
         findings = self._findings(run, request.POST)
-        if not (note.is_valid() and findings.is_valid()):
-            return self._render(request, run, note, findings)
+        actions = self._actions(run, request.POST)
+        if not (note.is_valid() and findings.is_valid() and actions.is_valid()):
+            return self._render(request, run, note, findings, actions)
 
         run = note.save(commit=False)
         run.findings = findings.entries
+        run.actions = actions.entries
         # `full_clean` y no sólo `save`: la comprobación de forma vive en el
         # modelo justamente para que ningún camino la esquive, y la vista es un
         # camino más.
         run.full_clean()
-        run.save(update_fields=["period_note", "findings", "updated_at"])
+        run.save(update_fields=["period_note", "findings", "actions", "updated_at"])
         set_audit_context(request, run, action="update")
         messages.success(request, _("Saved successfully."))
         return redirect(f"{reverse('monthly-report')}?period={run.period:%Y-%m}")
@@ -231,11 +277,27 @@ class ReportNarrativeUpdate(ModelPermissionRequiredMixin, View):
         return FindingFormSet(data, initial=run.findings, prefix="findings")
 
     @staticmethod
-    def _render(request, run, note, findings):
+    def _actions(run, data=None):
+        """LV-235: las acciones del Dato Ejecutivo, en la misma pantalla.
+
+        Se escriben acá y no en una vista propia porque son **la misma
+        naturaleza** que los hallazgos —narrativa del informe, escrita por quien
+        firma— y separarlas habría dado dos formularios que guardan sobre la
+        misma fila, con dos oportunidades de pisarse.
+        """
+        return ActionFormSet(data, initial=run.actions, prefix="actions")
+
+    @staticmethod
+    def _render(request, run, note, findings, actions):
         return render(
             request,
             "reporting/narrative_form.html",
-            {"run": run, "note_form": note, "finding_formset": findings},
+            {
+                "run": run,
+                "note_form": note,
+                "finding_formset": findings,
+                "action_formset": actions,
+            },
         )
 
 
