@@ -1,5 +1,6 @@
 from django.urls import path
 from . import report_views, views
+from .models import Alert, NonConformity
 
 urlpatterns = [
     path(
@@ -99,6 +100,19 @@ urlpatterns = [
     path("alert/", views.AlertList.as_view(), name="alert-list"),
     path(
         "alert/<uuid:pk>/resolve/", views.AlertResolve.as_view(), name="alert-resolve"
+    ),
+    # UX-14: el dueño. Una sola vista para los dos modelos —es la misma acción
+    # sobre el mismo campo— y el modelo lo fija la ruta, así que el permiso que
+    # se pide sale de ahí y no de una condición dentro de la vista.
+    path(
+        "alert/<uuid:pk>/assign/",
+        views.AssignOwner.as_view(model=Alert),
+        name="alert-assign",
+    ),
+    path(
+        "nonconformity/<uuid:pk>/assign/",
+        views.AssignOwner.as_view(model=NonConformity),
+        name="nonconformity-assign",
     ),
     # R7.4: deliverable quality control (ISO 9001 8.5.1/8.6).
     path("deliverable/", views.DeliverableList.as_view(), name="deliverable-list"),

@@ -214,12 +214,34 @@ cambiaron `app.css` y `worktable.js`.
 
 #### ⚠️ EL DESPLIEGUE DE ESTA TANDA (`355f6c1`)
 
-⚠️ **Los comandos van SIN `ssh` y sobre `/opt/aerocontrol`**, porque quien
-despliega ya está dentro de la VM. Dictarlos con `ssh p340 "…"` hace que la
-máquina se pida contraseña a sí misma — pasó el 2026-09-01 y costó una vuelta.
-El 2026-09-03 volvió a costar otra, por lo contrario: el Paso 0 se pegó en la
-**PowerShell de Windows**, que buscó `C:\opt\aerocontrol`. **El bloque se pega en
-la sesión de `p340`, no en la del escritorio.**
+##### ⛔ Antes de pegar cualquier bloque de despliegue, correr esto solo
+
+```
+hostname && pwd
+```
+
+Tiene que decir **`p340`** y **`/opt/aerocontrol`**. Si dice el nombre del PC y
+`D:\I+D\AeroControl`, es la ventana equivocada y el bloque **no** va ahí.
+
+⚠️ **Esto no es celo: ya pasó tres veces y dos de ellas el mismo día.** Los
+comandos van sin `ssh` y sobre `/opt/aerocontrol` porque quien despliega ya está
+dentro de la VM (dictarlos con `ssh p340 "…"` hace que la máquina se pida
+contraseña a sí misma — 2026-09-01). Pero eso mismo los vuelve indistinguibles de
+un comando local, y el 2026-09-07 el bloque entero se pegó **dos veces** en la
+PowerShell de Windows: las migraciones se aplicaron a la base de desarrollo,
+`collectstatic` copió a `D:\`, y el fallo sólo se notó al final porque `sudo` no
+existe en Windows. No hubo daño, pero **producción quedó sin desplegar creyendo
+que sí**, que es exactamente la confusión que esta sección ya perdió tres veces.
+
+Las tres señales de que está en la ventana equivocada:
+
+| Señal | Qué significa |
+|---|---|
+| El prompt dice `PS D:\…` o `pwsh` | es Windows |
+| `set -a; source <(sudo cat …)` da *"The '<' operator is reserved"* | es PowerShell: no entiende la sustitución de proceso |
+| `sudo` responde *"Sudo está deshabilitado en este equipo"* | es Windows |
+
+El prompt correcto es `levdigital01@p340:/opt/aerocontrol$`.
 
 ##### ✅ DESPLEGADO EN `p340`: **`7fa2ce0`**, el 2026-09-03
 

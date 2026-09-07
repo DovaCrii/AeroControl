@@ -580,6 +580,28 @@ class Alert(EffectivenessVerificationMixin, BaseModel):
     # to ask, and stay reason-less); AlertResolveForm is what actually makes
     # it required for the one place a human clicks "Resolve".
     resolution_reason = models.TextField(blank=True)
+    # `UX-14`: quién responde por esta alerta. Es lo que convierte una lista en
+    # trabajo — sin dueño, una bandeja de veinte filas es de todos y de nadie.
+    #
+    # ⚠️ **A un `User` y no a un `Operator`, y la alternativa era real.** La
+    # tarea de seguimiento que la alerta ya creaba deriva un `Operator`
+    # (`_derive_assigned_operator`), y podría haberse reusado. Pero esa pregunta
+    # es otra: *de quién es la credencial que vence*. Ésta es *quién se hace
+    # cargo de resolverla*, y quien resuelve es alguien con permiso en la
+    # aplicación — típicamente Cumplimiento, que **no vuela y por tanto no tiene
+    # ficha de operador**. Con `Operator`, "Mis pendientes" habría quedado vacío
+    # justo para el rol que trabaja la bandeja.
+    #
+    # `SET_NULL`: dar de baja una cuenta no puede borrar la alerta ni su
+    # historia. Queda sin dueño, que es visible y reasignable.
+    assigned_to = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_alerts",
+        verbose_name=_("Owner"),
+    )
     # R7.6 (ISO 10.2): the effectiveness fields and the 30-day clock come from
     # EffectivenessVerificationMixin, shared with NonConformity. Resolving used
     # to be terminal -- nobody ever went back to ask whether the action worked,
@@ -1092,6 +1114,17 @@ class NonConformity(EffectivenessVerificationMixin, BaseModel):
     )
     reported_to_dgac_at = models.DateField(null=True, blank=True)
     dgac_report_reference = models.CharField(max_length=100, blank=True)
+    # `UX-14`: mismo campo y mismo criterio que en `Alert` — a un `User`, porque
+    # quien analiza una no conformidad y escribe su causa raíz es alguien con
+    # permiso en la aplicación, no necesariamente alguien que vuela.
+    assigned_to = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_nonconformities",
+        verbose_name=_("Owner"),
+    )
 
     class Meta:
         verbose_name = _("non-conformity")

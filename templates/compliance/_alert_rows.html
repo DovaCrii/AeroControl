@@ -41,6 +41,13 @@ pueden decir cosas distintas.{% endcomment %}
   blanco se lee como "todavía no cargó" y el guion dice "no tiene", que en una
   alerta sobre un documento de empresa es la respuesta correcta.{% endcomment %}
   <td>{% if object.cost_center %}<span class="cc-chip" title="{{ object.cost_center }}">{{ object.cost_center.code }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+  {% comment %}`UX-14`: el dueño, y el atajo para ponerlo. **"Sin asignar" se
+  dice**, no se deja en blanco: una celda vacía se lee como dato que no cargó, y
+  acá la ausencia de dueño es el hecho que hay que ver.
+
+  El enlace abre el mismo modal que "Resolver" y por la misma razón: una fila
+  apretada no tiene sitio para un selector de personas.{% endcomment %}
+  <td>{% if object.assigned_to %}{{ object.assigned_to.get_full_name|default:object.assigned_to.username }}{% else %}<span class="text-muted fst-italic">{% translate "Unassigned" %}</span>{% endif %}{% if perms.compliance.change_alert %} <a class="small" href="{% url 'alert-assign' object.pk %}" hx-get="{% url 'alert-assign' object.pk %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" title="{% translate 'Assign an owner' %}">✎</a>{% endif %}</td>
   <td>{{ object.alert_rule.name }}</td>
   <td><span class="text-nowrap">{{ object.triggered_at|date:'Y-m-d' }}</span></td>
   {% comment %}LV-118: la fecha es la **congelada al crear la alerta**

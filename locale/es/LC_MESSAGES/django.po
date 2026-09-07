@@ -8158,9 +8158,38 @@ msgstr ""
 "El período %(period)s todavía no termina: un informe mensual no se puede "
 "congelar antes del cierre de su mes."
 
-#: apps/reporting/forms.py
+#: apps/reporting/forms.py apps/compliance/models.py apps/compliance/forms.py
 msgid "Owner"
 msgstr "Responsable"
+
+#: apps/compliance/forms.py
+msgid "Nobody yet"
+msgstr "Nadie todavía"
+
+#: apps/compliance/forms.py
+msgid "Leave it empty to unassign."
+msgstr "Déjelo vacío para quitar el responsable."
+
+#: apps/compliance/views.py
+msgid "Assign an owner"
+msgstr "Asignar responsable"
+
+#: apps/compliance/views.py
+#, python-format
+msgid "Assigned to %(who)s."
+msgstr "Asignada a %(who)s."
+
+#: apps/compliance/views.py
+msgid "Left without an owner."
+msgstr "Quedó sin responsable."
+
+#: templates/compliance/alert_list.html
+msgid "Any owner"
+msgstr "Cualquier responsable"
+
+#: templates/compliance/alert_list.html
+msgid "My pending items"
+msgstr "Mis pendientes"
 
 #: apps/reporting/forms.py
 msgid "Leave no empty action between two written ones."
