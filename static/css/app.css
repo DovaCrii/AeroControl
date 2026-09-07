@@ -277,6 +277,97 @@ body.is-resizing-sidebar {
   flex: 0 1 22rem;
 }
 
+/* == UX-24 / UX-25 · la paleta de comandos =================================
+ *
+ * Un solo componente para las dos filas: `Ctrl/⌘+K` en el escritorio y la lupa
+ * de la barra bajo 768 px, donde la búsqueda global desaparecía sin dejar nada
+ * en su lugar. En una pantalla angosta el panel ocupa todo el alto, que es lo
+ * que `UX-24` pide como "pantalla completa"; en una ancha se apoya arriba, que
+ * es donde el ojo ya está cuando uno acaba de apretar el atajo.
+ *
+ * Los colores salen de los tokens de tema: a diferencia del informe, esto es
+ * interfaz y tiene que seguir la preferencia de quien mira. */
+.command-palette {
+  position: fixed;
+  inset: 0;
+  z-index: 1080; /* sobre el modal de Bootstrap (1055) y su fondo (1050) */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.command-palette-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(6 12 24 / 55%);
+}
+.command-palette-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  /* Estos cuatro son geometría del componente y no escala: no hay paso de
+     `--sp-*` que signifique "el ancho de una paleta". Los de tipografía y
+     espaciado interior sí salen de los tokens (`UX-02`). */
+  width: min(38rem, 100%);
+  max-height: min(60vh, 32rem);
+  margin-top: 12vh;
+  overflow: hidden;
+  background: var(--ac-surface-raised);
+  color: var(--ac-text);
+  border: 1px solid var(--ac-border);
+  border-radius: var(--sp-2);
+  box-shadow: 0 18px 48px rgb(6 12 24 / 35%);
+}
+.command-palette-input {
+  flex: none;
+  padding: var(--sp-4) var(--sp-5);
+  border: 0;
+  border-bottom: 1px solid var(--ac-border);
+  background: transparent;
+  color: inherit;
+  font-size: var(--fs-base);
+}
+.command-palette-input:focus { outline: none; }
+.command-palette-results {
+  flex: 1 1 auto;
+  margin: 0;
+  padding: var(--sp-2);
+  overflow-y: auto;
+}
+.command-palette-item {
+  display: block;
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--sp-1);
+  color: inherit;
+  text-decoration: none;
+}
+/* `is-active` la pone el teclado **y** el puntero, para que no puedan discrepar:
+ * mover el ratón sobre la lista y apretar Enter no debe abrir otra cosa que la
+ * resaltada. */
+.command-palette-item.is-active { background: var(--ac-surface); }
+.command-palette-item.is-search { font-weight: 600; }
+.command-palette-empty { padding: var(--sp-4); color: var(--ac-text-muted); }
+.command-palette-foot {
+  flex: none;
+  padding: var(--sp-3) var(--sp-5);
+  border-top: 1px solid var(--ac-border);
+  color: var(--ac-text-muted);
+}
+/* El fondo no se desplaza mientras la paleta está abierta: en un teléfono, con
+ * el panel a pantalla completa, el deslizamiento se lo lleva la página de atrás
+ * y la lista de resultados no se mueve. */
+body.palette-open { overflow: hidden; }
+
+@media (max-width: 767.98px) {
+  .command-palette-panel {
+    width: 100%;
+    max-height: 100%;
+    height: 100%;
+    margin-top: 0;
+    border: 0;
+    border-radius: 0;
+  }
+}
+
 /* Scoped to .navbar so it outranks the generic `.form-select` control height
    further down the file. With a single class it lost on source order: the
    31px asked for here silently became the 42px of --ac-control-height, which
@@ -2227,6 +2318,135 @@ a.admin-metric:hover { border-color: var(--ac-text-secondary); }
 .geo-popup strong { display: block; }
 .geo-popup-desc { margin: 0.25rem 0 0; white-space: pre-wrap; }
 .geo-popup-measure { margin: 0.25rem 0 0; font-variant-numeric: tabular-nums; }
+
+/* UX-28 (WCAG 2.2 §2.5.7): la tabla de coordenadas dentro del globo del
+   elemento. Es la alternativa sin arrastre a mover vértices, y de paso lo que se
+   transcribe a SIGO.
+
+   El alto está acotado y desplaza: un círculo llega poligonalizado en 64
+   vértices (los KMZ de Trimble de CC 738), y sin tope el globo taparía el mapa
+   entero. */
+/* == UX-29 · el chequeo prevuelo ===========================================
+ *
+ * Un acta, no un formulario. Firmado, la pantalla pierde los controles en vez de
+ * atenuarlos: un formulario deshabilitado invita a buscar cómo habilitarlo. */
+.preflight-signed { border-left: 5px solid var(--ac-primary); }
+/* El «no conforme» registrado se ve **también después de firmar**, y de eso se
+   trata: la firma no lo tapa, lo deja escrito. Ámbar y no rojo porque no es un
+   error del sistema — es un hecho que alguien declaró y decidió asumir. */
+.preflight-flagged {
+  border-left: 5px solid var(--sev-warning-text);
+  background: var(--sev-warning-bg);
+  color: var(--sev-warning-text);
+}
+.preflight-items { margin: 0; padding-left: var(--sp-6); }
+.preflight-item { padding: var(--sp-3) 0; border-bottom: 1px solid var(--ac-border); }
+.preflight-item:last-child { border-bottom: 0; }
+.preflight-item-text { font-weight: 600; }
+.preflight-required { color: var(--sev-critical-text); }
+/* El área de toque de cada opción llega al rótulo entero: se contesta en faena,
+   en un teléfono, con guantes, y un radio de 13 px es imposible de acertar. */
+.preflight-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) 0;
+  cursor: pointer;
+}
+/* «Sin contestar» se dice, pero no se ofrece como opción: no es una respuesta,
+   es el estado inicial. Ámbar para que un punto sin tocar se vea al bajar por la
+   lista — que es cuando alguien va a ir a firmar. */
+.preflight-pending { color: var(--sev-warning-text); font-size: var(--fs-xs); font-weight: 600; }
+
+/* == UX-26 · el aviso de datos guardados ===================================
+ *
+ * Ámbar y arriba de todo. Ámbar y no rojo porque no es un error —la aplicación
+ * está haciendo exactamente lo que se le pidió— pero tampoco es neutro: lo que
+ * se está mirando puede tener un día de atraso, y en una pantalla de
+ * vencimientos un día importa.
+ *
+ * `position: sticky` para que no se vaya al desplazar: quien está sin señal
+ * puede estar leyendo una ficha larga, y el aviso tiene que seguir ahí cuando
+ * llegue a la fecha que va a copiar. */
+.offline-banner {
+  position: sticky;
+  top: 0;
+  z-index: 1090; /* sobre la paleta: es una condición de toda la pantalla */
+  padding: var(--sp-3) var(--sp-5);
+  background: var(--sev-warning-bg);
+  color: var(--sev-warning-text);
+  border-bottom: 1px solid var(--sev-warning-border);
+  font-size: var(--fs-md);
+  font-weight: 600;
+  text-align: center;
+}
+
+/* == UX-31 · los atajos del rol ============================================
+ *
+ * Una tira corta bajo el panel, antes de los grupos plegables. Se distingue del
+ * menú de siempre por sangría y peso, no por color: los ocho colores de sección
+ * (`LV-207`) significan *de qué módulo es* cada entrada, y un atajo puede
+ * apuntar a cualquiera de ellos — teñirlos de un noveno color habría inventado
+ * una sección que no existe. */
+.nav-shortcuts { margin-bottom: var(--sp-4); }
+.nav-shortcuts-label { display: block; }
+.nav-item.nav-shortcut {
+  /* Sin icono: el destino ya tiene el suyo más abajo, y repetirlo haría creer
+     que el menú se duplicó. La sangría ocupa su lugar para que la tira se lea
+     como una lista y no como cuatro entradas sueltas. */
+  padding-left: var(--sp-6);
+  font-weight: 600;
+}
+/* Colapsada la barra no hay sitio para texto sin icono, y una tira de rótulos
+   cortados no dice nada: los atajos se retiran y el menú de siempre queda. */
+.sidebar.is-collapsed .nav-shortcuts { display: none; }
+
+/* == UX-27 · «¿Puedo volar?» ===============================================
+ *
+ * El veredicto tiene que resolverse de un vistazo: quien mira esto lo hace en un
+ * teléfono, al sol, con guantes. Por eso el «Sí» o el «No» son tipografía grande
+ * y color de fondo, y no una insignia más en una tabla.
+ *
+ * Los colores salen de los tokens que ya existen y no de unos propios: el rojo
+ * de `--sev-critical-text` significa acá lo mismo que en la bandeja y en el
+ * panel, que es la única forma de que tres pantallas no enseñen tres escalas.
+ *
+ * ⚠️ **Para el «sí» va `--ac-primary` y no `--sev-nominal-text`.** «Nominal» en
+ * la escala de `UX-01` es gris a propósito —significa *"nada que reportar"*, y
+ * pintarlo de color le robaría atención a lo que sí la necesita— y acá hace
+ * falta lo contrario: el veredicto **es** la noticia de la pantalla. El
+ * corporativo es el color afirmativo del producto y no toca la escala. */
+.can-fly-yes { border-left: 5px solid var(--ac-primary); }
+.can-fly-no { border-left: 5px solid var(--sev-critical-text); }
+.can-fly-answer { font-size: var(--fs-xl); font-weight: 700; line-height: 1.1; }
+.can-fly-yes .can-fly-answer { color: var(--ac-primary); }
+.can-fly-no .can-fly-answer { color: var(--sev-critical-text); }
+/* La aclaración de que la pantalla no autoriza: se atenúa, no se esconde. Es la
+ * frase que evita que un «Sí» se lea como un permiso, así que tiene que estar a
+ * la vista aunque no compita con el veredicto. */
+.can-fly-caveat { font-size: var(--fs-md); color: var(--ac-text-muted); }
+.can-fly-item { padding: var(--sp-2) 0; border-bottom: 1px solid var(--ac-border); }
+.can-fly-item:last-child { border-bottom: 0; }
+.can-fly-item-blocker { border-left: 3px solid var(--sev-critical-text); padding-left: var(--sp-3); }
+.can-fly-item-warning { border-left: 3px solid var(--sev-warning-text); padding-left: var(--sp-3); }
+.can-fly-check { padding: var(--sp-2) 0; }
+/* ⚠️ La marca lleva `aria-hidden` y su significado va en un texto sólo para
+ * lectores: un ✓ verde y una ✕ roja distinguidos **sólo por color y forma** no
+ * llegan a quien usa lector de pantalla, y esta lista es justamente la que
+ * responde "qué se dio por comprobado". */
+.can-fly-check-mark { display: inline-block; width: 1.2rem; font-weight: 700; }
+.can-fly-check-mark.is-ok { color: var(--ac-primary); }
+.can-fly-check-mark.is-bad { color: var(--sev-critical-text); }
+
+.geo-popup-coords { margin-top: var(--sp-3); border-top: 1px solid var(--ac-border); padding-top: var(--sp-2); }
+.geo-popup-coords-title { font-weight: 600; font-size: var(--fs-md); }
+.geo-popup-coords-hint { margin: var(--sp-1) 0 var(--sp-2); font-size: var(--fs-xs); color: var(--ac-text-muted); }
+.geo-coord-table { display: block; max-height: 11rem; overflow-y: auto; font-size: var(--fs-xs); }
+.geo-coord-table th[scope="row"] { padding-right: var(--sp-2); color: var(--ac-text-muted); font-weight: 400; }
+.geo-coord-table td { padding: var(--sp-1) var(--sp-1) var(--sp-1) 0; }
+/* Anchura fija y cifras tabulares: una columna de coordenadas que baila con cada
+   dígito es ilegible justo cuando hay que compararlas entre sí. */
+.geo-coord-input { width: 8.5rem; font-variant-numeric: tabular-nums; }
 @media (max-width: 768px) {
   /* En columna la altura la ponen los hijos: con la del contenedor fija, el
      mapa y el panel se pelearían los mismos píxeles y el mapa perdería. */

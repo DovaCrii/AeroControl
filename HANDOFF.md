@@ -177,6 +177,72 @@ Dos filas más, **sin desplegar**:
 
 **Paso de despliegue: `collectstatic`.** Sin migración.
 
+### Cierre del 2026-09-07 (noche): la tanda 6, con alcance acordado — **empezar por acá**
+
+El plan la tenía bloqueada (*"requieren decisión de negocio... no empezar sin
+acordar alcance"*). El usuario acordó el alcance ese día y eligió **las cuatro
+filas que no dependen de un texto externo**.
+
+⚠️ **Esto lleva migración: `operations.0029`** (cuatro modelos nuevos, ninguna
+fila tocada). Y `collectstatic` y `compile_translations`, como la tanda anterior.
+
+| Fila | Qué quedó, y qué hay que saber para tocarlo |
+|---|---|
+| `UX-27` «¿Puedo volar?» | Una respuesta para aeronave + operador + faena, hoy. **Vencido bloquea, por vencer avisa** — la escala de `UX-01`, no una nueva. ⚠️ **La fecha ausente bloquea**: contestar «sí» porque *no se sabe* es peor que no contestar. 🔶 La brecha de compatibilidad y pertenecer a otra faena **nunca** bloquean. Y la pantalla dice que no autoriza nada. |
+| `UX-31` vistas por rol | Los roles son **los grupos de `bootstrap_roles`**, no una taxonomía nueva. Aterrizaje **sólo al iniciar sesión**, y un `?next=` gana siempre: no hay redirección desde `/` porque habría vuelto el panel inalcanzable para tres de cinco roles. Los atajos del menú son un añadido, no un recorte. |
+| `UX-26` PWA | `/sw.js` **desde la raíz** (el alcance de un worker es el directorio del que se descarga). Todo lo que no sea `GET` no se intercepta: sin cola, sin reintento. Hay un guardián que vigila que no aparezca maquinaria de escritura diferida. Cerrar sesión borra la caché. Lleva un ajuste nuevo, `SERVICE_WORKER_VERSION` — **el despliegue debería pasarle el commit**, o el navegador seguirá sirviendo lo guardado. |
+| `UX-29` checklist prevuelo | `operations.0029`. ⚠️ **La respuesta copia el texto del punto** (`LV-233` antes de que duela) y **firmado se congela**. 🔶 Un «no conforme» **no** impide firmar: la lista registra, no decide — bloquear habría hecho que la gente vuele igual y no firme nada. Las listas se configuran en el centro de administración; `PreflightCheck` y `PreflightAnswer` **no** se registran ahí a propósito. |
+
+**`UX-30` queda sin empezar**, y su propia fila dice por qué: *"sujeto a
+verificar el texto oficial primero"*. El clasificador DAN 151 Ed. 4 no se escribe
+contra una norma que no se tiene delante.
+
+⚠️ **Y un defecto viejo que apareció mirando el navegador, no el test.** La línea
+del pulso del panel (`UX-15`, *"N operaciones hoy · M permisos vigentes"*)
+**salía en inglés en producción desde que se escribió**: la entrada del catálogo
+está con `{flights}` y `blocktranslate` emite `%(flights)s`, así que nunca
+coincidió. Sus tres tests decían `«1 operaciones hoy» o «1 operations today»`, y
+esa disyunción de más los dejó pasando por el camino equivocado. Corregido, y con
+un test que ahora afirma que **no** hay inglés en la línea.
+
+---
+
+### Cierre del 2026-09-07 (tarde): fases D y E del plan de UX
+
+**Sin migraciones. Con `collectstatic` obligatorio**: cambiaron `app.css`,
+`app.js` y hay dos archivos de JS nuevos (`command-palette.js`, y
+`geo/inspector.js` reescrito). Y `compile_translations`: siete cadenas nuevas.
+
+| Fila | Qué quedó |
+|---|---|
+| `UX-19` | Cerrar el cuadro con algo escrito pregunta antes. En `hide.bs.modal`, que es cancelable y cubre las cuatro salidas (`Esc`, la cruz, "Cancelar", clic fuera). ⚠️ **El 422 no reinicia la marca**: ese swap devuelve el formulario con todo lo escrito. |
+| `UX-20` | Formulario de más de 8 campos visibles, o con selección múltiple, sale del cuadro: `HtmxFormMixin.get()` responde `HX-Redirect`. ⚠️ Sólo si la página completa **existe**; hay vistas que sólo viven en el cuadro. |
+| `UX-21` | `inputmode` por tipo de campo, en `AeroModelForm`. `enterkeyhint` y `autocomplete` **quedan fuera a propósito**, con el porqué escrito en el código. |
+| `UX-22` | "Guardar y crear otro" en bitácora, documentos y asignaciones. Opt-in por vista, sólo en el alta, vuelve con la query puesta. |
+| `UX-23` | El borrador, fuera del formulario de permiso. ⚠️ **Casi queda inerte**: `generic/form.html` no lo sirve a los largos porque los largos tienen plantilla propia. Se descubrió mirando el navegador, no el test. |
+| `UX-24` + `UX-25` | Un solo componente: la paleta (`Ctrl/⌘+K`) y la lupa de la barra bajo 768 px. Los destinos **se leen del menú lateral**, así que hereda los permisos sin preguntar. Verificado a 375×812. |
+| `UX-28` | Tabla de coordenadas editable en el globo del elemento (WCAG 2.2 §2.5.7). |
+| — | El **pie del informe** era cinco pies distintos: la portada anclada 16 px más arriba, con otra regla y otro rótulo, y la revisión sólo en una hoja de cinco. Ahora `reporting/_foot.html`, uno solo. |
+
+⚠️ **Un fallo de pérdida de datos, encontrado en el navegador y no por un test.**
+En la tabla de coordenadas, un `<input type="number">` con basura dentro devuelve
+`""`, y `Number("")` es **0** — que pasa `Number.isFinite` sin chistar. Escribir
+una letra en una latitud mandaba el vértice al ecuador **en silencio**, y quedaba
+guardado. La celda vacía ahora cuenta como inválida y se rechaza la tabla entera.
+Es la clase de defecto que sólo aparece ejercitando la pantalla.
+
+**Y un guardián que acusaba a quien no toca lo suyo**:
+`test_no_menu_row_is_left_outside_a_group` cortaba `base.html` desde `<aside>`
+**hasta el final del archivo**, lo que funcionó mientras el menú fuera lo último
+con enlaces. La paleta lleva un `{% url 'global-search' %}` en un `data-*` y el
+guardián lo contó como fila de menú. Ahora corta en `</aside>`.
+
+**Fase 6 (`UX-26`, `UX-27`, `UX-29`, `UX-30`, `UX-31`) sigue sin empezar**, y el
+propio plan dice por qué: *"Requieren decisión de negocio, no sólo diseño. No
+empezar sin acordar alcance."*
+
+---
+
 ### Cierre del 2026-09-03 al 2026-09-07 — **empezar por acá**
 
 ⚠️ **Esta sección abarca dos jornadas y conviene leerla sabiéndolo**, porque el

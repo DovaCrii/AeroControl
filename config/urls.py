@@ -1,7 +1,9 @@
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.conf.urls.i18n import set_language
 from django.urls import include, path
+from django.views.generic import TemplateView
 
 from apps.operations.views import CalendarView
 from apps.core.views import (
@@ -86,6 +88,23 @@ urlpatterns = [
         "listas/vistas/<uuid:pk>/borrar/",
         ListViewDelete.as_view(),
         name="list-view-delete",
+    ),
+    # `UX-26`: el service worker, **en la raíz y no en `/static/`**, y eso no es
+    # preferencia. El alcance de un service worker es el directorio del que se
+    # descarga: servido desde `/static/js/sw.js` sólo podría interceptar
+    # peticiones bajo `/static/js/`, o sea nada de lo que importa.
+    #
+    # Es una plantilla y no un archivo estático porque lleva la versión del
+    # despliegue en el nombre de su caché: un nombre nuevo es lo que hace que el
+    # navegador tire la caché vieja en vez de servir la pantalla del mes pasado.
+    path(
+        "sw.js",
+        TemplateView.as_view(
+            template_name="sw.js",
+            content_type="application/javascript",
+            extra_context={"version": settings.SERVICE_WORKER_VERSION},
+        ),
+        name="service-worker",
     ),
     path("health/", HealthCheckView.as_view(), name="health"),
     path("csp-report/", CspReportView.as_view(), name="csp-report"),

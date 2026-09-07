@@ -1355,3 +1355,224 @@ class FlightRequestHistory(BaseModel):
             latest = FlightRequestHistory.objects.order_by("-sequence").first()
             self.sequence = (latest.sequence if latest else 0) + 1
         return super().save(*args, **kwargs)
+
+
+class PreflightChecklist(BaseModel):
+    """`UX-29` · La plantilla de una lista de chequeo prevuelo.
+
+    *Por qué está en el plan:* es el estándar universal del mercado y la única
+    brecha funcional grande que **no** depende de la telemetría. El chequeo
+    prevuelo se hace —quien vuela lo hace— pero no queda por escrito, así que
+    ante una fiscalización no hay con qué demostrarlo.
+
+    **Configurable por tipo de aeronave**, que es como lo pide la fila. La
+    coincidencia se hace contra `Aircraft.model` por palabras clave, igual que
+    `QualificationType.model_keywords` — y no contra `Aircraft.type`, que en la
+    flota real vale "RPA" en todas y no distingue nada. Reusar ese mecanismo en
+    vez de inventar otro importa: son la misma pregunta ("¿esto aplica a este
+    modelo?") y dos formas de contestarla es cómo una empieza a decir que sí
+    donde la otra dice que no.
+
+    ⚠️ **Una lista sin palabras clave aplica a todo.** Es el caso normal y no un
+    descuido: una flota chica tiene una sola lista, y obligar a enumerar cada
+    modelo para que sirviera habría dejado sin chequeo a la primera aeronave
+    nueva, en silencio.
+    """
+
+    name = models.CharField(max_length=150)
+    model_keywords = models.CharField(
+        max_length=250,
+        blank=True,
+        help_text=_(
+            "Comma-separated words matched against the aircraft model. "
+            "Leave it empty for a checklist that applies to every aircraft."
+        ),
+    )
+
+    class Meta:
+        verbose_name = _("preflight checklist")
+        verbose_name_plural = _("preflight checklists")
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+    def keyword_list(self):
+        return [
+            word.strip().lower()
+            for word in self.model_keywords.split(",")
+            if word.strip()
+        ]
+
+    def applies_to(self, aircraft):
+        keywords = self.keyword_list()
+        if not keywords:
+            return True
+        model = (aircraft.model or "").lower()
+        return any(keyword in model for keyword in keywords)
+
+    @classmethod
+    def for_aircraft(cls, aircraft):
+        """La lista que corresponde a esta aeronave, o `None`.
+
+        ⚠️ **Gana la más específica**, o sea la que nombra el modelo por encima
+        de la general. Sin ese orden, una flota con una lista genérica y otra
+        para el Matrice dependería de cuál devolviera la base primero — y un
+        chequeo prevuelo cuyo contenido cambia entre dos vuelos del mismo día no
+        es evidencia de nada.
+        """
+        candidates = [
+            checklist
+            for checklist in cls.objects.filter(is_active=True).prefetch_related(
+                "items"
+            )
+            if checklist.applies_to(aircraft)
+        ]
+        if not candidates:
+            return None
+        return sorted(candidates, key=lambda c: (not c.keyword_list(), c.name))[0]
+
+
+class PreflightChecklistItem(BaseModel):
+    """Un punto de la lista. El texto vive acá; la respuesta lo **copia**."""
+
+    checklist = models.ForeignKey(
+        PreflightChecklist, on_delete=models.CASCADE, related_name="items"
+    )
+    text = models.CharField(max_length=250)
+    order = models.PositiveIntegerField(default=0)
+    # Un punto no obligatorio se puede dejar en "no aplica" sin trabar la firma.
+    # Existe porque no todo punto aplica a toda salida —"autorización del
+    # mandante para sobrevolar" no aplica en faena propia— y forzar un sí a algo
+    # que no corresponde es peor que registrar el no aplica.
+    is_required = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = _("preflight checklist item")
+        verbose_name_plural = _("preflight checklist items")
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return self.text
+
+
+class PreflightCheck(BaseModel):
+    """`UX-29` · Un chequeo prevuelo hecho y firmado, adjunto a su vuelo.
+
+    ⚠️ **Al firmar se congela, y no es una formalidad.** Un chequeo prevuelo es
+    la declaración de una persona sobre el estado de una aeronave en un momento;
+    si se pudiera editar después, dejaría de ser evidencia de nada — que es
+    exactamente el motivo por el que `ReportRun.freeze` existe y por el que una
+    prueba de conocimientos se rinde de nuevo en vez de corregirse.
+
+    ⚠️ **Y las respuestas copian el texto del punto**, no lo leen al dibujar. Es
+    la lección de `LV-233` aplicada antes de que duela: editar la plantilla el
+    mes que viene reescribiría lo que alguien firmó el mes pasado, y el papel
+    diría que se comprobó algo que ese día no estaba en la lista.
+    """
+
+    flight_record = models.OneToOneField(
+        FlightRecord,
+        on_delete=models.CASCADE,
+        related_name="preflight_check",
+    )
+    checklist = models.ForeignKey(
+        PreflightChecklist, on_delete=models.PROTECT, related_name="checks"
+    )
+    # El nombre de la lista, copiado: renombrarla no puede cambiar lo firmado.
+    checklist_name = models.CharField(max_length=150)
+    signed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="preflight_checks",
+        null=True,
+        blank=True,
+    )
+    signed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = _("preflight check")
+        verbose_name_plural = _("preflight checks")
+
+    def __str__(self):
+        return f"{self.checklist_name} · {self.flight_record}"
+
+    @property
+    def is_signed(self):
+        return self.signed_at is not None
+
+    @property
+    def blocking_answers(self):
+        """Los puntos obligatorios que salieron mal. Una lista y no un booleano:
+        quien revisa el expediente tiene que ver **cuáles**."""
+        return [
+            answer
+            for answer in self.answers.all()
+            if answer.is_required and answer.value == PreflightAnswer.NOT_OK
+        ]
+
+    def sign(self, user):
+        """Firma el chequeo. Después de esto no se toca.
+
+        ⚠️ **Un punto obligatorio en «no conforme» no impide firmar, y es
+        deliberado.** La lista registra lo que se comprobó; no decide si se
+        vuela. Eso lo decide quien opera, y a veces con razón — un punto malo con
+        mitigación acordada es una operación normal en aviación. Lo que el
+        sistema sí hace es **dejarlo escrito**: la firma queda con el «no
+        conforme» adentro, a la vista de quien revise. Impedir la firma habría
+        tenido el efecto contrario, que es el que importa: la gente vuela igual y
+        no firma nada, y se pierde el registro entero.
+
+        Lo que sí se exige es que **no quede nada sin contestar**: un punto en
+        blanco no dice "estaba bien", dice "no se miró", y una firma sobre eso
+        afirma algo que nadie comprobó.
+        """
+        if self.is_signed:
+            raise ValidationError(_("This preflight check is already signed."))
+        if self.answers.filter(value=PreflightAnswer.PENDING).exists():
+            raise ValidationError(_("Every item has to be answered before signing."))
+        self.signed_by = user
+        self.signed_at = timezone.now()
+        self.save(update_fields=["signed_by", "signed_at", "updated_at"])
+
+
+class PreflightAnswer(BaseModel):
+    """La respuesta a un punto, con el texto del punto copiado dentro."""
+
+    PENDING = "pending"
+    OK = "ok"
+    NOT_OK = "not_ok"
+    NOT_APPLICABLE = "na"
+    VALUE_CHOICES = [
+        # ⚠️ Minúscula, reusando el msgid que `assessment_detail.html` ya tiene:
+        # el guardián de traducciones rechaza dos entradas que sólo difieren en
+        # la caja, y con razón — son la misma frase traducida dos veces, hasta
+        # que un día no coinciden. Django la capitaliza sola donde hace falta.
+        (PENDING, _("not answered")),
+        (OK, _("Conforming")),
+        (NOT_OK, _("Not conforming")),
+        (NOT_APPLICABLE, _("Not applicable")),
+    ]
+
+    # ⚠️ `preflight_check` y no `check`: `check` es un método de clase de
+    # `models.Model` —el que corre `manage.py check`— y un campo con ese nombre
+    # lo pisa. Django lo rechaza con `models.E020`, y hace bien: el modelo se
+    # quedaría sin comprobaciones de sistema sin decirlo.
+    preflight_check = models.ForeignKey(
+        PreflightCheck, on_delete=models.CASCADE, related_name="answers"
+    )
+    # ⚠️ El texto **copiado**, no leído del punto al dibujar: editar la plantilla
+    # el mes que viene reescribiría lo que alguien firmó el mes pasado.
+    text = models.CharField(max_length=250)
+    order = models.PositiveIntegerField(default=0)
+    is_required = models.BooleanField(default=True)
+    value = models.CharField(max_length=10, choices=VALUE_CHOICES, default=PENDING)
+    comment = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = _("preflight answer")
+        verbose_name_plural = _("preflight answers")
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return f"{self.text}: {self.get_value_display()}"

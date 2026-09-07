@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% comment %}⚠️ El `{% translate ... as %}` va **dentro** del bloque: lo que una
+plantilla hija escribe fuera de un bloque no se renderiza, así que puesto arriba
+la variable llegaba vacía y el título quedaba en " - AeroControl".
+
+Y el msgid es el minúsculo del `verbose_name` con `|capfirst`, no un
+"Preflight check" propio: el guardián de traducciones rechaza dos entradas que
+sólo difieren en la caja, y con razón — son la misma palabra traducida dos veces,
+hasta que un día no coinciden.{% endcomment %}
+{% block title %}{% translate "preflight check" as preflight_label %}{{ preflight_label|capfirst }} - AeroControl{% endblock %}
+
+{% comment %}`UX-29` · El chequeo prevuelo, adjunto a su vuelo.
+
+Es el estándar universal del mercado y la única brecha funcional grande que no
+depende de la telemetría. El chequeo se hace —quien vuela lo hace— pero no
+quedaba por escrito, así que ante una fiscalización no había con qué demostrarlo.
+
+⚠️ **Firmado, la pantalla deja de tener formulario.** No se atenúa ni se
+deshabilita: se dibuja como lo que es, un acta. Un formulario deshabilitado
+invita a buscar cómo habilitarlo; un acta no.{% endcomment %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <p class="page-eyebrow mb-1"><a href="{% url 'record-detail' record.pk %}">{{ record }}</a></p>
+    {% translate "preflight check" as preflight_label %}<h1 class="h3 mb-0">{{ preflight_label|capfirst }}</h1>
+    <p class="page-description mb-0">{{ record.aircraft.registration }} · {{ record.pilot }} · {{ record.actual_date|date:"d-m-Y" }}</p>
+  </div>
+</div>
+
+{% if not check %}
+{% comment %}Una instalación recién puesta no tiene listas, y eso es un caso real.
+Se dice, en vez de inventar una lista vacía que alguien podría firmar creyendo
+que comprobó algo.{% endcomment %}
+<div class="alert alert-warning" role="status">
+  {% blocktranslate with model=record.aircraft.model %}No preflight checklist is configured for the model {{ model }}. Nothing can be recorded until one exists.{% endblocktranslate %}
+</div>
+{% else %}
+
+{% if check.is_signed %}
+<div class="card p-3 mb-3 preflight-signed">
+  <p class="mb-0">
+    <strong>{% translate "Signed" %}</strong> —
+    {% blocktranslate with who=check.signed_by when=check.signed_at|date:"d-m-Y H:i" %}by {{ who }} on {{ when }}.{% endblocktranslate %}
+  </p>
+  <p class="page-description mb-0 mt-1">{% translate "A signed preflight check is evidence: it is not edited. A correction is a new flight record." %}</p>
+</div>
+{% endif %}
+
+{% if check.blocking_answers %}
+{% comment %}⚠️ Un «no conforme» obligatorio **no impide firmar**, y por eso hay
+que decirlo tan fuerte: la decisión de volar es de quien opera, a veces con razón
+—un punto malo con mitigación acordada es una operación normal en aviación— y lo
+que el sistema hace es dejarlo escrito. Si esto no se viera, la firma habría
+tapado justamente lo que hay que ver.{% endcomment %}
+<div class="card p-3 mb-3 preflight-flagged">
+  <h2 class="h6 text-uppercase mb-2">{% translate "Recorded as not conforming" %}</h2>
+  <ul class="mb-0">
+    {% for answer in check.blocking_answers %}
+    <li>{{ answer.text }}{% if answer.comment %} — {{ answer.comment }}{% endif %}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<form method="post" class="card p-3">
+  {% csrf_token %}
+  <h2 class="h6 text-uppercase mb-3">{{ check.checklist_name }}</h2>
+  <ol class="preflight-items">
+    {% for answer in answers %}
+    <li class="preflight-item">
+      <p class="preflight-item-text mb-1">{{ answer.text }}{% if answer.is_required %} <span class="preflight-required" title="{% translate 'Required' %}">*</span>{% endif %}</p>
+      {% if check.is_signed %}
+      <p class="mb-0"><strong>{{ answer.get_value_display }}</strong>{% if answer.comment %} — {{ answer.comment }}{% endif %}</p>
+      {% else %}
+      <div class="d-flex gap-3 flex-wrap align-items-center">
+        {% for value, label in values %}
+        <label class="preflight-choice">
+          <input type="radio" name="value-{{ answer.pk }}" value="{{ value }}" {% if answer.value == value %}checked{% endif %}>
+          {{ label }}
+        </label>
+        {% endfor %}
+        {% if answer.value == "pending" %}<span class="preflight-pending">{% translate "not answered" %}</span>{% endif %}
+      </div>
+      <input class="form-control form-control-sm mt-1" type="text" name="comment-{{ answer.pk }}"
+             value="{{ answer.comment }}" placeholder="{% translate 'Comment (optional)' %}"
+             aria-label="{% blocktranslate with item=answer.text %}Comment on {{ item }}{% endblocktranslate %}">
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+
+  {% if not check.is_signed %}
+  <div class="d-flex gap-2 flex-wrap align-items-center mt-3">
+    <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+  </div>
+  {% endif %}
+</form>
+
+{% if not check.is_signed %}
+{% comment %}Firmar es un acto y no un dato, así que va en su propio formulario:
+mezclarlo con "guardar respuestas" habría hecho que quien contesta el último
+punto firmara sin querer. Y pregunta antes, por lo mismo que aprobar un informe
+— después no se edita.{% endcomment %}
+<form method="post" action="{% url 'preflight-sign' record.pk %}" class="mt-3"
+      data-confirm="{% translate 'Signing closes this preflight check: it stops being editable and stays as evidence. Continue?' %}">
+  {% csrf_token %}
+  <button class="btn btn-outline-primary">{% translate "Sign the preflight check" %}</button>
+  <span class="page-description small ms-2">{% translate "Every item has to be answered first." %}</span>
+</form>
+{% endif %}
+{% endif %}
+{% endblock %}

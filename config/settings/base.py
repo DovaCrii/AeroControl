@@ -59,6 +59,9 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "apps.compliance.context_processors.unresolved_alert_count",
+                # UX-31: los atajos del rol. Va acá y no en cada vista porque el
+                # menú vive en `base.html`, o sea en todas las pantallas.
+                "apps.core.context_processors.role_shortcuts",
             ]
         },
     }
@@ -309,6 +312,15 @@ REST_FRAMEWORK = {
 }
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/"
+# `UX-26`: la versión que nombra la caché del service worker. Cambiarla es lo que
+# hace que el navegador tire lo guardado; si no, una persona que instaló la
+# aplicación seguiría viendo la pantalla del despliegue anterior sin conexión.
+#
+# Se lee del entorno con un valor por defecto que sirve en desarrollo, y el
+# despliegue le pasa el commit: es el único dato que identifica sin ambigüedad
+# **qué** está guardado. Una fecha se repite si se despliega dos veces el mismo
+# día; un número que hay que acordarse de subir a mano no se sube.
+SERVICE_WORKER_VERSION = config("SERVICE_WORKER_VERSION", default="dev")
 LOGOUT_REDIRECT_URL = LOGIN_URL
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True

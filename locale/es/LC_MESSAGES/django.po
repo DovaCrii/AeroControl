@@ -8196,9 +8196,9 @@ msgid "See the resolved ones"
 msgstr "Ver las resueltas"
 
 #: templates/dashboard/index.html
-#, python-brace-format
-msgid "{flights} operations today · {permits} permits in force"
-msgstr "{flights} operaciones hoy · {permits} permisos vigentes"
+#, python-format
+msgid "%(flights)s operations today · %(permits)s permits in force"
+msgstr "%(flights)s operaciones hoy · %(permits)s permisos vigentes"
 
 #: templates/core/_weather_metrics.html
 #, python-brace-format
@@ -8493,3 +8493,280 @@ msgstr "Exportar la selección"
 #: templates/base.html
 msgid "This form has changes that have not been saved. Close it and lose them?"
 msgstr "Este formulario tiene cambios sin guardar. ¿Cerrarlo y perderlos?"
+
+#: templates/generic/form.html templates/compliance/document_form.html
+msgid "Save and add another"
+msgstr "Guardar y crear otro"
+
+#: apps/core/views.py
+msgid "Saved. You can enter the next one."
+msgstr "Guardado. Ya puede cargar el siguiente."
+
+#: templates/base.html
+msgid "Search everywhere for"
+msgstr "Buscar en todo"
+
+#: templates/base.html
+msgid "Nothing matches that."
+msgstr "No hay nada que coincida."
+
+#: templates/base.html
+msgid "Search or jump to a screen"
+msgstr "Buscar o ir a una pantalla"
+
+#: templates/base.html
+msgid "Enter to open · Esc to close"
+msgstr "Enter para abrir · Esc para cerrar"
+
+#: apps/geo/views.py
+msgid "Vertex"
+msgstr "Vértice"
+
+#: apps/geo/views.py
+msgid "Edit the numbers and apply: nothing here needs dragging."
+msgstr "Edite los números y aplique: acá nada se arrastra."
+
+#: apps/operations/readiness.py templates/operations/can_i_fly.html
+msgid "Can I fly?"
+msgstr "¿Puedo volar?"
+
+#: apps/operations/readiness.py templates/operations/can_i_fly.html
+msgid "Choose one…"
+msgstr "Elija uno…"
+
+#: apps/operations/readiness.py templates/operations/can_i_fly.html
+#, python-format
+msgid "Expired on %(date)s."
+msgstr "Venció el %(date)s."
+
+#: apps/operations/readiness.py templates/operations/can_i_fly.html
+#, python-format
+msgid "Recorded in %(code)s, not in %(chosen)s."
+msgstr "Registrado en %(code)s, no en %(chosen)s."
+
+#: apps/operations/readiness.py templates/operations/can_i_fly.html
+#, python-format
+msgid "Expires on %(date)s, in %(days)s days."
+msgstr "Vence el %(date)s, en %(days)s días."
+
+#: apps/operations/readiness.py templates/operations/can_i_fly.html
+msgid "This screen reads the records; it does not authorise the flight."
+msgstr "Esta pantalla lee los registros; no autoriza el vuelo."
+
+#: apps/operations/readiness.py templates/operations/can_i_fly.html
+msgid "Choose an aircraft, an operator and a cost centre. The three of them: half a set has no answer."
+msgstr "Elija una aeronave, un operador y un centro de costo. Los tres: media terna no tiene respuesta."
+
+#: apps/operations/readiness.py templates/operations/can_i_fly.html
+msgid "Airframe status"
+msgstr "Estado de la aeronave"
+
+#: apps/operations/readiness.py templates/operations/can_i_fly.html
+msgid "Aircraft belongs elsewhere"
+msgstr "La aeronave pertenece a otra faena"
+
+#: apps/operations/readiness.py templates/operations/can_i_fly.html
+msgid "One answer for one aircraft, one operator and one cost centre, today."
+msgstr "Una respuesta para una aeronave, un operador y un centro de costo, hoy."
+
+#: apps/operations/readiness.py templates/operations/can_i_fly.html
+msgid "Operator and aircraft"
+msgstr "Operador y aeronave"
+
+#: apps/operations/readiness.py templates/operations/can_i_fly.html
+msgid "What was checked"
+msgstr "Qué se comprobó"
+
+#: apps/operations/readiness.py templates/operations/can_i_fly.html
+msgid "No expiry date on file, so nothing here proves it is in force."
+msgstr "Sin fecha de vencimiento cargada, así que nada acá prueba que esté vigente."
+
+#: apps/operations/readiness.py templates/operations/can_i_fly.html
+#, python-format
+msgid "No current qualification of this operator covers the model %(model)s."
+msgstr "Ninguna habilitación vigente de este operador cubre el modelo %(model)s."
+
+#: apps/operations/readiness.py templates/operations/can_i_fly.html
+msgid "No approved permit covers today for this cost centre."
+msgstr "Ningún permiso aprobado cubre el día de hoy para este centro de costo."
+
+#: apps/operations/readiness.py templates/operations/can_i_fly.html
+#, python-format
+msgid "The aircraft is recorded as «%(status)s»."
+msgstr "La aeronave figura como «%(status)s»."
+
+#: apps/operations/readiness.py templates/operations/can_i_fly.html
+msgid "Model qualification"
+msgstr "Habilitación por modelo"
+
+#: apps/operations/readiness.py templates/operations/can_i_fly.html
+msgid "Worth knowing"
+msgstr "Conviene saber"
+
+#: apps/operations/readiness.py templates/operations/can_i_fly.html
+#, python-format
+msgid "Permit %(folio)s"
+msgstr "Permiso %(folio)s"
+
+#: apps/operations/readiness.py templates/operations/can_i_fly.html
+msgid "What stops it"
+msgstr "Qué lo impide"
+
+#: apps/operations/readiness.py templates/operations/can_i_fly.html
+msgid "Operator belongs elsewhere"
+msgstr "El operador pertenece a otra faena"
+
+
+#: templates/operations/can_i_fly.html
+msgid "nothing blocking"
+msgstr "sin nada que lo impida"
+
+#: templates/operations/can_i_fly.html
+msgid "has something blocking"
+msgstr "con algo que lo impide"
+
+#: templates/operations/can_i_fly.html
+#, python-format
+msgid ""
+"Nothing on record stops %(aircraft)s flying with %(operator)s in %(centre)s "
+"today."
+msgstr ""
+"En los registros no hay nada que impida que %(aircraft)s vuele con "
+"%(operator)s en %(centre)s hoy."
+
+#: templates/operations/can_i_fly.html
+#, python-format
+msgid "One thing on record stops this flight."
+msgid_plural "%(counter)s things on record stop this flight."
+msgstr[0] "Hay una cosa en los registros que impide este vuelo."
+msgstr[1] "Hay %(counter)s cosas en los registros que impiden este vuelo."
+
+#: templates/operations/can_i_fly.html
+#, python-format
+msgid "These do not stop the flight. Dates shown reach up to %(date)s."
+msgstr "Esto no impide el vuelo. Las fechas mostradas llegan hasta el %(date)s."
+
+#: templates/base.html
+msgid "Your day"
+msgstr "Su jornada"
+
+#: templates/base.html
+#, python-format
+msgid ""
+"No connection. You are looking at data saved on %(when)s; nothing can be "
+"saved until it comes back."
+msgstr ""
+"Sin conexión. Está viendo datos guardados el %(when)s; no se puede guardar "
+"nada hasta que vuelva."
+
+#: apps/operations/models.py templates/operations/preflight_check.html
+msgid "Preflight check signed."
+msgstr "Chequeo prevuelo firmado."
+
+#: apps/operations/models.py templates/operations/preflight_check.html
+msgid "Signed preflight check"
+msgstr "Chequeo prevuelo firmado"
+
+#: apps/operations/models.py templates/operations/preflight_check.html
+msgid "This preflight check is already signed."
+msgstr "Este chequeo prevuelo ya está firmado."
+
+#: apps/operations/models.py templates/operations/preflight_check.html
+msgid "Every item has to be answered before signing."
+msgstr "Hay que contestar todos los puntos antes de firmar."
+
+#: apps/operations/models.py templates/operations/preflight_check.html
+msgid "Every item has to be answered first."
+msgstr "Primero hay que contestar todos los puntos."
+
+#: apps/operations/models.py templates/operations/preflight_check.html
+msgid "Sign the preflight check"
+msgstr "Firmar el chequeo prevuelo"
+
+#: apps/operations/models.py templates/operations/preflight_check.html
+msgid "Signing closes this preflight check: it stops being editable and stays as evidence. Continue?"
+msgstr "Firmar cierra este chequeo prevuelo: deja de ser editable y queda como evidencia. ¿Continuar?"
+
+#: apps/operations/models.py templates/operations/preflight_check.html
+msgid "A signed preflight check is evidence: it is not edited. A correction is a new flight record."
+msgstr "Un chequeo prevuelo firmado es evidencia: no se edita. Una corrección es un registro de vuelo nuevo."
+
+#: apps/operations/models.py templates/operations/preflight_check.html
+msgid "Recorded as not conforming"
+msgstr "Registrado como no conforme"
+
+#: apps/operations/models.py templates/operations/preflight_check.html
+msgid "Comment (optional)"
+msgstr "Comentario (opcional)"
+
+#: apps/operations/models.py templates/operations/preflight_check.html
+msgid "Conforming"
+msgstr "Conforme"
+
+#: apps/operations/models.py templates/operations/preflight_check.html
+msgid "Not conforming"
+msgstr "No conforme"
+
+#: apps/operations/models.py templates/operations/preflight_check.html
+msgid "Not applicable"
+msgstr "No aplica"
+
+#: apps/operations/models.py templates/operations/preflight_check.html
+msgid "preflight checklist"
+msgstr "lista de chequeo prevuelo"
+
+#: apps/operations/models.py templates/operations/preflight_check.html
+msgid "preflight checklists"
+msgstr "listas de chequeo prevuelo"
+
+#: apps/operations/models.py templates/operations/preflight_check.html
+msgid "preflight checklist item"
+msgstr "punto de la lista de chequeo prevuelo"
+
+#: apps/operations/models.py templates/operations/preflight_check.html
+msgid "preflight checklist items"
+msgstr "puntos de la lista de chequeo prevuelo"
+
+#: apps/operations/models.py templates/operations/preflight_check.html
+msgid "preflight check"
+msgstr "chequeo prevuelo"
+
+#: apps/operations/models.py templates/operations/preflight_check.html
+msgid "preflight checks"
+msgstr "chequeos prevuelo"
+
+#: apps/operations/models.py templates/operations/preflight_check.html
+msgid "preflight answer"
+msgstr "respuesta de chequeo prevuelo"
+
+#: apps/operations/models.py templates/operations/preflight_check.html
+msgid "preflight answers"
+msgstr "respuestas de chequeo prevuelo"
+
+#: apps/operations/models.py templates/operations/preflight_check.html
+msgid "Signed"
+msgstr "Firmado"
+
+#: apps/operations/models.py templates/operations/preflight_check.html
+msgid "Comma-separated words matched against the aircraft model. Leave it empty for a checklist that applies to every aircraft."
+msgstr "Palabras separadas por coma que se comparan contra el modelo de la aeronave. Déjelo vacío para una lista que aplique a todas."
+
+
+#: templates/operations/preflight_check.html
+#, python-format
+msgid "by %(who)s on %(when)s."
+msgstr "por %(who)s el %(when)s."
+
+#: templates/operations/preflight_check.html
+#, python-format
+msgid ""
+"No preflight checklist is configured for the model %(model)s. Nothing can be "
+"recorded until one exists."
+msgstr ""
+"No hay ninguna lista de chequeo prevuelo configurada para el modelo "
+"%(model)s. No se puede registrar nada hasta que exista una."
+
+#: templates/operations/preflight_check.html
+#, python-format
+msgid "Comment on %(item)s"
+msgstr "Comentario sobre %(item)s"
