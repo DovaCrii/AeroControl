@@ -8149,6 +8149,15 @@ msgstr ""
 "Sólo se puede reutilizar el mismo tipo de documento, de otro registro de la "
 "misma faena, y que siga vigente."
 
+#: apps/reporting/models.py
+#, python-format
+msgid ""
+"The period %(period)s has not finished yet: a monthly report cannot be "
+"frozen before its month closes."
+msgstr ""
+"El período %(period)s todavía no termina: un informe mensual no se puede "
+"congelar antes del cierre de su mes."
+
 #: apps/operations/dossier.py
 msgid "Use one already on file"
 msgstr "Usar uno ya cargado"
