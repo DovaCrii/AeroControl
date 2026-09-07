@@ -42,6 +42,14 @@ urlpatterns = [
         views.PermissionFolioFromPdf.as_view(),
         name="permission-folio-from-pdf",
     ),
+    # LV-218(b): registrar la revisión de NOTAM. Con `GET` y `POST`, al revés
+    # que la meteorológica: ahí los números los trae el proveedor, y acá lo que
+    # se registra es lo que la persona leyó, así que hace falta el formulario.
+    path(
+        "permissions/<uuid:pk>/notam-review/",
+        views.NotamReviewCreate.as_view(),
+        name="notam-review-create",
+    ),
     # LV-135: archivar es el "borrar" de este proyecto. Con confirmación
     # siempre, y con motivo escrito si el permiso ya estaba aprobado.
     path(

@@ -894,6 +894,100 @@ class PermissionHistory(BaseModel):
         return super().save(*args, **kwargs)
 
 
+class NotamReview(BaseModel):
+    """LV-218(b): que alguien revisó los NOTAM, en el expediente.
+
+    **Es la mitad de `LV-218` que no depende de la DGAC.** El paso (a) dejó el
+    enlace al IFIS en la ficha, y el cruce automático espera saber si existe una
+    fuente estructurada (ver `docs/dev/lv218-consulta-notam-dgac.md`). Pero
+    mostrar un enlace no es evidencia: después del vuelo no había forma de
+    contestar *"¿se revisaron los avisos antes de volar, y qué decían?"*, que es
+    justo la pregunta que un auditor hace.
+
+    Sigue el molde de `WeatherReview` (`R8.1`), y por las mismas razones:
+
+    - **Se escribe por una acción explícita**, nunca al cargar la página. Lo que
+      la norma pide es que una persona responsable revisara las condiciones; una
+      fila escrita porque alguien abrió una pestaña acreditaría que nadie lo
+      hizo.
+    - **Guarda lo que se leyó**, no un puntero para volver a consultarlo. Un
+      NOTAM caduca y sale del listado: preguntarle al IFIS el mes que viene por
+      un aviso de agosto no devuelve nada, y esa nada no significa que no lo
+      hubiera.
+    - **Append-only por naturaleza**: una revisión es una afirmación sobre un
+      momento, y editarla después le quita el sentido.
+
+    ⚠️ **`outcome` no tiene valor por omisión, y ése es el punto de toda la
+    clase.** Con un `False` por defecto —"no afecta"— una revisión registrada de
+    apuro afirmaría que ningún aviso afecta al vuelo, que es exactamente el
+    fallo silencioso que `LV-218` viene evitando desde el paso (a). Hay que
+    responder cuál de los tres casos es.
+    """
+
+    # Tres estados y no un booleano, porque son tres hechos distintos y se
+    # actúa distinto en cada uno. "No hay avisos publicados" y "hay avisos y
+    # ninguno afecta a esta área" se confunden en un `False`, y la diferencia
+    # importa: la segunda dice que alguien leyó y descartó.
+    OUTCOME_NONE = "none"
+    OUTCOME_NOT_AFFECTED = "not_affected"
+    OUTCOME_AFFECTED = "affected"
+    OUTCOME_CHOICES = [
+        (OUTCOME_NONE, _("No NOTAM published for the area")),
+        (OUTCOME_NOT_AFFECTED, _("NOTAM published, none affects the operation")),
+        (OUTCOME_AFFECTED, _("A NOTAM affects the operation")),
+    ]
+
+    permission = models.ForeignKey(
+        FlightPermission, on_delete=models.CASCADE, related_name="notam_reviews"
+    )
+    # El día para el que se revisó. Se guarda aparte de `created_at` porque no
+    # son lo mismo: se puede revisar el lunes lo que se vuela el jueves, y lo
+    # que el expediente necesita saber es **para qué día** valía el aviso.
+    target_date = models.DateField(verbose_name=_("Date reviewed for"))
+    outcome = models.CharField(
+        max_length=20, choices=OUTCOME_CHOICES, verbose_name=_("Outcome")
+    )
+    # Qué decía. Obligatorio cuando algo afecta -- ver `clean`.
+    findings = models.TextField(blank=True, verbose_name=_("What it said"))
+    # La consulta que se abrió, tal como estaba. Queda por trazabilidad: el
+    # enlace del IFIS depende del aeródromo que el permiso declara, y si ese
+    # dato cambia después, el expediente tiene que seguir diciendo qué se
+    # consultó de verdad.
+    consulted_url = models.CharField(max_length=500, blank=True)
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+
+    class Meta:
+        verbose_name = _("NOTAM review")
+        verbose_name_plural = _("NOTAM reviews")
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.permission} @ {self.target_date}"
+
+    def clean(self):
+        """Decir que un aviso afecta y no decir cuál no es evidencia de nada.
+
+        Mismo criterio que resolver una alerta (`R6.2`) o liberar un entregable
+        bajo criterio (`R7.4`): la afirmación grave exige el motivo escrito, o el
+        registro queda con la forma de una evidencia y sin su contenido.
+        """
+        if self.outcome == self.OUTCOME_AFFECTED and not self.findings.strip():
+            raise ValidationError(
+                {
+                    "findings": _(
+                        "Say which NOTAM affects the operation and how; "
+                        "the record is the evidence."
+                    )
+                }
+            )
+
+
 class WorkAreaType(BaseModel):
     """R9.3: "Área de Trabajo" del formulario de SIGO.
 

@@ -41,6 +41,13 @@ ROLE_PERMISSIONS = {
         # view are granted, change and delete never are.
         "add_weatherreview",
         "view_weatherreview",
+        # LV-218(b): mismo reparto y por lo mismo. Quien vuela es quien revisa
+        # los avisos aeronáuticos antes de volar, así que Operaciones registra la
+        # revisión. Append-only: `add` y `view`, nunca `change` -- una revisión
+        # es una afirmación sobre un momento, y editarla después le quita el
+        # sentido.
+        "add_notamreview",
+        "view_notamreview",
         # R7.4: Operations records the deliverable's metrics; validating and
         # releasing it belongs to Compliance, so no `change` here.
         "add_deliverable",
@@ -130,6 +137,9 @@ ROLE_PERMISSIONS = {
         "approve_geoplan",
         # Reads the meteorological evidence (ISO 8.1) without producing it.
         "view_weatherreview",
+        # LV-218(b): igual con la revisión de NOTAM. Cumplimiento la audita; no
+        # la produce, porque no es quien vuela.
+        "view_notamreview",
         # R7.4: Compliance owns the internal validation and the release gate
         # (ISO 8.6) -- the whole point is that whoever produced the survey is
         # not the one who signs it off.
