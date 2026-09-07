@@ -12,7 +12,21 @@ dos centímetros. Un encabezado lleva acciones, no atajos a lo que ya está a la
 vista; y de paso desaparece "Abrir registro", que prometía el padrón y llevaba a
 centros de costo.{% endcomment %}
 <div class="page-header">
-  <h1 class="mb-0">{% translate "Operations Dashboard" %}</h1>
+  <div>
+    <h1 class="mb-0">{% translate "Operations Dashboard" %}</h1>
+    {% comment %}`UX-15`: **qué está pasando hoy**, no sólo qué vence.
+
+    Es lo que distingue un panel de cumplimiento de un centro de operaciones:
+    todo lo demás de esta pantalla contesta por vigencias y trabajo pendiente, y
+    ninguna tarjeta decía si hoy voló alguien.
+
+    Va junto al título y no como tarjeta, a propósito: no es un indicador que se
+    compare contra una meta ni que se pinte de color, es el pulso del día — y una
+    tarjeta más en la tira de arriba habría competido con las que sí piden
+    acción. Los vuelos se cuentan por **fecha real de vuelo** y no por fecha de
+    carga: la bitácora se escribe después, a veces al día siguiente.{% endcomment %}
+    <p class="page-description mb-0">{% blocktranslate with flights=flights_today permits=permits_in_force %}{{ flights }} operations today · {{ permits }} permits in force{% endblocktranslate %}</p>
+  </div>
   <a class="btn btn-primary" href="{% url 'permission-create' %}">+ {% translate "New permission" %}</a>
 </div>
 

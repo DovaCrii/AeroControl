@@ -597,15 +597,15 @@ desde la lista de alertas — es la misma vista, no un segundo camino.
 el patrón que AirHub ya tiene (investigador asignado) y lo que convierte una lista
 en trabajo. *Criterio:* "Mis pendientes" filtra por persona.
 
-**`UX-15` · Contador de actividad en el panel:** "N operaciones hoy · M permisos
+**`UX-15` · Contador de actividad en el panel** ✅ **hecho el 2026-09-07**, junto al título y no como tarjeta: no es un indicador que se compare contra una meta, es el pulso del día, y una tarjeta más habría competido con las que sí piden acción. Los vuelos se cuentan por **fecha real de vuelo** y no por fecha de carga — la bitácora se escribe después, a veces al día siguiente. Los permisos vigentes salen de `permit_counts`, la misma función que el informe. **Original:** "N operaciones hoy · M permisos
 vigentes". *Criterio:* sale de datos existentes, sin modelo nuevo.
 
-**`UX-16` · Frescura declarada en datos externos.** El clima muestra su hora de
+**`UX-16` · Frescura declarada en datos externos** ✅ **hecha el 2026-09-07.** ⚠️ La marca se sella **al consultar al proveedor**, no al dibujar: el pronóstico se guarda en caché una hora, así que uno leído a las 15:00 puede haberse traído a las 14:05 — sellarlo en la plantilla afirmaría una frescura que no tiene. **Original:** El clima muestra su hora de
 consulta. *Criterio:* ningún dato de terceros se presenta sin marca de tiempo.
 
-**`UX-17` · Filtro de faena recordado** en panel y listados.
+**`UX-17` · Filtro de faena recordado** ✅ **hecho el 2026-09-07** en el panel. En la **sesión** y no en una columna del usuario: es comodidad de navegación, no preferencia del negocio. ⚠️ La rama se elige por si el parámetro **viene**, no por si trae valor: llegar sin `cost_center` restaura, y llegar con `?cost_center=` vacío **borra** el recuerdo — sin esa distinción, la única forma de volver a verlo todo sería cerrar sesión. 🔶 **En los listados queda pendiente**: ahí el filtro por faena ya se combina con búsqueda, estado y responsable, y recordar sólo uno de cuatro sería arbitrario — o se recuerda la query entera (que es `UX-12`, ya hecho) o ninguno.
 
-**`UX-18` · Estado vacío de alertas como buena noticia.** "Nada pendiente" con
+**`UX-18` · Estado vacío de alertas como buena noticia** ✅ **hecho el 2026-09-07**, y también en la bandeja de `UX-13`. Se distinguen **dos** vacíos, que no son el mismo hecho: sin filtros no hay nada pendiente y se celebra, con el camino a lo resuelto; con filtros puede haber mucho pendiente y este recorte no alcanzarlo, así que lo que corresponde es ofrecer quitarlos. **Original:** "Nada pendiente" con
 enlace a las resueltas del mes, no "No alerts found."
 
 ### Fase D — Formularios y entrada

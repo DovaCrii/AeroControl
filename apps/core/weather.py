@@ -33,6 +33,7 @@ import urllib.request
 
 from django.conf import settings
 from django.core.cache import cache
+from django.utils import timezone
 
 logger = logging.getLogger("aerocontrol.weather")
 
@@ -240,6 +241,15 @@ def _parse(payload, iso_date):
     # Added after the emptiness check on purpose: a payload with a condition
     # code and no measurements is still nothing to show (see CONDITION_FIELD).
     result["condition"] = condition_for(value(CONDITION_FIELD))
+    # `UX-16`: **cuándo se consultó al proveedor**, no cuándo se lee.
+    #
+    # Criterio de la fila: *"ningún dato de terceros se presenta sin marca de
+    # tiempo"*. Y la marca tiene que quedar **acá**, al parsear la respuesta, no
+    # al dibujar: el pronóstico se guarda en caché una hora, así que uno leído a
+    # las 15:00 puede haberse traído a las 14:05. Sellarlo en la plantilla diría
+    # "consultado a las 15:00" sobre datos de una hora antes, que es justo la
+    # afirmación que esta fila viene a impedir.
+    result["fetched_at"] = timezone.now().isoformat()
 
     def clock(field):
         """ "2026-08-13T08:12" -> "08:12", or None when it is not that.
