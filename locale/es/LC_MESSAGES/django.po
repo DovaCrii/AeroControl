@@ -8183,6 +8183,28 @@ msgstr "Asignada a %(who)s."
 msgid "Left without an owner."
 msgstr "Quedó sin responsable."
 
+#: templates/compliance/_alert_rows.html
+msgid "No alerts match the current filters."
+msgstr "Ninguna alerta coincide con los filtros actuales."
+
+#: templates/compliance/_alert_rows.html
+msgid "No open alerts right now."
+msgstr "No hay alertas abiertas en este momento."
+
+#: templates/compliance/_alert_rows.html
+msgid "See the resolved ones"
+msgstr "Ver las resueltas"
+
+#: templates/dashboard/index.html
+#, python-brace-format
+msgid "{flights} operations today · {permits} permits in force"
+msgstr "{flights} operaciones hoy · {permits} permisos vigentes"
+
+#: templates/core/_weather_metrics.html
+#, python-brace-format
+msgid "Queried from the provider at {when}."
+msgstr "Consultado al proveedor a las {when}."
+
 #: apps/core/tray.py
 msgid "permit awaiting the DGAC"
 msgstr "permiso esperando a la DGAC"

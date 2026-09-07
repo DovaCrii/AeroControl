@@ -89,4 +89,24 @@ pueden decir cosas distintas.{% endcomment %}
     {% endif %}
     </div>
   </td>
-</tr>{% empty %}<tr><td colspan="99" class="text-center text-muted py-4">{% translate "No alerts found." %}</td></tr>{% endfor %}
+</tr>{% empty %}
+{% comment %}`UX-18`: el vacío de esta pantalla es una **buena noticia**, y se
+dice como tal. Decía *"No alerts found."*, que se lee como si la búsqueda hubiera
+fallado — y en la pantalla que contesta *"¿hay algo que atender?"* eso es
+exactamente la lectura equivocada.
+
+Se distinguen los dos vacíos, que no son el mismo hecho: **sin filtros** no hay
+nada pendiente y eso se celebra, con el camino a lo resuelto para quien venía a
+mirar historia; **con filtros** puede haber mucho pendiente y este recorte no
+alcanzarlo, así que lo que corresponde ofrecer es quitarlos. Es la misma
+distinción que `generic/_table_body.html` hace desde que existe.{% endcomment %}
+<tr><td colspan="99" class="text-center py-5">
+  {% if request.GET.q or request.GET.entity_type or request.GET.cost_center or request.GET.owner %}
+  <div class="mb-1">{% translate "No alerts match the current filters." %}</div>
+  <a href="{{ request.path }}">{% translate "Clear filters" %}</a>
+  {% else %}
+  <div class="h5 mb-1">{% translate "Nothing pending." %}</div>
+  <div class="text-body-secondary small">{% translate "No open alerts right now." %}
+    <a href="?is_resolved=true">{% translate "See the resolved ones" %}</a>.</div>
+  {% endif %}
+</td></tr>{% endfor %}

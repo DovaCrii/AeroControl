@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load aero_tags i18n %}
 {% comment %}R8.4: el pronóstico de un día, en un solo lugar. Lo comparten el
 panel y la ficha del plan geoespacial, que antes tenían su propia copia del
 mismo bloque -- dos copias derivan, y la que menos se mira termina mostrando
@@ -79,3 +79,18 @@ cuesta una llamada nueva: viene en la misma respuesta que el resto.{% endcomment
     <strong>{% if weather.precipitation_sum is not None %}{{ weather.precipitation_sum }} {{ weather.units.precipitation_sum|default:"" }}{% else %}—{% endif %}</strong>
   </div></div>
 </div>
+{% comment %}`UX-16`: la frescura, declarada. Criterio de la fila: *"ningún dato
+de terceros se presenta sin marca de tiempo"*.
+
+La marca la pone `weather.py` **al consultar al proveedor**, no acá al dibujar, y
+esa distinción es la fila entera: el pronóstico se guarda en caché una hora, así
+que uno leído a las 15:00 puede haberse traído a las 14:05. Sellarlo en la
+plantilla diría "consultado a las 15:00" sobre datos de una hora antes — la
+afirmación que esta fila viene a impedir.
+
+Va debajo y en letra chica: es procedencia, no una medición más. Y si el
+proveedor no la trae —un pronóstico guardado antes de que esto existiera— no se
+dibuja nada, en vez de inventar una hora.{% endcomment %}
+{% if weather.fetched_at %}
+<p class="text-body-secondary small mt-2 mb-0">{% blocktranslate with when=weather.fetched_at|as_datetime|date:"Y-m-d H:i" %}Queried from the provider at {{ when }}.{% endblocktranslate %}</p>
+{% endif %}

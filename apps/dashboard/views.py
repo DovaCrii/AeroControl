@@ -840,6 +840,39 @@ def dashboard(request):
             ).first()
         except (ValueError, ValidationError):
             selected_cost_center = None
+
+    # `UX-17`: la faena elegida se recuerda. Quien trabaja una faena la vuelve a
+    # elegir en cada login, y el panel es la primera pantalla del día.
+    #
+    # **En la sesión y no en una columna del usuario**: es una comodidad de
+    # navegación, no una preferencia del negocio, y una columna la convertiría en
+    # dato que alguien tiene que administrar.
+    #
+    # ⚠️ **La rama se elige por si el parámetro *viene*, no por si trae valor**, y
+    # ésa es la distinción que hace que el recuerdo se pueda apagar: llegar sin
+    # `cost_center` es abrir el panel de nuevo —y ahí se restaura—, mientras que
+    # llegar con `?cost_center=` vacío es haber pedido "todas" a propósito, y eso
+    # tiene que **borrar** el recuerdo. Sin separarlas, la única forma de volver a
+    # verlo todo sería cerrar sesión.
+    if "cost_center" in request.GET:
+        # Se guarda la que resolvió de verdad y no la cadena cruda, así una faena
+        # archivada deja de recordarse sola en vez de fijar un filtro que ya no
+        # existe.
+        if selected_cost_center is not None:
+            request.session["dashboard_cost_center"] = str(selected_cost_center.pk)
+        else:
+            request.session.pop("dashboard_cost_center", None)
+    else:
+        remembered = request.session.get("dashboard_cost_center")
+        if remembered:
+            try:
+                selected_cost_center = CostCenter.objects.filter(
+                    pk=remembered, is_active=True
+                ).first()
+            except (ValueError, ValidationError):
+                selected_cost_center = None
+            if selected_cost_center is None:
+                request.session.pop("dashboard_cost_center", None)
     cost_centers = CostCenter.objects.filter(is_active=True).order_by("code")
 
     # --- Summary counts ---
@@ -1061,7 +1094,37 @@ def dashboard(request):
         "monthly_flights": monthly_flights,
     }
 
+    # `UX-15`: **qué está pasando hoy**, no sólo qué vence.
+    #
+    # Es lo que distingue un panel de cumplimiento de un centro de operaciones:
+    # todo lo demás de esta pantalla contesta por vigencias y trabajo pendiente,
+    # y ninguna tarjeta decía si hoy voló alguien. Criterio de la fila: *"sale de
+    # datos existentes, sin modelo nuevo"* — y así es: `FlightRecord` ya guarda
+    # la fecha real del vuelo.
+    #
+    # Por `actual_date` y no por `created_at`: la bitácora se escribe **después**
+    # del vuelo, a veces al día siguiente, así que contar por fecha de carga
+    # diría "0 operaciones hoy" en una jornada que sí voló. Es la misma
+    # distinción que `LV-234` acaba de dejar cara: contar por cuándo se registró
+    # en vez de por cuándo ocurrió.
+    # `permit_counts` se importa acá porque en este módulo sólo lo usa
+    # `panel_readiness`, que lo trae dentro de su propio cuerpo. `FlightRecord`,
+    # en cambio, ya viene del import de arriba: repetirlo lo convertía en local
+    # de toda la función y rompía el uso anterior, unas líneas más arriba.
+    from apps.compliance.kpis import permit_counts as _permit_counts
+
+    flights_today = FlightRecord.objects.filter(is_active=True, actual_date=today)
+    if selected_cost_center:
+        flights_today = flights_today.filter(
+            permission__cost_center=selected_cost_center
+        )
+
     context = {
+        "flights_today": flights_today.count(),
+        # El acompañante que la fila pide en la misma frase ("N operaciones hoy ·
+        # M permisos vigentes"), y sale de `permit_counts` — la misma función que
+        # el informe, para que el panel y el PDF no digan cifras distintas.
+        "permits_in_force": _permit_counts(today, selected_cost_center)["in_force"],
         "aircraft_count": aircraft_count,
         "operator_count": operator_count,
         "alert_count": alert_count,

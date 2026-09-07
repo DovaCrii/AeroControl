@@ -120,3 +120,29 @@ def worktable_th(context, label, column="", align="", css=""):
         "state": state,
         "url": f"?{sort['base_query']}sort={column}&dir={nxt}",
     }
+
+
+@register.filter
+def as_datetime(value):
+    """Una marca ISO como `datetime`, para poder darle formato.
+
+    `UX-16`: el pronóstico guarda su hora de consulta en ISO porque viaja por la
+    caché y por el payload de una revisión meteorológica, y la plantilla la
+    dibuja en `Y-m-d H:i`. Sin esta conversión saldría el ISO crudo con su `T` y
+    su zona, que en una tarjeta de una línea se lee como ruido.
+
+    Vive acá y no en `report_leaf` —donde está su gemelo `as_date`— porque el
+    clima no es parte del informe: ese módulo carga sólo en las cinco hojas.
+
+    Devuelve el valor tal cual si no es una marca reconocible, en vez de
+    reventar: quien llama está dibujando una tarjeta de contexto, y un
+    pronóstico raro no puede tumbar la ficha del plan.
+    """
+    from datetime import datetime
+
+    if isinstance(value, datetime):
+        return value
+    try:
+        return datetime.fromisoformat(value)
+    except (TypeError, ValueError):
+        return value
