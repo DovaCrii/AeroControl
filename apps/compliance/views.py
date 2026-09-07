@@ -48,6 +48,7 @@ from .forms import (
     DocumentForm,
     DocumentTypeForm,
     NonConformityForm,
+    OwnerForm,
 )
 from .models import (
     Alert,
@@ -1315,6 +1316,9 @@ class AlertList(ComplianceList):
         # daría un orden que no corresponde a lo que se lee.
         "expiry": "triggering_date",
         "resolution": "is_resolved",
+        # UX-14: el dueño **sí** ordena, al revés que la faena: `assigned_to` es
+        # una columna de verdad y no una relación genérica resuelta en Python.
+        "owner": "assigned_to__username",
     }
     # LV-118: qué ve quien llega sin filtros. Constante y no un literal suelto
     # porque el test que fija este comportamiento tiene que poder nombrarlo:
@@ -1395,6 +1399,21 @@ class AlertList(ComplianceList):
         cost_center = self.selected_cost_center()
         if cost_center is not None:
             queryset = alerts_for_cost_center(queryset, cost_center)
+
+        # `UX-14`: "Mis pendientes". Es el criterio literal de la fila y lo que
+        # vuelve la bandeja utilizable: sin él, quien entra ve las veinte de
+        # todos y tiene que buscar las suyas a ojo.
+        #
+        # `owner=me` y no el id de la persona en la URL: un enlace con el id de
+        # alguien más sería un filtro por tercero disfrazado de "mis pendientes",
+        # y además cambiaría de significado al copiarlo. `unassigned` es la otra
+        # pregunta que se hace todos los días —qué no tiene dueño— y por eso es
+        # un valor y no un filtro aparte.
+        owner = self.request.GET.get("owner")
+        if owner == "me" and self.request.user.is_authenticated:
+            queryset = queryset.filter(assigned_to=self.request.user)
+        elif owner == "unassigned":
+            queryset = queryset.filter(assigned_to__isnull=True)
         # LV-118: severidad primero. `LV-112` dejó orden declarado (lo abierto
         # antes, y dentro de eso lo más antiguo) y descartó ordenar por el
         # vencimiento porque `watched_date` se calculaba en Python leyendo una
@@ -1585,6 +1604,69 @@ def _redirect_back(request, fallback="alert-list"):
     ):
         return redirect(referer)
     return redirect(fallback)
+
+
+class AssignOwner(ModelPermissionRequiredMixin, View):
+    """`UX-14`: ponerle dueño a una alerta o a una no conformidad.
+
+    **Una sola vista para los dos**, porque es literalmente la misma acción sobre
+    el mismo campo: dos copias es cómo una de ellas deja de registrar la
+    auditoría o de comprobar el permiso. El modelo concreto lo fija cada ruta.
+
+    Modal, como "Resolver", y por la misma razón: una fila apretada no tiene sitio
+    para un selector de personas.
+
+    `change` y no `add`: asignar modifica el registro que ya existe.
+    """
+
+    permission_action = "change"
+    # Lo fija cada entrada de `urls.py`. Sin esto `ModelPermissionRequiredMixin`
+    # no sabría qué permiso pedir, así que no hay un defecto silencioso posible.
+    model = None
+
+    def _target(self, pk):
+        return get_object_or_404(self.model, pk=pk, is_active=True)
+
+    def get(self, request, pk):
+        target = self._target(pk)
+        return render(
+            request,
+            "generic/_form_content.html",
+            {
+                "form": OwnerForm(initial={"assigned_to": target.assigned_to_id}),
+                "title": _("Assign an owner"),
+            },
+        )
+
+    def post(self, request, pk):
+        target = self._target(pk)
+        form = OwnerForm(request.POST)
+        if not form.is_valid():
+            return render(
+                request,
+                "generic/_form_content.html",
+                {"form": form, "title": _("Assign an owner")},
+            )
+        target.assigned_to = form.cleaned_data["assigned_to"]
+        target.save(update_fields=["assigned_to", "updated_at"])
+        set_audit_context(request, target, action="update")
+        messages.success(
+            request,
+            _("Assigned to %(who)s.") % {"who": target.assigned_to}
+            if target.assigned_to
+            else _("Left without an owner."),
+        )
+        # Vuelve a la lista de donde vino, **comprobando que sea de esta app**.
+        # Un `Referer` a secas es un valor que llega del navegador y que una
+        # página externa puede fijar: sin la comprobación, "asignar" sería un
+        # redirector abierto, y `url_has_allowed_host_and_scheme` es la misma
+        # que Django usa en su propio `LoginView`.
+        back = request.META.get("HTTP_REFERER") or ""
+        if not url_has_allowed_host_and_scheme(
+            back, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+        ):
+            back = "/"
+        return redirect(back)
 
 
 class AlertResolve(ModelPermissionRequiredMixin, View):

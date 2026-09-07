@@ -761,3 +761,37 @@ class AlertResolveForm(forms.Form):
         label=_("Reason / root cause"),
         help_text=_("Why this happened and how it was addressed."),
     )
+
+
+class OwnerForm(forms.Form):
+    """`UX-14`: a quién se le asigna una alerta o una no conformidad.
+
+    **A un usuario de la aplicación y no a un operador.** La alerta ya derivaba
+    un `Operator` para su tarea de seguimiento, pero esa pregunta es otra —*de
+    quién es la credencial que vence*—; ésta es *quién se hace cargo de
+    resolverla*, y quien resuelve es alguien con permiso acá. Cumplimiento, que
+    es quien más trabaja la bandeja, no vuela y no tiene ficha de operador.
+
+    Se ofrecen sólo cuentas **activas**: asignarle trabajo a alguien dado de baja
+    es dejar la fila sin dueño con aspecto de tenerlo.
+
+    `required=False` a propósito: vaciar el campo **desasigna**, que es una acción
+    legítima —alguien se va, o se asignó por error— y no necesita un botón
+    aparte.
+    """
+
+    assigned_to = forms.ModelChoiceField(
+        queryset=None,
+        required=False,
+        label=_("Owner"),
+        empty_label=_("Nobody yet"),
+        help_text=_("Leave it empty to unassign."),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from django.contrib.auth.models import User
+
+        self.fields["assigned_to"].queryset = User.objects.filter(
+            is_active=True
+        ).order_by("username")

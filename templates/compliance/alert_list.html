@@ -25,6 +25,15 @@ entrar por esa puerta, y que se escribía a mano o faltaba:
   vista. Se muestra `code - name` y no `{{ cc }}`, porque el `__str__` agrega el
   responsable y alarga cada opción hasta hacerla ilegible.{% endcomment %}
   {% if cost_centers %}<div class="col-md-3"><select class="form-select" name="cost_center" aria-label="{% translate 'Cost center' %}"><option value="">{% translate "All cost centers" %}</option>{% for cc in cost_centers %}<option value="{{ cc.pk }}" {% if selected_cost_center.pk == cc.pk %}selected{% endif %}>{{ cc.code }} - {{ cc.name }}</option>{% endfor %}</select></div>{% endif %}
+  {% comment %}`UX-14`: el criterio literal de la fila — *"Mis pendientes filtra
+  por persona"*. Va como selector y no como pestaña porque comparte fila con los
+  otros filtros y se combina con ellos: "mis pendientes de CC738" es una pregunta
+  real.
+
+  "Sin asignar" está en el mismo selector porque es la otra pregunta que se hace
+  todos los días, y separarla en un filtro propio habría dado dos controles para
+  una sola dimensión.{% endcomment %}
+  <div class="col-md-3"><select class="form-select" name="owner" aria-label="{% translate 'Owner' %}"><option value="">{% translate "Any owner" %}</option><option value="me" {% if request.GET.owner == 'me' %}selected{% endif %}>{% translate "My pending items" %}</option><option value="unassigned" {% if request.GET.owner == 'unassigned' %}selected{% endif %}>{% translate "Unassigned" %}</option></select></div>
   <div class="col-auto"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
 </form>
 {% endblock %}
@@ -49,6 +58,9 @@ entrar por esa puerta, y que se escribía a mano o faltaba:
   hay columna por la cual ordenar. Tiene nombre igual, que es lo que la vuelve
   ocultable: son dos capacidades distintas.{% endcomment %}
   {% worktable_th _("Cost center") "cost_centre" %}
+  {% comment %}`UX-14`: el dueño. Es lo que convierte una lista en trabajo — sin
+  esta columna, una bandeja de veinte filas es de todos y de nadie.{% endcomment %}
+  {% worktable_th _("Owner") "owner" %}
   {% worktable_th _("Rule") "rule" %}
   {% worktable_th _("Triggered") "triggered" %}
   {% worktable_th _("Expiry") "expiry" %}
