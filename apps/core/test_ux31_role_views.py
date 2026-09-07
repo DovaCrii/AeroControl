@@ -175,6 +175,36 @@ class TestTheShortcuts:
         assert "nav-shortcuts" in body
         assert reverse("can-i-fly") in body
 
+    @pytest.mark.django_db
+    def test_they_cost_one_query_and_it_does_not_grow(
+        self, client, db, django_assert_num_queries
+    ):
+        """⚠️ El guardián de la contrapartida. Los atajos se calculan en un
+        context processor, o sea **en cada petición de la aplicación entera**, y
+        eso ya obligó a subir de 10 a 11 el techo de consultas de
+        `test_the_list_does_not_query_once_per_row_for_the_file`. Subir un techo
+        se acepta cuando lo que se agregó es constante; lo que no se puede
+        aceptar es que mañana crezca sin que nadie lo note, y el número de acá lo
+        fija.
+
+        Se mide la función y no la petición completa a propósito: contar la
+        página entera mediría además todo lo que la vista hace, y este test
+        volvería a fallar cada vez que otra fila toque otra cosa — que es cómo un
+        guardián termina siendo el que todos suben sin leer.
+
+        ⚠️ **La caché de permisos se calienta antes de medir**, y no es hacer
+        trampa: `has_perm` cuesta dos consultas la primera vez y **cero** las
+        siguientes, porque Django las guarda en el objeto del usuario. En una
+        petición real ya están pagadas —el guard de la vista preguntó primero— y
+        por eso el listado de planes subió de 10 a 11 y no a 13. Medir en frío
+        contaría un costo que esta función no causa.
+        """
+        user = _user("Operations")
+        user.has_perm("operations.view_flightpermission")
+
+        with django_assert_num_queries(1):
+            shortcuts_for(user)
+
     def test_every_shortcut_declares_its_gate_and_its_label(self):
         """Sin `get` y sin valor por defecto en el código: un atajo nuevo sin
         entrada en estas tablas tiene que levantar en el momento, no dibujarse

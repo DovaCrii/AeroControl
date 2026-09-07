@@ -407,5 +407,16 @@ def test_the_list_does_not_query_once_per_row_for_the_file(
     client = _reader()
 
     # Sin `source_document` en el `select_related` son cinco consultas más.
-    with django_assert_max_num_queries(10):
+    #
+    # ⚠️ El techo subió de 10 a 11 con `UX-31`, y conviene decir por qué se
+    # aceptó: la consulta nueva es **una sola y constante** —los grupos de quien
+    # mira, que deciden los atajos del menú— y este guardián vigila lo que crece
+    # **por fila**. Con cinco planes son 11, con cincuenta también. La prueba
+    # está en el número: si esa consulta fuera por fila, acá habría 15.
+    #
+    # Se sube el techo en vez de guardar el rol en la sesión: guardarlo dejaría a
+    # alguien con los atajos de un rol que ya no tiene hasta que vuelva a entrar,
+    # y en una aplicación donde el rol decide qué se ve, ese desfase cuesta más
+    # que una consulta.
+    with django_assert_max_num_queries(11):
         client.get(reverse("geo-plan-list"))
