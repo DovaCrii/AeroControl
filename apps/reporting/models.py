@@ -12,6 +12,7 @@ aeronaves ni operadores: recolecta lo que ya existe y lo congela.
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _, pgettext_lazy
 
 from apps.core.models import BaseModel
@@ -185,7 +186,28 @@ class ReportRun(BaseModel):
         esta lógica es cómo el informe que genera el timer y el que genera una
         persona empiezan a diferir.
         """
-        from apps.reporting.builder import build
+        from apps.reporting.builder import build, month_bounds
+
+        # ⚠️ **LV-233: un mes que no terminó no se congela.** Hasta acá nada lo
+        # impedía, así que un `ReportRun` de septiembre con datos de tres días
+        # podía nacer, aprobarse y firmarse — y un `ReportRun` aprobado es el
+        # documento controlado que se emite a la DGAC. La vista previa en vivo
+        # sigue disponible para mirar el mes en curso; lo que no se puede es
+        # convertirla en documento.
+        #
+        # **Estrictamente futuro**, y ese borde importa: el mes termina el mismo
+        # día que es su último día, así que el 31 de agosto agosto **sí** se
+        # congela. Con `>=` el trabajo programado —que corre el último día del
+        # mes— habría quedado bloqueado justo el día que tiene que correr.
+        _start, end = month_bounds(period)
+        if end > timezone.localdate():
+            raise ValidationError(
+                _(
+                    "The period %(period)s has not finished yet: a monthly report "
+                    "cannot be frozen before its month closes."
+                )
+                % {"period": f"{period:%Y-%m}"}
+            )
 
         latest = cls.objects.filter(period=period).order_by("-revision").first()
         if latest and not force:

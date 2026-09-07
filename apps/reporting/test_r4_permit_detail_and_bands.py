@@ -14,9 +14,10 @@ Lo que estos tests protegen:
 4. **Que la tabla no cueste una consulta por fila.**
 """
 
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta
 
 import pytest
+from django.utils import timezone
 
 from apps.compliance.kpis import (
     PERMIT_BAND_CRITICAL,
@@ -45,8 +46,19 @@ def other_site(db):
     )
 
 
-def _permit(site, folio_number, *, days=None, status=None, **kwargs):
-    """Un permiso cuyo vencimiento cae a `days` del corte."""
+def _permit(site, folio_number, *, days=None, status=None, created=None, **kwargs):
+    """Un permiso cuyo vencimiento cae a `days` del corte.
+
+    ⚠️ **`created_at` se retrasa a propósito.** Desde `LV-233` el informe sólo
+    lista lo que existía al corte, y estos tests crean sus permisos *hoy* para
+    describir un corte de agosto — sin retrasarlo, todos quedarían fuera y los
+    tests medirían el filtro nuevo en vez de lo que vinieron a medir.
+
+    Va en la fábrica y no en cada test por lo mismo que `login_as`: una copia por
+    caso es una oportunidad de que uno se olvide y falle por la razón equivocada.
+    `update` y no `create`, porque `created_at` es `auto_now_add` y el `create`
+    lo pisa.
+    """
     permit = FlightPermission.objects.create(
         cost_center=site,
         purpose="photogrammetry",
@@ -58,6 +70,12 @@ def _permit(site, folio_number, *, days=None, status=None, **kwargs):
         valid_until=CUTOFF + timedelta(days=days) if days is not None else None,
         **kwargs,
     )
+    FlightPermission.objects.filter(pk=permit.pk).update(
+        created_at=timezone.make_aware(
+            datetime.combine(created or (CUTOFF - timedelta(days=60)), time(12, 0))
+        )
+    )
+    permit.refresh_from_db()
     return permit
 
 

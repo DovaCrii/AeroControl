@@ -168,10 +168,26 @@ def permit_counts(today, cost_center=None):
     # Se mira `valid_until` y no `valid_from`, igual que el resto de la app: lo
     # que vence es la autorización, y un permiso aprobado que empieza la semana
     # que viene ya está autorizado — no es trabajo pendiente de nadie.
-    in_force = approved.filter(valid_until__gte=today).count()
+    #
+    # ⚠️ **LV-233 corrigió esto: ahora se miran las dos puntas.** Lo de arriba
+    # sigue siendo cierto para el panel —un permiso que empieza la semana que
+    # viene ya está autorizado, no es trabajo pendiente— pero **"vigente" no es
+    # eso**: es estar en vigor. La diferencia no se nota mirando hoy y se vuelve
+    # una afirmación falsa mirando una fecha de corte pasada, que es lo que el
+    # informe hace: `JEJ-2026-012` y `013`, con vigencia 06-09 → 05-12, se
+    # contaban como vigentes en el informe de **agosto**.
+    #
+    # Y esta función es **una sola para los dos lectores** a propósito, así que
+    # no se podía arreglar el informe sin tocar el panel. Se corrige la
+    # definición, y lo que antes se sumaba a "vigentes" no se pierde: pasa a
+    # `not_started`, dicho por lo que es. Un número en la casilla equivocada es
+    # peor que un número menos.
+    in_force = approved.filter(valid_from__lte=today, valid_until__gte=today).count()
     return {
         "total": total,
         "in_force": in_force,
+        # Aprobados que todavía no empiezan. Existen y habilitan, pero no hoy.
+        "not_started": approved.filter(valid_from__gt=today).count(),
         "pct": round(in_force * 100 / total, 1) if total else None,
         "lapsed": approved.filter(valid_until__lt=today).count(),
         "awaiting": permits.filter(status=FlightPermission.STATUS_REQUESTED).count(),
