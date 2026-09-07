@@ -155,7 +155,18 @@
     link.title = link.textContent.replace(/\s+/g, ' ').trim();
     link.addEventListener('click', function () { setSidebar(false); });
   });
-  document.addEventListener('keydown', function (event) { if (event.key === 'Escape') { setSidebar(false); } });
+  // ⚠️ UX-25: con la paleta abierta, `Escape` es suyo. Los dos escuchan en el
+  // `document`, y ahí `stopPropagation` no sirve —no detiene a otro oyente del
+  // mismo elemento— y `stopImmediatePropagation` sólo alcanza a los que se
+  // registraron después, o sea que dependería del orden de las dos etiquetas
+  // `<script>`. Una comprobación explícita no depende de nada de eso: sin ella,
+  // un `Esc` para cerrar la paleta cerraba además la barra lateral, que la
+  // persona no había tocado.
+  document.addEventListener('keydown', function (event) {
+    var palette = document.getElementById('command-palette');
+    if (palette && !palette.hidden) return;
+    if (event.key === 'Escape') { setSidebar(false); }
+  });
   document.body.addEventListener('click', function (event) {
     var trigger = event.target.closest('[data-bs-target="#generic-modal"]');
     if (trigger) { modalTrigger = trigger; }

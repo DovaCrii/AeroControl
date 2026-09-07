@@ -240,11 +240,18 @@ async function init() {
       const layer = makeLayer(item);
       uidLayers.set(item.uid, layer);
       layer.bindPopup(() =>
-        buildEditablePopup(findPlacemark(state.doc, item.uid), labels, (n, d) => {
+        buildEditablePopup(findPlacemark(state.doc, item.uid), labels, (n, d, geom) => {
           const node = findPlacemark(state.doc, item.uid);
           if (node) {
             node.name = n;
             node.description = d;
+            // UX-28: la geometría llega sólo si la tabla de coordenadas se pudo
+            // leer entera. `null` es "algún número no era un número", y ahí se
+            // guarda el nombre y se deja la figura como estaba: aplicar la mitad
+            // dejaría una figura que nadie pidió.
+            if (geom) {
+              node.geometry = geom;
+            }
             state.snapshot();
             render();
             onChange();

@@ -111,8 +111,17 @@ def test_inventory_takes_what_moves_every_day(groups):
 
 
 def test_no_menu_row_is_left_outside_a_group(markup, groups):
-    """Una fila suelta se dibuja pegada al grupo anterior y parece suya."""
-    sidebar = markup[markup.index('<aside class="sidebar') :]
+    """Una fila suelta se dibuja pegada al grupo anterior y parece suya.
+
+    ⚠️ El corte llega hasta `</aside>` y no hasta el final del archivo. Cortaba
+    hasta el final, que funcionó mientras el menú fuera lo último con enlaces, y
+    `UX-25` lo rompió: la paleta de comandos lleva `{% url 'global-search' %}` en
+    un `data-*`, o sea un destino que no es una fila de menú, y el guardián lo
+    contó como si lo fuera. Un guardián que se equivoca de región acusa a quien
+    no toca lo que él vigila.
+    """
+    start = markup.index('<aside class="sidebar')
+    sidebar = markup[start : markup.index("</aside>", start)]
     everything = set(re.findall(r"\{%\s*url '([^']+)'", sidebar))
     grouped = set().union(*groups.values())
     # Fuera de grupo sólo el panel (encabeza el menú) y el pie de administración.
