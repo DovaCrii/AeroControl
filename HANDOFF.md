@@ -44,9 +44,10 @@ falta y en qué folio.
 
 | | |
 |---|---|
-| `origin/main` | **`d7c06da`** (2026-09-08) |
+| Último commit de **código** | **`d7c06da`** (2026-09-08) |
 | Desplegado en `p340` | **`d7c06da`** ✅ el 2026-09-08 |
 | Migraciones pendientes | **ninguna** |
+| Diferencia con `origin/main` | sólo documentación (este archivo, el post-mortem) — **no requiere desplegar** |
 | Copia sin conexión (`UX-26`) | ⛔ **apagada** — `SERVICE_WORKER_ENABLED=False`; ver el incidente de abajo antes de encenderla |
 
 Respaldo previo tomado **y verificado**: `aero_ops_20260908_094134.sqlite3`
