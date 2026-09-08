@@ -1,5 +1,19 @@
 # HANDOFF — AeroControl
 
+## ⏳ Lo que está pusheado y **no** desplegado
+
+| | |
+|---|---|
+| `origin/main` | **`eb72c51`** (2026-09-08) |
+| Desplegado en `p340` | **`69eab52`** (2026-09-07) |
+| Migraciones por aplicar | **1** — `operations.0029` |
+
+⚠️ **Esta tabla se actualiza en el momento de desplegar, no después.** La
+respuesta a *"¿qué corre en `p340`?"* se perdió tres veces por dejarla para
+luego, y cada vez costó una sesión reconstruirla. Los pasos están en *"El
+despliegue de esta tanda (fases D, E y 6…)"* — con `bootstrap_roles`, que esta
+vez **sí** hace falta, y dos cosas a mano después que ningún comando hace.
+
 > **Resumen de estado, no bitácora.** La historia detallada vive en `git log`,
 > `CHANGELOG.md` y las filas del tablero. La **fuente de verdad del trabajo
 > pendiente** es [MASTER_PLAN.md](MASTER_PLAN.md) → sección **"Rumbo a 1.0"**.
