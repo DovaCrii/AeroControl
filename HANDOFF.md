@@ -1,5 +1,43 @@
 # HANDOFF — AeroControl
 
+## ⏳ El informe mensual: paginado y con lo escrito marcado — **sin desplegar**
+
+Sale de dos preguntas del usuario el 2026-09-08 sobre el informe: si lo de
+generarlo estaba resuelto, y una forma más clara de editarlo y revisarlo.
+
+**Lo variable: estaba resuelto.** Las cifras se calculan y los estados se
+reconstruyen al corte (`LV-233`), así que generarlo fuera de la aplicación ya no
+tiene sentido: sacarlo perdería justamente el corte reconstruido.
+
+⚠️ **Lo que no estaba resuelto era el formato, y era pérdida de datos.** La hoja
+mide 1123 px fijos y el pie estaba en posición absoluta contra ellos, con el
+cuerpo sin tope. Medido con 15 permisos: el cuerpo terminaba en **1487 px**, o
+sea 427 px encima del pie y 364 px fuera de la hoja, recortados por
+`overflow: hidden`. **El informe perdía permisos en silencio** en un papel que va
+firmado a la DGAC diciendo «detalle permiso a permiso». Con los 11 de producción
+ya colisionaba.
+
+Dos arreglos, y el segundo existe porque el primero estuvo mal:
+
+1. **La hoja es una columna flex** y el pie va en el flujo. El traslape pasa a
+   ser imposible por construcción, sin importar el contenido.
+2. **El reparto en hojas** (`apps/reporting/pagination.py`): la sección de
+   permisos pide tantas hojas como necesite y «Página X de N» se calcula — antes
+   el pie decía «de 5» literal. ⚠️ El primer reparto usaba un alto de fila único
+   de 45 px, medido sobre filas de uno o dos operadores; con **cuatro** —lo que
+   tiene producción— la celda envuelve y la fila mide 60, así que volvía a
+   recortar. Ahora se reparte por presupuesto de píxeles estimando cada fila por
+   su contenido, y el rótulo **declara el total** («14 vigentes») para que un
+   recorte residual sea contable por quien revisa.
+
+**Y lo escrito se distingue de lo calculado**: los tres bloques que redacta quien
+firma —observación, hallazgos, acciones— llevan una marca «✎ Escrito · editar»
+con su enlace al formulario. ⚠️ **No se imprime**: un rótulo de «editable» sobre
+el papel entregado afirmaría que el lector puede cambiarlo.
+
+Queda pendiente de lo que el usuario pidió: **ver los cambios** (comparar
+revisiones, y contra el mes anterior). Se eligió dejarlo para después.
+
 ## ✅ Incidente del 2026-09-08, cerrado el mismo día
 
 **Resuelto y desplegado**: `d7c06da` en `p340`, con el interruptor confirmado en

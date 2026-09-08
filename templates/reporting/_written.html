@@ -1,0 +1,30 @@
+{% load i18n %}
+{% comment %}La marca de «esto lo escribió una persona», con su enlace para editarlo.
+
+Pedido del usuario el 2026-09-08: *"una mejor forma de editar y revisar el
+informe completo, lo que se modifica y los cambios más claro"*. La mitad que
+resuelve este archivo es **qué se modifica**: hasta ahora, quien revisaba el
+informe no tenía forma de saber, mirando el documento, dónde podía intervenir.
+Casi todo se calcula del corte y **tres bloques** los redacta quien firma — la
+observación del período, los hallazgos y las acciones requeridas—, y los tres se
+veían igual que una cifra consultada.
+
+Lleva el enlace al formulario y no sólo el rótulo, porque decirle a alguien que
+un bloque es editable y dejarlo buscando dónde es la mitad de un aviso — el mismo
+criterio que los hallazgos de «¿Puedo volar?».
+
+⚠️ **No se imprime, y eso es lo importante de todo esto.** El informe sale
+firmado hacia la DGAC: una marca de «editable» sobre el papel entregado diría
+algo sobre el documento que no es cierto —que el lector puede cambiarlo— y
+ensuciaría un documento controlado. Lo apaga `@media print` en `report-a4.css`,
+junto al resto de lo que sólo sirve en pantalla.
+
+Sólo aparece mientras el informe **se puede** editar: en uno aprobado el enlace
+llevaría a un formulario que rechaza, y `LV-130` ya dejó escrito lo que eso
+enseña — a desconfiar de la pantalla.{% endcomment %}
+{% if run.is_editable and perms.reporting.change_reportrun %}
+<a class="rpt-written no-print" href="{% url 'monthly-report-narrative' run.pk %}{% if anchor %}#{{ anchor }}{% endif %}"
+   title="{% translate 'Written by a person, not computed from the cutoff. Click to edit it.' %}">
+  ✎ {% translate "Written · edit" %}
+</a>
+{% endif %}

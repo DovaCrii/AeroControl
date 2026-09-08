@@ -80,11 +80,22 @@ hoy.{% endcomment %}
   {% endif %}
 </div>
 
+{% comment %}⚠️ **Las hojas de permisos son tantas como hagan falta, y por eso el
+documento ya no es una lista de cinco `include`.**
+
+Antes eran cinco fijas con su número escrito a mano. Medido el 2026-09-08: con 15
+permisos vigentes el cuerpo de la hoja 3 terminaba en 1487 px de una hoja de
+1123, así que **se recortaban filas en silencio** — en un papel que va firmado a
+la DGAC diciendo «detalle permiso a permiso». La numeración la asigna
+`MonthlyReportView._sheets`, en un solo lugar: dos sitios decidiéndola es cómo un
+documento termina con dos hojas numeradas igual.{% endcomment %}
 <div class="rpt-doc">
-  {% include "reporting/_page1_cover.html" %}
-  {% include "reporting/_page2_summary.html" %}
-  {% include "reporting/_page3_permits.html" %}
-  {% include "reporting/_page4_coverage.html" %}
-  {% include "reporting/_page5_plan.html" %}
+  {% include "reporting/_page1_cover.html" with page=1 pages=total_pages %}
+  {% include "reporting/_page2_summary.html" with page=2 pages=total_pages %}
+  {% for sheet in permit_sheets %}
+  {% include "reporting/_page3_permits.html" with sheet=sheet page=sheet.page pages=total_pages %}
+  {% endfor %}
+  {% include "reporting/_page4_coverage.html" with page=coverage_page pages=total_pages %}
+  {% include "reporting/_page5_plan.html" with page=plan_page pages=total_pages %}
 </div>
 {% endblock %}

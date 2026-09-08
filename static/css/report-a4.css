@@ -39,8 +39,27 @@
   padding-bottom: 1rem;
 }
 
+/* ⚠️ **La hoja es una columna flex, y eso no es preferencia de maquetación: es
+ * lo que vuelve imposible que el contenido tape el pie.**
+ *
+ * Antes el pie estaba en `position: absolute` contra los 1123 px y el cuerpo no
+ * tenía tope, así que crecía por encima de él y después fuera de la hoja, donde
+ * `overflow: hidden` lo recortaba. Medido el 2026-09-08 con 15 permisos: el
+ * cuerpo terminaba en **1487 px** de una hoja de 1123, con el pie empezando en
+ * 1060 — o sea 427 px de traslape y 364 px de filas recortadas **en silencio**.
+ * En un papel que va firmado a la DGAC diciendo "detalle permiso a permiso", una
+ * fila que desaparece sin avisar es lo más grave que puede pasar.
+ *
+ * Con la columna flex el pie va en el flujo (`margin-top: auto`) y el cuerpo
+ * queda acotado: el reparto de filas por hoja se ocupa de que no sobre nada, y
+ * si algún día sobra, se recorta contra un borde limpio en vez de dibujarse
+ * encima del pie. El `min-height: 0` es lo que permite que el cuerpo se encoja
+ * de verdad — sin él, el mínimo de un ítem flex es su contenido y volveríamos al
+ * desborde. */
 .rpt-page {
   position: relative;
+  display: flex;
+  flex-direction: column;
   width: 794px;
   min-width: 794px;
   height: 1123px;
@@ -79,10 +98,12 @@
  * que el lector compara al pasar la hoja. Lo que se alinea es la **línea de
  * base**. */
 .rpt-foot {
-  position: absolute;
-  left: 56px;
-  right: 48px;
-  bottom: 28px;
+  /* En el flujo y empujado al fondo por `margin-top: auto`, no en absoluto: es
+   * lo que impide que el cuerpo lo tape. Los márgenes laterales son los mismos
+   * que tenía con `left`/`right`, y `margin-bottom` ocupa el lugar del `bottom`,
+   * así que la línea de base contra el borde del papel no se mueve. */
+  flex: none;
+  margin: auto 48px 28px 56px;
   border-top: 1px solid var(--rpt-rule);
   padding-top: 8px;
   display: flex;
@@ -124,7 +145,11 @@
 .rpt-foot-firm { color: var(--rpt-navy); font-weight: bold; }
 
 /* Título numerado de sección. */
-.rpt-body { padding: 22px 48px 0 56px; display: block; }
+/* `min-height: 0` **y** `overflow: hidden`: el primero permite que el cuerpo se
+ * encoja dentro de la columna flex (sin él su mínimo es el alto de su contenido,
+ * que es justo el desborde que esto viene a cerrar) y el segundo recorta contra
+ * un borde limpio si alguna vez sobra, en vez de dibujar sobre el pie. */
+.rpt-body { padding: 22px 48px 0 56px; display: block; flex: 1 1 auto; min-height: 0; overflow: hidden; }
 .rpt-h2 { display: flex; align-items: baseline; gap: 12px; }
 .rpt-h2-num { color: var(--rpt-cyan); font-size: 22px; font-weight: bold; }
 .rpt-h2-text { color: var(--rpt-navy); font-size: 21px; font-weight: bold; }
@@ -301,6 +326,33 @@
 .rpt-cell-na { background: #f1f4f7; color: var(--rpt-faint); }
 .rpt-cell-end { border-right: none; }
 
+/* -- lo que escribió una persona (pantalla, nunca papel) ----------------- */
+
+/* La marca de «esto lo redactó quien firma, y se edita acá». Casi todo el
+ * informe se calcula del corte; tres bloques se escriben, y hasta ahora se veían
+ * igual que una cifra consultada.
+ *
+ * ⚠️ **No se imprime** — la regla vive en el bloque `@media print` de abajo, con
+ * `.no-print`. El informe sale firmado hacia la DGAC: una marca de «editable»
+ * sobre el papel entregado afirmaría algo falso sobre el documento y ensuciaría
+ * un papel controlado.
+ *
+ * Cyan y no ámbar: el ámbar punteado ya significa «falta el dato» en este
+ * documento (`.rpt-pending`), y dos cosas distintas con el mismo color es cómo
+ * alguien lee «pendiente» donde dice «editable». */
+.rpt-written {
+  display: inline-block;
+  margin-bottom: 6px;
+  padding: 1px 7px;
+  border: 1px dashed var(--rpt-cyan);
+  border-radius: 2px;
+  color: var(--rpt-cyan);
+  font-size: 9px;
+  font-weight: bold;
+  text-decoration: none;
+}
+.rpt-written:hover { background: #edf6f8; color: var(--rpt-navy); }
+
 /* -- el dato que todavía no hay ------------------------------------------ */
 
 /* Ámbar punteado: la convención que el propio lienzo del diseño anotó para
@@ -352,6 +404,14 @@
    * "Sin habilitación" sale igual que una "Vigente". */
   .rpt-page,
   .rpt-page * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+
+  /* ⚠️ La marca de «escrito · editar» **no va al papel**. El informe sale
+   * firmado hacia la DGAC, y un rótulo de «editable» sobre el documento
+   * entregado afirmaría que el lector puede cambiarlo. Es lo mismo que hace
+   * `app.css` con la navegación, pero declarado acá porque esta hoja se imprime
+   * sola y no puede depender de que la otra esté cargada. */
+  .rpt-written,
+  .no-print { display: none !important; }
 }
 
 /* == LV-235 · Dato Ejecutivo, la hoja de una página =========================

@@ -117,7 +117,59 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
                 ),
             }
         )
+        context.update(self._sheets(payload))
         return context
+
+    @staticmethod
+    def _sheets(payload):
+        """El reparto de las tablas en hojas, y la numeración del documento.
+
+        ⚠️ **La numeración se asigna acá, en un solo lugar.** Antes cada plantilla
+        de página traía su número escrito a mano (`page=3`) y el pie decía
+        «de 5» literal — cierto para el informe emitido de agosto, y falso en
+        cuanto la tabla necesita una hoja más. Dos sitios decidiendo la
+        numeración es cómo un documento termina con dos hojas numeradas igual.
+
+        Las hojas fijas son cuatro —portada, resumen, y las dos últimas— y en
+        medio van tantas como pidan los permisos.
+        """
+        from .pagination import CLOSING_PX, ROW_BASE_PX, row_px, sheets_for
+
+        permits = payload.get("permits") or []
+        in_force = [row for row in permits if row.get("in_force")]
+        awaiting = [row for row in permits if not row.get("in_force")]
+        # El bloque de "en trámite" cierra la sección junto a la observación y la
+        # leyenda, así que su alto se descuenta del techo de la última hoja: si
+        # no, cinco solicitudes en trámite volverían a empujar el cierre fuera.
+        # Se mide fila por fila como las otras, más su rótulo, que ocupa una
+        # escasa.
+        closing = CLOSING_PX + sum(row_px(row) for row in awaiting)
+        if awaiting:
+            closing += ROW_BASE_PX
+        permit_sheets = sheets_for(in_force, closing_px=closing)
+
+        first_permit_page = 3
+        for offset, sheet in enumerate(permit_sheets):
+            sheet["page"] = first_permit_page + offset
+            # `index`/`of` son de la **sección**, no del documento: el rótulo de
+            # la tabla dice "hoja 2 de 3 de la sección" mientras el pie dice
+            # "Página 4 de 6". Son dos cuentas distintas y confundirlas es cómo
+            # alguien cree que le falta media sección.
+            sheet["index"] = offset + 1
+            sheet["of"] = len(permit_sheets)
+            # El total de la sección, repetido en cada hoja: es lo que vuelve
+            # detectable un recorte (ver la advertencia de `pagination.py`).
+            sheet["total"] = len(in_force)
+            # Las solicitudes en trámite van en la última hoja de la sección,
+            # que es donde el documento emitido las tenía.
+            sheet["awaiting"] = awaiting if sheet["last"] else []
+        after = first_permit_page + len(permit_sheets)
+        return {
+            "permit_sheets": permit_sheets,
+            "coverage_page": after,
+            "plan_page": after + 1,
+            "total_pages": after + 1,
+        }
 
 
 class ExecutiveBriefView(MonthlyReportView):

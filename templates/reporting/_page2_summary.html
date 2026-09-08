@@ -107,6 +107,7 @@ sobre las cifras, y el informe va firmado.{% endcomment %}
     <div>
       <div class="rpt-label" style="margin-bottom: 10px;">Hallazgos del período</div>
       {% if run.findings %}
+      {% include "reporting/_written.html" with anchor="findings" %}
       <div class="rpt-stack-8">
         {% for finding in run.findings %}
         <div style="display: flex; gap: 12px; align-items: flex-start; background: #F4F7FA; padding: 11px 14px;">
@@ -143,6 +144,6 @@ sobre las cifras, y el informe va firmado.{% endcomment %}
 
   </div>
 
-  {% include "reporting/_foot.html" with page=2 %}
+  {% include "reporting/_foot.html" with section="summary" %}
 
 </div>
