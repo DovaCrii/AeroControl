@@ -312,15 +312,39 @@ REST_FRAMEWORK = {
 }
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/"
-# `UX-26`: la versión que nombra la caché del service worker. Cambiarla es lo que
-# hace que el navegador tire lo guardado; si no, una persona que instaló la
-# aplicación seguiría viendo la pantalla del despliegue anterior sin conexión.
-#
-# Se lee del entorno con un valor por defecto que sirve en desarrollo, y el
-# despliegue le pasa el commit: es el único dato que identifica sin ambigüedad
-# **qué** está guardado. Una fecha se repite si se despliega dos veces el mismo
-# día; un número que hay que acordarse de subir a mano no se sube.
-SERVICE_WORKER_VERSION = config("SERVICE_WORKER_VERSION", default="dev")
+
+
+def _service_worker_version():
+    """`UX-26`: el nombre de la caché del service worker, distinto por despliegue.
+
+    Cambiarlo es lo que hace que el navegador tire lo guardado. Si no cambia,
+    quien instaló la aplicación seguiría viendo sin conexión la pantalla del
+    despliegue anterior — para siempre, y sin ninguna señal de que eso pasa.
+
+    ⚠️ **Sale del manifiesto de estáticos y no de un paso que alguien recuerde.**
+    La primera versión era una variable de entorno que el despliegue tenía que
+    pasar, y ése es exactamente el tipo de paso que `HANDOFF` documenta después de
+    que se olvidó: no falla, no avisa, y el síntoma aparece semanas más tarde en
+    el teléfono de otra persona. `collectstatic` reescribe `staticfiles.json` en
+    **cada** corrida, así que su fecha de modificación cambia justo cuando cambia
+    lo que hay para guardar, y ese paso ya es obligatorio en este proyecto
+    (`ManifestStaticFilesStorage`: sin él las listas dan 500).
+
+    La variable de entorno se conserva y **gana**, para poder forzar la
+    invalidación sin tocar los estáticos. Y sin manifiesto —desarrollo, donde no
+    se corre `collectstatic`— cae en `dev`, que es correcto: ahí el worker se
+    recarga a mano y una caché estable ayuda más que una que cambia sola.
+    """
+    override = config("SERVICE_WORKER_VERSION", default="")
+    if override:
+        return override
+    try:
+        return str(int((STATIC_ROOT / "staticfiles.json").stat().st_mtime))
+    except OSError:
+        return "dev"
+
+
+SERVICE_WORKER_VERSION = _service_worker_version()
 LOGOUT_REDIRECT_URL = LOGIN_URL
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True

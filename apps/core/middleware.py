@@ -32,6 +32,17 @@ def build_csp(report_uri="", frame_ancestors="'none'"):
         "img-src 'self' data: https://*.tile.openstreetmap.org "
         "https://server.arcgisonline.com",
         "font-src 'self'",
+        # `UX-26`: el service worker y el manifiesto, declarados **explícitamente**
+        # aunque hoy ya pasarían por herencia — `worker-src` cae en `script-src`
+        # y `manifest-src` en `default-src`, y los dos valen `'self'`.
+        #
+        # Se escriben igual porque de esa herencia depende que la aplicación
+        # funcione sin señal, y una directiva heredada se rompe en silencio: el
+        # día que alguien acote `script-src` para otra cosa, el worker deja de
+        # registrarse y lo único que se nota es que la copia sin conexión dejó de
+        # existir. Escrito, el cambio que lo rompería se ve en el diff.
+        "worker-src 'self'",
+        "manifest-src 'self'",
         "object-src 'none'",
         "base-uri 'self'",
         f"frame-ancestors {frame_ancestors}",

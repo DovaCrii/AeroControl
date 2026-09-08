@@ -183,8 +183,23 @@ El plan la tenía bloqueada (*"requieren decisión de negocio... no empezar sin
 acordar alcance"*). El usuario acordó el alcance ese día y eligió **las cuatro
 filas que no dependen de un texto externo**.
 
+**Gate verde, los nueve pasos**: 3154 pruebas, **97,42 %** de cobertura,
+**31m40s**, `ruff check`, `ruff format --check`, `bandit` y `pip-audit` limpios.
+Sin dependencias nuevas, así que `pip-audit` no dice nada que no dijera antes.
+
 ⚠️ **Esto lleva migración: `operations.0029`** (cuatro modelos nuevos, ninguna
-fila tocada). Y `collectstatic` y `compile_translations`, como la tanda anterior.
+fila tocada). Y `bootstrap_roles`, `collectstatic` y dos cosas a mano después —
+ver *"El despliegue de esta tanda"* más abajo.
+
+⚠️ **`makemigrations --check` atajó una migración que faltaba**, y vale anotar
+cómo: cambié la etiqueta de `PreflightAnswer.VALUE_CHOICES` **después** de
+generar `0029`, y Django guarda `choices` dentro de la migración. El gate la
+detectó y propuso un `0030_alter_preflightanswer_value`. Se plegó en `0029`
+—regenerándola— en vez de mandar dos: `0029` no se había aplicado en ninguna
+parte salvo la base de demo, que es descartable, y en SQLite un `AlterField`
+reconstruye la tabla, o sea trabajo por una etiqueta. **Esto sólo es correcto
+mientras la migración no haya salido**; una vez desplegada, el arreglo es siempre
+una migración nueva.
 
 | Fila | Qué quedó, y qué hay que saber para tocarlo |
 |---|---|
@@ -196,6 +211,85 @@ fila tocada). Y `collectstatic` y `compile_translations`, como la tanda anterior
 **`UX-30` queda sin empezar**, y su propia fila dice por qué: *"sujeto a
 verificar el texto oficial primero"*. El clasificador DAN 151 Ed. 4 no se escribe
 contra una norma que no se tiene delante.
+
+#### ⚠️ EL DESPLIEGUE DE ESTA TANDA (fases D, E y 6, más el pie del informe)
+
+**Lo que trae, en una línea:** una migración (`operations.0029`), cero
+dependencias nuevas, y **tres pasos que no puede saltear** — `bootstrap_roles`,
+`collectstatic` y, después, **crear la lista de chequeo prevuelo a mano**.
+
+##### Los pasos, en el orden correcto
+
+El orden es el mismo de siempre y por los mismos motivos, así que no se repiten
+acá: **entrar, `cd`, comprobar la ventana, entorno, respaldo, y recién migrar**.
+Están escritos completos más abajo, en *"El despliegue de esta tanda (`355f6c1`)"*
+— léalos ahí antes de pegar nada; ⚠️ **esta sección no los reemplaza**, y
+dictarlos de memoria es exactamente lo que salió mal el 2026-09-07.
+
+```
+ssh levdigital01@100.121.16.118
+cd /opt/aerocontrol && hostname && pwd
+```
+
+Tiene que decir **`p340`** y **`/opt/aerocontrol`**. Si dice el nombre del PC,
+es la ventana equivocada.
+
+```
+git pull && uv sync
+set -a; source <(sudo cat /etc/aerocontrol.env); set +a
+echo $DJANGO_SETTINGS_MODULE; echo $DB_PATH
+uv run python manage.py backup && uv run python manage.py verify_backup
+uv run python manage.py showmigrations operations | tail -5
+uv run python manage.py migrate --no-input
+uv run python manage.py bootstrap_roles
+uv run python manage.py collectstatic --no-input
+sudo systemctl restart aerocontrol && git log --oneline -1
+```
+
+##### Por qué cada paso no opcional lo es, esta vez
+
+| Paso | Por qué |
+|---|---|
+| `migrate` | **Una sola**, `operations.0029`: cuatro tablas nuevas de `UX-29`. No toca ninguna fila existente. |
+| `bootstrap_roles` | ⚠️ **Hace falta**, a diferencia de la tanda anterior. Los cuatro modelos nuevos traen permisos nuevos, y el grupo `Administrator` se define como *todos* los permisos — sin volver a correrlo, nadie puede configurar una lista de chequeo. Los otros roles no cambian: contestar y firmar el chequeo usa `operations.change_flightrecord`, que `Operations` ya tenía. |
+| `collectstatic` | ⚠️ **Obligatorio, como siempre** (`ManifestStaticFilesStorage`: sin él las listas dan 500), y esta vez además **es lo que invalida la caché de la PWA**: `SERVICE_WORKER_VERSION` sale de la fecha de `staticfiles.json`. Cambian `app.css`, `app.js`, `icons.svg`, `geo/inspector.js`, `geo/main.js`, y hay tres archivos nuevos (`command-palette.js`, `pwa.js`, `manifest.webmanifest`). |
+| `restart` | El `.mo` compilado viaja en el repo, pero Django lo carga al arrancar. |
+
+##### ⚠️ Después de desplegar: dos cosas que ningún comando hace
+
+**1. Crear la lista de chequeo prevuelo.** Sin ella, `UX-29` dice *"No hay
+ninguna lista de chequeo prevuelo configurada para el modelo X"* — que es
+correcto y deliberado (inventar una lista vacía dejaría que alguien la firmara
+creyendo que comprobó algo), pero significa que la fila **no hace nada** hasta
+que exista una. Se crea en `/admin/operations/preflightchecklist/`:
+
+- **Nombre**: el que use el procedimiento de la empresa.
+- **Palabras clave del modelo**: **vacío** para que aplique a toda la flota. Se
+  llena sólo si hace falta una lista distinta por modelo, y ahí la específica
+  gana sobre la general.
+- **Puntos**: uno por renglón, con su orden. `Obligatorio` marcado es el defecto.
+
+⚠️ **El contenido de la lista es una decisión de la empresa, no mía**, y por eso
+no viene precargada: un chequeo prevuelo que alguien firma es una declaración
+sobre el estado de una aeronave, y sembrar puntos inventados haría que la primera
+firma afirmara algo que nadie acordó.
+
+**2. Comprobar que la gente está en su grupo de rol.** `UX-31` reparte pantalla
+de inicio y atajos por los grupos de `bootstrap_roles`. Quien no esté en ninguno
+sigue viendo exactamente lo de antes —el panel y el menú completo— así que **no
+se rompe nada** si esto no se hace; simplemente la fila no se nota. Se revisa en
+`/administracion/usuarios/`.
+
+##### Qué mirar en la VM, después
+
+| Comprobación | Qué tiene que pasar |
+|---|---|
+| Abrir «¿Puedo volar?» desde el menú | Tres desplegables; elegir la terna da un «Sí» o un «No» con sus motivos |
+| Abrir un informe mensual e imprimirlo | El pie igual en las cinco hojas, con «Revisión N · Página X de 5» |
+| Abrir la ficha de un vuelo | Botón «Chequeo prevuelo» |
+| `Ctrl+K` en cualquier pantalla | Se abre la paleta y lista las pantallas del menú |
+| Abrir en un teléfono | Lupa en la barra, y la aplicación se puede instalar |
+| `curl -sI https://…/sw.js` | `200` y `content-type: application/javascript` |
 
 ⚠️ **Y un defecto viejo que apareció mirando el navegador, no el test.** La línea
 del pulso del panel (`UX-15`, *"N operaciones hoy · M permisos vigentes"*)
