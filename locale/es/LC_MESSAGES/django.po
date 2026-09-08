@@ -8770,3 +8770,20 @@ msgstr ""
 #, python-format
 msgid "Comment on %(item)s"
 msgstr "Comentario sobre %(item)s"
+
+#: apps/operations/readiness.py
+msgid "Not named in the permit"
+msgstr "No está nombrado en el permiso"
+
+#: apps/operations/readiness.py
+#, python-format
+msgid "The permit in force for this cost centre (%(folios)s) does not authorise %(missing)s."
+msgid_plural "The permits in force for this cost centre (%(folios)s) do not authorise %(missing)s."
+msgstr[0] "El permiso vigente de este centro de costo (%(folios)s) no autoriza a %(missing)s."
+msgstr[1] "Los permisos vigentes de este centro de costo (%(folios)s) no autorizan a %(missing)s."
+
+#: apps/operations/readiness.py
+#, python-format
+msgid "No single permit in force (%(folios)s) authorises this operator and this aircraft together."
+msgstr "Ningún permiso vigente (%(folios)s) autoriza a este operador y a esta aeronave juntos."
+

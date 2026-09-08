@@ -633,6 +633,34 @@ class SaveAndAddAnotherMixin:
         return super().get_success_message()
 
 
+class ServiceWorkerView(TemplateView):
+    """`UX-26`: `/sw.js`, con su interruptor leído **en cada petición**.
+
+    Existe por lo mismo que `SignInView` en vez de un `extra_context` en las
+    URLs: `extra_context={"enabled": settings.SERVICE_WORKER_ENABLED}` congela el
+    ajuste al importar el módulo. Acá pesa más que en la pantalla de acceso —
+    este ajuste es un **interruptor de apagado**, y uno que "no se aplica hasta
+    reiniciar" sin decirlo es el peor tipo de interruptor. De paso lo vuelve
+    comprobable: con el valor congelado, ningún test podía ejercitar las dos
+    ramas.
+
+    Se sirve desde la raíz y no desde `/static/` porque el alcance de un service
+    worker es el directorio del que se descarga.
+    """
+
+    template_name = "sw.js"
+    content_type = "application/javascript"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["version"] = settings.SERVICE_WORKER_VERSION
+        # ⛔ Apagado, la plantilla sirve el worker que se desinstala solo. La
+        # ruta sigue existiendo a propósito: es el único camino por el que se
+        # sana un navegador que ya se quedó con uno roto.
+        context["enabled"] = settings.SERVICE_WORKER_ENABLED
+        return context
+
+
 class SignInView(auth_views.LoginView):
     """La pantalla de acceso, con la ayuda y el entorno.
 

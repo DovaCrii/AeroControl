@@ -1,5 +1,36 @@
 # HANDOFF — AeroControl
 
+## 🔴 Incidente del 2026-09-08: la aplicación dejó de cargar, y hay un arreglo **sin desplegar**
+
+Después de desplegar `b4a7d9e`, producción devolvió `ERR_FAILED` en el navegador
+con el servidor sano. **La causa fue el service worker de `UX-26`**, escrito ese
+mismo día: `cache.put` estaba dentro del camino de la respuesta y al rechazar
+—una 206, una redirigida, la cuota— hacía que `respondWith` rechazara. La red
+estaba bien; lo que mató la página fue el intento de guardarla.
+
+⚠️ **Un service worker roto sobrevive a un `git revert`**: el navegador conserva
+la copia que ya guardó. Por eso el arreglo no es revertir, es **servir bytes
+nuevos en `/sw.js`** que lo desinstalen. Con `SERVICE_WORKER_ENABLED=False` —el
+defecto ahora— esa ruta sirve un worker que se desinstala solo, borra la caché y
+recarga las pestañas que estaba rompiendo.
+
+⚠️ **Recuperar una pestaña con `Ctrl+Shift+R` no arregla producción**: esquiva el
+worker en ese navegador y deja la ruta sirviendo el roto para todos los demás.
+
+El análisis completo, con los guardianes que quedaron puestos y el procedimiento
+para volver a encender la copia sin conexión, está en
+[docs/dev/postmortem-2026-09-08-service-worker.md](docs/dev/postmortem-2026-09-08-service-worker.md).
+La regla que queda —*nada que intercepte navegaciones se despliega habilitado por
+defecto*— está en `AGENTS.md`, § Lecciones operativas.
+
+**El mismo día y por la misma causa de fondo**, el usuario encontró que
+«¿Puedo volar?» contestaba **Sí** para una persona que el permiso no nombra: la
+comprobación se quedaba en *"¿la faena tiene algún permiso vigente?"* y nunca
+miraba `FlightPermission.operators` / `aircraft_fleet`. Sus ocho tests pasaban
+porque **la fixture creaba el permiso con el padrón vacío** — el test compartía
+el punto ciego del código que probaba. Arreglado: ahora bloquea, y dice qué mitad
+falta y en qué folio.
+
 ## ✅ Qué corre en `p340`
 
 | | |

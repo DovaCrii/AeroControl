@@ -345,6 +345,25 @@ def _service_worker_version():
 
 
 SERVICE_WORKER_VERSION = _service_worker_version()
+
+# ⛔ `UX-26`: el interruptor de la copia sin conexión, **apagado por defecto**.
+#
+# Apagado no es prudencia genérica: la primera versión dejó la aplicación en
+# `ERR_FAILED` en producción el 2026-09-08. El `cache.put` estaba dentro del
+# camino de la respuesta, y al rechazar —una 206, una redirigida, la cuota—
+# hacía que `respondWith` rechazara: la red estaba bien y la página no cargaba.
+# Peor, se cura solo cuando el navegador vuelve a pedir `/sw.js`, así que un
+# worker roto sobrevive a un `git revert`.
+#
+# Con `False`, `/sw.js` sirve un worker que **se desinstala solo** y borra la
+# caché: eso es lo que sana a los navegadores que ya se quedaron con el roto,
+# sin pedirle a nadie que abra las herramientas del navegador.
+#
+# Encenderlo es poner `SERVICE_WORKER_ENABLED=True` en el entorno, y **recién
+# después de comprobar en un navegador** que la copia sin conexión hace lo que
+# dice. El resto de `UX-26` —instalable, manifiesto, el aviso de datos
+# guardados— no depende de esto y sigue funcionando.
+SERVICE_WORKER_ENABLED = config("SERVICE_WORKER_ENABLED", default=False, cast=bool)
 LOGOUT_REDIRECT_URL = LOGIN_URL
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True

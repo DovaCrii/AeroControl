@@ -74,18 +74,33 @@ def operator(centre):
     return person
 
 
-@pytest.fixture
-def permit(centre):
-    return FlightPermission.objects.create(
+def _permit(centre, operators=(), fleet=(), **kwargs):
+    permit = FlightPermission.objects.create(
         cost_center=centre,
         purpose="photogrammetry",
         status=FlightPermission.STATUS_APPROVED,
-        permission_number="P-1",
         location="Sector 3",
         area_type="unpopulated",
-        valid_from=TODAY - timedelta(days=10),
-        valid_until=TODAY + timedelta(days=90),
+        valid_from=kwargs.pop("valid_from", TODAY - timedelta(days=10)),
+        valid_until=kwargs.pop("valid_until", TODAY + timedelta(days=90)),
+        **kwargs,
     )
+    permit.operators.set(operators)
+    permit.aircraft_fleet.set(fleet)
+    return permit
+
+
+@pytest.fixture
+def permit(centre, aircraft, operator):
+    """⚠️ **El permiso nombra a los dos, y el que no lo hacía era el defecto.**
+
+    La primera versión de esta fixture creaba el permiso con el padrón vacío, y
+    todos los tests pasaban igual — porque la comprobación tampoco lo miraba. El
+    test compartía el punto ciego del código que probaba, que es cómo un defecto
+    llega a producción con la suite en verde. Lo encontró el usuario el
+    2026-09-08 usando la pantalla.
+    """
+    return _permit(centre, operators=[operator], fleet=[aircraft])
 
 
 def verdict(aircraft, operator, centre):
@@ -166,6 +181,129 @@ class TestExpiredBlocks:
         )
 
         assert not verdict(aircraft, operator, centre).can_fly
+
+
+class TestThePermitHasToNameThem:
+    """⚠️ **El defecto que el usuario encontró en producción el 2026-09-08.**
+
+    La pantalla contestaba «Sí» para `RPA-7126` con un operador que el permiso no
+    nombra, porque la comprobación se quedaba en *"¿la faena tiene algún permiso
+    vigente?"*. Un permiso DGAC no autoriza a la faena: autoriza a un **padrón**
+    concreto de operadores y de aeronaves, y volar bajo uno que no lo nombra es
+    exactamente el incumplimiento que esta pantalla existe para atajar.
+
+    Por eso **bloquea**, y es la única regla de este módulo que bloquea por algo
+    que no es una fecha.
+    """
+
+    @pytest.mark.django_db
+    def test_an_operator_outside_the_roster_blocks(self, aircraft, operator, centre):
+        _permit(centre, operators=[], fleet=[aircraft])
+
+        result = verdict(aircraft, operator, centre)
+
+        assert not result.can_fly
+        assert any(str(operator) in item.detail for item in result.blockers)
+
+    @pytest.mark.django_db
+    def test_an_aircraft_outside_the_fleet_blocks(self, aircraft, operator, centre):
+        _permit(centre, operators=[operator], fleet=[])
+
+        result = verdict(aircraft, operator, centre)
+
+        assert not result.can_fly
+        assert any(aircraft.registration in item.detail for item in result.blockers)
+
+    @pytest.mark.django_db
+    def test_it_says_which_half_is_missing(self, aircraft, operator, centre):
+        """«No autorizado» a secas deja a quien lo lee sin saber si hay que
+        agregar a la persona, la aeronave o las dos — y esto se lee en faena, con
+        el equipo en la mano."""
+        _permit(centre, operators=[], fleet=[])
+
+        detail = verdict(aircraft, operator, centre).blockers[0].detail
+
+        assert str(operator) in detail
+        assert aircraft.registration in detail
+
+    @pytest.mark.django_db
+    def test_naming_both_in_the_same_permit_lets_it_fly(
+        self, aircraft, operator, centre
+    ):
+        _permit(centre, operators=[operator], fleet=[aircraft])
+
+        assert verdict(aircraft, operator, centre).can_fly
+
+    @pytest.mark.django_db
+    def test_two_permits_that_split_them_is_not_enough(
+        self, aircraft, operator, centre
+    ):
+        """⚠️ Uno autoriza a la persona y el otro a la aeronave, y ninguno a los
+        dos. Es un caso real cuando una faena parte sus permisos por sector, y
+        `any()` sobre cada padrón por separado habría dicho que sí: se vuela
+        **bajo un** permiso, no bajo la unión de todos."""
+        _permit(centre, operators=[operator], fleet=[], permission_number="A")
+        _permit(centre, operators=[], fleet=[aircraft], permission_number="B")
+
+        result = verdict(aircraft, operator, centre)
+
+        assert not result.can_fly
+
+    @pytest.mark.django_db
+    def test_but_one_permit_that_does_authorise_is_enough(
+        self, aircraft, operator, centre
+    ):
+        """Que otro permiso de la misma faena no los nombre no es problema de
+        nadie: se vuela bajo el que sí."""
+        _permit(centre, operators=[], fleet=[], permission_number="A")
+        _permit(centre, operators=[operator], fleet=[aircraft], permission_number="B")
+
+        assert verdict(aircraft, operator, centre).can_fly
+
+    @pytest.mark.django_db
+    def test_the_warning_follows_the_permit_that_authorises(
+        self, aircraft, operator, centre
+    ):
+        """⚠️ El aviso de vencimiento sale del que **autoriza este vuelo**, no del
+        que vence primero de la faena. Uno ajeno que caduca mañana no le importa
+        a nadie acá, y mostrarlo escondería el que sí corre."""
+        _permit(
+            centre,
+            operators=[],
+            fleet=[],
+            permission_number="AJENO",
+            valid_until=TODAY + timedelta(days=2),
+        )
+        mine = _permit(
+            centre,
+            operators=[operator],
+            fleet=[aircraft],
+            permission_number="MIO",
+            valid_until=TODAY + timedelta(days=20),
+        )
+
+        result = verdict(aircraft, operator, centre)
+
+        assert result.can_fly
+        assert any(mine.internal_folio in item.label for item in result.warnings)
+
+    @pytest.mark.django_db
+    def test_belonging_to_another_cost_centre_still_only_warns(
+        self, aircraft, operator, centre
+    ):
+        """⚠️ La distinción que parece contradictoria y no lo es. «Pertenece a
+        otra faena» es administrativo —dónde está anotado el recurso, y los
+        recursos se prestan—; «no está en el permiso» es de autorización. Un
+        equipo prestado de CC110 que **sí** figura en el permiso de CC738 vuela
+        sin problema, y la faena de origen no autoriza nada."""
+        other = CostCenter.objects.create(code="CC110", name="Casa matriz")
+        aircraft.cost_center = other
+        _permit(centre, operators=[operator], fleet=[aircraft])
+
+        result = verdict(aircraft, operator, centre)
+
+        assert result.can_fly
+        assert any("CC110" in item.detail for item in result.warnings)
 
 
 class TestTheMissingDateBlocks:
