@@ -1,6 +1,15 @@
 # HANDOFF — AeroControl
 
-## 🔴 Incidente del 2026-09-08: la aplicación dejó de cargar, y hay un arreglo **sin desplegar**
+## ✅ Incidente del 2026-09-08, cerrado el mismo día
+
+**Resuelto y desplegado**: `d7c06da` en `p340`, con el interruptor confirmado en
+la VM (`curl /sw.js | grep -c unregister` → `1`). Desde ahí, cada navegador que
+abre la aplicación desinstala solo el worker roto y borra su caché.
+
+**Gate verde sobre el arreglo**: 3169 pruebas, 97,43 % de cobertura, 27m55s. Son
+15 más que antes de la caída, y las 15 son guardianes de esto: seis del
+interruptor y del camino de la respuesta, ocho del cruce permiso ↔ persona ↔
+aeronave, y una del reparto plural del aviso.
 
 Después de desplegar `b4a7d9e`, producción devolvió `ERR_FAILED` en el navegador
 con el servidor sano. **La causa fue el service worker de `UX-26`**, escrito ese
@@ -35,9 +44,10 @@ falta y en qué folio.
 
 | | |
 |---|---|
-| `origin/main` | **`b4a7d9e`** (2026-09-08) |
-| Desplegado en `p340` | **`b4a7d9e`** ✅ el 2026-09-08 09:41 |
+| `origin/main` | **`d7c06da`** (2026-09-08) |
+| Desplegado en `p340` | **`d7c06da`** ✅ el 2026-09-08 |
 | Migraciones pendientes | **ninguna** |
+| Copia sin conexión (`UX-26`) | ⛔ **apagada** — `SERVICE_WORKER_ENABLED=False`; ver el incidente de abajo antes de encenderla |
 
 Respaldo previo tomado **y verificado**: `aero_ops_20260908_094134.sqlite3`
 (*"restorable"*). `operations.0029` aplicó limpio —la única que faltaba—,
