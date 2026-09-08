@@ -75,6 +75,47 @@ class TestItIsInstallable:
 
         assert f'"aerocontrol-{settings.SERVICE_WORKER_VERSION}"' in body
 
+    def test_the_version_does_not_depend_on_anyone_remembering_it(self):
+        """⚠️ La primera versión de esto era una variable de entorno que el
+        despliegue tenía que pasar, y ése es exactamente el tipo de paso que
+        `HANDOFF` documenta **después** de que se olvidó: no falla, no avisa, y
+        el síntoma aparece semanas más tarde en el teléfono de otra persona.
+
+        Ahora sale de la fecha de `staticfiles.json`, que `collectstatic`
+        reescribe en cada corrida — y `collectstatic` ya es obligatorio en este
+        proyecto, así que la invalidación viaja con un paso que no se puede
+        saltear (sin él las listas dan 500).
+        """
+        from pathlib import Path
+
+        source = (
+            Path(settings.BASE_DIR) / "config" / "settings" / "base.py"
+        ).read_text(encoding="utf-8")
+        derivation = source.split("def _service_worker_version", 1)[1].split(
+            "\nSERVICE_WORKER_VERSION", 1
+        )[0]
+
+        assert "staticfiles.json" in derivation
+        # La variable de entorno se conserva y gana, para poder forzar la
+        # invalidación sin tocar los estáticos.
+        assert 'config("SERVICE_WORKER_VERSION"' in derivation
+
+    @pytest.mark.django_db
+    def test_the_policy_names_the_worker_and_the_manifest(self, client, db):
+        """⚠️ Los dos ya pasarían por herencia —`worker-src` cae en `script-src`
+        y `manifest-src` en `default-src`, y los dos valen `'self'`— y se
+        escriben igual porque de esa herencia depende que la aplicación funcione
+        sin señal. Una directiva heredada se rompe en silencio: el día que
+        alguien acote `script-src` para otra cosa, el worker deja de registrarse
+        y lo único que se nota es que la copia sin conexión dejó de existir.
+        """
+        from apps.core.middleware import build_csp
+
+        policy = build_csp("")
+
+        assert "worker-src 'self'" in policy
+        assert "manifest-src 'self'" in policy
+
     @pytest.mark.django_db
     def test_it_is_reachable_without_a_session(self, client):
         """El navegador pide `/sw.js` sin las cookies de la página en algunos
