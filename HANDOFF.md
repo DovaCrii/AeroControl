@@ -1,18 +1,31 @@
 # HANDOFF — AeroControl
 
-## ⏳ Lo que está pusheado y **no** desplegado
+## ✅ Qué corre en `p340`
 
 | | |
 |---|---|
-| `origin/main` | **`eb72c51`** (2026-09-08) |
-| Desplegado en `p340` | **`69eab52`** (2026-09-07) |
-| Migraciones por aplicar | **1** — `operations.0029` |
+| `origin/main` | **`b4a7d9e`** (2026-09-08) |
+| Desplegado en `p340` | **`b4a7d9e`** ✅ el 2026-09-08 09:41 |
+| Migraciones pendientes | **ninguna** |
+
+Respaldo previo tomado **y verificado**: `aero_ops_20260908_094134.sqlite3`
+(*"restorable"*). `operations.0029` aplicó limpio —la única que faltaba—,
+`bootstrap_roles` reconfiguró los cinco roles y el grupo `Dirección`, y
+`collectstatic` copió **9** archivos con 403 post-procesados: exactamente los
+nueve que cambiaron. `uv sync` no instaló nada, porque esta tanda no trae
+dependencias nuevas.
+
+⚠️ **Queda pendiente en la VM, y no lo hace ningún comando: crear la lista de
+chequeo prevuelo** en `/admin/operations/preflightchecklist/`. Hasta que exista,
+`UX-29` dice *"no hay ninguna lista configurada para el modelo X"* — que es
+correcto y deliberado, pero significa que la fila no hace nada. **Su contenido es
+una decisión de la empresa y por eso no viene precargada**: un chequeo que
+alguien firma es una declaración sobre el estado de una aeronave, y sembrar
+puntos inventados haría que la primera firma afirmara algo que nadie acordó.
 
 ⚠️ **Esta tabla se actualiza en el momento de desplegar, no después.** La
 respuesta a *"¿qué corre en `p340`?"* se perdió tres veces por dejarla para
-luego, y cada vez costó una sesión reconstruirla. Los pasos están en *"El
-despliegue de esta tanda (fases D, E y 6…)"* — con `bootstrap_roles`, que esta
-vez **sí** hace falta, y dos cosas a mano después que ningún comando hace.
+luego, y cada vez costó una sesión reconstruirla.
 
 > **Resumen de estado, no bitácora.** La historia detallada vive en `git log`,
 > `CHANGELOG.md` y las filas del tablero. La **fuente de verdad del trabajo
