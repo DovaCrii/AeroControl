@@ -20,6 +20,14 @@ la bandeja y el panel ya aplican — y eso importa más que la elección en sí:
 pantallas que responden distinto sobre el mismo hecho es lo que enseña a
 desconfiar de las dos.
 
+**Y lo no autorizado también bloquea**, que es la única regla de acá que no habla
+de fechas. Un permiso DGAC no autoriza *a la faena*: autoriza a un padrón
+concreto de operadores y de aeronaves. Preguntar sólo *"¿la faena tiene un
+permiso vigente?"* era el defecto de la primera versión —encontrado en producción
+el 2026-09-08, contestando «Sí» para una persona que el permiso no nombra— y
+volar bajo un permiso que no lo nombra es exactamente el incumplimiento que esta
+pantalla existe para atajar.
+
 ⚠️ **Con una excepción escrita, y no es un olvido.** La brecha de compatibilidad
 operador–aeronave **avisa y no bloquea**, porque eso se acordó con el usuario el
 2026-07-30 y está escrito en `registry.selectors`: *"a warning, not a validation
@@ -39,6 +47,7 @@ from datetime import timedelta
 from django.urls import reverse
 from django.utils.text import capfirst
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ngettext
 
 #: Cuántos días adelante mira el aviso ámbar. Es el mismo horizonte de
 #: `panel_readiness`, y a propósito: un vencimiento que el panel ya llama
@@ -260,19 +269,38 @@ def _expiring_documents(Document, subject):
     ).select_related("doc_type")
 
 
-def _check_permission(cost_center, today):
+def _check_permission(aircraft, operator, cost_center, today):
+    """El permiso que autoriza **este** vuelo: la faena, la persona y el equipo.
+
+    ⚠️ **Preguntar sólo si la faena tiene un permiso vigente no alcanza, y eso
+    era el defecto.** La primera versión de esta comprobación se quedaba ahí, así
+    que contestaba «Sí» para una persona que el permiso no nombra — encontrado en
+    producción el 2026-09-08, con `RPA-7126` y un operador de otra faena.
+
+    Un permiso DGAC no autoriza *a la faena*: autoriza a un **padrón** concreto
+    de operadores y de aeronaves, y `FlightPermission` lo guarda (`operators` y
+    `aircraft_fleet`). Volar bajo un permiso que no lo nombra es exactamente el
+    incumplimiento que esta pantalla existe para atajar, así que **bloquea** — no
+    avisa. Es la única comprobación que bloquea por algo que no es una fecha.
+
+    Con varios permisos vigentes basta **uno** que autorice a los dos: se vuela
+    bajo ése, y que otro permiso de la misma faena no los nombre no es un
+    problema de nadie.
+    """
     from apps.operations.models import FlightPermission
 
     check = Check(name=_("Flight permission"))
-    permits = FlightPermission.objects.filter(
-        cost_center=cost_center,
-        is_active=True,
-        status=FlightPermission.STATUS_APPROVED,
-        valid_from__lte=today,
-        valid_until__gte=today,
-    ).order_by("valid_until")
-
-    covering = list(permits)
+    covering = list(
+        FlightPermission.objects.filter(
+            cost_center=cost_center,
+            is_active=True,
+            status=FlightPermission.STATUS_APPROVED,
+            valid_from__lte=today,
+            valid_until__gte=today,
+        )
+        .prefetch_related("operators", "aircraft_fleet")
+        .order_by("valid_until")
+    )
     if not covering:
         check.blockers.append(
             Finding(
@@ -283,9 +311,66 @@ def _check_permission(cost_center, today):
         )
         return check
 
-    # El que vence primero es el que manda el aviso: es el que deja de cubrir
-    # antes, y avisar por el más largo escondería justamente el que corre.
-    soonest = covering[0]
+    authorising = [
+        permit
+        for permit in covering
+        if any(person.pk == operator.pk for person in permit.operators.all())
+        and any(unit.pk == aircraft.pk for unit in permit.aircraft_fleet.all())
+    ]
+    if not authorising:
+        # **Se dice qué mitad falta, y en cuál permiso.** "No autorizado" a secas
+        # deja a quien lo lee sin saber si hay que agregar a la persona, la
+        # aeronave o las dos, ni a qué folio — y este aviso se lee en faena, con
+        # el equipo en la mano.
+        missing = []
+        if not any(
+            person.pk == operator.pk
+            for permit in covering
+            for person in permit.operators.all()
+        ):
+            missing.append(str(operator))
+        if not any(
+            unit.pk == aircraft.pk
+            for permit in covering
+            for unit in permit.aircraft_fleet.all()
+        ):
+            missing.append(aircraft.registration)
+        folios = ", ".join(permit.internal_folio for permit in covering)
+        check.blockers.append(
+            Finding(
+                label=_("Not named in the permit"),
+                detail=(
+                    # `ngettext` y no una frase sola: con dos folios listados,
+                    # "El permiso vigente (A, B)" no concuerda — y una faena con
+                    # varios permisos vigentes es el caso normal, no el raro.
+                    ngettext(
+                        "The permit in force for this cost centre (%(folios)s) "
+                        "does not authorise %(missing)s.",
+                        "The permits in force for this cost centre (%(folios)s) "
+                        "do not authorise %(missing)s.",
+                        len(covering),
+                    )
+                    % {"folios": folios, "missing": ", ".join(missing)}
+                    if missing
+                    # Los dos están nombrados, pero nunca en el **mismo** permiso:
+                    # uno autoriza a la persona y otro a la aeronave. Es un caso
+                    # real cuando una faena parte sus permisos por sector, y
+                    # decirlo así evita la búsqueda a ciegas de "pero si están".
+                    else _(
+                        "No single permit in force (%(folios)s) authorises this "
+                        "operator and this aircraft together."
+                    )
+                    % {"folios": folios}
+                ),
+                url=reverse("permission-detail", args=[covering[0].pk]),
+            )
+        )
+        return check
+
+    # El que vence primero **de los que autorizan**: es el que deja de cubrir
+    # este vuelo antes, y avisar por el más largo escondería justamente el que
+    # corre.
+    soonest = authorising[0]
     _add(
         check,
         *_expiry_finding(
@@ -308,6 +393,14 @@ def _check_pairing(aircraft, operator, cost_center):
     la última palabra sobre un despegue sería darle demasiada. Y la pertenencia,
     porque prestar un equipo entre faenas es una operación normal: lo que
     corresponde es que quede dicho, no que se impida.
+
+    ⚠️ **Y no se contradice con el bloqueo de `_check_permission`, aunque a
+    primera vista lo parezca.** "Pertenece a otra faena" es un hecho
+    administrativo: dónde está anotado el recurso, y los recursos se prestan.
+    "No está nombrado en el permiso" es un hecho de **autorización**: la DGAC
+    aprobó un padrón, y quien no está en él no está autorizado. Un equipo
+    prestado de CC110 que **sí** figura en el permiso de CC738 vuela sin
+    problema, y eso es lo correcto — la faena de origen no autoriza nada.
     """
     from apps.registry.selectors import operator_aircraft_compatibility_gaps
 
@@ -358,7 +451,7 @@ def can_fly(aircraft, operator, cost_center, today):
         checks=[
             _check_aircraft(aircraft, today),
             _check_operator(operator, today),
-            _check_permission(cost_center, today),
+            _check_permission(aircraft, operator, cost_center, today),
             _check_pairing(aircraft, operator, cost_center),
         ]
     )

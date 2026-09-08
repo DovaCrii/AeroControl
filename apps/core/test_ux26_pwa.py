@@ -67,10 +67,12 @@ class TestItIsInstallable:
         assert response["Content-Type"].startswith("application/javascript")
 
     @pytest.mark.django_db
-    def test_its_cache_is_named_after_the_deploy(self, client):
+    def test_its_cache_is_named_after_the_deploy(self, client, settings):
         """Un nombre nuevo por despliegue es lo que hace que el navegador tire lo
         guardado. Sin eso, quien instaló la aplicación seguiría viendo sin
         conexión la pantalla del despliegue anterior, para siempre."""
+        settings.SERVICE_WORKER_ENABLED = True
+
         body = client.get("/sw.js").content.decode()
 
         assert f'"aerocontrol-{settings.SERVICE_WORKER_VERSION}"' in body
@@ -124,6 +126,65 @@ class TestItIsInstallable:
         assert client.get("/sw.js").status_code == 200
 
 
+class TestTheKillSwitch:
+    """⛔ La copia sin conexión nace **apagada**, y no por prudencia genérica.
+
+    La primera versión dejó la aplicación en `ERR_FAILED` en producción el
+    2026-09-08. Lo que lo vuelve distinto de cualquier otro defecto es que **se
+    cura solo**: el navegador guarda el worker y lo sigue usando, así que un
+    `git revert` no alcanza — hay que servirle bytes nuevos que lo desinstalen.
+
+    De ahí que la ruta siga existiendo apagada: es el único camino por el que se
+    sana un navegador que ya se quedó con el roto, sin pedirle a nadie que abra
+    las herramientas del navegador.
+    """
+
+    def test_it_is_off_unless_someone_turns_it_on(self):
+        assert settings.SERVICE_WORKER_ENABLED is False
+
+    @pytest.mark.django_db
+    def test_off_it_serves_a_worker_that_uninstalls_itself(self, client):
+        body = client.get("/sw.js").content.decode()
+
+        assert "registration.unregister()" in body
+        assert "caches.delete(name)" in body
+        # Y no queda nada del que interceptaba: ni caché nueva, ni `fetch`.
+        assert "networkFirst" not in body
+        assert 'addEventListener("fetch"' not in body
+
+    @pytest.mark.django_db
+    def test_and_it_reloads_the_tabs_it_was_breaking(self, client):
+        """Sin esto, la pestaña que está mirando el `ERR_FAILED` se queda ahí
+        hasta que alguien la recargue a mano — que es exactamente lo que este
+        archivo viene a evitar."""
+        body = client.get("/sw.js").content.decode()
+
+        assert "client.navigate(client.url)" in body
+
+    @pytest.mark.django_db
+    def test_the_route_stays_even_when_off(self, client):
+        """Un `404` **no** sirve para desregistrar: en Chrome funciona, en otros
+        no, y deja la caché puesta."""
+        assert client.get("/sw.js").status_code == 200
+
+    @pytest.mark.django_db
+    def test_on_it_serves_the_caching_worker(self, client, settings):
+        settings.SERVICE_WORKER_ENABLED = True
+
+        body = client.get("/sw.js").content.decode()
+
+        assert "networkFirst" in body
+        assert "registration.unregister()" not in body
+
+    @pytest.mark.django_db
+    def test_the_rest_of_the_row_does_not_depend_on_it(self, client, db):
+        """Instalable, manifiesto y el aviso de datos guardados siguen puestos:
+        lo que se apagó es la intercepción, que es la parte que puede romper una
+        navegación."""
+        assert 'rel="manifest"' in BASE
+        assert 'id="offline-banner"' in BASE
+
+
 class TestNothingIsEverWrittenOffline:
     """⚠️ La regla que no se negocia."""
 
@@ -161,8 +222,39 @@ class TestTheOfflineCopyIsPlanB:
 
     def test_a_failed_response_is_not_kept(self):
         """Una 404 guardada se serviría como «la última vez que miraste» cuando
-        en realidad es la última vez que fallaste."""
-        assert "response.ok" in SW
+        en realidad es la última vez que fallaste.
+
+        ⚠️ `status !== 200` y no `!ok`: una **206** también es `ok`, y
+        `Cache.put` la rechaza — que era uno de los caminos al fallo de
+        producción de abajo."""
+        assert "response.status !== 200" in SW
+        assert "response.redirected" in SW
+
+    def test_keeping_a_copy_can_never_fail_the_response(self):
+        """⚠️ **El fallo que dejó la aplicación en `ERR_FAILED` en producción el
+        2026-09-08, y su guardián.**
+
+        `cache.put` vivía **dentro** del `try` y se esperaba antes de devolver la
+        respuesta. `Cache.put` rechaza en varios casos —una 206, una redirigida,
+        la cuota llena— y al rechazar caía al `catch`, no encontraba nada
+        guardado (nunca se había guardado nada) y **relanzaba**: `respondWith`
+        rechazaba y el navegador mostraba un error de red. **La red estaba bien;
+        lo que mató la página fue el intento de guardarla.**
+
+        Guardar es un efecto secundario. Tiene que estar fuera del camino de la
+        respuesta, sin `await` que la retenga, con su propio `catch`.
+        """
+        network = SW.split("async function networkFirst", 1)[1].split(
+            "\nasync function keep", 1
+        )[0]
+        keeping = SW.split("async function keep", 1)[1].split("\nasync function", 1)[0]
+
+        # El guardado no se espera antes de devolver: va por `waitUntil`.
+        assert "event.waitUntil(keep(" in network
+        assert "await cache.put" not in network
+        # Y no puede propagar: su propio try/catch.
+        assert "catch (error)" in keeping
+        assert "await cache.put" in keeping
 
     def test_credentials_and_the_api_are_never_kept(self):
         never = SW.split("NEVER_CACHE = ", 1)[1].split("]", 1)[0]
