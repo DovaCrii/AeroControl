@@ -1,6 +1,16 @@
 # HANDOFF — AeroControl
 
-## ⏳ El informe mensual: paginado y con lo escrito marcado — **sin desplegar**
+## ✅ El informe mensual: paginado y con lo escrito marcado
+
+**Desplegado** en `eb62b0a` el 2026-09-08. `collectstatic` copió **1** archivo —
+`report-a4.css`, el único estático que cambió— y no hubo migraciones.
+
+⚠️ **Queda sin comprobar la impresión real.** Los tests afirman que la regla
+`@media print` existe y que la marca de «escrito» lleva `.no-print`, pero
+imprimir a PDF no es algo que se pueda ejercitar desde el navegador integrado. Un
+`Ctrl+P` sobre un informe con más de nueve permisos confirma las dos cosas que
+faltan: que cada hoja sale en su página y que la marca no aparece en el papel.
+
 
 Sale de dos preguntas del usuario el 2026-09-08 sobre el informe: si lo de
 generarlo estaba resuelto, y una forma más clara de editarlo y revisarlo.
@@ -82,8 +92,8 @@ falta y en qué folio.
 
 | | |
 |---|---|
-| Último commit de **código** | **`d7c06da`** (2026-09-08) |
-| Desplegado en `p340` | **`d7c06da`** ✅ el 2026-09-08 |
+| Último commit de **código** | **`eb62b0a`** (2026-09-08) |
+| Desplegado en `p340` | **`eb62b0a`** ✅ el 2026-09-08 |
 | Migraciones pendientes | **ninguna** |
 | Diferencia con `origin/main` | sólo documentación (este archivo, el post-mortem) — **no requiere desplegar** |
 | Copia sin conexión (`UX-26`) | ⛔ **apagada** — `SERVICE_WORKER_ENABLED=False`; ver el incidente de abajo antes de encenderla |
