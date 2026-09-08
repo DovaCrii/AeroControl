@@ -22,10 +22,17 @@ detalle de formato en un papel que va a la DGAC.{% endcomment %}
   <div class="rpt-body rpt-stack-14" style="padding-top: 20px;">
 
     <div>
-      <div class="rpt-h2"><span class="rpt-h2-num">2</span><span class="rpt-h2-text">Permisos de vuelo vigentes ante la DGAC</span></div>
+      <div class="rpt-h2"><span class="rpt-h2-num">2</span><span class="rpt-h2-text">Permisos de vuelo vigentes ante la DGAC{% if not sheet.first %} <span style="font-size: 13px; font-weight: normal; color: #52606D;">(continuación)</span>{% endif %}</span></div>
       <div class="rpt-h2-rule"></div>
     </div>
 
+    {% comment %}⚠️ **El ciclo y los indicadores van sólo en la primera hoja de la
+    sección.** No son datos de la tabla: el ciclo es el trámite que fija el
+    instructivo y los cuatro indicadores son el total del período. Repetirlos en
+    cada hoja de continuación diría que cada hoja tiene sus propias cifras, y con
+    tres hojas sumarían tres veces los mismos permisos para quien las lee
+    sueltas.{% endcomment %}
+    {% if sheet.first %}
     <div class="rpt-cycle">
       <div style="padding: 8px 12px 4px; display: flex; justify-content: space-between; align-items: baseline; gap: 12px;">
         <span class="rpt-label" style="letter-spacing: 0.06em;">Ciclo de vigencia del permiso de operación</span>
@@ -79,6 +86,7 @@ detalle de formato en un papel que va a la DGAC.{% endcomment %}
         </div>
       </div>
     </div>
+    {% endif %}
 
     {% comment %}R4: la tabla del informe emitido, ahora desde la base.
 
@@ -87,7 +95,14 @@ detalle de formato en un papel que va a la DGAC.{% endcomment %}
     junte lo sugiere. El segundo bloque lleva su propio rótulo, igual que en el
     documento emitido.{% endcomment %}
     <div>
-      <div class="rpt-label" style="margin-bottom: 10px;">Detalle permiso a permiso</div>
+      {% comment %}⚠️ **El rótulo declara el total de la sección, y no el de la
+      hoja.** Es lo que vuelve detectable un recorte: el reparto en hojas se
+      calcula con el alto de una fila medido en el caso peor, así que una fila
+      más alta que ese peor caso podría dejar algo fuera. Con el total escrito,
+      quien revisa cuenta y lo nota; sin él, una fila perdida pasa inadvertida en
+      un papel que va firmado. Ver la advertencia de
+      `apps/reporting/pagination.py`.{% endcomment %}
+      <div class="rpt-label" style="margin-bottom: 10px;">Detalle permiso a permiso · {{ sheet.total }} vigente{{ sheet.total|pluralize:"s" }}{% if sheet.of > 1 %} · hoja {{ sheet.index }} de {{ sheet.of }} de la sección{% endif %}</div>
       <div class="rpt-table">
         <div class="rpt-grid-permits rpt-grid-head">
           <div class="th">N° JEJ</div>
@@ -100,7 +115,10 @@ detalle de formato en un papel que va a la DGAC.{% endcomment %}
         </div>
 
         <div class="rpt-grid-permits">
-          {% for permit in payload.permits %}{% if permit.in_force %}
+          {% comment %}`sheet.rows` y no `payload.permits`: el reparto en hojas lo
+          hace `MonthlyReportView._sheets` con `pagination.sheets_for`, para que
+          una tabla más larga que la hoja no se recorte en silencio.{% endcomment %}
+          {% for permit in sheet.rows %}
           <div class="c rpt-num">{{ permit.folio }}</div>
           <div class="c">{% if permit.dgac_number %}{{ permit.dgac_number }}{% else %}<span class="rpt-dash">—</span>{% endif %}</div>
           <div class="c">{{ permit.cost_centre }}</div>
@@ -108,15 +126,15 @@ detalle de formato en un papel que va a la DGAC.{% endcomment %}
           <div class="c rpt-tail">{% for tail in permit.aircraft %}{{ tail }}{% if not forloop.last %}<br>{% endif %}{% empty %}<span class="rpt-dash">—</span>{% endfor %}</div>
           <div class="c rpt-tail">{{ permit.valid_from|as_date|date:"d-m"|default:"—" }} → <strong{% if permit.band == 'critical' %} style="color: #B23B34;"{% endif %}>{{ permit.valid_until|as_date|date:"d-m-Y" }}</strong></div>
           <div class="c rpt-sev-{{ permit.band }}" style="text-align: center; font-weight: bold;">{{ permit.days_remaining }}</div>
-          {% endif %}{% empty %}
+          {% empty %}
           <div class="c" style="grid-column: 1 / -1; text-align: center; color: #98A2B0; padding: 18px;">Ningún permiso vigente al corte.</div>
           {% endfor %}
         </div>
 
-        {% if payload.kpis.permits_awaiting.value %}
+        {% if sheet.awaiting %}
         <div style="background: #F4F7FA; border-top: 1px solid #D7DEE6; padding: 6px 10px; color: #124384; font-size: 8.6px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em;">Solicitudes en trámite — sin habilitación hasta su aprobación</div>
         <div class="rpt-grid-permits">
-          {% for permit in payload.permits %}{% if not permit.in_force %}
+          {% for permit in sheet.awaiting %}
           <div class="c rpt-num">{{ permit.folio }}</div>
           <div class="c" style="color: #B8791A; font-size: 8.2px;">En proceso</div>
           <div class="c">{{ permit.cost_centre }}</div>
@@ -126,15 +144,22 @@ detalle de formato en un papel que va a la DGAC.{% endcomment %}
           {% comment %}Guion y no cero: la DGAC todavía no resolvió, y un cero
           ahí se leería como "vence hoy" (`LV-219`).{% endcomment %}
           <div class="c rpt-dash" style="text-align: center;">—</div>
-          {% endif %}{% endfor %}
+          {% endfor %}
         </div>
         {% endif %}
       </div>
     </div>
 
+    {% comment %}⚠️ **La observación y la leyenda cierran la sección, así que van
+    sólo en la última hoja.** No es sólo prolijidad: el reparto de filas descuenta
+    su alto (`CLOSING_PX`) del techo de esa hoja y **no** del de las otras, así
+    que dibujarlas en todas volvería a desbordar exactamente lo que esto viene a
+    arreglar.{% endcomment %}
+    {% if sheet.last %}
     <div>
       <div class="rpt-label" style="margin-bottom: 10px;">Observación del período</div>
       {% if run.period_note %}
+      {% include "reporting/_written.html" with anchor="period_note" %}
       <div style="border: 1px solid #D7DEE6; border-left: 3px solid #00A7BC; background: #F4F7FA; padding: 9px 12px; color: #0F1B2D; font-size: 10.5px; line-height: 1.55;">{{ run.period_note|linebreaksbr }}</div>
       {% else %}
       {% pending "la observación se redacta y se aprueba antes de emitir" "LV-227" %}
@@ -146,9 +171,10 @@ detalle de formato en un papel que va a la DGAC.{% endcomment %}
       <span><span class="rpt-swatch" style="background: #B8791A;"></span>Por vencer (31–60)</span>
       <span><span class="rpt-swatch" style="background: #B23B34;"></span>Crítico (≤30)</span>
     </div>
+    {% endif %}
 
   </div>
 
-  {% include "reporting/_foot.html" with page=3 %}
+  {% include "reporting/_foot.html" with section="permits" %}
 
 </div>

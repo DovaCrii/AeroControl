@@ -19,17 +19,23 @@ del pie que un cambio de criterio obliga a revisar entera, y tenerlas en cinco
 archivos es cómo una hoja termina declarando un corte que otra ya no usa. Es el
 mismo motivo por el que `_head.html` existe.
 
+⚠️ **La nota se elige por `section` y no por el número de página**, y eso cambió
+el 2026-09-08: desde que la tabla de permisos puede pedir hojas de más, la
+página 4 ya no es la de cobertura ni la 5 la del plan. Con la nota atada al
+número, agregar un permiso le habría puesto a la hoja de cobertura la nota de la
+del plan — un pie que declara la fuente equivocada en un documento firmado.
+
 El texto va en español y sin `{% translate %}`, igual que el resto del documento:
 no es interfaz, es el papel que se firma ante la DGAC.{% endcomment %}
 <div class="rpt-foot{% if cover %} rpt-foot-cover{% endif %}">
   <div class="rpt-foot-note">
-    {% if page == 1 %}
+    {% if section == "cover" %}
     <span class="rpt-foot-firm">J.E.J. INGENIERÍA S.A.</span><br>
     Av. Apoquindo 2930, Piso 11, Las Condes – Santiago de Chile<br>
     Fono +56 2 2722 5000 · jej@jej.cl · www.jej.cl
-    {% elif page == 2 %}
+    {% elif section == "summary" %}
     Fuente: AeroControl, corte al {{ cutoff_date|date:"d-m-Y" }}.
-    {% elif page == 3 %}
+    {% elif section == "permits" %}
     {% comment %}LV-233: el pie dice **qué se reconstruye y qué no**.
 
     Se reconstruye al corte la población —quedan fuera los permisos que ese día
@@ -50,18 +56,25 @@ no es interfaz, es el papel que se firma ante la DGAC.{% endcomment %}
     Días calculados al {{ cutoff_date|date:"d-m-Y" }}. Población, estado y archivado
     reconstruidos al corte; quedan fuera los archivados sin fecha registrada.
     Referencia: DAN 91, DAN 137, DAN 151 · INS-096 numeral 6.4.1.
-    {% elif page == 4 %}
+    {% elif section == "coverage" %}
     Fuente: AeroControl — módulo Permisos, corte al {{ cutoff_date|date:"d-m-Y" }}.
-    {% elif page == 5 %}
+    {% elif section == "plan" %}
     El informe mensual es obligación del {{ payload.meta.issued_by }} en conjunto
     con el {{ payload.meta.jointly_with }} (INS-096, 5.4.2 y 6.5).
     {% endif %}
   </div>
-  {% comment %}«de 5» va literal porque el juego es de cinco hojas por estructura
-  del documento, no por configuración: `monthly_report.html` incluye exactamente
-  esas cinco. Hay un test que vigila que las dos cosas no se separen.{% endcomment %}
+  {% comment %}⚠️ **El total se calcula; antes decía «de 5» literal.**
+
+  Estaba escrito a mano, con un comentario que afirmaba que el juego es de cinco
+  hojas «por estructura del documento». Era cierto para el informe emitido de
+  agosto y dejó de serlo el 2026-09-08, cuando se midió que la tabla de permisos
+  desborda la hoja: desde que la sección puede pedir hojas de más, un total fijo
+  convierte al pie en el que **miente sobre cuántas hojas son** — y es el dato
+  con el que alguien comprueba que no le falta una página del juego impreso.
+
+  Lo asigna `MonthlyReportView._sheets`, en un solo lugar.{% endcomment %}
   <div class="rpt-foot-id">
-    {{ revision_label }} · Página {{ page }} de 5
+    {{ revision_label }} · Página {{ page }} de {{ pages }}
     {% if cover %}<br>Documento de gestión interna{% endif %}
   </div>
 </div>

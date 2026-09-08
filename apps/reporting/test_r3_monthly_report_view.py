@@ -20,6 +20,7 @@ import pytest
 from django.contrib.auth.models import Permission, User
 from django.urls import reverse
 
+from apps.core.testing import without_template_comments
 from apps.operations.models import FlightPermission
 from apps.registry.models import CostCenter
 from apps.reporting.models import ReportRun
@@ -410,9 +411,15 @@ class TestTheFooterIsTheSameOnEveryPage:
             )
         ]
 
-        assert len(labels) == 5
+        # ⚠️ Contra `len(labels)` y no contra un 5 escrito: desde el 2026-09-08 la
+        # sección de permisos pide tantas hojas como necesite, así que el total
+        # es variable. El test anterior afirmaba «de 5» y habría empezado a
+        # fallar por la razón correcta con el arreglo puesto — pero también
+        # habría dejado pasar un pie que numera mal si el documento volviera a
+        # tener cinco hojas por casualidad.
+        assert len(labels) >= 5
         for number, label in enumerate(labels, start=1):
-            assert f"Página {number} de 5" in label
+            assert f"Página {number} de {len(labels)}" in label
 
     @pytest.mark.django_db
     def test_every_page_declares_the_revision(self, client, reader, site):
@@ -424,21 +431,41 @@ class TestTheFooterIsTheSameOnEveryPage:
 
         assert body.count("Borrador ·") == 5
 
-    def test_the_footer_page_count_matches_the_pages_included(self):
-        """`_foot.html` escribe «de 5» literal. Si mañana se agrega una hoja al
-        documento, este test cae antes de que salga un informe donde la página 6
-        diga «de 5»."""
+    def test_the_footer_takes_the_total_and_does_not_hardcode_it(self):
+        """⚠️ Este test antes comprobaba lo contrario: que `_foot.html` escribiera
+        «de 5» literal, con la premisa de que el juego es de cinco hojas «por
+        estructura del documento». Era cierto para el informe emitido de agosto y
+        falso desde que se midió que la tabla de permisos desborda la hoja — un
+        total fijo convierte al pie en el que miente sobre cuántas hojas son, y
+        es el dato con el que alguien comprueba que no le falta una página del
+        juego impreso.
+
+        Queda dado vuelta: lo que no se puede volver a escribir es el número."""
+        from pathlib import Path
+
+        from django.conf import settings
+
+        foot = (
+            Path(settings.BASE_DIR) / "templates" / "reporting" / "_foot.html"
+        ).read_text(encoding="utf-8")
+
+        assert "de {{ pages }}" in foot
+        assert "de 5" not in without_template_comments(foot)
+
+    def test_no_page_pins_its_own_number(self):
+        """La numeración la asigna `MonthlyReportView._sheets`, en un solo lugar.
+        Dos sitios decidiéndola es cómo un documento termina con dos hojas
+        numeradas igual — y con la sección de permisos variable, un `page=4`
+        escrito en la plantilla de cobertura empieza a mentir en cuanto entra un
+        permiso más."""
         from pathlib import Path
 
         from django.conf import settings
 
         templates = Path(settings.BASE_DIR) / "templates" / "reporting"
-        document = (templates / "monthly_report.html").read_text(encoding="utf-8")
-        foot = (templates / "_foot.html").read_text(encoding="utf-8")
-
-        included = len(re.findall(r'{% include "reporting/_page\d', document))
-
-        assert f"de {included}" in foot
+        for page in sorted(templates.glob("_page*.html")):
+            source = without_template_comments(page.read_text(encoding="utf-8"))
+            assert not re.search(r"_foot\.html\" with page=\d", source), page.name
 
     def test_the_long_note_cannot_squeeze_the_page_label(self):
         """⚠️ El traslape. Los dos lados eran `<span>` sueltos en un flex sin
@@ -475,3 +502,105 @@ class TestTheFooterIsTheSameOnEveryPage:
             source = page.read_text(encoding="utf-8")
             assert '{% include "reporting/_foot.html"' in source, page.name
             assert 'class="rpt-foot"' not in source, page.name
+
+
+class TestTheDocumentSaysWhatAPersonWrote:
+    """Pedido del usuario el 2026-09-08: *"una mejor forma de editar y revisar el
+    informe completo, lo que se modifica y los cambios más claro"*.
+
+    Casi todo el informe se calcula del corte y **tres bloques** los redacta
+    quien firma —la observación del período, los hallazgos y las acciones—, y los
+    tres se veían igual que una cifra consultada. Quien revisaba no tenía forma
+    de saber, mirando el documento, dónde podía intervenir.
+    """
+
+    @pytest.fixture
+    def editable(self, db, site):
+        user = User.objects.create_user("writer", password="x")
+        user.user_permissions.add(
+            *Permission.objects.filter(
+                codename__in=["view_reportrun", "change_reportrun"],
+                content_type__app_label="reporting",
+            )
+        )
+        run = ReportRun.objects.create(
+            period=date(2026, 8, 1),
+            generated_by="test",
+            status=ReportRun.STATUS_DRAFT,
+            payload={"meta": {}, "kpis": {}, "permits": [], "cost_centres": []},
+            period_note="La renovación de CC738 arrancó el 12.",
+            findings=[
+                {"severity": "warning", "title": "Renovación", "text": "Va tarde."}
+            ],
+        )
+        return user, run
+
+    @pytest.mark.django_db
+    def test_the_written_blocks_carry_their_mark(self, client, editable):
+        user, _run = editable
+        client.force_login(user)
+
+        body = client.get(reverse(URL), {"period": "2026-08"}).content.decode()
+
+        # Dos bloques escritos en este informe: la observación y los hallazgos.
+        assert body.count("rpt-written") == 2
+
+    @pytest.mark.django_db
+    def test_the_mark_links_to_the_form_that_edits_it(self, client, editable):
+        """Decirle a alguien que un bloque es editable y dejarlo buscando dónde
+        es la mitad de un aviso — el mismo criterio que los hallazgos de
+        «¿Puedo volar?»."""
+        user, run = editable
+        client.force_login(user)
+
+        body = client.get(reverse(URL), {"period": "2026-08"}).content.decode()
+
+        assert reverse("monthly-report-narrative", args=[run.pk]) in body
+
+    @pytest.mark.django_db
+    def test_an_approved_report_shows_no_mark(self, client, editable):
+        """Un informe aprobado no se toca: se emite una revisión. El enlace
+        llevaría a un formulario que rechaza, y `LV-130` ya dejó escrito lo que
+        eso enseña — a desconfiar de la pantalla."""
+        user, run = editable
+        ReportRun.objects.filter(pk=run.pk).update(status=ReportRun.STATUS_APPROVED)
+        client.force_login(user)
+
+        body = client.get(reverse(URL), {"period": "2026-08"}).content.decode()
+
+        assert "rpt-written" not in body
+
+    @pytest.mark.django_db
+    def test_without_the_write_permission_there_is_no_mark(self, client, reader, site):
+        """Quien sólo lee no gana un enlace que va a terminar en 403."""
+        ReportRun.objects.create(
+            period=date(2026, 8, 1),
+            generated_by="test",
+            status=ReportRun.STATUS_DRAFT,
+            payload={"meta": {}, "kpis": {}, "permits": [], "cost_centres": []},
+            period_note="Algo escrito.",
+        )
+        client.force_login(reader)
+
+        body = client.get(reverse(URL), {"period": "2026-08"}).content.decode()
+
+        assert "rpt-written" not in body
+
+    def test_the_mark_never_reaches_the_paper(self):
+        """⚠️ Lo más importante de esta fila. El informe sale **firmado** hacia la
+        DGAC: un rótulo de «editable» sobre el documento entregado afirmaría algo
+        falso —que el lector puede cambiarlo— y ensuciaría un papel controlado.
+
+        La regla va en `report-a4.css` y no sólo en `app.css` porque esta hoja se
+        imprime sola y no puede depender de que la otra esté cargada."""
+        from pathlib import Path
+
+        from django.conf import settings
+
+        css = (Path(settings.BASE_DIR) / "static" / "css" / "report-a4.css").read_text(
+            encoding="utf-8"
+        )
+        printing = css.split("@media print", 1)[1]
+
+        assert ".rpt-written" in printing
+        assert "display: none !important" in printing

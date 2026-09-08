@@ -8787,3 +8787,12 @@ msgstr[1] "Los permisos vigentes de este centro de costo (%(folios)s) no autoriz
 msgid "No single permit in force (%(folios)s) authorises this operator and this aircraft together."
 msgstr "Ningún permiso vigente (%(folios)s) autoriza a este operador y a esta aeronave juntos."
 
+
+#: templates/reporting/_written.html
+msgid "Written by a person, not computed from the cutoff. Click to edit it."
+msgstr "Lo escribió una persona; no se calcula del corte. Haga clic para editarlo."
+
+#: templates/reporting/_written.html
+msgid "Written · edit"
+msgstr "Escrito · editar"
+
