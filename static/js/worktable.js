@@ -125,6 +125,19 @@
         var col = document.createElement("col");
         col.className = "col-select";
         group.insertBefore(col, group.firstChild);
+        // Y la fila de "sin resultados" abarca una columna más, por la misma
+        // razón por la que el `<col>` va acá: la columna y su ancho son el mismo
+        // hecho. Sin esto el mensaje deja la última columna afuera.
+        //
+        // ⚠️ Se **suma**, nunca se pone un número grande. El `colspan` de esa
+        // fila es exacto a propósito: en una tabla de ancho fijo el navegador
+        // crea las columnas que el `colspan` promete y les reparte el sobrante
+        // de `col-flex`. Medido el 2026-09-11, un `colspan="99"` dejaba la
+        // columna flexible en 5 px y el encabezado en 280, con cada letra de
+        // "Habilitaciones" en su propia línea.
+        [].forEach.call(table.querySelectorAll("tbody td[colspan]"), function (cell) {
+          cell.colSpan = cell.colSpan + 1;
+        });
       }
       var th = document.createElement("th");
       th.scope = "col";
