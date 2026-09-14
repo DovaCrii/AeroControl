@@ -92,8 +92,8 @@ falta y en qué folio.
 
 | | |
 |---|---|
-| Último commit de **código** | **`eb62b0a`** (2026-09-08) |
-| Desplegado en `p340` | **`eb62b0a`** ✅ el 2026-09-08 |
+| Último commit de **código** | **`a23b6dc`** (2026-09-14) |
+| Desplegado en `p340` | **`a23b6dc`** ✅ el 2026-09-14 |
 | Migraciones pendientes | **ninguna** |
 | Diferencia con `origin/main` | sólo documentación (este archivo, el post-mortem) — **no requiere desplegar** |
 | Copia sin conexión (`UX-26`) | ⛔ **apagada** — `SERVICE_WORKER_ENABLED=False`; ver el incidente de abajo antes de encenderla |
@@ -116,6 +116,21 @@ puntos inventados haría que la primera firma afirmara algo que nadie acordó.
 ⚠️ **Esta tabla se actualiza en el momento de desplegar, no después.** La
 respuesta a *"¿qué corre en `p340`?"* se perdió tres veces por dejarla para
 luego, y cada vez costó una sesión reconstruirla.
+
+### 🔶 Pendientes de mantenimiento, vistos en el despliegue del 2026-09-14
+
+Aparecieron en la salida del `git pull` y en el banner de la VM, y no los resuelve
+ningún comando del despliegue:
+
+- **Dos ramas de Dependabot esperando**: `dependabot/pip/django-6.1.1` y
+  `dependabot/pip/ruff-0.16.6`. La de Django es la que corre: un `6.1.1` sobre
+  `6.1` es un parche, y los parches de Django suelen ser de seguridad. Conviene
+  mirar su nota de versión antes de mezclar, y pasar el gate — `pip-audit` está
+  en él, así que un CVE conocido saldría solo.
+- **La VM pide reinicio** (*"System restart required"*) y tiene **40
+  actualizaciones** del sistema pendientes. Reiniciar `p340` corta la aplicación
+  unos segundos y levanta sola por `systemd`, pero conviene hacerlo fuera de
+  horario de faena y con el respaldo del día tomado.
 
 > **Resumen de estado, no bitácora.** La historia detallada vive en `git log`,
 > `CHANGELOG.md` y las filas del tablero. La **fuente de verdad del trabajo
