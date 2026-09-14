@@ -224,6 +224,31 @@ def permit_status_by_cost_center(today):
     incumplidas por una operación que no les toca. Ver el comentario del campo en
     `CostCenter`.
 
+    ⚠️ **Y sólo las que siguen contratadas.** Una faena con `contract_status`
+    cerrado está en la **misma** situación que `CC110`: ya no opera, así que
+    contarla entre las que no tienen permiso vigente la declara incumplida por
+    algo que dejó de tocarle. El usuario lo vio en el panel el 2026-09-14 — siete
+    faenas cerradas ocupando la tabla con "Ninguno".
+
+    No es sólo ruido de pantalla: estas filas son el denominador del indicador
+    *"X de N Centros de Costo cuentan con permiso de vuelo vigente"* que va
+    **firmado a la DGAC**, así que cada faena cerrada empeoraba una cifra de
+    cumplimiento por una operación terminada.
+
+    **Cerrada es cerrada, tenga permisos o no** — decisión del usuario, y es la
+    regla simple: *"independiente que tenga permiso o no, si está cerrado no
+    cuenta"*. La alternativa que se propuso —dejar visible la faena cerrada que
+    conserva un permiso vivo, por ser una contradicción que alguien debería
+    cerrar— se descartó a propósito. 🔶 Lo que se pierde con eso: ese permiso ya
+    no se ve **en esta tabla**. Sigue estando en la lista de permisos y en los
+    vencimientos del panel, que es donde se trabaja un permiso de todas formas.
+
+    🔶 **Y esto no se reconstruye al corte**, como sí pasa con la población y el
+    estado de los permisos (`LV-233`): `contract_status` no guarda **cuándo** se
+    cerró, igual que `is_active`. Así que un informe todavía no congelado de un
+    mes en que la faena sí operaba la deja fuera. Los ya congelados no cambian —
+    guardan su payload— y ése es justamente el motivo de que lo hagan.
+
     **Dos consultas, no una por faena.** La primera trae las faenas; la segunda
     agrega los permisos de todas de un golpe. Recorrer `permit_counts` por faena
     habría costado cuatro consultas por fila en una pantalla que se abre en cada
@@ -236,9 +261,9 @@ def permit_status_by_cost_center(today):
 
     horizon = today + timedelta(days=30)
     centers = list(
-        CostCenter.objects.filter(is_active=True, operates_flights=True).order_by(
-            "code"
-        )
+        CostCenter.objects.filter(is_active=True, operates_flights=True)
+        .exclude(contract_status=CostCenter.CONTRACT_CLOSED)
+        .order_by("code")
     )
     counted = {
         row["cost_center"]: row
