@@ -117,6 +117,35 @@ puntos inventados haría que la primera firma afirmara algo que nadie acordó.
 respuesta a *"¿qué corre en `p340`?"* se perdió tres veces por dejarla para
 luego, y cada vez costó una sesión reconstruirla.
 
+### ⚠️ La faena cerrada sale del indicador — **una cifra del informe cambia**
+
+Pedido del usuario el 2026-09-14 mirando el panel: *"cuando el centro de costo
+cierra no es necesario que lo muestre el panel"*. Eran siete faenas cerradas
+ocupando la tabla con «Ninguno».
+
+**No era sólo ruido de pantalla.** Esas filas son el universo del indicador que va
+firmado a la DGAC: `cost_centres_with_operation` es su denominador y
+`cost_centres_without_permit` su numerador. Una faena cerrada no tiene permisos
+vigentes —ya no opera— así que cada una empeoraba una cifra de cumplimiento por
+una operación terminada.
+
+**Qué cambia en el papel**: los informes **ya congelados no se tocan** —guardan su
+payload, y por eso lo guardan—. Cambian las vistas previas en vivo y los informes
+que se congelen de aquí en adelante: el «X de N Centros de Costo con permiso
+vigente» pasa a contar sólo las faenas que operan. En producción bajan numerador
+y denominador, así que la cifra **mejora** y pasa a medir lo que corresponde.
+
+🔶 **La regla no admite excepción, por decisión del usuario**: *"independiente que
+tenga permiso o no, si está cerrado no cuenta"*. Se propuso dejar visible la
+faena cerrada que conserva un permiso vivo —una contradicción que alguien debería
+cerrar— y se descartó. Lo que se pierde: ese permiso ya no sale en **esa** tabla;
+sigue en la lista de permisos y en los vencimientos.
+
+🔶 **Y no se reconstruye al corte**, a diferencia de la población y el estado de
+los permisos (`LV-233`): `contract_status` no guarda **cuándo** se cerró, igual
+que `is_active`. Un informe aún no congelado de un mes en que la faena sí operaba
+la deja fuera.
+
 ### 🔶 Pendientes de mantenimiento, vistos en el despliegue del 2026-09-14
 
 Aparecieron en la salida del `git pull` y en el banner de la VM, y no los resuelve

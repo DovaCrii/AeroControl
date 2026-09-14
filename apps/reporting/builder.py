@@ -92,7 +92,6 @@ def collect_kpis(cutoff, cost_centres, permit_rows):
     from apps.compliance.kpis import PERMIT_CRITICAL_DAYS, PERMIT_WARNING_DAYS
     from apps.compliance.models import NonConformity
     from apps.dashboard.views import panel_readiness
-    from apps.registry.models import CostCenter
 
     # El primer día del mes al que pertenece el corte: los incidentes se cuentan
     # **del período**, no acumulados, y sin esto un informe de agosto sumaría los
@@ -100,14 +99,24 @@ def collect_kpis(cutoff, cost_centres, permit_rows):
     period_start = cutoff.replace(day=1)
 
     readiness = {card["key"]: card for card in panel_readiness(cutoff)["readiness"]}
-    # `operates_flights`: `CC110` y `CC410` administran equipos y no vuelan
-    # (`LV-205`), así que contarlas como faenas con operación las declararía
-    # incumplidas por algo que no les toca — el mismo criterio que `LV-229`
-    # aplicó al contador de seguros.
-    flying = CostCenter.objects.filter(is_active=True, operates_flights=True)
 
     return {
-        "cost_centres_with_operation": leaf(flying.count(), "registry", cutoff),
+        # ⚠️ **El denominador sale de las filas ya recolectadas, no de una
+        # consulta propia**, y eso cerró un defecto real.
+        #
+        # Era `CostCenter.objects.filter(is_active=True, operates_flights=True)
+        # .count()`: una segunda consulta que *debía* devolver el mismo universo
+        # que `cost_centres`, con el docstring de esta función advirtiendo que
+        # "dos recorridos separados es cómo el informe empieza a decir 7 de 12 en
+        # una página y 7 de 11 en la siguiente". El 2026-09-14 se separaron de
+        # verdad: `permit_status_by_cost_center` dejó fuera las faenas con
+        # contrato cerrado —que ya no operan, así que declararlas sin permiso
+        # vigente las acusa por algo que dejó de tocarles— y esta consulta las
+        # seguía contando.
+        #
+        # Contar `len(cost_centres)` los vuelve el mismo número **por
+        # construcción**: no hay dos criterios que mantener sincronizados.
+        "cost_centres_with_operation": leaf(len(cost_centres), "registry", cutoff),
         # El hallazgo que abre el informe emitido: "solo 5 de 12 Centros de Costo
         # cuentan con permiso de vuelo vigente". Se cuenta sobre las filas ya
         # recolectadas, que salen de `permit_status_by_cost_center` — la consulta

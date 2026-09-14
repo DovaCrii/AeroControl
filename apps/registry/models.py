@@ -74,9 +74,15 @@ class CostCenter(BaseModel):
     # client contract ended is not an error/duplicate to archive away; it
     # should keep showing (greyed, grouped after the operative ones) so its
     # history stays reachable from the normal list, not just from "archived".
+    # Constantes y no literales sueltos: `contract_status` pasó de ser un dato de
+    # la ficha a **decidir quién entra en el indicador de cumplimiento**
+    # (`permit_status_by_cost_center`, 2026-09-14), y un `"closed"` tecleado mal
+    # en ese filtro no falla — deja de excluir y nadie se entera.
+    CONTRACT_ACTIVE = "active"
+    CONTRACT_CLOSED = "closed"
     CONTRACT_STATUS_CHOICES = [
-        ("active", _("Active")),
-        ("closed", _("Closed")),
+        (CONTRACT_ACTIVE, _("Active")),
+        (CONTRACT_CLOSED, _("Closed")),
     ]
     # blank=True: unlike R2.6's area_type, closing a contract is an
     # occasional action on an existing record, not a fact every cost center
