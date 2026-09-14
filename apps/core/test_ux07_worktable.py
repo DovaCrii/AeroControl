@@ -224,3 +224,114 @@ class TestTheWorkboardListStaysOut:
 
         assert 'name="sort"' in content
         assert '{% extends "generic/worktable.html" %}' not in content
+
+
+def _normalized_lists():
+    """Las listas de ancho fijo, con su plantilla de filas, leídas del árbol.
+
+    Se descubren en vez de enumerarse: una lista que se normalice mañana entra
+    sola al guardián de abajo, que es justo el caso en que este defecto vuelve.
+    """
+    found = {}
+    for page in sorted(TEMPLATES.glob("*/*_list.html")):
+        source = page.read_text(encoding="utf-8")
+        if "table-normalized" not in source:
+            continue
+        rows = re.search(r'{% include "([^"]+_rows\.html)" %}', source)
+        if rows:
+            found[page] = TEMPLATES / rows.group(1)
+    return found
+
+
+class TestTheEmptyRowSpansExactlyTheColumnsThereAre:
+    """⚠️ **El defecto que el usuario encontró el 2026-09-11 buscando un operador
+    que no existe.**
+
+    La fila de «sin resultados» llevaba `colspan="99"` — el truco habitual para
+    «que abarque todo», inofensivo en una tabla de reparto automático. En una
+    `table-normalized` no lo es: el navegador **crea las columnas que el
+    `colspan` promete** y reparte entre todas ellas el sobrante que le tocaba a
+    `col-flex`.
+
+    Medido en la lista de operadores: «Habilitaciones» pasaba de **424 px a 5**,
+    y el encabezado de 56 px a **280**, con cada letra de la palabra en su propia
+    línea. Cada columna inventada le roba la mitad a la flexible — con 8 daba
+    212, con 99 daba 5.
+
+    El número exacto vive en la plantilla de filas y los `<col>` en la de la
+    lista: dos archivos distintos, así que la única forma de que no se separen es
+    cruzarlos acá.
+    """
+
+    def test_the_tree_still_has_normalized_lists_to_check(self):
+        """Si el descubrimiento deja de encontrar nada, los tests de abajo pasan
+        sin comprobar nada — que es la forma en que un guardián se apaga solo."""
+        assert len(_normalized_lists()) >= 4
+
+    def test_the_colspan_matches_the_colgroup(self):
+        for page, rows in _normalized_lists().items():
+            columns = len(
+                re.findall(
+                    r"<col\s", without_template_comments(page.read_text("utf-8"))
+                )
+            )
+            spans = [
+                int(value)
+                for value in re.findall(
+                    r'colspan="(\d+)"',
+                    without_template_comments(rows.read_text("utf-8")),
+                )
+            ]
+
+            assert spans, f"{rows.name}: sin fila vacía que comprobar"
+            for span in spans:
+                assert span == columns, (
+                    f"{rows.name} abarca {span} columnas y "
+                    f"{page.name} declara {columns}"
+                )
+
+    def test_no_normalized_list_uses_the_catch_all_span(self):
+        """El 99 es el que rompía. Se prohíbe por nombre para que el mensaje de
+        error diga qué pasó, en vez de sólo que dos números no coinciden."""
+        for _page, rows in _normalized_lists().items():
+            source = without_template_comments(rows.read_text("utf-8"))
+
+            assert 'colspan="99"' not in source, rows.name
+
+    @pytest.mark.django_db
+    def test_a_search_that_finds_nothing_offers_the_way_back(self):
+        """`UX-18` en las cuatro listas del padrón, que se habían quedado atrás.
+
+        Los dos vacíos no son el mismo hecho: sin filtros el padrón está vacío y
+        lo que corresponde es ofrecer crear el primero; con un filtro puesto
+        puede haber mucho y este recorte no alcanzarlo, así que lo que
+        corresponde es ofrecer quitarlo. Las cuatro decían *"No se encontraron
+        registros."* en los dos casos — el usuario lo vio el 2026-09-11 buscando
+        un operador que no existe: la pantalla no le ofrecía volver.
+        """
+        from django.utils.translation import gettext
+
+        client = login_as("view_operator")
+
+        body = client.get(reverse("operator-list"), {"q": "zzzz"}).content.decode()
+
+        assert gettext("No records match the current filters.") in body
+        assert gettext("Clear filters") in body
+
+    def test_every_normalized_list_makes_the_distinction(self):
+        for _page, rows in _normalized_lists().items():
+            source = without_template_comments(rows.read_text("utf-8"))
+
+            assert "is_filtered" in source, rows.name
+            assert "No records found." not in source, rows.name
+
+    def test_the_script_grows_the_span_instead_of_replacing_it(self):
+        """`worktable.js` inyecta la columna de selección, así que la fila vacía
+        abarca una más. **Se suma, nunca se pone un número grande**: volver a un
+        `colspan` mayor que las columnas reales reproduce el defecto exacto."""
+        script = (Path(settings.BASE_DIR) / "static" / "js" / "worktable.js").read_text(
+            encoding="utf-8"
+        )
+        injection = script.split('col.className = "col-select"', 1)[1]
+
+        assert "cell.colSpan = cell.colSpan + 1" in injection

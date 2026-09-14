@@ -60,6 +60,39 @@
   </td>
 </tr>
 {% empty %}
-<tr><td colspan="99" class="text-center text-muted py-4">{% translate "No records found." %}</td></tr>
+{% comment %}⚠️ **El `colspan` es el número exacto de columnas, y antes decía 99.**
+
+Un `colspan` grande es el truco habitual para «que abarque todo», y en una tabla
+de reparto automático es inofensivo. En una `table-normalized` —`table-layout:
+fixed` con una columna `col-flex` que absorbe el sobrante— **el navegador crea
+las columnas que el `colspan` promete** y reparte el sobrante entre todas ellas.
+
+Medido el 2026-09-11 en esta misma lista, buscando un nombre que no existe:
+«Habilitaciones» pasaba de **424 px a 5**, y el encabezado de 56 px a **280**,
+con cada letra de la palabra en su propia línea. Cada columna inventada le roba
+la mitad a la flexible: con 8 daba 212, con 99 daba 5.
+
+`colspan` = los `<col>` del `<colgroup>` de `operator_list.html`, y hay un
+guardián que cruza los dos números — viven en archivos distintos y la única
+forma de que no se separen es comprobarlo.
+
+`worktable.js` le suma uno cuando inyecta la columna de selección, por la misma
+razón por la que inyecta su `<col>`: la columna y su ancho son el mismo hecho.
+{% endcomment %}
+<tr><td colspan="7" class="text-center text-muted py-4">
+  {% comment %}UX-18: los dos vacios no son el mismo hecho. Sin filtros, el
+  padron esta vacio y lo que corresponde es ofrecer crear el primero; con un
+  filtro puesto, puede haber mucho y este recorte no alcanzarlo, asi que lo que
+  corresponde es ofrecer quitarlo. Decia "No se encontraron registros." en los
+  dos casos, y el usuario lo vio el 2026-09-11 buscando un operador que no
+  existe: la pantalla no le ofrecia volver.{% endcomment %}
+  {% if is_filtered %}
+    {% translate "No records match the current filters." %}
+    <a href="{{ request.path }}">{% translate "Clear filters" %}</a>
+  {% else %}
+    {% translate "Nothing here yet." %}
+    {% if has_create_url %}<a href="new/">{% translate "Create the first one" %}</a>{% endif %}
+  {% endif %}
+</td></tr>
 {% endfor %}
 {% if is_htmx %}<div id="pagination-container" hx-swap-oob="true">{% render_pagination page_obj %}</div>{% endif %}
