@@ -168,8 +168,13 @@ base de datos merece comprobarse antes de dar nada por hecho, y se comprobó:
 | `aero_ops.sqlite3` | 3,1 MB, modificada ese mismo día |
 | Volumen | el mismo LVM `ubuntu--vg-ubuntu--lv`, ampliado — 13 GB usados |
 | Respaldos | diarios y al día (19:00) |
+| **Padrón** | **15 faenas · 45 operadores · 16 aeronaves** |
 
 Fue una **ampliación**, no un volumen nuevo. Una base vacía pesaría ~200 KB.
+
+🔶 **Ese conteo queda escrito a propósito**: es la referencia contra la que
+comparar la próxima vez que haya que comprobar si una base es la de siempre. Un
+"parece que está todo" no se puede contrastar; tres números sí.
 
 ⚠️ **Y al dictar esa comprobación se repitió el error que esta guía documenta
 dos veces**: el comando de conteo se dio sin `cd /opt/aerocontrol` y sin cargar
