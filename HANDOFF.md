@@ -92,8 +92,8 @@ falta y en qué folio.
 
 | | |
 |---|---|
-| Último commit de **código** | **`a23b6dc`** (2026-09-14) |
-| Desplegado en `p340` | **`a23b6dc`** ✅ el 2026-09-14 |
+| Último commit de **código** | **`a640fa4`** (2026-09-14) |
+| Desplegado en `p340` | **`a640fa4`** ✅ el 2026-09-14 |
 | Migraciones pendientes | **ninguna** |
 | Diferencia con `origin/main` | sólo documentación (este archivo, el post-mortem) — **no requiere desplegar** |
 | Copia sin conexión (`UX-26`) | ⛔ **apagada** — `SERVICE_WORKER_ENABLED=False`; ver el incidente de abajo antes de encenderla |
@@ -148,18 +148,35 @@ la deja fuera.
 
 ### 🔶 Pendientes de mantenimiento, vistos en el despliegue del 2026-09-14
 
-Aparecieron en la salida del `git pull` y en el banner de la VM, y no los resuelve
-ningún comando del despliegue:
-
-- **Dos ramas de Dependabot esperando**: `dependabot/pip/django-6.1.1` y
+- ⏳ **Dos ramas de Dependabot esperando**: `dependabot/pip/django-6.1.1` y
   `dependabot/pip/ruff-0.16.6`. La de Django es la que corre: un `6.1.1` sobre
   `6.1` es un parche, y los parches de Django suelen ser de seguridad. Conviene
   mirar su nota de versión antes de mezclar, y pasar el gate — `pip-audit` está
   en él, así que un CVE conocido saldría solo.
-- **La VM pide reinicio** (*"System restart required"*) y tiene **40
-  actualizaciones** del sistema pendientes. Reiniciar `p340` corta la aplicación
-  unos segundos y levanta sola por `systemd`, pero conviene hacerlo fuera de
-  horario de faena y con el respaldo del día tomado.
+- ✅ **Las 40 actualizaciones del sistema se aplicaron y la VM se reinició** esa
+  misma tarde: `26.04` → `26.04.1`, y el banner ya no pide reinicio.
+
+#### ✅ La VM creció, y se comprobó que los datos siguen ahí
+
+En el mismo reinicio el volumen pasó de **47 GB a 342 GB** y la IPv4 interna de
+`eth0` cambió (`172.22.10.51` → `172.22.10.143`; la de Tailscale no, por eso el
+SSH siguió funcionando). Un volumen que cambia de tamaño bajo los pies de una
+base de datos merece comprobarse antes de dar nada por hecho, y se comprobó:
+
+| | |
+|---|---|
+| `aero_ops.sqlite3` | 3,1 MB, modificada ese mismo día |
+| Volumen | el mismo LVM `ubuntu--vg-ubuntu--lv`, ampliado — 13 GB usados |
+| Respaldos | diarios y al día (19:00) |
+
+Fue una **ampliación**, no un volumen nuevo. Una base vacía pesaría ~200 KB.
+
+⚠️ **Y al dictar esa comprobación se repitió el error que esta guía documenta
+dos veces**: el comando de conteo se dio sin `cd /opt/aerocontrol` y sin cargar
+el entorno, así que murió con *"can't open file '/home/levdigital01/manage.py'"*.
+Falló limpio, pero con el `cd` puesto y sin el entorno habría corrido contra
+`config.settings.dev` — que es la forma silenciosa del mismo error. **Entorno
+primero, siempre**, también para una consulta de lectura.
 
 > **Resumen de estado, no bitácora.** La historia detallada vive en `git log`,
 > `CHANGELOG.md` y las filas del tablero. La **fuente de verdad del trabajo
