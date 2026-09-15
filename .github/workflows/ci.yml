@@ -5,6 +5,22 @@ on:
   push:
     branches: [main]
 
+# **Una ejecución por rama, y la anterior se cancela.**
+#
+# Sin esto, empujar tres veces seguidas a la misma rama deja **tres ejecuciones corriendo a la vez**
+# y las dos primeras gastan sus veinte minutos para dar un resultado que ya no interesa.
+#
+# No es una optimización teórica: el 2026-09-15 llegó el aviso de GitHub con **1 802 de los 2 000
+# minutos** del mes gastados, y midiendo por repositorio salió que **AeroControl es el que más
+# consume** — 19,8 min por ejecución, de los cuales **20,6 min son `pytest`** y el resto suma nueve
+# segundos. Con cien ejecuciones en treinta días, cada duplicado cuesta caro.
+#
+# `main` se excluye a propósito —`github.ref` entra en el grupo— porque ahí cada fusión es un estado
+# que conviene tener comprobado por sí mismo, no sustituido por la siguiente.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   verify:
     runs-on: ubuntu-latest
