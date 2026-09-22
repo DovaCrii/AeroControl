@@ -183,9 +183,45 @@ def permit_counts(today, cost_center=None):
     # `not_started`, dicho por lo que es. Un número en la casilla equivocada es
     # peor que un número menos.
     in_force = approved.filter(valid_from__lte=today, valid_until__gte=today).count()
+    # LV-241: **lo que venció y sigue sin renovarse, dentro del mes en curso.**
+    #
+    # Pedido del usuario mirando el panel: *"debe contabilizar y marcar y dar el
+    # seguimiento completo sobre todo lo que hoy está vencido, por lo cual no debe
+    # marcar vigente, indicar vencimiento claro en lo que se lleva al mes"*.
+    #
+    # ⚠️ **Y lo que fallaba no era un rótulo: era que el vencido no se podía
+    # contar.** `lapsed` mira los **aprobados** con fecha pasada, y
+    # `expire_permissions` (`LV-83`) los pasa a `expired` cada noche — o sea que un
+    # permiso vencido salía del conjunto antes de que nadie lo viera. El propio
+    # docstring de esta función lo tenía escrito sin sacar la conclusión:
+    # *"`lapsed` normalmente vale cero porque `expire_permissions` los cierra cada
+    # noche"*. Un contador que en régimen normal vale cero **no está midiendo el
+    # vencimiento**, está midiendo si corrió el cron.
+    #
+    # Los dos siguen existiendo y por separado, porque son dos hechos distintos:
+    # `lapsed` es la anomalía (nadie lo cerró) y `expired_this_month` es el
+    # trabajo (venció y hay que renovarlo).
+    #
+    # **La ventana es el mes en curso, elegida por el usuario**: es el período en
+    # que esto se rinde, y uno que se renovó en julio deja de pesar en septiembre.
+    # Sin ventana, la columna acumularía historia hasta volverse una lista que
+    # nadie termina de cerrar.
+    #
+    # 🔶 **No entra en el denominador, y es decisión del usuario**: `total` sigue
+    # siendo los permisos vivos, así que el porcentaje mide lo mismo que ayer y el
+    # informe ya emitido no se mueve. Lo vencido se ve al lado, no dentro.
+    expired_this_month = FlightPermission.objects.filter(
+        is_active=True,
+        status=FlightPermission.STATUS_EXPIRED,
+        valid_until__gte=today.replace(day=1),
+        valid_until__lt=today,
+    )
+    if cost_center:
+        expired_this_month = expired_this_month.filter(cost_center=cost_center)
     return {
         "total": total,
         "in_force": in_force,
+        "expired_this_month": expired_this_month.count(),
         # Aprobados que todavía no empiezan. Existen y habilitan, pero no hoy.
         "not_started": approved.filter(valid_from__gt=today).count(),
         "pct": round(in_force * 100 / total, 1) if total else None,
@@ -272,6 +308,14 @@ def permit_status_by_cost_center(today):
             status__in=(
                 FlightPermission.STATUS_REQUESTED,
                 FlightPermission.STATUS_APPROVED,
+                # LV-241: los caducados entran **al conjunto**, no a las cuentas de
+                # vigencia. Cada agregado de abajo filtra por su propio estado, así
+                # que sumarlos acá no mueve `in_force`, `awaiting`, `soon` ni
+                # `next_expiry`: lo único que cambia es que una faena cuyo único
+                # permiso venció deja de desaparecer de la tabla. Era el caso que
+                # el usuario vio en `CC684` — dos documentos atrasados en la lista
+                # de vencimientos y la fila entera en guiones.
+                FlightPermission.STATUS_EXPIRED,
             ),
         )
         .values("cost_center")
@@ -282,10 +326,26 @@ def permit_status_by_cost_center(today):
                     status=FlightPermission.STATUS_APPROVED, valid_until__gte=today
                 ),
             ),
+            # LV-241: **la columna de vigencia pasada era estructuralmente cero.**
+            # Contaba sólo los `approved` con fecha pasada, y el trabajo nocturno
+            # los mueve a `expired` cada noche: el permiso vencido salía del
+            # conjunto antes de poder contarse, así que la faena se veía limpia. Se
+            # cuentan los dos hechos, y siguen separados porque se arreglan
+            # distinto: un `approved` vencido es una anomalía —nadie lo cerró, y
+            # eso se ve cualquiera sea su fecha—, mientras que un `expired` del mes
+            # en curso es el trabajo de renovarlo.
             lapsed=Count(
                 "pk",
                 filter=Q(
                     status=FlightPermission.STATUS_APPROVED, valid_until__lt=today
+                ),
+            ),
+            expired_this_month=Count(
+                "pk",
+                filter=Q(
+                    status=FlightPermission.STATUS_EXPIRED,
+                    valid_until__gte=today.replace(day=1),
+                    valid_until__lt=today,
                 ),
             ),
             awaiting=Count("pk", filter=Q(status=FlightPermission.STATUS_REQUESTED)),
@@ -314,7 +374,13 @@ def permit_status_by_cost_center(today):
             ),
         )
     }
-    empty = {"in_force": 0, "lapsed": 0, "awaiting": 0, "soon": 0}
+    empty = {
+        "in_force": 0,
+        "lapsed": 0,
+        "expired_this_month": 0,
+        "awaiting": 0,
+        "soon": 0,
+    }
     rows = []
     for center in centers:
         counts = counted.get(center.pk, empty)

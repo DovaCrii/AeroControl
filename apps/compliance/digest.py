@@ -9,8 +9,7 @@ from datetime import timedelta
 
 from django.utils import timezone
 
-from apps.compliance.models import Document
-from apps.registry.models import CostCenter, Operator, Qualification
+from apps.registry.models import CostCenter
 
 # Ordered most urgent first; the last bound is the digest horizon.
 BUCKETS = [
@@ -175,19 +174,11 @@ def bucket_for(expiry, today):
     return None
 
 
-def _documents_for(cost_center, cutoff):
-    """Expiring current documents attached to this cost center."""
-    from apps.compliance.reports import documents_for_cost_center
-
-    return documents_for_cost_center(
-        cost_center,
-        Document.objects.filter(
-            is_active=True,
-            is_current_version=True,
-            expiry_date__isnull=False,
-            expiry_date__lte=cutoff,
-        ).select_related("doc_type"),
-    ).order_by("expiry_date")
+# LV-240: acá vivía `_documents_for`, la mitad documental de la recolección propia
+# de este módulo. Se va con la otra mitad: `compliance.expirations` hace la misma
+# consulta —`documents_for_cost_center` sobre los documentos vigentes con fecha— y
+# además las cuatro fuentes que faltaban. Dos funciones que debían devolver lo
+# mismo es exactamente cómo el correo terminó diciendo menos que la pantalla.
 
 
 def build_digest(cost_center, today=None):
@@ -195,52 +186,61 @@ def build_digest(cost_center, today=None):
 
     Items are dicts with kind/label/detail/expiry_date/url_path so the email
     templates stay free of model knowledge.
+
+    ⚠️ **LV-240: esto recorría dos de las seis fuentes, y la que faltaba era la
+    que sale por correo.** Tenía su propia recolección —habilitaciones y
+    documentos— mientras el panel mostraba seis, así que **el seguro JAC, la
+    credencial DGAC, la prueba de conocimientos y la vigencia del permiso
+    aparecían en pantalla y no en el correo**: quien no abre la aplicación no se
+    enteraba de que caduca una póliza. Dos implementaciones parciales del mismo
+    hecho, y la de menos alcance era la única que va a buscar a la persona.
+
+    Hoy la recolección es **una sola** y vive en `compliance.expirations`. Con
+    ella entran, sin escribir una consulta más, las tres reglas que esta función
+    no tenía: se esconde lo que la bandeja ya cerró (`LV-122` — decisivo en un
+    correo **diario**, porque un vencimiento resuelto y no renovado se repetiría
+    cada mañana para siempre), quedan fuera los registros en estado terminal
+    (`LV-90`), y de la prueba de conocimientos se toma sólo la última de cada
+    operador.
+
+    Lo que cambia en el texto del correo: `detail` pasa a ser **de qué tipo es el
+    vencimiento** ("Seguro JAC", "Credencial DGAC") en vez del operador o el tipo
+    de documento. Con seis orígenes conviviendo en una misma lista, saber qué es
+    cada línea manda sobre el resto — y el sujeto ya viene en `label`, que es
+    donde `LV-186` lo puso justamente para eso.
     """
+    from apps.compliance.expirations import upcoming_expirations
+
     today = today or timezone.localdate()
     cutoff = today + timedelta(days=HORIZON_DAYS)
-    operator_ids = list(
-        Operator.objects.filter(cost_center=cost_center, is_active=True).values_list(
-            "pk", flat=True
-        )
-    )
 
     buckets = {key: [] for key, _bound in BUCKETS}
 
-    qualifications = (
-        Qualification.objects.filter(
-            operator_id__in=operator_ids,
-            is_active=True,
-            expiry_date__isnull=False,
-            expiry_date__lte=cutoff,
+    # `user=None` **no es un descuido de permisos**: el digest no se arma para una
+    # sesión sino para la faena, y se manda a su responsable — el gate por
+    # `view_*` es de la pantalla, donde hay alguien mirando a quien limitarle lo
+    # que ve. Aquí recortarlo dejaría fuera vencimientos reales sin que nadie
+    # sepa por qué, que es la clase de falla silenciosa que este módulo existe
+    # para evitar.
+    for item in upcoming_expirations(today, cutoff, cost_center=cost_center):
+        key = item["bucket"]
+        if not key:
+            continue
+        # Un documento dice además de qué cuelga (`LV-186`): hay una "Carta
+        # Permiso" por permiso, así que sin eso la línea obliga a abrir el enlace
+        # para saber a cuál se refiere.
+        detail = item["kind"]
+        if item.get("subject"):
+            detail = f"{detail} · {item['subject']}"
+        buckets[key].append(
+            {
+                "kind": item["kind"],
+                "label": item["label"],
+                "detail": detail,
+                "expiry_date": item["date"],
+                "url_path": item["url"],
+            }
         )
-        .select_related("operator", "qualification_type")
-        .order_by("expiry_date")
-    )
-    for qualification in qualifications:
-        key = bucket_for(qualification.expiry_date, today)
-        if key:
-            buckets[key].append(
-                {
-                    "kind": "qualification",
-                    "label": qualification.qualification_type.name,
-                    "detail": str(qualification.operator),
-                    "expiry_date": qualification.expiry_date,
-                    "url_path": f"/registry/qualification/{qualification.pk}/",
-                }
-            )
-
-    for document in _documents_for(cost_center, cutoff):
-        key = bucket_for(document.expiry_date, today)
-        if key:
-            buckets[key].append(
-                {
-                    "kind": "document",
-                    "label": document.title,
-                    "detail": str(document.doc_type),
-                    "expiry_date": document.expiry_date,
-                    "url_path": f"/compliance/document/{document.pk}/",
-                }
-            )
 
     for items in buckets.values():
         items.sort(key=lambda item: item["expiry_date"])

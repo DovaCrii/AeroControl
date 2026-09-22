@@ -360,7 +360,7 @@ class TestTheExportNamesTheEntity:
 @pytest.mark.django_db
 class TestThePanelRowsSayTheirCostCenter:
     def test_every_source_carries_its_cost_center(self):
-        from apps.dashboard.views import upcoming_expirations
+        from apps.compliance.expirations import upcoming_expirations
 
         cost_center = CostCenter.objects.create(code="CC738", name="MLP")
         _aircraft("RPA-4025", cost_center, insurance_expiry=TODAY)
@@ -377,7 +377,7 @@ class TestThePanelRowsSayTheirCostCenter:
         assert {item["cost_center_code"] for item in items} == {"CC738"}
 
     def test_an_item_with_no_cost_center_is_marked_as_such(self):
-        from apps.dashboard.views import upcoming_expirations
+        from apps.compliance.expirations import upcoming_expirations
 
         _aircraft("RPA-4025", None, insurance_expiry=TODAY)
 
@@ -426,7 +426,7 @@ class TestThePanelRowsSayTheirCostCenter:
         assert response.status_code == 200
 
     def test_document_rows_now_respect_the_cost_center_filter(self):
-        from apps.dashboard.views import upcoming_expirations
+        from apps.compliance.expirations import upcoming_expirations
 
         mine = CostCenter.objects.create(code="CC738", name="MLP")
         other = CostCenter.objects.create(code="CC861", name="Talabre")

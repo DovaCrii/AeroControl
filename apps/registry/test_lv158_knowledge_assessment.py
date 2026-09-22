@@ -443,7 +443,7 @@ class TestItEntersTheExpiryEngine:
     def test_an_expiring_assessment_reaches_the_panel_list(self):
         from datetime import timedelta
 
-        from apps.dashboard.views import upcoming_expirations
+        from apps.compliance.expirations import upcoming_expirations
 
         cost_center = CostCenter.objects.create(code="CC738", name="MLP")
         operator = _operator(cost_center=cost_center)
@@ -467,7 +467,7 @@ class TestItEntersTheExpiryEngine:
         # y listarlos llenaría el panel con la misma persona repetida.
         from datetime import timedelta
 
-        from apps.dashboard.views import upcoming_expirations
+        from apps.compliance.expirations import upcoming_expirations
 
         operator = _operator()
         for days in (5, 10):

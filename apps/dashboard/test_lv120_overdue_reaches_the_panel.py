@@ -27,7 +27,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.compliance.models import Alert, AlertRule
-from apps.dashboard.views import upcoming_expirations
+from apps.compliance.expirations import upcoming_expirations
 from apps.operations.models import FlightPermission
 from apps.registry.models import Aircraft, CostCenter, Operator, Qualification
 from apps.registry.models import QualificationType

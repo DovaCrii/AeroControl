@@ -173,7 +173,7 @@ class TestOneScaleTwoRepresentations:
 @pytest.mark.django_db
 class TestTheRowTakesItsColourFromTheScale:
     def test_an_overdue_row_carries_the_shared_tone(self):
-        from apps.dashboard.views import upcoming_expirations
+        from apps.compliance.expirations import upcoming_expirations
 
         _aircraft(insurance_expiry=TODAY - timedelta(days=5))
 
