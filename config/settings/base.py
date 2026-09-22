@@ -163,6 +163,18 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 12 * 1024 * 1024
 # are English source labels (proper nouns), shown in the map's layer switcher.
 # The tile host list must stay in sync with the CSP img-src in
 # apps/core/middleware.py.
+#
+# LV-239: `"default": True` marca cuál se dibuja al abrir el plan, y es el
+# **satélite** por pedido del usuario. El área de un plan es terreno —un tranque,
+# una ladera, un rajo—, y sobre el callejero la circunferencia queda flotando en
+# blanco: hay que cambiar de capa antes de poder mirar nada, todas las veces.
+#
+# ⚠️ **La marca es explícita a propósito.** El editor tomaba "el primero de la
+# lista", así que la capa inicial dependía del **orden** de este literal: alguien
+# que reordene por prolijidad cambia lo que ve el operador al abrir, y nada en
+# ninguno de los dos archivos lo dice. El orden se conserva tal cual estaba
+# —sólo decide el orden del selector, que es cosmético— y quien manda es la
+# marca. Sin ninguna marcada, el editor vuelve a tomar la primera.
 GEO_TILE_PROVIDERS = [
     {
         "id": "streets",
@@ -180,6 +192,7 @@ GEO_TILE_PROVIDERS = [
         ),
         "attribution": "Esri, Maxar, Earthstar Geographics",
         "maxZoom": 19,
+        "default": True,
     },
 ]
 

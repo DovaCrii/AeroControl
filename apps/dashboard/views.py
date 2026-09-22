@@ -30,7 +30,7 @@ from apps.registry.models import (
 )
 
 
-def resolved_alert_keys():
+def resolved_alert_keys(candidates=None):
     """LV-122: (tipo, registro, valor) de todo lo que la bandeja ya cerró.
 
     Una consulta, no una por fila: el panel se abre en cada login y esto se
@@ -38,12 +38,37 @@ def resolved_alert_keys():
     `generate_alerts` deduplica** desde `LV-111` — y usarla textual es lo que
     garantiza que el panel esconda ni más ni menos de lo que la bandeja
     considera cerrado.
+
+    **LV-237: `candidates` acota la consulta a lo que se va a cruzar.** Sin él,
+    esto era `filter(is_resolved=True, is_active=True)` **sin cota alguna** —ni
+    fecha, ni faena, ni modelo— materializado en un `set` de Python en cada
+    carga del panel. El costo no dependía de lo que la pantalla muestra sino de
+    **toda la historia de la operación**: cada vencimiento que alguien resolvió
+    alguna vez seguía viajando a memoria para filtrar una lista de diez filas, y
+    a tres años son decenas de miles de tuplas por inicio de sesión. Crecía sin
+    techo y en silencio, porque la pantalla se ve igual.
+
+    `candidates` es un iterable de `(content_type_id, object_id)`. El `IN` sobre
+    los dos campos por separado puede traer alguna fila de más —el producto
+    cartesiano de ambos conjuntos—, y no importa: **el cruce final sigue siendo
+    por la tupla completa de tres**, así que el resultado es idéntico y lo único
+    que cambia es cuánto se trae. Sin candidatos no hay nada que cruzar y se
+    devuelve el conjunto vacío sin consultar.
+
+    Se conserva el parámetro opcional en `None` —comportamiento anterior, sin
+    cota— porque la firma es pública y hay llamadores que preguntan por el
+    universo completo.
     """
-    return set(
-        Alert.objects.filter(is_resolved=True, is_active=True).values_list(
-            "content_type_id", "object_id", "watched_value"
+    alerts = Alert.objects.filter(is_resolved=True, is_active=True)
+    if candidates is not None:
+        pairs = set(candidates)
+        if not pairs:
+            return set()
+        alerts = alerts.filter(
+            content_type_id__in={content_type for content_type, _pk in pairs},
+            object_id__in={pk for _ct, pk in pairs},
         )
-    )
+    return set(alerts.values_list("content_type_id", "object_id", "watched_value"))
 
 
 # LV-191: qué permiso hace falta para ver cada fuente de la lista de
@@ -147,7 +172,6 @@ def upcoming_expirations(today, cutoff, cost_center=None, user=None):
     abierta": un vencimiento que el motor todavía no miró (se genera a las
     06:00) no tiene alerta ninguna y tiene que verse igual.
     """
-    triaged = resolved_alert_keys()
     items = []
 
     def code(cost_center_of_the_row):
@@ -178,26 +202,29 @@ def upcoming_expirations(today, cutoff, cost_center=None, user=None):
         llamadores internos que preguntan "qué vence" sin una sesión detrás están
         probando la consulta, no la autorización. La vista pasa siempre
         `request.user`.
+
+        **LV-237: el descarte de lo ya resuelto ya no ocurre acá.** Se recogen
+        todos los ítems con su clave y el cruce va al final, en una sola consulta
+        acotada a estos candidatos — ver el cierre de la función.
         """
         if user is not None and not user.has_perm(EXPIRATION_PERMISSIONS[model]):
             return
-        key = (
+        item["key"] = (
             ContentType.objects.get_for_model(model).id,
             record_pk,
             item["date"].isoformat(),
         )
-        if key not in triaged:
-            # LV-148: el color del tramo sale de la misma tabla que la insignia de
-            # la bandeja. Antes era una cadena de cuatro `{% if %}` en la
-            # plantilla, y por eso `due_30` era ámbar acá y azul allá.
-            item["tone"] = BUCKET_TEXT_CSS.get(item["bucket"], "")
-            # LV-217: el color del **tipo**, que contesta otra pregunta que el
-            # tramo de urgencia de la línea de arriba. Sin `get` y sin valor por
-            # defecto: una fuente nueva sin entrada en la tabla levanta acá, en el
-            # momento, en vez de dibujarse gris para siempre — que es el estado
-            # que esta fila vino a arreglar y el que nadie reportaría dos veces.
-            item["kind_css"] = SUBJECT_TONE_CSS[EXPIRATION_SUBJECT_TONES[model]]
-            items.append(item)
+        # LV-148: el color del tramo sale de la misma tabla que la insignia de
+        # la bandeja. Antes era una cadena de cuatro `{% if %}` en la
+        # plantilla, y por eso `due_30` era ámbar acá y azul allá.
+        item["tone"] = BUCKET_TEXT_CSS.get(item["bucket"], "")
+        # LV-217: el color del **tipo**, que contesta otra pregunta que el
+        # tramo de urgencia de la línea de arriba. Sin `get` y sin valor por
+        # defecto: una fuente nueva sin entrada en la tabla levanta acá, en el
+        # momento, en vez de dibujarse gris para siempre — que es el estado
+        # que esta fila vino a arreglar y el que nadie reportaría dos veces.
+        item["kind_css"] = SUBJECT_TONE_CSS[EXPIRATION_SUBJECT_TONES[model]]
+        items.append(item)
 
     quals = Qualification.objects.filter(
         is_active=True,
@@ -362,6 +389,15 @@ def upcoming_expirations(today, cutoff, cost_center=None, user=None):
                 "url": reverse("permission-detail", args=[permission.pk]),
             },
         )
+
+    # LV-122, con la consulta de LV-237: se esconde lo que la bandeja ya cerró, y
+    # se pregunta **sólo por estos candidatos** en vez de traerse toda la historia
+    # de alertas resueltas. El cruce sigue siendo por la tupla de tres —la misma
+    # con que `generate_alerts` deduplica desde `LV-111`—, así que lo que se
+    # esconde y lo que no es exactamente lo de antes: una renovación cambia el
+    # valor vigilado, y por eso el vencimiento siguiente vuelve a aparecer.
+    triaged = resolved_alert_keys(item["key"][:2] for item in items)
+    items = [item for item in items if item.pop("key") not in triaged]
 
     items.sort(key=lambda item: item["date"])
     return items
@@ -546,279 +582,27 @@ def panel_readiness(today, cost_center=None):
     }
 
 
-# LV-147: cuántas ubicaciones ofrece el selector. Es una lista para **elegir**,
-# no un listado: con veinte ya se recorre a ojo, y el resto se alcanza filtrando
-# por faena arriba.
-WEATHER_CHOICE_LIMIT = 20
-
-
-def _weather_candidates(today, cost_center, user, may_see):
-    """`(permisos, sitios)` que pueden ser ubicación del pronóstico.
-
-    LV-147: los permisos son **la misma consulta** que ya elegía el próximo
-    vuelo — activo, con coordenadas, vigencia abierta y sin los tres estados
-    terminales—, ordenada por `valid_from`. Una segunda consulta para la lista
-    sería la forma de que un día el selector ofrezca algo que el automático no
-    elegiría nunca.
-
-    Los sitios son los centros de costo con coordenadas en ficha. Cada lista va
-    vacía sin el `view_*` del modelo que lee: la tarjeta nombra folios y faenas,
-    así que no puede convertirse en un camino alrededor de esos permisos.
-
-    El filtro de faena de arriba manda sobre las dos: si estás mirando CC738, el
-    selector no ofrece el permiso de otra faena.
-    """
-    permissions = FlightPermission.objects.filter(
-        is_active=True,
-        latitude__isnull=False,
-        longitude__isnull=False,
-        valid_until__gte=today,
-    ).exclude(
-        # None of these has a flight left to plan for: one already happened,
-        # one is not going to, and one ran out of time (LV-83). The date filter
-        # above already rules the expired ones out; listing the status keeps the
-        # intent readable rather than relying on that coincidence.
-        status__in=[
-            FlightPermission.STATUS_COMPLETED,
-            FlightPermission.STATUS_DENIED,
-            FlightPermission.STATUS_EXPIRED,
-        ]
-    )
-    if cost_center:
-        permissions = permissions.filter(cost_center=cost_center)
-    permits = (
-        list(
-            permissions.select_related("cost_center").order_by("valid_from")[
-                :WEATHER_CHOICE_LIMIT
-            ]
-        )
-        if may_see("operations.view_flightpermission")
-        else []
-    )
-
-    sites = []
-    if may_see("registry.view_costcenter"):
-        site_qs = CostCenter.objects.filter(
-            is_active=True, latitude__isnull=False, longitude__isnull=False
-        )
-        if cost_center:
-            site_qs = site_qs.filter(pk=cost_center.pk)
-        sites = list(site_qs.order_by("code")[:WEATHER_CHOICE_LIMIT])
-    return permits, sites
-
-
-def _resolve_weather_choice(selection, permits, sites):
-    """`(kind, registro)` de lo elegido, o `(None, None)` para el automático.
-
-    LV-147: se busca **dentro de las listas ya cargadas**, nunca con un `get()`
-    fresco. Ése es el punto: un pk inexistente, archivado, de otra faena, en
-    estado terminal o de un permiso que esta persona no puede ver caen todos al
-    automático por el mismo camino, sin una consulta extra y sin filtrar un
-    folio. Un `get()` habría necesitado repetir cada uno de esos filtros, y
-    olvidar uno es una fuga.
-    """
-    if not selection or ":" not in selection:
-        return None, None
-    kind, _, raw_pk = selection.partition(":")
-    pool = {"permission": permits, "cost_center": sites}.get(kind)
-    if not pool or not raw_pk:
-        return None, None
-    for record in pool:
-        if str(record.pk) == raw_pk:
-            return kind, record
-    return None, None
-
-
-def _weather_plan_url(permission):
-    """La ficha del plan geoespacial de este permiso, o `None`.
-
-    LV-179: el panel muestra el pronóstico y **no lo guarda**; la ficha del plan
-    lo muestra sobre el área dibujada y ahí se puede archivar como evidencia
-    (`R8.1`). Este es el puente entre la pantalla que se mira por costumbre y la
-    que deja constancia.
-
-    Se elige el plan **activo más reciente**, y si hay varios no se listan: la
-    tarjeta es un atajo, no un índice. Sin plan ligado devuelve `None` y el
-    enlace no se dibuja — un botón que lleva a ninguna parte enseña a no
-    apretar botones.
-    """
-    from apps.geo.models import GeoPlan
-
-    plan = (
-        GeoPlan.objects.filter(flight_permission=permission, is_active=True)
-        .order_by("-created_at")
-        .first()
-    )
-    return reverse("geo-plan-detail", args=[plan.pk]) if plan else None
-
-
-def panel_forecast(today, cost_center=None, user=None, selection=None):
-    """R8.4: the weather for the operation's next flight, for the panel.
-
-    Until now the forecast only existed on a geo plan's page, and only when that
-    plan had an area *and* a linked permit with a date -- buried, for something
-    that gets consulted before every flight. What makes it reachable here is
-    OPS-4: the permit carries its own `latitude`/`longitude`, so no geo plan is
-    needed.
-
-    **One call, never N.** The panel is opened by everyone, every day, so this
-    resolves a single location and asks for a single (coordinate, day) -- the
-    same cached entry the whole office shares. Showing every upcoming permit
-    would be one outgoing request per permit per page load, which is the shape
-    this project already paid for twice (V.18/V.19).
-
-    Where the location comes from, in order:
-
-    1. the next permit that is not finished or denied and does carry
-       coordinates -- the actual next flight, and the day is clamped to today so
-       a permit whose window is already open forecasts today rather than a start
-       date in the past;
-    2. failing that, the selected cost center's own site coordinates (R8.4
-       option (c)) -- which is what makes the panel's cost-center filter double
-       as the location selector.
-
-    Returns a dict with `weather` set to None whenever the feature is off, no
-    location is on file, or the provider did not answer; the card then does not
-    render at all. Never raises: this feeds the page every login lands on.
-
-    Each source is gated on the `view_*` of the model it reads (AGENTS.md's
-    read contract): the card names a permit folio, its site and its aircraft, so
-    it must not become a way around `view_flightpermission`.
-
-    **LV-147: la ubicación se puede elegir.** El pedido textual fue *"¿es
-    recomendado? porque sale tan directo […] donde yo pueda elegir la ubicación
-    del permiso e ir actualizando, algo más dinámico, ya que pierde sentido tener
-    el último solamente"*. `selection` es el valor crudo del GET
-    (`"permission:<pk>"` o `"cost_center:<pk>"`); vacío o inválido significa
-    automático, que es el comportamiento anterior intacto. La elección **nunca
-    abre una puerta**: se resuelve dentro de la lista de candidatos, que ya está
-    acotada por permiso, estado y filtro de faena.
-
-    Sigue siendo **una sola llamada a Open-Meteo por carga**, elija o no.
-    """
-    from apps.core.weather import forecast_for
-
-    def may_see(permission_codename):
-        return user is None or user.has_perm(permission_codename)
-
-    permits, sites = _weather_candidates(today, cost_center, user, may_see)
-    chosen_kind, chosen = _resolve_weather_choice(selection, permits, sites)
-
-    # LV-147: las dos listas para el desplegable. Van separadas y no como una
-    # sola con clave "grupo" para que los rótulos de los `<optgroup>` sean
-    # literales traducibles en la plantilla: `_(variable)` no lo extrae
-    # `makemessages`.
-    choices = {
-        "weather_permit_choices": [
-            {
-                "value": f"permission:{permit.pk}",
-                # Con el filtro de faena puesto el código sobra; sin él hace
-                # falta, porque dos faenas pueden tener sitios homónimos.
-                "label": " · ".join(
-                    part
-                    for part in (
-                        None if cost_center else permit.cost_center.code,
-                        permit.internal_folio,
-                        permit.area_name or permit.location,
-                    )
-                    if part
-                ),
-            }
-            for permit in permits
-        ],
-        "weather_site_choices": [
-            {"value": f"cost_center:{site.pk}", "label": f"{site.code} - {site.name}"}
-            for site in sites
-        ],
-    }
-
-    if chosen_kind == "cost_center":
-        return {
-            **choices,
-            "weather": forecast_for(*chosen.coordinates, today),
-            "weather_date": today,
-            "weather_source": "cost_center",
-            "weather_scope": "site",
-            "weather_place": str(chosen),
-            "weather_selection": f"cost_center:{chosen.pk}",
-            "weather_card": True,
-            "weather_url": reverse("costcenter-detail", args=[chosen.pk]),
-        }
-
-    permission = (
-        chosen if chosen_kind == "permission" else (permits[0] if permits else None)
-    )
-
-    if permission is not None:
-        # Bounded on purpose (one query, three values): the card names what is
-        # flying, but a permit with a large fleet must not turn into a wall.
-        fleet = list(
-            permission.aircraft_fleet.filter(is_active=True).values_list(
-                "registration", flat=True
-            )[:3]
-        )
-        return {
-            **choices,
-            "weather": forecast_for(
-                permission.latitude,
-                permission.longitude,
-                max(permission.valid_from, today),
-            ),
-            "weather_date": max(permission.valid_from, today),
-            "weather_source": "permission",
-            # LV-147: el título depende de esto. "El clima donde vuelas ahora"
-            # ya mentía en el camino de respaldo por faena —donde no hay vuelo
-            # ninguno— y con selector mentiría siempre que se elija otra cosa.
-            "weather_scope": "permission" if chosen_kind else "next",
-            "weather_place": permission.area_name or permission.location,
-            "weather_folio": permission.internal_folio,
-            "weather_fleet": ", ".join(fleet),
-            "weather_selection": (f"permission:{permission.pk}" if chosen_kind else ""),
-            "weather_card": True,
-            "weather_url": reverse("permission-detail", args=[permission.pk]),
-            # LV-179: el camino a donde el clima **queda registrado**.
-            #
-            # Esta tarjeta se recalcula en cada visita y no guarda nada — su
-            # propio pie lo dice: sólo de referencia, no reemplaza el chequeo
-            # preoperacional. Donde el pronóstico se archiva como evidencia
-            # (`R8.1`, `WeatherReview`) es en la ficha del plan geoespacial, y
-            # eso importa porque **un pronóstico no es reproducible después**:
-            # preguntarle al proveedor por una fecha pasada devuelve otra corrida
-            # del modelo, o nada.
-            #
-            # Se resolvió así, con un enlace, y **no** repitiendo las cifras en
-            # la ficha del plan —que ya las tiene— ni sumando una tercera
-            # pantalla: dos superficies mostrando el mismo pronóstico y sólo una
-            # que deja constancia es una invitación a mirar la que no registra y
-            # creer que se hizo el chequeo.
-            "weather_plan_url": _weather_plan_url(permission),
-        }
-
-    coordinates = (
-        cost_center.coordinates
-        if cost_center and may_see("registry.view_costcenter")
-        else None
-    )
-    if coordinates is None:
-        # No upcoming located flight and no site on file. Deliberately not a
-        # guessed location: a forecast for the wrong place, next to a real date,
-        # is worse than no card. LV-147: y sin ninguna ubicación tampoco hay nada
-        # que elegir, así que la tarjeta desaparece entera, selector incluido.
-        return {**choices, "weather": None, "weather_card": False}
-    latitude, longitude = coordinates
-    return {
-        **choices,
-        "weather": forecast_for(latitude, longitude, today),
-        "weather_date": today,
-        "weather_source": "cost_center",
-        "weather_scope": "site",
-        "weather_place": str(cost_center),
-        "weather_selection": "",
-        "weather_card": True,
-        "weather_url": reverse("costcenter-detail", args=[cost_center.pk]),
-    }
-
-
+# LV-237: acá vivían `panel_forecast` y sus tres ayudantes (`R8.4`, `LV-147`).
+#
+# `LV-216` retiró la tarjeta del clima de la plantilla a pedido del usuario —*"no es
+# necesario que muestre el clima, ya el dashboard lo veo innecesario"*— y **borró sólo
+# la mitad**: la vista siguió llamando `panel_forecast` en cada carga durante un mes,
+# resolviendo candidatos de permisos, sitios con coordenadas y el plan geo ligado para
+# un contexto que ninguna plantilla volvía a leer. Nueve consultas por carga de la
+# primera pantalla de la aplicación, más la posible salida a Open-Meteo cuando la
+# caché estaba fría.
+#
+# Es la razón por la que `test_lv237_panel_query_budget.py` existe: retirar una
+# sección de la pantalla y dejar viva su consulta no se nota mirando la pantalla.
+#
+# **Lo que NO se fue**: `apps/core/weather.forecast_for` y la revisión meteorológica
+# de la ficha del plan geo (`R8.1`/`R8.2`, `WeatherReview`), que es donde el pronóstico
+# **queda registrado como evidencia** y era el único camino real desde `LV-216`. Un
+# pronóstico no es reproducible después: preguntarle al proveedor por una fecha pasada
+# devuelve otra corrida del modelo, o nada.
+#
+# Reponer la tarjeta es recuperar este bloque y el de la plantilla de git, en el commit
+# anterior a esta fila.
 @login_required
 def dashboard(request):
     # OPS-8: an optional global filter by cost center. Silently ignored if it
@@ -1004,22 +788,21 @@ def dashboard(request):
             for row in rows
         ]
 
-    # --- Chart: Aircraft by status ---
-    aircraft_by_status = labelled(
-        aircraft_qs.values("status").annotate(count=Count("id")).order_by("status"),
-        "status",
-        Aircraft.STATUS_CHOICES,
-    )
-
-    # --- Chart: Permissions by status ---
-    permissions_qs = FlightPermission.objects.filter(is_active=True)
-    if selected_cost_center:
-        permissions_qs = permissions_qs.filter(cost_center=selected_cost_center)
-    perms_by_status = labelled(
-        permissions_qs.values("status").annotate(count=Count("id")).order_by("status"),
-        "status",
-        FlightPermission.STATUS_CHOICES,
-    )
+    # LV-237: acá se agregaban "Aeronaves por estado" y "Permisos por estado".
+    #
+    # `LV-89` retiró los dos gráficos de la plantilla —restataban números que las
+    # tarjetas de arriba ya mostraban— y las dos agregaciones se quedaron: se
+    # calculaban, se serializaban al HTML en `#chart-data` y **ningún gráfico las
+    # leía**. El propio `static/js/dashboard.js` lo dejó escrito: seguían ahí *"porque
+    # un test lee `permissions_by_status` como evidencia del filtro por faena"*.
+    #
+    # Un test no debería fijar la forma del contexto de producción, y menos cobrando
+    # dos agregaciones por inicio de sesión. La evidencia del filtro se lee ahora de
+    # `readiness` —su fila `permits` respeta `selected_cost_center`—, que es un dato
+    # que la pantalla **sí** dibuja: si mañana deja de filtrar, el test cae *y* se ve.
+    #
+    # De paso dejan de viajar al navegador dos distribuciones de estado que la página
+    # no usa para nada.
 
     # --- Chart: Maintenance by type ---
     maintenance_qs = MaintenanceRecord.objects.filter(is_active=True)
@@ -1088,9 +871,7 @@ def dashboard(request):
     )
 
     chart_data = {
-        "permissions_by_status": perms_by_status,
         "maintenance_by_type": maint_by_type,
-        "aircraft_by_status": aircraft_by_status,
         "monthly_flights": monthly_flights,
     }
 
@@ -1107,11 +888,17 @@ def dashboard(request):
     # diría "0 operaciones hoy" en una jornada que sí voló. Es la misma
     # distinción que `LV-234` acaba de dejar cara: contar por cuándo se registró
     # en vez de por cuándo ocurrió.
-    # `permit_counts` se importa acá porque en este módulo sólo lo usa
-    # `panel_readiness`, que lo trae dentro de su propio cuerpo. `FlightRecord`,
-    # en cambio, ya viene del import de arriba: repetirlo lo convertía en local
-    # de toda la función y rompía el uso anterior, unas líneas más arriba.
-    from apps.compliance.kpis import permit_counts as _permit_counts
+    # LV-237: **una sola vuelta de `permit_counts` por carga.** El número de
+    # permisos vigentes se dibuja dos veces —en el encabezado y en la tarjeta de
+    # la tira, a cien píxeles— y hasta acá se calculaba dos veces para eso: una
+    # dentro de `panel_readiness` y otra en esta función. Son la misma cifra con
+    # los mismos argumentos, así que la tira se arma primero y el encabezado lee
+    # de ella. Dos llamadas separadas además podían llegar a discrepar, que es
+    # justo lo que `LV-201` centralizó `permit_counts` para evitar.
+    readiness = panel_readiness(today, selected_cost_center)
+    permits_in_force = next(
+        row["count"] for row in readiness["readiness"] if row["key"] == "permits"
+    )
 
     flights_today = FlightRecord.objects.filter(is_active=True, actual_date=today)
     if selected_cost_center:
@@ -1124,7 +911,7 @@ def dashboard(request):
         # El acompañante que la fila pide en la misma frase ("N operaciones hoy ·
         # M permisos vigentes"), y sale de `permit_counts` — la misma función que
         # el informe, para que el panel y el PDF no digan cifras distintas.
-        "permits_in_force": _permit_counts(today, selected_cost_center)["in_force"],
+        "permits_in_force": permits_in_force,
         "aircraft_count": aircraft_count,
         "operator_count": operator_count,
         "alert_count": alert_count,
@@ -1147,16 +934,5 @@ def dashboard(request):
         "selected_cost_center": selected_cost_center,
         "monthly_records": monthly_records,
     }
-    context.update(panel_readiness(today, selected_cost_center))
-    # R8.4: after the rest of the context, so a provider hiccup cannot get in
-    # the way of anything the panel already showed.
-    context.update(
-        panel_forecast(
-            today,
-            selected_cost_center,
-            request.user,
-            # LV-147: la ubicación elegida en el desplegable de la tarjeta.
-            request.GET.get("weather"),
-        )
-    )
+    context.update(readiness)
     return render(request, "dashboard/index.html", context)

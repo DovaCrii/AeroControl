@@ -38,9 +38,11 @@
 
   // LV-89 replaced "Aircraft by status" and "Permissions by status" with the
   // three-indicator strip; their canvases are gone from the template, so no
-  // chart is declared for them here either. The view still computes the two
-  // series (a test reads `permissions_by_status` as evidence of the cost-centre
-  // filter), which is why `chart-data` still carries them.
+  // chart is declared for them here either. LV-237 finally took the two series
+  // out of the view as well: they were still being aggregated and shipped inside
+  // `chart-data` on every login for nobody to read, held up by a test that used
+  // `permissions_by_status` as evidence of the cost-centre filter. That test now
+  // reads `readiness` instead -- a figure the page actually draws.
 
   // ── Maintenance by Type (doughnut) ──
   var maintData = chartData.maintenance_by_type;

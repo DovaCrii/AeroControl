@@ -39,12 +39,11 @@ centros de costo.{% endcomment %}
       {% endfor %}
     </select>
   </div>
-  {% comment %}LV-147: el camino de vuelta. Cambiar de faena no debería perder la
-  ubicación elegida para el clima. Y como `weather_selection` es lo
-  **efectivamente resuelto**, si la elección deja de ser válida en la faena nueva
-  la resolución cae al automático y este input desaparece del render siguiente:
-  el estado se sana solo, sin código de limpieza.{% endcomment %}
-  {% if weather_selection %}<input type="hidden" name="weather" value="{{ weather_selection }}">{% endif %}
+  {% comment %}LV-237: acá iba el `<input type="hidden" name="weather">` de LV-147,
+  que conservaba la ubicación del clima al cambiar de faena. `LV-216` retiró la
+  tarjeta y este input quedó atado a `weather_selection`, una variable que la vista
+  dejó de poner en el contexto — o sea que ya no se dibujaba nunca. Se va con el
+  resto del camino del clima.{% endcomment %}
   <noscript><div class="col-auto"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div></noscript>
 </form>
 
@@ -162,10 +161,17 @@ es información -- "no hay nada pendiente" es justo lo que se viene a leer.
   {% comment %}R9.6: trabajo detenido en manos de un tercero — presentado en
   SIGO y sin respuesta. Aparece sólo cuando hay algo, como la de vencidos: una
   tarjeta en cero todos los días enseña a no mirar la fila.{% endcomment %}
+  {% comment %}LV-237: el pie con la espera más larga. `longest_wait` se calculaba en
+  la vista desde R9.6, tenía sus pruebas y **ninguna plantilla lo dibujaba**: la
+  tarjeta decía "3" y había que bajar tres bloques para saber si eran de ayer o de
+  hace dos meses, que es la única parte que decide si hay que llamar a la DGAC. No
+  cuesta consulta —sale de la lista que la sección de abajo ya trae— y es el mismo
+  desglose que la tarjeta de vencimientos usa al lado.{% endcomment %}
   {% if awaiting_count %}
   <a class="summary-card text-decoration-none" href="{% url 'flight-request-list' %}?status=filed">
     <small>{% translate "Awaiting SIGO" %}</small>
     <strong>{{ awaiting_count }}</strong>
+    {% if longest_wait is not None %}<small class="text-muted">{% blocktranslate count days=longest_wait %}longest wait: {{ days }} day{% plural %}longest wait: {{ days }} days{% endblocktranslate %}</small>{% endif %}
   </a>
   {% endif %}
   {% if monthly_records %}
