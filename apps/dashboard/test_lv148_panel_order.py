@@ -42,7 +42,12 @@ def _aircraft(**kwargs):
 
 
 def _located_permission():
-    """Un permiso con coordenadas: es lo que hace existir la tarjeta del clima."""
+    """Un permiso con coordenadas, que es lo que hacía aparecer la tarjeta del clima.
+
+    `LV-237` retiró también el cálculo, así que hoy esto es justamente lo contrario:
+    el caso que **habría** dibujado la tarjeta, para que el test de abajo afirme el
+    retiro sobre los datos que lo harían fallar si volviera.
+    """
     from apps.operations.models import FlightPermission
 
     return FlightPermission.objects.create(

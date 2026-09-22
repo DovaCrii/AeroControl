@@ -4,16 +4,22 @@
 export function createMap(el, tileProviders) {
   const map = L.map(el, { zoomControl: true });
   const bases = {};
-  let first = null;
-  for (const provider of tileProviders || []) {
+  const providers = tileProviders || [];
+  // LV-239: the layer drawn on open is the one flagged `default` in
+  // GEO_TILE_PROVIDERS -- satellite, by the user's request: a plan's area is
+  // terrain, and on the street map the circle floats over nothing. It used to be
+  // whichever came first in the settings list, so reordering that literal for
+  // tidiness silently changed what the operator sees. Falling back to the first
+  // one keeps a map on screen if nobody flags any.
+  const initial = providers.find((provider) => provider.default) || providers[0];
+  for (const provider of providers) {
     const layer = L.tileLayer(provider.url, {
       attribution: provider.attribution || "",
       maxZoom: provider.maxZoom || 19,
     });
     bases[provider.name] = layer;
-    if (!first) {
+    if (provider === initial) {
       layer.addTo(map);
-      first = layer;
     }
   }
   if (Object.keys(bases).length > 1) {

@@ -5686,6 +5686,13 @@ msgid_plural "%(days)s days waiting"
 msgstr[0] "%(days)s día esperando"
 msgstr[1] "%(days)s días esperando"
 
+#: .\templates\dashboard\index.html:171
+#, python-format
+msgid "longest wait: %(days)s day"
+msgid_plural "longest wait: %(days)s days"
+msgstr[0] "la más antigua: %(days)s día"
+msgstr[1] "la más antigua: %(days)s días"
+
 #: .\templates\dashboard\index.html:265
 msgid "See all of them"
 msgstr "Verlas todas"

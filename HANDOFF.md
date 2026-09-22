@@ -1,5 +1,77 @@
 # HANDOFF — AeroControl
 
+## 🟡 El panel deja de pagar por trabajo que nadie mira (sin desplegar)
+
+**Hecho el 2026-09-21, en `main`, sin migraciones.** Sale de la revisión de brechas
+que pidió el usuario: *"revisar el estado de las mejoras pendientes […] buscar
+brechas de mejoras principalmente del dashboard o en general flujos que no estén
+bien"*. De todo lo que salió eligió esta mitad — la misma pantalla, más liviana.
+
+**Medido: 58 consultas por carga antes, 48 después** (59 → 49 con faena elegida).
+
+⚠️ **El hallazgo que hay que llevarse, porque va a repetirse**: tres de las cuatro
+cosas son la misma historia — **una sección se retira de la pantalla y su cálculo se
+queda vivo**, porque mirando la pantalla no se nota. `LV-216` borró la tarjeta del
+clima de la plantilla y la vista siguió calculándola **un mes entero**. `LV-89`
+retiró dos gráficos y sus agregaciones siguieron viajando al navegador, sostenidas
+por un test que las leía como evidencia.
+
+Lo que se fue: el camino completo del clima (`panel_forecast` y sus tres ayudantes,
+más el `<input type="hidden" name="weather">` que colgaba de una variable que la
+vista ya no ponía), las dos series de `LV-89`, la segunda vuelta de `permit_counts`,
+y la cota que le faltaba a `resolved_alert_keys` — que traía **toda la historia de
+alertas resueltas** a memoria en cada login para filtrar una lista de diez filas.
+
+**Lo que NO se tocó**: `apps/core/weather.forecast_for` y la revisión meteorológica
+de la ficha del plan geo (`R8.1`/`R8.2`), que es donde el pronóstico **queda como
+evidencia** — y era el único camino real desde `LV-216`.
+
+🆕 Y de paso lo contrario del mismo defecto: `longest_wait` se calculaba, tenía
+pruebas y **ninguna plantilla lo dibujaba**. Ahora la tarjeta de SIGO dice *"la más
+antigua: 42 días"*, sin costar una consulta.
+
+**Queda un guardián**: `apps/dashboard/test_lv237_panel_query_budget.py` fija el
+techo de la **vista entera** —había techos sobre funciones sueltas y ninguno sobre
+el panel—, en sus dos formas y con una prueba de que no crece con la operación.
+⚠️ **El techo se mide con el proceso caliente**: Django cachea
+`ContentType.get_for_model` por proceso, así que sin una carga de calentamiento el
+número mide el orden de la suite y no el panel (daba 57 aislado y 49 en la suite
+completa, midiendo lo mismo).
+
+**Y el plan geoespacial abre en satélite** (`LV-239`), pedido del usuario en la
+misma sesión. Lo interesante no es la capa sino que dejó de depender del **orden**
+de `GEO_TILE_PROVIDERS`: ahora hay una marca `"default": True` explícita, porque
+reordenar ese literal por prolijidad cambiaba en silencio lo que ve el operador.
+
+### Pasos de despliegue
+
+Nada especial: `collectstatic` (cambian `dashboard.js` y `geo/map.js`) y **no hay
+migraciones**. El `.mo` cambió (una cadena nueva), y viaja en el repo como siempre.
+
+### Lo que la revisión encontró y NO se hizo
+
+El usuario eligió el alcance; esto quedó levantado, con su evidencia:
+
+- **Callejones sin salida del panel.** «4 seguros vencidos» lleva a la lista
+  completa, porque el filtro por vigencia **no existe** en `AircraftList` ni en
+  `OperatorList`. «Abrir» en la bandeja va a `alert-list` y no a la alerta
+  (`apps/core/tray.py`), mientras las otras tres fuentes sí usan
+  `get_absolute_url()`. La lista de vencimientos se corta en 10 sin decirlo y sin
+  «ver todos». La tabla por faena **calcula** `next_expiry` y `days_remaining` y no
+  los dibuja — justo el dato que dice cuál renovar primero.
+- ⚠️ **El correo diario avisa de 2 de 6 fuentes.** `build_digest` sólo recorre
+  habilitaciones y documentos; seguro JAC, credencial DGAC, prueba de conocimientos
+  y vigencia de permiso salen en el panel y **no** en el correo. Hoy no se nota
+  porque `EMAIL_HOST` está vacío: **el día que se encienda SMTP, avisa mal.**
+- **Una faena sin flota dice «todo al día»**, afirmando cumplimiento sobre un
+  conjunto vacío en la tarjeta que existe para contestar «¿puedo operar?».
+- **El prevuelo sólo puede firmarse después de volar** (`LV-238`, anotado por
+  decisión del usuario): `PreflightCheck` cuelga de `FlightRecord`, que se escribe
+  al volver. Y nada persigue un vuelo sin chequeo.
+- ✅ **Un pendiente que ya no lo era**: `HANDOFF` pedía averiguar si `LV-186`
+  escondía documentos por vencer. **No los esconde** — era el guard de onboarding, y
+  `LV-187` lo cerró; el test de punta a punta lo fija.
+
 ## ✅ El informe mensual: paginado y con lo escrito marcado
 
 **Desplegado** en `eb62b0a` el 2026-09-08. `collectstatic` copió **1** archivo —

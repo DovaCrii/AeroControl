@@ -255,6 +255,50 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **El plan geoespacial abre en satélite (`LV-239`).** Pedido del usuario: el área
+  de un plan es terreno —un tranque, una ladera, un rajo— y sobre el callejero la
+  circunferencia queda flotando en blanco, así que había que cambiar de capa antes
+  de poder mirar nada, todas las veces. El callejero sigue a un clic. De paso deja
+  de depender del **orden** de la lista de proveedores: cuál capa sale al abrir
+  era un efecto de qué entrada iba primero en la configuración, y ahora está
+  marcado explícitamente — reordenar esa lista ya no cambia en silencio lo que ve
+  el operador.
+- **El panel deja de pagar por trabajo que nadie mira: de 58 consultas por carga
+  a 48 (`LV-237`).** La pantalla dice exactamente lo mismo; lo que cambia es lo
+  que cuesta abrirla, y se abre en cada inicio de sesión. Cuatro cosas, y tres
+  son la misma historia: **una sección se retira de la pantalla y su cálculo se
+  queda vivo**, porque mirando la pantalla no se nota. (1) El **pronóstico del
+  tiempo**, cuya tarjeta el usuario mandó retirar hace un mes (`LV-216`): se
+  borró de la plantilla y la vista siguió calculándolo en cada carga —permisos
+  con coordenadas, sitios, el plan geo ligado y la posible salida al proveedor—
+  para un contexto que ya nadie leía. (2) Los **dos gráficos** que `LV-89` había
+  retirado, que seguían agregándose y viajando al navegador sostenidos por un
+  test que los usaba como evidencia. (3) El **número de permisos vigentes**,
+  calculado dos veces para dibujarlo dos veces a cien píxeles de distancia. Y
+  (4) la consulta de alertas resueltas, que **no tenía cota ninguna**: traía toda
+  la historia de la operación a memoria en cada login para filtrar una lista de
+  diez filas, así que su costo crecía para siempre sin que se notara en pantalla.
+  Ahora se pregunta sólo por lo que se va a mostrar. Nada de esto cambia una
+  cifra: lo que el panel decía ayer es lo que dice hoy. La fila deja además un
+  **techo de consultas sobre la vista entera** —había techos sobre funciones
+  sueltas y ninguno sobre el panel—, que es lo que habría delatado el clima el
+  mismo día en vez de un mes después.
+- **La tarjeta "Esperando SIGO" dice cuánto lleva esperando la más antigua
+  (`LV-237`).** Decía "3", y había que bajar tres bloques de la pantalla para
+  saber si eran de ayer o de hace dos meses — que es la única parte que decide si
+  hay que llamar a la DGAC. El dato se calculaba desde `R9.6`, tenía sus pruebas
+  y ninguna plantilla lo dibujaba; ahora se lee al lado del número, sin costar
+  una consulta.
+- **Una faena con contrato cerrado sale del indicador de cumplimiento
+  (`LV-236`).** Pedido del usuario mirando el panel: eran siete faenas cerradas
+  ocupando la tabla con "Ninguno". No era sólo ruido de pantalla — esas filas son
+  el universo del indicador **que va firmado a la DGAC**, así que cada faena
+  terminada empeoraba una cifra de cumplimiento por una operación que ya no
+  existe. La regla no admite excepción, por decisión del usuario: *"independiente
+  que tenga permiso o no, si está cerrado no cuenta"*. De paso, el denominador de
+  ese indicador pasa a **ser** las filas de la tabla en vez de una consulta
+  aparte que debía coincidir con ellas — que es como un informe empieza a decir
+  "7 de 12" en una página y "7 de 11" en la siguiente.
 - **Desde una alerta se llega a la ficha de la entidad (`LV-125`).** Clicar
   `RPA-5534` abre su aeronave, que es donde están el estado del seguro, el
   historial del trámite y los documentos. Antes había que ir al padrón, buscar la

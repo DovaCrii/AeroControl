@@ -66,11 +66,20 @@ def test_filter_narrows_aircraft_and_permission_counts(auth_client):
 
     assert response.context["aircraft_count"] == 1
     assert response.context["selected_cost_center"] == cc2
-    perms = {
-        row["status"]: row["count"]
-        for row in response.context["chart_data"]["permissions_by_status"]
-    }
-    assert sum(perms.values()) == 1
+    # LV-237: la evidencia de que el filtro alcanza a los permisos se lee de
+    # `readiness`, no de `chart_data["permissions_by_status"]`.
+    #
+    # Esa serie existía **sólo** para esta aserción: `LV-89` retiró su gráfico y la
+    # vista siguió agregándola y mandándola al navegador en cada inicio de sesión
+    # porque este test la leía —`static/js/dashboard.js` lo tenía escrito—. Un test
+    # que fija la forma del contexto de producción y cobra una consulta por ello está
+    # sosteniendo lo que debería vigilar.
+    #
+    # La fila `permits` sí se dibuja, así que ahora la aserción cae **y se ve**.
+    permits = next(
+        row for row in response.context["readiness"] if row["key"] == "permits"
+    )
+    assert permits["total"] == 1
 
 
 @pytest.mark.django_db
