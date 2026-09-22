@@ -72,10 +72,16 @@ def test_build_digest_groups_items_by_urgency(cost_center):
 
     buckets = build_digest(cost_center, today=TODAY)
 
-    assert [item["label"] for item in buckets["overdue"]] == ["Vencida"]
-    assert [item["label"] for item in buckets["due_7"]] == ["Semana"]
-    assert [item["label"] for item in buckets["due_15"]] == ["Quincena"]
-    assert [item["label"] for item in buckets["due_30"]] == ["Mes"]
+    # LV-240: la etiqueta pasa a ser **la del panel** —"persona — tipo"— porque las
+    # dos superficies leen ahora la misma recolección. Antes el correo tenía la
+    # suya, con el tipo en `label` y la persona en `detail`, y esa segunda
+    # implementación es la razón por la que el correo recorría dos de las seis
+    # fuentes. Lo que se afirma sigue siendo lo mismo: cada vencimiento cae en su
+    # tramo.
+    assert [item["label"] for item in buckets["overdue"]] == ["Piloto -3 — Vencida"]
+    assert [item["label"] for item in buckets["due_7"]] == ["Piloto 5 — Semana"]
+    assert [item["label"] for item in buckets["due_15"]] == ["Piloto 12 — Quincena"]
+    assert [item["label"] for item in buckets["due_30"]] == ["Piloto 25 — Mes"]
 
 
 @pytest.mark.django_db

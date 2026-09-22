@@ -32,7 +32,7 @@ from django.utils import timezone
 
 from apps.compliance.models import Document, DocumentType
 from apps.core.testing import login_as
-from apps.dashboard.views import EXPIRATION_PERMISSIONS, upcoming_expirations
+from apps.compliance.expirations import EXPIRATION_PERMISSIONS, upcoming_expirations
 from apps.operations.models import FlightPermission
 from apps.registry.models import (
     Aircraft,

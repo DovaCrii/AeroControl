@@ -104,7 +104,7 @@ class TestTheTwoScalesDoNotCollide:
 class TestTheDashboardListIsColoured:
     @pytest.mark.django_db
     def test_each_source_carries_its_own_tone(self, db):
-        from apps.dashboard.views import (
+        from apps.compliance.expirations import (
             EXPIRATION_PERMISSIONS,
             EXPIRATION_SUBJECT_TONES,
         )
@@ -121,7 +121,7 @@ class TestTheDashboardListIsColoured:
 
     @pytest.mark.django_db
     def test_the_expiring_permit_row_gets_the_permit_tone(self, db):
-        from apps.dashboard.views import upcoming_expirations
+        from apps.compliance.expirations import upcoming_expirations
         from apps.operations.models import FlightPermission
         from apps.registry.models import CostCenter
 
@@ -150,12 +150,16 @@ class TestTheDashboardListIsColoured:
         `add()` busca la clave sin `get`, así que agregar una fuente sin su tono
         falla en el momento en vez de dibujarse gris para siempre — el estado que
         el usuario reportó y que nadie reportaría dos veces.
+
+        LV-240: la recolección se mudó de `dashboard.views` al dominio, y este test
+        con ella. El correo diario lee ahora la misma, así que la guarda cubre las
+        dos superficies en vez de sólo la pantalla.
         """
-        from apps.dashboard import views
+        from apps.compliance import expirations
 
         assert (
             "EXPIRATION_SUBJECT_TONES[model]"
-            in open(views.__file__, encoding="utf-8").read()
+            in open(expirations.__file__, encoding="utf-8").read()
         )
 
 

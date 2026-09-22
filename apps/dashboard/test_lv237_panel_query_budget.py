@@ -34,12 +34,18 @@ from apps.registry.models import Aircraft, CostCenter, Operator
 # **58 antes de `LV-237` y 48 después**. Las diez que se fueron son el clima que ya no
 # se calcula, la segunda vuelta de `permit_counts` y las dos agregaciones de los
 # gráficos que `LV-89` había retirado de la pantalla.
-PANEL_QUERY_BUDGET = 48
+#
+# **+1 el 2026-09-22 (`LV-241`), y el techo funcionó como debía**: `permit_counts`
+# pasa a contar además los permisos caducados dentro del mes, que es una consulta
+# nueva sobre un estado que el resto de sus agregados no mira. Se sube a propósito y
+# queda dicho — que es exactamente la diferencia entre una consulta que se agrega
+# sabiendo y una que se agrega sin que nadie se entere, que es la razón del archivo.
+PANEL_QUERY_BUDGET = 49
 # Elegir una faena cuesta exactamente **una** consulta más —el `SELECT` de esa faena—
 # y cambia los `WHERE` del resto sin agregar recorridos. Se mide aparte igualmente:
 # que hoy sea "una más" es justo lo que un techo propio mantiene verdadero. Antes de
 # `LV-237` eran 59.
-PANEL_FILTERED_QUERY_BUDGET = 49
+PANEL_FILTERED_QUERY_BUDGET = 50
 
 
 @pytest.fixture

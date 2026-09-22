@@ -96,11 +96,18 @@ contradecirse.{% endcomment %}
     otro sería la cifra única para dos trabajos distintos que el comentario de
     arriba acaba de describir.{% endcomment %}
     <small class="text-muted">
-      {% if item.lapsed or item.missing or item.awaiting %}
+      {% comment %}LV-241: `not_started` entra como cuarto término. Es el permiso
+      aprobado cuya vigencia **todavía no empieza**: existe y habilita, pero no hoy,
+      así que no es ni un atraso ni una espera y necesita decirse por su nombre. Se
+      calculaba desde `LV-233` sin dibujarse en ninguna parte, y por eso la tarjeta
+      mostraba "13/14 · 1" — el faltante caía a la rama de abajo, que además no
+      tiene rótulo en esta fila.{% endcomment %}
+      {% if item.lapsed or item.missing or item.awaiting or item.not_started %}
         {% if item.lapsed %}{% blocktranslate count counter=item.lapsed %}{{ counter }} lapsed{% plural %}{{ counter }} lapsed{% endblocktranslate %}{% endif %}
         {% if item.lapsed and item.missing %}·{% endif %}
         {% if item.missing %}{% blocktranslate count counter=item.missing %}{{ counter }} with no date on file{% plural %}{{ counter }} with no date on file{% endblocktranslate %}{% endif %}
         {% if item.awaiting %}{% if item.lapsed or item.missing %}·{% endif %} {% blocktranslate count counter=item.awaiting %}{{ counter }} awaiting approval{% plural %}{{ counter }} awaiting approval{% endblocktranslate %}{% endif %}
+        {% if item.not_started %}{% if item.lapsed or item.missing or item.awaiting %}·{% endif %} {% blocktranslate count counter=item.not_started %}{{ counter }} not started yet{% plural %}{{ counter }} not started yet{% endblocktranslate %}{% endif %}
       {% elif item.shortfall %}{{ item.shortfall }} {{ item.shortfall_label }}{% elif item.target %}{% blocktranslate with target=item.target|floatformat:0 %}target {{ target }}%{% endblocktranslate %}{% else %}{% translate "all up to date" %}{% endif %}
       {% if item.soon %}· {% blocktranslate count counter=item.soon %}{{ counter }} expires within 30 days{% plural %}{{ counter }} expire within 30 days{% endblocktranslate %}{% endif %}
     </small>
@@ -354,7 +361,14 @@ en `CostCenter`).{% endcomment %}
           <td class="text-center">{% if row.in_force %}<b>{{ row.in_force }}</b>{% else %}<span class="text-warning-emphasis">{% translate "None" %}</span>{% endif %}</td>
           <td class="text-center">{% if row.soon %}<span class="text-warning-emphasis">{{ row.soon }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
           <td class="text-center">{% if row.awaiting %}{{ row.awaiting }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
-          <td class="text-center">{% if row.lapsed %}<span class="text-danger-emphasis">{{ row.lapsed }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+          {% comment %}LV-241: esta columna estaba **estructuralmente en cero**. Sólo
+          contaba los aprobados con fecha pasada, y `expire_permissions` los mueve a
+          "caducado" cada noche, así que el permiso vencido salía del conjunto antes
+          de poder contarse: la faena se veía limpia. El usuario lo vio en `CC684`,
+          con dos documentos atrasados en la lista de arriba y la fila entera en
+          guiones. Ahora suma los dos hechos —el aprobado que nadie cerró y el
+          caducado del mes en curso— y el título dice cuál es cuál.{% endcomment %}
+          <td class="text-center">{% with past=row.lapsed|add:row.expired_this_month %}{% if past %}<span class="text-danger-emphasis" title="{% if row.lapsed %}{% blocktranslate count counter=row.lapsed %}{{ counter }} approved and not closed{% plural %}{{ counter }} approved and not closed{% endblocktranslate %}{% if row.expired_this_month %} · {% endif %}{% endif %}{% if row.expired_this_month %}{% blocktranslate count counter=row.expired_this_month %}{{ counter }} expired this month{% plural %}{{ counter }} expired this month{% endblocktranslate %}{% endif %}">{{ past }}</span>{% else %}<span class="text-muted">—</span>{% endif %}{% endwith %}</td>
         </tr>
         {% endfor %}
       </tbody>

@@ -269,7 +269,7 @@ class TestTheExpiryEngineLeavesItAlone:
 
     @pytest.mark.django_db
     def test_it_is_not_announced_as_an_upcoming_expiration(self, db):
-        from apps.dashboard.views import upcoming_expirations
+        from apps.compliance.expirations import upcoming_expirations
 
         _requested(_cc())
 

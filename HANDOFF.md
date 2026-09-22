@@ -1,5 +1,60 @@
 # HANDOFF — AeroControl
 
+## 🟡 Lo vencido se contaba mal, y el correo avisaba de 2 de 6 (sin desplegar)
+
+**Hecho el 2026-09-22, en `main`, sin migraciones.** Dos filas, y las dos son la
+misma forma de defecto: **un contador que no puede contar lo que dice contar**.
+
+### `LV-241` — el panel se veía limpio teniendo permisos vencidos
+
+Pedido del usuario con captura: *"el dashboard debe contabilizar y marcar y dar el
+seguimiento completo sobre todo lo que hoy está vencido"*. En su pantalla `CC684`
+tenía **dos documentos atrasados** arriba y la fila de la tabla de permisos
+**entera en guiones**.
+
+⚠️ **La causa no era un rótulo.** La columna «Vigencia pasada» contaba sólo los
+permisos `approved` con fecha pasada, y `expire_permissions` los mueve a `expired`
+cada noche: **el permiso vencido salía del conjunto antes de que nadie lo viera**, y
+la faena cuyo único permiso caducó desaparecía de la tabla. El docstring de
+`permit_counts` lo tenía escrito sin sacar la conclusión — *"`lapsed` normalmente
+vale cero porque `expire_permissions` los cierra cada noche"*. **Un contador que en
+régimen normal vale cero no mide el vencimiento: mide si corrió el cron.**
+
+Los dos hechos quedan separados: `lapsed` es la anomalía (nadie lo cerró, visible a
+cualquier edad) y `expired_this_month` es el trabajo de renovar.
+
+**Dos decisiones del usuario, preguntadas antes de tocar:**
+- La ventana es **el mes en curso** — es el período en que esto se rinde.
+- 🔶 **El porcentaje no baja.** El denominador sigue siendo los permisos vivos, así
+  que la cifra que va firmada a la DGAC mide lo mismo y los informes emitidos no se
+  mueven. Lo vencido se ve **al lado**, no dentro.
+
+🆕 **Y el número mudo de la misma tarjeta**: *"13/14 · **1** · 2 vencen en 30
+días"*. **Tres de las cuatro filas no declaraban `shortfall_label`**, así que
+cuando el faltante no era ninguno de los términos con nombre, la plantilla escribía
+la cifra sola. Ese 1 era un permiso **aprobado que aún no empieza**, calculado desde
+`LV-233` y nunca dibujado. Comprobado en pantalla que no era sólo de permisos:
+seguros escribía *"0/1 · 1 · 1 vence en 30 días"*.
+
+### `LV-240` — el correo diario recorría 2 de las 6 fuentes
+
+Seguro JAC, credencial DGAC, prueba de conocimientos y vigencia de permiso salían en
+el panel y **no** en el correo. ⚠️ **La que se quedaba corta era la única que va a
+buscar a la persona.** No se nota hoy porque `EMAIL_HOST` está vacío: **se habría
+notado el día de encender el SMTP.**
+
+La causa era una dependencia al revés —`digest` no puede importar de
+`dashboard.views`, que lo importa a él— así que el arreglo es una **mudanza**:
+`upcoming_expirations` vive ahora en `apps/compliance/expirations.py`, en el dominio.
+Con ella el correo hereda tres reglas que no tenía: esconde lo ya resuelto
+(decisivo en algo que llega **cada mañana**), descarta estados terminales, y toma
+sólo la última prueba de conocimientos de cada operador.
+
+### Pasos de despliegue
+
+`collectstatic` no hace falta (no cambió ningún estático) pero tampoco estorba; **no
+hay migraciones**. El `.mo` cambió: cinco cadenas nuevas.
+
 ## ✅ El panel deja de pagar por trabajo que nadie mira
 
 **Desplegado** en `bb391df` el 2026-09-22. Respaldo previo tomado **y verificado**:

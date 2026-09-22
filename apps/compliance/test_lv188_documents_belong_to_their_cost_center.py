@@ -181,7 +181,7 @@ class TestWhatWasBroken:
         afirma —el chip de faena, que pone `cost_centers_for_refs`— es lo que el
         filtro de esa faena devuelve. Antes el chip decía `CC738` y el filtro la
         borraba."""
-        from apps.dashboard.views import upcoming_expirations
+        from apps.compliance.expirations import upcoming_expirations
 
         _document(_permit(mine))
         Aircraft.objects.create(registration="RPA-1", serial_number="S1")

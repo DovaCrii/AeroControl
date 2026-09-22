@@ -103,7 +103,7 @@ def test_upcoming_expirations_spans_quals_documents_and_permissions():
     from django.utils import timezone
 
     from apps.compliance.models import Document, DocumentType
-    from apps.dashboard.views import upcoming_expirations
+    from apps.compliance.expirations import upcoming_expirations
     from apps.registry.models import Qualification, QualificationType
 
     today = timezone.localdate()
@@ -160,7 +160,7 @@ def test_upcoming_expirations_assigns_the_shared_urgency_bucket():
 
     from django.utils import timezone
 
-    from apps.dashboard.views import upcoming_expirations
+    from apps.compliance.expirations import upcoming_expirations
     from apps.registry.models import Qualification, QualificationType
 
     today = timezone.localdate()
@@ -213,7 +213,7 @@ def test_permission_without_dgac_folio_does_not_render_the_word_none():
 
     from django.utils import timezone
 
-    from apps.dashboard.views import upcoming_expirations
+    from apps.compliance.expirations import upcoming_expirations
 
     today = timezone.localdate()
     cutoff = today + timedelta(days=30)
@@ -241,7 +241,7 @@ def test_upcoming_expirations_include_dgac_vigencias():
 
     from django.utils import timezone, translation
 
-    from apps.dashboard.views import upcoming_expirations
+    from apps.compliance.expirations import upcoming_expirations
 
     today = timezone.localdate()
     cutoff = today + timedelta(days=30)

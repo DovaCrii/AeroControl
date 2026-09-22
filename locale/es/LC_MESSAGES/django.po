@@ -5693,6 +5693,39 @@ msgid_plural "longest wait: %(days)s days"
 msgstr[0] "la más antigua: %(days)s día"
 msgstr[1] "la más antigua: %(days)s días"
 
+#: .\apps\dashboard\views.py:210
+msgid "not in force today"
+msgstr "sin vigencia hoy"
+
+#: .\apps\dashboard\views.py:160
+msgid "without valid cover"
+msgstr "sin cobertura vigente"
+
+#: .\apps\dashboard\views.py:181
+msgid "not up to date"
+msgstr "sin estar al día"
+
+#: .\templates\dashboard\index.html:364
+#, python-format
+msgid "%(counter)s approved and not closed"
+msgid_plural "%(counter)s approved and not closed"
+msgstr[0] "%(counter)s aprobado sin cerrar"
+msgstr[1] "%(counter)s aprobados sin cerrar"
+
+#: .\templates\dashboard\index.html:364
+#, python-format
+msgid "%(counter)s expired this month"
+msgid_plural "%(counter)s expired this month"
+msgstr[0] "%(counter)s caducado este mes"
+msgstr[1] "%(counter)s caducados este mes"
+
+#: .\templates\dashboard\index.html:112
+#, python-format
+msgid "%(counter)s not started yet"
+msgid_plural "%(counter)s not started yet"
+msgstr[0] "%(counter)s aún no empieza"
+msgstr[1] "%(counter)s aún no empiezan"
+
 #: .\templates\dashboard\index.html:265
 msgid "See all of them"
 msgstr "Verlas todas"

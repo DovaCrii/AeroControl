@@ -253,6 +253,36 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   fabricante y es con el que la aeronave aparece en la garantía, en el registro
   de la DGAC y en las carpetas del repositorio documental.
 
+### Fixed
+
+- **Lo vencido se contaba mal, y por eso el panel se veía limpio (`LV-241`).**
+  Pedido del usuario mirando la pantalla: una faena tenía dos documentos atrasados
+  en la lista de vencimientos y su fila de la tabla de permisos estaba **entera en
+  guiones**. La causa no era un rótulo: la columna «Vigencia pasada» contaba sólo
+  los permisos *aprobados* con fecha pasada, y el trabajo nocturno los pasa a
+  *caducado* cada noche — así que **el permiso vencido salía del conjunto antes de
+  que nadie lo viera**, y la faena cuyo único permiso caducó desaparecía de la
+  tabla. Ahora se cuentan los dos hechos y siguen separados, porque se arreglan
+  distinto: un aprobado sin cerrar delata que el cron no corrió; un caducado del
+  mes es trabajo de renovación. **El porcentaje no cambia**: el denominador sigue
+  siendo los permisos vivos, así que la cifra que va firmada a la DGAC mide lo
+  mismo que ayer y lo vencido se ve al lado, no dentro.
+- **Las tarjetas del panel ya no muestran un número sin decir de qué es
+  (`LV-241`).** Se leía *"13/14 · **1** · 2 vencen en 30 días"*. Tres de las cuatro
+  tarjetas no tenían rótulo para su faltante, así que cuando ese faltante no era
+  ninguno de los casos con nombre —vencido, sin fecha, esperando— el número salía
+  mudo. En permisos ese 1 era uno **aprobado que todavía no empieza**, un dato que
+  se calculaba desde hace semanas y que ninguna pantalla dibujaba.
+- **El correo diario avisaba de dos de seis fuentes (`LV-240`).** El seguro JAC, la
+  credencial DGAC, la prueba de conocimientos y la vigencia del permiso salían en
+  el panel y **no** en el correo, porque cada uno tenía su propia forma de juntar
+  lo que vence. La que se quedaba corta era la única que va a buscar a la persona:
+  el panel hay que abrirlo, el correo llega. Hoy no se notaba porque todavía no
+  sale correo de la VM — se habría notado el día de encender el SMTP. De paso el
+  correo hereda tres reglas que le faltaban: no repite lo que ya se revisó y se
+  cerró (decisivo en algo que llega **cada mañana**), no avisa por equipos dados de
+  baja, y de la prueba de conocimientos toma sólo la última de cada persona.
+
 ### Changed
 
 - **El plan geoespacial abre en satélite (`LV-239`).** Pedido del usuario: el área
