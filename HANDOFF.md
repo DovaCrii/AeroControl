@@ -1,8 +1,18 @@
 # HANDOFF — AeroControl
 
-## 🟡 El panel deja de pagar por trabajo que nadie mira (sin desplegar)
+## ✅ El panel deja de pagar por trabajo que nadie mira
 
-**Hecho el 2026-09-21, en `main`, sin migraciones.** Sale de la revisión de brechas
+**Desplegado** en `bb391df` el 2026-09-22. Respaldo previo tomado **y verificado**:
+`aero_ops_20260922_165049.sqlite3` (*"restorable"*). Sin migraciones;
+`collectstatic` copió **2** archivos con 396 post-procesados — exactamente los dos
+que cambiaron (`dashboard.js` y `geo/map.js`).
+
+⚠️ **`python` pelado no existe en la VM**, y el primer intento murió ahí: es
+`uv run python manage.py`. El comando iba encadenado con `&&`, así que se cortó en
+el respaldo y no dejó nada a medias — pero conviene tenerlo escrito, porque el
+error se lee como si faltara Python y lo que falta es el alias.
+
+Sale de la revisión de brechas
 que pidió el usuario: *"revisar el estado de las mejoras pendientes […] buscar
 brechas de mejoras principalmente del dashboard o en general flujos que no estén
 bien"*. De todo lo que salió eligió esta mitad — la misma pantalla, más liviana.
@@ -42,11 +52,6 @@ completa, midiendo lo mismo).
 misma sesión. Lo interesante no es la capa sino que dejó de depender del **orden**
 de `GEO_TILE_PROVIDERS`: ahora hay una marca `"default": True` explícita, porque
 reordenar ese literal por prolijidad cambiaba en silencio lo que ve el operador.
-
-### Pasos de despliegue
-
-Nada especial: `collectstatic` (cambian `dashboard.js` y `geo/map.js`) y **no hay
-migraciones**. El `.mo` cambió (una cadena nueva), y viaja en el repo como siempre.
 
 ### Lo que la revisión encontró y NO se hizo
 
@@ -164,10 +169,10 @@ falta y en qué folio.
 
 | | |
 |---|---|
-| Último commit de **código** | **`a640fa4`** (2026-09-14) |
-| Desplegado en `p340` | **`a640fa4`** ✅ el 2026-09-14 |
+| Último commit de **código** | **`bb391df`** (2026-09-22) |
+| Desplegado en `p340` | **`bb391df`** ✅ el 2026-09-22 |
 | Migraciones pendientes | **ninguna** |
-| Diferencia con `origin/main` | sólo documentación (este archivo, el post-mortem) — **no requiere desplegar** |
+| Diferencia con `origin/main` | sólo documentación (este archivo) — **no requiere desplegar** |
 | Copia sin conexión (`UX-26`) | ⛔ **apagada** — `SERVICE_WORKER_ENABLED=False`; ver el incidente de abajo antes de encenderla |
 
 Respaldo previo tomado **y verificado**: `aero_ops_20260908_094134.sqlite3`
