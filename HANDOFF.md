@@ -1,5 +1,31 @@
 # HANDOFF — AeroControl
 
+## 🟡 Plan de mejora en curso — Fase 0 hecha, sin desplegar
+
+El 2026-09-23 el usuario pidió, en cinco mensajes seguidos, marcar lo vencido en
+rojo en tres pantallas, revisar el informe mensual y un plan general de mejora. Se
+aprobó un plan en cuatro fases, en este orden, con sus decisiones tomadas:
+
+| Fase | Qué | Estado |
+|---|---|---|
+| **0** | `LV-246`: faenas sin permiso primero y en rojo, «⚠ Caducado» en la lista y ficha de permisos, «⚠ Permiso vencido» en los planes geo, reparto de la lista de permisos | ✅ hecha, **sin desplegar** |
+| **1** | Informe: 4 defectos (1a), operadores por permiso → cantidad + anexo (1b), **bloques editables** portada/fases/matriz (1c), **borrador automático el día 1** (1d), ver cambios entre revisiones (1e) | ⬜ |
+| **2** | Una sola forma de decir «vencido» en toda la app, `MESSAGE_TAGS` (los errores salen sin color), listas con reparto, N+1 de mantención | ⬜ |
+| **3** | `pytest-xdist` para acortar el gate, tests que dependen del reloj, alinear `AGENTS.md` sobre el squash | ⬜ |
+
+**Decisiones del usuario que acotan la Fase 1**: del informe se recorta **sólo** la
+nómina de operadores por permiso (la dotación, los textos fijos y la hoja del plan se
+quedan); las plantillas se resuelven con **bloques editables en la app**, no con Word;
+y la emisión se automatiza como **borrador el día 1**, sin PDF.
+
+⚠️ **La Fase 1c trae migración.** Al desplegarla, el bloque de comandos lleva
+`migrate`, y hay que unirlo con lo que haya quedado sin desplegar antes.
+
+### Pendiente de desplegar ahora
+
+`d5ebac0` (dependencias), `57f8be5` (CI) y la Fase 0. Sin migraciones, pero con
+**`uv sync --no-dev`** (cambian dependencias) y **`collectstatic`** (cambia `app.css`).
+
 ## ✅ Lo vencido se contaba mal, y las cifras no llevaban a ninguna parte
 
 **Desplegado** en `89a211d` el 2026-09-23, con `LV-240`, `LV-241` y `LV-242`.

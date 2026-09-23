@@ -16,8 +16,19 @@
   {% comment %}LV-219: sin vigencia la celda mostraba un guion suelto entre dos
   huecos, que se lee como un dato que falta por descuido. Dice qué es: la DGAC
   todavía no ha respondido, y por eso no hay fechas que poner.{% endcomment %}
-  <td>{% if object.valid_from and object.valid_until %}{{ object.valid_from|date:"Y-m-d" }} – {{ object.valid_until|date:"Y-m-d" }}{% else %}<span class="text-body-secondary fst-italic">{% translate "Awaiting the DGAC" %}</span>{% endif %}</td>
-  <td><span class="badge bg-{% if object.status == 'approved' %}success{% elif object.status == 'denied' %}danger{% elif object.status == 'completed' %}info{% else %}warning{% endif %}">{{ object.get_status_display }}</span></td>
+  {% comment %}LV-246: `text-nowrap` porque un rango de fechas partido en dos
+  líneas deja de poder compararse con el de la fila de arriba — el usuario lo leyó
+  como "letras apretadas". La vigencia vencida va en rojo: es la fecha que explica
+  el badge de la columna siguiente.{% endcomment %}
+  <td class="text-nowrap{% if object.has_lapsed %} sev-text-critical{% endif %}">{% if object.valid_from and object.valid_until %}{{ object.valid_from|date:"Y-m-d" }} – {{ object.valid_until|date:"Y-m-d" }}{% else %}<span class="text-body-secondary fst-italic">{% translate "Awaiting the DGAC" %}</span>{% endif %}</td>
+  {% comment %}LV-246: **el permiso vencido en rojo, con marca.** Pedido del usuario:
+  *"que sea marcado en ROJO con alguna marca"*. `expired` caía en el `else` y salía
+  en `bg-warning` —el mismo ámbar que «Solicitado»—, así que un permiso que ya no
+  autoriza a volar se veía igual que uno que espera respuesta. Y un `approved` con
+  la fecha pasada seguía en verde hasta que corriera el trabajo nocturno: por eso se
+  pregunta a `has_lapsed` y no al estado. El ⚠ es la marca que pidió, y la que
+  sobrevive a una impresión en blanco y negro.{% endcomment %}
+  <td>{% if object.has_lapsed %}<span class="badge sev-critical">⚠ {% translate "Lapsed" context "flight permission" %}</span>{% else %}<span class="badge bg-{% if object.status == 'approved' %}success{% elif object.status == 'denied' %}danger{% elif object.status == 'completed' %}info{% else %}warning{% endif %}">{{ object.get_status_display }}</span>{% endif %}</td>
   <td class="text-end text-nowrap">
     {% comment %}LV-135: la fila archivada se distingue y ofrece volver. Sin
     "Restaurar" acá, el filtro "Archivados" sería una lista sin salida.{% endcomment %}
@@ -33,8 +44,12 @@
   </td>
 </tr>
 {% empty %}
+{% comment %}LV-246: siete, el número exacto de `<col>` de `permission_list.html`.
+Ahora que la lista es `table-normalized`, un `colspan` mayor crea columnas que no
+existen y les reparte el ancho de la flexible — medido en operadores: de 424 px a 5
+(ver AGENTS.md). `worktable.js` le suma uno al inyectar la casilla.{% endcomment %}
 <tr>
-  <td colspan="99" class="text-center text-muted py-4">
+  <td colspan="7" class="text-center text-muted py-4">
     {% if is_filtered %}
       {% translate "No records match the current filters." %}
       <a href="{{ request.path }}">{% translate "Clear filters" %}</a>

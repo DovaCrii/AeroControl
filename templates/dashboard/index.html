@@ -166,6 +166,22 @@ es información -- "no hay nada pendiente" es justo lo que se viene a leer.
     </small>
   </a>
   {% endif %}
+  {% comment %}LV-246: **la faena que no tiene permiso vigente.** Pedido del usuario
+  mirando el panel desplegado: *"ubicar los centros de costo con incumplimiento, sin
+  permisos vigentes, que es crítico; según el avance del plan se le exige mínimo
+  tener el permiso de vuelo"*.
+
+  Es el indicador que el informe mensual **firma** como `cost_centres_without_permit`
+  —su numerador— y que hasta ahora sólo existía en el papel: la tabla de abajo tenía
+  las filas y el panel no decía cuántas eran. Enlaza al ancla de esa tabla, que es
+  donde se ve cuáles.{% endcomment %}
+  {% if cost_centres_without_permit %}
+  <a class="summary-card summary-card-warning text-decoration-none" href="#panel-permit-status-title">
+    <small>{% translate "Sites without a permit" %}</small>
+    <strong>{{ cost_centres_without_permit }}</strong>
+    <small class="text-muted">{% translate "flying requires one" %}</small>
+  </a>
+  {% endif %}
   {% if incomplete_maintenance_count %}
   <a class="summary-card summary-card-warning text-decoration-none" href="{% url 'maintenance-list' %}">
     <small>{% translate "Maintenance to define" %}</small>
@@ -371,11 +387,23 @@ en `CostCenter`).{% endcomment %}
       </thead>
       <tbody>
         {% for row in permit_status_rows %}
-        {% comment %}La fila sin permisos vigentes se distingue, que es la razón de
-        existir de la tabla. En ámbar y no en rojo: no tener permiso vigente no es
-        un incumplimiento por sí mismo —puede que no haya trabajo esa semana— y
-        pintarlo de rojo enseñaría a ignorar el rojo.{% endcomment %}
-        <tr{% if not row.in_force %} class="table-warning-subtle"{% endif %}>
+        {% comment %}LV-246: **la fila sin permiso vigente pasa a rojo, y van todas
+        primero.** Esto revierte a propósito una decisión escrita acá mismo: *"en
+        ámbar y no en rojo: no tener permiso vigente no es un incumplimiento por sí
+        mismo —puede que no haya trabajo esa semana— y pintarlo de rojo enseñaría a
+        ignorar el rojo"*.
+
+        La premisa era mía y el usuario la corrigió: *"es crítico; según el avance
+        del plan se le exige mínimo tener el permiso de vuelo"*. O sea que **sí es
+        un incumplimiento por sí mismo** — la exigencia no depende de si esa semana
+        hay vuelo. Quien responde ante la DGAC define qué es crítico, y esta fila es
+        justo el numerador del indicador que va firmado.
+
+        El reparo de "enseñar a ignorar el rojo" se atiende por el otro lado: la
+        tabla ya deja fuera las faenas que **no vuelan** (`operates_flights`) y las
+        de contrato cerrado (`LV-236`), así que un rojo acá es siempre una faena que
+        opera y no puede.{% endcomment %}
+        <tr{% if not row.in_force %} class="row-critical"{% endif %}>
           <td>
             <a href="{% url 'permission-list' %}?cost_center={{ row.cost_center.pk }}" class="text-decoration-none">
               <span class="cc-chip me-2">{{ row.cost_center.code }}</span>{{ row.cost_center.name }}

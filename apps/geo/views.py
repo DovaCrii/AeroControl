@@ -149,8 +149,11 @@ class GeoPlanListView(
             queryset = queryset.filter(status=status)
         # LV-149: `source_document` entra al join porque la columna del archivo
         # lo lee en cada fila -- sin esto son 25 consultas extra por página.
+        # LV-246: `flight_permission` también, porque la fila pregunta si su
+        # permiso ya caducó (`permit_has_lapsed`) — sin el join serían 25 consultas
+        # más por página, el mismo motivo que trajo `source_document`.
         return queryset.select_related(
-            "cost_center", "current_version", "source_document"
+            "cost_center", "current_version", "source_document", "flight_permission"
         ).order_by("-created_at")
 
     def get_context_data(self, **kwargs):

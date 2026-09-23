@@ -355,6 +355,7 @@ def dashboard(request):
     from apps.compliance.kpis import permit_status_by_cost_center
 
     today = timezone.localdate()
+    permit_status_rows = permit_status_by_cost_center(today)
     cutoff = today + timedelta(days=30)
     # LV-191: `request.user`, o la lista nombra permisos, matrículas, personas y
     # documentos que los permisos del usuario no le dan. Lo tapaba por accidente
@@ -587,7 +588,31 @@ def dashboard(request):
         # LV-206: el estado de los permisos faena por faena, incluidas las que no
         # tienen ninguno — que son las que el usuario quiere ver. Sólo las que
         # vuelan: ver `operates_flights` en `CostCenter`.
-        "permit_status_rows": permit_status_by_cost_center(today),
+        #
+        # LV-246: **y las que no tienen ninguno van primero.** Pedido del usuario:
+        # *"ubicar en el dashboard los centros de costo con incumplimiento, sin
+        # permisos vigentes, que es crítico; según el avance del plan se le exige
+        # mínimo tener el permiso de vuelo"*. Estaban ordenadas por código y
+        # repartidas entre las que sí tienen, así que había que recorrer la tabla
+        # entera para encontrarlas — en producción son siete de quince.
+        #
+        # ⚠️ **Se ordena acá y no en `permit_status_by_cost_center`**, que es
+        # deliberado: ese selector lo comparte el informe mensual, donde la tabla
+        # va por código porque es un documento formal que alguien coteja fila por
+        # fila. El orden es presentación y puede diferir; el **cálculo** no, y ése
+        # sigue siendo uno solo.
+        "permit_status_rows": sorted(
+            permit_status_rows,
+            key=lambda row: (bool(row["in_force"]), row["cost_center"].code),
+        ),
+        # El mismo indicador que el informe firma como `cost_centres_without_permit`
+        # —su numerador—, que hasta ahora sólo existía en el papel. Sale de las
+        # filas ya recolectadas, así que no cuesta una consulta: es la lección de
+        # `LV-236`, donde el denominador se calculaba aparte y podía separarse de
+        # su propia tabla.
+        "cost_centres_without_permit": sum(
+            1 for row in permit_status_rows if not row["in_force"]
+        ),
         "chart_data": chart_data,
         "compliance_setup": compliance_setup,
         "compliance_incomplete": compliance_incomplete,

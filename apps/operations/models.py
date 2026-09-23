@@ -433,6 +433,34 @@ class FlightPermission(StatusFlowMixin, BaseModel):
 
         return reverse("permission-detail", kwargs={"pk": self.pk})
 
+    @property
+    def has_lapsed(self):
+        """LV-246: el permiso ya no autoriza a volar por **fecha**.
+
+        Dos caminos al mismo hecho, y por eso una sola definición: `expired` es el
+        que ya cerró `expire_permissions` (`LV-83`), y un `approved` con
+        `valid_until` pasada es el que el trabajo nocturno **todavía no** cerró —
+        corre una vez por noche, así que entre medianoche y esa corrida el permiso
+        vencido sigue diciendo "Aprobado" en verde. Pedido del usuario mirando la
+        lista: *"cuando un permiso vencido o caducado, que sea marcado en ROJO con
+        alguna marca"*; con sólo mirar el estado, ese intervalo quedaba en verde.
+
+        La leen la fila de la lista, la ficha y el plan geoespacial que cuelga del
+        permiso (`GeoPlan.permit_has_lapsed`): tres pantallas con su propia versión
+        de "vencido" es cómo terminan discrepando, que es la lección de `LV-188`.
+
+        `denied` no cuenta: un rechazado **nunca tuvo** vigencia, no la perdió.
+        """
+        from django.utils import timezone
+
+        if self.status == self.STATUS_EXPIRED:
+            return True
+        return (
+            self.status == self.STATUS_APPROVED
+            and self.valid_until is not None
+            and self.valid_until < timezone.localdate()
+        )
+
     def status_steps(self):
         """LV-83: how far it got before it stopped, not just that it stopped.
 

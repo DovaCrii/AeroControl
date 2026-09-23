@@ -28,14 +28,24 @@ Las dos decisiones son del usuario, preguntadas antes de tocar:
 
 from datetime import timedelta
 
+from datetime import date
+
 import pytest
-from django.utils import timezone
 
 from apps.compliance.kpis import permit_counts, permit_status_by_cost_center
 from apps.operations.models import FlightPermission
 from apps.registry.models import CostCenter
 
-TODAY = timezone.localdate()
+# LV-246: **fecha fija, a mitad de mes, y no `timezone.localdate()`.** Con el día de
+# hoy, `TODAY - 4 días` cae en el mes anterior del 1 al 3 de cada mes: el permiso
+# "caducado este mes" deja de estarlo y tres tests fallan sin que nadie haya tocado
+# `permit_counts`. Es la trampa que `AGENTS.md` documenta desde `LV-223` —un test
+# cuyo verde depende del día en que se corre falla disfrazado de regresión— y este
+# archivo la tenía puesta; se habría disparado el 1 de octubre.
+#
+# Las funciones medidas reciben `today` como argumento, así que fijarla no esconde
+# nada: es declarar la fecha que el test ya suponía.
+TODAY = date(2026, 9, 15)
 MONTH_START = TODAY.replace(day=1)
 
 
