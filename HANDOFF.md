@@ -251,8 +251,8 @@ falta y en qué folio.
 
 | | |
 |---|---|
-| Último commit de **código** | **`89a211d`** (2026-09-23) |
-| Desplegado en `p340` | **`89a211d`** ✅ el 2026-09-23 |
+| Último commit de **código** | **`0ebb52f`** (2026-09-23) |
+| Desplegado en `p340` | **`0ebb52f`** ✅ el 2026-09-23 |
 | Migraciones pendientes | **ninguna** |
 | Diferencia con `origin/main` | sólo documentación (este archivo) — **no requiere desplegar** |
 | Copia sin conexión (`UX-26`) | ⛔ **apagada** — `SERVICE_WORKER_ENABLED=False`; ver el incidente de abajo antes de encenderla |
