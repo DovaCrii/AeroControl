@@ -4,6 +4,7 @@ from apps.reporting.views import (
     ExecutiveBriefView,
     MonthlyReportView,
     ReportApprove,
+    ReportCompareView,
     ReportDraftCreate,
     ReportNarrativeUpdate,
     ReportTemplateUpdate,
@@ -29,6 +30,12 @@ urlpatterns = [
         "monthly/<uuid:pk>/narrative/",
         ReportNarrativeUpdate.as_view(),
         name="monthly-report-narrative",
+    ),
+    # LV-251: qué cambió contra la revisión anterior o contra el mes anterior.
+    path(
+        "monthly/<uuid:pk>/compare/",
+        ReportCompareView.as_view(),
+        name="monthly-report-compare",
     ),
     path(
         "monthly/<uuid:pk>/approve/",

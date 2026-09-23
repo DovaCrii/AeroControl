@@ -9028,3 +9028,168 @@ msgstr "Negrita"
 msgctxt "requirement level"
 msgid "Required"
 msgstr "Exigible"
+
+#: .\apps\reporting\compare.py:40
+msgid "Sites with operation"
+msgstr "Faenas con operación"
+
+#: .\apps\reporting\compare.py:41
+msgid "Sites without a permit in force"
+msgstr "Faenas sin permiso vigente"
+
+#: .\apps\reporting\compare.py:43
+msgid "Permits awaiting the DGAC"
+msgstr "Permisos en trámite ante la DGAC"
+
+#: .\apps\reporting\compare.py:44
+msgid "Permits lapsed and not closed"
+msgstr "Permisos vencidos sin cerrar"
+
+#: .\apps\reporting\compare.py:45
+msgid "Permits expiring within 30 days"
+msgstr "Permisos por vencer en 30 días"
+
+#: .\apps\reporting\compare.py:46
+msgid "Permits expiring within 60 days"
+msgstr "Permisos por vencer en 60 días"
+
+#: .\apps\reporting\compare.py:47
+msgid "Incidents in the period"
+msgstr "Incidentes del período"
+
+#: .\apps\reporting\compare.py:48
+msgid "Incidents still open"
+msgstr "Incidentes abiertos"
+
+#: .\apps\reporting\compare.py:49
+msgid "Aircraft on the register"
+msgstr "Aeronaves en el padrón"
+
+#: .\apps\reporting\compare.py:50
+msgid "Aircraft available"
+msgstr "Aeronaves disponibles"
+
+#: .\apps\reporting\compare.py:51
+msgid "JAC insurance up to date"
+msgstr "Seguro JAC al día"
+
+#: .\apps\reporting\compare.py:52
+msgid "JAC insurance with no date on file"
+msgstr "Seguro JAC sin fecha cargada"
+
+#: .\apps\reporting\compare.py:53
+msgid "JAC insurance lapsed"
+msgstr "Seguro JAC vencido"
+
+#: .\apps\reporting\compare.py:54
+msgid "Operators on the register"
+msgstr "Operadores en el padrón"
+
+#: .\apps\reporting\compare.py:55
+msgid "DGAC credential in force"
+msgstr "Credencial DGAC vigente"
+
+#: .\apps\reporting\compare.py:56
+msgid "DGAC credential with no date on file"
+msgstr "Credencial DGAC sin fecha cargada"
+
+#: .\apps\reporting\compare.py:57
+msgid "DGAC credential lapsed"
+msgstr "Credencial DGAC vencida"
+
+#: .\templates\reporting\compare.html:3
+msgid "Changes"
+msgstr "Cambios"
+
+#: .\templates\reporting\compare.html:18
+#, python-format
+msgid "rev. %(revision)s"
+msgstr "rev. %(revision)s"
+
+#: .\templates\reporting\compare.html:20
+#, python-format
+msgid "Compared with %(code)s rev. %(revision)s."
+msgstr "Comparado con %(code)s rev. %(revision)s."
+
+#: .\templates\reporting\compare.html:27
+msgid "Against the previous revision"
+msgstr "Contra la revisión anterior"
+
+#: .\templates\reporting\compare.html:27
+msgid "No previous revision"
+msgstr "Sin revisión anterior"
+
+#: .\templates\reporting\compare.html:30
+msgid "Against the previous month"
+msgstr "Contra el mes anterior"
+
+#: .\templates\reporting\compare.html:30
+msgid "No report for the previous month"
+msgstr "Sin informe del mes anterior"
+
+#: .\templates\reporting\compare.html:35
+msgid ""
+"There is nothing to compare this report with yet: it has no earlier revision "
+"and the previous month has no frozen report."
+msgstr ""
+"Todavía no hay con qué comparar este informe: no tiene una revisión anterior y "
+"el mes anterior no tiene un informe congelado."
+
+#: .\templates\reporting\compare.html:39
+msgid "Indicators"
+msgstr "Indicadores"
+
+#: .\templates\reporting\compare.html:40
+#, python-format
+msgid "%(counter)s indicator changed."
+msgid_plural "%(counter)s indicators changed."
+msgstr[0] "%(counter)s indicador cambió."
+msgstr[1] "%(counter)s indicadores cambiaron."
+
+#: .\templates\reporting\compare.html:46
+msgid "Before"
+msgstr "Antes"
+
+#: .\templates\reporting\compare.html:47
+msgid "Now"
+msgstr "Ahora"
+
+#: .\templates\reporting\compare.html:48
+msgid "Difference"
+msgstr "Diferencia"
+
+#: .\templates\reporting\compare.html:65
+msgid "Permits"
+msgstr "Permisos"
+
+#: .\templates\reporting\compare.html:68
+msgid "Now in force"
+msgstr "Pasaron a vigentes"
+
+#: .\templates\reporting\compare.html:69
+msgid "No longer in force"
+msgstr "Dejaron de estar vigentes"
+
+#: .\templates\reporting\compare.html:70
+msgid "Newly awaiting the DGAC"
+msgstr "Nuevos en trámite ante la DGAC"
+
+#: .\templates\reporting\compare.html:71
+msgid "No longer awaiting"
+msgstr "Ya no están en trámite"
+
+#: .\templates\reporting\compare.html:74
+msgid "The same permits in both."
+msgstr "Los mismos permisos en los dos."
+
+#: .\templates\reporting\compare.html:79
+msgid "Written text"
+msgstr "Texto escrito"
+
+#: .\templates\reporting\compare.html:94
+msgid "The written text did not change."
+msgstr "El texto escrito no cambió."
+
+#: .\templates\reporting\monthly_report.html:40
+msgid "See the changes"
+msgstr "Ver los cambios"
