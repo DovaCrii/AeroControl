@@ -352,6 +352,33 @@ class TestExpiringOnlyWarns:
         assert verdict(aircraft, operator, centre).warnings == []
 
 
+class TestTheWholeVerdictIsForTheSameDay:
+    @pytest.mark.django_db
+    def test_the_model_qualification_is_judged_on_the_day_asked(
+        self, aircraft, operator, centre, permit
+    ):
+        """`LV-257`: `can_fly` recibe el día y lo pasaba a todo **menos** a la
+        habilitación por modelo, que miraba el día real. Se encontró porque este
+        mismo archivo empezaba a fallar a partir de 2027-03-26 (vence la
+        habilitación de la fixture) corriendo la suite con el reloj movido.
+
+        La habilitación vence el 2026-09-15: vigente el día que se pregunta
+        (`TODAY`, 2026-09-07) y vencida para cualquier día real en que corra esto.
+        Con la fecha real, el veredicto de un día en que sí estaba vigente avisaba
+        que no lo estaba.
+        """
+        Qualification.objects.filter(operator=operator).update(
+            expiry_date=date(2026, 9, 15)
+        )
+
+        from django.utils.translation import gettext
+
+        warnings = verdict(aircraft, operator, centre).warnings
+
+        labels = [str(w.label) for w in warnings]
+        assert gettext("Model qualification") not in labels, labels
+
+
 class TestWhatDeliberatelyNeverBlocks:
     @pytest.mark.django_db
     def test_the_compatibility_gap_only_warns(self, aircraft, operator, centre, permit):
