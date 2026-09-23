@@ -83,7 +83,7 @@
     {% if plan.is_active %}
     {% if perms.geo.delete_geoplan %}
     <form method="post" action="{% url 'geo-plan-archive' plan.pk %}" style="display:inline">{% csrf_token %}
-      <button type="submit" class="btn btn-sm btn-outline-secondary">{% translate "Archive" %}</button>
+      <button type="submit" class="btn btn-sm btn-outline-danger">{% translate "Archive" %}</button>
     </form>
     {% endif %}
     {% else %}
