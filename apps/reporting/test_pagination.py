@@ -39,23 +39,23 @@ class TestWhatARowMeasures:
     def test_one_operator_is_the_base(self):
         assert row_px(_row(operators=1)) == ROW_BASE_PX
 
-    def test_two_names_still_fit_on_one_line(self):
-        """La columna es `1fr` de una rejilla de siete y el cuerpo baja a 8,2 px
-        (`.rpt-people`) justamente para que quepan dos nombres completos."""
-        assert row_px(_row(operators=2)) == ROW_BASE_PX
+    def test_operators_no_longer_grow_the_row(self):
+        """⚠️ **LV-248, y el cambio de signo es a propósito.** Estos tests
+        afirmaban que cuatro operadores hacían crecer la fila a 60 px —era cierto:
+        la celda los listaba a todos y envolvía de dos en dos, y fue lo que rompió
+        el primer reparto—. El usuario pidió un informe más corto con lo esencial y
+        eligió recortar **exactamente eso**: la celda dice ahora «4 operadores», y
+        la nómina completa va al anexo del final (`roster_row_px`). Así que ya no
+        importa cuántos sean: la fila mide una línea."""
+        assert row_px(_row(operators=4)) == ROW_BASE_PX
+        assert row_px(_row(operators=12)) == ROW_BASE_PX
 
-    def test_four_operators_wrap_and_the_row_grows(self):
-        """⚠️ El caso que rompió el primer arreglo: medido en el navegador, una
-        fila de cuatro operadores mide **60 px** contra los 45 de una de dos."""
-        assert row_px(_row(operators=4)) == 60
+    def test_aircraft_still_do(self):
+        """Las aeronaves siguen listándose, una por línea —la plantilla las separa
+        con `<br>`—, así que son lo único que todavía hace crecer la fila."""
+        from apps.reporting.pagination import ROW_LINE_PX
 
-    def test_the_tallest_multivalued_cell_wins(self):
-        """Van una al lado de la otra, así que la fila mide lo que mida la peor.
-        Las aeronaves van una por línea —la plantilla las separa con `<br>`— así
-        que tres aeronaves pesan como cinco o seis operadores."""
-        assert row_px(_row(operators=1, aircraft=3)) == row_px(
-            _row(operators=6, aircraft=1)
-        )
+        assert row_px(_row(aircraft=3)) == ROW_BASE_PX + 2 * ROW_LINE_PX
 
     def test_a_row_with_nothing_still_takes_a_line(self):
         """Un permiso sin operadores cargados dibuja un guion, no una celda de
@@ -128,6 +128,31 @@ class TestNothingIsEverDropped:
             # caso, y el margen de seguridad lo absorbe.
             assert used <= budget or len(sheet) == 1, (index, used, budget)
 
+    @pytest.mark.parametrize("shortfall", [0, 1, 2])
+    def test_the_closing_blocks_always_get_their_room(self, shortfall):
+        """⚠️ **LV-248.** Cuando todas las filas caben en la primera hoja *no
+        final* —cuyo presupuesto no descuenta el cierre— pero no en una sola hoja,
+        la hoja final quedaba vacía, se descartaba, y la primera pasaba a ser la
+        última **sin el espacio del cierre**: la observación, la leyenda y las
+        solicitudes en trámite quedaban bajo el pie, recortadas en silencio. Se vio
+        con los números de entonces —once filas de 45 px, 495 contra 500—, y se
+        construye acá desde las constantes y no con números fijos, para que el caso
+        siga ejercitándose cuando se vuelva a medir."""
+        closing = 313
+        non_final = sheet_budget_px(first=True, last=False, closing_px=closing)
+        single = sheet_budget_px(first=True, last=True, closing_px=closing)
+        count = non_final // ROW_BASE_PX - shortfall
+        # El caso existe sólo si no caben en una hoja sola: si no, no hay trampa.
+        assert count * ROW_BASE_PX > single
+        rows = [_row(operators=4) for _ in range(count)]
+
+        sheets = paginate(rows, closing_px=closing)
+
+        last = sheets[-1]
+        budget = sheet_budget_px(first=len(sheets) == 1, last=True, closing_px=closing)
+        assert sum(row_px(row) for row in last) <= budget or len(last) == 1
+        assert [row for sheet in sheets for row in sheet] == rows
+
     def test_an_empty_section_still_gets_one_sheet(self):
         """La sección existe en el documento y tiene que decir «ningún permiso
         vigente al corte» en su hoja."""
@@ -142,12 +167,55 @@ class TestNothingIsEverDropped:
 
     def test_tall_rows_need_more_sheets_than_short_ones(self):
         """La comprobación de que la estimación se usa de verdad: las mismas
-        veinte filas, con cuatro operadores cada una, no caben donde caben con
-        uno."""
-        short = paginate([_row(operators=1) for _ in range(20)])
-        tall = paginate([_row(operators=6) for _ in range(20)])
+        veinte filas, con cuatro aeronaves cada una, no caben donde caben con una.
+        LV-248: con aeronaves y no con operadores, que ya no alargan la fila."""
+        short = paginate([_row(aircraft=1) for _ in range(20)])
+        tall = paginate([_row(aircraft=4) for _ in range(20)])
 
         assert len(tall) > len(short)
+
+    def test_the_same_permits_now_take_fewer_sheets(self):
+        """⚠️ **La mitad visible del pedido**: *"que el informe sea más corto, con
+        lo esencial"*. Veinte permisos de cuatro operadores —lo que tiene
+        producción— necesitaban una hoja más cuando la celda listaba los nombres;
+        ahora caben donde caben veinte de uno."""
+        four = paginate([_row(operators=4) for _ in range(20)])
+        one = paginate([_row(operators=1) for _ in range(20)])
+
+        assert len(four) == len(one)
+
+
+class TestTheRosterAnnex:
+    """LV-248: la nómina completa, fuera de la tabla de permisos."""
+
+    def test_names_wrap_four_to_a_line(self):
+        from apps.reporting.pagination import (
+            ROSTER_LINE_PX,
+            ROSTER_ROW_BASE_PX,
+            roster_row_px,
+        )
+
+        assert roster_row_px(_row(operators=4)) == ROSTER_ROW_BASE_PX
+        assert roster_row_px(_row(operators=5)) == ROSTER_ROW_BASE_PX + ROSTER_LINE_PX
+
+    def test_the_annex_never_drops_a_row_either(self):
+        """La propiedad de fondo, la misma que la tabla de permisos: todo permiso
+        cae en exactamente una hoja, y en orden."""
+        from apps.reporting.pagination import (
+            ROSTER_FIRST_ROW_TOP_PX,
+            roster_row_px,
+        )
+
+        rows = [_row(operators=9) for _ in range(60)]
+
+        sheets = paginate(
+            rows,
+            closing_px=0,
+            estimate=roster_row_px,
+            first_top=ROSTER_FIRST_ROW_TOP_PX,
+        )
+
+        assert [row for sheet in sheets for row in sheet] == rows
 
 
 class TestWhatTheTemplateGets:

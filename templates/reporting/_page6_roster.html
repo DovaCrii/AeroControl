@@ -1,0 +1,48 @@
+{% load report_leaf %}
+{% comment %}LV-248 · Anexo · Operadores designados por permiso.
+
+**Existe porque la tabla de permisos dejó de listarlos.** El usuario pidió un
+informe más corto con lo esencial, y lo que eligió recortar fue la nómina dentro de
+la tabla: allá queda «4 operadores», acá queda quiénes. Nada se pierde del papel
+firmado, sólo cambia de lugar — y va al final porque es consulta, no lectura: quien
+revisa el cumplimiento lee las cifras, y quien necesita saber si una persona estaba
+autorizada viene a esta hoja.
+
+Incluye los vigentes **y** los en trámite, en el mismo orden que la tabla de la
+sección 2, para que un folio se encuentre en las dos hojas en la misma posición.
+
+Paginada con el mismo mecanismo que la tabla de permisos (`pagination.py`, con su
+propio estimador), y con el total declarado en cada hoja: un recorte contra un total
+escrito se nota.{% endcomment %}
+<div class="rpt-page">
+
+  {% include "reporting/_head.html" %}
+
+  <div class="rpt-body rpt-stack-16">
+    <div>
+      <div class="rpt-h2"><span class="rpt-h2-num">A</span><span class="rpt-h2-text">Anexo · Operadores designados por permiso</span></div>
+      <div class="rpt-h2-rule"></div>
+    </div>
+
+    <div>
+      <div class="rpt-label" style="margin-bottom: 10px;">{{ sheet.total }} permiso{{ sheet.total|pluralize:"s" }} con su nómina designada{% if sheet.of > 1 %} · hoja {{ sheet.index }} de {{ sheet.of }} del anexo{% endif %}</div>
+      <div class="rpt-table">
+        <div class="rpt-grid-roster rpt-grid-head">
+          <div class="th">N° JEJ</div>
+          <div class="th">CC</div>
+          <div class="th">Operadores designados</div>
+        </div>
+        <div class="rpt-grid-roster">
+          {% for permit in sheet.rows %}
+          <div class="c rpt-num">{{ permit.folio }}</div>
+          <div class="c">{{ permit.cost_centre }}</div>
+          <div class="c rpt-people">{% for name in permit.operators %}{{ name }}{% if not forloop.last %} · {% endif %}{% empty %}<span class="rpt-dash">—</span>{% endfor %}</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% include "reporting/_foot.html" with section="roster" %}
+
+</div>

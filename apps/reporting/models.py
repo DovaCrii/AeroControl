@@ -243,6 +243,14 @@ class ReportRun(BaseModel):
             completeness=(cls.COMPLETENESS_PARTIAL if missing else cls.COMPLETENESS_OK),
             findings=latest.findings if latest else [],
             period_note=latest.period_note if latest else "",
+            # LV-247: **las acciones también viajan**, y no viajaban. El docstring
+            # de arriba lo afirmaba para "la narrativa" entera, y la narrativa son
+            # tres bloques: se copiaban dos. `actions` llegó después (`LV-235`, las
+            # acciones del Dato Ejecutivo) y esta línea no se enteró, así que
+            # emitir una revisión para corregir una cifra **borraba en silencio**
+            # las acciones escritas — justo cuando alguien está corrigiendo el
+            # documento y menos lo va a notar.
+            actions=latest.actions if latest else [],
         )
         if latest:
             cls.objects.filter(period=period).exclude(pk=run.pk).update(

@@ -58,6 +58,9 @@ no es interfaz, es el papel que se firma ante la DGAC.{% endcomment %}
     Referencia: DAN 91, DAN 137, DAN 151 · INS-096 numeral 6.4.1.
     {% elif section == "coverage" %}
     Fuente: AeroControl — módulo Permisos, corte al {{ cutoff_date|date:"d-m-Y" }}.
+    {% elif section == "roster" %}
+    Nómina designada en cada permiso vigente o en trámite al {{ cutoff_date|date:"d-m-Y" }},
+    tal como figura en el permiso. Detalle de la sección 2.
     {% elif section == "plan" %}
     El informe mensual es obligación del {{ payload.meta.issued_by }} en conjunto
     con el {{ payload.meta.jointly_with }} (INS-096, 5.4.2 y 6.5).
