@@ -6,12 +6,113 @@ resource_id gets resolved to a human label.
 """
 
 from collections import defaultdict
+from datetime import timedelta
 
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 
 from .models import Aircraft, Operator, Qualification, ResourceMovementLog
+
+# LV-242: el criterio de "al día", en un solo lugar para las dos superficies.
+#
+# El panel dice *"Seguros al día 13/14 · 1 vencido"* y su tarjeta llevaba al padrón
+# **completo, sin filtrar**: la cifra decía cuántos faltan y después había que
+# buscarlos a ojo entre dieciséis. El filtro no existía en `AircraftList` ni en
+# `OperatorList` — sólo `search_fields`.
+#
+# ⚠️ **Y el criterio tiene que ser el mismo, o el clic miente.** Si la lista
+# filtrara sólo por fecha, una aeronave con póliza vencida pero dada de baja
+# aparecería ahí y no en la tarjeta: el usuario contaría cinco donde el panel dijo
+# cuatro. Por eso las exclusiones viven acá y las usan los dos —`panel_readiness`
+# y la lista—, que es la lección que `LV-188` y `LV-201` dejaron cara: dos mitades
+# del mismo cálculo separadas terminan diciendo números distintos.
+
+
+def operational_fleet():
+    """La flota sobre la que se mide disponibilidad y cobertura.
+
+    `retired` queda fuera porque una aeronave dada de baja no está "no
+    disponible": salió de la flota, y contarla hundiría el indicador para siempre
+    por una decisión correcta (el mismo criterio que `kpis.fleet_availability`).
+
+    Las faenas que **no vuelan** también (`LV-229`): sus equipos están en bodega, y
+    un seguro sin renovar ahí no es una brecha de cobertura. `cost_center__isnull`
+    **entra**, y eso no es descuido: una aeronave sin faena no es una que no vuela,
+    es una cuya pertenencia falta — y eso sí hay que verlo.
+    """
+    return (
+        Aircraft.objects.filter(is_active=True)
+        .exclude(status="retired")
+        .exclude(cost_center__operates_flights=False)
+    )
+
+
+def operational_roster():
+    """El padrón sobre el que se miden las credenciales DGAC."""
+    return Operator.objects.filter(is_active=True)
+
+
+def filter_by_insurance(queryset, key, today):
+    """Acota la flota por el estado de su póliza JAC, o la devuelve intacta.
+
+    `attention` es **el complemento exacto del numerador de la tarjeta**: todo lo
+    que no cuenta como "al día", sea por fecha vencida, por no tener fecha o
+    porque la póliza no está activa. Es el destino natural del clic — la tarjeta
+    dice cuántos faltan y el clic muestra cuáles.
+
+    Una clave desconocida no filtra ni falla, que es la convención del repo para
+    los parámetros de listado: un filtro mal escrito es un no-op, no un error.
+
+    ⚠️ **Con filtro puesto se acota además a la flota operativa, y ese es el punto
+    de la fila.** Sin eso, una aeronave con la póliza vencida pero **dada de baja**
+    —o de una faena que no vuela— saldría en la lista y no en la tarjeta: el
+    usuario contaría cinco donde el panel dijo cuatro, y la cifra dejaría de ser
+    creíble justo cuando se va a actuar sobre ella. Lo cazaron dos tests de
+    `LV-242` escritos antes de que el filtro existiera.
+
+    Sin filtro **no** se acota: la lista es el padrón, y esconder ahí una aeronave
+    dada de baja sería peor que mostrarla.
+    """
+    if key not in {"attention", "lapsed", "missing", "soon"}:
+        return queryset
+    queryset = queryset.exclude(status="retired").exclude(
+        cost_center__operates_flights=False
+    )
+    if key == "attention":
+        return queryset.exclude(
+            insurance_status=Aircraft.INSURANCE_STATUS_ACTIVE,
+            insurance_expiry__gte=today,
+        )
+    if key == "lapsed":
+        return queryset.filter(insurance_expiry__lt=today)
+    if key == "missing":
+        return queryset.filter(insurance_expiry__isnull=True)
+    return queryset.filter(
+        insurance_expiry__gte=today,
+        insurance_expiry__lte=today + timedelta(days=30),
+    )
+
+
+def filter_by_credential(queryset, key, today):
+    """Lo mismo para la credencial DGAC de cada operador.
+
+    Aquí "al día" es sólo la fecha —no hay un campo de estado como en la póliza—
+    así que `attention` es todo lo que no tiene una vigencia por delante,
+    incluidos los que nunca la tuvieron cargada.
+    """
+    if key == "attention":
+        return queryset.exclude(credential_expiry__gte=today)
+    if key == "lapsed":
+        return queryset.filter(credential_expiry__lt=today)
+    if key == "missing":
+        return queryset.filter(credential_expiry__isnull=True)
+    if key == "soon":
+        return queryset.filter(
+            credential_expiry__gte=today,
+            credential_expiry__lte=today + timedelta(days=30),
+        )
+    return queryset
 
 
 def label_movements(entries):

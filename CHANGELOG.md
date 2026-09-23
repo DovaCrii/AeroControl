@@ -255,6 +255,17 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **Las cifras del panel ahora llevan al trabajo que anuncian (`LV-242`).** Decía
+  «1 vencido» y el clic traía las dieciséis aeronaves, así que el número informaba
+  y no servía: el filtro por vigencia no existía en ninguna de las dos listas.
+  Ahora la tarjeta lleva exactamente a los que contó — y el criterio vive en un
+  solo lugar, para que la lista no muestre cinco donde la tarjeta dijo cuatro. Con
+  eso, tres arreglos de la misma familia: «Abrir» en la bandeja abre **la alerta**
+  y no el listado entero (las veinte filas apuntaban a la misma página), la lista
+  de vencimientos **dice cuántos esconde** cuando se corta en diez, y la tabla por
+  faena muestra **la fecha del próximo vencimiento** — un dato que ya se calculaba,
+  que el informe dibuja hace meses y que el panel descartaba, siendo el que dice
+  cuál renovar primero.
 - **Lo vencido se contaba mal, y por eso el panel se veía limpio (`LV-241`).**
   Pedido del usuario mirando la pantalla: una faena tenía dos documentos atrasados
   en la lista de vencimientos y su fila de la tabla de permisos estaba **entera en

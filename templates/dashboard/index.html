@@ -267,6 +267,16 @@ when the three are done.{% endcomment %}
       {% empty %}
       <p class="text-muted my-2">{% translate "Nothing expired or expiring." %}</p>
       {% endfor %}
+      {% comment %}LV-242: **la lista se cortaba en diez sin decirlo.** La tarjeta
+      de arriba podía decir 34 y acá había diez filas, sin nada que avisara de las
+      otras veinticuatro — y el único enlace de la sección va a la bandeja de
+      alertas, que **no contiene** lo que todavía no generó alerta: el motor corre
+      a las 06:00, así que un vencimiento cargado hoy no tiene alerta ninguna y no
+      está allá. Tres bloques más abajo, la sección de SIGO ya resolvía esto con su
+      "y N más".{% endcomment %}
+      {% if expirations_total > expirations|length %}
+      <p class="small text-muted mb-0 mt-2">{% blocktranslate count counter=expirations_total|add:"-10" %}and {{ counter }} more not shown{% plural %}and {{ counter }} more not shown{% endblocktranslate %}</p>
+      {% endif %}
     </div>
   </div>
 </div>
@@ -341,6 +351,12 @@ en `CostCenter`).{% endcomment %}
           Centrado, el número queda bajo su palabra.{% endcomment %}
           <th scope="col">{% translate "Cost center" %}</th>
           <th scope="col" class="text-center">{% translate "In force" %}</th>
+          {% comment %}LV-242: la fecha del primer permiso que cae. `kpis` la calcula
+          desde `R4` —con `Min` y no `Max`, porque el que obliga a actuar es el
+          primero— el informe la dibuja hace meses, y el panel la **descartaba**: la
+          tabla tenía cuatro columnas de conteos y ninguna de fecha, que es
+          justamente el dato que dice cuál renovar primero.{% endcomment %}
+          <th scope="col" class="text-center">{% translate "Next expiry" %}</th>
           <th scope="col" class="text-center">{% translate "Expiring soon" %}</th>
           <th scope="col" class="text-center">{% translate "Awaiting" %}</th>
           <th scope="col" class="text-center">{% translate "Past validity" %}</th>
@@ -359,6 +375,7 @@ en `CostCenter`).{% endcomment %}
             </a>
           </td>
           <td class="text-center">{% if row.in_force %}<b>{{ row.in_force }}</b>{% else %}<span class="text-warning-emphasis">{% translate "None" %}</span>{% endif %}</td>
+          <td class="text-center">{% if row.next_expiry %}{{ row.next_expiry|date:"Y-m-d" }}{% if row.days_remaining is not None %} <span class="text-muted">· {% blocktranslate count days=row.days_remaining %}{{ days }} day left{% plural %}{{ days }} days left{% endblocktranslate %}</span>{% endif %}{% else %}<span class="text-muted">—</span>{% endif %}</td>
           <td class="text-center">{% if row.soon %}<span class="text-warning-emphasis">{{ row.soon }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
           <td class="text-center">{% if row.awaiting %}{{ row.awaiting }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
           {% comment %}LV-241: esta columna estaba **estructuralmente en cero**. Sólo

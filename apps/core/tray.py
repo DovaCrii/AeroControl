@@ -99,7 +99,19 @@ def _alerts(user):
                 severity=alert.urgency_level,
                 owner=alert.assigned_to,
                 due=alert.triggering_date,
-                url=reverse("alert-list"),
+                # LV-242: **abre la alerta, no el listado.** El docstring de este
+                # módulo prometía *"la URL de la acción que ya existe — el modal de
+                # resolver"* y las veinte filas apuntaban a la misma página: había
+                # que volver a buscar en una lista paginada la alerta que se acababa
+                # de elegir. Las otras tres fuentes ya usaban `get_absolute_url()`,
+                # así que la bandeja cumplía su promesa en tres cuartas partes.
+                #
+                # `alert-resolve` y no un detalle, porque **la alerta no tiene
+                # ficha**: lo que existe es el formulario de resolver, que es además
+                # lo que uno viene a hacer. Responde a un `GET` con la página
+                # completa, así que sirve igual como destino de un enlace que como
+                # modal desde el listado.
+                url=reverse("alert-resolve", args=[alert.pk]),
             )
         )
     return rows

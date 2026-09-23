@@ -20,6 +20,7 @@ from apps.compliance.expirations import upcoming_expirations
 from apps.maintenance.models import MaintenanceRecord
 from apps.operations.models import FlightRecord, FlightRequest
 from apps.registry.models import Aircraft, CostCenter, Operator
+from apps.registry.selectors import operational_fleet, operational_roster
 
 
 def panel_readiness(today, cost_center=None):
@@ -45,25 +46,17 @@ def panel_readiness(today, cost_center=None):
 
     horizon = today + timedelta(days=30)
 
-    fleet = Aircraft.objects.filter(is_active=True).exclude(status="retired")
-    # LV-229: fuera los equipos de una faena que **no vuela**.
-    #
-    # Encontrado midiendo `LV-74`: `RPA-2019` figuraba como "sin seguro JAC" y
-    # está en `CC110`, uno de los centros administrativos que `LV-205` distinguió
-    # a pedido del usuario (*"el CC110 de casa matriz o 410, por ejemplo, estamos
-    # a cargo más de los equipos que volar"*). Confirmado con él: ese equipo está
-    # en bodega y no opera, así que **no es una brecha de seguro** — y contarlo
-    # como falta bajaba el indicador por una decisión correcta.
-    #
-    # Es el mismo criterio que `permit_status_by_cost_center` ya aplicaba a los
-    # permisos, y que a este contador le faltaba: dos indicadores del mismo panel
-    # respondían distinto a la misma pregunta sobre la misma faena.
-    #
-    # `cost_center__isnull=True` **entra**, no se excluye: una aeronave sin faena
-    # no es una aeronave que no vuela, es una aeronave cuya pertenencia falta —y
-    # eso sí es una brecha que hay que ver, no una que ocultar.
-    fleet = fleet.exclude(cost_center__operates_flights=False)
-    operators = Operator.objects.filter(is_active=True)
+    # LV-242: las exclusiones se leen de `registry.selectors`, que es de donde las
+    # lee también el filtro `?insurance=` de la lista. Vivían escritas acá, y la
+    # tarjeta llevaba al padrón sin filtrar — en cuanto el clic empezó a filtrar de
+    # verdad, dos copias del criterio habrían hecho que el número de la tarjeta y
+    # las filas del listado dejaran de coincidir. El porqué de cada exclusión está
+    # en el docstring de `operational_fleet`.
+    # LV-229 (el porqué de excluir las faenas que no vuelan, con el caso de
+    # `RPA-2019` en `CC110` que lo motivó) vive ahora en ese docstring, junto al
+    # criterio que aplica.
+    fleet = operational_fleet()
+    operators = operational_roster()
 
     # **El padrón que se cuenta es el que existía en `today`, no el de hoy.**
     #
@@ -165,7 +158,16 @@ def panel_readiness(today, cost_center=None):
                 "soon": fleet.filter(
                     insurance_expiry__gte=today, insurance_expiry__lte=horizon
                 ).count(),
-                "url": reverse("aircraft-list"),
+                # LV-242: el clic lleva a **lo que falta**, no al padrón entero.
+                # La tarjeta dice cuántos no están al día; su destino natural es
+                # esa lista y no las dieciséis aeronaves para buscarlas a ojo.
+                # Cuando no falta ninguno el enlace se queda en la lista completa:
+                # un filtro que no recorta nada es un filtro que confunde.
+                "url": (
+                    f"{reverse('aircraft-list')}?insurance=attention"
+                    if fleet_total - insured
+                    else reverse("aircraft-list")
+                ),
             },
             {
                 "key": "credentials",
@@ -188,7 +190,14 @@ def panel_readiness(today, cost_center=None):
                 "soon": operators.filter(
                     credential_expiry__gte=today, credential_expiry__lte=horizon
                 ).count(),
-                "url": reverse("operator-list"),
+                # LV-242: ver la fila de seguros. Acá pesaba más, porque el padrón
+                # es de cuarenta y cinco personas y la tarjeta llegó a decir
+                # "7 sin fecha cargada".
+                "url": (
+                    f"{reverse('operator-list')}?credential=attention"
+                    if operators_total - credentialed
+                    else reverse("operator-list")
+                ),
             },
             {
                 "key": "permits",
@@ -568,6 +577,10 @@ def dashboard(request):
         "awaiting_count": awaiting_count,
         "longest_wait": longest_wait,
         "expirations": expirations,
+        # LV-242: cuántos hay en total, para poder decir lo que el corte esconde.
+        # No cuesta consulta: `all_expirations` ya está en memoria, y es la misma
+        # lista de la que salen los dos contadores de la tarjeta.
+        "expirations_total": len(all_expirations),
         "expiring_count": expiring_count,
         "overdue_count": overdue_count,
         "show_onboarding": show_onboarding,
