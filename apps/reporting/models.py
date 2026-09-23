@@ -327,3 +327,164 @@ class ReportRun(BaseModel):
         lado.
         """
         return self.status == self.STATUS_DRAFT
+
+
+class ReportTemplate(BaseModel):
+    """LV-249: los bloques del informe que se editan desde la aplicación.
+
+    Pedido del usuario: *"tomar otras plantillas más fáciles de modificar"*. Hasta
+    acá la portada vivía en `builder.collect_meta`, las fases del plan en la
+    constante `PLAN_PHASES` —con los meses de 2026 escritos— y la matriz de
+    exigibilidad en la plantilla, con **SEP–DIC a mano**: en enero iba a imprimirse
+    un plan vencido como vigente, y cambiar una coma exigía un despliegue.
+
+    ⚠️ **Esto revierte a propósito una decisión escrita en `builder.py`**: *"una
+    tabla de configuración para cuatro filas que nadie edita es una tabla que nadie
+    mantiene"*. Era cierto mientras nadie las editaba; el usuario pidió
+    explícitamente poder hacerlo, y eligió esta forma —bloques editables en la app—
+    por sobre exportar a Word.
+
+    **No es un editor de plantillas**, y esa es la otra mitad de la decisión: el
+    diseño y las cifras siguen en el repositorio y en la base. `LV-227` descartó
+    editar plantillas desde la web porque una plantilla es código con acceso al
+    contexto; acá se editan **textos**, que el informe dibuja como textos.
+
+    ⚠️ **Regla que no se negocia: se lee al congelar.** `build()` copia estos bloques
+    al payload, y un informe congelado se dibuja desde su payload. Editar la
+    portada hoy cambia la vista previa y los informes que se congelen desde ahora;
+    un informe ya emitido sigue diciendo lo que dijo — que es la razón de existir de
+    `ReportRun`.
+
+    Hay **uno** activo (`current`); una migración lo siembra con los textos que el
+    código tenía, así que el primer informe después del cambio sale idéntico.
+    """
+
+    issued_by = models.CharField(_("Issued by"), max_length=200)
+    jointly_with = models.CharField(_("Jointly with"), max_length=200)
+    standard = models.CharField(_("Standard"), max_length=120)
+    addressed_to = models.CharField(_("Addressed to"), max_length=300)
+    scope = models.CharField(_("Scope"), max_length=200)
+    sources = models.CharField(_("Sources"), max_length=200)
+    plan_lede = models.TextField(_("Plan introduction"))
+
+    class Meta:
+        verbose_name = _("report template")
+        verbose_name_plural = _("report templates")
+
+    def __str__(self):
+        return self.standard
+
+    @classmethod
+    def current(cls):
+        """El bloque vigente, o `None` en una base sin sembrar.
+
+        `None` y no un error: `build()` cae a los textos de siempre, y un informe
+        que no se puede generar por falta de configuración es peor que uno que sale
+        con la portada de fábrica.
+        """
+        return cls.objects.filter(is_active=True).order_by("created_at").first()
+
+    def active_phases(self):
+        return self.phases.filter(is_active=True).order_by("month")
+
+    def active_matrix_rows(self):
+        return self.matrix_rows.filter(is_active=True).order_by("order", "created_at")
+
+
+class PlanPhase(BaseModel):
+    """LV-249: una fase del plan de normalización, con su mes.
+
+    Reemplaza a `builder.PLAN_PHASES`. El **estado** de cada fase —cumplida, en
+    curso, por venir— se sigue calculando contra el período del informe
+    (`collect_plan`), así que editar una fase no la marca como vigente: lo decide el
+    calendario.
+    """
+
+    template = models.ForeignKey(
+        ReportTemplate, on_delete=models.PROTECT, related_name="phases"
+    )
+    month = models.DateField(
+        _("month"),
+        help_text=_("The phase is the whole month; the day is ignored."),
+    )
+    title = models.CharField(_("Title"), max_length=200)
+    text = models.TextField(_("Description"))
+    close = models.CharField(_("Closing criterion"), max_length=300)
+
+    class Meta:
+        ordering = ["month"]
+        verbose_name = _("plan phase")
+        verbose_name_plural = _("plan phases")
+
+    def __str__(self):
+        return f"{self.month:%Y-%m} · {self.title}"
+
+    def save(self, *args, **kwargs):
+        # Una fase es un mes entero: se guarda el día 1 para que dos fases del
+        # mismo mes se reconozcan como tales y la clave de la matriz sea estable.
+        if self.month:
+            self.month = self.month.replace(day=1)
+        super().save(*args, **kwargs)
+
+    @property
+    def key(self):
+        """La clave con que la matriz de exigibilidad se refiere a este mes."""
+        return f"{self.month:%Y-%m}"
+
+
+class ExigibilityRow(BaseModel):
+    """LV-249: una fila de la matriz de exigibilidad progresiva.
+
+    **Las columnas no se guardan: son las fases.** La matriz de la plantilla tenía
+    SEP–DIC escrito a mano, y en enero habría seguido diciéndolo. Acá cada fila
+    guarda un nivel **por mes de fase** (`levels`, `{"2026-09": "due", …}`), y las
+    columnas del informe salen de las fases vigentes: agregar una fase agrega una
+    columna, y un mes sin nivel se dibuja como «No aplica».
+    """
+
+    LEVEL_DUE = "due"
+    LEVEL_INFO = "info"
+    LEVEL_NA = "na"
+    LEVEL_CHOICES = [
+        # Con contexto: "Required" ya está en el catálogo como «Requerido» —lo usan
+        # los formularios—, y en el informe este nivel se llama «Exigible».
+        (LEVEL_DUE, pgettext_lazy("requirement level", "Required")),
+        (LEVEL_INFO, _("Informative")),
+        (LEVEL_NA, _("Not applicable")),
+    ]
+
+    template = models.ForeignKey(
+        ReportTemplate, on_delete=models.PROTECT, related_name="matrix_rows"
+    )
+    order = models.PositiveSmallIntegerField(_("Order"), default=0)
+    label = models.CharField(_("What is reported"), max_length=200)
+    emphasis = models.BooleanField(_("Emphasised"), default=False)
+    levels = models.JSONField(_("Levels"), default=dict, blank=True)
+
+    class Meta:
+        ordering = ["order", "created_at"]
+        verbose_name = _("requirement row")
+        verbose_name_plural = _("requirement rows")
+
+    def __str__(self):
+        return self.label
+
+    def clean(self):
+        """Los niveles son uno de tres. En el modelo y no sólo en el formulario,
+        porque el admin y una migración de datos también escriben acá, y un nivel
+        mal escrito no falla al guardar: se dibuja como una celda sin color."""
+        super().clean()
+        valid = {code for code, _label in self.LEVEL_CHOICES}
+        if not isinstance(self.levels, dict) or any(
+            value not in valid for value in self.levels.values()
+        ):
+            raise ValidationError(
+                {
+                    "levels": _(
+                        "Each level must be required, informative or not applicable."
+                    )
+                }
+            )
+
+    def level_for(self, phase_key):
+        return self.levels.get(phase_key, self.LEVEL_NA)

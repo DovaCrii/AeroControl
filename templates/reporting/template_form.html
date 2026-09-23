@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Report texts" %} - AeroControl{% endblock %}
+
+{% comment %}LV-249: los bloques editables del informe mensual.
+
+**No es un editor de plantillas**, igual que la narrativa (`LV-227`): se editan
+textos, y el informe los dibuja como textos. El diseño sigue en el repositorio y las
+cifras en la base.
+
+La advertencia de arriba no es decoración: es la pregunta que cualquiera se hace
+antes de guardar —"¿esto cambia el informe que ya mandé?"— y la respuesta es no.{% endcomment %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <p class="page-eyebrow mb-1">{% translate "Reports" %}</p>
+    <h1 class="h3 mb-0">{% translate "Report texts" %}</h1>
+    <p class="page-description mb-0">{% translate "The cover, the plan phases and the requirement matrix of the monthly report. The figures come from the database and are not edited here." %}</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{% url 'monthly-report' %}">{% translate "Back to the report" %}</a>
+</div>
+
+<div class="alert alert-info" role="note">
+  {% translate "Changes apply to the preview and to reports frozen from now on. A report already frozen keeps the texts it was issued with." %}
+</div>
+
+<form method="post" class="card p-3">
+  {% csrf_token %}
+
+  <h2 class="h5">{% translate "Cover" %}</h2>
+  {% for field in cover_form %}
+  <div class="mb-2">
+    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label|capfirst }}</label>
+    {{ field }}
+    {{ field.errors }}
+  </div>
+  {% endfor %}
+
+  <hr>
+
+  <h2 class="h5">{% translate "Plan phases" %}</h2>
+  <p class="text-muted small">{% translate "One phase per month. Whether a phase is done, current or upcoming is worked out from the report period, not set here." %}</p>
+  {{ phase_formset.management_form }}
+  {% if phase_formset.non_form_errors %}<div class="alert alert-danger" role="alert">{{ phase_formset.non_form_errors }}</div>{% endif %}
+  {% for form in phase_formset %}
+  <div class="border rounded p-3 mb-3">
+    {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+    <div class="row g-2">
+      <div class="col-md-3">
+        <label class="form-label" for="{{ form.month.id_for_label }}">{{ form.month.label }}</label>
+        {{ form.month }}{{ form.month.errors }}
+      </div>
+      <div class="col-md-9">
+        <label class="form-label" for="{{ form.title.id_for_label }}">{{ form.title.label|capfirst }}</label>
+        {{ form.title }}{{ form.title.errors }}
+      </div>
+      <div class="col-12">
+        <label class="form-label" for="{{ form.text.id_for_label }}">{{ form.text.label|capfirst }}</label>
+        {{ form.text }}{{ form.text.errors }}
+      </div>
+      <div class="col-md-9">
+        <label class="form-label" for="{{ form.close.id_for_label }}">{{ form.close.label|capfirst }}</label>
+        {{ form.close }}{{ form.close.errors }}
+      </div>
+      {% if form.instance.pk %}
+      <div class="col-md-3 d-flex align-items-end">
+        <div class="form-check">{{ form.DELETE }} <label class="form-check-label" for="{{ form.DELETE.id_for_label }}">{% translate "Remove this phase" %}</label></div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+
+  <hr>
+
+  <h2 class="h5">{% translate "Requirement matrix" %}</h2>
+  <p class="text-muted small">{% translate "One column per saved phase. A phase added in this same save gets its column once saved." %}</p>
+  {{ row_formset.management_form }}
+  {% if row_formset.non_form_errors %}<div class="alert alert-danger" role="alert">{{ row_formset.non_form_errors }}</div>{% endif %}
+  <div class="table-responsive">
+    <table class="table table-sm align-middle">
+      <thead>
+        <tr>
+          <th scope="col">{% translate "Order" %}</th>
+          <th scope="col">{% translate "What is reported" %}</th>
+          <th scope="col">{% translate "Bold" %}</th>
+          {% for field in row_formset.forms.0.level_fields %}<th scope="col">{{ field.label }}</th>{% endfor %}
+          <th scope="col">{% translate "Remove" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for form in row_formset %}
+        <tr>
+          <td style="width: 5rem;">{% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}{{ form.order }}</td>
+          <td>{{ form.label }}{{ form.label.errors }}</td>
+          <td class="text-center">{{ form.emphasis }}</td>
+          {% for field in form.level_fields %}<td>{{ field }}</td>{% endfor %}
+          <td class="text-center">{% if form.instance.pk %}{{ form.DELETE }}{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="d-flex gap-2 mt-3">
+    <button class="btn btn-primary">{% translate "Save" %}</button>
+    <a class="btn btn-outline-secondary" href="{% url 'monthly-report' %}">{% translate "Cancel" %}</a>
+  </div>
+</form>
+{% endblock %}

@@ -377,6 +377,115 @@ class ReportNarrativeUpdate(ModelPermissionRequiredMixin, View):
         )
 
 
+class ReportTemplateUpdate(ModelPermissionRequiredMixin, View):
+    """LV-249: los bloques editables del informe — portada, fases y matriz.
+
+    Pedido del usuario: *"tomar otras plantillas más fáciles de modificar"*. Lo que
+    se edita acá es lo que hasta ahora exigía tocar el código: la portada
+    (`collect_meta`), las fases del plan (`PLAN_PHASES`) y la matriz de exigibilidad,
+    que tenía SEP–DIC escrito a mano en la plantilla.
+
+    Mismo permiso que la narrativa (`change_reportrun`): quien puede redactar el
+    informe puede ajustar sus textos fijos. No se inventa un permiso nuevo para
+    cuatro filas.
+
+    ⚠️ **Editar acá no cambia ningún informe congelado**: los bloques se copian al
+    payload al congelar, y un informe congelado se dibuja desde su payload. Cambia
+    la vista previa y los que se congelen de aquí en adelante. La pantalla lo dice,
+    porque es exactamente lo que alguien se preguntaría antes de guardar.
+    """
+
+    model = ReportRun
+    permission_action = "change"
+
+    def get(self, request):
+        template = self._template()
+        return self._render(request, *self._forms(template))
+
+    def post(self, request):
+        template = self._template()
+        cover, phases, rows = self._forms(template, request.POST)
+        if not (cover.is_valid() and phases.is_valid() and rows.is_valid()):
+            return self._render(request, cover, phases, rows)
+
+        from django.db import transaction
+
+        with transaction.atomic():
+            cover.save()
+            self._save_archiving(phases)
+            self._save_archiving(rows)
+        set_audit_context(request, template, action="update")
+        messages.success(
+            request,
+            _(
+                "Saved. The preview and the reports frozen from now on use these "
+                "texts; reports already frozen keep theirs."
+            ),
+        )
+        return redirect("monthly-report-template")
+
+    @staticmethod
+    def _template():
+        """El bloque vigente, creándolo con los textos de fábrica si la base no lo
+        tiene sembrado — una pantalla de edición que no abre por falta de datos no
+        sirve para cargarlos."""
+        from .builder import FACTORY_COVER
+        from .models import ReportTemplate
+
+        template = ReportTemplate.current()
+        if template is None:
+            template = ReportTemplate.objects.create(**FACTORY_COVER, plan_lede="")
+        return template
+
+    @staticmethod
+    def _forms(template, data=None):
+        from .forms import ExigibilityRowFormSet, PlanPhaseFormSet, ReportTemplateForm
+
+        # Las columnas de la matriz son las fases **ya guardadas**: una fase que se
+        # agrega en este mismo envío suma su columna al guardar, no antes.
+        saved_phases = list(template.active_phases())
+        return (
+            ReportTemplateForm(data, instance=template, prefix="cover"),
+            PlanPhaseFormSet(
+                data,
+                instance=template,
+                queryset=template.active_phases(),
+                prefix="phases",
+            ),
+            ExigibilityRowFormSet(
+                data,
+                instance=template,
+                queryset=template.active_matrix_rows(),
+                prefix="rows",
+                form_kwargs={"phases": saved_phases},
+            ),
+        )
+
+    @staticmethod
+    def _save_archiving(formset):
+        """Guarda el formset **archivando** lo marcado para borrar.
+
+        `AGENTS.md`: nunca se borran filas, se archivan. Y acá importa más que en
+        otro lado: una fase borrada de la base haría que un informe **no congelado**
+        de un mes pasado cambiara su plan al regenerarse, sin rastro de que existió.
+        """
+        instances = formset.save(commit=False)
+        for obj in formset.deleted_objects:
+            obj.is_active = False
+            obj.save(update_fields=["is_active", "updated_at"])
+        for obj in instances:
+            obj.full_clean()
+            obj.save()
+
+    @staticmethod
+    def _render(request, cover, phases, rows):
+        return render(
+            request,
+            "reporting/template_form.html",
+            {"cover_form": cover, "phase_formset": phases, "row_formset": rows},
+        )
+
+
 class ReportApprove(ModelPermissionRequiredMixin, View):
     """R5: aprobar es lo que convierte el borrador en el documento emitido.
 
