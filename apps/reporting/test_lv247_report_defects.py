@@ -26,7 +26,9 @@ class TestARevisionKeepsTheWholeNarrative:
         con `LV-235`— se quedaban atrás. Corregir una cifra perdía en silencio lo
         escrito, justo cuando alguien está corrigiendo y menos lo va a notar."""
         first, _created = ReportRun.freeze(PERIOD, generated_by="lv247")
-        first.actions = [{"text": "Renovar el permiso de CC684", "owner": "ADC"}]
+        first.actions = [
+            {"action": "Renovar el permiso de CC684", "owner": "ADC", "due": ""}
+        ]
         first.findings = [{"severity": "high", "title": "Faenas sin permiso"}]
         first.period_note = "Vigencias no uniformes."
         first.save()

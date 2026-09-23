@@ -279,6 +279,17 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   parten en dos líneas). Y un plan geoespacial aprobado cuyo permiso caducó muestra
   **«⚠ Permiso vencido»** en la lista y en su ficha.
 
+### Added
+
+- **Los textos fijos del informe mensual se editan desde la app (`LV-249`).** La
+  portada, las fases del plan de normalización y la matriz de exigibilidad estaban
+  escritas en el código —la matriz decía «SEP–DIC» a mano, así que en enero habría
+  quedado vieja— y cambiar una coma exigía un despliegue. Ahora hay una pantalla
+  «Textos del informe», con el mismo permiso que la narrativa. Las columnas de la
+  matriz salen de las fases: agregar una fase agrega su mes. **Un informe ya
+  emitido no cambia** al editar: estos textos se copian al informe cuando se
+  congela, que es lo que lo vuelve un documento controlado.
+
 ### Changed
 
 - **Dependencias al día: Django 6.1.1, crispy-bootstrap5 2026.9, pytest-django

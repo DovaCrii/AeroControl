@@ -16,10 +16,10 @@ se deriva de ninguna columna. Por eso se escribe y se guarda.
 """
 
 from django import forms
-from django.forms import formset_factory
+from django.forms import formset_factory, inlineformset_factory
 from django.utils.translation import gettext_lazy as _
 
-from apps.reporting.models import ReportRun
+from apps.reporting.models import ExigibilityRow, PlanPhase, ReportRun, ReportTemplate
 
 # Cuatro hallazgos trae el informe emitido. El tope deja aire sin volver la
 # página 2 una lista interminable: el resumen ejecutivo se lee de un vistazo o
@@ -180,4 +180,137 @@ ActionFormSet = formset_factory(
     max_num=MAX_ACTIONS,
     validate_max=True,
     can_delete=False,
+)
+
+
+# --- LV-249: los bloques editables del informe -------------------------------
+
+
+def _bootstrap(form):
+    """Las clases de Bootstrap que la plantilla no pone.
+
+    La pantalla dibuja campo por campo, y sin esto los campos salían con el borde
+    del navegador y 180 px de ancho — comprobado en pantalla, no supuesto.
+    """
+    for field in form.fields.values():
+        widget = field.widget
+        if isinstance(widget, forms.CheckboxInput):
+            css = "form-check-input"
+        elif isinstance(widget, forms.Select):
+            css = "form-select form-select-sm"
+        else:
+            css = "form-control"
+        widget.attrs["class"] = f"{widget.attrs.get('class', '')} {css}".strip()
+
+
+class ReportTemplateForm(forms.ModelForm):
+    """La portada y el texto de apertura del plan.
+
+    Campos declarados uno a uno y no `"__all__"`: `AGENTS.md` lo prohíbe en
+    formularios de escritura, y acá `is_active` y `notes` no son del informe.
+    """
+
+    class Meta:
+        model = ReportTemplate
+        fields = [
+            "issued_by",
+            "jointly_with",
+            "standard",
+            "addressed_to",
+            "scope",
+            "sources",
+            "plan_lede",
+        ]
+        widgets = {"plan_lede": forms.Textarea(attrs={"rows": 3})}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _bootstrap(self)
+
+
+class PlanPhaseForm(forms.ModelForm):
+    """Una fase del plan. El mes se elige como mes, no como fecha: una fase es el
+    mes entero, y pedir un día invitaría a creer que importa."""
+
+    month = forms.DateField(
+        label=_("Month"),
+        input_formats=["%Y-%m", "%Y-%m-%d"],
+        widget=forms.DateInput(attrs={"type": "month"}, format="%Y-%m"),
+    )
+
+    class Meta:
+        model = PlanPhase
+        fields = ["month", "title", "text", "close"]
+        widgets = {"text": forms.Textarea(attrs={"rows": 3})}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _bootstrap(self)
+
+
+PlanPhaseFormSet = inlineformset_factory(
+    ReportTemplate,
+    PlanPhase,
+    form=PlanPhaseForm,
+    extra=1,
+    can_delete=True,
+)
+
+
+class ExigibilityRowForm(forms.ModelForm):
+    """Una fila de la matriz, con un nivel **por cada fase guardada**.
+
+    Las columnas no son campos fijos: se agregan al construir el formulario, una
+    por fase, porque la matriz tiene tantas columnas como fases el plan. Es lo que
+    evita el SEP–DIC escrito a mano que había en la plantilla.
+    """
+
+    class Meta:
+        model = ExigibilityRow
+        fields = ["order", "label", "emphasis"]
+
+    def __init__(self, *args, phases=(), **kwargs):
+        super().__init__(*args, **kwargs)
+        self.phases = list(phases)
+        levels = self.instance.levels if self.instance.pk else {}
+        for phase in self.phases:
+            self.fields[self.level_field(phase)] = forms.ChoiceField(
+                label=f"{phase.month:%Y-%m}",
+                choices=ExigibilityRow.LEVEL_CHOICES,
+                initial=levels.get(phase.key, ExigibilityRow.LEVEL_NA),
+                required=False,
+            )
+        _bootstrap(self)
+
+    @staticmethod
+    def level_field(phase):
+        return f"level_{phase.key}"
+
+    def level_fields(self):
+        """Los campos de nivel, en el orden de las fases, para la plantilla."""
+        return [self[self.level_field(phase)] for phase in self.phases]
+
+    def save(self, commit=True):
+        row = super().save(commit=False)
+        # Se conservan los niveles de meses que ya no son fase: si alguien borra una
+        # fase y la vuelve a crear, la fila no pierde lo que decía de ese mes.
+        levels = dict(row.levels or {})
+        for phase in self.phases:
+            levels[phase.key] = (
+                self.cleaned_data.get(self.level_field(phase))
+                or ExigibilityRow.LEVEL_NA
+            )
+        row.levels = levels
+        if commit:
+            row.full_clean()
+            row.save()
+        return row
+
+
+ExigibilityRowFormSet = inlineformset_factory(
+    ReportTemplate,
+    ExigibilityRow,
+    form=ExigibilityRowForm,
+    extra=1,
+    can_delete=True,
 )

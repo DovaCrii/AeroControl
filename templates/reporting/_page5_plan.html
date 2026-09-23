@@ -29,7 +29,11 @@ devolver la página que agosto vio.{% endcomment %}
       <div class="rpt-h2-rule"></div>
     </div>
 
-    <div class="rpt-lede">Cuatro fases de un mes. Ninguna exige lo que la anterior no dejó instalado: primero se cierra la habilitación vigente, luego se automatiza su renovación, después se instala el registro de vuelo y solo al final se exige completitud.</div>
+    {% comment %}LV-249: el texto de apertura sale del payload —editable desde la
+    app— y cae al texto fijo de antes cuando el payload no lo trae. Esa rama **no
+    es un resto**: es cómo se sigue dibujando igual un informe congelado antes de
+    este cambio, cuyo payload no guardó el texto porque vivía acá.{% endcomment %}
+    <div class="rpt-lede">{% if payload.plan.lede %}{{ payload.plan.lede }}{% else %}Cuatro fases de un mes. Ninguna exige lo que la anterior no dejó instalado: primero se cierra la habilitación vigente, luego se automatiza su renovación, después se instala el registro de vuelo y solo al final se exige completitud.{% endif %}</div>
 
     <div class="rpt-stack-9">
 
@@ -72,6 +76,29 @@ devolver la página que agosto vio.{% endcomment %}
 
     <div>
       <div class="rpt-label" style="margin-bottom: 9px;">Exigibilidad progresiva de la reportabilidad</div>
+      {% comment %}LV-249: **la matriz sale del payload**, con una columna por fase
+      del plan. Estaba escrita abajo con SEP–DIC a mano, y en enero habría seguido
+      diciéndolo.
+
+      ⚠️ El bloque fijo de abajo **se conserva a propósito**: es lo que dibuja un
+      informe congelado antes de este cambio, cuyo payload no trae `matrix` porque
+      la matriz vivía en la plantilla. Borrarlo haría que esos informes perdieran su
+      matriz al volver a abrirlos — y un informe emitido no puede cambiar.{% endcomment %}
+      {% if payload.plan.matrix %}
+      {% with matrix=payload.plan.matrix %}
+      <div style="border: 1px solid #D7DEE6; border-bottom: none;">
+        <div class="rpt-matrix rpt-matrix-head" style="grid-template-columns: 1.9fr repeat({{ matrix.columns|length }}, minmax(0, 1fr));">
+          <div>Qué se reporta</div>{% for column in matrix.columns %}<div>{{ column }}</div>{% endfor %}
+        </div>
+        <div class="rpt-matrix" style="grid-template-columns: 1.9fr repeat({{ matrix.columns|length }}, minmax(0, 1fr));">
+          {% for row in matrix.rows %}
+          <div class="rpt-matrix-row">{% if row.emphasis %}<strong>{{ row.label }}</strong>{% else %}{{ row.label }}{% endif %}</div>
+          {% for level in row.cells %}<div class="rpt-cell rpt-cell-{{ level }}{% if forloop.last %} rpt-cell-end{% endif %}">{% if level == "due" %}Exigible{% elif level == "info" %}Informativo{% else %}No aplica{% endif %}</div>{% endfor %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endwith %}
+      {% else %}
       <div style="border: 1px solid #D7DEE6; border-bottom: none;">
         <div class="rpt-matrix rpt-matrix-head">
           <div>Qué se reporta</div><div>SEP</div><div>OCT</div><div>NOV</div><div>DIC</div>
@@ -102,6 +129,7 @@ devolver la página que agosto vio.{% endcomment %}
           <div class="rpt-cell rpt-cell-due rpt-cell-end">Exigible</div>
         </div>
       </div>
+      {% endif %}
       <div style="background: #F4F7FA; border: 1px solid #D7DEE6; padding: 8px 10px; font-size: 9.5px; color: #52606D; line-height: 1.5;"><strong style="color: #124384;">Informativo</strong> = se reporta el dato y se identifican brechas, sin consecuencia para el CC. <strong style="color: #124384;">Exigible</strong> = la brecha se escala a la Gerencia de Ingeniería y a la Gerencia de Riesgo con plazo de cierre comprometido.</div>
     </div>
 

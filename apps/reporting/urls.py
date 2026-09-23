@@ -6,6 +6,7 @@ from apps.reporting.views import (
     ReportApprove,
     ReportDraftCreate,
     ReportNarrativeUpdate,
+    ReportTemplateUpdate,
 )
 
 urlpatterns = [
@@ -18,6 +19,12 @@ urlpatterns = [
         name="monthly-report-brief",
     ),
     path("monthly/draft/", ReportDraftCreate.as_view(), name="monthly-report-draft"),
+    # LV-249: los bloques editables — portada, fases del plan y matriz.
+    path(
+        "monthly/template/",
+        ReportTemplateUpdate.as_view(),
+        name="monthly-report-template",
+    ),
     path(
         "monthly/<uuid:pk>/narrative/",
         ReportNarrativeUpdate.as_view(),

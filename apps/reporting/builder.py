@@ -57,22 +57,38 @@ def collect_meta(period, cutoff):
         # congeló a mitad de mes, aunque se lea en diciembre.
         "in_progress": cutoff < end,
         "days_remaining": max((end - cutoff).days, 0),
-        # Del estándar, no de la base: son los cargos que firman.
-        "issued_by": "Gerente de Operaciones Aéreas ante la DGAC",
-        "jointly_with": "Jefe Seguridad Aérea ante la DGAC",
-        "standard": "JEJ-GRI-SS-INS-096 Rev. 0",
-        # R3: los tres campos que faltaban de la portada del informe emitido.
-        # Van acá y no en la plantilla por la misma razón que los dos de arriba:
-        # son texto del **documento**, y el documento se re-renderiza desde el
-        # payload congelado. Escritos en la plantilla, un cambio de cargo
-        # reescribiría en silencio los informes ya emitidos.
-        "addressed_to": (
-            "Gerencia General · Gerencia de Riesgo · "
-            "Gerencia de Ingeniería · Administradores de Contrato"
-        ),
-        "scope": "Vigencia de permisos de vuelo ante la DGAC",
-        "sources": "AeroControl · SIGO — DGAC",
+        # LV-249: los textos de la portada salen de los **bloques editables**
+        # (`ReportTemplate`) y no de literales de este archivo. Siguen yendo al
+        # payload —no a la plantilla— por la razón que `R3` dejó escrita acá: el
+        # documento se re-renderiza desde el payload congelado, así que editar un
+        # cargo hoy no reescribe en silencio los informes ya emitidos.
+        **_cover_texts(),
     }
+
+
+#: LV-249: los textos de fábrica de la portada. Sólo se usan si la base no tiene
+#: bloques sembrados (la migración `0005` los crea), para que un informe nunca deje
+#: de generarse por falta de configuración.
+FACTORY_COVER = {
+    "issued_by": "Gerente de Operaciones Aéreas ante la DGAC",
+    "jointly_with": "Jefe Seguridad Aérea ante la DGAC",
+    "standard": "JEJ-GRI-SS-INS-096 Rev. 0",
+    "addressed_to": (
+        "Gerencia General · Gerencia de Riesgo · "
+        "Gerencia de Ingeniería · Administradores de Contrato"
+    ),
+    "scope": "Vigencia de permisos de vuelo ante la DGAC",
+    "sources": "AeroControl · SIGO — DGAC",
+}
+
+
+def _cover_texts():
+    from apps.reporting.models import ReportTemplate
+
+    template = ReportTemplate.current()
+    if template is None:
+        return dict(FACTORY_COVER)
+    return {field: getattr(template, field) for field in FACTORY_COVER}
 
 
 def collect_kpis(cutoff, cost_centres, permit_rows):
@@ -451,50 +467,13 @@ def collect_permits(cutoff):
 # 2027 el informe iba a seguir diciendo *"FASE 0 · Sep 2026 · renovar los
 # permisos que vencen"* — un plan vencido impreso como si fuera vigente.
 #
-# Las fases **siguen viviendo en el código y no en la base**, y eso es
-# deliberado: son un compromiso de gestión que cambia una vez al año, no un dato
-# de operación. Una tabla de configuración para cuatro filas que nadie edita es
-# una tabla que nadie mantiene, el mismo criterio con el que `KpiTarget` no se
-# creó. Lo que se saca de la plantilla es **en qué fase se está**, que sí cambia
-# cada mes.
-PLAN_PHASES = [
-    (
-        (2026, 9),
-        "Cierre de brechas de habilitación",
-        "Renovar los permisos que vencen dentro del período. Definir cuáles de "
-        "los Centros de Costo sin permiso tendrán operación aérea y tramitar su "
-        "carta del mandante y su solicitud en SIGO.",
-        "ningún CC con operación prevista opera sin permiso vigente.",
-    ),
-    (
-        (2026, 10),
-        "Calendario de renovación automático",
-        "AeroControl calcula el vencimiento sobre la fecha real de cada "
-        "resolución —no sobre un plazo supuesto— y dispara alertas a 45 y 30 "
-        "días: a los 45 el ADC solicita la carta del mandante; a los 30 el Jefe "
-        "Seguridad Aérea presenta en SIGO y, sin carta, escala al Gerente "
-        "Operaciones Aéreas.",
-        "ninguna renovación depende de que alguien la recuerde.",
-    ),
-    (
-        (2026, 11),
-        "Bitácora digital de vuelo",
-        "Se habilita el registro por vuelo: bitácora (JEJ-GTE-CT-REG-015), "
-        "check list pre-vuelo (LVE-003) e inspección (LVE-002). Cada vuelo se "
-        "asocia al permiso que lo autoriza, de modo que el sistema no admita "
-        "registrar un vuelo sin permiso vigente en esa fecha.",
-        "completitud reportada como línea base, sin sanción interna.",
-    ),
-    (
-        (2026, 12),
-        "Exigibilidad plena y auditoría",
-        "La completitud de bitácoras pasa a indicador exigible por Centro de "
-        "Costo y se contrasta la coherencia entre vuelos ejecutados y vuelos "
-        "autorizados. Auditoría interna regulatoria conforme al numeral 5.4.2 "
-        "del INS-096.",
-        "informe anual consolidado y plan de acción 2027.",
-    ),
-]
+# ⚠️ LV-249: acá estaba escrito que las fases **siguen viviendo en el código y no
+# en la base**, porque *"una tabla de configuración para cuatro filas que nadie
+# edita es una tabla que nadie mantiene"*. Era cierto mientras nadie las editaba.
+# El usuario pidió poder modificarlas desde la aplicación, y la constante
+# `PLAN_PHASES` —con los meses de 2026 escritos— se mudó a `PlanPhase`, sembrada
+# por la migración `0005` con estos mismos cuatro textos. Lo que sigue saliendo de
+# acá es **en qué fase se está**, que se calcula contra el período del informe.
 
 MONTH_ABBR = [
     "",
@@ -529,9 +508,15 @@ def collect_plan(period):
     de 2026 no hay fase vigente, y decirlo es mejor que dejar la primera pintada
     como actual para siempre.
     """
+    from apps.reporting.models import ReportTemplate
+
+    template = ReportTemplate.current()
+    phases = list(template.active_phases()) if template else []
+
     key = (period.year, period.month)
     rows = []
-    for index, (when, title, text, close) in enumerate(PLAN_PHASES):
+    for index, phase in enumerate(phases):
+        when = (phase.month.year, phase.month.month)
         if when < key:
             state = "done"
         elif when == key:
@@ -542,18 +527,43 @@ def collect_plan(period):
             {
                 "number": index,
                 "month": f"{MONTH_ABBR[when[1]]} {when[0]}",
-                "title": title,
-                "text": text,
-                "close": close,
+                "title": phase.title,
+                "text": phase.text,
+                "close": phase.close,
                 "state": state,
             }
         )
+
+    # LV-249: **la matriz de exigibilidad, como dato.** Estaba escrita en la
+    # plantilla con SEP–DIC a mano. Ahora sus **columnas son las fases** —un mes por
+    # fase, en el mismo orden— y cada fila trae su nivel por mes: agregar una fase
+    # agrega una columna, y un mes sin nivel se dibuja «No aplica». Viaja en el
+    # payload como el resto, así que un informe congelado guarda su matriz.
+    matrix = None
+    if template and phases:
+        matrix = {
+            "columns": [MONTH_ABBR[phase.month.month].upper() for phase in phases],
+            "rows": [
+                {
+                    "label": row.label,
+                    "emphasis": row.emphasis,
+                    "cells": [row.level_for(phase.key) for phase in phases],
+                }
+                for row in template.active_matrix_rows()
+            ],
+        }
+
+    first = (phases[0].month.year, phases[0].month.month) if phases else None
+    last = (phases[-1].month.year, phases[-1].month.month) if phases else None
     return {
         "phases": rows,
+        "lede": template.plan_lede if template else "",
+        "matrix": matrix,
         # Ninguna fase es la actual: o el período es anterior al plan, o el plan
-        # ya terminó. Las dos se dicen, en vez de fingir una fase vigente.
-        "concluded": key > PLAN_PHASES[-1][0],
-        "not_started": key < PLAN_PHASES[0][0],
+        # ya terminó. Las dos se dicen, en vez de fingir una fase vigente. Sin
+        # fases no se afirma ninguna de las dos.
+        "concluded": bool(last) and key > last,
+        "not_started": bool(first) and key < first,
     }
 
 

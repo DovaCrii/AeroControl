@@ -8875,3 +8875,156 @@ msgstr "Lo escribió una persona; no se calcula del corte. Haga clic para editar
 msgid "Written · edit"
 msgstr "Escrito · editar"
 
+
+#: .\apps\reporting\models.py:360
+msgid "Issued by"
+msgstr "Emitido por"
+
+#: .\apps\reporting\models.py:361
+msgid "Jointly with"
+msgstr "En conjunto con"
+
+#: .\apps\reporting\models.py:362
+msgid "Standard"
+msgstr "Estándar"
+
+#: .\apps\reporting\models.py:363
+msgid "Addressed to"
+msgstr "Dirigido a"
+
+#: .\apps\reporting\models.py:364
+msgid "Scope"
+msgstr "Alcance"
+
+#: .\apps\reporting\models.py:365
+msgid "Sources"
+msgstr "Fuentes"
+
+#: .\apps\reporting\models.py:366
+msgid "Plan introduction"
+msgstr "Introducción del plan"
+
+#: .\apps\reporting\models.py:369
+msgid "report template"
+msgstr "textos del informe"
+
+#: .\apps\reporting\models.py:370
+msgid "report templates"
+msgstr "textos del informe"
+
+#: .\apps\reporting\models.py:409
+msgid "The phase is the whole month; the day is ignored."
+msgstr "La fase es el mes completo; el día no se considera."
+
+#: .\apps\reporting\models.py:414
+msgid "Closing criterion"
+msgstr "Criterio de cierre"
+
+#: .\apps\reporting\models.py:418
+msgid "plan phase"
+msgstr "fase del plan"
+
+#: .\apps\reporting\models.py:419
+msgid "plan phases"
+msgstr "fases del plan"
+
+#: .\apps\reporting\models.py:447
+msgid "Informative"
+msgstr "Informativo"
+
+#: .\apps\reporting\models.py:456
+msgid "Order"
+msgstr "Orden"
+
+#: .\apps\reporting\models.py:457
+msgid "What is reported"
+msgstr "Qué se reporta"
+
+#: .\apps\reporting\models.py:458
+msgid "Emphasised"
+msgstr "Destacada"
+
+#: .\apps\reporting\models.py:459
+msgid "Levels"
+msgstr "Niveles"
+
+#: .\apps\reporting\models.py:463
+msgid "requirement row"
+msgstr "fila de exigibilidad"
+
+#: .\apps\reporting\models.py:464
+msgid "requirement rows"
+msgstr "filas de exigibilidad"
+
+#: .\apps\reporting\models.py:478
+msgid "Each level must be required, informative or not applicable."
+msgstr "Cada nivel tiene que ser exigible, informativo o no aplica."
+
+#: .\apps\reporting\views.py:420
+msgid ""
+"Saved. The preview and the reports frozen from now on use these texts; reports "
+"already frozen keep theirs."
+msgstr ""
+"Guardado. La vista previa y los informes que se congelen desde ahora usan estos "
+"textos; los ya congelados conservan los suyos."
+
+#: .\templates\reporting\template_form.html:3
+msgid "Report texts"
+msgstr "Textos del informe"
+
+#: .\templates\reporting\template_form.html:19
+msgid ""
+"The cover, the plan phases and the requirement matrix of the monthly report. "
+"The figures come from the database and are not edited here."
+msgstr ""
+"La portada, las fases del plan y la matriz de exigibilidad del informe mensual. "
+"Las cifras salen de la base y no se editan acá."
+
+#: .\templates\reporting\template_form.html:25
+msgid ""
+"Changes apply to the preview and to reports frozen from now on. A report "
+"already frozen keeps the texts it was issued with."
+msgstr ""
+"Los cambios se aplican a la vista previa y a los informes que se congelen desde "
+"ahora. Un informe ya congelado conserva los textos con que se emitió."
+
+#: .\templates\reporting\template_form.html:31
+msgid "Cover"
+msgstr "Portada"
+
+#: .\templates\reporting\template_form.html:42
+msgid "Plan phases"
+msgstr "Fases del plan"
+
+#: .\templates\reporting\template_form.html:43
+msgid ""
+"One phase per month. Whether a phase is done, current or upcoming is worked "
+"out from the report period, not set here."
+msgstr ""
+"Una fase por mes. Si una fase está cumplida, en curso o por venir se calcula "
+"según el período del informe; no se fija acá."
+
+#: .\templates\reporting\template_form.html:70
+msgid "Remove this phase"
+msgstr "Quitar esta fase"
+
+#: .\templates\reporting\template_form.html:79
+msgid "Requirement matrix"
+msgstr "Matriz de exigibilidad"
+
+#: .\templates\reporting\template_form.html:80
+msgid ""
+"One column per saved phase. A phase added in this same save gets its column "
+"once saved."
+msgstr ""
+"Una columna por cada fase guardada. Una fase agregada en este mismo guardado "
+"suma su columna una vez guardada."
+
+#: .\templates\reporting\template_form.html:90
+msgid "Bold"
+msgstr "Negrita"
+
+#: .\apps\reporting\models.py:447
+msgctxt "requirement level"
+msgid "Required"
+msgstr "Exigible"

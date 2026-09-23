@@ -30,6 +30,10 @@ la barra y los botones, y quedan las cinco hojas A4 solas.{% endcomment %}
     acá y no en el menú porque es **otra salida del mismo informe**, no otro
     informe: quien la busca ya está mirando el período.{% endcomment %}
     <a class="btn btn-outline-secondary" href="{% url 'monthly-report-brief' %}?period={{ period_date|date:'Y-m' }}">{% translate "Executive brief" %}</a>
+    {% comment %}LV-249: la portada, las fases y la matriz, editables. Con el mismo
+    permiso que la narrativa y fuera del `{% if run %}`: los textos fijos no son de
+    un informe en particular, y se ajustan antes de congelar el próximo.{% endcomment %}
+    {% if perms.reporting.change_reportrun %}<a class="btn btn-outline-secondary" href="{% url 'monthly-report-template' %}">{% translate "Report texts" %}</a>{% endif %}
     {% comment %}LV-227: escribir la narrativa necesita un informe donde
     guardarla, y congelar el borrador es un acto explícito — no un efecto
     secundario de teclear el primer hallazgo.{% endcomment %}
