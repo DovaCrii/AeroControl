@@ -253,6 +253,18 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   fabricante y es con el que la aeronave aparece en la garantía, en el registro
   de la DGAC y en las carpetas del repositorio documental.
 
+### Changed
+
+- **Dependencias al día: Django 6.1.1, crispy-bootstrap5 2026.9, pytest-django
+  4.14.0 y reportlab hasta la 6 (`LV-244`).** Las cinco ramas de Dependabot que
+  estaban abiertas, resueltas de una. Dos de ellas **no se podían mergear**: eran
+  de antes de la tanda de septiembre y su diff revertía trabajo — bajaban Django a
+  6.0.7 y borraban dependencias añadidas después. Se tomó sólo la subida de
+  versión de cada una. `ruff` se queda en 0.15.22 a propósito: la 0.16 amplió las
+  reglas por defecto y trae 480 hallazgos, de los cuales 268 son el patrón normal
+  de un modelo Django. Es una decisión de política de linting, no un bump, y queda
+  anotada para tomarla aparte.
+
 ### Fixed
 
 - **Una faena sin registros ya no dice «todo al día» (`LV-243`).** Al elegir una

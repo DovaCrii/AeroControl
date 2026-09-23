@@ -4,8 +4,8 @@ version = "0.1.0"
 description = "Local-first operations desk for aviation teams."
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    "Django==6.1",
-    "crispy-bootstrap5==2026.3",
+    "Django==6.1.1",
+    "crispy-bootstrap5==2026.9",
     "django-crispy-forms==2.7",
     "python-decouple==3.8",
     "openpyxl>=3.1,<4",
@@ -13,7 +13,7 @@ dependencies = [
     # R6.4: PDF export for the compliance report. Pure-Python, no system
     # package (Cairo/Pango, wkhtmltopdf) required on the Ubuntu VM deploy --
     # unlike weasyprint/xhtml2pdf's HTML-rendering route.
-    "reportlab>=4.2,<5",
+    "reportlab>=4.2,<6",
     # Direct dependency for the BLOQUE GEO KML parser (hardened lxml). It was
     # already in the tree transitively via python-docx; pinned here so the geo
     # module does not depend on that chain continuing to pull it.
@@ -46,7 +46,7 @@ dev = [
     "pip-audit==2.10.1",
     "pytest==9.1.1",
     "pytest-cov==7.1.0",
-    "pytest-django==4.12.0",
+    "pytest-django==4.14.0",
     "polib>=1.2,<2",
     "ruff==0.15.22",
 ]
