@@ -62,7 +62,7 @@
   {% if permission.is_active %}
   {% if perms.operations.delete_flightpermission %}
   <form method="post" action="{% url 'permission-archive' permission.pk %}" style="display:inline">{% csrf_token %}
-    <button type="submit" class="btn btn-outline-secondary">{% translate "Archive" %}</button>
+    <button type="submit" class="btn btn-outline-danger">{% translate "Archive" %}</button>
   </form>
   {% endif %}
   {% else %}

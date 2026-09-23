@@ -255,6 +255,9 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **«Archivar» se ve como lo que es (`LV-255`).** En las fichas de permisos y de
+  planes geoespaciales el botón iba en gris, como «Volver»; ahora va en rojo, como
+  en el resto de las fichas.
 - **Las listas más usadas reparten bien sus columnas (`LV-254`).** Planes
   geoespaciales, vuelos, no conformidades, documentos y mantención dejan de repartir
   el ancho por contenido: los folios, las fechas y los códigos de faena ya no se
