@@ -76,6 +76,33 @@ es el orden correcto: sin JS —o antes de que cargue— no se promete nada.{% e
 </div>
 {% endblock %}
 
+{% block list_table_class %}table-normalized{% endblock %}
+
+{% comment %}LV-246 (pedido del usuario con captura, 2026-09-23): *"mejorar la
+distribución de la tabla, algunas letras apretadas"*. Esta lista era de las que
+**no** declaraban reparto, así que el navegador lo hacía por contenido y el
+resultado era el peor de los dos mundos: «Operadores» —texto libre, a veces siete
+nombres— se llevaba el ancho, mientras «Número» partía `JEJ-2026-001` en dos líneas
+y «Vigencia» partía el rango de fechas, que son justo los dos datos que se barren
+con la vista para encontrar una fila.
+
+El reparto sigue el criterio que `LV-162` dejó escrito: la columna que absorbe el
+sobrante (`col-flex`) es la de **texto libre más largo**, no la más corta. Acá son
+los operadores. Las dos que no deben partirse nunca llevan ancho propio y `nowrap`
+en su celda: un folio y un rango de fechas partidos dejan de poder compararse entre
+filas.{% endcomment %}
+{% block list_colgroup %}
+<colgroup>
+  <col class="col-primary">
+  <col class="col-compact">
+  <col class="col-flex">
+  <col class="col-text">
+  <col class="col-text">
+  <col class="col-status">
+  <col class="col-actions">
+</colgroup>
+{% endblock %}
+
 {% block list_header %}
 <th scope="col">{% translate "Number" %}</th>
 {% comment %}LV-192: la faena, pedida por el usuario mirando este listado. Iba

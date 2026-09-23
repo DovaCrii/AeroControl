@@ -217,6 +217,22 @@ class GeoPlan(StatusFlowMixin, BaseModel):
         return self.status in self.EDITABLE_STATUSES
 
     @property
+    def permit_has_lapsed(self):
+        """LV-246: el permiso DGAC ligado a este plan ya no autoriza a volar.
+
+        Delega en `FlightPermission.has_lapsed` y no repite el criterio: la lista
+        de permisos, su ficha y esta pantalla dicen "vencido" por la misma regla.
+        Sin permiso ligado es `False` y no "vencido": un plan que todavía no tiene
+        papel no perdió nada, y marcarlo en rojo enseñaría a ignorar el rojo.
+
+        Mira el vínculo directo (`flight_permission`). Los permisos que cuelgan por
+        las solicitudes SIGO (`LV-176`) no entran acá a propósito: la lista pide una
+        respuesta por fila sin consultas extra, y ese camino se recorre en la ficha.
+        """
+        permit = self.flight_permission
+        return permit is not None and permit.has_lapsed
+
+    @property
     def source_file_stem(self):
         """The imported file's name without its extension, or `""` if none.
 

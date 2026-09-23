@@ -21,7 +21,14 @@ La fila archivada se distingue y ofrece "Restaurar": sin eso, el filtro
   (`display_title` no reescribe nada).{% endcomment %}
   <td><span class="cell-truncate">{{ plan.source_file_stem|default:plan.display_title }}</span></td>
   <td>{{ plan.cost_center }}</td>
-  <td>{% include "geo/_status_badge.html" with status=plan.status label=plan.get_status_display %}</td>
+  {% comment %}LV-246: **el plan aprobado cuyo permiso ya no autoriza.** Pedido del
+  usuario mirando esta lista: *"mostrar también cuando el permiso que se cruza con
+  el geoespacial está vencido"*. Quince planes decían «Aprobado» en verde y la
+  pantalla no nombraba el permiso DGAC en ninguna parte, así que un área dibujada y
+  aprobada sobre un permiso caducado se veía lista para volar. El estado del plan
+  sigue diciendo lo suyo —el dibujo **está** aprobado—; la marca roja va al lado y
+  dice lo otro.{% endcomment %}
+  <td>{% include "geo/_status_badge.html" with status=plan.status label=plan.get_status_display %}{% if plan.permit_has_lapsed %} <span class="badge sev-critical" title="{{ plan.flight_permission }}">⚠ {% translate "Permit lapsed" %}</span>{% endif %}</td>
   <td>{% if plan.current_version %}v{{ plan.current_version.version_number }}{% else %}—{% endif %}</td>
   <td><span class="text-nowrap">{{ plan.created_at|date:'Y-m-d' }}</span></td>
   <td class="text-end text-nowrap">

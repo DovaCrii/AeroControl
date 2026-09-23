@@ -253,6 +253,19 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   fabricante y es con el que la aeronave aparece en la garantía, en el registro
   de la DGAC y en las carpetas del repositorio documental.
 
+### Fixed
+
+- **Lo vencido se ve, y en rojo (`LV-246`).** Tres pedidos del mismo día. En el
+  panel, las **faenas sin permiso vigente van primero** y en rojo, con una tarjeta
+  nueva que las cuenta: es el mismo indicador que el informe mensual firma, y hasta
+  ahora sólo existía en el papel. La fila que debía destacarlas **nunca se había
+  pintado**: usaba una clase de estilo que no existe. En la lista de permisos, un
+  permiso caducado dejó de verse en el mismo ámbar que uno «Solicitado»: ahora dice
+  **«⚠ Caducado» en rojo**, incluido el que venció anoche y el trabajo nocturno
+  todavía no cerró. La lista se reparte mejor (los folios y las fechas ya no se
+  parten en dos líneas). Y un plan geoespacial aprobado cuyo permiso caducó muestra
+  **«⚠ Permiso vencido»** en la lista y en su ficha.
+
 ### Changed
 
 - **Dependencias al día: Django 6.1.1, crispy-bootstrap5 2026.9, pytest-django

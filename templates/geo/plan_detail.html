@@ -41,7 +41,10 @@
     el radio de una: elegir una sería afirmar que las demás no están.{% endcomment %}
     <p class="text-muted mb-0">
       {{ plan.cost_center.name|default:plan.cost_center.code }}
-      {% if plan.flight_permission %} · <a href="{% url 'permission-detail' plan.flight_permission.pk %}">{{ plan.flight_permission }}</a>{% endif %}
+      {% comment %}LV-246: el enlace al permiso nombraba el folio y no decía si
+      seguía vigente. Con el permiso caducado, la marca va pegada al folio —es de
+      él de quien habla—, y es lo primero que se lee al abrir el plan.{% endcomment %}
+      {% if plan.flight_permission %} · <a href="{% url 'permission-detail' plan.flight_permission.pk %}">{{ plan.flight_permission }}</a>{% if plan.permit_has_lapsed %} <span class="badge sev-critical">⚠ {% translate "Permit lapsed" %}</span>{% endif %}{% endif %}
       {% if heading_extent.count %} · {% blocktranslate count counter=heading_extent.count %}{{ counter }} circle{% plural %}{{ counter }} circles{% endblocktranslate %}
       {% elif heading_extent.radius_m %} · {% blocktranslate with radius=heading_extent.radius_m %}radius {{ radius }} m{% endblocktranslate %}{% if heading_extent.is_enclosing %} <span title="{% translate 'Smallest circle that encloses the drawn area' %}">({% translate "enclosing" %})</span>{% endif %}
       {% endif %}

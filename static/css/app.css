@@ -1484,6 +1484,28 @@ main {
 .badge.sev-advisory { background-color: var(--sev-advisory-bg); border-color: var(--sev-advisory-border); color: var(--sev-advisory-text); }
 .badge.sev-nominal  { background-color: var(--sev-nominal-bg);  border-color: var(--sev-nominal-border);  color: var(--sev-nominal-text); }
 
+/* LV-246: la variante de **fila entera**, para la faena que no tiene permiso
+   vigente.
+
+   ⚠️ **Existe porque la clase anterior no existía.** La tabla de permisos por faena
+   escribía `class="table-warning-subtle"` desde `LV-206` y esa clase **no está ni en
+   `app.css` ni en Bootstrap** —que tiene `.table-warning` y las utilidades
+   `*-subtle` por separado, no combinadas—, así que la fila que el comentario decía
+   destacar nunca se pintó de nada en quince meses. El texto "Ninguno" en ámbar era
+   todo lo que había, y por eso las siete faenas incumplidas se leían igual que las
+   demás.
+
+   Va sobre `td` y no sobre `tr` porque `<tr>` no acepta fondo cuando las celdas
+   traen el suyo, que es de donde viene la mitad de los intentos fallidos de pintar
+   filas. `box-shadow` en vez de `border` para no descuadrar la altura de la fila. */
+tr.row-critical > td {
+  background-color: var(--sev-critical-bg);
+  color: var(--sev-critical-text);
+}
+tr.row-critical > td:first-child {
+  box-shadow: inset 3px 0 0 var(--sev-critical-border);
+}
+
 /* La variante de **texto suelto**, para la fila del panel: ahí la fecha va sin
    pastilla porque la fila ya lleva dos (`LV-148`), así que se unifica la paleta y
    no la forma. El peso es lo que separa `warning` de `caution`. */

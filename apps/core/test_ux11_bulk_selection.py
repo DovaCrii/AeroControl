@@ -267,10 +267,16 @@ class TestTheSelectionIsExplicitInTheMarkup:
             if "<colgroup>" in path.read_text(encoding="utf-8")
         )
 
+        # LV-246: `permission_list.html` es la quinta, y este test hizo lo que dice
+        # su docstring — avisó. Lo que había que revisar se revisó en el navegador:
+        # `worktable.js` inyecta su `<col class="col-select">` (la tabla quedó con
+        # 8 `<col>`, los 7 declarados más la casilla) y la fila vacía lleva el
+        # `colspan` exacto, que `test_lv246_lapsed_is_red` fija para esta lista.
         assert with_widths == [
             "aircraft_list.html",
             "costcenter_list.html",
             "operator_list.html",
+            "permission_list.html",
             "qualification_list.html",
         ]
 

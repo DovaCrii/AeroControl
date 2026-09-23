@@ -5709,6 +5709,23 @@ msgstr "Próximo vencimiento"
 msgid "no records"
 msgstr "sin registros"
 
+#: .\templates\operations\_permission_rows.html:28
+msgctxt "flight permission"
+msgid "Lapsed"
+msgstr "Caducado"
+
+#: .\templates\geo\_plan_rows.html:31
+msgid "Permit lapsed"
+msgstr "Permiso vencido"
+
+#: .\templates\dashboard\index.html:166
+msgid "Sites without a permit"
+msgstr "Faenas sin permiso"
+
+#: .\templates\dashboard\index.html:168
+msgid "flying requires one"
+msgstr "volar exige tenerlo"
+
 #: .\templates\dashboard\index.html:369
 #, python-format
 msgid "%(days)s day left"
