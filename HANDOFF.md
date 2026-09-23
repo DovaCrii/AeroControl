@@ -1,6 +1,6 @@
 # HANDOFF — AeroControl
 
-## 🟡 Plan de mejora en curso — Fase 0 hecha, sin desplegar
+## 🟡 Plan de mejora en curso — Fases 0 y 1 hechas, la 2 a medias; nada desplegado
 
 El 2026-09-23 el usuario pidió, en cinco mensajes seguidos, marcar lo vencido en
 rojo en tres pantallas, revisar el informe mensual y un plan general de mejora. Se
@@ -9,7 +9,14 @@ aprobó un plan en cuatro fases, en este orden, con sus decisiones tomadas:
 | Fase | Qué | Estado |
 |---|---|---|
 | **0** | `LV-246`: faenas sin permiso primero y en rojo, «⚠ Caducado» en la lista y ficha de permisos, «⚠ Permiso vencido» en los planes geo, reparto de la lista de permisos | ✅ hecha, **sin desplegar** |
-| **1** | Informe: 4 defectos (1a, `LV-247` ✅), más corto (1b, `LV-248` ✅: permisos de producción en **una** hoja, 5 + anexo), **bloques editables** portada/fases/matriz (1c, `LV-249` ✅, **con migración**), **borrador automático el día 1** (1d, `LV-250` ✅ — **falta instalar el timer en `p340`**, bloque en `docs/scheduled-operations.md`), ver cambios entre revisiones (1e, `LV-251` ✅) | ✅ |
+| **1** | Informe: 4 defectos (1a, `LV-247` ✅), más corto (1b, `LV-248` ✅: permisos de producción en **una** hoja, 5 + anexo), **bloques editables** portada/fases/matriz (1c, `LV-249` ✅, **con migración**), **borrador automático el día 1** (1d, `LV-250` ✅ — **falta instalar el timer en `p340`**, bloque en `docs/scheduled-operations.md`), ver cambios entre revisiones (1e, `LV-251` ✅) | ✅ hecha, **sin desplegar** |
+| **2** | `LV-252`: los errores en rojo (`MESSAGE_TAGS`), N+1 de mantención, «y N más» real · `LV-253`: una sola marca de vencido (`badge sev-critical` + ⚠) en nueve sitios, y la credencial DGAC vencida en la ficha del operador · `LV-254`: reparto de columnas en planes, vuelos, no conformidades, documentos y mantención (que pasa a la tabla de trabajo compartida), y **el reparto de permisos de la Fase 0 corregido** · alertas quedan fuera del reparto (9 columnas no caben en los anchos del sistema; ya tienen ocultar columnas y filas-tarjeta) | 🟡 hecho eso, **sin desplegar**; faltan las fichas (encabezado único `UX-04`, «Archivar» con peso de acción destructiva, `table-responsive`) |
+| **3** | `pytest-xdist` para acortar el gate, tests que dependen del reloj, alinear `AGENTS.md` sobre el squash | ⬜ |
+
+**Decisiones del usuario que acotan la Fase 1**: del informe se recorta **sólo** la
+nómina de operadores por permiso (la dotación, los textos fijos y la hoja del plan se
+quedan); las plantillas se resuelven con **bloques editables en la app**, no con Word;
+y la emisión se automatiza como **borrador el día 1**, sin PDF.
 
 ⚠️ **`LV-249` trae migraciones (`reporting.0004` y `0005`)**. El despliegue que la
 incluya lleva `migrate`; la `0005` siembra los textos de la portada, las fases y la
@@ -23,21 +30,27 @@ segunda opción que se le recomendó **tampoco** estaba medida. Lo que de verdad
 alargaba la tabla era un defecto de CSS (el folio partido). **Antes de ofrecer un
 recorte como solución, correr el reparto con la forma real de producción**: son
 diez líneas en `manage.py shell` sobre `pagination.paginate`.
-| **2** | Una sola forma de decir «vencido» en toda la app, `MESSAGE_TAGS` (los errores salen sin color), listas con reparto, N+1 de mantención | ⬜ |
-| **3** | `pytest-xdist` para acortar el gate, tests que dependen del reloj, alinear `AGENTS.md` sobre el squash | ⬜ |
 
-**Decisiones del usuario que acotan la Fase 1**: del informe se recorta **sólo** la
-nómina de operadores por permiso (la dotación, los textos fijos y la hoja del plan se
-quedan); las plantillas se resuelven con **bloques editables en la app**, no con Word;
-y la emisión se automatiza como **borrador el día 1**, sin PDF.
+⚠️ **Lección de la Fase 2, la misma forma**: el reparto de permisos de `LV-246` se
+dio por bueno con el `colspan` exacto y una columna por encabezado, y **la columna
+de operadores medía 0 px** — los porcentajes sumaban 90 % más los 110 px de
+acciones. Ningún guardián miraba anchos, sólo cuentas. Ahora
+`test_lv162_table_column_widths` calcula el sobrante de la columna flexible en
+cada lista, desde los anchos de `app.css`.
 
-⚠️ **La Fase 1c trae migración.** Al desplegarla, el bloque de comandos lleva
-`migrate`, y hay que unirlo con lo que haya quedado sin desplegar antes.
+🔶 **Observado y no diagnosticado**: `test_lv200_step2_the_file_is_reused` falló
+**una vez** (dos tests de `TestCleanupDoesNotTakeTheSharedFile`) en una corrida de
+`apps/compliance` + `apps/dashboard`, y pasó aislado y en la corrida siguiente de
+`apps/compliance` completa. Ninguno de los archivos que toca esta tanda está en su
+camino. Usa `cleanup_documents --older-than-days 0`, un borde de reloj que es
+**sospecha, no causa comprobada**.
 
 ### Pendiente de desplegar ahora
 
-`d5ebac0` (dependencias), `57f8be5` (CI) y la Fase 0. Sin migraciones, pero con
-**`uv sync --no-dev`** (cambian dependencias) y **`collectstatic`** (cambia `app.css`).
+`d5ebac0` (dependencias), `57f8be5` (CI), la Fase 0, la Fase 1 y la Fase 2. Lleva
+**`uv sync --no-dev`** (cambian dependencias), **`migrate`** (`reporting.0004` y
+`0005`) y **`collectstatic`** (cambian `app.css` y `report-a4.css`). Después,
+instalar el timer del informe (bloque en `docs/scheduled-operations.md`).
 
 ## ✅ Lo vencido se contaba mal, y las cifras no llevaban a ninguna parte
 

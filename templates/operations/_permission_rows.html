@@ -11,7 +11,14 @@
   existe. En `Aircraft` y `Operator` sí es nula, y de ahí viene el guion de esas
   otras vistas.{% endcomment %}
   <td><span class="cc-chip">{{ object.cost_center.code }}</span></td>
-  <td>{% for operator in object.operators.all %}{{ operator }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+  {% comment %}LV-254: tres nombres y «+N más», con la nómina entera en el `title`.
+  Un permiso real nombra once operadores, y con la columna ya con ancho de verdad
+  la fila crecía a **338 px** —medido en el demo, que tiene la forma de
+  producción—: tres filas por pantalla en la lista que se barre para encontrar un
+  folio. La nómina completa sigue en la ficha, y el informe hizo el mismo recorte
+  (`LV-247`, cantidad + anexo). Sale de la precarga de la vista, sin consultas
+  extra.{% endcomment %}
+  <td>{% with ops=object.operators.all %}{% for operator in ops|slice:":3" %}{{ operator }}{% if not forloop.last %}, {% endif %}{% endfor %}{% if ops|length > 3 %} <span class="text-body-secondary small text-nowrap" data-more-operators title="{% for operator in ops %}{{ operator }}{% if not forloop.last %}, {% endif %}{% endfor %}">{% blocktranslate count counter=ops|length|add:"-3" %}+{{ counter }} more{% plural %}+{{ counter }} more{% endblocktranslate %}</span>{% endif %}{% endwith %}</td>
   <td>{% for aircraft in object.aircraft_fleet.all %}{{ aircraft }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
   {% comment %}LV-219: sin vigencia la celda mostraba un guion suelto entre dos
   huecos, que se lee como un dato que falta por descuido. Dice qué es: la DGAC

@@ -43,6 +43,26 @@ sin él, archivar no tendría vuelta.{% endcomment %}
   </div>
 </form>
 {% endblock %}
+{% comment %}LV-254: reparto de columnas declarado, como las listas del padrón y la
+de permisos (`LV-246`). Sin él el navegador repartía por contenido: un nombre de
+KMZ largo empujaba al folio y a la fecha a partirse, y la marca «⚠ Permiso
+vencido» caía en una columna de estado sin ancho propio. La columna flexible es la
+del archivo —el texto libre más largo, criterio de `LV-162`—. El folio es un
+código de ancho fijo (`col-compact`, como en permisos) y el estado va en
+`col-text`: medido en el demo, con `col-status` «Aprobado» y «⚠ Permiso vencido» se
+partían en dos líneas.{% endcomment %}
+{% block worktable_table_class %}table-normalized{% endblock %}
+{% block worktable_colgroup %}
+<colgroup>
+  <col class="col-compact">
+  <col class="col-flex">
+  <col class="col-numeric">
+  <col class="col-text">
+  <col class="col-numeric">
+  <col class="col-compact">
+  <col class="col-actions">
+</colgroup>
+{% endblock %}
 {% block worktable_header %}
           {% worktable_th _("Number") "number" %}
           {% comment %}LV-149: la columna dejó de ser el título completo y pasó a

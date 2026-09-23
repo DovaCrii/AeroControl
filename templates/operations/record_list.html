@@ -1,12 +1,28 @@
 {% extends "generic/list.html" %}
 {% load i18n %}
 
+{% comment %}LV-254: reparto declarado. La primera columna es una fecha —ancho fijo,
+no el 26 % de un nombre—, y el permiso también: su rótulo es el folio interno, de
+ancho casi uniforme. La flexible es la del piloto, el texto más largo de la fila
+(criterio de `LV-162`).{% endcomment %}
+{% block list_table_class %}table-normalized{% endblock %}
+{% block list_colgroup %}
+<colgroup>
+  <col class="col-compact">
+  <col class="col-compact">
+  <col class="col-flex">
+  <col class="col-text">
+  <col class="col-numeric">
+  <col class="col-actions">
+</colgroup>
+{% endblock %}
+
 {% block list_header %}
 <th scope="col">{% translate "Date" %}</th>
 <th scope="col">{% translate "Flight permission" %}</th>
 <th scope="col">{% translate "Pilot" %}</th>
 <th scope="col">{% translate "Aircraft" %}</th>
-<th scope="col">{% translate "Duration" %}</th>
+<th scope="col" class="cell-numeric">{% translate "Duration" %}</th>
 {% endblock %}
 
 {% block table_body %}{% include "operations/_record_rows.html" %}{% endblock %}

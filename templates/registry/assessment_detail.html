@@ -26,7 +26,7 @@ solo: "72%" no dice nada sin saber que el corte es 80.{% endcomment %}
     </span>
     <span class="text-body-secondary">
       {% blocktranslate with date=assessment.expires_on|date:"Y-m-d" %}Valid until {{ date }}{% endblocktranslate %}
-      {% if assessment.is_expired %}<span class="badge bg-danger ms-1">{% translate "Overdue" %}</span>{% endif %}
+      {% if assessment.is_expired %}<span class="badge sev-critical ms-1">⚠ {% translate "Overdue" %}</span>{% endif %}
     </span>
   </div>
 </div>

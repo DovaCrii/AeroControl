@@ -28,6 +28,9 @@
   habilitación es poner directamente en el recuadro lo que dice la DGAC, no más;
   no buscar más allá de estandarizar"*. El texto literal de la credencial es el
   dato; el catálogo es la interpretación.{% endcomment %}
+  {% comment %}LV-253: la lista marcaba la credencial vencida y la ficha no —
+  quien abría al operador veía la fecha en la tabla sin ninguna señal.{% endcomment %}
+  {% if object.credential_is_overdue %}<p class="mb-3" data-credential-lapsed><span class="badge sev-critical">⚠ {% translate "DGAC credential lapsed" %}</span> <span class="sev-text-critical">{{ object.credential_expiry|date:'Y-m-d' }}</span></p>{% endif %}
   {% include "generic/_fields_detail_table.html" %}
 </div>
 
@@ -56,7 +59,7 @@ con fechas, el bloque estructurado dice algo que el texto libre no puede decir.
       <tr>
         <td><span class="badge {% if qualification.expiry_date and qualification.expiry_date < today %}bg-danger{% else %}{{ qualification.qualification_type.chip_class }}{% endif %}">{{ qualification.qualification_type.name }}</span></td>
         <td>{{ qualification.issue_date|date:'Y-m-d'|default:'—' }}</td>
-        <td>{% if qualification.expiry_date %}{{ qualification.expiry_date|date:'Y-m-d' }}{% if qualification.expiry_date < today %} <span class="badge bg-danger">{% translate "Expired" %}</span>{% endif %}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+        <td>{% if qualification.expiry_date %}{{ qualification.expiry_date|date:'Y-m-d' }}{% if qualification.expiry_date < today %} <span class="badge sev-critical">⚠ {% translate "Expired" %}</span>{% endif %}{% else %}<span class="text-muted">—</span>{% endif %}</td>
         <td class="text-end">{% if perms.registry.change_qualification %}<a href="{% url 'qualification-update' qualification.pk %}" hx-get="{% url 'qualification-update' qualification.pk %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-secondary">{% translate "Edit" %}</a>{% endif %}</td>
       </tr>
       {% endfor %}
@@ -101,7 +104,7 @@ lo que hay que reforzar.{% endcomment %}
         <td>{{ assessment.taken_at|date:'Y-m-d' }}</td>
         <td>{% if assessment.passed %}<span class="badge bg-success">{% translate "Passed" %}</span>{% else %}<span class="badge bg-danger">{% translate "Insufficient" %}</span>{% endif %}</td>
         <td>{{ assessment.score_percent }}% <span class="text-body-secondary small">({{ assessment.correct_count }}/{{ assessment.question_count }})</span></td>
-        <td>{{ assessment.expires_on|date:'Y-m-d' }}{% if assessment.is_expired %} <span class="badge bg-danger">{% translate "Overdue" %}</span>{% endif %}</td>
+        <td>{{ assessment.expires_on|date:'Y-m-d' }}{% if assessment.is_expired %} <span class="badge sev-critical">⚠ {% translate "Overdue" %}</span>{% endif %}</td>
         <td class="text-end">
           <a class="btn btn-sm btn-outline-secondary" href="{% url 'assessment-detail' assessment.pk %}">{% translate "Review" %}</a>
           {% comment %}LV-173: archivar, nunca borrar. Va como formulario POST y

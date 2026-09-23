@@ -2559,6 +2559,9 @@ a.admin-metric:hover { border-color: var(--ac-text-secondary); }
 .table-normalized .col-flex,
 .table-normalized .col-chips { width: auto; }
 .table-normalized .col-actions { width: 110px; }
+/* LV-254: documentos tiene tres botones por fila (ver, reemplazar, eliminar), que
+   en 110 px se apilaban en tres líneas. */
+.table-normalized .col-actions-wide { width: 250px; }
 
 /* LV-162: en una tabla de anchos fijos el encabezado envuelve en vez de
    desbordar.

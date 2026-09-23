@@ -90,13 +90,22 @@ El reparto sigue el criterio que `LV-162` dejó escrito: la columna que absorbe 
 sobrante (`col-flex`) es la de **texto libre más largo**, no la más corta. Acá son
 los operadores. Las dos que no deben partirse nunca llevan ancho propio y `nowrap`
 en su celda: un folio y un rango de fechas partidos dejan de poder compararse entre
-filas.{% endcomment %}
+filas.
+
+⚠️ LV-254: el primer reparto (`col-primary`, `col-compact`, flex, `col-text` ×2,
+`col-status`) sumaba **90 % más los 110 px de acciones**, y la columna flexible se
+quedaba con lo que sobra: medido en el navegador a 910 px, «Operadores» tenía
+**0 px**. Ninguna prueba lo miraba —el guardián del `colspan` cuenta columnas, no
+anchos—, así que ahora `test_lv254_list_widths` calcula ese sobrante en cada
+lista. El folio interno es de ancho fijo (`JEJ-2026-004`) y cabe en `col-compact`
+—no necesita el 26 % de un nombre—, y la faena es un código corto (`col-numeric`,
+como las cuentas del padrón). Lo que se libera va a los operadores.{% endcomment %}
 {% block list_colgroup %}
 <colgroup>
-  <col class="col-primary">
   <col class="col-compact">
+  <col class="col-numeric">
   <col class="col-flex">
-  <col class="col-text">
+  <col class="col-compact">
   <col class="col-text">
   <col class="col-status">
   <col class="col-actions">

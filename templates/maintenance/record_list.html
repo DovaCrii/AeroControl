@@ -1,28 +1,44 @@
 {% extends "generic/list.html" %}
 {% load i18n %}
-{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h1 class="h3">{{ title }}</h1>
-  <div class="d-flex gap-2">
-    <a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>
-    <a class="btn btn-primary" href="new/">+ {% translate "New" %}</a>
-  </div>
-</div>
-<form method="get" class="row g-2 mb-3">
-  <div class="col-md-3"><input class="form-control" name="q" value="{{ request.GET.q }}" placeholder="{% translate 'Search...' %}"></div>
-  <div class="col-md-2"><select class="form-select" name="status"><option value="">{% translate "All statuses" %}</option>{% for value,label in status_choices %}<option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
-  <div class="col-md-2"><select class="form-select" name="maintenance_type"><option value="">{% translate "All types" %}</option>{% for value,label in type_choices %}<option value="{{ value }}" {% if current_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
-  <div class="col-auto"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
-</form>
-<div class="card"><div class="table-responsive"><table class="table table-hover mb-0">
-  <thead><tr><th scope="col">{% translate "Aircraft" %}</th><th scope="col">{% translate "Type" %}</th><th scope="col">{% translate "Scheduled" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col" class="text-end">{% translate "Actions" %}</th></tr></thead>
-  <tbody>{% for object in objects %}<tr>
-    <td><a href="{{ object.pk }}/">{{ object.aircraft }}</a></td><td>{{ object.get_maintenance_type_display }}</td><td>{{ object.scheduled_date|date:"Y-m-d" }}</td>
-    <td>
-      <span class="badge bg-{% if object.status == 'completed' %}success{% elif object.status == 'in_progress' %}warning{% elif object.is_at_workshop_stage %}info text-dark{% else %}secondary{% endif %}">{{ object.get_status_display }}</span>
-      {% if object.workshop_dwell_is_overdue %}<span class="badge bg-danger" title="{% translate 'Dwelling in this status longer than usual' %}">⚠</span>{% endif %}
-    </td>
-    <td class="text-end"><a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">{% translate "View" %}</a></td>
-  </tr>{% empty %}<tr><td colspan="5" class="text-center text-muted py-4">{% translate "No records found." %}</td></tr>{% endfor %}</tbody>
-</table></div>{% include "generic/_pagination.html" %}</div>
+{% comment %}LV-254: era la última lista que se escribía la tabla entera a mano
+(sobrescribía `content`), así que se había quedado sin lo que `UX-07` les dio a
+las demás: búsqueda en vivo, selección múltiple, ocultar columnas, filas-tarjeta
+en el teléfono y el vacío que distingue un filtro sin resultados. Y es la pantalla
+de aterrizaje del rol Maintenance (`UX-31`), o sea la primera que ve esa persona
+cada mañana. Entra por los bloques `list_*` con sus mismas columnas.{% endcomment %}
+
+{% block list_primary_actions %}
+<a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>
+<a class="btn btn-primary" href="new/">+ {% translate "New" %}</a>
 {% endblock %}
+
+{% block list_filters %}
+<div class="col-md-3">{% include "generic/_search_input.html" with search_url=request.path %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
+<div class="col-md-2"><select class="form-select" name="status"><option value="">{% translate "All statuses" %}</option>{% for value,label in status_choices %}<option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+<div class="col-md-2"><select class="form-select" name="maintenance_type"><option value="">{% translate "All types" %}</option>{% for value,label in type_choices %}<option value="{{ value }}" {% if current_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+<div class="col-auto"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
+{% endblock %}
+
+{% block list_table_class %}table-normalized{% endblock %}
+{% comment %}La flexible es el estado: sus rótulos son los más largos de la fila
+(«Terminada en taller», «En tránsito de vuelta») y pueden llevar al lado la marca
+de permanencia excesiva. El tipo y la fecha son cortos; la aeronave es el
+ancla.{% endcomment %}
+{% block list_colgroup %}
+<colgroup>
+  <col class="col-primary">
+  <col class="col-compact">
+  <col class="col-compact">
+  <col class="col-flex">
+  <col class="col-actions">
+</colgroup>
+{% endblock %}
+
+{% block list_header %}
+<th scope="col">{% translate "Aircraft" %}</th>
+<th scope="col">{% translate "Type" %}</th>
+<th scope="col">{% translate "Scheduled" %}</th>
+<th scope="col">{% translate "Status" %}</th>
+{% endblock %}
+
+{% block table_body %}{% include "maintenance/_record_rows.html" %}{% endblock %}

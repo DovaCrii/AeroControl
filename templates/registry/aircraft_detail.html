@@ -30,7 +30,7 @@ ahí abajo: primero en qué estado está el trámite, después el papel.{% endco
       <p class="text-muted small mb-0">
         {% if object.insurance_expiry %}
           {% blocktranslate with date=object.insurance_expiry|date:"Y-m-d" %}Policy on file valid until {{ date }}.{% endblocktranslate %}
-          {% if object.insurance_is_overdue %}<span class="badge bg-danger ms-1">{% translate "Lapsed" %}</span>{% endif %}
+          {% if object.insurance_is_overdue %}<span class="badge sev-critical ms-1">⚠ {% translate "Lapsed" %}</span>{% endif %}
         {% else %}
           {% translate "No policy validity on file." %}
         {% endif %}

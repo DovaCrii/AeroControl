@@ -4,11 +4,17 @@ es lo que habilita la selección múltiple.{% endcomment %}
 {% for object in objects %}<tr data-pk="{{ object.pk }}">
   <td><a href="{{ object.get_absolute_url }}"><strong>{{ object.title }}</strong></a></td>
   <td>{{ object.get_source_display }}</td>
-  <td>{{ object.cost_center|default:"—" }}</td>
+  <td>{% if object.cost_center %}<span class="cc-chip" title="{{ object.cost_center }}">{{ object.cost_center.code }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
   <td><span class="text-nowrap">{{ object.detected_on|date:"Y-m-d" }}</span></td>
   <td><span class="badge bg-{% if object.status == 'closed' %}success{% else %}warning text-dark{% endif %}">{{ object.get_status_display }}</span></td>
   {% comment %}R7.6: closing is not the end of the story -- the norm asks whether
   the action worked. An open finding shows nothing here rather than a blank,
   because the question does not apply yet.{% endcomment %}
-  <td>{% if object.effectiveness_verified_at %}<span class="badge bg-primary-subtle text-primary-emphasis">{% translate "Verified" %}</span>{% elif object.effectiveness_is_due %}<span class="badge bg-danger">{% translate "Verification due" %}</span>{% elif object.status == 'closed' %}<span class="text-muted small">{{ object.effectiveness_due_date|date:"Y-m-d"|default:"—" }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
-</tr>{% empty %}<tr><td colspan="99" class="text-center text-muted py-4">{% translate "No non-conformities recorded yet." %}</td></tr>{% endfor %}
+  <td>{% if object.effectiveness_verified_at %}<span class="badge bg-primary-subtle text-primary-emphasis">{% translate "Verified" %}</span>{% elif object.effectiveness_is_due %}<span class="badge sev-critical">⚠ {% translate "Verification due" %}</span>{% elif object.status == 'closed' %}<span class="text-muted small">{{ object.effectiveness_due_date|date:"Y-m-d"|default:"—" }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+</tr>{% empty %}<tr><td colspan="6" class="text-center text-muted py-4">
+  {% if is_filtered %}
+  {% translate "No records match the current filters." %} <a href="{{ request.path }}">{% translate "Clear filters" %}</a>
+  {% else %}
+  {% translate "No non-conformities recorded yet." %}
+  {% endif %}
+</td></tr>{% endfor %}

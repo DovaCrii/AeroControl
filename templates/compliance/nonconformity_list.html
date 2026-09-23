@@ -25,6 +25,21 @@
   <div class="col-auto"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
 </form>
 {% endblock %}
+{% comment %}LV-254: reparto declarado. La flexible es la del título —texto libre y
+el más largo de la fila— aunque sea la primera: esta lista no tiene columna de
+acciones, así que el ancla y el botón que `col-primary` alinea entre las listas
+del padrón no aplican acá.{% endcomment %}
+{% block worktable_table_class %}table-normalized{% endblock %}
+{% block worktable_colgroup %}
+<colgroup>
+  <col class="col-flex">
+  <col class="col-compact">
+  <col class="col-numeric">
+  <col class="col-compact">
+  <col class="col-status">
+  <col class="col-text">
+</colgroup>
+{% endblock %}
 {% block worktable_header %}
   {% worktable_th _("Title") "title" %}
   {% worktable_th _("Source") "source" %}

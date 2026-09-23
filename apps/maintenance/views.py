@@ -52,10 +52,14 @@ class MCreate(HtmxFormMixin, ModelPermissionRequiredMixin, CreateView):
 class MaintenanceRecordList(MList):
     model = MaintenanceRecord
     template_name = "maintenance/record_list.html"
+    htmx_template_name = "maintenance/_record_rows.html"
     search_fields = ["aircraft__registration", "description", "performed_by"]
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        # LV-252: `select_related("aircraft")` porque cada fila dibuja su aeronave:
+        # sin el join era una consulta por fila, hasta 25 de más por página, en una
+        # lista que no tenía techo de consultas que lo notara.
+        queryset = super().get_queryset().select_related("aircraft")
         status = self.request.GET.get("status", "")
         maintenance_type = self.request.GET.get("maintenance_type", "")
         if status in dict(MaintenanceRecord.STATUSES):
@@ -71,6 +75,11 @@ class MaintenanceRecordList(MList):
             type_choices=MaintenanceRecord.TYPES,
             current_status=self.request.GET.get("status", ""),
             current_type=self.request.GET.get("maintenance_type", ""),
+        )
+        # LV-254: los dos filtros propios también cuentan como filtro, para que el
+        # vacío ofrezca quitarlos en vez de decir que no hay registros.
+        context["is_filtered"] = context["is_filtered"] or bool(
+            context["current_status"] or context["current_type"]
         )
         return context
 
