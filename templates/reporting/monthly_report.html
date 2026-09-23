@@ -38,6 +38,9 @@ la barra y los botones, y quedan las cinco hojas A4 solas.{% endcomment %}
     guardarla, y congelar el borrador es un acto explícito — no un efecto
     secundario de teclear el primer hallazgo.{% endcomment %}
     {% if run %}
+      {% comment %}LV-251: la vista prometía "comparar" y no había ninguna. Con
+      permiso de lectura: comparar no escribe nada.{% endcomment %}
+      <a class="btn btn-outline-secondary" href="{% url 'monthly-report-compare' run.pk %}">{% translate "See the changes" %}</a>
       {% if run.is_editable and perms.reporting.change_reportrun %}
       <a class="btn btn-outline-primary" href="{% url 'monthly-report-narrative' run.pk %}">{% translate "Write the narrative" %}</a>
       {% comment %}R5. Aprobar cierra el informe: deja de ser editable y una

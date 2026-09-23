@@ -281,6 +281,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Ver qué cambió entre dos informes (`LV-251`).** El botón «Ver los cambios»
+  compara el informe con su revisión anterior —qué se corrigió— o con el del mes
+  anterior —cómo se movió la operación—: los 18 indicadores con su diferencia, los
+  permisos que entraron y salieron, y el texto escrito que cambió. Compara los
+  informes tal como quedaron congelados, así que lo que muestra es lo que cada uno
+  dijo cuando se emitió. Era la mitad pendiente de un pedido del 8 de septiembre.
 - **El borrador del informe mensual se congela solo el día 1 (`LV-250`).** Hasta
   ahora había que hacerlo a mano. Queda listo para instalar el trabajo programado
   que lo deja con las cifras fijas —sin aprobarlo: la firma es de una persona— y

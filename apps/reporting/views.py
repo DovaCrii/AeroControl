@@ -377,6 +377,54 @@ class ReportNarrativeUpdate(ModelPermissionRequiredMixin, View):
         )
 
 
+class ReportCompareView(ModelViewPermissionRequiredMixin, TemplateView):
+    """LV-251: qué cambió entre este informe y el anterior.
+
+    El pedido del 2026-09-08 que quedó pendiente: *"lo que se modifica y los cambios
+    más claro"*. Dos comparaciones, elegibles con `?against=`: la **revisión
+    anterior** del mismo mes (qué corrigió esta revisión) y el **mes anterior** (cómo
+    se movió la operación). Sin parámetro, la revisión si existe —es la pregunta que
+    lleva a alguien a abrir una revisión 1— y si no, el mes.
+
+    Permiso de **lectura**: comparar no escribe nada, y quien puede ver el informe
+    puede ver en qué cambió.
+    """
+
+    model = ReportRun
+    template_name = "reporting/compare.html"
+
+    def get_context_data(self, **kwargs):
+        from .compare import (
+            baselines_for,
+            compare_kpis,
+            compare_narrative,
+            compare_permits,
+        )
+
+        context = super().get_context_data(**kwargs)
+        run = get_object_or_404(ReportRun, pk=self.kwargs["pk"])
+        baselines = baselines_for(run)
+        against = self.request.GET.get("against")
+        if against not in baselines or baselines[against] is None:
+            against = "revision" if baselines["revision"] else "month"
+        baseline = baselines[against]
+        context.update(
+            run=run,
+            baselines=baselines,
+            against=against,
+            baseline=baseline,
+        )
+        if baseline is not None:
+            kpis = compare_kpis(baseline.payload, run.payload)
+            context.update(
+                kpis=kpis,
+                changed_count=sum(1 for row in kpis if row["changed"]),
+                permits=compare_permits(baseline.payload, run.payload),
+                narrative=compare_narrative(baseline, run),
+            )
+        return context
+
+
 class ReportTemplateUpdate(ModelPermissionRequiredMixin, View):
     """LV-249: los bloques editables del informe — portada, fases y matriz.
 

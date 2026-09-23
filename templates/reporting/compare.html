@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Changes" %} · {{ run.code }} - AeroControl{% endblock %}
+
+{% comment %}LV-251: qué cambió entre dos informes congelados.
+
+Compara **payloads congelados**, nunca recalcula: un informe es lo que dijo cuando
+se emitió, y recalcular cualquiera de los dos mediría la base de hoy contra la de
+hoy — "qué cambió" sería siempre "nada".
+
+Las filas sin cambio se muestran atenuadas y no se esconden: saber que una cifra
+**no** se movió también es información, y una tabla que sólo muestra lo que cambió
+no deja ver contra qué.{% endcomment %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <p class="page-eyebrow mb-1">{% translate "Reports" %}</p>
+    <h1 class="h3 mb-0">{% translate "Changes" %} · {{ run.code }} {% blocktranslate with revision=run.revision %}rev. {{ revision }}{% endblocktranslate %}</h1>
+    {% if baseline %}
+    <p class="page-description mb-0">{% blocktranslate with code=baseline.code revision=baseline.revision %}Compared with {{ code }} rev. {{ revision }}.{% endblocktranslate %}</p>
+    {% endif %}
+  </div>
+  <a class="btn btn-outline-secondary" href="{% url 'monthly-report' %}?period={{ run.period|date:'Y-m' }}">{% translate "Back to the report" %}</a>
+</div>
+
+<ul class="nav nav-pills mb-3">
+  <li class="nav-item">
+    {% if baselines.revision %}<a class="nav-link{% if against == 'revision' %} active{% endif %}" href="?against=revision">{% translate "Against the previous revision" %}</a>{% else %}<span class="nav-link disabled">{% translate "No previous revision" %}</span>{% endif %}
+  </li>
+  <li class="nav-item">
+    {% if baselines.month %}<a class="nav-link{% if against == 'month' %} active{% endif %}" href="?against=month">{% translate "Against the previous month" %}</a>{% else %}<span class="nav-link disabled">{% translate "No report for the previous month" %}</span>{% endif %}
+  </li>
+</ul>
+
+{% if not baseline %}
+<div class="alert alert-info" role="note">{% translate "There is nothing to compare this report with yet: it has no earlier revision and the previous month has no frozen report." %}</div>
+{% else %}
+
+<section class="card p-3 mb-3">
+  <h2 class="h5">{% translate "Indicators" %}</h2>
+  <p class="text-muted small mb-2">{% blocktranslate count counter=changed_count %}{{ counter }} indicator changed.{% plural %}{{ counter }} indicators changed.{% endblocktranslate %}</p>
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+      <thead>
+        <tr>
+          <th scope="col">{% translate "Indicator" %}</th>
+          <th scope="col" class="text-end">{% translate "Before" %}</th>
+          <th scope="col" class="text-end">{% translate "Now" %}</th>
+          <th scope="col" class="text-end">{% translate "Difference" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in kpis %}
+        <tr{% if not row.changed %} class="text-body-secondary"{% endif %}>
+          <td>{% if row.changed %}<strong>{{ row.label }}</strong>{% else %}{{ row.label }}{% endif %}</td>
+          <td class="text-end">{% if row.before is None %}—{% else %}{{ row.before }}{% endif %}</td>
+          <td class="text-end">{% if row.after is None %}—{% else %}{{ row.after }}{% endif %}</td>
+          <td class="text-end">{% if row.delta %}<strong>{% if row.delta > 0 %}+{% endif %}{{ row.delta }}</strong>{% elif row.changed %}{% translate "Changed" %}{% else %}—{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card p-3 mb-3">
+  <h2 class="h5">{% translate "Permits" %}</h2>
+  {% if permits.in_force.added or permits.in_force.removed or permits.awaiting.added or permits.awaiting.removed %}
+  <dl class="row mb-0">
+    {% if permits.in_force.added %}<dt class="col-sm-4">{% translate "Now in force" %}</dt><dd class="col-sm-8">{{ permits.in_force.added|join:", " }}</dd>{% endif %}
+    {% if permits.in_force.removed %}<dt class="col-sm-4">{% translate "No longer in force" %}</dt><dd class="col-sm-8">{{ permits.in_force.removed|join:", " }}</dd>{% endif %}
+    {% if permits.awaiting.added %}<dt class="col-sm-4">{% translate "Newly awaiting the DGAC" %}</dt><dd class="col-sm-8">{{ permits.awaiting.added|join:", " }}</dd>{% endif %}
+    {% if permits.awaiting.removed %}<dt class="col-sm-4">{% translate "No longer awaiting" %}</dt><dd class="col-sm-8">{{ permits.awaiting.removed|join:", " }}</dd>{% endif %}
+  </dl>
+  {% else %}
+  <p class="text-muted mb-0">{% translate "The same permits in both." %}</p>
+  {% endif %}
+</section>
+
+<section class="card p-3">
+  <h2 class="h5">{% translate "Written text" %}</h2>
+  {% for block in narrative %}
+  <h3 class="h6 mt-2">{{ block.label }}</h3>
+  <div class="row g-3">
+    <div class="col-md-6">
+      <p class="small text-muted mb-1">{% translate "Before" %}</p>
+      {% for line in block.before %}<p class="mb-1">{{ line }}</p>{% empty %}<p class="text-muted mb-1">—</p>{% endfor %}
+    </div>
+    <div class="col-md-6">
+      <p class="small text-muted mb-1">{% translate "Now" %}</p>
+      {% for line in block.after %}<p class="mb-1">{{ line }}</p>{% empty %}<p class="text-muted mb-1">—</p>{% endfor %}
+    </div>
+  </div>
+  {% empty %}
+  <p class="text-muted mb-0">{% translate "The written text did not change." %}</p>
+  {% endfor %}
+</section>
+{% endif %}
+{% endblock %}
