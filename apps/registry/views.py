@@ -55,6 +55,7 @@ from .forms import (
     QualificationForm,
     QualificationTypeForm,
 )
+from .selectors import filter_by_credential, filter_by_insurance
 from .services import bulk_assign_aircraft, bulk_assign_operators
 
 
@@ -635,7 +636,7 @@ class OperatorList(RegistryList):
             is_active=True,
             is_current_version=True,
         )
-        return self.scope_by_tenant(
+        queryset = self.scope_by_tenant(
             super()
             .get_queryset()
             .select_related("cost_center")
@@ -667,6 +668,12 @@ class OperatorList(RegistryList):
                 )
             )
             .order_by("sort_name", "full_name")
+        )
+        # LV-242: ver `AircraftList`. La tarjeta "Credenciales al día" decía
+        # *"1 vencido · 7 sin fecha cargada"* y llevaba al padrón entero: siete
+        # personas que localizar a ojo entre cuarenta y cinco.
+        return filter_by_credential(
+            queryset, self.request.GET.get("credential"), timezone.localdate()
         )
 
 
@@ -722,7 +729,15 @@ class AircraftList(RegistryList):
 
     def get_queryset(self):
         # R3.2: no Meta.ordering fell back to created_at.
-        return self.scope_by_tenant(super().get_queryset()).order_by("registration")
+        queryset = self.scope_by_tenant(super().get_queryset()).order_by("registration")
+        # LV-242: `?insurance=` acota por el estado de la póliza, y es lo que hace
+        # que la tarjeta del panel lleve a alguna parte. Decía "1 vencido" y el
+        # clic traía las dieciséis aeronaves, así que el número informaba y no
+        # servía. El criterio vive en `selectors` para que la lista muestre
+        # exactamente los que la tarjeta contó.
+        return filter_by_insurance(
+            queryset, self.request.GET.get("insurance"), timezone.localdate()
+        )
 
 
 class AircraftDetail(RegistryDetail):

@@ -5701,6 +5701,24 @@ msgstr "sin vigencia hoy"
 msgid "without valid cover"
 msgstr "sin cobertura vigente"
 
+#: .\templates\dashboard\index.html:346
+msgid "Next expiry"
+msgstr "Próximo vencimiento"
+
+#: .\templates\dashboard\index.html:369
+#, python-format
+msgid "%(days)s day left"
+msgid_plural "%(days)s days left"
+msgstr[0] "queda %(days)s día"
+msgstr[1] "quedan %(days)s días"
+
+#: .\templates\dashboard\index.html:276
+#, python-format
+msgid "and %(counter)s more not shown"
+msgid_plural "and %(counter)s more not shown"
+msgstr[0] "y %(counter)s más sin mostrar"
+msgstr[1] "y %(counter)s más sin mostrar"
+
 #: .\apps\dashboard\views.py:181
 msgid "not up to date"
 msgstr "sin estar al día"
