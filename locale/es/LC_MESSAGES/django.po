@@ -5705,6 +5705,10 @@ msgstr "sin cobertura vigente"
 msgid "Next expiry"
 msgstr "Próximo vencimiento"
 
+#: .\templates\dashboard\index.html:112
+msgid "no records"
+msgstr "sin registros"
+
 #: .\templates\dashboard\index.html:369
 #, python-format
 msgid "%(days)s day left"

@@ -1,9 +1,36 @@
 # HANDOFF — AeroControl
 
-## 🟡 Lo vencido se contaba mal, y el correo avisaba de 2 de 6 (sin desplegar)
+## ✅ Lo vencido se contaba mal, y las cifras no llevaban a ninguna parte
 
-**Hecho el 2026-09-22, en `main`, sin migraciones.** Dos filas, y las dos son la
-misma forma de defecto: **un contador que no puede contar lo que dice contar**.
+**Desplegado** en `89a211d` el 2026-09-23, con `LV-240`, `LV-241` y `LV-242`.
+Respaldo previo tomado **y verificado**: `aero_ops_20260923_105302.sqlite3`. Sin
+migraciones, y `collectstatic` copió **0** archivos —ninguna de las tres filas tocó
+un estático—, que es lo que se esperaba.
+
+### `LV-242` — el panel decía cuántos faltan y no dejaba llegar a ellos
+
+La continuación de `LV-241`: contabilizar y marcar ya estaba, faltaba **poder
+seguirlo**. Cuatro caminos que no llevaban a nada: la tarjeta de seguros enlazaba
+al padrón completo (el filtro por vigencia **no existía** en ninguna de las dos
+listas), «Abrir» en la bandeja iba a `alert-list` para las veinte filas, la lista
+de vencimientos se cortaba en diez sin decirlo, y la tabla por faena **tiraba** la
+fecha del próximo vencimiento que ya calculaba.
+
+⚠️ **Lo delicado no era el filtro sino el criterio.** Si la lista filtrara por su
+cuenta, una aeronave con póliza vencida pero **dada de baja** saldría ahí y no en
+la tarjeta: cinco filas donde el panel dijo cuatro. Las exclusiones se mudaron a
+`registry.selectors` y las leen los dos. 🆕 **Lo cazaron dos tests escritos antes
+de que el filtro existiera**, que fallaron exactamente por ese caso.
+
+Dos tropiezos que vale tener a mano: el techo de consultas de `LV-237` volvió a
+saltar con la consulta nueva de `LV-241` (48 → 49, subido a propósito), y
+**`ruff check apps/` no alcanza** — el gate corre `ruff check .` y cazó una
+variable sin usar que la corrida acotada no vio.
+
+## 🟡 Lo vencido se contaba mal, y el correo avisaba de 2 de 6
+
+**Hecho el 2026-09-22.** Dos filas, y las dos son la misma forma de defecto: **un
+contador que no puede contar lo que dice contar**.
 
 ### `LV-241` — el panel se veía limpio teniendo permisos vencidos
 
@@ -224,8 +251,8 @@ falta y en qué folio.
 
 | | |
 |---|---|
-| Último commit de **código** | **`bb391df`** (2026-09-22) |
-| Desplegado en `p340` | **`bb391df`** ✅ el 2026-09-22 |
+| Último commit de **código** | **`89a211d`** (2026-09-23) |
+| Desplegado en `p340` | **`89a211d`** ✅ el 2026-09-23 |
 | Migraciones pendientes | **ninguna** |
 | Diferencia con `origin/main` | sólo documentación (este archivo) — **no requiere desplegar** |
 | Copia sin conexión (`UX-26`) | ⛔ **apagada** — `SERVICE_WORKER_ENABLED=False`; ver el incidente de abajo antes de encenderla |
