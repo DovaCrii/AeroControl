@@ -30,12 +30,28 @@ SUMMARY_MAX_LENGTH = 300
 # una corrida fallida sin gritar, y avisa recién cuando falló dos veces
 # seguidas. Un vigilante que avisa al primer tropiezo se termina ignorando, que
 # es el modo de fallo que este proyecto ya conoce de las alertas.
-DAILY_JOBS = {"generate_alerts": 48, "send_alert_digest": 48, "backup": 48}
+#
+# LV-250: `generate_monthly_report` entra con **35 días**. Corre el día 1 de cada
+# mes (pedido del usuario: *"borrador automático el día 1"*), así que un mes y
+# medio sin corrida es un timer caído o uno que nunca se instaló. La holgura sobre
+# los 31 días cubre un mes que corrió tarde por la VM apagada: `Persistent=true`
+# lo recupera al encender, y avisar por eso sería el vigilante que grita al primer
+# tropiezo. El nombre del diccionario dice "diarios" por historia; lo que guarda es
+# la antigüedad máxima de cada uno.
+DAILY_JOBS = {
+    "generate_alerts": 48,
+    "send_alert_digest": 48,
+    "backup": 48,
+    "generate_monthly_report": 24 * 35,
+}
 WATCHED_JOBS = [
     "generate_alerts",
     "send_alert_digest",
     "backup",
     "send_executive_report",
+    # LV-250: sin esto, que el borrador del informe no se congelara el día 1 se
+    # descubría el día 5, cuando alguien abría la pantalla para firmarlo.
+    "generate_monthly_report",
 ]
 
 

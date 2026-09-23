@@ -9,7 +9,7 @@ aprobó un plan en cuatro fases, en este orden, con sus decisiones tomadas:
 | Fase | Qué | Estado |
 |---|---|---|
 | **0** | `LV-246`: faenas sin permiso primero y en rojo, «⚠ Caducado» en la lista y ficha de permisos, «⚠ Permiso vencido» en los planes geo, reparto de la lista de permisos | ✅ hecha, **sin desplegar** |
-| **1** | Informe: 4 defectos (1a, `LV-247` ✅), más corto (1b, `LV-248` ✅: permisos de producción en **una** hoja, 5 + anexo), **bloques editables** portada/fases/matriz (1c, `LV-249` ✅, **con migración**), **borrador automático el día 1** (1d ⬜), ver cambios entre revisiones (1e ⬜) | 🔄 |
+| **1** | Informe: 4 defectos (1a, `LV-247` ✅), más corto (1b, `LV-248` ✅: permisos de producción en **una** hoja, 5 + anexo), **bloques editables** portada/fases/matriz (1c, `LV-249` ✅, **con migración**), **borrador automático el día 1** (1d, `LV-250` ✅ — **falta instalar el timer en `p340`**, bloque en `docs/scheduled-operations.md`), ver cambios entre revisiones (1e ⬜) | 🔄 |
 
 ⚠️ **`LV-249` trae migraciones (`reporting.0004` y `0005`)**. El despliegue que la
 incluya lleva `migrate`; la `0005` siembra los textos de la portada, las fases y la

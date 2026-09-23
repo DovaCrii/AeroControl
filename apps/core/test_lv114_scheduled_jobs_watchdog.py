@@ -51,6 +51,9 @@ def _all_current():
     for command in ("generate_alerts", "send_alert_digest", "backup"):
         _run(command, when=NOW - timedelta(hours=2))
     _run("send_executive_report", when=NOW - timedelta(days=6))
+    # LV-250: el borrador del informe mensual también se vigila. Corre el día 1, así
+    # que "al día" es haber corrido dentro del último mes — 20 días atrás lo está.
+    _run("generate_monthly_report", when=NOW - timedelta(days=20))
 
 
 @pytest.mark.django_db
@@ -86,6 +89,27 @@ class TestWhatCountsAsNeedingAttention:
         _all_current()
 
         assert failing_jobs() == []
+
+    def test_the_monthly_report_is_measured_by_the_month(self):
+        """LV-250: el borrador del informe corre el día 1. Veinte días sin correr es
+        lo normal; con la vara de 48 horas de un diario el vigilante lo daría por
+        caído casi todo el mes, y un aviso que llega siempre se deja de leer."""
+        _all_current()
+
+        assert "generate_monthly_report" not in [
+            row["command"] for row in failing_jobs()
+        ]
+
+    def test_a_missed_month_is_reported(self):
+        """Pasado el mes y medio sin corrida, el timer se cayó o nunca se instaló:
+        eso sí se avisa — hoy, un borrador que no se congeló el día 1 se descubría
+        el día 5, al abrir la pantalla para firmarlo."""
+        _all_current()
+        JobRun.objects.filter(command="generate_monthly_report").update(
+            started_at=NOW - timedelta(days=40), finished_at=NOW - timedelta(days=40)
+        )
+
+        assert [row["command"] for row in failing_jobs()] == ["generate_monthly_report"]
 
 
 @pytest.mark.django_db
