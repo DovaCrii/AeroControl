@@ -247,6 +247,58 @@
 .rpt-people { font-size: 8.2px; line-height: 1.35; }
 .rpt-tail { font-size: 8.4px; }
 
+/* LV-248: la nota breve del resumen, donde se mudó el ciclo del permiso. Un
+ * párrafo con la barra de acento a la izquierda, en el tono de los textos
+ * secundarios del informe: es contexto del trámite, no una cifra. */
+.rpt-note {
+  border-left: 3px solid var(--rpt-cyan);
+  background: #F4F7FA;
+  color: #52606D;
+  font-size: 9.2px;
+  line-height: 1.5;
+  padding: 7px 10px;
+}
+.rpt-note strong { color: #124384; }
+
+/* ⚠️ LV-248: **las tres reglas de arriba no se aplicaban**, y por eso cada fila de
+ * permisos medía 45 px. `.rpt-table .c` —más abajo en este archivo, con la misma
+ * especificidad que `.rpt-grid-permits .c`— gana por orden: las celdas salían a
+ * 10 px con 7 px de relleno en vez de los 9 px y 6 px que el diseño declara, y a ese
+ * tamaño el folio `JEJ-2026-001` no cabe en su columna de 74 px y se parte en dos
+ * líneas. La altura de **toda** la tabla la decidía el folio partido.
+ *
+ * Se encontró midiendo el anexo de operadores, que tenía el mismo defecto (ver
+ * `.rpt-grid-roster`). Restaurar el tamaño que el diseño ya pedía baja la fila a
+ * una línea, y con eso la sección de permisos de producción cabe en una hoja: el
+ * pedido del usuario era un informe "más corto, con lo esencial". No se achica la
+ * letra por debajo de lo declarado; se deja de agrandarla por accidente. */
+.rpt-table .rpt-grid-permits .c { padding: 6px 5px; font-size: 9px; }
+.rpt-table .rpt-grid-permits .rpt-num { white-space: nowrap; }
+.rpt-table .rpt-grid-permits .rpt-tail { font-size: 8.4px; }
+
+/* LV-248 · El anexo de operadores designados. Tres columnas y no siete: folio y
+ * faena para ubicar el permiso, y el resto del ancho para los nombres, que es lo
+ * único que esta hoja tiene que mostrar. Con ese ancho caben cuatro nombres por
+ * línea (`ROSTER_NAMES_PER_LINE`), contra dos en la tabla de la sección 2. */
+.rpt-grid-roster { display: grid; grid-template-columns: 88px 50px 1fr; }
+/* ⚠️ Con `.rpt-table` delante, y no por prolijidad. `.rpt-table .c` se declara
+ * más abajo con la misma especificidad y gana por orden: medido en el navegador,
+ * las celdas del anexo salían a 10 px con 7 px de relleno, y a ese tamaño el folio
+ * `JEJ-2026-001` no cabe en 74 px y se parte en dos líneas — así que **todas** las
+ * filas medían 45 px, con un nombre o con nueve, y la estimación por nombres no
+ * medía nada. Por eso también el folio lleva `nowrap` y una columna más ancha. */
+.rpt-table .rpt-grid-roster .th {
+  color: #ffffff;
+  font-size: 8.4px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 7px 5px;
+}
+.rpt-table .rpt-grid-roster .c { padding: 6px 5px; font-size: 9px; color: var(--rpt-ink); border-bottom: 1px solid var(--rpt-hair); }
+.rpt-table .rpt-grid-roster .rpt-num { white-space: nowrap; }
+.rpt-table .rpt-grid-roster .rpt-people { font-size: 8.2px; line-height: 1.35; }
+
 /* -- página 4 · cobertura por Centro de Costo ---------------------------- */
 
 .rpt-table { border: 1px solid var(--rpt-rule); }
@@ -405,6 +457,12 @@
   .rpt-page,
   .rpt-page * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 
+  /* LV-247: el Dato Ejecutivo al papel, con las mismas dos reglas que las hojas
+   * del informe: sin sombra y con los fondos de color, que son información. */
+  .rpt-sheet { box-shadow: none; min-height: 0; }
+  .rpt-sheet,
+  .rpt-sheet * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+
   /* ⚠️ La marca de «escrito · editar» **no va al papel**. El informe sale
    * firmado hacia la DGAC, y un rótulo de «editable» sobre el documento
    * entregado afirmaría que el lector puede cambiarlo. Es lo mismo que hace
@@ -420,6 +478,28 @@
  * papel. Sale firmado hacia la DGAC, así que no puede depender del tema claro u
  * oscuro de quien lo abrió -- los colores van literales, como en el resto del
  * archivo. */
+/* LV-247: la hoja del Dato Ejecutivo. La plantilla escribía `class="rpt-sheet"` y
+ * esa clase **no existía**: la hoja no tenía ancho de A4, ni fondo blanco, ni
+ * sombra de papel en pantalla, y al imprimir tampoco ninguna regla — se veía como
+ * texto suelto sobre el fondo de la aplicación. Es la misma forma de defecto que la
+ * `table-warning-subtle` del panel (`LV-246`): una clase desconocida no falla, no
+ * pinta.
+ *
+ * `min-height` y no `height`: a diferencia de las hojas del informe, que se reparten
+ * con `pagination.py` para no recortar, ésta es una sola y su contenido varía con el
+ * número de faenas. Una altura fija con `overflow: hidden` —lo que tiene
+ * `.rpt-page`— perdería filas en silencio, el defecto que costó `pagination.py`. */
+.rpt-sheet {
+  width: 794px;
+  min-width: 794px;
+  min-height: 1123px;
+  margin: 0 auto;
+  background: #ffffff;
+  color: var(--rpt-ink);
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  box-shadow: 0 2px 12px rgb(15 27 45 / 18%);
+}
+
 .rpt-brief { padding: 26px 30px; }
 .rpt-brief-head { border-bottom: 2px solid #124384; padding-bottom: 10px; margin-bottom: 14px; }
 .rpt-brief-eyebrow { color: #124384; font-size: 8.5px; font-weight: bold; letter-spacing: 0.12em; text-transform: uppercase; }

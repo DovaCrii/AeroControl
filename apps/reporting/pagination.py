@@ -52,20 +52,33 @@ silencioso pasa inadvertido; uno contra un total declarado, no.
 #: Todo en píxeles de la hoja de 1123, tal como se midió. Se dejan como números
 #: y no como fracciones porque son medidas de un diseño concreto: expresarlas en
 #: porcentajes sugeriría que el diseño escala, y no lo hace.
+#:
+#: ⚠️ **LV-248 · re-medidos el 2026-09-23, y tres de cinco cambiaron.** La tabla de
+#: arriba de este módulo es la medición del 2026-09-08 y se deja como historia. Lo
+#: que cambió y por qué:
+#:
+#: | | Antes | Ahora | Por qué |
+#: |---|---|---|---|
+#: | Primera fila, hoja 1 de la sección | 515 | **344** | el ciclo de cuatro pasos (157 px) se mudó al resumen, por decisión del usuario |
+#: | Primera fila, hoja de continuación | 205 | **229** | medida de nuevo: la de antes estaba **corta**, y el margen de seguridad la tapaba |
+#: | Fila base | 45 | **27** (26,5) | el folio se partía en dos líneas porque `.rpt-table .c` pisaba la letra de 9 px del diseño; restaurada, la fila es de una línea |
+#: | Línea de aeronave de más | 15 | **12** (11,7) | la celda vuelve a su 8,4 px |
+#:
+#: Con esto la sección de permisos de producción —11 vigentes y 3 en trámite—
+#: cabe en **una** hoja: el informe pasa de 6 a 5 hojas más el anexo de la nómina.
 FOOTER_TOP_PX = 1060
-FIRST_SHEET_ROW_TOP_PX = 515
-CONTINUATION_ROW_TOP_PX = 205
+FIRST_SHEET_ROW_TOP_PX = 344
+CONTINUATION_ROW_TOP_PX = 229
 #: Una fila de una sola línea en sus celdas multivaluadas.
-ROW_BASE_PX = 45
-#: Lo que suma cada línea envuelta de más. Es la diferencia medida entre la fila
-#: de dos operadores (45 px, una línea de nombres) y la de cuatro (60 px, dos
-#: líneas). Equivocarse por exceso deja un hueco en la hoja; por defecto, recorta
-#: una fila — así que cuando haya duda, este número sube.
-ROW_LINE_PX = 15
-#: Cuántos nombres caben en una línea de la celda de operadores designados. La
-#: columna es `1fr` de una rejilla de siete y el cuerpo baja a 8,2 px justamente
-#: para que quepan (`.rpt-people`), así que entran dos nombres completos.
-NAMES_PER_LINE = 2
+ROW_BASE_PX = 27
+#: Lo que suma cada aeronave de más (van una por línea). Medido: 26,5 px con una,
+#: 38,2 con dos. Equivocarse por exceso deja un hueco en la hoja; por defecto,
+#: recorta una fila — así que cuando haya duda, este número sube.
+ROW_LINE_PX = 12
+#: LV-248: acá estaba `NAMES_PER_LINE = 2`, cuántos nombres cabían por línea en la
+#: celda de operadores. La celda dejó de listarlos —dice «4 operadores»—, así que
+#: la constante no tenía ya a quién medir. Los nombres viven en el anexo, con su
+#: propia medida (`ROSTER_NAMES_PER_LINE`).
 #: Observación del período + leyenda de bandas, que cierran la sección y por eso
 #: van sólo en la última hoja.
 CLOSING_PX = 133
@@ -75,36 +88,81 @@ SAFETY_PX = ROW_BASE_PX
 
 
 def row_px(row):
-    """El alto estimado de una fila, por su contenido.
+    """El alto estimado de una fila de la tabla de permisos, por su contenido.
 
-    Las dos celdas que crecen son las multivaluadas —operadores designados y
-    aeronaves— y manda la más alta: van una al lado de la otra, así que la fila
-    mide lo que mida la peor.
+    ⚠️ **LV-248: los operadores ya no cuentan.** La celda mostraba a **todos** los
+    operadores designados, y cada dos nombres sumaban una línea de 15 px: con los
+    cuatro de producción era la causa directa de las hojas de más. El usuario pidió
+    un informe *"más corto, con lo esencial"* y eligió recortar exactamente esto —
+    la celda dice ahora «4 operadores» y la nómina completa va a un anexo al final
+    (`roster_row_px`). Lo único que sigue creciendo es la de aeronaves, que va una
+    por línea (la plantilla las separa con `<br>`).
+    """
+    tails = len(row.get("aircraft") or [])
+    return ROW_BASE_PX + ROW_LINE_PX * (max(tails, 1) - 1)
 
-    Las aeronaves van una por línea (la plantilla las separa con `<br>`); los
-    nombres van corridos y envuelven de dos en dos.
+
+#: LV-248 · El anexo de la nómina. **Medido en el navegador el 2026-09-23** sobre la
+#: hoja renderizada, con nombres reales de producción:
+#:
+#: | | |
+#: |---|---|
+#: | Donde cae la primera fila | 218 px |
+#: | Fila de 1 y de 4 nombres (una línea) | 26,5 px |
+#: | Fila de 9 nombres (dos líneas) | 35,1 px |
+#:
+#: ⚠️ La primera medición daba **45 px para todas las filas**, con uno o con nueve
+#: nombres: `.rpt-table .c` pisaba el cuerpo del anexo y el folio se partía en dos
+#: líneas, así que la altura la decidía el folio y no los nombres. Una estimación
+#: calibrada contra eso habría medido otra cosa; se corrigió el CSS y se volvió a
+#: medir. Ver `report-a4.css`.
+#:
+#: Los tres se redondean **hacia arriba** —equivocarse por exceso deja un hueco;
+#: por defecto, recorta—, y `ROSTER_NAMES_PER_LINE` queda en 4 aunque la medición
+#: muestra que caben al menos cinco: cuatro nombres largos entran seguro en una
+#: línea, y los nombres de producción no miden todos lo mismo.
+ROSTER_FIRST_ROW_TOP_PX = 218
+ROSTER_ROW_BASE_PX = 27
+ROSTER_LINE_PX = 12
+ROSTER_NAMES_PER_LINE = 4
+
+
+def roster_row_px(row):
+    """El alto estimado de una fila del anexo de operadores designados.
+
+    Una fila por permiso: folio, faena y la nómina completa, que envuelve de a
+    `ROSTER_NAMES_PER_LINE`. Equivocarse por defecto recorta una fila; por eso,
+    como en la tabla de permisos, el margen de hoja (`SAFETY_PX`) absorbe el
+    residuo y el rótulo declara el total.
     """
     names = len(row.get("operators") or [])
-    tails = len(row.get("aircraft") or [])
-    name_lines = -(-names // NAMES_PER_LINE) if names else 1
-    lines = max(name_lines, tails or 1, 1)
-    return ROW_BASE_PX + ROW_LINE_PX * (lines - 1)
+    lines = -(-names // ROSTER_NAMES_PER_LINE) if names else 1
+    return ROSTER_ROW_BASE_PX + ROSTER_LINE_PX * (lines - 1)
 
 
-def sheet_budget_px(*, first, last, closing_px=CLOSING_PX):
+def sheet_budget_px(
+    *, first, last, closing_px=CLOSING_PX, first_top=FIRST_SHEET_ROW_TOP_PX
+):
     """Cuántos píxeles de filas caben en una hoja de la sección.
 
     `first` baja el techo porque esa hoja carga además el ciclo de vigencia y los
     cuatro indicadores; `last` lo baja porque cierra con la observación y la
     leyenda. Una sección de una sola hoja es las dos cosas, y ése es el caso más
-    apretado.
+    apretado. `first_top` deja que otra sección —el anexo, `LV-248`— declare dónde
+    empieza su primera fila.
     """
-    top = FIRST_SHEET_ROW_TOP_PX if first else CONTINUATION_ROW_TOP_PX
+    top = first_top if first else CONTINUATION_ROW_TOP_PX
     available = FOOTER_TOP_PX - top - (closing_px if last else 0) - SAFETY_PX
     return max(ROW_BASE_PX, available)
 
 
-def paginate(rows, *, closing_px=CLOSING_PX):
+def paginate(
+    rows,
+    *,
+    closing_px=CLOSING_PX,
+    estimate=row_px,
+    first_top=FIRST_SHEET_ROW_TOP_PX,
+):
     """Reparte `rows` en hojas, devolviendo una lista de listas.
 
     ⚠️ **Se busca el número de hojas por prueba creciente en vez de repartir de
@@ -122,7 +180,7 @@ def paginate(rows, *, closing_px=CLOSING_PX):
     if not rows:
         return [[]]
     for sheets in range(1, len(rows) + 1):
-        packed = _pack(rows, sheets, closing_px)
+        packed = _pack(rows, sheets, closing_px, estimate, first_top)
         if packed is not None:
             return packed
     # Inalcanzable: con `sheets == len(rows)` cada hoja lleva una fila, y
@@ -132,16 +190,33 @@ def paginate(rows, *, closing_px=CLOSING_PX):
     return [rows]
 
 
-def _pack(rows, sheets, closing_px):
+def _pack(rows, sheets, closing_px, estimate, first_top):
     """Intenta meter `rows` en exactamente `sheets` hojas. `None` si no entran."""
     out, index = [], 0
     for sheet in range(sheets):
         budget = sheet_budget_px(
-            first=sheet == 0, last=sheet == sheets - 1, closing_px=closing_px
+            first=sheet == 0,
+            last=sheet == sheets - 1,
+            closing_px=closing_px,
+            first_top=first_top,
         )
         chunk = []
         while index < len(rows):
-            cost = row_px(rows[index])
+            # ⚠️ LV-248: **una hoja que no es la última no se lleva la última fila.**
+            # Sin esto, cuando todas las filas caben en la primera hoja —cuyo
+            # presupuesto *no* descuenta el cierre, porque no es la última—, la hoja
+            # final queda vacía, se descarta más abajo, y la primera pasa a ser la
+            # última **sin el espacio del cierre**: la observación, la leyenda y las
+            # solicitudes en trámite quedan bajo el pie, donde `overflow: hidden` las
+            # recorta en silencio. Lo destapó acortar las filas: con los operadores
+            # listados medían 60 px y once no cabían nunca en una hoja; con la
+            # cantidad miden 45, y las once de producción (495 px) entraban justo en
+            # los 500 de la primera. Guardar una fila para la última obliga a que la
+            # hoja que carga el cierre tenga filas, y por lo tanto su presupuesto —el
+            # que sí descuenta el cierre— se verifica.
+            if sheet < sheets - 1 and index == len(rows) - 1:
+                break
+            cost = estimate(rows[index])
             if chunk and cost > budget:
                 break
             budget -= cost
@@ -155,7 +230,13 @@ def _pack(rows, sheets, closing_px):
     return [chunk for chunk in out if chunk] or [[]]
 
 
-def sheets_for(rows, *, closing_px=CLOSING_PX):
+def sheets_for(
+    rows,
+    *,
+    closing_px=CLOSING_PX,
+    estimate=row_px,
+    first_top=FIRST_SHEET_ROW_TOP_PX,
+):
     """Las hojas de la sección, cada una con lo que la plantilla necesita saber.
 
     Devuelve `[{rows, first, last}]`. El **número de página** no se asigna acá a
@@ -163,7 +244,9 @@ def sheets_for(rows, *, closing_px=CLOSING_PX):
     vista que arma el documento entero lo sabe. Repartirlo en dos lugares es cómo
     un informe termina con dos hojas numeradas igual.
     """
-    chunks = paginate(rows, closing_px=closing_px)
+    chunks = paginate(
+        rows, closing_px=closing_px, estimate=estimate, first_top=first_top
+    )
     return [
         {
             "rows": chunk,

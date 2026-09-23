@@ -9,7 +9,15 @@ aprobó un plan en cuatro fases, en este orden, con sus decisiones tomadas:
 | Fase | Qué | Estado |
 |---|---|---|
 | **0** | `LV-246`: faenas sin permiso primero y en rojo, «⚠ Caducado» en la lista y ficha de permisos, «⚠ Permiso vencido» en los planes geo, reparto de la lista de permisos | ✅ hecha, **sin desplegar** |
-| **1** | Informe: 4 defectos (1a), operadores por permiso → cantidad + anexo (1b), **bloques editables** portada/fases/matriz (1c), **borrador automático el día 1** (1d), ver cambios entre revisiones (1e) | ⬜ |
+| **1** | Informe: 4 defectos (1a, `LV-247` ✅), más corto (1b, `LV-248` ✅: permisos de producción en **una** hoja, 5 + anexo), **bloques editables** portada/fases/matriz (1c ⬜), **borrador automático el día 1** (1d ⬜), ver cambios entre revisiones (1e ⬜) | 🔄 |
+
+⚠️ **Lección de la 1b, para no repetirla**: el recorte se le ofreció al usuario con
+una premisa que no se había medido ("la nómina es la causa de las hojas de más"), y
+con los datos de producción era falsa — sumaba una hoja en vez de quitarla. La
+segunda opción que se le recomendó **tampoco** estaba medida. Lo que de verdad
+alargaba la tabla era un defecto de CSS (el folio partido). **Antes de ofrecer un
+recorte como solución, correr el reparto con la forma real de producción**: son
+diez líneas en `manage.py shell` sobre `pagination.paginate`.
 | **2** | Una sola forma de decir «vencido» en toda la app, `MESSAGE_TAGS` (los errores salen sin color), listas con reparto, N+1 de mantención | ⬜ |
 | **3** | `pytest-xdist` para acortar el gate, tests que dependen del reloj, alinear `AGENTS.md` sobre el squash | ⬜ |
 

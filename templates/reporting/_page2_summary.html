@@ -1,16 +1,15 @@
 {% load i18n static report_leaf %}
 {% comment %}Página 2 · Resumen ejecutivo. Artboard `p2_resumen` del ZIP.
 
-**Las seis tarjetas del informe emitido, con una diferencia declarada.** La
-cuarta decía "Permisos por vencer en 60 días"; el payload trae la ventana de
-**30**, que es la que `permit_counts` calcula y la que el panel muestra. Se
-rotula por lo que mide y no por lo que decía agosto: relabelar 30 como 60 es
-exactamente la clase de dato inventado que la regla del SPEC prohíbe. Sumar la
-ventana de 60 días es trabajo de `R4`, junto con los semáforos.
+LV-247: este comentario decía que la tarjeta medía **30** días a la espera de
+`R4` y que los hallazgos eran "un bloque pendiente hasta `LV-227`". Las dos cosas
+se resolvieron hace semanas —la ventana de 60 días entró con `R4` y los hallazgos
+se escriben desde `LV-227`, ver más abajo— y el comentario seguía describiendo el
+estado anterior. Un comentario que afirma lo contrario de lo que el código hace
+es peor que no tenerlo: el próximo que lo lea va a "arreglar" lo que ya está bien.
 
-Los cuatro hallazgos van redactados a mano en el informe emitido, así que acá
-son un bloque pendiente hasta `LV-227`. No se generan: un hallazgo es un juicio
-sobre las cifras, y el informe va firmado.{% endcomment %}
+Lo que sigue siendo cierto: **los hallazgos no se generan**. Un hallazgo es un
+juicio sobre las cifras, y el informe va firmado.{% endcomment %}
 <div class="rpt-page">
 
   {% include "reporting/_head.html" %}
@@ -140,6 +139,22 @@ sobre las cifras, y el informe va firmado.{% endcomment %}
           <div class="rpt-kpi-note">{% leaf payload.kpis.operators_credentialed %} con credencial DGAC vigente · <strong>{% leaf payload.kpis.credentials_missing %}</strong> sin fecha cargada · <strong>{% leaf payload.kpis.credentials_lapsed %}</strong> vencida</div>
         </div>
       </div>
+    </div>
+
+    {% comment %}LV-248: **el ciclo del permiso, como nota breve.** Vivía como bloque
+    de cuatro pasos en la primera hoja de permisos (157 px), y era lo que obligaba a
+    la sección a una segunda hoja con los datos de producción. Decisión del usuario:
+    moverlo acá. Se conserva lo que el bloque decía —los cuatro pasos, el tope de
+    tres meses, la renovación con carta nueva treinta días antes y la vigencia no
+    uniforme— en una sola nota, porque no es un dato del mes: es el trámite que fija
+    el instructivo, igual en todos los informes.{% endcomment %}
+    <div class="rpt-note">
+      <strong>Ciclo del permiso de operación:</strong> carta del mandante → solicitud en SIGO
+      con KMZ, serie de aeronave y operadores → autorización DGAC, con
+      <strong>tope de 3 meses</strong> → renovación, que exige <strong>nueva carta del
+      mandante</strong> e iniciarla 30 días antes. La vigencia otorgada no es uniforme,
+      así que el calendario de renovación se construye sobre la fecha real de cada
+      resolución: AeroControl <em>valida</em> el tope en vez de calcular el vencimiento.
     </div>
 
   </div>

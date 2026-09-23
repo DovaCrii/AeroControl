@@ -255,6 +255,19 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **El informe mensual es más corto: la sección de permisos cabe en una hoja
+  (`LV-248`).** La tabla dice ahora «4 operadores» en vez de listar cada nombre, y la
+  nómina completa va a un anexo al final — nada sale del papel. El ciclo de cuatro
+  pasos del permiso pasó a ser una nota breve en el resumen. Y lo que de verdad
+  alargaba la tabla era un error de estilo: el folio se partía en dos líneas porque
+  la letra salía más grande de lo que el diseño pedía. Con los datos de hoy el
+  informe queda en 5 hojas más el anexo, y se corrigió de paso un caso límite en que
+  el bloque de cierre de la sección podía quedar recortado sin aviso.
+- **Cuatro defectos del informe mensual (`LV-247`).** Emitir una revisión para
+  corregir una cifra **borraba las acciones** ya escritas. El Dato Ejecutivo titulaba
+  «Vencimientos próximos 60 días» sobre filas que cuentan lo **ya vencido**. Su hoja
+  no tenía formato de página —usaba un estilo que no existía— y salía como texto
+  suelto. Y un comentario del código describía un estado de hace semanas.
 - **Lo vencido se ve, y en rojo (`LV-246`).** Tres pedidos del mismo día. En el
   panel, las **faenas sin permiso vigente van primero** y en rojo, con una tarjeta
   nueva que las cuenta: es el mismo indicador que el informe mensual firma, y hasta

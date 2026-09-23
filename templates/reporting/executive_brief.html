@@ -89,7 +89,15 @@ emitido son idénticos, así que la pantalla tiene que decir cuál se mira.{% en
 
   <div class="rpt-brief-cols">
     <div>
-      <div class="rpt-label">Vencimientos próximos 60 días</div>
+      {% comment %}LV-247: **el título decía una cosa y las filas otra.** Se llamaba
+      "Vencimientos próximos 60 días", y eso es cierto sólo para la primera línea:
+      las de seguros y credenciales cuentan los **ya vencidos** —`insurance_lapsed`,
+      `credentials_lapsed`—, que es lo que dicen sus propios rótulos ("por
+      renovar"). Un gerente que lee "próximos 60 días" y un 1 debajo entiende que
+      algo vence pronto, no que ya venció. No se agrega una ventana de 60 días para
+      seguros: el payload no la trae, y un informe ya congelado no la tendría — se
+      corrige el rótulo, que es lo que estaba mal.{% endcomment %}
+      <div class="rpt-label">Por vencer y por renovar</div>
       <ul class="rpt-brief-list">
         <li>Permisos por vencer · <strong>{% leaf payload.kpis.permits_expiring_60d %}</strong>{% if payload.kpis.permits_expiring_30d.value %} <span class="rpt-brief-crit">({% leaf payload.kpis.permits_expiring_30d %} en 30 días o menos)</span>{% endif %}</li>
         {% comment %}Los seguros y las credenciales salen de los mismos

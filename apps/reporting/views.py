@@ -164,11 +164,35 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
             # que es donde el documento emitido las tenía.
             sheet["awaiting"] = awaiting if sheet["last"] else []
         after = first_permit_page + len(permit_sheets)
+        coverage_page, plan_page = after, after + 1
+
+        # LV-248: el anexo con la nómina, que la tabla de permisos dejó de listar.
+        # Vigentes y en trámite, en el mismo orden que la sección 2, para que un
+        # folio se encuentre en las dos hojas en la misma posición. Sin ningún
+        # nombre cargado no se emite: una hoja anexa de puros guiones le diría al
+        # lector que falta algo que nunca existió.
+        from .pagination import ROSTER_FIRST_ROW_TOP_PX, roster_row_px
+
+        roster = in_force + awaiting
+        roster_sheets = []
+        if any(row.get("operators") for row in roster):
+            roster_sheets = sheets_for(
+                roster,
+                closing_px=0,
+                estimate=roster_row_px,
+                first_top=ROSTER_FIRST_ROW_TOP_PX,
+            )
+            for offset, sheet in enumerate(roster_sheets):
+                sheet["page"] = plan_page + 1 + offset
+                sheet["index"] = offset + 1
+                sheet["of"] = len(roster_sheets)
+                sheet["total"] = len(roster)
         return {
             "permit_sheets": permit_sheets,
-            "coverage_page": after,
-            "plan_page": after + 1,
-            "total_pages": after + 1,
+            "coverage_page": coverage_page,
+            "plan_page": plan_page,
+            "roster_sheets": roster_sheets,
+            "total_pages": plan_page + len(roster_sheets),
         }
 
 
