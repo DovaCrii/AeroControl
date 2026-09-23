@@ -281,6 +281,11 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **El borrador del informe mensual se congela solo el día 1 (`LV-250`).** Hasta
+  ahora había que hacerlo a mano. Queda listo para instalar el trabajo programado
+  que lo deja con las cifras fijas —sin aprobarlo: la firma es de una persona— y
+  el vigilante de trabajos avisa si un mes no corrió. La hora está elegida para
+  que el reloj en UTC del servidor no congele el mes equivocado.
 - **Los textos fijos del informe mensual se editan desde la app (`LV-249`).** La
   portada, las fases del plan de normalización y la matriz de exigibilidad estaban
   escritas en el código —la matriz decía «SEP–DIC» a mano, así que en enero habría

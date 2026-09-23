@@ -19,6 +19,7 @@ resumen corto), así que después se puede comprobar si realmente corrieron.
 | `expire_permissions` (LV-83) | Marca como **Caducado** todo permiso de vuelo cuya vigencia terminó y que sigue en *Solicitado* o *Aprobado*. **No completa nada**: completar exige el PDF firmado de la DGAC (R2.4) y un permiso puede caducar sin haber volado nunca. No toca los denegados ni los completados. Cada cierre queda en el historial del permiso con `expire_permissions` como autor | Diario, temprano (antes de `generate_alerts`, para que un permiso ya cerrado no genere alerta ese mismo día) |
 | `verify_backup` (LV-115) | Comprueba que el **último respaldo** esté, coincida con su manifiesto y **se abra como base de datos** con `PRAGMA integrity_check` más una consulta real. Un `sha256` sólo prueba que el archivo no cambió; una copia hecha mientras la app escribía puede estar rota **y tener el checksum correcto**. Avisa a Dirección con los pasos a seguir; calla si el respaldo es restaurable. **No reemplaza el ensayo completo de restauración**, que sigue siendo humano | Diario, **después** del respaldo |
 | `check_scheduled_jobs` (LV-114) | Avisa al grupo Dirección cuando **otro trabajo programado** está atrasado o terminó en error — incluido el que nunca corrió porque su timer no se instaló. **Calla cuando todo está al día**: un vigilante que escribe a diario se archiva sin leer. No arregla nada ni reintenta: sólo cuenta lo que el centro de administración ya sabía y nadie miraba | Diario, después de los trabajos de la mañana |
+| `generate_monthly_report` (R5, programado desde LV-250) | **Congela el borrador del informe mensual RPA** del mes recién cerrado, con sus cifras fijas, para que quien lo firma llegue a una pantalla que no se mueve mientras escribe los hallazgos. **Congela, no aprueba**: aprobar es de una persona. Idempotente: si el mes ya tiene informe, no hace nada y lo dice | **Mensual, el día 1** (a partir de las 04:00 UTC — ver abajo) |
 | `snapshot_compliance` (R7.7) | Guarda los totales documentales del día (una fila por centro de costo más una consolidada). **Sin esto el reporte no puede mostrar tendencia**: los contadores se evalúan siempre "a hoy", así que comparar período contra período marca "sin cambio" por construcción. Idempotente: repetir la misma fecha la sobrescribe, no duplica | Diario, al final del día |
 
 El orden importa: `send_alert_digest` reporta lo que `generate_alerts` acaba de
@@ -264,6 +265,76 @@ historia que no se puede recuperar después. Acepta `--date YYYY-MM-DD` (para
 rellenar un día puntual, aunque **rellenar el pasado guarda los números de hoy**,
 no los de ese día — sirve para inicializar, no para reconstruir historia) y
 `--dry-run`.
+
+### El borrador del informe mensual (LV-250)
+
+Pedido del usuario: *"borrador automático el día 1"*. El comando existe desde R5
+y se corría a mano; esto lo programa. Deja el informe del mes cerrado **congelado
+como borrador** —cifras fijas, narrativa por escribir— y **no lo aprueba**: la
+firma es de una persona. El informe se emite el día 5, así que quedan cuatro días
+para los hallazgos.
+
+```bash
+sudo bash -c '
+mkjob() {  # la misma función de arriba
+  cat >/etc/systemd/system/aerocontrol-$1.service <<EOF
+[Unit]
+Description=AeroControl $1
+After=network.target
+
+[Service]
+Type=oneshot
+User=levdigital01
+WorkingDirectory=/opt/aerocontrol
+EnvironmentFile=/etc/aerocontrol.env
+ExecStart=/home/levdigital01/.local/bin/uv run python manage.py $2
+EOF
+  cat >/etc/systemd/system/aerocontrol-$1.timer <<EOF
+[Unit]
+Description=AeroControl $1 (scheduled)
+
+[Timer]
+OnCalendar=$3
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+}
+mkjob monthly-report "generate_monthly_report" "*-*-01 06:30:00"
+systemctl daemon-reload
+systemctl enable --now aerocontrol-monthly-report.timer
+'
+```
+
+> ⚠️ **La hora no es libre, y es por el reloj en UTC de `p340`.** El comando
+> congela "el mes recién cerrado" según la fecha **local** (`America/Santiago`),
+> y el timer dispara en **UTC**. A las `02:00 UTC` del día 1, en Chile todavía es
+> el **último día del mes anterior** —22:00 o 23:00 según el horario—, así que el
+> comando creería que el mes no cerró y congelaría **el mes equivocado**. Por eso
+> `06:30 UTC`: son las 02:30 o 03:30 del día 1 en Chile en cualquier época del año.
+> **Nunca antes de las 04:00 UTC.**
+>
+> `Persistent=true` importa acá más que en ningún otro: si la VM estaba apagada el
+> día 1, el borrador se congela al encender en vez de perderse hasta el mes
+> siguiente.
+
+Comprobar antes de dejarlo solo:
+
+```bash
+uv run python manage.py generate_monthly_report --dry-run
+systemctl list-timers aerocontrol-monthly-report.timer
+```
+
+**Si llegan datos del mes después del día 1** —una bitácora cargada tarde, un
+permiso que se regularizó—, el borrador ya congelado no los ve: sus cifras son las
+del momento en que se congeló, que es justamente lo que lo vuelve un documento. Se
+emite la revisión siguiente con `generate_monthly_report --force`: la anterior
+queda como *reemplazada*, no se borra, y la narrativa ya escrita viaja a la nueva
+(`LV-247`).
+
+`check_scheduled_jobs` lo vigila con **35 días** de holgura: pasado el mes y medio
+sin corrida, avisa a Dirección.
 
 ## Prueba antes de programar
 
