@@ -57,6 +57,38 @@ def login_as(*codenames, groups=(), member_of=None):
     return client
 
 
+def pin_today_mid_month(monkeypatch):
+    """Fija `timezone.localdate()` al **día 15 del mes en curso** y lo devuelve.
+
+    `LV-257`: cuatro tests del informe afirmaban que el mes en curso "sigue
+    abierto" usando el día real, y **fallaban todos los últimos días de mes** —
+    el código considera cerrado el mes su último día, a propósito (lo fija
+    `test_the_last_day_of_the_month_is_already_closed`). Se encontró corriendo la
+    suite con el reloj movido al 31 de diciembre; el 1 de octubre y el 1 de enero
+    pasaban. Es la lección de `LV-223` en `AGENTS.md`: la fecha es andamio y hay
+    que declararla.
+
+    Día 15 del mes **real**, no una fecha absoluta: los registros siguen
+    sellándose con la hora real (`auto_now_add`), y una fecha de otro mes los
+    dejaría fuera del período que el test mira.
+
+    Con argumento, `localdate(valor)` sigue convirtiendo de verdad: sólo cambia
+    la pregunta "¿qué día es hoy?".
+    """
+    from django.utils import timezone
+
+    real = timezone.localdate
+    pinned = real().replace(day=15)
+
+    def localdate(value=None, timezone=None):
+        if value is None:
+            return pinned
+        return real(value, timezone)
+
+    monkeypatch.setattr("django.utils.timezone.localdate", localdate)
+    return pinned
+
+
 _TEMPLATE_COMMENT = re.compile(
     r"\{%\s*comment\s*%\}.*?\{%\s*endcomment\s*%\}", re.DOTALL
 )

@@ -201,7 +201,14 @@ def test_cost_center_without_expiring_items_gets_no_email(cost_center, settings)
     settings.MAILERS = {
         "default": {"BACKEND": "django.core.mail.backends.locmem.EmailBackend"}
     }
-    _qualification(cost_center, 200)
+    # LV-257: "200 días" contados desde **hoy**, no desde el `TODAY` fijo del
+    # módulo. Contados desde 2026-07-24 vencían el 2027-02-09, y como el comando
+    # mira el día real, desde esa fecha la habilitación entraba al correo como
+    # vencida y este test fallaba solo. Encontrado corriendo la suite con el reloj
+    # movido al 2027-02-28.
+    from django.utils import timezone
+
+    _qualification(cost_center, (timezone.localdate() - TODAY).days + 200)
 
     call_command("send_alert_digest")
 

@@ -24,7 +24,7 @@ from django.core.management.base import CommandError
 from django.urls import reverse
 from django.utils import timezone
 
-from apps.core.testing import login_as
+from apps.core.testing import login_as, pin_today_mid_month
 from apps.reporting.builder import build, month_bounds
 from apps.reporting.models import ReportRun
 
@@ -43,11 +43,11 @@ class TestTheCutoffNeverSitsInTheFuture:
         assert payload["meta"]["cutoff"] == today.isoformat()
 
     @pytest.mark.django_db
-    def test_and_the_payload_says_the_period_is_still_open(self, db):
+    def test_and_the_payload_says_the_period_is_still_open(self, db, monkeypatch):
         """Viaja en el payload **congelado** y no se recalcula al dibujar: un
         informe que se congeló a mitad de mes tiene que seguir diciendo que se
         congeló a mitad de mes, aunque se lea en diciembre."""
-        today = timezone.localdate()
+        today = pin_today_mid_month(monkeypatch)
         _start, end = month_bounds(_first_of(today))
 
         payload, _missing = build(_first_of(today))
@@ -427,8 +427,8 @@ class TestInForceMeansInForce:
         assert counts["total"] == 1
 
     @pytest.mark.django_db
-    def test_freezing_the_current_month_is_refused(self, db):
-        today = timezone.localdate()
+    def test_freezing_the_current_month_is_refused(self, db, monkeypatch):
+        today = pin_today_mid_month(monkeypatch)
 
         with pytest.raises(ValidationError):
             ReportRun.freeze(_first_of(today), "alguien")
@@ -466,12 +466,12 @@ class TestInForceMeansInForce:
         assert payload["meta"]["period"] == f"{today:%Y-%m}"
 
     @pytest.mark.django_db
-    def test_the_scheduled_command_refuses_it_as_an_error(self, db):
+    def test_the_scheduled_command_refuses_it_as_an_error(self, db, monkeypatch):
         """Al revés que la pantalla, que avisa y sigue: un trabajo programado que
         se equivoca de mes tiene que **fallar**, para que el timer lo reporte, en
         vez de dejar un informe a medias que nadie sabe que está a medias. Es la
         misma asimetría que ya tiene `--period` mal escrito."""
-        today = timezone.localdate()
+        today = pin_today_mid_month(monkeypatch)
 
         with pytest.raises(CommandError):
             call_command("generate_monthly_report", f"--period={today:%Y-%m}")

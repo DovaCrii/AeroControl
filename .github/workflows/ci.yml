@@ -49,7 +49,10 @@ jobs:
       - run: uv run ruff format --check .
       - run: uv run python manage.py check --deploy
       - run: uv run python manage.py makemigrations --check --dry-run
-      - run: uv run pytest --cov=apps --cov-report=term-missing
+      # `-n auto`: un worker por núcleo del runner (`pytest-xdist`). Es la palanca
+      # sobre los 20,6 min de `pytest` que el comentario de arriba mide — en el
+      # equipo de desarrollo bajó la suite de 18m55s a 2m57s (ver scripts/verify.ps1).
+      - run: uv run pytest -n auto --cov=apps --cov-report=term-missing
       - run: uv run bandit -q -c pyproject.toml -r apps config
       - run: uv run pip-audit
       - name: Staging preflight

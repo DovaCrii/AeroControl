@@ -156,7 +156,9 @@ class TestTheCoverFollowsThePeriod:
         assert "período en curso" not in body
 
     @pytest.mark.django_db
-    def test_an_unfinished_month_is_cut_today_and_says_so(self, client, reader, site):
+    def test_an_unfinished_month_is_cut_today_and_says_so(
+        self, client, reader, site, monkeypatch
+    ):
         """⚠️ **Este es el test que `LV-233` mandaba cambiar, y se cambia a
         propósito.**
 
@@ -171,9 +173,9 @@ class TestTheCoverFollowsThePeriod:
         corte en el futuro, y que cuando el período sigue abierto **lo dice en el
         papel**, que es donde tiene que constar porque esta hoja se firma.
         """
-        from django.utils import timezone
+        from apps.core.testing import pin_today_mid_month
 
-        today = timezone.localdate()
+        today = pin_today_mid_month(monkeypatch)
         client.force_login(reader)
 
         body = client.get(reverse(URL), {"period": f"{today:%Y-%m}"}).content.decode()

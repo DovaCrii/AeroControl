@@ -253,8 +253,21 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   fabricante y es con el que la aeronave aparece en la garantía, en el registro
   de la DGAC y en las carpetas del repositorio documental.
 
+### Changed
+
+- **La verificación del código tarda 3 minutos en vez de 19 (`LV-256`).** Las
+  pruebas corren en paralelo, una por núcleo. No cambia nada de la aplicación: es
+  la herramienta con la que se comprueba cada cambio antes de publicarlo, y cuesta
+  menos minutos del servicio de integración continua, que estaba cerca de su tope
+  mensual.
+
 ### Fixed
 
+- **«¿Puedo volar?» juzga todo con la misma fecha (`LV-257`).** La comprobación
+  de habilitación por modelo usaba el día real aunque se preguntara por otro. Hoy
+  no cambiaba nada en pantalla, que siempre pregunta por hoy. Y cinco pruebas que
+  fallaban solas según el día (cuatro cada fin de mes, una a partir de febrero de
+  2027) quedan fijas.
 - **«Archivar» se ve como lo que es (`LV-255`).** En las fichas de permisos y de
   planes geoespaciales el botón iba en gris, como «Volver»; ahora va en rojo, como
   en el resto de las fichas.

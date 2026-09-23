@@ -384,7 +384,7 @@ def _check_permission(aircraft, operator, cost_center, today):
     return check
 
 
-def _check_pairing(aircraft, operator, cost_center):
+def _check_pairing(aircraft, operator, cost_center, today):
     """La terna encaja: la persona sabe volar **ese** modelo, y las dos cosas
     pertenecen a **esa** faena.
 
@@ -406,7 +406,7 @@ def _check_pairing(aircraft, operator, cost_center):
 
     check = Check(name=_("Operator and aircraft"))
 
-    if operator_aircraft_compatibility_gaps([operator], [aircraft]):
+    if operator_aircraft_compatibility_gaps([operator], [aircraft], today):
         check.warnings.append(
             Finding(
                 label=_("Model qualification"),
@@ -452,7 +452,7 @@ def can_fly(aircraft, operator, cost_center, today):
             _check_aircraft(aircraft, today),
             _check_operator(operator, today),
             _check_permission(aircraft, operator, cost_center, today),
-            _check_pairing(aircraft, operator, cost_center),
+            _check_pairing(aircraft, operator, cost_center, today),
         ]
     )
 

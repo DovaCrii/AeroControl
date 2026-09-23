@@ -166,7 +166,7 @@ def movements_for_cost_center(cost_center, limit=100):
     return label_movements(queryset)
 
 
-def operator_aircraft_compatibility_gaps(operators, aircraft_fleet):
+def operator_aircraft_compatibility_gaps(operators, aircraft_fleet, today=None):
     """B4.4: (operator, aircraft) pairs from these rosters where the operator
     holds no current qualification covering that aircraft's model.
 
@@ -184,7 +184,11 @@ def operator_aircraft_compatibility_gaps(operators, aircraft_fleet):
     if not operators or not aircraft_fleet:
         return []
 
-    today = timezone.localdate()
+    # LV-257: el día **a evaluar**, cuando quien llama lo sabe. «¿Puedo volar?»
+    # (`can_fly`) recibe una fecha y la pasaba a todas sus comprobaciones menos a
+    # ésta, que decidía la vigencia de las habilitaciones con el día real — un
+    # veredicto sobre una fecha armado con dos fechas.
+    today = today or timezone.localdate()
     current_qualifications = (
         Qualification.objects.filter(operator__in=operators, is_active=True)
         .filter(Q(expiry_date__isnull=True) | Q(expiry_date__gte=today))
