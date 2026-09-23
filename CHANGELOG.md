@@ -255,6 +255,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **Una faena sin registros ya no dice «todo al día» (`LV-243`).** Al elegir una
+  faena administrativa en el filtro, las tarjetas mostraban «0/0 · todo al día»:
+  con nada que contar no hay nada vencido ni sin fecha, así que la tarjeta caía a
+  la frase de cierre y **declaraba cumplimiento sobre un conjunto vacío** — en la
+  tira que existe para contestar «¿puedo operar hoy?». Ahora dice «sin registros».
+  Cuando sí hay registros y sí están todos al día, se sigue diciendo.
 - **Las cifras del panel ahora llevan al trabajo que anuncian (`LV-242`).** Decía
   «1 vencido» y el clic traía las dieciséis aeronaves, así que el número informaba
   y no servía: el filtro por vigencia no existía en ninguna de las dos listas.

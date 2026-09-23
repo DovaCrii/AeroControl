@@ -108,7 +108,14 @@ contradecirse.{% endcomment %}
         {% if item.missing %}{% blocktranslate count counter=item.missing %}{{ counter }} with no date on file{% plural %}{{ counter }} with no date on file{% endblocktranslate %}{% endif %}
         {% if item.awaiting %}{% if item.lapsed or item.missing %}·{% endif %} {% blocktranslate count counter=item.awaiting %}{{ counter }} awaiting approval{% plural %}{{ counter }} awaiting approval{% endblocktranslate %}{% endif %}
         {% if item.not_started %}{% if item.lapsed or item.missing or item.awaiting %}·{% endif %} {% blocktranslate count counter=item.not_started %}{{ counter }} not started yet{% plural %}{{ counter }} not started yet{% endblocktranslate %}{% endif %}
-      {% elif item.shortfall %}{{ item.shortfall }} {{ item.shortfall_label }}{% elif item.target %}{% blocktranslate with target=item.target|floatformat:0 %}target {{ target }}%{% endblocktranslate %}{% else %}{% translate "all up to date" %}{% endif %}
+      {% comment %}LV-243: **"todo al día" sobre un conjunto vacío es una afirmación
+      falsa.** Con `total` en cero no hay nada vencido, nada sin fecha y nada
+      esperando, así que la tarjeta caía a la última rama y declaraba cumplimiento
+      —justo la que existe para contestar "¿puedo operar?"— sobre una faena que no
+      tiene flota ni padrón. Elegir una faena administrativa bastaba para leerlo.
+      Un "0/0 · sin registros" no afirma nada, que es lo correcto cuando no hay
+      nada que afirmar.{% endcomment %}
+      {% elif not item.total %}{% translate "no records" %}{% elif item.shortfall %}{{ item.shortfall }} {{ item.shortfall_label }}{% elif item.target %}{% blocktranslate with target=item.target|floatformat:0 %}target {{ target }}%{% endblocktranslate %}{% else %}{% translate "all up to date" %}{% endif %}
       {% if item.soon %}· {% blocktranslate count counter=item.soon %}{{ counter }} expires within 30 days{% plural %}{{ counter }} expire within 30 days{% endblocktranslate %}{% endif %}
     </small>
   </a>
