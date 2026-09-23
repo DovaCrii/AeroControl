@@ -1,9 +1,19 @@
 from datetime import timedelta
 from pathlib import Path
 from decouple import config
+from django.contrib.messages import constants as message_constants
 from django.utils.translation import gettext_lazy as _
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+# LV-252: **un mensaje de error salía sin color.** `base.html` dibuja cada mensaje
+# como `alert-{{ message.tags }}`, y la etiqueta que Django le pone a
+# `messages.error` es `error` — así que el HTML decía `alert-error`, una clase que
+# no existe ni en Bootstrap (que usa `alert-danger`) ni en `app.css`. Los 32
+# `messages.error` de la aplicación se veían como texto suelto, sin el rojo que los
+# distingue de un aviso cualquiera. Mismo defecto que las clases fantasma de
+# `LV-246` y `LV-247`: una clase desconocida no falla, no pinta.
+MESSAGE_TAGS = {message_constants.ERROR: "danger"}
 SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]

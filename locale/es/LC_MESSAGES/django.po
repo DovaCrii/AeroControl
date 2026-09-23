@@ -9193,3 +9193,13 @@ msgstr "El texto escrito no cambió."
 #: .\templates\reporting\monthly_report.html:40
 msgid "See the changes"
 msgstr "Ver los cambios"
+
+#: templates/maintenance/_record_rows.html
+msgid "No maintenance records yet."
+msgstr "Todavía no hay registros de mantención."
+
+#: templates/operations/_permission_rows.html
+msgid "+%(counter)s more"
+msgid_plural "+%(counter)s more"
+msgstr[0] "+%(counter)s más"
+msgstr[1] "+%(counter)s más"

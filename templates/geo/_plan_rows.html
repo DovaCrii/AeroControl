@@ -20,7 +20,11 @@ La fila archivada se distingue y ofrece "Restaurar": sin eso, el filtro
   no hay archivo de origen o cuando alguien escribió el título a mano
   (`display_title` no reescribe nada).{% endcomment %}
   <td><span class="cell-truncate">{{ plan.source_file_stem|default:plan.display_title }}</span></td>
-  <td>{{ plan.cost_center }}</td>
+  {% comment %}LV-254: el `cc-chip` de permisos, alertas y el panel (`LV-192`), con el
+  nombre en el `title`. Como texto completo («CC738 - Faena …») se partía en dos
+  líneas y duplicaba la altura de cada fila. La FK es obligatoria, así que no hay
+  rama sin faena.{% endcomment %}
+  <td><span class="cc-chip" title="{{ plan.cost_center }}">{{ plan.cost_center.code }}</span></td>
   {% comment %}LV-246: **el plan aprobado cuyo permiso ya no autoriza.** Pedido del
   usuario mirando esta lista: *"mostrar también cuando el permiso que se cruza con
   el geoespacial está vencido"*. Quince planes decían «Aprobado» en verde y la
@@ -63,7 +67,7 @@ La fila archivada se distingue y ofrece "Restaurar": sin eso, el filtro
   </td>
 </tr>
 {% empty %}
-<tr><td colspan="99" class="text-center text-muted py-4">
+<tr><td colspan="7" class="text-center text-muted py-4">
   {% if is_filtered %}
   {% translate "No plans match this filter." %} <a href="{{ request.path }}">{% translate "Clear it" %}</a>
   {% else %}

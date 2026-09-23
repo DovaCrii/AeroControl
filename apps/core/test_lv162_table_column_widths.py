@@ -137,6 +137,110 @@ def test_on_the_operator_list_the_slack_goes_to_the_free_text_column():
     assert roles[cost_center_at] == "col-compact"
 
 
+def _every_normalized_table():
+    """LV-254: las listas normalizadas de **las dos familias de bloques**.
+
+    `_normalized_lists` sólo lee `list_*`, así que no veía las que heredan
+    directamente de `generic/worktable.html` (planes geo, documentos, no
+    conformidades), que declaran `worktable_table_class`/`worktable_colgroup`.
+
+    Devuelve (ruta relativa, [roles], cantidad de columnas del encabezado). En la
+    familia `list_*`, `generic/list.html` agrega el `<th>` de Acciones fuera del
+    bloque; en la `worktable_*`, la lista lo escribe (o no) dentro del suyo.
+    """
+    header_cell = re.compile(r"<th\b|\{%\s*worktable_th\b")
+    found = []
+    for path in TEMPLATES.rglob("*.html"):
+        markup = _without_comments(path.read_text(encoding="utf-8"))
+        for family, actions_outside in (("list", 1), ("worktable", 0)):
+            if "table-normalized" not in _block(markup, f"{family}_table_class"):
+                continue
+            roles = re.findall(
+                r'<col\s+class="([^"]+)"', _block(markup, f"{family}_colgroup")
+            )
+            columns = (
+                len(header_cell.findall(_block(markup, f"{family}_header")))
+                + actions_outside
+            )
+            found.append((path.relative_to(TEMPLATES).as_posix(), roles, columns))
+    return found
+
+
+def _widths():
+    """Los anchos tal como los declara `app.css`: `{rol: (valor, unidad)}` y el
+    `min-width` de la tabla. Se leen del archivo para que el cálculo de abajo no
+    se quede con números viejos el día que alguien cambie un ancho."""
+    stylesheet = CSS.read_text(encoding="utf-8")
+    widths = {
+        role: (float(value), unit)
+        for role, value, unit in re.findall(
+            r"\.table-normalized \.(col-[\w-]+)\s*\{\s*width:\s*([\d.]+)(%|px);",
+            stylesheet,
+        )
+    }
+    table_rule = re.search(r"\.table-normalized\s*\{([^}]*)\}", stylesheet)
+    min_width = float(re.search(r"min-width:\s*(\d+)px", table_rule.group(1))[1])
+    return widths, min_width
+
+
+def test_every_normalized_table_is_being_read():
+    tables = {name for name, _roles, _columns in _every_normalized_table()}
+
+    for expected in (
+        "registry/operator_list.html",
+        "geo/plan_list.html",
+        "compliance/document_list.html",
+    ):
+        assert expected in tables, sorted(tables)
+
+
+@pytest.mark.parametrize("name, roles, columns", _every_normalized_table())
+def test_every_table_declares_one_col_per_column(name, roles, columns):
+    assert len(roles) == columns, f"{name}: {len(roles)} <col> para {columns} columnas"
+    stylesheet = CSS.read_text(encoding="utf-8")
+    for role in roles:
+        assert f".table-normalized .{role}" in stylesheet, f"{name}: {role} sin ancho"
+    flexible = [role for role in roles if role in {"col-flex", "col-chips"}]
+    assert len(flexible) == 1, f"{name}: {len(flexible)} columnas flexibles"
+
+
+# Un nombre de dos palabras a 14 px. Por debajo, la columna que existe para el
+# texto largo es la más angosta de la fila.
+MIN_FLEX_PX = 120
+
+
+@pytest.mark.parametrize("name, roles, columns", _every_normalized_table())
+def test_the_flexible_column_keeps_room_at_the_narrowest_width(name, roles, columns):
+    """⚠️ **El defecto que el guardián del `colspan` no podía ver.**
+
+    La columna flexible se queda con lo que sobra después de los porcentajes y
+    los anchos fijos. La lista de permisos de `LV-246` sumaba 90 % + 110 px, y
+    medido en el navegador a 910 px «Operadores» tenía **0 px** — con el
+    `colspan` exacto, una columna por encabezado y todo lo demás en verde.
+
+    Se calcula al ancho mínimo de la tabla, que es donde el sobrante es menor, y
+    se suma la casilla de selección que `worktable.js` inyecta con su `<col>`.
+    """
+    widths, table_px = _widths()
+    percent = widths["col-select"][0]
+    fixed_px = 0.0
+    for role in roles:
+        if role in {"col-flex", "col-chips"}:
+            continue
+        value, unit = widths[role]
+        if unit == "%":
+            percent += value
+        else:
+            fixed_px += value
+
+    slack = table_px * (1 - percent / 100) - fixed_px
+
+    assert slack >= MIN_FLEX_PX, (
+        f"{name}: a {table_px:.0f} px la columna flexible queda con {slack:.0f} px "
+        f"({percent:.0f} % + {fixed_px:.0f} px fijos)"
+    )
+
+
 def test_the_normalized_header_wraps_instead_of_overflowing():
     """`.table th` fija `nowrap` a propósito, y el comentario que lo justifica
     cierra con "la tabla vive en .table-responsive, así que un encabezado ancho

@@ -7,7 +7,7 @@
   <td class="cell-truncate">{% if object.cost_center %}<span title="{{ object.cost_center }}">{{ object.cost_center.code }}</span>{% else %}<span class="text-muted">{% translate "Unassigned" %}</span>{% endif %}</td>
   <td class="cell-status">
     {% if object.credential_expiry %}
-      {% if object.credential_is_overdue %}<span class="badge bg-danger">{% translate "Overdue" %} · {{ object.credential_expiry|date:'Y-m-d' }}</span>
+      {% if object.credential_is_overdue %}<span class="badge sev-critical">⚠ {% translate "Overdue" %} · {{ object.credential_expiry|date:'Y-m-d' }}</span>
       {% else %}<span class="badge bg-warning-subtle text-warning-emphasis">{{ object.credential_expiry|date:'Y-m-d' }}</span>{% endif %}
     {% else %}<span class="text-muted">—</span>{% endif %}
   </td>

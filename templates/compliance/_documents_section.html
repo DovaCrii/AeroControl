@@ -62,7 +62,7 @@ la descarga cuando no.{% endcomment %}
           {% comment %}La fecha por sí sola no dice si está vencida; la insignia
           usa la misma escala de urgencia que el resto de la app.{% endcomment %}
           <td class="text-nowrap">
-            {% if document.expiry_date %}{{ document.expiry_date|date:"Y-m-d" }}{% if document.is_expired %} <span class="badge bg-danger">{% translate "Expired" %}</span>{% endif %}{% else %}—{% endif %}
+            {% if document.expiry_date %}{{ document.expiry_date|date:"Y-m-d" }}{% if document.is_expired %} <span class="badge sev-critical">⚠ {% translate "Expired" %}</span>{% endif %}{% else %}—{% endif %}
           </td>
           <td class="text-end text-nowrap">
             {% comment %}LV-92: abre sobre la ficha, sin perder la lista. El

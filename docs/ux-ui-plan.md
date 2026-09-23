@@ -527,6 +527,11 @@ de diccionarios armada en Python.
 
 **`UX-08` · Densidad conmutable (cómoda 40 px / compacta 32 px),** recordada por
 persona en `localStorage` con el `try/catch` que el proyecto ya usa.
+✅ **Estaba hecha y sin marcar**, encontrada en la revisión del 2026-09-23
+(`LV-252`): el conmutador vive en `base.html`, la preferencia en `static/js/app.js`
+y las dos densidades en `app.css`. Es la quinta vez que este repo tiene una fila
+hecha con la casilla vacía — la lección de `AGENTS.md` ("el tablero miente en las
+dos direcciones").
 
 **`UX-09` · Selector de columnas,** persistido por lista y por persona.
 ✅ **Hecho el 2026-09-03**, con `UX-12`: las dos son *con qué estado alguien
@@ -564,6 +569,12 @@ haría falta desnormalizar la faena en `Alert`, que es una decisión aparte.
 **`UX-10` · Fila-tarjeta bajo 768 px.** Cada fila se apila mostrando las tres
 columnas que importan más su severidad. *Criterio:* ninguna lista requiere
 desplazamiento horizontal en 390 px.
+✅ **Implementada y sin marcar** (misma revisión, `LV-252`): las reglas viven en
+`app.css` bajo `@media (max-width: 767.98px)`. 🔶 **Lo que no se comprobó**: el
+criterio —ninguna lista con desplazamiento horizontal a 390 px— no se midió lista
+por lista en el navegador. Y hay tablas que **no** pasan por la lista compartida y
+por lo tanto no se apilan: las de las fichas (centro de costo, aeronave, operador,
+permiso, solicitud SIGO) no tienen `table-responsive` y pueden desbordar en móvil.
 
 **`UX-11` · Acciones en lote con selección explícita por casilla.** Archivar,
 exportar la selección y resolver alertas. *Criterio:* la barra contextual aparece

@@ -436,6 +436,12 @@ class NonConformityList(ComplianceList):
         context["source_choices"] = NonConformity.SOURCE_CHOICES
         context["selected_status"] = self.request.GET.get("status", "")
         context["selected_source"] = self.request.GET.get("source", "")
+        # LV-254: `SearchMixin` sólo conoce `q`/`is_active`. Sin sumar los filtros
+        # propios, un filtro de estado sin resultados decía "todavía no hay no
+        # conformidades" en vez de ofrecer quitarlo.
+        context["is_filtered"] = context["is_filtered"] or bool(
+            context["selected_status"] or context["selected_source"]
+        )
         return context
 
 
@@ -553,6 +559,11 @@ class DocumentList(ComplianceList):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["document_types"] = DocumentType.objects.filter(is_active=True)
+        # LV-254: mismo motivo que en no conformidades.
+        context["is_filtered"] = context["is_filtered"] or bool(
+            self.request.GET.get("doc_type")
+            or self.request.GET.get("is_current_version")
+        )
         return context
 
 

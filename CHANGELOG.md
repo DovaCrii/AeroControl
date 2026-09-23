@@ -255,6 +255,27 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **Las listas más usadas reparten bien sus columnas (`LV-254`).** Planes
+  geoespaciales, vuelos, no conformidades, documentos y mantención dejan de repartir
+  el ancho por contenido: los folios, las fechas y los códigos de faena ya no se
+  parten, y el texto largo se lleva el espacio. En la **lista de permisos**, la
+  columna de operadores había quedado **sin ancho** con el cambio de `LV-246`; ahora
+  tiene el suyo, y la fila muestra tres nombres y «+N más» (la nómina completa sigue
+  en la ficha y al pasar el ratón). **Mantención**, la pantalla de inicio del rol
+  Mantenimiento, gana lo que las demás listas ya tenían: búsqueda mientras se
+  escribe, selección múltiple, columnas ocultables y la vista de tarjetas en el
+  teléfono. Documentos marca en rojo lo vencido también en la lista. Y cuando un
+  filtro no encuentra nada, estas listas ofrecen quitarlo en vez de decir que no hay
+  registros.
+- **Una sola forma de decir «vencido» (`LV-253`).** Pólizas, credenciales,
+  habilitaciones, pruebas de conocimientos y documentos vencidos se marcaban con el
+  mismo rojo que «Rechazado» o «Insuficiente». Ahora todos llevan la misma insignia
+  con **⚠**, la del panel. Y la ficha del operador **avisa cuando su credencial DGAC
+  venció** — hasta ahora sólo lo decía la lista.
+- **Los mensajes de error salen en rojo (`LV-252`).** Los 32 avisos de error de la
+  aplicación se mostraban sin color: la clase que los pintaba no existe. También: la
+  lista de mantención hacía una consulta por fila, y el panel calculaba «y N más» con
+  un número fijo en vez del real.
 - **El informe mensual es más corto: la sección de permisos cabe en una hoja
   (`LV-248`).** La tabla dice ahora «4 operadores» en vez de listar cada nombre, y la
   nómina completa va a un anexo al final — nada sale del papel. El ciclo de cuatro

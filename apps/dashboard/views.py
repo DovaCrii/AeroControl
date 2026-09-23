@@ -582,6 +582,9 @@ def dashboard(request):
         # No cuesta consulta: `all_expirations` ya está en memoria, y es la misma
         # lista de la que salen los dos contadores de la tarjeta.
         "expirations_total": len(all_expirations),
+        # LV-252: lo que el corte esconde, calculado del corte real y no de un 10
+        # escrito en la plantilla.
+        "expirations_hidden": len(all_expirations) - len(expirations),
         "expiring_count": expiring_count,
         "overdue_count": overdue_count,
         "show_onboarding": show_onboarding,

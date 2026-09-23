@@ -22,6 +22,20 @@ principal por la que alguien abre esta lista.{% endcomment %}
   <div class="col-md-2 d-grid align-self-start"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
 </form>
 {% endblock %}
+{% comment %}LV-254: reparto declarado. El título es la flexible —el texto libre más
+largo— y la columna de acciones es la ancha (`col-actions-wide`): esta es la única
+lista con tres botones por fila, y en los 110 px de las demás se apilaban.{% endcomment %}
+{% block worktable_table_class %}table-normalized{% endblock %}
+{% block worktable_colgroup %}
+<colgroup>
+  <col class="col-flex">
+  <col class="col-compact">
+  <col class="col-text">
+  <col class="col-compact">
+  <col class="col-numeric">
+  <col class="col-actions-wide">
+</colgroup>
+{% endblock %}
 {% block worktable_header %}
   {% worktable_th _("Title") "title" %}
   {% worktable_th _("Type") "type" %}

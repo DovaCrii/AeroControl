@@ -297,8 +297,12 @@ when the three are done.{% endcomment %}
       a las 06:00, así que un vencimiento cargado hoy no tiene alerta ninguna y no
       está allá. Tres bloques más abajo, la sección de SIGO ya resolvía esto con su
       "y N más".{% endcomment %}
-      {% if expirations_total > expirations|length %}
-      <p class="small text-muted mb-0 mt-2">{% blocktranslate count counter=expirations_total|add:"-10" %}and {{ counter }} more not shown{% plural %}and {{ counter }} more not shown{% endblocktranslate %}</p>
+      {% comment %}LV-252: la cuenta viene hecha de la vista. Restaba 10 fijo
+      (`expirations_total|add:"-10"`), así que el número dependía de que el corte
+      de la lista siguiera siendo diez: el día que alguien lo cambiara en la vista,
+      esta línea diría una cantidad falsa sin que nada fallara.{% endcomment %}
+      {% if expirations_hidden %}
+      <p class="small text-muted mb-0 mt-2">{% blocktranslate count counter=expirations_hidden %}and {{ counter }} more not shown{% plural %}and {{ counter }} more not shown{% endblocktranslate %}</p>
       {% endif %}
     </div>
   </div>

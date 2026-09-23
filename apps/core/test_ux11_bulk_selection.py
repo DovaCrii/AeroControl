@@ -272,12 +272,22 @@ class TestTheSelectionIsExplicitInTheMarkup:
         # `worktable.js` inyecta su `<col class="col-select">` (la tabla quedó con
         # 8 `<col>`, los 7 declarados más la casilla) y la fila vacía lleva el
         # `colspan` exacto, que `test_lv246_lapsed_is_red` fija para esta lista.
+        # LV-254: cinco más de una vez, y otra vez se revisó en el navegador antes de
+        # sumarlas: en planes, no conformidades, documentos y mantención —con filas
+        # en el demo— `worktable.js` agregó su `<col class="col-select">` (33 px a
+        # 1095 px de tabla); vuelos no tenía filas, así que no la inyectó, y su vacío
+        # abarcó las 6 columnas. Cada fila vacía lleva el `colspan` exacto.
         assert with_widths == [
             "aircraft_list.html",
             "costcenter_list.html",
+            "document_list.html",
+            "nonconformity_list.html",
             "operator_list.html",
             "permission_list.html",
+            "plan_list.html",
             "qualification_list.html",
+            "record_list.html",
+            "record_list.html",
         ]
 
     def test_every_list_partial_declares_the_identity(self):

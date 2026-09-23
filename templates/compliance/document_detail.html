@@ -15,7 +15,7 @@
     <dt class="col-sm-3">{% translate "Entity" %}</dt><dd class="col-sm-9">{{ object.content_object|default:object.object_id }}</dd>
     <dt class="col-sm-3">{% translate "Issue date" %}</dt><dd class="col-sm-9">{{ object.issue_date }}</dd>
     <dt class="col-sm-3">{% translate "Expiry date" %}</dt>
-    <dd class="col-sm-9">{{ object.expiry_date|default:'—' }}{% if object.is_expired %} <span class="badge bg-danger">{% translate "Expired" %}</span>{% endif %}</dd>
+    <dd class="col-sm-9">{{ object.expiry_date|default:'—' }}{% if object.is_expired %} <span class="badge sev-critical">⚠ {% translate "Expired" %}</span>{% endif %}</dd>
   </dl>
 </div>
 

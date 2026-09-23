@@ -138,7 +138,12 @@ def test_manual_task_creation_without_any_board_reports_error(qualification):
     assert KanbanTask.objects.count() == 0
     # Assert on the message level, not its wording: the copy is translated and
     # asserting the English text breaks under a Spanish locale.
-    assert [m.level_tag for m in response.context["messages"]] == ["error"]
+    # LV-252: el nivel, no su etiqueta — `MESSAGE_TAGS` ahora dibuja ERROR como
+    # `danger` (la clase que Bootstrap sí tiene), así que `level_tag` ya no dice
+    # "error" aunque el mensaje siga siendo un error.
+    from django.contrib import messages as django_messages
+
+    assert [m.level for m in response.context["messages"]] == [django_messages.ERROR]
 
 
 @pytest.mark.django_db
