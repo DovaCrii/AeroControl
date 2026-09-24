@@ -1,6 +1,6 @@
 # HANDOFF — AeroControl
 
-## 🟡 Plan de mejora — las cuatro fases hechas, **nada desplegado**
+## ✅ Plan de mejora — las cuatro fases hechas y **desplegadas** (`b80962c`)
 
 El 2026-09-23 el usuario pidió, en cinco mensajes seguidos, marcar lo vencido en
 rojo en tres pantallas, revisar el informe mensual y un plan general de mejora. Se
@@ -8,9 +8,9 @@ aprobó un plan en cuatro fases, en este orden, con sus decisiones tomadas:
 
 | Fase | Qué | Estado |
 |---|---|---|
-| **0** | `LV-246`: faenas sin permiso primero y en rojo, «⚠ Caducado» en la lista y ficha de permisos, «⚠ Permiso vencido» en los planes geo, reparto de la lista de permisos | ✅ hecha, **sin desplegar** |
-| **1** | Informe: 4 defectos (1a, `LV-247` ✅), más corto (1b, `LV-248` ✅: permisos de producción en **una** hoja, 5 + anexo), **bloques editables** portada/fases/matriz (1c, `LV-249` ✅, **con migración**), **borrador automático el día 1** (1d, `LV-250` ✅ — **falta instalar el timer en `p340`**, bloque en `docs/scheduled-operations.md`), ver cambios entre revisiones (1e, `LV-251` ✅) | ✅ hecha, **sin desplegar** |
-| **2** | `LV-252`: los errores en rojo (`MESSAGE_TAGS`), N+1 de mantención, «y N más» real · `LV-253`: una sola marca de vencido (`badge sev-critical` + ⚠) en nueve sitios, y la credencial DGAC vencida en la ficha del operador · `LV-254`: reparto de columnas en planes, vuelos, no conformidades, documentos y mantención (que pasa a la tabla de trabajo compartida), y **el reparto de permisos de la Fase 0 corregido** · alertas quedan fuera del reparto (9 columnas no caben en los anchos del sistema; ya tienen ocultar columnas y filas-tarjeta) · `LV-255`: «Archivar» en rojo en las fichas de permisos y planes; `table-responsive` y encabezados de fichas **descartados medidos** (ver la fila) | ✅ hecha (`41bac63` + `LV-255`), **sin desplegar** |
+| **0** | `LV-246`: faenas sin permiso primero y en rojo, «⚠ Caducado» en la lista y ficha de permisos, «⚠ Permiso vencido» en los planes geo, reparto de la lista de permisos | ✅ desplegada |
+| **1** | Informe: 4 defectos (1a, `LV-247` ✅), más corto (1b, `LV-248` ✅: permisos de producción en **una** hoja, 5 + anexo), **bloques editables** portada/fases/matriz (1c, `LV-249` ✅, **con migración**), **borrador automático el día 1** (1d, `LV-250` ✅ — **falta instalar el timer en `p340`**, bloque en `docs/scheduled-operations.md`), ver cambios entre revisiones (1e, `LV-251` ✅) | ✅ desplegada |
+| **2** | `LV-252`: los errores en rojo (`MESSAGE_TAGS`), N+1 de mantención, «y N más» real · `LV-253`: una sola marca de vencido (`badge sev-critical` + ⚠) en nueve sitios, y la credencial DGAC vencida en la ficha del operador · `LV-254`: reparto de columnas en planes, vuelos, no conformidades, documentos y mantención (que pasa a la tabla de trabajo compartida), y **el reparto de permisos de la Fase 0 corregido** · alertas quedan fuera del reparto (9 columnas no caben en los anchos del sistema; ya tienen ocultar columnas y filas-tarjeta) · `LV-255`: «Archivar» en rojo en las fichas de permisos y planes; `table-responsive` y encabezados de fichas **descartados medidos** (ver la fila) | ✅ desplegada |
 | **3** | `LV-256`: el gate en paralelo (`-n auto`), **de ~19 min a 3m11s**, y `AGENTS.md` alineado sobre el squash · `LV-257`: suite corrida con el **reloj movido** a bordes de mes y año — 4 tests que caían cada fin de mes, 1 bomba de tiempo (2027-02-09) y 1 defecto real en «¿Puedo volar?», todos arreglados; el plugin queda en `scripts/pytest_clockshift.py` | ✅ |
 
 **Decisiones del usuario que acotan la Fase 1**: del informe se recorta **sólo** la
@@ -45,13 +45,28 @@ cada lista, desde los anchos de `app.css`.
 camino. Usa `cleanup_documents --older-than-days 0`, un borde de reloj que es
 **sospecha, no causa comprobada**.
 
-### Pendiente de desplegar ahora
+### Desplegado el 2026-09-23 — `d5ebac0..b80962c`
 
-`d5ebac0` (dependencias), `57f8be5` (CI) y las cuatro fases (hasta `LV-257`). Lleva
-**`uv sync --no-dev`** (cambian dependencias), **`migrate`** (`reporting.0004` y
-`0005`) y **`collectstatic`** (cambian `app.css` y `report-a4.css`). Después,
-instalar el timer del informe (bloque en `docs/scheduled-operations.md`).
+`git pull` fue un avance rápido desde `d5ebac0` (la VM no estaba en `0ebb52f`, como
+decía la tabla de más abajo). Respaldo previo tomado **y verificado**:
+`aero_ops_20260923_210854.sqlite3` (*"restorable"*). `reporting.0004` y `0005`
+aplicaron limpio y quedaron `[X]`; `collectstatic` copió **132** archivos (82 sin
+cambios, 396 post-procesados). `git log --oneline -1` en la VM: `b80962c`.
 
+⚠️ **`uv sync --no-dev` no se sostiene en la VM.** Desinstaló las 36 herramientas de
+desarrollo, y el siguiente `uv run python manage.py backup` **las volvió a
+instalar** (38 paquetes, incluido `pytest-xdist`): `uv run` sincroniza también el
+grupo `dev` salvo que se le diga lo contrario. No rompe nada —son herramientas que
+producción no importa—, pero el `--no-dev` del procedimiento es ilusorio. Arreglo
+posible, **decisión del usuario porque toca `/etc/aerocontrol.env`**: agregar
+`UV_NO_DEV=1` a ese archivo, que `uv` respeta en `sync` y en `run`.
+
+### Queda en la VM, sin código
+
+- **Instalar el timer del borrador mensual del día 1** (`LV-250`): el bloque está en
+  `docs/scheduled-operations.md`. Hasta entonces el borrador se congela a mano.
+- **`LV-150` vence el 2026-09-30**: si hay alguna solicitud SIGO en producción, el
+  retiro del menú se revierte. Decisión del usuario con un dato de la VM.
 ## ✅ Lo vencido se contaba mal, y las cifras no llevaban a ninguna parte
 
 **Desplegado** en `89a211d` el 2026-09-23, con `LV-240`, `LV-241` y `LV-242`.
@@ -303,8 +318,8 @@ falta y en qué folio.
 
 | | |
 |---|---|
-| Último commit de **código** | **`0ebb52f`** (2026-09-23) |
-| Desplegado en `p340` | **`0ebb52f`** ✅ el 2026-09-23 |
+| Último commit de **código** | **`b80962c`** (2026-09-23) |
+| Desplegado en `p340` | **`b80962c`** ✅ el 2026-09-23 (respaldo `aero_ops_20260923_210854`) |
 | Migraciones pendientes | **ninguna** |
 | Diferencia con `origin/main` | sólo documentación (este archivo) — **no requiere desplegar** |
 | Copia sin conexión (`UX-26`) | ⛔ **apagada** — `SERVICE_WORKER_ENABLED=False`; ver el incidente de abajo antes de encenderla |
