@@ -1536,8 +1536,22 @@ tr.row-critical > td {
   background-color: var(--sev-critical-bg);
   color: var(--sev-critical-text);
 }
+/* ⚠️ LV-261: **el paso del mouse tapaba el rojo, y la primera celda no se
+   enteraba.** `.table-hover` de Bootstrap pinta el realce con una sombra interior
+   (`box-shadow: inset 0 0 0 9999px var(--bs-table-bg-state)`), que se dibuja
+   **encima** del fondo: la fila crítica se volvía gris azulado justo al señalarla.
+   Y la primera celda, que declara su propia sombra para la barra del canto,
+   **reemplazaba** la de Bootstrap, así que se quedaba roja mientras el resto se
+   ponía gris — lo que el usuario vio "extraño" el 2026-09-25. Ahora el realce de
+   una fila crítica es un rojo más hondo, y la primera celda apila las dos sombras. */
+.table-hover > tbody > tr.row-critical:hover > * {
+  --bs-table-bg-state: color-mix(in srgb, var(--sev-critical-border) 40%, transparent);
+  color: var(--sev-critical-text);
+}
 tr.row-critical > td:first-child {
-  box-shadow: inset 3px 0 0 var(--sev-critical-border);
+  box-shadow:
+    inset 3px 0 0 var(--sev-critical-border),
+    inset 0 0 0 9999px var(--bs-table-bg-state, transparent);
 }
 
 /* La variante de **texto suelto**, para la fila del panel: ahí la fecha va sin
@@ -3109,10 +3123,13 @@ main h1[class],
 tr[data-sev] > td:first-child {
   box-shadow: inset 3px 0 0 0 transparent;
 }
-tr[data-sev="critical"] > td:first-child { box-shadow: inset 3px 0 0 0 var(--sev-critical-border); }
-tr[data-sev="warning"] > td:first-child { box-shadow: inset 3px 0 0 0 var(--sev-warning-border); }
-tr[data-sev="caution"] > td:first-child { box-shadow: inset 3px 0 0 0 var(--sev-caution-border); }
-tr[data-sev="advisory"] > td:first-child { box-shadow: inset 3px 0 0 0 var(--sev-advisory-border); }
+/* LV-261: la segunda sombra es el realce de `.table-hover`, que la barra del
+   canto reemplazaba — sin ella, al pasar el mouse la primera celda era la única
+   de la fila que no se realzaba. */
+tr[data-sev="critical"] > td:first-child { box-shadow: inset 3px 0 0 0 var(--sev-critical-border), inset 0 0 0 9999px var(--bs-table-bg-state, transparent); }
+tr[data-sev="warning"] > td:first-child { box-shadow: inset 3px 0 0 0 var(--sev-warning-border), inset 0 0 0 9999px var(--bs-table-bg-state, transparent); }
+tr[data-sev="caution"] > td:first-child { box-shadow: inset 3px 0 0 0 var(--sev-caution-border), inset 0 0 0 9999px var(--bs-table-bg-state, transparent); }
+tr[data-sev="advisory"] > td:first-child { box-shadow: inset 3px 0 0 0 var(--sev-advisory-border), inset 0 0 0 9999px var(--bs-table-bg-state, transparent); }
 
 /* == UX-09 / UX-12 · Columnas por persona y vistas guardadas ===============
  *
