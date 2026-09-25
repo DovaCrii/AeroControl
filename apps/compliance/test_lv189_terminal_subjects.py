@@ -177,7 +177,17 @@ class TestATerminalSubjectStopsCounting:
     @pytest.mark.django_db
     def test_it_is_still_one_query(self, site, django_assert_num_queries):
         """El informe llama a esto **una vez por faena**, así que el `exclude`
-        tiene que ir dentro de la subconsulta y no en un bucle de Python."""
+        tiene que ir dentro de la subconsulta y no en un bucle de Python.
+
+        ⚠️ **Se calienta antes de medir** (`LV-258`): `ContentType.get_for_model`
+        cachea por proceso, así que en frío la misma llamada hace 11 consultas —
+        una por modelo documentable—. En la suite en serie siempre llegaba
+        caliente; con `-n auto` (`LV-256`) depende de qué le tocó antes a su
+        worker, y falló el 2026-09-25 sin que nadie tocara esta función. Es la
+        misma receta que `test_lv237_panel_query_budget`: medir la subconsulta,
+        no el estado de la caché."""
+        list(documents_for_cost_center(site))
+
         with django_assert_num_queries(1):
             list(documents_for_cost_center(site))
 

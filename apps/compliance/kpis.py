@@ -320,11 +320,24 @@ def permit_status_by_cost_center(today):
         )
         .values("cost_center")
         .annotate(
+            # LV-258: **vigente es haber empezado y no haber terminado.** Este
+            # filtro sólo miraba el final, así que un permiso aprobado que arranca
+            # la semana próxima contaba como vigente hoy — y una faena cuyo único
+            # permiso todavía no empieza salía **con** permiso, fuera de la tarjeta
+            # «Faenas sin permiso» del panel y del indicador firmado. `permit_counts`
+            # ya los separaba como `not_started` desde `LV-233`; se detectó porque
+            # la hoja 3 del informe decía 12 en la fila y 11 en el total.
             in_force=Count(
                 "pk",
                 filter=Q(
-                    status=FlightPermission.STATUS_APPROVED, valid_until__gte=today
+                    status=FlightPermission.STATUS_APPROVED,
+                    valid_from__lte=today,
+                    valid_until__gte=today,
                 ),
+            ),
+            not_started=Count(
+                "pk",
+                filter=Q(status=FlightPermission.STATUS_APPROVED, valid_from__gt=today),
             ),
             # LV-241: **la columna de vigencia pasada era estructuralmente cero.**
             # Contaba sólo los `approved` con fecha pasada, y el trabajo nocturno
@@ -353,6 +366,7 @@ def permit_status_by_cost_center(today):
                 "pk",
                 filter=Q(
                     status=FlightPermission.STATUS_APPROVED,
+                    valid_from__lte=today,
                     valid_until__gte=today,
                     valid_until__lte=horizon,
                 ),
@@ -369,13 +383,16 @@ def permit_status_by_cost_center(today):
             next_expiry=Min(
                 "valid_until",
                 filter=Q(
-                    status=FlightPermission.STATUS_APPROVED, valid_until__gte=today
+                    status=FlightPermission.STATUS_APPROVED,
+                    valid_from__lte=today,
+                    valid_until__gte=today,
                 ),
             ),
         )
     }
     empty = {
         "in_force": 0,
+        "not_started": 0,
         "lapsed": 0,
         "expired_this_month": 0,
         "awaiting": 0,

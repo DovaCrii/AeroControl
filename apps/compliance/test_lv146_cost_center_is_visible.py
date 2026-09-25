@@ -184,6 +184,10 @@ class TestTheResolverFindsTheCostCenter:
 
         # Una por el modelo presente + una por los centros de costo. El tope es
         # holgado a propósito: lo que se afirma es que no crece con las filas.
+        # LV-258: se calienta la caché de `ContentType` antes de medir; en frío
+        # (un worker de `-n auto` que no corrió nada antes) suma sus propias
+        # consultas y el tope mide el orden de la suite, no esta función.
+        cost_centers_for_refs(refs)
         with django_assert_max_num_queries(4):
             cost_centers_for_refs(refs)
 

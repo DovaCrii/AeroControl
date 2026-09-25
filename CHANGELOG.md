@@ -263,6 +263,11 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **Un permiso aprobado que todavía no empieza ya no cuenta como vigente (`LV-258`).**
+  La tabla por faena del panel y del informe lo sumaba, así que una faena cuyo único
+  permiso arranca la semana próxima aparecía con permiso y no entre las que no
+  pueden volar. Se notó porque el informe decía 12 vigentes en una fila y 11 en el
+  total.
 - **«¿Puedo volar?» juzga todo con la misma fecha (`LV-257`).** La comprobación
   de habilitación por modelo usaba el día real aunque se preguntara por otro. Hoy
   no cambiaba nada en pantalla, que siempre pregunta por hoy. Y cinco pruebas que

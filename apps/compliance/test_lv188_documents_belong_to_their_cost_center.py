@@ -279,6 +279,9 @@ class TestWhatItCosts:
         ids no viajan a Python para volver a la base."""
         for index in range(5):
             _document(_permit(mine, folio=f"JEJ-2026-{index:03d}"), title=f"C{index}")
+        # LV-258: caché de `ContentType` caliente antes de medir (ver
+        # `test_lv189_terminal_subjects::test_it_is_still_one_query`).
+        documents_for_cost_center(mine, _current_documents()).count()
 
         with django_assert_num_queries(1):
             assert documents_for_cost_center(mine, _current_documents()).count() == 5
