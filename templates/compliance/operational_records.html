@@ -9,6 +9,9 @@
     <p class="page-description">{% translate "Flight logs, RPA checklists and drone inspections filed against each cost center." %}</p>
   </div>
   <div class="d-flex gap-2">
+    {% comment %}LV-262: esta lista se abre desde el cierre mensual, que es ahora la
+    entrada del menú; el camino de vuelta va a la vista.{% endcomment %}
+    <a class="btn btn-outline-secondary" href="{% url 'monthly-review' %}{% if selected_month %}?month={{ selected_month }}{% endif %}">← {% translate "Back to the monthly close" %}</a>
     <a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>
     {% if perms.compliance.add_document %}
     <a href="{% url 'document-create' %}?entity_type={{ cost_center_content_type_id }}{% if selected_cost_center %}&object_id={{ selected_cost_center }}{% endif %}{% if selected_doc_type %}&doc_type={{ selected_doc_type }}{% endif %}" class="btn btn-primary">+ {% translate "Upload record" %}</a>

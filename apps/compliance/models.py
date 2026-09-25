@@ -290,7 +290,58 @@ class MonthlyComplianceReview(BaseModel):
         )
         if status in self.RESOLVED_STATUSES:
             resolve_open_alerts_for(self)
+        # LV-262: «no conforme» abre la no conformidad **desde donde se vio**.
+        # Antes eran dos pasos en dos pantallas —marcar acá, crear allá— y el
+        # segundo era el que se olvidaba: la revisión quedaba roja y la brecha sin
+        # causa ni acción, que es lo que ISO 10.2 pide registrar.
+        if status == self.STATUS_NON_COMPLIANT:
+            self.open_non_conformity()
         return self
+
+    @classmethod
+    def for_month(cls, cost_center, period):
+        """La revisión de esa faena y ese mes, creándola si no existe.
+
+        LV-262: `check_monthly_records` sólo la crea para faenas **con vuelos
+        registrados**, y en producción no había ninguno (las bitácoras llegan en
+        PDF). El cierre mensual deja revisar cualquier faena que opera, así que la
+        revisión nace cuando alguien decide, no sólo cuando corre el trabajo.
+        """
+        review, _created = cls.objects.get_or_create(
+            cost_center=cost_center, period=period.replace(day=1)
+        )
+        return review
+
+    def open_non_conformity(self):
+        """La no conformidad de esta revisión: la abierta que ya haya, o una nueva.
+
+        Idempotente a propósito: volver a marcar «no conforme» —para corregir la
+        nota, por ejemplo— no puede abrir una segunda por el mismo mes. El origen
+        queda enlazado a la revisión, así que la no conformidad sabe de qué faena
+        y de qué mes habla.
+        """
+        from django.contrib.contenttypes.models import ContentType
+        from django.utils.translation import gettext
+
+        content_type = ContentType.objects.get_for_model(self)
+        existing = NonConformity.objects.filter(
+            content_type=content_type,
+            object_id=self.pk,
+            is_active=True,
+            status=NonConformity.STATUS_OPEN,
+        ).first()
+        if existing:
+            return existing
+        return NonConformity.objects.create(
+            title=gettext("Operational records incomplete: %(center)s %(period)s")
+            % {"center": self.cost_center.code, "period": f"{self.period:%Y-%m}"},
+            source=NonConformity.SOURCE_EXPIRED_DOCUMENT,
+            cost_center=self.cost_center,
+            content_type=content_type,
+            object_id=self.pk,
+            description=self.notes
+            or gettext("Marked non-compliant in the monthly close."),
+        )
 
 
 class ComplianceSnapshot(BaseModel):

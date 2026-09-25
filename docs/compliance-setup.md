@@ -192,16 +192,21 @@ inspección de dron (LVE-002)— son otra categoría: no vencen, pero deben exis
 uno por vuelo. No se confunden con los procedimientos (esos van a *Documentos de
 la empresa*) ni con la resolución JAC (esa va a la ficha de la aeronave).
 
-- **Dónde viven**: *Cumplimiento → Registros operacionales*
-  (`/compliance/operational-records/`). Se cuelgan de un **centro de costo** con
-  la **fecha del vuelo** como fecha de emisión; se filtran por CC, mes y tipo, y
-  se suben con "Subir registro" (prellena el CC elegido).
-- **Cierre de mes**: el comando `check_monthly_records` (timer diario, actúa el
-  último día del mes) crea una **revisión de cumplimiento** pendiente por cada
-  centro de costo que voló y avisa al grupo **Dirección** con la tabla vuelos vs
-  registros. Cada revisión pendiente es una **alerta viva** hasta que Dirección
-  la marca **Cumple** o **No cumple** en *Cumplimiento → Cumplimiento mensual*
-  (`/compliance/monthly-review/`, con export CSV). Marcarla cierra la alerta.
+- **Dónde viven**: *Cumplimiento → Cierre mensual* (`/compliance/monthly-review/`,
+  `LV-262`). Una fila por faena que opera, con cuántos registros hay de **cada
+  tipo** en el mes y cuáles faltan. Se cuelgan de un **centro de costo** con la
+  **fecha del vuelo** como fecha de emisión, y se suben con **+ Cargar** desde la
+  fila de la faena (prellena el CC y el primer tipo que falta). La lista completa
+  de documentos (`/compliance/operational-records/`) se abre desde cada chip y
+  desde «Todos los registros».
+- **Cierre de mes**: Dirección marca **Cumple** o **No cumple** en la misma fila,
+  con una nota opcional. **«No cumple» abre sola la no conformidad** de esa faena
+  y ese mes, con la nota como descripción. Se puede marcar cualquier faena que
+  opera, haya vuelos registrados en la app o no (las bitácoras llegan en PDF).
+  Además, el comando `check_monthly_records` (timer diario, actúa el último día del
+  mes) sigue creando una revisión pendiente para cada faena **con vuelos
+  registrados** y avisando a **Dirección**; esa revisión es una alerta viva hasta
+  que se marca. Export CSV con un conteo por tipo de registro.
 - **Quién revisa**: solo el grupo *Dirección* (permiso
   `change_monthlycompliancereview`); el resto la ve en modo lectura.
 

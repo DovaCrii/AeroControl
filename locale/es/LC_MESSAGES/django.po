@@ -9203,3 +9203,73 @@ msgid "+%(counter)s more"
 msgid_plural "+%(counter)s more"
 msgstr[0] "+%(counter)s más"
 msgstr[1] "+%(counter)s más"
+
+#: templates/compliance/monthly_review.html templates/base.html
+msgid "Monthly close"
+msgstr "Cierre mensual"
+
+#: templates/compliance/monthly_review.html
+msgid "Each cost center's operational records for the month and its review, on one screen."
+msgstr "Los registros operacionales de cada faena en el mes y su revisión, en una sola pantalla."
+
+#: templates/compliance/monthly_review.html
+msgid "Previous month"
+msgstr "Mes anterior"
+
+#: templates/compliance/monthly_review.html
+msgid "Next month"
+msgstr "Mes siguiente"
+
+#: templates/compliance/monthly_review.html
+msgid "Go"
+msgstr "Ir"
+
+#: templates/compliance/monthly_review.html
+msgid "Records this month"
+msgstr "Registros del mes"
+
+#: templates/compliance/monthly_review.html
+msgctxt "monthly close column"
+msgid "Review"
+msgstr "Revisión"
+
+#: templates/compliance/monthly_review.html
+msgid "No flights recorded in the app this month"
+msgstr "Ningún vuelo registrado en la aplicación este mes"
+
+#: templates/compliance/monthly_review.html
+msgid "missing"
+msgstr "falta"
+
+#: templates/compliance/monthly_review.html
+msgid "No operational record types are configured."
+msgstr "No hay tipos de registro operacional configurados."
+
+#: templates/compliance/monthly_review.html apps/compliance/views.py
+msgid "Not reviewed"
+msgstr "Sin revisar"
+
+#: templates/compliance/monthly_review.html
+msgid "Upload"
+msgstr "Cargar"
+
+#: templates/compliance/monthly_review.html
+msgid "Opens a non-conformity for this cost center and month"
+msgstr "Abre una no conformidad para esta faena y este mes"
+
+#: templates/compliance/monthly_review.html
+msgid "No cost centers with RPA operation."
+msgstr "Ningún centro de costo con operación RPA."
+
+#: apps/compliance/models.py
+#, python-format
+msgid "Operational records incomplete: %(center)s %(period)s"
+msgstr "Registros operacionales incompletos: %(center)s %(period)s"
+
+#: apps/compliance/models.py
+msgid "Marked non-compliant in the monthly close."
+msgstr "Marcada no conforme en el cierre mensual."
+
+#: templates/compliance/operational_records.html
+msgid "Back to the monthly close"
+msgstr "Volver al cierre mensual"

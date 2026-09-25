@@ -1,6 +1,25 @@
 # HANDOFF — AeroControl
 
-## 🟡 2026-09-25 — el informe rediseñado y el contraste, **sin desplegar**
+## 🟡 2026-09-25 — cierre mensual unificado y realce de filas, **sin desplegar**
+
+`p340` corre **`67643fa`** (desplegado el 2026-09-25: `collectstatic` copió 2
+estáticos con el entorno cargado, reinicio, `git log` = `67643fa`). Faltan:
+
+| Fila | Qué | Despliegue |
+|---|---|---|
+| `LV-261` | Al pasar el mouse, una fila roja del panel se volvía gris y la primera celda seguía roja (reporte del usuario con captura). El realce ahora oscurece el rojo y cubre la fila entera; lo mismo en las filas con borde de severidad. | `collectstatic` |
+| `LV-262` | **Cierre mensual**: «Registros operacionales» y «Cumplimiento mensual» son una pantalla y una entrada de menú. Una fila por faena que opera, registros por tipo y cuáles faltan, **+ Cargar**, **Cumple**/**No cumple** — y «No cumple» abre sola la no conformidad. Funciona sin vuelos registrados (en producción hay 0). No conformidades se queda: alimenta los incidentes del informe. | `collectstatic` + reiniciar |
+
+**Paso de despliegue: `git pull`, entorno, `collectstatic` y reiniciar.** Sin
+migraciones. ⚠️ **El entorno primero** — el 2026-09-25 se dictó el bloque sin él y
+`collectstatic` murió con `SECRET_KEY not found` (el `git pull` sí había entrado):
+error del dictado, no de la VM.
+
+**Conteo de producción del 2026-09-25**, la base de la decisión de `LV-262`:
+registros operacionales 0 · revisiones mensuales 0 · no conformidades 0 · vuelos
+0 · chequeos prevuelo 0. Ninguno de esos módulos se había usado todavía.
+
+## ✅ 2026-09-25 — el informe rediseñado y el contraste, desplegados (`67643fa`)
 
 Tres filas sobre `b80962c` (lo que corre en `p340`), pedidas por el usuario en la
 misma jornada:
@@ -9,12 +28,9 @@ misma jornada:
 |---|---|---|
 | `LV-258` | Un permiso aprobado que **todavía no empieza** contaba como vigente en la tabla por faena del panel y del informe — una faena cuyo único permiso arranca la semana próxima salía habilitada. Destapado por una suma que no cuadraba (12 en la fila, 11 en el total). Y tres techos de consultas que dependían del orden de la suite, visibles desde el gate paralelo. | reiniciar |
 | `LV-259` | **Contraste medido en 16 pantallas y los dos temas.** El Dato Ejecutivo en oscuro estaba a 1,12 : 1 (texto casi blanco sobre papel blanco: los tokens del papel no llegaban a su hoja). También el rojo y verde de Bootstrap en oscuro, las insignias amarillas con letra blanca y la paleta del papel. Re-medido: 0 textos bajo el mínimo. | `collectstatic` |
-| `LV-261` | Al pasar el mouse, una fila roja del panel se volvía gris y la primera celda seguía roja (reporte del usuario con captura). El realce ahora oscurece el rojo y cubre la fila entera. | `collectstatic` |
 | `LV-260` | **El informe más corto**: hoja ejecutiva con la conclusión primero, sin contadores repetidos, y la cobertura por faena + el plan compacto en una hoja **cuando caben (hasta 9 faenas con operación)**. Con la forma de producción: de 6 hojas a 5. | `collectstatic` |
 
-**Paso de despliegue de la tanda: `git pull`, `collectstatic` y reiniciar.** Sin
-migraciones ni dependencias nuevas para producción (`pytest-xdist` es sólo de
-desarrollo).
+Desplegadas el 2026-09-25 en `67643fa`.
 
 🔶 **Dato que falta para cerrar `LV-260`**: cuántas faenas con operación salen en el
 informe de producción. Con más de 9, el plan va a su hoja y el documento queda en

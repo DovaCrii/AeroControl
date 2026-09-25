@@ -102,7 +102,12 @@ class TestThePaperTextReadsOnPaper:
 
 class TestTheBootstrapColoursUsedLoose:
     def test_danger_and_success_are_lightened_in_the_dark_theme(self):
-        for selector in (".text-danger", ".text-success", ".btn-outline-danger"):
+        for selector in (
+            ".text-danger",
+            ".text-success",
+            ".btn-outline-danger",
+            ".btn-outline-success",  # LV-262: el «Cumple» del cierre mensual
+        ):
             assert re.search(
                 r'\[data-theme="dark"\]\s*' + re.escape(selector), APP_CSS
             ), selector

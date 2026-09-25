@@ -306,11 +306,15 @@ def test_monthly_review_page_shows_counts_and_marks(world):
     review = MonthlyComplianceReview.objects.create(cost_center=cc, period=PERIOD)
     client = _admin_client()
 
-    response = client.get(reverse("monthly-review"))
+    # LV-262: la pantalla es ahora el cierre mensual — una fila por faena y mes,
+    # con el mes elegido (por defecto, el cerrado anterior). Las cifras son las
+    # mismas que afirmaba este test; cambió de dónde se leen.
+    response = client.get(reverse("monthly-review"), {"month": "2026-05"})
     assert response.status_code == 200
-    row = response.context["reviews"][0]
-    assert row.flights == 1
-    assert row.records == 1
+    row = response.context["rows"][0]
+    assert row["flights"] == 1
+    assert row["records_total"] == 1
+    assert row["review"] == review
 
     marked = client.post(
         reverse("monthly-review-mark", args=[review.pk]),
