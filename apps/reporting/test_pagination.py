@@ -51,11 +51,17 @@ class TestWhatARowMeasures:
         assert row_px(_row(operators=12)) == ROW_BASE_PX
 
     def test_aircraft_still_do(self):
-        """Las aeronaves siguen listándose, una por línea —la plantilla las separa
-        con `<br>`—, así que son lo único que todavía hace crecer la fila."""
-        from apps.reporting.pagination import ROW_LINE_PX
+        """Las aeronaves siguen siendo lo único que hace crecer la fila.
 
-        assert row_px(_row(aircraft=3)) == ROW_BASE_PX + 2 * ROW_LINE_PX
+        LV-260: van **en línea**, separadas por «·», en la columna que se lleva el
+        ancho libre, así que cuatro caben en un renglón y la quinta abre otro
+        (antes iba una por renglón y tres ya sumaban dos líneas)."""
+        from apps.reporting.pagination import AIRCRAFT_PER_LINE, ROW_LINE_PX
+
+        assert row_px(_row(aircraft=AIRCRAFT_PER_LINE)) == ROW_BASE_PX
+        assert row_px(_row(aircraft=AIRCRAFT_PER_LINE + 1)) == (
+            ROW_BASE_PX + ROW_LINE_PX
+        )
 
     def test_a_row_with_nothing_still_takes_a_line(self):
         """Un permiso sin operadores cargados dibuja un guion, no una celda de
@@ -65,9 +71,12 @@ class TestWhatARowMeasures:
 
 
 class TestTheBudgetOfASheet:
-    def test_the_first_sheet_has_less_room(self):
-        """Carga además el ciclo de vigencia y los cuatro indicadores."""
-        assert sheet_budget_px(first=True, last=False) < sheet_budget_px(
+    def test_the_first_sheet_no_longer_carries_the_counters(self):
+        """LV-260: la primera hoja cargaba el ciclo (`LV-248` lo mudó) y los cuatro
+        indicadores, que repetían los de la hoja ejecutiva y salieron. Ahora su
+        primera fila cae **más arriba** que la de una hoja de continuación, que
+        lleva el rótulo «(continuación)» y el de hoja N de M."""
+        assert sheet_budget_px(first=True, last=False) >= sheet_budget_px(
             first=False, last=False
         )
 
@@ -78,8 +87,10 @@ class TestTheBudgetOfASheet:
             sheet_budget_px(first=False, last=False) - CLOSING_PX
         )
 
-    def test_a_single_sheet_section_is_the_tightest_case(self):
-        """Es primera y última a la vez."""
+    def test_a_closing_sheet_is_the_tightest_case(self):
+        """La hoja que cierra la sección es la más apretada, porque carga la
+        observación y la leyenda. LV-260: ya no es la de una sola hoja —la primera
+        dejó de cargar los indicadores—, sino la última de varias."""
         budgets = [
             sheet_budget_px(first=True, last=True),
             sheet_budget_px(first=True, last=False),
@@ -87,7 +98,7 @@ class TestTheBudgetOfASheet:
             sheet_budget_px(first=False, last=False),
         ]
 
-        assert budgets[0] == min(budgets)
+        assert budgets[2] == min(budgets)
 
     def test_no_budget_ever_reaches_the_footer(self):
         """⚠️ La afirmación de fondo: el presupuesto más generoso, sumado a donde
@@ -167,10 +178,11 @@ class TestNothingIsEverDropped:
 
     def test_tall_rows_need_more_sheets_than_short_ones(self):
         """La comprobación de que la estimación se usa de verdad: las mismas
-        veinte filas, con cuatro aeronaves cada una, no caben donde caben con una.
-        LV-248: con aeronaves y no con operadores, que ya no alargan la fila."""
-        short = paginate([_row(aircraft=1) for _ in range(20)])
-        tall = paginate([_row(aircraft=4) for _ in range(20)])
+        treinta filas, con nueve aeronaves cada una (tres renglones), no caben
+        donde caben con una. LV-248: con aeronaves y no con operadores; LV-260:
+        nueve y no cuatro, porque ahora cuatro entran en un renglón."""
+        short = paginate([_row(aircraft=1) for _ in range(30)])
+        tall = paginate([_row(aircraft=9) for _ in range(30)])
 
         assert len(tall) > len(short)
 

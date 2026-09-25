@@ -67,7 +67,10 @@ silencioso pasa inadvertido; uno contra un total declarado, no.
 #: Con esto la sección de permisos de producción —11 vigentes y 3 en trámite—
 #: cabe en **una** hoja: el informe pasa de 6 a 5 hojas más el anexo de la nómina.
 FOOTER_TOP_PX = 1060
-FIRST_SHEET_ROW_TOP_PX = 344
+#: LV-260: 344 → **220**. Los cuatro contadores de arriba de la tabla salieron
+#: (repetían los de la hoja ejecutiva); medido el 2026-09-25, la primera fila cae
+#: en 217 px. Fila base sin cambios: 26,5 medido, 27 usado.
+FIRST_SHEET_ROW_TOP_PX = 220
 CONTINUATION_ROW_TOP_PX = 229
 #: Una fila de una sola línea en sus celdas multivaluadas.
 ROW_BASE_PX = 27
@@ -87,6 +90,51 @@ CLOSING_PX = 133
 SAFETY_PX = ROW_BASE_PX
 
 
+#: LV-260: las matrículas van en línea, separadas por «·», en la columna que
+#: ahora se lleva el ancho libre. Cuántas caben por renglón.
+AIRCRAFT_PER_LINE = 4
+
+#: LV-260 · La hoja que junta la cobertura por faena y el plan compacto.
+#: **Medidos en el navegador el 2026-09-25** sobre el informe renderizado con la
+#: forma de producción (12 faenas, cuatro fases, matriz de cuatro filas):
+#:
+#: | | medido | usado |
+#: |---|---|---|
+#: | Primera fila de faena, desde el borde de la hoja | 201 | 201 |
+#: | Alto de una fila de faena | 22,2 | 23 |
+#: | Total + concentración + separación hasta el plan | 62 + 14 | 76 |
+#: | Plan compacto sin la matriz (título, apertura, fases, leyenda, ciclo) | 442,4 | 443 |
+#: | Fila de la matriz | 23,4 | 24 |
+#:
+#: Con el margen de una fila (`SAFETY_PX`), comparten hoja **hasta 9 faenas**. Con
+#: 12 no entran: medido, el plan terminaba en 1079 px, bajo el pie. Las fases son
+#: texto editable (`LV-249`): si alguien las alarga mucho, este número se queda
+#: corto — y lo que pasa entonces es que la hoja recorta contra su borde, así que
+#: al editar las fases conviene mirar la vista previa.
+COVERAGE_FIRST_ROW_TOP_PX = 201
+COVERAGE_ROW_PX = 23
+COVERAGE_TAIL_PX = 76
+PLAN_BLOCK_BASE_PX = 443
+PLAN_MATRIX_ROW_PX = 24
+
+
+def plan_fits_with_coverage(cost_centres, matrix_rows):
+    """¿Caben la tabla de faenas y el plan compacto en la misma hoja?
+
+    La tabla crece con las faenas y el plan con las filas de la matriz; el resto
+    del plan (fases, leyenda, nota del ciclo) es de alto fijo. Con margen de una
+    fila, como el resto del reparto: equivocarse por exceso manda el plan a su
+    hoja; por defecto, lo recortaría bajo el pie.
+    """
+    coverage = (
+        COVERAGE_FIRST_ROW_TOP_PX
+        + COVERAGE_ROW_PX * max(cost_centres, 1)
+        + COVERAGE_TAIL_PX
+    )
+    plan = PLAN_BLOCK_BASE_PX + PLAN_MATRIX_ROW_PX * matrix_rows
+    return coverage + plan + SAFETY_PX <= FOOTER_TOP_PX
+
+
 def row_px(row):
     """El alto estimado de una fila de la tabla de permisos, por su contenido.
 
@@ -99,7 +147,9 @@ def row_px(row):
     por línea (la plantilla las separa con `<br>`).
     """
     tails = len(row.get("aircraft") or [])
-    return ROW_BASE_PX + ROW_LINE_PX * (max(tails, 1) - 1)
+    # LV-260: en línea, `AIRCRAFT_PER_LINE` por renglón (antes, una por renglón).
+    lines = -(-tails // AIRCRAFT_PER_LINE) if tails else 1
+    return ROW_BASE_PX + ROW_LINE_PX * (lines - 1)
 
 
 #: LV-248 · El anexo de la nómina. **Medido en el navegador el 2026-09-23** sobre la

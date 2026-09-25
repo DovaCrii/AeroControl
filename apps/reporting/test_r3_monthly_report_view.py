@@ -192,7 +192,8 @@ class TestTheCoverFollowsThePeriod:
         termina diciendo otro período que la portada."""
         client.force_login(reader)
 
-        body = client.get(reverse(URL), {"period": "2026-09"}).content.decode()
+        response = client.get(reverse(URL), {"period": "2026-09"})
+        body = response.content.decode()
 
         # Se cuenta dentro de `rpt-head-code` y no en todo el cuerpo: el código
         # sale además en el `<title>` y en el encabezado de la pantalla, que no
@@ -200,7 +201,12 @@ class TestTheCoverFollowsThePeriod:
         # la aplicación y se rompería al tocarlo.
         headers = re.findall(r'class="rpt-head-code"[^>]*>\s*([A-Z0-9-]+)', body)
 
-        assert headers == ["JEJ-GTE-CT-INF-RPA-2026-09"] * 5
+        # LV-260: una por hoja —la portada también la lleva—, contra el total que
+        # calcula la vista y no contra un 5 escrito: el plan puede compartir hoja
+        # con la cobertura, y entonces el documento tiene una menos.
+        assert (
+            headers == ["JEJ-GTE-CT-INF-RPA-2026-09"] * response.context["total_pages"]
+        )
         assert "JEJ-GTE-CT-INF-RPA-2026-08" not in body
 
     @pytest.mark.django_db
@@ -404,7 +410,8 @@ class TestTheFooterIsTheSameOnEveryPage:
     def test_every_page_declares_its_number_and_the_total(self, client, reader, site):
         client.force_login(reader)
 
-        body = client.get(reverse(URL)).content.decode()
+        response = client.get(reverse(URL))
+        body = response.content.decode()
 
         labels = [
             " ".join(match.split())
@@ -419,7 +426,9 @@ class TestTheFooterIsTheSameOnEveryPage:
         # fallar por la razón correcta con el arreglo puesto — pero también
         # habría dejado pasar un pie que numera mal si el documento volviera a
         # tener cinco hojas por casualidad.
-        assert len(labels) >= 5
+        # LV-260: y contra el total de la vista, que es el que numera. Con el plan
+        # debajo de la cobertura el documento mínimo es de cuatro hojas.
+        assert len(labels) == response.context["total_pages"] >= 4
         for number, label in enumerate(labels, start=1):
             assert f"Página {number} de {len(labels)}" in label
 
@@ -429,9 +438,10 @@ class TestTheFooterIsTheSameOnEveryPage:
         revisión: lo que no puede pasar es que una hoja no diga nada."""
         client.force_login(reader)
 
-        body = client.get(reverse(URL)).content.decode()
+        response = client.get(reverse(URL))
+        body = response.content.decode()
 
-        assert body.count("Borrador ·") == 5
+        assert body.count("Borrador ·") == response.context["total_pages"]
 
     def test_the_footer_takes_the_total_and_does_not_hardcode_it(self):
         """⚠️ Este test antes comprobaba lo contrario: que `_foot.html` escribiera

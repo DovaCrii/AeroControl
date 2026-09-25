@@ -185,11 +185,13 @@
 /* Los espaciadores verticales del diseño, uno por página. */
 .rpt-stack-8 > * { margin-bottom: 8px; }
 .rpt-stack-9 > * { margin-bottom: 9px; }
+.rpt-stack-12 > * { margin-bottom: 12px; }
 .rpt-stack-14 > * { margin-bottom: 14px; }
 .rpt-stack-16 > * { margin-bottom: 16px; }
 .rpt-stack-20 > * { margin-bottom: 20px; }
 .rpt-stack-8 > :last-child,
 .rpt-stack-9 > :last-child,
+.rpt-stack-12 > :last-child,
 .rpt-stack-14 > :last-child,
 .rpt-stack-16 > :last-child,
 .rpt-stack-20 > :last-child { margin-bottom: 0; }
@@ -234,6 +236,119 @@
 .rpt-kpi-warn .rpt-kpi-value { color: var(--rpt-amber); }
 .rpt-kpi-info { border-top-color: var(--rpt-cyan); }
 
+/* == LV-260 · La hoja ejecutiva ============================================
+ *
+ * La conclusión va primero y en líneas cortas, cada una con su marca de tono a
+ * la izquierda: la marca, y no sólo el color de la letra, es lo que sobrevive a
+ * una fotocopia en blanco y negro. Los cuatro indicadores llevan el tono **según
+ * su valor** (`summary.executive_summary`), no fijo por tarjeta. */
+.rpt-verdict {
+  list-style: none;
+  /* Sin tocar el margen de abajo: lo pone `.rpt-stack-*`, y un `margin: 0`
+     acá lo anulaba por orden de declaración y pegaba la lista al rótulo
+     siguiente. */
+  margin-top: 0;
+  margin-left: 0;
+  margin-right: 0;
+  padding: 12px 16px;
+  background: var(--rpt-wash);
+  border: 1px solid var(--rpt-rule);
+  border-left: 4px solid var(--rpt-navy);
+  display: grid;
+  gap: 7px;
+}
+.rpt-verdict li {
+  position: relative;
+  padding-left: 16px;
+  color: var(--rpt-ink);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+.rpt-verdict li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--rpt-muted);
+}
+.rpt-verdict-critical::before { background: #b23b34 !important; }
+.rpt-verdict-warning::before { background: var(--rpt-amber) !important; }
+.rpt-verdict-good::before { background: var(--rpt-green-ink) !important; }
+.rpt-verdict-info::before { background: var(--rpt-navy) !important; }
+
+.rpt-kpis-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.rpt-kpis-4 .rpt-kpi { padding: 11px 12px; }
+.rpt-kpis-4 .rpt-kpi-value { font-size: 30px; }
+.rpt-tone-critical { border-top-color: #b23b34; }
+.rpt-tone-critical .rpt-kpi-value { color: #b23b34; }
+.rpt-tone-warning { border-top-color: var(--rpt-amber); }
+.rpt-tone-warning .rpt-kpi-value { color: var(--rpt-amber-ink); }
+.rpt-tone-good { border-top-color: var(--rpt-green-ink); }
+.rpt-tone-good .rpt-kpi-value { color: var(--rpt-green-ink); }
+.rpt-tone-info { border-top-color: var(--rpt-cyan); }
+.rpt-tone-neutral { border-top-color: var(--rpt-navy); }
+.rpt-kpi-strip {
+  display: flex;
+  gap: 22px;
+  margin-top: 8px;
+  color: var(--rpt-muted);
+  font-size: 9.6px;
+}
+.rpt-kpi-strip strong { color: var(--rpt-ink); }
+.rpt-kpi-strip .rpt-strip-bad { color: #b23b34; }
+
+/* Lo próximo que vence: folio, faena, fecha, barra y días. La barra satura a 60
+ * días, el horizonte del indicador. */
+.rpt-next {
+  display: grid;
+  grid-template-columns: 86px 52px 74px 1fr 56px;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 6px;
+  font-size: 10px;
+}
+.rpt-next-folio { font-weight: bold; color: var(--rpt-navy); white-space: nowrap; }
+.rpt-next-cc { color: var(--rpt-muted); }
+.rpt-next-date { color: var(--rpt-ink); white-space: nowrap; }
+.rpt-next-bar { height: 8px; background: var(--rpt-hair); border-radius: 4px; overflow: hidden; }
+.rpt-bar { display: block; height: 100%; border-radius: 4px; background: var(--rpt-navy); }
+.rpt-bar-critical { background: #b23b34; }
+.rpt-bar-warning { background: var(--rpt-amber); }
+.rpt-bar-nominal { background: var(--rpt-green-ink); }
+.rpt-next-days { text-align: right; font-weight: bold; white-space: nowrap; }
+.rpt-days-critical { color: #b23b34; }
+.rpt-days-warning { color: var(--rpt-amber-ink); }
+.rpt-days-nominal { color: var(--rpt-green-ink); }
+
+.rpt-finding {
+  border-left: 3px solid var(--rpt-amber);
+  background: var(--rpt-wash);
+  padding: 9px 12px;
+  color: var(--rpt-ink);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.rpt-finding-critical { border-left-color: #b23b34; }
+
+/* La dotación en una línea por padrón: nombre, barra de cobertura, cifra y la
+ * brecha partida en «sin fecha» y «vencida» (se arreglan distinto). */
+.rpt-staff { display: grid; gap: 8px; }
+.rpt-staff-row {
+  display: grid;
+  grid-template-columns: 210px 1fr 62px 150px;
+  align-items: center;
+  column-gap: 12px;
+  font-size: 10px;
+  color: var(--rpt-ink);
+}
+.rpt-staff-meter { height: 8px; background: var(--rpt-hair); border-radius: 4px; overflow: hidden; }
+.rpt-staff-meter > span { display: block; height: 100%; background: var(--rpt-navy); }
+.rpt-staff-value { text-align: right; white-space: nowrap; }
+.rpt-staff-gap { color: var(--rpt-muted); font-size: 9.4px; }
+
 /* -- página 3 · permisos ------------------------------------------------- */
 
 .rpt-cycle { border: 1px solid var(--rpt-rule); border-left: 3px solid var(--rpt-navy); background: var(--rpt-wash); }
@@ -250,7 +365,13 @@
 
 /* La tabla permiso a permiso: siete columnas, las del informe emitido. Las
  * medidas salen del artboard `p3_permisos` del ZIP. */
-.rpt-grid-permits { display: grid; grid-template-columns: 74px 46px 44px 1fr 84px 108px 34px; }
+/* LV-260: el ancho libre (`1fr`) pasa de operadores a aeronaves. La celda de
+ * operadores dice «4 operadores» desde `LV-248` y seguía siendo la más ancha,
+ * mientras las matrículas iban una por renglón y eran lo único que alargaba una
+ * fila. Ahora van en línea, separadas por «·», y la fila crece sólo cuando no
+ * caben (ver `pagination.row_px`). «N° DGAC» pasa de 46 a 70 px: «En proceso»
+ * se partía en dos líneas. */
+.rpt-grid-permits { display: grid; grid-template-columns: 78px 70px 46px 84px 1fr 118px 38px; }
 .rpt-grid-permits .th {
   color: #ffffff;
   font-size: 8.4px;
@@ -378,16 +499,17 @@
   text-align: center;
 }
 .rpt-matrix-head > :first-child { padding: 7px 10px; text-align: left; text-transform: uppercase; letter-spacing: 0.04em; }
+/* LV-260: 4 px de relleno y no 6: la matriz comparte hoja con la cobertura. */
 .rpt-matrix-row {
-  padding: 6px 10px;
-  font-size: 10px;
+  padding: 4px 10px;
+  font-size: 9.6px;
   color: var(--rpt-ink);
   border-bottom: 1px solid var(--rpt-hair);
   border-right: 1px solid var(--rpt-hair);
 }
 .rpt-cell {
-  padding: 6px 8px;
-  font-size: 9.4px;
+  padding: 4px 8px;
+  font-size: 9.2px;
   text-align: center;
   border-bottom: 1px solid var(--rpt-hair);
   border-right: 1px solid var(--rpt-hair);
@@ -561,4 +683,53 @@
 .rpt-fase-done .rpt-fase-state { color: #52606D; }
 /* El caso que el plan escrito a mano no tenía: ninguna fase vigente, porque el
  * plan terminó o todavía no empieza. */
-.rpt-fase-note { border-left: 3px solid #00A7BC; background: #F4F7FA; padding: 8px 12px; margin-top: 10px; color: #52606D; font-size: 9px; }
+.rpt-fase-note { border-left: 3px solid var(--rpt-cyan); background: var(--rpt-wash); padding: 8px 12px; color: var(--rpt-muted); font-size: 9px; }
+
+/* == LV-260 · El plan compacto y la cobertura que comparte hoja ============
+ *
+ * Las fases pasan de bloques apilados (una hoja entera) a una franja de columnas:
+ * el orden temporal se lee de izquierda a derecha. La fase en curso lleva el
+ * borde rojo que ya tenía; las cumplidas, apagadas. */
+.rpt-phases { display: grid; gap: 8px; }
+.rpt-phase {
+  border: 1px solid var(--rpt-rule);
+  border-top: 3px solid var(--rpt-cyan);
+  background: var(--rpt-wash);
+  padding: 7px 8px 8px;
+}
+.rpt-phase-now { border-top-color: #b23b34; background: #ffffff; }
+.rpt-phase-done { border-top-color: var(--rpt-green-ink); }
+.rpt-phase-head { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+.rpt-phase-n { color: var(--rpt-navy); font-size: 8.6px; font-weight: bold; letter-spacing: 0.05em; text-transform: uppercase; }
+.rpt-phase-month { color: var(--rpt-cyan-ink); font-size: 9.6px; font-weight: bold; white-space: nowrap; }
+.rpt-phase-now .rpt-phase-month { color: #b23b34; }
+.rpt-phase-state { color: #b23b34; }
+.rpt-phase-done .rpt-phase-state { color: var(--rpt-green-ink); }
+.rpt-phase-title { color: var(--rpt-navy); font-size: 10px; font-weight: bold; line-height: 1.25; margin-top: 4px; }
+.rpt-phase-text { color: var(--rpt-ink); font-size: 8.4px; line-height: 1.38; margin-top: 3px; }
+.rpt-phase-close { color: var(--rpt-muted); font-size: 8px; line-height: 1.35; margin-top: 4px; }
+.rpt-phase-close strong { color: var(--rpt-navy); }
+.rpt-matrix-legend {
+  background: var(--rpt-wash);
+  border: 1px solid var(--rpt-rule);
+  padding: 6px 10px;
+  font-size: 8.8px;
+  color: var(--rpt-muted);
+  line-height: 1.45;
+}
+.rpt-matrix-legend strong { color: var(--rpt-navy); }
+
+/* La cobertura por faena en filas más bajas: comparte hoja con el plan cuando
+ * el padrón es corto. Mismo cuerpo de letra que la tabla de permisos. */
+.rpt-table .rpt-grid-compact .c { padding: 4px 8px; font-size: 9.6px; line-height: 1.3; }
+.rpt-table .rpt-grid-compact .rpt-est { padding: 1px 6px; line-height: 1.3; }
+.rpt-concentration {
+  display: flex;
+  gap: 18px;
+  align-items: baseline;
+  flex-wrap: wrap;
+  font-size: 9.6px;
+  color: var(--rpt-muted);
+}
+.rpt-concentration strong { color: var(--rpt-ink); }
+.rpt-concentration .rpt-conc-warn { color: var(--rpt-amber-ink); }

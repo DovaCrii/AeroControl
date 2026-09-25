@@ -47,14 +47,18 @@ class TestProductionFitsInFewerSheets:
 
         assert len(sheets["permit_sheets"]) == 1
 
-    def test_the_whole_document_is_five_sheets_plus_the_annex(self):
+    def test_the_whole_document_is_five_sheets_with_the_annex(self):
+        """LV-260: eran cinco más el anexo; el plan compacto comparte hoja con la
+        cobertura cuando el padrón es corto (ver `test_lv260_executive_report`
+        para el caso en que no cabe)."""
         sheets = MonthlyReportView._sheets(_production_shape())
 
         assert len(sheets["roster_sheets"]) == 1
-        assert sheets["total_pages"] == 6
-        # Las cuatro fijas y la de permisos, y el anexo al final.
-        assert sheets["plan_page"] == 5
-        assert sheets["roster_sheets"][0]["page"] == 6
+        assert sheets["total_pages"] == 5
+        # Portada, resumen, permisos, cobertura + plan, y el anexo al final.
+        assert sheets["plan_page"] is None
+        assert sheets["coverage_page"] == 4
+        assert sheets["roster_sheets"][0]["page"] == 5
 
 
 class TestNothingLeavesThePaper:
@@ -79,7 +83,9 @@ class TestNothingLeavesThePaper:
         sheets = MonthlyReportView._sheets(payload)
 
         assert sheets["roster_sheets"] == []
-        assert sheets["total_pages"] == sheets["plan_page"]
+        # LV-260: la última hoja fija es la del plan, o la de cobertura cuando el
+        # plan va debajo de ella.
+        assert sheets["total_pages"] == (sheets["plan_page"] or sheets["coverage_page"])
 
 
 @pytest.mark.django_db
@@ -128,8 +134,10 @@ class TestWhatThePagesSay:
         assert "Anexo · Operadores designados por permiso" in report
         assert "Alexandra Márquez" in report
 
-    def test_the_cycle_moved_to_the_summary(self, report):
+    def test_the_cycle_is_still_on_the_paper(self, report):
         """El ciclo de cuatro pasos sigue en el papel —es el trámite que fija el
-        instructivo— pero como nota del resumen y no como bloque de la hoja 3."""
-        assert "Ciclo del permiso de operación" in report
+        instructivo—. `LV-248` lo pasó de bloque de la hoja 3 a nota del resumen, y
+        `LV-260` a nota del plan, que es donde se habla del trámite: la hoja
+        ejecutiva quedó para lo que cambia cada mes."""
+        assert "Ciclo del permiso:" in report
         assert "Ciclo de vigencia del permiso de operación" not in report

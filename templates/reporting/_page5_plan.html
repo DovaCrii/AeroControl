@@ -1,138 +1,18 @@
 {% load i18n static report_leaf %}
-{% comment %}Página 5 · Plan de normalización. Artboard `p5_plan` del ZIP.
+{% comment %}Página 5 · Plan de normalización, **sólo cuando no cabe junto a la
+cobertura** (LV-260).
 
-Cuatro fases con su criterio de cierre, y la matriz de exigibilidad progresiva.
-No salen de la base ni podrían: son un compromiso de gestión, no una medición.
-
-⚠️ **`LV-235`: pero sí sale del payload en qué fase se está**, y ésa era la
-mitad que faltaba. Hasta acá las fases estaban escritas en esta plantilla con
-sus meses a mano y la primera con `rpt-fase-now` fija, así que en enero de 2027
-el informe iba a seguir diciendo *"FASE 0 · Sep 2026 · renovar los permisos que
-vencen"* — un plan vencido impreso como si fuera vigente. Textual del usuario
-mirando esta página: *"el actual es estático, sólo cambia la fecha, lo cual lo
-vuelve inútil"*, y para esta página era exacto.
-
-El texto de las fases sigue viviendo en el código (`builder.PLAN_PHASES`) y no
-en la base: cambia una vez al año, y una tabla de configuración de cuatro filas
-que nadie edita es una tabla que nadie mantiene — el mismo criterio con el que
-`KpiTarget` no se creó. Lo que se calcula es el **estado** de cada fase, contra
-el período del informe y no contra hoy: reimprimir agosto en diciembre tiene que
-devolver la página que agosto vio.{% endcomment %}
+El contenido vive en `_plan_block.html`, compartido con la hoja de cobertura: con
+un padrón corto el plan compacto va debajo de la tabla de faenas y esta hoja no se
+emite. La decisión la toma `MonthlyReportView._sheets` con el alto medido de cada
+bloque; una sola plantilla con el contenido es lo que evita que las dos versiones
+del plan empiecen a decir cosas distintas.{% endcomment %}
 <div class="rpt-page">
 
   {% include "reporting/_head.html" %}
 
-  <div class="rpt-body rpt-stack-16">
-
-    <div>
-      <div class="rpt-h2"><span class="rpt-h2-num">4</span><span class="rpt-h2-text">Plan de normalización de operaciones aéreas</span></div>
-      <div class="rpt-h2-rule"></div>
-    </div>
-
-    {% comment %}LV-249: el texto de apertura sale del payload —editable desde la
-    app— y cae al texto fijo de antes cuando el payload no lo trae. Esa rama **no
-    es un resto**: es cómo se sigue dibujando igual un informe congelado antes de
-    este cambio, cuyo payload no guardó el texto porque vivía acá.{% endcomment %}
-    <div class="rpt-lede">{% if payload.plan.lede %}{{ payload.plan.lede }}{% else %}Cuatro fases de un mes. Ninguna exige lo que la anterior no dejó instalado: primero se cierra la habilitación vigente, luego se automatiza su renovación, después se instala el registro de vuelo y solo al final se exige completitud.{% endif %}</div>
-
-    <div class="rpt-stack-9">
-
-      {% comment %}LV-235: las fases salen del payload, y **cada una sabe si ya
-      pasó, si es la de este período o si viene**.
-
-      Antes estaban escritas acá con sus meses a mano, y la primera llevaba
-      `rpt-fase-now` fija: en enero de 2027 el informe iba a seguir diciendo
-      "FASE 0 · Sep 2026 · renovar los permisos que vencen" — un plan vencido
-      impreso como vigente. Textual del usuario: *"sólo cambia la fecha, lo cual
-      lo vuelve inútil"*.
-
-      El estado se calcula contra **el período del informe** y no contra hoy, por
-      lo mismo que el corte: reimprimir agosto en diciembre tiene que devolver la
-      página que agosto vio.{% endcomment %}
-      {% for phase in payload.plan.phases %}
-      <div class="rpt-fase{% if phase.state == 'current' %} rpt-fase-now{% endif %}{% if phase.state == 'done' %} rpt-fase-done{% endif %}{% if forloop.last %} rpt-fase-last{% endif %}">
-        <div class="rpt-fase-when">
-          <div class="rpt-fase-n">FASE {{ phase.number }}</div>
-          <div class="rpt-fase-month">{{ phase.month }}</div>
-          {% if phase.state == 'done' %}<div class="rpt-fase-state">Cumplida</div>{% elif phase.state == 'current' %}<div class="rpt-fase-state">En curso</div>{% endif %}
-        </div>
-        <div class="rpt-fase-body">
-          <div class="rpt-fase-title">{{ phase.title }}</div>
-          <div class="rpt-fase-text">{{ phase.text }}</div>
-          <div class="rpt-fase-close"><strong style="color: #124384;">Cierre:</strong> {{ phase.close }}</div>
-        </div>
-      </div>
-      {% endfor %}
-
-      {% comment %}Los dos casos que el plan escrito a mano no tenía. Decirlos es
-      mejor que dejar la primera fase pintada como actual para siempre.{% endcomment %}
-      {% if payload.plan.concluded %}
-      {% with last_phase=payload.plan.phases|last %}<div class="rpt-fase-note">El plan de normalización concluyó en {{ last_phase.month }}. El ciclo siguiente se define en el informe anual consolidado.</div>{% endwith %}
-      {% elif payload.plan.not_started %}
-      <div class="rpt-fase-note">El plan de normalización comienza en {{ payload.plan.phases.0.month }}; este período es anterior a su primera fase.</div>
-      {% endif %}
-
-    </div>
-
-    <div>
-      <div class="rpt-label" style="margin-bottom: 9px;">Exigibilidad progresiva de la reportabilidad</div>
-      {% comment %}LV-249: **la matriz sale del payload**, con una columna por fase
-      del plan. Estaba escrita abajo con SEP–DIC a mano, y en enero habría seguido
-      diciéndolo.
-
-      ⚠️ El bloque fijo de abajo **se conserva a propósito**: es lo que dibuja un
-      informe congelado antes de este cambio, cuyo payload no trae `matrix` porque
-      la matriz vivía en la plantilla. Borrarlo haría que esos informes perdieran su
-      matriz al volver a abrirlos — y un informe emitido no puede cambiar.{% endcomment %}
-      {% if payload.plan.matrix %}
-      {% with matrix=payload.plan.matrix %}
-      <div style="border: 1px solid #D7DEE6; border-bottom: none;">
-        <div class="rpt-matrix rpt-matrix-head" style="grid-template-columns: 1.9fr repeat({{ matrix.columns|length }}, minmax(0, 1fr));">
-          <div>Qué se reporta</div>{% for column in matrix.columns %}<div>{{ column }}</div>{% endfor %}
-        </div>
-        <div class="rpt-matrix" style="grid-template-columns: 1.9fr repeat({{ matrix.columns|length }}, minmax(0, 1fr));">
-          {% for row in matrix.rows %}
-          <div class="rpt-matrix-row">{% if row.emphasis %}<strong>{{ row.label }}</strong>{% else %}{{ row.label }}{% endif %}</div>
-          {% for level in row.cells %}<div class="rpt-cell rpt-cell-{{ level }}{% if forloop.last %} rpt-cell-end{% endif %}">{% if level == "due" %}Exigible{% elif level == "info" %}Informativo{% else %}No aplica{% endif %}</div>{% endfor %}
-          {% endfor %}
-        </div>
-      </div>
-      {% endwith %}
-      {% else %}
-      <div style="border: 1px solid #D7DEE6; border-bottom: none;">
-        <div class="rpt-matrix rpt-matrix-head">
-          <div>Qué se reporta</div><div>SEP</div><div>OCT</div><div>NOV</div><div>DIC</div>
-        </div>
-        <div class="rpt-matrix">
-          <div class="rpt-matrix-row">Permisos de vuelo vigentes por CC</div>
-          <div class="rpt-cell rpt-cell-due">Exigible</div>
-          <div class="rpt-cell rpt-cell-due">Exigible</div>
-          <div class="rpt-cell rpt-cell-due">Exigible</div>
-          <div class="rpt-cell rpt-cell-due rpt-cell-end">Exigible</div>
-
-          <div class="rpt-matrix-row">Renovación anticipada (carta + solicitud)</div>
-          <div class="rpt-cell rpt-cell-info">Informativo</div>
-          <div class="rpt-cell rpt-cell-due">Exigible</div>
-          <div class="rpt-cell rpt-cell-due">Exigible</div>
-          <div class="rpt-cell rpt-cell-due rpt-cell-end">Exigible</div>
-
-          <div class="rpt-matrix-row"><strong>Bitácora, check list e inspección por vuelo</strong></div>
-          <div class="rpt-cell rpt-cell-na">No aplica</div>
-          <div class="rpt-cell rpt-cell-na">No aplica</div>
-          <div class="rpt-cell rpt-cell-info">Informativo</div>
-          <div class="rpt-cell rpt-cell-due rpt-cell-end">Exigible</div>
-
-          <div class="rpt-matrix-row">Coherencia vuelos ejecutados vs. autorizados</div>
-          <div class="rpt-cell rpt-cell-na">No aplica</div>
-          <div class="rpt-cell rpt-cell-na">No aplica</div>
-          <div class="rpt-cell rpt-cell-info">Informativo</div>
-          <div class="rpt-cell rpt-cell-due rpt-cell-end">Exigible</div>
-        </div>
-      </div>
-      {% endif %}
-      <div style="background: #F4F7FA; border: 1px solid #D7DEE6; padding: 8px 10px; font-size: 9.5px; color: #52606D; line-height: 1.5;"><strong style="color: #124384;">Informativo</strong> = se reporta el dato y se identifican brechas, sin consecuencia para el CC. <strong style="color: #124384;">Exigible</strong> = la brecha se escala a la Gerencia de Ingeniería y a la Gerencia de Riesgo con plazo de cierre comprometido.</div>
-    </div>
-
+  <div class="rpt-body" style="padding-top: 20px;">
+    {% include "reporting/_plan_block.html" %}
   </div>
 
   {% include "reporting/_foot.html" with section="plan" %}

@@ -321,8 +321,10 @@ class TestThePlanPageMovesWithThePeriod:
 
         from django.conf import settings
 
+        # LV-260: el contenido del plan vive en `_plan_block.html`, que comparten
+        # la hoja propia del plan y la de cobertura cuando va debajo de ella.
         page = (
-            Path(settings.BASE_DIR) / "templates" / "reporting" / "_page5_plan.html"
+            Path(settings.BASE_DIR) / "templates" / "reporting" / "_plan_block.html"
         ).read_text(encoding="utf-8")
         from apps.core.testing import without_template_comments
 

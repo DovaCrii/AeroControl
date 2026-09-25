@@ -34,7 +34,11 @@ no es interfaz, es el papel que se firma ante la DGAC.{% endcomment %}
     Av. Apoquindo 2930, Piso 11, Las Condes – Santiago de Chile<br>
     Fono +56 2 2722 5000 · jej@jej.cl · www.jej.cl
     {% elif section == "summary" %}
-    Fuente: AeroControl, corte al {{ cutoff_date|date:"d-m-Y" }}.
+    {% comment %}LV-260: la convención del ámbar punteado se explicaba en el
+    párrafo de apertura del resumen, que salió. Va acá: es una nota sobre cómo
+    leer el papel, no una conclusión.{% endcomment %}
+    Fuente: AeroControl, corte al {{ cutoff_date|date:"d-m-Y" }}. Un campo en ámbar
+    punteado no tenía dato al corte: se informa pendiente, no como cero.
     {% elif section == "permits" %}
     {% comment %}LV-233: el pie dice **qué se reconstruye y qué no**.
 
@@ -57,7 +61,14 @@ no es interfaz, es el papel que se firma ante la DGAC.{% endcomment %}
     reconstruidos al corte; quedan fuera los archivados sin fecha registrada.
     Referencia: DAN 91, DAN 137, DAN 151 · INS-096 numeral 6.4.1.
     {% elif section == "coverage" %}
-    Fuente: AeroControl — módulo Permisos, corte al {{ cutoff_date|date:"d-m-Y" }}.
+    Fuente: AeroControl — módulo Permisos, corte al {{ cutoff_date|date:"d-m-Y" }}. El
+    estado es el del cierre del período; sin permiso vigente, la faena no está habilitada.
+    {% elif section == "coverage_plan" %}
+    {% comment %}LV-260: la hoja que junta la cobertura y el plan lleva las dos
+    notas — la fuente de la tabla y la obligación que el plan cita.{% endcomment %}
+    Fuente: AeroControl — módulo Permisos, corte al {{ cutoff_date|date:"d-m-Y" }}; estado al
+    cierre del período. El informe mensual es obligación del {{ payload.meta.issued_by }} en conjunto
+    con el {{ payload.meta.jointly_with }} (INS-096, 5.4.2 y 6.5).
     {% elif section == "roster" %}
     Nómina designada en cada permiso vigente o en trámite al {{ cutoff_date|date:"d-m-Y" }},
     tal como figura en el permiso. Detalle de la sección 2.

@@ -103,7 +103,11 @@ documento termina con dos hojas numeradas igual.{% endcomment %}
   {% include "reporting/_page3_permits.html" with sheet=sheet page=sheet.page pages=total_pages %}
   {% endfor %}
   {% include "reporting/_page4_coverage.html" with page=coverage_page pages=total_pages %}
+  {% comment %}LV-260: el plan compacto va debajo de la cobertura cuando cabe, y
+  sólo si no cabe se emite su hoja. Lo decide `_sheets`.{% endcomment %}
+  {% if not plan_joins_coverage %}
   {% include "reporting/_page5_plan.html" with page=plan_page pages=total_pages %}
+  {% endif %}
   {% comment %}LV-248: el anexo con la nómina de operadores, al final porque es
   consulta y no lectura. Tantas hojas como pida, numeradas en `_sheets`.{% endcomment %}
   {% for sheet in roster_sheets %}
