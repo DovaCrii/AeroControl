@@ -1,80 +1,99 @@
 {% extends "base.html" %}
 {% load aero_tags i18n %}
-{% block title %}{% translate "Monthly compliance" %} - AeroControl{% endblock %}
+{% block title %}{% translate "Monthly close" %} - AeroControl{% endblock %}
 {% block content %}
+{% comment %}LV-262: **el cierre mensual** — lo que eran «Registros operacionales» y
+«Cumplimiento mensual», en una pantalla. Pedido del usuario el 2026-09-25, pensando
+en la etapa de carga de datos: *"ver cómo unificar y dejar herramientas más fácil y
+más condensado"*.
+
+Una fila por faena que opera: cuántos registros hay de cada tipo este mes y cuáles
+faltan, la revisión, y todo lo que se hace con eso **desde la misma fila** — cargar
+el que falta, abrir los cargados, marcar conforme o no conforme. «No conforme» abre
+la no conformidad sola; la nota escrita pasa a ser su descripción.{% endcomment %}
 <div class="page-header">
   <div>
     <span class="page-eyebrow">{% translate "Compliance" %}</span>
-    <h1 class="h3 mb-0">{% translate "Monthly compliance" %}</h1>
-    <p class="page-description">{% translate "End-of-month check that each cost center's operational records are on file for the flights it flew." %}</p>
+    <h1 class="h3 mb-0">{% translate "Monthly close" %} · {{ period|date:"F Y" }}</h1>
+    <p class="page-description">{% translate "Each cost center's operational records for the month and its review, on one screen." %}</p>
   </div>
-  <a href="?export=csv{% if selected_month %}&month={{ selected_month }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}" class="btn btn-outline-secondary" hx-boost="false">{% translate "Export CSV" %}</a>
+  <div class="d-flex gap-2 flex-wrap align-items-end">
+    <a class="btn btn-outline-secondary" href="?month={{ previous_month|date:'Y-m' }}">← {% translate "Previous month" %}</a>
+    <form method="get" class="d-flex gap-2 align-items-end">
+      <input type="month" name="month" value="{{ period|date:'Y-m' }}" class="form-control" aria-label="{% translate 'Month' %}">
+      <button type="submit" class="btn btn-outline-primary">{% translate "Go" %}</button>
+    </form>
+    <a class="btn btn-outline-secondary" href="?month={{ next_month|date:'Y-m' }}">{% translate "Next month" %} →</a>
+    <a class="btn btn-outline-secondary" href="?month={{ period|date:'Y-m' }}&amp;export=csv" hx-boost="false">{% translate "Export CSV" %}</a>
+    <a class="btn btn-outline-secondary" href="{% url 'operational-records' %}?month={{ period|date:'Y-m' }}">{% translate "All records" %}</a>
+  </div>
 </div>
-
-<form method="get" class="card p-3 mb-3">
-  <div class="row g-2 align-items-end">
-    <div class="col-sm-4">
-      <label class="form-label" for="filter-month">{% translate "Month" %}</label>
-      <input id="filter-month" type="month" name="month" value="{{ selected_month }}" class="form-control form-control-sm">
-    </div>
-    <div class="col-sm-4">
-      <label class="form-label" for="filter-status">{% translate "Status" %}</label>
-      <select id="filter-status" name="status" class="form-select form-select-sm">
-        <option value="">{% translate "All" %}</option>
-        {% for value, label in status_choices %}<option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
-      </select>
-    </div>
-    <div class="col-sm-2 d-grid">
-      <button type="submit" class="btn btn-sm btn-outline-primary">{% translate "Filter" %}</button>
-    </div>
-  </div>
-</form>
 
 <div class="card p-2">
   <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0">
+    <table class="table table-hover align-middle mb-0 monthly-close">
       <thead><tr>
-        <th scope="col">{% translate "Period" %}</th><th scope="col">{% translate "Cost center" %}</th>
-        <th scope="col" class="text-end">{% translate "Flights" %}</th><th scope="col" class="text-end">{% translate "Records" %}</th>
-        <th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Reviewer" %}</th>
-        {% if can_review %}<th scope="col" class="text-end">{% translate "Decision" %}</th>{% endif %}
+        <th scope="col">{% translate "Cost center" %}</th>
+        <th scope="col" class="text-end">{% translate "Flights" %}</th>
+        <th scope="col">{% translate "Records this month" %}</th>
+        {% comment %}Con contexto: «Review» ya está en el catálogo como verbo
+        («Revisar», en la ficha del operador), y acá es el sustantivo.{% endcomment %}
+        <th scope="col">{% translate "Review" context "monthly close column" %}</th>
+        <th scope="col" class="text-end">{% translate "Actions" %}</th>
       </tr></thead>
       <tbody>
-        {% for review in reviews %}
-        <tr>
-          <td>{{ review.period|date:"Y-m" }}</td>
-          <td class="fw-semibold">{{ review.cost_center.code }}</td>
-          <td class="text-end">{{ review.flights }}</td>
-          <td class="text-end">
-            <a href="{% url 'operational-records' %}?cost_center={{ review.cost_center.pk }}&month={{ review.period|date:'Y-m' }}">{{ review.records }}</a>
+        {% for row in rows %}
+        <tr{% if row.review.status == "non_compliant" %} data-sev="critical"{% endif %}>
+          <td>
+            <span class="fw-semibold">{{ row.cost_center.code }}</span>
+            <span class="d-block small text-body-secondary">{{ row.cost_center.name }}</span>
+          </td>
+          <td class="text-end">{% if row.flights %}{{ row.flights }}{% else %}<span class="text-body-secondary" title="{% translate 'No flights recorded in the app this month' %}">0</span>{% endif %}</td>
+          <td>
+            {% comment %}Un chip por tipo de registro, con su cantidad. El que falta
+            va punteado y dice «falta»: es lo que alguien viene a buscar a esta
+            pantalla, así que se lee sin contar.{% endcomment %}
+            <div class="d-flex flex-wrap gap-1">
+              {% for item in row.records %}
+              {% if item.count %}
+              <a class="close-chip close-chip-ok" href="{% url 'operational-records' %}?cost_center={{ row.cost_center.pk }}&amp;doc_type={{ item.doc_type.pk }}&amp;month={{ period|date:'Y-m' }}" title="{{ item.doc_type.name }}">{{ item.doc_type.short }} · {{ item.count }}</a>
+              {% else %}
+              <span class="close-chip close-chip-missing" title="{{ item.doc_type.name }}">{{ item.doc_type.short }} · {% translate "missing" %}</span>
+              {% endif %}
+              {% empty %}
+              <span class="text-body-secondary small">{% translate "No operational record types are configured." %}</span>
+              {% endfor %}
+            </div>
           </td>
           <td>
-            {% if review.status == "completed" %}<span class="badge bg-success-subtle text-success-emphasis">{{ review.get_status_display }}</span>
-            {% elif review.status == "non_compliant" %}<span class="badge bg-danger">{{ review.get_status_display }}</span>
-            {% else %}<span class="badge bg-warning text-dark">{{ review.get_status_display }}</span>{% endif %}
+            {% if row.review.status == "completed" %}<span class="badge bg-success-subtle text-success-emphasis">{{ row.review.get_status_display }}</span>
+            {% elif row.review.status == "non_compliant" %}<span class="badge sev-critical">⚠ {{ row.review.get_status_display }}</span>
+            {% else %}<span class="badge bg-secondary-subtle text-secondary-emphasis">{% translate "Not reviewed" %}</span>{% endif %}
+            {% if row.review.reviewed_by %}<span class="d-block small text-body-secondary">{{ row.review.reviewed_by.get_username }} · {{ row.review.reviewed_at|date:"Y-m-d" }}</span>{% endif %}
           </td>
-          <td>{% if review.reviewed_by %}{{ review.reviewed_by.get_username }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
-          {% if can_review %}
           <td class="text-end">
-            <form method="post" action="{% url 'monthly-review-mark' review.pk %}" class="d-inline">
-              {% csrf_token %}
-              <input type="hidden" name="status" value="completed">
-              <button type="submit" class="btn btn-sm btn-outline-success">{% translate "Compliant" %}</button>
-            </form>
-            <form method="post" action="{% url 'monthly-review-mark' review.pk %}" class="d-inline">
-              {% csrf_token %}
-              <input type="hidden" name="status" value="non_compliant">
-              <button type="submit" class="btn btn-sm btn-outline-danger">{% translate "Non-compliant" %}</button>
-            </form>
+            <div class="close-actions">
+              {% if can_upload %}
+              <a class="btn btn-sm btn-outline-primary" href="{% url 'document-create' %}?entity_type={{ cost_center_content_type_id }}&amp;object_id={{ row.cost_center.pk }}{% if row.missing_types %}&amp;doc_type={{ row.missing_types.0.pk }}{% endif %}">+ {% translate "Upload" %}</a>
+              {% endif %}
+              {% if can_review %}
+              <form method="post" action="{% url 'monthly-close-mark' %}" class="d-flex gap-1 align-items-center">
+                {% csrf_token %}
+                <input type="hidden" name="cost_center" value="{{ row.cost_center.pk }}">
+                <input type="hidden" name="period" value="{{ period|date:'Y-m' }}">
+                <input type="text" name="notes" class="form-control form-control-sm close-note" placeholder="{% translate 'Note (optional)' %}" aria-label="{% translate 'Note (optional)' %}" value="{{ row.review.notes|default:'' }}">
+                <button type="submit" name="status" value="completed" class="btn btn-sm btn-outline-success">{% translate "Compliant" %}</button>
+                <button type="submit" name="status" value="non_compliant" class="btn btn-sm btn-outline-danger" title="{% translate 'Opens a non-conformity for this cost center and month' %}">{% translate "Non-compliant" %}</button>
+              </form>
+              {% endif %}
+            </div>
           </td>
-          {% endif %}
         </tr>
         {% empty %}
-        <tr><td colspan="99" class="text-center text-muted py-4">{% translate "No monthly reviews yet. They are created at month-end for each cost center that flew." %}</td></tr>
+        <tr><td colspan="5" class="text-center text-muted py-4">{% translate "No cost centers with RPA operation." %}</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-  {% render_pagination page_obj %}
 </div>
 {% endblock %}

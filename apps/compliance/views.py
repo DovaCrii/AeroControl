@@ -1,4 +1,5 @@
 from contextlib import contextmanager, suppress
+from datetime import timedelta
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -7,6 +8,7 @@ from django.db.models import Case, IntegerField, Value, When
 from django.http import FileResponse, Http404, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.translation import gettext as _, ngettext
 from django.views.generic import (
     CreateView,
@@ -14,6 +16,7 @@ from django.views.generic import (
     DetailView,
     FormView,
     ListView,
+    TemplateView,
     UpdateView,
     View,
 )
@@ -1831,38 +1834,30 @@ class AlertCreateTask(ModelPermissionRequiredMixin, View):
         return redirect("alert-list")
 
 
-class MonthlyReviewView(ModelViewPermissionRequiredMixin, ListView):
-    """LV-30: the end-of-month compliance table -- one row per (cost center,
-    period) with its flights, its filed records and the reviewer's decision.
+class MonthlyReviewView(ModelViewPermissionRequiredMixin, TemplateView):
+    """LV-262: **el cierre mensual** — registros operacionales y revisión del mes,
+    en una sola pantalla.
 
-    The reviewer (group Dirección, `change_monthlycompliancereview`) marks each
-    Compliant or Non-compliant with a note; everyone with view permission reads
-    it. CSV export gives the informe.
+    Pedido del usuario el 2026-09-25: unificar «Registros operacionales» y
+    «Cumplimiento mensual» y dejar herramientas más fáciles y condensadas, pensando
+    en la etapa de carga de datos. Eran dos mitades de la misma pregunta —¿están
+    los registros de cada faena este mes?—: una pantalla mostraba los papeles y la
+    otra preguntaba si estaban, con un enlace de ida y vuelta entre las dos.
+
+    Una fila por faena que opera: vuelos del mes, cuántos registros hay de **cada
+    tipo** (bitácora, check list, inspección) y cuáles faltan, la revisión, y las
+    acciones en la misma fila — cargar el registro que falta, verlos, y marcar
+    conforme o no conforme. Marcar «no conforme» abre la no conformidad sola
+    (`MonthlyComplianceReview.open_non_conformity`).
+
+    Conserva el nombre de la clase, la URL `monthly-review` y el permiso de
+    lectura de `LV-30`: los correos de `check_monthly_records` y del día 15, y las
+    alertas de revisión pendiente, enlazan acá. La lista de documentos
+    (`operational-records`) sigue viva y se abre desde cada fila.
     """
 
     model = MonthlyComplianceReview
     template_name = "compliance/monthly_review.html"
-    context_object_name = "reviews"
-    paginate_by = 25
-
-    def get_queryset(self):
-        from apps.core.tenancy import visible_tenant_ids
-
-        from .monthly import month_start
-
-        queryset = MonthlyComplianceReview.objects.filter(
-            is_active=True
-        ).select_related("cost_center", "reviewed_by")
-        tenant_ids = visible_tenant_ids(self.request.user)
-        if tenant_ids is not None:
-            queryset = queryset.filter(cost_center__tenant_id__in=tenant_ids)
-        status = self.request.GET.get("status")
-        if status in dict(MonthlyComplianceReview.STATUS_CHOICES):
-            queryset = queryset.filter(status=status)
-        month = self._parse_month(self.request.GET.get("month"))
-        if month:
-            queryset = queryset.filter(period=month_start(month))
-        return queryset
 
     @staticmethod
     def _parse_month(value):
@@ -1875,14 +1870,42 @@ class MonthlyReviewView(ModelViewPermissionRequiredMixin, ListView):
         except ValueError:
             return None
 
-    def _decorate(self, reviews):
-        """Attach the flights/records counts each row shows (and the CSV needs)."""
-        from .monthly import flights_in_month, records_in_month
+    def _period(self):
+        """El mes pedido, o **el mes cerrado anterior**: un cierre describe un mes
+        terminado, igual que el informe mensual (`reporting.views.previous_month`)."""
+        from .monthly import month_start, previous_month_start
 
-        for review in reviews:
-            review.flights = flights_in_month(review.cost_center, review.period)
-            review.records = records_in_month(review.cost_center, review.period)
-        return reviews
+        month = self._parse_month(self.request.GET.get("month"))
+        return (
+            month_start(month) if month else previous_month_start(timezone.localdate())
+        )
+
+    def _cost_centers(self):
+        """Las faenas que operan, en el alcance del usuario. Las mismas que cuenta
+        el informe: activas, que vuelan y con contrato abierto (`LV-236`)."""
+        from apps.core.tenancy import visible_tenant_ids
+
+        queryset = CostCenter.objects.filter(
+            is_active=True, operates_flights=True
+        ).exclude(contract_status=CostCenter.CONTRACT_CLOSED)
+        tenant_ids = visible_tenant_ids(self.request.user)
+        if tenant_ids is not None:
+            queryset = queryset.filter(tenant_id__in=tenant_ids)
+        return list(queryset.order_by("code"))
+
+    def _rows(self, period):
+        from .monthly import monthly_close_rows
+
+        doc_types = list(
+            DocumentType.objects.filter(
+                is_operational_record=True, is_active=True
+            ).order_by("name")
+        )
+        # El rótulo del chip: «Bitácora de vuelo» y no «Bitácora de vuelo
+        # (REG-015)». El nombre completo queda en el `title`.
+        for doc_type in doc_types:
+            doc_type.short = doc_type.name.split(" (")[0]
+        return doc_types, monthly_close_rows(period, self._cost_centers(), doc_types)
 
     def get(self, request, *args, **kwargs):
         if request.GET.get("export") == "csv":
@@ -1894,39 +1917,114 @@ class MonthlyReviewView(ModelViewPermissionRequiredMixin, ListView):
 
         from django.http import HttpResponse
 
-        reviews = self._decorate(list(self.get_queryset()))
+        period = self._period()
+        doc_types, rows = self._rows(period)
         response = HttpResponse(content_type="text/csv; charset=utf-8")
         response["Content-Disposition"] = (
-            'attachment; filename="monthly-compliance.csv"'
+            f'attachment; filename="monthly-close-{period:%Y-%m}.csv"'
         )
         writer = csv.writer(response)
         writer.writerow(
-            ["period", "cost_center", "flights", "records", "status", "reviewed_by"]
+            ["period", "cost_center", "flights", "records"]
+            + [doc_type.code for doc_type in doc_types]
+            + ["status", "reviewed_by"]
         )
-        for review in reviews:
+        for row in rows:
+            review = row["review"]
             writer.writerow(
                 [
-                    review.period.strftime("%Y-%m"),
-                    review.cost_center.code,
-                    review.flights,
-                    review.records,
-                    review.get_status_display(),
-                    review.reviewed_by.get_username() if review.reviewed_by else "",
+                    period.strftime("%Y-%m"),
+                    row["cost_center"].code,
+                    row["flights"],
+                    row["records_total"],
+                ]
+                + [item["count"] for item in row["records"]]
+                + [
+                    review.get_status_display() if review else _("Not reviewed"),
+                    review.reviewed_by.get_username()
+                    if review and review.reviewed_by
+                    else "",
                 ]
             )
         return response
 
     def get_context_data(self, **kwargs):
+        from .monthly import month_bounds
+
         context = super().get_context_data(**kwargs)
-        context["title"] = _("Monthly compliance")
-        context["reviews"] = self._decorate(list(context["reviews"]))
-        context["status_choices"] = MonthlyComplianceReview.STATUS_CHOICES
-        context["selected_status"] = self.request.GET.get("status", "")
-        context["selected_month"] = self.request.GET.get("month", "")
-        context["can_review"] = self.request.user.has_perm(
-            "compliance.change_monthlycompliancereview"
+        period = self._period()
+        doc_types, rows = self._rows(period)
+        first, _last = month_bounds(period)
+        previous = (first - timedelta(days=1)).replace(day=1)
+        following = (_last + timedelta(days=1)).replace(day=1)
+        reviewed = sum(
+            1
+            for row in rows
+            if row["review"]
+            and row["review"].status != MonthlyComplianceReview.STATUS_PENDING
+        )
+        context.update(
+            {
+                "title": _("Monthly close"),
+                "period": period,
+                "previous_month": previous,
+                "next_month": following,
+                "rows": rows,
+                "doc_types": doc_types,
+                "reviewed_count": reviewed,
+                "cost_center_content_type_id": ContentType.objects.get_for_model(
+                    CostCenter
+                ).pk,
+                "can_review": self.request.user.has_perm(
+                    "compliance.change_monthlycompliancereview"
+                ),
+                "can_upload": self.request.user.has_perm("compliance.add_document"),
+            }
         )
         return context
+
+
+class MonthlyCloseMark(ModelPermissionRequiredMixin, View):
+    """LV-262: marcar una faena y un mes desde el cierre, **exista o no la
+    revisión**.
+
+    `MonthlyReviewMark` pide el `pk` de una revisión ya creada, y las revisiones
+    sólo nacían para faenas con vuelos registrados — cero en producción. Acá se
+    marca por faena y mes: la revisión se crea si hace falta
+    (`MonthlyComplianceReview.for_month`) y se marca en la misma transacción.
+    """
+
+    model = MonthlyComplianceReview
+    permission_action = "change"
+
+    def post(self, request):
+        from datetime import datetime
+
+        status = request.POST.get("status")
+        if status not in MonthlyComplianceReview.RESOLVED_STATUSES:
+            return HttpResponseBadRequest("invalid status")
+        try:
+            period = datetime.strptime(request.POST.get("period", ""), "%Y-%m").date()
+        except ValueError:
+            return HttpResponseBadRequest("invalid period")
+        cost_center = get_object_or_404(
+            scope_queryset_to_tenant(
+                CostCenter.objects.filter(is_active=True), request.user
+            ),
+            pk=request.POST.get("cost_center"),
+        )
+        with transaction.atomic():
+            review = MonthlyComplianceReview.for_month(cost_center, period)
+            review.mark(
+                status, request.user, notes=request.POST.get("notes", "").strip()
+            )
+        set_audit_context(request, review, action=f"monthly_review_{status}")
+        messages.success(
+            request,
+            _("%(center)s %(period)s marked.")
+            % {"center": cost_center.code, "period": period.strftime("%Y-%m")},
+        )
+        return redirect(f"{reverse('monthly-review')}?month={period:%Y-%m}")
 
 
 class MonthlyReviewMark(ModelPermissionRequiredMixin, View):

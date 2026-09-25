@@ -47,6 +47,12 @@ urlpatterns = [
         views.MonthlyReviewMark.as_view(),
         name="monthly-review-mark",
     ),
+    # LV-262: marcar por faena y mes desde el cierre, exista o no la revisión.
+    path(
+        "monthly-review/mark/",
+        views.MonthlyCloseMark.as_view(),
+        name="monthly-close-mark",
+    ),
     path("document/new/", views.DocumentCreate.as_view(), name="document-create"),
     # LV-200 paso 3: adjuntar un papel ya cargado. Vive al lado de "nuevo"
     # porque es la otra mitad de la misma acción -- dejar el documento en la

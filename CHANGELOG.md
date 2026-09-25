@@ -255,6 +255,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Cierre mensual: los registros operacionales y la revisión del mes, en una
+  pantalla (`LV-262`).** Una fila por faena con los registros del mes por tipo —y
+  cuáles faltan—, para cargarlos desde la misma fila y marcar «Cumple» o «No
+  cumple». Marcar «No cumple» abre sola la no conformidad. Funciona aunque no haya
+  vuelos registrados en la aplicación, que es la situación de hoy. El menú de
+  Cumplimiento tiene una entrada menos.
 - **El informe mensual es más corto y dice primero lo importante (`LV-260`).** La
   hoja de resumen abre con la conclusión —qué faenas no pueden volar, qué permiso
   vence primero, qué espera a la DGAC— y cuatro indicadores cuyo color depende de

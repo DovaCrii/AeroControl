@@ -1474,6 +1474,46 @@ main {
   --sev-nominal-text: #e6edf6;
 }
 
+/* == LV-262 · El cierre mensual ============================================
+ * Un chip por tipo de registro: sólido con su cantidad si está, punteado y en
+ * ámbar si falta — es lo que se viene a buscar, así que se lee sin contar. Los
+ * colores son los de severidad, ya calculados para leerse en los dos temas. */
+.close-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.close-chip-ok {
+  background: var(--bs-success-bg-subtle);
+  color: var(--bs-success-text-emphasis);
+  border: 1px solid var(--bs-success-border-subtle);
+}
+.close-chip-missing {
+  background: transparent;
+  color: var(--sev-warning-text);
+  border: 1px dashed var(--sev-warning-border);
+}
+/* Las acciones en **una** línea: medido en el navegador, con `flex-wrap`
+   «Cargar» quedaba arriba y la nota con los botones abajo, y cada fila medía el
+   doble. Lo que envuelve es la columna de registros, no la de acciones. */
+.monthly-close .close-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--sp-1);
+  justify-content: flex-end;
+  align-items: center;
+}
+/* Y el texto de cada botón tampoco se parte: sin esto, al no poder envolver la
+   fila, el navegador partía «No cumple» y «+ Cargar» en dos renglones — visto en
+   la captura, no en la medición, que daba la fila en una línea. */
+.monthly-close .close-actions .btn { white-space: nowrap; }
+.monthly-close .close-note { width: 9rem; }
+
 /* == LV-259 · Contraste de los colores de Bootstrap que la app usa sueltos ====
  *
  * Medido el 2026-09-25 sobre 16 pantallas, con los dos temas y calculando el
@@ -1506,6 +1546,13 @@ main {
      apagado pensado para enmarcar una insignia, y sobre la tarjeta oscura el
      contorno del botón casi desaparecía. */
   --bs-btn-border-color: var(--sev-critical-text);
+}
+/* LV-262: el verde del mismo problema. No salía en ninguna de las 16 pantallas
+   medidas en `LV-259`; lo trajo el botón «Cumple» del cierre mensual, 3,66 : 1. */
+[data-theme="dark"] .btn-outline-success,
+[data-bs-theme="dark"] .btn-outline-success {
+  --bs-btn-color: var(--bs-success-text-emphasis, #75b798);
+  --bs-btn-border-color: var(--bs-success-text-emphasis, #75b798);
 }
 
 /* Las clases que consumen los tokens. **Sin `!important`, y eso es el punto**:

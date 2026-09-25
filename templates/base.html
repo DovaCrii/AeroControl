@@ -250,8 +250,12 @@ menú deja de leerse de un vistazo.{% endcomment %}
       (NonConformity + verificación de eficacia).
       <a href="{% url 'kanban' %}" class="nav-item nav-compliance {% if url_name == 'kanban' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-kanban"/></svg>{% translate "Action plan" %}</a>
       {% endcomment %}
-      <a href="{% url 'operational-records' %}" class="nav-item nav-compliance {% if url_name == 'operational-records' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-operational-records"/></svg>{% translate "Operational records" %}</a>
-      <a href="{% url 'monthly-review' %}" class="nav-item nav-compliance {% if url_name == 'monthly-review' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-monthly-review"/></svg>{% translate "Monthly compliance" %}</a>
+      {% comment %}LV-262: «Registros operacionales» y «Cumplimiento mensual» son
+      ahora **una entrada**, el cierre mensual — pedido del usuario para la etapa
+      de carga de datos. La lista de documentos (`operational-records`) no se
+      retiró: se abre desde cada fila del cierre y desde «Todos los registros», y
+      por eso se marca activa esta entrada cuando se está en ella.{% endcomment %}
+      <a href="{% url 'monthly-review' %}" class="nav-item nav-compliance {% if url_name == 'monthly-review' or url_name == 'operational-records' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-monthly-review"/></svg>{% translate "Monthly close" %}</a>
       {% comment %}Los entregables salen del menú a pedido del usuario
       (2026-08-20): no se están usando todavía y ocupaban un sitio en la columna
       de cumplimiento, que es la que se mira a diario. **La función sigue
