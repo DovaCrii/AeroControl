@@ -1,14 +1,14 @@
 # HANDOFF — AeroControl
 
-## 🟡 2026-09-25 — cierre mensual unificado y realce de filas, **sin desplegar**
+## ✅ 2026-09-25 — cierre mensual unificado y realce de filas, **desplegados** (`755fe6b`)
 
 `p340` corre **`67643fa`** (desplegado el 2026-09-25: `collectstatic` copió 2
 estáticos con el entorno cargado, reinicio, `git log` = `67643fa`). Faltan:
 
 | Fila | Qué | Despliegue |
 |---|---|---|
-| `LV-261` | Al pasar el mouse, una fila roja del panel se volvía gris y la primera celda seguía roja (reporte del usuario con captura). El realce ahora oscurece el rojo y cubre la fila entera; lo mismo en las filas con borde de severidad. | `collectstatic` |
-| `LV-262` | **Cierre mensual**: «Registros operacionales» y «Cumplimiento mensual» son una pantalla y una entrada de menú. Una fila por faena que opera, registros por tipo y cuáles faltan, **+ Cargar**, **Cumple**/**No cumple** — y «No cumple» abre sola la no conformidad. Funciona sin vuelos registrados (en producción hay 0). No conformidades se queda: alimenta los incidentes del informe. | `collectstatic` + reiniciar |
+| `LV-261` | Al pasar el mouse, una fila roja del panel se volvía gris y la primera celda seguía roja (reporte del usuario con captura). El realce ahora oscurece el rojo y cubre la fila entera; lo mismo en las filas con borde de severidad. | ✅ desplegado |
+| `LV-262` | **Cierre mensual**: «Registros operacionales» y «Cumplimiento mensual» son una pantalla y una entrada de menú. Una fila por faena que opera, registros por tipo y cuáles faltan, **+ Cargar**, **Cumple**/**No cumple** — y «No cumple» abre sola la no conformidad. Funciona sin vuelos registrados (en producción hay 0). No conformidades se queda: alimenta los incidentes del informe. | ✅ desplegado |
 
 **Paso de despliegue: `git pull`, entorno, `collectstatic` y reiniciar.** Sin
 migraciones. ⚠️ **El entorno primero** — el 2026-09-25 se dictó el bloque sin él y
