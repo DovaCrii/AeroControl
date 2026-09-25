@@ -270,6 +270,9 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **Pasar el mouse por una fila roja ya no la vuelve gris (`LV-261`).** La fila se
+  oscurece en su mismo rojo, entera, en el panel y en las listas con borde de
+  severidad.
 - **El modo oscuro se lee bien (`LV-259`).** El Dato Ejecutivo salía con el texto
   casi invisible en modo oscuro. También se corrigieron el botón «Archivar» y los
   ✓/✕ del expediente en oscuro, las insignias amarillas con letra blanca, y los

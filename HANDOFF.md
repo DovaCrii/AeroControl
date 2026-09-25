@@ -9,6 +9,7 @@ misma jornada:
 |---|---|---|
 | `LV-258` | Un permiso aprobado que **todavía no empieza** contaba como vigente en la tabla por faena del panel y del informe — una faena cuyo único permiso arranca la semana próxima salía habilitada. Destapado por una suma que no cuadraba (12 en la fila, 11 en el total). Y tres techos de consultas que dependían del orden de la suite, visibles desde el gate paralelo. | reiniciar |
 | `LV-259` | **Contraste medido en 16 pantallas y los dos temas.** El Dato Ejecutivo en oscuro estaba a 1,12 : 1 (texto casi blanco sobre papel blanco: los tokens del papel no llegaban a su hoja). También el rojo y verde de Bootstrap en oscuro, las insignias amarillas con letra blanca y la paleta del papel. Re-medido: 0 textos bajo el mínimo. | `collectstatic` |
+| `LV-261` | Al pasar el mouse, una fila roja del panel se volvía gris y la primera celda seguía roja (reporte del usuario con captura). El realce ahora oscurece el rojo y cubre la fila entera. | `collectstatic` |
 | `LV-260` | **El informe más corto**: hoja ejecutiva con la conclusión primero, sin contadores repetidos, y la cobertura por faena + el plan compacto en una hoja **cuando caben (hasta 9 faenas con operación)**. Con la forma de producción: de 6 hojas a 5. | `collectstatic` |
 
 **Paso de despliegue de la tanda: `git pull`, `collectstatic` y reiniciar.** Sin
