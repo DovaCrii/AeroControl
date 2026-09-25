@@ -263,6 +263,11 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **El modo oscuro se lee bien (`LV-259`).** El Dato Ejecutivo salía con el texto
+  casi invisible en modo oscuro. También se corrigieron el botón «Archivar» y los
+  ✓/✕ del expediente en oscuro, las insignias amarillas con letra blanca, y los
+  colores más claros del informe impreso. Se midieron 16 pantallas en los dos temas:
+  ningún texto queda por debajo del mínimo de legibilidad.
 - **Un permiso aprobado que todavía no empieza ya no cuenta como vigente (`LV-258`).**
   La tabla por faena del panel y del informe lo sumaba, así que una faena cuyo único
   permiso arranca la semana próxima aparecía con permiso y no entre las que no

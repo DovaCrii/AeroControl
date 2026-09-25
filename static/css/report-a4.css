@@ -18,19 +18,38 @@
 
 /* -- la hoja ------------------------------------------------------------ */
 
-/* 794 × 1123 px son A4 a 96 dpi, la medida en la que se dibujó el diseño. */
-.rpt-doc {
+/* ⚠️ LV-259: **los tokens van en las dos hojas, no sólo en `.rpt-doc`.** El Dato
+ * Ejecutivo (`.rpt-sheet`) no vive dentro de `.rpt-doc`, así que su
+ * `color: var(--rpt-ink)` apuntaba a una variable que no existía y el texto
+ * **heredaba el color del tema**: en oscuro, casi blanco sobre papel blanco —
+ * medido 1,12 : 1, el texto prácticamente invisible. En claro pasaba por
+ * casualidad, porque lo heredado era oscuro.
+ *
+ * Y los colores **de texto** van separados de los de marca. El cian `#00a7bc`
+ * da 2,9 : 1 sobre blanco y el gris `#98a2b0` 2,58 — por debajo del 4,5 que
+ * pide un texto normal. Se conservan para barras, reglas y bordes, donde no hay
+ * letra que leer, y el texto usa su versión `-ink`. Calculados, no leídos de un
+ * navegador (`LV-207`): cian-ink 5,03 sobre `--rpt-wash`, faint 4,54 sobre la
+ * celda «No aplica», green-ink 5,48 sobre la celda «Exigible». */
+.rpt-doc,
+.rpt-sheet {
   --rpt-navy: #124384;
   --rpt-cyan: #00a7bc;
+  --rpt-cyan-ink: #007585;
   --rpt-ink: #0f1b2d;
   --rpt-muted: #52606d;
-  --rpt-faint: #98a2b0;
+  --rpt-faint: #667080;
   --rpt-rule: #d7dee6;
   --rpt-hair: #e4eaf0;
   --rpt-wash: #f4f7fa;
   --rpt-amber: #b8791a;
   --rpt-amber-ink: #8a5a08;
   --rpt-amber-bg: #fbf0d9;
+  --rpt-green-ink: #0b6a52;
+}
+
+/* 794 × 1123 px son A4 a 96 dpi, la medida en la que se dibujó el diseño. */
+.rpt-doc {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -70,7 +89,7 @@
   box-shadow: 0 2px 12px rgb(15 27 45 / 18%);
 }
 
-.rpt-page a { color: var(--rpt-cyan); }
+.rpt-page a { color: var(--rpt-cyan-ink); }
 .rpt-page a:hover { color: var(--rpt-navy); }
 
 /* Encabezado y pie repetidos de las páginas 2 a 5. */
@@ -151,7 +170,7 @@
  * un borde limpio si alguna vez sobra, en vez de dibujar sobre el pie. */
 .rpt-body { padding: 22px 48px 0 56px; display: block; flex: 1 1 auto; min-height: 0; overflow: hidden; }
 .rpt-h2 { display: flex; align-items: baseline; gap: 12px; }
-.rpt-h2-num { color: var(--rpt-cyan); font-size: 22px; font-weight: bold; }
+.rpt-h2-num { color: var(--rpt-cyan-ink); font-size: 22px; font-weight: bold; }
 .rpt-h2-text { color: var(--rpt-navy); font-size: 21px; font-weight: bold; }
 .rpt-h2-rule { height: 3px; background: var(--rpt-cyan); width: 54px; margin-top: 8px; }
 .rpt-label {
@@ -221,7 +240,7 @@
 .rpt-cycle-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 6px 12px 8px; }
 .rpt-step { background: #ffffff; border: 1px solid var(--rpt-rule); padding: 8px 10px; }
 .rpt-step-last { border-color: #b23b34; }
-.rpt-step-n { color: var(--rpt-cyan); font-size: 8.4px; font-weight: bold; letter-spacing: 0.06em; }
+.rpt-step-n { color: var(--rpt-cyan-ink); font-size: 8.4px; font-weight: bold; letter-spacing: 0.06em; }
 .rpt-step-last .rpt-step-n { color: #b23b34; }
 .rpt-step-name { color: var(--rpt-ink); font-size: 10px; font-weight: bold; margin-top: 3px; }
 .rpt-step-text { color: var(--rpt-muted); font-size: 8.6px; line-height: 1.4; margin-top: 3px; }
@@ -329,7 +348,7 @@
  * Antes eran `-ok`/`-soon`/`-none`, tres nombres que decían de qué color eran y
  * no qué significaban — y `-none` se usaba para la faena sin permiso, que no es
  * "sin nivel" sino el peor de todos. */
-.rpt-sev-nominal { background: #dcefe6; color: #0e7a5f; }
+.rpt-sev-nominal { background: #dcefe6; color: var(--rpt-green-ink); }
 .rpt-sev-warning { background: var(--rpt-amber-bg); color: var(--rpt-amber-ink); }
 .rpt-sev-critical { background: #f7e2e0; color: #b23b34; }
 .rpt-total { background: var(--rpt-wash); border-top: 2px solid var(--rpt-navy); }
@@ -342,7 +361,7 @@
 .rpt-fase-last { background: #edf6f8; border-left-color: var(--rpt-navy); }
 .rpt-fase-when { padding: 12px 10px; text-align: center; }
 .rpt-fase-n { color: var(--rpt-navy); font-size: 10px; font-weight: bold; letter-spacing: 0.05em; }
-.rpt-fase-month { color: var(--rpt-cyan); font-size: 12.5px; font-weight: bold; margin-top: 3px; }
+.rpt-fase-month { color: var(--rpt-cyan-ink); font-size: 12.5px; font-weight: bold; margin-top: 3px; }
 .rpt-fase-now .rpt-fase-month { color: #b23b34; }
 .rpt-fase-last .rpt-fase-month { color: var(--rpt-navy); }
 .rpt-fase-body { padding: 11px 14px 12px 6px; }
@@ -373,7 +392,7 @@
   border-bottom: 1px solid var(--rpt-hair);
   border-right: 1px solid var(--rpt-hair);
 }
-.rpt-cell-due { background: #dcefe6; color: #0e7a5f; font-weight: bold; }
+.rpt-cell-due { background: #dcefe6; color: var(--rpt-green-ink); font-weight: bold; }
 .rpt-cell-info { background: var(--rpt-amber-bg); color: var(--rpt-amber-ink); }
 .rpt-cell-na { background: #f1f4f7; color: var(--rpt-faint); }
 .rpt-cell-end { border-right: none; }
@@ -398,7 +417,7 @@
   padding: 1px 7px;
   border: 1px dashed var(--rpt-cyan);
   border-radius: 2px;
-  color: var(--rpt-cyan);
+  color: var(--rpt-cyan-ink);
   font-size: 9px;
   font-weight: bold;
   text-decoration: none;

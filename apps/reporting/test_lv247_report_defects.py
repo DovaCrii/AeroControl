@@ -77,7 +77,11 @@ class TestTheBriefSheetExists:
         css = (Path(settings.BASE_DIR) / "static" / "css" / "report-a4.css").read_text(
             encoding="utf-8"
         )
-        block = re.search(r"^\.rpt-sheet\s*\{(.*?)\}", css, re.MULTILINE | re.DOTALL)
+        # LV-259: hay dos bloques que abren con `.rpt-sheet {` — el de los tokens
+        # del papel (compartido con `.rpt-doc`) y el de la maquetación. Se afirma
+        # sobre el que declara el ancho de la hoja.
+        blocks = re.findall(r"^\.rpt-sheet\s*\{(.*?)\}", css, re.MULTILINE | re.DOTALL)
+        layout = next(block for block in blocks if "width:" in block)
 
-        assert "min-height" in block.group(1)
-        assert "overflow: hidden" not in block.group(1)
+        assert "min-height" in layout
+        assert "overflow: hidden" not in layout
