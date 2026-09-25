@@ -2,8 +2,9 @@
 
 ## ✅ 2026-09-25 — cierre mensual unificado y realce de filas, **desplegados** (`755fe6b`)
 
-`p340` corre **`67643fa`** (desplegado el 2026-09-25: `collectstatic` copió 2
-estáticos con el entorno cargado, reinicio, `git log` = `67643fa`). Faltan:
+`p340` corre **`755fe6b`**, desplegado el 2026-09-25 con el entorno cargado desde
+el principio: `git pull` 67643fa..755fe6b, `collectstatic` copió 2 estáticos
+(`app.css` y el sprite), reinicio, `git log` = `755fe6b`. Lo que entró:
 
 | Fila | Qué | Despliegue |
 |---|---|---|
