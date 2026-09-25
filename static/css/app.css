@@ -1474,6 +1474,40 @@ main {
   --sev-nominal-text: #e6edf6;
 }
 
+/* == LV-259 · Contraste de los colores de Bootstrap que la app usa sueltos ====
+ *
+ * Medido el 2026-09-25 sobre 16 pantallas, con los dos temas y calculando el
+ * contraste contra el fondo efectivo de cada texto. Cuatro familias no llegaban:
+ *
+ * - **Rojo y verde de Bootstrap en oscuro** (`btn-outline-danger` de «Archivar»,
+ *   `text-danger`/`text-success` de los ✓/✕): Bootstrap no los aclara en su tema
+ *   oscuro, y `#dc3545`/`#198754` sobre la tarjeta oscura dan **3,66 : 1**. Se
+ *   usan los tonos que la app ya tiene para eso: `--sev-critical-text` (8,1) y
+ *   el énfasis verde de Bootstrap (7,1).
+ * - **Insignias amarillas y celestes con texto blanco** («Solicitado», «En
+ *   curso»): blanco sobre `#ffc107` es **1,63 : 1** en los dos temas. Texto
+ *   oscuro: 10,2 y 8,5.
+ * - **`text-warning` sobre blanco**: el mismo amarillo como letra, 1,63. Pasa al
+ *   ámbar de severidad, que en cada tema ya está calculado para leerse.
+ *
+ * `!important` porque las utilidades de Bootstrap lo traen de fábrica; es la
+ * misma pelea que documentan las reglas de arriba. */
+.badge.bg-warning,
+.badge.bg-info { color: #1b1f24; }
+.text-warning { color: var(--sev-warning-text) !important; }
+[data-theme="dark"] .text-danger,
+[data-bs-theme="dark"] .text-danger { color: var(--sev-critical-text) !important; }
+[data-theme="dark"] .text-success,
+[data-bs-theme="dark"] .text-success { color: var(--bs-success-text-emphasis, #75b798) !important; }
+[data-theme="dark"] .btn-outline-danger,
+[data-bs-theme="dark"] .btn-outline-danger {
+  --bs-btn-color: var(--sev-critical-text);
+  /* El borde del mismo tono que la letra: `--sev-critical-border` es un rojo
+     apagado pensado para enmarcar una insignia, y sobre la tarjeta oscura el
+     contorno del botón casi desaparecía. */
+  --bs-btn-border-color: var(--sev-critical-text);
+}
+
 /* Las clases que consumen los tokens. **Sin `!important`, y eso es el punto**:
    las quince reglas de arriba lo necesitan porque pelean contra las utilidades de
    Bootstrap, que vienen con `!important` de fábrica. Una clase propia no compite
@@ -3057,7 +3091,10 @@ main h1[class],
 .worktable-sort:hover .worktable-sort-mark { opacity: 1; }
 /* Atenuada mientras no ordena, para que en una tabla de siete columnas las
  * flechas no compitan con los rótulos. La que está activa va entera. */
-.worktable-sort-mark { opacity: 0.35; font-size: 0.75em; }
+/* LV-259: 0,35 dejaba la marca en 1,69 : 1 en claro y 2,59 en oscuro — por
+ * debajo del 3 : 1 que pide un indicador de interfaz. A 0,7 sigue más tenue que
+ * el rótulo, que es lo que buscaba el comentario de arriba, y se ve. */
+.worktable-sort-mark { opacity: 0.7; font-size: 0.75em; }
 .worktable-sort.is-sorted { color: var(--ac-primary); font-weight: 600; }
 .worktable-sort.is-sorted .worktable-sort-mark { opacity: 1; }
 
@@ -3107,10 +3144,15 @@ tr[data-sev="advisory"] > td:first-child { box-shadow: inset 3px 0 0 0 var(--sev
 }
 .worktable-view:hover { color: var(--ac-primary); background: var(--ac-primary-soft); }
 .worktable-view.is-active {
-  color: var(--ac-primary);
+  /* LV-259: el primario sobre su propio fondo suave daba 4,23 : 1 en claro. El
+   * mismo arreglo que `.view-tab.is-active`: tono de *hover* en claro, primario
+   * en oscuro. */
+  color: var(--ac-primary-hover);
   border-color: var(--ac-primary);
   background: var(--ac-primary-soft);
 }
+[data-theme="dark"] .worktable-view.is-active,
+[data-bs-theme="dark"] .worktable-view.is-active { color: var(--ac-primary); }
 /* El rombo dice "compartida". Va como marca y no como palabra porque la
  * pestaña ya lleva el nombre que alguien eligió, y sumarle "(compartida)"
  * duplicaría el largo de cada una. */
