@@ -1,0 +1,102 @@
+{% load report_leaf %}
+{% comment %}Sección 4 · Plan de normalización, **compacto** (LV-260).
+
+Ocupaba una hoja entera: cuatro fases apiladas en bloques altos y la matriz
+debajo. Es el mismo contenido todos los meses salvo la fase en curso, y el usuario
+pidió el informe más corto. Ahora las fases van **en una franja de cuatro
+columnas** —el orden temporal se lee de izquierda a derecha, que es como se lee un
+plan— y la matriz queda igual. Con eso la sección cabe debajo de la cobertura por
+faena cuando el padrón es corto (`MonthlyReportView._sheets` decide), y si no
+cabe va a su hoja, igual de compacta.
+
+Todo sale del payload (`LV-235`/`LV-249`): el estado de cada fase se calcula
+contra el período del informe, no contra hoy, así que reimprimir agosto en
+diciembre devuelve lo que agosto vio. El bloque fijo de la matriz **se conserva**
+para los informes congelados antes de `LV-249`, cuyo payload no trae `matrix`.
+
+LV-260: acá llega también la nota del ciclo del permiso, que vivía en el resumen:
+es el trámite que fija el instructivo, igual todos los meses — contexto del plan,
+no un dato del período.{% endcomment %}
+<div class="rpt-stack-12">
+
+  <div>
+    <div class="rpt-h2"><span class="rpt-h2-num">4</span><span class="rpt-h2-text">Plan de normalización de operaciones aéreas</span></div>
+    <div class="rpt-h2-rule"></div>
+  </div>
+
+  <div class="rpt-lede">{% if payload.plan.lede %}{{ payload.plan.lede }}{% else %}Cuatro fases de un mes. Ninguna exige lo que la anterior no dejó instalado: primero se cierra la habilitación vigente, luego se automatiza su renovación, después se instala el registro de vuelo y solo al final se exige completitud.{% endif %}</div>
+
+  <div class="rpt-phases" style="grid-template-columns: repeat({{ payload.plan.phases|length|default:1 }}, minmax(0, 1fr));">
+    {% for phase in payload.plan.phases %}
+    <div class="rpt-phase{% if phase.state == 'current' %} rpt-phase-now{% elif phase.state == 'done' %} rpt-phase-done{% endif %}">
+      <div class="rpt-phase-head">
+        <span class="rpt-phase-n">Fase {{ phase.number }}{% if phase.state == 'done' %} · <span class="rpt-phase-state">Cumplida</span>{% elif phase.state == 'current' %} · <span class="rpt-phase-state">En curso</span>{% endif %}</span>
+        <span class="rpt-phase-month">{{ phase.month }}</span>
+      </div>
+      <div class="rpt-phase-title">{{ phase.title }}</div>
+      <div class="rpt-phase-text">{{ phase.text }}</div>
+      <div class="rpt-phase-close"><strong>Cierre:</strong> {{ phase.close }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if payload.plan.concluded %}
+  {% with last_phase=payload.plan.phases|last %}<div class="rpt-fase-note">El plan de normalización concluyó en {{ last_phase.month }}. El ciclo siguiente se define en el informe anual consolidado.</div>{% endwith %}
+  {% elif payload.plan.not_started %}
+  <div class="rpt-fase-note">El plan de normalización comienza en {{ payload.plan.phases.0.month }}; este período es anterior a su primera fase.</div>
+  {% endif %}
+
+  <div>
+    <div class="rpt-label" style="margin-bottom: 7px;">Exigibilidad progresiva de la reportabilidad</div>
+    {% if payload.plan.matrix %}
+    {% with matrix=payload.plan.matrix %}
+    <div style="border: 1px solid #D7DEE6; border-bottom: none;">
+      <div class="rpt-matrix rpt-matrix-head" style="grid-template-columns: 1.9fr repeat({{ matrix.columns|length }}, minmax(0, 1fr));">
+        <div>Qué se reporta</div>{% for column in matrix.columns %}<div>{{ column }}</div>{% endfor %}
+      </div>
+      <div class="rpt-matrix" style="grid-template-columns: 1.9fr repeat({{ matrix.columns|length }}, minmax(0, 1fr));">
+        {% for row in matrix.rows %}
+        <div class="rpt-matrix-row">{% if row.emphasis %}<strong>{{ row.label }}</strong>{% else %}{{ row.label }}{% endif %}</div>
+        {% for level in row.cells %}<div class="rpt-cell rpt-cell-{{ level }}{% if forloop.last %} rpt-cell-end{% endif %}">{% if level == "due" %}Exigible{% elif level == "info" %}Informativo{% else %}No aplica{% endif %}</div>{% endfor %}
+        {% endfor %}
+      </div>
+    </div>
+    {% endwith %}
+    {% else %}
+    <div style="border: 1px solid #D7DEE6; border-bottom: none;">
+      <div class="rpt-matrix rpt-matrix-head">
+        <div>Qué se reporta</div><div>SEP</div><div>OCT</div><div>NOV</div><div>DIC</div>
+      </div>
+      <div class="rpt-matrix">
+        <div class="rpt-matrix-row">Permisos de vuelo vigentes por CC</div>
+        <div class="rpt-cell rpt-cell-due">Exigible</div>
+        <div class="rpt-cell rpt-cell-due">Exigible</div>
+        <div class="rpt-cell rpt-cell-due">Exigible</div>
+        <div class="rpt-cell rpt-cell-due rpt-cell-end">Exigible</div>
+
+        <div class="rpt-matrix-row">Renovación anticipada (carta + solicitud)</div>
+        <div class="rpt-cell rpt-cell-info">Informativo</div>
+        <div class="rpt-cell rpt-cell-due">Exigible</div>
+        <div class="rpt-cell rpt-cell-due">Exigible</div>
+        <div class="rpt-cell rpt-cell-due rpt-cell-end">Exigible</div>
+
+        <div class="rpt-matrix-row"><strong>Bitácora, check list e inspección por vuelo</strong></div>
+        <div class="rpt-cell rpt-cell-na">No aplica</div>
+        <div class="rpt-cell rpt-cell-na">No aplica</div>
+        <div class="rpt-cell rpt-cell-info">Informativo</div>
+        <div class="rpt-cell rpt-cell-due rpt-cell-end">Exigible</div>
+
+        <div class="rpt-matrix-row">Coherencia vuelos ejecutados vs. autorizados</div>
+        <div class="rpt-cell rpt-cell-na">No aplica</div>
+        <div class="rpt-cell rpt-cell-na">No aplica</div>
+        <div class="rpt-cell rpt-cell-info">Informativo</div>
+        <div class="rpt-cell rpt-cell-due rpt-cell-end">Exigible</div>
+      </div>
+    </div>
+    {% endif %}
+    <div class="rpt-matrix-legend"><strong>Informativo</strong> = se reporta el dato y se identifican brechas, sin consecuencia para el CC. <strong>Exigible</strong> = la brecha se escala a la Gerencia de Ingeniería y a la Gerencia de Riesgo con plazo de cierre comprometido.</div>
+  </div>
+
+  <div class="rpt-note"><strong>Ciclo del permiso:</strong> carta del mandante → solicitud en SIGO (KMZ, serie, operadores) → autorización DGAC con <strong>tope de 3 meses</strong> → renovación con <strong>carta nueva</strong>, iniciada 30 días antes. La vigencia otorgada no es uniforme: AeroControl valida el tope, no calcula el vencimiento.</div>
+
+</div>

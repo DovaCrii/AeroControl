@@ -1,118 +1,134 @@
 {% load i18n static report_leaf %}
-{% comment %}Página 2 · Resumen ejecutivo. Artboard `p2_resumen` del ZIP.
+{% comment %}Página 2 · Resumen ejecutivo.
 
-LV-247: este comentario decía que la tarjeta medía **30** días a la espera de
-`R4` y que los hallazgos eran "un bloque pendiente hasta `LV-227`". Las dos cosas
-se resolvieron hace semanas —la ventana de 60 días entró con `R4` y los hallazgos
-se escriben desde `LV-227`, ver más abajo— y el comentario seguía describiendo el
-estado anterior. Un comentario que afirma lo contrario de lo que el código hace
-es peor que no tenerlo: el próximo que lo lea va a "arreglar" lo que ya está bien.
+LV-260: **la hoja se lee en un minuto, y la conclusión va primero.** Pedido del
+usuario el 2026-09-25: el informe era *"demasiado largo"*, y eligió la dirección
+«hoja ejecutiva + detalle». Esta hoja abría con dos párrafos que eran los mismos
+todos los meses y siete indicadores con el mismo peso, en una rejilla de tres que
+dejaba uno huérfano; la conclusión la tenía que armar quien leía. Ahora, de arriba
+abajo: qué pasa (tres líneas), cuatro cifras con el color **según su valor**, qué
+vence primero, los hallazgos que escribe quien firma, y la dotación en una línea.
 
-Lo que sigue siendo cierto: **los hallazgos no se generan**. Un hallazgo es un
-juicio sobre las cifras, y el informe va firmado.{% endcomment %}
+Lo que salió y a dónde fue — nada se perdió:
+- los dos párrafos de propósito y alcance: el alcance ya está en la portada, y la
+  convención del ámbar punteado pasa al pie de esta hoja;
+- «permisos vencidos sin cerrar» e «incidentes»: a la conclusión, **cuando no son
+  cero**, y como línea compacta bajo las cifras siempre;
+- la nota del ciclo del permiso: a la sección del plan, que es donde se habla del
+  trámite (es igual todos los meses, no es un dato del mes);
+- la brecha de seguros y credenciales partida en «sin fecha» y «vencida»: se
+  conserva, dentro de la línea de dotación.
+
+Todo sale de `summary.executive_summary(payload)` y de `payload.kpis`: un informe
+congelado se dibuja igual el día que se reabra.
+
+**Los hallazgos no se generan** (sigue siendo cierto): son un juicio sobre las
+cifras, y el informe va firmado.{% endcomment %}
 <div class="rpt-page">
 
   {% include "reporting/_head.html" %}
 
-  <div class="rpt-body rpt-stack-20" style="padding-top: 26px;">
+  <div class="rpt-body rpt-stack-16" style="padding-top: 24px;">
 
     <div>
       <div class="rpt-h2"><span class="rpt-h2-num">1</span><span class="rpt-h2-text">Resumen ejecutivo</span></div>
       <div class="rpt-h2-rule"></div>
     </div>
 
-    <div style="color: #0F1B2D; font-size: 12.5px; line-height: 1.6;">
-      Este informe corresponde al <strong>ciclo de reportabilidad mensual de operaciones aéreas RPA</strong> de J.E.J. Ingeniería, conforme al instructivo {{ payload.meta.standard }}. Su objetivo es <strong>normalizar la operación</strong>, no auditar el desempeño de vuelo.
-      <br><br>
-      {% comment %}Sin `|lower`: el alcance trae siglas —"ante la DGAC"— y
-      bajarlas a minúscula convierte al regulador en "dgac" dentro de un
-      documento que se le dirige.{% endcomment %}
-      El alcance de este ciclo: <strong>{{ payload.meta.scope }}</strong>. Las cifras salen de AeroControl con corte al {{ cutoff_date|date:"d-m-Y" }}; los campos en ámbar punteado son los que no tenían dato a esa fecha, y se informan como pendientes en vez de como cero.
-    </div>
+    {% with s=summary %}
+    {% comment %}La conclusión: lo que alguien tiene que saber aunque no lea nada
+    más. Cada línea lleva su tono con una marca a la izquierda, que es lo que
+    sobrevive a una impresión en blanco y negro.{% endcomment %}
+    <ul class="rpt-verdict" aria-label="Conclusión del período">
+      {% if s.without_permit %}
+      <li class="rpt-verdict-critical"><strong>{{ s.without_permit|length }} de {{ s.cost_centres_total }} Centro{{ s.cost_centres_total|pluralize:"s" }} de Costo sin permiso vigente</strong> — no pueden operar RPA: {{ s.without_permit|join:", " }}.</li>
+      {% elif s.cost_centres_total %}
+      <li class="rpt-verdict-good"><strong>Los {{ s.cost_centres_total }} Centros de Costo con operación tienen permiso vigente.</strong></li>
+      {% else %}
+      <li class="rpt-verdict-neutral">Ningún Centro de Costo con operación RPA registrada al corte.</li>
+      {% endif %}
+
+      {% if s.first_to_expire %}
+      <li class="rpt-verdict-{% if s.first_to_expire.band == 'critical' %}critical{% elif s.first_to_expire.band == 'warning' %}warning{% else %}good{% endif %}">El primer permiso en vencer es <strong>{{ s.first_to_expire.folio }}</strong> ({{ s.first_to_expire.cost_centre }}), el <strong>{{ s.first_to_expire.valid_until|as_date|date:"d-m-Y" }}</strong>{% if s.first_to_expire.days_remaining is not None %}, en {{ s.first_to_expire.days_remaining }} día{{ s.first_to_expire.days_remaining|pluralize:"s" }}{% endif %}.{% if s.within_60 > 1 %} Vencen {{ s.within_60 }} en los próximos 60 días.{% endif %}</li>
+      {% elif s.cost_centres_total %}
+      <li class="rpt-verdict-critical"><strong>Ningún permiso de vuelo vigente al corte.</strong></li>
+      {% endif %}
+
+      {% if s.awaiting %}
+      <li class="rpt-verdict-info">{{ s.awaiting }} solicitud{{ s.awaiting|pluralize:"es" }} en trámite ante la DGAC, sin habilitación hasta su aprobación.</li>
+      {% endif %}
+      {% if s.lapsed %}
+      <li class="rpt-verdict-critical">{{ s.lapsed }} permiso{{ s.lapsed|pluralize:"s" }} aprobado{{ s.lapsed|pluralize:"s" }} con la vigencia vencida y sin cerrar.</li>
+      {% endif %}
+      {% if s.incidents %}
+      <li class="rpt-verdict-warning">{{ s.incidents }} incidente{{ s.incidents|pluralize:"s" }} en el período{% if s.incidents_open %}, {{ s.incidents_open }} sin cerrar al corte{% endif %}.</li>
+      {% endif %}
+    </ul>
 
     <div>
-      <div class="rpt-label" style="margin-bottom: 10px;">Indicadores al {{ cutoff_date|date:"d" }} de {{ cutoff_date|date:"F" }} de {{ cutoff_date|date:"Y" }}</div>
-      <div class="rpt-kpis">
-
-        <div class="rpt-kpi">
-          <div class="rpt-kpi-value">{% leaf payload.kpis.cost_centres_with_operation %}</div>
-          <div class="rpt-kpi-name">Centros de Costo registrados</div>
-          <div class="rpt-kpi-note">Con operación RPA asociada</div>
+      <div class="rpt-label" style="margin-bottom: 8px;">Indicadores al {{ cutoff_date|date:"d" }} de {{ cutoff_date|date:"F" }} de {{ cutoff_date|date:"Y" }}</div>
+      <div class="rpt-kpis rpt-kpis-4">
+        <div class="rpt-kpi rpt-tone-{{ s.kpis.enabled }}">
+          <div class="rpt-kpi-value">{{ s.enabled }}<span class="rpt-kpi-of"> / {{ s.cost_centres_total }}</span></div>
+          <div class="rpt-kpi-name">Centros de Costo habilitados</div>
+          <div class="rpt-kpi-note">Con permiso vigente al corte</div>
         </div>
-
-        <div class="rpt-kpi rpt-kpi-good">
+        <div class="rpt-kpi rpt-tone-{{ s.kpis.in_force }}">
           <div class="rpt-kpi-value">{% leaf payload.kpis.permits_in_force %}</div>
-          <div class="rpt-kpi-name">Permisos de vuelo vigentes</div>
-          <div class="rpt-kpi-note">Aprobados por la DGAC al cierre</div>
+          <div class="rpt-kpi-name">Permisos vigentes</div>
+          <div class="rpt-kpi-note">Aprobados por la DGAC</div>
         </div>
-
-        <div class="rpt-kpi rpt-kpi-bad">
-          <div class="rpt-kpi-value">{% leaf payload.kpis.cost_centres_without_permit %}<span class="rpt-kpi-of"> / {% leaf payload.kpis.cost_centres_with_operation %}</span></div>
-          <div class="rpt-kpi-name">Centros de Costo sin permiso vigente</div>
-          <div class="rpt-kpi-note">No pueden operar RPA legalmente</div>
-        </div>
-
-        {% comment %}R4 cierra la deuda que R3 dejó declarada: la tarjeta del
-        informe emitido cuenta **60 días**, y hasta ahora el payload sólo traía
-        la ventana de 30, así que se rotulaba por lo que medía. El horizonte es
-        60 y no 30 porque la renovación exige carta nueva del mandante y el
-        aviso arranca a los 45 (`LV-226`): a 30 días ya se va tarde.{% endcomment %}
-        <div class="rpt-kpi rpt-kpi-warn">
+        <div class="rpt-kpi rpt-tone-{{ s.kpis.expiring }}">
           <div class="rpt-kpi-value">{% leaf payload.kpis.permits_expiring_60d %}</div>
-          <div class="rpt-kpi-name">Permisos por vencer en 60 días</div>
-          <div class="rpt-kpi-note">{% leaf payload.kpis.permits_expiring_30d %} de ellos en 30 días o menos</div>
+          <div class="rpt-kpi-name">Vencen en 60 días</div>
+          <div class="rpt-kpi-note">{% leaf payload.kpis.permits_expiring_30d %} en 30 días o menos</div>
         </div>
-
-        <div class="rpt-kpi rpt-kpi-info">
+        <div class="rpt-kpi rpt-tone-{{ s.kpis.awaiting }}">
           <div class="rpt-kpi-value">{% leaf payload.kpis.permits_awaiting %}</div>
-          <div class="rpt-kpi-name">Solicitudes en trámite ante la DGAC</div>
-          <div class="rpt-kpi-note">Sin habilitación hasta su aprobación</div>
+          <div class="rpt-kpi-name">En trámite ante la DGAC</div>
+          <div class="rpt-kpi-note">Sin habilitación aún</div>
         </div>
-
-        {% comment %}`lapsed` normalmente vale cero porque `expire_permissions`
-        los cierra cada noche, y por eso vale mirarlo: un número acá significa
-        que ese trabajo nocturno no corrió (`LV-83`, misma lectura que hace la
-        pantalla de cumplimiento).{% endcomment %}
-        <div class="rpt-kpi {% if payload.kpis.permits_lapsed.value %}rpt-kpi-bad{% else %}rpt-kpi-good{% endif %}">
-          <div class="rpt-kpi-value">{% leaf payload.kpis.permits_lapsed %}</div>
-          <div class="rpt-kpi-name">Permisos vencidos sin cerrar</div>
-          <div class="rpt-kpi-note">Aprobados cuya vigencia ya pasó</div>
-        </div>
-
-        {% comment %}LV-235: los incidentes del período, que el informe emitido
-        llevaba **escrito a mano** ("0 Incidentes en el período") y el payload no
-        producía. Ahora se cuentan de `NonConformity` con origen `incident` —no
-        todas las no conformidades: un re-vuelo es un hallazgo de calidad, y
-        sumarlo inflaría ante la DGAC una cifra que ella lee como incidentes de
-        vuelo—, y por **fecha de detección**, así que un evento del 20 de agosto
-        cargado el 2 de septiembre pertenece a agosto.
-
-        La nota de abajo distingue los abiertos, porque cero incidentes y cero
-        abiertos no son lo mismo que dos ya cerrados.{% endcomment %}
-        <div class="rpt-kpi {% if payload.kpis.incidents.value %}rpt-kpi-warn{% else %}rpt-kpi-good{% endif %}">
-          <div class="rpt-kpi-value">{% leaf payload.kpis.incidents %}</div>
-          <div class="rpt-kpi-name">Incidentes del período</div>
-          <div class="rpt-kpi-note">{% if payload.kpis.incidents_open.value %}{% leaf payload.kpis.incidents_open %} sin cerrar al corte{% else %}Sin eventos operacionales que reportar{% endif %}</div>
-        </div>
-
+      </div>
+      <div class="rpt-kpi-strip">
+        <span>Permisos vencidos sin cerrar <strong{% if s.lapsed %} class="rpt-strip-bad"{% endif %}>{% leaf payload.kpis.permits_lapsed %}</strong></span>
+        <span>Incidentes del período <strong{% if s.incidents %} class="rpt-strip-bad"{% endif %}>{% leaf payload.kpis.incidents %}</strong>{% if s.incidents_open %} · {{ s.incidents_open }} sin cerrar{% endif %}</span>
       </div>
     </div>
 
-    {% comment %}`LV-227`: los hallazgos salen del informe guardado, no de la
-    base. Un hallazgo es un **juicio sobre** las cifras y va firmado, así que se
-    escribe. Sin ninguno escrito la página dice que están pendientes y no que no
-    hay: un resumen ejecutivo sin hallazgos afirmaría que el período no tuvo
-    ninguno, que es lo contrario de "todavía nadie los redactó".{% endcomment %}
+    {% comment %}Lo que vence primero, con una barra: el ojo compara largos más
+    rápido que números. La barra satura a 60 días —el horizonte del indicador de
+    arriba—, así que una llena dice «fuera del horizonte» y una corta, «ya». El
+    detalle completo, permiso a permiso, es la sección 2.{% endcomment %}
     <div>
-      <div class="rpt-label" style="margin-bottom: 10px;">Hallazgos del período</div>
+      <div class="rpt-label" style="margin-bottom: 8px;">Lo próximo que vence</div>
+      {% if s.next_to_expire %}
+      <div class="rpt-next">
+        {% for row in s.next_to_expire %}
+        <div class="rpt-next-folio">{{ row.folio }}</div>
+        <div class="rpt-next-cc">{{ row.cost_centre }}</div>
+        <div class="rpt-next-date">{{ row.valid_until|as_date|date:"d-m-Y" }}</div>
+        <div class="rpt-next-bar"><span class="rpt-bar rpt-bar-{{ row.band }}" style="width: {{ row.bar_pct }}%;"></span></div>
+        <div class="rpt-next-days rpt-days-{{ row.band }}">{{ row.days_remaining }} día{{ row.days_remaining|pluralize:"s" }}</div>
+        {% endfor %}
+      </div>
+      {% if s.more_to_expire %}<div class="rpt-kpi-note" style="margin-top: 5px;">Y {{ s.more_to_expire }} más en la sección 2, permiso a permiso.</div>{% endif %}
+      {% else %}
+      <div class="rpt-kpi-note">Ningún permiso vigente al corte.</div>
+      {% endif %}
+    </div>
+    {% endwith %}
+
+    {% comment %}`LV-227`: los hallazgos salen del informe guardado, no de la
+    base. Sin ninguno escrito la página dice que están pendientes y no que no
+    hay: un resumen sin hallazgos afirmaría que el período no tuvo ninguno, que
+    es lo contrario de "todavía nadie los redactó".{% endcomment %}
+    <div>
+      <div class="rpt-label" style="margin-bottom: 8px;">Hallazgos del período</div>
       {% if run.findings %}
       {% include "reporting/_written.html" with anchor="findings" %}
       <div class="rpt-stack-8">
         {% for finding in run.findings %}
-        <div style="display: flex; gap: 12px; align-items: flex-start; background: #F4F7FA; padding: 11px 14px;">
-          <div class="rpt-swatch" style="margin-top: 4px; flex-shrink: 0; background: {% if finding.severity == 'critical' %}#B23B34{% else %}#B8791A{% endif %};"></div>
-          <div style="color: #0F1B2D; font-size: 11.5px; line-height: 1.55;"><strong>{{ finding.title }} —</strong> {{ finding.text }}</div>
-        </div>
+        <div class="rpt-finding rpt-finding-{% if finding.severity == 'critical' %}critical{% else %}warning{% endif %}"><strong>{{ finding.title }} —</strong> {{ finding.text }}</div>
         {% endfor %}
       </div>
       {% else %}
@@ -123,38 +139,25 @@ juicio sobre las cifras, y el informe va firmado.{% endcomment %}
     {% comment %}**La brecha va partida en dos y es deliberado.** El informe
     emitido decía "8 sin credencial vigente"; eran 7 sin fecha cargada más una
     vencida, y no se arreglan igual: una es cargar un dato que nadie ingresó, la
-    otra es renovar ante la DGAC. Una sola cifra no dice a quién llamar. Es la
-    misma distinción que `LV-129` hizo en el panel.{% endcomment %}
+    otra es renovar ante la DGAC. Es la misma distinción que `LV-129` hizo en el
+    panel. LV-260: en una línea por padrón, con su barra de cobertura, y ya no
+    repetida en la hoja de faenas.{% endcomment %}
     <div>
-      <div class="rpt-label" style="margin-bottom: 10px;">Dotación al corte</div>
-      <div style="display: flex; gap: 12px;">
-        <div class="rpt-kpi" style="flex: 1;">
-          <div class="rpt-kpi-value" style="font-size: 26px;">{% leaf payload.kpis.fleet_total %}</div>
-          <div class="rpt-kpi-name">Aeronaves en el padrón</div>
-          <div class="rpt-kpi-note">{% leaf payload.kpis.insurance_up_to_date %} con seguro JAC al día · <strong>{% leaf payload.kpis.insurance_missing %}</strong> sin fecha cargada · <strong>{% leaf payload.kpis.insurance_lapsed %}</strong> vencido</div>
+      <div class="rpt-label" style="margin-bottom: 8px;">Dotación al corte</div>
+      <div class="rpt-staff">
+        <div class="rpt-staff-row">
+          <div class="rpt-staff-name">Aeronaves con seguro JAC al día</div>
+          <div class="rpt-staff-meter"><span style="width: {% widthratio payload.kpis.insurance_up_to_date.value|default:0 payload.kpis.fleet_total.value|default:1 100 %}%;"></span></div>
+          <div class="rpt-staff-value"><strong>{% leaf payload.kpis.insurance_up_to_date %} de {% leaf payload.kpis.fleet_total %}</strong></div>
+          <div class="rpt-staff-gap">{% leaf payload.kpis.insurance_missing %} sin fecha · {% leaf payload.kpis.insurance_lapsed %} vencido{{ payload.kpis.insurance_lapsed.value|pluralize:"s" }}</div>
         </div>
-        <div class="rpt-kpi" style="flex: 1;">
-          <div class="rpt-kpi-value" style="font-size: 26px;">{% leaf payload.kpis.operators_total %}</div>
-          <div class="rpt-kpi-name">Operadores en el padrón</div>
-          <div class="rpt-kpi-note">{% leaf payload.kpis.operators_credentialed %} con credencial DGAC vigente · <strong>{% leaf payload.kpis.credentials_missing %}</strong> sin fecha cargada · <strong>{% leaf payload.kpis.credentials_lapsed %}</strong> vencida</div>
+        <div class="rpt-staff-row">
+          <div class="rpt-staff-name">Operadores con credencial DGAC vigente</div>
+          <div class="rpt-staff-meter"><span style="width: {% widthratio payload.kpis.operators_credentialed.value|default:0 payload.kpis.operators_total.value|default:1 100 %}%;"></span></div>
+          <div class="rpt-staff-value"><strong>{% leaf payload.kpis.operators_credentialed %} de {% leaf payload.kpis.operators_total %}</strong></div>
+          <div class="rpt-staff-gap">{% leaf payload.kpis.credentials_missing %} sin fecha · {% leaf payload.kpis.credentials_lapsed %} vencida{{ payload.kpis.credentials_lapsed.value|pluralize:"s" }}</div>
         </div>
       </div>
-    </div>
-
-    {% comment %}LV-248: **el ciclo del permiso, como nota breve.** Vivía como bloque
-    de cuatro pasos en la primera hoja de permisos (157 px), y era lo que obligaba a
-    la sección a una segunda hoja con los datos de producción. Decisión del usuario:
-    moverlo acá. Se conserva lo que el bloque decía —los cuatro pasos, el tope de
-    tres meses, la renovación con carta nueva treinta días antes y la vigencia no
-    uniforme— en una sola nota, porque no es un dato del mes: es el trámite que fija
-    el instructivo, igual en todos los informes.{% endcomment %}
-    <div class="rpt-note">
-      <strong>Ciclo del permiso de operación:</strong> carta del mandante → solicitud en SIGO
-      con KMZ, serie de aeronave y operadores → autorización DGAC, con
-      <strong>tope de 3 meses</strong> → renovación, que exige <strong>nueva carta del
-      mandante</strong> e iniciarla 30 días antes. La vigencia otorgada no es uniforme,
-      así que el calendario de renovación se construye sobre la fecha real de cada
-      resolución: AeroControl <em>valida</em> el tope en vez de calcular el vencimiento.
     </div>
 
   </div>

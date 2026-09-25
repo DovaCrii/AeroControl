@@ -35,6 +35,7 @@ from apps.core.views import (
 from apps.reporting.builder import build, month_bounds
 from apps.reporting.forms import ActionFormSet, FindingFormSet, PeriodNoteForm
 from apps.reporting.models import ReportRun
+from apps.reporting.summary import executive_summary
 
 # Cuatro dígitos de año y dos de mes, exactos. Partir por el guion y confiar en
 # `int()` acepta `26-8` y devuelve **el año 26**: un informe fechado dieciocho
@@ -118,6 +119,8 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
             }
         )
         context.update(self._sheets(payload))
+        # LV-260: la hoja ejecutiva, calculada del payload y no de la base.
+        context["summary"] = executive_summary(payload)
         return context
 
     @staticmethod
@@ -164,7 +167,19 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
             # que es donde el documento emitido las tenía.
             sheet["awaiting"] = awaiting if sheet["last"] else []
         after = first_permit_page + len(permit_sheets)
-        coverage_page, plan_page = after, after + 1
+        # LV-260: el plan compacto comparte hoja con la cobertura cuando los dos
+        # bloques caben, medidos (`pagination.plan_fits_with_coverage`). Si no,
+        # el plan va a su hoja — igual de compacto.
+        from .pagination import plan_fits_with_coverage
+
+        plan = payload.get("plan") or {}
+        matrix_rows = len((plan.get("matrix") or {}).get("rows") or []) or 4
+        plan_joins = plan_fits_with_coverage(
+            len(payload.get("cost_centres") or []), matrix_rows
+        )
+        coverage_page = after
+        plan_page = None if plan_joins else after + 1
+        last_fixed = coverage_page if plan_joins else plan_page
 
         # LV-248: el anexo con la nómina, que la tabla de permisos dejó de listar.
         # Vigentes y en trámite, en el mismo orden que la sección 2, para que un
@@ -183,7 +198,7 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
                 first_top=ROSTER_FIRST_ROW_TOP_PX,
             )
             for offset, sheet in enumerate(roster_sheets):
-                sheet["page"] = plan_page + 1 + offset
+                sheet["page"] = last_fixed + 1 + offset
                 sheet["index"] = offset + 1
                 sheet["of"] = len(roster_sheets)
                 sheet["total"] = len(roster)
@@ -191,8 +206,10 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
             "permit_sheets": permit_sheets,
             "coverage_page": coverage_page,
             "plan_page": plan_page,
+            "plan_joins_coverage": plan_joins,
+            "coverage_section": "coverage_plan" if plan_joins else "coverage",
             "roster_sheets": roster_sheets,
-            "total_pages": plan_page + len(roster_sheets),
+            "total_pages": last_fixed + len(roster_sheets),
         }
 
 

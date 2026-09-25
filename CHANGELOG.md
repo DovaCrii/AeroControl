@@ -255,6 +255,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **El informe mensual es más corto y dice primero lo importante (`LV-260`).** La
+  hoja de resumen abre con la conclusión —qué faenas no pueden volar, qué permiso
+  vence primero, qué espera a la DGAC— y cuatro indicadores cuyo color depende de
+  su valor. La hoja de permisos ya no repite esas cifras, la cobertura por faena y
+  el plan comparten hoja cuando caben, y el plan se lee en una franja de cuatro
+  fases. Con los datos de hoy el informe pasa de 6 hojas a 5, sin sacar nada del
+  papel.
 - **La verificación del código tarda 3 minutos en vez de 19 (`LV-256`).** Las
   pruebas corren en paralelo, una por núcleo. No cambia nada de la aplicación: es
   la herramienta con la que se comprueba cada cambio antes de publicarlo, y cuesta

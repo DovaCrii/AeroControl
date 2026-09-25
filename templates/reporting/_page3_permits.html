@@ -26,37 +26,12 @@ detalle de formato en un papel que va a la DGAC.{% endcomment %}
       <div class="rpt-h2-rule"></div>
     </div>
 
-    {% comment %}⚠️ **Los indicadores van sólo en la primera hoja de la sección.**
-    Son el total del período: repetirlos en cada hoja de continuación diría que
-    cada hoja tiene sus propias cifras, y con tres hojas sumarían tres veces los
-    mismos permisos para quien las lee sueltas.
-
-    LV-248: acá estaba también el **ciclo de cuatro pasos** del permiso (157 px). Se
-    mudó a la hoja de resumen como nota breve, por decisión del usuario: con los
-    datos de producción era lo que obligaba a esta sección a una segunda hoja.{% endcomment %}
-    {% if sheet.first %}
-    <div>
-      <div class="rpt-label" style="margin-bottom: 10px;">Situación de los permisos al corte</div>
-      <div class="rpt-kpis" style="grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;">
-        <div class="rpt-kpi rpt-kpi-good" style="padding: 10px 12px;">
-          <div class="rpt-kpi-value" style="font-size: 26px;">{% leaf payload.kpis.permits_in_force %}</div>
-          <div class="rpt-kpi-name">Vigentes</div>
-        </div>
-        <div class="rpt-kpi rpt-kpi-warn" style="padding: 10px 12px;">
-          <div class="rpt-kpi-value" style="font-size: 26px;">{% leaf payload.kpis.permits_expiring_60d %}</div>
-          <div class="rpt-kpi-name">Por vencer en 60 días</div>
-        </div>
-        <div class="rpt-kpi rpt-kpi-info" style="padding: 10px 12px;">
-          <div class="rpt-kpi-value" style="font-size: 26px;">{% leaf payload.kpis.permits_awaiting %}</div>
-          <div class="rpt-kpi-name">En trámite</div>
-        </div>
-        <div class="rpt-kpi {% if payload.kpis.permits_lapsed.value %}rpt-kpi-bad{% endif %}" style="padding: 10px 12px;">
-          <div class="rpt-kpi-value" style="font-size: 26px;">{% leaf payload.kpis.permits_lapsed %}</div>
-          <div class="rpt-kpi-name">Vencidos sin cerrar</div>
-        </div>
-      </div>
-    </div>
-    {% endif %}
+    {% comment %}LV-260: **acá iban cuatro contadores —vigentes, por vencer, en
+    trámite, vencidos sin cerrar— idénticos a los de la hoja de resumen.** El
+    usuario pidió el informe más corto, y repetir las mismas cifras en la hoja
+    siguiente era largo sin decir nada nuevo: esta sección es el detalle, y el
+    rótulo de la tabla ya declara el total. Salieron de aquí y de ninguna otra
+    parte; siguen en la hoja ejecutiva.{% endcomment %}
 
     {% comment %}R4: la tabla del informe emitido, ahora desde la base.
 
@@ -100,7 +75,7 @@ detalle de formato en un papel que va a la DGAC.{% endcomment %}
           <div class="c">{% if permit.dgac_number %}{{ permit.dgac_number }}{% else %}<span class="rpt-dash">—</span>{% endif %}</div>
           <div class="c">{{ permit.cost_centre }}</div>
           <div class="c">{% with n=permit.operators|length %}{% if n %}{{ n }} operador{{ n|pluralize:"es" }}{% else %}<span class="rpt-dash">—</span>{% endif %}{% endwith %}</div>
-          <div class="c rpt-tail">{% for tail in permit.aircraft %}{{ tail }}{% if not forloop.last %}<br>{% endif %}{% empty %}<span class="rpt-dash">—</span>{% endfor %}</div>
+          <div class="c rpt-tail">{% for tail in permit.aircraft %}{{ tail }}{% if not forloop.last %} · {% endif %}{% empty %}<span class="rpt-dash">—</span>{% endfor %}</div>
           <div class="c rpt-tail">{{ permit.valid_from|as_date|date:"d-m"|default:"—" }} → <strong{% if permit.band == 'critical' %} style="color: #B23B34;"{% endif %}>{{ permit.valid_until|as_date|date:"d-m-Y" }}</strong></div>
           <div class="c rpt-sev-{{ permit.band }}" style="text-align: center; font-weight: bold;">{{ permit.days_remaining }}</div>
           {% empty %}
@@ -113,10 +88,10 @@ detalle de formato en un papel que va a la DGAC.{% endcomment %}
         <div class="rpt-grid-permits">
           {% for permit in sheet.awaiting %}
           <div class="c rpt-num">{{ permit.folio }}</div>
-          <div class="c" style="color: #B8791A; font-size: 8.2px;">En proceso</div>
+          <div class="c" style="color: var(--rpt-amber-ink); font-size: 8.2px; white-space: nowrap;">En proceso</div>
           <div class="c">{{ permit.cost_centre }}</div>
           <div class="c">{% with n=permit.operators|length %}{% if n %}{{ n }} operador{{ n|pluralize:"es" }}{% else %}<span class="rpt-dash">—</span>{% endif %}{% endwith %}</div>
-          <div class="c rpt-tail">{% for tail in permit.aircraft %}{{ tail }}{% if not forloop.last %}<br>{% endif %}{% empty %}<span class="rpt-dash">—</span>{% endfor %}</div>
+          <div class="c rpt-tail">{% for tail in permit.aircraft %}{{ tail }}{% if not forloop.last %} · {% endif %}{% empty %}<span class="rpt-dash">—</span>{% endfor %}</div>
           <div class="c rpt-tail">{% if permit.valid_until %}{{ permit.valid_from|as_date|date:"d-m"|default:"—" }} → {{ permit.valid_until|as_date|date:"d-m-Y" }}{% else %}<span class="rpt-dash">Sin vigencia resuelta</span>{% endif %}</div>
           {% comment %}Guion y no cero: la DGAC todavía no resolvió, y un cero
           ahí se leería como "vence hoy" (`LV-219`).{% endcomment %}

@@ -1,128 +1,95 @@
 {% load i18n static report_leaf %}
-{% comment %}Página 4 · Cobertura por Centro de Costo. Artboard `p4_cobertura`.
+{% comment %}Página 4 · Cobertura por Centro de Costo, y el plan cuando cabe.
 
-**Es la página que hoy trae datos reales fila por fila**, y la que más importa
-que se recorra al derecho: `permit_status_by_cost_center` (`LV-206`) parte de
-las faenas y no de los permisos, precisamente para que las que **no tienen
-ninguno** aparezcan. Un `GROUP BY` sobre permisos habría devuelto sólo las cinco
-habilitadas y la página habría contestado lo contrario de la pregunta.
+**Es la página que trae datos reales fila por fila**, y la que más importa que se
+recorra al derecho: `permit_status_by_cost_center` (`LV-206`) parte de las faenas y
+no de los permisos, para que las que **no tienen ninguno** aparezcan.
 
-**El semáforo (`R4`)** sale de `permit_band`, que vive junto al resto del dominio
-de permisos y no acá: sus cortes son 30/60 días y no los 7/15/30 del documento,
-porque una renovación exige carta nueva del mandante y el aviso arranca a los 45
-(`LV-226`). Los **nombres** son los cinco niveles que `UX-01` fijó — lo que
-cambia es el umbral, no el vocabulario, y por eso el rojo significa lo mismo acá
-que en la bandeja. El color de papel lo pone `report-a4.css`.
+**El semáforo (`R4`)** sale de `permit_band`: cortes de 30/60 días, porque una
+renovación exige carta nueva del mandante y el aviso arranca a los 45 (`LV-226`).
+Una faena sin ningún permiso vigente es `critical` y no "sin banda": el semáforo
+de la faena es **el peor** de sus habilitantes (§4.2 del SPEC).
 
-Una faena sin ningún permiso vigente es `critical` y no "sin banda": es el §4.2
-del SPEC —el semáforo de la faena es **el peor** de sus habilitantes, nunca el
-promedio— y no poder volar es lo peor de la escala.{% endcomment %}
+LV-260 · El informe más corto, pedido del usuario:
+- **la tarjeta «Cobertura del padrón» salió**: repetía la dotación de la hoja
+  ejecutiva, con la misma brecha partida en «sin fecha» y «vencida»;
+- **la concentración operacional queda en una línea** bajo la tabla — es un
+  riesgo real (una faena que depende de una sola persona) y se conserva entero;
+- las filas son más bajas, y **el plan compacto se dibuja debajo cuando cabe**:
+  lo decide `MonthlyReportView._sheets` con el alto medido de cada bloque, y si no
+  cabe va a su propia hoja.{% endcomment %}
 <div class="rpt-page">
 
   {% include "reporting/_head.html" %}
 
-  <div class="rpt-body rpt-stack-16">
+  <div class="rpt-body rpt-stack-14" style="padding-top: 20px;">
 
-    <div>
-      <div class="rpt-h2"><span class="rpt-h2-num">3</span><span class="rpt-h2-text">Cobertura por Centro de Costo</span></div>
-      <div class="rpt-h2-rule"></div>
-    </div>
-
-    <div class="rpt-lede">Un Centro de Costo sin permiso vigente no está habilitado para ejecutar operaciones con RPA. La columna de estado refleja la situación al cierre del período, no la actividad prevista.</div>
-
-    <div class="rpt-table">
-      <div class="rpt-grid rpt-grid-head">
-        <div class="th">Código</div>
-        <div class="th">Centro de Costo</div>
-        <div class="th" style="text-align: center;">Permisos<br>vigentes</div>
-        <div class="th" style="text-align: center;">En<br>trámite</div>
-        <div class="th">Próximo<br>vencimiento</div>
-        <div class="th" style="text-align: center;">Días</div>
-        <div class="th">Estado</div>
+    <div class="rpt-stack-12">
+      <div>
+        <div class="rpt-h2"><span class="rpt-h2-num">3</span><span class="rpt-h2-text">Cobertura por Centro de Costo</span></div>
+        <div class="rpt-h2-rule"></div>
       </div>
-      <div class="rpt-grid">
-        {% for row in payload.cost_centres %}
-        <div class="c rpt-code">{{ row.code }}</div>
-        <div class="c" style="color: #52606D;">{{ row.name }}</div>
-        <div class="c" style="text-align: center; font-weight: bold;{% if not row.permits_in_force %} color: #B23B34;{% endif %}">{{ row.permits_in_force }}</div>
-        <div class="c" style="text-align: center;">{% if row.permits_awaiting %}{{ row.permits_awaiting }}{% else %}<span class="rpt-dash">—</span>{% endif %}</div>
-        {% comment %}R4: el **primer** permiso que vence, con sus días. Sin
-        permiso vigente van guiones y no un cero — "sin fecha" no es "vence
-        hoy".{% endcomment %}
-        <div class="c">{% if row.next_expiry %}{{ row.next_expiry|as_date|date:"d-m-Y" }}{% else %}<span class="rpt-dash">—</span>{% endif %}</div>
-        <div class="c {% if row.days_remaining is not None %}rpt-sev-{{ row.band }}{% endif %}" style="text-align: center; font-weight: bold;">{% if row.days_remaining is not None %}{{ row.days_remaining }}{% else %}<span class="rpt-dash">—</span>{% endif %}</div>
-        <div class="c">
-          {% if not row.permits_in_force %}<span class="rpt-est rpt-sev-critical">Sin habilitación</span>
-          {% else %}<span class="rpt-est rpt-sev-{{ row.band }}">{% if row.band == 'critical' %}Renovar ahora{% elif row.band == 'warning' %}Por vencer{% else %}Vigente{% endif %}</span>{% endif %}
+
+      <div class="rpt-table">
+        <div class="rpt-grid rpt-grid-head">
+          <div class="th">Código</div>
+          <div class="th">Centro de Costo</div>
+          <div class="th" style="text-align: center;">Permisos<br>vigentes</div>
+          <div class="th" style="text-align: center;">En<br>trámite</div>
+          <div class="th">Próximo<br>vencimiento</div>
+          <div class="th" style="text-align: center;">Días</div>
+          <div class="th">Estado</div>
         </div>
-        {% empty %}
-        <div class="c" style="grid-column: 1 / -1; text-align: center; color: #98A2B0; padding: 18px;">Ninguna faena con operación RPA registrada al corte.</div>
-        {% endfor %}
-      </div>
-      <div class="rpt-grid rpt-total">
-        <div style="font-weight: bold; color: #124384;">Total</div>
-        <div style="color: #52606D;">{% leaf payload.kpis.cost_centres_with_operation %} Centros de Costo · {% leaf payload.kpis.cost_centres_without_permit %} sin habilitación</div>
-        <div style="font-weight: bold; color: #124384; text-align: center; font-size: 11px;">{% leaf payload.kpis.permits_in_force %}</div>
-        <div style="font-weight: bold; color: #124384; text-align: center; font-size: 11px;">{% leaf payload.kpis.permits_awaiting %}</div>
-        <div></div>
-        <div></div>
-        <div></div>
-      </div>
-    </div>
-
-    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;">
-
-      <div style="border: 1px solid #D7DEE6; border-top: 3px solid #00A7BC;">
-        <div class="rpt-label" style="padding: 10px 14px 4px; letter-spacing: 0.06em;">Cobertura del padrón</div>
-        <div style="padding: 0 14px 12px;">
-          <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; border-bottom: 1px solid #E4EAF0; font-size: 11px;">
-            <span>Aeronaves con seguro JAC al día</span><span style="font-weight: bold; color: #124384; font-size: 15px;">{% leaf payload.kpis.insurance_up_to_date %} / {% leaf payload.kpis.fleet_total %}</span>
+        <div class="rpt-grid rpt-grid-compact">
+          {% for row in payload.cost_centres %}
+          <div class="c rpt-code">{{ row.code }}</div>
+          <div class="c" style="color: var(--rpt-muted);">{{ row.name }}</div>
+          <div class="c" style="text-align: center; font-weight: bold;{% if not row.permits_in_force %} color: #B23B34;{% endif %}">{{ row.permits_in_force }}</div>
+          <div class="c" style="text-align: center;">{% if row.permits_awaiting %}{{ row.permits_awaiting }}{% else %}<span class="rpt-dash">—</span>{% endif %}</div>
+          {% comment %}R4: el **primer** permiso que vence, con sus días. Sin
+          permiso vigente van guiones y no un cero — "sin fecha" no es "vence
+          hoy".{% endcomment %}
+          <div class="c">{% if row.next_expiry %}{{ row.next_expiry|as_date|date:"d-m-Y" }}{% else %}<span class="rpt-dash">—</span>{% endif %}</div>
+          <div class="c {% if row.days_remaining is not None %}rpt-sev-{{ row.band }}{% endif %}" style="text-align: center; font-weight: bold;">{% if row.days_remaining is not None %}{{ row.days_remaining }}{% else %}<span class="rpt-dash">—</span>{% endif %}</div>
+          <div class="c">
+            {% if not row.permits_in_force %}<span class="rpt-est rpt-sev-critical">Sin habilitación</span>
+            {% else %}<span class="rpt-est rpt-sev-{{ row.band }}">{% if row.band == 'critical' %}Renovar ahora{% elif row.band == 'warning' %}Por vencer{% else %}Vigente{% endif %}</span>{% endif %}
           </div>
-          <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; border-bottom: 1px solid #E4EAF0; font-size: 11px;">
-            <span>Operadores con credencial DGAC vigente</span><span style="font-weight: bold; color: #124384; font-size: 15px;">{% leaf payload.kpis.operators_credentialed %} / {% leaf payload.kpis.operators_total %}</span>
-          </div>
-          {% comment %}La brecha, partida por lo que hay que hacer con cada
-          mitad: cargar una fecha que nadie ingresó, o renovar ante la DGAC.
-          Sumadas no dicen a quién llamar.{% endcomment %}
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px;">
-            <div class="rpt-est rpt-sev-warning" style="text-align: center; padding: 5px;">{% leaf payload.kpis.credentials_missing %} credenciales sin fecha</div>
-            <div class="rpt-est rpt-sev-critical" style="text-align: center; padding: 5px;">{% leaf payload.kpis.credentials_lapsed %} credenciales vencidas</div>
-            <div class="rpt-est rpt-sev-warning" style="text-align: center; padding: 5px;">{% leaf payload.kpis.insurance_missing %} seguros sin fecha</div>
-            <div class="rpt-est rpt-sev-critical" style="text-align: center; padding: 5px;">{% leaf payload.kpis.insurance_lapsed %} seguros vencidos</div>
-          </div>
-          <div style="color: #52606D; font-size: 9.4px; line-height: 1.5; margin-top: 8px;">Una fecha ausente y una vencida se arreglan distinto, así que van separadas: la primera es un dato que nadie cargó —y por eso no genera alerta ni aparece en la lista de vencimientos—, la segunda es un trámite ante la DGAC. El padrón es el que existía al corte.</div>
+          {% empty %}
+          <div class="c" style="grid-column: 1 / -1; text-align: center; color: var(--rpt-faint); padding: 18px;">Ninguna faena con operación RPA registrada al corte.</div>
+          {% endfor %}
+        </div>
+        <div class="rpt-grid rpt-total">
+          <div style="font-weight: bold; color: var(--rpt-navy);">Total</div>
+          <div style="color: var(--rpt-muted);">{% leaf payload.kpis.cost_centres_with_operation %} Centros de Costo · {% leaf payload.kpis.cost_centres_without_permit %} sin habilitación</div>
+          <div style="font-weight: bold; color: var(--rpt-navy); text-align: center; font-size: 11px;">{% leaf payload.kpis.permits_in_force %}</div>
+          <div style="font-weight: bold; color: var(--rpt-navy); text-align: center; font-size: 11px;">{% leaf payload.kpis.permits_awaiting %}</div>
+          <div></div>
+          <div></div>
+          <div></div>
         </div>
       </div>
 
-      <div style="border: 1px solid #D7DEE6; border-top: 3px solid #B8791A;">
-        <div class="rpt-label" style="padding: 10px 14px 4px; letter-spacing: 0.06em;">Concentración operacional</div>
-        {% comment %}R4. **Una faena depende de una persona cuando la unión de
-        los operadores de todos sus permisos vigentes tiene un solo miembro**, y
-        esa definición es la que responde al riesgo real: si alguno de sus
-        permisos designa a otro, la faena sigue pudiendo volar sin la primera.
-        Contar "faenas con algún permiso de un solo operador" habría inflado la
-        cifra con faenas que sí tienen suplente.{% endcomment %}
-        <div style="padding: 0 14px 12px;">
-          <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; border-bottom: 1px solid #E4EAF0; font-size: 11px;">
-            <span>Permisos con un único operador designado</span><span style="font-weight: bold; color: #B8791A; font-size: 15px;">{{ payload.concentration.permits_with_one_operator }} / {{ payload.concentration.permits_in_force }}</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; border-bottom: 1px solid #E4EAF0; font-size: 11px;">
-            <span>Centros de Costo que dependen de una sola persona</span><span style="font-weight: bold; color: {% if payload.concentration.cost_centres_on_one_person %}#B8791A{% else %}#0E7A5F{% endif %}; font-size: 15px;">{{ payload.concentration.cost_centres_on_one_person|length }}</span>
-          </div>
-          <div style="color: #52606D; font-size: 9.4px; line-height: 1.5; margin-top: 8px;">
-            {% if payload.concentration.cost_centres_on_one_person %}
-            {% for code in payload.concentration.cost_centres_on_one_person %}{{ code }}{% if not forloop.last %}, {% endif %}{% endfor %} designan a un solo operador en todos sus permisos vigentes. Su ausencia detiene esas faenas hasta tramitar una modificación ante la DGAC.
-            {% else %}
-            Ninguna faena depende de una sola persona: todas tienen más de un operador designado entre sus permisos vigentes.
-            {% endif %}
-          </div>
-        </div>
+      {% comment %}R4. **Una faena depende de una persona cuando la unión de los
+      operadores de todos sus permisos vigentes tiene un solo miembro**: si alguno
+      de sus permisos designa a otro, la faena sigue pudiendo volar sin la primera.
+      LV-260: en una línea, sin su tarjeta.{% endcomment %}
+      <div class="rpt-concentration">
+        <span>Permisos con un único operador designado <strong{% if payload.concentration.permits_with_one_operator %} class="rpt-conc-warn"{% endif %}>{{ payload.concentration.permits_with_one_operator }} de {{ payload.concentration.permits_in_force }}</strong></span>
+        {% if payload.concentration.cost_centres_on_one_person %}
+        <span>Dependen de una sola persona: <strong class="rpt-conc-warn">{{ payload.concentration.cost_centres_on_one_person|join:", " }}</strong> — su ausencia detiene la faena hasta modificar el permiso ante la DGAC.</span>
+        {% else %}
+        <span>Ninguna faena depende de una sola persona.</span>
+        {% endif %}
       </div>
-
     </div>
+
+    {% if plan_joins_coverage %}
+    {% include "reporting/_plan_block.html" %}
+    {% endif %}
 
   </div>
 
-  {% include "reporting/_foot.html" with section="coverage" %}
+  {% include "reporting/_foot.html" with section=coverage_section %}
 
 </div>

@@ -1,5 +1,32 @@
 # HANDOFF — AeroControl
 
+## 🟡 2026-09-25 — el informe rediseñado y el contraste, **sin desplegar**
+
+Tres filas sobre `b80962c` (lo que corre en `p340`), pedidas por el usuario en la
+misma jornada:
+
+| Fila | Qué | Despliegue |
+|---|---|---|
+| `LV-258` | Un permiso aprobado que **todavía no empieza** contaba como vigente en la tabla por faena del panel y del informe — una faena cuyo único permiso arranca la semana próxima salía habilitada. Destapado por una suma que no cuadraba (12 en la fila, 11 en el total). Y tres techos de consultas que dependían del orden de la suite, visibles desde el gate paralelo. | reiniciar |
+| `LV-259` | **Contraste medido en 16 pantallas y los dos temas.** El Dato Ejecutivo en oscuro estaba a 1,12 : 1 (texto casi blanco sobre papel blanco: los tokens del papel no llegaban a su hoja). También el rojo y verde de Bootstrap en oscuro, las insignias amarillas con letra blanca y la paleta del papel. Re-medido: 0 textos bajo el mínimo. | `collectstatic` |
+| `LV-260` | **El informe más corto**: hoja ejecutiva con la conclusión primero, sin contadores repetidos, y la cobertura por faena + el plan compacto en una hoja **cuando caben (hasta 9 faenas con operación)**. Con la forma de producción: de 6 hojas a 5. | `collectstatic` |
+
+**Paso de despliegue de la tanda: `git pull`, `collectstatic` y reiniciar.** Sin
+migraciones ni dependencias nuevas para producción (`pytest-xdist` es sólo de
+desarrollo).
+
+🔶 **Dato que falta para cerrar `LV-260`**: cuántas faenas con operación salen en el
+informe de producción. Con más de 9, el plan va a su hoja y el documento queda en
+6 (con el resto de las mejoras). Se ve abriendo la vista previa de septiembre
+después de desplegar.
+
+⚠️ **Lección de método de la jornada**: dos veces una medición inventó un defecto —
+al sacar las hojas de su contenedor desaparecieron los tokens y el encabezado de
+una tabla salió blanco sobre blanco; y la copia estática de las pantallas cargaba
+Bootstrap con SRI desde otro puerto, que el navegador bloquea, y el menú salía sin
+estilo. En los dos casos se descartó antes de "arreglar" nada. **Antes de creerle
+a una medición rara, comprobar que lo medido es lo que ve el usuario.**
+
 ## ✅ Plan de mejora — las cuatro fases hechas y **desplegadas** (`b80962c`)
 
 El 2026-09-23 el usuario pidió, en cinco mensajes seguidos, marcar lo vencido en
