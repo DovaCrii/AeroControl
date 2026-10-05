@@ -31,6 +31,11 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Skills de flujo para agentes (`LV-272`).** `/abrir-pr`, `/cerrar-tarea`, `/verificar` y
+  `/desplegar-p340`: el agente crea, verifica y fusiona sus PR con el CI verde, y el
+  usuario sólo despliega en `p340`. Recogen los errores de esta jornada —commits en una
+  rama equivocada que nunca llegaron a `main`, y un CI en rojo durante semanas— para que
+  no se repitan.
 - **Un guardián recorre las rutas y exige permiso en cada vista (`LV-268`).** Toda ruta
   fuera de `admin/` tiene que pedir un permiso de modelo o figurar en una lista de
   excepciones con su motivo; una vista nueva con sólo sesión ya no pasa el gate sin que
