@@ -57,6 +57,14 @@ jobs:
       - run: uv run pip-audit
       - name: Staging preflight
         run: |
+          # `migrate` primero: la base de este paso es un archivo **vacío** en
+          # `$RUNNER_TEMP` (`pytest` usa la suya, aparte). `backup` y `verify_backup`
+          # registran su ejecución en `core_jobrun` desde que existe `JobRun`, así que
+          # sin las tablas morían con `no such table: core_jobrun` y **el CI estuvo en
+          # rojo en todos los pushes durante semanas** sin que nada de `pytest` tuviera
+          # la culpa. Es también lo que dice el nombre del paso: un *staging* es una
+          # base migrada, no un archivo en blanco.
+          uv run python manage.py migrate --no-input
           uv run python manage.py scale_readiness --json
           uv run python manage.py backup
           # `verify_backup` sin argumento verifica el último respaldo, así que no
