@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _, pgettext_lazy
 from apps.core.choices import PURPOSE_CHOICES
 from apps.core.models import BaseModel, StatusFlowMixin
+from apps.core.status_history import StatusHistoryMixin
 from apps.registry.models import Operator, Aircraft, CostCenter
 
 
@@ -23,8 +24,11 @@ from apps.registry.models import Operator, Aircraft, CostCenter
 NOTAM_QUERY_BASE = "https://aipchile.dgac.gob.cl/notam"
 
 
-class FlightPermission(StatusFlowMixin, BaseModel):
+class FlightPermission(StatusHistoryMixin, StatusFlowMixin, BaseModel):
     """A flight authorization, mirroring the real DGAC document (OPS-4).
+
+    T1.3: el historial de estados (`PermissionHistory`) lo escribe
+    `StatusHistoryMixin` dentro del guardado, y ya no una señal `pre_save`.
 
     A single authorization typically lists several operators and several
     aircraft over a validity range (docs/dev/ops-contract-tracking-plan.md),
@@ -32,6 +36,8 @@ class FlightPermission(StatusFlowMixin, BaseModel):
     could not represent that. `cost_center` stays a single FK: the scoping
     unit is unambiguous even when the crew/fleet is a roster.
     """
+
+    STATUS_HISTORY = ("operations.PermissionHistory", "permission", "status")
 
     STATUS_REQUESTED = "requested"
     STATUS_APPROVED = "approved"

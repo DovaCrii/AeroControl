@@ -9,7 +9,7 @@ def track_status_changes(sender, instance, **kwargs):
 
     from apps.geo.models import GeoPlanHistory
     from apps.maintenance.models import MaintenanceHistory
-    from apps.operations.models import FlightRequestHistory, PermissionHistory
+    from apps.operations.models import FlightRequestHistory
     from apps.registry.models import InsuranceHistory
 
     # (history model, its FK back to the record, the field being tracked).
@@ -18,7 +18,9 @@ def track_status_changes(sender, instance, **kwargs):
     # maintenance) is a different axis that no history table watches, while its
     # insurance filing does advance through a flow and needs the trace.
     history = {
-        "flightpermission": (PermissionHistory, "permission", "status"),
+        # T1.3: `flightpermission` salió de este mapa. Su historial lo escribe
+        # `core.status_history.StatusHistoryMixin`, dentro del guardado; el resto
+        # de los modelos se migra uno por commit y esta señal se retira con el último.
         # R9.4: quinto usuario de esta señal. Que agregar el seguimiento de una
         # solicitud SIGO cueste una línea acá es la razón por la que `LV-72`
         # extrajo esto de la vista del permiso.
