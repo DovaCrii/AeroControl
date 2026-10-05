@@ -253,6 +253,14 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   fabricante y es con el que la aeronave aparece en la garantía, en el registro
   de la DGAC y en las carpetas del repositorio documental.
 
+### Added
+
+- **«Revisar antes de emitir» en el informe mensual (`LV-265`).** Avisa, sólo en
+  pantalla, de un permiso vigente cuya faena no sale en la tabla de cobertura, de
+  faenas nombradas en el texto escrito que no existen en el informe, de la
+  observación o los hallazgos sin redactar y de un cambio en el total de Centros de
+  Costo contra el mes anterior. No bloquea aprobar.
+
 ### Changed
 
 - **Las confirmaciones preguntan una sola vez (`LV-264`).** «Aprobar» el informe
