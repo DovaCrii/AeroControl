@@ -25,6 +25,16 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   invisibles para `--pending`— y no toma un sub-ítem (`LV-168b`) por una fila fantasma.
   Es una vista derivada: manda `AGENTS.md`. El `.gitignore` deja de excluir
   `.claude/skills/` y sigue excluyendo el resto de `.claude/`.
+- **`HANDOFF.md` vuelve a ser corto.** Tenía 3261 líneas de historia acumulada; ahora
+  trae sólo la entrada vigente (qué corre en `p340` y qué falta), el índice de punteros y
+  un aviso de que cada despliegue deja una entrada nueva al principio. Lo anterior se
+  movió **sin cambiar una línea** a `docs/dev/handoff-archive.md` (comprobado: ninguna
+  línea del original se perdió).
+- **El inventario `UX-nn` de `docs/ux-ui-plan.md` dice lo que el código hace.**
+  Verificadas contra el código y sus pruebas: `UX-02` ✅; `UX-11` ✅ en selección y
+  exportación (archivar y resolver en lote no existen); `UX-01`, `UX-03`, `UX-04` y
+  `UX-05` 🔶 con lo que falta y su condición de cierre; `UX-30` ⛔ a la espera del texto
+  de la DAN 151 Ed. 4.
 - **Las tablas se ordenan por columna, se acomodan y se guardan como vistas
   (`UX-07`, `UX-09`, `UX-12`).** Las 16 listas de la aplicación pasan ahora por
   un mismo componente. Con eso: **ordenar apretando el encabezado** —que no
