@@ -10,6 +10,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Un guardián recorre las rutas y exige permiso en cada vista (`LV-268`).** Toda ruta
+  fuera de `admin/` tiene que pedir un permiso de modelo o figurar en una lista de
+  excepciones con su motivo; una vista nueva con sólo sesión ya no pasa el gate sin que
+  nadie lo note. Es sólo una prueba: no cambia ninguna pantalla.
 - **Skill `aerocontrol` para agentes (`.claude/skills/aerocontrol/`).** Resume `AGENTS.md`,
   las lecciones operativas, el despliegue a `p340` y el rumbo a 1.0 en un `SKILL.md` corto con
   referencias que se cargan solo cuando hacen falta, y trae `scripts/plan_query.py`, que
