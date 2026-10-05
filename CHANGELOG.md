@@ -8,6 +8,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Fixed
+
+- **El CI vuelve a poder estar verde (`LV-271`).** Llevaba semanas en rojo en cada push
+  porque su último paso corría sobre una base vacía, sin migrar. Ahora migra primero, y
+  `scripts/verify.ps1` corre ese mismo paso —sobre una base temporal— para que el gate
+  local y el CI digan lo mismo.
+
 ### Added
 
 - **Las tablas se ordenan por columna, se acomodan y se guardan como vistas
