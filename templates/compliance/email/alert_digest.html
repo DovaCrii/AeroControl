@@ -7,6 +7,7 @@
       <p style="margin:6px 0 0;font-size:13px;opacity:.85;">{{ cost_center.code }} · {% translate "Total items" %}: {{ item_count }}</p>
     </div>
     <div style="padding:8px 24px 24px;">
+      {% if unassigned %}<p style="margin:16px 0 0;padding:10px 12px;background:#fff7e0;border:1px solid #e8d49a;border-radius:6px;font-size:13px;">{% translate "This cost center has no responsible person assigned, so you receive its notice as a fallback. Assign a responsible operator or an external contact in the cost center record." %}</p>{% endif %}
       {% for group in groups %}{% if group.items %}
       <h2 style="margin:22px 0 8px;font-size:14px;color:{{ group.color }};">{{ group.title }} ({{ group.items|length }})</h2>
       <table role="presentation" style="width:100%;border-collapse:collapse;font-size:13px;">

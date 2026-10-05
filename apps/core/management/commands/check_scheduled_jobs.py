@@ -23,14 +23,13 @@ timer que falló, un comando que revienta cada noche, o uno que nunca se instal�
 import logging
 
 from django.conf import settings
-from django.contrib.auth.models import Group
 from django.core.mail import EmailMessage
 from django.core.management.base import BaseCommand
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.translation import gettext as _
 
-from apps.core.groups import REPORT_RECIPIENTS
+from apps.core.groups import REPORT_RECIPIENTS, direction_emails
 from apps.core.jobs import failing_jobs, record_job_run
 from apps.core.mail import warn_undelivered_mail
 
@@ -78,12 +77,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS("Every watched job is current."))
 
     def _notify(self, failing, dry_run):
-        recipients = list(
-            Group.objects.filter(name=REPORT_RECIPIENTS)
-            .values_list("user__email", flat=True)
-            .exclude(user__email="")
-            .exclude(user__email=None)
-        )
+        recipients = direction_emails()
         if not recipients:
             # El caso que AGENTS.md nombra: la función existía y no llegaba a
             # nadie. Se dice en voz alta en vez de dar por enviado.

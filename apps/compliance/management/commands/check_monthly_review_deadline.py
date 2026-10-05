@@ -22,7 +22,6 @@ import logging
 from datetime import datetime
 
 from django.conf import settings
-from django.contrib.auth.models import Group
 from django.core.mail import EmailMessage
 from django.core.management.base import BaseCommand, CommandError
 from django.template.loader import render_to_string
@@ -38,7 +37,7 @@ from apps.compliance.monthly import (
     previous_month_start,
     records_in_month,
 )
-from apps.core.groups import REPORT_RECIPIENTS
+from apps.core.groups import REPORT_RECIPIENTS, direction_emails
 from apps.core.jobs import record_job_run
 from apps.core.mail import warn_undelivered_mail
 
@@ -123,12 +122,7 @@ class Command(BaseCommand):
         return rows, mailed
 
     def _notify(self, period_start, rows, dry_run):
-        recipients = list(
-            Group.objects.filter(name=REPORT_RECIPIENTS)
-            .values_list("user__email", flat=True)
-            .exclude(user__email="")
-            .exclude(user__email=None)
-        )
+        recipients = direction_emails()
         if not recipients:
             logger.warning(
                 "monthly_review_deadline_no_recipients",

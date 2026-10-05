@@ -2,7 +2,6 @@ import logging
 from datetime import timedelta
 
 from django.conf import settings
-from django.contrib.auth.models import Group
 from django.core.mail import EmailMultiAlternatives
 from django.core.management.base import BaseCommand, CommandError
 from django.template.loader import render_to_string
@@ -11,7 +10,7 @@ from django.utils.translation import gettext as _
 
 from apps.compliance.report_views import build_report_workbook_bytes
 from apps.compliance.reports import build_compliance_report, compare_periods
-from apps.core.groups import REPORT_RECIPIENTS
+from apps.core.groups import REPORT_RECIPIENTS, direction_emails
 from apps.core.jobs import record_job_run
 from apps.core.mail import send_verb, warn_undelivered_mail
 
@@ -74,12 +73,7 @@ class Command(BaseCommand):
     def _recipients(self, explicit):
         if explicit:
             return list(explicit)
-        emails = list(
-            Group.objects.filter(name=REPORT_RECIPIENTS)
-            .values_list("user__email", flat=True)
-            .exclude(user__email="")
-            .exclude(user__email=None)
-        )
+        emails = direction_emails()
         if not emails:
             raise CommandError(
                 f"No recipients: pass --to, or add users with an email to the "

@@ -13,6 +13,7 @@ from apps.compliance.digest import (
     build_digest,
     cost_centers_to_notify,
 )
+from apps.core.groups import direction_emails
 from apps.core.jobs import record_job_run
 from apps.core.mail import send_verb, warn_undelivered_mail
 
@@ -85,13 +86,25 @@ class Command(BaseCommand):
                     "are not being watched. Reassign them or restore the center."
                 )
             )
+        # LV-267: quien no tiene responsable no se queda sin aviso. En producción
+        # 11 de 15 faenas estaban así, incluidas las dos que vencían esa semana, y
+        # el resumen las saltaba: la función existía y no llegaba a nadie. El
+        # respaldo es el grupo Dirección, el mismo que ya recibe lo de
+        # infraestructura. Una sola consulta, no una por faena.
+        fallback = direction_emails()
         for cost_center in cost_centers_to_notify():
             buckets = build_digest(cost_center, today=today)
             item_count = sum(len(items) for items in buckets.values())
             if not item_count:
                 continue
-            recipient = cost_center.notification_email
-            if not recipient:
+            recipients = (
+                [cost_center.notification_email]
+                if (cost_center.notification_email)
+                else fallback
+            )
+            unassigned = not cost_center.notification_email
+            recipient = ", ".join(recipients)
+            if not recipients:
                 skipped += 1
                 # Reaching nobody is an operational gap, not a crash: report it
                 # and keep going so the other cost centers still get their mail.
@@ -107,18 +120,21 @@ class Command(BaseCommand):
                 self.stdout.write(
                     self.style.WARNING(
                         f"{cost_center.code}: {item_count} expiring items but no "
-                        "reachable responsible operator or contact; skipped."
+                        "reachable responsible operator or contact, and the "
+                        "Dirección group has no email either; skipped."
                     )
                 )
                 continue
 
             context = self._context(cost_center, buckets, item_count)
+            context["unassigned"] = unassigned
             subject = _("AeroControl · expiry summary for %(center)s") % {
                 "center": cost_center.name
             }
             if dry_run:
                 self.stdout.write(
                     f"[dry-run] {recipient} <- {cost_center.code}: {item_count} items"
+                    f"{' (fallback)' if unassigned else ''}"
                 )
             else:
                 # LV-119: antes del primer envío, no después -- puesto al final
@@ -129,7 +145,7 @@ class Command(BaseCommand):
                     subject=subject,
                     body=render_to_string("compliance/email/alert_digest.txt", context),
                     from_email=settings.DEFAULT_FROM_EMAIL,
-                    to=[recipient],
+                    to=recipients,
                 )
                 message.attach_alternative(
                     render_to_string("compliance/email/alert_digest.html", context),

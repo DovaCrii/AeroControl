@@ -1,7 +1,9 @@
 {% load i18n %}{% blocktranslate with center=cost_center.name %}Expiry summary for {{ center }}{% endblocktranslate %}
 {% translate "Cost center" %}: {{ cost_center.code }} - {{ cost_center.name }}
 {% translate "Total items" %}: {{ item_count }}
-
+{% if unassigned %}
+{% translate "This cost center has no responsible person assigned, so you receive its notice as a fallback. Assign a responsible operator or an external contact in the cost center record." %}
+{% endif %}
 {% for group in groups %}{% if group.items %}== {{ group.title }} ({{ group.items|length }}) ==
 {% for item in group.items %}- {{ item.expiry_date|date:"Y-m-d" }} · {{ item.label }} ({{ item.detail }})
   {{ base_url }}{{ item.url_path }}

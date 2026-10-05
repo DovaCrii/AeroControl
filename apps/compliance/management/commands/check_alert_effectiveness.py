@@ -22,7 +22,6 @@ a one-off run without touching the model constant.
 import logging
 
 from django.conf import settings
-from django.contrib.auth.models import Group
 from django.core.mail import EmailMessage
 from django.core.management.base import BaseCommand
 from django.template.loader import render_to_string
@@ -31,7 +30,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from apps.compliance.models import Alert, NonConformity
-from apps.core.groups import REPORT_RECIPIENTS
+from apps.core.groups import REPORT_RECIPIENTS, direction_emails
 from apps.core.jobs import record_job_run
 from apps.core.mail import warn_undelivered_mail
 
@@ -126,12 +125,7 @@ class Command(BaseCommand):
         return rows, mailed
 
     def _notify(self, rows, window, dry_run):
-        recipients = list(
-            Group.objects.filter(name=REPORT_RECIPIENTS)
-            .values_list("user__email", flat=True)
-            .exclude(user__email="")
-            .exclude(user__email=None)
-        )
+        recipients = direction_emails()
         if not recipients:
             # Same choice as R6.5: log and carry on rather than fail. A missing
             # group is a configuration gap, and crashing a daily timer over it

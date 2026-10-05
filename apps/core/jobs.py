@@ -38,16 +38,22 @@ SUMMARY_MAX_LENGTH = 300
 # lo recupera al encender, y avisar por eso sería el vigilante que grita al primer
 # tropiezo. El nombre del diccionario dice "diarios" por historia; lo que guarda es
 # la antigüedad máxima de cada uno.
+#
+# LV-267: `check_client_letters` entra con 48 h. Es el escalamiento que el informe
+# promete a la DGAC y existía sin timer ni registro; el vigilante lo da por
+# «nunca corrió» hasta que alguien instale su timer, que es justo lo que debe decir.
 DAILY_JOBS = {
     "generate_alerts": 48,
     "send_alert_digest": 48,
     "backup": 48,
+    "check_client_letters": 48,
     "generate_monthly_report": 24 * 35,
 }
 WATCHED_JOBS = [
     "generate_alerts",
     "send_alert_digest",
     "backup",
+    "check_client_letters",
     "send_executive_report",
     # LV-250: sin esto, que el borrador del informe no se congelara el día 1 se
     # descubría el día 5, cuando alguien abría la pantalla para firmarlo.

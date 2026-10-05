@@ -21,14 +21,13 @@ import logging
 from datetime import datetime, timedelta
 
 from django.conf import settings
-from django.contrib.auth.models import Group
 from django.core.mail import EmailMessage
 from django.core.management.base import BaseCommand, CommandError
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
-from apps.core.groups import REPORT_RECIPIENTS
+from apps.core.groups import REPORT_RECIPIENTS, direction_emails
 from apps.core.jobs import record_job_run
 from apps.core.mail import warn_undelivered_mail
 from apps.operations.selectors import (
@@ -94,12 +93,7 @@ class Command(BaseCommand):
         return rows, mailed
 
     def _notify(self, day, rows, dry_run):
-        recipients = list(
-            Group.objects.filter(name=REPORT_RECIPIENTS)
-            .values_list("user__email", flat=True)
-            .exclude(user__email="")
-            .exclude(user__email=None)
-        )
+        recipients = direction_emails()
         if not recipients:
             # Same choice as R6.5/R7.6a: log and carry on. A configuration gap
             # must not take down a daily timer.

@@ -48,7 +48,14 @@ def _run(command, *, when, result=JobRun.RESULT_OK):
 
 
 def _all_current():
-    for command in ("generate_alerts", "send_alert_digest", "backup"):
+    # LV-267: `check_client_letters` también se vigila (el escalamiento que el
+    # informe promete a la DGAC).
+    for command in (
+        "generate_alerts",
+        "send_alert_digest",
+        "backup",
+        "check_client_letters",
+    ):
         _run(command, when=NOW - timedelta(hours=2))
     _run("send_executive_report", when=NOW - timedelta(days=6))
     # LV-250: el borrador del informe mensual también se vigila. Corre el día 1, así

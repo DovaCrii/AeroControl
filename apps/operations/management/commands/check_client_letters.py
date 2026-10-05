@@ -23,15 +23,36 @@ cambiaba el destinatario, así que un permiso próximo a vencer acumulaba cuatro
 cinco filas en la bandeja para un solo hecho. La regla se retiró; la pregunta
 condicional se queda acá, que es donde se podía responder de verdad.
 
-**Read-only.** No crea alertas ni escribe nada: informa. Crear una alerta desde
-acá volvería a poner en la bandeja lo que `LV-232` acaba de sacar, y
-`LV-111`/`LV-118` son dos filas gastadas justamente en alertas repetidas.
+**No crea alertas.** Crear una alerta desde acá volvería a poner en la bandeja lo
+que `LV-232` acaba de sacar, y `LV-111`/`LV-118` son dos filas gastadas justamente
+en alertas repetidas.
+
+⚠️ **LV-267: antes sólo imprimía, y nadie lo corría.** El informe emitido le dice
+a la DGAC que *«sin carta, se escala al Gerente de Operaciones Aéreas»*, y el
+único lugar donde eso existía era la salida de este comando — sin timer, sin
+correo y sin registro de ejecución (comprobado en `p340` el 2026-10-05: no estaba
+entre los 12 timers ni entre los trabajos con historial). Ahora, **sólo para lo que
+escala** (15 días o menos), escribe al grupo Dirección; los de 45 días siguen
+siendo trabajo del ADC en la bandeja, donde ya hay una alerta, y repetirlos por
+correo cada día enseñaría a no leerlo. Calla cuando no hay nada que escalar, y
+deja constancia en `JobRun` para que el vigilante note si dejó de correr.
 """
 
 from datetime import timedelta
 
+from django.conf import settings
+from django.core.mail import EmailMessage
 from django.core.management.base import BaseCommand
+from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext as _
+
+from apps.core.groups import REPORT_RECIPIENTS, direction_emails
+from apps.core.jobs import record_job_run
+from apps.core.mail import warn_undelivered_mail
+
+ESCALATE_DAYS = 15
 
 
 class Command(BaseCommand):
@@ -47,8 +68,48 @@ class Command(BaseCommand):
                 "the letter)."
             ),
         )
+        parser.add_argument(
+            "--dry-run",
+            action="store_true",
+            help="Report without sending mail.",
+        )
 
     def handle(self, *args, **options):
+        with record_job_run("check_client_letters") as run:
+            escalated = self._report(options)
+            mailed = self._notify(escalated, options["dry_run"]) if escalated else False
+            run["mailed"] = mailed and not options["dry_run"]
+            run["summary"] = (
+                f"{'[dry-run] ' if options['dry_run'] else ''}"
+                f"{len(escalated)} to escalate"
+                + (", mailed" if mailed and not options["dry_run"] else "")
+            )
+
+    def _notify(self, escalated, dry_run):
+        recipients = direction_emails()
+        if not recipients:
+            self.stdout.write(
+                self.style.WARNING(
+                    f"{len(escalated)} permit(s) to escalate but no recipients in "
+                    f"the {REPORT_RECIPIENTS!r} group; nothing sent."
+                )
+            )
+            return False
+        if not dry_run:
+            warn_undelivered_mail(self)
+            EmailMessage(
+                subject=_("AeroControl · permits expiring without the client letter"),
+                body=render_to_string(
+                    "operations/email/client_letters.txt",
+                    {"rows": escalated, "base_url": settings.SITE_BASE_URL},
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=recipients,
+            ).send()
+        return True
+
+    def _report(self, options):
+        """Imprime el informe de siempre y devuelve lo que escala a Gerencia."""
         from django.contrib.contenttypes.models import ContentType
 
         from apps.compliance.models import Document
@@ -95,6 +156,7 @@ class Command(BaseCommand):
             f"Client authorization letters, permits expiring within {horizon} "
             f"days ({total} permits):\n"
         )
+        escalated = []
         for permit, days_left in missing:
             label = f"{permit.internal_folio} {permit.cost_center.code}".strip()
             when = (
@@ -105,7 +167,16 @@ class Command(BaseCommand):
             # El escalamiento del SPEC es por umbral, y se dice en la salida en
             # vez de decidirse en silencio: quien lee el trabajo diario ve a
             # quién le toca.
-            if days_left <= 15:
+            if days_left <= ESCALATE_DAYS:
+                escalated.append(
+                    {
+                        "label": label,
+                        "valid_until": permit.valid_until,
+                        "days_left": days_left,
+                        "days_left_abs": abs(days_left),
+                        "path": reverse("permission-detail", args=[permit.pk]),
+                    }
+                )
                 self.stdout.write(
                     self.style.ERROR(f"  ESCALATE  {label:28} {when}  → Gerencia")
                 )
@@ -122,3 +193,4 @@ class Command(BaseCommand):
                 "Upload it from the permit's dossier (Carta del mandante). "
                 "Renewal needs it; the DGAC does not renew without it."
             )
+        return escalated
