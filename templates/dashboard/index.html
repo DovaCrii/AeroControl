@@ -228,9 +228,9 @@ when the three are done.{% endcomment %}
       <p class="text-muted small mb-0">{% translate "The registry is loaded, but nothing is being watched yet. Three steps in order:" %}</p>
     </div>
     <div class="d-flex gap-2 flex-wrap align-items-center">
-      {% if compliance_setup.doc_types %}<span class="badge bg-success-subtle text-success-emphasis">✓ {% translate "Document types created" %}</span>{% else %}<a href="{% url 'documenttype-create' %}" class="badge bg-warning-subtle text-warning-emphasis text-decoration-none">1 · {% translate "Create the document types" %}</a>{% endif %}
-      {% if compliance_setup.documents %}<span class="badge bg-success-subtle text-success-emphasis">✓ {% translate "Documents loaded" %}</span>{% else %}<a href="{% url 'document-create' %}" class="badge bg-warning-subtle text-warning-emphasis text-decoration-none">2 · {% translate "Load the documents with their expiry dates" %}</a>{% endif %}
-      {% if compliance_setup.rules %}<span class="badge bg-success-subtle text-success-emphasis">✓ {% translate "Alert rules defined" %}</span>{% else %}<a href="{% url 'alertrule-create' %}" class="badge bg-warning-subtle text-warning-emphasis text-decoration-none">3 · {% translate "Define an alert rule" %}</a>{% endif %}
+      {% if compliance_setup.doc_types %}<span class="badge bg-success-subtle text-success-emphasis">✓ {% translate "Document types created" %}</span>{% else %}<a href="{% url 'documenttype-create' %}" class="badge sev-caution text-decoration-none">1 · {% translate "Create the document types" %}</a>{% endif %}
+      {% if compliance_setup.documents %}<span class="badge bg-success-subtle text-success-emphasis">✓ {% translate "Documents loaded" %}</span>{% else %}<a href="{% url 'document-create' %}" class="badge sev-caution text-decoration-none">2 · {% translate "Load the documents with their expiry dates" %}</a>{% endif %}
+      {% if compliance_setup.rules %}<span class="badge bg-success-subtle text-success-emphasis">✓ {% translate "Alert rules defined" %}</span>{% else %}<a href="{% url 'alertrule-create' %}" class="badge sev-caution text-decoration-none">3 · {% translate "Define an alert rule" %}</a>{% endif %}
     </div>
   </div>
 </section>

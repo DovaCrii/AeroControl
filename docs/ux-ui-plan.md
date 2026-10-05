@@ -480,12 +480,16 @@ cada par fondo/texto cumple 4.5:1 en ambos temas.
 🔶 **Implementada, con el criterio sin cerrar** (revisión del 2026-10-05). Hecho: los
 cinco niveles con sus tres variantes en los dos temas, `BUCKET_BADGE_CSS` y
 `BUCKET_TEXT_CSS` sobre ellos, y la prueba de contraste 4.5:1
-(`apps/core/test_ux01_severity_tokens.py`). **Falta**: 10 usos directos de
-`bg-warning-subtle` en 6 plantillas (`registry/_aircraft_rows`, `registry/_operator_rows`,
-`registry/_qualification_rows`, `operations/_flight_request_rows`, `geo/plan_detail`,
-`dashboard/index`) y 7 reglas `!important` de insignias en tema oscuro (bajaron de 15,
-no a 0). *Condición de cierre:* migrar esas 10 apariciones a un nivel `sev-*` y
-borrar las reglas `!important` que queden sin insignia de Bootstrap que reparar.
+(`apps/core/test_ux01_severity_tokens.py`). **Cerrada la mitad del criterio** el
+2026-10-05 (`LV-269`): los 10 usos directos de `bg-warning-subtle` pasaron a `sev-caution`
+y `sev-warning`, que miden lo mismo que la clase vieja en los dos temas (comprobado en el
+navegador), y una prueba impide volver a escribirla. **Falta la otra mitad**: 7 reglas
+`!important` de insignias en tema oscuro (bajaron de 15, no a 0), que todavía necesitan
+28 usos de `bg-secondary/primary/success/info/dark-subtle` en plantillas y las paletas
+de categoría de `compliance/digest.py` (`SUBJECT_TONE_CSS`) y `registry/models.py`
+(`CHIP_PALETTE`). Esos **no son severidad** sino neutros y colores de familia. *Condición
+de cierre:* decidir si el criterio de las reglas `!important` se retira de la fila (esos
+usos no son de severidad) o se migran a tokens de categoría.
 
 **`UX-02` · Escala tipográfica y de espaciado como tokens.**
 *Criterio:* `--fs-*` y `--sp-*` declarados; ningún valor `rem` literal nuevo en
