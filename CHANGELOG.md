@@ -8,6 +8,15 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Fixed
+
+- **El historial de estados de un permiso ya no queda huérfano si el guardado falla
+  (`LV-270`).** Antes se escribía antes de guardar el permiso: con un error en el
+  guardado, el historial decía que el permiso había pasado, por ejemplo, de aprobado a
+  denegado mientras la base seguía diciendo aprobado. Ahora se escribe dentro del mismo
+  guardado y, si este falla, se deshace con él. Es el primero de los cinco modelos con
+  historial; el resto sigue como estaba.
+
 ### Changed
 
 - **Las insignias ámbar dejan de nombrar la utilidad de Bootstrap (`LV-269`).** Diez
