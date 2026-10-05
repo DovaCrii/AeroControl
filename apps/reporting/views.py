@@ -17,7 +17,7 @@ impresión.
 """
 
 import re
-from datetime import date
+from datetime import date, timedelta
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -33,6 +33,7 @@ from apps.core.views import (
     ModelViewPermissionRequiredMixin,
 )
 from apps.reporting.builder import build, month_bounds
+from apps.reporting.checks import pre_issue_warnings
 from apps.reporting.forms import ActionFormSet, FindingFormSet, PeriodNoteForm
 from apps.reporting.models import ReportRun
 from apps.reporting.summary import executive_summary
@@ -121,6 +122,14 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
         context.update(self._sheets(payload))
         # LV-260: la hoja ejecutiva, calculada del payload y no de la base.
         context["summary"] = executive_summary(payload)
+        # LV-265: lo que conviene mirar antes de emitir, sólo en pantalla.
+        previous_month = (period.replace(day=1) - timedelta(days=1)).replace(day=1)
+        previous = (
+            ReportRun.objects.filter(period=previous_month)
+            .order_by("-revision")
+            .first()
+        )
+        context["warnings"] = pre_issue_warnings(payload, run, previous)
         return context
 
     @staticmethod

@@ -9283,3 +9283,27 @@ msgstr "Descargar PDF"
 #: templates/reporting/executive_brief.html
 msgid "Opens the print dialog: choose “Save as PDF” as the destination."
 msgstr "Abre el diálogo de impresión: elija «Guardar como PDF» como destino."
+
+#: apps/reporting/checks.py
+msgid "%(code)s has a permit in force (%(folios)s) but is not in the coverage table: it is closed, inactive or marked as not flying. The “X of N cost centres” figure does not count it."
+msgstr "%(code)s tiene un permiso vigente (%(folios)s) pero no está en la tabla de cobertura: está cerrada, inactiva o marcada como que no vuela. La cifra «X de N Centros de Costo» no la cuenta."
+
+#: apps/reporting/checks.py
+msgid "The written text names %(code)s, which is not a cost centre of this report."
+msgstr "El texto escrito nombra a %(code)s, que no es un Centro de Costo de este informe."
+
+#: apps/reporting/checks.py
+msgid "The period observation (section 2) is still not written."
+msgstr "La observación del período (sección 2) aún no está redactada."
+
+#: apps/reporting/checks.py
+msgid "The findings of the period are still not written."
+msgstr "Los hallazgos del período aún no están redactados."
+
+#: apps/reporting/checks.py
+msgid "The total of cost centres went from %(before)s to %(now)s since the previous report. Closed cost centres stopped counting on 2026-09-14; if that is not the reason, review the registry."
+msgstr "El total de Centros de Costo pasó de %(before)s a %(now)s desde el informe anterior. Las faenas cerradas dejaron de contarse el 2026-09-14; si ese no es el motivo, conviene revisar el registro."
+
+#: templates/reporting/monthly_report.html
+msgid "Review before issuing"
+msgstr "Revisar antes de emitir"

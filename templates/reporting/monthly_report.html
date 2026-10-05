@@ -92,6 +92,18 @@ hoy.{% endcomment %}
   {% endif %}
 </div>
 
+{% comment %}LV-265: lo que conviene mirar antes de emitir. Sólo en pantalla
+(`d-print-none`): son avisos para quien emite, no parte del documento. No bloquean
+aprobar, porque el motivo puede ser legítimo.{% endcomment %}
+{% if warnings %}
+<div class="alert alert-warning d-print-none" role="alert">
+  <strong>{% translate "Review before issuing" %}</strong>
+  <ul class="mb-0 mt-1">
+    {% for warning in warnings %}<li>{{ warning }}</li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+
 {% comment %}⚠️ **Las hojas de permisos son tantas como hagan falta, y por eso el
 documento ya no es una lista de cinco `include`.**
 
