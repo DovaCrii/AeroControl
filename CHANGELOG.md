@@ -10,6 +10,14 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Skill `aerocontrol` para agentes (`.claude/skills/aerocontrol/`).** Resume `AGENTS.md`,
+  las lecciones operativas, el despliegue a `p340` y el rumbo a 1.0 en un `SKILL.md` corto con
+  referencias que se cargan solo cuando hacen falta, y trae `scripts/plan_query.py`, que
+  consulta `MASTER_PLAN.md` (`--pending`, `--id`, `--summary`, `--ghosts`) sin leerlo entero.
+  Reconoce el estado `🔶` (a medias) —sin él las filas como `LV-218` quedaban
+  invisibles para `--pending`— y no toma un sub-ítem (`LV-168b`) por una fila fantasma.
+  Es una vista derivada: manda `AGENTS.md`. El `.gitignore` deja de excluir
+  `.claude/skills/` y sigue excluyendo el resto de `.claude/`.
 - **Las tablas se ordenan por columna, se acomodan y se guardan como vistas
   (`UX-07`, `UX-09`, `UX-12`).** Las 16 listas de la aplicación pasan ahora por
   un mismo componente. Con eso: **ordenar apretando el encabezado** —que no
