@@ -1,20 +1,36 @@
 # HANDOFF — AeroControl
 
-## 🟡 2026-10-05 — descargar el informe en PDF, **sin desplegar**
+## ✅ 2026-10-05 — PDF, confirmación única, revisión previa, regla de faenas y alertas, **desplegados** (`66bc664`)
 
-`p340` corre **`755fe6b`**. Falta:
+`p340` corre **`66bc664`**, desplegado el 2026-10-05 (`git pull` `c1ed293..66bc664`,
+reinicio, `git log` = `66bc664`). Lo que entró:
 
-| Fila | Qué | Despliegue |
-|---|---|---|
-| deps | `pypdf` 6.16.2 → 6.19.0 y `urllib3` 2.7.0 → 2.8.0: `pip-audit` publicó avisos el 2026-10-05 y el gate quedó rojo. | `uv sync --no-dev` |
-| `LV-267` | **Alertas.** (1) El resumen de vencimientos va al grupo Dirección cuando la faena no tiene responsable. (2) **Los avisos a Dirección se perdían si un miembro no tenía correo** (ocho comandos). (3) `check_client_letters` escribe a Dirección lo que escala y queda registrado. **Falta del usuario:** `EMAIL_HOST` (hoy no sale ningún correo), instalar los timers `letters`, `watchdog` y `verifybak`, y apagar la regla «T-15 · Gerencia». | reiniciar + timers |
-| `LV-266` | Regla única: una faena **cerrada o sin operación no entra en los registros** (cobertura, cierre mensual, «¿Puedo volar?»); el resumen de vencimientos deja de escribirle a las cerradas (`CC716`). | reiniciar |
-| `LV-265` | Bloque **«Revisar antes de emitir»** en el informe (sólo pantalla): permiso vigente de faena fuera de la cobertura, faenas inexistentes en el texto, observación sin redactar, cambio del total. **Falta del usuario:** averiguar por qué `CC716` no sale en la tabla y redactar la observación y los hallazgos. | reiniciar |
-| `LV-264` | Los botones con confirmación («Aprobar», «Archivar») preguntaban **dos veces**, y la segunda aun tras cancelar la primera. Ahora una. | `collectstatic` |
-| `LV-263` | Botón **«Descargar PDF»** en el informe mensual y en el Dato Ejecutivo (pedido del usuario, «de prioridad»). Lo impreso salía en 7 páginas para un informe de 5 y el Dato Ejecutivo en 2; ahora 5 y 1, medido con `--print-to-pdf`. | `collectstatic` + reiniciar |
+| Fila | Qué |
+|---|---|
+| deps | `pypdf` 6.19.0 y `urllib3` 2.8.0 (avisos de `pip-audit`). |
+| `LV-263` | Botón **«Descargar PDF»** en el informe mensual y en el Dato Ejecutivo; impreso, 5 páginas y 1. |
+| `LV-264` | Los botones con confirmación preguntaban **dos veces**; ahora una. |
+| `LV-265` | Bloque **«Revisar antes de emitir»** en el informe (sólo pantalla). |
+| `LV-266` | Regla única: una faena **cerrada o sin operación no entra en los registros**; el resumen de vencimientos deja de escribirle a las cerradas. |
+| `LV-267` | **Alertas.** El resumen cae en Dirección si la faena no tiene responsable; los avisos a Dirección **ya no se pierden si un miembro no tiene correo** (ocho comandos); `check_client_letters` escribe a Dirección lo que escala y queda registrado. |
 
-**Paso de despliegue: `git pull`, `uv sync --no-dev`, entorno, `collectstatic` y
-reiniciar.** Sin migraciones. El entorno **antes** de `collectstatic`.
+⚠️ **Dos despliegues de esta jornada "parecieron" correr sin el `git pull`**
+(`collectstatic` copió 0 archivos y el `git log` seguía en el hash viejo). La
+prueba de que llegó es siempre el hash final de `git log --oneline -1`.
+
+### Falta, y es del usuario (sin código)
+
+- **`EMAIL_HOST` y credenciales** en `/etc/aerocontrol.env`: hoy **ningún correo
+  sale** (cuatro trabajos terminan «NO ENVIADO (correo sin configurar)»).
+- **Instalar los timers `letters`, `watchdog` y `verifybak`**: el bloque está en
+  `docs/scheduled-operations.md`. El vigilante no corre desde el 2026-08-17.
+- **Apagar la regla «Permisos: renovación vencida de plazo (T-15 · Gerencia)»**
+  (`LV-232` la mandó retirar; sigue activa con 3 alertas).
+- **Poner responsable** a las faenas sin destinatario (11 de 15 el 2026-10-05).
+- **`CC716`**: contrato cerrado con el permiso `JEJ-2026-003` vivo hasta el 28-10;
+  reabrir el contrato o cerrar el permiso.
+- Una contraseña quedó tecleada como comando en la terminal de `p340` el
+  2026-10-05; el historial se borró con `history -c && history -w`.
 
 ## ✅ 2026-09-25 — cierre mensual unificado y realce de filas, **desplegados** (`755fe6b`)
 
