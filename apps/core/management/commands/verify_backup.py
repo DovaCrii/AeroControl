@@ -28,14 +28,13 @@ import logging
 from pathlib import Path
 
 from django.conf import settings
-from django.contrib.auth.models import Group
 from django.core.mail import EmailMessage
 from django.core.management.base import BaseCommand, CommandError
 from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 
 from apps.core.backups import latest_backup, load_manifest, verify
-from apps.core.groups import REPORT_RECIPIENTS
+from apps.core.groups import REPORT_RECIPIENTS, direction_emails
 from apps.core.jobs import record_job_run
 from apps.core.mail import warn_undelivered_mail
 
@@ -111,12 +110,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f"{name}: restorable."))
 
     def _notify(self, name, problems, dry_run):
-        recipients = list(
-            Group.objects.filter(name=REPORT_RECIPIENTS)
-            .values_list("user__email", flat=True)
-            .exclude(user__email="")
-            .exclude(user__email=None)
-        )
+        recipients = direction_emails()
         if not recipients:
             logger.warning(
                 "backup_verification_no_recipients",

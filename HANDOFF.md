@@ -7,6 +7,7 @@
 | Fila | Qué | Despliegue |
 |---|---|---|
 | deps | `pypdf` 6.16.2 → 6.19.0 y `urllib3` 2.7.0 → 2.8.0: `pip-audit` publicó avisos el 2026-10-05 y el gate quedó rojo. | `uv sync --no-dev` |
+| `LV-267` | **Alertas.** (1) El resumen de vencimientos va al grupo Dirección cuando la faena no tiene responsable. (2) **Los avisos a Dirección se perdían si un miembro no tenía correo** (ocho comandos). (3) `check_client_letters` escribe a Dirección lo que escala y queda registrado. **Falta del usuario:** `EMAIL_HOST` (hoy no sale ningún correo), instalar los timers `letters`, `watchdog` y `verifybak`, y apagar la regla «T-15 · Gerencia». | reiniciar + timers |
 | `LV-266` | Regla única: una faena **cerrada o sin operación no entra en los registros** (cobertura, cierre mensual, «¿Puedo volar?»); el resumen de vencimientos deja de escribirle a las cerradas (`CC716`). | reiniciar |
 | `LV-265` | Bloque **«Revisar antes de emitir»** en el informe (sólo pantalla): permiso vigente de faena fuera de la cobertura, faenas inexistentes en el texto, observación sin redactar, cambio del total. **Falta del usuario:** averiguar por qué `CC716` no sale en la tabla y redactar la observación y los hallazgos. | reiniciar |
 | `LV-264` | Los botones con confirmación («Aprobar», «Archivar») preguntaban **dos veces**, y la segunda aun tras cancelar la primera. Ahora una. | `collectstatic` |

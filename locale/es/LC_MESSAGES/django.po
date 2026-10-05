@@ -9310,3 +9310,33 @@ msgstr "El total de Centros de Costo pasó de %(before)s a %(now)s desde el info
 #: templates/reporting/monthly_report.html
 msgid "Review before issuing"
 msgstr "Revisar antes de emitir"
+
+#: templates/compliance/email/alert_digest.html
+msgid "This cost center has no responsible person assigned, so you receive its notice as a fallback. Assign a responsible operator or an external contact in the cost center record."
+msgstr "Este centro de costo no tiene un responsable asignado, por lo que usted recibe su aviso como respaldo. Asigne un operador responsable o un contacto externo en la ficha del centro de costo."
+
+#: apps/operations/management/commands/check_client_letters.py
+msgid "AeroControl · permits expiring without the client letter"
+msgstr "AeroControl · permisos por vencer sin la carta del mandante"
+
+#: templates/operations/email/client_letters.txt
+msgid "Permits expiring without the client letter"
+msgstr "Permisos por vencer sin la carta del mandante"
+
+#: templates/operations/email/client_letters.txt
+msgid "These permits expire soon and have no client authorization letter on file. The DGAC does not renew without it, so the renewal needs your attention:"
+msgstr "Estos permisos vencen pronto y no tienen la carta de autorización del mandante en la ficha. La DGAC no renueva sin ella, así que la renovación necesita su atención:"
+
+#: templates/operations/email/client_letters.txt
+#, python-format
+msgid "expired %(days)s days ago"
+msgstr "venció hace %(days)s días"
+
+#: templates/operations/email/client_letters.txt
+#, python-format
+msgid "%(days)s days left"
+msgstr "faltan %(days)s días"
+
+#: templates/operations/email/client_letters.txt
+msgid "Upload the letter from the permit's dossier (Carta del mandante)."
+msgstr "Suba la carta desde el expediente del permiso (Carta del mandante)."

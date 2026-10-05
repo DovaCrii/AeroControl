@@ -253,6 +253,19 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   fabricante y es con el que la aeronave aparece en la garantía, en el registro
   de la DGAC y en las carpetas del repositorio documental.
 
+### Fixed
+
+- **Los avisos al grupo Dirección se perdían si un miembro no tenía correo
+  (`LV-267`).** Bastaba una persona sin correo en el grupo para que el vigilante de
+  trabajos, la verificación de respaldos, el informe ejecutivo y otros cuatro
+  avisos no le llegaran a nadie. Ahora se descarta sólo a quien no tiene correo.
+- **El resumen de vencimientos ya no salta a las faenas sin responsable
+  (`LV-267`).** Su aviso llega al grupo Dirección, con una línea que pide asignar
+  un responsable.
+- **El escalamiento por carta del mandante avisa por correo (`LV-267`).** Los
+  permisos que vencen en 15 días o menos sin la carta se informan a Dirección; el
+  trabajo queda registrado y lo supervisa el vigilante.
+
 ### Added
 
 - **«Revisar antes de emitir» en el informe mensual (`LV-265`).** Avisa, sólo en

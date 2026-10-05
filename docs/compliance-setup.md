@@ -49,6 +49,14 @@ uv run python manage.py check_digest_recipients
 Lista cada CC activo como `OK`/`MISSING` con el motivo, y un resumen. Es de solo
 lectura y usa la misma lógica (`CostCenter.notification_email`) que el digest.
 
+**La faena sin responsable no se queda sin aviso (`LV-267`).** Si una faena tiene
+vencimientos y ningún destinatario alcanzable, su resumen llega al grupo
+**Dirección**, con una línea que explica por qué y pide asignar un responsable. Es
+un respaldo, no la solución: el aviso a quien corresponde sigue saliendo de la
+ficha de la faena. Sólo si Dirección tampoco tiene correos, el resumen se salta
+la faena y lo dice. `send_alert_digest --dry-run` marca esas líneas con
+`(fallback)`.
+
 ### Qué faenas entran en los registros (`LV-266`)
 
 Una faena **entra** si está activa, **se vuela** en ella y su contrato está

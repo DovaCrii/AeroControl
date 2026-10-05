@@ -20,6 +20,7 @@ resumen corto), así que después se puede comprobar si realmente corrieron.
 | `verify_backup` (LV-115) | Comprueba que el **último respaldo** esté, coincida con su manifiesto y **se abra como base de datos** con `PRAGMA integrity_check` más una consulta real. Un `sha256` sólo prueba que el archivo no cambió; una copia hecha mientras la app escribía puede estar rota **y tener el checksum correcto**. Avisa a Dirección con los pasos a seguir; calla si el respaldo es restaurable. **No reemplaza el ensayo completo de restauración**, que sigue siendo humano | Diario, **después** del respaldo |
 | `check_scheduled_jobs` (LV-114) | Avisa al grupo Dirección cuando **otro trabajo programado** está atrasado o terminó en error — incluido el que nunca corrió porque su timer no se instaló. **Calla cuando todo está al día**: un vigilante que escribe a diario se archiva sin leer. No arregla nada ni reintenta: sólo cuenta lo que el centro de administración ya sabía y nadie miraba | Diario, después de los trabajos de la mañana |
 | `generate_monthly_report` (R5, programado desde LV-250) | **Congela el borrador del informe mensual RPA** del mes recién cerrado, con sus cifras fijas, para que quien lo firma llegue a una pantalla que no se mueve mientras escribe los hallazgos. **Congela, no aprueba**: aprobar es de una persona. Idempotente: si el mes ya tiene informe, no hace nada y lo dice | **Mensual, el día 1** (a partir de las 04:00 UTC — ver abajo) |
+| `check_client_letters` (LV-226, con correo desde LV-267) | El escalamiento que el informe mensual promete a la DGAC: permisos que vencen en **15 días o menos sin la carta del mandante en ficha** se avisan por correo al grupo Dirección. Los de 45 días siguen siendo trabajo del ADC en la bandeja (ya hay una alerta) y no se repiten por correo. **Calla cuando no hay nada que escalar**; `--dry-run` informa sin enviar. Lo supervisa `check_scheduled_jobs` | Diario, después de `generate_alerts` |
 | `snapshot_compliance` (R7.7) | Guarda los totales documentales del día (una fila por centro de costo más una consolidada). **Sin esto el reporte no puede mostrar tendencia**: los contadores se evalúan siempre "a hoy", así que comparar período contra período marca "sin cambio" por construcción. Idempotente: repetir la misma fecha la sobrescribe, no duplica | Diario, al final del día |
 
 El orden importa: `send_alert_digest` reporta lo que `generate_alerts` acaba de
@@ -145,6 +146,51 @@ systemctl daemon-reload
 systemctl enable --now aerocontrol-expire.timer aerocontrol-alerts.timer aerocontrol-digest.timer aerocontrol-backup.timer aerocontrol-watchdog.timer aerocontrol-verifybak.timer
 '
 ```
+
+> ⚠️ **Estado real de `p340` el 2026-10-05 (`list-timers`): faltan tres de los de
+> arriba — `watchdog`, `verifybak` y, desde `LV-267`, `letters`.** Los otros nueve
+> corren. El vigilante no corría desde el 17 de agosto (un `--dry-run` a mano) y el
+> respaldo se verificaba sólo cuando alguien se acordaba. Para instalar **sólo
+> esos tres**, sin tocar los que ya funcionan:
+>
+> ```bash
+> sudo bash -c '
+> mkjob() {
+>   cat >/etc/systemd/system/aerocontrol-$1.service <<EOF
+> [Unit]
+> Description=AeroControl $1
+> After=network.target
+>
+> [Service]
+> Type=oneshot
+> User=levdigital01
+> WorkingDirectory=/opt/aerocontrol
+> EnvironmentFile=/etc/aerocontrol.env
+> ExecStart=/home/levdigital01/.local/bin/uv run python manage.py $2
+> EOF
+>   cat >/etc/systemd/system/aerocontrol-$1.timer <<EOF
+> [Unit]
+> Description=AeroControl $1 (scheduled)
+>
+> [Timer]
+> OnCalendar=$3
+> Persistent=true
+>
+> [Install]
+> WantedBy=timers.target
+> EOF
+> }
+> mkjob letters "check_client_letters"  "*-*-* 06:30:00"
+> mkjob watchdog "check_scheduled_jobs" "*-*-* 09:00:00"
+> mkjob verifybak "verify_backup"       "*-*-* 22:30:00"
+> systemctl daemon-reload
+> systemctl enable --now aerocontrol-letters.timer aerocontrol-watchdog.timer aerocontrol-verifybak.timer
+> '
+> ```
+>
+> `letters` va a las 06:30, después de `generate_alerts` (06:00) y antes del
+> resumen (07:00). Con el correo sin configurar, los tres terminan en «NO ENVIADO»
+> pero **dejan registro**, que es lo que el centro de administración lee.
 
 > **`check_scheduled_jobs` (`LV-114`) va a las 09:00 a propósito**: después de
 > los trabajos de la mañana (05:30–07:00), para que lo que reporte sea el estado
