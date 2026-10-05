@@ -162,3 +162,27 @@ class TestTheUrgencyScaleUsesTheTokens:
         for level in LEVELS:
             regla = re.search(rf"\.badge\.sev-{level}\s*\{{([^}}]+)\}}", css).group(1)
             assert "!important" not in regla, level
+
+
+class TestNoTemplateNamesTheAmberUtility:
+    def test_no_template_writes_bg_warning_subtle(self):
+        """`LV-269`: las diez apariciones que quedaban pasaron a `sev-caution` /
+        `sev-warning`, que **miden lo mismo** en los dos temas (comprobado en el
+        navegador contra la clase vieja). Es la mitad del criterio de la fila:
+        ninguna insignia de estado usa `bg-warning-subtle` directamente.
+
+        La otra mitad —las reglas `!important` del tema oscuro— sigue abierta: las
+        necesitan todavía los grises y los colores de categoría (`bg-secondary-subtle`
+        y compañía), que **no** son severidad. `CHIP_PALETTE` conserva el ámbar como
+        uno de sus seis colores de familia, y es decorativo: no dice nada del estado.
+        """
+        templates = Path("templates")
+        offenders = sorted(
+            str(path)
+            for path in templates.rglob("*.html")
+            if "bg-warning-subtle" in path.read_text(encoding="utf-8")
+        )
+        assert not offenders, (
+            "Usa `sev-caution` (algo por hacer) o `sev-warning` (un problema) en "
+            f"vez de la utilidad de Bootstrap: {offenders}"
+        )

@@ -15,8 +15,44 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   `scripts/verify.ps1` corre ese mismo paso —sobre una base temporal— para que el gate
   local y el CI digan lo mismo.
 
+- **El historial de estados de un permiso ya no queda huérfano si el guardado falla
+  (`LV-270`).** Antes se escribía antes de guardar el permiso: con un error en el
+  guardado, el historial decía que el permiso había pasado, por ejemplo, de aprobado a
+  denegado mientras la base seguía diciendo aprobado. Ahora se escribe dentro del mismo
+  guardado y, si este falla, se deshace con él. Es el primero de los cinco modelos con
+  historial; el resto sigue como estaba.
+
+### Changed
+
+- **Las insignias ámbar dejan de nombrar la utilidad de Bootstrap (`LV-269`).** Diez
+  insignias de las listas de aeronaves, operadores, habilitaciones y solicitudes, de la
+  puesta en marcha del panel y del editor geo usan ahora los niveles de severidad de la
+  aplicación. Se ven exactamente igual en los dos temas.
+
 ### Added
 
+- **Un guardián recorre las rutas y exige permiso en cada vista (`LV-268`).** Toda ruta
+  fuera de `admin/` tiene que pedir un permiso de modelo o figurar en una lista de
+  excepciones con su motivo; una vista nueva con sólo sesión ya no pasa el gate sin que
+  nadie lo note. Es sólo una prueba: no cambia ninguna pantalla.
+- **Skill `aerocontrol` para agentes (`.claude/skills/aerocontrol/`).** Resume `AGENTS.md`,
+  las lecciones operativas, el despliegue a `p340` y el rumbo a 1.0 en un `SKILL.md` corto con
+  referencias que se cargan solo cuando hacen falta, y trae `scripts/plan_query.py`, que
+  consulta `MASTER_PLAN.md` (`--pending`, `--id`, `--summary`, `--ghosts`) sin leerlo entero.
+  Reconoce el estado `🔶` (a medias) —sin él las filas como `LV-218` quedaban
+  invisibles para `--pending`— y no toma un sub-ítem (`LV-168b`) por una fila fantasma.
+  Es una vista derivada: manda `AGENTS.md`. El `.gitignore` deja de excluir
+  `.claude/skills/` y sigue excluyendo el resto de `.claude/`.
+- **`HANDOFF.md` vuelve a ser corto.** Tenía 3261 líneas de historia acumulada; ahora
+  trae sólo la entrada vigente (qué corre en `p340` y qué falta), el índice de punteros y
+  un aviso de que cada despliegue deja una entrada nueva al principio. Lo anterior se
+  movió **sin cambiar una línea** a `docs/dev/handoff-archive.md` (comprobado: ninguna
+  línea del original se perdió).
+- **El inventario `UX-nn` de `docs/ux-ui-plan.md` dice lo que el código hace.**
+  Verificadas contra el código y sus pruebas: `UX-02` ✅; `UX-11` ✅ en selección y
+  exportación (archivar y resolver en lote no existen); `UX-01`, `UX-03`, `UX-04` y
+  `UX-05` 🔶 con lo que falta y su condición de cierre; `UX-30` ⛔ a la espera del texto
+  de la DAN 151 Ed. 4.
 - **Las tablas se ordenan por columna, se acomodan y se guardan como vistas
   (`UX-07`, `UX-09`, `UX-12`).** Las 16 listas de la aplicación pasan ahora por
   un mismo componente. Con eso: **ordenar apretando el encabezado** —que no

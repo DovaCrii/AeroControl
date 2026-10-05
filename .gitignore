@@ -15,7 +15,10 @@ backups/
 .obsidian/
 
 # Local tooling config; holds machine-specific absolute paths
-.claude/
+.claude/*
+# Las skills del proyecto sí se versionan (guía para agentes: .claude/skills/aerocontrol).
+# Worktrees, settings y cachés de .claude/ siguen fuera.
+!.claude/skills/
 # Mismo motivo, y ya se coló una vez: el `settings.json` que VS Code escribe
 # solo apunta a `.venv\Scripts\python.exe`, una ruta de Windows que en la VM
 # `p340` no existe. Versionarla le rompería el intérprete a quien trabaje en

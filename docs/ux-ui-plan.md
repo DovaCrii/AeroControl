@@ -477,25 +477,63 @@ sus tres variantes (fondo, texto, borde) en claro y oscuro. *Criterio:* ninguna
 insignia de estado usa `bg-warning-subtle` directamente; las reglas `!important`
 de insignias en `[data-theme="dark"]` bajan de 15 a 0; una prueba verifica que
 cada par fondo/texto cumple 4.5:1 en ambos temas.
+🔶 **Implementada, con el criterio sin cerrar** (revisión del 2026-10-05). Hecho: los
+cinco niveles con sus tres variantes en los dos temas, `BUCKET_BADGE_CSS` y
+`BUCKET_TEXT_CSS` sobre ellos, y la prueba de contraste 4.5:1
+(`apps/core/test_ux01_severity_tokens.py`). **Cerrada la mitad del criterio** el
+2026-10-05 (`LV-269`): los 10 usos directos de `bg-warning-subtle` pasaron a `sev-caution`
+y `sev-warning`, que miden lo mismo que la clase vieja en los dos temas (comprobado en el
+navegador), y una prueba impide volver a escribirla. **Falta la otra mitad**: 7 reglas
+`!important` de insignias en tema oscuro (bajaron de 15, no a 0), que todavía necesitan
+28 usos de `bg-secondary/primary/success/info/dark-subtle` en plantillas y las paletas
+de categoría de `compliance/digest.py` (`SUBJECT_TONE_CSS`) y `registry/models.py`
+(`CHIP_PALETTE`). Esos **no son severidad** sino neutros y colores de familia. *Condición
+de cierre:* decidir si el criterio de las reglas `!important` se retira de la fila (esos
+usos no son de severidad) o se migran a tokens de categoría.
 
 **`UX-02` · Escala tipográfica y de espaciado como tokens.**
 *Criterio:* `--fs-*` y `--sp-*` declarados; ningún valor `rem` literal nuevo en
 `app.css`; los existentes se migran al tocar cada bloque, no en una pasada.
+✅ **Hecho el 2026-09-02**, marcado el 2026-10-05: seis `--fs-*` y seis `--sp-*`
+declarados y usados, y `apps/core/test_ux02_scale_tokens.py` fija el techo de
+literales `rem` (311) para que la migración incremental no retroceda.
 
 **`UX-03` · `tabular-nums` en tablas, KPI y fechas.**
 *Criterio:* una línea; `11/14` y `8/16` alinean entre tarjetas contiguas.
+🔶 **Aplicada, sin medir** (2026-10-05): `font-variant-numeric: tabular-nums` está en
+las reglas de los KPI, las tablas, las métricas del centro de administración y los
+popups geo de `app.css`. **No se comprobó** que `11/14` y `8/16` alineen entre tarjetas
+contiguas —es un criterio visual y no tiene prueba propia—; conviene mirarlo en el demo
+antes de marcarla ✅.
 
 **`UX-04` · Encabezado de página único y obligatorio.**
 *Por qué:* hoy hay tres tamaños de `h1` distintos según si la plantilla usa
 `.page-header`. *Criterio:* existe `generic/_page_header.html`; ninguna plantilla
 declara `<h1>` fuera de él; una prueba de plantillas lo verifica.
+✅ **El criterio visible**, 🔶 **el estructural** (2026-10-05). Una sola regla sobre
+`main h1` empareja el tamaño de las 59 apariciones, y el parcial existe; pero **sólo 3
+plantillas lo usan** y el resto declara su `<h1>` a mano (58 archivos). Es deliberado y
+está escrito en `apps/core/test_ux04_page_header.py`: migrar ~30 plantillas de marcado
+denso a ciegas es cómo se introduce una rotura silenciosa, así que se migra al tocar cada
+una por otra razón y el techo `HAND_WRITTEN_H1_CEILING` (57) lleva la cuenta. Tampoco
+cabe en el parcial el `<h1>` con la insignia «Archivado» en línea de las fichas.
+*Condición de cierre:* el techo llega a 0, o se decide que la regla CSS basta y se
+retira el criterio estructural de la fila.
 
 **`UX-05` · Sprite SVG global.**
 *Por qué:* `base.html` lleva ~24 `path` inline y `administration.html` ya
 demuestra el patrón correcto con `<symbol>`/`<use>`. *Criterio:* un solo
 `icons.svg`; `base.html` pierde los `path`; los iconos se referencian por nombre.
+✅ **El menú**, 🔶 **no todo `base.html`** (2026-10-05). `static/img/icons.svg` tiene los
+29 símbolos del menú, `base.html` los referencia con 29 `<use>`, y
+`apps/core/test_ux05_icon_sprite.py` vigila que no declaren color propio (el de cada
+sección lo pone `LV-207`). Quedan **13 `<path>` en línea** en `base.html`, y no son del
+menú: el botón de la barra lateral, la lupa del buscador, los iconos de tema claro/oscuro
+y los chevrones de los grupos. *Condición de cierre:* pasarlos al sprite, o dejarlos
+escritos como excepción —el icono de tema lo anima el CSS por clase, y moverlo exige
+comprobar que siga animándose.
 
-**`UX-06` · `@media print` para informes y fichas.**
+**`UX-06` · `@media print` para informes y fichas.** ✅ **Hecho el 2026-09-02** (bloque `@media print` y `.print-stamp` en `static/css/app.css`; la hoja A4 del informe mensual lo complementa en `report-a4.css`).
 *Criterio:* imprimir `compliance/report.html` no incluye menú, barra ni botones;
 las tablas no se cortan a mitad de fila; sale el sello de generación.
 
@@ -575,11 +613,23 @@ criterio —ninguna lista con desplazamiento horizontal a 390 px— no se midió
 por lista en el navegador. Y hay tablas que **no** pasan por la lista compartida y
 por lo tanto no se apilan: las de las fichas (centro de costo, aeronave, operador,
 permiso, solicitud SIGO) no tienen `table-responsive` y pueden desbordar en móvil.
+🔶 **Esa última sospecha se midió después, durante `LV-254`, y no se confirmó**: ninguna
+tabla de ficha desbordaba a 390 px. Sigue sin haber `table-responsive` en ellas, así que
+es un hecho de hoy y no una garantía.
 
 **`UX-11` · Acciones en lote con selección explícita por casilla.** Archivar,
 exportar la selección y resolver alertas. *Criterio:* la barra contextual aparece
 sólo con algo seleccionado y dice cuántos; **la selección es explícita, nunca
 inferida por fecha o regla** (la lección de `LV-68`).
+✅ **La selección y la exportación**, ⬜ **archivar y resolver en lote** (2026-10-05).
+Hecho: casilla por casilla, barra oculta hasta que hay algo marcado con su contador
+(`generic/_bulk_bar.html`, `worktable.js`), y «Exportar la selección» acotada **sobre**
+el queryset de la vista, de modo que una lista de ids pegada a mano no exporta filas
+ajenas (`apps/core/test_ux11_bulk_selection.py`). **No existe** archivar ni resolver
+alertas en lote: la barra sólo trae «Limpiar» y «Exportar». Son acciones que **escriben**
+—archivar es el borrado lógico de filas operativas— y exigen su prueba de 403 y de
+tenant por acción; no se agregan sin pedido, porque `LV-68` retiró justamente la
+resolución en lote.
 
 **`UX-12` · Vistas guardadas.** ✅ **Hecho el 2026-09-03**, junto con `UX-09` y en
 el mismo modelo. Un filtro con nombre, propia o compartida.
@@ -757,6 +807,14 @@ clase prohíbe.
 **`UX-30` · Clasificador de categoría DAN 151 Ed. 4** en el flujo del permiso,
 con justificación visible y bifurcación del flujo. **Sujeto a verificar el texto
 oficial primero.**
+⛔ **Bloqueada** (2026-10-05): no hay clasificador de categorías en el código. Lo que
+existe de la DAN 151 es otra cosa: el encabezado del PDF de la autorización (`LV-231`),
+el techo de 130 m AGL (`check_altitudes`) y `area_type` (DAN 151 zona poblada contra
+DAN 91 no poblada, `R2.6`), que es una distinción del permiso y no la categoría de la
+Ed. 4 con justificación y bifurcación del flujo. El texto oficial de la Ed. 4 no está
+en el repo. *Condición de cierre:* que el usuario aporte el texto
+de la DAN 151 Ed. 4; sin él, las categorías serían inventadas y un permiso quedaría
+bifurcado por una regla que no es la de la DGAC.
 
 **`UX-31` · Vistas por rol** ✅ **hecho el 2026-09-07**. Distinta página de inicio y distintos accesos primeros
 para jefatura, cumplimiento y operador — **sin ocultar** lo que el permiso
