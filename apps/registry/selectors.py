@@ -12,7 +12,13 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Aircraft, Operator, Qualification, ResourceMovementLog
+from .models import (
+    Aircraft,
+    CostCenter,
+    Operator,
+    Qualification,
+    ResourceMovementLog,
+)
 
 # LV-242: el criterio de "al día", en un solo lugar para las dos superficies.
 #
@@ -27,6 +33,32 @@ from .models import Aircraft, Operator, Qualification, ResourceMovementLog
 # cuatro. Por eso las exclusiones viven acá y las usan los dos —`panel_readiness`
 # y la lista—, que es la lección que `LV-188` y `LV-201` dejaron cara: dos mitades
 # del mismo cálculo separadas terminan diciendo números distintos.
+
+
+def operating_cost_centers():
+    """LV-266: las faenas que **entran en los registros**. Una sola definición.
+
+    Entra una faena activa, en la que se vuela y con el contrato abierto. Una
+    faena **cerrada** o **sin operación** queda fuera de la cobertura de permisos,
+    del cierre mensual, del resumen de vencimientos y de la consulta «¿Puedo
+    volar?»: ya no hay nada que registrar ahí, y listarla declara incumplida una
+    operación que no le toca. Regla del usuario, 2026-10-05: *«al estar como sin
+    vuelo u operación no entra en los registros»*.
+
+    Estaba escrita **tres veces y distinta**: la cobertura y el cierre mensual
+    excluían las cerradas; «¿Puedo volar?» sólo las que no vuelan; y el resumen de
+    vencimientos ninguna de las dos, así que seguía escribiéndole a la faena
+    cerrada (`CC716`, con permiso vivo) mientras la tabla del informe ya no la
+    contaba. Un lugar donde se decide es lo que impide que vuelvan a separarse.
+
+    🔶 Lo que **no** cambia: un permiso vivo de una faena cerrada sigue listándose
+    en la hoja de permisos del informe —existe ante la DGAC aunque la faena haya
+    cerrado—, y por eso el bloque «Revisar antes de emitir» avisa del desacuerdo
+    en vez de esconderlo.
+    """
+    return CostCenter.objects.filter(is_active=True, operates_flights=True).exclude(
+        contract_status=CostCenter.CONTRACT_CLOSED
+    )
 
 
 def operational_fleet():

@@ -49,6 +49,24 @@ uv run python manage.py check_digest_recipients
 Lista cada CC activo como `OK`/`MISSING` con el motivo, y un resumen. Es de solo
 lectura y usa la misma lógica (`CostCenter.notification_email`) que el digest.
 
+### Qué faenas entran en los registros (`LV-266`)
+
+Una faena **entra** si está activa, **se vuela** en ella y su contrato está
+**abierto**. Una faena con el contrato **cerrado** o marcada como **sin
+operación** queda fuera de:
+
+- la cobertura de permisos (panel e informe mensual) y su denominador «X de N»;
+- el cierre mensual;
+- la consulta «¿Puedo volar?».
+
+El resumen de vencimientos deja de escribirle a las faenas **cerradas**. Las que
+**no vuelan** pero guardan equipos siguen recibiéndolo: sus seguros y
+mantenciones tienen dueño.
+
+Un permiso vigente de una faena cerrada **sigue listándose** en la hoja de
+permisos del informe —existe ante la DGAC—, y el bloque «Revisar antes de emitir»
+lo avisa. Se resuelve cerrando o archivando el permiso, o reabriendo el contrato.
+
 ## Paso 2 — Tipos de documento
 
 ```bash

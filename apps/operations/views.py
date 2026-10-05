@@ -74,7 +74,10 @@ from .models import (
 )
 from .selectors import DAILY_FLIGHT_LIMIT, duty_time_for, format_duration
 from apps.registry.models import Aircraft, CostCenter, Operator
-from apps.registry.selectors import operator_aircraft_compatibility_gaps
+from apps.registry.selectors import (
+    operating_cost_centers,
+    operator_aircraft_compatibility_gaps,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -1896,7 +1899,7 @@ class CanIFlyView(LoginRequiredMixin, TemplateView):
     }
 
     def get_context_data(self, **kwargs):
-        from apps.registry.models import Aircraft, CostCenter, Operator
+        from apps.registry.models import Aircraft, Operator
 
         from .readiness import can_fly, horizon
 
@@ -1909,9 +1912,7 @@ class CanIFlyView(LoginRequiredMixin, TemplateView):
             .exclude(status="retired")
             .order_by("registration"),
             "operator": Operator.objects.filter(is_active=True).order_by("full_name"),
-            "cost_center": CostCenter.objects.filter(
-                is_active=True, operates_flights=True
-            ).order_by("code"),
+            "cost_center": operating_cost_centers().order_by("code"),
         }
         chosen = {}
         for key, queryset in rosters.items():

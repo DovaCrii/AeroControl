@@ -263,6 +263,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Una faena cerrada o sin operación no entra en los registros (`LV-266`).** La
+  regla era distinta en cada pantalla; ahora hay una sola definición para la
+  cobertura de permisos, el cierre mensual y «¿Puedo volar?». El resumen de
+  vencimientos deja de escribirle a las faenas con el contrato cerrado.
 - **Las confirmaciones preguntan una sola vez (`LV-264`).** «Aprobar» el informe
   mensual, «Archivar» y el resto de los botones que piden confirmación mostraban
   la pregunta dos veces, y la segunda aparecía aun después de cancelar la primera.

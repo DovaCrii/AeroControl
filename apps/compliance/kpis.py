@@ -293,14 +293,10 @@ def permit_status_by_cost_center(today):
     from django.db.models import Count, Min, Q
 
     from apps.operations.models import FlightPermission
-    from apps.registry.models import CostCenter
+    from apps.registry.selectors import operating_cost_centers
 
     horizon = today + timedelta(days=30)
-    centers = list(
-        CostCenter.objects.filter(is_active=True, operates_flights=True)
-        .exclude(contract_status=CostCenter.CONTRACT_CLOSED)
-        .order_by("code")
-    )
+    centers = list(operating_cost_centers().order_by("code"))
     counted = {
         row["cost_center"]: row
         for row in FlightPermission.objects.filter(
