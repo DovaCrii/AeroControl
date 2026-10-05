@@ -1,0 +1,546 @@
+From 641112402f45db3a9a6334a4319773e5a532f6d0 Mon Sep 17 00:00:00 2001
+From: Cristobal <noreply@example.com>
+Date: Mon, 5 Oct 2026 19:53:32 +0000
+Subject: [PATCH] chore(agents): skill aerocontrol y UX-06 marcada hecha
+
+---
+ .claude/skills/aerocontrol/SKILL.md           |  69 ++++++++++
+ .../aerocontrol/references/convenciones.md    |  50 +++++++
+ .../aerocontrol/references/despliegue-p340.md |  33 +++++
+ .../aerocontrol/references/lecciones.md       |  44 +++++++
+ .../aerocontrol/references/mapa-plan.md       |  69 ++++++++++
+ .../aerocontrol/references/rumbo-1.0.md       |  43 ++++++
+ .../skills/aerocontrol/scripts/plan_query.py  | 122 ++++++++++++++++++
+ .gitignore                                    |   5 +-
+ CHANGELOG.md                                  |   6 +
+ docs/ux-ui-plan.md                            |   2 +-
+ 10 files changed, 441 insertions(+), 2 deletions(-)
+ create mode 100644 .claude/skills/aerocontrol/SKILL.md
+ create mode 100644 .claude/skills/aerocontrol/references/convenciones.md
+ create mode 100644 .claude/skills/aerocontrol/references/despliegue-p340.md
+ create mode 100644 .claude/skills/aerocontrol/references/lecciones.md
+ create mode 100644 .claude/skills/aerocontrol/references/mapa-plan.md
+ create mode 100644 .claude/skills/aerocontrol/references/rumbo-1.0.md
+ create mode 100644 .claude/skills/aerocontrol/scripts/plan_query.py
+
+diff --git a/.claude/skills/aerocontrol/SKILL.md b/.claude/skills/aerocontrol/SKILL.md
+new file mode 100644
+index 0000000..a20dbd9
+--- /dev/null
++++ b/.claude/skills/aerocontrol/SKILL.md
+@@ -0,0 +1,69 @@
++---
++name: aerocontrol
++description: Guía operativa del repo AeroControl (Django, gestión de flota RPA/UAS, cumplimiento DGAC, J.E.J. Ingeniería). Úsala SIEMPRE que se trabaje en este repositorio -- retomar trabajo, elegir la siguiente tarea, implementar o corregir algo, revisar un PR, tocar traducciones/permisos/migraciones, o desplegar a la VM p340 -- aunque el pedido no mencione MASTER_PLAN, HANDOFF o AGENTS. Reemplaza leer MASTER_PLAN.md (1500+ líneas) y HANDOFF.md (3000+ líneas) enteros.
++---
++
++# AeroControl
++
++Django 6.1 modular (Python 3.12, uv, SQLite, Bootstrap 5 + HTMX), desplegado en intranet (VM `p340`) con datos reales. Proyecto en **pausa de estabilización**: no se agrega funcionalidad fuera del plan sin pedido explícito del usuario.
++
++## 1. Al empezar (en este orden, ~2 minutos)
++
++1. `git status --short --branch` y `git log --oneline -5`.
++2. Leer **solo la primera entrada** de `HANDOFF.md` (hasta el primer `---`/`##` siguiente). Describe qué corre en producción y qué falta. No leer el resto.
++3. Estado del plan sin abrir `MASTER_PLAN.md`:
++   ```
++   python .claude/skills/aerocontrol/scripts/plan_query.py --summary
++   python .claude/skills/aerocontrol/scripts/plan_query.py --pending
++   python .claude/skills/aerocontrol/scripts/plan_query.py --id LV-267     # una fila concreta
++   ```
++4. Si hay que entender un área, abrir **solo** la sección que apunta `references/mapa-plan.md` (con `sed -n 'A,Bp'`).
++
++## 2. Antes de implementar una fila pendiente
++
++- **El tablero miente en las dos direcciones.** Un `⬜` puede estar hecho (pasó 5 veces) y un `✅` puede tener la premisa vencida. Hacer `grep` del código que la fila describe antes de escribir nada.
++- **Un `⬜` bloqueado por decisión de negocio no se desbloquea programando.** Umbrales de contrato, límites de jornada y metas de KPI los define el usuario; no inventar números.
++- **Un pendiente anotado en un test es una hipótesis**, no un diagnóstico: verificar la causa antes de actuar.
++- Antes de agregar un método a una clase larga, listar los que ya tiene (`grep -n "^    def "`): una segunda definición silencia a la primera sin error.
++
++## 3. Reglas no negociables (resumen; detalle en `references/convenciones.md`)
++
++- Modelos: `BaseModel` (UUID, `created_at/updated_at`, `is_active`). **Nunca borrar filas operativas**: archivar. FKs operativos con `on_delete=PROTECT`.
++- Lógica de negocio en modelos; nada en templates ni serializers. Validar en formulario **y** en `clean()`/constraint.
++- **Toda vista de lectura exige `view_*`** (no basta `LoginRequiredMixin`), acota por tenant y lleva prueba de 403. Sin `fields="__all__"` en formularios de escritura. Sin `|safe` con datos de usuario (`json_script`).
++- Cadenas fuente **en inglés** con `gettext`; el español vive en el catálogo, **neutral y sin voseo** (trato de usted o impersonal). Traducciones nuevas **a mano** en el `.po`, nunca aceptar `fuzzy`; recompilar el `.mo` (está versionado).
++- Mutaciones relevantes quedan en `AuditEvent` vía `set_audit_context`. Exportaciones reutilizan `CsvExportMixin`.
++- Una intención por rama y por commit; rama `codex/<área>`; **nunca `push --force`**; `git fetch` antes de empujar (puede haber otra sesión en la misma rama).
++
++## 4. Definition of Done
++
++| Cambio | Mínimo |
++|---|---|
++| Modelo/campo | Migración con nombre descriptivo + constraint + prueba de la constraint |
++| Vista | Prueba de 403 + aislamiento por tenant + strings traducidos |
++| Comando | Camino feliz + camino de error real |
++| Formulario | Una prueba por cada regla de `clean()`/`add_error`; si agrega campo a `Meta.fields`, agregarlo a la plantilla |
++| Bug | Prueba que falla sin el fix y pasa con él (romper el arreglo una vez para confirmarlo) |
++| Plantilla | `apps/core/test_templates.py` sigue verde |
++
++Gate antes de entregar: `pwsh scripts/verify.ps1` (check, migraciones, `pytest -n auto --cov`, `ruff check` **y** `ruff format --check`, bandit, pip-audit). Verificar en navegador antes de marcar `✅`.
++
++## 5. Al cerrar una fila
++
++El commit y su fila van **juntos**: marcar `⬜→✅` en `MASTER_PLAN.md`, entrada en `CHANGELOG.md` `[Unreleased]`, y si cambió algo operativo, `HANDOFF.md`. Comprobar con `plan_query.py --ghosts` (no debe haber IDs `LV-N` del log sin fila).
++
++## 6. Despliegue a `p340`
++
++Solo cuando el usuario lo pida. Seguir **`references/despliegue-p340.md`** al pie de la letra: se pega por pasos, el primer comando es `git status --short --branch`, y la prueba de que llegó es el hash de `git log --oneline -1` en la VM.
++
++## Dónde mirar según la tarea
++
++| Necesito… | Leer |
++|---|---|
++| Convenciones, permisos, i18n, DoD completos | `references/convenciones.md` |
++| Trampas ya vividas (tests, UI, migraciones, service worker) | `references/lecciones.md` |
++| Desplegar, diagnosticar un 500 post-despliegue | `references/despliegue-p340.md` |
++| Qué falta para 1.0 y qué decide el usuario | `references/rumbo-1.0.md` |
++| Dónde está cada bloque del plan (líneas y estado) | `references/mapa-plan.md` |
++
++Precedencia documental si dos fuentes chocan: `AGENTS.md` > `MASTER_PLAN.md` > `openspec/changes/*` > `AUDIT_CLAUDE.md` > `BACKLOG.md` > `README.md`/`ARCHITECTURE.md` > `docs/*.md` > `docs/dev/*.md` (no autoritativas).
+diff --git a/.claude/skills/aerocontrol/references/convenciones.md b/.claude/skills/aerocontrol/references/convenciones.md
+new file mode 100644
+index 0000000..afac920
+--- /dev/null
++++ b/.claude/skills/aerocontrol/references/convenciones.md
+@@ -0,0 +1,50 @@
++# Convenciones de AeroControl
++
++Resumen operativo de `AGENTS.md` (que manda si hay diferencia). Contenido:
++1. Dominio y datos · 2. Contrato de permisos · 3. Traducciones (i18n) · 4. Git y ramas · 5. Calidad y CI
++
++## 1. Dominio y datos
++
++- `apps.core.BaseModel`: PK UUID, `created_at`/`updated_at`, `is_active` (archivado lógico), `notes` opcional.
++- **Nunca borrar filas operativas**: se archiva. FKs operativos con `on_delete=PROTECT`; no introducir más `CASCADE` (ver `AUDIT_CLAUDE.md` F-07).
++- "Fat models, thin views": la regla de negocio vive en el modelo. Ninguna regla en templates, serializers ni solo en el formulario (el admin, la API o un import la evaden): espejar en `clean()` o `CheckConstraint`.
++- Auditoría: toda mutación autenticada relevante queda en `AuditEvent` (append-only) vía `apps.core.audit.set_audit_context` en la vista.
++- Rutas de datos (`DB_PATH`, `DOCUMENTS_DIR`, `LOGS_DIR`, `BACKUPS_DIR`) fuera del repo. Nunca commitear datos operativos, documentos, backups ni secretos.
++- Cambios de modelo: migración revisada y con nombre descriptivo + pruebas de regresión de la regla que la motiva. Chequeos previos a una migración con `values_list`, nunca `.all()` (corren con código nuevo sobre base vieja).
++- Despliegue decidido: web en intranet. PostgreSQL solo cuando haya concurrencia real (`docs/postgresql-readiness.md`); no migrar antes.
++
++## 2. Contrato de permisos (toda vista nueva)
++
++- Vistas mutantes exigen `add_*`/`change_*`/`delete_*`.
++- **Toda vista de lectura** (listado, detalle, exportación, API) exige `view_*` explícito. `LoginRequiredMixin` a secas fue el origen de los hallazgos F-05/F-06. Las excepciones existentes (`WorkTrayView`, `CanIFlyView`, `GlobalSearchView`, etc.) están justificadas en su docstring: documentar igual cualquier excepción nueva.
++- Si el modelo tiene aislamiento por tenant, acotar el queryset con `scope_queryset_to_tenant`, no solo por permiso.
++- **Prueba de 403** para un usuario sin el permiso, y prueba cross-tenant cuando aplique.
++- Sin `fields = "__all__"` en formularios de escritura. Sin `|safe` con JSON de usuario: `json_script`.
++- Exportaciones CSV/XLSX/DOCX neutralizan fórmulas: reutilizar `CsvExportMixin`.
++- Al agregar un campo a `Meta.fields`, revisar si la plantilla dibuja campo por campo (`as_crispy_field`): un campo declarado y no dibujado se guarda vacío en cada POST.
++
++## 3. Traducciones (ES/EN)
++
++- Todo string visible usa `gettext`/`gettext_lazy`; nunca `_(variable)` (no extraíble).
++- **Cadenas fuente en inglés**, aunque solo las vea un usuario chileno. El test falla con una sola tilde en un literal.
++- Español **neutral, sin voseo** (nada de "podés/escribí/revisá"). Preferir impersonal ("conviene revisar") o trato de usted ("vuelva a probar"). Ningún test lo vigila: lo detectó el usuario.
++- Escribir `msgid`/`msgstr` **a mano** en el `.po`. `makemessages` inventa traducciones `fuzzy` por parecido; tras cada corrida, `grep fuzzy`.
++- `.mo` versionado: compilarlo localmente y commitearlo (el despliegue no corre `compilemessages`). Compilar con `--ignore .claude --locale es` o el `.mo` del proyecto puede quedar sin recompilar.
++- `{% translate %}` **no** traduce un literal con `%(algo)s`: traducir en la vista y pasar por contexto.
++- GNU gettext es obligatorio. `scripts/compile_translations.py` solo compila, no valida ni extrae.
++- `apps/core/test_translations.py` vigila duplicados, vacíos, fuzzy, cadenas faltantes y fuente en español.
++
++## 4. Git y ramas
++
++- `main` siempre desplegable, nunca se toca directo. Rama por bloque: `codex/<área-o-bloque>` (no `feat/...`). Un PR por bloque con CI verde; no mezclar tooling con producto.
++- `git fetch` antes de cualquier push y revisar `git log HEAD..origin/<rama>`. Si divergió: **nunca `push --force`**; rama nueva o fusión deliberada.
++- `locale/es/LC_MESSAGES/django.mo` es binario: no se resuelve a mano, se regenera con `scripts/compile_translations.py` desde el `.po` fusionado.
++- Conventional Commits. Al cerrar un bloque: `MASTER_PLAN.md` (✅), `CHANGELOG.md` `[Unreleased]`, `BACKLOG.md` si corresponde; la fila y el commit van juntos.
++
++## 5. Calidad y CI
++
++- Inicio: `uv sync --all-groups`. Gate: `pwsh scripts/verify.ps1` (check y `check --deploy`, `makemigrations --check`, `pytest -n auto --cov` con umbral en `pyproject.toml`, `ruff check`, `ruff format --check`, bandit, pip-audit).
++- Iterar rápido: `uv run pytest apps/<app>/tests.py` y `uv run ruff check .`.
++- **La suite corre en paralelo** (`-n auto`): los tests que escriben en disco usan `tmp_path` y apuntan `settings.DOCUMENTS_ROOT` ahí; los techos de consultas calientan la caché de `ContentType` antes de medir. Un fallo que solo aparece en paralelo se depura corriendo el archivo solo y sin `-n`.
++- Tests dependientes de la fecha: fijar el reloj (`apps.core.testing.pin_today_mid_month`) y la fecha del dato; `scripts/pytest_clockshift.py` busca bombas de reloj.
++- Ruff pinneado en `pyproject.toml` (0.15.22): una versión más nueva da cientos de avisos (`RUF012`, orden de imports) que no son deuda actual.
+diff --git a/.claude/skills/aerocontrol/references/despliegue-p340.md b/.claude/skills/aerocontrol/references/despliegue-p340.md
+new file mode 100644
+index 0000000..2ea247e
+--- /dev/null
++++ b/.claude/skills/aerocontrol/references/despliegue-p340.md
+@@ -0,0 +1,33 @@
++# Despliegue a la VM `p340`
++
++Reglas verificadas (de `AGENTS.md`). Los comandos exactos y rutas están en `docs/dev/remote-vm-operations.md` y `docs/dev/ubuntu-vm-deploy.md`; este archivo dice **qué comprobar y qué no hacer**. Desplegar solo cuando el usuario lo pida.
++
++## Dónde corre cada cosa
++- Merge y push: en **Windows** (las ramas solo existen ahí).
++- Despliegue: **dentro** de la sesión SSH de la VM. `/opt/aerocontrol` es ruta Linux; en PowerShell se resolvería como `C:\opt\...`.
++
++## Antes de dictar los comandos
++1. Comparar `git log --oneline -1` de la VM con lo que se va a subir. **El despliegue es el de TODO lo que falta en la VM, no el del último commit**: unir los pasos de todas las filas intermedias. El 2026-08-31 se entregó "solo `collectstatic`" sobre una VM que no había corrido una migración anterior y toda página que armaba el panel murió con `no such column`. Si la tanda necesita `migrate`, el comando va **en el bloque**, no en una nota al final.
++2. Primer comando de todo despliegue: `git status --short --branch`. La primera línea debe decir `## main...origin/main`, **no** `## HEAD (no branch)`.
++3. Tras un rollback (`git checkout <commit>`) la VM queda en HEAD desprendido y `git pull` no despliega nada, pero `uv sync`, `collectstatic` y el reinicio **corren igual sobre el código viejo sin error**. Volver con `git checkout main` el mismo día del rollback.
++4. Si se va a versionar un archivo que ya existe **sin versionar** en la VM, apartarlo allá primero (`mv` a `~`, no `rm`; comparar con `diff` después). Si no, `git pull` se niega y el resto del bloque corre sobre código viejo con respuestas plausibles.
++
++## Cómo ejecutarlo
++- **Cargar el entorno primero y con `set -a`**: `set -a; source /etc/aerocontrol.env; set +a`. Sin `set -a` se definen variables de shell, no de entorno, y `manage.py` cae a `config.settings.dev`. Sin entorno, `collectstatic` muere con `SECRET_KEY not found`. Verificar con `echo` `DJANGO_SETTINGS_MODULE` y `DB_PATH` **antes** de migrar.
++- **Pegar por pasos**, mirando la salida de cada uno. No encadenar en una línea: los `;` que exige la carga del entorno cortan la cadena `&&`, y un `git pull` fallado no frena el `restart`.
++- `collectstatic` es obligatorio en producción (estáticos con hash; sin `staticfiles.json` toda etiqueta `{% static %}` falla). `build.sh` ya lo ejecuta.
++- No hace falta `compilemessages`: el `.mo` está versionado.
++
++## Cómo saber que llegó
++- **El hash final de `git log --oneline -1` en la VM debe coincidir con el `main` empujado.** Es la única prueba.
++- Las tres señales de un despliegue que no llegó: `[behind N]` en el `status`, `uv sync` sin instalar nada y `migrate` sin aplicar nada.
++- Un 500 después de desplegar: `uv run python manage.py showmigrations <app> | tail -6`. Una migración sin `[X]` con código nuevo que ya la usa lo explica sin leer el traceback.
++- Si se agregó una función que notifica: comprobar el camino real (`--dry-run`, `systemctl list-timers`), no solo los tests.
++
++## Cosas que nunca se despliegan encendidas
++- Service worker: detrás de `SERVICE_WORKER_ENABLED=False` (ver `lecciones.md`; postmortem en `docs/dev/postmortem-2026-09-08-service-worker.md`).
++- Trabajos programados nuevos: registrar el timer y comprobar que aparece en `list-timers`.
++
++## Higiene
++- No teclear credenciales como comando en la terminal de la VM. Si ocurre, limpiar el historial (`history -c && history -w`) y rotar la credencial.
++- Cada despliegue deja una entrada al inicio de `HANDOFF.md` con el hash que corre en `p340` y los pasos que se ejecutaron.
+diff --git a/.claude/skills/aerocontrol/references/lecciones.md b/.claude/skills/aerocontrol/references/lecciones.md
+new file mode 100644
+index 0000000..c549f58
+--- /dev/null
++++ b/.claude/skills/aerocontrol/references/lecciones.md
+@@ -0,0 +1,44 @@
++# Lecciones operativas (trampas ya vividas)
++
++Destiladas de `AGENTS.md` § "Lecciones operativas": cada una costó tiempo real. Aquí va la regla; el relato completo, con fechas y filas `LV-N`, sigue en `AGENTS.md`.
++
++Contenido: Registro y plan · Pruebas · Traducciones · Migraciones y datos · Alertas y señales · Frontend/CSS/JS · Producción
++
++## Registro y plan
++- **Fila fantasma**: trabajo hecho sin fila en `MASTER_PLAN.md` ni entrada en `CHANGELOG.md` (pasó con `LV-186`). Al cerrar, commit y fila juntos; al retomar, `plan_query.py --ghosts`.
++- **El tablero miente**: un `⬜` puede estar hecho y un `✅` puede tener premisa vencida. `grep` del código antes de implementar.
++- **Retiros "de pantalla y no de base"**: cada uno lleva escrita, el mismo día, la **condición de cierre** del paso 2 (qué tiene que ser cierto para borrar). Seis retiros dejaron el paso 2 sin decidir. Ejemplo de formato: `max_altitude_ft` en `apps/operations/models.py`.
++- Si se retira una regla en el tablero, retirarla también de `AGENTS.md` el mismo día (las migraciones no se squashean por el tiempo del gate: se midió, 158 migraciones tardan 4,3 s).
++- Un pendiente anotado en un test: escribir qué se **observó** y qué **no** se comprobó.
++
++## Pruebas
++- **Test verde de primera sobre un bug recién arreglado**: romper el arreglo una vez (revertir, correr, restaurar) para saber que el test sirve.
++- Comparar contra el objeto (`Clase.mensaje`, `gettext("literal")`, `BUCKET_BADGE_CSS["overdue"]`), no contra texto o clases CSS tecleadas. Acotar la búsqueda a la región que se afirma, no a toda la página.
++- **Punto ciego compartido**: la fixture debe poblar las relaciones que usa la regla de negocio (el permiso con padrón vacío hizo pasar ocho tests de «¿Puedo volar?» que contestaba Sí a quien no estaba nombrado). Si la comprobación responde sobre una terna, variar cada pata por separado.
++- **Dependencia del día**: si falla un test y el diff no toca lo que afirma, mirar la fecha antes que el diff. Fijar el reloj y la fecha del dato.
++- **El gate verifica código, no cableado**: una función que notifica se comprueba en producción (`--dry-run`, `systemctl list-timers`), no solo con tests.
++- Antes de agregar un método a una clase larga, listar los que ya tiene.
++
++## Traducciones
++- Ver `convenciones.md` §3. Casos clave: `fuzzy` de `makemessages` puso en pantalla lo contrario de lo que decía el código (`LV-183`); `{% translate %}` con `%(x)s` devuelve inglés (`LV-198`); sin voseo.
++
++## Migraciones y datos
++- Los sembrados son idempotentes **por nombre/código** (`seed_alert_rules` por `name`, `seed_document_types` por `code`): renombrar una regla sembrada crea otra y deja la vieja viva (duplicaba avisos). Extender sumando filas, sin tocar claves.
++- Chequeos previos a una migración: `values_list`, nunca `.all()`.
++- El demo (`scripts/run-demo.ps1`, login `demo`/`demo-review-only`) tiene casos límite que la copia de restauración no: un bug de orden de la migración `0028` fue silencioso contra la copia limpia y reventó contra el demo.
++
++## Alertas y señales
++- `post_save`, no `pre_save`, cuando el handler vuelve a guardar algo (`Alert.resolve()` re-guarda la tarjeta enlazada; con `pre_save` esa escritura se pierde).
++- Una función que notifica no está terminada hasta comprobar el camino completo en producción: grupo destinatario con correos y trabajo programado registrado.
++
++## Frontend, CSS y JS
++- **Contraste**: se calcula (aritmética sobre dos colores), no se lee del navegador; medir contra el fondo correcto. **Medir y además mirar**: un número correcto puede describir solo la mitad de un defecto visual; una captura cierra la fila.
++- `colspan` de la fila vacía = número exacto de `<col>` en tablas `.table-normalized`; `colspan="99"` destruye los anchos. `worktable.js` le suma uno, nunca lo reemplaza. Hay un guardián que cruza `*_list.html` con `_*_rows.html`.
++- Custom property inline en un elemento puede anular una regla de estado: usar un token aparte para el valor del usuario (`--ac-sidebar-width-user`) escrito en `documentElement`.
++- `localStorage` **lanza** (no devuelve `null`) en ventana privada o con almacenamiento bloqueado: todo acceso va envuelto, lectura incluida.
++- Vistas de error: `render_to_string` **sin** `request` (con `render(request, …)` corren los context processors y apoyan la página de error en el orden de los middleware).
++- Al verificar CSS/JS en el navegador integrado, forzar revalidación (`fetch(url, {cache: 'reload'})`) antes de creerle a la medición. `collectstatic` de prueba deja `staticfiles/` (no versionado; borrarlo).
++- **Service worker**: es el único código que sobrevive a un `git revert`. (1) Guardar en caché es efecto secundario fuera del camino de la respuesta (`event.waitUntil`, con su `try/catch`). (2) `status === 200`, no `response.ok` (una 206 también es `ok` y `Cache.put` la rechaza; tampoco respuestas `redirected`). (3) **Nunca se despliega habilitado por defecto**: va tras `SERVICE_WORKER_ENABLED=False`, y `/sw.js` sigue existiendo apagado sirviendo un worker que se desinstala solo. Se enciende tras ejercitarlo como worker registrado de verdad.
++
++## Producción
++- Ver `despliegue-p340.md`. Tres ideas: el hash final de `git log -1` en la VM es la única prueba de que llegó; el despliegue incluye TODO lo que falta en la VM, no solo el último commit; `showmigrations` es el diagnóstico de treinta segundos ante un 500.
+diff --git a/.claude/skills/aerocontrol/references/mapa-plan.md b/.claude/skills/aerocontrol/references/mapa-plan.md
+new file mode 100644
+index 0000000..4a1dc1d
+--- /dev/null
++++ b/.claude/skills/aerocontrol/references/mapa-plan.md
+@@ -0,0 +1,69 @@
++# Mapa de MASTER_PLAN.md
++
++Índice de secciones con su rango de líneas, para leer **solo** lo necesario (`sed -n 'A,Bp' MASTER_PLAN.md`).
++Generado el 2026-10-05 sobre `6fba910`; los rangos se desplazan al editar el plan: si no cuadran, regenerar con `grep -nE '^#{2,3} ' MASTER_PLAN.md`.
++
++Casi todo el archivo es **historia ya resuelta** (la mayoría de las ~500 filas con estado están `✅`). Para lo abierto usar `scripts/plan_query.py --pending`, no leer secciones.
++
++| Líneas | Sección |
++|---|---|
++| 9–30 | Rumbo a 1.0 (actualizado 2026-08-12 — leer esto primero) |
++| 31–48 |   Lo que separa a esta app de una 1.0 ya no es código, es operación |
++| 49–84 |   Qué queda, al 2026-08-12 |
++| 85–92 |   Deuda técnica: política incremental (sin cambios) |
++| 93–176 |   Retiros a medias: condiciones de cierre (medido el 2026-09-02) |
++| 177–232 | Antecedentes: prioridades post-auditoría (2026-08-07) |
++| 233–254 | Cómo usar este documento |
++| 255–260 | Rama de trabajo |
++| 261–328 |   Dónde retomar |
++| 329–354 |   Estado de la base de datos real (2026-07-24) |
++| 355–381 |   Puesta en producción real: VM `p340` (2026-07-29/30) |
++| 382–393 |   Revisión en vivo del usuario sobre la app desplegada (2026-07-30) |
++| 394–428 |   Inventario de ramas (TL.6, cruzado el 2026-07-24) |
++| 429–463 |   Anatomía de R.10 / T5.1 (medido el 2026-07-25) |
++| 464–529 |   Revisión 2026-07-25 (V.*) — seguridad, estabilidad, desempeño y UX |
++| 530–545 |   Áreas de vuelo en KMZ — decidido el 2026-07-25, **SUPERADO el 2026-07-27** |
++| 546–569 |   Deuda de `openspec/specs/` (TL.8, pendiente) |
++| 570–583 | Estado actual (actualizado 2026-07-24 — FASE 0 + higiene de Bloque 0 cerradas) |
++| 584–585 | Tablero de bloques |
++| 586–597 |   FASE 0 — Estabilización inmediata `⛔ desbloquea todo` |
++| 598–607 |   FASE 1 — Arquitectura y deuda crítica `⛔ requiere FASE 0` |
++| 608–618 |   FASE 2 — Seguridad y permisos `⛔ requiere FASE 1` |
++| 619–628 |   FASE 3 — Integridad de datos `⛔ requiere FASE 1 · CAMBIAR AHORA` |
++| 629–638 |   FASE 4 — Testing `⛔ requiere FASE 0; parcial tras FASE 3` |
++| 639–652 |   FASE 5 — UX y flujos operacionales `requiere FASE 0` |
++| 653–676 |   FASE 5R — Legibilidad y consistencia visual (feedback de revisión en vivo 2026-07-24) |
++| 677–846 |   Revisión en vivo 2026-07-30 — issues de formularios/UX `🔄 EN CAPTURA` |
++| 847–860 |   FASE 6 — Nuevas funcionalidades `⏸ requiere FASE 0-3 cerradas` |
++| 861–868 | Bloques de producto (plan externo integrado 2026-07-24) |
++| 869–882 |   Ruta de ejecución (ORDEN OBLIGATORIO — no seguir el orden numérico) |
++| 883–900 |   BLOQUE 1 — Integración Alertas ⇄ Kanban `rama codex/alertas-kanban` |
++| 901–915 |   BLOQUE 2 — Notificaciones y programación `rama codex/notificaciones` `✅ COMPLETO` |
++| 916–927 |   BLOQUE 3 — Mejoras UX del Kanban `rama codex/kanban-ux` `⏸ DIFERIDO (no ejecutar sin instrucción)` |
++| 928–940 |   BLOQUE 4 — Robustez de reglas y deuda de datos `rama codex/reglas-datos` `✅ COMPLETO (parte en alcance)` |
++| 941–952 |   BLOQUE 5 — Centro de administración operativo `rama codex/admin-center` `🔄 PARCIAL — panel de situación (B5.1/ |
++| 953–966 |   BLOQUE 6 — Reportes ejecutivos y asistente `rama codex/reportes-ejecutivos` (6.1/6.2 en la ruta; 6.3 diferido) |
++| 967–970 |   BLOQUE 6.3 — Asistente IA `⏸ DIFERIDO (requiere aprobación de diseño)` |
++| 971–1006 |   BLOQUE GEO (7) — Editor geoespacial KMZ/KML `rama codex/geo-*` `⬜ PROPUESTA APROBADA — espera "go" de GEO-0` |
++| 1007–1036 |   BLOQUE OPS (8) — Seguimiento de contratos, recursos y permisos `rama codex/ops-*` `✅ CERRADO 2026-07-27 — OPS- |
++| 1037–1058 |   FASE L — Limpieza y orden del repositorio `puede correr en paralelo a FASE 0` |
++| 1059–1064 | Detalle de las tareas de FASE 0 — ✅ completada 2026-07-24 |
++| 1065–1070 |   T0.1 — Bloque `extrahead` duplicado *(PRIMERA TAREA)* |
++| 1071–1075 |   T0.2 — Cierre de mantenimiento |
++| 1076–1080 |   T0.3 — Gate que realmente falla |
++| 1081–1085 |   T0.4 — Umbral de cobertura |
++| 1086–1090 |   T0.5 — Compilación de plantillas en CI |
++| 1091–1095 |   T0.6 — Sincronizar metadatos |
++| 1096–1102 |   T0.7 — Formato |
++| 1103–1109 | REVISIÓN POST-AUDITORÍA (2026-08-07) — bloques R1-R8 y X |
++| 1110–1122 |   BLOQUE R1 — Bugs que ocultan información de cumplimiento `P0` |
++| 1123–1139 |   BLOQUE R2 — Permiso de vuelo: numeración, edición y flujo `P0` |
++| 1140–1155 |   BLOQUE R3 — Estandarización transversal `P1` — antes de importar |
++| 1156–1190 |   BLOQUE R4 — Repositorio documental `P1` |
++| 1191–1204 |   BLOQUE R5 — Trazabilidad y ciclo de vida `P1-P2` |
++| 1205–1214 |   BLOQUE R6 — Alertas y reportes `P2` |
++| 1215–1229 |   BLOQUE R7 — Base para la auditoría ISO `P2` |
++| 1230–1486 |   BLOQUE LV-D — Revisión en vivo sobre producción, 2026-08-11 (post-despliegue) `P1` |
++| 1487–1492 |   BLOQUE R8 — Clima y contexto operacional `P3` |
++| 1493–1512 |   BLOQUE X — Contrato de coexistencia con AeroLink `P1` |
++| 1513–1526 | Reglas de trabajo con agentes |
+diff --git a/.claude/skills/aerocontrol/references/rumbo-1.0.md b/.claude/skills/aerocontrol/references/rumbo-1.0.md
+new file mode 100644
+index 0000000..0f13eac
+--- /dev/null
++++ b/.claude/skills/aerocontrol/references/rumbo-1.0.md
+@@ -0,0 +1,43 @@
++# Rumbo a 1.0 — qué falta y qué decide el usuario
++
++Fuente: `MASTER_PLAN.md` § "Rumbo a 1.0" (líneas 9–92, redactada el 2026-08-12) actualizada con la primera entrada de `HANDOFF.md` (2026-10-05, `p340` corre `66bc664`). **El estado cambia rápido: si esta lista choca con `HANDOFF.md`, manda `HANDOFF.md`.**
++
++## Idea central
++Lo que separa a la app de una 1.0 **ya no es código, es operación**. Los dos bloqueadores que `v0.4.0-beta` declaró (`T2.1`, `V.3`) están cerrados.
++
++## Criterios de salida a 1.0 (estado al 2026-08-12/20)
++| # | Criterio | Estado |
++|---|---|---|
++| 1 | CSP *enforcing* en `p340` | ✅ 2026-08-13 |
++| 2 | Notificaciones llegando a personas reales | ❌ no llega nada: `EMAIL_HOST` vacío, los correos se imprimen en el journal (`LV-119`) |
++| 3 | Importador `R4` con `--apply` real | Bloqueado por 3 carpetas de `Z:` |
++| 4 | Ensayo de restauración como rutina | 🔄 la mitad automática corre a diario; falta cadencia escrita del ensayo completo |
++| 5 | Monitoreo mínimo | 🔄 los trabajos avisan si se atrasan (`LV-114`); falta instalar su timer y cubrir "la VM está apagada" |
++| 6 | 30 días estables sin incidente P0 | corre desde 2026-08-11 |
++| 7 | Correo saliente con dominio corporativo (SPF/DKIM) | ❌ bloqueador del criterio 2 |
++
++## Pendientes operativos del usuario (sin código) — HANDOFF 2026-10-05
++- Configurar `EMAIL_HOST` y credenciales en `/etc/aerocontrol.env`: hoy ningún correo sale (cuatro trabajos terminan «NO ENVIADO (correo sin configurar)»).
++- Instalar los timers `letters`, `watchdog` y `verifybak` (bloque en `docs/scheduled-operations.md`). El vigilante no corre desde el 2026-08-17.
++- Apagar la regla «Permisos: renovación vencida de plazo (T-15 · Gerencia)» (`LV-232` la mandó retirar; sigue activa con 3 alertas).
++- Asignar responsable a las faenas sin destinatario (11 de 15 el 2026-10-05).
++- `CC716`: contrato cerrado con el permiso `JEJ-2026-003` vivo hasta el 28-10; reabrir el contrato o cerrar el permiso.
++
++## Decisiones que solo toma el usuario (no inventar valores)
++- Metas de KPI que faltan (precisión, tasa de re-vuelos, cumplimiento de plazos): sin ellas el indicador se muestra pero no marca incumplimiento. Se fija en `apps/compliance/kpis.py`.
++- Umbrales RMSE/GSD por contrato (`R7.4`): sin ellos los entregables quedan "Sin evaluar". Se cargan desde la ficha del centro de costo.
++- Alcance de la limpieza del Kanban (`LV-78`): una opción borra el registro de qué tarjeta cerró qué alerta.
++- `LV-74`: las 10 vigencias que faltan en producción (lo único con impacto de cumplimiento hoy).
++
++## Bloqueado por terceros
++- `R4`: nombres de carpeta en `Z:` y antivirus real (instalado y verificado en agosto).
++- `X.4` (ingesta de vuelos): AeroLink está en M0 y las sesiones son M3; la mitad de baterías se cerró con `X.4b`.
++
++## Diferido por diseño (no ejecutar sin instrucción explícita)
++Bloque 3 (UX Kanban), Bloque 5 salvo `JobRun`, Bloque 6.3 (asistente IA), DJI Cloud API (`T6.7`), Celery, Gantt (`LV-6`, obsoleto), IPER estructurado de `R7.5` (solo a pedido), migrar a PostgreSQL (cuando AeroLink lo instale en la misma VM, con un ADR).
++
++## Deuda técnica: política incremental
++`core/views.py` y `registry/views.py` son grandes, pero el riesgo de una migración XL supera su beneficio con uso diario real. **Extraer mixins/selectors solo al tocar el flujo por otra razón** (como `EffectivenessVerificationMixin` y `StatusFlowMixin`, extraídos al aparecer su segundo usuario). Pendientes de arquitectura con ID: `T1.1`–`T1.5`, `T3.5`, `T4.5`.
++
++## Cuándo regenerar este archivo
++Cuando cambie el criterio de salida o cierre un pendiente operativo. Para el estado de filas usar `plan_query.py --pending`, no este archivo.
+diff --git a/.claude/skills/aerocontrol/scripts/plan_query.py b/.claude/skills/aerocontrol/scripts/plan_query.py
+new file mode 100644
+index 0000000..9b235e4
+--- /dev/null
++++ b/.claude/skills/aerocontrol/scripts/plan_query.py
+@@ -0,0 +1,122 @@
++#!/usr/bin/env python3
++"""Consulta rápida de MASTER_PLAN.md sin leerlo entero (solo biblioteca estándar).
++
++Uso (desde la raíz del repo):
++  python plan_query.py --summary                  # conteo de filas por estado
++  python plan_query.py --pending                  # filas ⬜ 🔄 ⛔, una línea cada una
++  python plan_query.py --pending --section FASE   # filtra por texto del encabezado
++  python plan_query.py --id LV-267                # fila completa de un ID (o prefijo: --id T1.)
++  python plan_query.py --ghosts                   # IDs LV-N del git log sin fila en el plan
++"""
++
++import argparse
++import re
++import subprocess
++import sys
++from pathlib import Path
++
++STATUS = {
++    "⬜": "pendiente",
++    "🔄": "en progreso",
++    "✅": "hecho",
++    "⛔": "bloqueado",
++    "⏸": "diferido",
++    "↪": "consolidado",
++    "❌": "obsoleto",
++}
++ROW = re.compile(r"^\|\s*([A-Za-z][A-Za-z0-9.\-]*\d[A-Za-z0-9.]*)\s*\|\s*(.*)$")
++
++
++def parse(path):
++    section, rows = "", []
++    for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
++        if line.startswith("#"):
++            section = line.lstrip("# ").strip()
++            continue
++        m = ROW.match(line)
++        if not m:
++            continue
++        rest = [c.strip() for c in m.group(2).split("|")]
++        status = next((s for s in STATUS if rest and s in rest[0]), None)
++        if status is None:
++            continue
++        text = max(rest[2:], key=len) if len(rest) > 2 else ""
++        if not text.strip():
++            text = rest[0].lstrip("".join(STATUS)).strip()
++        rows.append(
++            {
++                "id": m.group(1),
++                "status": status,
++                "section": section,
++                "line": n,
++                "text": text,
++                "raw": line,
++            }
++        )
++    return rows
++
++
++def short(text, width=150):
++    text = re.sub(r"\*\*|`", "", text)
++    return text if len(text) <= width else text[: width - 1] + "…"
++
++
++def main():
++    ap = argparse.ArgumentParser()
++    ap.add_argument("--plan", default="MASTER_PLAN.md")
++    ap.add_argument("--summary", action="store_true")
++    ap.add_argument("--pending", action="store_true")
++    ap.add_argument("--section")
++    ap.add_argument("--id")
++    ap.add_argument("--ghosts", action="store_true")
++    a = ap.parse_args()
++
++    path = Path(a.plan)
++    if not path.exists():
++        sys.exit(f"No encuentro {path}: ejecutar desde la raíz del repo.")
++    all_rows = parse(path)
++    rows = all_rows
++    if a.section:
++        rows = [r for r in rows if a.section.lower() in r["section"].lower()]
++
++    if a.summary:
++        totals = {}
++        for r in rows:
++            totals[r["status"]] = totals.get(r["status"], 0) + 1
++        print(f"{len(rows)} filas con estado")
++        for s, c in sorted(totals.items(), key=lambda x: -x[1]):
++            print(f"  {s} {STATUS[s]:<12}{c}")
++
++    if a.pending:
++        for r in rows:
++            if r["status"] in "⬜🔄⛔":
++                print(
++                    f"{r['status']} {r['id']:<8} L{r['line']:<5} "
++                    f"[{short(r['section'], 38)}] {short(r['text'])}"
++                )
++
++    if a.id:
++        hits = [r for r in all_rows if r["id"] == a.id or r["id"].startswith(a.id)]
++        for r in hits:
++            print(
++                f"--- {r['id']} {r['status']} (línea {r['line']}, "
++                f"sección: {r['section']})\n{r['raw']}\n"
++            )
++        if not hits:
++            print(f"Sin fila para {a.id}")
++
++    if a.ghosts:
++        log = subprocess.run(
++            ["git", "log", "--pretty=%s", "-n", "300"], capture_output=True, text=True
++        ).stdout
++        in_log = set(re.findall(r"\bLV-\d+[a-z]?\b", log))
++        in_plan = {r["id"] for r in all_rows}
++        missing = sorted(in_log - in_plan, key=lambda x: int(re.sub(r"\D", "", x)))
++        print(
++            "Filas fantasma (en commits, no en el plan):",
++            ", ".join(missing) or "ninguna",
++        )
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/.gitignore b/.gitignore
+index 4b33bdc..b475b62 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -15,7 +15,10 @@ backups/
+ .obsidian/
+ 
+ # Local tooling config; holds machine-specific absolute paths
+-.claude/
++.claude/*
++# Las skills del proyecto sí se versionan (guía para agentes: .claude/skills/aerocontrol).
++# Worktrees, settings y cachés de .claude/ siguen fuera.
++!.claude/skills/
+ # Mismo motivo, y ya se coló una vez: el `settings.json` que VS Code escribe
+ # solo apunta a `.venv\Scripts\python.exe`, una ruta de Windows que en la VM
+ # `p340` no existe. Versionarla le rompería el intérprete a quien trabaje en
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index aa35cb5..664ceb1 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -10,6 +10,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
+ 
+ ### Added
+ 
++- **Skill `aerocontrol` para agentes (`.claude/skills/aerocontrol/`).** Resume `AGENTS.md`,
++  las lecciones operativas, el despliegue a `p340` y el rumbo a 1.0 en un `SKILL.md` corto con
++  referencias que se cargan solo cuando hacen falta, y trae `scripts/plan_query.py`, que
++  consulta `MASTER_PLAN.md` (`--pending`, `--id`, `--summary`, `--ghosts`) sin leerlo entero.
++  Es una vista derivada: manda `AGENTS.md`. El `.gitignore` deja de excluir
++  `.claude/skills/` y sigue excluyendo el resto de `.claude/`.
+ - **Las tablas se ordenan por columna, se acomodan y se guardan como vistas
+   (`UX-07`, `UX-09`, `UX-12`).** Las 16 listas de la aplicación pasan ahora por
+   un mismo componente. Con eso: **ordenar apretando el encabezado** —que no
+diff --git a/docs/ux-ui-plan.md b/docs/ux-ui-plan.md
+index caf5a60..e6ddde1 100644
+--- a/docs/ux-ui-plan.md
++++ b/docs/ux-ui-plan.md
+@@ -495,7 +495,7 @@ declara `<h1>` fuera de él; una prueba de plantillas lo verifica.
+ demuestra el patrón correcto con `<symbol>`/`<use>`. *Criterio:* un solo
+ `icons.svg`; `base.html` pierde los `path`; los iconos se referencian por nombre.
+ 
+-**`UX-06` · `@media print` para informes y fichas.**
++**`UX-06` · `@media print` para informes y fichas.** ✅ **Hecho el 2026-09-02** (bloque `@media print` y `.print-stamp` en `static/css/app.css`; la hoja A4 del informe mensual lo complementa en `report-a4.css`).
+ *Criterio:* imprimir `compliance/report.html` no incluye menú, barra ni botones;
+ las tablas no se cortan a mitad de fila; sale el sello de generación.
+ 
+-- 
+2.43.0
+
