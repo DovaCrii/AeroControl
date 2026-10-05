@@ -10,6 +10,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **El CI vuelve a poder estar verde (`LV-271`).** Llevaba semanas en rojo en cada push
+  porque su último paso corría sobre una base vacía, sin migrar. Ahora migra primero, y
+  `scripts/verify.ps1` corre ese mismo paso —sobre una base temporal— para que el gate
+  local y el CI digan lo mismo.
 - **El historial de estados de un permiso ya no queda huérfano si el guardado falla
   (`LV-270`).** Antes se escribía antes de guardar el permiso: con un error en el
   guardado, el historial decía que el permiso había pasado, por ejemplo, de aprobado a
