@@ -12,7 +12,7 @@ solicitud presentada en SIGO que nadie contestó.{% endcomment %}
   <td class="text-nowrap">{{ object.radius_m|default:"—" }}{% if object.radius_m %} m{% endif %}</td>
   <td>{% if object.amc %}<span class="text-nowrap">{{ object.amc.code }}</span> <span class="text-body-secondary">{{ object.amc_distance_km }} km</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
   <td>
-    <span class="badge {% if object.status == 'closed' %}bg-secondary-subtle text-secondary-emphasis{% elif object.status == 'linked' %}bg-success-subtle text-success-emphasis{% elif object.status == 'filed' %}bg-info-subtle text-info-emphasis{% else %}bg-warning-subtle text-warning-emphasis{% endif %}">{{ object.get_status_display }}</span>
+    <span class="badge {% if object.status == 'closed' %}bg-secondary-subtle text-secondary-emphasis{% elif object.status == 'linked' %}bg-success-subtle text-success-emphasis{% elif object.status == 'filed' %}bg-info-subtle text-info-emphasis{% else %}sev-caution{% endif %}">{{ object.get_status_display }}</span>
     {% with waiting=object.days_waiting %}
     {% if waiting is not None %}
     {% comment %}Sin umbral inventado: se dice cuántos días lleva y quien mira
