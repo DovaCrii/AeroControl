@@ -7,6 +7,7 @@
 | Fila | Qué | Despliegue |
 |---|---|---|
 | deps | `pypdf` 6.16.2 → 6.19.0 y `urllib3` 2.7.0 → 2.8.0: `pip-audit` publicó avisos el 2026-10-05 y el gate quedó rojo. | `uv sync --no-dev` |
+| `LV-264` | Los botones con confirmación («Aprobar», «Archivar») preguntaban **dos veces**, y la segunda aun tras cancelar la primera. Ahora una. | `collectstatic` |
 | `LV-263` | Botón **«Descargar PDF»** en el informe mensual y en el Dato Ejecutivo (pedido del usuario, «de prioridad»). Lo impreso salía en 7 páginas para un informe de 5 y el Dato Ejecutivo en 2; ahora 5 y 1, medido con `--print-to-pdf`. | `collectstatic` + reiniciar |
 
 **Paso de despliegue: `git pull`, `uv sync --no-dev`, entorno, `collectstatic` y

@@ -255,6 +255,9 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Las confirmaciones preguntan una sola vez (`LV-264`).** «Aprobar» el informe
+  mensual, «Archivar» y el resto de los botones que piden confirmación mostraban
+  la pregunta dos veces, y la segunda aparecía aun después de cancelar la primera.
 - **El informe mensual y el Dato Ejecutivo se descargan en PDF (`LV-263`).** Botón
   «Descargar PDF» en las dos pantallas: abre el diálogo de impresión, donde se elige
   «Guardar como PDF», y el archivo se propone con el código del informe. Además el

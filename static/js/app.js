@@ -274,12 +274,8 @@
   });
 
   // Progressive enhancement for former inline JS (V.10 CSP: no inline handlers,
-  // no javascript: URLs).
-  // <form data-confirm="…"> asks before submitting; declining cancels it.
-  document.body.addEventListener('submit', function (event) {
-    var form = event.target.closest('form[data-confirm]');
-    if (form && !window.confirm(form.dataset.confirm)) event.preventDefault();
-  });
+  // no javascript: URLs). `<form data-confirm>` lives in its own block at the
+  // end of this file (LV-264): it was wired here too, so it asked twice.
   // <a data-history-back href="/fallback/"> goes back when there is history,
   // otherwise follows its real href (which works with CSP and no history).
   document.body.addEventListener('click', function (event) {
@@ -402,11 +398,17 @@
  *
  * Delegado en `document` y no enganchado a cada formulario: los que llegan por
  * htmx después de la carga quedan cubiertos sin volver a inicializar nada.
+ *
+ * ⚠️ **Un solo manejador** (`LV-264`). Había otro igual sobre `document.body`, más
+ * arriba, y como el envío sube de `body` a `document` la pregunta salía **dos
+ * veces** — y la segunda aun después de contestar «Cancelar» a la primera. Por
+ * eso además `defaultPrevented`: si alguien ya canceló el envío, no se pregunta.
  */
 (function () {
   'use strict';
   document.addEventListener('submit', function (event) {
     var form = event.target;
+    if (event.defaultPrevented) return;
     if (!form || !form.dataset || !form.dataset.confirm) return;
     if (!window.confirm(form.dataset.confirm)) event.preventDefault();
   });
