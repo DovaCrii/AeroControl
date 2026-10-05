@@ -1,5 +1,17 @@
 # HANDOFF — AeroControl
 
+## 🟡 2026-10-05 — descargar el informe en PDF, **sin desplegar**
+
+`p340` corre **`755fe6b`**. Falta:
+
+| Fila | Qué | Despliegue |
+|---|---|---|
+| deps | `pypdf` 6.16.2 → 6.19.0 y `urllib3` 2.7.0 → 2.8.0: `pip-audit` publicó avisos el 2026-10-05 y el gate quedó rojo. | `uv sync --no-dev` |
+| `LV-263` | Botón **«Descargar PDF»** en el informe mensual y en el Dato Ejecutivo (pedido del usuario, «de prioridad»). Lo impreso salía en 7 páginas para un informe de 5 y el Dato Ejecutivo en 2; ahora 5 y 1, medido con `--print-to-pdf`. | `collectstatic` + reiniciar |
+
+**Paso de despliegue: `git pull`, `uv sync --no-dev`, entorno, `collectstatic` y
+reiniciar.** Sin migraciones. El entorno **antes** de `collectstatic`.
+
 ## ✅ 2026-09-25 — cierre mensual unificado y realce de filas, **desplegados** (`755fe6b`)
 
 `p340` corre **`755fe6b`**, desplegado el 2026-09-25 con el entorno cargado desde

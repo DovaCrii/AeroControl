@@ -411,3 +411,26 @@
     if (!window.confirm(form.dataset.confirm)) event.preventDefault();
   });
 })();
+
+/* LV-263 · Descargar el informe en PDF.
+ *
+ * `<button data-print data-print-title="…">` abre el diálogo de impresión, donde
+ * se elige «Guardar como PDF». El título del documento se cambia mientras dura
+ * el diálogo porque **es el nombre que el navegador propone para el archivo**:
+ * sin esto se guarda como «JEJ-…-2026-09 - AeroControl.pdf». Se restaura en
+ * `afterprint`, que corre también cuando se cancela el diálogo. */
+(function () {
+  'use strict';
+  document.addEventListener('click', function (event) {
+    var button = event.target.closest('[data-print]');
+    if (!button) return;
+    event.preventDefault();
+    var original = document.title;
+    if (button.dataset.printTitle) document.title = button.dataset.printTitle;
+    window.addEventListener('afterprint', function restore() {
+      document.title = original;
+      window.removeEventListener('afterprint', restore);
+    });
+    window.print();
+  });
+})();

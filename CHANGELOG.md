@@ -255,6 +255,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **El informe mensual y el Dato Ejecutivo se descargan en PDF (`LV-263`).** Botón
+  «Descargar PDF» en las dos pantallas: abre el diálogo de impresión, donde se elige
+  «Guardar como PDF», y el archivo se propone con el código del informe. Además el
+  informe impreso dejó de salir con una primera página vacía y una última con sólo
+  el sello (7 páginas para un documento de 5), y el Dato Ejecutivo vuelve a caber
+  en una hoja.
 - **Cierre mensual: los registros operacionales y la revisión del mes, en una
   pantalla (`LV-262`).** Una fila por faena con los registros del mes por tipo —y
   cuáles faltan—, para cargarlos desde la misma fila y marcar «Cumple» o «No
@@ -530,6 +536,9 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Security
 
+- **`pypdf` 6.19.0 y `urllib3` 2.8.0.** `pip-audit` publicó el 2026-10-05 siete
+  avisos para `pypdf` 6.16.2 (lo usa la lectura del folio de la DGAC, `LV-231`) y
+  tres para `urllib3` 2.7.0; los dos suben dentro del rango ya declarado.
 - **La clave de respuestas deja de mostrársele a quien rindió la prueba
   (`LV-184`).** La revisión listaba la respuesta correcta de cada pregunta
   fallada, a la persona que acaba de rendir y puede volver a rendir: con eso se

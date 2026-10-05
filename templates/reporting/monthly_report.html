@@ -12,13 +12,18 @@ la barra y los botones, y quedan las cinco hojas A4 solas.{% endcomment %}
 {% block extrahead %}<link rel="stylesheet" href="{% static 'css/report-a4.css' %}">{% endblock %}
 
 {% block content %}
-<div class="page-header">
+{% comment %}LV-263: `d-print-none` porque el encabezado de la pantalla, impreso,
+ocupaba la primera página entera y empujaba la portada a la segunda: el PDF salía
+con siete páginas para un informe de cinco.{% endcomment %}
+<div class="page-header d-print-none">
   <div>
     <p class="page-eyebrow mb-1">{% translate "Reports" %}</p>
     <h1 class="h3 mb-0">{{ payload.meta.code }}</h1>
     <p class="page-description mb-0">{% translate "Monthly RPA reportability report to the DGAC." %}</p>
   </div>
   <div class="d-flex gap-2 flex-wrap align-items-end">
+    <button type="button" class="btn btn-primary" data-print data-print-title="{{ payload.meta.code }}"
+            title="{% translate 'Opens the print dialog: choose “Save as PDF” as the destination.' %}">{% translate "Download PDF" %}</button>
     <form method="get" class="d-flex gap-2 align-items-end">
       <div>
         <label class="form-label" for="period">{% translate "Period" %}</label>

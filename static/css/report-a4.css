@@ -600,7 +600,11 @@
 
   /* LV-247: el Dato Ejecutivo al papel, con las mismas dos reglas que las hojas
    * del informe: sin sombra y con los fondos de color, que son información. */
-  .rpt-sheet { box-shadow: none; min-height: 0; }
+  /* LV-263: `html` delante porque esta regla vive **antes** que la de pantalla
+   * de `.rpt-sheet` (más abajo, con `min-height: 1123px`) y con la misma
+   * especificidad perdía por orden. La hoja salía de 1123 px en una A4 de
+   * 1122,5 y el pie caía solo en una segunda página. */
+  html .rpt-sheet { box-shadow: none; min-height: 0; }
   .rpt-sheet,
   .rpt-sheet * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 
@@ -611,6 +615,12 @@
    * sola y no puede depender de que la otra esté cargada. */
   .rpt-written,
   .no-print { display: none !important; }
+
+  /* LV-263: el sello «Impreso desde AeroControl» de `base.html` caía solo en
+   * una página extra, después de la última hoja. El informe ya dice en su pie
+   * qué es, de qué período y en qué estado. `html body` gana por especificidad
+   * al `display: block !important` de `app.css`, sin depender del orden. */
+  html body .print-stamp { display: none !important; }
 }
 
 /* == LV-235 · Dato Ejecutivo, la hoja de una página =========================
