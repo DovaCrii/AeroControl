@@ -1,5 +1,16 @@
 # HANDOFF — AeroControl
 
+## 🟡 2026-10-05 — insignias ámbar con niveles de severidad, **sin desplegar**
+
+`p340` corre **`66bc664`**. Desde entonces entraron una skill, un guardián de permisos
+(`LV-268`, sólo un test), el inventario `UX-nn` al día, `HANDOFF.md` archivado y
+**`LV-269`**: diez insignias ámbar pasan a `sev-caution`/`sev-warning`, idénticas a la
+vista en los dos temas. De todo eso sólo `LV-269` toca lo que se sirve.
+
+**Paso de despliegue: `git pull` y reiniciar.** Sin migraciones ni `collectstatic`
+(sólo cambian plantillas). Prueba de que llegó: `git log --oneline -1` en la VM debe
+mostrar el último commit de `main`.
+
 ## ✅ 2026-10-05 — PDF, confirmación única, revisión previa, regla de faenas y alertas, **desplegados** (`66bc664`)
 
 `p340` corre **`66bc664`**, desplegado el 2026-10-05 (`git pull` `c1ed293..66bc664`,
