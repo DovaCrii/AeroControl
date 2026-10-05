@@ -495,7 +495,7 @@ declara `<h1>` fuera de él; una prueba de plantillas lo verifica.
 demuestra el patrón correcto con `<symbol>`/`<use>`. *Criterio:* un solo
 `icons.svg`; `base.html` pierde los `path`; los iconos se referencian por nombre.
 
-**`UX-06` · `@media print` para informes y fichas.**
+**`UX-06` · `@media print` para informes y fichas.** ✅ **Hecho el 2026-09-02** (bloque `@media print` y `.print-stamp` en `static/css/app.css`; la hoja A4 del informe mensual lo complementa en `report-a4.css`).
 *Criterio:* imprimir `compliance/report.html` no incluye menú, barra ni botones;
 las tablas no se cortan a mitad de fila; sale el sello de generación.
 
