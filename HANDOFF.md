@@ -1,17 +1,19 @@
 # HANDOFF — AeroControl
 
-## 🟡 2026-10-05 — insignias ámbar y historial de permisos atómico, **sin desplegar**
+## 🟡 2026-10-05 — insignias ámbar e historial de estados atómico, **sin desplegar**
 
-`p340` corre **`66bc664`**. Desde entonces entraron una skill, un guardián de permisos
-(`LV-268`, sólo un test), el inventario `UX-nn` al día, `HANDOFF.md` archivado, el plan
-de `T1.3`/`T1.4` y dos cambios que sí tocan lo que se sirve:
+`p340` corre **`66bc664`**. Desde entonces entraron una skill y sus tres compañeras de
+flujo (`/abrir-pr`, `/cerrar-tarea`, `/verificar`, `/desplegar-p340`), un guardián de
+permisos (`LV-268`, sólo un test), el arreglo del CI (`LV-271`), el inventario `UX-nn` al
+día, `HANDOFF.md` archivado, el plan de `T1.3`/`T1.4` y tres cambios que sí tocan lo que se
+sirve:
 
 - **`LV-269`**: diez insignias ámbar pasan a `sev-caution`/`sev-warning`, idénticas a la
   vista en los dos temas.
-- **`LV-270`** (`T1.3`, primer modelo): el historial de estados de un **permiso** se
-  escribe dentro del guardado y no antes; si el guardado falla, el historial se deshace
-  con él. Es lo único de esta entrada que cambia **comportamiento de escritura**, así
-  que conviene comprobarlo (abajo).
+- **`LV-270`** y **`LV-273`** (`T1.3`, primeros dos modelos): el historial de estados de un
+  **permiso** y de una **solicitud de vuelo** se escribe dentro del guardado y no antes; si
+  el guardado falla, el historial se deshace con él. Es lo único de esta entrada que cambia
+  **comportamiento de escritura**, así que conviene comprobarlo (abajo).
 
 **Paso de despliegue: `git pull` y reiniciar.** Sin migraciones ni `collectstatic`.
 Prueba de que llegó: `git log --oneline -1` en la VM debe mostrar el último commit de

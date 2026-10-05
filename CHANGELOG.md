@@ -15,12 +15,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   `scripts/verify.ps1` corre ese mismo paso —sobre una base temporal— para que el gate
   local y el CI digan lo mismo.
 
-- **El historial de estados de un permiso ya no queda huérfano si el guardado falla
-  (`LV-270`).** Antes se escribía antes de guardar el permiso: con un error en el
-  guardado, el historial decía que el permiso había pasado, por ejemplo, de aprobado a
-  denegado mientras la base seguía diciendo aprobado. Ahora se escribe dentro del mismo
-  guardado y, si este falla, se deshace con él. Es el primero de los cinco modelos con
-  historial; el resto sigue como estaba.
+- **El historial de estados de un permiso y de una solicitud de vuelo ya no queda
+  huérfano si el guardado falla (`LV-270`, `LV-273`).** Antes se escribía antes de
+  guardar el registro: con un error en el guardado, el historial decía que el permiso
+  había pasado, por ejemplo, de aprobado a denegado mientras la base seguía diciendo
+  aprobado. Ahora se escribe dentro del mismo guardado y, si este falla, se deshace
+  con él. Son dos de los cinco modelos con historial; el resto sigue como estaba.
 
 ### Changed
 
