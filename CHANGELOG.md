@@ -8,6 +8,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Changed
+
+- **Las insignias ámbar dejan de nombrar la utilidad de Bootstrap (`LV-269`).** Diez
+  insignias de las listas de aeronaves, operadores, habilitaciones y solicitudes, de la
+  puesta en marcha del panel y del editor geo usan ahora los niveles de severidad de la
+  aplicación. Se ven exactamente igual en los dos temas.
+
 ### Added
 
 - **Un guardián recorre las rutas y exige permiso en cada vista (`LV-268`).** Toda ruta
