@@ -126,7 +126,9 @@ class CostCenterForm(AeroModelForm):
             "name": _("Optional descriptive name (e.g. Casa Matriz)."),
             "contract_status": _(
                 "Closed keeps the cost center on the list (greyed, grouped "
-                "after the active ones) instead of archiving it."
+                "after the active ones) instead of archiving it. A closed cost "
+                "center no longer enters the records: permit coverage, monthly "
+                "close and expiry digest."
             ),
             "responsible_operator": _(
                 "Recipient of expiry digests. Use when the responsible person "

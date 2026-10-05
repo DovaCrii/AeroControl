@@ -1885,9 +1885,9 @@ class MonthlyReviewView(ModelViewPermissionRequiredMixin, TemplateView):
         el informe: activas, que vuelan y con contrato abierto (`LV-236`)."""
         from apps.core.tenancy import visible_tenant_ids
 
-        queryset = CostCenter.objects.filter(
-            is_active=True, operates_flights=True
-        ).exclude(contract_status=CostCenter.CONTRACT_CLOSED)
+        from apps.registry.selectors import operating_cost_centers
+
+        queryset = operating_cost_centers()
         tenant_ids = visible_tenant_ids(self.request.user)
         if tenant_ids is not None:
             queryset = queryset.filter(tenant_id__in=tenant_ids)

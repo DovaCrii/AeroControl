@@ -154,9 +154,12 @@ class TestTheCodeUsesTheConstantAndNotALiteral:
 
         from django.conf import settings
 
-        source = (
-            Path(settings.BASE_DIR) / "apps" / "compliance" / "kpis.py"
-        ).read_text(encoding="utf-8")
+        apps = Path(settings.BASE_DIR) / "apps"
+        # LV-266: el filtro vive en un solo lugar, `operating_cost_centers`, y la
+        # cobertura lo llama. Allí es donde la constante tiene que estar.
+        selectors = (apps / "registry" / "selectors.py").read_text(encoding="utf-8")
+        kpis = (apps / "compliance" / "kpis.py").read_text(encoding="utf-8")
 
-        assert "CostCenter.CONTRACT_CLOSED" in source
-        assert 'contract_status="closed"' not in source
+        assert "CostCenter.CONTRACT_CLOSED" in selectors
+        assert 'contract_status="closed"' not in selectors + kpis
+        assert "operating_cost_centers()" in kpis

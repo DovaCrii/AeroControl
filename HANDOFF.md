@@ -7,6 +7,7 @@
 | Fila | Qué | Despliegue |
 |---|---|---|
 | deps | `pypdf` 6.16.2 → 6.19.0 y `urllib3` 2.7.0 → 2.8.0: `pip-audit` publicó avisos el 2026-10-05 y el gate quedó rojo. | `uv sync --no-dev` |
+| `LV-266` | Regla única: una faena **cerrada o sin operación no entra en los registros** (cobertura, cierre mensual, «¿Puedo volar?»); el resumen de vencimientos deja de escribirle a las cerradas (`CC716`). | reiniciar |
 | `LV-265` | Bloque **«Revisar antes de emitir»** en el informe (sólo pantalla): permiso vigente de faena fuera de la cobertura, faenas inexistentes en el texto, observación sin redactar, cambio del total. **Falta del usuario:** averiguar por qué `CC716` no sale en la tabla y redactar la observación y los hallazgos. | reiniciar |
 | `LV-264` | Los botones con confirmación («Aprobar», «Archivar») preguntaban **dos veces**, y la segunda aun tras cancelar la primera. Ahora una. | `collectstatic` |
 | `LV-263` | Botón **«Descargar PDF»** en el informe mensual y en el Dato Ejecutivo (pedido del usuario, «de prioridad»). Lo impreso salía en 7 páginas para un informe de 5 y el Dato Ejecutivo en 2; ahora 5 y 1, medido con `--print-to-pdf`. | `collectstatic` + reiniciar |

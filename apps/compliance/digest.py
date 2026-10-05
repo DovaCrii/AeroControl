@@ -252,9 +252,17 @@ def digest_item_count(buckets):
 
 
 def cost_centers_to_notify():
-    """Active cost centers, most specific first, for the digest run."""
+    """Active cost centers, most specific first, for the digest run.
+
+    LV-266: sin las de contrato **cerrado**. El resumen seguía escribiéndole a una
+    faena que ya no opera —en producción `CC716`, cuyo operador recibía «3
+    vencimientos» de una faena cerrada— mientras el informe ya no la contaba. Las
+    que **no vuelan** se quedan: administran equipos, y los vencimientos de lo que
+    guardan (seguros, mantenciones) siguen siendo de alguien.
+    """
     return (
         CostCenter.objects.filter(is_active=True)
+        .exclude(contract_status=CostCenter.CONTRACT_CLOSED)
         .select_related("responsible_operator")
         .order_by("code")
     )
