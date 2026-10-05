@@ -9273,3 +9273,13 @@ msgstr "Marcada no conforme en el cierre mensual."
 #: templates/compliance/operational_records.html
 msgid "Back to the monthly close"
 msgstr "Volver al cierre mensual"
+
+#: templates/reporting/monthly_report.html
+#: templates/reporting/executive_brief.html
+msgid "Download PDF"
+msgstr "Descargar PDF"
+
+#: templates/reporting/monthly_report.html
+#: templates/reporting/executive_brief.html
+msgid "Opens the print dialog: choose “Save as PDF” as the destination."
+msgstr "Abre el diálogo de impresión: elija «Guardar como PDF» como destino."
