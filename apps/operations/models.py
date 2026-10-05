@@ -1091,8 +1091,11 @@ class FlightObjective(BaseModel):
         return self.name
 
 
-class FlightRequest(StatusFlowMixin, BaseModel):
+class FlightRequest(StatusHistoryMixin, StatusFlowMixin, BaseModel):
     """R9.3: una solicitud de vuelo de SIGO — **una circunferencia**.
+
+    T1.3: el historial de estados (`FlightRequestHistory`) lo escribe
+    `StatusHistoryMixin` dentro del guardado, y ya no una señal `pre_save`.
 
     Espejo del formulario "Información Vuelo" de SIGO, que acepta un punto
     centro con su radio por solicitud. Nace de separar un KMZ multi-círculo
@@ -1106,6 +1109,8 @@ class FlightRequest(StatusFlowMixin, BaseModel):
     solicitud se vincula al permiso y **rellena** su ubicación estructurada
     (OPS-4) en vez de duplicarla.
     """
+
+    STATUS_HISTORY = ("operations.FlightRequestHistory", "request", "status")
 
     STATUS_PREPARED = "prepared"
     STATUS_FILED = "filed"
