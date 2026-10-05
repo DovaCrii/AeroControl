@@ -15,6 +15,7 @@ Resumen operativo de `AGENTS.md` (que manda si hay diferencia). Contenido:
 
 ## 2. Contrato de permisos (toda vista nueva)
 
+- **Una vista nueva sin permiso de modelo rompe el gate**: `apps/core/test_lv268_permission_contract.py` recorre las rutas reales y exige el mixin o una entrada en `LOGIN_ONLY` con su motivo y dónde está el control. No es un trámite: la lista falla también si una entrada sobra.
 - Vistas mutantes exigen `add_*`/`change_*`/`delete_*`.
 - **Toda vista de lectura** (listado, detalle, exportación, API) exige `view_*` explícito. `LoginRequiredMixin` a secas fue el origen de los hallazgos F-05/F-06. Las excepciones existentes (`WorkTrayView`, `CanIFlyView`, `GlobalSearchView`, etc.) están justificadas en su docstring: documentar igual cualquier excepción nueva.
 - Si el modelo tiene aislamiento por tenant, acotar el queryset con `scope_queryset_to_tenant`, no solo por permiso.
