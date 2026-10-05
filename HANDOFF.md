@@ -1,15 +1,43 @@
 # HANDOFF — AeroControl
 
-## 🟡 2026-10-05 — insignias ámbar con niveles de severidad, **sin desplegar**
+## 🟡 2026-10-05 — insignias ámbar y historial de permisos atómico, **sin desplegar**
 
 `p340` corre **`66bc664`**. Desde entonces entraron una skill, un guardián de permisos
-(`LV-268`, sólo un test), el inventario `UX-nn` al día, `HANDOFF.md` archivado y
-**`LV-269`**: diez insignias ámbar pasan a `sev-caution`/`sev-warning`, idénticas a la
-vista en los dos temas. De todo eso sólo `LV-269` toca lo que se sirve.
+(`LV-268`, sólo un test), el inventario `UX-nn` al día, `HANDOFF.md` archivado, el plan
+de `T1.3`/`T1.4` y dos cambios que sí tocan lo que se sirve:
 
-**Paso de despliegue: `git pull` y reiniciar.** Sin migraciones ni `collectstatic`
-(sólo cambian plantillas). Prueba de que llegó: `git log --oneline -1` en la VM debe
-mostrar el último commit de `main`.
+- **`LV-269`**: diez insignias ámbar pasan a `sev-caution`/`sev-warning`, idénticas a la
+  vista en los dos temas.
+- **`LV-270`** (`T1.3`, primer modelo): el historial de estados de un **permiso** se
+  escribe dentro del guardado y no antes; si el guardado falla, el historial se deshace
+  con él. Es lo único de esta entrada que cambia **comportamiento de escritura**, así
+  que conviene comprobarlo (abajo).
+
+**Paso de despliegue: `git pull` y reiniciar.** Sin migraciones ni `collectstatic`.
+Prueba de que llegó: `git log --oneline -1` en la VM debe mostrar el último commit de
+`main`.
+
+**Comprobación opcional de `LV-270` en `p340`, sin dejar rastro**: cambiar el estado de
+un permiso dentro de una transacción que se **deshace**, y mirar que el historial
+nació.
+
+```bash
+uv run python manage.py shell <<'EOF'
+from django.db import transaction
+from apps.operations.models import FlightPermission, PermissionHistory
+permit = FlightPermission.objects.filter(is_active=True).first()
+before = PermissionHistory.objects.filter(permission=permit).count()
+with transaction.atomic():
+    permit.status = "denied" if permit.status != "denied" else "requested"
+    permit.save()
+    print("historial antes/despues:", before, PermissionHistory.objects.filter(permission=permit).count())
+    transaction.set_rollback(True)
+
+print("tras deshacer:", PermissionHistory.objects.filter(permission=permit).count())
+EOF
+```
+
+Debe imprimir `antes → antes+1` dentro y volver a `antes` tras deshacer.
 
 ## ✅ 2026-10-05 — PDF, confirmación única, revisión previa, regla de faenas y alertas, **desplegados** (`66bc664`)
 
