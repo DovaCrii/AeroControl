@@ -277,16 +277,16 @@ def test_several_circles_keep_the_table(center, author):
 
 
 @pytest.mark.django_db
-def test_the_seconds_are_written_with_a_dot_and_not_the_locale_comma(center, author):
-    """Con el locale español `floatformat:2` escribe "4,80" y `format_dms` —que
-    arma la lectura corrida en Python— escribe "4.80": dos formas del mismo
-    número en la misma pantalla, y el botón copiaría la que la casilla de SIGO
-    puede no aceptar. La casilla y la lectura tienen que coincidir."""
+def test_the_seconds_are_whole_numbers(center, author):
+    """LV-279: SIGO no acepta decimales. Antes la casilla decía "4.80" (y con el
+    locale español podía decir "4,80"); ahora es el entero 5 y la lectura
+    corrida de abajo dice lo mismo, así que casilla y lectura coinciden."""
     plan = _plan(center, author, "CC738 · CG-01", "CG-01.kmz", content=ONE_CIRCLE)
 
     body = _reader().get(reverse("geo-plan-detail", args=[plan.pk])).content.decode()
 
-    assert 'data-copy="4.80"' in body
+    assert 'data-copy="5"' in body
+    assert 'data-copy="4.80"' not in body
     assert 'data-copy="4,80"' not in body
 
 

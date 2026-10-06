@@ -125,7 +125,7 @@ class TestAnIrregularArea:
             LAT, LON, float(amc.latitude), float(amc.longitude)
         )
 
-        assert row["amc_distance_km"] == pytest.approx(desde_el_centro, abs=0.1)
+        assert row["amc_distance_km"] == round(desde_el_centro)
         # Y las dos medidas difieren de verdad: sin esto el test pasaría también
         # si el centro no se hubiera movido.
         assert abs(desde_el_centro - desde_el_punto) > 5
