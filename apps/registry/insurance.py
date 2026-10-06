@@ -111,10 +111,11 @@ def sync_insurance_expiry(aircraft, *, user=None):
         aircraft.insurance_status = Aircraft.INSURANCE_STATUS_ACTIVE
         fields.append("insurance_status")
     # La bitácora de `LV-81` lee este atributo para atribuir el cambio; sin él la
-    # fila nace muda, que es el defecto que `LV-101` encontró como "system". El
-    # `pre_save` de `track_status_changes` escribe la fila del historial del
-    # trámite, así que el salto a "Póliza vigente" queda registrado con quién y
-    # cuándo, igual que si se hubiera apretado el botón.
+    # fila nace muda, que es el defecto que `LV-101` encontró como "system".
+    # `StatusHistoryMixin` escribe la fila del historial del trámite al guardar
+    # (`insurance_status` va en el `update_fields`, que es lo que lo dispara), así
+    # que el salto a "Póliza vigente" queda registrado con quién y cuándo, igual que
+    # si se hubiera apretado el botón.
     aircraft._changed_by_user = user
     aircraft.save(update_fields=fields)
     return declared if moves_forward else aircraft.insurance_expiry
