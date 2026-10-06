@@ -10,6 +10,7 @@ Shared by the parser (import), the generator (export, GEO-3) and the commit API
 
 import hashlib
 import json
+import re
 import uuid
 
 from .errors import KmlImportError
@@ -21,6 +22,8 @@ MAX_CONTENT_BYTES = 8 * 1024 * 1024
 MAX_FEATURES = 2000
 
 GEOMETRY_TYPES = {"Point", "LineString", "Polygon", "GeometryCollection"}
+# LV-282: `#rrggbb`, el único formato de color de capa que acepta el editor.
+COLOR_PATTERN = re.compile(r"#[0-9a-fA-F]{6}")
 
 
 def new_uid(kind):
@@ -138,6 +141,14 @@ def validate_document(document, *, reparse_raw=True):
         )
 
     for placemark in iter_placemarks(document):
+        # LV-282: el color de capa elegido en el editor. Opcional; si viene, es
+        # `#rrggbb` y nada más, porque `build.py` lo escribe tal cual dentro de un
+        # `<Style>` y un valor libre sería XML que alguien más controla.
+        color = placemark.get("color")
+        if color is not None and not (
+            isinstance(color, str) and COLOR_PATTERN.fullmatch(color)
+        ):
+            raise KmlImportError(f"Invalid colour: {color!r}.")
         geometry = placemark.get("geometry")
         if geometry is None:
             continue

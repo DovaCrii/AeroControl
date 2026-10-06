@@ -50,6 +50,9 @@ export function buildPanel(container, groups, map, labels) {
 //   onMove(uid, targetFolderUid, index), onDuplicate(uid), onExplode(uid),
 //   onSelectFolder(uid|null), onToggle(uid, visible)
 // }
+// El color de siempre del mapa (`STROKE` en main.js).
+const DEFAULT_COLOR = "#0f9f95";
+
 export function buildTree(container, doc, opts) {
   container.replaceChildren();
 
@@ -172,7 +175,26 @@ export function buildTree(container, doc, opts) {
         ),
       );
 
-      row.append(checkbox, text, actions);
+      // LV-282: el color de la capa. Sólo en placemarks (una carpeta no tiene
+      // figura que pintar). Sin color elegido muestra el de siempre, así que la
+      // muestra nunca miente sobre lo que se ve en el mapa.
+      if (node.kind === "placemark" && opts.onColor) {
+        const swatch = document.createElement("input");
+        swatch.type = "color";
+        swatch.className = "geo-tree-color";
+        swatch.value = node.color || DEFAULT_COLOR;
+        const colorLabel = opts.labels.layerColor || "Color";
+        swatch.title = colorLabel;
+        swatch.setAttribute("aria-label", colorLabel);
+        // `change` (al cerrar el selector) y no `input` (en cada arrastre): cada
+        // cambio es un snapshot y un re-dibujado del mapa entero.
+        swatch.addEventListener("change", () =>
+          opts.onColor(node.uid, swatch.value),
+        );
+        row.append(checkbox, swatch, text, actions);
+      } else {
+        row.append(checkbox, text, actions);
+      }
       parentEl.appendChild(row);
 
       if (node.kind === "folder") {
