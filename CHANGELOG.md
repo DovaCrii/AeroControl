@@ -15,13 +15,14 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   `scripts/verify.ps1` corre ese mismo paso —sobre una base temporal— para que el gate
   local y el CI digan lo mismo.
 
-- **El historial de estados de un permiso, de una solicitud de vuelo y de una mantención
-  ya no queda huérfano si el guardado falla (`LV-270`, `LV-273`, `LV-274`).** Antes se
-  escribía antes de guardar el registro: con un error en el guardado, el historial decía
-  que el permiso había pasado, por ejemplo, de aprobado a denegado mientras la base seguía
-  diciendo aprobado. Ahora se escribe dentro del mismo guardado y, si este falla, se deshace
-  con él. En las mantenciones, lo mismo vale para lo que se le hace a la aeronave: ya no
-  puede quedar en «mantención» sin que la mantención se haya guardado. Son tres de los
+- **El historial de estados de un permiso, de una solicitud de vuelo, de una mantención y
+  de un plan geoespacial ya no queda huérfano si el guardado falla (`LV-270`, `LV-273`,
+  `LV-274`, `LV-275`).** Antes se escribía antes de guardar el registro: con un error en el
+  guardado, el historial decía que el permiso había pasado, por ejemplo, de aprobado a
+  denegado mientras la base seguía diciendo aprobado. Ahora se escribe dentro del mismo
+  guardado y, si este falla, se deshace con él. Lo mismo vale para lo que se hace junto con
+  el cambio: la aeronave ya no puede quedar en «mantención» sin que la mantención se haya
+  guardado, ni un plan figurar enlazado a un permiso que nunca tuvo. Son cuatro de los
   cinco modelos con historial; el resto sigue como estaba.
 
 ### Changed
