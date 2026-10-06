@@ -170,7 +170,12 @@ Preparada ──> Ingresada en SIGO ──> Vinculada al permiso ──> Cerrada
 | **R9.5** | Vistas, plantillas y menú · vista previa de separación · hoja SIGO · descarga del KMZ · vínculo desde la pantalla | ✅ hecho 2026-08-20, 23 tests. Verificado en el navegador con el KMZ real |
 | **R9.6** | El expediente del permiso muestra su solicitud de origen · el panel muestra lo presentado y sin respuesta, con los días de espera | ✅ hecho 2026-08-20, 12 tests. Verificado en el navegador |
 
-**Con R9.6 el bloque R9 queda cerrado.** El círculo completo: el KMZ entra, se
+| **R9.7** | **Números cerrados** en la hoja SIGO (segundos, radio, distancia, altura): SIGO no acepta decimales — ver §7.4 | ⬜ |
+| **R9.8** | Detección de la modalidad del KMZ (Punto Centro / Corredor / Triangular / Cuadricular) — ver §7.2 | ⬜ |
+| **R9.9** | `FlightRequest.request_type` se puebla y la hoja SIGO muestra los campos de **su** modalidad — ver §7.3 | ⬜ |
+| **R9.10** | Pantalla «qué traerá este KMZ»: tipo detectado, qué datos aporta y cuáles quedan por completar a mano — ver §7.2 | ⬜ |
+
+**Con R9.6 el bloque R9 queda cerrado** (para la modalidad Punto Centro; R9.7–R9.10 abren las otras tres, §7). El círculo completo: el KMZ entra, se
 separa, cada sección se prepara y se presenta, el panel persigue lo que espera
 respuesta, y cuando la DGAC contesta la solicitud se vincula al permiso — cuyo
 expediente ya puede responder *"¿la DGAC autorizó lo que pedimos?"*.
@@ -255,3 +260,83 @@ aceptación de R9.1: separar debe producir **exactamente 47 secciones**, cada
 una con nombre real, radio ≈30 m (el archivo lo declara en su propio nombre), y
 ningún aviso de desemparejado. Cualquier cambio futuro al motor corre contra
 esa estructura (sintética, en tests) antes de tocar producción.
+
+
+## 7 · Las cuatro modalidades de área de vuelo y los números cerrados (2026-10-06)
+
+SIGO ahora permite **cuatro** formas de declarar el área de vuelo, y no sólo el
+círculo en que se basó R9.1. Hasta aquí el motor asume una sola (círculo + punto
+central); este apartado fija cómo se incorporan las otras tres sin romper lo
+hecho. *Los campos exactos por modalidad salen de las cuatro capturas del
+formulario que aportó el usuario; donde dice «por confirmar» hay que
+contrastarlo con ellas antes de implementar.*
+
+### 7.1 Las modalidades
+
+| Modalidad | Qué dibuja el operador | Datos que pide SIGO |
+|---|---|---|
+| **Punto Centro** | Un círculo | Centro (lat/lon en GMS), radio (m), altura, distancia al aeródromo |
+| **Punto Corredor** | Una línea con ancho | Vértices del eje (GMS), ancho del corredor (por confirmar) |
+| **Triangular** | Un triángulo | Tres vértices (GMS) |
+| **Cuadricular** | Un cuadrilátero | Cuatro vértices (GMS) |
+
+Punto Centro es la que ya funciona hoy (R9.1–R9.6).
+
+### 7.2 Qué trae cada tipo de KMZ — pantalla «qué traerá este KMZ» (R9.8, R9.10)
+
+Al cargar un KMZ la app dice **qué entendió antes de crear nada**: el tipo
+detectado y, para ese tipo, qué datos aporta y cuáles no. Detección en este
+orden, sobre la geometría canónica (nunca sobre el nombre de la carpeta):
+
+1. Anillo cerrado de ≥ 24 lados con radio casi constante (desvío ≤ 0,10) y un
+   punto dentro → **Punto Centro** (regla de `sections.py`, sin cambios).
+2. Anillo cerrado de 3 vértices distintos → **Triangular**.
+3. Anillo cerrado de 4 vértices distintos → **Cuadricular**.
+4. Línea abierta (`LineString`) → **Punto Corredor**.
+5. Cualquier otra cosa → **sin tipo**: se avisa y no se crea solicitud sola.
+
+| Tipo | El KMZ aporta | **No** aporta (se completa a mano) |
+|---|---|---|
+| Punto Centro | centro, radio estimado, aeródromo más cercano y distancia | altura, fechas, tipo de operación |
+| Punto Corredor | vértices del eje | ancho del corredor, altura |
+| Triangular | tres vértices | altura, distancia al aeródromo (por confirmar) |
+| Cuadricular | cuatro vértices | altura, distancia al aeródromo (por confirmar) |
+
+La pantalla lista por cada área: tipo, nombre, los datos que se rellenan solos
+y los que faltan. Nada se presenta con un dato inventado.
+
+### 7.3 Implicancias de modelo (R9.9)
+
+- `FlightRequest.request_type` (hoy sin poblar, §4.3) toma uno de los cuatro
+  valores; migración con nombre descriptivo y `CheckConstraint`. Las solicitudes
+  existentes son todas `center_point`.
+- Los vértices se guardan como lista ordenada en un campo JSON validado en
+  `clean()` (3 triangular, 4 cuadricular, ≥ 2 corredor). El círculo sigue con
+  sus columnas actuales.
+- Esto **relaja** la regla del §1 «el KMZ debe contener un único círculo»: un
+  KMZ puede traer áreas de distintas modalidades y cada una es una solicitud.
+- `sigo_sheet` devuelve los campos de la modalidad y la plantilla dibuja sólo
+  esos.
+
+### 7.4 Números cerrados (R9.7)
+
+SIGO **no acepta decimales**. Hoy la hoja entrega segundos con dos decimales
+(`16.48"`) y la distancia con uno (`206,8 km`). Regla para **todas** las
+modalidades:
+
+- **Segundos**: entero, con acarreo (59,6″ → 0″ y +1′; 59′ 59,6″ → +1°).
+- **Radio y altura**: entero. El radio **hacia arriba** (propuesta): 30,2 m
+  declarado como 30 dejaría fuera 20 cm del área planeada.
+- **Distancia al aeródromo**: entera (206,8 → 207).
+- Se redondea **al presentar**, no al guardar: lo calculado conserva su
+  precisión y la hoja es la única que muestra enteros.
+- El botón de copiar de cada casilla copia el mismo número cerrado que se ve.
+
+### 7.5 Preguntas abiertas
+
+1. Ancho del corredor: ¿lo dibuja el operador o lo pide SIGO como dato aparte?
+2. Orden de los vértices: ¿SIGO exige un sentido o acepta cualquiera?
+3. ¿Una solicitud por área, también en las modalidades nuevas?
+4. En polígonos y corredores, ¿contra qué punto se mide la distancia al aeródromo?
+5. Radio: ¿hacia arriba (propuesto) o al entero más cercano?
+6. Capturas de los tooltips «?» del formulario, para copiar sus textos de ayuda.
