@@ -27,6 +27,7 @@ import {
   geometryFromLayer,
   newUid,
 } from "./doc.js";
+import { closedRingOf, pairCircleCenters, ringCentroid } from "./circles.js";
 
 const DRAW_CONTROLS = {
   position: "topleft",
@@ -46,24 +47,105 @@ const DRAW_CONTROLS = {
 
 // Attach edit-sync listeners to one rendered layer so vertex/drag edits flow
 // back into its placemark node. Called by the renderer for every layer.
-export function wireLayer(layer, uid, state, onChange) {
-  const sync = () => {
+//
+// LV-277: `layer` llega como el grupo de `L.geoJSON`, y `toGeoJSON()` de un grupo
+// es una `FeatureCollection` **sin `geometry`**: `geometryFromLayer` devolvía
+// `null` y la sincronización no escribía nada. Se escucha y se lee la **hoja** (la
+// figura que Geoman realmente edita), no el grupo que la envuelve.
+//
+// `getLayers()` devuelve el `Map(uid -> capa)` vigente: `main.js` lo reconstruye en
+// cada `render()`, así que se pasa una función y no el mapa, que quedaría viejo.
+export function wireLayer(layer, uid, state, onChange, getLayers) {
+  layer = leafOf(layer);
+  if (!layer) {
+    return;
+  }
+  // Mientras se arrastra un círculo: el pin que lo acompaña y de dónde partió.
+  let follower = null;
+
+  const persist = () => {
     const node = findPlacemark(state.doc, uid);
     if (!node) {
       return;
     }
     const geometry = geometryFromLayer(layer);
-    if (geometry) {
-      node.geometry = geometry;
-      state.snapshot();
-      onChange();
+    if (!geometry) {
+      return;
     }
+    node.geometry = geometry;
+    if (follower) {
+      const pinNode = findPlacemark(state.doc, follower.uid);
+      if (pinNode) {
+        pinNode.geometry = {
+          type: "Point",
+          coordinates: [follower.lng, follower.lat],
+        };
+      }
+    }
+    // Un solo snapshot para el anillo y su centro: un Deshacer los devuelve juntos.
+    state.snapshot();
+    onChange();
   };
+
+  // LV-277: el centro es el punto que `pairCircleCenters` empareja con este
+  // anillo —el mismo criterio con que el servidor decide cuál copia la hoja de
+  // SIGO—. Sin anillo-círculo o sin punto dentro, no hay nada que acompañar.
+  layer.on("pm:dragstart", () => {
+    follower = null;
+    const node = findPlacemark(state.doc, uid);
+    const ring = node && closedRingOf(node.geometry);
+    const layers = getLayers ? getLayers() : null;
+    if (!ring || !layers) {
+      return;
+    }
+    const pinUid = pairCircleCenters(state.doc).get(uid);
+    const pinNode = pinUid && findPlacemark(state.doc, pinUid);
+    const pinLeaf = pinNode && leafOf(layers.get(pinUid));
+    if (!pinLeaf || typeof pinLeaf.setLatLng !== "function") {
+      return;
+    }
+    const [lng, lat] = pinNode.geometry.coordinates;
+    follower = {
+      uid: pinUid,
+      leaf: pinLeaf,
+      start: ringCentroid(ring),
+      lng,
+      lat,
+      startLng: lng,
+      startLat: lat,
+    };
+  });
+  // En vivo: el pin se mueve con la misma distancia que el anillo. Se mide el
+  // centroide del anillo **ahora** contra el de la salida, en vez de acumular
+  // deltas de los eventos, que pierden pasos si el navegador los junta.
+  layer.on("pm:drag", () => {
+    if (!follower) {
+      return;
+    }
+    const ring = closedRingOf(geometryFromLayer(layer));
+    if (!ring) {
+      return;
+    }
+    const now = ringCentroid(ring);
+    follower.lng = follower.startLng + (now.lng - follower.start.lng);
+    follower.lat = follower.startLat + (now.lat - follower.start.lat);
+    follower.leaf.setLatLng([follower.lat, follower.lng]);
+  });
   // pm:update fires once an edit gesture completes; the drag events cover
   // whole-shape moves. Together they catch every geometry change without
   // snapshotting on every intermediate vertex move.
-  layer.on("pm:update", sync);
-  layer.on("pm:dragend", sync);
+  layer.on("pm:update", persist);
+  layer.on("pm:dragend", () => {
+    persist();
+    follower = null;
+  });
+}
+
+function leafOf(layer) {
+  if (layer && typeof layer.getLayers === "function") {
+    return layer.getLayers()[0] || null;
+  }
+  return layer;
 }
 
 // Install the Geoman toolbar and the create/remove handlers. `render` rebuilds
