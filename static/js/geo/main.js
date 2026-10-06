@@ -92,6 +92,9 @@ async function init() {
 
   let renderedLayers = [];
   let uidLayers = new Map();
+  // LV-277: `render()` reasigna el mapa, así que `edit.js` recibe esta función y
+  // no el mapa: una referencia directa quedaría apuntando al render anterior.
+  const uidLayersNow = () => uidLayers;
   const hidden = new Set();
   let activeFolderUid = null;
   let fittedOnce = false;
@@ -259,7 +262,7 @@ async function init() {
           }
         }),
       );
-      wireLayer(layer, item.uid, state, onChange);
+      wireLayer(layer, item.uid, state, onChange, uidLayersNow);
       if (!hidden.has(item.uid)) {
         layer.addTo(map);
       }
