@@ -10,6 +10,14 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Las cuatro modalidades de área de vuelo de SIGO (`LV-278`, bloque A).** Además de
+  Punto Centro, el motor reconoce **Triangular** (3 vértices), **Cuadricular** (4) y
+  **Punto Corredor** (un trazado abierto, que antes se descartaba sin aviso). Los
+  vértices salen en sentido horario y toda área trae su punto central (el dibujado o el
+  calculado), desde el cual se mide el aeródromo. La pantalla de separación dice qué
+  modalidad es cada área, qué trae el KMZ y qué falta completar; la hoja lista los
+  vértices con botón de copiar. Migración `operations/0030` (`area_modality`,
+  `vertices`): las solicitudes anteriores quedan como Punto Centro.
 - **Color por capa en el editor geoespacial (`LV-282`).** Cada capa tiene un selector de
   color en el árbol; al recolorear el anillo de una circunferencia su centro lo sigue. El
   color se valida (`#rrggbb`) y se exporta como `<Style>` en línea del KML.

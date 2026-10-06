@@ -56,6 +56,7 @@ from .forms import (
 from .dossier import operational_dossier
 from .flight_requests import (
     create_requests_from_plan,
+    kmz_contents,
     link_to_permission,
     plan_sections,
     section_kmz,
@@ -1718,23 +1719,40 @@ class GeoPlanSplitIntoRequests(ModelPermissionRequiredMixin, View):
         # fila de `plan_sections` que usan la hoja y la creación—, no la sección
         # cruda. Antes, sobre un área irregular, mostraba el punto dibujado y la
         # solicitud se creaba con otro centro.
+        rows = []
+        for row in plan_sections(plan):
+            brings, missing = kmz_contents(row)
+            rows.append(
+                {
+                    "section": row["section"],
+                    "lat": row["lat_readable"],
+                    "lon": row["lon_readable"],
+                    "radius_m": row["radius_m"],
+                    "modality": row["modality"],
+                    "modality_label": row["modality_label"],
+                    # LV-278: «qué traerá este KMZ», por área.
+                    "brings": brings,
+                    "missing": missing,
+                    "warnings": [
+                        SECTION_WARNINGS.get(code, code) for code in row["warnings"]
+                    ],
+                }
+            )
+        # «3 Punto Centro · 1 Triangular»: el resumen de arriba, en el orden en que
+        # aparece cada modalidad por primera vez.
+        summary = {}
+        for row in rows:
+            entry = summary.setdefault(
+                row["modality"], {"label": row["modality_label"], "count": 0}
+            )
+            entry["count"] += 1
         return render(
             request,
             "operations/flight_request_split.html",
             {
                 "plan": plan,
-                "sections": [
-                    {
-                        "section": row["section"],
-                        "lat": row["lat_readable"],
-                        "lon": row["lon_readable"],
-                        "radius_m": row["radius_m"],
-                        "warnings": [
-                            SECTION_WARNINGS.get(code, code) for code in row["warnings"]
-                        ],
-                    }
-                    for row in plan_sections(plan)
-                ],
+                "sections": rows,
+                "summary": list(summary.values()),
                 "existing": FlightRequest.objects.filter(
                     source_plan=plan, is_active=True
                 ).count(),
