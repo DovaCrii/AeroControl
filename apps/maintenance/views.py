@@ -53,6 +53,13 @@ class MaintenanceRecordList(MList):
     model = MaintenanceRecord
     template_name = "maintenance/record_list.html"
     htmx_template_name = "maintenance/_record_rows.html"
+    # LV-280
+    sortable_columns = {
+        "aircraft": "aircraft__registration",
+        "type": "maintenance_type",
+        "scheduled": "scheduled_date",
+        "status": "status",
+    }
     search_fields = ["aircraft__registration", "description", "performed_by"]
 
     def get_queryset(self):

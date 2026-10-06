@@ -1,5 +1,5 @@
 {% extends "generic/list.html" %}
-{% load i18n %}
+{% load aero_tags i18n %}
 
 {% block list_actions %}<a class="btn btn-outline-secondary" href="{% url 'operator-import' %}">{% translate "Import" %}</a>{% endblock %}
 
@@ -39,9 +39,9 @@ en el navegador: la habilitación pasa de 281 a 436 px.{% endcomment %}
 
 {% comment %}LV-57: "RUT" folds into the identity column under the name.{% endcomment %}
 {% block list_header %}
-<th scope="col">{% translate "Name" %}</th>
-<th scope="col" class="cell-numeric">{% translate "DGAC credential" %}</th>
-<th scope="col" class="cell-status">{% translate "Credential expiry" %}</th>
+{% worktable_th _("Name") "name" %}
+{% worktable_th _("DGAC credential") "credential" "" "cell-numeric" %}
+{% worktable_th _("Credential expiry") "expiry" "" "cell-status" %}
 {% comment %}LV-87: la insignia "Sin PDF" vivía **dentro** de la celda de la
 fecha, así que una sola celda mezclaba dos hechos distintos -- cuándo vence y si
 el respaldo está adjunto -- y a simple vista parecía calificar a la fecha.
@@ -54,7 +54,7 @@ regalarle espacio a una cruz quitándoselo a la habilitación, que es justo lo q
 `LV-162` vino a corregir. El significado completo vive en el `title` y en el
 texto para lector de pantalla de cada celda, que ya lo decían.{% endcomment %}
 <th scope="col" class="cell-status" title="{% translate 'DGAC credential file' %}">{% translate "File" %}</th>
-<th scope="col">{% translate "Cost center" %}</th>
+{% worktable_th _("Cost center") "cost_center" %}
 {% comment %}LV-152: decía "Habilitación" y mostraba una insignia verde "Vigente"
 derivada de las habilitaciones estructuradas. Con el vencimiento en `NULL` —como
 quedaron todas las importadas— la anotación las contaba como vigentes, así que la

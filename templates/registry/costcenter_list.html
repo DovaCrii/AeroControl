@@ -1,5 +1,5 @@
 {% extends "generic/list.html" %}
-{% load i18n %}
+{% load aero_tags i18n %}
 
 {% block list_actions %}<a class="btn btn-outline-secondary" href="{% url 'costcenter-import' %}">{% translate "Import" %}</a>{% endblock %}
 
@@ -20,8 +20,8 @@
 column -- rows that have one flag it next to the code and keep the full text in
 the cost center's detail page.{% endcomment %}
 {% block list_header %}
-<th scope="col">{% translate "Code" %}</th>
-<th scope="col">{% translate "Contract administrator name" %}</th>
+{% worktable_th _("Code") "code" %}
+{% worktable_th _("Contract administrator name") "responsible" %}
 <th scope="col" class="cell-numeric">{% translate "Operators" %}</th>
 <th scope="col" class="cell-numeric">{% translate "Aircraft" %}</th>
 {% endblock %}
