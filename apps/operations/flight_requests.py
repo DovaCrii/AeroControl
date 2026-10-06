@@ -15,6 +15,7 @@ sólo decide qué se persiste y cómo se presenta.
 from decimal import Decimal
 
 from django.db import transaction
+from django.utils.translation import gettext
 
 from apps.geo.administrative import locate
 from apps.geo.kml.build import build_kml_bytes
@@ -65,6 +66,62 @@ def plan_sections(plan):
         _row(section, aerodromes)
         for section in split_sections(plan.current_version.content)
     ]
+
+
+def kmz_contents(row):
+    """LV-278: qué rellena este KMZ de una área y qué queda por completar.
+
+    Es la pantalla «qué traerá este KMZ»: el pedido del usuario fue que al cargar un
+    KMZ la app diga **qué tipo es y qué información trae**, antes de crear nada.
+    Devuelve `(trae, falta)`, dos listas de rótulos ya traducidos.
+
+    «Falta» no es una promesa de que SIGO lo pida: es lo que ningún KMZ puede
+    traer (la altura y el horario los decide quien vuela), así que se dice en vez de
+    dejar que la hoja los muestre en blanco sin explicación.
+    """
+    section = row["section"]
+    brings = []
+    if row["modality"] == "center_point":
+        brings.append(gettext("Centre point"))
+        if row["radius_m"]:
+            brings.append(gettext("Radius (m)"))
+    else:
+        brings.append(gettext("Area vertices"))
+        # El centro dibujado es un dato declarado; el calculado es un derivado, y
+        # la pantalla debe decir cuál es para que nadie lo tome por el otro.
+        brings.append(
+            gettext("Centre point")
+            if section.point is not None
+            else gettext("Centre point (calculated)")
+        )
+    if row["amc"] is not None:
+        brings.append(gettext("Nearest aerodrome (AMC)"))
+    if row["comuna"]:
+        brings.append(gettext("Commune"))
+    missing = [gettext("Height (m)"), gettext("Schedule")]
+    return brings, missing
+
+
+def vertex_rows(vertices):
+    """LV-278: los vértices `[lon, lat]` de un área, listos para las casillas de SIGO.
+
+    Cada uno con sus seis casillas (grados, minutos y segundos **enteros** por
+    eje, más el hemisferio) y la lectura corrida para cotejar contra la carta. El
+    orden es el de entrada: ya viene en sentido horario desde `split_sections`.
+    """
+    rows = []
+    for index, vertex in enumerate(vertices, start=1):
+        lon, lat = vertex[0], vertex[1]
+        rows.append(
+            {
+                "number": index,
+                "dms_lat": to_dms(lat, "lat"),
+                "dms_lon": to_dms(lon, "lon"),
+                "lat_readable": format_dms(lat, "lat"),
+                "lon_readable": format_dms(lon, "lon"),
+            }
+        )
+    return rows
 
 
 def _row(section, aerodromes):
@@ -120,6 +177,12 @@ def _row(section, aerodromes):
         # SIGO no acepta decimales: la hoja muestra la distancia cerrada.
         "amc_distance_km": (whole(distance_km) if distance_km is not None else None),
         "warnings": list(section.warnings),
+        # LV-278: cómo se declara esta área en SIGO y, si no es un círculo, sus
+        # vértices. Sin radio (`radius_m` ya es None): un triángulo, un
+        # cuadrilátero o un eje no tienen uno que declarar.
+        "modality": section.modality,
+        "modality_label": dict(FlightRequest.AREA_MODALITY_CHOICES)[section.modality],
+        "vertices": vertex_rows(section.vertices),
         "comuna": place.get("comuna", ""),
         "provincia": place.get("provincia", ""),
         "region": place.get("region", ""),
@@ -167,6 +230,8 @@ def create_requests_from_plan(plan, *, created_by, document=None):
             title=section.name,
             cost_center=plan.cost_center,
             source_plan=plan,
+            area_modality=section.modality,
+            vertices=section.vertices,
             # Entero en metros, con el mismo redondeo que la hoja. None cuando
             # no hay círculo -- la sección con aviso se crea igual, porque
             # esconderla obligaría a volver al KMZ para descubrir que falta.
@@ -207,6 +272,11 @@ def sigo_sheet(request):
     ]
     return {
         "request_type": request.get_request_type_display(),
+        # LV-278: la modalidad con el nombre del portal y, fuera de Punto Centro,
+        # los vértices en las casillas de SIGO.
+        "area_modality": request.area_modality,
+        "area_modality_label": request.get_area_modality_display(),
+        "vertices": vertex_rows(request.vertices),
         "work_pairs": pairs,
         "commune": request.commune,
         "area": request.area_name,

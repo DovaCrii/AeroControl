@@ -25,6 +25,11 @@ from apps.geo.sections import haversine_km
 from apps.operations.flight_requests import plan_sections
 from apps.registry.models import CostCenter
 
+# LV-278: cinco vértices y no cuatro. Un rectángulo es ahora la modalidad Cuadricular
+# de SIGO, que se declara por sus vértices; un área irregular que no es ninguna de
+# las formas de SIGO sigue resolviéndose con el círculo que la encierra.
+IRREGULAR_AREA = [(0, 0), (0.5, 0), (0.5, 0.02), (0.25, 0.03), (0, 0.02)]
+
 # Cerca del área real de CC 861 (Tranque Talabre), donde el AMC del catálogo es
 # Andrés Sabella y las distancias son de cientos de kilómetros: a esa escala un
 # centro corrido decenas de kilómetros cambia el número que se declara.
@@ -96,9 +101,7 @@ class TestAnIrregularArea:
         """El punto declarado va en una esquina del área alargada, así que el
         centro del círculo que la encierra queda lejos: si la fila mostrara el
         punto, la latitud sería la del punto."""
-        document = _document(
-            [(0, 0), (0.5, 0), (0.5, 0.02), (0, 0.02)], with_point_at=(0, 0)
-        )
+        document = _document(IRREGULAR_AREA, with_point_at=(0, 0))
 
         row = _row(plan, document)
 
@@ -111,9 +114,7 @@ class TestAnIrregularArea:
         """La distancia y el aeródromo salen del centro que se va a declarar. Si
         se copiaran del punto dibujado, serían dos datos correctos por separado
         que juntos describen una solicitud que no existe."""
-        document = _document(
-            [(0, 0), (0.5, 0), (0.5, 0.02), (0, 0.02)], with_point_at=(0, 0)
-        )
+        document = _document(IRREGULAR_AREA, with_point_at=(0, 0))
 
         row = _row(plan, document)
         amc = row["amc"]
@@ -133,7 +134,7 @@ class TestAnIrregularArea:
     def test_the_drawn_average_travels_as_a_reference_only(self, plan):
         """Se muestra en chico y no como casilla: el radio promedio de algo que
         no es un círculo es el artefacto de medir un no-círculo."""
-        document = _document([(0, 0), (0.5, 0), (0.5, 0.02), (0, 0.02)])
+        document = _document(IRREGULAR_AREA)
 
         row = _row(plan, document)
 

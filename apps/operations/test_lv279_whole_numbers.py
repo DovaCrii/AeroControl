@@ -39,8 +39,14 @@ class _Request:
     hour_from = hour_to = None
     commune = area_name = ""
 
+    area_modality = "center_point"
+    vertices = []
+
     def get_request_type_display(self):
         return "Punto centro"
+
+    def get_area_modality_display(self):
+        return "Punto Centro"
 
     class work_items:  # noqa: N801
         @staticmethod

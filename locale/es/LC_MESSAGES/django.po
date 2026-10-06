@@ -6617,17 +6617,17 @@ msgstr "Volver al plan"
 #: .\templates\operations\flight_request_split.html:24
 #, python-format
 msgid ""
-"This plan yields <strong>%(count)s flight request</strong>: SIGO accepts one "
-"circle with its centre point per request."
+"This plan yields <strong>%(count)s flight request</strong>, one per flight "
+"area."
 msgid_plural ""
-"This plan yields <strong>%(count)s flight requests</strong>: SIGO accepts "
-"one circle with its centre point per request."
+"This plan yields <strong>%(count)s flight requests</strong>, one per flight "
+"area."
 msgstr[0] ""
-"Este plan da <strong>%(count)s solicitud de vuelo</strong>: SIGO acepta una "
-"circunferencia con su punto central por solicitud."
+"Este plan da <strong>%(count)s solicitud de vuelo</strong>, una por área de "
+"vuelo."
 msgstr[1] ""
-"Este plan da <strong>%(count)s solicitudes de vuelo</strong>: SIGO acepta "
-"una circunferencia con su punto central por solicitud."
+"Este plan da <strong>%(count)s solicitudes de vuelo</strong>, una por área de "
+"vuelo."
 
 #: .\templates\operations\flight_request_split.html:33
 #, python-format
@@ -9344,3 +9344,51 @@ msgstr "Suba la carta desde el expediente del permiso (Carta del mandante)."
 #: apps/geo/views.py
 msgid "Layer color"
 msgstr "Color de la capa"
+
+#: apps/operations/models.py
+msgid "Center point"
+msgstr "Punto Centro"
+
+#: apps/operations/models.py
+msgid "Corridor point"
+msgstr "Punto Corredor"
+
+#: apps/operations/models.py
+msgid "Triangular"
+msgstr "Triangular"
+
+#: apps/operations/models.py
+msgid "Square grid"
+msgstr "Cuadricular"
+
+#: apps/operations/models.py
+msgid "Area modality"
+msgstr "Modalidad del área"
+
+#: apps/operations/models.py
+msgid "The vertices must be a list of coordinates."
+msgstr "Los vértices deben ser una lista de coordenadas."
+
+#: apps/operations/models.py
+msgid "This area modality needs a different number of vertices."
+msgstr "Esta modalidad de área necesita otra cantidad de vértices."
+
+#: apps/operations/flight_requests.py
+msgid "Area vertices"
+msgstr "Vértices del área"
+
+#: apps/operations/flight_requests.py
+msgid "Centre point (calculated)"
+msgstr "Punto centro (calculado)"
+
+#: templates/geo/_sigo_sheet.html
+msgid "clockwise"
+msgstr "sentido horario"
+
+#: templates/operations/flight_request_split.html
+msgid "What the KMZ brings"
+msgstr "Qué trae el KMZ"
+
+#: templates/operations/flight_request_split.html
+msgid "Still to fill in"
+msgstr "Falta completar"
