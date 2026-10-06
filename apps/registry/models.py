@@ -10,6 +10,7 @@ from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from apps.core.choices import PURPOSE_CHOICES
 from apps.core.models import BaseModel, OperationalTenant
+from apps.core.status_history import StatusHistoryMixin
 from apps.core.tenancy import get_default_tenant
 
 
@@ -300,7 +301,15 @@ class CostCenter(BaseModel):
         return self.responsible_contact_email
 
 
-class Aircraft(BaseModel):
+class Aircraft(StatusHistoryMixin, BaseModel):
+    # T1.3: el historial del trámite del seguro (`InsuranceHistory`) lo escribe
+    # `StatusHistoryMixin` dentro del guardado, y ya no una señal `pre_save`. Lo que se
+    # sigue es `insurance_status`, no `status` (la aeronave activa / dañada / en
+    # mantención es otro eje, sin historial). La otra señal de este modelo
+    # (`track_aircraft_location`, OPS-3) sigue siendo `pre_save`, pero corre **dentro**
+    # de esa transacción: si el guardado falla, el registro del movimiento se deshace.
+    STATUS_HISTORY = ("registry.InsuranceHistory", "aircraft", "insurance_status")
+
     tenant = models.ForeignKey(
         OperationalTenant,
         on_delete=models.PROTECT,
@@ -596,7 +605,7 @@ class InsuranceHistory(BaseModel):
     """LV-81: append-only trace of the JAC insurance filing, per aircraft.
 
     Mirrors `operations.PermissionHistory` field for field, because the shared
-    `track_status_changes` signal writes all of them and the shared
+    `StatusHistoryMixin` (T1.3) writes all of them and the shared
     `generic/_traceability.html` renders all of them -- a different shape here
     would mean a fourth variant of the same table.
 
