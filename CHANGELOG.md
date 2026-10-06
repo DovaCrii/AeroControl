@@ -8,8 +8,18 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Added
+
+- **Al mover una circunferencia en el editor, su centro la acompaña (`LV-277`).** El pin
+  «Centro» se mueve en vivo con el anillo y ambos se guardan juntos (un solo Deshacer).
+  Sólo sigue al anillo el punto que está **dentro** del círculo y que el servidor
+  emparejaría como su centro; un punto vecino no se toca.
+
 ### Fixed
 
+- **Mover o editar una figura en el editor geoespacial vuelve a guardarse (`LV-277`).**
+  La sincronización leía la geometría del grupo de `L.geoJSON`, cuyo `toGeoJSON()` no trae
+  `geometry`, y no escribía nada; ahora lee la figura que Geoman realmente edita.
 - **La hoja «Datos para SIGO» entrega números cerrados (`LV-279`).** SIGO no acepta
   decimales y la hoja mostraba segundos como `16.48` y la distancia al AMC como `206,8`.
   Ahora segundos y distancia son enteros (.5 hacia arriba, con acarreo al minuto/grado), y
