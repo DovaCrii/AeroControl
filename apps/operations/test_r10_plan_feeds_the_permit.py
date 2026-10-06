@@ -146,7 +146,7 @@ class TestTheDataIsReadableAtTheKmzStage:
         row = rows[0]
         assert row["name"] == "Quebrada km 13.760"
         assert abs(row["radius_m"] - 30) <= 1
-        assert row["lat_readable"] == "31° 53' 39.81\" S"
+        assert row["lat_readable"] == "31° 53' 40\" S"
         assert row["dms_lat"]["hemisphere"] == "S"
 
     @pytest.mark.django_db
@@ -202,7 +202,7 @@ class TestTheDataIsReadableAtTheKmzStage:
         # Sin las comillas del formato GMS: Django escapa `'` y `"` a entidades
         # HTML, así que afirmar la cadena literal comprobaría el escapado y no
         # que el dato llegó. Los grados y los segundos bastan y no se escapan.
-        assert "31°" in content and "39.81" in content
+        assert "31°" in content and "40&quot; S" in content
         # La distancia **no** se afirma acá a propósito: con el locale español
         # activo Django la formatea con coma decimal, así que buscar "125.9"
         # comprobaría el formateo y no el cálculo. El valor lo fija

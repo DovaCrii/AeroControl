@@ -25,6 +25,7 @@ from apps.geo.sections import (
     nearest_aerodromes,
     split_sections,
     to_dms,
+    whole,
 )
 from apps.registry.models import Aerodrome
 
@@ -113,7 +114,8 @@ def _row(section, aerodromes):
         "lon_readable": format_dms(lon, "lon"),
         "radius_m": round(radius_m) if radius_m else None,
         "amc": aerodrome,
-        "amc_distance_km": (round(distance_km, 1) if distance_km is not None else None),
+        # SIGO no acepta decimales: la hoja muestra la distancia cerrada.
+        "amc_distance_km": (whole(distance_km) if distance_km is not None else None),
         "warnings": list(section.warnings),
         "comuna": place.get("comuna", ""),
         "provincia": place.get("provincia", ""),
@@ -200,16 +202,20 @@ def sigo_sheet(request):
         "commune": request.commune,
         "area": request.area_name,
         "amc": str(request.amc) if request.amc else "",
-        "amc_distance_km": request.amc_distance_km,
+        "amc_distance_km": (
+            whole(request.amc_distance_km)
+            if request.amc_distance_km is not None
+            else None
+        ),
         # Las seis casillas, y además la lectura corrida para revisar de un
         # vistazo contra la carta.
         "lat_degrees": dms_lat["degrees"],
         "lat_minutes": dms_lat["minutes"],
-        "lat_seconds": f"{dms_lat['seconds']:.2f}",
+        "lat_seconds": dms_lat["seconds"],
         "lat_hemisphere": dms_lat["hemisphere"],
         "lon_degrees": dms_lon["degrees"],
         "lon_minutes": dms_lon["minutes"],
-        "lon_seconds": f"{dms_lon['seconds']:.2f}",
+        "lon_seconds": dms_lon["seconds"],
         "lon_hemisphere": dms_lon["hemisphere"],
         "lat_readable": format_dms(lat, "lat"),
         "lon_readable": format_dms(lon, "lon"),
