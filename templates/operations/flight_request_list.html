@@ -1,5 +1,5 @@
 {% extends "generic/list.html" %}
-{% load i18n %}
+{% load aero_tags i18n %}
 
 {% block list_primary_actions %}
 {% comment %}R9.5: no hay "+ Nueva". Una solicitud **nace de separar un KMZ**,
@@ -45,11 +45,11 @@ así que sin esta línea las dos pantallas se parecen más de lo que se diferenc
 {% endblock %}
 
 {% block list_header %}
-<th scope="col">{% translate "Title" %}</th>
-<th scope="col">{% translate "Cost center" %}</th>
-<th scope="col">{% translate "Radius (m)" %}</th>
-<th scope="col">{% translate "AMC" %}</th>
-<th scope="col">{% translate "Status" %}</th>
+{% worktable_th _("Title") "title" %}
+{% worktable_th _("Cost center") "cost_center" %}
+{% worktable_th _("Radius (m)") "radius" %}
+{% worktable_th _("AMC") "amc" %}
+{% worktable_th _("Status") "status" %}
 <th scope="col">{% translate "Permit" %}</th>
 {% endblock %}
 

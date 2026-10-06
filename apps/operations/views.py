@@ -125,6 +125,15 @@ class FlightPermissionList(
     htmx_template_name = "operations/_permission_rows.html"
     context_object_name = "objects"
     paginate_by = 25
+    # LV-280: sólo las columnas que tienen un valor propio que ordenar. Operadores
+    # y Aeronaves son relaciones M2M (no hay un valor que ordene la fila), así que
+    # quedan como encabezado simple. «Vigencia» ordena por la fecha de término.
+    sortable_columns = {
+        "number": "internal_folio",
+        "cost_center": "cost_center__code",
+        "validity": "valid_until",
+        "status": "status",
+    }
     # R2.2/R2.3: internal_folio is the identifier every screen actually
     # shows now; permission_number (the DGAC folio) stays searchable too,
     # it just is not always present. R2.7: the placeholder ("Search number,
@@ -1012,6 +1021,13 @@ class FlightRecordList(OList):
     model = FlightRecord
     template_name = "operations/record_list.html"
     htmx_template_name = "operations/_record_rows.html"
+    # LV-280. «Duración» se calcula de dos horas y no es una columna: sin orden.
+    sortable_columns = {
+        "date": "actual_date",
+        "permission": "permission__internal_folio",
+        "pilot": "pilot__full_name",
+        "aircraft": "aircraft__registration",
+    }
     search_fields = [
         "permission__permission_number",
         "pilot__full_name",
@@ -1260,6 +1276,14 @@ class FlightRequestList(
     htmx_template_name = "operations/_flight_request_rows.html"
     context_object_name = "objects"
     paginate_by = 25
+    # LV-280. «Permiso» es un enlace que puede faltar: sin orden.
+    sortable_columns = {
+        "title": "title",
+        "cost_center": "cost_center__code",
+        "radius": "radius_m",
+        "amc": "amc__code",
+        "status": "status",
+    }
     search_fields = ["title", "commune", "area_name"]
 
     def get_queryset(self):
