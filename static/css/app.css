@@ -1601,6 +1601,26 @@ tr.row-critical > td:first-child {
     inset 0 0 0 9999px var(--bs-table-bg-state, transparent);
 }
 
+/* LV-284: la fila de una faena **sin permiso vigente pero con uno esperando
+   respuesta** va en ámbar (el naranja de la paleta de severidad: `warning`) y no en
+   rojo. Pedido del usuario (2026-10-06): *«cuando diga esperando sea color naranjo y
+   no rojo»*. Sigue siendo una faena que no puede volar todavía, pero el rojo es lo
+   que no tiene remedio a la vista; esto ya se pidió y se está esperando. Mismas tres
+   reglas que `row-critical`, con los tokens de `warning`. */
+tr.row-awaiting > td {
+  background-color: var(--sev-warning-bg);
+  color: var(--sev-warning-text);
+}
+.table-hover > tbody > tr.row-awaiting:hover > * {
+  --bs-table-bg-state: color-mix(in srgb, var(--sev-warning-border) 40%, transparent);
+  color: var(--sev-warning-text);
+}
+tr.row-awaiting > td:first-child {
+  box-shadow:
+    inset 3px 0 0 var(--sev-warning-border),
+    inset 0 0 0 9999px var(--bs-table-bg-state, transparent);
+}
+
 /* La variante de **texto suelto**, para la fila del panel: ahí la fecha va sin
    pastilla porque la fila ya lleva dos (`LV-148`), así que se unifica la paleta y
    no la forma. El peso es lo que separa `warning` de `caution`. */
