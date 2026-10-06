@@ -29,6 +29,7 @@ Decisiones:
 
 import math
 from dataclasses import dataclass, field
+from decimal import ROUND_HALF_UP, Decimal
 
 from .enclosing import enclosing_circle_of_ring
 from .kml.canonical import empty_document, iter_placemarks, new_uid
@@ -72,14 +73,23 @@ def haversine_km(lat1, lon1, lat2, lon2):
     return 2 * EARTH_RADIUS_KM * math.asin(math.sqrt(a))
 
 
+def whole(value):
+    """Número cerrado, de .5 hacia arriba (no el redondeo al par de `round`).
+
+    SIGO no acepta decimales en ninguna casilla. Se redondea **al presentar**:
+    lo calculado conserva su precisión y sólo la hoja muestra enteros.
+    """
+    return int(Decimal(str(value)).quantize(Decimal(1), rounding=ROUND_HALF_UP))
+
+
 def to_dms(value, axis):
     """Las casillas de SIGO tal cual: grados, minutos, segundos y hemisferio.
 
     El formulario pide seis casillas numéricas sin signo (Grados/Minutos/
     Segundos por eje); el hemisferio se devuelve como letra aparte. Los
-    segundos van con dos decimales y el acarreo se normaliza: 59.999" es
-    0" del minuto siguiente, nunca "60.0"", que es un valor que ninguna
-    casilla acepta.
+    segundos van **enteros** (SIGO no acepta decimales) y el acarreo se
+    normaliza: 59.6" es 0" del minuto siguiente, nunca "60"", que es un valor
+    que ninguna casilla acepta.
     """
     if axis not in ("lat", "lon"):
         raise ValueError(f"axis must be 'lat' or 'lon', got {axis!r}")
@@ -91,9 +101,9 @@ def to_dms(value, axis):
     degrees = int(magnitude)
     remainder = (magnitude - degrees) * 60
     minutes = int(remainder)
-    seconds = round((remainder - minutes) * 60, 2)
+    seconds = whole((remainder - minutes) * 60)
     if seconds >= 60:
-        seconds = round(seconds - 60, 2)
+        seconds -= 60
         minutes += 1
     if minutes >= 60:
         minutes -= 60
@@ -107,12 +117,9 @@ def to_dms(value, axis):
 
 
 def format_dms(value, axis):
-    """`31° 53' 39.81" S` — para la hoja SIGO y los listados."""
+    """`31° 53' 40" S` — para la hoja SIGO y los listados."""
     dms = to_dms(value, axis)
-    return (
-        f"{dms['degrees']}° {dms['minutes']}' "
-        f'{dms["seconds"]:.2f}" {dms["hemisphere"]}'
-    )
+    return f"{dms['degrees']}° {dms['minutes']}' {dms['seconds']}\" {dms['hemisphere']}"
 
 
 @dataclass

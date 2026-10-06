@@ -170,7 +170,7 @@ Preparada ──> Ingresada en SIGO ──> Vinculada al permiso ──> Cerrada
 | **R9.5** | Vistas, plantillas y menú · vista previa de separación · hoja SIGO · descarga del KMZ · vínculo desde la pantalla | ✅ hecho 2026-08-20, 23 tests. Verificado en el navegador con el KMZ real |
 | **R9.6** | El expediente del permiso muestra su solicitud de origen · el panel muestra lo presentado y sin respuesta, con los días de espera | ✅ hecho 2026-08-20, 12 tests. Verificado en el navegador |
 
-| **R9.7** | **Números cerrados** en la hoja SIGO (segundos, radio, distancia, altura): SIGO no acepta decimales — ver §7.4 | ⬜ |
+| **R9.7** | **Números cerrados** en la hoja SIGO (segundos, radio, distancia, altura): SIGO no acepta decimales — ver §7.4 | ✅ hecho 2026-10-06 (LV-279). Segundos y distancia enteros; radio sigue `round` hasta resolver §7.5.5 |
 | **R9.8** | Detección de la modalidad del KMZ (Punto Centro / Corredor / Triangular / Cuadricular) — ver §7.2 | ⬜ |
 | **R9.9** | `FlightRequest.request_type` se puebla y la hoja SIGO muestra los campos de **su** modalidad — ver §7.3 | ⬜ |
 | **R9.10** | Pantalla «qué traerá este KMZ»: tipo detectado, qué datos aporta y cuáles quedan por completar a mano — ver §7.2 | ⬜ |

@@ -73,23 +73,22 @@ simplificada a ~111 m. Literalmente el mismo aviso que la tabla.{% endcomment %}
 
 <h3 class="sigo-section-title sigo-section-coords">{% translate "Latitude" %}</h3>
 <div class="row g-2 sigo-section sigo-section-coords">
-  {% include "geo/_sigo_field.html" with label=label_degrees value=row.dms_lat.degrees copy=row.dms_lat.degrees %}
-  {% include "geo/_sigo_field.html" with label=label_minutes value=row.dms_lat.minutes copy=row.dms_lat.minutes %}
-  {% comment %}`floatformat:"2u"` y no `floatformat:2`: con el locale español
-  activo Django escribe la coma decimal ("4,80"), y la lectura corrida de abajo
-  —que la arma `format_dms` en Python— escribe el punto ("4.80"). Dos formas del
-  mismo número en la misma pantalla, y el botón copiaría la que la casilla de
-  SIGO puede no aceptar. La `u` desactiva la localización.{% endcomment %}
-  {% include "geo/_sigo_field.html" with label=label_seconds value=row.dms_lat.seconds|floatformat:"2u" copy=row.dms_lat.seconds|floatformat:"2u" %}
+  {% include "geo/_sigo_field.html" with label=label_degrees value=row.dms_lat.degrees|stringformat:"d" copy=row.dms_lat.degrees|stringformat:"d" %}
+  {% include "geo/_sigo_field.html" with label=label_minutes value=row.dms_lat.minutes|stringformat:"d" copy=row.dms_lat.minutes|stringformat:"d" %}
+  {% comment %}LV-279: SIGO no acepta decimales, así que los segundos son enteros.
+  `stringformat:"d"` (y no el entero a secas) porque `_sigo_field` y el botón de
+  copiar tratan un `0` como «sin valor»: un segundo 0 —uno de cada sesenta— se
+  vería como un guion y no se podría copiar.{% endcomment %}
+  {% include "geo/_sigo_field.html" with label=label_seconds value=row.dms_lat.seconds|stringformat:"d" copy=row.dms_lat.seconds|stringformat:"d" %}
   {% include "geo/_sigo_field.html" with label=label_hemisphere value=row.dms_lat.hemisphere copy=row.dms_lat.hemisphere %}
 </div>
 <p class="small text-body-secondary mb-0 mt-1 font-monospace">{{ row.lat_readable }}</p>
 
 <h3 class="sigo-section-title sigo-section-coords">{% translate "Longitude" %}</h3>
 <div class="row g-2 sigo-section sigo-section-coords">
-  {% include "geo/_sigo_field.html" with label=label_degrees value=row.dms_lon.degrees copy=row.dms_lon.degrees %}
-  {% include "geo/_sigo_field.html" with label=label_minutes value=row.dms_lon.minutes copy=row.dms_lon.minutes %}
-  {% include "geo/_sigo_field.html" with label=label_seconds value=row.dms_lon.seconds|floatformat:"2u" copy=row.dms_lon.seconds|floatformat:"2u" %}
+  {% include "geo/_sigo_field.html" with label=label_degrees value=row.dms_lon.degrees|stringformat:"d" copy=row.dms_lon.degrees|stringformat:"d" %}
+  {% include "geo/_sigo_field.html" with label=label_minutes value=row.dms_lon.minutes|stringformat:"d" copy=row.dms_lon.minutes|stringformat:"d" %}
+  {% include "geo/_sigo_field.html" with label=label_seconds value=row.dms_lon.seconds|stringformat:"d" copy=row.dms_lon.seconds|stringformat:"d" %}
   {% include "geo/_sigo_field.html" with label=label_hemisphere value=row.dms_lon.hemisphere copy=row.dms_lon.hemisphere %}
 </div>
 <p class="small text-body-secondary mb-0 mt-1 font-monospace">{{ row.lon_readable }}</p>
