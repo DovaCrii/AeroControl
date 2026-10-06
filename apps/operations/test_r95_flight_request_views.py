@@ -212,9 +212,9 @@ class TestTheDetailSheet:
             reverse("flight-request-detail", args=[flight_request.pk])
         ).content.decode()
 
-        assert "39.81" in content  # segundos de la latitud
-        assert "7.95" in content  # segundos de la longitud
-        assert "31° 53' 39.81&quot; S" in content or "39.81" in content
+        assert "<strong>40</strong>" in content  # segundos de la latitud
+        assert "<strong>8</strong>" in content  # segundos de la longitud (7.95")
+        assert "40&quot; S" in content
 
     @pytest.mark.django_db
     def test_the_amc_carries_its_reminder(self, client_in, flight_request):

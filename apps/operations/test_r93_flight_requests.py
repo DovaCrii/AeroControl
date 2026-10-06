@@ -204,10 +204,10 @@ class TestTheSigoSheet:
         sheet = sigo_sheet(requests[0])
 
         assert (sheet["lat_degrees"], sheet["lat_minutes"]) == (31, 53)
-        assert sheet["lat_seconds"] == "39.81"
+        assert sheet["lat_seconds"] == 40
         assert sheet["lat_hemisphere"] == "S"
         assert sheet["lon_hemisphere"] == "W"
-        assert sheet["lat_readable"] == "31° 53' 39.81\" S"
+        assert sheet["lat_readable"] == "31° 53' 40\" S"
 
     @pytest.mark.django_db
     def test_work_pairs_come_through(self, plan, user, catalogs):

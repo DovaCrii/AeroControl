@@ -18,6 +18,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **La hoja «Datos para SIGO» entrega números cerrados (`LV-279`).** SIGO no acepta
+  decimales y la hoja mostraba segundos como `16.48` y la distancia al AMC como `206,8`.
+  Ahora segundos y distancia son enteros (.5 hacia arriba, con acarreo al minuto/grado), y
+  una casilla en `0` ya no se dibuja como «sin valor» ni pierde su botón de copiar.
 - **El panel distingue «Ninguno» de «Esperando» (`LV-281`).** En «Permisos de vuelo por
   centro de costo», una faena sin vigentes pero con un permiso esperando respuesta decía
   «Ninguno» igual que una sin nada. Ahora dice «Esperando» en color de advertencia; la
