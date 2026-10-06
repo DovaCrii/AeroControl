@@ -112,7 +112,10 @@ def _row(section, aerodromes):
         "dms_lon": to_dms(lon, "lon"),
         "lat_readable": format_dms(lat, "lat"),
         "lon_readable": format_dms(lon, "lon"),
-        "radius_m": round(radius_m) if radius_m else None,
+        # `whole()` y no `round()`: `round(30.5)` es 30 (redondeo al par) y el
+        # resto de la hoja lleva `.5` hacia arriba. El usuario pidió «al más
+        # cercano» (2026-10-06), y con un solo criterio en toda la hoja.
+        "radius_m": whole(radius_m) if radius_m else None,
         "amc": aerodrome,
         # SIGO no acepta decimales: la hoja muestra la distancia cerrada.
         "amc_distance_km": (whole(distance_km) if distance_km is not None else None),
@@ -122,7 +125,7 @@ def _row(section, aerodromes):
         "region": place.get("region", ""),
         "is_enclosing": is_enclosing,
         "drawn_radius_m": (
-            round(section.radius_m) if is_enclosing and section.radius_m else None
+            whole(section.radius_m) if is_enclosing and section.radius_m else None
         ),
     }
 
@@ -147,21 +150,27 @@ def create_requests_from_plan(plan, *, created_by, document=None):
 
     requests = []
     for section in sections:
-        lat, lon = section.center
+        # LV-278: el centro y el radio salen **de la misma fila** que muestra la
+        # hoja «Datos para SIGO». Antes se leían de la sección cruda, así que
+        # sobre un área irregular la hoja decía «círculo envolvente» y la
+        # solicitud guardaba el punto dibujado con el radio promedio: dos
+        # pantallas del mismo plan, dos solicitudes distintas.
+        row = _row(section, aerodromes)
+        lat, lon = row["lat"], row["lon"]
         amc, distance_km = None, None
         ranked = nearest_aerodromes((lat, lon), aerodromes, limit=1)
         if ranked:
             amc, distance = ranked[0]
+            # Se guarda con su decimal: la hoja la cierra al presentar (`whole`).
             distance_km = Decimal(f"{distance:.1f}")
         request = FlightRequest.objects.create(
             title=section.name,
             cost_center=plan.cost_center,
             source_plan=plan,
-            # `round()` y no truncado: el radio se estima del polígono y SIGO
-            # pide un entero en metros. None cuando no hay círculo -- la
-            # sección con aviso se crea igual, porque esconderla obligaría a
-            # volver al KMZ para descubrir que falta.
-            radius_m=round(section.radius_m) if section.radius_m else None,
+            # Entero en metros, con el mismo redondeo que la hoja. None cuando
+            # no hay círculo -- la sección con aviso se crea igual, porque
+            # esconderla obligaría a volver al KMZ para descubrir que falta.
+            radius_m=row["radius_m"],
             center_lat=Decimal(f"{lat:.6f}"),
             center_lon=Decimal(f"{lon:.6f}"),
             amc=amc,

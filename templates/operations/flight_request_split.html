@@ -48,7 +48,7 @@ que nadie lo supiera.{% endcomment %}
           <td class="text-muted">{{ forloop.counter }}</td>
           <td><strong>{{ row.section.name }}</strong></td>
           <td class="small text-nowrap">{{ row.lat }}<br>{{ row.lon }}</td>
-          <td class="text-nowrap">{% if row.section.radius_m %}{{ row.section.radius_m|floatformat:0 }} m{% else %}<span class="text-muted">—</span>{% endif %}</td>
+          <td class="text-nowrap">{% if row.radius_m %}{{ row.radius_m }} m{% else %}<span class="text-muted">—</span>{% endif %}</td>
           <td>
             {% for warning in row.warnings %}
             <div class="small text-warning-emphasis">⚠ {{ warning }}</div>

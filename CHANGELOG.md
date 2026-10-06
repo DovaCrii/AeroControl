@@ -25,6 +25,11 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **La solicitud creada desde un plan guarda lo que muestra la hoja SIGO (`LV-283`).**
+  Sobre un área irregular la hoja mostraba el círculo que la encierra, pero la solicitud
+  guardaba el punto dibujado y el radio promedio, y la vista previa mostraba otra versión.
+  Ahora las tres usan la misma fila. El radio se redondea al entero más cercano
+  (`.5` hacia arriba): 30,5 m se declara como 31.
 - **Mover o editar una figura en el editor geoespacial vuelve a guardarse (`LV-277`).**
   La sincronización leía la geometría del grupo de `L.geoJSON`, cuyo `toGeoJSON()` no trae
   `geometry`, y no escribía nada; ahora lee la figura que Geoman realmente edita.
