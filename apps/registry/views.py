@@ -2,8 +2,8 @@ from datetime import timedelta
 
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Case, CharField, Count, F, Prefetch, Q, When
-from django.db.models.functions import Length
+from django.db.models import Case, CharField, Count, F, IntegerField, Prefetch, Q, When
+from django.db.models.functions import Cast, Length, Substr
 from django.http import HttpResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -617,6 +617,14 @@ class OperatorList(RegistryList):
     # T5.6/F-13: the live-search/pagination partial must carry this list's own
     # columns, or an HTMX search collapsed them to the generic Name/Created/Status.
     htmx_template_name = "registry/_operator_rows.html"
+    # LV-280. «Archivo» y «Habilitaciones» salen de documentos y de una relación:
+    # no hay un valor propio que ordene la fila.
+    sortable_columns = {
+        "name": "full_name",
+        "credential": "dgac_credential",
+        "expiry": "credential_expiry",
+        "cost_center": "cost_center__code",
+    }
     search_fields = ["full_name", "employee_id", "rut", "dgac_credential"]
 
     def get_queryset(self):
@@ -667,8 +675,12 @@ class OperatorList(RegistryList):
                     output_field=CharField(),
                 )
             )
-            .order_by("sort_name", "full_name")
         )
+        # LV-280: el orden por apellido es el de **omisión**. Escrito dentro de la
+        # cadena pisaba el que dejó `SortableColumnsMixin`, y el clic en el
+        # encabezado no habría hecho nada.
+        if not self._requested_sort()[0]:
+            queryset = queryset.order_by("sort_name", "full_name")
         # LV-242: ver `AircraftList`. La tarjeta "Credenciales al día" decía
         # *"1 vencido · 7 sin fecha cargada"* y llevaba al padrón entero: siete
         # personas que localizar a ojo entre cuarenta y cinco.
@@ -684,10 +696,14 @@ class CostCenterList(RegistryList):
     model = CostCenter
     template_name = "registry/costcenter_list.html"
     htmx_template_name = "registry/_costcenter_rows.html"
+    # LV-280. Los conteos de operadores y aeronaves son anotaciones: sin orden.
+    # «code» se reordena por la parte numérica (`code_number`) en `get_queryset`:
+    # por texto, «CC110» quedaría antes que «CC2», lo que R3.2 ya evitaba.
+    sortable_columns = {"code": "code", "responsible": "responsible"}
     search_fields = ["code", "name", "responsible"]
 
     def get_queryset(self):
-        return self.scope_by_tenant(
+        queryset = self.scope_by_tenant(
             super()
             .get_queryset()
             # LV-58: day_to_day_contact reads responsible_operator per row.
@@ -708,8 +724,18 @@ class CostCenterList(RegistryList):
             # R3.3(b): "contract_status" first so closed cost centers group
             # after the active ones instead of interleaving with them --
             # "active" < "closed" alphabetically already gives that order.
-            .order_by("contract_status", Length("code"), "code")
+            .annotate(code_number=Cast(Substr("code", 3), IntegerField()))
         )
+        # LV-280: el orden de omisión sólo entra si nadie pidió otro.
+        column, direction = self._requested_sort()
+        if column == "code":
+            # El mixin ya ordenó por `code` (texto) antes de que existiera la
+            # anotación; se rehace acá, por el número.
+            prefix = "-" if direction == "desc" else ""
+            queryset = queryset.order_by(f"{prefix}code_number", f"{prefix}code", "pk")
+        elif not column:
+            queryset = queryset.order_by("contract_status", Length("code"), "code")
+        return queryset
 
 
 class AircraftList(RegistryList):
@@ -725,11 +751,23 @@ class AircraftList(RegistryList):
     model = Aircraft
     template_name = "registry/aircraft_list.html"
     htmx_template_name = "registry/_aircraft_rows.html"
+    sortable_columns = {
+        "registration": "registration",
+        "cost_center": "cost_center__code",
+        "status": "status",
+        "location": "current_location",
+        "insurance": "insurance_expiry",
+    }
     search_fields = ["registration", "model", "manufacturer"]
 
     def get_queryset(self):
         # R3.2: no Meta.ordering fell back to created_at.
-        queryset = self.scope_by_tenant(super().get_queryset()).order_by("registration")
+        queryset = self.scope_by_tenant(super().get_queryset())
+        # LV-280: `order_by` encima de lo que dejó `SortableColumnsMixin` lo
+        # pisaría, y el clic en el encabezado no haría nada. El orden por defecto
+        # sólo entra cuando nadie pidió otro.
+        if not self._requested_sort()[0]:
+            queryset = queryset.order_by("registration")
         # LV-242: `?insurance=` acota por el estado de la póliza, y es lo que hace
         # que la tarjeta del panel lleve a alguna parte. Decía "1 vencido" y el
         # clic traía las dieciséis aeronaves, así que el número informaba y no

@@ -77,7 +77,9 @@ class TestTheListShowsTheCostCenter:
         # el cuerpo —compararlo contra el `<th>` mediría el orden de la tabla y
         # no el de las columnas— y "Operadores" a secas está también en el menú
         # lateral, que va antes que la tabla entera.
-        assert content.index('scope="col">Centro de costo') < content.index(
+        # LV-280: «Centro de costo» ahora es un encabezado ordenable (`data-col`,
+        # con el rótulo dentro de un enlace), así que se ancla por su `data-col`.
+        assert content.index('data-col="cost_center"') < content.index(
             'scope="col">Operadores'
         )
 
