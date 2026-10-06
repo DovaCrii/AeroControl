@@ -31,6 +31,8 @@ import math
 from dataclasses import dataclass, field
 from decimal import ROUND_HALF_UP, Decimal
 
+from django.utils.translation import gettext
+
 from .enclosing import enclosing_circle_of_ring
 from .kml.canonical import empty_document, iter_placemarks, new_uid
 
@@ -57,6 +59,14 @@ WARNING_NOT_A_CIRCLE = "not_a_circle"
 # SIGO con ese centro se presentaría por el sitio equivocado; callarlo sería
 # dejar que el error viaje al formulario del Estado con timbre y todo.
 WARNING_DUPLICATE_CENTER = "duplicate_center"
+
+# LV-278: las cuatro modalidades de área de vuelo que admite SIGO. Un círculo con
+# su punto central es la que el motor conocía; las otras tres se reconocen por la
+# forma del dibujo, nunca por el nombre de una carpeta.
+MODALITY_CENTER_POINT = "center_point"
+MODALITY_CORRIDOR = "corridor"
+MODALITY_TRIANGLE = "triangle"
+MODALITY_QUADRILATERAL = "quadrilateral"
 
 
 def haversine_km(lat1, lon1, lat2, lon2):
@@ -143,6 +153,12 @@ class Section:
     # Sobre un círculo sería el círculo mismo, o sea ruido; sobre un polígono es
     # la única forma de llevarlo a la casilla de SIGO sin dibujarlo a mano.
     enclosing: tuple | None = None
+    # LV-278: la modalidad del área y sus vértices `[lon, lat]`. En triángulo y
+    # cuadrilátero van en **sentido horario** (pedido del usuario) y sin repetir el
+    # de cierre; en el corredor, en el orden del trazado (es un eje, no un anillo).
+    # Vacío en Punto Centro, que no tiene vértices que declarar.
+    modality: str = MODALITY_CENTER_POINT
+    vertices: list = field(default_factory=list)
 
 
 def _ring_vertices(ring):
@@ -246,15 +262,162 @@ def closed_ring_of(placemark):
     return None
 
 
+def _set_modality(section, modality, coordinates):
+    """Marca la sección como triángulo, cuadrilátero o corredor, con sus vértices."""
+    section.modality = modality
+    if modality == MODALITY_CORRIDOR:
+        section.vertices = [[v[0], v[1]] for v in coordinates]
+    else:
+        section.vertices = clockwise_vertices(coordinates)
+
+
+def open_line_of(placemark):
+    """LV-278: las coordenadas de un trazado **abierto** (el eje de un corredor), o None.
+
+    El complemento de `closed_ring_of`: un `LineString` cuyo último vértice no
+    repite el primero. Hasta `LV-278` se ignoraba **en silencio** —«es un trazado»—
+    y un KMZ con sólo líneas daba cero secciones sin decir por qué. Ahora es la
+    cuarta modalidad de SIGO (Punto Corredor). Un trazado de dos vértices ya es un
+    corredor: una recta tiene eje.
+    """
+    geometry = placemark.get("geometry") or {}
+    coordinates = geometry.get("coordinates")
+    if geometry.get("type") != "LineString" or not coordinates:
+        return None
+    if len(coordinates) < 2 or coordinates[0][:2] == coordinates[-1][:2]:
+        return None
+    return coordinates
+
+
+def _distinct_vertices(ring):
+    """Los vértices del anillo sin el de cierre y sin repetidos (a ~10 cm)."""
+    seen = set()
+    distinct = []
+    for vertex in _ring_vertices(ring):
+        key = (round(vertex[0], 6), round(vertex[1], 6))
+        if key not in seen:
+            seen.add(key)
+            distinct.append([vertex[0], vertex[1]])
+    return distinct
+
+
+def polygon_modality(ring):
+    """Triángulo, cuadrilátero, o None si el anillo no es ninguno de los dos.
+
+    Se cuentan **vértices distintos**: un círculo trae decenas, y un polígono de
+    cinco o más no es ninguna de las dos formas que SIGO ofrece —sigue
+    resolviéndose con el círculo que lo encierra, como antes—.
+    """
+    count = len(_distinct_vertices(ring))
+    if count == 3:
+        return MODALITY_TRIANGLE
+    if count == 4:
+        return MODALITY_QUADRILATERAL
+    return None
+
+
+def _signed_area(vertices):
+    """Área con signo en el plano lon/lat: positivo = antihorario (norte arriba)."""
+    ox, oy = vertices[0]
+    total = 0.0
+    for index, (x1, y1) in enumerate(vertices):
+        x2, y2 = vertices[(index + 1) % len(vertices)]
+        # Respecto del primer vértice, por la misma razón que `_area_centroid`.
+        total += (x1 - ox) * (y2 - oy) - (x2 - ox) * (y1 - oy)
+    return total / 2
+
+
+def clockwise_vertices(ring):
+    """Los vértices del anillo en **sentido horario**, sin repetir el de cierre.
+
+    Pedido del usuario (2026-10-06): *«el orden será horario»*. Sea cual sea el
+    sentido en que se dibujó, la hoja los entrega siempre igual, para que dos
+    personas que dibujan el mismo triángulo en sentidos opuestos declaren lo mismo.
+    """
+    vertices = _distinct_vertices(ring)
+    if _signed_area(vertices) > 0:
+        vertices.reverse()
+    return vertices
+
+
+def _area_centroid(ring):
+    """Centroide del **área** del polígono, en (lat, lon).
+
+    No la media de vértices: en un cuadrilátero con tres vértices juntos la media
+    se corre hacia ellos y deja de ser el centro de lo que se vuela. Se calcula en
+    un plano con la longitud escalada por `cos(lat)` —a la escala de una solicitud
+    es indistinguible del geodésico—. Un área nula (vértices alineados) cae a la
+    media de vértices, que es lo único que queda por decir.
+    """
+    vertices = _distinct_vertices(ring)
+    scale = math.cos(math.radians(sum(v[1] for v in vertices) / len(vertices)))
+    # Respecto del primer vértice: con las coordenadas absolutas (decenas de
+    # grados) los productos cruzados de un área de unos cientos de metros se
+    # restan casi iguales y se pierden los decimales que importan (~17 cm).
+    ox, oy = vertices[0][0] * scale, vertices[0][1]
+    points = [(v[0] * scale - ox, v[1] - oy) for v in vertices]
+    twice_area = 0.0
+    cx = cy = 0.0
+    for index, (x1, y1) in enumerate(points):
+        x2, y2 = points[(index + 1) % len(points)]
+        cross = x1 * y2 - x2 * y1
+        twice_area += cross
+        cx += (x1 + x2) * cross
+        cy += (y1 + y2) * cross
+    if abs(twice_area) < 1e-18:
+        return _centroid(ring)
+    return (
+        oy + cy / (3 * twice_area),
+        (ox + cx / (3 * twice_area)) / scale,
+    )
+
+
+def _line_length_m(coordinates):
+    return sum(
+        haversine_km(a[1], a[0], b[1], b[0]) * 1000
+        for a, b in zip(coordinates, coordinates[1:])
+    )
+
+
+def _line_midpoint(coordinates):
+    """El punto a medio camino **por longitud** de un trazado, en (lat, lon).
+
+    No la media de vértices: con vértices desparejos (muchos en un tramo, uno en
+    otro) la media se corre hacia donde hay más y deja de caer sobre el eje.
+    """
+    total = _line_length_m(coordinates)
+    if total == 0:
+        return (coordinates[0][1], coordinates[0][0])
+    remaining = total / 2
+    for a, b in zip(coordinates, coordinates[1:]):
+        step = haversine_km(a[1], a[0], b[1], b[0]) * 1000
+        if step >= remaining and step > 0:
+            fraction = remaining / step
+            return (
+                a[1] + (b[1] - a[1]) * fraction,
+                a[0] + (b[0] - a[0]) * fraction,
+            )
+        remaining -= step
+    return (coordinates[-1][1], coordinates[-1][0])
+
+
 def split_sections(document):
-    """Separar un documento canónico en secciones punto+circunferencia.
+    """Separar un documento canónico en secciones (una por área de vuelo).
 
     Devuelve una lista de `Section` en el orden de los puntos en el documento
-    (que es el orden en que la persona los dibujó y espera verlos). Los
-    anillos huérfanos van al final, cada uno como sección con aviso.
+    (que es el orden en que la persona los dibujó y espera verlos). Las áreas sin
+    punto van al final, cada una como sección — con aviso si es un círculo, que es
+    la única modalidad donde el punto central es un dato que la persona declara.
+
+    LV-278: además de la circunferencia con su punto, reconoce Triangular
+    (3 vértices), Cuadricular (4) y Punto Corredor (un trazado abierto). Esas tres
+    traen su centro calculado —el centroide del área o el punto medio del eje—
+    cuando no hay un punto dibujado, porque toda área necesita un centro desde el
+    cual medir el aeródromo.
     """
     points = []
-    rings = []  # (placemark, anillo exterior) -- ver closed_ring_of
+    # (placemark, coordenadas, modalidad) -- ver closed_ring_of / open_line_of
+    rings = []
     for placemark in iter_placemarks(document):
         geometry = placemark.get("geometry") or {}
         if geometry.get("type") == "Point" and geometry.get("coordinates"):
@@ -262,7 +425,11 @@ def split_sections(document):
             continue
         ring = closed_ring_of(placemark)
         if ring is not None:
-            rings.append((placemark, ring))
+            rings.append((placemark, ring, polygon_modality(ring)))
+            continue
+        line = open_line_of(placemark)
+        if line is not None:
+            rings.append((placemark, line, MODALITY_CORRIDOR))
 
     # Todos los pares (polígono, punto) dentro del umbral, no sólo el punto más
     # cercano de cada polígono. La versión "sólo el más cercano" falló al
@@ -275,9 +442,18 @@ def split_sections(document):
     # de disfrazarse de desemparejado.
     candidates = []  # (distance_m, ring_index, point_index)
     measured = []  # (centroid, radius_m, deviation) por anillo
-    for ring_index, (_placemark, ring) in enumerate(rings):
-        centroid = _centroid(ring)
-        radius_m, deviation = estimate_radius_m(centroid, ring)
+    for ring_index, (_placemark, ring, modality) in enumerate(rings):
+        if modality == MODALITY_CORRIDOR:
+            # El «radio» sólo sirve de umbral de emparejamiento: media longitud del
+            # eje. Un corredor no tiene radio que declarar.
+            centroid = _line_midpoint(ring)
+            radius_m, deviation = _line_length_m(ring) / 2, None
+        elif modality is not None:
+            centroid = _area_centroid(ring)
+            radius_m, deviation = estimate_radius_m(centroid, ring)
+        else:
+            centroid = _centroid(ring)
+            radius_m, deviation = estimate_radius_m(centroid, ring)
         measured.append((centroid, radius_m, deviation))
         threshold = max(3 * radius_m, 100.0)
         for point_index, point in enumerate(points):
@@ -307,22 +483,41 @@ def split_sections(document):
         if ring_index is None:
             section.warnings.append(WARNING_NO_CIRCLE)
         else:
-            placemark, ring = rings[ring_index]
-            # El radio se mide desde el punto declarado, no desde el centroide:
-            # el punto es lo que la persona afirmó como centro y lo que SIGO
-            # recibirá como tal.
-            radius_m, deviation = estimate_radius_m(section.center, ring)
+            placemark, ring, modality = rings[ring_index]
             section.circle = placemark
-            section.radius_m = radius_m
-            section.radius_deviation = deviation
-            _flag_shape(section, ring, deviation)
+            if modality is not None:
+                # LV-278: triángulo, cuadrilátero o corredor. Sin radio y sin
+                # círculo envolvente: el área se declara por sus vértices. El
+                # punto dibujado sigue siendo el centro declarado.
+                _set_modality(section, modality, ring)
+            else:
+                # El radio se mide desde el punto declarado, no desde el
+                # centroide: el punto es lo que la persona afirmó como centro y
+                # lo que SIGO recibirá como tal.
+                radius_m, deviation = estimate_radius_m(section.center, ring)
+                section.radius_m = radius_m
+                section.radius_deviation = deviation
+                _flag_shape(section, ring, deviation)
         sections.append(section)
 
     matched = set(claimed_by_point.values())
-    for ring_index, (placemark, ring) in enumerate(rings):
+    for ring_index, (placemark, ring, modality) in enumerate(rings):
         if ring_index in matched:
             continue
         centroid, radius_m, deviation = measured[ring_index]
+        if modality is not None:
+            # LV-278: sin punto dibujado el centro es el calculado y **no es un
+            # error**: en estas modalidades la persona declara el área por sus
+            # vértices, y el centro es un derivado desde el que se mide el AMC.
+            label = "Corredor" if modality == MODALITY_CORRIDOR else "Área"
+            derived = Section(
+                name=placemark.get("name") or f"{label} {ring_index + 1}",
+                center=centroid,
+                circle=placemark,
+            )
+            _set_modality(derived, modality, ring)
+            sections.append(derived)
+            continue
         orphan = Section(
             name=placemark.get("name") or f"Circunferencia {ring_index + 1}",
             center=centroid,
@@ -416,6 +611,18 @@ def build_section_document(section):
     if section.point is not None:
         document["children"].append(
             _bare_placemark(section.point, geometry=dict(section.point["geometry"]))
+        )
+    elif section.modality != MODALITY_CENTER_POINT:
+        # LV-278: SIGO pide el punto central junto al área. En triángulo,
+        # cuadrilátero y corredor la persona no está obligada a dibujarlo, así que
+        # el KMZ de la sección lleva el centro calculado. (El círculo sin punto ya
+        # avisa `no_center_point` y no se le inventa uno: ahí sí es un dato.)
+        lat, lon = section.center
+        document["children"].append(
+            _bare_placemark(
+                {"name": gettext("Center")},
+                geometry={"type": "Point", "coordinates": [lon, lat]},
+            )
         )
     if section.circle is not None:
         circle = _bare_placemark(

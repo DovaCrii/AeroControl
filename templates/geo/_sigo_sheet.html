@@ -48,6 +48,9 @@ propio.{% endcomment %}
 <div class="row g-2 sigo-section sigo-section-area">
   {% include "geo/_sigo_field.html" with label=label_area value=row.name copy=row.name width="col-12 col-md-6" %}
 </div>
+{% comment %}LV-278: qué modalidad de SIGO es esta área. Sin botón de copiar: no es una
+casilla de texto sino la opción que se elige en el portal.{% endcomment %}
+<p class="small text-body-secondary mb-0 mt-1">{% translate "Area modality" %}: <strong>{{ row.modality_label }}</strong></p>
 {% if row.is_enclosing %}
 {% comment %}LV-132: en la tabla este aviso va dentro de la celda del nombre,
 por la misma razón por la que acá va debajo de la casilla: el centro y el radio
@@ -93,9 +96,37 @@ simplificada a ~111 m. Literalmente el mismo aviso que la tabla.{% endcomment %}
 </div>
 <p class="small text-body-secondary mb-0 mt-1 font-monospace">{{ row.lon_readable }}</p>
 
-<h3 class="sigo-section-title sigo-section-circle">{% translate "Circle and aerodrome" %}</h3>
+{% if row.vertices %}
+{% comment %}LV-278: triángulo, cuadrilátero y corredor se declaran **por sus
+vértices**, no por un radio. Van en sentido horario (pedido del usuario) y cada
+coordenada con su botón de copiar. Es la versión mínima: la disposición casilla por
+casilla del portal es el bloque B del plan, que espera las capturas.{% endcomment %}
+<h3 class="sigo-section-title sigo-section-circle">{% translate "Area vertices" %}{% if row.modality != "corridor" %} · {% translate "clockwise" %}{% endif %}</h3>
+<div class="table-responsive">
+  <table class="table table-sm align-middle mb-0">
+    <thead><tr>
+      <th scope="col">#</th>
+      <th scope="col">{% translate "Latitude" %}</th>
+      <th scope="col">{% translate "Longitude" %}</th>
+    </tr></thead>
+    <tbody>
+      {% for vertex in row.vertices %}
+      <tr>
+        <td class="text-muted">{{ vertex.number }}</td>
+        <td class="small font-monospace text-nowrap">{{ vertex.lat_readable }}{% translate "Latitude" as vertex_lat_label %}{% include "geo/_sigo_copy_button.html" with value=vertex.lat_readable label=vertex_lat_label %}</td>
+        <td class="small font-monospace text-nowrap">{{ vertex.lon_readable }}{% translate "Longitude" as vertex_lon_label %}{% include "geo/_sigo_copy_button.html" with value=vertex.lon_readable label=vertex_lon_label %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<h3 class="sigo-section-title sigo-section-circle">{% if row.modality == "center_point" %}{% translate "Circle and aerodrome" %}{% else %}{% translate "Nearest aerodrome (AMC)" %}{% endif %}</h3>
 <div class="row g-2 sigo-section sigo-section-circle">
+  {% if row.modality == "center_point" %}
   {% include "geo/_sigo_field.html" with label=label_radius value=row.radius_m copy=row.radius_m %}
+  {% endif %}
   {% include "geo/_sigo_field.html" with label=label_amc value=row.amc copy=row.amc width="col-12 col-md-6" %}
   {% include "geo/_sigo_field.html" with label=label_distance value=row.amc_distance_km copy=row.amc_distance_km %}
 </div>

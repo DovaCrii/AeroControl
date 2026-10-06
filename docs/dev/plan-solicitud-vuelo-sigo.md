@@ -335,8 +335,27 @@ modalidades:
 ### 7.5 Preguntas abiertas
 
 1. Ancho del corredor: ¿lo dibuja el operador o lo pide SIGO como dato aparte?
+   → **Respondida (2026-10-06): el corredor lleva los datos que pide el portal,
+   «como en la foto».** Falta ver la foto: el bloque B fija las casillas.
 2. Orden de los vértices: ¿SIGO exige un sentido o acepta cualquiera?
+   → **Horario.** Hecho: `clockwise_vertices` en `apps/geo/sections.py`.
 3. ¿Una solicitud por área, también en las modalidades nuevas?
+   → **Sí, se mantiene el criterio.**
 4. En polígonos y corredores, ¿contra qué punto se mide la distancia al aeródromo?
+   → **Toda área genera siempre un punto central y desde él se calcula.** Hecho: el
+   punto dibujado si existe; si no, el centroide del área o el punto medio del eje.
 5. Radio: ¿hacia arriba (propuesto) o al entero más cercano?
+   → **Al más cercano.** Hecho: `whole()` (`.5` hacia arriba) en toda la hoja (`LV-283`).
 6. Capturas de los tooltips «?» del formulario, para copiar sus textos de ayuda.
+   → **Pendiente.** Junto con las cuatro capturas de las modalidades: las que se
+   enviaron en el chat no quedaron guardadas en disco.
+
+### 7.6 Estado (2026-10-06)
+
+- **Bloque A hecho** (`LV-283` y `LV-278`): detección de las cuatro modalidades,
+  vértices horarios, punto central siempre, `FlightRequest.area_modality` y
+  `vertices` (migración `operations/0030`), pantalla «qué traerá este KMZ» y hoja con
+  la lista de vértices.
+- **Bloque B pendiente:** la hoja casilla por casilla como el portal, y el dato propio
+  del corredor. Necesita las capturas.
+- La fila R9.8 a R9.10 de la tabla de fases queda ✅ en lo que no depende del portal.
