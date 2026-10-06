@@ -35,17 +35,12 @@ class RegistryConfig(AppConfig):
             sender=Aircraft,
             dispatch_uid="ops_track_aircraft_location",
         )
-        # LV-81: trace the insurance filing. A second pre_save receiver on the
-        # same sender, like maintenance already does -- both re-fetch the
-        # pre-save row independently and neither mutates the other's field, so
-        # the order they run in does not matter.
-        from apps.core.signals import track_status_changes
-
-        pre_save.connect(
-            track_status_changes,
-            sender=Aircraft,
-            dispatch_uid="registry.track_insurance_status",
-        )
+        # T1.3: el historial del trámite del seguro (LV-81) ya no se conecta acá.
+        # Lo escribe `StatusHistoryMixin` dentro del guardado de `Aircraft`; si
+        # siguiera conectado a `track_status_changes`, cada cambio dejaría **dos**
+        # filas. La señal de ubicación de arriba sigue siendo `pre_save`, pero ahora
+        # corre dentro de esa transacción.
+        #
         # LV-159: la Resolución de la JAC pone la vigencia (y el estado) del
         # seguro en la aeronave de la que cuelga. Va por señal y no en cada vista
         # de carga porque hay **tres** caminos por los que un documento entra

@@ -1,8 +1,9 @@
 # HANDOFF — AeroControl
 
-## 🟡 2026-10-06 — el historial de mantenciones y de planes geo, atómico, **sin desplegar**
+## 🟡 2026-10-06 — los historiales de estado, atómicos (cierra `T1.3`), **sin desplegar**
 
-`p340` corre **`05f5e2c`** (ver abajo). Faltan dos filas de `T1.3`:
+`p340` corre **`05f5e2c`** (ver abajo). Faltan tres filas de `T1.3`, con las que **los cinco
+historiales de estado quedan atómicos** y se retira la señal vieja (`core/signals.py`):
 
 - **`LV-274`** (tercer modelo): el historial de estados de una **mantención** se escribe dentro
   del guardado y no antes. Además, lo que la mantención le hace a la **aeronave** (enviarla al
@@ -11,6 +12,9 @@
 - **`LV-275`** (cuarto modelo): el historial de estados de un **plan geoespacial** y el registro
   de con qué permiso se enlazó se escriben dentro del guardado. Lo cubren sus 12 pruebas; la
   comprobación de abajo es de las mantenciones.
+- **`LV-276`** (quinto y último): el historial del **trámite del seguro** de una aeronave y el
+  registro de sus movimientos se escriben dentro del guardado. Se borra `apps/core/signals.py`
+  (ya nadie la usa). Lo cubren sus 13 pruebas y las 2 441 de las apps vecinas.
 
 Cambian **comportamiento de escritura**, así que conviene comprobarlo.
 

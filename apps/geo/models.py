@@ -411,8 +411,8 @@ class GeoPlanVersion(models.Model):
 class GeoPlanHistory(BaseModel):
     """Append-only status history, mirroring operations.PermissionHistory.
 
-    Written by the shared `track_status_changes` signal (apps/core/signals.py),
-    which is why the field names match its expectations.
+    Written by `StatusHistoryMixin` (apps/core/status_history.py, T1.3), which is
+    why the field names match its expectations.
     """
 
     # `created_at` alone cannot order two rows created moments apart: on this
