@@ -260,12 +260,26 @@ class TestDmsForTheSigoBoxes:
         dms = to_dms(LAT, "lat")
 
         assert (dms["degrees"], dms["minutes"], dms["hemisphere"]) == (31, 53, "S")
-        assert abs(dms["seconds"] - 39.81) < 0.01
+        # LV-279: SIGO no acepta decimales; 39.81" se declara como 40".
+        assert dms["seconds"] == 40
+        assert isinstance(dms["seconds"], int)
 
     def test_carry_never_produces_sixty_seconds(self):
         dms = to_dms(30.99999999, "lat")
 
-        assert (dms["degrees"], dms["minutes"], dms["seconds"]) == (31, 0, 0.0)
+        assert (dms["degrees"], dms["minutes"], dms["seconds"]) == (31, 0, 0)
+
+    def test_rounding_up_carries_into_the_minute(self):
+        """59.6" cierra a 60": es 0" del minuto siguiente."""
+        # 10° 20' 59.6" = 10 + 20/60 + 59.6/3600
+        dms = to_dms(10 + 20 / 60 + 59.6 / 3600, "lat")
+
+        assert (dms["degrees"], dms["minutes"], dms["seconds"]) == (10, 21, 0)
+
+    def test_half_a_second_rounds_up(self):
+        dms = to_dms(10 + 20 / 60 + 30.5 / 3600, "lat")
+
+        assert dms["seconds"] == 31
 
     def test_axes_have_their_own_hemispheres(self):
         assert to_dms(LON, "lon")["hemisphere"] == "W"
@@ -273,7 +287,7 @@ class TestDmsForTheSigoBoxes:
         assert to_dms(0, "lat")["hemisphere"] == "N"
 
     def test_format_reads_like_a_chart(self):
-        assert format_dms(LAT, "lat") == "31° 53' 39.81\" S"
+        assert format_dms(LAT, "lat") == "31° 53' 40\" S"
 
 
 class TestDistances:
