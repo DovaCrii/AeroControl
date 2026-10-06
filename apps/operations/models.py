@@ -1356,10 +1356,10 @@ class FlightRequestNote(BaseModel):
 
 
 class FlightRequestHistory(BaseModel):
-    """Historial de estados, escrito por `track_status_changes`.
+    """Historial de estados, escrito por `StatusHistoryMixin` (`T1.3`).
 
-    Los nombres de los campos son los que esa señal espera (`apps/core/
-    signals.py`); copiarlos es lo que permite reusarla en vez de escribir un
+    Los nombres de los campos son los que ese mixin espera (`apps/core/
+    status_history.py`); copiarlos es lo que permite reusarlo en vez de escribir un
     cuarto registrador de transiciones.
     """
 

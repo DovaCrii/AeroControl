@@ -75,11 +75,14 @@ def sync_aircraft_assignment(sender, instance, **kwargs):
 def track_aircraft_location(sender, instance, **kwargs):
     """OPS-3: log a move whenever Aircraft.current_location/current_site changes.
 
-    pre_save (not post_save): needs the *previous* row to compare against, the
-    same shape as apps/core/signals.py's track_status_changes, but writing to
-    the generic ResourceMovementLog instead of a per-model history table --
-    location isn't a workflow status, and the log already models "resource
+    pre_save (not post_save): needs the *previous* row to compare against. It
+    writes to the generic ResourceMovementLog instead of a per-model history table
+    -- location isn't a workflow status, and the log already models "resource
     moved" independently of cost-center assignment.
+
+    T1.3: runs inside `Model.save`, so it joins the transaction that
+    `StatusHistoryMixin.save` opens around the save: if the save fails, the log
+    row is rolled back with it.
     """
     if not instance.pk:
         return  # first save: nothing to compare against, no transition to log
