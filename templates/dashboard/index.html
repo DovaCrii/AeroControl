@@ -413,10 +413,10 @@ en `CostCenter`).{% endcomment %}
               <span class="cc-chip me-2">{{ row.cost_center.code }}</span>{{ row.cost_center.name }}
             </a>
           </td>
-          <td class="text-center">{% if row.in_force %}<b>{{ row.in_force }}</b>{% else %}<span class="text-warning-emphasis">{% translate "None" %}</span>{% endif %}</td>
+          <td class="text-center">{% if row.in_force %}<b>{{ row.in_force }}</b>{% elif row.awaiting %}<span class="sev-text-warning">{% translate "Awaiting" %}</span>{% else %}<span class="text-warning-emphasis">{% translate "None" %}</span>{% endif %}</td>
           <td class="text-center">{% if row.next_expiry %}{{ row.next_expiry|date:"Y-m-d" }}{% if row.days_remaining is not None %} <span class="text-muted">· {% blocktranslate count days=row.days_remaining %}{{ days }} day left{% plural %}{{ days }} days left{% endblocktranslate %}</span>{% endif %}{% else %}<span class="text-muted">—</span>{% endif %}</td>
           <td class="text-center">{% if row.soon %}<span class="text-warning-emphasis">{{ row.soon }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
-          <td class="text-center">{% if row.awaiting %}{{ row.awaiting }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+          <td class="text-center">{% if row.awaiting %}<span class="sev-text-warning">{{ row.awaiting }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
           {% comment %}LV-241: esta columna estaba **estructuralmente en cero**. Sólo
           contaba los aprobados con fecha pasada, y `expire_permissions` los mueve a
           "caducado" cada noche, así que el permiso vencido salía del conjunto antes
