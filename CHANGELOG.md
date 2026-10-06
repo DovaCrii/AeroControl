@@ -8,6 +8,14 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Added
+
+- **Ordenar las listas con un clic en el encabezado (`LV-280`).** Permisos, Vuelos,
+  Solicitudes SIGO, Mantenciones, Operadores, Aeronaves y Centros de costo se ordenan
+  ascendente/descendente desde la columna, igual que las siete que ya lo hacían. El orden
+  de omisión de Aeronaves, Operadores y Centros de costo pisaba el pedido y ahora sólo
+  entra si nadie eligió otro.
+
 ### Fixed
 
 - **La hoja «Datos para SIGO» entrega números cerrados (`LV-279`).** SIGO no acepta

@@ -1,5 +1,5 @@
 {% extends "generic/list.html" %}
-{% load i18n %}
+{% load aero_tags i18n %}
 {% comment %}LV-254: era la última lista que se escribía la tabla entera a mano
 (sobrescribía `content`), así que se había quedado sin lo que `UX-07` les dio a
 las demás: búsqueda en vivo, selección múltiple, ocultar columnas, filas-tarjeta
@@ -35,10 +35,10 @@ ancla.{% endcomment %}
 {% endblock %}
 
 {% block list_header %}
-<th scope="col">{% translate "Aircraft" %}</th>
-<th scope="col">{% translate "Type" %}</th>
-<th scope="col">{% translate "Scheduled" %}</th>
-<th scope="col">{% translate "Status" %}</th>
+{% worktable_th _("Aircraft") "aircraft" %}
+{% worktable_th _("Type") "type" %}
+{% worktable_th _("Scheduled") "scheduled" %}
+{% worktable_th _("Status") "status" %}
 {% endblock %}
 
 {% block table_body %}{% include "maintenance/_record_rows.html" %}{% endblock %}

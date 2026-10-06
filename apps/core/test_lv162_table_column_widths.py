@@ -57,9 +57,16 @@ def _normalized_lists():
             continue
         colgroup = _block(markup, "list_colgroup")
         roles = re.findall(r'<col\s+class="([^"]+)"', colgroup)
-        headers = re.findall(
-            r"<th\b[^>]*>(.*?)</th>", _block(markup, "list_header"), re.DOTALL
-        )
+        # LV-280: un encabezado ordenable se escribe `{% worktable_th %}` y no
+        # `<th>`; ambos son una columna.
+        headers = [
+            plain or tag
+            for plain, tag in re.findall(
+                r"<th\b[^>]*>(.*?)</th>|(\{%\s*worktable_th\b.*?%\})",
+                _block(markup, "list_header"),
+                re.DOTALL,
+            )
+        ]
         found.append((path.relative_to(TEMPLATES).as_posix(), roles, headers))
     return found
 
