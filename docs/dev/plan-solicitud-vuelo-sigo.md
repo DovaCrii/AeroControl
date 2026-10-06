@@ -170,7 +170,12 @@ Preparada ──> Ingresada en SIGO ──> Vinculada al permiso ──> Cerrada
 | **R9.5** | Vistas, plantillas y menú · vista previa de separación · hoja SIGO · descarga del KMZ · vínculo desde la pantalla | ✅ hecho 2026-08-20, 23 tests. Verificado en el navegador con el KMZ real |
 | **R9.6** | El expediente del permiso muestra su solicitud de origen · el panel muestra lo presentado y sin respuesta, con los días de espera | ✅ hecho 2026-08-20, 12 tests. Verificado en el navegador |
 
-**Con R9.6 el bloque R9 queda cerrado.** El círculo completo: el KMZ entra, se
+| **R9.7** | **Números cerrados** en la hoja SIGO (segundos, radio, distancia, altura): SIGO no acepta decimales — ver §7.4 | ⬜ |
+| **R9.8** | Detección de la modalidad del KMZ (Punto Centro / Corredor / Triangular / Cuadricular) — ver §7.2 | ⬜ |
+| **R9.9** | `FlightRequest.request_type` se puebla y la hoja SIGO muestra los campos de **su** modalidad — ver §7.3 | ⬜ |
+| **R9.10** | Pantalla «qué traerá este KMZ»: tipo detectado, qué datos aporta y cuáles quedan por completar a mano — ver §7.2 | ⬜ |
+
+**Con R9.6 el bloque R9 queda cerrado** (para la modalidad Punto Centro; R9.7–R9.10 abren las otras tres, §7). El círculo completo: el KMZ entra, se
 separa, cada sección se prepara y se presenta, el panel persigue lo que espera
 respuesta, y cuando la DGAC contesta la solicitud se vincula al permiso — cuyo
 expediente ya puede responder *"¿la DGAC autorizó lo que pedimos?"*.
