@@ -43,7 +43,6 @@ from apps.core.views import (
 )
 from apps.core.views import filter_options as core_filter_options
 from apps.geo.models import GeoPlan
-from apps.geo.sections import format_dms, split_sections
 from .forms import (
     FlightPermissionForm,
     FlightPermissionUpdateForm,
@@ -1715,7 +1714,10 @@ class GeoPlanSplitIntoRequests(ModelPermissionRequiredMixin, View):
 
     def get(self, request, pk):
         plan = self._plan(pk)
-        sections = split_sections(plan.current_version.content)
+        # LV-278: la vista previa muestra **lo que se va a declarar** —la misma
+        # fila de `plan_sections` que usan la hoja y la creación—, no la sección
+        # cruda. Antes, sobre un área irregular, mostraba el punto dibujado y la
+        # solicitud se creaba con otro centro.
         return render(
             request,
             "operations/flight_request_split.html",
@@ -1723,15 +1725,15 @@ class GeoPlanSplitIntoRequests(ModelPermissionRequiredMixin, View):
                 "plan": plan,
                 "sections": [
                     {
-                        "section": section,
-                        "lat": format_dms(section.center[0], "lat"),
-                        "lon": format_dms(section.center[1], "lon"),
+                        "section": row["section"],
+                        "lat": row["lat_readable"],
+                        "lon": row["lon_readable"],
+                        "radius_m": row["radius_m"],
                         "warnings": [
-                            SECTION_WARNINGS.get(code, code)
-                            for code in section.warnings
+                            SECTION_WARNINGS.get(code, code) for code in row["warnings"]
                         ],
                     }
-                    for section in sections
+                    for row in plan_sections(plan)
                 ],
                 "existing": FlightRequest.objects.filter(
                     source_plan=plan, is_active=True
