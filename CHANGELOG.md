@@ -8,6 +8,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Changed
+
+- **«Esperando» en naranja y dos entradas fuera del menú (`LV-284`).** En el panel, la
+  faena sin permiso vigente pero con uno esperando respuesta se pinta en ámbar y no en
+  rojo. «¿Puedo volar?» y «Vuelos» se ocultan del menú de momento (las pantallas siguen
+  accesibles por su URL).
+
 ### Added
 
 - **Las cuatro modalidades de área de vuelo de SIGO (`LV-278`, bloque A).** Además de

@@ -154,7 +154,16 @@
       la que empieza la jornada de quien está en faena. Las demás entradas del
       grupo son listas de trabajo; ésta es una sola respuesta, y ponerla después
       de tres listas sería enterrarla bajo lo que vino a resumir.{% endcomment %}
+      {% comment %}LV-284 paso 1 (2026-10-06, decisión del usuario): «¿Puedo volar?» se
+      oculta del menú **de momento** — *«ocultar el puedo volar y vuelos no son
+      necesarios de momento»*. Sólo el enlace: la vista, la URL `can-i-fly`, sus
+      permisos y sus tests siguen enteros, y volver es descomentar la línea de abajo.
+      Condición de cierre: si en un mes nadie lo echa de menos y no hay un solo uso en
+      el registro de auditoría, se decide entre congelarlo y borrarlo; si lo piden de
+      vuelta, se descomenta y esta nota se retira.
+
       <a href="{% url 'can-i-fly' %}" class="nav-item nav-flight {% if url_name == 'can-i-fly' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-can-i-fly"/></svg>{% translate "Can I fly?" %}</a>
+      {% endcomment %}
       <a href="{% url 'permission-list' %}" class="nav-item nav-flight {% if url_name == 'permission-list' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-permission-list"/></svg>{% translate "Permissions" %}</a>
       {% comment %}LV-150 paso 1 (2026-08-26, decisión del usuario): "Solicitudes
       SIGO" se retira del menú siguiendo el procedimiento de LV-78 y LV-103 --
@@ -193,7 +202,15 @@
       <a href="{% url 'flight-request-list' %}" class="nav-item nav-flight {% if url_name == 'flight-request-list' or url_name == 'flight-request-detail' or url_name == 'geo-plan-split' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-flight-request-list"/></svg>{% translate "SIGO requests" %}</a>
       {% endcomment %}
       <a href="{% url 'geo-plan-list' %}" class="nav-item nav-flight {% if url_name == 'geo-plan-list' or url_name == 'geo-plan-detail' or url_name == 'geo-plan-import' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-geo-plan-list"/></svg>{% translate "Geospatial planning" %}</a>
+      {% comment %}LV-284 paso 1 (2026-10-06, decisión del usuario): «Vuelos» se oculta
+      del menú **de momento**, igual que «¿Puedo volar?» más arriba. Sólo el enlace:
+      la lista, la URL `record-list` y el alta de un vuelo siguen enteras (el flujo
+      de permiso a vuelo y el panel apuntan ahí). Descomentar la línea vuelve al menú.
+      Condición de cierre: la misma que la de arriba — un mes sin que nadie lo
+      pida, y entonces se decide si se congela.
+
       <a href="{% url 'record-list' %}" class="nav-item nav-flight {% if url_name == 'record-list' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-record-list"/></svg>{% translate "Flights" %}</a>
+      {% endcomment %}
       {% comment %}LV-103 paso 1 (2026-08-14, decisión del usuario): el
       calendario se retira siguiendo el procedimiento de LV-78 -- primero sin
       superficies, después congelado, y sólo al final se borra si nadie lo echa
