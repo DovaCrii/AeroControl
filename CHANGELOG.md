@@ -14,6 +14,11 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   «Centro» se mueve en vivo con el anillo y ambos se guardan juntos (un solo Deshacer).
   Sólo sigue al anillo el punto que está **dentro** del círculo y que el servidor
   emparejaría como su centro; un punto vecino no se toca.
+- **Ordenar las listas con un clic en el encabezado (`LV-280`).** Permisos, Vuelos,
+  Solicitudes SIGO, Mantenciones, Operadores, Aeronaves y Centros de costo se ordenan
+  ascendente/descendente desde la columna, igual que las siete que ya lo hacían. El orden
+  de omisión de Aeronaves, Operadores y Centros de costo pisaba el pedido y ahora sólo
+  entra si nadie eligió otro.
 
 ### Fixed
 
