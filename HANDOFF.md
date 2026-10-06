@@ -1,45 +1,58 @@
 # HANDOFF — AeroControl
 
-## 🟡 2026-10-05 — insignias ámbar e historial de estados atómico, **sin desplegar**
+## 🟡 2026-10-06 — el historial de mantención, atómico, **sin desplegar**
 
-`p340` corre **`66bc664`**. Desde entonces entraron una skill y sus tres compañeras de
-flujo (`/abrir-pr`, `/cerrar-tarea`, `/verificar`, `/desplegar-p340`), un guardián de
-permisos (`LV-268`, sólo un test), el arreglo del CI (`LV-271`), el inventario `UX-nn` al
-día, `HANDOFF.md` archivado, el plan de `T1.3`/`T1.4` y tres cambios que sí tocan lo que se
-sirve:
+`p340` corre **`05f5e2c`** (ver abajo). Falta una fila, `LV-274` (`T1.3`, tercer modelo): el
+historial de estados de una **mantención** se escribe dentro del guardado y no antes. Además,
+lo que la mantención le hace a la **aeronave** (enviarla al taller, traerla de vuelta) entra en
+la misma transacción: si el guardado falla, la aeronave ya no queda en «mantención» sin que la
+mantención se haya guardado. Cambia **comportamiento de escritura**, así que conviene comprobarlo.
 
-- **`LV-269`**: diez insignias ámbar pasan a `sev-caution`/`sev-warning`, idénticas a la
-  vista en los dos temas.
-- **`LV-270`** y **`LV-273`** (`T1.3`, primeros dos modelos): el historial de estados de un
-  **permiso** y de una **solicitud de vuelo** se escribe dentro del guardado y no antes; si
-  el guardado falla, el historial se deshace con él. Es lo único de esta entrada que cambia
-  **comportamiento de escritura**, así que conviene comprobarlo (abajo).
+**Paso de despliegue: `git pull` y reiniciar.** Sin migraciones ni `collectstatic`. Prueba de que
+llegó: `git log --oneline -1` en la VM debe mostrar el último commit de `main`.
 
-**Paso de despliegue: `git pull` y reiniciar.** Sin migraciones ni `collectstatic`.
-Prueba de que llegó: `git log --oneline -1` en la VM debe mostrar el último commit de
-`main`.
-
-**Comprobación opcional de `LV-270` en `p340`, sin dejar rastro**: cambiar el estado de
-un permiso dentro de una transacción que se **deshace**, y mirar que el historial
-nació.
+**Comprobación opcional en `p340`, sin dejar rastro** (con el entorno cargado, `set -a`): envía
+una mantención al taller dentro de una transacción que se **deshace**, y mira el historial y la
+aeronave antes, dentro y después.
 
 ```bash
 uv run python manage.py shell <<'EOF'
 from django.db import transaction
-from apps.operations.models import FlightPermission, PermissionHistory
-permit = FlightPermission.objects.filter(is_active=True).first()
-before = PermissionHistory.objects.filter(permission=permit).count()
-with transaction.atomic():
-    permit.status = "denied" if permit.status != "denied" else "requested"
-    permit.save()
-    print("historial antes/despues:", before, PermissionHistory.objects.filter(permission=permit).count())
-    transaction.set_rollback(True)
+from apps.maintenance.models import MaintenanceHistory, MaintenanceRecord
 
-print("tras deshacer:", PermissionHistory.objects.filter(permission=permit).count())
+def probe():
+    record = MaintenanceRecord.objects.filter(is_active=True).exclude(status="sent").first()
+    if record is None:
+        return print("sin mantenciones para probar")
+    aircraft = record.aircraft
+    history = MaintenanceHistory.objects.filter(record=record)
+    before, was = history.count(), (aircraft.status, aircraft.current_location)
+    with transaction.atomic():
+        record.status = "sent"
+        record.save()
+        aircraft.refresh_from_db()
+        print("historial antes/dentro:", before, history.count())
+        print("aeronave dentro:", aircraft.status, aircraft.current_location)
+        transaction.set_rollback(True)
+    aircraft.refresh_from_db()
+    print("tras deshacer: historial", history.count(), "aeronave", (aircraft.status, aircraft.current_location), "antes", was)
+
+probe()
 EOF
 ```
 
-Debe imprimir `antes → antes+1` dentro y volver a `antes` tras deshacer.
+Debe imprimir `antes → antes+1`, la aeronave en `maintenance maintenance` dentro, y volver a
+los valores de antes al deshacer. Si dice «sin mantenciones para probar», no es un error.
+
+## ✅ 2026-10-06 — insignias, historial de permisos y solicitudes, CI y skills, **desplegados** (`05f5e2c`)
+
+`p340` corre **`05f5e2c`**, desplegado el 2026-10-06 (`git pull` `66bc664..05f5e2c`, reinicio,
+`git log` = `05f5e2c`, `systemctl is-active aerocontrol` = `active`). Entró: `LV-268` (guardián de
+permisos), `LV-269` (insignias ámbar con niveles de severidad), `LV-270` y `LV-273` (historial de
+permisos y de solicitudes, atómico), `LV-271` (el CI vuelve a poder estar verde), `LV-272` (las
+cuatro skills de flujo) y el plan de `T1.3`/`T1.4`. **Comprobado en producción**: el historial de un
+permiso real pasó de 3 a 4 filas dentro de la transacción y volvió a 3 al deshacerla. `LV-273` no se
+pudo ejercitar allí: todavía no hay solicitudes de vuelo en producción (la cubren sus 8 pruebas).
 
 ## ✅ 2026-10-05 — PDF, confirmación única, revisión previa, regla de faenas y alertas, **desplegados** (`66bc664`)
 
