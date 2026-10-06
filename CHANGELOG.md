@@ -10,6 +10,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **El panel distingue «Ninguno» de «Esperando» (`LV-281`).** En «Permisos de vuelo por
+  centro de costo», una faena sin vigentes pero con un permiso esperando respuesta decía
+  «Ninguno» igual que una sin nada. Ahora dice «Esperando» en color de advertencia; la
+  fila sigue crítica.
 - **El CI vuelve a poder estar verde (`LV-271`).** Llevaba semanas en rojo en cada push
   porque su último paso corría sobre una base vacía, sin migrar. Ahora migra primero, y
   `scripts/verify.ps1` corre ese mismo paso —sobre una base temporal— para que el gate
