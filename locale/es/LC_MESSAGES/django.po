@@ -9392,3 +9392,16 @@ msgstr "Qué trae el KMZ"
 #: templates/operations/flight_request_split.html
 msgid "Still to fill in"
 msgstr "Falta completar"
+
+#: templates/core/administration.html
+msgid "Audit log writes"
+msgstr "Escrituras del registro de auditoría"
+
+#: templates/core/administration.html
+#, python-format
+msgid ""
+"%(count)s change(s) were saved without an audit entry; the last one at "
+"%(last)s. See the server log (audit_write_failed)."
+msgstr ""
+"Se guardaron %(count)s cambio(s) sin su entrada de auditoría; el último, el "
+"%(last)s. Revise el registro del servidor (audit_write_failed)."
