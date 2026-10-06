@@ -87,13 +87,50 @@ def _build_placemark(parent, node):
         etree.SubElement(placemark, _q("visibility")).text = "0"
     if node.get("style_url"):
         etree.SubElement(placemark, _q("styleUrl")).text = node["style_url"]
+    color = node.get("color")
+    if color:
+        placemark.append(_style_element(color))
     extended = node.get("extended_data")
     if extended and extended.get("raw_xml"):
         _append_raw(placemark, extended["raw_xml"])
     if node.get("geometry"):
         _build_geometry(placemark, node["geometry"])
     for extra in node.get("extras", []):
+        # LV-282: con un color elegido, el `<Style>` en línea que trajo el archivo
+        # original sobra: KML admite un solo StyleSelector por Placemark y el que
+        # el usuario eligió es el que manda. Los demás extras se conservan.
+        if color and _is_style_fragment(extra):
+            continue
         _append_raw(placemark, extra)
+
+
+def _is_style_fragment(raw_xml):
+    element = etree.fromstring(raw_xml.encode("utf-8"), _hardened_parser())
+    return etree.QName(element).localname == "Style"
+
+
+def _kml_color(rgb, alpha):
+    """`#rrggbb` -> `aabbggrr`, el orden de bytes de KML (no el de CSS)."""
+    r, g, b = rgb[1:3], rgb[3:5], rgb[5:7]
+    return f"{alpha}{b}{g}{r}".lower()
+
+
+def _style_element(color):
+    """El `<Style>` en línea de un placemark con color de capa.
+
+    Línea y punto opacos, relleno translúcido: es lo que el editor dibuja
+    (`weight: 3, fillOpacity: 0.15` en `main.js`), así que Google Earth muestra
+    el mismo color que el mapa.
+    """
+    style = etree.Element(_q("Style"))
+    line = etree.SubElement(style, _q("LineStyle"))
+    etree.SubElement(line, _q("color")).text = _kml_color(color, "ff")
+    etree.SubElement(line, _q("width")).text = "3"
+    poly = etree.SubElement(style, _q("PolyStyle"))
+    etree.SubElement(poly, _q("color")).text = _kml_color(color, "26")
+    icon = etree.SubElement(style, _q("IconStyle"))
+    etree.SubElement(icon, _q("color")).text = _kml_color(color, "ff")
+    return style
 
 
 def _build_geometry(parent, geometry):

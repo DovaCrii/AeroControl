@@ -16,6 +16,7 @@ import {
   duplicateNode,
   explodeMultiGeometry,
 } from "./doc.js";
+import { pairCircleCenters } from "./circles.js";
 import { createMap } from "./map.js";
 import { installExpand } from "./expand.js";
 import { buildPanel, buildTree } from "./panel.js";
@@ -120,7 +121,10 @@ async function init() {
     return pointToLayer(feature, latlng);
   }
 
-  function makeLayer(item, color) {
+  function makeLayer(item, forcedColor) {
+    // LV-282: el color explícito (el del diff) gana; si no, el que el usuario
+    // eligió para esta capa; si no, el de siempre.
+    const color = forcedColor || item.color || null;
     const style = color
       ? () => ({ color, weight: 3, fillOpacity: 0.15 })
       : pathStyle;
@@ -187,6 +191,24 @@ async function init() {
     } else {
       setLayerVisible(uid, visible);
     }
+  }
+
+  // LV-282: cambiar el color de una capa. Si es el anillo de una circunferencia,
+  // su pin «Centro» toma el mismo color (el mismo emparejamiento que decide cuál
+  // es su centro, `circles.js`), así que el círculo se ve y se exporta de un color.
+  function onColor(uid, color) {
+    const doc = currentDoc();
+    const node = findPlacemark(doc, uid);
+    if (!node) {
+      return;
+    }
+    node.color = color;
+    const pinUid = pairCircleCenters(doc).get(uid);
+    const pin = pinUid && findPlacemark(doc, pinUid);
+    if (pin) {
+      pin.color = color;
+    }
+    structural(true);
   }
 
   // A structural mutation already ran; snapshot once and rebuild from the doc.
@@ -286,6 +308,7 @@ async function init() {
           render();
         },
         onToggle,
+        onColor,
       });
     }
     fitOnce(allLayers);

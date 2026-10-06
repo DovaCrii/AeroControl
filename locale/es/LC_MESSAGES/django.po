@@ -9340,3 +9340,7 @@ msgstr "faltan %(days)s días"
 #: templates/operations/email/client_letters.txt
 msgid "Upload the letter from the permit's dossier (Carta del mandante)."
 msgstr "Suba la carta desde el expediente del permiso (Carta del mandante)."
+
+#: apps/geo/views.py
+msgid "Layer color"
+msgstr "Color de la capa"
