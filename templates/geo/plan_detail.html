@@ -148,6 +148,10 @@ escribe nada.{% endcomment %}
         <tr>
           <td>
             {{ row.name }}{% if row.warnings %} <span class="badge sev-caution" title="{% translate 'This circle has a data problem — see Split for the detail' %}">!</span>{% endif %}
+            {% comment %}LV-278: la modalidad de SIGO de cada área, bajo el nombre
+            y no en una columna nueva: la tabla ya tiene seis, y el radio de las que
+            no son círculo es «—», que es lo que corresponde.{% endcomment %}
+            {% if row.modality != "center_point" %}<div class="small text-body-secondary">{{ row.modality_label }}</div>{% endif %}
             {% comment %}LV-132: cuando el área no es circular la fila muestra el
             círculo que la encierra, y hay que decirlo **acá**, en la misma fila:
             una segunda fila al lado invitaba a mezclar el centro de una con el

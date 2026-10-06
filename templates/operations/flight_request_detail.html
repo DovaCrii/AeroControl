@@ -78,6 +78,7 @@ que va a fallar es peor que no ofrecerlo.{% endcomment %}
   <table class="table table-bordered align-middle mb-0">
     <tbody>
       <tr><th scope="row" class="w-25">{% translate "Request type" %}</th><td>{{ sheet.request_type }}</td></tr>
+      <tr><th scope="row">{% translate "Area modality" %}</th><td>{{ sheet.area_modality_label }}</td></tr>
       <tr>
         <th scope="row">{% translate "Work area / objective" %}</th>
         <td>
@@ -123,7 +124,22 @@ que va a fallar es peor que no ofrecerlo.{% endcomment %}
           <div class="small text-body-secondary">{{ sheet.lon_readable }}</div>
         </td>
       </tr>
+      {% if sheet.vertices %}
+      {% comment %}LV-278: triángulo, cuadrilátero o corredor se declaran por sus
+      vértices (en sentido horario, salvo el corredor, que va en el orden del
+      trazado) y no por un radio.{% endcomment %}
+      <tr>
+        <th scope="row">{% translate "Area vertices" %}</th>
+        <td>
+          {% for vertex in sheet.vertices %}
+          <div class="font-monospace small">{{ vertex.number }}. {{ vertex.lat_readable }} · {{ vertex.lon_readable }}</div>
+          {% endfor %}
+        </td>
+      </tr>
+      {% endif %}
+      {% if sheet.area_modality == "center_point" %}
       <tr><th scope="row">{% translate "Radius (m)" %}</th><td>{{ sheet.radius_m|default:"—" }}</td></tr>
+      {% endif %}
       <tr><th scope="row">{% translate "Height (m)" %}</th><td>{{ sheet.altitude_m|default:"—" }}</td></tr>
       <tr><th scope="row">{% translate "Schedule" %}</th><td>{% if sheet.hour_from and sheet.hour_to %}{{ sheet.hour_from|time:"H:i" }} – {{ sheet.hour_to|time:"H:i" }}{% else %}<span class="text-muted">—</span>{% endif %}</td></tr>
     </tbody>

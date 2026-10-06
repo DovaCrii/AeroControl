@@ -175,7 +175,11 @@ class TestWhatTheSectionCarries:
         La forma es la del caso real -- un polígono alargado, sin punto centro,
         como los de CC 861 y PMCHS.
         """
-        document = self._document([(0, 0), (0.05, 0), (0.05, 0.004), (0, 0.004)])
+        # LV-278: cinco vértices y no cuatro: un cuadrilátero es ahora la modalidad
+        # Cuadricular de SIGO, que se declara por sus vértices y no por un círculo.
+        document = self._document(
+            [(0, 0), (0.05, 0), (0.05, 0.004), (0.025, 0.006), (0, 0.004)]
+        )
 
         section = split_sections(document)[0]
 

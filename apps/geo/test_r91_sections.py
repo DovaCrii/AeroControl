@@ -171,6 +171,10 @@ class TestWhatDoesNotPairCleanly:
         assert codes == [WARNING_NO_CENTER_POINT, WARNING_NO_CIRCLE]
 
     def test_a_rectangle_is_flagged_as_not_a_circle(self):
+        # LV-278: un cuadrilátero ya no es «no es un círculo» sino la modalidad
+        # Cuadricular de SIGO (ver `test_lv278_modalities.py`). Lo que este test
+        # sujeta —una figura alargada que no es círculo sigue marcada— lo cumple
+        # ahora un pentágono, que no es ninguna de las formas de SIGO.
         document = empty_document()
         document["children"].append(_point("Punto", LAT, LON))
         rectangle = _point("", LAT, LON)
@@ -181,6 +185,7 @@ class TestWhatDoesNotPairCleanly:
                     [LON - 0.001, LAT - 0.0001, 0],
                     [LON + 0.001, LAT - 0.0001, 0],
                     [LON + 0.001, LAT + 0.0001, 0],
+                    [LON, LAT + 0.00015, 0],
                     [LON - 0.001, LAT + 0.0001, 0],
                     [LON - 0.001, LAT - 0.0001, 0],
                 ]

@@ -1160,6 +1160,39 @@ class FlightRequest(StatusHistoryMixin, StatusFlowMixin, BaseModel):
         choices=REQUEST_TYPE_CHOICES,
         default=REQUEST_TYPE_UNPOPULATED,
     )
+
+    # LV-278: la forma en que se declara el **área de vuelo** en SIGO. No es el
+    # `request_type` de arriba (el tipo de *operación*): son dos preguntas del
+    # formulario. Los valores son los de `apps.geo.sections` y los nombres, los del
+    # portal («Punto Centro», «Punto Corredor», «Triangular», «Cuadricular»).
+    MODALITY_CENTER_POINT = "center_point"
+    MODALITY_CORRIDOR = "corridor"
+    MODALITY_TRIANGLE = "triangle"
+    MODALITY_QUADRILATERAL = "quadrilateral"
+    AREA_MODALITY_CHOICES = [
+        (MODALITY_CENTER_POINT, _("Center point")),
+        (MODALITY_CORRIDOR, _("Corridor point")),
+        (MODALITY_TRIANGLE, _("Triangular")),
+        (MODALITY_QUADRILATERAL, _("Square grid")),
+    ]
+    # Cuántos vértices exige cada modalidad: (mínimo, máximo). Punto Centro no
+    # declara vértices; el corredor admite un eje de dos o más.
+    MODALITY_VERTEX_RANGE = {
+        MODALITY_CENTER_POINT: (0, 0),
+        MODALITY_TRIANGLE: (3, 3),
+        MODALITY_QUADRILATERAL: (4, 4),
+        MODALITY_CORRIDOR: (2, None),
+    }
+    area_modality = models.CharField(
+        max_length=20,
+        choices=AREA_MODALITY_CHOICES,
+        default=MODALITY_CENTER_POINT,
+        verbose_name=_("Area modality"),
+    )
+    # `[[lon, lat], ...]`. Triángulo y cuadrilátero en sentido **horario** y sin
+    # repetir el vértice de cierre; corredor en el orden del trazado. Vacío en Punto
+    # Centro. Las solicitudes anteriores a LV-278 son todas círculos.
+    vertices = models.JSONField(default=list, blank=True)
     status = models.CharField(
         max_length=20, choices=STATUS_CHOICES, default=STATUS_PREPARED
     )
@@ -1251,6 +1284,21 @@ class FlightRequest(StatusHistoryMixin, StatusFlowMixin, BaseModel):
                 fields=["cost_center", "is_active"], name="ops_request_cc_idx"
             ),
         ]
+        constraints = [
+            # LV-278: un valor fuera de las cuatro modalidades de SIGO no se
+            # puede guardar ni desde el admin, la API o una importación.
+            models.CheckConstraint(
+                condition=models.Q(
+                    area_modality__in=[
+                        "center_point",
+                        "corridor",
+                        "triangle",
+                        "quadrilateral",
+                    ]
+                ),
+                name="ops_request_area_modality_valid",
+            ),
+        ]
 
     def __str__(self):
         return self.title
@@ -1275,6 +1323,22 @@ class FlightRequest(StatusHistoryMixin, StatusFlowMixin, BaseModel):
             message = _("The aerodrome and its distance must be entered together.")
             errors["amc"] = message
             errors["amc_distance_km"] = message
+        # LV-278: los vértices que declara cada modalidad. Se valida acá y no sólo
+        # en la pantalla, que es evadible desde el admin o una importación.
+        vertex_range = self.MODALITY_VERTEX_RANGE.get(self.area_modality)
+        if vertex_range is not None:
+            minimum, maximum = vertex_range
+            vertices = self.vertices if isinstance(self.vertices, list) else None
+            if vertices is None or any(
+                not isinstance(v, (list, tuple)) or len(v) < 2 for v in vertices
+            ):
+                errors["vertices"] = _("The vertices must be a list of coordinates.")
+            elif len(vertices) < minimum or (
+                maximum is not None and len(vertices) > maximum
+            ):
+                errors["vertices"] = _(
+                    "This area modality needs a different number of vertices."
+                )
         if errors:
             raise ValidationError(errors)
 

@@ -109,27 +109,36 @@ class TestTheTrimbleShape:
 
 
 class TestWhatMustNotBecomeACircle:
-    def test_an_open_linestring_is_a_path_and_is_ignored(self):
+    def test_an_open_linestring_is_never_taken_for_a_circle(self):
         """Un trazado abierto —un camino, una quebrada— no encierra nada.
 
-        Tomarlo por área convertiría una ruta en una circunferencia de vuelo, y
-        el punto se quedaría sin círculo: es lo correcto, y así se informa.
+        Tomarlo por área convertiría una ruta en una circunferencia de vuelo. Es lo
+        que este test siempre sujetó y se mantiene: no hay radio, no hay círculo.
+
+        LV-278 cambió **qué es** en cambio: antes se ignoraba en silencio (y el
+        punto quedaba con `no_circle`); ahora es un Punto Corredor —la cuarta
+        modalidad de SIGO— y el punto cercano es su centro declarado.
         """
         document = _trimble_like_document(close=False)
 
         sections = split_sections(document)
 
         assert len(sections) == 1
-        assert sections[0].warnings == ["no_circle"]
+        assert sections[0].modality == "corridor"
         assert sections[0].radius_m is None
+        assert sections[0].enclosing is None
+        assert "not_a_circle" not in sections[0].warnings
 
     def test_a_closed_ring_that_is_not_round_is_flagged(self):
         """Cerrado no es lo mismo que circular: el umbral sigue mandando."""
         document = empty_document()
+        # LV-278: cinco vértices (una «casita») y no cuatro: un cuadrilátero es
+        # ahora la modalidad Cuadricular de SIGO y no se marca como no-círculo.
         square = [
             [LON - 0.01, LAT - 0.01, 0],
             [LON + 0.01, LAT - 0.01, 0],
             [LON + 0.01, LAT + 0.01, 0],
+            [LON, LAT + 0.015, 0],
             [LON - 0.01, LAT + 0.01, 0],
         ]
         square.append(list(square[0]))

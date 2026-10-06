@@ -20,7 +20,11 @@ bajo cuarenta y siete filas nuevas. Acá se ve antes de tocar nada.{% endcomment
 </div>
 
 <div class="alert alert-info">
-  {% blocktranslate count count=sections|length %}This plan yields <strong>{{ count }} flight request</strong>: SIGO accepts one circle with its centre point per request.{% plural %}This plan yields <strong>{{ count }} flight requests</strong>: SIGO accepts one circle with its centre point per request.{% endblocktranslate %}
+  {% blocktranslate count count=sections|length %}This plan yields <strong>{{ count }} flight request</strong>, one per flight area.{% plural %}This plan yields <strong>{{ count }} flight requests</strong>, one per flight area.{% endblocktranslate %}
+  {% comment %}LV-278: la frase anterior decía que SIGO acepta «una circunferencia con
+  su punto central por solicitud», que dejó de ser cierto: ahora admite cuatro
+  modalidades de área. El resumen dice cuáles trae este KMZ.{% endcomment %}
+  <div class="small mt-1">{% for entry in summary %}{{ entry.count }} × {{ entry.label }}{% if not forloop.last %} · {% endif %}{% endfor %}</div>
 </div>
 
 {% if existing %}
@@ -38,8 +42,11 @@ que nadie lo supiera.{% endcomment %}
       <thead><tr>
         <th scope="col">#</th>
         <th scope="col">{% translate "Section" %}</th>
+        <th scope="col">{% translate "Area modality" %}</th>
         <th scope="col">{% translate "Centre point" %}</th>
         <th scope="col">{% translate "Radius (m)" %}</th>
+        <th scope="col">{% translate "What the KMZ brings" %}</th>
+        <th scope="col">{% translate "Still to fill in" %}</th>
         <th scope="col">{% translate "Check" %}</th>
       </tr></thead>
       <tbody>
@@ -47,8 +54,13 @@ que nadie lo supiera.{% endcomment %}
         <tr {% if row.warnings %}class="table-warning"{% endif %}>
           <td class="text-muted">{{ forloop.counter }}</td>
           <td><strong>{{ row.section.name }}</strong></td>
+          <td class="small">{{ row.modality_label }}</td>
           <td class="small text-nowrap">{{ row.lat }}<br>{{ row.lon }}</td>
           <td class="text-nowrap">{% if row.radius_m %}{{ row.radius_m }} m{% else %}<span class="text-muted">—</span>{% endif %}</td>
+          {% comment %}LV-278: lo que se rellena solo (en verde) y lo que ningún KMZ
+          puede traer (en ámbar). Se dice en vez de dejar la hoja en blanco.{% endcomment %}
+          <td class="small text-success-emphasis">{% for item in row.brings %}<div>✓ {{ item }}</div>{% endfor %}</td>
+          <td class="small text-warning-emphasis">{% for item in row.missing %}<div>○ {{ item }}</div>{% endfor %}</td>
           <td>
             {% for warning in row.warnings %}
             <div class="small text-warning-emphasis">⚠ {{ warning }}</div>
