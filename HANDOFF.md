@@ -1,12 +1,18 @@
 # HANDOFF — AeroControl
 
-## 🟡 2026-10-06 — el historial de mantención, atómico, **sin desplegar**
+## 🟡 2026-10-06 — el historial de mantenciones y de planes geo, atómico, **sin desplegar**
 
-`p340` corre **`05f5e2c`** (ver abajo). Falta una fila, `LV-274` (`T1.3`, tercer modelo): el
-historial de estados de una **mantención** se escribe dentro del guardado y no antes. Además,
-lo que la mantención le hace a la **aeronave** (enviarla al taller, traerla de vuelta) entra en
-la misma transacción: si el guardado falla, la aeronave ya no queda en «mantención» sin que la
-mantención se haya guardado. Cambia **comportamiento de escritura**, así que conviene comprobarlo.
+`p340` corre **`05f5e2c`** (ver abajo). Faltan dos filas de `T1.3`:
+
+- **`LV-274`** (tercer modelo): el historial de estados de una **mantención** se escribe dentro
+  del guardado y no antes. Además, lo que la mantención le hace a la **aeronave** (enviarla al
+  taller, traerla de vuelta) entra en la misma transacción: si el guardado falla, la aeronave ya
+  no queda en «mantención» sin que la mantención se haya guardado.
+- **`LV-275`** (cuarto modelo): el historial de estados de un **plan geoespacial** y el registro
+  de con qué permiso se enlazó se escriben dentro del guardado. Lo cubren sus 12 pruebas; la
+  comprobación de abajo es de las mantenciones.
+
+Cambian **comportamiento de escritura**, así que conviene comprobarlo.
 
 **Paso de despliegue: `git pull` y reiniciar.** Sin migraciones ni `collectstatic`. Prueba de que
 llegó: `git log --oneline -1` en la VM debe mostrar el último commit de `main`.

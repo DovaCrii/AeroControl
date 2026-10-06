@@ -15,16 +15,25 @@ from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
 from apps.core.models import BaseModel, StatusFlowMixin
+from apps.core.status_history import StatusHistoryMixin
 
 
-class GeoPlan(StatusFlowMixin, BaseModel):
+class GeoPlan(StatusHistoryMixin, StatusFlowMixin, BaseModel):
     """A geospatial flight-planning document anchored to a cost center.
+
+    T1.3: el historial de estados (`GeoPlanHistory`) lo escribe
+    `StatusHistoryMixin` dentro del guardado, y ya no una señal `pre_save`. La otra
+    señal de este modelo (`track_flight_permission_link`) sigue siendo `pre_save`,
+    pero corre **dentro** de esa transacción: si el guardado falla, el registro del
+    enlace con el permiso se deshace con él.
 
     Anchored to `cost_center` (the real scoping unit in this project) with an
     optional `flight_permission`: planning usually precedes the permit. The
     original KMZ/KML lives in `source_document` (a compliance.Document) and is
     never mutated; edits produce new GeoPlanVersion rows.
     """
+
+    STATUS_HISTORY = ("geo.GeoPlanHistory", "plan", "status")
 
     STATUS_DRAFT = "draft"
     STATUS_EDITING = "editing"
