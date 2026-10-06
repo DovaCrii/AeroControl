@@ -1697,6 +1697,13 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
             checks["database"] = False
         documents = Path(settings.DOCUMENTS_ROOT)
         checks["documents"] = documents.exists() and documents.is_dir()
+        # T1.4: la auditoría que no se pudo escribir. Hasta ahora sólo dejaba una
+        # línea de log; acá se ve donde ya se mira.
+        from apps.core.audit_health import last_failure
+
+        failure = last_failure()
+        checks["audit"] = failure is None
+        checks["audit_failure"] = failure
         return checks
 
     @staticmethod
