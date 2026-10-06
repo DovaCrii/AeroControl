@@ -68,7 +68,14 @@ whether a title wrapped, so nothing lined up.{% endcomment %}
       <ul class="list-unstyled mb-3">
         <li>{% if situation.health.database %}✅{% else %}❌{% endif %} {% translate "Database" %}</li>
         <li>{% if situation.health.documents %}✅{% else %}❌{% endif %} {% translate "Document storage" %}</li>
+        <li>{% if situation.health.audit %}✅{% else %}❌{% endif %} {% translate "Audit log writes" %}</li>
       </ul>
+      {% if situation.health.audit_failure %}
+      {% comment %}T1.4: un cambio se guardó **sin** su entrada de auditoría. Se dice
+      cuántas veces y cuándo fue la última, que es lo que permite distinguir un
+      tropiezo único de algo que pasa en cada petición.{% endcomment %}
+      <p class="small text-danger-emphasis mb-3">{% blocktranslate with count=situation.health.audit_failure.count last=situation.health.audit_failure.last_at %}{{ count }} change(s) were saved without an audit entry; the last one at {{ last }}. See the server log (audit_write_failed).{% endblocktranslate %}</p>
+      {% endif %}
       {% endif %}
       {% if situation.can_view_backup %}
       <h3 class="h6">{% translate "Last backup" %}</h3>

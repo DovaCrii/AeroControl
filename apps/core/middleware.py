@@ -3,6 +3,8 @@ import logging
 import time
 import uuid
 
+from apps.core.audit_health import record_failure
+
 
 logger = logging.getLogger("aerocontrol.request")
 csp_logger = logging.getLogger("aerocontrol.csp")
@@ -146,7 +148,7 @@ class RequestMetricsMiddleware:
                         request_id=request_id,
                         metadata=metadata,
                     )
-            except Exception:
+            except Exception as error:
                 logger.exception(
                     "audit_write_failed",
                     extra={
@@ -154,6 +156,14 @@ class RequestMetricsMiddleware:
                         "method": request.method,
                         "path": request.path,
                     },
+                )
+                # T1.4: además del log, una marca que el centro de administración
+                # muestra. Sigue siendo fail-open: la mutación no se toca.
+                record_failure(
+                    request_id=request_id,
+                    method=request.method,
+                    path=request.path,
+                    error=error,
                 )
         logger.info(
             "request_complete",

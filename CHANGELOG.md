@@ -17,6 +17,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Un fallo al escribir la auditoría ahora se ve (`T1.4`, paso 1).** Si el `AuditEvent` de
+  una mutación no se puede escribir, además de la línea de log queda una marca en disco y
+  el centro de administración muestra «Escrituras del registro de auditoría» en rojo, con
+  cuántos cambios se guardaron sin su entrada y cuándo fue el último. `manage.py
+  clear_audit_failure` la da por revisada. Sigue siendo fail-open: no cambia qué pasa con
+  la mutación (eso es el paso 2, detrás de `AUDIT_FAIL_CLOSED`).
 - **Las cuatro modalidades de área de vuelo de SIGO (`LV-278`, bloque A).** Además de
   Punto Centro, el motor reconoce **Triangular** (3 vértices), **Cuadricular** (4) y
   **Punto Corredor** (un trazado abierto, que antes se descartaba sin aviso). Los
