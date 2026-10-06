@@ -8,6 +8,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Changed
+
+- **«Esperando» en naranja y dos entradas fuera del menú (`LV-284`).** En el panel, la
+  faena sin permiso vigente pero con uno esperando respuesta se pinta en ámbar y no en
+  rojo. «¿Puedo volar?» y «Vuelos» se ocultan del menú de momento (las pantallas siguen
+  accesibles por su URL).
+
 ### Added
 
 - **Un fallo al escribir la auditoría ahora se ve (`T1.4`, paso 1).** Si el `AuditEvent` de
