@@ -31,6 +31,8 @@ export function collectFeatures(doc) {
           folderPath: path,
           geometry: node.geometry,
           iconResource: iconFor(node.style_url),
+          // LV-282: el color de capa elegido en el editor (`#rrggbb`), o null.
+          color: node.color || null,
         });
       }
     }

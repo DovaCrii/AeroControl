@@ -551,6 +551,8 @@ class GeoPlanDetailView(ModelViewPermissionRequiredMixin, DetailView):
                 # dibujada. Va acá y no en el JS porque los módulos del mapa no
                 # llevan cadenas visibles: se traducen en el servidor.
                 "circleCenter": _("Center"),
+                # LV-282: el selector de color de cada capa.
+                "layerColor": _("Layer color"),
                 # GEO-12a version diff
                 "compare": _("Compare"),
                 "diffExit": _("Exit comparison"),

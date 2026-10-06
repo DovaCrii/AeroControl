@@ -2422,6 +2422,17 @@ a.admin-metric:hover { border-color: var(--ac-text-secondary); }
   cursor: pointer;
 }
 .geo-tree-btn:hover { color: var(--ac-text); border-color: var(--ac-text-secondary); }
+/* LV-282: la muestra de color de cada capa, del alto de los botones de acción. */
+.geo-tree-color {
+  flex: 0 0 auto;
+  width: 1.4rem;
+  height: 1.4rem;
+  padding: 0;
+  border: 1px solid var(--ac-border);
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+}
 /* GEO-12a version diff */
 .geo-diff-bar { display: inline-flex; align-items: center; gap: 0.35rem; }
 .geo-diff-select { width: auto; min-width: 4.5rem; }
