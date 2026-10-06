@@ -8,7 +8,6 @@ def track_status_changes(sender, instance, **kwargs):
         return
 
     from apps.geo.models import GeoPlanHistory
-    from apps.maintenance.models import MaintenanceHistory
     from apps.registry.models import InsuranceHistory
 
     # (history model, its FK back to the record, the field being tracked).
@@ -17,11 +16,10 @@ def track_status_changes(sender, instance, **kwargs):
     # maintenance) is a different axis that no history table watches, while its
     # insurance filing does advance through a flow and needs the trace.
     history = {
-        # T1.3: `flightpermission` y `flightrequest` salieron de este mapa. Su
-        # historial lo escribe `core.status_history.StatusHistoryMixin`, dentro del
-        # guardado; el resto de los modelos se migra uno por commit y esta señal se
-        # retira con el último.
-        "maintenancerecord": (MaintenanceHistory, "record", "status"),
+        # T1.3: `flightpermission`, `flightrequest` y `maintenancerecord` salieron de
+        # este mapa. Su historial lo escribe `core.status_history.StatusHistoryMixin`,
+        # dentro del guardado; el resto de los modelos se migra uno por commit y esta
+        # señal se retira con el último.
         "geoplan": (GeoPlanHistory, "plan", "status"),
         "aircraft": (InsuranceHistory, "aircraft", "insurance_status"),
     }.get(sender._meta.model_name)

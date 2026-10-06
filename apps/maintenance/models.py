@@ -3,10 +3,18 @@ from django.conf import settings
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from apps.core.models import BaseModel
+from apps.core.status_history import StatusHistoryMixin
 from apps.registry.models import Aircraft
 
 
-class MaintenanceRecord(BaseModel):
+class MaintenanceRecord(StatusHistoryMixin, BaseModel):
+    # T1.3: el historial de estados (`MaintenanceHistory`) lo escribe
+    # `StatusHistoryMixin` dentro del guardado, y ya no una señal `pre_save`. La
+    # otra señal de esta app (`sync_maintenance_status_transition`) sigue siendo
+    # `pre_save`, pero ahora corre **dentro** de esa transacción: si el guardado
+    # falla, lo que le hizo a la aeronave se deshace con él.
+    STATUS_HISTORY = ("maintenance.MaintenanceHistory", "record", "status")
+
     TYPES = [
         # LV-8a: a maintenance that is known to be needed but not yet specified
         # (no date/assignee decided). Listed first so it reads as the "inbox"
