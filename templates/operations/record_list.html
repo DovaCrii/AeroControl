@@ -1,5 +1,5 @@
 {% extends "generic/list.html" %}
-{% load i18n %}
+{% load aero_tags i18n %}
 
 {% comment %}LV-254: reparto declarado. La primera columna es una fecha —ancho fijo,
 no el 26 % de un nombre—, y el permiso también: su rótulo es el folio interno, de
@@ -18,10 +18,10 @@ ancho casi uniforme. La flexible es la del piloto, el texto más largo de la fil
 {% endblock %}
 
 {% block list_header %}
-<th scope="col">{% translate "Date" %}</th>
-<th scope="col">{% translate "Flight permission" %}</th>
-<th scope="col">{% translate "Pilot" %}</th>
-<th scope="col">{% translate "Aircraft" %}</th>
+{% worktable_th _("Date") "date" %}
+{% worktable_th _("Flight permission") "permission" %}
+{% worktable_th _("Pilot") "pilot" %}
+{% worktable_th _("Aircraft") "aircraft" %}
 <th scope="col" class="cell-numeric">{% translate "Duration" %}</th>
 {% endblock %}
 
