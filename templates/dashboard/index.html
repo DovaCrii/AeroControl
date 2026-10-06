@@ -407,7 +407,7 @@ en `CostCenter`).{% endcomment %}
         tabla ya deja fuera las faenas que **no vuelan** (`operates_flights`) y las
         de contrato cerrado (`LV-236`), así que un rojo acá es siempre una faena que
         opera y no puede.{% endcomment %}
-        <tr{% if not row.in_force %} class="row-critical"{% endif %}>
+        <tr{% if not row.in_force %} class="{% if row.awaiting %}row-awaiting{% else %}row-critical{% endif %}"{% endif %}>
           <td>
             <a href="{% url 'permission-list' %}?cost_center={{ row.cost_center.pk }}" class="text-decoration-none">
               <span class="cc-chip me-2">{{ row.cost_center.code }}</span>{{ row.cost_center.name }}
