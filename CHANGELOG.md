@@ -10,6 +10,9 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Color por capa en el editor geoespacial (`LV-282`).** Cada capa tiene un selector de
+  color en el árbol; al recolorear el anillo de una circunferencia su centro lo sigue. El
+  color se valida (`#rrggbb`) y se exporta como `<Style>` en línea del KML.
 - **Al mover una circunferencia en el editor, su centro la acompaña (`LV-277`).** El pin
   «Centro» se mueve en vivo con el anillo y ambos se guardan juntos (un solo Deshacer).
   Sólo sigue al anillo el punto que está **dentro** del círculo y que el servidor
