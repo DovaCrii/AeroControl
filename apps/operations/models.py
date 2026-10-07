@@ -672,6 +672,22 @@ class FlightPermission(StatusHistoryMixin, StatusFlowMixin, BaseModel):
         day = min(self.valid_from.day, calendar.monthrange(year, month)[1])
         return date(year, month, day)
 
+    def _fleet_for_rules(self):
+        """Las aeronaves contra las que se juzga la ventana del permiso (LV-287).
+
+        Una relación M2M **no se puede leer antes de guardar**, y tampoco sirve la de
+        la base cuando el formulario cambia la flota: juzgaría la flota vieja y
+        rechazaría justo la corrección. Por eso el formulario deja acá la que la
+        persona acaba de elegir (`_rule_fleet`); sin ella, sólo se lee la de la base
+        si el permiso ya existe.
+        """
+        chosen = getattr(self, "_rule_fleet", None)
+        if chosen is not None:
+            return chosen
+        if self._state.adding:
+            return []
+        return list(self.aircraft_fleet.all())
+
     def clean(self):
         errors = {}
         # LV-157: espejo en el modelo de la regla del formulario, como exige
@@ -698,6 +714,16 @@ class FlightPermission(StatusHistoryMixin, StatusFlowMixin, BaseModel):
                 "end after %(limit)s. If the authorisation really says otherwise, "
                 "write the reason in the field below and it will be recorded."
             ) % {"limit": self.latest_allowed_valid_until().isoformat()}
+        # LV-287: el techo por seguro, sólo mientras el permiso está *solicitado*
+        # (ver `permit_rules`). No se le suma `errors.setdefault`: si ya hay un
+        # error en ese campo, el primero —el techo de la DGAC— es el que se ve.
+        if self.status == self.STATUS_REQUESTED:
+            from .permit_rules import insurance_window_errors
+
+            for field, message in insurance_window_errors(
+                self.valid_from, self.valid_until, self._fleet_for_rules()
+            ).items():
+                errors.setdefault(field, message)
         # LV-219: la vigencia puede faltar mientras la DGAC no responda, pero un
         # permiso autorizado sin vigencia sería una autorización sin plazo — y el
         # motor de vencimientos no tendría de dónde agarrarse para cerrarlo.
