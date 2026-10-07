@@ -9405,3 +9405,41 @@ msgid ""
 msgstr ""
 "Se guardaron %(count)s cambio(s) sin su entrada de auditoría; el último, el "
 "%(last)s. Revise el registro del servidor (audit_write_failed)."
+
+#: templates/geo/_sigo_sheet.html
+msgid "Start point (corridor)"
+msgstr "Punto Inicio (Corredor)"
+
+#: templates/geo/_sigo_sheet.html
+msgid "End point (corridor)"
+msgstr "Punto Término (Corredor)"
+
+#: templates/geo/_sigo_sheet.html
+#, python-format
+msgid "Vertex %(number)s"
+msgstr "Vértice %(number)s"
+
+#: templates/geo/_sigo_sheet.html
+#, python-format
+msgid "Centre used to measure the aerodrome: %(lat)s · %(lon)s"
+msgstr "Centro desde el que se midió el aeródromo: %(lat)s · %(lon)s"
+
+#: templates/operations/flight_request_detail.html
+msgid "used to measure the aerodrome"
+msgstr "desde el que se midió el aeródromo"
+
+#: apps/operations/models.py
+msgid "Approximate flight time (minutes)"
+msgstr "Tiempo aproximado de vuelo (minutos)"
+
+#: apps/operations/flight_requests.py
+msgid "Start and end points"
+msgstr "Puntos de inicio y de término"
+
+#: apps/operations/views.py
+msgid ""
+"Corridor simplified: SIGO takes only a start and an end point, so the points "
+"in between are not declared."
+msgstr ""
+"Corredor simplificado: SIGO sólo admite un punto de inicio y uno de término, "
+"así que los puntos intermedios no se declaran."

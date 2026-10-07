@@ -350,12 +350,32 @@ modalidades:
    → **Pendiente.** Junto con las cuatro capturas de las modalidades: las que se
    enviaron en el chat no quedaron guardadas en disco.
 
+### 7.5b Lo que muestra el portal (capturas del 2026-10-06)
+
+Común a las cuatro: tabla «Trabajo Aéreo / Objetivo del Vuelo», Comuna, Área, Aeródromo
+más cercano (AMC), Distancia al AMC (kilómetros), y el selector **«Modalidad de área de
+vuelo»** con cuatro botones. Al final de todas: Altura (metros **o** pies), Hora Desde,
+Hora Hasta, Mapa (KMZ, máximo 20 MB) y **Tiempo aproximado de vuelo (minutos)**.
+
+| Modalidad | Casillas propias |
+|---|---|
+| **Punto Centro** | Latitud y Longitud (Grados, Minutos, Segundos) · «Radio / Ancho» (metros **o** millas náuticas) |
+| **Punto Corredor** | «Punto Inicio (Corredor)» y «Punto Término (Corredor)», cada uno con Latitud y Longitud (G/M/S) · **sin radio ni ancho** |
+| **Triangular** | Vértice 1, 2, 3 — cada uno con Latitud y Longitud (G/M/S) |
+| **Cuadricular** | Vértice 1, 2, 3, 4 — cada uno con Latitud y Longitud (G/M/S) |
+
+Ninguna tiene casilla de hemisferio. Esto corrige un supuesto del bloque A (el corredor
+con N vértices): el portal declara **dos** puntos.
+
 ### 7.6 Estado (2026-10-06)
 
 - **Bloque A hecho** (`LV-283` y `LV-278`): detección de las cuatro modalidades,
   vértices horarios, punto central siempre, `FlightRequest.area_modality` y
   `vertices` (migración `operations/0030`), pantalla «qué traerá este KMZ» y hoja con
   la lista de vértices.
-- **Bloque B pendiente:** la hoja casilla por casilla como el portal, y el dato propio
-  del corredor. Necesita las capturas.
+- **Bloque B hecho** (rama `codex/sigo-modalidades-b`, migración `operations/0031`): la
+  hoja y la ficha de la solicitud siguen el portal (ver §7.5b), el corredor se declara
+  por sus dos extremos con aviso si se simplificó, y existe la casilla «Tiempo aproximado
+  de vuelo (minutos)». Sin radio ni ancho en el corredor: el portal no los pide.
+- **Sigue pendiente:** los textos de ayuda de los «?», si algún día se quieren copiar.
 - La fila R9.8 a R9.10 de la tabla de fases queda ✅ en lo que no depende del portal.

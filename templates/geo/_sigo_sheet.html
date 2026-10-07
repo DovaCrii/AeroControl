@@ -74,6 +74,7 @@ con su botón, porque el rótulo de la casilla es lo que dice cuál es cuál.
 simplificada a ~111 m. Literalmente el mismo aviso que la tabla.{% endcomment %}
 <p class="text-muted small mb-0 mt-1">{% translate "The commune, province and region come from the BCN administrative boundaries, which that institution publishes as referential: near a boundary the answer may be the neighbouring commune. Confirm it before filing." %}</p>
 
+{% if row.modality == "center_point" %}
 <h3 class="sigo-section-title sigo-section-coords">{% translate "Latitude" %}</h3>
 <div class="row g-2 sigo-section sigo-section-coords">
   {% include "geo/_sigo_field.html" with label=label_degrees value=row.dms_lat.degrees|stringformat:"d" copy=row.dms_lat.degrees|stringformat:"d" %}
@@ -95,31 +96,40 @@ simplificada a ~111 m. Literalmente el mismo aviso que la tabla.{% endcomment %}
   {% include "geo/_sigo_field.html" with label=label_hemisphere value=row.dms_lon.hemisphere copy=row.dms_lon.hemisphere %}
 </div>
 <p class="small text-body-secondary mb-0 mt-1 font-monospace">{{ row.lon_readable }}</p>
+{% else %}
+{% comment %}LV-278 (bloque B, capturas del portal del 2026-10-06): sin Punto Centro
+no hay «Latitud/Longitud» de un centro que declarar. El portal pide, según la
+modalidad, **Punto Inicio y Punto Término** (corredor) o **Vértice 1, 2, 3 (y 4)**
+(triangular y cuadricular), cada uno con Latitud y Longitud en Grados, Minutos y
+Segundos — **tres casillas por eje, sin casilla de hemisferio**, que va en el
+rótulo. Los vértices vienen en sentido horario.
 
-{% if row.vertices %}
-{% comment %}LV-278: triángulo, cuadrilátero y corredor se declaran **por sus
-vértices**, no por un radio. Van en sentido horario (pedido del usuario) y cada
-coordenada con su botón de copiar. Es la versión mínima: la disposición casilla por
-casilla del portal es el bloque B del plan, que espera las capturas.{% endcomment %}
-<h3 class="sigo-section-title sigo-section-circle">{% translate "Area vertices" %}{% if row.modality != "corridor" %} · {% translate "clockwise" %}{% endif %}</h3>
-<div class="table-responsive">
-  <table class="table table-sm align-middle mb-0">
-    <thead><tr>
-      <th scope="col">#</th>
-      <th scope="col">{% translate "Latitude" %}</th>
-      <th scope="col">{% translate "Longitude" %}</th>
-    </tr></thead>
-    <tbody>
-      {% for vertex in row.vertices %}
-      <tr>
-        <td class="text-muted">{{ vertex.number }}</td>
-        <td class="small font-monospace text-nowrap">{{ vertex.lat_readable }}{% translate "Latitude" as vertex_lat_label %}{% include "geo/_sigo_copy_button.html" with value=vertex.lat_readable label=vertex_lat_label %}</td>
-        <td class="small font-monospace text-nowrap">{{ vertex.lon_readable }}{% translate "Longitude" as vertex_lon_label %}{% include "geo/_sigo_copy_button.html" with value=vertex.lon_readable label=vertex_lon_label %}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+El centro que sí existe (el dibujado o el calculado) no es una casilla: es desde
+donde se midió el aeródromo, y se dice abajo para que la distancia no parezca de
+la nada.{% endcomment %}
+{% for vertex in row.vertices %}
+<h3 class="sigo-section-title sigo-section-coords">{% if row.modality == "corridor" %}{% if forloop.first %}{% translate "Start point (corridor)" %}{% else %}{% translate "End point (corridor)" %}{% endif %}{% else %}{% blocktranslate with number=vertex.number %}Vertex {{ number }}{% endblocktranslate %}{% endif %}</h3>
+<div class="row g-2 sigo-section sigo-section-coords">
+  <div class="col-12 col-md-6">
+    <div class="small text-body-secondary mb-1">{% translate "Latitude" %} · {{ vertex.dms_lat.hemisphere }}</div>
+    <div class="row g-2">
+      {% include "geo/_sigo_field.html" with label=label_degrees value=vertex.dms_lat.degrees|stringformat:"d" copy=vertex.dms_lat.degrees|stringformat:"d" width="col-4" %}
+      {% include "geo/_sigo_field.html" with label=label_minutes value=vertex.dms_lat.minutes|stringformat:"d" copy=vertex.dms_lat.minutes|stringformat:"d" width="col-4" %}
+      {% include "geo/_sigo_field.html" with label=label_seconds value=vertex.dms_lat.seconds|stringformat:"d" copy=vertex.dms_lat.seconds|stringformat:"d" width="col-4" %}
+    </div>
+  </div>
+  <div class="col-12 col-md-6">
+    <div class="small text-body-secondary mb-1">{% translate "Longitude" %} · {{ vertex.dms_lon.hemisphere }}</div>
+    <div class="row g-2">
+      {% include "geo/_sigo_field.html" with label=label_degrees value=vertex.dms_lon.degrees|stringformat:"d" copy=vertex.dms_lon.degrees|stringformat:"d" width="col-4" %}
+      {% include "geo/_sigo_field.html" with label=label_minutes value=vertex.dms_lon.minutes|stringformat:"d" copy=vertex.dms_lon.minutes|stringformat:"d" width="col-4" %}
+      {% include "geo/_sigo_field.html" with label=label_seconds value=vertex.dms_lon.seconds|stringformat:"d" copy=vertex.dms_lon.seconds|stringformat:"d" width="col-4" %}
+    </div>
+  </div>
 </div>
+<p class="small text-body-secondary mb-0 mt-1 font-monospace">{{ vertex.lat_readable }} · {{ vertex.lon_readable }}</p>
+{% endfor %}
+<p class="small text-body-secondary mb-0 mt-2">{% blocktranslate with lat=row.lat_readable lon=row.lon_readable %}Centre used to measure the aerodrome: {{ lat }} · {{ lon }}{% endblocktranslate %}</p>
 {% endif %}
 
 <h3 class="sigo-section-title sigo-section-circle">{% if row.modality == "center_point" %}{% translate "Circle and aerodrome" %}{% else %}{% translate "Nearest aerodrome (AMC)" %}{% endif %}</h3>

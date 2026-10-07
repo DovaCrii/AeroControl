@@ -59,6 +59,9 @@ WARNING_NOT_A_CIRCLE = "not_a_circle"
 # SIGO con ese centro se presentaría por el sitio equivocado; callarlo sería
 # dejar que el error viaje al formulario del Estado con timbre y todo.
 WARNING_DUPLICATE_CENTER = "duplicate_center"
+# LV-278: la línea dibujada tiene más de dos vértices y el portal de SIGO sólo
+# admite inicio y término.
+WARNING_CORRIDOR_SIMPLIFIED = "corridor_simplified"
 
 # LV-278: las cuatro modalidades de área de vuelo que admite SIGO. Un círculo con
 # su punto central es la que el motor conocía; las otras tres se reconocen por la
@@ -266,7 +269,14 @@ def _set_modality(section, modality, coordinates):
     """Marca la sección como triángulo, cuadrilátero o corredor, con sus vértices."""
     section.modality = modality
     if modality == MODALITY_CORRIDOR:
-        section.vertices = [[v[0], v[1]] for v in coordinates]
+        # El portal de SIGO declara un corredor con **dos** puntos: «Punto Inicio» y
+        # «Punto Término» (capturas del 2026-10-06). Una línea con más vértices se
+        # declara por sus extremos y **se avisa**: los intermedios no tienen casilla,
+        # y callarlo dejaría declarar un tramo recto donde el trazado dobla.
+        first, last = coordinates[0], coordinates[-1]
+        section.vertices = [[first[0], first[1]], [last[0], last[1]]]
+        if len(coordinates) > 2:
+            section.warnings.append(WARNING_CORRIDOR_SIMPLIFIED)
     else:
         section.vertices = clockwise_vertices(coordinates)
 
@@ -516,6 +526,12 @@ def split_sections(document):
                 circle=placemark,
             )
             _set_modality(derived, modality, ring)
+            if modality == MODALITY_CORRIDOR:
+                # Lo que se declara es el segmento inicio-término, así que su centro
+                # es el punto medio de **ese** segmento: lo que se mide y lo que se
+                # declara son la misma figura.
+                (lon1, lat1), (lon2, lat2) = derived.vertices
+                derived.center = ((lat1 + lat2) / 2, (lon1 + lon2) / 2)
             sections.append(derived)
             continue
         orphan = Section(
