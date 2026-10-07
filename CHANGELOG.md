@@ -10,6 +10,9 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **«Vuelos» vuelve al menú lateral (`LV-291`).** Es donde vive el registro de vuelos y el acceso
+  a la pantalla de operaciones de cada permiso. «¿Puedo volar?» sigue oculto.
+
 - **Registro de operaciones en el formato de la DGAC (`LV-290`).** Cada permiso tiene una pantalla
   con el encabezado del portal, el alta de una línea (fecha, horas, operador, aeronave por N° de serie),
   la tabla de operaciones registradas y el adjunto del registro de vuelo `.TXT`. Una operación es un

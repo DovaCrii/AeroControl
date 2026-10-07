@@ -202,15 +202,8 @@
       <a href="{% url 'flight-request-list' %}" class="nav-item nav-flight {% if url_name == 'flight-request-list' or url_name == 'flight-request-detail' or url_name == 'geo-plan-split' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-flight-request-list"/></svg>{% translate "SIGO requests" %}</a>
       {% endcomment %}
       <a href="{% url 'geo-plan-list' %}" class="nav-item nav-flight {% if url_name == 'geo-plan-list' or url_name == 'geo-plan-detail' or url_name == 'geo-plan-import' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-geo-plan-list"/></svg>{% translate "Geospatial planning" %}</a>
-      {% comment %}LV-284 paso 1 (2026-10-06, decisión del usuario): «Vuelos» se oculta
-      del menú **de momento**, igual que «¿Puedo volar?» más arriba. Sólo el enlace:
-      la lista, la URL `record-list` y el alta de un vuelo siguen enteras (el flujo
-      de permiso a vuelo y el panel apuntan ahí). Descomentar la línea vuelve al menú.
-      Condición de cierre: la misma que la de arriba — un mes sin que nadie lo
-      pida, y entonces se decide si se congela.
-
-      <a href="{% url 'record-list' %}" class="nav-item nav-flight {% if url_name == 'record-list' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-record-list"/></svg>{% translate "Flights" %}</a>
-      {% endcomment %}
+      {% comment %}LV-291 (2026-10-07, pedido del usuario): «Vuelos» vuelve al menú, ahora que el registro de operaciones en formato DGAC (LV-290) vive ahí: la lista es el registro de todos los vuelos y cada permiso tiene su pantalla de operaciones. LV-284 lo había ocultado; «¿Puedo volar?» sigue oculto.{% endcomment %}
+      <a href="{% url 'record-list' %}" class="nav-item nav-flight {% if url_name == 'record-list' or url_name == 'record-detail' or url_name == 'permission-operations' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-record-list"/></svg>{% translate "Flights" %}</a>
       {% comment %}LV-103 paso 1 (2026-08-14, decisión del usuario): el
       calendario se retira siguiendo el procedimiento de LV-78 -- primero sin
       superficies, después congelado, y sólo al final se borra si nadie lo echa
