@@ -17,6 +17,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Auditoría atómica con cada cambio, apagada por omisión (`T1.4`, paso 2).** Con
+  `AUDIT_FAIL_CLOSED=True`, cada cambio se guarda y se audita en una sola transacción: si el
+  registro de auditoría no se puede escribir, el cambio entero se deshace y la persona ve
+  «Cambio no guardado» (503). Ninguna mutación queda sin su entrada. Apagado (como llega) se
+  comporta exactamente igual que antes; se enciende en la VM tras una semana con el aviso de
+  fallos de auditoría en cero.
 - **Skill `/terminar-bloques` (`LV-289`).** Hace todos los bloques pendientes hasta GitHub (rama,
   prueba, gate, PR, CI, fusión) y al final lista lo que falta subir a la VM con los comandos
   justos: sólo los bloques que hacen falta según lo que cambió. Sus scripts viven ahora en el

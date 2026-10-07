@@ -12,7 +12,10 @@ la hoja sigue el portal), `LV-279` (números cerrados), `LV-280` (orden por colu
 `LV-282` (color por capa), `LV-283` y `T1.4` paso 1 (el fallo de auditoría se ve en el centro de
 administración).
 
-**Seguimiento — fusionado sin desplegar: `LV-288`** (el orden por columna: conserva el orden al
+**Seguimiento — fusionado sin desplegar: `T1.4` paso 2** (la auditoría atómica con cada cambio,
+**APAGADA por omisión**: desplegarla no cambia nada hasta poner `AUDIT_FAIL_CLOSED=True` en
+`/etc/aerocontrol.env`, y eso es **del usuario y sólo tras una semana con «Escrituras del registro de
+auditoría» en verde** en el centro de administración; sin migración), **`LV-288`** (el orden por columna: conserva el orden al
 filtrar, vacíos al final, «Estado» por lo que se ve; **lleva `collectstatic`** por `app.css`),
 **`LV-286`** (la revisión meteorológica del expediente pasa a informativa) **y `LV-287`** (una solicitud de permiso no puede pasar del seguro de sus aeronaves: techo =
 el día anterior al vencimiento más próximo). **Sin migración y sin dependencias; lleva `collectstatic`
