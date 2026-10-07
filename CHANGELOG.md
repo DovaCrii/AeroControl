@@ -17,6 +17,9 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Ordenar por columna en seis listas más (`LV-280`, segunda tanda).** Asignaciones de
+  operador y de aeronave, tipos de documento, reglas de alerta, tipos de habilitación y
+  etiquetas del tablero se ordenan con un clic en el encabezado, ascendente y descendente.
 - **La hoja SIGO sigue el portal, modalidad por modalidad (`LV-278`, bloque B).** Con las
   capturas del formulario: el **corredor** se declara con «Punto Inicio» y «Punto
   Término» (sin radio ni ancho; si la línea tenía más vértices se avisa y se declaran los
