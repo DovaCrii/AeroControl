@@ -1,5 +1,6 @@
 import calendar
 import logging
+import uuid
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from urllib.parse import quote
@@ -1122,7 +1123,7 @@ class FlightRecordList(OList):
         )
         context["register_permits"] = permits.select_related("cost_center").order_by(
             "cost_center__code", "valid_from"
-        )[:30]
+        )
         return context
 
 
@@ -1323,6 +1324,33 @@ class PermissionOperations(
         warn_if_over_duty_limit(request, record)
         messages.success(request, _("Operation registered."))
         return redirect("permission-operations", pk=self.object.pk)
+
+
+class PermissionOperationsPick(ModelViewPermissionRequiredMixin, View):
+    """LV-292: del selector de «Vuelos» a la pantalla de operaciones del permiso elegido.
+
+    Un `<select>` HTML no navega solo sin JavaScript, así que el formulario hace GET acá
+    y esta vista redirige. El permiso se busca **acotado por tenant**: un identificador
+    ajeno da 404, igual que su URL directa.
+    """
+
+    model = FlightPermission
+
+    def get(self, request, *args, **kwargs):
+        raw = request.GET.get("permission", "")
+        try:
+            pk = uuid.UUID(raw)
+        except ValueError:
+            return redirect("record-list")
+        permission = get_object_or_404(
+            scope_queryset_to_tenant(
+                FlightPermission.objects.filter(is_active=True),
+                request.user,
+                "cost_center__tenant_id",
+            ),
+            pk=pk,
+        )
+        return redirect("permission-operations", pk=permission.pk)
 
 
 class FlightRecordDetail(
