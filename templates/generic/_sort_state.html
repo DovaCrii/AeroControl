@@ -1,0 +1,11 @@
+{% comment %}LV-288: lleva el orden elegido a través de un formulario GET.
+
+Un `<form method="get">` envía **sólo sus campos**. Los filtros y la búsqueda en vivo
+(`hx-include="closest form"`) mandaban `q`, el estado y las fechas, y se llevaban
+puesto el `sort` y el `dir`: ordenar, filtrar y volver a ver la lista **sin** el orden
+que se había pedido. El usuario lo reportó como «funciona mal el ascendente y
+descendente».
+
+Se lee de `worktable_sort` y no de `request.GET`: ahí el `sort` ya pasó por la lista
+blanca de la vista, así que un valor inventado en la URL no llega al formulario.{% endcomment %}
+{% if worktable_sort.column %}<input type="hidden" name="sort" value="{{ worktable_sort.column }}"><input type="hidden" name="dir" value="{{ worktable_sort.direction }}">{% endif %}
