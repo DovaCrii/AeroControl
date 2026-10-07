@@ -13,8 +13,11 @@ la hoja sigue el portal), `LV-279` (números cerrados), `LV-280` (orden por colu
 administración).
 
 **Seguimiento — fusionado sin desplegar: `LV-286`** (la revisión meteorológica del expediente pasa a
-informativa). **Sólo reinicio**: sin migración, sin estáticos, sin dependencias. Se despliega con el resto
-al terminar los bloques. **`T1.4` (auditoría atómica) queda para el final, a pedido del usuario.** (Regla desde 2026-10-07: se fusiona bloque tras bloque
+informativa) **y `LV-287`** (una solicitud de permiso no puede pasar del seguro de sus aeronaves: techo =
+el día anterior al vencimiento más próximo). **Sólo reinicio**: sin migración, sin estáticos, sin
+dependencias (el `.mo` va versionado, sin `compilemessages`). Se despliega con el resto al terminar los
+bloques. Ojo al desplegar `LV-287`: **permisos solicitados ya guardados que pasen del seguro** no se
+rompen, pero fallarán al editarlos hasta corregir la fecha. **`T1.4` (auditoría atómica) queda para el final, a pedido del usuario.** (Regla desde 2026-10-07: se fusiona bloque tras bloque
 y se despliega **una vez** al final; ver `AGENTS.md` «Despliegue por tandas». Cuando algo quede
 fusionado sin desplegar, va **aquí**, con qué lleva migración y qué lleva estáticos.)
 
