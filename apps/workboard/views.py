@@ -124,6 +124,8 @@ class WCreate(ModelPermissionRequiredMixin, CreateView):
 
 class LabelList(WList):
     model = KanbanLabel
+    # LV-280: las tres columnas genéricas (Nombre / Creado / Estado).
+    sortable_columns = {"name": "name", "created": "created_at", "status": "is_active"}
 
 
 class LabelCreate(WCreate):

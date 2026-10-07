@@ -1093,6 +1093,14 @@ class OperatorAssignmentList(RegistryList):
     model = OperatorAssignment
     template_name = "registry/operatorassignment_list.html"
     htmx_template_name = "registry/_operatorassignment_rows.html"
+    # LV-280. «Propósito» es una elección con texto libre cuando es «otro»: ordenar
+    # por la clave agruparía por código y no por lo que se lee, así que no ordena.
+    sortable_columns = {
+        "operator": "operator__full_name",
+        "cost_center": "cost_center__code",
+        "status": "status",
+        "since": "start_date",
+    }
     search_fields = [
         "operator__full_name",
         "operator__employee_id",
@@ -1110,6 +1118,13 @@ class AircraftAssignmentList(RegistryList):
     model = AircraftAssignment
     template_name = "registry/aircraftassignment_list.html"
     htmx_template_name = "registry/_aircraftassignment_rows.html"
+    # LV-280: el espejo de la lista de operadores.
+    sortable_columns = {
+        "aircraft": "aircraft__registration",
+        "cost_center": "cost_center__code",
+        "status": "status",
+        "since": "start_date",
+    }
     search_fields = ["aircraft__registration", "aircraft__model", "cost_center__code"]
 
     def get_queryset(self):
@@ -1508,6 +1523,8 @@ class BatteryList(RegistryList):
 # DocumentType -- list/create/update only, no detail/archive/restore.
 class QualificationTypeList(RegistryList):
     model = QualificationType
+    # LV-280: las tres columnas genéricas (Nombre / Creado / Estado).
+    sortable_columns = {"name": "name", "created": "created_at", "status": "is_active"}
     search_fields = ["name", "code", "model_keywords"]
 
 
