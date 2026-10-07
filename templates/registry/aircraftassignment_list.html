@@ -1,12 +1,12 @@
 {% extends "generic/list.html" %}
-{% load i18n %}
+{% load aero_tags i18n %}
 
 {% block list_header %}
-<th scope="col">{% translate "Aircraft" %}</th>
-<th scope="col">{% translate "Cost center" %}</th>
-<th scope="col">{% translate "Status" %}</th>
+{% worktable_th _("Aircraft") "aircraft" %}
+{% worktable_th _("Cost center") "cost_center" %}
+{% worktable_th _("Status") "status" %}
 <th scope="col">{% translate "Purpose" %}</th>
-<th scope="col">{% translate "Since" %}</th>
+{% worktable_th _("Since") "since" %}
 {% endblock %}
 
 {% block table_body %}{% include "registry/_aircraftassignment_rows.html" %}{% endblock %}
