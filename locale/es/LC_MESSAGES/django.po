@@ -7840,10 +7840,14 @@ msgstr ""
 #: apps/operations/forms.py
 msgid ""
 "Optional until the permission is approved. The DGAC authorises three months "
-"at most, counted from the start date."
+"at most, counted from the start date, and a request cannot run past the day "
+"before the earliest insurance expiry of its aircraft (insurance until the "
+"21st → permit until the 20th)."
 msgstr ""
 "Opcional hasta que el permiso esté aprobado. La DGAC autoriza tres meses como "
-"máximo, contados desde la fecha de inicio."
+"máximo, contados desde la fecha de inicio, y una solicitud no puede pasar del "
+"día anterior al primer vencimiento de seguro de sus aeronaves (seguro hasta "
+"el 21 → permiso hasta el 20)."
 
 #: apps/operations/forms.py
 msgid ""
@@ -9451,3 +9455,35 @@ msgstr "Opcional"
 #: apps/operations/dossier.py
 msgid "Optional: no review on record"
 msgstr "Opcional: sin revisión registrada"
+
+#: apps/operations/permit_rules.py
+#, python-format
+msgid ""
+"The insurance of %(aircraft)s expires on %(expiry)s, which is before this "
+"permit would start. Renew the insurance first."
+msgstr ""
+"El seguro de %(aircraft)s vence el %(expiry)s, antes de que este permiso "
+"empiece. Renueve primero el seguro."
+
+#: apps/operations/permit_rules.py
+#, python-format
+msgid ""
+"The insurance of %(aircraft)s expires on %(expiry)s, so the permit cannot run "
+"past the day before. Set the end date to %(limit)s or earlier."
+msgstr ""
+"El seguro de %(aircraft)s vence el %(expiry)s, así que el permiso no puede "
+"pasar del día anterior. Ponga como fecha de término el %(limit)s o antes."
+
+#: apps/operations/forms.py
+#, python-format
+msgid "%(label)s · insurance until %(date)s"
+msgstr "%(label)s · seguro hasta %(date)s"
+
+#: templates/operations/permission_detail.html
+#, python-format
+msgid ""
+"Insurance of %(aircraft)s until %(expiry)s: this request can end on %(limit)s "
+"at the latest."
+msgstr ""
+"Seguro de %(aircraft)s hasta el %(expiry)s: esta solicitud puede terminar el "
+"%(limit)s como máximo."

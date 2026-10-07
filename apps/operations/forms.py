@@ -1,6 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Q
+from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 
 from apps.core.forms import AeroModelForm
@@ -116,7 +117,9 @@ class FlightPermissionForm(AeroModelForm):
             # es un tope que ya costó un intento.
             "valid_until": _(
                 "Optional until the permission is approved. The DGAC authorises "
-                "three months at most, counted from the start date."
+                "three months at most, counted from the start date, and a request "
+                "cannot run past the day before the earliest insurance expiry of "
+                "its aircraft (insurance until the 21st → permit until the 20th)."
             ),
             "validity_override_reason": _(
                 "Only if the DGAC granted a different term. Leave it empty for a "
@@ -192,9 +195,10 @@ class FlightPermissionForm(AeroModelForm):
         self.fields["permission_number"].required = False
         # R5.5: registration alone doesn't distinguish "which M300" in a
         # roster with several of the same model.
-        self.fields["aircraft_fleet"].label_from_instance = lambda obj: (
-            obj.selector_label
-        )
+        # LV-287: la fecha del seguro va **en la misma casilla** en que se elige la
+        # aeronave, porque es lo que limita hasta cuándo puede llegar el permiso. Un
+        # tope que se descubre recién al guardar es un tope que ya costó un intento.
+        self.fields["aircraft_fleet"].label_from_instance = self._aircraft_label
         # LV-151: el roster se ofrecía **en el orden en que la base devolvía las
         # filas**. Ni `Operator` ni `Aircraft` declaran `Meta.ordering`, así que
         # con 41 operadores el formulario era una grilla sin orden que sólo se
@@ -225,6 +229,15 @@ class FlightPermissionForm(AeroModelForm):
             ),
             "aircraft_fleet",
         ).order_by("registration")
+
+    @staticmethod
+    def _aircraft_label(aircraft):
+        if aircraft.insurance_expiry is None:
+            return aircraft.selector_label
+        return gettext("%(label)s · insurance until %(date)s") % {
+            "label": aircraft.selector_label,
+            "date": aircraft.insurance_expiry.isoformat(),
+        }
 
     def _hide_what_the_plan_provides(self):
         """Sacar del formulario los datos de ubicación que ya vienen del plan.
@@ -377,6 +390,12 @@ class FlightPermissionForm(AeroModelForm):
                     )
                     % {"limit": limit.isoformat()},
                 )
+        # LV-287: el techo por seguro lo aplica `FlightPermission.clean()`; acá sólo
+        # se le deja la flota que la persona **acaba de elegir** (ver
+        # `_fleet_for_rules`), y no la guardada en la base, que juzgaría la flota
+        # vieja y rechazaría justo la corrección.
+        if "aircraft_fleet" in cleaned:
+            self.instance._rule_fleet = list(cleaned["aircraft_fleet"] or [])
         effective_status = cleaned.get("status") or self.instance.status
         if effective_status in FlightPermission.REQUIRE_VALIDITY_STATUSES:
             for field in ("valid_from", "valid_until"):
