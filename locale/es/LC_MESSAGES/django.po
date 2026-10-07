@@ -9541,3 +9541,57 @@ msgstr "Aún sin vuelo"
 #: templates/operations/permission_detail.html
 msgid "No preflight checks started for this permission."
 msgstr "Aún no se empezó ningún chequeo prevuelo para este permiso."
+
+msgid "Operation registered."
+msgstr "Operación registrada."
+
+msgid "Operations register (DGAC format)"
+msgstr "Registro de operaciones (formato DGAC)"
+
+msgid "Operations register"
+msgstr "Registro de operaciones"
+
+msgid "Back to permit"
+msgstr "Volver al permiso"
+
+msgid "Request no."
+msgstr "Solicitud N°"
+
+msgid "Authorized period"
+msgstr "Período autorizado"
+
+msgid "Register operation"
+msgstr "Registrar operación"
+
+msgid "Registered operations"
+msgstr "Operaciones registradas"
+
+msgid "No."
+msgstr "N°"
+
+msgid "Start time"
+msgstr "Hora de inicio"
+
+msgid "End time"
+msgstr "Hora de término"
+
+msgid "Aircraft (serial no.)"
+msgstr "Aeronave (N° de serie)"
+
+msgid "No operations registered yet."
+msgstr "Aún no hay operaciones registradas."
+
+msgid "Attach flight log"
+msgstr "Adjuntar registro de vuelo"
+
+msgid "Required format: .TXT"
+msgstr "Formato requerido: .TXT"
+
+msgid "Upload .TXT"
+msgstr "Cargar .TXT"
+
+msgid "Size"
+msgstr "Tamaño"
+
+msgid "No flight log attached yet."
+msgstr "Aún no hay registro de vuelo adjunto."

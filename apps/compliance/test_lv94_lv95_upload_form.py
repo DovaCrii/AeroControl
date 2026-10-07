@@ -30,6 +30,13 @@ HX_TARGET = 'hx-target="#document-object-field"'
 TARGET_ID = 'id="document-object-field"'
 
 
+@pytest.fixture(autouse=True)
+def empty_catalog(db):
+    # LV-290: la migración compliance/0027 siembra un tipo (light-log-txt). Estas
+    # pruebas cuentan y ordenan **sus** tipos, así que parten de un catálogo vacío.
+    DocumentType.objects.all().delete()
+
+
 @pytest.fixture
 def doc_type(db):
     return DocumentType.objects.create(

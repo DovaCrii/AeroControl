@@ -19,6 +19,11 @@ urlpatterns = [
         name="permission-detail",
     ),
     path(
+        "permissions/<uuid:pk>/operations/",
+        views.PermissionOperations.as_view(),
+        name="permission-operations",
+    ),
+    path(
         "permissions/<uuid:pk>/edit/",
         views.FlightPermissionUpdate.as_view(),
         name="permission-update",
