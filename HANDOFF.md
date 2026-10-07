@@ -1,58 +1,40 @@
 # HANDOFF — AeroControl
 
-## 🟡 2026-10-06 — los historiales de estado, atómicos (cierra `T1.3`), **sin desplegar**
+## ✅ 2026-10-07 — modalidades SIGO, orden por columna, colores, auditoría visible, **desplegados** (`b02d84e`)
 
-`p340` corre **`05f5e2c`** (ver abajo). Faltan tres filas de `T1.3`, con las que **los cinco
-historiales de estado quedan atómicos** y se retira la señal vieja (`core/signals.py`):
+`p340` corre **`b02d84e`**, desplegado el 2026-10-07 por tandas (`97e2f35` → `120f5c8` → `ea480af` →
+`b02d84e`; cada una con `git pull`, reinicio y `git log` = hash de `main`). Dos migraciones, cada una con
+respaldo `verify_backup` = *restorable* antes: `operations/0030` (`area_modality`, `vertices`) y
+`operations/0031` (`approx_flight_minutes`). Entró: `LV-277` (el centro sigue a la circunferencia y el
+arrastre vuelve a guardarse), `LV-278` bloques A y B (Punto Centro, Corredor, Triangular, Cuadricular;
+la hoja sigue el portal), `LV-279` (números cerrados), `LV-280` (orden por columna, 20 listas),
+`LV-281` y `LV-284` (panel: «Esperando» en naranja; menú sin «¿Puedo volar?» ni «Vuelos»),
+`LV-282` (color por capa), `LV-283` y `T1.4` paso 1 (el fallo de auditoría se ve en el centro de
+administración).
 
-- **`LV-274`** (tercer modelo): el historial de estados de una **mantención** se escribe dentro
-  del guardado y no antes. Además, lo que la mantención le hace a la **aeronave** (enviarla al
-  taller, traerla de vuelta) entra en la misma transacción: si el guardado falla, la aeronave ya
-  no queda en «mantención» sin que la mantención se haya guardado.
-- **`LV-275`** (cuarto modelo): el historial de estados de un **plan geoespacial** y el registro
-  de con qué permiso se enlazó se escriben dentro del guardado. Lo cubren sus 12 pruebas; la
-  comprobación de abajo es de las mantenciones.
-- **`LV-276`** (quinto y último): el historial del **trámite del seguro** de una aeronave y el
-  registro de sus movimientos se escriben dentro del guardado. Se borra `apps/core/signals.py`
-  (ya nadie la usa). Lo cubren sus 13 pruebas y las 2 441 de las apps vecinas.
+**Seguimiento — fusionado sin desplegar: nada.** (Regla desde 2026-10-07: se fusiona bloque tras bloque
+y se despliega **una vez** al final; ver `AGENTS.md` «Despliegue por tandas». Cuando algo quede
+fusionado sin desplegar, va **aquí**, con qué lleva migración y qué lleva estáticos.)
 
-Cambian **comportamiento de escritura**, así que conviene comprobarlo.
+**No verificado en producción** (se comprobó con pruebas y en el demo, no en `p340`): el arrastre con el
+ratón real del editor y el clic sobre el selector de color; la hoja de SIGO contra el portal real; el
+rojo/naranja de «Esperando» a ojo. Y `LV-273` sigue sin ejercitarse allí (aún no hay solicitudes de vuelo
+reales: ahora, al separar un plan, se crean con modalidad).
 
-**Paso de despliegue: `git pull` y reiniciar.** Sin migraciones ni `collectstatic`. Prueba de que
-llegó: `git log --oneline -1` en la VM debe mostrar el último commit de `main`.
+**Pendiente — del usuario**
+- **Decisión de `T1.4`**: ¿fail-closed (sin auditoría no se guarda) o fail-open ruidoso? El paso atómico
+  espera esa respuesta; el paso 1 ya está desplegado.
+- **Correo** (de lado a pedido del usuario): `EMAIL_HOST` y `SITE_BASE_URL`; sin eso ningún aviso sale.
+- **Timers** `letters`, `watchdog` y `verifybak`: el bloque está en `docs/scheduled-operations.md`.
+- **Apagar la regla** «Permisos: renovación vencida de plazo (T-15 · Gerencia)».
+- **Responsable** en 11 de 15 faenas; **`CC716`** (contrato cerrado con el permiso `JEJ-2026-003` vivo
+  hasta el 28-10); **`LV-150`** (decisión vencida el 2026-09-30); **`LV-228`** (cuatro operadores sin
+  faena: René Herrera Molina, Natalia Ramos Mora, Jimmy Patricio Andrade Muñoz y David Vidal Vidal).
+- Los textos de ayuda de los «?» del portal de SIGO, sólo si se quieren copiar a la app.
 
-**Comprobación opcional en `p340`, sin dejar rastro** (con el entorno cargado, `set -a`): envía
-una mantención al taller dentro de una transacción que se **deshace**, y mira el historial y la
-aeronave antes, dentro y después.
-
-```bash
-uv run python manage.py shell <<'EOF'
-from django.db import transaction
-from apps.maintenance.models import MaintenanceHistory, MaintenanceRecord
-
-def probe():
-    record = MaintenanceRecord.objects.filter(is_active=True).exclude(status="sent").first()
-    if record is None:
-        return print("sin mantenciones para probar")
-    aircraft = record.aircraft
-    history = MaintenanceHistory.objects.filter(record=record)
-    before, was = history.count(), (aircraft.status, aircraft.current_location)
-    with transaction.atomic():
-        record.status = "sent"
-        record.save()
-        aircraft.refresh_from_db()
-        print("historial antes/dentro:", before, history.count())
-        print("aeronave dentro:", aircraft.status, aircraft.current_location)
-        transaction.set_rollback(True)
-    aircraft.refresh_from_db()
-    print("tras deshacer: historial", history.count(), "aeronave", (aircraft.status, aircraft.current_location), "antes", was)
-
-probe()
-EOF
-```
-
-Debe imprimir `antes → antes+1`, la aeronave en `maintenance maintenance` dentro, y volver a
-los valores de antes al deshacer. Si dice «sin mantenciones para probar», no es un error.
+**Pendiente — del código, sin decisión nueva**: ninguno. Lo que queda en `MASTER_PLAN.md` (`T1.1`,
+`T1.2`, `T1.5`, `T3.5`, `X.4`, `X.5`, `LV-231`, `LV-238`, `LV-233`, `LV-245`) espera una decisión, es un
+refactor grande o depende de AeroLink, y el proyecto está en pausa de estabilización.
 
 ## ✅ 2026-10-06 — insignias, historial de permisos y solicitudes, CI y skills, **desplegados** (`05f5e2c`)
 
