@@ -13,6 +13,7 @@ la tabla, no la barra de acciones.{% endcomment %}
 {% block worktable_actions %}<a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>{% endblock %}
 {% block worktable_filters %}
 <form method="get" class="row g-2 mb-3">
+  {% include "generic/_sort_state.html" %}
   <div class="col-md-5">{% include "generic/_search_input.html" with search_url=request.path %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
   <div class="col-md-3">
     <select class="form-select" name="is_active">

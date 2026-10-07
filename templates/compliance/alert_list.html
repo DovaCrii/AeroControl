@@ -14,6 +14,7 @@ entrar por esa puerta, y que se escribía a mano o faltaba:
 {% block worktable_actions %}<a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>{% endblock %}
 {% block worktable_filters %}
 <form method="get" class="row g-2 mb-3">
+  {% include "generic/_sort_state.html" %}
   <div class="col-md-4"><input class="form-control" name="q" value="{{ request.GET.q }}" placeholder="{% translate 'Search alerts...' %}"></div>
   <div class="col-md-3"><select class="form-select" name="is_resolved"><option value="false" {% if selected_is_resolved == 'false' %}selected{% endif %}>{% translate "Unresolved" %}</option><option value="true" {% if selected_is_resolved == 'true' %}selected{% endif %}>{% translate "Resolved" %}</option><option value="all" {% if selected_is_resolved == 'all' %}selected{% endif %}>{% translate "All alerts" %}</option></select></div>
   {% comment %}LV-76: the view has filtered on ?entity_type since it was written,

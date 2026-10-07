@@ -21,6 +21,7 @@ traducirse. Los encabezados van llanos, que es como `worktable_th` degrada.{% en
 {% block worktable_description %}<p class="page-description mb-0">{% translate "Everything pending, from every module, in one list." %}</p>{% endblock %}
 {% block worktable_filters %}
 <form method="get" class="row g-2 mb-3">
+  {% include "generic/_sort_state.html" %}
   <div class="col-md-3">
     <select class="form-select" name="owner" aria-label="{% translate 'Owner' %}">
       <option value="">{% translate "Any owner" %}</option>

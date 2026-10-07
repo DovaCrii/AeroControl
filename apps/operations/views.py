@@ -203,7 +203,39 @@ class FlightPermissionList(
         # evitar. Se ve archivado sólo al pedirlo, y desde ahí se restaura.
         if self.request.GET.get("is_active") not in {"active", "archived"}:
             queryset = queryset.filter(is_active=True)
+        # LV-288: «Estado» se ordena por **lo que la columna muestra**. La celda dice
+        # «Caducado» para un aprobado con la vigencia vencida (`has_lapsed`), pero el
+        # mixin ordena por el código guardado, y entonces los caducados quedaban
+        # repartidos entre los aprobados: una columna que no parecía ordenada. El
+        # orden es el del ciclo —solicitado, aprobado, completado, caducado,
+        # rechazado— y no el alfabético de la etiqueta, que cambia con el idioma.
+        column, direction = self._requested_sort()
+        if column == "status":
+            queryset = self._order_by_shown_status(queryset, direction)
         return queryset
+
+    @staticmethod
+    def _order_by_shown_status(queryset, direction):
+        from django.db.models import Case, IntegerField, Q, Value, When
+
+        today = timezone.localdate()
+        lapsed = Q(status=FlightPermission.STATUS_EXPIRED) | Q(
+            status=FlightPermission.STATUS_APPROVED, valid_until__lt=today
+        )
+        # `lapsed` va **antes** que `approved`: un `When` ya resuelto no se revisa.
+        rank = Case(
+            When(status=FlightPermission.STATUS_REQUESTED, then=Value(0)),
+            When(lapsed, then=Value(3)),
+            When(status=FlightPermission.STATUS_APPROVED, then=Value(1)),
+            When(status=FlightPermission.STATUS_COMPLETED, then=Value(2)),
+            When(status=FlightPermission.STATUS_DENIED, then=Value(4)),
+            default=Value(5),
+            output_field=IntegerField(),
+        )
+        prefix = "-" if direction == "desc" else ""
+        return queryset.annotate(status_rank=rank).order_by(
+            f"{prefix}status_rank", "internal_folio", "pk"
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
