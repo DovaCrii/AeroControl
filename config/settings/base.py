@@ -387,6 +387,23 @@ SERVICE_WORKER_VERSION = _service_worker_version()
 # dice. El resto de `UX-26` —instalable, manifiesto, el aviso de datos
 # guardados— no depende de esto y sigue funcionando.
 SERVICE_WORKER_ENABLED = config("SERVICE_WORKER_ENABLED", default=False, cast=bool)
+
+# T1.4 paso 2 — auditoría atómica con la mutación, **apagada por omisión**.
+#
+# Apagado: el `AuditEvent` se escribe después de la respuesta y, si falla, el
+# cambio ya se confirmó (fail-open; el fallo queda en el log y en la marca del
+# centro de administración). Encendido: las peticiones que mutan corren en una
+# transacción y la auditoría se escribe **antes de confirmarla**; si no se puede,
+# se deshace el cambio entero y la persona ve un 503 (fail-closed: ninguna
+# mutación sin su entrada, que es lo que pide la trazabilidad).
+#
+# Es lo que intercepta **todas** las mutaciones, y la lección del service worker es
+# que algo así no se despliega encendido. Se enciende con `AUDIT_FAIL_CLOSED=True`
+# en el entorno de `p340`, **tras una semana con la marca `audit_write_failed` en
+# cero** (el centro de administración la muestra) y midiendo antes con
+# `scale_readiness`: en SQLite la transacción retiene al único escritor hasta que
+# termina la vista.
+AUDIT_FAIL_CLOSED = config("AUDIT_FAIL_CLOSED", default=False, cast=bool)
 LOGOUT_REDIRECT_URL = LOGIN_URL
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
