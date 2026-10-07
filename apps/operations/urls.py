@@ -94,6 +94,23 @@ urlpatterns = [
         views.PreflightSignView.as_view(),
         name="preflight-sign",
     ),
+    # LV-238: el chequeo prevuelo **antes** del vuelo. Se empieza desde el permiso
+    # (`pk` del permiso) y después se trabaja por su propio `pk`.
+    path(
+        "permissions/<uuid:pk>/preflight/new/",
+        views.PreflightStartView.as_view(),
+        name="preflight-start",
+    ),
+    path(
+        "preflight/<uuid:pk>/",
+        views.StandalonePreflightView.as_view(),
+        name="preflight-standalone",
+    ),
+    path(
+        "preflight/<uuid:pk>/sign/",
+        views.StandalonePreflightSignView.as_view(),
+        name="preflight-standalone-sign",
+    ),
     path(
         "records/<uuid:pk>/delete/",
         views.FlightRecordDelete.as_view(),

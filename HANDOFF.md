@@ -12,18 +12,28 @@ la hoja sigue el portal), `LV-279` (números cerrados), `LV-280` (orden por colu
 `LV-282` (color por capa), `LV-283` y `T1.4` paso 1 (el fallo de auditoría se ve en el centro de
 administración).
 
-**Seguimiento — fusionado sin desplegar: `T1.4` paso 2** (la auditoría atómica con cada cambio,
-**APAGADA por omisión**: desplegarla no cambia nada hasta poner `AUDIT_FAIL_CLOSED=True` en
-`/etc/aerocontrol.env`, y eso es **del usuario y sólo tras una semana con «Escrituras del registro de
-auditoría» en verde** en el centro de administración; sin migración), **`LV-288`** (el orden por columna: conserva el orden al
-filtrar, vacíos al final, «Estado» por lo que se ve; **lleva `collectstatic`** por `app.css`),
-**`LV-286`** (la revisión meteorológica del expediente pasa a informativa) **y `LV-287`** (una solicitud de permiso no puede pasar del seguro de sus aeronaves: techo =
-el día anterior al vencimiento más próximo). **Sin migración y sin dependencias; lleva `collectstatic`
-(por `LV-288`) y reinicio** (el `.mo` va versionado, sin `compilemessages`). Se despliega con el resto al
-terminar los bloques. Ojo al desplegar `LV-287`: **permisos solicitados ya guardados que pasen del seguro** no se
-rompen, pero fallarán al editarlos hasta corregir la fecha. **`T1.4` (auditoría atómica) queda para el final, a pedido del usuario.** (Regla desde 2026-10-07: se fusiona bloque tras bloque
-y se despliega **una vez** al final; ver `AGENTS.md` «Despliegue por tandas». Cuando algo quede
-fusionado sin desplegar, va **aquí**, con qué lleva migración y qué lleva estáticos.)
+**Seguimiento — fusionado sin desplegar** (la VM corre `b02d84e`; los comandos justos los escribe
+`.claude/skills/terminar-bloques/scripts/deploy_plan.ps1 -From <hash de la VM>`):
+
+- **`LV-238`** — el chequeo prevuelo se hace y se firma antes de volar. **Lleva MIGRACIÓN
+  `operations/0032`** → respaldo y `migrate`.
+- **`T1.4` paso 2** — la auditoría atómica con cada cambio, **APAGADA por omisión**: desplegarla no
+  cambia nada hasta poner `AUDIT_FAIL_CLOSED=True` en `/etc/aerocontrol.env`, y eso es **del usuario y
+  sólo tras una semana con «Escrituras del registro de auditoría» en verde** en el centro de
+  administración. Sin migración.
+- **`LV-288`** — el orden por columna: conserva el orden al filtrar, vacíos al final, «Estado» por lo
+  que se ve. **Lleva `collectstatic`** por `app.css`.
+- **`LV-286`** — la revisión meteorológica del expediente pasa a informativa.
+- **`LV-287`** — una solicitud de permiso no puede pasar del seguro de sus aeronaves (techo = el día
+  anterior al vencimiento más próximo). Ojo: **permisos solicitados ya guardados que pasen del seguro**
+  no se rompen, pero fallarán al editarlos hasta corregir la fecha.
+- **`LV-289`** (la skill `/terminar-bloques`) y la fila **`LV-231`** corregida (ya estaba hecha): sin
+  efecto en la VM.
+
+**Sin dependencias nuevas**; el `.mo` va versionado, sin `compilemessages`. Se despliega con el resto al
+terminar los bloques. (Regla desde 2026-10-07: se fusiona bloque tras bloque y se despliega **una vez** al
+final; ver `AGENTS.md` «Despliegue por tandas». Cuando algo quede fusionado sin desplegar, va **aquí**, con
+qué lleva migración y qué lleva estáticos.)
 
 **No verificado en producción** (se comprobó con pruebas y en el demo, no en `p340`): el arrastre con el
 ratón real del editor y el clic sobre el selector de color; la hoja de SIGO contra el portal real; el
@@ -31,8 +41,9 @@ rojo/naranja de «Esperando» a ojo. Y `LV-273` sigue sin ejercitarse allí (aú
 reales: ahora, al separar un plan, se crean con modalidad).
 
 **Pendiente — del usuario**
-- **Decisión de `T1.4`**: ¿fail-closed (sin auditoría no se guarda) o fail-open ruidoso? El paso atómico
-  espera esa respuesta; el paso 1 ya está desplegado.
+- **`T1.4` paso 3**: **encender `AUDIT_FAIL_CLOSED=True`** en `/etc/aerocontrol.env` (decidido
+  fail-closed el 2026-10-07; el paso atómico ya está en el código, apagado), **sólo tras una semana
+  con la marca de fallos de auditoría en cero** y midiendo antes con `scale_readiness`.
 - **Correo** (de lado a pedido del usuario): `EMAIL_HOST` y `SITE_BASE_URL`; sin eso ningún aviso sale.
 - **Timers** `letters`, `watchdog` y `verifybak`: el bloque está en `docs/scheduled-operations.md`.
 - **Apagar la regla** «Permisos: renovación vencida de plazo (T-15 · Gerencia)».

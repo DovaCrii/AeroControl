@@ -1608,11 +1608,36 @@ class PreflightCheck(BaseModel):
     diría que se comprobó algo que ese día no estaba en la lista.
     """
 
+    # LV-238: **nullable.** El chequeo prevuelo se hace *antes* de volar y la bitácora
+    # se escribe al volver, a veces al día siguiente: con el vuelo como único dueño, la
+    # firma de un chequeo «previo» quedaba con fecha **posterior al despegue**, que como
+    # evidencia ante una fiscalización es justo lo que `UX-29` decía venir a resolver.
+    # Ahora un chequeo puede nacer ligado a un permiso y una aeronave y **adoptar** su
+    # vuelo cuando éste se registre (`adopt_for`); la firma conserva su hora real.
     flight_record = models.OneToOneField(
         FlightRecord,
         on_delete=models.CASCADE,
         related_name="preflight_check",
+        null=True,
+        blank=True,
     )
+    permission = models.ForeignKey(
+        "operations.FlightPermission",
+        on_delete=models.PROTECT,
+        related_name="preflight_checks",
+        null=True,
+        blank=True,
+    )
+    aircraft = models.ForeignKey(
+        "registry.Aircraft",
+        on_delete=models.PROTECT,
+        related_name="preflight_checks",
+        null=True,
+        blank=True,
+    )
+    # El día del vuelo previsto: es lo que empareja el chequeo con su vuelo cuando éste
+    # se cargue (misma aeronave, mismo permiso, mismo día).
+    planned_date = models.DateField(null=True, blank=True)
     checklist = models.ForeignKey(
         PreflightChecklist, on_delete=models.PROTECT, related_name="checks"
     )
@@ -1630,13 +1655,81 @@ class PreflightCheck(BaseModel):
     class Meta:
         verbose_name = _("preflight check")
         verbose_name_plural = _("preflight checks")
+        constraints = [
+            # LV-238: un chequeo siempre pertenece a algo — a su vuelo, o al permiso y
+            # la aeronave para los que se hizo. Sin esto, la nulabilidad de
+            # `flight_record` dejaría nacer chequeos huérfanos que nadie encuentra.
+            models.CheckConstraint(
+                condition=models.Q(flight_record__isnull=False)
+                | models.Q(permission__isnull=False, aircraft__isnull=False),
+                name="ops_preflight_check_has_an_owner",
+            ),
+        ]
 
     def __str__(self):
-        return f"{self.checklist_name} · {self.flight_record}"
+        if self.flight_record_id:
+            return f"{self.checklist_name} · {self.flight_record}"
+        return f"{self.checklist_name} · {self.aircraft} · {self.planned_date}"
 
     @property
     def is_signed(self):
         return self.signed_at is not None
+
+    @classmethod
+    def open_from_checklist(cls, checklist, **owner):
+        """Crea un chequeo y copia en él los puntos de la lista (en blanco).
+
+        Un solo camino para los dos orígenes —el vuelo ya cargado y el permiso antes
+        de volar—, porque dos copias de «copiar los puntos» son dos maneras de que
+        una lista quede distinta según desde dónde se abrió. Las respuestas nacen
+        «sin contestar» y no «conforme»: lo que se crea es el formulario en blanco,
+        no una declaración.
+        """
+        with transaction.atomic():
+            check = cls.objects.create(
+                checklist=checklist,
+                # Copiado, no leído: renombrar la lista no puede cambiar lo que dice
+                # un chequeo ya firmado.
+                checklist_name=checklist.name,
+                **owner,
+            )
+            PreflightAnswer.objects.bulk_create(
+                PreflightAnswer(
+                    preflight_check=check,
+                    text=item.text,
+                    order=item.order,
+                    is_required=item.is_required,
+                )
+                for item in checklist.items.filter(is_active=True)
+            )
+        return check
+
+    @classmethod
+    def adopt_for(cls, record):
+        """Liga a un vuelo recién cargado el chequeo que se hizo antes para él.
+
+        Empareja por **permiso, aeronave y día**, y sólo toma uno que aún no tenga
+        vuelo; con varios del mismo día (varios vuelos de una jornada) toma el más
+        antiguo, que es el que se hizo primero. Devuelve el chequeo o `None`. No
+        toca la firma: sigue diciendo cuándo se firmó de verdad.
+        """
+        if cls.objects.filter(flight_record=record).exists():
+            return None
+        check = (
+            cls.objects.filter(
+                flight_record__isnull=True,
+                permission_id=record.permission_id,
+                aircraft_id=record.aircraft_id,
+                planned_date=record.actual_date,
+            )
+            .order_by("created_at")
+            .first()
+        )
+        if check is None:
+            return None
+        check.flight_record = record
+        check.save(update_fields=["flight_record", "updated_at"])
+        return check
 
     @property
     def blocking_answers(self):
