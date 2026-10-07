@@ -12,12 +12,16 @@ la hoja sigue el portal), `LV-279` (números cerrados), `LV-280` (orden por colu
 `LV-282` (color por capa), `LV-283` y `T1.4` paso 1 (el fallo de auditoría se ve en el centro de
 administración).
 
-**Seguimiento — fusionado sin desplegar: `LV-288`** (el orden por columna: conserva el orden al
+**Seguimiento — fusionado sin desplegar** (la VM corre `b02d84e`; los comandos justos los escribe
+`.claude/skills/terminar-bloques/scripts/deploy_plan.ps1 -From <hash de la VM>`):
+**`LV-238`** (el chequeo prevuelo se hace y se firma antes de volar; **lleva MIGRACIÓN
+`operations/0032`** → respaldo y `migrate`), **`LV-288`** (el orden por columna: conserva el orden al
 filtrar, vacíos al final, «Estado» por lo que se ve; **lleva `collectstatic`** por `app.css`),
-**`LV-286`** (la revisión meteorológica del expediente pasa a informativa) **y `LV-287`** (una solicitud de permiso no puede pasar del seguro de sus aeronaves: techo =
-el día anterior al vencimiento más próximo). **Sin migración y sin dependencias; lleva `collectstatic`
-(por `LV-288`) y reinicio** (el `.mo` va versionado, sin `compilemessages`). Se despliega con el resto al
-terminar los bloques. Ojo al desplegar `LV-287`: **permisos solicitados ya guardados que pasen del seguro** no se
+**`LV-286`** (la revisión meteorológica del expediente pasa a informativa), **`LV-287`** (una
+solicitud de permiso no puede pasar del seguro de sus aeronaves: techo = el día anterior al
+vencimiento más próximo) y **`LV-289`** (la skill `/terminar-bloques`, sin efecto en la VM). **Sin
+dependencias**; el `.mo` va versionado, sin `compilemessages`. Se despliega con el resto al terminar
+los bloques. Ojo al desplegar `LV-287`: **permisos solicitados ya guardados que pasen del seguro** no se
 rompen, pero fallarán al editarlos hasta corregir la fecha. **`T1.4` (auditoría atómica) queda para el final, a pedido del usuario.** (Regla desde 2026-10-07: se fusiona bloque tras bloque
 y se despliega **una vez** al final; ver `AGENTS.md` «Despliegue por tandas». Cuando algo quede
 fusionado sin desplegar, va **aquí**, con qué lleva migración y qué lleva estáticos.)
