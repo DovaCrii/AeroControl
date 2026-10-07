@@ -17,6 +17,7 @@ usa las opciones del modelo, y el de vigencia es el que deja ver lo archivado --
 sin él, archivar no tendría vuelta.{% endcomment %}
 {% block worktable_filters %}
 <form method="get" class="row g-2 mb-3">
+  {% include "generic/_sort_state.html" %}
   {% comment %}LV-149: el buscador cubre ahora `source_document__title`, así que
   el marcador de posición tiene que nombrar el archivo -- si no, buscar por lo
   que la columna muestra parece no estar ofrecido.{% endcomment %}

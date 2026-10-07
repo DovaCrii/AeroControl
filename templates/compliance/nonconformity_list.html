@@ -9,6 +9,7 @@
 {% endblock %}
 {% block worktable_filters %}
 <form method="get" class="row g-2 mb-3">
+  {% include "generic/_sort_state.html" %}
   <div class="col-md-4">{% include "generic/_search_input.html" with search_url=request.path %}</div>
   <div class="col-md-3">
     <select class="form-select" name="status">

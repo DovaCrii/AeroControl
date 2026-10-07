@@ -13,6 +13,7 @@ esta semana bajo las ochenta del año pasado -- pero un listado que recorta sin
 decirlo es peor que uno largo.{% endcomment %}
 {% block worktable_filters %}
 <form method="get" class="row g-2 mb-3">
+  {% include "generic/_sort_state.html" %}
   <div class="col-md-4">{% include "generic/_search_input.html" with search_url=request.path %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
   <div class="col-md-3">
     <select class="form-select" name="resource_kind">

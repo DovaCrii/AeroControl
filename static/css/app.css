@@ -3171,10 +3171,14 @@ main h1[class],
  * La marca de orden va **siempre**, incluso sin ordenar (con la flecha doble),
  * porque es lo que dice que la columna se puede ordenar. Dibujarla sólo al
  * ordenar convierte la función en algo que hay que descubrir por accidente. */
+/* LV-288: `inline-flex` y no `flex` con `space-between`. La flecha quedaba pegada al
+   borde derecho de la celda, a un ancho de columna del rótulo, y en una fila de
+   encabezados se leía como la flecha de la columna de al lado (la captura del
+   usuario: «CENTRO DE COSTO» con su marca junto a «OPERADORES»). Ahora la marca va
+   **al lado del rótulo** y la alinea el `text-align` de la propia celda. */
 .worktable-sort {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--sp-2);
   color: inherit;
   text-decoration: none;
