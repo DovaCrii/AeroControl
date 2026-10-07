@@ -308,12 +308,14 @@ class TestThePermitGivesTheTeam:
 
 @pytest.mark.django_db
 class TestFlightsIsTheEntryPoint:
-    def test_the_list_links_to_each_current_permit(self, permit):
+    def test_the_list_offers_each_current_permit_in_a_dropdown(self, permit):
         html = login_as(*READ).get(reverse("record-list")).content.decode()
-        panel = html.split('id="register-permits"')[1]
+        panel = html.split('id="register-permits"')[1].split("</form>")[0]
 
-        assert _url(permit) in panel
+        assert "<select" in panel
+        assert f'value="{permit.pk}"' in panel
         assert "DGAC-0042" in panel
+        assert "btn-outline-primary" not in panel  # ya no es un muro de botones
 
     def test_an_expired_permit_is_not_offered(self, permit):
         permit.valid_until = TODAY - timedelta(days=1)
@@ -332,3 +334,37 @@ class TestFlightsIsTheEntryPoint:
         html = client.get(reverse("record-list")).content.decode()
 
         assert _url(permit) not in html
+
+
+@pytest.mark.django_db
+class TestThePicker:
+    PICK = "permission-operations-pick"
+
+    def test_it_goes_to_the_chosen_permit(self, permit):
+        response = login_as(*READ).get(
+            reverse(self.PICK), {"permission": str(permit.pk)}
+        )
+
+        assert response.status_code == 302
+        assert response.url == _url(permit)
+
+    def test_a_junk_value_goes_back_to_the_list(self):
+        response = login_as(*READ).get(reverse(self.PICK), {"permission": "nope"})
+
+        assert response.url == reverse("record-list")
+
+    def test_without_view_permission_it_is_forbidden(self, permit):
+        response = login_as().get(reverse(self.PICK), {"permission": str(permit.pk)})
+
+        assert response.status_code == 403
+
+    def test_another_tenants_permit_is_a_404(self, permit):
+        from apps.core.models import OperationalTenant
+
+        other = OperationalTenant.objects.create(name="Otra", slug="otra")
+        client = login_as(*READ, member_of=other)
+
+        assert (
+            client.get(reverse(self.PICK), {"permission": str(permit.pk)}).status_code
+            == 404
+        )

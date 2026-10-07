@@ -9607,3 +9607,6 @@ msgstr "Operadores del permiso"
 
 msgid "Aircraft on this permit"
 msgstr "Aeronaves del permiso"
+
+msgid "Open register"
+msgstr "Abrir registro"

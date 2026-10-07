@@ -81,6 +81,11 @@ urlpatterns = [
     ),
     # Flight Records
     path("records/", views.FlightRecordList.as_view(), name="record-list"),
+    path(
+        "records/register/",
+        views.PermissionOperationsPick.as_view(),
+        name="permission-operations-pick",
+    ),
     path("records/new/", views.FlightRecordCreate.as_view(), name="record-create"),
     path(
         "records/<uuid:pk>/", views.FlightRecordDetail.as_view(), name="record-detail"
