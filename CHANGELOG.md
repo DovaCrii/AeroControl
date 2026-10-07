@@ -17,6 +17,11 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Una solicitud de permiso no puede pasar del seguro de sus aeronaves (`LV-287`).** El
+  techo de tres meses cede ante el vencimiento del seguro más próximo: el permiso puede
+  terminar, como máximo, **el día anterior** (seguro hasta el 21 → permiso hasta el 20). Se
+  restringe al guardar con la fecha recomendada, sólo para permisos solicitados; la casilla
+  de cada aeronave muestra su «seguro hasta» y la ficha dice la fecha máxima.
 - **La revisión meteorológica del expediente es informativa (`LV-286`).** Ya no suma un
   «por confirmar» ámbar en la ficha del permiso ni impide «Completo»: sigue en la lista,
   con su atajo para registrarla, marcada como opcional.

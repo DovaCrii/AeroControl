@@ -429,6 +429,25 @@ class FlightPermissionDetail(
             return None
         return read_dgac_folio(permission)
 
+    @staticmethod
+    def _insurance_limit(permission):
+        """LV-287: hasta cuándo puede llegar esta solicitud por el seguro de sus
+        aeronaves, o None. Sólo para permisos solicitados (ver `permit_rules`)."""
+        from .permit_rules import insurance_cutoff
+
+        if permission.status != FlightPermission.STATUS_REQUESTED:
+            return None
+        cutoff = insurance_cutoff(list(permission.aircraft_fleet.all()))
+        if cutoff is None:
+            return None
+        limit, aircraft = cutoff
+        return {
+            "limit": limit.isoformat(),
+            "aircraft": aircraft.registration,
+            "expiry": aircraft.insurance_expiry.isoformat(),
+            "exceeded": bool(permission.valid_until and permission.valid_until > limit),
+        }
+
     def get_context_data(self, **kwargs):
         from apps.compliance.attachments import attached_documents_context
 
@@ -440,6 +459,7 @@ class FlightPermissionDetail(
         # LV-130: con el usuario, para que cada renglón traiga sólo el atajo que
         # esta persona puede ejecutar.
         context["dossier"] = operational_dossier(self.object, self.request.user)
+        context["insurance_limit"] = self._insurance_limit(self.object)
         context["derived_location"] = self._derived_location(self.object)
         # R10.2: los planes que se pueden cruzar con este permiso -- los de su
         # mismo centro de costo que todavía no están vinculados a ninguno.
