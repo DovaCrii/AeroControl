@@ -27,6 +27,11 @@ vio terminar en el hash de `origin/main`.
 
 ## 1. Qué falta
 
+**Atajo:** `pwsh -NoProfile -File .claude/skills/terminar-bloques/scripts/deploy_plan.ps1 -From <hash de
+la VM>` hace lo de abajo (diff, clasificación y bloques) y escribe **sólo los comandos necesarios**; la
+tabla y las reglas que siguen explican **por qué** son esos. Está en la skill `/terminar-bloques`, que
+encadena todo el recorrido (bloques → PR → fusión → esto).
+
 1. `git fetch` y `git log --oneline -1 origin/main` — **el hash que debe quedar en la VM**.
 2. Qué corre hoy la VM: el argumento, la primera entrada de `HANDOFF.md`, o se le pide al usuario
    `git log --oneline -1` desde la VM.

@@ -15,6 +15,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   rojo. «¿Puedo volar?» y «Vuelos» se ocultan del menú de momento (las pantallas siguen
   accesibles por su URL).
 
+### Added
+
+- **Skill `/terminar-bloques` (`LV-289`).** Hace todos los bloques pendientes hasta GitHub (rama,
+  prueba, gate, PR, CI, fusión) y al final lista lo que falta subir a la VM con los comandos
+  justos: sólo los bloques que hacen falta según lo que cambió. Sus scripts viven ahora en el
+  repositorio.
+
 ### Fixed
 
 - **El orden por columna ya no se pierde ni se ve desordenado (`LV-288`).** Filtrar o buscar
