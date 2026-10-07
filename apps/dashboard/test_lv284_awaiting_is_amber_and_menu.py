@@ -101,14 +101,17 @@ class TestTheStyleExists:
 
 
 @pytest.mark.django_db
-class TestTheMenuHidesTwoEntries:
-    def test_the_sidebar_has_neither_link(self, client, admin_user):
+class TestTheMenuHidesOneEntry:
+    def test_the_sidebar_has_no_can_i_fly_link_but_flights_is_back(
+        self, client, admin_user
+    ):
         client.force_login(admin_user)
 
         body = client.get(reverse("dashboard")).content.decode()
 
         assert f'href="{reverse("can-i-fly")}"' not in body
-        assert f'href="{reverse("record-list")}"' not in body
+        # LV-291: «Vuelos» vuelve al menú (el registro de operaciones DGAC vive ahí).
+        assert f'href="{reverse("record-list")}"' in body
 
     def test_the_other_flight_entries_are_still_there(self, client, admin_user):
         client.force_login(admin_user)
