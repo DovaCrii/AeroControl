@@ -492,6 +492,19 @@ class FlightPermissionDetail(
         # esta persona puede ejecutar.
         context["dossier"] = operational_dossier(self.object, self.request.user)
         context["insurance_limit"] = self._insurance_limit(self.object)
+        # LV-238: los chequeos prevuelo de este permiso (con o sin vuelo todavía) y si
+        # quien mira puede empezar uno: sólo en un permiso aprobado —el que autoriza
+        # volar— y con el permiso de registrar un vuelo, el mismo de `UX-29`.
+        context["preflight_checks"] = list(
+            self.object.preflight_checks.filter(is_active=True)
+            .select_related("aircraft", "flight_record")
+            .order_by("-planned_date", "-created_at")[:15]
+        )
+        context["can_start_preflight"] = (
+            self.object.status == FlightPermission.STATUS_APPROVED
+            and self.object.aircraft_fleet.exists()
+            and self.request.user.has_perm("operations.add_flightrecord")
+        )
         context["derived_location"] = self._derived_location(self.object)
         # R10.2: los planes que se pueden cruzar con este permiso -- los de su
         # mismo centro de costo que todavía no están vinculados a ninguno.
@@ -1135,6 +1148,15 @@ class FlightRecordCreate(SaveAndAddAnotherMixin, DutyLimitWarningMixin, OCreate)
     form_class = FlightRecordForm
     template_name = "operations/flightrecord_form.html"
     success_url_name = "record-list"
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        # LV-238: si antes de volar se hizo el chequeo prevuelo de este permiso, esta
+        # aeronave y este día, el vuelo recién cargado lo adopta. Es un no-op cuando no
+        # hay ninguno, que es el caso de siempre.
+        if getattr(self, "object", None) is not None and self.object.pk:
+            PreflightCheck.adopt_for(self.object)
+        return response
 
     def get_initial(self):
         initial = super().get_initial()
@@ -1874,6 +1896,16 @@ class PreflightCheckView(ModelPermissionRequiredMixin, View):
             {
                 "record": record,
                 "check": check,
+                # LV-238: el encabezado y la acción de firmar no se leen del vuelo
+                # dentro de la plantilla, porque un chequeo puede no tener vuelo.
+                "subject": {
+                    "link_url": reverse("record-detail", args=[record.pk]),
+                    "link_label": str(record),
+                    "aircraft": record.aircraft,
+                    "who": record.pilot,
+                    "date": record.actual_date,
+                },
+                "sign_url": reverse("preflight-sign", args=[record.pk]),
                 "answers": check.answers.all() if check else [],
                 # ⚠️ «Sin contestar» **no se ofrece como opción**, y por eso se
                 # filtra acá y no en la plantilla. No es una respuesta: es el
@@ -1926,24 +1958,144 @@ class PreflightCheckView(ModelPermissionRequiredMixin, View):
         checklist = PreflightChecklist.for_aircraft(record.aircraft)
         if checklist is None:
             return None
-        with transaction.atomic():
-            check = PreflightCheck.objects.create(
-                flight_record=record,
-                checklist=checklist,
-                # Copiado, no leído: renombrar la lista no puede cambiar lo que
-                # dice un chequeo ya firmado.
-                checklist_name=checklist.name,
-            )
-            PreflightAnswer.objects.bulk_create(
-                PreflightAnswer(
-                    preflight_check=check,
-                    text=item.text,
-                    order=item.order,
-                    is_required=item.is_required,
+        # LV-238: un solo camino para copiar los puntos (ver `open_from_checklist`).
+        return PreflightCheck.open_from_checklist(checklist, flight_record=record)
+
+
+def _values_without_pending():
+    """Las opciones de respuesta, sin «sin contestar» (no es una respuesta)."""
+    return [
+        (value, label)
+        for value, label in PreflightAnswer.VALUE_CHOICES
+        if value != PreflightAnswer.PENDING
+    ]
+
+
+class PreflightStartView(ModelPermissionRequiredMixin, View):
+    """LV-238 · Empezar un chequeo prevuelo **antes de que exista el vuelo**.
+
+    Pedido del usuario (2026-10-07, al decidir `LV-238`): que se pueda crear y firmar
+    antes de volar. Sale de la ficha del permiso: el chequeo nace ligado a **ese
+    permiso, una aeronave de su flota y el día previsto**, y cuando el vuelo se
+    registre lo adopta (`PreflightCheck.adopt_for`).
+
+    El permiso exigido es el de **registrar un vuelo** (`add_flightrecord`), el
+    mismo criterio de `UX-29`: quien carga la bitácora es quien hace el chequeo, y una
+    llave propia habría dejado a alguien con una mitad del acto.
+    """
+
+    model = FlightRecord
+    permission_action = "add"
+
+    def post(self, request, pk):
+        permission = get_object_or_404(FlightPermission, pk=pk, is_active=True)
+        # La aeronave sale **de la flota del permiso**: un chequeo de una aeronave que
+        # el permiso no cubre no serviría de evidencia de ese permiso.
+        aircraft = get_object_or_404(
+            permission.aircraft_fleet.filter(is_active=True),
+            pk=request.POST.get("aircraft") or None,
+        )
+        try:
+            planned = date.fromisoformat(request.POST.get("planned_date") or "")
+        except ValueError:
+            planned = timezone.localdate()
+        checklist = PreflightChecklist.for_aircraft(aircraft)
+        if checklist is None:
+            messages.error(
+                request,
+                _(
+                    "No preflight checklist is configured for the model %(model)s. "
+                    "Nothing can be recorded until one exists."
                 )
-                for item in checklist.items.filter(is_active=True)
+                % {"model": aircraft.model},
             )
-        return check
+            return redirect("permission-detail", pk=permission.pk)
+        check = PreflightCheck.open_from_checklist(
+            checklist, permission=permission, aircraft=aircraft, planned_date=planned
+        )
+        set_audit_context(request, check, action="preflight_started")
+        return redirect("preflight-standalone", pk=check.pk)
+
+
+class StandalonePreflightView(ModelPermissionRequiredMixin, View):
+    """LV-238 · El chequeo prevuelo que todavía no tiene vuelo: verlo y contestarlo.
+
+    Misma pantalla y mismas reglas que `PreflightCheckView` —firmado es firmado, y
+    «sin contestar» no se ofrece—; cambia sólo de dónde cuelga: el permiso y la
+    aeronave en vez del vuelo. El permiso exigido sigue siendo el del vuelo.
+    """
+
+    model = FlightRecord
+    permission_action = "change"
+
+    @staticmethod
+    def _check(pk):
+        return get_object_or_404(
+            PreflightCheck.objects.select_related(
+                "permission", "aircraft", "signed_by"
+            ).filter(is_active=True),
+            pk=pk,
+        )
+
+    def get(self, request, pk):
+        check = self._check(pk)
+        return render(
+            request,
+            "operations/preflight_check.html",
+            {
+                "record": check.flight_record,
+                "check": check,
+                "answers": check.answers.all(),
+                "values": _values_without_pending(),
+                "subject": _preflight_subject(check),
+                "sign_url": reverse("preflight-standalone-sign", args=[check.pk]),
+            },
+        )
+
+    def post(self, request, pk):
+        check = self._check(pk)
+        if check.is_signed:
+            messages.error(request, _("This preflight check is already signed."))
+            return redirect("preflight-standalone", pk=check.pk)
+        allowed = {value for value, _label in PreflightAnswer.VALUE_CHOICES}
+        for answer in check.answers.all():
+            value = request.POST.get(f"value-{answer.pk}")
+            if value in allowed:
+                answer.value = value
+            answer.comment = request.POST.get(f"comment-{answer.pk}", "").strip()
+            answer.save(update_fields=["value", "comment", "updated_at"])
+        set_audit_context(request, check, action="preflight_answered")
+        messages.success(request, _("Saved successfully."))
+        return redirect("preflight-standalone", pk=check.pk)
+
+
+class StandalonePreflightSignView(ModelPermissionRequiredMixin, View):
+    """LV-238 · Firmar el chequeo que aún no tiene vuelo (un POST propio, como `UX-29`)."""
+
+    model = FlightRecord
+    permission_action = "change"
+
+    def post(self, request, pk):
+        check = get_object_or_404(PreflightCheck, pk=pk, is_active=True)
+        try:
+            check.sign(request.user)
+        except ValidationError as error:
+            messages.error(request, error.messages[0])
+        else:
+            set_audit_context(request, check, action="preflight_signed")
+            messages.success(request, _("Preflight check signed."))
+        return redirect("preflight-standalone", pk=check.pk)
+
+
+def _preflight_subject(check):
+    """De qué trata un chequeo sin vuelo, para el encabezado de su pantalla."""
+    return {
+        "link_url": reverse("permission-detail", args=[check.permission_id]),
+        "link_label": str(check.permission),
+        "aircraft": check.aircraft,
+        "who": "",
+        "date": check.planned_date,
+    }
 
 
 class PreflightSignView(ModelPermissionRequiredMixin, View):

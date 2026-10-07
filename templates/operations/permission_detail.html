@@ -240,6 +240,45 @@ el `onsubmit` y dice **qué pasa con la ubicación**: se queda en el permiso, as
 que el aviso tiene que decirlo antes y no después.{% endcomment %}
 {% with plans=permission.geo_plans.all %}{% if plans %}<table class="table table-sm mb-0"><thead><tr><th scope="col">{% translate "Title" %}</th><th scope="col">{% translate "Status" %}</th>{% if perms.geo.change_geoplan %}<th scope="col" class="text-end">{% translate "Actions" %}</th>{% endif %}</tr></thead><tbody>{% for plan in plans %}{% if plan.is_active %}<tr><td><a href="{% url 'geo-plan-detail' plan.pk %}">{{ plan.title }}</a></td><td>{{ plan.get_status_display }}</td>{% if perms.geo.change_geoplan %}<td class="text-end">{% translate "Unlink this plan? The location it filled in stays on the permit." as unlink_confirm %}<form method="post" action="{% url 'permission-unlink-plan' permission.pk %}" style="display:inline" onsubmit="return confirm('{{ unlink_confirm|escapejs }}')">{% csrf_token %}<input type="hidden" name="plan" value="{{ plan.pk }}"><button class="btn btn-sm btn-outline-secondary">{% translate "Unlink" %}</button></form></td>{% endif %}</tr>{% endif %}{% endfor %}</tbody></table>{% else %}<p class="text-muted mb-0">{% translate "No geospatial plans linked to this permission." %}</p>{% endif %}{% endwith %}</div>
 {% endif %}
+{% if can_start_preflight or preflight_checks %}
+{% comment %}LV-238: el chequeo prevuelo **antes** del vuelo. Hasta acá sólo se podía abrir
+desde un registro de vuelo ya cargado, y la bitácora se escribe al volver: la firma de un
+chequeo «previo» quedaba con fecha posterior al despegue. Acá se crea y se firma antes,
+ligado a este permiso y a una aeronave de su flota; cuando el vuelo se registre, lo
+adopta (misma aeronave, mismo día).{% endcomment %}
+<div class="card mt-3 p-4" id="preflight-checks">
+  <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+    <h2 class="h5 mb-0">{% translate "Preflight checks" %}</h2>
+    {% if can_start_preflight %}
+    <form method="post" action="{% url 'preflight-start' permission.pk %}" class="d-flex gap-2 align-items-center flex-wrap">
+      {% csrf_token %}
+      <select class="form-select form-select-sm w-auto" name="aircraft" required aria-label="{% translate 'Aircraft' %}">
+        {% for aircraft in permission.aircraft_fleet.all %}<option value="{{ aircraft.pk }}">{{ aircraft.registration }}</option>{% endfor %}
+      </select>
+      <input class="form-control form-control-sm w-auto" type="date" name="planned_date" value="{% now 'Y-m-d' %}" aria-label="{% translate 'Planned flight date' %}">
+      <button class="btn btn-sm btn-primary">+ {% translate "Start before flying" %}</button>
+    </form>
+    {% endif %}
+  </div>
+  {% if preflight_checks %}
+  <table class="table table-sm mb-0">
+    <thead><tr><th scope="col">{% translate "Date" %}</th><th scope="col">{% translate "Aircraft" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Flight" %}</th></tr></thead>
+    <tbody>
+      {% for check in preflight_checks %}
+      <tr>
+        <td><a href="{% url 'preflight-standalone' check.pk %}">{{ check.planned_date|date:"Y-m-d" }}</a></td>
+        <td>{{ check.aircraft.registration }}</td>
+        <td>{% if check.is_signed %}<span class="badge bg-success">{% translate "Signed" %}</span>{% else %}<span class="badge bg-warning text-dark">{% translate "Not signed" %}</span>{% endif %}</td>
+        <td>{% if check.flight_record %}<a href="{% url 'record-detail' check.flight_record_id %}">{{ check.flight_record.actual_date|date:"Y-m-d" }}</a>{% else %}<span class="text-muted">{% translate "Not flown yet" %}</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="text-muted mb-0">{% translate "No preflight checks started for this permission." %}</p>
+  {% endif %}
+</div>
+{% endif %}
 <div class="card mt-3 p-4"><div class="d-flex justify-content-between align-items-center mb-2"><h2 class="h5 mb-0">{% translate "Flight records" %}</h2><a href="{% url 'record-create' %}?permission={{ permission.pk }}" class="btn btn-sm btn-primary">+ {% translate "Add record" %}</a></div>{% if permission.records.exists %}<table class="table table-sm"><thead><tr><th scope="col">{% translate "Date" %}</th><th scope="col">{% translate "Pilot" %}</th><th scope="col">{% translate "Aircraft" %}</th><th scope="col">{% translate "Departure" %}</th><th scope="col">{% translate "Arrival" %}</th></tr></thead><tbody>{% for r in flight_records %}<tr><td><a href="{% url 'record-detail' r.pk %}">{{ r.actual_date|date:"Y-m-d" }}</a></td><td>{{ r.pilot }}</td><td>{{ r.aircraft }}</td><td>{{ r.departure_time|time:"H:i" }}</td><td>{{ r.arrival_time|time:"H:i" }}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="text-muted mb-0">{% translate "No flight records for this permission." %}</p>{% endif %}</div>
 {% endblock %}
 
