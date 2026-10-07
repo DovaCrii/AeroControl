@@ -23,6 +23,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   «Cambio no guardado» (503). Ninguna mutación queda sin su entrada. Apagado (como llega) se
   comporta exactamente igual que antes; se enciende en la VM tras una semana con el aviso de
   fallos de auditoría en cero.
+- **El chequeo prevuelo se puede hacer y firmar antes de volar (`LV-238`).** Hasta ahora
+  sólo se abría desde un registro de vuelo ya cargado, así que la firma de un chequeo
+  «previo» quedaba con fecha posterior al despegue. Ahora se empieza desde la ficha del
+  permiso («Empezar antes de volar»), con una aeronave de su flota y el día previsto; se
+  contesta y se firma en el momento, y cuando el vuelo se registre lo adopta. Migración
+  `operations/0032`.
 - **Skill `/terminar-bloques` (`LV-289`).** Hace todos los bloques pendientes hasta GitHub (rama,
   prueba, gate, PR, CI, fusión) y al final lista lo que falta subir a la VM con los comandos
   justos: sólo los bloques que hacen falta según lo que cambió. Sus scripts viven ahora en el

@@ -9517,3 +9517,27 @@ msgstr "Volver a intentarlo"
 #: templates/core/audit_unavailable.html
 msgid "Go to the start"
 msgstr "Ir al inicio"
+
+#: templates/operations/permission_detail.html
+msgid "Preflight checks"
+msgstr "Chequeos prevuelo"
+
+#: templates/operations/permission_detail.html
+msgid "Planned flight date"
+msgstr "Fecha prevista del vuelo"
+
+#: templates/operations/permission_detail.html
+msgid "Start before flying"
+msgstr "Empezar antes de volar"
+
+#: templates/operations/permission_detail.html
+msgid "Not signed"
+msgstr "Sin firmar"
+
+#: templates/operations/permission_detail.html
+msgid "Not flown yet"
+msgstr "Aún sin vuelo"
+
+#: templates/operations/permission_detail.html
+msgid "No preflight checks started for this permission."
+msgstr "Aún no se empezó ningún chequeo prevuelo para este permiso."
