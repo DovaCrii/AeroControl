@@ -30,15 +30,21 @@ vuelo pertenece a un permiso, así que el primer paso es elegirlo: el permiso tr
 faena, su responsable y su equipo (operadores y aeronaves).{% endcomment %}
 {% block list_intro %}
 {% if register_permits %}
-<div class="border rounded p-3 mb-3" id="register-permits">
-  <div class="fw-semibold mb-2">{% translate "Register operations" %}</div>
-  <p class="small text-body-secondary mb-2">{% translate "Pick the flight permit the operations belong to." %}</p>
-  <div class="d-flex flex-wrap gap-2">
-    {% for p in register_permits %}
-    <a class="btn btn-sm btn-outline-primary" href="{% url 'permission-operations' p.pk %}">{{ p.permission_number|default:p.internal_folio }} · {{ p.cost_center.code }}</a>
-    {% endfor %}
+<form method="get" action="{% url 'permission-operations-pick' %}" class="border rounded p-3 mb-3 d-flex flex-wrap gap-2 align-items-end" id="register-permits">
+  <div class="flex-grow-1" style="min-width:16rem;max-width:36rem">
+    <label for="register-permit-select" class="form-label fw-semibold mb-1">{% translate "Register operations" %}</label>
+    <select id="register-permit-select" name="permission" class="form-select" required>
+      <option value="">{% translate "Pick the flight permit the operations belong to." %}</option>
+      {% regroup register_permits by cost_center as by_centre %}
+      {% for group in by_centre %}
+      <optgroup label="{{ group.grouper }}">
+        {% for p in group.list %}<option value="{{ p.pk }}">{{ p.permission_number|default:p.internal_folio }} · {{ p.valid_from|date:"d/m/Y" }} – {{ p.valid_until|date:"d/m/Y" }}</option>{% endfor %}
+      </optgroup>
+      {% endfor %}
+    </select>
   </div>
-</div>
+  <button type="submit" class="btn btn-primary">{% translate "Open register" %}</button>
+</form>
 {% endif %}
 {% endblock %}
 {% block table_body %}{% include "operations/_record_rows.html" %}{% endblock %}
