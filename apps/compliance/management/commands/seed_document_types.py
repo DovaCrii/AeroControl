@@ -157,6 +157,14 @@ DOCUMENT_TYPES = [
     # LV-30: the per-flight operational records. They do not expire (a record of
     # what happened, not a validity), so requires_expiry=False.
     ("flight-log", "Bitácora de vuelo (REG-015)", False, False, True, OPERATIONAL),
+    # LV-290: el **registro de vuelo `.TXT`** que el portal de la DGAC pide adjuntar
+    # al registrar las operaciones de una solicitud. No es la bitácora de arriba
+    # (el formulario interno REG-015): es el archivo técnico que genera el control
+    # del RPA, y va a la DGAC. Categoría DGAC —es lo que se presenta ante ella— y
+    # `is_operational_record=False`: esa bandera lo contaría en el cierre mensual
+    # como un registro operacional más, y no lo es. No vence (ocurrió).
+    # La migración `compliance/0027` lo crea también donde el sembrado ya corrió.
+    ("flight-log-txt", "Registro de vuelo DGAC (.TXT)", False, False, False, DGAC),
     ("rpa-checklist", "Check list RPA (LVE-003)", False, False, True, OPERATIONAL),
     (
         "drone-inspection",
