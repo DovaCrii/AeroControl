@@ -636,6 +636,7 @@ class FlightRequestForm(AeroModelForm):
             "altitude_m",
             "hour_from",
             "hour_to",
+            "approx_flight_minutes",
             "filed_on",
         ]
         labels = {
@@ -648,6 +649,7 @@ class FlightRequestForm(AeroModelForm):
             "altitude_m": _("Height (m)"),
             "hour_from": _("From (time)"),
             "hour_to": _("To (time)"),
+            "approx_flight_minutes": _("Approximate flight time (minutes)"),
             "filed_on": _("Filed in SIGO on"),
         }
 

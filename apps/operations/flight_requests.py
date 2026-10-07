@@ -86,7 +86,11 @@ def kmz_contents(row):
         if row["radius_m"]:
             brings.append(gettext("Radius (m)"))
     else:
-        brings.append(gettext("Area vertices"))
+        brings.append(
+            gettext("Start and end points")
+            if row["modality"] == "corridor"
+            else gettext("Area vertices")
+        )
         # El centro dibujado es un dato declarado; el calculado es un derivado, y
         # la pantalla debe decir cuál es para que nadie lo tome por el otro.
         brings.append(
@@ -98,7 +102,11 @@ def kmz_contents(row):
         brings.append(gettext("Nearest aerodrome (AMC)"))
     if row["comuna"]:
         brings.append(gettext("Commune"))
-    missing = [gettext("Height (m)"), gettext("Schedule")]
+    missing = [
+        gettext("Height (m)"),
+        gettext("Schedule"),
+        gettext("Approximate flight time (minutes)"),
+    ]
     return brings, missing
 
 
@@ -121,6 +129,12 @@ def vertex_rows(vertices):
                 "lon_readable": format_dms(lon, "lon"),
             }
         )
+        # Los dos ejes como pares (rótulo, casillas), para que la ficha de la
+        # solicitud los dibuje sin repetir el bloque dos veces.
+        rows[-1]["axes"] = [
+            (gettext("Latitude"), rows[-1]["dms_lat"]),
+            (gettext("Longitude"), rows[-1]["dms_lon"]),
+        ]
     return rows
 
 
@@ -300,6 +314,11 @@ def sigo_sheet(request):
         "lon_readable": format_dms(lon, "lon"),
         "radius_m": request.radius_m,
         "altitude_m": request.altitude_m,
+        # El portal deja elegir metros o pies: se ofrecen los dos, ya cerrados.
+        "altitude_ft": (
+            whole(request.altitude_m * 3.28084) if request.altitude_m else None
+        ),
+        "approx_flight_minutes": request.approx_flight_minutes,
         "hour_from": request.hour_from,
         "hour_to": request.hour_to,
     }

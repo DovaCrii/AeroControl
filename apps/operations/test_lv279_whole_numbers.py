@@ -41,6 +41,7 @@ class _Request:
 
     area_modality = "center_point"
     vertices = []
+    approx_flight_minutes = 0
 
     def get_request_type_display(self):
         return "Punto centro"

@@ -1265,6 +1265,10 @@ SECTION_WARNINGS = {
         "Duplicate centre: another section has these same coordinates. "
         "Check the source table before filing."
     ),
+    "corridor_simplified": gettext_lazy(
+        "Corridor simplified: SIGO takes only a start and an end point, so the "
+        "points in between are not declared."
+    ),
 }
 
 
