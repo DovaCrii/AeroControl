@@ -10,6 +10,9 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **«Vuelos»: los permisos van en una lista desplegable (`LV-293`).** El muro de botones no escalaba;
+  ahora es un selector agrupado por faena que abre el registro de operaciones del permiso elegido.
+
 - **Registro de operaciones: botón en la cabecera, entrada principal del menú y equipo del permiso (`LV-292`).**
   El botón se ve junto al título del permiso; «Vuelos» abre una lista que enlaza a cada permiso vigente
   y la pantalla del permiso muestra su responsable y su equipo (operadores y aeronaves).
