@@ -79,7 +79,7 @@ class TestRequestsKeepTheirModality:
         assert by_title["Cuad"].area_modality == "quadrilateral"
         assert len(by_title["Cuad"].vertices) == 4
         assert by_title["Corr"].area_modality == "corridor"
-        assert len(by_title["Corr"].vertices) == 3
+        assert len(by_title["Corr"].vertices) == 2  # inicio y término
 
     def test_only_the_circle_has_a_radius(self, plan):  # noqa: F811
         _publish(plan, _mixed_document())
@@ -151,7 +151,6 @@ class TestTheModelGuardsTheModality:
             ("triangle", [[0, 0], [1, 0], [0, 1]]),
             ("quadrilateral", [[0, 0], [1, 0], [1, 1], [0, 1]]),
             ("corridor", [[0, 0], [1, 1]]),
-            ("corridor", [[0, 0], [1, 1], [2, 0], [3, 3]]),
         ],
     )
     def test_the_right_number_of_vertices_is_valid(self, centre, modality, vertices):
@@ -165,6 +164,7 @@ class TestTheModelGuardsTheModality:
             ("triangle", [[0, 0], [1, 0], [0, 1], [1, 1]]),
             ("quadrilateral", [[0, 0], [1, 0], [0, 1]]),
             ("corridor", [[0, 0]]),
+            ("corridor", [[0, 0], [1, 1], [2, 0]]),
             ("corridor", []),
         ],
     )
@@ -230,8 +230,10 @@ class TestTheSheetsShowTheModality:
 
         body = client.get(reverse("geo-plan-detail", args=[plan.pk])).content.decode()
 
-        assert "Vértices del área" in body
-        assert "sentido horario" in body
+        assert "Vértice 1" in body
+        assert "Vértice 2" in body
+        assert "Vértice 3" in body
+        assert "Vértice 4" not in body
         assert "Triangular" in body
         # La casilla «Radio (m)» es de la modalidad Punto Centro.
         assert 'sigo-field-label">Radio (m)' not in body
@@ -244,7 +246,7 @@ class TestTheSheetsShowTheModality:
         body = client.get(reverse("geo-plan-detail", args=[plan.pk])).content.decode()
 
         assert 'sigo-field-label">Radio (m)' in body
-        assert "Vértices del área" not in body
+        assert "Vértice 1" not in body
 
     def test_the_request_page_shows_modality_and_vertices(self, plan, client):  # noqa: F811
         request = self._triangle_request(plan)
@@ -255,8 +257,8 @@ class TestTheSheetsShowTheModality:
 
         assert "Modalidad del área" in body
         assert "Triangular" in body
-        assert "Vértices del área" in body
-        assert "1. " in body and "3. " in body
+        assert "Vértice 1" in body and "Vértice 3" in body
+        assert "Tiempo aproximado de vuelo (minutos)" in body
 
 
 @pytest.mark.django_db
@@ -288,7 +290,11 @@ class TestTheKmzPreview:
         assert "Radio (m)" in rows["Circulo"]["brings"]
         assert "Radio (m)" not in rows["Tri"]["brings"]
         for row in rows.values():
-            assert row["missing"] == ["Altura (m)", "Horario"]
+            assert row["missing"] == [
+                "Altura (m)",
+                "Horario",
+                "Tiempo aproximado de vuelo (minutos)",
+            ]
 
     def test_a_calculated_centre_is_told_apart_from_a_drawn_one(self, preview):
         rows = {r["section"].name: r for r in preview.context["sections"]}
