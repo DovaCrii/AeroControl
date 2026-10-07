@@ -9488,6 +9488,36 @@ msgstr ""
 "Seguro de %(aircraft)s hasta el %(expiry)s: esta solicitud puede terminar el "
 "%(limit)s como máximo."
 
+#: templates/core/audit_unavailable.html
+msgid "Change not saved"
+msgstr "Cambio no guardado"
+
+#: templates/core/audit_unavailable.html
+msgid ""
+"The audit log could not be written, so this change was not saved. Nothing was "
+"modified."
+msgstr ""
+"No se pudo escribir el registro de auditoría, así que este cambio no se "
+"guardó. No se modificó nada."
+
+#: templates/core/audit_unavailable.html
+msgid ""
+"This is a protection, not an error in your data: the system does not save "
+"changes it cannot record. Try again in a moment; if it keeps happening, tell "
+"an administrator."
+msgstr ""
+"Es una protección y no un error de sus datos: el sistema no guarda cambios "
+"que no puede registrar. Vuelva a intentarlo en un momento; si sigue "
+"ocurriendo, avise a un administrador."
+
+#: templates/core/audit_unavailable.html
+msgid "Try again"
+msgstr "Volver a intentarlo"
+
+#: templates/core/audit_unavailable.html
+msgid "Go to the start"
+msgstr "Ir al inicio"
+
 #: templates/operations/permission_detail.html
 msgid "Preflight checks"
 msgstr "Chequeos prevuelo"

@@ -1,0 +1,33 @@
+{% load i18n static %}
+{% comment %}T1.4 paso 2: la pantalla de «el cambio no se guardó porque no se pudo auditar».
+
+**Sin `base.html` y sin `request` a propósito**, por la razón de `csrf_failure` (`LV-215`):
+una página de error tiene que dibujarse cuando algo ya falló, y la plantilla base cuenta
+con el menú, los permisos y el contador de alertas — todo consultas a la base, que es lo
+que acá puede estar fallando.
+
+Dice **qué pasó, que no se perdió nada y qué hacer**. Es una protección y no un error de
+los datos de la persona: el sistema prefiere no guardar un cambio que no puede registrar.
+Cadenas de una línea con `translate` y no `blocktranslate`, por lo mismo que la pantalla
+de CSRF: el `msgid` de un bloque multilínea depende del sangrado.{% endcomment %}
+<!doctype html>
+<html lang="{{ LANGUAGE_CODE|default:'es' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% translate "Change not saved" %} — AeroControl</title>
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body class="d-flex align-items-center justify-content-center" style="min-height:100vh">
+  <main class="card p-4 p-md-5" style="max-width:34rem">
+    <h1 class="h4 mb-3">{% translate "Change not saved" %}</h1>
+    <p class="mb-2">{% translate "The audit log could not be written, so this change was not saved. Nothing was modified." %}</p>
+    <p class="text-body-secondary mb-4">{% translate "This is a protection, not an error in your data: the system does not save changes it cannot record. Try again in a moment; if it keeps happening, tell an administrator." %}</p>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-primary" href="{{ path }}">{% translate "Try again" %}</a>
+      <a class="btn btn-outline-secondary" href="/">{% translate "Go to the start" %}</a>
+    </div>
+  </main>
+</body>
+</html>
