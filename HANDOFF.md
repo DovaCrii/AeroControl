@@ -1,44 +1,34 @@
 # HANDOFF — AeroControl
 
-## ✅ 2026-10-07 — modalidades SIGO, orden por columna, colores, auditoría visible, **desplegados** (`b02d84e`)
+## ✅ 2026-10-07 — modalidades SIGO, orden por columna, colores, prevuelo, auditoría, **desplegados** (`186dffb`)
 
-`p340` corre **`b02d84e`**, desplegado el 2026-10-07 por tandas (`97e2f35` → `120f5c8` → `ea480af` →
-`b02d84e`; cada una con `git pull`, reinicio y `git log` = hash de `main`). Dos migraciones, cada una con
-respaldo `verify_backup` = *restorable* antes: `operations/0030` (`area_modality`, `vertices`) y
-`operations/0031` (`approx_flight_minutes`). Entró: `LV-277` (el centro sigue a la circunferencia y el
-arrastre vuelve a guardarse), `LV-278` bloques A y B (Punto Centro, Corredor, Triangular, Cuadricular;
-la hoja sigue el portal), `LV-279` (números cerrados), `LV-280` (orden por columna, 20 listas),
-`LV-281` y `LV-284` (panel: «Esperando» en naranja; menú sin «¿Puedo volar?» ni «Vuelos»),
-`LV-282` (color por capa), `LV-283` y `T1.4` paso 1 (el fallo de auditoría se ve en el centro de
-administración).
+`p340` corre **`186dffb`**, desplegado el 2026-10-07 por tandas (`97e2f35` → `120f5c8` → `ea480af` →
+`b02d84e` → `23e7b48` → `186dffb`; cada una con `git pull`, reinicio y `git log` = hash de `main`, leído
+de la salida pegada). Tres migraciones, cada una con respaldo `verify_backup` = *restorable* antes:
+`operations/0030` (`area_modality`, `vertices`), `operations/0031` (`approx_flight_minutes`) y
+`operations/0032` (el chequeo prevuelo sin vuelo). Entró: `LV-277` (el centro sigue a la circunferencia y
+el arrastre vuelve a guardarse), `LV-278` bloques A y B (Punto Centro, Corredor, Triangular,
+Cuadricular; la hoja sigue el portal), `LV-279` (números cerrados), `LV-280` (orden por columna),
+`LV-281` y `LV-284` (panel: «Esperando» en naranja; menú sin «¿Puedo volar?» ni «Vuelos»), `LV-282`
+(color por capa), `LV-283`, `LV-286` (meteorológica informativa), `LV-287` (el permiso no pasa del
+seguro), `LV-288` (el orden se conserva al filtrar, vacíos al final, «Estado» por lo que se ve),
+`LV-238` (el chequeo prevuelo antes de volar), `T1.4` pasos 1 y 2 (el fallo de auditoría se ve, y la
+auditoría atómica **apagada por omisión**) y `LV-289` (la skill `/terminar-bloques`).
 
-**Seguimiento — fusionado sin desplegar** (la VM corre `b02d84e`; los comandos justos los escribe
-`.claude/skills/terminar-bloques/scripts/deploy_plan.ps1 -From <hash de la VM>`):
+**Seguimiento — fusionado sin desplegar: nada.** (Regla desde 2026-10-07: se fusiona bloque tras bloque y
+se despliega **una vez** al final; ver `AGENTS.md` «Despliegue por tandas». Cuando algo quede fusionado
+sin desplegar, va **aquí**, con qué lleva migración y qué lleva estáticos; los comandos justos los escribe
+`.claude/skills/terminar-bloques/scripts/deploy_plan.ps1 -From <hash de la VM>`.)
 
-- **`LV-238`** — el chequeo prevuelo se hace y se firma antes de volar. **Lleva MIGRACIÓN
-  `operations/0032`** → respaldo y `migrate`.
-- **`T1.4` paso 2** — la auditoría atómica con cada cambio, **APAGADA por omisión**: desplegarla no
-  cambia nada hasta poner `AUDIT_FAIL_CLOSED=True` en `/etc/aerocontrol.env`, y eso es **del usuario y
-  sólo tras una semana con «Escrituras del registro de auditoría» en verde** en el centro de
-  administración. Sin migración.
-- **`LV-288`** — el orden por columna: conserva el orden al filtrar, vacíos al final, «Estado» por lo
-  que se ve. **Lleva `collectstatic`** por `app.css`.
-- **`LV-286`** — la revisión meteorológica del expediente pasa a informativa.
-- **`LV-287`** — una solicitud de permiso no puede pasar del seguro de sus aeronaves (techo = el día
-  anterior al vencimiento más próximo). Ojo: **permisos solicitados ya guardados que pasen del seguro**
-  no se rompen, pero fallarán al editarlos hasta corregir la fecha.
-- **`LV-289`** (la skill `/terminar-bloques`) y la fila **`LV-231`** corregida (ya estaba hecha): sin
-  efecto en la VM.
-
-**Sin dependencias nuevas**; el `.mo` va versionado, sin `compilemessages`. Se despliega con el resto al
-terminar los bloques. (Regla desde 2026-10-07: se fusiona bloque tras bloque y se despliega **una vez** al
-final; ver `AGENTS.md` «Despliegue por tandas». Cuando algo quede fusionado sin desplegar, va **aquí**, con
-qué lleva migración y qué lleva estáticos.)
+⚠️ **Ojo con `LV-287`:** los permisos solicitados ya guardados que pasen del seguro de sus aeronaves no se
+rompen, pero fallarán al editarlos hasta corregir la fecha.
 
 **No verificado en producción** (se comprobó con pruebas y en el demo, no en `p340`): el arrastre con el
 ratón real del editor y el clic sobre el selector de color; la hoja de SIGO contra el portal real; el
-rojo/naranja de «Esperando» a ojo. Y `LV-273` sigue sin ejercitarse allí (aún no hay solicitudes de vuelo
-reales: ahora, al separar un plan, se crean con modalidad).
+rojo/naranja de «Esperando» a ojo; el chequeo prevuelo antes del vuelo (pantallas y adopción) y la
+pantalla «Cambio no guardado», que sólo aparece con `AUDIT_FAIL_CLOSED` encendido. Y `LV-273` sigue sin
+ejercitarse allí (aún no hay solicitudes de vuelo reales: ahora, al separar un plan, se crean con
+modalidad).
 
 **Pendiente — del usuario**
 - **`T1.4` paso 3**: **encender `AUDIT_FAIL_CLOSED=True`** en `/etc/aerocontrol.env` (decidido
