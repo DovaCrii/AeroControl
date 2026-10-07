@@ -276,7 +276,8 @@ def test_document_form_flags_the_empty_document_type_catalog():
     seemingly broken picker with no options."""
     from apps.compliance.forms import DocumentForm
 
-    assert not DocumentType.objects.filter(is_active=True).exists()
+    # LV-290: la migración compliance/0027 siembra un tipo; el catálogo vacío se arma acá.
+    DocumentType.objects.all().delete()
     form = DocumentForm()
     help_text = str(form.fields["doc_type"].help_text)
     assert (
@@ -299,7 +300,8 @@ def test_seed_document_types_creates_catalog_including_one_insurance_type():
     # dirección contraria a su propia documentación. Al fusionarlos el catálogo
     # recupera su tamaño, porque nunca hubo un papel nuevo — sólo un nombre que
     # engañaba.
-    assert DocumentType.objects.count() == 19
+    # LV-290: **20**, no 19: suma `flight-log-txt` (el registro de vuelo .TXT de la DGAC).
+    assert DocumentType.objects.count() == 20
     # LV-117: sigue siendo **uno** aunque ahora existan dos tipos que hablan del
     # seguro. La resolución de la JAC no lleva la bandera: dos tipos marcados
     # harían competir dos documentos por la columna de la lista de aeronaves.
@@ -342,7 +344,8 @@ def test_seed_document_types_creates_catalog_including_one_insurance_type():
 
     # Idempotent: a second run does not duplicate or touch existing rows.
     call_command("seed_document_types")
-    assert DocumentType.objects.count() == 19
+    # LV-290: **20**, no 19: suma `flight-log-txt` (el registro de vuelo .TXT de la DGAC).
+    assert DocumentType.objects.count() == 20
 
 
 @pytest.mark.django_db

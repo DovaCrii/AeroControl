@@ -58,7 +58,16 @@ ALLOWED_UPLOAD_SIGNATURES = {
     "xlsx": (b"PK\x03\x04",),
     "kmz": (b"PK\x03\x04",),
     "kml": (b"<?xml", b"<kml", b"\xef\xbb\xbf<?xml", b"\xef\xbb\xbf<kml"),
+    # LV-290: el «Registro de vuelo» que el portal de la DGAC pide adjuntar es un
+    # `.TXT` (la bitácora técnica que escribe el control del RPA). Un texto plano no
+    # tiene firma que comprobar, así que va con la tupla vacía y `_signature_matches`
+    # lo trata aparte: lo que se exige es que **sea texto**, no que empiece de cierta
+    # manera.
+    "txt": (),
 }
+
+# Extensiones de texto plano: sin «magic bytes», se valida por contenido.
+TEXT_EXTENSIONS = frozenset({"txt"})
 
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 
@@ -97,6 +106,15 @@ def _signature_matches(uploaded, extension):
     signatures = ALLOWED_UPLOAD_SIGNATURES[extension]
     current_position = uploaded.tell()
     uploaded.seek(0)
+    if extension in TEXT_EXTENSIONS:
+        # LV-290: un `.txt` no empieza de ninguna manera en particular, pero un
+        # ejecutable o un binario renombrado a `.txt` sí trae bytes nulos en sus
+        # primeros kilobytes y un texto no. Es la misma defensa que las firmas
+        # —que un archivo renombrado no pase por documento— adaptada a lo que un
+        # texto sí permite comprobar.
+        sample = uploaded.read(8192)
+        uploaded.seek(current_position)
+        return b"\x00" not in sample
     header = uploaded.read(16)
     uploaded.seek(current_position)
     return any(header.startswith(signature) for signature in signatures)

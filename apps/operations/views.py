@@ -14,7 +14,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.views import View
 from django.views.generic import (
     CreateView,
@@ -23,6 +23,7 @@ from django.views.generic import (
     TemplateView,
     UpdateView,
 )
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.text import capfirst, slugify
 
 from apps.core.audit import set_audit_context
@@ -1103,6 +1104,32 @@ class FlightRecordList(OList):
         return super().get_queryset().select_related("permission", "pilot", "aircraft")
 
 
+def warn_if_over_duty_limit(request, record):
+    """R7.5: avisa si el piloto de `record` pasó el límite diario de vuelo.
+
+    Función y no método del mixin porque lo usan dos pantallas —el alta de vuelo de
+    siempre y el «Registro de operaciones» de `LV-290`— y dos copias de un aviso de
+    fatiga son dos maneras de que una deje de avisar.
+    """
+    if not (record.pilot_id and record.actual_date):
+        return
+    total = duty_time_for(record.pilot, record.actual_date)
+    if total > DAILY_FLIGHT_LIMIT:
+        messages.warning(
+            request,
+            _(
+                "%(pilot)s now has %(total)s logged on %(date)s, over the "
+                "%(limit)s daily flight limit."
+            )
+            % {
+                "pilot": record.pilot,
+                "total": format_duration(total),
+                "date": record.actual_date.isoformat(),
+                "limit": format_duration(DAILY_FLIGHT_LIMIT),
+            },
+        )
+
+
 class DutyLimitWarningMixin:
     """R7.5: warn when a pilot's logged flight time for a day passes the limit.
 
@@ -1115,23 +1142,7 @@ class DutyLimitWarningMixin:
 
     def form_valid(self, response_or_form):
         response = super().form_valid(response_or_form)
-        record = self.object
-        if record.pilot_id and record.actual_date:
-            total = duty_time_for(record.pilot, record.actual_date)
-            if total > DAILY_FLIGHT_LIMIT:
-                messages.warning(
-                    self.request,
-                    _(
-                        "%(pilot)s now has %(total)s logged on %(date)s, over the "
-                        "%(limit)s daily flight limit."
-                    )
-                    % {
-                        "pilot": record.pilot,
-                        "total": format_duration(total),
-                        "date": record.actual_date.isoformat(),
-                        "limit": format_duration(DAILY_FLIGHT_LIMIT),
-                    },
-                )
+        warn_if_over_duty_limit(self.request, self.object)
         return response
 
 
@@ -1167,6 +1178,125 @@ class FlightRecordCreate(SaveAndAddAnotherMixin, DutyLimitWarningMixin, OCreate)
         return initial
 
 
+class PermissionOperations(
+    TenantScopedQuerysetMixin, ModelViewPermissionRequiredMixin, DetailView
+):
+    """LV-290 · «Registro de operaciones»: la pantalla de la DGAC, en AeroControl.
+
+    Pedido del usuario (2026-10-07, con la captura del portal): *«así se registran los
+    vuelos ahora en la DGAC… sería importante sumar el mismo formato igual a
+    AeroControl»*. El portal muestra, por solicitud: quién y para cuándo (solicitud,
+    período autorizado, empresa), un formulario de una línea —fecha, hora de inicio y
+    de fin, operador y aeronave por **número de serie**—, la tabla de lo registrado y
+    el adjunto del registro de vuelo `.TXT`. Es lo que se copia al portal, así que la
+    pantalla propia tiene la misma forma: se registra acá y se transcribe, o se
+    contrasta, allá.
+
+    **No hay modelo nuevo.** Una operación del portal es un `FlightRecord`: la misma
+    fecha, las mismas horas, el mismo operador y la misma aeronave. El alta usa
+    `FlightRecordForm`, o sea **las mismas reglas** que el alta de vuelo de siempre
+    —operador y aeronave del padrón del permiso, fecha dentro de la vigencia, llegada
+    posterior a la salida—, el mismo aviso de jornada y la misma adopción del chequeo
+    prevuelo. Dos pantallas para el mismo hecho con reglas distintas es como una de las
+    dos deja de validar.
+
+    Leer exige poder ver permisos; **registrar** exige además `add_flightrecord`.
+    """
+
+    model = FlightPermission
+    template_name = "operations/permission_operations.html"
+    context_object_name = "permission"
+    tenant_path = "cost_center__tenant_id"
+    FLIGHT_LOG_TYPE = "flight-log-txt"
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .filter(is_active=True)
+            .prefetch_related("operators", "aircraft_fleet")
+        )
+
+    def get_context_data(self, **kwargs):
+        from apps.core.branding import LEGAL_NAME
+
+        from .dossier import _upload_action
+
+        context = super().get_context_data(**kwargs)
+        permission = self.object
+        # El formulario se construye sobre el permiso para que sus selectores ya
+        # ofrezcan sólo su padrón (`FlightRecordForm.__init__`).
+        context.setdefault(
+            "form", FlightRecordForm(initial={"permission": permission.pk})
+        )
+        records = (
+            permission.records.filter(is_active=True)
+            .select_related("pilot", "aircraft")
+            .order_by("actual_date", "departure_time", "created_at")
+        )
+        upload_label, upload_url = _upload_action(
+            permission, self.FLIGHT_LOG_TYPE, self.request.user
+        )
+        context.update(
+            {
+                "company": LEGAL_NAME,
+                "rows": list(enumerate(records, start=1)),
+                "flight_logs": self._flight_logs(permission),
+                "upload_url": upload_url,
+                "can_add": self.request.user.has_perm("operations.add_flightrecord"),
+                "can_archive": self.request.user.has_perm(
+                    "operations.delete_flightrecord"
+                ),
+            }
+        )
+        return context
+
+    def _flight_logs(self, permission):
+        """Los `.TXT` adjuntos a este permiso, con su tamaño (la tabla del portal)."""
+        from django.contrib.contenttypes.models import ContentType
+
+        from apps.compliance.models import Document
+        from apps.compliance.storage import get_document_storage
+
+        documents = Document.objects.filter(
+            content_type=ContentType.objects.get_for_model(FlightPermission),
+            object_id=permission.pk,
+            doc_type__code=self.FLIGHT_LOG_TYPE,
+            is_active=True,
+            is_current_version=True,
+        ).order_by("-created_at")
+        storage = get_document_storage()
+        rows = []
+        for document in documents:
+            try:
+                size = storage.size(document.file_path)
+            except Exception:  # noqa: BLE001 - un archivo ausente se muestra sin tamaño
+                size = None
+            rows.append({"document": document, "size": size})
+        return rows
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if not request.user.has_perm("operations.add_flightrecord"):
+            raise PermissionDenied
+        # El permiso lo fija la URL y no el formulario: nadie puede registrar una
+        # operación contra otro permiso editando un campo.
+        data = request.POST.copy()
+        data["permission"] = str(self.object.pk)
+        form = FlightRecordForm(data)
+        if not form.is_valid():
+            return self.render_to_response(self.get_context_data(form=form))
+        record = form.save()
+        set_audit_context(request, record, action="created")
+        # Igual que el alta de siempre (`FlightRecordCreate`): el vuelo adopta el
+        # chequeo prevuelo que se hizo antes (LV-238) y avisa si el piloto pasó el
+        # límite de jornada (R7.5).
+        PreflightCheck.adopt_for(record)
+        warn_if_over_duty_limit(request, record)
+        messages.success(request, _("Operation registered."))
+        return redirect("permission-operations", pk=self.object.pk)
+
+
 class FlightRecordDetail(
     TenantScopedQuerysetMixin, ModelViewPermissionRequiredMixin, DetailView
 ):
@@ -1195,6 +1325,13 @@ class FlightRecordDelete(ModelPermissionRequiredMixin, DetailView):
         record.save(update_fields=["is_active", "updated_at"])
         set_audit_context(request, record, action="archived")
         messages.success(request, _("Flight record archived."))
+        # LV-290: la pantalla de operaciones de un permiso archiva desde su tabla y
+        # vuelve a ella. Sólo se acepta un destino del propio sitio.
+        target = request.POST.get("next", "")
+        if target and url_has_allowed_host_and_scheme(
+            target, allowed_hosts={request.get_host()}
+        ):
+            return redirect(target)
         return redirect("record-list")
 
 

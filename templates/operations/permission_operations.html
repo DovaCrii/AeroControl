@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load aero_tags i18n crispy_forms_filters %}
+{% block title %}{% translate "Operations register" %} - AeroControl{% endblock %}
+{% block content %}
+<div class="card p-4">
+  {% translate "Operations register" as page_title %}
+  <div class="page-header">
+    {% include "generic/_page_header.html" %}
+    <a href="{% url 'permission-detail' permission.pk %}" class="btn btn-sm btn-outline-secondary">{% translate "Back to permit" %}</a>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="border rounded p-3 h-100"><div class="small text-muted">{% translate "Request no." %}</div><div class="fw-semibold">{{ permission.permission_number|default:"—" }}</div></div></div>
+    <div class="col-md-4"><div class="border rounded p-3 h-100"><div class="small text-muted">{% translate "Authorized period" %}</div><div class="fw-semibold">{{ permission.valid_from|date:"d/m/Y" }} – {{ permission.valid_until|date:"d/m/Y" }}</div></div></div>
+    <div class="col-md-4"><div class="border rounded p-3 h-100"><div class="small text-muted">{% translate "Company" %}</div><div class="fw-semibold">{{ company }}</div></div></div>
+  </div>
+
+  {% if can_add %}
+  <form method="post" class="border rounded p-3 mb-4" id="operation-form">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {{ form.permission.errors }}
+    <div class="row g-3 align-items-end">
+      <div class="col-md-2">{{ form.actual_date|as_crispy_field }}</div>
+      <div class="col-md-2">{{ form.departure_time|as_crispy_field }}</div>
+      <div class="col-md-2">{{ form.arrival_time|as_crispy_field }}</div>
+      <div class="col-md-3">{{ form.pilot|as_crispy_field }}</div>
+      <div class="col-md-3">{{ form.aircraft|as_crispy_field }}</div>
+    </div>
+    <div class="d-flex gap-2 mt-3">
+      <button type="submit" class="btn btn-primary">{% translate "Register operation" %}</button>
+      <a href="{% url 'permission-operations' permission.pk %}" class="btn btn-outline-secondary">{% translate "Cancel" %}</a>
+    </div>
+  </form>
+  {% endif %}
+
+  <h2 class="h5">{% translate "Registered operations" %}</h2>
+  <div class="table-responsive mb-4">
+    <table class="table table-sm align-middle">
+      <thead><tr>
+        <th scope="col">{% translate "No." %}</th>
+        <th scope="col">{% translate "Date" %}</th>
+        <th scope="col">{% translate "Start time" %}</th>
+        <th scope="col">{% translate "End time" %}</th>
+        <th scope="col">{% translate "Operator" %}</th>
+        <th scope="col">{% translate "Aircraft (serial no.)" %}</th>
+        <th scope="col">{% translate "Actions" %}</th>
+      </tr></thead>
+      <tbody>
+      {% for n, r in rows %}
+        <tr>
+          <td>{{ n }}</td>
+          <td>{{ r.actual_date|date:"d/m/Y" }}</td>
+          <td>{{ r.departure_time|time:"H:i" }}</td>
+          <td>{{ r.arrival_time|time:"H:i" }}</td>
+          <td>{{ r.pilot }}</td>
+          <td>{{ r.aircraft.serial_number|default:r.aircraft }}</td>
+          <td class="d-flex gap-2">
+            <a class="btn btn-sm btn-outline-primary" href="{% url 'record-detail' r.pk %}">{% translate "View" %}</a>
+            {% if can_archive %}
+            <form method="post" action="{% url 'record-delete' r.pk %}" class="d-inline">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{% url 'permission-operations' permission.pk %}">
+              <button type="submit" class="btn btn-sm btn-outline-danger">{% translate "Archive" %}</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="7" class="text-muted">{% translate "No operations registered yet." %}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="h5">{% translate "Attach flight log" %}</h2>
+  <p class="small text-muted mb-2">{% translate "Required format: .TXT" %}</p>
+  {% if upload_url %}<p><a href="{{ upload_url }}" class="btn btn-sm btn-primary">{% translate "Upload .TXT" %}</a></p>{% endif %}
+  <div class="table-responsive">
+    <table class="table table-sm align-middle">
+      <thead><tr>
+        <th scope="col">{% translate "Name" %}</th>
+        <th scope="col">{% translate "Size" %}</th>
+        <th scope="col">{% translate "Actions" %}</th>
+      </tr></thead>
+      <tbody>
+      {% for item in flight_logs %}
+        <tr>
+          <td><a href="{% url 'document-detail' item.document.pk %}">{{ item.document.title }}</a></td>
+          <td>{% if item.size is not None %}{{ item.size|filesizeformat }}{% else %}—{% endif %}</td>
+          <td><a class="btn btn-sm btn-outline-primary" href="{% url 'document-download' item.document.pk %}">{% translate "Download" %}</a></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="3" class="text-muted">{% translate "No flight log attached yet." %}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
