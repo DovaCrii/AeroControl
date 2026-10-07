@@ -17,6 +17,9 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **La revisión meteorológica del expediente es informativa (`LV-286`).** Ya no suma un
+  «por confirmar» ámbar en la ficha del permiso ni impide «Completo»: sigue en la lista,
+  con su atajo para registrarla, marcada como opcional.
 - **El despliegue pasa a ser por tandas (`LV-285`).** Se fusiona bloque tras bloque y se
   despliega una sola vez al terminar, con el seguimiento de lo pendiente en `HANDOFF.md`.
   Regla en `AGENTS.md` y en la skill `/desplegar-p340`, ahora en cuatro bloques cortos.
