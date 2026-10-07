@@ -9595,3 +9595,15 @@ msgstr "Tamaño"
 
 msgid "No flight log attached yet."
 msgstr "Aún no hay registro de vuelo adjunto."
+
+msgid "Register operations"
+msgstr "Registrar operaciones"
+
+msgid "Pick the flight permit the operations belong to."
+msgstr "Elija el permiso de vuelo al que pertenecen las operaciones."
+
+msgid "Operators on this permit"
+msgstr "Operadores del permiso"
+
+msgid "Aircraft on this permit"
+msgstr "Aeronaves del permiso"
