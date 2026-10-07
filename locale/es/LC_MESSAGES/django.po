@@ -9443,3 +9443,11 @@ msgid ""
 msgstr ""
 "Corredor simplificado: SIGO sólo admite un punto de inicio y uno de término, "
 "así que los puntos intermedios no se declaran."
+
+#: templates/operations/permission_detail.html
+msgid "Optional"
+msgstr "Opcional"
+
+#: apps/operations/dossier.py
+msgid "Optional: no review on record"
+msgstr "Opcional: sin revisión registrada"

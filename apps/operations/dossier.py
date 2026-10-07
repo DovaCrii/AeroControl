@@ -53,6 +53,11 @@ from django.utils.translation import gettext_lazy as _
 OK = "ok"
 MISSING = "missing"
 UNKNOWN = "unknown"
+# LV-286: un renglón **informativo**. No falta nada ni hay nada que confirmar: es un
+# dato que la persona puede registrar o no. No entra en ningún contador ni impide
+# que el expediente se lea como completo — un contador que no puede llegar a cero
+# enseña a ignorar el contador (la lección de `LV-194`).
+INFO = "info"
 
 # Los dos documentos DGAC del expediente, por `code` (identidad estable del
 # catálogo, la misma sobre la que `seed_document_types` es idempotente).
@@ -102,6 +107,12 @@ class DossierItem:
     @property
     def is_ok(self):
         return self.status == OK
+
+    @property
+    def counts_toward_complete(self):
+        """Lo que el expediente exige para leerse como completo: en regla, o sólo
+        informativo."""
+        return self.status in (OK, INFO)
 
 
 def _allowed(user, codename):
@@ -389,8 +400,13 @@ def _geo_plan_items(permission, user=None):
         DossierItem(
             "weather",
             _("Weather reviewed and on record"),
-            OK if not without else UNKNOWN,
-            "" if not without else _("No review on record"),
+            # LV-286: **informativo**, no «por confirmar». Pedido del usuario
+            # (2026-10-07, mirando esta ficha): la revisión meteorológica es
+            # opcional, y como `UNKNOWN` ponía un «1 por confirmar» ámbar en todo
+            # permiso con plan hasta que alguien la registrara. Sigue pudiéndose
+            # registrar (el atajo se conserva) y sigue constando cuando existe.
+            OK if not without else INFO,
+            "" if not without else _("Optional: no review on record"),
             without,
             *weather_action,
         ),
@@ -566,5 +582,8 @@ def operational_dossier(permission, user=None):
         # cifra que la persona mira antes de leer el detalle.
         "missing_count": sum(1 for item in items if item.status == MISSING),
         "unknown_count": sum(1 for item in items if item.status == UNKNOWN),
-        "is_complete": all(item.is_ok for item in items),
+        # LV-286: los informativos no cuentan en `missing` ni en `unknown`, y no
+        # impiden «Completo». Se cuentan aparte por si alguien los quiere mostrar.
+        "info_count": sum(1 for item in items if item.status == INFO),
+        "is_complete": all(item.counts_toward_complete for item in items),
     }
