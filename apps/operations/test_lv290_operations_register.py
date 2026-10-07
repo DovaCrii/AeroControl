@@ -126,7 +126,8 @@ class TestTheScreen:
             .content.decode()
         )
 
-        assert _url(permit) in html
+        # LV-292: es un botón de la cabecera, no un enlace perdido dentro de una tarjeta.
+        assert f'href="{_url(permit)}" class="btn btn-primary"' in html
 
 
 @pytest.mark.django_db
@@ -273,3 +274,61 @@ class TestTheTextFlightLog:
         upload = SimpleUploadedFile("vuelo.txt", b"MZ\x00\x00binary")
 
         assert _signature_matches(upload, "txt") is False
+
+
+@pytest.mark.django_db
+class TestThePermitGivesTheTeam:
+    """LV-292: el permiso aporta responsable, operadores y aeronaves."""
+
+    def test_the_screen_shows_the_roster_and_the_responsible(
+        self, permit, aircraft, pilot, centre
+    ):
+        centre.responsible = "Jefe de Faena"
+        centre.save()
+
+        html = login_as(*READ).get(_url(permit)).content.decode()
+        team = html.split('id="permit-team"')[1].split("</form>")[0]
+
+        assert "Jefe de Faena" in team
+        assert "Piloto Uno" in team
+        assert "SN-123456" in team
+
+    def test_an_operator_outside_the_permit_is_not_listed_in_the_team(
+        self, permit, centre
+    ):
+        Operator.objects.create(
+            full_name="Ajeno", employee_id="E-9", cost_center=centre
+        )
+
+        html = login_as(*READ).get(_url(permit)).content.decode()
+        team = html.split('id="permit-team"')[1].split("</form>")[0]
+
+        assert "Ajeno" not in team
+
+
+@pytest.mark.django_db
+class TestFlightsIsTheEntryPoint:
+    def test_the_list_links_to_each_current_permit(self, permit):
+        html = login_as(*READ).get(reverse("record-list")).content.decode()
+        panel = html.split('id="register-permits"')[1]
+
+        assert _url(permit) in panel
+        assert "DGAC-0042" in panel
+
+    def test_an_expired_permit_is_not_offered(self, permit):
+        permit.valid_until = TODAY - timedelta(days=1)
+        permit.save()
+
+        html = login_as(*READ).get(reverse("record-list")).content.decode()
+
+        assert "register-permits" not in html
+
+    def test_another_tenants_permit_is_not_offered(self, permit):
+        from apps.core.models import OperationalTenant
+
+        other = OperationalTenant.objects.create(name="Otra", slug="otra")
+        client = login_as(*READ, member_of=other)
+
+        html = client.get(reverse("record-list")).content.decode()
+
+        assert _url(permit) not in html

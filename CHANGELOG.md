@@ -10,6 +10,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Registro de operaciones: botón en la cabecera, entrada principal del menú y equipo del permiso (`LV-292`).**
+  El botón se ve junto al título del permiso; «Vuelos» abre una lista que enlaza a cada permiso vigente
+  y la pantalla del permiso muestra su responsable y su equipo (operadores y aeronaves).
+
 - **«Vuelos» vuelve al menú lateral (`LV-291`).** Es donde vive el registro de vuelos y el acceso
   a la pantalla de operaciones de cada permiso. «¿Puedo volar?» sigue oculto.
 
