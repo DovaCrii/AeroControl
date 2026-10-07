@@ -100,6 +100,7 @@ que va a fallar es peor que no ofrecerlo.{% endcomment %}
         </td>
       </tr>
       <tr><th scope="row">{% translate "Distance to AMC (km)" %}</th><td>{{ sheet.amc_distance_km|default:"—" }}</td></tr>
+      {% if sheet.area_modality == "center_point" %}
       <tr>
         <th scope="row">{% translate "Centre point — latitude" %}</th>
         <td>
@@ -124,24 +125,34 @@ que va a fallar es peor que no ofrecerlo.{% endcomment %}
           <div class="small text-body-secondary">{{ sheet.lon_readable }}</div>
         </td>
       </tr>
-      {% if sheet.vertices %}
-      {% comment %}LV-278: triángulo, cuadrilátero o corredor se declaran por sus
-      vértices (en sentido horario, salvo el corredor, que va en el orden del
-      trazado) y no por un radio.{% endcomment %}
+      <tr><th scope="row">{% translate "Radius (m)" %}</th><td>{{ sheet.radius_m|default:"—" }}</td></tr>
+      {% else %}
+      {% comment %}LV-278 (bloque B, capturas del portal del 2026-10-06): sin Punto
+      Centro el portal pide **Punto Inicio y Punto Término** (corredor) o **Vértice
+      1, 2, 3 (y 4)**, cada uno con Latitud y Longitud en Grados, Minutos y Segundos
+      —tres casillas por eje, sin hemisferio—. En sentido horario. No hay «Radio /
+      Ancho» en estas modalidades.{% endcomment %}
+      {% for vertex in sheet.vertices %}
       <tr>
-        <th scope="row">{% translate "Area vertices" %}</th>
+        <th scope="row">{% if sheet.area_modality == "corridor" %}{% if forloop.first %}{% translate "Start point (corridor)" %}{% else %}{% translate "End point (corridor)" %}{% endif %}{% else %}{% blocktranslate with number=vertex.number %}Vertex {{ number }}{% endblocktranslate %}{% endif %}</th>
         <td>
-          {% for vertex in sheet.vertices %}
-          <div class="font-monospace small">{{ vertex.number }}. {{ vertex.lat_readable }} · {{ vertex.lon_readable }}</div>
+          {% for axis_label, dms in vertex.axes %}
+          <div class="d-flex gap-3 flex-wrap align-items-baseline">
+            <span class="text-body-secondary small">{{ axis_label }} · {{ dms.hemisphere }}</span>
+            <span><span class="text-body-secondary small">{% translate "Degrees" %}</span> <strong>{{ dms.degrees }}</strong></span>
+            <span><span class="text-body-secondary small">{% translate "Minutes" %}</span> <strong>{{ dms.minutes }}</strong></span>
+            <span><span class="text-body-secondary small">{% translate "Seconds" %}</span> <strong>{{ dms.seconds }}</strong></span>
+          </div>
           {% endfor %}
+          <div class="small text-body-secondary font-monospace">{{ vertex.lat_readable }} · {{ vertex.lon_readable }}</div>
         </td>
       </tr>
+      {% endfor %}
+      <tr><th scope="row">{% translate "Centre point" %}</th><td class="small text-body-secondary">{{ sheet.lat_readable }} · {{ sheet.lon_readable }} — {% translate "used to measure the aerodrome" %}</td></tr>
       {% endif %}
-      {% if sheet.area_modality == "center_point" %}
-      <tr><th scope="row">{% translate "Radius (m)" %}</th><td>{{ sheet.radius_m|default:"—" }}</td></tr>
-      {% endif %}
-      <tr><th scope="row">{% translate "Height (m)" %}</th><td>{{ sheet.altitude_m|default:"—" }}</td></tr>
+      <tr><th scope="row">{% translate "Height (m)" %}</th><td>{{ sheet.altitude_m|default:"—" }}{% if sheet.altitude_ft %} <span class="small text-body-secondary">· {{ sheet.altitude_ft }} ft</span>{% endif %}</td></tr>
       <tr><th scope="row">{% translate "Schedule" %}</th><td>{% if sheet.hour_from and sheet.hour_to %}{{ sheet.hour_from|time:"H:i" }} – {{ sheet.hour_to|time:"H:i" }}{% else %}<span class="text-muted">—</span>{% endif %}</td></tr>
+      <tr><th scope="row">{% translate "Approximate flight time (minutes)" %}</th><td>{{ sheet.approx_flight_minutes }}</td></tr>
     </tbody>
   </table>
 </div>

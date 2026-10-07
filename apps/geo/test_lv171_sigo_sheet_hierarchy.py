@@ -89,7 +89,10 @@ def test_latitude_and_longitude_share_one_accent():
     """Son las dos mitades de una coordenada; separarlas por color mentiría."""
     markup = SHEET.read_text(encoding="utf-8")
 
-    assert markup.count("sigo-section-coords") == 4  # dos títulos y dos filas
+    # Dos títulos y dos filas del Punto Centro, más un título y una fila por cada
+    # vértice (LV-278, bloque B): las coordenadas de cualquier modalidad comparten
+    # el acento, que es lo que el test sujeta.
+    assert markup.count("sigo-section-coords") == 6
 
 
 def test_colour_is_never_the_only_carrier():

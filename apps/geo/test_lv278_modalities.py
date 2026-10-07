@@ -21,6 +21,7 @@ from apps.geo.sections import (
     MODALITY_CORRIDOR,
     MODALITY_QUADRILATERAL,
     MODALITY_TRIANGLE,
+    WARNING_CORRIDOR_SIMPLIFIED,
     WARNING_NO_CENTER_POINT,
     WARNING_NOT_A_CIRCLE,
     build_section_document,
@@ -195,26 +196,37 @@ class TestCorridors:
         assert len(sections) == 1
         assert sections[0].modality == MODALITY_CORRIDOR
 
-    def test_the_axis_keeps_the_order_it_was_drawn_in(self):
-        """Es un eje, no un anillo: invertirlo cambiaría el sentido del corredor."""
+    def test_it_is_declared_by_its_start_and_end_points_in_drawing_order(self):
+        """El portal de SIGO pide «Punto Inicio» y «Punto Término» (capturas del
+        2026-10-06) y nada entre ellos. El orden es el del trazado: invertirlo
+        cambiaría el sentido del corredor."""
         (section,) = split_sections(_document(_line("Camino", self.AXIS)))
 
-        assert section.vertices == self.AXIS
+        assert section.vertices == [self.AXIS[0], self.AXIS[-1]]
 
-    def test_the_centre_is_the_midpoint_along_the_axis(self):
-        """A medio camino por **longitud**, no la media de vértices: con vértices
-        desparejos (acá dos en el primer tramo) la media se corre hacia ellos."""
-        axis = [_at(0, 0), _at(100, 0), _at(100, 300)]  # largo total 400 m
+    def test_the_points_in_between_are_dropped_and_the_drawing_says_so(self):
+        """Declarar un tramo recto donde el trazado dobla no puede pasar callado."""
+        (section,) = split_sections(_document(_line("Camino", self.AXIS)))
+
+        assert WARNING_CORRIDOR_SIMPLIFIED in section.warnings
+
+    def test_a_straight_two_point_line_needs_no_warning(self):
+        (section,) = split_sections(_document(_line("Recta", [_at(0, 0), _at(500, 0)])))
+
+        assert section.warnings == []
+
+    def test_the_centre_is_the_midpoint_of_the_declared_segment(self):
+        """Lo que se declara es el segmento inicio-término, y desde su punto medio
+        se mide el aeródromo: lo medido y lo declarado son la misma figura."""
+        axis = [_at(0, 0), _at(100, 0), _at(100, 300)]
 
         (section,) = split_sections(_document(_line("Camino", axis)))
 
         lat, lon = section.center
-        # A 200 m del inicio: 100 m al este y 100 m al norte.
-        expected = _at(100, 100)
+        expected = _at(50, 150)  # entre (0, 0) y (100, 300)
         assert lat == pytest.approx(expected[1], abs=2e-6)
         assert lon == pytest.approx(expected[0], abs=2e-6)
         assert section.radius_m is None
-        assert section.warnings == []
 
     def test_a_point_near_the_midpoint_is_its_centre(self):
         document = _document(_line("Camino", self.AXIS), _point("Centro", 100, 100))

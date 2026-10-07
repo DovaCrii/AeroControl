@@ -1176,12 +1176,14 @@ class FlightRequest(StatusHistoryMixin, StatusFlowMixin, BaseModel):
         (MODALITY_QUADRILATERAL, _("Square grid")),
     ]
     # Cuántos vértices exige cada modalidad: (mínimo, máximo). Punto Centro no
-    # declara vértices; el corredor admite un eje de dos o más.
+    # declara vértices. Es lo que muestra el portal (capturas del 2026-10-06): el
+    # corredor tiene exactamente «Punto Inicio» y «Punto Término», el triángulo
+    # tres vértices y el cuadrilátero cuatro.
     MODALITY_VERTEX_RANGE = {
         MODALITY_CENTER_POINT: (0, 0),
         MODALITY_TRIANGLE: (3, 3),
         MODALITY_QUADRILATERAL: (4, 4),
-        MODALITY_CORRIDOR: (2, None),
+        MODALITY_CORRIDOR: (2, 2),
     }
     area_modality = models.CharField(
         max_length=20,
@@ -1245,6 +1247,12 @@ class FlightRequest(StatusHistoryMixin, StatusFlowMixin, BaseModel):
     )
     hour_from = models.TimeField(null=True, blank=True, verbose_name=_("From (time)"))
     hour_to = models.TimeField(null=True, blank=True, verbose_name=_("To (time)"))
+    # LV-278 (bloque B): «Tiempo aproximado de vuelo (minutos)», la última casilla
+    # del formulario de SIGO, que el portal trae en 0 y que no teníamos dónde
+    # guardar. Lo decide quien vuela: ningún KMZ lo trae.
+    approx_flight_minutes = models.PositiveIntegerField(
+        default=0, verbose_name=_("Approximate flight time (minutes)")
+    )
 
     # --- Origen y destino ---
     source_plan = models.ForeignKey(

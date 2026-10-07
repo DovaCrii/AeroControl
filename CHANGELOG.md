@@ -17,6 +17,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **La hoja SIGO sigue el portal, modalidad por modalidad (`LV-278`, bloque B).** Con las
+  capturas del formulario: el **corredor** se declara con «Punto Inicio» y «Punto
+  Término» (sin radio ni ancho; si la línea tenía más vértices se avisa y se declaran los
+  extremos), el **triangular** y el **cuadricular** con «Vértice 1, 2, 3 (y 4)», y todas con
+  tres casillas por eje. Nueva casilla **«Tiempo aproximado de vuelo (minutos)»**
+  (migración `operations/0031`) y la altura también en pies.
 - **Un fallo al escribir la auditoría ahora se ve (`T1.4`, paso 1).** Si el `AuditEvent` de
   una mutación no se puede escribir, además de la línea de log queda una marca en disco y
   el centro de administración muestra «Escrituras del registro de auditoría» en rojo, con
