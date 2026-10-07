@@ -15,6 +15,12 @@
     <div class="col-md-4"><div class="border rounded p-3 h-100"><div class="small text-muted">{% translate "Company" %}</div><div class="fw-semibold">{{ company }}</div></div></div>
   </div>
 
+  <div class="row g-3 mb-4" id="permit-team">
+    <div class="col-md-4"><div class="border rounded p-3 h-100"><div class="small text-muted">{% translate "Responsible" %}</div><div class="fw-semibold">{{ responsible|default:"—" }}</div><div class="small text-muted">{{ permission.cost_center }}</div></div></div>
+    <div class="col-md-4"><div class="border rounded p-3 h-100"><div class="small text-muted">{% translate "Operators on this permit" %}</div>{% for o in team_operators %}<div>{{ o.full_name }}</div>{% empty %}<div class="text-muted">—</div>{% endfor %}</div></div>
+    <div class="col-md-4"><div class="border rounded p-3 h-100"><div class="small text-muted">{% translate "Aircraft on this permit" %}</div>{% for a in team_aircraft %}<div>{{ a.serial_number|default:a.registration }} · {{ a.model }}</div>{% empty %}<div class="text-muted">—</div>{% endfor %}</div></div>
+  </div>
+
   {% if can_add %}
   <form method="post" class="border rounded p-3 mb-4" id="operation-form">
     {% csrf_token %}
