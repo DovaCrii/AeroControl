@@ -1103,6 +1103,28 @@ class FlightRecordList(OList):
     def get_queryset(self):
         return super().get_queryset().select_related("permission", "pilot", "aircraft")
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # LV-292: los permisos vigentes, para entrar al registro de operaciones de uno.
+        # Mismo alcance de tenant que el resto de las lecturas de permisos.
+        today = timezone.localdate()
+        permits = scope_queryset_to_tenant(
+            FlightPermission.objects.filter(
+                is_active=True,
+                status__in=[
+                    FlightPermission.STATUS_APPROVED,
+                    FlightPermission.STATUS_REQUESTED,
+                ],
+                valid_until__gte=today,
+            ),
+            self.request.user,
+            "cost_center__tenant_id",
+        )
+        context["register_permits"] = permits.select_related("cost_center").order_by(
+            "cost_center__code", "valid_from"
+        )[:30]
+        return context
+
 
 def warn_if_over_duty_limit(request, record):
     """R7.5: avisa si el piloto de `record` pasó el límite diario de vuelo.
@@ -1240,6 +1262,12 @@ class PermissionOperations(
         context.update(
             {
                 "company": LEGAL_NAME,
+                # LV-292: el permiso da el equipo: quién responde por la faena y con
+                # qué operadores y aeronaves se puede volar bajo él.
+                "responsible": permission.cost_center.day_to_day_contact
+                or permission.cost_center.responsible,
+                "team_operators": list(permission.operators.filter(is_active=True)),
+                "team_aircraft": list(permission.aircraft_fleet.filter(is_active=True)),
                 "rows": list(enumerate(records, start=1)),
                 "flight_logs": self._flight_logs(permission),
                 "upload_url": upload_url,
