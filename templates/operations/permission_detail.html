@@ -190,6 +190,7 @@ después se desincroniza.{% endcomment %}
             la decisión 2 de dossier.py.{% endcomment %}
             {% if item.status == "ok" %}<span class="text-success" aria-hidden="true">✓</span><span class="visually-hidden">{% translate "On file" %}</span>
             {% elif item.status == "missing" %}<span class="text-danger" aria-hidden="true">✕</span><span class="visually-hidden">{% translate "Missing" %}</span>
+            {% elif item.status == "info" %}<span class="text-body-secondary" aria-hidden="true">○</span><span class="visually-hidden">{% translate "Optional" %}</span>
             {% else %}<span class="text-warning" aria-hidden="true">•</span><span class="visually-hidden">{% translate "To confirm" %}</span>{% endif %}
           </td>
           <td>{{ item.label }}</td>
