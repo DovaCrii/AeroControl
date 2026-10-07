@@ -2087,6 +2087,8 @@ class ComplianceUpdate(
 
 class DocumentTypeList(ComplianceList):
     model = DocumentType
+    # LV-280: las tres columnas genéricas (Nombre / Creado / Estado).
+    sortable_columns = {"name": "name", "created": "created_at", "status": "is_active"}
 
 
 class DocumentTypeCreate(ComplianceCreate):
@@ -2101,6 +2103,8 @@ class DocumentTypeUpdate(ComplianceUpdate):
 
 class AlertRuleList(ComplianceList):
     model = AlertRule
+    # LV-280: las tres columnas genéricas (Nombre / Creado / Estado).
+    sortable_columns = {"name": "name", "created": "created_at", "status": "is_active"}
 
 
 class AlertRuleCreate(ComplianceCreate):

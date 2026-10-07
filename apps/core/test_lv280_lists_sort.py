@@ -25,6 +25,13 @@ LISTS = [
     "operator-list",
     "aircraft-list",
     "costcenter-list",
+    # Segunda tanda: asignaciones y las listas genéricas (Nombre / Creado / Estado).
+    "operatorassignment-list",
+    "aircraftassignment-list",
+    "documenttype-list",
+    "alertrule-list",
+    "qualificationtype-list",
+    "label-list",
 ]
 
 
