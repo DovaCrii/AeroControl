@@ -15,6 +15,14 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   rojo. «¿Puedo volar?» y «Vuelos» se ocultan del menú de momento (las pantallas siguen
   accesibles por su URL).
 
+### Fixed
+
+- **El orden por columna ya no se pierde ni se ve desordenado (`LV-288`).** Filtrar o buscar
+  en una lista ordenada conserva el orden elegido; los vacíos (por ejemplo «Esperando a la
+  DGAC») van al final tanto al ascender como al descender; «Estado» de permisos ordena por lo
+  que muestra la celda (los «Caducado» ya no se reparten entre los aprobados); y la flecha del
+  encabezado queda junto a su rótulo.
+
 ### Changed
 
 - **Una solicitud de permiso no puede pasar del seguro de sus aeronaves (`LV-287`).** El

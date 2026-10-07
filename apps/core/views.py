@@ -75,12 +75,22 @@ class SortableColumnsMixin:
         if not column:
             return queryset
         field = self.get_sortable_columns()[column]
-        prefix = "-" if direction == "desc" else ""
         previous = list(queryset.query.order_by) or list(queryset.model._meta.ordering)
+        # LV-288: **los vacíos van al final en los dos sentidos.** Sin esto SQLite
+        # pone los `NULL` primero al ascender y la lista «ascendente» de vigencias
+        # abría con una fila «Esperando a la DGAC» —que no tiene fecha— y parecía mal
+        # ordenada; al descender quedaban al final, así que el mismo vacío saltaba de
+        # un extremo al otro. El usuario lo reportó como «funciona mal».
+        expression = models.F(field)
+        primary = (
+            expression.desc(nulls_last=True)
+            if direction == "desc"
+            else expression.asc(nulls_last=True)
+        )
         # `pk` cierra la lista siempre, y no es un detalle: un orden con empates
         # no define una secuencia, y paginar una secuencia indefinida puede
         # repetir una fila en la página 2 y perder otra sin que nada lo diga.
-        return queryset.order_by(f"{prefix}{field}", *previous, "pk")
+        return queryset.order_by(primary, *previous, "pk")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

@@ -23,6 +23,7 @@ su nombre, y un subtítulo obligatorio se llenaría de relleno.{% endcomment %}
 {% block worktable_intro %}{% block list_intro %}{% endblock %}{% endblock %}
 {% block worktable_filters %}
 <form method="get" class="row g-2 mb-3">
+  {% include "generic/_sort_state.html" %}
   {% block list_filters %}
   <div class="col-md-5">{% include "generic/_search_input.html" with search_url=request.path %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
   <div class="col-md-3"><select class="form-select" name="is_active"><option value="">{% translate "All statuses" %}</option><option value="active" {% if request.GET.is_active == 'active' %}selected{% endif %}>{% translate "Active" %}</option><option value="archived" {% if request.GET.is_active == 'archived' %}selected{% endif %}>{% translate "Archived" %}</option></select></div>
