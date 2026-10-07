@@ -10,6 +10,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Registro de operaciones en el formato de la DGAC (`LV-290`).** Cada permiso tiene una pantalla
+  con el encabezado del portal, el alta de una línea (fecha, horas, operador, aeronave por N° de serie),
+  la tabla de operaciones registradas y el adjunto del registro de vuelo `.TXT`. Una operación es un
+  registro de vuelo: pasa por las mismas reglas, el aviso de jornada y el chequeo prevuelo. Migración
+  `compliance/0027` (tipo de documento `flight-log-txt`).
+
 - **«Esperando» en naranja y dos entradas fuera del menú (`LV-284`).** En el panel, la
   faena sin permiso vigente pero con uno esperando respuesta se pinta en ámbar y no en
   rojo. «¿Puedo volar?» y «Vuelos» se ocultan del menú de momento (las pantallas siguen
