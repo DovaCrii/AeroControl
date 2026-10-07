@@ -15,6 +15,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
   rojo. «¿Puedo volar?» y «Vuelos» se ocultan del menú de momento (las pantallas siguen
   accesibles por su URL).
 
+### Changed
+
+- **El despliegue pasa a ser por tandas (`LV-285`).** Se fusiona bloque tras bloque y se
+  despliega una sola vez al terminar, con el seguimiento de lo pendiente en `HANDOFF.md`.
+  Regla en `AGENTS.md` y en la skill `/desplegar-p340`, ahora en cuatro bloques cortos.
+
 ### Added
 
 - **Ordenar por columna en seis listas más (`LV-280`, segunda tanda).** Asignaciones de
