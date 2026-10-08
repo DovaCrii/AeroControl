@@ -633,6 +633,40 @@ def read_dgac_folio(permission):
         return None
 
 
+def read_dgac_window(permission):
+    """LV-295: la vigencia `(desde, hasta)` que declara la autorización DGAC adjunta.
+
+    Busca **el mismo documento** que `read_dgac_folio` y devuelve `None` ante cualquier
+    duda (sin PDF, ilegible, o dos rangos distintos): la compuerta de aprobación sólo
+    cruza cuando hay una lectura inequívoca.
+    """
+    from apps.compliance.models import Document
+    from apps.compliance.storage import get_document_storage
+
+    from .dgac_pdf import window_from_pdf
+
+    document = (
+        Document.objects.filter(
+            content_type=ContentType.objects.get_for_model(type(permission)),
+            object_id=permission.pk,
+            doc_type__code="dgac-rpa-operation-authorization",
+            is_current_version=True,
+            is_active=True,
+        )
+        .exclude(file_path="")
+        .order_by("-created_at")
+        .first()
+    )
+    if document is None:
+        return None
+    try:
+        with get_document_storage().open(document.file_path) as stream:
+            return window_from_pdf(stream)
+    except Exception:  # noqa: BLE001 - un archivo ausente es "sin lectura"
+        logger.info("dgac_window_file_unavailable", exc_info=True)
+        return None
+
+
 class PermissionFolioFromPdf(ModelPermissionRequiredMixin, View):
     """LV-231: escribir el folio que el PDF de la DGAC trae, al confirmarlo.
 
@@ -756,6 +790,59 @@ class RequireDgacPermitPdfMixin:
         return super().post(request, pk)
 
 
+class CrossCheckDgacWindowMixin:
+    """LV-295: aprobar cruza la vigencia del permiso con la que dice el PDF de la DGAC.
+
+    Pedido del usuario (2026-10-08, con la autorización a la vista): *"la vigencia del
+    permiso te la entrega el PDF […] debe ser ahí cruzado para aprobar"*. Antes se
+    pedía teclearla (`RequireValidityWindowMixin`), que es transcribir a mano un dato
+    que va a la autoridad.
+
+    - **El PDF se lee y trae un rango inequívoco:**
+      - el permiso **sin** fechas las recibe del PDF (sólo las que faltan);
+      - el permiso **con** fechas distintas **no se aprueba**: el mensaje dice las dos
+        y manda a corregir el permiso. Una discrepancia entre el papel y la app es
+        justo lo que esta compuerta existe para impedir.
+    - **El PDF no se puede leer** (no hay, está cifrado, dos rangos): no hace nada y
+      quedan las compuertas de siempre, que piden las fechas a mano.
+
+    Va **antes** de `RequireValidityWindowMixin`: si completa las fechas, esa compuerta
+    ya no tiene nada que reclamar.
+    """
+
+    window_mismatch_message = None
+
+    def post(self, request, pk):
+        permission = get_object_or_404(self.model, pk=pk, is_active=True)
+        window = read_dgac_window(permission)
+        if window is not None:
+            start, end = window
+            if permission.valid_from and permission.valid_until:
+                if (permission.valid_from, permission.valid_until) != (start, end):
+                    messages.error(
+                        request,
+                        self.window_mismatch_message
+                        % {
+                            "pdf_from": start.strftime("%d/%m/%Y"),
+                            "pdf_until": end.strftime("%d/%m/%Y"),
+                            "permit_from": permission.valid_from.strftime("%d/%m/%Y"),
+                            "permit_until": permission.valid_until.strftime("%d/%m/%Y"),
+                        },
+                    )
+                    return redirect(permission)
+            else:
+                updated = []
+                if permission.valid_from is None:
+                    permission.valid_from = start
+                    updated.append("valid_from")
+                if permission.valid_until is None:
+                    permission.valid_until = end
+                    updated.append("valid_until")
+                set_audit_context(request, permission, action="validity_taken_from_pdf")
+                permission.save(update_fields=[*updated, "updated_at"])
+        return super().post(request, pk)
+
+
 class RequireDgacFolioMixin:
     """LV-156: un permiso aprobado sin número de la DGAC es un permiso que la
     lista muestra como "En proceso" cuando ya está autorizado.
@@ -817,6 +904,7 @@ class RequireValidityWindowMixin:
 
 class FlightPermissionApprove(
     RequireDgacPermitPdfMixin,
+    CrossCheckDgacWindowMixin,
     RequireDgacFolioMixin,
     RequireValidityWindowMixin,
     StatusTransitionView,
@@ -830,6 +918,11 @@ class FlightPermissionApprove(
         "two dates in."
     )
     success_message = gettext_lazy("Permission approved.")
+    window_mismatch_message = gettext_lazy(
+        "The DGAC authorization says %(pdf_from)s to %(pdf_until)s, but the permit "
+        "says %(permit_from)s to %(permit_until)s. Correct the permit so both agree "
+        "before approving."
+    )
     missing_pdf_message = gettext_lazy(
         "Upload the DGAC operation authorization (the signed SIGO PDF) "
         "before approving this permit."

@@ -9616,3 +9616,9 @@ msgstr "Para un permiso de vuelo, deje las fechas en blanco para tomar la vigenc
 
 msgid "This field is required."
 msgstr "Este campo es obligatorio."
+
+msgid "The permit was not saved. Fix these fields:"
+msgstr "El permiso no se guardó. Corrija estos campos:"
+
+msgid "The DGAC authorization says %(pdf_from)s to %(pdf_until)s, but the permit says %(permit_from)s to %(permit_until)s. Correct the permit so both agree before approving."
+msgstr "La autorización de la DGAC dice del %(pdf_from)s al %(pdf_until)s, pero el permiso dice del %(permit_from)s al %(permit_until)s. Corrija el permiso para que ambos coincidan antes de aprobar."
