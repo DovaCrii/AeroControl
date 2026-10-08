@@ -384,6 +384,12 @@ def permit_status_by_cost_center(today):
                     valid_until__gte=today,
                 ),
             ),
+            # LV-296: cuándo empieza el primer permiso aprobado que todavía no empieza.
+            # Sólo para decirlo en la fila: no entra en ninguna cuenta de vigencia.
+            next_start=Min(
+                "valid_from",
+                filter=Q(status=FlightPermission.STATUS_APPROVED, valid_from__gt=today),
+            ),
         )
     }
     empty = {
@@ -405,6 +411,7 @@ def permit_status_by_cost_center(today):
                 "cost_center": center,
                 **{key: counts.get(key, 0) for key in empty},
                 "next_expiry": next_expiry,
+                "next_start": counts.get("next_start"),
                 "days_remaining": (next_expiry - today).days if next_expiry else None,
             }
         )
