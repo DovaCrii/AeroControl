@@ -1294,6 +1294,27 @@ class FlightRecordCreate(SaveAndAddAnotherMixin, DutyLimitWarningMixin, OCreate)
         return initial
 
 
+def portal_operation_labels(form):
+    """LV-298: las casillas de «Registro de operaciones» con los rótulos del portal.
+
+    El portal de la DGAC dice «Fecha, Hora Inicio, Hora Fin, Operador, Aeronave (N° de
+    Serie)»; el formulario de vuelo de siempre dice «Fecha de vuelo / Hora de salida /
+    Piloto / Aeronaves». Es el mismo modelo con dos pantallas, así que los rótulos se
+    ajustan acá y no en `FlightRecordForm`, que sigue siendo el de la otra pantalla.
+    """
+    form.fields["actual_date"].label = _("Date")
+    form.fields["departure_time"].label = _("Start time")
+    form.fields["arrival_time"].label = _("End time")
+    form.fields["pilot"].label = _("Operator")
+    form.fields["aircraft"].label = _("Aircraft (serial no.)")
+    form.fields["aircraft"].label_from_instance = lambda aircraft: (
+        f"{aircraft.serial_number} · {aircraft.registration}"
+        if aircraft.serial_number
+        else aircraft.selector_label
+    )
+    return form
+
+
 class PermissionOperations(
     TenantScopedQuerysetMixin, ModelViewPermissionRequiredMixin, DetailView
 ):
@@ -1343,7 +1364,10 @@ class PermissionOperations(
         # El formulario se construye sobre el permiso para que sus selectores ya
         # ofrezcan sólo su padrón (`FlightRecordForm.__init__`).
         context.setdefault(
-            "form", FlightRecordForm(initial={"permission": permission.pk})
+            "form",
+            portal_operation_labels(
+                FlightRecordForm(initial={"permission": permission.pk})
+            ),
         )
         records = (
             permission.records.filter(is_active=True)
@@ -1405,7 +1429,7 @@ class PermissionOperations(
         # operación contra otro permiso editando un campo.
         data = request.POST.copy()
         data["permission"] = str(self.object.pk)
-        form = FlightRecordForm(data)
+        form = portal_operation_labels(FlightRecordForm(data))
         if not form.is_valid():
             return self.render_to_response(self.get_context_data(form=form))
         record = form.save()
