@@ -21,6 +21,17 @@ cada cosa.{% endcomment %}
     {% csrf_token %}
     {% include "generic/_duplicate_hint.html" %}
     {{ form.non_field_errors }}
+    {% comment %}LV-295: al guardar con errores la página se dibuja de nuevo desde arriba y el
+    mensaje de cada campo queda junto al campo, lejos del botón: parecía que «Guardar» no
+    hacía nada y volvía al inicio. Este resumen lo dice arriba, con un enlace a cada campo.{% endcomment %}
+    {% if form.errors %}
+    <div class="alert alert-danger" role="alert" id="form-error-summary" tabindex="-1">
+      <strong>{% translate "The permit was not saved. Fix these fields:" %}</strong>
+      <ul class="mb-0 mt-1">
+        {% for field in form %}{% if field.errors %}<li><a href="#{{ field.id_for_label }}">{{ field.label }}</a>: {{ field.errors|join:" " }}</li>{% endif %}{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
     {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
 
     <fieldset class="cc-form-section mb-4">
