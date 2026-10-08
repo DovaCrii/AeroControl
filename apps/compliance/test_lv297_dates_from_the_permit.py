@@ -1,4 +1,4 @@
-"""LV-294: las fechas de un documento de permiso salen del propio permiso.
+"""LV-297: las fechas de un documento de permiso salen del propio permiso.
 
 Pedido del usuario (2026-10-08, con la autorización de la DGAC abierta al lado): el
 rango de fechas autorizado ya está en el permiso, y teclearlo otra vez sólo permite
