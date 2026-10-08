@@ -50,11 +50,13 @@ def _run(command, *, when, result=JobRun.RESULT_OK):
 def _all_current():
     # LV-267: `check_client_letters` también se vigila (el escalamiento que el
     # informe promete a la DGAC).
+    # LV-294: y `sync_batteries`, el espejo del inventario de AeroLink.
     for command in (
         "generate_alerts",
         "send_alert_digest",
         "backup",
         "check_client_letters",
+        "sync_batteries",
     ):
         _run(command, when=NOW - timedelta(hours=2))
     _run("send_executive_report", when=NOW - timedelta(days=6))
