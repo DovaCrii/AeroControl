@@ -29,7 +29,7 @@ ejecución.
 |---|---|---|
 | `X.1` | `serial_number` como llave única de cruce | ✅ AeroControl |
 | `X.3` | Padrón de aeronaves como API de sólo lectura | ✅ AeroControl |
-| `X.4b` | **Baterías**: consumidor + contrato | ✅ AeroControl · ✅ **productor implementado** (rama `codex/api-inventario-dispositivos`, pendiente de PR) |
+| `X.4b` | **Baterías**: consumidor + contrato | ✅ AeroControl · ✅ **productor fusionado (AeroLink PR #35) y desplegado en `p340` el 2026-10-08**. Falta el timer de `sync_batteries` y cargar el inventario: ver `LV-294` y `docs/scheduled-operations.md` |
 | `X.4c` | Normalización de seriales alineada con el ADR §2 | ✅ AeroControl |
 | `X.4` | **Sesiones de vuelo**: conciliación con `FlightRecord` | ⬜ Bloqueado |
 
@@ -41,8 +41,10 @@ HTTPS pero no MQTTS/8883, sin lo cual M1 no avanza).
 
 ### 1. ~~Endpoint de inventario~~ — **implementado el 2026-08-12**
 
-Está en la rama `codex/api-inventario-dispositivos` de AeroLink, **pendiente de
-PR** (su `main` está protegido y exige uno). Incluye lo que su `AGENTS.md` exige
+Fusionado en AeroLink (PR #35) y **desplegado en `p340` el 2026-10-08**. Hasta esa
+fecha el despliegue era anterior al arreglo de un `Enum` y respondía `500`: **ocho
+semanas** sin que nadie lo supiera, porque `sync_batteries` no tenía timer ni estaba
+en el vigilante (`LV-294`). Incluye lo que su `AGENTS.md` exige
 para toda API nueva: autenticación (token de servicio, `ADR-0003`), autorización
 (*allowlist* de `kind`; pedir aeronaves responde `403` citando `AL-R4`),
 auditoría (el primer escritor de `AuditEvent` del repo) y 51 pruebas.
