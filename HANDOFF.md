@@ -20,7 +20,8 @@ usó dos veces y la de las fechas pasó a `LV-297`.
 
 **Hecho en producción esta jornada, sin código:** instalados los timers `letters`, `watchdog` y
 `verifybak` (15 timers `aerocontrol-*`) y **apagada la regla** «Permisos: renovación vencida de plazo
-(T-15 · Gerencia)» (`enabled=False`; sus 3 alertas ya existentes siguen en la bandeja).
+(T-15 · Gerencia)» (`enabled=False`). Sus 3 alertas **ya estaban cerradas** desde el 2026-10-07 («se solicita
+renovación»), verificado en la VM: no queda ninguna abierta.
 
 **No verificado en producción:** la lectura del «Rango de fecha autorizado» de un PDF real de la DGAC (el
 patrón sale de una captura; si no lo lee, la aprobación sigue pidiendo las fechas a mano), la pantalla

@@ -368,3 +368,32 @@ class TestThePicker:
             client.get(reverse(self.PICK), {"permission": str(permit.pk)}).status_code
             == 404
         )
+
+
+@pytest.mark.django_db
+class TestThePortalLabels:
+    """LV-298: las casillas llevan los rótulos del portal, no los del alta de vuelo."""
+
+    def test_the_form_uses_the_portal_labels(self, permit):
+        from django.utils.translation import gettext
+
+        html = login_as(*READ, "add_flightrecord").get(_url(permit)).content.decode()
+        form = html.split('id="operation-form"')[1].split("</form>")[0]
+
+        for label in (
+            "Date",
+            "Start time",
+            "End time",
+            "Operator",
+            "Aircraft (serial no.)",
+        ):
+            assert gettext(label) in form
+        # y no los del formulario de vuelo de siempre
+        assert f">{gettext('Departure time')}<" not in form
+        assert f">{gettext('Pilot')}<" not in form
+
+    def test_the_aircraft_is_offered_by_serial_number(self, permit):
+        html = login_as(*READ, "add_flightrecord").get(_url(permit)).content.decode()
+        form = html.split('id="operation-form"')[1].split("</form>")[0]
+
+        assert "SN-123456 · RPA-2019" in form

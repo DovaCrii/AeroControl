@@ -10,6 +10,8 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **«Registro de operaciones» usa los rótulos del portal (`LV-298`).** Fecha, Hora de inicio, Hora de fin,
+  Operador y Aeronave (N° de serie), en lugar de los del alta de vuelo de siempre.
 - **El panel dice cuándo empieza un permiso aprobado que aún no empieza (`LV-296`).** La faena sale en ámbar
   con «Inicia el dd/mm» y no en rojo con «Ninguno». El conteo de faenas sin permiso no cambia.
 
