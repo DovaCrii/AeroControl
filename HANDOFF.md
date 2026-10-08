@@ -1,37 +1,48 @@
 # HANDOFF — AeroControl
 
-## ⏳ 2026-10-08 — `LV-294`: AeroLink caído se ve, y el espejo de baterías tiene su script (**fusionado sin desplegar**)
+## ✅ 2026-10-08 — registro de operaciones, aprobar cruzando el PDF, panel, **desplegados** (`46e39e2`)
 
-**Seguimiento — fusionado sin desplegar: `LV-294`.** **Sin migración. Sin estáticos.** Cambia el código de
-`sync_batteries` y del vigilante (`apps/core/jobs.py`), así que basta `git pull` + reinicio.
+`p340` corre **`46e39e2`**, desplegado el 2026-10-08 por tandas (`1b6c2f4` → `99ca98a` → `46e39e2`; cada una con
+`git pull`, reinicio y `git log` = hash de `main`, leído de la salida pegada). Antes, `ccab650` (con la
+migración `compliance/0027`, con respaldo `restorable`). Ninguna de las tres últimas lleva migración ni
+estáticos. Una cuarta sesión desplegó `9ebb5c8` (AeroLink) entre medias: por eso **el primer paso de todo
+despliegue es leer el hash de la VM**, que no siempre es el que se dejó.
 
-`p340` corría **`1b6c2f4`** el 2026-10-08 (verificado por SSH: `origin/main` de ese día, sin cambios locales,
-servicio `active`) y **ya tiene instalados los timers `watchdog`, `verifybak` y `letters`** — la entrada de
-más abajo que los daba por pendientes quedó desactualizada.
+**Seguimiento — fusionado sin desplegar: nada.**
 
-**Por qué importa.** El endpoint de baterías de AeroLink respondió `500` en `p340` **ocho semanas** sin que
-nadie lo supiera; se corrigió el 2026-10-08 al desplegar AeroLink. Del lado de AeroControl faltaba que un
-fallo así **se viera**: ahora `sync_batteries` lo registra en su `JobRun` con el motivo y el vigilante lo
-reporta en su siguiente pasada (09:00 UTC).
+Entró: `LV-290` (pantalla «Registro de operaciones» con el formato de la DGAC, adjunto `.TXT`, tipo de
+documento `flight-log-txt`), `LV-291` (**«Vuelos» vuelve al menú**), `LV-292` (botón en la cabecera del
+permiso; el permiso muestra responsable y equipo), `LV-293` (selector desplegable de permisos en «Vuelos»),
+`LV-297` (las fechas de un documento de permiso salen del permiso), `LV-295` (**aprobar cruza la vigencia
+con el PDF de la DGAC** y el formulario del permiso resume sus errores) y `LV-296` (el panel dice cuándo
+empieza un permiso aprobado que aún no empieza). `LV-294` es la de AeroLink (otra sesión): el número se
+usó dos veces y la de las fechas pasó a `LV-297`.
 
-**Para dejarlo funcionando — del usuario, con `sudo`**, en la VM, después de `git pull` y reiniciar:
+**Hecho en producción esta jornada, sin código:** instalados los timers `letters`, `watchdog` y
+`verifybak` (15 timers `aerocontrol-*`) y **apagada la regla** «Permisos: renovación vencida de plazo
+(T-15 · Gerencia)» (`enabled=False`; sus 3 alertas ya existentes siguen en la bandeja).
 
-```bash
-cd /opt/aerocontrol && bash scripts/activar-sync-baterias.sh
-```
+**No verificado en producción:** la lectura del «Rango de fecha autorizado» de un PDF real de la DGAC (el
+patrón sale de una captura; si no lo lee, la aprobación sigue pidiendo las fechas a mano), la pantalla
+«Registro de operaciones» con su carga de `.TXT`, el menú «Vuelos», el hemisferio de Punto Centro contra el
+portal, y — de la otra sesión — si se corrió `scripts/activar-sync-baterias.sh` (el espejo de baterías de
+AeroLink no tiene timer hasta que se corra; sin él el vigilante lo lee como «nunca corrió»).
 
-Hace, idempotente y pidiendo `sudo` sólo donde hace falta: copia `AEROLINK_*` a `/etc/aerocontrol.env`
-(**el token no se imprime**), corre `audit_serial_case`, simula `sync_batteries --dry-run`, e **instala el
-timer sólo si la simulación salió bien**. Detalle y pasos manuales en `docs/scheduled-operations.md`
-(«Baterías de AeroLink»).
+**Pendiente — del usuario**
+- **Captura de Punto Centro del portal real** (lat/lon visibles), para decidir si la casilla «Hemisferio»
+  se quita o se queda (el mapa de `docs/dev/plan-solicitud-vuelo-sigo.md` §7.5b dice que ninguna modalidad
+  la tiene; la hoja y la ficha la dibujan sólo en Punto Centro).
+- **`T1.4` paso 3**: encender `AUDIT_FAIL_CLOSED=True` en `/etc/aerocontrol.env`, **sólo tras una semana
+  con la marca de fallos de auditoría en cero** y midiendo antes con `scale_readiness`.
+- **Correo** (de lado a pedido del usuario): `EMAIL_HOST` y `SITE_BASE_URL`; sin eso ningún aviso sale.
+- Dejados como están a pedido del usuario (2026-10-08, «ya que funciona la VM»): responsable en 11 de 15
+  faenas, `CC716`, `LV-150` y `LV-228` (cuatro operadores sin faena).
+- Si se quiere que un permiso aprobado cuente como vigente desde la aprobación y no desde su fecha de
+  inicio: es otra decisión (cambia una cifra firmada) y **no** se tomó (`LV-258`, `LV-296`).
 
-⚠️ **Hasta que el timer exista**, `check_scheduled_jobs` leerá `sync_batteries` como «nunca corrió» y escribirá
-a Dirección (si el correo está configurado): por eso conviene correr el script **en el mismo recorrido** del
-despliegue.
-
-**No verificado en producción:** `systemd-run` con `EnvironmentFile=` y `--uid` (lo usa el script para
-`manage.py` con las variables del servicio) se probó sólo en sintaxis y en la lógica de copia del token con
-archivos falsos; no se pudo ejercitar con `sudo` real. Si falla, la salida del script dice en qué paso.
+**Pendiente — del código, sin decisión nueva**: ninguno. Lo que queda en `MASTER_PLAN.md` (`T1.1`,
+`T1.2`, `T1.5`, `T3.5`, `X.4`, `X.5`, `LV-233`, `LV-245`) espera una decisión, es un refactor grande o
+depende de AeroLink, y el proyecto está en pausa de estabilización.
 
 ## ✅ 2026-10-07 — modalidades SIGO, orden por columna, colores, prevuelo, auditoría, **desplegados** (`186dffb`)
 

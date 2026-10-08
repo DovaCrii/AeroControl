@@ -409,7 +409,7 @@ class DocumentForm(AeroModelForm):
         # holds. Say where they came from, or a pre-filled field reads as a
         # value someone else entered and nobody dares correct it -- and the
         # DGAC can perfectly well issue a resolution on a date of its own.
-        # LV-294: para un permiso de vuelo las fechas salen del propio permiso, así que
+        # LV-297: para un permiso de vuelo las fechas salen del propio permiso, así que
         # dejarlas en blanco es válido ahí (se resuelve en `clean`). Para cualquier otra
         # entidad `clean` sigue exigiendo la fecha de emisión.
         self.fields["issue_date"].required = False
@@ -527,7 +527,7 @@ class DocumentForm(AeroModelForm):
 
     @staticmethod
     def _take_dates_from_permit(cleaned, record):
-        """LV-294: la vigencia de un permiso es la del documento que lo respalda.
+        """LV-297: la vigencia de un permiso es la del documento que lo respalda.
 
         Pedido del usuario (2026-10-08, con la autorización de la DGAC a la vista): las
         fechas de inicio y fin de la operación **están en el propio permiso**, y
