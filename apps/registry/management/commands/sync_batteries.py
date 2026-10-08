@@ -54,9 +54,16 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        payload = self._load(options)
         dry_run = options["dry_run"]
         with record_job_run("sync_batteries") as run:
+            # LV-294: the payload is loaded *inside* the job record. It used to be
+            # loaded before it, so when AeroLink was down -- the one failure this
+            # job exists to survive -- the CommandError escaped with no JobRun at
+            # all. The watchdog could then only notice by age, 48 h later and
+            # without the reason; recorded here it reads "error: AeroLink
+            # unavailable: HTTP 500" on its next pass. `record_job_run` re-raises,
+            # so the scheduler still sees the command fail.
+            payload = self._load(options)
             created, updated, skipped, missing = self._sync(payload, dry_run)
             run["summary"] = (
                 f"{'[dry-run] ' if dry_run else ''}{created} created, "

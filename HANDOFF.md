@@ -1,5 +1,38 @@
 # HANDOFF — AeroControl
 
+## ⏳ 2026-10-08 — `LV-294`: AeroLink caído se ve, y el espejo de baterías tiene su script (**fusionado sin desplegar**)
+
+**Seguimiento — fusionado sin desplegar: `LV-294`.** **Sin migración. Sin estáticos.** Cambia el código de
+`sync_batteries` y del vigilante (`apps/core/jobs.py`), así que basta `git pull` + reinicio.
+
+`p340` corría **`1b6c2f4`** el 2026-10-08 (verificado por SSH: `origin/main` de ese día, sin cambios locales,
+servicio `active`) y **ya tiene instalados los timers `watchdog`, `verifybak` y `letters`** — la entrada de
+más abajo que los daba por pendientes quedó desactualizada.
+
+**Por qué importa.** El endpoint de baterías de AeroLink respondió `500` en `p340` **ocho semanas** sin que
+nadie lo supiera; se corrigió el 2026-10-08 al desplegar AeroLink. Del lado de AeroControl faltaba que un
+fallo así **se viera**: ahora `sync_batteries` lo registra en su `JobRun` con el motivo y el vigilante lo
+reporta en su siguiente pasada (09:00 UTC).
+
+**Para dejarlo funcionando — del usuario, con `sudo`**, en la VM, después de `git pull` y reiniciar:
+
+```bash
+cd /opt/aerocontrol && bash scripts/activar-sync-baterias.sh
+```
+
+Hace, idempotente y pidiendo `sudo` sólo donde hace falta: copia `AEROLINK_*` a `/etc/aerocontrol.env`
+(**el token no se imprime**), corre `audit_serial_case`, simula `sync_batteries --dry-run`, e **instala el
+timer sólo si la simulación salió bien**. Detalle y pasos manuales en `docs/scheduled-operations.md`
+(«Baterías de AeroLink»).
+
+⚠️ **Hasta que el timer exista**, `check_scheduled_jobs` leerá `sync_batteries` como «nunca corrió» y escribirá
+a Dirección (si el correo está configurado): por eso conviene correr el script **en el mismo recorrido** del
+despliegue.
+
+**No verificado en producción:** `systemd-run` con `EnvironmentFile=` y `--uid` (lo usa el script para
+`manage.py` con las variables del servicio) se probó sólo en sintaxis y en la lógica de copia del token con
+archivos falsos; no se pudo ejercitar con `sudo` real. Si falla, la salida del script dice en qué paso.
+
 ## ✅ 2026-10-07 — modalidades SIGO, orden por columna, colores, prevuelo, auditoría, **desplegados** (`186dffb`)
 
 `p340` corre **`186dffb`**, desplegado el 2026-10-07 por tandas (`97e2f35` → `120f5c8` → `ea480af` →

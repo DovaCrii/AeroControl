@@ -13,7 +13,7 @@ resumen corto), así que después se puede comprobar si realmente corrieron.
 | `notify_expiring_credentials` (opcional, LV-29) | Avisa por correo a **cada operador** de sus vigencias DGAC por vencer o ya vencidas (credencial + habilitaciones, ≤30 días) | Diario o semanal, si se quiere el aviso directo al operador |
 | `check_monthly_records` (LV-30) | El último día del mes, crea la **revisión de cumplimiento** pendiente por cada centro de costo que voló y avisa al grupo Dirección (vuelos vs registros del mes) | Diario (actúa solo el último día 28/29/30/31) |
 | `check_monthly_review_deadline` (R6.5) | El día 15, revisa las revisiones del mes anterior que sigan **pendientes** (nadie las marcó) y las escala al grupo Dirección en un segundo correo. No crea ni cambia ninguna revisión, solo persigue lo que quedó sin firmar | Diario (actúa solo el día 15) |
-| `sync_batteries` (X.4b) | Espeja el inventario de baterías de AeroLink en `registry.Battery` (ciclos, salud, firmware) para la evidencia ISO 7.1.3. **Sólo se programa cuando AeroLink publique su endpoint**; hasta entonces se corre a mano con `--from-file`. Nunca borra: una batería ausente del feed se reporta, no se elimina | Diario, una vez que exista el endpoint |
+| `sync_batteries` (X.4b, programado desde LV-294) | Espeja el inventario de baterías de AeroLink en `registry.Battery` (ciclos, salud, firmware) para la evidencia ISO 7.1.3. El endpoint existe y está desplegado en `p340` desde el 2026-10-08; falta el timer y las variables `AEROLINK_*` (ver «Baterías de AeroLink» abajo). Nunca borra: una batería ausente del feed se reporta, no se elimina. **Si AeroLink no responde falla con ruido y deja un `JobRun` en error con el motivo**, que `check_scheduled_jobs` reporta en su siguiente pasada: un inventario vacío y una pasarela caída no se parecen en el registro | Diario, **antes** de `generate_alerts` (05:45) |
 | `check_flight_duty_limit` (R7.5) | Reporta al grupo Dirección los pilotos cuya **jornada de vuelo del día anterior** superó las **8 horas** (control de fatiga, ISO 45001 6.1.2). Sólo reporta: nunca edita ni rechaza un registro de vuelo | Diario |
 | `check_alert_effectiveness` (R7.6) | Escala al grupo Dirección las acciones correctivas resueltas hace **30 días** cuya eficacia **nadie confirmó**. Nunca resuelve, reabre ni verifica por su cuenta: una máquina declarando que una acción correctiva fue eficaz es lo contrario de la evidencia que pide ISO 10.2 | Diario |
 | `expire_permissions` (LV-83) | Marca como **Caducado** todo permiso de vuelo cuya vigencia terminó y que sigue en *Solicitado* o *Aprobado*. **No completa nada**: completar exige el PDF firmado de la DGAC (R2.4) y un permiso puede caducar sin haber volado nunca. No toca los denegados ni los completados. Cada cierre queda en el historial del permiso con `expire_permissions` como autor | Diario, temprano (antes de `generate_alerts`, para que un permiso ya cerrado no genere alerta ese mismo día) |
@@ -381,6 +381,121 @@ queda como *reemplazada*, no se borra, y la narrativa ya escrita viaja a la nuev
 
 `check_scheduled_jobs` lo vigila con **35 días** de holgura: pasado el mes y medio
 sin corrida, avisa a Dirección.
+
+### Baterías de AeroLink (X.4b, LV-294)
+
+AeroLink publica el inventario de baterías en `GET /api/v1/devices/?kind=battery`
+(`AL-107`) y `sync_batteries` lo espeja en `registry.Battery`. **Estuvo roto en `p340`
+ocho semanas sin que nadie lo supiera**: el despliegue de AeroLink era anterior al
+arreglo de un `Enum` y respondía `500`, y como `sync_batteries` no tenía timer ni
+estaba en el vigilante, no había nada que lo mirara. Corregido el 2026-10-08; esto lo
+programa y lo vigila.
+
+**El camino corto: un script, en la VM, después de desplegar AeroControl.**
+
+```bash
+cd /opt/aerocontrol && bash scripts/activar-sync-baterias.sh
+```
+
+Hace los cinco pasos de abajo, pide `sudo` cuando lo necesita, es **idempotente** (se
+puede repetir) y **sólo instala el timer si la simulación salió bien**. Nunca imprime
+el token. Los pasos siguientes son lo que hace, por si hay que hacerlo a mano o algo
+falla a medias.
+
+**Los pasos, en orden.** Lo que lleva `sudo` lo corre quien lo tenga.
+
+> **Por qué `systemd-run` y no `sudo -u levdigital01 bash -c '. /etc/aerocontrol.env'`.**
+> `/etc/aerocontrol.env` lo lee **sólo root** (así lo carga systemd, y por eso los
+> trabajos reciben los secretos sin poder leer el archivo). `levdigital01` no puede
+> hacer `source` de él, así que ese comando fallaría por permisos. `systemd-run` con
+> `EnvironmentFile=` reproduce exactamente cómo corren los timers.
+
+**Paso 1 — las variables.** `/etc/aerocontrol.env` necesita `AEROLINK_API_URL` y
+   `AEROLINK_API_TOKEN`. El token es el `SERVICE_TOKEN` de `/opt/aerolink/.env`, y
+   **no se teclea ni se imprime**: se copia de un archivo al otro.
+
+   ```bash
+   sudo sh -c 'printf "AEROLINK_API_URL=http://127.0.0.1:8081/api/v1\nAEROLINK_API_TOKEN=%s\n" \
+     "$(grep -E "^SERVICE_TOKEN=" /opt/aerolink/.env | cut -d= -f2-)" >> /etc/aerocontrol.env'
+   sudo grep -c "^AEROLINK_" /etc/aerocontrol.env      # debe decir 2, sin mostrar los valores
+   ```
+
+   La URL es loopback: los dos sistemas comparten la VM y esto nunca sale a internet.
+
+**Paso 2 — `audit_serial_case`, antes del primer sync real** (sólo lectura): cambiar
+   `save()` no reescribe las filas ya guardadas, y si dos seriales difieren sólo por
+   mayúsculas la migración `0032` se niega a correr.
+
+   ```bash
+   sudo systemd-run --quiet --wait --pipe --collect --uid=levdigital01 \
+     -p WorkingDirectory=/opt/aerocontrol -p EnvironmentFile=/etc/aerocontrol.env \
+     /home/levdigital01/.local/bin/uv run python manage.py audit_serial_case
+   ```
+
+**Paso 3 — simular, y leer el resultado**, antes de escribir nada:
+
+   ```bash
+   sudo systemd-run --quiet --wait --pipe --collect --uid=levdigital01 \
+     -p WorkingDirectory=/opt/aerocontrol -p EnvironmentFile=/etc/aerocontrol.env \
+     /home/levdigital01/.local/bin/uv run python manage.py sync_batteries --dry-run
+   ```
+
+   Con el inventario de AeroLink todavía vacío dice `0 created, 0 updated`, y eso es
+   **correcto** pero no prueba que el sync funcione: se prueba con baterías cargadas
+   (en AeroLink, `python -m aerolink.devices import`).
+
+**Paso 4 — el timer**, a las 05:45 UTC: antes de `generate_alerts` (06:00), para que
+cualquier regla que mire baterías lea el inventario del día. Este bloque va **sin
+sangría** a propósito: el `EOF` de un heredoc indentado no cierra, y copiarlo desde el
+archivo crudo lo rompería.
+
+```bash
+sudo bash -c '
+mkjob() {  # la misma función de arriba
+  cat >/etc/systemd/system/aerocontrol-$1.service <<EOF
+[Unit]
+Description=AeroControl $1
+After=network.target
+
+[Service]
+Type=oneshot
+User=levdigital01
+WorkingDirectory=/opt/aerocontrol
+EnvironmentFile=/etc/aerocontrol.env
+ExecStart=/home/levdigital01/.local/bin/uv run python manage.py $2
+EOF
+  cat >/etc/systemd/system/aerocontrol-$1.timer <<EOF
+[Unit]
+Description=AeroControl $1 (scheduled)
+
+[Timer]
+OnCalendar=$3
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+}
+mkjob sync-batteries "sync_batteries" "*-*-* 05:45:00"
+systemctl daemon-reload
+systemctl enable --now aerocontrol-sync-batteries.timer
+'
+```
+
+**Paso 5 — comprobar** que quedó y a qué hora corre:
+`systemctl list-timers 'aerocontrol-sync*'`.
+
+**Mientras el timer no exista**, `check_scheduled_jobs` lee `sync_batteries` como
+«nunca corrió», igual que pasó con `check_client_letters`: es lo que debe decir. Por
+eso conviene hacer los cinco pasos **en la misma sesión** en que se despliega esto, y
+no dejar el vigilante escribiendo a Dirección por un trabajo que todavía no se
+programó.
+
+**Qué ve el vigilante si AeroLink se cae.** El comando registra la falla **dentro** de
+su `JobRun` (antes la registraba fuera y no quedaba nada): `check_scheduled_jobs` la
+reporta en su siguiente pasada —09:00 UTC— con el motivo, por ejemplo
+`CommandError: AeroLink unavailable: HTTP 500`. El correo sólo sale si `EMAIL_HOST`
+está configurado; si no, queda en el centro de administración, que es donde se mira.
 
 ## Prueba antes de programar
 
