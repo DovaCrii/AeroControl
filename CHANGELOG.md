@@ -10,6 +10,9 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Las fechas de un documento de permiso se toman del permiso (`LV-294`).** Si se dejan en blanco al
+  cargar la autorización de la DGAC, la emisión y el vencimiento salen de la vigencia del permiso.
+
 - **Que AeroLink caído se vea, y que el espejo de baterías tenga timer (`LV-294`).** El endpoint de
   baterías de AeroLink respondió `500` en `p340` ocho semanas sin que nadie lo supiera. `sync_batteries`
   ahora registra el fallo **dentro** de su `JobRun` (antes salía sin dejar nada, porque cargaba el

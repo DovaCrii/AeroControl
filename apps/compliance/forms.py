@@ -409,6 +409,13 @@ class DocumentForm(AeroModelForm):
         # holds. Say where they came from, or a pre-filled field reads as a
         # value someone else entered and nobody dares correct it -- and the
         # DGAC can perfectly well issue a resolution on a date of its own.
+        # LV-294: para un permiso de vuelo las fechas salen del propio permiso, así que
+        # dejarlas en blanco es válido ahí (se resuelve en `clean`). Para cualquier otra
+        # entidad `clean` sigue exigiendo la fecha de emisión.
+        self.fields["issue_date"].required = False
+        self.fields["issue_date"].help_text = _(
+            "For a flight permit, leave the dates blank to take the permit's validity."
+        )
         if not self.is_bound:
             for name in ("issue_date", "expiry_date"):
                 if self.initial.get(name):
@@ -495,11 +502,17 @@ class DocumentForm(AeroModelForm):
             )
             if record is None:
                 self.add_error("object_id", _("Select an active existing record."))
-            elif not cleaned.get("title"):
+            else:
+                self._take_dates_from_permit(cleaned, record)
+            if record is not None and not cleaned.get("title"):
                 cleaned["title"] = self._autogenerate_title(
                     record, cleaned.get("doc_type"), cleaned.get("issue_date")
                 )
 
+        if "issue_date" in self.errors:
+            pass
+        elif not cleaned.get("issue_date"):
+            self.add_error("issue_date", _("This field is required."))
         uploaded = cleaned.get("file")
         if uploaded:
             for error in upload_errors(uploaded):
@@ -511,6 +524,25 @@ class DocumentForm(AeroModelForm):
                 "expiry_date", _("This document type requires an expiry date.")
             )
         return cleaned
+
+    @staticmethod
+    def _take_dates_from_permit(cleaned, record):
+        """LV-294: la vigencia de un permiso es la del documento que lo respalda.
+
+        Pedido del usuario (2026-10-08, con la autorización de la DGAC a la vista): las
+        fechas de inicio y fin de la operación **están en el propio permiso**, y
+        volver a teclearlas sólo abre la puerta a equivocarse. Si la persona dejó una
+        fecha en blanco se completa con la del permiso; una fecha escrita a mano se
+        respeta (la DGAC puede emitir una resolución con fecha propia).
+        """
+        from apps.operations.models import FlightPermission
+
+        if not isinstance(record, FlightPermission):
+            return
+        if not cleaned.get("issue_date") and record.valid_from:
+            cleaned["issue_date"] = record.valid_from
+        if not cleaned.get("expiry_date") and record.valid_until:
+            cleaned["expiry_date"] = record.valid_until
 
     def _fingerprint(self, uploaded):
         """LV-200, paso 1: la huella del archivo, y quién ya la tiene.
