@@ -27,6 +27,7 @@ revisa.
 
 import logging
 import re
+from datetime import date
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +77,57 @@ def folio_from_pdf(stream):
     found = {
         match.group(1).lstrip("0") or "0" for match in FOLIO_PATTERN.finditer(text)
     }
+    if len(found) != 1:
+        return None
+    return found.pop()
+
+
+# LV-295: «Rango de fecha autorizado para efectuar las siguientes operaciones :
+# 10/10/2026-10/01/2027». Día/mes/año, como escribe la DGAC. El texto entre «fecha» y
+# los dos puntos se tolera porque es lo que el PDF puede reformular sin avisar.
+WINDOW_PATTERN = re.compile(
+    r"Rango\s+de\s+fecha[^:]*:\s*"
+    r"(\d{1,2})/(\d{1,2})/(\d{4})\s*-\s*(\d{1,2})/(\d{1,2})/(\d{4})",
+    re.IGNORECASE,
+)
+
+
+def window_from_pdf(stream):
+    """La vigencia `(desde, hasta)` que declara el PDF, o `None` si no hay una sola.
+
+    LV-295, pedido del usuario (2026-10-08, con la autorización a la vista): la
+    vigencia del permiso *la entrega el PDF* y debe **cruzarse** con la del permiso
+    para aprobar. Misma regla que `folio_from_pdf`: ante la duda devuelve `None` y el
+    camino manual queda intacto -- no hay fecha, hay dos candidatas, o el archivo no
+    se lee --, porque una vigencia equivocada leída sola es peor que una en blanco.
+
+    Nunca levanta.
+    """
+    try:
+        from pypdf import PdfReader
+
+        reader = PdfReader(stream)
+        text = "\n".join(
+            page.extract_text() or "" for page in reader.pages[:PAGES_TO_READ]
+        )
+    except Exception:  # noqa: BLE001 - cualquier PDF ilegible es "sin lectura"
+        logger.info("dgac_window_unreadable", exc_info=True)
+        return None
+    return window_from_text(text)
+
+
+def window_from_text(text):
+    """El mismo criterio de `window_from_pdf`, sobre texto ya extraído (testeable)."""
+    found = set()
+    for match in WINDOW_PATTERN.finditer(text):
+        d1, m1, y1, d2, m2, y2 = (int(part) for part in match.groups())
+        try:
+            start, end = date(y1, m1, d1), date(y2, m2, d2)
+        except ValueError:
+            return None
+        if end < start:
+            return None
+        found.add((start, end))
     if len(found) != 1:
         return None
     return found.pop()

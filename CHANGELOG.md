@@ -10,6 +10,9 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Aprobar cruza la vigencia con el PDF de la DGAC (`LV-295`).** La autorización se lee: sin fechas en el
+  permiso las recibe, con fechas distintas no se aprueba. Y el formulario del permiso resume arriba sus errores.
+
 - **Las fechas de un documento de permiso se toman del permiso (`LV-294`).** Si se dejan en blanco al
   cargar la autorización de la DGAC, la emisión y el vencimiento salen de la vigencia del permiso.
 
