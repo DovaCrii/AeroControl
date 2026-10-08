@@ -407,13 +407,14 @@ en `CostCenter`).{% endcomment %}
         tabla ya deja fuera las faenas que **no vuelan** (`operates_flights`) y las
         de contrato cerrado (`LV-236`), así que un rojo acá es siempre una faena que
         opera y no puede.{% endcomment %}
-        <tr{% if not row.in_force %} class="{% if row.awaiting %}row-awaiting{% else %}row-critical{% endif %}"{% endif %}>
+        {% comment %}LV-296: un permiso **aprobado que todavía no empieza** (aprobado el 8, vigente desde el 10) no es «Ninguno»: existe y habilita desde la fecha. La fila lo dice en ámbar con la fecha de inicio. **El conteo no cambia** —sigue sin contar como vigente para «Faenas sin permiso» ni para el indicador firmado, que es `LV-258`—; sólo deja de enseñarse como si no hubiera nada.{% endcomment %}
+        <tr{% if not row.in_force %} class="{% if row.awaiting or row.not_started %}row-awaiting{% else %}row-critical{% endif %}"{% endif %}>
           <td>
             <a href="{% url 'permission-list' %}?cost_center={{ row.cost_center.pk }}" class="text-decoration-none">
               <span class="cc-chip me-2">{{ row.cost_center.code }}</span>{{ row.cost_center.name }}
             </a>
           </td>
-          <td class="text-center">{% if row.in_force %}<b>{{ row.in_force }}</b>{% elif row.awaiting %}<span class="sev-text-warning">{% translate "Awaiting" %}</span>{% else %}<span class="text-warning-emphasis">{% translate "None" %}</span>{% endif %}</td>
+          <td class="text-center">{% if row.in_force %}<b>{{ row.in_force }}</b>{% elif row.awaiting %}<span class="sev-text-warning">{% translate "Awaiting" %}</span>{% elif row.not_started %}<span class="sev-text-warning">{% blocktranslate with date=row.next_start|date:"d/m" %}Starts {{ date }}{% endblocktranslate %}</span>{% else %}<span class="text-warning-emphasis">{% translate "None" %}</span>{% endif %}</td>
           <td class="text-center">{% if row.next_expiry %}{{ row.next_expiry|date:"Y-m-d" }}{% if row.days_remaining is not None %} <span class="text-muted">· {% blocktranslate count days=row.days_remaining %}{{ days }} day left{% plural %}{{ days }} days left{% endblocktranslate %}</span>{% endif %}{% else %}<span class="text-muted">—</span>{% endif %}</td>
           <td class="text-center">{% if row.soon %}<span class="text-warning-emphasis">{{ row.soon }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
           <td class="text-center">{% if row.awaiting %}<span class="sev-text-warning">{{ row.awaiting }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>

@@ -10,6 +10,9 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **El panel dice cuándo empieza un permiso aprobado que aún no empieza (`LV-296`).** La faena sale en ámbar
+  con «Inicia el dd/mm» y no en rojo con «Ninguno». El conteo de faenas sin permiso no cambia.
+
 - **Aprobar cruza la vigencia con el PDF de la DGAC (`LV-295`).** La autorización se lee: sin fechas en el
   permiso las recibe, con fechas distintas no se aprueba. Y el formulario del permiso resume arriba sus errores.
 
