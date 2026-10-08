@@ -10,6 +10,12 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Que AeroLink caído se vea, y que el espejo de baterías tenga timer (`LV-294`).** El endpoint de
+  baterías de AeroLink respondió `500` en `p340` ocho semanas sin que nadie lo supiera. `sync_batteries`
+  ahora registra el fallo **dentro** de su `JobRun` (antes salía sin dejar nada, porque cargaba el
+  payload antes de abrir el registro) y entra al vigilante con 48 h. `AEROLINK_*` documentadas en
+  `.env.example` y `scripts/activar-sync-baterias.sh` para dejarlo funcionando en la VM.
+
 - **«Vuelos»: los permisos van en una lista desplegable (`LV-293`).** El muro de botones no escalaba;
   ahora es un selector agrupado por faena que abre el registro de operaciones del permiso elegido.
 

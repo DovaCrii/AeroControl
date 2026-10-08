@@ -42,11 +42,19 @@ SUMMARY_MAX_LENGTH = 300
 # LV-267: `check_client_letters` entra con 48 h. Es el escalamiento que el informe
 # promete a la DGAC y existía sin timer ni registro; el vigilante lo da por
 # «nunca corrió» hasta que alguien instale su timer, que es justo lo que debe decir.
+#
+# LV-294: `sync_batteries` entra con 48 h. Es el único trabajo cuya falla viene de
+# *otro sistema*: el 2026-08-26 AeroLink empezó a responder 500 en `p340` y **nadie
+# lo supo durante ocho semanas**, porque no existía timer ni registro que lo
+# mirara. Con 48 h, una corrida fallida no grita (falló una vez, no dos) y una
+# caída sostenida sí. Como `check_client_letters`, se lee «nunca corrió» hasta que
+# su timer exista, que es justo lo que debe decir.
 DAILY_JOBS = {
     "generate_alerts": 48,
     "send_alert_digest": 48,
     "backup": 48,
     "check_client_letters": 48,
+    "sync_batteries": 48,
     "generate_monthly_report": 24 * 35,
 }
 WATCHED_JOBS = [
@@ -54,6 +62,7 @@ WATCHED_JOBS = [
     "send_alert_digest",
     "backup",
     "check_client_letters",
+    "sync_batteries",
     "send_executive_report",
     # LV-250: sin esto, que el borrador del informe no se congelara el día 1 se
     # descubría el día 5, cuando alguien abría la pantalla para firmarlo.
