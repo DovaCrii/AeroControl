@@ -9610,3 +9610,9 @@ msgstr "Aeronaves del permiso"
 
 msgid "Open register"
 msgstr "Abrir registro"
+
+msgid "For a flight permit, leave the dates blank to take the permit's validity."
+msgstr "Para un permiso de vuelo, deje las fechas en blanco para tomar la vigencia del permiso."
+
+msgid "This field is required."
+msgstr "Este campo es obligatorio."
