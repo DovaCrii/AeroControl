@@ -92,7 +92,8 @@ class TestTheVisualLayer:
     def test_the_layer_does_not_redefine_the_state_colours(self):
         """Sólo suma relieve: no toca los tokens medidos de severidad ni del tema."""
         css = IDENTITY_CSS.read_text(encoding="utf-8")
-        assert "--sev-" not in css
+        # Se puede LEER un token de severidad (`var(--sev-…)`); lo que no se puede es redefinirlo.
+        assert not re.search(r"--sev-[a-z-]+\s*:", css)
         assert not re.search(r"--ac-[a-z-]+\s*:", css)
         # Lo único que el tema oscuro puede definir aquí son las variables propias `--id-*`.
         for block in re.findall(r"\[data-theme[^\]]*\]\s*\{([^}]*)\}", css):

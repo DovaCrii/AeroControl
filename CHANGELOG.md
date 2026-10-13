@@ -10,6 +10,9 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Rediseño visible (`LV-307`).** Portada de inicio de sesión en dos paneles con una ruta de vuelo y un dron
+  animado; indicadores del panel con icono, cifra grande y barra con la meta; tipografía de AeroAcademy
+  (Archivo, servida desde el propio servidor) en títulos y cifras; fondo de plano técnico. Lleva `collectstatic`.
 - **Datos personales reales fuera del repositorio público (`LV-306`).** Cinco RUT y correos corporativos
   reemplazados por equivalentes ficticios en pruebas, documentos y código; sin cambios de comportamiento.
   El historial de git conserva los originales: limpiarlo es decisión del usuario.

@@ -216,20 +216,156 @@
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--ac-primary) 14%, transparent);
 }
 
-/* ── Portada de inicio de sesión ────────────────────────────────────────── */
-.login-page { position: relative; }
+/* ── Inicio de sesión: presentación de marca + formulario (LV-307) ───────────
+ * Pedido del usuario (2026-10-13, con captura): la portada «se ve igual» y la ilustración quedó
+ * como una pegatina suelta. Ahora son dos paneles en pantallas anchas: a la izquierda la marca
+ * (cuadrícula técnica, ruta de vuelo con un dron animado, mensaje y puntos clave) y a la derecha
+ * el formulario, que no cambia. Bajo 992 px sólo queda el formulario, como antes. */
+.login-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  padding: 0;
+  min-height: 100vh;
+  align-items: stretch;
+}
 
-.login-art { display: none; }
+.login-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
 
-@media (min-width: 1100px) {
-  .login-art {
-    display: block;
+.login-showcase { display: none; }
+
+@media (min-width: 992px) {
+  .login-page { grid-template-columns: minmax(0, 1.2fr) minmax(400px, 0.8fr); }
+
+  .login-showcase {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 2rem;
+    padding: 2.75rem 3.5rem;
+    overflow: hidden;
+    color: #eaf0ff;
+    background:
+      radial-gradient(720px 440px at 18% 8%, rgb(34 211 197 / 24%), transparent 62%),
+      radial-gradient(640px 420px at 92% 92%, rgb(56 189 248 / 20%), transparent 62%),
+      linear-gradient(160deg, #0d1c3a, #070f20);
+  }
+
+  /* La cuadrícula técnica de AeroAcademy, que se desvanece hacia abajo. */
+  .login-showcase::before {
+    content: "";
     position: absolute;
-    right: 5vw;
-    bottom: 6vh;
-    width: min(30vw, 400px);
+    inset: 0;
+    background-image:
+      linear-gradient(rgb(255 255 255 / 6%) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(255 255 255 / 6%) 1px, transparent 1px);
+    background-size: 38px 38px;
+    mask-image: linear-gradient(180deg, #000 0%, transparent 88%);
+    pointer-events: none;
+  }
+
+  .login-showcase > * { position: relative; z-index: 1; }
+
+  .showcase-route {
+    position: absolute !important;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0 !important;
+    opacity: 0.9;
+  }
+
+  .showcase-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  .showcase-kicker {
+    margin: 0 0 0.9rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #22d3c5;
+  }
+
+  .showcase-title {
+    margin: 0;
+    max-width: 15ch;
+    font-size: clamp(2.2rem, 3.6vw, 3.6rem);
+    font-weight: 800;
+    line-height: 1.04;
+    letter-spacing: -0.03em;
+  }
+
+  .showcase-points {
+    list-style: none;
+    margin: 1.75rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 0.95rem;
+    max-width: 30rem;
+  }
+
+  .showcase-points li {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    color: #cdd9f3;
+    font-size: 1.02rem;
+  }
+
+  .pt-ico {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: rgb(34 211 197 / 15%);
+    color: #22d3c5;
+    box-shadow: inset 0 0 0 1px rgb(34 211 197 / 30%);
+  }
+
+  .pt-ico .nav-icon { width: 22px; height: 22px; color: inherit; }
+
+  .showcase-art {
+    align-self: flex-end;
+    width: min(340px, 62%);
+    transform: rotate(2.5deg);
+    box-shadow: 0 24px 50px -22px rgb(0 0 0 / 70%);
   }
 }
+
+/* El dron y la ruta (SVG de fondo del panel de marca). */
+.route-line {
+  fill: none;
+  stroke: rgb(34 211 197 / 55%);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-dasharray: 7 9;
+}
+
+.route-dot { fill: #22d3c5; }
+.route-dot-end { fill: #38bdf8; }
+
+.drone-fly { transform: translate(420px, 300px); }
+
+.drone-arm { fill: none; stroke: #cfd8ea; stroke-width: 5; stroke-linecap: round; }
+.drone-disc { fill: rgb(56 189 248 / 24%); stroke: #7dd3fc; stroke-width: 1.4; }
+.blades { fill: none; stroke: #e6f1ff; stroke-width: 2.2; stroke-linecap: round; }
+.drone-rotor .blades { transform-box: fill-box; transform-origin: center; }
+.drone-core { fill: #22d3c5; stroke: #0b1b2b; stroke-width: 2; }
+.drone-lens { fill: #0b1b2b; }
 
 /* ── Toda la aplicación, por selectores compartidos ─────────────────────────
  * Se engancha a las clases que ya usan las ~150 plantillas (`.card`, `.page-header`,
@@ -338,6 +474,131 @@
   .sidebar.is-collapsed a:hover { transform: none; }
 }
 
+/* ── Tipografía de AeroAcademy (LV-307) ──────────────────────────────────────
+ * Archivo, variable (peso 100–900 y ancho 62–125 %), **servida desde este mismo servidor**: sin
+ * CDN ni pedido a terceros, licencia SIL OFL 1.1 (`static/fonts/OFL-Archivo.txt`). Sólo para
+ * títulos y cifras; el texto corrido sigue en la fuente del sistema. Si el archivo no carga, cae
+ * a `system-ui` y la página no se mueve (`font-display: swap`). Decisión del usuario
+ * (2026-10-13: «más cercana a AeroAcademy»), que reemplaza a la de `docs/ux-ui-plan.md` §8
+ * («no se agrega fuente web»): aquel argumento era el pedido a la red, que aquí no existe. */
+@font-face {
+  font-family: "Archivo";
+  src: url("../fonts/Archivo.woff2") format("woff2");
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-display: swap;
+}
+
+:root {
+  --id-display: "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+h1,
+h2,
+.page-title,
+.login-title,
+.showcase-title,
+.showcase-brand,
+.summary-card strong {
+  font-family: var(--id-display);
+  font-stretch: 90%;
+}
+
+h1,
+.page-title,
+.showcase-title { font-weight: 800; letter-spacing: -0.03em; }
+
+/* ── Fondo de plano técnico, en toda la aplicación ───────────────────────── */
+body {
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--ac-text) 4%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--ac-text) 4%, transparent) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* ── Indicadores del panel: icono, cifra grande y barra con meta (LV-307) ── */
+.summary-card--kpi {
+  position: relative;
+  gap: 0.4rem;
+  padding: 0.95rem 1.1rem 1.05rem 1.3rem;
+  overflow: hidden;
+}
+
+.summary-card--kpi::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: var(--kpi-accent, var(--ac-primary));
+}
+
+.kpi-fleet { --kpi-accent: #22d3c5; }
+.kpi-insurance { --kpi-accent: #38bdf8; }
+.kpi-credentials { --kpi-accent: #a78bfa; }
+.kpi-permits { --kpi-accent: #fbbf24; }
+
+.kpi-head { display: flex; align-items: center; gap: 0.65rem; }
+
+.kpi-ico {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  color: var(--kpi-accent);
+  background: color-mix(in srgb, var(--kpi-accent) 18%, transparent);
+}
+
+.kpi-ico .nav-icon { width: 20px; height: 20px; color: inherit; }
+
+.summary-card--kpi strong { font-size: 2.35rem; font-weight: 800; letter-spacing: -0.02em; }
+
+.kpi-meter {
+  display: block;
+  width: 100%;
+  height: 8px;
+  margin: 0.15rem 0 0.1rem;
+  border: 0;
+  background: transparent;
+}
+
+.kpi-meter::-webkit-meter-bar {
+  height: 8px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ac-text) 11%, transparent);
+}
+
+.kpi-meter::-webkit-meter-optimum-value {
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--kpi-accent, var(--ac-primary)),
+    color-mix(in srgb, var(--kpi-accent, var(--ac-primary)) 55%, #fff)
+  );
+}
+
+.kpi-meter::-webkit-meter-suboptimum-value {
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.kpi-meter::-webkit-meter-even-less-good-value {
+  border-radius: 999px;
+  background: #ef4444;
+}
+
+.kpi-meter::-moz-meter-bar { border-radius: 999px; background: var(--kpi-accent, var(--ac-primary)); }
+.kpi-meter:-moz-meter-sub-optimum::-moz-meter-bar { background: #f59e0b; }
+.kpi-meter:-moz-meter-sub-sub-optimum::-moz-meter-bar { background: #ef4444; }
+
+/* La fila «sin permiso» sigue siendo crítica, pero deja de ser un bloque de ladrillo: el rojo se
+   mezcla con la superficie. El contraste del texto sólo mejora (el fondo se acerca al de la tarjeta). */
+tr.row-critical > td {
+  background-color: color-mix(in srgb, var(--sev-critical-bg) 58%, var(--ac-surface));
+}
+
 /* ── Movimiento: sólo si la persona no pidió reducirlo ──────────────────── */
 @media (prefers-reduced-motion: no-preference) {
   @keyframes ac-float {
@@ -361,14 +622,43 @@
   }
 
   .empty-art img,
-  .login-art img {
+  .showcase-art img {
     animation: ac-float 3.6s ease-in-out infinite alternate;
   }
 
-  .kpi-grid .summary-card { animation: ac-rise 0.35s ease-out both; }
-  .kpi-grid .summary-card:nth-child(2) { animation-delay: 0.05s; }
-  .kpi-grid .summary-card:nth-child(3) { animation-delay: 0.1s; }
-  .kpi-grid .summary-card:nth-child(4) { animation-delay: 0.15s; }
+  /* El dron recorre la ruta (puntos calculados sobre la propia curva) y entra y sale con
+     un desvanecido para que el salto de vuelta al inicio no se vea. */
+  @keyframes ac-fly {
+    0% { transform: translate(60px, 470px); opacity: 0; }
+    6% { opacity: 1; }
+    10% { transform: translate(140px, 436px); }
+    20% { transform: translate(213px, 397px); }
+    30% { transform: translate(282px, 358px); }
+    40% { transform: translate(350px, 324px); }
+    50% { transform: translate(420px, 300px); }
+    60% { transform: translate(490px, 276px); }
+    70% { transform: translate(557px, 243px); }
+    80% { transform: translate(623px, 203px); }
+    90% { transform: translate(690px, 158px); opacity: 1; }
+    100% { transform: translate(760px, 110px); opacity: 0; }
+  }
+
+  @keyframes ac-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .drone-fly { animation: ac-fly 14s linear infinite; }
+  .drone-body { animation: ac-float 2.4s ease-in-out infinite alternate; }
+  .drone-rotor .blades { animation: ac-spin 0.45s linear infinite; }
+
+  .kpi-grid .summary-card,
+  .readiness-strip .summary-card { animation: ac-rise 0.45s ease-out both; }
+  .kpi-grid .summary-card:nth-child(2),
+  .readiness-strip .summary-card:nth-child(2) { animation-delay: 0.06s; }
+  .kpi-grid .summary-card:nth-child(3),
+  .readiness-strip .summary-card:nth-child(3) { animation-delay: 0.12s; }
+  .kpi-grid .summary-card:nth-child(4),
+  .readiness-strip .summary-card:nth-child(4) { animation-delay: 0.18s; }
 
   .hero-route .route-line { animation: ac-dash 1.8s linear infinite; }
 
