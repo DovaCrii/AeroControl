@@ -139,6 +139,15 @@ LOCALE_PATHS = [BASE_DIR / "locale"]
 TIME_ZONE = config("TIME_ZONE", default="America/Santiago")
 USE_I18N = True
 USE_TZ = True
+# Contact block printed on the report letterhead. The defaults are generic on
+# purpose (this repository is public): each deployment sets the real values in
+# its environment, otherwise the reports print the placeholder text.
+REPORT_CONTACT_ADDRESS = config(
+    "REPORT_CONTACT_ADDRESS", default="Calle Ejemplo 123, Ciudad"
+)
+REPORT_CONTACT_WEB = config("REPORT_CONTACT_WEB", default="www.example.com")
+REPORT_CONTACT_PHONE = config("REPORT_CONTACT_PHONE", default="+56 2 0000 0000")
+REPORT_CONTACT_EMAIL = config("REPORT_CONTACT_EMAIL", default="contacto@example.com")
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"

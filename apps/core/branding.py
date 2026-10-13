@@ -49,8 +49,11 @@ FONT_ITALIC = "Helvetica-Oblique"
 
 # -- Identity (2026 signature block) ----------------------------------------
 LEGAL_NAME = "J.E.J. Ingeniería S.A."
-ADDRESS = "Av. Apoquindo 2930 Piso 11, Las Condes, Santiago de Chile"
-WEBSITE = "www.jej.cl"
+# The contact data (address, site) is read from settings so that the real values
+# live in each deployment's environment and not in this public repository; the
+# defaults in config/settings/base.py are generic placeholders.
+ADDRESS = settings.REPORT_CONTACT_ADDRESS
+WEBSITE = settings.REPORT_CONTACT_WEB
 
 # The signature template carries the phone as a per-person placeholder
 # ("(56) Teléfono Fijo – Teléfono Celular"), so there is no corporate number to
