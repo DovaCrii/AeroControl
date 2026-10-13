@@ -10,6 +10,8 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+
+- **Asistente: tope por hora y mensajes de límite (LV-308).** Cada persona puede hacer `AI_ASSISTANT_MAX_PER_HOUR` preguntas por hora (30 por omisión) para no gastar los créditos de prueba de NVIDIA; un 429 o una llave rechazada tienen su propio mensaje en vez del genérico.
 - **Datos personales reales fuera del repositorio público (`LV-306`).** Cinco RUT y correos corporativos
   reemplazados por equivalentes ficticios en pruebas, documentos y código; sin cambios de comportamiento.
   El historial de git conserva los originales: limpiarlo es decisión del usuario.

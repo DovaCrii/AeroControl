@@ -15,6 +15,8 @@ import logging
 import time
 from dataclasses import dataclass, field
 
+from django.conf import settings
+from django.core.cache import cache
 from django.utils.translation import gettext as _
 
 from .client import AssistantUnavailable, NvidiaClient
@@ -51,6 +53,11 @@ def ask(user, question, client=None):
                 "environment."
             ),
             ok=False,
+        )
+
+    if _over_the_hourly_cap(user):
+        return Answer(
+            _("You have asked too many questions this hour. Try again later."), ok=False
         )
 
     started = time.monotonic()
@@ -97,14 +104,40 @@ def ask(user, question, client=None):
             _("The assistant needed too many steps. Try a simpler question."),
             ok=False,
         )
-    except AssistantUnavailable:
+    except AssistantUnavailable as error:
         return _finish(
-            user,
-            started,
-            tools_used,
-            _("The assistant is not available right now. Try again in a moment."),
-            ok=False,
+            user, started, tools_used, _unavailable_text(str(error)), ok=False
         )
+
+
+def _unavailable_text(reason):
+    """Un texto propio según por qué falló, sin detalles técnicos ni nada de la petición.
+
+    «Límite alcanzado» y «llave no aceptada» se distinguen porque se arreglan distinto: lo primero
+    se espera (créditos o ritmo del servicio de prueba), lo segundo lo corrige quien administra
+    el entorno.
+    """
+    if reason == "http-429":
+        return _("The assistant reached its usage limit. Try again later.")
+    if reason in ("http-401", "http-403"):
+        return _(
+            "The assistant's key was not accepted. Ask the administrator to check it."
+        )
+    return _("The assistant is not available right now. Try again in a moment.")
+
+
+def _over_the_hourly_cap(user):
+    """Cuenta la pregunta y dice si esta persona ya pasó su tope de la hora.
+
+    El contador vive en la caché por usuario y por hora: se reinicia solo al cambiar la hora y no
+    guarda nada de lo preguntado. Con el tope en 0 no cuenta nada.
+    """
+    cap = settings.AI_ASSISTANT_MAX_PER_HOUR
+    if not cap:
+        return False
+    key = f"assistant:{getattr(user, 'pk', 'anon')}:{int(time.time() // 3600)}"
+    cache.add(key, 0, timeout=3700)
+    return cache.incr(key) > cap
 
 
 def _finish(user, started, tools_used, text, ok):
