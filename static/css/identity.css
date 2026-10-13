@@ -277,8 +277,66 @@
   box-shadow: 0 8px 16px -10px var(--ac-primary);
 }
 
-/* El ítem activo del menú lleva una marca lateral además del fondo. */
-.sidebar .nav-item.active { box-shadow: inset 3px 0 0 var(--ac-primary); }
+/* ── Panel lateral ──────────────────────────────────────────────────────────
+ * Sólo CSS: el marcado, los seis grupos, los colores por sección (`LV-207`, con su contraste
+ * medido) y el modo icono (`LV-170`) no se tocan. Aquí van profundidad y movimiento. */
+.sidebar {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ac-primary) 7%, var(--ac-surface)) 0,
+      var(--ac-surface) 240px
+    ),
+    var(--ac-surface);
+  box-shadow: 1px 0 0 var(--ac-border), 14px 0 30px -26px rgb(0 0 0 / 60%);
+}
+
+.sidebar a {
+  border-radius: 12px;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.sidebar a:hover { transform: translateX(2px); }
+
+.sidebar .nav-icon { transition: transform 0.15s ease, filter 0.15s ease; }
+.sidebar a:hover .nav-icon { transform: scale(1.1); }
+
+/* El ítem activo: degradado de la marca hacia el borde, marca lateral y su icono con halo. */
+.sidebar a.active {
+  font-weight: 700;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--ac-primary) 22%, transparent),
+    color-mix(in srgb, var(--ac-primary) 6%, transparent)
+  );
+  box-shadow: inset 3px 0 0 var(--ac-primary);
+}
+
+.sidebar a.active .nav-icon {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 5px color-mix(in srgb, currentColor 55%, transparent));
+}
+
+/* Cada grupo abre con un tramo de color sobre su línea, como la barra de escala de los títulos. */
+.sidebar-label { position: relative; }
+
+.sidebar-label::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0.45rem;
+  width: 26px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--ac-primary);
+}
+
+.sidebar-label:first-of-type::before { display: none; }
+
+/* En modo icono las filas no se desplazan: los iconos van centrados. */
+@media (min-width: 769px) {
+  .sidebar.is-collapsed a:hover { transform: none; }
+}
 
 /* ── Movimiento: sólo si la persona no pidió reducirlo ──────────────────── */
 @media (prefers-reduced-motion: no-preference) {
@@ -324,4 +382,6 @@
   .summary-card:hover { transform: none; }
   .btn { transition: none; }
   .btn-primary:hover { transform: none; }
+  .sidebar a, .sidebar .nav-icon { transition: none; }
+  .sidebar a:hover, .sidebar a:hover .nav-icon { transform: none; }
 }
