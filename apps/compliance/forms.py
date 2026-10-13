@@ -525,24 +525,67 @@ class DocumentForm(AeroModelForm):
             )
         return cleaned
 
-    @staticmethod
-    def _take_dates_from_permit(cleaned, record):
-        """LV-297: la vigencia de un permiso es la del documento que lo respalda.
+    AUTHORIZATION_CODE = "dgac-rpa-operation-authorization"
 
-        Pedido del usuario (2026-10-08, con la autorización de la DGAC a la vista): las
-        fechas de inicio y fin de la operación **están en el propio permiso**, y
-        volver a teclearlas sólo abre la puerta a equivocarse. Si la persona dejó una
-        fecha en blanco se completa con la del permiso; una fecha escrita a mano se
-        respeta (la DGAC puede emitir una resolución con fecha propia).
+    @staticmethod
+    def _window_from_upload(uploaded):
+        """LV-299: la vigencia que declara el PDF recién subido, o `None`.
+
+        Lee sin consumir el archivo: lo rebobina antes y deja el cursor donde estaba,
+        porque después hay que guardarlo y calcular su huella.
+        """
+        from apps.operations.dgac_pdf import window_from_pdf
+
+        position = uploaded.tell()
+        try:
+            uploaded.seek(0)
+            return window_from_pdf(uploaded)
+        finally:
+            uploaded.seek(position)
+
+    def _take_dates_from_permit(self, cleaned, record):
+        """Completa las fechas en blanco de un documento de permiso: PDF, luego permiso.
+
+        LV-297, pedido del usuario (2026-10-08): las fechas de inicio y fin de la
+        operación **no se teclean**; volver a escribirlas sólo abre la puerta a
+        equivocarse. LV-299 (2026-10-13): *"yo puedo subir el permiso y eso saca las
+        fechas"* — un permiso recién creado **no tiene fechas** (la DGAC las entrega
+        con la autorización), así que derivarlas del permiso no alcanzaba y el
+        formulario se atascaba en «campo obligatorio» justo al subir el papel que las
+        trae.
+
+        Orden de autoridad, de mayor a menor: **lo escrito a mano** (la DGAC puede
+        emitir una resolución con fecha propia) → **el PDF de la autorización** (es la
+        fuente) → **el permiso**. El PDF sólo se lee para el tipo «Autorización de
+        Operación RPA» y sólo si falta alguna fecha; si no se puede leer (o trae dos
+        rangos) se cae al permiso, y si tampoco hay, el formulario pide las fechas
+        como siempre.
         """
         from apps.operations.models import FlightPermission
 
         if not isinstance(record, FlightPermission):
             return
-        if not cleaned.get("issue_date") and record.valid_from:
-            cleaned["issue_date"] = record.valid_from
-        if not cleaned.get("expiry_date") and record.valid_until:
-            cleaned["expiry_date"] = record.valid_until
+        missing = not cleaned.get("issue_date") or not cleaned.get("expiry_date")
+        doc_type = cleaned.get("doc_type")
+        uploaded = cleaned.get("file")
+        window = None
+        # Sólo se lee un archivo que ya pasó la validación de extensión, tamaño y
+        # firma: leer primero y validar después le daría a cualquier archivo, bueno
+        # o malo, una pasada por el analizador de PDF.
+        if (
+            missing
+            and uploaded
+            and doc_type is not None
+            and doc_type.code == self.AUTHORIZATION_CODE
+            and not upload_errors(uploaded)
+        ):
+            window = self._window_from_upload(uploaded)
+        if not cleaned.get("issue_date"):
+            cleaned["issue_date"] = (window[0] if window else None) or record.valid_from
+        if not cleaned.get("expiry_date"):
+            cleaned["expiry_date"] = (
+                window[1] if window else None
+            ) or record.valid_until
 
     def _fingerprint(self, uploaded):
         """LV-200, paso 1: la huella del archivo, y quién ya la tiene.
