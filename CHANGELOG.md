@@ -10,6 +10,8 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **La lista de permisos abre con los últimos generados primero (`LV-301`).** Antes salía por número
+  ascendente; un orden elegido en la columna sigue mandando.
 - **La habilitación escrita en la ficha del operador también cumple (`LV-300`).** «Mavic-Phantom-Matrice /
   Series» cubre un «Mavic 3 Enterprise» (la serie, no cualquier palabra del modelo).
 - **Subir la autorización de la DGAC saca las fechas del PDF (`LV-299`).** Un permiso recién solicitado no
