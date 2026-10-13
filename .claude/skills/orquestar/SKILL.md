@@ -23,7 +23,8 @@ Al lanzar un subagente pasa siempre `model` explícito (`"sonnet"` o `"haiku"`);
    qué no toca. Si trabajan en el mismo repo, cada uno en su propio `git worktree`. Sin `git push` ni PR en los subagentes.
 4. **Integrar (Opus).** Leer el informe, mirar el diff, correr `uv run pytest` y `uv run ruff check .`.
 5. **Verificar (Haiku).** Enlaces, inventarios y revisión mecánica al final.
-6. **Publicar (Opus).** Rama, PR, CI en verde. La persona revisa y fusiona.
+6. **Publicar (Opus).** Rama `codex/<tema>`, PR, CI en verde. **Opus fusiona** con el CI verde y sin conflictos
+   (decisión del usuario, 2026-10-05, en `AGENTS.md`); la persona **sólo despliega** en `p340`. Nunca `push --force`.
 
 ## Ahorro de tokens
 

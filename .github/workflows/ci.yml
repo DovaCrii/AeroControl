@@ -29,8 +29,6 @@ jobs:
       SECRET_KEY: ci-only-not-for-production
     steps:
       - uses: actions/checkout@v7
-      - name: Revisión de privacidad
-        run: python tools/kit/privacy_scan.py
       # El contexto `runner` no existe en `jobs.<id>.env` (sólo github, needs,
       # strategy, matrix, vars, secrets, inputs): usarlo ahí aborta el workflow
       # al arrancar. Las rutas se exportan aquí, donde $RUNNER_TEMP sí existe.
@@ -46,6 +44,12 @@ jobs:
           python-version: "3.12"
           enable-cache: true
       - run: uv sync --all-groups --locked
+      # Revisión de privacidad: el repositorio es público. **Es el mismo paso que corre
+      # `scripts/verify.ps1`** (regla de `LV-271`: un paso que está en uno y no en el otro es
+      # cómo el CI estuvo en rojo semanas con el gate local en verde). Va con `uv run` y no con
+      # un `python` suelto, que el runner no garantiza.
+      - name: Revisión de privacidad
+        run: uv run python tools/kit/privacy_scan.py
       - run: uv run python scripts/compile_translations.py
       - run: uv run ruff check .
       - run: uv run ruff format --check .

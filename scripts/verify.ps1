@@ -32,6 +32,9 @@ Invoke-Step "ruff check" @("run", "ruff", "check", ".")
 Invoke-Step "ruff format --check" @("run", "ruff", "format", "--check", ".")
 Invoke-Step "bandit" @("run", "bandit", "-q", "-c", "pyproject.toml", "-r", "apps", "config")
 Invoke-Step "pip-audit" @("run", "pip-audit")
+# Revisión de privacidad (el repositorio es público). Es el mismo paso que `.github/workflows/ci.yml`:
+# se agregan a los dos el mismo día, que es la regla de LV-271.
+Invoke-Step "privacy scan" @("run", "python", "tools/kit/privacy_scan.py")
 
 # El último paso del CI (`Staging preflight`) no estaba aquí, y por eso el CI pudo
 # estar en rojo semanas con este script en verde: la base de ese paso es un archivo
