@@ -4,7 +4,7 @@
 {% block content %}
 <div class="card p-4">
   <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-    <h1 class="h3 mb-0">{{ object }}{% if not object.is_active %} <span class="badge bg-secondary align-middle">{% translate "Archived" %}</span>{% endif %}</h1>
+    {% aircraft_art object as art %}<h1 class="h3 mb-0">{{ object }}{% if not object.is_active %} <span class="badge bg-secondary align-middle">{% translate "Archived" %}</span>{% endif %}</h1>
     <div class="d-flex gap-2">
       {% if list_url %}<a href="{{ list_url }}" class="btn btn-outline-secondary">← {% translate "Back to list" %}</a>{% endif %}
       {% if can_change and object.is_active %}<a href="{{ update_url }}" class="btn btn-outline-primary">{% translate "Edit" %}</a>{% endif %}
@@ -14,6 +14,19 @@
       <form method="post" action="{{ restore_url }}">{% csrf_token %}<button class="btn btn-outline-success" type="submit">{% translate "Restore" %}</button></form>
       {% endif %}
     </div>
+  </div>
+
+  {% comment %}LV-303: la aeronave a lo grande, con sus datos clave al lado. Una miniatura junto
+  al título se leía como un adorno (y el dibujo genérico se veía mal a ese tamaño). La imagen es
+  el dibujo de su serie, o una foto con derecho de uso si se dejó en `static/img/equipment/`.{% endcomment %}
+  <div class="fleet-hero">
+    <div class="fleet-hero-art"><img src="{{ art.url }}" alt="{{ object.model|default:object.registration }}"{% if art.photo %} class="is-photo"{% endif %}></div>
+    <dl class="fleet-hero-facts">
+      <div><dt>{% translate "Model" %}</dt><dd>{{ object.model|default:"—" }}</dd></div>
+      <div><dt>{% translate "Manufacturer" %}</dt><dd>{{ object.manufacturer|default:"—" }}</dd></div>
+      <div><dt>{% translate "Serial number" %}</dt><dd class="font-monospace">{{ object.serial_number|default:"—" }}</dd></div>
+      <div><dt>{% translate "Status" %}</dt><dd>{{ object.get_status_display }}</dd></div>
+    </dl>
   </div>
 
   {% include "generic/_fields_detail_table.html" %}

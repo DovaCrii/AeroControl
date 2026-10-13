@@ -51,6 +51,94 @@
   margin: 0 auto 0.75rem;
 }
 
+/* ── Ficha de una entidad: su ilustración junto al título ───────────────── */
+.entity-head {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.illus-sm {
+  flex: none;
+  width: 92px;
+  padding: 0.4rem;
+  border-radius: 16px;
+}
+
+/* ── Ficha de la aeronave: el equipo a lo grande ────────────────────────── */
+.fleet-hero {
+  display: grid;
+  grid-template-columns: minmax(220px, 340px) 1fr;
+  gap: 1.5rem;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--ac-border);
+  border-radius: 20px;
+  background:
+    radial-gradient(
+      420px 220px at 28% 40%,
+      color-mix(in srgb, var(--ac-primary) 18%, transparent),
+      transparent 70%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--ac-border) 55%, transparent) 0 1px,
+      transparent 1px 28px
+    ),
+    var(--ac-surface);
+}
+
+.fleet-hero-art img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 14px 14px rgb(0 0 0 / 22%));
+}
+
+.fleet-hero-art img.is-photo {
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 14px;
+  filter: none;
+}
+
+.fleet-hero-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.9rem 1.25rem;
+  margin: 0;
+}
+
+.fleet-hero-facts dt {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ac-text-secondary);
+}
+
+.fleet-hero-facts dd {
+  margin: 0.15rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 767.98px) {
+  .fleet-hero { grid-template-columns: 1fr; }
+  .fleet-hero-art { max-width: 300px; margin: 0 auto; }
+}
+
+/* Una foto real (si la persona la aporta) llena la lámina en vez de flotar en ella. */
+.illus-tile img.is-photo {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
 /* ── Indicadores del panel con relieve ──────────────────────────────────── */
 .summary-card {
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
