@@ -10,6 +10,8 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **La habilitación escrita en la ficha del operador también cumple (`LV-300`).** «Mavic-Phantom-Matrice /
+  Series» cubre un «Mavic 3 Enterprise» (la serie, no cualquier palabra del modelo).
 - **Subir la autorización de la DGAC saca las fechas del PDF (`LV-299`).** Un permiso recién solicitado no
   tiene fechas, así que ahora se leen del PDF subido (escrito a mano > PDF > permiso) en vez de pedirlas.
 - **«Registro de operaciones» usa los rótulos del portal (`LV-298`).** Fecha, Hora de inicio, Hora de fin,
