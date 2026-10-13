@@ -1,0 +1,32 @@
+{
+  "allow_email_domains": [
+    "example.test",
+    "example.cl",
+    "x.cl",
+    "test.cl",
+    "test.local",
+    "t.com",
+    "b.cl",
+    "jac.gob.cl"
+  ],
+  "allow_paths": [
+    "static/vendor/*"
+  ],
+  "allow_rules": {
+    "templates/reporting/_foot.html": ["email"],
+    "CHANGELOG.md": ["rut"],
+    "MASTER_PLAN.md": ["rut"],
+    "locale/es/LC_MESSAGES/django.po": ["rut"],
+    "apps/registry/catastro.py": ["rut"],
+    "apps/registry/forms.py": ["rut"],
+    "apps/registry/models.py": ["rut"],
+    "apps/registry/rut.py": ["rut"],
+    "apps/registry/test_lv143_operator_rut.py": ["rut"],
+    "apps/registry/test_lv145_catastro.py": ["rut"],
+    "apps/registry/test_lv169_employee_id_from_rut.py": ["rut"],
+    "apps/registry/test_lv8_lv9_lv10.py": ["rut"],
+    "apps/registry/test_merge.py": ["rut"],
+    "apps/core/test_lv190_the_import_cannot_duplicate_a_person.py": ["rut"],
+    "apps/core/tests.py": ["rut"]
+  }
+}

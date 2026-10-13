@@ -192,3 +192,46 @@ Tres reglas, y la tercera es la que importa:
 - Specs de cambios en curso: `openspec/changes/`.
 - Puesta en marcha: `README.md` y `scripts/setup.ps1`.
 - Documentación de producto: `docs/` (raíz). Notas internas/históricas: `docs/dev/` (no autoritativas).
+
+## Stack
+
+_Sección agregada al adoptar el estándar de trabajo (`docs/ESTANDAR_TRABAJO.md` de AeroAcademy); resume lo ya descrito arriba._
+
+- Python 3.12 con `uv` (dependencias bloqueadas en `uv.lock`).
+- Django 6.1 + Django REST framework, `django-axes`, `gunicorn`; plantillas Django y estáticos con `whitenoise`.
+- Base de datos: SQLite local-first; PostgreSQL cuando haya concurrencia real (`docs/postgresql-readiness.md`).
+- Pruebas y calidad: `pytest` (+ `pytest-django`, `pytest-xdist`, cobertura), `ruff` (lint y formato), `bandit`, `pip-audit`.
+- Despliegue: servidor interno en la VM `p340` (detalle en `.claude/skills/aerocontrol/references/despliegue-p340.md` y `docs/dev/ubuntu-vm-deploy.md`); `render.yaml`/`build.sh` para Render.
+
+## Comandos
+
+```powershell
+uv sync --all-groups          # instalar
+pwsh scripts/run.ps1          # ejecutar en desarrollo
+uv run pytest                 # pruebas (en paralelo: -n auto)
+uv run ruff check .           # lint
+uv run ruff format --check .  # formato
+pwsh scripts/verify.ps1       # gate completo antes de entregar
+python tools/kit/privacy_scan.py   # revisión de privacidad
+```
+
+## Privacidad
+
+El repositorio es **público**. Sin secretos, datos de clientes, datos personales ni datos operativos reales (RUT, correos y teléfonos reales,
+documentos, respaldos, bases `.sqlite3`). Secretos solo por variables de entorno; `DB_PATH`, `DOCUMENTS_DIR`, `LOGS_DIR` y `BACKUPS_DIR`
+fuera del repo. Lo privado va en `private/` (ignorado por git). `python tools/kit/privacy_scan.py` corre local y en el CI; los falsos
+positivos se declaran en `.privacy-scan.json`, las reglas no se debilitan. Si algo sensible llegó a un commit: avisar, rotar la clave y
+decidir con la persona cómo limpiar el historial. Claude Code no lee `.env`, claves ni `private/` (`deny` en `.claude/settings.json`).
+
+## Skills y subagentes
+
+| Skill (`.claude/skills/`) | Para qué |
+|---|---|
+| `aerocontrol` | Contexto del proyecto, plan y lecciones |
+| `abrir-pr`, `cerrar-tarea`, `verificar`, `terminar-bloques` | Flujo de PR y cierre de bloques (ver «Flujo de trabajo Git») |
+| `desplegar-p340` | Despliegue en la VM; solo cuando la persona lo decide |
+| `orquestar` | Repartir una ronda entre subagentes |
+| `revision-privacidad` | Revisar el diff antes de un PR en repo público |
+
+Política de modelos: Opus orquesta, Sonnet construye, Haiku verifica lo mecánico. Al lanzar un subagente se pasa `model` explícito, con
+dueños de archivos sin cruce, sin `push` ni PR.
