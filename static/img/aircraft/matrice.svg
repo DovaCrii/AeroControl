@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-14 0 348 220" role="img" aria-label="Matrice">
+<defs>
+<linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f6fa"/><stop offset=".55" stop-color="#d3d8e2"/><stop offset="1" stop-color="#9ea7b8"/></linearGradient>
+<linearGradient id="dark" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#586277"/><stop offset="1" stop-color="#202636"/></linearGradient>
+<linearGradient id="arm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6eaf1"/><stop offset="1" stop-color="#98a1b3"/></linearGradient>
+<linearGradient id="bat" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a4357"/><stop offset="1" stop-color="#171c29"/></linearGradient>
+<radialGradient id="disc" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ff8c42" stop-opacity=".08"/><stop offset=".72" stop-color="#ff8c42" stop-opacity=".4"/><stop offset="1" stop-color="#ff8c42" stop-opacity=".1"/></radialGradient>
+<radialGradient id="lens" cx=".34" cy=".3" r=".85"><stop offset="0" stop-color="#8fdcff"/><stop offset=".22" stop-color="#22507a"/><stop offset="1" stop-color="#050f1b"/></radialGradient>
+<radialGradient id="glowg"><stop offset="0" stop-color="#4ade80" stop-opacity=".9"/><stop offset="1" stop-color="#4ade80" stop-opacity="0"/></radialGradient>
+<radialGradient id="glowr"><stop offset="0" stop-color="#ff5a4f" stop-opacity=".9"/><stop offset="1" stop-color="#ff5a4f" stop-opacity="0"/></radialGradient>
+<filter id="soft" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>
+</defs>
+<style>
+.rotor{transform-box:fill-box;transform-origin:center;animation:blur .07s linear infinite alternate}
+.led{animation:blink 1.4s steps(2,end) infinite}
+.bob{animation:bob 3.4s ease-in-out infinite alternate}
+.shadow{animation:shade 3.4s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center}
+@keyframes blur{from{transform:scaleX(.78)}to{transform:scaleX(1)}}
+@keyframes blink{50%{opacity:.15}}
+@keyframes bob{from{transform:translateY(-3px)}to{transform:translateY(4px)}}
+@keyframes shade{from{transform:scaleX(1.04);opacity:.28}to{transform:scaleX(.92);opacity:.18}}
+@media (prefers-reduced-motion:reduce){.rotor,.led,.bob,.shadow{animation:none}}
+</style>
+<ellipse class="shadow" cx="160" cy="207" rx="104" ry="8" fill="#1f2430" opacity=".25" filter="url(#soft)"/>
+<g class="bob" stroke="#1f2430" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M104 100 L58 80 M216 100 L262 80" stroke-width="11"/><path d="M104 100 L58 80 M216 100 L262 80" stroke="url(#arm)" stroke-width="6"/>
+  <ellipse cx="54" cy="78" rx="14" ry="9.5" fill="url(#dark)"/><ellipse cx="266" cy="78" rx="14" ry="9.5" fill="url(#dark)"/>
+  <ellipse class="rotor" cx="84" cy="52" rx="38" ry="5.5" fill="url(#disc)" stroke-width="1.3" opacity=".7"/>
+  <ellipse class="rotor" cx="236" cy="52" rx="38" ry="5.5" fill="url(#disc)" stroke-width="1.3" opacity=".7"/>
+  <ellipse class="rotor" cx="52" cy="66" rx="52" ry="7" fill="url(#disc)" stroke-width="1.6"/>
+  <ellipse class="rotor" cx="268" cy="66" rx="52" ry="7" fill="url(#disc)" stroke-width="1.6"/>
+  <path d="M96 120 L82 188 H60 M224 120 L238 188 H260" fill="none" stroke-width="4"/>
+  <path d="M60 188 H84 M236 188 H260" stroke-width="5.5"/>
+  <path d="M120 128 L116 172 M200 128 L204 172" fill="none" stroke-width="2.6" opacity=".55"/>
+  <path d="M118 88 Q160 56 202 88 Z" fill="url(#body)"/>
+  <path d="M128 70 L118 38 M192 70 L202 38" fill="none" stroke-width="3.2"/>
+  <circle cx="117" cy="36" r="4" fill="#ff8c42" stroke-width="2"/><circle cx="203" cy="36" r="4" fill="#ff8c42" stroke-width="2"/>
+  <rect x="86" y="84" width="148" height="62" rx="20" fill="url(#body)"/>
+  <rect x="98" y="92" width="52" height="14" rx="5" fill="url(#bat)" stroke-width="2.4"/><rect x="170" y="92" width="52" height="14" rx="5" fill="url(#bat)" stroke-width="2.4"/>
+  <rect x="104" y="96" width="14" height="5" rx="2" fill="#4ade80" stroke="none"/><rect x="176" y="96" width="14" height="5" rx="2" fill="#4ade80" stroke="none"/>
+  <rect x="104" y="118" width="112" height="11" rx="5.5" fill="#ffc93c" stroke-width="2.4"/>
+  <path d="M120 122 H200" stroke="#fff" stroke-width="1.6" opacity=".55"/>
+  <rect x="124" y="140" width="72" height="12" rx="6" fill="url(#dark)" stroke-width="2.4"/>
+  <rect x="132" y="150" width="56" height="38" rx="14" fill="url(#dark)"/>
+  <circle cx="148" cy="170" r="12" fill="url(#lens)" stroke="#ff8c42" stroke-width="3"/>
+  <circle cx="148" cy="170" r="6.5" fill="none" stroke="#0b1b2b" stroke-width="1.8"/>
+  <circle cx="144" cy="166" r="2.4" fill="#fff" stroke="none"/>
+  <circle cx="172" cy="170" r="9" fill="#0b1b2b" stroke="#2ec4b6" stroke-width="2.6"/>
+  <circle cx="170" cy="168" r="1.8" fill="#fff" stroke="none"/>
+  <circle cx="98" cy="136" r="8" fill="url(#glowr)" stroke="none" class="led"/><circle class="led" cx="98" cy="136" r="3.4" fill="#ff5a4f" stroke-width="1.5"/>
+  <circle cx="222" cy="136" r="8" fill="url(#glowg)" stroke="none" class="led"/><circle class="led" cx="222" cy="136" r="3.4" fill="#4ade80" stroke-width="1.5"/>
+</g>
+</svg>

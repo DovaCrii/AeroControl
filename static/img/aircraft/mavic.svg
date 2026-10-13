@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-14 0 348 220" role="img" aria-label="Mavic">
+<defs>
+<linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f6fa"/><stop offset=".55" stop-color="#cfd5e0"/><stop offset="1" stop-color="#9aa3b4"/></linearGradient>
+<linearGradient id="dark" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a6479"/><stop offset="1" stop-color="#232938"/></linearGradient>
+<linearGradient id="arm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e3e7ee"/><stop offset="1" stop-color="#9aa3b4"/></linearGradient>
+<radialGradient id="disc" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#2ec4b6" stop-opacity=".08"/><stop offset=".72" stop-color="#2ec4b6" stop-opacity=".38"/><stop offset="1" stop-color="#2ec4b6" stop-opacity=".1"/></radialGradient>
+<radialGradient id="lens" cx=".34" cy=".3" r=".85"><stop offset="0" stop-color="#8fdcff"/><stop offset=".22" stop-color="#22507a"/><stop offset="1" stop-color="#050f1b"/></radialGradient>
+<radialGradient id="glow"><stop offset="0" stop-color="#4ade80" stop-opacity=".9"/><stop offset="1" stop-color="#4ade80" stop-opacity="0"/></radialGradient>
+<filter id="soft" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>
+</defs>
+<style>
+.rotor{transform-box:fill-box;transform-origin:center;animation:blur .07s linear infinite alternate}
+.led{animation:blink 1.3s steps(2,end) infinite}
+.bob{animation:bob 3.2s ease-in-out infinite alternate}
+.shadow{animation:shade 3.2s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center}
+@keyframes blur{from{transform:scaleX(.78)}to{transform:scaleX(1)}}
+@keyframes blink{50%{opacity:.15}}
+@keyframes bob{from{transform:translateY(-3px)}to{transform:translateY(4px)}}
+@keyframes shade{from{transform:scaleX(1.04);opacity:.28}to{transform:scaleX(.92);opacity:.18}}
+@media (prefers-reduced-motion:reduce){.rotor,.led,.bob,.shadow{animation:none}}
+</style>
+<ellipse class="shadow" cx="160" cy="205" rx="92" ry="8" fill="#1f2430" opacity=".25" filter="url(#soft)"/>
+<g class="bob" stroke="#1f2430" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M120 98 L80 86 M200 98 L240 86" stroke-width="9"/><path d="M120 98 L80 86 M200 98 L240 86" stroke="url(#arm)" stroke-width="4.6"/>
+  <ellipse cx="76" cy="84" rx="12" ry="8" fill="url(#dark)"/><ellipse cx="244" cy="84" rx="12" ry="8" fill="url(#dark)"/>
+  <ellipse class="rotor" cx="74" cy="75" rx="46" ry="6.5" fill="url(#disc)" stroke-width="1.4" opacity=".75"/>
+  <ellipse class="rotor" cx="246" cy="75" rx="46" ry="6.5" fill="url(#disc)" stroke-width="1.4" opacity=".75"/>
+  <path d="M112 114 L54 134 M208 114 L266 134" stroke-width="12"/><path d="M112 114 L54 134 M208 114 L266 134" stroke="url(#arm)" stroke-width="7"/>
+  <ellipse cx="48" cy="136" rx="15" ry="10.5" fill="url(#dark)"/><ellipse cx="272" cy="136" rx="15" ry="10.5" fill="url(#dark)"/>
+  <ellipse cx="46" cy="132" rx="7" ry="3.2" fill="#8d97ab" stroke="none"/><ellipse cx="274" cy="132" rx="7" ry="3.2" fill="#8d97ab" stroke="none"/>
+  <ellipse class="rotor" cx="46" cy="124" rx="54" ry="7.5" fill="url(#disc)" stroke-width="1.6"/>
+  <ellipse class="rotor" cx="274" cy="124" rx="54" ry="7.5" fill="url(#disc)" stroke-width="1.6"/>
+  <path d="M122 152 L113 168 M198 152 L207 168" fill="none" stroke-width="3.4"/>
+  <path d="M104 122 Q100 92 128 86 H192 Q220 92 216 122 V140 Q216 158 196 160 H124 Q104 158 104 140 Z" fill="url(#body)"/>
+  <path d="M120 100 H200" fill="none" stroke="#7d869a" stroke-width="2" opacity=".7"/>
+  <path d="M132 94 L132 98 M140 94 L140 98 M148 94 L148 98 M172 94 L172 98 M180 94 L180 98 M188 94 L188 98" stroke="#7d869a" stroke-width="2" fill="none"/>
+  <rect x="130" y="124" width="60" height="9" rx="4.5" fill="url(#dark)" stroke-width="2.2"/>
+  <circle cx="142" cy="128.5" r="2" fill="#7fe3ff" stroke="none"/><circle cx="178" cy="128.5" r="2" fill="#7fe3ff" stroke="none"/>
+  <rect x="146" y="152" width="28" height="10" rx="3" fill="url(#dark)"/>
+  <rect x="126" y="158" width="68" height="42" rx="17" fill="url(#dark)"/>
+  <circle cx="160" cy="178" r="16" fill="url(#lens)" stroke="#2ec4b6" stroke-width="3.4"/>
+  <circle cx="160" cy="178" r="9.5" fill="none" stroke="#0b1b2b" stroke-width="2"/>
+  <circle cx="154" cy="172" r="3" fill="#fff" stroke="none" opacity=".95"/><circle cx="165" cy="183" r="1.6" fill="#ffc93c" stroke="none"/>
+  <circle cx="139" cy="186" r="4.5" fill="#0b1b2b" stroke-width="2"/><circle cx="181" cy="186" r="4.5" fill="#0b1b2b" stroke-width="2"/>
+  <circle cx="160" cy="93" r="9" fill="url(#glow)" stroke="none" class="led"/>
+  <circle class="led" cx="160" cy="93" r="3.4" fill="#4ade80" stroke-width="1.4"/>
+</g>
+</svg>

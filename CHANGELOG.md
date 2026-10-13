@@ -10,6 +10,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Cada aeronave tiene su dibujo por serie, con hélices que giran (`LV-303`).** Matrice, Mavic, Phantom,
+  Elios y uno genérico, en la ficha de la aeronave; el operador y el centro de costo también llevan su
+  ilustración. Si se deja una foto con derecho de uso en `static/img/equipment/`, esa foto manda. Lleva
+  `collectstatic`.
 - **Capa de identidad al estilo de AeroAcademy (`LV-302`).** Láminas con relieve, ilustraciones de drones
   en estados vacíos y portada, cabecera del panel con ruta de vuelo, el recorrido del permiso arriba de su
   ficha y animaciones suaves que respetan «reducir movimiento». Lleva `collectstatic`.

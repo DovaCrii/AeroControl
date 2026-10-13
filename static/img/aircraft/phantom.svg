@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-14 0 348 220" role="img" aria-label="Phantom">
+<defs>
+<linearGradient id="shell" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#eceff4"/><stop offset="1" stop-color="#bcc3d0"/></linearGradient>
+<linearGradient id="dark" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a6479"/><stop offset="1" stop-color="#232938"/></linearGradient>
+<radialGradient id="disc" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ff8c42" stop-opacity=".08"/><stop offset=".72" stop-color="#ff8c42" stop-opacity=".4"/><stop offset="1" stop-color="#ff8c42" stop-opacity=".1"/></radialGradient>
+<radialGradient id="lens" cx=".34" cy=".3" r=".85"><stop offset="0" stop-color="#8fdcff"/><stop offset=".22" stop-color="#22507a"/><stop offset="1" stop-color="#050f1b"/></radialGradient>
+<radialGradient id="glowg"><stop offset="0" stop-color="#4ade80" stop-opacity=".9"/><stop offset="1" stop-color="#4ade80" stop-opacity="0"/></radialGradient>
+<radialGradient id="glowr"><stop offset="0" stop-color="#ff5a4f" stop-opacity=".9"/><stop offset="1" stop-color="#ff5a4f" stop-opacity="0"/></radialGradient>
+<filter id="soft" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>
+</defs>
+<style>
+.rotor{transform-box:fill-box;transform-origin:center;animation:blur .07s linear infinite alternate}
+.led{animation:blink 1.5s steps(2,end) infinite}
+.bob{animation:bob 3.3s ease-in-out infinite alternate}
+.shadow{animation:shade 3.3s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center}
+@keyframes blur{from{transform:scaleX(.78)}to{transform:scaleX(1)}}
+@keyframes blink{50%{opacity:.15}}
+@keyframes bob{from{transform:translateY(-3px)}to{transform:translateY(4px)}}
+@keyframes shade{from{transform:scaleX(1.04);opacity:.28}to{transform:scaleX(.92);opacity:.18}}
+@media (prefers-reduced-motion:reduce){.rotor,.led,.bob,.shadow{animation:none}}
+</style>
+<ellipse class="shadow" cx="160" cy="207" rx="96" ry="8" fill="#1f2430" opacity=".25" filter="url(#soft)"/>
+<g class="bob" stroke="#1f2430" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M118 112 L84 100 M202 112 L236 100" stroke-width="10"/><path d="M118 112 L84 100 M202 112 L236 100" stroke="url(#shell)" stroke-width="5.4"/>
+  <ellipse cx="80" cy="98" rx="13" ry="9" fill="url(#dark)"/><ellipse cx="240" cy="98" rx="13" ry="9" fill="url(#dark)"/>
+  <ellipse class="rotor" cx="78" cy="78" rx="46" ry="6" fill="url(#disc)" stroke-width="1.3" opacity=".7"/>
+  <ellipse class="rotor" cx="242" cy="78" rx="46" ry="6" fill="url(#disc)" stroke-width="1.3" opacity=".7"/>
+  <path d="M104 126 L58 142 M216 126 L262 142" stroke-width="11"/><path d="M104 126 L58 142 M216 126 L262 142" stroke="url(#shell)" stroke-width="6"/>
+  <ellipse cx="52" cy="144" rx="14" ry="10" fill="url(#dark)"/><ellipse cx="268" cy="144" rx="14" ry="10" fill="url(#dark)"/>
+  <ellipse class="rotor" cx="50" cy="130" rx="52" ry="7" fill="url(#disc)" stroke-width="1.6"/>
+  <ellipse class="rotor" cx="270" cy="130" rx="52" ry="7" fill="url(#disc)" stroke-width="1.6"/>
+  <path d="M112 150 L100 192 H84 M208 150 L220 192 H236" fill="none" stroke-width="4"/>
+  <path d="M84 192 H104 M216 192 H236" stroke-width="5.5"/>
+  <path d="M136 156 L134 184 M184 156 L186 184" fill="none" stroke-width="2.4" opacity=".5"/>
+  <path d="M100 124 Q98 90 160 88 Q222 90 220 124 Q220 156 160 160 Q100 156 100 124 Z" fill="url(#shell)"/>
+  <path d="M116 106 Q160 86 204 106" fill="none" stroke="#2ec4b6" stroke-width="5.5"/>
+  <path d="M122 136 Q160 148 198 136" fill="none" stroke="#9aa3b4" stroke-width="2.2" opacity=".7"/>
+  <path d="M146 158 H174 V166 H146 Z" fill="url(#dark)"/>
+  <circle cx="160" cy="180" r="19" fill="url(#dark)"/>
+  <circle cx="160" cy="180" r="12.5" fill="url(#lens)" stroke="#ff8c42" stroke-width="3"/>
+  <circle cx="156" cy="176" r="2.8" fill="#fff" stroke="none"/>
+  <circle cx="118" cy="132" r="8" fill="url(#glowr)" stroke="none" class="led"/><circle class="led" cx="118" cy="132" r="3.2" fill="#ff5a4f" stroke-width="1.4"/>
+  <circle cx="202" cy="132" r="8" fill="url(#glowg)" stroke="none" class="led"/><circle class="led" cx="202" cy="132" r="3.2" fill="#4ade80" stroke-width="1.4"/>
+</g>
+</svg>
