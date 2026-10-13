@@ -44,3 +44,12 @@ htmlcov/
 # propósito: un `*.map` global escondería también un sourcemap que algún día
 # queramos versionar de verdad.
 static/vendor/**/*.map
+
+# Configuración compartida de Claude Code (permisos conservadores, sin rutas de máquina).
+# settings.local.json sigue ignorado por la regla .claude/*.
+!.claude/settings.json
+
+# Datos privados y entornos (estándar de trabajo). .env.example sí se versiona.
+private/
+.env.*
+!.env.example
