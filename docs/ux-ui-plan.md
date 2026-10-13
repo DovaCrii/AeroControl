@@ -928,6 +928,10 @@ Métricas verificables, no impresiones:
   entidad → ilustración (`static/img/illustrations/README.md`); **(4)** guardianes que fallan si
   algo nuevo no cumple (`test_lv302_illustrations.py`). Fase siguiente: fichas de detalle,
   formularios e informes impresos.
+  **Panel lateral (`LV-304`)**: incluido en este mismo rediseño a pedido del usuario. Primera pasada
+  sólo CSS (profundidad, ítem activo con degradado y halo, tramo de color por grupo). Lo que cambiaría
+  el contenido —un pie con el usuario y un resumen vivo, y los seis ítems retirados del menú— queda
+  como decisión del usuario.
 
 ### Fuentes de la sección de mercado
 
