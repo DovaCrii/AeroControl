@@ -84,12 +84,19 @@ motor de alertas, así que un número acá y una alerta en la bandeja no pueden
 contradecirse.{% endcomment %}
 <div class="readiness-strip mb-3">
   {% for item in readiness %}
-  <a class="summary-card text-decoration-none" href="{{ item.url }}">
-    <small>{{ item.label }}</small>
+  {% comment %}LV-307: cada indicador lleva su icono y una barra con la meta marcada. La barra es un
+  `<meter>` nativo: accesible, sin estilos en línea, y pasa a ámbar sola cuando el valor queda
+  bajo `low` (la meta). Los números y los textos de abajo no cambian.{% endcomment %}
+  <a class="summary-card summary-card--kpi kpi-{{ item.key }} text-decoration-none" href="{{ item.url }}">
+    <span class="kpi-head">
+      <span class="kpi-ico"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#{% if item.key == 'fleet' %}icon-aircraft-list{% elif item.key == 'insurance' %}icon-compliance-report{% elif item.key == 'credentials' %}icon-operator-list{% else %}icon-permission-list{% endif %}"/></svg></span>
+      <small>{{ item.label }}</small>
+    </span>
     <strong>
       {{ item.count }}/{{ item.total }}
       {% if item.pct is not None %}<span class="readiness-pct{% if item.target and item.pct < item.target %} is-below{% endif %}">{{ item.pct|floatformat:0 }}%</span>{% endif %}
     </strong>
+    {% if item.pct is not None %}<meter class="kpi-meter" min="0" max="100" value="{{ item.pct|floatformat:0 }}" low="1" high="{% if item.target %}{{ item.target|floatformat:0 }}{% else %}100{% endif %}" optimum="100" aria-hidden="true"></meter>{% endif %}
     {% comment %}LV-129: "5 faltantes o vencidos" era una cifra para dos cosas
     que se arreglan distinto — cargar una fecha que nadie ingresó, o renovar una
     póliza que caducó — y que además no cuadraba con ninguna otra tarjeta: los

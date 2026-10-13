@@ -17,9 +17,40 @@
 </head>
 <body>
   <div class="login-page">
-    {% comment %}LV-302: ilustración de portada, sólo en pantallas anchas (ver `identity.css`).
-    Decorativa y sobre lámina clara: el trazo es oscuro.{% endcomment %}
-    <div class="illus-tile login-art" aria-hidden="true"><img src="{% static 'img/illustrations/hero-planning.svg' %}" alt="" width="400" height="300" loading="lazy"></div>
+    {% comment %}LV-307: presentación de marca a la izquierda (sólo pantallas anchas), el formulario a la
+    derecha. Todo decorativo: `aria-hidden`, sin enlaces ni controles. La ruta y el dron animado viven en
+    `identity.css` y se detienen con «reducir movimiento».{% endcomment %}
+    <aside class="login-showcase" aria-hidden="true">
+      <svg class="showcase-route" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" focusable="false">
+        <path class="route-line" d="M60 470 C200 420 300 330 420 300 C540 270 640 190 760 110"/>
+        <circle class="route-dot" cx="60" cy="470" r="7"/>
+        <circle class="route-dot" cx="420" cy="300" r="7"/>
+        <circle class="route-dot route-dot-end" cx="760" cy="110" r="7"/>
+        <g class="drone-fly">
+          <g class="drone-body">
+            <path d="M-17 -17 L17 17 M17 -17 L-17 17" class="drone-arm"/>
+            <g class="drone-rotor" transform="translate(-19 -19)"><circle r="11" class="drone-disc"/><path class="blades" d="M-9 0 H9 M0 -9 V9"/></g>
+            <g class="drone-rotor" transform="translate(19 -19)"><circle r="11" class="drone-disc"/><path class="blades" d="M-9 0 H9 M0 -9 V9"/></g>
+            <g class="drone-rotor" transform="translate(-19 19)"><circle r="11" class="drone-disc"/><path class="blades" d="M-9 0 H9 M0 -9 V9"/></g>
+            <g class="drone-rotor" transform="translate(19 19)"><circle r="11" class="drone-disc"/><path class="blades" d="M-9 0 H9 M0 -9 V9"/></g>
+            <rect x="-10" y="-10" width="20" height="20" rx="7" class="drone-core"/>
+            <circle r="3.4" class="drone-lens"/>
+          </g>
+        </g>
+      </svg>
+      <div class="showcase-brand"><img src="{% static 'img/aerocontrol-mark.svg' %}" alt="" width="42" height="42"><span>AeroControl</span></div>
+      <div class="showcase-copy">
+        <p class="showcase-kicker">{% translate "RPA operations in Chile" %}</p>
+        <h2 class="showcase-title">{% translate "Every flight documented and on time." %}</h2>
+        <ul class="showcase-points">
+          <li><span class="pt-ico"><svg class="nav-icon"><use href="{% static 'img/icons.svg' %}#icon-permission-list"/></svg></span><span>{% translate "Permits and DGAC authorizations in one place" %}</span></li>
+          <li><span class="pt-ico"><svg class="nav-icon"><use href="{% static 'img/icons.svg' %}#icon-aircraft-list"/></svg></span><span>{% translate "Fleet, operators and qualifications up to date" %}</span></li>
+          <li><span class="pt-ico"><svg class="nav-icon"><use href="{% static 'img/icons.svg' %}#icon-alert-list"/></svg></span><span>{% translate "Alerts before anything expires" %}</span></li>
+        </ul>
+      </div>
+      <div class="illus-tile showcase-art"><img src="{% static 'img/illustrations/drone-scan.svg' %}" alt="" width="360" height="360" loading="lazy"></div>
+    </aside>
+    <div class="login-main">
     <div class="login-card">
       <div class="login-logo"><img src="{% static 'img/aerocontrol-mark.svg' %}" alt="AeroControl"></div>
       <h1 class="login-title">AeroControl</h1>
@@ -70,6 +101,7 @@
       </div>
 
       <div class="login-footer">{% translate "Internal system" %} · J.E.J. Ingeniería S.A.</div>
+    </div>
     </div>
   </div>
   <script src="{% static 'js/login.js' %}"></script>
