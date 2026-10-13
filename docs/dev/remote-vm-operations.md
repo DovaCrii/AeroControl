@@ -13,13 +13,13 @@ abrir puertos de la red corporativa. La VM se expone sólo dentro de Tailscale.
 | Concepto | Valor |
 | --- | --- |
 | Nombre Ubuntu | `p340` |
-| Dirección Tailscale | `100.121.16.118` |
-| Aplicación | `https://p340.tailccd107.ts.net` |
-| Usuario Linux | `levdigital01` |
+| Dirección Tailscale | `<IP-DE-LA-VM>` |
+| Aplicación | `https://<host-de-la-vm>.<tu-tailnet>.ts.net` |
+| Usuario Linux | `example` |
 | Código de la app | `/opt/aerocontrol` |
 | Datos persistentes | `/srv/aerocontrol-data` |
 
-> **El nombre DNS `p340.tailccd107.ts.net` no sirve para SSH.** La versión
+> **El nombre DNS `<host-de-la-vm>.<tu-tailnet>.ts.net` no sirve para SSH.** La versión
 > original de este documento lo usaba; el `HANDOFF` registra que **resuelve a una
 > IP pública ajena**, así que para conectarse va la IP de Tailscale. Para el
 > navegador el nombre sí funciona, porque ahí lo resuelve el propio Tailscale.
@@ -43,7 +43,7 @@ No uses la cuenta de AeroControl para SSH: es distinta de la cuenta Linux.
 ## 2. Acceso SSH con llave
 
 ```powershell
-ssh -i "$env:USERPROFILE\.ssh\aerocontrol_vm_notebook" levdigital01@100.121.16.118
+ssh -i "$env:USERPROFILE\.ssh\aerocontrol_vm_notebook" example@<IP-DE-LA-VM>
 ```
 
 La primera vez acepta la huella de host sólo si corresponde a `p340`. Después de
@@ -63,7 +63,7 @@ tailscale serve status
 ```
 
 ```bash
-curl -sS -o /dev/null -w '%{http_code}\n' https://p340.tailccd107.ts.net/health/
+curl -sS -o /dev/null -w '%{http_code}\n' https://<host-de-la-vm>.<tu-tailnet>.ts.net/health/
 ```
 
 El servicio debe indicar `active` y el endpoint de salud devolver `200`.

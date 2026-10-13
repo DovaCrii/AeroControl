@@ -3,7 +3,7 @@
 Complemento del [runbook de la VM](ubuntu-vm-deploy.md). El runbook levanta
 AeroControl **solo dentro del tailnet** (`tailscale serve`, sin exposición a
 internet). Este documento describe cómo **exponer la app a internet** con
-Tailscale Funnel, sobre el mismo dominio `https://p340.tailccd107.ts.net`, sin
+Tailscale Funnel, sobre el mismo dominio `https://<host-de-la-vm>.<tu-tailnet>.ts.net`, sin
 abrir puertos del router y sin que el visitante tenga Tailscale.
 
 > **Cuándo usar esto.** Solo cuando alguien que **no** puede entrar al tailnet
@@ -50,19 +50,19 @@ tiene `operator` configurado. Verificar:
 tailscale funnel status
 ```
 
-Debe mostrar `https://p340.tailccd107.ts.net` como **Funnel on** (ya no
+Debe mostrar `https://<host-de-la-vm>.<tu-tailnet>.ts.net` como **Funnel on** (ya no
 "tailnet only") apuntando a `http://127.0.0.1:8000`.
 
 ## 3. Verificar desde fuera del tailnet
 
 Comprobar desde un equipo **sin** Tailscale (p. ej. un teléfono con datos
-móviles, no en la WiFi de la oficina): abrir `https://p340.tailccd107.ts.net/`
+móviles, no en la WiFi de la oficina): abrir `https://<host-de-la-vm>.<tu-tailnet>.ts.net/`
 → debe salir el login. Un equipo que ya está en el tailnet llega igual con o sin
 Funnel, así que no sirve para verificar la exposición pública.
 
 ## 4. Crear la cuenta de la persona
 
-Como `root`, en `https://p340.tailccd107.ts.net/admin/` → **Users → Add user**,
+Como `root`, en `https://<host-de-la-vm>.<tu-tailnet>.ts.net/admin/` → **Users → Add user**,
 contraseña fuerte, y asignar su grupo de rol (`Operations`, `Compliance`,
 `Maintenance`, `Viewer`, `Dirección` o `Administrator`). No marcar *superuser*
 salvo que se quiera dar acceso total.
