@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-14 0 348 220" role="img" aria-label="Elios">
+<defs>
+<radialGradient id="ball" cx=".38" cy=".3" r=".8"><stop offset="0" stop-color="#ffffff" stop-opacity=".9"/><stop offset=".5" stop-color="#dff4f1" stop-opacity=".35"/><stop offset="1" stop-color="#9fd8d1" stop-opacity=".25"/></radialGradient>
+<linearGradient id="dark" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a6479"/><stop offset="1" stop-color="#232938"/></linearGradient>
+<linearGradient id="core" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe08a"/><stop offset="1" stop-color="#f0a91c"/></linearGradient>
+<radialGradient id="disc" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#2ec4b6" stop-opacity=".1"/><stop offset=".72" stop-color="#2ec4b6" stop-opacity=".45"/><stop offset="1" stop-color="#2ec4b6" stop-opacity=".12"/></radialGradient>
+<radialGradient id="lens" cx=".34" cy=".3" r=".85"><stop offset="0" stop-color="#8fdcff"/><stop offset=".22" stop-color="#22507a"/><stop offset="1" stop-color="#050f1b"/></radialGradient>
+<radialGradient id="beam" cx="0" cy=".5" r="1"><stop offset="0" stop-color="#fff2b0" stop-opacity=".75"/><stop offset="1" stop-color="#fff2b0" stop-opacity="0"/></radialGradient>
+<filter id="soft" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>
+</defs>
+<style>
+.rotor{transform-box:fill-box;transform-origin:center;animation:blur .07s linear infinite alternate}
+.led{animation:blink 1s steps(2,end) infinite}
+.cage{transform-box:fill-box;transform-origin:center;animation:turn 16s linear infinite}
+.bob{animation:bob 3s ease-in-out infinite alternate}
+.beam{animation:pulse 2.2s ease-in-out infinite alternate}
+.shadow{animation:shade 3s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center}
+@keyframes blur{from{transform:scaleX(.78)}to{transform:scaleX(1)}}
+@keyframes blink{50%{opacity:.15}}
+@keyframes turn{to{transform:rotate(360deg)}}
+@keyframes bob{from{transform:translateY(-3px)}to{transform:translateY(4px)}}
+@keyframes pulse{from{opacity:.5}to{opacity:1}}
+@keyframes shade{from{transform:scaleX(1.04);opacity:.28}to{transform:scaleX(.92);opacity:.18}}
+@media (prefers-reduced-motion:reduce){.rotor,.led,.bob,.cage,.beam,.shadow{animation:none}}
+</style>
+<ellipse class="shadow" cx="160" cy="207" rx="80" ry="8" fill="#1f2430" opacity=".25" filter="url(#soft)"/>
+<g class="bob" stroke="#1f2430" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="160" cy="108" r="86" fill="url(#ball)" stroke-width="3.4"/>
+  <path class="beam" d="M160 108 L262 66 L262 150 Z" fill="url(#beam)" stroke="none"/>
+  <g class="cage" fill="none" stroke-width="2" opacity=".8">
+    <ellipse cx="160" cy="108" rx="86" ry="28"/><ellipse cx="160" cy="108" rx="86" ry="56"/>
+    <ellipse cx="160" cy="108" rx="28" ry="86"/><ellipse cx="160" cy="108" rx="56" ry="86"/>
+  </g>
+  <path d="M116 88 L204 88 M116 128 L204 128" fill="none" stroke-width="7"/><path d="M116 88 L204 88 M116 128 L204 128" stroke="#cfd5e0" stroke-width="3.4"/>
+  <ellipse class="rotor" cx="116" cy="80" rx="26" ry="4.6" fill="url(#disc)" stroke-width="1.5"/>
+  <ellipse class="rotor" cx="204" cy="80" rx="26" ry="4.6" fill="url(#disc)" stroke-width="1.5"/>
+  <ellipse class="rotor" cx="116" cy="136" rx="26" ry="4.6" fill="url(#disc)" stroke-width="1.5"/>
+  <ellipse class="rotor" cx="204" cy="136" rx="26" ry="4.6" fill="url(#disc)" stroke-width="1.5"/>
+  <rect x="134" y="92" width="52" height="34" rx="13" fill="url(#core)" stroke-width="3.2"/>
+  <circle cx="160" cy="109" r="11" fill="url(#lens)" stroke="#232938" stroke-width="2.6"/>
+  <circle cx="156" cy="105" r="2.6" fill="#fff" stroke="none"/>
+  <circle class="led" cx="143" cy="98" r="2.6" fill="#ff5a4f" stroke-width="1"/>
+  <circle class="led" cx="177" cy="98" r="2.6" fill="#4ade80" stroke-width="1"/>
+</g>
+</svg>
