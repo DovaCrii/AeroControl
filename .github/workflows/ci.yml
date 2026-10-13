@@ -29,6 +29,8 @@ jobs:
       SECRET_KEY: ci-only-not-for-production
     steps:
       - uses: actions/checkout@v7
+      - name: Revisión de privacidad
+        run: python tools/kit/privacy_scan.py
       # El contexto `runner` no existe en `jobs.<id>.env` (sólo github, needs,
       # strategy, matrix, vars, secrets, inputs): usarlo ahí aborta el workflow
       # al arrancar. Las rutas se exportan aquí, donde $RUNNER_TEMP sí existe.
