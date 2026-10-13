@@ -131,7 +131,7 @@ Comprobar que el ejecutable existe **para el usuario del servicio**, que es lo
 que `shutil.which()` va a mirar:
 
 ```bash
-sudo -u aerocontrol which clamscan
+sudo -u example which clamscan
 ```
 
 > Si el comando queda configurado pero **no existe**, la subida falla en vez de
@@ -143,7 +143,7 @@ devuelve **2** hasta que `freshclam` termina de bajar la base de firmas, y con
 código 2 **toda subida se rechaza**.
 
 ```bash
-sudo -u aerocontrol clamscan --no-summary /etc/hostname; echo "código: $?"
+sudo -u example clamscan --no-summary /etc/hostname; echo "código: $?"
 ```
 
 Escanea un archivo que ya existe **a propósito**: la primera versión de este

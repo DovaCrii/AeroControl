@@ -2103,7 +2103,7 @@ Lo encontrado ahí:
   **"Lecciones operativas"** en `AGENTS.md`.
 - El runbook de la VM se corrigió con el despliegue real: **`set -a` no es
   opcional** al cargar el entorno (sin él `manage.py` cae a `dev`), y el usuario
-  de systemd es `aerocontrol`, no `aero`.
+  de systemd es `example`, no `aero`.
 
 ## [0.4.0-beta] - 2026-08-04
 

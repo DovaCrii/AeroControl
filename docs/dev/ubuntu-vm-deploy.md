@@ -184,11 +184,11 @@ verificado a `/srv/aerocontrol-data/db/aero_ops.sqlite3` **antes** del `migrate`
 WhiteNoise sirve los estáticos desde el propio gunicorn, así que no hace falta
 un servidor de estáticos aparte. Crea `/etc/systemd/system/aerocontrol.service`:
 
-> **El usuario real en `p340` es `aerocontrol`, no `aero`** (verificado
+> **El usuario real en `p340` es `example`, no `aero`** (verificado
 > 2026-08-11 leyendo `systemctl status aerocontrol` de la VM en producción:
-> `ExecStart=/home/aerocontrol/.local/bin/uv run gunicorn ...`). Este documento
+> `ExecStart=/home/example/.local/bin/uv run gunicorn ...`). Este documento
 > decía `aero` mientras `scheduled-operations.md` y el `scp` de respaldos usaban
-> `aerocontrol`; los ejemplos de abajo quedan con el valor correcto. Si copias
+> `example`; los ejemplos de abajo quedan con el valor correcto. Si copias
 > esto a otra máquina, ajusta el usuario **y la ruta de `uv`**, que vive en su
 > `$HOME`.
 
@@ -198,10 +198,10 @@ Description=AeroControl (gunicorn)
 After=network.target
 
 [Service]
-User=aerocontrol
+User=example
 WorkingDirectory=/opt/aerocontrol
 EnvironmentFile=/etc/aerocontrol.env
-ExecStart=/home/aerocontrol/.local/bin/uv run gunicorn config.wsgi:application \
+ExecStart=/home/example/.local/bin/uv run gunicorn config.wsgi:application \
     --bind 127.0.0.1:8000 --workers 3 --timeout 60
 Restart=on-failure
 RestartSec=3
@@ -255,7 +255,7 @@ fallaría igual de silenciosa. Esto no es teórico — es el mismo gotcha que se
 repitió en el deploy real de la VM p340 (ver `HANDOFF.md`), y ahí se resolvió
 cambiando cron por **timers de systemd**: el `.service` lee
 `EnvironmentFile=/etc/aerocontrol.env` como root y luego baja privilegios a
-`User=aerocontrol` para ejecutar el comando, así el proceso recibe los secretos
+`User=example` para ejecutar el comando, así el proceso recibe los secretos
 sin que ese usuario necesite leer el archivo directamente. Detalle completo y el patrón
 `mkjob` en [scheduled-operations.md](../scheduled-operations.md#linux-systemd--la-vm-p340);
 aquí, adaptado a las rutas de esta guía:
@@ -270,10 +270,10 @@ After=network.target
 
 [Service]
 Type=oneshot
-User=aerocontrol
+User=example
 WorkingDirectory=/opt/aerocontrol
 EnvironmentFile=/etc/aerocontrol.env
-ExecStart=/home/aerocontrol/.local/bin/uv run python manage.py $2
+ExecStart=/home/example/.local/bin/uv run python manage.py $2
 EOF
   cat >/etc/systemd/system/aerocontrol-$1.timer <<EOF
 [Unit]

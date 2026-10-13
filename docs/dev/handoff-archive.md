@@ -453,7 +453,7 @@ comparar la próxima vez que haya que comprobar si una base es la de siempre. Un
 
 ⚠️ **Y al dictar esa comprobación se repitió el error que esta guía documenta
 dos veces**: el comando de conteo se dio sin `cd /opt/aerocontrol` y sin cargar
-el entorno, así que murió con *"can't open file '/home/aerocontrol/manage.py'"*.
+el entorno, así que murió con *"can't open file '/home/example/manage.py'"*.
 Falló limpio, pero con el `cd` puesto y sin el entorno habría corrido contra
 `config.settings.dev` — que es la forma silenciosa del mismo error. **Entorno
 primero, siempre**, también para una consulta de lectura.
@@ -685,7 +685,7 @@ Están escritos completos más abajo, en *"El despliegue de esta tanda (`355f6c1
 dictarlos de memoria es exactamente lo que salió mal el 2026-09-07.
 
 ```
-ssh aerocontrol@100.64.0.1
+ssh example@<IP-DE-LA-VM>
 cd /opt/aerocontrol && hostname && pwd
 ```
 
@@ -835,13 +835,13 @@ cambiaron `app.css` y `worktable.js`.
 ##### Cómo se entra a `p340`
 
 ```
-ssh aerocontrol@100.64.0.1
+ssh example@<IP-DE-LA-VM>
 ```
 
-Es la IP de Tailscale (`vm.example.ts.net`). **Esto se corre en la terminal
+Es la IP de Tailscale (`<host-de-la-vm>.<tu-tailnet>.ts.net`). **Esto se corre en la terminal
 de Windows**; todo lo demás, ya dentro.
 
-Y **entrar deja en `/home/aerocontrol`, no en el proyecto**, así que el primer
+Y **entrar deja en `/home/example`, no en el proyecto**, así que el primer
 comando de adentro es siempre:
 
 ```
@@ -867,7 +867,7 @@ es el mismo error que esa sección advierte dos veces.
 La secuencia buena, entera:
 
 ```
-ssh aerocontrol@100.64.0.1
+ssh example@<IP-DE-LA-VM>
 cd /opt/aerocontrol && hostname && pwd
 git pull && uv sync
 set -a; source <(sudo cat /etc/aerocontrol.env); set +a
@@ -913,7 +913,7 @@ Las tres señales de que está en la ventana equivocada:
 | `set -a; source <(sudo cat …)` da *"The '<' operator is reserved"* | es PowerShell: no entiende la sustitución de proceso |
 | `sudo` responde *"Sudo está deshabilitado en este equipo"* | es Windows |
 
-El prompt correcto es `aerocontrol@p340:/opt/aerocontrol$`.
+El prompt correcto es `example@p340:/opt/aerocontrol$`.
 
 ##### ✅ DESPLEGADO EN `p340`: **`7fa2ce0`**, el 2026-09-03
 
@@ -1925,7 +1925,7 @@ en la VM. El documento tampoco está allá — vive en OneDrive—, así que pri
 copia, con nombre simple para no pelear con espacios y acentos:
 
 ```
-scp "D:\OneDrive - J.E.J. Ingeniería S.A\DGAC\Manual\ManualRev17\1 Capítulo 1 202608_R17_reparado.docx" aerocontrol@p340:/tmp/cap1.docx
+scp "D:\OneDrive - J.E.J. Ingeniería S.A\DGAC\Manual\ManualRev17\1 Capítulo 1 202608_R17_reparado.docx" example@p340:/tmp/cap1.docx
 ```
 
 Y **el informe primero**, que no escribe nada:
@@ -2811,7 +2811,7 @@ El respaldo previo sigue siendo obligatorio igual.
 > (`git checkout <commit-anterior>`), no dejarlo a medias.
 
 ```bash
-ssh aerocontrol@100.64.0.1
+ssh example@<IP-DE-LA-VM>
 ```
 
 ```bash
@@ -3168,8 +3168,8 @@ Lo esencial y los dos errores que costaron tiempo el 2026-08-11:
 - **El merge/push va en Windows** (`D:\I+D\AeroControl`); las ramas sólo existen
   ahí. El **deploy va dentro de la sesión SSH**: `/opt/aerocontrol` es ruta
   Linux y PowerShell la resuelve como `C:\opt\aerocontrol`.
-- **El nombre DNS `vm.example.ts.net` no resuelve bien** (apunta a una IP
-  pública ajena). Usar la IP de Tailscale: `ssh aerocontrol@100.64.0.1`.
+- **El nombre DNS `<host-de-la-vm>.<tu-tailnet>.ts.net` no resuelve bien** (apunta a una IP
+  pública ajena). Usar la IP de Tailscale: `ssh example@<IP-DE-LA-VM>`.
 - **`set -a` no es opcional** al cargar el entorno, o `manage.py` cae a
   `config.settings.dev` y muere con `SECRET_KEY not found`:
   ```bash

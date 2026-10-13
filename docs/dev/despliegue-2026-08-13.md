@@ -41,7 +41,7 @@ Si `git log` imprime algo, **parar**: alguien más empujó. Nunca `push --force`
 **2. Entrar a la VM.** El nombre DNS no resuelve bien; usar la IP de Tailscale.
 
 ```bash
-ssh aerocontrol@100.64.0.1
+ssh example@<IP-DE-LA-VM>
 ```
 
 **3. Cargar el entorno.** `set -a` no es opcional: sin él `manage.py` cae a
