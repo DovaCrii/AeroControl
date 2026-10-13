@@ -33,6 +33,21 @@ El modelo **no toca la base de datos**. Sólo puede pedir tres herramientas de *
   disponible» sin detalles técnicos.
 - **La llave nunca se registra ni se muestra.** Vive sólo en el entorno.
 
+## Revisión contra el alcance real de la API (2026-10-13)
+
+Se contrastó el prototipo con lo que NVIDIA publica hoy. **Fuentes secundarias en su mayoría** (foros y
+guías de terceros); el texto oficial de los términos es un PDF que no se pudo abrir, así que **hay que leerlo
+antes de decidir nada de producción**.
+
+| Hallazgo | Qué significa para el prototipo |
+|---|---|
+| El servicio hospedado se rige por los **«NVIDIA API Trial Terms of Service»**, pensados para **prueba y evaluación, no producción** (secciones 1.2 y 1.4, según un resumen en el foro de NVIDIA). | Confirma el diseño: sólo demo, y la pantalla no existe sin `DEBUG`. |
+| Según ese mismo resumen, **NVIDIA puede usar los prompts y respuestas para mejorar sus productos**. NVIDIA no respondió con claridad en el foro. | Es la razón de fondo de que **nada personal ni dato real viaje**: sólo cifras agregadas y folios internos, y **en el demo, sólo datos de demo**. |
+| Según el resumen, **el contenido generado no se puede distribuir**. | **No exportar ni pegar respuestas del asistente en informes** ni en documentos que salgan de la empresa. La pantalla las muestra y no las guarda. |
+| El acceso es por **créditos limitados** (1 000 al registrarse; hasta 5 000 con correo empresarial) y ronda las 40 solicitudes por minuto. | Se agregó un **tope por usuario y por hora** (`AI_ASSISTANT_MAX_PER_HOUR`, 30) para no gastar créditos por accidente, y un mensaje propio cuando el servicio responde que se alcanzó el límite. |
+| El modelo por omisión (`meta/llama-3.3-70b-instruct`) existe en el catálogo y su ficha lo describe con «function calling». | Es la herramienta que usa el asistente. **Sigue sin probarse contra el servicio real.** |
+| Caminos a producción según NVIDIA: **alojar el modelo en infraestructura propia** o usar la API sin servidor de pago con una licencia NVIDIA AI Enterprise. | Es la decisión que falta si algún día se quiere usar con usuarios reales; cambia también qué datos se pueden enviar. |
+
 ## Por qué sólo demo
 
 El acceso gratuito de NVIDIA (Developer Program) es **sólo para prototipos, investigación y

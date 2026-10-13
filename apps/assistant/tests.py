@@ -230,6 +230,75 @@ class TestTheToolLoop:
         assert answer.ok is False
         assert "http-500" not in answer.text
 
+    @pytest.mark.parametrize(
+        ("reason", "expected"),
+        [
+            ("http-429", "The assistant reached its usage limit. Try again later."),
+            (
+                "http-401",
+                "The assistant's key was not accepted. Ask the administrator to check it.",
+            ),
+            (
+                "http-403",
+                "The assistant's key was not accepted. Ask the administrator to check it.",
+            ),
+            (
+                "http-500",
+                "The assistant is not available right now. Try again in a moment.",
+            ),
+        ],
+    )
+    def test_each_failure_reason_has_its_own_message(self, reason, expected):
+        from django.utils.translation import gettext
+
+        expected = gettext(expected)
+
+        class Down:
+            configured = True
+
+            def chat(self, messages, tools=None):
+                raise AssistantUnavailable(reason)
+
+        answer = ask(object(), "hola", client=Down())
+
+        assert answer.ok is False
+        assert expected in answer.text
+        assert reason not in answer.text
+
+    def test_the_hourly_cap_stops_the_question_before_calling_the_service(
+        self, settings, db
+    ):
+        from django.core.cache import cache
+
+        cache.clear()
+        settings.AI_ASSISTANT_MAX_PER_HOUR = 2
+        user = login_as("view_flightpermission").user
+        fake = FakeClient([_final("uno"), _final("dos"), _final("tres")])
+
+        results = [ask(user, "hola", client=fake) for _ in range(3)]
+
+        assert [r.ok for r in results] == [True, True, False]
+        assert len(fake.calls) == 2  # la tercera ni salió hacia el servicio
+
+    def test_the_cap_is_per_user(self, settings, db):
+        from django.core.cache import cache
+
+        cache.clear()
+        settings.AI_ASSISTANT_MAX_PER_HOUR = 1
+        first = login_as("view_flightpermission").user
+        second = login_as("view_flightpermission", "view_aircraft").user
+        fake = FakeClient([_final("a"), _final("b")])
+
+        assert ask(first, "hola", client=fake).ok is True
+        assert ask(second, "hola", client=fake).ok is True
+
+    def test_a_cap_of_zero_means_no_cap(self, settings, db):
+        settings.AI_ASSISTANT_MAX_PER_HOUR = 0
+        user = login_as("view_flightpermission").user
+        fake = FakeClient([_final("x") for _ in range(5)])
+
+        assert all(ask(user, "hola", client=fake).ok for _ in range(5))
+
     def test_the_question_text_is_never_logged(self, permit, caplog):
         user = login_as("view_flightpermission").user
         fake = FakeClient([_final("ok")])
