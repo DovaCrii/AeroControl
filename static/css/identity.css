@@ -1,0 +1,239 @@
+/* LV-302 · capa de identidad: profundidad, láminas con ilustración y movimiento suave.
+ *
+ * Pedido del usuario (2026-10-13): que la aplicación deje de verse «plana y todo
+ * cuadrada», más cercana a AeroAcademy, con figuras e imágenes de drones y animaciones.
+ *
+ * Se carga DESPUÉS de `app.css` y sólo suma: no redefine ningún token ni cambia ningún
+ * color de estado. La paleta, los contrastes medidos y el tema oscuro siguen siendo los
+ * de `app.css`; esta capa agrega relieve y personalidad encima.
+ *
+ * Reglas que respeta:
+ *   - Los dibujos llevan trazo oscuro, así que van SIEMPRE sobre una lámina clara
+ *     (`.illus-tile`), también en el tema oscuro: es la metáfora de «papel de plano» de
+ *     AeroAcademy y evita un dibujo ilegible sobre fondo azul noche.
+ *   - Toda `animation` vive dentro de `prefers-reduced-motion: no-preference`
+ *     (lo vigila `apps/core/test_lv302_illustrations.py`).
+ *   - Sin fuentes web ni imágenes externas.
+ */
+
+:root {
+  --id-paper: #faf8f3;
+  --id-paper-edge: #e4dfd1;
+  --id-ink: #1f2430;
+  --id-lift: 0 1px 2px rgb(16 24 40 / 8%), 0 12px 26px -14px rgb(16 24 40 / 32%);
+}
+
+/* ── Lámina con ilustración ─────────────────────────────────────────────── */
+.illus-tile {
+  display: inline-grid;
+  place-items: center;
+  padding: 0.75rem;
+  background: var(--id-paper);
+  color: var(--id-ink);
+  border: 1px solid var(--id-paper-edge);
+  border-radius: 20px;
+  box-shadow: var(--id-lift);
+}
+
+.illus-tile img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.empty-art-wrap {
+  padding: 1.25rem 0 0.5rem;
+  text-align: center;
+}
+
+.empty-art {
+  width: min(210px, 70%);
+  margin: 0 auto 0.75rem;
+}
+
+/* ── Indicadores del panel con relieve ──────────────────────────────────── */
+.summary-card {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--id-lift);
+  border-color: color-mix(in srgb, var(--ac-primary) 45%, var(--ac-border));
+}
+
+/* ── Cabecera del panel con ruta de vuelo ───────────────────────────────── */
+.page-header--hero {
+  position: relative;
+  overflow: hidden;
+  padding: 1.15rem 1.35rem;
+  border: 1px solid var(--ac-border);
+  border-radius: 20px;
+  background:
+    radial-gradient(
+      680px 190px at 92% -35%,
+      color-mix(in srgb, var(--ac-primary) 20%, transparent),
+      transparent 70%
+    ),
+    var(--ac-surface);
+  box-shadow: var(--id-lift);
+}
+
+.page-header--hero > *:not(.hero-route) {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-route {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: min(46%, 440px);
+  height: 100%;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.hero-route .route-line {
+  fill: none;
+  stroke: var(--ac-primary);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 6 7;
+}
+
+.hero-route .route-dot { fill: var(--ac-primary); }
+.hero-route .route-dot-end { fill: var(--ac-text-secondary); }
+
+@media (max-width: 767.98px) {
+  .hero-route { display: none; }
+}
+
+/* ── Recorrido del permiso (cabecera de la ficha) ───────────────────────── */
+.permit-journey {
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  border-radius: 20px;
+  box-shadow: var(--id-lift);
+}
+
+.status-step-badge {
+  width: 36px;
+  height: 36px;
+}
+
+.status-step:not(:first-child)::before { top: 17px; }
+
+.status-step.is-done .status-step-badge {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--ac-primary) 14%, transparent);
+}
+
+/* ── Portada de inicio de sesión ────────────────────────────────────────── */
+.login-page { position: relative; }
+
+.login-art { display: none; }
+
+@media (min-width: 1100px) {
+  .login-art {
+    display: block;
+    position: absolute;
+    right: 5vw;
+    bottom: 6vh;
+    width: min(30vw, 400px);
+  }
+}
+
+/* ── Toda la aplicación, por selectores compartidos ─────────────────────────
+ * Se engancha a las clases que ya usan las ~150 plantillas (`.card`, `.page-header`,
+ * `.btn`, `.nav-item`), no a una pantalla: así el relieve llega a todas a la vez y una
+ * pantalla nueva lo hereda sin acordarse de pedirlo. */
+[data-theme="dark"] {
+  --id-lift: 0 1px 2px rgb(0 0 0 / 40%), 0 14px 30px -14px rgb(0 0 0 / 70%);
+}
+
+.card,
+.panel {
+  border-radius: 16px;
+  box-shadow: var(--id-lift);
+}
+
+/* Una tarjeta dentro de otra no se eleva dos veces: pesaría como una pila de papeles. */
+.card .card,
+.panel .card,
+.card .panel {
+  box-shadow: none;
+}
+
+.modal-content { border-radius: 20px; }
+
+/* Barra de escala bajo el título de página: el guiño de AeroAcademy a un plano técnico. */
+.page-header h1::after {
+  content: "";
+  display: block;
+  width: 56px;
+  height: 4px;
+  margin-top: 0.45rem;
+  border-radius: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--ac-primary) 0 8px,
+    transparent 8px 12px
+  );
+  opacity: 0.85;
+}
+
+.btn { transition: transform 0.12s ease, box-shadow 0.12s ease; }
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px -10px var(--ac-primary);
+}
+
+/* El ítem activo del menú lleva una marca lateral además del fondo. */
+.sidebar .nav-item.active { box-shadow: inset 3px 0 0 var(--ac-primary); }
+
+/* ── Movimiento: sólo si la persona no pidió reducirlo ──────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes ac-float {
+    from { transform: translateY(-3px); }
+    to { transform: translateY(4px); }
+  }
+
+  @keyframes ac-rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  @keyframes ac-dash {
+    to { stroke-dashoffset: -26; }
+  }
+
+  @keyframes ac-pulse {
+    0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ac-primary) 40%, transparent); }
+    70% { box-shadow: 0 0 0 9px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
+  }
+
+  .empty-art img,
+  .login-art img {
+    animation: ac-float 3.6s ease-in-out infinite alternate;
+  }
+
+  .kpi-grid .summary-card { animation: ac-rise 0.35s ease-out both; }
+  .kpi-grid .summary-card:nth-child(2) { animation-delay: 0.05s; }
+  .kpi-grid .summary-card:nth-child(3) { animation-delay: 0.1s; }
+  .kpi-grid .summary-card:nth-child(4) { animation-delay: 0.15s; }
+
+  .hero-route .route-line { animation: ac-dash 1.8s linear infinite; }
+
+  .status-step.is-current .status-step-badge {
+    animation: ac-pulse 2.4s ease-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .summary-card { transition: none; }
+  .summary-card:hover { transform: none; }
+  .btn { transition: none; }
+  .btn-primary:hover { transform: none; }
+}

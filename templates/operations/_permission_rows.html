@@ -1,4 +1,4 @@
-{% load aero_tags i18n %}
+{% load aero_tags i18n static %}
 {% for object in objects %}
 <tr data-pk="{{ object.pk }}">
   <td><a href="{{ object.pk }}/" class="table-primary-value">{{ object }}</a><span class="table-primary-sub cell-truncate">{% translate "DGAC" %}: {% if object.permission_number %}{{ object.permission_number }}{% else %}{% translate "In process" %}{% endif %}</span></td>
@@ -57,6 +57,7 @@ existen y les reparte el ancho de la flexible — medido en operadores: de 424 p
 (ver AGENTS.md). `worktable.js` le suma uno al inyectar la casilla.{% endcomment %}
 <tr>
   <td colspan="7" class="text-center text-muted py-4">
+    {% static 'img/illustrations/permit-clipboard.svg' as art_src %}{% include "generic/_empty_art.html" with src=art_src %}
     {% if is_filtered %}
       {% translate "No records match the current filters." %}
       <a href="{{ request.path }}">{% translate "Clear filters" %}</a>

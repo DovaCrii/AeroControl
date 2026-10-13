@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n static %}
 {% comment %}`UX-07`: las filas salen a su propio parcial, como en las otras
 quince listas, y llevan `data-pk` — que es lo que habilita la selección múltiple
 que `worktable.js` inyecta.{% endcomment %}
@@ -11,4 +11,5 @@ que `worktable.js` inyecta.{% endcomment %}
   compliant is how a quality gate quietly stops gating.{% endcomment %}
   <td>{% if object.meets_acceptance_criteria is None %}<span class="text-muted">{% translate "Not assessed" %}</span>{% elif object.meets_acceptance_criteria %}<span class="badge bg-success">{% translate "Meets criteria" %}</span>{% else %}<span class="badge bg-danger">{% translate "Below criteria" %}</span>{% endif %}</td>
   <td><span class="text-nowrap">{{ object.created_at|date:"Y-m-d" }}</span></td>
-</tr>{% empty %}<tr><td colspan="99" class="text-center text-muted py-4">{% translate "No deliverables recorded yet." %}</td></tr>{% endfor %}
+</tr>{% empty %}<tr><td colspan="99" class="text-center text-muted py-4">
+    {% static 'img/illustrations/documents.svg' as art_src %}{% include "generic/_empty_art.html" with src=art_src %}{% translate "No deliverables recorded yet." %}</td></tr>{% endfor %}

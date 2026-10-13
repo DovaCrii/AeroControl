@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n static %}
 {% comment %}LV-75: one alert, one row. R6.3 used to fold same-rule, same-date
 alerts together on the premise that a shared date meant a shared cause (a fleet
 policy covering several aircraft); LV-68 found that false against production data
@@ -101,6 +101,7 @@ mirar historia; **con filtros** puede haber mucho pendiente y este recorte no
 alcanzarlo, así que lo que corresponde ofrecer es quitarlos. Es la misma
 distinción que `generic/_table_body.html` hace desde que existe.{% endcomment %}
 <tr><td colspan="99" class="text-center py-5">
+    {% static 'img/illustrations/certificates.svg' as art_src %}{% include "generic/_empty_art.html" with src=art_src %}
   {% if request.GET.q or request.GET.entity_type or request.GET.cost_center or request.GET.owner %}
   <div class="mb-1">{% translate "No alerts match the current filters." %}</div>
   <a href="{{ request.path }}">{% translate "Clear filters" %}</a>

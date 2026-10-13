@@ -2,6 +2,9 @@
 {% load aero_tags i18n static %}
 {% block title %}{{ permission }} - AeroControl{% endblock %}
 {% block content %}
+{% comment %}LV-302: el recorrido del permiso arriba, donde se mira primero (Solicitado,
+Aprobado, Completado…). Antes vivía al fondo, dentro de «Trazabilidad».{% endcomment %}
+<div class="card permit-journey" aria-label="{% translate 'Permit progress' %}">{% include "generic/_status_steps.html" with steps=permission.status_steps %}</div>
 <div class="card p-4"><div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h3">{{ permission }}</h1><div class="d-flex gap-2 align-items-end flex-wrap">
   <a href="{% url 'permission-operations' permission.pk %}" class="btn btn-primary">{% translate "Operations register" %}</a>
   {% if status_actions %}
@@ -223,7 +226,7 @@ después se desincroniza.{% endcomment %}
   </div>
 </div>
 
-{% include "generic/_traceability.html" with record=permission steps=permission.status_steps %}
+{% include "generic/_traceability.html" with record=permission hide_steps=True %}
 {% comment %}R10.6: esta sección tenía su propio marcado, anterior a la plantilla
 compartida, y por eso se quedó sin lo que LV-92 y LV-104 le dieron a las demás
 fichas. `object` es el mismo permiso que `permission` (lo pone DetailView), que
