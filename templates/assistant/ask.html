@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Assistant" %} - AeroControl{% endblock %}
+{% block content %}
+{% translate "Assistant" as page_title %}
+<div class="page-header">
+  {% include "generic/_page_header.html" %}
+</div>
+
+<div class="card p-4">
+  {% comment %}LV-305: PROTOTIPO. Dice lo que es y lo que no es, arriba y sin letra chica: es una
+  prueba en el entorno de demo, con datos agregados, y no sustituye a las pantallas.{% endcomment %}
+  <div class="alert alert-info mb-3" role="note">
+    <strong>{% translate "Prototype, demo environment only." %}</strong>
+    {% translate "It answers from aggregated permit data. It never changes anything and never sees names, ID numbers or contact details. Check anything important on the screens." %}
+  </div>
+
+  <form method="post" class="mb-3">
+    {% csrf_token %}
+    <label for="assistant-question" class="form-label fw-semibold">{% translate "Ask about permits" %}</label>
+    <textarea id="assistant-question" name="question" class="form-control" rows="3" maxlength="{{ max_chars }}" placeholder="{% translate 'Which sites have no current permit?' %}" required>{{ question|default:"" }}</textarea>
+    <div class="d-flex gap-2 mt-2">
+      <button type="submit" class="btn btn-primary">{% translate "Ask" %}</button>
+    </div>
+  </form>
+
+  {% if error %}<div class="alert alert-warning" role="alert">{{ error }}</div>{% endif %}
+
+  {% if answer %}
+  <div class="border rounded p-3" id="assistant-answer" aria-live="polite">
+    <div class="small text-muted mb-1">{% translate "Answer" %}</div>
+    <div style="white-space: pre-wrap">{{ answer.text }}</div>
+    {% if answer.tools_used %}
+    <div class="small text-muted mt-2">{% translate "Data consulted" %}: {{ answer.tools_used|join:", " }}</div>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

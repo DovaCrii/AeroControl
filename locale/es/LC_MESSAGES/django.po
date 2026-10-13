@@ -9628,3 +9628,45 @@ msgstr "Inicia el %(date)s"
 
 msgid "Permit progress"
 msgstr "Avance del permiso"
+
+msgid "Write a question first."
+msgstr "Escriba primero una pregunta."
+
+msgid "The question is too long."
+msgstr "La pregunta es demasiado larga."
+
+msgid "The assistant is not configured: the NVIDIA key is missing in this environment."
+msgstr "El asistente no está configurado: falta la llave de NVIDIA en este entorno."
+
+msgid "The assistant returned no answer."
+msgstr "El asistente no devolvió respuesta."
+
+msgid "The assistant needed too many steps. Try a simpler question."
+msgstr "El asistente necesitó demasiados pasos. Pruebe con una pregunta más simple."
+
+msgid "The assistant is not available right now. Try again in a moment."
+msgstr "El asistente no está disponible por ahora. Vuelva a intentarlo en un momento."
+
+msgid "Assistant"
+msgstr "Asistente"
+
+msgid "Prototype, demo environment only."
+msgstr "Prototipo, solo en el entorno de demo."
+
+msgid "It answers from aggregated permit data. It never changes anything and never sees names, ID numbers or contact details. Check anything important on the screens."
+msgstr "Responde con datos agregados de permisos. Nunca cambia nada y nunca ve nombres, números de identificación ni datos de contacto. Verifique en las pantallas todo lo importante."
+
+msgid "Ask about permits"
+msgstr "Pregunte sobre permisos"
+
+msgid "Which sites have no current permit?"
+msgstr "¿Qué faenas no tienen permiso vigente?"
+
+msgid "Ask"
+msgstr "Preguntar"
+
+msgid "Answer"
+msgstr "Respuesta"
+
+msgid "Data consulted"
+msgstr "Datos consultados"
