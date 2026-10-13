@@ -1,4 +1,4 @@
-{% load aero_tags i18n %}
+{% load aero_tags i18n static %}
 {% for object in objects %}
 <tr data-pk="{{ object.pk }}">
   <td><a href="{% url 'operator-detail' object.pk %}" class="table-primary-value">{{ object.full_name }}</a>
@@ -35,6 +35,7 @@ el `colspan` promete y les reparte el sobrante que le tocaba a `col-flex`: medid
 el 2026-09-11, un 99 dejaba la columna flexible en 5 px y el encabezado en 280,
 con cada letra en su propia linea. Hay un guardian que cruza este numero con los
 `<col>`. El porque completo esta en `_operator_rows.html`.{% endcomment %}<tr><td colspan="5" class="text-center text-muted py-4">
+    {% static 'img/illustrations/certificates.svg' as art_src %}{% include "generic/_empty_art.html" with src=art_src %}
   {% comment %}UX-18: los dos vacios no son el mismo hecho. Sin filtros, el
   padron esta vacio y lo que corresponde es ofrecer crear el primero; con un
   filtro puesto, puede haber mucho y este recorte no alcanzarlo, asi que lo que

@@ -1,0 +1,11 @@
+{% comment %}LV-302: la ilustración de un estado vacío, sobre su lámina clara.
+
+Recibe `src` ya resuelto por quien incluye (con `static ... as art_src`), a propósito:
+con el nombre del archivo escrito literal en cada plantilla, un guardián
+(`apps/core/test_lv302_illustrations.py`) comprueba que el archivo existe. Armar el nombre
+aquí dentro lo volvería invisible para ese guardián.
+
+Decorativa: `alt=""`. El mensaje del estado vacío va como texto debajo, no en la imagen.{% endcomment %}
+<div class="empty-art-wrap">
+  <div class="illus-tile empty-art"><img src="{{ src }}" alt="" width="220" height="220" loading="lazy"></div>
+</div>

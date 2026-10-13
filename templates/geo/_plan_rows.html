@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n static %}
 {% comment %}LV-135: parcial propio y no el genérico, misma razón que
 `_permission_rows.html` (LV-53/T5.6): una respuesta HTMX de búsqueda en vivo tiene
 que traer **estas** columnas, o el resultado colapsa a las genéricas.
@@ -68,6 +68,7 @@ La fila archivada se distingue y ofrece "Restaurar": sin eso, el filtro
 </tr>
 {% empty %}
 <tr><td colspan="7" class="text-center text-muted py-4">
+    {% static 'img/illustrations/survey.svg' as art_src %}{% include "generic/_empty_art.html" with src=art_src %}
   {% if is_filtered %}
   {% translate "No plans match this filter." %} <a href="{{ request.path }}">{% translate "Clear it" %}</a>
   {% else %}

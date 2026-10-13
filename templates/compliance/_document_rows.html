@@ -1,4 +1,4 @@
-{% load aero_tags i18n %}
+{% load aero_tags i18n static %}
 {% for object in objects %}
 <tr data-pk="{{ object.pk }}">
   <td><a href="{% url 'document-detail' object.pk %}">{{ object.title }}</a></td>
@@ -9,6 +9,7 @@
   <td class="text-end text-nowrap"><a class="btn btn-sm btn-outline-secondary" href="{% url 'document-detail' object.pk %}">{% translate "View" %}</a> <a class="btn btn-sm btn-outline-primary" href="{% url 'document-replace' object.pk %}">{% translate "Replace" %}</a> <a class="btn btn-sm btn-outline-danger" href="{% url 'document-delete' object.pk %}">{% translate "Delete" %}</a></td>
 </tr>
 {% empty %}<tr><td colspan="6" class="text-center text-muted py-4">
+    {% static 'img/illustrations/documents.svg' as art_src %}{% include "generic/_empty_art.html" with src=art_src %}
   {% if is_filtered %}
   {% translate "No records match the current filters." %} <a href="{{ request.path }}">{% translate "Clear filters" %}</a>
   {% else %}

@@ -11,7 +11,15 @@
 dos centímetros. Un encabezado lleva acciones, no atajos a lo que ya está a la
 vista; y de paso desaparece "Abrir registro", que prometía el padrón y llevaba a
 centros de costo.{% endcomment %}
-<div class="page-header">
+<div class="page-header page-header--hero">
+  {% comment %}LV-302: ruta de vuelo decorativa (línea punteada con puntos de paso) detrás del
+  título. Sólo CSS y SVG en línea; el movimiento de la línea lo apaga «reducir movimiento».{% endcomment %}
+  <svg class="hero-route" viewBox="0 0 420 120" preserveAspectRatio="xMaxYMid meet" aria-hidden="true" focusable="false">
+    <path class="route-line" d="M10 100 C90 90 110 30 190 40 S320 85 408 18"/>
+    <circle class="route-dot" cx="190" cy="40" r="5"/>
+    <circle class="route-dot-end" cx="408" cy="18" r="5"/>
+    <circle class="route-dot" cx="10" cy="100" r="5"/>
+  </svg>
   <div>
     <h1 class="mb-0">{% translate "Operations Dashboard" %}</h1>
     {% comment %}`UX-15`: **qué está pasando hoy**, no sólo qué vence.
