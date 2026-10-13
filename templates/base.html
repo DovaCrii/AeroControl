@@ -101,7 +101,7 @@
         </button>
       </div>
       {% with request.resolver_match.url_name as url_name %}
-      <a href="{% url 'dashboard' %}" class="nav-item nav-overview {% if url_name == 'dashboard' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-dashboard"/></svg>{% translate "Dashboard" %}</a>
+      <a href="{% url 'dashboard' %}" class="nav-item nav-overview {% if url_name == 'dashboard' %}active{% endif %}" {% if url_name == 'dashboard' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-dashboard"/></svg><span class="nav-label">{% translate "Dashboard" %}</span></a>
 
       {% comment %}`UX-31` · Los atajos del rol.
 
@@ -121,7 +121,7 @@
       <div class="nav-shortcuts">
         <span class="sidebar-label nav-shortcuts-label">{% translate "Your day" %}</span>
         {% for shortcut in role_shortcuts %}
-        <a href="{{ shortcut.url }}" class="nav-item nav-shortcut {% if url_name == shortcut.url_name %}active{% endif %}">{% translate shortcut.label %}</a>
+        <a href="{{ shortcut.url }}" class="nav-item nav-shortcut {% if url_name == shortcut.url_name %}active{% endif %}" {% if url_name == shortcut.url_name %}aria-current="page"{% endif %}><span class="nav-label">{% translate shortcut.label %}</span></a>
         {% endfor %}
       </div>
       {% endif %}
@@ -163,9 +163,9 @@
       el registro de auditoría, se decide entre congelarlo y borrarlo; si lo piden de
       vuelta, se descomenta y esta nota se retira.
 
-      <a href="{% url 'can-i-fly' %}" class="nav-item nav-flight {% if url_name == 'can-i-fly' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-can-i-fly"/></svg>{% translate "Can I fly?" %}</a>
+      <a href="{% url 'can-i-fly' %}" class="nav-item nav-flight {% if url_name == 'can-i-fly' %}active{% endif %}" {% if url_name == 'can-i-fly' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-can-i-fly"/></svg><span class="nav-label">{% translate "Can I fly?" %}</span></a>
       {% endcomment %}
-      <a href="{% url 'permission-list' %}" class="nav-item nav-flight {% if url_name == 'permission-list' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-permission-list"/></svg>{% translate "Permissions" %}</a>
+      <a href="{% url 'permission-list' %}" class="nav-item nav-flight {% if url_name == 'permission-list' %}active{% endif %}" {% if url_name == 'permission-list' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-permission-list"/></svg><span class="nav-label">{% translate "Permissions" %}</span></a>
       {% comment %}LV-150 paso 1 (2026-08-26, decisión del usuario): "Solicitudes
       SIGO" se retira del menú siguiendo el procedimiento de LV-78 y LV-103 --
       primero sin superficie propia, después congelado, y sólo al final se borra
@@ -200,11 +200,11 @@
       trámite que va en medio. Va entre ambos porque ése es el orden en que
       ocurre.
 
-      <a href="{% url 'flight-request-list' %}" class="nav-item nav-flight {% if url_name == 'flight-request-list' or url_name == 'flight-request-detail' or url_name == 'geo-plan-split' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-flight-request-list"/></svg>{% translate "SIGO requests" %}</a>
+      <a href="{% url 'flight-request-list' %}" class="nav-item nav-flight {% if url_name == 'flight-request-list' or url_name == 'flight-request-detail' or url_name == 'geo-plan-split' %}active{% endif %}" {% if url_name == 'flight-request-list' or url_name == 'flight-request-detail' or url_name == 'geo-plan-split' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-flight-request-list"/></svg><span class="nav-label">{% translate "SIGO requests" %}</span></a>
       {% endcomment %}
-      <a href="{% url 'geo-plan-list' %}" class="nav-item nav-flight {% if url_name == 'geo-plan-list' or url_name == 'geo-plan-detail' or url_name == 'geo-plan-import' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-geo-plan-list"/></svg>{% translate "Geospatial planning" %}</a>
+      <a href="{% url 'geo-plan-list' %}" class="nav-item nav-flight {% if url_name == 'geo-plan-list' or url_name == 'geo-plan-detail' or url_name == 'geo-plan-import' %}active{% endif %}" {% if url_name == 'geo-plan-list' or url_name == 'geo-plan-detail' or url_name == 'geo-plan-import' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-geo-plan-list"/></svg><span class="nav-label">{% translate "Geospatial planning" %}</span></a>
       {% comment %}LV-291 (2026-10-07, pedido del usuario): «Vuelos» vuelve al menú, ahora que el registro de operaciones en formato DGAC (LV-290) vive ahí: la lista es el registro de todos los vuelos y cada permiso tiene su pantalla de operaciones. LV-284 lo había ocultado; «¿Puedo volar?» sigue oculto.{% endcomment %}
-      <a href="{% url 'record-list' %}" class="nav-item nav-flight {% if url_name == 'record-list' or url_name == 'record-detail' or url_name == 'permission-operations' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-record-list"/></svg>{% translate "Flights" %}</a>
+      <a href="{% url 'record-list' %}" class="nav-item nav-flight {% if url_name == 'record-list' or url_name == 'record-detail' or url_name == 'permission-operations' %}active{% endif %}" {% if url_name == 'record-list' or url_name == 'record-detail' or url_name == 'permission-operations' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-record-list"/></svg><span class="nav-label">{% translate "Flights" %}</span></a>
       {% comment %}LV-103 paso 1 (2026-08-14, decisión del usuario): el
       calendario se retira siguiendo el procedimiento de LV-78 -- primero sin
       superficies, después congelado, y sólo al final se borra si nadie lo echa
@@ -225,7 +225,7 @@
       vuelve entero. A diferencia del Kanban, acá no había ninguna dependencia
       escondida -- `CALENDAR_EVENT_PERMISSIONS` y `CalendarAccessMixin` viven en
       `apps.core.views` y sólo los usa el propio calendario.
-      <a href="{% url 'calendar' %}" class="nav-item nav-flight {% if url_name == 'calendar' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-calendar"/></svg>{% translate "Calendar" %}</a>
+      <a href="{% url 'calendar' %}" class="nav-item nav-flight {% if url_name == 'calendar' %}active{% endif %}" {% if url_name == 'calendar' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-calendar"/></svg><span class="nav-label">{% translate "Calendar" %}</span></a>
       {% endcomment %}
         </div>
       </div>
@@ -239,15 +239,15 @@
       así que una pestaña transversal encima se sentía redundante. La vista y la
       URL 'document-list' siguen vivas (auditoría de todo junto) -- solo se
       quita el enlace, igual que el patrón de LV-7 con Kanban.
-      <a href="{% url 'document-list' %}" class="nav-item nav-compliance {% if url_name == 'document-list' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-document-list"/></svg>{% translate "Documents" %}</a>
+      <a href="{% url 'document-list' %}" class="nav-item nav-compliance {% if url_name == 'document-list' %}active{% endif %}" {% if url_name == 'document-list' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-document-list"/></svg><span class="nav-label">{% translate "Documents" %}</span></a>
       {% endcomment %}
       {% comment %}`UX-13`: la bandeja va **primera** en esta sección y encima de las
 alertas, porque es la pantalla con la que se empieza el día: alertas es una de
 sus cuatro fuentes, no su reemplazo. Reusa el icono de alertas a propósito —
 `UX-05` fijó el juego de símbolos y un icono nuevo por pantalla nueva es cómo el
 menú deja de leerse de un vistazo.{% endcomment %}
-<a href="{% url 'work-tray' %}" class="nav-item nav-compliance {% if url_name == 'work-tray' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-work-tray"/></svg>{% translate "Work tray" %}</a>
-<a href="{% url 'alert-list' %}" class="nav-item nav-compliance {% if url_name == 'alert-list' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-alert-list"/></svg>{% translate "Alerts" %} {% include "core/_alert_badge.html" %}</a>
+<a href="{% url 'work-tray' %}" class="nav-item nav-compliance {% if url_name == 'work-tray' %}active{% endif %}" {% if url_name == 'work-tray' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-work-tray"/></svg><span class="nav-label">{% translate "Work tray" %}</span></a>
+<a href="{% url 'alert-list' %}" class="nav-item nav-compliance {% if url_name == 'alert-list' %}active{% endif %}" {% if url_name == 'alert-list' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-alert-list"/></svg><span class="nav-label">{% translate "Alerts" %}</span> {% include "core/_alert_badge.html" %}</a>
       {% comment %}LV-69 (2026-08-11): "Seguimiento de alertas" se ocultó del menú
       por decisión del usuario, que no reconocía qué hacía y lo veía duplicado.
       Es la tercera vuelta de este módulo (LV-7 lo ocultó, LV-48 lo renombró y lo
@@ -259,14 +259,14 @@ menú deja de leerse de un vistazo.{% endcomment %}
       de la lista de alertas siguen funcionando. Si en un mes nadie lo extraña,
       se puede eliminar con confianza; el diseño de R7.6 propone el reemplazo
       (NonConformity + verificación de eficacia).
-      <a href="{% url 'kanban' %}" class="nav-item nav-compliance {% if url_name == 'kanban' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-kanban"/></svg>{% translate "Action plan" %}</a>
+      <a href="{% url 'kanban' %}" class="nav-item nav-compliance {% if url_name == 'kanban' %}active{% endif %}" {% if url_name == 'kanban' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-kanban"/></svg><span class="nav-label">{% translate "Action plan" %}</span></a>
       {% endcomment %}
       {% comment %}LV-262: «Registros operacionales» y «Cumplimiento mensual» son
       ahora **una entrada**, el cierre mensual — pedido del usuario para la etapa
       de carga de datos. La lista de documentos (`operational-records`) no se
       retiró: se abre desde cada fila del cierre y desde «Todos los registros», y
       por eso se marca activa esta entrada cuando se está en ella.{% endcomment %}
-      <a href="{% url 'monthly-review' %}" class="nav-item nav-compliance {% if url_name == 'monthly-review' or url_name == 'operational-records' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-monthly-review"/></svg>{% translate "Monthly close" %}</a>
+      <a href="{% url 'monthly-review' %}" class="nav-item nav-compliance {% if url_name == 'monthly-review' or url_name == 'operational-records' %}active{% endif %}" {% if url_name == 'monthly-review' or url_name == 'operational-records' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-monthly-review"/></svg><span class="nav-label">{% translate "Monthly close" %}</span></a>
       {% comment %}Los entregables salen del menú a pedido del usuario
       (2026-08-20): no se están usando todavía y ocupaban un sitio en la columna
       de cumplimiento, que es la que se mira a diario. **La función sigue
@@ -285,8 +285,8 @@ menú deja de leerse de un vistazo.{% endcomment %}
       producción, el enlace vuelve; si no se crea ninguno, se retira de verdad
       —vista, URL, plantillas y tests— salvo que `NonConformity` siga
       dependiendo del rechazo de entregables, que hoy es el caso.{% endcomment %}
-      {% if perms.compliance.view_nonconformity %}<a href="{% url 'nonconformity-list' %}" class="nav-item nav-compliance {% if url_name == 'nonconformity-list' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-nonconformity-list"/></svg>{% translate "Non-conformities" %}</a>{% endif %}
-      <a href="{% url 'company-documents' %}" class="nav-item nav-compliance {% if url_name == 'company-documents' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-company-documents"/></svg>{% translate "Company documents" %}</a>
+      {% if perms.compliance.view_nonconformity %}<a href="{% url 'nonconformity-list' %}" class="nav-item nav-compliance {% if url_name == 'nonconformity-list' %}active{% endif %}" {% if url_name == 'nonconformity-list' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-nonconformity-list"/></svg><span class="nav-label">{% translate "Non-conformities" %}</span></a>{% endif %}
+      <a href="{% url 'company-documents' %}" class="nav-item nav-compliance {% if url_name == 'company-documents' %}active{% endif %}" {% if url_name == 'company-documents' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-company-documents"/></svg><span class="nav-label">{% translate "Company documents" %}</span></a>
         </div>
       </div>
 
@@ -306,15 +306,15 @@ menú deja de leerse de un vistazo.{% endcomment %}
         <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="reports" aria-expanded="true" aria-controls="nav-group-reports">{% translate "Reports" %}<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
         <div class="nav-group-items" id="nav-group-reports">
       {% if perms.registry.view_aircraft and perms.registry.view_operator %}
-      <a href="{% url 'registry-roster' %}" class="nav-item nav-reports {% if url_name == 'registry-roster' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-registry-roster"/></svg>{% translate "Roster report" %}</a>
+      <a href="{% url 'registry-roster' %}" class="nav-item nav-reports {% if url_name == 'registry-roster' %}active{% endif %}" {% if url_name == 'registry-roster' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-registry-roster"/></svg><span class="nav-label">{% translate "Roster report" %}</span></a>
       {% endif %}
-      <a href="{% url 'compliance-report' %}" class="nav-item nav-reports {% if url_name == 'compliance-report' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-compliance-report"/></svg>{% translate "Report" %}</a>
+      <a href="{% url 'compliance-report' %}" class="nav-item nav-reports {% if url_name == 'compliance-report' %}active{% endif %}" {% if url_name == 'compliance-report' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-compliance-report"/></svg><span class="nav-label">{% translate "Report" %}</span></a>
       {% comment %}R3: el informe mensual RPA entra al menú el mismo día que
       gana pantalla. El repo arrastra vistas vivas a las que sólo se llega
       tecleando la URL (ver §4b del plan y las condiciones de cierre en
       `MASTER_PLAN.md`); ésta no suma otra.{% endcomment %}
       {% if perms.reporting.view_reportrun %}
-      <a href="{% url 'monthly-report' %}" class="nav-item nav-reports {% if url_name == 'monthly-report' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-monthly-report"/></svg>{% translate "Monthly RPA report" %}</a>
+      <a href="{% url 'monthly-report' %}" class="nav-item nav-reports {% if url_name == 'monthly-report' %}active{% endif %}" {% if url_name == 'monthly-report' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-monthly-report"/></svg><span class="nav-label">{% translate "Monthly RPA report" %}</span></a>
       {% endif %}
         </div>
       </div>
@@ -325,7 +325,7 @@ menú deja de leerse de un vistazo.{% endcomment %}
       {% comment %}LV-61: was "Records", which collided with "Operational
       records" above and with the flight records in "Flights" -- three
       different things called the same in one menu.{% endcomment %}
-      <a href="{% url 'maintenance-list' %}" class="nav-item nav-maintenance {% if url_name == 'maintenance-list' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-maintenance-list"/></svg>{% translate "Maintenance jobs" %}</a>
+      <a href="{% url 'maintenance-list' %}" class="nav-item nav-maintenance {% if url_name == 'maintenance-list' %}active{% endif %}" {% if url_name == 'maintenance-list' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-maintenance-list"/></svg><span class="nav-label">{% translate "Maintenance jobs" %}</span></a>
         </div>
       </div>
 
@@ -343,15 +343,15 @@ menú deja de leerse de un vistazo.{% endcomment %}
       <div class="nav-group">
         <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="registry" aria-expanded="true" aria-controls="nav-group-registry">{% translate "Registry" context "sidebar group" %}<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
         <div class="nav-group-items" id="nav-group-registry">
-      <a href="{% url 'costcenter-list' %}" class="nav-item nav-registry {% if url_name == 'costcenter-list' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-costcenter-list"/></svg>{% translate "Cost Centers" %}</a>
-      <a href="{% url 'aircraft-list' %}" class="nav-item nav-registry {% if url_name == 'aircraft-list' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-aircraft-list"/></svg>{% translate "Aircraft" %}</a>
-      <a href="{% url 'operator-list' %}" class="nav-item nav-registry {% if url_name == 'operator-list' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-operator-list"/></svg>{% translate "Operators" %}</a>
+      <a href="{% url 'costcenter-list' %}" class="nav-item nav-registry {% if url_name == 'costcenter-list' %}active{% endif %}" {% if url_name == 'costcenter-list' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-costcenter-list"/></svg><span class="nav-label">{% translate "Cost Centers" %}</span></a>
+      <a href="{% url 'aircraft-list' %}" class="nav-item nav-registry {% if url_name == 'aircraft-list' %}active{% endif %}" {% if url_name == 'aircraft-list' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-aircraft-list"/></svg><span class="nav-label">{% translate "Aircraft" %}</span></a>
+      <a href="{% url 'operator-list' %}" class="nav-item nav-registry {% if url_name == 'operator-list' %}active{% endif %}" {% if url_name == 'operator-list' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-operator-list"/></svg><span class="nav-label">{% translate "Operators" %}</span></a>
       {% comment %}R5.8 (2026-08-11): "Habilitaciones" se ocultó del menú por
       decisión del usuario -- redundante con la ficha del operador, que ahora
       muestra las habilitaciones reales de cada uno (ver operator_detail.html).
       La vista y la URL 'qualification-list' siguen vivas (auditoría de todas
       juntas), igual que el patrón de LV-7 con Kanban y LV-D8 con Documentos.
-      <a href="{% url 'qualification-list' %}" class="nav-item nav-registry {% if url_name == 'qualification-list' or url_name == 'qualification-detail' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-qualification-list"/></svg>{% translate "Qualifications" %}</a>
+      <a href="{% url 'qualification-list' %}" class="nav-item nav-registry {% if url_name == 'qualification-list' or url_name == 'qualification-detail' %}active{% endif %}" {% if url_name == 'qualification-list' or url_name == 'qualification-detail' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-qualification-list"/></svg><span class="nav-label">{% translate "Qualifications" %}</span></a>
       {% endcomment %}
       {% comment %}LV-158: la prueba de conocimientos, para quien la rinde. Va en
       Padrón porque es un dato de la persona, junto a operadores; y sólo aparece
@@ -359,7 +359,7 @@ menú deja de leerse de un vistazo.{% endcomment %}
       hacer ahí -- el historial de todos se lee en la ficha de cada operador.
       {% endcomment %}
       {% if perms.registry.add_knowledgeassessment %}
-      <a href="{% url 'assessment-take' %}" class="nav-item nav-registry {% if url_name == 'assessment-take' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-assessment-take"/></svg>{% translate "Knowledge assessment" %}</a>
+      <a href="{% url 'assessment-take' %}" class="nav-item nav-registry {% if url_name == 'assessment-take' %}active{% endif %}" {% if url_name == 'assessment-take' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-assessment-take"/></svg><span class="nav-label">{% translate "Knowledge assessment" %}</span></a>
       {% endif %}
         </div>
       </div>
@@ -372,20 +372,22 @@ menú deja de leerse de un vistazo.{% endcomment %}
       <div class="nav-group">
         <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="inventory" aria-expanded="true" aria-controls="nav-group-inventory">{% translate "Inventory and movements" %}<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
         <div class="nav-group-items" id="nav-group-inventory">
-      <a href="{% url 'operatorassignment-list' %}" class="nav-item nav-inventory {% if url_name == 'operatorassignment-list' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-operatorassignment-list"/></svg>{% translate "Operator assignments" %}</a>
-      <a href="{% url 'aircraftassignment-list' %}" class="nav-item nav-inventory {% if url_name == 'aircraftassignment-list' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-aircraftassignment-list"/></svg>{% translate "Aircraft assignments" %}</a>
-      <a href="{% url 'battery-list' %}" class="nav-item nav-inventory {% if url_name == 'battery-list' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-battery-list"/></svg>{% translate "Batteries" %}</a>
-      <a href="{% url 'resourcemovementlog-list' %}" class="nav-item nav-inventory {% if url_name == 'resourcemovementlog-list' %}active{% endif %}"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-resourcemovementlog-list"/></svg>{% translate "Resource movements" %}</a>
+      <a href="{% url 'operatorassignment-list' %}" class="nav-item nav-inventory {% if url_name == 'operatorassignment-list' %}active{% endif %}" {% if url_name == 'operatorassignment-list' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-operatorassignment-list"/></svg><span class="nav-label">{% translate "Operator assignments" %}</span></a>
+      <a href="{% url 'aircraftassignment-list' %}" class="nav-item nav-inventory {% if url_name == 'aircraftassignment-list' %}active{% endif %}" {% if url_name == 'aircraftassignment-list' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-aircraftassignment-list"/></svg><span class="nav-label">{% translate "Aircraft assignments" %}</span></a>
+      <a href="{% url 'battery-list' %}" class="nav-item nav-inventory {% if url_name == 'battery-list' %}active{% endif %}" {% if url_name == 'battery-list' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-battery-list"/></svg><span class="nav-label">{% translate "Batteries" %}</span></a>
+      <a href="{% url 'resourcemovementlog-list' %}" class="nav-item nav-inventory {% if url_name == 'resourcemovementlog-list' %}active{% endif %}" {% if url_name == 'resourcemovementlog-list' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-resourcemovementlog-list"/></svg><span class="nav-label">{% translate "Resource movements" %}</span></a>
         </div>
       </div>
 
-      <hr>
+      <div class="nav-admin-zone">
+        <span class="sidebar-label nav-admin-label">{% translate "Administration" context "sidebar zone" %}</span>
       {% comment %}Gated by the same view_* permissions the page itself checks
       per row, not by is_staff: a compliance manager with view_documenttype had
       no way to reach the document-type and alert-rule configuration at all.
       {% endcomment %}
-      {% if perms.core.view_operationaltenant or perms.core.view_tenantmembership or perms.compliance.view_documenttype or perms.compliance.view_alertrule or perms.workboard.view_kanbanboard or perms.workboard.view_kanbanstage or perms.workboard.view_kanbanlabel or perms.core.view_backupconfig or perms.core.view_auditevent %}<a href="{% url 'administration' %}" class="nav-item nav-admin"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-administration"/></svg>{% translate "Administration center" %}</a>{% endif %}
-      <a href="{% url 'admin:index' %}" class="nav-item nav-admin"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-admin-index"/></svg>{% translate "Admin" %}</a>
+      {% if perms.core.view_operationaltenant or perms.core.view_tenantmembership or perms.compliance.view_documenttype or perms.compliance.view_alertrule or perms.workboard.view_kanbanboard or perms.workboard.view_kanbanstage or perms.workboard.view_kanbanlabel or perms.core.view_backupconfig or perms.core.view_auditevent %}<a href="{% url 'administration' %}" class="nav-item nav-admin"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-administration"/></svg><span class="nav-label">{% translate "Administration center" %}</span></a>{% endif %}
+      <a href="{% url 'admin:index' %}" class="nav-item nav-admin"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-admin-index"/></svg><span class="nav-label">{% translate "Admin" %}</span></a>
+      </div>
       {% endwith %}
       {% comment %}LV-208: el tirador del ancho, pedido del usuario para poder
       regular la barra en vez de sólo abrirla o colapsarla.
