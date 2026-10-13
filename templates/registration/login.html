@@ -11,11 +11,15 @@
         crossorigin="anonymous">
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   <link rel="stylesheet" href="{% static 'css/login.css' %}">
+  <link rel="stylesheet" href="{% static 'css/identity.css' %}">
   <link rel="icon" type="image/svg+xml" href="{% static 'img/aerocontrol-mark.svg' %}">
   <script src="{% static 'js/theme-init.js' %}"></script>
 </head>
 <body>
   <div class="login-page">
+    {% comment %}LV-302: ilustración de portada, sólo en pantallas anchas (ver `identity.css`).
+    Decorativa y sobre lámina clara: el trazo es oscuro.{% endcomment %}
+    <div class="illus-tile login-art" aria-hidden="true"><img src="{% static 'img/illustrations/hero-planning.svg' %}" alt="" width="400" height="300" loading="lazy"></div>
     <div class="login-card">
       <div class="login-logo"><img src="{% static 'img/aerocontrol-mark.svg' %}" alt="AeroControl"></div>
       <h1 class="login-title">AeroControl</h1>

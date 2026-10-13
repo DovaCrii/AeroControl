@@ -1,0 +1,13 @@
+{% comment %}LV-302: el recorrido de un registro (Solicitado → Aprobado → …), solo.
+
+Sacado de `_traceability.html` para poder dibujarlo **arriba** en la ficha del permiso sin
+repetir el HTML: una sola definición del recorrido, la que lee `steps` del modelo
+(`record.status_steps`), nunca una lista escrita aquí (la trampa de R1.1).{% endcomment %}
+<ol class="status-steps">
+  {% for step in steps %}
+  <li class="status-step is-{{ step.state }}">
+    <span class="status-step-badge">{% if step.state == 'done' %}✓{% elif step.state == 'blocked' %}✕{% else %}{{ forloop.counter }}{% endif %}</span>
+    <span class="status-step-label">{{ step.label }}</span>
+  </li>
+  {% endfor %}
+</ol>

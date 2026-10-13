@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n static %}
 {% comment %}R9.5: parcial propio y no el genérico, misma razón que
 `_permission_rows.html` (LV-53/T5.6): una respuesta HTMX de búsqueda en vivo
 tiene que traer estas columnas, o el resultado colapsa a las genéricas.
@@ -28,5 +28,6 @@ solicitud presentada en SIGO que nadie contestó.{% endcomment %}
 {% comment %}LV-131: el estado vacío es el que tiene que explicar de dónde salen
 las solicitudes, porque es cuando la persona no lo sabe. El enlace va acá y no en
 el encabezado: en el encabezado era un botón que parecía una acción.{% endcomment %}
-<tr><td colspan="6" class="text-muted py-3">{% translate "No flight requests yet." %} <a href="{% url 'geo-plan-list' %}">{% translate "Open a geospatial plan" %}</a> {% translate "and split it into requests -- only needed when its KMZ has more than one circle." %}</td></tr>
+<tr><td colspan="6" class="text-muted py-3">
+    {% static 'img/illustrations/route-map.svg' as art_src %}{% include "generic/_empty_art.html" with src=art_src %}{% translate "No flight requests yet." %} <a href="{% url 'geo-plan-list' %}">{% translate "Open a geospatial plan" %}</a> {% translate "and split it into requests -- only needed when its KMZ has more than one circle." %}</td></tr>
 {% endfor %}

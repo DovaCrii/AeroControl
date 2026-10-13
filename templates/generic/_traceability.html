@@ -22,14 +22,9 @@ Shared by the flight permit, the geo plan and the aircraft's insurance filing
 {% endcomment %}
 <div class="{% if not embedded %}card mt-3 p-4{% endif %}">
   <h2 class="{% if embedded %}h6{% else %}h5{% endif %} mb-3">{% translate "Traceability" %}</h2>
-  <ol class="status-steps mb-4">
-    {% for step in steps %}
-    <li class="status-step is-{{ step.state }}">
-      <span class="status-step-badge">{% if step.state == 'done' %}✓{% elif step.state == 'blocked' %}✕{% else %}{{ forloop.counter }}{% endif %}</span>
-      <span class="status-step-label">{{ step.label }}</span>
-    </li>
-    {% endfor %}
-  </ol>
+  {% comment %}LV-302: `hide_steps` cuando la pantalla ya dibujó el recorrido arriba
+  (la ficha del permiso): el mismo recorrido dos veces en una página es ruido.{% endcomment %}
+  {% if not hide_steps %}<div class="mb-4">{% include "generic/_status_steps.html" %}</div>{% endif %}
 
   <h3 class="h6 mb-2">{% if history_title %}{{ history_title }}{% else %}{% translate "Request history" %}{% endif %}</h3>
   {% if history %}

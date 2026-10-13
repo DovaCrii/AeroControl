@@ -1,4 +1,4 @@
-{% load aero_tags i18n %}
+{% load aero_tags i18n static %}
 {% for object in objects %}
 <tr data-pk="{{ object.pk }}">
   <td><a href="{{ object.pk }}/" class="table-primary-value">{{ object.actual_date|date:"Y-m-d" }}</a></td>
@@ -13,6 +13,7 @@
 {% empty %}
 <tr>
   <td colspan="6" class="text-center text-muted py-4">
+    {% static 'img/illustrations/route-map.svg' as art_src %}{% include "generic/_empty_art.html" with src=art_src %}
     {% if is_filtered %}
       {% translate "No records match the current filters." %}
       <a href="{{ request.path }}">{% translate "Clear filters" %}</a>

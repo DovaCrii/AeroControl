@@ -10,6 +10,9 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Capa de identidad al estilo de AeroAcademy (`LV-302`).** Láminas con relieve, ilustraciones de drones
+  en estados vacíos y portada, cabecera del panel con ruta de vuelo, el recorrido del permiso arriba de su
+  ficha y animaciones suaves que respetan «reducir movimiento». Lleva `collectstatic`.
 - **La lista de permisos abre con los últimos generados primero (`LV-301`).** Antes salía por número
   ascendente; un orden elegido en la columna sigue mandando.
 - **La habilitación escrita en la ficha del operador también cumple (`LV-300`).** «Mavic-Phantom-Matrice /

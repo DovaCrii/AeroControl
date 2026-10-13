@@ -9625,3 +9625,6 @@ msgstr "La autorización de la DGAC dice del %(pdf_from)s al %(pdf_until)s, pero
 
 msgid "Starts %(date)s"
 msgstr "Inicia el %(date)s"
+
+msgid "Permit progress"
+msgstr "Avance del permiso"
