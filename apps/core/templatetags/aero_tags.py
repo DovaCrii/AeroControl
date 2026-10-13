@@ -1,3 +1,5 @@
+import re
+
 from django import template
 from django.db import models
 from django.utils.translation import gettext as _
@@ -146,3 +148,71 @@ def as_datetime(value):
         return datetime.fromisoformat(value)
     except (TypeError, ValueError):
         return value
+
+
+# LV-303: la ilustración de una aeronave según su serie.
+#
+# Pedido del usuario (2026-10-13): que los drones se vean bien, no como siluetas simples. Hay un
+# dibujo propio por serie en `static/img/aircraft/` y, **si la persona deja una foto con derecho
+# de uso** en `static/img/equipment/<serie>.(webp|jpg|jpeg|png)`, esa foto manda. Nada de fotos
+# de terceros va en el repositorio: ver `static/img/illustrations/README.md`.
+AIRCRAFT_ART_SERIES = ("mavic", "matrice", "phantom", "elios")
+AIRCRAFT_PHOTO_EXTENSIONS = ("webp", "jpg", "jpeg", "png")
+
+
+# Abreviaturas que el fabricante usa en el modelo y que no empiezan por el nombre de la serie
+# («M3» es Mavic 3; «M300 RTK» es Matrice 300). Sólo las **inequívocas**: «M4» se deja fuera a
+# propósito porque hay un Matrice 4 y un Mavic 4, y adivinar mostraría el dibujo equivocado.
+# Esto vale **sólo para elegir el dibujo**; la comprobación de habilitaciones sigue usando
+# `aircraft_series` tal cual, porque ahí un falso «cumple» es un riesgo y acá sólo un dibujo.
+_SERIES_ABBREVIATIONS = (
+    (re.compile(r"^m(2|3)(e|ea|t|m|p|c)?$"), "mavic"),
+    (re.compile(r"^m(30|100|200|210|300|350|600)(t|e|rtk)?$"), "matrice"),
+)
+
+
+def _abbreviated_series(aircraft):
+    words = re.split(r"[\s_-]+", (getattr(aircraft, "model", "") or "").strip().lower())
+    first = words[0] if words else ""
+    for pattern, series in _SERIES_ABBREVIATIONS:
+        if pattern.match(first):
+            return series
+    return ""
+
+
+@register.simple_tag
+def aircraft_art(aircraft):
+    """`{"url", "photo", "series"}` para dibujar la aeronave en su ficha.
+
+    La serie sale de `aircraft_series` (la primera palabra del modelo), la misma definición
+    que usa la comprobación de habilitaciones: una sola idea de «qué serie es». Una serie sin
+    dibujo cae en el genérico, vista desde arriba, y **nunca** en el de otra serie: mostrar un
+    Mavic para un equipo que no lo es sería informar mal.
+    """
+    from django.contrib.staticfiles import finders
+    from django.contrib.staticfiles.storage import staticfiles_storage
+
+    from apps.registry.selectors import aircraft_series
+
+    series = aircraft_series(aircraft)
+    if series not in AIRCRAFT_ART_SERIES:
+        series = _abbreviated_series(aircraft)
+    key = series if series in AIRCRAFT_ART_SERIES else "generic"
+    for extension in AIRCRAFT_PHOTO_EXTENSIONS:
+        path = f"img/equipment/{key}.{extension}"
+        if finders.find(path) or staticfiles_storage.exists(path):
+            try:
+                return {
+                    "url": staticfiles_storage.url(path),
+                    "photo": True,
+                    "series": key,
+                }
+            except ValueError:
+                # Con estáticos de contenido con hash, una foto recién dejada y sin
+                # `collectstatic` no tiene URL: se cae al dibujo en vez de romper la ficha.
+                break
+    return {
+        "url": staticfiles_storage.url(f"img/aircraft/{key}.svg"),
+        "photo": False,
+        "series": key,
+    }
