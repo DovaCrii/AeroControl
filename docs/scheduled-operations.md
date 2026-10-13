@@ -33,7 +33,7 @@ y así no se anuncia como pendiente algo que ya se cerró esa misma mañana.
 correo, o a los que se indiquen con `--to`. Si no hay ninguno, el comando falla
 con un mensaje claro en vez de enviar a nadie en silencio.
 
-> **En `p340` el timer lleva `--to cmunoz@jej.cl`** (decisión del usuario,
+> **En `p340` el timer lleva `--to <correo-del-responsable>`** (decisión del usuario,
 > 2026-08-20): mientras las revisiones las hace una sola persona, el informe va
 > sólo a ella. Se hizo en el timer y **no** sacando al otro destinatario del
 > grupo *Dirección*, porque ese grupo también recibe los avisos de
@@ -232,7 +232,7 @@ journalctl -u aerocontrol-alerts.service -n 30 --no-pager
 
 El informe ejecutivo semanal se agrega igual, con
 `OnCalendar=Mon *-*-* 07:30:00`. En `p340` está instalado como
-`mkjob executive "send_executive_report --period week --to cmunoz@jej.cl"
+`mkjob executive "send_executive_report --period week --to <correo-del-responsable>"
 "Mon *-*-* 07:30:00"` — ver la nota de arriba sobre por qué el destinatario va
 en el timer y no en el grupo. Sin `--to` va a quienes tengan correo en
 *Dirección*.
@@ -252,7 +252,7 @@ Type=oneshot
 User=levdigital01
 WorkingDirectory=/opt/aerocontrol
 EnvironmentFile=/etc/aerocontrol.env
-ExecStart=/home/levdigital01/.local/bin/uv run python manage.py send_executive_report --period week --to cmunoz@jej.cl
+ExecStart=/home/levdigital01/.local/bin/uv run python manage.py send_executive_report --period week --to <correo-del-responsable>
 EOF
 systemctl daemon-reload
 systemctl restart aerocontrol-executive.timer

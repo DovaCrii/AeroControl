@@ -534,13 +534,13 @@ class TestChapter1DocxImport:
         document.add_paragraph("1.5-\tDOTACIÓN OPERADOR RPA")
         document.add_paragraph("\t1)\tPERMANENTES")
         document.add_paragraph("\t\t\tNOMBRE\t\t:\tCristobal Muñoz Montiel")
-        document.add_paragraph("RUT\t\t:\t17.816.266-7")
+        document.add_paragraph("RUT\t\t:\t15.151.515-0")
         document.add_paragraph("Credencial N°\t:\t8172")
         document.add_paragraph("Tipo\t\t:\tOperador RPA")
         document.add_paragraph("Habilitaciones\t:\tMatrice Series")
         document.add_paragraph("Dirección\t:\tDiagonal Santa Elena 2605")
         document.add_paragraph("Teléfono\t:\t987282880")
-        document.add_paragraph("Email\t\t:\tcmunoz@jej.cl")
+        document.add_paragraph("Email\t\t:\tdirector@example.com")
         document.add_paragraph("\t\t\tNOMBRE\t\t:\tAriel Ortega Ramirez")
         document.add_paragraph("RUT\t\t:\t13.553.607-5")
         document.add_paragraph("Credencial N°\t:\t15532")
@@ -548,7 +548,7 @@ class TestChapter1DocxImport:
         document.add_paragraph("Habilitaciones\t:\tMatrice 30 T")
         document.add_paragraph("Dirección\t:\tSergio Valdovinos 01788")
         document.add_paragraph("Teléfono\t:\t939358818")
-        document.add_paragraph("Email\t\t:\taortega@jej.cl")
+        document.add_paragraph("Email\t\t:\tdeputy@example.com")
         document.add_paragraph("2) EVENTUALES (NO APLICA)")
         service_table = document.add_table(rows=2, cols=3)
         service_table.rows[0].cells[0].text = "AERONAVES"
@@ -590,13 +590,13 @@ class TestChapter1DocxImport:
         document.add_paragraph("1.5-\tDOTACIÓN OPERADOR RPA")
         document.add_paragraph("\t1)\tPERMANENTES")
         document.add_paragraph("\t\t\tNOMBRE\t\t:\tCristobal Muñoz Montiel")
-        document.add_paragraph("RUT\t\t:\t17.816.266-7")
+        document.add_paragraph("RUT\t\t:\t15.151.515-0")
         document.add_paragraph("Credencial N°\t:\t8172")
         document.add_paragraph("Tipo\t\t:\tOperador RPA")
         document.add_paragraph("Habilitaciones\t:\tMatrice Series")
         document.add_paragraph("Dirección\t:\tDiagonal Santa Elena 2605")
         document.add_paragraph("Teléfono\t:\t987282880")
-        document.add_paragraph("Email\t\t:\tcmunoz@jej.cl")
+        document.add_paragraph("Email\t\t:\tdirector@example.com")
         document.add_paragraph("2) EVENTUALES (NO APLICA)")
         service_table = document.add_table(rows=2, cols=3)
         service_table.rows[0].cells[0].text = "AERONAVES"
@@ -672,7 +672,7 @@ class TestChapter1DocxImport:
             == "MODELO QUE YA ESTABA"
         )
         # Y el operador que no estaba sí entró: "sólo lo que falta", no "nada".
-        assert Operator.objects.filter(employee_id="RUT-178162667").exists()
+        assert Operator.objects.filter(employee_id="RUT-151515150").exists()
 
     @pytest.mark.django_db
     def test_a_serial_that_exists_under_another_registration_is_a_conflict(

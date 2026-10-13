@@ -42,13 +42,13 @@ def _source(tmp_path, *, registration="RPA-4401", serial=SERIAL_DEL_MANUAL):
     document.add_paragraph("1.5-\tDOTACIÓN OPERADOR RPA")
     document.add_paragraph("\t1)\tPERMANENTES")
     document.add_paragraph("\t\t\tNOMBRE\t\t:\tCristobal Muñoz Montiel")
-    document.add_paragraph("RUT\t\t:\t17.816.266-7")
+    document.add_paragraph("RUT\t\t:\t15.151.515-0")
     document.add_paragraph("Credencial N°\t:\t8172")
     document.add_paragraph("Tipo\t\t:\tOperador RPA")
     document.add_paragraph("Habilitaciones\t:\tMatrice Series")
     document.add_paragraph("Dirección\t:\tDiagonal Santa Elena 2605")
     document.add_paragraph("Teléfono\t:\t987282880")
-    document.add_paragraph("Email\t\t:\tcmunoz@jej.cl")
+    document.add_paragraph("Email\t\t:\tdirector@example.com")
     document.add_paragraph("2) EVENTUALES (NO APLICA)")
     service_table = document.add_table(rows=2, cols=3)
     service_table.rows[0].cells[0].text = "AERONAVES"
@@ -116,7 +116,7 @@ class TestTheSpaceInTheWordCell:
 
         from apps.registry.models import Operator
 
-        assert Operator.objects.filter(employee_id="RUT-178162667").exists()
+        assert Operator.objects.filter(employee_id="RUT-151515150").exists()
 
     def test_the_serial_is_still_read_verbatim_from_the_manual(self, tmp_path, capsys):
         """El informe describe la fuente: ver el espacio es lo que delata que el

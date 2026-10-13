@@ -119,14 +119,18 @@ def test_without_a_recipient_it_stops_after_the_connection(capsys):
 def test_with_a_recipient_it_sends_a_real_message(capsys):
     mail.outbox.clear()
 
-    call_command("check_email", "--to", "cmunoz@jej.cl", "--to", "aortega@jej.cl")
+    call_command(
+        "check_email", "--to", "director@example.com", "--to", "deputy@example.com"
+    )
 
     assert len(mail.outbox) == 1
     message = mail.outbox[0]
-    assert message.to == ["cmunoz@jej.cl", "aortega@jej.cl"]
+    assert message.to == ["director@example.com", "deputy@example.com"]
     assert "prueba de correo saliente" in message.subject
     assert settings.MAIL_OPTIONS_FROM_ENV["host"] in message.body
-    assert "Enviado a cmunoz@jej.cl, aortega@jej.cl" in capsys.readouterr().out
+    assert (
+        "Enviado a director@example.com, deputy@example.com" in capsys.readouterr().out
+    )
 
 
 @override_settings(**_mail(LOCMEM, host="smtp.example.com"))
@@ -187,7 +191,8 @@ def test_an_smtp_level_refusal_is_reported_with_its_class(monkeypatch):
 
 
 @override_settings(
-    **_mail(LOCMEM, host="smtp.example.com"), DEFAULT_FROM_EMAIL="aerocontrol@jej.cl"
+    **_mail(LOCMEM, host="smtp.example.com"),
+    DEFAULT_FROM_EMAIL="aerocontrol@example.com",
 )
 def test_a_refused_sender_explains_the_relay_case(monkeypatch):
     """La falla típica de un buzón recién creado: autentica y no tiene permiso
@@ -198,7 +203,7 @@ def test_a_refused_sender_explains_the_relay_case(monkeypatch):
     error = smtplib.SMTPSenderRefused(
         550,
         b"5.7.60 Client does not have permission to send as this sender",
-        "aerocontrol@jej.cl",
+        "aerocontrol@example.com",
     )
 
     def refuse(self, fail_silently=False):
@@ -207,10 +212,10 @@ def test_a_refused_sender_explains_the_relay_case(monkeypatch):
     monkeypatch.setattr(EmailMessage, "send", refuse)
 
     with pytest.raises(CommandError) as failure:
-        call_command("check_email", "--to", "cmunoz@jej.cl")
+        call_command("check_email", "--to", "director@example.com")
 
     message = str(failure.value)
-    assert "aerocontrol@jej.cl" in message
+    assert "aerocontrol@example.com" in message
     assert "DEFAULT_FROM_EMAIL" in message
 
 
@@ -224,7 +229,7 @@ def test_a_backend_that_accepts_and_discards_is_a_failure(monkeypatch):
     monkeypatch.setattr(EmailMessage, "send", lambda self, fail_silently=False: 0)
 
     with pytest.raises(CommandError) as failure:
-        call_command("check_email", "--to", "cmunoz@jej.cl")
+        call_command("check_email", "--to", "director@example.com")
 
     assert "no entregó ningún mensaje" in str(failure.value)
 

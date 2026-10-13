@@ -41,7 +41,7 @@ def backups_dir(tmp_path, monkeypatch):
 @pytest.fixture
 def direccion(db):
     group = Group.objects.create(name=REPORT_RECIPIENTS)
-    user = User.objects.create_user("jefa", email="jefa@jej.cl", password="pw")
+    user = User.objects.create_user("jefa", email="jefa@example.com", password="pw")
     user.groups.add(group)
     return group
 
@@ -141,7 +141,7 @@ class TestWhoFindsOut:
         call_command("verify_backup")
 
         assert len(mail.outbox) == 1
-        assert mail.outbox[0].to == ["jefa@jej.cl"]
+        assert mail.outbox[0].to == ["jefa@example.com"]
 
     def test_silence_when_the_backup_is_restorable(self, backups_dir, direccion):
         _write_backup(backups_dir)
