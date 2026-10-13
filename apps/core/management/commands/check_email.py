@@ -70,7 +70,7 @@ class Command(BaseCommand):
                     "aceptar las credenciales y negarse a retransmitir con "
                     f"remitente {settings.DEFAULT_FROM_EMAIL}; para probarlo "
                     "hace falta enviar de verdad:\n"
-                    "  python manage.py check_email --to alguien@jej.cl"
+                    "  python manage.py check_email --to alguien@example.com"
                 )
             )
             return

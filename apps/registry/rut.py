@@ -39,7 +39,7 @@ def normalize_rut(raw):
 
 
 def employee_id_from_rut(value):
-    """`"19.213.597-4"` -> `"RUT-192135974"`. `""` cuando no hay RUT.
+    """`"14.141.414-3"` -> `"RUT-141414143"`. `""` cuando no hay RUT.
 
     LV-169: el ID de empleado se deriva del RUT en vez de pedirse a mano. **El
     formato no se eligió acá**: es el que el import del Capítulo 1 viene

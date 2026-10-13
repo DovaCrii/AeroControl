@@ -2,8 +2,8 @@
 
 Pedido del usuario, con captura del alta de operador en producción: el
 formulario abre pidiendo "ID de empleado" como primer campo obligatorio, y dos
-campos más abajo pide el RUT. En `p340` conviven `RUT-192135974` y la columna de
-al lado diciendo `19213597-4`: el mismo número, tipeado dos veces, con el error
+campos más abajo pide el RUT. En `p340` conviven `RUT-141414143` y la columna de
+al lado diciendo `14141414-3`: el mismo número, tipeado dos veces, con el error
 de transcripción incluido en el precio. Es la otra mitad del pedido que cerró
 `LV-167` ("tomar el RUT e incorporarlo directo en las tablas").
 
@@ -32,8 +32,8 @@ from apps.registry.forms import OperatorForm
 from apps.registry.models import Operator
 from apps.registry.rut import employee_id_from_rut
 
-RUT = "19.213.597-4"
-DERIVED = "RUT-192135974"
+RUT = "14.141.414-3"
+DERIVED = "RUT-141414143"
 
 
 def _payload(**kwargs):
@@ -56,8 +56,8 @@ def _payload(**kwargs):
 
 def test_the_format_is_the_one_the_chapter1_import_already_writes():
     assert employee_id_from_rut(RUT) == DERIVED
-    assert employee_id_from_rut("19213597-4") == DERIVED
-    assert employee_id_from_rut("19213597k") == "RUT-19213597K"
+    assert employee_id_from_rut("14141414-3") == DERIVED
+    assert employee_id_from_rut("26262627k") == "RUT-26262627K"
 
 
 def test_no_rut_means_no_derived_id():
@@ -92,7 +92,7 @@ def test_an_id_already_written_is_never_overwritten():
 @pytest.mark.django_db
 def test_editing_a_record_does_not_rewrite_its_id():
     operator = Operator.objects.create(
-        employee_id="E-042", full_name="Cristobal Muñoz", rut="19213597-4"
+        employee_id="E-042", full_name="Cristobal Muñoz", rut="14141414-3"
     )
 
     operator.phone = "+56 9 1234 5678"
@@ -116,7 +116,7 @@ def test_without_a_rut_the_id_is_still_required():
 @pytest.mark.django_db
 def test_an_invalid_rut_never_produces_a_derived_id():
     """Un ID inválido y único es basura que pasa la constraint."""
-    operator = Operator(employee_id="", full_name="RUT malo", rut="19213597-9")
+    operator = Operator(employee_id="", full_name="RUT malo", rut="14141414-K")
 
     with pytest.raises(ValidationError) as error:
         operator.full_clean()

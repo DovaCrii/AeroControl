@@ -52,10 +52,10 @@ class TestTheCanonicalForm:
         [
             "12.345.678-5",
             "11.111.111-1",
-            "6.376.291-1",  # cuerpo de siete dígitos: los RUT antiguos existen
+            "16.161.616-8",  # cuerpo de siete dígitos: los RUT antiguos existen
             "874.321-5",  # y de seis
-            "6.000.000-K",  # dígito verificador K, el caso que se olvida
-            "6.000.005-0",  # y el 0, que es el otro resto especial del módulo 11
+            "17.171.717-5",  # dígito verificador K, el caso que se olvida
+            "18.181.818-2",  # y el 0, que es el otro resto especial del módulo 11
         ],
     )
     def test_a_real_rut_passes_the_check_digit(self, value):
