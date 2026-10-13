@@ -45,8 +45,8 @@ AIRCRAFT_HEADERS = [
 # **not** here: this document is written to be handed to whoever asked for it,
 # the user asked for the roster and not for a contact list, and personal contact
 # details are the kind of column that is easy to add and impossible to recall.
-# LV-167: se fue `Employee ID`. En producción vale `RUT-111111111` y la columna
-# de al lado dice `11111111-1`: el mismo número dos veces, en dos formatos, que
+# LV-167: se fue `Employee ID`. En producción vale `RUT-141414143` y la columna
+# de al lado dice `14141414-3`: el mismo número dos veces, en dos formatos, que
 # es exactamente la confusión que el usuario reportó. El RUT es la llave natural
 # chilena (`LV-143`) y es el que se pide cuando alguien pregunta por una persona.
 OPERATOR_HEADERS = [

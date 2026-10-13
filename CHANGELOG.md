@@ -10,6 +10,9 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Datos personales reales fuera del repositorio público (`LV-306`).** Cinco RUT y correos corporativos
+  reemplazados por equivalentes ficticios en pruebas, documentos y código; sin cambios de comportamiento.
+  El historial de git conserva los originales: limpiarlo es decisión del usuario.
 - **Asistente de consulta con IA, prototipo solo para el demo (`LV-305`).** Responde preguntas sobre
   permisos con tres herramientas de solo lectura y sin datos personales. Apagado por omisión y exige
   `DEBUG`: en producción no se enciende. Ver `docs/dev/asistente-ia.md`.
@@ -1139,7 +1142,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 ### Fixed
 
 - **El ID de empleado se deriva del RUT (`LV-169`).** El alta de operador pedía
-  el mismo número dos veces: `RUT-111111111` arriba y `11111111-1` tres campos
+  el mismo número dos veces: `RUT-141414143` arriba y `14141414-3` tres campos
   más abajo. Ahora se deja en blanco y se rellena solo, y sigue editable. El
   formato es el que el import del Capítulo 1 ya escribía —de hecho ese import
   pasa a usar la misma función, para que no puedan divergir y terminar

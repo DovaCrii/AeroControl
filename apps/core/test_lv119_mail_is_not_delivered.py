@@ -165,7 +165,7 @@ class TestEndToEndThroughARealCommand:
     def test_the_executive_report_refuses_to_claim_it_sent(self, capsys):
         """El caso exacto del 2026-08-20: el comando terminaba en `Sent the week
         executive report to 1 recipient(s)` con el correo yendo al journal."""
-        call_command("send_executive_report", "--to", "persona@example.com")
+        call_command("send_executive_report", "--to", "director@example.com")
 
         captured = capsys.readouterr()
         assert "PRINTED, NOT SENT" in captured.out
@@ -178,7 +178,7 @@ class TestEndToEndThroughARealCommand:
     @pytest.mark.django_db
     @override_settings(**_mail(LOCMEM, host="smtp.example.com"))
     def test_with_a_working_backend_it_says_sent_and_stays_quiet(self, capsys):
-        call_command("send_executive_report", "--to", "persona@example.com")
+        call_command("send_executive_report", "--to", "director@example.com")
 
         captured = capsys.readouterr()
         assert "Sent the week executive report to 1 recipient(s)." in captured.out
@@ -192,7 +192,9 @@ class TestEndToEndThroughARealCommand:
     @override_settings(**_mail(CONSOLE))
     def test_a_dry_run_does_not_cry_wolf(self, capsys):
         """No compuso correo, así que no hay nada que no se haya enviado."""
-        call_command("send_executive_report", "--to", "persona@example.com", "--dry-run")
+        call_command(
+            "send_executive_report", "--to", "director@example.com", "--dry-run"
+        )
 
         captured = capsys.readouterr()
         assert "Would send" in captured.out
