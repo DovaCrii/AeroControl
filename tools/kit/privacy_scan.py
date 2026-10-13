@@ -46,7 +46,9 @@ CONTENT_RULES = {
     "private-key": re.compile(r"-----BEGIN (?:[A-Z]+ )*PRIVATE KEY"),
     "rut": re.compile(r"(?<![\w.])\d{1,2}\.?\d{3}\.?\d{3}-[\dkK]\b"),
 }
-EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@([A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,})")
+EMAIL_RE = re.compile(
+    r"[A-Za-z0-9._%+-]+@([A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,})"
+)
 
 
 def tracked_files(root: Path) -> list[str]:
@@ -70,7 +72,9 @@ def check_path(path: str) -> list[str]:
     return found
 
 
-def check_text(path: str, text: str, allow_domains: set[str], skip_rules=()) -> list[str]:
+def check_text(
+    path: str, text: str, allow_domains: set[str], skip_rules=()
+) -> list[str]:
     found = []
     for lineno, line in enumerate(text.splitlines(), 1):
         for rule, rx in CONTENT_RULES.items():
@@ -84,7 +88,9 @@ def check_text(path: str, text: str, allow_domains: set[str], skip_rules=()) -> 
     return found
 
 
-def scan(root: Path, config: dict | None = None, files: list[str] | None = None) -> list[str]:
+def scan(
+    root: Path, config: dict | None = None, files: list[str] | None = None
+) -> list[str]:
     config = config or {}
     allow_domains = DEFAULT_ALLOW_DOMAINS | {
         d.lower() for d in config.get("allow_email_domains", [])
@@ -103,20 +109,31 @@ def scan(root: Path, config: dict | None = None, files: list[str] | None = None)
         if b"\0" in data:
             continue
         skip = {
-            r for pat, rules in allow_rules.items() if fnmatch.fnmatch(path, pat) for r in rules
+            r
+            for pat, rules in allow_rules.items()
+            if fnmatch.fnmatch(path, pat)
+            for r in rules
         }
-        problems += check_text(path, data.decode("utf-8", "replace"), allow_domains, skip)
+        problems += check_text(
+            path, data.decode("utf-8", "replace"), allow_domains, skip
+        )
     return problems
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description="Revisión de privacidad de archivos versionados")
+    ap = argparse.ArgumentParser(
+        description="Revisión de privacidad de archivos versionados"
+    )
     ap.add_argument("--root", default=".")
-    ap.add_argument("--config", default=None, help="JSON de excepciones (def. .privacy-scan.json)")
+    ap.add_argument(
+        "--config", default=None, help="JSON de excepciones (def. .privacy-scan.json)"
+    )
     args = ap.parse_args(argv)
     root = Path(args.root).resolve()
     cfg_path = Path(args.config) if args.config else root / ".privacy-scan.json"
-    config = json.loads(cfg_path.read_text(encoding="utf-8")) if cfg_path.is_file() else {}
+    config = (
+        json.loads(cfg_path.read_text(encoding="utf-8")) if cfg_path.is_file() else {}
+    )
     problems = scan(root, config)
     if problems:
         print("Revisión de privacidad: FALLÓ")
