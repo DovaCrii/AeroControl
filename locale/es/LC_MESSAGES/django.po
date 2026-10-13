@@ -9671,6 +9671,15 @@ msgstr "Respuesta"
 msgid "Data consulted"
 msgstr "Datos consultados"
 
+msgid "You have asked too many questions this hour. Try again later."
+msgstr "Se hicieron demasiadas preguntas en esta hora. Vuelva a intentarlo más tarde."
+
+msgid "The assistant reached its usage limit. Try again later."
+msgstr "El asistente alcanzó su límite de uso. Vuelva a intentarlo más tarde."
+
+msgid "The assistant's key was not accepted. Ask the administrator to check it."
+msgstr "No se aceptó la llave del asistente. Pida a la administración que la revise."
+
 msgid "Every flight documented and on time."
 msgstr "Cada vuelo, documentado y a tiempo."
 

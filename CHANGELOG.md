@@ -10,6 +10,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Asistente: tope por hora y mensajes de límite (`LV-308`).** Cada persona puede hacer `AI_ASSISTANT_MAX_PER_HOUR` preguntas por hora (30 por omisión) para no gastar los créditos de prueba de NVIDIA; un 429 o una llave rechazada tienen su propio mensaje en vez del genérico.
 - **Rediseño visible (`LV-307`).** Portada de inicio de sesión en dos paneles con una ruta de vuelo y un dron
   animado; indicadores del panel con icono, cifra grande y barra con la meta; tipografía de AeroAcademy
   (Archivo, servida desde el propio servidor) en títulos y cifras; fondo de plano técnico. Lleva `collectstatic`.

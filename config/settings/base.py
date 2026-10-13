@@ -430,6 +430,9 @@ NVIDIA_BASE_URL = config(
 )
 NVIDIA_MODEL = config("NVIDIA_MODEL", default="meta/llama-3.3-70b-instruct")
 AI_ASSISTANT_TIMEOUT = config("AI_ASSISTANT_TIMEOUT", default=30, cast=int)
+# Preguntas por usuario y por hora. El acceso de prueba de NVIDIA es por créditos limitados
+# (1 000 al registrarse), así que un tope evita gastarlos por accidente. 0 = sin tope.
+AI_ASSISTANT_MAX_PER_HOUR = config("AI_ASSISTANT_MAX_PER_HOUR", default=30, cast=int)
 LOGOUT_REDIRECT_URL = LOGIN_URL
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
