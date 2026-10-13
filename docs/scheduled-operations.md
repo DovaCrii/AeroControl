@@ -99,7 +99,7 @@ entorno mínimo: si se omite, los trabajos no encontrarán la configuración.
 
 ## Linux (systemd — la VM p340)
 
-En la VM el servicio ya corre bajo systemd con `User=aerocontrol` +
+En la VM el servicio ya corre bajo systemd con `User=example` +
 `EnvironmentFile=/etc/aerocontrol.env` (systemd lee el archivo como root y luego
 baja al usuario, así los trabajos reciben los secretos sin poder leer el
 archivo). Los trabajos programados usan el mismo patrón con *timers*, más
@@ -119,10 +119,10 @@ After=network.target
 
 [Service]
 Type=oneshot
-User=aerocontrol
+User=example
 WorkingDirectory=/opt/aerocontrol
 EnvironmentFile=/etc/aerocontrol.env
-ExecStart=/home/aerocontrol/.local/bin/uv run python manage.py $2
+ExecStart=/home/example/.local/bin/uv run python manage.py $2
 EOF
   cat >/etc/systemd/system/aerocontrol-$1.timer <<EOF
 [Unit]
@@ -163,10 +163,10 @@ systemctl enable --now aerocontrol-expire.timer aerocontrol-alerts.timer aerocon
 >
 > [Service]
 > Type=oneshot
-> User=aerocontrol
+> User=example
 > WorkingDirectory=/opt/aerocontrol
 > EnvironmentFile=/etc/aerocontrol.env
-> ExecStart=/home/aerocontrol/.local/bin/uv run python manage.py $2
+> ExecStart=/home/example/.local/bin/uv run python manage.py $2
 > EOF
 >   cat >/etc/systemd/system/aerocontrol-$1.timer <<EOF
 > [Unit]
@@ -249,10 +249,10 @@ After=network.target
 
 [Service]
 Type=oneshot
-User=aerocontrol
+User=example
 WorkingDirectory=/opt/aerocontrol
 EnvironmentFile=/etc/aerocontrol.env
-ExecStart=/home/aerocontrol/.local/bin/uv run python manage.py send_executive_report --period week --to <correo-del-responsable>
+ExecStart=/home/example/.local/bin/uv run python manage.py send_executive_report --period week --to <correo-del-responsable>
 EOF
 systemctl daemon-reload
 systemctl restart aerocontrol-executive.timer
@@ -330,10 +330,10 @@ After=network.target
 
 [Service]
 Type=oneshot
-User=aerocontrol
+User=example
 WorkingDirectory=/opt/aerocontrol
 EnvironmentFile=/etc/aerocontrol.env
-ExecStart=/home/aerocontrol/.local/bin/uv run python manage.py $2
+ExecStart=/home/example/.local/bin/uv run python manage.py $2
 EOF
   cat >/etc/systemd/system/aerocontrol-$1.timer <<EOF
 [Unit]
@@ -404,9 +404,9 @@ falla a medias.
 
 **Los pasos, en orden.** Lo que lleva `sudo` lo corre quien lo tenga.
 
-> **Por qué `systemd-run` y no `sudo -u aerocontrol bash -c '. /etc/aerocontrol.env'`.**
+> **Por qué `systemd-run` y no `sudo -u example bash -c '. /etc/aerocontrol.env'`.**
 > `/etc/aerocontrol.env` lo lee **sólo root** (así lo carga systemd, y por eso los
-> trabajos reciben los secretos sin poder leer el archivo). `aerocontrol` no puede
+> trabajos reciben los secretos sin poder leer el archivo). `example` no puede
 > hacer `source` de él, así que ese comando fallaría por permisos. `systemd-run` con
 > `EnvironmentFile=` reproduce exactamente cómo corren los timers.
 
@@ -427,17 +427,17 @@ falla a medias.
    mayúsculas la migración `0032` se niega a correr.
 
    ```bash
-   sudo systemd-run --quiet --wait --pipe --collect --uid=aerocontrol \
+   sudo systemd-run --quiet --wait --pipe --collect --uid=example \
      -p WorkingDirectory=/opt/aerocontrol -p EnvironmentFile=/etc/aerocontrol.env \
-     /home/aerocontrol/.local/bin/uv run python manage.py audit_serial_case
+     /home/example/.local/bin/uv run python manage.py audit_serial_case
    ```
 
 **Paso 3 — simular, y leer el resultado**, antes de escribir nada:
 
    ```bash
-   sudo systemd-run --quiet --wait --pipe --collect --uid=aerocontrol \
+   sudo systemd-run --quiet --wait --pipe --collect --uid=example \
      -p WorkingDirectory=/opt/aerocontrol -p EnvironmentFile=/etc/aerocontrol.env \
-     /home/aerocontrol/.local/bin/uv run python manage.py sync_batteries --dry-run
+     /home/example/.local/bin/uv run python manage.py sync_batteries --dry-run
    ```
 
    Con el inventario de AeroLink todavía vacío dice `0 created, 0 updated`, y eso es
@@ -459,10 +459,10 @@ After=network.target
 
 [Service]
 Type=oneshot
-User=aerocontrol
+User=example
 WorkingDirectory=/opt/aerocontrol
 EnvironmentFile=/etc/aerocontrol.env
-ExecStart=/home/aerocontrol/.local/bin/uv run python manage.py $2
+ExecStart=/home/example/.local/bin/uv run python manage.py $2
 EOF
   cat >/etc/systemd/system/aerocontrol-$1.timer <<EOF
 [Unit]

@@ -1,4 +1,4 @@
-{% comment %}El pie de las cinco hojas del informe. Una sola copia.
+{% load report_contact %}{% comment %}El pie de las cinco hojas del informe. Una sola copia.
 
 Antes había cinco pies distintos y ninguno igual al otro:
 
@@ -30,9 +30,10 @@ no es interfaz, es el papel que se firma ante la DGAC.{% endcomment %}
 <div class="rpt-foot{% if cover %} rpt-foot-cover{% endif %}">
   <div class="rpt-foot-note">
     {% if section == "cover" %}
+    {% report_contact as contact %}
     <span class="rpt-foot-firm">J.E.J. INGENIERÍA S.A.</span><br>
-    Av. Apoquindo 2930, Piso 11, Las Condes – Santiago de Chile<br>
-    Fono +56 2 2722 5000 · persona@example.com · www.jej.cl
+    {{ contact.address }}<br>
+    Fono {{ contact.phone }} · {{ contact.email }} · {{ contact.web }}
     {% elif section == "summary" %}
     {% comment %}LV-260: la convención del ámbar punteado se explicaba en el
     párrafo de apertura del resumen, que salió. Va acá: es una nota sobre cómo

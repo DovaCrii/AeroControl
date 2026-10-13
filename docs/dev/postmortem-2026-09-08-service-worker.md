@@ -1,6 +1,6 @@
 # Post-mortem · 2026-09-08 · La aplicación dejó de cargar en producción
 
-**Qué pasó:** después de desplegar `b4a7d9e`, `https://vm.example.ts.net`
+**Qué pasó:** después de desplegar `b4a7d9e`, `https://<host-de-la-vm>.<tu-tailnet>.ts.net`
 devolvió `ERR_FAILED` en el navegador. El servidor estaba sano: `systemctl
 is-active` decía `active`, gunicorn respondía en el puerto 8000 y la base no se
 tocó. **Lo que no cargaba era la página, no el servicio.**
