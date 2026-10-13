@@ -1,4 +1,4 @@
-{% load aero_tags i18n %}
+{% load aero_tags i18n static %}
 {% for document in documents %}
 <tr data-pk="{{ document.pk }}">
   <td><a href="{% url 'document-detail' document.pk %}" class="fw-semibold">{{ document.title }}</a></td>
@@ -16,6 +16,7 @@
   </td>
 </tr>
 {% empty %}
-<tr><td colspan="99" class="text-center text-muted py-4">{% translate "No company documents yet." %}{% if perms.compliance.add_document and tenant %} <a href="{% url 'document-create' %}?entity_type={{ document_content_type_id }}&object_id={{ tenant.pk }}">{% translate "Upload the first one" %}</a>{% endif %}</td></tr>
+<tr><td colspan="99" class="text-center text-muted py-4">
+    {% static 'img/illustrations/documents.svg' as art_src %}{% include "generic/_empty_art.html" with src=art_src %}{% translate "No company documents yet." %}{% if perms.compliance.add_document and tenant %} <a href="{% url 'document-create' %}?entity_type={{ document_content_type_id }}&object_id={{ tenant.pk }}">{% translate "Upload the first one" %}</a>{% endif %}</td></tr>
 {% endfor %}
 {% if is_htmx %}<div id="pagination-container" hx-swap-oob="true">{% render_pagination page_obj %}</div>{% endif %}

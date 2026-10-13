@@ -1,4 +1,4 @@
-{% load aero_tags i18n %}
+{% load aero_tags i18n static %}
 {% comment %}LV-254: parcial propio, como las otras listas — una respuesta HTMX de
 búsqueda en vivo tiene que traer **estas** columnas, o el resultado colapsa a las
 genéricas. `data-pk` es lo que habilita la selección múltiple.{% endcomment %}
@@ -16,6 +16,7 @@ genéricas. `data-pk` es lo que habilita la selección múltiple.{% endcomment %
 {% empty %}
 <tr>
   <td colspan="5" class="text-center text-muted py-4">
+    {% static 'img/illustrations/maintenance.svg' as art_src %}{% include "generic/_empty_art.html" with src=art_src %}
     {% if is_filtered %}
       {% translate "No records match the current filters." %}
       <a href="{{ request.path }}">{% translate "Clear filters" %}</a>

@@ -1,4 +1,4 @@
-{% load aero_tags i18n %}
+{% load aero_tags i18n static %}
 {% for object in objects %}
 <tr>
   <td><a href="{{ object.pk }}/" class="fw-semibold">{{ object.operator }}</a><small class="d-block text-muted">{{ object.operator.employee_id }}</small></td>
@@ -9,6 +9,7 @@
   <td class="text-end"><a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">{% translate "View" %}</a> <a href="{{ object.pk }}/edit/" hx-get="{{ object.pk }}/edit/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">{% translate "Edit" %}</a></td>
 </tr>
 {% empty %}
-<tr><td colspan="99" class="text-center text-muted py-4">{% translate "No assignments found." %}</td></tr>
+<tr><td colspan="99" class="text-center text-muted py-4">
+    {% static 'img/illustrations/team.svg' as art_src %}{% include "generic/_empty_art.html" with src=art_src %}{% translate "No assignments found." %}</td></tr>
 {% endfor %}
 {% if is_htmx %}<div id="pagination-container" hx-swap-oob="true">{% render_pagination page_obj %}</div>{% endif %}

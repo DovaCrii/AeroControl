@@ -1,4 +1,4 @@
-{% load aero_tags i18n %}
+{% load aero_tags i18n static %}
 {% comment %}LV-88: la tabla decía lo mismo con más columnas. "Desde" y "Hasta"
 son un solo hecho -- de dónde a dónde -- y separarlos dejaba media tabla con "—"
 en todo movimiento inicial. El recurso ahora enlaza a su ficha: leer que
@@ -27,6 +27,7 @@ en todo movimiento inicial. El recurso ahora enlaza a su ficha: leer que
   <td class="text-nowrap">{{ entry.created_at|date:'Y-m-d H:i' }}<span class="table-primary-sub">{% blocktranslate with since=entry.created_at|timesince %}{{ since }} ago{% endblocktranslate %}</span></td>
 </tr>
 {% empty %}
-<tr><td colspan="99" class="text-center text-muted py-4">{% translate "No movements in this period." %}</td></tr>
+<tr><td colspan="99" class="text-center text-muted py-4">
+    {% static 'img/illustrations/data.svg' as art_src %}{% include "generic/_empty_art.html" with src=art_src %}{% translate "No movements in this period." %}</td></tr>
 {% endfor %}
 {% if is_htmx %}<div id="pagination-container" hx-swap-oob="true">{% render_pagination page_obj %}</div>{% endif %}

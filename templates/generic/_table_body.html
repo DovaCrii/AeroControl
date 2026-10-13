@@ -1,4 +1,4 @@
-{% load aero_tags i18n %}
+{% load aero_tags i18n static %}
 {% comment %}has_detail_url / has_update_url come from SearchMixin: they probe
 whether the relative row URLs actually resolve, because this table used to
 offer View/Edit unconditionally and four lists 404ed on them.{% endcomment %}
@@ -30,6 +30,7 @@ ahora el mismo atributo.{% endcomment %}
 </tr>
 {% empty %}
 <tr><td colspan="99" class="text-center text-muted py-4">
+  {% static 'img/illustrations/drone-scan.svg' as art_src %}{% include "generic/_empty_art.html" with src=art_src %}
   {% if is_filtered %}
     {% translate "No records match the current filters." %}
     <a href="{{ request.path }}">{% translate "Clear filters" %}</a>

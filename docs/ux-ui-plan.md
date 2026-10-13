@@ -910,6 +910,24 @@ Métricas verificables, no impresiones:
 - **2026-09-02** — Documento creado. Revisión completa del recorrido, del sistema
   visual y del mercado. 31 filas propuestas, ninguna ejecutada. Pendiente:
   aprobación del usuario y captura en `MASTER_PLAN.md`.
+- **2026-10-13** — **Capa de identidad (`LV-302`)**, pedida por el usuario: *«se ve plana y todo
+  cuadrado; más cercana a AeroAcademy, con figuras e imágenes de drones y animaciones»*. Este plan
+  concluyó «consolidar, no rehacer» y **sigue valiendo** para consistencia y accesibilidad; esta capa
+  es **otra cosa** (personalidad y profundidad) y por eso se agrega **encima**, sin tocar tokens ni
+  colores de estado: `static/css/identity.css`, ilustraciones de AeroAcademy sobre lámina clara
+  (`static/img/illustrations/`), recorrido del permiso en la cabecera de su ficha y movimiento
+  suave que respeta «reducir movimiento». Se mantiene lo decidido en §8: **sin fuente web** y **el
+  panel conserva su estructura** (sólo gana cabecera con ruta de vuelo). Pendiente, a decidir con el
+  usuario: tarjetas de aeronave con ilustración por serie, y fotos de equipos **sólo con archivos
+  que aporte con derecho de uso** (no se descargan imágenes de terceros).
+  **Cómo se distribuye a toda la app** (pedido explícito: *«no una pestaña, la app completa»*), en
+  cuatro mecanismos, ninguno pantalla por pantalla: **(1)** `identity.css` se engancha a las clases
+  que ya usan las ~150 plantillas (`.card`, `.page-header`, `.btn`, `.nav-item`) y se carga desde
+  `base.html` y `login.html`; **(2)** componentes compartidos nuevos —`_empty_art.html`,
+  `_status_steps.html`— que las plantillas incluyen en vez de repetir HTML; **(3)** una tabla
+  entidad → ilustración (`static/img/illustrations/README.md`); **(4)** guardianes que fallan si
+  algo nuevo no cumple (`test_lv302_illustrations.py`). Fase siguiente: fichas de detalle,
+  formularios e informes impresos.
 
 ### Fuentes de la sección de mercado
 
