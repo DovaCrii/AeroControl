@@ -5,6 +5,7 @@ standalone movement log list cannot drift apart on how a row's bare
 resource_id gets resolved to a human label.
 """
 
+import unicodedata
 from collections import defaultdict
 from datetime import timedelta
 
@@ -235,8 +236,41 @@ def operator_aircraft_compatibility_gaps(operators, aircraft_fleet, today=None):
     gaps = []
     for operator in operators:
         keywords = keywords_by_operator.get(operator.pk, [])
+        written = _plain(getattr(operator, "authorizations", ""))
         for aircraft in aircraft_fleet:
             model = (aircraft.model or "").lower()
-            if not any(keyword in model for keyword in keywords):
-                gaps.append((operator, aircraft))
+            if any(keyword in model for keyword in keywords):
+                continue
+            # LV-300: la habilitación escrita a mano en la ficha también cuenta.
+            series = aircraft_series(aircraft)
+            if series and series in written:
+                continue
+            gaps.append((operator, aircraft))
     return gaps
+
+
+def _plain(text):
+    """Minúsculas y sin tildes, para comparar texto libre sin que una tilde decida."""
+    decomposed = unicodedata.normalize("NFKD", text or "")
+    return "".join(c for c in decomposed if not unicodedata.combining(c)).lower()
+
+
+def aircraft_series(aircraft):
+    """La **serie** del equipo: la primera palabra de su modelo («Mavic» en «Mavic 3
+    Enterprise», «Matrice» en «Matrice 300 RTK»), sin tildes y en minúsculas.
+
+    LV-300, pedido del usuario (2026-10-13): *«si tiene una parte del nombre del equipo
+    ya cumple, como Mavic series»*. Los operadores importados de los capítulos traen su
+    habilitación como texto libre («Mavic-Phantom-Matrice / Series»), no como
+    `Qualification`, y la comprobación sólo miraba éstas: un operador que sí cumple salía
+    con brecha.
+
+    **La serie y no cualquier palabra del modelo**, a propósito: «Enterprise» o «Thermal»
+    aparecen en modelos de series distintas, y habilitarse en «Mavic 3 Enterprise» no
+    habilita para «Matrice 4 Enterprise». Un falso «cumple» es peor que un falso «no
+    cumple», que sólo cuesta una revisión. Una palabra de menos de tres letras o sin
+    letras no sirve de serie.
+    """
+    first = (_plain(getattr(aircraft, "model", "")).split() or [""])[0]
+    first = "".join(c for c in first if c.isalpha())
+    return first if len(first) >= 3 else ""
