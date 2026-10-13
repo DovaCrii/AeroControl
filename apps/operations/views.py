@@ -214,6 +214,14 @@ class FlightPermissionList(
         column, direction = self._requested_sort()
         if column == "status":
             queryset = self._order_by_shown_status(queryset, direction)
+        elif not column:
+            # LV-301, pedido del usuario (2026-10-13): *«al ingresar a los permisos,
+            # que siempre me muestre primero los últimos generados»*. Sin un orden
+            # elegido la lista salía por número ascendente, así que el permiso recién
+            # creado quedaba al final, en la última página. El folio desempata a los
+            # creados en el mismo instante (una importación) y `pk` cierra la secuencia
+            # para que la paginación no repita ni pierda filas.
+            queryset = queryset.order_by("-created_at", "-internal_folio", "pk")
         return queryset
 
     @staticmethod
