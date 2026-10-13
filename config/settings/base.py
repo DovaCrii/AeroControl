@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     # R0 del informe mensual RPA. Va al final porque **sólo lee**: no define
     # dominio ni lo modifica, así que ninguna app anterior depende de ella.
     "apps.reporting",
+    # LV-305: asistente de consulta con IA. PROTOTIPO, apagado por omisión y sólo en demo.
+    "apps.assistant",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -404,6 +406,21 @@ SERVICE_WORKER_ENABLED = config("SERVICE_WORKER_ENABLED", default=False, cast=bo
 # `scale_readiness`: en SQLite la transacción retiene al único escritor hasta que
 # termina la vista.
 AUDIT_FAIL_CLOSED = config("AUDIT_FAIL_CLOSED", default=False, cast=bool)
+
+# LV-305 · Asistente de consulta con IA (NVIDIA). PROTOTIPO: apagado por omisión, **sólo demo**.
+#
+# El acceso gratuito de NVIDIA (Developer Program) es para prototipos, investigación y pruebas;
+# atender a usuarios reales es «producción» y exige licencia. Por eso la pantalla sólo existe con
+# `AI_ASSISTANT_ENABLED` **y** `DEBUG` (ver `apps/assistant/views.py`): en producción no se
+# enciende aunque alguien ponga la variable. La llave va **sólo en el entorno**
+# (`NVIDIA_API_KEY`), nunca en el repositorio ni en el chat.
+AI_ASSISTANT_ENABLED = config("AI_ASSISTANT_ENABLED", default=False, cast=bool)
+NVIDIA_API_KEY = config("NVIDIA_API_KEY", default="")
+NVIDIA_BASE_URL = config(
+    "NVIDIA_BASE_URL", default="https://integrate.api.nvidia.com/v1"
+)
+NVIDIA_MODEL = config("NVIDIA_MODEL", default="meta/llama-3.3-70b-instruct")
+AI_ASSISTANT_TIMEOUT = config("AI_ASSISTANT_TIMEOUT", default=30, cast=int)
 LOGOUT_REDIRECT_URL = LOGIN_URL
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
