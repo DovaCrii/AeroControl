@@ -10,6 +10,8 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Subir la autorización de la DGAC saca las fechas del PDF (`LV-299`).** Un permiso recién solicitado no
+  tiene fechas, así que ahora se leen del PDF subido (escrito a mano > PDF > permiso) en vez de pedirlas.
 - **«Registro de operaciones» usa los rótulos del portal (`LV-298`).** Fecha, Hora de inicio, Hora de fin,
   Operador y Aeronave (N° de serie), en lugar de los del alta de vuelo de siempre.
 - **El panel dice cuándo empieza un permiso aprobado que aún no empieza (`LV-296`).** La faena sale en ámbar
