@@ -1,49 +1,60 @@
 # HANDOFF — AeroControl
 
-## ✅ 2026-10-08 — registro de operaciones, aprobar cruzando el PDF, panel, **desplegados** (`46e39e2`)
+## ✅ 2026-10-13 — identidad visual, asistente con IA (prototipo), privacidad y estándar de trabajo, **desplegados** (`59e5ac6`)
 
-`p340` corre **`46e39e2`**, desplegado el 2026-10-08 por tandas (`1b6c2f4` → `99ca98a` → `46e39e2`; cada una con
-`git pull`, reinicio y `git log` = hash de `main`, leído de la salida pegada). Antes, `ccab650` (con la
-migración `compliance/0027`, con respaldo `restorable`). Ninguna de las tres últimas lleva migración ni
-estáticos. Una cuarta sesión desplegó `9ebb5c8` (AeroLink) entre medias: por eso **el primer paso de todo
-despliegue es leer el hash de la VM**, que no siempre es el que se dejó.
+`p340` corre **`59e5ac6`**, desplegado el 2026-10-13 por tandas (`ac173f3` → `dd66b63` → `b4f2372` → `59e5ac6`; cada
+una con `git pull`, reinicio y `git log` = hash de `main`, leído de la salida pegada). Las dos de en medio llevaron
+`collectstatic` (13 y 7 archivos); ninguna lleva migración (la última sigue siendo `compliance/0027`, del 2026-10-08).
+El plan lo calcula `deploy_plan.ps1 -From <hash de la VM>`, y **el primer paso es leer el hash de la VM**: otra sesión ya
+desplegó entre medias una vez.
 
 **Seguimiento — fusionado sin desplegar: nada.**
 
-Entró: `LV-290` (pantalla «Registro de operaciones» con el formato de la DGAC, adjunto `.TXT`, tipo de
-documento `flight-log-txt`), `LV-291` (**«Vuelos» vuelve al menú**), `LV-292` (botón en la cabecera del
-permiso; el permiso muestra responsable y equipo), `LV-293` (selector desplegable de permisos en «Vuelos»),
-`LV-297` (las fechas de un documento de permiso salen del permiso), `LV-295` (**aprobar cruza la vigencia
-con el PDF de la DGAC** y el formulario del permiso resume sus errores) y `LV-296` (el panel dice cuándo
-empieza un permiso aprobado que aún no empieza). `LV-294` es la de AeroLink (otra sesión): el número se
-usó dos veces y la de las fechas pasó a `LV-297`.
+Entró: `LV-298` («Registro de operaciones» con los rótulos del portal), `LV-299` (subir la autorización de la DGAC saca
+las fechas del PDF), `LV-300` (la habilitación escrita en la ficha del operador cumple por **serie**), `LV-301` (la lista
+de permisos abre con los últimos generados), `LV-302` a `LV-304` (**identidad visual**: capa global `identity.css`,
+ilustraciones de AeroAcademy en estados vacíos y portada, dibujo de la aeronave por serie con hélices que giran, panel
+lateral), `LV-305` (**asistente de consulta con IA, prototipo sólo demo**: en producción no existe), `LV-306` (datos
+personales reales fuera del repositorio público) y el PR #86 (estándar de trabajo: `CLAUDE.md`, skills `orquestar` y
+`revision-privacidad`, y el **escáner de privacidad** `tools/kit/privacy_scan.py` en el CI **y** en `scripts/verify.ps1`).
 
-**Hecho en producción esta jornada, sin código:** instalados los timers `letters`, `watchdog` y
-`verifybak` (15 timers `aerocontrol-*`) y **apagada la regla** «Permisos: renovación vencida de plazo
-(T-15 · Gerencia)» (`enabled=False`). Sus 3 alertas **ya estaban cerradas** desde el 2026-10-07 («se solicita
-renovación»), verificado en la VM: no queda ninguna abierta.
+**Comprobado en producción tras el despliegue (2026-10-13):** `/assistant/` → **404** (el asistente no existe allí, como debe) y
+`/health/` → **200**.
 
-**No verificado en producción:** la lectura del «Rango de fecha autorizado» de un PDF real de la DGAC (el
-patrón sale de una captura; si no lo lee, la aprobación sigue pidiendo las fechas a mano), la pantalla
-«Registro de operaciones» con su carga de `.TXT`, el menú «Vuelos», el hemisferio de Punto Centro contra el
-portal, y — de la otra sesión — si se corrió `scripts/activar-sync-baterias.sh` (el espejo de baterías de
-AeroLink no tiene timer hasta que se corra; sin él el vigilante lo lee como «nunca corrió»).
+**Hecho en producción sin código (2026-10-08):** instalados los timers `letters`, `watchdog` y `verifybak` (15 timers
+`aerocontrol-*`) y **apagada la regla** «Permisos: renovación vencida de plazo (T-15 · Gerencia)» (`enabled=False`); sus 3
+alertas ya estaban cerradas desde el 2026-10-07.
+
+**No verificado en producción:**
+- La lectura del «Rango de fecha autorizado» de un PDF **real** de la DGAC (el patrón sale de una captura; si no lo lee, la
+  aprobación sigue pidiendo las fechas a mano).
+- «Registro de operaciones» con una operación real y una aeronave (en el demo ningún permiso las tiene; el alta la cubren las
+  pruebas, no se vio en pantalla).
+- La identidad visual **en pantalla ancha**: se revisó en un panel angosto (la portada y la ruta del panel sólo aparecen ≥ 768 y
+  ≥ 1100 px).
+- **El asistente contra el servicio real de NVIDIA:** las pruebas usan un cliente falso y no hubo llave en la sesión.
+- El hemisferio de Punto Centro contra el portal, y si se corrió `scripts/activar-sync-baterias.sh` (de otra sesión).
 
 **Pendiente — del usuario**
-- **Captura de Punto Centro del portal real** (lat/lon visibles), para decidir si la casilla «Hemisferio»
-  se quita o se queda (el mapa de `docs/dev/plan-solicitud-vuelo-sigo.md` §7.5b dice que ninguna modalidad
-  la tiene; la hoja y la ficha la dibujan sólo en Punto Centro).
-- **`T1.4` paso 3**: encender `AUDIT_FAIL_CLOSED=True` en `/etc/aerocontrol.env`, **sólo tras una semana
-  con la marca de fallos de auditoría en cero** y midiendo antes con `scale_readiness`.
+- **Decidir si se limpia el historial de git** (`LV-306`): los cinco RUT y los correos reales **siguen en commits anteriores**
+  del repositorio público; borrarlos del código no los saca de ahí. Reescribir historia compartida no se hace sin su orden.
+- **Probar el asistente con su llave del Developer Program** (`docs/dev/asistente-ia.md`; la llave sólo en su terminal, nunca en el
+  chat ni en el repo). Ese acceso es sólo para prototipos: **producción exige licencia o alojar el modelo**.
+- **Fotos de equipos con derecho de uso** en `static/img/equipment/<serie>.webp` (hoy hay dibujos propios; no se usan imágenes de
+  buscadores ni de DJI).
+- **Captura de Punto Centro del portal real** (lat/lon visibles), para decidir si la casilla «Hemisferio» se quita o se queda.
+- **`T1.4` paso 3**: encender `AUDIT_FAIL_CLOSED=True`, **sólo tras una semana con la marca de fallos de auditoría en cero** y
+  midiendo antes con `scale_readiness`.
 - **Correo** (de lado a pedido del usuario): `EMAIL_HOST` y `SITE_BASE_URL`; sin eso ningún aviso sale.
-- Dejados como están a pedido del usuario (2026-10-08, «ya que funciona la VM»): responsable en 11 de 15
-  faenas, `CC716`, `LV-150` y `LV-228` (cuatro operadores sin faena).
-- Si se quiere que un permiso aprobado cuente como vigente desde la aprobación y no desde su fecha de
-  inicio: es otra decisión (cambia una cifra firmada) y **no** se tomó (`LV-258`, `LV-296`).
+- Dejados como están a pedido del usuario: responsable en 11 de 15 faenas, `CC716`, `LV-150` y `LV-228`.
+- Decisiones de contenido del rediseño: un pie del panel lateral con usuario y resumen vivo, y los seis ítems retirados del menú
+  (`docs/ux-ui-plan.md` §1); fase siguiente (fichas de detalle de documentos y solicitudes SIGO, formularios, informes impresos).
+- Si un permiso aprobado debe contar como vigente desde la aprobación y no desde su fecha de inicio: cambia una cifra firmada y
+  **no** se decidió (`LV-258`, `LV-296`).
 
-**Pendiente — del código, sin decisión nueva**: ninguno. Lo que queda en `MASTER_PLAN.md` (`T1.1`,
-`T1.2`, `T1.5`, `T3.5`, `X.4`, `X.5`, `LV-233`, `LV-245`) espera una decisión, es un refactor grande o
-depende de AeroLink, y el proyecto está en pausa de estabilización.
+**Pendiente — del código, sin decisión nueva**: ninguno. Lo que queda en `MASTER_PLAN.md` (`T1.1`, `T1.2`, `T1.5`, `T3.5`,
+`X.4`, `X.5`, `LV-233`, `LV-245`) espera una decisión, es un refactor grande o depende de AeroLink, y el proyecto está en pausa
+de estabilización.
 
 ## ✅ 2026-10-07 — modalidades SIGO, orden por columna, colores, prevuelo, auditoría, **desplegados** (`186dffb`)
 
