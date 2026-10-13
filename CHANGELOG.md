@@ -10,6 +10,9 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Asistente de consulta con IA, prototipo solo para el demo (`LV-305`).** Responde preguntas sobre
+  permisos con tres herramientas de solo lectura y sin datos personales. Apagado por omisión y exige
+  `DEBUG`: en producción no se enciende. Ver `docs/dev/asistente-ia.md`.
 - **Panel lateral rediseñado (`LV-304`).** Fondo con profundidad, ítems con micro-movimiento, ítem activo con
   degradado y halo en su icono, y un tramo de color sobre cada grupo. Sólo CSS: los grupos, los colores por
   sección y el modo icono no cambian. Lleva `collectstatic`.
