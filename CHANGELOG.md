@@ -10,6 +10,9 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Panel lateral rediseñado (`LV-304`).** Fondo con profundidad, ítems con micro-movimiento, ítem activo con
+  degradado y halo en su icono, y un tramo de color sobre cada grupo. Sólo CSS: los grupos, los colores por
+  sección y el modo icono no cambian. Lleva `collectstatic`.
 - **Cada aeronave tiene su dibujo por serie, con hélices que giran (`LV-303`).** Matrice, Mavic, Phantom,
   Elios y uno genérico, en la ficha de la aeronave; el operador y el centro de costo también llevan su
   ilustración. Si se deja una foto con derecho de uso en `static/img/equipment/`, esa foto manda. Lleva

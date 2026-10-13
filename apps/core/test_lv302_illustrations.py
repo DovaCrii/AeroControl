@@ -101,7 +101,12 @@ class TestTheVisualLayer:
     def test_the_global_layer_hooks_onto_shared_classes(self):
         """«Toda la app» se logra con las clases compartidas, no pantalla por pantalla."""
         css = IDENTITY_CSS.read_text(encoding="utf-8")
-        for selector in (".card", ".page-header h1::after", ".btn", ".nav-item.active"):
+        for selector in (
+            ".card",
+            ".page-header h1::after",
+            ".btn",
+            ".sidebar a.active",
+        ):
             assert selector in css, selector
 
 
