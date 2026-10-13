@@ -928,6 +928,11 @@ Métricas verificables, no impresiones:
   entidad → ilustración (`static/img/illustrations/README.md`); **(4)** guardianes que fallan si
   algo nuevo no cumple (`test_lv302_illustrations.py`). Fase siguiente: fichas de detalle,
   formularios e informes impresos.
+  **Corrección (`LV-307`, mismo día)**: el usuario miró producción y dijo que no se notaba cambio. Tenía razón:
+  esta capa fue tímida. Se rehízo la portada (dos paneles, ruta de vuelo animada), los indicadores del
+  panel (icono, barra con meta), y se **incorporó la tipografía Archivo de AeroAcademy, servida desde el
+  propio servidor**, lo que **reemplaza lo decidido en §8 («no se agrega fuente web»)**: aquel argumento era
+  no pedir nada a la red, y un `.woff2` propio de 189 KB no lo hace.
   **Panel lateral (`LV-304`)**: incluido en este mismo rediseño a pedido del usuario. Primera pasada
   sólo CSS (profundidad, ítem activo con degradado y halo, tramo de color por grupo). Lo que cambiaría
   el contenido —un pie con el usuario y un resumen vivo, y los seis ítems retirados del menú— queda
