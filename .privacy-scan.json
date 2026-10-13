@@ -1,0 +1,11 @@
+{
+  "allow_email_domains": ["example.test", "x.cl", "test.cl", "test.local", "t.com", "example.cl", "b.cl"],
+  "allow_paths": ["static/vendor/*"],
+  "allow_rules": {
+    "apps/core/test*": ["rut"],
+    "apps/registry/test_lv143*": ["rut"],
+    "apps/registry/test_lv145*": ["rut"],
+    "apps/registry/test_lv8_lv9_lv10.py": ["rut"],
+    "apps/registry/test_merge.py": ["rut"]
+  }
+}
