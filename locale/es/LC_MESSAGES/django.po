@@ -9670,3 +9670,18 @@ msgstr "Respuesta"
 
 msgid "Data consulted"
 msgstr "Datos consultados"
+
+msgid "Every flight documented and on time."
+msgstr "Cada vuelo, documentado y a tiempo."
+
+msgid "Permits and DGAC authorizations in one place"
+msgstr "Permisos y autorizaciones DGAC en un solo lugar"
+
+msgid "Fleet, operators and qualifications up to date"
+msgstr "Flota, operadores y habilitaciones al día"
+
+msgid "Alerts before anything expires"
+msgstr "Alertas antes de que algo venza"
+
+msgid "RPA operations in Chile"
+msgstr "Operaciones RPA en Chile"
