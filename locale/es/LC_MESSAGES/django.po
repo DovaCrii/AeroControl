@@ -9679,3 +9679,17 @@ msgstr "El asistente alcanzó su límite de uso. Vuelva a intentarlo más tarde.
 
 msgid "The assistant's key was not accepted. Ask the administrator to check it."
 msgstr "No se aceptó la llave del asistente. Pida a la administración que la revise."
+msgid "Every flight documented and on time."
+msgstr "Cada vuelo, documentado y a tiempo."
+
+msgid "Permits and DGAC authorizations in one place"
+msgstr "Permisos y autorizaciones DGAC en un solo lugar"
+
+msgid "Fleet, operators and qualifications up to date"
+msgstr "Flota, operadores y habilitaciones al día"
+
+msgid "Alerts before anything expires"
+msgstr "Alertas antes de que algo venza"
+
+msgid "RPA operations in Chile"
+msgstr "Operaciones RPA en Chile"
