@@ -121,10 +121,10 @@ CSRF_TRUSTED_ORIGINS=https://vm.example.ts.net
 # Correo (opcional; sin EMAIL_HOST el digest se imprime en el log, no se envía)
 # EMAIL_HOST=smtp.example.com
 # EMAIL_PORT=587
-# EMAIL_HOST_USER=persona@example.com
+# EMAIL_HOST_USER=aerocontrol@example.com
 # EMAIL_HOST_PASSWORD=clave-de-aplicacion
 # EMAIL_USE_TLS=True
-# DEFAULT_FROM_EMAIL=persona@example.com
+# DEFAULT_FROM_EMAIL=aerocontrol@example.com
 # SITE_BASE_URL=https://vm.example.ts.net
 ```
 ```bash
@@ -326,8 +326,8 @@ para no mezclarlos con los snapshots del PC:
 ```powershell
 $dest = "D:\OneDrive - J.E.J. Ingeniería S.A\AeroControl-Backups\p340"
 New-Item -ItemType Directory -Force -Path $dest | Out-Null
-scp aerocontrol@vm.example.ts.net:/srv/aerocontrol-data/backups/aero_ops_*.sqlite3 $dest
-scp aerocontrol@vm.example.ts.net:/srv/aerocontrol-data/backups/aero_ops_*.json $dest
+scp <usuario>@<vm>:/srv/aerocontrol-data/backups/aero_ops_*.sqlite3 $dest
+scp <usuario>@<vm>:/srv/aerocontrol-data/backups/aero_ops_*.json $dest
 Get-ChildItem $dest | Sort-Object Name -Descending | Select-Object -First 6
 ```
 

@@ -876,8 +876,8 @@ class Operator(BaseModel):
         RUT canónico, y así el padrón converge sin migración de datos.
 
         **LV-169: el ID de empleado se deriva del RUT cuando está en blanco.**
-        En producción convivían `RUT-111111111` y la columna de al lado diciendo
-        `11111111-1` — el mismo número dos veces, tipeado a mano, con el error de
+        En producción convivían `RUT-141414143` y la columna de al lado diciendo
+        `14141414-3` — el mismo número dos veces, tipeado a mano, con el error de
         transcripción incluido en el precio. Se rellena **sólo si está vacío**:
         un ID ya escrito es la llave con la que esa persona figura en otros
         sistemas y sobrescribirlo rompería esas referencias sin avisar.

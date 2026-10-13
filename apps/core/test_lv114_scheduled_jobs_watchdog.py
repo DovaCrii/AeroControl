@@ -31,7 +31,7 @@ NOW = timezone.now()
 @pytest.fixture
 def direccion(db):
     group = Group.objects.create(name=REPORT_RECIPIENTS)
-    user = User.objects.create_user("jefa", email="persona@example.com", password="pw")
+    user = User.objects.create_user("jefa", email="jefa@example.com", password="pw")
     user.groups.add(group)
     return group
 
@@ -132,7 +132,7 @@ class TestWhoFindsOut:
         call_command("check_scheduled_jobs")
 
         assert len(mail.outbox) == 1
-        assert mail.outbox[0].to == ["persona@example.com"]
+        assert mail.outbox[0].to == ["jefa@example.com"]
         assert "backup" in mail.outbox[0].body
 
     def test_silence_when_everything_is_current(self, direccion):

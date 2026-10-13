@@ -494,7 +494,7 @@ primero, siempre**, también para una consulta de lectura.
 
 Verificar: `systemctl list-timers 'aerocontrol-*' --no-pager`
 
-Notificaciones a `Dirección`: `persona@example.com` + `persona@example.com`.
+Notificaciones a `Dirección`: `<correo-de-la-direccion>` + `<correo-del-responsable>`.
 
 ## Cierre del 2026-08-31 — **empezar por acá**
 
@@ -2381,7 +2381,7 @@ sudo -e /etc/aerocontrol.env      # EMAIL_HOST, EMAIL_PORT, EMAIL_HOST_USER,
 sudo systemctl restart aerocontrol
 cd /opt/aerocontrol && set -a && . /etc/aerocontrol.env && set +a
 .venv/bin/python manage.py check_email
-.venv/bin/python manage.py check_email --to persona@example.com
+.venv/bin/python manage.py check_email --to <correo-del-responsable>
 ```
 
 Cuatro cosas que conviene saber antes de escribir esas cinco variables:

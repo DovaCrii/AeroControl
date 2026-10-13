@@ -73,11 +73,11 @@ class TestTheHelpThatWasMissing:
 
     @pytest.mark.django_db
     def test_with_a_contact_configured_it_names_it(self, client, settings):
-        settings.SUPPORT_CONTACT = "persona@example.com"
+        settings.SUPPORT_CONTACT = "soporte@example.com"
 
         body = client.get(reverse("login")).content.decode()
 
-        assert "persona@example.com" in body
+        assert "soporte@example.com" in body
 
     @pytest.mark.django_db
     def test_it_says_which_instance_you_are_signing_in_to(self, client):

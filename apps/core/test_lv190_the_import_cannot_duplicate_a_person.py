@@ -38,9 +38,9 @@ from docx import Document as DocxDocument
 
 from apps.registry.models import Operator
 
-RUT = "11.111.111-1"
-CANONICAL = "11111111-1"
-EMPLOYEE_ID = "RUT-111111111"
+RUT = "15.151.515-0"
+CANONICAL = "15151515-0"
+EMPLOYEE_ID = "RUT-151515150"
 
 
 @pytest.fixture
@@ -56,7 +56,7 @@ def source(tmp_path):
     document.add_paragraph("Habilitaciones\t:\tMatrice Series")
     document.add_paragraph("Dirección\t:\tCalle Santa Elena 2605")
     document.add_paragraph("Teléfono\t:\t900000001")
-    document.add_paragraph("Email\t\t:\persona@example.com")
+    document.add_paragraph("Email\t\t:\tdirector@example.com")
     document.add_paragraph("2) EVENTUALES (NO APLICA)")
     service_table = document.add_table(rows=2, cols=3)
     service_table.rows[0].cells[0].text = "AERONAVES"

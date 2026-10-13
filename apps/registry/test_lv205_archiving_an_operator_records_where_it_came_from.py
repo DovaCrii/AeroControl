@@ -37,7 +37,7 @@ def center(db):
 @pytest.fixture
 def operator(center):
     return Operator.objects.create(
-        employee_id="RUT-111111111",
+        employee_id="RUT-151515150",
         full_name="Casimiro Urrutia Tapiador",
         cost_center=center,
     )
@@ -191,4 +191,4 @@ class TestWhatDoesNotChange:
 
         existing = set(Operator.objects.values_list("employee_id", flat=True))
 
-        assert "RUT-111111111" in existing
+        assert "RUT-151515150" in existing
