@@ -12,15 +12,33 @@ dos centímetros. Un encabezado lleva acciones, no atajos a lo que ya está a la
 vista; y de paso desaparece "Abrir registro", que prometía el padrón y llevaba a
 centros de costo.{% endcomment %}
 <div class="page-header page-header--hero">
-  {% comment %}LV-302: ruta de vuelo decorativa (línea punteada con puntos de paso) detrás del
-  título. Sólo CSS y SVG en línea; el movimiento de la línea lo apaga «reducir movimiento».{% endcomment %}
-  <svg class="hero-route" viewBox="0 0 420 120" preserveAspectRatio="xMaxYMid meet" aria-hidden="true" focusable="false">
-    <path class="route-line" d="M10 100 C90 90 110 30 190 40 S320 85 408 18"/>
-    <circle class="route-dot" cx="190" cy="40" r="5"/>
-    <circle class="route-dot-end" cx="408" cy="18" r="5"/>
-    <circle class="route-dot" cx="10" cy="100" r="5"/>
-  </svg>
-  <div>
+  {% comment %}LV-312: fondo aeronáutico **atenuado** (cielo, cordillera, retícula técnica y la ruta
+  punteada con un avión al final). Es decoración: opacidades bajas para que mande el título, y sin
+  fotografía, scripts ni recursos externos. La ruta se dibuja una sola vez y sólo si la persona no pidió
+  reducir el movimiento (ver `identity.css`). Se oculta bajo 768 px.{% endcomment %}
+  <svg class="hero-sky" viewBox="0 0 1200 170" preserveAspectRatio="xMaxYMax slice" aria-hidden="true" focusable="false">
+    <defs>
+      <pattern id="hero-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+        <path class="hero-grid-line" d="M40 0H0V40"/>
+      </pattern>
+      <mask id="hero-reveal" maskUnits="userSpaceOnUse" x="0" y="0" width="1200" height="170">
+        <path class="route-draw" pathLength="1" d="M470 150 C600 140 680 70 800 84 S1000 128 1130 40"/>
+      </mask>
+    </defs>
+    <rect class="hero-grid" width="1200" height="170" fill="url(#hero-grid)"/>
+    <path class="hero-ridge hero-ridge--far" d="M300 170 L300 120 L380 78 L450 112 L540 52 L640 108 L720 74 L820 118 L920 60 L1010 104 L1100 70 L1200 112 L1200 170Z"/>
+    <path class="hero-ridge hero-ridge--mid" d="M520 170 L520 138 L610 96 L690 130 L780 88 L870 134 L960 100 L1050 138 L1130 112 L1200 130 L1200 170Z"/>
+    <path class="hero-ridge hero-ridge--near" d="M700 170 L700 150 L790 122 L880 148 L980 126 L1080 150 L1200 134 L1200 170Z"/>
+    <g mask="url(#hero-reveal)">
+      <path class="route-line" d="M470 150 C600 140 680 70 800 84 S1000 128 1130 40"/>
+    </g>
+    <circle class="route-dot" cx="470" cy="150" r="4"/>
+    <circle class="route-dot" cx="800" cy="84" r="4"/>
+    <g class="hero-plane" transform="translate(1130 40) rotate(52)">
+      <path d="M0-16 C2-16 3-12 3-8 L3-2 L16 6 L16 9 L3 5 L3 12 L7 15 L7 17 L0 15.5 L-7 17 L-7 15 L-3 12 L-3 5 L-16 9 L-16 6 L-3-2 L-3-8 C-3-12 -2-16 0-16Z"/>
+    </g>
+  </svg>  <div>
+    <p class="hero-greeting mb-1">{% blocktranslate with name=user.get_short_name|default:user.get_username %}Hello, {{ name }}{% endblocktranslate %}</p>
     <h1 class="mb-0">{% translate "Operations Dashboard" %}</h1>
     {% comment %}`UX-15`: **qué está pasando hoy**, no sólo qué vence.
 
@@ -91,7 +109,10 @@ que se viene a leer.{% endcomment %}
     {% for item in attention %}
     <a class="attention-chip sev-{{ item.severity }}" data-attention="{{ item.key }}" href="{{ item.url }}">
       <strong class="attention-count">{{ item.count }}</strong>
-      <span class="attention-text">{{ item.label }}{% if item.longest_wait is not None and item.key == "awaiting_sigo" %}<small class="d-block">{% blocktranslate count days=item.longest_wait %}longest wait: {{ days }} day{% plural %}longest wait: {{ days }} days{% endblocktranslate %}</small>{% endif %}</span>
+      <span class="attention-body">
+        <span class="attention-text">{{ item.label }}{% if item.longest_wait is not None and item.key == "awaiting_sigo" %}<small class="d-block">{% blocktranslate count days=item.longest_wait %}longest wait: {{ days }} day{% plural %}longest wait: {{ days }} days{% endblocktranslate %}</small>{% endif %}</span>
+        <span class="attention-action">{% if item.key == "overdue" %}{% translate "Review expiries" %}{% elif item.key == "sites_without_permit" %}{% translate "Review permits" %}{% elif item.key == "maintenance_to_define" %}{% translate "Plan maintenance" %}{% elif item.key == "awaiting_sigo" %}{% translate "Follow up requests" %}{% else %}{% translate "Close the month" %}{% endif %} <span aria-hidden="true">→</span></span>
+      </span>
     </a>
     {% endfor %}
   </div>
