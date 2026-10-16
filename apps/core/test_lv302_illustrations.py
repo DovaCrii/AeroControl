@@ -97,7 +97,8 @@ class TestTheVisualLayer:
         assert not re.search(r"--ac-[a-z-]+\s*:", css)
         # Lo único que el tema oscuro puede definir aquí son las variables propias `--id-*`.
         for block in re.findall(r"\[data-theme[^\]]*\]\s*\{([^}]*)\}", css):
-            assert set(re.findall(r"(--[\w-]+)\s*:", block)) <= {"--id-lift"}
+            names = set(re.findall(r"(--[\w-]+)\s*:", block))
+            assert all(name.startswith("--id-") for name in names), names
 
     def test_the_global_layer_hooks_onto_shared_classes(self):
         """«Toda la app» se logra con las clases compartidas, no pantalla por pantalla."""
