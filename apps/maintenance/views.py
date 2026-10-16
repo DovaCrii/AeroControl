@@ -73,6 +73,12 @@ class MaintenanceRecordList(MList):
             queryset = queryset.filter(status=status)
         if maintenance_type in dict(MaintenanceRecord.TYPES):
             queryset = queryset.filter(maintenance_type=maintenance_type)
+        # LV-310: destino del indicador «Mantenciones por definir» del panel; el
+        # criterio es el mismo que el de su cifra (`needing_planning`).
+        if self.request.GET.get("needs_planning") == "1":
+            queryset = MaintenanceRecord.needing_planning(
+                queryset.filter(is_active=True)
+            )
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -86,7 +92,9 @@ class MaintenanceRecordList(MList):
         # LV-254: los dos filtros propios también cuentan como filtro, para que el
         # vacío ofrezca quitarlos en vez de decir que no hay registros.
         context["is_filtered"] = context["is_filtered"] or bool(
-            context["current_status"] or context["current_type"]
+            context["current_status"]
+            or context["current_type"]
+            or self.request.GET.get("needs_planning") == "1"
         )
         return context
 

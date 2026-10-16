@@ -304,7 +304,9 @@ def test_expiring_soon_kpi_tile_links_to_the_panel_with_severity(auth_client):
     response = auth_client.get(reverse("dashboard"))
     content = response.content.decode()
 
-    assert 'href="#upcoming-expirations"' in content
+    # LV-310: la tarjeta «Vence en 30 días» se fue; el ancla ahora la usa el chip
+    # de lo **vencido** (ver `test_lv310_panel_attention.py`). Lo que sigue
+    # afirmándose acá es que la sección existe y que la fila dice la urgencia.
     assert 'id="upcoming-expirations"' in content
     assert "Due Soon Operator" in content
     assert "Vence en 7 días" in content

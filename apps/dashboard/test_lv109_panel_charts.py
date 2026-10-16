@@ -50,6 +50,14 @@ def test_every_chart_the_script_builds_has_a_canvas():
     assert not orphaned, f"chart built for a canvas that is not there: {orphaned}"
 
 
+def test_lv310_the_maintenance_chart_left_with_both_halves():
+    """«Próximas mantenciones» reemplazó la rosca de mantención por tipo: el
+    canvas y su construcción se van **juntos**, que es lo que los dos tests de
+    arriba exigen. Esto fija además que lo que queda es sólo el de vuelos."""
+    assert _declared_canvases() == {"chart-monthly-flights"}
+    assert _built_charts() == {"chart-monthly-flights"}
+
+
 def test_no_chart_is_constructed_outside_the_guard():
     """`new Chart(...)` anywhere else would skip the missing-canvas check and
     bring back the failure where one bad chart takes down the rest."""
