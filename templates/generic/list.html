@@ -22,12 +22,16 @@ título no alcanza. Vacío por defecto: la mayoría de los listados se explican 
 su nombre, y un subtítulo obligatorio se llenaría de relleno.{% endcomment %}
 {% block worktable_intro %}{% block list_intro %}{% endblock %}{% endblock %}
 {% block worktable_filters %}
-<form method="get" class="row g-2 mb-3">
+{% comment %}LV-316 (ola A): una franja compacta —`.id-filterbar`, flex con el rótulo
+arriba de cada control— en vez de la rejilla `row g-2` / `col-md-*`. Las listas que
+sobreescriben `list_filters` siguen escribiendo `col-md-*`: el CSS de la ola los
+acomoda igual, así que ninguna se toca.{% endcomment %}
+<form method="get" class="id-filterbar">
   {% include "generic/_sort_state.html" %}
   {% block list_filters %}
-  <div class="col-md-5">{% include "generic/_search_input.html" with search_url=request.path %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
-  <div class="col-md-3"><select class="form-select" name="is_active"><option value="">{% translate "All statuses" %}</option><option value="active" {% if request.GET.is_active == 'active' %}selected{% endif %}>{% translate "Active" %}</option><option value="archived" {% if request.GET.is_active == 'archived' %}selected{% endif %}>{% translate "Archived" %}</option></select></div>
-  <div class="col-auto"><button class="btn btn-outline-primary">{% translate "Search" %}</button></div>
+  <div class="id-filter id-filter--grow"><label class="id-filter-label" for="id-filter-q">{% translate "Search" %}</label>{% include "generic/_search_input.html" with search_url=request.path input_id="id-filter-q" %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
+  <div class="id-filter"><label class="id-filter-label" for="id-filter-status">{% translate "Status" %}</label><select class="form-select" id="id-filter-status" name="is_active"><option value="">{% translate "All statuses" %}</option><option value="active" {% if request.GET.is_active == 'active' %}selected{% endif %}>{% translate "Active" %}</option><option value="archived" {% if request.GET.is_active == 'archived' %}selected{% endif %}>{% translate "Archived" %}</option></select></div>
+  <div class="id-filter id-filter--action"><button class="btn btn-outline-primary">{% translate "Search" %}</button></div>
   {% endblock %}
 </form>
 {% endblock %}
