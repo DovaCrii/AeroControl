@@ -46,9 +46,22 @@ encadena todo el recorrido (bloques → PR → fusión → esto).
 | `templates/**`, `apps/**/*.py`, `locale/**/*.mo` | sólo reiniciar (el `.mo` está versionado: no hay `compilemessages`) |
 | `docs/scheduled-operations.md` (timers nuevos) | **del usuario**: se le da el bloque `mkjob` y se comprueba con `list-timers` |
 
-## 2. Dictarlo en **cuatro bloques cortos**, mirando la salida de cada uno
+## 2. Dictar **un solo comando**: `scripts/deploy.sh` (LV-327)
 
-Probado el 2026-10-07 (dos despliegues sin un solo tropiezo). Cada bloque en su propio `bash`, **sin
+```bash
+cd /opt/aerocontrol && bash scripts/deploy.sh --dry-run   # opcional: sólo lee, imprime el plan
+cd /opt/aerocontrol && bash scripts/deploy.sh
+```
+
+Hace los pasos de A-D de abajo con sus comprobaciones y **aborta** en la primera señal de despliegue
+fantasma (HEAD desprendido, árbol sucio, `uv sync` sin instalar, `collectstatic` en 0, health ≠ 200). Pide
+la contraseña de `sudo` **una vez**, no imprime el entorno y **nunca ejecuta un rollback**: lo imprime.
+El usuario pega al chat sólo el bloque `=== RESUMEN` (≤10 líneas, sin entorno ni host). Opciones:
+`--status`, `--backup`, `--allow-noop-sync`. **No instala timers** (siguen siendo del usuario).
+
+### Plan B manual: **cuatro bloques cortos**, mirando la salida de cada uno
+
+Si el script no puede correr. Probado el 2026-10-07 (dos despliegues sin un solo tropiezo). Cada bloque en su propio `bash`, **sin
 `$` ni salida pegada**, y **sólo `&&` dentro del bloque, nunca `;`**: el `;` de una carga de entorno
 mal escrita corta la cadena y un `git pull` fallado no frena el reinicio. Se espera la salida de cada
 bloque antes de dictar el siguiente.
@@ -80,7 +93,9 @@ se repite por eso.
 
 ## 3. Confirmar leyendo la terminal
 
-`mcp__terminal__read_terminal` (≈80-150 líneas). Comprobar: la primera línea del `status`; que el `pull`
+Con el script: leer el `=== RESUMEN` (terminal o pegado) y dar por desplegado sólo si dice
+`DEPLOY OK`, `HEAD == origin/main: sí` y el hash nuevo; `DEPLOY FALLÓ en paso N` es parar y
+diagnosticar, no reintentar. Con el plan B, `mcp__terminal__read_terminal` (≈80-150 líneas). Comprobar: la primera línea del `status`; que el `pull`
 traiga la diferencia esperada; que `uv sync`/`collectstatic`/`migrate` hayan hecho **algo** si el diff lo
 pedía; y el hash final. Las tres señales de que **no** llegó: `[behind N]`, `uv sync` sin instalar y
 `migrate` sin aplicar. Si algo falla, **parar y diagnosticar** (`showmigrations`, el log), no repetir.
