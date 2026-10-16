@@ -1,5 +1,25 @@
 # HANDOFF — AeroControl
 
+## ⏳ 2026-10-16 — rediseño de toda la app, renovar permiso, asistente con registro y despliegue automatizado: **fusionado sin desplegar** (`b2e6842`)
+
+`p340` corre **`a807eb8`**. `main` está en **`b2e6842`** (108 archivos de diferencia).
+
+**Seguimiento — fusionado sin desplegar, y qué lleva cada cosa:**
+- **Migraciones (3):** `operations.0033_permit_renews`, `geo.0007_geoplan_copied_from` (renovar permiso, `LV-320`) y `assistant.0001_assistant_usage` (`LV-326`). **Respaldo antes de migrar.**
+- **Estáticos (`collectstatic` obligatorio):** `LV-316` a `LV-321` y `LV-324` (listas, fichas, formularios, hoja impresa, plano técnico del panel, portada con topografía, cabecera por módulo y fondos).
+- **Sólo código:** `LV-323` (asistente acotado por empresa), `LV-325` (chip «Renovado», botón en la lista, cierre de avisos), `LV-322` (`deploy_status`) y `LV-327` (`scripts/deploy.sh`).
+- **El asistente sigue apagado en producción:** el candado `DEBUG` no cambió. El interruptor de producción espera la decisión de licencia/servidor propio.
+
+**Despliegue:** con `scripts/deploy.sh` (primer uso **siempre con `--dry-run`**, no se probó contra una VM real) o, como plan B, los cuatro bloques de `deploy_plan.ps1 -From a807eb8`.
+
+**Pendiente — del usuario**
+- Valores reales de `REPORT_CONTACT_ADDRESS` y `REPORT_CONTACT_WEB` en `/etc/aerocontrol.env` (hoy no están: los informes salen con textos de ejemplo).
+- Probar el asistente en el demo con su llave y decidir licencia de NVIDIA o modelo propio (`PR 3` del asistente espera eso).
+- Decidir si se limpia el historial de git (RUT, correos y un usuario Linux antiguo siguen en commits anteriores).
+- Skills: `lecciones.md`, `rumbo-1.0.md`, `despliegue-p340.md` y `AGENTS.md` l.236.
+- Ramas respaldadas a revisar: `codex/skill-aerocontrol`, `codex/t1-4-auditoria-visible`.
+
+**Pendiente — del código:** ola E (mensajes con icono, foco uniforme, migrar colores sueltos de `app.css`), subida de ruff 0.17 (al final, por el formato), chips de SIGO/mantenciones que no filtran por faena, y los informes con `.page-header` propio (sin fondo de módulo).
 ## ✅ 2026-10-16 — rediseño de barra y panel, asistente con tope, Django 6.1.2, **desplegados** (`a807eb8`)
 
 `p340` corre **`a807eb8`**, desplegado el 2026-10-16 en cuatro bloques (estado → entorno → `git pull` + `uv sync` → `collectstatic` + reinicio;
