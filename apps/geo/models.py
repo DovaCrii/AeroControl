@@ -142,6 +142,16 @@ class GeoPlan(StatusHistoryMixin, StatusFlowMixin, BaseModel):
         blank=True,
         related_name="+",
     )
+    # LV-320: de qué plan es copia, cuando nació al renovar un permiso. El plan
+    # original no se mueve: sigue ligado al permiso anterior, y la copia comparte
+    # su KMZ (`source_document`) sin duplicarlo.
+    copied_from = models.ForeignKey(
+        "self",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="copies",
+    )
 
     class Meta:
         verbose_name = _("geo plan")
@@ -224,6 +234,57 @@ class GeoPlan(StatusHistoryMixin, StatusFlowMixin, BaseModel):
     @property
     def is_editable(self):
         return self.status in self.EDITABLE_STATUSES
+
+    def copy_for_renewal(self, permission, user):
+        """LV-320: la copia de este plan para el permiso que renueva al suyo.
+
+        **Se copia, no se mueve**: el plan original sigue siendo el expediente del
+        permiso anterior, que continúa vigente hasta que caduque. La copia tiene
+        folio PG propio, comparte el mismo KMZ de origen (`source_document`, que no
+        se duplica) y arranca con una V1 que es el contenido vigente del original
+        (mismo `content_checksum`), con origen `renewal`.
+
+        **Hereda el estado**: si el original estaba aprobado, la copia nace
+        aprobada —el área ya fue revisada y es la misma—, y el historial dice quién
+        renovó (`changed_by`), de modo que no parezca aprobada por nadie.
+        """
+        from django.db import transaction
+
+        with transaction.atomic():
+            plan = GeoPlan.objects.create(
+                title=self.title,
+                cost_center=self.cost_center,
+                flight_permission=permission,
+                status=self.STATUS_DRAFT,
+                created_by=user,
+                source_document=self.source_document,
+                copied_from=self,
+            )
+            source = self.current_version
+            if source is not None:
+                version = GeoPlanVersion.objects.create(
+                    plan=plan,
+                    version_number=1,
+                    content=source.content,
+                    content_checksum=source.content_checksum,
+                    source="renewal",
+                    summary=(_("Copy of %(folio)s") % {"folio": self.folio})[:200],
+                    feature_count=source.feature_count,
+                    size_bytes=source.size_bytes,
+                    bbox_west=source.bbox_west,
+                    bbox_south=source.bbox_south,
+                    bbox_east=source.bbox_east,
+                    bbox_north=source.bbox_north,
+                    created_by=user,
+                )
+                plan.current_version = version
+                plan.save(update_fields=["current_version", "updated_at"])
+            if self.status != self.STATUS_DRAFT:
+                plan.status = self.status
+                plan._changed_by = user.get_username()
+                plan._changed_by_user = user
+                plan.save(update_fields=["status", "updated_at"])
+        return plan
 
     @property
     def permit_has_lapsed(self):
@@ -333,6 +394,8 @@ class GeoPlanVersion(models.Model):
         ("import", _("Import")),
         ("editor", _("Editor")),
         ("restore", _("Restore")),
+        # LV-320: V1 de un plan copiado al renovar un permiso.
+        ("renewal", _("Renewal")),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -392,7 +455,9 @@ class GeoPlanVersion(models.Model):
         # a content edit by a user. Any editor/restore version, though, may only
         # land while the plan is in an editable state.
         super().clean()
-        if self.source == "import":
+        # LV-320: la V1 de una renovación es igual de exenta: nace con el plan, y
+        # el plan hereda el estado del original (puede ser aprobado).
+        if self.source in ("import", "renewal"):
             return
         if self.plan_id and self.plan.status not in GeoPlan.EDITABLE_STATUSES:
             raise ValidationError(

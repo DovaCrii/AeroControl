@@ -55,20 +55,26 @@ def ask(user, question, client=None):
             ok=False,
         )
 
-    if _over_the_hourly_cap(user):
-        return Answer(
-            _("You have asked too many questions this hour. Try again later."), ok=False
-        )
-
     started = time.monotonic()
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": question},
     ]
     tools_used = []
+    tokens = 0
     try:
         for _round in range(MAX_ROUNDS):
+            if _over_the_hourly_cap(user):
+                return _finish(
+                    user,
+                    started,
+                    tools_used,
+                    _("You have asked too many questions this hour. Try again later."),
+                    ok=False,
+                    tokens=tokens,
+                )
             message = client.chat(messages, tools=tool_definitions())
+            tokens += message.pop("_total_tokens", 0) or 0
             calls = message.get("tool_calls") or []
             if not calls:
                 text = (message.get("content") or "").strip()
@@ -78,6 +84,7 @@ def ask(user, question, client=None):
                     tools_used,
                     text or _("The assistant returned no answer."),
                     ok=bool(text),
+                    tokens=tokens,
                 )
             messages.append(
                 {
@@ -103,10 +110,16 @@ def ask(user, question, client=None):
             tools_used,
             _("The assistant needed too many steps. Try a simpler question."),
             ok=False,
+            tokens=tokens,
         )
     except AssistantUnavailable as error:
         return _finish(
-            user, started, tools_used, _unavailable_text(str(error)), ok=False
+            user,
+            started,
+            tools_used,
+            _unavailable_text(str(error)),
+            ok=False,
+            tokens=tokens,
         )
 
 
@@ -127,10 +140,16 @@ def _unavailable_text(reason):
 
 
 def _over_the_hourly_cap(user):
-    """Cuenta la pregunta y dice si esta persona ya pasó su tope de la hora.
+    """Cuenta UNA LLAMADA al servicio y dice si esta persona ya pasó su tope de la hora.
 
-    El contador vive en la caché por usuario y por hora: se reinicia solo al cambiar la hora y no
-    guarda nada de lo preguntado. Con el tope en 0 no cuenta nada.
+    Se cuenta por llamada y no por pregunta: una pregunta puede hacer hasta `MAX_ROUNDS`
+    llamadas, y cada una cuesta. El tope por hora es entonces de llamadas, no de preguntas.
+
+    ⚠️ El contador vive en la caché **por proceso**: con varios procesos de gunicorn el tope real
+    es `AI_ASSISTANT_MAX_PER_HOUR` × procesos. Es aceptable sólo mientras el asistente esté
+    limitado al demo. La persistencia en base (un registro de uso por llamada, compartido por
+    todos los procesos) llega en el PR 2 del endurecimiento; no se inventa una tabla acá.
+    Con el tope en 0 no cuenta nada.
     """
     cap = settings.AI_ASSISTANT_MAX_PER_HOUR
     if not cap:
@@ -140,13 +159,14 @@ def _over_the_hourly_cap(user):
     return cache.incr(key) > cap
 
 
-def _finish(user, started, tools_used, text, ok):
+def _finish(user, started, tools_used, text, ok, tokens=0):
     logger.info(
         "assistant_answered",
         extra={
             "user_id": getattr(user, "pk", None),
             "tools": tools_used,
             "ok": ok,
+            "total_tokens": tokens,
             "ms": round((time.monotonic() - started) * 1000),
         },
     )

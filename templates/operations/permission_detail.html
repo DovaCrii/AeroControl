@@ -5,8 +5,13 @@
 {% comment %}LV-302: el recorrido del permiso arriba, donde se mira primero (Solicitado,
 Aprobado, Completado…). Antes vivía al fondo, dentro de «Trazabilidad».{% endcomment %}
 <div class="card permit-journey" aria-label="{% translate 'Permit progress' %}">{% include "generic/_status_steps.html" with steps=permission.status_steps %}</div>
-<div class="card p-4"><div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h3">{{ permission }}</h1><div class="d-flex gap-2 align-items-end flex-wrap">
+<div class="card p-4"><div class="entity-bar"><div class="entity-title"><h1 class="h3 mb-0">{{ permission }}</h1><div class="entity-chips">{% if permission.has_lapsed %}<span class="id-chip id-chip--critical">⚠ {% translate "Lapsed" context "flight permission" %}</span>{% else %}<span class="id-chip id-chip--{{ permission.status|status_tone }}">{{ permission.get_status_display }}</span>{% endif %}</div></div><div class="d-flex gap-2 align-items-end flex-wrap">
   <a href="{% url 'permission-operations' permission.pk %}" class="btn btn-primary">{% translate "Operations register" %}</a>
+  {% comment %}LV-320: renovar copia al borrador de un permiso **nuevo** la misma área
+  y los mismos datos, sin fechas ni número (los da la DGAC). Sólo si el permiso fue
+  autorizado, está vivo y aún no tiene renovación, y para quien puede crear permisos
+  y planes. Es un enlace al formulario del alta, que aplica todas sus validaciones.{% endcomment %}
+  {% if can_renew %}<a href="{% url 'permission-create' %}?renueva={{ permission.pk }}" class="btn btn-outline-primary">{% translate "Renew permit" %}</a>{% endif %}
   {% if status_actions %}
   {% comment %}
     R2.5: one dropdown instead of one coloured button per transition -- most
@@ -100,6 +105,8 @@ Aprobado, Completado…). Antes vivía al fondo, dentro de «Trazabilidad».{% e
   estado a secas— para que la ficha no diga "Aprobado" en verde de un permiso que
   la lista ya marcó en rojo.{% endcomment %}
   <tr{% if permission.has_lapsed %} class="row-critical"{% endif %}><th scope="row">{% translate "Status" %}</th><td>{% if permission.has_lapsed %}<span class="badge sev-critical">⚠ {% translate "Lapsed" context "flight permission" %}</span>{% else %}<span class="badge bg-{% if permission.status == 'approved' %}success{% elif permission.status == 'denied' %}danger{% elif permission.status == 'completed' %}info{% else %}warning{% endif %}">{{ permission.get_status_display }}</span>{% endif %}</td></tr>
+  {% if permission.renews %}<tr><th scope="row">{% translate "Renews" %}</th><td><a href="{{ permission.renews.get_absolute_url }}">{{ permission.renews }}</a></td></tr>{% endif %}
+  {% if active_renewal %}<tr><th scope="row">{% translate "Renewed by" %}</th><td><a href="{{ active_renewal.get_absolute_url }}">{{ active_renewal }}</a></td></tr>{% endif %}
   <tr><th scope="row">{% translate "Operators" %}</th><td>{% for operator in permission.operators.all %}{{ operator }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr><tr><th scope="row">{% translate "Aircraft" %}</th><td>{% for aircraft in permission.aircraft_fleet.all %}{{ aircraft }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr><tr><th scope="row">{% translate "Cost center" %}</th><td>{{ permission.cost_center }}</td></tr><tr><th scope="row">{% translate "Purpose" %}</th><td>{{ permission.get_purpose_display }}{% if permission.purpose == "other" %}: {{ permission.purpose_detail }}{% endif %}</td></tr><tr><th scope="row">{% translate "Validity" %}</th><td>{% if permission.valid_from and permission.valid_until %}{{ permission.valid_from|date:"Y-m-d" }} – {{ permission.valid_until|date:"Y-m-d" }}{% else %}<span class="text-body-secondary fst-italic">{% translate "Awaiting the DGAC" %}</span>{% endif %}{% if insurance_limit %}<div class="small {% if insurance_limit.exceeded %}text-danger-emphasis{% else %}text-body-secondary{% endif %} mt-1">{% blocktranslate with aircraft=insurance_limit.aircraft expiry=insurance_limit.expiry limit=insurance_limit.limit %}Insurance of {{ aircraft }} until {{ expiry }}: this request can end on {{ limit }} at the latest.{% endblocktranslate %}</div>{% endif %}</td></tr><tr><th scope="row">{% translate "Location" %}</th><td>{{ permission.location }}</td></tr>
   {% comment %}LV-220: la fila **siempre** se dibuja, y si falta lo dice.
 

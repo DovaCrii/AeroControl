@@ -24,7 +24,9 @@ El modelo **no toca la base de datos**. Sólo puede pedir tres herramientas de *
   una decisión explícita del usuario: una máquina que aprueba o declara cumplimiento es lo contrario
   de la evidencia que piden las normas.
 - **Nada personal hacia afuera.** Ni nombres de operadores, ni RUT, ni correos ni teléfonos. Sólo
-  folios internos, códigos de faena y fechas. Lo vigila una prueba.
+  folios internos, códigos de faena y fechas (ni siquiera el nombre de la faena). Lo vigila una
+  prueba que cubre las tres herramientas.
+- **Cada herramienta acota por la empresa (tenant) de quien pregunta** (`LV-323`).
 - **El permiso del usuario manda.** Cada herramienta declara el permiso que exige y se comprueba
   contra quien pregunta antes de ejecutarla; la IA no amplía lo que esa persona puede ver.
 - **No se guarda la pregunta ni la respuesta.** Se registra quién preguntó, qué herramientas se
@@ -44,7 +46,7 @@ antes de decidir nada de producción**.
 | El servicio hospedado se rige por los **«NVIDIA API Trial Terms of Service»**, pensados para **prueba y evaluación, no producción** (secciones 1.2 y 1.4, según un resumen en el foro de NVIDIA). | Confirma el diseño: sólo demo, y la pantalla no existe sin `DEBUG`. |
 | Según ese mismo resumen, **NVIDIA puede usar los prompts y respuestas para mejorar sus productos**. NVIDIA no respondió con claridad en el foro. | Es la razón de fondo de que **nada personal ni dato real viaje**: sólo cifras agregadas y folios internos, y **en el demo, sólo datos de demo**. |
 | Según el resumen, **el contenido generado no se puede distribuir**. | **No exportar ni pegar respuestas del asistente en informes** ni en documentos que salgan de la empresa. La pantalla las muestra y no las guarda. |
-| El acceso es por **créditos limitados** (1 000 al registrarse; hasta 5 000 con correo empresarial) y ronda las 40 solicitudes por minuto. | Se agregó un **tope por usuario y por hora** (`AI_ASSISTANT_MAX_PER_HOUR`, 30) para no gastar créditos por accidente, y un mensaje propio cuando el servicio responde que se alcanzó el límite. |
+| El acceso es por **créditos limitados** (1 000 al registrarse; hasta 5 000 con correo empresarial) y ronda las 40 solicitudes por minuto. | Se agregó un **tope por usuario y por hora, contado por llamada al servicio** (una pregunta puede hacer hasta 4; el contador vive en la caché de cada proceso, así que con varios procesos el tope real se multiplica hasta que la persistencia en base llegue en el PR 2 del endurecimiento) (`AI_ASSISTANT_MAX_PER_HOUR`, 30) para no gastar créditos por accidente, y un mensaje propio cuando el servicio responde que se alcanzó el límite. |
 | El modelo por omisión (`meta/llama-3.3-70b-instruct`) existe en el catálogo y su ficha lo describe con «function calling». | Es la herramienta que usa el asistente. **Sigue sin probarse contra el servicio real.** |
 | Caminos a producción según NVIDIA: **alojar el modelo en infraestructura propia** o usar la API sin servidor de pago con una licencia NVIDIA AI Enterprise. | Es la decisión que falta si algún día se quiere usar con usuarios reales; cambia también qué datos se pueden enviar. |
 
