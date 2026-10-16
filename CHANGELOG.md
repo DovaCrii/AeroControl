@@ -8,10 +8,20 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Security
+
+- **Asistente IA acotado por empresa y sin nombres de faena (`LV-323`).** Las tres herramientas ven sólo los permisos de la empresa de quien pregunta; `cost_centres_permit_status` ya no envía el nombre de la faena. El tope por hora cuenta llamadas al servicio (no preguntas) y se registra `total_tokens`. Sin migración ni estáticos.
+
 ### Changed
 
 - **`manage.py deploy_status` (`LV-322`).** Estado del despliegue de sólo lectura (hash, rama, migraciones pendientes, trabajos; `--json`). No imprime rutas ni secretos. `activar-sync-baterias.sh` ya no trae un usuario escrito. Sin migración ni `collectstatic`.
+- **Formularios, ola C del rediseño (LV-318).** Resumen de errores arriba, barra de acciones pegajosa con un solo botón primario, foco visible y estado de envío sin parpadeo en los formularios genéricos y sus modales. Sólo presentación; sin migración; lleva estáticos (collectstatic).
+- **Listas, tablas y filtros (LV-316, ola A del rediseño).** Barra de filtros compacta, encabezados en versalitas, hover de fila de 120 ms respetando `prefers-reduced-motion`, paginación y barra masiva coherentes, estados Activo/Archivado como `.id-chip`; esconder una columna ya no corre los anchos de las demás. Sin migración; lleva estáticos.
+- **Plano técnico y movimiento ambiental (LV-321, ola F).** La cabecera del panel dibuja un cuadricóptero y un ala fija acotados, y la portada hace volar el cuadricóptero técnico por la ruta; el movimiento continuo queda sólo en la portada y se pausa fuera de pantalla (`ambient-motion.js`). La portada suma topografía, rumbo, waypoints numerados, estela, radar y telemetría decorativa, y un wordmark mayor. Se quita el LED parpadeante de los dibujos por serie. Sin migración; lleva estáticos (collectstatic).
+- **Renovar un permiso con la misma área (LV-320, PR 1).** Botón «Renovar permiso» en la ficha: abre el alta precargada con los datos del anterior (sin número ni vigencia) y, al guardar, copia el plan geoespacial —mismo KMZ, folio PG nuevo, estado heredado— y enlaza `renews`. Una sola renovación viva por permiso. **LLEVA MIGRACIÓN** (`operations.0033_permit_renews`, `geo.0007_geoplan_copied_from`); sin estáticos.
 - **Base de la identidad visual (LV-315, ola 0).** identity.css suma tokens --id-*, cinco secciones con marca para el rediseño por olas y el chip .id-chip; no cambia nada visible. Sin migración; lleva estáticos (collectstatic).
+- **Informes impresos, documentos y SIGO (LV-319, ola D).** Hoja impresa limpia (A4 con márgenes, 11 pt, siempre en claro, sin sombras, filas sin cortar, encabezado y pie de papel con el contacto de la configuración) y estados como `.id-chip` en el informe de cumplimiento y los documentos; el informe mensual y el Dato Ejecutivo no cambian.
+- **Fichas de detalle (LV-317, ola B).** Cabecera de entidad unificada con chip de estado, pastillas de sección en la aeronave, datos clave con rótulos en versalitas y trazabilidad como línea de tiempo.
 - **Skills del repo más cortas (`LV-314`).** Se quitan duplicados de `AGENTS.md` en las skills (convenciones, mapa del plan, pasos de PR a mano) y `pendientes-github` entra en las tablas de skills. Sólo documentación; sin migración ni `collectstatic`.
 - **Django 6.1.2 (`LV-313`).** Corrige cuatro vulnerabilidades (DoS en el análisis de cabeceras HTTP y en `get_supported_language_variant()`, y permisos en formsets con clave editable; lo de GeoDjango no aplica) y varios errores. Sube `pyproject.toml` y `uv.lock` juntos; reemplaza el PR #92. Sin migración ni `collectstatic`.
 - **Cabecera del panel con fondo aeronáutico atenuado y chips con acción (`LV-312`).** SVG propio (cielo, cordillera, retícula y ruta con avión), saludo con el nombre, y cada chip de «Requiere atención» dice qué hacer con una flecha. Se retiran las animaciones infinitas del panel (la ruta se dibuja una vez).

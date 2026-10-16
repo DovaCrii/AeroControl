@@ -10,11 +10,9 @@
 </defs>
 <style>
 .rotor{transform-box:fill-box;transform-origin:center;animation:blur .07s linear infinite alternate}
-.led{animation:blink 1.3s steps(2,end) infinite}
 .bob{animation:bob 3.2s ease-in-out infinite alternate}
 .shadow{animation:shade 3.2s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center}
 @keyframes blur{from{transform:scaleX(.78)}to{transform:scaleX(1)}}
-@keyframes blink{50%{opacity:.15}}
 @keyframes bob{from{transform:translateY(-3px)}to{transform:translateY(4px)}}
 @keyframes shade{from{transform:scaleX(1.04);opacity:.28}to{transform:scaleX(.92);opacity:.18}}
 @media (prefers-reduced-motion:reduce){.rotor,.led,.bob,.shadow{animation:none}}
