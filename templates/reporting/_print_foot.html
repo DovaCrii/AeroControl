@@ -1,0 +1,6 @@
+{% load report_contact %}{% report_contact as contact %}
+{% comment %}LV-319: pie de papel, repetido al fondo de cada hoja. El contacto sale de la
+configuración (`REPORT_CONTACT_*`) y, si falta, el pie no lo inventa: sólo se omite.{% endcomment %}
+<div class="id-print-foot" aria-hidden="true">
+  {{ contact.address }}{% if contact.phone %} · {{ contact.phone }}{% endif %}{% if contact.email %} · {{ contact.email }}{% endif %}{% if contact.web %} · {{ contact.web }}{% endif %}
+</div>
