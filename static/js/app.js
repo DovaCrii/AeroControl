@@ -80,56 +80,94 @@
     }
   }
 
-  // LV-170: los grupos del menú se pliegan y **recuerdan** su estado, uno por
-  // uno. Va en `localStorage` y no en la sesión del servidor a propósito: es una
-  // preferencia de esta persona en este navegador, no un dato de la cuenta, y
-  // guardarla en el servidor costaría una petición por click.
+  // LV-170 / LV-309: los grupos del menu son un **acordeon** y recuerdan cual
+  // quedo abierto. Va en `localStorage` y no en la sesion del servidor a
+  // proposito: es una preferencia de esta persona en este navegador, no un dato
+  // de la cuenta, y guardarla en el servidor costaria una peticion por click.
   //
-  // Se guarda **sólo lo plegado**, no lo abierto. Así un grupo nuevo aparece
-  // abierto sin que nadie tenga que migrar nada: lo que no está en la lista, se
-  // ve. Al revés —guardar los abiertos— el grupo que se agregue mañana nacería
-  // invisible para todos los que ya usaron el menú, que es la clase de estreno
-  // que nadie descubre.
-  function collapsedGroups() {
+  // Se guarda **el grupo abierto** (clave `nav-group-open`); la clave antigua
+  // `nav-groups-collapsed` se ignora. Sin JS todos los grupos quedan abiertos,
+  // que es el estado correcto para degradar: el HTML ya trae `aria-expanded`.
+  function openGroupName() {
     try {
-      var raw = localStorage.getItem('nav-groups-collapsed');
-      return raw ? JSON.parse(raw) : [];
+      return localStorage.getItem('nav-group-open');
     } catch (error) {
-      return [];  // localStorage bloqueado o JSON viejo: el menú abre entero.
+      return null;  // localStorage bloqueado: se abre el primer grupo.
     }
   }
-  function setGroup(toggle, expanded) {
+  function rememberOpenGroup(name) {
+    try {
+      localStorage.setItem('nav-group-open', name);
+    } catch (error) {
+      /* Sin poder guardar, el acordeon sigue andando en esta pagina. */
+    }
+  }
+  // La altura solo se anima si la persona no pidio reducir el movimiento; con
+  // `reduce` el grupo se abre y se cierra de golpe.
+  function mayAnimate() {
+    return !!(window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: no-preference)').matches);
+  }
+  function setGroup(toggle, expanded, animate) {
     var items = document.getElementById(toggle.getAttribute('aria-controls'));
     toggle.setAttribute('aria-expanded', String(expanded));
-    if (items) items.hidden = !expanded;
+    if (!items) return;
+    if (!animate || !mayAnimate() || items.hidden === !expanded) {
+      items.style.height = '';
+      items.classList.remove('is-animating');
+      items.hidden = !expanded;
+      return;
+    }
+    var timer;
+    var onEnd = function (event) { if (event.target === items) finish(); };
+    var finish = function () {
+      items.removeEventListener('transitionend', onEnd);
+      clearTimeout(timer);
+      items.classList.remove('is-animating');
+      items.style.height = '';
+      items.hidden = !expanded;
+    };
+    timer = setTimeout(finish, 320);  // por si la transicion nunca se dispara.
+    items.addEventListener('transitionend', onEnd);
+    items.classList.add('is-animating');
+    if (expanded) {
+      items.hidden = false;
+      items.style.height = '0px';
+      void items.offsetHeight;
+      items.style.height = items.scrollHeight + 'px';
+    } else {
+      items.style.height = items.scrollHeight + 'px';
+      void items.offsetHeight;
+      items.style.height = '0px';
+    }
   }
   var navToggles = document.querySelectorAll('.nav-group-toggle');
   if (navToggles.length) {
-    var collapsed = collapsedGroups();
+    // El grupo que contiene la pagina actual gana siempre: si no, la pantalla en
+    // la que estas parado no aparece en el menu y el menu contradice a la pagina.
+    var active = document.querySelector('.nav-group-items .nav-item.active');
+    var activeOwner = active ? active.closest('.nav-group').querySelector('.nav-group-toggle') : null;
+    var remembered = openGroupName();
+    var openName = activeOwner ? activeOwner.dataset.navGroup : remembered;
+    var known = Array.prototype.some.call(navToggles, function (toggle) {
+      return toggle.dataset.navGroup === openName;
+    });
+    // Sin pagina activa ni recuerdo valido se abre el primero; '' (todo
+    // cerrado a proposito) tambien se respeta.
+    if (!known && openName !== '') openName = navToggles[0].dataset.navGroup;
     navToggles.forEach(function (toggle) {
-      setGroup(toggle, collapsed.indexOf(toggle.dataset.navGroup) === -1);
+      setGroup(toggle, toggle.dataset.navGroup === openName, false);
       toggle.addEventListener('click', function () {
         var expanded = toggle.getAttribute('aria-expanded') === 'true';
-        setGroup(toggle, !expanded);
-        var names = collapsedGroups().filter(function (name) {
-          return name !== toggle.dataset.navGroup;
+        navToggles.forEach(function (other) {
+          if (other !== toggle && other.getAttribute('aria-expanded') === 'true') {
+            setGroup(other, false, true);
+          }
         });
-        if (expanded) names.push(toggle.dataset.navGroup);
-        try {
-          localStorage.setItem('nav-groups-collapsed', JSON.stringify(names));
-        } catch (error) {
-          /* Sin poder guardar, el plegado sigue andando en esta página. */
-        }
+        setGroup(toggle, !expanded, true);
+        rememberOpenGroup(expanded ? '' : toggle.dataset.navGroup);
       });
     });
-    // El grupo que contiene la página actual se abre aunque estuviera plegado:
-    // si no, la pantalla en la que estás parado no aparece en el menú y el menú
-    // pasa a contradecir a la página.
-    var active = document.querySelector('.nav-group-items .nav-item.active');
-    if (active) {
-      var owner = active.closest('.nav-group').querySelector('.nav-group-toggle');
-      if (owner) setGroup(owner, true);
-    }
   }
 
   var themeToggle = document.getElementById('theme-toggle');
@@ -152,7 +190,6 @@
   applyTheme(document.documentElement.getAttribute('data-theme') || 'light');
   if (window.innerWidth >= 769 && recall('sidebar-collapsed') === 'true') setSidebarCollapsed(true);
   document.querySelectorAll('#sidebar a').forEach(function (link) {
-    link.title = link.textContent.replace(/\s+/g, ' ').trim();
     link.addEventListener('click', function () { setSidebar(false); });
   });
   // ⚠️ UX-25: con la paleta abierta, `Escape` es suyo. Los dos escuchan en el

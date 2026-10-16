@@ -29,7 +29,7 @@ BASE_HTML = Path(settings.BASE_DIR) / "templates" / "base.html"
 # la etiqueta traducible después. Se captura el dibujo y el nombre.
 NAV_ENTRY = re.compile(
     r'<a\s[^>]*class="nav-item[^"]*"[^>]*>\s*'
-    r"(?P<svg><svg\b.*?</svg>)\s*"
+    r"(?P<svg><svg\b.*?</svg>)\s*(?:<span class=\"nav-label\">)?"
     r'\{%\s*translate\s+"(?P<label>[^"]+)"',
     re.DOTALL,
 )
