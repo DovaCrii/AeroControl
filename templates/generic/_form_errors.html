@@ -1,0 +1,14 @@
+{% load i18n %}
+{% comment %}LV-318 (ola C): resumen de errores de un formulario genérico, con un enlace
+a cada campo, para reutilizar el patrón de `permission_form.html` (LV-295).
+Los errores de cada campo ya quedan junto al campo y enlazados con
+`aria-describedby` por Django; esto sólo dice arriba que «Guardar» no guardó. Los
+errores sin campo (`__all__`) los dibuja `crispy` y no se repiten aquí.{% endcomment %}
+{% if form.errors|length > 1 or form.errors and not form.non_field_errors %}
+<div class="alert alert-danger form-error-summary" role="alert" id="form-error-summary" tabindex="-1">
+  <strong>{% translate "The form was not saved. Fix these fields:" %}</strong>
+  <ul class="mb-0 mt-1">
+    {% for field in form %}{% if field.errors %}<li><a href="#{{ field.id_for_label }}">{{ field.label }}</a>: {{ field.errors|join:" " }}</li>{% endif %}{% endfor %}
+  </ul>
+</div>
+{% endif %}

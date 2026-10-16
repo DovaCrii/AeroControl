@@ -7,9 +7,10 @@ permission") instead of the generic "Form".{% endcomment %}
       hx-post="{{ request.path }}" hx-target="#modal-content" hx-swap="innerHTML">
   {% csrf_token %}
   {% include "generic/_duplicate_hint.html" %}
+  {% include "generic/_form_errors.html" %}
   {{ form|crispy }}
-  <div class="form-actions d-flex gap-2 mt-4">
+  <div class="form-actions form-actions--sticky d-flex gap-2 mt-4 align-items-center">
     <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
-    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+    <button type="button" class="btn btn-link" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
   </div>
 </form>

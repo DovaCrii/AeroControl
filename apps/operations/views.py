@@ -7,7 +7,7 @@ from urllib.parse import quote
 
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -303,7 +303,151 @@ class FlightPermissionCreate(OCreate):
         # archivar). El caso es el mismo que motivó el escape: una resolución de
         # la DGAC que trae otra coordenada.
         kwargs["manual_location"] = self.request.GET.get("ubicacion") == "manual"
+        renewed = getattr(self, "renewed", None)
+        if renewed is not None:
+            # LV-320: la ubicación copiada tiene que verse para revisarse, y el
+            # `renews` tiene que estar en la instancia **antes** de validar: es lo
+            # que `FlightPermission.clean()` lee para comparar la faena.
+            kwargs["manual_location"] = True
+            kwargs["instance"] = FlightPermission(renews=renewed)
         return kwargs
+
+    # LV-320: lo que se copia al borrador de la renovación. **No** están: número
+    # DGAC, estado (nace «solicitado»), vigencia ni su motivo, documentos,
+    # historial, `max_altitude_ft` (valor histórico) ni solicitudes SIGO.
+    RENEWAL_COPIED_FIELDS = (
+        "cost_center",
+        "purpose",
+        "purpose_detail",
+        "location",
+        "region",
+        "commune",
+        "area_name",
+        "latitude",
+        "longitude",
+        "radius_km",
+        "max_altitude_m",
+        "area_type",
+    )
+
+    def _renewal_guard(self):
+        """LV-320: resuelve `?renueva=<pk>`. Devuelve una respuesta si no procede.
+
+        Pide además `geo.add_geoplan`, porque renovar crea un plan (la copia). Se
+        comprueba **explícitamente** y no sólo por el mixin, que mira un permiso.
+        El anterior se busca dentro del tenant: de otro tenant es 404.
+        """
+        self.renewed = None
+        raw = self.request.GET.get("renueva")
+        if not raw:
+            return None
+        user = self.request.user
+        if not user.has_perm("geo.add_geoplan"):
+            raise PermissionDenied
+        queryset = scope_queryset_to_tenant(
+            FlightPermission.objects.filter(is_active=True),
+            user,
+            "cost_center__tenant_id",
+        )
+        previous = lookup_by_pk(queryset, raw)
+        if previous is None:
+            raise Http404
+        if not previous.can_be_renewed:
+            messages.error(
+                self.request,
+                _(
+                    "%(folio)s cannot be renewed: it is not approved, completed or "
+                    "expired, or it has already been renewed."
+                )
+                % {"folio": previous.internal_folio},
+            )
+            return redirect(previous)
+        self.renewed = previous
+        return None
+
+    def get(self, request, *args, **kwargs):
+        return self._renewal_guard() or super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self._renewal_guard() or super().post(request, *args, **kwargs)
+
+    def get_initial(self):
+        initial = super().get_initial()
+        renewed = getattr(self, "renewed", None)
+        if renewed is not None:
+            for name in self.RENEWAL_COPIED_FIELDS:
+                initial[name] = getattr(renewed, name)
+            initial["cost_center"] = renewed.cost_center_id
+            initial["operators"] = list(renewed.operators.values_list("pk", flat=True))
+            initial["aircraft_fleet"] = list(
+                renewed.aircraft_fleet.values_list("pk", flat=True)
+            )
+        return initial
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        if getattr(self, "renewed", None) is not None:
+            # La geografía viene del permiso anterior y su plan se copia solo.
+            form.fields.pop("source_plan", None)
+        return form
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        renewed = getattr(self, "renewed", None)
+        context["renewed"] = renewed
+        if renewed is not None:
+            context["title"] = _("Renew %(folio)s") % {"folio": renewed.internal_folio}
+        return context
+
+    def _save_renewal(self, form):
+        """LV-320: guarda el permiso, copia el plan y deja la auditoría, todo junto."""
+        previous = self.renewed
+        # Lo que el formulario no dibuja pero la renovación hereda: el aeródromo
+        # (con su distancia) y la procedencia de región y comuna.
+        for name in ("amc", "amc_distance_km", "region_source", "commune_source"):
+            setattr(form.instance, name, getattr(previous, name))
+        try:
+            with transaction.atomic():
+                response = super().form_valid(form)
+                new_plan = None
+                original = (
+                    previous.geo_plans.filter(is_active=True)
+                    .order_by("-created_at")
+                    .first()
+                )
+                if original is not None:
+                    new_plan = original.copy_for_renewal(self.object, self.request.user)
+                    fill_permission_from_plan(new_plan, self.object)
+                set_audit_context(
+                    self.request,
+                    self.object,
+                    action="permission_renewed",
+                    metadata={
+                        "previous": previous.internal_folio,
+                        "new": self.object.internal_folio,
+                        "plan_copied": new_plan.folio if new_plan else None,
+                    },
+                )
+        except IntegrityError:
+            messages.error(
+                self.request,
+                _("%(folio)s has already been renewed.")
+                % {"folio": previous.internal_folio},
+            )
+            self.object = None
+            return redirect(previous)
+        messages.success(
+            self.request,
+            _("%(new)s renews %(previous)s.")
+            % {"new": self.object.internal_folio, "previous": previous.internal_folio},
+        )
+        if new_plan is not None:
+            messages.info(
+                self.request,
+                _("The plan %(old)s was copied as %(new)s, with the same KMZ.")
+                % {"old": original.folio, "new": new_plan.folio},
+            )
+        return response
 
     def form_valid(self, form):
         """B4.4: warn (do not block) when an assigned operator has no current
@@ -313,7 +457,12 @@ class FlightPermissionCreate(OCreate):
         once form.save_m2m() has run, which happens inside
         super().form_valid() -- so the check has to come after it, not before.
         """
-        response = super().form_valid(form)
+        if getattr(self, "renewed", None) is not None:
+            response = self._save_renewal(form)
+            if self.object is None:
+                return response
+        else:
+            response = super().form_valid(form)
         # LV-153: el plan elegido en el alta rellena los huecos de ubicación,
         # **después** de que el permiso existe: no se puede vincular un plan a
         # una fila que todavía no tiene pk. Misma función que usa la puerta de la
@@ -516,6 +665,15 @@ class FlightPermissionDetail(
             and self.request.user.has_perm("operations.add_flightrecord")
         )
         context["derived_location"] = self._derived_location(self.object)
+        # LV-320: la cadena de renovaciones y el botón. Renovar crea un permiso y
+        # un plan, así que sólo se ofrece a quien tiene **los dos** permisos.
+        context["active_renewal"] = self.object.active_renewal
+        context["can_renew"] = (
+            context["active_renewal"] is None
+            and self.object.can_be_renewed
+            and self.request.user.has_perm("operations.add_flightpermission")
+            and self.request.user.has_perm("geo.add_geoplan")
+        )
         # R10.2: los planes que se pueden cruzar con este permiso -- los de su
         # mismo centro de costo que todavía no están vinculados a ninguno.
         # Excluir los ya vinculados a **otro** permiso es deliberado: reasignar
