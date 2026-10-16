@@ -12,32 +12,8 @@ dos centímetros. Un encabezado lleva acciones, no atajos a lo que ya está a la
 vista; y de paso desaparece "Abrir registro", que prometía el padrón y llevaba a
 centros de costo.{% endcomment %}
 <div class="page-header page-header--hero">
-  {% comment %}LV-312: fondo aeronáutico **atenuado** (cielo, cordillera, retícula técnica y la ruta
-  punteada con un avión al final). Es decoración: opacidades bajas para que mande el título, y sin
-  fotografía, scripts ni recursos externos. La ruta se dibuja una sola vez y sólo si la persona no pidió
-  reducir el movimiento (ver `identity.css`). Se oculta bajo 768 px.{% endcomment %}
-  <svg class="hero-sky" viewBox="0 0 1200 170" preserveAspectRatio="xMaxYMax slice" aria-hidden="true" focusable="false">
-    <defs>
-      <pattern id="hero-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-        <path class="hero-grid-line" d="M40 0H0V40"/>
-      </pattern>
-      <mask id="hero-reveal" maskUnits="userSpaceOnUse" x="0" y="0" width="1200" height="170">
-        <path class="route-draw" pathLength="1" d="M470 150 C600 140 680 70 800 84 S1000 128 1130 40"/>
-      </mask>
-    </defs>
-    <rect class="hero-grid" width="1200" height="170" fill="url(#hero-grid)"/>
-    <path class="hero-ridge hero-ridge--far" d="M300 170 L300 120 L380 78 L450 112 L540 52 L640 108 L720 74 L820 118 L920 60 L1010 104 L1100 70 L1200 112 L1200 170Z"/>
-    <path class="hero-ridge hero-ridge--mid" d="M520 170 L520 138 L610 96 L690 130 L780 88 L870 134 L960 100 L1050 138 L1130 112 L1200 130 L1200 170Z"/>
-    <path class="hero-ridge hero-ridge--near" d="M700 170 L700 150 L790 122 L880 148 L980 126 L1080 150 L1200 134 L1200 170Z"/>
-    <g mask="url(#hero-reveal)">
-      <path class="route-line" d="M470 150 C600 140 680 70 800 84 S1000 128 1130 40"/>
-    </g>
-    <circle class="route-dot" cx="470" cy="150" r="4"/>
-    <circle class="route-dot" cx="800" cy="84" r="4"/>
-    <g class="hero-plane" transform="translate(1130 40) rotate(52)">
-      <path d="M0-16 C2-16 3-12 3-8 L3-2 L16 6 L16 9 L3 5 L3 12 L7 15 L7 17 L0 15.5 L-7 17 L-7 15 L-3 12 L-3 5 L-16 9 L-16 6 L-3-2 L-3-8 C-3-12 -2-16 0-16Z"/>
-    </g>
-  </svg>  <div>
+  {% comment %}LV-321: plano técnico atenuado -- cuadricóptero y ala fija en planta con cotas genéricas, retícula milimetrada, silueta lejana y una ruta con waypoints. Es decoración (aria-hidden, sin fotos ni recursos externos). Nada se mueve para siempre: las hélices giran y frenan (vuelven a girar al pasar el cursor), la ruta se dibuja una vez y la retícula entra con fundido; todo sólo si la persona no pidió reducir el movimiento. Se oculta bajo 768 px.{% endcomment %}
+  <svg class="hero-sky" viewBox="0 0 1200 170" preserveAspectRatio="xMaxYMax slice" aria-hidden="true" focusable="false"><defs><pattern id="hero-grid" width="20" height="20" patternUnits="userSpaceOnUse"><path class="hero-grid-line" d="M20 0H0V20"/></pattern><pattern id="hero-grid-major" width="100" height="100" patternUnits="userSpaceOnUse"><path class="hero-grid-line hero-grid-line--major" d="M100 0H0V100"/></pattern><mask id="hero-reveal" maskUnits="userSpaceOnUse" x="0" y="0" width="1200" height="170"><path class="route-draw" pathLength="1" d="M430 120C480 150 520 60 570 70S700 150 760 100S860 30 1000 40S1120 70 1180 30"/></mask></defs><g class="hero-grid-fade"><rect width="1200" height="170" fill="url(#hero-grid)"/><rect width="1200" height="170" fill="url(#hero-grid-major)"/></g><path class="hero-ridge hero-ridge--far" d="M300 170L300 120L380 78L450 112L540 52L640 108L720 74L820 118L920 60L1010 104L1100 70L1200 112L1200 170Z"/><path class="hero-ridge hero-ridge--mid" d="M520 170L520 138L610 96L690 130L780 88L870 134L960 100L1050 138L1130 112L1200 130L1200 170Z"/><path class="hero-ridge hero-ridge--near" d="M700 170L700 150L790 122L880 148L980 126L1080 150L1200 134L1200 170Z"/><g mask="url(#hero-reveal)"><path class="route-line" d="M430 120C480 150 520 60 570 70S700 150 760 100S860 30 1000 40S1120 70 1180 30"/></g><g class="route-wp"><circle cx="430" cy="120" r="3.5"/><circle cx="570" cy="70" r="3.5"/><circle cx="760" cy="100" r="3.5"/><circle cx="1000" cy="40" r="3.5"/><circle cx="1180" cy="30" r="3.5"/></g><g transform="translate(640 76)"><path class="bp-thin bp-center" d="M-64 0H64M0-68V68"/><path class="bp-line bp-arm" d="M-39-39L-12-12M39-39L12-12M-39 39L-12 12M39 39L12 12"/><g transform="translate(-44 -44)"><circle class="bp-thin bp-ring" r="20"/><path class="bp-line bp-blades" d="M-19 0H19"/><circle class="bp-line" r="5"/></g><g transform="translate(44 -44)"><circle class="bp-thin bp-ring" r="20"/><path class="bp-line bp-blades" d="M-19 0H19"/><circle class="bp-line" r="5"/></g><g transform="translate(-44 44)"><circle class="bp-thin bp-ring" r="20"/><path class="bp-line bp-blades" d="M-19 0H19"/><circle class="bp-line" r="5"/></g><g transform="translate(44 44)"><circle class="bp-thin bp-ring" r="20"/><path class="bp-line bp-blades" d="M-19 0H19"/><circle class="bp-line" r="5"/></g><rect class="bp-line" x="-14" y="-18" width="28" height="36" rx="8"/><rect class="bp-thin" x="-8" y="-9" width="16" height="22" rx="3"/><path class="bp-thin" d="M-8 0H8M-8 6H8"/><rect class="bp-line" x="-6" y="-27" width="12" height="8" rx="2"/><circle class="bp-thin" cx="0" cy="-23" r="2"/></g><path class="bp-thin" d="M596 146V158M684 146V158M596 152H684"/><text class="bp-text" x="640" y="164" text-anchor="middle">350 mm</text><path class="bp-thin" d="M596 122V158M684 122V158"/><path class="bp-thin" d="M583 20L568 12H522"/><text class="bp-text" x="522" y="9">&#216; 9&#8243;</text><g class="bp-wing"><path class="bp-thin bp-center" d="M900 10V150"/><path class="bp-line" d="M900 24C906 24 908 40 908 60V118C908 128 904 140 900 144C896 140 892 128 892 118V60C892 40 894 24 900 24Z"/><path class="bp-line" d="M908 62L970 80V92L908 84ZM892 62L830 80V92L892 84Z"/><path class="bp-line" d="M892 120L872 130V134L892 130ZM908 120L928 130V134L908 130Z"/><path class="bp-thin" d="M830 92V156M970 92V156"/><path class="bp-thin" d="M830 146V158M970 146V158M830 152H970"/><text class="bp-text" x="900" y="164" text-anchor="middle">1 800 mm</text><path class="bp-thin" d="M970 80H1004M970 92H1004M1000 80V92"/><text class="bp-text" x="1008" y="89">155 mm</text></g></svg>  <div>
     <p class="hero-greeting mb-1">{% blocktranslate with name=user.get_short_name|default:user.get_username %}Hello, {{ name }}{% endblocktranslate %}</p>
     <h1 class="mb-0">{% translate "Operations Dashboard" %}</h1>
     {% comment %}`UX-15`: **qué está pasando hoy**, no sólo qué vence.

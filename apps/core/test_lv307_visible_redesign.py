@@ -89,6 +89,14 @@ class TestTheLoginShowcase:
         assert "ac-fly" in inside and "ac-spin" in inside
         assert not re.search(r"\banimation(-[a-z]+)?\s*:", outside)
 
+    def test_the_drone_is_the_technical_quadcopter_and_loops_only_when_ambient(self):
+        """LV-321: el dron simple (cruz de aspas y discos) fue reemplazado por el cuadricóptero técnico;
+        su vuelo y sus hélices son continuos sólo bajo `[data-ambient]` (pausable)."""
+        css = CSS.read_text(encoding="utf-8")
+        assert not re.search(r"\.drone-(arm|disc|core|lens)\b", css)
+        assert "[data-ambient] .drone-fly { animation: ac-fly" in css
+        assert "[data-ambient] .bp-blades { animation: ac-spin" in css
+
 
 @pytest.mark.django_db
 class TestTheDashboardIndicators:
