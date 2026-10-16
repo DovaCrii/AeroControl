@@ -57,7 +57,9 @@ paso() {
 }
 
 cleanup() {
-  [[ -n "${KEEP_PID}" ]] && kill "${KEEP_PID}" 2>/dev/null || true
+  if [[ -n "${KEEP_PID}" ]]; then
+    kill "${KEEP_PID}" 2>/dev/null || true
+  fi
 }
 trap cleanup EXIT
 
