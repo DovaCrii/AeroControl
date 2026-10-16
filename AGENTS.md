@@ -231,6 +231,7 @@ decidir con la persona cómo limpiar el historial. Claude Code no lee `.env`, cl
 | `abrir-pr`, `cerrar-tarea`, `verificar`, `terminar-bloques` | Flujo de PR y cierre de bloques (ver «Flujo de trabajo Git») |
 | `desplegar-p340` | Despliegue en la VM; solo cuando la persona lo decide |
 | `orquestar` | Repartir una ronda entre subagentes |
+| `pendientes-github` | Cerrar PR abiertos, ramas fusionadas y worktrees sobrantes |
 | `revision-privacidad` | Revisar el diff antes de un PR en repo público |
 
 Política de modelos: Opus orquesta, Sonnet construye, Haiku verifica lo mecánico. Al lanzar un subagente se pasa `model` explícito, con

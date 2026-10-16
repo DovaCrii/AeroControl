@@ -11,7 +11,7 @@ description: Revisa que un cambio no exponga secretos, datos de clientes ni dato
    - correos reales, RUT, teléfonos, direcciones, nombres de clientes o de personas;
    - datos de proyectos de clientes (nubes de puntos, planos, bases de datos, exportaciones);
    - capturas con barras de URL, nombres de usuario o rutas personales.
-3. **Corre** `python tools/kit/privacy_scan.py`. Un hallazgo se corrige quitando el dato, no relajando la regla.
+3. El gate (`scripts/verify.ps1`) ya corre `python tools/kit/privacy_scan.py`; esta revisión cubre lo que el escáner no ve (nombres, capturas, datos de clientes). Un hallazgo del escáner se corrige quitando el dato, no relajando la regla.
    Solo un falso positivo claro se agrega a `.privacy-scan.json` (dominio ficticio o ruta de pruebas), con la razón en el PR.
 4. **Dónde va lo sensible:** en `private/` (ignorado por git), variables de entorno o un gestor de secretos. Los ejemplos
    usan datos inventados (`persona@example.com`).

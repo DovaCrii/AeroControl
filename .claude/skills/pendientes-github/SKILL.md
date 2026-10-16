@@ -31,24 +31,14 @@ Por cada PR abierto, una de cuatro salidas. Se anota en el informe, no se hace e
 Un bump de **Django** o de **ruff** puede cambiar comportamiento o formato: va solo, con el gate completo, y un bump mayor
 de ruff obliga a correr `ruff format` y revisar el diff. Nunca se mezclan dos dependencias en un PR.
 
-## 3. Implementar (Sonnet, esfuerzo medio)
+## 3. Implementar, revisar y publicar
 
-Un agente por PR de dependencia o de limpieza, **cada uno en su worktree**, con dueños de archivos sin cruce
-(`pyproject.toml`/`uv.lock` solo lo toca uno a la vez: es el cuello de botella). El prompt exige: rama `codex/<tema>`,
-gate `pwsh scripts/verify.ps1` completo, un commit, **sin push ni PR**, e informe de qué quedó sin hacer.
+Según `orquestar` (Sonnet implementa, Haiku revisa, Opus publica) y `abrir-pr` (`open_pr.ps1`, `wait_ci.ps1`, `merge_pr.ps1`). Particular de esta skill:
 
-## 4. Revisar (Haiku, esfuerzo medio)
+- Un agente por PR de dependencia o de limpieza, cada uno en su worktree; `pyproject.toml`/`uv.lock` solo lo toca uno a la vez (cuello de botella).
+- La revisión mecánica de Haiku busca `localStorage` sin try/catch, animaciones fuera de `prefers-reduced-motion`, cadenas sin traducción en el `.po`/`.mo`, datos personales o rutas de VM, y la fila de `MASTER_PLAN.md` y entrada de `CHANGELOG.md`.
 
-Revisión mecánica del diff: `localStorage` sin try/catch, animaciones fuera de `prefers-reduced-motion`, cadenas nuevas
-sin traducción en el `.po` ni `.mo` recompilado, datos personales o rutas de VM, fila de `MASTER_PLAN.md` y entrada de
-`CHANGELOG.md`. Informa archivo:línea o «sin hallazgos». No edita.
-
-## 5. Publicar y fusionar (Opus)
-
-`open_pr.ps1`, `wait_ci.ps1`, `merge_pr.ps1`, de `terminar-bloques`. Se lee la salida; la prueba de que algo llegó es
-`git ls-remote origin refs/heads/main`.
-
-## 6. Limpieza
+## 4. Limpieza
 
 - **Ramas remotas ya fusionadas:** `gh pr merge --delete-branch` ya las borra; las que queden se borran una a una con
   `git push origin --delete <rama>` **solo si el inventario las lista como fusionadas** y la persona lo confirma.
