@@ -505,22 +505,6 @@
 
 .modal-content { border-radius: 20px; }
 
-/* Barra de escala bajo el título de página: el guiño de AeroAcademy a un plano técnico. */
-.page-header h1::after {
-  content: "";
-  display: block;
-  width: 56px;
-  height: 4px;
-  margin-top: 0.45rem;
-  border-radius: 2px;
-  background: repeating-linear-gradient(
-    90deg,
-    var(--ac-primary) 0 8px,
-    transparent 8px 12px
-  );
-  opacity: 0.85;
-}
-
 .btn { transition: transform 0.12s ease, box-shadow 0.12s ease; }
 
 .btn-primary:hover {
@@ -1317,7 +1301,90 @@ form.is-submitting-slow .btn-primary::after {
   }
 }
 
-/* F2: reservada para las entradas de la ola F (las animaciones, en el bloque de movimiento). */
+/* F2: cabecera por módulo y fondos. El rótulo (icono + nombre del módulo de la barra) va sobre el
+   título y el fondo es una máscara de trazo propia (`static/img/modules/*-bg.svg`) pintada con
+   `--ac-text-secondary` a <= 0,08 de opacidad: sigue el tema claro y oscuro sin redefinir ningún
+   token del tema y el título (`--ac-text`) conserva >= 4,5:1 (calculado en test_lv324_module_header). */
+.module-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  color: var(--ac-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.module-tag .nav-icon { width: 16px; height: 16px; flex: none; color: inherit; }
+
+.page-header--module {
+  position: relative;
+  isolation: isolate;
+  padding-block: 0.5rem;
+}
+
+.page-header--module::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--ac-text-secondary);
+  opacity: 0.07;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: right center;
+  mask-position: right center;
+  -webkit-mask-size: auto 100%;
+  mask-size: auto 100%;
+}
+
+.page-header--module[data-module="flight"]::before { -webkit-mask-image: url("../img/modules/flight-bg.svg"); mask-image: url("../img/modules/flight-bg.svg"); }
+.page-header--module[data-module="compliance"]::before { -webkit-mask-image: url("../img/modules/compliance-bg.svg"); mask-image: url("../img/modules/compliance-bg.svg"); }
+.page-header--module[data-module="reports"]::before { -webkit-mask-image: url("../img/modules/reports-bg.svg"); mask-image: url("../img/modules/reports-bg.svg"); }
+.page-header--module[data-module="maintenance"]::before { -webkit-mask-image: url("../img/modules/maintenance-bg.svg"); mask-image: url("../img/modules/maintenance-bg.svg"); }
+.page-header--module[data-module="registry"]::before { -webkit-mask-image: url("../img/modules/registry-bg.svg"); mask-image: url("../img/modules/registry-bg.svg"); }
+.page-header--module[data-module="inventory"]::before { -webkit-mask-image: url("../img/modules/inventory-bg.svg"); mask-image: url("../img/modules/inventory-bg.svg"); }
+
+@media (max-width: 767.98px) {
+  .page-header--module::before { display: none; }
+}
+
+/* Estado vacío: retícula de plano y halo detrás de la lámina, sólo con CSS. */
+.empty-art-wrap {
+  position: relative;
+  isolation: isolate;
+}
+
+.empty-art-wrap::before,
+.empty-art-wrap::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: -1;
+  width: min(320px, 96%);
+  aspect-ratio: 1;
+  translate: -50% 0;
+  pointer-events: none;
+}
+
+.empty-art-wrap::before {
+  background-image:
+    linear-gradient(var(--ac-text-secondary) 1px, transparent 1px),
+    linear-gradient(90deg, var(--ac-text-secondary) 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 0.09;
+  -webkit-mask-image: radial-gradient(closest-side, #000 35%, transparent);
+  mask-image: radial-gradient(closest-side, #000 35%, transparent);
+}
+
+.empty-art-wrap::after {
+  background: radial-gradient(closest-side, var(--ac-primary), transparent);
+  opacity: 0.12;
+}
 
 /* ── Movimiento: sólo si la persona no pidió reducirlo ──────────────────── */
 @media (prefers-reduced-motion: no-preference) {
@@ -1418,6 +1485,14 @@ form.is-submitting-slow .btn-primary::after {
   }
 
   /* F2: entradas */
+  /* Una sola vez (300 ms), sin repetición: el fondo de la cabecera aparece con fundido (hasta su
+     opacidad de reposo) y el halo del estado vacío se asienta. */
+  @keyframes ac-module-in { from { opacity: 0; } }
+  @keyframes ac-halo-in { from { opacity: 0; scale: 0.92; } }
+
+  .page-header--module::before { animation: ac-module-in 300ms ease-out both; }
+  .empty-art-wrap::before,
+  .empty-art-wrap::after { animation: ac-halo-in 300ms ease-out both; }
 }
 
 @media (prefers-reduced-motion: reduce) {
