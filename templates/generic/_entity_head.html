@@ -1,0 +1,34 @@
+{% load aero_tags i18n %}
+{% comment %}LV-317 (ola B): cabecera de ficha unificada -- ilustración, título grande, chip de
+estado (texto + color) y acciones a la derecha. Una sola definición para las fichas genéricas.
+Espera: `object`, y opcionalmente
+  - `art`          : URL de la ilustración (lámina `.illus-sm`); sin ella, sin lámina
+  - `art_alt`      : texto alternativo (vacío si es decorativa)
+  - `chip_label`   : texto del chip; por omisión «Activo» según `is_active`
+  - `chip_tone`    : ok | warning | critical | info | neutral (ver el filtro `status_tone`)
+  - `subtitle`     : línea breve bajo el título
+Las acciones (volver, editar, archivar, restaurar) son las de siempre, con los permisos que la
+vista ya calcula (`can_change`, `can_archive`).{% endcomment %}
+<header class="entity-bar">
+  <div class="entity-head">
+    {% if art %}<div class="illus-tile illus-sm"><img src="{{ art }}" alt="{{ art_alt }}" width="84" height="84"></div>{% endif %}
+    <div class="entity-title">
+      <h1 class="h3 mb-0">{{ title|default:object }}</h1>
+      {% if subtitle %}<p class="entity-subtitle mb-0">{{ subtitle }}</p>{% endif %}
+      <div class="entity-chips">
+        {% if not object.is_active %}<span class="id-chip id-chip--neutral">{% translate "Archived" %}</span>
+        {% elif chip_label %}<span class="id-chip id-chip--{{ chip_tone|default:'neutral' }}">{{ chip_label }}</span>
+        {% else %}<span class="id-chip id-chip--ok">{% translate "Active" %}</span>{% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="entity-actions">
+    {% if list_url %}<a href="{{ list_url }}" class="btn btn-outline-secondary">← {% translate "Back to list" %}</a>{% endif %}
+    {% if can_change and object.is_active %}<a href="{{ update_url }}" class="btn btn-outline-primary">{% translate "Edit" %}</a>{% endif %}
+    {% if object.is_active and can_archive %}
+    <form method="post" action="{{ archive_url }}">{% csrf_token %}<button class="btn btn-outline-danger" type="submit">{% translate "Archive" %}</button></form>
+    {% elif not object.is_active and can_change %}
+    <form method="post" action="{{ restore_url }}">{% csrf_token %}<button class="btn btn-outline-success" type="submit">{% translate "Restore" %}</button></form>
+    {% endif %}
+  </div>
+</header>
