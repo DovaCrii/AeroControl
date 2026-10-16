@@ -10,6 +10,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Django 6.1.2 (`LV-313`).** Corrige cuatro vulnerabilidades (DoS en el análisis de cabeceras HTTP y en `get_supported_language_variant()`, y permisos en formsets con clave editable; lo de GeoDjango no aplica) y varios errores. Sube `pyproject.toml` y `uv.lock` juntos; reemplaza el PR #92. Sin migración ni `collectstatic`.
 - **Panel: «Requiere atención» y «Próximas mantenciones» (`LV-310`).** Chips con cifra y enlace antes de los indicadores, en lugar de la rejilla de seis tarjetas; «Faenas sin permiso» respeta la faena elegida; la tabla de vencimientos lee el estado también por texto; «Próximas mantenciones» reemplaza al gráfico de mantenimiento por tipo.
 - **Barra lateral en acordeón y con burbuja en modo icono (`LV-309`).** Un solo grupo abierto a la vez (se recuerda cuál; el de la página activa gana), tres niveles visuales (título de grupo, enlace, zona de administración), ítem activo con `aria-current`, y en modo icono el texto de cada enlace aparece en una burbuja al apuntar o tabular. La animación de altura sólo corre sin `prefers-reduced-motion`.
 - **Asistente: tope por hora y mensajes de límite (`LV-308`).** Cada persona puede hacer `AI_ASSISTANT_MAX_PER_HOUR` preguntas por hora (30 por omisión) para no gastar los créditos de prueba de NVIDIA; un 429 o una llave rechazada tienen su propio mensaje en vez del genérico.
