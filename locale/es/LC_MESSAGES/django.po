@@ -9821,6 +9821,7 @@ msgstr "Renovado"
 #, python-format
 msgid "Renewal started: %(folio)s"
 msgstr "Renovación iniciada: %(folio)s"
+
 msgid "Answered"
 msgstr "Respondida"
 
