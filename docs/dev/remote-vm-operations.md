@@ -77,7 +77,9 @@ El servicio debe indicar `active` y el endpoint de salud devolver `200`.
 > pierde, y el 2026-08-28 el respaldo estuvo a punto de saltarse por menos que
 > eso. Lo que sigue acá es sólo lo propio del acceso remoto.
 
-Antes de actualizar, **anota el commit actual** — es a lo que se vuelve si algo
+Actualizar es `cd /opt/aerocontrol && bash scripts/deploy.sh` (con `--dry-run` para ver el plan sin
+cambiar nada; ver `docs/dev/ubuntu-vm-deploy.md`, Parte J). El script anota el commit anterior y
+sólo **imprime** el rollback. A mano (plan B), antes de actualizar, **anota el commit actual** — es a lo que se vuelve si algo
 sale mal:
 
 ```bash
