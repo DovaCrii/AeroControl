@@ -11,6 +11,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 ### Changed
 
 - **Base de la identidad visual (LV-315, ola 0).** identity.css suma tokens --id-*, cinco secciones con marca para el rediseño por olas y el chip .id-chip; no cambia nada visible. Sin migración; lleva estáticos (collectstatic).
+- **Fichas de detalle (LV-317, ola B).** Cabecera de entidad unificada con chip de estado, pastillas de sección en la aeronave, datos clave con rótulos en versalitas y trazabilidad como línea de tiempo.
 - **Skills del repo más cortas (`LV-314`).** Se quitan duplicados de `AGENTS.md` en las skills (convenciones, mapa del plan, pasos de PR a mano) y `pendientes-github` entra en las tablas de skills. Sólo documentación; sin migración ni `collectstatic`.
 - **Django 6.1.2 (`LV-313`).** Corrige cuatro vulnerabilidades (DoS en el análisis de cabeceras HTTP y en `get_supported_language_variant()`, y permisos en formsets con clave editable; lo de GeoDjango no aplica) y varios errores. Sube `pyproject.toml` y `uv.lock` juntos; reemplaza el PR #92. Sin migración ni `collectstatic`.
 - **Cabecera del panel con fondo aeronáutico atenuado y chips con acción (`LV-312`).** SVG propio (cielo, cordillera, retícula y ruta con avión), saludo con el nombre, y cada chip de «Requiere atención» dice qué hacer con una flecha. Se retiran las animaciones infinitas del panel (la ruta se dibuja una vez).
