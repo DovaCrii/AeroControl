@@ -9740,3 +9740,21 @@ msgstr "Abrir mantenciones"
 
 msgid "No maintenance pending."
 msgstr "No hay mantenciones pendientes."
+
+msgid "Hello, %(name)s"
+msgstr "Hola, %(name)s"
+
+msgid "Review expiries"
+msgstr "Revisar vencimientos"
+
+msgid "Review permits"
+msgstr "Revisar permisos"
+
+msgid "Plan maintenance"
+msgstr "Planificar mantenciones"
+
+msgid "Follow up requests"
+msgstr "Dar seguimiento a las solicitudes"
+
+msgid "Close the month"
+msgstr "Cerrar el mes"
