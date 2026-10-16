@@ -30,12 +30,14 @@ Los bloques llevan prefijo `worktable_` a propósito, para no chocar con los
 sobreescriben.{% endcomment %}
 {% block title %}{% block worktable_title %}{{ title|default:_("Records") }}{% endblock %} - AeroControl{% endblock %}
 {% block content %}
-<div class="page-header">
+{% firstof module nav_module as hero_module %}
+<div class="page-header{% if hero_module %} page-header--module{% endif %}"{% if hero_module %} data-module="{{ hero_module }}"{% endif %}>
   {% comment %}El título y su bajada van juntos dentro de un envoltorio, porque
   `.page-header` es un `flex` con `justify-content: space-between`: sueltos, la
   bajada se iría al centro y los botones al borde. `mb-0` sobra —`.page-header
   h1` ya lleva `margin: 0`— y por eso no está.{% endcomment %}
   <div>
+    {% include "generic/_module_hero.html" with module=hero_module %}
     <h1 class="h3">{% block worktable_heading %}{{ title|default:_("Records") }}{% endblock %}</h1>
     {% block worktable_description %}{% endblock %}
   </div>

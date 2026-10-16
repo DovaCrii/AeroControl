@@ -105,7 +105,7 @@ class TestTheVisualLayer:
         css = IDENTITY_CSS.read_text(encoding="utf-8")
         for selector in (
             ".card",
-            ".page-header h1::after",
+            ".page-header--module",
             ".btn",
             ".sidebar a.active",
         ):
