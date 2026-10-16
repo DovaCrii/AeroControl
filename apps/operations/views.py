@@ -8,6 +8,7 @@ from urllib.parse import quote
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.db import IntegrityError, transaction
+from django.db.models import Exists, OuterRef
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -27,6 +28,7 @@ from django.views.generic import (
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.text import capfirst, slugify
 
+from apps.compliance.alerts import resolve_expiry_alerts_for
 from apps.core.audit import set_audit_context
 from apps.core.tenancy import scope_queryset_to_tenant
 from apps.core.views import (
@@ -184,6 +186,15 @@ class FlightPermissionList(
             super()
             .get_queryset()
             .prefetch_related("operators", "aircraft_fleet")
+            # LV-325: ¿tiene ya una renovación viva? Una sola subconsulta en la
+            # misma consulta de la lista, para ofrecer «Renovar» sin una por fila.
+            .annotate(
+                has_active_renewal=Exists(
+                    FlightPermission.objects.filter(
+                        renews=OuterRef("pk"), is_active=True
+                    )
+                )
+            )
             # LV-192: la columna de faena lee `cost_center.code`, que sin esto
             # cuesta una consulta por fila — 25 por página, en el listado que se
             # abre para elegir qué permiso mirar.
@@ -263,6 +274,19 @@ class FlightPermissionList(
             or self.request.GET.get("date_from")
             or self.request.GET.get("date_to")
         )
+        # LV-325: «Renovar» en la fila, con las mismas condiciones que en la ficha
+        # (`can_be_renewed` + los dos permisos que renovar necesita), pero sin
+        # preguntar fila por fila: la anotación de `get_queryset` ya lo sabe.
+        can_renew_perms = self.request.user.has_perm(
+            "operations.add_flightpermission"
+        ) and self.request.user.has_perm("geo.add_geoplan")
+        for row in context["objects"]:
+            row.can_renew_row = (
+                can_renew_perms
+                and row.is_active
+                and row.status in FlightPermission.RENEWABLE_STATUSES
+                and not row.has_active_renewal
+            )
         # LV-198: los rótulos del índice de borradores, **traducidos acá y no con
         # `{% translate %}` en la plantilla**, y no por gusto: ese tag **no traduce
         # un literal que contiene `%(count)s`** — devuelve el inglés mientras
@@ -418,6 +442,14 @@ class FlightPermissionCreate(OCreate):
                 if original is not None:
                     new_plan = original.copy_for_renewal(self.object, self.request.user)
                     fill_permission_from_plan(new_plan, self.object)
+                # LV-325: los avisos de 45 y 30 días del permiso anterior ya
+                # cumplieron su trabajo (pedir la carta y renovar): se cierran con
+                # el folio de la renovación como motivo, en la misma transacción.
+                resolve_expiry_alerts_for(
+                    previous,
+                    reason=_("Renewal started: %(folio)s")
+                    % {"folio": self.object.internal_folio},
+                )
                 set_audit_context(
                     self.request,
                     self.object,

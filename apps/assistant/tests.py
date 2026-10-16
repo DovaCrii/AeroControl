@@ -268,9 +268,6 @@ class TestTheToolLoop:
     def test_the_hourly_cap_stops_the_question_before_calling_the_service(
         self, settings, db
     ):
-        from django.core.cache import cache
-
-        cache.clear()
         settings.AI_ASSISTANT_MAX_PER_HOUR = 2
         user = login_as("view_flightpermission").user
         fake = FakeClient([_final("uno"), _final("dos"), _final("tres")])
@@ -281,9 +278,6 @@ class TestTheToolLoop:
         assert len(fake.calls) == 2  # la tercera ni salió hacia el servicio
 
     def test_the_cap_is_per_user(self, settings, db):
-        from django.core.cache import cache
-
-        cache.clear()
         settings.AI_ASSISTANT_MAX_PER_HOUR = 1
         first = login_as("view_flightpermission").user
         second = login_as("view_flightpermission", "view_aircraft").user
@@ -579,9 +573,6 @@ class TestTenantScope:
 @pytest.mark.django_db
 class TestCapAndUsage:
     def test_the_cap_counts_service_calls_not_questions(self, settings, permit):
-        from django.core.cache import cache
-
-        cache.clear()
         settings.AI_ASSISTANT_MAX_PER_HOUR = 2
         user = login_as("view_flightpermission").user
         # Una sola pregunta: llamada 1 pide herramienta, llamada 2 responde.
@@ -595,9 +586,6 @@ class TestCapAndUsage:
         assert len(fake.calls) == 2
 
     def test_the_cap_cuts_in_the_middle_of_a_question(self, settings, permit):
-        from django.core.cache import cache
-
-        cache.clear()
         settings.AI_ASSISTANT_MAX_PER_HOUR = 1
         user = login_as("view_flightpermission").user
         fake = FakeClient([_tool_call(), _final("nunca")])
@@ -660,3 +648,209 @@ class TestCapAndUsage:
 
         assert message["content"] == "hola"
         assert message.get("_total_tokens") == expected
+
+
+@pytest.fixture
+def caps(settings):
+    settings.AI_ASSISTANT_MAX_PER_HOUR = 0
+    settings.AI_ASSISTANT_DAILY_CAP = 0
+    return settings
+
+
+class Down:
+    configured = True
+
+    def __init__(self, reason):
+        self.reason = reason
+
+    def chat(self, messages, tools=None):
+        raise AssistantUnavailable(self.reason)
+
+
+@pytest.mark.django_db
+class TestUsageRegistry:
+    def test_neither_question_nor_answer_reaches_the_database_or_the_log(
+        self, permit, caplog, caps
+    ):
+        from django.apps import apps as django_apps
+        from django.db import models
+
+        from apps.assistant.models import AssistantUsage
+
+        user = login_as("view_flightpermission").user
+        fake = FakeClient([_tool_call(), _final("CENTINELA-RESPUESTA")])
+
+        with caplog.at_level(logging.INFO, logger="apps.assistant.service"):
+            ask(user, "CENTINELA-PREGUNTA", client=fake)
+
+        dump = json.dumps(list(AssistantUsage.objects.values()), default=str)
+        assert "CENTINELA" not in dump
+        assert "CENTINELA" not in caplog.text
+        row = AssistantUsage.objects.get()
+        assert row.notes == ""
+        assert (row.tools, row.rounds, row.outcome) == (
+            ["permits_summary"],
+            2,
+            "ok",
+        )
+        # Ningún campo de texto libre salvo `notes` (heredado, nunca escrito).
+        free_text = [
+            f.name
+            for f in django_apps.get_model("assistant", "AssistantUsage")._meta.fields
+            if isinstance(f, models.TextField)
+        ]
+        assert free_text == ["notes"]
+
+    def test_the_row_survives_deleting_the_user(self, caps):
+        from apps.assistant.models import AssistantUsage
+
+        user = login_as("view_flightpermission").user
+        ask(user, "hola", client=FakeClient([_final("x")]))
+
+        user.delete()
+
+        assert AssistantUsage.objects.get().user is None
+
+    def test_the_hourly_cap_is_counted_in_the_database_per_user(self, caps):
+        from apps.assistant.models import AssistantUsage
+
+        caps.AI_ASSISTANT_MAX_PER_HOUR = 2
+        first = login_as("view_flightpermission").user
+        second = login_as("view_flightpermission", "view_aircraft").user
+        fake = FakeClient([_final(str(i)) for i in range(6)])
+
+        results = [ask(first, "a", client=fake).ok for _ in range(3)]
+        other = ask(second, "b", client=fake)
+
+        assert results == [True, True, False]
+        assert other.ok is True
+        assert len(fake.calls) == 3
+        assert AssistantUsage.objects.filter(outcome="limit").count() == 1
+
+    def test_calls_older_than_an_hour_do_not_count(self, caps):
+        from apps.assistant.models import AssistantUsage
+
+        caps.AI_ASSISTANT_MAX_PER_HOUR = 1
+        user = login_as("view_flightpermission").user
+        ask(user, "a", client=FakeClient([_final("x")]))
+        AssistantUsage.objects.update(created_at=timezone.now() - timedelta(hours=2))
+
+        assert ask(user, "b", client=FakeClient([_final("y")])).ok is True
+
+    def test_the_daily_cap_is_global_and_checked_before_every_call(self, permit, caps):
+        caps.AI_ASSISTANT_DAILY_CAP = 3
+        first = login_as("view_flightpermission").user
+        second = login_as("view_flightpermission", "view_aircraft").user
+        # La primera pregunta gasta 2 llamadas; la segunda pide herramienta y se corta en
+        # su segunda llamada (tope de 3), no sólo en la primera.
+        fake = FakeClient([_tool_call(), _final("uno"), _tool_call(), _final("nunca")])
+
+        one = ask(first, "a", client=fake)
+        two = ask(second, "b", client=fake)
+
+        assert one.ok is True
+        assert two.ok is False
+        assert len(fake.calls) == 3
+        assert "daily limit" in two.text or "diario" in two.text
+
+    def test_two_requests_in_a_row_respect_the_cap(self, caps):
+        caps.AI_ASSISTANT_MAX_PER_HOUR = 1
+        user = login_as("view_flightpermission").user
+        fake = FakeClient([_final("a"), _final("b")])
+
+        answers = [ask(user, "x", client=fake), ask(user, "y", client=fake)]
+
+        assert [a.ok for a in answers] == [True, False]
+        assert len(fake.calls) == 1
+
+    def test_a_network_failure_gives_the_call_back_but_a_429_does_not(self, caps):
+        from apps.assistant.models import AssistantUsage
+
+        user = login_as("view_flightpermission").user
+
+        ask(user, "a", client=Down("unreachable"))
+        ask(user, "b", client=Down("http-429"))
+
+        rows = {r.outcome: r.rounds for r in AssistantUsage.objects.all()}
+        assert rows == {"unreachable": 0, "error-429": 1}
+
+    @pytest.mark.parametrize(
+        ("reason", "outcome"),
+        [
+            ("http-429", "error-429"),
+            ("http-401", "auth"),
+            ("http-403", "auth"),
+            ("unreachable", "unreachable"),
+            ("http-500", "error"),
+            ("unreadable", "error"),
+        ],
+    )
+    def test_each_failure_has_its_outcome(self, caps, reason, outcome):
+        from apps.assistant.models import AssistantUsage
+
+        ask(login_as().user, "hola", client=Down(reason))
+
+        assert AssistantUsage.objects.get().outcome == outcome
+
+    def test_outcome_for_steps_empty_and_ok(self, permit, caps):
+        from apps.assistant.models import AssistantUsage
+
+        user = login_as("view_flightpermission").user
+        ask(
+            user,
+            "a",
+            client=FakeClient([_tool_call(call_id=f"c{i}") for i in range(MAX_ROUNDS)]),
+        )
+        ask(user, "b", client=FakeClient([_final("   ")]))
+        ask(user, "c", client=FakeClient([_final("listo")]))
+
+        assert sorted(AssistantUsage.objects.values_list("outcome", flat=True)) == [
+            "empty",
+            "ok",
+            "too-many-steps",
+        ]
+
+    def test_a_cap_stop_is_recorded_as_limit_and_no_row_stays_pending(self, caps):
+        from apps.assistant.models import AssistantUsage
+
+        caps.AI_ASSISTANT_MAX_PER_HOUR = 1
+        user = login_as("view_flightpermission").user
+        fake = FakeClient([_final("a")])
+        ask(user, "x", client=fake)
+        ask(user, "y", client=fake)
+
+        assert not AssistantUsage.objects.filter(outcome="pending").exists()
+        assert AssistantUsage.objects.filter(outcome="limit", rounds=0).count() == 1
+
+    def test_the_usage_log_is_read_only_in_the_admin(self, client, caps):
+        from django.contrib.auth import get_user_model
+
+        from apps.assistant.models import AssistantUsage
+
+        admin_user = get_user_model().objects.create_superuser(
+            "boss", "boss@example.test", "pw-for-test-only"
+        )
+        client.force_login(admin_user)
+        row = AssistantUsage.objects.create(user=admin_user, outcome="ok")
+
+        assert (
+            client.get(reverse("admin:assistant_assistantusage_changelist")).status_code
+            == 200
+        )
+        assert (
+            client.get(reverse("admin:assistant_assistantusage_add")).status_code == 403
+        )
+        change = reverse("admin:assistant_assistantusage_change", args=[row.pk])
+        assert client.post(change, {"outcome": "limit"}).status_code == 403
+        delete = reverse("admin:assistant_assistantusage_delete", args=[row.pk])
+        assert client.post(delete, {"post": "yes"}).status_code == 403
+        row.refresh_from_db()
+        assert row.outcome == "ok"
+
+    def test_the_migration_is_complete(self):
+        from io import StringIO
+
+        from django.core.management import call_command
+
+        out = StringIO()
+        call_command("makemigrations", "assistant", "--check", "--dry-run", stdout=out)
