@@ -9758,3 +9758,52 @@ msgstr "Dar seguimiento a las solicitudes"
 
 msgid "Close the month"
 msgstr "Cerrar el mes"
+
+msgid "Renews"
+msgstr "Renueva"
+
+msgid "Renewed by"
+msgstr "Renovado por"
+
+msgid "Renew permit"
+msgstr "Renovar permiso"
+
+msgid "Renewal"
+msgstr "Renovación"
+
+#, python-format
+msgid "Copy of %(folio)s"
+msgstr "Copia de %(folio)s"
+
+#, python-format
+msgid "Renew %(folio)s"
+msgstr "Renovar %(folio)s"
+
+#, python-format
+msgid "%(folio)s has already been renewed."
+msgstr "%(folio)s ya fue renovado."
+
+#, python-format
+msgid "%(new)s renews %(previous)s."
+msgstr "%(new)s renueva a %(previous)s."
+
+#, python-format
+msgid "The plan %(old)s was copied as %(new)s, with the same KMZ."
+msgstr "El plan %(old)s se copió como %(new)s, con el mismo KMZ."
+
+#, python-format
+msgid "%(folio)s cannot be renewed: it is not approved, completed or expired, or it has already been renewed."
+msgstr "%(folio)s no se puede renovar: no está aprobado, completado ni caducado, o ya fue renovado."
+
+msgid "A renewal must keep the cost center of the permit it renews."
+msgstr "Una renovación debe mantener el centro de costo del permiso que renueva."
+
+msgid "Only an approved, completed or expired permit can be renewed."
+msgstr "Solo un permiso aprobado, completado o caducado se puede renovar."
+
+msgid "This permit has already been renewed."
+msgstr "Este permiso ya fue renovado."
+
+#, python-format
+msgid "This draft renews %(folio)s. The data below was copied from it so you can review it. The DGAC number and the validity are not copied: the DGAC gives them when it answers."
+msgstr "Este borrador renueva a %(folio)s. Los datos de abajo se copiaron de él para que se revisen. El número DGAC y la vigencia no se copian: los entrega la DGAC al responder."

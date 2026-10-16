@@ -21,6 +21,14 @@ cada cosa.{% endcomment %}
     {% csrf_token %}
     {% include "generic/_duplicate_hint.html" %}
     {{ form.non_field_errors }}
+    {% comment %}LV-320: al renovar, el borrador trae los datos del permiso anterior para
+    revisarlos. Se dice **qué se copió y qué no**: sin la vigencia ni el número a la
+    vista de que faltan, un campo en blanco se lee como un olvido.{% endcomment %}
+    {% if renewed %}
+    <div class="alert alert-info" role="status">
+      {% blocktranslate with folio=renewed.internal_folio %}This draft renews {{ folio }}. The data below was copied from it so you can review it. The DGAC number and the validity are not copied: the DGAC gives them when it answers.{% endblocktranslate %}
+    </div>
+    {% endif %}
     {% comment %}LV-295: al guardar con errores la página se dibuja de nuevo desde arriba y el
     mensaje de cada campo queda junto al campo, lejos del botón: parecía que «Guardar» no
     hacía nada y volvía al inicio. Este resumen lo dice arriba, con un enlace a cada campo.{% endcomment %}
@@ -117,7 +125,7 @@ cada cosa.{% endcomment %}
 
     Por eso el aviso dice de qué navegador se trata: un borrador que se promete
     en todas partes y sólo está en uno es peor que no tenerlo.{% endcomment %}
-    <div class="form-draft mt-4" data-form-draft data-form-draft-key="permission-form">
+    <div class="form-draft mt-4" data-form-draft data-form-draft-key="permission-form{% if renewed %}-renewal{% endif %}">
       {% comment %}LV-210: `d-none` además de `hidden`, por lo mismo que la caja
       del listado — el atributo pierde contra `d-flex` y este aviso se dibujaba
       aunque no hubiera borrador. El JS quita la clase cuando encuentra uno.
