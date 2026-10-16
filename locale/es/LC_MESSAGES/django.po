@@ -9758,3 +9758,8 @@ msgstr "Dar seguimiento a las solicitudes"
 
 msgid "Close the month"
 msgstr "Cerrar el mes"
+
+#: templates/generic/_form_errors.html
+msgid "The form was not saved. Fix these fields:"
+msgstr "El formulario no se guardó. Corrija estos campos:"
+
