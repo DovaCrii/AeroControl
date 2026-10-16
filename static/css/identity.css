@@ -846,6 +846,111 @@ tr.row-critical > td {
 /* == A: listas, tablas y filtros == */
 /* Contiene: listados, tablas de trabajo, barras de filtros, paginación y filas vacías. */
 
+/* LV-316 (ola A). Sólo agrega: ninguna clase existente se renombra ni se redefine su significado.
+ * Cabecera fija: NO. `.table-responsive` hace scroll en x (overflow-x: auto), y eso convierte al
+ * contenedor en el ancestro de `position: sticky`, así que la cabecera se pegaría a la tarjeta y no
+ * a la ventana; hacerla segura exigiría quitar el scroll horizontal, que es otra decisión. */
+
+/* Barra de filtros: una franja, rótulo arriba. Sirve a `.id-filterbar` (list.html) y a las barras
+ * `form.row.g-2` que escriben a mano las listas hijas (sus `col-md-*` se acomodan sin tocarlas). */
+.id-filterbar,
+.id-filters > form.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--id-sp-1) var(--id-sp-2);
+  margin: 0 0 var(--id-sp-2);
+  padding: 0;
+}
+
+.id-filters > form.row > [class*="col"] {
+  flex: 0 1 auto;
+  width: auto;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.id-filters > form.row > [class*="col"]:has(input[name="q"]) { flex: 1 1 16rem; min-width: 14rem; }
+
+.id-filter { display: flex; flex-direction: column; gap: 0.25rem; min-width: 10rem; }
+.id-filter--grow { flex: 1 1 16rem; min-width: 14rem; }
+.id-filter--action { min-width: 0; }
+
+/* El indicador de «Buscando…» flota sobre el campo: en el flujo empujaba el control hacia arriba y
+ * dejaba la franja con alturas distintas. */
+.id-filter { position: relative; }
+.id-filter .htmx-indicator { position: absolute; right: 0.75rem; bottom: 0.5rem; pointer-events: none; }
+
+.id-filter-label {
+  margin: 0;
+  color: var(--ac-text-secondary);
+  font-size: var(--id-fs-sm);
+  font-variant-caps: all-small-caps;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+}
+
+.id-filterbar .form-control,
+.id-filterbar .form-select,
+.id-filters > form.row .form-control,
+.id-filters > form.row .form-select { border-radius: var(--id-r-control); }
+
+/* Tabla de trabajo: encabezados como rótulo y filas más fáciles de recorrer. */
+.id-worktable thead th {
+  font-size: var(--id-fs-sm);
+  font-variant-caps: all-small-caps;
+  font-weight: 600;
+  /* Sin `letter-spacing`: en las columnas del 6 % (`col-icon`) una palabra como «Archivo» ya
+   * roza el ancho de la celda, y `LV-177` ya tuvo que arreglar un corte a mitad de palabra. */
+  letter-spacing: 0;
+  border-bottom: 1px solid var(--ac-border);
+}
+
+.id-worktable tbody td { border-color: var(--ac-border); }
+.id-worktable tbody tr:last-child td { border-bottom-width: 0; }
+.id-worktable tbody td:first-child a { font-weight: 600; text-decoration: none; }
+.id-worktable tbody td:first-child a:hover { text-decoration: underline; }
+
+/* Paginación y barra de selección con los mismos radios y rótulos que el resto de la capa. */
+#pagination-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--id-sp-1) var(--id-sp-2);
+}
+
+#pagination-container:not(:empty) { padding: var(--id-sp-1) var(--id-sp-2); }
+.id-pager-count { margin: 0; color: var(--ac-text-secondary); font-size: var(--id-fs-sm); }
+.id-pager { margin: 0; }
+.id-pager .pagination { margin: 0; gap: 0.25rem; }
+.id-pager .page-link { border-radius: var(--id-r-control); font-size: var(--id-fs-sm); }
+
+.bulk-bar {
+  gap: var(--id-sp-2);
+  padding: var(--id-sp-1) var(--id-sp-2);
+  border-radius: var(--id-r-card);
+  box-shadow: var(--id-lift);
+}
+
+.bulk-count {
+  font-size: var(--id-fs-sm);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.06em;
+}
+
+/* Hover de fila: 120 ms, y con `reduce` la regla de abajo la anula. No va dentro de un bloque
+ * `no-preference` a propósito: los guardianes de la capa (`test_lv302`, `test_lv309`, `test_lv315`)
+ * buscan el PRIMER bloque `no-preference` del archivo y dan por «fuera» todo lo que lo precede. */
+.id-worktable.table-hover > tbody > tr > * {
+  transition: background-color var(--id-t-fast) var(--id-ease), box-shadow var(--id-t-fast) var(--id-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .id-worktable.table-hover > tbody > tr > * { transition: none; }
+}
 
 /* == B: fichas de detalle == */
 /* Contiene: fichas de aeronave, operador, permiso y demás detalles; pestañas y datos clave. */
