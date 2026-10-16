@@ -392,6 +392,25 @@ para que quede trazado.
 
 ---
 
+## Parte J — Actualizar una VM ya instalada (`scripts/deploy.sh`)
+
+Desde LV-327 una actualización es **un comando**, dentro de la sesión en la VM:
+
+```bash
+cd /opt/aerocontrol && bash scripts/deploy.sh --dry-run   # sólo lee: rama, árbol, qué falta, entorno
+cd /opt/aerocontrol && bash scripts/deploy.sh
+```
+
+Pasos: rama `main...origin/main` y árbol limpio → qué falta (migraciones, `static/`, dependencias) →
+`sudo -v` (una contraseña) → `deploy_status` con el entorno cargado **por systemd**
+(`systemd-run -p EnvironmentFile=/etc/aerocontrol.env`, como los timers; el entorno no pasa por la
+shell ni por la pantalla) → respaldo **antes** del `pull` si hay migraciones → `pull --ff-only` →
+`uv sync --no-dev --locked` → `migrate` → `collectstatic` → reinicio → health 200 → hash final.
+Cada comprobación aborta con `DEPLOY FALLÓ en paso N` e imprime el rollback sugerido (`git checkout
+<hash viejo> && sudo systemctl restart aerocontrol`, más `restore_backup` si hubo migraciones); **nunca lo
+ejecuta**. Opciones: `--status`, `--backup`, `--allow-noop-sync`. No instala timers (Parte G).
+Si el script no puede correr, el plan B manual son los cuatro bloques de la skill `desplegar-p340`.
+
 ## Apéndice — Apoyarte con Codex / opencode
 
 Puedes delegar la ejecución a un agente en la VM, con dos reglas:
