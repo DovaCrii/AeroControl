@@ -7,19 +7,26 @@ Cómo se mantiene acotado:
 - **El modelo sólo ve lo que devuelven las herramientas** (`tools.py`), ya acotado y sin datos
   personales; la pregunta de la persona es lo único libre que viaja.
 - **Las instrucciones piden no inventar**: si la herramienta no trae el dato, se dice.
-- **No se guarda la pregunta ni la respuesta**: se registra quién, cuántas herramientas y cuánto
-  tardó, nunca el texto (una pregunta puede nombrar a alguien).
+- **No se guarda la pregunta ni la respuesta**: se registra (`AssistantUsage`) quién, qué
+  herramientas, cuántas llamadas y cuánto tardó, nunca el texto (una pregunta puede nombrar a
+  alguien).
+- **Topes en la base** (compartidos por todos los procesos): por persona y hora, y global por
+  día, revisados antes de CADA llamada al servicio.
 """
 
 import logging
 import time
 from dataclasses import dataclass, field
+from datetime import timedelta
 
 from django.conf import settings
-from django.core.cache import cache
+from django.db import transaction
+from django.db.models import F, Sum
+from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from .client import AssistantUnavailable, NvidiaClient
+from .models import AssistantUsage
 from .tools import run_tool, tool_definitions
 
 logger = logging.getLogger(__name__)
@@ -56,6 +63,10 @@ def ask(user, question, client=None):
         )
 
     started = time.monotonic()
+    usage = AssistantUsage.objects.create(
+        user=user if getattr(user, "pk", None) else None,
+        model=str(getattr(client, "model", "") or "")[:100],
+    )
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": question},
@@ -64,27 +75,43 @@ def ask(user, question, client=None):
     tokens = 0
     try:
         for _round in range(MAX_ROUNDS):
-            if _over_the_hourly_cap(user):
+            blocked = _reserve_call(usage)
+            if blocked:
                 return _finish(
-                    user,
+                    usage,
                     started,
                     tools_used,
-                    _("You have asked too many questions this hour. Try again later."),
-                    ok=False,
-                    tokens=tokens,
+                    _blocked_text(blocked),
+                    AssistantUsage.OUTCOME_LIMIT,
+                    tokens,
                 )
-            message = client.chat(messages, tools=tool_definitions())
+            try:
+                message = client.chat(messages, tools=tool_definitions())
+            except AssistantUnavailable as error:
+                reason = str(error)
+                if reason == "unreachable":
+                    # Como en AeroAcademy: un fallo de red antes de responder no gasta tope.
+                    # Un 429 sí cuenta: el servicio recibió la llamada.
+                    _give_back_call(usage)
+                return _finish(
+                    usage,
+                    started,
+                    tools_used,
+                    _unavailable_text(reason),
+                    _outcome_for(reason),
+                    tokens,
+                )
             tokens += message.pop("_total_tokens", 0) or 0
             calls = message.get("tool_calls") or []
             if not calls:
                 text = (message.get("content") or "").strip()
                 return _finish(
-                    user,
+                    usage,
                     started,
                     tools_used,
                     text or _("The assistant returned no answer."),
-                    ok=bool(text),
-                    tokens=tokens,
+                    AssistantUsage.OUTCOME_OK if text else AssistantUsage.OUTCOME_EMPTY,
+                    tokens,
                 )
             messages.append(
                 {
@@ -105,22 +132,33 @@ def ask(user, question, client=None):
                     }
                 )
         return _finish(
-            user,
+            usage,
             started,
             tools_used,
             _("The assistant needed too many steps. Try a simpler question."),
-            ok=False,
-            tokens=tokens,
+            AssistantUsage.OUTCOME_TOO_MANY_STEPS,
+            tokens,
         )
-    except AssistantUnavailable as error:
-        return _finish(
-            user,
-            started,
-            tools_used,
-            _unavailable_text(str(error)),
-            ok=False,
-            tokens=tokens,
-        )
+    except Exception:
+        # Un fallo inesperado no deja la fila «en curso» para siempre.
+        _finish(usage, started, tools_used, "", AssistantUsage.OUTCOME_ERROR, tokens)
+        raise
+
+
+def _outcome_for(reason):
+    if reason == "http-429":
+        return AssistantUsage.OUTCOME_429
+    if reason in ("http-401", "http-403"):
+        return AssistantUsage.OUTCOME_AUTH
+    if reason == "unreachable":
+        return AssistantUsage.OUTCOME_UNREACHABLE
+    return AssistantUsage.OUTCOME_ERROR
+
+
+def _blocked_text(which):
+    if which == "daily":
+        return _("The assistant reached its daily limit. Try again tomorrow.")
+    return _("You have asked too many questions this hour. Try again later.")
 
 
 def _unavailable_text(reason):
@@ -139,35 +177,62 @@ def _unavailable_text(reason):
     return _("The assistant is not available right now. Try again in a moment.")
 
 
-def _over_the_hourly_cap(user):
-    """Cuenta UNA LLAMADA al servicio y dice si esta persona ya pasó su tope de la hora.
+def _reserve_call(usage):
+    """Reserva UNA LLAMADA al servicio contra los topes; devuelve `None`, «daily» u «hourly».
 
     Se cuenta por llamada y no por pregunta: una pregunta puede hacer hasta `MAX_ROUNDS`
-    llamadas, y cada una cuesta. El tope por hora es entonces de llamadas, no de preguntas.
-
-    ⚠️ El contador vive en la caché **por proceso**: con varios procesos de gunicorn el tope real
-    es `AI_ASSISTANT_MAX_PER_HOUR` × procesos. Es aceptable sólo mientras el asistente esté
-    limitado al demo. La persistencia en base (un registro de uso por llamada, compartido por
-    todos los procesos) llega en el PR 2 del endurecimiento; no se inventa una tabla acá.
-    Con el tope en 0 no cuenta nada.
+    llamadas, y cada una cuesta. Los topes se calculan sobre `AssistantUsage.rounds`, en la base
+    y por lo tanto compartidos por todos los procesos; revisar y sumar ocurre en una misma
+    transacción. Un tope en 0 desactiva ese tope.
     """
-    cap = settings.AI_ASSISTANT_MAX_PER_HOUR
-    if not cap:
-        return False
-    key = f"assistant:{getattr(user, 'pk', 'anon')}:{int(time.time() // 3600)}"
-    cache.add(key, 0, timeout=3700)
-    return cache.incr(key) > cap
+    now = timezone.now()
+    with transaction.atomic():
+        daily_cap = settings.AI_ASSISTANT_DAILY_CAP
+        if daily_cap:
+            start_of_day = timezone.localtime(now).replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
+            used = AssistantUsage.objects.filter(
+                created_at__gte=start_of_day
+            ).aggregate(n=Sum("rounds"))["n"]
+            if (used or 0) >= daily_cap:
+                return "daily"
+        hourly_cap = settings.AI_ASSISTANT_MAX_PER_HOUR
+        if hourly_cap:
+            used = AssistantUsage.objects.filter(
+                user_id=usage.user_id, created_at__gte=now - timedelta(hours=1)
+            ).aggregate(n=Sum("rounds"))["n"]
+            if (used or 0) >= hourly_cap:
+                return "hourly"
+        AssistantUsage.objects.filter(pk=usage.pk).update(rounds=F("rounds") + 1)
+    return None
 
 
-def _finish(user, started, tools_used, text, ok, tokens=0):
+def _give_back_call(usage):
+    AssistantUsage.objects.filter(pk=usage.pk, rounds__gt=0).update(
+        rounds=F("rounds") - 1
+    )
+
+
+def _finish(usage, started, tools_used, text, outcome, tokens=0):
+    ms = round((time.monotonic() - started) * 1000)
+    AssistantUsage.objects.filter(pk=usage.pk).update(
+        outcome=outcome,
+        tools=tools_used,
+        ms=ms,
+        total_tokens=tokens or None,
+    )
     logger.info(
         "assistant_answered",
         extra={
-            "user_id": getattr(user, "pk", None),
+            "user_id": usage.user_id,
             "tools": tools_used,
-            "ok": ok,
+            "ok": outcome == AssistantUsage.OUTCOME_OK,
+            "outcome": outcome,
             "total_tokens": tokens,
-            "ms": round((time.monotonic() - started) * 1000),
+            "ms": ms,
         },
     )
-    return Answer(text=text, tools_used=tools_used, ok=ok)
+    return Answer(
+        text=text, tools_used=tools_used, ok=outcome == AssistantUsage.OUTCOME_OK
+    )
