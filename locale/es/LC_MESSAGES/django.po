@@ -9814,3 +9814,10 @@ msgstr "Este borrador renueva a %(folio)s. Los datos de abajo se copiaron de él
 
 msgid "Sections"
 msgstr "Secciones"
+
+msgid "Renewed"
+msgstr "Renovado"
+
+#, python-format
+msgid "Renewal started: %(folio)s"
+msgstr "Renovación iniciada: %(folio)s"
