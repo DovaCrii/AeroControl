@@ -69,6 +69,14 @@ class TestEveryModuleHasItsMask:
         )
 
 
+def _opacities():
+    light = re.search(r":root \{ --id-module-bg-opacity: ([\d.]+); \}", IDENTITY)
+    dark = re.search(
+        r'\[data-theme="dark"\] \{ --id-module-bg-opacity: ([\d.]+); \}', IDENTITY
+    )
+    return float(light.group(1)), float(dark.group(1))
+
+
 class TestNothingMovesForeverInF2:
     def test_the_entrance_is_a_single_300ms_fade(self):
         _, motion = _f2_css()
@@ -96,7 +104,13 @@ class TestTheThemeStillRules:
             1
         )
         assert "var(--ac-text-secondary)" in rule
-        assert 0.06 <= float(re.search(r"opacity:\s*([\d.]+)", rule).group(1)) <= 0.08
+        assert "opacity: var(--id-module-bg-opacity)" in rule
+        assert re.search(r"min-height:\s*9[0-6]px", static)
+        assert "mask-size: auto 130%" in rule
+        # El dibujo no tapa botones ni enlaces de la cabecera.
+        assert "pointer-events: none" in rule and "z-index: -1" in rule
+        light, dark = _opacities()
+        assert 0.10 <= light <= 0.12 and 0.14 <= dark <= 0.18
 
 
 class TestTheTitleAndTagStayReadable:
@@ -104,9 +118,13 @@ class TestTheTitleAndTagStayReadable:
     def test_contrast_on_the_worst_case_mix(self, theme):
         tokens = _tokens(theme)
         sec, surface = tokens["text-secondary"], tokens["surface"]
-        # Peor caso: el trazo cubre justo debajo del texto, a la opacidad máxima permitida (0,08).
+        # Peor caso: el trazo cubre justo debajo del texto, a la opacidad de reposo del tema.
+        share = _opacities()[0 if theme == "light" else 1]
         worst = tuple(
-            round(int(sec[i : i + 2], 16) * 0.08 + int(surface[i : i + 2], 16) * 0.92)
+            round(
+                int(sec[i : i + 2], 16) * share
+                + int(surface[i : i + 2], 16) * (1 - share)
+            )
             for i in (1, 3, 5)
         )
         for name in ("text", "text-secondary"):
