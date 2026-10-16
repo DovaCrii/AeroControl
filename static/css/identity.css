@@ -1126,6 +1126,110 @@ main .entity-title h1[class] {
 /* == D: informes, documentos y SIGO == */
 /* Contiene: informes mensuales, documentos, cierre mensual y pantallas de SIGO. */
 
+/* LV-319: la hoja impresa. Pantalla: el encabezado y el pie de papel no existen; en papel son
+ * los que dan identidad al informe (qué es, de qué período, y el contacto que lee
+ * `report_contact` de la configuración: nada de datos reales en el código). */
+.id-print-head,
+.id-print-foot { display: none; }
+
+@media print {
+  /* Márgenes de impresora para todo lo que no sea una hoja A4 de informe. El informe mensual y
+   * el Dato Ejecutivo cargan `report-a4.css` DESPUÉS de esta hoja y fijan `margin: 0`: la hoja
+   * es la página, y ahí manda la suya. */
+  @page { size: A4; margin: 16mm 14mm 20mm; }
+
+  /* Siempre claro en papel. Esta capa no redefine `--ac-*` ni `--sev-*` (son de `app.css`): fuerza
+   * las propiedades, con `!important` porque tiene que ganar al tema oscuro, que es más específico. */
+  html,
+  html[data-theme="dark"],
+  html[data-bs-theme="dark"] {
+    color-scheme: light;
+    --id-ok-bg: #e4f6ea;
+    --id-ok-border: #a7d9b8;
+    --id-ok-text: #1f7a43;
+  }
+  html[data-theme="dark"] body,
+  html[data-theme="dark"] main,
+  html[data-theme="dark"] .card,
+  html[data-theme="dark"] .table,
+  html[data-theme="dark"] .table th,
+  html[data-theme="dark"] .table td {
+    background: #ffffff !important;
+    color: #111827 !important;
+  }
+  html[data-theme="dark"] .text-muted,
+  html[data-theme="dark"] .text-body-secondary { color: #52606d !important; }
+  html .id-chip--critical,
+  html .badge.sev-critical { background: #fce4e6 !important; border-color: #f0b0b6 !important; color: #a52834 !important; }
+  html .id-chip--warning,
+  html .badge.sev-warning,
+  html .badge.sev-caution { background: #fdf1dc !important; border-color: #ecc98a !important; color: #8a5a12 !important; }
+  html .id-chip--neutral,
+  html .badge.sev-nominal { background: #eceff4 !important; border-color: #c4ccd8 !important; color: #384252 !important; }
+  html body {
+    background: #ffffff !important;
+    color: #111827;
+    font-size: 11pt;
+    line-height: 1.4;
+  }
+
+  /* Sin sombras ni fondos de tarjeta en papel. */
+  .card,
+  .summary-card,
+  .sigo-field {
+    box-shadow: none !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    border: 1px solid #c8ced8;
+  }
+
+  main h1,
+  main h2,
+  main h3,
+  .sigo-section-title { font-family: var(--id-display); color: #111827; break-after: avoid; }
+
+  /* Ninguna fila ni bloque se corta entre dos páginas; el encabezado de tabla se repite. */
+  tr,
+  .sigo-field,
+  .id-chip { break-inside: avoid; }
+  thead { display: table-header-group; }
+
+  /* Estados: texto + color, y el color se imprime. */
+  .id-chip { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+
+  /* Encabezado y pie de papel: el pie se repite al fondo de cada hoja. */
+  .id-print-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    padding-bottom: 6pt;
+    margin-bottom: 10pt;
+    border-bottom: 1.5pt solid #124384;
+    font-size: 9pt;
+    color: #3a4452;
+  }
+  .id-print-head strong { font-family: var(--id-display); font-size: 12pt; color: #124384; }
+  .id-print-foot {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding-top: 4pt;
+    border-top: 0.75pt solid #8a94a3;
+    font-size: 8pt;
+    color: #3a4452;
+  }
+
+  /* Hoja SIGO: las casillas son datos, no controles; el botón de copiar no va a papel. */
+  .copy-btn,
+  #copy-status { display: none !important; }
+
+  /* Documentos: el visor embebido no se imprime (un marco vacío en papel). */
+  iframe.document-preview { display: none !important; }
+}
+
 
 /* == E: pulido global == */
 /* Contiene: ajustes transversales finales (foco, selección, impresión, detalles de tema). */
