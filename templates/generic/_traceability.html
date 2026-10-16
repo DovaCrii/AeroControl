@@ -28,22 +28,23 @@ Shared by the flight permit, the geo plan and the aircraft's insurance filing
 
   <h3 class="h6 mb-2">{% if history_title %}{{ history_title }}{% else %}{% translate "Request history" %}{% endif %}</h3>
   {% if history %}
-  <div class="table-responsive">
-    <table class="table table-sm mb-0">
-      <thead><tr><th scope="col">#</th><th scope="col">{% translate "Action" %}</th><th scope="col">{% translate "User" %}</th><th scope="col">{% translate "Role" %}</th><th scope="col">{% translate "Date" %}</th><th scope="col">{% translate "Notes" %}</th></tr></thead>
-      <tbody>{% for h in history %}<tr>
-        <td class="text-muted">{{ forloop.counter }}</td>
-        <td><strong>{{ h.get_new_status_display|default:h.new_status }}</strong>
-          <div class="small text-muted">{% blocktranslate with previous=h.get_previous_status_display|default:h.previous_status %}from {{ previous }}{% endblocktranslate %}</div></td>
-        <td>{{ h.changed_by|default:"—" }}</td>
+  {% comment %}LV-317: línea de tiempo en vez de tabla -- cada cambio es un hito con su autor, su
+  rol y su fecha, de más antiguo a más reciente (el orden que ya traía `history`).{% endcomment %}
+  <ol class="id-timeline">{% for h in history %}
+    <li class="id-timeline-item">
+      <span class="id-timeline-dot" aria-hidden="true">{{ forloop.counter }}</span>
+      <div class="id-timeline-body">
+        <div class="id-timeline-head">
+          <strong>{{ h.get_new_status_display|default:h.new_status }}</strong>
+          <span class="text-muted small">{% blocktranslate with previous=h.get_previous_status_display|default:h.previous_status %}from {{ previous }}{% endblocktranslate %}</span>
+          <time class="id-timeline-date" datetime="{{ h.created_at|date:'c' }}">{{ h.created_at|date:"Y-m-d H:i" }}</time>
+        </div>
         {% comment %}The role is the user's groups (Operations, Compliance…).
         A trace that says who but not in what capacity answers half the
         auditor's question.{% endcomment %}
-        <td>{% for group in h.changed_by_user.groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% empty %}<span class="text-muted">—</span>{% endfor %}</td>
-        <td><span class="text-nowrap">{{ h.created_at|date:"Y-m-d H:i" }}</span></td>
-        <td>{{ h.notes|default:"—" }}</td>
-      </tr>{% endfor %}</tbody>
-    </table>
-  </div>
-  {% else %}<p class="text-muted mb-0">{% translate "No status changes recorded yet." %}</p>{% endif %}
+        <div class="id-timeline-who small">{{ h.changed_by|default:"—" }}{% for group in h.changed_by_user.groups.all %}{% if forloop.first %} · {% endif %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+        {% if h.notes %}<div class="id-timeline-notes small">{{ h.notes }}</div>{% endif %}
+      </div>
+    </li>{% endfor %}
+  </ol>  {% else %}<p class="text-muted mb-0">{% translate "No status changes recorded yet." %}</p>{% endif %}
 </div>

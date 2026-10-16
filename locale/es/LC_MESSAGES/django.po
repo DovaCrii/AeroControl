@@ -9758,3 +9758,6 @@ msgstr "Dar seguimiento a las solicitudes"
 
 msgid "Close the month"
 msgstr "Cerrar el mes"
+
+msgid "Sections"
+msgstr "Secciones"
