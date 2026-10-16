@@ -225,6 +225,16 @@
     [].forEach.call(table.querySelectorAll("[" + COL_ATTR + "]"), function (cell) {
       cell.hidden = hidden.indexOf(cell.getAttribute(COL_ATTR)) !== -1;
     });
+    // LV-316: con `table-layout: fixed` los `<col>` se aplican por posición entre las
+    // columnas visibles, así que esconder las celdas y dejar el `<col>` corría todos los anchos un
+    // lugar (la última columna heredaba el ancho de «Acciones»). Se esconde el `<col>` gemelo.
+    var keys = columnsOf(table);
+    var cols = table.querySelectorAll("colgroup > col");
+    if (cols.length === keys.length) {
+      [].forEach.call(cols, function (col, index) {
+        col.hidden = !!keys[index] && hidden.indexOf(keys[index]) !== -1;
+      });
+    }
     // El cuerpo esperaba escondido para no mostrar un salto; ya se puede ver.
     table.classList.remove("wt-pending");
   }
