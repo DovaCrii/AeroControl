@@ -9814,3 +9814,45 @@ msgstr "Este borrador renueva a %(folio)s. Los datos de abajo se copiaron de él
 
 msgid "Sections"
 msgstr "Secciones"
+
+msgid "Answered"
+msgstr "Respondida"
+
+msgid "Usage cap reached"
+msgstr "Tope de uso alcanzado"
+
+msgid "Service rate limit"
+msgstr "Límite de ritmo del servicio"
+
+msgid "Key not accepted"
+msgstr "Llave no aceptada"
+
+msgid "Service unreachable"
+msgstr "Servicio inalcanzable"
+
+msgid "Too many steps"
+msgstr "Demasiados pasos"
+
+msgid "Empty answer"
+msgstr "Respuesta vacía"
+
+msgid "Other error"
+msgstr "Otro error"
+
+msgid "Tools used"
+msgstr "Herramientas usadas"
+
+msgid "Service calls"
+msgstr "Llamadas al servicio"
+
+msgid "Duration (ms)"
+msgstr "Duración (ms)"
+
+msgid "Total tokens"
+msgstr "Tokens totales"
+
+msgid "assistant usage"
+msgstr "uso del asistente"
+
+msgid "The assistant reached its daily limit. Try again tomorrow."
+msgstr "El asistente alcanzó su límite diario. Vuelva a intentarlo mañana."
