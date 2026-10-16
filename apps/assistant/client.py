@@ -39,7 +39,11 @@ class NvidiaClient:
         return bool(self.api_key)
 
     def chat(self, messages, tools=None):
-        """Una llamada de chat; devuelve el `message` del modelo (un diccionario)."""
+        """Una llamada de chat; devuelve el `message` del modelo (un diccionario).
+
+        Si el servicio informa `usage.total_tokens`, se agrega como `_total_tokens` (entero);
+        si falta o no es un número, la clave no aparece. Nunca se reenvía al modelo.
+        """
         if not self.configured:
             raise AssistantUnavailable("not-configured")
         payload = {
@@ -74,6 +78,12 @@ class NvidiaClient:
         if len(raw) > MAX_RESPONSE_BYTES:
             raise AssistantUnavailable("too-large")
         try:
-            return json.loads(raw)["choices"][0]["message"]
+            data = json.loads(raw)
+            message = dict(data["choices"][0]["message"])
         except (ValueError, KeyError, IndexError, TypeError):
             raise AssistantUnavailable("unreadable") from None
+        usage = data.get("usage") if isinstance(data, dict) else None
+        total = usage.get("total_tokens") if isinstance(usage, dict) else None
+        if isinstance(total, int) and not isinstance(total, bool) and total >= 0:
+            message["_total_tokens"] = total
+        return message

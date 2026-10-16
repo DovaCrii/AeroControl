@@ -7,7 +7,10 @@ agregados o no personales**. Reglas que no se rompen:
 - **Cada herramienta declara el permiso** que exige; el servicio lo comprueba contra el usuario
   que pregunta antes de ejecutarla (la IA no amplía lo que esa persona puede ver).
 - **Nada personal sale hacia el servicio externo**: ni nombres de operadores, ni RUT, ni correos,
-  ni teléfonos. Sólo folios internos, códigos de faena y fechas. Un guardián de pruebas lo vigila.
+  ni teléfonos, ni el nombre de la faena (dato del cliente). Sólo folios internos, códigos de
+  faena y fechas. Un guardián de pruebas lo vigila en las tres herramientas.
+- **Cada herramienta acota por la empresa (tenant) de quien pregunta**, igual que el panel y
+  `expiring_permits`: con dos empresas, ninguna ve los permisos de la otra (`LV-323`).
 - **Salida acotada**: listas con tope y números, nunca tablas enteras.
 - **Ninguna herramienta escribe.** Agregar una que escriba exige una decisión explícita del
   usuario: una máquina que aprueba o declara cumplimiento es lo contrario de la evidencia.
@@ -38,7 +41,7 @@ class Tool:
 def _permits_summary(user, arguments):
     from apps.compliance.kpis import permit_counts
 
-    counts = permit_counts(timezone.localdate())
+    counts = permit_counts(timezone.localdate(), user=user)
     keys = (
         "total",
         "in_force",
@@ -54,11 +57,10 @@ def _permits_summary(user, arguments):
 def _cost_centres_status(user, arguments):
     from apps.compliance.kpis import permit_status_by_cost_center
 
-    rows = permit_status_by_cost_center(timezone.localdate())
+    rows = permit_status_by_cost_center(timezone.localdate(), user=user)
     return [
         {
             "code": row["cost_center"].code,
-            "name": row["cost_center"].name,
             "in_force": row["in_force"],
             "not_started": row["not_started"],
             "awaiting": row["awaiting"],

@@ -445,3 +445,218 @@ class TestTheHttpClient:
     def test_it_refuses_without_a_key(self):
         with pytest.raises(AssistantUnavailable):
             NvidiaClient(api_key="").chat([{"role": "user", "content": "x"}])
+
+
+def _world():
+    """Dos empresas que no se ven: A con dos permisos vigentes, B con uno."""
+    from apps.core.models import OperationalTenant
+    from apps.operations.models import FlightPermission
+    from apps.registry.models import CostCenter
+
+    today = timezone.localdate()
+    tenants = {}
+    for key, count in (("a", 2), ("b", 1)):
+        tenant = OperationalTenant.objects.create(
+            name=f"Empresa {key}", slug=f"empresa-{key}"
+        )
+        centre = CostCenter.objects.create(
+            code=f"CC-{key.upper()}",
+            name=f"Faena Secreta {key.upper()}",
+            operates_flights=True,
+            tenant=tenant,
+        )
+        for index in range(count):
+            FlightPermission.objects.create(
+                cost_center=centre,
+                purpose="photogrammetry",
+                status=FlightPermission.STATUS_APPROVED,
+                permission_number=f"{key}{index}",
+                location="Calama",
+                area_type="unpopulated",
+                valid_from=today - timedelta(days=5),
+                valid_until=today + timedelta(days=12 + index),
+            )
+        tenants[key] = tenant
+    return tenants
+
+
+@pytest.mark.django_db
+class TestTenantScope:
+    """LV-323: con dos empresas, ninguna herramienta ve los datos de la otra."""
+
+    def _user(self, tenant):
+        # El nombre de usuario sale de los permisos: uno distinto por empresa.
+        extra = "view_aircraft" if tenant.slug.endswith("b") else "view_operator"
+        return login_as("view_flightpermission", extra, member_of=tenant).user
+
+    def test_permits_summary_counts_only_the_users_tenant(self):
+        tenants = _world()
+
+        a = json.loads(
+            tools.run_tool(self._user(tenants["a"]), "permits_summary", "{}")
+        )
+        b = json.loads(
+            tools.run_tool(self._user(tenants["b"]), "permits_summary", "{}")
+        )
+
+        assert (a["total"], a["in_force"]) == (2, 2)
+        assert (b["total"], b["in_force"]) == (1, 1)
+
+    def test_cost_centres_lists_only_the_users_tenant(self):
+        tenants = _world()
+
+        a = json.loads(
+            tools.run_tool(self._user(tenants["a"]), "cost_centres_permit_status", "{}")
+        )
+        b = json.loads(
+            tools.run_tool(self._user(tenants["b"]), "cost_centres_permit_status", "{}")
+        )
+
+        assert [row["code"] for row in a] == ["CC-A"]
+        assert [row["code"] for row in b] == ["CC-B"]
+
+    def test_expiring_permits_lists_only_the_users_tenant(self):
+        tenants = _world()
+
+        a = json.loads(
+            tools.run_tool(self._user(tenants["a"]), "expiring_permits", "{}")
+        )
+        b = json.loads(
+            tools.run_tool(self._user(tenants["b"]), "expiring_permits", "{}")
+        )
+
+        assert {row["cost_centre"] for row in a} == {"CC-A"}
+        assert {row["cost_centre"] for row in b} == {"CC-B"}
+
+    def test_a_superuser_still_sees_every_tenant(self):
+        _world()
+        from django.contrib.auth import get_user_model
+
+        root = get_user_model().objects.create_superuser("root", password="pw")  # nosec B106
+
+        summary = json.loads(tools.run_tool(root, "permits_summary", "{}"))
+        centres = json.loads(tools.run_tool(root, "cost_centres_permit_status", "{}"))
+
+        assert summary["total"] == 3
+        assert {row["code"] for row in centres} == {"CC-A", "CC-B"}
+
+    def test_the_kpi_functions_without_user_are_unchanged(self):
+        """Panel e informes llaman sin `user`: siguen viendo todo."""
+        from apps.compliance.kpis import permit_counts, permit_status_by_cost_center
+
+        _world()
+        today = timezone.localdate()
+
+        assert permit_counts(today)["total"] == 3
+        assert len(permit_status_by_cost_center(today)) == 2
+
+    def test_no_tool_sends_the_cost_centre_name_or_anything_personal(self):
+        tenants = _world()
+        user = self._user(tenants["a"])
+
+        for name in tools.TOOLS:
+            output = tools.run_tool(user, name, "{}")
+            assert "Secreta" not in output, name
+            assert "Faena" not in output, name
+
+    def test_cost_centres_rows_carry_only_the_agreed_fields(self):
+        tenants = _world()
+
+        rows = json.loads(
+            tools.run_tool(self._user(tenants["a"]), "cost_centres_permit_status", "{}")
+        )
+
+        assert set(rows[0]) == {
+            "code",
+            "in_force",
+            "not_started",
+            "awaiting",
+            "expiring_in_30_days",
+            "next_expiry",
+        }
+
+
+@pytest.mark.django_db
+class TestCapAndUsage:
+    def test_the_cap_counts_service_calls_not_questions(self, settings, permit):
+        from django.core.cache import cache
+
+        cache.clear()
+        settings.AI_ASSISTANT_MAX_PER_HOUR = 2
+        user = login_as("view_flightpermission").user
+        # Una sola pregunta: llamada 1 pide herramienta, llamada 2 responde.
+        fake = FakeClient([_tool_call(), _final("uno"), _final("dos")])
+
+        first = ask(user, "hola", client=fake)
+        second = ask(user, "hola otra vez", client=fake)
+
+        assert first.ok is True
+        assert second.ok is False  # el tope se gastó en las dos llamadas de la primera
+        assert len(fake.calls) == 2
+
+    def test_the_cap_cuts_in_the_middle_of_a_question(self, settings, permit):
+        from django.core.cache import cache
+
+        cache.clear()
+        settings.AI_ASSISTANT_MAX_PER_HOUR = 1
+        user = login_as("view_flightpermission").user
+        fake = FakeClient([_tool_call(), _final("nunca")])
+
+        answer = ask(user, "hola", client=fake)
+
+        assert answer.ok is False
+        assert len(fake.calls) == 1
+
+    def test_total_tokens_are_logged_when_the_service_reports_them(
+        self, permit, caplog
+    ):
+        user = login_as("view_flightpermission").user
+        first = _tool_call()
+        first["_total_tokens"] = 120
+        last = _final("ok")
+        last["_total_tokens"] = 30
+        fake = FakeClient([first, last])
+
+        with caplog.at_level(logging.INFO, logger="apps.assistant.service"):
+            ask(user, "hola", client=fake)
+
+        record = next(r for r in caplog.records if r.message == "assistant_answered")
+        assert record.total_tokens == 150
+
+    def test_the_token_marker_never_travels_back_to_the_model(self, permit):
+        user = login_as("view_flightpermission").user
+        first = _tool_call()
+        first["_total_tokens"] = 10
+        fake = FakeClient([first, _final("ok")])
+
+        ask(user, "hola", client=fake)
+
+        assert "_total_tokens" not in json.dumps(fake.calls[1])
+
+    @pytest.mark.parametrize(
+        ("usage", "expected"),
+        [
+            ({"total_tokens": 42}, 42),
+            ({"total_tokens": "42"}, None),
+            ({"total_tokens": True}, None),
+            ({}, None),
+            (None, None),
+            ("garbage", None),
+        ],
+    )
+    def test_the_client_reads_usage_tolerantly(self, monkeypatch, usage, expected):
+        body = {"choices": [{"message": {"content": "hola"}}]}
+        if usage is not None:
+            body["usage"] = usage
+        monkeypatch.setattr(
+            client_module.urllib.request,
+            "urlopen",
+            lambda request, timeout: _Response(json.dumps(body).encode()),
+        )
+
+        message = NvidiaClient(
+            api_key=SECRET_KEY, base_url="https://example.test/v1", model="m", timeout=5
+        ).chat([{"role": "user", "content": "x"}])
+
+        assert message["content"] == "hola"
+        assert message.get("_total_tokens") == expected

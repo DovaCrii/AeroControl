@@ -8,6 +8,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Security
+
+- **Asistente IA acotado por empresa y sin nombres de faena (`LV-323`).** Las tres herramientas ven sólo los permisos de la empresa de quien pregunta; `cost_centres_permit_status` ya no envía el nombre de la faena. El tope por hora cuenta llamadas al servicio (no preguntas) y se registra `total_tokens`. Sin migración ni estáticos.
+
 ### Changed
 
 - **Formularios, ola C del rediseño (LV-318).** Resumen de errores arriba, barra de acciones pegajosa con un solo botón primario, foco visible y estado de envío sin parpadeo en los formularios genéricos y sus modales. Sólo presentación; sin migración; lleva estáticos (collectstatic).
