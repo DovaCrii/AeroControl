@@ -10,6 +10,7 @@
   <form method="post" {% if form.is_multipart %}enctype="multipart/form-data"{% endif %}>
     {% csrf_token %}
     {% include "generic/_duplicate_hint.html" %}
+    {% include "generic/_form_errors.html" %}
     {{ form|crispy }}
 
     {% comment %}`UX-23`: el borrador sólo en los formularios que lo justifican.
@@ -22,7 +23,7 @@
     del proyecto. Hay un test que vigila que los dos números no se separen.{% endcomment %}
     {% if form.visible_fields|length > 8 %}{% include "generic/_form_draft.html" %}{% endif %}
 
-    <div class="form-actions d-flex gap-2 mt-4 flex-wrap align-items-center">
+    <div class="form-actions form-actions--sticky d-flex gap-2 mt-4 flex-wrap align-items-center">
       <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
       {% comment %}`UX-22`. Sólo en el alta y sólo donde la vista lo declara
       (`SaveAndAddAnotherMixin`): en una edición, el formulario que quedaría
@@ -32,7 +33,7 @@
       <button type="submit" name="_save_and_add_another" value="1" class="btn btn-outline-primary">{% translate "Save and add another" %}</button>
       {% endif %}
       {% if form.visible_fields|length > 8 %}{% include "generic/_form_draft_button.html" %}{% endif %}
-      <a href="{% url 'dashboard' %}" data-history-back class="btn btn-outline-secondary">{% translate "Cancel" %}</a>
+      <a href="{% url 'dashboard' %}" data-history-back class="btn btn-link">{% translate "Cancel" %}</a>
     </div>
   </form>
 </div>

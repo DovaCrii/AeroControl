@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
 from django.db.models import Q
@@ -404,6 +404,24 @@ class FlightPermission(StatusHistoryMixin, StatusFlowMixin, BaseModel):
     status = models.CharField(
         max_length=20, choices=STATUS_CHOICES, default="requested"
     )
+    # LV-320: el permiso que éste renueva. La DGAC no renueva sola: cada renovación
+    # es un permiso **nuevo** (otra carta del mandante, otro folio, otra vigencia),
+    # pero nace del anterior y se quiere poder decir cuál. `PROTECT` como todo FK
+    # operativo; el anterior no se toca al renovar y sigue vigente hasta que lo
+    # cierre `expire_permissions`.
+    renews = models.ForeignKey(
+        "self",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="renewals",
+        verbose_name=_("Renews"),
+    )
+
+    # Los estados desde los que se puede renovar: el permiso tuvo que ser
+    # autorizado. Uno solicitado todavía no existe para la DGAC y uno rechazado
+    # nunca tuvo vigencia que renovar.
+    RENEWABLE_STATUSES = frozenset({STATUS_APPROVED, STATUS_COMPLETED, STATUS_EXPIRED})
 
     class Meta:
         verbose_name = _("flight permission")
@@ -423,7 +441,21 @@ class FlightPermission(StatusHistoryMixin, StatusFlowMixin, BaseModel):
             models.CheckConstraint(
                 condition=~Q(purpose="other") | ~Q(purpose_detail=""),
                 name="ops_flightpermission_other_purpose_requires_detail",
-            )
+            ),
+            # LV-320: un permiso no se renueva a sí mismo.
+            models.CheckConstraint(
+                condition=~Q(renews=models.F("id")),
+                name="ops_flightpermission_cannot_renew_itself",
+            ),
+            # LV-320: **una** renovación viva por permiso. Sin esto, dos clics en
+            # «Renovar» o dos pestañas dejarían dos permisos nuevos del mismo
+            # anterior, cada uno con su copia del plan. Archivar la renovación
+            # (`is_active=False`) libera al anterior para renovarse de nuevo.
+            models.UniqueConstraint(
+                fields=["renews"],
+                condition=Q(is_active=True),
+                name="ops_flightpermission_one_active_renewal",
+            ),
         ]
 
     def __str__(self):
@@ -465,6 +497,20 @@ class FlightPermission(StatusHistoryMixin, StatusFlowMixin, BaseModel):
             self.status == self.STATUS_APPROVED
             and self.valid_until is not None
             and self.valid_until < timezone.localdate()
+        )
+
+    @property
+    def active_renewal(self):
+        """LV-320: la renovación viva de este permiso, o `None`."""
+        return self.renewals.filter(is_active=True).first()
+
+    @property
+    def can_be_renewed(self):
+        """LV-320: ¿se ofrece «Renovar»? Autorizado alguna vez, vivo y sin sucesor."""
+        return (
+            self.is_active
+            and self.status in self.RENEWABLE_STATUSES
+            and self.active_renewal is None
         )
 
     def status_steps(self):
@@ -746,6 +792,27 @@ class FlightPermission(StatusHistoryMixin, StatusFlowMixin, BaseModel):
             errors["longitude"] = message
         if self.radius_km is not None and self.latitude is None:
             errors["radius_km"] = _("A radius requires a coordinate pair.")
+        # LV-320: la renovación. Espejo en el modelo de lo que valida la vista, para
+        # que el admin o un import no puedan armar una cadena imposible.
+        if self.renews_id:
+            previous = self.renews
+            if self.cost_center_id and self.cost_center_id != previous.cost_center_id:
+                errors["cost_center"] = _(
+                    "A renewal must keep the cost center of the permit it renews."
+                )
+            # El estado del anterior se exige al **nacer** la renovación: corregirlo
+            # después no debe impedir editar el permiso nuevo.
+            if self._state.adding and previous.status not in self.RENEWABLE_STATUSES:
+                errors[NON_FIELD_ERRORS] = _(
+                    "Only an approved, completed or expired permit can be renewed."
+                )
+            elif (
+                self.is_active
+                and previous.renewals.filter(is_active=True)
+                .exclude(pk=self.pk)
+                .exists()
+            ):
+                errors[NON_FIELD_ERRORS] = _("This permit has already been renewed.")
         if errors:
             raise ValidationError(errors)
 

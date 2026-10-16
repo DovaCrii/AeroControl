@@ -4,7 +4,7 @@ Cuatro garantías:
 
 1. **El dibujo es sólo decoración**: sin recursos externos ni scripts, y oculto en pantallas
    angostas.
-2. **«Nada permanente»**: la cabecera no tiene animación infinita; la ruta se dibuja una vez.
+2. **«Nada permanente»**: la cabecera no tiene animación infinita (las hélices giran y frenan, la retícula\n   entra con fundido y la ruta se dibuja una vez); lo continuo vive sólo en la portada (LV-321).
 3. **El título se lee**: el contraste de título y descripción sobre el fondo (calculado con
    los colores del CSS en claro y oscuro, peor caso con la cordillera encima) llega a 4,5:1.
 4. **Cada chip de atención dice qué hacer**: una línea de acción con flecha, además del
@@ -46,10 +46,14 @@ class TestTheHeroDrawing:
         assert not re.search(r"https?:|<script|<image|<use|href=|on\w+=", svg, re.I)
         assert 'aria-hidden="true"' in svg
 
-    def test_it_is_a_layered_landscape(self):
+    def test_it_is_a_blueprint_over_a_distant_ridge(self):
+        """LV-321: el avión suelto cedió el sitio al plano técnico; la silueta lejana (tres planos)
+        se conserva y el avión pasó a ser el ala fija en planta (`bp-wing`)."""
         svg = _hero_svg()
         assert svg.count("hero-ridge ") == 3
-        assert "hero-plane" in svg and "route-line" in svg and "hero-grid" in svg
+        assert "hero-plane" not in svg and "hero-plane" not in IDENTITY
+        assert "bp-wing" in svg and "bp-blades" in svg
+        assert "route-line" in svg and "hero-grid" in svg and "route-wp" in svg
 
     def test_ridges_stay_faint(self):
         for name in ("far", "mid", "near"):

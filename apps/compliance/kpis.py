@@ -26,6 +26,8 @@ from datetime import timedelta
 
 from django.utils.translation import gettext_lazy as _
 
+from apps.core.tenancy import scope_queryset_to_tenant
+
 # Decided with the user on 2026-08-12. Tolerates roughly one aircraft of a
 # ~16-strong fleet being out at any moment.
 FLEET_AVAILABILITY_TARGET = 90.0
@@ -128,7 +130,18 @@ def fleet_availability():
     }
 
 
-def permit_counts(today, cost_center=None):
+def _scoped_to_user(permits, user):
+    """Acota permisos a la empresa (tenant) de `user`; sin `user`, no toca nada.
+
+    Parámetro opcional a propósito: el panel y los informes siguen llamando sin él y no
+    cambian. Lo usa el asistente (`LV-323`), que sí debe acotar por quien pregunta.
+    """
+    if user is None:
+        return permits
+    return scope_queryset_to_tenant(permits, user, "cost_center__tenant_id")
+
+
+def permit_counts(today, cost_center=None, user=None):
     """LV-201: cuántos permisos hay vigentes, atrasados y esperando a la DGAC.
 
     Pedido del usuario: *"es importante mencionar tanto en los reportes como en el
@@ -163,6 +176,7 @@ def permit_counts(today, cost_center=None):
     )
     if cost_center:
         permits = permits.filter(cost_center=cost_center)
+    permits = _scoped_to_user(permits, user)
     approved = permits.filter(status=FlightPermission.STATUS_APPROVED)
     total = permits.count()
     # Se mira `valid_until` y no `valid_from`, igual que el resto de la app: lo
@@ -218,6 +232,7 @@ def permit_counts(today, cost_center=None):
     )
     if cost_center:
         expired_this_month = expired_this_month.filter(cost_center=cost_center)
+    expired_this_month = _scoped_to_user(expired_this_month, user)
     return {
         "total": total,
         "in_force": in_force,
@@ -243,7 +258,7 @@ def permit_counts(today, cost_center=None):
     }
 
 
-def permit_status_by_cost_center(today):
+def permit_status_by_cost_center(today, user=None):
     """LV-206: una fila por faena, con sus permisos vigentes — y las que no tienen.
 
     Pedido del usuario: *"necesito una opción de poner los CC que hoy tienen y los
@@ -296,10 +311,14 @@ def permit_status_by_cost_center(today):
     from apps.registry.selectors import operating_cost_centers
 
     horizon = today + timedelta(days=30)
-    centers = list(operating_cost_centers().order_by("code"))
+    centers = operating_cost_centers()
+    if user is not None:
+        centers = scope_queryset_to_tenant(centers, user)
+    centers = list(centers.order_by("code"))
     counted = {
         row["cost_center"]: row
-        for row in FlightPermission.objects.filter(
+        for row in _scoped_to_user(FlightPermission.objects.all(), user)
+        .filter(
             is_active=True,
             status__in=(
                 FlightPermission.STATUS_REQUESTED,
