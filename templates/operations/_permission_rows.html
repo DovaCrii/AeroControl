@@ -47,6 +47,9 @@
     </form>
     {% endif %}
     {% endif %}
+    {% comment %}LV-325: «Renovar» en la fila, con las condiciones de la ficha
+    (`can_renew_row` lo arma la vista sin una consulta por fila).{% endcomment %}
+    {% if object.can_renew_row %}<a href="{% url 'permission-create' %}?renueva={{ object.pk }}" class="btn btn-sm btn-outline-primary">{% translate "Renew permit" %}</a>{% endif %}
     <a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">{% translate "View" %}</a>
   </td>
 </tr>
