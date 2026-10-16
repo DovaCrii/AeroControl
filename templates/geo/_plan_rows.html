@@ -32,7 +32,7 @@ La fila archivada se distingue y ofrece "Restaurar": sin eso, el filtro
   aprobada sobre un permiso caducado se veía lista para volar. El estado del plan
   sigue diciendo lo suyo —el dibujo **está** aprobado—; la marca roja va al lado y
   dice lo otro.{% endcomment %}
-  <td>{% include "geo/_status_badge.html" with status=plan.status label=plan.get_status_display %}{% if plan.permit_has_lapsed %} <span class="badge sev-critical" title="{{ plan.flight_permission }}">⚠ {% translate "Permit lapsed" %}</span>{% endif %}</td>
+  <td>{% include "geo/_status_badge.html" with status=plan.status label=plan.get_status_display %}{% if plan.permit_has_lapsed and plan.renewed_by_folio %} <span class="id-chip id-chip--neutral" title="{{ plan.flight_permission }}">{% translate "Renewed" %} → {{ plan.renewed_by_folio }}</span>{% elif plan.permit_has_lapsed %} <span class="badge sev-critical" title="{{ plan.flight_permission }}">⚠ {% translate "Permit lapsed" %}</span>{% endif %}</td>
   <td>{% if plan.current_version %}v{{ plan.current_version.version_number }}{% else %}—{% endif %}</td>
   <td><span class="text-nowrap">{{ plan.created_at|date:'Y-m-d' }}</span></td>
   <td class="text-end text-nowrap">
