@@ -50,6 +50,9 @@ jobs:
       # un `python` suelto, que el runner no garantiza.
       - name: Revisión de privacidad
         run: uv run python tools/kit/privacy_scan.py
+      # Mismo paso que `scripts/verify.ps1` (LV-271/LV-327): los .sh del repo corren en la VM.
+      - name: shellcheck
+        run: shellcheck scripts/*.sh
       - run: uv run python scripts/compile_translations.py
       - run: uv run ruff check .
       - run: uv run ruff format --check .

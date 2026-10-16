@@ -5,7 +5,7 @@
 `p340` corre **`a807eb8`**, desplegado el 2026-10-16 en cuatro bloques (estado → entorno → `git pull` + `uv sync` → `collectstatic` + reinicio;
 135 estáticos copiados, servicio `active`, hash leído de la salida pegada). **Sin migración** (la última sigue siendo `compliance/0027`).
 
-**Seguimiento — fusionado sin desplegar: sólo documentación** (`LV-311` skill `pendientes-github`, `LV-314` recorte de skills; no afectan a producción).
+**Seguimiento — fusionado sin desplegar: sólo documentación** (`LV-311` skill `pendientes-github`, `LV-314` recorte de skills; no afectan a producción) y `LV-327` (`scripts/deploy.sh`, sin migración ni estáticos; **sin probar aún en la VM**: el primer uso conviene con `--dry-run`).
 
 Entró: `LV-307` (portada de dos paneles, tarjetas con barra, tipografía Archivo), `LV-308` (asistente: tope por usuario y hora, mensajes de límite/llave),
 `LV-309` (barra lateral: un grupo abierto, activo con luz, nombres al enfocar), `LV-310` («Requiere atención», «Próximas mantenciones» en vez de la dona,

@@ -36,6 +36,30 @@ Invoke-Step "pip-audit" @("run", "pip-audit")
 # se agregan a los dos el mismo día, que es la regla de LV-271.
 Invoke-Step "privacy scan" @("run", "python", "tools/kit/privacy_scan.py")
 
+# shellcheck de los .sh (LV-327): mismo paso que el CI (`shellcheck scripts/*.sh`). En el CI
+# (ubuntu-latest) viene instalado; aquí, si falta, sólo se avisa para no romper el gate local.
+$Shellcheck = Get-Command shellcheck -ErrorAction SilentlyContinue
+if ($Shellcheck) {
+    Write-Host "==> shellcheck scripts/*.sh" -ForegroundColor Cyan
+    # Con autocrlf el arbol de trabajo trae CRLF y shellcheck lo marca (SC1017); el CI lee LF.
+    # Se lintean copias sin CR para medir lo mismo que el CI.
+    $ShDir = Join-Path ([IO.Path]::GetTempPath()) ("aerocontrol-shellcheck-" + [guid]::NewGuid().ToString("N").Substring(0, 8))
+    New-Item -ItemType Directory -Force $ShDir | Out-Null
+    try {
+        $Copies = foreach ($Sh in Get-ChildItem scripts -Filter *.sh) {
+            $Dest = Join-Path $ShDir $Sh.Name
+            [IO.File]::WriteAllText($Dest, ([IO.File]::ReadAllText($Sh.FullName) -replace "`r", ""))
+            $Dest
+        }
+        & $Shellcheck.Source @Copies
+        if ($LASTEXITCODE -ne 0) { throw "verify.ps1: step failed (shellcheck), exit code $LASTEXITCODE" }
+    }
+    finally { Remove-Item -Recurse -Force $ShDir -ErrorAction SilentlyContinue }
+}
+else {
+    Write-Warning "shellcheck no esta instalado: paso omitido localmente (el CI si lo corre). scoop install shellcheck"
+}
+
 # El último paso del CI (`Staging preflight`) no estaba aquí, y por eso el CI pudo
 # estar en rojo semanas con este script en verde: la base de ese paso es un archivo
 # vacío y `backup` necesita las tablas. Se corre igual que allá, pero **sobre una base
