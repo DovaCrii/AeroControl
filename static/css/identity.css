@@ -23,6 +23,98 @@
   --id-lift: 0 1px 2px rgb(16 24 40 / 8%), 0 12px 26px -14px rgb(16 24 40 / 32%);
 }
 
+/* ── Tokens de la identidad (LV-315, ola 0) ─────────────────────────────────
+ * Escalas para que las olas de rediseño no inventen números: tipografía (razón 1,25 sobre
+ * 16 px), espaciado (base 8 px), radios, sombras y movimiento. Sólo prefijo `--id-`: nunca se
+ * redefine `--ac-*` ni `--sev-*` (lo vigila `test_lv315_identity_foundation.py`). Ninguna regla
+ * los usa todavía; esta ola no cambia nada visible. */
+:root {
+  --id-fs-sm: 0.8125rem;
+  --id-fs-md: 1rem;
+  --id-fs-lg: 1.25rem;
+  --id-fs-xl: 1.5625rem;
+  --id-fs-2xl: 1.9375rem;
+
+  --id-sp-1: 0.5rem;
+  --id-sp-2: 1rem;
+  --id-sp-3: 1.5rem;
+  --id-sp-4: 2.5rem;
+
+  --id-r-control: 8px;
+  --id-r-card: 12px;
+  --id-r-modal: 20px;
+  --id-r-pill: 999px;
+
+  --id-lift-2: 0 2px 4px rgb(16 24 40 / 10%), 0 22px 40px -16px rgb(16 24 40 / 40%);
+
+  --id-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --id-t-fast: 120ms;
+  --id-t-base: 180ms;
+
+  /* «Correcto» para `.id-chip--ok`: la app no tiene `--sev-ok`, así que se toma la paleta de
+     su insignia de éxito (`.badge.bg-success-subtle`, app.css), que ya tiene el contraste medido. */
+  --id-ok-bg: #e4f6ea;
+  --id-ok-border: #a7d9b8;
+  --id-ok-text: #1f7a43;
+}
+
+[data-theme="dark"] {
+  --id-lift-2: 0 2px 4px rgb(0 0 0 / 45%), 0 24px 44px -16px rgb(0 0 0 / 80%);
+  --id-ok-bg: #14361f;
+  --id-ok-border: #2c6b40;
+  --id-ok-text: #7fd6a0;
+}
+
+/* ── Chip de estado compartido (LV-315) ─────────────────────────────────────
+ * Texto + color (nunca sólo color). Lee los tokens `--sev-*` ya medidos; el contraste de cada
+ * variante en claro y oscuro lo calcula `test_lv315_identity_foundation.py`. */
+.id-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.15em 0.65em;
+  border: 1px solid var(--sev-nominal-border);
+  border-radius: var(--id-r-pill);
+  background: var(--sev-nominal-bg);
+  color: var(--sev-nominal-text);
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.06em;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.id-chip--critical {
+  background: var(--sev-critical-bg);
+  border-color: var(--sev-critical-border);
+  color: var(--sev-critical-text);
+}
+
+.id-chip--warning {
+  background: var(--sev-warning-bg);
+  border-color: var(--sev-warning-border);
+  color: var(--sev-warning-text);
+}
+
+.id-chip--ok {
+  background: var(--id-ok-bg);
+  border-color: var(--id-ok-border);
+  color: var(--id-ok-text);
+}
+
+.id-chip--info {
+  background: var(--sev-advisory-bg);
+  border-color: var(--sev-advisory-border);
+  color: var(--sev-advisory-text);
+}
+
+.id-chip--neutral {
+  background: var(--sev-nominal-bg);
+  border-color: var(--sev-nominal-border);
+  color: var(--sev-nominal-text);
+}
 /* ── Lámina con ilustración ─────────────────────────────────────────────── */
 .illus-tile {
   display: inline-grid;
@@ -750,6 +842,25 @@ tr.row-critical > td {
 
 /* «Vuelos mensuales», más bajo que los gráficos de antes: ahora es el único. */
 .chart-container--low canvas { max-height: 150px; }
+
+/* == A: listas, tablas y filtros == */
+/* Contiene: listados, tablas de trabajo, barras de filtros, paginación y filas vacías. */
+
+
+/* == B: fichas de detalle == */
+/* Contiene: fichas de aeronave, operador, permiso y demás detalles; pestañas y datos clave. */
+
+
+/* == C: formularios == */
+/* Contiene: campos, grupos, ayudas, errores de validación y barras de acciones. */
+
+
+/* == D: informes, documentos y SIGO == */
+/* Contiene: informes mensuales, documentos, cierre mensual y pantallas de SIGO. */
+
+
+/* == E: pulido global == */
+/* Contiene: ajustes transversales finales (foco, selección, impresión, detalles de tema). */
 
 /* ── Movimiento: sólo si la persona no pidió reducirlo ──────────────────── */
 @media (prefers-reduced-motion: no-preference) {
