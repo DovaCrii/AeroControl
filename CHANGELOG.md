@@ -10,6 +10,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Plano técnico y movimiento ambiental (LV-321, ola F).** La cabecera del panel dibuja un cuadricóptero y un ala fija acotados, y la portada hace volar el cuadricóptero técnico por la ruta; el movimiento continuo queda sólo en la portada y se pausa fuera de pantalla (`ambient-motion.js`). La portada suma topografía, rumbo, waypoints numerados, estela, radar y telemetría decorativa, y un wordmark mayor. Se quita el LED parpadeante de los dibujos por serie. Sin migración; lleva estáticos (collectstatic).
 - **Base de la identidad visual (LV-315, ola 0).** identity.css suma tokens --id-*, cinco secciones con marca para el rediseño por olas y el chip .id-chip; no cambia nada visible. Sin migración; lleva estáticos (collectstatic).
 - **Skills del repo más cortas (`LV-314`).** Se quitan duplicados de `AGENTS.md` en las skills (convenciones, mapa del plan, pasos de PR a mano) y `pendientes-github` entra en las tablas de skills. Sólo documentación; sin migración ni `collectstatic`.
 - **Django 6.1.2 (`LV-313`).** Corrige cuatro vulnerabilidades (DoS en el análisis de cabeceras HTTP y en `get_supported_language_variant()`, y permisos en formsets con clave editable; lo de GeoDjango no aplica) y varios errores. Sube `pyproject.toml` y `uv.lock` juntos; reemplaza el PR #92. Sin migración ni `collectstatic`.
