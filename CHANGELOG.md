@@ -8,6 +8,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Security
+
+- **Asistente IA acotado por empresa y sin nombres de faena (`LV-323`).** Las tres herramientas ven sólo los permisos de la empresa de quien pregunta; `cost_centres_permit_status` ya no envía el nombre de la faena. El tope por hora cuenta llamadas al servicio (no preguntas) y se registra `total_tokens`. Sin migración ni estáticos.
+
 ### Changed
 
 - **Base de la identidad visual (LV-315, ola 0).** identity.css suma tokens --id-*, cinco secciones con marca para el rediseño por olas y el chip .id-chip; no cambia nada visible. Sin migración; lleva estáticos (collectstatic).
