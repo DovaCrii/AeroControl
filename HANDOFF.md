@@ -1,6 +1,23 @@
 # HANDOFF — AeroControl
 
-## ✅ 2026-10-13 — identidad visual, asistente con IA (prototipo), privacidad y estándar de trabajo, **desplegados** (`59e5ac6`)
+## ✅ 2026-10-16 — rediseño de barra y panel, asistente con tope, Django 6.1.2, **desplegados** (`a807eb8`)
+
+`p340` corre **`a807eb8`**, desplegado el 2026-10-16 en cuatro bloques (estado → entorno → `git pull` + `uv sync` → `collectstatic` + reinicio;
+135 estáticos copiados, servicio `active`, hash leído de la salida pegada). **Sin migración** (la última sigue siendo `compliance/0027`).
+
+**Seguimiento — fusionado sin desplegar: sólo documentación** (`LV-311` skill `pendientes-github`, `LV-314` recorte de skills; no afectan a producción).
+
+Entró: `LV-307` (portada de dos paneles, tarjetas con barra, tipografía Archivo), `LV-308` (asistente: tope por usuario y hora, mensajes de límite/llave),
+`LV-309` (barra lateral: un grupo abierto, activo con luz, nombres al enfocar), `LV-310` («Requiere atención», «Próximas mantenciones» en vez de la dona,
+estados por texto), `LV-312` (cabecera con fondo aeronáutico propio y chips con acción) y `LV-313` (Django 6.1.2).
+
+**Pendiente — del usuario**
+- **`REPORT_CONTACT_ADDRESS` y `REPORT_CONTACT_WEB`** no están en `/etc/aerocontrol.env` (se quitaron el 2026-10-16 para no imprimir marcadores): los informes salen con los textos de ejemplo hasta que se fijen los reales.
+- Revisar en producción con recarga forzada: portada, barra, panel (con y sin faena elegida) y la ficha de un informe impreso.
+- Decisiones de skills: `lecciones.md`, `rumbo-1.0.md`, `despliegue-p340.md` y `AGENTS.md` l.236 (ver PR de `LV-314`).
+- Ramas respaldadas en el remoto, a revisar: `codex/skill-aerocontrol`, `codex/t1-4-auditoria-visible`. Dependabot #93, #29 y #23 pedidos a recrear.
+- Siguen los del 2026-10-13: limpiar o no el historial de git, probar el asistente en el demo con la llave propia, PDF real de la DGAC.
+## 2026-10-13 — identidad visual, asistente con IA (prototipo), privacidad y estándar de trabajo (desplegados en `59e5ac6`)
 
 `p340` corre **`59e5ac6`**, desplegado el 2026-10-13 por tandas (`ac173f3` → `dd66b63` → `b4f2372` → `59e5ac6`; cada
 una con `git pull`, reinicio y `git log` = hash de `main`, leído de la salida pegada). Las dos de en medio llevaron
