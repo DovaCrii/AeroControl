@@ -3,19 +3,15 @@
 {% block title %}{{ object }} - AeroControl{% endblock %}
 {% block content %}
 <div class="card p-4">
-  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-    {% aircraft_art object as art %}<h1 class="h3 mb-0">{{ object }}{% if not object.is_active %} <span class="badge bg-secondary align-middle">{% translate "Archived" %}</span>{% endif %}</h1>
-    <div class="d-flex gap-2">
-      {% if list_url %}<a href="{{ list_url }}" class="btn btn-outline-secondary">← {% translate "Back to list" %}</a>{% endif %}
-      {% if can_change and object.is_active %}<a href="{{ update_url }}" class="btn btn-outline-primary">{% translate "Edit" %}</a>{% endif %}
-      {% if object.is_active and can_archive %}
-      <form method="post" action="{{ archive_url }}">{% csrf_token %}<button class="btn btn-outline-danger" type="submit">{% translate "Archive" %}</button></form>
-      {% elif not object.is_active and can_change %}
-      <form method="post" action="{{ restore_url }}">{% csrf_token %}<button class="btn btn-outline-success" type="submit">{% translate "Restore" %}</button></form>
-      {% endif %}
-    </div>
-  </div>
-
+  {% aircraft_art object as art %}
+  {% include "generic/_entity_head.html" with art=art.url art_alt=object.model chip_label=object.get_status_display chip_tone=object.status|status_tone %}
+  <nav class="entity-nav" aria-label="{% translate 'Sections' %}">
+    <a href="#section-insurance">{% translate "JAC insurance" %}</a>
+    <a href="#section-documents">{% translate "Documents" %}</a>
+    {% if open_maintenance is not None %}<a href="#section-maintenance">{% translate "Maintenance & status" %}</a>{% endif %}
+    {% if total_flight_hours is not None %}<a href="#section-hours">{% translate "Flight hours" %}</a>{% endif %}
+    {% if movements is not None %}<a href="#section-movements">{% translate "Movement history" %}</a>{% endif %}
+  </nav>
   {% comment %}LV-303: la aeronave a lo grande, con sus datos clave al lado. Una miniatura junto
   al título se leía como un adorno (y el dibujo genérico se veía mal a ese tamaño). La imagen es
   el dibujo de su serie, o una foto con derecho de uso si se dejó en `static/img/equipment/`.{% endcomment %}
@@ -36,7 +32,7 @@
 misma forma que el permiso -- que es la pantalla que el usuario ya lee todos los
 días en SIGO. Va **antes** de los documentos porque el certificado se adjunta
 ahí abajo: primero en qué estado está el trámite, después el papel.{% endcomment %}
-<div class="card mt-3 p-4">
+<div class="card mt-3 p-4 entity-section" id="section-insurance">
   <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
     <div>
       <h2 class="h5 mb-1">{% translate "JAC insurance" %}</h2>
@@ -61,10 +57,10 @@ ahí abajo: primero en qué estado está el trámite, después el papel.{% endco
   {% include "generic/_traceability.html" with steps=insurance_steps history=insurance_history history_title=insurance_history_title embedded=1 %}
 </div>
 
-{% include "compliance/_documents_section.html" %}
+<div id="section-documents" class="entity-section">{% include "compliance/_documents_section.html" %}</div>
 
 {% if open_maintenance is not None %}
-<div class="card mt-3 p-4">
+<div class="card mt-3 p-4 entity-section" id="section-maintenance">
   <div class="d-flex justify-content-between align-items-center mb-2">
     <h2 class="h5 mb-0">{% translate "Maintenance & status" %}</h2>
     {% if perms.maintenance.add_maintenancerecord and object.is_active %}
@@ -116,14 +112,14 @@ ahí abajo: primero en qué estado está el trámite, después el papel.{% endco
 {% endif %}
 
 {% if total_flight_hours is not None %}
-<div class="card mt-3 p-4">
+<div class="card mt-3 p-4 entity-section" id="section-hours">
   <h2 class="h5 mb-2">{% translate "Flight hours" %}</h2>
   <p class="mb-0">{% translate "Cumulative flight time recorded for this aircraft:" %} <strong>{{ total_flight_hours }}</strong></p>
 </div>
 {% endif %}
 
 {% if movements is not None %}
-<div class="card mt-3 p-4">
+<div class="card mt-3 p-4 entity-section" id="section-movements">
   <h2 class="h5 mb-3">{% translate "Movement history" %}</h2>
   {% if movements %}
   <table class="table table-sm">
