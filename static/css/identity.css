@@ -278,6 +278,7 @@
 
 .hero-sky .hero-grid { opacity: 0.55; }
 .hero-sky .hero-grid-line { fill: none; stroke: currentColor; stroke-width: 1; opacity: 0.1; }
+.hero-sky .hero-grid-line--major { opacity: 0.16; }
 .hero-sky .hero-ridge { fill: currentColor; }
 .hero-sky .hero-ridge--far { opacity: 0.06; }
 .hero-sky .hero-ridge--mid { opacity: 0.09; }
@@ -301,7 +302,6 @@
 }
 
 .hero-sky .route-dot { fill: var(--ac-primary); opacity: 0.45; }
-.hero-sky .hero-plane { fill: var(--ac-primary); opacity: 0.45; }
 
 .hero-greeting {
   font-size: 0.95rem;
@@ -403,8 +403,8 @@
   .showcase-brand {
     display: flex;
     align-items: center;
-    gap: 0.8rem;
-    font-size: 1.35rem;
+    gap: 1rem;
+    font-size: 1.8rem;
     font-weight: 800;
     letter-spacing: -0.01em;
   }
@@ -480,12 +480,7 @@
 
 .drone-fly { transform: translate(420px, 300px); }
 
-.drone-arm { fill: none; stroke: #cfd8ea; stroke-width: 5; stroke-linecap: round; }
-.drone-disc { fill: rgb(56 189 248 / 24%); stroke: #7dd3fc; stroke-width: 1.4; }
-.blades { fill: none; stroke: #e6f1ff; stroke-width: 2.2; stroke-linecap: round; }
-.drone-rotor .blades { transform-box: fill-box; transform-origin: center; }
-.drone-core { fill: #22d3c5; stroke: #0b1b2b; stroke-width: 2; }
-.drone-lens { fill: #0b1b2b; }
+/* LV-321: el dron de la portada es el plano técnico (`.bp-*`, ver sección F). */
 
 /* ── Toda la aplicación, por selectores compartidos ─────────────────────────
  * Se engancha a las clases que ya usan las ~150 plantillas (`.card`, `.page-header`,
@@ -862,6 +857,54 @@ tr.row-critical > td {
 /* == E: pulido global == */
 /* Contiene: ajustes transversales finales (foco, selección, impresión, detalles de tema). */
 
+/* == F: ilustración y movimiento == */
+/* Contiene: F1 plano técnico (cabecera del panel y portada) y F2 entradas (reservada); las animaciones van en el bloque de movimiento de abajo. */
+
+/* F1: plano técnico. Trazos con currentColor: el color lo da el contenedor (`.hero-sky`, `.showcase-route`). */
+.bp-line { fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; opacity: 0.4; }
+.bp-thin { fill: none; stroke: currentColor; stroke-width: 0.8; opacity: 0.3; }
+.bp-ring { stroke-dasharray: 2 3; }
+.bp-center { stroke-dasharray: 8 3 1 3; opacity: 0.22; }
+.bp-text { fill: currentColor; opacity: 0.4; font: 8px ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; letter-spacing: 0.04em; }
+.bp-blades { transform-box: fill-box; transform-origin: center; }
+.route-wp circle { fill: none; stroke: currentColor; stroke-width: 1.2; opacity: 0.45; }
+.hero-sky { -webkit-mask-image: linear-gradient(90deg, transparent, #000 28%); mask-image: linear-gradient(90deg, transparent, #000 28%); }
+.showcase-route { color: #9fd8f5; }
+.showcase-route .bp-line { opacity: 0.85; stroke-width: 2; }
+.showcase-route .bp-thin { opacity: 0.55; stroke-width: 1.1; }
+.showcase-route .bp-text { opacity: 0.7; font-size: 11px; }
+
+/* Portada: topografía y telemetría. Capas estáticas bajo el texto en <= 0,2 de opacidad para que el
+   titular y los tres puntos sigan en >= 4,5:1 (calculado en test_lv321_ambient); las lecturas de
+   telemetría y el rumbo van en las esquinas libres, fuera de las cajas de texto. */
+.topo { fill: none; stroke: currentColor; stroke-width: 0.8; opacity: 0.16; }
+.topo--index { stroke-width: 1.1; opacity: 0.2; }
+.topo-label { fill: currentColor; opacity: 0.2; font: 8px ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; }
+.hud-line { fill: none; stroke: currentColor; stroke-width: 1; opacity: 0.35; }
+.hud-dash { stroke-dasharray: 3 4; }
+.hud-fill { fill: currentColor; opacity: 0.35; }
+.hud-text { fill: currentColor; opacity: 0.4; font: 10px ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; letter-spacing: 0.06em; }
+.radar-wedge { fill: currentColor; opacity: 0.1; }
+.radar-sweep { transform-origin: 0 0; }
+.route-trail { fill: none; stroke: #7dd3fc; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; opacity: 0; }
+.wp-ring { fill: none; stroke: #22d3c5; stroke-width: 1.6; opacity: 0.25; transform-box: fill-box; transform-origin: center; }
+
+/* Con el panel de marca a la vista, el nombre ya lo lleva su wordmark: la tarjeta conserva isotipo y
+   subtítulo, y el `h1` queda sólo para lectores de pantalla. Bajo 992 px el panel no existe y la
+   tarjeta vuelve a mostrar el nombre. */
+@media (min-width: 992px) {
+  .login-title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+/* F2: reservada para las entradas de la ola F (las animaciones, en el bloque de movimiento). */
+
 /* ── Movimiento: sólo si la persona no pidió reducirlo ──────────────────── */
 @media (prefers-reduced-motion: no-preference) {
   @keyframes ac-float {
@@ -901,9 +944,39 @@ tr.row-critical > td {
     to { transform: rotate(360deg); }
   }
 
-  .drone-fly { animation: ac-fly 14s linear infinite; }
-  .drone-body { animation: ac-float 2.4s ease-in-out infinite alternate; }
-  .drone-rotor .blades { animation: ac-spin 0.45s linear infinite; }
+  /* F1: ambiente. Cabecera del panel: ninguna animación es infinita -- las hélices giran, frenan y
+     quedan quietas (vuelven a girar al pasar el cursor), la retícula entra con fundido y la ruta se
+     dibuja una vez. Lo CONTINUO (lento, ciclo >= 6 s) vive sólo en la portada y sólo bajo
+     `[data-ambient]`, que `ambient-motion.js` pausa fuera de pantalla o con la pestaña oculta. */
+  @keyframes ac-spin-a { to { transform: rotate(1080deg); } }
+  @keyframes ac-spin-b { to { transform: rotate(1080deg); } }
+  @keyframes ac-fade { from { opacity: 0; } to { opacity: 1; } }
+
+  /* Portada: la estela se dibuja detrás del dron (mismo ciclo que `ac-fly`) y cada waypoint se
+     «enciende» al pasar (opacity/transform; sin saltos ni parpadeo). */
+  @keyframes ac-trail {
+    0% { stroke-dashoffset: 1; opacity: 0.9; }
+    92% { stroke-dashoffset: 0; opacity: 0.9; }
+    100% { stroke-dashoffset: 0; opacity: 0; }
+  }
+
+  @keyframes ac-wp {
+    0% { opacity: 0.25; transform: scale(1); }
+    4% { opacity: 1; transform: scale(1.7); }
+    20%, 100% { opacity: 0.25; transform: scale(1); }
+  }
+
+  .hero-sky .bp-blades { animation: ac-spin-a 6s cubic-bezier(0.1, 0.6, 0.3, 1) 1 both; }
+  .page-header--hero:hover .bp-blades { animation: ac-spin-b 6s cubic-bezier(0.1, 0.6, 0.3, 1) 1 both; }
+  .hero-sky .hero-grid-fade { animation: ac-fade 1.2s ease-out both; }
+
+  [data-ambient] .drone-fly { animation: ac-fly 14s linear infinite; }
+  [data-ambient] .bp-float { animation: ac-float 6s ease-in-out infinite alternate; }
+  [data-ambient] .bp-blades { animation: ac-spin 6s linear infinite; }
+  [data-ambient] .radar-sweep { animation: ac-spin 14s linear infinite; }
+  [data-ambient] .route-trail { animation: ac-trail 14s linear infinite; }
+  [data-ambient] .wp-ring { animation: ac-wp 14s ease-out infinite; }
+  [data-ambient].is-paused * { animation-play-state: paused; }
 
   .kpi-grid .summary-card,
   .readiness-strip .summary-card { animation: ac-rise 0.45s ease-out both; }
@@ -929,6 +1002,8 @@ tr.row-critical > td {
       transition: opacity 150ms ease, visibility 150ms ease;
     }
   }
+
+  /* F2: entradas */
 }
 
 @media (prefers-reduced-motion: reduce) {
