@@ -216,3 +216,39 @@ def aircraft_art(aircraft):
         "photo": False,
         "series": key,
     }
+
+
+# LV-317: tono del chip de estado de una ficha (`.id-chip--*`). Una sola tabla para todas las
+# fichas, para que «Aprobado» no sea verde en una y azul en otra. Lo desconocido es neutro.
+_STATUS_TONES = {
+    "ok": {"active", "approved", "completed", "resolved", "filed", "done"},
+    "critical": {
+        "damaged",
+        "denied",
+        "rejected",
+        "lapsed",
+        "overdue",
+        "blocked",
+        "failed",
+    },
+    "warning": {
+        "maintenance",
+        "pending",
+        "requested",
+        "submitted",
+        "in_progress",
+        "scheduled",
+        "missing",
+        "open",
+    },
+}
+
+
+@register.filter
+def status_tone(value):
+    """Variante `.id-chip--<tono>` para un valor de estado (texto crudo, no el rótulo)."""
+    value = str(value or "")
+    for tone, values in _STATUS_TONES.items():
+        if value in values:
+            return tone
+    return "neutral"
