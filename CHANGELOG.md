@@ -10,6 +10,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Listas, tablas y filtros (LV-316, ola A del rediseño).** Barra de filtros compacta, encabezados en versalitas, hover de fila de 120 ms respetando `prefers-reduced-motion`, paginación y barra masiva coherentes, estados Activo/Archivado como `.id-chip`; esconder una columna ya no corre los anchos de las demás. Sin migración; lleva estáticos.
 - **Base de la identidad visual (LV-315, ola 0).** identity.css suma tokens --id-*, cinco secciones con marca para el rediseño por olas y el chip .id-chip; no cambia nada visible. Sin migración; lleva estáticos (collectstatic).
 - **Skills del repo más cortas (`LV-314`).** Se quitan duplicados de `AGENTS.md` en las skills (convenciones, mapa del plan, pasos de PR a mano) y `pendientes-github` entra en las tablas de skills. Sólo documentación; sin migración ni `collectstatic`.
 - **Django 6.1.2 (`LV-313`).** Corrige cuatro vulnerabilidades (DoS en el análisis de cabeceras HTTP y en `get_supported_language_variant()`, y permisos en formsets con clave editable; lo de GeoDjango no aplica) y varios errores. Sube `pyproject.toml` y `uv.lock` juntos; reemplaza el PR #92. Sin migración ni `collectstatic`.
