@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import OuterRef, Subquery
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -152,9 +153,37 @@ class GeoPlanListView(
         # LV-246: `flight_permission` también, porque la fila pregunta si su
         # permiso ya caducó (`permit_has_lapsed`) — sin el join serían 25 consultas
         # más por página, el mismo motivo que trajo `source_document`.
-        return queryset.select_related(
-            "cost_center", "current_version", "source_document", "flight_permission"
-        ).order_by("-created_at")
+        # LV-325: el folio de la copia viva que renovó este plan, anotado en la
+        # misma consulta (una subconsulta, ninguna por fila). «Viva» = la copia está
+        # activa y su permiso no está rechazado, caducado ni con la vigencia pasada:
+        # una renovación que ya murió no tapa el rojo del plan original.
+        live_copies = (
+            GeoPlan.objects.filter(
+                copied_from=OuterRef("pk"),
+                is_active=True,
+                flight_permission__is_active=True,
+            )
+            .exclude(
+                flight_permission__status__in=[
+                    FlightPermission.STATUS_DENIED,
+                    FlightPermission.STATUS_EXPIRED,
+                ]
+            )
+            .exclude(
+                flight_permission__status=FlightPermission.STATUS_APPROVED,
+                flight_permission__valid_until__lt=timezone.localdate(),
+            )
+            .order_by("-created_at")
+        )
+        return (
+            queryset.annotate(
+                renewed_by_folio=Subquery(live_copies.values("folio")[:1])
+            )
+            .select_related(
+                "cost_center", "current_version", "source_document", "flight_permission"
+            )
+            .order_by("-created_at")
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
