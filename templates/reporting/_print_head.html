@@ -1,0 +1,6 @@
+{% comment %}LV-319: encabezado de papel (sólo `@media print`, ver identity.css, sección D).
+Recibe `title` y `subtitle`; ambos ya vienen traducidos por la plantilla que lo incluye.{% endcomment %}
+<div class="id-print-head" aria-hidden="true">
+  <strong>AeroControl · {{ title }}</strong>
+  <span>{{ subtitle }}{% if subtitle_end %} – {{ subtitle_end }}{% endif %}</span>
+</div>
