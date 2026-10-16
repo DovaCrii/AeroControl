@@ -1303,7 +1303,7 @@ form.is-submitting-slow .btn-primary::after {
 
 /* F2: cabecera por módulo y fondos. El rótulo (icono + nombre del módulo de la barra) va sobre el
    título y el fondo es una máscara de trazo propia (`static/img/modules/*-bg.svg`) pintada con
-   `--ac-text-secondary` a <= 0,08 de opacidad: sigue el tema claro y oscuro sin redefinir ningún
+   `--ac-text-secondary` a 0,11 (claro) / 0,16 (oscuro) de opacidad: sigue el tema claro y oscuro sin redefinir ningún
    token del tema y el título (`--ac-text`) conserva >= 4,5:1 (calculado en test_lv324_module_header). */
 .module-tag {
   display: flex;
@@ -1319,10 +1319,15 @@ form.is-submitting-slow .btn-primary::after {
 
 .module-tag .nav-icon { width: 16px; height: 16px; flex: none; color: inherit; }
 
+/* Opacidad de reposo del dibujo por tema (la calcula test_lv324 contra el contraste del texto). */
+:root { --id-module-bg-opacity: 0.11; }
+[data-theme="dark"] { --id-module-bg-opacity: 0.18; }
+
 .page-header--module {
   position: relative;
   isolation: isolate;
-  padding-block: 0.5rem;
+  min-height: 92px;
+  padding-block: 0.75rem;
 }
 
 .page-header--module::before {
@@ -1332,13 +1337,15 @@ form.is-submitting-slow .btn-primary::after {
   z-index: -1;
   pointer-events: none;
   background: var(--ac-text-secondary);
-  opacity: 0.07;
+  opacity: var(--id-module-bg-opacity);
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
-  -webkit-mask-position: right center;
-  mask-position: right center;
-  -webkit-mask-size: auto 100%;
-  mask-size: auto 100%;
+  /* Desplazado a la izquierda de los botones de acción (~270 px) para que el dibujo se vea entre el
+     título y las acciones, no debajo de ellas; el formulario no tiene acciones y lo ancla al borde. */
+  -webkit-mask-position: right 270px center;
+  mask-position: right 270px center;
+  -webkit-mask-size: auto 130%;
+  mask-size: auto 130%;
 }
 
 .page-header--module[data-module="flight"]::before { -webkit-mask-image: url("../img/modules/flight-bg.svg"); mask-image: url("../img/modules/flight-bg.svg"); }
@@ -1347,6 +1354,11 @@ form.is-submitting-slow .btn-primary::after {
 .page-header--module[data-module="maintenance"]::before { -webkit-mask-image: url("../img/modules/maintenance-bg.svg"); mask-image: url("../img/modules/maintenance-bg.svg"); }
 .page-header--module[data-module="registry"]::before { -webkit-mask-image: url("../img/modules/registry-bg.svg"); mask-image: url("../img/modules/registry-bg.svg"); }
 .page-header--module[data-module="inventory"]::before { -webkit-mask-image: url("../img/modules/inventory-bg.svg"); mask-image: url("../img/modules/inventory-bg.svg"); }
+
+.form-shell .page-header--module::before {
+  -webkit-mask-position: right center;
+  mask-position: right center;
+}
 
 @media (max-width: 767.98px) {
   .page-header--module::before { display: none; }
