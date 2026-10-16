@@ -2,7 +2,10 @@
 {% load i18n %}
 {% block title %}{% translate "Compliance status report" %} - AeroControl{% endblock %}
 {% block content %}
-<div class="page-header">
+{% translate "Compliance status report" as print_title %}
+{% include "reporting/_print_head.html" with title=print_title subtitle=report.period.start|date:"Y-m-d" subtitle_end=report.period.end|date:"Y-m-d" %}
+{% include "reporting/_print_foot.html" %}
+<div class="page-header d-print-none">
   {% translate "Compliance" as page_eyebrow %}{% translate "Compliance status report" as page_title %}{% translate "Document validity, upcoming expiries and alert resolution times." as page_description %}
   {% include "generic/_page_header.html" %}
   <div class="d-flex gap-2 flex-wrap">
@@ -92,7 +95,7 @@ window closed) and renders "—": a 0% there would read as total failure.{% endc
         a bare "0/0" for a percentage that simply had nothing to measure.{% endcomment %}
         <td class="text-end">{% if kpi.unit == 'duration' %}{{ kpi.detail }}{% elif kpi.value is not None %}{{ kpi.value }}%<div class="small text-muted">{{ kpi.detail }}</div>{% else %}<span class="text-muted">—</span>{% endif %}</td>
         <td class="text-end">{% if kpi.target %}{{ kpi.target }}%{% else %}<span class="text-muted">—</span>{% endif %}</td>
-        <td class="text-end">{% if kpi.met is None %}<span class="text-muted">—</span>{% elif kpi.met %}<span class="badge bg-success">{% translate "Met" %}</span>{% else %}<span class="badge bg-danger">{% translate "Below target" %}</span>{% endif %}</td>
+        <td class="text-end">{% if kpi.met is None %}<span class="text-muted">—</span>{% elif kpi.met %}<span class="id-chip id-chip--ok">{% translate "Met" %}</span>{% else %}<span class="id-chip id-chip--critical">⚠ {% translate "Below target" %}</span>{% endif %}</td>
       </tr>{% endfor %}</tbody>
     </table>
   </div>
@@ -162,8 +165,8 @@ window closed) and renders "—": a 0% there would read as total failure.{% endc
           <td><strong>{{ row.code }}</strong> <span class="text-muted">{{ row.name }}</span></td>
           <td class="text-end">{{ row.total }}</td>
           <td class="text-end">{{ row.valid_pct }}%</td>
-          <td class="text-end">{% if row.expired %}<span class="badge bg-danger">{{ row.expired }}</span>{% else %}0{% endif %}</td>
-          <td class="text-end">{% if row.due_7 %}<span class="badge bg-warning text-dark">{{ row.due_7 }}</span>{% else %}0{% endif %}</td>
+          <td class="text-end">{% if row.expired %}<span class="id-chip id-chip--critical">{{ row.expired }}</span>{% else %}0{% endif %}</td>
+          <td class="text-end">{% if row.due_7 %}<span class="id-chip id-chip--warning">{{ row.due_7 }}</span>{% else %}0{% endif %}</td>
           <td class="text-end">{{ row.due_15 }}</td>
           <td class="text-end">{{ row.due_30 }}</td>
         </tr>

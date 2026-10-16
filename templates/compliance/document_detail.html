@@ -2,6 +2,9 @@
 {% load i18n %}
 {% block title %}{{ object.title }} - AeroControl{% endblock %}
 {% block content %}
+{% translate "Document" as print_title %}
+{% include "reporting/_print_head.html" with title=print_title subtitle=object.title %}
+{% include "reporting/_print_foot.html" %}
 <div class="card p-4">
   <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
     <h1 class="h3 mb-0">{{ object.title }}</h1>
@@ -15,7 +18,7 @@
     <dt class="col-sm-3">{% translate "Entity" %}</dt><dd class="col-sm-9">{{ object.content_object|default:object.object_id }}</dd>
     <dt class="col-sm-3">{% translate "Issue date" %}</dt><dd class="col-sm-9">{{ object.issue_date }}</dd>
     <dt class="col-sm-3">{% translate "Expiry date" %}</dt>
-    <dd class="col-sm-9">{{ object.expiry_date|default:'—' }}{% if object.is_expired %} <span class="badge sev-critical">⚠ {% translate "Expired" %}</span>{% endif %}</dd>
+    <dd class="col-sm-9">{{ object.expiry_date|default:'—' }}{% if object.is_expired %} <span class="badge sev-critical">⚠ {% translate "Expired" %}</span>{% elif object.expiry_date %} <span class="id-chip id-chip--ok">{% translate "Current" %}</span>{% endif %}</dd>
   </dl>
 </div>
 
