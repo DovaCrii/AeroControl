@@ -2,13 +2,14 @@ from datetime import timedelta
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
-from django.db.models import Count, Q
+from django.db.models import Count, F
 from django.db.models.functions import TruncMonth
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, ngettext
 
+from apps.compliance.digest import BUCKET_BADGE_CSS
 from apps.compliance.reports import alerts_for_cost_center
 from apps.compliance.models import Alert, AlertRule, Document, DocumentType
 
@@ -356,6 +357,18 @@ def dashboard(request):
 
     today = timezone.localdate()
     permit_status_rows = permit_status_by_cost_center(today)
+    # LV-310: la tabla y su cifra respetan la faena elegida, como el resto del
+    # panel. Antes `permit_status_by_cost_center` devolvía **todas** las faenas
+    # aunque hubiera una elegida, así que «Faenas sin permiso» decía 7 sobre un
+    # panel filtrado a una sola. Se recorta acá y no en el selector, que comparte
+    # el informe mensual (ver LV-246: el cálculo es uno, la presentación puede
+    # diferir).
+    if selected_cost_center:
+        permit_status_rows = [
+            row
+            for row in permit_status_rows
+            if row["cost_center"].pk == selected_cost_center.pk
+        ]
     cutoff = today + timedelta(days=30)
     # LV-191: `request.user`, o la lista nombra permisos, matrículas, personas y
     # documentos que los permisos del usuario no le dan. Lo tapaba por accidente
@@ -371,6 +384,10 @@ def dashboard(request):
     overdue_count = sum(1 for item in all_expirations if item["bucket"] == "overdue")
     expiring_count = len(all_expirations) - overdue_count
     expirations = all_expirations[:10]
+    # LV-310: el estado también se **lee**, no sólo se ve: cada fila lleva una
+    # insignia de texto con la misma paleta que la bandeja (`BUCKET_BADGE_CSS`).
+    for item in expirations:
+        item["badge_css"] = BUCKET_BADGE_CSS.get(item["bucket"], "")
 
     # LV-187: si se dibuja la tarjeta "Comienza tu operación" en vez del panel.
     #
@@ -436,16 +453,6 @@ def dashboard(request):
     # This is step 1 of the retirement: the board loses its last surface without
     # a single row being deleted.
 
-    # Charts label their slices with the human-readable choice, not the raw
-    # database value (the legend used to read "active"/"in_progress"), and the
-    # aggregations exclude archived rows like the rest of the app.
-    def labelled(rows, field, choices):
-        labels = dict(choices)
-        return [
-            {field: str(labels.get(row[field], row[field])), "count": row["count"]}
-            for row in rows
-        ]
-
     # LV-237: acá se agregaban "Aeronaves por estado" y "Permisos por estado".
     #
     # `LV-89` retiró los dos gráficos de la plantilla —restataban números que las
@@ -462,29 +469,44 @@ def dashboard(request):
     # De paso dejan de viajar al navegador dos distribuciones de estado que la página
     # no usa para nada.
 
-    # --- Chart: Maintenance by type ---
+    # LV-310: acá se agregaba "Mantenimiento por tipo" para un gráfico de rosca.
+    # Lo reemplaza «Próximas mantenciones» (abajo), que dice **cuáles** vienen y no
+    # cuántas hay de cada tipo; la agregación y su canvas se van juntos, porque
+    # `test_lv109` empareja gráfico y canvas y una consulta sin gráfico es el
+    # defecto que `LV-237` ya pagó una vez.
     maintenance_qs = MaintenanceRecord.objects.filter(is_active=True)
     if selected_cost_center:
         maintenance_qs = maintenance_qs.filter(
             aircraft__cost_center=selected_cost_center
         )
-    maint_by_type = labelled(
-        maintenance_qs.values("maintenance_type")
-        .annotate(count=Count("id"))
-        .order_by("maintenance_type"),
-        "maintenance_type",
-        MaintenanceRecord.TYPES,
-    )
 
     # --- LV-8e: maintenance that still needs planning ---
     # "To be defined" or missing a scheduled date, and not yet completed. The
     # alert engine only watches date *expiry*, so this absence is surfaced here
-    # (and in the compliance report) instead of as an Alert object.
-    incomplete_maintenance_count = (
-        maintenance_qs.filter(status__in=["pending", "in_progress"])
-        .filter(Q(maintenance_type="to_be_defined") | Q(scheduled_date__isnull=True))
-        .count()
-    )
+    # (and in the compliance report) instead of as an Alert object. The criterion
+    # lives in `MaintenanceRecord.needing_planning`, shared with the list that the
+    # panel's chip links to (LV-310).
+    incomplete_maintenance_count = MaintenanceRecord.needing_planning(
+        maintenance_qs
+    ).count()
+
+    # --- LV-310: the five nearest maintenance records not yet completed ---
+    # Sin fecha («por definir») primero: son las que alguien tiene que planificar,
+    # y una mantención sin fecha no es "lejana", es la más urgente de decidir.
+    # Nombra matrículas, así que exige el mismo permiso de lectura que la lista
+    # (`LV-191`: el panel no dice lo que los permisos del usuario no le dan).
+    can_view_maintenance = request.user.has_perm("maintenance.view_maintenancerecord")
+    upcoming_maintenance = []
+    if can_view_maintenance:
+        upcoming_maintenance = list(
+            maintenance_qs.exclude(status="completed")
+            .select_related("aircraft")
+            .order_by(
+                F("scheduled_date").asc(nulls_first=True),
+                "aircraft__registration",
+                "pk",
+            )[:5]
+        )
 
     # --- R9.6: solicitudes SIGO presentadas y sin respuesta ---
     # Trabajo detenido en manos de un tercero: se presentó y nadie contestó. No
@@ -528,10 +550,7 @@ def dashboard(request):
         .order_by("month")
     )
 
-    chart_data = {
-        "maintenance_by_type": maint_by_type,
-        "monthly_flights": monthly_flights,
-    }
+    chart_data = {"monthly_flights": monthly_flights}
 
     # `UX-15`: **qué está pasando hoy**, no sólo qué vence.
     #
@@ -564,7 +583,91 @@ def dashboard(request):
             permission__cost_center=selected_cost_center
         )
 
+    cost_centres_without_permit = sum(
+        1 for row in permit_status_rows if not row["in_force"]
+    )
+
+    # LV-310: «Requiere atención» — lo que alguien tiene que hacer hoy, en un solo
+    # lugar y antes de los indicadores. **Ninguna cifra es dato nuevo**: todas
+    # salen de lo que el panel ya calculó, y cada una enlaza a la lista donde se
+    # ve ese mismo número. Sólo aparece lo que es mayor que cero.
+    #
+    # Rojo (`critical`) únicamente para lo vencido y para la faena sin permiso
+    # —lo que `LV-246` definió como incumplimiento—; lo demás es ámbar: trabajo
+    # detenido o por hacer, no una falta. Van en ese orden.
+    attention = []
+    if overdue_count:
+        attention.append(
+            {
+                "key": "overdue",
+                "count": overdue_count,
+                "label": ngettext("lapsed expiry", "lapsed expiries", overdue_count),
+                "url": "#upcoming-expirations",
+                "severity": "critical",
+            }
+        )
+    if cost_centres_without_permit:
+        attention.append(
+            {
+                "key": "sites_without_permit",
+                "count": cost_centres_without_permit,
+                "label": ngettext(
+                    "site without a permit",
+                    "sites without a permit",
+                    cost_centres_without_permit,
+                ),
+                "url": "#panel-permit-status-title",
+                "severity": "critical",
+            }
+        )
+    if incomplete_maintenance_count:
+        attention.append(
+            {
+                "key": "maintenance_to_define",
+                "count": incomplete_maintenance_count,
+                "label": ngettext(
+                    "maintenance item to define",
+                    "maintenance items to define",
+                    incomplete_maintenance_count,
+                ),
+                "url": f"{reverse('maintenance-list')}?needs_planning=1",
+                "severity": "warning",
+            }
+        )
+    if awaiting_count:
+        attention.append(
+            {
+                "key": "awaiting_sigo",
+                "count": awaiting_count,
+                "label": ngettext(
+                    "request awaiting SIGO",
+                    "requests awaiting SIGO",
+                    awaiting_count,
+                ),
+                "url": f"{reverse('flight-request-list')}?status=filed",
+                "severity": "warning",
+                "longest_wait": longest_wait,
+            }
+        )
+    if monthly_records and monthly_records["pending"]:
+        attention.append(
+            {
+                "key": "monthly_close",
+                "count": monthly_records["pending"],
+                "label": ngettext(
+                    "monthly close pending",
+                    "monthly closes pending",
+                    monthly_records["pending"],
+                ),
+                "url": reverse("monthly-review"),
+                "severity": "warning",
+            }
+        )
+
     context = {
+        "attention": attention,
+        "upcoming_maintenance": upcoming_maintenance,
+        "can_view_maintenance": can_view_maintenance,
         "flights_today": flights_today.count(),
         # El acompañante que la fila pide en la misma frase ("N operaciones hoy ·
         # M permisos vigentes"), y sale de `permit_counts` — la misma función que
@@ -613,9 +716,7 @@ def dashboard(request):
         # filas ya recolectadas, así que no cuesta una consulta: es la lección de
         # `LV-236`, donde el denominador se calculaba aparte y podía separarse de
         # su propia tabla.
-        "cost_centres_without_permit": sum(
-            1 for row in permit_status_rows if not row["in_force"]
-        ),
+        "cost_centres_without_permit": cost_centres_without_permit,
         "chart_data": chart_data,
         "compliance_setup": compliance_setup,
         "compliance_incomplete": compliance_incomplete,
