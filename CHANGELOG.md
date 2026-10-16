@@ -79,6 +79,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Skill `pendientes-github` (`LV-311`).** Inventario de solo lectura de PR abiertos, ramas fusionadas y worktrees, y la receta para cerrarlos con Opus decidiendo, Sonnet implementando y Haiku revisando; `orquestar` queda alineada.
 - **Auditoría atómica con cada cambio, apagada por omisión (`T1.4`, paso 2).** Con
   `AUDIT_FAIL_CLOSED=True`, cada cambio se guarda y se audita en una sola transacción: si el
   registro de auditoría no se puede escribir, el cambio entero se deshace y la persona ve
