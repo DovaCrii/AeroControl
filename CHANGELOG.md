@@ -14,6 +14,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **`manage.py deploy_status` (`LV-322`).** Estado del despliegue de sólo lectura (hash, rama, migraciones pendientes, trabajos; `--json`). No imprime rutas ni secretos. `activar-sync-baterias.sh` ya no trae un usuario escrito. Sin migración ni `collectstatic`.
 - **Formularios, ola C del rediseño (LV-318).** Resumen de errores arriba, barra de acciones pegajosa con un solo botón primario, foco visible y estado de envío sin parpadeo en los formularios genéricos y sus modales. Sólo presentación; sin migración; lleva estáticos (collectstatic).
 - **Listas, tablas y filtros (LV-316, ola A del rediseño).** Barra de filtros compacta, encabezados en versalitas, hover de fila de 120 ms respetando `prefers-reduced-motion`, paginación y barra masiva coherentes, estados Activo/Archivado como `.id-chip`; esconder una columna ya no corre los anchos de las demás. Sin migración; lleva estáticos.
 - **Plano técnico y movimiento ambiental (LV-321, ola F).** La cabecera del panel dibuja un cuadricóptero y un ala fija acotados, y la portada hace volar el cuadricóptero técnico por la ruta; el movimiento continuo queda sólo en la portada y se pausa fuera de pantalla (`ambient-motion.js`). La portada suma topografía, rumbo, waypoints numerados, estela, radar y telemetría decorativa, y un wordmark mayor. Se quita el LED parpadeante de los dibujos por serie. Sin migración; lleva estáticos (collectstatic).

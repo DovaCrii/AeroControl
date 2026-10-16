@@ -19,17 +19,18 @@ set -euo pipefail
 ROOT=/opt/aerocontrol
 ENV_FILE=/etc/aerocontrol.env
 ACL_ENV=/opt/aerolink/.env
-UV=/home/levdigital01/.local/bin/uv
+SVC_USER="$(id -un)"   # quien corre esta sesion es quien corre la app
+UV="$(command -v uv)"
 TIMER=aerocontrol-sync-batteries
 
 paso() { printf '\n==> %s\n' "$1"; }
 
 # Los comandos de manage.py corren **como corren los timers**: systemd lee el
-# EnvironmentFile como root y baja a levdigital01. Un `sudo -u levdigital01 bash -c
+# EnvironmentFile como root y baja al usuario del servicio. Un `sudo -u <usuario> bash -c
 # '. /etc/aerocontrol.env'` fallaria: ese usuario no puede leer el archivo.
 manage() {
   sudo systemd-run --quiet --wait --pipe --collect \
-    --uid=levdigital01 \
+    --uid="${SVC_USER}" \
     -p WorkingDirectory="${ROOT}" \
     -p EnvironmentFile="${ENV_FILE}" \
     "${UV}" run python manage.py "$@"
@@ -82,7 +83,7 @@ After=network.target
 
 [Service]
 Type=oneshot
-User=levdigital01
+User=${SVC_USER}
 WorkingDirectory=${ROOT}
 EnvironmentFile=${ENV_FILE}
 ExecStart=${UV} run python manage.py sync_batteries
