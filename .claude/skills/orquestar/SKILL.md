@@ -9,11 +9,11 @@ description: Reparte una ronda de trabajo de AeroControl entre subagentes - Opus
 
 | Modelo | Rol | Ejemplos |
 |---|---|---|
-| **Opus** (sesión principal) | Entiende el pedido, decide, reparte, revisa, integra y publica el PR | Planificar, resolver dudas con la persona, revisar lo entregado |
-| **Sonnet** | Construye | Código y pruebas, documentos, revisión independiente de un bloque |
-| **Haiku** | Mecánico y de lectura | Buscar dónde está algo, inventarios, revisar enlaces, resumir salidas de pruebas o logs |
+| **Opus** (esfuerzo medio) | Diseña, decide y establece cómo se hace; reparte, revisa, integra y publica el PR | Planificar, propuestas de diseño, resolver dudas con la persona, revisar lo entregado |
+| **Sonnet** (esfuerzo medio) | Implementa lo que Opus dejó decidido | Código y pruebas, documentos, un PR por worktree |
+| **Haiku** (esfuerzo medio) | Lo que Opus estime conveniente para no gastar de más | Revisión mecánica del diff, inventarios (`pendientes-github`), buscar dónde está algo, resumir salidas de pruebas o logs |
 
-Al lanzar un subagente pasa siempre `model` explícito (`"sonnet"` o `"haiku"`); sin él podría heredar el modelo caro.
+Al lanzar un subagente pasa siempre `model` explícito (`"opus"`, `"sonnet"` o `"haiku"`) y, para diseño, `subagent_type: "Plan"` (solo lee y propone). Orden de la persona (2026-10-16): **Opus diseña y decide, Sonnet implementa, Haiku revisa**; el cierre de PR, ramas y worktrees sigue `pendientes-github`.
 
 ## Orden
 
@@ -32,3 +32,9 @@ Al lanzar un subagente pasa siempre `model` explícito (`"sonnet"` o `"haiku"`);
 - Prompts autosuficientes y cortos: contexto, archivos dueños, criterios de aceptación, cómo verificar, qué reportar.
 - Informes concisos (archivos, decisiones, pruebas); los detalles se leen del diff.
 - Si un agente arrancó con el modelo equivocado y lleva poco, detenlo y relánzalo; descarta lo hecho a medias.
+
+## Lecciones de la ronda del 2026-10-16 (rediseño de barra y panel)
+
+- Un agente que se corta deja el trabajo **sin commitear** en su worktree: antes de darlo por perdido, git status --short en su ruta y retomarlo con `SendMessage` (conserva su contexto).
+- El informe de un subagente dice qué **no** quedó hecho; hay que leerlo, y verificar en el navegador lo visual aunque el gate esté verde (el agente del panel no lo hizo).
+- Con la ventana del navegador oculta innerWidth da 0 y todo mide 0: `resize_window` antes de medir.
