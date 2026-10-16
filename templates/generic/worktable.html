@@ -42,7 +42,10 @@ sobreescriben.{% endcomment %}
   <div class="d-flex gap-2">{% block worktable_actions %}{% endblock %}</div>
 </div>
 {% block worktable_intro %}{% endblock %}
-{% block worktable_filters %}{% endblock %}
+{% comment %}LV-316: `.id-filters` envuelve a TODAS las barras de filtro (las de `list.html` y las que
+escriben a mano las listas hijas) para que una sola hoja de estilos las deje como
+una franja compacta.{% endcomment %}
+<div class="id-filters">{% block worktable_filters %}{% endblock %}</div>
 {% include "generic/_bulk_bar.html" %}
 {% include "generic/_worktable_toolbar.html" %}
 <div id="table-wrapper" class="card">
@@ -58,7 +61,7 @@ sobreescriben.{% endcomment %}
 
     El nombre de las columnas escondidas viaja en `data-hidden-columns` y no en
     una etiqueta `<script>`: la CSP del proyecto no admite JS embebido.{% endcomment %}
-    <table class="table table-hover mb-0 {% if worktable_prefs.hidden %}wt-pending {% endif %}{% block worktable_table_class %}{% endblock %}" data-hidden-columns="{{ worktable_prefs.hidden|join:"," }}">
+    <table class="table table-hover id-worktable mb-0 {% if worktable_prefs.hidden %}wt-pending {% endif %}{% block worktable_table_class %}{% endblock %}" data-hidden-columns="{{ worktable_prefs.hidden|join:"," }}">
       {% block worktable_colgroup %}{% endblock %}
       <thead>
         <tr>{% block worktable_header %}{% endblock %}</tr>

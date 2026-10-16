@@ -1,5 +1,5 @@
 {% load i18n %}
-<input class="form-control" name="q" value="{{ request.GET.q }}"
+<input class="form-control"{% if input_id %} id="{{ input_id }}"{% endif %} name="q" value="{{ request.GET.q }}"
        placeholder="{% if search_placeholder %}{{ search_placeholder }}{% else %}{% translate 'Search...' %}{% endif %}"
        hx-get="{{ search_url|default:request.path }}"
        hx-trigger="keyup changed delay:300ms, search"
