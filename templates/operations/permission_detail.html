@@ -5,7 +5,7 @@
 {% comment %}LV-302: el recorrido del permiso arriba, donde se mira primero (Solicitado,
 Aprobado, Completado…). Antes vivía al fondo, dentro de «Trazabilidad».{% endcomment %}
 <div class="card permit-journey" aria-label="{% translate 'Permit progress' %}">{% include "generic/_status_steps.html" with steps=permission.status_steps %}</div>
-<div class="card p-4"><div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h3">{{ permission }}</h1><div class="d-flex gap-2 align-items-end flex-wrap">
+<div class="card p-4"><div class="entity-bar"><div class="entity-title"><h1 class="h3 mb-0">{{ permission }}</h1><div class="entity-chips">{% if permission.has_lapsed %}<span class="id-chip id-chip--critical">⚠ {% translate "Lapsed" context "flight permission" %}</span>{% else %}<span class="id-chip id-chip--{{ permission.status|status_tone }}">{{ permission.get_status_display }}</span>{% endif %}</div></div><div class="d-flex gap-2 align-items-end flex-wrap">
   <a href="{% url 'permission-operations' permission.pk %}" class="btn btn-primary">{% translate "Operations register" %}</a>
   {% comment %}LV-320: renovar copia al borrador de un permiso **nuevo** la misma área
   y los mismos datos, sin fechas ni número (los da la DGAC). Sólo si el permiso fue
