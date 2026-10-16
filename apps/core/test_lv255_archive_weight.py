@@ -24,7 +24,12 @@ ARCHIVE_BUTTON = re.compile(
 
 def _archive_buttons():
     found = []
-    for path in TEMPLATES.rglob("*_detail.html"):
+    # LV-317: la cabecera común (`_entity_head.html`) dibuja el botón de las fichas genéricas.
+    sources = [
+        *TEMPLATES.rglob("*_detail.html"),
+        TEMPLATES / "generic" / "_entity_head.html",
+    ]
+    for path in sources:
         source = without_template_comments(path.read_text(encoding="utf-8"))
         for match in ARCHIVE_BUTTON.finditer(source):
             found.append((path.relative_to(TEMPLATES).as_posix(), match.group(1)))
