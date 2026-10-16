@@ -26,17 +26,20 @@ movido, y el `-q` ocultó «Everything up-to-date». Por eso:
 
 ## 1. Rama y verificación
 
-4. Desde `main` actualizado: `git checkout -b codex/<área>`. Si hay trabajo sin commit en otra rama,
+4. Desde `origin/main` actualizado: `git fetch && git checkout -b codex/<área> origin/main`. Si hay trabajo sin commit en otra rama,
    se rescata con `cherry-pick`, nunca con `reset` ni `--force`.
 5. `/verificar` en verde (`pwsh scripts/verify.ps1`, que incluye el *staging preflight* del CI).
 6. La fila y su commit van **juntos** (`/cerrar-tarea`): `MASTER_PLAN.md`, `CHANGELOG.md` y, si cambió
    algo operativo, `HANDOFF.md`. **No se abre un PR sólo para `HANDOFF.md`**: cada uno cuesta una
-   ejecución de CI de ~20 min (el repositorio tiene 2 000 min/mes y ya llegó a 1 802).
+   ejecución de CI de ~20 min.
 
 ## 2. Subir y abrir
 
-7. `git push -u origin <rama>` y **leer** la salida: debe nombrar la rama nueva.
-8. `gh pr create -R DovaCrii/AeroControl --base main --head <rama> --title … --body-file <archivo>`.
+Los scripts de `terminar-bloques` (`.claude/skills/terminar-bloques/scripts/`, con `pwsh -NoProfile -File`) hacen
+estos pasos y dejan la salida completa a la vista:
+
+7. `open_pr.ps1 -Title … -BodyFile …`: sube la rama (**leer** la salida: debe nombrar la rama nueva), la
+   comprueba en `origin` y abre el PR contra `main`.
    El cuerpo va en un archivo del *scratchpad* (el filtro de comandos rechaza ciertos caracteres en
    línea). Español, con estas secciones:
    - **Qué cambia** (una frase por cambio).
@@ -47,19 +50,17 @@ movido, y el `-q` ocultó «Everything up-to-date». Por eso:
 
 ## 3. Esperar y fusionar
 
-9. `gh pr checks <n> -R DovaCrii/AeroControl --watch` (en segundo plano: tarda ~20 min).
-10. Fusionar **sólo** con todas las comprobaciones en verde y `mergeStateStatus` = `CLEAN`:
-    `gh pr merge <n> -R DovaCrii/AeroControl --merge --delete-branch`.
-11. Si el CI falla o hay conflicto, **no se fusiona**: se lee el log (`gh run view <id> --log-failed`),
+8. `wait_ci.ps1 -Number N` (salida 0 verde, 1 falló, 2 sigue: volver a llamarlo; el CI tarda ~20 min).
+9. `merge_pr.ps1 -Number N`: fusiona **sólo** con todo en verde y `CLEAN`, y comprueba que el commit está en `origin/main`.
+10. Si el CI falla o hay conflicto, **no se fusiona**: se lee el log (`gh run view <id> --log-failed`),
     se arregla la causa con un commit nuevo (o `merge` de `main` en la rama) y se vuelve a esperar.
-    Un PR apilado se fusiona **después** de su base. Si el usuario dijo «no la fusiones», manda.
-
+    Si el usuario dijo «no la fusiones», manda.
 ## 4. Comprobar que llegó
 
-12. `git checkout main && git pull --ff-only`, y `git ls-remote origin refs/heads/main` debe dar el
+11. `git checkout main && git pull --ff-only`, y `git ls-remote origin refs/heads/main` debe dar el
     mismo hash que `git log --oneline -1`. **Ese hash es el que el usuario verá en `p340`.**
-13. Terminar con: qué se fusionó, el hash de `main`, y los pasos de `/desplegar-p340`. No se da nada
-    por entregado sin haber hecho el paso 12.
+12. Terminar con: qué se fusionó, el hash de `main`, y los pasos de `/desplegar-p340`. No se da nada
+    por entregado sin haber hecho el paso 11.
 
 ## Notas
 
