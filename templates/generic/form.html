@@ -3,8 +3,12 @@
 {% block title %}{{ title|default:'Form' }} - AeroControl{% endblock %}
 {% block content %}
 <div class="form-shell card p-4">
-  <div class="page-header">
+  {% firstof module nav_module as hero_module %}
+  <div class="page-header{% if hero_module %} page-header--module{% endif %}"{% if hero_module %} data-module="{{ hero_module }}"{% endif %}>
+    <div>
+    {% include "generic/_module_hero.html" with module=hero_module %}
     <h1 class="h3">{% if title %}{{ title }}{% elif view.object %}{{ view.object }}{% else %}{% translate "New record" %}{% endif %}</h1>
+    </div>
   </div>
 
   <form method="post" {% if form.is_multipart %}enctype="multipart/form-data"{% endif %}>

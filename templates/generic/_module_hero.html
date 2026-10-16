@@ -1,0 +1,12 @@
+{% load i18n static %}{% comment %}LV-324 · Rótulo del módulo (y, si se pasan, eyebrow, título y bajada) de una cabecera.
+
+Recibe `module` (flight, compliance, reports, maintenance, registry, inventory; los mismos valores del
+`data-nav-group` de `base.html`) y, opcionalmente, `page_eyebrow`, `page_title` y `page_description`.
+`generic/worktable.html` y `generic/form.html` sólo necesitan el rótulo (su título es un bloque que un
+`include` no puede recibir), así que `page_title` es opcional. El envoltorio —
+`class="page-header page-header--module" data-module="…"`— lo escribe la plantilla que incluye, porque
+los botones de acción viven dentro de él. Los nombres salen de la propia barra lateral (mismos msgid).{% endcomment %}
+{% if module %}<p class="module-tag mb-1"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-{% if module == 'flight' %}flight-request-list{% elif module == 'compliance' %}document-list{% elif module == 'reports' %}compliance-report{% elif module == 'maintenance' %}maintenance-list{% elif module == 'registry' %}aircraft-list{% else %}battery-list{% endif %}"/></svg><span>{% if module == 'flight' %}{% translate "Flight" %}{% elif module == 'compliance' %}{% translate "Compliance" %}{% elif module == 'reports' %}{% translate "Reports" %}{% elif module == 'maintenance' %}{% translate "Maintenance" %}{% elif module == 'registry' %}{% translate "Registry" context "sidebar group" %}{% else %}{% translate "Inventory and movements" %}{% endif %}</span></p>{% endif %}
+{% if page_eyebrow %}<p class="page-eyebrow mb-1">{{ page_eyebrow }}</p>{% endif %}
+{% if page_title %}<h1 class="page-title mb-0">{{ page_title }}</h1>{% endif %}
+{% if page_description %}<p class="page-description mb-0">{{ page_description }}</p>{% endif %}

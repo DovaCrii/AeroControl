@@ -74,6 +74,8 @@ TEMPLATES = [
                 # UX-31: los atajos del rol. Va acá y no en cada vista porque el
                 # menú vive en `base.html`, o sea en todas las pantallas.
                 "apps.core.context_processors.role_shortcuts",
+                # LV-324: el módulo de la barra al que pertenece la pantalla (cabecera y fondo).
+                "apps.core.context_processors.nav_module",
             ]
         },
     }

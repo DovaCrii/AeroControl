@@ -32,3 +32,78 @@ def role_shortcuts(request):
             for name in shortcuts_for(user)
         ]
     }
+
+
+# LV-324: la sección de la barra lateral a la que pertenece cada pantalla (mismos valores que el
+# `data-nav-group` de `base.html`). Se busca por nombre de URL y, si no está, quitando segmentos
+# desde el final (`aircraft-update` -> `aircraft`), así las altas, ediciones y fichas heredan el
+# módulo de su lista sin enumerarlas.
+NAV_MODULE_STEMS = {
+    "flight": (
+        "can-i-fly",
+        "permission",
+        "flight-request",
+        "geo-plan",
+        "record",
+        "calendar",
+        "ops-calendar",
+        "preflight",
+        "weather-review",
+        "notam-review",
+    ),
+    "compliance": (
+        "document",
+        "documenttype",
+        "work-tray",
+        "alert",
+        "alertrule",
+        "kanban",
+        "monthly-review",
+        "monthly-close",
+        "operational-records",
+        "nonconformity",
+        "company-documents",
+        "deliverable",
+        "task",
+        "board",
+        "label",
+        "stage",
+        "checklist",
+        "workboard",
+        "history",
+    ),
+    "reports": ("registry-roster", "compliance-report", "monthly-report"),
+    "maintenance": ("maintenance",),
+    "registry": (
+        "costcenter",
+        "aircraft",
+        "operator",
+        "qualification",
+        "qualificationtype",
+        "assessment",
+    ),
+    "inventory": (
+        "operatorassignment",
+        "aircraftassignment",
+        "battery",
+        "resourcemovementlog",
+    ),
+}
+_STEM_TO_MODULE = {
+    stem: module for module, stems in NAV_MODULE_STEMS.items() for stem in stems
+}
+
+
+def module_for_url_name(url_name):
+    parts = (url_name or "").split("-")
+    while parts:
+        module = _STEM_TO_MODULE.get("-".join(parts))
+        if module:
+            return module
+        parts.pop()
+    return ""
+
+
+def nav_module(request):
+    match = getattr(request, "resolver_match", None)
+    return {"nav_module": module_for_url_name(getattr(match, "url_name", ""))}
