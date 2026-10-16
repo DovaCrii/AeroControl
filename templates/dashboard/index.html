@@ -76,6 +76,30 @@ reales de esa faena. El porqué de cada término está en `views.py`.{% endcomme
   </ol>
 </section>
 {% else %}
+{% comment %}LV-310: **«Requiere atención»**, antes de los indicadores. Es lo que alguien
+tiene que hacer hoy, y estaba repartido en una rejilla de seis tarjetas de igual peso
+debajo de la tira de "¿puedo operar?". Cada chip lleva la cifra, qué es y a dónde ir;
+sólo aparecen los que son mayores que cero, y **todo lo que se lee acá sale de lo que
+el panel ya calculó** (ver `attention` en `views.py`). Rojo sólo para lo vencido y la
+faena sin permiso (`LV-246`); el resto es ámbar. El estado se dice con texto además de
+color, y con todo en cero queda una sola línea neutra: «sin nada crítico» es justo lo
+que se viene a leer.{% endcomment %}
+<section id="panel-attention" class="attention mb-3" aria-labelledby="panel-attention-title">
+  <h2 id="panel-attention-title" class="h6 section-title mb-2">{% translate "Needs attention" %}</h2>
+  {% if attention %}
+  <div class="attention-chips">
+    {% for item in attention %}
+    <a class="attention-chip sev-{{ item.severity }}" data-attention="{{ item.key }}" href="{{ item.url }}">
+      <strong class="attention-count">{{ item.count }}</strong>
+      <span class="attention-text">{{ item.label }}{% if item.longest_wait is not None and item.key == "awaiting_sigo" %}<small class="d-block">{% blocktranslate count days=item.longest_wait %}longest wait: {{ days }} day{% plural %}longest wait: {{ days }} days{% endblocktranslate %}</small>{% endif %}</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="attention-clear mb-0"><span aria-hidden="true">✓</span> {% translate "No critical pending items" %}</p>
+  {% endif %}
+</section>
+
 {% comment %}LV-89: "¿puedo operar hoy?", que es la pregunta con la que se abre
 esta pantalla. Cada indicador es una **fracción con su faltante nombrado**: un
 porcentaje solo te dice que algo anda mal sin decirte cuánto trabajo cuesta
@@ -136,99 +160,6 @@ contradecirse.{% endcomment %}
   </a>
   {% endfor %}
 </div>
-
-{% comment %}LV-148: **qué hay que hacer**, después de "¿podemos operar hoy?".
-
-Este bloque estaba **arriba de la tira de readiness** y mezclaba tres
-naturalezas presentándolas como iguales: inventario que casi no cambia
-("Aeronaves activas", "Operadores activos"), trabajo pendiente (vencimientos,
-alertas, mantención, SIGO) y cierre de período (registros mensuales). Y las dos
-que nunca cambian ocupaban las **dos primeras posiciones**, que son las más
-leídas.
-
-Las dos de inventario se van, y eso no pierde nada: eran el **denominador** de la
-tira de arriba dicho dos veces —"Aeronaves activas: 15" contra "Flota disponible
-15/16"— y sus enlaces (`aircraft-list`, `operator-list`) son los mismos que las
-tarjetas de flota y credenciales ya llevan. Misma redundancia que `LV-89`
-eliminó al sacar los dos gráficos de estado.
-
-Se conserva la regla de `LV-122`/`R9.6` de ocultar en cero, con **una excepción
-declarada**: Alertas se muestra siempre, porque representa la bandeja y un 0 ahí
-es información -- "no hay nada pendiente" es justo lo que se viene a leer.
-{% endcomment %}
-<div class="kpi-grid mb-3">
-  <a class="summary-card text-decoration-none" href="{% url 'alert-list' %}">
-    <small>{% translate "Pending Alerts" %}</small>
-    <strong>{{ alert_count }}</strong>
-  </a>
-  {% comment %}LV-129: **una** tarjeta de vencimientos, no dos. `LV-120` separó
-  lo vencido de lo por vencer con razón —sumarlos habría vuelto falsa la de "30
-  días"— pero eso dejó dos tarjetas contiguas que son las dos mitades de la
-  misma lista y que además sólo hacen scroll hasta ella. Juntas en una fila,
-  cada número conserva su nombre y se libera un espacio de la grilla.
-
-  El total grande es el trabajo pendiente de vigencias; el desglose de abajo
-  dice de qué está hecho. Lo vencido va primero porque es lo que hay que hacer
-  primero.{% endcomment %}
-  {% if overdue_count or expiring_count %}
-  <a class="summary-card{% if overdue_count %} summary-card-warning{% endif %} text-decoration-none" href="#upcoming-expirations">
-    <small>{% translate "Expiries" %}</small>
-    <strong>{{ overdue_count|add:expiring_count }}</strong>
-    <small class="text-muted">
-      {% if overdue_count %}{% blocktranslate count counter=overdue_count %}{{ counter }} lapsed{% plural %}{{ counter }} lapsed{% endblocktranslate %}{% endif %}
-      {% if overdue_count and expiring_count %}·{% endif %}
-      {% if expiring_count %}{% blocktranslate count counter=expiring_count %}{{ counter }} within 30 days{% plural %}{{ counter }} within 30 days{% endblocktranslate %}{% endif %}
-    </small>
-  </a>
-  {% endif %}
-  {% comment %}LV-246: **la faena que no tiene permiso vigente.** Pedido del usuario
-  mirando el panel desplegado: *"ubicar los centros de costo con incumplimiento, sin
-  permisos vigentes, que es crítico; según el avance del plan se le exige mínimo
-  tener el permiso de vuelo"*.
-
-  Es el indicador que el informe mensual **firma** como `cost_centres_without_permit`
-  —su numerador— y que hasta ahora sólo existía en el papel: la tabla de abajo tenía
-  las filas y el panel no decía cuántas eran. Enlaza al ancla de esa tabla, que es
-  donde se ve cuáles.{% endcomment %}
-  {% if cost_centres_without_permit %}
-  <a class="summary-card summary-card-warning text-decoration-none" href="#panel-permit-status-title">
-    <small>{% translate "Sites without a permit" %}</small>
-    <strong>{{ cost_centres_without_permit }}</strong>
-    <small class="text-muted">{% translate "flying requires one" %}</small>
-  </a>
-  {% endif %}
-  {% if incomplete_maintenance_count %}
-  <a class="summary-card summary-card-warning text-decoration-none" href="{% url 'maintenance-list' %}">
-    <small>{% translate "Maintenance to define" %}</small>
-    <strong>{{ incomplete_maintenance_count }}</strong>
-  </a>
-  {% endif %}
-  {% comment %}R9.6: trabajo detenido en manos de un tercero — presentado en
-  SIGO y sin respuesta. Aparece sólo cuando hay algo, como la de vencidos: una
-  tarjeta en cero todos los días enseña a no mirar la fila.{% endcomment %}
-  {% comment %}LV-237: el pie con la espera más larga. `longest_wait` se calculaba en
-  la vista desde R9.6, tenía sus pruebas y **ninguna plantilla lo dibujaba**: la
-  tarjeta decía "3" y había que bajar tres bloques para saber si eran de ayer o de
-  hace dos meses, que es la única parte que decide si hay que llamar a la DGAC. No
-  cuesta consulta —sale de la lista que la sección de abajo ya trae— y es el mismo
-  desglose que la tarjeta de vencimientos usa al lado.{% endcomment %}
-  {% if awaiting_count %}
-  <a class="summary-card text-decoration-none" href="{% url 'flight-request-list' %}?status=filed">
-    <small>{% translate "Awaiting SIGO" %}</small>
-    <strong>{{ awaiting_count }}</strong>
-    {% if longest_wait is not None %}<small class="text-muted">{% blocktranslate count days=longest_wait %}longest wait: {{ days }} day{% plural %}longest wait: {{ days }} days{% endblocktranslate %}</small>{% endif %}
-  </a>
-  {% endif %}
-  {% if monthly_records %}
-  <a class="summary-card{% if monthly_records.pending %} summary-card-warning{% endif %} text-decoration-none" href="{% url 'monthly-review' %}">
-    <small>{% translate "Monthly records" %} ({{ monthly_records.period }})</small>
-    <strong>{{ monthly_records.compliant }}/{{ monthly_records.total }}</strong>
-    <small class="text-muted">{% translate "cost centers up to date" %}</small>
-  </a>
-  {% endif %}
-</div>
-
-
 
 {% if compliance_incomplete and perms.compliance.add_documenttype %}
 {% comment %}LV-D4: the registry is loaded but compliance is idle (0 types /
@@ -294,12 +225,12 @@ when the three are done.{% endcomment %}
         existe para evitar. Las otras cuatro fuentes no lo llevan porque su etiqueta
         **es** el sujeto: la matrícula, el nombre de la persona.{% endcomment %}{% if item.subject %} <span class="text-body-secondary">· {{ item.subject }}</span>{% endif %}</span>
         {% comment %}LV-148: el color sale de `item.tone`, que viene de la misma
-        tabla que la insignia de la bandeja (`digest.BUCKET_TEXT_CSS`). Acá vivía
-        una cadena de cuatro `{% templatetag openblock %} if {% templatetag closeblock %}`
-        con su propia paleta, y por eso `due_30` era ámbar en esta pantalla y azul
-        en la otra: dos versiones de la misma escala.{% endcomment %}
-        <span class="text-end {{ item.tone }}">
-          <b>{{ item.date|date:"Y-m-d" }}</b>{% if item.bucket == "overdue" %} · {% translate "Overdue" %}{% elif item.bucket == "due_7" %} · {% translate "Due within 7 days" %}{% elif item.bucket == "due_15" %} · {% translate "Due within 15 days" %}{% elif item.bucket == "due_30" %} · {% translate "Due within 30 days" %}{% endif %}
+        tabla que la insignia de la bandeja (`digest.BUCKET_TEXT_CSS`): una sola escala
+        en toda la aplicación.{% endcomment %}
+        {% comment %}LV-310: el estado se **lee**, no sólo se ve: punto de color más una insignia de texto
+        (misma paleta que la bandeja, `BUCKET_BADGE_CSS`). El color solo no alcanza para quien no lo distingue.{% endcomment %}
+        <span class="text-end text-nowrap {{ item.tone }}">
+          <span aria-hidden="true">●</span> <b>{{ item.date|date:"Y-m-d" }}</b>{% if item.badge_css and item.bucket != "later" %} <span class="badge {{ item.badge_css }} ms-1">{% if item.bucket == "overdue" %}{% translate "Overdue" %}{% elif item.bucket == "due_7" %}{% translate "Due within 7 days" %}{% elif item.bucket == "due_15" %}{% translate "Due within 15 days" %}{% elif item.bucket == "due_30" %}{% translate "Due within 30 days" %}{% endif %}</span>{% endif %}
         </span>
       </a>
       {% empty %}
@@ -368,14 +299,16 @@ que **no** tienen ninguno, y un recorrido sobre permisos no las devolvería. Y s
 las que vuelan — `CC110` y `CC410` administran equipos, y listarlas acá las
 declararía incumplidas por una operación que no les toca (ver `operates_flights`
 en `CostCenter`).{% endcomment %}
+<div class="row g-3 mb-3">
 {% if permit_status_rows %}
-<section class="card p-3 mb-3" aria-labelledby="panel-permit-status-title">
+<div class="col-lg-6">
+<section class="card p-3 h-100" aria-labelledby="panel-permit-status-title">
   <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
     <h2 id="panel-permit-status-title" class="h6 mb-0">{% translate "Flight permits by cost center" %}</h2>
     <a class="small" href="{% url 'permission-list' %}">{% translate "Open the permits" %}</a>
   </div>
   <div class="table-responsive">
-    <table class="table table-sm table-hover mb-0">
+    <table class="table table-sm table-hover mb-0 small">
       <thead>
         <tr>
           {% comment %}LV-212: "vence pronto" tiene **su propia columna**. Iba
@@ -447,7 +380,31 @@ en `CostCenter`).{% endcomment %}
     </table>
   </div>
 </section>
+</div>
 {% endif %}
+{% comment %}LV-310: **«Próximas mantenciones»** reemplaza a «Mantenimiento por tipo» (una rosca que
+repetía cuántas hay de cada tipo). Esto dice **cuáles vienen**: las cinco más cercanas sin completar,
+con las que no tienen fecha («por definir») arriba, porque son las que alguien tiene que planificar.
+Nombra matrículas, así que sólo se dibuja con el permiso de lectura de mantenciones (`LV-191`).{% endcomment %}
+{% if can_view_maintenance %}
+<div class="col-lg-6">
+<section class="card p-3 h-100" id="upcoming-maintenance" aria-labelledby="upcoming-maintenance-title">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+    <h2 id="upcoming-maintenance-title" class="h6 mb-0">{% translate "Upcoming maintenance" %}</h2>
+    <a class="small" href="{% url 'maintenance-list' %}">{% translate "Open maintenance" %}</a>
+  </div>
+  {% for record in upcoming_maintenance %}
+  <a href="{{ record.get_absolute_url }}" class="d-flex justify-content-between align-items-center border-bottom py-2 text-decoration-none text-body">
+    <span><span class="cc-chip me-2">{{ record.aircraft.registration }}</span>{{ record.get_maintenance_type_display }}</span>
+    <span class="text-end text-nowrap">{% if record.scheduled_date %}<b>{{ record.scheduled_date|date:"Y-m-d" }}</b>{% else %}<span class="badge sev-warning">{% translate "To be defined" %}</span>{% endif %}</span>
+  </a>
+  {% empty %}
+  <p class="text-muted my-2">{% translate "No maintenance pending." %}</p>
+  {% endfor %}
+</section>
+</div>
+{% endif %}
+</div>
 
 {% comment %}LV-216: acá estaba la tarjeta del clima (R8.4, LV-147). El usuario la
 retiró, y lo pidió dos veces: *"no es necesario que muestre el clima, ya el
@@ -479,14 +436,6 @@ solo el gráfico.{% endcomment %}
   "Permisos por estado" (una sola barra). Ocupaban un tercio de la pantalla para
   repetir números que las tarjetas de arriba ya daban. Los reemplaza la tira de
   arriba, que responde la pregunta con la que se abre el panel.{% endcomment %}
-  {% if chart_data.maintenance_by_type %}
-  <div class="col-lg-4">
-    <div class="card p-2 chart-container">
-      <h4 class="h6 section-title mb-2">{% translate "Maintenance by Type" %}</h4>
-      <canvas id="chart-maint-type"></canvas>
-    </div>
-  </div>
-  {% endif %}
   {% comment %}LV-78/LV-89: acá vivía "Tareas por etapa", que dibujaba las
   etapas del tablero Kanban **dado de baja el 2026-08-12** -- un gráfico de un
   tablero al que ya nadie llega desde el menú, en la primera pantalla de la app.

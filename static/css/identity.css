@@ -657,6 +657,68 @@ tr.row-critical > td {
   background-color: color-mix(in srgb, var(--sev-critical-bg) 58%, var(--ac-surface));
 }
 
+/* ── «Requiere atención» del panel (LV-310) ───────────────────────────────
+   Chips grandes: cifra, texto y enlace. Los colores salen de los tokens de
+   severidad (`--sev-*`), así que siguen al tema claro/oscuro sin otra regla. El
+   rojo es sólo `critical` (vencido, faena sin permiso); el resto es ámbar. */
+.attention-chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.6rem;
+}
+
+.attention-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--sev-nominal-border);
+  border-left-width: 5px;
+  border-radius: 12px;
+  background: var(--sev-nominal-bg);
+  color: var(--sev-nominal-text);
+  text-decoration: none;
+}
+
+.attention-chip.sev-critical {
+  background: var(--sev-critical-bg);
+  border-color: var(--sev-critical-border);
+  color: var(--sev-critical-text);
+}
+
+.attention-chip.sev-warning {
+  background: var(--sev-warning-bg);
+  border-color: var(--sev-warning-border);
+  color: var(--sev-warning-text);
+}
+
+.attention-chip:hover,
+.attention-chip:focus-visible {
+  text-decoration: underline;
+  filter: brightness(0.97);
+}
+
+.attention-count {
+  font-family: var(--id-display);
+  font-size: 2.1rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.attention-text { font-weight: 600; line-height: 1.25; }
+.attention-text small { font-weight: 400; }
+
+.attention-clear {
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--sev-nominal-border);
+  border-radius: 12px;
+  background: var(--sev-nominal-bg);
+  color: var(--sev-nominal-text);
+}
+
+/* «Vuelos mensuales», más bajo que los gráficos de antes: ahora es el único. */
+.chart-container--low canvas { max-height: 150px; }
+
 /* ── Movimiento: sólo si la persona no pidió reducirlo ──────────────────── */
 @media (prefers-reduced-motion: no-preference) {
   @keyframes ac-float {

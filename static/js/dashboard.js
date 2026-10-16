@@ -44,19 +44,9 @@
   // `permissions_by_status` as evidence of the cost-centre filter. That test now
   // reads `readiness` instead -- a figure the page actually draws.
 
-  // ── Maintenance by Type (doughnut) ──
-  var maintData = chartData.maintenance_by_type;
-  build('chart-maint-type', maintData, {
-    type: 'doughnut',
-    data: {
-      labels: maintData.map(function (d) { return d.maintenance_type; }),
-      datasets: [{
-        data: maintData.map(function (d) { return d.count; }),
-        backgroundColor: palette.slice(0, maintData.length),
-      }]
-    },
-    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: textColor } } } }
-  });
+  // LV-310: "Maintenance by Type" (doughnut) is gone -- "Próximas mantenciones"
+  // replaces it with a list. Its canvas and its series left together, as LV-109
+  // requires: a chart is built only when both halves exist.
 
   // LV-78/LV-89: "Tasks per Stage" removed with the Kanban board's retirement.
   // The view no longer sends `tasks_by_stage`, so reading it here would throw on

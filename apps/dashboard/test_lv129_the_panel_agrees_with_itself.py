@@ -135,10 +135,15 @@ class TestOneExpiriesCardInsteadOfTwo:
         _aircraft(cost_center, "RPA-5534", TODAY - timedelta(days=12))
         _aircraft(cost_center, "RPA-4436", TODAY + timedelta(days=16))
 
-        content = _panel(_client()).content.decode()
-
-        # Una sola tarjeta con el total y el desglose debajo.
-        assert "1 vencido" in content and "1 en 30 días" in content
+        # LV-310: la tarjeta «Vencimientos» con su desglose se fue con la rejilla.
+        # Cada mitad conserva su nombre: lo vencido es un chip de «Requiere
+        # atención» (con su cifra) y lo por vencer queda en la lista de abajo.
+        # Se compara contra el contexto y el chip, no contra un texto tecleado.
+        response = _panel(_client())
+        content = response.content.decode()
+        attention = {item["key"]: item for item in response.context["attention"]}
+        assert attention["overdue"]["count"] == response.context["overdue_count"] == 1
+        assert response.context["expiring_count"] == 1
         # Y ya no está la que sólo decía "Already expired".
         assert "Vencidos</small>" not in content
 

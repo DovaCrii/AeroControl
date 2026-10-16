@@ -20,11 +20,12 @@ que nadie se entere**, que es la única forma en que llegó a donde estaba.
 from datetime import timedelta
 
 import pytest
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Permission, User
 from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.maintenance.models import MaintenanceRecord
 from apps.operations.models import FlightPermission
 from apps.registry.models import Aircraft, CostCenter, Operator
 
@@ -41,6 +42,13 @@ from apps.registry.models import Aircraft, CostCenter, Operator
 # queda dicho — que es exactamente la diferencia entre una consulta que se agrega
 # sabiendo y una que se agrega sin que nadie se entere, que es la razón del archivo.
 PANEL_QUERY_BUDGET = 49
+#
+# **LV-310 (2026-10-13): el número no se mueve, y no por casualidad.** Salió la
+# agregación «Mantenimiento por tipo» (-1) y entró la lista «Próximas mantenciones»
+# (+1, una sola consulta con `select_related`, sin costo por fila). Para que el techo
+# **mida** esa consulta nueva y no sólo la reste, el usuario del fixture tiene el
+# permiso de lectura de mantenciones y la operación trae registros: sin eso la sección
+# se salta por permiso y el 49 se cumpliría con 48 reales, o sea un techo holgado.
 # Elegir una faena cuesta exactamente **una** consulta más —el `SELECT` de esa faena—
 # y cambia los `WHERE` del resto sin agregar recorridos. Se mide aparte igualmente:
 # que hoy sea "una más" es justo lo que un techo propio mantiene verdadero. Antes de
@@ -51,6 +59,11 @@ PANEL_FILTERED_QUERY_BUDGET = 50
 @pytest.fixture
 def auth_client(db):
     user = User.objects.create_user("budget-user", password="pw")
+    user.user_permissions.add(
+        Permission.objects.get(
+            content_type__app_label="maintenance", codename="view_maintenancerecord"
+        )
+    )
     client = Client()
     assert client.login(username=user.username, password="pw")
     return client
@@ -90,6 +103,9 @@ def operation(db):
         )
         permit.operators.add(operator)
         permit.aircraft_fleet.add(aircraft)
+        MaintenanceRecord.objects.create(
+            aircraft=aircraft, maintenance_type="to_be_defined", status="pending"
+        )
     return centre
 
 
@@ -182,6 +198,9 @@ def test_the_budget_does_not_grow_with_the_operation(
         )
         permit.operators.add(operator)
         permit.aircraft_fleet.add(aircraft)
+        MaintenanceRecord.objects.create(
+            aircraft=aircraft, maintenance_type="to_be_defined", status="pending"
+        )
 
     _warm(auth_client)
 
