@@ -10,6 +10,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Panel: «Requiere atención» y «Próximas mantenciones» (`LV-310`).** Chips con cifra y enlace antes de los indicadores, en lugar de la rejilla de seis tarjetas; «Faenas sin permiso» respeta la faena elegida; la tabla de vencimientos lee el estado también por texto; «Próximas mantenciones» reemplaza al gráfico de mantenimiento por tipo.
 - **Barra lateral en acordeón y con burbuja en modo icono (`LV-309`).** Un solo grupo abierto a la vez (se recuerda cuál; el de la página activa gana), tres niveles visuales (título de grupo, enlace, zona de administración), ítem activo con `aria-current`, y en modo icono el texto de cada enlace aparece en una burbuja al apuntar o tabular. La animación de altura sólo corre sin `prefers-reduced-motion`.
 - **Asistente: tope por hora y mensajes de límite (`LV-308`).** Cada persona puede hacer `AI_ASSISTANT_MAX_PER_HOUR` preguntas por hora (30 por omisión) para no gastar los créditos de prueba de NVIDIA; un 429 o una llave rechazada tienen su propio mensaje en vez del genérico.
 - **Rediseño visible (`LV-307`).** Portada de inicio de sesión en dos paneles con una ruta de vuelo y un dron

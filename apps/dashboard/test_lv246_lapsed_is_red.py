@@ -96,7 +96,16 @@ class TestSitesWithoutAPermitComeFirst:
         response = client.get(reverse("dashboard"))
 
         assert response.context["cost_centres_without_permit"] == 2
-        assert "Faenas sin permiso" in response.content.decode()
+        # LV-310: la tarjeta pasó a ser un chip de «Requiere atención», en rojo
+        # porque la faena sin permiso es incumplimiento (este mismo archivo).
+        chip = next(
+            item
+            for item in response.context["attention"]
+            if item["key"] == "sites_without_permit"
+        )
+        assert chip["count"] == 2
+        assert chip["severity"] == "critical"
+        assert "faenas sin permiso" in response.content.decode()
 
     @pytest.mark.django_db
     def test_the_report_keeps_its_own_order(self, db):

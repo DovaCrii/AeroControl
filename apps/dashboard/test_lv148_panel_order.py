@@ -75,12 +75,22 @@ def _panel(**params):
 
 @pytest.mark.django_db
 class TestTheOrderOfTheSections:
-    def test_readiness_comes_before_the_work_row(self):
+    def test_attention_comes_before_readiness_and_expirations(self):
+        """**LV-310 reescribe el orden de esta fila.** Antes: indicadores, rejilla de
+        seis tarjetas de trabajo, vencimientos. Ahora la rejilla se fue y su lugar lo
+        toma «Requiere atención», que va **primero**: lo que alguien tiene que hacer
+        hoy se lee antes que «¿podemos operar?». La pregunta del test es la misma
+        —qué tramo responde qué— y la respuesta cambió a propósito."""
         _aircraft()
 
         content = _panel()
 
-        assert content.index("readiness-strip") < content.index("kpi-grid")
+        assert (
+            content.index('id="panel-attention"')
+            < content.index("readiness-strip")
+            < content.index('id="upcoming-expirations"')
+        )
+        assert "kpi-grid" not in content
 
     def test_lv216_the_weather_card_is_no_longer_on_the_panel(self):
         """**Estos dos tests se funden en uno con `LV-216`.** Afirmaban que la
@@ -99,8 +109,11 @@ class TestTheOrderOfTheSections:
 
         assert "panel-weather-title" not in content
         assert "upcoming-expirations" in content
-        assert "kpi-grid" in content
-        assert content.index("kpi-grid") < content.index("upcoming-expirations")
+        # LV-310: lo accionable es «Requiere atención», y va antes de los vencimientos.
+        assert 'id="panel-attention"' in content
+        assert content.index('id="panel-attention"') < content.index(
+            'id="upcoming-expirations"'
+        )
 
 
 @pytest.mark.django_db
@@ -129,14 +142,19 @@ class TestTheInventoryCardsAreGone:
         assert reverse("aircraft-list") in content
         assert reverse("operator-list") in content
 
-    def test_the_alert_card_shows_even_at_zero(self):
-        # Excepción declarada a la regla de ocultar en cero: la tarjeta
-        # representa la bandeja, y un 0 ahí es información.
-        _aircraft()
+    def test_the_alert_card_is_gone_but_the_tray_is_still_reachable(self):
+        # LV-310: la tarjeta «Alertas pendientes» salió con la rejilla (la bandeja
+        # tiene su contador en el menú y el enlace en la sección de vencimientos).
+        # Se afirma sobre la **región de contenido**, no la página entera: el menú
+        # lateral enlaza a la bandeja siempre y haría pasar el test aunque el
+        # panel no llevara a ella.
+        _aircraft(insurance_expiry=TODAY - timedelta(days=5))
 
         content = _panel()
+        body = content.split('id="panel-attention"')[-1]
 
-        assert reverse("alert-list") in content
+        assert "Alertas pendientes" not in body
+        assert reverse("alert-list") in body
 
 
 class TestOneScaleTwoRepresentations:

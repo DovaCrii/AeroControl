@@ -9699,3 +9699,44 @@ msgstr "Alertas antes de que algo venza"
 
 msgid "RPA operations in Chile"
 msgstr "Operaciones RPA en Chile"
+
+#: apps/dashboard/views.py templates/dashboard/index.html
+msgid "Needs attention"
+msgstr "Requiere atención"
+
+msgid "No critical pending items"
+msgstr "Sin pendientes críticos"
+
+msgid "lapsed expiry"
+msgid_plural "lapsed expiries"
+msgstr[0] "vencido"
+msgstr[1] "vencidos"
+
+msgid "site without a permit"
+msgid_plural "sites without a permit"
+msgstr[0] "faena sin permiso"
+msgstr[1] "faenas sin permiso"
+
+msgid "maintenance item to define"
+msgid_plural "maintenance items to define"
+msgstr[0] "mantención por definir"
+msgstr[1] "mantenciones por definir"
+
+msgid "request awaiting SIGO"
+msgid_plural "requests awaiting SIGO"
+msgstr[0] "solicitud esperando SIGO"
+msgstr[1] "solicitudes esperando SIGO"
+
+msgid "monthly close pending"
+msgid_plural "monthly closes pending"
+msgstr[0] "cierre mensual pendiente"
+msgstr[1] "cierres mensuales pendientes"
+
+msgid "Upcoming maintenance"
+msgstr "Próximas mantenciones"
+
+msgid "Open maintenance"
+msgstr "Abrir mantenciones"
+
+msgid "No maintenance pending."
+msgstr "No hay mantenciones pendientes."

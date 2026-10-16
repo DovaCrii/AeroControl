@@ -79,6 +79,20 @@ class MaintenanceRecord(StatusHistoryMixin, BaseModel):
     # rows created after this field existed.
     status_changed_at = models.DateTimeField(null=True, blank=True, editable=False)
 
+    @classmethod
+    def needing_planning(cls, queryset):
+        """LV-310: the rows that still need planning, as a queryset filter.
+
+        One definition for the panel's "Maintenance to define" count **and** the
+        list its chip links to (`?needs_planning=1`): two copies of the criterion
+        are how a number and the rows behind it stop agreeing. Same rule as
+        `is_incomplete`, expressed for the database.
+        """
+        return queryset.filter(status__in=["pending", "in_progress"]).filter(
+            models.Q(maintenance_type="to_be_defined")
+            | models.Q(scheduled_date__isnull=True)
+        )
+
     @property
     def is_incomplete(self):
         """LV-8e: needs planning -- flagged as 'to be defined' or missing a
