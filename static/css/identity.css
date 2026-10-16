@@ -150,51 +150,79 @@
   border-color: color-mix(in srgb, var(--ac-primary) 45%, var(--ac-border));
 }
 
-/* ── Cabecera del panel con ruta de vuelo ───────────────────────────────── */
+/* ── Cabecera del panel con fondo aeronáutico atenuado (LV-312) ──────────
+   El dibujo es decoración: cielo (degradado con el color primario), tres planos de
+   cordillera de 6 a 12 % de opacidad, retícula técnica y la ruta con un avión al final,
+   todo en `currentColor`/tokens para que siga al tema. Lo que manda es el título, las
+   alertas y los datos; por eso el dibujo vive a la derecha y baja de intensidad. */
 .page-header--hero {
   position: relative;
   overflow: hidden;
   padding: 1.15rem 1.35rem;
   border: 1px solid var(--ac-border);
   border-radius: 20px;
-  background:
-    radial-gradient(
-      680px 190px at 92% -35%,
-      color-mix(in srgb, var(--ac-primary) 20%, transparent),
-      transparent 70%
-    ),
-    var(--ac-surface);
+  background: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--ac-primary) 14%, var(--ac-surface)),
+    var(--ac-surface) 78%
+  );
   box-shadow: var(--id-lift);
 }
 
-.page-header--hero > *:not(.hero-route) {
+.page-header--hero > *:not(.hero-sky) {
   position: relative;
   z-index: 1;
 }
 
-.hero-route {
+.hero-sky {
   position: absolute;
   top: 0;
   right: 0;
-  width: min(46%, 440px);
+  width: min(62%, 760px);
   height: 100%;
-  opacity: 0.55;
+  color: var(--ac-text-secondary);
   pointer-events: none;
 }
 
-.hero-route .route-line {
+.hero-sky .hero-grid { opacity: 0.55; }
+.hero-sky .hero-grid-line { fill: none; stroke: currentColor; stroke-width: 1; opacity: 0.1; }
+.hero-sky .hero-ridge { fill: currentColor; }
+.hero-sky .hero-ridge--far { opacity: 0.06; }
+.hero-sky .hero-ridge--mid { opacity: 0.09; }
+.hero-sky .hero-ridge--near { opacity: 0.12; }
+
+.hero-sky .route-draw {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 8;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+
+.hero-sky .route-line {
   fill: none;
   stroke: var(--ac-primary);
   stroke-width: 2;
   stroke-linecap: round;
   stroke-dasharray: 6 7;
+  opacity: 0.45;
 }
 
-.hero-route .route-dot { fill: var(--ac-primary); }
-.hero-route .route-dot-end { fill: var(--ac-text-secondary); }
+.hero-sky .route-dot { fill: var(--ac-primary); opacity: 0.45; }
+.hero-sky .hero-plane { fill: var(--ac-primary); opacity: 0.45; }
+
+.hero-greeting {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ac-text);
+}
+
+/* Sobre el fondo con cordillera el gris secundario queda en 4,495:1 en claro (peor caso medido en
+   test_lv312_hero); la descripción de la cabecera usa el color de texto principal. */
+.page-header--hero .page-description { color: var(--ac-text); }
 
 @media (max-width: 767.98px) {
-  .hero-route { display: none; }
+  .hero-sky { display: none; }
 }
 
 /* ── Recorrido del permiso (cabecera de la ficha) ───────────────────────── */
@@ -694,7 +722,7 @@ tr.row-critical > td {
 
 .attention-chip:hover,
 .attention-chip:focus-visible {
-  text-decoration: underline;
+  text-decoration: none;
   filter: brightness(0.97);
 }
 
@@ -705,7 +733,11 @@ tr.row-critical > td {
   line-height: 1;
 }
 
+.attention-body { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
 .attention-text { font-weight: 600; line-height: 1.25; }
+.attention-action { font-size: 0.82rem; font-weight: 700; }
+.attention-chip:hover .attention-action,
+.attention-chip:focus-visible .attention-action { text-decoration: underline; }
 .attention-text small { font-weight: 400; }
 
 .attention-clear {
@@ -731,19 +763,10 @@ tr.row-critical > td {
     to { opacity: 1; transform: none; }
   }
 
-  @keyframes ac-dash {
-    to { stroke-dashoffset: -26; }
-  }
-
-  @keyframes ac-pulse {
-    0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ac-primary) 40%, transparent); }
-    70% { box-shadow: 0 0 0 9px transparent; }
-    100% { box-shadow: 0 0 0 0 transparent; }
-  }
-
-  .empty-art img,
-  .showcase-art img {
-    animation: ac-float 3.6s ease-in-out infinite alternate;
+  /* La ruta de la cabecera se dibuja UNA vez (nada permanente). */
+  @keyframes ac-draw {
+    from { stroke-dashoffset: 1; }
+    to { stroke-dashoffset: 0; }
   }
 
   /* El dron recorre la ruta (puntos calculados sobre la propia curva) y entra y sale con
@@ -780,11 +803,7 @@ tr.row-critical > td {
   .kpi-grid .summary-card:nth-child(4),
   .readiness-strip .summary-card:nth-child(4) { animation-delay: 0.18s; }
 
-  .hero-route .route-line { animation: ac-dash 1.8s linear infinite; }
-
-  .status-step.is-current .status-step-badge {
-    animation: ac-pulse 2.4s ease-out infinite;
-  }
+  .hero-sky .route-draw { animation: ac-draw 1.2s ease-out forwards; }
 
   /* Movimiento: sólo si la persona no pidió reducirlo. Con `reduce` el grupo se abre de golpe y la
    * burbuja aparece sin fundido. */
