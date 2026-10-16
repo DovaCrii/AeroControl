@@ -243,7 +243,52 @@
     setHidden(box, false);
   }
 
+  // LV-318 (ola C): al volver con errores, el foco va al resumen para que se
+  // lea y no parezca que «Guardar» volvió al inicio sin hacer nada.
+  function focusErrorSummary() {
+    var summary = document.getElementById('form-error-summary');
+    if (!summary || summary.closest('.modal')) return;
+    try {
+      summary.focus({ preventScroll: false });
+    } catch (error) {
+      /* sin foco programático: el resumen sigue visible arriba */
+    }
+  }
+
+  // LV-318: estado de envío sin parpadeo. Sólo marca el botón (el CSS espera
+  // 300 ms antes de mostrar el giro) y se desmarca al volver con bfcache.
+  function setUpSubmitState() {
+    document.querySelectorAll('form.form-shell, .form-shell form').forEach(function (form) {
+      form.addEventListener('submit', function () {
+        // Diferido: deshabilitar durante el evento descartaría el `name` del botón.
+        window.setTimeout(function () {
+          form.classList.add('is-submitting');
+          form.setAttribute('aria-busy', 'true');
+          window.setTimeout(function () {
+            form.classList.add('is-submitting-slow');
+          }, 300);
+          form.querySelectorAll('button[type="submit"]').forEach(function (b) {
+            b.disabled = true;
+          });
+        }, 0);
+      });
+    });
+  }
+
+  window.addEventListener('pageshow', function (event) {
+    if (!event.persisted) return;
+    document.querySelectorAll('form.is-submitting').forEach(function (form) {
+      form.classList.remove('is-submitting', 'is-submitting-slow');
+      form.removeAttribute('aria-busy');
+      form.querySelectorAll('button[type="submit"]').forEach(function (b) {
+        b.disabled = false;
+      });
+    });
+  });
+
   function init() {
+    focusErrorSummary();
+    setUpSubmitState();
     document.querySelectorAll('[data-form-draft]').forEach(setUp);
     document.querySelectorAll('[data-draft-index]').forEach(setUpIndex);
   }
