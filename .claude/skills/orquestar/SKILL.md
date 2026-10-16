@@ -21,7 +21,7 @@ Al lanzar un subagente pasa siempre `model` explícito (`"opus"`, `"sonnet"` o `
 2. **Explorar (Haiku, opcional).** Ubicar archivos y dueños antes de repartir.
 3. **Repartir (Sonnet, en paralelo).** Un agente por parte, con **dueños de archivos sin cruce**: el prompt dice qué edita y
    qué no toca. Si trabajan en el mismo repo, cada uno en su propio `git worktree`. Sin `git push` ni PR en los subagentes.
-4. **Integrar (Opus).** Leer el informe, mirar el diff, correr `uv run pytest` y `uv run ruff check .`.
+4. **Integrar (Opus).** Leer el informe, mirar el diff y correr `/verificar`.
 5. **Verificar (Haiku).** Enlaces, inventarios y revisión mecánica al final.
 6. **Publicar (Opus).** Rama `codex/<tema>`, PR, CI en verde. **Opus fusiona** con el CI verde y sin conflictos
    (decisión del usuario, 2026-10-05, en `AGENTS.md`); la persona **sólo despliega** en `p340`. Nunca `push --force`.
@@ -35,6 +35,6 @@ Al lanzar un subagente pasa siempre `model` explícito (`"opus"`, `"sonnet"` o `
 
 ## Lecciones de la ronda del 2026-10-16 (rediseño de barra y panel)
 
-- Un agente que se corta deja el trabajo **sin commitear** en su worktree: antes de darlo por perdido, git status --short en su ruta y retomarlo con `SendMessage` (conserva su contexto).
-- El informe de un subagente dice qué **no** quedó hecho; hay que leerlo, y verificar en el navegador lo visual aunque el gate esté verde (el agente del panel no lo hizo).
+Lo del agente cortado y del informe de subagentes está en `pendientes-github` (Trampas conocidas).
+
 - Con la ventana del navegador oculta innerWidth da 0 y todo mide 0: `resize_window` antes de medir.

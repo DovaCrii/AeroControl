@@ -41,44 +41,34 @@ Los scripts viven en `.claude/skills/terminar-bloques/scripts/` (se llaman con `
 
 ## 2. Por cada bloque (un PR por intención)
 
-6. Rama nueva **desde `origin/main` actualizado**: `git checkout -b codex/<área> origin/main`.
-7. **La prueba primero**, y se ve fallar. Si un test sale verde de entrada sobre un defecto que acabas
-   de arreglar, se rompe el arreglo una vez y se comprueba que el test cae (lección del 2026-09-01).
-8. Implementar. Traducciones **a mano** en el `.po` (español neutro, sin voseo) y
-   `uv run python scripts/compile_translations.py` para el `.mo`.
-9. `/cerrar-tarea`: fila en `MASTER_PLAN.md`, entrada en `CHANGELOG.md` y, en `HANDOFF.md`, la línea del
-   **«Seguimiento — fusionado sin desplegar»** con **qué lleva migración, qué lleva estáticos y
-   cualquier advertencia** (se anota **al fusionar**, no al desplegar). Nunca un PR sólo por `HANDOFF.md`.
-10. `pwsh scripts/verify.ps1` completo: sólo se dice «en verde» con la salida a la vista en esta sesión.
-11. `git add` **por nombre** (no `-A` de todo), `git commit -F <archivo>` y el cuerpo del PR en un archivo
-    del *scratchpad*: Qué cambia · Cómo se midió · Riesgos y lo que no se comprobó · Paso de despliegue.
-12. `open_pr.ps1`, luego `wait_ci.ps1` (repetirlo si sale 2) y `merge_pr.ps1`.
+6. Rama nueva **desde `origin/main` actualizado**, la prueba primero (y se ve fallar), implementar, y entonces
+   `/cerrar-tarea` y `/abrir-pr` (rama, gate, PR, CI, fusión y comprobación; los scripts de arriba hacen
+   `open_pr`/`wait_ci`/`merge_pr`). En `/cerrar-tarea` la línea del **«Seguimiento — fusionado sin
+   desplegar»** de `HANDOFF.md` dice **qué lleva migración, qué lleva estáticos y cualquier advertencia**
+   (se anota **al fusionar**, no al desplegar).
+7. `git add` **por nombre** (no `-A`) y `git commit -F <archivo>`.
+8. Lo propio de encadenar bloques:
     - **No se espera ocioso:** mientras corre el CI se empieza el bloque siguiente **en otra rama desde
       `origin/main`** (no desde la rama del PR en espera).
     - Conflicto casi seguro en `CHANGELOG.md` y `MASTER_PLAN.md` al fusionar el segundo PR en vuelo:
       `git fetch && git merge origin/main`, **conservar las dos entradas** (nunca descartar la de otro),
-      correr las pruebas que tocan esos archivos y empujar. Si el merge cambia el hash, el CI corre de
-      nuevo: es el costo de tener dos PR en vuelo.
-    - Si el CI falla: leer el log, arreglar la causa con un commit nuevo y volver a esperar. Nunca
-      `--force`, nunca `--no-verify`, nunca empujar a `main`.
-13. **Comprobar que llegó:** `merge_pr.ps1` ya verifica que el commit está en `origin/main`; además
-    `git ls-remote origin refs/heads/main` da el hash que verá la VM.
-
+      línea en blanco entre entradas del `.po` y `.mo` regenerado con polib; correr las pruebas que tocan
+      esos archivos y empujar. Si el merge cambia el hash, el CI corre de nuevo: es el costo de tener dos PR en vuelo.
 ## 3. Al terminar: lo que falta subir y los comandos justos
 
-14. Pedir al usuario **un solo dato**: el hash que corre la VM (`git log --oneline -1` allá), o tomar el
+9. Pedir al usuario **un solo dato**: el hash que corre la VM (`git log --oneline -1` allá), o tomar el
     argumento / la primera entrada de `HANDOFF.md`. Si no se sabe, **se pregunta**: desplegar desde un
     hash equivocado repite el salto de tanda que tiró producción (2026-08-31).
-15. `pwsh -NoProfile -File .claude/skills/terminar-bloques/scripts/deploy_plan.ps1 -From <hash>`.
+10. `pwsh -NoProfile -File .claude/skills/terminar-bloques/scripts/deploy_plan.ps1 -From <hash>`.
     Imprime los commits que faltan, qué llevan (migraciones, estáticos, dependencias) y los bloques
     **A** estado · **B** entorno (+ respaldo si hay migraciones) · **C** `pull` (+ `uv sync`/`migrate`) ·
     **D** (`collectstatic` si hay estáticos) + reinicio. **Sólo los que hacen falta**: sin migraciones no
     hay respaldo ni `migrate`; sin estáticos no hay `collectstatic`.
-16. **Se dictan de a uno** (un bloque por mensaje, esperando la salida pegada o leída de la Terminal):
+11. **Se dictan de a uno** (un bloque por mensaje, esperando la salida pegada o leída de la Terminal):
     el resto de las reglas de `/desplegar-p340` §2–§3 valen tal cual (el `sudo` pide la contraseña **del
     usuario**; nunca se repite una contraseña que aparezca en una salida; sólo cuenta como llegado el
     hash final de `origin/main`).
-17. Con el despliegue confirmado: la primera entrada de `HANDOFF.md` pasa a «desplegados (`<hash>`)» y el
+12. Con el despliegue confirmado: la primera entrada de `HANDOFF.md` pasa a «desplegados (`<hash>`)» y el
     seguimiento queda en «nada fusionado sin desplegar». Eso viaja en el **siguiente** PR, no en uno propio.
 
 ## 4. El informe final (siempre estas tres partes, cortas)
@@ -91,8 +81,5 @@ Los scripts viven en `.claude/skills/terminar-bloques/scripts/` (se llaman con `
 
 ## No hacer
 
-- Pedir al usuario que despliegue entre bloques (salvo producción rota o hallazgo de seguridad).
-- Marcar ✅ lo que no se comprobó; va 🔶 con lo que falta y quién lo cierra.
-- `git push -q`, recortar la salida de un `push`, `--force`, `--no-verify`, empujar a `main`.
-- Tomar una decisión de negocio por el usuario para poder cerrar una fila.
-- Dar por desplegado algo sin ver el hash final en la salida de la VM.
+- Pedir desplegar entre bloques (salvo producción rota o hallazgo de seguridad), marcar ✅ lo que no se comprobó, o decidir por el usuario un tema de negocio.
+- `push -q`, `--force`, `--no-verify`, empujar a `main`; dar por desplegado algo sin ver el hash final en la salida de la VM.

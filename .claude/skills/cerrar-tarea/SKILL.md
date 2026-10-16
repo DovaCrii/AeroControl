@@ -25,10 +25,8 @@ rehacer (`LV-186`), y una marcada sin cumplirse es el tablero mintiendo.
    a la más antigua), con cifras medidas **y fecha**, lo que **no** se cambió a propósito, y el **paso
    de despliegue**. Un retiro «de pantalla y no de base» lleva escrita su condición de cierre.
 6. **`CHANGELOG.md`:** una entrada en `[Unreleased]`, en lenguaje de quien usa la aplicación.
-7. **`HANDOFF.md`**, sólo si cambió algo operativo (qué falta desplegar, qué decide el usuario). Debe
-   seguir siendo corto: lo viejo va a `docs/dev/handoff-archive.md`.
-8. Traducciones nuevas **a mano** en el `.po`, español neutro sin voseo, y `.mo` recompilado con
-   `scripts/compile_translations.py`.
-9. Un commit por intención, mensaje en español, imperativo y con ámbito (`fix(ui): …`), por archivo
+7. **`HANDOFF.md`:** siempre la línea del Seguimiento (fusionado sin desplegar, con migración/estáticos); lo operativo, además (qué decide el usuario).
+   Debe seguir siendo corto: lo viejo va a `docs/dev/handoff-archive.md`.
+8. Un commit por intención, mensaje en español, imperativo y con ámbito (`fix(ui): …`), por archivo
    con `git commit -F`. La entrega la hace `/abrir-pr`.
-10. Terminar diciendo: qué se cerró, con qué medida y qué queda abierto.
+9. Terminar diciendo: qué se cerró, con qué medida y qué queda abierto.

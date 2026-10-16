@@ -20,8 +20,8 @@ a pelo ni se pega entero al contexto.
 
 ## Lo que el gate cubre y lo que no
 
-- Cubre: `check` y `check --deploy`, migraciones al día, `pytest -n auto --cov` (umbral en
-  `pyproject.toml`), `ruff`, `bandit`, `pip-audit` y el **mismo último paso que el CI**
+- Cubre: `compile translations`, `check` y `check --deploy`, migraciones al día, `pytest -n auto --cov` (umbral en
+  `pyproject.toml`), `ruff`, `bandit`, `pip-audit`, `privacy scan` y el **mismo último paso que el CI**
   (`migrate` + `scale_readiness` + `backup` + `verify_backup`, sobre una base **temporal**).
 - **No cubre** el navegador ni producción. Una pantalla se mira en el demo
   (`scripts/run-demo.ps1`); una función que notifica se comprueba en `p340` (`--dry-run`,
@@ -32,8 +32,6 @@ a pelo ni se pega entero al contexto.
 
 ## Trampas
 
-- Un fallo que sólo aparece en paralelo: correr ese archivo solo y sin `-n`; si ahí pasa, la causa es
-  estado compartido (disco fuera de `tmp_path`, caché de `ContentType`).
-- Si un test falla y el diff no toca lo que afirma, **mirar la fecha antes que el diff**.
+- Fallos que sólo aparecen en paralelo o que dependen de la fecha: ver `AGENTS.md` § Calidad obligatoria y § Lecciones operativas.
 - El filtro de comandos de la herramienta rechaza algunas expresiones regulares en línea: ponerlas en
   un script del *scratchpad*.
