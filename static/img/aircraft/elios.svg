@@ -10,13 +10,11 @@
 </defs>
 <style>
 .rotor{transform-box:fill-box;transform-origin:center;animation:blur .07s linear infinite alternate}
-.led{animation:blink 1s steps(2,end) infinite}
 .cage{transform-box:fill-box;transform-origin:center;animation:turn 16s linear infinite}
 .bob{animation:bob 3s ease-in-out infinite alternate}
 .beam{animation:pulse 2.2s ease-in-out infinite alternate}
 .shadow{animation:shade 3s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center}
 @keyframes blur{from{transform:scaleX(.78)}to{transform:scaleX(1)}}
-@keyframes blink{50%{opacity:.15}}
 @keyframes turn{to{transform:rotate(360deg)}}
 @keyframes bob{from{transform:translateY(-3px)}to{transform:translateY(4px)}}
 @keyframes pulse{from{opacity:.5}to{opacity:1}}

@@ -39,6 +39,7 @@ SECTIONS = [
     "/* == C: formularios == */",
     "/* == D: informes, documentos y SIGO == */",
     "/* == E: pulido global == */",
+    "/* == F: ilustración y movimiento == */",
 ]
 
 VARIANTS = ["critical", "warning", "ok", "info", "neutral"]
@@ -131,7 +132,7 @@ class TestTokens:
 
 
 class TestSections:
-    def test_the_five_marks_exist_once_and_in_order(self):
+    def test_the_six_marks_exist_once_and_in_order(self):
         positions = [IDENTITY.index(mark) for mark in SECTIONS]
         assert positions == sorted(positions)
         for mark in SECTIONS:
