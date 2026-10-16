@@ -4151,6 +4151,11 @@ msgctxt "sidebar group"
 msgid "Registry"
 msgstr "Padrón"
 
+#: .\templates\base.html
+msgctxt "sidebar zone"
+msgid "Administration"
+msgstr "Administración"
+
 #: .\templates\base.html:251
 msgid "Cost Centers"
 msgstr "Centros de costo"

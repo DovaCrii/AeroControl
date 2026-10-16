@@ -427,17 +427,32 @@
   box-shadow: 1px 0 0 var(--ac-border), 14px 0 30px -26px rgb(0 0 0 / 60%);
 }
 
+/* LV-309: tres niveles. Título de grupo (pequeño, tenue, en mayúsculas) > enlace (legible, peso
+ * medio) > zona de administración (más tenue aún). El color de cada sección sigue siendo el del
+ * icono (`LV-207`); aquí sólo se ordena la jerarquía. */
 .sidebar a {
   border-radius: 12px;
-  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  transition: background 150ms ease, color 150ms ease;
 }
 
-.sidebar a:hover { transform: translateX(2px); }
+.sidebar a.nav-item {
+  font-size: 0.92rem;
+  font-weight: 500;
+}
 
-.sidebar .nav-icon { transition: transform 0.15s ease, filter 0.15s ease; }
-.sidebar a:hover .nav-icon { transform: scale(1.1); }
+.sidebar a.nav-item:hover {
+  background: color-mix(in srgb, var(--ac-primary) 8%, transparent);
+  color: inherit;
+}
 
-/* El ítem activo: degradado de la marca hacia el borde, marca lateral y su icono con halo. */
+.sidebar .nav-icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+}
+
+/* El ítem activo: degradado de la marca hacia el borde, marca lateral de 3 px y una sombra corta
+ * que lo despega del fondo. `aria-current="page"` lo anuncia a quien no lo ve. */
 .sidebar a.active {
   font-weight: 700;
   background: linear-gradient(
@@ -445,34 +460,77 @@
     color-mix(in srgb, var(--ac-primary) 22%, transparent),
     color-mix(in srgb, var(--ac-primary) 6%, transparent)
   );
-  box-shadow: inset 3px 0 0 var(--ac-primary);
+  box-shadow: inset 3px 0 0 var(--ac-primary), 0 6px 14px -10px var(--ac-primary);
 }
 
-.sidebar a.active .nav-icon {
-  transform: scale(1.1);
-  filter: drop-shadow(0 0 5px color-mix(in srgb, currentColor 55%, transparent));
+.sidebar a:focus-visible {
+  outline: 2px solid var(--ac-primary);
+  outline-offset: 2px;
 }
 
-/* Cada grupo abre con un tramo de color sobre su línea, como la barra de escala de los títulos. */
-.sidebar-label { position: relative; }
-
-.sidebar-label::before {
-  content: "";
-  position: absolute;
-  top: -1px;
-  left: 0.45rem;
-  width: 26px;
-  height: 2px;
-  border-radius: 2px;
-  background: var(--ac-primary);
+/* Título de grupo: sin fondo, sin el tramo de color que traía encima (`::before`), con la flecha. */
+.sidebar .sidebar-label {
+  color: var(--ac-text-secondary);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  background: none;
 }
 
-.sidebar-label:first-of-type::before { display: none; }
+.sidebar .nav-group-toggle:hover { color: var(--ac-text); }
 
-/* En modo icono las filas no se desplazan: los iconos van centrados. */
+/* Zona de administración: separada del resto y más tenue; es lo que se usa menos. */
+.nav-admin-zone {
+  margin-top: 0.75rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--ac-border);
+}
+
+.sidebar .nav-admin-label {
+  display: block;
+  font-size: 0.64rem;
+  opacity: 0.8;
+}
+
+.nav-admin-zone .nav-item { opacity: 0.82; }
+.nav-admin-zone .nav-item:hover,
+.nav-admin-zone .nav-item:focus-visible,
+.nav-admin-zone .nav-item.active { opacity: 1; }
+
+/* Modo icono: el texto de cada enlace pasa a una burbuja a la derecha del icono, visible al
+ * apuntar o al llegar con el teclado. Sustituye al `title` que ponía el JS (duplicaba el texto). */
 @media (min-width: 769px) {
   .sidebar.is-collapsed a:hover { transform: none; }
+
+  .sidebar.is-collapsed .nav-label {
+    position: absolute;
+    left: calc(100% + 10px);
+    top: 50%;
+    z-index: 1100;
+    padding: 0.35rem 0.65rem;
+    border: 1px solid var(--ac-border);
+    border-radius: 8px;
+    background: var(--ac-surface);
+    box-shadow: 0 8px 20px -8px rgb(0 0 0 / 35%);
+    color: var(--ac-text);
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-50%);
+  }
+
+  .sidebar.is-collapsed a:hover .nav-label,
+  .sidebar.is-collapsed a:focus-visible .nav-label {
+    opacity: 1;
+    visibility: visible;
+  }
 }
+
 
 /* ── Tipografía de AeroAcademy (LV-307) ──────────────────────────────────────
  * Archivo, variable (peso 100–900 y ancho 62–125 %), **servida desde este mismo servidor**: sin
@@ -665,6 +723,20 @@ tr.row-critical > td {
   .status-step.is-current .status-step-badge {
     animation: ac-pulse 2.4s ease-out infinite;
   }
+
+  /* Movimiento: sólo si la persona no pidió reducirlo. Con `reduce` el grupo se abre de golpe y la
+   * burbuja aparece sin fundido. */
+
+  .nav-group-items.is-animating {
+    overflow: hidden;
+    transition: height 200ms ease;
+  }
+
+  @media (min-width: 769px) {
+    .sidebar.is-collapsed .nav-label {
+      transition: opacity 150ms ease, visibility 150ms ease;
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -672,6 +744,5 @@ tr.row-critical > td {
   .summary-card:hover { transform: none; }
   .btn { transition: none; }
   .btn-primary:hover { transform: none; }
-  .sidebar a, .sidebar .nav-icon { transition: none; }
-  .sidebar a:hover, .sidebar a:hover .nav-icon { transform: none; }
+  .sidebar a { transition: none; }
 }
