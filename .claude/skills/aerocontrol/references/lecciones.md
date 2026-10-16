@@ -20,7 +20,7 @@ Contenido: Registro y plan · Pruebas · Traducciones · Migraciones y datos · 
 - Antes de agregar un método a una clase larga, listar los que ya tiene.
 
 ## Traducciones
-- Ver `convenciones.md` §3. Casos clave: `fuzzy` de `makemessages` puso en pantalla lo contrario de lo que decía el código (`LV-183`); `{% translate %}` con `%(x)s` devuelve inglés (`LV-198`); sin voseo.
+- Ver `AGENTS.md` § Convenciones de dominio. Casos clave: `fuzzy` de `makemessages` puso en pantalla lo contrario de lo que decía el código (`LV-183`); `{% translate %}` con `%(x)s` devuelve inglés (`LV-198`); sin voseo.
 
 ## Migraciones y datos
 - Los sembrados son idempotentes **por nombre/código** (`seed_alert_rules` por `name`, `seed_document_types` por `code`): renombrar una regla sembrada crea otra y deja la vieja viva (duplicaba avisos). Extender sumando filas, sin tocar claves.

@@ -10,6 +10,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Skills del repo más cortas (`LV-314`).** Se quitan duplicados de `AGENTS.md` en las skills (convenciones, mapa del plan, pasos de PR a mano) y `pendientes-github` entra en las tablas de skills. Sólo documentación; sin migración ni `collectstatic`.
 - **Django 6.1.2 (`LV-313`).** Corrige cuatro vulnerabilidades (DoS en el análisis de cabeceras HTTP y en `get_supported_language_variant()`, y permisos en formsets con clave editable; lo de GeoDjango no aplica) y varios errores. Sube `pyproject.toml` y `uv.lock` juntos; reemplaza el PR #92. Sin migración ni `collectstatic`.
 - **Cabecera del panel con fondo aeronáutico atenuado y chips con acción (`LV-312`).** SVG propio (cielo, cordillera, retícula y ruta con avión), saludo con el nombre, y cada chip de «Requiere atención» dice qué hacer con una flecha. Se retiran las animaciones infinitas del panel (la ruta se dibuja una vez).
 - **Panel: «Requiere atención» y «Próximas mantenciones» (`LV-310`).** Chips con cifra y enlace antes de los indicadores, en lugar de la rejilla de seis tarjetas; «Faenas sin permiso» respeta la faena elegida; la tabla de vencimientos lee el estado también por texto; «Próximas mantenciones» reemplaza al gráfico de mantenimiento por tipo.
