@@ -89,11 +89,11 @@ class TestSuggestionsFollowTheScreen:
         assert gettext("Which sites have no current permit?") in shown
         assert "data-assistant-suggest" in response.content.decode()
 
-    def test_another_module_gets_the_default_suggestion_only(self, enabled):
+    def test_another_module_falls_back_to_what_the_user_can_ask(self, enabled):
         response = _page(login_as("view_flightpermission", "view_alert"), "alert-list")
 
         shown = [str(s) for s in response.context["assistant_suggestions"]]
-        assert shown == [gettext("Which sites have no current permit?")]
+        assert gettext("Open alerts by urgency") in shown
 
 
 @pytest.mark.django_db

@@ -86,6 +86,58 @@
     });
   }
 
+  // `LV-346`: voto y copia, por delegación (los fragmentos llegan después de cargar la página).
+  // El voto sólo envía el token firmado y +1/-1: nunca texto. Copiar usa `textContent`, que ya es
+  // el texto escapado por el servidor.
+  function say(actions, text) {
+    var status = actions.querySelector('.ai-actions-status');
+    if (status) status.textContent = text;
+  }
+
+  function vote(button) {
+    var actions = button.closest('.ai-actions');
+    if (!actions || actions.dataset.voting) return;
+    actions.dataset.voting = '1';
+    var body = new FormData();
+    body.set('csrfmiddlewaretoken', form.querySelector('[name=csrfmiddlewaretoken]').value);
+    body.set('usage_id', actions.dataset.usageId);
+    body.set('vote', button.dataset.assistantVote);
+    fetch(panel.dataset.voteUrl, {
+      method: 'POST',
+      body: body,
+      credentials: 'same-origin',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    }).then(function (response) {
+      if (!response.ok) throw new Error('http-' + response.status);
+      actions.querySelectorAll('[data-assistant-vote]').forEach(function (other) {
+        other.setAttribute('aria-pressed', other === button ? 'true' : 'false');
+        other.classList.toggle('active', other === button);
+      });
+      say(actions, panel.dataset.voteThanks);
+    }).catch(function () {
+      say(actions, panel.dataset.voteFailed);
+    }).then(function () {
+      delete actions.dataset.voting;
+    });
+  }
+
+  function copy(button) {
+    var actions = button.closest('.ai-actions');
+    var message = button.closest('.ai-msg');
+    var text = message && message.querySelector('.ai-msg-text');
+    if (!actions || !text) return;
+    var done = function () { say(actions, panel.dataset.copied); };
+    var failed = function () { say(actions, panel.dataset.copyFailed); };
+    if (!navigator.clipboard || !navigator.clipboard.writeText) return failed();
+    navigator.clipboard.writeText(text.textContent).then(done, failed);
+  }
+
+  log.addEventListener('click', function (event) {
+    var target = event.target.closest('[data-assistant-vote], [data-assistant-copy]');
+    if (!target) return;
+    if (target.hasAttribute('data-assistant-vote')) vote(target); else copy(target);
+  });
+
   form.addEventListener('submit', function (event) {
     event.preventDefault();
     ask(input.value);

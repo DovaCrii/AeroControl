@@ -14,7 +14,28 @@
     </ul>
   </div>
   {% endif %}
-  {% if answer.tools_used %}
+  {% if usage_token or assistant_allow_copy %}
+  <div class="ai-actions" {% if usage_token %}data-usage-id="{{ usage_token }}"{% endif %}>
+    {% if usage_token %}
+    <span class="ai-actions-label small">{% translate "Was this useful?" %}</span>
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-assistant-vote="1" aria-pressed="false">
+      <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11v9H4v-9zM7 11l4-8a2 2 0 0 1 2 2v4h5.5a2 2 0 0 1 2 2.3l-1.2 7a2 2 0 0 1-2 1.7H7"/></svg>
+      <span>{% translate "Useful" %}</span>
+    </button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-assistant-vote="-1" aria-pressed="false">
+      <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 13V4h3v9zM17 13l-4 8a2 2 0 0 1-2-2v-4H5.5a2 2 0 0 1-2-2.3l1.2-7a2 2 0 0 1 2-1.7H17"/></svg>
+      <span>{% translate "Not useful" %}</span>
+    </button>
+    {% endif %}
+    {% if assistant_allow_copy %}
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-assistant-copy>
+      <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>
+      <span>{% translate "Copy answer" %}</span>
+    </button>
+    {% endif %}
+    <span class="ai-actions-status small" role="status"></span>
+  </div>
+  {% endif %}  {% if answer.tools_used %}
   <div class="ai-meta">{% translate "Data consulted" %}: {{ answer.tools_used|join:", " }}</div>
   {% endif %}
 </div>
