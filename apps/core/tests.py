@@ -199,16 +199,16 @@ class TestPublicURLs:
         """R1.2: permission_number is None until the DGAC folio arrives
         (LV-39). f"{permission.permission_number} · {label}" used to
         interpolate that as the literal word "None" whenever the permit had
-        operators, e.g. "None · Alexandra Márquez Cortés +2 → hasta 07-10".
+        operators, e.g. "None · Amanda Marchant Cortez +2 → hasta 07-10".
         R2.2/R2.3 replaced the whole fallback with internal_folio, assigned
         at creation and never blank -- the title is built from that now,
         not from the (possibly missing) DGAC folio."""
         center = CostCenter.objects.create(code="NUL", name="Sin folio")
         first = Operator.objects.create(
-            employee_id="NUL-1", full_name="Alexandra Márquez", cost_center=center
+            employee_id="NUL-1", full_name="Amanda Marchant", cost_center=center
         )
         second = Operator.objects.create(
-            employee_id="NUL-2", full_name="Javier Marín", cost_center=center
+            employee_id="NUL-2", full_name="Julián Marchese", cost_center=center
         )
         permission = FlightPermission.objects.create(
             cost_center=center,
@@ -229,8 +229,8 @@ class TestPublicURLs:
         assert "None" not in title
         # M2M order is not guaranteed, so either operator can be first.
         assert title.startswith(
-            f"{permission.internal_folio} · Alexandra Márquez +1"
-        ) or title.startswith(f"{permission.internal_folio} · Javier Marín +1")
+            f"{permission.internal_folio} · Amanda Marchant +1"
+        ) or title.startswith(f"{permission.internal_folio} · Julián Marchese +1")
 
     def test_administration_center_explains_operational_configuration(
         self, auth_client
@@ -533,21 +533,21 @@ class TestChapter1DocxImport:
         document = DocxDocument()
         document.add_paragraph("1.5-\tDOTACIÓN OPERADOR RPA")
         document.add_paragraph("\t1)\tPERMANENTES")
-        document.add_paragraph("\t\t\tNOMBRE\t\t:\tCristobal Muñoz Montiel")
+        document.add_paragraph("\t\t\tNOMBRE\t\t:\tSebastian Muñiz Montero")
         document.add_paragraph("RUT\t\t:\t15.151.515-0")
-        document.add_paragraph("Credencial N°\t:\t8172")
+        document.add_paragraph("Credencial N°\t:\t9001")
         document.add_paragraph("Tipo\t\t:\tOperador RPA")
         document.add_paragraph("Habilitaciones\t:\tMatrice Series")
-        document.add_paragraph("Dirección\t:\tDiagonal Santa Elena 2605")
-        document.add_paragraph("Teléfono\t:\t987282880")
+        document.add_paragraph("Dirección\t:\tCalle Ficticia 100")
+        document.add_paragraph("Teléfono\t:\t900000001")
         document.add_paragraph("Email\t\t:\tdirector@example.com")
-        document.add_paragraph("\t\t\tNOMBRE\t\t:\tAriel Ortega Ramirez")
-        document.add_paragraph("RUT\t\t:\t13.553.607-5")
-        document.add_paragraph("Credencial N°\t:\t15532")
+        document.add_paragraph("\t\t\tNOMBRE\t\t:\tAldo Orrego Rebolledo")
+        document.add_paragraph("RUT\t\t:\t16.161.616-8")
+        document.add_paragraph("Credencial N°\t:\t9002")
         document.add_paragraph("Tipo\t\t:\tOperador RPA")
         document.add_paragraph("Habilitaciones\t:\tMatrice 30 T")
-        document.add_paragraph("Dirección\t:\tSergio Valdovinos 01788")
-        document.add_paragraph("Teléfono\t:\t939358818")
+        document.add_paragraph("Dirección\t:\tAvenida Ficticia 200")
+        document.add_paragraph("Teléfono\t:\t900000002")
         document.add_paragraph("Email\t\t:\tdeputy@example.com")
         document.add_paragraph("2) EVENTUALES (NO APLICA)")
         service_table = document.add_table(rows=2, cols=3)
@@ -576,8 +576,8 @@ class TestChapter1DocxImport:
         payload = json.loads(capsys.readouterr().out)
         assert payload["counts"]["operators_extracted"] == 2
         assert [o["full_name"] for o in payload["operators"]] == [
-            "Cristobal Muñoz Montiel",
-            "Ariel Ortega Ramirez",
+            "Sebastian Muñiz Montero",
+            "Aldo Orrego Rebolledo",
         ]
         # Y la aeronave que motivó la carga, con la serie del registro DGAC.
         assert payload["aircraft"][0]["registration"] == "RPA-7213"
@@ -589,13 +589,13 @@ class TestChapter1DocxImport:
         document = DocxDocument()
         document.add_paragraph("1.5-\tDOTACIÓN OPERADOR RPA")
         document.add_paragraph("\t1)\tPERMANENTES")
-        document.add_paragraph("\t\t\tNOMBRE\t\t:\tCristobal Muñoz Montiel")
+        document.add_paragraph("\t\t\tNOMBRE\t\t:\tSebastian Muñiz Montero")
         document.add_paragraph("RUT\t\t:\t15.151.515-0")
-        document.add_paragraph("Credencial N°\t:\t8172")
+        document.add_paragraph("Credencial N°\t:\t9001")
         document.add_paragraph("Tipo\t\t:\tOperador RPA")
         document.add_paragraph("Habilitaciones\t:\tMatrice Series")
-        document.add_paragraph("Dirección\t:\tDiagonal Santa Elena 2605")
-        document.add_paragraph("Teléfono\t:\t987282880")
+        document.add_paragraph("Dirección\t:\tCalle Ficticia 100")
+        document.add_paragraph("Teléfono\t:\t900000001")
         document.add_paragraph("Email\t\t:\tdirector@example.com")
         document.add_paragraph("2) EVENTUALES (NO APLICA)")
         service_table = document.add_table(rows=2, cols=3)

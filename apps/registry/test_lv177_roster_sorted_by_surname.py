@@ -6,8 +6,8 @@ es un solo campo: alfabéticamente eso ordena por el **nombre de pila** —Alber
 Alex, Alexandra, Ariel, Boris…— y a alguien se lo busca por el apellido. Con 42
 personas hay que barrer la lista entera.
 
-**El corte no se deduce.** "Jose Luis Ogalde Henríquez" son dos nombres y dos
-apellidos; "Bernardine Von Irmer Helle" lleva partícula; "Ana Rivas" es uno y
+**El corte no se deduce.** "Juan Luis Ogando Herrada" son dos nombres y dos
+apellidos; "Marianne Von Brandt Keller" lleva partícula; "Ana Rivas" es uno y
 uno. Partir por espacios acierta en el caso fácil y se equivoca en el raro — que
 es justo el que cuesta encontrar— y nadie lo nota, porque la lista igual se ve
 ordenada. Por eso los campos nacen vacíos y hay un comando que **propone**.
@@ -44,20 +44,20 @@ def _operator(full_name, **kwargs):
 @pytest.mark.django_db
 def test_the_roster_sorts_by_surname_when_it_is_known():
     _operator(
-        "Alberto Jesus Angel Milla", given_names="Alberto Jesus", surnames="Angel Milla"
+        "Mario Elias Arce Mella", given_names="Mario Elias", surnames="Arce Mella"
     )
     _operator(
-        "Cristobal Muñoz Montiel", given_names="Cristobal", surnames="Muñoz Montiel"
+        "Sebastian Muñiz Montero", given_names="Sebastian", surnames="Muñiz Montero"
     )
-    _operator("Ariel Ortega Ramirez", given_names="Ariel", surnames="Ortega Ramirez")
+    _operator("Aldo Orrego Rebolledo", given_names="Aldo", surnames="Orrego Rebolledo")
     client = login_as("view_operator")
 
     body = client.get(reverse("operator-list")).content.decode()
 
     assert (
-        body.index("Angel Milla")
-        < body.index("Muñoz Montiel")
-        < body.index("Ortega Ramirez")
+        body.index("Arce Mella")
+        < body.index("Muñiz Montero")
+        < body.index("Orrego Rebolledo")
     )
 
 
@@ -66,24 +66,24 @@ def test_a_record_without_the_split_still_appears_where_it_is_looked_for():
     """Nadie desaparece mientras se completa el padrón."""
     _operator("Ana Rivas")
     _operator(
-        "Cristobal Muñoz Montiel", given_names="Cristobal", surnames="Muñoz Montiel"
+        "Sebastian Muñiz Montero", given_names="Sebastian", surnames="Muñiz Montero"
     )
     client = login_as("view_operator")
 
     body = client.get(reverse("operator-list")).content.decode()
 
-    # "Ana Rivas" ordena por su nombre completo: cae antes de "Muñoz Montiel".
-    assert body.index("Ana Rivas") < body.index("Muñoz Montiel")
+    # "Ana Rivas" ordena por su nombre completo: cae antes de "Muñiz Montero".
+    assert body.index("Ana Rivas") < body.index("Muñiz Montero")
 
 
 @pytest.mark.django_db
 def test_the_listing_shows_the_surname_first_only_when_it_is_known():
     split = _operator(
-        "Cristobal Muñoz Montiel", given_names="Cristobal", surnames="Muñoz Montiel"
+        "Sebastian Muñiz Montero", given_names="Sebastian", surnames="Muñiz Montero"
     )
     plain = _operator("Ana Rivas")
 
-    assert split.listing_name == "Muñoz Montiel, Cristobal"
+    assert split.listing_name == "Muñiz Montero, Sebastian"
     assert plain.listing_name == "Ana Rivas"
 
 
@@ -91,10 +91,10 @@ def test_the_listing_shows_the_surname_first_only_when_it_is_known():
 def test_the_full_name_stays_the_name_on_record():
     """Es el que sale en el permiso, el catastro y el PDF."""
     operator = _operator(
-        "Cristobal Muñoz Montiel", given_names="Cristobal", surnames="Muñoz Montiel"
+        "Sebastian Muñiz Montero", given_names="Sebastian", surnames="Muñiz Montero"
     )
 
-    assert str(operator) == "Cristobal Muñoz Montiel"
+    assert str(operator) == "Sebastian Muñiz Montero"
 
 
 @pytest.mark.django_db
@@ -115,29 +115,29 @@ def test_accents_and_case_do_not_make_it_refuse():
     """Quien complete el corte lo tipea a mano; un acento no es un error."""
     operator = Operator(
         employee_id="E-1",
-        full_name="Cristobal Muñoz Montiel",
-        given_names="cristobal",
-        surnames="MUNOZ montiel",
+        full_name="Sebastian Muñiz Montero",
+        given_names="sebastian",
+        surnames="MUNIZ montero",
     )
 
     operator.full_clean()  # no levanta
 
 
 def test_the_command_proposes_the_chilean_pattern():
-    assert propose("Ariel Ortega Ramirez") == ("Ariel", "Ortega Ramirez")
-    assert propose("Jose Luis Ogalde Henriquez") == ("Jose Luis", "Ogalde Henriquez")
+    assert propose("Aldo Orrego Rebolledo") == ("Aldo", "Orrego Rebolledo")
+    assert propose("Juan Luis Ogando Herrada") == ("Juan Luis", "Ogando Herrada")
 
 
 def test_the_command_refuses_to_guess_what_it_cannot_know():
     """Reportar de más antes que escribir de más."""
     assert propose("Ana Rivas") is None, "dos palabras no dicen cuál es cuál"
-    assert propose("Bernardine Von Irmer Helle") is None, "la partícula rompe el conteo"
+    assert propose("Marianne Von Brandt Keller") is None, "la partícula rompe el conteo"
     assert propose("Maria Jose de la Cruz Soto") is None
 
 
 @pytest.mark.django_db
 def test_the_command_writes_nothing_without_apply():
-    operator = _operator("Ariel Ortega Ramirez")
+    operator = _operator("Aldo Orrego Rebolledo")
 
     call_command("split_operator_names", stdout=StringIO())
 
@@ -147,14 +147,14 @@ def test_the_command_writes_nothing_without_apply():
 
 @pytest.mark.django_db
 def test_the_command_writes_the_proposals_with_apply_and_leaves_the_rest():
-    clear = _operator("Ariel Ortega Ramirez")
-    ambiguous = _operator("Bernardine Von Irmer Helle")
+    clear = _operator("Aldo Orrego Rebolledo")
+    ambiguous = _operator("Marianne Von Brandt Keller")
     out = StringIO()
 
     call_command("split_operator_names", "--apply", stdout=out)
 
     clear.refresh_from_db()
     ambiguous.refresh_from_db()
-    assert clear.surnames == "Ortega Ramirez"
+    assert clear.surnames == "Orrego Rebolledo"
     assert ambiguous.surnames == "", "lo ambiguo se reporta, no se toca"
-    assert "Bernardine Von Irmer Helle" in out.getvalue()
+    assert "Marianne Von Brandt Keller" in out.getvalue()

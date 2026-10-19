@@ -75,7 +75,7 @@ class TestEditingKeepsWhatItDoesNotShow:
         """El caso exacto de producción: se edita el nombre y la faena sigue
         volando."""
         center = CostCenter.objects.create(
-            code="CC410", name="Levantamientos digital", responsible="Cristóbal Muñoz"
+            code="CC410", name="Levantamientos digital", responsible="Sebastián Muñiz"
         )
 
         self._edit(center, name="Levantamientos Digital")
@@ -120,7 +120,7 @@ class TestEditingKeepsWhatItDoesNotShow:
         center = CostCenter.objects.create(
             code="CC738",
             name="MLP",
-            responsible="Juan Quiroz",
+            responsible="Julio Quintana",
             latitude="-31.700000",
             longitude="-70.600000",
             required_gsd_cm=5,

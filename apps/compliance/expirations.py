@@ -173,7 +173,7 @@ def upcoming_expirations(today, cutoff, cost_center=None, user=None):
     **LV-122: y tampoco aparece lo que ya se revisó y se cerró.** `LV-120` alineó
     el panel con la bandeja en una sola dirección —mostrar lo que la bandeja
     muestra— y faltaba la otra: **esconder lo que la bandeja cerró**. El usuario
-    lo vio el mismo día: la credencial de `Carlos Peñailillo`, vencida el
+    lo vio el mismo día: la credencial de `Camilo Peñaloza`, vencida el
     2025-05-02 y resuelta con el motivo *"Fuera de CC con operación RPA"*, se
     instaló en el panel para siempre — porque esa fecha ya no va a cambiar
     nunca. Sus palabras: *"que sean las no resueltas nada más o si no se llenará

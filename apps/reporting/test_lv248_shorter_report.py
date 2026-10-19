@@ -115,7 +115,12 @@ class TestWhatThePagesSay:
             valid_until=cutoff + timedelta(days=40),
         )
         for index, name in enumerate(
-            ["Alexandra Márquez", "Javier Marin", "Francisca Fredes", "Kevin Palma"]
+            [
+                "Amanda Marchant",
+                "Julián Marchese",
+                "Fabiola Ferrada",
+                "Kenneth Palacios",
+            ]
         ):
             permit.operators.add(
                 Operator.objects.create(employee_id=f"E{index}", full_name=name)
@@ -132,7 +137,7 @@ class TestWhatThePagesSay:
 
     def test_the_names_are_in_the_annex(self, report):
         assert "Anexo · Operadores designados por permiso" in report
-        assert "Alexandra Márquez" in report
+        assert "Amanda Marchant" in report
 
     def test_the_cycle_is_still_on_the_paper(self, report):
         """El ciclo de cuatro pasos sigue en el papel —es el trámite que fija el

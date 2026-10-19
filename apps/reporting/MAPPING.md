@@ -175,7 +175,7 @@ de aprobación. 22 tests más.
 ✅ **Segregación de funciones: decidida el 2026-09-02, y no se separa.** Hoy
 alcanza con `change_reportrun`, así que quien redacta la narrativa puede además
 aprobarla — y **eso es correcto mientras redactor y firmante sean la misma
-persona**, que es el caso: el usuario redacta y aprueba, como `root` o `cmunoz`.
+persona**, que es el caso: el usuario redacta y aprueba, como `root` o `usuario`.
 Un permiso propio para aprobar habría creado una separación que no existe en la
 organización, y una barrera que la única persona que la cruza tendría que
 saltarse todos los meses.

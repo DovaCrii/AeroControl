@@ -132,7 +132,7 @@ modalidad).
 - **Apagar la regla** «Permisos: renovación vencida de plazo (T-15 · Gerencia)».
 - **Responsable** en 11 de 15 faenas; **`CC716`** (contrato cerrado con el permiso `JEJ-2026-003` vivo
   hasta el 28-10); **`LV-150`** (decisión vencida el 2026-09-30); **`LV-228`** (cuatro operadores sin
-  faena: René Herrera Molina, Natalia Ramos Mora, Jimmy Patricio Andrade Muñoz y David Vidal Vidal).
+  faena: Rubén Herrero Mena, Nadia Rubio Mena, Julián Patricio Aranda Muñiz y Daniel Vera Vera).
 - Los textos de ayuda de los «?» del portal de SIGO, sólo si se quieren copiar a la app.
 
 **Pendiente — del código, sin decisión nueva**: ninguno. Lo que queda en `MASTER_PLAN.md` (`T1.1`,

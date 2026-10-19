@@ -34,7 +34,7 @@ tres tienen traducción directa acá:
 
 **"Si nadie puede actuar sobre una alerta, esa alerta no debería existir."**
 Aplica de lleno, y hay evidencia en la propia captura del usuario: la credencial
-de `Carlos Peñailillo` se resolvió con el motivo *"Fuera de CC con operación
+de `Camilo Peñaloza` se resolvió con el motivo *"Fuera de CC con operación
 RPA"* — o sea, **la alerta no era accionable**: la persona ya no está en la
 operación. Ver §3.1, que es el hallazgo más importante de este análisis.
 

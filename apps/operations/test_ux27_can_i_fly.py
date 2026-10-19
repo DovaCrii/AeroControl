@@ -58,7 +58,7 @@ def aircraft(centre):
 def operator(centre):
     person = Operator.objects.create(
         employee_id="E1",
-        full_name="Nicolas Galleguillos",
+        full_name="Nelson Gallardo",
         cost_center=centre,
         credential_expiry=TODAY + timedelta(days=200),
     )

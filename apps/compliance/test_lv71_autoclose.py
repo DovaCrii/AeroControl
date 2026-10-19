@@ -183,7 +183,7 @@ def test_it_also_covers_operator_credentials(db):
     a date rule."""
     operator = Operator.objects.create(
         employee_id="OP-1",
-        full_name="Carlos Peñailillo",
+        full_name="Camilo Peñaloza",
         credential_expiry=TODAY - timedelta(days=100),
     )
     rule = _rule(
