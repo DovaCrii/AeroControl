@@ -25,9 +25,61 @@ class Command(BaseCommand):
             action="store_true",
             help="Make one minimal call to the service and report latency and tokens.",
         )
+        parser.add_argument(
+            "--eval",
+            action="store_true",
+            help="Run the golden questions against the real service (needs --user); "
+            "prints figures only, never the answer text.",
+        )
+        parser.add_argument(
+            "--user", type=int, help="User id whose permissions --eval uses."
+        )
+        parser.add_argument(
+            "--max",
+            type=int,
+            default=10,
+            help="Most questions --eval asks (default 10).",
+        )
+
+    def _eval(self, options, client):
+        """LV-345: el golden set contra el servicio REAL, con los permisos de `--user`.
+
+        Respeta los topes y cuenta en `AssistantUsage` como cualquier pregunta. Por pregunta
+        imprime SOLO «herramientas OK/KO, citas, longitud, ms, tokens»: nunca el texto de la
+        respuesta ni la llave.
+        """
+        from django.contrib.auth import get_user_model
+
+        from apps.assistant.evals.golden import GOLDEN, evaluate
+
+        if not options["user"]:
+            raise CommandError(
+                "--eval needs --user <id>: it runs with that user's permissions."
+            )
+        if not client.configured:
+            raise CommandError("eval: not configured (no key in this environment).")
+        user = (
+            get_user_model().objects.filter(pk=options["user"], is_active=True).first()
+        )
+        if user is None:
+            raise CommandError("eval: no active user with that id.")
+        limit = max(1, options["max"])
+        cases = [case for case in GOLDEN if case.permissions is None][:limit]
+        ok = 0
+        for case in cases:
+            result = evaluate(user, case, client=client)
+            ok += bool(result["ok_tools"])
+            self.stdout.write(
+                f"{case.name}: tools {'OK' if result['ok_tools'] else 'KO'}, "
+                f"citations {result['citations']}, length {result['length']}, "
+                f"{result['ms']} ms, tokens {result['tokens'] if result['tokens'] is not None else 'unknown'}"
+            )
+        self.stdout.write(f"eval: {ok}/{len(cases)} with the expected tools")
 
     def handle(self, *args, **options):
         client = NvidiaClient()
+        if options["eval"]:
+            return self._eval(options, client)
         out = self.stdout.write
 
         def cap(value):

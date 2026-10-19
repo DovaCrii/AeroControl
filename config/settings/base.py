@@ -462,6 +462,9 @@ NVIDIA_BASE_URL = config(
     "NVIDIA_BASE_URL", default="https://integrate.api.nvidia.com/v1"
 )
 NVIDIA_MODEL = config("NVIDIA_MODEL", default="meta/llama-3.3-70b-instruct")
+# `LV-346`: botón «Copy answer» del panel. Apagado por omisión: copiar el texto fuera del sistema es
+# redistribuirlo, y eso depende de la licencia del proveedor del modelo.
+AI_ASSISTANT_ALLOW_COPY = config("AI_ASSISTANT_ALLOW_COPY", default=False, cast=bool)
 AI_ASSISTANT_TIMEOUT = config("AI_ASSISTANT_TIMEOUT", default=30, cast=int)
 # Preguntas por usuario y por hora. El acceso de prueba de NVIDIA es por créditos limitados
 # (1 000 al registrarse), así que un tope evita gastarlos por accidente. 0 = sin tope.
@@ -479,6 +482,10 @@ WEATHER_DEFAULT_TZ = config("WEATHER_DEFAULT_TZ", default="")
 WEATHER_SEARCH_MAX_PER_HOUR = config(
     "WEATHER_SEARCH_MAX_PER_HOUR", default=60, cast=int
 )
+
+# LV-345 · Cliente guionizado (sin servicio ni llave) para demo y pruebas: sólo cuenta con DEBUG;
+# fuera de DEBUG se ignora y `check` avisa (apps/assistant/fake_client.py).
+AI_ASSISTANT_FAKE = config("AI_ASSISTANT_FAKE", default=False, cast=bool)
 LOGOUT_REDIRECT_URL = LOGIN_URL
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
