@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     "apps.reporting",
     # LV-305: asistente de consulta con IA. PROTOTIPO, apagado por omisión y sólo en demo.
     "apps.assistant",
+    # LV-343: ciudad predeterminada del widget del tiempo, por persona.
+    "apps.weather",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -444,6 +446,17 @@ AI_ASSISTANT_TIMEOUT = config("AI_ASSISTANT_TIMEOUT", default=30, cast=int)
 AI_ASSISTANT_MAX_PER_HOUR = config("AI_ASSISTANT_MAX_PER_HOUR", default=30, cast=int)
 # Tope global por día (suma de llamadas de todas las personas, contadas en la base); 0 = sin tope.
 AI_ASSISTANT_DAILY_CAP = config("AI_ASSISTANT_DAILY_CAP", default=300, cast=int)
+# LV-343: ciudad por omisión del widget del tiempo para quien aún no eligió una. Vacío (por
+# omisión) = el widget pide "Elige tu ciudad". Latitud/longitud como texto: un valor mal
+# escrito se ignora en vez de impedir que arranque la aplicación.
+WEATHER_DEFAULT_LABEL = config("WEATHER_DEFAULT_LABEL", default="")
+WEATHER_DEFAULT_LAT = config("WEATHER_DEFAULT_LAT", default="")
+WEATHER_DEFAULT_LON = config("WEATHER_DEFAULT_LON", default="")
+WEATHER_DEFAULT_TZ = config("WEATHER_DEFAULT_TZ", default="")
+# Búsquedas de ciudad por persona y por hora (llaman a un servicio externo). 0 = sin tope.
+WEATHER_SEARCH_MAX_PER_HOUR = config(
+    "WEATHER_SEARCH_MAX_PER_HOUR", default=60, cast=int
+)
 LOGOUT_REDIRECT_URL = LOGIN_URL
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
