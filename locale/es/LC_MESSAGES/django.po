@@ -9989,3 +9989,54 @@ msgstr "Usar esta ciudad"
 
 msgid "No cities found."
 msgstr "No se encontraron ciudades."
+
+msgid "People are not available in the assistant. Please check the operators screen."
+msgstr "Las personas no están disponibles en el asistente. Revise la pantalla de operadores."
+
+msgid "Please give the aircraft registration, for example RPA-1234."
+msgstr "Indique la matrícula de la aeronave, por ejemplo RPA-1234."
+
+msgid "That is outside what I can look up here. I can help with flight permits, maintenance, company and aircraft documents and insurance, alerts by urgency, SIGO requests and fleet availability."
+msgstr "Eso está fuera de lo que puedo consultar aquí. Puedo ayudar con permisos de vuelo, mantenciones, documentos y seguros de empresa y de aeronave, alertas por urgencia, solicitudes SIGO y disponibilidad de flota."
+
+msgid "I cannot read that data with your permissions."
+msgstr "No puedo leer esos datos con sus permisos."
+
+msgid "Flight permits: %(in_force)s in force, %(soon)s expiring in 30 days, %(lapsed)s lapsed."
+msgstr "Permisos de vuelo: %(in_force)s vigentes, %(soon)s por vencer en 30 días, %(lapsed)s vencidos."
+
+msgid "Fleet: %(available)s of %(total)s aircraft available."
+msgstr "Flota: %(available)s de %(total)s aeronaves disponibles."
+
+msgid "Open alerts: %(total)s."
+msgstr "Alertas abiertas: %(total)s."
+
+msgid "SIGO requests: %(total)s."
+msgstr "Solicitudes SIGO: %(total)s."
+
+msgid "No aircraft with that registration was found."
+msgstr "No se encontró ninguna aeronave con esa matrícula."
+
+msgid "For %(registration)s, nothing in the records prevents it."
+msgstr "Para %(registration)s, en los registros no hay nada que lo impida."
+
+msgid "For %(registration)s, the records show %(n)s blocking item(s)."
+msgstr "Para %(registration)s, los registros muestran %(n)s impedimento(s)."
+
+msgid "Permits expiring soon: %(n)s."
+msgstr "Permisos por vencer: %(n)s."
+
+msgid "Upcoming or overdue maintenance: %(n)s."
+msgstr "Mantenciones próximas o atrasadas: %(n)s."
+
+msgid "Company documents expiring: %(n)s."
+msgstr "Documentos de la empresa por vencer: %(n)s."
+
+msgid "Aircraft with insurance data: %(n)s."
+msgstr "Aeronaves con datos de seguro: %(n)s."
+
+msgid "Cost centres listed: %(n)s."
+msgstr "Centros de costo listados: %(n)s."
+
+msgid "Records found: %(n)s."
+msgstr "Registros encontrados: %(n)s."

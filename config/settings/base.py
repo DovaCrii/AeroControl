@@ -479,6 +479,10 @@ WEATHER_DEFAULT_TZ = config("WEATHER_DEFAULT_TZ", default="")
 WEATHER_SEARCH_MAX_PER_HOUR = config(
     "WEATHER_SEARCH_MAX_PER_HOUR", default=60, cast=int
 )
+
+# LV-345 · Cliente guionizado (sin servicio ni llave) para demo y pruebas: sólo cuenta con DEBUG;
+# fuera de DEBUG se ignora y `check` avisa (apps/assistant/fake_client.py).
+AI_ASSISTANT_FAKE = config("AI_ASSISTANT_FAKE", default=False, cast=bool)
 LOGOUT_REDIRECT_URL = LOGIN_URL
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
