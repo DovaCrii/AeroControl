@@ -136,3 +136,23 @@ class TestNothingIsRedefined:
     def test_every_signal_class_is_declared(self):
         for kind in ("hint", "note", "warn", "ok", "danger"):
             assert f".id-{kind}" in self._e5()
+
+
+class TestSignalPartial:
+    @pytest.mark.parametrize(
+        "kind,prefix",
+        [
+            ("hint", None),
+            ("note", "Notice:"),
+            ("warn", "Warning:"),
+            ("ok", "Success:"),
+            ("danger", "Error:"),
+        ],
+    )
+    def test_every_kind_has_icon_text_and_a_spoken_severity(self, kind, prefix):
+        from django.template.loader import render_to_string
+
+        html = render_to_string("generic/_signal.html", {"kind": kind, "text": "Algo"})
+        assert f'class="id-{kind}"' in html
+        assert 'aria-hidden="true"' in html and "Algo" in html
+        assert ("visually-hidden" in html) is (prefix is not None)

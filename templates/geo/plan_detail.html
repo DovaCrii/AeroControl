@@ -205,7 +205,7 @@ escribe nada.{% endcomment %}
   {% comment %}LV-141: la misma honestidad que con el AMC. BCN declara su
   cartografía referencial, y la capa está simplificada a ~111 m: cerca de un
   límite comunal el resultado puede ser el vecino, y eso se dice.{% endcomment %}
-  <p class="text-muted small mb-0 mt-1">{% translate "The commune, province and region come from the BCN administrative boundaries, which that institution publishes as referential: near a boundary the answer may be the neighbouring commune. Confirm it before filing." %}</p>
+  {% translate "The commune, province and region come from the BCN administrative boundaries, which that institution publishes as referential: near a boundary the answer may be the neighbouring commune. Confirm it before filing." as bcn_warning %}{% include "generic/_signal.html" with kind="warn" text=bcn_warning %}
   {% comment %}R10.8: se explica sólo cuando hay una fila así, porque en el caso
   normal —un círculo dibujado como círculo— la frase sobraría.{% endcomment %}
   {% if has_enclosing %}
