@@ -9863,3 +9863,15 @@ msgstr "uso del asistente"
 
 msgid "The assistant reached its daily limit. Try again tomorrow."
 msgstr "El asistente alcanzó su límite diario. Vuelva a intentarlo mañana."
+
+msgid "Success:"
+msgstr "Correcto:"
+
+msgid "Warning:"
+msgstr "Advertencia:"
+
+msgid "Error:"
+msgstr "Error:"
+
+msgid "Notice:"
+msgstr "Aviso:"

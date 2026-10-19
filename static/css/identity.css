@@ -1255,6 +1255,60 @@ form.is-submitting-slow .btn-primary::after {
 /* == E: pulido global == */
 /* Contiene: ajustes transversales finales (foco, selección, impresión, detalles de tema). */
 
+/* E1: foco uniforme (LV-328). 2px en `--ac-primary` (claro y oscuro ya medidos) con separación de 2px.
+   Especificidad (0,1,1): gana a la regla base `:where(...)` de app.css y NO pisa la de la barra
+   (`.sidebar a:focus-visible`, LV-309) ni la del formulario (`.form-shell ...`, LV-318), que son más
+   específicas. */
+a:focus-visible,
+button:focus-visible,
+.btn:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--ac-primary);
+  outline-offset: 2px;
+}
+
+/* E2: mensajes (`messages` de base.html). Icono + texto + color por gravedad; nunca sólo color. */
+.id-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.7rem 2.75rem 0.7rem 0.9rem;
+  border: 1px solid var(--sev-nominal-border);
+  border-left-width: 4px;
+  border-radius: var(--id-r-control);
+  background: var(--sev-nominal-bg);
+  color: var(--sev-nominal-text);
+}
+.id-message-icon { flex: none; margin-top: 0.15rem; }
+.id-message-text { min-width: 0; overflow-wrap: anywhere; }
+.id-message--success { background: var(--id-ok-bg); border-color: var(--id-ok-border); color: var(--id-ok-text); }
+.id-message--info { background: var(--sev-advisory-bg); border-color: var(--sev-advisory-border); color: var(--sev-advisory-text); }
+.id-message--warning { background: var(--sev-warning-bg); border-color: var(--sev-warning-border); color: var(--sev-warning-text); }
+.id-message--danger { background: var(--sev-critical-bg); border-color: var(--sev-critical-border); color: var(--sev-critical-text); }
+.id-message .btn-close { padding: 0.9rem; }
+
+/* E3: estado vacío unificado (`generic/_empty_art.html` con `title`). */
+.empty-state__body { display: grid; justify-items: center; gap: 0.35rem; max-width: 36rem; }
+.empty-state__title { margin: 0; color: var(--ac-text); }
+.empty-state__help { margin: 0; color: var(--ac-text-secondary); }
+.empty-state__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin-top: 0.5rem; }
+
+/* E4: responsivo a 375 px (LV-328). Medido en el demo: el panel desbordaba 2 px por una insignia
+   de una sola línea, y las cabeceras apilaban título y acciones sin envolver. El modo icono de la
+   barra no se toca. */
+@media (max-width: 575.98px) {
+  .badge:not(.id-chip) { white-space: normal; max-width: 100%; text-align: left; }
+  .entity-head { flex-wrap: wrap; }
+  .entity-title h1 { overflow-wrap: anywhere; font-size: 1.5rem; }
+  .page-header { flex-wrap: wrap; }
+  .page-header h1 { overflow-wrap: anywhere; }
+  .page-header--module::before { display: none; }
+  .empty-state { padding: 1.25rem 0.75rem; }
+}
+
 /* == F: ilustración y movimiento == */
 /* Contiene: F1 plano técnico (cabecera del panel y portada) y F2 entradas (reservada); las animaciones van en el bloque de movimiento de abajo. */
 
