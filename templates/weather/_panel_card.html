@@ -1,0 +1,106 @@
+{% load i18n %}{% comment %}LV-347: tarjeta del tiempo del panel (fragmento htmx de `weather/panel/`). SOLO informativa: muestra el tiempo y los eventos climáticos previstos en la región de la ciudad elegida y no se cruza con nada más de la aplicación. Todo lo que se dibuja viene calculado de `apps/weather/panel.py`; `city` va escapada por la plantilla (nunca `|safe`). El movimiento es sólo CSS, bajo `no-preference`, y el contenedor lleva el marcador que pausa lo continuo fuera de pantalla.{% endcomment %}
+{% if state == "ok" %}
+<section id="wx-card" class="wx-card" aria-labelledby="wx-title" data-ambient>
+  <header class="wx-head wx-head--{{ slug }}{% if not is_day %} is-night{% endif %}">
+    <span class="wx-drift wx-drift--a" aria-hidden="true"></span><span class="wx-drift wx-drift--b" aria-hidden="true"></span>
+    <div class="wx-now">
+      {% include "weather/_icons.html" with slug=slug night=is_night size="lg" animate=True %}
+      <div>
+        <p class="wx-temp"><span class="visually-hidden">{% translate "Now" %}: </span>{% if temp is not None %}{{ temp }}°{% else %}–{% endif %}</p>
+        <p class="wx-cond">{{ condition }}{% if feels is not None %} · {% blocktranslate with value=feels %}Feels like {{ value }}°{% endblocktranslate %}{% endif %}</p>
+      </div>
+    </div>
+    <div class="wx-where">
+      <h2 id="wx-title" class="wx-title">{% translate "Weather" %}</h2>
+      <p class="wx-city">{{ city }}</p>
+      <a class="wx-change" href="{% url 'weather-location' %}">{% translate "Change" context "weather city" %}<span class="visually-hidden">: {% translate "Weather location" %}</span></a>
+    </div>
+  </header>
+
+  <div class="wx-body">
+    <div class="wx-col">
+      <h3 class="wx-h">{% translate "Next 24 hours" %}</h3>
+      <div class="wx-strip" tabindex="0" role="group" aria-label="{% translate 'Next 24 hours' %}">
+        <div class="wx-strip-inner" style="width: {{ strip_width }}px">
+          {% if temp_points %}<svg class="wx-line" viewBox="0 0 {{ strip_width }} 52" width="{{ strip_width }}" height="52" aria-hidden="true" focusable="false"><polyline points="{{ temp_points }}" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/></svg>{% endif %}
+          <ol class="wx-hours">
+            {% for h in hours %}
+            <li class="wx-hour" title="{{ h.title }}">
+              <b class="wx-hour-t">{% if h.temp is not None %}{{ h.temp }}°{% else %}–{% endif %}</b>
+              <span class="wx-bars" aria-hidden="true"><i class="wx-gust" style="--v: {{ h.gust_pct }}%"></i><i class="wx-wind" style="--v: {{ h.wind_pct }}%"></i></span>
+              <span class="wx-hour-w">{% if h.wind is not None %}{{ h.wind }}{% else %}–{% endif %}<small>{% if h.gust is not None %}{{ h.gust }}{% else %}–{% endif %}</small></span>
+              <span class="wx-hour-r">{% if h.rain is not None %}{{ h.rain }}%{% else %}–{% endif %}</span>
+              <span class="wx-hour-h">{{ h.hour }}</span>
+            </li>
+            {% endfor %}
+          </ol>
+        </div>
+      </div>
+      <p class="wx-key"><span><i class="wx-key-wind" aria-hidden="true"></i>{% translate "Wind (km/h)" %}</span><span><i class="wx-key-gust" aria-hidden="true"></i>{% translate "Gusts (km/h)" %}</span><span><i class="wx-key-rain" aria-hidden="true"></i>{% translate "Chance of rain" %}</span></p>
+
+      <h3 class="wx-h">{% translate "Next 7 days" %}</h3>
+      <ul class="wx-days">
+        {% for d in days %}
+        <li class="wx-day">
+          <span class="wx-day-n">{% if d.is_today %}{% translate "Today" %}{% else %}{{ d.date|date:"D" }}{% endif %}</span>
+          {% include "weather/_icons.html" with slug=d.slug night=False size="sm" label=d.label %}
+          <span class="wx-day-r">{% if d.rain is not None %}{{ d.rain }}%{% endif %}</span>
+          <span class="wx-day-lo">{% if d.tmin is not None %}{{ d.tmin }}°{% endif %}</span>
+          <span class="wx-range" aria-hidden="true">{% if d.bar_width %}<i style="left: {{ d.bar_left }}%; width: {{ d.bar_width }}%"></i>{% endif %}</span>
+          <span class="wx-day-hi">{% if d.tmax is not None %}{{ d.tmax }}°{% endif %}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="wx-col">
+      <h3 class="wx-h">{% translate "Right now" %}</h3>
+      <dl class="wx-facts">
+        <div><dt>{% translate "Sunrise" %}</dt><dd>{% if sunrise %}{{ sunrise|date:"H:i" }}{% else %}–{% endif %}</dd></div>
+        <div><dt>{% translate "Sunset" %}</dt><dd>{% if sunset %}{{ sunset|date:"H:i" }}{% else %}–{% endif %}</dd></div>
+        <div><dt>{% translate "Clouds" %}</dt><dd>{% if cloud is not None %}{{ cloud }}%{% else %}–{% endif %}</dd></div>
+        <div><dt>{% translate "Visibility" %}</dt><dd>{% if visibility_km is not None %}{{ visibility_km }} km{% else %}–{% endif %}</dd></div>
+        <div><dt>{% translate "Wind" %}</dt><dd>{% if wind is not None %}{{ wind }} km/h{% else %}–{% endif %}{% if wind_rot is not None %} <svg class="wx-arrow" viewBox="0 0 24 24" width="16" height="16" style="--rot: {{ wind_rot }}deg" aria-hidden="true" focusable="false"><path d="M12 3v18M12 3l-6 7M12 3l6 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="visually-hidden">{% blocktranslate with degrees=wind_dir %}from {{ degrees }} degrees{% endblocktranslate %}</span>{% endif %}</dd></div>
+        <div><dt>{% translate "Gusts" %}</dt><dd>{% if gust is not None %}{{ gust }} km/h{% else %}–{% endif %}</dd></div>
+      </dl>
+
+      <h3 class="wx-h">{% translate "Weather events expected" %}</h3>
+      {% if events %}
+      <ul class="wx-events">
+        {% for e in events %}
+        <li class="wx-event wx-event--{{ e.level }}">
+          <span class="wx-lvl"><span aria-hidden="true">{{ e.symbol }}</span> {{ e.level_label }}</span>
+          <b class="wx-event-t">{{ e.label }}</b>
+          <span class="wx-event-w">{% if e.start %}{{ e.start|date:"D H:i" }}{% endif %}{% if e.end and e.end != e.start %} – {{ e.end|date:"D H:i" }}{% endif %}</span>
+          {% if e.value is not None %}<span class="wx-event-v">{{ e.value|floatformat:"-1" }} {{ e.unit }}</span>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="wx-none"><span aria-hidden="true">✓</span> {% translate "No notable weather events expected in the next 48 hours" %}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <footer class="wx-foot">
+    <p class="wx-legend">{% translate "Informational only. It is not a flight condition and does not replace anyone's judgement or the DGAC" %}</p>
+    <p class="wx-credit">{% translate "Weather data by" %} <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo.com</a> · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>{% if checked_at %} · {{ checked_at }}{% endif %}</p>
+  </footer>
+</section>
+{% elif state == "empty" %}
+<section id="wx-card" class="wx-card wx-card--note" aria-labelledby="wx-title">
+  <div class="wx-note">
+    <h2 id="wx-title" class="wx-title">{% translate "Weather" %}</h2>
+    <p class="mb-2">{% translate "Pick your city" %}</p>
+    <a class="btn btn-sm btn-primary" href="{% url 'weather-location' %}">{% translate "Choose your city" %}</a>
+  </div>
+</section>
+{% else %}
+<section id="wx-card" class="wx-card wx-card--note" aria-labelledby="wx-title">
+  <div class="wx-note">
+    <h2 id="wx-title" class="wx-title">{% translate "Weather" %}</h2>
+    <p class="mb-2" role="status">{% translate "The weather is not available right now. It will be tried again shortly." %}</p>
+    <a class="wx-change" href="{% url 'weather-location' %}">{% translate "Change" context "weather city" %}<span class="visually-hidden">: {% translate "Weather location" %}</span></a>
+  </div>
+</section>
+{% endif %}

@@ -10032,6 +10032,116 @@ msgstr "Usar esta ciudad"
 msgid "No cities found."
 msgstr "No se encontraron ciudades."
 
+msgid "Windy"
+msgstr "Con viento"
+
+msgid "Wind"
+msgstr "Viento"
+
+msgid "Gusts"
+msgstr "Ráfagas"
+
+msgid "Heavy rain"
+msgstr "Lluvia intensa"
+
+msgid "Accumulated rain"
+msgstr "Lluvia acumulada"
+
+msgid "Hail"
+msgstr "Granizo"
+
+msgid "Frost"
+msgstr "Helada"
+
+msgid "Heat"
+msgstr "Calor"
+
+msgid "Low visibility"
+msgstr "Visibilidad reducida"
+
+msgid "Info"
+msgstr "Informativo"
+
+msgid "Attention"
+msgstr "Atención"
+
+msgid "Strong"
+msgstr "Fuerte"
+
+msgid "%(hour)s:00 · %(temp)s °C · wind %(wind)s km/h · gusts %(gust)s km/h · rain %(rain)s%%"
+msgstr "%(hour)s:00 · %(temp)s °C · viento %(wind)s km/h · ráfagas %(gust)s km/h · lluvia %(rain)s%%"
+
+msgid "Checked at %(time)s"
+msgstr "Consultado a las %(time)s"
+
+msgid "Feels like %(value)s°"
+msgstr "Sensación térmica de %(value)s°"
+
+msgid "Weather"
+msgstr "Clima"
+
+msgid "Weather location"
+msgstr "Ubicación del clima"
+
+msgid "Next 24 hours"
+msgstr "Próximas 24 horas"
+
+msgid "Wind (km/h)"
+msgstr "Viento (km/h)"
+
+msgid "Gusts (km/h)"
+msgstr "Ráfagas (km/h)"
+
+msgid "Next 7 days"
+msgstr "Próximos 7 días"
+
+msgid "Right now"
+msgstr "Ahora mismo"
+
+msgid "Sunrise"
+msgstr "Salida del sol"
+
+msgid "Sunset"
+msgstr "Puesta del sol"
+
+msgid "Clouds"
+msgstr "Nubes"
+
+msgid "Visibility"
+msgstr "Visibilidad"
+
+msgid "from %(degrees)s degrees"
+msgstr "desde %(degrees)s grados"
+
+msgid "Weather events expected"
+msgstr "Eventos climáticos previstos"
+
+msgid "No notable weather events expected in the next 48 hours"
+msgstr "No se esperan eventos climáticos relevantes en las próximas 48 horas"
+
+msgid "Informational only. It is not a flight condition and does not replace anyone's judgement or the DGAC"
+msgstr "Solo informativo. No es una condición de vuelo ni reemplaza el criterio de nadie ni a la DGAC"
+
+msgid "Weather data by"
+msgstr "Datos del clima de"
+
+msgid "Pick your city"
+msgstr "Elija su ciudad"
+
+msgid "Choose your city"
+msgstr "Elegir ciudad"
+
+msgid "The weather is not available right now. It will be tried again shortly."
+msgstr "El clima no está disponible por ahora. Se volverá a intentar en breve."
+
+msgid "Loading weather"
+msgstr "Cargando el clima"
+
+#: templates/weather/_panel_card.html
+msgctxt "weather city"
+msgid "Change"
+msgstr "Cambiar"
+
 msgid "People are not available in the assistant. Please check the operators screen."
 msgstr "Las personas no están disponibles en el asistente. Revise la pantalla de operadores."
 

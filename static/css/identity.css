@@ -1634,6 +1634,170 @@ summary:focus-visible {
   opacity: 0.12;
 }
 
+/* F3: tiempo (LV-347). Tarjeta informativa del panel. Sólo usa `--id-*`, `--ac-*` y `--sev-*` (no
+   redefine ninguno) y tokens propios `--wx-*`. El texto de la cabecera es `--ac-text` y su contraste
+   sobre ambos extremos de cada degradado, claro y oscuro, se calcula en test_lv347_weather_card. */
+.wx-card {
+  position: relative;
+  margin-bottom: var(--id-sp-3);
+  border: 1px solid var(--ac-border);
+  border-radius: var(--id-r-card);
+  background: var(--ac-surface);
+  color: var(--ac-text);
+  box-shadow: var(--id-lift);
+  overflow: hidden;
+  min-width: 0;
+}
+
+.wx-head {
+  --id-wx-a: color-mix(in srgb, var(--sev-advisory-border) 60%, var(--ac-surface));
+  --id-wx-b: color-mix(in srgb, var(--sev-nominal-border) 45%, var(--ac-surface));
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--id-sp-2) var(--id-sp-3);
+  padding: var(--id-sp-2) var(--id-sp-3);
+  background: linear-gradient(135deg, var(--id-wx-a), var(--id-wx-b));
+  color: var(--ac-text);
+  overflow: hidden;
+}
+
+.wx-head--clear { --id-wx-a: color-mix(in srgb, var(--sev-warning-border) 70%, var(--ac-surface)); --id-wx-b: color-mix(in srgb, var(--sev-advisory-border) 45%, var(--ac-surface)); }
+.wx-head--partly { --id-wx-a: color-mix(in srgb, var(--sev-advisory-border) 65%, var(--ac-surface)); --id-wx-b: color-mix(in srgb, var(--sev-warning-border) 35%, var(--ac-surface)); }
+.wx-head--cloudy { --id-wx-a: color-mix(in srgb, var(--sev-nominal-border) 70%, var(--ac-surface)); --id-wx-b: color-mix(in srgb, var(--sev-nominal-bg) 60%, var(--ac-surface)); }
+.wx-head--fog { --id-wx-a: color-mix(in srgb, var(--sev-nominal-border) 45%, var(--ac-surface)); --id-wx-b: color-mix(in srgb, var(--sev-nominal-bg) 80%, var(--ac-surface)); }
+.wx-head--rain { --id-wx-a: color-mix(in srgb, var(--sev-advisory-border) 80%, var(--ac-surface)); --id-wx-b: color-mix(in srgb, var(--sev-nominal-border) 60%, var(--ac-surface)); }
+.wx-head--snow { --id-wx-a: color-mix(in srgb, var(--sev-advisory-bg) 90%, var(--ac-surface)); --id-wx-b: color-mix(in srgb, var(--sev-nominal-bg) 80%, var(--ac-surface)); }
+.wx-head--storm { --id-wx-a: color-mix(in srgb, var(--sev-critical-border) 55%, var(--ac-surface)); --id-wx-b: color-mix(in srgb, var(--sev-nominal-border) 70%, var(--ac-surface)); }
+.wx-head--wind { --id-wx-a: color-mix(in srgb, var(--ac-primary) 30%, var(--ac-surface)); --id-wx-b: color-mix(in srgb, var(--sev-advisory-border) 55%, var(--ac-surface)); }
+.wx-head.is-night { --id-wx-a: color-mix(in srgb, var(--ac-text-secondary) 38%, var(--ac-surface)); }
+
+.wx-now { display: flex; align-items: center; gap: var(--id-sp-2); }
+.wx-ico { display: block; flex: none; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.wx-ico--lg { width: 88px; height: 88px; }
+.wx-ico--sm { width: 26px; height: 26px; stroke-width: 3.4; }
+.wx-cloud-shape { fill: var(--ac-surface); }
+.wx-cloud-back { fill: var(--sev-nominal-bg); }
+.wx-fill-sun { fill: var(--sev-warning-border); }
+.wx-fill-moon { fill: var(--sev-advisory-border); }
+.wx-bolt { fill: var(--sev-warning-border); }
+.wx-flake { fill: var(--ac-surface); }
+.wx-spin { transform-box: fill-box; transform-origin: center; }
+
+.wx-temp { margin: 0; font-family: var(--id-display); font-size: 3.4rem; font-weight: 800; line-height: 1; letter-spacing: -0.02em; }
+.wx-cond { margin: 0.2rem 0 0; font-size: var(--id-fs-sm); font-weight: 600; }
+.wx-where { min-width: 0; text-align: right; }
+.wx-title { margin: 0; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ac-text); }
+.wx-city { margin: 0.1rem 0 0.4rem; font-size: var(--id-fs-lg); font-weight: 700; overflow-wrap: anywhere; }
+.wx-change {
+  display: inline-block;
+  padding: 0.2rem 0.75rem;
+  border: 1px solid var(--ac-text);
+  border-radius: var(--id-r-pill);
+  background: color-mix(in srgb, var(--ac-surface) 55%, transparent);
+  color: var(--ac-text);
+  font-size: var(--id-fs-sm);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.wx-change:hover { background: var(--ac-surface); color: var(--ac-text); }
+
+.wx-drift {
+  position: absolute;
+  z-index: -1;
+  width: 180px;
+  height: 56px;
+  border-radius: var(--id-r-pill);
+  background: color-mix(in srgb, var(--ac-surface) 38%, transparent);
+  pointer-events: none;
+}
+
+.wx-drift--a { top: 14%; left: 8%; }
+.wx-drift--b { bottom: 10%; right: 18%; width: 130px; height: 40px; }
+.wx-head--clear .wx-drift, .wx-head--snow .wx-drift, .wx-head--wind .wx-drift { display: none; }
+
+.wx-body { display: grid; gap: var(--id-sp-2) var(--id-sp-3); padding: var(--id-sp-2) var(--id-sp-3); }
+.wx-col { min-width: 0; }
+.wx-h { margin: var(--id-sp-2) 0 0.4rem; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ac-text-secondary); }
+.wx-col > .wx-h:first-child { margin-top: 0; }
+
+.wx-strip { overflow-x: auto; padding-bottom: 0.25rem; border-radius: var(--id-r-control); }
+.wx-strip-inner { position: relative; }
+.wx-line { display: block; color: var(--ac-primary); }
+.wx-hours { display: flex; margin: 0; padding: 0; list-style: none; }
+.wx-hour { flex: none; width: 34px; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 0.72rem; text-align: center; }
+.wx-hour-t { font-size: 0.78rem; }
+.wx-bars { position: relative; display: block; width: 14px; height: 44px; }
+.wx-bars i { position: absolute; bottom: 0; left: 0; display: block; width: 100%; height: max(3px, var(--v)); border-radius: 3px 3px 0 0; }
+.wx-gust { background: var(--sev-warning-border); }
+.wx-bars .wx-wind { left: 20%; width: 60%; background: var(--ac-primary); }
+.wx-hour-w { font-weight: 700; }
+.wx-hour-w small { display: block; font-size: 0.68rem; font-weight: 500; color: var(--ac-text-secondary); }
+.wx-hour-r { color: var(--sev-advisory-text); font-weight: 700; }
+.wx-hour-h { color: var(--ac-text-secondary); }
+.wx-key { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; margin: 0.4rem 0 0; font-size: 0.72rem; color: var(--ac-text-secondary); }
+.wx-key i { display: inline-block; width: 10px; height: 10px; margin-right: 0.3rem; border-radius: 2px; }
+.wx-key-wind { background: var(--ac-primary); }
+.wx-key-gust { background: var(--sev-warning-border); }
+.wx-key-rain { background: var(--sev-advisory-text); }
+
+.wx-days { margin: 0; padding: 0; list-style: none; }
+.wx-day { display: grid; grid-template-columns: 3rem 28px 2.4rem 2rem minmax(40px, 1fr) 2rem; align-items: center; gap: 0.4rem; padding: 0.2rem 0; border-top: 1px solid var(--ac-border); font-size: var(--id-fs-sm); }
+.wx-day:first-child { border-top: 0; }
+.wx-day-n { font-weight: 700; }
+.wx-day-r { color: var(--sev-advisory-text); font-weight: 700; }
+.wx-day-lo { text-align: right; color: var(--ac-text-secondary); }
+.wx-day-hi { font-weight: 700; }
+.wx-range { position: relative; height: 6px; border-radius: var(--id-r-pill); background: var(--ac-border); }
+.wx-range i { position: absolute; top: 0; bottom: 0; border-radius: var(--id-r-pill); background: linear-gradient(90deg, var(--sev-advisory-border), var(--sev-warning-border)); }
+
+.wx-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); gap: 0.5rem; margin: 0; }
+.wx-facts div { padding: 0.4rem 0.6rem; border: 1px solid var(--ac-border); border-radius: var(--id-r-control); }
+.wx-facts dt { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ac-text-secondary); }
+.wx-facts dd { margin: 0; font-weight: 700; }
+.wx-arrow { vertical-align: -2px; transform: rotate(var(--rot, 0deg)); }
+
+.wx-events { display: grid; gap: 0.4rem; margin: 0; padding: 0; list-style: none; }
+.wx-event { display: grid; grid-template-columns: auto 1fr auto; gap: 0.1rem 0.6rem; align-items: baseline; padding: 0.45rem 0.65rem; border: 1px solid var(--ac-border); border-radius: var(--id-r-control); }
+.wx-lvl { grid-row: span 2; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+.wx-event-t { font-size: var(--id-fs-md); }
+.wx-event-v { font-weight: 800; text-align: right; }
+.wx-event-w { grid-column: 2 / -1; font-size: var(--id-fs-sm); }
+.wx-event--info { background: var(--sev-advisory-bg); border-color: var(--sev-advisory-border); color: var(--sev-advisory-text); }
+.wx-event--attention { background: var(--sev-warning-bg); border-color: var(--sev-warning-border); color: var(--sev-warning-text); }
+.wx-event--strong { background: var(--sev-critical-bg); border-color: var(--sev-critical-border); color: var(--sev-critical-text); }
+.wx-none { margin: 0; padding: 0.55rem 0.65rem; border: 1px dashed var(--ac-border); border-radius: var(--id-r-control); font-size: var(--id-fs-sm); color: var(--ac-text-secondary); }
+
+.wx-foot { padding: 0.6rem var(--id-sp-3); border-top: 1px solid var(--ac-border); font-size: 0.75rem; color: var(--ac-text-secondary); }
+.wx-foot p { margin: 0; }
+.wx-legend { font-weight: 600; }
+.wx-credit a { color: inherit; text-decoration: underline; }
+
+.wx-card--note .wx-note { padding: var(--id-sp-2) var(--id-sp-3); }
+.wx-card--note .wx-title { margin-bottom: 0.3rem; color: var(--ac-text-secondary); }
+.wx-note .wx-change { border-color: var(--ac-border); background: transparent; }
+
+/* Esqueleto de carga: estático, del tamaño aproximado de la tarjeta. */
+.wx-card--loading { min-height: 220px; padding: var(--id-sp-2) var(--id-sp-3); }
+.wx-skel { border-radius: var(--id-r-control); background: var(--ac-border); }
+.wx-skel--head { height: 88px; margin-bottom: var(--id-sp-2); }
+.wx-skel--line { height: 14px; margin-bottom: 0.6rem; }
+.wx-skel--short { width: 55%; }
+
+@media (min-width: 992px) {
+  .wx-body { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+}
+
+@media (max-width: 575.98px) {
+  .wx-where { text-align: left; }
+  .wx-temp { font-size: 2.8rem; }
+  .wx-ico--lg { width: 72px; height: 72px; }
+}
+
 /* ── Movimiento: sólo si la persona no pidió reducirlo ──────────────────── */
 @media (prefers-reduced-motion: no-preference) {
   @keyframes ac-float {
@@ -1710,6 +1874,21 @@ summary:focus-visible {
   [data-ambient] .route-trail { animation: ac-trail 14s linear infinite; }
   [data-ambient] .wp-ring { animation: ac-wp 14s ease-out infinite; }
   [data-ambient].is-paused * { animation-play-state: paused; }
+
+  /* F3: tiempo. Sólo `transform` y `opacity`, siete nodos como máximo (rayos, nube o gotas del icono
+     grande y dos nubes de fondo), ciclos lentos y SIEMPRE bajo `[data-ambient]`, que se pausa fuera de
+     pantalla. Las nubes de fondo son del color de la superficie, así que no restan contraste al texto. */
+  @keyframes wx-spin { to { transform: rotate(360deg); } }
+  @keyframes wx-sway { from { transform: translate(-2px, 0); } to { transform: translate(3px, 0); } }
+  @keyframes wx-fall { 0% { transform: translateY(-3px); opacity: 0; } 25% { opacity: 1; } 100% { transform: translateY(7px); opacity: 0; } }
+  @keyframes wx-glide { from { transform: translate(-14px, 0); } to { transform: translate(40px, 0); } }
+  [data-ambient] .wx-spin { animation: wx-spin 60s linear infinite; }
+  [data-ambient] .wx-cloud { animation: wx-sway 8s ease-in-out infinite alternate; }
+  [data-ambient] .wx-drop { animation: wx-fall 6s linear infinite; }
+  [data-ambient] .wx-drop--b { animation-delay: -2s; }
+  [data-ambient] .wx-drop--c { animation-delay: -4s; }
+  [data-ambient] .wx-drift--a { animation: wx-glide 26s ease-in-out infinite alternate; }
+  [data-ambient] .wx-drift--b { animation: wx-glide 34s ease-in-out infinite alternate-reverse; }
 
   .kpi-grid .summary-card,
   .readiness-strip .summary-card { animation: ac-rise 0.45s ease-out both; }
