@@ -202,7 +202,12 @@ class TestALapsedPermitSaysSo:
 
         content = client.get(reverse("permission-list")).content.decode()
 
-        assert '<span class="badge sev-critical">⚠ Caducado</span>' in content
+        # LV-330: el estado es un `.id-chip` (texto + color + icono), no `badge sev-*`.
+        assert (
+            '<span class="id-chip id-chip--critical"><span aria-hidden="true">⚠</span>'
+            " Caducado</span>"
+        ) in content
+        assert "badge bg-warning" not in content
 
     @pytest.mark.django_db
     def test_the_fiche_says_the_same_as_the_list(self, client, admin_user):
