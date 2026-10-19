@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Assistant usage" %} - AeroControl{% endblock %}
+{% block content %}
+{% translate "Assistant usage" as page_title %}
+<div class="page-header">
+  {% include "generic/_page_header.html" %}
+</div>
+
+{% comment %}LV-341: sólo cifras. Esta pantalla no tiene de dónde sacar preguntas, respuestas,
+argumentos ni citas: el modelo no los guarda.{% endcomment %}
+{% if warn %}
+<div class="alert alert-warning" role="alert" id="usage-cap-warning">
+  {% blocktranslate with percent=percent used=used_today cap=cap %}Today's usage is at {{ percent }}% of the daily cap ({{ used }} of {{ cap }} service calls).{% endblocktranslate %}
+</div>
+{% endif %}
+
+<div class="card p-4 mb-3">
+  <div class="row g-3">
+    <div class="col-md-4"><div class="small text-muted">{% translate "Daily cap used today" %}</div>
+      <div class="h4 mb-0">{% if cap %}{{ percent }}%{% else %}{% translate "No cap" %}{% endif %}</div></div>
+    <div class="col-md-4"><div class="small text-muted">{% blocktranslate %}Total tokens (last {{ window_days }} days){% endblocktranslate %}</div>
+      <div class="h4 mb-0">{{ total_tokens }}</div></div>
+    <div class="col-md-4"><div class="small text-muted">{% blocktranslate %}Questions (last {{ window_days }} days){% endblocktranslate %}</div>
+      <div class="h4 mb-0">{{ total_questions }}</div></div>
+  </div>
+</div>
+
+<div class="card p-4 mb-3">
+  <h2 class="h6">{% translate "By day" %}</h2>
+  <table class="table table-sm mb-0">
+    <thead><tr><th scope="col">{% translate "Day" %}</th><th scope="col">{% translate "Questions" %}</th><th scope="col">{% translate "Service calls" %}</th><th scope="col">{% translate "Total tokens" %}</th></tr></thead>
+    <tbody>
+    {% for d in days %}<tr><td>{{ d.day|date:"Y-m-d" }}</td><td>{{ d.questions }}</td><td>{{ d.calls }}</td><td>{{ d.tokens }}</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6"><div class="card p-4 h-100">
+    <h2 class="h6">{% translate "By outcome" %}</h2>
+    <table class="table table-sm mb-0">
+      <thead><tr><th scope="col">{% translate "Outcome" %}</th><th scope="col">{% translate "Questions" %}</th></tr></thead>
+      <tbody>{% for o in by_outcome %}<tr><td>{{ o.label }}</td><td>{{ o.questions }}</td></tr>{% empty %}<tr><td colspan="2" class="text-muted">{% translate "No data yet." %}</td></tr>{% endfor %}</tbody>
+    </table>
+  </div></div>
+  <div class="col-lg-6"><div class="card p-4 h-100">
+    <h2 class="h6">{% translate "By user" %}</h2>
+    <table class="table table-sm mb-0">
+      <thead><tr><th scope="col">{% translate "User" %}</th><th scope="col">{% translate "Questions" %}</th><th scope="col">{% translate "Service calls" %}</th><th scope="col">{% translate "Total tokens" %}</th></tr></thead>
+      <tbody>{% for u in by_user %}<tr><td>{{ u.user|default:"-" }}</td><td>{{ u.questions }}</td><td>{{ u.calls }}</td><td>{{ u.tokens }}</td></tr>{% empty %}<tr><td colspan="4" class="text-muted">{% translate "No data yet." %}</td></tr>{% endfor %}</tbody>
+    </table>
+  </div></div>
+</div>
+{% endblock %}

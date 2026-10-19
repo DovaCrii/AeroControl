@@ -16,6 +16,8 @@ class AssistantUsage(BaseModel):
     `rounds` cuenta las llamadas al servicio de esta pregunta (lo que se cobra contra el tope);
     se devuelve una cuando la llamada falló por red antes de responder.
 
+    `vote` (LV-341) es el único juicio que se guarda sobre una respuesta: +1 o -1, nunca texto.
+
     `user` es SET_NULL (excepción documentada a PROTECT): el registro de uso debe sobrevivir a
     la persona, y archivar usuarios no es el único camino de borrado (el admin puede borrar).
     """
@@ -63,6 +65,15 @@ class AssistantUsage(BaseModel):
         verbose_name=_("Outcome"),
     )
 
+    VOTE_UP = 1
+    VOTE_DOWN = -1
+    vote = models.SmallIntegerField(
+        null=True,
+        blank=True,
+        verbose_name=_("Vote"),
+        help_text=_("+1 helpful, -1 not helpful. Never accompanied by free text."),
+    )
+
     class Meta:
         ordering = ["-created_at"]
         verbose_name = _("assistant usage")
@@ -86,6 +97,10 @@ class AssistantUsage(BaseModel):
                     ]
                 ),
                 name="assistant_usage_outcome_valid",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(vote__isnull=True) | models.Q(vote__in=[-1, 1]),
+                name="assistant_usage_vote_valid",
             ),
         ]
 

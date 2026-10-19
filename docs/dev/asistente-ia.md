@@ -113,6 +113,26 @@ Nada de esto consta todavía; son preguntas, no afirmaciones. Dejar la respuesta
 
 `assistant_probar` nunca imprime la llave ni el texto del modelo; sin `--ping` no llama al servicio.
 
+## Uso y voto (`LV-341`) — LLEVA MIGRACIÓN (`assistant.0002_assistantusage_vote`)
+
+- **`/assistant/usage/`** (sólo lectura; exige `assistant.view_assistantusage` y el interruptor, 404 apagado):
+  uso por día (14), por usuario y por resultado, tokens totales y % del tope `AI_ASSISTANT_DAILY_CAP` usado hoy.
+  Sobre el 80 % muestra una franja y emite `logger.warning("assistant_daily_cap_80")` **una vez al día**
+  (`cache.add` con clave por fecha; con caché por proceso puede salir una vez por proceso). Sólo cifras: no hay
+  preguntas, respuestas, argumentos ni citas que mostrar, porque el modelo no los guarda.
+- **Sin tenant:** `AssistantUsage` no tiene tenant, así que la vista es **global** para quien tenga el permiso
+  (dárselo sólo a administración).
+- **Admin:** sigue de sólo lectura; filtros por resultado, fecha y usuario, `date_hierarchy` y la columna `vote`.
+- **Voto:** `AssistantUsage.vote` (nulo, +1 o -1, `CheckConstraint`; nunca texto). Endpoint
+  `POST assistant/vote/` (`assistant-vote`, CSRF normal, 404 apagado, permiso `view_flightpermission` como el
+  panel) con `usage_id` y `vote`. El `usage_id` es un token firmado (`apps.assistant.usage_views.sign_usage_id`,
+  `django.core.signing`, caduca en 1 h) que ata el registro **y** a quien preguntó: firma alterada o caducada o
+  voto fuera de ±1 da 400; fila de otra persona da 404. Se registra en `AuditEvent`.
+- **Cómo lo enchufa el PR de experiencia:** `ask()` ya crea la fila `AssistantUsage`; ese PR debe pasar la fila
+  (o su id) hasta `_answer.html`, llamar a `sign_usage_id(usage)` y poner el token en un botón de pulgar
+  arriba/abajo que haga `POST` a `assistant-vote` con `usage_id` y `vote=1|-1`. Este PR no toca `service.py`,
+  `views.py` ni el panel.
+
 ## Por qué hay un interruptor aparte
 
 El acceso gratuito de NVIDIA (Developer Program) es **sólo para prototipos, investigación y
