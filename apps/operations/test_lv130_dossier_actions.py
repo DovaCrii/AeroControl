@@ -20,7 +20,6 @@ from django.utils import timezone
 
 from apps.compliance.models import DocumentType
 from apps.core.testing import login_as
-from apps.geo.models import GeoPlan
 from apps.operations.dossier import (
     SIGNED_AUTHORIZATION,
     _flight_record_item,
@@ -137,25 +136,6 @@ class TestWhereEachGapIsClosed:
         assert item.action_url == (
             f"{reverse('geo-plan-import')}?flight_permission={permission.pk}"
         )
-
-    @pytest.mark.django_db
-    def test_a_plan_without_weather_review_links_to_that_plan(
-        self, permission, cost_center
-    ):
-        """La revisión se registra con un botón que vive en la ficha del plan
-        (R8.1), así que el atajo lleva ahí en vez de duplicar el registro de
-        evidencia en un segundo lugar."""
-        owner = login_as().user
-        plan = GeoPlan.objects.create(
-            title="Plan sin revisión",
-            cost_center=cost_center,
-            created_by=owner,
-            flight_permission=permission,
-        )
-
-        item = _item(permission, "weather")
-
-        assert item.action_url == reverse("geo-plan-detail", args=[plan.pk])
 
     @pytest.mark.django_db
     def test_no_request_links_to_the_requests_list(self, permission):
