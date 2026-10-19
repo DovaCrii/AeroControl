@@ -9772,6 +9772,9 @@ msgstr "Renovado por"
 msgid "Renew permit"
 msgstr "Renovar permiso"
 
+msgid "More actions"
+msgstr "Más acciones"
+
 msgid "Renewal"
 msgstr "Renovación"
 

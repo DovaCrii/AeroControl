@@ -1,0 +1,20 @@
+{% load i18n %}
+{% comment %}LV-330 (ola G): el menú «⋯» de una fila. `<details>` y no un dropdown de
+Bootstrap: abre y cierra sin JS, y `row-menu.js` sólo le suma Esc, flechas y cierre
+al hacer clic fuera. Las acciones de lectura («Ver») NO entran acá: el llamador las
+deja siempre a la vista.
+
+Parámetros (sin nada que mostrar no dibuja ni el botón; lo que no sea show_* verdadero no sale):
+- `show_renew` + `renew_href`/`renew_label`: un enlace.
+- `is_active` + `show_archive` + `archive_action`/`archive_label` (fila viva), o `show_restore` +
+  `restore_action`/`restore_label` (fila archivada): formularios POST (con CSRF). Los permisos los decide quien llama, no este parcial.{% endcomment %}
+{% if show_renew or is_active and show_archive or not is_active and show_restore %}
+<details class="id-rowmenu">
+  <summary class="btn btn-sm btn-outline-secondary" aria-label="{% translate 'More actions' %}" aria-haspopup="menu">⋯</summary>
+  <div class="id-rowmenu-list" role="menu">
+    {% if show_renew %}<a class="id-rowmenu-item" role="menuitem" href="{{ renew_href }}">{{ renew_label }}</a>{% endif %}
+    {% if not is_active and show_restore %}<form method="post" action="{{ restore_action }}">{% csrf_token %}<button type="submit" class="id-rowmenu-item" role="menuitem">{{ restore_label }}</button></form>{% endif %}
+    {% if is_active and show_archive %}<form method="post" action="{{ archive_action }}">{% csrf_token %}<button type="submit" class="id-rowmenu-item id-rowmenu-item--danger" role="menuitem">{{ archive_label }}</button></form>{% endif %}
+  </div>
+</details>
+{% endif %}
