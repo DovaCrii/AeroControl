@@ -97,8 +97,9 @@ cada cosa.{% endcomment %}
       y tiene más autoridad que lo que se preparó antes de presentar, que es la
       misma razón por la que `fill_location_gaps` rellena sin pisar.{% endcomment %}
       {% if form.hidden_plan_fields %}
-      <div class="alert alert-light border d-flex flex-wrap gap-2 justify-content-between align-items-center">
-        <span>{% blocktranslate with folio=form.plan_providing_location.folio count counter=form.hidden_plan_fields|length %}{{ counter }} location box comes from the plan {{ folio }} and is not asked again.{% plural %}{{ counter }} location boxes come from the plan {{ folio }} and are not asked again.{% endblocktranslate %}</span>
+      <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+        {% blocktranslate asvar plan_note with folio=form.plan_providing_location.folio count counter=form.hidden_plan_fields|length %}{{ counter }} location box comes from the plan {{ folio }} and is not asked again.{% plural %}{{ counter }} location boxes come from the plan {{ folio }} and are not asked again.{% endblocktranslate %}
+        <div class="flex-grow-1">{% include "generic/_signal.html" with kind="note" text=plan_note %}</div>
         <a class="btn btn-sm btn-outline-secondary" href="?ubicacion=manual">{% translate "Adjust to the DGAC resolution" %}</a>
       </div>
       {% endif %}
