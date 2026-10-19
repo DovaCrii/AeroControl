@@ -1459,6 +1459,10 @@ summary:focus-visible {
 .ai-bar--short { width: 55%; }
 .ai-suggest { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .ai-form { display: grid; gap: 0.5rem; }
+.ai-disclaimer { margin: 0; color: var(--ac-text-secondary); }
+.ai-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-top: 0.5rem; }
+.ai-actions .btn { display: inline-flex; align-items: center; gap: 0.3rem; }
+.ai-actions-status { color: var(--ac-text-secondary); flex-basis: 100%; }
 @media (max-width: 575.98px) { .ai-fab { right: 0.75rem; bottom: 0.75rem; } }
 
 /* E5: señales (LV-333). Siempre icono + texto + color, nunca sólo color. Cada `.id-*` es un
