@@ -423,10 +423,16 @@ AUDIT_FAIL_CLOSED = config("AUDIT_FAIL_CLOSED", default=False, cast=bool)
 #
 # El acceso gratuito de NVIDIA (Developer Program) es para prototipos, investigación y pruebas;
 # atender a usuarios reales es «producción» y exige licencia. Por eso la pantalla sólo existe con
-# `AI_ASSISTANT_ENABLED` **y** `DEBUG` (ver `apps/assistant/views.py`): en producción no se
-# enciende aunque alguien ponga la variable. La llave va **sólo en el entorno**
+# `AI_ASSISTANT_ENABLED` **y** (`DEBUG` o `AI_ASSISTANT_ALLOW_PRODUCTION`) (ver
+# `apps/assistant/views.py`). La llave va **sólo en el entorno**
 # (`NVIDIA_API_KEY`), nunca en el repositorio ni en el chat.
 AI_ASSISTANT_ENABLED = config("AI_ASSISTANT_ENABLED", default=False, cast=bool)
+# LV-336 · Interruptor de producción: fuera de `DEBUG` el asistente sólo existe con ENABLED **y**
+# esta variable, apagada por omisión. Se enciende cuando la licencia de NVIDIA y la llave están en el
+# entorno de la VM; el apagado de emergencia es `AI_ASSISTANT_ENABLED=0` + reinicio.
+AI_ASSISTANT_ALLOW_PRODUCTION = config(
+    "AI_ASSISTANT_ALLOW_PRODUCTION", default=False, cast=bool
+)
 NVIDIA_API_KEY = config("NVIDIA_API_KEY", default="")
 NVIDIA_BASE_URL = config(
     "NVIDIA_BASE_URL", default="https://integrate.api.nvidia.com/v1"

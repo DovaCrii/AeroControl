@@ -1,7 +1,7 @@
 # Asistente de consulta con IA — prototipo (`LV-305`)
 
-**Estado:** prototipo, **apagado por omisión** y **sólo en el demo**. No está en producción ni puede
-estarlo sin una decisión aparte (ver «Por qué sólo demo»).
+**Estado:** prototipo, **apagado por omisión**. En producción exige además `AI_ASSISTANT_ALLOW_PRODUCTION`
+(ver «Interruptor de producción»); mientras no exista la llave de la licencia, producción no cambia.
 
 ## Qué hace
 
@@ -63,17 +63,63 @@ pregunta por `POST assistant/ask/panel/` (CSRF normal) y recibe el fragmento `_a
   **escapado** y nunca se dibuja una URL escrita por él.
 - **Sugerencias por módulo:** el módulo «flight» (permisos) ofrece «¿Qué permisos vencen…?» y «¿Qué faenas no tienen
   permiso vigente?»; el resto, la segunda.
-- El interruptor de producción (`AI_ASSISTANT_ALLOW_PRODUCTION`) es un cambio aparte: reemplazará `assistant_available()`
-  en un solo punto y espera la decisión sobre licencia o servidor propio.
+- El interruptor de producción (`AI_ASSISTANT_ALLOW_PRODUCTION`, `LV-336`) vive en `assistant_available()`, un solo punto.
 
-## Por qué sólo demo
+## Interruptor de producción (`LV-336`)
+
+Decisión del usuario (2026-10-19): el asistente **se usará en producción con la licencia de NVIDIA**, que la
+persona obtiene y cuya llave pone en el entorno de la VM (nunca en el repositorio ni en el chat). Mientras la
+llave no exista, producción no cambia.
+
+`assistant_available()` = `AI_ASSISTANT_ENABLED and (DEBUG or AI_ASSISTANT_ALLOW_PRODUCTION)`.
+
+| Situación | Resultado |
+|---|---|
+| Desarrollo/demo (`DEBUG`) con `AI_ASSISTANT_ENABLED=1` | Abierto, como antes. |
+| Producción con sólo `AI_ASSISTANT_ENABLED=1` | **Cerrado**: 404 y ningún HTML del panel. |
+| Producción con `ENABLED=1` y `AI_ASSISTANT_ALLOW_PRODUCTION=1` | Abierto. Sin llave, la pantalla avisa «no configurado». |
+| `AI_ASSISTANT_ENABLED=0` (o ausente) | Cerrado siempre. |
+
+`AI_ASSISTANT_ALLOW_PRODUCTION` está **apagado por omisión**. Los permisos no cambian: sigue haciendo falta
+`view_flightpermission` y rige el contrato de `LV-268`; no hay roles nuevos.
+
+**Apagado de emergencia:** `AI_ASSISTANT_ENABLED=0` en el entorno de la VM y reiniciar el servicio. La pantalla y
+el panel dejan de existir en la siguiente petición del proceso nuevo.
+
+### Puntos de la licencia que hay que confirmar con NVIDIA antes de activar
+
+Nada de esto consta todavía; son preguntas, no afirmaciones. Dejar la respuesta (con fecha y quién la dio) aquí.
+
+1. ¿La licencia que se obtendrá cubre **uso en producción con usuarios internos reales** (personal de la empresa)?
+2. ¿NVIDIA **guarda** lo que se envía (preguntas, respuestas, metadatos) y por cuánto tiempo? ¿Lo usa para
+   **entrenar o mejorar** sus productos? ¿Se puede desactivar?
+3. ¿Se puede **redistribuir o usar lo generado** (por ejemplo en informes que salen de la empresa)? Hasta saberlo
+   no se pega ni exporta nada del asistente.
+4. **Límites** (solicitudes por minuto, créditos, tokens) y **precio**, para ajustar `AI_ASSISTANT_MAX_PER_HOUR` y
+   `AI_ASSISTANT_DAILY_CAP`.
+5. ¿El modelo elegido (`NVIDIA_MODEL`) admite llamadas a funciones bajo esa licencia y en qué región se procesa?
+
+### Lista de verificación de activación
+
+1. Confirmar los puntos de arriba con NVIDIA.
+2. En la VM (`p340`), poner `NVIDIA_API_KEY` en el archivo de entorno del servicio (nunca en el repo ni en el chat).
+3. Poner `AI_ASSISTANT_ENABLED=1` y `AI_ASSISTANT_ALLOW_PRODUCTION=1` en el mismo archivo y ajustar los topes.
+4. Reiniciar el servicio. Verificar con `echo` que `DJANGO_SETTINGS_MODULE` y `DB_PATH` son los de producción.
+5. `uv run python manage.py assistant_probar`: debe decir `key: present`, `switch: OPEN` y los topes esperados.
+6. `uv run python manage.py assistant_probar --ping`: una sola llamada; debe decir `ping: ok` con latencia y tokens.
+7. Entrar con una cuenta con `view_flightpermission`, hacer una pregunta y revisar en el admin la fila de
+   `AssistantUsage` (quién, herramientas, llamadas, tokens, resultado; nunca el texto).
+8. Para apagar: `AI_ASSISTANT_ENABLED=0` y reiniciar.
+
+`assistant_probar` nunca imprime la llave ni el texto del modelo; sin `--ping` no llama al servicio.
+
+## Por qué hay un interruptor aparte
 
 El acceso gratuito de NVIDIA (Developer Program) es **sólo para prototipos, investigación y
 pruebas**. Atender a usuarios reales es «producción» y exige licencia (NVIDIA AI Enterprise) o
-alojar el modelo en infraestructura propia. Por eso la pantalla exige `AI_ASSISTANT_ENABLED` **y**
-`DEBUG`: en producción no se enciende aunque alguien ponga la variable. Pasar a producción es una
-decisión (y una licencia), no un interruptor. Además, el límite gratuito ronda las 40 solicitudes por
-minuto y no hay una política clara de retención de lo que se envía.
+alojar el modelo en infraestructura propia. Por eso, fuera de `DEBUG`, no basta `AI_ASSISTANT_ENABLED`: hace
+falta `AI_ASSISTANT_ALLOW_PRODUCTION`, que sólo se enciende con la licencia resuelta. Además, el límite
+gratuito ronda las 40 solicitudes por minuto y no hay una política clara de retención de lo que se envía.
 
 ## Cómo probarlo en el demo
 
