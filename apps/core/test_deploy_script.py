@@ -79,7 +79,12 @@ exit 0
 """,
     "curl": r"""#!/usr/bin/env bash
 echo "curl $*" >> "$STUB_LOG"
-printf '%s' "$(cat "$STUB_DIR/health" 2>/dev/null || echo 200)"
+# Como produccion: HTTP plano recibe el 301 de SECURE_SSL_REDIRECT; con la cabecera del proxy, 200.
+if [ -e "$STUB_DIR/https_only" ] && [[ "$*" != *"X-Forwarded-Proto: https"* ]]; then
+  printf '301'
+else
+  printf '%s' "$(cat "$STUB_DIR/health" 2>/dev/null || echo 200)"
+fi
 """,
     "uv": r"""#!/usr/bin/env bash
 echo "uv $*" >> "$STUB_LOG"
@@ -281,6 +286,19 @@ def test_health_503_aborts_without_running_the_rollback(world):
     # el HEAD sigue en el commit nuevo: el rollback sólo se imprimió
     assert world.vm_git("rev-parse HEAD") == world.vm_git("rev-parse origin/main")
     assert "systemctl checkout" not in world.calls()
+
+
+def test_health_check_speaks_https_like_the_proxy(world):
+    """Primer despliegue real (2026-10-19): el paso 12 recibió un 301 y abortó con la app sana.
+
+    Producción redirige HTTP a HTTPS; el chequeo local debe mandar la cabecera que manda el proxy.
+    El curl simulado se comporta como producción: sin la cabecera devuelve 301.
+    """
+    world.push({"b.txt": "b"})
+    (world.stub / "https_only").write_text("1")
+    rc, out = world.run()
+    assert rc == 0, out
+    assert "X-Forwarded-Proto: https" in world.calls()
 
 
 def test_wrong_settings_module_aborts_before_anything_is_written(world):
