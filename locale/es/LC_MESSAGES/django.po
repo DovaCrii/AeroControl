@@ -9932,3 +9932,60 @@ msgstr "Preguntas (últimos %(window_days)s días)"
 
 msgid "Today's usage is at %(percent)s%% of the daily cap (%(used)s of %(cap)s service calls)."
 msgstr "El uso de hoy llega al %(percent)s%% del tope diario (%(used)s de %(cap)s llamadas al servicio)."
+
+msgid "Site"
+msgstr "Faena"
+
+msgid "City"
+msgstr "Ciudad"
+
+msgid "Time zone"
+msgstr "Zona horaria"
+
+msgid "A site is required when the city comes from a site."
+msgstr "Se requiere una faena cuando la ciudad proviene de una faena."
+
+msgid "That site is not available."
+msgstr "Esa faena no está disponible."
+
+msgid "Too many searches this hour. Try again later."
+msgstr "Se hicieron demasiadas búsquedas en esta hora. Vuelva a intentarlo más tarde."
+
+msgid "That result is no longer available. Search again."
+msgstr "Ese resultado ya no está disponible. Vuelva a buscar."
+
+msgid "Choose a site or a search result."
+msgstr "Elija una faena o un resultado de la búsqueda."
+
+msgid "Your city was saved."
+msgstr "Su ciudad quedó guardada."
+
+msgid "My city"
+msgstr "Mi ciudad"
+
+msgid "The weather widget on the home page shows this city. It is informational and has nothing to do with flight permits."
+msgstr "El widget del tiempo de la página principal muestra esta ciudad. Es solo informativo y no tiene relación con los permisos de vuelo."
+
+msgid "Current city"
+msgstr "Ciudad actual"
+
+msgid "None chosen yet."
+msgstr "Aún no se elige ninguna."
+
+msgid "Choose one of our sites"
+msgstr "Elegir una de nuestras faenas"
+
+msgid "Use this site"
+msgstr "Usar esta faena"
+
+msgid "Or search for a city"
+msgstr "O buscar una ciudad"
+
+msgid "City name"
+msgstr "Nombre de la ciudad"
+
+msgid "Use this city"
+msgstr "Usar esta ciudad"
+
+msgid "No cities found."
+msgstr "No se encontraron ciudades."
