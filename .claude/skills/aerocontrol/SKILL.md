@@ -44,19 +44,19 @@ El commit y su fila van **juntos**: marcar `⬜→✅` en `MASTER_PLAN.md`, entr
 2. `/verificar` — el gate (`pwsh scripts/verify.ps1`, que corre lo mismo que el CI).
 3. `/abrir-pr` — rama `codex/…`, PR, espera del CI y fusión; termina comprobando que el hash llegó a `origin/main`.
 
-Después, `/desplegar-p340` dicta los pasos **uno por bloque** y lee la terminal del usuario. Reglas completas en **`references/despliegue-p340.md`**: el primer comando es `git status --short --branch`, `git pull` no se omite, y la prueba de que llegó es el hash de `git log --oneline -1` en la VM. El agente no tiene SSH.
+Después, `/desplegar-p340` dicta los pasos **uno por bloque** y lee la terminal del usuario. Reglas en **`/desplegar-p340`** (camino principal `scripts/deploy.sh`): el primer comando es `git status --short --branch`, `git pull` no se omite, y la prueba de que llegó es el hash de `git log --oneline -1` en la VM. El agente no tiene SSH.
 
 ## Dónde mirar según la tarea
 
 | Necesito… | Leer |
 |---|---|
-| Trampas ya vividas (tests, UI, migraciones, service worker) | `references/lecciones.md` |
-| Desplegar, diagnosticar un 500 post-despliegue | `references/despliegue-p340.md` y `/desplegar-p340` |
+| Trampas ya vividas (tests, UI, migraciones, service worker) | `AGENTS.md` § Lecciones operativas |
+| Desplegar, diagnosticar un 500 post-despliegue | `/desplegar-p340` |
 | Entregar un bloque (rama, PR, CI, fusión) | `/abrir-pr` |
 | Cerrar una fila del plan | `/cerrar-tarea` |
 | Correr el gate sin inundar el contexto | `/verificar` |
 | Terminar todos los bloques pendientes y dejar listo lo que se sube | `/terminar-bloques` |
 | Cerrar PR, ramas y worktrees sobrantes en GitHub | `/pendientes-github` |
-| Qué falta para 1.0 y qué decide el usuario | `references/rumbo-1.0.md` |
+| Qué falta para 1.0 y qué decide el usuario | primera entrada de `HANDOFF.md` y `MASTER_PLAN.md` § Rumbo a 1.0 |
 | Dónde está cada bloque del plan | `grep -nE '^#{2,3} ' MASTER_PLAN.md` |
 
