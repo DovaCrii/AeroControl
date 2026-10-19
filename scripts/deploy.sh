@@ -103,7 +103,10 @@ jget() { # jget <json> <python-expr sobre d>
 }
 
 health_code() {
-  curl -s -o /dev/null -w '%{http_code}' "${HEALTH_URL}" || true
+  # En produccion Django redirige todo HTTP a HTTPS (301). El proxy delante de gunicorn manda
+  # `X-Forwarded-Proto: https`; sin esa cabecera la comprobacion local recibe el 301 y falla
+  # aunque la aplicacion este bien (paso 12 del primer despliegue real, 2026-10-19).
+  curl -s -o /dev/null -w '%{http_code}' -H 'X-Forwarded-Proto: https' "${HEALTH_URL}" || true
 }
 
 wait_health() {
