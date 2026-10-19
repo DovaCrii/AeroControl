@@ -42,7 +42,7 @@ def operator(db):
     cost_center = CostCenter.objects.create(code="OPS", name="Operations")
     return Operator.objects.create(
         employee_id="P1",
-        full_name="Carlos Peñailillo Latorre",
+        full_name="Camilo Peñaloza Lagos",
         cost_center=cost_center,
         credential_expiry=TODAY - timedelta(days=90),
     )

@@ -1152,7 +1152,7 @@ class UnifiedCalendarEventsView(CalendarAccessMixin, View):
                 # DGAC folio"` -- permission_number is None until the DGAC
                 # folio arrives (LV-39), and an f-string interpolates None
                 # as the literal word "None", not an empty string, so a
-                # permit without one rendered as "None · Alexandra Márquez
+                # permit without one rendered as "None · Amanda Marchant
                 # Cortés +2" on this calendar. internal_folio is assigned at
                 # creation and never blank, so the possibility is gone, not
                 # just guarded.

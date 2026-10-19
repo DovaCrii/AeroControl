@@ -152,13 +152,13 @@ class TestTrace:
     def test_a_change_is_recorded_with_who_made_it(self):
         aircraft = _aircraft()
         aircraft.insurance_status = Aircraft.INSURANCE_STATUS_PENDING
-        aircraft._changed_by = "cmunoz"
+        aircraft._changed_by = "operador-demo"
         aircraft.save()
 
         entry = InsuranceHistory.objects.get(aircraft=aircraft)
         assert entry.previous_status == Aircraft.INSURANCE_STATUS_MISSING
         assert entry.new_status == Aircraft.INSURANCE_STATUS_PENDING
-        assert entry.changed_by == "cmunoz"
+        assert entry.changed_by == "operador-demo"
 
     def test_saving_without_changing_the_status_records_nothing(self):
         aircraft = _aircraft()

@@ -14,6 +14,12 @@ Configuración opcional (JSON, por defecto ``.privacy-scan.json`` en la raíz):
 - ``allow_email_domains``: dominios de correo aceptados además de los de ejemplo.
 - ``allow_paths``: globs de rutas que no se examinan.
 - ``allow_rules``: {"glob": ["email", "rut"]} reglas ignoradas solo en esas rutas.
+- ``allow_ruts``: cuerpos de RUT inventados (sin puntos ni dígito verificador) aceptados en
+  cualquier archivo con cualquier dígito verificador; todo otro RUT falla.
+Reglas de rutas y hosts: ``user-path`` (carpeta de usuario de Windows, salvo ``usuario``),
+``home-path`` (``/home/<u>``, salvo ``aerocontrol``/``usuario``/``example``), ``private-ip``
+(172.16-31.x.x y 100.64-127.x.x, salvo 100.64.0.1) y ``tailnet-host`` (``<x>.ts.net``, salvo
+``example``/``tuTailnet``).
 Las excepciones son para falsos positivos legítimos; no se debilitan las reglas.
 """
 
@@ -44,8 +50,25 @@ CONTENT_RULES = {
     "sk": re.compile(r"\bsk-[A-Za-z0-9_-]{20,}"),
     "aws": re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
     "private-key": re.compile(r"-----BEGIN (?:[A-Z]+ )*PRIVATE KEY"),
-    "rut": re.compile(r"(?<![\w.])\d{1,2}\.?\d{3}\.?\d{3}-[\dkK]\b"),
+    # El inicio admite un ``\t``/``\n`` escrito en el código: ``":\t12.345.678-5"`` también es un RUT.
+    "rut": re.compile(r"(?:(?<![\w.])|(?<=\\[tnr]))\d{1,2}\.?\d{3}\.?\d{3}-[\dkK]\b"),
+    # Ruta personal de Windows: cualquier carpeta de usuario salvo el sustituto ``usuario``.
+    "user-path": re.compile(r"\b[A-Za-z]:[\\/]+Users[\\/]+(?!usuario\b)[A-Za-z0-9_.-]"),
+    # Carpeta personal de Linux: salvo ``aerocontrol``, ``usuario`` y ``example``.
+    "home-path": re.compile(
+        r"/home/(?!(?:aerocontrol|usuario|example)\b)[A-Za-z_][\w.-]*"
+    ),
+    # Direcciones privadas o de tailnet (172.16-31.x.x y 100.64-127.x.x); los ejemplos
+    # 10.0.0.x y 100.64.0.1 son los sustitutos aceptados.
+    "private-ip": re.compile(
+        r"(?<![\d.])(?:172\.(?:1[6-9]|2\d|3[01])|100\.(?:6[4-9]|[7-9]\d|1[01]\d|12[0-7]))"
+        r"\.\d{1,3}\.\d{1,3}(?![\d])"
+    ),
 }
+ALLOWED_IPS = {"100.64.0.1"}
+# Host de tailnet: la etiqueta antes de ``.ts.net`` debe ser un sustituto.
+ALLOWED_TAILNET_LABELS = {"example", "tutailnet"}
+TAILNET_RE = re.compile(r"\b([A-Za-z0-9-]+)\.ts\.net\b")
 EMAIL_RE = re.compile(
     r"[A-Za-z0-9._%+-]+@([A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,})"
 )
@@ -72,14 +95,35 @@ def check_path(path: str) -> list[str]:
     return found
 
 
+def _rut_body(value: str) -> str:
+    """Cuerpo del RUT sin puntos ni dígito verificador."""
+    return value.replace(".", "").rsplit("-", 1)[0]
+
+
 def check_text(
-    path: str, text: str, allow_domains: set[str], skip_rules=()
+    path: str,
+    text: str,
+    allow_domains: set[str],
+    skip_rules=(),
+    allow_ruts: frozenset[str] | set[str] = frozenset(),
 ) -> list[str]:
     found = []
     for lineno, line in enumerate(text.splitlines(), 1):
         for rule, rx in CONTENT_RULES.items():
-            if rule not in skip_rules and rx.search(line):
+            if rule in skip_rules:
+                continue
+            for m in rx.finditer(line):
+                if rule == "rut" and _rut_body(m.group(0)) in allow_ruts:
+                    continue
+                if rule == "private-ip" and m.group(0) in ALLOWED_IPS:
+                    continue
                 found.append(f"{rule}: {path}:{lineno}")
+                break
+        if "tailnet-host" not in skip_rules:
+            for m in TAILNET_RE.finditer(line):
+                if m.group(1).lower() not in ALLOWED_TAILNET_LABELS:
+                    found.append(f"tailnet-host: {path}:{lineno}")
+                    break
         if "email" not in skip_rules:
             for m in EMAIL_RE.finditer(line):
                 domain = m.group(1).lower()
@@ -97,6 +141,7 @@ def scan(
     }
     allow_paths = config.get("allow_paths", [])
     allow_rules = config.get("allow_rules", {})
+    allow_ruts = {r.replace(".", "") for r in config.get("allow_ruts", [])}
     problems = []
     for path in files if files is not None else tracked_files(root):
         if any(fnmatch.fnmatch(path, p) for p in allow_paths):
@@ -115,7 +160,7 @@ def scan(
             for r in rules
         }
         problems += check_text(
-            path, data.decode("utf-8", "replace"), allow_domains, skip
+            path, data.decode("utf-8", "replace"), allow_domains, skip, allow_ruts
         )
     return problems
 

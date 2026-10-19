@@ -47,7 +47,7 @@ class TestCredentialColumn:
     def test_the_file_is_its_own_column_not_a_badge_on_the_date(self):
         """R4.7 drew "Sin PDF" inside the expiry cell, so one cell mixed two
         different facts and the badge read as if it qualified the date."""
-        Operator.objects.create(employee_id="E1", full_name="René Herrera")
+        Operator.objects.create(employee_id="E1", full_name="Rubén Herrero")
 
         content = (
             login_as("view_operator").get(reverse("operator-list")).content.decode()

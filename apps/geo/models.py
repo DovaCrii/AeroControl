@@ -57,7 +57,7 @@ class GeoPlan(StatusHistoryMixin, StatusFlowMixin, BaseModel):
 
     # LV-138: el identificador del plan. Pedido del usuario mirando el listado,
     # donde el título hacía de identificador y venía armado de **dos formas
-    # distintas** según cómo se hubiera importado: "CC738 - MLP · Juan Quiroz ·
+    # distintas** según cómo se hubiera importado: "CC738 - MLP · Julio Quintana ·
     # CG-01_circunferencia_grande" cuando no había permiso, y "JEJ-2026-002 ·
     # CC861_area_permiso" cuando sí. Ninguna de las dos es un identificador:
     # cambian de forma, se repiten y no se pueden citar por teléfono.

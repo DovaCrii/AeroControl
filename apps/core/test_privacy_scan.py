@@ -73,7 +73,7 @@ class TestWhatItDetects:
 
     def test_ordinary_numbers_are_not_a_rut(self, tmp_path):
         assert (
-            _scan(tmp_path, {"a.py": "n = 1234567\nphone = '+56 2 2722 5000'\n"}) == []
+            _scan(tmp_path, {"a.py": "n = 1234567\nphone = '+56 2 0000 0000'\n"}) == []
         )
 
     def test_path_rules(self):
@@ -83,6 +83,78 @@ class TestWhatItDetects:
         assert privacy_scan.check_path("--basura.txt")
         assert privacy_scan.check_path(".env.example") == []
         assert privacy_scan.check_path("apps/core/models.py") == []
+
+
+# LV-338: ruta personal, carpeta personal de Linux, IP privada y host de tailnet. Armados en ejecución.
+WIN_USER_PATH = "C:" + "\\Users\\" + "alguien-real" + "\\Desktop"
+WIN_USER_PATH_SLASHES = "C:" + "/Users/" + "alguien-real" + "/x"
+LINUX_HOME = "/ho" + "me/" + "alguien-real" + "/.config"
+IP_172 = ".".join(["172", "20", "1", "5"])
+IP_100 = ".".join(["100", "101", "2", "3"])
+TAILNET_HOST = "mi-maquina." + "red-real." + "ts" + ".net"
+
+
+class TestPersonalPathsAndHosts:
+    @pytest.mark.parametrize(
+        ("text", "rule"),
+        [
+            (WIN_USER_PATH, "user-path"),
+            (WIN_USER_PATH_SLASHES, "user-path"),
+            (LINUX_HOME, "home-path"),
+            (IP_172, "private-ip"),
+            (IP_100, "private-ip"),
+            (TAILNET_HOST, "tailnet-host"),
+        ],
+    )
+    def test_each_new_rule_fires(self, tmp_path, text, rule):
+        problems = _scan(tmp_path, {"a.md": f"ver {text} luego\n"})
+
+        assert any(p.startswith(f"{rule}:") for p in problems), problems
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "C:" + "\\Users\\" + "usuario" + "\\Desktop",
+            "/ho" + "me/" + "aerocontrol" + "/x",
+            "/ho" + "me/" + "usuario" + "/x",
+            "/ho" + "me/" + "example" + "/x",
+            "10.0.0.51",
+            "100.64.0.1",
+            "172.15.0.1",
+            "172.32.0.1",
+            "100.63.0.1",
+            "100.128.0.1",
+            "https://aerocontrol." + "tuTailnet." + "ts" + ".net",
+            "https://vm." + "example." + "ts" + ".net",
+            "https://<host-de-la-vm>.<tu-tailnet>." + "ts" + ".net",
+            "version 1.100.64.2",
+        ],
+    )
+    def test_the_documented_substitutes_are_fine(self, tmp_path, text):
+        assert _scan(tmp_path, {"a.md": f"ver {text} luego\n"}) == []
+
+    def test_a_listed_fictitious_rut_body_is_accepted_with_any_check_digit(
+        self, tmp_path
+    ):
+        files = {"a.md": f"{RUT_DOTTED} y {RUT_K}\n{RUT_PLAIN}\n"}
+
+        assert _scan(tmp_path, files)
+        assert _scan(tmp_path, files, {"allow_ruts": ["12345678", "9876543"]}) == []
+
+    def test_a_rut_glued_to_an_escaped_tab_is_still_found(self, tmp_path):
+        """Un RUT tras un ``\\t`` escrito en el código: el ``t`` del escape tapaba el RUT al lookbehind."""
+        line = 'p = "RUT' + "\\" + "t:" + "\\" + "t" + RUT_K + '"\n'
+
+        problems = _scan(tmp_path, {"a.py": line})
+
+        assert any(p.startswith("rut:") for p in problems)
+
+    def test_an_unlisted_rut_still_fails_next_to_a_listed_one(self, tmp_path):
+        files = {"a.md": f"{RUT_DOTTED} y {RUT_K}\n"}
+
+        problems = _scan(tmp_path, files, {"allow_ruts": ["12345678"]})
+
+        assert any(p.startswith("rut:") for p in problems)
 
 
 class TestExceptions:
@@ -143,6 +215,17 @@ class TestTheRepositoryConfiguration:
         wildcards = [pattern for pattern in config["allow_rules"] if "*" in pattern]
 
         assert wildcards == []
+
+    def test_no_file_is_exempt_from_the_rut_rule(self):
+        """LV-338: los RUT de ejemplo se aceptan por cuerpo inventado, no por archivo."""
+        config = json.loads(CONFIG.read_text(encoding="utf-8"))
+
+        exempt = [p for p, rules in config["allow_rules"].items() if "rut" in rules]
+
+        assert exempt == []
+        assert config["allow_ruts"], (
+            "los ejemplos de RUT necesitan sus cuerpos listados"
+        )
 
     def test_every_excepted_file_exists(self):
         """Una excepción sobre un archivo que ya no existe es una puerta abierta sin motivo."""

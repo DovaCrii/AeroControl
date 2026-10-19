@@ -38,7 +38,7 @@ def center(db):
 def operator(center):
     return Operator.objects.create(
         employee_id="RUT-151515150",
-        full_name="Nicolas Galleguillos Adaros",
+        full_name="Nelson Gallardo Aros",
         cost_center=center,
     )
 

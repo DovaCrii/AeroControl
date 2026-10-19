@@ -434,7 +434,7 @@ la deja fuera.
 #### ✅ La VM creció, y se comprobó que los datos siguen ahí
 
 En el mismo reinicio el volumen pasó de **47 GB a 342 GB** y la IPv4 interna de
-`eth0` cambió (`172.22.10.51` → `172.22.10.143`; la de Tailscale no, por eso el
+`eth0` cambió (`10.0.0.51` → `10.0.0.143`; la de Tailscale no, por eso el
 SSH siguió funcionando). Un volumen que cambia de tamaño bajo los pies de una
 base de datos merece comprobarse antes de dar nada por hecho, y se comprobó:
 
@@ -517,7 +517,7 @@ en el panel (`LV-191`). Ninguno de los cuatro se buscó.
   **`p340` sigue en `22f379f`**: ahora le faltan **`LV-184` a `LV-195`**.
 - El paso de despliegue no cambió: **`migrate` + `bootstrap_roles` +
   `collectstatic`**, y sin `bootstrap_roles` media fila de `LV-184` queda sin
-  efecto. Después, el rol `Compliance` a Ariel y a Cristóbal.
+  efecto. Después, el rol `Compliance` a Aldo y a Sebastián.
 - **Ninguna de las filas nuevas trae migración.** La única de la tanda que
   migraba sigue siendo `LV-184` (`registry.0039`, sólo el permiso).
 
@@ -583,7 +583,7 @@ son un hecho fechado, igual que una migración.
 
 Desplegado `3315933` en `p340` (respaldo `aero_ops_20260831_123616` verificado,
 `registry.0039` aplicada, `bootstrap_roles` corrido). **Queda el paso manual:
-asignar el rol `Compliance` a Ariel y a Cristóbal**, o media fila de `LV-184`
+asignar el rol `Compliance` a Aldo y a Sebastián**, o media fila de `LV-184`
 sigue sin efecto. Después de ese despliegue se cerraron cinco filas más, **sin
 desplegar todavía**:
 
@@ -1559,7 +1559,7 @@ tests, cobertura 97.20%.
 | Fila | Qué falta |
 |---|---|
 | `LV-74` | **1 aeronave** (`RPA-7126`) sin seguro y **7 credenciales** DGAC sin fecha. Re-medido hoy: eran 3 aeronaves y una ya se cargó; `RPA-2019` no aplica (bodega, ver `LV-229`) |
-| `LV-228` | Cuatro operadores sin faena: René Herrera, Natalia Ramos, Jimmy Andrade, David Vidal |
+| `LV-228` | Cuatro operadores sin faena: Rubén Herrero, Nadia Rubio, Julián Aranda, Daniel Vera |
 | `LV-98`, `LV-102` | Tipos de documento bajo "Otro", y el calendario — que depende de los dos anteriores |
 
 Y **el correo** sigue siendo el único criterio en rojo, esperando SMTP.
@@ -1903,8 +1903,8 @@ git log --oneline -1
 
 **`bootstrap_roles` no es opcional**: sin él, el permiso `view_assessment_answers`
 de `LV-184` existe y no lo tiene nadie salvo `root`, así que media fila queda sin
-efecto. Y después, en la app: **el rol `Compliance` a Ariel Ortega y a
-Cristóbal**. La única migración de la tanda es `registry.0039` (`LV-184`, sólo el
+efecto. Y después, en la app: **el rol `Compliance` a Aldo Orrego y a
+Sebastián**. La única migración de la tanda es `registry.0039` (`LV-184`, sólo el
 permiso; `sqlmigrate` la reporta `(no-op)`).
 
 ### El cruce del manual, después de desplegar
@@ -1981,7 +1981,7 @@ pedidos del usuario abiertos, con el camino ya acordado**.
   lo tiene nadie salvo `root`, así que **Compliance no vería la clave de
   respuestas** — media fila sin efecto.
 - Después de desplegar, el usuario tiene que **darles el rol `Compliance` a
-  Ariel Ortega y a Cristóbal** para que vean las respuestas correctas.
+  Aldo Orrego y a Sebastián** para que vean las respuestas correctas.
 
 ### Lo que el usuario pidió y quedó acordado, sin hacer
 
@@ -2363,7 +2363,7 @@ plan geoespacial y la hoja de campo para SIGO con botones de copiar) · `LV-150`
 el correo sigue sin salir hasta que alguien pegue las credenciales).
 
 El plan del lote, con el contexto de cada decisión, está en
-`C:\Users\cmunoz\.claude\plans\d-onedrive-j-e-j-ingenier-a-parallel-map.md`.
+`C:\Users\usuario\.claude\plans\d-onedrive-j-e-j-ingenier-a-parallel-map.md`.
 
 ### El lote quedó completo
 
@@ -2868,7 +2868,7 @@ uv run python manage.py collectstatic --no-input && sudo systemctl restart aeroc
 **Qué mirar después**, en este orden:
 
 1. **Panel**: la tarjeta **Vencidos** con `RPA-5534` y `RPA-2198` en rojo arriba
-   de la lista (`LV-120`), y que la credencial de `Carlos Peñailillo` —resuelta
+   de la lista (`LV-120`), y que la credencial de `Camilo Peñaloza` —resuelta
    con "Fuera de CC con operación RPA"— **ya no esté** (`LV-122`). Las dos
    mitades del mismo reporte.
 2. **Alertas**: abre en "Sin resolver" (4 filas, no 8), lo más atrasado primero,
@@ -2917,9 +2917,9 @@ correcta de LV-29: un nulo significa "nunca se ingresó"), así que estos 10 son
 invisibles para las alertas, el calendario y el reporte: el hueco no se anuncia.
 
 - Sin `insurance_expiry` (seguro JAC): `RPA-2019`, `RPA-3696`, `RPA-7126`.
-- Sin `credential_expiry` (credencial DGAC): René Herrera Molina, Natalia Ramos
-  Mora, Jimmy Patricio Andrade Muñoz, David Vidal Vidal, Jose Luis Ogalde
-  Henríquez, Luis Piña Tapia, Alberto Jesus Angel Milla.
+- Sin `credential_expiry` (credencial DGAC): Rubén Herrero Mena, Nadia Rubio
+  Mora, Julián Patricio Aranda Muñiz, Daniel Vera Vera, Juan Luis Ogando
+  Herrada, Lucas Pineda Toro, Mario Elias Arce Mella.
 
 Se cargan desde la ficha de cada aeronave/operador, o re-corriendo
 `load_dgac_vigencias` con una captura completa.

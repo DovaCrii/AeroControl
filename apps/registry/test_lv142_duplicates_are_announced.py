@@ -48,7 +48,7 @@ def _cost_center_data(**overrides):
     data = {
         "code": "CC738",
         "name": "Minera Los Pelambres",
-        "responsible": "Juan Quiroz",
+        "responsible": "Julio Quintana",
         "responsible_type": "administrator",
     }
     data.update(overrides)
