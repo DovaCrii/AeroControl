@@ -462,6 +462,9 @@ NVIDIA_BASE_URL = config(
     "NVIDIA_BASE_URL", default="https://integrate.api.nvidia.com/v1"
 )
 NVIDIA_MODEL = config("NVIDIA_MODEL", default="meta/llama-3.3-70b-instruct")
+# `LV-346`: botón «Copy answer» del panel. Apagado por omisión: copiar el texto fuera del sistema es
+# redistribuirlo, y eso depende de la licencia del proveedor del modelo.
+AI_ASSISTANT_ALLOW_COPY = config("AI_ASSISTANT_ALLOW_COPY", default=False, cast=bool)
 AI_ASSISTANT_TIMEOUT = config("AI_ASSISTANT_TIMEOUT", default=30, cast=int)
 # Preguntas por usuario y por hora. El acceso de prueba de NVIDIA es por créditos limitados
 # (1 000 al registrarse), así que un tope evita gastarlos por accidente. 0 = sin tope.
