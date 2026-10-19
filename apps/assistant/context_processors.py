@@ -1,13 +1,15 @@
 """`LV-332`: lo que necesita el panel flotante del asistente en cualquier pantalla.
 
 Devuelve `assistant_panel` (¿se dibuja el botón y el panel?) y las sugerencias de la pantalla.
-Apagado, o sin `view_flightpermission`, el panel no existe: ni botón ni HTML. El candado es el
+Apagado, o sin el permiso de NINGUNA herramienta (`LV-340`), el panel no existe: ni botón ni HTML. El candado es el
 mismo `assistant_available()` de la pantalla; este módulo no lo duplica.
 """
 
 from django.utils.translation import gettext_lazy as _
 
 from apps.core.context_processors import module_for_url_name
+
+from .tools import user_has_any_tool_permission
 
 SUGGESTIONS_BY_MODULE = {
     "flight": (
@@ -26,7 +28,7 @@ def assistant_panel(request):
         user is None
         or not user.is_authenticated
         or not assistant_available()
-        or not user.has_perm("operations.view_flightpermission")
+        or not user_has_any_tool_permission(user)
     ):
         return {"assistant_panel": False}
     match = getattr(request, "resolver_match", None)

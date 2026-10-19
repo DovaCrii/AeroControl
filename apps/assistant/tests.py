@@ -25,6 +25,10 @@ URL = "assistant-ask"
 SECRET_KEY = "nvapi-TEST-NOT-A-REAL-KEY"
 
 
+def _data(text):
+    return json.loads(text)["data"]
+
+
 def _tool_call(name="permits_summary", arguments="{}", call_id="c1"):
     return {
         "role": "assistant",
@@ -190,7 +194,7 @@ class TestTheToolLoop:
         assert answer.tools_used == ["permits_summary"]
         second_round = fake.calls[1]
         tool_message = next(m for m in second_round if m["role"] == "tool")
-        assert json.loads(tool_message["content"])["in_force"] == 1
+        assert json.loads(tool_message["content"])["data"]["in_force"] == 1
 
     def test_a_user_without_the_permission_gets_an_error_not_the_data(
         self, permit, monkeypatch
@@ -311,7 +315,7 @@ class TestWhatTheToolsReveal:
 
         assert "unknown tool" in tools.run_tool(user, "drop_everything", "{}")
         # argumentos que no son JSON: se usan los valores por omisión
-        assert json.loads(tools.run_tool(user, "expiring_permits", "no-json")) == []
+        assert _data(tools.run_tool(user, "expiring_permits", "no-json")) == []
 
     def test_no_personal_data_leaves_through_any_tool(self, permit, centre):
         """Nombres, RUT y correos de operadores no viajan hacia el servicio externo."""
@@ -340,7 +344,7 @@ class TestWhatTheToolsReveal:
     def test_expiring_permits_only_lists_the_agreed_fields(self, permit):
         user = login_as("view_flightpermission").user
 
-        rows = json.loads(tools.run_tool(user, "expiring_permits", '{"days": 30}'))
+        rows = _data(tools.run_tool(user, "expiring_permits", '{"days": 30}'))
 
         assert rows and set(rows[0]) == {
             "pk",
@@ -355,12 +359,12 @@ class TestWhatTheToolsReveal:
 
         # 10 años pedidos: se acota a 365 y no devuelve un error
         assert isinstance(
-            json.loads(tools.run_tool(user, "expiring_permits", '{"days": 3650}')), list
+            _data(tools.run_tool(user, "expiring_permits", '{"days": 3650}')), list
         )
 
     def test_every_tool_declares_a_view_permission_and_none_writes(self):
         for tool in tools.TOOLS.values():
-            assert tool.permission.startswith(("operations.view_", "compliance.view_"))
+            assert tool.permission.split(".")[1].startswith("view_"), tool.name
 
 
 class _Response(io.BytesIO):
@@ -487,12 +491,8 @@ class TestTenantScope:
     def test_permits_summary_counts_only_the_users_tenant(self):
         tenants = _world()
 
-        a = json.loads(
-            tools.run_tool(self._user(tenants["a"]), "permits_summary", "{}")
-        )
-        b = json.loads(
-            tools.run_tool(self._user(tenants["b"]), "permits_summary", "{}")
-        )
+        a = _data(tools.run_tool(self._user(tenants["a"]), "permits_summary", "{}"))
+        b = _data(tools.run_tool(self._user(tenants["b"]), "permits_summary", "{}"))
 
         assert (a["total"], a["in_force"]) == (2, 2)
         assert (b["total"], b["in_force"]) == (1, 1)
@@ -500,10 +500,10 @@ class TestTenantScope:
     def test_cost_centres_lists_only_the_users_tenant(self):
         tenants = _world()
 
-        a = json.loads(
+        a = _data(
             tools.run_tool(self._user(tenants["a"]), "cost_centres_permit_status", "{}")
         )
-        b = json.loads(
+        b = _data(
             tools.run_tool(self._user(tenants["b"]), "cost_centres_permit_status", "{}")
         )
 
@@ -513,12 +513,8 @@ class TestTenantScope:
     def test_expiring_permits_lists_only_the_users_tenant(self):
         tenants = _world()
 
-        a = json.loads(
-            tools.run_tool(self._user(tenants["a"]), "expiring_permits", "{}")
-        )
-        b = json.loads(
-            tools.run_tool(self._user(tenants["b"]), "expiring_permits", "{}")
-        )
+        a = _data(tools.run_tool(self._user(tenants["a"]), "expiring_permits", "{}"))
+        b = _data(tools.run_tool(self._user(tenants["b"]), "expiring_permits", "{}"))
 
         assert {row["cost_centre"] for row in a} == {"CC-A"}
         assert {row["cost_centre"] for row in b} == {"CC-B"}
@@ -529,8 +525,8 @@ class TestTenantScope:
 
         root = get_user_model().objects.create_superuser("root", password="pw")  # nosec B106
 
-        summary = json.loads(tools.run_tool(root, "permits_summary", "{}"))
-        centres = json.loads(tools.run_tool(root, "cost_centres_permit_status", "{}"))
+        summary = _data(tools.run_tool(root, "permits_summary", "{}"))
+        centres = _data(tools.run_tool(root, "cost_centres_permit_status", "{}"))
 
         assert summary["total"] == 3
         assert {row["code"] for row in centres} == {"CC-A", "CC-B"}
@@ -557,7 +553,7 @@ class TestTenantScope:
     def test_cost_centres_rows_carry_only_the_agreed_fields(self):
         tenants = _world()
 
-        rows = json.loads(
+        rows = _data(
             tools.run_tool(self._user(tenants["a"]), "cost_centres_permit_status", "{}")
         )
 

@@ -10,6 +10,7 @@ from apps.core.views import ModelViewPermissionRequiredMixin
 from apps.operations.models import FlightPermission
 
 from .service import MAX_QUESTION_CHARS, ask
+from .tools import user_has_any_tool_permission
 
 
 def assistant_available():
@@ -77,3 +78,9 @@ class AssistantPanelAsk(AssistantAsk):
     """
 
     template_name = "assistant/_answer.html"
+
+    def has_permission(self):
+        # `LV-340`: el panel se dibuja con el permiso de AL MENOS una herramienta, así que su
+        # fragmento acepta lo mismo; cada herramienta vuelve a comprobar el suyo. La pantalla
+        # completa (`AssistantAsk`) conserva `view_flightpermission` por el contrato de `LV-268`.
+        return user_has_any_tool_permission(self.request.user)
