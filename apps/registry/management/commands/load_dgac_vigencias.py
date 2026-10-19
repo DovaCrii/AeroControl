@@ -8,11 +8,10 @@ Two input sources, checked in this order:
   * ``--file path.csv`` -- a CSV with the columns ``kind,key,expiry`` where
     ``kind`` is ``operator`` or ``aircraft``; ``key`` is the operator's DGAC
     credential (falling back to full name) or the aircraft registration; and
-    ``expiry`` is an ISO date (YYYY-MM-DD). This is the path to use while the
-    transcription is being verified -- it needs no code change.
-  * the embedded ``EMBEDDED_VIGENCIAS`` table below, transcribed from the
-    captures. It ships empty on purpose: the transcription (with its OCR risk)
-    is filled in and verified against prod before it is trusted.
+    ``expiry`` is an ISO date (YYYY-MM-DD). This is the path to use: keep the
+    CSV in a private directory outside git (`private/` or `DOCUMENTS_DIR`).
+  * the embedded ``EMBEDDED_VIGENCIAS`` table below. It ships empty on purpose:
+    the real data is private and must never be committed (public repository).
 
 Idempotent: it only sets the two date fields, so a rerun with the same data is
 a no-op. Unmatched keys are reported, never invented. ``--dry-run`` prints what
@@ -27,87 +26,12 @@ from django.db.models import Q
 
 from apps.registry.models import Aircraft, Operator
 
-# (kind, key, "YYYY-MM-DD"). Transcribed from the SIGO captures (2026-08-03,
-# J.E.J. Ingeniería). Aircraft key = registration "RPA-<N° inscripción DGAC>";
-# operator key = DGAC credential number. OCR risk: verify with --dry-run against
-# prod (it reports unmatched keys) before the real run.
-EMBEDDED_VIGENCIAS: list[tuple[str, str, str]] = [
-    # ── Aeronaves RPA · Vigencia Seguro JAC ──
-    ("aircraft", "RPA-4884", "2027-01-23"),
-    ("aircraft", "RPA-4401", "2026-09-05"),
-    ("aircraft", "RPA-2883", "2026-04-16"),
-    ("aircraft", "RPA-4436", "2026-09-05"),
-    ("aircraft", "RPA-2455", "2025-09-09"),
-    ("aircraft", "RPA-2116", "2026-01-30"),
-    ("aircraft", "RPA-4025", "2027-05-28"),
-    ("aircraft", "RPA-3755", "2027-01-12"),
-    ("aircraft", "RPA-2750", "2027-02-06"),
-    ("aircraft", "RPA-6691", "2027-07-23"),
-    ("aircraft", "RPA-3696", "2026-12-21"),
-    ("aircraft", "RPA-6396", "2027-04-10"),
-    ("aircraft", "RPA-4883", "2027-07-23"),
-    ("aircraft", "RPA-2198", "2026-05-20"),
-    ("aircraft", "RPA-5532", "2026-08-08"),
-    ("aircraft", "RPA-5534", "2026-08-08"),
-    ("aircraft", "RPA-4647", "2026-11-20"),
-    # ── Personal Operativo · Vigencia credencial DGAC ──
-    ("operator", "5365", "2027-12-04"),
-    ("operator", "5173", "2027-10-14"),
-    ("operator", "15324", "2027-06-03"),
-    ("operator", "15532", "2027-06-19"),
-    ("operator", "8476", "2027-06-16"),
-    ("operator", "8516", "2027-06-04"),
-    ("operator", "16858", "2027-11-04"),
-    ("operator", "14057", "2028-04-07"),
-    ("operator", "4303", "2025-05-02"),
-    ("operator", "8172", "2027-12-05"),
-    ("operator", "9049", "2027-07-19"),
-    ("operator", "16945", "2027-11-11"),
-    ("operator", "14825", "2025-04-08"),
-    ("operator", "12431", "2028-05-23"),
-    ("operator", "769", "2027-06-03"),
-    ("operator", "4350", "2027-08-30"),
-    ("operator", "13175", "2028-01-30"),
-    ("operator", "7561", "2027-11-28"),
-    ("operator", "6439", "2027-12-12"),
-    ("operator", "1138", "2028-02-28"),
-    ("operator", "11306", "2028-10-20"),
-    ("operator", "3079", "2027-11-04"),
-    ("operator", "11227", "2028-10-27"),
-    ("operator", "7953", "2027-12-11"),
-    ("operator", "4126", "2028-06-09"),
-    ("operator", "2985", "2027-09-03"),
-    ("operator", "8918", "2027-06-24"),
-    ("operator", "8345", "2028-07-04"),
-    ("operator", "12617", "2027-10-30"),
-    ("operator", "17221", "2027-12-04"),
-    ("operator", "6428", "2027-10-16"),
-    ("operator", "16790", "2027-10-29"),
-    ("operator", "8766", "2027-08-19"),
-    ("operator", "11678", "2028-01-29"),
-    ("operator", "8322", "2028-07-24"),
-    ("operator", "20660", "2028-10-03"),
-    ("operator", "8220", "2028-01-24"),
-    ("operator", "3405", "2027-06-10"),
-    ("operator", "7995", "2028-02-14"),
-    ("operator", "15581", "2027-06-26"),
-    ("operator", "5956", "2027-11-13"),
-    ("operator", "2894", "2028-01-08"),
-    ("operator", "11489", "2028-06-02"),
-    ("operator", "19717", "2028-07-28"),
-    ("operator", "20516", "2028-09-30"),
-    ("operator", "14923", "2028-03-26"),
-    ("operator", "5102", "2027-12-02"),
-    ("operator", "17181", "2027-12-02"),
-    ("operator", "11446", "2028-01-22"),
-    ("operator", "15316", "2027-05-30"),
-    ("operator", "8718", "2028-06-09"),
-    ("operator", "1619", "2027-10-15"),
-    ("operator", "4677", "2027-12-06"),
-    ("operator", "11447", "2025-02-06"),
-    ("operator", "6788", "2025-01-04"),
-]
-
+# (kind, key, "YYYY-MM-DD"). Empty on purpose: the real DGAC credential numbers
+# and expiry dates are personal/operational data and this repository is public.
+# They live outside the repo and are loaded with ``--file`` from a CSV kept in a
+# private directory (``private/`` or ``DOCUMENTS_DIR``, both ignored by git).
+# Aircraft key = registration "RPA-<N>"; operator key = DGAC credential number.
+EMBEDDED_VIGENCIAS: list[tuple[str, str, str]] = []
 VALID_KINDS = {"operator", "aircraft"}
 
 
@@ -131,8 +55,8 @@ class Command(BaseCommand):
         if not rows:
             self.stdout.write(
                 self.style.WARNING(
-                    "No vigencias to load. Pass --file, or fill EMBEDDED_VIGENCIAS "
-                    "from the SIGO captures."
+                    "No vigencias to load. Pass --file with a private "
+                    "CSV (kind,key,expiry)."
                 )
             )
             return
@@ -225,7 +149,7 @@ class Command(BaseCommand):
             # contradicting it. `save(update_fields=...)` does not run `clean()`,
             # so the aircraft ends up with a valid policy on file and still
             # reading "Faltante o por renovar" -- which is exactly what happened
-            # to `RPA-3696` in production on 2026-08-13 (date 2026-12-21, status
+            # to one aircraft in production on 2026-08-13 (a future date, status
             # `missing`), found by looking at the data after the load, not by a
             # test. The normalization lives on the model; this just has to call
             # it and save the field it touches.
