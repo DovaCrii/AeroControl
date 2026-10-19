@@ -201,7 +201,7 @@ _Sección agregada al adoptar el estándar de trabajo (`docs/ESTANDAR_TRABAJO.md
 - Django 6.1 + Django REST framework, `django-axes`, `gunicorn`; plantillas Django y estáticos con `whitenoise`.
 - Base de datos: SQLite local-first; PostgreSQL cuando haya concurrencia real (`docs/postgresql-readiness.md`).
 - Pruebas y calidad: `pytest` (+ `pytest-django`, `pytest-xdist`, cobertura), `ruff` (lint y formato), `bandit`, `pip-audit`.
-- Despliegue: servidor interno en la VM `p340` (detalle en `.claude/skills/aerocontrol/references/despliegue-p340.md` y `docs/dev/ubuntu-vm-deploy.md`); `render.yaml`/`build.sh` para Render.
+- Despliegue: servidor interno en la VM `p340` (detalle en `.claude/skills/desplegar-p340/SKILL.md` y `docs/dev/ubuntu-vm-deploy.md`); `render.yaml`/`build.sh` para Render.
 
 ## Comandos
 
@@ -235,5 +235,4 @@ decidir con la persona cómo limpiar el historial. Claude Code no lee `.env`, cl
 | `revision-privacidad` | Revisar el diff antes de un PR en repo público |
 | `diseno-ui` | Diseño visual y UX: qué skill externa usar (`ui-ux-pro-max`, `bencium-controlled-ux-designer`, `web-design-guidelines`) y qué se verifica; ver `.claude/skills/VENDOR.md` |
 
-Política de modelos: Opus orquesta, Sonnet construye, Haiku verifica lo mecánico. Al lanzar un subagente se pasa `model` explícito, con
-dueños de archivos sin cruce, sin `push` ni PR.
+Política de modelos: Opus (esfuerzo medio) diseña y decide, Sonnet (medio) implementa en su worktree, Haiku (medio) revisa y verifica lo mecánico. Al lanzar un subagente se pasa `model` explícito, con dueños de archivos sin cruce, sin `push` ni PR; el cierre de PR, ramas y worktrees sigue `pendientes-github`.

@@ -16,7 +16,7 @@
 - Valores reales de `REPORT_CONTACT_ADDRESS` y `REPORT_CONTACT_WEB` en `/etc/aerocontrol.env` (hoy no están: los informes salen con textos de ejemplo).
 - Probar el asistente en el demo con su llave y decidir licencia de NVIDIA o modelo propio (`PR 3` del asistente espera eso).
 - Decidir si se limpia el historial de git (RUT, correos y un usuario Linux antiguo siguen en commits anteriores).
-- Skills: `lecciones.md`, `rumbo-1.0.md`, `despliegue-p340.md` y `AGENTS.md` l.236.
+- ~~Decisiones de skills~~ resueltas en `LV-337`.
 - Ramas respaldadas a revisar: `codex/skill-aerocontrol`, `codex/t1-4-auditoria-visible`.
 
 **Pendiente — del código:** ola E (mensajes con icono, foco uniforme, migrar colores sueltos de `app.css`), subida de ruff 0.17 (al final, por el formato), chips de SIGO/mantenciones que no filtran por faena, y los informes con `.page-header` propio (sin fondo de módulo).

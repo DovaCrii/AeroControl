@@ -7,8 +7,9 @@ argument-hint: "[hash que corre hoy la VM - opcional]"
 
 # Desplegar a `p340`
 
-El usuario **sólo emite a la VM**; el agente no tiene SSH y no lo intenta. Detalle de reglas en
-`.claude/skills/aerocontrol/references/despliegue-p340.md`.
+El usuario **sólo emite a la VM**; el agente no tiene SSH y no lo intenta. Rutas y comandos de apoyo en
+`docs/dev/remote-vm-operations.md` y `docs/dev/ubuntu-vm-deploy.md`. En el repo público sólo van `/opt/aerocontrol`,
+`/etc/aerocontrol.env` y marcadores `<…>`: nunca contraseñas ni datos reales de la VM.
 
 ## 0. Cuándo se despliega: **por tandas, no por PR** (decisión del usuario, 2026-10-07)
 
@@ -46,15 +47,15 @@ encadena todo el recorrido (bloques → PR → fusión → esto).
 | `templates/**`, `apps/**/*.py`, `locale/**/*.mo` | sólo reiniciar (el `.mo` está versionado: no hay `compilemessages`) |
 | `docs/scheduled-operations.md` (timers nuevos) | **del usuario**: se le da el bloque `mkjob` y se comprueba con `list-timers` |
 
-## 2. Dictar **un solo comando**: `scripts/deploy.sh` (LV-327)
+## 2. Camino principal: **un solo comando**, `scripts/deploy.sh` (LV-327)
 
 ```bash
-cd /opt/aerocontrol && bash scripts/deploy.sh --dry-run   # opcional: sólo lee, imprime el plan
+cd /opt/aerocontrol && bash scripts/deploy.sh --dry-run   # primer uso: siempre; sólo lee, imprime el plan
 cd /opt/aerocontrol && bash scripts/deploy.sh
 ```
 
 Hace los pasos de A-D de abajo con sus comprobaciones y **aborta** en la primera señal de despliegue
-fantasma (HEAD desprendido, árbol sucio, `uv sync` sin instalar, `collectstatic` en 0, health ≠ 200). Pide
+fantasma (HEAD desprendido, árbol sucio, `uv sync` sin instalar, `collectstatic` en 0, health ≠ 200; el chequeo de salud manda `X-Forwarded-Proto: https`, LV-335). Pide
 la contraseña de `sudo` **una vez**, no imprime el entorno y **nunca ejecuta un rollback**: lo imprime.
 El usuario pega al chat sólo el bloque `=== RESUMEN` (≤10 líneas, sin entorno ni host). Opciones:
 `--status`, `--backup`, `--allow-noop-sync`. **No instala timers** (siguen siendo del usuario).
@@ -90,6 +91,14 @@ si el diff no toca `static/**`). Debe terminar en `active` y en el hash de `orig
 
 Si una contraseña del `sudo` sale mal, el bloque **sigue** al segundo intento y el resultado vale: no
 se repite por eso.
+
+### Trampas que el script y los bloques no cubren solos
+
+- **Tras un rollback** (`git checkout <commit>`) la VM queda en HEAD desprendido: `git pull` no despliega nada y `uv sync`, `collectstatic` y el reinicio corren igual sobre el código viejo, sin error. Volver con `git checkout main` el mismo día.
+- **Archivo que se va a versionar y ya existe sin versionar en la VM**: apartarlo allá antes (`mv` a `~`, no `rm`; `diff` después). Si no, `git pull` se niega y el resto corre sobre código viejo con respuestas plausibles.
+- **Cargar el entorno con `set -a`** (`source` solo define variables de shell y `manage.py` cae a `config.settings.dev`); verificar `DJANGO_SETTINGS_MODULE` y `DB_PATH` con `echo` antes de migrar.
+- **Un 500 tras desplegar**: `uv run python manage.py showmigrations <app> | tail -6`; una migración sin `[X]` con código nuevo que la usa lo explica sin leer el traceback.
+- **Nunca se despliega encendido**: el service worker (`SERVICE_WORKER_ENABLED=False`; `docs/dev/postmortem-2026-09-08-service-worker.md`) ni un trabajo programado sin registrar su timer y verlo en `list-timers`. Una función que notifica se comprueba en producción (`--dry-run`, `list-timers`), no sólo con tests.
 
 ## 3. Confirmar leyendo la terminal
 
