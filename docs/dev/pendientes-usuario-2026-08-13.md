@@ -17,7 +17,7 @@ SIGO del 2026-08-03, y **una de las tres aeronaves que faltan ya está en ella**
 
 | Aeronave | ¿Está la fecha en el repo? |
 |---|---|
-| `RPA-3696` | **Sí** — `2026-12-21` |
+| `RPA-3696` | **Sí** (fecha cargada) |
 | `RPA-2019` | No |
 | `RPA-7126` | No |
 

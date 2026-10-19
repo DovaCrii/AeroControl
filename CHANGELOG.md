@@ -17,6 +17,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Privacidad: `load_dgac_vigencias` sin datos reales (`LV-339`).** La tabla embebida de vigencias DGAC queda vacía; los datos reales se cargan con `--file` desde un CSV privado fuera del repo.
 - **Limpieza de skills (`LV-337`).** Se borran `rumbo-1.0.md`, `lecciones.md` y `despliegue-p340.md` de `aerocontrol/references`; lo único vigente de este último pasa a `desplegar-p340` (camino principal `scripts/deploy.sh`, bloques A-D como plan B) y la política de modelos de `AGENTS.md` se alinea con la orden vigente. Sólo documentación.
 
 - **`deploy.sh`: el chequeo de salud habla HTTPS como el proxy (`LV-335`).** El primer uso real abortó en el paso 12 con la aplicación sana: producción redirige HTTP a HTTPS (301) y el `curl` local no mandaba `X-Forwarded-Proto: https`. Ahora lo manda, y el `curl` simulado de las pruebas reproduce el 301. Sólo código.
