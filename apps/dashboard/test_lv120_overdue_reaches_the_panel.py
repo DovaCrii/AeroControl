@@ -179,7 +179,7 @@ class TestWhatTheTrayAlreadyClosed:
     """LV-122: `LV-120` alineó el panel con la bandeja en una sola dirección.
 
     Faltaba la otra, y el usuario la vio el mismo día: la credencial de
-    `Carlos Peñailillo`, vencida el 2025-05-02 y resuelta con el motivo *"Fuera
+    `Camilo Peñaloza`, vencida el 2025-05-02 y resuelta con el motivo *"Fuera
     de CC con operación RPA"*, se instaló en el panel para siempre — esa fecha
     ya no va a cambiar nunca. Textual: *"que sean las no resueltas nada más o si
     no se llenará completo"*.
@@ -190,7 +190,7 @@ class TestWhatTheTrayAlreadyClosed:
         """El caso exacto de la captura."""
         operator = Operator.objects.create(
             employee_id="P1",
-            full_name="Carlos Peñailillo Latorre",
+            full_name="Camilo Peñaloza Lagos",
             cost_center=cost_center,
             credential_expiry=date(2025, 5, 2),
         )

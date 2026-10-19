@@ -44,7 +44,7 @@ class Command(BaseCommand):
         `LV-111` cerró la causa —la clave anti-duplicados incluye el valor
         vigilado, así que el motor no vuelve a crear dos filas del mismo caso—
         pero **no dice nada de las que quedaron escritas antes**. En producción
-        quedaron cuatro (`RPA-5532` y `Carlos Peñailillo`, duplicadas), y la
+        quedaron cuatro (`RPA-5532` y `Camilo Peñaloza`, duplicadas), y la
         única forma de enterarse fue que el usuario las viera en pantalla el
         2026-08-20, tres días después de desplegar el arreglo.
 

@@ -8,7 +8,7 @@ y el nombre del KMZ"*.
 
 El título hacía de identificador y venía en **dos formas distintas** según cómo se
 hubiera importado el plan — "JEJ-2026-002 · CC861_area_permiso" con permiso, y
-"CC738 - MLP · Juan Quiroz · CG-01_circunferencia_grande" sin él —, así que no se
+"CC738 - MLP · Julio Quintana · CG-01_circunferencia_grande" sin él —, así que no se
 podía citar ni ordenar. Ahora el identificador es `PG-2026-001`, correlativo anual
 como el del permiso, y el título vuelve a ser el comentario.
 """

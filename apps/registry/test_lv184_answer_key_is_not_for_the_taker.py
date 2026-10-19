@@ -12,7 +12,7 @@ de vencimientos** (`LV-173` lo verificó), lo que se degrada no es la pantalla
 sino el estado de cumplimiento de una persona frente a la DGAC.
 
 **Se resuelve con un permiso propio y no nombrando personas.** El usuario dijo
-"sólo yo, Ariel Ortega y root": eso es un rol, no una lista de nombres — una
+"sólo yo, Aldo Orrego y root": eso es un rol, no una lista de nombres — una
 lista en el código se desactualiza el día que alguien entra o sale, y en
 silencio. `view_assessment_answers` va a `Compliance` y **no a `Operations`**,
 que es el rol de quien rinde.

@@ -798,8 +798,8 @@ class Operator(BaseModel):
     # el origen habría tocado todo eso por una mejora de listado.
     #
     # Nacen **vacíos y opcionales a propósito**: dónde empieza el apellido no es
-    # deducible sin equivocarse —"Bernardine Von Irmer Helle", "Jose Luis Ogalde
-    # Henríquez"— y un corte inventado es peor que ninguno, porque ordena mal
+    # deducible sin equivocarse —"Marianne Von Brandt Keller", "Juan Luis Ogando
+    # Herrada"— y un corte inventado es peor que ninguno, porque ordena mal
     # justo los casos raros. La lista ordena por apellido cuando está cargado y
     # por nombre completo cuando no, así que nadie desaparece mientras se
     # completan. El comando `split_operator_names` propone el corte; escribirlo

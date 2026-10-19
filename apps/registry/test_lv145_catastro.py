@@ -65,7 +65,7 @@ def world(db):
     operator("Ana Rivas", "E-001", cost_center=north, rut="12345678-5")
     operator("Bruno Soto", "E-002", cost_center=south)
     operator("Carla Diaz", "E-003")  # no cost center
-    operator("Dario Luna", "E-004", cost_center=north, is_active=False)
+    operator("Darwin Lira", "E-004", cost_center=north, is_active=False)
     return {"north": north, "south": south}
 
 
@@ -133,12 +133,12 @@ def test_an_explicit_status_filter_wins_over_the_terminal_exclusion(world, root)
 
 def test_archived_rows_are_out_unless_they_are_asked_for(world, root):
     assert "RPA-0002" not in _registrations(build_catastro(root))
-    assert "Dario Luna" not in _names(build_catastro(root))
+    assert "Darwin Lira" not in _names(build_catastro(root))
 
     included = build_catastro(root, CatastroFilters(include_archived=True))
 
     assert "RPA-0002" in _registrations(included)
-    assert "Dario Luna" in _names(included)
+    assert "Darwin Lira" in _names(included)
 
 
 # -- what the filters hide, said out loud -----------------------------------

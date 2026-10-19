@@ -25,7 +25,7 @@ def centre(db):
 
 def _operator(centre, text, employee_id="E-1"):
     return Operator.objects.create(
-        full_name="Luis Piña",
+        full_name="Lucas Pineda",
         employee_id=employee_id,
         authorizations=text,
         cost_center=centre,

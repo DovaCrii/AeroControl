@@ -204,8 +204,8 @@ class TestImport:
     ):
         """LV-138: el **código** del centro de costo, no su `str()`.
 
-        Éste arrastra el nombre de la faena y el responsable —"CC1 - Uno · Juan
-        Quiroz"—, tres datos que ya están en su propia columna del listado y que
+        Éste arrastra el nombre de la faena y el responsable —"CC1 - Uno · Julio
+        Quintana"—, tres datos que ya están en su propia columna del listado y que
         repetidos en cada fila empujaban fuera de la vista el nombre del KMZ, que
         es lo único que distingue un plan de otro de la misma faena.
         """

@@ -1,7 +1,7 @@
 """LV-177: propone el corte nombres/apellidos del padrón. Escribir exige --apply.
 
-Dónde empieza el apellido **no es deducible sin equivocarse**: "Jose Luis Ogalde
-Henríquez" son dos nombres y dos apellidos, "Bernardine Von Irmer Helle" lleva
+Dónde empieza el apellido **no es deducible sin equivocarse**: "Juan Luis Ogando
+Herrada" son dos nombres y dos apellidos, "Marianne Von Brandt Keller" lleva
 una partícula, y "Ana Rivas" es uno y uno. Por eso este comando **propone y no
 decide**, con el mismo molde que `find_duplicate_operators`: la máquina ordena el
 trabajo, la persona que tiene el dato firma.

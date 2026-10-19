@@ -13,20 +13,20 @@
     "static/vendor/*"
   ],
   "allow_rules": {
-    "templates/reporting/_foot.html": ["email"],
-    "CHANGELOG.md": ["rut"],
-    "MASTER_PLAN.md": ["rut"],
-    "locale/es/LC_MESSAGES/django.po": ["rut"],
-    "apps/registry/catastro.py": ["rut"],
-    "apps/registry/forms.py": ["rut"],
-    "apps/registry/models.py": ["rut"],
-    "apps/registry/rut.py": ["rut"],
-    "apps/registry/test_lv143_operator_rut.py": ["rut"],
-    "apps/registry/test_lv145_catastro.py": ["rut"],
-    "apps/registry/test_lv169_employee_id_from_rut.py": ["rut"],
-    "apps/registry/test_lv8_lv9_lv10.py": ["rut"],
-    "apps/registry/test_merge.py": ["rut"],
-    "apps/core/test_lv190_the_import_cannot_duplicate_a_person.py": ["rut"],
-    "apps/core/tests.py": ["rut"]
-  }
+    "templates/reporting/_foot.html": [
+      "email"
+    ],
+    ".claude/skills/ui-ux-pro-max/data/stacks/avalonia.csv": [
+      "user-path"
+    ]
+  },
+  "allow_ruts": [
+    "12345678",
+    "11111111",
+    "14141414",
+    "15151515",
+    "16161616",
+    "17171717",
+    "18181818"
+  ]
 }
