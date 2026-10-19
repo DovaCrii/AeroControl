@@ -20,7 +20,7 @@ def _form_data(**overrides):
     data = {
         "code": "742",
         "name": "Tranque Talabre",
-        "responsible": "Ricardo Fuentealba",
+        "responsible": "Rodrigo Fuentealba",
         "responsible_type": "administrator",
     }
     data.update(overrides)

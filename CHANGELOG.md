@@ -10,6 +10,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Privacidad de HEAD y escáner más estricto (`LV-338`).** Nombres de personas, una ruta personal, direcciones internas y un usuario de la máquina de desarrollo reemplazados por equivalentes ficticios en pruebas y documentos. `tools/kit/privacy_scan.py` suma las reglas `user-path`, `home-path`, `private-ip` y `tailnet-host`, y `.privacy-scan.json` deja de eximir la regla de RUT por archivo: acepta sólo una lista de cuerpos inventados (`allow_ruts`).
 - **Panel lateral del asistente (`LV-332`).** Botón flotante «Ask» + Ctrl+J abren un panel con sugerencias por pantalla, estados (pensando, error, tope alcanzado) y citas armadas por el servidor (`pk` en `expiring_permits`); texto del modelo escapado, historial sólo en el DOM. Sólo con el asistente encendido (demo) y `view_flightpermission`; producción sigue sin HTML del panel. Sin migración; estáticos nuevos (`assistant-panel.js`, `identity.css`).
 
 - **Interruptor de producción del asistente y comando `assistant_probar` (`LV-336`).** Fuera de `DEBUG` el asistente exige además `AI_ASSISTANT_ALLOW_PRODUCTION` (apagado por omisión: producción no cambia); apagado de emergencia con `AI_ASSISTANT_ENABLED=0` + reinicio. `assistant_probar [--ping]` diagnostica sin imprimir la llave. Sin migración ni estáticos.
