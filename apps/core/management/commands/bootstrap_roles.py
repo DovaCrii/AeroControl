@@ -16,6 +16,11 @@ COST_CENTER_READERS = ("Operations", "Compliance", "Maintenance")
 
 ROLE_PERMISSIONS = {
     "Operations": {
+        # LV-343: la ciudad del widget del tiempo es una preferencia personal e informativa,
+        # así que todos los roles la ven y la eligen. No toca permisos de vuelo.
+        "add_userweatherlocation",
+        "change_userweatherlocation",
+        "view_userweatherlocation",
         "view_costcenter",
         # LV-158: quien vuela es quien rinde la prueba de conocimientos, y ve la
         # suya. `change` y `delete` no existen como acto: una prueba se rinde de
@@ -100,6 +105,11 @@ ROLE_PERMISSIONS = {
         "view_flightobjective",
     },
     "Compliance": {
+        # LV-343: la ciudad del widget del tiempo es una preferencia personal e informativa,
+        # así que todos los roles la ven y la eligen. No toca permisos de vuelo.
+        "add_userweatherlocation",
+        "change_userweatherlocation",
+        "view_userweatherlocation",
         "view_costcenter",
         # LV-158: Compliance **lee** las pruebas de todos -- es quien responde
         # "cómo está la condición de los profesionales" ante una auditoría-- pero
@@ -176,6 +186,11 @@ ROLE_PERMISSIONS = {
         "view_reportrun",
     },
     "Maintenance": {
+        # LV-343: la ciudad del widget del tiempo es una preferencia personal e informativa,
+        # así que todos los roles la ven y la eligen. No toca permisos de vuelo.
+        "add_userweatherlocation",
+        "change_userweatherlocation",
+        "view_userweatherlocation",
         "view_costcenter",
         "add_maintenancerecord",
         "change_maintenancerecord",
@@ -187,6 +202,10 @@ ROLE_PERMISSIONS = {
     # tenant configuration. A read-only role reads the operational record, not
     # the administration of the system.
     "Viewer": {
+        # LV-343: Viewer sólo ve la ciudad (la por omisión). Elegirla es escribir, y
+        # este rol no escribe nada (invariante probado en `test_viewer_grants_only_read_permissions`).
+        # Si se quiere que un Viewer elija su ciudad, es una decisión del usuario.
+        "view_userweatherlocation",
         "view_costcenter",
         "view_aircraft",
         "view_operator",
