@@ -931,6 +931,94 @@ tr.row-critical > td {
   .id-worktable.table-hover > tbody > tr > * { transition: none; }
 }
 
+/* A2: Visual v2 (LV-330, ola G). Sólo agrega al final de la sección A. Sin tokens nuevos (los
+ * guardianes de la capa los buscan al inicio de línea) y sin animación: la del menú vive en el
+ * único bloque `no-preference` del archivo. La densidad ya la resuelve `UX-08` (`html[data-density]`,
+ * botón de la barra superior): aquí sólo se respeta, no se duplica. */
+
+/* Cualquier barra `.id-filterbar` cuyos hijos escriban `col-md-*` (Bootstrap los mantenía en
+ * porcentaje y la franja saltaba a dos filas): se acomodan como las de `form.row`. */
+.id-filterbar > [class*="col"] {
+  flex: 0 1 auto;
+  width: auto;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.id-filterbar > [class*="col"]:has(input[name="q"]) { flex: 1 1 16rem; min-width: 14rem; }
+
+/* 36 px sólo dentro de la franja: `--ac-control-height` (42) sigue mandando en formularios. */
+.id-filterbar .form-control,
+.id-filterbar .form-select,
+.id-filterbar .btn {
+  height: 2.25rem;
+  min-height: 2.25rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+.id-filterbar input[type="date"] { max-width: 9.5rem; }
+
+/* La búsqueda cede ancho: con cinco filtros y los botones, 16 rem de base (1138 px de suma contra
+ * 1097 de franja a 1440) empujaba «Filtrar/Limpiar» a una segunda fila. Sigue creciendo con el sobrante. */
+.id-filterbar > .id-filter--grow { flex-basis: 12rem; min-width: 12rem; }
+.id-filter--date { min-width: 0; }
+
+/* Fila: fondo propio al pasar el cursor y un filete de 2 px a la izquierda. */
+.id-worktable.table-hover > tbody > tr:hover { --bs-table-hover-bg: var(--ac-surface-raised); }
+
+.id-worktable.table-hover > tbody > tr:hover > td:first-child {
+  box-shadow: inset 2px 0 0 var(--ac-primary), inset 0 0 0 9999px var(--bs-table-bg-state, var(--bs-table-bg-type, var(--bs-table-accent-bg)));
+}
+
+/* Acciones de fila: lo de lectura a la vista y lo demás en el menú «⋯» (`generic/_row_menu.html`). */
+.id-rowactions { display: inline-flex; align-items: center; justify-content: flex-end; gap: 0.25rem; }
+.id-rowmenu { position: relative; }
+.id-rowmenu > summary { list-style: none; cursor: pointer; line-height: 1.2; }
+.id-rowmenu > summary::-webkit-details-marker { display: none; }
+
+.id-rowmenu-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 1030;
+  min-width: 12rem;
+  padding: 0.25rem;
+  border: 1px solid var(--ac-border);
+  border-radius: var(--id-r-card);
+  background: var(--ac-surface);
+  box-shadow: var(--id-lift);
+  text-align: left;
+}
+
+/* `row-menu.js` lo saca del flujo con `position: fixed` al abrir: dentro de `.table-responsive`
+ * y de `.card` (overflow) un menú absoluto se recorta en las últimas filas. */
+.id-rowmenu-list.is-floating { position: fixed; top: auto; right: auto; }
+.id-rowmenu-list form { margin: 0; }
+
+.id-rowmenu-item {
+  display: block;
+  width: 100%;
+  padding: 0.4rem 0.75rem;
+  border: 0;
+  border-radius: var(--id-r-control);
+  background: transparent;
+  color: var(--ac-text);
+  font-size: var(--id-fs-sm);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.id-rowmenu-item:hover,
+.id-rowmenu-item:focus-visible { background: var(--ac-surface-raised); color: var(--ac-text); }
+.id-rowmenu-item--danger { color: var(--sev-critical-text); }
+.id-rowmenu-item--danger:hover,
+.id-rowmenu-item--danger:focus-visible { color: var(--sev-critical-text); }
+
+[data-density="compact"] .id-rowmenu > summary { padding-top: 0.1rem; padding-bottom: 0.1rem; }
+
 /* == B: fichas de detalle == */
 /* Contiene: fichas de aeronave, operador, permiso y demás detalles; pestañas y datos clave. */
 
@@ -1116,7 +1204,49 @@ main .entity-title h1[class] {
   box-shadow: none;
 }
 
-.form-shell .form-text { font-size: var(--id-fs-sm); }
+/* LV-333 (legibilidad): las ayudas bajan de 13 a 14 px, sin cursiva y con un icono propio. El
+   icono es una máscara (data-URI SVG, sin recursos externos): toma el color del texto. */
+.form-shell .form-text {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+  font-style: normal;
+  color: var(--ac-text-secondary);
+}
+.form-shell .form-text::before {
+  content: "";
+  flex: none;
+  width: 1em;
+  height: 1em;
+  margin-top: 0.2em;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 11v5.5M12 8v.01'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 11v5.5M12 8v.01'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* «dd-mm-aaaa» es el texto nativo de `<input type=date>`: sólo el pseudo-elemento lo alcanza. */
+input[type="date"]::-webkit-datetime-edit { color: var(--ac-text-secondary); }
+input[type="date"]:focus::-webkit-datetime-edit { color: var(--ac-text); }
+
+/* Título de sección del formulario (no el `.section-title` global, que usa también el panel). */
+.form-shell { counter-reset: id-section; }
+.cc-form-section > legend.section-title {
+  counter-increment: id-section;
+  float: none;
+  width: 100%;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--ac-border);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--ac-text);
+}
+.cc-form-section > legend.section-title::before {
+  content: counter(id-section) ". ";
+  color: var(--ac-text-secondary);
+}
 
 .form-shell .invalid-feedback { display: block; font-size: var(--id-fs-sm); }
 
@@ -1309,6 +1439,56 @@ summary:focus-visible {
   .empty-state { padding: 1.25rem 0.75rem; }
 }
 
+/* E2: asistente (LV-332). Botón flotante y panel lateral. Sin animación: el esqueleto de «pensando»
+   es estático (el rótulo para lectores de pantalla dice que se está esperando). Sólo tokens. */
+.ai-fab { position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 1030; display: inline-flex; align-items: center; gap: 0.4rem; border-radius: 999px; font-weight: 600; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25); }
+.ai-panel { --bs-offcanvas-width: min(26rem, 100vw); }
+.ai-body { display: flex; flex-direction: column; gap: 0.75rem; min-height: 0; }
+.ai-note { margin: 0; color: var(--ac-text-secondary); }
+.ai-log { flex: 1 1 auto; overflow-y: auto; display: flex; flex-direction: column; gap: 0.6rem; min-height: 4rem; }
+.ai-msg { padding: 0.6rem 0.75rem; border: 1px solid var(--sev-nominal-border); border-radius: var(--id-r-control); background: var(--sev-nominal-bg); color: var(--sev-nominal-text); overflow-wrap: anywhere; }
+.ai-msg--user { align-self: flex-end; max-width: 90%; background: var(--sev-advisory-bg); border-color: var(--sev-advisory-border); color: var(--sev-advisory-text); white-space: pre-wrap; }
+.ai-msg--limit { background: var(--sev-warning-bg); border-color: var(--sev-warning-border); color: var(--sev-warning-text); }
+.ai-msg--error { background: var(--sev-critical-bg); border-color: var(--sev-critical-border); color: var(--sev-critical-text); }
+.ai-msg-text { white-space: pre-wrap; }
+.ai-cites, .ai-meta { margin-top: 0.5rem; font-size: 0.85rem; }
+.ai-cites-title { font-weight: 600; }
+.ai-cites-list { margin: 0.2rem 0 0; padding-left: 1.1rem; }
+.ai-thinking { display: grid; gap: 0.4rem; }
+.ai-bar { display: block; height: 0.6rem; border-radius: 0.3rem; background: var(--ac-border); }
+.ai-bar--short { width: 55%; }
+.ai-suggest { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.ai-form { display: grid; gap: 0.5rem; }
+@media (max-width: 575.98px) { .ai-fab { right: 0.75rem; bottom: 0.75rem; } }
+
+/* E5: señales (LV-333). Siempre icono + texto + color, nunca sólo color. Cada `.id-*` es un
+   renglón con un SVG en línea `aria-hidden` y la gravedad dicha con `visually-hidden`
+   (`generic/_signal.html`). Sólo leen tokens `--ac-*`, `--sev-*` e `--id-*`. */
+.id-hint, .id-note, .id-warn, .id-ok, .id-danger {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0.35rem 0;
+  font-size: 0.875rem;
+  font-style: normal;
+  line-height: 1.45;
+}
+.id-signal-icon { flex: none; margin-top: 0.15rem; }
+.id-signal-text { min-width: 0; overflow-wrap: anywhere; }
+.id-hint { color: var(--ac-text-secondary); }
+.id-note, .id-warn, .id-ok, .id-danger {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid transparent;
+  border-left-width: 3px;
+  border-radius: var(--id-r-control);
+}
+.id-note { background: var(--sev-advisory-bg); border-color: var(--sev-advisory-border); color: var(--sev-advisory-text); }
+.id-warn { background: var(--sev-warning-bg); border-color: var(--sev-warning-border); color: var(--sev-warning-text); }
+.id-ok { background: var(--id-ok-bg); border-color: var(--id-ok-border); color: var(--id-ok-text); }
+.id-danger { background: var(--sev-critical-bg); border-color: var(--sev-critical-border); color: var(--sev-critical-text); }
+/* Chips con icono (reloj de «En proceso», guion de «Sin registrar»). */
+.id-chip .id-signal-icon { margin-top: 0; }
+
 /* == F: ilustración y movimiento == */
 /* Contiene: F1 plano técnico (cabecera del panel y portada) y F2 entradas (reservada); las animaciones van en el bloque de movimiento de abajo. */
 
@@ -1357,7 +1537,7 @@ summary:focus-visible {
 
 /* F2: cabecera por módulo y fondos. El rótulo (icono + nombre del módulo de la barra) va sobre el
    título y el fondo es una máscara de trazo propia (`static/img/modules/*-bg.svg`) pintada con
-   `--ac-text-secondary` a 0,11 (claro) / 0,16 (oscuro) de opacidad: sigue el tema claro y oscuro sin redefinir ningún
+   `--ac-text-secondary` a 0,16 (claro) / 0,24 (oscuro) de opacidad, anclado al título: sigue el tema claro y oscuro sin redefinir ningún
    token del tema y el título (`--ac-text`) conserva >= 4,5:1 (calculado en test_lv324_module_header). */
 .module-tag {
   display: flex;
@@ -1374,8 +1554,8 @@ summary:focus-visible {
 .module-tag .nav-icon { width: 16px; height: 16px; flex: none; color: inherit; }
 
 /* Opacidad de reposo del dibujo por tema (la calcula test_lv324 contra el contraste del texto). */
-:root { --id-module-bg-opacity: 0.11; }
-[data-theme="dark"] { --id-module-bg-opacity: 0.18; }
+:root { --id-module-bg-opacity: 0.16; }
+[data-theme="dark"] { --id-module-bg-opacity: 0.24; }
 
 .page-header--module {
   position: relative;
@@ -1387,19 +1567,20 @@ summary:focus-visible {
 .page-header--module::before {
   content: "";
   position: absolute;
-  inset: 0;
+  /* Termina 280 px antes del borde derecho: el dibujo nunca llega a los botones de acción. */
+  inset: 0 280px 0 0;
   z-index: -1;
   pointer-events: none;
   background: var(--ac-text-secondary);
   opacity: var(--id-module-bg-opacity);
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
-  /* Desplazado a la izquierda de los botones de acción (~270 px) para que el dibujo se vea entre el
-     título y las acciones, no debajo de ellas; el formulario no tiene acciones y lo ancla al borde. */
-  -webkit-mask-position: right 270px center;
-  mask-position: right 270px center;
-  -webkit-mask-size: auto 130%;
-  mask-size: auto 130%;
+  /* Anclado al título: el motivo de cada máscara arranca hacia el 36 % del lienzo, así que se corre
+     a la izquierda para que empiece junto al rótulo y no flote a media pantalla. */
+  -webkit-mask-position: left -70px center;
+  mask-position: left -70px center;
+  -webkit-mask-size: auto 100%;
+  mask-size: auto 100%;
 }
 
 .page-header--module[data-module="flight"]::before { -webkit-mask-image: url("../img/modules/flight-bg.svg"); mask-image: url("../img/modules/flight-bg.svg"); }
@@ -1409,10 +1590,7 @@ summary:focus-visible {
 .page-header--module[data-module="registry"]::before { -webkit-mask-image: url("../img/modules/registry-bg.svg"); mask-image: url("../img/modules/registry-bg.svg"); }
 .page-header--module[data-module="inventory"]::before { -webkit-mask-image: url("../img/modules/inventory-bg.svg"); mask-image: url("../img/modules/inventory-bg.svg"); }
 
-.form-shell .page-header--module::before {
-  -webkit-mask-position: right center;
-  mask-position: right center;
-}
+.form-shell .page-header--module::before { inset-inline-end: 0; }
 
 @media (max-width: 767.98px) {
   .page-header--module::before { display: none; }
@@ -1498,6 +1676,10 @@ summary:focus-visible {
   @keyframes ac-spin-a { to { transform: rotate(1080deg); } }
   @keyframes ac-spin-b { to { transform: rotate(1080deg); } }
   @keyframes ac-fade { from { opacity: 0; } to { opacity: 1; } }
+
+  /* A2 (LV-330): el menú «⋯» de fila entra con un fundido de 120 ms; con `reduce` aparece de golpe. */
+  @keyframes id-menu-in { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+  .id-rowmenu[open] > .id-rowmenu-list { animation: id-menu-in var(--id-t-fast) var(--id-ease); }
 
   /* Portada: la estela se dibuja detrás del dron (mismo ciclo que `ac-fly`) y cada waypoint se
      «enciende» al pasar (opacity/transform; sin saltos ni parpadeo). */

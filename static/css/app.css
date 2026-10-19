@@ -985,7 +985,9 @@ body, .card, .form-control, .form-select, .page-link, .table,
   --ac-surface-raised: #ffffff;
   --ac-border: #dbe3ee;
   --ac-text: #172238;
-  --ac-text-secondary: #516079;
+  /* LV-333: #516079 -> #44526a. El gris de las ayudas se leía débil junto al texto; ahora da >=7:1 sobre fondo y superficie. */
+  --ac-text-secondary: #44526a;
+  --bs-secondary-color: var(--ac-text-secondary);
   /* Was #748198, which measured 3.94:1 on white -- under the 4.5:1 AA floor.
      Because it is a token, every muted label on a light surface failed at once
      ("Navegación", the empty-column notice). #626f85 clears it at 5.09:1 and
@@ -1292,7 +1294,8 @@ main {
   --ac-border: #33435b;
   --ac-text: #edf3fb;
   --ac-text-secondary: #b5c1d1;
-  --ac-text-muted: #8d9bb0;
+  --ac-text-muted: #9aa7ba;
+  --bs-secondary-color: var(--ac-text-secondary);
   --ac-primary: #42d4c6;
   --ac-primary-hover: #6be0d5;
   --ac-primary-soft: #193a43;

@@ -20,7 +20,9 @@ import json
 from dataclasses import dataclass
 from datetime import timedelta
 from typing import Callable
+from uuid import UUID
 
+from django.urls import reverse
 from django.utils import timezone
 
 from apps.core.tenancy import scope_queryset_to_tenant
@@ -94,6 +96,9 @@ def _expiring_permits(user, arguments):
     )
     return [
         {
+            # `pk` no es dato personal; sirve para que el SERVIDOR arme el enlace de cita
+            # (`citations_for`). El modelo jamás escribe una URL.
+            "pk": str(permit.pk),
             "permit": permit.internal_folio,
             "cost_centre": permit.cost_center.code,
             "valid_until": permit.valid_until.isoformat(),
@@ -166,17 +171,49 @@ def tool_definitions():
     ]
 
 
+MAX_CITATIONS = 25
+
+
+def citations_for(name, data):
+    """Las citas de lo que devolvió una herramienta: `[{"label", "url"}]`.
+
+    Las arma el servidor con `reverse()` a partir de **datos que la herramienta ya acotó por
+    tenant**; el texto del modelo no interviene, así que no puede inyectar un enlace. Sólo
+    se acepta un `pk` con forma de UUID.
+    """
+    if name != "expiring_permits" or not isinstance(data, list):
+        return []
+    cites = []
+    for row in data:
+        try:
+            pk = UUID(str(row.get("pk")))
+        except (AttributeError, ValueError):
+            continue
+        cites.append(
+            {
+                "label": str(row.get("permit") or ""),
+                "url": reverse("permission-detail", args=[pk]),
+            }
+        )
+    return cites[:MAX_CITATIONS]
+
+
 def run_tool(user, name, raw_arguments):
-    """Ejecuta una herramienta pedida por el modelo y devuelve **texto JSON acotado**.
+    """Sólo el texto JSON de `execute_tool` (lo que ve el modelo)."""
+    return execute_tool(user, name, raw_arguments)[0]
+
+
+def execute_tool(user, name, raw_arguments):
+    """Ejecuta una herramienta pedida por el modelo: `(texto JSON acotado, citas)`.
 
     Nunca levanta: un nombre desconocido, argumentos mal formados o falta de permiso se
     devuelven al modelo como un error legible para que lo diga, no como una excepción.
     """
     tool = TOOLS.get(name)
     if tool is None:
-        return json.dumps({"error": "unknown tool"})
+        return json.dumps({"error": "unknown tool"}), []
     if not user.has_perm(tool.permission):
-        return json.dumps({"error": "this user has no permission for that data"})
+        return json.dumps({"error": "this user has no permission for that data"}), []
     try:
         arguments = json.loads(raw_arguments) if raw_arguments else {}
         if not isinstance(arguments, dict):
@@ -184,6 +221,7 @@ def run_tool(user, name, raw_arguments):
     except ValueError:
         arguments = {}
     try:
-        return json.dumps(tool.run(user, arguments), ensure_ascii=False)[:6000]
+        data = tool.run(user, arguments)
+        return json.dumps(data, ensure_ascii=False)[:6000], citations_for(name, data)
     except Exception:  # noqa: BLE001 - la IA no debe poder romper la pantalla
-        return json.dumps({"error": "the data could not be read"})
+        return json.dumps({"error": "the data could not be read"}), []

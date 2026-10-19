@@ -8,8 +8,13 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Added
+
+- **Panel lateral del asistente (`LV-332`).** Botón flotante «Ask» + Ctrl+J abren un panel con sugerencias por pantalla, estados (pensando, error, tope alcanzado) y citas armadas por el servidor (`pk` en `expiring_permits`); texto del modelo escapado, historial sólo en el DOM. Sólo con el asistente encendido (demo) y `view_flightpermission`; producción sigue sin HTML del panel. Sin migración; estáticos nuevos (`assistant-panel.js`, `identity.css`).
+
 ### Changed
 
+- **Visual v2, ola H: fondos de módulo con más presencia (`LV-331`).** El dibujo de la cabecera de módulo se ancla al título, sube su opacidad a 0,16 (claro) / 0,24 (oscuro) sin tapar los botones de acción y las seis máscaras suman cotas, rumbo y retícula; el guardián de contraste se recalculó. Sólo estáticos (CSS/SVG): sin migración ni cadenas.
 - **Ruff 0.15.22 → 0.17.0 (`LV-329`).** Sustituye el PR #93 de dependabot (no actualizaba `uv.lock`). 0.17 amplía las reglas por defecto; se fija `select = ["E4","E7","E9","F"]` para conservar el comportamiento anterior. Sólo herramienta de desarrollo: sin migración ni estáticos.
 
 ### Security
@@ -20,7 +25,9 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Lista de permisos, ola G del «Visual v2» (`LV-330`).** «Ver» siempre a la vista y renovar/archivar/restaurar en un menú «⋯» (mismos permisos; ya no se corta «Renovar permiso»); filtros en una franja con rótulos; estados con `.id-chip`; hover de fila con filete; regla genérica que acomoda las barras `col-md-*` de las demás listas.
 - **Pulido global (`LV-328`, ola E).** Mensajes con icono y gravedad (`role="alert"` sólo en error), estado vacío unificado con acción sólo con permiso, foco `:focus-visible` uniforme y arreglos a 375 px (insignia desbordada en el panel, cabeceras que envuelven); 30 colores de insignias de estado pasan a tokens `--sev-*`/`--id-ok-*` con el mismo valor. Sin migración.
+- **Legibilidad, contraste y señales (`LV-333`, ola K).** Gris secundario más oscuro en claro (≥7:1), gris débil más claro en oscuro, `--bs-secondary-color` atado al token, ayudas de formulario de 14 px con icono, títulos de sección numerados y clases `.id-hint/note/warn/ok/danger` (icono + texto + color).
 - **`scripts/deploy.sh` (`LV-327`).** Despliegue en la VM con un solo comando: comprueba rama, árbol y entorno de producción, respalda antes del `pull` si hay migraciones, y aborta ante cada señal de despliegue fantasma, imprimiendo (sin ejecutar) el rollback. `--dry-run` sólo lee. `deploy_plan.ps1` lo dicta (`-FromJson`), y `shellcheck scripts/*.sh` entra al CI y a `verify.ps1`.
 - **`manage.py deploy_status` (`LV-322`).** Estado del despliegue de sólo lectura (hash, rama, migraciones pendientes, trabajos; `--json`). No imprime rutas ni secretos. `activar-sync-baterias.sh` ya no trae un usuario escrito. Sin migración ni `collectstatic`.
 - **Formularios, ola C del rediseño (LV-318).** Resumen de errores arriba, barra de acciones pegajosa con un solo botón primario, foco visible y estado de envío sin parpadeo en los formularios genéricos y sus modales. Sólo presentación; sin migración; lleva estáticos (collectstatic).
