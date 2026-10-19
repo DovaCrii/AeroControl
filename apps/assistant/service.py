@@ -15,6 +15,7 @@ Cómo se mantiene acotado:
 """
 
 import logging
+import re
 import time
 from dataclasses import dataclass, field
 from datetime import timedelta
@@ -25,6 +26,7 @@ from django.db.models import F, Sum
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
+from . import prompts
 from .client import AssistantUnavailable, NvidiaClient
 from .models import AssistantUsage
 from .tools import execute_tool, tool_definitions
@@ -33,14 +35,29 @@ logger = logging.getLogger(__name__)
 
 MAX_ROUNDS = 4
 MAX_QUESTION_CHARS = 500
+MAX_ANSWER_CHARS = 1500
+_URL_RE = re.compile(r"(?:https?://|www\.)\S*", re.IGNORECASE)
 
-SYSTEM_PROMPT = (
-    "Eres el asistente de consulta de AeroControl, una aplicación interna de operaciones con "
-    "drones (RPA) en Chile. Responde en español neutro, breve y claro. Usa SOLO los datos que "
-    "devuelvan las herramientas: si no tienes el dato, di que no lo tienes y no lo inventes. "
-    "No des consejos legales ni declares que algo cumple una norma: describe los datos y "
-    "deja la decisión a la persona. Las fechas están en formato año-mes-día."
-)
+
+def clean_model_text(text):
+    """Lo que el servidor le hace al texto del modelo antes de mostrarlo (LV-345).
+
+    Quita toda URL (los enlaces salen sólo de las citas armadas con `reverse()`) y recorta a
+    `MAX_ANSWER_CHARS`. El escape HTML sigue siendo de la plantilla.
+    """
+    text = _URL_RE.sub("", text or "").strip()
+    if len(text) > MAX_ANSWER_CHARS:
+        text = text[: MAX_ANSWER_CHARS - 1].rstrip() + "…"
+    return text
+
+
+def default_client():
+    """El cliente real, o el guionizado sólo con `AI_ASSISTANT_FAKE` **y** `DEBUG`."""
+    if settings.AI_ASSISTANT_FAKE and settings.DEBUG:
+        from .fake_client import ScriptedClient
+
+        return ScriptedClient()
+    return NvidiaClient()
 
 
 @dataclass
@@ -56,7 +73,7 @@ class Answer:
 
 def ask(user, question, client=None):
     """Contesta `question` para `user`. Nunca levanta: un fallo se vuelve un texto neutro."""
-    client = client or NvidiaClient()
+    client = client or default_client()
     if not client.configured:
         return Answer(
             _(
@@ -73,7 +90,7 @@ def ask(user, question, client=None):
         model=str(getattr(client, "model", "") or "")[:100],
     )
     messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": prompts.SYSTEM_PROMPT},
         {"role": "user", "content": question},
     ]
     tools_used = []
@@ -110,7 +127,7 @@ def ask(user, question, client=None):
             tokens += message.pop("_total_tokens", 0) or 0
             calls = message.get("tool_calls") or []
             if not calls:
-                text = (message.get("content") or "").strip()
+                text = clean_model_text(message.get("content") or "")
                 return _finish(
                     usage,
                     started,
@@ -242,6 +259,7 @@ def _finish(usage, started, tools_used, text, outcome, tokens=0, citations=()):
             "outcome": outcome,
             "total_tokens": tokens,
             "ms": ms,
+            "prompt_version": prompts.PROMPT_VERSION,
         },
     )
     ok = outcome == AssistantUsage.OUTCOME_OK

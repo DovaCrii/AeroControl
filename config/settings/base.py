@@ -444,6 +444,9 @@ AI_ASSISTANT_TIMEOUT = config("AI_ASSISTANT_TIMEOUT", default=30, cast=int)
 AI_ASSISTANT_MAX_PER_HOUR = config("AI_ASSISTANT_MAX_PER_HOUR", default=30, cast=int)
 # Tope global por día (suma de llamadas de todas las personas, contadas en la base); 0 = sin tope.
 AI_ASSISTANT_DAILY_CAP = config("AI_ASSISTANT_DAILY_CAP", default=300, cast=int)
+# LV-345 · Cliente guionizado (sin servicio ni llave) para demo y pruebas: sólo cuenta con DEBUG;
+# fuera de DEBUG se ignora y `check` avisa (apps/assistant/fake_client.py).
+AI_ASSISTANT_FAKE = config("AI_ASSISTANT_FAKE", default=False, cast=bool)
 LOGOUT_REDIRECT_URL = LOGIN_URL
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
