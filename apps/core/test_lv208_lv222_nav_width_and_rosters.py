@@ -199,7 +199,7 @@ class TestTheRostersReadEvenly:
 
         cc = CostCenter.objects.create(code="CC1", name="Uno", operates_flights=True)
         Operator.objects.create(
-            employee_id="P1", full_name="Francisca Fredes Araya", cost_center=cc
+            employee_id="P1", full_name="Fabiola Ferrada Aravena", cost_center=cc
         )
         client = login_as("add_flightpermission", "view_flightpermission")
 
@@ -207,4 +207,4 @@ class TestTheRostersReadEvenly:
 
         assert "data-roster-search" in body
         assert "data-roster-count" in body
-        assert "Francisca Fredes Araya" in body
+        assert "Fabiola Ferrada Aravena" in body

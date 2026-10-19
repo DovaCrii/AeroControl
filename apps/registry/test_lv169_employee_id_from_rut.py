@@ -39,7 +39,7 @@ DERIVED = "RUT-141414143"
 def _payload(**kwargs):
     return {
         "employee_id": "",
-        "full_name": "Cristobal Muñoz",
+        "full_name": "Sebastian Muñiz",
         "rut": RUT,
         "email": "",
         "phone": "",
@@ -72,7 +72,7 @@ def test_an_unreadable_rut_does_not_become_an_unreadable_id():
 
 @pytest.mark.django_db
 def test_the_model_derives_the_id_when_it_is_blank():
-    operator = Operator(employee_id="", full_name="Cristobal Muñoz", rut=RUT)
+    operator = Operator(employee_id="", full_name="Sebastian Muñiz", rut=RUT)
 
     operator.full_clean()
 
@@ -82,7 +82,7 @@ def test_the_model_derives_the_id_when_it_is_blank():
 @pytest.mark.django_db
 def test_an_id_already_written_is_never_overwritten():
     """Es la llave con la que esa persona figura en otros sistemas."""
-    operator = Operator(employee_id="E-042", full_name="Cristobal Muñoz", rut=RUT)
+    operator = Operator(employee_id="E-042", full_name="Sebastian Muñiz", rut=RUT)
 
     operator.full_clean()
 
@@ -92,7 +92,7 @@ def test_an_id_already_written_is_never_overwritten():
 @pytest.mark.django_db
 def test_editing_a_record_does_not_rewrite_its_id():
     operator = Operator.objects.create(
-        employee_id="E-042", full_name="Cristobal Muñoz", rut="14141414-3"
+        employee_id="E-042", full_name="Sebastian Muñiz", rut="14141414-3"
     )
 
     operator.phone = "+56 9 1234 5678"

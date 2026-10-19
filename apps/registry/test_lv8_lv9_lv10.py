@@ -289,7 +289,7 @@ class TestCostCenterFormSimplified:
         form = CostCenterForm(
             data={
                 "code": "738",
-                "responsible": "Juan Quintana",
+                "responsible": "Julio Quintana",
                 "notes": "Contrato MLP",
             }
         )
@@ -298,7 +298,7 @@ class TestCostCenterFormSimplified:
         assert cc.code == "CC738"
         assert cc.name == ""
         assert cc.notes == "Contrato MLP"
-        assert str(cc) == "CC738 · Juan Quintana"  # __str__ falls back to code
+        assert str(cc) == "CC738 · Julio Quintana"  # __str__ falls back to code
 
     @pytest.mark.django_db
     def test_name_can_be_set_and_changed_from_the_form(self, db):
@@ -518,7 +518,7 @@ class TestQualificationListGroupedByOperator:
     def test_one_row_per_operator_with_equipment_chips(self, admin_client):
         cc = CostCenter.objects.create(code="CC1", name="One")
         operator = Operator.objects.create(
-            employee_id="OP-1", full_name="René Herrero", cost_center=cc
+            employee_id="OP-1", full_name="Rubén Herrero", cost_center=cc
         )
         mavic = QualificationType.objects.create(code="mavic", name="Serie Mavic")
         matrice = QualificationType.objects.create(code="matrice", name="Serie Matrice")
@@ -532,7 +532,7 @@ class TestQualificationListGroupedByOperator:
         assert list(response.context["objects"]) == [operator]
         content = response.content.decode()
         # Operator name appears once; both equipment chips are present.
-        assert content.count("René Herrero") == 1
+        assert content.count("Rubén Herrero") == 1
         assert "Serie Mavic" in content and "Serie Matrice" in content
 
     @pytest.mark.django_db
@@ -541,7 +541,7 @@ class TestQualificationListGroupedByOperator:
         an expired chip keeps the red override."""
         cc = CostCenter.objects.create(code="CC1", name="One")
         operator = Operator.objects.create(
-            employee_id="OP-1", full_name="René Herrero", cost_center=cc
+            employee_id="OP-1", full_name="Rubén Herrero", cost_center=cc
         )
         mavic = QualificationType.objects.create(code="mavic", name="Serie Mavic")
         phantom = QualificationType.objects.create(code="phantom", name="Serie Phantom")

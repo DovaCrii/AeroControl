@@ -10,6 +10,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Privacidad de HEAD y escáner más estricto (`LV-338`).** Nombres de personas, una ruta personal, direcciones internas y un usuario de la máquina de desarrollo reemplazados por equivalentes ficticios en pruebas y documentos. `tools/kit/privacy_scan.py` suma las reglas `user-path`, `home-path`, `private-ip` y `tailnet-host`, y `.privacy-scan.json` deja de eximir la regla de RUT por archivo: acepta sólo una lista de cuerpos inventados (`allow_ruts`).
 - **Panel lateral del asistente (`LV-332`).** Botón flotante «Ask» + Ctrl+J abren un panel con sugerencias por pantalla, estados (pensando, error, tope alcanzado) y citas armadas por el servidor (`pk` en `expiring_permits`); texto del modelo escapado, historial sólo en el DOM. Sólo con el asistente encendido (demo) y `view_flightpermission`; producción sigue sin HTML del panel. Sin migración; estáticos nuevos (`assistant-panel.js`, `identity.css`).
 
 - **Interruptor de producción del asistente y comando `assistant_probar` (`LV-336`).** Fuera de `DEBUG` el asistente exige además `AI_ASSISTANT_ALLOW_PRODUCTION` (apagado por omisión: producción no cambia); apagado de emergencia con `AI_ASSISTANT_ENABLED=0` + reinicio. `assistant_probar [--ping]` diagnostica sin imprimir la llave. Sin migración ni estáticos.
@@ -17,6 +18,8 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 ### Changed
 
 - **Privacidad: `load_dgac_vigencias` sin datos reales (`LV-339`).** La tabla embebida de vigencias DGAC queda vacía; los datos reales se cargan con `--file` desde un CSV privado fuera del repo.
+- **Limpieza de skills (`LV-337`).** Se borran `rumbo-1.0.md`, `lecciones.md` y `despliegue-p340.md` de `aerocontrol/references`; lo único vigente de este último pasa a `desplegar-p340` (camino principal `scripts/deploy.sh`, bloques A-D como plan B) y la política de modelos de `AGENTS.md` se alinea con la orden vigente. Sólo documentación.
+
 - **`deploy.sh`: el chequeo de salud habla HTTPS como el proxy (`LV-335`).** El primer uso real abortó en el paso 12 con la aplicación sana: producción redirige HTTP a HTTPS (301) y el `curl` local no mandaba `X-Forwarded-Proto: https`. Ahora lo manda, y el `curl` simulado de las pruebas reproduce el 301. Sólo código.
 - **Visual v2, ola H: fondos de módulo con más presencia (`LV-331`).** El dibujo de la cabecera de módulo se ancla al título, sube su opacidad a 0,16 (claro) / 0,24 (oscuro) sin tapar los botones de acción y las seis máscaras suman cotas, rumbo y retícula; el guardián de contraste se recalculó. Sólo estáticos (CSS/SVG): sin migración ni cadenas.
 - **Ruff 0.15.22 → 0.17.0 (`LV-329`).** Sustituye el PR #93 de dependabot (no actualizaba `uv.lock`). 0.17 amplía las reglas por defecto; se fija `select = ["E4","E7","E9","F"]` para conservar el comportamiento anterior. Sólo herramienta de desarrollo: sin migración ni estáticos.
