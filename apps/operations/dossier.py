@@ -379,38 +379,10 @@ def _geo_plan_items(permission, user=None):
                 *action,
             )
         ]
-    reviewed = [plan for plan in plans if plan.weather_reviews.exists()]
-    pending = [plan for plan in plans if plan not in reviewed]
-    without = [str(plan.title) for plan in pending]
-    # La revisión se registra **con un botón que vive en la ficha del plan**
-    # (R8.1), así que el atajo lleva ahí y no a una acción propia: duplicar el
-    # registro de evidencia en dos lugares es cómo se termina con dos versiones
-    # de "quién revisó qué".
-    weather_action = _open_record_action(
-        pending,
-        user=user,
-        codename="geo.view_geoplan",
-        detail_url="geo-plan-detail",
-        list_url="geo-plan-list",
-        one=_("Open the plan"),
-        many=_("Open the plans"),
-    )
-    return [
-        DossierItem("geo_plan", _("Geospatial plan linked"), OK),
-        DossierItem(
-            "weather",
-            _("Weather reviewed and on record"),
-            # LV-286: **informativo**, no «por confirmar». Pedido del usuario
-            # (2026-10-07, mirando esta ficha): la revisión meteorológica es
-            # opcional, y como `UNKNOWN` ponía un «1 por confirmar» ámbar en todo
-            # permiso con plan hasta que alguien la registrara. Sigue pudiéndose
-            # registrar (el atajo se conserva) y sigue constando cuando existe.
-            OK if not without else INFO,
-            "" if not without else _("Optional: no review on record"),
-            without,
-            *weather_action,
-        ),
-    ]
+    # LV-344 paso 1: el renglón de la revisión meteorológica ya no se dibuja en
+    # el expediente (pedido del 2026-10-19: «ya no se ocupa»). La revisión, su
+    # modelo y su registro en el plan siguen intactos: ver LV-344 paso 2.
+    return [DossierItem("geo_plan", _("Geospatial plan linked"), OK)]
 
 
 def _notam_items(permission, user=None):

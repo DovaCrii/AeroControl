@@ -1,24 +1,19 @@
-"""LV-286: la revisión meteorológica del expediente es informativa, no «por confirmar».
+"""LV-286 -> LV-344: el expediente ya no ofrece ni menciona la revisión meteorológica.
 
-Pedido del usuario (2026-10-07, mirando la ficha de un permiso con la insignia
-«1 por confirmar» por la revisión meteorológica): *«lo quitamos para la revisión,
-como punto es opcional o informativo»*.
-
-Un renglón que nace ámbar y que nadie está obligado a cerrar deja un contador que no
-llega a cero, y eso enseña a ignorar el contador — la misma razón por la que
-`LV-194` retiró los dos últimos renglones.
+LV-286 la volvió informativa (2026-10-07); el 2026-10-19 la persona dijo «ya no se
+ocupa la revisión meteorológica» y `LV-344` paso 1 retiró el renglón del expediente.
+La revisión, su modelo y su registro en el plan geoespacial siguen intactos
+(paso 2, con su condición de cierre en `MASTER_PLAN.md`).
 """
 
 import pytest
 from django.contrib.auth.models import User
 from django.urls import reverse
-from django.utils import timezone
+from django.utils import translation
 
 from apps.geo.models import GeoPlan
-from apps.operations.dossier import INFO, OK, UNKNOWN, operational_dossier
+from apps.operations.dossier import MISSING, UNKNOWN, operational_dossier
 from apps.operations.test_lv107_dossier import cost_center, permission  # noqa: F401
-
-TODAY = timezone.localdate()
 
 
 @pytest.fixture
@@ -32,106 +27,57 @@ def plan(permission, cost_center):  # noqa: F811
     )
 
 
-def _weather(permission):  # noqa: F811
-    return next(
-        i for i in operational_dossier(permission)["items"] if i.key == "weather"
-    )
-
-
 @pytest.mark.django_db
-class TestWithoutAReview:
-    def test_the_row_is_informative_not_to_confirm(self, permission, plan):  # noqa: F811
-        item = _weather(permission)
+class TestTheDossierNoLongerOffersTheWeatherReview:
+    def test_there_is_no_weather_row(self, permission, plan):  # noqa: F811
+        keys = [i.key for i in operational_dossier(permission)["items"]]
 
-        assert item.status == INFO
-        assert item.status != UNKNOWN
+        assert "weather" not in keys
+        assert "geo_plan" in keys
 
-    def test_it_adds_nothing_to_the_to_confirm_counter(self, permission, plan):  # noqa: F811
+    def test_no_row_points_at_the_plan_to_record_a_review(self, permission, plan):  # noqa: F811
+        urls = [i.action_url for i in operational_dossier(permission)["items"]]
+
+        assert reverse("geo-plan-detail", args=[plan.pk]) not in urls
+
+    def test_the_gap_counts_are_those_of_the_other_items(self, permission, plan):  # noqa: F811
+        """Era opcional: quitarlo no mueve «por confirmar» ni «faltan»."""
         dossier = operational_dossier(permission)
+        items = dossier["items"]
 
-        # Lo que cuenta como «por confirmar» son los demás renglones; el
-        # meteorológico se cuenta aparte, como informativo.
-        others = sum(
-            1 for i in dossier["items"] if i.status == UNKNOWN and i.key != "weather"
-        )
-        assert dossier["unknown_count"] == others
-        assert dossier["info_count"] == 1
+        assert dossier["unknown_count"] == sum(1 for i in items if i.status == UNKNOWN)
+        assert dossier["missing_count"] == sum(1 for i in items if i.status == MISSING)
+        assert dossier["info_count"] == 0
 
-    def test_it_does_not_stop_the_dossier_from_reading_complete_on_its_own(
-        self,
-        permission,  # noqa: F811
-        plan,
-    ):
-        """Lo único opcional que queda sin registrar no puede impedir «Completo»."""
-        dossier = operational_dossier(permission)
-        pending = [i.key for i in dossier["items"] if not i.counts_toward_complete]
-
-        assert "weather" not in pending
-
-    def test_the_shortcut_to_record_it_is_kept(self, permission, plan):  # noqa: F811
-        """Es opcional, no inalcanzable: sigue llevando al plan donde se registra."""
-        item = _weather(permission)
-
-        assert item.action_url == reverse("geo-plan-detail", args=[plan.pk])
-
-    def test_the_detail_says_it_is_optional(self, permission, plan):  # noqa: F811
-        assert str(_weather(permission).detail).startswith("Opcional")
-
-
-@pytest.mark.django_db
-class TestWithAReview:
-    def test_a_recorded_review_still_reads_as_in_order(self, permission, plan):  # noqa: F811
+    def test_a_recorded_review_does_not_reappear_in_the_dossier(self, permission, plan):  # noqa: F811
         plan.weather_reviews.create(
             flight_permission=permission,
-            target_date=TODAY,
+            target_date=permission.valid_from,
             latitude="-22.300000",
             longitude="-68.900000",
         )
 
-        item = _weather(permission)
+        keys = [i.key for i in operational_dossier(permission)["items"]]
 
-        assert item.status == OK
-        assert operational_dossier(permission)["info_count"] == 0
+        assert "weather" not in keys
+        assert plan.weather_reviews.count() == 1  # la evidencia guardada no se toca
 
 
 @pytest.mark.django_db
 class TestThePermitPage:
-    def _body(self, client, permission, plan):  # noqa: F811
+    def test_the_page_does_not_mention_the_weather_review(
+        self,
+        client,
+        permission,  # noqa: F811
+        plan,
+    ):
         admin = User.objects.create_superuser("w286a", "w286a@test.com", "pw")  # nosec B106
         client.force_login(admin)
-        return client.get(
-            reverse("permission-detail", args=[permission.pk])
-        ).content.decode()
-
-    def test_no_amber_to_confirm_badge_for_the_weather_review(
-        self,
-        client,
-        permission,  # noqa: F811
-        plan,
-    ):
-        body = self._body(client, permission, plan)
-
-        assert "Revisión meteorológica registrada" in body  # el renglón sigue ahí
-        assert (
-            "por confirmar"
-            not in body.split("Expediente operativo")[1].split("</h2>")[0]
-        )
-
-    def test_the_row_is_drawn_as_optional_not_as_a_warning_dot(
-        self,
-        client,
-        permission,  # noqa: F811
-        plan,
-    ):
-        body = self._body(client, permission, plan)
-        section = body.split("Revisión meteorológica registrada")[0].rsplit("<tr>", 1)[
-            1
-        ]
-
-        assert "text-warning" not in section
-        assert "Opcional" in section
-
-    def test_the_detail_is_written_in_spanish(self, client, permission, plan):  # noqa: F811
-        body = self._body(client, permission, plan)
-
-        assert "Opcional: sin revisión registrada" in body
+        for language in ("es", "en"):
+            with translation.override(language):
+                body = client.get(
+                    reverse("permission-detail", args=[permission.pk])
+                ).content.decode()
+            section = body.split("<h2", 1)[1] if "<h2" in body else body
+            assert "Revisión meteorológica" not in section
+            assert "Weather reviewed" not in section
