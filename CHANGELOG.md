@@ -8,11 +8,16 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Removed
+
+- **Expediente operativo sin «Revisión meteorológica registrada» (`LV-344`, paso 1).** La persona dijo que ya no se ocupa: el renglón opcional y su botón «Abrir el plan» salen del expediente; la cuenta de faltas no cambia. El modelo, el registro en el plan geoespacial y las revisiones guardadas siguen intactos hasta el paso 2 (condición de cierre en `MASTER_PLAN.md`).
+
 ### Added
 
 - **Herramientas del asistente (`LV-340`).** Siete herramientas de solo lectura nuevas (mantención, documentos de aeronaves y faenas, seguro, alertas por urgencia, solicitudes de vuelo, disponibilidad de flota y registros de una aeronave), cada una con su permiso y acotada por empresa; salida validada y recortada por filas, sin campos libres ni datos de personas. El panel se dibuja con el permiso de al menos una herramienta.
 - **Observabilidad y voto del asistente (`LV-341`). LLEVA MIGRACIÓN** (`assistant.0002_assistantusage_vote`): voto +1/-1 sin texto, pantalla `/assistant/usage/` de sólo lectura con aviso al 80 % del tope diario, y endpoint de voto con `usage_id` firmado. Sin estáticos.
 - **Ciudad predeterminada del widget del tiempo (`LV-343`). LLEVA MIGRACIÓN** (`weather.0001_user_weather_location`): cada persona elige su ciudad desde una faena con coordenadas o buscando, en `/weather/location/`; nunca se guardan coordenadas enviadas por el navegador, y la búsqueda tiene tope por hora. Permisos nuevos para Operations, Compliance y Maintenance, y sólo ver para Viewer (correr `bootstrap_roles`). Ajustes opcionales `WEATHER_DEFAULT_*`. Sin estáticos.
+- **Tarjeta del tiempo, cliente (`LV-342`).** `panel_forecast`, `search_places` y `regional_events` en `apps/core/weather.py` (eventos climáticos informativos, sin cruce con permisos ni faenas), con caché, `WEATHER_API_KEY` opcional y modo demo `WEATHER_FAKE_FIXTURE` sólo con DEBUG. Producción sigue apagada (`WEATHER_ENABLED=False`): el uso gratuito de Open-Meteo es no comercial. Sin migración ni estáticos.
 - **Privacidad de HEAD y escáner más estricto (`LV-338`).** Nombres de personas, una ruta personal, direcciones internas y un usuario de la máquina de desarrollo reemplazados por equivalentes ficticios en pruebas y documentos. `tools/kit/privacy_scan.py` suma las reglas `user-path`, `home-path`, `private-ip` y `tailnet-host`, y `.privacy-scan.json` deja de eximir la regla de RUT por archivo: acepta sólo una lista de cuerpos inventados (`allow_ruts`).
 - **Panel lateral del asistente (`LV-332`).** Botón flotante «Ask» + Ctrl+J abren un panel con sugerencias por pantalla, estados (pensando, error, tope alcanzado) y citas armadas por el servidor (`pk` en `expiring_permits`); texto del modelo escapado, historial sólo en el DOM. Sólo con el asistente encendido (demo) y `view_flightpermission`; producción sigue sin HTML del panel. Sin migración; estáticos nuevos (`assistant-panel.js`, `identity.css`).
 
