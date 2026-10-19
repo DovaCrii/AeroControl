@@ -90,7 +90,7 @@ class TestProductionViews:
         assert client.get(reverse(ASK)).status_code == 403
         assert client.post(reverse(ASK), {"question": "x"}).status_code == 403
         assert client.post(reverse(PANEL), {"question": "x"}).status_code == 403
-        html = login_as("view_alert").get(reverse("alert-list")).content.decode()
+        html = login_as("view_operator").get(reverse("operator-list")).content.decode()
         assert not any(marker in html for marker in MARKERS)
 
 

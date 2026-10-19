@@ -68,8 +68,8 @@ class TestThePanelIsAbsentUnlessAvailable:
         assert 'role="dialog"' in html
         assert "js/assistant-panel.js" in html
 
-    def test_a_user_without_view_flightpermission_gets_no_panel(self, enabled):
-        html = login_as("view_alert").get(reverse("alert-list")).content.decode()
+    def test_a_user_with_no_tool_permission_gets_no_panel(self, enabled):
+        html = login_as("view_operator").get(reverse("operator-list")).content.decode()
 
         assert not any(marker in html for marker in MARKERS)
 
@@ -300,5 +300,5 @@ class TestStatesAndPrivacy:
         assert "Secreto" not in out
         assert "E-777-ID" not in out
         assert "example.com" not in out
-        for row in json.loads(out):
+        for row in json.loads(out)["data"]:
             uuid.UUID(row["pk"])
