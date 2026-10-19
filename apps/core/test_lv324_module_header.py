@@ -8,6 +8,9 @@ Garantías:
 3. **El tema manda**: F2 no redefine ningún token `--ac-*`/`--sev-*`; el color sale de
    `--ac-text-secondary`.
 4. **El título y el rótulo se leen** sobre la mezcla más desfavorable, en claro y oscuro.
+   Decisión explícita de la ola H (LV-331): el dibujo pasó de 0,11/0,18 a 0,16/0,24 (claro/oscuro)
+   porque se veía tenue y «descolgado»; el rango del guardián se recalculó con él (0,15-0,17 /
+   0,22-0,26) y título y rótulo siguen exigiendo >= 4,5:1 con la mezcla más desfavorable.
 5. El context processor `nav_module` mapea las seis secciones y las pantallas genéricas lo pintan.
 6. La barra punteada bajo cada título ya no existe.
 """
@@ -54,6 +57,9 @@ class TestEveryModuleHasItsMask:
         path = ROOT / "static/img/modules" / f"{module}-bg.svg"
         raw = path.read_bytes()
         assert len(raw) <= 6 * 1024, module
+        assert len(raw) <= 2560, (
+            module
+        )  # ola H: enriquecidas pero siguen siendo ligeras
         svg = raw.decode("utf-8")
         assert not re.search(
             r"<script|href=|<image|<foreignObject|url\(\s*['\"]?http|on\w+=", svg, re.I
@@ -106,11 +112,14 @@ class TestTheThemeStillRules:
         assert "var(--ac-text-secondary)" in rule
         assert "opacity: var(--id-module-bg-opacity)" in rule
         assert re.search(r"min-height:\s*9[0-6]px", static)
-        assert "mask-size: auto 130%" in rule
+        assert "mask-size: auto 100%" in rule
+        # Anclado al título y cortado antes de las acciones (~270 px a la derecha).
+        assert "mask-position: left" in rule
+        assert re.search(r"inset:\s*0 2[6-9]\dpx 0 0", rule)
         # El dibujo no tapa botones ni enlaces de la cabecera.
         assert "pointer-events: none" in rule and "z-index: -1" in rule
         light, dark = _opacities()
-        assert 0.10 <= light <= 0.12 and 0.14 <= dark <= 0.18
+        assert 0.15 <= light <= 0.17 and 0.22 <= dark <= 0.26
 
 
 class TestTheTitleAndTagStayReadable:
