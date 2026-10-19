@@ -5,7 +5,23 @@ con el nombre del archivo escrito literal en cada plantilla, un guardián
 (`apps/core/test_lv302_illustrations.py`) comprueba que el archivo existe. Armar el nombre
 aquí dentro lo volvería invisible para ese guardián.
 
-Decorativa: `alt=""`. El mensaje del estado vacío va como texto debajo, no en la imagen.{% endcomment %}
-<div class="empty-art-wrap">
+Decorativa: `alt=""`. El mensaje del estado vacío va como texto debajo, no en la imagen.
+
+LV-328: todos los parámetros son opcionales. Sin `title` esta plantilla sólo dibuja la lámina
+(las 20 inclusiones de filas vacías); con `title` suma el texto unificado: título corto, una línea
+de ayuda (`help`) y, si quien incluye pasa `action_url`, el botón primario. Quien incluye decide el
+permiso: no se pasa `action_url` a quien no puede crear. `secondary_url`/`secondary_label` es la
+salida secundaria (p. ej. gestionar).{% endcomment %}
+{% if src %}<div class="empty-art-wrap">
   <div class="illus-tile empty-art"><img src="{{ src }}" alt="" width="220" height="220" loading="lazy"></div>
+</div>{% endif %}
+{% if title %}
+<div class="empty-state__body">
+  <h2 class="empty-state__title h5">{{ title }}</h2>
+  {% if help %}<p class="empty-state__help">{{ help }}</p>{% endif %}
+  {% if action_url or secondary_url %}<div class="empty-state__actions">
+    {% if action_url %}<a href="{{ action_url }}" class="btn btn-primary">{{ action_label }}</a>{% endif %}
+    {% if secondary_url %}<a href="{{ secondary_url }}" class="btn btn-outline-secondary">{{ secondary_label }}</a>{% endif %}
+  </div>{% endif %}
 </div>
+{% endif %}

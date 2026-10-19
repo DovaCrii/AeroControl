@@ -1382,22 +1382,22 @@ main {
 }
 /* Light theme */
 .badge.bg-primary-subtle   { background-color: #e7efff !important; border-color: #a9c7f5; color: #1b4f9c !important; }
-.badge.bg-success-subtle   { background-color: #e4f6ea !important; border-color: #a7d9b8; color: #1f7a43 !important; }
-.badge.bg-info-subtle      { background-color: #e0f4f8 !important; border-color: #9fd6e2; color: #14707f !important; }
-.badge.bg-warning-subtle   { background-color: #fdf1dc !important; border-color: #ecc98a; color: #8a5a12 !important; }
-.badge.bg-danger-subtle    { background-color: #fce4e6 !important; border-color: #f0b0b6; color: #a52834 !important; }
-.badge.bg-secondary-subtle { background-color: #eceff4 !important; border-color: #c4ccd8; color: #384252 !important; }
+.badge.bg-success-subtle   { background-color: var(--id-ok-bg) !important; border-color: var(--id-ok-border); color: var(--id-ok-text) !important; }
+.badge.bg-info-subtle      { background-color: var(--sev-advisory-bg) !important; border-color: var(--sev-advisory-border); color: var(--sev-advisory-text) !important; }
+.badge.bg-warning-subtle   { background-color: var(--sev-warning-bg) !important; border-color: var(--sev-warning-border); color: var(--sev-warning-text) !important; }
+.badge.bg-danger-subtle    { background-color: var(--sev-critical-bg) !important; border-color: var(--sev-critical-border); color: var(--sev-critical-text) !important; }
+.badge.bg-secondary-subtle { background-color: var(--sev-nominal-bg) !important; border-color: var(--sev-nominal-border); color: var(--sev-nominal-text) !important; }
 .badge.bg-dark-subtle      { background-color: #e9ebee !important; border-color: #c2c7cf; color: #343a42 !important; }
 /* Dark theme */
 [data-theme="dark"] .badge.bg-primary-subtle   { background-color: #17304d !important; border-color: #2f5c93; color: #9cc3ff !important; }
-[data-theme="dark"] .badge.bg-success-subtle   { background-color: #14361f !important; border-color: #2c6b40; color: #7fd6a0 !important; }
-[data-theme="dark"] .badge.bg-info-subtle      { background-color: #123a42 !important; border-color: #2a6b78; color: #79d6e6 !important; }
-[data-theme="dark"] .badge.bg-warning-subtle   { background-color: #3d2f14 !important; border-color: #7a5f26; color: #e6c079 !important; }
-[data-theme="dark"] .badge.bg-danger-subtle    { background-color: #3d1a1e !important; border-color: #7a343c; color: #f0a0a8 !important; }
+[data-theme="dark"] .badge.bg-success-subtle   { background-color: var(--id-ok-bg) !important; border-color: var(--id-ok-border); color: var(--id-ok-text) !important; }
+[data-theme="dark"] .badge.bg-info-subtle      { background-color: var(--sev-advisory-bg) !important; border-color: var(--sev-advisory-border); color: var(--sev-advisory-text) !important; }
+[data-theme="dark"] .badge.bg-warning-subtle   { background-color: var(--sev-warning-bg) !important; border-color: var(--sev-warning-border); color: var(--sev-warning-text) !important; }
+[data-theme="dark"] .badge.bg-danger-subtle    { background-color: var(--sev-critical-bg) !important; border-color: var(--sev-critical-border); color: var(--sev-critical-text) !important; }
 /* LV-42: los grises neutros se fundían con la tarjeta oscura (fondo 1.38:1,
    borde 2.2:1 vs card). Se sube el relleno y se aclara el borde a ≥3:1 para que
    la pastilla lea como pastilla; el texto ya contrastaba (~9:1). */
-[data-theme="dark"] .badge.bg-secondary-subtle { background-color: #37455c !important; border-color: #657793 !important; color: #e6edf6 !important; }
+[data-theme="dark"] .badge.bg-secondary-subtle { background-color: var(--sev-nominal-bg) !important; border-color: var(--sev-nominal-border) !important; color: var(--sev-nominal-text) !important; }
 [data-theme="dark"] .badge.bg-dark-subtle      { background-color: #353d48 !important; border-color: #636d7b !important; color: #e2e7ee !important; }
 /* The sidebar alert count keeps its own compact sizing (set earlier); don't let
    the generic bump enlarge it. */
