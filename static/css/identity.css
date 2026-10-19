@@ -1116,7 +1116,49 @@ main .entity-title h1[class] {
   box-shadow: none;
 }
 
-.form-shell .form-text { font-size: var(--id-fs-sm); }
+/* LV-333 (legibilidad): las ayudas bajan de 13 a 14 px, sin cursiva y con un icono propio. El
+   icono es una máscara (data-URI SVG, sin recursos externos): toma el color del texto. */
+.form-shell .form-text {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+  font-style: normal;
+  color: var(--ac-text-secondary);
+}
+.form-shell .form-text::before {
+  content: "";
+  flex: none;
+  width: 1em;
+  height: 1em;
+  margin-top: 0.2em;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 11v5.5M12 8v.01'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 11v5.5M12 8v.01'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* «dd-mm-aaaa» es el texto nativo de `<input type=date>`: sólo el pseudo-elemento lo alcanza. */
+input[type="date"]::-webkit-datetime-edit { color: var(--ac-text-secondary); }
+input[type="date"]:focus::-webkit-datetime-edit { color: var(--ac-text); }
+
+/* Título de sección del formulario (no el `.section-title` global, que usa también el panel). */
+.form-shell { counter-reset: id-section; }
+.cc-form-section > legend.section-title {
+  counter-increment: id-section;
+  float: none;
+  width: 100%;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--ac-border);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--ac-text);
+}
+.cc-form-section > legend.section-title::before {
+  content: counter(id-section) ". ";
+  color: var(--ac-text-secondary);
+}
 
 .form-shell .invalid-feedback { display: block; font-size: var(--id-fs-sm); }
 
@@ -1308,6 +1350,34 @@ summary:focus-visible {
   .page-header--module::before { display: none; }
   .empty-state { padding: 1.25rem 0.75rem; }
 }
+
+/* E5: señales (LV-333). Siempre icono + texto + color, nunca sólo color. Cada `.id-*` es un
+   renglón con un SVG en línea `aria-hidden` y la gravedad dicha con `visually-hidden`
+   (`generic/_signal.html`). Sólo leen tokens `--ac-*`, `--sev-*` e `--id-*`. */
+.id-hint, .id-note, .id-warn, .id-ok, .id-danger {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0.35rem 0;
+  font-size: 0.875rem;
+  font-style: normal;
+  line-height: 1.45;
+}
+.id-signal-icon { flex: none; margin-top: 0.15rem; }
+.id-signal-text { min-width: 0; overflow-wrap: anywhere; }
+.id-hint { color: var(--ac-text-secondary); }
+.id-note, .id-warn, .id-ok, .id-danger {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid transparent;
+  border-left-width: 3px;
+  border-radius: var(--id-r-control);
+}
+.id-note { background: var(--sev-advisory-bg); border-color: var(--sev-advisory-border); color: var(--sev-advisory-text); }
+.id-warn { background: var(--sev-warning-bg); border-color: var(--sev-warning-border); color: var(--sev-warning-text); }
+.id-ok { background: var(--id-ok-bg); border-color: var(--id-ok-border); color: var(--id-ok-text); }
+.id-danger { background: var(--sev-critical-bg); border-color: var(--sev-critical-border); color: var(--sev-critical-text); }
+/* Chips con icono (reloj de «En proceso», guion de «Sin registrar»). */
+.id-chip .id-signal-icon { margin-top: 0; }
 
 /* == F: ilustración y movimiento == */
 /* Contiene: F1 plano técnico (cabecera del panel y portada) y F2 entradas (reservada); las animaciones van en el bloque de movimiento de abajo. */
