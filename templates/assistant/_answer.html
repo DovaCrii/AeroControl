@@ -1,0 +1,21 @@
+{% load i18n %}
+{% comment %}LV-332: fragmento de una respuesta del panel. El texto del modelo sale ESCAPADO (sin
+|safe) y las citas son enlaces que armó el servidor desde lo que devolvieron las herramientas.{% endcomment %}
+{% if error %}
+<div class="ai-msg ai-msg--error" role="alert">{{ error }}</div>
+{% elif answer %}
+<div class="ai-msg ai-msg--bot {% if answer.state == 'limit' %}ai-msg--limit{% elif answer.state == 'error' %}ai-msg--error{% endif %}">
+  <div class="ai-msg-text">{{ answer.text }}</div>
+  {% if answer.citations %}
+  <div class="ai-cites">
+    <div class="ai-cites-title">{% translate "Cited records" %}</div>
+    <ul class="ai-cites-list">
+      {% for cite in answer.citations %}<li><a href="{{ cite.url }}">{{ cite.label }}</a></li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+  {% if answer.tools_used %}
+  <div class="ai-meta">{% translate "Data consulted" %}: {{ answer.tools_used|join:", " }}</div>
+  {% endif %}
+</div>
+{% endif %}

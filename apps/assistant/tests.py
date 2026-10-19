@@ -343,6 +343,7 @@ class TestWhatTheToolsReveal:
         rows = json.loads(tools.run_tool(user, "expiring_permits", '{"days": 30}'))
 
         assert rows and set(rows[0]) == {
+            "pk",
             "permit",
             "cost_centre",
             "valid_until",

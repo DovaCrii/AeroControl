@@ -1,7 +1,9 @@
 from django.conf import settings
 from django.http import Http404
 from django.shortcuts import render
+from django.views.decorators.http import require_POST
 from django.utils.translation import gettext as _
+from django.utils.decorators import method_decorator
 from django.views import View
 
 from apps.core.views import ModelViewPermissionRequiredMixin
@@ -20,6 +22,19 @@ def assistant_available():
     interruptor.
     """
     return bool(settings.AI_ASSISTANT_ENABLED and settings.DEBUG)
+
+
+def _question_context(user, question):
+    """El contexto de una pregunta: validada, y contestada si es válida. Lo comparten la pantalla
+    sin JS y el fragmento del panel, para que midan igual."""
+    context = {"max_chars": MAX_QUESTION_CHARS, "question": question}
+    if not question:
+        context["error"] = _("Write a question first.")
+    elif len(question) > MAX_QUESTION_CHARS:
+        context["error"] = _("The question is too long.")
+    else:
+        context["answer"] = ask(user, question)
+    return context
 
 
 class AssistantAsk(ModelViewPermissionRequiredMixin, View):
@@ -44,11 +59,18 @@ class AssistantAsk(ModelViewPermissionRequiredMixin, View):
 
     def post(self, request):
         question = (request.POST.get("question") or "").strip()
-        context = {"max_chars": MAX_QUESTION_CHARS, "question": question}
-        if not question:
-            context["error"] = _("Write a question first.")
-        elif len(question) > MAX_QUESTION_CHARS:
-            context["error"] = _("The question is too long.")
-        else:
-            context["answer"] = ask(request.user, question)
-        return render(request, self.template_name, context)
+        return render(
+            request, self.template_name, _question_context(request.user, question)
+        )
+
+
+@method_decorator(require_POST, name="dispatch")
+class AssistantPanelAsk(AssistantAsk):
+    """Fragmento del panel lateral (`LV-332`): misma puerta, mismo permiso y misma pregunta que
+    la pantalla, pero devuelve sólo `_answer.html`. POST con CSRF normal; nada se guarda.
+
+    `require_POST` envuelve `dispatch`: un GET es 405 sin revelar nada; el 404 de «apagado» y el
+    permiso los sigue poniendo `AssistantAsk`.
+    """
+
+    template_name = "assistant/_answer.html"

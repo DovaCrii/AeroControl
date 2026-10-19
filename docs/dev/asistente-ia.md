@@ -50,6 +50,22 @@ antes de decidir nada de producción**.
 | El modelo por omisión (`meta/llama-3.3-70b-instruct`) existe en el catálogo y su ficha lo describe con «function calling». | Es la herramienta que usa el asistente. **Sigue sin probarse contra el servicio real.** |
 | Caminos a producción según NVIDIA: **alojar el modelo en infraestructura propia** o usar la API sin servidor de pago con una licencia NVIDIA AI Enterprise. | Es la decisión que falta si algún día se quiere usar con usuarios reales; cambia también qué datos se pueden enviar. |
 
+## Panel lateral (`LV-332`)
+
+Además de `/assistant/`, en cada pantalla aparece un botón «Ask» (abajo a la derecha; Ctrl+J) que abre un panel
+lateral. **Sólo si** `assistant_available()` (encendido y `DEBUG`) **y** la persona tiene `view_flightpermission`:
+si no, el servidor no dibuja ni el botón ni el panel (context processor `assistant_panel`). El panel envía la
+pregunta por `POST assistant/ask/panel/` (CSRF normal) y recibe el fragmento `_answer.html`.
+
+- **Historial sólo en el DOM:** recargar lo pierde; no se guarda nada en el navegador ni en el servidor.
+- **Citas «Cited records»:** las arma el servidor con `reverse()` a partir de lo que devolvieron las herramientas
+  (`expiring_permits` incluye `pk`, que no es dato personal), ya acotado por empresa. El texto del modelo sale
+  **escapado** y nunca se dibuja una URL escrita por él.
+- **Sugerencias por módulo:** el módulo «flight» (permisos) ofrece «¿Qué permisos vencen…?» y «¿Qué faenas no tienen
+  permiso vigente?»; el resto, la segunda.
+- El interruptor de producción (`AI_ASSISTANT_ALLOW_PRODUCTION`) es un cambio aparte: reemplazará `assistant_available()`
+  en un solo punto y espera la decisión sobre licencia o servidor propio.
+
 ## Por qué sólo demo
 
 El acceso gratuito de NVIDIA (Developer Program) es **sólo para prototipos, investigación y
