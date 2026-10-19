@@ -26,7 +26,7 @@
   {% comment %}LV-246: `text-nowrap` porque un rango de fechas partido en dos
   líneas deja de poder compararse con el de la fila de arriba — el usuario lo leyó
   como "letras apretadas". La vigencia vencida va en rojo: es la fecha que explica
-  el badge de la columna siguiente.{% endcomment %}
+  el chip de la columna siguiente.{% endcomment %}
   <td class="text-nowrap{% if object.has_lapsed %} sev-text-critical{% endif %}">{% if object.valid_from and object.valid_until %}{{ object.valid_from|date:"Y-m-d" }} – {{ object.valid_until|date:"Y-m-d" }}{% else %}<span class="text-body-secondary fst-italic">{% translate "Awaiting the DGAC" %}</span>{% endif %}</td>
   {% comment %}LV-246: **el permiso vencido en rojo, con marca.** Pedido del usuario:
   *"que sea marcado en ROJO con alguna marca"*. `expired` caía en el `else` y salía
@@ -34,23 +34,25 @@
   autoriza a volar se veía igual que uno que espera respuesta. Y un `approved` con
   la fecha pasada seguía en verde hasta que corriera el trabajo nocturno: por eso se
   pregunta a `has_lapsed` y no al estado. El ⚠ es la marca que pidió, y la que
-  sobrevive a una impresión en blanco y negro.{% endcomment %}
-  <td>{% if object.has_lapsed %}<span class="badge sev-critical">⚠ {% translate "Lapsed" context "flight permission" %}</span>{% else %}<span class="badge bg-{% if object.status == 'approved' %}success{% elif object.status == 'denied' %}danger{% elif object.status == 'completed' %}info{% else %}warning{% endif %}">{{ object.get_status_display }}</span>{% endif %}</td>
+  sobrevive a una impresión en blanco y negro.
+
+  LV-330: ahora con `.id-chip` (texto + color + icono) en vez de `badge bg-*`, y el
+  «Archivado» —que vivía en Acciones— junto al estado, que es donde se lee.{% endcomment %}
+  <td class="text-nowrap">{% if object.has_lapsed %}<span class="id-chip id-chip--critical"><span aria-hidden="true">⚠</span> {% translate "Lapsed" context "flight permission" %}</span>{% elif object.status == 'approved' %}<span class="id-chip id-chip--ok"><span aria-hidden="true">✓</span> {{ object.get_status_display }}</span>{% elif object.status == 'denied' %}<span class="id-chip id-chip--critical"><span aria-hidden="true">✕</span> {{ object.get_status_display }}</span>{% elif object.status == 'completed' %}<span class="id-chip id-chip--info"><span aria-hidden="true">◆</span> {{ object.get_status_display }}</span>{% else %}<span class="id-chip id-chip--warning"><span aria-hidden="true">●</span> {{ object.get_status_display }}</span>{% endif %}{% if not object.is_active %} <span class="id-chip id-chip--neutral"><span aria-hidden="true">▣</span> {% translate "Archived" %}</span>{% endif %}</td>
+  {% comment %}LV-330: «Ver» siempre a la vista; lo demás —renovar, archivar,
+  restaurar— va en el menú «⋯». Antes eran hasta tres botones en 110 px fijos y
+  «Renovar permiso» se cortaba en cada fila. Los permisos son los de antes: renovar
+  pide `add_flightpermission` y `add_geoplan` (`can_renew_row` los junta, sin
+  consulta por fila); archivar, `delete_flightpermission` (como la ficha); restaurar,
+  `change_flightpermission`. LV-135: sin «Restaurar» el filtro «Archivados» sería
+  una lista sin salida. El parcial no dibuja lo que no trae show_* verdadero.{% endcomment %}
   <td class="text-end text-nowrap">
-    {% comment %}LV-135: la fila archivada se distingue y ofrece volver. Sin
-    "Restaurar" acá, el filtro "Archivados" sería una lista sin salida.{% endcomment %}
-    {% if not object.is_active %}
-    <span class="badge bg-secondary-subtle text-secondary-emphasis">{% translate "Archived" %}</span>
-    {% if perms.operations.change_flightpermission %}
-    <form method="post" action="{% url 'permission-restore' object.pk %}" style="display:inline">{% csrf_token %}
-      <button class="btn btn-sm btn-outline-secondary">{% translate "Restore" %}</button>
-    </form>
-    {% endif %}
-    {% endif %}
-    {% comment %}LV-325: «Renovar» en la fila, con las condiciones de la ficha
-    (`can_renew_row` lo arma la vista sin una consulta por fila).{% endcomment %}
-    {% if object.can_renew_row %}<a href="{% url 'permission-create' %}?renueva={{ object.pk }}" class="btn btn-sm btn-outline-primary">{% translate "Renew permit" %}</a>{% endif %}
-    <a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">{% translate "View" %}</a>
+    <div class="id-rowactions">
+      <a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">{% translate "View" %}</a>
+      {% translate "Renew permit" as renew_label %}{% translate "Archive" as archive_label %}{% translate "Restore" as restore_label %}
+      {% url 'permission-create' as create_url %}{% url 'permission-archive' object.pk as archive_url %}{% url 'permission-restore' object.pk as restore_url %}
+      {% with pk_text=object.pk|stringformat:"s" %}{% include "generic/_row_menu.html" with renew_href=create_url|add:"?renueva="|add:pk_text renew_label=renew_label show_renew=object.can_renew_row is_active=object.is_active archive_action=archive_url archive_label=archive_label show_archive=perms.operations.delete_flightpermission restore_action=restore_url restore_label=restore_label show_restore=perms.operations.change_flightpermission %}{% endwith %}
+    </div>
   </td>
 </tr>
 {% empty %}
