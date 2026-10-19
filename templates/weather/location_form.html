@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "My city" %} - AeroControl{% endblock %}
+{% block content %}
+{% translate "My city" as page_title %}
+<div class="page-header">
+  {% include "generic/_page_header.html" %}
+</div>
+
+<div class="card p-4">
+  <p class="text-muted">{% translate "The weather widget on the home page shows this city. It is informational and has nothing to do with flight permits." %}</p>
+
+  <p class="mb-3">
+    <strong>{% translate "Current city" %}:</strong>
+    {% if current %}{{ current.label }}{% else %}{% translate "None chosen yet." %}{% endif %}
+  </p>
+
+  {% if error %}<div class="alert alert-warning" role="alert">{{ error }}</div>{% endif %}
+
+  {% if sites %}
+  <h2 class="h6">{% translate "Choose one of our sites" %}</h2>
+  <form method="post" class="mb-4">
+    {% csrf_token %}
+    <label for="weather-site" class="form-label">{% translate "Site" %}</label>
+    <select id="weather-site" name="site" class="form-select" required>
+      {% for site in sites %}
+      <option value="{{ site.pk }}">{{ site.code }}{% if site.name %} - {{ site.name }}{% endif %}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-primary mt-2">{% translate "Use this site" %}</button>
+  </form>
+  {% endif %}
+
+  <h2 class="h6">{% translate "Or search for a city" %}</h2>
+  <form method="get" class="mb-3">
+    <label for="weather-q" class="form-label">{% translate "City name" %}</label>
+    <input id="weather-q" name="q" class="form-control" maxlength="80" value="{{ query }}">
+    <button type="submit" class="btn btn-outline-primary mt-2">{% translate "Search" %}</button>
+  </form>
+
+  {% if places is not None %}
+    {% if places %}
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="q" value="{{ query }}">
+      <ul class="list-unstyled">
+        {% for place in places %}
+        <li class="form-check">
+          <input class="form-check-input" type="radio" name="pick" id="weather-pick-{{ forloop.counter0 }}" value="{{ forloop.counter0 }}" required>
+          <label class="form-check-label" for="weather-pick-{{ forloop.counter0 }}">{{ place.label }}</label>
+        </li>
+        {% endfor %}
+      </ul>
+      <button type="submit" class="btn btn-primary">{% translate "Use this city" %}</button>
+    </form>
+    {% else %}
+    <p class="text-muted">{% translate "No cities found." %}</p>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}
