@@ -48,7 +48,7 @@ dev = [
     "pytest-cov==7.1.0",
     "pytest-django==4.14.0",
     "polib>=1.2,<2",
-    "ruff==0.15.22",
+    "ruff==0.17.0",
     "pytest-xdist==3.8.0",
 ]
 
@@ -60,6 +60,10 @@ target-version = "py312"
 exclude = [".venv", ".tmp-baseline", "migrations", ".pytest_cache", ".ruff_cache"]
 
 [tool.ruff.lint]
+# Ruff 0.17 widened the default rule set (533 new findings: RUF012, I001, FURB157...).
+# Pin the set that 0.15 used by default so the bump stays a tool upgrade, not a refactor;
+# adopting the new rules is a separate decision (MASTER_PLAN LV-329).
+select = ["E4", "E7", "E9", "F"]
 # Existing compact model declarations are tracked for incremental refactoring.
 ignore = ["E702", "F403", "F405"]
 

@@ -8,6 +8,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Changed
+
+- **Ruff 0.15.22 → 0.17.0 (`LV-329`).** Sustituye el PR #93 de dependabot (no actualizaba `uv.lock`). 0.17 amplía las reglas por defecto; se fija `select = ["E4","E7","E9","F"]` para conservar el comportamiento anterior. Sólo herramienta de desarrollo: sin migración ni estáticos.
+
 ### Security
 
 - **Asistente IA: registro de uso y topes en la base (`LV-326`).** Cada pregunta deja una fila `AssistantUsage` (sin texto de pregunta ni respuesta); los topes por hora y global por día (`AI_ASSISTANT_DAILY_CAP`, 300) se cuentan ahí y se revisan antes de cada llamada. **LLEVA MIGRACIÓN** (`assistant.0001`); sin estáticos.
