@@ -233,6 +233,7 @@ decidir con la persona cómo limpiar el historial. Claude Code no lee `.env`, cl
 | `orquestar` | Repartir una ronda entre subagentes |
 | `pendientes-github` | Cerrar PR abiertos, ramas fusionadas y worktrees sobrantes |
 | `revision-privacidad` | Revisar el diff antes de un PR en repo público |
+| `diseno-ui` | Diseño visual y UX: qué skill externa usar (`ui-ux-pro-max`, `bencium-controlled-ux-designer`, `web-design-guidelines`) y qué se verifica; ver `.claude/skills/VENDOR.md` |
 
 Política de modelos: Opus orquesta, Sonnet construye, Haiku verifica lo mecánico. Al lanzar un subagente se pasa `model` explícito, con
 dueños de archivos sin cruce, sin `push` ni PR.
