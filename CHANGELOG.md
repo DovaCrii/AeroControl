@@ -20,6 +20,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Pulido global (`LV-328`, ola E).** Mensajes con icono y gravedad (`role="alert"` sólo en error), estado vacío unificado con acción sólo con permiso, foco `:focus-visible` uniforme y arreglos a 375 px (insignia desbordada en el panel, cabeceras que envuelven); 30 colores de insignias de estado pasan a tokens `--sev-*`/`--id-ok-*` con el mismo valor. Sin migración.
 - **`scripts/deploy.sh` (`LV-327`).** Despliegue en la VM con un solo comando: comprueba rama, árbol y entorno de producción, respalda antes del `pull` si hay migraciones, y aborta ante cada señal de despliegue fantasma, imprimiendo (sin ejecutar) el rollback. `--dry-run` sólo lee. `deploy_plan.ps1` lo dicta (`-FromJson`), y `shellcheck scripts/*.sh` entra al CI y a `verify.ps1`.
 - **`manage.py deploy_status` (`LV-322`).** Estado del despliegue de sólo lectura (hash, rama, migraciones pendientes, trabajos; `--json`). No imprime rutas ni secretos. `activar-sync-baterias.sh` ya no trae un usuario escrito. Sin migración ni `collectstatic`.
 - **Formularios, ola C del rediseño (LV-318).** Resumen de errores arriba, barra de acciones pegajosa con un solo botón primario, foco visible y estado de envío sin parpadeo en los formularios genéricos y sus modales. Sólo presentación; sin migración; lleva estáticos (collectstatic).
