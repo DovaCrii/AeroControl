@@ -319,6 +319,6 @@ class TestRepeatedAlertsAreDenounced:
 def operator_record(cost_center):
     return Operator.objects.create(
         employee_id="P1",
-        full_name="Florencio Ordóñez Navarrete",
+        full_name="Camilo Peñaloza Lagos",
         cost_center=cost_center,
     )

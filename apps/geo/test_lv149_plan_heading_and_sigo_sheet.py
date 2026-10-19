@@ -191,7 +191,7 @@ def test_a_legacy_three_part_title_is_shortened_to_code_and_file(center, author)
     plan = _plan(
         center,
         author,
-        "CC738 - MLP · Juan Quintana · CG-01_circunferencia_grande",
+        "CC738 - MLP · Julio Quintana · CG-01_circunferencia_grande",
         "CG-01_circunferencia_grande.kmz",
     )
 
@@ -235,13 +235,13 @@ def test_the_stored_title_is_never_rewritten(center, author):
     plan = _plan(
         center,
         author,
-        "CC738 - MLP · Juan Quintana · CG-01_circunferencia_grande",
+        "CC738 - MLP · Julio Quintana · CG-01_circunferencia_grande",
         "CG-01_circunferencia_grande.kmz",
     )
 
     assert plan.display_title != plan.title
     plan.refresh_from_db()
-    assert plan.title == "CC738 - MLP · Juan Quintana · CG-01_circunferencia_grande"
+    assert plan.title == "CC738 - MLP · Julio Quintana · CG-01_circunferencia_grande"
 
 
 # -- las dos formas de la tarjeta ------------------------------------------

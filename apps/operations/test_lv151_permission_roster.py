@@ -55,9 +55,9 @@ class TestTheRosterIsOrdered:
         # Creados a propósito en desorden: el orden que importa es el ofrecido,
         # no el de inserción.
         for employee_id, name in [
-            ("E-3", "Roberto Salinas Reyes"),
-            ("E-1", "Alex Lagos Paz"),
-            ("E-2", "Benito Gómez Torres"),
+            ("E-3", "Rodolfo Salinas Reyes"),
+            ("E-1", "Axel Lagos Paz"),
+            ("E-2", "Benito Guerra Tello"),
         ]:
             Operator.objects.create(employee_id=employee_id, full_name=name)
 
@@ -67,9 +67,9 @@ class TestTheRosterIsOrdered:
         ]
 
         assert offered == [
-            "Alex Lagos Paz",
-            "Benito Gómez Torres",
-            "Roberto Salinas Reyes",
+            "Axel Lagos Paz",
+            "Benito Guerra Tello",
+            "Rodolfo Salinas Reyes",
         ]
 
     def test_aircraft_are_offered_by_registration(self):
@@ -150,7 +150,7 @@ class TestTheFormRenders:
         assert "roster-filter.js" in content
 
     def test_the_roster_carries_each_option_as_a_filterable_item(self):
-        Operator.objects.create(employee_id="E-1", full_name="Álvaro Arias")
+        Operator.objects.create(employee_id="E-1", full_name="Ángel Araos")
 
         content = (
             login_as("add_flightpermission")
@@ -159,7 +159,7 @@ class TestTheFormRenders:
         )
 
         assert "data-roster-item" in content
-        assert 'data-roster-text="Álvaro Arias"' in content
+        assert 'data-roster-text="Ángel Araos"' in content
 
     def test_it_is_403_without_the_add_permission(self):
         assert (

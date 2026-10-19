@@ -101,7 +101,7 @@ class GeoPlanImportForm(forms.Form):
         `LV-138`: el título **dejó de ser el identificador**. Antes se anclaba en
         el permiso cuando había uno y en el centro de costo cuando no, así que el
         listado mostraba dos formas distintas —"JEJ-2026-002 · CC861_area_permiso"
-        y "CC738 - MLP · Juan Quintana · CG-01_circunferencia_grande"— y ninguna
+        y "CC738 - MLP · Julio Quintana · CG-01_circunferencia_grande"— y ninguna
         servía para citar un plan. Eso lo hace ahora `folio` (`PG-2026-001`).
 
         Lo que queda es el comentario que pidió el usuario: **el CC y el nombre

@@ -147,7 +147,7 @@ class TestTheDetailTable:
         permit = _permit(site, 1, days=88, dgac="6405")
         permit.operators.add(
             Operator.objects.create(
-                employee_id="P1", full_name="Fernando Jorquera Toro", cost_center=site
+                employee_id="P1", full_name="Fabián Jorquera Toro", cost_center=site
             )
         )
         permit.aircraft_fleet.add(
@@ -165,7 +165,7 @@ class TestTheDetailTable:
         assert row["folio"] == permit.internal_folio
         assert row["dgac_number"] == "6405"
         assert row["cost_centre"] == "CC738"
-        assert row["operators"] == ["Fernando Jorquera Toro"]
+        assert row["operators"] == ["Fabián Jorquera Toro"]
         assert row["aircraft"] == ["RPA-4883"]
         assert row["days_remaining"] == 88
         assert row["band"] == PERMIT_BAND_NOMINAL
@@ -330,7 +330,7 @@ class TestItAllReachesThePage:
         permit = _permit(site, 1, days=17, dgac="5808")
         permit.operators.add(
             Operator.objects.create(
-                employee_id="P1", full_name="Alex Lagos Paz", cost_center=site
+                employee_id="P1", full_name="Axel Lagos Paz", cost_center=site
             )
         )
         client.force_login(user)
@@ -339,7 +339,7 @@ class TestItAllReachesThePage:
 
         assert permit.internal_folio in body
         assert "5808" in body
-        assert "Alex Lagos Paz" in body
+        assert "Axel Lagos Paz" in body
         assert "rpt-sev-critical" in body
         # Y el vocabulario viejo no vuelve por la puerta de atrás.
         assert "rpt-est-none" not in body

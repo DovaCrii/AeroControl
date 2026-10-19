@@ -49,12 +49,12 @@ def source(tmp_path):
     document = DocxDocument()
     document.add_paragraph("1.5-\tDOTACIÓN OPERADOR RPA")
     document.add_paragraph("\t1)\tPERMANENTES")
-    document.add_paragraph("\t\t\tNOMBRE\t\t:\tCristobal Muñoz Montero")
+    document.add_paragraph("\t\t\tNOMBRE\t\t:\tSebastian Muñiz Montero")
     document.add_paragraph(f"RUT\t\t:\t{RUT}")
-    document.add_paragraph("Credencial N°\t:\t8172")
+    document.add_paragraph("Credencial N°\t:\t9001")
     document.add_paragraph("Tipo\t\t:\tOperador RPA")
     document.add_paragraph("Habilitaciones\t:\tMatrice Series")
-    document.add_paragraph("Dirección\t:\tCalle Santa Elena 2605")
+    document.add_paragraph("Dirección\t:\tCalle Ficticia 100")
     document.add_paragraph("Teléfono\t:\t900000001")
     document.add_paragraph("Email\t\t:\tdirector@example.com")
     document.add_paragraph("2) EVENTUALES (NO APLICA)")
@@ -93,7 +93,7 @@ class TestTheDuplicateThatCouldGetThrough:
         propio `employee_id`. El import no la reconocía y creaba la persona de
         nuevo — sin que la base pudiera impedirlo."""
         Operator.objects.create(
-            employee_id="P-01", full_name="Cristóbal Muñoz", rut=CANONICAL
+            employee_id="P-01", full_name="Sebastián Muñiz", rut=CANONICAL
         )
 
         report = _report(source, capsys)
@@ -106,7 +106,7 @@ class TestTheDuplicateThatCouldGetThrough:
         no es "ya está", es "el manual y la base no coinciden", y adivinar cuál
         manda sobre una persona es cómo se crea la ficha fantasma."""
         Operator.objects.create(
-            employee_id="P-01", full_name="Cristóbal Muñoz", rut=CANONICAL
+            employee_id="P-01", full_name="Sebastián Muñiz", rut=CANONICAL
         )
 
         with pytest.raises(CommandError, match="disagree"):
@@ -124,7 +124,7 @@ class TestTheDuplicateThatCouldGetThrough:
         RUT **con puntos**, porque `create()` no pasa por `clean()`. Comparar en
         crudo no habría encontrado justo a las personas que él cargó."""
         Operator.objects.create(
-            employee_id="P-01", full_name="Cristóbal Muñoz", rut=RUT
+            employee_id="P-01", full_name="Sebastián Muñiz", rut=RUT
         )
 
         assert _report(source, capsys)["conflicts"]
@@ -138,7 +138,7 @@ class TestWhatMustKeepWorking:
         """La corrida normal: el ID coincide y el RUT también. Es la misma
         persona y se salta, que es lo que `LV-134` dejó funcionando."""
         Operator.objects.create(
-            employee_id=EMPLOYEE_ID, full_name="Cristobal Muñoz Montero", rut=CANONICAL
+            employee_id=EMPLOYEE_ID, full_name="Sebastian Muñiz Montero", rut=CANONICAL
         )
 
         report = _report(source, capsys)
@@ -152,7 +152,7 @@ class TestWhatMustKeepWorking:
         """El ID coincide y la ficha no tiene el RUT escrito. Tratarlo como
         conflicto habría convertido en un bloqueo cada ficha vieja incompleta."""
         Operator.objects.create(
-            employee_id=EMPLOYEE_ID, full_name="Cristobal Muñoz Montero", rut=""
+            employee_id=EMPLOYEE_ID, full_name="Sebastian Muñiz Montero", rut=""
         )
 
         report = _report(source, capsys)
