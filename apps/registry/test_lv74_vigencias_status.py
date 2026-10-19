@@ -1,7 +1,7 @@
 """LV-74/LV-81: loading a vigencia must leave the filing status consistent.
 
 Found in production on 2026-08-13, by looking at the data after the load rather
-than by a test: `RPA-3696` came out with `insurance_expiry = 2026-12-21` and
+than by a test: `RPA-9001` came out with `a future insurance_expiry` and
 `insurance_status = missing` at the same time -- a policy on file that the fiche
 still described as missing.
 
@@ -21,7 +21,7 @@ from apps.registry.models import Aircraft, Operator
 TODAY = timezone.localdate()
 
 
-def _aircraft(registration="RPA-3696", **kwargs):
+def _aircraft(registration="RPA-9001", **kwargs):
     return Aircraft.objects.create(
         registration=registration,
         type="RPA",
@@ -51,7 +51,7 @@ class TestTheStatusFollowsTheDate:
         call_command(
             "load_dgac_vigencias",
             "--file",
-            _csv(tmp_path, [("aircraft", "RPA-3696", future.isoformat())]),
+            _csv(tmp_path, [("aircraft", "RPA-9001", future.isoformat())]),
         )
 
         aircraft.refresh_from_db()
@@ -67,7 +67,7 @@ class TestTheStatusFollowsTheDate:
         call_command(
             "load_dgac_vigencias",
             "--file",
-            _csv(tmp_path, [("aircraft", "RPA-3696", past.isoformat())]),
+            _csv(tmp_path, [("aircraft", "RPA-9001", past.isoformat())]),
         )
 
         aircraft.refresh_from_db()
@@ -84,7 +84,7 @@ class TestTheStatusFollowsTheDate:
         call_command(
             "load_dgac_vigencias",
             "--file",
-            _csv(tmp_path, [("aircraft", "RPA-3696", future.isoformat())]),
+            _csv(tmp_path, [("aircraft", "RPA-9001", future.isoformat())]),
         )
 
         aircraft.refresh_from_db()
@@ -98,7 +98,7 @@ class TestTheStatusFollowsTheDate:
         call_command(
             "load_dgac_vigencias",
             "--file",
-            _csv(tmp_path, [("aircraft", "RPA-3696", future.isoformat())]),
+            _csv(tmp_path, [("aircraft", "RPA-9001", future.isoformat())]),
             "--dry-run",
         )
 

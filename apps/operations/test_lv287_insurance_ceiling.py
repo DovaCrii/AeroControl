@@ -99,7 +99,7 @@ class TestThePureRule:
 @pytest.mark.django_db
 class TestTheForm:
     def test_the_day_before_the_expiry_is_accepted(self, centre, operator):
-        plane = _aircraft("RPA-3696", EXPIRY)
+        plane = _aircraft("RPA-9002", EXPIRY)
 
         form = _form(centre, operator, [plane], end=date(2026, 12, 20))
 
@@ -108,18 +108,18 @@ class TestTheForm:
     def test_the_expiry_day_itself_is_refused_and_the_eve_is_recommended(
         self, centre, operator
     ):
-        plane = _aircraft("RPA-3696", EXPIRY)
+        plane = _aircraft("RPA-9002", EXPIRY)
 
         form = _form(centre, operator, [plane], end=EXPIRY)
 
         assert not form.is_valid()
         message = " ".join(form.errors["valid_until"])
-        assert "RPA-3696" in message
+        assert "RPA-9002" in message
         assert "2026-12-21" in message  # cuándo vence el seguro
         assert "2026-12-20" in message  # la fecha que se recomienda
 
     def test_a_later_date_is_refused_too(self, centre, operator):
-        plane = _aircraft("RPA-3696", EXPIRY)
+        plane = _aircraft("RPA-9002", EXPIRY)
 
         form = _form(centre, operator, [plane], end=date(2026, 12, 22))
 
@@ -162,7 +162,7 @@ class TestTheForm:
     def test_the_override_reason_does_not_skip_the_insurance(self, centre, operator):
         """Ese motivo es para un plazo que la DGAC concedió distinto; el seguro no es
         un plazo de la DGAC."""
-        plane = _aircraft("RPA-3696", EXPIRY)
+        plane = _aircraft("RPA-9002", EXPIRY)
 
         form = _form(
             centre,
@@ -227,7 +227,7 @@ class TestApprovedPermitsAreNotRestricted:
     def test_an_approved_window_past_the_insurance_is_left_alone(
         self, centre, operator
     ):
-        plane = _aircraft("RPA-3696", EXPIRY)
+        plane = _aircraft("RPA-9002", EXPIRY)
         permit = FlightPermission.objects.create(
             cost_center=centre,
             purpose="photogrammetry",
@@ -258,7 +258,7 @@ class TestTheModelMirrorsIt:
 
     def test_a_saved_request_past_the_insurance_fails_its_clean(self, centre):
         permit = self._requested(centre, EXPIRY)
-        permit.aircraft_fleet.add(_aircraft("RPA-3696", EXPIRY))
+        permit.aircraft_fleet.add(_aircraft("RPA-9002", EXPIRY))
 
         with pytest.raises(ValidationError) as error:
             permit.clean()
@@ -267,7 +267,7 @@ class TestTheModelMirrorsIt:
 
     def test_a_saved_request_on_the_eve_passes(self, centre):
         permit = self._requested(centre, date(2026, 12, 20))
-        permit.aircraft_fleet.add(_aircraft("RPA-3696", EXPIRY))
+        permit.aircraft_fleet.add(_aircraft("RPA-9002", EXPIRY))
 
         permit.clean()
 
@@ -290,12 +290,12 @@ class TestTheModelMirrorsIt:
 @pytest.mark.django_db
 class TestItIsSaidBeforeItIsBroken:
     def test_the_aircraft_choice_shows_the_insurance_date(self, centre, operator):
-        _aircraft("RPA-3696", EXPIRY)
+        _aircraft("RPA-9002", EXPIRY)
 
         form = FlightPermissionForm()
         labels = [str(label) for _value, label in form.fields["aircraft_fleet"].choices]
 
-        assert any("RPA-3696" in label and "2026-12-21" in label for label in labels)
+        assert any("RPA-9002" in label and "2026-12-21" in label for label in labels)
 
     def test_an_aircraft_without_a_date_shows_no_insurance_text(self, centre, operator):
         _aircraft("RPA-NODATE", None)
@@ -320,7 +320,7 @@ class TestItIsSaidBeforeItIsBroken:
             valid_from=START,
             valid_until=date(2026, 12, 20),
         )
-        permit.aircraft_fleet.add(_aircraft("RPA-3696", EXPIRY))
+        permit.aircraft_fleet.add(_aircraft("RPA-9002", EXPIRY))
         admin = User.objects.create_superuser("i287", "i287@test.com", "pw")  # nosec B106
         client.force_login(admin)
 
@@ -341,7 +341,7 @@ class TestItIsSaidBeforeItIsBroken:
             valid_from=START,
             valid_until=date(2026, 12, 20),
         )
-        permit.aircraft_fleet.add(_aircraft("RPA-3696", EXPIRY))
+        permit.aircraft_fleet.add(_aircraft("RPA-9002", EXPIRY))
         admin = User.objects.create_superuser("i287b", "i287b@test.com", "pw")  # nosec B106
         client.force_login(admin)
 
