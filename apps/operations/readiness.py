@@ -461,3 +461,66 @@ def horizon(today):
     """La fecha hasta la que se avisa. Para que la pantalla pueda decirla en vez
     de dejar al lector deducir de dónde salió el ámbar."""
     return today + timedelta(days=WARNING_HORIZON_DAYS)
+
+
+def check_aircraft_for_assistant(aircraft, today):
+    """Lo que los registros dicen de UNA aeronave, para el asistente (`LV-340`).
+
+    No es `can_fly()` ni lo sustituye: no mira a ninguna persona (un operador es dato
+    personal y no viaja al servicio externo) y **no autoriza nada**. Reutiliza
+    `_expiry_finding` para que la regla de fechas sea la misma que la de la pantalla
+    «¿Puedo volar?». Devuelve sólo datos acotados: etiquetas fijas, el tipo de documento
+    del CATÁLOGO (nunca el título, que es texto libre), fecha ISO y una bandera.
+    """
+    from apps.compliance.models import Document
+    from apps.operations.models import FlightPermission
+
+    blockers, warnings = [], []
+
+    def put(outcome, item, expiry, flag):
+        entry = {
+            "item": item,
+            "date": expiry.isoformat() if expiry else None,
+            "flag": flag,
+        }
+        (blockers if outcome == "blocker" else warnings).append(entry)
+
+    def flag_for(expiry):
+        if expiry is None:
+            return "missing"
+        return "expired" if expiry < today else "expiring"
+
+    if aircraft.status in {"damaged", "maintenance", "retired"}:
+        put("blocker", "airframe_status", None, aircraft.status)
+
+    outcome, _finding = _expiry_finding("", aircraft.insurance_expiry, today, "", "")
+    if outcome:
+        put(
+            outcome,
+            "insurance",
+            aircraft.insurance_expiry,
+            flag_for(aircraft.insurance_expiry),
+        )
+
+    for document in _expiring_documents(Document, aircraft):
+        outcome, _finding = _expiry_finding("", document.expiry_date, today, "", "")
+        if outcome:
+            put(
+                outcome,
+                document.doc_type.name,
+                document.expiry_date,
+                flag_for(document.expiry_date),
+            )
+
+    if aircraft.cost_center_id is None:
+        put("warning", "site_permit", None, "no_site")
+    elif not FlightPermission.objects.filter(
+        cost_center_id=aircraft.cost_center_id,
+        is_active=True,
+        status=FlightPermission.STATUS_APPROVED,
+        valid_from__lte=today,
+        valid_until__gte=today,
+    ).exists():
+        put("blocker", "site_permit", None, "no_current_permit")
+
+    return {"blockers": blockers, "warnings": warnings}

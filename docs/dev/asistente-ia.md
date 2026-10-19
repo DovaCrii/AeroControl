@@ -9,7 +9,7 @@ Una pantalla (`/assistant/`) donde se escribe una pregunta («¿qué faenas no t
 vigente?») y el asistente contesta con **datos agregados de permisos**. No tiene entrada en el
 menú: hay que escribir la dirección, a propósito, mientras sea prototipo.
 
-El modelo **no toca la base de datos**. Sólo puede pedir tres herramientas de **solo lectura**
+El modelo **no toca la base de datos**. Sólo puede pedir diez herramientas de **solo lectura**
 (`apps/assistant/tools.py`), que reutilizan los mismos cálculos que el panel:
 
 | Herramienta | Qué devuelve |
@@ -17,6 +17,22 @@ El modelo **no toca la base de datos**. Sólo puede pedir tres herramientas de *
 | `permits_summary` | cuántos permisos vigentes, sin empezar, esperando a la DGAC, por vencer y atrasados |
 | `cost_centres_permit_status` | por faena: vigentes, esperando, por vencer, próximo vencimiento |
 | `expiring_permits` | permisos aprobados que vencen en los próximos N días (folio, faena, fecha) |
+| `upcoming_maintenance` | mantenciones abiertas próximas, atrasadas o por definir (matrícula, tipo, estado, fecha) |
+| `expiring_company_documents` | documentos de aeronaves y faenas por vencer (tipo del catálogo, matrícula o código de faena, fecha); sin documentos de personas |
+| `aircraft_insurance_status` | seguro JAC por aeronave: trámite, vencimiento, días |
+| `open_alerts_by_urgency` | sólo conteos de alertas abiertas por urgencia y por tipo de entidad |
+| `flight_requests_status` | solicitudes de vuelo por estado y las abiertas (faena, estado, tipo, antigüedad) |
+| `fleet_availability` | total, disponibles, porcentaje, meta y conteo por estado |
+| `aircraft_readiness` | qué dicen los registros de UNA aeronave (estado, seguro, documentos, permiso de su faena); nunca dice «puede volar» y no revisa personas |
+
+**Salida de las herramientas (`LV-340`).** Todo va envuelto como `{"data": ...}`, con a lo más 25
+filas (se recortan antes de serializar, así el JSON nunca queda cortado), claves y tipos de una lista
+blanca, códigos saneados (30 caracteres, `[A-Za-z0-9-_.]`) y fechas ISO. **Excluido para siempre:**
+campos libres (descripción, notas, quién hizo qué, mensaje de alerta, título de solicitud, nombre de
+faena, responsables), filas de operadores, habilitaciones o evaluaciones, y «¿puedo volar?» con una
+persona. Las matrículas sí salen (son públicas en el registro DGAC). Las citas viven en
+`CITATION_ROUTES` (una ruta por herramienta; sólo `pk` con forma de UUID). El panel se dibuja con el
+permiso de AL MENOS una herramienta; la pantalla completa conserva `view_flightpermission` (`LV-268`).
 
 ## Reglas que no se aflojan
 
@@ -25,7 +41,7 @@ El modelo **no toca la base de datos**. Sólo puede pedir tres herramientas de *
   de la evidencia que piden las normas.
 - **Nada personal hacia afuera.** Ni nombres de operadores, ni RUT, ni correos ni teléfonos. Sólo
   folios internos, códigos de faena y fechas (ni siquiera el nombre de la faena). Lo vigila una
-  prueba que cubre las tres herramientas.
+  prueba que cubre todas las herramientas (centinelas sembrados en cada campo libre).
 - **Cada herramienta acota por la empresa (tenant) de quien pregunta** (`LV-323`).
 - **El permiso del usuario manda.** Cada herramienta declara el permiso que exige y se comprueba
   contra quien pregunta antes de ejecutarla; la IA no amplía lo que esa persona puede ver.
@@ -142,8 +158,8 @@ confirmar en `build.nvidia.com` que el modelo elegido admite llamadas a funcione
   la forma de la petición, pero **no** que NVIDIA responda como se espera, ni la calidad de las
   respuestas, ni que el modelo elegido use bien las herramientas. Eso es lo primero que hay que mirar
   con la llave puesta.
-- La herramienta `cost_centres_permit_status` tiene el mismo alcance que el panel, que no se acota por
-  tenant; `expiring_permits` sí.
+- Todas las herramientas se acotan por empresa, incluida `cost_centres_permit_status` (el panel, que
+  llama sin `user`, sigue viendo todo).
 
 ## Aplicaciones que vale la pena evaluar después (sin hacer)
 
