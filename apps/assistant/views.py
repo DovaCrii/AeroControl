@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.http import Http404
 from django.shortcuts import render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.utils.translation import gettext as _
 from django.utils.decorators import method_decorator
@@ -10,6 +11,7 @@ from apps.core.views import ModelViewPermissionRequiredMixin
 from apps.operations.models import FlightPermission
 
 from .service import MAX_QUESTION_CHARS, ask
+from .models import AssistantUsage
 from .tools import user_has_any_tool_permission
 
 
@@ -28,6 +30,28 @@ def assistant_available():
     )
 
 
+def _vote_token(user, answer, since):
+    """`LV-346`: token firmado para votar, sólo si esta respuesta dejó fila `AssistantUsage` y salió
+    bien (ni error ni tope). `ask()` no devuelve la fila, así que se busca la de esta persona creada
+    desde que empezó la pregunta."""
+    # El endpoint de voto exige `view_flightpermission` (contrato `LV-268`): sin él los botones
+    # fallarían siempre, así que no se ofrecen.
+    if (
+        answer.state != "ok"
+        or not getattr(user, "pk", None)
+        or not user.has_perm("operations.view_flightpermission")
+    ):
+        return ""
+    from .usage_views import (
+        sign_usage_id,
+    )  # import tardío: usage_views importa este módulo
+
+    usage = AssistantUsage.objects.filter(
+        user_id=user.pk, created_at__gte=since
+    ).first()
+    return sign_usage_id(usage) if usage else ""
+
+
 def _question_context(user, question):
     """El contexto de una pregunta: validada, y contestada si es válida. Lo comparten la pantalla
     sin JS y el fragmento del panel, para que midan igual."""
@@ -37,7 +61,10 @@ def _question_context(user, question):
     elif len(question) > MAX_QUESTION_CHARS:
         context["error"] = _("The question is too long.")
     else:
-        context["answer"] = ask(user, question)
+        before = timezone.now()
+        answer = ask(user, question)
+        context["answer"] = answer
+        context["usage_token"] = _vote_token(user, answer, before)
     return context
 
 
