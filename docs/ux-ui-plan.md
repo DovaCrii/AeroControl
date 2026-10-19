@@ -464,6 +464,8 @@ Nadie lo tiene para Chile.
 
 ## 6 · Decisiones de mejora
 
+Cada fase se trabaja con la skill `diseno-ui`.
+
 Formato: **qué se decide · por qué · cómo se ve · cómo se sabe que quedó bien.**
 Los IDs `UX-nn` son los que se capturan en `MASTER_PLAN.md`.
 

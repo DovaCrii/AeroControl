@@ -103,6 +103,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Skills de diseño UI fijadas (`LV-334`).** `ui-ux-pro-max`, `web-design-guidelines` y `bencium-controlled-ux-designer`, revisadas y fijadas a un commit, más la skill propia `diseno-ui` con su verificador de contraste (`.claude/skills/VENDOR.md`). Sin cambios de CSS, plantillas ni tokens.
 - **Skill `pendientes-github` (`LV-311`).** Inventario de solo lectura de PR abiertos, ramas fusionadas y worktrees, y la receta para cerrarlos con Opus decidiendo, Sonnet implementando y Haiku revisando; `orquestar` queda alineada.
 - **Auditoría atómica con cada cambio, apagada por omisión (`T1.4`, paso 2).** Con
   `AUDIT_FAIL_CLOSED=True`, cada cambio se guarda y se audita en una sola transacción: si el
