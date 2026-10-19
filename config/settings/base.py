@@ -76,6 +76,7 @@ TEMPLATES = [
                 "apps.core.context_processors.role_shortcuts",
                 # LV-324: el módulo de la barra al que pertenece la pantalla (cabecera y fondo).
                 "apps.core.context_processors.nav_module",
+                "apps.assistant.context_processors.assistant_panel",
             ]
         },
     }

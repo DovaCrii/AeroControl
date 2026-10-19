@@ -8,6 +8,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Added
+
+- **Panel lateral del asistente (`LV-332`).** Botón flotante «Ask» + Ctrl+J abren un panel con sugerencias por pantalla, estados (pensando, error, tope alcanzado) y citas armadas por el servidor (`pk` en `expiring_permits`); texto del modelo escapado, historial sólo en el DOM. Sólo con el asistente encendido (demo) y `view_flightpermission`; producción sigue sin HTML del panel. Sin migración; estáticos nuevos (`assistant-panel.js`, `identity.css`).
+
 ### Changed
 
 - **Ruff 0.15.22 → 0.17.0 (`LV-329`).** Sustituye el PR #93 de dependabot (no actualizaba `uv.lock`). 0.17 amplía las reglas por defecto; se fija `select = ["E4","E7","E9","F"]` para conservar el comportamiento anterior. Sólo herramienta de desarrollo: sin migración ni estáticos.

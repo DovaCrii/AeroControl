@@ -478,6 +478,7 @@ menú deja de leerse de un vistazo.{% endcomment %}
   fila se pueda apilar como tarjeta en pantalla angosta. Va después de `app.js`,
   que es quien engancha htmx.{% endcomment %}
   <script src="{% static 'js/worktable.js' %}"></script>
+  {% if assistant_panel %}{% include "assistant/_panel.html" %}{% endif %}
   {% block extrascripts %}{% endblock %}
 </body>
 </html>

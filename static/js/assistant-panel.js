@@ -1,0 +1,104 @@
+/* LV-332: panel lateral del asistente. Archivo propio por la CSP (sin JS embebido).
+   El historial vive sólo en el DOM: recargar lo borra y nada se guarda en el navegador.
+   La respuesta llega como un fragmento que el SERVIDOR ya escapó y armó; acá no se interpreta
+   texto del modelo como HTML. Los textos de la pregunta se escriben con textContent. */
+(function () {
+  'use strict';
+  var panel = document.getElementById('assistant-panel');
+  if (!panel || !window.bootstrap) return;
+  var form = document.getElementById('assistant-form');
+  var input = document.getElementById('assistant-input');
+  var send = document.getElementById('assistant-send');
+  var log = document.getElementById('assistant-log');
+  var suggest = document.getElementById('assistant-suggest');
+  var busy = false;
+
+  function instance() { return window.bootstrap.Offcanvas.getOrCreateInstance(panel); }
+
+  // Ctrl+J abre o cierra (Ctrl+K es la paleta de comandos).
+  document.addEventListener('keydown', function (event) {
+    if ((event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey &&
+        event.key.toLowerCase() === 'j') {
+      event.preventDefault();
+      instance().toggle();
+    }
+  });
+
+  panel.addEventListener('shown.bs.offcanvas', function () { input.focus(); });
+
+  function bubble(cls, text) {
+    var el = document.createElement('div');
+    el.className = 'ai-msg ' + cls;
+    el.textContent = text;
+    log.appendChild(el);
+    return el;
+  }
+
+  function skeleton() {
+    var el = document.createElement('div');
+    el.className = 'ai-msg ai-msg--bot ai-thinking';
+    el.setAttribute('role', 'status');
+    ['ai-bar', 'ai-bar ai-bar--short'].forEach(function (cls) {
+      var bar = document.createElement('span');
+      bar.className = cls;
+      el.appendChild(bar);
+    });
+    var label = document.createElement('span');
+    label.className = 'visually-hidden';
+    label.textContent = panel.dataset.thinking;
+    el.appendChild(label);
+    return el;
+  }
+
+  function ask(question) {
+    question = question.trim();
+    if (busy || !question) return;
+    busy = true;
+    send.disabled = true;
+    if (suggest) suggest.hidden = true;
+    bubble('ai-msg--user', question);
+    var waiting = skeleton();
+    log.appendChild(waiting);
+    log.scrollTop = log.scrollHeight;
+
+    var body = new FormData(form);
+    body.set('question', question);
+    fetch(panel.dataset.url, {
+      method: 'POST',
+      body: body,
+      credentials: 'same-origin',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    }).then(function (response) {
+      if (!response.ok) throw new Error('http-' + response.status);
+      return response.text();
+    }).then(function (html) {
+      // Fragmento del servidor (ya escapado); sustituye al esqueleto.
+      waiting.outerHTML = html;
+    }).catch(function () {
+      waiting.parentNode.removeChild(waiting);
+      bubble('ai-msg--error', panel.dataset.failed);
+    }).then(function () {
+      busy = false;
+      send.disabled = false;
+      input.value = '';
+      log.scrollTop = log.scrollHeight;
+      input.focus();
+    });
+  }
+
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    ask(input.value);
+  });
+
+  input.addEventListener('keydown', function (event) {
+    if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+      event.preventDefault();
+      ask(input.value);
+    }
+  });
+
+  panel.querySelectorAll('[data-assistant-suggest]').forEach(function (button) {
+    button.addEventListener('click', function () { ask(button.textContent.trim()); });
+  });
+})();

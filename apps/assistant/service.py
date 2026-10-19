@@ -27,7 +27,7 @@ from django.utils.translation import gettext as _
 
 from .client import AssistantUnavailable, NvidiaClient
 from .models import AssistantUsage
-from .tools import run_tool, tool_definitions
+from .tools import execute_tool, tool_definitions
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +48,10 @@ class Answer:
     text: str
     tools_used: list = field(default_factory=list)
     ok: bool = True
+    # Enlaces armados por el servidor desde lo que devolvieron las herramientas (nunca del texto
+    # del modelo). `state`: "ok", "limit" (tope alcanzado) o "error".
+    citations: list = field(default_factory=list)
+    state: str = "ok"
 
 
 def ask(user, question, client=None):
@@ -60,6 +64,7 @@ def ask(user, question, client=None):
                 "environment."
             ),
             ok=False,
+            state="error",
         )
 
     started = time.monotonic()
@@ -72,6 +77,7 @@ def ask(user, question, client=None):
         {"role": "user", "content": question},
     ]
     tools_used = []
+    citations = []
     tokens = 0
     try:
         for _round in range(MAX_ROUNDS):
@@ -112,6 +118,7 @@ def ask(user, question, client=None):
                     text or _("The assistant returned no answer."),
                     AssistantUsage.OUTCOME_OK if text else AssistantUsage.OUTCOME_EMPTY,
                     tokens,
+                    citations if text else [],
                 )
             messages.append(
                 {
@@ -124,11 +131,15 @@ def ask(user, question, client=None):
                 function = call.get("function") or {}
                 name = function.get("name", "")
                 tools_used.append(name)
+                content, cites = execute_tool(user, name, function.get("arguments"))
+                for cite in cites:
+                    if cite not in citations:
+                        citations.append(cite)
                 messages.append(
                     {
                         "role": "tool",
                         "tool_call_id": call.get("id", ""),
-                        "content": run_tool(user, name, function.get("arguments")),
+                        "content": content,
                     }
                 )
         return _finish(
@@ -214,7 +225,7 @@ def _give_back_call(usage):
     )
 
 
-def _finish(usage, started, tools_used, text, outcome, tokens=0):
+def _finish(usage, started, tools_used, text, outcome, tokens=0, citations=()):
     ms = round((time.monotonic() - started) * 1000)
     AssistantUsage.objects.filter(pk=usage.pk).update(
         outcome=outcome,
@@ -233,6 +244,17 @@ def _finish(usage, started, tools_used, text, outcome, tokens=0):
             "ms": ms,
         },
     )
+    ok = outcome == AssistantUsage.OUTCOME_OK
+    if ok:
+        state = "ok"
+    elif outcome in (AssistantUsage.OUTCOME_LIMIT, AssistantUsage.OUTCOME_429):
+        state = "limit"
+    else:
+        state = "error"
     return Answer(
-        text=text, tools_used=tools_used, ok=outcome == AssistantUsage.OUTCOME_OK
+        text=text,
+        tools_used=tools_used,
+        ok=ok,
+        citations=list(citations),
+        state=state,
     )
