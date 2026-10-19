@@ -7,8 +7,17 @@ from .models import AssistantUsage
 class AssistantUsageAdmin(admin.ModelAdmin):
     """Solo lectura: lo escribe el servicio, no una persona. No hay texto de preguntas."""
 
-    list_display = ("created_at", "user", "outcome", "rounds", "total_tokens", "ms")
-    list_filter = ("outcome",)
+    list_display = (
+        "created_at",
+        "user",
+        "outcome",
+        "vote",
+        "rounds",
+        "total_tokens",
+        "ms",
+    )
+    list_filter = ("outcome", "created_at", "user")
+    date_hierarchy = "created_at"
     readonly_fields = [field.name for field in AssistantUsage._meta.fields]
 
     def has_add_permission(self, request):
