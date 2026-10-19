@@ -1,0 +1,22 @@
+{
+ "results": [
+  {
+   "id": 3871336,
+   "name": "Santiago",
+   "latitude": -33.45694,
+   "longitude": -70.64827,
+   "country": "Chile",
+   "admin1": "Región Metropolitana",
+   "timezone": "America/Santiago"
+  },
+  {
+   "id": 3893894,
+   "name": "Concepción",
+   "latitude": -36.82699,
+   "longitude": -73.04977,
+   "country": "Chile",
+   "admin1": "Biobío",
+   "timezone": "America/Santiago"
+  }
+ ]
+}

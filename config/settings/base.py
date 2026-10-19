@@ -233,6 +233,28 @@ WEATHER_API_URL = config(
 # Short on purpose: a slow third party must not hold a gunicorn worker.
 WEATHER_TIMEOUT_SECONDS = config("WEATHER_TIMEOUT_SECONDS", default=4, cast=int)
 WEATHER_CACHE_SECONDS = config("WEATHER_CACHE_SECONDS", default=3600, cast=int)
+# LV-342: informative weather card on the main page. Open-Meteo's free tier is
+# for non-commercial use only: production keeps WEATHER_ENABLED=False until a
+# commercial licence is resolved (WEATHER_API_KEY, or a self-hosted
+# WEATHER_API_URL). The key comes from the environment only -- never the repo.
+WEATHER_API_KEY = config("WEATHER_API_KEY", default="")
+WEATHER_GEOCODING_URL = config(
+    "WEATHER_GEOCODING_URL", default="https://geocoding-api.open-meteo.com/v1/search"
+)
+WEATHER_PANEL_CACHE_SECONDS = config(
+    "WEATHER_PANEL_CACHE_SECONDS", default=1800, cast=int
+)
+# Demo without Internet: serve bundled sample JSON. Ignored unless DEBUG.
+WEATHER_FAKE_FIXTURE = config("WEATHER_FAKE_FIXTURE", default=False, cast=bool)
+# Referential thresholds for informative weather events (NOT flight conditions).
+WEATHER_EVENT_WIND_KMH = config("WEATHER_EVENT_WIND_KMH", default=40, cast=float)
+WEATHER_EVENT_GUST_KMH = config("WEATHER_EVENT_GUST_KMH", default=60, cast=float)
+WEATHER_EVENT_RAIN_MM_24H = config("WEATHER_EVENT_RAIN_MM_24H", default=20, cast=float)
+WEATHER_EVENT_VISIBILITY_M = config(
+    "WEATHER_EVENT_VISIBILITY_M", default=1000, cast=float
+)
+WEATHER_EVENT_HEAT_C = config("WEATHER_EVENT_HEAT_C", default=35, cast=float)
+WEATHER_EVENT_FROST_C = config("WEATHER_EVENT_FROST_C", default=0, cast=float)
 
 # X.4b (ADR-0002 phase 2): reading AeroLink's battery inventory. Opt-in for the
 # same reason as the weather call -- with no URL configured nothing is fetched
