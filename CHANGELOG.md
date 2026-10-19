@@ -12,6 +12,8 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 - **Panel lateral del asistente (`LV-332`).** Botón flotante «Ask» + Ctrl+J abren un panel con sugerencias por pantalla, estados (pensando, error, tope alcanzado) y citas armadas por el servidor (`pk` en `expiring_permits`); texto del modelo escapado, historial sólo en el DOM. Sólo con el asistente encendido (demo) y `view_flightpermission`; producción sigue sin HTML del panel. Sin migración; estáticos nuevos (`assistant-panel.js`, `identity.css`).
 
+- **Interruptor de producción del asistente y comando `assistant_probar` (`LV-336`).** Fuera de `DEBUG` el asistente exige además `AI_ASSISTANT_ALLOW_PRODUCTION` (apagado por omisión: producción no cambia); apagado de emergencia con `AI_ASSISTANT_ENABLED=0` + reinicio. `assistant_probar [--ping]` diagnostica sin imprimir la llave. Sin migración ni estáticos.
+
 ### Changed
 
 - **Privacidad: `load_dgac_vigencias` sin datos reales (`LV-339`).** La tabla embebida de vigencias DGAC queda vacía; los datos reales se cargan con `--file` desde un CSV privado fuera del repo.

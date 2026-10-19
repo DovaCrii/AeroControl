@@ -13,15 +13,18 @@ from .service import MAX_QUESTION_CHARS, ask
 
 
 def assistant_available():
-    """Encendido **y** sólo en desarrollo/demo.
+    """Encendido **y** (desarrollo/demo **o** producción autorizada aparte).
 
-    El acceso gratuito a los modelos de NVIDIA (Developer Program) es **sólo para prototipos,
-    investigación y pruebas**; atender a usuarios reales es «producción» y exige licencia.
-    Por eso, aunque alguien ponga `AI_ASSISTANT_ENABLED` en producción, **no se enciende**:
-    hace falta además `DEBUG`. Pasar a producción es una decisión (y una licencia), no un
-    interruptor.
+    El acceso gratuito a los modelos de NVIDIA es sólo para prototipos y pruebas; atender a
+    usuarios reales es «producción» y exige licencia. Por eso, fuera de `DEBUG`, además de
+    `AI_ASSISTANT_ENABLED` hace falta `AI_ASSISTANT_ALLOW_PRODUCTION` (apagado por omisión): la
+    persona lo enciende sólo cuando tiene la licencia y la llave en el entorno de la VM.
+    Apagado de emergencia: `AI_ASSISTANT_ENABLED=0` y reiniciar.
     """
-    return bool(settings.AI_ASSISTANT_ENABLED and settings.DEBUG)
+    return bool(
+        settings.AI_ASSISTANT_ENABLED
+        and (settings.DEBUG or settings.AI_ASSISTANT_ALLOW_PRODUCTION)
+    )
 
 
 def _question_context(user, question):
