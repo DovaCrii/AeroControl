@@ -101,8 +101,11 @@ def _met(value, target, direction):
     return value <= target if direction == LOWER_IS_BETTER else value >= target
 
 
-def fleet_availability():
+def fleet_availability(user=None):
     """Percentage of the fleet that is flyable right now.
+
+    With `user`, the fleet is scoped to that user's company (tenant), like
+    `permit_counts`; without it nothing changes (the panel and reports see all).
 
     `Aircraft.status` is the condition axis (OPS-3 separated it from
     `current_location`): "active" is flyable, "damaged" and "maintenance" are
@@ -113,6 +116,8 @@ def fleet_availability():
     from apps.registry.models import Aircraft
 
     fleet = Aircraft.objects.filter(is_active=True).exclude(status="retired")
+    if user is not None:
+        fleet = scope_queryset_to_tenant(fleet, user, "tenant_id")
     total = fleet.count()
     if not total:
         return {
