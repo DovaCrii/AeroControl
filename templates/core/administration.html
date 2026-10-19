@@ -111,7 +111,8 @@ whether a title wrapped, so nothing lined up.{% endcomment %}
     {% endfor %}
   </section>
   {% empty %}
-  <div class="empty-state"><div><h2 class="h4">{% translate "No administration modules available" %}</h2><p>{% translate "Ask an administrator to grant the required permissions." %}</p></div></div>
+  {% translate "No administration modules available" as empty_title %}{% translate "Ask an administrator to grant the required permissions." as empty_help %}
+  <div class="empty-state">{% include "generic/_empty_art.html" with title=empty_title help=empty_help %}</div>
   {% endfor %}
 </div>
 {% endblock %}
