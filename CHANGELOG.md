@@ -10,6 +10,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Visual v2, ola H: fondos de módulo con más presencia (`LV-331`).** El dibujo de la cabecera de módulo se ancla al título, sube su opacidad a 0,16 (claro) / 0,24 (oscuro) sin tapar los botones de acción y las seis máscaras suman cotas, rumbo y retícula; el guardián de contraste se recalculó. Sólo estáticos (CSS/SVG): sin migración ni cadenas.
 - **Ruff 0.15.22 → 0.17.0 (`LV-329`).** Sustituye el PR #93 de dependabot (no actualizaba `uv.lock`). 0.17 amplía las reglas por defecto; se fija `select = ["E4","E7","E9","F"]` para conservar el comportamiento anterior. Sólo herramienta de desarrollo: sin migración ni estáticos.
 
 ### Security
