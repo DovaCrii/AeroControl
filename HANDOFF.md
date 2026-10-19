@@ -14,8 +14,8 @@
 - Valores reales de `REPORT_CONTACT_ADDRESS` y `REPORT_CONTACT_WEB` en `/etc/aerocontrol.env` (hoy no están: los informes salen con textos de ejemplo).
 - Probar el asistente en el demo con su llave y decidir licencia de NVIDIA o modelo propio (`PR 3` del asistente espera eso).
 - Decidir si se limpia el historial de git (RUT, correos y un usuario Linux antiguo siguen en commits anteriores).
-- Skills: `lecciones.md`, `rumbo-1.0.md`, `despliegue-p340.md` y `AGENTS.md` l.236.
-- Ramas respaldadas a revisar: `codex/skill-aerocontrol`, `codex/t1-4-auditoria-visible`; y dos worktrees antiguos con un archivo sin commitear (`fervent-dhawan`, `keen-wilbur`).
+- ~~Decisiones de skills~~ resueltas en `LV-337`; ~~ramas respaldadas~~ borradas el 2026-10-19 (su trabajo ya estaba en `main`).
+- Dos worktrees antiguos con un archivo sin commitear (`fervent-dhawan`, `keen-wilbur`).
 
 **Pendiente — del código:** ola J (movimiento con propósito), menú «⋯» en las demás listas, reglas nuevas de ruff (533), chips de SIGO/mantenciones sin filtro de faena, alertas y bandeja en la ola de legibilidad, informes con `.page-header` propio (sin fondo de módulo) y densidad por tabla.
 
