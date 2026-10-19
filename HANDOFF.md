@@ -1,23 +1,29 @@
 # HANDOFF — AeroControl
 
-## ✅ 2026-10-19 — rediseño de toda la app («Visual v2»), renovar permiso, asistente con registro, despliegue automatizado y skills de diseño: **desplegados** (`edabb6b`)
+## ⏳ 2026-10-20 — tanda de cierre (asistente, tiempo, privacidad, skills): **fusionada sin desplegar** (`6e96794`)
 
-`p340` corre **`edabb6b`** (primer despliegue con `scripts/deploy.sh`; antes, `7efc024` por el plan B de cuatro bloques el mismo día, con las migraciones `assistant.0001`, `geo.0007` y `operations.0033`). Hash, servicio `active` y `health` 200 leídos de la salida pegada.
+`p340`: la persona reportó haber desplegado `89c2c7d` por el plan corto (`git pull` + reinicio; **sin pegar el hash final**: confirmarlo con `git log --oneline -1` antes de desplegar). `main` está en **`6e96794`** (66 archivos de diferencia con `89c2c7d`). El `deploy.sh` de la VM ya trae el arreglo del paso 12 (`LV-335`, chequeo de salud con `X-Forwarded-Proto: https`).
 
-**El primer uso real de `deploy.sh` falló en el paso 12 con la aplicación sana:** el chequeo de salud recibía un 301 porque producción redirige HTTP a HTTPS y el chequeo local no mandaba `X-Forwarded-Proto: https`. Corregido en `LV-335` (con prueba; sin el arreglo falla). Mientras ese PR no esté desplegado, un `deploy.sh` real vuelve a abortar en el paso 12: el despliegue ya hecho llegó entero y se verificó a mano.
+**Seguimiento — fusionado sin desplegar, y qué lleva cada cosa:**
+- **Migraciones (2):** `assistant.0002_assistantusage_vote` (voto, `LV-341`) y `weather.0001_user_weather_location` (ciudad por persona, `LV-343`). **Respaldo antes de migrar** (`deploy.sh` lo hace si hay migraciones).
+- **Estáticos (`collectstatic`):** `LV-346`, `LV-347`, `LV-348` (panel del asistente, tarjeta del tiempo y re-escaneo de movimiento por htmx).
+- **Sólo código:** `LV-336` (interruptor de producción del asistente y `assistant_probar`), `LV-340` (siete herramientas de solo lectura), `LV-342` (cliente de Open-Meteo y eventos), `LV-344` (el expediente deja de pedir la revisión meteorológica, paso 1), `LV-345` (prompt, modo demo `AI_ASSISTANT_FAKE`, evaluación), `LV-338`/`LV-339` (datos privados fuera del código y de `load_dgac_vigencias`).
+- **Todo lo nuevo viene APAGADO en producción:** el asistente (`AI_ASSISTANT_ENABLED` y `AI_ASSISTANT_ALLOW_PRODUCTION`), la tarjeta del tiempo (`WEATHER_ENABLED`) y el botón de copiar (`AI_ASSISTANT_ALLOW_COPY`). Desplegar no cambia lo que ve nadie, salvo el expediente sin el renglón meteorológico.
 
-**Seguimiento — fusionado sin desplegar:** `LV-335` (la corrección del script; sólo código, sin migración ni estáticos).
+**Despliegue:** `cd /opt/aerocontrol && bash scripts/deploy.sh` (con `--dry-run` primero, como la vez anterior).
 
-**No verificado en producción:** fondos de módulo, portada, plano técnico, menú «⋯» de las filas, tema claro y fecha nativa del formulario (el navegador integrado no compone animaciones ni cambia el tema), y renovar un permiso real.
+**No verificado en navegador:** tarjeta del tiempo, panel del asistente abierto, voto y copia, menú «⋯» y fondos de módulo en tema claro (el navegador integrado no compone animaciones ni cambia el tema; el acceso a localhost fue denegado a un agente).
+
+**Historial de git — decidido y preparado, NO publicado:** la persona decidió reescribir (no repo nuevo). El clon reescrito y verificado vive en el scratchpad (`rewrite\work2.git`, hecho sobre `7f26ecf`: **ya está viejo, hay que rehacerlo sobre el `main` final**); respaldos completos en `D:\respaldos`. El empuje forzado lo bloqueó el clasificador de seguridad de Claude Code: lo ejecuta la persona con el comando que se le dejó, o da permiso explícito. Después: resincronizar la VM (`fetch` + `reset --hard origin/main` desde `main`, tras respaldar `.env`, la base y los documentos), rehacer las ramas locales con cherry-pick sobre el `main` nuevo y enviar a GitHub Support el texto de purga (`TEXTO_SUPPORT_GITHUB.txt`, a regenerar).
 
 **Pendiente — del usuario**
-- Valores reales de `REPORT_CONTACT_ADDRESS` y `REPORT_CONTACT_WEB` en `/etc/aerocontrol.env` (hoy no están: los informes salen con textos de ejemplo).
-- Probar el asistente en el demo con su llave y decidir licencia de NVIDIA o modelo propio (`PR 3` del asistente espera eso).
-- Decidir si se limpia el historial de git (RUT, correos y un usuario Linux antiguo siguen en commits anteriores).
-- ~~Decisiones de skills~~ resueltas en `LV-337`; ~~ramas respaldadas~~ borradas el 2026-10-19 (su trabajo ya estaba en `main`).
+- Ejecutar el empuje forzado del historial (o dar permiso) y escribir a GitHub Support; rotar el acceso SSH de la VM y revisar los accesos de Tailscale (el usuario y el host estuvieron publicados).
+- Asistente en producción: la llave y la licencia de NVIDIA (confirmar los cinco puntos de `docs/dev/asistente-ia.md`), luego activar `AI_ASSISTANT_ENABLED` y `AI_ASSISTANT_ALLOW_PRODUCTION`, `assistant_probar --ping` y `--eval`.
+- Tiempo: la licencia comercial de Open-Meteo (plan de pago o servidor propio) antes de encender `WEATHER_ENABLED` en producción; confirmar que `p340` sale a Internet; elegir la ciudad por omisión.
+- Pie de los informes: queda con los datos genéricos del repositorio (decidido).
 - Dos worktrees antiguos con un archivo sin commitear (`fervent-dhawan`, `keen-wilbur`).
 
-**Pendiente — del código:** ola J (movimiento con propósito), menú «⋯» en las demás listas, reglas nuevas de ruff (533), chips de SIGO/mantenciones sin filtro de faena, alertas y bandeja en la ola de legibilidad, informes con `.page-header` propio (sin fondo de módulo) y densidad por tabla.
+**Pendiente — del código:** paso 2 de `LV-344` (retirar la revisión meteorológica del plan geoespacial y del panel; condición de cierre en la fila), ola J (movimiento con propósito), menú «⋯» en las demás listas, reglas nuevas de ruff (533), chips de SIGO/mantenciones sin filtro de faena, alertas y bandeja en la ola de legibilidad, informes con `.page-header` propio, densidad por tabla, y el escaneo de nombres sueltos en la historia (heurístico).
 
 ## ✅ 2026-10-16 — rediseño de barra y panel, asistente con tope, Django 6.1.2, **desplegados** (`a807eb8`)
 
