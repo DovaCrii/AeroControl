@@ -25,17 +25,23 @@ Disabled by default (`WEATHER_ENABLED=False`): a deployment that never sets
 it keeps the project's zero-outgoing-calls property.
 """
 
+import hashlib
 import json
 import logging
+import math
 import urllib.error
 import urllib.parse
 import urllib.request
+from pathlib import Path
 
 from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone
 
 logger = logging.getLogger("aerocontrol.weather")
+
+# Bounded read of a provider response (a 7-day + 48 h payload is ~20 KB).
+MAX_BODY_BYTES = 64 * 1024
 
 # The daily fields ISO 8.1 actually asks about: wind (the limiting factor for
 # an RPAS), gusts, and precipitation. Requested as a fixed list, not built
@@ -167,7 +173,8 @@ def forecast_for(latitude, longitude, target_date):
 
 
 def _fetch(latitude, longitude, iso_date):
-    query = urllib.parse.urlencode(
+    return _get_json(
+        settings.WEATHER_API_URL,
         {
             "latitude": latitude,
             "longitude": longitude,
@@ -176,20 +183,32 @@ def _fetch(latitude, longitude, iso_date):
             "timezone": "auto",
             "start_date": iso_date,
             "end_date": iso_date,
-        }
+        },
     )
-    # The base URL is a setting, never user input, and the query is built from
-    # validated floats plus fixed field names -- nothing user-controlled
-    # reaches the request (no SSRF surface).
-    base = settings.WEATHER_API_URL
+
+
+def _get_json(base, params):
+    """GET `base?params` and decode JSON, or None on any failure. Never raises.
+
+    The base URL is a setting, never user input, and the query is built from
+    validated values plus fixed field names -- nothing user-controlled reaches
+    the request except the (length-bounded) place search text, which is only
+    ever URL-encoded into a query value (no SSRF surface).
+
+    The optional `WEATHER_API_KEY` is added here as `apikey` and nowhere else:
+    it is never logged, and the URL is never logged either (it would carry it).
+    """
     # urlopen would happily accept file:// or a custom scheme, which would turn
-    # a misconfigured WEATHER_API_URL into a local-file read. The scheme is
-    # checked here rather than assumed, so the guarantee is enforced instead of
-    # merely documented (bandit B310).
+    # a misconfigured URL into a local-file read. The scheme is checked here
+    # rather than assumed (bandit B310).
     if urllib.parse.urlparse(base).scheme not in ("http", "https"):
         logger.error("weather_bad_url_scheme")
         return None
-    url = f"{base}?{query}"
+    params = dict(params)
+    api_key = getattr(settings, "WEATHER_API_KEY", "")
+    if api_key:
+        params["apikey"] = api_key
+    url = f"{base}?{urllib.parse.urlencode(params)}"
     timeout = getattr(settings, "WEATHER_TIMEOUT_SECONDS", 4)
     try:
         request = urllib.request.Request(url, headers={"Accept": "application/json"})
@@ -201,10 +220,11 @@ def _fetch(latitude, longitude, iso_date):
                 return None
             # Bounded read: a provider returning an unexpectedly huge body must
             # not become a memory problem.
-            body = response.read(64 * 1024)
+            body = response.read(MAX_BODY_BYTES)
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
         # Expected in normal operation (no connectivity on the VM, provider
-        # down, DNS hiccup). Logged at warning, never raised.
+        # down, DNS hiccup). Logged at warning, never raised. Only the
+        # exception class is logged: its message may embed the URL (and key).
         logger.warning("weather_unreachable", extra={"reason": type(exc).__name__})
         return None
     try:
@@ -280,3 +300,398 @@ def _parse(payload, iso_date):
     result["units"] = units if isinstance(units, dict) else {}
     result["date"] = iso_date
     return result
+
+
+# ---------------------------------------------------------------------------
+# LV-342: informative weather card for the main page.
+#
+# Purely informative: it shows forecast *weather events* for the region of a
+# city the person picks. It is NOT crossed with flight permits or work sites
+# and says nothing about whether anyone can fly (LV-216 had removed the old
+# card; the person decided on 2026-10-19 to bring a purely informative one
+# back). Open-Meteo's free tier is for non-commercial use only, so in
+# production this stays off behind WEATHER_ENABLED=False until a commercial
+# licence (WEATHER_API_KEY / self-hosted WEATHER_API_URL) is resolved.
+# ---------------------------------------------------------------------------
+
+PANEL_CURRENT_FIELDS = (
+    "temperature_2m",
+    "apparent_temperature",
+    "wind_speed_10m",
+    "wind_gusts_10m",
+    "wind_direction_10m",
+    "precipitation",
+    "cloud_cover",
+    "weather_code",
+    "is_day",
+)
+# 48 h, not 24: `regional_events` looks at the next 48 hours.
+PANEL_HOURLY_HOURS = 48
+PANEL_HOURLY_FIELDS = (
+    "temperature_2m",
+    "wind_speed_10m",
+    "wind_gusts_10m",
+    "precipitation_probability",
+    "precipitation",
+    "visibility",
+    "weather_code",
+)
+PANEL_DAILY_FIELDS = (
+    "weather_code",
+    "temperature_2m_max",
+    "temperature_2m_min",
+    "precipitation_sum",
+    "precipitation_probability_max",
+    "wind_speed_10m_max",
+    "wind_gusts_10m_max",
+    "sunrise",
+    "sunset",
+    "uv_index_max",
+)
+PANEL_DAILY_DAYS = 7
+_TIME_FIELDS = ("sunrise", "sunset")
+
+GEOCODING_COUNT = 8
+GEOCODING_MIN_CHARS = 2
+GEOCODING_MAX_CHARS = 80
+GEOCODING_CACHE_SECONDS = 24 * 3600
+_FAKE_DIR = Path(__file__).parent / "testdata"
+
+_KMH_PER_UNIT = {"km/h": 1.0, "ms": 3.6, "m/s": 3.6, "mph": 1.609344, "kn": 1.852}
+
+
+def _valid_coordinates(latitude, longitude):
+    """(lat, lon) rounded to ~1 km, or None if not finite / out of range."""
+    try:
+        lat, lon = float(latitude), float(longitude)
+    except (TypeError, ValueError):
+        return None
+    if not (math.isfinite(lat) and math.isfinite(lon)):
+        return None
+    if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+        return None
+    return _rounded(lat), _rounded(lon)
+
+
+def _fake_enabled():
+    """Demo mode: serve bundled JSON, no network. Only honoured with DEBUG."""
+    if not getattr(settings, "WEATHER_FAKE_FIXTURE", False):
+        return False
+    if not settings.DEBUG:
+        logger.warning("weather_fake_fixture_ignored_without_debug")
+        return False
+    return True
+
+
+def _fake_json(name):
+    with (_FAKE_DIR / name).open(encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def _number(entry):
+    ok = isinstance(entry, (int, float)) and not isinstance(entry, bool)
+    return entry if ok and math.isfinite(entry) else None
+
+
+def _rows(block, fields, limit=None):
+    """Turn the provider's column arrays into a list of one dict per time step."""
+    times = block.get("time") if isinstance(block, dict) else None
+    if not isinstance(times, list):
+        return []
+    rows = []
+    for index, moment in enumerate(times[:limit]):
+        if not isinstance(moment, str):
+            continue
+        row = {"time": moment}
+        for field in fields:
+            series = block.get(field)
+            entry = (
+                series[index]
+                if isinstance(series, list) and index < len(series)
+                else None
+            )
+            row[field] = entry if field in _TIME_FIELDS else _number(entry)
+            if field in _TIME_FIELDS and not isinstance(entry, str):
+                row[field] = None
+        rows.append(row)
+    return rows
+
+
+def _parse_panel(payload):
+    if not isinstance(payload, dict):
+        return None
+    current = payload.get("current")
+    current = (
+        {field: _number(current.get(field)) for field in PANEL_CURRENT_FIELDS}
+        if isinstance(current, dict)
+        else {}
+    )
+    hourly = _rows(payload.get("hourly"), PANEL_HOURLY_FIELDS, PANEL_HOURLY_HOURS)
+    daily = _rows(payload.get("daily"), PANEL_DAILY_FIELDS, PANEL_DAILY_DAYS)
+    # Nothing usable at all is not a forecast.
+    if not any(v is not None for v in current.values()) and not hourly and not daily:
+        return None
+    units = {}
+    for key in ("current_units", "hourly_units", "daily_units"):
+        block = payload.get(key)
+        if isinstance(block, dict):
+            units.update({k: v for k, v in block.items() if isinstance(v, str)})
+    return {
+        "current": current,
+        "hourly": hourly,
+        "daily": daily,
+        "units": units,
+        "timezone": payload.get("timezone")
+        if isinstance(payload.get("timezone"), str)
+        else None,
+        # When the provider was asked (see UX-16): sealed at parse time.
+        "fetched_at": timezone.now().isoformat(),
+    }
+
+
+def panel_forecast(latitude, longitude):
+    """Current conditions + 48 h hourly + 7 days daily, or None. One request.
+
+    Never raises. Cached per (rounded coordinates, wind unit) for
+    WEATHER_PANEL_CACHE_SECONDS (default 1800); failures are cached too (the
+    "unavailable" sentinel) so an outage is not one request per page view.
+    """
+    if not getattr(settings, "WEATHER_ENABLED", False):
+        return None
+    coords = _valid_coordinates(latitude, longitude)
+    if coords is None:
+        return None
+    if _fake_enabled():
+        return _parse_panel(_fake_json("weather_panel_forecast.json"))
+    lat, lon = coords
+    cache_key = f"weather:panel:{lat}:{lon}:{WIND_SPEED_UNIT}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return None if cached == "unavailable" else cached
+    payload = _get_json(
+        settings.WEATHER_API_URL,
+        {
+            "latitude": lat,
+            "longitude": lon,
+            "current": ",".join(PANEL_CURRENT_FIELDS),
+            "hourly": ",".join(PANEL_HOURLY_FIELDS),
+            "forecast_hours": PANEL_HOURLY_HOURS,
+            "daily": ",".join(PANEL_DAILY_FIELDS),
+            "forecast_days": PANEL_DAILY_DAYS,
+            "wind_speed_unit": WIND_SPEED_UNIT,
+            "timezone": "auto",
+        },
+    )
+    parsed = _parse_panel(payload) if payload is not None else None
+    cache.set(
+        cache_key,
+        parsed if parsed is not None else "unavailable",
+        getattr(settings, "WEATHER_PANEL_CACHE_SECONDS", 1800),
+    )
+    return parsed
+
+
+def search_places(query, language="es"):
+    """Up to 8 places matching `query` (2-80 chars), `[]` if none, None on failure.
+
+    Each item: name, admin1, country, latitude, longitude, timezone. Cached 24 h.
+    A query outside 2-80 characters returns `[]` without any request.
+    """
+    if not getattr(settings, "WEATHER_ENABLED", False):
+        return None
+    text = " ".join(str(query or "").split())
+    if not (GEOCODING_MIN_CHARS <= len(text) <= GEOCODING_MAX_CHARS):
+        return []
+    if _fake_enabled():
+        payload = _fake_json("weather_places.json")
+        return _parse_places(payload, text)
+    digest = hashlib.sha1(f"{text.lower()}|{language}".encode()).hexdigest()  # noqa: S324  # nosec B324 - cache key only
+    cache_key = f"weather:geo:{digest}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return None if cached == "unavailable" else cached
+    payload = _get_json(
+        settings.WEATHER_GEOCODING_URL,
+        {
+            "name": text,
+            "count": GEOCODING_COUNT,
+            "language": language if language in ("es", "en") else "en",
+            "format": "json",
+        },
+    )
+    places = _parse_places(payload, text) if payload is not None else None
+    cache.set(
+        cache_key,
+        places if places is not None else "unavailable",
+        GEOCODING_CACHE_SECONDS,
+    )
+    return places
+
+
+def _parse_places(payload, text):
+    if not isinstance(payload, dict):
+        return None
+    results = payload.get("results", [])
+    if not isinstance(results, list):
+        return None
+    places = []
+    for item in results:
+        if not isinstance(item, dict):
+            continue
+        coords = _valid_coordinates(item.get("latitude"), item.get("longitude"))
+        name = item.get("name")
+        if coords is None or not isinstance(name, str) or not name:
+            continue
+        places.append(
+            {
+                "name": name,
+                "admin1": item.get("admin1")
+                if isinstance(item.get("admin1"), str)
+                else "",
+                "country": item.get("country")
+                if isinstance(item.get("country"), str)
+                else "",
+                "latitude": coords[0],
+                "longitude": coords[1],
+                "timezone": item.get("timezone")
+                if isinstance(item.get("timezone"), str)
+                else "",
+            }
+        )
+    return places[:GEOCODING_COUNT]
+
+
+# Event levels, mildest first.
+LEVELS = ("info", "attention", "strong")
+_THUNDER_CODES = (95, 96, 99)
+_HAIL_CODES = (96, 99)
+_SNOW_LEVEL = {71: 0, 77: 0, 73: 1, 85: 1, 75: 2, 86: 2}
+_FOG_CODES = (45, 48)
+# Referential, not configurable: heavy hourly rain (mm in one hour).
+HEAVY_RAIN_MM_H = 8.0
+
+
+def _threshold(name, default):
+    value = getattr(settings, name, default)
+    return default if _number(value) is None else value
+
+
+def regional_events(forecast):
+    """Informative weather events in the next 48 h of a `panel_forecast`.
+
+    PURE: no I/O, no clock; it only reads `forecast["hourly"]` (and its units).
+    Returns a short list of dicts `{type, level, start, end, value, unit}`
+    ordered strongest first, or `[]` when nothing crosses a threshold.
+
+    Types: wind, gusts, heavy_rain, rain_accumulated, thunderstorm, hail, snow,
+    frost, heat, low_visibility. Levels: info / attention / strong. `start` and
+    `end` are the first and last provider hour (local time) that triggered the
+    event; `value` is the extreme (max, or min for frost and visibility).
+
+    Thresholds are generic REFERENCE values, configurable per environment
+    (WEATHER_EVENT_WIND_KMH=40, _GUST_KMH=60, _RAIN_MM_24H=20, _VISIBILITY_M=1000,
+    _HEAT_C=35, _FROST_C=0). Wind, rain, heat and frost trigger at-or-above
+    (at-or-below for frost); visibility triggers strictly below. They are NOT
+    flight conditions, do not replace anyone's judgement or the DGAC's rules,
+    and are not crossed with permits or work sites.
+    """
+    hours = (forecast or {}).get("hourly") if isinstance(forecast, dict) else None
+    if not isinstance(hours, list):
+        return []
+    hours = [h for h in hours if isinstance(h, dict) and h.get("time")][
+        :PANEL_HOURLY_HOURS
+    ]
+    units = forecast.get("units") or {}
+    to_kmh = _KMH_PER_UNIT.get(units.get("wind_speed_10m", WIND_SPEED_UNIT), 1.0)
+
+    wind_t = _threshold("WEATHER_EVENT_WIND_KMH", 40)
+    gust_t = _threshold("WEATHER_EVENT_GUST_KMH", 60)
+    rain_t = _threshold("WEATHER_EVENT_RAIN_MM_24H", 20)
+    vis_t = _threshold("WEATHER_EVENT_VISIBILITY_M", 1000)
+    heat_t = _threshold("WEATHER_EVENT_HEAT_C", 35)
+    frost_t = _threshold("WEATHER_EVENT_FROST_C", 0)
+
+    events = []
+
+    def add(kind, level, picked, unit, value):
+        if picked:
+            events.append(
+                {
+                    "type": kind,
+                    "level": LEVELS[level],
+                    "start": picked[0]["time"],
+                    "end": picked[-1]["time"],
+                    "value": round(value, 1),
+                    "unit": unit,
+                }
+            )
+
+    def series(field, scale=1.0):
+        return [
+            (h, h[field] * scale) for h in hours if _number(h.get(field)) is not None
+        ]
+
+    def high(kind, field, scale, threshold, unit):
+        pairs = series(field, scale)
+        picked = [(h, v) for h, v in pairs if v >= threshold]
+        if picked:
+            peak = max(v for _, v in picked)
+            add(
+                kind,
+                2 if peak >= threshold * 1.5 else 1,
+                [h for h, _ in picked],
+                unit,
+                peak,
+            )
+
+    high("wind", "wind_speed_10m", to_kmh, wind_t, "km/h")
+    high("gusts", "wind_gusts_10m", to_kmh, gust_t, "km/h")
+    high("heavy_rain", "precipitation", 1.0, HEAVY_RAIN_MM_H, "mm/h")
+    high("heat", "temperature_2m", 1.0, heat_t, "°C")
+
+    # Accumulated rain: the worst rolling 24 h window inside the 48 h.
+    rain = series("precipitation")
+    best = None
+    for i in range(len(rain)):
+        window = rain[i : i + 24]
+        total = sum(v for _, v in window)
+        if total >= rain_t and (best is None or total > best[0]):
+            best = (total, [h for h, v in window if v > 0])
+    if best:
+        add(
+            "rain_accumulated",
+            2 if best[0] >= rain_t * 2 else 1,
+            best[1],
+            "mm",
+            best[0],
+        )
+
+    frost = [(h, v) for h, v in series("temperature_2m") if v <= frost_t]
+    if frost:
+        low = min(v for _, v in frost)
+        add("frost", 2 if low <= frost_t - 5 else 1, [h for h, _ in frost], "°C", low)
+
+    vis = [(h, v) for h, v in series("visibility") if v < vis_t]
+    fog = [h for h in hours if h.get("weather_code") in _FOG_CODES]
+    if vis:
+        low = min(v for _, v in vis)
+        picked = sorted(
+            {h["time"]: h for h in [h for h, _ in vis] + fog}.values(),
+            key=lambda h: h["time"],
+        )
+        add("low_visibility", 2 if low < vis_t / 5 else 1, picked, "m", low)
+    elif fog:
+        add("low_visibility", 0, fog, None, 0)
+
+    thunder = [h for h in hours if h.get("weather_code") in _THUNDER_CODES]
+    add("thunderstorm", 1, thunder, None, 0)
+    hail = [h for h in hours if h.get("weather_code") in _HAIL_CODES]
+    add("hail", 2, hail, None, 0)
+
+    snow = [h for h in hours if h.get("weather_code") in _SNOW_LEVEL]
+    if snow:
+        top = max(_SNOW_LEVEL[h["weather_code"]] for h in snow)
+        add("snow", top, snow, None, 0)
+
+    events.sort(key=lambda e: (-LEVELS.index(e["level"]), e["start"], e["type"]))
+    return events
