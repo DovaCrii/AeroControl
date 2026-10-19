@@ -100,6 +100,15 @@ class TestTheScript:
         ):
             assert needle in SCRIPT
 
+    def test_it_rescans_content_swapped_in_by_htmx(self):
+        """LV-348: lo que llega por htmx (tiempo, panel del asistente) también se pausa."""
+        for needle in (
+            'addEventListener("htmx:afterSwap"',
+            'addEventListener("htmx:load"',
+        ):
+            assert needle in SCRIPT
+        assert "nodes.has(n)" in SCRIPT  # no observa dos veces el mismo nodo
+
     def test_it_makes_no_network_calls(self):
         assert not re.search(
             r"fetch\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource|import\(|https?:",

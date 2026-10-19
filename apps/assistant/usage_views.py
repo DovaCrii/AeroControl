@@ -30,6 +30,7 @@ from apps.core.views import ModelViewPermissionRequiredMixin
 from apps.operations.models import FlightPermission
 
 from .models import AssistantUsage
+from .tools import user_has_any_tool_permission
 from .views import assistant_available
 
 logger = logging.getLogger(__name__)
@@ -151,12 +152,16 @@ class AssistantUsageView(ModelViewPermissionRequiredMixin, View):
 class AssistantVote(ModelViewPermissionRequiredMixin, View):
     """Voto de utilidad (+1/-1) sobre una respuesta propia. Sin texto, jamás.
 
-    Misma puerta y mismo permiso que el panel (`view_flightpermission`, contrato `LV-268`).
+    Misma puerta que el panel y `AssistantPanelAsk` (`LV-340`): el permiso de AL MENOS una
+    herramienta; quien ve los botones de voto puede votar. Sigue bajo el mixin de `LV-268`.
     Una firma caducada o alterada, un voto fuera de ±1 o un registro de otra persona se
     rechazan; el ajeno da 404 para no confirmar que existe. El voto se puede cambiar.
     """
 
     model = FlightPermission
+
+    def has_permission(self):
+        return user_has_any_tool_permission(self.request.user)
 
     def dispatch(self, request, *args, **kwargs):
         _gate(request)

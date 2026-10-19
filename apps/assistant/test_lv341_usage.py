@@ -138,6 +138,20 @@ class TestVote:
         usage = _usage(client.user)
         assert self._post(client, sign_usage_id(usage), 1).status_code == 404
 
+    def test_a_tool_permission_other_than_flights_can_vote_its_own_row(self, enabled):
+        """LV-348: quien ve el panel con otra herramienta (p. ej. `view_aircraft`) puede votar."""
+        client = login_as("view_aircraft")
+        usage = _usage(client.user)
+        owner = User.objects.create_user("owner2", password="pw")  # nosec B106
+        other = _usage(owner)
+
+        assert self._post(client, sign_usage_id(usage), 1).status_code == 204
+        usage.refresh_from_db()
+        assert usage.vote == 1
+        assert self._post(client, sign_usage_id(other), 1).status_code == 404
+        other.refresh_from_db()
+        assert other.vote is None
+
     def test_get_is_not_allowed(self, enabled):
         client = login_as("view_flightpermission")
         assert client.get(reverse(VOTE)).status_code == 405
