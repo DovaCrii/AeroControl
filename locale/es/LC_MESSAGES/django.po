@@ -9893,3 +9893,42 @@ msgstr "Error:"
 
 msgid "Notice:"
 msgstr "Aviso:"
+
+msgid "Vote"
+msgstr "Voto"
+
+msgid "+1 helpful, -1 not helpful. Never accompanied by free text."
+msgstr "+1 útil, -1 no útil. Nunca va acompañado de texto libre."
+
+msgid "Assistant usage"
+msgstr "Uso del asistente"
+
+msgid "Daily cap used today"
+msgstr "Tope diario usado hoy"
+
+msgid "No cap"
+msgstr "Sin tope"
+
+msgid "By day"
+msgstr "Por día"
+
+msgid "Day"
+msgstr "Día"
+
+msgid "By outcome"
+msgstr "Por resultado"
+
+msgid "By user"
+msgstr "Por usuario"
+
+msgid "No data yet."
+msgstr "Aún no hay datos."
+
+msgid "Total tokens (last %(window_days)s days)"
+msgstr "Tokens totales (últimos %(window_days)s días)"
+
+msgid "Questions (last %(window_days)s days)"
+msgstr "Preguntas (últimos %(window_days)s días)"
+
+msgid "Today's usage is at %(percent)s%% of the daily cap (%(used)s of %(cap)s service calls)."
+msgstr "El uso de hoy llega al %(percent)s%% del tope diario (%(used)s de %(cap)s llamadas al servicio)."
