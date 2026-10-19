@@ -8,6 +8,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Added
+
+- **Panel lateral del asistente (`LV-332`).** Botón flotante «Ask» + Ctrl+J abren un panel con sugerencias por pantalla, estados (pensando, error, tope alcanzado) y citas armadas por el servidor (`pk` en `expiring_permits`); texto del modelo escapado, historial sólo en el DOM. Sólo con el asistente encendido (demo) y `view_flightpermission`; producción sigue sin HTML del panel. Sin migración; estáticos nuevos (`assistant-panel.js`, `identity.css`).
+
 ### Changed
 
 - **Visual v2, ola H: fondos de módulo con más presencia (`LV-331`).** El dibujo de la cabecera de módulo se ancla al título, sube su opacidad a 0,16 (claro) / 0,24 (oscuro) sin tapar los botones de acción y las seis máscaras suman cotas, rumbo y retícula; el guardián de contraste se recalculó. Sólo estáticos (CSS/SVG): sin migración ni cadenas.

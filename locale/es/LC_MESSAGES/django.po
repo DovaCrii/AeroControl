@@ -9676,6 +9676,21 @@ msgstr "Respuesta"
 msgid "Data consulted"
 msgstr "Datos consultados"
 
+msgid "Ask the assistant"
+msgstr "Consultar al asistente"
+
+msgid "Thinking…"
+msgstr "Pensando…"
+
+msgid "You"
+msgstr "Usted"
+
+msgid "Cited records"
+msgstr "Registros citados"
+
+msgid "Which permits expire in the next 30 days?"
+msgstr "¿Qué permisos vencen en los próximos 30 días?"
+
 msgid "You have asked too many questions this hour. Try again later."
 msgstr "Se hicieron demasiadas preguntas en esta hora. Vuelva a intentarlo más tarde."
 
