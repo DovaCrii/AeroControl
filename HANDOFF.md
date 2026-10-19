@@ -1,25 +1,24 @@
 # HANDOFF — AeroControl
 
-## ⏳ 2026-10-16 — rediseño de toda la app, renovar permiso, asistente con registro y despliegue automatizado: **fusionado sin desplegar** (`b2e6842`)
+## ✅ 2026-10-19 — rediseño de toda la app, renovar permiso, asistente con registro y despliegue automatizado, **desplegados** (`7efc024`)
 
-`p340` corre **`a807eb8`**. `main` está en **`b2e6842`** (108 archivos de diferencia).
+`p340` corre **`7efc024`**, desplegado el 2026-10-19 (respaldo `restorable.` → `git pull` + `uv sync` + `migrate` → `collectstatic` (17 copiados) + reinicio, `active`; hash leído de la salida pegada). Quedaron aplicadas `assistant.0001`, `geo.0007` y `operations.0033`.
 
-**Seguimiento — fusionado sin desplegar, y qué lleva cada cosa:**
-- **Migraciones (3):** `operations.0033_permit_renews`, `geo.0007_geoplan_copied_from` (renovar permiso, `LV-320`) y `assistant.0001_assistant_usage` (`LV-326`). **Respaldo antes de migrar.**
-- **Estáticos (`collectstatic` obligatorio):** `LV-316` a `LV-321` y `LV-324` (listas, fichas, formularios, hoja impresa, plano técnico del panel, portada con topografía, cabecera por módulo y fondos).
-- **Sólo código:** `LV-323` (asistente acotado por empresa), `LV-325` (chip «Renovado», botón en la lista, cierre de avisos), `LV-322` (`deploy_status`) y `LV-327` (`scripts/deploy.sh`).
-- **El asistente sigue apagado en producción:** el candado `DEBUG` no cambió. El interruptor de producción espera la decisión de licencia/servidor propio.
+**Seguimiento — fusionado sin desplegar: nada.**
 
-**Despliegue:** con `scripts/deploy.sh` (primer uso **siempre con `--dry-run`**, no se probó contra una VM real) o, como plan B, los cuatro bloques de `deploy_plan.ps1 -From a807eb8`.
+Entró: `LV-307` a `LV-312` (portada, barra, panel, cabecera), `LV-315` a `LV-319` (tokens y olas A–D), `LV-320`/`LV-325` (renovar permiso con la misma área: copia del plan), `LV-321`/`LV-324` (plano técnico, portada con topografía, cabecera por módulo), `LV-322`/`LV-327` (`deploy_status` y `scripts/deploy.sh`), `LV-323`/`LV-326` (asistente acotado por empresa, registro de uso y topes en base; **sigue apagado en producción**), `LV-328` (ola E), `LV-329` (ruff 0.17 con las reglas fijadas a las de 0.15) y `LV-313` (Django 6.1.2).
+
+**No verificado en producción:** que los fondos de módulo, la portada y el plano técnico se vean bien en pantalla real (el navegador integrado no compone animaciones); `scripts/deploy.sh` contra una VM real (no existía en la VM: se usó el plan B de cuatro bloques; **primer uso con `--dry-run`**); renovar un permiso real y el cierre de los avisos de 45/30 días.
 
 **Pendiente — del usuario**
 - Valores reales de `REPORT_CONTACT_ADDRESS` y `REPORT_CONTACT_WEB` en `/etc/aerocontrol.env` (hoy no están: los informes salen con textos de ejemplo).
 - Probar el asistente en el demo con su llave y decidir licencia de NVIDIA o modelo propio (`PR 3` del asistente espera eso).
 - Decidir si se limpia el historial de git (RUT, correos y un usuario Linux antiguo siguen en commits anteriores).
 - Skills: `lecciones.md`, `rumbo-1.0.md`, `despliegue-p340.md` y `AGENTS.md` l.236.
-- Ramas respaldadas a revisar: `codex/skill-aerocontrol`, `codex/t1-4-auditoria-visible`.
+- Ramas respaldadas a revisar: `codex/skill-aerocontrol`, `codex/t1-4-auditoria-visible`; y dos worktrees antiguos con un archivo sin commitear (`fervent-dhawan`, `keen-wilbur`).
 
-**Pendiente — del código:** ola E (mensajes con icono, foco uniforme, migrar colores sueltos de `app.css`), subida de ruff 0.17 (al final, por el formato), chips de SIGO/mantenciones que no filtran por faena, y los informes con `.page-header` propio (sin fondo de módulo).
+**Pendiente — del código:** adoptar las reglas nuevas de ruff (533 hallazgos), chips de SIGO/mantenciones que no filtran por faena, informes con `.page-header` propio (sin fondo de módulo), `style=` en línea y ~225 colores sueltos de `app.css`.
+
 ## ✅ 2026-10-16 — rediseño de barra y panel, asistente con tope, Django 6.1.2, **desplegados** (`a807eb8`)
 
 `p340` corre **`a807eb8`**, desplegado el 2026-10-16 en cuatro bloques (estado → entorno → `git pull` + `uv sync` → `collectstatic` + reinicio;
