@@ -5,3 +5,6 @@ class AssistantConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "apps.assistant"
     verbose_name = "Assistant"
+
+    def ready(self):
+        from . import fake_client  # noqa: F401 - registra el chequeo de AI_ASSISTANT_FAKE
