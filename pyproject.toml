@@ -57,7 +57,7 @@ package = false
 
 [tool.ruff]
 target-version = "py312"
-exclude = [".venv", ".tmp-baseline", "migrations", ".pytest_cache", ".ruff_cache"]
+exclude = [".venv", ".tmp-baseline", "migrations", ".pytest_cache", ".ruff_cache", ".claude/skills/ui-ux-pro-max"]
 
 [tool.ruff.lint]
 # Ruff 0.17 widened the default rule set (533 new findings: RUF012, I001, FURB157...).
