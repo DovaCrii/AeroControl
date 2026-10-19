@@ -7895,8 +7895,8 @@ msgstr ""
 "permiso muestra el equivalente en pies para el formulario del SIGO."
 
 #: templates/operations/permission_detail.html
-msgid "for the SIGO form"
-msgstr "para el formulario del SIGO"
+msgid "%(ft)s ft for the SIGO form"
+msgstr "%(ft)s ft para el formulario del SIGO"
 
 #: templates/operations/permission_detail.html
 msgid "Check its NOTAMs at the DGAC"

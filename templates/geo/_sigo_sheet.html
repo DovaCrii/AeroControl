@@ -72,7 +72,7 @@ con su botón, porque el rótulo de la casilla es lo que dice cuál es cuál.
 </div>
 {% comment %}LV-141: BCN declara su cartografía referencial y la capa está
 simplificada a ~111 m. Literalmente el mismo aviso que la tabla.{% endcomment %}
-<p class="text-muted small mb-0 mt-1">{% translate "The commune, province and region come from the BCN administrative boundaries, which that institution publishes as referential: near a boundary the answer may be the neighbouring commune. Confirm it before filing." %}</p>
+{% translate "The commune, province and region come from the BCN administrative boundaries, which that institution publishes as referential: near a boundary the answer may be the neighbouring commune. Confirm it before filing." as bcn_warning %}{% include "generic/_signal.html" with kind="warn" text=bcn_warning %}
 
 {% if row.modality == "center_point" %}
 <h3 class="sigo-section-title sigo-section-coords">{% translate "Latitude" %}</h3>

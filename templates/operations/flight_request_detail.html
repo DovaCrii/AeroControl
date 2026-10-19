@@ -96,7 +96,7 @@ que va a fallar es peor que no ofrecerlo.{% endcomment %}
           {% comment %}El recordatorio va pegado al dato y no en una nota al
           pie: es lo que impide que un cálculo se presente como un hecho
           verificado. `LV-93`: la app propone, el papel manda.{% endcomment %}
-          <div class="small text-body-secondary">{% translate "Proposed by distance — confirm against the AIP chart." %}</div>
+          {% translate "Proposed by distance — confirm against the AIP chart." as aip_warning %}{% include "generic/_signal.html" with kind="warn" text=aip_warning %}
         </td>
       </tr>
       <tr><th scope="row">{% translate "Distance to AMC (km)" %}</th><td>{{ sheet.amc_distance_km|default:"—" }}</td></tr>
