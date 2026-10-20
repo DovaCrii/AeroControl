@@ -174,14 +174,20 @@ class TestTheTabsShownAreTheOnesYouCanOpen:
         _city(client)
         assert self._links(_get(client, WEATHER).content.decode()) == {WEATHER}
 
-    def test_the_airspace_tab_waits_for_its_route_even_for_a_superuser(self, on):
-        """El punto de extensión: `view_airspacefeature` Y la ruta; sin ruta no hay enlace roto."""
+    def test_the_airspace_tab_shows_once_its_route_exists_and_with_its_permission(
+        self, on
+    ):
+        """LV-357 (F3) registró `airspace-map`: la pestaña declarada en E1 aparece sola, con `view_airspacefeature`."""
         client = login_as()
         client.user.is_superuser = True
         client.user.save()
         keys = [tab["key"] for tab in tabs.tabs_for(client.user)]
-        assert keys == ["weather", "gnss"]
-        assert "/environment/airspace/" not in _get(client, WEATHER).content.decode()
+        assert keys == ["weather", "gnss", "airspace"]
+        assert "/environment/airspace/" in _get(client, WEATHER).content.decode()
+        weather_only = login_as(VIEW).user
+        assert "airspace" not in [tab["key"] for tab in tabs.tabs_for(weather_only)]
+        airspace_only = login_as("view_airspacefeature").user
+        assert [tab["key"] for tab in tabs.tabs_for(airspace_only)] == ["airspace"]
 
     def test_a_registered_route_makes_a_declared_tab_appear(self, on, monkeypatch):
         extra = tabs.Tab("extra", "health", "Extra", "weather.view_userweatherlocation")

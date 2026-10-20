@@ -1,0 +1,189 @@
+/* LV-357 (fase 3): estilos de la pestaña «Espacio aéreo» de Entorno.
+   Archivo propio y no una subsección de `identity.css`: allí los guardianes de E7 (LV-358) prohíben el
+   rojo de «crítico», y un mapa de zonas prohibidas sí lo necesita (P = `--sev-critical-*`, con patrón y
+   letra además del color). Se carga sólo en esa pestaña. */
+
+/* Franja con conteos y foto del mapa, panel de
+   búsqueda, mapa Leaflet, leyenda y ficha técnica. Sólo lee `--id-*`, `--ac-*` y `--sev-*` y define
+   tokens `--id-air-*`. Una zona se distingue por color + patrón + letra (P, R, D, N), nunca sólo por
+   color; los patrones de relleno viven en el SVG que dibuja `airspace-map.js` y toman su color de
+   estas clases, así que siguen el tema claro/oscuro. Ninguna animación ni desplazamiento horizontal. */
+.air-layout {
+  --id-air-map-h: 34rem;
+  display: grid;
+  gap: var(--id-sp-2);
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+.air-layout > * { min-width: 0; }
+.air-strip, .air-panel, .air-mapcol, .air-side .air-fiche, .air-near-out, .air-empty {
+  padding: var(--id-sp-2) var(--id-sp-3);
+  border: 1px solid var(--ac-border);
+  border-radius: var(--id-r-card);
+  background: var(--ac-surface);
+  color: var(--ac-text);
+  box-shadow: var(--id-lift);
+}
+.air-side { display: grid; gap: var(--id-sp-2); }
+.air-counts { display: flex; flex-wrap: wrap; gap: var(--id-sp-1) var(--id-sp-3); margin: 0 0 var(--id-sp-1); }
+.air-counts div { min-width: 5.5rem; }
+.air-counts dt { font-size: 0.75rem; font-weight: 600; color: var(--ac-text-secondary); }
+.air-counts dd { margin: 0; font-size: var(--id-fs-lg); font-weight: 700; }
+.air-photo, .air-attribution { margin: 0 0 0.3rem; font-size: var(--id-fs-sm); }
+.air-photo--stale { color: var(--sev-warning-text); font-weight: 600; }
+.air-attribution { color: var(--ac-text-secondary); }
+.air-attribution a { color: var(--ac-text); font-weight: 600; text-decoration: underline; }
+.air-steps { margin: 0; padding-left: 1.25rem; font-size: var(--id-fs-sm); }
+.air-steps code, .air-point { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: 0.8125rem; overflow-wrap: anywhere; }
+.air-label { display: block; margin-bottom: 0.2rem; font-size: 0.75rem; font-weight: 700; color: var(--ac-text-secondary); }
+.air-input {
+  width: 100%;
+  min-height: 2.25rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--ac-border);
+  border-radius: var(--id-r-control);
+  background: var(--ac-surface);
+  color: var(--ac-text);
+  font: inherit;
+}
+.air-input:focus-visible, .air-tool:focus-visible, .air-row:focus-visible, .air-check input:focus-visible, .air-legend-item input:focus-visible {
+  outline: 3px solid var(--ac-text);
+  outline-offset: 2px;
+}
+.air-help { margin: 0.3rem 0 0; font-size: 0.75rem; color: var(--ac-text-secondary); }
+.air-filters { display: grid; gap: var(--id-sp-1); grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: var(--id-sp-1); }
+.air-check { grid-column: 1 / -1; display: flex; align-items: center; gap: 0.4rem; font-size: var(--id-fs-sm); }
+.air-status { margin: var(--id-sp-1) 0 0; font-size: var(--id-fs-sm); font-weight: 600; }
+.air-results { max-height: 24rem; margin: var(--id-sp-1) 0 0; padding: 0; overflow-y: auto; list-style: none; border-top: 1px solid var(--ac-border); }
+.air-result { border-bottom: 1px solid var(--ac-border); }
+.air-more { padding: 0.5rem 0; font-size: 0.75rem; color: var(--ac-text-secondary); }
+.air-row {
+  display: grid;
+  gap: 0.15rem;
+  width: 100%;
+  padding: 0.45rem 0.4rem;
+  border: 0;
+  border-radius: var(--id-r-control);
+  background: transparent;
+  color: var(--ac-text);
+  font: inherit;
+  font-size: var(--id-fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+.air-row:hover { background: var(--ac-bg); }
+.air-row[aria-current="true"] { background: var(--ac-bg); box-shadow: inset 4px 0 0 var(--ac-text); }
+.air-row-kind {
+  justify-self: start;
+  padding: 0 0.5rem;
+  border: 1px solid var(--sev-nominal-border);
+  border-radius: var(--id-r-pill);
+  background: var(--sev-nominal-bg);
+  color: var(--sev-nominal-text);
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+.air-row-kind--prohibited { border-color: var(--sev-critical-border); background: var(--sev-critical-bg); color: var(--sev-critical-text); }
+.air-row-kind--restricted { border-color: var(--sev-warning-border); background: var(--sev-warning-bg); color: var(--sev-warning-text); }
+.air-row-kind--danger { border-color: var(--sev-advisory-border); background: var(--sev-advisory-bg); color: var(--sev-advisory-text); }
+.air-row-main { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.air-row-code { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; }
+.air-row-name { overflow-wrap: anywhere; }
+.air-row-flag, .air-row-dist { font-size: 0.75rem; color: var(--ac-text-secondary); }
+.air-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--id-sp-1); margin-bottom: var(--id-sp-1); }
+.air-circle-tool { display: inline-flex; align-items: center; gap: 0.4rem; }
+.air-radius { width: 5rem; }
+.air-nm { font-size: 0.75rem; color: var(--ac-text-secondary); }
+.air-tool {
+  min-height: 2.25rem;
+  padding: 0.3rem 0.8rem;
+  border: 1px solid var(--ac-border);
+  border-radius: var(--id-r-control);
+  background: var(--ac-surface);
+  color: var(--ac-text);
+  font: inherit;
+  font-size: var(--id-fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+.air-tool:hover { background: var(--ac-bg); }
+.air-tool[aria-pressed="true"] { border-color: var(--ac-text); border-width: 2px; background: var(--ac-bg); }
+.air-tool[aria-pressed="true"]::before { content: "✓ "; }
+.air-tool.is-copied::before { content: "✓ "; }
+.air-map { height: var(--id-air-map-h); border: 1px solid var(--ac-border); border-radius: var(--id-r-control); background: var(--ac-bg); }
+.air-map--tool { cursor: crosshair; }
+.air-map--tool .leaflet-interactive { cursor: crosshair; }
+.air-legend { margin: var(--id-sp-1) 0 0; padding: 0; border: 0; }
+.air-legend legend { float: none; width: auto; margin: 0 0 0.3rem; padding: 0; font-size: 0.75rem; font-weight: 700; color: var(--ac-text-secondary); }
+.air-legend-items { display: flex; flex-wrap: wrap; gap: 0.3rem var(--id-sp-2); }
+.air-legend-item { display: inline-flex; align-items: center; gap: 0.35rem; font-size: var(--id-fs-sm); }
+.air-readout { margin-top: var(--id-sp-1); padding: 0.4rem 0.6rem; border: 1px solid var(--ac-border); border-radius: var(--id-r-control); font-size: var(--id-fs-sm); }
+.air-swatch, .air-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border: 2px solid var(--sev-nominal-text);
+  border-radius: 4px;
+  background: var(--sev-nominal-bg);
+  color: var(--sev-nominal-text);
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.air-swatch svg { width: 1rem; height: 1rem; }
+.air-swatch--prohibited, .air-badge--prohibited { border-color: var(--sev-critical-text); background: var(--sev-critical-bg); color: var(--sev-critical-text); }
+.air-swatch--restricted, .air-badge--restricted { border-color: var(--sev-warning-text); background: var(--sev-warning-bg); color: var(--sev-warning-text); }
+.air-swatch--danger, .air-badge--danger { border-color: var(--sev-advisory-text); background: var(--sev-advisory-bg); color: var(--sev-advisory-text); }
+.air-swatch--fir_boundary { border-style: dashed; }
+.air-swatch--airstrip { width: 0.6rem; height: 0.6rem; border-radius: 50%; background: var(--ac-text-secondary); border-color: var(--ac-text-secondary); }
+.air-badge { width: 1.375rem; height: 1.375rem; box-shadow: 0 0 0 2px var(--ac-surface); }
+.air-badge-wrap.is-selected .air-badge, .air-plane-wrap.is-selected .air-plane { outline: 3px solid var(--ac-text); outline-offset: 2px; }
+.air-plane {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.625rem;
+  height: 1.625rem;
+  color: var(--ac-text);
+}
+.air-plane--airport { border: 2px solid var(--ac-text); border-radius: 50%; background: var(--ac-surface); }
+.air-plane--aerodrome svg { filter: drop-shadow(0 0 2px var(--ac-surface)) drop-shadow(0 0 1px var(--ac-surface)); }
+.air-shape--prohibited { stroke: var(--sev-critical-text); }
+.air-shape--restricted { stroke: var(--sev-warning-text); }
+.air-shape--danger { stroke: var(--sev-advisory-text); }
+.air-shape--naval { stroke: var(--sev-nominal-text); }
+.air-shape--fir_boundary { stroke: var(--sev-nominal-text); stroke-dasharray: 8 6; stroke-width: 2; fill: none; }
+.air-pat-bg { opacity: 0.6; }
+.air-pat--prohibited .air-pat-bg { fill: var(--sev-critical-bg); }
+.air-pat--prohibited .air-pat-mark { stroke: var(--sev-critical-text); stroke-width: 1.2; fill: none; }
+.air-pat--restricted .air-pat-bg { fill: var(--sev-warning-bg); }
+.air-pat--restricted .air-pat-mark { stroke: var(--sev-warning-text); stroke-width: 1.2; fill: none; }
+.air-pat--danger .air-pat-bg { fill: var(--sev-advisory-bg); }
+.air-pat--danger .air-pat-mark { fill: var(--sev-advisory-text); stroke: none; }
+.air-pat--naval .air-pat-bg { fill: var(--sev-nominal-bg); }
+.air-pat--naval .air-pat-mark { stroke: var(--sev-nominal-text); stroke-width: 1.2; fill: none; }
+.air-refpoint { stroke: var(--ac-text); fill: var(--ac-text); }
+.air-circle { stroke: var(--ac-text); stroke-dasharray: 4 4; fill: var(--ac-text); }
+.air-measure-line { stroke: var(--ac-text); stroke-dasharray: 2 6; stroke-linecap: round; }
+.air-fiche-name { margin: 0; font-size: var(--id-fs-md); font-weight: 700; overflow-wrap: anywhere; }
+.air-flag { margin: 0.4rem 0 0; font-size: var(--id-fs-sm); font-weight: 600; }
+.air-fiche-list { margin: var(--id-sp-1) 0 0; display: grid; gap: 0.5rem; }
+.air-fiche-list dt { font-size: 0.75rem; font-weight: 700; color: var(--ac-text-secondary); }
+.air-fiche-list dd { margin: 0; font-size: var(--id-fs-sm); overflow-wrap: anywhere; }
+.air-pre { white-space: pre-wrap; }
+.air-near-title { margin: var(--id-sp-1) 0 0.2rem; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ac-text-secondary); }
+.air-near-list { margin: 0; padding: 0; list-style: none; }
+@media (min-width: 992px) {
+  .air-layout { grid-template-columns: minmax(16rem, 20rem) minmax(0, 1fr); }
+  .air-side { grid-column: 1 / -1; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1400px) {
+  .air-layout { grid-template-columns: minmax(16rem, 20rem) minmax(0, 1fr) minmax(16rem, 22rem); }
+  .air-side { grid-column: auto; grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 575.98px) {
+  .air-layout { --id-air-map-h: 60vh; }
+  .air-filters { grid-template-columns: minmax(0, 1fr); }
+}
