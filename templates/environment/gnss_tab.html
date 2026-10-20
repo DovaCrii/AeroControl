@@ -1,0 +1,32 @@
+{% extends "environment/_section.html" %}
+{% load i18n %}
+{% comment %}LV-358: pestaña Centelleo. EXPLICA (qué es, la temporada de la fuente, la ventana de hoy y el supuesto que es nuestro); el estado vivo sale de la cabecera común, no se repite acá. Referencia ESTADÍSTICA tomada de GEOCOM (centelleo.geocom.cl, con el área de desarrollo de Trimble): no mide, no lee datos en vivo y no se cruza con permisos ni faenas.{% endcomment %}
+{% block env_tab %}
+{% with card=env_summary.gnss %}
+<section class="env-panel" aria-labelledby="env-gnss-what">
+  <h2 id="env-gnss-what" class="env-title">{% translate "What it is" %}</h2>
+  <p>{% translate "Scintillation is a disturbance of satellite signals as they cross the ionosphere. It can degrade high-precision positioning: RTK and PPK may lose the fixed solution or gain error, mostly at night." %}</p>
+</section>
+
+<section class="env-panel" aria-labelledby="env-gnss-season">
+  <h2 id="env-gnss-season" class="env-title">{% translate "Season" %}</h2>
+  <p>{% blocktranslate with months=gnss_season first=gnss_year_from last=gnss_year_to %}The source indicates {{ months }}, with a peak in 2025 and effects until 2028. This screen covers {{ first }} to {{ last }}.{% endblocktranslate %}</p>
+</section>
+
+<section class="env-panel" aria-labelledby="env-gnss-window">
+  <h2 id="env-gnss-window" class="env-title">{% translate "Tonight's window" %}</h2>
+  {% if card.sunset and card.dusk %}
+  <p>{% blocktranslate with sunset=card.sunset dusk=card.dusk city=card.sunset_city %}Sunset {{ sunset }} · nightfall {{ dusk }} (per the forecast for {{ city }}){% endblocktranslate %}</p>
+  {% else %}
+  <p>{% blocktranslate with start=card.night_start end=card.night_end %}Fixed hours: {{ start }} to {{ end }}.{% endblocktranslate %}</p>
+  {% endif %}
+  <p class="env-assume">{% blocktranslate with start=card.night_start end=card.night_end %}The {{ start }} to {{ end }} hours are our interpretation of "near midnight". The source only says night, September to April, with a peak in 2025 and effects until 2028.{% endblocktranslate %}</p>
+</section>
+
+<footer class="env-foot">
+  {% if card.portal_url %}<p class="env-portal"><a href="{{ card.portal_url }}" target="_blank" rel="noopener noreferrer">{% translate "Real-time data: see portal" %}<span class="visually-hidden"> ({% translate "opens in a new tab" %})</span></a></p>{% endif %}
+  {% include "environment/_source.html" with name="GEOCOM / Trimble" url=card.source_url %}
+  {% if env_summary.sunset_text %}{% include "environment/_source.html" with name="Open-Meteo.com" url="https://open-meteo.com/" license="CC BY 4.0" license_url="https://creativecommons.org/licenses/by/4.0/" stale=env_summary.stale %}{% endif %}
+</footer>
+{% endwith %}
+{% endblock %}

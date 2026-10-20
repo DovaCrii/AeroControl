@@ -24,7 +24,6 @@
         {% else %}{% translate "Outside the period the source indicates" %}{% endif %}
       </span>
     </p>
-    {% if sunset and dusk %}<p class="gn-sun">{% blocktranslate with sunset=sunset dusk=dusk city=sunset_city %}Sunset {{ sunset }} · nightfall {{ dusk }} (per the forecast for {{ city }}){% endblocktranslate %}</p>{% endif %}
     <p class="gn-ref">{% translate "Statistical reference from the source. It is not a measurement and not a go/no-go criterion" %}</p>
     <p class="gn-what">{% translate "Scintillation is a disturbance of satellite signals as they cross the ionosphere. It can degrade high-precision positioning: RTK and PPK may lose the fixed solution or gain error, mostly at night." %}</p>
     <p class="gn-assume">{% blocktranslate with start=night_start end=night_end %}The {{ start }} to {{ end }} hours are our interpretation of "near midnight". The source only says night, September to April, with a peak in 2025 and effects until 2028.{% endblocktranslate %}</p>

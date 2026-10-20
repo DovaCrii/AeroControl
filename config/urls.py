@@ -185,4 +185,5 @@ urlpatterns = [
     path("reporting/", include("apps.reporting.urls")),
     path("assistant/", include("apps.assistant.urls")),
     path("weather/", include("apps.weather.urls")),
+    path("environment/", include("apps.environment.urls")),
 ]

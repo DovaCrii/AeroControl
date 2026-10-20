@@ -310,40 +310,53 @@ class TestGnssFollowsTheSunset:
         assert state_["next_start"] == sun(date(2026, 10, 20), 21, 0)
 
 
+class TestGnssCardIsPure:
+    """LV-358: `build_gnss_card(now, sunsets, city)` no pide pronóstico: se lo pasan."""
+
+    def test_the_card_shows_sunset_and_nightfall_with_the_city(self, forecast):
+        sunsets, _zone = gnss.sunsets_from_forecast(forecast)
+        moment = datetime(2026, 10, 19, 21, 30, tzinfo=SANTIAGO)
+        card = gnss_tags.build_gnss_card(moment, sunsets, "Santiago")
+        assert card["status"] == "on"
+        assert (card["sunset"], card["dusk"], card["sunset_city"]) == (
+            "19:50",
+            "20:50",
+            "Santiago",
+        )
+
+    def test_without_sunsets_it_uses_the_fixed_hours_and_hides_the_line(self):
+        moment = datetime(2026, 10, 19, 20, 55, tzinfo=SANTIAGO)
+        card = gnss_tags.build_gnss_card(moment, {}, "")
+        assert card["status"] == "off" and card["sunset"] is None
+        assert card["next_start"].strftime("%H:%M") == "21:00"
+
+    def test_an_unreadable_forecast_gives_no_sunsets_and_never_raises(self):
+        assert gnss.sunsets_from_forecast(None)[0] == {}
+        broken = {"timezone": "Nowhere/Land", "daily": [{"time": "x", "sunset": "y"}]}
+        assert gnss.sunsets_from_forecast(broken)[0] == {}
+
+    def test_the_module_cannot_reach_the_network(self):
+        # La salida a la red del panel (hallazgo de LV-358) nacía de que este módulo importaba el
+        # cliente del tiempo; sin el import no hay forma de llamarlo.
+        assert not hasattr(gnss_tags, "weather_client")
+        assert not hasattr(gnss_tags, "forecast_sunsets")
+
+
 @pytest.mark.django_db
-class TestGnssCardUsesTheForecast:
-    def _page(self, monkeypatch, moment, result):
-        pin_now(monkeypatch, moment)
-        monkeypatch.setattr(weather_client, "panel_forecast", lambda lat, lon: result)
-        return (
+class TestThePanelCardAsksForNoForecast:
+    def test_the_dashboard_renders_the_card_without_calling_the_forecast(
+        self, monkeypatch
+    ):
+        def boom(lat, lon):
+            raise AssertionError("armar el panel no puede pedir el pronóstico")
+
+        pin_now(monkeypatch, datetime(2026, 10, 19, 20, 55, tzinfo=SANTIAGO))
+        monkeypatch.setattr(weather_client, "panel_forecast", boom)
+        content = (
             login_as()
             .get(reverse("dashboard"), headers={"Accept-Language": "en"})
             .content.decode()
         )
-
-    def test_the_card_shows_sunset_and_nightfall_with_the_city(
-        self, monkeypatch, forecast
-    ):
-        moment = datetime(2026, 10, 19, 21, 30, tzinfo=SANTIAGO)
-        content = self._page(monkeypatch, moment, forecast)
-        card = content.split('id="gnss-card"')[1].split("</section>")[0]
-        assert "gn-state--on" in card
-        assert "Sunset 19:50 · nightfall 20:50 (per the forecast for Santiago)" in card
-
-    def test_without_a_forecast_it_uses_the_fixed_hours_and_hides_the_line(
-        self, monkeypatch
-    ):
-        moment = datetime(2026, 10, 19, 20, 55, tzinfo=SANTIAGO)
-        content = self._page(monkeypatch, moment, None)
         card = content.split('id="gnss-card"')[1].split("</section>")[0]
         assert "gn-state--off" in card and "next: Mon 19 Oct, 21:00" in card
         assert "nightfall" not in card
-
-    def test_a_forecast_that_raises_is_treated_as_missing(self, monkeypatch):
-        def boom(lat, lon):
-            raise RuntimeError("proveedor caído")
-
-        pin_now(monkeypatch, datetime(2026, 10, 19, 20, 55, tzinfo=SANTIAGO))
-        monkeypatch.setattr(weather_client, "panel_forecast", boom)
-        card = gnss_tags.build_gnss_card()
-        assert card["status"] == "off" and card["sunset"] is None
