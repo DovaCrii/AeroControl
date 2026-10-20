@@ -10367,3 +10367,108 @@ msgstr "Informe mensual DGAC: corte %(date)s · %(status)s"
 #, python-format
 msgid "DGAC monthly report: period %(period)s · %(status)s"
 msgstr "Informe mensual DGAC: período %(period)s · %(status)s"
+
+msgctxt "compliance level"
+msgid "Overdue"
+msgstr "Vencido"
+
+msgid "People"
+msgstr "Personas"
+
+msgid "≤7 days"
+msgstr "≤7 días"
+
+msgid "≤15 days"
+msgstr "≤15 días"
+
+msgid "≤30 days"
+msgstr "≤30 días"
+
+msgid "31–90 days"
+msgstr "31–90 días"
+
+#, python-format
+msgid "W%(n)s"
+msgstr "S%(n)s"
+
+#, python-format
+msgid "days %(first)s to %(last)s"
+msgstr "días %(first)s a %(last)s"
+
+msgid "0–30 days"
+msgstr "0–30 días"
+
+msgid "31–60 days"
+msgstr "31–60 días"
+
+msgid "61–90 days"
+msgstr "61–90 días"
+
+msgid "0–7 days"
+msgstr "0–7 días"
+
+msgid "8–30 days"
+msgstr "8–30 días"
+
+msgid "Over 30 days"
+msgstr "Más de 30 días"
+
+msgid "to attend within 30 days"
+msgstr "por atender en 30 días"
+
+msgid "without an owner"
+msgstr "sin responsable"
+
+msgid "No maintenance to define."
+msgstr "Sin mantenciones por definir."
+
+msgid "open alert"
+msgid_plural "open alerts"
+msgstr[0] "alerta abierta"
+msgstr[1] "alertas abiertas"
+
+msgid "maintenance record to define"
+msgid_plural "maintenance records to define"
+msgstr[0] "mantención por definir"
+msgstr[1] "mantenciones por definir"
+
+#, python-format
+msgid "%(count)s open alert"
+msgid_plural "%(count)s open alerts"
+msgstr[0] "%(count)s alerta abierta"
+msgstr[1] "%(count)s alertas abiertas"
+
+#, python-format
+msgid "%(label)s: %(attend)s to attend within 30 days"
+msgstr "%(label)s: %(attend)s por atender en 30 días"
+
+#, python-format
+msgid ""
+"%(label)s: %(overdue)s overdue, %(d7)s within 7 days, %(d15)s within 15 days, "
+"%(d30)s within 30 days, %(later)s within 31 to 90 days."
+msgstr ""
+"%(label)s: %(overdue)s vencidos, %(d7)s en 7 días, %(d15)s en 15 días, "
+"%(d30)s en 30 días y %(later)s entre 31 y 90 días."
+
+#, python-format
+msgid ""
+"Open alerts by age: %(fresh)s from 0 to 7 days, %(mid)s from 8 to 30 days, "
+"%(old)s over 30 days; %(unassigned)s without an owner."
+msgstr ""
+"Alertas abiertas por antigüedad: %(fresh)s de 0 a 7 días, %(mid)s de 8 a 30 "
+"días y %(old)s de más de 30 días; %(unassigned)s sin responsable."
+
+msgid "Expiries by week over the next 90 days"
+msgstr "Vencimientos por semana en los próximos 90 días"
+
+msgid "Expiries in 30-day periods over the next 90 days"
+msgstr "Vencimientos por tramos de 30 días en los próximos 90 días"
+
+msgid ""
+"✕ overdue · ▲ up to 7 days · ◆ up to 15 · ● up to 30 · ○ later. A week takes "
+"the symbol of its first day. The figure in each cell is the count; the color "
+"only helps to scan."
+msgstr ""
+"✕ vencido · ▲ hasta 7 días · ◆ hasta 15 · ● hasta 30 · ○ después. Cada semana "
+"lleva el símbolo de su primer día. La cifra de cada celda es la cuenta; el "
+"color sólo ayuda a ojear."

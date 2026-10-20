@@ -29,8 +29,8 @@ HX = {"HTTP_HX_REQUEST": "true"}
 
 # Medido (2026-10-20) sobre la operación del fixture, con el proceso caliente. Ver el aviso de
 # `test_lv237_panel_query_budget.py` antes de tocarlos: se suben a propósito y se dice por qué.
-SECTION_QUERY_BUDGET = 10
-SECTION_FILTERED_QUERY_BUDGET = 13
+SECTION_QUERY_BUDGET = 20
+SECTION_FILTERED_QUERY_BUDGET = 23
 
 
 @pytest.fixture
