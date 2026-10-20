@@ -15,6 +15,8 @@ OJO, INTERPRETACIÓN NUESTRA: la fuente dice «de noche, cerca de la medianoche�
 2028 (mayo de 2028 ya queda fuera), y el período empieza el 1 de enero de 2025.
 
 Reglas:
+- Desde LV-354 el inicio puede ser la puesta de sol del pronóstico + `GNSS_SCINT_SUNSET_OFFSET_MIN`
+  (60 por omisión); si no hay pronóstico se usan las horas fijas.
 - La hora SIEMPRE se convierte a `settings.TIME_ZONE` (America/Santiago), nunca se usa UTC.
 - Una noche pertenece al día en que empieza la tarde: la madrugada del 1 de mayo es noche de abril
   (cuenta) y la del 1 de septiembre es noche de agosto (no cuenta).
@@ -41,6 +43,7 @@ class GnssParams:
     year_to: int
     source_url: str
     portal_url: str
+    sunset_offset_min: int = 60
 
 
 def _parse_months(raw):
@@ -68,6 +71,7 @@ def params_from_settings():
         year_to=year_to,
         source_url=getattr(settings, "GNSS_SCINT_SOURCE_URL", ""),
         portal_url=getattr(settings, "GNSS_SCINT_PORTAL_URL", ""),
+        sunset_offset_min=int(getattr(settings, "GNSS_SCINT_SUNSET_OFFSET_MIN", 60)),
     )
 
 
@@ -95,8 +99,20 @@ def _last_covered_day(params):
     return first_of_next - timedelta(days=1)
 
 
-def _window(zone, anchor, params):
-    start = _local(zone, anchor, params.night_start)
+def window_start(zone, anchor, params, sunsets=None):
+    """Inicio de la ventana de la tarde `anchor`: puesta de sol del pronóstico + desfase.
+
+    `sunsets` es `{fecha: instante aware}` (LV-354). Sin puesta de ese día —o sin pronóstico— se
+    usa la hora fija `night_start`, como antes.
+    """
+    sunset = (sunsets or {}).get(anchor)
+    if sunset is not None:
+        return sunset.astimezone(zone) + timedelta(minutes=params.sunset_offset_min)
+    return _local(zone, anchor, params.night_start)
+
+
+def _window(zone, anchor, params, sunsets=None):
+    start = window_start(zone, anchor, params, sunsets)
     wraps = params.night_end <= params.night_start
     end_day = anchor + timedelta(days=1) if wraps else anchor
     return start, _local(zone, end_day, params.night_end)
@@ -108,13 +124,14 @@ def _anchor_counts(anchor, params):
     ) <= anchor <= _last_covered_day(params)
 
 
-def window_state(now, params=None):
+def window_state(now, params=None, sunsets=None):
     """`{active, next_start, next_end, in_period, period_over}` para el instante `now` (aware).
 
     `active`: ahora cae dentro de una ventana. Sin `active`, `next_start`/`next_end` son la próxima
     ventana (`None` si no hay); con `active`, `next_start` es `None` y `next_end` el fin de la
     ventana en curso. `in_period`: la fecha está dentro del período que indica la fuente.
-    `period_over`: ya pasó (no se inventan ventanas después).
+    `period_over`: ya pasó (no se inventan ventanas después). `sunsets` (opcional) mueve el inicio
+    de cada tarde a la puesta de sol del pronóstico más el desfase (ver `window_start`).
     """
     params = params or params_from_settings()
     zone = ZoneInfo(settings.TIME_ZONE)
@@ -138,7 +155,7 @@ def window_state(now, params=None):
             break
         if not _anchor_counts(day, params):
             continue
-        start, end = _window(zone, day, params)
+        start, end = _window(zone, day, params, sunsets)
         if _utc(start) <= instant < _utc(end):
             state["active"] = True
             state["next_end"] = end

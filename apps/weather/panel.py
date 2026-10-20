@@ -24,6 +24,7 @@ from django.views import View
 from apps.core import weather as weather_client
 from apps.core.views import ModelPermissionRequiredMixin
 
+from . import sky as sky_module
 from .locations import get_location_for
 from .models import UserWeatherLocation
 
@@ -111,11 +112,39 @@ def _parse(moment):
         return None
 
 
-def _local_now(forecast):
+def _zone(forecast):
     try:
-        zone = ZoneInfo(forecast.get("timezone") or "")
+        return ZoneInfo(forecast.get("timezone") or "")
     except Exception:  # zona desconocida: la del proyecto
-        zone = timezone.get_current_timezone()
+        return timezone.get_current_timezone()
+
+
+def _fake_now(zone):
+    """`WEATHER_FAKE_NOW` (ISO) como hora local naive, o `None`.
+
+    Sólo vale con `DEBUG` y `WEATHER_FAKE_FIXTURE` activos, igual que el pronóstico de demostración:
+    en producción se ignora aunque esté definida. Sirve para ver cada fase del cielo en el demo.
+    """
+    raw = (getattr(settings, "WEATHER_FAKE_NOW", "") or "").strip()
+    if (
+        not raw
+        or not settings.DEBUG
+        or not getattr(settings, "WEATHER_FAKE_FIXTURE", False)
+    ):
+        return None
+    moment = _parse(raw)
+    if moment is None:
+        return None
+    if moment.tzinfo is not None:
+        moment = moment.astimezone(zone)
+    return moment.replace(tzinfo=None)
+
+
+def _local_now(forecast):
+    zone = _zone(forecast)
+    fake = _fake_now(zone)
+    if fake is not None:
+        return fake
     return timezone.now().astimezone(zone).replace(tzinfo=None)
 
 
@@ -284,6 +313,9 @@ def build_card(location, forecast, events):
         "visibility_km": None if visibility is None else round(visibility / 1000, 1),
         "sunrise": sunrise,
         "sunset": sunset,
+        "sky": sky_module.sky_state(
+            local_now, forecast.get("daily"), is_day, slug, _zone(forecast)
+        ),
         "hours": hours,
         "temp_points": points,
         "strip_width": strip_width,
