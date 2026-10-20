@@ -10476,6 +10476,112 @@ msgstr ""
 "lleva el símbolo de su primer día. La cifra de cada celda es la cuenta; el "
 "color sólo ayuda a ojear."
 
+msgid "Start with what the panel lists as needing attention."
+msgstr "Se parte por lo que el panel lista como pendiente de atención."
+
+msgid "Open the alerts to correct what is overdue or about to expire."
+msgstr "Abra las alertas para corregir lo que está vencido o por vencer."
+
+msgid "Permits by site"
+msgstr "Permisos por faena"
+
+msgid "Check which site has no permit in force and renew first."
+msgstr "Revise qué faena no tiene permiso vigente y renueve esa primero."
+
+msgid "Close last month: records on file for each site that flew."
+msgstr "Cierre el mes pasado: los registros archivados de cada faena que voló."
+
+msgid "Review the monthly DGAC report before approving it."
+msgstr "Revise el informe mensual DGAC antes de aprobarlo."
+
+msgid "Review history"
+msgstr "Historial de revisión"
+
+msgid "Monthly close status of the last six closed months"
+msgstr "Estado del cierre mensual de los últimos seis meses cerrados"
+
+msgid "Status of the close"
+msgstr "Estado del cierre"
+
+msgid "✕ non-compliant · ▲ pending review · ● compliant · ○ not reviewed yet. The figure is the number of sites that fly; each month opens its close."
+msgstr "✕ no cumple · ▲ pendiente de revisión · ● cumple · ○ aún sin revisar. La cifra es la cantidad de faenas que vuelan; cada mes abre su cierre."
+
+msgid "No site flies, so there is nothing to close."
+msgstr "Ninguna faena vuela, así que no hay nada que cerrar."
+
+msgid "How to read and review this section"
+msgstr "Cómo leer y revisar esta sección"
+
+msgid "Symbols and colors"
+msgstr "Símbolos y colores"
+
+msgid "Up to 7 days"
+msgstr "Hasta 7 días"
+
+msgid "Up to 15 days"
+msgstr "Hasta 15 días"
+
+msgid "Up to 30 days"
+msgstr "Hasta 30 días"
+
+msgid "Later"
+msgstr "Después"
+
+msgid "The symbol and the word carry the meaning; the color only helps to scan, and ▲ and ◆ share a color."
+msgstr "El símbolo y la palabra llevan el significado; el color sólo ayuda a ojear, y ▲ y ◆ comparten color."
+
+msgid "Why there are two scales"
+msgstr "Por qué hay dos escalas"
+
+msgid "Documents and alerts are graded at 7, 15 and 30 days. Flight permits are graded at 30 and 60 days: renewing one involves a request to the DGAC, which takes longer than renewing a document."
+msgstr "Los documentos y las alertas se gradúan a 7, 15 y 30 días. Los permisos de vuelo, a 30 y 60 días: renovar uno implica una solicitud a la DGAC, que demora más que renovar un documento."
+
+msgid "Today and the report cut-off"
+msgstr "Hoy y el corte del informe"
+
+msgid "Everything here is as of today. The DGAC monthly report is frozen at its own cut-off date, so its figures can differ from these without either being wrong."
+msgstr "Todo lo de aquí es a hoy. El informe mensual DGAC queda congelado en su propia fecha de corte, así que sus cifras pueden diferir de estas sin que ninguna esté mal."
+
+msgid "How to review it, in five steps"
+msgstr "Cómo revisarla, en cinco pasos"
+
+msgid "Open the screen"
+msgstr "Abrir la pantalla"
+
+#, python-format
+msgid "%(n)s d"
+msgstr "%(n)s d"
+
+#, python-format
+msgid "%(count)s site, of which %(without)s without a permit in force"
+msgid_plural "%(count)s sites, of which %(without)s without a permit in force"
+msgstr[0] "%(count)s faena, de las cuales %(without)s sin permiso vigente"
+msgstr[1] "%(count)s faenas, de las cuales %(without)s sin permiso vigente"
+
+msgid "Over 60 days"
+msgstr "Más de 60 días"
+
+msgid "≤60 days"
+msgstr "Hasta 60 días"
+
+msgid "No validity yet"
+msgstr "Sin vigencia aún"
+
+msgid "No live permits."
+msgstr "Sin permisos vivos."
+
+#, python-format
+msgid "and %(counter)s more permit"
+msgid_plural "and %(counter)s more permits"
+msgstr[0] "y %(counter)s permiso más"
+msgstr[1] "y %(counter)s permisos más"
+
+msgid "✕ no permit in force, or 30 days or less · ▲ awaiting, not started yet, or 60 days or less · ● more than 60 days. The meter shows the days left of the first permit to expire (0 to 90); the number and the word carry the meaning."
+msgstr "✕ sin permiso vigente, o 30 días o menos · ▲ esperando, aún sin empezar, o 60 días o menos · ● más de 60 días. El medidor muestra los días que le quedan al primer permiso en vencer (0 a 90); el número y la palabra llevan el significado."
+
+msgid "No sites with flight operations."
+msgstr "No hay faenas con operación de vuelo."
+
 msgid "airspace snapshot"
 msgstr "foto del espacio aéreo"
 

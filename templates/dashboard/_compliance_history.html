@@ -1,0 +1,30 @@
+{% load i18n %}{% comment %}LV-359 (fase 3): historial de revisión. Seis meses cerrados × estado del cierre mensual (LV-262), leído de `MonthlyComplianceReview` sin recalcular. Cada estado lleva símbolo + texto además del color; la fila enlaza al cierre de ese mes. Sólo con `view_monthlycompliancereview` (`cx_blocks.history`). Tabla real, sin colspan.{% endcomment %}
+<div class="id-cx-block id-cx-block--history" data-cx-block="history" id="cx-history">
+  <h3 class="id-cx-h3">{% translate "Review history" %}</h3>
+  {% if cx_history.operating %}
+  <table class="id-cx-hist">
+    <caption class="visually-hidden">{% translate "Monthly close status of the last six closed months" %}</caption>
+    <thead>
+      <tr>
+        <th scope="col">{% translate "Month" %}</th>
+        <th scope="col">{% translate "Status of the close" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in cx_history.rows %}
+      <tr data-cx-month="{{ row.month|date:'Y-m' }}">
+        <th scope="row"><a href="{{ row.url }}">{{ row.month|date:"Y-m" }}</a></th>
+        <td>
+          <ul class="id-cx-levels">
+            {% for chip in row.chips %}<li><span class="id-chip id-chip--{{ chip.tone }}"><span aria-hidden="true">{{ chip.symbol }}</span> <b>{{ chip.n }}</b> {{ chip.label }}</span></li>{% endfor %}
+          </ul>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="id-cx-legend">{% translate "✕ non-compliant · ▲ pending review · ● compliant · ○ not reviewed yet. The figure is the number of sites that fly; each month opens its close." %}</p>
+  {% else %}
+  {% translate "No site flies, so there is nothing to close." as no_sites %}{% include "generic/_signal.html" with kind="ok" text=no_sites %}
+  {% endif %}
+</div>

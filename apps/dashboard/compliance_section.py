@@ -20,13 +20,28 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils import timezone
+from django.utils.http import urlencode
+from django.utils.translation import gettext as _
 
 from apps.compliance.expirations import EXPIRATION_PERMISSIONS
 from apps.core.tenancy import visible_tenant_ids
 from apps.reporting.models import ReportRun
 
-from .compliance_data import alert_ages, expiry_data, visible_categories
+from .compliance_data import (
+    REVIEW_PERMISSION,
+    alert_ages,
+    expiry_data,
+    review_history,
+    visible_categories,
+)
+from .compliance_permits import (
+    PERMIT_PERMISSION,
+    permit_table,
+    requested_sort,
+    sort_context,
+)
 from .selection import resolve_cost_center
 
 # Las fuentes que alimentan la sección. Los cinco `view_*` del diseño, más los de padrones que
@@ -40,7 +55,7 @@ SOURCE_PERMISSIONS = (
     *EXPIRATION_SOURCES,
     ALERT_PERMISSION,
     MAINTENANCE_PERMISSION,
-    "compliance.view_monthlycompliancereview",
+    REVIEW_PERMISSION,
 )
 
 
@@ -62,6 +77,8 @@ def blocks_for(user):
         "heat": categories,
         "alerts": user.has_perm(ALERT_PERMISSION),
         "maintenance": user.has_perm(MAINTENANCE_PERMISSION),
+        "history": user.has_perm(REVIEW_PERMISSION),
+        "permits": user.has_perm(PERMIT_PERMISSION),
     }
 
 
@@ -95,6 +112,56 @@ def report_notice(user):
     }
 
 
+def guide_steps(user, cost_center):
+    """Los cinco pasos de «Cómo leer y revisar esta sección», cada uno con su enlace para corregir.
+
+    El enlace sólo existe si la persona puede abrir esa pantalla (`url` queda `None` si no): la guía
+    nunca manda a un 403. El paso se dice igual, porque saber que existe también orienta.
+    """
+    site = {"cost_center": cost_center.pk} if cost_center else {}
+    permits = reverse("permission-list")
+    if site:
+        permits = f"{permits}?{urlencode(site)}"
+
+    def link(permission, url):
+        return url if user.has_perm(permission) else None
+
+    return [
+        {
+            "n": 1,
+            "label": _("Needs attention"),
+            "text": _("Start with what the panel lists as needing attention."),
+            "url": f"{reverse('dashboard')}#panel-attention",
+        },
+        {
+            "n": 2,
+            "label": _("Expiries"),
+            "text": _("Open the alerts to correct what is overdue or about to expire."),
+            "url": link(ALERT_PERMISSION, reverse("alert-list")),
+        },
+        {
+            "n": 3,
+            "label": _("Permits by site"),
+            "text": _("Check which site has no permit in force and renew first."),
+            "url": link("operations.view_flightpermission", permits),
+        },
+        {
+            "n": 4,
+            "label": _("Monthly close"),
+            "text": _("Close last month: records on file for each site that flew."),
+            "url": link(
+                "compliance.view_monthlycompliancereview", reverse("monthly-review")
+            ),
+        },
+        {
+            "n": 5,
+            "label": _("Report"),
+            "text": _("Review the monthly DGAC report before approving it."),
+            "url": link(REPORT_PERMISSION, reverse("monthly-report")),
+        },
+    ]
+
+
 def section_context(request):
     user = request.user
     cost_center = resolve_cost_center(request, scope_user=user)
@@ -114,6 +181,15 @@ def section_context(request):
             context.update({f"cx_{key}": value for key, value in data.items()})
         if blocks["alerts"]:
             context["cx_alerts"] = alert_ages(user, cost_center, today, tenant_ids)
+        if blocks["permits"]:
+            column, direction = requested_sort(request.GET)
+            context["cx_permits"] = permit_table(
+                user, cost_center, today, tenant_ids, column, direction
+            )
+            context["worktable_sort"] = sort_context(request, cost_center)
+        if blocks["history"]:
+            context["cx_history"] = review_history(user, cost_center, today, tenant_ids)
+        context["cx_guide"] = guide_steps(user, cost_center)
     return context
 
 

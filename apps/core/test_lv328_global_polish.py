@@ -170,6 +170,8 @@ def test_stylesheet_weight_guard():
     La tanda «Visual v2» (listas, fondos de módulo, panel del asistente y señales) sumó unos
     7 KB más y el techo pasa a 220 KB de forma deliberada: sigue siendo un guardián. La escena
     del cielo (LV-356: 14 fases claro y oscuro, capas y movimiento, ~9,5 KB) lo sube a 235 KB.
+    La sección «Cumplimiento» (LV-359: anillos, mapa de calor, historial, guía y la tabla de permisos,
+    ~9 KB entre las fases 2 y 4) lo sube a 245 KB; sigue siendo un techo y no una cifra a ciegas.
     """
     total = sum((STATIC / name).stat().st_size for name in ("app.css", "identity.css"))
-    assert total < 235 * 1024
+    assert total < 245 * 1024

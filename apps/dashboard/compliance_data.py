@@ -22,9 +22,11 @@ from django.utils.translation import gettext as _, ngettext, pgettext
 
 from apps.compliance.digest import bucket_for
 from apps.compliance.expirations import upcoming_expirations
-from apps.compliance.models import Alert
+from apps.compliance.models import Alert, MonthlyComplianceReview
+from apps.compliance.monthly import previous_month_start
 from apps.compliance.reports import alerts_for_cost_center
 from apps.maintenance.models import MaintenanceRecord
+from apps.registry.selectors import operating_cost_centers
 
 HORIZON_DAYS = 90
 WEEKS = 13  # 13 semanas de 7 días cubren los 90 días
@@ -162,7 +164,11 @@ def _describe(label, counts):
 
 
 def expiry_data(user, cost_center, today, tenant_ids):
-    """Anillos y mapa de calor: {rings, heat_rows, heat_columns, maintenance_to_define, ...}.`n`n    `tenant_ids` (`visible_tenant_ids(user)`, `None` = todos) es obligatorio y sin valor por defecto: un`n    llamador que lo olvidara no acotaría por tenant y nadie lo notaría.`n"""
+    """Anillos y mapa de calor: {rings, heat_rows, heat_columns, maintenance_to_define, ...}.
+
+    `tenant_ids` (`visible_tenant_ids(user)`, `None` = todos) es obligatorio y sin valor por defecto: un
+    llamador que lo olvidara no acotaría por tenant y nadie lo notaría.
+    """
     categories = visible_categories(user)
     if not categories:
         return None
@@ -320,3 +326,94 @@ def alert_ages(user, cost_center, today, tenant_ids):
         "desc": desc,
         "url": reverse("alert-list"),
     }
+
+
+HISTORY_MONTHS = 6
+REVIEW_PERMISSION = "compliance.view_monthlycompliancereview"
+# Estado del cierre -> símbolo y tono de `.id-chip--*`. Símbolo + texto además del color.
+REVIEW_STATES = ("non_compliant", "pending", "completed", "unreviewed")
+REVIEW_SYMBOL = {
+    "non_compliant": "✕",
+    "pending": "▲",
+    "completed": "●",
+    "unreviewed": "○",
+}
+REVIEW_TONE = {
+    "non_compliant": "critical",
+    "pending": "warning",
+    "completed": "ok",
+    "unreviewed": "neutral",
+}
+
+
+def review_status_label(key):
+    return {
+        "non_compliant": _("Non-compliant"),
+        "pending": _("Pending review"),
+        "completed": _("Compliant"),
+        "unreviewed": _("Not reviewed"),
+    }[key]
+
+
+def closed_months(today, count=HISTORY_MONTHS):
+    """Los `count` meses CERRADOS más recientes (primer día de cada uno), del más nuevo al más viejo.
+
+    Un cierre describe un mes terminado, igual que `MonthlyReviewView._period`.
+    """
+    months = []
+    day = today
+    for _i in range(count):
+        day = previous_month_start(day)
+        months.append(day)
+    return months
+
+
+def review_history(user, cost_center, today, tenant_ids):
+    """Seis meses × estado del cierre mensual (LV-262), o `None` sin `view_monthlycompliancereview`.
+
+    Lee `MonthlyComplianceReview` tal como está (no recalcula nada): UNA agregación por (mes, estado)
+    acotada por tenant y por las faenas que operan (las mismas que cuenta el cierre), y UNA cuenta de
+    esas faenas para decir cuántas siguen «sin revisar». Cantidad de consultas constante: no crece con
+    los datos.
+    """
+    if not user.has_perm(REVIEW_PERMISSION):
+        return None
+    sites = _scoped(operating_cost_centers(), tenant_ids, "tenant_id")
+    if cost_center:
+        sites = sites.filter(pk=cost_center.pk)
+    operating = sites.count()
+    months = closed_months(today)
+    grouped = (
+        MonthlyComplianceReview.objects.filter(
+            is_active=True, period__in=months, cost_center__in=sites
+        )
+        .values("period", "status")
+        .annotate(n=Count("pk"))
+    )
+    by_month = {month: {} for month in months}
+    for row in grouped:
+        by_month.setdefault(row["period"], {})[row["status"]] = row["n"]
+    rows = []
+    for month in months:
+        counts = dict(by_month[month])
+        counts["unreviewed"] = max(0, operating - sum(counts.values()))
+        chips = [
+            {
+                "key": key,
+                "n": counts[key],
+                "symbol": REVIEW_SYMBOL[key],
+                "tone": REVIEW_TONE[key],
+                "label": review_status_label(key),
+            }
+            for key in REVIEW_STATES
+            if counts.get(key)
+        ]
+        query = urlencode({"month": month.strftime("%Y-%m")})
+        rows.append(
+            {
+                "month": month,
+                "chips": chips,
+                "url": f"{reverse('monthly-review')}?{query}",
+            }
+        )
+    return {"rows": rows, "operating": operating}

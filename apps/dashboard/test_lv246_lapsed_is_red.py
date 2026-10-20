@@ -78,7 +78,8 @@ class TestSitesWithoutAPermitComeFirst:
         _centre("CC900")
         client.force_login(admin_user)
 
-        rows = client.get(reverse("dashboard")).context["permit_status_rows"]
+        # LV-359 (fase 4): la tabla vive en «Cumplimiento»; su contexto es `cx_permits`.
+        rows = client.get(reverse("dashboard-compliance")).context["cx_permits"]["rows"]
 
         assert [row["cost_center"].code for row in rows] == ["CC900", "CC100"]
 
@@ -128,7 +129,7 @@ class TestSitesWithoutAPermitComeFirst:
         _operation()
         client.force_login(admin_user)
 
-        content = client.get(reverse("dashboard")).content.decode()
+        content = client.get(reverse("dashboard-compliance")).content.decode()
 
         assert 'class="row-critical"' in content
 
@@ -146,11 +147,13 @@ class TestNoMoreGhostClasses:
         assert re.search(r"tr\.row-critical\s*>\s*td\s*\{", css)
 
     def test_the_class_that_never_existed_is_gone(self):
-        template = (
-            Path(settings.BASE_DIR) / "templates" / "dashboard" / "index.html"
-        ).read_text(encoding="utf-8")
+        # LV-359 (fase 4): la tabla se mudó; se vigilan las dos plantillas.
+        for name in ("index.html", "_compliance_permits.html"):
+            template = (
+                Path(settings.BASE_DIR) / "templates" / "dashboard" / name
+            ).read_text(encoding="utf-8")
 
-        assert 'class="table-warning-subtle"' not in template
+            assert 'class="table-warning-subtle"' not in template
 
 
 class TestALapsedPermitSaysSo:

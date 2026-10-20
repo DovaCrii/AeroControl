@@ -339,7 +339,10 @@ class TestTheTableShowsTheDateItAlreadyHad:
             valid_until=TODAY + timedelta(days=12),
         )
 
-        content = auth_client.get(reverse("dashboard")).content.decode()
+        # LV-359 (fase 4): la tabla vive en la sección «Cumplimiento»; la fecha sigue
+        # a la vista y los días restantes quedan además en un medidor con su texto («12 d»).
+        content = auth_client.get(reverse("dashboard-compliance")).content.decode()
 
         assert (TODAY + timedelta(days=12)).isoformat() in content
         assert "quedan 12 días" in content
+        assert "12 d" in content

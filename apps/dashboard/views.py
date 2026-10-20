@@ -581,7 +581,10 @@ def dashboard(request):
                     "sites without a permit",
                     cost_centres_without_permit,
                 ),
-                "url": "#panel-permit-status-title",
+                # LV-359: la tabla vive en la sección «Cumplimiento»; el hueco del panel
+                # lleva el ancla (`#cx-permits`) en su esqueleto, así que el salto
+                # funciona aun antes de que la sección cargue.
+                "url": "#cx-permits",
                 "severity": "critical",
             }
         )
@@ -656,26 +659,12 @@ def dashboard(request):
         "expiring_count": expiring_count,
         "overdue_count": overdue_count,
         "show_onboarding": show_onboarding,
-        # LV-206: el estado de los permisos faena por faena, incluidas las que no
-        # tienen ninguno — que son las que el usuario quiere ver. Sólo las que
-        # vuelan: ver `operates_flights` en `CostCenter`.
+        # LV-359 (fase 4): la tabla de permisos por faena (LV-206, LV-246: las que no
+        # tienen ninguno van primero) se mudó a la sección «Cumplimiento»
+        # (`compliance_permits.permit_table`), que la pide por htmx. Acá queda sólo
+        # la cifra de abajo, calculada de las mismas filas de
+        # `permit_status_by_cost_center` que el panel ya recolecta para el chip.
         #
-        # LV-246: **y las que no tienen ninguno van primero.** Pedido del usuario:
-        # *"ubicar en el dashboard los centros de costo con incumplimiento, sin
-        # permisos vigentes, que es crítico; según el avance del plan se le exige
-        # mínimo tener el permiso de vuelo"*. Estaban ordenadas por código y
-        # repartidas entre las que sí tienen, así que había que recorrer la tabla
-        # entera para encontrarlas — en producción son siete de quince.
-        #
-        # ⚠️ **Se ordena acá y no en `permit_status_by_cost_center`**, que es
-        # deliberado: ese selector lo comparte el informe mensual, donde la tabla
-        # va por código porque es un documento formal que alguien coteja fila por
-        # fila. El orden es presentación y puede diferir; el **cálculo** no, y ése
-        # sigue siendo uno solo.
-        "permit_status_rows": sorted(
-            permit_status_rows,
-            key=lambda row: (bool(row["in_force"]), row["cost_center"].code),
-        ),
         # El mismo indicador que el informe firma como `cost_centres_without_permit`
         # —su numerador—, que hasta ahora sólo existía en el papel. Sale de las
         # filas ya recolectadas, así que no cuesta una consulta: es la lección de
