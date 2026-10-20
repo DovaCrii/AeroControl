@@ -1493,6 +1493,32 @@ summary:focus-visible {
 /* Chips con icono (reloj de «En proceso», guion de «Sin registrar»). */
 .id-chip .id-signal-icon { margin-top: 0; }
 
+/* E6: alertas y bandeja (LV-350). La gravedad se lee por símbolo + texto + color: los chips de
+   vencimiento y de «Sin asignar», los vacíos con texto y acción (LV-328) y las ayudas en gris pasan
+   a las señales de E5. Sólo tokens `--sev-*` y `--ac-*`; el contraste de cada par se calcula en
+   `test_lv350_alert_signals`. */
+.al-sev, .al-flag { display: inline-flex; align-items: center; gap: 0.3rem; }
+.al-sev .id-signal-icon, .al-flag .id-signal-icon, .kanban-due .id-signal-icon { flex: none; margin-top: 0; }
+.al-sev { font-weight: 600; white-space: normal; text-align: left; }
+.al-flag {
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--sev-warning-border);
+  border-radius: var(--id-r-control);
+  background: var(--sev-warning-bg);
+  color: var(--sev-warning-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.alert-reason .id-hint { margin: 0; }
+.task-meta { color: var(--ac-text-secondary); font-size: 0.875rem; }
+.kanban-due { display: flex; align-items: center; gap: 0.3rem; }
+.kanban-due.is-overdue::before { content: none; }
+.kanban-empty .id-hint { justify-content: center; font-size: 0.875rem; }
+@media (max-width: 575.98px) {
+  .al-sev, .al-flag { max-width: 100%; }
+}
+
 /* == F: ilustración y movimiento == */
 /* Contiene: F1 plano técnico (cabecera del panel y portada) y F2 entradas (reservada); las animaciones van en el bloque de movimiento de abajo. */
 
