@@ -51,13 +51,16 @@ Pieza central, `apps/reporting/registry.py`:
 ```python
 @dataclass(frozen=True)
 class ReportDefinition:
-    key: str; title: str; audience: str            # "operativo" | "oficial"
+    key: str
+    title: str
+    audience: str  # "operativo" | "oficial"
     permissions: tuple[str, ...]
     filters: type
     build: Callable[[User, Filters], dict]
     sections: tuple[Section, ...]
-    formats: frozenset[str]                         # {"html","pdf","xlsx","csv","docx"}
-    paper: str = "A4"; orientation: str = "portrait"
+    formats: frozenset[str]  # {"html","pdf","xlsx","csv","docx"}
+    paper: str = "A4"
+    orientation: str = "portrait"
     filename: str = "{code}_{as_of:%Y-%m-%d}"
 ```
 
