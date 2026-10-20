@@ -29,6 +29,8 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Los chips de «Requiere atención» enlazan a listas que respetan la faena elegida (LV-351).** Con una faena elegida en el panel, «Mantenciones por definir» y «Solicitudes en SIGO» llevan ?cost_center= y las listas lo aplican (acotado al tenant, vacío si no existe o es de otra empresa) y muestran el filtro activo con un botón para quitarlo; la cifra del chip y el total de la lista coinciden con y sin faena.
+
 - **Privacidad: `load_dgac_vigencias` sin datos reales (`LV-339`).** La tabla embebida de vigencias DGAC queda vacía; los datos reales se cargan con `--file` desde un CSV privado fuera del repo.
 - **Limpieza de skills (`LV-337`).** Se borran `rumbo-1.0.md`, `lecciones.md` y `despliegue-p340.md` de `aerocontrol/references`; lo único vigente de este último pasa a `desplegar-p340` (camino principal `scripts/deploy.sh`, bloques A-D como plan B) y la política de modelos de `AGENTS.md` se alinea con la orden vigente. Sólo documentación.
 

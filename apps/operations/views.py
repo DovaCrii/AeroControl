@@ -43,6 +43,7 @@ from apps.core.views import (
     StatusTransitionView,
     TenantScopedQuerysetMixin,
     allowed_calendar_types,
+    apply_cost_center_filter,
     lookup_by_pk,
 )
 from apps.core.views import filter_options as core_filter_options
@@ -1895,7 +1896,13 @@ class FlightRequestList(
         if raw_plan:
             plan = lookup_by_pk(GeoPlan.objects.all(), raw_plan)
             queryset = queryset.filter(source_plan=plan) if plan else queryset.none()
+        # LV-351: destino del chip «Solicitudes en SIGO» con una faena elegida.
+        queryset, self.cost_center_filter = apply_cost_center_filter(
+            self.request, queryset, "cost_center"
+        )
         return queryset
+
+    cost_center_filter = None
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1906,9 +1913,12 @@ class FlightRequestList(
             title=capfirst(FlightRequest._meta.verbose_name_plural),
             status_choices=FlightRequest.STATUS_CHOICES,
             current_status=self.request.GET.get("status", ""),
+            cost_center_filter=self.cost_center_filter,
         )
         context["is_filtered"] = context["is_filtered"] or bool(
-            self.request.GET.get("status") or self.request.GET.get("plan")
+            self.request.GET.get("status")
+            or self.request.GET.get("plan")
+            or self.cost_center_filter
         )
         return context
 
