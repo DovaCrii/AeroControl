@@ -25,10 +25,12 @@ Con `R10.1` los datos del KMZ (centro, radio, AMC) se leen en la ficha del plan,
 así que sin esta línea las dos pantallas se parecen más de lo que se diferencian.
 {% endcomment %}
 <p class="text-body-secondary mb-3">{% translate "What was filed in SIGO and how long it has been waiting. The data comes from a geospatial plan; a request is created by splitting one." %}</p>
+{% include "generic/_cost_center_filter_chip.html" %}
 {% endblock %}
 
 {% block list_filters %}
 {% translate "Search title, commune, area..." as request_search_placeholder %}
+{% if cost_center_filter %}<input type="hidden" name="cost_center" value="{{ request.GET.cost_center }}">{% endif %}
 <div class="col-md-5">{% include "generic/_search_input.html" with search_url=request.path search_placeholder=request_search_placeholder %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
 <div class="col-md-3">
   <select class="form-select" name="status">

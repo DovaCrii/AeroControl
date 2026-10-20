@@ -10196,3 +10196,10 @@ msgstr "Centros de costo listados: %(n)s."
 
 msgid "Records found: %(n)s."
 msgstr "Registros encontrados: %(n)s."
+
+msgid "Not found"
+msgstr "No encontrada"
+
+msgid "Remove filter"
+msgstr "Quitar filtro"
+

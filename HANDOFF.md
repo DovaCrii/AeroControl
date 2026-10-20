@@ -1,27 +1,23 @@
 # HANDOFF — AeroControl
 
-## ⏳ 2026-10-20 — tanda de cierre (asistente, tiempo, privacidad, skills): **fusionada sin desplegar** (`6e96794`)
+## ✅ 2026-10-20 — historial reescrito y publicado, VM resincronizada y tanda de cierre **desplegada** (`738a317`)
 
-`p340`: la persona reportó haber desplegado `89c2c7d` por el plan corto (`git pull` + reinicio; **sin pegar el hash final**: confirmarlo con `git log --oneline -1` antes de desplegar). `main` está en **`6e96794`** (66 archivos de diferencia con `89c2c7d`). El `deploy.sh` de la VM ya trae el arreglo del paso 12 (`LV-335`, chequeo de salud con `X-Forwarded-Proto: https`).
+`p340` corre **`738a317`** (leído de la salida pegada, junto con `active` y `health` 200; el primer chequeo dio 000 por la carrera del arranque, el siguiente 200). Se desplegó por bloques tras respaldar la base (`aero_ops_20261020_075452.sqlite3`, `restorable.`): `fetch --force` + `checkout -B main origin/main` + `reflog expire` + `gc --prune=now` (la VM ya no conserva el historial viejo), `uv sync --no-dev`, `migrate` (`assistant.0002_assistantusage_vote`, `weather.0001_user_weather_location`), `collectstatic` (3 copiados) y reinicio.
 
-**Seguimiento — fusionado sin desplegar, y qué lleva cada cosa:**
-- **Migraciones (2):** `assistant.0002_assistantusage_vote` (voto, `LV-341`) y `weather.0001_user_weather_location` (ciudad por persona, `LV-343`). **Respaldo antes de migrar** (`deploy.sh` lo hace si hay migraciones).
-- **Estáticos (`collectstatic`):** `LV-346`, `LV-347`, `LV-348` (panel del asistente, tarjeta del tiempo y re-escaneo de movimiento por htmx).
-- **Sólo código:** `LV-336` (interruptor de producción del asistente y `assistant_probar`), `LV-340` (siete herramientas de solo lectura), `LV-342` (cliente de Open-Meteo y eventos), `LV-344` (el expediente deja de pedir la revisión meteorológica, paso 1), `LV-345` (prompt, modo demo `AI_ASSISTANT_FAKE`, evaluación), `LV-338`/`LV-339` (datos privados fuera del código y de `load_dgac_vigencias`).
-- **Todo lo nuevo viene APAGADO en producción:** el asistente (`AI_ASSISTANT_ENABLED` y `AI_ASSISTANT_ALLOW_PRODUCTION`), la tarjeta del tiempo (`WEATHER_ENABLED`) y el botón de copiar (`AI_ASSISTANT_ALLOW_COPY`). Desplegar no cambia lo que ve nadie, salvo el expediente sin el renglón meteorológico.
+**Historial de git reescrito y publicado el 2026-10-20** (`LV-349`): `git filter-repo` sobre todo el historial (valores reales → ficticios, autores → noreply de GitHub), `main` en `738a317` y los 6 tags con SHAs nuevos; el remoto tiene solo `main`. **Todos los hashes anteriores cambiaron.** La copia local se limpió (ramas, worktrees, stash y `gc`; 999 commits, todos del historial nuevo). Respaldos con los datos originales en `D:\respaldos` (fuera de cualquier repo; la persona decide cuándo borrarlos). Las `refs/pull/*` de GitHub no se pueden reescribir: **los SHAs viejos siguen accesibles por URL hasta que GitHub Support los purgue** (texto listo en `scratchpad\rewrite\SUPPORT_GITHUB_FINAL_ES.txt` y `_EN.txt`).
 
-**Despliegue:** `cd /opt/aerocontrol && bash scripts/deploy.sh` (con `--dry-run` primero, como la vez anterior).
+**Todo lo nuevo viene APAGADO en producción:** el asistente (`AI_ASSISTANT_ENABLED` y `AI_ASSISTANT_ALLOW_PRODUCTION`), la tarjeta del tiempo (`WEATHER_ENABLED`) y el botón de copiar (`AI_ASSISTANT_ALLOW_COPY`). Lo único visible: el expediente operativo ya no muestra «Revisión meteorológica» (`LV-344`, paso 1).
 
-**No verificado en navegador:** tarjeta del tiempo, panel del asistente abierto, voto y copia, menú «⋯» y fondos de módulo en tema claro (el navegador integrado no compone animaciones ni cambia el tema; el acceso a localhost fue denegado a un agente).
+**Seguimiento — fusionado sin desplegar:** sólo este `HANDOFF` (documentación).
 
-**Historial de git — decidido y preparado, NO publicado:** la persona decidió reescribir (no repo nuevo). El clon reescrito y verificado vive en el scratchpad (`rewrite\work2.git`, hecho sobre `7f26ecf`: **ya está viejo, hay que rehacerlo sobre el `main` final**); respaldos completos en `D:\respaldos`. El empuje forzado lo bloqueó el clasificador de seguridad de Claude Code: lo ejecuta la persona con el comando que se le dejó, o da permiso explícito. Después: resincronizar la VM (`fetch` + `reset --hard origin/main` desde `main`, tras respaldar `.env`, la base y los documentos), rehacer las ramas locales con cherry-pick sobre el `main` nuevo y enviar a GitHub Support el texto de purga (`TEXTO_SUPPORT_GITHUB.txt`, a regenerar).
+**No verificado en navegador:** tarjeta del tiempo, panel del asistente abierto, voto y copia, menú «⋯» y fondos de módulo en tema claro (el navegador integrado no compone animaciones ni cambia el tema), y que el expediente ya no muestre el renglón meteorológico en producción (comprobación visual de la persona, con recarga forzada).
 
 **Pendiente — del usuario**
-- Ejecutar el empuje forzado del historial (o dar permiso) y escribir a GitHub Support; rotar el acceso SSH de la VM y revisar los accesos de Tailscale (el usuario y el host estuvieron publicados).
+- Enviar a GitHub Support el texto de purga (completar el contacto), reactivar la protección de `main` si se desactivó para el empuje, y rotar el acceso SSH de la VM y revisar los accesos de Tailscale (el usuario y el host estuvieron publicados).
 - Asistente en producción: la llave y la licencia de NVIDIA (confirmar los cinco puntos de `docs/dev/asistente-ia.md`), luego activar `AI_ASSISTANT_ENABLED` y `AI_ASSISTANT_ALLOW_PRODUCTION`, `assistant_probar --ping` y `--eval`.
 - Tiempo: la licencia comercial de Open-Meteo (plan de pago o servidor propio) antes de encender `WEATHER_ENABLED` en producción; confirmar que `p340` sale a Internet; elegir la ciudad por omisión.
 - Pie de los informes: queda con los datos genéricos del repositorio (decidido).
-- Dos worktrees antiguos con un archivo sin commitear (`fervent-dhawan`, `keen-wilbur`).
+- Una lectura humana rápida de `MASTER_PLAN.md` y `handoff-archive.md` por si quedó un nombre de persona suelto (la detección de nombres de la reescritura fue heurística).
 
 **Pendiente — del código:** paso 2 de `LV-344` (retirar la revisión meteorológica del plan geoespacial y del panel; condición de cierre en la fila), ola J (movimiento con propósito), menú «⋯» en las demás listas, reglas nuevas de ruff (533), chips de SIGO/mantenciones sin filtro de faena, alertas y bandeja en la ola de legibilidad, informes con `.page-header` propio, densidad por tabla, y el escaneo de nombres sueltos en la historia (heurístico).
 

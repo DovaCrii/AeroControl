@@ -319,6 +319,48 @@ def lookup_by_pk(queryset, raw_pk):
         return None
 
 
+def apply_cost_center_filter(request, queryset, path):
+    """LV-351: `?cost_center=<uuid>` sobre una lista, y qué mostrar de él.
+
+    Es el destino de los chips de «Requiere atención» del panel cuando hay una
+    faena elegida: la cifra del chip es de esa faena, así que la lista a la que
+    enlaza tiene que serlo también.
+
+    La faena se busca **acotada al tenant** de la persona y activa (como el
+    panel): una de otra empresa, archivada, inexistente o que no es un UUID da la
+    lista **vacía** y no "sin filtro" —mostrar todo afirmaría que eso es lo de la
+    faena pedida— y sin decir nada de lo que hay detrás.
+
+    Devuelve `(queryset, info)`; `info` es `None` sin filtro, y si no, el nombre a
+    rotular y la URL que lo quita (conserva el resto de la consulta).
+    """
+    raw = request.GET.get("cost_center", "")
+    if not raw:
+        return queryset, None
+    from apps.core.tenancy import scope_queryset_to_tenant
+    from apps.registry.models import CostCenter
+
+    centre = lookup_by_pk(
+        scope_queryset_to_tenant(
+            CostCenter.objects.filter(is_active=True), request.user
+        ),
+        raw,
+    )
+    remaining = request.GET.copy()
+    remaining.pop("cost_center", None)
+    remaining.pop("page", None)
+    query = remaining.urlencode()
+    info = {
+        "name": (f"{centre.code} - {centre.name}" if centre.name else centre.code)
+        if centre
+        else None,
+        "clear_url": f"{request.path}?{query}" if query else request.path,
+    }
+    if centre is None:
+        return queryset.none(), info
+    return queryset.filter(**{path: centre}), info
+
+
 def filter_options(user, model, permission, order_field):
     """Filas activas para un desplegable de filtro, vacío sin el permiso.
 

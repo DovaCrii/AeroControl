@@ -30,6 +30,8 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Los chips de «Requiere atención» enlazan a listas que respetan la faena elegida (LV-351).** Con una faena elegida en el panel, «Mantenciones por definir» y «Solicitudes en SIGO» llevan ?cost_center= y las listas lo aplican (acotado al tenant, vacío si no existe o es de otra empresa) y muestran el filtro activo con un botón para quitarlo; la cifra del chip y el total de la lista coinciden con y sin faena.
+
 - **Privacidad: `load_dgac_vigencias` sin datos reales (`LV-339`).** La tabla embebida de vigencias DGAC queda vacía; los datos reales se cargan con `--file` desde un CSV privado fuera del repo.
 - **Limpieza de skills (`LV-337`).** Se borran `rumbo-1.0.md`, `lecciones.md` y `despliegue-p340.md` de `aerocontrol/references`; lo único vigente de este último pasa a `desplegar-p340` (camino principal `scripts/deploy.sh`, bloques A-D como plan B) y la política de modelos de `AGENTS.md` se alinea con la orden vigente. Sólo documentación.
 
@@ -39,6 +41,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Security
 
+- **Historial de git reescrito y publicado (`LV-349`).** Los valores privados (identificadores, correos, nombres, datos de la VM y credenciales) se reemplazaron por ficticios en todo el historial y los autores pasaron al noreply de GitHub. Todos los hashes cambiaron (`main` en `738a317`); los SHAs anteriores siguen accesibles hasta que GitHub Support purgue las referencias de PR.
 - **Asistente IA: registro de uso y topes en la base (`LV-326`).** Cada pregunta deja una fila `AssistantUsage` (sin texto de pregunta ni respuesta); los topes por hora y global por día (`AI_ASSISTANT_DAILY_CAP`, 300) se cuentan ahí y se revisan antes de cada llamada. **LLEVA MIGRACIÓN** (`assistant.0001`); sin estáticos.
 
 - **Asistente IA acotado por empresa y sin nombres de faena (`LV-323`).** Las tres herramientas ven sólo los permisos de la empresa de quien pregunta; `cost_centres_permit_status` ya no envía el nombre de la faena. El tope por hora cuenta llamadas al servicio (no preguntas) y se registra `total_tokens`. Sin migración ni estáticos.
