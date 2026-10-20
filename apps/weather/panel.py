@@ -23,6 +23,7 @@ from django.views import View
 
 from apps.core import weather as weather_client
 from apps.core.views import ModelPermissionRequiredMixin
+from apps.environment.levels import LEVEL_LABELS
 
 from . import gnss as gnss_module
 from . import scene as scene_module
@@ -67,13 +68,6 @@ EVENT_LABELS = {
     "frost": gettext_lazy("Frost"),
     "heat": gettext_lazy("Heat"),
     "low_visibility": gettext_lazy("Low visibility"),
-}
-
-# Nivel -> (símbolo, rótulo). El símbolo y el texto van siempre: el color nunca es lo único.
-LEVEL_LABELS = {
-    "info": ("●", gettext_lazy("Info")),
-    "attention": ("▲", gettext_lazy("Attention")),
-    "strong": ("◆", gettext_lazy("Strong")),
 }
 
 _KMH_PER_UNIT = {"km/h": 1.0, "ms": 3.6, "m/s": 3.6, "mph": 1.609344, "kn": 1.852}
@@ -366,4 +360,8 @@ class WeatherPanel(WeatherEnabledMixin, ModelPermissionRequiredMixin, View):
         return self._render(request, build_card(location, forecast, events))
 
     def _render(self, request, context):
+        # LV-358: dentro de «Entorno» la advertencia «Referencial» es una sola y vive en la
+        # cabecera común; la pestaña lo pide con `?embed=environment` para no repetirla (y el
+        # botón de reintentar conserva el parámetro).
+        context["hide_legend"] = request.GET.get("embed") == "environment"
         return render(request, self.template_name, context)

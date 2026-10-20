@@ -10249,3 +10249,69 @@ msgstr "Noticia"
 
 msgid "Environment conditions"
 msgstr "Condiciones del entorno"
+
+msgid "Environment"
+msgstr "Entorno"
+
+msgid "Weather, GNSS scintillation and airspace in one place"
+msgstr "Tiempo, centelleo GNSS y espacio aéreo en un solo lugar"
+
+msgid "Environment sections"
+msgstr "Secciones del entorno"
+
+msgid "Airspace"
+msgstr "Espacio aéreo"
+
+msgid "My location"
+msgstr "Mi ubicación"
+
+msgid "Chile time"
+msgstr "Hora de Chile"
+
+msgid "Situation of the day"
+msgstr "Situación del día"
+
+msgid "Referential"
+msgstr "Referencial"
+
+msgid "Information only. It is not a flight condition and does not replace anyone's judgement, the AIP-Chile or the NOTAM."
+msgstr "Solo informativo. No es una condición de vuelo y no reemplaza el criterio de nadie, el AIP-Chile ni los NOTAM."
+
+msgid "Older than 3 hours"
+msgstr "Con más de 3 horas"
+
+msgid "What it is"
+msgstr "Qué es"
+
+msgid "Season"
+msgstr "Temporada"
+
+msgid "Tonight's window"
+msgstr "Ventana de esta noche"
+
+msgid "The source indicates %(months)s, with a peak in 2025 and effects until 2028. This screen covers %(first)s to %(last)s."
+msgstr "La fuente indica de %(months)s, con máximo en 2025 y efectos hasta 2028. Esta pantalla cubre de %(first)s a %(last)s."
+
+msgid "Fixed hours: %(start)s to %(end)s."
+msgstr "Horas fijas: de %(start)s a %(end)s."
+
+#, python-format
+msgid "%(first)s to %(last)s"
+msgstr "%(first)s a %(last)s"
+
+#, python-format
+msgid "Typical higher-scintillation window: now, until %(time)s"
+msgstr "Ventana típica de mayor centelleo: ahora, hasta las %(time)s"
+
+#, python-format
+msgid "Typical scintillation window: next on %(when)s"
+msgstr "Ventana típica de centelleo: la próxima el %(when)s"
+
+msgid "The forecast is not available right now"
+msgstr "El pronóstico no está disponible por ahora"
+
+#, python-format
+msgid "%(count)s weather event expected in 48 hours: %(names)s"
+msgid_plural "%(count)s weather events expected in 48 hours: %(names)s"
+msgstr[0] "%(count)s evento climático previsto en 48 horas: %(names)s"
+msgstr[1] "%(count)s eventos climáticos previstos en 48 horas: %(names)s"

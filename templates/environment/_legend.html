@@ -1,0 +1,6 @@
+{% load i18n %}{% comment %}LV-358: la leyenda ÚNICA de los niveles. Símbolo + texto; ningún nivel usa el rojo de «crítico».{% endcomment %}
+<p class="env-legend"><span class="visually-hidden">{% translate "Levels" %}: </span>
+  <span class="env-lvl env-lvl--info"><span aria-hidden="true">●</span> {% translate "Info" %}</span>
+  <span class="env-lvl env-lvl--attention"><span aria-hidden="true">▲</span> {% translate "Attention" %}</span>
+  <span class="env-lvl env-lvl--strong"><span aria-hidden="true">◆</span> {% translate "Strong" %}</span>
+</p>

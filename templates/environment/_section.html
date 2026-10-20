@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% comment %}LV-358: el armazón de la sección «Entorno»: título, pestañas (rutas reales), cabecera común y la leyenda única. Cada pestaña llena sólo `env_tab`. El enlace de una pestaña aparece únicamente si la persona puede abrirla (`tabs_for`).{% endcomment %}
+{% block title %}{% translate "Environment" %} - AeroControl{% endblock %}
+{% block content %}
+{% translate "Environment" as page_title %}{% translate "Weather, GNSS scintillation and airspace in one place" as page_description %}
+<div class="page-header">
+  {% include "generic/_page_header.html" %}
+</div>
+<div class="env-section">
+  <nav class="env-tabs" aria-label="{% translate 'Environment sections' %}">
+    <ul>
+      {% for tab in env_tabs %}
+      <li><a href="{{ tab.url }}" class="env-tab{% if tab.key == env_active %} is-active{% endif %}"{% if tab.key == env_active %} aria-current="page"{% endif %}>{{ tab.label }}</a></li>
+      {% endfor %}
+    </ul>
+  </nav>
+  {% include "environment/_header.html" %}
+  {% block env_tab %}{% endblock %}
+  {% include "environment/_legend.html" %}
+</div>
+{% endblock %}

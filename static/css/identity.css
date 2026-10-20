@@ -1519,6 +1519,82 @@ summary:focus-visible {
   .al-sev, .al-flag { max-width: 100%; }
 }
 
+/* E7: sección «Entorno» (LV-358). Cabecera común, pestañas, niveles ● ▲ ◆, advertencia única y pie de
+   fuente. Sólo lee `--id-*`, `--ac-*` y `--sev-*` y define tokens `--id-env-*`. Un nivel se lee por símbolo
+   + texto + color, y NINGUNO usa el rojo de «crítico»: la sección informa, no decide. Sin animación ni
+   desplazamientos horizontales. El contraste de cada par se calcula en `apps/environment/test_lv358_environment.py`. */
+.env-section {
+  --id-env-info-bg: var(--sev-nominal-bg);
+  --id-env-info-fg: var(--sev-nominal-text);
+  --id-env-info-bd: var(--sev-nominal-border);
+  --id-env-attention-bg: var(--sev-warning-bg);
+  --id-env-attention-fg: var(--sev-warning-text);
+  --id-env-attention-bd: var(--sev-warning-border);
+  --id-env-strong-bg: var(--sev-warning-bg);
+  --id-env-strong-fg: var(--sev-warning-text);
+  --id-env-strong-bd: var(--sev-warning-text);
+  display: grid;
+  gap: var(--id-sp-3);
+  min-width: 0;
+}
+.env-section > * { min-width: 0; }
+.env-tabs ul { display: flex; flex-wrap: wrap; gap: 0.25rem; margin: 0; padding: 0 0 0 0; list-style: none; border-bottom: 1px solid var(--ac-border); }
+.env-tab {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: var(--id-r-control) var(--id-r-control) 0 0;
+  color: var(--ac-text-secondary);
+  font-weight: 600;
+  text-decoration: none;
+}
+.env-tab:hover { color: var(--ac-text); background: var(--ac-surface); }
+.env-tab.is-active { border-color: var(--ac-border); background: var(--ac-surface); color: var(--ac-text); }
+.env-header, .env-panel, .env-foot {
+  padding: var(--id-sp-2) var(--id-sp-3);
+  border: 1px solid var(--ac-border);
+  border-radius: var(--id-r-card);
+  background: var(--ac-surface);
+  color: var(--ac-text);
+  box-shadow: var(--id-lift);
+}
+.env-header { display: grid; gap: var(--id-sp-2) var(--id-sp-3); grid-template-columns: minmax(0, 1fr); }
+.env-title { margin: 0 0 0.4rem; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ac-text-secondary); }
+.env-city { margin: 0 0 0.6rem; font-size: var(--id-fs-lg); font-weight: 700; }
+.env-change { margin-left: 0.5rem; font-size: var(--id-fs-sm); font-weight: 600; color: var(--ac-text); text-decoration: underline; }
+.env-facts { display: flex; flex-wrap: wrap; gap: var(--id-sp-2) var(--id-sp-3); margin: 0; }
+.env-facts div { min-width: 5rem; }
+.env-facts dt { font-size: 0.75rem; font-weight: 600; color: var(--ac-text-secondary); }
+.env-facts dd { margin: 0; font-size: var(--id-fs-lg); font-weight: 700; }
+.env-lines { display: grid; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
+.env-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem; font-size: var(--id-fs-sm); }
+.env-lvl {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.1rem 0.55rem;
+  border: 1px solid var(--id-env-info-bd);
+  border-radius: var(--id-r-pill);
+  background: var(--id-env-info-bg);
+  color: var(--id-env-info-fg);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.env-lvl--attention { border-color: var(--id-env-attention-bd); background: var(--id-env-attention-bg); color: var(--id-env-attention-fg); }
+.env-lvl--strong { border-color: var(--id-env-strong-bd); border-width: 2px; background: var(--id-env-strong-bg); color: var(--id-env-strong-fg); }
+.env-referential { grid-column: 1 / -1; margin: 0; padding-top: var(--id-sp-1); border-top: 1px solid var(--ac-border); font-size: var(--id-fs-sm); color: var(--ac-text); }
+.env-panel p { margin: 0 0 0.6rem; font-size: var(--id-fs-sm); }
+.env-assume { color: var(--ac-text-secondary); font-size: 0.75rem; }
+.env-foot p { margin: 0 0 0.3rem; font-size: 0.75rem; color: var(--ac-text-secondary); }
+.env-foot a, .env-source a { color: var(--ac-text); font-weight: 600; text-decoration: underline; }
+.env-source--stale { color: var(--sev-warning-text); font-weight: 600; }
+.env-legend { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0; font-size: 0.75rem; }
+@media (min-width: 992px) {
+  .env-header { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); }
+}
+
 /* == F: ilustración y movimiento == */
 /* Contiene: F1 plano técnico (cabecera del panel y portada) y F2 entradas (reservada); las animaciones van en el bloque de movimiento de abajo. */
 

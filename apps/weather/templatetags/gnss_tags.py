@@ -5,18 +5,23 @@ La tarjeta es SOLO informativa: una referencia estadística tomada de GEOCOM (po
 datos en vivo y no se cruza con permisos, faenas ni aeronaves. La ventana se calcula en
 `apps/weather/gnss.py`; aquí sólo se arma lo que dibuja la plantilla. Se apaga con
 `GNSS_SCINTILLATION_ENABLED=False`.
+
+LV-358: `build_gnss_card` es una función PURA `(now, sunsets, city)`: no pide el pronóstico por su
+cuenta. Antes la tarjeta del panel llamaba a `panel_forecast()` mientras se armaba la página (con
+la caché fría, una salida a la red de hasta 4 s que ninguna prueba de consultas veía) y lo hacía
+para la ciudad por omisión, no la de la persona, de modo que la puesta de la tarjeta del tiempo y
+la del centelleo podían contradecirse. Ahora quien tiene el pronóstico (la sección «Entorno») se lo
+pasa; la etiqueta del panel no tiene ninguno y usa las horas fijas.
 """
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 from zoneinfo import ZoneInfo
 
 from django import template
 from django.conf import settings
 from django.utils import timezone
 
-from apps.core import weather as weather_client
 from apps.weather import gnss
-from apps.weather.locations import default_location
 
 register = template.Library()
 
@@ -27,41 +32,24 @@ def gnss_card_enabled():
     return bool(getattr(settings, "GNSS_SCINTILLATION_ENABLED", True))
 
 
-def forecast_sunsets():
-    """`({fecha: puesta de sol aware}, ciudad, zona)` del pronóstico de la ciudad por omisión.
+def _zone_of(sunsets):
+    for moment in (sunsets or {}).values():
+        if moment.tzinfo is not None:
+            return moment.tzinfo
+    return ZoneInfo(settings.TIME_ZONE)
 
-    Es la de `WEATHER_DEFAULT_*`, no la de la persona: el panel tiene un presupuesto exacto de
-    consultas (`LV-237`) y leer la fila de la ciudad de cada quien sumaría una. La ventana es una
-    referencia estadística de todo el norte y centro de Chile, no una medición local.
 
-    LV-354: nunca lanza. Sin ciudad, sin pronóstico o con una puesta ilegible la ventana vuelve a
-    las horas fijas, y la tarjeta no muestra la línea del atardecer.
+def build_gnss_card(now, sunsets=None, city=""):
+    """Todo lo que dibuja la tarjeta, calculado aquí y no en la plantilla.
+
+    `sunsets` es `{fecha: puesta aware}` de UN pronóstico y `city` el nombre de su ciudad; ambos
+    vacíos significan «sin pronóstico»: la ventana usa las horas fijas y no hay línea de puesta.
     """
-    try:
-        location = default_location()
-        forecast = weather_client.panel_forecast(location.latitude, location.longitude)
-        if not forecast:
-            return {}, "", None
-        try:
-            zone = ZoneInfo(forecast.get("timezone") or "")
-        except Exception:  # zona desconocida: la del proyecto
-            zone = ZoneInfo(settings.TIME_ZONE)
-        sunsets = {}
-        for row in forecast.get("daily") or []:
-            day = datetime.fromisoformat(row["time"]).date()
-            sunsets[day] = datetime.fromisoformat(row["sunset"]).replace(tzinfo=zone)
-        return sunsets, location.label, zone
-    except Exception:
-        return {}, "", None
-
-
-def build_gnss_card(now=None):
-    """Todo lo que dibuja la tarjeta, calculado aquí y no en la plantilla."""
+    sunsets = sunsets or {}
     params = gnss.params_from_settings()
-    now = now or timezone.now()
-    sunsets, city, zone = forecast_sunsets()
     state = gnss.window_state(now, params, sunsets)
-    today = now.astimezone(zone or ZoneInfo(settings.TIME_ZONE)).date()
+    zone = _zone_of(sunsets)
+    today = now.astimezone(zone).date()
     sunset = sunsets.get(today)
     dusk = sunset + timedelta(minutes=params.sunset_offset_min) if sunset else None
     if state["active"]:
@@ -91,4 +79,5 @@ def build_gnss_card(now=None):
 
 @register.inclusion_tag("weather/_gnss_card.html")
 def gnss_card():
-    return build_gnss_card()
+    """La tarjeta del panel: sin pronóstico propio, con las horas fijas (ver el docstring del módulo)."""
+    return build_gnss_card(timezone.now())

@@ -45,7 +45,8 @@ class TestThereIsOneSpriteAndTheMenuUsesIt:
         # una entrada de menu -- que es el punto de que sea exacto: obliga a
         # mirar el sprite en vez de dejar un `<use>` apuntando a un id que no
         # existe, que no falla, dibuja nada.
-        assert len(_symbol_ids()) == 29
+        # 30 desde `LV-358`: la sección «Entorno» trae su propio símbolo.
+        assert len(_symbol_ids()) == 30
 
     def test_the_menu_no_longer_draws_the_icons_itself(self):
         """El criterio de la fila: `base.html` pierde los `path` de navegación.
@@ -57,7 +58,7 @@ class TestThereIsOneSpriteAndTheMenuUsesIt:
         source = BASE.read_text(encoding="utf-8")
 
         assert '<svg class="nav-icon" viewBox' not in source
-        assert source.count("<use href=") == 29
+        assert source.count("<use href=") == 30
 
     def test_every_reference_points_at_a_symbol_that_exists(self):
         """**Un `<use>` a un id inexistente no falla: dibuja nada.**
@@ -132,7 +133,7 @@ class TestNoTwoSymbolsDrawTheSameThing:
         symbols = re.findall(
             r'<symbol id="([^"]+)"[^>]*>(.*?)</symbol>', _sprite(), re.DOTALL
         )
-        assert len(symbols) == 29
+        assert len(symbols) == 30
 
         by_drawing = {}
         for sid, drawing in symbols:

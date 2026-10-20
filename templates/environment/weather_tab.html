@@ -1,0 +1,13 @@
+{% extends "environment/_section.html" %}
+{% load i18n static %}
+{% comment %}LV-358: pestaña Tiempo. Reutiliza `weather/_panel_card.html` tal cual, cargada por htmx como en el panel (LV-353); `?embed=environment` quita la advertencia propia de la tarjeta, que ahora es la de la cabecera.{% endcomment %}
+{% block env_tab %}
+<div id="wx-card" class="wx-card wx-card--loading" hx-get="{% url 'weather-panel' %}?embed=environment" hx-trigger="load" hx-swap="outerHTML" hx-request='{"timeout": 10000}' aria-busy="true">
+  <template data-wx-error>{% include "weather/_panel_card.html" with state="error" hide_legend=True %}</template>
+  <div class="wx-skel wx-skel--head"></div>
+  <div class="wx-skel wx-skel--line"></div>
+  <div class="wx-skel wx-skel--line wx-skel--short"></div>
+  <span class="visually-hidden" role="status">{% translate "Loading weather" %}</span>
+</div>
+{% endblock %}
+{% block extrascripts %}{{ block.super }}<script defer src="{% static 'js/weather-card.js' %}"></script><script defer src="{% static 'js/sky-preview.js' %}"></script>{% endblock %}

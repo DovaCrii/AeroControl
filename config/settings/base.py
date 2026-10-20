@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     "apps.assistant",
     # LV-343: ciudad predeterminada del widget del tiempo, por persona.
     "apps.weather",
+    # LV-358: sección «Entorno» (tiempo, centelleo GNSS y, después, espacio aéreo). Sin modelos.
+    "apps.environment",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

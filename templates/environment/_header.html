@@ -1,0 +1,25 @@
+{% load i18n %}{% comment %}LV-358: cabecera común de «Entorno». Una sola ciudad, una sola zona y un solo pronóstico: de ahí salen la hora, el amanecer, la puesta, los eventos y la ventana de centelleo, así que no pueden contradecirse. «Situación del día» son HECHOS con su nivel (● ▲ ◆); nunca dice si se puede volar. Todo texto de la ciudad va escapado por la plantilla (nunca `|safe`).{% endcomment %}
+<section class="env-header" aria-labelledby="env-where-title">
+  <div class="env-where">
+    <h2 id="env-where-title" class="env-title">{% translate "My location" %}</h2>
+    {% if env_location %}
+    <p class="env-city">{{ env_location.label }} <a class="env-change" href="{% url 'weather-location' %}">{% translate "Change" context "weather city" %}<span class="visually-hidden">: {% translate "Weather location" %}</span></a></p>
+    {% else %}
+    <p class="env-city">{% translate "Pick your city" %} <a class="env-change" href="{% url 'weather-location' %}">{% translate "Choose your city" %}</a></p>
+    {% endif %}
+    <dl class="env-facts">
+      <div><dt>{% translate "Chile time" %}</dt><dd>{{ env_summary.chile_time_text }}</dd></div>
+      <div><dt>{% translate "Sunrise" %}</dt><dd>{% if env_summary.sunrise_text %}{{ env_summary.sunrise_text }}{% else %}–{% endif %}</dd></div>
+      <div><dt>{% translate "Sunset" %}</dt><dd>{% if env_summary.sunset_text %}{{ env_summary.sunset_text }}{% else %}–{% endif %}</dd></div>
+    </dl>
+  </div>
+  <div class="env-day">
+    <h2 id="env-day-title" class="env-title">{% translate "Situation of the day" %}</h2>
+    <ul class="env-lines" aria-labelledby="env-day-title">
+      {% for line in env_summary.lines %}
+      <li class="env-line env-line--{{ line.level }}"><span class="env-lvl env-lvl--{{ line.level }}"><span aria-hidden="true">{{ line.symbol }}</span> {{ line.level_label }}</span> <span class="env-line-text">{{ line.text }}</span></li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% include "environment/_referential.html" %}
+</section>

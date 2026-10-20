@@ -75,6 +75,29 @@ def params_from_settings():
     )
 
 
+def sunsets_from_forecast(forecast):
+    """`({fecha: puesta de sol aware}, zona)` de UN pronóstico ya obtenido. Función pura: no llama a nadie.
+
+    LV-358: la puesta de la ventana, la de la cabecera y la de la escena salen del mismo pronóstico,
+    así que no pueden contradecirse. Nunca lanza: sin pronóstico o con una puesta ilegible devuelve
+    lo que pudo (`{}` si nada) y la ventana vuelve a las horas fijas.
+    """
+    if not forecast:
+        return {}, ZoneInfo(settings.TIME_ZONE)
+    try:
+        zone = ZoneInfo(forecast.get("timezone") or "")
+    except Exception:  # zona desconocida: la del proyecto
+        zone = ZoneInfo(settings.TIME_ZONE)
+    sunsets = {}
+    for row in forecast.get("daily") or []:
+        try:
+            day = datetime.fromisoformat(row["time"]).date()
+            sunsets[day] = datetime.fromisoformat(row["sunset"]).replace(tzinfo=zone)
+        except Exception:
+            continue
+    return sunsets, zone
+
+
 def _local(zone, day, hour):
     """`day` a las `hour` en hora local; una hora inexistente (salto de septiembre) se corre adelante."""
     naive = datetime(day.year, day.month, day.day, hour, tzinfo=zone)

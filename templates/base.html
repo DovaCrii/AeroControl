@@ -102,6 +102,9 @@
       </div>
       {% with request.resolver_match.url_name as url_name %}
       <a href="{% url 'dashboard' %}" class="nav-item nav-overview {% if url_name == 'dashboard' %}active{% endif %}" {% if url_name == 'dashboard' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-dashboard"/></svg><span class="nav-label">{% translate "Dashboard" %}</span></a>
+      {% comment %}LV-358: un solo ítem «Entorno» (tiempo, centelleo GNSS, después espacio aéreo). Aparece sólo si la persona puede abrir alguna pestaña: sin permiso de ninguna no hay ítem, y quien tiene una sola entra directo a esa.{% endcomment %}
+      {% load environment_tags %}{% environment_entry as env_entry %}
+      {% if env_entry %}<a href="{{ env_entry }}" class="nav-item nav-overview {% if url_name == 'environment-hub' or url_name == 'environment-weather' or url_name == 'environment-gnss' or url_name == 'airspace-map' %}active{% endif %}" {% if url_name == 'environment-hub' or url_name == 'environment-weather' or url_name == 'environment-gnss' or url_name == 'airspace-map' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-environment"/></svg><span class="nav-label">{% translate "Environment" %}</span></a>{% endif %}
 
       {% comment %}`UX-31` · Los atajos del rol.
 
