@@ -455,7 +455,7 @@ def test_unknown_kind_is_rejected_by_the_database(kml_file):
 
 @pytest.mark.django_db
 def test_admin_is_read_only(rf, django_user_model):
-    user = django_user_model.objects.create_superuser("root", "r@example.invalid", "x")
+    user = django_user_model.objects.create_superuser("root", "r@test.com", "x")
     request = rf.get("/")
     request.user = user
     for model in (AirspaceSnapshot, AirspaceFeature):
