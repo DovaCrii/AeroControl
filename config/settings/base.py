@@ -222,13 +222,13 @@ GEO_TILE_PROVIDERS = [
     },
 ]
 
-# R8.1 (ISO 8.1 meteorological review). The project's only outgoing HTTP call,
-# so it is **opt-in**: a deployment that never sets WEATHER_ENABLED keeps the
-# zero-outgoing-calls property it has today. Open-Meteo needs no API key, so
+# R8.1 (ISO 8.1 meteorological review). The project's only outgoing HTTP call.
+# LV-353: ON by default (the person's decision of 2026-10-20); WEATHER_ENABLED=False
+# restores the zero-outgoing-calls property. Open-Meteo needs no API key, so
 # there is no credential here -- see apps/core/weather.py for why that decided
 # the provider choice. The call is server-side only, so the CSP below is
 # unaffected (no connect-src exception).
-WEATHER_ENABLED = config("WEATHER_ENABLED", default=False, cast=bool)
+WEATHER_ENABLED = config("WEATHER_ENABLED", default=True, cast=bool)
 WEATHER_API_URL = config(
     "WEATHER_API_URL", default="https://api.open-meteo.com/v1/forecast"
 )
@@ -236,9 +236,9 @@ WEATHER_API_URL = config(
 WEATHER_TIMEOUT_SECONDS = config("WEATHER_TIMEOUT_SECONDS", default=4, cast=int)
 WEATHER_CACHE_SECONDS = config("WEATHER_CACHE_SECONDS", default=3600, cast=int)
 # LV-342: informative weather card on the main page. Open-Meteo's free tier is
-# for non-commercial use only: production keeps WEATHER_ENABLED=False until a
-# commercial licence is resolved (WEATHER_API_KEY, or a self-hosted
-# WEATHER_API_URL). The key comes from the environment only -- never the repo.
+# for non-commercial use only. ACCEPTED RISK (LV-353, 2026-10-20): it is used "for now"
+# from the company server; WEATHER_ENABLED=False switches everything off, and a paid plan
+# or self-hosted server (WEATHER_API_KEY / WEATHER_API_URL) meets the commercial licence. The key comes from the environment only -- never the repo.
 WEATHER_API_KEY = config("WEATHER_API_KEY", default="")
 WEATHER_GEOCODING_URL = config(
     "WEATHER_GEOCODING_URL", default="https://geocoding-api.open-meteo.com/v1/search"
@@ -471,13 +471,13 @@ AI_ASSISTANT_TIMEOUT = config("AI_ASSISTANT_TIMEOUT", default=30, cast=int)
 AI_ASSISTANT_MAX_PER_HOUR = config("AI_ASSISTANT_MAX_PER_HOUR", default=30, cast=int)
 # Tope global por día (suma de llamadas de todas las personas, contadas en la base); 0 = sin tope.
 AI_ASSISTANT_DAILY_CAP = config("AI_ASSISTANT_DAILY_CAP", default=300, cast=int)
-# LV-343: ciudad por omisión del widget del tiempo para quien aún no eligió una. Vacío (por
-# omisión) = el widget pide "Elige tu ciudad". Latitud/longitud como texto: un valor mal
-# escrito se ignora en vez de impedir que arranque la aplicación.
-WEATHER_DEFAULT_LABEL = config("WEATHER_DEFAULT_LABEL", default="")
-WEATHER_DEFAULT_LAT = config("WEATHER_DEFAULT_LAT", default="")
-WEATHER_DEFAULT_LON = config("WEATHER_DEFAULT_LON", default="")
-WEATHER_DEFAULT_TZ = config("WEATHER_DEFAULT_TZ", default="")
+# LV-343/LV-353: ciudad por omisión del widget del tiempo para quien aún no eligió una:
+# Santiago de Chile. Vaciar WEATHER_DEFAULT_LABEL hace que el widget pida "Elige tu ciudad".
+# Latitud/longitud como texto: un valor mal escrito se ignora en vez de impedir que arranque.
+WEATHER_DEFAULT_LABEL = config("WEATHER_DEFAULT_LABEL", default="Santiago")
+WEATHER_DEFAULT_LAT = config("WEATHER_DEFAULT_LAT", default="-33.4489")
+WEATHER_DEFAULT_LON = config("WEATHER_DEFAULT_LON", default="-70.6693")
+WEATHER_DEFAULT_TZ = config("WEATHER_DEFAULT_TZ", default="America/Santiago")
 # Búsquedas de ciudad por persona y por hora (llaman a un servicio externo). 0 = sin tope.
 WEATHER_SEARCH_MAX_PER_HOUR = config(
     "WEATHER_SEARCH_MAX_PER_HOUR", default=60, cast=int

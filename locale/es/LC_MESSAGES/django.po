@@ -10138,6 +10138,10 @@ msgid "Loading weather"
 msgstr "Cargando el clima"
 
 #: templates/weather/_panel_card.html
+msgid "Retry"
+msgstr "Reintentar"
+
+#: templates/weather/_panel_card.html
 msgctxt "weather city"
 msgid "Change"
 msgstr "Cambiar"
