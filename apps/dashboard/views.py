@@ -1,7 +1,6 @@
 from datetime import timedelta
 
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError
 from django.db.models import Count, F
 from django.db.models.functions import TruncMonth
 from django.shortcuts import render
@@ -23,6 +22,9 @@ from apps.maintenance.models import MaintenanceRecord
 from apps.operations.models import FlightRecord, FlightRequest
 from apps.registry.models import Aircraft, CostCenter, Operator
 from apps.registry.selectors import operational_fleet, operational_roster
+
+from .compliance_section import can_see_compliance
+from .selection import resolve_cost_center
 
 
 def panel_readiness(today, cost_center=None):
@@ -264,58 +266,12 @@ def panel_readiness(today, cost_center=None):
 # anterior a esta fila.
 @login_required
 def dashboard(request):
-    # OPS-8: an optional global filter by cost center. Silently ignored if it
-    # does not resolve to a real, active cost center -- same "malformed filter
-    # is a no-op, not an error" convention SearchMixin already uses.
-    selected_cost_center = None
-    cost_center_id = request.GET.get("cost_center")
-    if cost_center_id:
-        # LV-146: el `try/except` arregla un 500 vigente. "No-op silencioso"
-        # cubría el UUID válido que no existe, el archivado y el de otro tenant —
-        # pero no `?cost_center=abc`: un valor que no es UUID hace que
-        # `filter(pk=...)` sobre una pk `UUIDField` levante `ValidationError`
-        # **dentro** de la consulta, y eso no lo atrapa el `.first()`. Una URL
-        # guardada, un autocompletado del navegador o un bot probando query
-        # strings tiraban la primera pantalla de la app.
-        try:
-            selected_cost_center = CostCenter.objects.filter(
-                pk=cost_center_id, is_active=True
-            ).first()
-        except (ValueError, ValidationError):
-            selected_cost_center = None
-
-    # `UX-17`: la faena elegida se recuerda. Quien trabaja una faena la vuelve a
-    # elegir en cada login, y el panel es la primera pantalla del día.
-    #
-    # **En la sesión y no en una columna del usuario**: es una comodidad de
-    # navegación, no una preferencia del negocio, y una columna la convertiría en
-    # dato que alguien tiene que administrar.
-    #
-    # ⚠️ **La rama se elige por si el parámetro *viene*, no por si trae valor**, y
-    # ésa es la distinción que hace que el recuerdo se pueda apagar: llegar sin
-    # `cost_center` es abrir el panel de nuevo —y ahí se restaura—, mientras que
-    # llegar con `?cost_center=` vacío es haber pedido "todas" a propósito, y eso
-    # tiene que **borrar** el recuerdo. Sin separarlas, la única forma de volver a
-    # verlo todo sería cerrar sesión.
-    if "cost_center" in request.GET:
-        # Se guarda la que resolvió de verdad y no la cadena cruda, así una faena
-        # archivada deja de recordarse sola en vez de fijar un filtro que ya no
-        # existe.
-        if selected_cost_center is not None:
-            request.session["dashboard_cost_center"] = str(selected_cost_center.pk)
-        else:
-            request.session.pop("dashboard_cost_center", None)
-    else:
-        remembered = request.session.get("dashboard_cost_center")
-        if remembered:
-            try:
-                selected_cost_center = CostCenter.objects.filter(
-                    pk=remembered, is_active=True
-                ).first()
-            except (ValueError, ValidationError):
-                selected_cost_center = None
-            if selected_cost_center is None:
-                request.session.pop("dashboard_cost_center", None)
+    # OPS-8 / UX-17: la faena elegida (parámetro, o la recordada en la sesión) se resuelve
+    # en `selection.resolve_cost_center`, que comparte con la sección «Cumplimiento»
+    # (LV-359). Un valor que no resuelve —UUID inválido, archivada, inexistente— es un
+    # no-op, no un error (LV-146).
+    selected_cost_center = resolve_cost_center(request, remember=True)
+    show_compliance_slot = can_see_compliance(request.user)
     cost_centers = CostCenter.objects.filter(is_active=True).order_by("code")
 
     # --- Summary counts ---
@@ -730,6 +686,7 @@ def dashboard(request):
         "compliance_setup": compliance_setup,
         "compliance_incomplete": compliance_incomplete,
         "cost_centers": cost_centers,
+        "show_compliance_slot": show_compliance_slot,
         "selected_cost_center": selected_cost_center,
         "monthly_records": monthly_records,
     }

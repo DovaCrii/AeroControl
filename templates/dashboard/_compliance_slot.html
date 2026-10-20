@@ -1,0 +1,12 @@
+{% load i18n %}{% comment %}LV-359: el hueco de «Cumplimiento» al final del panel. Armar el panel NO suma consultas (`test_lv237`): la sección se pide por htmx a `/dashboard/compliance/` cuando el hueco entra en pantalla (`revealed`), con la faena elegida EXPLÍCITA en la URL (el fragmento no lee la sesión). Sólo se dibuja si la persona puede ver al menos una de las fuentes (`show_compliance_slot`, calculado en la vista con permisos ya en memoria); sin ninguna no hay hueco ni petición. Sin JavaScript (o si nadie baja hasta aquí) queda el enlace a la página completa. El esqueleto es estático, sin animación.{% endcomment %}{% if show_compliance_slot %}
+<div id="compliance-section" class="id-cx id-cx--loading" hx-get="{% url 'dashboard-compliance' %}{% if selected_cost_center %}?cost_center={{ selected_cost_center.pk }}{% endif %}" hx-trigger="revealed" hx-swap="outerHTML" hx-request='{"timeout": 15000}' aria-busy="true">
+  <div class="id-cx-head">
+    <h2 class="id-cx-title">{% translate "Compliance" %}</h2>
+    <a class="id-cx-link" href="{% url 'dashboard-compliance' %}{% if selected_cost_center %}?cost_center={{ selected_cost_center.pk }}{% endif %}">{% translate "Open as a page" %} <span aria-hidden="true">→</span></a>
+  </div>
+  <div class="id-cx-skel" aria-hidden="true"></div>
+  <div class="id-cx-skel id-cx-skel--short" aria-hidden="true"></div>
+  <span class="visually-hidden" role="status">{% translate "Loading compliance" %}</span>
+  <noscript><p class="id-cx-note"><a href="{% url 'dashboard-compliance' %}{% if selected_cost_center %}?cost_center={{ selected_cost_center.pk }}{% endif %}">{% translate "Open the compliance page" %}</a></p></noscript>
+</div>
+{% endif %}

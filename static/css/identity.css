@@ -1382,6 +1382,132 @@ form.is-submitting-slow .btn-primary::after {
 }
 
 
+/* D2: sección «Cumplimiento» del panel (LV-359). Contenedor, cabecera, rejilla y esqueleto. Sin
+   animación (el esqueleto es estático). Sólo lee tokens `--ac-*`, `--sev-*` e `--id-*`. */
+.id-cx {
+  display: grid;
+  gap: var(--id-sp-2);
+  min-width: 0;
+  margin-bottom: var(--id-sp-3);
+  padding: var(--id-sp-2) var(--id-sp-3);
+  border: 1px solid var(--ac-border);
+  border-radius: var(--id-r-card);
+  background: var(--ac-surface);
+  color: var(--ac-text);
+  box-shadow: var(--id-lift);
+}
+.id-cx--loading { min-height: 120px; }
+.id-cx-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem var(--id-sp-3); }
+.id-cx-title { margin: 0; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ac-text-secondary); }
+.id-cx-asof { margin: 0; font-weight: 700; }
+.id-cx-link { margin-left: auto; color: var(--ac-text); font-size: var(--id-fs-sm); font-weight: 600; text-decoration: underline; }
+.id-cx-report { margin: 0; font-size: var(--id-fs-sm); color: var(--ac-text-secondary); }
+.id-cx-note { margin: 0; font-size: var(--id-fs-sm); }
+.id-cx-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--id-sp-2) var(--id-sp-3); }
+.id-cx-block { min-width: 0; }
+.id-cx-h3 { margin: 0 0 var(--id-sp-1); font-size: var(--id-fs-md); font-weight: 700; }
+.id-cx-skel { height: 1rem; margin: 0.4rem 0; border-radius: var(--id-r-control); background: var(--sev-nominal-bg); border: 1px solid var(--sev-nominal-border); }
+.id-cx-skel--short { width: 60%; }
+@media (min-width: 992px) {
+  .id-cx-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+  .id-cx-block--rings { grid-column: 1 / -1; }
+  /* El mapa lleva 14 columnas: a 1200 px una columna de 7/12 (461 px) lo obligaba a desplazarse, así que ocupa el ancho entero y alertas y mantención se reparten la fila de abajo. */
+  .id-cx-block--heat { grid-column: 1 / -1; }
+  .id-cx-block--alerts { grid-column: span 7; }
+  .id-cx-block--maintenance { grid-column: span 5; }
+}
+
+/* D3: «Cumplimiento», gráficos y mapa de calor (LV-359, fase 2). Sin animación. Los rellenos de los
+   gráficos usan `--sev-*-text` (5,75–7,11:1 en claro, 8,1–14 en oscuro), NUNCA `--sev-*-border`
+   (1,58–1,81:1: no se distingue del fondo). Dos tramos comparten color en `app.css` (≤7 y ≤15 días:
+   `--sev-warning-*` y `--sev-caution-*` tienen el mismo hex), así que el símbolo y el texto van
+   siempre: ✕ vencido, ▲ ≤7, ◆ ≤15, ● ≤30, ○ después. El contraste de cada par lo calcula
+   `test_lv359_compliance_charts.py` y se mide con `contrast.py` (ver `diseno-ui/SKILL.md`). */
+:root {
+  --id-cx-ink: #172238;
+  --id-cx-track: #e4e9f1;
+  --id-cx-edge: #8a94a3;
+  --id-cx-heat-1: #fdf1dc;
+  --id-cx-heat-2: #f7d9a3;
+  --id-cx-heat-3: #f1ab90;
+  --id-cx-heat-4: #e07f86;
+}
+
+[data-theme="dark"] {
+  --id-cx-ink: #edf3fb;
+  --id-cx-track: #2a374c;
+  --id-cx-edge: #7f8fa8;
+  --id-cx-heat-1: #3d2f14;
+  --id-cx-heat-2: #5c4516;
+  --id-cx-heat-3: #7a3b2e;
+  --id-cx-heat-4: #8f2f3a;
+}
+
+.id-cx-block--rings,
+.id-cx-block--maintenance { min-width: 0; }
+.id-cx-rings { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: var(--id-sp-2); margin: 0; padding: 0; list-style: none; }
+.id-cx-ring { display: grid; justify-items: start; gap: 0.35rem; min-width: 0; padding: var(--id-sp-1) 0; }
+.id-cx-ring-name { margin: 0; font-size: var(--id-fs-sm); font-weight: 700; }
+.id-cx-ring-text { min-width: 0; }
+.id-cx-ring-fig { margin: 0; font-size: var(--id-fs-sm); }
+.id-cx-fig { font-size: var(--id-fs-lg); font-variant-numeric: tabular-nums; }
+.id-cx-levels { display: flex; flex-wrap: wrap; gap: 0.25rem; margin: 0.35rem 0 0; padding: 0; list-style: none; }
+.id-cx-levels .id-chip { white-space: normal; }
+.id-cx-svg { display: block; max-width: 100%; height: auto; }
+.id-cx-track { stroke: var(--id-cx-track); }
+.id-cx-seg--overdue { stroke: var(--sev-critical-text); }
+.id-cx-seg--due_7 { stroke: var(--sev-warning-text); }
+.id-cx-seg--due_15 { stroke: var(--sev-caution-text); }
+.id-cx-seg--due_30 { stroke: var(--sev-advisory-text); }
+.id-cx-seg--later { stroke: var(--sev-nominal-text); }
+.id-cx-ring-n { fill: var(--ac-text); font-size: 1.35rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.id-cx-svg-text { fill: var(--ac-text); font-size: 0.8125rem; }
+.id-cx-svg-value { font-weight: 700; font-variant-numeric: tabular-nums; }
+.id-cx-bar--fresh { fill: var(--sev-nominal-text); }
+.id-cx-bar--mid { fill: var(--sev-warning-text); }
+.id-cx-bar--old { fill: var(--sev-critical-text); }
+.id-cx-spark { stroke: var(--ac-text-secondary); }
+.id-cx-spark-end { fill: var(--ac-text-secondary); }
+.id-cx-unowned { white-space: nowrap; }
+
+/* Mapa de calor: una tabla real (sin `.table-normalized` ni `colspan`), cifra y borde en cada celda. */
+.id-cx-heat-wrap { overflow-x: auto; }
+.id-cx-heat { border-collapse: separate; border-spacing: 2px; width: 100%; font-size: var(--id-fs-sm); }
+.id-cx-heat--narrow { display: none; }
+.id-cx-heat th, .id-cx-heat td { padding: 0.25rem 0.2rem; text-align: center; }
+.id-cx-col { font-weight: 600; color: var(--ac-text-secondary); line-height: 1.2; }
+.id-cx-col .id-cx-sym { display: block; }
+.id-cx-rowhead { text-align: left; font-weight: 700; white-space: nowrap; padding-right: var(--id-sp-1); }
+.id-cx-cell { min-width: 1.9rem; border: 1px solid var(--id-cx-edge); border-radius: 4px; font-variant-numeric: tabular-nums; }
+.id-cx-heat-0 { background: var(--ac-surface); color: var(--ac-text-muted); }
+.id-cx-heat-1 { background: var(--id-cx-heat-1); color: var(--id-cx-ink); border-color: var(--id-cx-ink); }
+.id-cx-heat-2 { background: var(--id-cx-heat-2); color: var(--id-cx-ink); border-color: var(--id-cx-ink); }
+.id-cx-heat-3 { background: var(--id-cx-heat-3); color: var(--id-cx-ink); border-color: var(--id-cx-ink); }
+.id-cx-heat-4 { background: var(--id-cx-heat-4); color: var(--id-cx-ink); border-color: var(--id-cx-ink); }
+.id-cx-legend { margin: var(--id-sp-1) 0 0; font-size: var(--id-fs-sm); color: var(--ac-text-secondary); }
+/* Bajo 576 px los anillos se apilan en filas (anillo a la izquierda, cifra y chips a la derecha) y el
+   mapa de calor pasa a cuatro columnas: Vencido, 0–30, 31–60 y 61–90 días. */
+@media (max-width: 575.98px) {
+  .id-cx-rings { grid-template-columns: minmax(0, 1fr); }
+  .id-cx-ring { grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: var(--id-sp-2); }
+  .id-cx-ring-name { grid-column: 1 / -1; }
+  .id-cx-heat--wide { display: none; }
+  .id-cx-heat--narrow { display: table; }
+  .id-cx-heat--narrow .id-cx-rowhead { white-space: normal; padding-right: 0.25rem; }
+}
+@media print {
+  html body {
+    --id-cx-ink: #172238;
+    --id-cx-track: #e4e9f1;
+    --id-cx-edge: #8a94a3;
+    --id-cx-heat-1: #fdf1dc;
+    --id-cx-heat-2: #f7d9a3;
+    --id-cx-heat-3: #f1ab90;
+    --id-cx-heat-4: #e07f86;
+  }
+  .id-cx-cell { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
+
 /* == E: pulido global == */
 /* Contiene: ajustes transversales finales (foco, selección, impresión, detalles de tema). */
 

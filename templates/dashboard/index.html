@@ -457,6 +457,8 @@ solo el gráfico.{% endcomment %}
   </div>
   {% endif %}
 </div>
+{% comment %}LV-359: la sección «Cumplimiento», al final del panel y por htmx (cuesta 0 consultas).{% endcomment %}
+{% include "dashboard/_compliance_slot.html" %}
 {% endif %}
 {% endblock %}
 
