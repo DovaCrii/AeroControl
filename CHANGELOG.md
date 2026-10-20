@@ -14,6 +14,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- Propuesta de optimización de la sección Informes (`docs/dev/informes-optimizacion.md`, LV-355): inventario, solapamientos, arquitectura objetivo y plan por fases; el informe mensual DGAC se conserva como contrato.
 - **Tarjeta del tiempo encendida por omisión, con Santiago como ciudad (`LV-353`).** `WEATHER_ENABLED=True` por omisión (`False` lo apaga todo: sin hueco, sin petición, rutas `weather/*` en 404, sin llamadas salientes). Si la petición de la tarjeta falla, `weather-card.js` cambia el esqueleto de carga por el estado de error con «Reintentar». Riesgo aceptado: licencia gratuita no comercial de Open-Meteo (ver `docs/dev/tiempo.md`). Lleva estáticos; sin migración.
 
 - **Tarjeta «Centelleo GNSS» en el panel (`LV-352`).** Referencia estadística (no medición) tomada del portal de GEOCOM: indica si ahora cae en la ventana típica de mayor centelleo ionosférico (noche, septiembre a abril, período 2025–2028) y cuándo es la próxima. Sin llamadas externas, sin permisos ni cruces; fila «Condiciones del entorno» junto al tiempo. Se apaga con `GNSS_SCINTILLATION_ENABLED=False`; parámetros `GNSS_SCINT_*` por entorno. Lleva estáticos; sin migración.
