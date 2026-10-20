@@ -31,6 +31,10 @@ ROLE_PERMISSIONS = {
         "add_flightpermission",
         "change_flightpermission",
         "view_flightpermission",
+        # LV-357: el mapa de espacio aéreo es consulta de quien arma el permiso.
+        # Sólo `view`: el catálogo se escribe con `import_airspace_zones`, no a mano.
+        # Compliance y Viewer no lo tienen hasta que la persona lo pida.
+        "view_airspacefeature",
         "add_flightrecord",
         "change_flightrecord",
         "delete_flightrecord",
