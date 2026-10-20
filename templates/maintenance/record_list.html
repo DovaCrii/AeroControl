@@ -12,7 +12,10 @@ cada mañana. Entra por los bloques `list_*` con sus mismas columnas.{% endcomme
 <a class="btn btn-primary" href="new/">+ {% translate "New" %}</a>
 {% endblock %}
 
+{% block list_intro %}{% include "generic/_cost_center_filter_chip.html" %}{% endblock %}
+
 {% block list_filters %}
+{% if cost_center_filter %}<input type="hidden" name="cost_center" value="{{ request.GET.cost_center }}">{% endif %}
 <div class="col-md-3">{% include "generic/_search_input.html" with search_url=request.path %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
 <div class="col-md-2"><select class="form-select" name="status"><option value="">{% translate "All statuses" %}</option>{% for value,label in status_choices %}<option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
 <div class="col-md-2"><select class="form-select" name="maintenance_type"><option value="">{% translate "All types" %}</option>{% for value,label in type_choices %}<option value="{{ value }}" {% if current_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>

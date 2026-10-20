@@ -1,0 +1,8 @@
+{% load i18n %}{% comment %}LV-351: qué faena está filtrando la lista, a la vista y con
+forma de quitarla. Llega del chip del panel, así que la persona no lo escribió acá:
+sin este rótulo vería una lista corta sin saber por qué. `cost_center_filter` lo arma
+`apply_cost_center_filter`; si la faena no se encontró, el rótulo lo dice en vez de
+nombrar lo que no debe.{% endcomment %}
+{% if cost_center_filter %}
+<p class="mb-3"><span class="id-chip id-chip--info" data-active-filter="cost_center">{% translate "Cost center" %}: {% if cost_center_filter.name %}{{ cost_center_filter.name }}{% else %}{% translate "Not found" %}{% endif %}<a class="ms-2" href="{{ cost_center_filter.clear_url }}" aria-label="{% translate 'Remove filter' %}" title="{% translate 'Remove filter' %}"><span aria-hidden="true">×</span></a></span></p>
+{% endif %}
