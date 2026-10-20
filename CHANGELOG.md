@@ -38,6 +38,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Security
 
+- **Historial de git reescrito y publicado (`LV-349`).** Los valores privados (identificadores, correos, nombres, datos de la VM y credenciales) se reemplazaron por ficticios en todo el historial y los autores pasaron al noreply de GitHub. Todos los hashes cambiaron (`main` en `738a317`); los SHAs anteriores siguen accesibles hasta que GitHub Support purgue las referencias de PR.
 - **Asistente IA: registro de uso y topes en la base (`LV-326`).** Cada pregunta deja una fila `AssistantUsage` (sin texto de pregunta ni respuesta); los topes por hora y global por día (`AI_ASSISTANT_DAILY_CAP`, 300) se cuentan ahí y se revisan antes de cada llamada. **LLEVA MIGRACIÓN** (`assistant.0001`); sin estáticos.
 
 - **Asistente IA acotado por empresa y sin nombres de faena (`LV-323`).** Las tres herramientas ven sólo los permisos de la empresa de quien pregunta; `cost_centres_permit_status` ya no envía el nombre de la faena. El tope por hora cuenta llamadas al servicio (no preguntas) y se registra `total_tokens`. Sin migración ni estáticos.
