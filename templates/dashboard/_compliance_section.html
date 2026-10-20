@@ -1,0 +1,102 @@
+{% load i18n compliance_charts %}{% comment %}LV-359: la sección «Cumplimiento». Es el fragmento que pide el hueco del panel y también el cuerpo de la página completa. Sin ninguna fuente visible (`cx_visible` falso) devuelve un contenedor vacío y oculto: ni nombres ni cifras. Cada bloque se dibuja sólo con el permiso de su fuente (`cx_blocks`); cada categoría, con el de las suyas. «A hoy» es la fecha de hoy; el aviso del informe DGAC lleva SU fecha de corte, leída del último informe, y nunca se mezcla con «hoy». Fase 2: anillos por categoría, mapa de calor (tabla real, sin colspan) y alertas por antigüedad, todo SVG/HTML de servidor sin JavaScript. Cada gráfico lleva su cifra impresa al lado (un `<svg role="img">` no se recorre por dentro). Símbolo + texto además del color: ✕ vencido, ▲ ≤7, ◆ ≤15, ● ≤30, ○ después.{% endcomment %}{% if not cx_visible %}<div id="compliance-section" hidden></div>{% else %}
+<section id="compliance-section" class="id-cx" aria-labelledby="cx-title">
+  <header class="id-cx-head">
+    <h2 id="cx-title" class="id-cx-title">{% translate "Compliance" %}</h2>
+    <p class="id-cx-asof">{% if cx_cost_center %}{% blocktranslate with date=cx_today|date:"d-m-Y" site=cx_cost_center.code %}As of today, {{ date }} · site {{ site }}{% endblocktranslate %}{% else %}{% blocktranslate with date=cx_today|date:"d-m-Y" %}As of today, {{ date }} · all sites{% endblocktranslate %}{% endif %}</p>
+    {% if not cx_full_page %}<a class="id-cx-link" href="{% url 'dashboard-compliance' %}{% if cx_cost_center %}?cost_center={{ cx_cost_center.pk }}{% endif %}">{% translate "Open as a page" %} <span aria-hidden="true">→</span></a>{% endif %}
+  </header>
+  {% if cx_report %}
+  <p class="id-cx-report">{% if cx_report.cutoff %}{% blocktranslate with date=cx_report.cutoff|date:"d-m-Y" status=cx_report.status_label %}DGAC monthly report: cut-off {{ date }} · {{ status }}{% endblocktranslate %}{% else %}{% blocktranslate with period=cx_report.period|date:"Y-m" status=cx_report.status_label %}DGAC monthly report: period {{ period }} · {{ status }}{% endblocktranslate %}{% endif %}</p>
+  {% endif %}
+  <div class="id-cx-grid">
+    {% if cx_blocks.rings %}
+    <div class="id-cx-block id-cx-block--rings" data-cx-block="rings">
+      <h3 class="id-cx-h3">{% translate "By category" %}</h3>
+      <ul class="id-cx-rings">
+        {% for r in cx_rings %}
+        <li class="id-cx-ring" data-cx-ring="{{ r.key }}">
+          <h4 class="id-cx-ring-name">{{ r.label }}</h4>
+          {% ring r.segments uid="cx-ring-"|add:r.key title=r.title desc=r.desc center=r.attend %}
+          <div class="id-cx-ring-text">
+            <p class="id-cx-ring-fig"><b class="id-cx-fig">{{ r.attend }}</b> <span>{% translate "to attend within 30 days" %}</span></p>
+            <ul class="id-cx-levels">
+              {% for lv in r.levels %}<li><span class="id-chip id-chip--{{ lv.tone }}"><span aria-hidden="true">{{ lv.symbol }}</span> <b>{{ lv.n }}</b> {{ lv.label }}</span></li>{% endfor %}
+            </ul>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+    {% if cx_blocks.heat %}
+    <div class="id-cx-block id-cx-block--heat" data-cx-block="heat">
+      <h3 class="id-cx-h3">{% translate "Next 90 days" %}</h3>
+      <div class="id-cx-heat-wrap">
+        <table class="id-cx-heat id-cx-heat--wide">
+          <caption class="visually-hidden">{% translate "Expiries by week over the next 90 days" %}</caption>
+          <thead>
+            <tr>
+              <th scope="col"><span class="visually-hidden">{% translate "Category" %}</span></th>
+              {% for col in cx_heat_wide_columns %}<th scope="col" class="id-cx-col"><span class="id-cx-sym" aria-hidden="true">{{ col.symbol }}</span> <span>{{ col.label }}</span>{% if col.hint %}<span class="visually-hidden"> ({{ col.hint }})</span>{% endif %}</th>{% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in cx_heat_rows %}
+            <tr>
+              <th scope="row" class="id-cx-rowhead">{{ row.label }}</th>
+              {% for cell in row.wide %}<td class="id-cx-cell id-cx-heat-{{ cell.step }}"><b>{{ cell.n }}</b></td>{% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <table class="id-cx-heat id-cx-heat--narrow">
+          <caption class="visually-hidden">{% translate "Expiries in 30-day periods over the next 90 days" %}</caption>
+          <thead>
+            <tr>
+              <th scope="col"><span class="visually-hidden">{% translate "Category" %}</span></th>
+              {% for col in cx_heat_narrow_columns %}<th scope="col" class="id-cx-col"><span class="id-cx-sym" aria-hidden="true">{{ col.symbol }}</span> <span>{{ col.label }}</span></th>{% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in cx_heat_rows %}
+            <tr>
+              <th scope="row" class="id-cx-rowhead">{{ row.label }}</th>
+              {% for cell in row.narrow %}<td class="id-cx-cell id-cx-heat-{{ cell.step }}"><b>{{ cell.n }}</b></td>{% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="id-cx-legend">{% translate "✕ overdue · ▲ up to 7 days · ◆ up to 15 · ● up to 30 · ○ later. A week takes the symbol of its first day. The figure in each cell is the count; the color only helps to scan." %}</p>
+    </div>
+    {% endif %}
+    {% if cx_blocks.alerts and cx_alerts %}
+    <div class="id-cx-block id-cx-block--alerts" data-cx-block="alerts">
+      <h3 class="id-cx-h3">{% translate "Open alerts by age" %}</h3>
+      {% if cx_alerts.total %}
+      {% hbar cx_alerts.bars uid="cx-alerts" title=cx_alerts.title desc=cx_alerts.desc %}
+      <p class="id-cx-ring-fig"><b class="id-cx-fig">{{ cx_alerts.total }}</b> <span>{% blocktranslate count counter=cx_alerts.total %}open alert{% plural %}open alerts{% endblocktranslate %}</span>
+        · <span class="id-cx-unowned"><b>{{ cx_alerts.unassigned }}</b> {% translate "without an owner" %}</span></p>
+      <p class="id-cx-note"><a href="{{ cx_alerts.url }}">{% translate "Work on these in the alert tray" %} <span aria-hidden="true">→</span></a></p>
+      {% else %}
+      {% translate "No open alerts." as no_alerts %}{% include "generic/_signal.html" with kind="ok" text=no_alerts %}
+      {% endif %}
+    </div>
+    {% endif %}
+    {% if cx_blocks.maintenance %}
+    <div class="id-cx-block id-cx-block--maintenance" data-cx-block="maintenance">
+      <h3 class="id-cx-h3">{% translate "Maintenance" %}</h3>
+      {% if cx_maintenance_to_define %}
+      <p class="id-cx-ring-fig"><b class="id-cx-fig">{{ cx_maintenance_to_define }}</b> <span>{% blocktranslate count counter=cx_maintenance_to_define %}maintenance record to define{% plural %}maintenance records to define{% endblocktranslate %}</span></p>
+      <p class="id-cx-note"><a href="{{ cx_maintenance_url }}">{% translate "Plan maintenance" %} <span aria-hidden="true">→</span></a></p>
+      {% else %}
+      {% translate "No maintenance to define." as no_maintenance %}{% include "generic/_signal.html" with kind="ok" text=no_maintenance %}
+      {% endif %}
+    </div>
+    {% endif %}
+    {% if cx_blocks.permits and cx_permits %}{% include "dashboard/_compliance_permits.html" %}{% endif %}
+    {% if cx_blocks.history and cx_history %}{% include "dashboard/_compliance_history.html" %}{% endif %}
+  </div>
+  {% include "dashboard/_compliance_guide.html" %}
+</section>
+{% endif %}

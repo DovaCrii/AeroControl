@@ -120,7 +120,14 @@ def worktable_th(context, label, column="", align="", css=""):
         "css": css,
         "column": column,
         "state": state,
-        "url": f"?{sort['base_query']}sort={column}&dir={nxt}",
+        # `url_prefix`/`url_suffix` (opcionales; las listas no los ponen): un fragmento htmx
+        # que se pinta dentro de OTRA página (la sección «Cumplimiento» del panel) necesita
+        # que el enlace lleve su propia ruta —un `?sort=` suelto resolvería contra el panel— y
+        # su ancla.
+        "url": (
+            f"{sort.get('url_prefix', '')}?{sort['base_query']}sort={column}&dir={nxt}"
+            f"{sort.get('url_suffix', '')}"
+        ),
     }
 
 

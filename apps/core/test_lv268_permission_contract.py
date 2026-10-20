@@ -115,6 +115,13 @@ LOGIN_ONLY = {
         "el panel de inicio; cada tarjeta se arma sólo con lo que el usuario puede "
         "ver (`EXPIRATION_PERMISSIONS`, `panel_readiness`)."
     ),
+    "apps.dashboard.compliance_section.compliance_section": (
+        "la sección «Cumplimiento» del panel (LV-359, decisión D2): cruza cinco "
+        "fuentes y no tiene modelo propio; **cada bloque se dibuja sólo si quien "
+        "mira puede ver su fuente** (`blocks_for`, `EXPIRATION_PERMISSIONS`) y sin "
+        "ninguna devuelve un contenedor vacío, sin nombres de registros. La faena "
+        "de la URL se acota por tenant. Todo por GET."
+    ),
     # DRF: piden `IsAuthenticated` y hacen la comprobación de modelo adentro,
     # porque el permiso depende del método (GET lista, POST escribe).
     "apps.geo.api.GeoPlanVersionsView": (

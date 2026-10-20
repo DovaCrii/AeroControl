@@ -28,7 +28,8 @@ def _page(client, admin_user):
         status="active",
     )
     client.force_login(admin_user)
-    content = client.get(reverse("dashboard")).content.decode()
+    # LV-359 (fase 4): la tabla vive en la sección «Cumplimiento».
+    content = client.get(reverse("dashboard-compliance")).content.decode()
     return content.split("Permisos de vuelo por centro de costo")[-1]
 
 
@@ -49,7 +50,10 @@ def test_a_waiting_permit_shows_awaiting_in_warning_colour(client, admin_user):
 
     table = _page(client, admin_user)
 
-    assert '<span class="sev-text-warning">Esperando</span>' in table
+    assert (
+        '<span class="id-chip id-chip--warning"><span aria-hidden="true">▲</span> Esperando</span>'
+        in table
+    )
     assert "Ninguno" not in table.split("</thead>")[-1]
 
 
@@ -60,4 +64,5 @@ def test_a_site_with_nothing_still_says_none(client, admin_user):
     table = _page(client, admin_user)
 
     assert "Ninguno" in table
-    assert "sev-text-warning" not in table
+    # sólo la tabla: la guía de la sección también dibuja chips de ese tono
+    assert "id-chip--warning" not in table.split("</table>")[0]

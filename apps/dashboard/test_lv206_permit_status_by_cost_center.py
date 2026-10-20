@@ -161,7 +161,9 @@ class TestOnThePanel:
         )
         django_user_model.objects.create_superuser("admin", "a@test.com", "password")
         assert client.login(username="admin", password="password")
-        return client.get(reverse("dashboard")).content.decode()
+        # LV-359 (fase 4): la tabla se mudó del panel a la sección «Cumplimiento»; se lee del
+        # endpoint (la página completa), que es donde vive ahora.
+        return client.get(reverse("dashboard-compliance")).content.decode()
 
     def test_the_table_is_drawn(self, client, django_user_model):
         center = _center("CC738", "MLP")
@@ -179,20 +181,20 @@ class TestOnThePanel:
 
         assert "Ninguno" in content
 
-    def test_the_table_comes_before_the_weather(self, client, django_user_model):
-        """El pedido era el **lugar**: la tabla donde estaba el clima. El clima no
-        se quita porque es de donde se registra la revisión meteorológica, que
-        `LV-194` acaba de confirmar como necesaria en el expediente."""
+    def test_the_table_left_the_panel_and_the_slot_carries_its_anchor(
+        self, client, django_user_model
+    ):
+        """LV-359 (fase 4): antes este test fijaba que la tabla fuera ANTES del clima (el
+        pedido original de LV-206 era el lugar). El clima se retiró (LV-216) y la tabla se
+        mudó al final, a «Cumplimiento»: lo que se vigila ahora es que el panel ya no la
+        dibuje y que el hueco lleve el ancla `#cx-permits`, o el chip de «Requiere
+        atención» saltaría a la nada mientras la sección no carga."""
         center = _center("CC738", "MLP")
         _permit(center, "JEJ-001")
+        self._content(client, django_user_model)  # deja la sesión iniciada
 
-        content = self._content(client, django_user_model)
+        panel = client.get(reverse("dashboard")).content.decode()
 
-        # Se comparan los `id` de las dos secciones y no su texto: el título del
-        # clima se ve en mayúsculas por CSS, así que buscarlo tal como aparece en
-        # pantalla es la fragilidad que `LV-95` dejó documentada.
-        assert "panel-permit-status-title" in content
-        if "panel-weather-title" in content:
-            assert content.index("panel-permit-status-title") < content.index(
-                "panel-weather-title"
-            )
+        assert "panel-permit-status-title" not in panel
+        assert "Permisos de vuelo por centro de costo" not in panel
+        assert 'id="cx-permits"' in panel  # el esqueleto del hueco

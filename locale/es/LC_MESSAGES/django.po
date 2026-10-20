@@ -10334,6 +10334,254 @@ msgid_plural "+%(counter)s more events"
 msgstr[0] "+%(counter)s evento más"
 msgstr[1] "+%(counter)s eventos más"
 
+msgid "Open as a page"
+msgstr "Abrir como página"
+
+msgid "Loading compliance"
+msgstr "Cargando el cumplimiento"
+
+msgid "Open the compliance page"
+msgstr "Abrir la página de cumplimiento"
+
+msgid "By category"
+msgstr "Por categoría"
+
+msgid "Next 90 days"
+msgstr "Próximos 90 días"
+
+msgid "Open alerts by age"
+msgstr "Alertas abiertas por antigüedad"
+
+msgid "Are we up to date today, and what expires first?"
+msgstr "¿Estamos al día hoy y qué vence primero?"
+
+#, python-format
+msgid "As of today, %(date)s · site %(site)s"
+msgstr "A hoy, %(date)s · faena %(site)s"
+
+#, python-format
+msgid "As of today, %(date)s · all sites"
+msgstr "A hoy, %(date)s · todas las faenas"
+
+#, python-format
+msgid "DGAC monthly report: cut-off %(date)s · %(status)s"
+msgstr "Informe mensual DGAC: corte %(date)s · %(status)s"
+
+#, python-format
+msgid "DGAC monthly report: period %(period)s · %(status)s"
+msgstr "Informe mensual DGAC: período %(period)s · %(status)s"
+
+msgctxt "compliance level"
+msgid "Overdue"
+msgstr "Vencido"
+
+msgid "People"
+msgstr "Personas"
+
+msgid "≤7 days"
+msgstr "≤7 días"
+
+msgid "≤15 days"
+msgstr "≤15 días"
+
+msgid "≤30 days"
+msgstr "≤30 días"
+
+msgid "31–90 days"
+msgstr "31–90 días"
+
+#, python-format
+msgid "W%(n)s"
+msgstr "S%(n)s"
+
+#, python-format
+msgid "days %(first)s to %(last)s"
+msgstr "días %(first)s a %(last)s"
+
+msgid "0–30 days"
+msgstr "0–30 días"
+
+msgid "31–60 days"
+msgstr "31–60 días"
+
+msgid "61–90 days"
+msgstr "61–90 días"
+
+msgid "0–7 days"
+msgstr "0–7 días"
+
+msgid "8–30 days"
+msgstr "8–30 días"
+
+msgid "Over 30 days"
+msgstr "Más de 30 días"
+
+msgid "to attend within 30 days"
+msgstr "por atender en 30 días"
+
+msgid "without an owner"
+msgstr "sin responsable"
+
+msgid "No maintenance to define."
+msgstr "Sin mantenciones por definir."
+
+msgid "open alert"
+msgid_plural "open alerts"
+msgstr[0] "alerta abierta"
+msgstr[1] "alertas abiertas"
+
+msgid "maintenance record to define"
+msgid_plural "maintenance records to define"
+msgstr[0] "mantención por definir"
+msgstr[1] "mantenciones por definir"
+
+#, python-format
+msgid "%(count)s open alert"
+msgid_plural "%(count)s open alerts"
+msgstr[0] "%(count)s alerta abierta"
+msgstr[1] "%(count)s alertas abiertas"
+
+#, python-format
+msgid "%(label)s: %(attend)s to attend within 30 days"
+msgstr "%(label)s: %(attend)s por atender en 30 días"
+
+#, python-format
+msgid ""
+"%(label)s: %(overdue)s overdue, %(d7)s within 7 days, %(d15)s within 15 days, "
+"%(d30)s within 30 days, %(later)s within 31 to 90 days."
+msgstr ""
+"%(label)s: %(overdue)s vencidos, %(d7)s en 7 días, %(d15)s en 15 días, "
+"%(d30)s en 30 días y %(later)s entre 31 y 90 días."
+
+#, python-format
+msgid ""
+"Open alerts by age: %(fresh)s from 0 to 7 days, %(mid)s from 8 to 30 days, "
+"%(old)s over 30 days; %(unassigned)s without an owner."
+msgstr ""
+"Alertas abiertas por antigüedad: %(fresh)s de 0 a 7 días, %(mid)s de 8 a 30 "
+"días y %(old)s de más de 30 días; %(unassigned)s sin responsable."
+
+msgid "Expiries by week over the next 90 days"
+msgstr "Vencimientos por semana en los próximos 90 días"
+
+msgid "Expiries in 30-day periods over the next 90 days"
+msgstr "Vencimientos por tramos de 30 días en los próximos 90 días"
+
+msgid ""
+"✕ overdue · ▲ up to 7 days · ◆ up to 15 · ● up to 30 · ○ later. A week takes "
+"the symbol of its first day. The figure in each cell is the count; the color "
+"only helps to scan."
+msgstr ""
+"✕ vencido · ▲ hasta 7 días · ◆ hasta 15 · ● hasta 30 · ○ después. Cada semana "
+"lleva el símbolo de su primer día. La cifra de cada celda es la cuenta; el "
+"color sólo ayuda a ojear."
+
+msgid "Start with what the panel lists as needing attention."
+msgstr "Se parte por lo que el panel lista como pendiente de atención."
+
+msgid "Open the alerts to correct what is overdue or about to expire."
+msgstr "Abra las alertas para corregir lo que está vencido o por vencer."
+
+msgid "Permits by site"
+msgstr "Permisos por faena"
+
+msgid "Check which site has no permit in force and renew first."
+msgstr "Revise qué faena no tiene permiso vigente y renueve esa primero."
+
+msgid "Close last month: records on file for each site that flew."
+msgstr "Cierre el mes pasado: los registros archivados de cada faena que voló."
+
+msgid "Review the monthly DGAC report before approving it."
+msgstr "Revise el informe mensual DGAC antes de aprobarlo."
+
+msgid "Review history"
+msgstr "Historial de revisión"
+
+msgid "Monthly close status of the last six closed months"
+msgstr "Estado del cierre mensual de los últimos seis meses cerrados"
+
+msgid "Status of the close"
+msgstr "Estado del cierre"
+
+msgid "✕ non-compliant · ▲ pending review · ● compliant · ○ not reviewed yet. The figure is the number of sites that fly; each month opens its close."
+msgstr "✕ no cumple · ▲ pendiente de revisión · ● cumple · ○ aún sin revisar. La cifra es la cantidad de faenas que vuelan; cada mes abre su cierre."
+
+msgid "No site flies, so there is nothing to close."
+msgstr "Ninguna faena vuela, así que no hay nada que cerrar."
+
+msgid "How to read and review this section"
+msgstr "Cómo leer y revisar esta sección"
+
+msgid "Symbols and colors"
+msgstr "Símbolos y colores"
+
+msgid "Up to 7 days"
+msgstr "Hasta 7 días"
+
+msgid "Up to 15 days"
+msgstr "Hasta 15 días"
+
+msgid "Up to 30 days"
+msgstr "Hasta 30 días"
+
+msgid "Later"
+msgstr "Después"
+
+msgid "The symbol and the word carry the meaning; the color only helps to scan, and ▲ and ◆ share a color."
+msgstr "El símbolo y la palabra llevan el significado; el color sólo ayuda a ojear, y ▲ y ◆ comparten color."
+
+msgid "Why there are two scales"
+msgstr "Por qué hay dos escalas"
+
+msgid "Documents and alerts are graded at 7, 15 and 30 days. Flight permits are graded at 30 and 60 days: renewing one involves a request to the DGAC, which takes longer than renewing a document."
+msgstr "Los documentos y las alertas se gradúan a 7, 15 y 30 días. Los permisos de vuelo, a 30 y 60 días: renovar uno implica una solicitud a la DGAC, que demora más que renovar un documento."
+
+msgid "Today and the report cut-off"
+msgstr "Hoy y el corte del informe"
+
+msgid "Everything here is as of today. The DGAC monthly report is frozen at its own cut-off date, so its figures can differ from these without either being wrong."
+msgstr "Todo lo de aquí es a hoy. El informe mensual DGAC queda congelado en su propia fecha de corte, así que sus cifras pueden diferir de estas sin que ninguna esté mal."
+
+msgid "How to review it, in five steps"
+msgstr "Cómo revisarla, en cinco pasos"
+
+msgid "Open the screen"
+msgstr "Abrir la pantalla"
+
+#, python-format
+msgid "%(n)s d"
+msgstr "%(n)s d"
+
+#, python-format
+msgid "%(count)s site, of which %(without)s without a permit in force"
+msgid_plural "%(count)s sites, of which %(without)s without a permit in force"
+msgstr[0] "%(count)s faena, de las cuales %(without)s sin permiso vigente"
+msgstr[1] "%(count)s faenas, de las cuales %(without)s sin permiso vigente"
+
+msgid "Over 60 days"
+msgstr "Más de 60 días"
+
+msgid "≤60 days"
+msgstr "Hasta 60 días"
+
+msgid "No validity yet"
+msgstr "Sin vigencia aún"
+
+msgid "No live permits."
+msgstr "Sin permisos vivos."
+
+#, python-format
+msgid "and %(counter)s more permit"
+msgid_plural "and %(counter)s more permits"
+msgstr[0] "y %(counter)s permiso más"
+msgstr[1] "y %(counter)s permisos más"
+
+msgid "✕ no permit in force, or 30 days or less · ▲ awaiting, not started yet, or 60 days or less · ● more than 60 days. The meter shows the days left of the first permit to expire (0 to 90); the number and the word carry the meaning."
+msgstr "✕ sin permiso vigente, o 30 días o menos · ▲ esperando, aún sin empezar, o 60 días o menos · ● más de 60 días. El medidor muestra los días que le quedan al primer permiso en vencer (0 a 90); el número y la palabra llevan el significado."
+
+msgid "No sites with flight operations."
+msgstr "No hay faenas con operación de vuelo."
+
 msgid "airspace snapshot"
 msgstr "foto del espacio aéreo"
 

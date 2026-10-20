@@ -241,6 +241,10 @@ def upcoming_expirations(today, cutoff, cost_center=None, user=None):
         # momento, en vez de dibujarse gris para siempre — que es el estado
         # que esta fila vino a arreglar y el que nadie reportaría dos veces.
         item["kind_css"] = SUBJECT_TONE_CSS[EXPIRATION_SUBJECT_TONES[model]]
+        # LV-359: de qué cuelga, como clave estable (`person`/`aircraft`/`document`/`permit`): la
+        # sección «Cumplimiento» agrupa por categoría y no puede hacerlo por `kind`, que es texto
+        # traducible y distingue seis fuentes, no cuatro categorías.
+        item["subject_kind"] = EXPIRATION_SUBJECT_TONES[model]
         items.append(item)
 
     quals = Qualification.objects.filter(

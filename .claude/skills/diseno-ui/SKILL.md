@@ -36,6 +36,21 @@ python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css \
   --pair sev-nominal-text:sev-nominal-bg
 ```
 
+Pares de «Cumplimiento» (`LV-359`, tokens `--id-cx-*` de `identity.css`; pasar los dos CSS):
+
+```bash
+python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css static/css/identity.css \
+  --pair id-cx-ink:id-cx-heat-1 --pair id-cx-ink:id-cx-heat-2 \
+  --pair id-cx-ink:id-cx-heat-3 --pair id-cx-ink:id-cx-heat-4 \
+  --pair ac-text-muted:ac-surface
+python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css static/css/identity.css --min 3 \
+  --pair id-cx-edge:ac-surface --pair sev-critical-text:id-cx-track --pair sev-warning-text:id-cx-track \
+  --pair sev-advisory-text:id-cx-track --pair sev-nominal-text:id-cx-track
+```
+
+Los rellenos de gráficos usan `--sev-*-text`, nunca `--sev-*-border`. Cuidado: un bloque `@media print` que reasigne
+tokens en `html[data-theme="dark"]` hace que este script los lea como oscuros y mida mal; reasignarlos en `html body`.
+
 Umbral 4.5:1; `--min 3` para iconos y bordes de controles. Al agregar un token de texto o de fondo, se suma su par en
 el mismo PR. `--auto` explora; sus hallazgos se confirman con el uso real (p. ej. `--ac-text-muted` no se usa sobre los
 fondos `--sev-*`, que llevan su propio `--sev-*-text`).

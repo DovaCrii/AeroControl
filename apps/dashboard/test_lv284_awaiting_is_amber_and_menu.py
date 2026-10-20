@@ -28,7 +28,8 @@ def _page(client, admin_user):
         registration="RPA-0001", type="RPA", model="M3", manufacturer="DJI"
     )
     client.force_login(admin_user)
-    return client.get(reverse("dashboard")).content.decode()
+    # LV-359 (fase 4): la tabla vive en la sección «Cumplimiento».
+    return client.get(reverse("dashboard-compliance")).content.decode()
 
 
 def _centre(code, *, requested):

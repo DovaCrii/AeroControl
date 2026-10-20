@@ -1,0 +1,28 @@
+{% load i18n %}{% comment %}LV-359 (fase 3): «Cómo leer y revisar esta sección». `<details>` cerrado por defecto: la leyenda de símbolos y colores, por qué dos escalas de umbrales (7/15/30 en documentos y alertas, 30/60 en permisos), «hoy» frente al corte del informe, y los cinco pasos con su enlace para corregir. Cada enlace existe sólo si la persona puede abrir esa pantalla (`guide_steps`). Los umbrales son texto: los números viven en `digest` y `kpis.permit_band`.{% endcomment %}
+<details class="id-cx-guide" id="cx-guide">
+  <summary>{% translate "How to read and review this section" %}</summary>
+  <div class="id-cx-guide-body">
+    <h3 class="id-cx-h3">{% translate "Symbols and colors" %}</h3>
+    <ul class="id-cx-levels">
+      <li><span class="id-chip id-chip--critical"><span aria-hidden="true">✕</span> {% translate "Overdue" context "compliance level" %}</span></li>
+      <li><span class="id-chip id-chip--warning"><span aria-hidden="true">▲</span> {% translate "Up to 7 days" %}</span></li>
+      <li><span class="id-chip id-chip--warning"><span aria-hidden="true">◆</span> {% translate "Up to 15 days" %}</span></li>
+      <li><span class="id-chip id-chip--info"><span aria-hidden="true">●</span> {% translate "Up to 30 days" %}</span></li>
+      <li><span class="id-chip id-chip--neutral"><span aria-hidden="true">○</span> {% translate "Later" %}</span></li>
+    </ul>
+    <p class="id-cx-note">{% translate "The symbol and the word carry the meaning; the color only helps to scan, and ▲ and ◆ share a color." %}</p>
+
+    <h3 class="id-cx-h3">{% translate "Why there are two scales" %}</h3>
+    <p class="id-cx-note">{% translate "Documents and alerts are graded at 7, 15 and 30 days. Flight permits are graded at 30 and 60 days: renewing one involves a request to the DGAC, which takes longer than renewing a document." %}</p>
+
+    <h3 class="id-cx-h3">{% translate "Today and the report cut-off" %}</h3>
+    <p class="id-cx-note">{% translate "Everything here is as of today. The DGAC monthly report is frozen at its own cut-off date, so its figures can differ from these without either being wrong." %}</p>
+
+    <h3 class="id-cx-h3">{% translate "How to review it, in five steps" %}</h3>
+    <ol class="id-cx-steps">
+      {% for step in cx_guide %}
+      <li data-cx-step="{{ step.n }}"><b>{{ step.label }}</b> · {{ step.text }}{% if step.url %} <a href="{{ step.url }}">{% translate "Open the screen" %} <span aria-hidden="true">→</span></a>{% endif %}</li>
+      {% endfor %}
+    </ol>
+  </div>
+</details>
