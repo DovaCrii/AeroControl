@@ -1486,7 +1486,22 @@ form.is-submitting-slow .btn-primary::after {
 .id-cx-heat-4 { background: var(--id-cx-heat-4); color: var(--id-cx-ink); border-color: var(--id-cx-ink); }
 .id-cx-legend { margin: var(--id-sp-1) 0 0; font-size: var(--id-fs-sm); color: var(--ac-text-secondary); }
 /* Fase 3: historial de revisión y guía de lectura. Sin tokens nuevos: los chips ya llevan su contraste. */
-.id-cx-block--history { grid-column: 1 / -1; }
+.id-cx-block--history, .id-cx-block--permits { grid-column: 1 / -1; }
+/* Fase 4: «Permisos por faena». Las filas rojas y ámbar son las de app.css (`tr.row-critical`,
+   `tr.row-awaiting`); aquí sólo la forma. El medidor es ayuda visual: el número y el chip llevan el
+   significado, así que no se le fuerza color. Sin `colspan` ni `.table-normalized`. */
+.id-cx-permits-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem var(--id-sp-3); }
+.id-cx-permits-head .id-cx-link { margin-left: auto; }
+.id-cx-permits-wrap { overflow-x: auto; }
+.id-cx-permits { font-size: var(--id-fs-sm); }
+.id-cx-permits th, .id-cx-permits td { vertical-align: middle; }
+.id-cx-permits .worktable-sort { white-space: nowrap; }
+.id-cx-site-details > summary { cursor: pointer; font-weight: 600; }
+.id-cx-permit-list { margin: 0.35rem 0; padding-left: 1.1rem; display: grid; gap: 0.2rem; font-weight: 400; }
+.id-cx-days { display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
+.id-cx-meter { width: 5.5rem; height: 0.9rem; vertical-align: middle; }
+.id-cx-date { color: var(--ac-text-secondary); white-space: nowrap; }
+.id-cx-past { color: var(--sev-critical-text); }
 .id-cx-hist { border-collapse: collapse; width: 100%; font-size: var(--id-fs-sm); }
 .id-cx-hist th, .id-cx-hist td { padding: 0.3rem 0.4rem; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--ac-border); }
 .id-cx-hist thead th { color: var(--ac-text-secondary); font-weight: 600; }

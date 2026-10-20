@@ -83,7 +83,8 @@ class TestTheRowSaysWhenItStarts:
         start = TODAY + timedelta(days=2)
         _permit(centre, start, start + timedelta(days=90))
 
-        html = admin_client.get(reverse("dashboard")).content.decode()
+        # LV-359 (fase 4): la tabla vive en la sección «Cumplimiento».
+        html = admin_client.get(reverse("dashboard-compliance")).content.decode()
         marker = 'cc-chip me-2">CC684'
         row = html.split(marker)[1].split("</tr>")[0]
 
@@ -93,7 +94,7 @@ class TestTheRowSaysWhenItStarts:
         assert "row-critical" not in tr_open
 
     def test_a_centre_with_nothing_is_still_critical(self, centre, admin_client):
-        html = admin_client.get(reverse("dashboard")).content.decode()
+        html = admin_client.get(reverse("dashboard-compliance")).content.decode()
         marker = 'cc-chip me-2">CC684'
 
         tr_open = html[: html.index(marker)].rsplit("<tr", 1)[1].split(">")[0]

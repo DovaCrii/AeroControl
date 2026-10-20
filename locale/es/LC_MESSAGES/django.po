@@ -10544,3 +10544,37 @@ msgstr "Cómo revisarla, en cinco pasos"
 
 msgid "Open the screen"
 msgstr "Abrir la pantalla"
+
+#, python-format
+msgid "%(n)s d"
+msgstr "%(n)s d"
+
+#, python-format
+msgid "%(count)s site, of which %(without)s without a permit in force"
+msgid_plural "%(count)s sites, of which %(without)s without a permit in force"
+msgstr[0] "%(count)s faena, de las cuales %(without)s sin permiso vigente"
+msgstr[1] "%(count)s faenas, de las cuales %(without)s sin permiso vigente"
+
+msgid "Over 60 days"
+msgstr "Más de 60 días"
+
+msgid "≤60 days"
+msgstr "Hasta 60 días"
+
+msgid "No validity yet"
+msgstr "Sin vigencia aún"
+
+msgid "No live permits."
+msgstr "Sin permisos vivos."
+
+#, python-format
+msgid "and %(counter)s more permit"
+msgid_plural "and %(counter)s more permits"
+msgstr[0] "y %(counter)s permiso más"
+msgstr[1] "y %(counter)s permisos más"
+
+msgid "✕ no permit in force, or 30 days or less · ▲ awaiting, not started yet, or 60 days or less · ● more than 60 days. The meter shows the days left of the first permit to expire (0 to 90); the number and the word carry the meaning."
+msgstr "✕ sin permiso vigente, o 30 días o menos · ▲ esperando, aún sin empezar, o 60 días o menos · ● más de 60 días. El medidor muestra los días que le quedan al primer permiso en vencer (0 a 90); el número y la palabra llevan el significado."
+
+msgid "No sites with flight operations."
+msgstr "No hay faenas con operación de vuelo."

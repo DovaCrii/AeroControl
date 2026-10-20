@@ -102,11 +102,15 @@ class TestEachChipCarriesItsNumberAndItsLink:
         chip = _chips(response)["sites_without_permit"]
         content = response.content.decode()
         assert chip["severity"] == "critical"
-        assert chip["url"] == "#panel-permit-status-title"
-        assert 'id="panel-permit-status-title"' in content
+        # LV-359 (fase 4): la tabla se mudó a «Cumplimiento»; el ancla `#cx-permits` vive en
+        # el esqueleto del hueco del panel y, al cargar, en la tabla misma.
+        assert chip["url"] == "#cx-permits"
+        assert 'id="cx-permits"' in content
         # La cifra es el número de filas de la tabla a la que enlaza que no tienen
         # permiso vigente.
-        rows = response.context["permit_status_rows"]
+        rows = admin_client.get(reverse("dashboard-compliance")).context["cx_permits"][
+            "rows"
+        ]
         assert chip["count"] == sum(1 for row in rows if not row["in_force"]) == 2
 
     def test_maintenance_to_define_links_to_a_list_with_the_same_number(
@@ -211,8 +215,12 @@ class TestOnlyWhatIsAboveZeroAppears:
         assert everything.context["cost_centres_without_permit"] == 2
         assert filtered.context["cost_centres_without_permit"] == 1
         assert _chips(filtered)["sites_without_permit"]["count"] == 1
+        # LV-359 (fase 4): la tabla obedece la misma faena en la sección.
+        section = admin_client.get(
+            reverse("dashboard-compliance"), {"cost_center": chosen.pk}
+        )
         assert [
-            row["cost_center"] for row in filtered.context["permit_status_rows"]
+            row["cost_center"] for row in section.context["cx_permits"]["rows"]
         ] == [chosen]
 
 

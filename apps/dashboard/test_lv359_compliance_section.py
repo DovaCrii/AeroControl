@@ -30,9 +30,12 @@ HX = {"HTTP_HX_REQUEST": "true"}
 # Medido (2026-10-20) sobre la operación del fixture, con el proceso caliente. Ver el aviso de
 # `test_lv237_panel_query_budget.py` antes de tocarlos: se suben a propósito y se dice por qué.
 # Fase 3: +2 por el historial de revisión (una cuenta de las faenas que operan y una agregación por mes
-# y estado): constantes, no crecen con las revisiones. Antes 20 y 23.
-SECTION_QUERY_BUDGET = 22
-SECTION_FILTERED_QUERY_BUDGET = 25
+# y estado). Fase 4: +7 por la tabla de permisos: `permit_status_by_cost_center(hoy, usuario)` cuesta 6
+# (sus dos consultas más las 4 de membresía de tenant que repite `scope_queryset_to_tenant`) y el detalle
+# de las faenas 1 (acotado con los `tenant_ids` ya resueltos). Todas constantes: no crecen con los datos
+# (`test_the_section_budget_does_not_grow_with_the_data`). Antes 20 y 23.
+SECTION_QUERY_BUDGET = 29
+SECTION_FILTERED_QUERY_BUDGET = 32
 
 
 @pytest.fixture

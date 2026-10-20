@@ -115,10 +115,12 @@ class TestTheCostCentreWithoutPermitIsDeclared:
         )
 
         response = admin_client.get(reverse("dashboard"))
+        # LV-359 (fase 4): la tabla vive en la sección «Cumplimiento».
+        section = admin_client.get(reverse("dashboard-compliance"))
 
         rows = {
             row["cost_center"].code: row
-            for row in response.context["permit_status_rows"]
+            for row in section.context["cx_permits"]["rows"]
         }
         assert rows["CC259"]["in_force"] == 0
         assert response.context["cost_centres_without_permit"] >= 1

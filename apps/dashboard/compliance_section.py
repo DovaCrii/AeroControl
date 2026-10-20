@@ -36,6 +36,12 @@ from .compliance_data import (
     review_history,
     visible_categories,
 )
+from .compliance_permits import (
+    PERMIT_PERMISSION,
+    permit_table,
+    requested_sort,
+    sort_context,
+)
 from .selection import resolve_cost_center
 
 # Las fuentes que alimentan la sección. Los cinco `view_*` del diseño, más los de padrones que
@@ -72,6 +78,7 @@ def blocks_for(user):
         "alerts": user.has_perm(ALERT_PERMISSION),
         "maintenance": user.has_perm(MAINTENANCE_PERMISSION),
         "history": user.has_perm(REVIEW_PERMISSION),
+        "permits": user.has_perm(PERMIT_PERMISSION),
     }
 
 
@@ -174,6 +181,12 @@ def section_context(request):
             context.update({f"cx_{key}": value for key, value in data.items()})
         if blocks["alerts"]:
             context["cx_alerts"] = alert_ages(user, cost_center, today, tenant_ids)
+        if blocks["permits"]:
+            column, direction = requested_sort(request.GET)
+            context["cx_permits"] = permit_table(
+                user, cost_center, today, tenant_ids, column, direction
+            )
+            context["worktable_sort"] = sort_context(request, cost_center)
         if blocks["history"]:
             context["cx_history"] = review_history(user, cost_center, today, tenant_ids)
         context["cx_guide"] = guide_steps(user, cost_center)
