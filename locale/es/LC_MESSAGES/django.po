@@ -10247,6 +10247,9 @@ msgstr "se abre en una pestaña nueva"
 msgid "News item"
 msgstr "Noticia"
 
+msgid "Environment conditions"
+msgstr "Condiciones del entorno"
+
 msgid "Environment"
 msgstr "Entorno"
 
@@ -10578,3 +10581,285 @@ msgstr "✕ sin permiso vigente, o 30 días o menos · ▲ esperando, aún sin e
 
 msgid "No sites with flight operations."
 msgstr "No hay faenas con operación de vuelo."
+
+msgid "airspace snapshot"
+msgstr "foto del espacio aéreo"
+
+msgid "airspace snapshots"
+msgstr "fotos del espacio aéreo"
+
+msgid "airspace feature"
+msgstr "elemento del espacio aéreo"
+
+msgid "airspace features"
+msgstr "elementos del espacio aéreo"
+
+msgid "Aerodrome"
+msgstr "Aeródromo"
+
+msgid "Airport"
+msgstr "Aeropuerto"
+
+msgid "Small airstrip (unofficial)"
+msgstr "Pista chica (no oficial)"
+
+msgid "Prohibited zone"
+msgstr "Zona prohibida"
+
+msgid "Restricted zone"
+msgstr "Zona restringida"
+
+msgid "Danger zone"
+msgstr "Zona peligrosa"
+
+msgid "Naval restricted zone"
+msgstr "Zona restringida naval"
+
+msgid "FIR boundary"
+msgstr "Límite de FIR"
+
+msgid "Drawing aid"
+msgstr "Ayuda de dibujo"
+
+msgid "Sensitive-zones map delivered by the DGAC (Google My Maps)"
+msgstr "Mapa de zonas sensibles entregado por la DGAC (Google My Maps)"
+
+msgid "Airspace and aerodromes"
+msgstr "Espacio aéreo y aeródromos"
+
+msgid "There is no airspace map loaded yet."
+msgstr "Aún no hay un mapa de espacio aéreo cargado."
+
+msgid ""
+"The data lives in the database, not in the repository: a person with server "
+"access imports it with a management command."
+msgstr ""
+"Los datos viven en la base de datos, no en el repositorio: una persona con "
+"acceso al servidor los importa con un comando de gestión."
+
+msgid ""
+"Download the KML of the map from its source (Google My Maps, ZONAS "
+"SENSIBLES) or use a copy you already have."
+msgstr ""
+"Descargue el KML del mapa desde su fuente (Google My Maps, ZONAS SENSIBLES) "
+"o use una copia que ya tenga."
+
+msgid "Check it first without writing anything:"
+msgstr "Revíselo primero sin escribir nada:"
+
+msgid "Import it:"
+msgstr "Impórtelo:"
+
+msgid "Reload this page."
+msgstr "Recargue esta página."
+
+msgid "Official reference: AIP-Chile, ENR 5.1"
+msgstr "Referencia oficial: AIP-Chile, ENR 5.1"
+
+msgid "ICAO code, zone code, name, coordinate, region or commune"
+msgstr "Código OACI, código de zona, nombre, coordenada, región o comuna"
+
+msgid ""
+"A coordinate in decimal degrees or degrees, minutes and seconds centres the "
+"map and marks the point."
+msgstr ""
+"Una coordenada en grados decimales o en grados, minutos y segundos centra el"
+" mapa y marca el punto."
+
+msgid "Folder"
+msgstr "Carpeta"
+
+msgid "FIR"
+msgstr "FIR"
+
+msgid "Only with a code"
+msgstr "Solo con código"
+
+msgid "Loading the map data"
+msgstr "Cargando los datos del mapa"
+
+msgid "Results"
+msgstr "Resultados"
+
+msgid "Airspace map"
+msgstr "Mapa del espacio aéreo"
+
+msgid "Map tools"
+msgstr "Herramientas del mapa"
+
+msgid "Measure distance"
+msgstr "Medir distancia"
+
+msgid "Radius circle"
+msgstr "Círculo de radio"
+
+msgid "Radius in kilometres"
+msgstr "Radio en kilómetros"
+
+msgid "km"
+msgstr "km"
+
+msgid "What is near here?"
+msgstr "¿Qué hay cerca de aquí?"
+
+msgid ""
+"The map needs JavaScript. The list of results works without the map once the"
+" data loads."
+msgstr ""
+"El mapa necesita JavaScript. La lista de resultados funciona sin el mapa una"
+" vez cargados los datos."
+
+msgid ""
+"Zones carry a letter and a pattern besides their colour: P prohibited, R "
+"restricted, D danger, N naval. Small airstrips are not official and appear "
+"from zoom 8."
+msgstr ""
+"Las zonas llevan una letra y un patrón además del color: P prohibida, R "
+"restringida, D peligrosa, N naval. Las pistas chicas no son oficiales y "
+"aparecen desde el zoom 8."
+
+msgid "Point copied"
+msgstr "Punto copiado"
+
+msgid "Copy the point (SIGO format)"
+msgstr "Copiar el punto (formato SIGO)"
+
+msgid "Technical sheet"
+msgstr "Ficha técnica"
+
+msgid "Choose a result or click a zone or aerodrome on the map."
+msgstr "Elija un resultado o haga clic en una zona o aeródromo del mapa."
+
+msgid "Not official: the source does not say who maintains this airstrip."
+msgstr "No oficial: la fuente no dice quién mantiene esta pista."
+
+msgid "Vertical limits (as the source wrote them)"
+msgstr "Límites verticales (tal como los escribió la fuente)"
+
+msgid "Schedule (as the source wrote it)"
+msgstr "Horario (tal como lo escribió la fuente)"
+
+msgid "Source text, coordination and reason"
+msgstr "Texto de la fuente, coordinación y motivo"
+
+msgid "Centre"
+msgstr "Centro"
+
+msgid "Region and commune"
+msgstr "Región y comuna"
+
+msgid ""
+"Confirm every limit and schedule against the AIP-Chile (ENR 5.1) and the "
+"NOTAM. A zone may be activated by NOTAM."
+msgstr ""
+"Confirme cada límite y horario contra el AIP-Chile (ENR 5.1) y los NOTAM. "
+"Una zona puede activarse por NOTAM."
+
+msgid ""
+"Base maps: OpenStreetMap and Esri (as configured). No data of this screen is"
+" sent to any other service."
+msgstr ""
+"Mapas base: OpenStreetMap y Esri (según la configuración). Ningún dato de "
+"esta pantalla se envía a otro servicio."
+
+msgid "Map copy of %(date)s · %(source)s"
+msgstr "Copia del mapa del %(date)s · %(source)s"
+
+msgid "The copy is %(days)s days old. Ask for a new import."
+msgstr "La copia tiene %(days)s días. Pida una importación nueva."
+
+msgid "Around the point (near = %(km)s km)"
+msgstr "Alrededor del punto (cerca = %(km)s km)"
+
+msgid "Nothing matches. Check the code or try part of the name."
+msgstr "Nada coincide. Revise el código o pruebe con parte del nombre."
+
+msgid "{n} more. Refine the search to see them."
+msgstr "{n} más. Afine la búsqueda para verlos."
+
+msgid "{n} results"
+msgstr "{n} resultados"
+
+msgid "no code"
+msgstr "sin código"
+
+msgid "not official"
+msgstr "no oficial"
+
+msgid "NM"
+msgstr "NM"
+
+msgid "true heading"
+msgstr "rumbo verdadero"
+
+msgid "Total"
+msgstr "Total"
+
+msgid "Last leg"
+msgstr "Último tramo"
+
+msgid "Click the map to add points. Press Escape to stop."
+msgstr ""
+"Haga clic en el mapa para agregar puntos. Presione Escape para terminar."
+
+msgid "Click the map to place the centre of the circle."
+msgstr "Haga clic en el mapa para poner el centro del círculo."
+
+msgid "Click the map to ask what is around that point."
+msgstr "Haga clic en el mapa para consultar qué hay alrededor de ese punto."
+
+msgid "That coordinate is not valid: {reason}."
+msgstr "Esa coordenada no es válida: {reason}."
+
+msgid "latitude outside -90 to 90"
+msgstr "latitud fuera de -90 a 90"
+
+msgid "longitude outside -180 to 180"
+msgstr "longitud fuera de -180 a 180"
+
+msgid "minutes and seconds must be below 60"
+msgstr "los minutos y segundos deben ser menores que 60"
+
+msgid "use a sign or a hemisphere letter, not both"
+msgstr "use un signo o una letra de hemisferio, no ambos"
+
+msgid "one latitude and one longitude are needed"
+msgstr "se necesitan una latitud y una longitud"
+
+msgid "The map data could not be loaded. Reload the page to try again."
+msgstr ""
+"No se pudieron cargar los datos del mapa. Recargue la página para "
+"reintentar."
+
+msgid "The query failed. Try again."
+msgstr "La consulta falló. Intente de nuevo."
+
+msgid "Inside"
+msgstr "Dentro"
+
+msgid "Touches the circle"
+msgstr "Toca el círculo"
+
+msgid "Near"
+msgstr "Cerca"
+
+msgid "Nearest aerodromes"
+msgstr "Aeródromos más cercanos"
+
+msgid "{name}: shown"
+msgstr "{name}: se muestra"
+
+msgid "{name}: hidden"
+msgstr "{name}: se oculta"
+
+msgid "Selected: {name}"
+msgstr "Seleccionado: {name}"
+
+msgid "to the centre"
+msgstr "al centro"
+
+msgid "Not stated in the source"
+msgstr "No consta en la fuente"
+
+msgid "Distances are measured from {label}."
+msgstr "Las distancias se miden desde {label}."

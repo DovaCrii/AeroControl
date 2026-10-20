@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     "apps.weather",
     # LV-358: sección «Entorno» (tiempo, centelleo GNSS y, después, espacio aéreo). Sin modelos.
     "apps.environment",
+    # LV-357: espacio aéreo y aeródromos (catálogo importado, sin datos en git).
+    "apps.airspace",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -223,6 +225,9 @@ GEO_TILE_PROVIDERS = [
         "default": True,
     },
 ]
+
+# LV-357: "near" for the airspace screen, in km (the person's decision of 2026-10-20; shown with NM).
+AIRSPACE_NEAR_KM = config("AIRSPACE_NEAR_KM", default=10, cast=float)
 
 # R8.1 (ISO 8.1 meteorological review). The project's only outgoing HTTP call.
 # LV-353: ON by default (the person's decision of 2026-10-20); WEATHER_ENABLED=False
