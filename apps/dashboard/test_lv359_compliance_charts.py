@@ -459,7 +459,9 @@ def section_html(mix, rule):
 def test_the_heat_map_is_a_real_table_without_colspan(section_html):
     assert "colspan" not in section_html
     assert "table-normalized" not in section_html
-    tables = re.findall(r"<table.*?</table>", section_html, flags=re.S)
+    tables = re.findall(
+        r'<table class="id-cx-heat .*?</table>', section_html, flags=re.S
+    )
     assert len(tables) == 2  # ancho y angosto (bajo 576 px)
     wide, narrow = tables
     for table, columns in ((wide, 1 + WEEKS), (narrow, 4)):
@@ -494,9 +496,13 @@ def test_every_svg_says_what_it_shows_and_prints_its_figure_beside_it(section_ht
 def test_every_level_has_a_symbol_and_a_text_and_not_only_a_color(section_html):
     for level in LEVELS:
         assert LEVEL_SYMBOL[level] in section_html
+    # sólo los anillos: el historial y la guía también dibujan chips, con otros símbolos
+    rings = section_html.split('data-cx-block="rings"')[1].split(
+        'data-cx-block="heat"'
+    )[0]
     chips = re.findall(
         r'<span class="id-chip id-chip--(\w+)">(.*?)</span></li>',
-        section_html,
+        rings,
         flags=re.S,
     )
     assert len(chips) == 5 * 5

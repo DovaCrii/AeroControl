@@ -29,8 +29,10 @@ HX = {"HTTP_HX_REQUEST": "true"}
 
 # Medido (2026-10-20) sobre la operación del fixture, con el proceso caliente. Ver el aviso de
 # `test_lv237_panel_query_budget.py` antes de tocarlos: se suben a propósito y se dice por qué.
-SECTION_QUERY_BUDGET = 20
-SECTION_FILTERED_QUERY_BUDGET = 23
+# Fase 3: +2 por el historial de revisión (una cuenta de las faenas que operan y una agregación por mes
+# y estado): constantes, no crecen con las revisiones. Antes 20 y 23.
+SECTION_QUERY_BUDGET = 22
+SECTION_FILTERED_QUERY_BUDGET = 25
 
 
 @pytest.fixture
@@ -262,7 +264,8 @@ def test_the_report_notice_needs_view_reportrun(operation):
     )
     html = _get(login_as("view_alert")).content.decode()
     assert "30-09-2026" not in html
-    assert "DGAC" not in html
+    # el aviso del informe; la guía nombra a la DGAC en su texto, el aviso no debe estar
+    assert 'class="id-cx-report"' not in html
 
 
 # --- consultas ------------------------------------------------------------------------------

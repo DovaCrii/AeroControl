@@ -1485,6 +1485,19 @@ form.is-submitting-slow .btn-primary::after {
 .id-cx-heat-3 { background: var(--id-cx-heat-3); color: var(--id-cx-ink); border-color: var(--id-cx-ink); }
 .id-cx-heat-4 { background: var(--id-cx-heat-4); color: var(--id-cx-ink); border-color: var(--id-cx-ink); }
 .id-cx-legend { margin: var(--id-sp-1) 0 0; font-size: var(--id-fs-sm); color: var(--ac-text-secondary); }
+/* Fase 3: historial de revisión y guía de lectura. Sin tokens nuevos: los chips ya llevan su contraste. */
+.id-cx-block--history { grid-column: 1 / -1; }
+.id-cx-hist { border-collapse: collapse; width: 100%; font-size: var(--id-fs-sm); }
+.id-cx-hist th, .id-cx-hist td { padding: 0.3rem 0.4rem; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--ac-border); }
+.id-cx-hist thead th { color: var(--ac-text-secondary); font-weight: 600; }
+.id-cx-hist tbody th { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.id-cx-hist .id-cx-levels { margin: 0; }
+.id-cx-guide { margin-top: var(--id-sp-2); border-top: 1px solid var(--ac-border); padding-top: var(--id-sp-1); }
+.id-cx-guide > summary { cursor: pointer; font-weight: 700; font-size: var(--id-fs-md); }
+.id-cx-guide-body { display: grid; gap: var(--id-sp-1); padding-top: var(--id-sp-1); }
+.id-cx-guide-body .id-cx-h3 { margin-top: var(--id-sp-1); }
+.id-cx-steps { margin: 0; padding-left: 1.25rem; display: grid; gap: 0.25rem; font-size: var(--id-fs-sm); }
+.id-cx-steps a { color: var(--ac-text); font-weight: 600; text-decoration: underline; }
 /* Bajo 576 px los anillos se apilan en filas (anillo a la izquierda, cifra y chips a la derecha) y el
    mapa de calor pasa a cuatro columnas: Vencido, 0–30, 31–60 y 61–90 días. */
 @media (max-width: 575.98px) {

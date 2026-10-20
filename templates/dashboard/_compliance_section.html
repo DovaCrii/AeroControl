@@ -94,6 +94,8 @@
       {% endif %}
     </div>
     {% endif %}
+    {% if cx_blocks.history and cx_history %}{% include "dashboard/_compliance_history.html" %}{% endif %}
   </div>
+  {% include "dashboard/_compliance_guide.html" %}
 </section>
 {% endif %}
