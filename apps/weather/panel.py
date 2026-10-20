@@ -24,6 +24,8 @@ from django.views import View
 from apps.core import weather as weather_client
 from apps.core.views import ModelPermissionRequiredMixin
 
+from . import gnss as gnss_module
+from . import scene as scene_module
 from . import sky as sky_module
 from .locations import get_location_for
 from .models import UserWeatherLocation
@@ -271,6 +273,24 @@ def _checked_at(forecast):
     }
 
 
+def _scintillation_active(forecast, local_now):
+    """¿Está activa la ventana de centelleo GNSS ahora? Sólo un guiño visual: nunca lanza."""
+    try:
+        if not getattr(settings, "GNSS_SCINTILLATION_ENABLED", True):
+            return False
+        zone = _zone(forecast)
+        sunsets = {}
+        for row in forecast.get("daily") or []:
+            day = _parse(row.get("time"))
+            sunset = _parse(row.get("sunset"))
+            if day is not None and sunset is not None:
+                sunsets[day.date()] = sunset.replace(tzinfo=zone)
+        now = local_now.replace(tzinfo=zone)
+        return bool(gnss_module.window_state(now, sunsets=sunsets)["active"])
+    except Exception:
+        return False
+
+
 def build_card(location, forecast, events):
     """Todo lo que dibuja la tarjeta, calculado aquí y no en la plantilla."""
     units = forecast.get("units") or {}
@@ -296,6 +316,10 @@ def build_card(location, forecast, events):
     direction = current.get("wind_direction_10m")
     points, strip_width = _temperature_line(hours)
     visibility = first.get("visibility")
+    sky = sky_module.sky_state(
+        local_now, forecast.get("daily"), is_day, slug, _zone(forecast)
+    )
+    scintillation = _scintillation_active(forecast, local_now)
     return {
         "state": "ok",
         "city": location.label,
@@ -313,9 +337,8 @@ def build_card(location, forecast, events):
         "visibility_km": None if visibility is None else round(visibility / 1000, 1),
         "sunrise": sunrise,
         "sunset": sunset,
-        "sky": sky_module.sky_state(
-            local_now, forecast.get("daily"), is_day, slug, _zone(forecast)
-        ),
+        "sky": sky,
+        "scene": scene_module.scene_context(sky, local_now, scintillation),
         "hours": hours,
         "temp_points": points,
         "strip_width": strip_width,

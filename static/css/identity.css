@@ -1874,6 +1874,82 @@ summary:focus-visible {
   .env-row--split { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
 }
 
+/* F3c: cielo (LV-356). Escena SVG detrás de la cabecera de la tarjeta del tiempo (`weather/_sky.html`),
+   decorativa. Sólo define tokens `--id-sky-*` (con prefijo `--id-`, lo único que esta hoja puede
+   definir) por fase del día, claro y oscuro, y no redefine ningún `--ac-*` ni `--sev-*`. El texto
+   de la cabecera sigue siendo `--ac-text` y va sobre un velo `--id-sky-scrim` del color contrario
+   al texto: su contraste sobre cada color de cada fase se calcula en test_lv356_sky_scene. */
+@property --id-sky-top { syntax: "<color>"; inherits: true; initial-value: #2f86d6; }
+@property --id-sky-bot { syntax: "<color>"; inherits: true; initial-value: #8ccaf2; }
+@property --id-sky-sun { syntax: "<color>"; inherits: true; initial-value: #fff3b0; }
+@property --id-sky-cloud { syntax: "<color>"; inherits: true; initial-value: #ffffff; }
+@property --id-sky-ridge { syntax: "<color>"; inherits: true; initial-value: #36546f; }
+
+.wx-head--sky {
+  --id-sky-top: #2f86d6;
+  --id-sky-bot: #8ccaf2;
+  --id-sky-sun: #fff3b0;
+  --id-sky-cloud: #ffffff;
+  --id-sky-ridge: #36546f;
+  --id-sky-moon: #eef2ff;
+  --id-sky-ink: var(--ac-text);
+  --id-sky-scrim: #ffffffb3;
+  background: linear-gradient(180deg, var(--id-sky-top), var(--id-sky-bot));
+  color: var(--id-sky-ink);
+}
+[data-theme="dark"] .wx-head--sky { --id-sky-scrim: #0b1430b3; }
+.wx-head[data-sky="night"] { --id-sky-top: #0b1430; --id-sky-bot: #1d2f5c; --id-sky-sun: #f6d365; --id-sky-cloud: #5a6a94; --id-sky-ridge: #070d1f; }
+.wx-head[data-sky="dawn"] { --id-sky-top: #3a3f7a; --id-sky-bot: #f2a07b; --id-sky-sun: #ffd9a0; --id-sky-cloud: #f7c3b3; --id-sky-ridge: #1d2347; }
+.wx-head[data-sky="morning"] { --id-sky-top: #5aa8e8; --id-sky-bot: #bfe3f7; --id-sky-sun: #ffe38a; --id-sky-cloud: #ffffff; --id-sky-ridge: #3b5a7a; }
+.wx-head[data-sky="midday"] { --id-sky-top: #2f86d6; --id-sky-bot: #8ccaf2; --id-sky-sun: #fff3b0; --id-sky-cloud: #ffffff; --id-sky-ridge: #36546f; }
+.wx-head[data-sky="afternoon"] { --id-sky-top: #3f8fdc; --id-sky-bot: #a6d6f2; --id-sky-sun: #ffe08a; --id-sky-cloud: #ffffff; --id-sky-ridge: #3a5670; }
+.wx-head[data-sky="sunset"] { --id-sky-top: #4a3b7c; --id-sky-bot: #f58b5b; --id-sky-sun: #ffc36b; --id-sky-cloud: #f7b79a; --id-sky-ridge: #2a2148; }
+.wx-head[data-sky="twilight"] { --id-sky-top: #1e2a5e; --id-sky-bot: #8a5a8f; --id-sky-sun: #ff9e6b; --id-sky-cloud: #9a7fa8; --id-sky-ridge: #131a3a; }
+[data-theme="dark"] .wx-head[data-sky="night"] { --id-sky-top: #060b1c; --id-sky-bot: #121f40; --id-sky-sun: #f6d365; --id-sky-cloud: #46557d; --id-sky-ridge: #04070f; }
+[data-theme="dark"] .wx-head[data-sky="dawn"] { --id-sky-top: #2a2e60; --id-sky-bot: #b5705a; --id-sky-sun: #ffd9a0; --id-sky-cloud: #d9a496; --id-sky-ridge: #121733; }
+[data-theme="dark"] .wx-head[data-sky="morning"] { --id-sky-top: #2f6aa8; --id-sky-bot: #7fb0d6; --id-sky-sun: #ffe38a; --id-sky-cloud: #dbe6f2; --id-sky-ridge: #2a4560; }
+[data-theme="dark"] .wx-head[data-sky="midday"] { --id-sky-top: #1f5fa0; --id-sky-bot: #5f9fcb; --id-sky-sun: #fff3b0; --id-sky-cloud: #dbe6f2; --id-sky-ridge: #27415a; }
+[data-theme="dark"] .wx-head[data-sky="afternoon"] { --id-sky-top: #2a6ba8; --id-sky-bot: #7aaed0; --id-sky-sun: #ffe08a; --id-sky-cloud: #dbe6f2; --id-sky-ridge: #2b4760; }
+[data-theme="dark"] .wx-head[data-sky="sunset"] { --id-sky-top: #33295e; --id-sky-bot: #c4673f; --id-sky-sun: #ffc36b; --id-sky-cloud: #c99a86; --id-sky-ridge: #1a1530; }
+[data-theme="dark"] .wx-head[data-sky="twilight"] { --id-sky-top: #141d46; --id-sky-bot: #65406e; --id-sky-sun: #ff9e6b; --id-sky-cloud: #7d6690; --id-sky-ridge: #0b1128; }
+
+/* Capas: la escena al fondo, el velo encima y el texto sobre todo (la cabecera aísla su contexto). */
+.sky-scene { position: absolute; inset: 0; z-index: -3; display: block; width: 100%; height: 100%; pointer-events: none; }
+.wx-head--sky::after { content: ""; position: absolute; inset: 0; z-index: -2; background: var(--id-sky-scrim); pointer-events: none; }
+.wx-head--sky .wx-drift { display: none; }
+.wx-head--sky:focus-visible { outline: 2px solid var(--ac-primary); outline-offset: -2px; }
+@media (min-width: 768px) {
+  .wx-head--sky::after {
+    background: linear-gradient(90deg, var(--id-sky-scrim) 0, var(--id-sky-scrim) 36%, transparent 54%, transparent 62%, var(--id-sky-scrim) 80%, var(--id-sky-scrim) 100%);
+  }
+}
+
+.sky-sun-wrap, .sky-moon-wrap { opacity: 0; }
+.sky-scene[data-sun="on"] .sky-sun-wrap, .sky-scene[data-moon="on"] .sky-moon-wrap { opacity: 1; }
+.sky-sun, .sky-halo { fill: var(--id-sky-sun); }
+.sky-halo { opacity: 0.28; }
+.sky-halo--moon { fill: var(--id-sky-moon); opacity: 0.16; }
+.sky-moon, .sky-moon-dark { fill: var(--id-sky-moon); }
+.sky-moon-dark { opacity: 0.18; }
+.sky-stars { opacity: 0; }
+.wx-head[data-sky="night"] .sky-stars { opacity: 0.95; }
+.wx-head[data-sky="dawn"] .sky-stars, .wx-head[data-sky="twilight"] .sky-stars { opacity: 0.45; }
+.sky-star { fill: var(--id-sky-moon); stroke: var(--id-sky-moon); stroke-linecap: round; }
+.sky-star--s { stroke-width: 2; }
+.sky-star--b { stroke-width: 3.2; }
+.sky-star--tw { stroke: none; }
+.sky-cloud { fill: var(--id-sky-cloud); opacity: 0.9; }
+.sky-cloud.is-heavy { fill: color-mix(in srgb, var(--id-sky-cloud) 62%, var(--id-sky-ridge)); }
+.sky-fog rect { fill: var(--id-sky-cloud); opacity: 0.32; }
+.sky-fog .sky-fog-b { opacity: 0.22; }
+.sky-rain { fill: none; stroke: var(--id-sky-cloud); stroke-width: 1.4; stroke-linecap: round; opacity: 0.45; }
+.sky-snow { fill: none; stroke: var(--id-sky-cloud); stroke-width: 3; stroke-linecap: round; opacity: 0.8; }
+.sky-ridge { fill: var(--id-sky-ridge); }
+.sky-city { fill: color-mix(in srgb, var(--id-sky-ridge) 80%, #000000); }
+.sky-windows { fill: none; stroke: var(--id-sky-sun); stroke-width: 2; opacity: 0; }
+.wx-head[data-sky="night"] .sky-windows, .wx-head[data-sky="twilight"] .sky-windows { opacity: 0.9; }
+.wx-head[data-sky="dawn"] .sky-windows, .wx-head[data-sky="sunset"] .sky-windows { opacity: 0.55; }
+
 /* ── Movimiento: sólo si la persona no pidió reducirlo ──────────────────── */
 @media (prefers-reduced-motion: no-preference) {
   @keyframes ac-float {
@@ -1974,6 +2050,27 @@ summary:focus-visible {
   [data-ambient] .gn-wave--b { animation-delay: -2.7s; }
   [data-ambient] .gn-wave--c { animation-delay: -5.3s; }
   [data-ambient] .gn-sat--mid { animation: gn-bob 9s ease-in-out infinite alternate; }
+
+  /* F3c: cielo. Sólo `opacity` y `transform`, a lo sumo ocho nodos a la vez (tres nubes, cuatro
+     estrellas que titilan, y una capa de lluvia, nieve o niebla), ciclos de 6 s o más y SIEMPRE
+     bajo `[data-ambient]`. Los cambios de fase se suavizan con `transition`. */
+  @keyframes sky-drift { from { transform: translate(-14px, 0); } to { transform: translate(22px, 0); } }
+  @keyframes sky-twinkle { 0%, 100% { opacity: 0.2; } 50% { opacity: 0.95; } }
+  @keyframes sky-fall { from { transform: translate(0, 0); } to { transform: translate(0, 48px); } }
+  @keyframes sky-haze { from { transform: translate(-16px, 0); } to { transform: translate(16px, 0); } }
+  [data-ambient] .sky-cloud--1 { animation: sky-drift 32s ease-in-out infinite alternate; }
+  [data-ambient] .sky-cloud--2 { animation: sky-drift 40s ease-in-out infinite alternate-reverse; }
+  [data-ambient] .sky-cloud--3 { animation: sky-drift 48s ease-in-out infinite alternate; }
+  [data-ambient] .sky-star--tw { animation: sky-twinkle 9s ease-in-out infinite; }
+  [data-ambient] .sky-star--tw2 { animation-delay: -2.5s; }
+  [data-ambient] .sky-star--tw3 { animation-delay: -5s; }
+  [data-ambient] .sky-star--tw4 { animation-delay: -7s; }
+  [data-ambient] .sky-rain { animation: sky-fall 6s linear infinite; }
+  [data-ambient] .sky-snow { animation: sky-fall 14s linear infinite; }
+  [data-ambient] .sky-fog { animation: sky-haze 20s ease-in-out infinite alternate; }
+  .wx-head--sky { transition: --id-sky-top 1.4s ease, --id-sky-bot 1.4s ease, --id-sky-sun 1.4s ease, --id-sky-cloud 1.4s ease, --id-sky-ridge 1.4s ease; }
+  .wx-head--sky.is-previewing { transition-duration: 0.4s; }
+  .sky-sun-wrap, .sky-moon-wrap, .sky-stars, .sky-windows { transition: opacity 1.4s ease; }
 
   .kpi-grid .summary-card,
   .readiness-strip .summary-card { animation: ac-rise 0.45s ease-out both; }

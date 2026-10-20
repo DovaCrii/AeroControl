@@ -168,7 +168,8 @@ def test_stylesheet_weight_guard():
 
     La ola E fijó 200 KB (app.css 141.3 KB + identity.css 48.7 KB = ~190 KB al abrir la ola).
     La tanda «Visual v2» (listas, fondos de módulo, panel del asistente y señales) sumó unos
-    7 KB más y el techo pasa a 220 KB de forma deliberada: sigue siendo un guardián.
+    7 KB más y el techo pasa a 220 KB de forma deliberada: sigue siendo un guardián. La escena
+    del cielo (LV-356: 14 fases claro y oscuro, capas y movimiento, ~9,5 KB) lo sube a 235 KB.
     """
     total = sum((STATIC / name).stat().st_size for name in ("app.css", "identity.css"))
-    assert total < 220 * 1024
+    assert total < 235 * 1024
