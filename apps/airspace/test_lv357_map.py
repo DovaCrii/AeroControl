@@ -508,12 +508,27 @@ def test_the_script_only_puts_fixed_svg_through_innerhtml():
     assert "insertAdjacentHTML" not in code
 
 
+def test_leaflet_labels_are_always_dom_nodes_never_strings():
+    """Leaflet mete un string de `bindTooltip`/`bindPopup` con `innerHTML`: con nombres de la fuente
+    importada eso es XSS. Todo rótulo se pasa como nodo (`tipNode(...)`)."""
+    import re
+
+    code = _code_only(MAP_JS)
+    calls = re.findall(r"\.bind(?:Tooltip|Popup)\(\s*([^,)]*)", code)
+    assert calls, "el script debería rotular algo"
+    for first_argument in calls:
+        assert first_argument.startswith("tipNode("), first_argument
+    assert ".setContent(" not in code and ".setTooltipContent(" not in code
+
+
 def test_the_script_makes_no_calls_outside_its_own_origin():
     code = _code_only(MAP_JS)
     assert "http://" not in code.replace("http://www.w3.org/2000/svg", "")
     assert "https://" not in code
     assert "XMLHttpRequest" not in code and "WebSocket" not in code
-    assert code.count("fetch(") == 2  # data.json y near/
+    assert (
+        code.count("fetch(") == 3
+    )  # data.json, near/ y own-layers.json (E3, al encender una capa)
 
 
 def test_the_script_never_converts_the_sources_limits_or_decides():

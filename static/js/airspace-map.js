@@ -248,7 +248,7 @@
       dot.on("click", function (event) {
         featureClick(entry.id, event);
       });
-      dot.bindTooltip(titleOf(entry), { direction: "top" });
+      dot.bindTooltip(tipNode(titleOf(entry)), { direction: "top" });
       dot.options.airstrip = true;
       layers.push(dot);
     } else if (kind === "airport" || kind === "aerodrome") {
@@ -275,7 +275,7 @@
         L.DomEvent.stopPropagation(event);
         featureClick(entry.id, event);
       });
-      shape.bindTooltip(titleOf(entry), { sticky: true });
+      shape.bindTooltip(tipNode(titleOf(entry)), { sticky: true });
       layers.push(shape);
       if (zone) {
         layers.push(marker(entry, badgeIcon(kind), titleOf(entry)));
@@ -807,6 +807,134 @@
     return span;
   }
 
+  /* ── capas propias (LV-358, E3): «Mis faenas» y «Permisos vigentes» ───────────
+     Cada una existe sólo si el servidor la ofreció (`cfg.ownLayers`: la persona tiene su `view_*`), arranca
+     APAGADA y se pide a `own-layers.json` recién al encenderla. Lo que llega es dato: los textos entran con
+     `textContent` y los rótulos de Leaflet se pasan como NODOS (un string iría a `innerHTML`). */
+  var ownGroups = {};
+
+  function ownName(key) {
+    return key === "sites" ? T.layerSites : T.layerPermits;
+  }
+  function tipNode(text) {
+    return el("span", "", text);
+  }
+  function dateText(iso) {
+    var parts = String(iso).split("-");
+    return parts.length === 3 ? parts[2] + "-" + parts[1] + "-" + parts[0] : String(iso);
+  }
+  function drawSite(item) {
+    var title = T.siteWord + " " + item.code + (item.name ? " · " + item.name : "");
+    var icon = L.divIcon({
+      className: "air-own-wrap",
+      html: '<span class="air-own" aria-hidden="true">■</span>',
+      iconSize: [18, 18],
+      iconAnchor: [9, 9],
+    });
+    var m = L.marker([item.lat, item.lon], { icon: icon, title: title, alt: title, keyboard: true });
+    m.bindTooltip(tipNode(title), { direction: "top" });
+    return [m];
+  }
+  function drawPermit(item) {
+    var title =
+      T.permitWord + " " + (item.number || item.site) + " · " + item.site + " · " +
+      fmt(T.validUntil, { date: dateText(item.valid_until) });
+    var shapes = [];
+    if (item.radius_km) {
+      var circle = L.circle([item.lat, item.lon], {
+        renderer: svgRenderer,
+        radius: item.radius_km * 1000,
+        className: "air-own-permit",
+        interactive: true,
+      });
+      circle.bindTooltip(tipNode(title), { sticky: true });
+      shapes.push(circle);
+    }
+    var dot = L.circleMarker([item.lat, item.lon], {
+      renderer: svgRenderer,
+      radius: 6,
+      className: "air-own-permit-dot",
+      interactive: true,
+    });
+    dot.bindTooltip(tipNode(title), { direction: "top" });
+    shapes.push(dot);
+    return shapes;
+  }
+
+  function setOwnLayer(key, on, box) {
+    var group = ownGroups[key];
+    group.on = on;
+    if (!on) {
+      group.layers.forEach(function (layer) {
+        map.removeLayer(layer);
+      });
+      $("air-tool-hint").textContent = fmt(T.layerHidden, { name: ownName(key) });
+      return;
+    }
+    var show = function () {
+      if (!group.on) {
+        return;
+      }
+      group.layers.forEach(function (layer) {
+        layer.addTo(map);
+      });
+      $("air-tool-hint").textContent = group.layers.length
+        ? fmt(T.layerShown, { name: ownName(key) })
+        : T.layerOwnEmpty;
+    };
+    if (group.loaded) {
+      show();
+      return;
+    }
+    fetch(group.url, { credentials: "same-origin", headers: { Accept: "application/json" } })
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error(String(response.status));
+        }
+        return response.json();
+      })
+      .then(function (data) {
+        data.items.forEach(function (item) {
+          var drawn = key === "sites" ? drawSite(item) : drawPermit(item);
+          drawn.forEach(function (layer) {
+            group.layers.push(layer);
+          });
+        });
+        group.loaded = true;
+        show();
+      })
+      .catch(function () {
+        group.on = false;
+        box.checked = false;
+        $("air-tool-hint").textContent = T.layerOwnFailed;
+      });
+  }
+
+  function buildOwnLegend(host) {
+    var offered = cfg.ownLayers || [];
+    if (!offered.length) {
+      return;
+    }
+    host.appendChild(el("p", "air-legend-sep", T.layerOwnHeading));
+    offered.forEach(function (own) {
+      ownGroups[own.key] = { url: own.url, layers: [], loaded: false, on: false };
+      var label = el("label", "air-legend-item");
+      var box = el("input");
+      box.type = "checkbox";
+      box.checked = false;
+      box.dataset.own = own.key;
+      box.addEventListener("change", function () {
+        setOwnLayer(own.key, box.checked, box);
+      });
+      var swatch = el("span", "air-swatch air-swatch--own-" + own.key, own.key === "sites" ? "■" : "◎");
+      swatch.setAttribute("aria-hidden", "true");
+      label.appendChild(box);
+      label.appendChild(swatch);
+      label.appendChild(el("span", "", ownName(own.key)));
+      host.appendChild(label);
+    });
+  }
+
   function buildLegend(counts) {
     var host = $("air-legend-items");
     KIND_ORDER.forEach(function (kind) {
@@ -830,6 +958,7 @@
       label.appendChild(el("span", "", cfg.kinds[kind] + " (" + counts[kind] + ")"));
       host.appendChild(label);
     });
+    buildOwnLegend(host);
   }
 
   function fillSelect(id, values) {

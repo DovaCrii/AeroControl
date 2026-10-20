@@ -11,7 +11,8 @@ cuenta. Antes la tarjeta del panel llamaba a `panel_forecast()` mientras se arma
 la caché fría, una salida a la red de hasta 4 s que ninguna prueba de consultas veía) y lo hacía
 para la ciudad por omisión, no la de la persona, de modo que la puesta de la tarjeta del tiempo y
 la del centelleo podían contradecirse. Ahora quien tiene el pronóstico (la sección «Entorno») se lo
-pasa; la etiqueta del panel no tiene ninguno y usa las horas fijas.
+pasa. (La etiqueta `{% gnss_card %}` y su plantilla se retiraron en E3: el estado vive en la cabecera,
+la franja y la pestaña Centelleo.)
 """
 
 from datetime import timedelta
@@ -75,9 +76,3 @@ def build_gnss_card(now, sunsets=None, city=""):
         "source_url": params.source_url,
         "portal_url": params.portal_url,
     }
-
-
-@register.inclusion_tag("weather/_gnss_card.html")
-def gnss_card():
-    """La tarjeta del panel: sin pronóstico propio, con las horas fijas (ver el docstring del módulo)."""
-    return build_gnss_card(timezone.now())

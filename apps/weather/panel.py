@@ -10,7 +10,8 @@ tres vistas del tiempo responden 404. Una sola función (`weather_enabled`) deci
 hueco, la vista y el cliente no puedan discrepar.
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
+from datetime import timezone as dt_timezone
 from zoneinfo import ZoneInfo
 
 from django.conf import settings
@@ -165,6 +166,7 @@ def _hour_rows(forecast, floor, to_kmh):
         hours.append(
             {
                 "hour": moment.strftime("%H"),
+                "moment": moment,
                 "x": STRIP_STEP // 2 + index * STRIP_STEP,
                 "temp": _round(row.get("temperature_2m")),
                 "temp_raw": row.get("temperature_2m"),
@@ -285,6 +287,74 @@ def _scintillation_active(forecast, local_now):
         return False
 
 
+def gnss_band(forecast, hours):
+    """La ventana típica de centelleo GNSS sobre la franja de 24 h (LV-358, E3), o `None`.
+
+    Sale de LO MISMO que el estado de la cabecera: la puesta del pronóstico ya cargado más
+    `GNSS_SCINT_SUNSET_OFFSET_MIN` y el fin de siempre (`gnss.windows_between`); no hay consulta ni
+    salida a la red nuevas. Cada hora de la franja es un tramo de una hora REAL (el cambio de hora
+    de septiembre salta una y el de abril repite una), y la ventana que cruza la medianoche entra
+    completa. Devuelve `{segments: [{left, width}], label}` en píxeles de la franja; no es una
+    medición, es la estadística de la fuente (ver `gnss.py`).
+    """
+    if not hours or not getattr(settings, "GNSS_SCINTILLATION_ENABLED", True):
+        return None
+    zone = _zone(forecast)
+    sunsets, _forecast_zone = gnss_module.sunsets_from_forecast(forecast)
+    one_hour = timedelta(hours=1)
+    slots, previous = [], None
+    for row in hours:
+        start = row["moment"].replace(tzinfo=zone).astimezone(dt_timezone.utc)
+        if previous is not None and start <= previous:
+            # La hora repetida del cambio de abril: la segunda vuelta es un instante posterior.
+            start = (
+                row["moment"].replace(tzinfo=zone, fold=1).astimezone(dt_timezone.utc)
+            )
+        slots.append(start)
+        previous = start
+    windows = gnss_module.windows_between(slots[0], slots[-1] + one_hour, None, sunsets)
+    spans = []
+    for index, start in enumerate(slots):
+        end = start + one_hour
+        for win_start, win_end in windows:
+            lo = max(start, win_start.astimezone(dt_timezone.utc))
+            hi = min(end, win_end.astimezone(dt_timezone.utc))
+            if hi > lo:
+                base = index * STRIP_STEP
+                spans.append(
+                    (
+                        base + (lo - start) / one_hour * STRIP_STEP,
+                        base + (hi - start) / one_hour * STRIP_STEP,
+                    )
+                )
+    if not spans:
+        return None
+    segments = [list(spans[0])]
+    for left, right in spans[1:]:
+        if left <= segments[-1][1] + 0.5:
+            segments[-1][1] = max(segments[-1][1], right)
+        else:
+            segments.append([left, right])
+    # Una misma franja horaria se nombra una vez aunque la banda tenga dos tramos (cruza la medianoche).
+    label = ", ".join(
+        dict.fromkeys(
+            "%s–%s"
+            % (
+                win_start.astimezone(zone).strftime("%H:%M"),
+                win_end.astimezone(zone).strftime("%H:%M"),
+            )
+            for win_start, win_end in windows
+        )
+    )
+    return {
+        "segments": [
+            {"left": round(left), "width": max(1, round(right - left))}
+            for left, right in segments
+        ],
+        "label": label,
+    }
+
+
 def _now_state(forecast, local_now):
     """Lo que el pronóstico dice de AHORA: condición, viento y si es de día (compartido con la franja)."""
     units = forecast.get("units") or {}
@@ -353,7 +423,9 @@ def build_card(location, forecast, events):
     sky = sky_module.sky_state(
         local_now, forecast.get("daily"), is_day, slug, _zone(forecast)
     )
-    scintillation = _scintillation_active(forecast, local_now)
+    band = gnss_band(forecast, hours)
+    # Con la banda en la franja, el guiño de las estrellas sobra: sería el mismo dato dos veces.
+    scintillation = False if band else _scintillation_active(forecast, local_now)
     return {
         "state": "ok",
         "city": location.label,
@@ -376,6 +448,7 @@ def build_card(location, forecast, events):
         "hours": hours,
         "temp_points": points,
         "strip_width": strip_width,
+        "gnss_band": band,
         "days": days,
         "events": _event_rows(events),
         "checked_at": _checked_at(forecast),

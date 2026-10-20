@@ -41,12 +41,19 @@ NIGHT = datetime(
 STRIP = reverse("environment-strip")
 DASHBOARD = reverse("dashboard")
 
-# Techo propio de la franja, MEDIDO el 2026-10-20 con el proceso caliente y una ciudad guardada: 9.
-# Ocho son lo que paga CUALQUIER petición con sesión (sesión, persona, permisos de usuario y de grupo,
-# grupos y el guardado de la sesión con su savepoint) y UNA es de la franja: la fila de
-# `UserWeatherLocation`. Si sube, se sube acá a propósito y se dice por qué: el panel NO paga ninguna
-# de estas (las paga este fragmento, aparte), y el pronóstico sale de la caché, no de la base.
-STRIP_QUERY_BUDGET = 9
+# Techo propio de la franja, MEDIDO con el proceso caliente y TODAS las celdas (tiempo, centelleo y espacio
+# aéreo): 13. Es lo que paga el fragmento y NO el panel (que sólo dibuja el hueco, sin una consulta).
+#
+# Nueve son la franja del tiempo y el centelleo (`STRIP_QUERY_BUDGET_WITHOUT_AIRSPACE`, medido el
+# 2026-10-20): ocho las paga CUALQUIER petición con sesión (sesión, persona, permisos de usuario y de grupo,
+# grupos y el guardado de la sesión con su savepoint) y UNA es de la franja, la fila de
+# `UserWeatherLocation`. **Cuatro más el 2026-10-20 (LV-358, E3) por la celda de espacio aéreo**: la foto
+# vigente, los tenants de la persona, los permisos vigentes y las zonas P/R/D. Son cuatro **sin importar
+# cuántas faenas haya** (una sola consulta de permisos y una de zonas; la distancia se calcula en memoria con
+# el bbox como prefiltro). Si sube, se sube acá a propósito y se dice por qué: el pronóstico sale de la
+# caché, no de la base.
+STRIP_QUERY_BUDGET = 13
+STRIP_QUERY_BUDGET_WITHOUT_AIRSPACE = 9
 
 FORBIDDEN = (
     "puede volar",
@@ -161,10 +168,14 @@ class TestAccess:
         _city(client)
         assert 'id="env-strip"' in _strip(client)
 
-    def test_404_when_every_source_is_off_even_with_the_permission(self, on, settings):
+    def test_every_switch_off_leaves_the_weather_person_without_a_cell(
+        self, on, settings
+    ):
+        # LV-358 (E3): la celda de espacio aéreo no tiene interruptor, así que ya no hay un 404 «todo
+        # apagado»; quien sólo tiene el permiso del tiempo no tiene ninguna celda y recibe 403.
         settings.WEATHER_ENABLED = False
         settings.GNSS_SCINTILLATION_ENABLED = False
-        assert _get(login_as(VIEW)).status_code == 404
+        assert _get(login_as(VIEW)).status_code == 403
 
     def test_the_fragment_reads_only_the_callers_city(self, on, calls):
         other = login_as(VIEW, "view_aircraft")
@@ -186,13 +197,14 @@ class TestTheCells:
         assert "14°" in content  # la temperatura actual del fixture
         assert "Typical higher-scintillation window: now, until 03:00" in content
 
-    def test_the_airspace_cell_is_not_drawn_even_for_a_superuser(self, on):
-        client = login_as(VIEW)
-        client.user.is_superuser = True
-        client.user.save()
+    def test_the_airspace_cell_needs_both_permissions(self, on):
+        # El detalle de la celda (cifras, foto, tenant) se prueba en test_lv358_airspace_cell.
+        only_weather = login_as(VIEW)
+        _city(only_weather)
+        assert "env-cell--airspace" not in _strip(only_weather)
+        client = login_as(VIEW, "view_airspacefeature", "view_flightpermission")
         _city(client)
-        content = _strip(client)
-        assert "airspace" not in content.lower() and "env-cell--airspace" not in content
+        assert "env-cell--airspace" in _strip(client)
 
     def test_the_weather_switch_off_leaves_only_the_gnss_cell_and_no_forecast_call(
         self, on, settings, calls
@@ -399,7 +411,7 @@ class TestTheStripsOwnQueryBudget:
         client = login_as(VIEW)
         _city(client)
         client.get(STRIP)  # calienta cachés de proceso (ContentType, permisos)
-        with django_assert_num_queries(STRIP_QUERY_BUDGET):
+        with django_assert_num_queries(STRIP_QUERY_BUDGET_WITHOUT_AIRSPACE):
             assert client.get(STRIP).status_code == 200
 
 

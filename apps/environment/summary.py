@@ -13,6 +13,7 @@ from typing import Optional
 from zoneinfo import ZoneInfo
 
 from django.conf import settings
+from django.utils import timezone
 from django.utils.dates import MONTHS
 from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
@@ -52,6 +53,10 @@ class EnvironmentSummary:
     # El renglón del centelleo por separado (LV-358, E2): la franja del panel lo dibuja sin tener
     # que adivinar su lugar dentro de `lines`.
     gnss_line: Optional[SummaryLine] = None
+    # El tercer renglón (LV-358, E3): zonas de espacio aéreo cerca de faenas con permiso vigente.
+    # Es el MISMO dato que dibuja la celda de la franja: se calcula una vez (`airspace_near`).
+    airspace: Optional[dict] = None
+    airspace_line: Optional[SummaryLine] = None
 
     # Texto ya en la hora de la zona del pronóstico: el filtro `date` de las plantillas convertiría
     # a la hora del proyecto y una ciudad de otra zona (Isla de Pascua) saldría corrida.
@@ -134,8 +139,42 @@ def _gnss_text(card):
     return _("Outside the period the source indicates")
 
 
+def airspace_text(fact):
+    """El renglón de espacio aéreo a partir del hecho de `airspace_near`: cifras y fecha, sin veredicto."""
+    if fact["state"] == "nosnapshot":
+        return _("No airspace snapshot has been imported yet")
+    date = timezone.localtime(fact["fetched_at"]).strftime("%d-%m")
+    km = f"{fact['km']:g}"
+    if not fact["sites"]:
+        text = _(
+            "No sites with a current permit and coordinates to compare · snapshot of %(date)s"
+        ) % {"date": date}
+    else:
+        text = ngettext(
+            "%(count)s zone at ≤%(km)s km from sites with a current permit · snapshot of %(date)s",
+            "%(count)s zones at ≤%(km)s km from sites with a current permit · snapshot of %(date)s",
+            fact["count"],
+        ) % {"count": fact["count"], "km": km, "date": date}
+    if fact["stale"]:
+        text += " · " + _("snapshot is more than 30 days old")
+    return text
+
+
+def _airspace_line(fact):
+    level = "attention" if fact["state"] == "ok" and fact["stale"] else "info"
+    symbol, label = level_info(level)
+    return SummaryLine(level, symbol, str(label), airspace_text(fact))
+
+
 def build_summary(
-    now, forecast, events, city, *, gnss_enabled=True, forecast_checked_at=None
+    now,
+    forecast,
+    events,
+    city,
+    *,
+    gnss_enabled=True,
+    forecast_checked_at=None,
+    airspace=None,
 ):
     """El resumen del día para `city` a partir de UN pronóstico (o `None` si no hay).
 
@@ -175,6 +214,11 @@ def build_summary(
         gnss_line = SummaryLine(level, symbol, str(label), _gnss_text(card))
         lines.append(gnss_line)
 
+    airspace_line = None
+    if airspace is not None:
+        airspace_line = _airspace_line(airspace)
+        lines.append(airspace_line)
+
     stale = bool(forecast_checked_at and now - forecast_checked_at > STALE_AFTER)
     return EnvironmentSummary(
         city=city,
@@ -190,4 +234,6 @@ def build_summary(
         sunsets=sunsets,
         lines=tuple(lines),
         gnss_line=gnss_line,
+        airspace=airspace,
+        airspace_line=airspace_line,
     )

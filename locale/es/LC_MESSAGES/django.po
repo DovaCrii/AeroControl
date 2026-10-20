@@ -10863,3 +10863,44 @@ msgstr "No consta en la fuente"
 
 msgid "Distances are measured from {label}."
 msgstr "Las distancias se miden desde {label}."
+
+#, python-format
+msgid "Typical scintillation window (GNSS): %(window)s"
+msgstr "Ventana típica de centelleo (GNSS): %(window)s"
+
+msgid "No airspace snapshot has been imported yet"
+msgstr "Aún no se ha importado ninguna foto del espacio aéreo"
+
+#, python-format
+msgid "No sites with a current permit and coordinates to compare · snapshot of %(date)s"
+msgstr "No hay faenas con permiso vigente y coordenadas para comparar · foto del %(date)s"
+
+#, python-format
+msgid "%(count)s zone at ≤%(km)s km from sites with a current permit · snapshot of %(date)s"
+msgid_plural "%(count)s zones at ≤%(km)s km from sites with a current permit · snapshot of %(date)s"
+msgstr[0] "%(count)s zona a ≤%(km)s km de faenas con permiso vigente · foto del %(date)s"
+msgstr[1] "%(count)s zonas a ≤%(km)s km de faenas con permiso vigente · foto del %(date)s"
+
+msgid "snapshot is more than 30 days old"
+msgstr "la foto tiene más de 30 días"
+
+msgid "Open the map"
+msgstr "Abrir el mapa"
+
+msgid "My layers (off by default)"
+msgstr "Mis capas (apagadas por omisión)"
+
+msgid "My sites"
+msgstr "Mis faenas"
+
+msgid "Current permits"
+msgstr "Permisos vigentes"
+
+msgid "Your layer could not be loaded. Try again."
+msgstr "No se pudo cargar la capa. Vuelva a intentarlo."
+
+msgid "Nothing to show on this layer."
+msgstr "No hay nada que mostrar en esta capa."
+
+msgid "valid until {date}"
+msgstr "vigente hasta {date}"

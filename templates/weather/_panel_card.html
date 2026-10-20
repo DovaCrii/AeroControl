@@ -23,6 +23,7 @@
       <h3 class="wx-h">{% translate "Next 24 hours" %}</h3>
       <div class="wx-strip" tabindex="0" role="group" aria-label="{% translate 'Next 24 hours' %}">
         <div class="wx-strip-inner" style="width: {{ strip_width }}px">
+          {% if gnss_band %}{% comment %}LV-358 (E3): la ventana típica de centelleo GNSS, sombreada con trama (no sólo color) detrás de las horas; la leyenda de abajo la nombra.{% endcomment %}{% for seg in gnss_band.segments %}<span class="wx-gnss-band" style="left: {{ seg.left }}px; width: {{ seg.width }}px" aria-hidden="true"></span>{% endfor %}{% endif %}
           {% if temp_points %}<svg class="wx-line" viewBox="0 0 {{ strip_width }} 52" width="{{ strip_width }}" height="52" aria-hidden="true" focusable="false"><polyline points="{{ temp_points }}" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/></svg>{% endif %}
           <ol class="wx-hours">
             {% for h in hours %}
@@ -37,7 +38,7 @@
           </ol>
         </div>
       </div>
-      <p class="wx-key"><span><i class="wx-key-wind" aria-hidden="true"></i>{% translate "Wind (km/h)" %}</span><span><i class="wx-key-gust" aria-hidden="true"></i>{% translate "Gusts (km/h)" %}</span><span><i class="wx-key-rain" aria-hidden="true"></i>{% translate "Chance of rain" %}</span></p>
+      <p class="wx-key"><span><i class="wx-key-wind" aria-hidden="true"></i>{% translate "Wind (km/h)" %}</span><span><i class="wx-key-gust" aria-hidden="true"></i>{% translate "Gusts (km/h)" %}</span><span><i class="wx-key-rain" aria-hidden="true"></i>{% translate "Chance of rain" %}</span>{% if gnss_band %}<span class="wx-key-band"><i class="wx-key-gnss" aria-hidden="true"></i>{% blocktranslate with window=gnss_band.label %}Typical scintillation window (GNSS): {{ window }}{% endblocktranslate %}</span>{% endif %}</p>
 
       <h3 class="wx-h">{% translate "Next 7 days" %}</h3>
       <ul class="wx-days">
