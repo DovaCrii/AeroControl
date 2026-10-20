@@ -248,7 +248,7 @@
       dot.on("click", function (event) {
         featureClick(entry.id, event);
       });
-      dot.bindTooltip(titleOf(entry), { direction: "top" });
+      dot.bindTooltip(tipNode(titleOf(entry)), { direction: "top" });
       dot.options.airstrip = true;
       layers.push(dot);
     } else if (kind === "airport" || kind === "aerodrome") {
@@ -275,7 +275,7 @@
         L.DomEvent.stopPropagation(event);
         featureClick(entry.id, event);
       });
-      shape.bindTooltip(titleOf(entry), { sticky: true });
+      shape.bindTooltip(tipNode(titleOf(entry)), { sticky: true });
       layers.push(shape);
       if (zone) {
         layers.push(marker(entry, badgeIcon(kind), titleOf(entry)));

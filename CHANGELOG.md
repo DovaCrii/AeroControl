@@ -54,6 +54,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Security
 
+- **Mapa de espacio aéreo: rótulos de Leaflet como nodos, no como texto HTML (`LV-357`).** Los rótulos de las pistas pequeñas y de las zonas pasaban un string con nombres de la fuente importada a `bindTooltip`, que Leaflet inserta con `innerHTML` (XSS potencial con un nombre malicioso en el KML). Ahora todo rótulo es un nodo (`tipNode`), con una prueba que impide volver a pasar strings. Lleva estáticos; sin migración.
 - **Historial de git reescrito y publicado (`LV-349`).** Los valores privados (identificadores, correos, nombres, datos de la VM y credenciales) se reemplazaron por ficticios en todo el historial y los autores pasaron al noreply de GitHub. Todos los hashes cambiaron (`main` en `738a317`); los SHAs anteriores siguen accesibles hasta que GitHub Support purgue las referencias de PR.
 - **Asistente IA: registro de uso y topes en la base (`LV-326`).** Cada pregunta deja una fila `AssistantUsage` (sin texto de pregunta ni respuesta); los topes por hora y global por día (`AI_ASSISTANT_DAILY_CAP`, 300) se cuentan ahí y se revisan antes de cada llamada. **LLEVA MIGRACIÓN** (`assistant.0001`); sin estáticos.
 
