@@ -90,12 +90,19 @@ def sunsets_from_forecast(forecast):
         zone = ZoneInfo(settings.TIME_ZONE)
     sunsets = {}
     for row in forecast.get("daily") or []:
-        try:
-            day = datetime.fromisoformat(row["time"]).date()
-            sunsets[day] = datetime.fromisoformat(row["sunset"]).replace(tzinfo=zone)
-        except Exception:
-            continue
+        parsed = _sunset_of(row, zone)
+        if parsed is not None:
+            sunsets[parsed[0]] = parsed[1]
     return sunsets, zone
+
+
+def _sunset_of(row, zone):
+    """(día, puesta de sol) de una fila del pronóstico, o None si la fila viene incompleta."""
+    try:
+        day = datetime.fromisoformat(row["time"]).date()
+        return day, datetime.fromisoformat(row["sunset"]).replace(tzinfo=zone)
+    except (KeyError, TypeError, ValueError, AttributeError):
+        return None
 
 
 def _local(zone, day, hour):
