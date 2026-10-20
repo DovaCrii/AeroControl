@@ -10330,6 +10330,7 @@ msgid "+%(counter)s more event"
 msgid_plural "+%(counter)s more events"
 msgstr[0] "+%(counter)s evento más"
 msgstr[1] "+%(counter)s eventos más"
+
 msgid "airspace snapshot"
 msgstr "foto del espacio aéreo"
 
