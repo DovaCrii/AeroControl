@@ -258,6 +258,25 @@ WEATHER_EVENT_VISIBILITY_M = config(
 WEATHER_EVENT_HEAT_C = config("WEATHER_EVENT_HEAT_C", default=35, cast=float)
 WEATHER_EVENT_FROST_C = config("WEATHER_EVENT_FROST_C", default=0, cast=float)
 
+# LV-352: GNSS scintillation card (informative, NO external calls, no data licence). Values come
+# from GEOCOM's news item (night, September-April, near midnight, peak 2025, effects until 2028).
+# The 21-03 hours are OUR interpretation of "near midnight". Months are numbers, years "from-to".
+GNSS_SCINTILLATION_ENABLED = config(
+    "GNSS_SCINTILLATION_ENABLED", default=True, cast=bool
+)
+GNSS_SCINT_MONTHS = config("GNSS_SCINT_MONTHS", default="9,10,11,12,1,2,3,4")
+GNSS_SCINT_NIGHT_START = config("GNSS_SCINT_NIGHT_START", default=21, cast=int)
+GNSS_SCINT_NIGHT_END = config("GNSS_SCINT_NIGHT_END", default=3, cast=int)
+GNSS_SCINT_PEAK_HOUR = config("GNSS_SCINT_PEAK_HOUR", default=0, cast=int)
+GNSS_SCINT_YEARS = config("GNSS_SCINT_YEARS", default="2025-2028")
+GNSS_SCINT_SOURCE_URL = config(
+    "GNSS_SCINT_SOURCE_URL",
+    default="https://www.geocom.cl/blogs/news/nuevo-portal-de-monitoreo-de-perturbaciones-ionosfericas",
+)
+GNSS_SCINT_PORTAL_URL = config(
+    "GNSS_SCINT_PORTAL_URL", default="https://centelleo.geocom.cl"
+)
+
 # X.4b (ADR-0002 phase 2): reading AeroLink's battery inventory. Opt-in for the
 # same reason as the weather call -- with no URL configured nothing is fetched
 # and the zero-outgoing-calls property holds. Both services live on the same

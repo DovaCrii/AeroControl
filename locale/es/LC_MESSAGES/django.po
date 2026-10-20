@@ -10209,3 +10209,40 @@ msgstr "No encontrada"
 msgid "Remove filter"
 msgstr "Quitar filtro"
 
+
+
+msgid "GNSS scintillation"
+msgstr "Centelleo GNSS"
+
+msgid "Typical higher-scintillation window: now"
+msgstr "Ventana típica de mayor centelleo: ahora"
+
+msgid "until %(time)s"
+msgstr "hasta las %(time)s"
+
+msgid "Not in the typical window · next: %(when)s"
+msgstr "Fuera de la ventana típica · próxima: %(when)s"
+
+msgid "Outside the period the source indicates"
+msgstr "Fuera del período que indica la fuente"
+
+msgid "Statistical reference from the source. It is not a measurement and not a go/no-go criterion"
+msgstr "Referencia estadística de la fuente. No es una medición ni un criterio para decidir"
+
+msgid "Scintillation is a disturbance of satellite signals as they cross the ionosphere. It can degrade high-precision positioning: RTK and PPK may lose the fixed solution or gain error, mostly at night."
+msgstr "El centelleo es una perturbación de las señales de los satélites al cruzar la ionosfera. Puede degradar el posicionamiento de alta precisión: el RTK y el PPK pueden perder la solución fija o ganar error, sobre todo de noche."
+
+msgid "The %(start)s to %(end)s hours are our interpretation of \"near midnight\". The source only says night, September to April, with a peak in 2025 and effects until 2028."
+msgstr "Las horas de %(start)s a %(end)s son nuestra interpretación de «cerca de la medianoche». La fuente solo dice noche, de septiembre a abril, con máximo en 2025 y efectos hasta 2028."
+
+msgid "Real-time data: see portal"
+msgstr "Datos en tiempo real: ver el portal"
+
+msgid "opens in a new tab"
+msgstr "se abre en una pestaña nueva"
+
+msgid "News item"
+msgstr "Noticia"
+
+msgid "Environment conditions"
+msgstr "Condiciones del entorno"
