@@ -417,14 +417,19 @@ class TestTheCard:
             is False
         )
 
-    def test_the_dashboard_loads_the_preview_script_when_enabled(
+    def test_the_weather_tab_loads_the_preview_script_when_enabled(
         self, enabled, settings
     ):
+        # LV-358 (E2): la escena animada vive en la pestaña Tiempo, no en el panel.
         client = login_as(VIEW)
-        content = client.get(reverse("dashboard")).content.decode()
+        content = client.get(reverse("environment-weather")).content.decode()
         assert "js/sky-preview.js" in content and "js/ambient-motion.js" in content
         settings.WEATHER_ENABLED = False
-        assert "sky-preview.js" not in client.get(reverse("dashboard")).content.decode()
+        assert client.get(reverse("environment-weather")).status_code == 404
+
+    def test_the_dashboard_does_not_load_the_preview_script(self, enabled):
+        content = login_as(VIEW).get(reverse("dashboard")).content.decode()
+        assert "sky-preview.js" not in content
 
 
 class TestThePreviewScript:
