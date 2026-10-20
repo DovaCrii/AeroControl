@@ -73,21 +73,26 @@ class TestSwitchEndToEnd:
         assert client.get(reverse("weather-panel")).status_code == 404
 
     def test_off_makes_no_outgoing_call_and_no_slot(self, settings, monkeypatch):
+        # LV-358 (E2): el hueco del panel es la franja «Entorno hoy»; sin ninguna fuente encendida no
+        # hay hueco ni script, y la petición saliente del cliente tampoco existe.
         settings.WEATHER_ENABLED = False
+        settings.GNSS_SCINTILLATION_ENABLED = False
         assert weather_client.panel_forecast(-33.4, -70.6) is None
         assert weather_client.search_places("Santiago") is None
         content = login_as(VIEW).get(reverse("dashboard")).content.decode()
         assert "wx-card" not in content and "weather-card.js" not in content
+        assert "env-strip" not in content
 
     def test_on_without_permission_draws_no_slot(self, settings):
         settings.WEATHER_ENABLED = True
         content = login_as().get(reverse("dashboard")).content.decode()
         assert "wx-card" not in content and "weather-card.js" not in content
+        assert "env-strip" not in content
 
     def test_on_with_permission_draws_the_slot_and_loads_the_script(self, settings):
         settings.WEATHER_ENABLED = True
         content = login_as(VIEW).get(reverse("dashboard")).content.decode()
-        assert f'hx-get="{reverse("weather-panel")}"' in content
+        assert f'hx-get="{reverse("environment-strip")}"' in content
         assert "data-wx-error" in content
         assert "js/weather-card.js" in content
         assert "hx-request=" in content  # tiempo máximo del lado del navegador
@@ -102,6 +107,10 @@ class TestFailedRequestsDoNotLeaveTheSkeleton:
     def test_the_script_listens_to_the_three_failure_events(self):
         for event in ("htmx:responseError", "htmx:sendError", "htmx:timeout"):
             assert f'"{event}"' in JS
+
+    def test_the_script_serves_both_the_weather_card_and_the_strip(self):
+        # LV-358 (E2): el mismo script sirve a la tarjeta del tiempo y a la franja del panel.
+        assert "wx-card" in JS and "env-strip" in JS
 
     def test_the_script_swaps_in_the_error_template_and_reprocesses_it(self):
         assert "template[data-wx-error]" in JS

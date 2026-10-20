@@ -1,0 +1,46 @@
+{% load i18n %}{% comment %}LV-358 (E2): la franja «Entorno hoy» del panel. Un fragmento htmx (`/environment/strip/`) que reemplaza a las dos tarjetas de `env-row`. Son HECHOS con su nivel (● ▲ ◆): nunca dice si se puede volar. Cada celda se dibuja sólo si la persona tiene el permiso de su fuente y el interruptor está encendido (`cells`); la celda de espacio aéreo no existe hasta que exista la ruta `airspace-map` (E3). El icono es de condición y de día/noche, SIN animación; la escena animada del cielo vive en la pestaña Tiempo. Todo texto de la ciudad va escapado por la plantilla (nunca `|safe`). `state="error"` es el estado que `weather-card.js` pone si la petición falla.{% endcomment %}
+{% if state == "error" %}
+<section id="env-strip" class="env-strip env-strip--note" aria-labelledby="env-strip-title">
+  <h2 id="env-strip-title" class="env-title">{% translate "Environment today" %}</h2>
+  <p class="env-strip-note" role="status">{% translate "The environment is not available right now. It will be tried again shortly." %}</p>
+  {% comment %}Reintentar es htmx puro (sin JS inline, que la CSP bloquea); es el mismo parcial que usa `weather-card.js` cuando la petición misma falla.{% endcomment %}
+  <button type="button" class="btn btn-sm btn-outline-primary" data-wx-retry hx-get="{% url 'environment-strip' %}" hx-target="#env-strip" hx-swap="outerHTML" hx-disabled-elt="this" hx-request='{"timeout": 10000}'>{% translate "Retry" %}</button>
+</section>
+{% else %}
+<section id="env-strip" class="env-strip" aria-labelledby="env-strip-title">
+  <header class="env-strip-head">
+    <h2 id="env-strip-title" class="env-title">{% translate "Environment today" %}</h2>
+    {% if city %}<span class="env-strip-city">{{ city }}</span>{% endif %}
+    <a class="env-strip-link" href="{{ hub_url }}">{% translate "See the environment" %} <span aria-hidden="true">→</span></a>
+  </header>
+  <div class="env-strip-cells">
+    {% if weather %}
+    <div class="env-cell env-cell--weather">
+      <h3 class="env-cell-title">{% translate "Weather" %}</h3>
+      {% if weather.state == "ok" %}
+      <p class="env-cell-now"><span aria-hidden="true">{% include "weather/_icons.html" with slug=weather.slug night=weather.is_night size="sm" label=weather.condition %}</span><b class="env-cell-temp"><span class="visually-hidden">{% translate "Now" %}: </span>{% if weather.temp is not None %}{{ weather.temp }}°{% else %}–{% endif %}</b> <span class="env-cell-cond">{{ weather.condition }}{% if weather.feels is not None %} · {% blocktranslate with value=weather.feels %}Feels like {{ value }}°{% endblocktranslate %}{% endif %}</span></p>
+      {% with event=weather.event %}
+      {% if event %}
+      <p class="env-cell-line"><span class="env-lvl env-lvl--{{ event.level }}"><span aria-hidden="true">{{ event.symbol }}</span> {{ event.level_label }}</span> <b>{{ event.label }}</b>{% if event.start %} <span class="env-cell-when">{{ event.start|date:"D H:i" }}</span>{% endif %}{% if weather.more_events %} <span class="env-cell-more">{% blocktranslate count counter=weather.more_events %}+{{ counter }} more event{% plural %}+{{ counter }} more events{% endblocktranslate %}</span>{% endif %}</p>
+      {% else %}
+      <p class="env-cell-line"><span class="env-lvl env-lvl--{{ weather.line.level }}"><span aria-hidden="true">{{ weather.line.symbol }}</span> {{ weather.line.level_label }}</span> <span>{{ weather.line.text }}</span></p>
+      {% endif %}
+      {% endwith %}
+      {% elif weather.state == "nocity" %}
+      <p class="env-cell-line">{% translate "Pick your city" %} <a class="env-strip-link" href="{% url 'weather-location' %}">{% translate "Choose your city" %}</a></p>
+      {% else %}
+      <p class="env-cell-line" role="status">{% translate "The weather is not available right now. It will be tried again shortly." %}</p>
+      <button type="button" class="btn btn-sm btn-outline-primary" data-wx-retry hx-get="{% url 'environment-strip' %}" hx-target="#env-strip" hx-swap="outerHTML" hx-disabled-elt="this" hx-request='{"timeout": 10000}'>{% translate "Retry" %}</button>
+      {% endif %}
+    </div>
+    {% endif %}
+    {% if gnss %}
+    <div class="env-cell env-cell--gnss">
+      <h3 class="env-cell-title">{% translate "GNSS scintillation" %}</h3>
+      <p class="env-cell-line"><span class="env-lvl env-lvl--{{ gnss.level }}"><span aria-hidden="true">{{ gnss.symbol }}</span> {{ gnss.level_label }}</span> <span>{{ gnss.text }}</span></p>
+    </div>
+    {% endif %}
+  </div>
+  {% include "environment/_referential.html" %}
+</section>
+{% endif %}

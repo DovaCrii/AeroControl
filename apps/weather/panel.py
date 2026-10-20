@@ -285,16 +285,11 @@ def _scintillation_active(forecast, local_now):
         return False
 
 
-def build_card(location, forecast, events):
-    """Todo lo que dibuja la tarjeta, calculado aquí y no en la plantilla."""
+def _now_state(forecast, local_now):
+    """Lo que el pronóstico dice de AHORA: condición, viento y si es de día (compartido con la franja)."""
     units = forecast.get("units") or {}
     to_kmh = _KMH_PER_UNIT.get(units.get("wind_speed_10m", "ms"), 3.6)
-    local_now = _local_now(forecast)
-    floor = local_now.replace(minute=0, second=0, microsecond=0)
-    hours = _hour_rows(forecast, floor, to_kmh)
-    days = _day_rows(forecast, local_now.date())
     current = forecast.get("current") or {}
-    first = hours[0] if hours else {}
     daily0 = (forecast.get("daily") or [{}])[0]
     wind = _scaled(current.get("wind_speed_10m"), to_kmh)
     gust = _scaled(current.get("wind_gusts_10m"), to_kmh)
@@ -306,6 +301,51 @@ def build_card(location, forecast, events):
     sunrise, sunset = _parse(daily0.get("sunrise")), _parse(daily0.get("sunset"))
     if is_day is None:
         is_day = not (sunrise and sunset and not (sunrise <= local_now <= sunset))
+    return {
+        "to_kmh": to_kmh,
+        "current": current,
+        "wind": wind,
+        "gust": gust,
+        "slug": slug,
+        "is_day": bool(is_day),
+        "sunrise": sunrise,
+        "sunset": sunset,
+    }
+
+
+def current_conditions(forecast):
+    """Lo mínimo que dibuja la franja del panel (LV-358, E2): temperatura, condición e icono de día/noche.
+
+    Sale del MISMO cálculo que la tarjeta completa (`_now_state`), de modo que ambas no pueden
+    discrepar, y no arma las horas, los días ni la escena del cielo.
+    """
+    state = _now_state(forecast, _local_now(forecast))
+    current = state["current"]
+    temp = current.get("temperature_2m")
+    if temp is None and forecast.get("hourly"):
+        temp = forecast["hourly"][0].get("temperature_2m")
+    return {
+        "slug": state["slug"],
+        "condition": CONDITION_LABELS[state["slug"]],
+        "is_night": not state["is_day"],
+        "temp": _round(temp),
+        "feels": _round(current.get("apparent_temperature")),
+    }
+
+
+def build_card(location, forecast, events):
+    """Todo lo que dibuja la tarjeta, calculado aquí y no en la plantilla."""
+    local_now = _local_now(forecast)
+    now_state = _now_state(forecast, local_now)
+    to_kmh = now_state["to_kmh"]
+    floor = local_now.replace(minute=0, second=0, microsecond=0)
+    hours = _hour_rows(forecast, floor, to_kmh)
+    days = _day_rows(forecast, local_now.date())
+    current = now_state["current"]
+    first = hours[0] if hours else {}
+    wind, gust = now_state["wind"], now_state["gust"]
+    slug, is_day = now_state["slug"], now_state["is_day"]
+    sunrise, sunset = now_state["sunrise"], now_state["sunset"]
     temp = current.get("temperature_2m")
     direction = current.get("wind_direction_10m")
     points, strip_width = _temperature_line(hours)

@@ -49,6 +49,9 @@ class EnvironmentSummary:
     stale: bool = False
     sunsets: dict = field(default_factory=dict)
     lines: tuple = ()
+    # El renglón del centelleo por separado (LV-358, E2): la franja del panel lo dibuja sin tener
+    # que adivinar su lugar dentro de `lines`.
+    gnss_line: Optional[SummaryLine] = None
 
     # Texto ya en la hora de la zona del pronóstico: el filtro `date` de las plantillas convertiría
     # a la hora del proyecto y una ciudad de otra zona (Isla de Pascua) saldría corrida.
@@ -165,10 +168,12 @@ def build_summary(
         level, text = "info", _("The forecast is not available right now")
     symbol, label = level_info(level)
     lines.append(SummaryLine(level, symbol, str(label), text))
+    gnss_line = None
     if card is not None:
         level = "attention" if card["status"] == "on" else "info"
         symbol, label = level_info(level)
-        lines.append(SummaryLine(level, symbol, str(label), _gnss_text(card)))
+        gnss_line = SummaryLine(level, symbol, str(label), _gnss_text(card))
+        lines.append(gnss_line)
 
     stale = bool(forecast_checked_at and now - forecast_checked_at > STALE_AFTER)
     return EnvironmentSummary(
@@ -184,4 +189,5 @@ def build_summary(
         stale=stale,
         sunsets=sunsets,
         lines=tuple(lines),
+        gnss_line=gnss_line,
     )

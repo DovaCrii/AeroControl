@@ -51,12 +51,19 @@ def no_network(monkeypatch):
     monkeypatch.setattr(socket.socket, "connect", refuse)
 
 
-def _page(monkeypatch, moment=IN_WINDOW, language="en", client=None):
+@pytest.fixture(autouse=True)
+def _language_is_reset():
+    yield
+    translation.deactivate()
+
+
+def _page(monkeypatch, moment=IN_WINDOW, language="en"):
+    """La tarjeta, dibujada por su etiqueta: desde LV-358 (E2) ya no está en el panel."""
     pin_now(monkeypatch, moment)
-    client = client or login_as()
-    return client.get(
-        reverse("dashboard"), headers={"Accept-Language": language}
-    ).content.decode()
+    translation.activate(
+        language
+    )  # queda activo, como lo dejaba el middleware de la petición
+    return Template("{% load gnss_tags %}{% gnss_card %}").render(Context({}))
 
 
 def _card(content):
@@ -166,39 +173,18 @@ class TestTheContent:
 
 
 @pytest.mark.django_db
-class TestTheSwitchAndTheRow:
+class TestTheSwitchAndThePanel:
     def test_it_is_on_by_default(self, monkeypatch):
         assert 'id="gnss-card"' in _page(monkeypatch)
 
-    def test_switched_off_there_is_no_card_and_no_row(self, monkeypatch, settings):
-        settings.GNSS_SCINTILLATION_ENABLED = False
-        settings.WEATHER_ENABLED = False
-        content = _page(monkeypatch)
+    def test_the_panel_no_longer_draws_the_card_nor_the_row(self, monkeypatch):
+        # LV-358 (E2): la franja «Entorno hoy» la reemplazó; ni la tarjeta ni la fila de dos
+        # columnas están en el panel (la celda del centelleo de la franja se prueba en test_lv358_strip).
+        pin_now(monkeypatch, IN_WINDOW)
+        content = login_as("view_userweatherlocation").get(reverse("dashboard"))
+        content = content.content.decode()
         assert "gnss-card" not in content and "gn-card" not in content
         assert "env-row" not in content
-
-    def test_the_card_stands_alone_full_width_when_the_weather_is_off(
-        self, monkeypatch, settings
-    ):
-        settings.WEATHER_ENABLED = False
-        content = _page(monkeypatch, client=login_as("view_userweatherlocation"))
-        assert 'class="env-row"' in content and "env-row--split" not in content
-        assert 'id="gnss-card"' in content and 'id="wx-card"' not in content
-
-    def test_with_the_weather_on_the_row_is_split(self, monkeypatch, settings):
-        settings.WEATHER_ENABLED = True
-        content = _page(monkeypatch, client=login_as("view_userweatherlocation"))
-        assert 'class="env-row env-row--split"' in content
-        assert content.index('id="wx-card"') < content.index('id="gnss-card"')
-
-    def test_the_weather_alone_keeps_its_row_without_the_card(
-        self, monkeypatch, settings
-    ):
-        settings.WEATHER_ENABLED = True
-        settings.GNSS_SCINTILLATION_ENABLED = False
-        content = _page(monkeypatch, client=login_as("view_userweatherlocation"))
-        assert 'class="env-row"' in content and "gnss-card" not in content
-        assert 'id="wx-card"' in content
 
     def test_the_panel_query_count_does_not_change(self, monkeypatch, settings):
         client = login_as()
@@ -212,9 +198,10 @@ class TestTheSwitchAndTheRow:
             client.get(reverse("dashboard"))
         assert len(on) == len(off)
 
-    def test_the_dashboard_template_only_includes_the_tag(self):
-        assert "{% gnss_card %}" in DASHBOARD
+    def test_the_dashboard_template_no_longer_includes_the_tag(self):
+        assert "{% gnss_card %}" not in DASHBOARD
         assert "data-ambient" not in DASHBOARD
+        assert "env-row" not in DASHBOARD
         assert not re.search(r"\bgn-", DASHBOARD)
 
     def test_the_tag_renders_nothing_when_off(self, settings):
