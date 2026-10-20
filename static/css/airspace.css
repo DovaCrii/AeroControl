@@ -138,6 +138,14 @@
 .air-swatch--danger, .air-badge--danger { border-color: var(--sev-advisory-text); background: var(--sev-advisory-bg); color: var(--sev-advisory-text); }
 .air-swatch--fir_boundary { border-style: dashed; }
 .air-swatch--airstrip { width: 0.6rem; height: 0.6rem; border-radius: 50%; background: var(--ac-text-secondary); border-color: var(--ac-text-secondary); }
+/* Capas propias (LV-358, E3): símbolo + texto en la leyenda y forma distinta en el mapa (cuadrado macizo = faena, círculo punteado = permiso vigente), nunca sólo color. */
+.air-swatch--own-sites { background: var(--ac-text); border-color: var(--ac-text); color: var(--ac-surface); border-radius: 2px; }
+.air-swatch--own-permits { background: transparent; border-style: dashed; border-color: var(--ac-primary); color: var(--ac-primary); border-radius: 50%; }
+.air-own-wrap { background: none; border: 0; }
+.air-own { display: inline-flex; align-items: center; justify-content: center; width: 1.125rem; height: 1.125rem; border: 2px solid var(--ac-surface); background: var(--ac-text); color: var(--ac-surface); font-size: 0.6rem; line-height: 1; box-shadow: 0 0 0 1px var(--ac-text); }
+.air-own-permit { stroke: var(--ac-primary); stroke-width: 2; stroke-dasharray: 6 4; fill: var(--ac-primary); fill-opacity: 0.08; }
+.air-own-permit-dot { stroke: var(--ac-primary); stroke-width: 2; fill: var(--ac-surface); fill-opacity: 1; }
+.air-legend-sep { flex-basis: 100%; margin: 0.2rem 0 0; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ac-text-secondary); }
 .air-badge { width: 1.375rem; height: 1.375rem; box-shadow: 0 0 0 2px var(--ac-surface); }
 .air-badge-wrap.is-selected .air-badge, .air-plane-wrap.is-selected .air-plane { outline: 3px solid var(--ac-text); outline-offset: 2px; }
 .air-plane {

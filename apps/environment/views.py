@@ -21,6 +21,7 @@ from apps.weather.models import UserWeatherLocation
 from apps.weather.panel import weather_enabled
 from apps.weather.templatetags.gnss_tags import gnss_card_enabled
 
+from .airspace_near import airspace_near_fact
 from .summary import build_summary, season_label
 from .tabs import TABS_BY_KEY, tabs_for
 
@@ -45,6 +46,10 @@ def environment_context(user, now=None):
         forecast = weather_client.panel_forecast(location.latitude, location.longitude)
         if forecast:
             events = weather_client.regional_events(forecast)
+    # El tercer renglón y la celda de la franja salen de ESTE hecho (una sola función, E3).
+    airspace = (
+        airspace_near_fact(user, now=now) if TABS_BY_KEY["airspace"].enabled() else None
+    )
     summary = build_summary(
         now,
         forecast,
@@ -52,6 +57,7 @@ def environment_context(user, now=None):
         location.label if location else "",
         gnss_enabled=gnss_card_enabled(),
         forecast_checked_at=_checked_at(forecast) if forecast else None,
+        airspace=airspace,
     )
     return {
         "env_location": location,

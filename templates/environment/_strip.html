@@ -1,4 +1,4 @@
-{% load i18n %}{% comment %}LV-358 (E2): la franja «Entorno hoy» del panel. Un fragmento htmx (`/environment/strip/`) que reemplaza a las dos tarjetas de `env-row`. Son HECHOS con su nivel (● ▲ ◆): nunca dice si se puede volar. Cada celda se dibuja sólo si la persona tiene el permiso de su fuente y el interruptor está encendido (`cells`); la celda de espacio aéreo no existe hasta que exista la ruta `airspace-map` (E3). El icono es de condición y de día/noche, SIN animación; la escena animada del cielo vive en la pestaña Tiempo. Todo texto de la ciudad va escapado por la plantilla (nunca `|safe`). `state="error"` es el estado que `weather-card.js` pone si la petición falla.{% endcomment %}
+{% load i18n %}{% comment %}LV-358 (E2): la franja «Entorno hoy» del panel. Un fragmento htmx (`/environment/strip/`) que reemplaza a las dos tarjetas de `env-row`. Son HECHOS con su nivel (● ▲ ◆): nunca dice si se puede volar. Cada celda se dibuja sólo si la persona tiene el permiso de su fuente y el interruptor está encendido (`cells`); la celda de espacio aéreo (E3) cruza zonas y permisos vigentes con la cifra de la «Situación del día» y enlaza al mapa (`airspace-map`). El icono es de condición y de día/noche, SIN animación; la escena animada del cielo vive en la pestaña Tiempo. Todo texto de la ciudad va escapado por la plantilla (nunca `|safe`). `state="error"` es el estado que `weather-card.js` pone si la petición falla.{% endcomment %}
 {% if state == "error" %}
 <section id="env-strip" class="env-strip env-strip--note" aria-labelledby="env-strip-title">
   <h2 id="env-strip-title" class="env-title">{% translate "Environment today" %}</h2>
@@ -38,6 +38,12 @@
     <div class="env-cell env-cell--gnss">
       <h3 class="env-cell-title">{% translate "GNSS scintillation" %}</h3>
       <p class="env-cell-line"><span class="env-lvl env-lvl--{{ gnss.level }}"><span aria-hidden="true">{{ gnss.symbol }}</span> {{ gnss.level_label }}</span> <span>{{ gnss.text }}</span></p>
+    </div>
+    {% endif %}
+    {% if airspace %}
+    <div class="env-cell env-cell--airspace">
+      <h3 class="env-cell-title">{% translate "Airspace" %}</h3>
+      <p class="env-cell-line"><span class="env-lvl env-lvl--{{ airspace.line.level }}"><span aria-hidden="true">{{ airspace.line.symbol }}</span> {{ airspace.line.level_label }}</span> <span>{{ airspace.line.text }}</span> <a class="env-strip-link" href="{{ airspace.url }}">{% translate "Open the map" %} <span aria-hidden="true">→</span></a></p>
     </div>
     {% endif %}
   </div>

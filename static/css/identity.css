@@ -1943,47 +1943,20 @@ summary:focus-visible {
   .wx-ico--lg { width: 72px; height: 72px; }
 }
 
-/* F3b: centelleo (LV-352). Tarjeta informativa GNSS (ya no está en el panel: la franja «Entorno hoy» la reemplazó, LV-358 E2). Sólo lee
-   `--id-*`, `--ac-*` y `--sev-*` (no redefine ninguno) y usa tokens propios `--id-gn-*` (con prefijo `--id-`, que es lo único que esta hoja puede definir). El estado va
-   siempre con símbolo y texto; el color sólo lo refuerza. El contraste de cada par se calcula en
-   test_lv352_gnss_card. */
-.gn-card {
-  --id-gn-on-bg: var(--sev-warning-bg);
-  --id-gn-on-fg: var(--sev-warning-text);
-  --id-gn-on-bd: var(--sev-warning-border);
-  --id-gn-off-bg: var(--sev-nominal-bg);
-  --id-gn-off-fg: var(--sev-nominal-text);
-  --id-gn-off-bd: var(--sev-nominal-border);
-  --id-gn-art: var(--ac-primary);
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid var(--ac-border);
-  border-radius: var(--id-r-card);
-  background: var(--ac-surface);
-  color: var(--ac-text);
-  box-shadow: var(--id-lift);
-  overflow: hidden;
-  min-width: 0;
+/* F3b: banda de centelleo GNSS (LV-352, LV-358 E3). La ventana típica sombreada sobre la franja de 24 h del Tiempo
+   (`weather/_panel_card.html`): ámbar de advertencia con TRAMA (no sólo color) y su leyenda con texto. Sólo lee
+   `--ac-*` y `--sev-*`; no se anima. Es estadística de la fuente, no una medición. */
+.wx-gnss-band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 0;
+  pointer-events: none;
+  border-inline: 1px dashed var(--sev-warning-border);
+  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--sev-warning-border) 26%, transparent) 0 4px, transparent 4px 9px);
 }
-.gn-head { display: flex; align-items: center; gap: var(--id-sp-2); padding: var(--id-sp-2) var(--id-sp-3) 0; }
-.gn-art { flex: none; width: 112px; height: auto; color: var(--id-gn-art); }
-.gn-sat { opacity: 0.9; }
-.gn-wave { opacity: 0.55; }
-.gn-title { margin: 0; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ac-text); }
-.gn-body { flex: 1; padding: var(--id-sp-2) var(--id-sp-3); }
-.gn-body p { margin: 0 0 0.6rem; font-size: var(--id-fs-sm); }
-.gn-state { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.55rem 0.7rem; border: 1px solid; border-radius: var(--id-r-control); font-weight: 700; }
-.gn-state--on { background: var(--id-gn-on-bg); border-color: var(--id-gn-on-bd); color: var(--id-gn-on-fg); }
-.gn-state--off, .gn-state--outside { background: var(--id-gn-off-bg); border-color: var(--id-gn-off-bd); color: var(--id-gn-off-fg); }
-.gn-sym { flex: none; line-height: 1.3; }
-.gn-ref { font-weight: 600; }
-.gn-what { color: var(--ac-text); }
-.gn-assume { color: var(--ac-text-secondary); font-size: 0.75rem; }
-.gn-foot { padding: 0.6rem var(--id-sp-3); border-top: 1px solid var(--ac-border); font-size: 0.75rem; color: var(--ac-text-secondary); }
-.gn-foot p { margin: 0; }
-.gn-foot a { color: var(--ac-text); font-weight: 600; text-decoration: underline; }
-.gn-credit a { color: inherit; font-weight: inherit; }
+.wx-line, .wx-hours { position: relative; z-index: 1; }
+.wx-key-gnss { background: repeating-linear-gradient(135deg, var(--sev-warning-border) 0 2px, transparent 2px 4px); border: 1px solid var(--sev-warning-border); }
 
 /* F3c: cielo (LV-356). Escena SVG detrás de la cabecera de la tarjeta del tiempo (`weather/_sky.html`),
    decorativa. Sólo define tokens `--id-sky-*` (con prefijo `--id-`, lo único que esta hoja puede
@@ -2152,15 +2125,6 @@ summary:focus-visible {
   [data-ambient] .wx-drop--c { animation-delay: -4s; }
   [data-ambient] .wx-drift--a { animation: wx-glide 26s ease-in-out infinite alternate; }
   [data-ambient] .wx-drift--b { animation: wx-glide 34s ease-in-out infinite alternate-reverse; }
-
-  /* F3b: centelleo. Sólo `opacity` y `transform`, cuatro nodos como máximo (tres ondas y un
-     satélite central), ciclos de 8 s o más y SIEMPRE bajo `[data-ambient]`. */
-  @keyframes gn-pulse { 0%, 100% { opacity: 0.25; } 50% { opacity: 0.85; } }
-  @keyframes gn-bob { from { transform: translateY(-1.5px); } to { transform: translateY(1.5px); } }
-  [data-ambient] .gn-wave { animation: gn-pulse 8s ease-in-out infinite; }
-  [data-ambient] .gn-wave--b { animation-delay: -2.7s; }
-  [data-ambient] .gn-wave--c { animation-delay: -5.3s; }
-  [data-ambient] .gn-sat--mid { animation: gn-bob 9s ease-in-out infinite alternate; }
 
   /* F3c: cielo. Sólo `opacity` y `transform`, a lo sumo ocho nodos a la vez (tres nubes, cuatro
      estrellas que titilan, y una capa de lluvia, nieve o niebla), ciclos de 6 s o más y SIEMPRE

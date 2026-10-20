@@ -3,8 +3,9 @@
 * `AirspaceTab`   GET /environment/airspace/            the screen (404 with an import guide if no snapshot)
 * `AirspaceData`  GET /environment/airspace/data.json   the current snapshot as JSON (ETag = its sha256)
 * `AirspaceNear`  GET /environment/airspace/near/       what contains / is near a point or circle
+* `AirspaceOwnLayers` GET /environment/airspace/own-layers.json?layer=sites|permits  the person's own layers
 
-All three need `view_airspacefeature` (LV-268). The catalog is global (no tenant), like `Aerodrome`.
+The first three need `view_airspacefeature` (LV-268). The catalog is global (no tenant), like `Aerodrome`.
 `near/` runs the very same pure functions as `apps/geo/airspace_geometry.py`, so the client never
 re-implements the distance maths that decides "this zone touches your circle".
 
@@ -15,6 +16,7 @@ limit converted to a number, or that a zone "is active now". The source's words 
 import math
 
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse, HttpResponseNotModified, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
@@ -22,6 +24,8 @@ from django.utils.translation import gettext as _
 from django.views import View
 
 from apps.core.views import ModelViewPermissionRequiredMixin
+from apps.core.tenancy import scope_queryset_to_tenant
+from apps.environment.airspace_near import current_permits
 from apps.environment.views import EnvironmentTab, environment_context
 from apps.geo.airspace_geometry import nearby
 from apps.geo.sections import format_dms
@@ -35,7 +39,7 @@ NEAREST_AERODROMES = 3
 
 def near_km():
     """«Near» in kilometres (the person's decision of 2026-10-20; `AIRSPACE_NEAR_KM`)."""
-    return float(getattr(settings, "AIRSPACE_NEAR_KM", 10))
+    return payload.near_km()
 
 
 def kind_labels():
@@ -80,11 +84,37 @@ def ui_strings():
         "toCentre": _("to the centre"),
         "notStated": _("Not stated in the source"),
         "referenceFrom": _("Distances are measured from {label}."),
+        "layerOwnHeading": _("My layers (off by default)"),
+        "layerSites": _("My sites"),
+        "layerPermits": _("Current permits"),
+        "layerOwnFailed": _("Your layer could not be loaded. Try again."),
+        "layerOwnEmpty": _("Nothing to show on this layer."),
+        "siteWord": _("Site"),
+        "permitWord": _("Permit"),
+        "validUntil": _("valid until {date}"),
     }
 
 
-def tab_config(reference):
+# The person's own layers (LV-358, E3): each one needs ITS model's view permission, on top of the
+# map's, and is cut by the user's tenant. Off by default in the map; fetched only when switched on.
+OWN_LAYERS = {
+    "sites": "registry.view_costcenter",
+    "permits": "operations.view_flightpermission",
+}
+
+
+def own_layers_for(user):
+    """The own layers `user` may load: `[{key, url}]`, in order. Empty when they have none."""
+    return [
+        {"key": key, "url": f"{reverse('airspace-own-layers')}?layer={key}"}
+        for key, permission in OWN_LAYERS.items()
+        if user.has_perm(permission)
+    ]
+
+
+def tab_config(reference, own_layers=()):
     return {
+        "ownLayers": list(own_layers),
         "dataUrl": reverse("airspace-data"),
         "nearUrl": reverse("airspace-near"),
         "nearKm": near_km(),
@@ -133,7 +163,7 @@ class AirspaceTab(EnvironmentTab):
                     for kind in payload.SHOWN_KINDS
                 ],
                 "air_total": sum(counts.values()),
-                "air_config": tab_config(reference),
+                "air_config": tab_config(reference, own_layers_for(request.user)),
                 "air_kinds": [
                     {"kind": kind, "label": labels[kind]}
                     for kind in payload.SHOWN_KINDS
@@ -164,6 +194,72 @@ class AirspaceData(ModelViewPermissionRequiredMixin, View):
             )
         response["ETag"] = etag
         # Always revalidate (cheap: one row and a 304) so a new import shows up at once.
+        response["Cache-Control"] = "private, no-cache"
+        return response
+
+
+def _site_entry(center):
+    return {
+        "id": str(center.pk),
+        "code": center.code,
+        "name": center.name,
+        "lat": float(center.latitude),
+        "lon": float(center.longitude),
+    }
+
+
+def _permit_entry(permit):
+    radius = permit.radius_km
+    return {
+        "id": str(permit.pk),
+        "number": permit.permission_number,
+        "site": permit.cost_center.code,
+        "location": permit.location,
+        "valid_until": permit.valid_until.isoformat(),
+        "lat": float(permit.latitude) if permit.latitude is not None else None,
+        "lon": float(permit.longitude) if permit.longitude is not None else None,
+        "radius_km": float(radius) if radius is not None else None,
+    }
+
+
+class AirspaceOwnLayers(ModelViewPermissionRequiredMixin, View):
+    """The person's own layers for the map: `?layer=sites` or `?layer=permits`.
+
+    «My sites» are the cost centers with coordinates; «Current permits» the approved permits in force
+    today with a point (and a circle when they carry a radius). Each layer needs ITS model's view
+    permission (403 without it), is cut by the user's tenant, and answers as data: the client draws it
+    with `textContent`, and `dumps` escapes markup anyway. Not cached by shared caches."""
+
+    model = AirspaceFeature
+
+    def get(self, request):
+        layer = request.GET.get("layer", "")
+        if layer not in OWN_LAYERS:
+            return JsonResponse({"error": "invalid_layer"}, status=400)
+        if not request.user.has_perm(OWN_LAYERS[layer]):
+            raise PermissionDenied
+        if layer == "sites":
+            from apps.registry.models import CostCenter
+
+            rows = scope_queryset_to_tenant(
+                CostCenter.objects.filter(
+                    is_active=True, latitude__isnull=False, longitude__isnull=False
+                ),
+                request.user,
+            ).order_by("code")
+            items = [_site_entry(center) for center in rows]
+        else:
+            rows = (
+                current_permits(request.user)
+                .filter(latitude__isnull=False, longitude__isnull=False)
+                .select_related("cost_center")
+                .order_by("permission_number", "pk")
+            )
+            items = [_permit_entry(permit) for permit in rows]
+        response = HttpResponse(
+            payload.dumps({"layer": layer, "items": items}),
+            content_type="application/json; charset=utf-8",
+        )
         response["Cache-Control"] = "private, no-cache"
         return response
 

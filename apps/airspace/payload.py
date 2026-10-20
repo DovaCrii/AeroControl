@@ -11,6 +11,7 @@ import json
 import re
 from urllib.parse import quote
 
+from django.conf import settings
 from django.utils import timezone
 
 from apps.geo.sections import format_dms
@@ -64,6 +65,11 @@ def _round(value):
     if isinstance(value, float):
         return round(value, COORD_DECIMALS)
     return value
+
+
+def near_km():
+    """«Near» in kilometres (the person's decision of 2026-10-20; `AIRSPACE_NEAR_KM`)."""
+    return float(getattr(settings, "AIRSPACE_NEAR_KM", 10))
 
 
 def current_snapshot():

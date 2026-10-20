@@ -513,7 +513,9 @@ def test_the_script_makes_no_calls_outside_its_own_origin():
     assert "http://" not in code.replace("http://www.w3.org/2000/svg", "")
     assert "https://" not in code
     assert "XMLHttpRequest" not in code and "WebSocket" not in code
-    assert code.count("fetch(") == 2  # data.json y near/
+    assert (
+        code.count("fetch(") == 3
+    )  # data.json, near/ y own-layers.json (E3, al encender una capa)
 
 
 def test_the_script_never_converts_the_sources_limits_or_decides():

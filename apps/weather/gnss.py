@@ -154,6 +154,29 @@ def _anchor_counts(anchor, params):
     ) <= anchor <= _last_covered_day(params)
 
 
+def windows_between(begin, finish, params=None, sunsets=None):
+    """Las ventanas `[(inicio, fin)]` (aware) que tocan el intervalo `[begin, finish)`.
+
+    Sirve para sombrear la franja de 24 h del Tiempo (LV-358, E3): mismo cálculo que `window_state`
+    (misma puesta, mismo desfase, misma temporada) y la ventana que cruza la medianoche entra por
+    las dos tardes que la tocan. Función pura: no llama a nadie.
+    """
+    params = params or params_from_settings()
+    zone = ZoneInfo(settings.TIME_ZONE)
+    lo, hi = _utc(begin), _utc(finish)
+    first = begin.astimezone(zone).date() - timedelta(days=1)
+    last = finish.astimezone(zone).date()
+    found = []
+    day = first
+    while day <= last:
+        if _anchor_counts(day, params):
+            start, end = _window(zone, day, params, sunsets)
+            if _utc(start) < hi and _utc(end) > lo:
+                found.append((start, end))
+        day += timedelta(days=1)
+    return found
+
+
 def window_state(now, params=None, sunsets=None):
     """`{active, next_start, next_end, in_period, period_over}` para el instante `now` (aware).
 

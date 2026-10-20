@@ -385,11 +385,23 @@ class TestTheCard:
         )
         assert context["scene"]["hour_now"] == 22.0
 
-    def test_the_window_makes_four_stars_twinkle(self, enabled):
+    def test_the_band_retires_the_wink(self, enabled):
+        # LV-358 (E3): a las 22:00 de octubre la ventana está activa, pero la banda GNSS de la franja
+        # de 24 h ya dice lo mismo: las estrellas no titilan (sería el mismo dato dos veces).
         client = login_as(VIEW)
         _city(client)
         content = client.get(reverse("weather-panel")).content.decode()
-        assert content.count("sky-star--tw ") == 4  # 22:00 de octubre: ventana activa
+        assert "wx-gnss-band" in content
+        assert "sky-star--tw" not in content
+
+    def test_without_a_band_the_window_still_makes_four_stars_twinkle(self, enabled):
+        # Sin horas en el pronóstico no hay franja ni banda: queda el guiño de siempre.
+        location = SimpleNamespace(label="Santiago")
+        bare = {**enabled, "hourly": []}
+        context = panel_module.build_card(location, bare, [])
+        assert context["gnss_band"] is None
+        html = render_to_string("weather/_panel_card.html", context)
+        assert "wx-gnss-band" not in html and html.count("sky-star--tw ") == 4
 
     def test_no_window_no_twinkling(self, enabled, monkeypatch):
         monkeypatch.setattr(
