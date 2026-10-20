@@ -1382,6 +1382,40 @@ form.is-submitting-slow .btn-primary::after {
 }
 
 
+/* D2: sección «Cumplimiento» del panel (LV-359). Contenedor, cabecera, rejilla y esqueleto. Sin
+   animación (el esqueleto es estático). Sólo lee tokens `--ac-*`, `--sev-*` e `--id-*`. */
+.id-cx {
+  display: grid;
+  gap: var(--id-sp-2);
+  min-width: 0;
+  margin-bottom: var(--id-sp-3);
+  padding: var(--id-sp-2) var(--id-sp-3);
+  border: 1px solid var(--ac-border);
+  border-radius: var(--id-r-card);
+  background: var(--ac-surface);
+  color: var(--ac-text);
+  box-shadow: var(--id-lift);
+}
+.id-cx--loading { min-height: 120px; }
+.id-cx-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem var(--id-sp-3); }
+.id-cx-title { margin: 0; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ac-text-secondary); }
+.id-cx-asof { margin: 0; font-weight: 700; }
+.id-cx-link { margin-left: auto; color: var(--ac-text); font-size: var(--id-fs-sm); font-weight: 600; text-decoration: underline; }
+.id-cx-report { margin: 0; font-size: var(--id-fs-sm); color: var(--ac-text-secondary); }
+.id-cx-note { margin: 0; font-size: var(--id-fs-sm); }
+.id-cx-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--id-sp-2) var(--id-sp-3); }
+.id-cx-block { min-width: 0; }
+.id-cx-h3 { margin: 0 0 var(--id-sp-1); font-size: var(--id-fs-md); font-weight: 700; }
+.id-cx-skel { height: 1rem; margin: 0.4rem 0; border-radius: var(--id-r-control); background: var(--sev-nominal-bg); border: 1px solid var(--sev-nominal-border); }
+.id-cx-skel--short { width: 60%; }
+@media (min-width: 992px) {
+  .id-cx-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+  .id-cx-block--rings { grid-column: 1 / -1; }
+  .id-cx-block--heat { grid-column: span 7; }
+  .id-cx-block--alerts { grid-column: span 5; }
+  .id-cx-block--maintenance { grid-column: 1 / -1; }
+}
+
 /* == E: pulido global == */
 /* Contiene: ajustes transversales finales (foco, selección, impresión, detalles de tema). */
 

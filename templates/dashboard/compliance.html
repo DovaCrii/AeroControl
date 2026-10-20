@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% comment %}LV-359: la sección «Cumplimiento» como página completa (sin htmx): es el destino del enlace «Abrir como página» y del `<noscript>` del hueco del panel. Reutiliza el mismo parcial; `cx_full_page` sólo oculta ese enlace.{% endcomment %}
+{% block title %}{% translate "Compliance" %} - AeroControl{% endblock %}
+{% block content %}
+{% translate "Compliance" as page_title %}{% translate "Are we up to date today, and what expires first?" as page_description %}
+<div class="page-header">
+  {% include "generic/_page_header.html" %}
+</div>
+{% include "dashboard/_compliance_section.html" with cx_full_page=True %}
+{% endblock %}

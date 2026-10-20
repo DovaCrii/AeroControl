@@ -10330,3 +10330,40 @@ msgid "+%(counter)s more event"
 msgid_plural "+%(counter)s more events"
 msgstr[0] "+%(counter)s evento más"
 msgstr[1] "+%(counter)s eventos más"
+
+msgid "Open as a page"
+msgstr "Abrir como página"
+
+msgid "Loading compliance"
+msgstr "Cargando el cumplimiento"
+
+msgid "Open the compliance page"
+msgstr "Abrir la página de cumplimiento"
+
+msgid "By category"
+msgstr "Por categoría"
+
+msgid "Next 90 days"
+msgstr "Próximos 90 días"
+
+msgid "Open alerts by age"
+msgstr "Alertas abiertas por antigüedad"
+
+msgid "Are we up to date today, and what expires first?"
+msgstr "¿Estamos al día hoy y qué vence primero?"
+
+#, python-format
+msgid "As of today, %(date)s · site %(site)s"
+msgstr "A hoy, %(date)s · faena %(site)s"
+
+#, python-format
+msgid "As of today, %(date)s · all sites"
+msgstr "A hoy, %(date)s · todas las faenas"
+
+#, python-format
+msgid "DGAC monthly report: cut-off %(date)s · %(status)s"
+msgstr "Informe mensual DGAC: corte %(date)s · %(status)s"
+
+#, python-format
+msgid "DGAC monthly report: period %(period)s · %(status)s"
+msgstr "Informe mensual DGAC: período %(period)s · %(status)s"

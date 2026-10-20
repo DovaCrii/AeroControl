@@ -1,0 +1,36 @@
+{% load i18n %}{% comment %}LV-359: la sección «Cumplimiento». Es el fragmento que pide el hueco del panel y también el cuerpo de la página completa. Sin ninguna fuente visible (`cx_visible` falso) devuelve un contenedor vacío y oculto: ni nombres ni cifras. Cada bloque se dibuja sólo con el permiso de su fuente (`cx_blocks`). «A hoy» es la fecha de hoy; el aviso del informe DGAC lleva SU fecha de corte, leída del último informe, y nunca se mezcla con «hoy». Fase 1: los bloques son esqueletos estáticos; los gráficos llegan en la fase 2.{% endcomment %}{% if not cx_visible %}<div id="compliance-section" hidden></div>{% else %}
+<section id="compliance-section" class="id-cx" aria-labelledby="cx-title">
+  <header class="id-cx-head">
+    <h2 id="cx-title" class="id-cx-title">{% translate "Compliance" %}</h2>
+    <p class="id-cx-asof">{% if cx_cost_center %}{% blocktranslate with date=cx_today|date:"d-m-Y" site=cx_cost_center.code %}As of today, {{ date }} · site {{ site }}{% endblocktranslate %}{% else %}{% blocktranslate with date=cx_today|date:"d-m-Y" %}As of today, {{ date }} · all sites{% endblocktranslate %}{% endif %}</p>
+    {% if not cx_full_page %}<a class="id-cx-link" href="{% url 'dashboard-compliance' %}{% if cx_cost_center %}?cost_center={{ cx_cost_center.pk }}{% endif %}">{% translate "Open as a page" %} <span aria-hidden="true">→</span></a>{% endif %}
+  </header>
+  {% if cx_report %}
+  <p class="id-cx-report">{% if cx_report.cutoff %}{% blocktranslate with date=cx_report.cutoff|date:"d-m-Y" status=cx_report.status_label %}DGAC monthly report: cut-off {{ date }} · {{ status }}{% endblocktranslate %}{% else %}{% blocktranslate with period=cx_report.period|date:"Y-m" status=cx_report.status_label %}DGAC monthly report: period {{ period }} · {{ status }}{% endblocktranslate %}{% endif %}</p>
+  {% endif %}
+  <div class="id-cx-grid">
+    {% if cx_blocks.expirations %}
+    <div class="id-cx-block id-cx-block--rings" data-cx-block="rings">
+      <h3 class="id-cx-h3">{% translate "By category" %}</h3>
+      <div class="id-cx-skel" aria-hidden="true"></div>
+    </div>
+    <div class="id-cx-block id-cx-block--heat" data-cx-block="heat">
+      <h3 class="id-cx-h3">{% translate "Next 90 days" %}</h3>
+      <div class="id-cx-skel" aria-hidden="true"></div>
+    </div>
+    {% endif %}
+    {% if cx_blocks.alerts %}
+    <div class="id-cx-block id-cx-block--alerts" data-cx-block="alerts">
+      <h3 class="id-cx-h3">{% translate "Open alerts by age" %}</h3>
+      <div class="id-cx-skel" aria-hidden="true"></div>
+    </div>
+    {% endif %}
+    {% if cx_blocks.maintenance %}
+    <div class="id-cx-block id-cx-block--maintenance" data-cx-block="maintenance">
+      <h3 class="id-cx-h3">{% translate "Maintenance" %}</h3>
+      <div class="id-cx-skel" aria-hidden="true"></div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
