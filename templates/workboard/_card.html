@@ -25,10 +25,10 @@
       contrast measurement was needed -- same colours already vetted elsewhere
       (aircraft insurance badge, compliance report buckets).
     {% endcomment %}
-    <div class="kanban-due{% if bucket == 'overdue' %} is-overdue{% elif bucket == 'due_7' %} text-warning-emphasis fw-bold{% elif bucket == 'due_15' %} text-warning-emphasis fw-semibold{% elif bucket == 'due_30' %} text-warning-emphasis{% endif %}">{% translate "Due" %} {{ task.due_date|date:"M j" }}{% if bucket == "overdue" %} · {% translate "Overdue" %}{% elif bucket == "due_7" %} · {% translate "Due within 7 days" %}{% elif bucket == "due_15" %} · {% translate "Due within 15 days" %}{% elif bucket == "due_30" %} · {% translate "Due within 30 days" %}{% endif %}</div>
+    <div class="kanban-due{% if bucket == 'overdue' %} is-overdue{% elif bucket == 'due_7' %} text-warning-emphasis fw-bold{% elif bucket == 'due_15' %} text-warning-emphasis fw-semibold{% elif bucket == 'due_30' %} text-warning-emphasis{% endif %}">{% if bucket == "overdue" %}{% include "generic/_signal_icon.html" with kind="danger" %}{% elif bucket == "due_7" or bucket == "due_15" %}{% include "generic/_signal_icon.html" with kind="warn" %}{% elif bucket == "due_30" %}{% include "generic/_signal_icon.html" with kind="note" %}{% endif %}{% translate "Due" %} {{ task.due_date|date:"M j" }}{% if bucket == "overdue" %} · {% translate "Overdue" %}{% elif bucket == "due_7" %} · {% translate "Due within 7 days" %}{% elif bucket == "due_15" %} · {% translate "Due within 15 days" %}{% elif bucket == "due_30" %} · {% translate "Due within 30 days" %}{% endif %}</div>
     {% endwith %}
   {% endif %}
-  <div class="kanban-progress small">{% if task.checklist_total %}{{ task.checklist_progress }}% {% translate "complete" %}<div class="progress"><div class="progress-bar" style="width:{{ task.checklist_progress }}%"></div></div>{% else %}<span class="text-muted">{% translate "No steps" %}</span>{% endif %}</div>
+  <div class="kanban-progress small">{% if task.checklist_total %}{{ task.checklist_progress }}% {% translate "complete" %}<div class="progress"><div class="progress-bar" style="width:{{ task.checklist_progress }}%"></div></div>{% else %}{% translate "No steps" as t_nosteps %}{% include "generic/_signal.html" with kind="hint" text=t_nosteps %}{% endif %}</div>
   <form method="post" action="{% url 'task-archive' task.id %}" class="mt-2">
     {% csrf_token %}
     <button type="submit" class="btn btn-sm btn-link p-0 text-muted">{% translate "Archive" %}</button>

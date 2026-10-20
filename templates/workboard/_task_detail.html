@@ -1,6 +1,6 @@
 {% load i18n %}
 <div class="task-detail-header d-flex justify-content-between align-items-start">
-  <div><p class="text-muted small mb-1">{{ task.stage.name }}</p><h2 class="h5 mb-0">{{ task.title }}</h2></div>
+  <div><p class="task-meta mb-1">{{ task.stage.name }}</p><h2 class="h5 mb-0">{{ task.title }}</h2></div>
   <a class="btn btn-sm btn-outline-primary" hx-get="{% url 'task-edit' task.id %}" hx-target="#task-detail-content">{% translate "Edit" %}</a>
 </div>
 <hr>
@@ -10,15 +10,15 @@
   {% for label in task.labels.all %}<span class="kanban-label" style="--label-color: {{ label.color }}">{{ label.name }}</span>{% endfor %}
 </div>
 {% if task.description %}<p class="mb-3">{{ task.description|linebreaksbr }}</p>{% endif %}
-{% if task.source_object %}<div class="task-source mb-3"><span class="small text-muted d-block">{% translate "Origin" %}</span><strong>{{ task.source_object }}</strong>{% if task.source_content_type.model == "alert" %} <a class="small ms-1" href="{% url 'alert-list' %}?entity_type={{ task.source_object.content_type.model }}&amp;is_resolved=false">{% translate "View in alerts" %}</a>{% endif %}</div>{% endif %}
-<div class="small text-muted mb-2">{% translate "Checklist" %} · {{ task.checklist_completed }}/{{ task.checklist_total }} ({{ task.checklist_progress }}%)</div>
+{% if task.source_object %}<div class="task-source mb-3"><span class="task-meta d-block">{% translate "Origin" %}</span><strong>{{ task.source_object }}</strong>{% if task.source_content_type.model == "alert" %} <a class="small ms-1" href="{% url 'alert-list' %}?entity_type={{ task.source_object.content_type.model }}&amp;is_resolved=false">{% translate "View in alerts" %}</a>{% endif %}</div>{% endif %}
+<div class="task-meta mb-2">{% translate "Checklist" %} · {{ task.checklist_completed }}/{{ task.checklist_total }} ({{ task.checklist_progress }}%)</div>
 <div class="progress mb-3" role="progressbar" aria-valuenow="{{ task.checklist_progress }}" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar" style="width:{{ task.checklist_progress }}%"></div></div>
 <div class="list-group mb-3">
 {% for item in task.checklist_items.all %}
   <form method="post" action="{% url 'checklist-toggle' item.id %}" hx-post="{% url 'checklist-toggle' item.id %}" hx-target="#task-detail-content" class="list-group-item d-flex gap-2 align-items-center">
     {% csrf_token %}<button class="btn btn-sm btn-link p-0" aria-label="{% translate 'Toggle checklist item' %}"> {% if item.is_completed %}☑{% else %}☐{% endif %}</button><span class="{% if item.is_completed %}text-decoration-line-through text-muted{% endif %}">{{ item.title }}</span>
   </form>
-{% empty %}<p class="text-muted small">{% translate "No checklist steps yet." %}</p>{% endfor %}
+{% empty %}{% translate "No checklist steps yet." as t_nochk %}{% include "generic/_signal.html" with kind="hint" text=t_nochk %}{% endfor %}
 </div>
 <form method="post" action="{% url 'checklist-create' task.id %}" hx-post="{% url 'checklist-create' task.id %}" hx-target="#task-detail-content" class="input-group">
   {% csrf_token %}{{ checklist_form.title }}<button class="btn btn-primary" type="submit">{% translate "Add step" %}</button>

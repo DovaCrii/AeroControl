@@ -10193,6 +10193,12 @@ msgstr "Centros de costo listados: %(n)s."
 msgid "Records found: %(n)s."
 msgstr "Registros encontrados: %(n)s."
 
+msgid "Tasks show up here when they are created on the board or from an alert."
+msgstr "Las tareas aparecen aquí cuando se crean en el tablero o desde una alerta."
+
+msgid "Open the board"
+msgstr "Abrir el tablero"
+
 msgid "Not found"
 msgstr "No encontrada"
 

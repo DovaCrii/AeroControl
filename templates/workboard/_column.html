@@ -11,7 +11,7 @@
     {% for task in tasks %}
       {% include "workboard/_card.html" %}
     {% empty %}
-      <div class="kanban-empty">{% translate "No tasks" %}</div>
+      <div class="kanban-empty">{% translate "No tasks" as t_none %}{% include "generic/_signal.html" with kind="hint" text=t_none %}</div>
     {% endfor %}
   </div>
   <div class="kanban-footer">

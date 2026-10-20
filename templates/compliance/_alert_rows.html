@@ -47,7 +47,7 @@ pueden decir cosas distintas.{% endcomment %}
 
   El enlace abre el mismo modal que "Resolver" y por la misma razón: una fila
   apretada no tiene sitio para un selector de personas.{% endcomment %}
-  <td>{% if object.assigned_to %}{{ object.assigned_to.get_full_name|default:object.assigned_to.username }}{% else %}<span class="text-muted fst-italic">{% translate "Unassigned" %}</span>{% endif %}{% if perms.compliance.change_alert %} <a class="small" href="{% url 'alert-assign' object.pk %}" hx-get="{% url 'alert-assign' object.pk %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" title="{% translate 'Assign an owner' %}">✎</a>{% endif %}</td>
+  <td>{% if object.assigned_to %}{{ object.assigned_to.get_full_name|default:object.assigned_to.username }}{% else %}<span class="al-flag">{% include "generic/_signal_icon.html" with kind="warn" %}{% translate "Unassigned" %}</span>{% endif %}{% if perms.compliance.change_alert %} <a class="small" href="{% url 'alert-assign' object.pk %}" hx-get="{% url 'alert-assign' object.pk %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" title="{% translate 'Assign an owner' %}">✎</a>{% endif %}</td>
   <td>{{ object.alert_rule.name }}</td>
   <td><span class="text-nowrap">{{ object.triggered_at|date:'Y-m-d' }}</span></td>
   {% comment %}LV-118: la fecha es la **congelada al crear la alerta**
@@ -56,7 +56,7 @@ pueden decir cosas distintas.{% endcomment %}
   del que la disparó -- dos filas de `RPA-5532` levantadas por una póliza
   vencida el 2026-08-08 decían "vencimiento 2027-08-04". El color sale del
   tramo de urgencia, con los mismos cortes que el digest diario.{% endcomment %}
-  <td>{% if object.triggering_date %}<span class="badge {{ object.urgency_css }}">{% if object.urgency == 'overdue' %}{% translate "Overdue" %} · {{ object.triggering_date|date:'Y-m-d' }}{% else %}{% translate "Due" %} {{ object.triggering_date|date:'Y-m-d' }}{% endif %}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+  <td>{% if object.triggering_date %}{% include "compliance/_urgency_chip.html" %}{% else %}<span class="text-muted">—</span>{% endif %}</td>
   {% comment %}LV-110: el estado de la alerta y su motivo, juntos y con espacio
   propio. El motivo vivía sólo en un `title` (invisible al tacto), después pasó a
   una línea diminuta debajo de los botones -- la evidencia ISO 10.2 seguía siendo
@@ -71,7 +71,7 @@ pueden decir cosas distintas.{% endcomment %}
     posterior, así que acompaña a "Resuelta" en vez de reemplazarla. Decir que
     **no** se sostuvo es lo que ya hace "Deshacer".{% endcomment %}
     {% if object.effectiveness_verified_at %}<span class="badge bg-primary-subtle text-primary-emphasis" title="{% blocktranslate with when=object.effectiveness_verified_at|date:'Y-m-d' who=object.effectiveness_verified_by|default:'—' %}Verified on {{ when }} by {{ who }}{% endblocktranslate %}">{% translate "Verified" %}</span>{% endif %}
-    {% if object.resolution_reason %}<div class="small text-body-secondary mt-1 alert-reason">{{ object.resolution_reason }}</div>{% endif %}
+    {% if object.resolution_reason %}<div class="mt-1 alert-reason">{% include "generic/_signal.html" with kind="hint" text=object.resolution_reason %}</div>{% endif %}
     {% else %}<span class="text-muted">—</span>{% endif %}
   </td>
   {% comment %}Un solo envoltorio para las dos ramas y botones que no se parten,
@@ -100,14 +100,12 @@ nada pendiente y eso se celebra, con el camino a lo resuelto para quien venía a
 mirar historia; **con filtros** puede haber mucho pendiente y este recorte no
 alcanzarlo, así que lo que corresponde ofrecer es quitarlos. Es la misma
 distinción que `generic/_table_body.html` hace desde que existe.{% endcomment %}
+{% translate "No alerts match the current filters." as empty_title %}{% translate "Clear filters" as clear_label %}{% translate "Nothing pending." as ok_title %}{% translate "No open alerts right now." as ok_help %}{% translate "See the resolved ones" as resolved_label %}
 <tr><td colspan="99" class="text-center py-5">
-    {% static 'img/illustrations/certificates.svg' as art_src %}{% include "generic/_empty_art.html" with src=art_src %}
+  {% static 'img/illustrations/certificates.svg' as art_src %}
   {% if request.GET.q or request.GET.entity_type or request.GET.cost_center or request.GET.owner %}
-  <div class="mb-1">{% translate "No alerts match the current filters." %}</div>
-  <a href="{{ request.path }}">{% translate "Clear filters" %}</a>
+  {% include "generic/_empty_art.html" with src=art_src title=empty_title action_url=request.path action_label=clear_label %}
   {% else %}
-  <div class="h5 mb-1">{% translate "Nothing pending." %}</div>
-  <div class="text-body-secondary small">{% translate "No open alerts right now." %}
-    <a href="?is_resolved=true">{% translate "See the resolved ones" %}</a>.</div>
+  {% include "generic/_empty_art.html" with src=art_src title=ok_title help=ok_help secondary_url="?is_resolved=true" secondary_label=resolved_label %}
   {% endif %}
 </td></tr>{% endfor %}
