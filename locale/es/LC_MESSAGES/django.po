@@ -10198,3 +10198,10 @@ msgstr "Las tareas aparecen aquí cuando se crean en el tablero o desde una aler
 
 msgid "Open the board"
 msgstr "Abrir el tablero"
+
+msgid "Not found"
+msgstr "No encontrada"
+
+msgid "Remove filter"
+msgstr "Quitar filtro"
+

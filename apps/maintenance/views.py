@@ -9,6 +9,7 @@ from django.utils.text import capfirst
 
 from apps.core.audit import set_audit_context
 from apps.core.views import (
+    apply_cost_center_filter,
     CsvExportMixin,
     HtmxFormMixin,
     ModelPermissionRequiredMixin,
@@ -61,6 +62,7 @@ class MaintenanceRecordList(MList):
         "status": "status",
     }
     search_fields = ["aircraft__registration", "description", "performed_by"]
+    cost_center_filter = None
 
     def get_queryset(self):
         # LV-252: `select_related("aircraft")` porque cada fila dibuja su aeronave:
@@ -79,6 +81,10 @@ class MaintenanceRecordList(MList):
             queryset = MaintenanceRecord.needing_planning(
                 queryset.filter(is_active=True)
             )
+        # LV-351: con una faena elegida en el panel, el chip enlaza acá con ella.
+        queryset, self.cost_center_filter = apply_cost_center_filter(
+            self.request, queryset, "aircraft__cost_center"
+        )
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -88,6 +94,7 @@ class MaintenanceRecordList(MList):
             type_choices=MaintenanceRecord.TYPES,
             current_status=self.request.GET.get("status", ""),
             current_type=self.request.GET.get("maintenance_type", ""),
+            cost_center_filter=self.cost_center_filter,
         )
         # LV-254: los dos filtros propios también cuentan como filtro, para que el
         # vacío ofrezca quitarlos en vez de decir que no hay registros.
@@ -95,6 +102,7 @@ class MaintenanceRecordList(MList):
             context["current_status"]
             or context["current_type"]
             or self.request.GET.get("needs_planning") == "1"
+            or self.cost_center_filter
         )
         return context
 

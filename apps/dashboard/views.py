@@ -7,6 +7,7 @@ from django.db.models.functions import TruncMonth
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.http import urlencode
 from django.utils.translation import gettext as _, ngettext
 
 from apps.compliance.digest import BUCKET_BADGE_CSS
@@ -595,6 +596,14 @@ def dashboard(request):
     # Rojo (`critical`) únicamente para lo vencido y para la faena sin permiso
     # —lo que `LV-246` definió como incumplimiento—; lo demás es ámbar: trabajo
     # detenido o por hacer, no una falta. Van en ese orden.
+    #
+    # LV-351: con una faena elegida, los enlaces a listas llevan `cost_center`, o
+    # la cifra (de esa faena) y la lista (de todas) no coincidirían.
+    def list_url(name, **params):
+        if selected_cost_center:
+            params["cost_center"] = selected_cost_center.pk
+        return f"{reverse(name)}?{urlencode(params)}"
+
     attention = []
     if overdue_count:
         attention.append(
@@ -630,7 +639,7 @@ def dashboard(request):
                     "maintenance items to define",
                     incomplete_maintenance_count,
                 ),
-                "url": f"{reverse('maintenance-list')}?needs_planning=1",
+                "url": list_url("maintenance-list", needs_planning=1),
                 "severity": "warning",
             }
         )
@@ -644,7 +653,7 @@ def dashboard(request):
                     "requests awaiting SIGO",
                     awaiting_count,
                 ),
-                "url": f"{reverse('flight-request-list')}?status=filed",
+                "url": list_url("flight-request-list", status="filed"),
                 "severity": "warning",
                 "longest_wait": longest_wait,
             }
