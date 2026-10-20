@@ -10315,3 +10315,44 @@ msgid "%(count)s weather event expected in 48 hours: %(names)s"
 msgid_plural "%(count)s weather events expected in 48 hours: %(names)s"
 msgstr[0] "%(count)s evento climático previsto en 48 horas: %(names)s"
 msgstr[1] "%(count)s eventos climáticos previstos en 48 horas: %(names)s"
+msgid "airspace snapshot"
+msgstr "foto del espacio aéreo"
+
+msgid "airspace snapshots"
+msgstr "fotos del espacio aéreo"
+
+msgid "airspace feature"
+msgstr "elemento del espacio aéreo"
+
+msgid "airspace features"
+msgstr "elementos del espacio aéreo"
+
+msgid "Aerodrome"
+msgstr "Aeródromo"
+
+msgid "Airport"
+msgstr "Aeropuerto"
+
+msgid "Small airstrip (unofficial)"
+msgstr "Pista chica (no oficial)"
+
+msgid "Prohibited zone"
+msgstr "Zona prohibida"
+
+msgid "Restricted zone"
+msgstr "Zona restringida"
+
+msgid "Danger zone"
+msgstr "Zona peligrosa"
+
+msgid "Naval restricted zone"
+msgstr "Zona restringida naval"
+
+msgid "FIR boundary"
+msgstr "Límite de FIR"
+
+msgid "Drawing aid"
+msgstr "Ayuda de dibujo"
+
+msgid "Sensitive-zones map delivered by the DGAC (Google My Maps)"
+msgstr "Mapa de zonas sensibles entregado por la DGAC (Google My Maps)"

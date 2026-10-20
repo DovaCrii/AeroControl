@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic test data: invented places, not the real map. -->
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>MAPA SINTETICO</name>
+    <description>Synthetic map for tests.</description>
+    <Folder>
+      <name>AERÓDROMOS</name>
+      <Placemark>
+        <name>SCXA Ad. Prueba Uno SANTIAGO</name>
+        <description><![CDATA[descripción: <br>tracking_href_2: ]]></description>
+        <Point><coordinates>-70.700000,-33.500000,0</coordinates></Point>
+      </Placemark>
+      <Placemark>
+        <name>SCXB Ap. Prueba Dos VALPARAISO</name>
+        <Point><coordinates>-71.500000,-33.000000,0</coordinates></Point>
+      </Placemark>
+      <Placemark>
+        <name>Ad. Sin Codigo</name>
+        <Point><coordinates>-70.900000,-33.600000,0</coordinates></Point>
+      </Placemark>
+    </Folder>
+    <Folder>
+      <name>Pistas chicas</name>
+      <Placemark>
+        <name>Pista Inventada (SCXC)</name>
+        <Point><coordinates>-70.800000,-33.300000,0</coordinates></Point>
+      </Placemark>
+    </Folder>
+    <Folder>
+      <name>Zonas Prohibidas, Restringuidas, Peligrosas</name>
+      <Placemark>
+        <name>SC - R54 FIR SINTETICO
+Sector Prueba</name>
+        <description><![CDATA[SC - R54 FIR SINTETICO<br>Espacio Aéreo:<br>33 30 00 S 70 42 00 W<br>33 30 00 S 70 39 50 W<br>33 37 00 S 70 43 00 W<br><br>9000 FT AMSL 6000 FT AMSL<br><br>H24 Instrucción<br>Coordinación con Torre Ficticia <script>alert("x")</script><b>negrita</b> &amp; fin.]]></description>
+        <Polygon><outerBoundaryIs><LinearRing><coordinates>-70.70,-33.50,0 -70.66,-33.50,0 -70.72,-33.62,0 -70.70,-33.50,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+      </Placemark>
+      <Placemark>
+        <name>SC – P 30 Zona de prueba</name>
+        <description><![CDATA[Límites Verticales:<br>1000 FT AGL<br>HORARIO:<br><br>Permanente]]></description>
+        <LineString><coordinates>-70.594011,-33.400000,0 -70.594034,-33.399564,0 -70.594102,-33.399132,0 -70.594215,-33.398706,0 -70.594372,-33.398290,0 -70.594572,-33.397887,0 -70.594813,-33.397500,0 -70.595094,-33.397132,0 -70.595412,-33.396786,0 -70.595765,-33.396464,0 -70.596150,-33.396170,0 -70.596565,-33.395904,0 -70.597005,-33.395670,0 -70.597469,-33.395468,0 -70.597952,-33.395302,0 -70.598450,-33.395170,0 -70.598960,-33.395076,0 -70.599478,-33.395019,0 -70.600000,-33.395000,0 -70.600522,-33.395019,0 -70.601040,-33.395076,0 -70.601550,-33.395170,0 -70.602048,-33.395302,0 -70.602531,-33.395468,0 -70.602995,-33.395670,0 -70.603435,-33.395904,0 -70.603850,-33.396170,0 -70.604235,-33.396464,0 -70.604588,-33.396786,0 -70.604906,-33.397132,0 -70.605187,-33.397500,0 -70.605428,-33.397887,0 -70.605628,-33.398290,0 -70.605785,-33.398706,0 -70.605898,-33.399132,0 -70.605966,-33.399564,0 -70.605989,-33.400000,0 -70.605966,-33.400436,0 -70.605898,-33.400868,0 -70.605785,-33.401294,0 -70.605628,-33.401710,0 -70.605428,-33.402113,0 -70.605187,-33.402500,0 -70.604906,-33.402868,0 -70.604588,-33.403214,0 -70.604235,-33.403536,0 -70.603850,-33.403830,0 -70.603435,-33.404096,0 -70.602995,-33.404330,0 -70.602531,-33.404532,0 -70.602048,-33.404698,0 -70.601550,-33.404830,0 -70.601040,-33.404924,0 -70.600522,-33.404981,0 -70.600000,-33.405000,0 -70.599478,-33.404981,0 -70.598960,-33.404924,0 -70.598450,-33.404830,0 -70.597952,-33.404698,0 -70.597469,-33.404532,0 -70.597005,-33.404330,0 -70.596565,-33.404096,0 -70.596150,-33.403830,0 -70.595765,-33.403536,0 -70.595412,-33.403214,0 -70.595094,-33.402868,0 -70.594813,-33.402500,0 -70.594572,-33.402113,0 -70.594372,-33.401710,0 -70.594215,-33.401294,0 -70.594102,-33.400868,0 -70.594034,-33.400436,0 -70.594011,-33.400000,0</coordinates></LineString>
+      </Placemark>
+      <Placemark>
+        <name>SC R-41 Peligro sintetico</name>
+        <Point><coordinates>-70.5,-33.2,0</coordinates></Point>
+      </Placemark>
+      <Placemark>
+        <name>SC-D66 Zona de peligro</name>
+        <Polygon><outerBoundaryIs><LinearRing><coordinates>-70.5,-33.2,0 -70.4,-33.2,0 -70.4,-33.1,0 -70.5,-33.2,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+      </Placemark>
+      <Placemark>
+        <name>ZONA SIN CODIGO</name>
+        <Point><coordinates>-70.1,-33.1,0</coordinates></Point>
+      </Placemark>
+    </Folder>
+    <Folder>
+      <name>ARMADA DE CHILE Zonas Restringuidas</name>
+      <Placemark>
+        <name>PRIMERA ZONA NAVAL Muelle Ficticio</name>
+        <description>Radio de 60 yardas</description>
+        <Point><coordinates>-71.6,-33.0,0</coordinates></Point>
+      </Placemark>
+      <Placemark>
+        <name>Punto centrado Muelle Ficticio</name>
+        <Point><coordinates>-71.6,-33.0,0</coordinates></Point>
+      </Placemark>
+    </Folder>
+    <Folder>
+      <name>REGION INFORMACIÓN DE VUELO</name>
+      <Placemark>
+        <name>Limite Norte</name>
+        <description>Limite sintetico de la FIR</description>
+        <LineString><coordinates>-72.0,-30.0,0 -70.0,-30.0,0</coordinates></LineString>
+      </Placemark>
+      <Placemark>
+        <name>Medida de círculo</name>
+        <LineString><coordinates>-72.0,-31.0,0 -71.0,-31.0,0</coordinates></LineString>
+      </Placemark>
+    </Folder>
+    <Folder>
+      <name>Capa sin nombre</name>
+    </Folder>
+  </Document>
+</kml>

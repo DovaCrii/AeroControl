@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     "apps.weather",
     # LV-358: sección «Entorno» (tiempo, centelleo GNSS y, después, espacio aéreo). Sin modelos.
     "apps.environment",
+    # LV-357: espacio aéreo y aeródromos (catálogo importado, sin datos en git).
+    "apps.airspace",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
