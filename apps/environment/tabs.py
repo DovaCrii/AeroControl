@@ -52,8 +52,7 @@ TABS = (
         "weather.view_userweatherlocation",
         _gnss_on,
     ),
-    # Otro bloque registra la ruta `airspace-map` (`/environment/airspace/`); hasta entonces no se
-    # muestra.
+    # LV-357 (F3) registra la ruta `airspace-map` (`/environment/airspace/`, `apps/airspace/urls.py`).
     Tab(
         "airspace",
         "airspace-map",

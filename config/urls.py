@@ -185,5 +185,7 @@ urlpatterns = [
     path("reporting/", include("apps.reporting.urls")),
     path("assistant/", include("apps.assistant.urls")),
     path("weather/", include("apps.weather.urls")),
+    # LV-357: la pestaña «Espacio aéreo» de Entorno (antes que `environment/`, que no tiene comodín).
+    path("environment/airspace/", include("apps.airspace.urls")),
     path("environment/", include("apps.environment.urls")),
 ]
