@@ -56,6 +56,7 @@ def environment_context(user, now=None):
     return {
         "env_location": location,
         "env_summary": summary,
+        "env_forecast": forecast,
         "env_tabs": tabs_for(user),
     }
 

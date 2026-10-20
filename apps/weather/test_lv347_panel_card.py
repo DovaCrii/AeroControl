@@ -318,20 +318,35 @@ class TestMotion:
 
 
 @pytest.mark.django_db
-class TestTheDashboardSlot:
+class TestTheCardLivesInTheWeatherTab:
+    """LV-358 (E2): la tarjeta completa ya no está en el panel; su hueco htmx vive en la pestaña Tiempo.
+
+    Es la cobertura que antes tenía el hueco del panel (pedida al cargar, nada sin permiso ni apagada),
+    movida al lugar donde la tarjeta se dibuja ahora. El panel conserva sólo la franja (`test_lv358_strip`).
+    """
+
     def test_it_is_requested_on_load_when_enabled(self, enabled):
         client = login_as(VIEW)
-        content = client.get(reverse("dashboard")).content.decode()
-        assert f'hx-get="{reverse(URL)}"' in content and 'hx-trigger="load"' in content
+        content = client.get(reverse("environment-weather")).content.decode()
+        assert f'hx-get="{reverse(URL)}?embed=environment"' in content
+        assert 'hx-trigger="load"' in content
+
+    def test_the_panel_no_longer_carries_the_card_or_its_request(self, enabled):
+        content = login_as(VIEW).get(reverse("dashboard")).content.decode()
+        assert reverse(URL) not in content and 'id="wx-card"' not in content
+        assert "sky-preview.js" not in content
 
     def test_nothing_is_requested_when_switched_off(self, settings):
         settings.WEATHER_ENABLED = False
-        content = login_as(VIEW).get(reverse("dashboard")).content.decode()
+        client = login_as(VIEW)
+        assert client.get(reverse("environment-weather")).status_code == 404
+        content = client.get(reverse("dashboard")).content.decode()
         assert reverse(URL) not in content and "wx-card" not in content
 
     def test_nothing_is_requested_without_the_permission(self, enabled):
-        content = login_as().get(reverse("dashboard")).content.decode()
-        assert reverse(URL) not in content
+        client = login_as()
+        assert client.get(reverse("environment-weather")).status_code == 403
+        assert reverse(URL) not in client.get(reverse("dashboard")).content.decode()
 
     def test_the_panel_query_count_does_not_change(self, settings):
         client = login_as(VIEW)

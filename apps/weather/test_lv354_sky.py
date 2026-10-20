@@ -343,20 +343,20 @@ class TestGnssCardIsPure:
 
 
 @pytest.mark.django_db
-class TestThePanelCardAsksForNoForecast:
-    def test_the_dashboard_renders_the_card_without_calling_the_forecast(
-        self, monkeypatch
-    ):
+class TestThePanelAsksForNoForecast:
+    """LV-358: armar el panel no pide el pronóstico; la franja «Entorno hoy» lo pide por htmx, aparte."""
+
+    def test_the_dashboard_renders_without_calling_the_forecast(self, monkeypatch):
         def boom(lat, lon):
             raise AssertionError("armar el panel no puede pedir el pronóstico")
 
         pin_now(monkeypatch, datetime(2026, 10, 19, 20, 55, tzinfo=SANTIAGO))
         monkeypatch.setattr(weather_client, "panel_forecast", boom)
         content = (
-            login_as()
+            login_as("view_userweatherlocation")
             .get(reverse("dashboard"), headers={"Accept-Language": "en"})
             .content.decode()
         )
-        card = content.split('id="gnss-card"')[1].split("</section>")[0]
-        assert "gn-state--off" in card and "next: Mon 19 Oct, 21:00" in card
-        assert "nightfall" not in card
+        # El hueco de la franja está, pero vacío: el pronóstico se pide cuando el navegador lo carga.
+        assert 'id="env-strip"' in content and 'id="gnss-card"' not in content
+        assert "nightfall" not in content
