@@ -1,5 +1,33 @@
 # HANDOFF — AeroControl
 
+## 🟡 2026-10-20 — tanda «Entorno + Espacio aéreo + Cumplimiento» **fusionada sin desplegar** (`main` en `97d2f44`; la VM sigue en `738a317`)
+
+Todo lo de abajo está en `main` con el CI verde; **nada se ha desplegado**. Son 132 archivos entre `738a317` y `97d2f44`.
+
+**Qué entró**
+- **Sección «Entorno»** (`LV-358`, E1 a E3): pestañas Tiempo y Centelleo GNSS por ruta (`/environment/`), cabecera común (una sola ciudad, hora de Chile, amanecer/puesta y un solo «Referencial»), franja «Entorno hoy» en el panel por htmx (reemplaza las dos tarjetas), banda del centelleo sobre las 24 h del tiempo y celda de espacio aéreo. El tiempo viene **encendido por omisión** (`LV-353`) y el centelleo desde la puesta de sol (`LV-354`); la escena animada del cielo está en la pestaña Tiempo (`LV-356`).
+- **Espacio aéreo y aeródromos** (`LV-357`, fases 1 a 3): app `apps/airspace` (catálogo importado del mapa «ZONAS SENSIBLES» que entrega la DGAC; los datos viven en la base, no en git), comando `import_airspace_zones`, y la pestaña `/environment/airspace/` con mapa, buscador, capas propias («Mis faenas», «Permisos vigentes»), medición y ficha. Referencial: confirmar con AIP/NOTAM. **Incluye un arreglo de seguridad** (rótulos de Leaflet como nodos, no HTML).
+- **Cumplimiento en el panel** (`LV-359`, fases 1 a 4): sección al final cargada por htmx (anillos, mapa de calor a 90 días, alertas por antigüedad, tabla de permisos por faena ordenable —se mudó del panel—, historial de revisión y guía de lectura).
+- **Propuesta de Informes** (`LV-355`, solo documentación en `docs/dev/informes-optimizacion.md`; sin código).
+
+**Seguimiento — fusionado sin desplegar: todo lo anterior.**
+- **LLEVA MIGRACIÓN:** `airspace.0001_create_airspace_snapshot_and_feature` (única; las otras apps no cambian).
+- **LLEVA ESTÁTICOS:** sí (`identity.css`, `airspace.css`, `airspace-map.js`, `airspace-search.js`, `sky-preview.js`, `weather-card.js`, `icons.svg`) → `collectstatic` obligatorio.
+- **LLEVA `.mo`** (versionado; no hace falta `compilemessages`).
+- **Después del `migrate`, en la VM:** `manage.py bootstrap_roles` (da `view_airspacefeature` al rol Operations) y `manage.py import_airspace_zones --url` **leyendo la salida** (agregado/cambiado/archivado y avisos de calidad; ≈572 elementos). Sin esa carga la pestaña muestra el estado vacío con la guía.
+- **Ojo con `WEATHER_ENABLED`:** ahora es `True` por omisión, así que al desplegar la tarjeta del tiempo **se enciende** y `p340` consultará `api.open-meteo.com` (riesgo de licencia aceptado por la persona, ver `docs/dev/tiempo.md`). Verificar que la VM sale a Internet y que `/etc/aerocontrol.env` no fije `WEATHER_ENABLED=False` si no se quiere.
+- Usar `scripts/deploy.sh --dry-run` primero; plan con `deploy_plan.ps1 -From <hash de la VM>`.
+
+**No verificado en navegador (el navegador integrado no compone):** la apariencia de la escena del cielo (siete fases, claro y oscuro), la franja, la banda del centelleo, el mapa con datos reales (rendimiento con ~572 elementos, íconos de avión, FIR, teclado y lector de pantalla), la sección de Cumplimiento (el disparo real de `revealed` al desplazarse, `<meter>`, chips, tema oscuro y móvil). Hace falta una mirada humana antes o justo después de desplegar.
+
+**Pendiente — del usuario**
+- Confirmar quién mantiene el mapa y su licencia (se asumió oficial de la DGAC por su confirmación del 2026-10-20) y, si el AIP-Chile (ENR 5.1, `aipchile.dgac.gob.cl`) publica las zonas de forma estructurada, usarlo como origen.
+- Validar el texto de la guía de Cumplimiento sobre las escalas 30/60 días de permisos («renovar un permiso implica una solicitud a la DGAC, que demora más»).
+- Informes (`LV-355`): decidir lo de la sección 7 de `docs/dev/informes-optimizacion.md` (menú, si gráficos y cambios entran al papel DGAC, PDF en servidor, sello, inglés) antes de implementar F0 en adelante.
+- Los pendientes de la entrada de abajo siguen vigentes (GitHub Support, rotar SSH/Tailscale, NVIDIA, licencia de Open-Meteo, lectura de nombres sueltos).
+
+**Pendiente — del código:** `dashboard()` no acota por tenant (`permit_status_by_cost_center(today)` sin `user`; hoy hay un solo tenant) y `upcoming_expirations` tampoco; «pronóstico en este punto» del mapa; capa de planes/solicitudes en «Permisos vigentes»; mover los archivos de geometría de `apps/geo` a `apps/airspace`; cadenas huérfanas de la tarjeta GNSS retirada en el `.po`; mover `Próximas mantenciones` (queda sola en media fila en el panel); reforzar con una prueba el dibujo del relleno con patrón del mapa; las fases F0 a F5 de Informes.
+
 ## ✅ 2026-10-20 — historial reescrito y publicado, VM resincronizada y tanda de cierre **desplegada** (`738a317`)
 
 `p340` corre **`738a317`** (leído de la salida pegada, junto con `active` y `health` 200; el primer chequeo dio 000 por la carrera del arranque, el siguiente 200). Se desplegó por bloques tras respaldar la base (`aero_ops_20261020_075452.sqlite3`, `restorable.`): `fetch --force` + `checkout -B main origin/main` + `reflog expire` + `gc --prune=now` (la VM ya no conserva el historial viejo), `uv sync --no-dev`, `migrate` (`assistant.0002_assistantusage_vote`, `weather.0001_user_weather_location`), `collectstatic` (3 copiados) y reinicio.
