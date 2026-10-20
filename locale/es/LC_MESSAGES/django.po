@@ -10235,6 +10235,9 @@ msgstr "El centelleo es una perturbación de las señales de los satélites al c
 msgid "The %(start)s to %(end)s hours are our interpretation of \"near midnight\". The source only says night, September to April, with a peak in 2025 and effects until 2028."
 msgstr "Las horas de %(start)s a %(end)s son nuestra interpretación de «cerca de la medianoche». La fuente solo dice noche, de septiembre a abril, con máximo en 2025 y efectos hasta 2028."
 
+msgid "Sunset %(sunset)s · nightfall %(dusk)s (per the forecast for %(city)s)"
+msgstr "Atardecer %(sunset)s · anochecer %(dusk)s (según el pronóstico de %(city)s)"
+
 msgid "Real-time data: see portal"
 msgstr "Datos en tiempo real: ver el portal"
 

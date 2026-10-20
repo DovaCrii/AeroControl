@@ -248,6 +248,9 @@ WEATHER_PANEL_CACHE_SECONDS = config(
 )
 # Demo without Internet: serve bundled sample JSON. Ignored unless DEBUG.
 WEATHER_FAKE_FIXTURE = config("WEATHER_FAKE_FIXTURE", default=False, cast=bool)
+# LV-354: ISO local time ("2026-10-19T19:30") that pins "now" for the sky scene. Only honoured
+# with DEBUG and WEATHER_FAKE_FIXTURE; ignored in production.
+WEATHER_FAKE_NOW = config("WEATHER_FAKE_NOW", default="")
 # Referential thresholds for informative weather events (NOT flight conditions).
 WEATHER_EVENT_WIND_KMH = config("WEATHER_EVENT_WIND_KMH", default=40, cast=float)
 WEATHER_EVENT_GUST_KMH = config("WEATHER_EVENT_GUST_KMH", default=60, cast=float)
@@ -269,6 +272,11 @@ GNSS_SCINT_NIGHT_START = config("GNSS_SCINT_NIGHT_START", default=21, cast=int)
 GNSS_SCINT_NIGHT_END = config("GNSS_SCINT_NIGHT_END", default=3, cast=int)
 GNSS_SCINT_PEAK_HOUR = config("GNSS_SCINT_PEAK_HOUR", default=0, cast=int)
 GNSS_SCINT_YEARS = config("GNSS_SCINT_YEARS", default="2025-2028")
+# LV-354: the window starts this many minutes after the forecast sunset (the fixed
+# GNSS_SCINT_NIGHT_START hour is the fallback when there is no forecast).
+GNSS_SCINT_SUNSET_OFFSET_MIN = config(
+    "GNSS_SCINT_SUNSET_OFFSET_MIN", default=60, cast=int
+)
 GNSS_SCINT_SOURCE_URL = config(
     "GNSS_SCINT_SOURCE_URL",
     default="https://www.geocom.cl/blogs/news/nuevo-portal-de-monitoreo-de-perturbaciones-ionosfericas",
