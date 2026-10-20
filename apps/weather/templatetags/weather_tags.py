@@ -1,7 +1,7 @@
 """Etiquetas de plantilla del tiempo (LV-347)."""
 
 from django import template
-from django.conf import settings
+from apps.weather.panel import weather_enabled
 
 register = template.Library()
 
@@ -15,7 +15,7 @@ def weather_card_enabled(context):
     request = context.get("request")
     user = getattr(request, "user", None)
     return bool(
-        getattr(settings, "WEATHER_ENABLED", False)
+        weather_enabled()
         and user is not None
         and user.has_perm("weather.view_userweatherlocation")
     )

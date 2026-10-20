@@ -50,14 +50,22 @@ centros de costo.{% endcomment %}
 </form>
 
 {% comment %}LV-347: tarjeta del tiempo, informativa. Sólo se dibuja el hueco si `WEATHER_ENABLED` y la persona puede ver su ciudad; con el interruptor apagado no hay hueco ni petición. No se cruza con nada del panel.{% endcomment %}
-{% load weather_tags %}{% weather_card_enabled as weather_on %}
+{% load weather_tags gnss_tags %}{% weather_card_enabled as weather_on %}{% gnss_card_enabled as gnss_on %}
+{% comment %}LV-352: fila «Condiciones del entorno»: tiempo (2/3) y centelleo GNSS (1/3) en pantallas anchas, apiladas en angostas; cada una es independiente y sin ninguna no hay fila.{% endcomment %}
+{% if weather_on or gnss_on %}
+<section class="env-row{% if weather_on and gnss_on %} env-row--split{% endif %}" aria-label="{% translate 'Environment conditions' %}">
 {% if weather_on %}
-<div id="wx-card" class="wx-card wx-card--loading" hx-get="{% url 'weather-panel' %}" hx-trigger="load" hx-swap="outerHTML" aria-busy="true">
+<div id="wx-card" class="wx-card wx-card--loading" hx-get="{% url 'weather-panel' %}" hx-trigger="load" hx-swap="outerHTML" hx-request='{"timeout": 10000}' aria-busy="true">
+  {% comment %}LV-353: si la petición falla, `weather-card.js` cambia el esqueleto por este estado de error (htmx no reemplaza respuestas 4xx/5xx ni errores de red).{% endcomment %}
+  <template data-wx-error>{% include "weather/_panel_card.html" with state="error" %}</template>
   <div class="wx-skel wx-skel--head"></div>
   <div class="wx-skel wx-skel--line"></div>
   <div class="wx-skel wx-skel--line wx-skel--short"></div>
   <span class="visually-hidden" role="status">{% translate "Loading weather" %}</span>
 </div>
+{% endif %}
+{% if gnss_on %}{% gnss_card %}{% endif %}
+</section>
 {% endif %}
 
 {% comment %}LV-187: la condición se calcula en la vista (`show_onboarding`) y no
@@ -466,6 +474,7 @@ solo el gráfico.{% endcomment %}
         crossorigin="anonymous"></script>
 {{ chart_data|json_script:"chart-data" }}
 <script defer src="{% static 'js/dashboard.js' %}"></script>
+{% load weather_tags %}{% weather_card_enabled as weather_on %}{% if weather_on %}<script defer src="{% static 'js/weather-card.js' %}"></script>{% endif %}
 {% endblock %}
 
 {% block extrascripts %}

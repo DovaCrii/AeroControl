@@ -291,7 +291,9 @@ class TestMotion:
             IDENTITY.index("/* F3: tiempo") : IDENTITY.index("/* ── Movimiento")
         ]
         assert "animation" not in static and "@keyframes" not in static
-        assert not re.search(r"--(?:ac|sev)-[\w-]+\s*:|--id-(?!wx-)[\w-]+\s*:", static)
+        assert not re.search(
+            r"--(?:ac|sev)-[\w-]+\s*:|--id-(?!wx-|gn-)[\w-]+\s*:", static
+        )
 
     def test_every_wx_animation_is_inside_the_single_no_preference_block(self):
         assert IDENTITY.count("prefers-reduced-motion: no-preference") <= 2

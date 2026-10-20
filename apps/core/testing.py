@@ -89,6 +89,20 @@ def pin_today_mid_month(monkeypatch):
     return pinned
 
 
+def pin_now(monkeypatch, moment):
+    """Fija `timezone.now()` al instante `moment` (aware) y lo devuelve.
+
+    `pin_today_mid_month` sólo fija la fecha; lo que depende de la HORA (la ventana del centelleo
+    GNSS, `LV-352`) necesita fijar el instante. `localdate()`/`localtime()` sin argumento parten
+    de `now()`, así que siguen coherentes con este valor.
+    """
+    from django.utils import timezone
+
+    assert timezone.is_aware(moment), "pin_now exige un datetime con zona horaria"
+    monkeypatch.setattr("django.utils.timezone.now", lambda: moment)
+    return moment
+
+
 _TEMPLATE_COMMENT = re.compile(
     r"\{%\s*comment\s*%\}.*?\{%\s*endcomment\s*%\}", re.DOTALL
 )

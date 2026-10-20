@@ -100,6 +100,8 @@
   <div class="wx-note">
     <h2 id="wx-title" class="wx-title">{% translate "Weather" %}</h2>
     <p class="mb-2" role="status">{% translate "The weather is not available right now. It will be tried again shortly." %}</p>
+    {% comment %}LV-353: reintentar es htmx puro (sin JS inline, que la CSP bloquea). `weather-card.js` usa este mismo parcial cuando la petición misma falla (red, 4xx/5xx, tiempo agotado).{% endcomment %}
+    <button type="button" class="btn btn-sm btn-outline-primary mb-2" data-wx-retry hx-get="{% url 'weather-panel' %}" hx-target="#wx-card" hx-swap="outerHTML" hx-disabled-elt="this" hx-request='{"timeout": 10000}'>{% translate "Retry" %}</button><br>
     <a class="wx-change" href="{% url 'weather-location' %}">{% translate "Change" context "weather city" %}<span class="visually-hidden">: {% translate "Weather location" %}</span></a>
   </div>
 </section>

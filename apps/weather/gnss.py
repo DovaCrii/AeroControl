@@ -1,0 +1,149 @@
+"""Ventana estadística del centelleo ionosférico GNSS (LV-352, fase 1). Función pura, sin red.
+
+Idea tomada del portal de GEOCOM (https://centelleo.geocom.cl): lo opera GEOCOM con el área de
+desarrollo de Trimble y muestra en tiempo real un mapa de calor del norte y centro de Chile. Según
+la noticia, el centelleo degrada el posicionamiento de alta precisión, sobre todo de noche, de
+septiembre a abril, cerca de la medianoche, con máximo en 2025 y efectos hasta 2028.
+
+LO QUE CONSTA de la fuente es eso. NO consta ninguna API, descarga, condición de uso ni índice
+(S4/ROTI/TEC/Kp): este módulo no lee datos en vivo ni inventa valores. Es una referencia
+ESTADÍSTICA, no una medición.
+
+OJO, INTERPRETACIÓN NUESTRA: la fuente dice «de noche, cerca de la medianoche»; las horas 21:00 a
+03:00 (y la hora pico 00:00) las fijamos nosotros y se pueden cambiar por entorno
+(`GNSS_SCINT_*`). Dos más: «efectos hasta 2028» se lee como la temporada que termina en abril de
+2028 (mayo de 2028 ya queda fuera), y el período empieza el 1 de enero de 2025.
+
+Reglas:
+- La hora SIEMPRE se convierte a `settings.TIME_ZONE` (America/Santiago), nunca se usa UTC.
+- Una noche pertenece al día en que empieza la tarde: la madrugada del 1 de mayo es noche de abril
+  (cuenta) y la del 1 de septiembre es noche de agosto (no cuenta).
+- Los inicios y fines se construyen en hora local: el cambio de septiembre salta de las 00:00 a las
+  01:00 (esa medianoche no existe) y el de abril repite las 23:00; se usa la primera ocurrencia.
+- Fuera del período no se inventa ventana.
+"""
+
+from dataclasses import dataclass
+from datetime import date, datetime, timedelta
+from datetime import timezone as dt_timezone
+from zoneinfo import ZoneInfo
+
+from django.conf import settings
+
+
+@dataclass(frozen=True)
+class GnssParams:
+    months: frozenset
+    night_start: int
+    night_end: int
+    peak_hour: int
+    year_from: int
+    year_to: int
+    source_url: str
+    portal_url: str
+
+
+def _parse_months(raw):
+    return frozenset(int(p) for p in str(raw).split(",") if p.strip())
+
+
+def _parse_years(raw):
+    first, _, last = str(raw).strip().partition("-")
+    return int(first), int(last or first)
+
+
+def params_from_settings():
+    """Los parámetros vigentes, leídos de `settings` en cada llamada (las pruebas los cambian)."""
+    year_from, year_to = _parse_years(
+        getattr(settings, "GNSS_SCINT_YEARS", "2025-2028")
+    )
+    return GnssParams(
+        months=_parse_months(
+            getattr(settings, "GNSS_SCINT_MONTHS", "9,10,11,12,1,2,3,4")
+        ),
+        night_start=int(getattr(settings, "GNSS_SCINT_NIGHT_START", 21)),
+        night_end=int(getattr(settings, "GNSS_SCINT_NIGHT_END", 3)),
+        peak_hour=int(getattr(settings, "GNSS_SCINT_PEAK_HOUR", 0)),
+        year_from=year_from,
+        year_to=year_to,
+        source_url=getattr(settings, "GNSS_SCINT_SOURCE_URL", ""),
+        portal_url=getattr(settings, "GNSS_SCINT_PORTAL_URL", ""),
+    )
+
+
+def _local(zone, day, hour):
+    """`day` a las `hour` en hora local; una hora inexistente (salto de septiembre) se corre adelante."""
+    naive = datetime(day.year, day.month, day.day, hour, tzinfo=zone)
+    return naive.astimezone(dt_timezone.utc).astimezone(zone)
+
+
+def _utc(moment):
+    # Dos datetimes con la MISMA zona se comparan por reloj de pared e ignoran el cambio de hora:
+    # se compara siempre en UTC (el instante real).
+    return moment.astimezone(dt_timezone.utc)
+
+
+def _last_covered_day(params):
+    """Último día cubierto: fin de la primera racha de meses que arranca en el menor mes del año final."""
+    months = sorted(params.months)
+    last = months[0]
+    for month in months[1:]:
+        if month != last + 1:
+            break
+        last = month
+    first_of_next = date(params.year_to + (last // 12), last % 12 + 1, 1)
+    return first_of_next - timedelta(days=1)
+
+
+def _window(zone, anchor, params):
+    start = _local(zone, anchor, params.night_start)
+    wraps = params.night_end <= params.night_start
+    end_day = anchor + timedelta(days=1) if wraps else anchor
+    return start, _local(zone, end_day, params.night_end)
+
+
+def _anchor_counts(anchor, params):
+    return anchor.month in params.months and date(
+        params.year_from, 1, 1
+    ) <= anchor <= _last_covered_day(params)
+
+
+def window_state(now, params=None):
+    """`{active, next_start, next_end, in_period, period_over}` para el instante `now` (aware).
+
+    `active`: ahora cae dentro de una ventana. Sin `active`, `next_start`/`next_end` son la próxima
+    ventana (`None` si no hay); con `active`, `next_start` es `None` y `next_end` el fin de la
+    ventana en curso. `in_period`: la fecha está dentro del período que indica la fuente.
+    `period_over`: ya pasó (no se inventan ventanas después).
+    """
+    params = params or params_from_settings()
+    zone = ZoneInfo(settings.TIME_ZONE)
+    instant = _utc(now)
+    local = now.astimezone(zone)
+    today = local.date()
+    last_day = _last_covered_day(params)
+    first_day = date(params.year_from, 1, 1)
+    state = {
+        "active": False,
+        "next_start": None,
+        "next_end": None,
+        "in_period": first_day <= today <= last_day,
+        "period_over": today > last_day,
+    }
+    first = max(today - timedelta(days=1), first_day)
+    # La temporada se repite cada año: 800 días de recorrido sobran y la búsqueda se corta sola.
+    for offset in range(800):
+        day = first + timedelta(days=offset)
+        if day > last_day:
+            break
+        if not _anchor_counts(day, params):
+            continue
+        start, end = _window(zone, day, params)
+        if _utc(start) <= instant < _utc(end):
+            state["active"] = True
+            state["next_end"] = end
+            return state
+        if _utc(start) > instant:
+            state["next_start"], state["next_end"] = start, end
+            return state
+    return state
