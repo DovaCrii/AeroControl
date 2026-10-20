@@ -314,7 +314,8 @@ class TestGetLocationFor:
     def _user(self):
         return User.objects.create_user("g", password="pw")  # nosec B106
 
-    def test_none_without_row_or_default(self):
+    def test_none_without_row_or_default(self, settings):
+        settings.WEATHER_DEFAULT_LABEL = ""  # LV-353: por omisión ahora es Santiago
         assert get_location_for(self._user()) is None
 
     def test_default_is_used_when_the_person_has_no_row(self, settings):

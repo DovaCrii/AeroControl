@@ -17,10 +17,11 @@ from apps.core.views import ModelPermissionRequiredMixin
 
 from .forms import WeatherLocationForm, sites_for
 from .models import UserWeatherLocation
+from .panel import WeatherEnabledMixin
 from .search import SearchLimitReached, search_cities
 
 
-class WeatherLocationUpdate(ModelPermissionRequiredMixin, View):
+class WeatherLocationUpdate(WeatherEnabledMixin, ModelPermissionRequiredMixin, View):
     """GET: la ciudad actual, las faenas y un buscador. POST: guardar la elegida.
 
     Ver exige `view_userweatherlocation`; guardar exige `add_` si la persona aún no tiene
@@ -93,7 +94,7 @@ class WeatherLocationUpdate(ModelPermissionRequiredMixin, View):
         return redirect(reverse("weather-location"))
 
 
-class WeatherSearch(ModelPermissionRequiredMixin, View):
+class WeatherSearch(WeatherEnabledMixin, ModelPermissionRequiredMixin, View):
     """JSON: ciudades que coinciden con `q`. Cuenta contra el tope por persona y hora.
 
     Devuelve `index` y `label`, no coordenadas: quien elige manda el índice y el servidor

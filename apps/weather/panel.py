@@ -4,8 +4,10 @@ La persona decidió el 2026-10-19 que la tarjeta reemplaza a la decisión de LV-
 tiempo y los eventos climáticos previstos en la región de SU ciudad, y no se cruza con permisos,
 faenas ni aeronaves. Por eso este módulo no importa nada de `operations` ni de `registry`.
 
-En producción queda apagado por `WEATHER_ENABLED=False` (la licencia comercial de Open-Meteo está
-sin resolver): apagado, el panel no pide el fragmento (ver `weather_tags`) y la vista responde 404.
+Encendido por omisión desde LV-353 (riesgo de licencia aceptado, ver `docs/dev/tiempo.md`);
+`WEATHER_ENABLED=False` lo apaga todo: el panel no pide el fragmento (ver `weather_tags`) y las
+tres vistas del tiempo responden 404. Una sola función (`weather_enabled`) decide, para que el
+hueco, la vista y el cliente no puedan discrepar.
 """
 
 from datetime import datetime
@@ -24,6 +26,21 @@ from apps.core.views import ModelPermissionRequiredMixin
 
 from .locations import get_location_for
 from .models import UserWeatherLocation
+
+
+def weather_enabled():
+    """El interruptor `WEATHER_ENABLED`; ausente cuenta como encendido, igual que el valor por omisión."""
+    return bool(getattr(settings, "WEATHER_ENABLED", True))
+
+
+class WeatherEnabledMixin:
+    """404 antes que cualquier permiso cuando el tiempo está apagado: no hay ruta que sondear."""
+
+    def dispatch(self, request, *args, **kwargs):
+        if not weather_enabled():
+            raise Http404
+        return super().dispatch(request, *args, **kwargs)
+
 
 CONDITION_LABELS = {
     "clear": pgettext_lazy("weather condition", "Clear"),
@@ -276,7 +293,7 @@ def build_card(location, forecast, events):
     }
 
 
-class WeatherPanel(ModelPermissionRequiredMixin, View):
+class WeatherPanel(WeatherEnabledMixin, ModelPermissionRequiredMixin, View):
     """GET /weather/panel/: el fragmento de la tarjeta. Ver exige `view_userweatherlocation`."""
 
     model = UserWeatherLocation
@@ -284,8 +301,6 @@ class WeatherPanel(ModelPermissionRequiredMixin, View):
     template_name = "weather/_panel_card.html"
 
     def get(self, request):
-        if not getattr(settings, "WEATHER_ENABLED", False):
-            raise Http404
         location = get_location_for(request.user)
         if location is None:
             return self._render(request, {"state": "empty"})
