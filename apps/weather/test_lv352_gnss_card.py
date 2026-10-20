@@ -259,7 +259,7 @@ class TestContrast:
 def _f3b_static():
     return IDENTITY[
         IDENTITY.index("/* F3b: centelleo (LV-352)") : IDENTITY.index(
-            "/* ── Movimiento"
+            "/* F3c: cielo (LV-356)"
         )
     ]
 

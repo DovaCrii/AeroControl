@@ -292,7 +292,7 @@ class TestMotion:
         ]
         assert "animation" not in static and "@keyframes" not in static
         assert not re.search(
-            r"--(?:ac|sev)-[\w-]+\s*:|--id-(?!wx-|gn-)[\w-]+\s*:", static
+            r"--(?:ac|sev)-[\w-]+\s*:|--id-(?!wx-|gn-|sky-)[\w-]+\s*:", static
         )
 
     def test_every_wx_animation_is_inside_the_single_no_preference_block(self):

@@ -474,7 +474,7 @@ solo el gráfico.{% endcomment %}
         crossorigin="anonymous"></script>
 {{ chart_data|json_script:"chart-data" }}
 <script defer src="{% static 'js/dashboard.js' %}"></script>
-{% load weather_tags %}{% weather_card_enabled as weather_on %}{% if weather_on %}<script defer src="{% static 'js/weather-card.js' %}"></script>{% endif %}
+{% load weather_tags %}{% weather_card_enabled as weather_on %}{% if weather_on %}<script defer src="{% static 'js/weather-card.js' %}"></script><script defer src="{% static 'js/sky-preview.js' %}"></script>{% endif %}
 {% endblock %}
 
 {% block extrascripts %}

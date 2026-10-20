@@ -1,7 +1,8 @@
-{% load i18n %}{% comment %}LV-347: tarjeta del tiempo del panel (fragmento htmx de `weather/panel/`). SOLO informativa: muestra el tiempo y los eventos climáticos previstos en la región de la ciudad elegida y no se cruza con nada más de la aplicación. Todo lo que se dibuja viene calculado de `apps/weather/panel.py`; `city` va escapada por la plantilla (nunca `|safe`). El movimiento es sólo CSS, bajo `no-preference`, y el contenedor lleva el marcador que pausa lo continuo fuera de pantalla.{% endcomment %}
+{% load i18n l10n %}{% comment %}LV-347: tarjeta del tiempo del panel (fragmento htmx de `weather/panel/`). SOLO informativa: muestra el tiempo y los eventos climáticos previstos en la región de la ciudad elegida y no se cruza con nada más de la aplicación. Todo lo que se dibuja viene calculado de `apps/weather/panel.py`; `city` va escapada por la plantilla (nunca `|safe`). El movimiento es sólo CSS, bajo `no-preference`, y el contenedor lleva el marcador que pausa lo continuo fuera de pantalla.{% endcomment %}
 {% if state == "ok" %}
 <section id="wx-card" class="wx-card" aria-labelledby="wx-title" data-ambient>
-  <header class="wx-head wx-head--{{ slug }}{% if not is_day %} is-night{% endif %}">
+  <header class="wx-head wx-head--{{ slug }}{% if not is_day %} is-night{% endif %} wx-head--sky" data-sky="{{ sky.phase }}" data-sr="{{ scene.sunrise_h|unlocalize }}" data-ss="{{ scene.sunset_h|unlocalize }}" data-hour="{{ scene.hour_now|unlocalize }}" tabindex="0">
+    {% include "weather/_sky.html" %}
     <span class="wx-drift wx-drift--a" aria-hidden="true"></span><span class="wx-drift wx-drift--b" aria-hidden="true"></span>
     <div class="wx-now">
       {% include "weather/_icons.html" with slug=slug night=is_night size="lg" animate=True %}
