@@ -8,6 +8,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Changed
+
+- **Asistente de IA endurecido para probar el alcance de NVIDIA (`LV-362`).** Cadena de modelos de respaldo (`NVIDIA_MODEL_FALLBACKS`), `enable_thinking:false` con reintento sin la opción, limpieza del razonamiento, reintento acotado ante 429, errores tipados, cupo devuelto cuando la llamada no llegó a responder y `assistant_probar --models`. El asistente sigue apagado en producción; sin migración ni estáticos.
+
 ### Removed
 
 - **Expediente operativo sin «Revisión meteorológica registrada» (`LV-344`, paso 1).** La persona dijo que ya no se ocupa: el renglón opcional y su botón «Abrir el plan» salen del expediente; la cuenta de faltas no cambia. El modelo, el registro en el plan geoespacial y las revisiones guardadas siguen intactos hasta el paso 2 (condición de cierre en `MASTER_PLAN.md`).

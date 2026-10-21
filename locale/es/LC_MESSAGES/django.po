@@ -9652,6 +9652,13 @@ msgstr "El asistente necesitó demasiados pasos. Pruebe con una pregunta más si
 msgid "The assistant is not available right now. Try again in a moment."
 msgstr "El asistente no está disponible por ahora. Vuelva a intentarlo en un momento."
 
+msgid ""
+"The assistant's model cannot use the lookup tools. Ask the administrator to "
+"check the model list."
+msgstr ""
+"El modelo del asistente no puede usar las herramientas de consulta. Pida al "
+"administrador que revise la lista de modelos."
+
 msgid "Assistant"
 msgstr "Asistente"
 
