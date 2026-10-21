@@ -16,7 +16,13 @@ from django.utils import timezone
 
 from apps.geo.sections import format_dms
 
-from .models import AirspaceFeature, AirspaceSnapshot
+from .models import (
+    REVIEW_APPROVED,
+    SOURCE_GOOGLE,
+    STATUS_PUBLISHED,
+    AirspaceFeature,
+    AirspaceSnapshot,
+)
 
 # Drawing aids published as zones ("Medida de círculo", "2 NM"): not airspace, never served.
 HIDDEN_KINDS = (AirspaceFeature.KIND_AUX,)
@@ -73,12 +79,19 @@ def near_km():
 
 
 def current_snapshot():
-    return AirspaceSnapshot.objects.filter(is_current=True).first()
+    """The published Google copy: until an AIP copy is approved (LV-361), the screen shows this one."""
+    return AirspaceSnapshot.objects.filter(
+        is_current=True, source_kind=SOURCE_GOOGLE, status=STATUS_PUBLISHED
+    ).first()
 
 
 def active_features():
     """Active (not archived) features of the map, drawing aids excluded."""
-    return AirspaceFeature.objects.filter(is_active=True).exclude(kind__in=HIDDEN_KINDS)
+    return AirspaceFeature.objects.filter(
+        is_active=True,
+        source_kind=SOURCE_GOOGLE,
+        review_status=REVIEW_APPROVED,
+    ).exclude(kind__in=HIDDEN_KINDS)
 
 
 def etag_for(snapshot):

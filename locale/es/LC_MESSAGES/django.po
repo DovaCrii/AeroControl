@@ -10594,6 +10594,57 @@ msgstr "elemento del espacio aéreo"
 msgid "airspace features"
 msgstr "elementos del espacio aéreo"
 
+msgid "AIP-Chile ENR 5.1 (P, R, D zones)"
+msgstr "AIP-Chile ENR 5.1 (zonas P, R y D)"
+
+msgid "AIP-Chile ENR 5.5 (other activities)"
+msgstr "AIP-Chile ENR 5.5 (otras actividades)"
+
+msgid "AIP-Chile FIR boundaries (JSON)"
+msgstr "Límites de FIR del AIP-Chile (JSON)"
+
+msgid "Google My Maps (DGAC sensitive zones)"
+msgstr "Google My Maps (zonas sensibles de la DGAC)"
+
+msgid "Published"
+msgstr "Publicado"
+
+msgid "Needs a closer look"
+msgstr "Requiere una mirada más atenta"
+
+msgid "Polygon (vertices)"
+msgstr "Polígono (vértices)"
+
+msgid "Circle (centre and radius)"
+msgstr "Círculo (centro y radio)"
+
+msgid "Arc"
+msgstr "Arco"
+
+msgid "Radial sector"
+msgstr "Sector radial"
+
+msgid "In the AIP, missing in Google"
+msgstr "Está en el AIP, falta en Google"
+
+msgid "In Google, missing in the AIP"
+msgstr "Está en Google, falta en el AIP"
+
+msgid "Match"
+msgstr "Coincide"
+
+msgid "Discrepancy"
+msgstr "Discrepancia"
+
+msgid "Google only (reference)"
+msgstr "Solo en Google (referencia)"
+
+msgid "airspace cross-check"
+msgstr "cruce del espacio aéreo"
+
+msgid "airspace cross-checks"
+msgstr "cruces del espacio aéreo"
+
 msgid "Aerodrome"
 msgstr "Aeródromo"
 
