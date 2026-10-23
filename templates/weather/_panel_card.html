@@ -61,9 +61,9 @@
         <div><dt>{% translate "Sunrise" %}</dt><dd>{% if sunrise %}{{ sunrise|date:"H:i" }}{% else %}–{% endif %}</dd></div>
         <div><dt>{% translate "Sunset" %}</dt><dd>{% if sunset %}{{ sunset|date:"H:i" }}{% else %}–{% endif %}</dd></div>
         <div><dt>{% translate "Clouds" %}</dt><dd>{% if cloud is not None %}{{ cloud }}%{% else %}–{% endif %}</dd></div>
-        <div><dt>{% translate "Visibility" %}</dt><dd>{% if visibility_km is not None %}{{ visibility_km }} km{% else %}–{% endif %}</dd></div>
+        <div><dt>{% translate "Visibility" %}</dt><dd>{% if visibility_km is not None %}{{ visibility_km }} km{% elif no_visibility %}{% translate "Not available" %}{% else %}–{% endif %}</dd></div>
         <div><dt>{% translate "Wind" %}</dt><dd>{% if wind is not None %}{{ wind }} km/h{% else %}–{% endif %}{% if wind_rot is not None %} <svg class="wx-arrow" viewBox="0 0 24 24" width="16" height="16" style="--rot: {{ wind_rot }}deg" aria-hidden="true" focusable="false"><path d="M12 3v18M12 3l-6 7M12 3l6 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="visually-hidden">{% blocktranslate with degrees=wind_dir %}from {{ degrees }} degrees{% endblocktranslate %}</span>{% endif %}</dd></div>
-        <div><dt>{% translate "Gusts" %}</dt><dd>{% if gust is not None %}{{ gust }} km/h{% else %}–{% endif %}</dd></div>
+        <div><dt>{% translate "Gusts" %}</dt><dd>{% if gust is not None %}{{ gust }} km/h{% elif no_gusts %}{% translate "Not available" %}{% else %}–{% endif %}</dd></div>
       </dl>
 
       <h3 class="wx-h">{% translate "Weather events expected" %}</h3>
@@ -79,14 +79,15 @@
         {% endfor %}
       </ul>
       {% else %}
-      <p class="wx-none"><span aria-hidden="true">✓</span> {% translate "No notable weather events expected in the next 48 hours" %}</p>
+      {% if limits %}<p class="wx-none"><span aria-hidden="true">✓</span> {% translate "No notable weather events in the available data for the next 48 hours" %}</p>{% else %}<p class="wx-none"><span aria-hidden="true">✓</span> {% translate "No notable weather events expected in the next 48 hours" %}</p>{% endif %}
       {% endif %}
     </div>
   </div>
 
   <footer class="wx-foot">
     {% if not hide_legend %}<p class="wx-legend">{% translate "Informational only. It is not a flight condition and does not replace anyone's judgement or the DGAC" %}</p>{% endif %}
-    <p class="wx-credit">{% translate "Weather data by" %} <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo.com</a> · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>{% if checked_at %} · {{ checked_at }}{% endif %}</p>
+    {% if limits %}<p class="wx-credit wx-limits" role="note">{% translate "Not available from this source" %}: {% for label in limits %}{{ label }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+    <p class="wx-credit">{% if credit.slug == "met_norway" %}{% translate "Based on data from" %}{% else %}{% translate "Weather data by" %}{% endif %} <a href="{{ credit.url }}" target="_blank" rel="noopener noreferrer">{{ credit.name }}</a> · <a href="{{ credit.license_url }}" target="_blank" rel="noopener noreferrer">{{ credit.license }}</a>{% if checked_at %} · {{ checked_at }}{% endif %}</p>
   </footer>
 </section>
 {% elif state == "empty" %}

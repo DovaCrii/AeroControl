@@ -47,6 +47,10 @@
 
   --id-lift-2: 0 2px 4px rgb(16 24 40 / 10%), 0 22px 40px -16px rgb(16 24 40 / 40%);
 
+  /* Visual v3 (LV-367, fase 1). Borde de figuras y tarjetas con >= 3:1 (WCAG 1.4.11) contra `--ac-bg`, `--ac-surface` y `--id-tile`; superficie interna de las tarjetas nuevas. `--ac-border` (1,12:1 contra la tarjeta) sigue siendo el trazo decorativo. */
+  --id-edge: #7d8aa0;
+  --id-tile: #f7f9fc;
+
   --id-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --id-t-fast: 120ms;
   --id-t-base: 180ms;
@@ -60,6 +64,8 @@
 
 [data-theme="dark"] {
   --id-lift-2: 0 2px 4px rgb(0 0 0 / 45%), 0 24px 44px -16px rgb(0 0 0 / 80%);
+  --id-edge: #6c81a3;
+  --id-tile: #1f2b3e;
   --id-ok-bg: #14361f;
   --id-ok-border: #2c6b40;
   --id-ok-text: #7fd6a0;
@@ -1441,7 +1447,7 @@ form.is-submitting-slow .btn-primary::after {
   min-width: 0;
   margin-bottom: var(--id-sp-3);
   padding: var(--id-sp-2) var(--id-sp-3);
-  border: 1px solid var(--ac-border);
+  border: 1px solid var(--id-edge);
   border-radius: var(--id-r-card);
   background: var(--ac-surface);
   color: var(--ac-text);
@@ -1449,7 +1455,7 @@ form.is-submitting-slow .btn-primary::after {
 }
 .id-cx--loading { min-height: 120px; }
 .id-cx-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem var(--id-sp-3); }
-.id-cx-title { margin: 0; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ac-text-secondary); }
+.id-cx-title { margin: 0; font-size: var(--id-fs-lg); font-weight: 700; color: var(--ac-text); }
 .id-cx-asof { margin: 0; font-weight: 700; }
 .id-cx-link { margin-left: auto; color: var(--ac-text); font-size: var(--id-fs-sm); font-weight: 600; text-decoration: underline; }
 .id-cx-report { margin: 0; font-size: var(--id-fs-sm); color: var(--ac-text-secondary); }
@@ -1496,10 +1502,6 @@ form.is-submitting-slow .btn-primary::after {
 
 .id-cx-block--rings,
 .id-cx-block--maintenance { min-width: 0; }
-.id-cx-rings { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: var(--id-sp-2); margin: 0; padding: 0; list-style: none; }
-.id-cx-ring { display: grid; justify-items: start; gap: 0.35rem; min-width: 0; padding: var(--id-sp-1) 0; }
-.id-cx-ring-name { margin: 0; font-size: var(--id-fs-sm); font-weight: 700; }
-.id-cx-ring-text { min-width: 0; }
 .id-cx-ring-fig { margin: 0; font-size: var(--id-fs-sm); }
 .id-cx-fig { font-size: var(--id-fs-lg); font-variant-numeric: tabular-nums; }
 .id-cx-levels { display: flex; flex-wrap: wrap; gap: 0.25rem; margin: 0.35rem 0 0; padding: 0; list-style: none; }
@@ -1542,7 +1544,7 @@ form.is-submitting-slow .btn-primary::after {
    `tr.row-awaiting`); aquí sólo la forma. El medidor es ayuda visual: el número y el chip llevan el
    significado, así que no se le fuerza color. Sin `colspan` ni `.table-normalized`. */
 .id-cx-permits-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem var(--id-sp-3); }
-.id-cx-permits-head .id-cx-link { margin-left: auto; }
+.id-cx-permits-head .id-cx-link { margin-left: 0; }
 .id-cx-permits-wrap { overflow-x: auto; }
 .id-cx-permits { font-size: var(--id-fs-sm); }
 .id-cx-permits th, .id-cx-permits td { vertical-align: middle; }
@@ -1564,12 +1566,32 @@ form.is-submitting-slow .btn-primary::after {
 .id-cx-guide-body .id-cx-h3 { margin-top: var(--id-sp-1); }
 .id-cx-steps { margin: 0; padding-left: 1.25rem; display: grid; gap: 0.25rem; font-size: var(--id-fs-sm); }
 .id-cx-steps a { color: var(--ac-text); font-weight: 600; text-decoration: underline; }
-/* Bajo 576 px los anillos se apilan en filas (anillo a la izquierda, cifra y chips a la derecha) y el
-   mapa de calor pasa a cuatro columnas: Vencido, 0–30, 31–60 y 61–90 días. */
+/* Fase 4 (LV-367): resumen de un vistazo y secciones plegables. Sin tokens nuevos: usa `--id-edge`, `--id-tile`
+   y los chips. Los anillos ya no se dibujan (`ring` sigue en `compliance_charts`). */
+.id-cx-first { padding: var(--id-sp-1) var(--id-sp-2); border: 1px solid var(--id-edge); border-left: 4px solid var(--sev-warning-text); border-radius: var(--id-r-control); background: var(--id-tile); }
+.id-cx-first-list { margin: 0; padding-left: 1.25rem; display: grid; gap: 0.25rem; font-size: var(--id-fs-md); }
+.id-cx-first-list a { color: var(--ac-text); font-weight: 700; text-decoration: underline; }
+.id-cx-calm { display: flex; align-items: center; gap: 0.4rem; margin: 0; font-size: 0.875rem; }
+.id-cx-calm .nav-icon { width: 1.1rem; height: 1.1rem; flex: 0 0 1.1rem; color: var(--id-ok-text); }
+.id-cx-ind { display: grid; gap: var(--id-sp-1); margin: 0; padding: 0; list-style: none; }
+.id-cx-ind-item { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.75rem; padding: 0.5rem 0.75rem; border: 1px solid var(--id-edge); border-radius: var(--id-r-control); background: var(--id-tile); }
+.id-cx-ind-item .nav-icon { width: 1.4rem; height: 1.4rem; flex: 0 0 1.4rem; color: var(--ac-text-secondary); }
+.id-cx-ind-name { min-width: 6rem; font-size: 0.875rem; font-weight: 700; }
+.id-cx-ind-fig { font-size: 0.875rem; }
+.id-cx-clear { margin-top: var(--id-sp-1); }
+.id-cx-clear-list { display: flex; flex-wrap: wrap; gap: 0.25rem 0.75rem; margin: 0.25rem 0 0; padding: 0; list-style: none; font-size: 0.875rem; color: var(--ac-text-secondary); }
+.id-cx-clear-list .nav-icon { width: 1rem; height: 1rem; vertical-align: -0.15em; }
+.id-cx-fold { grid-column: 1 / -1; min-width: 0; padding: 0.5rem 0.75rem; border: 1px solid var(--id-edge); border-radius: var(--id-r-control); }
+.id-cx-fold > summary { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: var(--id-fs-md); font-weight: 700; }
+.id-cx-fold[open] > summary { margin-bottom: var(--id-sp-1); }
+.id-cx-count { min-width: 1.6rem; padding: 0 0.5rem; border: 1px solid var(--sev-nominal-border); border-radius: var(--id-r-pill); background: var(--sev-nominal-bg); color: var(--sev-nominal-text); font-size: var(--id-fs-sm); text-align: center; font-variant-numeric: tabular-nums; }
+.id-cx-lv-wrap { overflow-x: auto; }
+.id-cx .id-chip { font-size: var(--id-fs-sm); }
+.id-cx-lv { border-collapse: separate; border-spacing: 0 0.25rem; width: 100%; font-size: 0.875rem; }
+.id-cx-lv th, .id-cx-lv td { padding: 0.15rem 0.35rem; text-align: left; }
+.id-cx-zero { color: var(--ac-text-muted); }
+.id-cx-zero-rows { color: var(--ac-text-secondary); }
 @media (max-width: 575.98px) {
-  .id-cx-rings { grid-template-columns: minmax(0, 1fr); }
-  .id-cx-ring { grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: var(--id-sp-2); }
-  .id-cx-ring-name { grid-column: 1 / -1; }
   .id-cx-heat--wide { display: none; }
   .id-cx-heat--narrow { display: table; }
   .id-cx-heat--narrow .id-cx-rowhead { white-space: normal; padding-right: 0.25rem; }
@@ -1724,26 +1746,35 @@ summary:focus-visible {
   .al-sev, .al-flag { max-width: 100%; }
 }
 
-/* E7: sección «Entorno» (LV-358). Cabecera común, pestañas, niveles ● ▲ ◆, advertencia única y pie de
+/* E7: sección «Entorno» (LV-358, LV-367 fase 2). Cabecera común, pestañas, niveles ● ▲ ◆, advertencia única y pie de
    fuente. Sólo lee `--id-*`, `--ac-*` y `--sev-*` y define tokens `--id-env-*`. Un nivel se lee por símbolo
-   + texto + color, y NINGUNO usa el rojo de «crítico»: la sección informa, no decide. Sin animación ni
-   desplazamientos horizontales. El contraste de cada par se calcula en `apps/environment/test_lv358_environment.py`. */
+   + texto + color, y NINGUNO usa el rojo de «crítico»: la sección informa, no decide. ● Info es cian
+   (`--sev-advisory-*`), ▲ Atención ámbar (`--sev-warning-*`) y ◆ Fuerte un naranja propio, más oscuro y con
+   borde de 2 px: ámbar y naranja se distinguen también por el símbolo y la palabra. Sin animación ni
+   desplazamientos horizontales. El contraste de cada par se calcula en `apps/environment/test_lv358_environment.py`
+   y los de LV-367 en `apps/environment/test_lv367_tiles.py`. */
 .env-section {
-  --id-env-info-bg: var(--sev-nominal-bg);
-  --id-env-info-fg: var(--sev-nominal-text);
-  --id-env-info-bd: var(--sev-nominal-border);
+  --id-env-info-bg: var(--sev-advisory-bg);
+  --id-env-info-fg: var(--sev-advisory-text);
+  --id-env-info-bd: var(--sev-advisory-border);
   --id-env-attention-bg: var(--sev-warning-bg);
   --id-env-attention-fg: var(--sev-warning-text);
   --id-env-attention-bd: var(--sev-warning-border);
-  --id-env-strong-bg: var(--sev-warning-bg);
-  --id-env-strong-fg: var(--sev-warning-text);
-  --id-env-strong-bd: var(--sev-warning-text);
+  --id-env-strong-bg: #ffedd5;
+  --id-env-strong-fg: #9a3412;
+  --id-env-strong-bd: #9a3412;
   display: grid;
   gap: var(--id-sp-3);
   min-width: 0;
 }
+[data-theme="dark"] .env-section,
+[data-theme="dark"] .env-strip {
+  --id-env-strong-bg: #3b1d0a;
+  --id-env-strong-fg: #fdba74;
+  --id-env-strong-bd: #fdba74;
+}
 .env-section > * { min-width: 0; }
-.env-tabs ul { display: flex; flex-wrap: wrap; gap: 0.25rem; margin: 0; padding: 0 0 0 0; list-style: none; border-bottom: 1px solid var(--ac-border); }
+.env-tabs ul { display: flex; flex-wrap: wrap; gap: 0.25rem; margin: 0; padding: 0 0 0 0; list-style: none; border-bottom: 1px solid var(--id-edge); }
 .env-tab {
   display: inline-block;
   padding: 0.5rem 1rem;
@@ -1755,25 +1786,24 @@ summary:focus-visible {
   text-decoration: none;
 }
 .env-tab:hover { color: var(--ac-text); background: var(--ac-surface); }
-.env-tab.is-active { border-color: var(--ac-border); background: var(--ac-surface); color: var(--ac-text); }
+.env-tab.is-active { border-color: var(--id-edge); background: var(--ac-surface); color: var(--ac-text); }
 .env-header, .env-panel, .env-foot {
   padding: var(--id-sp-2) var(--id-sp-3);
-  border: 1px solid var(--ac-border);
+  border: 1px solid var(--id-edge);
   border-radius: var(--id-r-card);
   background: var(--ac-surface);
   color: var(--ac-text);
   box-shadow: var(--id-lift);
 }
 .env-header { display: grid; gap: var(--id-sp-2) var(--id-sp-3); grid-template-columns: minmax(0, 1fr); }
-.env-title { margin: 0 0 0.4rem; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ac-text-secondary); }
+.env-title { margin: 0 0 0.4rem; font-size: var(--id-fs-lg); font-weight: 700; color: var(--ac-text); }
 .env-city { margin: 0 0 0.6rem; font-size: var(--id-fs-lg); font-weight: 700; }
-.env-change { margin-left: 0.5rem; font-size: var(--id-fs-sm); font-weight: 600; color: var(--ac-text); text-decoration: underline; }
+.env-change { margin-left: 0.5rem; font-size: 0.875rem; font-weight: 600; color: var(--ac-text); text-decoration: underline; }
 .env-facts { display: flex; flex-wrap: wrap; gap: var(--id-sp-2) var(--id-sp-3); margin: 0; }
 .env-facts div { min-width: 5rem; }
-.env-facts dt { font-size: 0.75rem; font-weight: 600; color: var(--ac-text-secondary); }
-.env-facts dd { margin: 0; font-size: var(--id-fs-lg); font-weight: 700; }
-.env-lines { display: grid; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
-.env-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem; font-size: var(--id-fs-sm); }
+.env-facts dt { display: flex; align-items: center; gap: 0.35rem; font-size: 0.875rem; font-weight: 600; color: var(--ac-text-secondary); }
+.env-facts dt .nav-icon { width: 1.1rem; height: 1.1rem; flex: 0 0 1.1rem; }
+.env-facts dd { margin: 0; font-size: var(--id-fs-lg); font-weight: 700; font-variant-numeric: tabular-nums; }
 .env-lvl {
   display: inline-flex;
   align-items: center;
@@ -1783,39 +1813,41 @@ summary:focus-visible {
   border-radius: var(--id-r-pill);
   background: var(--id-env-info-bg);
   color: var(--id-env-info-fg);
-  font-size: 0.75rem;
+  font-size: var(--id-fs-sm);
   font-weight: 700;
   white-space: nowrap;
 }
 .env-lvl--attention { border-color: var(--id-env-attention-bd); background: var(--id-env-attention-bg); color: var(--id-env-attention-fg); }
 .env-lvl--strong { border-color: var(--id-env-strong-bd); border-width: 2px; background: var(--id-env-strong-bg); color: var(--id-env-strong-fg); }
-.env-referential { grid-column: 1 / -1; margin: 0; padding-top: var(--id-sp-1); border-top: 1px solid var(--ac-border); font-size: var(--id-fs-sm); color: var(--ac-text); }
-.env-panel p { margin: 0 0 0.6rem; font-size: var(--id-fs-sm); }
-.env-assume { color: var(--ac-text-secondary); font-size: 0.75rem; }
-.env-foot p { margin: 0 0 0.3rem; font-size: 0.75rem; color: var(--ac-text-secondary); }
+.env-referential { grid-column: 1 / -1; margin: 0; padding-top: var(--id-sp-1); border-top: 1px solid var(--ac-border); font-size: 0.875rem; color: var(--ac-text); }
+.env-referential-sym { width: 1.1rem; height: 1.1rem; vertical-align: -0.2em; color: var(--ac-text-secondary); }
+.env-panel p { max-width: 65ch; margin: 0 0 0.6rem; font-size: 0.875rem; }
+.env-assume { color: var(--ac-text-secondary); font-size: var(--id-fs-sm); }
+.env-foot p { margin: 0 0 0.3rem; font-size: var(--id-fs-sm); color: var(--ac-text-secondary); }
 .env-foot a, .env-source a { color: var(--ac-text); font-weight: 600; text-decoration: underline; }
 .env-source--stale { color: var(--sev-warning-text); font-weight: 600; }
-.env-legend { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0; font-size: 0.75rem; }
+.env-legend { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0; font-size: var(--id-fs-sm); }
 
-/* E7b: franja «Entorno hoy» del panel (LV-358, E2). Vive fuera de `.env-section`, así que repite los
-   mismos tokens de nivel (una prueba exige que sean idénticos). Una línea de hechos con dos celdas; sin
-   animación (la escena del cielo vive en la pestaña Tiempo). */
+/* E7b: franja «Entorno hoy» del panel (LV-358, E2; tarjetas en LV-367 fase 2). Vive fuera de `.env-section`, así que
+   repite los mismos tokens de nivel (una prueba exige que sean idénticos, en claro y oscuro). Tres tarjetas sobre
+   `--id-tile`, cada una con un filete izquierdo de 4 px en el color de SU nivel y el borde de 3:1 de `--id-edge`;
+   sin animación (la escena del cielo vive en la pestaña Tiempo). */
 .env-strip {
-  --id-env-info-bg: var(--sev-nominal-bg);
-  --id-env-info-fg: var(--sev-nominal-text);
-  --id-env-info-bd: var(--sev-nominal-border);
+  --id-env-info-bg: var(--sev-advisory-bg);
+  --id-env-info-fg: var(--sev-advisory-text);
+  --id-env-info-bd: var(--sev-advisory-border);
   --id-env-attention-bg: var(--sev-warning-bg);
   --id-env-attention-fg: var(--sev-warning-text);
   --id-env-attention-bd: var(--sev-warning-border);
-  --id-env-strong-bg: var(--sev-warning-bg);
-  --id-env-strong-fg: var(--sev-warning-text);
-  --id-env-strong-bd: var(--sev-warning-text);
+  --id-env-strong-bg: #ffedd5;
+  --id-env-strong-fg: #9a3412;
+  --id-env-strong-bd: #9a3412;
   display: grid;
   gap: var(--id-sp-2);
   min-width: 0;
   margin-bottom: var(--id-sp-3);
   padding: var(--id-sp-2) var(--id-sp-3);
-  border: 1px solid var(--ac-border);
+  border: 1px solid var(--id-edge);
   border-radius: var(--id-r-card);
   background: var(--ac-surface);
   color: var(--ac-text);
@@ -1825,23 +1857,74 @@ summary:focus-visible {
 .env-strip-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem var(--id-sp-3); }
 .env-strip .env-title { margin: 0; }
 .env-strip-city { font-weight: 700; }
-.env-strip-link { color: var(--ac-text); font-size: var(--id-fs-sm); font-weight: 600; text-decoration: underline; }
+.env-strip-link { color: var(--ac-text); font-size: 0.875rem; font-weight: 600; text-decoration: underline; }
 .env-strip-head .env-strip-link { margin-left: auto; }
-.env-strip-note { margin: 0; font-size: var(--id-fs-sm); }
-.env-strip-cells { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--id-sp-2) var(--id-sp-3); }
-.env-cell { min-width: 0; }
-.env-cell-title { margin: 0 0 0.25rem; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ac-text-secondary); }
-.env-cell-now { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.25rem; }
-.env-cell-now .wx-ico { width: 1.75rem; height: 1.75rem; flex: none; }
-.env-cell-temp { font-size: var(--id-fs-lg); }
-.env-cell-cond, .env-cell-when, .env-cell-more { font-size: var(--id-fs-sm); color: var(--ac-text-secondary); }
-.env-cell-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.5rem; margin: 0; font-size: var(--id-fs-sm); }
+.env-strip-note { margin: 0; font-size: 0.875rem; }
+.env-strip-cells { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--id-sp-2); }
+.env-cell {
+  display: grid;
+  align-content: start;
+  gap: 0.4rem;
+  min-width: 0;
+  padding: var(--id-sp-2);
+  border: 1px solid var(--id-edge);
+  border-left: 4px solid var(--id-env-info-fg);
+  border-radius: var(--id-r-card);
+  background: var(--id-tile);
+}
+.env-cell--attention { border-left-color: var(--id-env-attention-fg); }
+.env-cell--strong { border-left-color: var(--id-env-strong-fg); }
+.env-cell-head { display: flex; align-items: center; gap: 0.5rem; }
+.env-cell-head .nav-icon { width: 1.4rem; height: 1.4rem; flex: 0 0 1.4rem; color: var(--ac-text-secondary); }
+.env-cell-title { margin: 0; font-size: 0.875rem; font-weight: 700; color: var(--ac-text-secondary); }
+.env-cell-now { display: flex; align-items: center; gap: 0.6rem; margin: 0; }
+.env-cell-ico .wx-ico { width: 3rem; height: 3rem; flex: none; }
+.env-cell-temp, .env-cell-big { margin: 0; font-size: var(--id-fs-2xl); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.env-cell-cond, .env-cell-when, .env-cell-more { font-size: 0.875rem; color: var(--ac-text-secondary); }
+.env-cell-more { margin: 0; }
+.env-cell-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.5rem; margin: 0; font-size: 0.875rem; }
+.env-cell-calm { align-items: center; }
+.env-cell-calm .nav-icon { width: 1.1rem; height: 1.1rem; flex: 0 0 1.1rem; color: var(--id-env-info-fg); }
 @media (min-width: 768px) {
-  .env-strip-cells { grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+  .env-strip-cells { grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
 }
 @media (min-width: 992px) {
-  .env-header { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); }
+  .env-header { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* E7c: banda de 24 h del centelleo GNSS (LV-367, SVG de servidor, sin `style=""`). Pista con borde de 3:1, ventana
+   típica con TRAMA ámbar (no sólo color) y «ahora» en el color del texto; el eje y las cifras van aparte, en texto. */
+.id-gx-svg { display: block; max-width: 100%; height: auto; }
+.id-gx-track { fill: var(--ac-surface); stroke: var(--id-edge); stroke-width: 1; }
+.id-gx-win { stroke: var(--sev-warning-text); stroke-width: 1; }
+.id-gx-hatch { stroke: var(--sev-warning-text); }
+.id-gx-now { stroke: var(--ac-text); }
+.id-gx-now-dot { fill: var(--ac-text); }
+.id-gx-tick { fill: var(--ac-text-secondary); font-size: 0.75rem; font-variant-numeric: tabular-nums; }
+/* Línea completa de la pestaña (fase 3): rótulo sobre cada pista, noche rellena con el borde de 3:1, hora pico punteada. */
+.id-gx-svg--full { max-width: 20rem; width: 100%; }
+.id-gx-label { fill: var(--ac-text); font-size: 0.8125rem; font-weight: 600; }
+.id-gx-label--peak { font-size: 0.75rem; font-weight: 400; fill: var(--ac-text-secondary); }
+.id-gx-night { fill: var(--id-edge); }
+.id-gx-peak { stroke: var(--ac-text-secondary); }
+.id-gx-facts { display: flex; flex-wrap: wrap; gap: var(--id-sp-1) var(--id-sp-3); margin: var(--id-sp-1) 0; }
+.id-gx-facts div { min-width: 6rem; }
+.id-gx-facts dt, .id-gx-glossary dt { font-size: 0.875rem; font-weight: 600; color: var(--ac-text-secondary); }
+.id-gx-facts dd { margin: 0; font-size: var(--id-fs-md); font-weight: 700; font-variant-numeric: tabular-nums; }
+/* Calendario de temporada: relleno ámbar (con ● y la palabra) dentro, contorno (○) fuera, anillo y «hoy» en el mes actual. */
+.id-gx-months, .id-gx-years { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: var(--id-sp-1) 0; padding: 0; list-style: none; }
+.id-gx-month { display: inline-flex; align-items: center; gap: 0.3rem; min-width: 4.2rem; padding: 0.3rem 0.55rem; border: 1px solid var(--id-edge); border-radius: var(--id-r-control); background: var(--id-tile); color: var(--ac-text-secondary); font-size: 0.875rem; font-weight: 600; }
+.id-gx-month.is-on { border-color: var(--sev-warning-text); background: var(--sev-warning-bg); color: var(--sev-warning-text); }
+.id-gx-month.is-now { outline: 3px solid var(--ac-text); outline-offset: 2px; }
+.id-gx-today { font-weight: 800; color: var(--ac-text); }
+.id-gx-years { gap: 0.4rem var(--id-sp-3); font-size: 0.875rem; }
+.id-gx-year.is-now b { text-decoration: underline; }
+.id-gx-glossary { display: grid; gap: var(--id-sp-1); margin: var(--id-sp-1) 0 0; }
+.id-gx-glossary dt { display: flex; align-items: center; gap: 0.4rem; }
+.id-gx-glossary dt .nav-icon { width: 1.2rem; height: 1.2rem; flex: 0 0 1.2rem; }
+.id-gx-glossary dd { max-width: 65ch; margin: 0 0 0 1.6rem; font-size: 0.875rem; }
+.env-gnss-noscale { max-width: 65ch; }
+.env-gnss-noscale .nav-icon { width: 1.1rem; height: 1.1rem; vertical-align: -0.2em; color: var(--ac-text-secondary); }
 
 /* == F: ilustración y movimiento == */
 /* Contiene: F1 plano técnico (cabecera del panel y portada) y F2 entradas (reservada); las animaciones van en el bloque de movimiento de abajo. */

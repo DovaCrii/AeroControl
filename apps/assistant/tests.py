@@ -760,16 +760,19 @@ class TestUsageRegistry:
         assert [a.ok for a in answers] == [True, False]
         assert len(fake.calls) == 1
 
-    def test_a_network_failure_gives_the_call_back_but_a_429_does_not(self, caps):
+    def test_a_call_that_never_answered_is_given_back_but_a_server_error_is_not(
+        self, caps
+    ):
         from apps.assistant.models import AssistantUsage
 
         user = login_as("view_flightpermission").user
 
         ask(user, "a", client=Down("unreachable"))
         ask(user, "b", client=Down("http-429"))
+        ask(user, "c", client=Down("http-500"))
 
         rows = {r.outcome: r.rounds for r in AssistantUsage.objects.all()}
-        assert rows == {"unreachable": 0, "error-429": 1}
+        assert rows == {"unreachable": 0, "error-429": 0, "error": 1}
 
     @pytest.mark.parametrize(
         ("reason", "outcome"),

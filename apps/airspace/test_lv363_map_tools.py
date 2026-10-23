@@ -180,7 +180,7 @@ process.stdin.on('end', async () => {
       }
     };
     const map = { on() { return map; }, getSize: () => ({ x: 500, y: 400 }), fitBounds() {}, setView() {},
-      addLayer() {}, removeLayer() {}, getZoom: () => 5, doubleClickZoom: { enable() {}, disable() {} } };
+      addLayer() {}, removeLayer() {}, createPane() {}, getZoom: () => 5, doubleClickZoom: { enable() {}, disable() {} } };
     const L = {
       map: () => map, canvas: () => ({}), svg: () => ({ _container: stub() }), tileLayer: layer,
       control: { layers: () => layer() }, marker: layer, circleMarker: layer, polyline: layer,

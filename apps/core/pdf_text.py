@@ -1,0 +1,146 @@
+"""LV-368 fase 2: texto de un PDF y lecturas por tipo de documento (antes `dgac_pdf`).
+
+Un solo lugar para leer la capa de texto de un PDF (`text_from_pdf`), compartido por
+la autorización DGAC (folio y vigencia: LV-231, LV-295, LV-299) y por la credencial del
+operador (`apps.registry.credential_reader`). Mismo criterio de siempre: ante la
+duda, `None`; nunca levanta.
+
+--- Historia original (LV-231) ---
+
+LV-231: leer el número de la autorización DGAC desde su propio PDF.
+
+Pedido del usuario, textual, con la captura del encabezado a la vista: *"que el
+número del permiso de vuelo lo pueda sacar de la autorización DGAC; es el mismo
+PDF que siempre sube la DGAC, de ahí que sea automático"*. Su captura muestra el
+encabezado invariable: **"Autorización de Operación RPA DAN 151 / Número: 6551"**.
+
+Hoy el folio se teclea a mano y `LV-156` lo exige antes de aprobar, así que es
+una transcripción manual de un dato que va a la autoridad -- justo la clase de
+error que `LV-171` vino a reducir, y el PDF lo trae escrito.
+
+⚠️ **`LV-156` decidió que esto no se hacía, y su razón se revisó en vez de
+ignorarla.** Decía que *"sacarlo del archivo exigiría parsear el PDF --
+dependencia nueva que la política del repo no admite"*. Verificado: no había
+ninguna librería de PDF en el árbol, así que la afirmación era cierta. Pero el
+criterio real del repo no es "ninguna dependencia": es **ninguna que exija
+paquetes de sistema**, y está escrito en `pyproject.toml` al elegir `reportlab`.
+`pypdf` es puro Python y cumple ese mismo criterio.
+
+⚠️⚠️ **Este módulo propone, nunca escribe.** Extraer de un PDF es heurística: si
+la DGAC cambia el encabezado, el patrón lee otra cosa o nada. Devuelve `None` con
+generosidad y el camino de teclearlo queda intacto -- el mismo criterio que
+`Aerodrome` ya declara (*"la app propone, el papel manda"*). Un folio equivocado
+escrito solo es peor que un folio en blanco, porque el equivocado nadie lo
+revisa.
+"""
+
+import logging
+import re
+from datetime import date
+
+logger = logging.getLogger(__name__)
+
+# "Número: 6551". Se acepta `Numero` sin tilde porque un PDF generado con una
+# fuente sin acentos, o extraído por una capa OCR, los pierde -- y perder el
+# folio por una tilde sería fallar por la razón más tonta posible.
+#
+# `\d{1,10}` y no `\d+`: acota lo que puede terminar en un campo de la base y
+# evita que una cadena larguísima de dígitos (una tabla mal extraída, un número
+# de cuenta) se presente como si fuera un folio.
+FOLIO_PATTERN = re.compile(r"N[uú]mero\s*:?\s*(\d{1,10})", re.IGNORECASE)
+
+# Sólo se miran las primeras páginas. El encabezado va en la primera; recorrer un
+# expediente de treinta páginas es tiempo de servidor gastado para aumentar la
+# probabilidad de encontrar **otro** número que también diga "Número:" -- una
+# referencia a otro trámite, por ejemplo. Menos páginas es aquí más correcto, no
+# sólo más rápido.
+PAGES_TO_READ = 2
+
+
+def text_from_pdf(stream, pages=PAGES_TO_READ):
+    """El texto de las primeras `pages` páginas, o `None` si no hay nada que leer.
+
+    Cifrado, corrupto, no-PDF o sin capa de texto (un escaneo; no hay OCR): `None`.
+    Nunca levanta, y el log dice solo `pdf_unreadable`, sin contenido ni nombres.
+    """
+    try:
+        from pypdf import PdfReader
+
+        reader = PdfReader(stream)
+        chunks = [page.extract_text() or "" for page in reader.pages[:pages]]
+    except Exception:  # noqa: BLE001 - cualquier PDF ilegible es "sin lectura"
+        logger.info("pdf_unreadable", exc_info=True)
+        return None
+    text = "\n".join(chunks)
+    return text if text.strip() else None
+
+
+def folio_from_pdf(stream):
+    """El folio que declara el PDF, o `None` si no se puede afirmar ninguno.
+
+    `None` en todos los casos dudosos, y son varios a propósito:
+
+    - el archivo no es un PDF, está cifrado o llega corrupto;
+    - el encabezado no aparece en las primeras páginas;
+    - **aparecen dos números distintos**, que es el caso que más importa: ahí no
+      hay una respuesta, hay dos candidatas, y elegir una sería inventar cuál
+      manda. Sin sugerencia, la persona teclea el que dice el papel, que es
+      exactamente lo que hacía antes.
+
+    Nunca levanta: quien llama está dibujando una ficha, y un permiso no puede
+    dejar de mostrarse porque su PDF adjunto esté roto.
+    """
+    text = text_from_pdf(stream)
+    if text is None:
+        return None
+
+    found = {
+        match.group(1).lstrip("0") or "0" for match in FOLIO_PATTERN.finditer(text)
+    }
+    if len(found) != 1:
+        return None
+    return found.pop()
+
+
+# LV-295: «Rango de fecha autorizado para efectuar las siguientes operaciones :
+# 10/10/2026-10/01/2027». Día/mes/año, como escribe la DGAC. El texto entre «fecha» y
+# los dos puntos se tolera porque es lo que el PDF puede reformular sin avisar.
+WINDOW_PATTERN = re.compile(
+    r"Rango\s+de\s+fecha[^:]*:\s*"
+    r"(\d{1,2})/(\d{1,2})/(\d{4})\s*-\s*(\d{1,2})/(\d{1,2})/(\d{4})",
+    re.IGNORECASE,
+)
+
+
+def window_from_pdf(stream):
+    """La vigencia `(desde, hasta)` que declara el PDF, o `None` si no hay una sola.
+
+    LV-295, pedido del usuario (2026-10-08, con la autorización a la vista): la
+    vigencia del permiso *la entrega el PDF* y debe **cruzarse** con la del permiso
+    para aprobar. Misma regla que `folio_from_pdf`: ante la duda devuelve `None` y el
+    camino manual queda intacto -- no hay fecha, hay dos candidatas, o el archivo no
+    se lee --, porque una vigencia equivocada leída sola es peor que una en blanco.
+
+    Nunca levanta.
+    """
+    text = text_from_pdf(stream)
+    if text is None:
+        return None
+    return window_from_text(text)
+
+
+def window_from_text(text):
+    """El mismo criterio de `window_from_pdf`, sobre texto ya extraído (testeable)."""
+    found = set()
+    for match in WINDOW_PATTERN.finditer(text):
+        d1, m1, y1, d2, m2, y2 = (int(part) for part in match.groups())
+        try:
+            start, end = date(y1, m1, d1), date(y2, m2, d2)
+        except ValueError:
+            return None
+        if end < start:
+            return None
+        found.add((start, end))
+    if len(found) != 1:
+        return None
+    return found.pop()

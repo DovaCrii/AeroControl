@@ -62,6 +62,14 @@ CATEGORY_PERMISSIONS = {
     "permits": ("operations.view_flightpermission",),
     "maintenance": ("maintenance.view_maintenancerecord",),
 }
+# Icono de cada categoría: símbolos del menú (`static/img/icons.svg`), sin dibujar nada nuevo.
+CATEGORY_ICON = {
+    "papers": "icon-document-list",
+    "people": "icon-operator-list",
+    "aircraft": "icon-aircraft-list",
+    "permits": "icon-permission-list",
+    "maintenance": "icon-maintenance-list",
+}
 # `item["subject_kind"]` (ver `expirations.add`) -> categoría.
 SUBJECT_CATEGORY = {
     "document": "papers",
@@ -209,6 +217,7 @@ def expiry_data(user, cost_center, today, tenant_ids):
             {
                 "key": key,
                 "label": label,
+                "icon": CATEGORY_ICON[key],
                 "counts": c,
                 "total": sum(c.values()),
                 "attend": attend,

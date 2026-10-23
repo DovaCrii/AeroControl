@@ -80,7 +80,7 @@ def on(settings, monkeypatch, forecast, calls):
     settings.GNSS_SCINTILLATION_ENABLED = True
     settings.WEATHER_DEFAULT_LABEL = ""
 
-    def fake(lat, lon):
+    def fake(lat, lon, zone=None):
         calls.append((round(float(lat), 3), round(float(lon), 3)))
         return forecast
 
@@ -246,7 +246,7 @@ class TestOneCityOneZoneOneForecast:
         assert bare.sunset_text == "" and bare.gnss["next_start"].hour == 21
 
     def test_the_panel_card_never_asks_for_a_forecast(self, monkeypatch, settings):
-        def boom(lat, lon):
+        def boom(lat, lon, zone=None):
             raise AssertionError("el panel no puede pedir el pronóstico")
 
         settings.GNSS_SCINTILLATION_ENABLED = True
@@ -321,8 +321,11 @@ class TestTheSummaryIsFactsNotAVerdict:
         _city(client)
         for url in (WEATHER, GNSS):
             html = _section(_get(client, url).content.decode())
-            assert "env-lvl--strong" in html or url == GNSS
             assert not re.search(r"critical|danger|\bred\b", html, re.I), url
+        # El nivel fuerte lo dibuja la franja (la pestaña Tiempo carga su tarjeta por htmx).
+        strip = _get(client, reverse("environment-strip")).content.decode()
+        assert "env-lvl--strong" in strip
+        assert not re.search(r"critical|danger|\bred\b", strip, re.I)
 
     def test_the_stylesheet_block_has_no_red_no_motion_and_no_foreign_tokens(self):
         block = IDENTITY[
@@ -398,7 +401,9 @@ class TestOneReferentialText:
         assert "js/weather-card.js" in content and "js/sky-preview.js" in content
 
     def test_a_failed_card_retries_inside_the_environment(self, on, monkeypatch):
-        monkeypatch.setattr(weather_client, "panel_forecast", lambda lat, lon: None)
+        monkeypatch.setattr(
+            weather_client, "panel_forecast", lambda lat, lon, zone=None: None
+        )
         client = login_as(VIEW)
         _city(client)
         retry = _get(client, reverse("weather-panel") + "?embed=environment")

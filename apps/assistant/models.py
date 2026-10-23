@@ -14,7 +14,7 @@ class AssistantUsage(BaseModel):
     los procesos (reemplaza la caché por proceso del PR 1).
 
     `rounds` cuenta las llamadas al servicio de esta pregunta (lo que se cobra contra el tope);
-    se devuelve una cuando la llamada falló por red antes de responder.
+    se devuelve una cuando la llamada falló por red, tiempo agotado o límite de ritmo (429) antes de\n    responder.
 
     `vote` (LV-341) es el único juicio que se guarda sobre una respuesta: +1 o -1, nunca texto.
 

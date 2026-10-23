@@ -622,7 +622,7 @@ class GeoPlanDetailView(ModelViewPermissionRequiredMixin, DetailView):
         whenever the feature is off, the area has no bbox, or the provider did
         not answer; the template then shows nothing rather than an error.
         """
-        from apps.core.weather import bbox_centroid, forecast_for
+        from apps.core.weather import bbox_centroid, forecast_for, provider_credit
 
         centroid = bbox_centroid(current)
         permission = plan.flight_permission
@@ -640,6 +640,7 @@ class GeoPlanDetailView(ModelViewPermissionRequiredMixin, DetailView):
         latitude, longitude = centroid
         return {
             "weather": forecast_for(latitude, longitude, target_date),
+            "weather_credit": provider_credit(),
             "weather_date": target_date,
             "weather_reviews": reviews,
         }

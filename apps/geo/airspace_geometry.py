@@ -226,6 +226,50 @@ def distance_to_geometry_km(lat, lon, geometry):
 
 
 # ---------------------------------------------------------------------------
+# Comparar dos formas (cruce AIP / Google, LV-361)
+# ---------------------------------------------------------------------------
+
+
+def vertices_of(geometry):
+    """Los vértices ``[lon, lat]`` de una geometría; un anillo cerrado no repite el primero."""
+    vertices = [list(p) for p in _points(geometry)]
+    for line in _lines(geometry):
+        vertices.extend(list(p) for p in line)
+    for polygon in _polygons(geometry):
+        for ring in polygon:
+            closed = len(ring) > 1 and list(ring[0]) == list(ring[-1])
+            vertices.extend(list(p) for p in (ring[:-1] if closed else ring))
+    return vertices
+
+
+def boundary_distance_km(lat, lon, geometry):
+    """Distancia del punto al BORDE de la geometría (puntos, líneas y anillos).
+
+    A diferencia de `distance_to_geometry_km`, un punto dentro de un polígono no da 0: sirve para
+    medir cuánto se separa un vértice de la otra forma, esté dentro o fuera de ella."""
+    best = math.inf
+    for point in _points(geometry):
+        best = min(best, haversine_km(lat, lon, point[1], point[0]))
+    for line in _lines(geometry):
+        best = min(best, distance_to_line_km(lat, lon, line))
+    for polygon in _polygons(geometry):
+        best = min(best, distance_to_polygon_edge_km(lat, lon, polygon))
+    return best
+
+
+def vertex_distances_m(geometry, other):
+    """Metros de cada vértice de `geometry` al borde de `other`, de menor a mayor.
+
+    Lista vacía si alguna de las dos no tiene posiciones: sin forma no hay distancia que inventar."""
+    if not _all_positions(other):
+        return []
+    return sorted(
+        boundary_distance_km(lat, lon, other) * 1000.0
+        for lon, lat in vertices_of(geometry)
+    )
+
+
+# ---------------------------------------------------------------------------
 # Círculos
 # ---------------------------------------------------------------------------
 
@@ -316,3 +360,229 @@ def nearby(
         "within": within,
         "aerodromes": points[: max(aerodromes, 0)],
     }
+
+
+# ---------------------------------------------------------------------------
+# Pertenencia a una comuna o región (LV-367, fase 6)
+# ---------------------------------------------------------------------------
+#
+# El «área» es una lista de PARTES (una por comuna); cada parte, una lista de anillos [lon, lat] que se
+# leen con la regla par-impar (islas y huecos, como `administrative.locate`). Una región es la unión de sus
+# comunas: se prueba por parte y se junta con «o», porque dos comunas vecinas se solapan o dejan rendijas
+# de hasta ~111 m y un par-impar sobre todo el conjunto contaría el solapamiento como «fuera».
+#
+# Qué es y qué no es cada resultado, para que nadie lo lea como más de lo que dice:
+#   * `geometry_intersects_rings`: recuadro -> vértice en polígono en ambos sentidos -> cruce de aristas.
+#     Es exacto sobre los anillos que recibe (no inventa tolerancia).
+#   * «contenida» es MUESTREADA: todos los vértices y tres puntos por arista caen dentro del área. Una
+#     protuberancia más fina que ese muestreo, o dentro de la rendija de dos comunas, se le puede escapar;
+#     por eso la pantalla dice «referencial BCN, ±111 m».
+
+
+def _box_of(ring):
+    lons = [p[0] for p in ring]
+    lats = [p[1] for p in ring]
+    return (min(lons), min(lats), max(lons), max(lats))
+
+
+def _boxes_overlap(a, b):
+    return a[0] <= b[2] and b[0] <= a[2] and a[1] <= b[3] and b[1] <= a[3]
+
+
+def _in_box(box, lon, lat):
+    return box[0] <= lon <= box[2] and box[1] <= lat <= box[3]
+
+
+def _in_ring_xy(lon, lat, ring):
+    """Trazado de rayo sobre un anillo `[lon, lat]` (el mismo algoritmo que `administrative._in_ring`)."""
+    inside = False
+    previous = ring[-1]
+    for current in ring:
+        if (current[1] > lat) != (previous[1] > lat):
+            crossing = previous[0] + (lat - previous[1]) * (
+                current[0] - previous[0]
+            ) / (current[1] - previous[1])
+            if lon < crossing:
+                inside = not inside
+        previous = current
+    return inside
+
+
+def _prepare_parts(parts):
+    prepared = []
+    for rings in parts:
+        valid = [ring for ring in rings if len(ring) >= 3]
+        if not valid:
+            continue
+        boxes = [_box_of(ring) for ring in valid]
+        box = (
+            min(b[0] for b in boxes),
+            min(b[1] for b in boxes),
+            max(b[2] for b in boxes),
+            max(b[3] for b in boxes),
+        )
+        prepared.append((box, valid, boxes))
+    return prepared
+
+
+def _in_part(lon, lat, part):
+    box, rings, boxes = part
+    if not _in_box(box, lon, lat):
+        return False
+    inside = False
+    for ring, ring_box in zip(rings, boxes, strict=True):
+        if _in_box(ring_box, lon, lat) and _in_ring_xy(lon, lat, ring):
+            inside = not inside
+    return inside
+
+
+def _orientation(a, b, c):
+    value = (b[1] - a[1]) * (c[0] - b[0]) - (b[0] - a[0]) * (c[1] - b[1])
+    return 0 if value == 0 else (1 if value > 0 else 2)
+
+
+def _on_segment(a, b, c):
+    return min(a[0], c[0]) <= b[0] <= max(a[0], c[0]) and min(a[1], c[1]) <= b[
+        1
+    ] <= max(a[1], c[1])
+
+
+def _segments_intersect(p1, p2, p3, p4):
+    """¿Se tocan los segmentos p1p2 y p3p4? Tocarse en un punto o ser colineales y solaparse cuenta."""
+    o1, o2 = _orientation(p1, p2, p3), _orientation(p1, p2, p4)
+    o3, o4 = _orientation(p3, p4, p1), _orientation(p3, p4, p2)
+    if o1 != o2 and o3 != o4:
+        return True
+    return (
+        (o1 == 0 and _on_segment(p1, p3, p2))
+        or (o2 == 0 and _on_segment(p1, p4, p2))
+        or (o3 == 0 and _on_segment(p3, p1, p4))
+        or (o4 == 0 and _on_segment(p3, p2, p4))
+    )
+
+
+def _edges(geometry):
+    """Las aristas de una geometría con su recuadro: anillos de polígono (cerrados) y polilíneas."""
+    pairs = []
+    for polygon in _polygons(geometry):
+        for ring in polygon:
+            if len(ring) >= 2:
+                pairs.extend(zip(ring, ring[1:] + ring[:1], strict=True))
+    for line in _lines(geometry):
+        pairs.extend(zip(line, line[1:], strict=False))
+    return [
+        (a, b, (min(a[0], b[0]), min(a[1], b[1]), max(a[0], b[0]), max(a[1], b[1])))
+        for a, b in pairs
+    ]
+
+
+def _intersects_part(gbox, positions, polygons, edges, part):
+    box, rings, boxes = part
+    if not _boxes_overlap(gbox, box):
+        return False
+    # 1. un vértice de la geometría dentro del área
+    if any(_in_part(p[0], p[1], part) for p in positions if _in_box(box, p[0], p[1])):
+        return True
+    # 2. un vértice del área dentro de un polígono de la geometría (el área cabe entera en la zona)
+    if polygons:
+        for ring, ring_box in zip(rings, boxes, strict=True):
+            if not _boxes_overlap(gbox, ring_box):
+                continue
+            for lon, lat in ring:
+                if _in_box(gbox, lon, lat) and any(
+                    point_in_polygon(lat, lon, polygon) for polygon in polygons
+                ):
+                    return True
+    # 3. una arista de la geometría cruza una arista del área (sin que ningún vértice esté dentro)
+    if edges:
+        for ring, ring_box in zip(rings, boxes, strict=True):
+            if not _boxes_overlap(gbox, ring_box):
+                continue
+            for a, b in zip(ring, ring[1:] + ring[:1], strict=True):
+                edge_box = (
+                    min(a[0], b[0]),
+                    min(a[1], b[1]),
+                    max(a[0], b[0]),
+                    max(a[1], b[1]),
+                )
+                if not _boxes_overlap(gbox, edge_box):
+                    continue
+                for c, d, other_box in edges:
+                    if _boxes_overlap(edge_box, other_box) and _segments_intersect(
+                        a, b, c, d
+                    ):
+                        return True
+    return False
+
+
+def _geometry_context(geometry):
+    gbox = bbox_of(geometry)
+    if gbox is None:
+        return None
+    return (gbox, _all_positions(geometry), _polygons(geometry), _edges(geometry))
+
+
+def geometry_intersects_rings(geometry, rings):
+    """¿La geometría toca el área descrita por `rings` (anillos `[lon, lat]`, regla par-impar)?
+
+    Tres pasos, del más barato al más caro: recuadros que no se tocan (descarte); un vértice de un lado
+    dentro del otro, **en ambos sentidos** (la zona dentro del área y el área entera dentro de la zona);
+    y, si nada de eso, un cruce de aristas (dos contornos que se atraviesan sin que ningún vértice quede
+    del otro lado). Tocarse en el borde cuenta."""
+    context = _geometry_context(geometry)
+    parts = _prepare_parts([rings])
+    if context is None or not parts:
+        return False
+    return _intersects_part(*context, parts[0])
+
+
+def _samples(geometry):
+    """Vértices y tres puntos por arista (1/4, 1/2, 3/4): lo que se prueba para decir «contenida»."""
+    points = list(_all_positions(geometry))
+    for a, b, _box in _edges(geometry):
+        for t in (0.25, 0.5, 0.75):
+            points.append((a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t))
+    return points
+
+
+def _within_parts(geometry, prepared):
+    return all(
+        any(_in_part(lon, lat, part) for part in prepared)
+        for lon, lat in _samples(geometry)
+    )
+
+
+def features_in_area(features, parts):
+    """Qué zonas y aeródromos hay en un área (`parts`: lista de anillos por comuna).
+
+    Devuelve `[{"feature": ..., "relation": "contained" | "touches"}]` en el orden recibido:
+
+    * un punto de aeródromo (`AERODROME_KINDS`): sólo si cae dentro; relación ``contained``.
+    * una zona (cualquier otro tipo con geometría): ``contained`` si TODAS sus muestras caen dentro del
+      área, ``touches`` si la toca sin estar contenida, y nada si no la toca.
+
+    Las pistas chicas y las geometrías vacías se omiten. Se calcula contra los anillos completos que
+    se reciben; el resultado es referencial (los anillos de BCN vienen a ~111 m)."""
+    prepared = _prepare_parts(parts)
+    found = []
+    for feature in features:
+        geometry = feature.get("geometry") or {}
+        kind = _kind(feature)
+        if kind == "airstrip":
+            continue
+        if kind in AERODROME_KINDS:
+            points = _points(geometry)
+            if points and any(
+                _in_part(points[0][0], points[0][1], part) for part in prepared
+            ):
+                found.append({"feature": feature, "relation": "contained"})
+            continue
+        context = _geometry_context(geometry)
+        if context is None:
+            continue
+        near = [part for part in prepared if _boxes_overlap(context[0], part[0])]
+        if not any(_intersects_part(*context, part) for part in near):
+            continue
+        relation = "contained" if _within_parts(geometry, near) else "touches"
+        found.append({"feature": feature, "relation": relation})
+    return found

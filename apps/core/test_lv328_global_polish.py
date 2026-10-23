@@ -172,6 +172,9 @@ def test_stylesheet_weight_guard():
     del cielo (LV-356: 14 fases claro y oscuro, capas y movimiento, ~9,5 KB) lo sube a 235 KB.
     La sección «Cumplimiento» (LV-359: anillos, mapa de calor, historial, guía y la tabla de permisos,
     ~9 KB entre las fases 2 y 4) lo sube a 245 KB; sigue siendo un techo y no una cifra a ciegas.
+    Visual v3 (LV-367: tarjetas del Entorno con niveles propios, banda e infografía del centelleo, y el
+    resumen plegable de Cumplimiento con la tabla simple; ~2 KB netos porque Cumplimiento retiró las
+    reglas de los anillos) lo sube a 250 KB.
     """
     total = sum((STATIC / name).stat().st_size for name in ("app.css", "identity.css"))
-    assert total < 245 * 1024
+    assert total < 250 * 1024

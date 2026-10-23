@@ -50,10 +50,15 @@ def _past(row):
     return row["lapsed"] + row["expired_this_month"]
 
 
+# Orden de «estado» para la columna Estado: primero lo que hay que atender (sin permiso, luego el que
+# aún no empieza, luego el que espera a la DGAC, al final el vigente).
+STATE_RANK = {"none": 0, "not_started": 1, "awaiting": 2, "in_force": 3}
+
 # Clave que viaja en `?sort=` -> valor por el que se ordena. Es la lista permitida: no se pasa
 # nada del URL a ninguna consulta ni a `getattr`.
 SORT_KEYS = {
     "code": lambda row: row["cost_center"].code,
+    "status": lambda row: STATE_RANK[_state(row)],
     "days": lambda row: row["days_remaining"],
     "in_force": lambda row: row["in_force"],
     "soon": lambda row: row["soon"],
@@ -132,7 +137,28 @@ def _details(tenant_ids, rows):
     return grouped
 
 
-def permit_table(user, cost_center, today, tenant_ids, column="", direction=""):
+def requested_all(params):
+    """¿Se pidió ver TODAS las faenas (`?all=1`)? Por omisión sólo las que tienen un problema."""
+    return params.get("all") == "1"
+
+
+def has_problem(row):
+    """Una faena «con problema»: sin permiso vigente, uno por empezar o esperando, o con el primero a 60 días o menos.
+
+    LV-367: la tabla simple muestra sólo estas por omisión; el resto se ve con «Ver todas». La escala es la
+    de PERMISOS (30/60 días, `permit_band`), la misma de los chips; nada se recalcula.
+    """
+    if _state(row) != "in_force":
+        return True
+    return permit_band(row["days_remaining"]) in (
+        PERMIT_BAND_CRITICAL,
+        PERMIT_BAND_WARNING,
+    )
+
+
+def permit_table(
+    user, cost_center, today, tenant_ids, column="", direction="", show_all=False
+):
     """La tabla lista para dibujar, o `None` sin `view_flightpermission`.
 
     `rows` ya viene ordenada; cada fila lleva su tramo (`band`, símbolo y tono), el valor del
@@ -144,6 +170,11 @@ def permit_table(user, cost_center, today, tenant_ids, column="", direction=""):
     if cost_center:
         rows = [row for row in rows if row["cost_center"].pk == cost_center.pk]
     rows = ordered_rows(rows, column, direction)
+    total = len(rows)
+    without_permit = sum(1 for row in rows if not row["in_force"])
+    problems = sum(1 for row in rows if has_problem(row))
+    if not show_all:
+        rows = [row for row in rows if has_problem(row)]
     details = _details(tenant_ids, rows)
     items = []
     for row in rows:
@@ -163,6 +194,7 @@ def permit_table(user, cost_center, today, tenant_ids, column="", direction=""):
                 "days_text": None if days is None else _("%(n)s d") % {"n": days},
                 # Estado de la celda «Vigentes»: con permiso vigente, la cifra; sin él, qué hay.
                 "state": _state(row),
+                "problem": has_problem(row),
                 "row_class": _row_class(row),
                 "permits": listed[:DETAIL_LIMIT],
                 "more": max(0, len(listed) - DETAIL_LIMIT),
@@ -171,18 +203,19 @@ def permit_table(user, cost_center, today, tenant_ids, column="", direction=""):
         )
     return {
         "rows": items,
-        "without_permit": sum(1 for row in items if not row["in_force"]),
+        "total": total,
+        "problems": problems,
+        "hidden": total - len(items),
+        "show_all": show_all,
+        "without_permit": without_permit,
         "column": column,
         "direction": direction,
         "title": ngettext(
             "%(count)s site, of which %(without)s without a permit in force",
             "%(count)s sites, of which %(without)s without a permit in force",
-            len(items),
+            total,
         )
-        % {
-            "count": len(items),
-            "without": sum(1 for row in items if not row["in_force"]),
-        },
+        % {"count": total, "without": without_permit},
     }
 
 
@@ -219,11 +252,14 @@ def sort_context(request, cost_center, columns=tuple(SORT_KEYS)):
     panel; con él lleva a la página completa de la sección y vuelve a la tabla.
     """
     column, direction = requested_sort(request.GET)
+    query = f"cost_center={cost_center.pk}&" if cost_center else ""
+    if requested_all(request.GET):
+        query += "all=1&"
     return {
         "columns": {key: key for key in columns},
         "column": column,
         "direction": direction,
-        "base_query": f"cost_center={cost_center.pk}&" if cost_center else "",
+        "base_query": query,
         "url_prefix": reverse("dashboard-compliance"),
         "url_suffix": "#cx-permits",
     }

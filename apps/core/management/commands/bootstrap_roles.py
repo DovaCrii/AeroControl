@@ -259,6 +259,10 @@ class Command(BaseCommand):
             group.permissions.set(all_permissions.filter(codename__in=codenames))
             self.stdout.write(self.style.SUCCESS(f"Configured role: {name}"))
 
+        # LV-361 (fase 4): `airspace.review_airspacesnapshot` (revisar, corregir y publicar las
+        # zonas leídas del AIP) NO está en ningún rol de arriba a propósito: quién revisa y
+        # aprueba cada enmienda lo decide la persona (diseño §6.5). Por ahora sólo lo tiene
+        # Administrator, que recibe todos los permisos; para darlo a otro rol, agregarlo acá.
         administrators, _ = Group.objects.get_or_create(name="Administrator")
         administrators.permissions.set(all_permissions)
         self.stdout.write(self.style.SUCCESS("Configured role: Administrator"))

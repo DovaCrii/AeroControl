@@ -323,7 +323,26 @@
     return found;
   }
 
+  /* LV-367 (fase 7): las comunas y regiones como entradas de búsqueda; espejo de
+     `airspace_search.admin_entries` (mismos campos). Sin código: el código BCN no se escribe. */
+  var ADMIN_ID_PREFIX = "admin:";
+
+  function adminEntries(index) {
+    return index.map(function (item) {
+      return {
+        id: ADMIN_ID_PREFIX + String(item.code),
+        code: "",
+        name: item.name,
+        kind: item.kind,
+        region: item.region || "",
+        bbox: item.bbox,
+      };
+    });
+  }
+
   var api = {
+    ADMIN_ID_PREFIX: ADMIN_ID_PREFIX,
+    adminEntries: adminEntries,
     normalizeText: normalizeText,
     normalizeZoneCode: normalizeZoneCode,
     parseQuery: parseQuery,

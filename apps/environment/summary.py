@@ -49,6 +49,7 @@ class EnvironmentSummary:
     checked_at: Optional[datetime] = None
     stale: bool = False
     sunsets: dict = field(default_factory=dict)
+    sunrises: dict = field(default_factory=dict)
     lines: tuple = ()
     # El renglón del centelleo por separado (LV-358, E2): la franja del panel lo dibuja sin tener
     # que adivinar su lugar dentro de `lines`.
@@ -183,7 +184,8 @@ def build_summary(
     sunsets, zone = gnss.sunsets_from_forecast(forecast)
     local_now = now.astimezone(zone)
     today = local_now.date()
-    sunrise = _sunrises(forecast, zone).get(today)
+    sunrises = _sunrises(forecast, zone)
+    sunrise = sunrises.get(today)
     sunset = sunsets.get(today)
     facts = _event_facts(events) if forecast else ()
     card = build_gnss_card(now, sunsets, city) if gnss_enabled else None
@@ -202,7 +204,13 @@ def build_summary(
             }
         else:
             level = "info"
-            text = _("No notable weather events expected in the next 48 hours")
+            if forecast.get("unavailable"):
+                # LV-365: sin ráfagas ni visibilidad en la fuente, «tranquilo» sería afirmar de más.
+                text = _(
+                    "No notable weather events in the available data for the next 48 hours"
+                )
+            else:
+                text = _("No notable weather events expected in the next 48 hours")
     else:
         level, text = "info", _("The forecast is not available right now")
     symbol, label = level_info(level)
@@ -232,6 +240,7 @@ def build_summary(
         checked_at=forecast_checked_at,
         stale=stale,
         sunsets=sunsets,
+        sunrises=sunrises,
         lines=tuple(lines),
         gnss_line=gnss_line,
         airspace=airspace,
