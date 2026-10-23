@@ -1,5 +1,37 @@
 # HANDOFF — AeroControl
 
+## 🟡 2026-10-23 — tanda «tiempo sin Open-Meteo, AIP-Chile, permiso, credencial, baja y visual v3» **fusionada sin desplegar** (`main` en `472e192`; la VM sigue en `c4c6b85`)
+
+Todo lo de abajo está en `main` con el CI verde; **nada se ha desplegado** desde `c4c6b85` (la tanda Entorno + Espacio aéreo + Cumplimiento, ya en producción). Son ~180 archivos.
+
+**Qué entró**
+- **El tiempo sin Open-Meteo** (`LV-364/365/366`): sol local NOAA (`apps/core/solar.py`), proveedor **MET Norway** (`WEATHER_PROVIDER=met_norway` por omisión; `open_meteo` queda como alternativa de pago/propia) y búsqueda de ciudades en las 346 comunas del BCN sin red. **MET no trae en Chile ráfagas, probabilidad de lluvia ni visibilidad**: la tarjeta dice «No disponible en esta fuente» y no emite esos eventos.
+- **AIP-Chile (ENR 5.1) como fuente primaria del espacio aéreo** (`LV-361`, fases 1 a 5): campos de fuente y revisión, parser (`aip_parser.py`), comando `import_aip_enr5` (borrador, nada se publica solo), cruce con el mapa de Google, **pantalla de revisión humana** (`/administracion/espacio-aereo/`, permiso `airspace.review_airspacesnapshot`) y la capa del AIP aprobado en el mapa con insignias de fuente. Sin AIP publicado, el mapa es byte a byte el de antes.
+- **Mapa:** arreglo del fallo en producción (`LV-363`: un `MultiGeometry` real servía geometría vacía y mataba el dibujo) y mejora visual con límites administrativos de comunas/regiones y búsqueda (`LV-367` fases 5 a 7).
+- **Visual v3** (`LV-367` fases 1 a 4): Entorno en tarjetas, Centelleo como infografía, Cumplimiento simple y colapsable.
+- **Permiso** (`LV-368`): cierre de **tres brechas reales de aislamiento por empresa** (selector de plan, vincular/desvincular y API de planes) más una cuarta (`GeoPlanSplitIntoRequests`/importación); ficha más liviana («Qué falta», secciones, menú «⋯»); lo geoespacial dentro del formulario (mini-mapa, selector de plan, importar KMZ); credencial del operador **leída desde el PDF** con confirmación campo por campo.
+- **Baja del colaborador** (`LV-369`): «Registrar salida de la empresa» (fecha, motivo y nota opcionales; no borra nada), insignia «Ex colaborador», alertas resueltas, histórico conservado, informe mensual al corte exacto; **el catastro y los informes son solo lo activo**.
+- **Asistente** (`LV-362`): cliente NVIDIA endurecido (cadena de modelos, 429, cupo); **sigue apagado en producción**. **Seguridad menor** (`LV-370`): el receptor de informes CSP ya no da 500 con un cuerpo de forma inesperada. **Dependencias:** `certifi`, `pillow`, `djangorestframework` y `pypdf` actualizadas por `pip-audit`.
+
+**Seguimiento — fusionado sin desplegar: todo lo anterior.**
+- **LLEVA MIGRACIONES (4):** `airspace.0002_aip_source_and_review_fields`, `0003_crosscheck_snapshot_and_measured`, `0004_review_airspacesnapshot_permission` y `registry.0042_operator_left_company`.
+- **LLEVA ESTÁTICOS:** sí (`airspace-map.js`, `airspace.css`, `airspace-review.css`, `airspace-review-map.js`, `geo/mini-map.js`, `permission-plan-picker.js`, `geo-mini-map.css`, `identity.css`, `icons-ui.svg`, entre otros) → `collectstatic` obligatorio.
+- **LLEVA `uv sync --no-dev`** (cambia `uv.lock`) y `.mo` (versionado; no hay `compilemessages`).
+- **Después del `migrate`, en la VM:** `manage.py bootstrap_roles` (el permiso nuevo `airspace.review_airspacesnapshot` lo recibe solo Administrator).
+- **ANTES de desplegar, en `/etc/aerocontrol.env`:** `WEATHER_USER_AGENT` (app y contacto, p. ej. `AeroControl/1.0 <correo corporativo>`; **sin él la tarjeta del tiempo queda «no disponible»**) y comprobar que la VM sale a `api.met.no`. No va en el repo.
+- Importar el AIP en la VM (opcional, después del despliegue): `import_aip_enr5` necesita `pdfplumber`, que **no es dependencia del proyecto** (`uv run --with pdfplumber python manage.py import_aip_enr5 --dry-run` y luego sin `--dry-run`); crea un **borrador**: nada se ve hasta aprobarlo en la pantalla de revisión.
+
+**No verificado a ojo (el navegador integrado no compone y las capturas salieron recortadas):** el aspecto de la franja y Cumplimiento en tema claro y a 375 px, el mapa con la capa AIP y los límites administrativos (rendimiento del canvas y compresión del JSON en `p340`), la pantalla de revisión del AIP, la ficha del permiso entera en claro, el formulario con el mini-mapa, el chip y el banner de «Ex colaborador», el reemplazo de plan al editar un permiso. Nada contra MET desde `p340`. Una mirada humana, con recarga forzada, antes o justo después de desplegar.
+
+**Pendiente — del usuario**
+- `WEATHER_USER_AGENT` (arriba) y la salida a `api.met.no`.
+- **Una credencial de ejemplo anonimizada, fuera del repo**, para fijar las etiquetas exactas del lector de credenciales (hoy son las del diseño).
+- **Quién revisa y aprueba cada enmienda del AIP**, el **umbral de discrepancia en metros** (`AIRSPACE_CROSSCHECK_THRESHOLD_M`; sin él el cruce muestra la distancia sin juzgar) y si `pdfplumber` entra como dependencia.
+- El orden de «Qué atender primero» en Cumplimiento (`PRIORITY_ORDER`, `apps/dashboard/compliance_section.py`) y la razón escrita de las escalas 30/60 días de los permisos.
+- OCR para credenciales fotografiadas (hoy solo PDF con texto); licencias (`docs/dev/licencias-y-terminos.md`): Esri/OSM para los fondos de mapa, GEOCOM, NVIDIA; decisiones de Informes (`docs/dev/informes-optimizacion.md` §7).
+
+**Pendiente — del código:** `GeoPlanListView`/`GeoPlanDetailView` y el resto de vistas de `geo` no acotan por empresa (F-08 parcial, hoy una sola empresa); `dashboard()` y `upcoming_expirations` tampoco; la franja del panel «zonas ≤N km» sigue contando solo la foto de Google; el cruce AIP/Google se calcula al importar; `gunicorn` 23 → 26 (compatibilidad); logo duplicado `assets/aerocontrol-mark.svg` (se deja); la capa «regiones» de BCN; localidades (INE/OSM); fases F0 a F5 de Informes (`LV-355`).
+
 ## ✅ 2026-10-21 — tanda «Entorno + Espacio aéreo + Cumplimiento» **desplegada** (`c4c6b85`)
 
 `p340` corre **`c4c6b85`**, desplegado el 2026-10-21 en bloques (leído de la salida pegada): estado (`## main...origin/main`, `738a317`), respaldo (`aero_ops_20261021_084027.sqlite3`, `restorable.`), `git pull` (`738a317..c4c6b85`) + `migrate` (`airspace.0001_create_airspace_snapshot_and_feature`, OK), `collectstatic` (7 copiados, 243 sin cambio), reinicio (`active`, hash `c4c6b85`), `health: 200`, `bootstrap_roles` (cinco roles y el grupo Dirección) e `import_airspace_zones --url` (dry-run: «Would add 572»; real: **«Added 572, changed 0, archived 0»**, 31 avisos de calidad de la fuente: 9 aeródromos sin OACI y nombres duplicados). Sin `uv sync` (el diff no tocó `pyproject.toml` ni `uv.lock`).
