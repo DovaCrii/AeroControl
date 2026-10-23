@@ -33,10 +33,13 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone
+
+from . import solar
 
 logger = logging.getLogger("aerocontrol.weather")
 
@@ -449,6 +452,25 @@ def _parse_panel(payload):
     }
 
 
+def _with_local_sun(parsed, latitude, longitude):
+    """Pone en cada día del pronóstico el amanecer y la puesta calculados en local (LV-364).
+
+    Fuente única de la ventana de centelleo y de la escena del cielo: no dependen de qué proveedor
+    contestó ni de si éste trae esas horas. Sin zona horaria legible no se toca nada; un día sin sol
+    (polar) queda en `None`, que la interfaz ya trata como «sin dato».
+    """
+    if parsed is None or not parsed.get("timezone"):
+        return parsed
+    try:
+        zone = ZoneInfo(parsed["timezone"])
+    except (ZoneInfoNotFoundError, ValueError):
+        return parsed
+    parsed["daily"] = solar.day_rows_with_sun(
+        parsed.get("daily"), latitude, longitude, zone
+    )
+    return parsed
+
+
 def panel_forecast(latitude, longitude):
     """Current conditions + 48 h hourly + 7 days daily, or None. One request.
 
@@ -462,7 +484,9 @@ def panel_forecast(latitude, longitude):
     if coords is None:
         return None
     if _fake_enabled():
-        return _parse_panel(_fake_json("weather_panel_forecast.json"))
+        return _with_local_sun(
+            _parse_panel(_fake_json("weather_panel_forecast.json")), *coords
+        )
     lat, lon = coords
     cache_key = f"weather:panel:{lat}:{lon}:{WIND_SPEED_UNIT}"
     cached = cache.get(cache_key)
@@ -483,6 +507,7 @@ def panel_forecast(latitude, longitude):
         },
     )
     parsed = _parse_panel(payload) if payload is not None else None
+    parsed = _with_local_sun(parsed, lat, lon)
     cache.set(
         cache_key,
         parsed if parsed is not None else "unavailable",

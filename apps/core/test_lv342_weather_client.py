@@ -8,12 +8,13 @@ Open-Meteo (slow, flaky, and impossible in CI without connectivity).
 import json
 import logging
 import urllib.error
+from datetime import date
 from pathlib import Path
 
 import pytest
 from django.core.cache import cache
 
-from apps.core import weather
+from apps.core import solar, weather
 
 TESTDATA = Path(weather.__file__).parent / "testdata"
 SECRET = "sk-test-secret-123"
@@ -80,7 +81,12 @@ class TestPanelForecast:
         assert "forecast_hours=48" in urls[0] and "wind_speed_unit=ms" in urls[0]
         assert result["current"]["temperature_2m"] == 14.2
         assert len(result["hourly"]) == 48 and len(result["daily"]) == 7
-        assert result["daily"][0]["sunrise"].endswith("06:40")
+        # LV-364: the sun is computed locally, not read from the provider.
+        first = result["daily"][0]
+        expected = solar.sun_times(
+            date.fromisoformat(first["time"]), -33.46, -70.65, "America/Santiago"
+        )
+        assert first["sunrise"] == expected[0].strftime("%Y-%m-%dT%H:%M")
         assert result["fetched_at"]
 
     def test_second_call_is_served_from_cache(self, enabled, monkeypatch):
