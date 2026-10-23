@@ -388,7 +388,7 @@ def test_rectangle_is_not_invented():
 REMARKS = (
     "H24. Coordinar con Cap. Juan Perez, fono: +56 2 2555 0100, anexo 1234, correo ops.demo@example.test. "
     "Tel. 2 2555 0101 / (56-2) 2555 0102. Celular 9 8765 4321. Horario 0800-1700 LT, 118.100 MHz, FL 450, 3 000 FT. "
-    "IVNO/VRNO. Contactar a jefe.turno@dominio-demo.cl."
+    "IVNO/VRNO. Contactar a jefe.turno@test.com."
 )
 
 
@@ -520,7 +520,7 @@ def _synthetic_pages():
         (173, 324, 455),
         _row(["31", "00", "00S", "–", "69", "00", "00W"], 85, 60)
         + _row(["31", "00", "00S", "–", "70", "00", "00W"], 85, 72)
-        + _row(["cte.", "jefe.turno@dominio-demo.cl"], 393, 66)
+        + _row(["cte.", "jefe.turno@test.com"], 393, 66)
         + _row(["SC-R902", "FIR", "SANTIAGO-Sector", "Demo", "Sur"], 85, 100)
         + _row(["Círculo", "de", "1", "NM", "de", "radio", "centrado", "en:"], 85, 112)
         + _row(["34", "00", "00", "S", "70", "30", "00", "W"], 85, 124)
