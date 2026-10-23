@@ -103,6 +103,8 @@ urlpatterns = [
         "calendar/events/", UnifiedCalendarEventsView.as_view(), name="calendar-events"
     ),
     path("administracion/", AdministrationCenterView.as_view(), name="administration"),
+    # LV-361 (fase 4): la revisión humana de las zonas leídas del AIP, con permiso propio.
+    path("administracion/espacio-aereo/", include("apps.airspace.review_urls")),
     path(
         "administracion/auditoria/",
         AuditEventListView.as_view(),

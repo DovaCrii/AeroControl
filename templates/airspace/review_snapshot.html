@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "AIP airspace review" %} - AeroControl{% endblock %}
+{% block content %}
+{% comment %}LV-361 (fase 4): las zonas de un snapshot del AIP, su estado y las acciones. Un aviso nunca se aprueba en lote.{% endcomment %}
+{% translate "AIP airspace review" as page_eyebrow %}
+{% with amdt=snapshot.amdt_number|default:"?" %}{% with page_title="AMDT "|add:amdt page_description=snapshot.attribution %}
+<div class="page-header">
+  {% include "generic/_page_header.html" %}
+  <div class="d-flex gap-2"><a class="btn btn-outline-secondary" href="{% url 'airspace-review-list' %}">{% translate "Back" %}</a></div>
+</div>
+{% endwith %}{% endwith %}
+
+<dl class="row mb-3">
+  <dt class="col-6 col-md-2">{% translate "Zones" %}</dt><dd class="col-6 col-md-1">{{ counts.total }}</dd>
+  <dt class="col-6 col-md-2">{% translate "Approved" %}</dt><dd class="col-6 col-md-1">{{ counts.approved }}</dd>
+  <dt class="col-6 col-md-2">{% translate "Rejected" %}</dt><dd class="col-6 col-md-1">{{ counts.rejected }}</dd>
+  <dt class="col-6 col-md-2">{% translate "Unresolved" %}</dt><dd class="col-6 col-md-1">{{ counts.unresolved }}</dd>
+</dl>
+
+{% if open %}
+<div class="d-flex flex-wrap gap-2 mb-3">
+  {% if counts.bulk %}<a class="btn btn-outline-primary" href="{% url 'airspace-review-bulk' snapshot.pk %}">{% blocktranslate with n=counts.bulk %}Approve the {{ n }} clean zones{% endblocktranslate %}</a>{% endif %}
+  <a class="btn btn-primary" href="{% url 'airspace-review-publish' snapshot.pk %}">{% translate "Publish" %}</a>
+</div>
+{% if counts.flagged_unresolved %}<p class="text-muted small">{% blocktranslate with n=counts.flagged_unresolved %}{{ n }} zone(s) carry a warning (crossing vertex order, a typo fixed by the parser, an arc or a sector). They are approved one at a time.{% endblocktranslate %}</p>{% endif %}
+{% if blockers %}<ul class="small text-muted">{% for blocker in blockers %}<li>{{ blocker }}</li>{% endfor %}</ul>{% endif %}
+{% else %}
+<p class="text-muted">{% blocktranslate with state=snapshot.get_status_display %}This snapshot is {{ state }}: it can be read but no longer reviewed.{% endblocktranslate %}</p>
+{% endif %}
+
+<nav class="mb-2" aria-label="{% translate 'Filter zones' %}">
+  <ul class="nav nav-pills small">
+    {% for key in filters %}<li class="nav-item"><a class="nav-link{% if key == show %} active{% endif %}" href="?show={{ key }}"{% if key == show %} aria-current="true"{% endif %}>{% if key == "all" %}{% translate "All" %}{% elif key == "flagged" %}{% translate "With a warning" %}{% elif key == "clean" %}{% translate "Clean" %}{% elif key == "pending" %}{% translate "Unresolved" %}{% else %}{% translate "Decided" %}{% endif %}</a></li>{% endfor %}
+  </ul>
+</nav>
+
+<div class="card mb-4">
+  <div class="table-responsive">
+    <table class="table table-sm table-hover mb-0">
+      <thead>
+        <tr>
+          <th scope="col">{% translate "Code" %}</th>
+          <th scope="col">{% translate "Name" %}</th>
+          <th scope="col">{% translate "Page" %}</th>
+          <th scope="col">{% translate "State" %}</th>
+          <th scope="col" class="text-end">{% translate "Warnings" %}</th>
+          <th scope="col">{% translate "Against the Google map" %}</th>
+          <th scope="col"><span class="visually-hidden">{% translate "Actions" %}</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td><strong>{{ row.feature.code|default:"—" }}</strong></td>
+          <td>{{ row.feature.name }}</td>
+          <td class="text-muted small">{{ row.feature.folder }}</td>
+          <td>{{ row.status }}{% if row.flagged and row.feature.review_status != "approved" and row.feature.review_status != "rejected" %} <span aria-hidden="true">▲</span><span class="visually-hidden">{% translate "carries a warning" %}</span>{% endif %}</td>
+          <td class="text-end">{{ row.warnings }}</td>
+          <td class="small">{% if row.check %}{% if row.check.max_vertex_m is not None %}{% blocktranslate with max=row.check.max_vertex_m median=row.check.median_m %}up to {{ max }} m (median {{ median }} m){% endblocktranslate %}{% if row.check.result == "discrepancy" %} · {{ row.check.get_result_display }}{% endif %}{% else %}{{ row.check.get_result_display }}{% endif %}{% else %}—{% endif %}</td>
+          <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{% url 'airspace-review-zone' snapshot.pk row.feature.pk %}">{% translate "Open" %}</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-muted">{% translate "No zone matches this filter." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% if not threshold %}<p class="text-muted small">{% translate "No discrepancy threshold has been set: distances are shown without a verdict." %}</p>{% endif %}
+
+{% if google_missing %}
+<h2 class="h5">{% translate "Only in the Google map" %}</h2>
+<p class="text-muted small">{% translate "These zones are in the Google map but not in this AIP amendment. They are kept as a reference layer; nothing is deleted." %}</p>
+<ul class="small">{% for row in google_missing %}<li>{{ row.google_feature.code|default:"—" }} {{ row.google_feature.name }} — {{ row.get_result_display }}</li>{% endfor %}</ul>
+{% endif %}
+{% endblock %}

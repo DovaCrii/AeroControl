@@ -1,0 +1,23 @@
+/* LV-361 (fase 4): la pantalla de revisión de las zonas del AIP (administración).
+   Sólo lee tokens `--ac-*` y `--sev-*`. El mini-mapa no tiene fondo (ninguna llamada externa): se
+   distingue la forma del AIP (línea continua) de la del mapa de Google (línea punteada) por TRAZO,
+   no sólo por color. */
+.air-review-map {
+  height: 22rem;
+  border: 1px solid var(--ac-border);
+  border-radius: 0.375rem;
+  background: var(--ac-bg);
+}
+.air-review-pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.air-review-legend { margin: 0.5rem 0 0; display: grid; gap: 0.25rem; }
+.air-review-swatch {
+  display: inline-block;
+  width: 2rem;
+  height: 0;
+  vertical-align: middle;
+  border-top: 3px solid var(--sev-critical-text);
+}
+.air-review-swatch--google { border-top-style: dashed; border-top-color: var(--ac-text-secondary); }
+.air-review-aip { stroke: var(--sev-critical-text); stroke-width: 3; fill: var(--sev-critical-bg); fill-opacity: 0.25; }
+.air-review-google { stroke: var(--ac-text-secondary); stroke-width: 2; stroke-dasharray: 7 5; fill: none; }
+.air-review-empty { padding: 0.75rem; border: 1px dashed var(--ac-border); border-radius: 0.375rem; }

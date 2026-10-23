@@ -14,6 +14,7 @@ limit converted to a number, or that a zone "is active now". The source's words 
 """
 
 import math
+from datetime import date
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
@@ -105,6 +106,25 @@ def ui_strings():
         "adminAerodromes": _("Aerodromes inside"),
         "adminReferential": _("Referential, BCN source, within about 111 m."),
         "adminSummary": _("{zones} zones and {aerodromes} aerodromes in {name}"),
+        # LV-361 (phase 5): the AIP layer. The badge says where a zone comes from; the cross-check
+        # line says how far the AIP outline is from the Google one (and, only once the person has set
+        # a threshold, whether that counts as a discrepancy).
+        "badgeAip": _("AIP · AMDT {amdt} ({date})"),
+        "badgeGoogleOnly": _("Google map only (not in the current AIP)"),
+        "badgeGoogleRef": _(
+            "Google reference shape (the AIP outline is the one drawn)"
+        ),
+        "crossDiff": _("Difference from Google: {m} m"),
+        "crossMatch": _("Matches Google: {m} m (threshold {t} m)"),
+        "crossDiscrepancy": _("Discrepancy with Google: {m} m (threshold {t} m)"),
+        "crossHint": _(
+            "Largest distance from a vertex of the AIP outline to the Google outline."
+        ),
+        "noShapeArc": _("No outline drawn: arc or sector, needs an external centre"),
+        "noShapeOther": _("No outline drawn: the source geometry could not be read"),
+        "noShapeShort": _("no outline"),
+        "layerReference": _("Google reference (off by default)"),
+        "referenceTag": _("reference"),
     }
 
 
@@ -170,9 +190,12 @@ class AirspaceTab(EnvironmentTab):
         if snapshot is None:
             return render(request, self.template_name, context, status=404)
         data = payload.snapshot_payload(snapshot)
+        served = payload.served_set()
         counts = {kind: 0 for kind in payload.SHOWN_KINDS}
-        for kind in payload.active_features().values_list("kind", flat=True):
-            counts[kind] = counts.get(kind, 0) + 1
+        # A zone the AIP and the Google map both have is counted once (its Google shape is only a
+        # reference drawing behind the AIP's).
+        for item in served.searchable():
+            counts[item.kind] = counts.get(item.kind, 0) + 1
         labels = kind_labels()
         location = context.get("env_location")
         reference = (
@@ -202,7 +225,35 @@ class AirspaceTab(EnvironmentTab):
                 "air_near_km": near_km(),
             }
         )
+        if served.aip is not None:
+            context.update(aip_context(served))
         return render(request, self.template_name, context)
+
+
+def aip_context(served):
+    """What the page says about the AIP copy once one is published: its attribution, its amendment,
+    whether a newer one is known, and which source feeds what (zones counted once)."""
+    aip = served.aip
+    info = payload.aip_payload(aip)
+    from_aip = len(served.aip_rows)
+    google_only = sum(
+        1 for _feature, role in served.google_rows if role == payload.ROLE_REFERENCE
+    )
+    return {
+        "air_aip": aip,
+        "air_aip_info": info,
+        "air_aip_date": aip.effective_date,
+        "air_aip_latest_date": (
+            date.fromisoformat(info["latest_known_date"])
+            if info["latest_known_date"]
+            else None
+        ),
+        "air_aip_no_shape": sum(
+            1 for row in served.aip_rows if not payload.has_shape(row.geometry)
+        ),
+        "air_from_aip": from_aip,
+        "air_google_only_zones": google_only,
+    }
 
 
 class AirspaceData(ModelViewPermissionRequiredMixin, View):
@@ -214,12 +265,13 @@ class AirspaceData(ModelViewPermissionRequiredMixin, View):
         snapshot = payload.current_snapshot()
         if snapshot is None:
             return JsonResponse({"error": "no_snapshot"}, status=404)
-        etag = payload.etag_for(snapshot)
+        served = payload.served_set()
+        etag = payload.etag_for(snapshot, served.aip)
         if payload.etag_matches(request.headers.get("If-None-Match"), etag):
             response = HttpResponseNotModified()
         else:
             response = HttpResponse(
-                payload.dumps(payload.build_payload(snapshot)),
+                payload.dumps(payload.build_payload(snapshot, served=served)),
                 content_type="application/json; charset=utf-8",
             )
         response["ETag"] = etag
@@ -306,7 +358,16 @@ def _number(request, name, low, high):
 
 
 def zone_and_aerodrome_features():
-    """The active P/R/D/N zones and aerodromes as GeoJSON-like features (what `near/` and `contains` read)."""
+    """The P/R/D/N zones and aerodromes as GeoJSON-like features (what `near/` and `contains` read).
+
+    The same set the map draws: the AIP zones with a shape and the Google rows that are not hidden
+    behind an AIP zone of the same code (so the answer agrees with the screen)."""
+    rows = [
+        row
+        for row in payload.served_set().searchable()
+        if row.kind in payload.ZONE_KINDS + payload.AERODROME_KINDS
+        and payload.has_shape(row.geometry)
+    ]
     return [
         {
             "type": "Feature",
@@ -318,9 +379,7 @@ def zone_and_aerodrome_features():
             },
             "geometry": row.geometry,
         }
-        for row in payload.active_features().filter(
-            kind__in=payload.ZONE_KINDS + payload.AERODROME_KINDS
-        )
+        for row in rows
     ]
 
 

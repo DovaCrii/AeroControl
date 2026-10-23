@@ -51,8 +51,8 @@ msgstr "Habilitación"
 #: .\templates\compliance\nonconformity_list.html:33
 #: .\templates\compliance\operational_records.html:22
 #: .\templates\compliance\operational_records.html:49
-#: .\templates\compliance\report.html:22 .\templates\compliance\report.html:137
-#: .\templates\geo\plan_list.html:56
+#: .\templates\compliance\report.html:22
+#: .\templates\compliance\report.html:137 .\templates\geo\plan_list.html:56
 #: .\templates\operations\flight_request_list.html:49
 #: .\templates\operations\permission_detail.html:86
 #: .\templates\registry\aircraft_list.html:25
@@ -173,7 +173,8 @@ msgid "Select an entity type first."
 msgstr "Selecciona primero un tipo de entidad."
 
 #: .\apps\compliance\forms.py:362 .\apps\compliance\forms.py:383
-#: .\templates\geo\plan_list.html:55 .\templates\registry\operator_list.html:64
+#: .\templates\geo\plan_list.html:55
+#: .\templates\registry\operator_list.html:64
 msgid "File"
 msgstr "Archivo"
 
@@ -300,7 +301,8 @@ msgstr "Notas"
 #: .\apps\compliance\forms.py:636
 msgid "Compared against the cost center's required GSD, when set."
 msgstr ""
-"Se compara contra el GSD requerido del centro de costo, cuando está definido."
+"Se compara contra el GSD requerido del centro de costo, cuando está "
+"definido."
 
 #: .\apps\compliance\forms.py:639
 msgid ""
@@ -625,7 +627,8 @@ msgstr ""
 
 #: .\apps\compliance\models.py:426
 #, python-format
-msgid "%(field)s is not a watchable field of %(model)s. Available: %(allowed)s"
+msgid ""
+"%(field)s is not a watchable field of %(model)s. Available: %(allowed)s"
 msgstr ""
 "%(field)s no es un campo vigilable de %(model)s. Disponibles: %(allowed)s"
 
@@ -789,7 +792,8 @@ msgstr "TOTAL"
 #: .\apps\compliance\report_views.py:461
 #: .\apps\compliance\test_lv144_report_pdf_letterhead.py:148
 #: .\templates\compliance\email\executive_report.html:30
-#: .\templates\compliance\report.html:53 .\templates\compliance\report.html:174
+#: .\templates\compliance\report.html:53
+#: .\templates\compliance\report.html:174
 msgid "Open alerts"
 msgstr "Alertas abiertas"
 
@@ -856,19 +860,23 @@ msgstr "Sin alertas abiertas."
 msgid "Compared with the previous period"
 msgstr "Comparado con el período anterior"
 
-#: .\apps\compliance\report_views.py:405 .\templates\compliance\report.html:102
+#: .\apps\compliance\report_views.py:405
+#: .\templates\compliance\report.html:102
 msgid "KPI"
 msgstr "KPI"
 
-#: .\apps\compliance\report_views.py:405 .\templates\compliance\report.html:103
+#: .\apps\compliance\report_views.py:405
+#: .\templates\compliance\report.html:103
 msgid "This period"
 msgstr "Este período"
 
-#: .\apps\compliance\report_views.py:405 .\templates\compliance\report.html:104
+#: .\apps\compliance\report_views.py:405
+#: .\templates\compliance\report.html:104
 msgid "Change"
 msgstr "Variación"
 
-#: .\apps\compliance\report_views.py:405 .\templates\compliance\report.html:105
+#: .\apps\compliance\report_views.py:405
+#: .\templates\compliance\report.html:105
 msgid "Previous period"
 msgstr "Período anterior"
 
@@ -876,7 +884,8 @@ msgstr "Período anterior"
 msgid "No comparison available."
 msgstr "No hay comparación disponible."
 
-#: .\apps\compliance\report_views.py:426 .\templates\compliance\report.html:157
+#: .\apps\compliance\report_views.py:426
+#: .\templates\compliance\report.html:157
 msgid "No cost centers to report."
 msgstr "No hay centros de costo que informar."
 
@@ -903,16 +912,16 @@ msgid ""
 "with your file: tell an administrator."
 msgstr ""
 "No se pudo revisar este archivo en busca de virus porque el antivirus no "
-"está disponible, así que no se guardó. Es un problema del servidor, no de tu "
-"archivo: avisa a un administrador."
+"está disponible, así que no se guardó. Es un problema del servidor, no de tu"
+" archivo: avisa a un administrador."
 
 #: .\apps\compliance\security.py:105
 msgid ""
 "The virus check took too long, so this file was not saved. This is a server "
 "problem, not a problem with your file: tell an administrator."
 msgstr ""
-"La revisión de virus demoró demasiado, así que este archivo no se guardó. Es "
-"un problema del servidor, no de tu archivo: avisa a un administrador."
+"La revisión de virus demoró demasiado, así que este archivo no se guardó. Es"
+" un problema del servidor, no de tu archivo: avisa a un administrador."
 
 #: .\apps\compliance\security.py:119
 msgid "The antivirus found a threat in this file, so it was not saved."
@@ -1676,7 +1685,8 @@ msgstr "Separar en partes"
 msgid "Root — drop here or click to add new here"
 msgstr "Raíz — suelta aquí o haz clic para agregar aquí"
 
-#. LV-215: la pantalla del fallo de CSRF. "Caducó" y no "falló": lo que pasó es
+#. LV-215: la pantalla del fallo de CSRF. "Caducó" y no "falló": lo que pasó
+#. es
 #. que la página llevaba demasiado tiempo abierta, y decir "error" invita a
 #. reportar un problema que no existe.
 #: .\templates\core\csrf_failure.html:1
@@ -1688,17 +1698,17 @@ msgid ""
 "This page had been open long enough for its security token to lapse, so the "
 "form was not sent. Nothing was saved and nothing was lost."
 msgstr ""
-"Esta página llevaba abierta el tiempo suficiente para que caducara su ficha de "
-"seguridad, así que el formulario no se envió. No se guardó nada y no se perdió "
-"nada."
+"Esta página llevaba abierta el tiempo suficiente para que caducara su ficha "
+"de seguridad, así que el formulario no se envió. No se guardó nada y no se "
+"perdió nada."
 
 #: .\templates\core\csrf_failure.html:3
 msgid ""
-"It happens when a tab stays open from one day to the next. Load the page again "
-"and it will work."
+"It happens when a tab stays open from one day to the next. Load the page "
+"again and it will work."
 msgstr ""
-"Pasa cuando una pestaña queda abierta de un día para otro. Vuelve a cargar la "
-"página y funcionará."
+"Pasa cuando una pestaña queda abierta de un día para otro. Vuelve a cargar "
+"la página y funcionará."
 
 #: .\templates\core\csrf_failure.html:4
 msgid "Load the page again"
@@ -1708,15 +1718,18 @@ msgstr "Volver a cargar la página"
 msgid "Sign in again"
 msgstr "Entrar de nuevo"
 
-#. LV-212: la columna propia de "vence pronto" en la tabla del panel. Iba pegada
+#. LV-212: la columna propia de "vence pronto" en la tabla del panel. Iba
+#. pegada
 #. al total ("1 · 1 vence pronto") y dos cifras en una celda impiden leer la
 #. columna en vertical, que es para lo que existe una tabla.
 #: .\templates\dashboard\index.html:8
 msgid "Expiring soon"
 msgstr "Vence pronto"
 
-#. LV-211: la sección de los criterios de aceptación del contrato en la ficha de
-#. la faena (R7.4). Son del **contrato** y no propiedades del sitio, y por eso van
+#. LV-211: la sección de los criterios de aceptación del contrato en la ficha
+#. de
+#. la faena (R7.4). Son del **contrato** y no propiedades del sitio, y por eso
+#. van
 #. en su propia sección y no bajo "Ubicación".
 #: .\templates\registry\_costcenter_form_fields.html:1
 msgid "Quality criteria"
@@ -1734,7 +1747,8 @@ msgstr "Abrir los permisos"
 #. LV-206: los encabezados de la tabla. "In force" **no se agrega acá**: ya
 #. existe traducido como "Vigentes" para el filtro del listado de permisos, y
 #. reusarlo es lo correcto — tres formas de nombrar lo mismo es cómo alguien
-#. termina creyendo que son tres cosas. (`msgfmt` lo rechaza como duplicado, que
+#. termina creyendo que son tres cosas. (`msgfmt` lo rechaza como duplicado,
+#. que
 #. es la red que lo atajó.)
 #: .\templates\dashboard\index.html:4
 msgid "Awaiting"
@@ -1744,8 +1758,10 @@ msgstr "Esperando"
 msgid "Past validity"
 msgstr "Vigencia pasada"
 
-#. LV-206: la faena que no tiene ningún permiso vigente. "Ninguno" y no un cero:
-#. es la fila que la tabla existe para mostrar, y un 0 se lee como dato ausente.
+#. LV-206: la faena que no tiene ningún permiso vigente. "Ninguno" y no un
+#. cero:
+#. es la fila que la tabla existe para mostrar, y un 0 se lee como dato
+#. ausente.
 #: .\templates\dashboard\index.html:6
 msgid "None"
 msgstr "Ninguno"
@@ -1769,24 +1785,27 @@ msgid ""
 "Uncheck for cost centers that only hold equipment and never fly: they stay "
 "out of the flight-permit status table."
 msgstr ""
-"Desmárcalo en las faenas que sólo tienen equipos a cargo y no vuelan: quedan "
-"fuera de la tabla de estado de permisos de vuelo."
+"Desmárcalo en las faenas que sólo tienen equipos a cargo y no vuelan: quedan"
+" fuera de la tabla de estado de permisos de vuelo."
 
-#. LV-205: el aviso al archivar a alguien que se retira, con la faena de la que
-#. venía. Quien archiva es quien puede corregir en el momento si se equivocó de
+#. LV-205: el aviso al archivar a alguien que se retira, con la faena de la
+#. que
+#. venía. Quien archiva es quien puede corregir en el momento si se equivocó
+#. de
 #. persona, y el nombre de la faena es lo que se lo dice.
 #: .\apps\registry\views.py:1
 #, python-format
 msgid ""
-"%(name)s archived. Came from %(centers)s; the assignment was closed today and "
-"it is on record."
+"%(name)s archived. Came from %(centers)s; the assignment was closed today "
+"and it is on record."
 msgstr ""
-"%(name)s archivado. Venía de %(centers)s; su asignación se cerró hoy y quedó "
-"registrada."
+"%(name)s archivado. Venía de %(centers)s; su asignación se cerró hoy y quedó"
+" registrada."
 
 #. LV-200: el archivo subido es idéntico a uno que ya está cargado. Avisa y no
 #. bloquea: la misma carta cubriendo varios permisos es el caso que el usuario
-#. describió, no un error. Nombra el documento existente, porque "ya existe" sin
+#. describió, no un error. Nombra el documento existente, porque "ya existe"
+#. sin
 #. el nombre manda a buscarlo a mano por toda la app.
 #: .\apps\compliance\views.py:1
 #, python-format
@@ -1795,8 +1814,9 @@ msgid ""
 "uploaded anyway: if it is the same paper covering both records, that is "
 "expected."
 msgstr ""
-"Este archivo es idéntico, byte por byte, a %(title)s, que ya está cargado. Se "
-"subió igual: si es el mismo papel que cubre los dos registros, es lo esperado."
+"Este archivo es idéntico, byte por byte, a %(title)s, que ya está cargado. "
+"Se subió igual: si es el mismo papel que cubre los dos registros, es lo "
+"esperado."
 
 #. LV-198: el aviso de que hay borradores sin terminar, en el listado de
 #. permisos. Dice "en este navegador" porque es la verdad: el borrador vive en
@@ -1823,7 +1843,8 @@ msgstr "Retomarlo"
 msgid "Unlink"
 msgstr "Desvincular"
 
-#. LV-199: la confirmación dice **qué pasa con la ubicación** antes de aceptar,
+#. LV-199: la confirmación dice **qué pasa con la ubicación** antes de
+#. aceptar,
 #. no después: se queda en el permiso.
 #: .\templates\operations\permission_detail.html:2
 msgid "Unlink this plan? The location it filled in stays on the permit."
@@ -1839,8 +1860,8 @@ msgid ""
 "Plan %(title)s unlinked. The location it filled in stays on the permit: "
 "correct it by editing the permit if it is wrong."
 msgstr ""
-"Plan %(title)s desvinculado. La ubicación que rellenó se queda en el permiso: "
-"si está equivocada, corrígela editando el permiso."
+"Plan %(title)s desvinculado. La ubicación que rellenó se queda en el "
+"permiso: si está equivocada, corrígela editando el permiso."
 
 #. LV-201: la cuarta fila de indicadores del panel y su tarjeta en el informe.
 #: .\apps\dashboard\views.py:1
@@ -1848,7 +1869,8 @@ msgid "Permits in force"
 msgstr "Permisos vigentes"
 
 #. LV-201: los permisos aprobados cuya vigencia ya pasó y que nadie cerró.
-#. "Vencidos" a secas se confundiría con la tarjeta de vencimientos de al lado,
+#. "Vencidos" a secas se confundiría con la tarjeta de vencimientos de al
+#. lado,
 #. que es de documentos y vigencias; esto es otra cosa y por eso se nombra
 #. completo.
 #: .\templates\compliance\report.html:1
@@ -1862,8 +1884,10 @@ msgid_plural "%(counter)s awaiting approval"
 msgstr[0] "%(counter)s esperando aprobación"
 msgstr[1] "%(counter)s esperando aprobación"
 
-#. LV-202: el nombre del punto central de una circunferencia dibujada. "Centro"
-#. y no "Centro del círculo": va como nombre del elemento en el panel de capas,
+#. LV-202: el nombre del punto central de una circunferencia dibujada.
+#. "Centro"
+#. y no "Centro del círculo": va como nombre del elemento en el panel de
+#. capas,
 #. junto a la circunferencia que lo explica, y la app ya usa "Centro de costo"
 #. para otra cosa en pantallas vecinas.
 #: .\apps\geo\views.py:541
@@ -1937,12 +1961,14 @@ msgstr "Revisión meteorológica registrada."
 msgid "Maintenance type"
 msgstr "Tipo de mantenimiento"
 
-#: .\apps\maintenance\forms.py:24 .\templates\maintenance\record_detail.html:28
+#: .\apps\maintenance\forms.py:24
+#: .\templates\maintenance\record_detail.html:28
 #: .\templates\registry\aircraft_detail.html:72
 msgid "Scheduled date"
 msgstr "Fecha programada"
 
-#: .\apps\maintenance\forms.py:25 .\templates\maintenance\record_detail.html:30
+#: .\apps\maintenance\forms.py:25
+#: .\templates\maintenance\record_detail.html:30
 #: .\templates\registry\aircraft_detail.html:93
 msgid "Performed by"
 msgstr "Realizado por"
@@ -2358,7 +2384,8 @@ msgstr "Requerido cuando el propósito es 'Otro'."
 
 #: .\apps\operations\forms.py:102
 msgid ""
-"Structured location, in addition to the free-text location above -- optional."
+"Structured location, in addition to the free-text location above -- "
+"optional."
 msgstr ""
 "Ubicación estructurada, además de la ubicación en texto libre de arriba: "
 "opcional."
@@ -2416,7 +2443,8 @@ msgstr "Hora de salida"
 msgid "Arrival time"
 msgstr "Hora de llegada"
 
-#: .\apps\operations\forms.py:376 .\templates\operations\email\duty_limit.txt:5
+#: .\apps\operations\forms.py:376
+#: .\templates\operations\email\duty_limit.txt:5
 #: .\templates\operations\flightrecord_detail.html:29
 #: .\templates\operations\permission_detail.html:173
 #: .\templates\operations\record_list.html:7
@@ -2695,8 +2723,8 @@ msgid ""
 "Plan %(title)s linked. It filled nothing in: the permit already had its "
 "location, or the plan has more than one circle."
 msgstr ""
-"Plan %(title)s vinculado. No llenó nada: el permiso ya tenía su ubicación, o "
-"el plan trae más de una circunferencia."
+"Plan %(title)s vinculado. No llenó nada: el permiso ya tenía su ubicación, o"
+" el plan trae más de una circunferencia."
 
 #: .\apps\operations\views.py:256
 #, python-format
@@ -2725,8 +2753,8 @@ msgid ""
 "Upload the DGAC operation authorization (the signed SIGO PDF) before "
 "approving this permit."
 msgstr ""
-"Sube la autorización de operación de la DGAC (el PDF firmado del SIGO) antes "
-"de aprobar este permiso."
+"Sube la autorización de operación de la DGAC (el PDF firmado del SIGO) antes"
+" de aprobar este permiso."
 
 #: .\apps\operations\views.py:486
 msgid ""
@@ -2749,8 +2777,8 @@ msgid ""
 "Upload the DGAC operation authorization (the signed SIGO PDF) before "
 "completing this permit."
 msgstr ""
-"Sube la autorización de operación de la DGAC (el PDF firmado del SIGO) antes "
-"de completar este permiso."
+"Sube la autorización de operación de la DGAC (el PDF firmado del SIGO) antes"
+" de completar este permiso."
 
 #: .\apps\operations\views.py:594
 msgid "Permit archived. Use the Archived filter to find or restore it."
@@ -2787,8 +2815,8 @@ msgid ""
 "%(pilot)s now has %(total)s logged on %(date)s, over the %(limit)s daily "
 "flight limit."
 msgstr ""
-"%(pilot)s acumula %(total)s el %(date)s, por sobre el límite diario de vuelo "
-"de %(limit)s."
+"%(pilot)s acumula %(total)s el %(date)s, por sobre el límite diario de vuelo"
+" de %(limit)s."
 
 #: .\apps\operations\views.py:814
 msgid "Flight record archived."
@@ -2798,8 +2826,8 @@ msgstr "Registro de vuelo archivado."
 msgid ""
 "No circle: this point has no circumference, so SIGO has nothing to draw."
 msgstr ""
-"Sin circunferencia: este punto no tiene círculo, así que SIGO no tendría qué "
-"dibujar."
+"Sin circunferencia: este punto no tiene círculo, así que SIGO no tendría qué"
+" dibujar."
 
 #: .\apps\operations\views.py:950
 msgid "No centre point: this circle has no point of its own."
@@ -2932,8 +2960,8 @@ msgstr "%(fleet)s y %(personnel)s inscritos al %(date)s."
 #: .\apps\registry\catastro.py:301
 #, python-format
 msgid ""
-"Filtered by cost center: %(fleet)s and %(personnel)s with no cost center are "
-"not listed."
+"Filtered by cost center: %(fleet)s and %(personnel)s with no cost center are"
+" not listed."
 msgstr ""
 "Filtrado por centro de costo: %(fleet)s y %(personnel)s sin centro de costo "
 "no aparecen en el listado."
@@ -3049,14 +3077,14 @@ msgid ""
 "verdict rather than judged against an invented threshold."
 msgstr ""
 "Criterios de aceptación del levantamiento (ISO 9001 8.6), tomados del "
-"contrato. Dejar en blanco si no se acordó ninguno: el entregable se registra "
-"sin veredicto en vez de juzgarse contra un umbral inventado."
+"contrato. Dejar en blanco si no se acordó ninguno: el entregable se registra"
+" sin veredicto en vez de juzgarse contra un umbral inventado."
 
 #: .\apps\registry\forms.py:134
 msgid ""
 "Optional: decimal degrees for the site where this contract operates (e.g. "
-"-33.4489). Used to show the weather on the dashboard when no upcoming permit "
-"carries its own coordinates."
+"-33.4489). Used to show the weather on the dashboard when no upcoming permit"
+" carries its own coordinates."
 msgstr ""
 "Opcional: grados decimales del lugar donde opera este contrato (por ejemplo "
 "-33,4489). Se usa para mostrar el clima en el panel cuando ningún permiso "
@@ -3259,7 +3287,8 @@ msgstr ""
 #: .\apps\registry\forms.py:422
 msgid "With its check digit, e.g. 12345678-5. Dots are optional."
 msgstr ""
-"Con su dígito verificador, por ejemplo 12345678-5. Los puntos son opcionales."
+"Con su dígito verificador, por ejemplo 12345678-5. Los puntos son "
+"opcionales."
 
 #: .\apps\registry\forms.py:424
 msgid ""
@@ -3339,8 +3368,9 @@ msgstr "AeroControl · tus vigencias DGAC están por vencer"
 
 #: .\apps\registry\models.py:78 .\apps\registry\models.py:277
 #: .\apps\registry\models.py:652 .\apps\registry\models.py:1322
-#: .\templates\core\users_roles.html:40 .\templates\generic\_table_body.html:10
-#: .\templates\generic\list.html:23 .\templates\registry\_aircraft_rows.html:15
+#: .\templates\core\users_roles.html:40
+#: .\templates\generic\_table_body.html:10 .\templates\generic\list.html:23
+#: .\templates\registry\_aircraft_rows.html:15
 #: .\templates\registry\assignment_list.html:32
 #: .\templates\registry\battery_list.html:25
 #: .\templates\registry\costcenter_detail.html:80
@@ -3355,7 +3385,8 @@ msgstr "Cerrado"
 
 #: .\apps\registry\models.py:98
 msgid "Recipient of expiry digests for this cost center."
-msgstr "Destinatario de los resúmenes de vencimientos de este centro de costo."
+msgstr ""
+"Destinatario de los resúmenes de vencimientos de este centro de costo."
 
 #: .\apps\registry\models.py:235
 msgid "cost center"
@@ -3485,8 +3516,7 @@ msgstr "Una batería necesita su número de serie."
 
 #: .\apps\registry\models.py:801
 msgid "Optional. Lets this person see \"My work\" filtered to them."
-msgstr ""
-"Opcional. Permite que esta persona vea \"Mi trabajo\" filtrado a lo suyo."
+msgstr "Opcional. Permite que esta persona vea \"Mi trabajo\" filtrado a lo suyo."
 
 #: .\apps\registry\models.py:805
 msgid "operator"
@@ -3800,8 +3830,8 @@ msgstr "Seguro registrado como autorizado."
 msgid ""
 "Enter the policy's validity date before recording the JAC's authorization."
 msgstr ""
-"Ingresa la fecha de vigencia de la póliza antes de registrar la autorización "
-"de la JAC."
+"Ingresa la fecha de vigencia de la póliza antes de registrar la autorización"
+" de la JAC."
 
 #: .\apps\registry\views.py:981
 msgid "Assign operators to a cost center"
@@ -4177,7 +4207,8 @@ msgstr "Administración"
 #: .\templates\compliance\_document_preview_modal.html:25
 #: .\templates\compliance\nonconformity_detail.html:62
 #: .\templates\operations\flight_request_detail.html:61
-#: .\templates\workboard\kanban.html:52 .\templates\workboard\task_list.html:23
+#: .\templates\workboard\kanban.html:52
+#: .\templates\workboard\task_list.html:23
 msgid "Close"
 msgstr "Cerrar"
 
@@ -4353,7 +4384,8 @@ msgstr "Emitido"
 #: .\templates\compliance\document_list.html:23
 #: .\templates\compliance\nonconformity_detail.html:58
 #: .\templates\compliance\operational_records.html:49
-#: .\templates\generic\list.html:44 .\templates\maintenance\record_list.html:18
+#: .\templates\generic\list.html:44
+#: .\templates\maintenance\record_list.html:18
 #: .\templates\operations\flight_request_detail.html:140
 #: .\templates\registry\assignment_list.html:51
 msgid "Actions"
@@ -4363,7 +4395,8 @@ msgstr "Acciones"
 #: .\templates\compliance\document_detail.html:18
 #: .\templates\compliance\email\executive_report.html:20
 #: .\templates\compliance\email\executive_report.html:54
-#: .\templates\compliance\report.html:52 .\templates\compliance\report.html:140
+#: .\templates\compliance\report.html:52
+#: .\templates\compliance\report.html:140
 #: .\templates\registry\_qualification_rows.html:20
 #: .\templates\registry\costcenter_detail.html:45
 msgid "Expired"
@@ -4600,8 +4633,8 @@ msgid ""
 "This deliverable is below the contract's criteria. State the reason for "
 "releasing it anyway:"
 msgstr ""
-"Este entregable está bajo los criterios del contrato. Indique el motivo para "
-"liberarlo igualmente:"
+"Este entregable está bajo los criterios del contrato. Indique el motivo para"
+" liberarlo igualmente:"
 
 #: .\templates\compliance\deliverable_detail.html:79
 msgid "Release"
@@ -4652,8 +4685,9 @@ msgid ""
 "All the files in one batch are filed against the same record, with the same "
 "document type and dates. Each one is checked individually."
 msgstr ""
-"Todos los archivos de un lote quedan archivados en el mismo registro, con el "
-"mismo tipo de documento y las mismas fechas. Cada uno se revisa por separado."
+"Todos los archivos de un lote quedan archivados en el mismo registro, con el"
+" mismo tipo de documento y las mismas fechas. Cada uno se revisa por "
+"separado."
 
 #: .\templates\compliance\document_bulk_form.html:25
 msgid "What these documents belong to"
@@ -4776,7 +4810,8 @@ msgid "prev."
 msgstr "ant."
 
 #: .\templates\compliance\email\executive_report.html:53
-#: .\templates\compliance\report.html:51 .\templates\compliance\report.html:139
+#: .\templates\compliance\report.html:51
+#: .\templates\compliance\report.html:139
 msgid "Valid"
 msgstr "Vigentes"
 
@@ -4853,8 +4888,8 @@ msgstr "Revisión de registros del mes — %(period)s"
 
 #: .\templates\compliance\email\monthly_review.txt:3
 msgid ""
-"For each cost center that flew this month, flights vs operational records on "
-"file:"
+"For each cost center that flew this month, flights vs operational records on"
+" file:"
 msgstr ""
 "Por cada centro de costo que voló este mes, vuelos vs registros "
 "operacionales en archivo:"
@@ -4870,7 +4905,8 @@ msgstr "Registros"
 #, python-format
 msgid "Review %(total)s cost center and mark it Compliant or Non-compliant:"
 msgid_plural ""
-"Review these %(total)s cost centers and mark each Compliant or Non-compliant:"
+"Review these %(total)s cost centers and mark each Compliant or Non-"
+"compliant:"
 msgstr[0] "Revisa %(total)s centro de costo y márcalo Cumple o No cumple:"
 msgstr[1] ""
 "Revisa estos %(total)s centros de costo y marca cada uno Cumple o No cumple:"
@@ -4890,8 +4926,8 @@ msgid_plural ""
 msgstr[0] ""
 "Este centro de costo todavía no tiene su revisión de %(period)s firmada:"
 msgstr[1] ""
-"Estos %(total)s centros de costo todavía no tienen su revisión de %(period)s "
-"firmada:"
+"Estos %(total)s centros de costo todavía no tienen su revisión de %(period)s"
+" firmada:"
 
 #: .\templates\compliance\email\monthly_review_deadline.txt:8
 msgid "Mark each Compliant or Non-compliant:"
@@ -4957,7 +4993,8 @@ msgid ""
 "ISO 10.2 asks whether the corrective action worked, not only that it was "
 "taken."
 msgstr ""
-"ISO 10.2 pregunta si la acción correctiva sirvió, no sólo que se haya tomado."
+"ISO 10.2 pregunta si la acción correctiva sirvió, no sólo que se haya "
+"tomado."
 
 #: .\templates\compliance\nonconformity_detail.html:47
 msgid "Note (optional)"
@@ -5096,7 +5133,8 @@ msgstr "Bajo la meta"
 #, python-format
 msgid "Document counters compared against the stored snapshot of %(date)s."
 msgstr ""
-"Contadores documentales comparados contra el registro histórico del %(date)s."
+"Contadores documentales comparados contra el registro histórico del "
+"%(date)s."
 
 #: .\templates\compliance\report.html:96
 msgid ""
@@ -5110,11 +5148,11 @@ msgstr ""
 
 #: .\templates\compliance\report.html:131
 msgid ""
-"Includes DGAC vigencias (operator credentials, aircraft insurance) alongside "
-"uploaded documents."
+"Includes DGAC vigencias (operator credentials, aircraft insurance) alongside"
+" uploaded documents."
 msgstr ""
-"Incluye vigencias DGAC (credenciales de operador, seguros de aeronave) junto "
-"con los documentos subidos."
+"Incluye vigencias DGAC (credenciales de operador, seguros de aeronave) junto"
+" con los documentos subidos."
 
 #: .\templates\compliance\report.html:181
 msgid "Age"
@@ -5296,7 +5334,8 @@ msgstr "Todos los modelos"
 msgid "When"
 msgstr "Cuándo"
 
-#: .\templates\core\audit_log.html:39 .\templates\generic\_traceability.html:38
+#: .\templates\core\audit_log.html:39
+#: .\templates\generic\_traceability.html:38
 msgid "Action"
 msgstr "Acción"
 
@@ -5918,8 +5957,8 @@ msgstr "¿Archivar documento?"
 msgid "This will hide the document without deleting its file."
 msgstr "El documento quedará oculto sin eliminar su archivo."
 
-#: .\templates\generic\confirm_delete.html:6 .\templates\generic\detail.html:18
-#: .\templates\geo\plan_detail.html:89
+#: .\templates\generic\confirm_delete.html:6
+#: .\templates\generic\detail.html:18 .\templates\geo\plan_detail.html:89
 #: .\templates\operations\flightrecord_detail.html:12
 #: .\templates\operations\permission_detail.html:69
 #: .\templates\registry\aircraft_detail.html:12
@@ -6022,8 +6061,8 @@ msgstr "Ubicación administrativa"
 #: .\templates\geo\_sigo_sheet.html:77 .\templates\geo\plan_detail.html:217
 msgid ""
 "The commune, province and region come from the BCN administrative "
-"boundaries, which that institution publishes as referential: near a boundary "
-"the answer may be the neighbouring commune. Confirm it before filing."
+"boundaries, which that institution publishes as referential: near a boundary"
+" the answer may be the neighbouring commune. Confirm it before filing."
 msgstr ""
 "La comuna, la provincia y la región salen de los límites administrativos de "
 "la BCN, que esa institución publica como referenciales: cerca de un límite "
@@ -6101,8 +6140,8 @@ msgstr[1] "%(counter)s revisiones meteorológicas registradas"
 #: .\templates\geo\plan_archive_confirm.html:23
 msgid ""
 "Archiving hides the plan from the listings; nothing is deleted and nothing "
-"cascades. Its SIGO requests stay where they are — they record what was filed "
-"with the authority — and this plan will still be reachable from them."
+"cascades. Its SIGO requests stay where they are — they record what was filed"
+" with the authority — and this plan will still be reachable from them."
 msgstr ""
 "Archivar lo saca de los listados; no se borra nada y nada se archiva en "
 "cascada. Sus solicitudes SIGO se quedan donde están —son el registro de lo "
@@ -6111,13 +6150,13 @@ msgstr ""
 
 #: .\templates\geo\plan_archive_confirm.html:27
 msgid ""
-"At least one of its requests is already filed in SIGO: the authority holds a "
-"file that this plan explains. Archive it only if you are sure nobody will "
+"At least one of its requests is already filed in SIGO: the authority holds a"
+" file that this plan explains. Archive it only if you are sure nobody will "
 "need to look it up."
 msgstr ""
 "Al menos una de sus solicitudes ya está presentada en SIGO: la autoridad "
-"tiene un expediente que este plan explica. Archívalo sólo si estás seguro de "
-"que nadie va a necesitar consultarlo."
+"tiene un expediente que este plan explica. Archívalo sólo si estás seguro de"
+" que nadie va a necesitar consultarlo."
 
 #: .\templates\geo\plan_archive_confirm.html:43
 msgid "Why is it being closed?"
@@ -6239,7 +6278,8 @@ msgstr "Pronóstico meteorológico"
 
 #: .\templates\geo\plan_detail.html:276
 #, python-format
-msgid "Forecast over this area for %(date)s, the day the linked permit begins."
+msgid ""
+"Forecast over this area for %(date)s, the day the linked permit begins."
 msgstr ""
 "Pronóstico sobre esta área para el %(date)s, el día en que empieza el "
 "permiso vinculado."
@@ -6264,8 +6304,8 @@ msgid ""
 "Append-only: each row is what the forecast said at the moment it was "
 "reviewed."
 msgstr ""
-"Sólo se agrega: cada fila es lo que decía el pronóstico en el momento en que "
-"se revisó."
+"Sólo se agrega: cada fila es lo que decía el pronóstico en el momento en que"
+" se revisó."
 
 #: .\templates\geo\plan_detail.html:303
 msgid "Reviewed"
@@ -6492,8 +6532,8 @@ msgid ""
 "Flight time only: the real duty day (travel, setup, waiting on weather) is "
 "longer, so this is a floor."
 msgstr ""
-"Sólo tiempo de vuelo: la jornada real (traslados, montaje, espera de ventana "
-"meteorológica) es más larga, así que esto es un piso."
+"Sólo tiempo de vuelo: la jornada real (traslados, montaje, espera de ventana"
+" meteorológica) es más larga, así que esto es un piso."
 
 #: .\templates\operations\flight_request_detail.html:28
 msgid "Download KMZ for SIGO"
@@ -6584,8 +6624,8 @@ msgstr "Agregar nota"
 
 #: .\templates\operations\flight_request_list.html:27
 msgid ""
-"What was filed in SIGO and how long it has been waiting. The data comes from "
-"a geospatial plan; a request is created by splitting one."
+"What was filed in SIGO and how long it has been waiting. The data comes from"
+" a geospatial plan; a request is created by splitting one."
 msgstr ""
 "Lo presentado en SIGO y cuánto lleva esperando. Los datos vienen de un plan "
 "geoespacial; una solicitud se crea separándolo."
@@ -6623,8 +6663,8 @@ msgstr[0] ""
 "Este plan da <strong>%(count)s solicitud de vuelo</strong>, una por área de "
 "vuelo."
 msgstr[1] ""
-"Este plan da <strong>%(count)s solicitudes de vuelo</strong>, una por área de "
-"vuelo."
+"Este plan da <strong>%(count)s solicitudes de vuelo</strong>, una por área "
+"de vuelo."
 
 #: .\templates\operations\flight_request_split.html:33
 #, python-format
@@ -6727,8 +6767,8 @@ msgstr "No tiene nada más colgando."
 
 #: .\templates\operations\permission_archive_confirm.html:30
 msgid ""
-"Archiving hides the permit from the listings; nothing is deleted and nothing "
-"cascades. Its flights and requests stay as the record of what happened and "
+"Archiving hides the permit from the listings; nothing is deleted and nothing"
+" cascades. Its flights and requests stay as the record of what happened and "
 "what was filed."
 msgstr ""
 "Archivar lo saca de los listados; no se borra nada y nada se archiva en "
@@ -6942,7 +6982,8 @@ msgstr "Hasta fecha"
 msgid "Duration"
 msgstr "Duración"
 
-#: .\templates\registration\login.html:8 .\templates\registration\login.html:48
+#: .\templates\registration\login.html:8
+#: .\templates\registration\login.html:48
 msgid "Sign In"
 msgstr "Iniciar sesión"
 
@@ -7065,7 +7106,8 @@ msgid "Maintenance & status"
 msgstr "Mantenimiento y estado"
 
 #: .\templates\registry\aircraft_detail.html:64
-msgid "Mark this aircraft as damaged and open an emergency maintenance record?"
+msgid ""
+"Mark this aircraft as damaged and open an emergency maintenance record?"
 msgstr ""
 "¿Marcar esta aeronave en Mal estado y abrir una mantención de emergencia?"
 
@@ -7144,8 +7186,8 @@ msgstr ""
 
 #: .\templates\registry\assessment_archive_confirm.html:25
 msgid ""
-"Nothing is deleted: the attempt stays on the record, marked as archived, and "
-"can be restored from the person's file."
+"Nothing is deleted: the attempt stays on the record, marked as archived, and"
+" can be restored from the person's file."
 msgstr ""
 "No se borra nada: el intento queda en el historial, marcado como archivado, "
 "y se puede restaurar desde la ficha de la persona."
@@ -7204,8 +7246,8 @@ msgid ""
 "The result is filed on your record and feeds the same expiry warnings as "
 "your DGAC credential."
 msgstr ""
-"El resultado queda en tu ficha y entra al mismo aviso de vencimientos que tu "
-"credencial DGAC."
+"El resultado queda en tu ficha y entra al mismo aviso de vencimientos que tu"
+" credencial DGAC."
 
 #: .\templates\registry\assessment_take.html:102
 #, python-brace-format
@@ -7239,7 +7281,8 @@ msgstr "Planificaciones activas"
 #: .\templates\registry\assignment_list.html:25
 msgid ""
 "There are assignments without a cost center. Review them before confirming."
-msgstr "Hay asignaciones sin centro de costo. Revísalas antes de confirmarlas."
+msgstr ""
+"Hay asignaciones sin centro de costo. Revísalas antes de confirmarlas."
 
 #: .\templates\registry\assignment_list.html:26
 msgid "Review pending assignments"
@@ -7665,7 +7708,8 @@ msgstr "Crea un tablero para organizar tareas, responsables y vencimientos."
 msgid "Create board"
 msgstr "Crear tablero"
 
-#: .\templates\workboard\kanban.html:52 .\templates\workboard\task_list.html:23
+#: .\templates\workboard\kanban.html:52
+#: .\templates\workboard\task_list.html:23
 msgid "Task details"
 msgstr "Detalle de tarea"
 
@@ -7707,74 +7751,10 @@ msgstr "Ordenar"
 msgid "No tasks found."
 msgstr "No se encontraron tareas."
 
-#~ msgid "Credential file"
-#~ msgstr "Credencial adjunta"
-
-#~ msgid "No qualifications recorded yet."
-#~ msgstr "Aún no hay habilitaciones registradas."
-
-#~ msgid "Enter the employee ID."
-#~ msgstr "Ingresa el ID de empleado."
-
-#~ msgid "SIGO requests"
-#~ msgstr "Solicitudes SIGO"
-
-#~ msgid "Search title or cost center..."
-#~ msgstr "Buscar título o centro de costo..."
-
-#, python-format
-#~ msgid ""
-#~ "%(counter)s question, %(percent)s%% to pass. The result is valid for "
-#~ "%(months)s months and is filed on your record."
-#~ msgid_plural ""
-#~ "%(counter)s questions, %(percent)s%% to pass. The result is valid for "
-#~ "%(months)s months and is filed on your record."
-#~ msgstr[0] ""
-#~ "%(counter)s pregunta, %(percent)s%% para aprobar. El resultado vale "
-#~ "%(months)s meses y queda en tu ficha."
-#~ msgstr[1] ""
-#~ "%(counter)s preguntas, %(percent)s%% para aprobar. El resultado vale "
-#~ "%(months)s meses y queda en tu ficha."
-
-#~ msgid "Active Aircraft"
-#~ msgstr "Aeronaves activas"
-
-#~ msgid "Active Operators"
-#~ msgstr "Operadores activos"
-
-#~ msgid "Incident"
-#~ msgstr "Incidente"
-
-#~ msgid "missing or lapsed"
-#~ msgstr "faltantes o vencidos"
-
-#~ msgid "Expiring in 30 days"
-#~ msgstr "Vence en 30 días"
-
-#~ msgid "No documents attached to this permission."
-#~ msgstr "No hay documentos adjuntos a este permiso."
-
-#~ msgid "Split a plan"
-#~ msgstr "Separar un plan"
-
-#~ msgid "No flight requests yet. Split a geospatial plan to create them."
-#~ msgstr ""
-#~ "Aún no hay solicitudes de vuelo. Separa un plan geoespacial para crearlas."
-
-#~ msgid "Smallest circle that encloses it"
-#~ msgstr "La circunferencia más chica que la encierra"
-
-#~ msgid ""
-#~ "The ↳ row appears when the drawn area is not a circle: SIGO accepts one "
-#~ "circle per request, and that is the smallest one covering the whole area."
-#~ msgstr ""
-#~ "La fila ↳ aparece cuando el área dibujada no es una circunferencia: SIGO "
-#~ "acepta una por solicitud, y ésa es la más chica que cubre toda el área."
-
 #: apps/operations/forms.py
 msgid ""
-"Optional until the permission is approved. The DGAC sets the validity window "
-"on the authorization it issues."
+"Optional until the permission is approved. The DGAC sets the validity window"
+" on the authorization it issues."
 msgstr ""
 "Opcional hasta que el permiso esté aprobado. La DGAC fija la vigencia en la "
 "autorización que emite."
@@ -7805,8 +7785,8 @@ msgstr ""
 
 #: apps/operations/views.py
 msgid ""
-"Enter the permit's validity window before approving. The DGAC sets it on the "
-"authorization you just uploaded: edit the permit and type the two dates in."
+"Enter the permit's validity window before approving. The DGAC sets it on the"
+" authorization you just uploaded: edit the permit and type the two dates in."
 msgstr ""
 "Ingresa la vigencia del permiso antes de aprobar. La DGAC la fija en la "
 "autorización que acabas de subir: edita el permiso y escribe las dos fechas."
@@ -7831,8 +7811,8 @@ msgid ""
 "the field below and it will be recorded."
 msgstr ""
 "La DGAC autoriza tres meses como máximo, así que esta vigencia no puede "
-"terminar después del %(limit)s. Si la autorización dice otra cosa, escribe el "
-"motivo en el campo de abajo y quedará registrado."
+"terminar después del %(limit)s. Si la autorización dice otra cosa, escribe "
+"el motivo en el campo de abajo y quedará registrado."
 
 #: apps/operations/forms.py
 msgid ""
@@ -7841,18 +7821,18 @@ msgid ""
 "before the earliest insurance expiry of its aircraft (insurance until the "
 "21st → permit until the 20th)."
 msgstr ""
-"Opcional hasta que el permiso esté aprobado. La DGAC autoriza tres meses como "
-"máximo, contados desde la fecha de inicio, y una solicitud no puede pasar del "
-"día anterior al primer vencimiento de seguro de sus aeronaves (seguro hasta "
-"el 21 → permiso hasta el 20)."
+"Opcional hasta que el permiso esté aprobado. La DGAC autoriza tres meses "
+"como máximo, contados desde la fecha de inicio, y una solicitud no puede "
+"pasar del día anterior al primer vencimiento de seguro de sus aeronaves "
+"(seguro hasta el 21 → permiso hasta el 20)."
 
 #: apps/operations/forms.py
 msgid ""
-"Only if the DGAC granted a different term. Leave it empty for a normal three-"
-"month permit."
+"Only if the DGAC granted a different term. Leave it empty for a normal "
+"three-month permit."
 msgstr ""
-"Solo si la DGAC otorgó un plazo distinto. Déjalo vacío para un permiso normal "
-"de tres meses."
+"Solo si la DGAC otorgó un plazo distinto. Déjalo vacío para un permiso "
+"normal de tres meses."
 
 #: apps/operations/dossier.py
 msgid "Client authorization letter on file"
@@ -7880,11 +7860,11 @@ msgstr "Altitud máxima (m)"
 
 #: apps/operations/forms.py
 msgid ""
-"In metres, as flown. The DAN 151 ceiling is 130 m AGL. The permit fiche shows "
-"the equivalent in feet for the SIGO form."
+"In metres, as flown. The DAN 151 ceiling is 130 m AGL. The permit fiche "
+"shows the equivalent in feet for the SIGO form."
 msgstr ""
-"En metros, como se vuela. El techo de la DAN 151 son 130 m AGL. La ficha del "
-"permiso muestra el equivalente en pies para el formulario del SIGO."
+"En metros, como se vuela. El techo de la DAN 151 son 130 m AGL. La ficha del"
+" permiso muestra el equivalente en pies para el formulario del SIGO."
 
 #: templates/operations/permission_detail.html
 msgid "%(ft)s ft for the SIGO form"
@@ -7925,7 +7905,6 @@ msgstr "informe emitido"
 #: apps/reporting/models.py
 msgid "report runs"
 msgstr "informes emitidos"
-
 
 #: apps/reporting/views.py
 #, python-format
@@ -8043,8 +8022,8 @@ msgstr "Volver al informe"
 
 #: templates/reporting/narrative_form.html
 msgid ""
-"Findings and the note for the period. The figures come from the database and "
-"are not edited here."
+"Findings and the note for the period. The figures come from the database and"
+" are not edited here."
 msgstr ""
 "Hallazgos y observación del período. Las cifras salen de la base de datos y "
 "no se editan acá."
@@ -8054,8 +8033,8 @@ msgid ""
 "A finding is a judgement about the figures, not a query: it is written by "
 "whoever signs the report."
 msgstr ""
-"Un hallazgo es un juicio sobre las cifras, no una consulta: lo escribe quien "
-"firma el informe."
+"Un hallazgo es un juicio sobre las cifras, no una consulta: lo escribe quien"
+" firma el informe."
 
 #: apps/reporting/models.py
 msgid "Only a draft can be approved; issue a new revision instead."
@@ -8067,8 +8046,8 @@ msgstr "Informe aprobado. Queda de sólo lectura."
 
 #: templates/reporting/monthly_report.html
 msgid ""
-"Approving closes the report: it stops being editable and a correction has to "
-"be issued as a new revision. Continue?"
+"Approving closes the report: it stops being editable and a correction has to"
+" be issued as a new revision. Continue?"
 msgstr ""
 "Aprobar cierra el informe: deja de ser editable y una corrección hay que "
 "emitirla como revisión nueva. ¿Continuar?"
@@ -8101,11 +8080,12 @@ msgstr "Entorno de prueba"
 
 #: templates/registration/login.html
 msgid ""
-"Wrong username or password. After several failed attempts the account is held "
-"for a while, so check the keyboard layout before trying again."
+"Wrong username or password. After several failed attempts the account is "
+"held for a while, so check the keyboard layout before trying again."
 msgstr ""
 "Usuario o contraseña incorrectos. Tras varios intentos fallidos la cuenta "
-"queda retenida un rato, así que conviene revisar el teclado antes de volver a probar."
+"queda retenida un rato, así que conviene revisar el teclado antes de volver "
+"a probar."
 
 #: templates/registration/login.html
 #, python-format
@@ -8149,8 +8129,8 @@ msgid ""
 "computer will not lift it. It clears on its own when the wait is over."
 msgstr ""
 "La retención es sobre el nombre de usuario y no sobre este equipo, así que "
-"entrar desde otro computador no la levanta. Se libera sola cuando termina la "
-"espera."
+"entrar desde otro computador no la levanta. Se libera sola cuando termina la"
+" espera."
 
 #: templates/registration/lockout.html
 #, python-format
@@ -8317,8 +8297,8 @@ msgid ""
 "No open alerts, findings, permits awaiting the DGAC or unreleased "
 "deliverables."
 msgstr ""
-"Sin alertas abiertas, hallazgos, permisos esperando a la DGAC ni entregables "
-"sin liberar."
+"Sin alertas abiertas, hallazgos, permisos esperando a la DGAC ni entregables"
+" sin liberar."
 
 #: templates/compliance/alert_list.html
 msgid "Any owner"
@@ -8354,7 +8334,8 @@ msgstr "Informe completo"
 
 #: templates/reporting/executive_brief.html
 msgid "Live preview: nothing is frozen for this period yet."
-msgstr "Vista previa en vivo: todavía no hay nada congelado para este período."
+msgstr ""
+"Vista previa en vivo: todavía no hay nada congelado para este período."
 
 #: templates/reporting/narrative_form.html
 msgid "Actions required this month"
@@ -8409,7 +8390,8 @@ msgstr ""
 
 #: apps/operations/forms.py
 msgid "Required when a NOTAM affects the operation: say which one and how."
-msgstr "Obligatorio cuando un NOTAM afecta a la operación: cuál y de qué forma."
+msgstr ""
+"Obligatorio cuando un NOTAM afecta a la operación: cuál y de qué forma."
 
 #: apps/operations/forms.py
 msgid "Choose what the review found"
@@ -8445,12 +8427,13 @@ msgstr "Abrir la consulta de NOTAM de la DGAC"
 
 #: templates/operations/notam_review_form.html
 msgid ""
-"AeroControl does not query the IFIS: it has no API, and a failed parse reads "
-"too easily as “no advisories”. What is recorded here is what you read there."
+"AeroControl does not query the IFIS: it has no API, and a failed parse reads"
+" too easily as “no advisories”. What is recorded here is what you read "
+"there."
 msgstr ""
 "AeroControl no consulta el IFIS: no tiene API, y una lectura fallida se "
-"interpreta con demasiada facilidad como «sin avisos». Lo que se registra acá "
-"es lo que usted leyó allá."
+"interpreta con demasiada facilidad como «sin avisos». Lo que se registra acá"
+" es lo que usted leyó allá."
 
 #: templates/operations/notam_review_form.html
 msgid ""
@@ -8574,7 +8557,8 @@ msgid "Export the selection"
 msgstr "Exportar la selección"
 
 #: templates/base.html
-msgid "This form has changes that have not been saved. Close it and lose them?"
+msgid ""
+"This form has changes that have not been saved. Close it and lose them?"
 msgstr "Este formulario tiene cambios sin guardar. ¿Cerrarlo y perderlos?"
 
 #: templates/generic/form.html templates/compliance/document_form.html
@@ -8637,8 +8621,12 @@ msgid "This screen reads the records; it does not authorise the flight."
 msgstr "Esta pantalla lee los registros; no autoriza el vuelo."
 
 #: apps/operations/readiness.py templates/operations/can_i_fly.html
-msgid "Choose an aircraft, an operator and a cost centre. The three of them: half a set has no answer."
-msgstr "Elija una aeronave, un operador y un centro de costo. Los tres: media terna no tiene respuesta."
+msgid ""
+"Choose an aircraft, an operator and a cost centre. The three of them: half a"
+" set has no answer."
+msgstr ""
+"Elija una aeronave, un operador y un centro de costo. Los tres: media terna "
+"no tiene respuesta."
 
 #: apps/operations/readiness.py templates/operations/can_i_fly.html
 msgid "Airframe status"
@@ -8650,7 +8638,8 @@ msgstr "La aeronave pertenece a otra faena"
 
 #: apps/operations/readiness.py templates/operations/can_i_fly.html
 msgid "One answer for one aircraft, one operator and one cost centre, today."
-msgstr "Una respuesta para una aeronave, un operador y un centro de costo, hoy."
+msgstr ""
+"Una respuesta para una aeronave, un operador y un centro de costo, hoy."
 
 #: apps/operations/readiness.py templates/operations/can_i_fly.html
 msgid "Operator and aircraft"
@@ -8662,16 +8651,19 @@ msgstr "Qué se comprobó"
 
 #: apps/operations/readiness.py templates/operations/can_i_fly.html
 msgid "No expiry date on file, so nothing here proves it is in force."
-msgstr "Sin fecha de vencimiento cargada, así que nada acá prueba que esté vigente."
+msgstr ""
+"Sin fecha de vencimiento cargada, así que nada acá prueba que esté vigente."
 
 #: apps/operations/readiness.py templates/operations/can_i_fly.html
 #, python-format
 msgid "No current qualification of this operator covers the model %(model)s."
-msgstr "Ninguna habilitación vigente de este operador cubre el modelo %(model)s."
+msgstr ""
+"Ninguna habilitación vigente de este operador cubre el modelo %(model)s."
 
 #: apps/operations/readiness.py templates/operations/can_i_fly.html
 msgid "No approved permit covers today for this cost centre."
-msgstr "Ningún permiso aprobado cubre el día de hoy para este centro de costo."
+msgstr ""
+"Ningún permiso aprobado cubre el día de hoy para este centro de costo."
 
 #: apps/operations/readiness.py templates/operations/can_i_fly.html
 #, python-format
@@ -8698,7 +8690,6 @@ msgstr "Qué lo impide"
 #: apps/operations/readiness.py templates/operations/can_i_fly.html
 msgid "Operator belongs elsewhere"
 msgstr "El operador pertenece a otra faena"
-
 
 #: templates/operations/can_i_fly.html
 msgid "nothing blocking"
@@ -8727,7 +8718,8 @@ msgstr[1] "Hay %(counter)s cosas en los registros que impiden este vuelo."
 #: templates/operations/can_i_fly.html
 #, python-format
 msgid "These do not stop the flight. Dates shown reach up to %(date)s."
-msgstr "Esto no impide el vuelo. Las fechas mostradas llegan hasta el %(date)s."
+msgstr ""
+"Esto no impide el vuelo. Las fechas mostradas llegan hasta el %(date)s."
 
 #: templates/base.html
 msgid "Your day"
@@ -8767,12 +8759,20 @@ msgid "Sign the preflight check"
 msgstr "Firmar el chequeo prevuelo"
 
 #: apps/operations/models.py templates/operations/preflight_check.html
-msgid "Signing closes this preflight check: it stops being editable and stays as evidence. Continue?"
-msgstr "Firmar cierra este chequeo prevuelo: deja de ser editable y queda como evidencia. ¿Continuar?"
+msgid ""
+"Signing closes this preflight check: it stops being editable and stays as "
+"evidence. Continue?"
+msgstr ""
+"Firmar cierra este chequeo prevuelo: deja de ser editable y queda como "
+"evidencia. ¿Continuar?"
 
 #: apps/operations/models.py templates/operations/preflight_check.html
-msgid "A signed preflight check is evidence: it is not edited. A correction is a new flight record."
-msgstr "Un chequeo prevuelo firmado es evidencia: no se edita. Una corrección es un registro de vuelo nuevo."
+msgid ""
+"A signed preflight check is evidence: it is not edited. A correction is a "
+"new flight record."
+msgstr ""
+"Un chequeo prevuelo firmado es evidencia: no se edita. Una corrección es un "
+"registro de vuelo nuevo."
 
 #: apps/operations/models.py templates/operations/preflight_check.html
 msgid "Recorded as not conforming"
@@ -8831,9 +8831,12 @@ msgid "Signed"
 msgstr "Firmado"
 
 #: apps/operations/models.py templates/operations/preflight_check.html
-msgid "Comma-separated words matched against the aircraft model. Leave it empty for a checklist that applies to every aircraft."
-msgstr "Palabras separadas por coma que se comparan contra el modelo de la aeronave. Déjelo vacío para una lista que aplique a todas."
-
+msgid ""
+"Comma-separated words matched against the aircraft model. Leave it empty for"
+" a checklist that applies to every aircraft."
+msgstr ""
+"Palabras separadas por coma que se comparan contra el modelo de la aeronave."
+" Déjelo vacío para una lista que aplique a todas."
 
 #: templates/operations/preflight_check.html
 #, python-format
@@ -8843,8 +8846,8 @@ msgstr "por %(who)s el %(when)s."
 #: templates/operations/preflight_check.html
 #, python-format
 msgid ""
-"No preflight checklist is configured for the model %(model)s. Nothing can be "
-"recorded until one exists."
+"No preflight checklist is configured for the model %(model)s. Nothing can be"
+" recorded until one exists."
 msgstr ""
 "No hay ninguna lista de chequeo prevuelo configurada para el modelo "
 "%(model)s. No se puede registrar nada hasta que exista una."
@@ -8860,25 +8863,36 @@ msgstr "No está nombrado en el permiso"
 
 #: apps/operations/readiness.py
 #, python-format
-msgid "The permit in force for this cost centre (%(folios)s) does not authorise %(missing)s."
-msgid_plural "The permits in force for this cost centre (%(folios)s) do not authorise %(missing)s."
-msgstr[0] "El permiso vigente de este centro de costo (%(folios)s) no autoriza a %(missing)s."
-msgstr[1] "Los permisos vigentes de este centro de costo (%(folios)s) no autorizan a %(missing)s."
+msgid ""
+"The permit in force for this cost centre (%(folios)s) does not authorise "
+"%(missing)s."
+msgid_plural ""
+"The permits in force for this cost centre (%(folios)s) do not authorise "
+"%(missing)s."
+msgstr[0] ""
+"El permiso vigente de este centro de costo (%(folios)s) no autoriza a "
+"%(missing)s."
+msgstr[1] ""
+"Los permisos vigentes de este centro de costo (%(folios)s) no autorizan a "
+"%(missing)s."
 
 #: apps/operations/readiness.py
 #, python-format
-msgid "No single permit in force (%(folios)s) authorises this operator and this aircraft together."
-msgstr "Ningún permiso vigente (%(folios)s) autoriza a este operador y a esta aeronave juntos."
-
+msgid ""
+"No single permit in force (%(folios)s) authorises this operator and this "
+"aircraft together."
+msgstr ""
+"Ningún permiso vigente (%(folios)s) autoriza a este operador y a esta "
+"aeronave juntos."
 
 #: templates/reporting/_written.html
 msgid "Written by a person, not computed from the cutoff. Click to edit it."
-msgstr "Lo escribió una persona; no se calcula del corte. Haga clic para editarlo."
+msgstr ""
+"Lo escribió una persona; no se calcula del corte. Haga clic para editarlo."
 
 #: templates/reporting/_written.html
 msgid "Written · edit"
 msgstr "Escrito · editar"
-
 
 #: .\apps\reporting\models.py:360
 msgid "Issued by"
@@ -8966,11 +8980,11 @@ msgstr "Cada nivel tiene que ser exigible, informativo o no aplica."
 
 #: .\apps\reporting\views.py:420
 msgid ""
-"Saved. The preview and the reports frozen from now on use these texts; reports "
-"already frozen keep theirs."
+"Saved. The preview and the reports frozen from now on use these texts; "
+"reports already frozen keep theirs."
 msgstr ""
-"Guardado. La vista previa y los informes que se congelen desde ahora usan estos "
-"textos; los ya congelados conservan los suyos."
+"Guardado. La vista previa y los informes que se congelen desde ahora usan "
+"estos textos; los ya congelados conservan los suyos."
 
 #: .\templates\reporting\template_form.html:3
 msgid "Report texts"
@@ -8978,19 +8992,19 @@ msgstr "Textos del informe"
 
 #: .\templates\reporting\template_form.html:19
 msgid ""
-"The cover, the plan phases and the requirement matrix of the monthly report. "
-"The figures come from the database and are not edited here."
+"The cover, the plan phases and the requirement matrix of the monthly report."
+" The figures come from the database and are not edited here."
 msgstr ""
-"La portada, las fases del plan y la matriz de exigibilidad del informe mensual. "
-"Las cifras salen de la base y no se editan acá."
+"La portada, las fases del plan y la matriz de exigibilidad del informe "
+"mensual. Las cifras salen de la base y no se editan acá."
 
 #: .\templates\reporting\template_form.html:25
 msgid ""
 "Changes apply to the preview and to reports frozen from now on. A report "
 "already frozen keeps the texts it was issued with."
 msgstr ""
-"Los cambios se aplican a la vista previa y a los informes que se congelen desde "
-"ahora. Un informe ya congelado conserva los textos con que se emitió."
+"Los cambios se aplican a la vista previa y a los informes que se congelen "
+"desde ahora. Un informe ya congelado conserva los textos con que se emitió."
 
 #: .\templates\reporting\template_form.html:31
 msgid "Cover"
@@ -9005,8 +9019,8 @@ msgid ""
 "One phase per month. Whether a phase is done, current or upcoming is worked "
 "out from the report period, not set here."
 msgstr ""
-"Una fase por mes. Si una fase está cumplida, en curso o por venir se calcula "
-"según el período del informe; no se fija acá."
+"Una fase por mes. Si una fase está cumplida, en curso o por venir se calcula"
+" según el período del informe; no se fija acá."
 
 #: .\templates\reporting\template_form.html:70
 msgid "Remove this phase"
@@ -9021,8 +9035,8 @@ msgid ""
 "One column per saved phase. A phase added in this same save gets its column "
 "once saved."
 msgstr ""
-"Una columna por cada fase guardada. Una fase agregada en este mismo guardado "
-"suma su columna una vez guardada."
+"Una columna por cada fase guardada. Una fase agregada en este mismo guardado"
+" suma su columna una vez guardada."
 
 #: .\templates\reporting\template_form.html:90
 msgid "Bold"
@@ -9133,11 +9147,11 @@ msgstr "Sin informe del mes anterior"
 
 #: .\templates\reporting\compare.html:35
 msgid ""
-"There is nothing to compare this report with yet: it has no earlier revision "
-"and the previous month has no frozen report."
+"There is nothing to compare this report with yet: it has no earlier revision"
+" and the previous month has no frozen report."
 msgstr ""
-"Todavía no hay con qué comparar este informe: no tiene una revisión anterior y "
-"el mes anterior no tiene un informe congelado."
+"Todavía no hay con qué comparar este informe: no tiene una revisión anterior"
+" y el mes anterior no tiene un informe congelado."
 
 #: .\templates\reporting\compare.html:39
 msgid "Indicators"
@@ -9213,8 +9227,12 @@ msgid "Monthly close"
 msgstr "Cierre mensual"
 
 #: templates/compliance/monthly_review.html
-msgid "Each cost center's operational records for the month and its review, on one screen."
-msgstr "Los registros operacionales de cada faena en el mes y su revisión, en una sola pantalla."
+msgid ""
+"Each cost center's operational records for the month and its review, on one "
+"screen."
+msgstr ""
+"Los registros operacionales de cada faena en el mes y su revisión, en una "
+"sola pantalla."
 
 #: templates/compliance/monthly_review.html
 msgid "Previous month"
@@ -9289,12 +9307,21 @@ msgid "Opens the print dialog: choose “Save as PDF” as the destination."
 msgstr "Abre el diálogo de impresión: elija «Guardar como PDF» como destino."
 
 #: apps/reporting/checks.py
-msgid "%(code)s has a permit in force (%(folios)s) but is not in the coverage table: it is closed, inactive or marked as not flying. The “X of N cost centres” figure does not count it."
-msgstr "%(code)s tiene un permiso vigente (%(folios)s) pero no está en la tabla de cobertura: está cerrada, inactiva o marcada como que no vuela. La cifra «X de N Centros de Costo» no la cuenta."
+msgid ""
+"%(code)s has a permit in force (%(folios)s) but is not in the coverage "
+"table: it is closed, inactive or marked as not flying. The “X of N cost "
+"centres” figure does not count it."
+msgstr ""
+"%(code)s tiene un permiso vigente (%(folios)s) pero no está en la tabla de "
+"cobertura: está cerrada, inactiva o marcada como que no vuela. La cifra «X "
+"de N Centros de Costo» no la cuenta."
 
 #: apps/reporting/checks.py
-msgid "The written text names %(code)s, which is not a cost centre of this report."
-msgstr "El texto escrito nombra a %(code)s, que no es un Centro de Costo de este informe."
+msgid ""
+"The written text names %(code)s, which is not a cost centre of this report."
+msgstr ""
+"El texto escrito nombra a %(code)s, que no es un Centro de Costo de este "
+"informe."
 
 #: apps/reporting/checks.py
 msgid "The period observation (section 2) is still not written."
@@ -9305,16 +9332,28 @@ msgid "The findings of the period are still not written."
 msgstr "Los hallazgos del período aún no están redactados."
 
 #: apps/reporting/checks.py
-msgid "The total of cost centres went from %(before)s to %(now)s since the previous report. Closed cost centres stopped counting on 2026-09-14; if that is not the reason, review the registry."
-msgstr "El total de Centros de Costo pasó de %(before)s a %(now)s desde el informe anterior. Las faenas cerradas dejaron de contarse el 2026-09-14; si ese no es el motivo, conviene revisar el registro."
+msgid ""
+"The total of cost centres went from %(before)s to %(now)s since the previous"
+" report. Closed cost centres stopped counting on 2026-09-14; if that is not "
+"the reason, review the registry."
+msgstr ""
+"El total de Centros de Costo pasó de %(before)s a %(now)s desde el informe "
+"anterior. Las faenas cerradas dejaron de contarse el 2026-09-14; si ese no "
+"es el motivo, conviene revisar el registro."
 
 #: templates/reporting/monthly_report.html
 msgid "Review before issuing"
 msgstr "Revisar antes de emitir"
 
 #: templates/compliance/email/alert_digest.html
-msgid "This cost center has no responsible person assigned, so you receive its notice as a fallback. Assign a responsible operator or an external contact in the cost center record."
-msgstr "Este centro de costo no tiene un responsable asignado, por lo que usted recibe su aviso como respaldo. Asigne un operador responsable o un contacto externo en la ficha del centro de costo."
+msgid ""
+"This cost center has no responsible person assigned, so you receive its "
+"notice as a fallback. Assign a responsible operator or an external contact "
+"in the cost center record."
+msgstr ""
+"Este centro de costo no tiene un responsable asignado, por lo que usted "
+"recibe su aviso como respaldo. Asigne un operador responsable o un contacto "
+"externo en la ficha del centro de costo."
 
 #: apps/operations/management/commands/check_client_letters.py
 msgid "AeroControl · permits expiring without the client letter"
@@ -9325,8 +9364,13 @@ msgid "Permits expiring without the client letter"
 msgstr "Permisos por vencer sin la carta del mandante"
 
 #: templates/operations/email/client_letters.txt
-msgid "These permits expire soon and have no client authorization letter on file. The DGAC does not renew without it, so the renewal needs your attention:"
-msgstr "Estos permisos vencen pronto y no tienen la carta de autorización del mandante en la ficha. La DGAC no renueva sin ella, así que la renovación necesita su atención:"
+msgid ""
+"These permits expire soon and have no client authorization letter on file. "
+"The DGAC does not renew without it, so the renewal needs your attention:"
+msgstr ""
+"Estos permisos vencen pronto y no tienen la carta de autorización del "
+"mandante en la ficha. La DGAC no renueva sin ella, así que la renovación "
+"necesita su atención:"
 
 #: templates/operations/email/client_letters.txt
 #, python-format
@@ -9439,11 +9483,11 @@ msgstr "Puntos de inicio y de término"
 
 #: apps/operations/views.py
 msgid ""
-"Corridor simplified: SIGO takes only a start and an end point, so the points "
-"in between are not declared."
+"Corridor simplified: SIGO takes only a start and an end point, so the points"
+" in between are not declared."
 msgstr ""
-"Corredor simplificado: SIGO sólo admite un punto de inicio y uno de término, "
-"así que los puntos intermedios no se declaran."
+"Corredor simplificado: SIGO sólo admite un punto de inicio y uno de término,"
+" así que los puntos intermedios no se declaran."
 
 #: templates/operations/permission_detail.html
 msgid "Optional"
@@ -9465,8 +9509,8 @@ msgstr ""
 #: apps/operations/permit_rules.py
 #, python-format
 msgid ""
-"The insurance of %(aircraft)s expires on %(expiry)s, so the permit cannot run "
-"past the day before. Set the end date to %(limit)s or earlier."
+"The insurance of %(aircraft)s expires on %(expiry)s, so the permit cannot "
+"run past the day before. Set the end date to %(limit)s or earlier."
 msgstr ""
 "El seguro de %(aircraft)s vence el %(expiry)s, así que el permiso no puede "
 "pasar del día anterior. Ponga como fecha de término el %(limit)s o antes."
@@ -9479,11 +9523,11 @@ msgstr "%(label)s · seguro hasta %(date)s"
 #: templates/operations/permission_detail.html
 #, python-format
 msgid ""
-"Insurance of %(aircraft)s until %(expiry)s: this request can end on %(limit)s "
-"at the latest."
+"Insurance of %(aircraft)s until %(expiry)s: this request can end on "
+"%(limit)s at the latest."
 msgstr ""
-"Seguro de %(aircraft)s hasta el %(expiry)s: esta solicitud puede terminar el "
-"%(limit)s como máximo."
+"Seguro de %(aircraft)s hasta el %(expiry)s: esta solicitud puede terminar el"
+" %(limit)s como máximo."
 
 #: templates/core/audit_unavailable.html
 msgid "Change not saved"
@@ -9491,8 +9535,8 @@ msgstr "Cambio no guardado"
 
 #: templates/core/audit_unavailable.html
 msgid ""
-"The audit log could not be written, so this change was not saved. Nothing was "
-"modified."
+"The audit log could not be written, so this change was not saved. Nothing "
+"was modified."
 msgstr ""
 "No se pudo escribir el registro de auditoría, así que este cambio no se "
 "guardó. No se modificó nada."
@@ -9500,8 +9544,8 @@ msgstr ""
 #: templates/core/audit_unavailable.html
 msgid ""
 "This is a protection, not an error in your data: the system does not save "
-"changes it cannot record. Try again in a moment; if it keeps happening, tell "
-"an administrator."
+"changes it cannot record. Try again in a moment; if it keeps happening, tell"
+" an administrator."
 msgstr ""
 "Es una protección y no un error de sus datos: el sistema no guarda cambios "
 "que no puede registrar. Vuelva a intentarlo en un momento; si sigue "
@@ -9608,8 +9652,11 @@ msgstr "Aeronaves del permiso"
 msgid "Open register"
 msgstr "Abrir registro"
 
-msgid "For a flight permit, leave the dates blank to take the permit's validity."
-msgstr "Para un permiso de vuelo, deje las fechas en blanco para tomar la vigencia del permiso."
+msgid ""
+"For a flight permit, leave the dates blank to take the permit's validity."
+msgstr ""
+"Para un permiso de vuelo, deje las fechas en blanco para tomar la vigencia "
+"del permiso."
 
 msgid "This field is required."
 msgstr "Este campo es obligatorio."
@@ -9617,8 +9664,14 @@ msgstr "Este campo es obligatorio."
 msgid "The permit was not saved. Fix these fields:"
 msgstr "El permiso no se guardó. Corrija estos campos:"
 
-msgid "The DGAC authorization says %(pdf_from)s to %(pdf_until)s, but the permit says %(permit_from)s to %(permit_until)s. Correct the permit so both agree before approving."
-msgstr "La autorización de la DGAC dice del %(pdf_from)s al %(pdf_until)s, pero el permiso dice del %(permit_from)s al %(permit_until)s. Corrija el permiso para que ambos coincidan antes de aprobar."
+msgid ""
+"The DGAC authorization says %(pdf_from)s to %(pdf_until)s, but the permit "
+"says %(permit_from)s to %(permit_until)s. Correct the permit so both agree "
+"before approving."
+msgstr ""
+"La autorización de la DGAC dice del %(pdf_from)s al %(pdf_until)s, pero el "
+"permiso dice del %(permit_from)s al %(permit_until)s. Corrija el permiso "
+"para que ambos coincidan antes de aprobar."
 
 msgid "Starts %(date)s"
 msgstr "Inicia el %(date)s"
@@ -9632,17 +9685,23 @@ msgstr "Escriba primero una pregunta."
 msgid "The question is too long."
 msgstr "La pregunta es demasiado larga."
 
-msgid "The assistant is not configured: the NVIDIA key is missing in this environment."
-msgstr "El asistente no está configurado: falta la llave de NVIDIA en este entorno."
+msgid ""
+"The assistant is not configured: the NVIDIA key is missing in this "
+"environment."
+msgstr ""
+"El asistente no está configurado: falta la llave de NVIDIA en este entorno."
 
 msgid "The assistant returned no answer."
 msgstr "El asistente no devolvió respuesta."
 
 msgid "The assistant needed too many steps. Try a simpler question."
-msgstr "El asistente necesitó demasiados pasos. Pruebe con una pregunta más simple."
+msgstr ""
+"El asistente necesitó demasiados pasos. Pruebe con una pregunta más simple."
 
 msgid "The assistant is not available right now. Try again in a moment."
-msgstr "El asistente no está disponible por ahora. Vuelva a intentarlo en un momento."
+msgstr ""
+"El asistente no está disponible por ahora. Vuelva a intentarlo en un "
+"momento."
 
 msgid ""
 "The assistant's model cannot use the lookup tools. Ask the administrator to "
@@ -9657,8 +9716,14 @@ msgstr "Asistente"
 msgid "Prototype, demo environment only."
 msgstr "Prototipo, solo en el entorno de demo."
 
-msgid "It answers from aggregated permit data. It never changes anything and never sees names, ID numbers or contact details. Check anything important on the screens."
-msgstr "Responde con datos agregados de permisos. Nunca cambia nada y nunca ve nombres, números de identificación ni datos de contacto. Verifique en las pantallas todo lo importante."
+msgid ""
+"It answers from aggregated permit data. It never changes anything and never "
+"sees names, ID numbers or contact details. Check anything important on the "
+"screens."
+msgstr ""
+"Responde con datos agregados de permisos. Nunca cambia nada y nunca ve "
+"nombres, números de identificación ni datos de contacto. Verifique en las "
+"pantallas todo lo importante."
 
 msgid "Ask about permits"
 msgstr "Pregunte sobre permisos"
@@ -9733,13 +9798,17 @@ msgid "Which permits expire in the next 30 days?"
 msgstr "¿Qué permisos vencen en los próximos 30 días?"
 
 msgid "You have asked too many questions this hour. Try again later."
-msgstr "Se hicieron demasiadas preguntas en esta hora. Vuelva a intentarlo más tarde."
+msgstr ""
+"Se hicieron demasiadas preguntas en esta hora. Vuelva a intentarlo más "
+"tarde."
 
 msgid "The assistant reached its usage limit. Try again later."
 msgstr "El asistente alcanzó su límite de uso. Vuelva a intentarlo más tarde."
 
-msgid "The assistant's key was not accepted. Ask the administrator to check it."
-msgstr "No se aceptó la llave del asistente. Pida a la administración que la revise."
+msgid ""
+"The assistant's key was not accepted. Ask the administrator to check it."
+msgstr ""
+"No se aceptó la llave del asistente. Pida a la administración que la revise."
 
 msgid "Every flight documented and on time."
 msgstr "Cada vuelo, documentado y a tiempo."
@@ -9855,11 +9924,16 @@ msgid "The plan %(old)s was copied as %(new)s, with the same KMZ."
 msgstr "El plan %(old)s se copió como %(new)s, con el mismo KMZ."
 
 #, python-format
-msgid "%(folio)s cannot be renewed: it is not approved, completed or expired, or it has already been renewed."
-msgstr "%(folio)s no se puede renovar: no está aprobado, completado ni caducado, o ya fue renovado."
+msgid ""
+"%(folio)s cannot be renewed: it is not approved, completed or expired, or it"
+" has already been renewed."
+msgstr ""
+"%(folio)s no se puede renovar: no está aprobado, completado ni caducado, o "
+"ya fue renovado."
 
 msgid "A renewal must keep the cost center of the permit it renews."
-msgstr "Una renovación debe mantener el centro de costo del permiso que renueva."
+msgstr ""
+"Una renovación debe mantener el centro de costo del permiso que renueva."
 
 msgid "Only an approved, completed or expired permit can be renewed."
 msgstr "Solo un permiso aprobado, completado o caducado se puede renovar."
@@ -9868,8 +9942,14 @@ msgid "This permit has already been renewed."
 msgstr "Este permiso ya fue renovado."
 
 #, python-format
-msgid "This draft renews %(folio)s. The data below was copied from it so you can review it. The DGAC number and the validity are not copied: the DGAC gives them when it answers."
-msgstr "Este borrador renueva a %(folio)s. Los datos de abajo se copiaron de él para que se revisen. El número DGAC y la vigencia no se copian: los entrega la DGAC al responder."
+msgid ""
+"This draft renews %(folio)s. The data below was copied from it so you can "
+"review it. The DGAC number and the validity are not copied: the DGAC gives "
+"them when it answers."
+msgstr ""
+"Este borrador renueva a %(folio)s. Los datos de abajo se copiaron de él para"
+" que se revisen. El número DGAC y la vigencia no se copian: los entrega la "
+"DGAC al responder."
 
 msgid "Sections"
 msgstr "Secciones"
@@ -9971,8 +10051,12 @@ msgstr "Tokens totales (últimos %(window_days)s días)"
 msgid "Questions (last %(window_days)s days)"
 msgstr "Preguntas (últimos %(window_days)s días)"
 
-msgid "Today's usage is at %(percent)s%% of the daily cap (%(used)s of %(cap)s service calls)."
-msgstr "El uso de hoy llega al %(percent)s%% del tope diario (%(used)s de %(cap)s llamadas al servicio)."
+msgid ""
+"Today's usage is at %(percent)s%% of the daily cap (%(used)s of %(cap)s "
+"service calls)."
+msgstr ""
+"El uso de hoy llega al %(percent)s%% del tope diario (%(used)s de %(cap)s "
+"llamadas al servicio)."
 
 msgid "Site"
 msgstr "Faena"
@@ -9990,7 +10074,9 @@ msgid "That site is not available."
 msgstr "Esa faena no está disponible."
 
 msgid "Too many searches this hour. Try again later."
-msgstr "Se hicieron demasiadas búsquedas en esta hora. Vuelva a intentarlo más tarde."
+msgstr ""
+"Se hicieron demasiadas búsquedas en esta hora. Vuelva a intentarlo más "
+"tarde."
 
 msgid "That result is no longer available. Search again."
 msgstr "Ese resultado ya no está disponible. Vuelva a buscar."
@@ -10004,8 +10090,12 @@ msgstr "Su ciudad quedó guardada."
 msgid "My city"
 msgstr "Mi ciudad"
 
-msgid "The weather widget on the home page shows this city. It is informational and has nothing to do with flight permits."
-msgstr "El widget del tiempo de la página principal muestra esta ciudad. Es solo informativo y no tiene relación con los permisos de vuelo."
+msgid ""
+"The weather widget on the home page shows this city. It is informational and"
+" has nothing to do with flight permits."
+msgstr ""
+"El widget del tiempo de la página principal muestra esta ciudad. Es solo "
+"informativo y no tiene relación con los permisos de vuelo."
 
 msgid "Current city"
 msgstr "Ciudad actual"
@@ -10067,8 +10157,12 @@ msgstr "Atención"
 msgid "Strong"
 msgstr "Fuerte"
 
-msgid "%(hour)s:00 · %(temp)s °C · wind %(wind)s km/h · gusts %(gust)s km/h · rain %(rain)s%%"
-msgstr "%(hour)s:00 · %(temp)s °C · viento %(wind)s km/h · ráfagas %(gust)s km/h · lluvia %(rain)s%%"
+msgid ""
+"%(hour)s:00 · %(temp)s °C · wind %(wind)s km/h · gusts %(gust)s km/h · rain "
+"%(rain)s%%"
+msgstr ""
+"%(hour)s:00 · %(temp)s °C · viento %(wind)s km/h · ráfagas %(gust)s km/h · "
+"lluvia %(rain)s%%"
 
 msgid "Checked at %(time)s"
 msgstr "Consultado a las %(time)s"
@@ -10118,8 +10212,12 @@ msgstr "Eventos climáticos previstos"
 msgid "No notable weather events expected in the next 48 hours"
 msgstr "No se esperan eventos climáticos relevantes en las próximas 48 horas"
 
-msgid "Informational only. It is not a flight condition and does not replace anyone's judgement or the DGAC"
-msgstr "Solo informativo. No es una condición de vuelo ni reemplaza el criterio de nadie ni a la DGAC"
+msgid ""
+"Informational only. It is not a flight condition and does not replace "
+"anyone's judgement or the DGAC"
+msgstr ""
+"Solo informativo. No es una condición de vuelo ni reemplaza el criterio de "
+"nadie ni a la DGAC"
 
 msgid "Weather data by"
 msgstr "Datos del clima de"
@@ -10130,8 +10228,10 @@ msgstr "Elija su ciudad"
 msgid "Choose your city"
 msgstr "Elegir ciudad"
 
-msgid "The weather is not available right now. It will be tried again shortly."
-msgstr "El clima no está disponible por ahora. Se volverá a intentar en breve."
+msgid ""
+"The weather is not available right now. It will be tried again shortly."
+msgstr ""
+"El clima no está disponible por ahora. Se volverá a intentar en breve."
 
 msgid "Loading weather"
 msgstr "Cargando el clima"
@@ -10145,20 +10245,34 @@ msgctxt "weather city"
 msgid "Change"
 msgstr "Cambiar"
 
-msgid "People are not available in the assistant. Please check the operators screen."
-msgstr "Las personas no están disponibles en el asistente. Revise la pantalla de operadores."
+msgid ""
+"People are not available in the assistant. Please check the operators "
+"screen."
+msgstr ""
+"Las personas no están disponibles en el asistente. Revise la pantalla de "
+"operadores."
 
 msgid "Please give the aircraft registration, for example RPA-1234."
 msgstr "Indique la matrícula de la aeronave, por ejemplo RPA-1234."
 
-msgid "That is outside what I can look up here. I can help with flight permits, maintenance, company and aircraft documents and insurance, alerts by urgency, SIGO requests and fleet availability."
-msgstr "Eso está fuera de lo que puedo consultar aquí. Puedo ayudar con permisos de vuelo, mantenciones, documentos y seguros de empresa y de aeronave, alertas por urgencia, solicitudes SIGO y disponibilidad de flota."
+msgid ""
+"That is outside what I can look up here. I can help with flight permits, "
+"maintenance, company and aircraft documents and insurance, alerts by "
+"urgency, SIGO requests and fleet availability."
+msgstr ""
+"Eso está fuera de lo que puedo consultar aquí. Puedo ayudar con permisos de "
+"vuelo, mantenciones, documentos y seguros de empresa y de aeronave, alertas "
+"por urgencia, solicitudes SIGO y disponibilidad de flota."
 
 msgid "I cannot read that data with your permissions."
 msgstr "No puedo leer esos datos con sus permisos."
 
-msgid "Flight permits: %(in_force)s in force, %(soon)s expiring in 30 days, %(lapsed)s lapsed."
-msgstr "Permisos de vuelo: %(in_force)s vigentes, %(soon)s por vencer en 30 días, %(lapsed)s vencidos."
+msgid ""
+"Flight permits: %(in_force)s in force, %(soon)s expiring in 30 days, "
+"%(lapsed)s lapsed."
+msgstr ""
+"Permisos de vuelo: %(in_force)s vigentes, %(soon)s por vencer en 30 días, "
+"%(lapsed)s vencidos."
 
 msgid "Fleet: %(available)s of %(total)s aircraft available."
 msgstr "Flota: %(available)s de %(total)s aeronaves disponibles."
@@ -10196,8 +10310,10 @@ msgstr "Centros de costo listados: %(n)s."
 msgid "Records found: %(n)s."
 msgstr "Registros encontrados: %(n)s."
 
-msgid "Tasks show up here when they are created on the board or from an alert."
-msgstr "Las tareas aparecen aquí cuando se crean en el tablero o desde una alerta."
+msgid ""
+"Tasks show up here when they are created on the board or from an alert."
+msgstr ""
+"Las tareas aparecen aquí cuando se crean en el tablero o desde una alerta."
 
 msgid "Open the board"
 msgstr "Abrir el tablero"
@@ -10207,8 +10323,6 @@ msgstr "No encontrada"
 
 msgid "Remove filter"
 msgstr "Quitar filtro"
-
-
 
 msgid "GNSS scintillation"
 msgstr "Centelleo GNSS"
@@ -10225,17 +10339,34 @@ msgstr "Fuera de la ventana típica · próxima: %(when)s"
 msgid "Outside the period the source indicates"
 msgstr "Fuera del período que indica la fuente"
 
-msgid "Statistical reference from the source. It is not a measurement and not a go/no-go criterion"
-msgstr "Referencia estadística de la fuente. No es una medición ni un criterio para decidir"
+msgid ""
+"Statistical reference from the source. It is not a measurement and not a "
+"go/no-go criterion"
+msgstr ""
+"Referencia estadística de la fuente. No es una medición ni un criterio para "
+"decidir"
 
-msgid "Scintillation is a disturbance of satellite signals as they cross the ionosphere. It can degrade high-precision positioning: RTK and PPK may lose the fixed solution or gain error, mostly at night."
-msgstr "El centelleo es una perturbación de las señales de los satélites al cruzar la ionosfera. Puede degradar el posicionamiento de alta precisión: el RTK y el PPK pueden perder la solución fija o ganar error, sobre todo de noche."
+msgid ""
+"Scintillation is a disturbance of satellite signals as they cross the "
+"ionosphere. It can degrade high-precision positioning: RTK and PPK may lose "
+"the fixed solution or gain error, mostly at night."
+msgstr ""
+"El centelleo es una perturbación de las señales de los satélites al cruzar "
+"la ionosfera. Puede degradar el posicionamiento de alta precisión: el RTK y "
+"el PPK pueden perder la solución fija o ganar error, sobre todo de noche."
 
-msgid "The %(start)s to %(end)s hours are our interpretation of \"near midnight\". The source only says night, September to April, with a peak in 2025 and effects until 2028."
-msgstr "Las horas de %(start)s a %(end)s son nuestra interpretación de «cerca de la medianoche». La fuente solo dice noche, de septiembre a abril, con máximo en 2025 y efectos hasta 2028."
+msgid ""
+"The %(start)s to %(end)s hours are our interpretation of \"near midnight\". "
+"The source only says night, September to April, with a peak in 2025 and "
+"effects until 2028."
+msgstr ""
+"Las horas de %(start)s a %(end)s son nuestra interpretación de «cerca de la "
+"medianoche». La fuente solo dice noche, de septiembre a abril, con máximo en"
+" 2025 y efectos hasta 2028."
 
 msgid "Sunset %(sunset)s · nightfall %(dusk)s (per the forecast for %(city)s)"
-msgstr "Atardecer %(sunset)s · anochecer %(dusk)s (según el pronóstico de %(city)s)"
+msgstr ""
+"Atardecer %(sunset)s · anochecer %(dusk)s (según el pronóstico de %(city)s)"
 
 msgid "Real-time data: see portal"
 msgstr "Datos en tiempo real: ver el portal"
@@ -10273,8 +10404,12 @@ msgstr "Situación del día"
 msgid "Referential"
 msgstr "Referencial"
 
-msgid "Information only. It is not a flight condition and does not replace anyone's judgement, the AIP-Chile or the NOTAM."
-msgstr "Solo informativo. No es una condición de vuelo y no reemplaza el criterio de nadie, el AIP-Chile ni los NOTAM."
+msgid ""
+"Information only. It is not a flight condition and does not replace anyone's"
+" judgement, the AIP-Chile or the NOTAM."
+msgstr ""
+"Solo informativo. No es una condición de vuelo y no reemplaza el criterio de"
+" nadie, el AIP-Chile ni los NOTAM."
 
 msgid "Older than 3 hours"
 msgstr "Con más de 3 horas"
@@ -10288,8 +10423,12 @@ msgstr "Temporada"
 msgid "Tonight's window"
 msgstr "Ventana de esta noche"
 
-msgid "The source indicates %(months)s, with a peak in 2025 and effects until 2028. This screen covers %(first)s to %(last)s."
-msgstr "La fuente indica de %(months)s, con máximo en 2025 y efectos hasta 2028. Esta pantalla cubre de %(first)s a %(last)s."
+msgid ""
+"The source indicates %(months)s, with a peak in 2025 and effects until 2028."
+" This screen covers %(first)s to %(last)s."
+msgstr ""
+"La fuente indica de %(months)s, con máximo en 2025 y efectos hasta 2028. "
+"Esta pantalla cubre de %(first)s a %(last)s."
 
 msgid "Fixed hours: %(start)s to %(end)s."
 msgstr "Horas fijas: de %(start)s a %(end)s."
@@ -10321,8 +10460,10 @@ msgstr "Entorno hoy"
 msgid "See the environment"
 msgstr "Ver entorno"
 
-msgid "The environment is not available right now. It will be tried again shortly."
-msgstr "El entorno no está disponible por ahora. Se volverá a intentar en breve."
+msgid ""
+"The environment is not available right now. It will be tried again shortly."
+msgstr ""
+"El entorno no está disponible por ahora. Se volverá a intentar en breve."
 
 msgid "Loading environment"
 msgstr "Cargando el entorno"
@@ -10446,8 +10587,8 @@ msgstr "%(label)s: %(attend)s por atender en 30 días"
 
 #, python-format
 msgid ""
-"%(label)s: %(overdue)s overdue, %(d7)s within 7 days, %(d15)s within 15 days, "
-"%(d30)s within 30 days, %(later)s within 31 to 90 days."
+"%(label)s: %(overdue)s overdue, %(d7)s within 7 days, %(d15)s within 15 "
+"days, %(d30)s within 30 days, %(later)s within 31 to 90 days."
 msgstr ""
 "%(label)s: %(overdue)s vencidos, %(d7)s en 7 días, %(d15)s en 15 días, "
 "%(d30)s en 30 días y %(later)s entre 31 y 90 días."
@@ -10467,13 +10608,13 @@ msgid "Expiries in 30-day periods over the next 90 days"
 msgstr "Vencimientos por tramos de 30 días en los próximos 90 días"
 
 msgid ""
-"✕ overdue · ▲ up to 7 days · ◆ up to 15 · ● up to 30 · ○ later. A week takes "
-"the symbol of its first day. The figure in each cell is the count; the color "
-"only helps to scan."
+"✕ overdue · ▲ up to 7 days · ◆ up to 15 · ● up to 30 · ○ later. A week takes"
+" the symbol of its first day. The figure in each cell is the count; the "
+"color only helps to scan."
 msgstr ""
-"✕ vencido · ▲ hasta 7 días · ◆ hasta 15 · ● hasta 30 · ○ después. Cada semana "
-"lleva el símbolo de su primer día. La cifra de cada celda es la cuenta; el "
-"color sólo ayuda a ojear."
+"✕ vencido · ▲ hasta 7 días · ◆ hasta 15 · ● hasta 30 · ○ después. Cada "
+"semana lleva el símbolo de su primer día. La cifra de cada celda es la "
+"cuenta; el color sólo ayuda a ojear."
 
 msgid "Start with what the panel lists as needing attention."
 msgstr "Se parte por lo que el panel lista como pendiente de atención."
@@ -10488,7 +10629,8 @@ msgid "Check which site has no permit in force and renew first."
 msgstr "Revise qué faena no tiene permiso vigente y renueve esa primero."
 
 msgid "Close last month: records on file for each site that flew."
-msgstr "Cierre el mes pasado: los registros archivados de cada faena que voló."
+msgstr ""
+"Cierre el mes pasado: los registros archivados de cada faena que voló."
 
 msgid "Review the monthly DGAC report before approving it."
 msgstr "Revise el informe mensual DGAC antes de aprobarlo."
@@ -10502,8 +10644,12 @@ msgstr "Estado del cierre mensual de los últimos seis meses cerrados"
 msgid "Status of the close"
 msgstr "Estado del cierre"
 
-msgid "✕ non-compliant · ▲ pending review · ● compliant · ○ not reviewed yet. The figure is the number of sites that fly; each month opens its close."
-msgstr "✕ no cumple · ▲ pendiente de revisión · ● cumple · ○ aún sin revisar. La cifra es la cantidad de faenas que vuelan; cada mes abre su cierre."
+msgid ""
+"✕ non-compliant · ▲ pending review · ● compliant · ○ not reviewed yet. The "
+"figure is the number of sites that fly; each month opens its close."
+msgstr ""
+"✕ no cumple · ▲ pendiente de revisión · ● cumple · ○ aún sin revisar. La "
+"cifra es la cantidad de faenas que vuelan; cada mes abre su cierre."
 
 msgid "No site flies, so there is nothing to close."
 msgstr "Ninguna faena vuela, así que no hay nada que cerrar."
@@ -10526,20 +10672,36 @@ msgstr "Hasta 30 días"
 msgid "Later"
 msgstr "Después"
 
-msgid "The symbol and the word carry the meaning; the color only helps to scan, and ▲ and ◆ share a color."
-msgstr "El símbolo y la palabra llevan el significado; el color sólo ayuda a ojear, y ▲ y ◆ comparten color."
+msgid ""
+"The symbol and the word carry the meaning; the color only helps to scan, and"
+" ▲ and ◆ share a color."
+msgstr ""
+"El símbolo y la palabra llevan el significado; el color sólo ayuda a ojear, "
+"y ▲ y ◆ comparten color."
 
 msgid "Why there are two scales"
 msgstr "Por qué hay dos escalas"
 
-msgid "Documents and alerts are graded at 7, 15 and 30 days. Flight permits are graded at 30 and 60 days: renewing one involves a request to the DGAC, which takes longer than renewing a document."
-msgstr "Los documentos y las alertas se gradúan a 7, 15 y 30 días. Los permisos de vuelo, a 30 y 60 días: renovar uno implica una solicitud a la DGAC, que demora más que renovar un documento."
+msgid ""
+"Documents and alerts are graded at 7, 15 and 30 days. Flight permits are "
+"graded at 30 and 60 days: renewing one involves a request to the DGAC, which"
+" takes longer than renewing a document."
+msgstr ""
+"Los documentos y las alertas se gradúan a 7, 15 y 30 días. Los permisos de "
+"vuelo, a 30 y 60 días: renovar uno implica una solicitud a la DGAC, que "
+"demora más que renovar un documento."
 
 msgid "Today and the report cut-off"
 msgstr "Hoy y el corte del informe"
 
-msgid "Everything here is as of today. The DGAC monthly report is frozen at its own cut-off date, so its figures can differ from these without either being wrong."
-msgstr "Todo lo de aquí es a hoy. El informe mensual DGAC queda congelado en su propia fecha de corte, así que sus cifras pueden diferir de estas sin que ninguna esté mal."
+msgid ""
+"Everything here is as of today. The DGAC monthly report is frozen at its own"
+" cut-off date, so its figures can differ from these without either being "
+"wrong."
+msgstr ""
+"Todo lo de aquí es a hoy. El informe mensual DGAC queda congelado en su "
+"propia fecha de corte, así que sus cifras pueden diferir de estas sin que "
+"ninguna esté mal."
 
 msgid "How to review it, in five steps"
 msgstr "Cómo revisarla, en cinco pasos"
@@ -10575,8 +10737,15 @@ msgid_plural "and %(counter)s more permits"
 msgstr[0] "y %(counter)s permiso más"
 msgstr[1] "y %(counter)s permisos más"
 
-msgid "✕ no permit in force, or 30 days or less · ▲ awaiting, not started yet, or 60 days or less · ● more than 60 days. The meter shows the days left of the first permit to expire (0 to 90); the number and the word carry the meaning."
-msgstr "✕ sin permiso vigente, o 30 días o menos · ▲ esperando, aún sin empezar, o 60 días o menos · ● más de 60 días. El medidor muestra los días que le quedan al primer permiso en vencer (0 a 90); el número y la palabra llevan el significado."
+msgid ""
+"✕ no permit in force, or 30 days or less · ▲ awaiting, not started yet, or "
+"60 days or less · ● more than 60 days. The meter shows the days left of the "
+"first permit to expire (0 to 90); the number and the word carry the meaning."
+msgstr ""
+"✕ sin permiso vigente, o 30 días o menos · ▲ esperando, aún sin empezar, o "
+"60 días o menos · ● más de 60 días. El medidor muestra los días que le "
+"quedan al primer permiso en vencer (0 a 90); el número y la palabra llevan "
+"el significado."
 
 msgid "No sites with flight operations."
 msgstr "No hay faenas con operación de vuelo."
@@ -10912,14 +11081,26 @@ msgid "No airspace snapshot has been imported yet"
 msgstr "Aún no se ha importado ninguna foto del espacio aéreo"
 
 #, python-format
-msgid "No sites with a current permit and coordinates to compare · snapshot of %(date)s"
-msgstr "No hay faenas con permiso vigente y coordenadas para comparar · foto del %(date)s"
+msgid ""
+"No sites with a current permit and coordinates to compare · snapshot of "
+"%(date)s"
+msgstr ""
+"No hay faenas con permiso vigente y coordenadas para comparar · foto del "
+"%(date)s"
 
 #, python-format
-msgid "%(count)s zone at ≤%(km)s km from sites with a current permit · snapshot of %(date)s"
-msgid_plural "%(count)s zones at ≤%(km)s km from sites with a current permit · snapshot of %(date)s"
-msgstr[0] "%(count)s zona a ≤%(km)s km de faenas con permiso vigente · foto del %(date)s"
-msgstr[1] "%(count)s zonas a ≤%(km)s km de faenas con permiso vigente · foto del %(date)s"
+msgid ""
+"%(count)s zone at ≤%(km)s km from sites with a current permit · snapshot of "
+"%(date)s"
+msgid_plural ""
+"%(count)s zones at ≤%(km)s km from sites with a current permit · snapshot of"
+" %(date)s"
+msgstr[0] ""
+"%(count)s zona a ≤%(km)s km de faenas con permiso vigente · foto del "
+"%(date)s"
+msgstr[1] ""
+"%(count)s zonas a ≤%(km)s km de faenas con permiso vigente · foto del "
+"%(date)s"
 
 msgid "snapshot is more than 30 days old"
 msgstr "la foto tiene más de 30 días"
@@ -10945,13 +11126,446 @@ msgstr "No hay nada que mostrar en esta capa."
 msgid "valid until {date}"
 msgstr "vigente hasta {date}"
 
+msgid "Measured (no threshold set)"
+msgstr "Medida (sin umbral definido)"
+
+msgid ""
+"Source: AIP-Chile, DGAC, AMDT NR %(amdt)s (%(date)s), ENR 5.1. For reference"
+" only; check the current NOTAM/SUP."
+msgstr ""
+"Fuente: AIP-Chile, DGAC, AMDT NR %(amdt)s (%(date)s), ENR 5.1. Referencial; "
+"consulte NOTAM/SUP vigentes."
+
+msgid "The vertex order crosses the polygon: correct the order or reject it."
+msgstr ""
+"El orden de los vértices cruza el polígono: corrija el orden o rechace la "
+"zona."
+
+msgid "Arc centred on a VOR/DME that the text does not give: no geometry."
+msgstr "Arco centrado en un VOR/DME que el texto no entrega: sin geometría."
+
+msgid "Sector defined by magnetic radials: no geometry."
+msgstr "Sector definido por radiales magnéticos: sin geometría."
+
+msgid "Shape the parser does not support: no geometry."
+msgstr "Forma que el lector no admite: sin geometría."
+
+msgid "A vertex could not be read."
+msgstr "No se pudo leer un vértice."
+
+msgid "The polygon is incomplete: it was not proposed."
+msgstr "El polígono está incompleto: no se propuso."
+
+msgid "Fewer than three usable vertices."
+msgstr "Hay menos de tres vértices utilizables."
+
+msgid "Two consecutive vertices are identical."
+msgstr "Dos vértices consecutivos son idénticos."
+
+msgid "The source gives this zone no SC code."
+msgstr "La fuente no le asigna un código SC a esta zona."
+
+msgid "No lateral limits were found."
+msgstr "No se encontraron límites laterales."
+
+msgid "No coordinates were found in the lateral limits."
+msgstr "No se encontraron coordenadas en los límites laterales."
+
+msgid "The circle does not have exactly one centre."
+msgstr "El círculo no tiene exactamente un centro."
+
+msgid "No radius with a recognised unit."
+msgstr "No hay un radio con una unidad reconocida."
+
+msgid "The radius is not a positive number."
+msgstr "El radio no es un número positivo."
+
+msgid "The radius looks implausibly large."
+msgstr "El radio parece demasiado grande."
+
+msgid "The two radius values of the source disagree."
+msgstr "Los dos valores de radio de la fuente no coinciden."
+
+msgid "The unit M was read as metres."
+msgstr "La unidad M se leyó como metros."
+
+msgid "A stray space inside a decimal was joined (source typo)."
+msgstr "Se unió un espacio suelto dentro de un decimal (error de la fuente)."
+
+msgid "A space before the hemisphere letter was ignored."
+msgstr "Se ignoró un espacio antes de la letra del hemisferio."
+
+msgid "A six-digit longitude was read as degrees, minutes, seconds."
+msgstr "Una longitud de seis dígitos se leyó como grados, minutos y segundos."
+
+msgid "A misplaced space was moved (source typo)."
+msgstr "Se corrigió un espacio mal ubicado (error de la fuente)."
+
+msgid "A separator was read as degrees and minutes (source typo)."
+msgstr "Un separador se leyó como grados y minutos (error de la fuente)."
+
+msgid "The same zone appears more than once in the PDF."
+msgstr "La misma zona aparece más de una vez en el PDF."
+
+msgid "Corrected by a person during the review."
+msgstr "Corregida por una persona durante la revisión."
+
+msgid "This snapshot is no longer open for review."
+msgstr "Esta foto ya no está abierta a revisión."
+
+msgid "At most %(max)s vertices are accepted."
+msgstr "Se aceptan como máximo %(max)s vértices."
+
+msgid "Line %(n)s: latitude %(v)s is outside %(lo)s to %(hi)s."
+msgstr "Línea %(n)s: la latitud %(v)s está fuera del rango %(lo)s a %(hi)s."
+
+msgid "Line %(n)s: longitude %(v)s is outside %(lo)s to %(hi)s."
+msgstr "Línea %(n)s: la longitud %(v)s está fuera del rango %(lo)s a %(hi)s."
+
+msgid "A polygon needs at least three different vertices."
+msgstr "Un polígono necesita al menos tres vértices distintos."
+
+msgid ""
+"The polygon crosses itself: put the vertices in order around the outline."
+msgstr ""
+"El polígono se cruza a sí mismo: ponga los vértices en orden alrededor del "
+"contorno."
+
+msgid ""
+"Line %(n)s is not a coordinate: use «lat, lon» in decimal degrees (for "
+"example -33.4569, -70.6483) or degrees, minutes and seconds."
+msgstr ""
+"La línea %(n)s no es una coordenada: use «lat, lon» en grados decimales (por"
+" ejemplo -33.4569, -70.6483) o grados, minutos y segundos."
+
+msgid ""
+"The polygon of %(code)s crosses itself: correct the vertex order before "
+"approving."
+msgstr ""
+"El polígono de %(code)s se cruza a sí mismo: corrija el orden de los "
+"vértices antes de aprobar."
+
+msgid ""
+"%(n)s zone(s) are still unresolved: approve, correct or reject each one."
+msgstr ""
+"Quedan %(n)s zona(s) sin resolver: apruebe, corrija o rechace cada una."
+
+msgid "There is no approved zone to publish."
+msgstr "No hay ninguna zona aprobada para publicar."
+
+msgid "Can review, correct and publish AIP airspace snapshots"
+msgstr "Puede revisar, corregir y publicar fotos del espacio aéreo del AIP"
+
+msgid "Vertices (one per line: latitude, longitude)"
+msgstr "Vértices (uno por línea: latitud, longitud)"
+
+msgid ""
+"Decimal degrees (-33.4569, -70.6483) or degrees, minutes and seconds. Put "
+"them in order around the outline; the polygon must not cross itself."
+msgstr ""
+"Grados decimales (-33.4569, -70.6483) o grados, minutos y segundos. Póngalos"
+" en orden alrededor del contorno; el polígono no debe cruzarse."
+
+msgid "Lateral limits"
+msgstr "Límites laterales"
+
+msgid "Vertical limits"
+msgstr "Límites verticales"
+
+msgid "Remarks and schedule"
+msgstr "Observaciones y horario"
+
+msgid "Phones, e-mails and names with a title are removed when saving."
+msgstr "Al guardar se eliminan teléfonos, correos y nombres con grado."
+
+msgid "AIP (proposed)"
+msgstr "AIP (propuesta)"
+
+msgid "Google map"
+msgstr "Mapa de Google"
+
+msgid "%(code)s approved."
+msgstr "%(code)s aprobada."
+
+msgid "%(code)s rejected."
+msgstr "%(code)s rechazada."
+
+msgid "Nothing was changed."
+msgstr "No se cambió nada."
+
+msgid "%(code)s corrected. It needs to be approved again."
+msgstr "%(code)s corregida. Hay que aprobarla de nuevo."
+
+msgid "Confirm the bulk approval to continue."
+msgstr "Confirme la aprobación en lote para continuar."
+
+msgid ""
+"%(n)s clean zone(s) approved. Zones with a warning still need your eyes one "
+"by one."
+msgstr ""
+"%(n)s zona(s) limpia(s) aprobada(s). Las zonas con aviso siguen requiriendo "
+"una revisión una por una."
+
+msgid "Confirm the publication to continue."
+msgstr "Confirme la publicación para continuar."
+
+msgid ""
+"Snapshot AMDT %(amdt)s published: %(n)s approved zone(s) are now the AIP "
+"copy."
+msgstr ""
+"Foto AMDT %(amdt)s publicada: %(n)s zona(s) aprobada(s) pasan a ser la copia"
+" del AIP."
+
+msgid "Review the AIP zones before they replace the reference map."
+msgstr ""
+"Revise las zonas del AIP antes de que reemplacen al mapa de referencia."
+
+msgid "AIP airspace review"
+msgstr "Revisión del espacio aéreo del AIP"
+
+msgid "Approve, correct or reject the zones of an imported AIP amendment."
+msgstr ""
+"Apruebe, corrija o rechace las zonas de una enmienda del AIP importada."
+
+msgid "Approve the clean zones"
+msgstr "Aprobar las zonas limpias"
+
+msgid "Back to the zones"
+msgstr "Volver a las zonas"
+
+msgid "Confirm: approve these zones"
+msgstr "Confirmar: aprobar estas zonas"
+
+msgid "There are no clean zones left to approve in bulk."
+msgstr "No quedan zonas limpias para aprobar en lote."
+
+msgid ""
+"Zones read from the AIP-Chile PDF are proposals. Nothing is drawn for anyone"
+" until a person approves it."
+msgstr ""
+"Las zonas leídas del PDF del AIP-Chile son propuestas. No se dibuja nada "
+"para nadie hasta que una persona lo apruebe."
+
+msgid ""
+"No AIP copy has been published yet: the map still shows the Google copy "
+"only."
+msgstr ""
+"Aún no se publica ninguna copia del AIP: el mapa sigue mostrando solo la "
+"copia de Google."
+
+msgid "Amendment"
+msgstr "Enmienda"
+
+msgid "Imported"
+msgstr "Importada"
+
+msgid "Zones"
+msgstr "Zonas"
+
+msgid "No AIP snapshot is waiting for review."
+msgstr "Ninguna foto del AIP está esperando revisión."
+
+msgid ""
+"A person with server access imports one with the management command "
+"import_aip_enr5; it arrives here as a draft."
+msgstr ""
+"Una persona con acceso al servidor importa una con el comando "
+"import_aip_enr5; llega aquí como borrador."
+
+msgid "Publish the AIP snapshot"
+msgstr "Publicar la foto del AIP"
+
+msgid ""
+"Publishing makes this snapshot the current AIP copy. The previous AIP copy "
+"is archived, never deleted, and the Google copy is not touched."
+msgstr ""
+"Publicar hace de esta foto la copia vigente del AIP. La copia anterior del "
+"AIP se archiva, nunca se borra, y la copia de Google no se toca."
+
+msgid "Confirm: publish"
+msgstr "Confirmar: publicar"
+
+msgid "Publish"
+msgstr "Publicar"
+
+msgid "Filter zones"
+msgstr "Filtrar zonas"
+
+msgid "With a warning"
+msgstr "Con aviso"
+
+msgid "Clean"
+msgstr "Limpias"
+
+msgid "Decided"
+msgstr "Resueltas"
+
+msgid "Page"
+msgstr "Página"
+
+msgid "Warnings"
+msgstr "Avisos"
+
+msgid "Against the Google map"
+msgstr "Frente al mapa de Google"
+
+msgid "carries a warning"
+msgstr "trae un aviso"
+
+msgid "No zone matches this filter."
+msgstr "Ninguna zona coincide con este filtro."
+
+msgid ""
+"No discrepancy threshold has been set: distances are shown without a "
+"verdict."
+msgstr ""
+"No se ha definido un umbral de discrepancia: las distancias se muestran sin "
+"veredicto."
+
+msgid "Only in the Google map"
+msgstr "Solo en el mapa de Google"
+
+msgid ""
+"These zones are in the Google map but not in this AIP amendment. They are "
+"kept as a reference layer; nothing is deleted."
+msgstr ""
+"Estas zonas están en el mapa de Google pero no en esta enmienda del AIP. Se "
+"conservan como capa de referencia; no se borra nada."
+
+msgid "Next unresolved zone"
+msgstr "Siguiente zona sin resolver"
+
+msgid "Warnings from the reading"
+msgstr "Avisos de la lectura"
+
+msgid ""
+"A zone with a warning is approved on its own, after comparing it with the "
+"AIP page."
+msgstr ""
+"Una zona con aviso se aprueba por separado, después de compararla con la "
+"página del AIP."
+
+msgid "Text read from the PDF"
+msgstr "Texto leído del PDF"
+
+msgid "Proposed shape"
+msgstr "Forma propuesta"
+
+msgid "Outline of the proposed zone and of the Google map zone"
+msgstr "Contorno de la zona propuesta y de la zona del mapa de Google"
+
+msgid "AIP (proposed): solid line"
+msgstr "AIP (propuesta): línea continua"
+
+msgid "Google map: dashed line"
+msgstr "Mapa de Google: línea punteada"
+
+msgid "No geometry was proposed."
+msgstr "No se propuso ninguna geometría."
+
+msgid ""
+"An arc or a sector depends on a VOR/DME centre that the text does not give. "
+"Load the outline by hand from the charts (GEN 2.5 or ENR 4.1), or approve "
+"the zone as text only."
+msgstr ""
+"Un arco o un sector depende de un centro VOR/DME que el texto no entrega. "
+"Cargue el contorno a mano desde las cartas (GEN 2.5 o ENR 4.1) o apruebe la "
+"zona solo como texto."
+
+msgid ""
+"This outline crosses itself: correct the vertex order before approving."
+msgstr ""
+"Este contorno se cruza a sí mismo: corrija el orden de los vértices antes de"
+" aprobar."
+
+msgid "No threshold has been set, so this distance carries no verdict."
+msgstr ""
+"No se ha definido un umbral, así que esta distancia no lleva veredicto."
+
+msgid "There is no comparison for this zone."
+msgstr "No hay comparación para esta zona."
+
+msgid "Vertices of the proposed outline"
+msgstr "Vértices del contorno propuesto"
+
+msgid "Approve as text only"
+msgstr "Aprobar solo como texto"
+
+msgid ""
+"Approving makes this zone part of the AIP copy once the whole snapshot is "
+"published. Rejecting keeps the row but never draws it."
+msgstr ""
+"Aprobar hace que esta zona forme parte de la copia del AIP cuando se "
+"publique la foto completa. Rechazar conserva la fila pero nunca la dibuja."
+
+msgid "Correct"
+msgstr "Corregir"
+
+msgid ""
+"Edit the outline or the texts. A corrected zone goes back to be approved "
+"again, on its own."
+msgstr ""
+"Edite el contorno o los textos. Una zona corregida vuelve a aprobarse, por "
+"separado."
+
+msgid "Save correction"
+msgstr "Guardar corrección"
+
+msgid "This snapshot is closed: its zones can be read but not changed."
+msgstr "Esta foto está cerrada: sus zonas se pueden leer pero no cambiar."
+
+msgid "Current AIP copy: AMDT %(amdt)s (%(date)s)."
+msgstr "Copia vigente del AIP: AMDT %(amdt)s (%(date)s)."
+
+msgid "Approve the %(n)s clean zones"
+msgstr "Aprobar las %(n)s zonas limpias"
+
+msgid ""
+"%(n)s zone(s) carry a warning (crossing vertex order, a typo fixed by the "
+"parser, an arc or a sector). They are approved one at a time."
+msgstr ""
+"%(n)s zona(s) traen un aviso (orden de vértices cruzado, un error de tipeo "
+"corregido por el lector, un arco o un sector). Se aprueban una por una."
+
+msgid "This snapshot is %(state)s: it can be read but no longer reviewed."
+msgstr ""
+"Esta foto está en estado «%(state)s»: se puede leer pero ya no revisar."
+
+msgid "up to %(max)s m (median %(median)s m)"
+msgstr "hasta %(max)s m (mediana %(median)s m)"
+
+msgid ""
+"Page %(page)s of the AIP. Contacts were removed; open the AIP page to "
+"compare."
+msgstr ""
+"Página %(page)s del AIP. Se quitaron los contactos; abra la página del AIP "
+"para comparar."
+
+msgid ""
+"Farthest vertex %(max)s m from the Google outline; median %(median)s m."
+msgstr ""
+"El vértice más lejano está a %(max)s m del contorno de Google; mediana "
+"%(median)s m."
+
+msgid ""
+"These %(n)s zones were read without any warning and have a geometry. "
+"Approving them in bulk is a decision of yours: confirm that you compared a "
+"sample with the AIP."
+msgstr ""
+"Estas %(n)s zonas se leyeron sin ningún aviso y tienen geometría. Aprobarlas"
+" en lote es una decisión suya: confirme que comparó una muestra con el AIP."
+
+msgid ""
+"%(n)s zone(s) with a warning stay out: each one is approved on its own."
+msgstr ""
+"%(n)s zona(s) con aviso quedan fuera: cada una se aprueba por separado."
+
+msgid "It replaces AMDT %(amdt)s."
+msgstr "Reemplaza a la AMDT %(amdt)s."
+
 #: templates/environment/airspace_tab.html
 msgid "Aeronautical"
 msgstr "Aeronáutico"
-
-#: templates/environment/airspace_tab.html
-msgid "Vertical limits"
-msgstr "Límites verticales"
 
 #: templates/environment/airspace_tab.html
 msgid "Source text"
@@ -10959,7 +11573,8 @@ msgstr "Texto de la fuente"
 
 #: templates/environment/airspace_tab.html
 msgid "Limits, schedule and text appear exactly as the source wrote them."
-msgstr "Los límites, el horario y el texto aparecen tal como los escribió la fuente."
+msgstr ""
+"Los límites, el horario y el texto aparecen tal como los escribió la fuente."
 
 #: templates/environment/airspace_tab.html
 msgid "Licence: not confirmed"
@@ -10987,7 +11602,8 @@ msgstr "Cargando los límites administrativos"
 
 #: apps/airspace/views.py
 msgid "The administrative boundaries could not be loaded. Try again."
-msgstr "No se pudieron cargar los límites administrativos. Vuelva a intentarlo."
+msgstr ""
+"No se pudieron cargar los límites administrativos. Vuelva a intentarlo."
 
 #: apps/airspace/views.py
 msgid "Inside {name}"
@@ -11026,12 +11642,120 @@ msgid "Administrative"
 msgstr "Administrativo"
 
 #: templates/environment/airspace_tab.html
-msgid "Communes and regions, BCN source (referential). Cities are not available: communes are offered instead."
-msgstr "Comunas y regiones, fuente BCN (referencial). No hay ciudades: se ofrecen comunas en su lugar."
+msgid ""
+"Communes and regions, BCN source (referential). Cities are not available: "
+"communes are offered instead."
+msgstr ""
+"Comunas y regiones, fuente BCN (referencial). No hay ciudades: se ofrecen "
+"comunas en su lugar."
 
 #: templates/environment/airspace_tab.html
 msgid "Administrative area"
 msgstr "Área administrativa"
+
+#: apps/airspace/views.py
+msgid "AIP · AMDT {amdt} ({date})"
+msgstr "AIP · AMDT {amdt} ({date})"
+
+#: apps/airspace/views.py
+msgid "Google map only (not in the current AIP)"
+msgstr "Solo mapa Google (no está en el AIP vigente)"
+
+#: apps/airspace/views.py
+msgid "Google reference shape (the AIP outline is the one drawn)"
+msgstr "Forma de referencia de Google (la que se dibuja es la del AIP)"
+
+#: apps/airspace/views.py
+msgid "Difference from Google: {m} m"
+msgstr "Diferencia con Google: {m} m"
+
+#: apps/airspace/views.py
+msgid "Matches Google: {m} m (threshold {t} m)"
+msgstr "Coincide con Google: {m} m (umbral {t} m)"
+
+#: apps/airspace/views.py
+msgid "Discrepancy with Google: {m} m (threshold {t} m)"
+msgstr "Discrepancia con Google: {m} m (umbral {t} m)"
+
+#: apps/airspace/views.py
+msgid ""
+"Largest distance from a vertex of the AIP outline to the Google outline."
+msgstr ""
+"Mayor distancia entre un vértice del contorno del AIP y el contorno de "
+"Google."
+
+#: apps/airspace/views.py
+msgid "No outline drawn: arc or sector, needs an external centre"
+msgstr "Sin forma dibujada: arco o sector, requiere un centro externo"
+
+#: apps/airspace/views.py
+msgid "No outline drawn: the source geometry could not be read"
+msgstr "Sin forma dibujada: no se pudo leer la geometría de la fuente"
+
+#: apps/airspace/views.py
+msgid "no outline"
+msgstr "sin forma"
+
+#: apps/airspace/views.py
+msgid "Google reference (off by default)"
+msgstr "Referencia Google (apagada por omisión)"
+
+#: apps/airspace/views.py
+msgid "reference"
+msgstr "referencia"
+
+#: templates/environment/airspace_tab.html
+msgid "AIP-Chile copy: AMDT %(amdt)s of %(date)s"
+msgstr "Copia del AIP-Chile: AMDT %(amdt)s del %(date)s"
+
+#: templates/environment/airspace_tab.html
+msgid "A newer amendment is on record (AMDT %(latest)s)."
+msgstr "Hay una enmienda más reciente registrada (AMDT %(latest)s)."
+
+#: templates/environment/airspace_tab.html
+msgid ""
+"Zones: %(aip)s come from the AIP and %(google)s only from the Google map "
+"(reference layer, off by default). Aerodromes, airstrips and FIR boundaries "
+"come from the Google map."
+msgstr ""
+"Zonas: %(aip)s vienen del AIP y %(google)s solo del mapa de Google (capa de "
+"referencia, apagada por omisión). Los aeródromos, las pistas y los límites "
+"FIR vienen del mapa de Google."
+
+#: templates/environment/airspace_tab.html
+msgid ""
+"%(n)s AIP zone(s) are text only: arcs and sectors have no drawn outline."
+msgstr ""
+"%(n)s zona(s) del AIP son solo texto: los arcos y sectores no tienen forma "
+"dibujada."
+
+#: templates/environment/airspace_tab.html
+msgid "Reference"
+msgstr "Referencia"
+
+#: templates/environment/airspace_tab.html
+msgid ""
+"Google map shapes the AIP does not draw: zones it does not carry, and the "
+"older shape of those it does. Dashed outline, for comparison only."
+msgstr ""
+"Formas del mapa de Google que el AIP no dibuja: las zonas que no trae y la "
+"forma anterior de las que sí trae. Contorno punteado, solo para comparar."
+
+#: templates/environment/airspace_tab.html
+msgid "AMDT %(amdt)s of %(date)s"
+msgstr "AMDT %(amdt)s del %(date)s"
+
+#: templates/environment/airspace_tab.html
+msgid "Newer amendment on record: AMDT %(latest)s (%(date)s)"
+msgstr "Enmienda más reciente registrada: AMDT %(latest)s (%(date)s)"
+
+#: templates/environment/airspace_tab.html
+msgid "No newer amendment on record"
+msgstr "Sin enmienda más reciente registrada"
+
+#: templates/environment/airspace_tab.html
+msgid "Check the current NOTAM/SUP."
+msgstr "Consulte los NOTAM/SUP vigentes."
 
 msgid "No typical window in the next 24 hours"
 msgstr "Sin ventana típica en las próximas 24 horas"
@@ -11044,12 +11768,20 @@ msgid "Typical scintillation window over the next 24 hours"
 msgstr "Ventana típica de centelleo en las próximas 24 horas"
 
 #, python-format
-msgid "Typical window: %(window)s. The marker is the current time, %(now)s. Statistical reference, not a measurement."
-msgstr "Ventana típica: %(window)s. La marca es la hora actual, %(now)s. Referencia estadística, no una medición."
+msgid ""
+"Typical window: %(window)s. The marker is the current time, %(now)s. "
+"Statistical reference, not a measurement."
+msgstr ""
+"Ventana típica: %(window)s. La marca es la hora actual, %(now)s. Referencia "
+"estadística, no una medición."
 
 #, python-format
-msgid "No typical window in these 24 hours. The marker is the current time, %(now)s. Statistical reference, not a measurement."
-msgstr "Sin ventana típica en estas 24 horas. La marca es la hora actual, %(now)s. Referencia estadística, no una medición."
+msgid ""
+"No typical window in these 24 hours. The marker is the current time, "
+"%(now)s. Statistical reference, not a measurement."
+msgstr ""
+"Sin ventana típica en estas 24 horas. La marca es la hora actual, %(now)s. "
+"Referencia estadística, no una medición."
 
 msgid "Night and typical scintillation window over 24 hours"
 msgstr "Noche y ventana típica de centelleo en 24 horas"
@@ -11123,32 +11855,53 @@ msgstr "Lo que esta pantalla no muestra"
 msgid "No measurement: statistical reference from the GEOCOM criterion."
 msgstr "Sin medición: referencia estadística del criterio de GEOCOM."
 
-msgid "It shows when scintillation is typical, never how strong it is: the source publishes no intensity scale."
-msgstr "Muestra cuándo es típico el centelleo, nunca qué tan fuerte es: la fuente no publica ninguna escala de intensidad."
+msgid ""
+"It shows when scintillation is typical, never how strong it is: the source "
+"publishes no intensity scale."
+msgstr ""
+"Muestra cuándo es típico el centelleo, nunca qué tan fuerte es: la fuente no"
+" publica ninguna escala de intensidad."
 
 msgid "Scintillation"
 msgstr "Centelleo"
 
-msgid "Fast changes in the strength and phase of a satellite signal after crossing the ionosphere."
-msgstr "Cambios rápidos en la intensidad y la fase de la señal de un satélite al cruzar la ionosfera."
+msgid ""
+"Fast changes in the strength and phase of a satellite signal after crossing "
+"the ionosphere."
+msgstr ""
+"Cambios rápidos en la intensidad y la fase de la señal de un satélite al "
+"cruzar la ionosfera."
 
 msgid "RTK and PPK"
 msgstr "RTK y PPK"
 
-msgid "High-precision positioning methods that need a fixed solution, which scintillation can break."
-msgstr "Métodos de posicionamiento de alta precisión que necesitan una solución fija, que el centelleo puede romper."
+msgid ""
+"High-precision positioning methods that need a fixed solution, which "
+"scintillation can break."
+msgstr ""
+"Métodos de posicionamiento de alta precisión que necesitan una solución "
+"fija, que el centelleo puede romper."
 
 msgid "From sunset to sunrise, per the forecast for your city."
-msgstr "Desde la puesta hasta la salida del sol, según el pronóstico de su ciudad."
+msgstr ""
+"Desde la puesta hasta la salida del sol, según el pronóstico de su ciudad."
 
-msgid "The hours when scintillation is usually higher, from the criterion of the source."
-msgstr "Las horas en que el centelleo suele ser mayor, según el criterio de la fuente."
+msgid ""
+"The hours when scintillation is usually higher, from the criterion of the "
+"source."
+msgstr ""
+"Las horas en que el centelleo suele ser mayor, según el criterio de la "
+"fuente."
 
 msgid "Our interpretation"
 msgstr "Interpretación nuestra"
 
-msgid "The exact hours and the peak hour are ours: the source only says night, near midnight."
-msgstr "Las horas exactas y la hora pico son nuestras: la fuente sólo dice de noche, cerca de la medianoche."
+msgid ""
+"The exact hours and the peak hour are ours: the source only says night, near"
+" midnight."
+msgstr ""
+"Las horas exactas y la hora pico son nuestras: la fuente sólo dice de noche,"
+" cerca de la medianoche."
 
 msgid "What to attend first"
 msgstr "Qué atender primero"
@@ -11187,8 +11940,12 @@ msgid "No expiries in the next 90 days:"
 msgstr "Sin vencimientos en los próximos 90 días:"
 
 #, python-format
-msgid "In force %(in_force)s · expiring soon %(soon)s · awaiting %(awaiting)s · past validity %(past)s"
-msgstr "Vigentes %(in_force)s · vencen pronto %(soon)s · esperando %(awaiting)s · vigencia pasada %(past)s"
+msgid ""
+"In force %(in_force)s · expiring soon %(soon)s · awaiting %(awaiting)s · "
+"past validity %(past)s"
+msgstr ""
+"Vigentes %(in_force)s · vencen pronto %(soon)s · esperando %(awaiting)s · "
+"vigencia pasada %(past)s"
 
 msgid "No expiry date"
 msgstr "Sin fecha de vencimiento"
@@ -11206,8 +11963,12 @@ msgstr "Ninguna faena tiene problemas con sus permisos."
 msgid "Permit in force"
 msgstr "Permiso vigente"
 
-msgid "Source: %(source)s. Reference only -- it does not replace the pre-flight check."
-msgstr "Fuente: %(source)s. Solo de referencia -- no reemplaza el chequeo preoperacional."
+msgid ""
+"Source: %(source)s. Reference only -- it does not replace the pre-flight "
+"check."
+msgstr ""
+"Fuente: %(source)s. Solo de referencia -- no reemplaza el chequeo "
+"preoperacional."
 
 msgid "Not available"
 msgstr "No disponible"
@@ -11219,10 +11980,15 @@ msgid "Based on data from"
 msgstr "Basado en datos de"
 
 msgid "No notable weather events in the available data for the next 48 hours"
-msgstr "Sin eventos climáticos relevantes en los datos disponibles para las próximas 48 horas"
+msgstr ""
+"Sin eventos climáticos relevantes en los datos disponibles para las próximas"
+" 48 horas"
 
-msgid "Communes: Biblioteca del Congreso Nacional de Chile (BCN). Reference only."
-msgstr "Comunas: Biblioteca del Congreso Nacional de Chile (BCN). Solo de referencia."
+msgid ""
+"Communes: Biblioteca del Congreso Nacional de Chile (BCN). Reference only."
+msgstr ""
+"Comunas: Biblioteca del Congreso Nacional de Chile (BCN). Solo de "
+"referencia."
 
 msgid "Other places: © OpenStreetMap contributors."
 msgstr "Otros lugares: © colaboradores de OpenStreetMap."
@@ -11257,14 +12023,26 @@ msgstr "El vencimiento de la credencial es obligatorio."
 msgid "The expiry date must be after the issue date."
 msgstr "El vencimiento debe ser posterior a la emisión."
 
-msgid "The holder read from the file does not match this person. Check that it is the right document."
-msgstr "El titular leído del archivo no coincide con esta persona. Revise que sea el documento correcto."
+msgid ""
+"The holder read from the file does not match this person. Check that it is "
+"the right document."
+msgstr ""
+"El titular leído del archivo no coincide con esta persona. Revise que sea el"
+" documento correcto."
 
-msgid "The RUT read from the file does not match the record. Check that it is the right document."
-msgstr "El RUT leído del archivo no coincide con la ficha. Revise que sea el documento correcto."
+msgid ""
+"The RUT read from the file does not match the record. Check that it is the "
+"right document."
+msgstr ""
+"El RUT leído del archivo no coincide con la ficha. Revise que sea el "
+"documento correcto."
 
-msgid "The file was read. Check each value against the paper and tick “Use” on the ones that are right. Nothing is saved until you confirm."
-msgstr "Se leyó el archivo. Compare cada valor con el papel y marque «Usar» en los que estén correctos. No se guarda nada hasta que usted confirme."
+msgid ""
+"The file was read. Check each value against the paper and tick “Use” on the "
+"ones that are right. Nothing is saved until you confirm."
+msgstr ""
+"Se leyó el archivo. Compare cada valor con el papel y marque «Usar» en los "
+"que estén correctos. No se guarda nada hasta que usted confirme."
 
 msgid "The file could not be read; fill in the fields by hand."
 msgstr "No se pudo leer el archivo; complete los campos a mano."
@@ -11314,17 +12092,26 @@ msgstr "Restricciones leídas del archivo (solo informativas, no se guardan)"
 msgid "Save confirmed values"
 msgstr "Guardar los valores confirmados"
 
-msgid "Upload the credential PDF. It is read, you check what was found, and nothing changes on this record until you confirm."
-msgstr "Suba el PDF de la credencial. Se lee, usted revisa lo que se encontró y nada cambia en esta ficha hasta que confirme."
+msgid ""
+"Upload the credential PDF. It is read, you check what was found, and nothing"
+" changes on this record until you confirm."
+msgstr ""
+"Suba el PDF de la credencial. Se lee, usted revisa lo que se encontró y nada"
+" cambia en esta ficha hasta que confirme."
 
 msgid "Upload credential"
 msgstr "Subir credencial"
 
 msgid "A plan can only be linked to a permit of its own cost center."
-msgstr "Un plan solo puede vincularse a un permiso de su propio centro de costo."
+msgstr ""
+"Un plan solo puede vincularse a un permiso de su propio centro de costo."
 
-msgid "This permit has linked plans from another cost center. Unlink them before changing the cost center."
-msgstr "Este permiso tiene planes vinculados de otro centro de costo. Desvincúlelos antes de cambiar el centro de costo."
+msgid ""
+"This permit has linked plans from another cost center. Unlink them before "
+"changing the cost center."
+msgstr ""
+"Este permiso tiene planes vinculados de otro centro de costo. Desvincúlelos "
+"antes de cambiar el centro de costo."
 
 msgid "Waiting on the DGAC"
 msgstr "Espera a la DGAC"
@@ -11373,3 +12160,67 @@ msgstr "Vigencia y documentos"
 
 msgid "Preflight and flights"
 msgstr "Prevuelo y vuelos"
+
+#~ msgid "Credential file"
+#~ msgstr "Credencial adjunta"
+
+#~ msgid "No qualifications recorded yet."
+#~ msgstr "Aún no hay habilitaciones registradas."
+
+#~ msgid "Enter the employee ID."
+#~ msgstr "Ingresa el ID de empleado."
+
+#~ msgid "SIGO requests"
+#~ msgstr "Solicitudes SIGO"
+
+#~ msgid "Search title or cost center..."
+#~ msgstr "Buscar título o centro de costo..."
+
+#, python-format
+#~ msgid ""
+#~ "%(counter)s question, %(percent)s%% to pass. The result is valid for "
+#~ "%(months)s months and is filed on your record."
+#~ msgid_plural ""
+#~ "%(counter)s questions, %(percent)s%% to pass. The result is valid for "
+#~ "%(months)s months and is filed on your record."
+#~ msgstr[0] ""
+#~ "%(counter)s pregunta, %(percent)s%% para aprobar. El resultado vale "
+#~ "%(months)s meses y queda en tu ficha."
+#~ msgstr[1] ""
+#~ "%(counter)s preguntas, %(percent)s%% para aprobar. El resultado vale "
+#~ "%(months)s meses y queda en tu ficha."
+
+#~ msgid "Active Aircraft"
+#~ msgstr "Aeronaves activas"
+
+#~ msgid "Active Operators"
+#~ msgstr "Operadores activos"
+
+#~ msgid "Incident"
+#~ msgstr "Incidente"
+
+#~ msgid "missing or lapsed"
+#~ msgstr "faltantes o vencidos"
+
+#~ msgid "Expiring in 30 days"
+#~ msgstr "Vence en 30 días"
+
+#~ msgid "No documents attached to this permission."
+#~ msgstr "No hay documentos adjuntos a este permiso."
+
+#~ msgid "Split a plan"
+#~ msgstr "Separar un plan"
+
+#~ msgid "No flight requests yet. Split a geospatial plan to create them."
+#~ msgstr ""
+#~ "Aún no hay solicitudes de vuelo. Separa un plan geoespacial para crearlas."
+
+#~ msgid "Smallest circle that encloses it"
+#~ msgstr "La circunferencia más chica que la encierra"
+
+#~ msgid ""
+#~ "The ↳ row appears when the drawn area is not a circle: SIGO accepts one "
+#~ "circle per request, and that is the smallest one covering the whole area."
+#~ msgstr ""
+#~ "La fila ↳ aparece cuando el área dibujada no es una circunferencia: SIGO "
+#~ "acepta una por solicitud, y ésa es la más chica que cubre toda el área."

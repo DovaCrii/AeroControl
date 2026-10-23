@@ -327,7 +327,17 @@
 
   function titleOf(entry) {
     var label = cfg.kinds[entry.kind] || entry.kind;
+    // Un dibujo de referencia (la forma de Google detrás del AIP, o una zona que el AIP no trae) se rotula.
+    if (entry.ref) {
+      label += ", " + T.referenceTag;
+    }
     return (entry.code ? entry.code + " · " : "") + entry.name + " (" + label + ")";
+  }
+
+  /* LV-361 (fase 5): la capa «Referencia Google» agrupa lo que el AIP no dibuja (la forma de Google de una
+     zona que el AIP ya trae, y las zonas que sólo trae Google). Va APAGADA al abrir. */
+  function groupKeyOf(entry) {
+    return entry.ref ? "reference" : entry.kind;
   }
 
   /* La forma que Leaflet puede dibujar, o null. Una `GeometryCollection` (zona + su punto de rótulo,
@@ -356,6 +366,14 @@
 
   function draw(entry) {
     var kind = entry.kind;
+    // Una zona del AIP aprobada sólo como texto (arco o sector sin centro) se lista y se busca, pero no se
+    // dibuja: el centro que falta no lo inventa nadie (ni el servidor ni este script).
+    if (entry.no_shape) {
+      entry.layers = [];
+      entry.shown = false;
+      return;
+    }
+    var ref = !!entry.ref;
     var outline = entry.geometry ? drawable(entry.geometry) : null;
     var layers = [];
     var zone = LETTERS[kind] != null;
@@ -406,8 +424,12 @@
         style: function (geo) {
           // Leaflet envuelve la geometría en un Feature: el tipo está en `geo.geometry`.
           var closed = hasArea(geo.geometry || geo);
-          var base = { className: "air-shape air-shape--" + kind, weight: 2, interactive: true };
-          if (closed && zone) {
+          var base = {
+            className: "air-shape air-shape--" + (ref ? "ref" : kind),
+            weight: 2,
+            interactive: true,
+          };
+          if (closed && zone && !ref) {
             base.fill = true;
             base.fillColor = "url(#air-pat-" + kind + ")";
             base.fillOpacity = 1;
@@ -424,13 +446,13 @@
       });
       shape.bindTooltip(tipNode(titleOf(entry)), { sticky: true });
       layers.push(shape);
-      if (zone) {
+      if (zone && !ref) {
         layers.push(marker(entry, badgeIcon(kind), titleOf(entry)));
         if (entry.code) {
           layers.push(codeLabel(entry, 14));
         }
       }
-    } else if (zone) {
+    } else if (zone && !ref) {
       layers.push(marker(entry, badgeIcon(kind), titleOf(entry)));
       if (entry.code) {
         layers.push(codeLabel(entry, 14));
@@ -447,13 +469,13 @@
 
   function groupFor(kind) {
     if (!groups[kind]) {
-      groups[kind] = { key: kind, layer: L.layerGroup(), on: true };
+      groups[kind] = { key: kind, layer: L.layerGroup(), on: kind !== "reference" };
     }
     return groups[kind];
   }
 
   function groupVisible(entry) {
-    var group = groups[entry.kind];
+    var group = groups[groupKeyOf(entry)];
     if (!group || !group.on) {
       return false;
     }
@@ -521,8 +543,17 @@
     );
   }
 
+  function hasPoint(entry) {
+    return entry.lat != null && entry.lon != null;
+  }
+
+  /* Distancia a la referencia para ordenar; una zona sin forma (no tiene punto) va al final. */
+  function sortDistance(entry) {
+    return hasPoint(entry) ? haversineKm(reference.lat, reference.lon, entry.lat, entry.lon) : Infinity;
+  }
+
   function describeDistance(entry) {
-    if (!reference) {
+    if (!reference || !hasPoint(entry)) {
       return "";
     }
     var km = haversineKm(reference.lat, reference.lon, entry.lat, entry.lon);
@@ -553,7 +584,74 @@
       meta.appendChild(el("span", "air-row-dist", distance));
     }
     button.appendChild(meta);
+    // LV-361: de dónde viene la zona y, si existe el cruce, cuánto difiere de Google.
+    var badge = sourceBadge(entry);
+    var cross = crossLine(entry);
+    if (badge || cross) {
+      var provenance = el("span", "air-row-prov");
+      if (badge) {
+        provenance.appendChild(el("span", "air-src " + badge.cls, labelled(badge)));
+      }
+      if (cross) {
+        provenance.appendChild(el("span", "air-cross air-cross--" + cross.tone, labelled(cross)));
+      }
+      button.appendChild(provenance);
+    }
     return button;
+  }
+
+  /* El símbolo y la palabra juntos (nunca sólo color); sin símbolo, sólo la palabra. */
+  function labelled(item) {
+    return (item.symbol ? item.symbol + " " : "") + item.text;
+  }
+
+  /* ── procedencia (LV-361, fase 5) ─────────────────────────────────────────── */
+  var aipInfo = null;
+
+  /* La insignia de fuente. Sin copia del AIP publicada no hay insignia alguna: la pantalla es la de
+     siempre. Un símbolo y una palabra acompañan al color. */
+  function sourceBadge(entry) {
+    if (!aipInfo) {
+      return null;
+    }
+    if (entry.source_kind === "aip_enr51") {
+      return {
+        symbol: "●",
+        cls: "air-src--aip",
+        text: fmt(T.badgeAip, {
+          amdt: aipInfo.amdt || "?",
+          date: aipInfo.effective_date ? dateText(aipInfo.effective_date) : "?",
+        }),
+      };
+    }
+    if (entry.shadowed) {
+      return { symbol: "○", cls: "air-src--ref", text: T.badgeGoogleRef };
+    }
+    if (LETTERS[entry.kind]) {
+      return { symbol: "○", cls: "air-src--google", text: T.badgeGoogleOnly };
+    }
+    return null;
+  }
+
+  /* «Diferencia con Google: X m». Sólo la distancia mientras la persona no haya fijado el umbral
+     (`verdict` nulo): ni color ni juicio. Con umbral, símbolo y palabra, y nunca rojo. */
+  function crossLine(entry) {
+    var cross = entry.cross;
+    if (!cross || cross.m == null) {
+      return null;
+    }
+    var values = { m: cross.m, t: aipInfo && aipInfo.threshold_m != null ? aipInfo.threshold_m : "" };
+    if (cross.verdict === "discrepancy") {
+      return { symbol: "▲", tone: "discrepancy", text: fmt(T.crossDiscrepancy, values) };
+    }
+    if (cross.verdict === "match") {
+      return { symbol: "●", tone: "match", text: fmt(T.crossMatch, values) };
+    }
+    return { symbol: "", tone: "plain", text: fmt(T.crossDiff, values) };
+  }
+
+  function noShapeText(entry) {
+    return entry.no_shape === "arc" || entry.no_shape === "sector" ? T.noShapeArc : T.noShapeOther;
   }
 
   function isAdminId(id) {
@@ -585,10 +683,12 @@
     });
   }
 
+  /* Lo que se lista, se cuenta y se busca. La forma de Google escondida detrás de la del AIP es la misma
+     zona dos veces: sólo se dibuja (en la capa de referencia), nunca es un segundo resultado. */
   function currentPool() {
     var f = filters();
     return features.filter(function (entry) {
-      return passes(entry, f);
+      return !entry.shadowed && passes(entry, f);
     });
   }
 
@@ -621,10 +721,9 @@
       rows = pool.slice();
       if (reference) {
         rows.sort(function (a, b) {
-          return (
-            haversineKm(reference.lat, reference.lon, a.lat, a.lon) -
-            haversineKm(reference.lat, reference.lon, b.lat, b.lon)
-          );
+          var da = sortDistance(a);
+          var db = sortDistance(b);
+          return da === db ? 0 : da < db ? -1 : 1;
         });
       }
       total = rows.length;
@@ -680,6 +779,24 @@
     $(id).textContent = text || emptyText || "";
   }
 
+  /* Insignia de fuente, «Diferencia con Google» y la nota de una zona sin forma, en la ficha. */
+  function showProvenance(entry) {
+    var badge = sourceBadge(entry);
+    var source = $("air-f-source");
+    source.hidden = !badge;
+    source.className = "air-src" + (badge ? " " + badge.cls : "");
+    source.textContent = badge ? labelled(badge) : "";
+    var cross = crossLine(entry);
+    var crossNode = $("air-f-cross");
+    crossNode.hidden = !cross;
+    crossNode.className = "air-cross" + (cross ? " air-cross--" + cross.tone : "");
+    crossNode.textContent = cross ? labelled(cross) : "";
+    crossNode.title = cross ? T.crossHint : "";
+    var note = $("air-f-noshape");
+    note.hidden = !entry.no_shape;
+    $("air-f-noshape-text").textContent = entry.no_shape ? noShapeText(entry) : "";
+  }
+
   function showFiche(entry) {
     $("air-fiche-empty").hidden = true;
     $("air-fiche-body").hidden = false;
@@ -690,7 +807,8 @@
     setText("air-f-vertical", entry.vertical, T.notStated);
     setText("air-f-schedule", entry.schedule, T.notStated);
     setText("air-f-text", entry.text, T.notStated);
-    setText("air-f-center", entry.dms);
+    setText("air-f-center", entry.dms, entry.no_shape ? T.notStated : "");
+    showProvenance(entry);
     [["air-f-region", entry.region], ["air-f-commune", entry.commune]].forEach(function (pair) {
       $(pair[0]).textContent = pair[1] || "";
       $(pair[0]).hidden = !pair[1];
@@ -748,10 +866,11 @@
     showFiche(entry);
     if (!entry.shown) {
       entry.passes = true;
-      var group = groups[entry.kind];
+      var key = groupKeyOf(entry);
+      var group = groups[key];
       if (group && !group.on) {
         group.on = true;
-        var box = document.querySelector('[data-group="' + entry.kind + '"]');
+        var box = document.querySelector('[data-group="' + key + '"]');
         if (box) {
           box.checked = true;
         }
@@ -765,7 +884,7 @@
           [[entry.bbox[1], entry.bbox[0]], [entry.bbox[3], entry.bbox[2]]],
           { maxZoom: 12, padding: [30, 30] }
         );
-      } else {
+      } else if (hasPoint(entry)) {
         map.setView([entry.lat, entry.lon], Math.max(map.getZoom(), 11));
       }
     }
@@ -1571,6 +1690,33 @@
     });
   }
 
+  /* La capa «Referencia Google»: sólo existe con una copia del AIP publicada, y arranca apagada. */
+  function buildReferenceLegend(count) {
+    var group = $("air-legend-ref-group");
+    var host = $("air-legend-ref");
+    if (!group || !host || !count) {
+      return;
+    }
+    var label = el("label", "air-legend-item");
+    var box = el("input");
+    box.type = "checkbox";
+    box.checked = false;
+    box.dataset.group = "reference";
+    box.addEventListener("change", function () {
+      groupFor("reference").on = box.checked;
+      syncLayers();
+      $("air-tool-hint").textContent = fmt(box.checked ? T.layerShown : T.layerHidden, {
+        name: T.layerReference,
+      });
+    });
+    label.appendChild(box);
+    label.appendChild(el("span", "air-swatch air-swatch--ref"));
+    label.appendChild(el("span", "air-legend-name", T.layerReference));
+    label.appendChild(el("span", "air-count-pill", String(count)));
+    host.appendChild(label);
+    group.hidden = false;
+  }
+
   function buildLegend(counts) {
     var host = $("air-legend-items");
     KIND_ORDER.forEach(function (kind) {
@@ -1595,6 +1741,7 @@
       label.appendChild(el("span", "air-count-pill", String(counts[kind])));
       host.appendChild(label);
     });
+    buildReferenceLegend(counts.reference || 0);
     buildAdminLegend($("air-legend-admin"));
     buildOwnLegend($("air-legend-own"));
     // En un teléfono la leyenda arranca plegada: el mapa va primero.
@@ -1626,16 +1773,18 @@
 
   function start(data) {
     features = data.features;
+    aipInfo = (data.snapshot && data.snapshot.aip) || null;
     var counts = {};
     features.forEach(function (entry) {
       byId[entry.id] = entry;
-      counts[entry.kind] = (counts[entry.kind] || 0) + 1;
+      // Las cuentas de la leyenda son las de cada capa: lo que se dibuja con las casillas por omisión.
+      counts[groupKeyOf(entry)] = (counts[groupKeyOf(entry)] || 0) + 1;
       entry.places = Search.normalizeText([entry.region, entry.commune].join(" "));
       entry.passes = true;
     });
     createMap();
     features.forEach(function (entry) {
-      groupFor(entry.kind);
+      groupFor(groupKeyOf(entry));
       try {
         draw(entry);
       } catch (error) {

@@ -105,6 +105,15 @@ class AirspaceSnapshot(BaseModel):
         ordering = ["-fetched_at"]
         verbose_name = _("airspace snapshot")
         verbose_name_plural = _("airspace snapshots")
+        # LV-361 phase 4: the person who reviews and publishes an AIP amendment. Not given to any
+        # role by `bootstrap_roles` (only Administrator, which holds every permission): who reviews
+        # each amendment is the person's decision.
+        permissions = [
+            (
+                "review_airspacesnapshot",
+                _("Can review, correct and publish AIP airspace snapshots"),
+            ),
+        ]
         constraints = [
             models.UniqueConstraint(
                 fields=["source_kind"],
@@ -268,6 +277,16 @@ class AirspaceFeature(BaseModel):
         return f"{self.code} {self.name}".strip()
 
 
+RESULTS_ALL = (
+    "missing_in_google",
+    "missing_in_aip",
+    "match",
+    "discrepancy",
+    "google_only",
+    "measured",
+)
+
+
 class AirspaceCrossCheck(BaseModel):
     """How one zone of the AIP compares with the same zone of the Google map.
 
@@ -282,21 +301,28 @@ class AirspaceCrossCheck(BaseModel):
     RESULT_MATCH = "match"
     RESULT_DISCREPANCY = "discrepancy"
     RESULT_GOOGLE_ONLY = "google_only"
-    RESULTS = (
-        RESULT_MISSING_IN_GOOGLE,
-        RESULT_MISSING_IN_AIP,
-        RESULT_MATCH,
-        RESULT_DISCREPANCY,
-        RESULT_GOOGLE_ONLY,
-    )
+    # Both shapes exist and the distance was measured, but no threshold has been set yet: the
+    # person decides what counts as a discrepancy (`AIRSPACE_CROSSCHECK_THRESHOLD_M`).
+    RESULT_MEASURED = "measured"
+    RESULTS = RESULTS_ALL
     RESULT_CHOICES = [
         (RESULT_MISSING_IN_GOOGLE, _("In the AIP, missing in Google")),
         (RESULT_MISSING_IN_AIP, _("In Google, missing in the AIP")),
         (RESULT_MATCH, _("Match")),
         (RESULT_DISCREPANCY, _("Discrepancy")),
         (RESULT_GOOGLE_ONLY, _("Google only (reference)")),
+        (RESULT_MEASURED, _("Measured (no threshold set)")),
     ]
 
+    # The AIP snapshot this comparison belongs to (also for the rows with no AIP feature: a zone
+    # only the Google map has).
+    snapshot = models.ForeignKey(
+        AirspaceSnapshot,
+        on_delete=models.PROTECT,
+        related_name="cross_checks",
+        null=True,
+        blank=True,
+    )
     code = models.CharField(max_length=20, blank=True)
     aip_feature = models.ForeignKey(
         AirspaceFeature,
@@ -322,15 +348,7 @@ class AirspaceCrossCheck(BaseModel):
         verbose_name_plural = _("airspace cross-checks")
         constraints = [
             models.CheckConstraint(
-                condition=Q(
-                    result__in=(
-                        "missing_in_google",
-                        "missing_in_aip",
-                        "match",
-                        "discrepancy",
-                        "google_only",
-                    )
-                ),
+                condition=Q(result__in=RESULTS_ALL),
                 name="airspace_crosscheck_result_valid",
             ),
             models.CheckConstraint(
@@ -349,7 +367,7 @@ class AirspaceCrossCheck(BaseModel):
                 name="airspace_crosscheck_google_side_shape",
             ),
             models.CheckConstraint(
-                condition=~Q(result__in=("match", "discrepancy"))
+                condition=~Q(result__in=("match", "discrepancy", "measured"))
                 | (Q(aip_feature__isnull=False) & Q(google_feature__isnull=False)),
                 name="airspace_crosscheck_compared_shape",
             ),
