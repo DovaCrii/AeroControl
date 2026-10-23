@@ -45,11 +45,23 @@ def test_the_buttons_are_being_found():
     assert len(pages) >= 5, sorted(pages)
 
 
+def _has_destructive_weight(classes):
+    """Botón con contorno rojo, o (LV-368) ítem de menú «⋯» con texto rojo.
+
+    La ficha del permiso pasó el archivado a un menú desplegable: ahí un `btn-*` no
+    cabe, y el peso se dice con `text-danger`. Lo que sigue prohibido es el gris.
+    """
+    tokens = classes.split()
+    return "btn-outline-danger" in tokens or (
+        "dropdown-item" in tokens and "text-danger" in tokens
+    )
+
+
 def test_every_archive_button_carries_the_destructive_weight():
     grey = [
         (page, classes)
         for page, classes in _archive_buttons()
-        if "btn-outline-danger" not in classes.split()
+        if not _has_destructive_weight(classes)
     ]
 
     assert not grey, grey
