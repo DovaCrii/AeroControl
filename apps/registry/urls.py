@@ -14,6 +14,13 @@ urlpatterns += [
         credential_views.OperatorCredentialConfirm.as_view(),
         name="operator-credential-confirm",
     ),
+    # LV-369: registrar la salida de una persona de la empresa. Antes del bucle
+    # CRUD, con el mismo criterio que lo demás de `operator/<pk>/...`.
+    path(
+        "operator/<uuid:pk>/departure/",
+        views.OperatorDeparture.as_view(),
+        name="operator-departure",
+    ),
     # LV-145: el catastro de flota y personal. Va antes del bucle CRUD de abajo
     # para que `roster/` no quede a la sombra de un patrón genérico.
     path(

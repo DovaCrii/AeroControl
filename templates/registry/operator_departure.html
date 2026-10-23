@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags i18n %}
+{% block title %}{{ title }} - AeroControl{% endblock %}
+{% block content %}
+{% comment %}LV-369: pantalla de confirmación del servidor, no un `confirm()` de JS. Registrar
+la salida apaga la ficha y cierra asignaciones y alertas, así que la persona decide
+viendo qué cambia. Nada se borra, y se dice. Sin rojo: no es una advertencia de
+peligro sino un cambio de estado reversible (Reincorporar).{% endcomment %}
+<div class="form-shell card p-4">
+  <h1 class="h3">{{ title }}</h1>
+  <p class="mb-3"><strong>{{ object.full_name }}</strong>{% if object.cost_center %} · <span class="text-body-secondary">{{ object.cost_center.code }}</span>{% endif %}</p>
+
+  <div class="id-note mb-3" role="note">
+    <span aria-hidden="true">ⓘ</span>
+    <div>
+      <strong>{% translate "What changes" %}</strong>
+      <ul class="mb-0 ps-3">
+        <li>{% translate "The record is not deleted: it stays with its documents, permits and operations, marked as a former employee." %}</li>
+        <li>{% translate "The person stops appearing in the active lists and in the pickers for permits, requests, operations, assignments and tasks." %}</li>
+        <li>{% blocktranslate count counter=open_assignments %}{{ counter }} open assignment is closed on the departure date.{% plural %}{{ counter }} open assignments are closed on the departure date.{% endblocktranslate %}</li>
+        <li>{% translate "Open alerts for their credential, qualifications, tests and documents are resolved with the reason 'No longer belongs to the company', and no new ones are raised." %}</li>
+        <li>{% translate "They can be rejoined later without losing the history." %}</li>
+      </ul>
+    </div>
+  </div>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% include "generic/_form_errors.html" %}
+    {{ form|crispy }}
+    <div class="form-actions d-flex gap-2 mt-4 flex-wrap align-items-center">
+      <button type="submit" class="btn btn-primary">{% translate "Register departure" %}</button>
+      <a href="{{ detail_url }}" class="btn btn-outline-secondary">{% translate "Cancel" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

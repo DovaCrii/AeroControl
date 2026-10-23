@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Case, CharField, Count, F, IntegerField, Prefetch, Q, When
 from django.db.models.functions import Cast, Length, Substr
@@ -50,6 +51,7 @@ from .forms import (
     AssignmentForm,
     OperatorAssignmentForm,
     OperatorBulkAssignForm,
+    OperatorDepartureForm,
     AircraftAssignmentForm,
     AircraftBulkAssignForm,
     QualificationForm,
@@ -385,7 +387,6 @@ for _model, _name in (
 for _model, _name in (
     (CostCenter, "CostCenter"),
     (Aircraft, "Aircraft"),
-    (Operator, "Operator"),
     (Assignment, "Assignment"),
     (OperatorAssignment, "OperatorAssignment"),
     (AircraftAssignment, "AircraftAssignment"),
@@ -429,34 +430,9 @@ class OperatorArchive(RegistryArchive):
     model = Operator
 
     def before_archive(self, request, obj):
-        from django.utils import timezone
-
-        today = timezone.localdate()
-        open_assignments = list(
-            obj.cc_assignments.filter(
-                is_active=True, status__in=OperatorAssignment.ACTIVE_STATUSES
-            ).select_related("cost_center")
-        )
-        codes = []
-        for assignment in open_assignments:
-            # `end_date` nunca antes de `start_date`: una asignación `planned` que
-            # empieza la semana próxima se cierra en su propia fecha de inicio, no
-            # en el pasado. `save(update_fields=...)` no pasa por `clean()`, así
-            # que la fila inválida no la atajaría nadie.
-            assignment.end_date = max(today, assignment.start_date)
-            assignment.status = "ended"
-            assignment.save(update_fields=["end_date", "status", "updated_at"])
-            if assignment.cost_center.code not in codes:
-                codes.append(assignment.cost_center.code)
-        if obj.cost_center and obj.cost_center.code not in codes:
-            codes.append(obj.cost_center.code)
-        if not codes:
-            return None
-        return {
-            "cost_centers": codes,
-            "assignments_closed": len(open_assignments),
-            "left_on": today.isoformat(),
-        }
+        # LV-369: el cierre de asignaciones se mudó a `Operator.close_open_assignments`
+        # (lo comparte «registrar la salida»); acá sigue siendo «hoy».
+        return obj.close_open_assignments(timezone.localdate())
 
     def archived_message(self, obj, movement):
         if not movement:
@@ -468,6 +444,125 @@ class OperatorArchive(RegistryArchive):
             "%(name)s archived. Came from %(centers)s; the assignment was closed "
             "today and it is on record."
         ) % {"name": obj.full_name, "centers": ", ".join(movement["cost_centers"])}
+
+
+class OperatorRestore(RegistryRestore):
+    """Devolver una ficha archivada; si la persona había salido, **reincorporarla**.
+
+    LV-369: restaurar a alguien con `left_company_on` sin limpiarlo dejaría una
+    ficha activa que dice que salió (y que `clean()` rechaza). Quien salió se
+    reincorpora con `Operator.rejoin`, que conserva el rastro en la auditoría y
+    reabre las alertas que la salida había resuelto.
+    """
+
+    model = Operator
+
+    def post(self, request, pk):
+        from apps.core.tenancy import scope_queryset_to_tenant
+
+        obj = get_object_or_404(
+            scope_queryset_to_tenant(Operator.objects.all(), request.user),
+            pk=pk,
+            is_active=False,
+        )
+        if not obj.has_left_company:
+            return super().post(request, pk)
+        metadata = obj.rejoin(user=request.user)
+        set_audit_context(request, obj, action="operator_rejoined", metadata=metadata)
+        messages.success(
+            request,
+            _("%(name)s rejoined the company. Their history is kept.")
+            % {"name": obj.full_name},
+        )
+        return redirect(reverse("operator-detail", args=[obj.pk]))
+
+
+class OperatorDeparture(ModelPermissionRequiredMixin, View):
+    """LV-369: «Registrar salida de la empresa» (formulario de confirmación, POST).
+
+    **Permisos: `delete_operator` y `change_operator`, los dos.** Archivar es el
+    «borrar» de este proyecto (AGENTS.md) y esta acción apaga la ficha igual que
+    archivar, así que no puede ser más fácil que archivar; y además escribe un
+    dato sensible de la persona, que es de quien puede editar operadores. Sin los
+    dos, 403. No existe `DELETE`: nada se borra.
+
+    El objeto se busca acotado al tenant (404 cross-tenant). Vale también sobre
+    una ficha ya archivada, para quien se retiró antes de que existiera esto.
+    """
+
+    model = Operator
+    template_name = "registry/operator_departure.html"
+
+    def get_permission_required(self):
+        return ("registry.delete_operator", "registry.change_operator")
+
+    def _operator(self, request, pk):
+        from apps.core.tenancy import scope_queryset_to_tenant
+
+        return get_object_or_404(
+            scope_queryset_to_tenant(
+                Operator.objects.select_related("cost_center"), request.user
+            ),
+            pk=pk,
+        )
+
+    def get(self, request, pk):
+        operator = self._operator(request, pk)
+        if operator.has_left_company:
+            return redirect(reverse("operator-detail", args=[operator.pk]))
+        return self._render(request, operator, OperatorDepartureForm())
+
+    def post(self, request, pk):
+        operator = self._operator(request, pk)
+        if operator.has_left_company:
+            return redirect(reverse("operator-detail", args=[operator.pk]))
+        form = OperatorDepartureForm(request.POST)
+        if form.is_valid():
+            try:
+                metadata = operator.register_departure(
+                    left_on=form.cleaned_data["left_company_on"],
+                    reason=form.cleaned_data["departure_reason"],
+                    note=form.cleaned_data["departure_note"],
+                    user=request.user,
+                )
+            except ValidationError as exc:
+                for field, messages_ in exc.message_dict.items():
+                    for message in messages_:
+                        form.add_error(field if field in form.fields else None, message)
+            else:
+                set_audit_context(
+                    request, operator, action="operator_left_company", metadata=metadata
+                )
+                messages.success(
+                    request,
+                    _(
+                        "%(name)s is recorded as having left the company on "
+                        "%(date)s. The record is kept."
+                    )
+                    % {
+                        "name": operator.full_name,
+                        "date": operator.left_company_on.strftime("%d-%m-%Y"),
+                    },
+                )
+                return redirect(reverse("operator-detail", args=[operator.pk]))
+        return self._render(request, operator, form, status=422)
+
+    def _render(self, request, operator, form, status=200):
+        open_assignments = operator.cc_assignments.filter(
+            is_active=True, status__in=OperatorAssignment.ACTIVE_STATUSES
+        ).count()
+        return render(
+            request,
+            self.template_name,
+            {
+                "object": operator,
+                "form": form,
+                "title": _("Register departure from the company"),
+                "open_assignments": open_assignments,
+                "detail_url": reverse("operator-detail", args=[operator.pk]),
+            },
+            status=status,
+        )
 
 
 def make_views(model, form, prefix):
@@ -627,6 +722,27 @@ class OperatorList(RegistryList):
     }
     search_fields = ["full_name", "employee_id", "rut", "dgac_credential"]
 
+    @property
+    def csv_fields(self):
+        """LV-369: la exportación lleva la columna de salida **sólo con permiso**.
+
+        Sin `csv_fields` el mixin exporta todos los campos del modelo, y el motivo
+        y la nota de salida son datos sensibles: sólo con `change_operator`. La
+        neutralización de fórmulas la hace el mixin, no se reimplementa.
+        """
+        hidden = {"id", "notes", "is_active", "created_at", "updated_at"}
+        if not self.request.user.has_perm("registry.change_operator"):
+            hidden |= {"left_company_on", "departure_reason", "departure_note"}
+        return [f for f in Operator._meta.fields if f.name not in hidden]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        context["can_depart"] = user.has_perm("registry.delete_operator") and (
+            user.has_perm("registry.change_operator")
+        )
+        return context
+
     def get_queryset(self):
         from django.contrib.contenttypes.models import ContentType
         from django.db.models import Exists, OuterRef
@@ -681,6 +797,14 @@ class OperatorList(RegistryList):
         # encabezado no habría hecho nada.
         if not self._requested_sort()[0]:
             queryset = queryset.order_by("sort_name", "full_name")
+        # LV-369: «Archivados» pasa a ser lo archivado **sin salida registrada**
+        # (error, duplicado); quien salió de la empresa tiene su propio valor,
+        # `left`. Lo resuelve el filtro del estado, sobre lo que ya dejó la base.
+        status = self.request.GET.get("is_active")
+        if status == "left":
+            queryset = queryset.filter(left_company_on__isnull=False)
+        elif status == "archived":
+            queryset = queryset.filter(left_company_on__isnull=True)
         # LV-242: ver `AircraftList`. La tarjeta "Credenciales al día" decía
         # *"1 vencido · 7 sin fecha cargada"* y llevaba al padrón entero: siete
         # personas que localizar a ojo entre cuarenta y cinco.
@@ -978,6 +1102,20 @@ class OperatorDetail(RegistryDetail):
             .order_by("qualification_type__name")
         )
         context["today"] = timezone.localdate()
+        # LV-369: salida de la empresa. La acción exige los dos permisos y el
+        # motivo/nota sólo se ven con `change_operator`: la ficha la lee quien
+        # tiene `view_operator`, y eso no alcanza para un dato sensible.
+        user = self.request.user
+        context["departure_url"] = reverse("operator-departure", args=[self.object.pk])
+        context["can_depart"] = (
+            not self.object.has_left_company
+            and user.has_perm("registry.delete_operator")
+            and user.has_perm("registry.change_operator")
+        )
+        context["can_see_departure_detail"] = user.has_perm("registry.change_operator")
+        # «Archivar» a secas no decía para qué sirve: ahora que salir de la empresa
+        # tiene su acción, archivar queda para lo cargado por error o duplicado.
+        context["archive_label"] = _("Archive (error or duplicate)")
         # LV-158: el historial de pruebas de conocimientos, que es donde el
         # usuario pidió que quedara: *"al operador quedar en el historial […] con
         # un aprobado o insuficiente"*. Va en la ficha y no en una pantalla

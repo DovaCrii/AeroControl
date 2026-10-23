@@ -844,6 +844,40 @@ class Operator(BaseModel):
         help_text=_('Optional. Lets this person see "My work" filtered to them.'),
     )
 
+    # LV-369: la persona **salió de la empresa**. Es un eje propio y no se deduce de
+    # `is_active`: archivar sirve para «se cargó por error» o «es un duplicado», y
+    # «ya no trabaja aquí» es otro hecho, con fecha, que además mueve el informe
+    # mensual (un operador que salió *después* del corte cuenta en ese corte).
+    #
+    # El motivo y la nota son **datos sensibles de una persona**: opcionales, se
+    # muestran sólo con `change_operator` y no viajan a logs, auditoría ni
+    # informes (la auditoría sólo guarda el *nombre* de los campos escritos).
+    DEPARTURE_RESIGNATION = "resignation"
+    DEPARTURE_CONTRACT_END = "contract_end"
+    DEPARTURE_DISMISSAL = "dismissal"
+    DEPARTURE_RETIREMENT = "retirement"
+    DEPARTURE_OTHER = "other"
+    DEPARTURE_REASON_CHOICES = [
+        (DEPARTURE_RESIGNATION, _("Resignation")),
+        (DEPARTURE_CONTRACT_END, _("End of contract")),
+        (DEPARTURE_DISMISSAL, _("Dismissal")),
+        (DEPARTURE_RETIREMENT, _("Retirement")),
+        (DEPARTURE_OTHER, _("Other")),
+    ]
+    left_company_on = models.DateField(
+        null=True, blank=True, verbose_name=_("Left the company on")
+    )
+    departure_reason = models.CharField(
+        max_length=20,
+        choices=DEPARTURE_REASON_CHOICES,
+        blank=True,
+        default="",
+        verbose_name=_("Departure reason"),
+    )
+    departure_note = models.CharField(
+        max_length=200, blank=True, default="", verbose_name=_("Departure note")
+    )
+
     class Meta:
         verbose_name = _("operator")
         verbose_name_plural = _("operators")
@@ -851,11 +885,246 @@ class Operator(BaseModel):
             models.UniqueConstraint(
                 fields=["tenant", "employee_id"],
                 name="registry_operator_tenant_employee_uniq",
-            )
+            ),
+            # LV-369: un motivo o una nota de salida sin fecha de salida no
+            # describen nada. La fecha no futura vive en `clean()` (depende de
+            # «hoy», que una constraint de base no puede conocer).
+            models.CheckConstraint(
+                condition=(Q(departure_reason="") & Q(departure_note=""))
+                | Q(left_company_on__isnull=False),
+                name="registry_operator_departure_detail_requires_date",
+            ),
         ]
 
     def __str__(self):
         return self.full_name
+
+    # LV-369: salida de la empresa. La regla vive acá y no en la vista ni en la
+    # plantilla: la pantalla es una de las puertas, no la única (admin, import).
+
+    @property
+    def has_left_company(self):
+        return self.left_company_on is not None
+
+    @staticmethod
+    def validate_departure(left_on, reason="", note=""):
+        """Valida los tres datos de una salida. Levanta `ValidationError` por campo.
+
+        La comparten el formulario y `register_departure`: dos copias de la regla
+        es como la pantalla y el modelo terminan aceptando cosas distintas.
+        «Hoy o pasada»: una salida **programada** no se admite (decisión de
+        diseño): la ficha dejaría de contar a alguien que todavía trabaja.
+        """
+        from django.utils import timezone
+
+        errors = {}
+        if left_on is None:
+            errors["left_company_on"] = _("Enter the date the person left.")
+        elif left_on > timezone.localdate():
+            errors["left_company_on"] = _("The departure date cannot be in the future.")
+        allowed = {value for value, _label in Operator.DEPARTURE_REASON_CHOICES}
+        if reason and reason not in allowed:
+            errors["departure_reason"] = _("Choose one of the listed reasons.")
+        max_note = Operator._meta.get_field("departure_note").max_length
+        if len(note or "") > max_note:
+            errors["departure_note"] = _(
+                "Keep the note to %(max)d characters or fewer."
+            ) % {"max": max_note}
+        if errors:
+            raise ValidationError(errors)
+
+    def _check_departure_state(self):
+        if (self.departure_reason or self.departure_note) and not self.left_company_on:
+            raise ValidationError(
+                {"left_company_on": _("Enter the date the person left.")}
+            )
+        if self.left_company_on and self.is_active:
+            raise ValidationError(
+                {
+                    "left_company_on": _(
+                        "Someone who left the company cannot be active. "
+                        "Rejoin them instead."
+                    )
+                }
+            )
+
+    def close_open_assignments(self, on_date, user=None):
+        """Cierra las asignaciones abiertas y devuelve de dónde venía la persona.
+
+        LV-205, movido desde la vista: lo comparten «archivar» y «registrar la
+        salida». Cierra `planned` y `active` (la misma definición de «tiene
+        faena» que `ACTIVE_STATUSES`) en `on_date` —nunca antes de su propio
+        inicio— y suma la faena de la ficha aunque no tuviera asignación formal.
+        `None` cuando no había faena que anotar.
+        """
+        open_assignments = list(
+            self.cc_assignments.filter(
+                is_active=True, status__in=OperatorAssignment.ACTIVE_STATUSES
+            ).select_related("cost_center")
+        )
+        codes = []
+        for assignment in open_assignments:
+            # `end_date` nunca antes de `start_date`; `save(update_fields=...)` no
+            # pasa por `clean()`, así que la fila inválida no la atajaría nadie.
+            assignment.end_date = max(on_date, assignment.start_date)
+            assignment.status = "ended"
+            if user is not None:
+                assignment._changed_by_user = user
+            assignment.save(update_fields=["end_date", "status", "updated_at"])
+            if assignment.cost_center.code not in codes:
+                codes.append(assignment.cost_center.code)
+        if self.cost_center and self.cost_center.code not in codes:
+            codes.append(self.cost_center.code)
+        if not codes:
+            return None
+        return {
+            "cost_centers": codes,
+            "assignments_closed": len(open_assignments),
+            "left_on": on_date.isoformat(),
+        }
+
+    def _alerts_of_this_person(self):
+        """Alertas abiertas de la persona y de lo que cuelga de ella.
+
+        La ficha, sus habilitaciones, sus pruebas de conocimientos y sus
+        documentos: es todo lo que el motor vigila a nombre de alguien.
+        """
+        from django.contrib.contenttypes.models import ContentType
+
+        from apps.compliance.models import Alert, Document
+
+        def subject(model, pks):
+            return Q(
+                content_type=ContentType.objects.get_for_model(model),
+                object_id__in=pks,
+            )
+
+        condition = (
+            subject(Operator, [self.pk])
+            | subject(
+                Qualification,
+                Qualification.objects.filter(operator=self).values("pk"),
+            )
+            | subject(
+                KnowledgeAssessment,
+                KnowledgeAssessment.objects.filter(operator=self).values("pk"),
+            )
+            | subject(
+                Document,
+                Document.objects.filter(
+                    content_type=ContentType.objects.get_for_model(Operator),
+                    object_id=self.pk,
+                ).values("pk"),
+            )
+        )
+        return Alert.objects.filter(condition, is_active=True)
+
+    @staticmethod
+    def _closing_reasons():
+        """El motivo de cierre en todos los idiomas: se escribe en el del momento."""
+        from django.conf import settings
+        from django.utils import translation
+
+        reasons = set()
+        for code, _name in settings.LANGUAGES:
+            with translation.override(code):
+                reasons.add(str(_("No longer belongs to the company")))
+        return reasons
+
+    @transaction.atomic
+    def register_departure(self, left_on=None, reason="", note="", user=None):
+        """Registra que la persona salió de la empresa (LV-369).
+
+        Pone `left_company_on`, apaga `is_active`, cierra las asignaciones en la
+        fecha de salida y **resuelve las alertas abiertas** de su credencial,
+        habilitaciones, pruebas y documentos con el motivo «ya no pertenece a la
+        empresa» (sin clave de seguimiento de efectividad: nadie tiene que
+        verificar nada de alguien que ya no está). No borra nada.
+
+        Devuelve la metadata para la auditoría: **sólo nombres de campo y hechos
+        de faena**, nunca el motivo ni la nota. Es válido también sobre una ficha
+        ya archivada (quien se retiró y se archivó antes de que esto existiera).
+        """
+        from django.utils import timezone
+
+        left_on = left_on or timezone.localdate()
+        reason, note = (reason or "").strip(), (note or "").strip()
+        self.validate_departure(left_on, reason, note)
+        if self.has_left_company:
+            raise ValidationError(
+                {"left_company_on": _("This person already left the company.")}
+            )
+        movement = self.close_open_assignments(left_on, user=user)
+        self.left_company_on = left_on
+        self.departure_reason = reason
+        self.departure_note = note
+        self.is_active = False
+        written = ["left_company_on", "is_active"]
+        if reason:
+            written.append("departure_reason")
+        if note:
+            written.append("departure_note")
+        self.save(
+            update_fields=[
+                "left_company_on",
+                "departure_reason",
+                "departure_note",
+                "is_active",
+                "updated_at",
+            ]
+        )
+        closing = str(_("No longer belongs to the company"))
+        resolved = 0
+        for alert in self._alerts_of_this_person().filter(is_resolved=False):
+            alert.resolve(reason=closing, track_effectiveness=False)
+            resolved += 1
+        metadata = dict(movement or {})
+        metadata.setdefault("left_on", left_on.isoformat())
+        metadata["fields"] = written
+        metadata["alerts_resolved"] = resolved
+        return metadata
+
+    @transaction.atomic
+    def rejoin(self, user=None):
+        """Reincorpora a quien había salido (LV-369) conservando el rastro.
+
+        Limpia `left_company_on`, el motivo y la nota (no pueden sobrevivir sin
+        fecha: la constraint lo impide) y reactiva la ficha. El rastro queda en
+        la **auditoría**: la salida (`operator_left_company`) sigue ahí y la
+        reincorporación anota la fecha de salida anterior. Se prefirió eso a un
+        campo `rejoined_on`: una segunda salida sobrescribiría el campo y se
+        perdería el primer tramo, mientras que el registro de auditoría es
+        append-only.
+
+        Reabre las alertas que la salida había resuelto: `generate_alerts`
+        deduplica contra las resueltas con el mismo valor, así que de otro modo
+        una credencial vencida no volvería a avisar jamás. Devuelve la metadata
+        de auditoría o `None` si la persona no había salido.
+        """
+        if not self.has_left_company:
+            return None
+        previous = self.left_company_on
+        self.left_company_on = None
+        self.departure_reason = ""
+        self.departure_note = ""
+        self.is_active = True
+        self.save(
+            update_fields=[
+                "left_company_on",
+                "departure_reason",
+                "departure_note",
+                "is_active",
+                "updated_at",
+            ]
+        )
+        reasons = self._closing_reasons()
+        reopened = 0
+        for alert in self._alerts_of_this_person().filter(
+            is_resolved=True, resolution_reason__in=reasons
+        ):
+            alert.reopen()
+            reopened += 1
+        return {"previous_left_on": previous.isoformat(), "alerts_reopened": reopened}
 
     def clean(self):
         """LV-143: el RUT se guarda canónico y se valida cuando cambia.
@@ -892,6 +1161,7 @@ class Operator(BaseModel):
         from .rut import employee_id_from_rut, normalize_rut, rut_is_valid
 
         super().clean()
+        self._check_departure_state()
         self._check_name_parts_belong_to_the_full_name()
         self.rut = normalize_rut(self.rut)
         # LV-368: el número de credencial no se repite en el tenant. Como el RUT,

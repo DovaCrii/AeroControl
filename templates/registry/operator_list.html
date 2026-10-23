@@ -5,6 +5,15 @@
 
 {% block list_table_class %}table-normalized{% endblock %}
 
+{% comment %}LV-369: el filtro de estado distingue a quien **salió de la empresa** de lo
+archivado por error o duplicado. Es el mismo bloque del genérico con una opción más;
+«Archivados» ya no incluye a los ex colaboradores.{% endcomment %}
+{% block list_filters %}
+<div class="id-filter id-filter--grow"><label class="id-filter-label" for="id-filter-q">{% translate "Search" %}</label>{% include "generic/_search_input.html" with search_url=request.path input_id="id-filter-q" %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
+<div class="id-filter"><label class="id-filter-label" for="id-filter-status">{% translate "Status" %}</label><select class="form-select" id="id-filter-status" name="is_active"><option value="">{% translate "All statuses" %}</option><option value="active" {% if request.GET.is_active == 'active' %}selected{% endif %}>{% translate "Active" %}</option><option value="left" {% if request.GET.is_active == 'left' %}selected{% endif %}>{% translate "Former employees" %}</option><option value="archived" {% if request.GET.is_active == 'archived' %}selected{% endif %}>{% translate "Archived" %}</option></select></div>
+<div class="id-filter id-filter--action"><button class="btn btn-outline-primary">{% translate "Search" %}</button></div>
+{% endblock %}
+
 {% comment %}LV-162 (pedido del usuario con captura, 2026-08-27): el reparto
 estaba al revés de lo que pide el contenido. `col-flex` existe para absorber el
 sobrante y se le había dado al dato **más corto** —el código de la faena, cinco

@@ -911,7 +911,7 @@ class Alert(EffectivenessVerificationMixin, BaseModel):
         )
 
     @transaction.atomic
-    def resolve(self, reason=""):
+    def resolve(self, reason="", track_effectiveness=True):
         """Mark the alert resolved and close its linked task (B1.6).
 
         Moves the linked task (if any, and not already there) to the board's
@@ -935,7 +935,12 @@ class Alert(EffectivenessVerificationMixin, BaseModel):
         # caller including the automatic ones. An automatic close (a renewed
         # expiry date, a completed maintenance) is still a corrective action
         # whose effect the norm expects someone to confirm.
-        self.start_effectiveness_clock()
+        #
+        # LV-369: `track_effectiveness=False` para el cierre de quien salió de la
+        # empresa: no hay acción correctiva cuya eficacia verificar, y el reloj
+        # abriría una verificación pendiente por cada alerta de esa persona.
+        if track_effectiveness:
+            self.start_effectiveness_clock()
         task = self.linked_task()
         completed_stage = None
         if task is not None:

@@ -1,0 +1,25 @@
+{% load i18n %}{% comment %}LV-368 (fase 4): la lectura de un plan, **una sola definición** para la vista previa del formulario y la
+ficha del permiso (`apps.operations.plan_preview.plan_reading`). Pasa `reading`, y `compact=True` en el
+formulario (sin el texto largo de la BCN: el chip alcanza, y la ficha es donde se confirma).
+Un plan con una sola área trae un centro que declarar; con varias no se elige ninguna: se manda a
+separarlas en solicitudes (`GeoPlanSplitIntoRequests`, que pide `add_flightrequest`).{% endcomment %}
+{% if reading.single %}{% with area=reading.single %}
+<table class="plan-preview-table"><tbody>
+  <tr><th scope="row">{% translate "Area modality" %}</th><td>{{ area.modality_label }}</td></tr>
+  <tr><th scope="row">{% translate "Centre point" %}</th><td>{{ area.lat }} · {{ area.lon }}</td></tr>
+  {% if area.radius_m %}<tr><th scope="row">{% translate "Radius (m)" %}</th><td>{{ area.radius_m }}</td></tr>{% endif %}
+  {% if area.amc %}<tr><th scope="row">{% translate "Nearest aerodrome (AMC)" %}</th><td>{{ area.amc }}{% if area.amc_distance_km is not None %} · {{ area.amc_distance_km }} km{% endif %}</td></tr>{% endif %}
+  {% if area.region or area.comuna %}<tr><th scope="row">{% translate "Region / Commune" %}</th><td>{{ area.region }}{% if area.region and area.comuna %}, {% endif %}{{ area.comuna }}{% include "operations/_derived_location.html" with compact=compact %}</td></tr>{% endif %}
+</tbody></table>
+<div class="plan-preview-lists">
+  <div><h4>{% translate "What the KMZ brings" %}</h4><ul>{% for label in area.brings %}<li>{{ label }}</li>{% endfor %}</ul></div>
+  <div><h4>{% translate "Still to fill in" %}</h4><ul>{% for label in area.missing %}<li>{{ label }}</li>{% endfor %}</ul></div>
+</div>
+{% endwith %}{% elif reading.area_count %}
+{% blocktranslate asvar areas_note with n=reading.area_count %}{{ n }} areas: separate them into flight requests.{% endblocktranslate %}{% include "generic/_signal.html" with kind="note" text=areas_note %}
+<ul class="plan-preview-areas">{% for area in reading.areas %}<li>{{ area.name }} · {{ area.modality_label }}</li>{% endfor %}</ul>
+{% if perms.operations.add_flightrequest %}<p class="mt-2 mb-0"><a class="btn btn-sm btn-outline-primary" href="{% url 'geo-plan-split' reading.plan.pk %}">{% translate "Split into flight requests" %}</a></p>{% endif %}
+{% else %}
+<p class="plan-preview-empty mb-0">{% translate "This plan has no area that can be read." %}</p>
+{% endif %}
+{% include "geo/_mini_map.html" with mini_map=reading.mini_map map_id=reading.map_id %}

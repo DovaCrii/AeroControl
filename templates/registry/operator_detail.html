@@ -21,7 +21,22 @@
   {% comment %}LV-253: la lista marcaba la credencial vencida y la ficha no —
   quien abría al operador veía la fecha en la tabla sin ninguna señal.{% endcomment %}
   {% if object.credential_is_overdue %}<p class="mb-3" data-credential-lapsed><span class="badge sev-critical">⚠ {% translate "DGAC credential lapsed" %}</span> <span class="sev-text-critical">{{ object.credential_expiry|date:'Y-m-d' }}</span></p>{% endif %}
-  {% include "generic/_fields_detail_table.html" %}
+  {% comment %}LV-369: ex colaborador. Banner informativo (cian, no rojo: no es un
+  fallo), con símbolo + palabra. El motivo y la nota son datos sensibles: sólo
+  con `change_operator`, y por eso la tabla genérica **no** los dibuja (la
+  tabla pinta todos los campos del modelo a quien tenga `view_operator`).{% endcomment %}
+  {% if object.has_left_company %}
+  <div class="id-note mb-3" role="note" data-former-employee>
+    <span aria-hidden="true">→</span>
+    <div>
+      <strong>{% translate "Former employee" %}</strong> · {% blocktranslate with date=object.left_company_on|date:"d-m-Y" %}left the company on {{ date }}{% endblocktranslate %}.
+      {% translate "This record is kept as history: it does not count as active staff today, but it still appears on past permits, operations and documents." %}
+      {% if can_see_departure_detail and object.departure_reason %}<br>{% translate "Reason" %}: {{ object.get_departure_reason_display }}{% endif %}
+      {% if can_see_departure_detail and object.departure_note %}<br>{% translate "Note" %}: {{ object.departure_note }}{% endif %}
+    </div>
+  </div>
+  {% endif %}
+  {% include "generic/_fields_detail_table.html" with exclude="left_company_on,departure_reason,departure_note" %}
 </div>
 
 {% comment %}LV-175: el bloque de habilitaciones estructuradas se **oculta**, con

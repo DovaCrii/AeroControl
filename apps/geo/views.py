@@ -1,8 +1,11 @@
+import json
+
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import OuterRef, Subquery
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -14,17 +17,21 @@ from apps.compliance.models import Document, DocumentType
 from apps.operations.models import FlightPermission
 from apps.compliance.views import save_uploaded_file, uploaded_file_cleanup
 from apps.core.audit import add_audit_sibling, set_audit_context
+from apps.core.tenancy import scope_queryset_to_tenant
 from apps.core.views import (
     CsvExportMixin,
     ModelPermissionRequiredMixin,
     ModelViewPermissionRequiredMixin,
     SearchMixin,
     StatusTransitionView,
+    lookup_by_pk,
 )
+from apps.registry.models import CostCenter
 
 from .forms import GeoPlanImportForm
 from .kml import canonical
 from .models import GeoPlan, GeoPlanVersion, WeatherReview
+from .sections import split_sections
 
 GEO_SOURCE_DOC_TYPE_CODE = "GEO_SOURCE"
 # LV-180: el nombre que ve la gente. Era "Geo source" —inglés y jerga— en una
@@ -643,12 +650,55 @@ class GeoPlanImportView(ModelPermissionRequiredMixin, FormView):
     model = GeoPlan
     permission_action = "add"
     template_name = "geo/plan_import.html"
+    htmx_template_name = "geo/_plan_import_modal.html"
     form_class = GeoPlanImportForm
+
+    @property
+    def is_modal(self):
+        """LV-368 (fase 5): el formulario del permiso abre **esta misma vista** en un modal htmx.
+
+        Una sola puerta para importar: el parser, la firma, el tamaño y el antivirus son los de
+        `GeoPlanImportForm`, y el permiso `geo.add_geoplan` es el de siempre. Lo único que cambia con
+        htmx es la respuesta: un fragmento en vez de una página, y al terminar el evento
+        `geoplan-imported` en lugar de la redirección a la ficha del plan.
+        """
+        return self.request.headers.get("HX-Request") == "true"
+
+    def get_template_names(self):
+        return (
+            [self.htmx_template_name] if self.is_modal else super().get_template_names()
+        )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        if self.is_modal:
+            # El modal sólo crea el plan: el permiso lo vincula al guardarse (misma función que la
+            # ficha), así que no se pregunta por uno que quizá todavía no existe.
+            form.fields.pop("flight_permission", None)
+        return form
 
     def get_initial(self):
         # LV-50: "Importar plan" from a flight permission's own detail page
         # prefills it, same pattern as maintenance-create?aircraft=.
         initial = super().get_initial()
+        raw_cost_center = self.request.GET.get("cost_center")
+        if raw_cost_center:
+            # LV-368 (fase 5): la faena viene precargada desde el formulario del permiso. Acotada por
+            # empresa: una faena ajena es 404, no un formulario con su identificador adentro.
+            cost_center = lookup_by_pk(
+                scope_queryset_to_tenant(
+                    CostCenter.objects.filter(is_active=True), self.request.user
+                ),
+                raw_cost_center,
+            )
+            if cost_center is None:
+                raise Http404
+            initial["cost_center"] = cost_center.pk
         raw_permission = self.request.GET.get("flight_permission")
         if not raw_permission:
             return initial
@@ -661,7 +711,11 @@ class GeoPlanImportView(ModelPermissionRequiredMixin, FormView):
         # a bad query string leaves the field empty, it does not 500.
         try:
             permission = (
-                FlightPermission.objects.filter(pk=raw_permission)
+                scope_queryset_to_tenant(
+                    FlightPermission.objects.filter(pk=raw_permission),
+                    self.request.user,
+                    "cost_center__tenant_id",
+                )
                 .select_related("cost_center")
                 .first()
             )
@@ -730,7 +784,39 @@ class GeoPlanImportView(ModelPermissionRequiredMixin, FormView):
                 metadata={"version": 1, "features": version.feature_count},
             )
         self._plan = plan
+        if self.is_modal:
+            areas = len(split_sections(document_content))
+            response = render(
+                self.request,
+                "geo/_plan_import_done.html",
+                {"plan": plan, "area_count": areas},
+            )
+            # Después del swap, para que el modal ya muestre su confirmación cuando el selector del
+            # permiso recibe el plan nuevo. ASCII (`ensure_ascii`): una cabecera HTTP no admite más,
+            # y un título con tilde se codificaría como MIME y htmx no podría leerlo.
+            response["HX-Trigger-After-Swap"] = json.dumps(
+                {
+                    "geoplan-imported": {
+                        "id": str(plan.pk),
+                        "label": f"{plan.folio} · {plan.title}",
+                        "areas": areas,
+                    }
+                }
+            )
+            return response
         return redirect("geo-plan-detail", pk=plan.pk)
+
+    def form_invalid(self, form):
+        if self.is_modal:
+            # 422, como el resto de los formularios del modal: `app.js` lo deja pasar a htmx y
+            # conserva lo que la persona escribió (y la guardia de «cerrar y perder cambios»).
+            return render(
+                self.request,
+                self.htmx_template_name,
+                self.get_context_data(form=form),
+                status=422,
+            )
+        return super().form_invalid(form)
 
 
 # ── GEO-9: status workflow ────────────────────────────────────────────────

@@ -16,7 +16,8 @@ vista ya calcula (`can_change`, `can_archive`).{% endcomment %}
       <h1 class="h3 mb-0">{{ title|default:object }}</h1>
       {% if subtitle %}<p class="entity-subtitle mb-0">{{ subtitle }}</p>{% endif %}
       <div class="entity-chips">
-        {% if not object.is_active %}<span class="id-chip id-chip--neutral">{% translate "Archived" %}</span>
+        {% if object.left_company_on %}<span class="id-chip id-chip--info"><span aria-hidden="true">→</span> {% blocktranslate with date=object.left_company_on|date:"d-m-Y" %}Former employee · left on {{ date }}{% endblocktranslate %}</span>
+        {% elif not object.is_active %}<span class="id-chip id-chip--neutral">{% translate "Archived" %}</span>
         {% elif chip_label %}<span class="id-chip id-chip--{{ chip_tone|default:'neutral' }}">{{ chip_label }}</span>
         {% else %}<span class="id-chip id-chip--ok">{% translate "Active" %}</span>{% endif %}
       </div>
@@ -25,10 +26,18 @@ vista ya calcula (`can_change`, `can_archive`).{% endcomment %}
   <div class="entity-actions">
     {% if list_url %}<a href="{{ list_url }}" class="btn btn-outline-secondary">← {% translate "Back to list" %}</a>{% endif %}
     {% if can_change and object.is_active %}<a href="{{ update_url }}" class="btn btn-outline-primary">{% translate "Edit" %}</a>{% endif %}
+    {% comment %}LV-369: «Registrar salida de la empresa», sólo donde la vista lo declara
+    (`can_depart`, la ficha del operador). Va **antes** de «Archivar»: es lo que casi
+    siempre se quiere, y «Archivar» a secas no distinguía un error de una salida.{% endcomment %}
+    {% if can_depart %}<a href="{{ departure_url }}" class="btn btn-outline-primary">{% translate "Register departure from the company" %}</a>{% endif %}
     {% if object.is_active and can_archive %}
+    {% if archive_label %}
+    <form method="post" action="{{ archive_url }}">{% csrf_token %}<button class="btn btn-outline-danger" type="submit">{{ archive_label }}</button></form>
+    {% else %}
     <form method="post" action="{{ archive_url }}">{% csrf_token %}<button class="btn btn-outline-danger" type="submit">{% translate "Archive" %}</button></form>
+    {% endif %}
     {% elif not object.is_active and can_change %}
-    <form method="post" action="{{ restore_url }}">{% csrf_token %}<button class="btn btn-outline-success" type="submit">{% translate "Restore" %}</button></form>
+    <form method="post" action="{{ restore_url }}">{% csrf_token %}<button class="btn btn-outline-success" type="submit">{% if object.left_company_on %}{% translate "Rejoin" %}{% else %}{% translate "Restore" %}{% endif %}</button></form>
     {% endif %}
   </div>
 </header>
