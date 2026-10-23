@@ -110,6 +110,23 @@ def etag_matches(header, etag):
     return False
 
 
+def public_geometry(geometry):
+    """The geometry as the client receives it, coordinates rounded.
+
+    A `GeometryCollection` (a KML `MultiGeometry`: a zone with its label point, as SC-P29) carries
+    its parts in `geometries`, not in `coordinates`. Serving only `coordinates` sent `null`, Leaflet
+    threw while drawing and the whole map stayed dead (LV-363)."""
+    kind = geometry.get("type")
+    if kind == "GeometryCollection":
+        return {
+            "type": kind,
+            "geometries": [
+                public_geometry(g) for g in geometry.get("geometries") or []
+            ],
+        }
+    return {"type": kind, "coordinates": _round(geometry.get("coordinates"))}
+
+
 def feature_payload(feature):
     point = (feature.geometry or {}).get("type") == "Point"
     data = {
@@ -132,10 +149,7 @@ def feature_payload(feature):
         data["bbox"] = _round(
             [feature.min_lon, feature.min_lat, feature.max_lon, feature.max_lat]
         )
-        data["geometry"] = {
-            "type": feature.geometry.get("type"),
-            "coordinates": _round(feature.geometry.get("coordinates")),
-        }
+        data["geometry"] = public_geometry(feature.geometry)
     url = ifis_url(feature)
     if url:
         data["ifis"] = url

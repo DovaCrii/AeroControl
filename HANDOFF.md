@@ -1,8 +1,12 @@
 # HANDOFF — AeroControl
 
-## 🟡 2026-10-20 — tanda «Entorno + Espacio aéreo + Cumplimiento» **fusionada sin desplegar** (`main` en `97d2f44`; la VM sigue en `738a317`)
+## ✅ 2026-10-21 — tanda «Entorno + Espacio aéreo + Cumplimiento» **desplegada** (`c4c6b85`)
 
-Todo lo de abajo está en `main` con el CI verde; **nada se ha desplegado**. Son 132 archivos entre `738a317` y `97d2f44`.
+`p340` corre **`c4c6b85`**, desplegado el 2026-10-21 en bloques (leído de la salida pegada): estado (`## main...origin/main`, `738a317`), respaldo (`aero_ops_20261021_084027.sqlite3`, `restorable.`), `git pull` (`738a317..c4c6b85`) + `migrate` (`airspace.0001_create_airspace_snapshot_and_feature`, OK), `collectstatic` (7 copiados, 243 sin cambio), reinicio (`active`, hash `c4c6b85`), `health: 200`, `bootstrap_roles` (cinco roles y el grupo Dirección) e `import_airspace_zones --url` (dry-run: «Would add 572»; real: **«Added 572, changed 0, archived 0»**, 31 avisos de calidad de la fuente: 9 aeródromos sin OACI y nombres duplicados). Sin `uv sync` (el diff no tocó `pyproject.toml` ni `uv.lock`).
+
+**Seguimiento — fusionado sin desplegar: nada.** Queda por revisar a mano en producción, con recarga forzada: la sección «Entorno» (menú, pestañas Tiempo, Centelleo GNSS y Espacio aéreo), la franja «Entorno hoy» del panel, la escena del cielo (siete fases y los dos temas), el mapa con los 572 elementos reales (rendimiento, íconos, FIR, teclado) y la sección «Cumplimiento» al final del panel (también a 375 px). El tiempo salió **encendido por omisión**: comprobar que `p340` llega a `api.open-meteo.com` y que la tarjeta no muestra el estado de error.
+
+Detalle de la tanda (ya desplegada):
 
 **Qué entró**
 - **Sección «Entorno»** (`LV-358`, E1 a E3): pestañas Tiempo y Centelleo GNSS por ruta (`/environment/`), cabecera común (una sola ciudad, hora de Chile, amanecer/puesta y un solo «Referencial»), franja «Entorno hoy» en el panel por htmx (reemplaza las dos tarjetas), banda del centelleo sobre las 24 h del tiempo y celda de espacio aéreo. El tiempo viene **encendido por omisión** (`LV-353`) y el centelleo desde la puesta de sol (`LV-354`); la escena animada del cielo está en la pestaña Tiempo (`LV-356`).

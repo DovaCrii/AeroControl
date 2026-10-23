@@ -59,7 +59,9 @@ def ui_strings():
         "heading": _("true heading"),
         "measureTotal": _("Total"),
         "measureLeg": _("Last leg"),
-        "measureHint": _("Click the map to add points. Press Escape to stop."),
+        "measureHint": _(
+            "Click the map to add points. Double-click or press Escape to finish."
+        ),
         "circleHint": _("Click the map to place the centre of the circle."),
         "nearHint": _("Click the map to ask what is around that point."),
         "invalidCoordinate": _("That coordinate is not valid: {reason}."),
@@ -69,9 +71,7 @@ def ui_strings():
         "reasonSign": _("use a sign or a hemisphere letter, not both"),
         "reasonAxis": _("one latitude and one longitude are needed"),
         "loading": _("Loading the map data"),
-        "loadFailed": _(
-            "The map data could not be loaded. Reload the page to try again."
-        ),
+        "loadFailed": _("The map data could not be loaded."),
         "nearFailed": _("The query failed. Try again."),
         "inside": _("Inside"),
         "touching": _("Touches the circle"),
