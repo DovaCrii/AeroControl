@@ -1,6 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Q
+from django.urls import reverse
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 
@@ -172,6 +173,13 @@ class FlightPermissionForm(AeroModelForm):
         # antes, campo por campo.
         self.plan_providing_location = None
         self.hidden_plan_fields = []
+        # LV-368 (fase 5): lo que esta persona puede hacer con un plan decide **qué dibuja** la
+        # plantilla, no sólo qué ofrece el selector. Elegir/vincular modifica el plan
+        # (`change_geoplan`) y la vista previa lo lee (`view_geoplan`); un selector vacío o una
+        # vista previa que termina en 403 es lo que `LV-130` llama enseñar a desconfiar de la pantalla.
+        # Sin `user` (tests, shell) no se recorta: la vista es la que decide.
+        self.can_pick_plan = user is None or user.has_perm("geo.change_geoplan")
+        self.can_preview_plan = user is None or user.has_perm("geo.view_geoplan")
         if not manual_location:
             self._hide_what_the_plan_provides()
             self._hide_at_creation()
@@ -189,12 +197,19 @@ class FlightPermissionForm(AeroModelForm):
         # llega al tenant por su centro de costo (no tiene FK propia).
         if user is not None:
             plans = scope_queryset_to_tenant(plans, user, "cost_center__tenant_id")
+        # LV-368 (fase 5): en la **edición** el selector ofrece sólo los planes de la faena del
+        # permiso, que es lo que la ficha ya ofrecía (`linkable_plans`): uno de otra faena sería una
+        # opción que `clean()` rechaza al guardar.
+        if not self.instance._state.adding:
+            plans = plans.filter(cost_center_id=self.instance.cost_center_id)
         self.fields["source_plan"].queryset = plans.select_related(
             "cost_center"
         ).order_by("-folio")
         self.fields["source_plan"].label_from_instance = lambda plan: (
             f"{plan.folio} · {plan.title}"
         )
+        self._wire_plan_preview()
+        self._mark_what_the_plan_will_fill()
         # LV-39: the folio is only demanded once approved (see clean); until then
         # the permit can be assembled without it.
         self.fields["permission_number"].required = False
@@ -243,6 +258,45 @@ class FlightPermissionForm(AeroModelForm):
             "label": aircraft.selector_label,
             "date": aircraft.insurance_expiry.isoformat(),
         }
+
+    def _wire_plan_preview(self):
+        """LV-368 (fase 5): al elegir un plan, el servidor devuelve «lo que trae» (htmx).
+
+        **No rellena casillas por JS**: se mantiene `LV-153` —el relleno ocurre al guardar, con
+        `fill_location_gaps`, que sólo llena huecos— y esto sólo muestra el plan para que la persona
+        confirme que es el que cree. Los atributos son los de htmx y nada más (la CSP no admite
+        `unsafe-eval`, así que nada de filtros ni de `hx-vals` con JS): el selector pide al cargar, al
+        cambiar él y al cambiar la faena, y `permission-plan-picker.js` renombra su parámetro a `plan`.
+        """
+        if not self.can_preview_plan:
+            return
+        self.fields["source_plan"].widget.attrs.update(
+            {
+                "hx-get": reverse("permission-plan-preview"),
+                "hx-trigger": "load, change, change from:#id_cost_center",
+                "hx-target": "#plan-preview",
+                "hx-swap": "innerHTML",
+                "hx-include": "#id_cost_center",
+                "data-plan-picker-select": "",
+            }
+        )
+
+    def _mark_what_the_plan_will_fill(self):
+        """LV-368 (fase 5): las casillas vacías que el plan llenará lo dicen en la propia casilla.
+
+        Sólo las **visibles y vacías** (la edición con una región por llenar, o `?ubicacion=manual`);
+        las ocultas se nombran en la nota de la plantilla (`hidden_plan_labels`). Es un placeholder y
+        no un valor: lo que la persona escriba gana, porque el relleno nunca pisa.
+        """
+        hint = gettext("Will come from the plan")
+        for name in self.PLAN_PROVIDED_FIELDS:
+            field = self.fields.get(name)
+            if field is not None and self.initial.get(name) in (None, ""):
+                field.widget.attrs["placeholder"] = hint
+
+    def hidden_plan_labels(self):
+        """Los rótulos de las casillas que el plan llena y el formulario no pide (para la nota)."""
+        return [str(self.Meta.labels[name]) for name in self.hidden_plan_fields]
 
     def _hide_what_the_plan_provides(self):
         """Sacar del formulario los datos de ubicación que ya vienen del plan.
@@ -442,11 +496,25 @@ class FlightPermissionUpdateForm(FlightPermissionForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # LV-153: traer los datos de un plan es del **alta**. Un permiso que ya
-        # existe tiene su propio selector en la ficha (`R10.2`), que además
-        # muestra qué rellenó y escribe la bitácora del vínculo; ofrecerlo también
-        # acá serían dos puertas para lo mismo, y una se queda atrás.
-        self.fields.pop("source_plan", None)
+        # LV-153 sacaba el selector de la edición: el permiso tenía el suyo en la ficha
+        # (`R10.2`) y ofrecerlo también acá eran dos puertas para lo mismo. LV-368 (fase 5) lo trae
+        # de vuelta **sin segunda puerta**: al guardar, la vista llama a la misma función que la
+        # ficha (`link_plan_with_record`: vincular, auditar, bitácora), así que hay un solo camino de
+        # escritura. «Cambiar» el plan es desvincular el anterior y vincular el nuevo por esa misma
+        # función; las casillas ya escritas no se pisan (`fill_location_gaps` sólo llena huecos).
+        field = self.fields["source_plan"]
+        if self.instance.geo_plans.filter(is_active=True).exists():
+            field.label = _("Replace the linked plan")
+            field.help_text = _(
+                "On save, the chosen plan replaces the one linked now. The boxes that "
+                "already have a value are not overwritten."
+            )
+        else:
+            field.label = _("Link a geospatial plan")
+            field.help_text = _(
+                "On save, the plan is linked and the boxes you leave empty are filled "
+                "from it. Nothing you typed is overwritten."
+            )
 
     def clean(self):
         # The parent rejects an approved permit with no DGAC folio, reading the

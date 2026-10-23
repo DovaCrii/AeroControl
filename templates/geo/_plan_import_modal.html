@@ -1,0 +1,16 @@
+{% load crispy_forms_tags i18n %}{% comment %}LV-368 (fase 5): «Subir un KMZ nuevo» desde el formulario del permiso. Es `geo-plan-import` (la misma vista, el
+mismo `GeoPlanImportForm`) respondiendo con un fragmento: sin permiso preguntado (el permiso vincula el plan
+al guardarse), con la faena precargada. Crea el plan con el **mismo estado** que la importación normal
+(borrador). El título del modal viaja fuera de banda, como en `generic/_form_content.html`.{% endcomment %}
+<h5 id="generic-modal-title" class="modal-title" hx-swap-oob="true">{% translate "Upload a new KMZ" %}</h5>
+<form method="post" action="{% url 'geo-plan-import' %}" enctype="multipart/form-data"
+      hx-post="{% url 'geo-plan-import' %}" hx-encoding="multipart/form-data" hx-target="#modal-content" hx-swap="innerHTML">
+  {% csrf_token %}
+  <p class="text-muted small">{% translate "Create a plan from a flight-planning file. The original is stored intact." %}</p>
+  {% include "generic/_form_errors.html" %}
+  {{ form|crispy }}
+  <div class="form-actions d-flex gap-2 mt-4 align-items-center">
+    <button type="submit" class="btn btn-primary">{% translate "Import file" %}</button>
+    <button type="button" class="btn btn-link" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+  </div>
+</form>

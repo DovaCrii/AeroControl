@@ -1,0 +1,14 @@
+{% load i18n %}{% comment %}LV-368 (fase 5): lo que dice el modal al terminar. El plan nuevo ya está elegido en el selector del
+permiso (evento `geoplan-imported`, que `permission-plan-picker.js` atiende); acá sólo se confirma y se
+deja cerrar. Con más de un área no se elige ninguna: la vista previa del formulario lo dice y enlaza a
+separarlas en solicitudes.{% endcomment %}
+<h5 id="generic-modal-title" class="modal-title" hx-swap-oob="true">{% translate "Upload a new KMZ" %}</h5>
+{% blocktranslate asvar done_text with folio=plan.folio %}Plan {{ folio }} was created from the file and is selected in the permit form.{% endblocktranslate %}
+{% include "generic/_signal.html" with kind="ok" text=done_text %}
+{% if area_count > 1 %}
+{% blocktranslate asvar areas_text with n=area_count %}{{ n }} areas: separate them into flight requests.{% endblocktranslate %}
+<div class="mt-2">{% include "generic/_signal.html" with kind="note" text=areas_text %}</div>
+{% endif %}
+<div class="form-actions d-flex gap-2 mt-4">
+  <button type="button" class="btn btn-primary" data-bs-dismiss="modal">{% translate "Close" %}</button>
+</div>

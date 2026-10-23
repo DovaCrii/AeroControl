@@ -105,7 +105,11 @@ class TestTheCreationForm:
             .content.decode()
         )
 
-        assert "Latitud" not in content
+        # LV-368 (fase 5): la nota «vendrán del plan» **nombra** las casillas ocultas (así una casilla
+        # que no está no se lee como un campo que falta); lo que no hay es la casilla.
+        assert 'name="latitude"' not in content and 'id="id_latitude"' not in content
+        assert "Estas casillas vendrán del plan al guardar" in content
+        assert "Latitud" in content.split("vendrán del plan al guardar")[1][:200]
 
 
 @pytest.mark.django_db

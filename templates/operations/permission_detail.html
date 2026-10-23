@@ -119,6 +119,16 @@ por la elegida justo antes de enviar.{% endcomment %}
   LV-368: la conversión ya no es una señal de color; es una ayuda en gris.{% endcomment %}
   {% if permission.max_altitude_m %}<tr><th scope="row">{% translate "Maximum altitude" %}</th><td>{{ permission.max_altitude_m }} m <span class="id-hint d-inline">{% blocktranslate with ft=permission.max_altitude_ft_equivalent %}{{ ft }} ft for the SIGO form{% endblocktranslate %}</span></td></tr>{% endif %}<tr><th scope="row">{% translate "Area type" %}</th><td>{{ permission.get_area_type_display|default:"—" }}</td></tr>
 </tbody></table></div>
+{% comment %}LV-368 (fase 5): la lectura del plan vinculado, **la misma** que la vista previa del formulario
+(`operations/_plan_reading.html`, armada por `plan_reading`): lo que el KMZ trae, la modalidad, el AMC con su
+distancia, y el mini-mapa. Sin el `compact` del formulario: acá sí va el «¿Por qué?» de la BCN, porque la
+ficha es donde se confirma el dato. Sólo con `view_geoplan`, que es el permiso de leer un plan.{% endcomment %}
+{% if linked_plan_reading %}
+<div class="card mt-3 p-4" id="permit-plan-reading">
+  <h2 class="h5 mb-2">{% translate "What the plan brings" %} · <a href="{% url 'geo-plan-detail' linked_plan_reading.plan.pk %}">{{ linked_plan_reading.plan.folio }}</a></h2>
+  {% include "operations/_plan_reading.html" with reading=linked_plan_reading %}
+</div>
+{% endif %}
 {% if perms.geo.view_geoplan %}
 {% comment %}LV-137: `id` para que el expediente ancle acá su atajo «Vincular un plan». R10.2: el plan
 ya subido se cruza con su permiso desde acá. LV-199: la columna de acciones, con «Desvincular»; la
@@ -243,4 +253,20 @@ se quedó sin lo que LV-92 y LV-104 le dieron a las demás fichas.{% endcomment 
 </details>
 {% endblock %}
 
-{% block extrascripts %}<script src="{% static 'js/permission-status.js' %}"></script>{% endblock %}
+{% block extrahead %}{{ block.super }}
+{% if linked_plan_reading %}
+<link rel="stylesheet" href="{% static 'css/geo-mini-map.css' %}">
+<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}"
+      integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H"
+      crossorigin="anonymous">
+{% endif %}
+{% endblock %}
+
+{% block extrascripts %}<script src="{% static 'js/permission-status.js' %}"></script>
+{% if linked_plan_reading %}
+<script src="{% static 'vendor/leaflet/leaflet.js' %}"
+        integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH"
+        crossorigin="anonymous"></script>
+<script src="{% static 'js/geo/mini-map.js' %}"></script>
+{% endif %}
+{% endblock %}

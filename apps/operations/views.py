@@ -29,7 +29,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.text import capfirst, slugify
 
 from apps.compliance.alerts import resolve_expiry_alerts_for
-from apps.core.audit import set_audit_context
+from apps.core.audit import add_audit_sibling, set_audit_context
 from apps.core.tenancy import scope_queryset_to_tenant
 from apps.core.views import (
     CALENDAR_EVENT_PERMISSIONS,
@@ -509,32 +509,15 @@ class FlightPermissionCreate(OCreate):
         # ficha, así que las dos escriben la misma bitácora.
         plan = form.cleaned_data.get("source_plan")
         if plan is not None:
-            filled = link_plan_to_permission(plan, self.object, self.request.user)
-            set_audit_context(
+            # LV-368 (fase 5): la misma función que la ficha y la edición; ver su docstring.
+            link_plan_with_record(
                 self.request,
                 plan,
-                action="geoplan_linked_to_permission",
-                metadata={
-                    "permission": self.object.internal_folio,
-                    "filled": filled,
-                },
+                self.object,
+                primary=False,
+                level=messages.info,
+                nothing_filled=linked_nothing_filled(),
             )
-            if filled:
-                messages.success(
-                    self.request,
-                    _("Plan %(title)s linked; it filled in: %(fields)s.")
-                    % {"title": plan.title, "fields": ", ".join(filled)},
-                )
-            else:
-                messages.info(
-                    self.request,
-                    _(
-                        "Plan %(title)s linked. It filled nothing in: the permit "
-                        "already had its location, or the plan has more than one "
-                        "circle."
-                    )
-                    % {"title": plan.title},
-                )
         gaps = operator_aircraft_compatibility_gaps(
             self.object.operators.all(), self.object.aircraft_fleet.all()
         )
@@ -590,7 +573,45 @@ class FlightPermissionUpdate(
         # por la que `fill_location_gaps` rellena sin pisar.
         kwargs = super().get_form_kwargs()
         kwargs["manual_location"] = self.request.GET.get("ubicacion") == "manual"
+        # LV-368 (fase 5): la edición ofrece el plan, así que el formulario necesita saber
+        # quién mira: acota el selector por empresa y por `change_geoplan`, como el alta.
+        kwargs["user"] = self.request.user
         return kwargs
+
+    def form_valid(self, form):
+        """Guarda el permiso y, si se eligió un plan, lo vincula **por la misma puerta que la ficha**.
+
+        LV-368 (fase 5). «Cambiar» el plan es desvincular el que había y vincular el nuevo, los dos por
+        `unlink_plan_with_record`/`link_plan_with_record` (auditoría y bitácora incluidas): no hay una
+        segunda escritura que pueda divergir de la de la ficha. Se hace **después** de guardar, así que
+        el relleno (`fill_location_gaps`, que sólo llena huecos) parte de lo que la persona acaba de
+        escribir y nunca lo pisa. Todo en una transacción: o queda el plan nuevo, o queda el anterior.
+        """
+        plan = form.cleaned_data.get("source_plan")
+        if plan is None:
+            return super().form_valid(form)
+        with transaction.atomic():
+            response = super().form_valid(form)
+            replaced = list(
+                self.object.geo_plans.filter(is_active=True).exclude(pk=plan.pk)
+            )
+            for old in replaced:
+                unlink_plan_with_record(self.request, old, self.object, primary=False)
+            link_plan_with_record(
+                self.request,
+                plan,
+                self.object,
+                primary=False,
+                level=messages.info,
+                nothing_filled=linked_nothing_filled(),
+            )
+            for old in replaced:
+                messages.info(
+                    self.request,
+                    _("Plan %(old)s was unlinked: %(new)s replaces it.")
+                    % {"old": old.folio, "new": plan.folio},
+                )
+        return response
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -724,6 +745,16 @@ class FlightPermissionDetail(
             flight_permission__isnull=True,
             is_active=True,
         ).order_by("-created_at")
+        # LV-368 (fase 5): la sección «Ubicación y área» lee el plan vinculado con **la misma lectura**
+        # que la vista previa del formulario (`plan_reading`: tabla, modalidad, AMC, comuna y región, y
+        # el mini-mapa). Sólo con `view_geoplan`: es el permiso de leer un plan, y la lectura es suya.
+        context["linked_plan_reading"] = None
+        if self.request.user.has_perm("geo.view_geoplan"):
+            linked = next(
+                (plan for plan in self.object.geo_plans.all() if plan.is_active), None
+            )
+            if linked is not None:
+                context["linked_plan_reading"] = plan_reading(linked)
         # LV-72: the SIGO trace shows *who, with what role, when*. The role is
         # the user's groups, prefetched here rather than resolved per row --
         # `{{ h.changed_by_user.groups.all }}` in the template would be one
@@ -2215,6 +2246,80 @@ def link_plan_to_permission(plan, permission, user):
     return fill_permission_from_plan(plan, permission)
 
 
+def linked_nothing_filled():
+    """El aviso del alta y de la edición cuando el plan se vinculó y no rellenó nada."""
+    return _(
+        "Plan %(title)s linked. It filled nothing in: the permit "
+        "already had its location, or the plan has more than one "
+        "circle."
+    )
+
+
+def link_plan_with_record(
+    request, plan, permission, *, primary=True, nothing_filled=None, level=None
+):
+    """LV-368 (fase 5): vincular un plan **con su auditoría y su aviso**: la única puerta de escritura.
+
+    Antes había dos copias del mismo cuerpo —la vista de la ficha y el alta del permiso— y la edición
+    iba a ser la tercera. Una tercera copia es cómo una de ellas deja de auditar, así que las tres
+    llaman acá: `link_plan_to_permission` (el vínculo, la bitácora `GeoPlanPermissionLink` y el
+    relleno de huecos) más la auditoría y el mensaje.
+
+    `primary=True` es la vista que **sólo** vincula (la entrada de auditoría es la del plan). Con
+    `primary=False` la vista ya tiene su propia mutación —crear o editar el permiso— y su entrada
+    **se conserva**: el vínculo se suma como entrada hermana (`add_audit_sibling`), porque
+    `set_audit_context` pisa la anterior y sólo sobreviviría la última.
+    """
+    filled = link_plan_to_permission(plan, permission, request.user)
+    metadata = {"permission": permission.internal_folio, "filled": filled}
+    if primary:
+        set_audit_context(
+            request, plan, action="geoplan_linked_to_permission", metadata=metadata
+        )
+    else:
+        set_audit_context(
+            request, permission, metadata={"plan": plan.folio, "filled": filled}
+        )
+        add_audit_sibling(request, plan, action="geoplan_linked_to_permission")
+    if filled:
+        messages.success(
+            request,
+            _("Plan %(title)s linked; it filled in: %(fields)s.")
+            % {"title": plan.title, "fields": ", ".join(filled)},
+        )
+    else:
+        level = level or messages.success
+        level(
+            request,
+            (
+                nothing_filled
+                or _("Plan %(title)s linked. The permit already had its location.")
+            )
+            % {"title": plan.title},
+        )
+    return filled
+
+
+def unlink_plan_with_record(request, plan, permission, *, primary=True):
+    """LV-199 / LV-368 (fase 5): deshacer el vínculo, con su auditoría. Lo usan la ficha y la edición.
+
+    No escribe la bitácora a mano: `GeoPlanPermissionLink` registra todo cambio de esa FK por sí sola,
+    incluido el paso a nulo. `primary` significa lo mismo que en `link_plan_with_record`.
+    """
+    plan.flight_permission = None
+    plan._changed_by_user = request.user
+    plan.save(update_fields=["flight_permission", "updated_at"])
+    if primary:
+        set_audit_context(
+            request,
+            plan,
+            action="geoplan_unlinked_from_permission",
+            metadata={"permission": permission.internal_folio},
+        )
+    else:
+        add_audit_sibling(request, plan, action="geoplan_unlinked_from_permission")
+
+
 def fill_permission_from_plan(plan, permission):
     """Lo que el KMZ aporta, cuando aporta algo que no sea ambiguo.
 
@@ -2288,25 +2393,7 @@ class GeoPlanLinkToPermission(ModelPermissionRequiredMixin, View):
             messages.error(request, _("Choose a plan from this cost center."))
             return redirect(permission)
 
-        filled = link_plan_to_permission(plan, permission, request.user)
-        set_audit_context(
-            request,
-            plan,
-            action="geoplan_linked_to_permission",
-            metadata={"permission": permission.internal_folio, "filled": filled},
-        )
-        if filled:
-            messages.success(
-                request,
-                _("Plan %(title)s linked; it filled in: %(fields)s.")
-                % {"title": plan.title, "fields": ", ".join(filled)},
-            )
-        else:
-            messages.success(
-                request,
-                _("Plan %(title)s linked. The permit already had its location.")
-                % {"title": plan.title},
-            )
+        link_plan_with_record(request, plan, permission)
         return redirect(permission)
 
 
@@ -2359,15 +2446,7 @@ class GeoPlanUnlinkFromPermission(ModelPermissionRequiredMixin, View):
             messages.error(request, _("That plan is not linked to this permit."))
             return redirect(permission)
 
-        plan.flight_permission = None
-        plan._changed_by_user = request.user
-        plan.save(update_fields=["flight_permission", "updated_at"])
-        set_audit_context(
-            request,
-            plan,
-            action="geoplan_unlinked_from_permission",
-            metadata={"permission": permission.internal_folio},
-        )
+        unlink_plan_with_record(request, plan, permission)
         messages.success(
             request,
             _(
@@ -2453,9 +2532,16 @@ class GeoPlanSplitIntoRequests(ModelPermissionRequiredMixin, View):
         )
         return redirect("flight-request-list")
 
-    @staticmethod
-    def _plan(pk):
-        plan = get_object_or_404(GeoPlan, pk=pk, is_active=True)
+    def _plan(self, pk):
+        # LV-368 (fase 5): la vista previa del formulario enlaza acá, así que se acota por empresa
+        # como el resto de las puertas del plan (F-08): un plan ajeno es 404, no su vista previa.
+        plan = get_object_or_404(
+            scope_queryset_to_tenant(
+                GeoPlan.objects.all(), self.request.user, "cost_center__tenant_id"
+            ),
+            pk=pk,
+            is_active=True,
+        )
         if plan.current_version is None:
             raise Http404("The plan has no content to split.")
         return plan
