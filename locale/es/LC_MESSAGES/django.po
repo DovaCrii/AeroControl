@@ -5823,14 +5823,6 @@ msgstr "Abrir el centro de costo"
 msgid "Forecast unavailable right now."
 msgstr "El pronóstico no está disponible por ahora."
 
-#: .\templates\dashboard\index.html:355 .\templates\geo\plan_detail.html:282
-msgid ""
-"Source: Open-Meteo. Reference only -- it does not replace the pre-flight "
-"check."
-msgstr ""
-"Fuente: Open-Meteo. Solo de referencia -- no reemplaza el chequeo "
-"preoperacional."
-
 #: .\templates\dashboard\index.html:372
 msgid "Maintenance by Type"
 msgstr "Mantenimiento por tipo"
@@ -10961,6 +10953,27 @@ msgstr "No hay nada que mostrar en esta capa."
 
 msgid "valid until {date}"
 msgstr "vigente hasta {date}"
+
+msgid "Source: %(source)s. Reference only -- it does not replace the pre-flight check."
+msgstr "Fuente: %(source)s. Solo de referencia -- no reemplaza el chequeo preoperacional."
+
+msgid "Not available"
+msgstr "No disponible"
+
+msgid "Not available from this source"
+msgstr "No disponible en esta fuente"
+
+msgid "Based on data from"
+msgstr "Basado en datos de"
+
+msgid "No notable weather events in the available data for the next 48 hours"
+msgstr "Sin eventos climáticos relevantes en los datos disponibles para las próximas 48 horas"
+
+msgid "Communes: Biblioteca del Congreso Nacional de Chile (BCN). Reference only."
+msgstr "Comunas: Biblioteca del Congreso Nacional de Chile (BCN). Solo de referencia."
+
+msgid "Other places: © OpenStreetMap contributors."
+msgstr "Otros lugares: © colaboradores de OpenStreetMap."
 
 msgid "Choose the credential file to upload."
 msgstr "Elija el archivo de la credencial que desea subir."

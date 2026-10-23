@@ -347,7 +347,7 @@ class TestThePanelAsksForNoForecast:
     """LV-358: armar el panel no pide el pronóstico; la franja «Entorno hoy» lo pide por htmx, aparte."""
 
     def test_the_dashboard_renders_without_calling_the_forecast(self, monkeypatch):
-        def boom(lat, lon):
+        def boom(lat, lon, zone=None):
             raise AssertionError("armar el panel no puede pedir el pronóstico")
 
         pin_now(monkeypatch, datetime(2026, 10, 19, 20, 55, tzinfo=SANTIAGO))
