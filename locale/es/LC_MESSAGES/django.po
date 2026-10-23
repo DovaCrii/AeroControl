@@ -11121,3 +11121,110 @@ msgstr "Vigencia y documentos"
 
 msgid "Preflight and flights"
 msgstr "Prevuelo y vuelos"
+
+msgid "Resignation"
+msgstr "Renuncia"
+
+msgid "End of contract"
+msgstr "Término de contrato"
+
+msgid "Dismissal"
+msgstr "Desvinculación"
+
+msgid "Retirement"
+msgstr "Jubilación"
+
+msgid "Left the company on"
+msgstr "Fecha de salida de la empresa"
+
+msgid "Departure reason"
+msgstr "Motivo de salida"
+
+msgid "Departure note"
+msgstr "Nota de salida"
+
+msgid "Enter the date the person left."
+msgstr "Indique la fecha de salida de la persona."
+
+msgid "The departure date cannot be in the future."
+msgstr "La fecha de salida no puede ser futura."
+
+msgid "Choose one of the listed reasons."
+msgstr "Elija uno de los motivos de la lista."
+
+msgid "Keep the note to %(max)d characters or fewer."
+msgstr "La nota admite hasta %(max)d caracteres."
+
+msgid "Someone who left the company cannot be active. Rejoin them instead."
+msgstr "Quien salió de la empresa no puede figurar activo. Reincorpórelo en su lugar."
+
+msgid "This person already left the company."
+msgstr "Esta persona ya salió de la empresa."
+
+msgid "No longer belongs to the company"
+msgstr "Ya no pertenece a la empresa"
+
+msgid "%(name)s rejoined the company. Their history is kept."
+msgstr "%(name)s se reincorporó a la empresa. Se conserva su historial."
+
+msgid "Register departure from the company"
+msgstr "Registrar salida de la empresa"
+
+msgid "%(name)s is recorded as having left the company on %(date)s. The record is kept."
+msgstr "Se registró que %(name)s salió de la empresa el %(date)s. La ficha se conserva."
+
+msgid "Archive (error or duplicate)"
+msgstr "Archivar (error o duplicado)"
+
+msgid "Not stated"
+msgstr "Sin indicar"
+
+msgid "Today or earlier. A future departure is not recorded."
+msgstr "Hoy o antes. No se registra una salida futura."
+
+msgid "Optional. Only people who can edit operators can see it."
+msgstr "Opcional. Solo lo ven quienes pueden editar operadores."
+
+msgid "Optional, short. Only people who can edit operators see it."
+msgstr "Opcional y breve. Solo lo ven quienes pueden editar operadores."
+
+msgid "What changes"
+msgstr "Qué cambia"
+
+msgid "The record is not deleted: it stays with its documents, permits and operations, marked as a former employee."
+msgstr "La ficha no se borra: se conserva con sus documentos, permisos y operaciones, marcada como ex colaborador."
+
+msgid "The person stops appearing in the active lists and in the pickers for permits, requests, operations, assignments and tasks."
+msgstr "La persona deja de aparecer en los listados activos y en los selectores de permisos, solicitudes, operaciones, asignaciones y tareas."
+
+msgid "%(counter)s open assignment is closed on the departure date."
+msgid_plural "%(counter)s open assignments are closed on the departure date."
+msgstr[0] "Se cierra %(counter)s asignación abierta en la fecha de salida."
+msgstr[1] "Se cierran %(counter)s asignaciones abiertas en la fecha de salida."
+
+msgid "Open alerts for their credential, qualifications, tests and documents are resolved with the reason 'No longer belongs to the company', and no new ones are raised."
+msgstr "Las alertas abiertas de su credencial, habilitaciones, pruebas y documentos se resuelven con el motivo «Ya no pertenece a la empresa» y no se generan nuevas."
+
+msgid "They can be rejoined later without losing the history."
+msgstr "Se puede reincorporar más adelante sin perder el historial."
+
+msgid "Register departure"
+msgstr "Registrar salida"
+
+msgid "Former employee · left on %(date)s"
+msgstr "Ex colaborador · salió el %(date)s"
+
+msgid "Former employee"
+msgstr "Ex colaborador"
+
+msgid "left the company on %(date)s"
+msgstr "salió de la empresa el %(date)s"
+
+msgid "This record is kept as history: it does not count as active staff today, but it still appears on past permits, operations and documents."
+msgstr "Esta ficha se conserva como historial: hoy no cuenta como personal activo, pero sigue figurando en permisos, operaciones y documentos anteriores."
+
+msgid "Rejoin"
+msgstr "Reincorporar"
+
+msgid "Former employees"
+msgstr "Ex colaboradores"

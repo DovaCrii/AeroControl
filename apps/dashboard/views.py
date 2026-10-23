@@ -60,7 +60,10 @@ def panel_readiness(today, cost_center=None):
     # `RPA-2019` en `CC110` que lo motivó) vive ahora en ese docstring, junto al
     # criterio que aplica.
     fleet = operational_fleet()
-    operators = operational_roster()
+    # LV-369: el padrón se pide **al corte**. Quien salió de la empresa después de
+    # esa fecha estaba ese día (cuenta); quien salió antes o en la fecha, no. Con
+    # la fecha de hoy es el padrón de hoy, así que el panel no cambia.
+    operators = operational_roster(today)
 
     # **El padrón que se cuenta es el que existía en `today`, no el de hoy.**
     #

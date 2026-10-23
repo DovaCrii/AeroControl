@@ -1142,6 +1142,7 @@ class UnifiedCalendarEventsView(CalendarAccessMixin, View):
             Operator,
             Qualification,
         )
+        from apps.registry.selectors import without_departed
 
         start, end = self.get_date_range(request)
         selected_types = set(filter(None, request.GET.get("types", "").split(",")))
@@ -1318,8 +1319,11 @@ class UnifiedCalendarEventsView(CalendarAccessMixin, View):
             )
 
         if "qualification" in selected_types:
-            qualifications = Qualification.objects.filter(
-                expiry_date__range=(start, end), is_active=True
+            # LV-369: sin habilitaciones de quien salió de la empresa.
+            qualifications = without_departed(
+                Qualification.objects.filter(
+                    expiry_date__range=(start, end), is_active=True
+                )
             ).select_related("operator", "qualification_type")
             if tenant_ids is not None:
                 qualifications = qualifications.filter(
@@ -1396,8 +1400,12 @@ class UnifiedCalendarEventsView(CalendarAccessMixin, View):
             )
 
         if "document" in selected_types:
-            documents = Document.objects.filter(
-                expiry_date__range=(start, end), is_current_version=True, is_active=True
+            documents = without_departed(
+                Document.objects.filter(
+                    expiry_date__range=(start, end),
+                    is_current_version=True,
+                    is_active=True,
+                )
             ).select_related("doc_type", "content_type")
             if tenant_ids is not None:
                 # T3.2 Fase 2: Document now carries its own tenant (Fase 0b), so

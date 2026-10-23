@@ -7,7 +7,7 @@
   dice la verdad de lo que se sabe de ese nombre en vez de inventar un corte para
   que todas se vean iguales. El `title` lleva siempre el nombre de registro, que
   es el que aparece en el permiso y en el catastro.{% endcomment %}
-  <td><a href="{{ object.pk }}/" class="table-primary-value" title="{{ object.full_name }}">{{ object.listing_name }}</a>{% if not object.is_active %} <span class="badge bg-secondary">{% translate "Archived" %}</span>{% endif %}
+  <td><a href="{{ object.pk }}/" class="table-primary-value" title="{{ object.full_name }}">{{ object.listing_name }}</a>{% if object.left_company_on %} <span class="badge sev-advisory"><span aria-hidden="true">→</span> {% blocktranslate with date=object.left_company_on|date:"d-m-Y" %}Former employee · left on {{ date }}{% endblocktranslate %}</span>{% elif not object.is_active %} <span class="badge bg-secondary">{% translate "Archived" %}</span>{% endif %}
     {% if object.rut %}<span class="table-primary-sub cell-truncate">{{ object.rut }}</span>{% endif %}
   </td>
   {% comment %}LV-177: el folio de la credencial es un número y se alineaba a la
@@ -53,9 +53,24 @@
   </td>
   <td class="text-end">
     {% if object.is_active %}
+    {% comment %}LV-369: la salida de la empresa, en el menú «⋯» de la fila. Un segundo
+    botón partía la celda (110 px) en dos líneas y duplicaba el alto de cada fila;
+    el menú cabe junto a «Editar». Va a la pantalla de confirmación (GET), no
+    ejecuta nada por sí sola. `data-bs-strategy="fixed"` para que la tabla no
+    recorte el menú.{% endcomment %}
+    <span class="d-inline-flex gap-1 align-items-center">
     <a href="{{ object.pk }}/edit/" hx-get="{{ object.pk }}/edit/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">{% translate "Edit" %}</a>
+    {% if can_depart %}
+    <span class="dropdown">
+      <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown" data-bs-strategy="fixed" aria-expanded="false" aria-label="{% translate 'More actions' %}" title="{% translate 'More actions' %}"><span aria-hidden="true">⋯</span></button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="{{ object.pk }}/departure/">{% translate "Register departure from the company" %}</a></li>
+      </ul>
+    </span>
+    {% endif %}
+    </span>
     {% elif has_restore_url %}
-    <form method="post" action="{{ object.pk }}/restore/" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-success" type="submit">{% translate "Restore" %}</button></form>
+    <form method="post" action="{{ object.pk }}/restore/" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-success{% if object.left_company_on %} px-1{% endif %}" type="submit">{% if object.left_company_on %}{% translate "Rejoin" %}{% else %}{% translate "Restore" %}{% endif %}</button></form>
     {% endif %}
   </td>
 </tr>

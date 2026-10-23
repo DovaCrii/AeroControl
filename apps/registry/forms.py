@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -25,6 +26,24 @@ from .models import (
     normalize_serial,
 )
 from .rut import employee_id_from_rut, normalize_rut, rut_is_valid
+
+
+def offer_only_present_operators(form):
+    """LV-369: el selector de personas ofrece sólo a quien está hoy en la empresa.
+
+    El queryset por defecto de una FK trae **todas** las filas, archivadas y ex
+    colaboradores incluidos. Lo ya elegido en un registro existente se conserva
+    aunque hoy no calificaría: sacarlo del queryset lo borraría al guardar
+    cualquier otra edición (el mismo criterio que `_roster` en operaciones).
+    """
+    field = form.fields.get("operator")
+    if field is None:
+        return
+    condition = models.Q(is_active=True)
+    kept = getattr(form.instance, "operator_id", None)
+    if kept:
+        condition |= models.Q(pk=kept)
+    field.queryset = Operator.objects.filter(condition).order_by("full_name")
 
 
 class CostCenterForm(AeroModelForm):
@@ -574,6 +593,64 @@ class OperatorForm(AeroModelForm):
         return value
 
 
+class OperatorDepartureForm(forms.Form):
+    """LV-369: «Registrar salida de la empresa».
+
+    Un formulario plano y no un `ModelForm` de `Operator`: lo que escribe no es la
+    ficha sino un **acto** (`Operator.register_departure`), y un `ModelForm`
+    volvería a correr toda `Operator.clean()` —RUT, credencial, ID de empleado—
+    sobre una ficha legada que no tiene nada que ver con esto. La regla es la del
+    modelo (`Operator.validate_departure`), no una copia.
+
+    Motivo y nota son **opcionales y sensibles**: ver `Operator.departure_reason`.
+    """
+
+    left_company_on = forms.DateField(
+        label=_("Left the company on"),
+        widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+        help_text=_("Today or earlier. A future departure is not recorded."),
+    )
+    departure_reason = forms.ChoiceField(
+        label=_("Departure reason"),
+        required=False,
+        choices=[("", _("Not stated"))] + Operator.DEPARTURE_REASON_CHOICES,
+        help_text=_("Optional. Only people who can edit operators can see it."),
+    )
+    departure_note = forms.CharField(
+        label=_("Departure note"),
+        required=False,
+        max_length=200,
+        widget=forms.TextInput(),
+        help_text=_("Optional, short. Only people who can edit operators see it."),
+    )
+
+    def __init__(self, *args, **kwargs):
+        from django.utils import timezone
+
+        super().__init__(*args, **kwargs)
+        today = timezone.localdate()
+        self.fields["left_company_on"].initial = today
+        self.fields["left_company_on"].widget.attrs["max"] = today.isoformat()
+        self.fields["departure_note"].widget.attrs["autocomplete"] = "off"
+
+    def clean(self):
+        cleaned = super().clean()
+        if self.errors.get("left_company_on"):
+            return cleaned
+        try:
+            Operator.validate_departure(
+                cleaned.get("left_company_on"),
+                cleaned.get("departure_reason", ""),
+                cleaned.get("departure_note", ""),
+            )
+        except ValidationError as exc:
+            for field, messages_ in exc.message_dict.items():
+                if field in self.fields:
+                    for message in messages_:
+                        self.add_error(field, message)
+        return cleaned
+
+
 class AssignmentForm(AeroModelForm):
     class Meta:
         model = Assignment
@@ -608,6 +685,7 @@ class AssignmentForm(AeroModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        offer_only_present_operators(self)
         # R5.5: registration alone doesn't distinguish "which M300" in a
         # dropdown with several of the same model.
         self.fields["aircraft"].label_from_instance = lambda obj: obj.selector_label
@@ -695,6 +773,7 @@ class OperatorAssignmentForm(AeroModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        offer_only_present_operators(self)
         # start_date stays required on the model but off the form (LV-17). Set it
         # here, before validation runs: the overlap check reads start_date, so a
         # None left until save() would break _overlapping's date filter.
@@ -850,6 +929,7 @@ class QualificationForm(AeroModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        offer_only_present_operators(self)
         # B4.3/LV-1 parity: an empty catalog makes the required picker look
         # broken. Point at where to create the first type.
         if not QualificationType.objects.filter(is_active=True).exists():
