@@ -2,191 +2,152 @@
 {% load aero_tags i18n static %}
 {% block title %}{{ permission }} - AeroControl{% endblock %}
 {% block content %}
-{% comment %}LV-302: el recorrido del permiso arriba, donde se mira primero (Solicitado,
-Aprobado, Completado…). Antes vivía al fondo, dentro de «Trazabilidad».{% endcomment %}
+{% comment %}LV-368 (fase 1): la ficha con jerarquía. Arriba sólo lo que hay que atender (cabecera con
+**un** chip de estado y a quién espera, y «Qué falta»); el resto va en secciones `<details>` cuyo
+`open` decide la vista en Python (`permit_attention.open_sections`). Un `<details>` pierde su estado
+si htmx reemplaza el bloque: por eso la ficha no se reemplaza por htmx. Lo plegado sigue en el HTML,
+así que las pruebas que buscan texto lo siguen encontrando.
+
+LV-302: el recorrido del permiso (Solicitado, Aprobado…) sigue arriba, donde se mira primero.{% endcomment %}
 <div class="card permit-journey" aria-label="{% translate 'Permit progress' %}">{% include "generic/_status_steps.html" with steps=permission.status_steps %}</div>
-<div class="card p-4"><div class="entity-bar"><div class="entity-title"><h1 class="h3 mb-0">{{ permission }}</h1><div class="entity-chips">{% if permission.has_lapsed %}<span class="id-chip id-chip--critical">⚠ {% translate "Lapsed" context "flight permission" %}</span>{% else %}<span class="id-chip id-chip--{{ permission.status|status_tone }}">{{ permission.get_status_display }}</span>{% endif %}</div></div><div class="d-flex gap-2 align-items-end flex-wrap">
+<div class="card p-4 permit-head"><div class="entity-bar"><div class="entity-title"><h1 class="h3 mb-0">{{ permission }}</h1><div class="entity-chips">
+  {% comment %}LV-246: `has_lapsed`, no el estado a secas, para que la ficha no diga «Aprobado» de un
+  permiso que la lista ya marcó vencido. **Un solo chip de estado**: la fila «Estado» que lo repetía
+  (con `bg-danger` para «denegado») se eliminó.{% endcomment %}
+  {% if permission.has_lapsed %}<span class="id-chip id-chip--critical">⚠ {% translate "Lapsed" context "flight permission" %}</span>{% else %}<span class="id-chip id-chip--{{ permission.status|status_tone }}">{{ permission.get_status_display }}</span>{% endif %}
+  {% if not permission.is_active %}<span class="id-chip id-chip--neutral">{% translate "Archived" %}</span>{% endif %}
+  {% if waiting_label %}<span class="permit-waiting"><svg class="id-signal-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>{{ waiting_label }}</span>{% endif %}
+</div>
+<p class="entity-subtitle mb-0">{{ permission.cost_center }} · {{ permission.get_purpose_display }}</p></div>
+<div class="entity-actions">
   <a href="{% url 'permission-operations' permission.pk %}" class="btn btn-primary">{% translate "Operations register" %}</a>
-  {% comment %}LV-320: renovar copia al borrador de un permiso **nuevo** la misma área
-  y los mismos datos, sin fechas ni número (los da la DGAC). Sólo si el permiso fue
-  autorizado, está vivo y aún no tiene renovación, y para quien puede crear permisos
-  y planes. Es un enlace al formulario del alta, que aplica todas sus validaciones.{% endcomment %}
-  {% if can_renew %}<a href="{% url 'permission-create' %}?renueva={{ permission.pk }}" class="btn btn-outline-primary">{% translate "Renew permit" %}</a>{% endif %}
-  {% if status_actions %}
-  {% comment %}
-    R2.5: one dropdown instead of one coloured button per transition -- most
-    visits to this page do not change the status at all, and "no siempre se
-    harán cambios" was the user's own framing for wanting this simpler. The
-    form's static action attribute defaults to the first option so it still
-    works without JS; permission-status.js overwrites it to match whatever
-    the user actually picked, right before submit.
-  {% endcomment %}
-  <form method="post" action="{{ status_actions.0.1 }}" id="permission-status-form" class="d-flex gap-2 align-items-end">
-    {% csrf_token %}
-    <div>
-      <label class="form-label small mb-0" for="permission-status-action">{% translate "Change status" %}</label>
-      <select id="permission-status-action" name="_target_action" class="form-select form-select-sm">
-        {% for label, url in status_actions %}<option value="{{ url }}">{{ label }}</option>{% endfor %}
-      </select>
-    </div>
-    <div>
-      <label class="form-label small mb-0" for="permission-status-notes">{% translate "Notes (optional)" %}</label>
-      <input type="text" id="permission-status-notes" name="notes" class="form-control form-control-sm" style="min-width:220px">
-    </div>
-    <button type="submit" class="btn btn-sm btn-primary">{% translate "Apply" %}</button>
-  </form>
-  {% endif %}
-  {% comment %}
-    R2.5: every status action (approve/deny/complete, success or failure)
-    redirects back to this same detail URL (core/views.py StatusTransitionView
-    always ends in redirect(obj), and the guard in FlightPermissionApprove
-    does too on rejection) -- each of those redirects is a fresh navigation
-    that pushes its own history entry, even though the URL does not change.
-    data-history-back's window.history.back() does not know that: it just
-    steps one entry back, landing on an earlier render of this exact page
-    instead of the permit list. Reproduced live: after any Approve/Deny
-    click, "Back" needed two clicks to actually leave the page. This link
-    already has the one, well-defined destination (the list) -- unlike a
-    create form's "Cancel", which has no fixed origin -- so it does not need
-    the history shortcut at all.
-  {% endcomment %}
-  {% if perms.operations.change_flightpermission %}
-  <a href="{% url 'permission-update' permission.pk %}" class="btn btn-outline-primary">{% translate "Edit" %}</a>
-  {% comment %}LV-101: corregir el estado dejó de ser un campo más del formulario
-  de edición -- por ahí se llegaba a "Aprobado" sin la autorización firmada y sin
-  que quedara quién lo hizo. Vive acá, aparte de "Cambiar estado", porque son
-  actos distintos: aquél dice qué pasó después, éste dice que lo anotado está
-  mal. Modal, como resolver una alerta, porque exige un motivo escrito.
-  {% endcomment %}
-  <a href="{% url 'permission-correct-status' permission.pk %}"
-     hx-get="{% url 'permission-correct-status' permission.pk %}"
-     hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal"
-     class="btn btn-outline-secondary"
-     title="{% translate 'Fix a status that was recorded by mistake, with a reason on record' %}">{% translate "Correct status" %}</a>
-  {% endif %}
-  {% comment %}LV-135: archivar va al final y en gris — es lo que se hace una vez
-  y con cuidado, no parte del flujo. Cuesta el permiso de borrado y pasa por una
-  confirmación que muestra qué cuelga del permiso; aprobado o completado, además,
-  exige un motivo escrito que queda en la auditoría.{% endcomment %}
-  {% if permission.is_active %}
-  {% if perms.operations.delete_flightpermission %}
-  <form method="post" action="{% url 'permission-archive' permission.pk %}" style="display:inline">{% csrf_token %}
-    <button type="submit" class="btn btn-outline-danger">{% translate "Archive" %}</button>
-  </form>
-  {% endif %}
-  {% else %}
-  <span class="badge bg-secondary-subtle text-secondary-emphasis align-self-center">{% translate "Archived" %}</span>
-  {% if perms.operations.change_flightpermission %}
-  <form method="post" action="{% url 'permission-restore' permission.pk %}" style="display:inline">{% csrf_token %}
-    <button type="submit" class="btn btn-outline-secondary">{% translate "Restore" %}</button>
-  </form>
-  {% endif %}
-  {% endif %}
-  <a href="{% url 'permission-list' %}" class="btn btn-outline-secondary">← {% translate "Back" %}</a>
+  {% comment %}Todo lo demás en «⋯». Cada acción conserva su permiso: editar y corregir el estado
+  (LV-101, modal con motivo escrito) piden `change_flightpermission`; archivar (LV-135, pasa por una
+  confirmación) pide `delete_flightpermission`; restaurar, `change`; renovar (LV-320) crea un permiso y
+  un plan, así que pide los dos permisos de alta (lo decide la vista en `can_renew`). El archivado y la
+  restauración son `POST`, así que viven en un `<form>` dentro del menú, no en un enlace.
+  «Volver» va al listado y no a `history.back()`: las transiciones de estado redirigen a esta misma
+  URL y cada una apila una entrada de historial (R2.5).{% endcomment %}
+  <div class="dropdown permit-more">
+    <button class="btn btn-outline-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="{% translate 'More actions' %}" title="{% translate 'More actions' %}"><span aria-hidden="true">⋯</span></button>
+    <ul class="dropdown-menu dropdown-menu-end">
+      {% if perms.operations.change_flightpermission %}
+      <li><a class="dropdown-item" href="{% url 'permission-update' permission.pk %}">{% translate "Edit" %}</a></li>
+      <li><a class="dropdown-item" href="{% url 'permission-correct-status' permission.pk %}"
+         hx-get="{% url 'permission-correct-status' permission.pk %}"
+         hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal"
+         title="{% translate 'Fix a status that was recorded by mistake, with a reason on record' %}">{% translate "Correct status" %}</a></li>
+      {% endif %}
+      {% if can_renew %}<li><a class="dropdown-item" href="{% url 'permission-create' %}?renueva={{ permission.pk }}">{% translate "Renew permit" %}</a></li>{% endif %}
+      {% if permission.is_active %}
+      {% if perms.operations.delete_flightpermission %}
+      <li><form method="post" action="{% url 'permission-archive' permission.pk %}">{% csrf_token %}<button type="submit" class="dropdown-item text-danger">{% translate "Archive" %}</button></form></li>
+      {% endif %}
+      {% elif perms.operations.change_flightpermission %}
+      <li><form method="post" action="{% url 'permission-restore' permission.pk %}">{% csrf_token %}<button type="submit" class="dropdown-item">{% translate "Restore" %}</button></form></li>
+      {% endif %}
+      <li><a class="dropdown-item" href="{% url 'permission-list' %}">← {% translate "Back" %}</a></li>
+    </ul>
+  </div>
 </div></div>
-<table class="table table-bordered"><tbody>
+{% if status_actions %}
+{% comment %}R2.5: un desplegable en vez de un botón de color por transición. La acción estática del
+formulario apunta a la primera opción para que funcione sin JS; permission-status.js la reemplaza
+por la elegida justo antes de enviar.{% endcomment %}
+<form method="post" action="{{ status_actions.0.1 }}" id="permission-status-form" class="d-flex gap-2 align-items-end flex-wrap">
+  {% csrf_token %}
+  <div>
+    <label class="form-label small mb-0" for="permission-status-action">{% translate "Change status" %}</label>
+    <select id="permission-status-action" name="_target_action" class="form-select form-select-sm">
+      {% for label, url in status_actions %}<option value="{{ url }}">{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="permit-status-notes">
+    <label class="form-label small mb-0" for="permission-status-notes">{% translate "Notes (optional)" %}</label>
+    <input type="text" id="permission-status-notes" name="notes" class="form-control form-control-sm">
+  </div>
+  <button type="submit" class="btn btn-sm btn-primary">{% translate "Apply" %}</button>
+</form>
+{% endif %}
+</div>
+
+{% include "operations/_permit_attention.html" %}
+
+<details class="permit-section" id="permit-operation"{% if open_sections.operation %} open{% endif %}>
+<summary><span class="permit-section-title">{% translate "Operation" %}</span></summary>
+<div class="permit-section-body">
+<div class="card p-4"><table class="table table-bordered mb-0"><tbody>
   <tr><th scope="row" class="w-25">{% translate "Internal folio" %}</th><td>{{ permission.internal_folio }}</td></tr>
-  {% comment %}LV-231: el número que la autorización DGAC trae escrito, ofrecido
-  para confirmar. Pedido del usuario con la captura del encabezado a la vista:
-  *"que el número del permiso de vuelo lo pueda sacar de la autorización DGAC; es
-  el mismo PDF que siempre sube la DGAC, de ahí que sea automático"*.
+  {% comment %}LV-231: el número que la autorización DGAC trae escrito, ofrecido para confirmar.
 
-  ⚠️ **Propone, nunca escribe solo.** Extraer de un PDF es heurística: si la DGAC
-  cambia el encabezado, el patrón lee otra cosa o nada. Por eso el número se
-  muestra rotulado con su origen, el botón es un `POST` que la persona aprieta, y
-  la casilla de teclearlo sigue intacta. Un folio equivocado escrito solo es peor
-  que uno en blanco, porque el equivocado nadie lo revisa.
-
-  El botón **no lleva el número**: el servidor vuelve a leer el PDF. Si lo llevara
-  en un campo oculto, "confirmar la sugerencia" sería un camino para escribir
-  cualquier folio, y encima uno que la ficha presentaría como leído del papel.{% endcomment %}
+  ⚠️ **Propone, nunca escribe solo.** Extraer de un PDF es heurística: si la DGAC cambia el
+  encabezado, el patrón lee otra cosa o nada. Por eso el número se muestra rotulado con su origen, el
+  botón es un `POST` que la persona aprieta y la casilla de teclearlo sigue intacta. El botón **no
+  lleva el número**: el servidor vuelve a leer el PDF; si lo llevara en un campo oculto, «confirmar la
+  sugerencia» sería un camino para escribir cualquier folio.{% endcomment %}
   <tr><th scope="row">{% translate "DGAC folio" %}</th><td>{% if permission.permission_number %}{{ permission.permission_number }}{% else %}<span class="id-chip id-chip--warning"><svg class="id-signal-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>{% translate "In process" %}</span>{% if suggested_folio and perms.operations.change_flightpermission %}<div class="small mt-2"><span class="badge sev-advisory">{% translate "Read from the DGAC authorization" %}</span> <strong>{{ suggested_folio }}</strong></div><form method="post" action="{% url 'permission-folio-from-pdf' permission.pk %}" class="mt-1">{% csrf_token %}<button class="btn btn-sm btn-outline-primary" title="{% translate 'Check it against the PDF before confirming' %}">{% translate "Use this number" %}</button></form>{% endif %}{% endif %}</td></tr>
-  {% comment %}LV-246: el mismo criterio que la fila de la lista —`has_lapsed`, no el
-  estado a secas— para que la ficha no diga "Aprobado" en verde de un permiso que
-  la lista ya marcó en rojo.{% endcomment %}
-  <tr{% if permission.has_lapsed %} class="row-critical"{% endif %}><th scope="row">{% translate "Status" %}</th><td>{% if permission.has_lapsed %}<span class="badge sev-critical">⚠ {% translate "Lapsed" context "flight permission" %}</span>{% else %}<span class="badge bg-{% if permission.status == 'approved' %}success{% elif permission.status == 'denied' %}danger{% elif permission.status == 'completed' %}info{% else %}warning{% endif %}">{{ permission.get_status_display }}</span>{% endif %}</td></tr>
   {% if permission.renews %}<tr><th scope="row">{% translate "Renews" %}</th><td><a href="{{ permission.renews.get_absolute_url }}">{{ permission.renews }}</a></td></tr>{% endif %}
   {% if active_renewal %}<tr><th scope="row">{% translate "Renewed by" %}</th><td><a href="{{ active_renewal.get_absolute_url }}">{{ active_renewal }}</a></td></tr>{% endif %}
-  <tr><th scope="row">{% translate "Operators" %}</th><td>{% for operator in permission.operators.all %}{{ operator }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr><tr><th scope="row">{% translate "Aircraft" %}</th><td>{% for aircraft in permission.aircraft_fleet.all %}{{ aircraft }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr><tr><th scope="row">{% translate "Cost center" %}</th><td>{{ permission.cost_center }}</td></tr><tr><th scope="row">{% translate "Purpose" %}</th><td>{{ permission.get_purpose_display }}{% if permission.purpose == "other" %}: {{ permission.purpose_detail }}{% endif %}</td></tr><tr><th scope="row">{% translate "Validity" %}</th><td>{% if permission.valid_from and permission.valid_until %}{{ permission.valid_from|date:"Y-m-d" }} – {{ permission.valid_until|date:"Y-m-d" }}{% else %}<span class="id-chip id-chip--warning"><svg class="id-signal-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>{% translate "Awaiting the DGAC" %}</span>{% endif %}{% if insurance_limit %}{% blocktranslate asvar insurance_text with aircraft=insurance_limit.aircraft expiry=insurance_limit.expiry limit=insurance_limit.limit %}Insurance of {{ aircraft }} until {{ expiry }}: this request can end on {{ limit }} at the latest.{% endblocktranslate %}{% if insurance_limit.exceeded %}{% include "generic/_signal.html" with kind="danger" text=insurance_text %}{% else %}{% include "generic/_signal.html" with kind="note" text=insurance_text %}{% endif %}{% endif %}</td></tr><tr><th scope="row">{% translate "Location" %}</th><td>{{ permission.location }}</td></tr>
-  {% comment %}LV-220: la fila **siempre** se dibuja, y si falta lo dice.
-
-  Antes existía sólo con `{% templatetag openblock %} if region or commune or
-  area_name {% templatetag closeblock %}`, así que en un permiso sin ninguno de
-  los tres la fila desaparecía entera — y desaparecen a menudo, porque `LV-197`
-  sacó esas casillas del alta y ahora sólo las trae un plan vinculado. El usuario
-  lo vio en `JEJ-2026-001`: *"sumar ahí que debe aparecer la región"*.
-
-  **Una fila ausente no se distingue de un dato que no aplica**, y la región sí
-  aplica: la DGAC la pide en el formulario del SIGO. Es la misma lectura que
-  `LV-146` fijó para el chip de faena — el caso vacío es un caso real y se dice.
-
-  **Mitad (b), hecha: ahora se deduce — y se dice que se dedujo.** La condición
-  que la (a) puso sigue mandando: presentar una región derivada con el mismo
-  aspecto que una declarada es peor que dejarla vacía, porque quien lee la ficha
-  para llenar el SIGO no podría distinguir el dato del papel de una inferencia
-  nuestra. Así que lo derivado va con su propio rótulo y con el aviso de la BCN,
-  el mismo que la hoja SIGO usa desde `LV-141`.
-
-  **Y la contradicción que la (b) dejó abierta ya está cerrada**: `region_source`
-  y `commune_source` existen desde `operations.0026`, así que una región guardada
-  **sí** sabe de dónde salió, y `fill_permission_from_plan` —que escribía las dos
-  deducidas del polígono, sin marca— ahora las marca al escribirlas. Con eso el
-  aviso deja de depender de que el campo esté vacío: un valor **guardado** que se
-  dedujo lleva el mismo rótulo que uno calculado al vuelo, que es el punto.
-
-  Vacío en el marcador es *no se sabe*, y son los permisos anteriores a la
-  migración: se dibujan como siempre, sin aviso, porque inventarles una
-  procedencia sería el mismo defecto al revés.{% endcomment %}
-  <tr><th scope="row">{% translate "Region / Commune" %}</th><td>{% if permission.region or permission.commune or permission.area_name %}{% if permission.area_name %}{{ permission.area_name }}{% if permission.region or permission.commune %} · {% endif %}{% endif %}{{ permission.region|default:"" }}{% if permission.region and permission.commune %}, {% endif %}{{ permission.commune|default:"" }}{% if permission.region_source == "derived" or permission.commune_source == "derived" %}<div class="small mt-1"><span class="badge sev-caution">{% translate "Derived from the coordinates" %}</span></div>{% translate "The commune, province and region come from the BCN administrative boundaries, which that institution publishes as referential: near a boundary the answer may be the neighbouring commune. Confirm it before filing." as bcn_warning %}{% include "generic/_signal.html" with kind="warn" text=bcn_warning %}{% endif %}{% elif derived_location %}<span class="id-chip id-chip--neutral"><svg class="id-signal-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>{% translate "Not recorded" %}</span><div class="small mt-1"><span class="badge sev-caution">{% translate "Derived from the coordinates" %}</span> {{ derived_location.region }}, {{ derived_location.comuna }}</div>{% translate "The commune, province and region come from the BCN administrative boundaries, which that institution publishes as referential: near a boundary the answer may be the neighbouring commune. Confirm it before filing." as bcn_warning %}{% include "generic/_signal.html" with kind="warn" text=bcn_warning %}{% else %}<span class="id-chip id-chip--neutral"><svg class="id-signal-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>{% translate "Not recorded" %}</span>{% endif %}</td></tr>
-  {% if permission.latitude and permission.longitude %}<tr><th scope="row">{% translate "Coordinates" %}</th><td>{{ permission.latitude }}, {{ permission.longitude }}{% if permission.radius_km %} · {% translate "radius" %} {{ permission.radius_km }} km{% endif %}</td></tr>{% endif %}
-  {% comment %}LV-166: la procedencia. Desde que el formulario dejó de pedir estos
-  datos cuando hay un plan vinculado, la ficha es el único lugar donde se ven — y
-  un dato sin fuente no se puede discutir con la DGAC. Se nombra el plan y se
-  enlaza, así que desde acá se llega al KMZ que los produjo.{% endcomment %}
-  {% with plan=permission.geo_plans.all|first %}{% if plan and plan.is_active and permission.latitude %}<tr><th scope="row">{% translate "Source of the location" %}</th><td><a href="{% url 'geo-plan-detail' plan.pk %}">{{ plan.folio }}</a> · {{ plan.display_title }}</td></tr>{% endif %}{% endwith %}
-  {% comment %}LV-137: el aeródromo más cercano y su distancia, que el plan calcula
-  y hasta acá se perdían en el camino: había que volver al plan para saberlos. Se
-  muestran juntos porque juntos se declaran, y sólo cuando están: un permiso viejo
-  sin ellos no es un permiso incompleto.{% endcomment %}
-  {% comment %}LV-218: el enlace a los NOTAM vigentes del aeródromo declarado.
-
-  **Es un enlace y no un resultado, a propósito.** El IFIS de la DGAC no tiene API
-  —todo es HTML— y un parseo que falla se lee con demasiada facilidad como "no hay
-  avisos", que es justo lo que esta fila no puede permitir. Un enlace no afirma
-  nada: lleva a la fuente oficial. El texto dice "consultar" por lo mismo.
-
-  Va pegado al aeródromo porque es su dato: la búsqueda del IFIS es por designador
-  OACI, así que sin `amc` no hay a qué enlazar.
-
-  `rel="noopener noreferrer"` con `target="_blank"`: el sitio destino no tiene por
-  qué recibir acceso a `window.opener` ni saber de dónde viene el clic.{% endcomment %}
-  {% if permission.amc %}<tr><th scope="row">{% translate "Nearest aerodrome (AMC)" %}</th><td>{{ permission.amc }}{% if permission.amc_distance_km is not None %} · {{ permission.amc_distance_km }} km{% endif %}{% if permission.notam_url %} · <a href="{{ permission.notam_url }}" target="_blank" rel="noopener noreferrer">{% translate "Check its NOTAMs at the DGAC" %} ↗</a>{% endif %}</td></tr>{% endif %}
-  {% comment %}LV-221: metros primero, porque es como se opera, y los pies al
-  lado en gris porque es lo que pide el formulario del SIGO. Tener las dos
-  unidades a la vista evita el cálculo a mano al transcribir, que es la clase de
-  error que `LV-171` vino a reducir — y el que produjo los tres permisos con
-  `120 ft` donde se querían 120 m.
-
-  Los pies **no se guardan**: los calcula `max_altitude_ft_equivalent`. Dos
-  columnas con el mismo hecho en distinta unidad son dos columnas que se
-  desincronizan, que es exactamente el estado del que viene esta fila.{% endcomment %}
-  {% if permission.max_altitude_m %}<tr><th scope="row">{% translate "Maximum altitude" %}</th><td>{{ permission.max_altitude_m }} m {% blocktranslate asvar sigo_ft with ft=permission.max_altitude_ft_equivalent %}{{ ft }} ft for the SIGO form{% endblocktranslate %}{% include "generic/_signal.html" with kind="hint" text=sigo_ft %}</td></tr>{% endif %}<tr><th scope="row">{% translate "Area type" %}</th><td>{{ permission.get_area_type_display|default:"—" }}</td></tr><tr><th scope="row">{% translate "Notes" %}</th><td>{{ permission.notes|default:"—" }}</td></tr>
+  <tr><th scope="row">{% translate "Operators" %}</th><td>{% for operator in permission.operators.all %}{{ operator }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr><tr><th scope="row">{% translate "Aircraft" %}</th><td>{% for aircraft in permission.aircraft_fleet.all %}{{ aircraft }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr><tr><th scope="row">{% translate "Cost center" %}</th><td>{{ permission.cost_center }}</td></tr><tr><th scope="row">{% translate "Purpose" %}</th><td>{{ permission.get_purpose_display }}{% if permission.purpose == "other" %}: {{ permission.purpose_detail }}{% endif %}</td></tr><tr><th scope="row">{% translate "Notes" %}</th><td>{{ permission.notes|default:"—" }}</td></tr>
 </tbody></table></div>
-{% comment %}LV-107: el expediente operativo. Va **antes** de la trazabilidad
-porque contesta la pregunta con la que uno llega —"¿esto está completo?"—,
-mientras que la trazabilidad contesta cómo llegó hasta acá. Es sólo lectura: las
-compuertas reales (el PDF firmado para aprobar o completar) viven en la vista,
-donde tienen efecto; repetirlas acá sería una segunda copia de la regla que
-después se desincroniza.{% endcomment %}
+</div>
+</details>
+
+<details class="permit-section" id="permit-location"{% if open_sections.location %} open{% endif %}>
+<summary><span class="permit-section-title">{% translate "Location and area" %}</span></summary>
+<div class="permit-section-body">
+<div class="card p-4"><table class="table table-bordered mb-0"><tbody>
+  <tr><th scope="row" class="w-25">{% translate "Location" %}</th><td>{{ permission.location }}</td></tr>
+  {% comment %}LV-220: la fila de región **siempre** se dibuja, y si falta lo dice: una fila ausente no
+  se distingue de un dato que no aplica, y la región sí aplica (la DGAC la pide en el SIGO).
+  Lo derivado va con su propio rótulo —`_derived_location.html`, una sola definición del aviso de la
+  BCN—: `region_source`/`commune_source` (operations.0026) dicen si un valor guardado se dedujo; vacío
+  es *no se sabe* y se dibuja sin aviso, porque inventarle una procedencia sería el mismo defecto al
+  revés.{% endcomment %}
+  <tr><th scope="row">{% translate "Region / Commune" %}</th><td>{% if permission.region or permission.commune or permission.area_name %}{% if permission.area_name %}{{ permission.area_name }}{% if permission.region or permission.commune %} · {% endif %}{% endif %}{{ permission.region|default:"" }}{% if permission.region and permission.commune %}, {% endif %}{{ permission.commune|default:"" }}{% if permission.region_source == "derived" or permission.commune_source == "derived" %}{% include "operations/_derived_location.html" %}{% endif %}{% elif derived_location %}<span class="id-chip id-chip--neutral"><svg class="id-signal-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>{% translate "Not recorded" %}</span> {{ derived_location.region }}, {{ derived_location.comuna }}{% include "operations/_derived_location.html" %}{% else %}<span class="id-chip id-chip--neutral"><svg class="id-signal-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>{% translate "Not recorded" %}</span>{% endif %}</td></tr>
+  {% if permission.latitude and permission.longitude %}<tr><th scope="row">{% translate "Coordinates" %}</th><td>{{ permission.latitude }}, {{ permission.longitude }}{% if permission.radius_km %} · {% translate "radius" %} {{ permission.radius_km }} km{% endif %}</td></tr>{% endif %}
+  {% comment %}LV-166: la procedencia. Un dato sin fuente no se puede discutir con la DGAC: se
+  nombra el plan y se enlaza.{% endcomment %}
+  {% with plan=permission.geo_plans.all|first %}{% if plan and plan.is_active and permission.latitude %}<tr><th scope="row">{% translate "Source of the location" %}</th><td><a href="{% url 'geo-plan-detail' plan.pk %}">{{ plan.folio }}</a> · {{ plan.display_title }}</td></tr>{% endif %}{% endwith %}
+  {% comment %}LV-137: el aeródromo más cercano y su distancia, juntos porque juntos se declaran.
+  LV-218: el enlace a los NOTAM del IFIS **es un enlace y no un resultado, a propósito**: el IFIS no
+  tiene API, y un parseo que falla se lee como «no hay avisos». `rel="noopener noreferrer"` con
+  `target="_blank"`.{% endcomment %}
+  {% if permission.amc %}<tr><th scope="row">{% translate "Nearest aerodrome (AMC)" %}</th><td>{{ permission.amc }}{% if permission.amc_distance_km is not None %} · {{ permission.amc_distance_km }} km{% endif %}{% if permission.notam_url %} · <a href="{{ permission.notam_url }}" target="_blank" rel="noopener noreferrer">{% translate "Check its NOTAMs at the DGAC" %} ↗</a>{% endif %}</td></tr>{% endif %}
+  {% comment %}LV-221: metros primero, porque es como se opera, y los pies **en texto gris** porque es lo
+  que pide el formulario del SIGO. Los pies no se guardan: los calcula `max_altitude_ft_equivalent`.
+  LV-368: la conversión ya no es una señal de color; es una ayuda en gris.{% endcomment %}
+  {% if permission.max_altitude_m %}<tr><th scope="row">{% translate "Maximum altitude" %}</th><td>{{ permission.max_altitude_m }} m <span class="id-hint d-inline">{% blocktranslate with ft=permission.max_altitude_ft_equivalent %}{{ ft }} ft for the SIGO form{% endblocktranslate %}</span></td></tr>{% endif %}<tr><th scope="row">{% translate "Area type" %}</th><td>{{ permission.get_area_type_display|default:"—" }}</td></tr>
+</tbody></table></div>
+{% if perms.geo.view_geoplan %}
+{% comment %}LV-137: `id` para que el expediente ancle acá su atajo «Vincular un plan». R10.2: el plan
+ya subido se cruza con su permiso desde acá. LV-199: la columna de acciones, con «Desvincular»; la
+confirmación va en el `onsubmit` y dice **qué pasa con la ubicación** (se queda en el permiso).{% endcomment %}
+<div class="card mt-3 p-4" id="tab-geo-plans"><div class="d-flex justify-content-between align-items-center mb-2"><h2 class="h5 mb-0">{% translate "Geospatial plans" %}</h2><div class="d-flex gap-2 flex-wrap align-items-center">{% if perms.geo.change_geoplan and linkable_plans %}<form method="post" action="{% url 'permission-link-plan' permission.pk %}" class="d-flex gap-2 align-items-center flex-wrap">{% csrf_token %}<select class="form-select form-select-sm w-auto" name="plan" required><option value="">{% translate "Link a plan already uploaded…" %}</option>{% for plan in linkable_plans %}<option value="{{ plan.pk }}">{{ plan.title }}</option>{% endfor %}</select><button class="btn btn-sm btn-success">{% translate "Link plan" %}</button></form>{% endif %}{% if perms.geo.add_geoplan %}<a href="{% url 'geo-plan-import' %}?flight_permission={{ permission.pk }}" class="btn btn-sm btn-primary">+ {% translate "Import plan" %}</a>{% endif %}</div></div>
+{% with plans=permission.geo_plans.all %}{% if plans %}<table class="table table-sm mb-0"><thead><tr><th scope="col">{% translate "Title" %}</th><th scope="col">{% translate "Status" %}</th>{% if perms.geo.change_geoplan %}<th scope="col" class="text-end">{% translate "Actions" %}</th>{% endif %}</tr></thead><tbody>{% for plan in plans %}{% if plan.is_active %}<tr><td><a href="{% url 'geo-plan-detail' plan.pk %}">{{ plan.title }}</a></td><td>{{ plan.get_status_display }}</td>{% if perms.geo.change_geoplan %}<td class="text-end">{% translate "Unlink this plan? The location it filled in stays on the permit." as unlink_confirm %}<form method="post" action="{% url 'permission-unlink-plan' permission.pk %}" class="d-inline" onsubmit="return confirm('{{ unlink_confirm|escapejs }}')">{% csrf_token %}<input type="hidden" name="plan" value="{{ plan.pk }}"><button class="btn btn-sm btn-outline-secondary">{% translate "Unlink" %}</button></form></td>{% endif %}</tr>{% endif %}{% endfor %}</tbody></table>{% else %}<p class="text-muted mb-0">{% translate "No geospatial plans linked to this permission." %}</p>{% endif %}{% endwith %}</div>
+{% endif %}
+</div>
+</details>
+
+<details class="permit-section" id="permit-validity"{% if open_sections.validity %} open{% endif %}>
+<summary><span class="permit-section-title">{% translate "Validity and documents" %}</span></summary>
+<div class="permit-section-body">
+<div class="card p-4">
+  {% comment %}LV-219: la vigencia la fija la DGAC al responder, así que sin fechas va **un solo**
+  chip «Esperando a la DGAC» y ninguna línea de tiempo.{% endcomment %}
+  {% if permission.valid_from and permission.valid_until %}{% include "operations/_permit_validity.html" %}{% else %}<p class="mb-0"><span class="id-chip id-chip--warning"><svg class="id-signal-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>{% translate "Awaiting the DGAC" %}</span></p>{% endif %}
+</div>
+{% comment %}LV-107: el expediente operativo. Contesta «¿esto está completo?». Es sólo lectura: las
+compuertas reales (el PDF firmado para aprobar o completar) viven en la vista, donde tienen efecto.{% endcomment %}
 <div class="card mt-3 p-4">
   <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
     <h2 class="h5 mb-0">{% translate "Operational dossier" %}</h2>
     {% if dossier.is_complete %}
-    <span class="badge bg-success">{% translate "Complete" %}</span>
+    <span class="id-chip id-chip--ok">✓ {% translate "Complete" %}</span>
     {% else %}
     <span class="d-flex gap-2">
-      {% if dossier.missing_count %}<span class="badge bg-danger">{% blocktranslate count counter=dossier.missing_count %}{{ counter }} missing{% plural %}{{ counter }} missing{% endblocktranslate %}</span>{% endif %}
-      {% if dossier.unknown_count %}<span class="badge bg-warning text-dark">{% blocktranslate count counter=dossier.unknown_count %}{{ counter }} to confirm{% plural %}{{ counter }} to confirm{% endblocktranslate %}</span>{% endif %}
+      {% if dossier.missing_count %}<span class="id-chip id-chip--warning">▲ {% blocktranslate count counter=dossier.missing_count %}{{ counter }} missing{% plural %}{{ counter }} missing{% endblocktranslate %}</span>{% endif %}
+      {% if dossier.unknown_count %}<span class="id-chip id-chip--neutral">{% blocktranslate count counter=dossier.unknown_count %}{{ counter }} to confirm{% plural %}{{ counter }} to confirm{% endblocktranslate %}</span>{% endif %}
     </span>
     {% endif %}
   </div>
@@ -195,10 +156,9 @@ después se desincroniza.{% endcomment %}
       <tbody>
         {% for item in dossier.items %}
         <tr>
-          <td class="text-nowrap" style="width: 3rem">
-            {% comment %}Icono con texto para lector de pantalla: un color solo
-            no es un estado legible. Ámbar y rojo dicen cosas distintas -- ver
-            la decisión 2 de dossier.py.{% endcomment %}
+          <td class="text-nowrap permit-dossier-mark">
+            {% comment %}Icono con texto para lector de pantalla: un color solo no es un estado legible.
+            Ámbar y rojo dicen cosas distintas (decisión 2 de dossier.py).{% endcomment %}
             {% if item.status == "ok" %}<span class="text-success" aria-hidden="true">✓</span><span class="visually-hidden">{% translate "On file" %}</span>
             {% elif item.status == "missing" %}<span class="text-danger" aria-hidden="true">✕</span><span class="visually-hidden">{% translate "Missing" %}</span>
             {% elif item.status == "info" %}<span class="text-body-secondary" aria-hidden="true">○</span><span class="visually-hidden">{% translate "Optional" %}</span>
@@ -208,17 +168,9 @@ después se desincroniza.{% endcomment %}
           <td class="text-body-secondary">
             {{ item.detail }}{% if item.offenders %}: <strong>{{ item.offenders|join:", " }}</strong>{% endif %}
           </td>
-          {% comment %}LV-130: el atajo que cierra el renglón. Va en su propia
-          columna y alineado a la derecha para que la columna se lea como una
-          lista de lo que hay que hacer; el permiso ya se comprobó al armar el
-          expediente, así que acá no hay `{% if perms %}` que pueda divergir de
-          lo que la vista decidió.{% endcomment %}
+          {% comment %}LV-130: el atajo que cierra el renglón. LV-200 paso 3: el atajo «usar uno ya
+          cargado» va **antes** del botón de subir y en tono secundario.{% endcomment %}
           <td class="text-end text-nowrap">
-            {% comment %}LV-200 paso 3: el atajo va **antes** del botón de subir y
-            en tono secundario. Antes porque cuando existe es casi siempre lo que
-            corresponde —la misma carta cubriendo otro permiso de la faena—; y
-            secundario porque subir sigue siendo el camino que siempre
-            funciona.{% endcomment %}
             {% if item.alt_action_url %}
             <a class="btn btn-sm btn-outline-secondary" href="{{ item.alt_action_url }}">{{ item.alt_action_label }}</a>
             {% endif %}
@@ -232,32 +184,19 @@ después se desincroniza.{% endcomment %}
     </table>
   </div>
 </div>
-
-{% include "generic/_traceability.html" with record=permission hide_steps=True %}
-{% comment %}R10.6: esta sección tenía su propio marcado, anterior a la plantilla
-compartida, y por eso se quedó sin lo que LV-92 y LV-104 le dieron a las demás
-fichas. `object` es el mismo permiso que `permission` (lo pone DetailView), que
-es lo que la plantilla compartida espera.{% endcomment %}
+{% comment %}R10.6: `object` es el mismo permiso que `permission` (lo pone DetailView), que es lo que
+la plantilla compartida espera.{% endcomment %}
 {% include "compliance/_documents_section.html" %}
-{% if perms.geo.view_geoplan %}
-{% comment %}LV-137: `id` para que el expediente ancle acá su atajo "Vincular un
-plan". El selector de R10.2 vive en esta tarjeta, y el atajo mandaba a importar —
-o sea a crear un plan nuevo cuando el que hace falta ya existe en la app.
-{% endcomment %}
-<div class="card mt-3 p-4" id="tab-geo-plans"><div class="d-flex justify-content-between align-items-center mb-2"><h2 class="h5 mb-0">{% translate "Geospatial plans" %}</h2><div class="d-flex gap-2 flex-wrap align-items-center">{% comment %}R10.2: faltaba la mitad. Sólo se podía **importar** un KMZ nuevo, así que un plan ya subido no tenía cómo cruzarse con su permiso salvo por el admin de Django. Al vincular, el plan rellena la ubicación del permiso con lo que dice su KMZ -- sólo los huecos.{% endcomment %}{% if perms.geo.change_geoplan and linkable_plans %}<form method="post" action="{% url 'permission-link-plan' permission.pk %}" class="d-flex gap-2 align-items-center flex-wrap">{% csrf_token %}<select class="form-select form-select-sm w-auto" name="plan" required><option value="">{% translate "Link a plan already uploaded…" %}</option>{% for plan in linkable_plans %}<option value="{{ plan.pk }}">{{ plan.title }}</option>{% endfor %}</select><button class="btn btn-sm btn-success">{% translate "Link plan" %}</button></form>{% endif %}{% if perms.geo.add_geoplan %}<a href="{% url 'geo-plan-import' %}?flight_permission={{ permission.pk }}" class="btn btn-sm btn-primary">+ {% translate "Import plan" %}</a>{% endif %}</div></div>{% comment %}LV-199: la columna de acciones, con "Desvincular". Vincular no tenía
-inversa —la misma mitad que faltaba y que `R10.2` corrigió del otro lado— y el
-usuario lo pidió para cuando el vínculo se hizo por error. La confirmación va en
-el `onsubmit` y dice **qué pasa con la ubicación**: se queda en el permiso, así
-que el aviso tiene que decirlo antes y no después.{% endcomment %}
-{% with plans=permission.geo_plans.all %}{% if plans %}<table class="table table-sm mb-0"><thead><tr><th scope="col">{% translate "Title" %}</th><th scope="col">{% translate "Status" %}</th>{% if perms.geo.change_geoplan %}<th scope="col" class="text-end">{% translate "Actions" %}</th>{% endif %}</tr></thead><tbody>{% for plan in plans %}{% if plan.is_active %}<tr><td><a href="{% url 'geo-plan-detail' plan.pk %}">{{ plan.title }}</a></td><td>{{ plan.get_status_display }}</td>{% if perms.geo.change_geoplan %}<td class="text-end">{% translate "Unlink this plan? The location it filled in stays on the permit." as unlink_confirm %}<form method="post" action="{% url 'permission-unlink-plan' permission.pk %}" style="display:inline" onsubmit="return confirm('{{ unlink_confirm|escapejs }}')">{% csrf_token %}<input type="hidden" name="plan" value="{{ plan.pk }}"><button class="btn btn-sm btn-outline-secondary">{% translate "Unlink" %}</button></form></td>{% endif %}</tr>{% endif %}{% endfor %}</tbody></table>{% else %}<p class="text-muted mb-0">{% translate "No geospatial plans linked to this permission." %}</p>{% endif %}{% endwith %}</div>
-{% endif %}
+</div>
+</details>
+
+<details class="permit-section" id="permit-flights"{% if open_sections.flights %} open{% endif %}>
+<summary><span class="permit-section-title">{% translate "Preflight and flights" %}</span></summary>
+<div class="permit-section-body">
 {% if can_start_preflight or preflight_checks %}
-{% comment %}LV-238: el chequeo prevuelo **antes** del vuelo. Hasta acá sólo se podía abrir
-desde un registro de vuelo ya cargado, y la bitácora se escribe al volver: la firma de un
-chequeo «previo» quedaba con fecha posterior al despegue. Acá se crea y se firma antes,
-ligado a este permiso y a una aeronave de su flota; cuando el vuelo se registre, lo
-adopta (misma aeronave, mismo día).{% endcomment %}
-<div class="card mt-3 p-4" id="preflight-checks">
+{% comment %}LV-238: el chequeo prevuelo **antes** del vuelo, ligado a este permiso y a una aeronave de
+su flota; cuando el vuelo se registre, lo adopta (misma aeronave, mismo día).{% endcomment %}
+<div class="card p-4" id="preflight-checks">
   <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
     <h2 class="h5 mb-0">{% translate "Preflight checks" %}</h2>
     {% if can_start_preflight %}
@@ -279,7 +218,7 @@ adopta (misma aeronave, mismo día).{% endcomment %}
       <tr>
         <td><a href="{% url 'preflight-standalone' check.pk %}">{{ check.planned_date|date:"Y-m-d" }}</a></td>
         <td>{{ check.aircraft.registration }}</td>
-        <td>{% if check.is_signed %}<span class="badge bg-success">{% translate "Signed" %}</span>{% else %}<span class="badge bg-warning text-dark">{% translate "Not signed" %}</span>{% endif %}</td>
+        <td>{% if check.is_signed %}<span class="id-chip id-chip--ok">✓ {% translate "Signed" %}</span>{% else %}<span class="id-chip id-chip--warning">▲ {% translate "Not signed" %}</span>{% endif %}</td>
         <td>{% if check.flight_record %}<a href="{% url 'record-detail' check.flight_record_id %}">{{ check.flight_record.actual_date|date:"Y-m-d" }}</a>{% else %}<span class="text-muted">{% translate "Not flown yet" %}</span>{% endif %}</td>
       </tr>
       {% endfor %}
@@ -290,7 +229,18 @@ adopta (misma aeronave, mismo día).{% endcomment %}
   {% endif %}
 </div>
 {% endif %}
-<div class="card mt-3 p-4"><div class="d-flex justify-content-between align-items-center mb-2"><h2 class="h5 mb-0">{% translate "Flight records" %}</h2><a href="{% url 'record-create' %}?permission={{ permission.pk }}" class="btn btn-sm btn-primary">+ {% translate "Add record" %}</a></div>{% if permission.records.exists %}<table class="table table-sm"><thead><tr><th scope="col">{% translate "Date" %}</th><th scope="col">{% translate "Pilot" %}</th><th scope="col">{% translate "Aircraft" %}</th><th scope="col">{% translate "Departure" %}</th><th scope="col">{% translate "Arrival" %}</th></tr></thead><tbody>{% for r in flight_records %}<tr><td><a href="{% url 'record-detail' r.pk %}">{{ r.actual_date|date:"Y-m-d" }}</a></td><td>{{ r.pilot }}</td><td>{{ r.aircraft }}</td><td>{{ r.departure_time|time:"H:i" }}</td><td>{{ r.arrival_time|time:"H:i" }}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="text-muted mb-0">{% translate "No flight records for this permission." %}</p>{% endif %}</div>
+<div class="card{% if can_start_preflight or preflight_checks %} mt-3{% endif %} p-4"><div class="d-flex justify-content-between align-items-center mb-2"><h2 class="h5 mb-0">{% translate "Flight records" %}</h2><a href="{% url 'record-create' %}?permission={{ permission.pk }}" class="btn btn-sm btn-primary">+ {% translate "Add record" %}</a></div>{% if permission.records.exists %}<table class="table table-sm"><thead><tr><th scope="col">{% translate "Date" %}</th><th scope="col">{% translate "Pilot" %}</th><th scope="col">{% translate "Aircraft" %}</th><th scope="col">{% translate "Departure" %}</th><th scope="col">{% translate "Arrival" %}</th></tr></thead><tbody>{% for r in flight_records %}<tr><td><a href="{% url 'record-detail' r.pk %}">{{ r.actual_date|date:"Y-m-d" }}</a></td><td>{{ r.pilot }}</td><td>{{ r.aircraft }}</td><td>{{ r.departure_time|time:"H:i" }}</td><td>{{ r.arrival_time|time:"H:i" }}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="text-muted mb-0">{% translate "No flight records for this permission." %}</p>{% endif %}</div>
+</div>
+</details>
+
+<details class="permit-section" id="permit-trace"{% if open_sections.trace %} open{% endif %}>
+<summary><span class="permit-section-title">{% translate "Traceability" %}</span></summary>
+<div class="permit-section-body">
+{% comment %}R10.6: esta sección tenía su propio marcado, anterior a la plantilla compartida, y por eso
+se quedó sin lo que LV-92 y LV-104 le dieron a las demás fichas.{% endcomment %}
+<div class="card p-4">{% include "generic/_traceability.html" with record=permission hide_steps=True embedded=True %}</div>
+</div>
+</details>
 {% endblock %}
 
 {% block extrascripts %}<script src="{% static 'js/permission-status.js' %}"></script>{% endblock %}

@@ -10954,3 +10954,57 @@ msgstr "No hay nada que mostrar en esta capa."
 
 msgid "valid until {date}"
 msgstr "vigente hasta {date}"
+
+msgid "A plan can only be linked to a permit of its own cost center."
+msgstr "Un plan solo puede vincularse a un permiso de su propio centro de costo."
+
+msgid "This permit has linked plans from another cost center. Unlink them before changing the cost center."
+msgstr "Este permiso tiene planes vinculados de otro centro de costo. Desvincúlelos antes de cambiar el centro de costo."
+
+msgid "Waiting on the DGAC"
+msgstr "Espera a la DGAC"
+
+msgid "Waiting on the operator"
+msgstr "Espera al operador"
+
+msgid "The validity window has ended."
+msgstr "La vigencia ya terminó."
+
+msgid "DGAC folio pending."
+msgstr "Folio DGAC pendiente."
+
+msgid "Operational dossier incomplete (missing: %(count)s)."
+msgstr "Expediente operativo incompleto (faltan: %(count)s)."
+
+msgid "Region not recorded."
+msgstr "Región sin informar."
+
+msgid "Starts on %(date)s."
+msgstr "Comienza el %(date)s."
+
+msgid "The window ended on %(date)s."
+msgstr "La vigencia terminó el %(date)s."
+
+msgid "Days left: %(days)s"
+msgstr "Días restantes: %(days)s"
+
+msgid "What is missing"
+msgstr "Qué falta"
+
+msgid "Nothing pending"
+msgstr "Nada pendiente"
+
+msgid "Why?"
+msgstr "¿Por qué?"
+
+msgid "Operation"
+msgstr "Operación"
+
+msgid "Location and area"
+msgstr "Ubicación y área"
+
+msgid "Validity and documents"
+msgstr "Vigencia y documentos"
+
+msgid "Preflight and flights"
+msgstr "Prevuelo y vuelos"
