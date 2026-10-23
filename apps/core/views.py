@@ -1081,6 +1081,11 @@ class CspReportView(View):
             report = json.loads(raw).get("csp-report", {})
         except (ValueError, AttributeError):
             report = {}
+        # LV-370: `{"csp-report": []}` (o un texto, un número, `null`) pasaba el
+        # `try` y reventaba más abajo en `report.get`: un 500 en un endpoint
+        # público. Lo que no es un objeto se trata como un informe vacío.
+        if not isinstance(report, dict):
+            report = {}
         logging.getLogger("aerocontrol.csp").warning(
             "csp_violation",
             extra={
