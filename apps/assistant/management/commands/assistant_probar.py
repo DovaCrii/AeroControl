@@ -26,6 +26,12 @@ class Command(BaseCommand):
             help="Make one minimal call to the service and report latency and tokens.",
         )
         parser.add_argument(
+            "--models",
+            action="store_true",
+            help="List the models the service reports (GET /models) and probe which of the "
+            "configured chain answer, with and without tools. Prints ids and figures only.",
+        )
+        parser.add_argument(
             "--eval",
             action="store_true",
             help="Run the golden questions against the real service (needs --user); "
@@ -76,10 +82,54 @@ class Command(BaseCommand):
             )
         self.stdout.write(f"eval: {ok}/{len(cases)} with the expected tools")
 
+    def _models(self, client):
+        """LV-362: qué hay en el servicio y cuáles de la cadena configurada responden hoy.
+
+        Una consulta mínima por modelo, sin y con herramientas (cuentan créditos de la prueba,
+        pero no `AssistantUsage`). Imprime SÓLO ids públicos, tiempos y códigos: nunca la llave,
+        la petición ni el texto que devuelve el modelo.
+        """
+        from apps.assistant.tools import tool_definitions
+
+        if not client.configured:
+            raise CommandError("models: not configured (no key in this environment).")
+        try:
+            listed = client.list_models()
+        except AssistantUnavailable as error:
+            raise CommandError(f"models: listing failed ({error}).") from None
+        self.stdout.write(f"service models: {len(listed)}")
+        for name in listed:
+            self.stdout.write(f"  {name}")
+        chain = list(getattr(client, "models", None) or [client.model])
+        ok = 0
+        for name in chain:
+            line = f"{name}: {'listed' if name in listed else 'NOT LISTED'}"
+            results = []
+            for label, tools in (("chat", None), ("tools", tool_definitions())):
+                single = NvidiaClient(model=name, fallbacks=[])
+                started = time.monotonic()
+                try:
+                    message = single.chat(
+                        [{"role": "user", "content": "ping"}], tools=tools
+                    )
+                except AssistantUnavailable as error:
+                    results.append(f"{label} FAIL ({error})")
+                    continue
+                ms = round((time.monotonic() - started) * 1000)
+                if message.get("content") or message.get("tool_calls"):
+                    results.append(f"{label} ok {ms} ms")
+                else:
+                    results.append(f"{label} empty")
+            ok += results[0].startswith("chat ok")
+            self.stdout.write(f"{line}; " + "; ".join(results))
+        self.stdout.write(f"models: {ok}/{len(chain)} of the chain answer")
+
     def handle(self, *args, **options):
         client = NvidiaClient()
         if options["eval"]:
             return self._eval(options, client)
+        if options["models"]:
+            return self._models(client)
         out = self.stdout.write
 
         def cap(value):
@@ -87,6 +137,10 @@ class Command(BaseCommand):
 
         out(f"key: {'present' if client.configured else 'MISSING'}")
         out(f"model: {client.model}")
+        out(
+            "fallbacks: "
+            + (", ".join(getattr(client, "models", [client.model])[1:]) or "none")
+        )
         out(f"base_url: {client.base_url}")
         out(f"AI_ASSISTANT_ENABLED: {bool(settings.AI_ASSISTANT_ENABLED)}")
         out(
@@ -109,4 +163,8 @@ class Command(BaseCommand):
             raise CommandError(f"ping: failed ({error}).") from None
         ms = round((time.monotonic() - started) * 1000)
         tokens = message.get("_total_tokens")
-        out(f"ping: ok, {ms} ms, tokens: {tokens if tokens is not None else 'unknown'}")
+        used = message.get("_model")
+        out(
+            f"ping: ok, {ms} ms, tokens: {tokens if tokens is not None else 'unknown'}"
+            + (f", model: {used}" if used else "")
+        )

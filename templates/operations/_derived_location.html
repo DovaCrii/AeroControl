@@ -1,0 +1,8 @@
+{% load i18n %}{% comment %}LV-368: el aviso de la BCN, **una sola definición**. Antes la ficha lo escribía
+completo en dos ramas (región guardada como derivada, y región deducida al dibujar). Ahora es un
+chip informativo —«ⓘ Derivada de las coordenadas», no rojo: informa, no pide nada— y el porqué
+queda plegado en «¿Por qué?», con **la misma cadena del catálogo** que usa la hoja SIGO (`LV-141`).
+Presentar una región derivada con el aspecto de una declarada seguiría siendo peor que dejarla
+vacía: quien llena el SIGO tiene que poder distinguir el dato del papel de una inferencia nuestra.{% endcomment %}
+<div class="permit-derived"><span class="id-chip id-chip--info"><svg class="id-signal-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 8v.01"/></svg>{% translate "Derived from the coordinates" %}</span>
+<details class="permit-why"><summary>{% translate "Why?" %}</summary><p class="permit-why-text">{% translate "The commune, province and region come from the BCN administrative boundaries, which that institution publishes as referential: near a boundary the answer may be the neighbouring commune. Confirm it before filing." %}</p></details></div>

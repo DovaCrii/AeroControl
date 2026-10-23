@@ -63,6 +63,14 @@ def bearing_deg(lat1, lon1, lat2, lon2):
 # ---------------------------------------------------------------------------
 
 
+def _parts(geometry):
+    """Las piezas de un `GeometryCollection` (un `MultiGeometry` de KML), o []. Antes se ignoraban:
+    una zona con su punto de rótulo (SC-P29) no la encontraba «¿qué hay cerca?» (LV-363)."""
+    if (geometry or {}).get("type") == "GeometryCollection":
+        return geometry.get("geometries") or []
+    return []
+
+
 def _polygons(geometry):
     """Lista de polígonos (cada uno, lista de anillos [lon, lat])."""
     kind = (geometry or {}).get("type")
@@ -71,7 +79,7 @@ def _polygons(geometry):
         return [coords]
     if kind == "MultiPolygon":
         return list(coords)
-    return []
+    return [polygon for part in _parts(geometry) for polygon in _polygons(part)]
 
 
 def _lines(geometry):
@@ -82,7 +90,7 @@ def _lines(geometry):
         return [coords]
     if kind == "MultiLineString":
         return list(coords)
-    return []
+    return [line for part in _parts(geometry) for line in _lines(part)]
 
 
 def _points(geometry):
@@ -92,7 +100,7 @@ def _points(geometry):
         return [coords] if coords else []
     if kind == "MultiPoint":
         return list(coords)
-    return []
+    return [point for part in _parts(geometry) for point in _points(part)]
 
 
 def _all_positions(geometry):

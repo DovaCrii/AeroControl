@@ -499,6 +499,28 @@ class FlightPermission(StatusHistoryMixin, StatusFlowMixin, BaseModel):
             and self.valid_until < timezone.localdate()
         )
 
+    WAITING_DGAC = "dgac"
+    WAITING_OPERATOR = "operator"
+    WAITING_NOBODY = "nobody"
+
+    def waiting_on(self):
+        """LV-368: a quién le toca mover este permiso: DGAC, operador o nadie.
+
+        - **Solicitado**: espera la resolución de la DGAC.
+        - **Aprobado** y vigente, o **completado**: no espera a nadie; el permiso
+          ya cumple lo suyo.
+        - **Vencido/caducado** (`has_lapsed`) o **rechazado**: le toca al
+          operador, que tiene que renovar, corregir y volver a pedir, o archivar.
+
+        Derivado del estado y de `has_lapsed` (una sola definición de «vencido»,
+        LV-246); no se guarda, así que no puede desincronizarse.
+        """
+        if self.has_lapsed or self.status == self.STATUS_DENIED:
+            return self.WAITING_OPERATOR
+        if self.status == self.STATUS_REQUESTED:
+            return self.WAITING_DGAC
+        return self.WAITING_NOBODY
+
     @property
     def active_renewal(self):
         """LV-320: la renovación viva de este permiso, o `None`."""
@@ -792,6 +814,20 @@ class FlightPermission(StatusHistoryMixin, StatusFlowMixin, BaseModel):
             errors["longitude"] = message
         if self.radius_km is not None and self.latitude is None:
             errors["radius_km"] = _("A radius requires a coordinate pair.")
+        # LV-368: el otro lado del vínculo plan-permiso. Cambiar el centro de costo
+        # de un permiso que ya tiene planes vigentes los dejaría apuntando a una
+        # faena que no es la suya (el espejo de `GeoPlan.clean()`).
+        if (
+            not self._state.adding
+            and self.cost_center_id
+            and self.geo_plans.filter(is_active=True)
+            .exclude(cost_center_id=self.cost_center_id)
+            .exists()
+        ):
+            errors["cost_center"] = _(
+                "This permit has linked plans from another cost center. Unlink "
+                "them before changing the cost center."
+            )
         # LV-320: la renovación. Espejo en el modelo de lo que valida la vista, para
         # que el admin o un import no puedan armar una cadena imposible.
         if self.renews_id:

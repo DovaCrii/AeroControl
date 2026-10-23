@@ -221,10 +221,20 @@ class GeoPlan(StatusHistoryMixin, StatusFlowMixin, BaseModel):
         `AGENTS.md`.
         """
         super().clean()
+        errors = {}
         if self.close_reason == self.CLOSE_OTHER and not self.close_reason_detail:
-            raise ValidationError(
-                {"close_reason_detail": _("Say what the other reason was.")}
-            )
+            errors["close_reason_detail"] = _("Say what the other reason was.")
+        # LV-368: espejo de la regla de `FlightPermissionForm.clean()` y de
+        # `GeoPlanLinkToPermission`: un plan sólo alimenta un permiso de su misma
+        # faena. Sin esto el admin o un import cruzan la geografía de un contrato
+        # con otro (y, con tenants distintos, de una organización con otra).
+        if self.flight_permission_id and self.cost_center_id:
+            if self.flight_permission.cost_center_id != self.cost_center_id:
+                errors["flight_permission"] = _(
+                    "A plan can only be linked to a permit of its own cost center."
+                )
+        if errors:
+            raise ValidationError(errors)
 
     def get_absolute_url(self):
         from django.urls import reverse
