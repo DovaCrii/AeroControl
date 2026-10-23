@@ -12,6 +12,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 - **Expediente operativo sin «Revisión meteorológica registrada» (`LV-344`, paso 1).** La persona dijo que ya no se ocupa: el renglón opcional y su botón «Abrir el plan» salen del expediente; la cuenta de faltas no cambia. El modelo, el registro en el plan geoespacial y las revisiones guardadas siguen intactos hasta el paso 2 (condición de cierre en `MASTER_PLAN.md`).
 
+### Fixed
+
+- **Espacio aéreo: el mapa real dejaba el panel vacío y las herramientas muertas (`LV-363`). Sin migración; LLEVA ESTÁTICOS (`airspace-map.js`) y `.mo`.** Un `MultiGeometry` del KML (SC-P29) se servía con `coordinates: null`, Leaflet lanzaba al dibujarlo y el `catch` mostraba «no se pudieron cargar» sin rastro. Ahora el servidor envía las piezas de la colección, «¿qué hay cerca?» las entiende, el script aísla el dibujo de cada elemento, deja el motivo en la consola y ofrece «Reintentar»; medir termina con doble clic y una pista chica ya no cuenta dos clics.
+
 ### Added
 
 - Inventario de licencias y términos de las fuentes externas (`docs/dev/licencias-y-terminos.md`, LV-360): qué exige cada fuente y qué decisiones le tocan a la persona. Solo documentación.
