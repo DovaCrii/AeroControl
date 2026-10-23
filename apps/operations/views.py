@@ -2202,7 +2202,13 @@ class GeoPlanLinkToPermission(ModelPermissionRequiredMixin, View):
     permission_action = "change"
 
     def post(self, request, pk):
-        permission = get_object_or_404(FlightPermission, pk=pk, is_active=True)
+        permission = get_object_or_404(
+            scope_queryset_to_tenant(
+                FlightPermission.objects.all(), request.user, "cost_center__tenant_id"
+            ),
+            pk=pk,
+            is_active=True,
+        )
         plan = GeoPlan.objects.filter(
             pk=request.POST.get("plan"),
             cost_center=permission.cost_center,
@@ -2264,7 +2270,13 @@ class GeoPlanUnlinkFromPermission(ModelPermissionRequiredMixin, View):
     permission_action = "change"
 
     def post(self, request, pk):
-        permission = get_object_or_404(FlightPermission, pk=pk, is_active=True)
+        permission = get_object_or_404(
+            scope_queryset_to_tenant(
+                FlightPermission.objects.all(), request.user, "cost_center__tenant_id"
+            ),
+            pk=pk,
+            is_active=True,
+        )
         plan = GeoPlan.objects.filter(
             pk=request.POST.get("plan"),
             flight_permission=permission,

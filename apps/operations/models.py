@@ -792,6 +792,20 @@ class FlightPermission(StatusHistoryMixin, StatusFlowMixin, BaseModel):
             errors["longitude"] = message
         if self.radius_km is not None and self.latitude is None:
             errors["radius_km"] = _("A radius requires a coordinate pair.")
+        # LV-368: el otro lado del vínculo plan-permiso. Cambiar el centro de costo
+        # de un permiso que ya tiene planes vigentes los dejaría apuntando a una
+        # faena que no es la suya (el espejo de `GeoPlan.clean()`).
+        if (
+            not self._state.adding
+            and self.cost_center_id
+            and self.geo_plans.filter(is_active=True)
+            .exclude(cost_center_id=self.cost_center_id)
+            .exists()
+        ):
+            errors["cost_center"] = _(
+                "This permit has linked plans from another cost center. Unlink "
+                "them before changing the cost center."
+            )
         # LV-320: la renovación. Espejo en el modelo de lo que valida la vista, para
         # que el admin o un import no puedan armar una cadena imposible.
         if self.renews_id:
