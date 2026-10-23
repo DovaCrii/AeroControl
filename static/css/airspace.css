@@ -1,13 +1,52 @@
-/* LV-357 (fase 3): estilos de la pestaña «Espacio aéreo» de Entorno.
+/* LV-357 (fase 3) y LV-367 (fase 5): estilos de la pestaña «Espacio aéreo» de Entorno.
    Archivo propio y no una subsección de `identity.css`: allí los guardianes de E7 (LV-358) prohíben el
-   rojo de «crítico», y un mapa de zonas prohibidas sí lo necesita (P = `--sev-critical-*`, con patrón y
-   letra además del color). Se carga sólo en esa pestaña. */
+   rojo de «crítico», y un mapa de zonas prohibidas sí lo necesita (P = rojo, con patrón y letra además del
+   color). Se carga sólo en esa pestaña.
 
-/* Franja con conteos y foto del mapa, panel de
-   búsqueda, mapa Leaflet, leyenda y ficha técnica. Sólo lee `--id-*`, `--ac-*` y `--sev-*` y define
-   tokens `--id-air-*`. Una zona se distingue por color + patrón + letra (P, R, D, N), nunca sólo por
-   color; los patrones de relleno viven en el SVG que dibuja `airspace-map.js` y toman su color de
-   estas clases, así que siguen el tema claro/oscuro. Ninguna animación ni desplazamiento horizontal. */
+   Sólo lee `--id-*`, `--ac-*` y `--sev-*` y define tokens `--id-air-*`. Una zona se distingue por color +
+   patrón + letra (P, R, D, N), nunca sólo por color; los patrones de relleno viven en el SVG que dibuja
+   `airspace-map.js` y toman su color de estas clases, así que siguen el tema claro/oscuro.
+
+   LV-367 (fase 5): el mapa se dibuja con tokens PROPIOS, no con los `--sev-*`. Las teselas no cambian con el
+   tema (un satélite oscuro con tema claro y al revés), así que el trazo de una zona no puede depender de él:
+   va en un color claro fijo sobre un halo oscuro fijo (`--id-air-halo`). Los cocientes de contraste están
+   calculados y vigilados en `apps/airspace/test_lv367_visual.py`: línea/halo >= 3, halo/blanco >= 3,
+   línea/negro >= 3, así que se ve sobre el extremo claro y el extremo oscuro de cualquier fondo.
+   `--id-edge` / `--id-tile` (base visual v3) aún no están en esta rama: se usan con respaldo. Ninguna
+   animación ni desplazamiento horizontal. */
+:root {
+  --id-air-halo: #0b1220;
+  --id-air-line-prohibited: #ff7b7b;
+  --id-air-line-restricted: #ffb84d;
+  --id-air-line-danger: #4fd1e8;
+  --id-air-line-naval: #b9a8ff;
+  --id-air-line-fir: #e6edf6;
+  --id-air-dot: #e6edf6;
+  /* Capa administrativa (LV-367, fase 7): comuna = línea blanca de 1 px sobre un halo oscuro; región
+     = realce ámbar. Fijos y no del tema, como el resto del mapa; el script los lee de acá. */
+  --id-air-admin-line: #ffffff;
+  --id-air-admin-halo: #0b1220;
+  --id-air-admin-region: #ffd166;
+  --id-air-edge: var(--id-edge, #7d8aa0);
+  --id-air-tile: var(--id-tile, #f7f9fc);
+}
+[data-theme="dark"] {
+  --id-air-edge: var(--id-edge, #5d7090);
+  --id-air-tile: var(--id-tile, #1f2b3e);
+}
+
+.air-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+.air-ic {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .air-layout {
   --id-air-map-h: 34rem;
   display: grid;
@@ -25,43 +64,63 @@
   box-shadow: var(--id-lift);
 }
 .air-side { display: grid; gap: var(--id-sp-2); }
-.air-counts { display: flex; flex-wrap: wrap; gap: var(--id-sp-1) var(--id-sp-3); margin: 0 0 var(--id-sp-1); }
-.air-counts div { min-width: 5.5rem; }
-.air-counts dt { font-size: 0.75rem; font-weight: 600; color: var(--ac-text-secondary); }
-.air-counts dd { margin: 0; font-size: var(--id-fs-lg); font-weight: 700; }
+
+/* Franja de conteos: cifra grande + ícono + rótulo. Sólo texto en la cifra y el rótulo; el ícono acompaña. */
+.air-counts { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); gap: var(--id-sp-1); margin: var(--id-sp-1) 0; }
+.air-count {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 0.15rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--id-air-edge);
+  border-left-width: 4px;
+  border-radius: var(--id-r-control);
+  background: var(--id-air-tile);
+}
+.air-count dt { display: flex; align-items: center; gap: 0.4rem; font-size: 0.875rem; font-weight: 600; color: var(--ac-text-secondary); }
+.air-count dd { margin: 0; font-size: var(--id-fs-xl); font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--ac-text); }
+.air-count--prohibited { border-left-color: var(--id-air-line-prohibited); }
+.air-count--restricted { border-left-color: var(--id-air-line-restricted); }
+.air-count--danger { border-left-color: var(--id-air-line-danger); }
+.air-count--naval { border-left-color: var(--id-air-line-naval); }
 .air-photo, .air-attribution { margin: 0 0 0.3rem; font-size: var(--id-fs-sm); }
 .air-photo--stale { color: var(--sev-warning-text); font-weight: 600; }
 .air-attribution { color: var(--ac-text-secondary); }
 .air-attribution a { color: var(--ac-text); font-weight: 600; text-decoration: underline; }
 .air-steps { margin: 0; padding-left: 1.25rem; font-size: var(--id-fs-sm); }
 .air-steps code, .air-point { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: 0.8125rem; overflow-wrap: anywhere; }
+.air-mono { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; }
 .air-label { display: block; margin-bottom: 0.2rem; font-size: 0.75rem; font-weight: 700; color: var(--ac-text-secondary); }
 .air-input {
   width: 100%;
   min-height: 2.25rem;
   padding: 0.3rem 0.6rem;
-  border: 1px solid var(--ac-border);
+  border: 1px solid var(--id-air-edge);
   border-radius: var(--id-r-control);
   background: var(--ac-surface);
   color: var(--ac-text);
   font: inherit;
 }
-.air-input:focus-visible, .air-tool:focus-visible, .air-row:focus-visible, .air-check input:focus-visible, .air-legend-item input:focus-visible {
+.air-input:focus-visible, .air-tool:focus-visible, .air-row:focus-visible, .air-check input:focus-visible, .air-legend-item input:focus-visible, .air-legend-summary:focus-visible, .air-notam:focus-visible {
   outline: 3px solid var(--ac-text);
   outline-offset: 2px;
 }
-.air-help { margin: 0.3rem 0 0; font-size: 0.75rem; color: var(--ac-text-secondary); }
+.air-help { margin: 0.3rem 0 0; font-size: 0.8125rem; color: var(--ac-text-secondary); }
 .air-filters { display: grid; gap: var(--id-sp-1); grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: var(--id-sp-1); }
 .air-check { grid-column: 1 / -1; display: flex; align-items: center; gap: 0.4rem; font-size: var(--id-fs-sm); }
 .air-status { margin: var(--id-sp-1) 0 0; font-size: var(--id-fs-sm); font-weight: 600; }
+
+/* Resultados: ícono del tipo, código en monoespaciado, distancia y rumbo. */
 .air-results { max-height: 24rem; margin: var(--id-sp-1) 0 0; padding: 0; overflow-y: auto; list-style: none; border-top: 1px solid var(--ac-border); }
 .air-result { border-bottom: 1px solid var(--ac-border); }
-.air-more { padding: 0.5rem 0; font-size: 0.75rem; color: var(--ac-text-secondary); }
+.air-more { padding: 0.5rem 0; font-size: 0.8125rem; color: var(--ac-text-secondary); }
 .air-row {
   display: grid;
-  gap: 0.15rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.15rem 0.6rem;
   width: 100%;
-  padding: 0.45rem 0.4rem;
+  padding: 0.5rem 0.4rem;
   border: 0;
   border-radius: var(--id-r-control);
   background: transparent;
@@ -73,31 +132,37 @@
 }
 .air-row:hover { background: var(--ac-bg); }
 .air-row[aria-current="true"] { background: var(--ac-bg); box-shadow: inset 4px 0 0 var(--ac-text); }
+.air-row-icon { display: inline-flex; grid-row: span 2; color: var(--ac-text); }
+.air-row-icon .air-ic { width: 1.5rem; height: 1.5rem; }
+.air-row-icon--prohibited { color: var(--sev-critical-text); }
+.air-row-icon--restricted { color: var(--sev-warning-text); }
+.air-row-icon--danger { color: var(--sev-advisory-text); }
+.air-row-main { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.1rem 0.5rem; min-width: 0; }
+.air-row-code { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-weight: 700; }
+.air-row-name { overflow-wrap: anywhere; }
+.air-row-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.1rem 0.5rem; grid-column: 2; }
 .air-row-kind {
-  justify-self: start;
   padding: 0 0.5rem;
   border: 1px solid var(--sev-nominal-border);
   border-radius: var(--id-r-pill);
   background: var(--sev-nominal-bg);
   color: var(--sev-nominal-text);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 .air-row-kind--prohibited { border-color: var(--sev-critical-border); background: var(--sev-critical-bg); color: var(--sev-critical-text); }
 .air-row-kind--restricted { border-color: var(--sev-warning-border); background: var(--sev-warning-bg); color: var(--sev-warning-text); }
 .air-row-kind--danger { border-color: var(--sev-advisory-border); background: var(--sev-advisory-bg); color: var(--sev-advisory-text); }
-.air-row-main { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-.air-row-code { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; }
-.air-row-name { overflow-wrap: anywhere; }
-.air-row-flag, .air-row-dist { font-size: 0.75rem; color: var(--ac-text-secondary); }
+.air-row-flag, .air-row-dist { font-size: 0.8125rem; color: var(--ac-text-secondary); font-variant-numeric: tabular-nums; }
+
 .air-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--id-sp-1); margin-bottom: var(--id-sp-1); }
 .air-circle-tool { display: inline-flex; align-items: center; gap: 0.4rem; }
 .air-radius { width: 5rem; }
-.air-nm { font-size: 0.75rem; color: var(--ac-text-secondary); }
+.air-nm { font-size: 0.8125rem; color: var(--ac-text-secondary); }
 .air-tool {
   min-height: 2.25rem;
   padding: 0.3rem 0.8rem;
-  border: 1px solid var(--ac-border);
+  border: 1px solid var(--id-air-edge);
   border-radius: var(--id-r-control);
   background: var(--ac-surface);
   color: var(--ac-text);
@@ -110,34 +175,53 @@
 .air-tool[aria-pressed="true"] { border-color: var(--ac-text); border-width: 2px; background: var(--ac-bg); }
 .air-tool[aria-pressed="true"]::before { content: "✓ "; }
 .air-tool.is-copied::before { content: "✓ "; }
-.air-map { height: var(--id-air-map-h); border: 1px solid var(--ac-border); border-radius: var(--id-r-control); background: var(--ac-bg); }
+.air-map { height: var(--id-air-map-h); border: 1px solid var(--id-air-edge); border-radius: var(--id-r-control); background: var(--ac-bg); }
 .air-map--tool { cursor: crosshair; }
 .air-map--tool .leaflet-interactive { cursor: crosshair; }
-.air-legend { margin: var(--id-sp-1) 0 0; padding: 0; border: 0; }
-.air-legend legend { float: none; width: auto; margin: 0 0 0.3rem; padding: 0; font-size: 0.75rem; font-weight: 700; color: var(--ac-text-secondary); }
-.air-legend-items { display: flex; flex-wrap: wrap; gap: 0.3rem var(--id-sp-2); }
-.air-legend-item { display: inline-flex; align-items: center; gap: 0.35rem; font-size: var(--id-fs-sm); }
+/* La atribución de Leaflet sobre una superficie del tema al 90 %: legible sobre cualquier tesela. */
+.air-map .leaflet-control-attribution {
+  background: color-mix(in srgb, var(--ac-surface) 90%, transparent);
+  color: var(--ac-text);
+}
+.air-map .leaflet-control-attribution a { color: var(--ac-text); text-decoration: underline; }
+
+/* Leyenda plegable: <details> expone solo su estado abierto/cerrado. */
+.air-legend { margin: var(--id-sp-1) 0 0; border: 1px solid var(--ac-border); border-radius: var(--id-r-control); background: var(--id-air-tile); }
+.air-legend-summary { display: flex; align-items: center; gap: 0.5rem; padding: 0.55rem 0.75rem; font-size: 0.875rem; font-weight: 700; cursor: pointer; }
+.air-legend[open] > .air-legend-summary { border-bottom: 1px solid var(--ac-border); }
+.air-legend-group { padding: 0.5rem 0.75rem 0; }
+.air-legend > .air-help { padding: 0 0.75rem 0.6rem; }
+.air-legend-head { margin: 0 0 0.35rem; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ac-text-secondary); }
+.air-legend-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr)); gap: 0.3rem var(--id-sp-2); }
+.air-legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: var(--id-fs-sm); min-height: 1.75rem; }
+.air-legend-name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.air-count-pill { flex: none; min-width: 1.75rem; padding: 0 0.45rem; border-radius: var(--id-r-pill); background: var(--ac-bg); border: 1px solid var(--ac-border); color: var(--ac-text); font-size: 0.8125rem; font-weight: 700; text-align: center; font-variant-numeric: tabular-nums; }
 .air-readout { margin-top: var(--id-sp-1); padding: 0.4rem 0.6rem; border: 1px solid var(--ac-border); border-radius: var(--id-r-control); font-size: var(--id-fs-sm); }
+
+/* Muestras (leyenda) y marcadores (mapa) comparten forma: la leyenda enseña lo que se ve en el mapa. */
 .air-swatch, .air-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.4rem;
-  height: 1.4rem;
-  border: 2px solid var(--sev-nominal-text);
+  width: 1.375rem;
+  height: 1.375rem;
+  border: 2px solid var(--id-air-line-fir);
   border-radius: 4px;
-  background: var(--sev-nominal-bg);
-  color: var(--sev-nominal-text);
+  background: var(--id-air-halo);
+  color: var(--id-air-line-fir);
   font-size: 0.75rem;
   font-weight: 800;
   line-height: 1;
 }
 .air-swatch svg { width: 1rem; height: 1rem; }
-.air-swatch--prohibited, .air-badge--prohibited { border-color: var(--sev-critical-text); background: var(--sev-critical-bg); color: var(--sev-critical-text); }
-.air-swatch--restricted, .air-badge--restricted { border-color: var(--sev-warning-text); background: var(--sev-warning-bg); color: var(--sev-warning-text); }
-.air-swatch--danger, .air-badge--danger { border-color: var(--sev-advisory-text); background: var(--sev-advisory-bg); color: var(--sev-advisory-text); }
+.air-swatch--prohibited, .air-badge--prohibited { border-color: var(--id-air-line-prohibited); color: var(--id-air-line-prohibited); }
+.air-swatch--restricted, .air-badge--restricted { border-color: var(--id-air-line-restricted); color: var(--id-air-line-restricted); }
+.air-swatch--danger, .air-badge--danger { border-color: var(--id-air-line-danger); color: var(--id-air-line-danger); }
+.air-swatch--naval, .air-badge--naval { border-color: var(--id-air-line-naval); color: var(--id-air-line-naval); }
 .air-swatch--fir_boundary { border-style: dashed; }
-.air-swatch--airstrip { width: 0.6rem; height: 0.6rem; border-radius: 50%; background: var(--ac-text-secondary); border-color: var(--ac-text-secondary); }
+.air-swatch--airstrip { width: 0.75rem; height: 0.75rem; border-radius: 50%; border: 3px solid var(--id-air-halo); background: var(--id-air-dot); box-shadow: 0 0 0 1px var(--id-air-edge); }
+.air-swatch--airport { width: 1.625rem; height: 1.625rem; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1.5px var(--id-air-halo); color: #fff; }
+.air-swatch--aerodrome { border-color: transparent; background: transparent; color: var(--ac-text); }
 /* Capas propias (LV-358, E3): símbolo + texto en la leyenda y forma distinta en el mapa (cuadrado macizo = faena, círculo punteado = permiso vigente), nunca sólo color. */
 .air-swatch--own-sites { background: var(--ac-text); border-color: var(--ac-text); color: var(--ac-surface); border-radius: 2px; }
 .air-swatch--own-permits { background: transparent; border-style: dashed; border-color: var(--ac-primary); color: var(--ac-primary); border-radius: 50%; }
@@ -145,44 +229,65 @@
 .air-own { display: inline-flex; align-items: center; justify-content: center; width: 1.125rem; height: 1.125rem; border: 2px solid var(--ac-surface); background: var(--ac-text); color: var(--ac-surface); font-size: 0.6rem; line-height: 1; box-shadow: 0 0 0 1px var(--ac-text); }
 .air-own-permit { stroke: var(--ac-primary); stroke-width: 2; stroke-dasharray: 6 4; fill: var(--ac-primary); fill-opacity: 0.08; }
 .air-own-permit-dot { stroke: var(--ac-primary); stroke-width: 2; fill: var(--ac-surface); fill-opacity: 1; }
-.air-legend-sep { flex-basis: 100%; margin: 0.2rem 0 0; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ac-text-secondary); }
-.air-badge { width: 1.375rem; height: 1.375rem; box-shadow: 0 0 0 2px var(--ac-surface); }
-.air-badge-wrap.is-selected .air-badge, .air-plane-wrap.is-selected .air-plane { outline: 3px solid var(--ac-text); outline-offset: 2px; }
-.air-plane {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.625rem;
-  height: 1.625rem;
-  color: var(--ac-text);
-}
-.air-plane--airport { border: 2px solid var(--ac-text); border-radius: 50%; background: var(--ac-surface); }
-.air-plane--aerodrome svg { filter: drop-shadow(0 0 2px var(--ac-surface)) drop-shadow(0 0 1px var(--ac-surface)); }
-.air-shape--prohibited { stroke: var(--sev-critical-text); }
-.air-shape--restricted { stroke: var(--sev-warning-text); }
-.air-shape--danger { stroke: var(--sev-advisory-text); }
-.air-shape--naval { stroke: var(--sev-nominal-text); }
-.air-shape--fir_boundary { stroke: var(--sev-nominal-text); stroke-dasharray: 8 6; stroke-width: 2; fill: none; }
-.air-pat-bg { opacity: 0.6; }
-.air-pat--prohibited .air-pat-bg { fill: var(--sev-critical-bg); }
-.air-pat--prohibited .air-pat-mark { stroke: var(--sev-critical-text); stroke-width: 1.2; fill: none; }
-.air-pat--restricted .air-pat-bg { fill: var(--sev-warning-bg); }
-.air-pat--restricted .air-pat-mark { stroke: var(--sev-warning-text); stroke-width: 1.2; fill: none; }
-.air-pat--danger .air-pat-bg { fill: var(--sev-advisory-bg); }
+.air-badge-wrap, .air-plane-wrap, .air-tag-wrap { background: none; border: 0; }
+/* Jerarquía de marcadores: aeropuerto (disco de 30 px con borde) > aeródromo (22 px) = insignia de zona (22 px). */
+.air-badge { box-shadow: 0 0 0 2px var(--id-air-halo); }
+.air-badge-wrap.is-selected .air-badge, .air-plane-wrap.is-selected .air-plane { outline: 3px solid #fff; outline-offset: 3px; }
+.air-plane { display: inline-flex; align-items: center; justify-content: center; color: #fff; }
+.air-plane .air-ic { fill: currentColor; stroke: none; }
+.air-plane--airport { width: 1.875rem; height: 1.875rem; border: 2px solid #fff; border-radius: 50%; background: var(--id-air-halo); box-shadow: 0 0 0 2px var(--id-air-halo); }
+.air-plane--airport .air-ic { width: 1.25rem; height: 1.25rem; }
+.air-plane--aerodrome { width: 1.375rem; height: 1.375rem; }
+.air-plane--aerodrome .air-ic { width: 1.375rem; height: 1.375rem; stroke: var(--id-air-halo); stroke-width: 1.4; paint-order: stroke; }
+.air-tag { margin: 0; font: 700 0.6875rem/1 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; color: #fff; white-space: nowrap; text-align: center; text-shadow: -1px -1px 0 var(--id-air-halo), 1px -1px 0 var(--id-air-halo), -1px 1px 0 var(--id-air-halo), 1px 1px 0 var(--id-air-halo), 0 0 3px var(--id-air-halo); }
+.air-tag-wrap { display: flex; justify-content: center; pointer-events: none; }
+
+/* Zonas: doble trazo (halo oscuro de 4 px + línea de color de 2 px), patrón al 30 % sin fondo. */
+.air-halo { stroke: var(--id-air-halo); fill: none; stroke-linejoin: round; stroke-linecap: round; }
+.air-shape--prohibited { stroke: var(--id-air-line-prohibited); }
+.air-shape--restricted { stroke: var(--id-air-line-restricted); }
+.air-shape--danger { stroke: var(--id-air-line-danger); }
+.air-shape--naval { stroke: var(--id-air-line-naval); }
+.air-shape--fir_boundary { stroke: var(--id-air-line-fir); stroke-dasharray: 8 6; fill: none; }
+.air-pat-bg { fill: none; }
+.air-pat-mark { opacity: 0.3; }
+.air-pat--prohibited .air-pat-mark { stroke: var(--sev-critical-text); stroke-width: 1.4; fill: none; }
+.air-pat--restricted .air-pat-mark { stroke: var(--sev-warning-text); stroke-width: 1.4; fill: none; }
 .air-pat--danger .air-pat-mark { fill: var(--sev-advisory-text); stroke: none; }
-.air-pat--naval .air-pat-bg { fill: var(--sev-nominal-bg); }
-.air-pat--naval .air-pat-mark { stroke: var(--sev-nominal-text); stroke-width: 1.2; fill: none; }
+.air-pat--naval .air-pat-mark { stroke: var(--sev-nominal-text); stroke-width: 1.4; fill: none; }
 .air-refpoint { stroke: var(--ac-text); fill: var(--ac-text); }
 .air-circle { stroke: var(--ac-text); stroke-dasharray: 4 4; fill: var(--ac-text); }
 .air-measure-line { stroke: var(--ac-text); stroke-dasharray: 2 6; stroke-linecap: round; }
+
+/* Ficha técnica en tarjetas. Los textos de la fuente salen tal cual (pre-wrap), sin interpretar. */
+.air-fiche-head { display: flex; align-items: center; gap: 0.75rem; padding-bottom: var(--id-sp-1); }
+.air-fiche-icon { display: inline-flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; flex: none; border: 1px solid var(--id-air-edge); border-radius: var(--id-r-control); background: var(--id-air-tile); color: var(--ac-text); }
+.air-fiche-icon .air-ic { width: 1.75rem; height: 1.75rem; }
+.air-fiche-type { margin: 0; font-size: 0.8125rem; font-weight: 700; color: var(--ac-text-secondary); }
 .air-fiche-name { margin: 0; font-size: var(--id-fs-md); font-weight: 700; overflow-wrap: anywhere; }
 .air-flag { margin: 0.4rem 0 0; font-size: var(--id-fs-sm); font-weight: 600; }
-.air-fiche-list { margin: var(--id-sp-1) 0 0; display: grid; gap: 0.5rem; }
-.air-fiche-list dt { font-size: 0.75rem; font-weight: 700; color: var(--ac-text-secondary); }
-.air-fiche-list dd { margin: 0; font-size: var(--id-fs-sm); overflow-wrap: anywhere; }
+.air-fiche-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--id-sp-1); margin: var(--id-sp-1) 0 0; }
+.air-card { padding: 0.55rem 0.7rem; border: 1px solid var(--id-air-edge); border-left-width: 4px; border-radius: var(--id-r-control); background: var(--id-air-tile); min-width: 0; }
+.air-card--wide { grid-column: 1 / -1; }
+.air-card dt { display: flex; align-items: center; gap: 0.4rem; font-size: 0.8125rem; font-weight: 700; color: var(--ac-text-secondary); }
+.air-card dt .air-ic { width: 1.1rem; height: 1.1rem; }
+.air-card-value { margin: 0.25rem 0 0; font-size: var(--id-fs-sm); overflow-wrap: anywhere; }
 .air-pre { white-space: pre-wrap; }
+.air-asis { margin-top: 0.4rem; }
+.air-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.4rem 0 0; }
+.air-chip { padding: 0.1rem 0.6rem; border: 1px solid var(--id-air-edge); border-radius: var(--id-r-pill); background: var(--ac-surface); color: var(--ac-text); font-size: 0.8125rem; font-weight: 600; }
+.air-notam { display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.5rem; padding: 0.35rem 0.8rem; border: 1px solid var(--ac-text); border-radius: var(--id-r-control); color: var(--ac-text); font-size: var(--id-fs-sm); font-weight: 700; text-decoration: none; }
+.air-notam:hover { background: var(--ac-bg); text-decoration: underline; }
 .air-near-title { margin: var(--id-sp-1) 0 0.2rem; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ac-text-secondary); }
 .air-near-list { margin: 0; padding: 0; list-style: none; }
+
+/* Pie: fuente legible (nombre en negrita, licencia, fecha y frescura con símbolo + palabra). */
+.air-source { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.4rem; margin: 0 0 0.4rem; font-size: var(--id-fs-sm); color: var(--ac-text); }
+.air-source strong a { color: var(--ac-text); text-decoration: underline; }
+.air-source-label { color: var(--ac-text-secondary); font-weight: 600; }
+.air-fresh { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0 0.6rem; border: 1px solid var(--sev-nominal-border); border-radius: var(--id-r-pill); background: var(--sev-nominal-bg); color: var(--sev-nominal-text); font-size: 0.8125rem; font-weight: 700; }
+.air-fresh--stale { border-color: var(--sev-warning-border); background: var(--sev-warning-bg); color: var(--sev-warning-text); }
+
 @media (min-width: 992px) {
   .air-layout { grid-template-columns: minmax(16rem, 20rem) minmax(0, 1fr); }
   .air-side { grid-column: 1 / -1; grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -194,4 +299,21 @@
 @media (max-width: 575.98px) {
   .air-layout { --id-air-map-h: 60vh; }
   .air-filters { grid-template-columns: minmax(0, 1fr); }
+  .air-fiche-cards { grid-template-columns: minmax(0, 1fr); }
+  .air-counts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .air-strip, .air-panel, .air-mapcol, .air-side .air-fiche, .air-near-out { padding: var(--id-sp-2); }
 }
+.air-fiche:focus-visible { outline: 3px solid var(--ac-text); outline-offset: 2px; }
+.air-map .leaflet-airHalo-pane { z-index: 399; }
+.air-shape--prohibited.is-selected { fill: var(--id-air-line-prohibited); fill-opacity: 0.12; }
+.air-shape--restricted.is-selected { fill: var(--id-air-line-restricted); fill-opacity: 0.12; }
+.air-shape--danger.is-selected { fill: var(--id-air-line-danger); fill-opacity: 0.12; }
+.air-shape--naval.is-selected { fill: var(--id-air-line-naval); fill-opacity: 0.12; }
+.air-map .leaflet-airAdmin-pane { z-index: 350; }
+.air-swatch--admin { border-color: var(--id-air-admin-line); background: var(--id-air-admin-halo); color: var(--id-air-admin-region); }
+.air-swatch--admin svg { width: 1rem; height: 1rem; }
+.air-admin-tag-wrap { background: none; border: 0; display: flex; justify-content: center; pointer-events: none; }
+.air-admin-tag { color: var(--id-air-admin-line); font: 600 0.75rem/1 system-ui, sans-serif; white-space: nowrap; text-align: center; text-shadow: -1px -1px 0 var(--id-air-admin-halo), 1px -1px 0 var(--id-air-admin-halo), -1px 1px 0 var(--id-air-admin-halo), 1px 1px 0 var(--id-air-admin-halo), 0 0 3px var(--id-air-admin-halo); }
+.air-admin-tag--region { color: var(--id-air-admin-region); font-size: 0.8125rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.air-row-icon--commune, .air-row-icon--region, .air-row-icon--undemarcated { color: var(--ac-text); }
+.air-admin-out .air-near-sec { margin-top: var(--id-sp-1); }
