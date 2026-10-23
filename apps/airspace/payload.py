@@ -16,7 +16,13 @@ from django.utils import timezone
 
 from apps.geo.sections import format_dms
 
-from .models import AirspaceFeature, AirspaceSnapshot
+from .models import (
+    REVIEW_APPROVED,
+    SOURCE_GOOGLE,
+    STATUS_PUBLISHED,
+    AirspaceFeature,
+    AirspaceSnapshot,
+)
 
 # Drawing aids published as zones ("Medida de círculo", "2 NM"): not airspace, never served.
 HIDDEN_KINDS = (AirspaceFeature.KIND_AUX,)
@@ -73,12 +79,19 @@ def near_km():
 
 
 def current_snapshot():
-    return AirspaceSnapshot.objects.filter(is_current=True).first()
+    """The published Google copy: until an AIP copy is approved (LV-361), the screen shows this one."""
+    return AirspaceSnapshot.objects.filter(
+        is_current=True, source_kind=SOURCE_GOOGLE, status=STATUS_PUBLISHED
+    ).first()
 
 
 def active_features():
     """Active (not archived) features of the map, drawing aids excluded."""
-    return AirspaceFeature.objects.filter(is_active=True).exclude(kind__in=HIDDEN_KINDS)
+    return AirspaceFeature.objects.filter(
+        is_active=True,
+        source_kind=SOURCE_GOOGLE,
+        review_status=REVIEW_APPROVED,
+    ).exclude(kind__in=HIDDEN_KINDS)
 
 
 def etag_for(snapshot):
@@ -95,6 +108,23 @@ def etag_matches(header, etag):
         if token == "*" or token.removeprefix("W/").strip('"') == wanted:
             return True
     return False
+
+
+def public_geometry(geometry):
+    """The geometry as the client receives it, coordinates rounded.
+
+    A `GeometryCollection` (a KML `MultiGeometry`: a zone with its label point, as SC-P29) carries
+    its parts in `geometries`, not in `coordinates`. Serving only `coordinates` sent `null`, Leaflet
+    threw while drawing and the whole map stayed dead (LV-363)."""
+    kind = geometry.get("type")
+    if kind == "GeometryCollection":
+        return {
+            "type": kind,
+            "geometries": [
+                public_geometry(g) for g in geometry.get("geometries") or []
+            ],
+        }
+    return {"type": kind, "coordinates": _round(geometry.get("coordinates"))}
 
 
 def feature_payload(feature):
@@ -119,10 +149,7 @@ def feature_payload(feature):
         data["bbox"] = _round(
             [feature.min_lon, feature.min_lat, feature.max_lon, feature.max_lat]
         )
-        data["geometry"] = {
-            "type": feature.geometry.get("type"),
-            "coordinates": _round(feature.geometry.get("coordinates")),
-        }
+        data["geometry"] = public_geometry(feature.geometry)
     url = ifis_url(feature)
     if url:
         data["ifis"] = url
