@@ -11014,3 +11014,336 @@ msgstr "Medida (sin umbral definido)"
 
 msgid "Source: AIP-Chile, DGAC, AMDT NR %(amdt)s (%(date)s), ENR 5.1. For reference only; check the current NOTAM/SUP."
 msgstr "Fuente: AIP-Chile, DGAC, AMDT NR %(amdt)s (%(date)s), ENR 5.1. Referencial; consulte NOTAM/SUP vigentes."
+
+msgid "The vertex order crosses the polygon: correct the order or reject it."
+msgstr "El orden de los vértices cruza el polígono: corrija el orden o rechace la zona."
+
+msgid "Arc centred on a VOR/DME that the text does not give: no geometry."
+msgstr "Arco centrado en un VOR/DME que el texto no entrega: sin geometría."
+
+msgid "Sector defined by magnetic radials: no geometry."
+msgstr "Sector definido por radiales magnéticos: sin geometría."
+
+msgid "Shape the parser does not support: no geometry."
+msgstr "Forma que el lector no admite: sin geometría."
+
+msgid "A vertex could not be read."
+msgstr "No se pudo leer un vértice."
+
+msgid "The polygon is incomplete: it was not proposed."
+msgstr "El polígono está incompleto: no se propuso."
+
+msgid "Fewer than three usable vertices."
+msgstr "Hay menos de tres vértices utilizables."
+
+msgid "Two consecutive vertices are identical."
+msgstr "Dos vértices consecutivos son idénticos."
+
+msgid "The source gives this zone no SC code."
+msgstr "La fuente no le asigna un código SC a esta zona."
+
+msgid "No lateral limits were found."
+msgstr "No se encontraron límites laterales."
+
+msgid "No coordinates were found in the lateral limits."
+msgstr "No se encontraron coordenadas en los límites laterales."
+
+msgid "The circle does not have exactly one centre."
+msgstr "El círculo no tiene exactamente un centro."
+
+msgid "No radius with a recognised unit."
+msgstr "No hay un radio con una unidad reconocida."
+
+msgid "The radius is not a positive number."
+msgstr "El radio no es un número positivo."
+
+msgid "The radius looks implausibly large."
+msgstr "El radio parece demasiado grande."
+
+msgid "The two radius values of the source disagree."
+msgstr "Los dos valores de radio de la fuente no coinciden."
+
+msgid "The unit M was read as metres."
+msgstr "La unidad M se leyó como metros."
+
+msgid "A stray space inside a decimal was joined (source typo)."
+msgstr "Se unió un espacio suelto dentro de un decimal (error de la fuente)."
+
+msgid "A space before the hemisphere letter was ignored."
+msgstr "Se ignoró un espacio antes de la letra del hemisferio."
+
+msgid "A six-digit longitude was read as degrees, minutes, seconds."
+msgstr "Una longitud de seis dígitos se leyó como grados, minutos y segundos."
+
+msgid "A misplaced space was moved (source typo)."
+msgstr "Se corrigió un espacio mal ubicado (error de la fuente)."
+
+msgid "A separator was read as degrees and minutes (source typo)."
+msgstr "Un separador se leyó como grados y minutos (error de la fuente)."
+
+msgid "The same zone appears more than once in the PDF."
+msgstr "La misma zona aparece más de una vez en el PDF."
+
+msgid "Corrected by a person during the review."
+msgstr "Corregida por una persona durante la revisión."
+
+msgid "This snapshot is no longer open for review."
+msgstr "Esta foto ya no está abierta a revisión."
+
+msgid "At most %(max)s vertices are accepted."
+msgstr "Se aceptan como máximo %(max)s vértices."
+
+msgid "Line %(n)s: latitude %(v)s is outside %(lo)s to %(hi)s."
+msgstr "Línea %(n)s: la latitud %(v)s está fuera del rango %(lo)s a %(hi)s."
+
+msgid "Line %(n)s: longitude %(v)s is outside %(lo)s to %(hi)s."
+msgstr "Línea %(n)s: la longitud %(v)s está fuera del rango %(lo)s a %(hi)s."
+
+msgid "A polygon needs at least three different vertices."
+msgstr "Un polígono necesita al menos tres vértices distintos."
+
+msgid "The polygon crosses itself: put the vertices in order around the outline."
+msgstr "El polígono se cruza a sí mismo: ponga los vértices en orden alrededor del contorno."
+
+msgid "Line %(n)s is not a coordinate: use «lat, lon» in decimal degrees (for example -33.4569, -70.6483) or degrees, minutes and seconds."
+msgstr "La línea %(n)s no es una coordenada: use «lat, lon» en grados decimales (por ejemplo -33.4569, -70.6483) o grados, minutos y segundos."
+
+msgid "The polygon of %(code)s crosses itself: correct the vertex order before approving."
+msgstr "El polígono de %(code)s se cruza a sí mismo: corrija el orden de los vértices antes de aprobar."
+
+msgid "%(n)s zone(s) are still unresolved: approve, correct or reject each one."
+msgstr "Quedan %(n)s zona(s) sin resolver: apruebe, corrija o rechace cada una."
+
+msgid "There is no approved zone to publish."
+msgstr "No hay ninguna zona aprobada para publicar."
+
+msgid "Can review, correct and publish AIP airspace snapshots"
+msgstr "Puede revisar, corregir y publicar fotos del espacio aéreo del AIP"
+
+msgid "Vertices (one per line: latitude, longitude)"
+msgstr "Vértices (uno por línea: latitud, longitud)"
+
+msgid "Decimal degrees (-33.4569, -70.6483) or degrees, minutes and seconds. Put them in order around the outline; the polygon must not cross itself."
+msgstr "Grados decimales (-33.4569, -70.6483) o grados, minutos y segundos. Póngalos en orden alrededor del contorno; el polígono no debe cruzarse."
+
+msgid "Lateral limits"
+msgstr "Límites laterales"
+
+msgid "Vertical limits"
+msgstr "Límites verticales"
+
+msgid "Remarks and schedule"
+msgstr "Observaciones y horario"
+
+msgid "Phones, e-mails and names with a title are removed when saving."
+msgstr "Al guardar se eliminan teléfonos, correos y nombres con grado."
+
+msgid "AIP (proposed)"
+msgstr "AIP (propuesta)"
+
+msgid "Google map"
+msgstr "Mapa de Google"
+
+msgid "%(code)s approved."
+msgstr "%(code)s aprobada."
+
+msgid "%(code)s rejected."
+msgstr "%(code)s rechazada."
+
+msgid "Nothing was changed."
+msgstr "No se cambió nada."
+
+msgid "%(code)s corrected. It needs to be approved again."
+msgstr "%(code)s corregida. Hay que aprobarla de nuevo."
+
+msgid "Confirm the bulk approval to continue."
+msgstr "Confirme la aprobación en lote para continuar."
+
+msgid "%(n)s clean zone(s) approved. Zones with a warning still need your eyes one by one."
+msgstr "%(n)s zona(s) limpia(s) aprobada(s). Las zonas con aviso siguen requiriendo una revisión una por una."
+
+msgid "Confirm the publication to continue."
+msgstr "Confirme la publicación para continuar."
+
+msgid "Snapshot AMDT %(amdt)s published: %(n)s approved zone(s) are now the AIP copy."
+msgstr "Foto AMDT %(amdt)s publicada: %(n)s zona(s) aprobada(s) pasan a ser la copia del AIP."
+
+msgid "Review the AIP zones before they replace the reference map."
+msgstr "Revise las zonas del AIP antes de que reemplacen al mapa de referencia."
+
+msgid "AIP airspace review"
+msgstr "Revisión del espacio aéreo del AIP"
+
+msgid "Approve, correct or reject the zones of an imported AIP amendment."
+msgstr "Apruebe, corrija o rechace las zonas de una enmienda del AIP importada."
+
+msgid "Approve the clean zones"
+msgstr "Aprobar las zonas limpias"
+
+msgid "Back to the zones"
+msgstr "Volver a las zonas"
+
+msgid "Confirm: approve these zones"
+msgstr "Confirmar: aprobar estas zonas"
+
+msgid "There are no clean zones left to approve in bulk."
+msgstr "No quedan zonas limpias para aprobar en lote."
+
+msgid "Zones read from the AIP-Chile PDF are proposals. Nothing is drawn for anyone until a person approves it."
+msgstr "Las zonas leídas del PDF del AIP-Chile son propuestas. No se dibuja nada para nadie hasta que una persona lo apruebe."
+
+msgid "No AIP copy has been published yet: the map still shows the Google copy only."
+msgstr "Aún no se publica ninguna copia del AIP: el mapa sigue mostrando solo la copia de Google."
+
+msgid "Amendment"
+msgstr "Enmienda"
+
+msgid "Imported"
+msgstr "Importada"
+
+msgid "Zones"
+msgstr "Zonas"
+
+msgid "No AIP snapshot is waiting for review."
+msgstr "Ninguna foto del AIP está esperando revisión."
+
+msgid "A person with server access imports one with the management command import_aip_enr5; it arrives here as a draft."
+msgstr "Una persona con acceso al servidor importa una con el comando import_aip_enr5; llega aquí como borrador."
+
+msgid "Publish the AIP snapshot"
+msgstr "Publicar la foto del AIP"
+
+msgid "Publishing makes this snapshot the current AIP copy. The previous AIP copy is archived, never deleted, and the Google copy is not touched."
+msgstr "Publicar hace de esta foto la copia vigente del AIP. La copia anterior del AIP se archiva, nunca se borra, y la copia de Google no se toca."
+
+msgid "Confirm: publish"
+msgstr "Confirmar: publicar"
+
+msgid "Publish"
+msgstr "Publicar"
+
+msgid "Filter zones"
+msgstr "Filtrar zonas"
+
+msgid "With a warning"
+msgstr "Con aviso"
+
+msgid "Clean"
+msgstr "Limpias"
+
+msgid "Decided"
+msgstr "Resueltas"
+
+msgid "Page"
+msgstr "Página"
+
+msgid "Warnings"
+msgstr "Avisos"
+
+msgid "Against the Google map"
+msgstr "Frente al mapa de Google"
+
+msgid "carries a warning"
+msgstr "trae un aviso"
+
+msgid "No zone matches this filter."
+msgstr "Ninguna zona coincide con este filtro."
+
+msgid "No discrepancy threshold has been set: distances are shown without a verdict."
+msgstr "No se ha definido un umbral de discrepancia: las distancias se muestran sin veredicto."
+
+msgid "Only in the Google map"
+msgstr "Solo en el mapa de Google"
+
+msgid "These zones are in the Google map but not in this AIP amendment. They are kept as a reference layer; nothing is deleted."
+msgstr "Estas zonas están en el mapa de Google pero no en esta enmienda del AIP. Se conservan como capa de referencia; no se borra nada."
+
+msgid "Next unresolved zone"
+msgstr "Siguiente zona sin resolver"
+
+msgid "Warnings from the reading"
+msgstr "Avisos de la lectura"
+
+msgid "A zone with a warning is approved on its own, after comparing it with the AIP page."
+msgstr "Una zona con aviso se aprueba por separado, después de compararla con la página del AIP."
+
+msgid "Text read from the PDF"
+msgstr "Texto leído del PDF"
+
+msgid "Proposed shape"
+msgstr "Forma propuesta"
+
+msgid "Outline of the proposed zone and of the Google map zone"
+msgstr "Contorno de la zona propuesta y de la zona del mapa de Google"
+
+msgid "AIP (proposed): solid line"
+msgstr "AIP (propuesta): línea continua"
+
+msgid "Google map: dashed line"
+msgstr "Mapa de Google: línea punteada"
+
+msgid "No geometry was proposed."
+msgstr "No se propuso ninguna geometría."
+
+msgid "An arc or a sector depends on a VOR/DME centre that the text does not give. Load the outline by hand from the charts (GEN 2.5 or ENR 4.1), or approve the zone as text only."
+msgstr "Un arco o un sector depende de un centro VOR/DME que el texto no entrega. Cargue el contorno a mano desde las cartas (GEN 2.5 o ENR 4.1) o apruebe la zona solo como texto."
+
+msgid "This outline crosses itself: correct the vertex order before approving."
+msgstr "Este contorno se cruza a sí mismo: corrija el orden de los vértices antes de aprobar."
+
+msgid "No threshold has been set, so this distance carries no verdict."
+msgstr "No se ha definido un umbral, así que esta distancia no lleva veredicto."
+
+msgid "There is no comparison for this zone."
+msgstr "No hay comparación para esta zona."
+
+msgid "Vertices of the proposed outline"
+msgstr "Vértices del contorno propuesto"
+
+msgid "Approve as text only"
+msgstr "Aprobar solo como texto"
+
+msgid "Approving makes this zone part of the AIP copy once the whole snapshot is published. Rejecting keeps the row but never draws it."
+msgstr "Aprobar hace que esta zona forme parte de la copia del AIP cuando se publique la foto completa. Rechazar conserva la fila pero nunca la dibuja."
+
+msgid "Correct"
+msgstr "Corregir"
+
+msgid "Edit the outline or the texts. A corrected zone goes back to be approved again, on its own."
+msgstr "Edite el contorno o los textos. Una zona corregida vuelve a aprobarse, por separado."
+
+msgid "Save correction"
+msgstr "Guardar corrección"
+
+msgid "This snapshot is closed: its zones can be read but not changed."
+msgstr "Esta foto está cerrada: sus zonas se pueden leer pero no cambiar."
+
+msgid "Current AIP copy: AMDT %(amdt)s (%(date)s)."
+msgstr "Copia vigente del AIP: AMDT %(amdt)s (%(date)s)."
+
+msgid "Approve the %(n)s clean zones"
+msgstr "Aprobar las %(n)s zonas limpias"
+
+msgid "%(n)s zone(s) carry a warning (crossing vertex order, a typo fixed by the parser, an arc or a sector). They are approved one at a time."
+msgstr "%(n)s zona(s) traen un aviso (orden de vértices cruzado, un error de tipeo corregido por el lector, un arco o un sector). Se aprueban una por una."
+
+msgid "This snapshot is %(state)s: it can be read but no longer reviewed."
+msgstr "Esta foto está en estado «%(state)s»: se puede leer pero ya no revisar."
+
+msgid "up to %(max)s m (median %(median)s m)"
+msgstr "hasta %(max)s m (mediana %(median)s m)"
+
+msgid "Page %(page)s of the AIP. Contacts were removed; open the AIP page to compare."
+msgstr "Página %(page)s del AIP. Se quitaron los contactos; abra la página del AIP para comparar."
+
+msgid "Farthest vertex %(max)s m from the Google outline; median %(median)s m."
+msgstr "El vértice más lejano está a %(max)s m del contorno de Google; mediana %(median)s m."
+
+msgid "These %(n)s zones were read without any warning and have a geometry. Approving them in bulk is a decision of yours: confirm that you compared a sample with the AIP."
+msgstr "Estas %(n)s zonas se leyeron sin ningún aviso y tienen geometría. Aprobarlas en lote es una decisión suya: confirme que comparó una muestra con el AIP."
+
+msgid "%(n)s zone(s) with a warning stay out: each one is approved on its own."
+msgstr "%(n)s zona(s) con aviso quedan fuera: cada una se aprueba por separado."
+
+msgid "It replaces AMDT %(amdt)s."
+msgstr "Reemplaza a la AMDT %(amdt)s."

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Publish the AIP snapshot" %} - AeroControl{% endblock %}
+{% block content %}
+{% comment %}LV-361 (fase 4): publicar un snapshot del AIP. Sólo con todas las zonas resueltas; la copia de Google queda intacta.{% endcomment %}
+{% translate "AIP airspace review" as page_eyebrow %}
+{% translate "Publish the AIP snapshot" as page_title %}
+<div class="page-header">
+  {% include "generic/_page_header.html" %}
+  <div class="d-flex gap-2"><a class="btn btn-outline-secondary" href="{% url 'airspace-review-snapshot' snapshot.pk %}">{% translate "Back to the zones" %}</a></div>
+</div>
+<div class="card mb-3"><div class="card-body">
+  <dl class="row mb-3">
+    <dt class="col-6 col-md-3">{% translate "Approved" %}</dt><dd class="col-6 col-md-3">{{ counts.approved }}</dd>
+    <dt class="col-6 col-md-3">{% translate "Rejected" %}</dt><dd class="col-6 col-md-3">{{ counts.rejected }}</dd>
+    <dt class="col-6 col-md-3">{% translate "Unresolved" %}</dt><dd class="col-6 col-md-3">{{ counts.unresolved }}</dd>
+  </dl>
+  {% if blockers %}
+  <div class="alert alert-warning" role="alert"><ul class="mb-0">{% for blocker in blockers %}<li>{{ blocker }}</li>{% endfor %}</ul></div>
+  {% else %}
+  <p>{% translate "Publishing makes this snapshot the current AIP copy. The previous AIP copy is archived, never deleted, and the Google copy is not touched." %}</p>
+  {% if current %}<p class="small text-muted">{% blocktranslate with amdt=current.amdt_number %}It replaces AMDT {{ amdt }}.{% endblocktranslate %}</p>{% endif %}
+  <form method="post" class="d-flex gap-2">
+    {% csrf_token %}
+    <input type="hidden" name="confirm" value="yes">
+    <button type="submit" class="btn btn-primary">{% translate "Confirm: publish" %}</button>
+    <a class="btn btn-outline-secondary" href="{% url 'airspace-review-snapshot' snapshot.pk %}">{% translate "Cancel" %}</a>
+  </form>
+  {% endif %}
+</div></div>
+{% endblock %}

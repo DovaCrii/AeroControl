@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "AIP airspace review" %} - AeroControl{% endblock %}
+{% block content %}
+{% comment %}LV-361 (fase 4): lista de snapshots del AIP en borrador o en revisión. Sólo existe para quien tiene `review_airspacesnapshot`. La pantalla del mapa para el usuario final no cambia.{% endcomment %}
+{% translate "Airspace" as page_eyebrow %}
+{% translate "AIP airspace review" as page_title %}
+{% translate "Zones read from the AIP-Chile PDF are proposals. Nothing is drawn for anyone until a person approves it." as page_description %}
+<div class="page-header">
+  {% include "generic/_page_header.html" %}
+  <div class="d-flex gap-2"><a class="btn btn-outline-secondary" href="{% url 'administration' %}">{% translate "Back" %}</a></div>
+</div>
+
+{% if current %}
+<p class="text-muted">{% blocktranslate with amdt=current.amdt_number date=current.effective_date|date:"d-m-Y" %}Current AIP copy: AMDT {{ amdt }} ({{ date }}).{% endblocktranslate %}</p>
+{% else %}
+<p class="text-muted">{% translate "No AIP copy has been published yet: the map still shows the Google copy only." %}</p>
+{% endif %}
+
+{% if rows %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-sm table-hover mb-0">
+      <thead>
+        <tr>
+          <th scope="col">{% translate "Amendment" %}</th>
+          <th scope="col">{% translate "Imported" %}</th>
+          <th scope="col">{% translate "State" %}</th>
+          <th scope="col" class="text-end">{% translate "Zones" %}</th>
+          <th scope="col" class="text-end">{% translate "Approved" %}</th>
+          <th scope="col" class="text-end">{% translate "Rejected" %}</th>
+          <th scope="col" class="text-end">{% translate "Unresolved" %}</th>
+          <th scope="col"><span class="visually-hidden">{% translate "Actions" %}</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>AMDT {{ row.snapshot.amdt_number|default:"?" }}{% if row.snapshot.effective_date %} <span class="text-muted small">({{ row.snapshot.effective_date|date:"d-m-Y" }})</span>{% endif %}</td>
+          <td class="text-muted small">{{ row.snapshot.fetched_at|date:"d-m-Y H:i" }}</td>
+          <td>{{ row.snapshot.get_status_display }}</td>
+          <td class="text-end">{{ row.counts.total }}</td>
+          <td class="text-end">{{ row.counts.approved }}</td>
+          <td class="text-end">{{ row.counts.rejected }}</td>
+          <td class="text-end">{{ row.counts.unresolved }}</td>
+          <td class="text-end"><a class="btn btn-sm btn-primary" href="{% url 'airspace-review-snapshot' row.snapshot.pk %}">{% translate "Review" %}</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card"><div class="card-body">
+  <p class="mb-1"><strong>{% translate "No AIP snapshot is waiting for review." %}</strong></p>
+  <p class="mb-0 text-muted">{% translate "A person with server access imports one with the management command import_aip_enr5; it arrives here as a draft." %}</p>
+</div></div>
+{% endif %}
+{% endblock %}

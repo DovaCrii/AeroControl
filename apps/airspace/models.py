@@ -105,6 +105,15 @@ class AirspaceSnapshot(BaseModel):
         ordering = ["-fetched_at"]
         verbose_name = _("airspace snapshot")
         verbose_name_plural = _("airspace snapshots")
+        # LV-361 phase 4: the person who reviews and publishes an AIP amendment. Not given to any
+        # role by `bootstrap_roles` (only Administrator, which holds every permission): who reviews
+        # each amendment is the person's decision.
+        permissions = [
+            (
+                "review_airspacesnapshot",
+                _("Can review, correct and publish AIP airspace snapshots"),
+            ),
+        ]
         constraints = [
             models.UniqueConstraint(
                 fields=["source_kind"],
