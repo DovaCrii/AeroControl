@@ -93,7 +93,30 @@ cada cosa.{% endcomment %}
       final: leído después de tipear las ocho casillas a mano, llega tarde. Sólo
       en el alta; un permiso que ya existe tiene su selector en la ficha.
       {% endcomment %}
-      {% if "source_plan" in form.fields %}{{ form.source_plan|as_crispy_field }}{% endif %}
+      {% comment %}LV-368 (fase 5): lo geoespacial **dentro** del permiso, para no cambiar de pestaña. Elegir un
+      plan pide al servidor «lo que trae» (htmx, `permission-plan-preview`) y lo muestra aquí mismo con su
+      mini-mapa; **no rellena casillas**: el relleno ocurre al guardar (LV-153, sólo huecos). Y si el KMZ
+      todavía no está subido, se sube sin salir (`geo-plan-import` en un modal; pide `add_geoplan`). El
+      selector aparece en el alta **y** en la edición, y en las dos vincula por la misma función que la
+      ficha. Sin permiso para vincular (`can_pick_plan`) no se dibuja: un selector vacío enseña a
+      desconfiar de la pantalla.{% endcomment %}
+      {% if "source_plan" in form.fields and form.can_pick_plan %}
+      <div class="plan-picker mb-3" data-plan-picker>
+        {{ form.source_plan|as_crispy_field }}
+        <div id="plan-preview" aria-live="polite">
+          <p class="plan-preview-empty">{% if form.can_preview_plan %}{% translate "Choose a plan to see what it brings. The empty boxes will be filled from it when you save; what you typed is never overwritten." %}{% else %}{% translate "The empty boxes will be filled from the chosen plan when you save; what you typed is never overwritten." %}{% endif %}</p>
+        </div>
+        {% if perms.geo.add_geoplan %}
+        <details class="plan-import-details">
+          <summary>{% translate "Upload a new KMZ" %}</summary>
+          <p class="small text-muted mb-2">{% translate "If the plan is not uploaded yet, upload its file here without leaving this form: it is selected as soon as it is created." %}</p>
+          <button type="button" class="btn btn-sm btn-outline-primary"
+                  hx-get="{% url 'geo-plan-import' %}" hx-include="#id_cost_center" hx-target="#modal-content"
+                  data-bs-toggle="modal" data-bs-target="#generic-modal">{% translate "Choose the KMZ file…" %}</button>
+        </details>
+        {% endif %}
+      </div>
+      {% endif %}
       {{ form.location|as_crispy_field }}
       {% comment %}LV-166: lo que el plan provee no se vuelve a pedir. El
       formulario dice **qué** se sacó y **de dónde**, porque una casilla que
@@ -101,10 +124,20 @@ cada cosa.{% endcomment %}
       puerta para el papel de la DGAC: una resolución puede traer otra coordenada
       y tiene más autoridad que lo que se preparó antes de presentar, que es la
       misma razón por la que `fill_location_gaps` rellena sin pisar.{% endcomment %}
-      {% if form.hidden_plan_fields %}
+      {% if form.hidden_plan_fields and form.plan_providing_location %}
       <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
         {% blocktranslate asvar plan_note with folio=form.plan_providing_location.folio count counter=form.hidden_plan_fields|length %}{{ counter }} location box comes from the plan {{ folio }} and is not asked again.{% plural %}{{ counter }} location boxes come from the plan {{ folio }} and are not asked again.{% endblocktranslate %}
         <div class="flex-grow-1">{% include "generic/_signal.html" with kind="note" text=plan_note %}</div>
+        <a class="btn btn-sm btn-outline-secondary" href="?ubicacion=manual">{% translate "Adjust to the DGAC resolution" %}</a>
+      </div>
+      {% elif form.hidden_plan_fields and "source_plan" in form.fields %}
+      {% comment %}LV-368 (fase 5): en el **alta** (y en una edición sin plan) las casillas ocultas no tienen aún de
+      dónde venir: se nombran, con las palabras de la fila —«vendrán del plan»—, para que una casilla que
+      no está no se lea como un campo que falta. La nota anterior decía «vienen del plan {folio}» con el
+      folio **vacío** porque todavía no hay plan.{% endcomment %}
+      <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+        {% blocktranslate asvar will_come with labels=form.hidden_plan_labels|join:", " %}These boxes will come from the plan when you save: {{ labels }}.{% endblocktranslate %}
+        <div class="flex-grow-1">{% include "generic/_signal.html" with kind="note" text=will_come %}</div>
         <a class="btn btn-sm btn-outline-secondary" href="?ubicacion=manual">{% translate "Adjust to the DGAC resolution" %}</a>
       </div>
       {% endif %}
@@ -164,7 +197,23 @@ cada cosa.{% endcomment %}
 </div>
 {% endblock %}
 
+{% block extrahead %}{{ block.super }}
+{% if "source_plan" in form.fields and form.can_pick_plan and form.can_preview_plan %}
+<link rel="stylesheet" href="{% static 'css/geo-mini-map.css' %}">
+<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}"
+      integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H"
+      crossorigin="anonymous">
+{% endif %}
+{% endblock %}
+
 {% block extrascripts %}
+{% if "source_plan" in form.fields and form.can_pick_plan and form.can_preview_plan %}
+<script src="{% static 'vendor/leaflet/leaflet.js' %}"
+        integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH"
+        crossorigin="anonymous"></script>
+<script src="{% static 'js/geo/mini-map.js' %}"></script>
+<script src="{% static 'js/permission-plan-picker.js' %}"></script>
+{% endif %}
 <script defer src="{% static 'js/roster-filter.js' %}"></script>
 <script defer src="{% static 'js/form-draft.js' %}"></script>
 {% endblock %}

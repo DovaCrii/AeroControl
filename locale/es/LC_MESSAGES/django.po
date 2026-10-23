@@ -12161,6 +12161,95 @@ msgstr "Vigencia y documentos"
 msgid "Preflight and flights"
 msgstr "Prevuelo y vuelos"
 
+msgid "Map of the plan area"
+msgstr "Mapa del área del plan"
+
+msgid "The map could not be drawn. The data next to it does not depend on it."
+msgstr ""
+"No se pudo dibujar el mapa. Los datos que lo acompañan no dependen de él."
+
+msgid "Reference only: the dashed line goes to the nearest aerodrome."
+msgstr "Solo referencial: la línea punteada va al aeródromo más cercano."
+
+msgid "What the plan brings"
+msgstr "Lo que trae el plan"
+
+msgid "%(n)s areas: separate them into flight requests."
+msgstr "%(n)s áreas: separar en solicitudes de vuelo."
+
+msgid "This plan has no area that can be read."
+msgstr "Este plan no tiene un área que se pueda leer."
+
+msgid ""
+"Choose a plan to see what it brings. The empty boxes will be filled from it "
+"when you save; what you typed is never overwritten."
+msgstr ""
+"Elija un plan para ver lo que trae. Las casillas vacías se rellenan con él "
+"al guardar; lo que usted escribió nunca se sobrescribe."
+
+msgid ""
+"That plan belongs to cost center %(code)s, not to the one chosen in this "
+"form. A plan can only fill in a permit of its own cost center."
+msgstr ""
+"Ese plan pertenece al centro de costo %(code)s, no al elegido en este "
+"formulario. Un plan solo puede rellenar un permiso de su propio centro de "
+"costo."
+
+msgid "Will come from the plan"
+msgstr "Vendrá del plan"
+
+msgid "Replace the linked plan"
+msgstr "Reemplazar el plan vinculado"
+
+msgid ""
+"On save, the chosen plan replaces the one linked now. The boxes that already"
+" have a value are not overwritten."
+msgstr ""
+"Al guardar, el plan elegido reemplaza al que está vinculado ahora. Las "
+"casillas que ya tienen un valor no se sobrescriben."
+
+msgid "Link a geospatial plan"
+msgstr "Vincular un plan geoespacial"
+
+msgid ""
+"On save, the plan is linked and the boxes you leave empty are filled from "
+"it. Nothing you typed is overwritten."
+msgstr ""
+"Al guardar, el plan se vincula y las casillas que deje vacías se rellenan "
+"con él. Lo que usted escribió no se sobrescribe."
+
+msgid "Plan %(old)s was unlinked: %(new)s replaces it."
+msgstr "El plan %(old)s se desvinculó: lo reemplaza %(new)s."
+
+msgid "Upload a new KMZ"
+msgstr "Subir un KMZ nuevo"
+
+msgid ""
+"Plan %(folio)s was created from the file and is selected in the permit form."
+msgstr ""
+"El plan %(folio)s se creó con el archivo y quedó elegido en el formulario "
+"del permiso."
+
+msgid ""
+"If the plan is not uploaded yet, upload its file here without leaving this "
+"form: it is selected as soon as it is created."
+msgstr ""
+"Si el plan aún no está subido, suba su archivo aquí sin salir de este "
+"formulario: queda elegido apenas se crea."
+
+msgid "Choose the KMZ file…"
+msgstr "Elegir el archivo KMZ…"
+
+msgid "These boxes will come from the plan when you save: %(labels)s."
+msgstr "Estas casillas vendrán del plan al guardar: %(labels)s."
+
+msgid ""
+"The empty boxes will be filled from the chosen plan when you save; what you "
+"typed is never overwritten."
+msgstr ""
+"Las casillas vacías se rellenarán con el plan elegido al guardar; lo que "
+"usted escribió nunca se sobrescribe."
+
 #~ msgid "Credential file"
 #~ msgstr "Credencial adjunta"
 

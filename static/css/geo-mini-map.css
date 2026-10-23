@@ -1,0 +1,26 @@
+/* LV-368 (fase 4): mini-mapa de solo lectura de un plan y la vista previa «lo que trae el plan».
+   Archivo propio, como `airspace.css`: sólo se carga en la ficha y el formulario del permiso, y no suma
+   al techo de peso de `app.css` + `identity.css` (`test_lv328`), que es lo que pesa en todas las páginas.
+   Sólo lee `--ac-*` y `--id-*`; ni un color propio, para que siga el tema claro y el oscuro. */
+.mini-map { margin-top: var(--id-sp-2); border: 1px solid var(--ac-border); border-radius: var(--id-r-card); background: var(--ac-surface); }
+.mini-map > summary { padding: 0.5rem 0.9rem; cursor: pointer; font-weight: 600; font-size: 0.875rem; color: var(--ac-text); }
+.mini-map-body { padding: 0 0.9rem 0.9rem; }
+.mini-map-canvas { height: 16rem; border-radius: var(--id-r-card); border: 1px solid var(--ac-border); background: var(--ac-surface-alt, var(--ac-surface)); }
+.mini-map-note, .mini-map-fallback { margin: 0.4rem 0 0; font-size: 0.8125rem; color: var(--ac-text-secondary); max-width: 65ch; }
+.mini-map-legend { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; margin: 0.4rem 0 0; padding: 0; list-style: none; font-size: 0.8125rem; color: var(--ac-text-secondary); }
+@media (max-width: 575.98px) { .mini-map-canvas { height: 13rem; } }
+
+.plan-preview { margin-top: var(--id-sp-2); padding: var(--id-sp-2) var(--id-sp-3); border: 1px solid var(--ac-border); border-radius: var(--id-r-card); background: var(--ac-surface); color: var(--ac-text); }
+.plan-preview-title { margin: 0 0 0.5rem; font-size: 1rem; font-weight: 700; }
+.plan-preview-empty { margin: var(--id-sp-2) 0 0; font-size: 0.875rem; color: var(--ac-text-secondary); max-width: 65ch; }
+.plan-preview-table { width: 100%; margin: 0; font-size: 0.875rem; }
+.plan-preview-table th { width: 38%; padding: 0.25rem 0.5rem 0.25rem 0; font-weight: 600; color: var(--ac-text-secondary); vertical-align: top; }
+.plan-preview-table td { padding: 0.25rem 0; overflow-wrap: anywhere; }
+.plan-preview-lists { display: grid; gap: 0.25rem 1.5rem; margin: 0.6rem 0 0; grid-template-columns: minmax(0, 1fr); font-size: 0.8125rem; }
+@media (min-width: 576px) { .plan-preview-lists { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.plan-preview-lists h4 { margin: 0 0 0.2rem; font-size: 0.8125rem; font-weight: 600; color: var(--ac-text-secondary); }
+.plan-preview-lists ul { margin: 0; padding-left: 1.1rem; }
+.plan-preview-areas { margin: 0.4rem 0 0; padding-left: 1.1rem; font-size: 0.875rem; }
+.plan-preview-will-fill { margin: 0.5rem 0 0; font-size: 0.8125rem; color: var(--ac-text-secondary); }
+.plan-import-details { margin-top: var(--id-sp-2); }
+.plan-import-details > summary { cursor: pointer; font-size: 0.875rem; font-weight: 600; color: var(--ac-primary); }

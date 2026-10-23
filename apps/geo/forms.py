@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.compliance.forms import ALLOWED_UPLOAD_SIGNATURES
 from apps.compliance.security import scan_uploaded_file
+from apps.core.tenancy import scope_queryset_to_tenant
 from apps.operations.models import FlightPermission
 from apps.registry.models import CostCenter
 
@@ -52,16 +53,25 @@ class GeoPlanImportForm(forms.Form):
     )
     file = forms.FileField(label=_("KMZ/KML file"))
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["cost_center"].queryset = CostCenter.objects.filter(
-            is_active=True
-        ).order_by("code")
-        self.fields["flight_permission"].queryset = (
+        cost_centers = CostCenter.objects.filter(is_active=True).order_by("code")
+        permissions = (
             FlightPermission.objects.filter(is_active=True)
             .select_related("cost_center")
             .order_by("-valid_from")
         )
+        # LV-368 (fase 5): el formulario se abre también desde el permiso, en un modal, y ofrecía
+        # **todas** las faenas y permisos. Con `user` se acota por empresa (F-08): una faena ajena ni
+        # se ofrece, y si se postea a mano queda como «opción no válida». Sin `user` (tests, shell)
+        # no se recorta.
+        if user is not None:
+            cost_centers = scope_queryset_to_tenant(cost_centers, user)
+            permissions = scope_queryset_to_tenant(
+                permissions, user, "cost_center__tenant_id"
+            )
+        self.fields["cost_center"].queryset = cost_centers
+        self.fields["flight_permission"].queryset = permissions
         # Parsed canonical document, stashed by clean_file so the view does not
         # parse the upload a second time.
         self.canonical = None
