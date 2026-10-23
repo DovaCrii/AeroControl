@@ -76,7 +76,8 @@ def _head(html):
 
 
 def _rows(client, **params):
-    return _page(client, **params).context["cx_permits"]["rows"]
+    """Todas las filas (`?all=1`): por omisión la tabla muestra sólo las faenas con problema (LV-367)."""
+    return _page(client, all="1", **params).context["cx_permits"]["rows"]
 
 
 def _codes(rows):
@@ -166,7 +167,7 @@ def test_soon_and_past_are_sortable_columns(sites):
 def test_an_unknown_sort_is_ignored_and_never_reflected(sites, junk):
     client = login_as(VIEW)
     default = _codes(_rows(client))
-    response = _page(client, sort=junk, dir="desc")
+    response = _page(client, all="1", sort=junk, dir="desc")
     assert response.status_code == 200
     assert _codes(response.context["cx_permits"]["rows"]) == default
     html = response.content.decode()
@@ -189,9 +190,11 @@ def test_headers_carry_aria_sort_and_flip_their_link(sites):
     client = login_as(VIEW)
     html = _page(client, sort="days", dir="asc").content.decode()
     head = _head(html)
-    assert head.count("aria-sort=") == 6  # las seis columnas ordenan
+    assert (
+        head.count("aria-sort=") == 3
+    )  # LV-367: tres columnas (Faena, Estado, Próximo vencimiento)
     assert head.count('aria-sort="ascending"') == 1
-    assert head.count('aria-sort="none"') == 5
+    assert head.count('aria-sort="none"') == 2
     # el enlace de la columna ya ordenada pide el sentido contrario, con ruta propia y ancla
     assert f"{reverse(URL)}?sort=days&amp;dir=desc#cx-permits" in head
     assert f"{reverse(URL)}?sort=code&amp;dir=asc#cx-permits" in head
@@ -298,8 +301,8 @@ def test_the_detail_of_a_foreign_site_is_not_reachable_by_choosing_it(sites):
 def test_the_band_boundaries_are_the_kpis_30_and_60(db, days, symbol, tone):
     site = _site("CC1")
     _permit(site, days)
-    html = _page(login_as(VIEW)).content.decode()
-    cell = _permits_block(html).split("<tbody>")[1].split("</tr>")[0].split("<td")[3]
+    html = _page(login_as(VIEW), all="1").content.decode()
+    cell = _permits_block(html).split("<tbody>")[1].split("</tr>")[0].split("<td")[2]
     assert (
         f'<span class="id-chip id-chip--{tone}"><span aria-hidden="true">{symbol}</span>'
         in cell
@@ -311,7 +314,7 @@ def test_the_meter_has_the_scale_and_the_text_carries_the_days(db):
     site = _site("CC1")
     _permit(site, 17)
     _permit(_site("CC2"), 200)
-    html = _page(login_as(VIEW)).content.decode()
+    html = _page(login_as(VIEW), all="1").content.decode()
     assert 'min="0" max="90" low="30" high="60" optimum="90" value="17"' in html
     assert gettext("%(n)s d") % {"n": 17} in html
     # más de 90 días: el valor se acota al máximo del medidor, el texto dice los 200 reales
@@ -339,7 +342,7 @@ def test_the_state_cell_says_what_there_is_with_symbol_and_word(sites):
 
 @pytest.mark.django_db
 def test_the_site_is_a_details_inside_its_cell_with_no_colspan(sites):
-    html = _page(login_as(VIEW)).content.decode()
+    html = _page(login_as(VIEW), all="1").content.decode()
     table = html.split('<table class="table table-sm table-hover mb-0 id-cx-permits">')[
         1
     ].split("</table>")[0]

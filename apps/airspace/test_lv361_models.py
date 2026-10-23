@@ -422,7 +422,9 @@ def test_the_screen_serves_only_approved_features_of_the_current_google_snapshot
     ids = {f["id"] for f in body["features"]}
     assert str(victim.pk) not in ids
     assert str(other.pk) in ids
-    assert "AIP only zone" not in response.content.decode()
+    # Phase 5: an approved zone of a PUBLISHED current AIP copy is now served (see
+    # `test_lv361_aip_layer.py`); the one still pending is not, and the Google copy keeps its place.
+    assert "AIP only zone" in response.content.decode()
     assert "Pending AIP zone" not in response.content.decode()
     assert body["snapshot"]["id"] == str(google.pk)
 

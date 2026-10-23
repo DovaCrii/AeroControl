@@ -1,6 +1,13 @@
 from django.urls import path
 
-from .views import AirspaceData, AirspaceNear, AirspaceOwnLayers, AirspaceTab
+from .views import (
+    AirspaceAdminContains,
+    AirspaceAdminLayer,
+    AirspaceData,
+    AirspaceNear,
+    AirspaceOwnLayers,
+    AirspaceTab,
+)
 
 # Mounted at `environment/airspace/` (config/urls.py). The name `airspace-map` is what
 # `apps/environment/tabs.py` looks for to show the tab.
@@ -9,4 +16,10 @@ urlpatterns = [
     path("data.json", AirspaceData.as_view(), name="airspace-data"),
     path("near/", AirspaceNear.as_view(), name="airspace-near"),
     path("own-layers.json", AirspaceOwnLayers.as_view(), name="airspace-own-layers"),
+    path("admin.json", AirspaceAdminLayer.as_view(), name="airspace-admin"),
+    path(
+        "admin/<str:code>/contains",
+        AirspaceAdminContains.as_view(),
+        name="airspace-admin-contains",
+    ),
 ]

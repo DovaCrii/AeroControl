@@ -13,6 +13,10 @@ class PdfSupportMissing(RuntimeError):
     """pdfplumber is not installed."""
 
 
+class PdfUnreadable(RuntimeError):
+    """The bytes are not a PDF the library can open."""
+
+
 def sha256_of(path):
     """Hex SHA-256 of a file, streamed (idempotence key of the import)."""
     digest = hashlib.sha256()
@@ -29,12 +33,20 @@ def read_pages(source):
     except ImportError as exc:
         raise PdfSupportMissing("pdfplumber is required to read the AIP PDF") from exc
     pages = []
-    with pdfplumber.open(source) as pdf:
-        for page in pdf.pages:
-            pages.append(
-                [
-                    {key: word[key] for key in ("text", "x0", "x1", "top", "bottom")}
-                    for word in page.extract_words()
-                ]
-            )
+    try:
+        with pdfplumber.open(source) as pdf:
+            for page in pdf.pages:
+                pages.append(
+                    [
+                        {
+                            key: word[key]
+                            for key in ("text", "x0", "x1", "top", "bottom")
+                        }
+                        for word in page.extract_words()
+                    ]
+                )
+    except Exception as exc:  # noqa: BLE001 - pdfminer/pdfplumber raise many unrelated types on garbage
+        raise PdfUnreadable(
+            f"The file is not a readable PDF ({type(exc).__name__})."
+        ) from exc
     return pages

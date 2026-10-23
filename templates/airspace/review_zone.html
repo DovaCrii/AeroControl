@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load i18n static %}
+{% block title %}{{ feature.code|default:feature.name }} - {% translate "AIP airspace review" %} - AeroControl{% endblock %}
+{% block extrahead %}{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/airspace-review.css' %}">
+<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}"
+      integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H"
+      crossorigin="anonymous">
+{% endblock %}
+{% block content %}
+{% comment %}LV-361 (fase 4): una zona del AIP lado a lado. A la izquierda lo que se leyó del PDF, ya depurado de contactos; a la derecha la geometría propuesta sobre un mini-mapa de sólo lectura (sin fondo: no hay llamadas externas) y la forma del mapa de Google. Todo lo que viene de la fuente entra por `{{ }}` (escapado) y `json_script`, nunca con `|safe`.{% endcomment %}
+{% translate "AIP airspace review" as page_eyebrow %}
+{% with page_title=feature.code|default:"—"|add:" "|add:feature.name page_description=status %}
+<div class="page-header">
+  {% include "generic/_page_header.html" %}
+  <div class="d-flex gap-2">
+    {% if following %}<a class="btn btn-outline-primary" href="{% url 'airspace-review-zone' snapshot.pk following.pk %}">{% translate "Next unresolved zone" %}</a>{% endif %}
+    <a class="btn btn-outline-secondary" href="{% url 'airspace-review-snapshot' snapshot.pk %}">{% translate "Back to the zones" %}</a>
+  </div>
+</div>
+{% endwith %}
+
+{% if warnings %}
+<section class="alert alert-warning" aria-labelledby="zone-warnings">
+  <h2 id="zone-warnings" class="h6"><span aria-hidden="true">▲</span> {% translate "Warnings from the reading" %}</h2>
+  <ul class="mb-0">{% for label, detail in warnings %}<li>{{ label }}{% if detail %} <code class="small">{{ detail }}</code>{% endif %}</li>{% endfor %}</ul>
+  <p class="small mb-0 mt-2">{% translate "A zone with a warning is approved on its own, after comparing it with the AIP page." %}</p>
+</section>
+{% endif %}
+
+<div class="row g-3 mb-3">
+  <div class="col-lg-6">
+    <section class="card h-100" aria-labelledby="zone-text">
+      <div class="card-body">
+        <h2 id="zone-text" class="h5">{% translate "Text read from the PDF" %}</h2>
+        <p class="text-muted small">{% blocktranslate with page=page_label %}Page {{ page }} of the AIP. Contacts were removed; open the AIP page to compare.{% endblocktranslate %}</p>
+        <dl class="mb-0">
+          <dt>{% translate "Lateral limits" %}</dt><dd class="air-review-pre">{{ feature.lateral_text|default:"—" }}</dd>
+          <dt>{% translate "Vertical limits" %}</dt><dd class="air-review-pre">{{ feature.vertical_limits_text|default:"—" }}</dd>
+          <dt>{% translate "Remarks and schedule" %}</dt><dd class="air-review-pre">{{ feature.schedule_text|default:"—" }}</dd>
+          <dt>{% translate "Method" %}</dt><dd>{{ feature.get_geometry_method_display|default:"—" }}</dd>
+        </dl>
+      </div>
+    </section>
+  </div>
+  <div class="col-lg-6">
+    <section class="card h-100" aria-labelledby="zone-shape">
+      <div class="card-body">
+        <h2 id="zone-shape" class="h5">{% translate "Proposed shape" %}</h2>
+        {% if has_geometry %}
+        <div id="air-review-map" class="air-review-map" role="img" aria-label="{% translate 'Outline of the proposed zone and of the Google map zone' %}"></div>
+        <ul class="air-review-legend small list-unstyled">
+          <li><span class="air-review-swatch air-review-swatch--aip" aria-hidden="true"></span> {% translate "AIP (proposed): solid line" %}</li>
+          {% if google %}<li><span class="air-review-swatch air-review-swatch--google" aria-hidden="true"></span> {% translate "Google map: dashed line" %}</li>{% endif %}
+        </ul>
+        {% else %}
+        <p class="air-review-empty"><strong>{% translate "No geometry was proposed." %}</strong> {% translate "An arc or a sector depends on a VOR/DME centre that the text does not give. Load the outline by hand from the charts (GEN 2.5 or ENR 4.1), or approve the zone as text only." %}</p>
+        {% endif %}
+        {% if crosses %}<p class="text-danger small"><span aria-hidden="true">▲</span> {% translate "This outline crosses itself: correct the vertex order before approving." %}</p>{% endif %}
+        <h3 class="h6 mt-3">{% translate "Against the Google map" %}</h3>
+        {% if check %}
+        <p class="small mb-1">{% if check.max_vertex_m is not None %}{% blocktranslate with max=check.max_vertex_m median=check.median_m %}Farthest vertex {{ max }} m from the Google outline; median {{ median }} m.{% endblocktranslate %}{% else %}{{ check.get_result_display }}.{% endif %}</p>
+        {% if check.result == "measured" and check.max_vertex_m is not None %}<p class="small text-muted mb-1">{% translate "No threshold has been set, so this distance carries no verdict." %}</p>{% elif check.result == "discrepancy" or check.result == "match" %}<p class="small mb-1">{{ check.get_result_display }}</p>{% endif %}
+        {% else %}<p class="small text-muted mb-1">{% translate "There is no comparison for this zone." %}</p>{% endif %}
+        {% if vertices %}
+        <details class="small mt-2">
+          <summary>{% translate "Vertices of the proposed outline" %}</summary>
+          <ol class="font-monospace mb-0">{% for v in vertices %}<li>{{ v.lat }}, {{ v.lon }}</li>{% endfor %}</ol>
+        </details>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+</div>
+
+{% if open %}
+<section class="card mb-3" aria-labelledby="zone-actions">
+  <div class="card-body">
+    <h2 id="zone-actions" class="h5">{% translate "Decision" %}</h2>
+    <form method="post" class="d-flex flex-wrap gap-2">
+      {% csrf_token %}
+      <button type="submit" name="action" value="approve" class="btn btn-success"{% if crosses %} disabled{% endif %}>{% if has_geometry %}{% translate "Approve" %}{% else %}{% translate "Approve as text only" %}{% endif %}</button>
+      <button type="submit" name="action" value="reject" class="btn btn-outline-danger">{% translate "Reject" %}</button>
+    </form>
+    <p class="small text-muted mt-2 mb-0">{% translate "Approving makes this zone part of the AIP copy once the whole snapshot is published. Rejecting keeps the row but never draws it." %}</p>
+  </div>
+</section>
+
+<section class="card mb-4" aria-labelledby="zone-correct">
+  <div class="card-body">
+    <h2 id="zone-correct" class="h5">{% translate "Correct" %}</h2>
+    <p class="small text-muted">{% translate "Edit the outline or the texts. A corrected zone goes back to be approved again, on its own." %}</p>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="action" value="correct">
+      {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+      {% for field in form %}
+      <div class="mb-3">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+        {% for error in field.errors %}<div class="text-danger small" role="alert">{{ error }}</div>{% endfor %}
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-primary">{% translate "Save correction" %}</button>
+    </form>
+  </div>
+</section>
+{% else %}
+<p class="text-muted">{% translate "This snapshot is closed: its zones can be read but not changed." %}</p>
+{% endif %}
+{{ map_data|json_script:"air-review-data" }}
+{% endblock %}
+{% block extrascripts %}{{ block.super }}
+{% if has_geometry %}
+<script src="{% static 'vendor/leaflet/leaflet.js' %}"
+        integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH"
+        crossorigin="anonymous"></script>
+<script src="{% static 'js/airspace-review-map.js' %}"></script>
+{% endif %}
+{% endblock %}

@@ -8,6 +8,12 @@ urlpatterns = [
     path("can-i-fly/", views.CanIFlyView.as_view(), name="can-i-fly"),
     # Permission
     path("permissions/", views.FlightPermissionList.as_view(), name="permission-list"),
+    # LV-368 (fase 4): «lo que trae el plan», el fragmento de la vista previa del formulario.
+    path(
+        "permissions/plan-preview/",
+        views.PermissionPlanPreview.as_view(),
+        name="permission-plan-preview",
+    ),
     path(
         "permissions/new/",
         views.FlightPermissionCreate.as_view(),

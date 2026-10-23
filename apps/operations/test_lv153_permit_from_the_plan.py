@@ -177,7 +177,10 @@ class TestTheCreateFormOffersTheAlreadyUploadedPlans:
 
         assert not form.fields["source_plan"].queryset.exists()
 
-    def test_the_edit_form_does_not_offer_it(self, cost_center):
+    def test_the_edit_form_offers_it_too_since_lv368(self, cost_center):
+        # LV-153 lo sacaba de la edición porque la ficha tenía su selector; LV-368 (fase 5) lo trae de
+        # vuelta **sin segunda puerta** (la vista vincula por la función de la ficha). Ver
+        # `test_lv368_plan_in_the_permit_form.py`.
         permission = FlightPermission.objects.create(
             cost_center=cost_center,
             purpose="photogrammetry",
@@ -185,10 +188,11 @@ class TestTheCreateFormOffersTheAlreadyUploadedPlans:
             valid_from=TODAY,
             valid_until=TODAY + timezone.timedelta(days=30),
         )
+        plan = _plan(cost_center, [("Quebrada", LAT, LON, 30)])
 
-        assert (
-            "source_plan" not in FlightPermissionUpdateForm(instance=permission).fields
-        )
+        form = FlightPermissionUpdateForm(instance=permission)
+
+        assert list(form.fields["source_plan"].queryset) == [plan]
 
 
 @pytest.mark.django_db

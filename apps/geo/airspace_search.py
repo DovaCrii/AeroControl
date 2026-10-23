@@ -245,3 +245,24 @@ def search_index(query, entries, limit=20):
             results.append({"entry": entry, "score": score})
     results.sort(key=lambda r: (-r["score"], normalize_text(r["entry"].get("name"))))
     return {"query": parsed, "results": results[:limit]}
+
+
+ADMIN_ID_PREFIX = "admin:"
+
+
+def admin_entries(index):
+    """Las comunas y regiones del padrón de `administrative_layer.search_index()` como entradas de
+    búsqueda (LV-367, fase 7): `id` con prefijo `admin:`, sin código (el código BCN no es algo que se
+    escriba) y el resto tal cual. `airspace-search.js` tiene el mismo `adminEntries`; los dos corren los
+    mismos casos en `apps/airspace/test_lv367_admin_search.py`."""
+    return [
+        {
+            "id": ADMIN_ID_PREFIX + str(item["code"]),
+            "code": "",
+            "name": item["name"],
+            "kind": item["kind"],
+            "region": item.get("region") or "",
+            "bbox": item["bbox"],
+        }
+        for item in index
+    ]

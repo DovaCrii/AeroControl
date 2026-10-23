@@ -1,0 +1,14 @@
+{% load i18n %}{% comment %}LV-368 (fase 4): el fragmento que `permission-plan-preview` devuelve al elegir un plan en el formulario del
+permiso. **No rellena casillas**: el relleno ocurre al guardar (LV-153, `fill_location_gaps`, que sólo llena
+huecos); esto sólo muestra lo que el plan traerá. Cuatro estados: sin plan elegido, plan de otro centro de
+costo que el del formulario, y la lectura.{% endcomment %}
+{% if not reading and not mismatch %}
+<p class="plan-preview-empty">{% translate "Choose a plan to see what it brings. The empty boxes will be filled from it when you save; what you typed is never overwritten." %}</p>
+{% elif mismatch %}
+<div class="plan-preview">{% blocktranslate asvar mismatch_note with code=mismatch.code %}That plan belongs to cost center {{ code }}, not to the one chosen in this form. A plan can only fill in a permit of its own cost center.{% endblocktranslate %}{% include "generic/_signal.html" with kind="warn" text=mismatch_note %}</div>
+{% else %}
+<div class="plan-preview">
+  <h3 class="plan-preview-title">{% translate "What the plan brings" %} · {{ reading.plan.folio }}</h3>
+  {% include "operations/_plan_reading.html" with compact=True %}
+</div>
+{% endif %}

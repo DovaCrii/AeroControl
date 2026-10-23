@@ -1544,6 +1544,7 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         from django.contrib.auth.models import User
 
+        from apps.airspace.models import AirspaceSnapshot
         from apps.compliance.models import AlertRule, DocumentType
         from apps.core.models import (
             AuditEvent,
@@ -1608,6 +1609,25 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
                         "qualificationtype-list",
                         QualificationType,
                         icon="tag",
+                    ),
+                ],
+            },
+            {
+                # LV-361 (phase 4): the human review of the zones read from the AIP.
+                "title": _("Airspace"),
+                "description": _(
+                    "Review the AIP zones before they replace the reference map."
+                ),
+                "items": [
+                    self.item(
+                        _("AIP airspace review"),
+                        _(
+                            "Approve, correct or reject the zones of an imported AIP amendment."
+                        ),
+                        "airspace-review-list",
+                        AirspaceSnapshot,
+                        icon="document",
+                        permission="airspace.review_airspacesnapshot",
                     ),
                 ],
             },
@@ -1784,14 +1804,28 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
             "size": manifest.get("size"),
         }
 
-    def item(self, title, description, url_name, model, icon, read_only=False):
+    def item(
+        self,
+        title,
+        description,
+        url_name,
+        model,
+        icon,
+        read_only=False,
+        permission=None,
+    ):
         """One row of the administration list.
 
         `icon` names a symbol in the sprite at the top of the template. Every
         row used to draw the same cog, which meant the icons carried no
         information and only added noise to nine near-identical rows.
+
+        `permission` replaces the model's `view_*` when the destination asks for
+        another one (LV-361: reviewing AIP zones is `review_airspacesnapshot`).
         """
-        permission = f"{model._meta.app_label}.view_{model._meta.model_name}"
+        permission = (
+            permission or f"{model._meta.app_label}.view_{model._meta.model_name}"
+        )
         if (
             not self.request.user.has_perm(permission)
             and not self.request.user.is_superuser

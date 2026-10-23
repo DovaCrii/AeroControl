@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Approve the clean zones" %} - AeroControl{% endblock %}
+{% block content %}
+{% comment %}LV-361 (fase 4): confirmación de la aprobación en lote. Sólo entran las zonas limpias (sin aviso, con geometría y sin tocar); las que traen aviso se aprueban una por una.{% endcomment %}
+{% translate "AIP airspace review" as page_eyebrow %}
+{% translate "Approve the clean zones" as page_title %}
+<div class="page-header">
+  {% include "generic/_page_header.html" %}
+  <div class="d-flex gap-2"><a class="btn btn-outline-secondary" href="{% url 'airspace-review-snapshot' snapshot.pk %}">{% translate "Back to the zones" %}</a></div>
+</div>
+{% if open and zones %}
+<div class="card mb-3"><div class="card-body">
+  <p>{% blocktranslate with n=zones|length %}These {{ n }} zones were read without any warning and have a geometry. Approving them in bulk is a decision of yours: confirm that you compared a sample with the AIP.{% endblocktranslate %}</p>
+  <p class="font-monospace small">{% for zone in zones %}{{ zone.code|default:zone.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+  <p class="small text-muted">{% blocktranslate with n=counts.flagged_unresolved %}{{ n }} zone(s) with a warning stay out: each one is approved on its own.{% endblocktranslate %}</p>
+  <form method="post" class="d-flex gap-2">
+    {% csrf_token %}
+    <input type="hidden" name="confirm" value="yes">
+    <button type="submit" class="btn btn-primary">{% translate "Confirm: approve these zones" %}</button>
+    <a class="btn btn-outline-secondary" href="{% url 'airspace-review-snapshot' snapshot.pk %}">{% translate "Cancel" %}</a>
+  </form>
+</div></div>
+{% else %}
+<p class="text-muted">{% translate "There are no clean zones left to approve in bulk." %}</p>
+{% endif %}
+{% endblock %}

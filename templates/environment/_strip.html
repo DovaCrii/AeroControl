@@ -1,4 +1,4 @@
-{% load i18n %}{% comment %}LV-358 (E2): la franja «Entorno hoy» del panel. Un fragmento htmx (`/environment/strip/`) que reemplaza a las dos tarjetas de `env-row`. Son HECHOS con su nivel (● ▲ ◆): nunca dice si se puede volar. Cada celda se dibuja sólo si la persona tiene el permiso de su fuente y el interruptor está encendido (`cells`); la celda de espacio aéreo (E3) cruza zonas y permisos vigentes con la cifra de la «Situación del día» y enlaza al mapa (`airspace-map`). El icono es de condición y de día/noche, SIN animación; la escena animada del cielo vive en la pestaña Tiempo. Todo texto de la ciudad va escapado por la plantilla (nunca `|safe`). `state="error"` es el estado que `weather-card.js` pone si la petición falla.{% endcomment %}
+{% load i18n static gnss_charts %}{% comment %}LV-358 (E2) y LV-367 (fase 2): la franja «Entorno hoy» del panel. Un fragmento htmx (`/environment/strip/`) con TRES tarjetas, una por fuente (tiempo, centelleo GNSS, espacio aéreo), cada una con un filete izquierdo del color de SU nivel y su cifra grande. Son HECHOS con su nivel (● ▲ ◆): nunca dice si se puede volar. Cada tarjeta se dibuja sólo si la persona tiene el permiso de su fuente y el interruptor está encendido (`cells`). El nivel «Info» no lleva chip (no hay nada que advertir): el chip aparece sólo en ▲ y ◆, y el filete lleva el color siempre. La banda de 24 h del centelleo es SVG de servidor (`gnss_day_band`), sin JS y sin `style=""`. El icono del tiempo es de condición y de día/noche, SIN animación; la escena animada vive en la pestaña Tiempo. Todo texto de la ciudad va escapado por la plantilla (nunca `|safe`). `state="error"` es el estado que `weather-card.js` pone si la petición falla.{% endcomment %}
 {% if state == "error" %}
 <section id="env-strip" class="env-strip env-strip--note" aria-labelledby="env-strip-title">
   <h2 id="env-strip-title" class="env-title">{% translate "Environment today" %}</h2>
@@ -15,15 +15,15 @@
   </header>
   <div class="env-strip-cells">
     {% if weather %}
-    <div class="env-cell env-cell--weather">
+    <div class="env-cell env-cell--weather env-cell--{% if weather.event %}{{ weather.event.level }}{% else %}info{% endif %}">
       <h3 class="env-cell-title">{% translate "Weather" %}</h3>
       {% if weather.state == "ok" %}
-      <p class="env-cell-now"><span aria-hidden="true">{% include "weather/_icons.html" with slug=weather.slug night=weather.is_night size="sm" label=weather.condition %}</span><b class="env-cell-temp"><span class="visually-hidden">{% translate "Now" %}: </span>{% if weather.temp is not None %}{{ weather.temp }}°{% else %}–{% endif %}</b> <span class="env-cell-cond">{{ weather.condition }}{% if weather.feels is not None %} · {% blocktranslate with value=weather.feels %}Feels like {{ value }}°{% endblocktranslate %}{% endif %}</span></p>
+      <p class="env-cell-now"><span class="env-cell-ico" aria-hidden="true">{% include "weather/_icons.html" with slug=weather.slug night=weather.is_night size="sm" label=weather.condition %}</span><b class="env-cell-temp"><span class="visually-hidden">{% translate "Now" %}: </span>{% if weather.temp is not None %}{{ weather.temp }}°{% else %}–{% endif %}</b> <span class="env-cell-cond">{{ weather.condition }}{% if weather.feels is not None %} · {% blocktranslate with value=weather.feels %}Feels like {{ value }}°{% endblocktranslate %}{% endif %}</span></p>
       {% with event=weather.event %}
       {% if event %}
       <p class="env-cell-line"><span class="env-lvl env-lvl--{{ event.level }}"><span aria-hidden="true">{{ event.symbol }}</span> {{ event.level_label }}</span> <b>{{ event.label }}</b>{% if event.start %} <span class="env-cell-when">{{ event.start|date:"D H:i" }}</span>{% endif %}{% if weather.more_events %} <span class="env-cell-more">{% blocktranslate count counter=weather.more_events %}+{{ counter }} more event{% plural %}+{{ counter }} more events{% endblocktranslate %}</span>{% endif %}</p>
       {% else %}
-      <p class="env-cell-line"><span class="env-lvl env-lvl--{{ weather.line.level }}"><span aria-hidden="true">{{ weather.line.symbol }}</span> {{ weather.line.level_label }}</span> <span>{{ weather.line.text }}</span></p>
+      <p class="env-cell-line env-cell-calm"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons-ui.svg' %}#icon-check"/></svg><span>{{ weather.line.text }}</span></p>
       {% endif %}
       {% endwith %}
       {% elif weather.state == "nocity" %}
@@ -35,15 +35,21 @@
     </div>
     {% endif %}
     {% if gnss %}
-    <div class="env-cell env-cell--gnss">
-      <h3 class="env-cell-title">{% translate "GNSS scintillation" %}</h3>
-      <p class="env-cell-line"><span class="env-lvl env-lvl--{{ gnss.level }}"><span aria-hidden="true">{{ gnss.symbol }}</span> {{ gnss.level_label }}</span> <span>{{ gnss.text }}</span></p>
+    <div class="env-cell env-cell--gnss env-cell--{{ gnss.level }}">
+      <header class="env-cell-head"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons-ui.svg' %}#icon-satellite"/></svg><h3 class="env-cell-title">{% translate "GNSS scintillation" %}</h3></header>
+      <p class="env-cell-line">{% if gnss.level != "info" %}<span class="env-lvl env-lvl--{{ gnss.level }}"><span aria-hidden="true">{{ gnss.symbol }}</span> {{ gnss.level_label }}</span> {% endif %}<span>{{ gnss.text }}</span></p>
+      {% if gnss_day %}
+      {% gnss_day_band gnss_day "env-gx-strip" %}
+      <p class="env-cell-more">{% if gnss_day.window_label %}{% blocktranslate with window=gnss_day.window_label %}Typical window: {{ window }}{% endblocktranslate %}{% else %}{% translate "No typical window in the next 24 hours" %}{% endif %}</p>
+      {% endif %}
     </div>
     {% endif %}
     {% if airspace %}
-    <div class="env-cell env-cell--airspace">
-      <h3 class="env-cell-title">{% translate "Airspace" %}</h3>
-      <p class="env-cell-line"><span class="env-lvl env-lvl--{{ airspace.line.level }}"><span aria-hidden="true">{{ airspace.line.symbol }}</span> {{ airspace.line.level_label }}</span> <span>{{ airspace.line.text }}</span> <a class="env-strip-link" href="{{ airspace.url }}">{% translate "Open the map" %} <span aria-hidden="true">→</span></a></p>
+    <div class="env-cell env-cell--airspace env-cell--{{ airspace.line.level }}">
+      <header class="env-cell-head"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons-ui.svg' %}#icon-zone"/></svg><h3 class="env-cell-title">{% translate "Airspace" %}</h3></header>
+      {% if airspace.fact.state == "ok" and airspace.fact.sites %}<p class="env-cell-big" aria-hidden="true">{{ airspace.fact.count }}</p>{% endif %}
+      <p class="env-cell-line">{% if airspace.line.level != "info" %}<span class="env-lvl env-lvl--{{ airspace.line.level }}"><span aria-hidden="true">{{ airspace.line.symbol }}</span> {{ airspace.line.level_label }}</span> {% endif %}<span>{{ airspace.line.text }}</span></p>
+      <p class="env-cell-line"><a class="env-strip-link" href="{{ airspace.url }}">{% translate "Open the map" %} <span aria-hidden="true">→</span></a></p>
     </div>
     {% endif %}
   </div>

@@ -18,6 +18,7 @@ Principles (see docs of LV-361):
 Warnings are strings `"<code>: <message>"`; `warning_codes()` lists the codes.
 """
 
+import datetime
 import math
 import re
 from dataclasses import dataclass, field
@@ -229,7 +230,9 @@ _PHONE_LABEL = re.compile(
     r"(?i)\b(fono|fonos|tel|tels|telf|telefono|tel[eé]fono|telefonos|tel[eé]fonos|cel|celular|"
     r"phone|fax|anexo|ph)\b\.?\s*[:\-]?\s*\+?\d[\d\s().\-/]*\d"
 )
-_PHONE_BARE = re.compile(r"(?<![\w.,/+\-])\d(?:[ \-]?\d){8,}(?![\w.,])")
+_PHONE_BARE = re.compile(
+    r"(?<![\w.,/+\-])(?:\d(?:[ \-]?\d){8,}(?!\w|[.,]\d)|\d{7,8}(?!\w|-|[.,]\d))"
+)
 _TITLED_NAME = re.compile(
     r"\b(?:Sr\.?|Sra\.?|Srta\.?|Cte\.?|Cdte\.?|Cmdte\.?|Cap\.?|Capit[aá]n|Mayor|Teniente|Tte\.?|"
     r"Cnel\.?|Coronel|Gral\.?|General|Sargento|Sgto\.?|Don|Do[nñ]a)\s+"
@@ -682,6 +685,7 @@ class RawBlock:
     col1: list = field(default_factory=list)
     col2: list = field(default_factory=list)
     col3: list = field(default_factory=list)
+    page: int = 0  # 1-based page of the code line (the printed page is ENR 5.1-<page>)
 
 
 def _lines_of(words):
@@ -768,7 +772,7 @@ def blocks_from_words(pages):
         for page, top, column, text in entries
         if column == 0 and (_START_CODE.match(text) or _START_NO_CODE.match(text))
     ]
-    blocks = [RawBlock() for _ in starts]
+    blocks = [RawBlock(page=page + 1) for page, _top in starts]
     for page, top, column, text in entries:
         # Columns 2 and 3 may sit a hair above the code line of their own row.
         owner = -1
@@ -785,5 +789,58 @@ def blocks_from_words(pages):
 
 def parse_enr51_words(pages):
     """(zones, summary) from pages of words. Idempotent: same words, same output."""
-    zones = [parse_zone(b.col1, b.col2, b.col3) for b in blocks_from_words(pages)]
+    zones = []
+    for block in blocks_from_words(pages):
+        zone = parse_zone(block.col1, block.col2, block.col3)
+        zone["page"] = block.page
+        zones.append(zone)
     return zones, summarize(zones)
+
+
+# --------------------------------------------------------------------------
+# Amendment (every page carries its own "AMDT NR n" and date)
+# --------------------------------------------------------------------------
+
+_AMDT = re.compile(r"\bAMDT\s+NR\s+(\d{1,3})\b", re.I)
+_AMDT_DATE = re.compile(r"\b(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})\b")
+_MONTHS = {
+    **{
+        m: i
+        for i, m in enumerate(
+            "JAN FEB MAR APR MAY JUN JUL AUG SEP OCT NOV DEC".split(), 1
+        )
+    },
+    "ENE": 1,
+    "ABR": 4,
+    "AGO": 8,
+    "DIC": 12,
+}
+
+
+def extract_amendment(pages):
+    """(amdt_number, date) of the newest amendment printed on the pages, or ("", None).
+
+    Each page carries its own amendment (a 2026 AIP still has pages of AMDT 44 or 49), so the
+    amendment of the document is the highest number found, with the date printed beside it.
+    """
+    best = None
+    for words in pages:
+        amdt = date = None
+        for _top, text in _lines_of(_clean_words(words)):
+            match = _AMDT.search(text)
+            if match and amdt is None:
+                amdt = int(match.group(1))
+            for day, mon, year in _AMDT_DATE.findall(text):
+                month = _MONTHS.get(mon.upper())
+                if month and date is None:
+                    try:
+                        date = datetime.date(int(year), month, int(day))
+                    except ValueError:
+                        date = None
+        if (
+            amdt is not None
+            and date is not None
+            and (best is None or (amdt, date) > best)
+        ):
+            best = (amdt, date)
+    return (str(best[0]), best[1]) if best else ("", None)
