@@ -120,6 +120,10 @@ def build_catastro(user, filters=None):
     operators = _base(Operator.objects.all(), filters, user).select_related(
         "cost_center"
     )
+    # LV-369: quien salió de la empresa se ve en los registros y su historial,
+    # pero el catastro es lo activo: ni «incluir archivados» lo devuelve (ese
+    # filtro es para fichas archivadas por error o duplicadas).
+    operators = operators.filter(left_company_on__isnull=True)
 
     filtered_by_cost_center = filters.cost_center is not None
     if filtered_by_cost_center:

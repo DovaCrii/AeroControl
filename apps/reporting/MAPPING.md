@@ -267,6 +267,8 @@ que nadie lea de más. **La cifra sólo queda estable cuando el informe se
 congela** (`R5`): un `ReportRun` dibuja su payload guardado y ya no depende de
 esta consulta.
 
+**LV-369 — salir de la empresa sí se reconstruye.** Para quien tiene `Operator.left_company_on` se sabe *cuándo* se fue, así que el padrón al corte es exacto en el borde: **salió después del corte → cuenta** (estaba ese día); **salió en el corte o antes → no cuenta**. Se lee la fecha y no `is_active` (`registry.selectors.operational_roster(as_of)`, que `panel_readiness` llama con el corte). Para todo lo que no tiene fecha de salida —los datos que ya existen, y un archivado a secas— la salida es la de siempre: la tabla de arriba sigue valiendo. **Diferencia hoy-vs-corte, deliberada:** el panel y el catastro de hoy no muestran a un ex colaborador (la fecha de salida nunca es futura), y el informe de un mes en que aún estaba, sí. Pruebas de borde (antes, en y después del corte) en `apps/reporting/test_lv369_departure_and_the_cutoff.py`.
+
 **Cómo medirlo en la VM antes y después de desplegar** — el número tiene que
 bajar de 42 a 41, y si no baja es que `created_at` refleja la fecha de carga
 masiva y no la del hecho:

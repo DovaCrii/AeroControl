@@ -16,6 +16,7 @@ from django.utils import timezone
 from .models import (
     Aircraft,
     CostCenter,
+    KnowledgeAssessment,
     Operator,
     Qualification,
     ResourceMovementLog,
@@ -81,9 +82,48 @@ def operational_fleet():
     )
 
 
-def operational_roster():
-    """El padrón sobre el que se miden las credenciales DGAC."""
-    return Operator.objects.filter(is_active=True)
+def operational_roster(as_of=None):
+    """El padrón sobre el que se miden las credenciales DGAC.
+
+    Sin `as_of`: el padrón **de hoy** (activos). Con `as_of` (el corte de un
+    informe, LV-369): además de los activos, quien **salió después** del corte
+    —estaba en la empresa ese día—, y no quien salió antes o **en** el corte. Se
+    lee `left_company_on` y no `is_active`: el informe mensual describe una fecha,
+    y archivar a alguien hoy no debe sacarlo de un mes que ya pasó cuando se sabe
+    cuándo se fue. Para los datos sin salida registrada todo queda como estaba.
+
+    ⚠️ La diferencia hoy-vs-corte es deliberada: el catastro y el panel de hoy no
+    muestran a un ex colaborador, y el informe de un mes en que aún estaba, sí.
+    """
+    if as_of is None:
+        return Operator.objects.filter(is_active=True)
+    return Operator.objects.filter(
+        Q(is_active=True, left_company_on__isnull=True) | Q(left_company_on__gt=as_of)
+    )
+
+
+def without_departed(queryset):
+    """Quita de un queryset lo que cuelga de alguien que **salió de la empresa**.
+
+    LV-369: lo usan el motor de alertas y las listas de vencimientos. Entiende
+    `Operator`, lo que lleva un `operator` (habilitaciones, pruebas) y los
+    documentos cuyo sujeto es una persona. Cualquier otro modelo vuelve intacto.
+    """
+    from django.contrib.contenttypes.models import ContentType
+
+    model = queryset.model
+    if model is Operator:
+        return queryset.filter(left_company_on__isnull=True)
+    if model in (Qualification, KnowledgeAssessment):
+        return queryset.filter(operator__left_company_on__isnull=True)
+    if model._meta.label == "compliance.Document":
+        return queryset.exclude(
+            content_type=ContentType.objects.get_for_model(Operator),
+            object_id__in=Operator.objects.filter(left_company_on__isnull=False).values(
+                "pk"
+            ),
+        )
+    return queryset
 
 
 def filter_by_insurance(queryset, key, today):

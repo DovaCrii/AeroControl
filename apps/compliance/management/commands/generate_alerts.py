@@ -13,6 +13,7 @@ from apps.compliance.watchables import (
     watchable_fields,
 )
 from apps.core.jobs import record_job_run
+from apps.registry.selectors import without_departed
 
 logger = logging.getLogger("compliance.alerts")
 
@@ -151,7 +152,10 @@ class Command(BaseCommand):
                 continue
             content_type = ContentType.objects.get_for_model(model)
             field = rule.field_to_watch
-            records = model.objects.filter(is_active=True)
+            # LV-369: lo que cuelga de alguien que salió de la empresa (su ficha,
+            # sus habilitaciones, sus pruebas, sus documentos) no se vigila: el
+            # vencimiento de quien ya no trabaja aquí no es trabajo de nadie.
+            records = without_departed(model.objects.filter(is_active=True))
             # LV-113: fuera los registros que ya no operan, **en las dos ramas**.
             #
             # `LV-90` documentó este defecto y lo corrigió sólo en la rama de

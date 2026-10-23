@@ -45,6 +45,7 @@ from apps.registry.models import (
     Operator,
     Qualification,
 )
+from apps.registry.selectors import without_departed
 
 
 def resolved_alert_keys(candidates=None):
@@ -247,11 +248,16 @@ def upcoming_expirations(today, cutoff, cost_center=None, user=None):
         item["subject_kind"] = EXPIRATION_SUBJECT_TONES[model]
         items.append(item)
 
-    quals = Qualification.objects.filter(
-        is_active=True,
-        expiry_date__lte=cutoff,
-        # LV-146: `operator__cost_center` en el `select_related`, o leer la faena
-        # de cada fila costaría una consulta por fila.
+    # LV-369: `without_departed` en las fuentes que cuelgan de una persona. Quien
+    # salió de la empresa no deja vencimientos que atender; el motor de alertas
+    # aplica la misma exclusión, así que el panel y la bandeja no discrepan.
+    quals = without_departed(
+        Qualification.objects.filter(
+            is_active=True,
+            expiry_date__lte=cutoff,
+            # LV-146: `operator__cost_center` en el `select_related`, o leer la faena
+            # de cada fila costaría una consulta por fila.
+        )
     ).select_related("operator__cost_center", "qualification_type")
     if cost_center:
         quals = quals.filter(operator__cost_center=cost_center)
@@ -271,8 +277,8 @@ def upcoming_expirations(today, cutoff, cost_center=None, user=None):
 
     # LV-29: the DGAC vigencias join the same window -- a lapsing credential or
     # JAC insurance is exactly what "upcoming expirations" is for.
-    credentials = Operator.objects.filter(
-        is_active=True, credential_expiry__lte=cutoff
+    credentials = without_departed(
+        Operator.objects.filter(is_active=True, credential_expiry__lte=cutoff)
     ).select_related("cost_center")
     if cost_center:
         credentials = credentials.filter(cost_center=cost_center)
@@ -317,7 +323,9 @@ def upcoming_expirations(today, cutoff, cost_center=None, user=None):
     # que nadie ve venir no sirve para eso. Sólo la **última** de cada operador:
     # los intentos anteriores son historial, y su vencimiento ya no es trabajo.
     assessments = (
-        KnowledgeAssessment.objects.filter(is_active=True, expires_on__lte=cutoff)
+        without_departed(
+            KnowledgeAssessment.objects.filter(is_active=True, expires_on__lte=cutoff)
+        )
         .select_related("operator__cost_center")
         .order_by("operator_id", "-taken_at")
     )
@@ -341,11 +349,13 @@ def upcoming_expirations(today, cutoff, cost_center=None, user=None):
             },
         )
 
-    document_qs = Document.objects.filter(
-        is_active=True,
-        is_current_version=True,
-        expiry_date__isnull=False,
-        expiry_date__lte=cutoff,
+    document_qs = without_departed(
+        Document.objects.filter(
+            is_active=True,
+            is_current_version=True,
+            expiry_date__isnull=False,
+            expiry_date__lte=cutoff,
+        )
     ).select_related("doc_type")
     # LV-146: los documentos **pasan a respetar el filtro por faena**. El
     # docstring de esta función decía que iban siempre "porque cuelgan de una
