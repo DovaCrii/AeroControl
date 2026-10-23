@@ -802,3 +802,39 @@ class TestPrivacy:
 
         assert "'=1+1" in body
         assert ",=1+1" not in body
+
+
+@pytest.mark.django_db
+class TestTheRosterIsWhatIsActive:
+    """El catastro es lo activo: quien salió queda en los registros, no en el catastro."""
+
+    def test_someone_who_left_is_not_in_the_roster_even_when_archived_are_included(
+        self, operator, center
+    ):
+        from django.contrib.auth import get_user_model
+
+        from apps.registry.catastro import CatastroFilters, build_catastro
+
+        root = get_user_model().objects.create_superuser("root", "root@test.com", "pw")
+        duplicate = Operator.objects.create(
+            employee_id="RUT-161616160",
+            full_name="Ficha duplicada",
+            cost_center=center,
+            is_active=False,
+        )
+        operator.register_departure(
+            left_on=timezone.localdate(), reason="resignation", user=root
+        )
+
+        default = build_catastro(root)
+        with_archived = build_catastro(root, CatastroFilters(include_archived=True))
+
+        def names(roster):
+            return {row.full_name for row in roster["operators"]}
+
+        assert operator.full_name not in names(default)
+        assert operator.full_name not in names(with_archived)
+        # lo archivado por error o duplicado sí vuelve con «incluir archivados»
+        assert duplicate.full_name in names(with_archived)
+        operator.refresh_from_db()
+        assert operator.left_company_on is not None  # sigue en los registros
