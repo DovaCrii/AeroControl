@@ -1,27 +1,52 @@
 {% extends "environment/_section.html" %}
-{% load i18n %}
-{% comment %}LV-358: pestaña Centelleo. EXPLICA (qué es, la temporada de la fuente, la ventana de hoy y el supuesto que es nuestro); el estado vivo sale de la cabecera común, no se repite acá. Referencia ESTADÍSTICA tomada de GEOCOM (centelleo.geocom.cl, con el área de desarrollo de Trimble): no mide, no lee datos en vivo y no se cruza con permisos ni faenas.{% endcomment %}
+{% load i18n static gnss_charts %}
+{% comment %}LV-358 y LV-367 (fase 3): pestaña Centelleo como infografía. Es una REFERENCIA ESTADÍSTICA tomada de GEOCOM (centelleo.geocom.cl, con el área de desarrollo de Trimble): no mide, no lee datos en vivo y no se cruza con permisos ni faenas. Cinco bloques: (1) la línea de 24 h en pistas (noche, ventana típica, hora pico y «ahora»; SVG de servidor con `role="img"`, título y descripción, y las mismas cifras escritas al lado); (2) el calendario de temporada de 12 casillas y la regla de años; (3) el aviso de que NO hay escala de intensidad: la fuente no publica ningún índice y aquí no se inventa ninguno; (4) el glosario con iconos; (5) el pie de fuente. Las horas 21:00 a 03:00 y la hora pico son interpretación NUESTRA y se dice en el texto.{% endcomment %}
 {% block env_tab %}
-{% with card=env_summary.gnss %}
-<section class="env-panel" aria-labelledby="env-gnss-what">
-  <h2 id="env-gnss-what" class="env-title">{% translate "What it is" %}</h2>
-  <p>{% translate "Scintillation is a disturbance of satellite signals as they cross the ionosphere. It can degrade high-precision positioning: RTK and PPK may lose the fixed solution or gain error, mostly at night." %}</p>
-</section>
-
-<section class="env-panel" aria-labelledby="env-gnss-season">
-  <h2 id="env-gnss-season" class="env-title">{% translate "Season" %}</h2>
-  <p>{% blocktranslate with months=gnss_season first=gnss_year_from last=gnss_year_to %}The source indicates {{ months }}, with a peak in 2025 and effects until 2028. This screen covers {{ first }} to {{ last }}.{% endblocktranslate %}</p>
-</section>
-
+{% with card=env_summary.gnss day=gnss_day %}
 <section class="env-panel" aria-labelledby="env-gnss-window">
   <h2 id="env-gnss-window" class="env-title">{% translate "Tonight's window" %}</h2>
   {% with line=env_summary.gnss_line %}{% if line %}<p class="env-cell-line">{% if line.level != "info" %}<span class="env-lvl env-lvl--{{ line.level }}"><span aria-hidden="true">{{ line.symbol }}</span> {{ line.level_label }}</span> {% endif %}<b>{{ line.text }}</b></p>{% endif %}{% endwith %}
+  {% gnss_day_chart day "env-gx-day" %}
+  <dl class="id-gx-facts">
+    {% if day.night_label %}<div><dt>{% translate "Night" %}</dt><dd>{{ day.night_label }}</dd></div>{% endif %}
+    <div><dt>{% translate "Typical window" %}</dt><dd>{% if day.window_label %}{{ day.window_label }}{% else %}{% translate "None in the next 24 hours" %}{% endif %}</dd></div>
+    {% if day.peak %}<div><dt>{% translate "Peak hour (our interpretation)" %}</dt><dd>{{ day.peak_label }}</dd></div>{% endif %}
+    <div><dt>{% translate "Now" %}</dt><dd>{{ day.now_label }}</dd></div>
+  </dl>
   {% if card.sunset and card.dusk %}
   <p>{% blocktranslate with sunset=card.sunset dusk=card.dusk city=card.sunset_city %}Sunset {{ sunset }} · nightfall {{ dusk }} (per the forecast for {{ city }}){% endblocktranslate %}</p>
   {% else %}
   <p>{% blocktranslate with start=card.night_start end=card.night_end %}Fixed hours: {{ start }} to {{ end }}.{% endblocktranslate %}</p>
   {% endif %}
   <p class="env-assume">{% blocktranslate with start=card.night_start end=card.night_end %}The {{ start }} to {{ end }} hours are our interpretation of "near midnight". The source only says night, September to April, with a peak in 2025 and effects until 2028.{% endblocktranslate %}</p>
+</section>
+
+<section class="env-panel" aria-labelledby="env-gnss-season">
+  <h2 id="env-gnss-season" class="env-title">{% translate "Season" %}</h2>
+  <p>{% blocktranslate with months=gnss_season first=gnss_year_from last=gnss_year_to %}The source indicates {{ months }}, with a peak in 2025 and effects until 2028. This screen covers {{ first }} to {{ last }}.{% endblocktranslate %}</p>
+  <ol class="id-gx-months" aria-label="{% translate 'Months of the season' %}">
+    {% for m in gnss_months %}<li class="id-gx-month{% if m.active %} is-on{% endif %}{% if m.current %} is-now{% endif %}"><span class="id-gx-month-sym" aria-hidden="true">{% if m.active %}●{% else %}○{% endif %}</span> <span class="id-gx-month-name">{{ m.name }}</span><span class="visually-hidden">: {% if m.active %}{% translate "in the season" %}{% else %}{% translate "outside the season" %}{% endif %}</span>{% if m.current %} <b class="id-gx-today">{% translate "today" %}</b>{% endif %}</li>{% endfor %}
+  </ol>
+  <ol class="id-gx-years" aria-label="{% translate 'Years covered' %}">
+    {% for y in gnss_years %}<li class="id-gx-year{% if y.current %} is-now{% endif %}"><b>{{ y.year }}</b>{% if y.peak %} <span>{% blocktranslate with year=y.year %}Peak {{ year }} (according to the source){% endblocktranslate %}</span>{% endif %}{% if y.end %} <span>{% blocktranslate with year=y.year %}Effects until {{ year }}{% endblocktranslate %}</span>{% endif %}{% if y.current %} <span class="id-gx-today">{% translate "this year" %}</span>{% endif %}</li>{% endfor %}
+  </ol>
+</section>
+
+<section class="env-panel" aria-labelledby="env-gnss-scale">
+  <h2 id="env-gnss-scale" class="env-title">{% translate "What this screen does not show" %}</h2>
+  <p class="env-gnss-noscale"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons-ui.svg' %}#icon-info"/></svg> <b>{% translate "No measurement: statistical reference from the GEOCOM criterion." %}</b> {% translate "It shows when scintillation is typical, never how strong it is: the source publishes no intensity scale." %}</p>
+</section>
+
+<section class="env-panel" aria-labelledby="env-gnss-what">
+  <h2 id="env-gnss-what" class="env-title">{% translate "What it is" %}</h2>
+  <p>{% translate "Scintillation is a disturbance of satellite signals as they cross the ionosphere. It can degrade high-precision positioning: RTK and PPK may lose the fixed solution or gain error, mostly at night." %}</p>
+  <dl class="id-gx-glossary">
+    <div><dt><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons-ui.svg' %}#icon-satellite"/></svg>{% translate "Scintillation" %}</dt><dd>{% translate "Fast changes in the strength and phase of a satellite signal after crossing the ionosphere." %}</dd></div>
+    <div><dt><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons-ui.svg' %}#icon-check"/></svg>{% translate "RTK and PPK" %}</dt><dd>{% translate "High-precision positioning methods that need a fixed solution, which scintillation can break." %}</dd></div>
+    <div><dt><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons-ui.svg' %}#icon-moon"/></svg>{% translate "Night" %}</dt><dd>{% translate "From sunset to sunrise, per the forecast for your city." %}</dd></div>
+    <div><dt><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons-ui.svg' %}#icon-clock"/></svg>{% translate "Typical window" %}</dt><dd>{% translate "The hours when scintillation is usually higher, from the criterion of the source." %}</dd></div>
+    <div><dt><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons-ui.svg' %}#icon-info"/></svg>{% translate "Our interpretation" %}</dt><dd>{% translate "The exact hours and the peak hour are ours: the source only says night, near midnight." %}</dd></div>
+  </dl>
 </section>
 
 <footer class="env-foot">

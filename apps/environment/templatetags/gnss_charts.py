@@ -86,6 +86,105 @@ def render_day_band(day, uid):
     return "".join(parts)
 
 
+def describe_full(day):
+    """`(título, descripción)` de la línea completa: noche, ventana, hora pico y «ahora»."""
+    title = _("Night and typical scintillation window over 24 hours")
+    parts = []
+    if day["night_label"]:
+        parts.append(_("Night: %(night)s.") % {"night": day["night_label"]})
+    if day["window_label"]:
+        parts.append(_("Typical window: %(window)s.") % {"window": day["window_label"]})
+        if day["peak"]:
+            parts.append(
+                _("Peak hour: %(peak)s (our interpretation).")
+                % {"peak": day["peak_label"]}
+            )
+    else:
+        parts.append(_("No typical window in these 24 hours."))
+    parts.append(
+        _("The marker is the current time, %(now)s.") % {"now": day["now_label"]}
+    )
+    parts.append(_("Statistical reference, not a measurement."))
+    return title, " ".join(str(p) for p in parts)
+
+
+# Geometría de la línea completa (unidades del viewBox): rótulo, pista, rótulo, pista, hora pico y eje.
+NIGHT_LABEL_Y, NIGHT_Y = 12, 18
+WINDOW_LABEL_Y, WINDOW_Y = 50, 56
+TRACK_H = 14
+PEAK_LABEL_Y, AXIS_Y, CHART_H = 90, 106, 112
+
+
+def render_day_chart(day, uid):
+    """La línea de 24 horas en pistas separadas: «Noche», «Ventana típica», hora pico y «ahora».
+
+    Sin pronóstico no hay pista de noche (no se inventa); fuera de temporada no hay ventana ni hora pico.
+    Cada pista lleva su rótulo escrito encima, y la ventana va con trama además de color.
+    """
+    uid = escape(uid)
+    title, desc = describe_full(day)
+    parts = [
+        f'<svg class="id-gx-svg id-gx-svg--full" width="{WIDTH}" height="{CHART_H}" '
+        f'viewBox="0 0 {WIDTH} {CHART_H}" role="img" aria-labelledby="{uid}-t {uid}-d" '
+        f'focusable="false">'
+        f'<title id="{uid}-t">{escape(title)}</title>'
+        f'<desc id="{uid}-d">{escape(desc)}</desc>',
+        f'<defs><pattern id="{uid}-h" width="6" height="6" patternUnits="userSpaceOnUse" '
+        f'patternTransform="rotate(45)"><line class="id-gx-hatch" x1="0" y1="0" x2="0" y2="6" '
+        f'stroke-width="2.5"/></pattern></defs>',
+    ]
+    if day["night_label"]:
+        parts.append(
+            f'<text class="id-gx-label" x="0" y="{NIGHT_LABEL_Y}">{escape(_("Night"))}</text>'
+            f'<rect class="id-gx-track" x="0.5" y="{NIGHT_Y}" width="{WIDTH - 1}" height="{TRACK_H}" rx="4"/>'
+        )
+        for x0, x1 in day["night"]:
+            parts.append(
+                f'<rect class="id-gx-night" x="{_n(_x(x0))}" y="{NIGHT_Y}" '
+                f'width="{_n(_x(x1 - x0))}" height="{TRACK_H}"/>'
+            )
+    parts.append(
+        f'<text class="id-gx-label" x="0" y="{WINDOW_LABEL_Y}">{escape(_("Typical window"))}</text>'
+        f'<rect class="id-gx-track" x="0.5" y="{WINDOW_Y}" width="{WIDTH - 1}" height="{TRACK_H}" rx="4"/>'
+    )
+    for x0, x1 in day["window"]:
+        parts.append(
+            f'<rect class="id-gx-win" x="{_n(_x(x0))}" y="{WINDOW_Y}" width="{_n(_x(x1 - x0))}" '
+            f'height="{TRACK_H}" fill="url(#{uid}-h)"/>'
+        )
+    for fraction in day["peak"]:
+        px = _x(fraction)
+        # El rótulo mide ~240 unidades: cerca de un borde se ancla hacia adentro para no salirse.
+        anchor = "start" if px < 120 else "end" if px > WIDTH - 120 else "middle"
+        parts.append(
+            f'<line class="id-gx-peak" x1="{_n(px)}" y1="{WINDOW_Y}" x2="{_n(px)}" '
+            f'y2="{PEAK_LABEL_Y - 12}" stroke-width="1.5" stroke-dasharray="3 2"/>'
+            f'<text class="id-gx-label id-gx-label--peak" x="{_n(px)}" y="{PEAK_LABEL_Y}" '
+            f'text-anchor="{anchor}">{escape(day["peak_label"])} · {escape(_("peak hour (our interpretation)"))}</text>'
+        )
+    now_x = _x(day["now"])
+    top = NIGHT_Y - 4 if day["night_label"] else WINDOW_Y - 4
+    parts.append(
+        f'<line class="id-gx-now" x1="{_n(now_x)}" y1="{top}" x2="{_n(now_x)}" '
+        f'y2="{WINDOW_Y + TRACK_H + 2}" stroke-width="2"/>'
+        f'<circle class="id-gx-now-dot" cx="{_n(now_x)}" cy="{top}" r="3"/>'
+    )
+    last = len(day["ticks"]) - 1
+    for index, (fraction, label) in enumerate(day["ticks"]):
+        anchor = "start" if index == 0 else "end" if index == last else "middle"
+        parts.append(
+            f'<text class="id-gx-tick" x="{_n(_x(fraction))}" y="{AXIS_Y}" '
+            f'text-anchor="{anchor}">{escape(label)}</text>'
+        )
+    parts.append("</svg>")
+    return "".join(parts)
+
+
 @register.simple_tag
 def gnss_day_band(day, uid):
     return mark_safe(render_day_band(day, uid))  # nosec B308 B703
+
+
+@register.simple_tag
+def gnss_day_chart(day, uid):
+    return mark_safe(render_day_chart(day, uid))  # nosec B308 B703

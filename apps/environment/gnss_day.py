@@ -19,6 +19,7 @@ from datetime import timezone as dt_timezone
 from zoneinfo import ZoneInfo
 
 from django.conf import settings
+from django.utils.dates import MONTHS_3
 
 from apps.weather import gnss
 
@@ -71,7 +72,7 @@ def day_geometry(now, sunsets=None, sunrises=None, params=None):
 
     first = begin_local.date() - timedelta(days=1)
     last = finish.astimezone(zone).date()
-    night, peak = [], []
+    night, peak, night_labels = [], [], {}
     day = first
     while day <= last:
         sunset, sunrise = sunsets.get(day), sunrises.get(day + timedelta(days=1))
@@ -79,6 +80,7 @@ def day_geometry(now, sunsets=None, sunrises=None, params=None):
             clipped = _clip(sunset, sunrise, begin, finish)
             if clipped:
                 night.append(clipped)
+                night_labels[f"{_label(sunset)} - {_label(sunrise)}"] = None
         moment = gnss._local(zone, day, params.peak_hour)
         x = (_utc(moment) - begin) / SPAN
         if 0 <= x < 1 and any(lo <= x < hi for lo, hi in window):
@@ -103,4 +105,49 @@ def day_geometry(now, sunsets=None, sunrises=None, params=None):
         "peak": peak,
         "ticks": ticks,
         "window_label": ", ".join(labels),
+        "night_label": ", ".join(night_labels),
+        "peak_label": f"{params.peak_hour:02d}:00",
+    }
+
+
+# «Máximo en 2025» es un dato de la fuente (GEOCOM), no un parámetro: se escribe una vez y se cita como tal.
+SOURCE_PEAK_YEAR = 2025
+
+
+def season_geometry(now, params=None):
+    """El calendario de temporada: 12 casillas en orden de temporada y la regla de años de la fuente.
+
+    Las casillas arrancan en el primer mes de la racha (septiembre) para que lo relleno quede contiguo;
+    con todos los meses (o ninguno) se ordena de enero a diciembre. `year_from`/`year_to` y los meses
+    salen de `GNSS_SCINT_*`; el año de máximo es el de la fuente (`SOURCE_PEAK_YEAR`). No hay ninguna
+    intensidad: sólo qué meses y qué años cubre la referencia.
+    """
+    params = params or gnss.params_from_settings()
+    local = now.astimezone(ZoneInfo(settings.TIME_ZONE))
+    months = params.months
+    start = next(
+        (m for m in sorted(months) if (m - 2) % 12 + 1 not in months),
+        1,
+    )
+    order = [(start - 1 + index) % 12 + 1 for index in range(12)]
+    return {
+        "months": [
+            {
+                "month": m,
+                "name": MONTHS_3[m],
+                "active": m in months,
+                "current": m == local.month,
+            }
+            for m in order
+        ],
+        "years": [
+            {
+                "year": year,
+                "peak": year == SOURCE_PEAK_YEAR,
+                "end": year == params.year_to,
+                "current": year == local.year,
+            }
+            for year in range(params.year_from, params.year_to + 1)
+        ],
+        "current_active": local.month in months,
     }
