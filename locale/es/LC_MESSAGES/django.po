@@ -10926,3 +10926,59 @@ msgstr "Fuente de los datos"
 #: templates/environment/airspace_tab.html
 msgid "%(days)s days old"
 msgstr "%(days)s días de antigüedad"
+
+#: apps/airspace/views.py
+msgid "Administrative boundaries"
+msgstr "Límites administrativos"
+
+#: apps/airspace/views.py
+msgid "Loading the administrative boundaries"
+msgstr "Cargando los límites administrativos"
+
+#: apps/airspace/views.py
+msgid "The administrative boundaries could not be loaded. Try again."
+msgstr "No se pudieron cargar los límites administrativos. Vuelva a intentarlo."
+
+#: apps/airspace/views.py
+msgid "Inside {name}"
+msgstr "Dentro de {name}"
+
+#: apps/airspace/views.py
+msgid "{n} communes"
+msgstr "{n} comunas"
+
+#: apps/airspace/views.py
+msgid "Zones inside"
+msgstr "Zonas dentro"
+
+#: apps/airspace/views.py
+msgid "Zones that touch it"
+msgstr "Zonas que lo tocan"
+
+#: apps/airspace/views.py
+msgid "Aerodromes inside"
+msgstr "Aeródromos dentro"
+
+#: apps/airspace/views.py
+msgid "Referential, BCN source, within about 111 m."
+msgstr "Referencial, fuente BCN: unos 111 m de margen."
+
+#: apps/airspace/views.py
+msgid "{zones} zones and {aerodromes} aerodromes in {name}"
+msgstr "{zones} zonas y {aerodromes} aeródromos en {name}"
+
+#: apps/airspace/views.py
+msgid "Undemarcated zone"
+msgstr "Zona sin demarcar"
+
+#: templates/environment/airspace_tab.html
+msgid "Administrative"
+msgstr "Administrativo"
+
+#: templates/environment/airspace_tab.html
+msgid "Communes and regions, BCN source (referential). Cities are not available: communes are offered instead."
+msgstr "Comunas y regiones, fuente BCN (referencial). No hay ciudades: se ofrecen comunas en su lugar."
+
+#: templates/environment/airspace_tab.html
+msgid "Administrative area"
+msgstr "Área administrativa"

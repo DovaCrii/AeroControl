@@ -93,6 +93,27 @@ def ui_strings():
         "siteWord": _("Site"),
         "permitWord": _("Permit"),
         "validUntil": _("valid until {date}"),
+        "layerAdmin": _("Administrative boundaries"),
+        "adminLoading": _("Loading the administrative boundaries"),
+        "adminFailed": _(
+            "The administrative boundaries could not be loaded. Try again."
+        ),
+        "adminInside": _("Inside {name}"),
+        "adminCommunes": _("{n} communes"),
+        "adminContained": _("Zones inside"),
+        "adminTouching": _("Zones that touch it"),
+        "adminAerodromes": _("Aerodromes inside"),
+        "adminReferential": _("Referential, BCN source, within about 111 m."),
+        "adminSummary": _("{zones} zones and {aerodromes} aerodromes in {name}"),
+    }
+
+
+def admin_kind_labels():
+    """The labels of the administrative search types (communes, regions and the BCN undemarcated zone)."""
+    return {
+        "commune": _("Commune"),
+        "region": _("Region"),
+        "undemarcated": _("Undemarcated zone"),
     }
 
 
@@ -114,14 +135,22 @@ def own_layers_for(user):
 
 
 def tab_config(reference, own_layers=()):
+    kinds = kind_labels()
+    kinds.update({key: str(label) for key, label in admin_kind_labels().items()})
     return {
         "ownLayers": list(own_layers),
         "dataUrl": reverse("airspace-data"),
         "nearUrl": reverse("airspace-near"),
+        # The administrative layer (LV-367): it is fetched only when the person switches it on.
+        # `{code}` is replaced by the script. The search index travels here (names and frames, no
+        # geometry) so communes and regions can be searched with the layer off.
+        "adminUrl": reverse("airspace-admin"),
+        "adminContainsUrl": reverse("airspace-admin-contains", args=["__code__"]),
+        "adminIndex": administrative_layer.search_index(),
         "nearKm": near_km(),
         "tileProviders": settings.GEO_TILE_PROVIDERS,
         "reference": reference,
-        "kinds": kind_labels(),
+        "kinds": kinds,
         "i18n": ui_strings(),
     }
 

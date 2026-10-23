@@ -22,6 +22,11 @@
   --id-air-line-naval: #b9a8ff;
   --id-air-line-fir: #e6edf6;
   --id-air-dot: #e6edf6;
+  /* Capa administrativa (LV-367, fase 7): comuna = línea blanca de 1 px sobre un halo oscuro; región
+     = realce ámbar. Fijos y no del tema, como el resto del mapa; el script los lee de acá. */
+  --id-air-admin-line: #ffffff;
+  --id-air-admin-halo: #0b1220;
+  --id-air-admin-region: #ffd166;
   --id-air-edge: var(--id-edge, #7d8aa0);
   --id-air-tile: var(--id-tile, #f7f9fc);
 }
@@ -304,3 +309,11 @@
 .air-shape--restricted.is-selected { fill: var(--id-air-line-restricted); fill-opacity: 0.12; }
 .air-shape--danger.is-selected { fill: var(--id-air-line-danger); fill-opacity: 0.12; }
 .air-shape--naval.is-selected { fill: var(--id-air-line-naval); fill-opacity: 0.12; }
+.air-map .leaflet-airAdmin-pane { z-index: 350; }
+.air-swatch--admin { border-color: var(--id-air-admin-line); background: var(--id-air-admin-halo); color: var(--id-air-admin-region); }
+.air-swatch--admin svg { width: 1rem; height: 1rem; }
+.air-admin-tag-wrap { background: none; border: 0; display: flex; justify-content: center; pointer-events: none; }
+.air-admin-tag { color: var(--id-air-admin-line); font: 600 0.75rem/1 system-ui, sans-serif; white-space: nowrap; text-align: center; text-shadow: -1px -1px 0 var(--id-air-admin-halo), 1px -1px 0 var(--id-air-admin-halo), -1px 1px 0 var(--id-air-admin-halo), 1px 1px 0 var(--id-air-admin-halo), 0 0 3px var(--id-air-admin-halo); }
+.air-admin-tag--region { color: var(--id-air-admin-region); font-size: 0.8125rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.air-row-icon--commune, .air-row-icon--region, .air-row-icon--undemarcated { color: var(--ac-text); }
+.air-admin-out .air-near-sec { margin-top: var(--id-sp-1); }

@@ -82,6 +82,12 @@ La advertencia «Referencial» es la ÚNICA de la sección (`_referential.html`,
         <h3 class="air-legend-head">{% translate "Aeronautical" %}</h3>
         <div id="air-legend-items" class="air-legend-items"></div>
       </div>
+      <div class="air-legend-group" id="air-legend-admin-group">
+        <h3 class="air-legend-head">{% translate "Administrative" %}</h3>
+        <div id="air-legend-admin" class="air-legend-items"></div>
+        <button type="button" class="air-tool" id="air-admin-retry" hidden>{% translate "Retry" %}</button>
+        <p class="air-help">{% translate "Communes and regions, BCN source (referential). Cities are not available: communes are offered instead." %}</p>
+      </div>
       <div class="air-legend-group" id="air-legend-own-group" hidden>
         <h3 class="air-legend-head">{% translate "My layers (off by default)" %}</h3>
         <div id="air-legend-own" class="air-legend-items"></div>
@@ -99,6 +105,14 @@ La advertencia «Referencial» es la ÚNICA de la sección (`_referential.html`,
       <p id="air-copy-status" class="visually-hidden" role="status"></p>
       <div id="air-near-lists"></div>
     </div>
+    <section id="air-admin-out" class="air-near-out air-admin-out" aria-labelledby="air-admin-title" hidden>
+      <h2 id="air-admin-title" class="env-title">{% translate "Administrative area" %}</h2>
+      <p id="air-admin-name" class="air-fiche-name"></p>
+      <p id="air-admin-status" class="air-help" role="status" aria-live="polite"></p>
+      <p id="air-admin-note" class="air-help"></p>
+      <button type="button" class="air-tool" id="air-admin-contains-retry" hidden>{% translate "Retry" %}</button>
+      <div id="air-admin-lists"></div>
+    </section>
     <article id="air-fiche" class="air-fiche" aria-live="polite" tabindex="0" aria-labelledby="air-fiche-title">
       <h2 id="air-fiche-title" class="env-title">{% translate "Technical sheet" %}</h2>
       <p id="air-fiche-empty" class="air-help">{% translate "Choose a result or click a zone or aerodrome on the map." %}</p>

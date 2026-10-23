@@ -372,9 +372,8 @@ def test_the_labels_are_dom_nodes_and_the_script_adds_no_network_call():
     assert (
         "html: node" in code
     )  # el rótulo es un nodo, no un string con datos de la fuente
-    assert (
-        code.count("fetch(") == 3
-    )  # data.json, near/ y own-layers.json: ninguna llamada nueva
+    # data.json, near/, own-layers.json y, desde la fase 7, admin.json y admin/<código>/contains.
+    assert code.count("fetch(") == 5
     assert "innerHTML" not in code
 
 
