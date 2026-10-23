@@ -8,6 +8,7 @@ del cliente contra el de Python (paridad por Node) y que la pantalla no diga lo 
 """
 
 import json
+import re
 import shutil
 import socket
 import subprocess
@@ -134,7 +135,8 @@ def test_the_page_shows_counts_source_attribution_and_the_official_reference(sna
     assert payload.AIP_ENR_URL in html
     assert 'id="air-config"' in html and 'id="air-map"' in html
     for kind, count in (("Aerodrome", 2), ("Airport", 1)):
-        assert f"<dt>{kind}</dt><dd>{count}</dd>" in html
+        # LV-367: the label carries its icon inside the <dt>; the figure stays in its own <dd>.
+        assert re.search(rf"<dt>(?:<svg.*?</svg>)?{kind}</dt><dd>{count}</dd>", html)
     # Una sola advertencia «Referencial» (la de la cabecera común) y ningún veredicto.
     assert html.count('class="env-referential"') == 1
     lowered = html.lower()
@@ -503,7 +505,7 @@ def _code_only(text):
 
 def test_the_script_only_puts_fixed_svg_through_innerhtml():
     code = _code_only(MAP_JS)
-    assert code.count("innerHTML") == 1  # sólo el SVG fijo del avión en la leyenda
+    # LV-367: los íconos son nodos `<use>` del sprite de la plantilla; ya no hay ningún `innerHTML`.\n    assert code.count("innerHTML") == 0
     assert "document.write" not in code and "eval(" not in code
     assert "insertAdjacentHTML" not in code
 

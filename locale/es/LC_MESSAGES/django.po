@@ -10733,15 +10733,6 @@ msgstr "Elija un resultado o haga clic en una zona o aeródromo del mapa."
 msgid "Not official: the source does not say who maintains this airstrip."
 msgstr "No oficial: la fuente no dice quién mantiene esta pista."
 
-msgid "Vertical limits (as the source wrote them)"
-msgstr "Límites verticales (tal como los escribió la fuente)"
-
-msgid "Schedule (as the source wrote it)"
-msgstr "Horario (tal como lo escribió la fuente)"
-
-msgid "Source text, coordination and reason"
-msgstr "Texto de la fuente, coordinación y motivo"
-
 msgid "Centre"
 msgstr "Centro"
 
@@ -10903,3 +10894,35 @@ msgstr "No hay nada que mostrar en esta capa."
 
 msgid "valid until {date}"
 msgstr "vigente hasta {date}"
+
+#: templates/environment/airspace_tab.html
+msgid "Aeronautical"
+msgstr "Aeronáutico"
+
+#: templates/environment/airspace_tab.html
+msgid "Vertical limits"
+msgstr "Límites verticales"
+
+#: templates/environment/airspace_tab.html
+msgid "Source text"
+msgstr "Texto de la fuente"
+
+#: templates/environment/airspace_tab.html
+msgid "Limits, schedule and text appear exactly as the source wrote them."
+msgstr "Los límites, el horario y el texto aparecen tal como los escribió la fuente."
+
+#: templates/environment/airspace_tab.html
+msgid "Licence: not confirmed"
+msgstr "Licencia: no confirmada"
+
+#: templates/environment/airspace_tab.html
+msgid "Up to date"
+msgstr "Al día"
+
+#: templates/environment/airspace_tab.html
+msgid "Data source"
+msgstr "Fuente de los datos"
+
+#: templates/environment/airspace_tab.html
+msgid "%(days)s days old"
+msgstr "%(days)s días de antigüedad"

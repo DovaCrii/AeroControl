@@ -92,15 +92,37 @@
     "airstrip",
   ];
   var AIRSTRIP_MIN_ZOOM = 8;
-  var PLANE =
-    '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">' +
-    '<path fill="currentColor" d="M12 2l2 7 8 4v2l-8-1.5V19l2.5 2v1L12 21l-4.5 1v-1L10 19v-5.5L2 15v-2l8-4z"/></svg>';
+  var LABEL_MIN_ZOOM = 9;
+  /* LV-367: los íconos viven en el sprite `air-i-*` de la plantilla; aquí sólo se nombran. */
+  function iconMarkup(name) {
+    return (
+      '<svg class="air-ic" aria-hidden="true" focusable="false"><use href="#air-i-' + name + '"/></svg>'
+    );
+  }
+  function iconNode(name) {
+    var svg = svgNode("svg", { class: "air-ic", "aria-hidden": "true", focusable: "false" });
+    var use = svgNode("use", {});
+    use.setAttribute("href", "#air-i-" + name);
+    svg.appendChild(use);
+    return svg;
+  }
+  var KIND_ICONS = {
+    airport: "airport",
+    aerodrome: "aerodrome",
+    prohibited: "prohibited",
+    restricted: "restricted",
+    danger: "danger",
+    naval: "naval",
+    fir_boundary: "fir_boundary",
+    airstrip: "airstrip",
+  };
 
   var features = [];
   var byId = {};
   var groups = {};
   var map = null;
   var svgRenderer = null;
+  var haloRenderer = null;
   var canvasRenderer = null;
   var selectedId = null;
   var reference = cfg.reference || null;
@@ -154,6 +176,9 @@
     map = L.map("air-map", { preferCanvas: true, zoomControl: true });
     canvasRenderer = L.canvas({ padding: 0.5 });
     svgRenderer = L.svg({ padding: 0.5 });
+    // El halo oscuro de las zonas va en su propio panel, DEBAJO de todas las líneas (z-index en CSS).
+    map.createPane("airHalo");
+    haloRenderer = L.svg({ padding: 0.5, pane: "airHalo" });
     var bases = {};
     var providers = cfg.tileProviders || [];
     var initial = providers.find(function (p) { return p.default; }) || providers[0];
@@ -218,18 +243,44 @@
       iconAnchor: [11, 11],
     });
   }
+  /* Jerarquía: aeropuerto = disco de 30 px con borde; aeródromo = 22 px (igual que la insignia de zona). */
   function planeIcon(kind) {
+    var size = kind === "airport" ? 30 : 22;
     return L.divIcon({
       className: "air-plane-wrap",
-      html: '<span class="air-plane air-plane--' + kind + '">' + PLANE + "</span>",
-      iconSize: [26, 26],
-      iconAnchor: [13, 13],
+      html: '<span class="air-plane air-plane--' + kind + '">' + iconMarkup("plane") + "</span>",
+      iconSize: [size, size],
+      iconAnchor: [size / 2, size / 2],
     });
   }
 
+  /* El código de la zona o del aeródromo, con halo, desde el zoom 9. Es un NODO (nunca un string): el
+     texto viene de la fuente y Leaflet metería un string con `innerHTML`. */
+  function codeLabel(entry, below) {
+    var node = el("span", "air-tag", entry.code);
+    var layer = L.marker([entry.lat, entry.lon], {
+      icon: L.divIcon({
+        className: "air-tag-wrap",
+        html: node,
+        iconSize: [80, 14],
+        iconAnchor: [40, -below],
+      }),
+      interactive: false,
+      keyboard: false,
+    });
+    layer.airMinZoom = LABEL_MIN_ZOOM;
+    return layer;
+  }
+
+  function cssVar(name, fallback) {
+    var value = getComputedStyle(document.documentElement).getPropertyValue(name);
+    return (value && value.trim()) || fallback;
+  }
   function airstripColor() {
-    var value = getComputedStyle(document.documentElement).getPropertyValue("--ac-text-secondary");
-    return value.trim() || "#555555";
+    return cssVar("--id-air-dot", "#e6edf6");
+  }
+  function haloColor() {
+    return cssVar("--id-air-halo", "#0b1220");
   }
 
   function marker(entry, icon, title) {
@@ -281,13 +332,23 @@
     var layers = [];
     var zone = LETTERS[kind] != null;
     if (kind === "airstrip") {
+      // Radio 4 con halo oscuro debajo (un segundo círculo, no interactivo): se lee sobre claro y oscuro.
+      var ring = L.circleMarker([entry.lat, entry.lon], {
+        renderer: canvasRenderer,
+        radius: 6.5,
+        weight: 0,
+        fillColor: haloColor(),
+        fillOpacity: 0.9,
+        interactive: false,
+      });
+      ring.options.airHalo = true;
+      layers.push(ring);
       var dot = L.circleMarker([entry.lat, entry.lon], {
         renderer: canvasRenderer,
-        radius: 3,
-        weight: 1,
-        color: airstripColor(),
+        radius: 4,
+        weight: 0,
         fillColor: airstripColor(),
-        fillOpacity: 0.7,
+        fillOpacity: 1,
       });
       dot.on("click", function (event) {
         // Un círculo burbujea al mapa: sin esto, con una herramienta activa el clic contaba dos veces.
@@ -299,7 +360,19 @@
       layers.push(dot);
     } else if (kind === "airport" || kind === "aerodrome") {
       layers.push(marker(entry, planeIcon(kind), titleOf(entry)));
+      if (entry.code) {
+        layers.push(codeLabel(entry, kind === "airport" ? 17 : 13));
+      }
     } else if (outline) {
+      // Doble trazo: un halo oscuro de 4 px (debajo de todo, sin eventos) y la línea de color de 2 px.
+      var halo = L.geoJSON(outline, {
+        renderer: haloRenderer,
+        style: function () {
+          return { className: "air-halo", weight: 4, fill: false, interactive: false };
+        },
+      });
+      halo.airRole = "halo";
+      layers.push(halo);
       var shape = L.geoJSON(outline, {
         renderer: svgRenderer,
         style: function (geo) {
@@ -316,6 +389,7 @@
           return base;
         },
       });
+      shape.airRole = "line";
       shape.on("click", function (event) {
         L.DomEvent.stopPropagation(event);
         featureClick(entry.id, event);
@@ -324,10 +398,21 @@
       layers.push(shape);
       if (zone) {
         layers.push(marker(entry, badgeIcon(kind), titleOf(entry)));
+        if (entry.code) {
+          layers.push(codeLabel(entry, 14));
+        }
       }
     } else if (zone) {
       layers.push(marker(entry, badgeIcon(kind), titleOf(entry)));
+      if (entry.code) {
+        layers.push(codeLabel(entry, 14));
+      }
     }
+    layers.forEach(function (layer) {
+      if (kind === "airstrip") {
+        layer.airMinZoom = AIRSTRIP_MIN_ZOOM;
+      }
+    });
     entry.layers = layers;
     entry.shown = false;
   }
@@ -349,12 +434,15 @@
 
   /* Pone o saca de su grupo lo que pasa (o no) los filtros, y el grupo de la capa. */
   function syncLayers() {
+    var zoom = map.getZoom();
     features.forEach(function (entry) {
-      var want = entry.passes && groupVisible(entry);
-      if (want === entry.shown) {
-        return;
-      }
+      var visible = !!(entry.passes && groupVisible(entry));
       entry.layers.forEach(function (layer) {
+        // Cada pieza tiene su zoom mínimo (los rótulos desde 9, las pistas desde 8).
+        var want = visible && zoom >= (layer.airMinZoom || 0);
+        if (want === !!layer.airOn) {
+          return;
+        }
         try {
           if (want) {
             layer.addTo(map);
@@ -364,8 +452,9 @@
         } catch (error) {
           reportError("layer " + entry.id, error);
         }
+        layer.airOn = want;
       });
-      entry.shown = want;
+      entry.shown = visible;
     });
   }
   function syncAirstrips() {
@@ -409,28 +498,43 @@
       return "";
     }
     var km = haversineKm(reference.lat, reference.lon, entry.lat, entry.lon);
-    return distanceText(km) + (entry.geometry ? " (" + T.toCentre + ")" : "");
+    var heading = headingText(bearingDeg(reference.lat, reference.lon, entry.lat, entry.lon));
+    return distanceText(km) + " · " + heading + (entry.geometry ? " (" + T.toCentre + ")" : "");
+  }
+
+  /* Una fila de resultados: ícono del tipo, código en monoespaciado, nombre, y debajo el tipo y la
+     distancia con su rumbo. Todo con `textContent`: el nombre y el código vienen de la fuente. */
+  function rowButton(entry, distance, unofficial) {
+    var button = el("button", "air-row");
+    button.type = "button";
+    button.dataset.id = entry.id;
+    var icon = el("span", "air-row-icon air-row-icon--" + entry.kind);
+    icon.setAttribute("aria-hidden", "true");
+    icon.appendChild(iconNode(KIND_ICONS[entry.kind] || "airstrip"));
+    button.appendChild(icon);
+    var main = el("span", "air-row-main");
+    main.appendChild(el("strong", "air-row-code", entry.code || ""));
+    main.appendChild(el("span", "air-row-name", entry.name));
+    if (unofficial) {
+      main.appendChild(el("span", "air-row-flag", "(" + T.unofficial + ")"));
+    }
+    button.appendChild(main);
+    var meta = el("span", "air-row-meta");
+    meta.appendChild(el("span", "air-row-kind air-row-kind--" + entry.kind, cfg.kinds[entry.kind]));
+    if (distance) {
+      meta.appendChild(el("span", "air-row-dist", distance));
+    }
+    button.appendChild(meta);
+    return button;
   }
 
   function renderRow(entry, withDistance) {
     var item = el("li", "air-result");
-    var button = el("button", "air-row");
-    button.type = "button";
-    button.dataset.id = entry.id;
-    button.appendChild(el("span", "air-row-kind air-row-kind--" + entry.kind, cfg.kinds[entry.kind]));
-    var main = el("span", "air-row-main");
-    main.appendChild(el("strong", "air-row-code", entry.code || ""));
-    main.appendChild(el("span", "air-row-name", entry.name));
-    if (entry.kind === "airstrip") {
-      main.appendChild(el("span", "air-row-flag", "(" + T.unofficial + ")"));
-    }
-    button.appendChild(main);
-    if (withDistance) {
-      var d = describeDistance(entry);
-      if (d) {
-        button.appendChild(el("span", "air-row-dist", d));
-      }
-    }
+    var button = rowButton(
+      entry,
+      withDistance ? describeDistance(entry) : "",
+      entry.kind === "airstrip"
+    );
     if (entry.id === selectedId) {
       button.setAttribute("aria-current", "true");
     }
@@ -533,16 +637,16 @@
     $("air-fiche-body").hidden = false;
     setText("air-fiche-name", (entry.code ? entry.code + " · " : "") + entry.name);
     setText("air-fiche-meta", cfg.kinds[entry.kind] + (entry.folder ? " · " + entry.folder : ""));
+    $("air-fiche-use").setAttribute("href", "#air-i-" + (KIND_ICONS[entry.kind] || "airstrip"));
     $("air-fiche-unofficial").hidden = entry.kind !== "airstrip";
     setText("air-f-vertical", entry.vertical, T.notStated);
     setText("air-f-schedule", entry.schedule, T.notStated);
     setText("air-f-text", entry.text, T.notStated);
     setText("air-f-center", entry.dms);
-    setText(
-      "air-f-place",
-      [entry.region, entry.commune].filter(Boolean).join(" · "),
-      T.notStated
-    );
+    [["air-f-region", entry.region], ["air-f-commune", entry.commune]].forEach(function (pair) {
+      $(pair[0]).textContent = pair[1] || "";
+      $(pair[0]).hidden = !pair[1];
+    });
     var ifis = $("air-f-ifis");
     if (entry.ifis) {
       $("air-f-ifis-link").href = entry.ifis;
@@ -552,10 +656,21 @@
     }
   }
 
+  /* Selección: la línea sube a 3 px (el halo a 5) y la zona se rellena sólido al 12 % (regla CSS
+     `.is-selected`, que gana al patrón); al soltar vuelve al patrón. */
   function styleSelected(entry, on) {
     entry.layers.forEach(function (layer) {
       if (layer.setStyle && layer.eachLayer) {
-        layer.setStyle({ weight: on ? 5 : 2 });
+        var halo = layer.airRole === "halo";
+        layer.setStyle({ weight: halo ? (on ? 5 : 4) : on ? 3 : 2 });
+        if (!halo) {
+          layer.eachLayer(function (part) {
+            var node = part.getElement && part.getElement();
+            if (node) {
+              node.classList.toggle("is-selected", on);
+            }
+          });
+        }
         if (on && layer.bringToFront) {
           layer.bringToFront();
         }
@@ -789,22 +904,14 @@
     var list = el("ul", "air-near-list");
     items.forEach(function (item) {
       var li = el("li");
-      var button = el("button", "air-row");
-      button.type = "button";
-      button.dataset.id = item.id;
-      button.appendChild(el("span", "air-row-kind air-row-kind--" + item.kind, cfg.kinds[item.kind]));
-      var main = el("span", "air-row-main");
-      main.appendChild(el("strong", "air-row-code", item.code || ""));
-      main.appendChild(el("span", "air-row-name", item.name));
-      button.appendChild(main);
+      var text = "";
       if (item.distance_km) {
-        var text = distanceText(item.distance_km);
+        text = distanceText(item.distance_km);
         if (withHeading && item.bearing_deg != null) {
           text += " · " + headingText(item.bearing_deg);
         }
-        button.appendChild(el("span", "air-row-dist", text));
       }
-      li.appendChild(button);
+      li.appendChild(rowButton(item, text, false));
       list.appendChild(li);
     });
     section.appendChild(list);
@@ -856,7 +963,7 @@
     if (LETTERS[kind]) {
       span.textContent = LETTERS[kind];
     } else if (kind === "airport" || kind === "aerodrome") {
-      span.innerHTML = PLANE; // SVG fijo de este archivo, sin datos de la fuente.
+      span.appendChild(iconNode("plane"));
     }
     return span;
   }
@@ -970,7 +1077,7 @@
     if (!offered.length) {
       return;
     }
-    host.appendChild(el("p", "air-legend-sep", T.layerOwnHeading));
+    $("air-legend-own-group").hidden = false;
     offered.forEach(function (own) {
       ownGroups[own.key] = { url: own.url, layers: [], loaded: false, on: false };
       var label = el("label", "air-legend-item");
@@ -985,7 +1092,7 @@
       swatch.setAttribute("aria-hidden", "true");
       label.appendChild(box);
       label.appendChild(swatch);
-      label.appendChild(el("span", "", ownName(own.key)));
+      label.appendChild(el("span", "air-legend-name", ownName(own.key)));
       host.appendChild(label);
     });
   }
@@ -1010,10 +1117,15 @@
       });
       label.appendChild(box);
       label.appendChild(swatchFor(kind));
-      label.appendChild(el("span", "", cfg.kinds[kind] + " (" + counts[kind] + ")"));
+      label.appendChild(el("span", "air-legend-name", cfg.kinds[kind]));
+      label.appendChild(el("span", "air-count-pill", String(counts[kind])));
       host.appendChild(label);
     });
-    buildOwnLegend(host);
+    buildOwnLegend($("air-legend-own"));
+    // En un teléfono la leyenda arranca plegada: el mapa va primero.
+    if (window.matchMedia && window.matchMedia("(max-width: 575.98px)").matches) {
+      $("air-legend").removeAttribute("open");
+    }
   }
 
   function fillSelect(id, values) {
@@ -1119,10 +1231,13 @@
     });
     new MutationObserver(function () {
       var color = airstripColor();
+      var halo = haloColor();
       features.forEach(function (entry) {
         entry.layers.forEach(function (layer) {
           if (layer.options && layer.options.airstrip) {
-            layer.setStyle({ color: color, fillColor: color });
+            layer.setStyle({ fillColor: color });
+          } else if (layer.options && layer.options.airHalo) {
+            layer.setStyle({ fillColor: halo });
           }
         });
       });

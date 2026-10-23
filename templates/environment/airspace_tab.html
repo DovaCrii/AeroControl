@@ -22,10 +22,11 @@ La advertencia «Referencial» es la ÚNICA de la sección (`_referential.html`,
   </ol>
 </section>
 {% else %}
+{% include "environment/_airspace_icons.html" %}
 <section class="air-strip" aria-labelledby="air-strip-title">
   <h2 id="air-strip-title" class="env-title">{% translate "Airspace and aerodromes" %}</h2>
   <dl class="air-counts">
-    {% for item in air_counts %}<div><dt>{{ item.label }}</dt><dd>{{ item.count }}</dd></div>{% endfor %}
+    {% for item in air_counts %}<div class="air-count air-count--{{ item.kind }}"><dt><svg class="air-ic" aria-hidden="true" focusable="false"><use href="#air-i-{{ item.kind }}"/></svg>{{ item.label }}</dt><dd>{{ item.count }}</dd></div>{% endfor %}
   </dl>
   <p class="air-photo{% if air_snapshot.stale %} air-photo--stale{% endif %}">
     {% blocktranslate with date=air_fetched_at|date:"d-m-Y" source=air_snapshot.source_name %}Map copy of {{ date }} · {{ source }}{% endblocktranslate %}
@@ -75,11 +76,18 @@ La advertencia «Referencial» es la ÚNICA de la sección (`_referential.html`,
     <div id="air-map" class="air-map" role="region" aria-label="{% translate 'Airspace map' %}">
       <noscript><p class="air-help">{% translate "The map needs JavaScript. The list of results works without the map once the data loads." %}</p></noscript>
     </div>
-    <fieldset class="air-legend" id="air-legend">
-      <legend>{% translate "Layers" %}</legend>
-      <div id="air-legend-items" class="air-legend-items"></div>
+    <details class="air-legend" id="air-legend" open>
+      <summary class="air-legend-summary"><svg class="air-ic" aria-hidden="true" focusable="false"><use href="#air-i-layers"/></svg>{% translate "Layers" %}</summary>
+      <div class="air-legend-group">
+        <h3 class="air-legend-head">{% translate "Aeronautical" %}</h3>
+        <div id="air-legend-items" class="air-legend-items"></div>
+      </div>
+      <div class="air-legend-group" id="air-legend-own-group" hidden>
+        <h3 class="air-legend-head">{% translate "My layers (off by default)" %}</h3>
+        <div id="air-legend-own" class="air-legend-items"></div>
+      </div>
       <p class="air-help">{% translate "Zones carry a letter and a pattern besides their colour: P prohibited, R restricted, D danger, N naval. Small airstrips are not official and appear from zoom 8." %}</p>
-    </fieldset>
+    </details>
     <div id="air-measure" class="air-readout" role="status" aria-live="polite" hidden></div>
   </section>
 
@@ -91,21 +99,26 @@ La advertencia «Referencial» es la ÚNICA de la sección (`_referential.html`,
       <p id="air-copy-status" class="visually-hidden" role="status"></p>
       <div id="air-near-lists"></div>
     </div>
-    <article id="air-fiche" class="air-fiche" aria-live="polite">
+    <article id="air-fiche" class="air-fiche" aria-live="polite" tabindex="0" aria-labelledby="air-fiche-title">
       <h2 id="air-fiche-title" class="env-title">{% translate "Technical sheet" %}</h2>
       <p id="air-fiche-empty" class="air-help">{% translate "Choose a result or click a zone or aerodrome on the map." %}</p>
       <div id="air-fiche-body" hidden>
-        <p id="air-fiche-name" class="air-fiche-name"></p>
-        <p id="air-fiche-meta" class="air-help"></p>
+        <header class="air-fiche-head">
+          <span id="air-fiche-icon" class="air-fiche-icon"><svg class="air-ic" aria-hidden="true" focusable="false"><use id="air-fiche-use" href="#air-i-zone"/></svg></span>
+          <div>
+            <p id="air-fiche-meta" class="air-fiche-type"></p>
+            <p id="air-fiche-name" class="air-fiche-name"></p>
+          </div>
+        </header>
         <p id="air-fiche-unofficial" class="air-flag" hidden><span aria-hidden="true">ⓘ</span> {% translate "Not official: the source does not say who maintains this airstrip." %}</p>
-        <dl class="air-fiche-list">
-          <div><dt>{% translate "Vertical limits (as the source wrote them)" %}</dt><dd id="air-f-vertical"></dd></div>
-          <div><dt>{% translate "Schedule (as the source wrote it)" %}</dt><dd id="air-f-schedule"></dd></div>
-          <div><dt>{% translate "Source text, coordination and reason" %}</dt><dd id="air-f-text" class="air-pre"></dd></div>
-          <div><dt>{% translate "Centre" %}</dt><dd id="air-f-center"></dd></div>
-          <div><dt>{% translate "Region and commune" %}</dt><dd id="air-f-place"></dd></div>
+        <dl class="air-fiche-cards">
+          <div class="air-card"><dt><svg class="air-ic" aria-hidden="true" focusable="false"><use href="#air-i-vertical"/></svg>{% translate "Vertical limits" %}</dt><dd id="air-f-vertical" class="air-card-value"></dd></div>
+          <div class="air-card"><dt><svg class="air-ic" aria-hidden="true" focusable="false"><use href="#air-i-clock"/></svg>{% translate "Schedule" %}</dt><dd id="air-f-schedule" class="air-card-value"></dd></div>
+          <div class="air-card air-card--wide"><dt><svg class="air-ic" aria-hidden="true" focusable="false"><use href="#air-i-document"/></svg>{% translate "Source text" %}</dt><dd id="air-f-text" class="air-card-value air-pre"></dd></div>
+          <div class="air-card air-card--wide"><dt><svg class="air-ic" aria-hidden="true" focusable="false"><use href="#air-i-pin"/></svg>{% translate "Centre" %}</dt><dd id="air-f-center" class="air-card-value air-mono"></dd><dd class="air-chips"><span id="air-f-region" class="air-chip" hidden></span><span id="air-f-commune" class="air-chip" hidden></span></dd></div>
         </dl>
-        <p id="air-f-ifis" hidden><a id="air-f-ifis-link" href="#" target="_blank" rel="noopener noreferrer">{% translate "Check its NOTAMs at the DGAC" %} ↗<span class="visually-hidden"> ({% translate "opens in a new tab" %})</span></a></p>
+        <p class="air-help air-asis">{% translate "Limits, schedule and text appear exactly as the source wrote them." %}</p>
+        <p id="air-f-ifis" hidden><a id="air-f-ifis-link" class="air-notam" href="#" target="_blank" rel="noopener noreferrer"><svg class="air-ic" aria-hidden="true" focusable="false"><use href="#air-i-external"/></svg>{% translate "Check its NOTAMs at the DGAC" %}<span class="visually-hidden"> ({% translate "opens in a new tab" %})</span></a></p>
         <p class="air-help">{% translate "Confirm every limit and schedule against the AIP-Chile (ENR 5.1) and the NOTAM. A zone may be activated by NOTAM." %}</p>
       </div>
     </article>
@@ -113,7 +126,7 @@ La advertencia «Referencial» es la ÚNICA de la sección (`_referential.html`,
 </div>
 {% endif %}
 <footer class="env-foot">
-  {% if snapshot %}{% include "environment/_source.html" with name=snapshot.source_name url=snapshot.source_url stale=air_snapshot.stale %}{% endif %}
+  {% if snapshot %}<p class="air-source{% if air_snapshot.stale %} air-source--stale{% endif %}"><svg class="air-ic" aria-hidden="true" focusable="false"><use href="#air-i-source"/></svg><span class="air-source-label">{% translate "Data source" %}:</span> <strong>{% if snapshot.source_url %}<a href="{{ snapshot.source_url }}" target="_blank" rel="noopener noreferrer">{{ snapshot.source_name }}<span class="visually-hidden"> ({% translate "opens in a new tab" %})</span></a>{% else %}{{ snapshot.source_name }}{% endif %}</strong> · {% translate "Licence: not confirmed" %} · {{ air_fetched_at|date:"d-m-Y" }} · {% if air_snapshot.stale %}<span class="air-fresh air-fresh--stale"><span aria-hidden="true">▲</span> {% blocktranslate with days=air_snapshot.age_days %}{{ days }} days old{% endblocktranslate %}</span>{% else %}<span class="air-fresh"><span aria-hidden="true">●</span> {% translate "Up to date" %}</span>{% endif %}</p>{% endif %}
   <p>{% translate "Base maps: OpenStreetMap and Esri (as configured). No data of this screen is sent to any other service." %}</p>
 </footer>
 {% if snapshot %}{{ air_config|json_script:"air-config" }}{% endif %}
