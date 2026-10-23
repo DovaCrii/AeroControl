@@ -36,6 +36,8 @@ logger = logging.getLogger(__name__)
 MAX_ROUNDS = 4
 MAX_QUESTION_CHARS = 500
 MAX_ANSWER_CHARS = 1500
+# Fallos tras los cuales la llamada se devuelve al tope (no llegó a producir respuesta).
+GIVE_BACK_REASONS = frozenset({"unreachable", "timeout", "http-429"})
 _URL_RE = re.compile(r"(?:https?://|www\.)\S*", re.IGNORECASE)
 
 
@@ -112,9 +114,10 @@ def ask(user, question, client=None):
                 message = client.chat(messages, tools=tool_definitions())
             except AssistantUnavailable as error:
                 reason = str(error)
-                if reason == "unreachable":
-                    # Como en AeroAcademy: un fallo de red antes de responder no gasta tope.
-                    # Un 429 sí cuenta: el servicio recibió la llamada.
+                if reason in GIVE_BACK_REASONS:
+                    # Como en AeroAcademy: una llamada que no llegó a responder (red, tiempo
+                    # agotado o límite de ritmo) no gasta tope. Un error del servicio (5xx,
+                    # llave) sí cuenta: la llamada se hizo.
                     _give_back_call(usage)
                 return _finish(
                     usage,
@@ -125,6 +128,11 @@ def ask(user, question, client=None):
                     tokens,
                 )
             tokens += message.pop("_total_tokens", 0) or 0
+            used_model = message.pop("_model", "")
+            if used_model and used_model != usage.model:
+                # Respondió un modelo de respaldo: el registro dice cuál (sólo el id público).
+                usage.model = used_model[:100]
+                AssistantUsage.objects.filter(pk=usage.pk).update(model=usage.model)
             calls = message.get("tool_calls") or []
             if not calls:
                 text = clean_model_text(message.get("content") or "")
@@ -178,7 +186,7 @@ def _outcome_for(reason):
         return AssistantUsage.OUTCOME_429
     if reason in ("http-401", "http-403"):
         return AssistantUsage.OUTCOME_AUTH
-    if reason == "unreachable":
+    if reason in ("unreachable", "timeout"):
         return AssistantUsage.OUTCOME_UNREACHABLE
     return AssistantUsage.OUTCOME_ERROR
 
@@ -201,6 +209,11 @@ def _unavailable_text(reason):
     if reason in ("http-401", "http-403"):
         return _(
             "The assistant's key was not accepted. Ask the administrator to check it."
+        )
+    if reason == "no-tools":
+        return _(
+            "The assistant's model cannot use the lookup tools. Ask the administrator "
+            "to check the model list."
         )
     return _("The assistant is not available right now. Try again in a moment.")
 

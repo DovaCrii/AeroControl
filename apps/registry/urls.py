@@ -1,8 +1,19 @@
 from django.urls import path
-from . import assessment_views, report_views, views
+from . import assessment_views, credential_views, report_views, views
 
 urlpatterns = []
 urlpatterns += [
+    # LV-368: subir la credencial DGAC de un operador, leerla y confirmarla.
+    path(
+        "operator/<uuid:pk>/credential/upload/",
+        credential_views.OperatorCredentialUpload.as_view(),
+        name="operator-credential-upload",
+    ),
+    path(
+        "operator/<uuid:pk>/credential/<uuid:document_pk>/",
+        credential_views.OperatorCredentialConfirm.as_view(),
+        name="operator-credential-confirm",
+    ),
     # LV-145: el catastro de flota y personal. Va antes del bucle CRUD de abajo
     # para que `roster/` no quede a la sombra de un patrón genérico.
     path(

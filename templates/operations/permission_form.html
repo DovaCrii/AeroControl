@@ -63,8 +63,13 @@ cada cosa.{% endcomment %}
       {{ form.purpose_detail|as_crispy_field }}
     </fieldset>
 
-    <fieldset class="cc-form-section mb-4">
-      <legend class="h6 section-title mb-3">{% translate "Validity" %}</legend>
+    {% comment %}LV-368: la vigencia es **opcional hasta aprobar** (la fija la DGAC al responder,
+    LV-219), así que va plegada: un alta de solicitud no tiene nada que escribir acá. Se abre sola si
+    hay un error —el resumen de arriba enlaza a estas casillas y un enlace a algo cerrado no se ve— o
+    si ya hay un valor, para que editar un permiso nunca esconda lo que tiene. No se movió ningún
+    campo: sólo cambia el contenedor.{% endcomment %}
+    <details class="cc-form-section permit-form-optional mb-4"{% if form.valid_from.errors or form.valid_until.errors or form.validity_override_reason.errors or form.valid_from.value or form.valid_until.value or form.validity_override_reason.value %} open{% endif %}>
+      <summary class="h6 section-title mb-3">{% translate "Validity" %}</summary>
       {{ form.valid_from|as_crispy_field }}
       {{ form.valid_until|as_crispy_field }}
       {% comment %}LV-224: el motivo de excepción va **dentro de este bloque**, y
@@ -80,7 +85,7 @@ cada cosa.{% endcomment %}
       dibujaba. Esta plantilla lista campo por campo, así que agregar uno al
       formulario **obliga** a agregarlo acá.{% endcomment %}
       {{ form.validity_override_reason|as_crispy_field }}
-    </fieldset>
+    </details>
 
     <fieldset class="cc-form-section mb-4">
       <legend class="h6 section-title mb-3">{% translate "Where it flies" %}</legend>

@@ -5,6 +5,7 @@ from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 
 from apps.core.forms import AeroModelForm
+from apps.core.tenancy import scope_queryset_to_tenant
 from apps.geo.models import GeoPlan
 from apps.registry.models import Aircraft, Operator
 from .models import (
@@ -184,6 +185,10 @@ class FlightPermissionForm(AeroModelForm):
         plans = GeoPlan.objects.filter(is_active=True, flight_permission__isnull=True)
         if user is not None and not user.has_perm("geo.change_geoplan"):
             plans = plans.none()
+        # LV-368 (F-08): ni siquiera se **ofrece** un plan de otro tenant. El plan
+        # llega al tenant por su centro de costo (no tiene FK propia).
+        if user is not None:
+            plans = scope_queryset_to_tenant(plans, user, "cost_center__tenant_id")
         self.fields["source_plan"].queryset = plans.select_related(
             "cost_center"
         ).order_by("-folio")

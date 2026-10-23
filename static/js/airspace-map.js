@@ -32,6 +32,13 @@
       return values[key] != null ? values[key] : whole;
     });
   }
+  /* El motivo de un fallo queda en la consola (nombre, estado y mensaje; nunca datos de la fuente). Antes
+     un `catch` mostraba un mensaje genérico sin dejar rastro y un fallo de dibujo parecía un fallo de red. */
+  function reportError(where, error) {
+    if (window.console && console.error) {
+      console.error("airspace-map: " + where + ": " + (error && error.message ? error.message : error));
+    }
+  }
   function el(tag, className, text) {
     var node = document.createElement(tag);
     if (className) {
@@ -181,6 +188,18 @@
       mapClick(event.latlng);
     });
     map.on("zoomend", syncAirstrips);
+    map.on("dblclick", function () {
+      if (tool !== "measure") {
+        return;
+      }
+      // Los dos clics del doble clic ya sumaron el mismo punto dos veces: se quita el repetido.
+      if (measureLine && measurePoints.length > 1) {
+        measurePoints.pop();
+        measureLine.setLatLngs(measurePoints);
+        renderMeasure();
+      }
+      setTool("");
+    });
   }
 
   /* Mover la vista de un mapa sin tamaño (contenedor oculto, pestaña en segundo plano) no tiene sentido y
@@ -232,8 +251,33 @@
     return (entry.code ? entry.code + " · " : "") + entry.name + " (" + label + ")";
   }
 
+  /* La forma que Leaflet puede dibujar, o null. Una `GeometryCollection` (zona + su punto de rótulo,
+     como SC-P29) se aplana a sus líneas y polígonos: el punto ya tiene su insignia y, como GeoJSON, Leaflet
+     lo dibujaría con el icono de imagen por defecto. Sin piezas o con coordenadas ausentes: null, y la
+     zona se queda sólo con su insignia en vez de tumbar el mapa entero (LV-363). */
+  function drawable(geometry) {
+    if (!geometry || typeof geometry !== "object") {
+      return null;
+    }
+    if (geometry.type === "GeometryCollection") {
+      var parts = (geometry.geometries || []).map(drawable).filter(Boolean);
+      parts = parts.filter(function (part) {
+        return part.type !== "Point" && part.type !== "MultiPoint";
+      });
+      return parts.length ? { type: "GeometryCollection", geometries: parts } : null;
+    }
+    return Array.isArray(geometry.coordinates) && geometry.coordinates.length ? geometry : null;
+  }
+  function hasArea(geometry) {
+    if (geometry.type === "GeometryCollection") {
+      return geometry.geometries.some(hasArea);
+    }
+    return geometry.type === "Polygon" || geometry.type === "MultiPolygon";
+  }
+
   function draw(entry) {
     var kind = entry.kind;
+    var outline = entry.geometry ? drawable(entry.geometry) : null;
     var layers = [];
     var zone = LETTERS[kind] != null;
     if (kind === "airstrip") {
@@ -246,6 +290,8 @@
         fillOpacity: 0.7,
       });
       dot.on("click", function (event) {
+        // Un círculo burbujea al mapa: sin esto, con una herramienta activa el clic contaba dos veces.
+        L.DomEvent.stopPropagation(event);
         featureClick(entry.id, event);
       });
       dot.bindTooltip(tipNode(titleOf(entry)), { direction: "top" });
@@ -253,13 +299,12 @@
       layers.push(dot);
     } else if (kind === "airport" || kind === "aerodrome") {
       layers.push(marker(entry, planeIcon(kind), titleOf(entry)));
-    } else if (entry.geometry) {
-      var shape = L.geoJSON(entry.geometry, {
+    } else if (outline) {
+      var shape = L.geoJSON(outline, {
         renderer: svgRenderer,
         style: function (geo) {
           // Leaflet envuelve la geometría en un Feature: el tipo está en `geo.geometry`.
-          var type = geo.geometry ? geo.geometry.type : geo.type;
-          var closed = type === "Polygon" || type === "MultiPolygon";
+          var closed = hasArea(geo.geometry || geo);
           var base = { className: "air-shape air-shape--" + kind, weight: 2, interactive: true };
           if (closed && zone) {
             base.fill = true;
@@ -310,10 +355,14 @@
         return;
       }
       entry.layers.forEach(function (layer) {
-        if (want) {
-          layer.addTo(map);
-        } else {
-          map.removeLayer(layer);
+        try {
+          if (want) {
+            layer.addTo(map);
+          } else {
+            map.removeLayer(layer);
+          }
+        } catch (error) {
+          reportError("layer " + entry.id, error);
         }
       });
       entry.shown = want;
@@ -580,6 +629,10 @@
     });
     $("air-tool-hint").textContent = tool ? T[HINTS[tool]] : "";
     $("air-map").classList.toggle("air-map--tool", !!tool);
+    // Medir termina con doble clic: sin esto el doble clic además acercaba el mapa.
+    if (map) {
+      map.doubleClickZoom[tool === "measure" ? "disable" : "enable"]();
+    }
     if (tool !== "measure") {
       stopMeasure(false);
     }
@@ -717,7 +770,8 @@
           renderNear(data);
         }
       })
-      .catch(function () {
+      .catch(function (error) {
+        reportError("near query", error);
         if (ticket === nearRequest) {
           $("air-near-point").textContent = T.nearFailed;
         }
@@ -903,7 +957,8 @@
         group.loaded = true;
         show();
       })
-      .catch(function () {
+      .catch(function (error) {
+        reportError("own layer " + key, error);
         group.on = false;
         box.checked = false;
         $("air-tool-hint").textContent = T.layerOwnFailed;
@@ -994,7 +1049,14 @@
     createMap();
     features.forEach(function (entry) {
       groupFor(entry.kind);
-      draw(entry);
+      try {
+        draw(entry);
+      } catch (error) {
+        // Un elemento con forma imposible no puede tumbar los otros 500: queda en la lista, sin dibujo.
+        reportError("draw " + entry.id, error);
+        entry.layers = [];
+        entry.shown = false;
+      }
     });
     fillSelect("air-folder", unique("folder"));
     fillSelect("air-fir", unique("fir"));
@@ -1067,16 +1129,58 @@
     }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
   }
 
+  /* Carga con estado de error claro: el motivo va a la consola y la persona tiene «Reintentar». Si el
+     fallo fue de red o de respuesta se vuelve a pedir; si el mapa ya se había creado (falló el arranque)
+     no se puede rehacer sobre el mismo contenedor, así que se recarga la página. */
+  var retryNode = $("air-retry");
+  var mapCreated = false;
+
+  function startOnce(data) {
+    if (!data || !Array.isArray(data.features)) {
+      throw new Error("unexpected data shape");
+    }
+    mapCreated = true;
+    start(data);
+  }
+
+  function showLoadFailure(stage, error) {
+    reportError(stage, error);
+    setStatus(T.loadFailed);
+    if (retryNode) {
+      retryNode.hidden = false;
+      retryNode.focus();
+    }
+  }
+
+  function load() {
+    if (retryNode) {
+      retryNode.hidden = true;
+    }
+    setStatus(T.loading);
+    fetch(cfg.dataUrl, { credentials: "same-origin", headers: { Accept: "application/json" } })
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error("data.json answered " + response.status);
+        }
+        return response.json();
+      })
+      .then(startOnce, function (error) {
+        showLoadFailure("loading the data", error);
+      })
+      .catch(function (error) {
+        showLoadFailure("starting the map", error);
+      });
+  }
+
   bind();
-  fetch(cfg.dataUrl, { credentials: "same-origin", headers: { Accept: "application/json" } })
-    .then(function (response) {
-      if (!response.ok) {
-        throw new Error(String(response.status));
+  if (retryNode) {
+    retryNode.addEventListener("click", function () {
+      if (mapCreated) {
+        window.location.reload();
+      } else {
+        load();
       }
-      return response.json();
-    })
-    .then(start)
-    .catch(function () {
-      setStatus(T.loadFailed);
     });
+  }
+  load();
 })();
