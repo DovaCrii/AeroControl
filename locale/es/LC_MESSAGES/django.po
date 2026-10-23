@@ -10904,3 +10904,21 @@ msgstr "No hay nada que mostrar en esta capa."
 
 msgid "valid until {date}"
 msgstr "vigente hasta {date}"
+
+msgid "No typical window in the next 24 hours"
+msgstr "Sin ventana típica en las próximas 24 horas"
+
+#, python-format
+msgid "Typical window: %(window)s"
+msgstr "Ventana típica: %(window)s"
+
+msgid "Typical scintillation window over the next 24 hours"
+msgstr "Ventana típica de centelleo en las próximas 24 horas"
+
+#, python-format
+msgid "Typical window: %(window)s. The marker is the current time, %(now)s. Statistical reference, not a measurement."
+msgstr "Ventana típica: %(window)s. La marca es la hora actual, %(now)s. Referencia estadística, no una medición."
+
+#, python-format
+msgid "No typical window in these 24 hours. The marker is the current time, %(now)s. Statistical reference, not a measurement."
+msgstr "Sin ventana típica en estas 24 horas. La marca es la hora actual, %(now)s. Referencia estadística, no una medición."

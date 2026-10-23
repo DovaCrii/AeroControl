@@ -15,6 +15,7 @@
 
 <section class="env-panel" aria-labelledby="env-gnss-window">
   <h2 id="env-gnss-window" class="env-title">{% translate "Tonight's window" %}</h2>
+  {% with line=env_summary.gnss_line %}{% if line %}<p class="env-cell-line">{% if line.level != "info" %}<span class="env-lvl env-lvl--{{ line.level }}"><span aria-hidden="true">{{ line.symbol }}</span> {{ line.level_label }}</span> {% endif %}<b>{{ line.text }}</b></p>{% endif %}{% endwith %}
   {% if card.sunset and card.dusk %}
   <p>{% blocktranslate with sunset=card.sunset dusk=card.dusk city=card.sunset_city %}Sunset {{ sunset }} · nightfall {{ dusk }} (per the forecast for {{ city }}){% endblocktranslate %}</p>
   {% else %}

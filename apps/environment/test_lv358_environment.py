@@ -321,8 +321,11 @@ class TestTheSummaryIsFactsNotAVerdict:
         _city(client)
         for url in (WEATHER, GNSS):
             html = _section(_get(client, url).content.decode())
-            assert "env-lvl--strong" in html or url == GNSS
             assert not re.search(r"critical|danger|\bred\b", html, re.I), url
+        # El nivel fuerte lo dibuja la franja (la pestaña Tiempo carga su tarjeta por htmx).
+        strip = _get(client, reverse("environment-strip")).content.decode()
+        assert "env-lvl--strong" in strip
+        assert not re.search(r"critical|danger|\bred\b", strip, re.I)
 
     def test_the_stylesheet_block_has_no_red_no_motion_and_no_foreign_tokens(self):
         block = IDENTITY[

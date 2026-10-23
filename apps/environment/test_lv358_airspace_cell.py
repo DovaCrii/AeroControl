@@ -284,7 +284,8 @@ class TestTheSingleFunction:
         cell = client.get(STRIP).content.decode()
         header = client.get(reverse("environment-gnss")).content.decode()
         assert cell.count(expected) == 1
-        assert header.count(expected) == 1
+        # LV-367: la cabecera ya no repite «Situación del día»; la cifra vive en la tarjeta y en nada más.
+        assert expected not in header and "env-lines" not in header
 
     def test_the_cell_links_to_the_map_and_names_itself(self, snapshot, tenants):
         site(tenants[0], "CC-A", SANTIAGO_SITE)
@@ -292,7 +293,8 @@ class TestTheSingleFunction:
         cell = html.split("env-cell--airspace")[1].split("</div>")[0]
         assert 'href="/environment/airspace/"' in cell and ">Airspace</h3>" in cell
         assert "Open the map" in cell
-        assert "env-lvl--info" in cell
+        # LV-367: un nivel «Info» no lleva chip (no hay nada que advertir); el filete lleva el color.
+        assert "env-lvl--info" not in cell and "env-cell--info" in html
 
     def test_a_single_zone_uses_the_singular(self, snapshot, tenants):
         site(tenants[0], "CC-A", NAVAL_SITE)
@@ -392,9 +394,9 @@ class TestFactsNotAVerdict:
         cell = client.get(STRIP).content.decode().split("env-cell--airspace")[1]
         cell = cell.split("</div>")[0]
         header = client.get(reverse("environment-gnss")).content.decode()
-        lines = header.split('class="env-lines"')[1].split("</ul>")[0]
-        assert "snapshot of" in cell and "snapshot of" in lines
-        for part in (cell, lines):
+        header = header.split('class="env-header"')[1].split("</section>")[0]
+        assert "snapshot of" in cell and "snapshot of" not in header
+        for part in (cell, header):
             assert "env-lvl--strong" not in part
             assert not re.search(r"critical|danger|\bred\b", part, re.I)
 

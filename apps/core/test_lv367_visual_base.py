@@ -52,15 +52,7 @@ THEMES = ["light", "dark"]
 # Símbolos del sprite de contenido que todavía no usa ninguna plantilla. Cada fase de la tanda saca
 # los suyos de acá al usarlos; la lista vacía es la meta (el guardián de huérfanos de `icons.svg`
 # aplica la misma regla al menú: un símbolo que nadie referencia es peso muerto).
-PENDING = {
-    "icon-satellite",
-    "icon-moon",
-    "icon-sunset",
-    "icon-clock",
-    "icon-zone",
-    "icon-check",
-    "icon-info",
-}
+PENDING = {"icon-moon"}
 
 
 def _symbols():
@@ -160,6 +152,7 @@ class TestContentIconSprite:
             "icon-satellite",
             "icon-moon",
             "icon-sunset",
+            "icon-sunrise",
             "icon-clock",
             "icon-zone",
             "icon-check",
