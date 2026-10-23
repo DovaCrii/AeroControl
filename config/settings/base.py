@@ -495,7 +495,21 @@ NVIDIA_API_KEY = config("NVIDIA_API_KEY", default="")
 NVIDIA_BASE_URL = config(
     "NVIDIA_BASE_URL", default="https://integrate.api.nvidia.com/v1"
 )
+# LV-362: la cadena de modelos vive SOLO aquí (el .env.example y la doc remiten a este archivo).
+# Primero `NVIDIA_MODEL`; ante un 404/410 (retirado), una respuesta vacía o sólo razonamiento, se pasa al
+# siguiente de `NVIDIA_MODEL_FALLBACKS` (lista separada por comas). Todos deben admitir llamadas a funciones
+# (`tools`): un modelo que las rechaza se salta. Los ids son del catálogo de build.nvidia.com y cambian;
+# `manage.py assistant_probar --models` dice cuáles responden hoy.
 NVIDIA_MODEL = config("NVIDIA_MODEL", default="meta/llama-3.3-70b-instruct")
+NVIDIA_MODEL_FALLBACKS = config(
+    "NVIDIA_MODEL_FALLBACKS",
+    default="meta/llama-3.1-70b-instruct,nvidia/llama-3.3-nemotron-super-49b-v1",
+)
+# Reintentos ante 429 (máx. 2, tope en el cliente) y espera inicial en segundos (se duplica).
+AI_ASSISTANT_RETRIES_429 = config("AI_ASSISTANT_RETRIES_429", default=2, cast=int)
+AI_ASSISTANT_RETRY_BACKOFF = config(
+    "AI_ASSISTANT_RETRY_BACKOFF", default=1.0, cast=float
+)
 # `LV-346`: botón «Copy answer» del panel. Apagado por omisión: copiar el texto fuera del sistema es
 # redistribuirlo, y eso depende de la licencia del proveedor del modelo.
 AI_ASSISTANT_ALLOW_COPY = config("AI_ASSISTANT_ALLOW_COPY", default=False, cast=bool)
