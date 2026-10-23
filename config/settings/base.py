@@ -259,6 +259,15 @@ WEATHER_API_KEY = config("WEATHER_API_KEY", default="")
 WEATHER_GEOCODING_URL = config(
     "WEATHER_GEOCODING_URL", default="https://geocoding-api.open-meteo.com/v1/search"
 )
+# LV-366: city search is LOCAL first (BCN communes, no network). Nominatim (OpenStreetMap) is OPTIONAL
+# and OFF: 1 request/second, cached, no autocomplete, needs WEATHER_USER_AGENT; results must credit
+# "(c) OpenStreetMap contributors".
+WEATHER_NOMINATIM_ENABLED = config(
+    "WEATHER_NOMINATIM_ENABLED", default=False, cast=bool
+)
+WEATHER_NOMINATIM_URL = config(
+    "WEATHER_NOMINATIM_URL", default="https://nominatim.openstreetmap.org/search"
+)
 WEATHER_PANEL_CACHE_SECONDS = config(
     "WEATHER_PANEL_CACHE_SECONDS", default=1800, cast=int
 )

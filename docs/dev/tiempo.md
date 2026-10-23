@@ -59,6 +59,16 @@ empieza; el código diario es el más severo.
 No vienen de ninguna API: `apps/core/solar.py` (NOAA/Meeus, ±1 min entre ±72°) es la fuente única de
 la ventana de centelleo y de la escena del cielo (LV-364).
 
+### Buscador de ciudades (LV-366)
+
+Primero el geocodificador LOCAL de comunas de BCN (`apps/geo/administrative.py`, sin red; atribución
+BCN en el selector): nombre sin tildes y un punto interior del polígono (no el centro del recuadro);
+zona `America/Santiago`, salvo Magallanes (`America/Punta_Arenas`) e Isla de Pascua
+(`Pacific/Easter`). Nominatim (OpenStreetMap) es opcional y viene apagado:
+`WEATHER_NOMINATIM_ENABLED=True` + `WEATHER_USER_AGENT`; sólo si no hubo comuna, 1 req/s, caché, sin
+autocompletar, crédito «© OpenStreetMap contributors». La geocodificación de Open-Meteo sólo con
+`WEATHER_PROVIDER=open_meteo`. Si se enciende Nominatim, `p340` debe poder salir a
+`nominatim.openstreetmap.org`.
 ### Para volver a Open-Meteo de pago
 
 `WEATHER_PROVIDER=open_meteo`, `WEATHER_API_KEY=<llave de pago>` y reiniciar. La geocodificación de

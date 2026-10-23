@@ -10910,3 +10910,9 @@ msgstr "Basado en datos de"
 
 msgid "No notable weather events in the available data for the next 48 hours"
 msgstr "Sin eventos climáticos relevantes en los datos disponibles para las próximas 48 horas"
+
+msgid "Communes: Biblioteca del Congreso Nacional de Chile (BCN). Reference only."
+msgstr "Comunas: Biblioteca del Congreso Nacional de Chile (BCN). Solo de referencia."
+
+msgid "Other places: © OpenStreetMap contributors."
+msgstr "Otros lugares: © colaboradores de OpenStreetMap."

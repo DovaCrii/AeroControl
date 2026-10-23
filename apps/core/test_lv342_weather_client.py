@@ -129,7 +129,7 @@ class TestPanelForecast:
     def test_disabled_makes_no_request(self, settings):
         settings.WEATHER_ENABLED = False
         assert weather.panel_forecast(-33.45, -70.66) is None
-        assert weather.search_places("Santiago") is None
+        assert weather.search_places("Oslo") is None
 
     def test_api_key_is_sent_but_never_logged(self, enabled, monkeypatch, caplog):
         enabled.WEATHER_API_KEY = SECRET
@@ -150,7 +150,7 @@ class TestSearchPlaces:
     PAYLOAD = {
         "results": [
             {
-                "name": "Santiago",
+                "name": "Oslo",
                 "latitude": -33.45694,
                 "longitude": -70.64827,
                 "country": "Chile",
@@ -163,10 +163,10 @@ class TestSearchPlaces:
 
     def test_results_are_normalised_and_cached(self, enabled, monkeypatch):
         urls = _serve(monkeypatch, FakeResponse(self.PAYLOAD))
-        first = weather.search_places("  Santiago ")
-        assert weather.search_places("santiago") == first
+        first = weather.search_places("  Oslo ")
+        assert weather.search_places("oslo") == first
         assert len(urls) == 1 and "count=8" in urls[0]
-        assert [p["name"] for p in first] == ["Santiago"]  # invalid coords dropped
+        assert [p["name"] for p in first] == ["Oslo"]  # invalid coords dropped
         assert first[0]["latitude"] == -33.46
 
     def test_no_results_is_an_empty_list(self, enabled, monkeypatch):
@@ -179,13 +179,13 @@ class TestSearchPlaces:
 
     def test_boundaries_do_query(self, enabled, monkeypatch):
         urls = _serve(monkeypatch, FakeResponse({}))
-        weather.search_places("ab")
+        weather.search_places("zq")
         weather.search_places("x" * 80)
         assert len(urls) == 2
 
     def test_failure_returns_none(self, enabled, monkeypatch):
         _serve(monkeypatch, TimeoutError())
-        assert weather.search_places("Santiago") is None
+        assert weather.search_places("Oslo") is None
 
 
 class TestFakeFixture:

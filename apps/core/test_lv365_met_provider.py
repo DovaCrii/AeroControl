@@ -381,7 +381,7 @@ class TestRules:
 
     def test_geocoding_of_open_meteo_is_only_for_open_meteo(self, monkeypatch):
         sent = serve(monkeypatch, FakeResponse({"results": []}))
-        assert weather.search_places("Santiago") is None
+        assert weather.search_places("Oslo") == []  # ni una consulta a Open-Meteo
         assert sent == []
 
 
