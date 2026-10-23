@@ -468,7 +468,7 @@ def test_the_rut_is_only_compared_never_shown_stored_or_audited(scene, caplog):
 
 def test_a_rut_that_does_not_match_the_record_says_so_without_the_value(scene):
     client = login_as(*BOTH)
-    lines = [line.replace(SENTINEL_RUT, "9.876.543-3") for line in CREDENTIAL_LINES]
+    lines = [line.replace(SENTINEL_RUT, "11.111.111-1") for line in CREDENTIAL_LINES]
     url = _confirm_url(_upload(client, scene, lines))
 
     page = client.get(url).content.decode()
