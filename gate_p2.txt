@@ -1,0 +1,12 @@
+apps/core/test_lv254_list_distribution.py: 13 warnings
+apps/core/test_ux15_ux18_phase_c.py: 10 warnings
+apps/core/test_ux11_bulk_selection.py: 6 warnings
+apps/core/test_ux07_list_count.py: 3 warnings
+apps/core/test_ux20_ux22_ux23_phase_d.py: 3 warnings
+  D:\I+D\AeroControl\.claude\worktrees\agent-ad51020f93d6670e1\.venv\Lib\site-packages\django\core\handlers\base.py:63: UserWarning: No directory at: D:\I+D\AeroControl\.claude\worktrees\agent-ad51020f93d6670e1\staticfiles\
+    mw_instance = middleware(adapted_handler)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED apps/compliance/test_lv350_alert_signals.py::TestTheLayerStaysInItsLane::test_e6_adds_no_colour_of_its_own
+1 failed, 2933 passed, 15 skipped, 851 warnings in 755.11s (0:12:35)

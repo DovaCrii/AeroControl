@@ -10954,6 +10954,179 @@ msgstr "No hay nada que mostrar en esta capa."
 msgid "valid until {date}"
 msgstr "vigente hasta {date}"
 
+msgid "No typical window in the next 24 hours"
+msgstr "Sin ventana típica en las próximas 24 horas"
+
+#, python-format
+msgid "Typical window: %(window)s"
+msgstr "Ventana típica: %(window)s"
+
+msgid "Typical scintillation window over the next 24 hours"
+msgstr "Ventana típica de centelleo en las próximas 24 horas"
+
+#, python-format
+msgid "Typical window: %(window)s. The marker is the current time, %(now)s. Statistical reference, not a measurement."
+msgstr "Ventana típica: %(window)s. La marca es la hora actual, %(now)s. Referencia estadística, no una medición."
+
+#, python-format
+msgid "No typical window in these 24 hours. The marker is the current time, %(now)s. Statistical reference, not a measurement."
+msgstr "Sin ventana típica en estas 24 horas. La marca es la hora actual, %(now)s. Referencia estadística, no una medición."
+
+msgid "Night and typical scintillation window over 24 hours"
+msgstr "Noche y ventana típica de centelleo en 24 horas"
+
+#, python-format
+msgid "Night: %(night)s."
+msgstr "Noche: %(night)s."
+
+#, python-format
+msgid "Typical window: %(window)s."
+msgstr "Ventana típica: %(window)s."
+
+#, python-format
+msgid "Peak hour: %(peak)s (our interpretation)."
+msgstr "Hora pico: %(peak)s (interpretación nuestra)."
+
+msgid "No typical window in these 24 hours."
+msgstr "Sin ventana típica en estas 24 horas."
+
+#, python-format
+msgid "The marker is the current time, %(now)s."
+msgstr "La marca es la hora actual, %(now)s."
+
+msgid "Statistical reference, not a measurement."
+msgstr "Referencia estadística, no una medición."
+
+msgid "Night"
+msgstr "Noche"
+
+msgid "Typical window"
+msgstr "Ventana típica"
+
+msgid "peak hour (our interpretation)"
+msgstr "hora pico (interpretación nuestra)"
+
+msgid "None in the next 24 hours"
+msgstr "Ninguna en las próximas 24 horas"
+
+msgid "Peak hour (our interpretation)"
+msgstr "Hora pico (interpretación nuestra)"
+
+msgid "Months of the season"
+msgstr "Meses de la temporada"
+
+msgid "in the season"
+msgstr "dentro de la temporada"
+
+msgid "outside the season"
+msgstr "fuera de la temporada"
+
+msgid "today"
+msgstr "hoy"
+
+msgid "Years covered"
+msgstr "Años cubiertos"
+
+#, python-format
+msgid "Peak %(year)s (according to the source)"
+msgstr "Máximo %(year)s (según la fuente)"
+
+#, python-format
+msgid "Effects until %(year)s"
+msgstr "Efectos hasta %(year)s"
+
+msgid "this year"
+msgstr "este año"
+
+msgid "What this screen does not show"
+msgstr "Lo que esta pantalla no muestra"
+
+msgid "No measurement: statistical reference from the GEOCOM criterion."
+msgstr "Sin medición: referencia estadística del criterio de GEOCOM."
+
+msgid "It shows when scintillation is typical, never how strong it is: the source publishes no intensity scale."
+msgstr "Muestra cuándo es típico el centelleo, nunca qué tan fuerte es: la fuente no publica ninguna escala de intensidad."
+
+msgid "Scintillation"
+msgstr "Centelleo"
+
+msgid "Fast changes in the strength and phase of a satellite signal after crossing the ionosphere."
+msgstr "Cambios rápidos en la intensidad y la fase de la señal de un satélite al cruzar la ionosfera."
+
+msgid "RTK and PPK"
+msgstr "RTK y PPK"
+
+msgid "High-precision positioning methods that need a fixed solution, which scintillation can break."
+msgstr "Métodos de posicionamiento de alta precisión que necesitan una solución fija, que el centelleo puede romper."
+
+msgid "From sunset to sunrise, per the forecast for your city."
+msgstr "Desde la puesta hasta la salida del sol, según el pronóstico de su ciudad."
+
+msgid "The hours when scintillation is usually higher, from the criterion of the source."
+msgstr "Las horas en que el centelleo suele ser mayor, según el criterio de la fuente."
+
+msgid "Our interpretation"
+msgstr "Interpretación nuestra"
+
+msgid "The exact hours and the peak hour are ours: the source only says night, near midnight."
+msgstr "Las horas exactas y la hora pico son nuestras: la fuente sólo dice de noche, cerca de la medianoche."
+
+msgid "What to attend first"
+msgstr "Qué atender primero"
+
+msgid "Nothing needs attention first."
+msgstr "Nada requiere atención primero."
+
+#, python-format
+msgid "%(count)s site without a permit in force"
+msgid_plural "%(count)s sites without a permit in force"
+msgstr[0] "%(count)s faena sin permiso vigente"
+msgstr[1] "%(count)s faenas sin permiso vigente"
+
+#, python-format
+msgid "%(count)s item overdue"
+msgid_plural "%(count)s items overdue"
+msgstr[0] "%(count)s elemento vencido"
+msgstr[1] "%(count)s elementos vencidos"
+
+#, python-format
+msgid "%(count)s alert open for over 30 days"
+msgid_plural "%(count)s alerts open for over 30 days"
+msgstr[0] "%(count)s alerta abierta hace más de 30 días"
+msgstr[1] "%(count)s alertas abiertas hace más de 30 días"
+
+msgid "No pending"
+msgstr "Sin pendientes"
+
+msgid "Expiries by category"
+msgstr "Vencimientos por categoría"
+
+msgid "Expiries by category and level over the next 90 days"
+msgstr "Vencimientos por categoría y nivel en los próximos 90 días"
+
+msgid "No expiries in the next 90 days:"
+msgstr "Sin vencimientos en los próximos 90 días:"
+
+#, python-format
+msgid "In force %(in_force)s · expiring soon %(soon)s · awaiting %(awaiting)s · past validity %(past)s"
+msgstr "Vigentes %(in_force)s · vencen pronto %(soon)s · esperando %(awaiting)s · vigencia pasada %(past)s"
+
+msgid "No expiry date"
+msgstr "Sin fecha de vencimiento"
+
+#, python-format
+msgid "See all (%(count)s more)"
+msgstr "Ver todas (%(count)s más)"
+
+msgid "Show only sites with a problem"
+msgstr "Ver sólo las faenas con problema"
+
+msgid "No site has a problem with its permits."
+msgstr "Ninguna faena tiene problemas con sus permisos."
+
+msgid "Permit in force"
+msgstr "Permiso vigente"
+
 msgid "Source: %(source)s. Reference only -- it does not replace the pre-flight check."
 msgstr "Fuente: %(source)s. Solo de referencia -- no reemplaza el chequeo preoperacional."
 

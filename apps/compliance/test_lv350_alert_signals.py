@@ -151,7 +151,8 @@ class TestEveryNewPairReaches45:
 class TestTheLayerStaysInItsLane:
     def _e6(self):
         start = IDENTITY.index("/* E6: alertas y bandeja")
-        end = IDENTITY.index("/* == F:", start)
+        # Hasta el inicio de E7 (LV-367 le dio colores propios, a propósito): el tramo de E6 no los hereda.
+        end = IDENTITY.index("/* E7:", start)
         return IDENTITY[start:end]
 
     def test_e6_sits_after_e5_and_before_f(self):

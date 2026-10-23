@@ -283,7 +283,7 @@ class TestOneCityOneZoneOneForecast:
         client = login_as(VIEW)
         _city(client, "Punta Arenas", "-53.16", "-70.91")
         in_strip = _strip(client)
-        header = _get(client, reverse("environment-weather")).content.decode()
+        header = _get(client, reverse("environment-gnss")).content.decode()
         text = "Typical higher-scintillation window: now, until 03:00"
         assert text in in_strip and text in header
         assert set(calls) == {(-53.16, -70.91)}  # nunca Santiago por omisión

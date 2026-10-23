@@ -48,6 +48,15 @@ python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css static/cs
   --pair sev-advisory-text:id-cx-track --pair sev-nominal-text:id-cx-track
 ```
 
+Pares de «Visual v3» (`LV-367`, tokens `--id-edge` e `--id-tile`; el borde de una figura o tarjeta debe llegar a 3:1):
+
+```bash
+python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css static/css/identity.css --min 3 \
+  --pair id-edge:ac-bg --pair id-edge:ac-surface --pair id-edge:id-tile
+python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css static/css/identity.css \
+  --pair ac-text:id-tile --pair ac-text-secondary:id-tile
+```
+
 Los rellenos de gráficos usan `--sev-*-text`, nunca `--sev-*-border`. Cuidado: un bloque `@media print` que reasigne
 tokens en `html[data-theme="dark"]` hace que este script los lea como oscuros y mida mal; reasignarlos en `html body`.
 
