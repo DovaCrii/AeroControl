@@ -11422,3 +11422,112 @@ msgstr "Comunas y regiones, fuente BCN (referencial). No hay ciudades: se ofrece
 #: templates/environment/airspace_tab.html
 msgid "Administrative area"
 msgstr "Área administrativa"
+
+#: apps/airspace/views.py
+msgid "AIP · AMDT {amdt} ({date})"
+msgstr "AIP · AMDT {amdt} ({date})"
+
+
+#: apps/airspace/views.py
+msgid "Google map only (not in the current AIP)"
+msgstr "Solo mapa Google (no está en el AIP vigente)"
+
+
+#: apps/airspace/views.py
+msgid "Google reference shape (the AIP outline is the one drawn)"
+msgstr "Forma de referencia de Google (la que se dibuja es la del AIP)"
+
+
+#: apps/airspace/views.py
+msgid "Difference from Google: {m} m"
+msgstr "Diferencia con Google: {m} m"
+
+
+#: apps/airspace/views.py
+msgid "Matches Google: {m} m (threshold {t} m)"
+msgstr "Coincide con Google: {m} m (umbral {t} m)"
+
+
+#: apps/airspace/views.py
+msgid "Discrepancy with Google: {m} m (threshold {t} m)"
+msgstr "Discrepancia con Google: {m} m (umbral {t} m)"
+
+
+#: apps/airspace/views.py
+msgid "Largest distance from a vertex of the AIP outline to the Google outline."
+msgstr "Mayor distancia entre un vértice del contorno del AIP y el contorno de Google."
+
+
+#: apps/airspace/views.py
+msgid "No outline drawn: arc or sector, needs an external centre"
+msgstr "Sin forma dibujada: arco o sector, requiere un centro externo"
+
+
+#: apps/airspace/views.py
+msgid "No outline drawn: the source geometry could not be read"
+msgstr "Sin forma dibujada: no se pudo leer la geometría de la fuente"
+
+
+#: apps/airspace/views.py
+msgid "no outline"
+msgstr "sin forma"
+
+
+#: apps/airspace/views.py
+msgid "Google reference (off by default)"
+msgstr "Referencia Google (apagada por omisión)"
+
+
+#: apps/airspace/views.py
+msgid "reference"
+msgstr "referencia"
+
+
+#: templates/environment/airspace_tab.html
+msgid "AIP-Chile copy: AMDT %(amdt)s of %(date)s"
+msgstr "Copia del AIP-Chile: AMDT %(amdt)s del %(date)s"
+
+
+#: templates/environment/airspace_tab.html
+msgid "A newer amendment is on record (AMDT %(latest)s)."
+msgstr "Hay una enmienda más reciente registrada (AMDT %(latest)s)."
+
+
+#: templates/environment/airspace_tab.html
+msgid "Zones: %(aip)s come from the AIP and %(google)s only from the Google map (reference layer, off by default). Aerodromes, airstrips and FIR boundaries come from the Google map."
+msgstr "Zonas: %(aip)s vienen del AIP y %(google)s solo del mapa de Google (capa de referencia, apagada por omisión). Los aeródromos, las pistas y los límites FIR vienen del mapa de Google."
+
+
+#: templates/environment/airspace_tab.html
+msgid "%(n)s AIP zone(s) are text only: arcs and sectors have no drawn outline."
+msgstr "%(n)s zona(s) del AIP son solo texto: los arcos y sectores no tienen forma dibujada."
+
+
+#: templates/environment/airspace_tab.html
+msgid "Reference"
+msgstr "Referencia"
+
+
+#: templates/environment/airspace_tab.html
+msgid "Google map shapes the AIP does not draw: zones it does not carry, and the older shape of those it does. Dashed outline, for comparison only."
+msgstr "Formas del mapa de Google que el AIP no dibuja: las zonas que no trae y la forma anterior de las que sí trae. Contorno punteado, solo para comparar."
+
+
+#: templates/environment/airspace_tab.html
+msgid "AMDT %(amdt)s of %(date)s"
+msgstr "AMDT %(amdt)s del %(date)s"
+
+
+#: templates/environment/airspace_tab.html
+msgid "Newer amendment on record: AMDT %(latest)s (%(date)s)"
+msgstr "Enmienda más reciente registrada: AMDT %(latest)s (%(date)s)"
+
+
+#: templates/environment/airspace_tab.html
+msgid "No newer amendment on record"
+msgstr "Sin enmienda más reciente registrada"
+
+
+#: templates/environment/airspace_tab.html
+msgid "Check the current NOTAM/SUP."
+msgstr "Consulte los NOTAM/SUP vigentes."

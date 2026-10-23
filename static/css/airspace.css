@@ -22,6 +22,9 @@
   --id-air-line-naval: #b9a8ff;
   --id-air-line-fir: #e6edf6;
   --id-air-dot: #e6edf6;
+  /* LV-361 (fase 5): la capa «Referencia Google» (lo que el AIP no dibuja): trazo punteado gris claro,
+     calculado igual que las demás líneas (contra el halo y contra el negro). */
+  --id-air-line-ref: #b6c2d2;
   /* Capa administrativa (LV-367, fase 7): comuna = línea blanca de 1 px sobre un halo oscuro; región
      = realce ámbar. Fijos y no del tema, como el resto del mapa; el script los lee de acá. */
   --id-air-admin-line: #ffffff;
@@ -317,3 +320,31 @@
 .air-admin-tag--region { color: var(--id-air-admin-region); font-size: 0.8125rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
 .air-row-icon--commune, .air-row-icon--region, .air-row-icon--undemarcated { color: var(--ac-text); }
 .air-admin-out .air-near-sec { margin-top: var(--id-sp-1); }
+
+/* LV-361 (fase 5): la capa del AIP. Insignia de fuente (símbolo + palabra + color), la distancia con Google
+   (sin color de discrepancia hasta que la persona fije el umbral; con él, ▲ y texto en ámbar, nunca rojo) y
+   la capa «Referencia Google»: trazo punteado, sin relleno, apagada al abrir. */
+.air-shape--ref { stroke: var(--id-air-line-ref); stroke-dasharray: 3 6; fill: none; }
+.air-swatch--ref { border-style: dashed; border-color: var(--id-air-line-ref); background: var(--id-air-halo); }
+.air-src {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0.4rem 0 0;
+  padding: 0.1rem 0.6rem;
+  border: 1px solid var(--sev-nominal-border);
+  border-radius: var(--id-r-pill);
+  background: var(--sev-nominal-bg);
+  color: var(--sev-nominal-text);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.air-src[hidden], .air-cross[hidden] { display: none; }
+.air-src--aip { border-color: var(--sev-advisory-border); background: var(--sev-advisory-bg); color: var(--sev-advisory-text); }
+.air-cross { margin: 0.3rem 0 0; font-size: 0.8125rem; font-weight: 600; color: var(--ac-text); font-variant-numeric: tabular-nums; }
+.air-cross--discrepancy { color: var(--sev-warning-text); font-weight: 700; }
+.air-row-prov { display: flex; flex-wrap: wrap; align-items: center; gap: 0.1rem 0.5rem; grid-column: 2; }
+.air-row-prov .air-src { margin: 0; padding: 0 0.5rem; font-size: 0.75rem; }
+.air-row-prov .air-cross { margin: 0; }
+.air-sources { margin: 0 0 0.3rem; font-size: var(--id-fs-sm); color: var(--ac-text); }

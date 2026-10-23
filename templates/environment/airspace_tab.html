@@ -32,6 +32,14 @@ La advertencia «Referencial» es la ÚNICA de la sección (`_referential.html`,
     {% blocktranslate with date=air_fetched_at|date:"d-m-Y" source=air_snapshot.source_name %}Map copy of {{ date }} · {{ source }}{% endblocktranslate %}
     {% if air_snapshot.stale %}<span class="env-stale"><span aria-hidden="true">▲</span> {% blocktranslate with days=air_snapshot.age_days %}The copy is {{ days }} days old. Ask for a new import.{% endblocktranslate %}</span>{% endif %}
   </p>
+  {% if air_aip %}
+  <p class="air-photo{% if air_aip_info.outdated %} air-photo--stale{% endif %}">
+    {% blocktranslate with amdt=air_aip.amdt_number date=air_aip_date|date:"d-m-Y" %}AIP-Chile copy: AMDT {{ amdt }} of {{ date }}{% endblocktranslate %}
+    {% if air_aip_info.outdated %}<span class="env-stale"><span aria-hidden="true">▲</span> {% blocktranslate with latest=air_aip_info.latest_known_amdt %}A newer amendment is on record (AMDT {{ latest }}).{% endblocktranslate %}</span>{% endif %}
+  </p>
+  <p class="air-sources">{% blocktranslate with aip=air_from_aip google=air_google_only_zones %}Zones: {{ aip }} come from the AIP and {{ google }} only from the Google map (reference layer, off by default). Aerodromes, airstrips and FIR boundaries come from the Google map.{% endblocktranslate %}{% if air_aip_no_shape %} {% blocktranslate with n=air_aip_no_shape %}{{ n }} AIP zone(s) are text only: arcs and sectors have no drawn outline.{% endblocktranslate %}{% endif %}</p>
+  <p class="air-attribution">{{ air_aip_info.attribution }}</p>
+  {% endif %}
   <p class="air-attribution">{% translate "Sensitive-zones map delivered by the DGAC (Google My Maps)" %}.
     <a href="{{ air_aip_url }}" target="_blank" rel="noopener noreferrer">{% translate "Official reference: AIP-Chile, ENR 5.1" %}<span class="visually-hidden"> ({% translate "opens in a new tab" %})</span></a></p>
 </section>
@@ -82,6 +90,11 @@ La advertencia «Referencial» es la ÚNICA de la sección (`_referential.html`,
         <h3 class="air-legend-head">{% translate "Aeronautical" %}</h3>
         <div id="air-legend-items" class="air-legend-items"></div>
       </div>
+      {% if air_aip %}<div class="air-legend-group" id="air-legend-ref-group" hidden>
+        <h3 class="air-legend-head">{% translate "Reference" %}</h3>
+        <div id="air-legend-ref" class="air-legend-items"></div>
+        <p class="air-help">{% translate "Google map shapes the AIP does not draw: zones it does not carry, and the older shape of those it does. Dashed outline, for comparison only." %}</p>
+      </div>{% endif %}
       <div class="air-legend-group" id="air-legend-admin-group">
         <h3 class="air-legend-head">{% translate "Administrative" %}</h3>
         <div id="air-legend-admin" class="air-legend-items"></div>
@@ -124,6 +137,9 @@ La advertencia «Referencial» es la ÚNICA de la sección (`_referential.html`,
             <p id="air-fiche-name" class="air-fiche-name"></p>
           </div>
         </header>
+        <p id="air-f-source" class="air-src" hidden></p>
+        <p id="air-f-cross" class="air-cross" hidden></p>
+        <p id="air-f-noshape" class="air-flag" hidden><span aria-hidden="true">ⓘ</span> <span id="air-f-noshape-text"></span></p>
         <p id="air-fiche-unofficial" class="air-flag" hidden><span aria-hidden="true">ⓘ</span> {% translate "Not official: the source does not say who maintains this airstrip." %}</p>
         <dl class="air-fiche-cards">
           <div class="air-card"><dt><svg class="air-ic" aria-hidden="true" focusable="false"><use href="#air-i-vertical"/></svg>{% translate "Vertical limits" %}</dt><dd id="air-f-vertical" class="air-card-value"></dd></div>
@@ -140,6 +156,7 @@ La advertencia «Referencial» es la ÚNICA de la sección (`_referential.html`,
 </div>
 {% endif %}
 <footer class="env-foot">
+  {% if air_aip %}<p class="air-source{% if air_aip_info.outdated %} air-source--stale{% endif %}"><svg class="air-ic" aria-hidden="true" focusable="false"><use href="#air-i-source"/></svg><span class="air-source-label">{% translate "Data source" %}:</span> <strong>{{ air_aip.source_name }}</strong> · {% blocktranslate with amdt=air_aip.amdt_number date=air_aip_date|date:"d-m-Y" %}AMDT {{ amdt }} of {{ date }}{% endblocktranslate %} · {% translate "Licence: not confirmed" %} · {% if air_aip_info.outdated %}<span class="air-fresh air-fresh--stale"><span aria-hidden="true">▲</span> {% blocktranslate with latest=air_aip_info.latest_known_amdt date=air_aip_latest_date|date:"d-m-Y" %}Newer amendment on record: AMDT {{ latest }} ({{ date }}){% endblocktranslate %}</span>{% else %}<span class="air-fresh"><span aria-hidden="true">●</span> {% translate "No newer amendment on record" %}</span>{% endif %} · {% translate "Check the current NOTAM/SUP." %}</p>{% endif %}
   {% if snapshot %}<p class="air-source{% if air_snapshot.stale %} air-source--stale{% endif %}"><svg class="air-ic" aria-hidden="true" focusable="false"><use href="#air-i-source"/></svg><span class="air-source-label">{% translate "Data source" %}:</span> <strong>{% if snapshot.source_url %}<a href="{{ snapshot.source_url }}" target="_blank" rel="noopener noreferrer">{{ snapshot.source_name }}<span class="visually-hidden"> ({% translate "opens in a new tab" %})</span></a>{% else %}{{ snapshot.source_name }}{% endif %}</strong> · {% translate "Licence: not confirmed" %} · {{ air_fetched_at|date:"d-m-Y" }} · {% if air_snapshot.stale %}<span class="air-fresh air-fresh--stale"><span aria-hidden="true">▲</span> {% blocktranslate with days=air_snapshot.age_days %}{{ days }} days old{% endblocktranslate %}</span>{% else %}<span class="air-fresh"><span aria-hidden="true">●</span> {% translate "Up to date" %}</span>{% endif %}</p>{% endif %}
   <p>{% translate "Base maps: OpenStreetMap and Esri (as configured). No data of this screen is sent to any other service." %}</p>
 </footer>
