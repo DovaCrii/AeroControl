@@ -10904,3 +10904,96 @@ msgstr "No hay nada que mostrar en esta capa."
 
 msgid "valid until {date}"
 msgstr "vigente hasta {date}"
+
+msgid "Choose the credential file to upload."
+msgstr "Elija el archivo de la credencial que desea subir."
+
+msgid "The DGAC credential document type is not configured."
+msgstr "El tipo de documento «Credencial DGAC» no está configurado."
+
+msgid "Tick \"Use\" on at least one field to save."
+msgstr "Marque «Usar» en al menos un campo para guardar."
+
+msgid "Credential details saved."
+msgstr "Datos de la credencial guardados."
+
+msgid "Confirm credential details"
+msgstr "Confirmar los datos de la credencial"
+
+msgid "Enter a credential number of up to 30 characters."
+msgstr "Ingrese un número de credencial de hasta 30 caracteres."
+
+msgid "Credential %(number)s already belongs to %(name)s."
+msgstr "La credencial %(number)s ya pertenece a %(name)s."
+
+msgid "The credential number is required."
+msgstr "El número de credencial es obligatorio."
+
+msgid "The credential expiry date is required."
+msgstr "El vencimiento de la credencial es obligatorio."
+
+msgid "The expiry date must be after the issue date."
+msgstr "El vencimiento debe ser posterior a la emisión."
+
+msgid "The holder read from the file does not match this person. Check that it is the right document."
+msgstr "El titular leído del archivo no coincide con esta persona. Revise que sea el documento correcto."
+
+msgid "The RUT read from the file does not match the record. Check that it is the right document."
+msgstr "El RUT leído del archivo no coincide con la ficha. Revise que sea el documento correcto."
+
+msgid "The file was read. Check each value against the paper and tick “Use” on the ones that are right. Nothing is saved until you confirm."
+msgstr "Se leyó el archivo. Compare cada valor con el papel y marque «Usar» en los que estén correctos. No se guarda nada hasta que usted confirme."
+
+msgid "The file could not be read; fill in the fields by hand."
+msgstr "No se pudo leer el archivo; complete los campos a mano."
+
+msgid "Field"
+msgstr "Campo"
+
+msgid "Current value"
+msgstr "Valor actual"
+
+msgid "Read from the file"
+msgstr "Leído del archivo"
+
+msgid "Value to save"
+msgstr "Valor a guardar"
+
+msgid "Use"
+msgstr "Usar"
+
+msgid "Read from the PDF"
+msgstr "Leído del PDF"
+
+msgid "Doubtful"
+msgstr "Dudoso"
+
+msgid "The holder read from the file matches this person."
+msgstr "El titular leído del archivo coincide con esta persona."
+
+msgid "The holder could not be read from the file."
+msgstr "No se pudo leer el titular del archivo."
+
+msgid "The RUT read from the file matches the record."
+msgstr "El RUT leído del archivo coincide con la ficha."
+
+msgid "The record has no RUT to compare with."
+msgstr "La ficha no tiene RUT con el cual comparar."
+
+msgid "The RUT could not be read from the file."
+msgstr "No se pudo leer el RUT del archivo."
+
+msgid "Class read from the file (for information only, not saved)"
+msgstr "Clase leída del archivo (solo informativa, no se guarda)"
+
+msgid "Restrictions read from the file (for information only, not saved)"
+msgstr "Restricciones leídas del archivo (solo informativas, no se guardan)"
+
+msgid "Save confirmed values"
+msgstr "Guardar los valores confirmados"
+
+msgid "Upload the credential PDF. It is read, you check what was found, and nothing changes on this record until you confirm."
+msgstr "Suba el PDF de la credencial. Se lee, usted revisa lo que se encontró y nada cambia en esta ficha hasta que confirme."
+
+msgid "Upload credential"
+msgstr "Subir credencial"

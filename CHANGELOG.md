@@ -8,6 +8,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Added
+
+- **Credencial DGAC leída desde su PDF (`LV-368`, fase 3).** En la ficha del operador, «Subir credencial» guarda el documento (tipo `dgac-credential`, sin tocar al operador), el servidor vuelve a leerlo (solo PDF con capa de texto; foto o escaneo se guardan igual con «No se pudo leer el archivo; complete los campos a mano») y una pantalla de confirmación muestra, por campo, valor actual, propuesta, confianza («Leído del PDF» / «Dudoso») y fragmento. Ninguna propuesta viene aceptada: lo que se escribe es lo que la persona marca «Usar». Reglas en `Operator.apply_credential` (vencimiento posterior a la emisión, número no repetido en el tenant con el nombre de quien lo tiene, número y vencimiento obligatorios, titular o RUT que no calzan solo avisan); rellena `issue_date`/`expiry_date` del documento y lo deja como versión vigente. Exige `compliance.add_document` y `registry.change_operator`, acotado por tenant. El RUT leído solo se compara («coincide / no coincide / no se leyó»): no se muestra, no se guarda y no va a la auditoría (que lleva nombres de campo) ni al log. Sin migración ni estáticos; clase y restricciones se muestran como información y no se guardan.
+
 ### Changed
 
 - **Lectura de PDF en un solo lugar (`LV-368`, fase 2).** `apps/operations/dgac_pdf.py` pasa a `apps/core/pdf_text.py` con `text_from_pdf(stream, pages=2)`; `folio_from_pdf` y `window_from_pdf` lo usan sin cambiar su comportamiento (`None` ante la duda, nunca lanzan). `dgac_pdf` queda como shim con condición de retiro en su docstring. Sin migración ni estáticos.
