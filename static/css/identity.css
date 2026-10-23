@@ -47,6 +47,10 @@
 
   --id-lift-2: 0 2px 4px rgb(16 24 40 / 10%), 0 22px 40px -16px rgb(16 24 40 / 40%);
 
+  /* Visual v3 (LV-367, fase 1). Borde de figuras y tarjetas con >= 3:1 (WCAG 1.4.11) contra `--ac-bg`, `--ac-surface` y `--id-tile`; superficie interna de las tarjetas nuevas. `--ac-border` (1,12:1 contra la tarjeta) sigue siendo el trazo decorativo. */
+  --id-edge: #7d8aa0;
+  --id-tile: #f7f9fc;
+
   --id-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --id-t-fast: 120ms;
   --id-t-base: 180ms;
@@ -60,6 +64,8 @@
 
 [data-theme="dark"] {
   --id-lift-2: 0 2px 4px rgb(0 0 0 / 45%), 0 24px 44px -16px rgb(0 0 0 / 80%);
+  --id-edge: #6c81a3;
+  --id-tile: #1f2b3e;
   --id-ok-bg: #14361f;
   --id-ok-border: #2c6b40;
   --id-ok-text: #7fd6a0;
