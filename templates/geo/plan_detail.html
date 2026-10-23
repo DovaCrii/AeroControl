@@ -264,7 +264,7 @@ the provider did not answer -- a forecast is context, never a blocker.{% endcomm
   compartido con el panel. Tener dos copias del mismo pronóstico era garantía de
   que una se quedara en km/h mientras la otra pasaba a m/s.{% endcomment %}
   {% include "core/_weather_metrics.html" %}
-  <p class="text-muted small mb-0 mt-3">{% translate "Source: Open-Meteo. Reference only -- it does not replace the pre-flight check." %}</p>
+  <p class="text-muted small mb-0 mt-3">{% blocktranslate with source=weather_credit.name %}Source: {{ source }}. Reference only -- it does not replace the pre-flight check.{% endblocktranslate %}</p>
   {% comment %}R8.1 evidence: showing the forecast is not proof it was reviewed.
   A forecast also cannot be looked up again afterwards -- the provider answers a
   later model run, or refuses a past date -- so recording it stores the numbers

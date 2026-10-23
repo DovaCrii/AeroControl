@@ -52,7 +52,7 @@
 <footer class="env-foot">
   {% if card.portal_url %}<p class="env-portal"><a href="{{ card.portal_url }}" target="_blank" rel="noopener noreferrer">{% translate "Real-time data: see portal" %}<span class="visually-hidden"> ({% translate "opens in a new tab" %})</span></a></p>{% endif %}
   {% include "environment/_source.html" with name="GEOCOM / Trimble" url=card.source_url %}
-  {% if env_summary.sunset_text %}{% include "environment/_source.html" with name="Open-Meteo.com" url="https://open-meteo.com/" license="CC BY 4.0" license_url="https://creativecommons.org/licenses/by/4.0/" stale=env_summary.stale %}{% endif %}
+  {% if env_summary.sunset_text %}{% include "environment/_source.html" with name=env_credit.name url=env_credit.url license=env_credit.license license_url=env_credit.license_url stale=env_summary.stale %}{% endif %}
 </footer>
 {% endwith %}
 {% endblock %}

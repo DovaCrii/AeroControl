@@ -50,7 +50,7 @@ class TestDefaults:
         settings.WEATHER_ENABLED = True  # los WEATHER_DEFAULT_* quedan los reales
         seen = {}
 
-        def fake(lat, lon):
+        def fake(lat, lon, zone=None):
             seen["at"] = (lat, lon)
 
         monkeypatch.setattr(weather_client, "panel_forecast", fake)
@@ -142,6 +142,8 @@ class TestNoInternetOnTheServer:
     def _offline(self, settings, monkeypatch):
         settings.WEATHER_ENABLED = True
         settings.WEATHER_FAKE_FIXTURE = False
+        # LV-365: MET sólo se llama con User-Agent; sin él ni siquiera intenta salir.
+        settings.WEATHER_USER_AGENT = "test-agent (test-contact)"
         cache.clear()
         self.calls = 0
 

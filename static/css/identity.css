@@ -1192,6 +1192,57 @@ main .entity-title h1[class] {
 }
 
 
+/* B2: ficha del permiso con jerarquía (LV-368, fase 1). Cabecera, «Qué falta», secciones
+   plegables, menú «⋯» y línea de tiempo de la vigencia. Sólo tokens `--ac-*`, `--sev-*` e `--id-*`;
+   sin tokens nuevos y sin animación. La gravedad se lee por símbolo + palabra + color. */
+.permit-waiting { display: inline-flex; align-items: center; gap: 0.35em; color: var(--ac-text-secondary); font-size: 0.875rem; font-weight: 600; }
+.permit-waiting .id-signal-icon { margin-top: 0; }
+.permit-head { overflow: visible; } /* `.card` recorta: el menú «⋯» se saldría de la tarjeta */
+.permit-head .entity-subtitle { margin-top: 0.25rem; }
+.permit-head .entity-bar { margin-bottom: 0; padding-bottom: 0; border-bottom: 0; }
+.permit-head #permission-status-form { margin-top: var(--id-sp-2); padding-top: var(--id-sp-2); border-top: 1px solid var(--ac-border); }
+.permit-status-notes { flex: 1 1 14rem; max-width: 24rem; }
+.permit-more .dropdown-item { font-size: 0.9375rem; }
+.permit-more form { margin: 0; }
+
+.permit-attention { margin: var(--id-sp-2) 0; padding: 0.75rem 1rem; border: 1px solid var(--ac-border); border-radius: var(--id-r-card); background: var(--ac-surface); }
+.permit-attention-title { margin: 0 0 0.4rem; color: var(--ac-text); font-size: var(--id-fs-md); font-weight: 700; }
+.permit-attention-list { display: grid; gap: 0.35rem; margin: 0; padding: 0; list-style: none; }
+.permit-attn { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.4rem 0.7rem; border: 1px solid var(--ac-border); border-left-width: 4px; border-radius: var(--id-r-control); font-size: 0.9375rem; line-height: 1.4; }
+.permit-attn-symbol { flex: none; min-width: 1.1em; font-weight: 700; text-align: center; }
+.permit-attn--critical { background: var(--sev-critical-bg); border-color: var(--sev-critical-border); color: var(--sev-critical-text); }
+.permit-attn--warning { background: var(--sev-warning-bg); border-color: var(--sev-warning-border); color: var(--sev-warning-text); }
+.permit-attn--caution { background: var(--sev-caution-bg); border-color: var(--sev-caution-border); color: var(--sev-caution-text); }
+.permit-attn--ok { border-color: var(--id-ok-border); background: var(--id-ok-bg); color: var(--id-ok-text); }
+
+.permit-section { margin-top: var(--id-sp-2); }
+.permit-section > summary { display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 1rem; border: 1px solid var(--ac-border); border-radius: var(--id-r-card); background: var(--ac-surface); cursor: pointer; list-style: none; }
+.permit-section > summary::-webkit-details-marker { display: none; }
+.permit-section > summary::before { content: "▸"; color: var(--ac-text-secondary); }
+.permit-section[open] > summary::before { content: "▾"; }
+.permit-section[open] > summary { margin-bottom: var(--id-sp-1); }
+.permit-section-title { font-size: var(--id-fs-md); font-weight: 700; }
+
+.permit-derived { margin-top: 0.35rem; }
+.permit-why > summary { display: inline; margin-left: 0.4rem; color: var(--ac-primary); font-size: 0.8125rem; cursor: pointer; }
+.permit-why-text { max-width: 65ch; margin: 0.35rem 0 0; color: var(--ac-text-secondary); font-size: 0.8125rem; }
+
+.permit-validity { display: grid; gap: 0.35rem; }
+.permit-tl { width: 100%; max-width: 20rem; height: auto; }
+.permit-tl-track { fill: none; stroke: var(--ac-text-secondary); stroke-width: 1; }
+.permit-tl-elapsed--nominal { fill: var(--sev-nominal-text); }
+.permit-tl-elapsed--warning { fill: var(--sev-warning-text); }
+.permit-tl-elapsed--critical { fill: var(--sev-critical-text); }
+.permit-tl-today { stroke: var(--ac-text); stroke-width: 2; }
+.permit-validity-text { color: var(--ac-text-secondary); font-size: 0.875rem; }
+.permit-validity-dates { font-variant-numeric: tabular-nums; }
+.permit-dossier-mark { width: 3rem; }
+.permit-form-optional > summary { cursor: pointer; }
+@media (max-width: 575.98px) {
+  .permit-head .entity-actions { width: 100%; }
+}
+
+
 /* == C: formularios == */
 /* Contiene: campos, grupos, ayudas, errores de validación y barras de acciones. */
 .form-shell .form-control,

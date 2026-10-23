@@ -140,6 +140,20 @@ lo que hay que reforzar.{% endcomment %}
 </div>
 {% endif %}
 
+{% comment %}LV-368: subir la credencial DGAC y confirmar lo que se lee de ella. Solo
+con los dos permisos: subir un documento y cambiar al operador.{% endcomment %}
+{% if object.is_active and perms.compliance.add_document and perms.registry.change_operator %}
+<div class="card mt-3 p-4" id="credential-upload">
+  <h2 class="h5 mb-2">{% translate "DGAC credential" %}</h2>
+  <p class="text-body-secondary small mb-3">{% translate "Upload the credential PDF. It is read, you check what was found, and nothing changes on this record until you confirm." %}</p>
+  <form method="post" enctype="multipart/form-data" action="{% url 'operator-credential-upload' object.pk %}" class="d-flex flex-wrap gap-2 align-items-center">
+    {% csrf_token %}
+    <input class="form-control w-auto" type="file" name="file" accept=".pdf,.png,.jpg,.jpeg" required aria-label="{% translate 'DGAC credential file' %}">
+    <button type="submit" class="btn btn-primary">{% translate "Upload credential" %}</button>
+  </form>
+</div>
+{% endif %}
+
 {% include "compliance/_documents_section.html" %}
 
 {% if movements is not None %}

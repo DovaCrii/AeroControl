@@ -23,6 +23,7 @@ from rest_framework.views import APIView
 
 from apps.core.api import ViewModelPermissions
 from apps.core.audit import set_audit_context
+from apps.core.tenancy import scope_queryset_to_tenant
 
 from .kml import canonical
 from .kml.build import build_kml_bytes
@@ -34,11 +35,19 @@ CHANGE_PERM = "geo.change_geoplan"
 VIEW_PERM = "geo.view_geoplan"
 
 
-def _get_active_plan(pk):
-    """Fetch an active plan by pk or raise 404. Shared by read and write views."""
+def _get_active_plan(pk, user):
+    """Fetch an active plan by pk or raise 404. Shared by read and write views.
+
+    LV-368 (F-08): scoped to the user's tenant through the plan's cost center, so
+    a plan of another tenant is a 404, not a readable/committable object.
+    """
     return get_object_or_404(
-        GeoPlan.objects.filter(is_active=True).select_related(
-            "cost_center", "flight_permission", "current_version"
+        scope_queryset_to_tenant(
+            GeoPlan.objects.filter(is_active=True).select_related(
+                "cost_center", "flight_permission", "current_version"
+            ),
+            user,
+            "cost_center__tenant_id",
         ),
         pk=pk,
     )
@@ -84,7 +93,7 @@ class _GeoReadView(_GeoApiView):
     queryset = GeoPlan.objects.all()
 
     def get_plan(self, pk):
-        return _get_active_plan(pk)
+        return _get_active_plan(pk, self.request.user)
 
 
 class GeoPlanMetaView(_GeoReadView):
@@ -263,7 +272,7 @@ class GeoPlanVersionsView(_GeoCommitMixin):
         return super().get_throttles()
 
     def get(self, request, pk):
-        plan = _get_active_plan(pk)
+        plan = _get_active_plan(pk, request.user)
         # defer(content): the blob is never sent here, so don't load it.
         versions = plan.versions.defer("content").order_by("-version_number")
         return JsonResponse(
@@ -282,7 +291,7 @@ class GeoPlanVersionsView(_GeoCommitMixin):
     def post(self, request, pk):
         if not request.user.has_perm(CHANGE_PERM):
             return JsonResponse({"detail": "Permission denied."}, status=403)
-        plan = _get_active_plan(pk)
+        plan = _get_active_plan(pk, request.user)
 
         try:
             payload = request.data
@@ -385,7 +394,7 @@ class GeoPlanRestoreView(_GeoCommitMixin):
     def post(self, request, pk, number):
         if not request.user.has_perm(CHANGE_PERM):
             return JsonResponse({"detail": "Permission denied."}, status=403)
-        plan = _get_active_plan(pk)
+        plan = _get_active_plan(pk, request.user)
 
         if plan.status not in GeoPlan.EDITABLE_STATUSES:
             return self._locked_response()
@@ -491,7 +500,7 @@ class GeoPlanExportView(_GeoCommitMixin):
     def post(self, request, pk):
         if not request.user.has_perm(VIEW_PERM):
             return JsonResponse({"detail": "Permission denied."}, status=403)
-        plan = _get_active_plan(pk)
+        plan = _get_active_plan(pk, request.user)
 
         try:
             payload = request.data

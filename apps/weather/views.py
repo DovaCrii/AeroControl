@@ -12,6 +12,7 @@ from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.views import View
 
+from apps.core import weather as weather_client
 from apps.core.audit import set_audit_context
 from apps.core.views import ModelPermissionRequiredMixin
 
@@ -49,6 +50,7 @@ class WeatherLocationUpdate(WeatherEnabledMixin, ModelPermissionRequiredMixin, V
             "query": query,
             "places": places,
             "error": error,
+            "nominatim_on": weather_client.nominatim_enabled(),
         }
         return render(request, self.template_name, context, status=status)
 

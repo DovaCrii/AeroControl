@@ -121,7 +121,7 @@ def on(settings, monkeypatch, forecast, calls):
     settings.GNSS_SCINTILLATION_ENABLED = True
     settings.WEATHER_DEFAULT_LABEL = ""
 
-    def fake(lat, lon):
+    def fake(lat, lon, zone=None):
         calls.append((round(float(lat), 3), round(float(lon), 3)))
         return forecast
 
@@ -234,7 +234,9 @@ class TestTheCells:
     def test_a_missing_forecast_says_so_with_a_retry_and_keeps_the_gnss_cell(
         self, on, monkeypatch
     ):
-        monkeypatch.setattr(weather_client, "panel_forecast", lambda lat, lon: None)
+        monkeypatch.setattr(
+            weather_client, "panel_forecast", lambda lat, lon, zone=None: None
+        )
         client = login_as(VIEW)
         _city(client)
         content = _strip(client)
@@ -380,7 +382,7 @@ class TestThePanel:
         assert STRIP in content
 
     def test_building_the_panel_never_reaches_the_forecast(self, on, monkeypatch):
-        def boom(lat, lon):
+        def boom(lat, lon, zone=None):
             raise AssertionError("armar el panel no puede pedir el pronóstico")
 
         monkeypatch.setattr(weather_client, "panel_forecast", boom)
