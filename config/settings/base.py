@@ -229,6 +229,15 @@ GEO_TILE_PROVIDERS = [
 # LV-357: "near" for the airspace screen, in km (the person's decision of 2026-10-20; shown with NM).
 AIRSPACE_NEAR_KM = config("AIRSPACE_NEAR_KM", default=10, cast=float)
 
+# LV-361: from how many metres an AIP zone counts as a discrepancy against the Google map. It is
+# the person's decision and has none yet: unset, the cross-check shows the measured distance
+# with no verdict (`measured`).
+AIRSPACE_CROSSCHECK_THRESHOLD_M = config(
+    "AIRSPACE_CROSSCHECK_THRESHOLD_M",
+    default="",
+    cast=lambda value: float(value) if str(value).strip() else None,
+)
+
 # R8.1 (ISO 8.1 meteorological review). The project's only outgoing HTTP call.
 # LV-353: ON by default (the person's decision of 2026-10-20); WEATHER_ENABLED=False
 # restores the zero-outgoing-calls property. Open-Meteo needs no API key, so

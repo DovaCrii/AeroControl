@@ -265,3 +265,43 @@ class TestNearby:
             "aerodromes": [],
         }
         assert g.nearby(-33.45, -70.62, self.FEATURES, aerodromes=0)["aerodromes"] == []
+
+
+# --- comparar dos formas (LV-361, fase 3) -----------------------------------
+
+
+def test_vertices_of_drops_the_closing_vertex_and_keeps_every_part():
+    assert g.vertices_of(BOX) == OUTER[:-1]
+    assert g.vertices_of(DONUT) == OUTER[:-1] + HOLE[:-1]
+    assert g.vertices_of(LINE) == LINE["coordinates"]
+    point = {"type": "Point", "coordinates": [-70.0, -33.0]}
+    collection = {"type": "GeometryCollection", "geometries": [BOX, point]}
+    assert len(g.vertices_of(collection)) == 5
+
+
+def test_boundary_distance_is_not_zero_for_a_point_inside_the_polygon():
+    centre_lat, centre_lon = -33.45, -70.65
+    assert g.distance_to_geometry_km(centre_lat, centre_lon, BOX) == 0.0
+    inside = g.boundary_distance_km(-33.45, -70.62, BOX)
+    assert 1.5 < inside < 2.0  # 0.02 degrees of longitude to the east edge
+    assert g.boundary_distance_km(-33.50, -70.65, BOX) == pytest.approx(0, abs=1e-6)
+
+
+def test_vertex_distances_are_metres_sorted_and_empty_without_a_shape():
+    shifted = {
+        "type": "Polygon",
+        "coordinates": [[[lon, lat - 0.001] for lon, lat in OUTER]],
+    }
+    distances = g.vertex_distances_m(BOX, shifted)
+    assert len(distances) == 4 and distances == sorted(distances)
+    # The bottom corners sit on a side of the shifted shape; the top ones are ~111 m (0.001 deg).
+    assert distances[0] < 1 and 100 < distances[-1] < 125
+    assert g.vertex_distances_m(BOX, BOX) == [0.0, 0.0, 0.0, 0.0]
+    assert (
+        g.vertex_distances_m(BOX, {"type": "GeometryCollection", "geometries": []})
+        == []
+    )
+    assert (
+        g.vertex_distances_m({"type": "GeometryCollection", "geometries": []}, BOX)
+        == []
+    )

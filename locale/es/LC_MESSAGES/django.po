@@ -11008,3 +11008,9 @@ msgstr "Vigencia y documentos"
 
 msgid "Preflight and flights"
 msgstr "Prevuelo y vuelos"
+
+msgid "Measured (no threshold set)"
+msgstr "Medida (sin umbral definido)"
+
+msgid "Source: AIP-Chile, DGAC, AMDT NR %(amdt)s (%(date)s), ENR 5.1. For reference only; check the current NOTAM/SUP."
+msgstr "Fuente: AIP-Chile, DGAC, AMDT NR %(amdt)s (%(date)s), ENR 5.1. Referencial; consulte NOTAM/SUP vigentes."

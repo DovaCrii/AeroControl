@@ -425,6 +425,13 @@ def test_bare_phone_numbers_without_a_label_are_scrubbed():
     assert "439" not in out and "8765" not in out and "0800-1700" in out
 
 
+def test_a_seven_or_eight_digit_number_stuck_together_is_scrubbed_too():
+    # Found on the real file (LV-361 phase 3): a landline written without spaces survived.
+    out = P.scrub_contacts("Consultas 29222117 y 4567890; vigente 0800-1700 y 118.100.")
+    assert "9222117" not in out and "4567890" not in out
+    assert "0800-1700" in out and "118.100" in out
+
+
 def test_scrubbing_keeps_schedules_frequencies_and_levels():
     out = P.scrub_contacts(REMARKS)
     for keep in (

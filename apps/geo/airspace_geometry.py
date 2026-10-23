@@ -226,6 +226,50 @@ def distance_to_geometry_km(lat, lon, geometry):
 
 
 # ---------------------------------------------------------------------------
+# Comparar dos formas (cruce AIP / Google, LV-361)
+# ---------------------------------------------------------------------------
+
+
+def vertices_of(geometry):
+    """Los vértices ``[lon, lat]`` de una geometría; un anillo cerrado no repite el primero."""
+    vertices = [list(p) for p in _points(geometry)]
+    for line in _lines(geometry):
+        vertices.extend(list(p) for p in line)
+    for polygon in _polygons(geometry):
+        for ring in polygon:
+            closed = len(ring) > 1 and list(ring[0]) == list(ring[-1])
+            vertices.extend(list(p) for p in (ring[:-1] if closed else ring))
+    return vertices
+
+
+def boundary_distance_km(lat, lon, geometry):
+    """Distancia del punto al BORDE de la geometría (puntos, líneas y anillos).
+
+    A diferencia de `distance_to_geometry_km`, un punto dentro de un polígono no da 0: sirve para
+    medir cuánto se separa un vértice de la otra forma, esté dentro o fuera de ella."""
+    best = math.inf
+    for point in _points(geometry):
+        best = min(best, haversine_km(lat, lon, point[1], point[0]))
+    for line in _lines(geometry):
+        best = min(best, distance_to_line_km(lat, lon, line))
+    for polygon in _polygons(geometry):
+        best = min(best, distance_to_polygon_edge_km(lat, lon, polygon))
+    return best
+
+
+def vertex_distances_m(geometry, other):
+    """Metros de cada vértice de `geometry` al borde de `other`, de menor a mayor.
+
+    Lista vacía si alguna de las dos no tiene posiciones: sin forma no hay distancia que inventar."""
+    if not _all_positions(other):
+        return []
+    return sorted(
+        boundary_distance_km(lat, lon, other) * 1000.0
+        for lon, lat in vertices_of(geometry)
+    )
+
+
+# ---------------------------------------------------------------------------
 # Círculos
 # ---------------------------------------------------------------------------
 
