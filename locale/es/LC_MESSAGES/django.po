@@ -11021,3 +11021,59 @@ msgstr "Interpretación nuestra"
 
 msgid "The exact hours and the peak hour are ours: the source only says night, near midnight."
 msgstr "Las horas exactas y la hora pico son nuestras: la fuente sólo dice de noche, cerca de la medianoche."
+
+msgid "What to attend first"
+msgstr "Qué atender primero"
+
+msgid "Nothing needs attention first."
+msgstr "Nada requiere atención primero."
+
+#, python-format
+msgid "%(count)s site without a permit in force"
+msgid_plural "%(count)s sites without a permit in force"
+msgstr[0] "%(count)s faena sin permiso vigente"
+msgstr[1] "%(count)s faenas sin permiso vigente"
+
+#, python-format
+msgid "%(count)s item overdue"
+msgid_plural "%(count)s items overdue"
+msgstr[0] "%(count)s elemento vencido"
+msgstr[1] "%(count)s elementos vencidos"
+
+#, python-format
+msgid "%(count)s alert open for over 30 days"
+msgid_plural "%(count)s alerts open for over 30 days"
+msgstr[0] "%(count)s alerta abierta hace más de 30 días"
+msgstr[1] "%(count)s alertas abiertas hace más de 30 días"
+
+msgid "No pending"
+msgstr "Sin pendientes"
+
+msgid "Expiries by category"
+msgstr "Vencimientos por categoría"
+
+msgid "Expiries by category and level over the next 90 days"
+msgstr "Vencimientos por categoría y nivel en los próximos 90 días"
+
+msgid "No expiries in the next 90 days:"
+msgstr "Sin vencimientos en los próximos 90 días:"
+
+#, python-format
+msgid "In force %(in_force)s · expiring soon %(soon)s · awaiting %(awaiting)s · past validity %(past)s"
+msgstr "Vigentes %(in_force)s · vencen pronto %(soon)s · esperando %(awaiting)s · vigencia pasada %(past)s"
+
+msgid "No expiry date"
+msgstr "Sin fecha de vencimiento"
+
+#, python-format
+msgid "See all (%(count)s more)"
+msgstr "Ver todas (%(count)s más)"
+
+msgid "Show only sites with a problem"
+msgstr "Ver sólo las faenas con problema"
+
+msgid "No site has a problem with its permits."
+msgstr "Ninguna faena tiene problemas con sus permisos."
+
+msgid "Permit in force"
+msgstr "Permiso vigente"

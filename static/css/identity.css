@@ -1396,7 +1396,7 @@ form.is-submitting-slow .btn-primary::after {
   min-width: 0;
   margin-bottom: var(--id-sp-3);
   padding: var(--id-sp-2) var(--id-sp-3);
-  border: 1px solid var(--ac-border);
+  border: 1px solid var(--id-edge);
   border-radius: var(--id-r-card);
   background: var(--ac-surface);
   color: var(--ac-text);
@@ -1404,7 +1404,7 @@ form.is-submitting-slow .btn-primary::after {
 }
 .id-cx--loading { min-height: 120px; }
 .id-cx-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem var(--id-sp-3); }
-.id-cx-title { margin: 0; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ac-text-secondary); }
+.id-cx-title { margin: 0; font-size: var(--id-fs-lg); font-weight: 700; color: var(--ac-text); }
 .id-cx-asof { margin: 0; font-weight: 700; }
 .id-cx-link { margin-left: auto; color: var(--ac-text); font-size: var(--id-fs-sm); font-weight: 600; text-decoration: underline; }
 .id-cx-report { margin: 0; font-size: var(--id-fs-sm); color: var(--ac-text-secondary); }
@@ -1451,10 +1451,6 @@ form.is-submitting-slow .btn-primary::after {
 
 .id-cx-block--rings,
 .id-cx-block--maintenance { min-width: 0; }
-.id-cx-rings { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: var(--id-sp-2); margin: 0; padding: 0; list-style: none; }
-.id-cx-ring { display: grid; justify-items: start; gap: 0.35rem; min-width: 0; padding: var(--id-sp-1) 0; }
-.id-cx-ring-name { margin: 0; font-size: var(--id-fs-sm); font-weight: 700; }
-.id-cx-ring-text { min-width: 0; }
 .id-cx-ring-fig { margin: 0; font-size: var(--id-fs-sm); }
 .id-cx-fig { font-size: var(--id-fs-lg); font-variant-numeric: tabular-nums; }
 .id-cx-levels { display: flex; flex-wrap: wrap; gap: 0.25rem; margin: 0.35rem 0 0; padding: 0; list-style: none; }
@@ -1497,7 +1493,7 @@ form.is-submitting-slow .btn-primary::after {
    `tr.row-awaiting`); aquí sólo la forma. El medidor es ayuda visual: el número y el chip llevan el
    significado, así que no se le fuerza color. Sin `colspan` ni `.table-normalized`. */
 .id-cx-permits-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem var(--id-sp-3); }
-.id-cx-permits-head .id-cx-link { margin-left: auto; }
+.id-cx-permits-head .id-cx-link { margin-left: 0; }
 .id-cx-permits-wrap { overflow-x: auto; }
 .id-cx-permits { font-size: var(--id-fs-sm); }
 .id-cx-permits th, .id-cx-permits td { vertical-align: middle; }
@@ -1519,12 +1515,32 @@ form.is-submitting-slow .btn-primary::after {
 .id-cx-guide-body .id-cx-h3 { margin-top: var(--id-sp-1); }
 .id-cx-steps { margin: 0; padding-left: 1.25rem; display: grid; gap: 0.25rem; font-size: var(--id-fs-sm); }
 .id-cx-steps a { color: var(--ac-text); font-weight: 600; text-decoration: underline; }
-/* Bajo 576 px los anillos se apilan en filas (anillo a la izquierda, cifra y chips a la derecha) y el
-   mapa de calor pasa a cuatro columnas: Vencido, 0–30, 31–60 y 61–90 días. */
+/* Fase 4 (LV-367): resumen de un vistazo y secciones plegables. Sin tokens nuevos: usa `--id-edge`, `--id-tile`
+   y los chips. Los anillos ya no se dibujan (`ring` sigue en `compliance_charts`). */
+.id-cx-first { padding: var(--id-sp-1) var(--id-sp-2); border: 1px solid var(--id-edge); border-left: 4px solid var(--sev-warning-text); border-radius: var(--id-r-control); background: var(--id-tile); }
+.id-cx-first-list { margin: 0; padding-left: 1.25rem; display: grid; gap: 0.25rem; font-size: var(--id-fs-md); }
+.id-cx-first-list a { color: var(--ac-text); font-weight: 700; text-decoration: underline; }
+.id-cx-calm { display: flex; align-items: center; gap: 0.4rem; margin: 0; font-size: 0.875rem; }
+.id-cx-calm .nav-icon { width: 1.1rem; height: 1.1rem; flex: 0 0 1.1rem; color: var(--id-ok-text); }
+.id-cx-ind { display: grid; gap: var(--id-sp-1); margin: 0; padding: 0; list-style: none; }
+.id-cx-ind-item { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.75rem; padding: 0.5rem 0.75rem; border: 1px solid var(--id-edge); border-radius: var(--id-r-control); background: var(--id-tile); }
+.id-cx-ind-item .nav-icon { width: 1.4rem; height: 1.4rem; flex: 0 0 1.4rem; color: var(--ac-text-secondary); }
+.id-cx-ind-name { min-width: 6rem; font-size: 0.875rem; font-weight: 700; }
+.id-cx-ind-fig { font-size: 0.875rem; }
+.id-cx-clear { margin-top: var(--id-sp-1); }
+.id-cx-clear-list { display: flex; flex-wrap: wrap; gap: 0.25rem 0.75rem; margin: 0.25rem 0 0; padding: 0; list-style: none; font-size: 0.875rem; color: var(--ac-text-secondary); }
+.id-cx-clear-list .nav-icon { width: 1rem; height: 1rem; vertical-align: -0.15em; }
+.id-cx-fold { grid-column: 1 / -1; min-width: 0; padding: 0.5rem 0.75rem; border: 1px solid var(--id-edge); border-radius: var(--id-r-control); }
+.id-cx-fold > summary { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: var(--id-fs-md); font-weight: 700; }
+.id-cx-fold[open] > summary { margin-bottom: var(--id-sp-1); }
+.id-cx-count { min-width: 1.6rem; padding: 0 0.5rem; border: 1px solid var(--sev-nominal-border); border-radius: var(--id-r-pill); background: var(--sev-nominal-bg); color: var(--sev-nominal-text); font-size: var(--id-fs-sm); text-align: center; font-variant-numeric: tabular-nums; }
+.id-cx-lv-wrap { overflow-x: auto; }
+.id-cx .id-chip { font-size: var(--id-fs-sm); }
+.id-cx-lv { border-collapse: separate; border-spacing: 0 0.25rem; width: 100%; font-size: 0.875rem; }
+.id-cx-lv th, .id-cx-lv td { padding: 0.15rem 0.35rem; text-align: left; }
+.id-cx-zero { color: var(--ac-text-muted); }
+.id-cx-zero-rows { color: var(--ac-text-secondary); }
 @media (max-width: 575.98px) {
-  .id-cx-rings { grid-template-columns: minmax(0, 1fr); }
-  .id-cx-ring { grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: var(--id-sp-2); }
-  .id-cx-ring-name { grid-column: 1 / -1; }
   .id-cx-heat--wide { display: none; }
   .id-cx-heat--narrow { display: table; }
   .id-cx-heat--narrow .id-cx-rowhead { white-space: normal; padding-right: 0.25rem; }
