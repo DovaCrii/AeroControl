@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import AirspaceFeature, AirspaceSnapshot
+from .models import AirspaceCrossCheck, AirspaceFeature, AirspaceSnapshot
 
 
 class _ReadOnlyAdmin(admin.ModelAdmin):
@@ -27,7 +27,7 @@ class AirspaceSnapshotAdmin(_ReadOnlyAdmin):
         "archived",
         "is_current",
     )
-    list_filter = ("is_current",)
+    list_filter = ("is_current", "source_kind", "status")
 
 
 @admin.register(AirspaceFeature)
@@ -36,3 +36,12 @@ class AirspaceFeatureAdmin(_ReadOnlyAdmin):
     list_filter = ("kind", "is_active", "folder")
     search_fields = ("code", "name", "raw_name")
     exclude = ("geometry",)
+
+
+@admin.register(AirspaceCrossCheck)
+class AirspaceCrossCheckAdmin(_ReadOnlyAdmin):
+    """Computed by the comparison, never edited."""
+
+    list_display = ("code", "result", "max_vertex_m", "median_m")
+    list_filter = ("result",)
+    search_fields = ("code",)

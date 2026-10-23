@@ -37,7 +37,12 @@ from apps.geo.administrative import locate
 from apps.geo.kml.errors import KmlImportError
 from apps.geo.kml.parse import parse_kml_bytes
 
-from .models import AirspaceFeature, AirspaceSnapshot
+from .models import (
+    REVIEW_APPROVED,
+    SOURCE_GOOGLE,
+    AirspaceFeature,
+    AirspaceSnapshot,
+)
 
 DEFAULT_URL = (
     "https://www.google.com/maps/d/kml?mid=1T3wWBnClwim-qP1isEKxBO4Xc1Dt6z4&forcekml=1"
@@ -464,11 +469,19 @@ def sync_features(
     content: the old row is archived and a new one created, so history stays),
     or *archived* (key gone from the source).
     """
-    current = AirspaceSnapshot.objects.filter(is_current=True).first()
+    # One current snapshot PER SOURCE (LV-361): this importer only reads and replaces its own.
+    current = AirspaceSnapshot.objects.filter(
+        is_current=True, source_kind=SOURCE_GOOGLE
+    ).first()
     if current and current.sha256 == sha256:
         return SyncReport(unchanged=True, dry_run=dry_run, total=current.feature_count)
 
-    existing = {f.source_key: f for f in AirspaceFeature.objects.filter(is_active=True)}
+    existing = {
+        f.source_key: f
+        for f in AirspaceFeature.objects.filter(
+            is_active=True, source_kind=SOURCE_GOOGLE
+        )
+    }
     report = SyncReport(dry_run=dry_run, total=len(result.features))
     incoming = {f.source_key: f for f in result.features}
     to_create = []
@@ -511,7 +524,13 @@ def sync_features(
                 is_active=False, archived_in=snapshot, updated_at=timezone.now()
             )
         AirspaceFeature.objects.bulk_create(
-            AirspaceFeature(snapshot=snapshot, **vars(feature)) for feature in to_create
+            AirspaceFeature(
+                snapshot=snapshot,
+                source_kind=SOURCE_GOOGLE,
+                review_status=REVIEW_APPROVED,
+                **vars(feature),
+            )
+            for feature in to_create
         )
     report.snapshot = snapshot
     return report
