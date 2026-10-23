@@ -5823,14 +5823,6 @@ msgstr "Abrir el centro de costo"
 msgid "Forecast unavailable right now."
 msgstr "El pronóstico no está disponible por ahora."
 
-#: .\templates\dashboard\index.html:355 .\templates\geo\plan_detail.html:282
-msgid ""
-"Source: Open-Meteo. Reference only -- it does not replace the pre-flight "
-"check."
-msgstr ""
-"Fuente: Open-Meteo. Solo de referencia -- no reemplaza el chequeo "
-"preoperacional."
-
 #: .\templates\dashboard\index.html:372
 msgid "Maintenance by Type"
 msgstr "Mantenimiento por tipo"
@@ -9652,6 +9644,13 @@ msgstr "El asistente necesitó demasiados pasos. Pruebe con una pregunta más si
 msgid "The assistant is not available right now. Try again in a moment."
 msgstr "El asistente no está disponible por ahora. Vuelva a intentarlo en un momento."
 
+msgid ""
+"The assistant's model cannot use the lookup tools. Ask the administrator to "
+"check the model list."
+msgstr ""
+"El modelo del asistente no puede usar las herramientas de consulta. Pida al "
+"administrador que revise la lista de modelos."
+
 msgid "Assistant"
 msgstr "Asistente"
 
@@ -11531,3 +11530,344 @@ msgstr "Sin enmienda más reciente registrada"
 #: templates/environment/airspace_tab.html
 msgid "Check the current NOTAM/SUP."
 msgstr "Consulte los NOTAM/SUP vigentes."
+
+msgid "No typical window in the next 24 hours"
+msgstr "Sin ventana típica en las próximas 24 horas"
+
+#, python-format
+msgid "Typical window: %(window)s"
+msgstr "Ventana típica: %(window)s"
+
+msgid "Typical scintillation window over the next 24 hours"
+msgstr "Ventana típica de centelleo en las próximas 24 horas"
+
+#, python-format
+msgid "Typical window: %(window)s. The marker is the current time, %(now)s. Statistical reference, not a measurement."
+msgstr "Ventana típica: %(window)s. La marca es la hora actual, %(now)s. Referencia estadística, no una medición."
+
+#, python-format
+msgid "No typical window in these 24 hours. The marker is the current time, %(now)s. Statistical reference, not a measurement."
+msgstr "Sin ventana típica en estas 24 horas. La marca es la hora actual, %(now)s. Referencia estadística, no una medición."
+
+msgid "Night and typical scintillation window over 24 hours"
+msgstr "Noche y ventana típica de centelleo en 24 horas"
+
+#, python-format
+msgid "Night: %(night)s."
+msgstr "Noche: %(night)s."
+
+#, python-format
+msgid "Typical window: %(window)s."
+msgstr "Ventana típica: %(window)s."
+
+#, python-format
+msgid "Peak hour: %(peak)s (our interpretation)."
+msgstr "Hora pico: %(peak)s (interpretación nuestra)."
+
+msgid "No typical window in these 24 hours."
+msgstr "Sin ventana típica en estas 24 horas."
+
+#, python-format
+msgid "The marker is the current time, %(now)s."
+msgstr "La marca es la hora actual, %(now)s."
+
+msgid "Statistical reference, not a measurement."
+msgstr "Referencia estadística, no una medición."
+
+msgid "Night"
+msgstr "Noche"
+
+msgid "Typical window"
+msgstr "Ventana típica"
+
+msgid "peak hour (our interpretation)"
+msgstr "hora pico (interpretación nuestra)"
+
+msgid "None in the next 24 hours"
+msgstr "Ninguna en las próximas 24 horas"
+
+msgid "Peak hour (our interpretation)"
+msgstr "Hora pico (interpretación nuestra)"
+
+msgid "Months of the season"
+msgstr "Meses de la temporada"
+
+msgid "in the season"
+msgstr "dentro de la temporada"
+
+msgid "outside the season"
+msgstr "fuera de la temporada"
+
+msgid "today"
+msgstr "hoy"
+
+msgid "Years covered"
+msgstr "Años cubiertos"
+
+#, python-format
+msgid "Peak %(year)s (according to the source)"
+msgstr "Máximo %(year)s (según la fuente)"
+
+#, python-format
+msgid "Effects until %(year)s"
+msgstr "Efectos hasta %(year)s"
+
+msgid "this year"
+msgstr "este año"
+
+msgid "What this screen does not show"
+msgstr "Lo que esta pantalla no muestra"
+
+msgid "No measurement: statistical reference from the GEOCOM criterion."
+msgstr "Sin medición: referencia estadística del criterio de GEOCOM."
+
+msgid "It shows when scintillation is typical, never how strong it is: the source publishes no intensity scale."
+msgstr "Muestra cuándo es típico el centelleo, nunca qué tan fuerte es: la fuente no publica ninguna escala de intensidad."
+
+msgid "Scintillation"
+msgstr "Centelleo"
+
+msgid "Fast changes in the strength and phase of a satellite signal after crossing the ionosphere."
+msgstr "Cambios rápidos en la intensidad y la fase de la señal de un satélite al cruzar la ionosfera."
+
+msgid "RTK and PPK"
+msgstr "RTK y PPK"
+
+msgid "High-precision positioning methods that need a fixed solution, which scintillation can break."
+msgstr "Métodos de posicionamiento de alta precisión que necesitan una solución fija, que el centelleo puede romper."
+
+msgid "From sunset to sunrise, per the forecast for your city."
+msgstr "Desde la puesta hasta la salida del sol, según el pronóstico de su ciudad."
+
+msgid "The hours when scintillation is usually higher, from the criterion of the source."
+msgstr "Las horas en que el centelleo suele ser mayor, según el criterio de la fuente."
+
+msgid "Our interpretation"
+msgstr "Interpretación nuestra"
+
+msgid "The exact hours and the peak hour are ours: the source only says night, near midnight."
+msgstr "Las horas exactas y la hora pico son nuestras: la fuente sólo dice de noche, cerca de la medianoche."
+
+msgid "What to attend first"
+msgstr "Qué atender primero"
+
+msgid "Nothing needs attention first."
+msgstr "Nada requiere atención primero."
+
+#, python-format
+msgid "%(count)s site without a permit in force"
+msgid_plural "%(count)s sites without a permit in force"
+msgstr[0] "%(count)s faena sin permiso vigente"
+msgstr[1] "%(count)s faenas sin permiso vigente"
+
+#, python-format
+msgid "%(count)s item overdue"
+msgid_plural "%(count)s items overdue"
+msgstr[0] "%(count)s elemento vencido"
+msgstr[1] "%(count)s elementos vencidos"
+
+#, python-format
+msgid "%(count)s alert open for over 30 days"
+msgid_plural "%(count)s alerts open for over 30 days"
+msgstr[0] "%(count)s alerta abierta hace más de 30 días"
+msgstr[1] "%(count)s alertas abiertas hace más de 30 días"
+
+msgid "No pending"
+msgstr "Sin pendientes"
+
+msgid "Expiries by category"
+msgstr "Vencimientos por categoría"
+
+msgid "Expiries by category and level over the next 90 days"
+msgstr "Vencimientos por categoría y nivel en los próximos 90 días"
+
+msgid "No expiries in the next 90 days:"
+msgstr "Sin vencimientos en los próximos 90 días:"
+
+#, python-format
+msgid "In force %(in_force)s · expiring soon %(soon)s · awaiting %(awaiting)s · past validity %(past)s"
+msgstr "Vigentes %(in_force)s · vencen pronto %(soon)s · esperando %(awaiting)s · vigencia pasada %(past)s"
+
+msgid "No expiry date"
+msgstr "Sin fecha de vencimiento"
+
+#, python-format
+msgid "See all (%(count)s more)"
+msgstr "Ver todas (%(count)s más)"
+
+msgid "Show only sites with a problem"
+msgstr "Ver sólo las faenas con problema"
+
+msgid "No site has a problem with its permits."
+msgstr "Ninguna faena tiene problemas con sus permisos."
+
+msgid "Permit in force"
+msgstr "Permiso vigente"
+
+msgid "Source: %(source)s. Reference only -- it does not replace the pre-flight check."
+msgstr "Fuente: %(source)s. Solo de referencia -- no reemplaza el chequeo preoperacional."
+
+msgid "Not available"
+msgstr "No disponible"
+
+msgid "Not available from this source"
+msgstr "No disponible en esta fuente"
+
+msgid "Based on data from"
+msgstr "Basado en datos de"
+
+msgid "No notable weather events in the available data for the next 48 hours"
+msgstr "Sin eventos climáticos relevantes en los datos disponibles para las próximas 48 horas"
+
+msgid "Communes: Biblioteca del Congreso Nacional de Chile (BCN). Reference only."
+msgstr "Comunas: Biblioteca del Congreso Nacional de Chile (BCN). Solo de referencia."
+
+msgid "Other places: © OpenStreetMap contributors."
+msgstr "Otros lugares: © colaboradores de OpenStreetMap."
+
+msgid "Choose the credential file to upload."
+msgstr "Elija el archivo de la credencial que desea subir."
+
+msgid "The DGAC credential document type is not configured."
+msgstr "El tipo de documento «Credencial DGAC» no está configurado."
+
+msgid "Tick \"Use\" on at least one field to save."
+msgstr "Marque «Usar» en al menos un campo para guardar."
+
+msgid "Credential details saved."
+msgstr "Datos de la credencial guardados."
+
+msgid "Confirm credential details"
+msgstr "Confirmar los datos de la credencial"
+
+msgid "Enter a credential number of up to 30 characters."
+msgstr "Ingrese un número de credencial de hasta 30 caracteres."
+
+msgid "Credential %(number)s already belongs to %(name)s."
+msgstr "La credencial %(number)s ya pertenece a %(name)s."
+
+msgid "The credential number is required."
+msgstr "El número de credencial es obligatorio."
+
+msgid "The credential expiry date is required."
+msgstr "El vencimiento de la credencial es obligatorio."
+
+msgid "The expiry date must be after the issue date."
+msgstr "El vencimiento debe ser posterior a la emisión."
+
+msgid "The holder read from the file does not match this person. Check that it is the right document."
+msgstr "El titular leído del archivo no coincide con esta persona. Revise que sea el documento correcto."
+
+msgid "The RUT read from the file does not match the record. Check that it is the right document."
+msgstr "El RUT leído del archivo no coincide con la ficha. Revise que sea el documento correcto."
+
+msgid "The file was read. Check each value against the paper and tick “Use” on the ones that are right. Nothing is saved until you confirm."
+msgstr "Se leyó el archivo. Compare cada valor con el papel y marque «Usar» en los que estén correctos. No se guarda nada hasta que usted confirme."
+
+msgid "The file could not be read; fill in the fields by hand."
+msgstr "No se pudo leer el archivo; complete los campos a mano."
+
+msgid "Field"
+msgstr "Campo"
+
+msgid "Current value"
+msgstr "Valor actual"
+
+msgid "Read from the file"
+msgstr "Leído del archivo"
+
+msgid "Value to save"
+msgstr "Valor a guardar"
+
+msgid "Use"
+msgstr "Usar"
+
+msgid "Read from the PDF"
+msgstr "Leído del PDF"
+
+msgid "Doubtful"
+msgstr "Dudoso"
+
+msgid "The holder read from the file matches this person."
+msgstr "El titular leído del archivo coincide con esta persona."
+
+msgid "The holder could not be read from the file."
+msgstr "No se pudo leer el titular del archivo."
+
+msgid "The RUT read from the file matches the record."
+msgstr "El RUT leído del archivo coincide con la ficha."
+
+msgid "The record has no RUT to compare with."
+msgstr "La ficha no tiene RUT con el cual comparar."
+
+msgid "The RUT could not be read from the file."
+msgstr "No se pudo leer el RUT del archivo."
+
+msgid "Class read from the file (for information only, not saved)"
+msgstr "Clase leída del archivo (solo informativa, no se guarda)"
+
+msgid "Restrictions read from the file (for information only, not saved)"
+msgstr "Restricciones leídas del archivo (solo informativas, no se guardan)"
+
+msgid "Save confirmed values"
+msgstr "Guardar los valores confirmados"
+
+msgid "Upload the credential PDF. It is read, you check what was found, and nothing changes on this record until you confirm."
+msgstr "Suba el PDF de la credencial. Se lee, usted revisa lo que se encontró y nada cambia en esta ficha hasta que confirme."
+
+msgid "Upload credential"
+msgstr "Subir credencial"
+
+msgid "A plan can only be linked to a permit of its own cost center."
+msgstr "Un plan solo puede vincularse a un permiso de su propio centro de costo."
+
+msgid "This permit has linked plans from another cost center. Unlink them before changing the cost center."
+msgstr "Este permiso tiene planes vinculados de otro centro de costo. Desvincúlelos antes de cambiar el centro de costo."
+
+msgid "Waiting on the DGAC"
+msgstr "Espera a la DGAC"
+
+msgid "Waiting on the operator"
+msgstr "Espera al operador"
+
+msgid "The validity window has ended."
+msgstr "La vigencia ya terminó."
+
+msgid "DGAC folio pending."
+msgstr "Folio DGAC pendiente."
+
+msgid "Operational dossier incomplete (missing: %(count)s)."
+msgstr "Expediente operativo incompleto (faltan: %(count)s)."
+
+msgid "Region not recorded."
+msgstr "Región sin informar."
+
+msgid "Starts on %(date)s."
+msgstr "Comienza el %(date)s."
+
+msgid "The window ended on %(date)s."
+msgstr "La vigencia terminó el %(date)s."
+
+msgid "Days left: %(days)s"
+msgstr "Días restantes: %(days)s"
+
+msgid "What is missing"
+msgstr "Qué falta"
+
+msgid "Nothing pending"
+msgstr "Nada pendiente"
+
+msgid "Why?"
+msgstr "¿Por qué?"
+
+msgid "Operation"
+msgstr "Operación"
+
+msgid "Location and area"
+msgstr "Ubicación y área"
+
+msgid "Validity and documents"
+msgstr "Vigencia y documentos"
+
+msgid "Preflight and flights"
+msgstr "Prevuelo y vuelos"

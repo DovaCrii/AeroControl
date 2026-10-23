@@ -1,6 +1,6 @@
-{% load i18n %}{% comment %}LV-359 (fase 3): historial de revisión. Seis meses cerrados × estado del cierre mensual (LV-262), leído de `MonthlyComplianceReview` sin recalcular. Cada estado lleva símbolo + texto además del color; la fila enlaza al cierre de ese mes. Sólo con `view_monthlycompliancereview` (`cx_blocks.history`). Tabla real, sin colspan.{% endcomment %}
-<div class="id-cx-block id-cx-block--history" data-cx-block="history" id="cx-history">
-  <h3 class="id-cx-h3">{% translate "Review history" %}</h3>
+{% load i18n %}{% comment %}LV-359 (fase 3) y LV-367 (fase 4: `<details>` siempre cerrado): historial de revisión. Seis meses cerrados × estado del cierre mensual (LV-262), leído de `MonthlyComplianceReview` sin recalcular. Cada estado lleva símbolo + texto además del color; la fila enlaza al cierre de ese mes. Sólo con `view_monthlycompliancereview` (`cx_blocks.history`). Tabla real, sin colspan.{% endcomment %}
+<details class="id-cx-fold" data-cx-block="history" id="cx-history">
+  <summary><span>{% translate "Review history" %}</span></summary>
   {% if cx_history.operating %}
   <table class="id-cx-hist">
     <caption class="visually-hidden">{% translate "Monthly close status of the last six closed months" %}</caption>
@@ -27,4 +27,4 @@
   {% else %}
   {% translate "No site flies, so there is nothing to close." as no_sites %}{% include "generic/_signal.html" with kind="ok" text=no_sites %}
   {% endif %}
-</div>
+</details>

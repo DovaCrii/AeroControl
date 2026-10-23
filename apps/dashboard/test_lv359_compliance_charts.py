@@ -474,21 +474,31 @@ def test_the_heat_map_is_a_real_table_without_colspan(section_html):
         for row in rows[1:]:
             assert 'scope="row"' in row
             assert row.count("<td") == columns  # una cifra en cada celda
-            assert len(re.findall(r"<td[^>]*><b>\d+</b></td>", row)) == columns
+            # LV-367: un cero se dice con «·» y su «0» oculto; el resto, con la cifra.
+            zero = '<span aria-hidden="true">·</span><span class="visually-hidden">0</span>'
+            cells = re.findall(
+                rf"<td[^>]*><b[^>]*>(?:\d+|{re.escape(zero)})</b></td>", row
+            )
+            assert len(cells) == columns
 
 
 @pytest.mark.django_db
 def test_every_svg_says_what_it_shows_and_prints_its_figure_beside_it(section_html):
-    svgs = re.findall(r"<svg\b.*?</svg>", section_html, flags=re.S)
-    assert len(svgs) == 5 + 1  # cinco anillos y las barras de alertas
+    svgs = [
+        s
+        for s in re.findall(r"<svg\b.*?</svg>", section_html, flags=re.S)
+        if 'class="nav-icon"' not in s
+    ]
+    # LV-367: los anillos ya no se dibujan; queda el gráfico de barras de las alertas.
+    assert len(svgs) == 1 and "id-cx-ring-svg" not in section_html
     for svg in svgs:
         assert 'role="img"' in svg
         assert re.search(r"<title id=\"[^\"]+\">[^<]+</title>", svg)
         assert re.search(r"<desc id=\"[^\"]+\">[^<]+</desc>", svg)
         assert "style=" not in svg
-    # la cifra de cada anillo está impresa FUERA de la imagen
+    # la cifra de cada indicador (y la de las alertas) está impresa FUERA de la imagen
     figures = re.findall(r'<b class="id-cx-fig">(\d+)</b>', section_html)
-    assert len(figures) >= 5
+    assert len(figures) >= 3
     assert "style=" not in section_html
 
 
@@ -496,19 +506,18 @@ def test_every_svg_says_what_it_shows_and_prints_its_figure_beside_it(section_ht
 def test_every_level_has_a_symbol_and_a_text_and_not_only_a_color(section_html):
     for level in LEVELS:
         assert LEVEL_SYMBOL[level] in section_html
-    # sólo los anillos: el historial y la guía también dibujan chips, con otros símbolos
-    rings = section_html.split('data-cx-block="rings"')[1].split(
-        'data-cx-block="heat"'
-    )[0]
+    # sólo la tabla de vencimientos por categoría: el historial y la guía también dibujan chips
+    table = section_html.split('data-cx-block="expiries"')[1].split("</table>")[0]
     chips = re.findall(
-        r'<span class="id-chip id-chip--(\w+)">(.*?)</span></li>',
-        rings,
-        flags=re.S,
+        r'<span class="id-chip id-chip--(\w+)">(.*?)</span></td>', table, flags=re.S
     )
-    assert len(chips) == 5 * 5
+    assert chips
     for _tone, body in chips:
         assert re.search(r'aria-hidden="true">[✕▲◆●○]</span>', body)
-        assert re.search(r"<b>\d+</b>\s+\S", body)  # la cifra y su rótulo
+        assert re.search(
+            r"<b>\d+</b>", body
+        )  # símbolo y cifra; el nivel es el encabezado
+    assert table.count('<th scope="col" class="id-cx-col">') == 5  # un rótulo por nivel
 
 
 # --- consultas ------------------------------------------------------------------------------

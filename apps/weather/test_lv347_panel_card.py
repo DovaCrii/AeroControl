@@ -52,7 +52,10 @@ def enabled(settings, monkeypatch):
     settings.WEATHER_DEFAULT_LABEL = ""
     forecast = weather_client._parse_panel(json.loads(FIXTURE.read_text("utf-8")))
     monkeypatch.setattr(
-        weather_client, "panel_forecast", lambda lat, lon: forecast, raising=True
+        weather_client,
+        "panel_forecast",
+        lambda lat, lon, zone=None: forecast,
+        raising=True,
     )
     # El fixture es de 2026-10-19: se fija «ahora» para que la prueba no dependa del día.
     monkeypatch.setattr(
@@ -106,7 +109,9 @@ class TestStates:
         assert "wx-hours" not in content
 
     def test_a_failed_client_shows_the_error_state(self, enabled, monkeypatch):
-        monkeypatch.setattr(weather_client, "panel_forecast", lambda lat, lon: None)
+        monkeypatch.setattr(
+            weather_client, "panel_forecast", lambda lat, lon, zone=None: None
+        )
         client = login_as(VIEW)
         _city(client)
         response = _get(client)
@@ -162,6 +167,9 @@ class TestTheCard:
         assert "wx-event wx-event--" not in content
 
     def test_legend_attribution_and_checked_time(self, enabled):
+        enabled["provider"] = (
+            "open_meteo"  # LV-365: se atribuye a quien dio ESE pronóstico
+        )
         content = self._page()
         legend = gettext(
             "Informational only. It is not a flight condition and does not replace"

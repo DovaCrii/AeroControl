@@ -24,6 +24,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import urlencode
 from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
 
 from apps.compliance.expirations import EXPIRATION_PERMISSIONS
 from apps.core.tenancy import visible_tenant_ids
@@ -39,6 +40,7 @@ from .compliance_data import (
 from .compliance_permits import (
     PERMIT_PERMISSION,
     permit_table,
+    requested_all,
     requested_sort,
     sort_context,
 )
@@ -57,6 +59,13 @@ SOURCE_PERMISSIONS = (
     MAINTENANCE_PERMISSION,
     REVIEW_PERMISSION,
 )
+
+
+# «Qué atender primero» (LV-367): el ORDEN es una PROPUESTA y lo confirma la persona. Es la única lista que hay
+# que tocar para cambiarlo; cada clave es una de las que arma `attention_first`. Hoy: faenas sin permiso
+# vigente (la operación se detiene), después lo vencido, después las alertas con más de 30 días abiertas.
+PRIORITY_ORDER = ("no_permit", "overdue", "old_alerts")
+PRIORITY_LIMIT = 3
 
 
 def can_see_compliance(user):
@@ -162,6 +171,67 @@ def guide_steps(user, cost_center):
     ]
 
 
+def attention_first(rings, alerts, permits):
+    """Hasta tres cosas que atender primero, en el orden de `PRIORITY_ORDER`; sólo las que hay (cifra > 0).
+
+    Se arma con lo ya calculado para la sección (anillos, alertas y tabla de permisos): cero consultas y
+    ninguna cifra nueva, así que coincide con el resto de la página. Cada una enlaza a donde se trabaja.
+    """
+    counts = {
+        "no_permit": permits["without_permit"] if permits else 0,
+        "overdue": sum(r["counts"]["overdue"] for r in rings or ()),
+        "old_alerts": alerts["old"] if alerts else 0,
+    }
+    texts = {
+        "no_permit": lambda n: ngettext(
+            "%(count)s site without a permit in force",
+            "%(count)s sites without a permit in force",
+            n,
+        ),
+        "overdue": lambda n: ngettext(
+            "%(count)s item overdue", "%(count)s items overdue", n
+        ),
+        "old_alerts": lambda n: ngettext(
+            "%(count)s alert open for over 30 days",
+            "%(count)s alerts open for over 30 days",
+            n,
+        ),
+    }
+    urls = {
+        "no_permit": "#cx-permits",
+        "overdue": "#cx-expiries",
+        "old_alerts": reverse("alert-list"),
+    }
+    items = [
+        {
+            "key": key,
+            "count": counts[key],
+            "text": texts[key](counts[key]) % {"count": counts[key]},
+            "url": urls[key],
+        }
+        for key in PRIORITY_ORDER
+        if counts[key] > 0
+    ]
+    return items[:PRIORITY_LIMIT]
+
+
+def open_flags(context):
+    """Qué secciones plegables salen abiertas: sólo las que tienen algo. Se decide acá, no en la plantilla.
+
+    El mapa de calor, el historial y la guía salen siempre cerrados. (Un `<details>` pierde su estado cada
+    vez que htmx reemplaza el fragmento: la sección se pide una sola vez, no se refresca.)
+    """
+    rings = context.get("cx_rings") or ()
+    alerts = context.get("cx_alerts")
+    permits = context.get("cx_permits")
+    return {
+        "expiries": any(r["attend"] for r in rings),
+        "alerts": bool(alerts and alerts["total"]),
+        "maintenance": bool(context.get("cx_maintenance_to_define")),
+        "permits": bool(permits and permits["problems"]),
+    }
+
+
 def section_context(request):
     user = request.user
     cost_center = resolve_cost_center(request, scope_user=user)
@@ -184,12 +254,28 @@ def section_context(request):
         if blocks["permits"]:
             column, direction = requested_sort(request.GET)
             context["cx_permits"] = permit_table(
-                user, cost_center, today, tenant_ids, column, direction
+                user,
+                cost_center,
+                today,
+                tenant_ids,
+                column,
+                direction,
+                requested_all(request.GET),
             )
             context["worktable_sort"] = sort_context(request, cost_center)
         if blocks["history"]:
             context["cx_history"] = review_history(user, cost_center, today, tenant_ids)
         context["cx_guide"] = guide_steps(user, cost_center)
+        rings = context.get("cx_rings") or []
+        context["cx_attention"] = [r for r in rings if r["attend"]]
+        context["cx_clear"] = [r for r in rings if not r["attend"]]
+        # Filas en cero resumidas: una categoría sin vencimientos a 90 días no ocupa una fila de ceros.
+        context["cx_listed"] = [r for r in rings if r["total"]]
+        context["cx_unlisted"] = [r for r in rings if not r["total"]]
+        context["cx_priorities"] = attention_first(
+            rings, context.get("cx_alerts"), context.get("cx_permits")
+        )
+        context["cx_open"] = open_flags(context)
     return context
 
 

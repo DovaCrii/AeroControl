@@ -62,7 +62,7 @@ antes de decidir nada de producción**.
 | El servicio hospedado se rige por los **«NVIDIA API Trial Terms of Service»**, pensados para **prueba y evaluación, no producción** (secciones 1.2 y 1.4, según un resumen en el foro de NVIDIA). | Confirma el diseño: sólo demo, y la pantalla no existe sin `DEBUG`. |
 | Según ese mismo resumen, **NVIDIA puede usar los prompts y respuestas para mejorar sus productos**. NVIDIA no respondió con claridad en el foro. | Es la razón de fondo de que **nada personal ni dato real viaje**: sólo cifras agregadas y folios internos, y **en el demo, sólo datos de demo**. |
 | Según el resumen, **el contenido generado no se puede distribuir**. | **No exportar ni pegar respuestas del asistente en informes** ni en documentos que salgan de la empresa. La pantalla las muestra y no las guarda. |
-| El acceso es por **créditos limitados** (1 000 al registrarse; hasta 5 000 con correo empresarial) y ronda las 40 solicitudes por minuto. | Se agregó un **tope por usuario y por hora, contado por llamada al servicio** (una pregunta puede hacer hasta 4; el contador vive en la base, en la tabla `AssistantUsage` (LV-326), compartido por todos los procesos) (`AI_ASSISTANT_MAX_PER_HOUR`, 30) más un **tope global por día** (`AI_ASSISTANT_DAILY_CAP`, 300; 0 = sin tope), ambos revisados antes de cada llamada. Cada pregunta deja una fila con quién, herramientas, llamadas, milisegundos, tokens, modelo y resultado, **nunca** el texto de la pregunta ni de la respuesta; un fallo de red antes de responder devuelve la llamada al tope (un 429 no). El registro es de sólo lectura en el admin para no gastar créditos por accidente, y un mensaje propio cuando el servicio responde que se alcanzó el límite. |
+| El acceso es por **créditos limitados** (1 000 al registrarse; hasta 5 000 con correo empresarial) y ronda las 40 solicitudes por minuto. | Se agregó un **tope por usuario y por hora, contado por llamada al servicio** (una pregunta puede hacer hasta 4; el contador vive en la base, en la tabla `AssistantUsage` (LV-326), compartido por todos los procesos) (`AI_ASSISTANT_MAX_PER_HOUR`, 30) más un **tope global por día** (`AI_ASSISTANT_DAILY_CAP`, 300; 0 = sin tope), ambos revisados antes de cada llamada. Cada pregunta deja una fila con quién, herramientas, llamadas, milisegundos, tokens, modelo y resultado, **nunca** el texto de la pregunta ni de la respuesta; un fallo de red, un tiempo agotado o un 429 (`LV-362`) devuelve la llamada al tope. El registro es de sólo lectura en el admin para no gastar créditos por accidente, y un mensaje propio cuando el servicio responde que se alcanzó el límite. |
 | El modelo por omisión (`meta/llama-3.3-70b-instruct`) existe en el catálogo y su ficha lo describe con «function calling». | Es la herramienta que usa el asistente. **Sigue sin probarse contra el servicio real.** |
 | Caminos a producción según NVIDIA: **alojar el modelo en infraestructura propia** o usar la API sin servidor de pago con una licencia NVIDIA AI Enterprise. | Es la decisión que falta si algún día se quiere usar con usuarios reales; cambia también qué datos se pueden enviar. |
 
@@ -191,6 +191,43 @@ gratuito ronda las 40 solicitudes por minuto y no hay una política clara de ret
   tokens», nunca el texto ni la llave. Sin llave o sin `--user` falla sin llamar. **Pendiente:** correrlo con la llave
   (en este PR no hubo).
 
+## Cómo lo usa AeroAcademy y qué se adoptó (`LV-362`) — sin migración
+
+La persona decidió usar la API de NVIDIA (NIM, build.nvidia.com) para ver el alcance «como lo usa
+AeroAcademy». Ese uso es un cliente `httpx` contra `https://integrate.api.nvidia.com/v1/chat/completions`
+(`temperature` 0,3, `max_tokens` 500, sin streaming ni herramientas), con una **cadena de modelos de
+respaldo**, `enable_thinking:false` y limpieza del razonamiento. Qué se adoptó aquí y qué no:
+
+| AeroAcademy | AeroControl |
+|---|---|
+| Cadena `NIM_MODEL_FALLBACKS`; respaldo ante 404/410 (modelo retirado) o respuesta vacía. | **Adoptado:** `NVIDIA_MODEL` + `NVIDIA_MODEL_FALLBACKS` (lista separada por comas). Los valores por omisión viven **sólo** en `config/settings/base.py` (ni el `.env.example` ni esta página los repiten). Se pasa al siguiente ante 404/410, respuesta vacía o sólo razonamiento. Un 5xx, un 401 o un timeout **no** recorren la cadena: no es culpa del modelo y gastaría créditos. |
+| Sin herramientas. | **Distinto:** AeroControl usa llamadas a funciones. Un modelo que las rechaza (400/422 que habla de `tools`) **no sirve para el bucle**: se salta, se recuerda por proceso y, si ninguno de la cadena las admite, la persona ve un texto claro («el modelo no puede usar las herramientas de consulta») y el resultado queda en `error`. Los modelos de respaldo reciben las mismas `tools`. |
+| `chat_template_kwargs:{"enable_thinking":false}`; si el modelo contesta 400/422, se recuerda y se reintenta sin la opción. | **Adoptado.** Sólo se recuerda cuando el reintento sin la opción **funcionó** (un 400 por otra causa no «envenena» al modelo). |
+| `strip_reasoning`: quita `<think>…</think>` y detecta razonamiento filtrado («Here's a thinking process…»); si queda vacío, siguiente modelo. | **Adoptado** (`client.strip_reasoning`, función pura con pruebas). |
+| Errores tipados: timeout, auth, rate, http, bad_response, network. | **Adoptado** como `AssistantUnavailable.kind` (el texto corto, p. ej. `http-429`, sigue siendo `str(error)` y nunca se muestra a la persona). |
+| Devuelve el cupo si la llamada falla. | **Adoptado:** se devuelve la llamada al tope cuando falló por **red, tiempo agotado o 429** (no llegó a producir respuesta). Un 5xx o una llave rechazada **sí** cuentan. `AssistantUsage.rounds` cuenta por vuelta del bucle (una `chat()`), no por intento HTTP: los respaldos y reintentos de una misma vuelta no suman. **No se guarda** texto de preguntas ni respuestas (lo comprueba una prueba que busca un texto centinela en todos los campos de la fila). |
+| Reintento ante 429. | **Adoptado y acotado:** `AI_ASSISTANT_RETRIES_429` (2 por omisión, **techo duro de 2**) con espera inicial `AI_ASSISTANT_RETRY_BACKOFF` (1 s, se duplica; ninguna espera pasa de 4 s). En el peor caso un trabajador de `gunicorn` espera 3 s más por vuelta. Si sigue el 429, la persona ve un mensaje fijo y amable («alcanzó su límite de uso; intente más tarde»), nunca el código. |
+| Comando de prueba que lista modelos (`GET /models`). | **Adoptado:** `assistant_probar --models` (ver abajo). |
+
+En el registro de uso, `AssistantUsage.model` guarda el modelo que **respondió** (el de respaldo si hubo
+paso), sólo su identificador público.
+
+### Puntos de licencia que NO están resueltos
+
+Esta tanda **no activa nada**: `AI_ASSISTANT_ALLOW_PRODUCTION` sigue apagado y no se tocó. Lo que queda
+abierto, para que lo decida la persona con la llave que use para ver el alcance:
+
+- Los términos de prueba de NVIDIA dicen **prueba/evaluación**, no producción (ver «Revisión contra el
+  alcance real»). Usar el demo para **ver el alcance** es coherente con eso; atender a usuarios reales no.
+- Esos términos indican que NVIDIA **puede usar los prompts** para mejorar sus productos (según un resumen
+  en el foro; NVIDIA no lo aclaró). No está confirmado cuánto los guarda ni dónde se procesan.
+- Por eso lo que viaja siguen siendo **datos agregados y folios internos, nunca personales**, y en el demo,
+  sólo datos de demo. La pregunta de la persona es el único texto libre y puede nombrar a alguien: no se
+  guarda aquí, pero **sí** llega al servicio.
+- Cada modelo de la cadena puede tener su **propia licencia** (Llama, Nemotron…): ampliar la cadena es
+  ampliar lo que hay que leer. Los ids por omisión **no se verificaron contra el catálogo** al escribirlos
+  (cambian); `--models` dice cuáles existen y responden hoy.
+
 ## Cómo probarlo en el demo
 
 En **su propia terminal de PowerShell** (la llave no se pega en el chat ni en ningún archivo del
@@ -203,8 +240,23 @@ $env:NVIDIA_API_KEY = "<su llave de build.nvidia.com>"
 ```
 
 Luego, con sesión iniciada, abrir `http://127.0.0.1:8010/assistant/`. Si falta la llave, la pantalla
-lo dice. El modelo por omisión es `meta/llama-3.3-70b-instruct` (`NVIDIA_MODEL` lo cambia); hay que
-confirmar en `build.nvidia.com` que el modelo elegido admite llamadas a funciones.
+lo dice. El modelo y su cadena de respaldo salen de `config/settings/base.py` (`NVIDIA_MODEL` y
+`NVIDIA_MODEL_FALLBACKS` los cambian); todos deben admitir llamadas a funciones.
+
+Antes de preguntar nada, en la misma terminal (con `NVIDIA_API_KEY` ya puesta en su entorno; ninguna de
+estas órdenes la imprime):
+
+```powershell
+uv run python manage.py assistant_probar                 # configuración, sin llamar al servicio
+uv run python manage.py assistant_probar --ping          # una llamada mínima: ms, tokens y qué modelo respondió
+uv run python manage.py assistant_probar --models        # lista /models y prueba la cadena, sin y con herramientas
+uv run python manage.py assistant_probar --eval --user <id> --max 10   # el golden set (cuenta en AssistantUsage)
+```
+
+`--models` imprime los ids del servicio y, por cada modelo de la cadena, si está en la lista y si responde
+a una consulta mínima («ping», fija) con y sin herramientas, con sus milisegundos. **Nunca** imprime la
+llave, la petición ni el texto que devuelve el modelo. Una fila `tools FAIL (no-tools)` significa que ese
+modelo no sirve para el asistente: sáquelo de `NVIDIA_MODEL_FALLBACKS`.
 
 ## Qué NO se probó
 

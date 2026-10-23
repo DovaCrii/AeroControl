@@ -62,6 +62,16 @@ def operator_with_rut(rut, *, tenant_id, exclude_pk=None):
     )
 
 
+def operator_with_credential(number, *, tenant_id, exclude_pk=None):
+    """El operador que ya tiene ese número de credencial DGAC en este tenant (LV-368)."""
+    if not number:
+        return None
+    return _first(
+        Operator.objects.filter(tenant_id=tenant_id, dgac_credential__iexact=number),
+        exclude_pk,
+    )
+
+
 def cost_center_with_code(code, *, tenant_id, exclude_pk=None):
     """El centro de costo que ya tiene ese código en este tenant."""
     if not code:
