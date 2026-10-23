@@ -59,6 +59,12 @@ from .forms import (
     StatusCorrectionForm,
 )
 from .dossier import operational_dossier
+from .permit_attention import (
+    attention_items,
+    open_sections,
+    validity_line,
+    waiting_label,
+)
 from .flight_requests import (
     create_requests_from_plan,
     kmz_contents,
@@ -769,6 +775,23 @@ class FlightPermissionDetail(
         else:
             actions = []
         context["status_actions"] = actions
+        # LV-368 (fase 1): la jerarquía de la ficha, decidida **acá** y con lo que ya
+        # se calculó arriba -- ni una consulta nueva ni una regla en la plantilla.
+        context["waiting_label"] = waiting_label(self.object)
+        context["attention_items"] = attention_items(
+            self.object,
+            suggested_folio=context["suggested_folio"],
+            insurance_limit=context["insurance_limit"],
+            dossier=context["dossier"],
+            derived_location=context["derived_location"],
+        )
+        context["open_sections"] = open_sections(
+            self.object,
+            dossier=context["dossier"],
+            derived_location=context["derived_location"],
+            preflight_checks=context["preflight_checks"],
+        )
+        context["validity_line"] = validity_line(self.object)
         return context
 
 

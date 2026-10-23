@@ -499,6 +499,28 @@ class FlightPermission(StatusHistoryMixin, StatusFlowMixin, BaseModel):
             and self.valid_until < timezone.localdate()
         )
 
+    WAITING_DGAC = "dgac"
+    WAITING_OPERATOR = "operator"
+    WAITING_NOBODY = "nobody"
+
+    def waiting_on(self):
+        """LV-368: a quién le toca mover este permiso: DGAC, operador o nadie.
+
+        - **Solicitado**: espera la resolución de la DGAC.
+        - **Aprobado** y vigente, o **completado**: no espera a nadie; el permiso
+          ya cumple lo suyo.
+        - **Vencido/caducado** (`has_lapsed`) o **rechazado**: le toca al
+          operador, que tiene que renovar, corregir y volver a pedir, o archivar.
+
+        Derivado del estado y de `has_lapsed` (una sola definición de «vencido»,
+        LV-246); no se guarda, así que no puede desincronizarse.
+        """
+        if self.has_lapsed or self.status == self.STATUS_DENIED:
+            return self.WAITING_OPERATOR
+        if self.status == self.STATUS_REQUESTED:
+            return self.WAITING_DGAC
+        return self.WAITING_NOBODY
+
     @property
     def active_renewal(self):
         """LV-320: la renovación viva de este permiso, o `None`."""

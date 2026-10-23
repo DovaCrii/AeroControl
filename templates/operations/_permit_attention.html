@@ -1,0 +1,14 @@
+{% load i18n %}{% comment %}LV-368: «Qué falta». Armada en Python (`permit_attention.attention_items`) con lo que la vista
+ya calculó: máximo tres ítems, ordenados en un solo lugar. ▲ falta algo, ◆ un límite que todavía
+no se excede, ⚠ sólo si está vencido o se excede el seguro. Símbolo + palabra + color. Sin ítems:
+«✓ Nada pendiente».{% endcomment %}
+<section id="permit-attention" class="permit-attention" aria-labelledby="permit-attention-title">
+  <h2 id="permit-attention-title" class="permit-attention-title">{% translate "What is missing" %}</h2>
+  {% if attention_items %}
+  <ul class="permit-attention-list">
+    {% for item in attention_items %}<li class="permit-attn permit-attn--{{ item.tone }}"><span class="permit-attn-symbol" aria-hidden="true">{{ item.symbol }}</span><span>{{ item.text }}</span></li>{% endfor %}
+  </ul>
+  {% else %}
+  <p class="permit-attn permit-attn--ok mb-0"><span class="permit-attn-symbol" aria-hidden="true">✓</span><span>{% translate "Nothing pending" %}</span></p>
+  {% endif %}
+</section>
