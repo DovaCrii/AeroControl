@@ -54,6 +54,7 @@ def no_network(monkeypatch):
 def enabled(settings):
     settings.WEATHER_ENABLED = True
     settings.WEATHER_API_URL = "https://api.example.test/v1/forecast"
+    settings.WEATHER_PROVIDER = "open_meteo"
     settings.WEATHER_GEOCODING_URL = "https://geo.example.test/v1/search"
     settings.WEATHER_API_KEY = ""
     return settings

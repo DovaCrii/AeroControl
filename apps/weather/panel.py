@@ -71,6 +71,14 @@ EVENT_LABELS = {
     "low_visibility": gettext_lazy("Low visibility"),
 }
 
+# LV-365: lo que el proveedor activo NO entrega (`forecast["unavailable"]`); la tarjeta lo nombra
+# con los rótulos de siempre, para que la ausencia de eventos no se lea como «tranquilo».
+LIMIT_LABELS = {
+    "gusts": gettext_lazy("Gusts"),
+    "visibility": gettext_lazy("Visibility"),
+    "rain_probability": gettext_lazy("Chance of rain"),
+}
+
 _KMH_PER_UNIT = {"km/h": 1.0, "ms": 3.6, "m/s": 3.6, "mph": 1.609344, "kn": 1.852}
 _RAIN_CODES = set(range(51, 68)) | {80, 81, 82}
 _SNOW_CODES = {71, 73, 75, 77, 85, 86}
@@ -452,6 +460,14 @@ def build_card(location, forecast, events):
         "days": days,
         "events": _event_rows(events),
         "checked_at": _checked_at(forecast),
+        "credit": weather_client.provider_credit(forecast.get("provider")),
+        "no_gusts": "gusts" in (forecast.get("unavailable") or []),
+        "no_visibility": "visibility" in (forecast.get("unavailable") or []),
+        "limits": [
+            LIMIT_LABELS[key]
+            for key in forecast.get("unavailable") or []
+            if key in LIMIT_LABELS
+        ],
     }
 
 
@@ -466,7 +482,9 @@ class WeatherPanel(WeatherEnabledMixin, ModelPermissionRequiredMixin, View):
         location = get_location_for(request.user)
         if location is None:
             return self._render(request, {"state": "empty"})
-        forecast = weather_client.panel_forecast(location.latitude, location.longitude)
+        forecast = weather_client.panel_forecast(
+            location.latitude, location.longitude, location.timezone
+        )
         if forecast is None:
             return self._render(request, {"state": "error", "city": location.label})
         events = weather_client.regional_events(forecast)

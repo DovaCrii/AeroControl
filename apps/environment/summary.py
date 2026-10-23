@@ -202,7 +202,13 @@ def build_summary(
             }
         else:
             level = "info"
-            text = _("No notable weather events expected in the next 48 hours")
+            if forecast.get("unavailable"):
+                # LV-365: sin ráfagas ni visibilidad en la fuente, «tranquilo» sería afirmar de más.
+                text = _(
+                    "No notable weather events in the available data for the next 48 hours"
+                )
+            else:
+                text = _("No notable weather events expected in the next 48 hours")
     else:
         level, text = "info", _("The forecast is not available right now")
     symbol, label = level_info(level)

@@ -126,6 +126,7 @@ def test_panel_forecast_uses_local_sun_not_the_provider_hours(settings, monkeypa
     cache.clear()
     settings.WEATHER_ENABLED = True
     settings.WEATHER_API_URL = "https://api.example.test/v1/forecast"
+    settings.WEATHER_PROVIDER = "open_meteo"
     fixture = json.loads(
         (weather._FAKE_DIR / "weather_panel_forecast.json").read_text("utf-8")
     )

@@ -43,7 +43,9 @@ def environment_context(user, now=None):
     location = get_location_for(user)
     forecast, events = None, []
     if location is not None and weather_enabled():
-        forecast = weather_client.panel_forecast(location.latitude, location.longitude)
+        forecast = weather_client.panel_forecast(
+            location.latitude, location.longitude, location.timezone
+        )
         if forecast:
             events = weather_client.regional_events(forecast)
     # El tercer renglón y la celda de la franja salen de ESTE hecho (una sola función, E3).
@@ -63,6 +65,7 @@ def environment_context(user, now=None):
         "env_location": location,
         "env_summary": summary,
         "env_forecast": forecast,
+        "env_credit": weather_client.provider_credit((forecast or {}).get("provider")),
         "env_tabs": tabs_for(user),
     }
 

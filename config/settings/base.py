@@ -231,21 +231,30 @@ AIRSPACE_NEAR_KM = config("AIRSPACE_NEAR_KM", default=10, cast=float)
 
 # R8.1 (ISO 8.1 meteorological review). The project's only outgoing HTTP call.
 # LV-353: ON by default (the person's decision of 2026-10-20); WEATHER_ENABLED=False
-# restores the zero-outgoing-calls property. Open-Meteo needs no API key, so
-# there is no credential here -- see apps/core/weather.py for why that decided
-# the provider choice. The call is server-side only, so the CSP below is
+# restores the zero-outgoing-calls property. The call is server-side only, so the CSP below is
 # unaffected (no connect-src exception).
+# LV-365 (2026-10-21): the provider is MET Norway by default (NLOD 2.0 / CC BY 4.0, commercial
+# use allowed, no key); `open_meteo` stays for a paid plan or a self-hosted server. MET requires a
+# User-Agent naming the app and a contact: WEATHER_USER_AGENT comes from the environment only --
+# never the (public) repo -- and without it MET is NOT called (the card says "not available").
 WEATHER_ENABLED = config("WEATHER_ENABLED", default=True, cast=bool)
+WEATHER_PROVIDER = config("WEATHER_PROVIDER", default="met_norway")
+WEATHER_USER_AGENT = config("WEATHER_USER_AGENT", default="")
 WEATHER_API_URL = config(
-    "WEATHER_API_URL", default="https://api.open-meteo.com/v1/forecast"
+    "WEATHER_API_URL",
+    default=(
+        "https://api.open-meteo.com/v1/forecast"
+        if WEATHER_PROVIDER.strip().lower() == "open_meteo"
+        else "https://api.met.no/weatherapi/locationforecast/2.0/complete"
+    ),
 )
 # Short on purpose: a slow third party must not hold a gunicorn worker.
 WEATHER_TIMEOUT_SECONDS = config("WEATHER_TIMEOUT_SECONDS", default=4, cast=int)
 WEATHER_CACHE_SECONDS = config("WEATHER_CACHE_SECONDS", default=3600, cast=int)
-# LV-342: informative weather card on the main page. Open-Meteo's free tier is
-# for non-commercial use only. ACCEPTED RISK (LV-353, 2026-10-20): it is used "for now"
-# from the company server; WEATHER_ENABLED=False switches everything off, and a paid plan
-# or self-hosted server (WEATHER_API_KEY / WEATHER_API_URL) meets the commercial licence. The key comes from the environment only -- never the repo.
+# LV-342: informative weather card on the main page. Open-Meteo's free tier is for
+# non-commercial use only, so it is NOT the default any more (LV-365): a paid plan or self-hosted
+# server (WEATHER_PROVIDER=open_meteo + WEATHER_API_KEY / WEATHER_API_URL) meets the commercial
+# licence. MET Norway needs no key. The key comes from the environment only -- never the repo.
 WEATHER_API_KEY = config("WEATHER_API_KEY", default="")
 WEATHER_GEOCODING_URL = config(
     "WEATHER_GEOCODING_URL", default="https://geocoding-api.open-meteo.com/v1/search"

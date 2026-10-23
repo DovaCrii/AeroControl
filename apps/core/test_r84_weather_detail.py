@@ -26,6 +26,7 @@ def clear_weather_cache():
 def enabled(settings):
     settings.WEATHER_ENABLED = True
     settings.WEATHER_API_URL = "https://api.example.test/v1/forecast"
+    settings.WEATHER_PROVIDER = "open_meteo"
     return settings
 
 
