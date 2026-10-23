@@ -32,16 +32,72 @@ import math
 import urllib.error
 import urllib.parse
 import urllib.request
+from email.utils import parsedate_to_datetime
 from pathlib import Path
+from typing import NamedTuple
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone
 
+from . import solar, weather_met
+
 logger = logging.getLogger("aerocontrol.weather")
 
-# Bounded read of a provider response (a 7-day + 48 h payload is ~20 KB).
-MAX_BODY_BYTES = 64 * 1024
+# Bounded read of a provider response. Medido el 2026-10-23: `locationforecast/2.0/complete` de MET
+# Norway para Santiago pesa ~61 KB sin comprimir (88 pasos); Open-Meteo ~20 KB. El tope deja
+# cuatro veces ese margen para sitios con más variables (países nórdicos) sin ser ilimitado.
+MAX_BODY_BYTES = 256 * 1024
+
+# LV-365 (decisión de la persona, 2026-10-21): la API gratuita de Open-Meteo es de uso NO comercial,
+# así que el proveedor por omisión es MET Norway (NLOD 2.0 y CC BY 4.0, uso comercial permitido, sin
+# llave). `open_meteo` queda para quien tenga plan de pago o servidor propio (`WEATHER_API_URL`).
+PROVIDER_MET = "met_norway"
+PROVIDER_OPEN_METEO = "open_meteo"
+KEY_PARAM_BY_PROVIDER = {PROVIDER_OPEN_METEO: "apikey"}
+PROVIDER_CREDITS = {
+    PROVIDER_MET: {
+        "slug": PROVIDER_MET,
+        "name": "MET Norway",
+        "url": "https://www.met.no/en",
+        "license": "CC BY 4.0",
+        "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    },
+    PROVIDER_OPEN_METEO: {
+        "slug": PROVIDER_OPEN_METEO,
+        "name": "Open-Meteo.com",
+        "url": "https://open-meteo.com/",
+        "license": "CC BY 4.0",
+        "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    },
+}
+# Mientras MET contesta 429 no se le vuelve a preguntar; la copia vieja se sigue sirviendo.
+MET_BACKOFF_SECONDS = 15 * 60
+# La copia cruda se guarda más que el pronóstico, para poder preguntar «¿cambió?» (304).
+MET_RAW_CACHE_SECONDS = 6 * 3600
+
+
+def provider():
+    """El proveedor activo (`WEATHER_PROVIDER`); un valor desconocido cae en MET Norway."""
+    value = (
+        str(getattr(settings, "WEATHER_PROVIDER", PROVIDER_MET) or "").strip().lower()
+    )
+    return value if value in PROVIDER_CREDITS else PROVIDER_MET
+
+
+def provider_credit(slug=None):
+    """Quién es el proveedor y bajo qué licencia, para la atribución que cada pantalla dibuja.
+
+    `slug` es el proveedor que produjo ESE pronóstico (`forecast["provider"]`): una copia en caché
+    de otro proveedor se atribuye a quien la dio, no al que esté configurado hoy.
+    """
+    return dict(PROVIDER_CREDITS[slug if slug in PROVIDER_CREDITS else provider()])
+
+
+def _met_user_agent():
+    return str(getattr(settings, "WEATHER_USER_AGENT", "") or "").strip()
+
 
 # The daily fields ISO 8.1 actually asks about: wind (the limiting factor for
 # an RPAS), gusts, and precipitation. Requested as a fixed list, not built
@@ -153,6 +209,10 @@ def forecast_for(latitude, longitude, target_date):
         return None
 
     iso_date = target_date.isoformat()
+    if provider() == PROVIDER_MET:
+        # MET no tiene consulta «por fecha»: la fila del día sale del MISMO pronóstico del panel
+        # (una sola llamada por ubicación) y sólo existe dentro de sus 7 días.
+        return _day_from_panel(panel_forecast(latitude, longitude), iso_date)
     # The wind unit is part of the key: changing WIND_SPEED_UNIT must not serve
     # numbers fetched in the old unit under the new label for up to an hour.
     cache_key = f"weather:{latitude}:{longitude}:{iso_date}:{WIND_SPEED_UNIT}"
@@ -172,6 +232,32 @@ def forecast_for(latitude, longitude, target_date):
     return parsed
 
 
+def _day_from_panel(forecast, iso_date):
+    """La forma de `forecast_for` (la de `_parse`) a partir de una fila diaria del pronóstico."""
+    if not isinstance(forecast, dict):
+        return None
+    row = next(
+        (r for r in forecast.get("daily") or [] if r.get("time") == iso_date), None
+    )
+    if row is None:
+        return None
+    result = {field: row.get(field) for field in DAILY_FIELDS}
+    if all(entry is None for entry in result.values()):
+        return None
+    result["condition"] = condition_for(row.get("weather_code"))
+    result["fetched_at"] = forecast.get("fetched_at")
+    sunrise, sunset = (
+        str(row.get(field))[11:16] if row.get(field) else None
+        for field in DAYLIGHT_FIELDS
+    )
+    result["daylight"] = (
+        {"sunrise": sunrise, "sunset": sunset} if sunrise and sunset else None
+    )
+    result["units"] = forecast.get("units") or {}
+    result["date"] = iso_date
+    return result
+
+
 def _fetch(latitude, longitude, iso_date):
     return _get_json(
         settings.WEATHER_API_URL,
@@ -187,16 +273,31 @@ def _fetch(latitude, longitude, iso_date):
     )
 
 
-def _get_json(base, params):
-    """GET `base?params` and decode JSON, or None on any failure. Never raises.
+class _Reply(NamedTuple):
+    """Lo que contestó el proveedor: estado, cuerpo ya decodificado y cabeceras en minúsculas."""
+
+    status: int
+    payload: object
+    headers: dict
+
+
+def _key_param():
+    """Nombre del parámetro de llave del proveedor activo, o `None` si no usa llave (LV-365)."""
+    return KEY_PARAM_BY_PROVIDER.get(provider())
+
+
+def _exchange(base, params, headers=None, with_key=True):
+    """GET `base?params`: un `_Reply`, o None si no hubo respuesta usable. Never raises.
 
     The base URL is a setting, never user input, and the query is built from
     validated values plus fixed field names -- nothing user-controlled reaches
     the request except the (length-bounded) place search text, which is only
     ever URL-encoded into a query value (no SSRF surface).
 
-    The optional `WEATHER_API_KEY` is added here as `apikey` and nowhere else:
-    it is never logged, and the URL is never logged either (it would carry it).
+    The optional `WEATHER_API_KEY` is added here, con el nombre de parámetro del proveedor, and
+    nowhere else: it is never logged, and the URL is never logged either (it would carry it). Los
+    304 (nada cambió) y 429 (frenar) se devuelven como respuesta, no como fallo, para que quien
+    llama decida; cualquier otro estado distinto de 200/203 es un fallo.
     """
     # urlopen would happily accept file:// or a custom scheme, which would turn
     # a misconfigured URL into a local-file read. The scheme is checked here
@@ -206,21 +307,33 @@ def _get_json(base, params):
         return None
     params = dict(params)
     api_key = getattr(settings, "WEATHER_API_KEY", "")
-    if api_key:
-        params["apikey"] = api_key
+    key_param = _key_param()
+    if with_key and api_key and key_param:
+        params[key_param] = api_key
     url = f"{base}?{urllib.parse.urlencode(params)}"
     timeout = getattr(settings, "WEATHER_TIMEOUT_SECONDS", 4)
+    all_headers = {"Accept": "application/json", **(headers or {})}
     try:
-        request = urllib.request.Request(url, headers={"Accept": "application/json"})
+        request = urllib.request.Request(url, headers=all_headers)
         # B310 is about urlopen accepting file:// or a custom scheme; the check
         # above restricts it to http/https, so the concern does not apply here.
         with urllib.request.urlopen(request, timeout=timeout) as response:  # nosec B310
-            if response.status != 200:
-                logger.warning("weather_http_status", extra={"status": response.status})
+            status = response.status
+            if status not in (200, 203):
+                logger.warning("weather_http_status", extra={"status": status})
                 return None
+            if status == 203:
+                # MET Norway: el producto está obsoleto o se retira; hay que migrar de versión.
+                logger.warning("weather_deprecated_product")
+            reply_headers = _lower_headers(getattr(response, "headers", None))
             # Bounded read: a provider returning an unexpectedly huge body must
             # not become a memory problem.
             body = response.read(MAX_BODY_BYTES)
+    except urllib.error.HTTPError as exc:
+        if exc.code in (304, 429):
+            return _Reply(exc.code, None, _lower_headers(exc.headers))
+        logger.warning("weather_unreachable", extra={"reason": type(exc).__name__})
+        return None
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
         # Expected in normal operation (no connectivity on the VM, provider
         # down, DNS hiccup). Logged at warning, never raised. Only the
@@ -228,10 +341,25 @@ def _get_json(base, params):
         logger.warning("weather_unreachable", extra={"reason": type(exc).__name__})
         return None
     try:
-        return json.loads(body)
+        return _Reply(status, json.loads(body), reply_headers)
     except (ValueError, UnicodeDecodeError):
         logger.warning("weather_malformed_payload")
         return None
+
+
+def _lower_headers(headers):
+    try:
+        return {str(k).lower(): str(v) for k, v in dict(headers or {}).items()}
+    except (TypeError, ValueError):
+        return {}
+
+
+def _get_json(base, params, headers=None, with_key=True):
+    """GET `base?params` and decode JSON, or None on any failure. Never raises."""
+    reply = _exchange(base, params, headers, with_key)
+    if reply is None or reply.status not in (200, 203):
+        return None
+    return reply.payload
 
 
 def _parse(payload, iso_date):
@@ -449,12 +577,35 @@ def _parse_panel(payload):
     }
 
 
-def panel_forecast(latitude, longitude):
+def _with_local_sun(parsed, latitude, longitude):
+    """Pone en cada día del pronóstico el amanecer y la puesta calculados en local (LV-364).
+
+    Fuente única de la ventana de centelleo y de la escena del cielo: no dependen de qué proveedor
+    contestó ni de si éste trae esas horas. Sin zona horaria legible no se toca nada; un día sin sol
+    (polar) queda en `None`, que la interfaz ya trata como «sin dato».
+    """
+    if parsed is None or not parsed.get("timezone"):
+        return parsed
+    try:
+        zone = ZoneInfo(parsed["timezone"])
+    except (ZoneInfoNotFoundError, ValueError):
+        return parsed
+    parsed["daily"] = solar.day_rows_with_sun(
+        parsed.get("daily"), latitude, longitude, zone
+    )
+    return parsed
+
+
+def panel_forecast(latitude, longitude, zone_name=None):
     """Current conditions + 48 h hourly + 7 days daily, or None. One request.
 
     Never raises. Cached per (rounded coordinates, wind unit) for
     WEATHER_PANEL_CACHE_SECONDS (default 1800); failures are cached too (the
     "unavailable" sentinel) so an outage is not one request per page view.
+
+    `zone_name` (LV-365) es la zona horaria de la ubicación, si se conoce: MET Norway entrega
+    instantes UTC y las horas locales salen de ella (sin pista, de las coordenadas; ver
+    `weather_met.zone_for`). Open-Meteo la resuelve solo y la ignora.
     """
     if not getattr(settings, "WEATHER_ENABLED", False):
         return None
@@ -462,8 +613,12 @@ def panel_forecast(latitude, longitude):
     if coords is None:
         return None
     if _fake_enabled():
-        return _parse_panel(_fake_json("weather_panel_forecast.json"))
+        return _with_local_sun(
+            _parse_panel(_fake_json("weather_panel_forecast.json")), *coords
+        )
     lat, lon = coords
+    if provider() == PROVIDER_MET:
+        return _met_panel(lat, lon, zone_name)
     cache_key = f"weather:panel:{lat}:{lon}:{WIND_SPEED_UNIT}"
     cached = cache.get(cache_key)
     if cached is not None:
@@ -483,6 +638,10 @@ def panel_forecast(latitude, longitude):
         },
     )
     parsed = _parse_panel(payload) if payload is not None else None
+    parsed = _with_local_sun(parsed, lat, lon)
+    if parsed is not None:
+        parsed["provider"] = PROVIDER_OPEN_METEO
+        parsed["unavailable"] = []
     cache.set(
         cache_key,
         parsed if parsed is not None else "unavailable",
@@ -491,11 +650,89 @@ def panel_forecast(latitude, longitude):
     return parsed
 
 
+def _expires_in(headers):
+    """Segundos que faltan para el `Expires` de MET (0 si no viene o no se lee)."""
+    try:
+        moment = parsedate_to_datetime(headers.get("expires", ""))
+    except (TypeError, ValueError):
+        return 0
+    if moment.tzinfo is None:
+        return 0
+    return max(0, int((moment - timezone.now()).total_seconds()))
+
+
+def _met_panel(lat, lon, zone_hint):
+    """El pronóstico del panel desde MET Norway, con sus reglas de uso (LV-365). Never raises.
+
+    - Sin `WEATHER_USER_AGENT` (app y contacto, sólo por entorno) NO se llama: el panel dice «no
+      disponible» y el log lo advierte una vez por hora.
+    - `Expires` manda: el pronóstico se guarda lo MAYOR entre `WEATHER_PANEL_CACHE_SECONDS` y lo que
+      falte para `Expires`; al vencer se pregunta con `If-Modified-Since` y un 304 reutiliza la copia.
+    - Un 429 frena las consultas `MET_BACKOFF_SECONDS`; mientras tanto se sirve la copia vieja con
+      su hora REAL de consulta (nunca se la hace pasar por reciente).
+    - Una sola llamada por ubicación (≈ 2 decimales de coordenada), muy por debajo de los 20 req/s.
+    """
+    agent = _met_user_agent()
+    if not agent:
+        if cache.add("weather:met:agent_missing_logged", 1, 3600):
+            logger.warning("weather_user_agent_missing")
+        return None
+    zone_name = weather_met.zone_for(lat, lon, zone_hint)
+    cache_key = f"weather:panel:met:{lat}:{lon}:{zone_name}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return None if cached == "unavailable" else cached
+
+    raw_key = f"weather:met:raw:{lat}:{lon}"
+    raw = cache.get(raw_key)
+    raw = raw if isinstance(raw, dict) and raw.get("payload") is not None else None
+    reply = None
+    if not cache.get("weather:met:backoff"):
+        headers = {"User-Agent": agent}
+        if raw and raw.get("last_modified"):
+            headers["If-Modified-Since"] = raw["last_modified"]
+        reply = _exchange(settings.WEATHER_API_URL, {"lat": lat, "lon": lon}, headers)
+
+    ttl = getattr(settings, "WEATHER_PANEL_CACHE_SECONDS", 1800)
+    now_iso = timezone.now().isoformat()
+    if reply is not None and reply.status in (200, 203):
+        raw = {
+            "payload": reply.payload,
+            "last_modified": reply.headers.get("last-modified"),
+            "fetched_at": now_iso,
+        }
+        ttl = max(ttl, _expires_in(reply.headers))
+        cache.set(raw_key, raw, MET_RAW_CACHE_SECONDS)
+    elif reply is not None and reply.status == 304 and raw:
+        raw = {**raw, "fetched_at": now_iso}
+        ttl = max(ttl, _expires_in(reply.headers))
+        cache.set(raw_key, raw, MET_RAW_CACHE_SECONDS)
+    elif reply is not None and reply.status == 429:
+        cache.set("weather:met:backoff", 1, MET_BACKOFF_SECONDS)
+        logger.warning("weather_rate_limited")
+
+    parsed = None
+    if raw is not None:
+        body = weather_met.to_open_meteo(raw["payload"], zone_name, lat, lon)
+        parsed = _parse_panel(body) if body is not None else None
+    if parsed is not None:
+        parsed["fetched_at"] = raw["fetched_at"]
+        parsed = _with_local_sun(parsed, lat, lon)
+        parsed["provider"] = PROVIDER_MET
+        parsed["unavailable"] = weather_met.missing_fields(parsed)
+    cache.set(cache_key, parsed if parsed is not None else "unavailable", ttl)
+    return parsed
+
+
 def search_places(query, language="es"):
     """Up to 8 places matching `query` (2-80 chars), `[]` if none, None on failure.
 
     Each item: name, admin1, country, latitude, longitude, timezone. Cached 24 h.
     A query outside 2-80 characters returns `[]` without any request.
+
+    LV-366, in this order: (1) the LOCAL commune geocoder (BCN, no network); (2) only if nothing
+    matched and `WEATHER_NOMINATIM_ENABLED`, Nominatim (OpenStreetMap); (3) Open-Meteo's geocoder
+    only with `WEATHER_PROVIDER=open_meteo` (its free API is non-commercial). Otherwise `[]`.
     """
     if not getattr(settings, "WEATHER_ENABLED", False):
         return None
@@ -505,6 +742,13 @@ def search_places(query, language="es"):
     if _fake_enabled():
         payload = _fake_json("weather_places.json")
         return _parse_places(payload, text)
+    local = _local_places(text)
+    if local:
+        return local
+    if nominatim_enabled():
+        return _nominatim_places(text, language)
+    if provider() != PROVIDER_OPEN_METEO:
+        return []
     digest = hashlib.sha1(f"{text.lower()}|{language}".encode()).hexdigest()  # noqa: S324  # nosec B324 - cache key only
     cache_key = f"weather:geo:{digest}"
     cached = cache.get(cache_key)
@@ -526,6 +770,97 @@ def search_places(query, language="es"):
         GEOCODING_CACHE_SECONDS,
     )
     return places
+
+
+def _local_places(text):
+    """Comunas de Chile (BCN) que coinciden con `text`, sin red, con un punto INTERIOR.
+
+    Lazy import: `apps.geo` es de dominio y `apps.core` no debe depender de él al cargar.
+    """
+    from apps.geo.administrative import search_comunas
+
+    return [
+        {
+            "name": item["comuna"],
+            "admin1": item["region"],
+            "country": "Chile",
+            "latitude": item["latitude"],
+            "longitude": item["longitude"],
+            "timezone": item["timezone"],
+        }
+        for item in search_comunas(text, GEOCODING_COUNT)
+    ]
+
+
+def nominatim_enabled():
+    """Nominatim es OPCIONAL y viene apagado: hace falta el interruptor y un User-Agent."""
+    return bool(getattr(settings, "WEATHER_NOMINATIM_ENABLED", False)) and bool(
+        _met_user_agent()
+    )
+
+
+def _nominatim_places(text, language):
+    """Búsqueda en Nominatim con su política de uso: 1 req/s, caché, User-Agent propio.
+
+    Sólo se llega acá con el interruptor encendido, tras una búsqueda enviada por la persona (la
+    interfaz no autocompleta). Una petición dentro del mismo segundo da `None` («no disponible»).
+    """
+    digest = hashlib.sha1(f"nominatim|{text.lower()}|{language}".encode()).hexdigest()  # noqa: S324  # nosec B324 - cache key only
+    cache_key = f"weather:nominatim:{digest}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return None if cached == "unavailable" else cached
+    if not cache.add("weather:nominatim:slot", 1, 1):
+        return None
+    payload = _get_json(
+        settings.WEATHER_NOMINATIM_URL,
+        {
+            "q": text,
+            "format": "jsonv2",
+            "limit": GEOCODING_COUNT,
+            "addressdetails": 1,
+            "accept-language": language if language in ("es", "en") else "en",
+        },
+        headers={"User-Agent": _met_user_agent()},
+        with_key=False,
+    )
+    places = _parse_nominatim(payload) if payload is not None else None
+    cache.set(
+        cache_key,
+        places if places is not None else "unavailable",
+        GEOCODING_CACHE_SECONDS,
+    )
+    return places
+
+
+def _parse_nominatim(payload):
+    if not isinstance(payload, list):
+        return None
+    places = []
+    for item in payload:
+        if not isinstance(item, dict):
+            continue
+        coords = _valid_coordinates(item.get("lat"), item.get("lon"))
+        address = item.get("address") if isinstance(item.get("address"), dict) else {}
+        name = item.get("name") or str(item.get("display_name") or "").split(",")[0]
+        if coords is None or not isinstance(name, str) or not name.strip():
+            continue
+        places.append(
+            {
+                "name": name.strip(),
+                "admin1": address.get("state")
+                if isinstance(address.get("state"), str)
+                else "",
+                "country": address.get("country")
+                if isinstance(address.get("country"), str)
+                else "",
+                "country_code": str(address.get("country_code") or "").upper()[:2],
+                "latitude": coords[0],
+                "longitude": coords[1],
+                "timezone": weather_met.zone_for(coords[0], coords[1]),
+            }
+        )
+    return places[:GEOCODING_COUNT]
 
 
 def _parse_places(payload, text):

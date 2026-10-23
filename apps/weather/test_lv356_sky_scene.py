@@ -336,7 +336,9 @@ def enabled(settings, monkeypatch):
     settings.WEATHER_ENABLED = True
     settings.WEATHER_DEFAULT_LABEL = ""
     forecast = weather_client._parse_panel(json.loads(FIXTURE.read_text("utf-8")))
-    monkeypatch.setattr(weather_client, "panel_forecast", lambda lat, lon: forecast)
+    monkeypatch.setattr(
+        weather_client, "panel_forecast", lambda lat, lon, zone=None: forecast
+    )
     monkeypatch.setattr(
         panel_module, "_local_now", lambda f: datetime(2026, 10, 19, 22, 0)
     )

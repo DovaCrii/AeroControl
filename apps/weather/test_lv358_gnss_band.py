@@ -197,7 +197,9 @@ def on(settings, monkeypatch):
     settings.GNSS_SCINTILLATION_ENABLED = True
     settings.WEATHER_DEFAULT_LABEL = ""
     forecast = weather_client._parse_panel(json.loads(FIXTURE.read_text("utf-8")))
-    monkeypatch.setattr(weather_client, "panel_forecast", lambda lat, lon: forecast)
+    monkeypatch.setattr(
+        weather_client, "panel_forecast", lambda lat, lon, zone=None: forecast
+    )
     # El fixture es del 19-oct-2026: se fija «ahora» a las 22:00 (ventana activa).
     monkeypatch.setattr(
         panel_module, "_local_now", lambda f: datetime(2026, 10, 19, 22, 0)
@@ -243,7 +245,9 @@ class TestTheCard:
         calls = []
         real = weather_client.panel_forecast
         monkeypatch.setattr(
-            weather_client, "panel_forecast", lambda a, b: calls.append(1) or real(a, b)
+            weather_client,
+            "panel_forecast",
+            lambda a, b, z=None: calls.append(1) or real(a, b, z),
         )
         client = login_as(VIEW)
         _city(client)

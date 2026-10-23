@@ -1,0 +1,20 @@
+<!-- LV-367 (Visual v3): iconos de CONTENIDO (no de menu) en un solo archivo.
+
+     Aparte de `icons.svg` a proposito: ese archivo es el menu lateral, y su guardian
+     (`test_ux05_icon_sprite.py`) exige que cada simbolo lo use `base.html` y que sean
+     exactamente 30. Estos son los que acompanan a un texto dentro de una tarjeta.
+
+     Reglas (las vigila `apps/core/test_lv367_visual_base.py`): 24 px, trazo `currentColor`
+     (sin `fill` ni `stroke` con color propio: lo pone `.nav-icon` de `app.css`), siempre
+     con `aria-hidden="true"` y siempre junto a su texto, nunca solos. Cada simbolo dibuja
+     algo distinto. Se usan con `{% static 'img/icons-ui.svg' %}#icon-<nombre>`. -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="icon-satellite" viewBox="0 0 24 24"><rect x="9.5" y="9.5" width="5" height="5" rx="1" transform="rotate(45 12 12)"/><path d="M6.2 10.4 3.6 7.8 6.4 5l2.6 2.6M17.8 13.6l2.6 2.6-2.8 2.8-2.6-2.6M10.6 13.4 8.2 15.8M13.4 10.6l2.4-2.4M16.5 4.5a4.5 4.5 0 0 1 3 3"/></symbol>
+  <symbol id="icon-moon" viewBox="0 0 24 24"><path d="M20 14.6A8.4 8.4 0 1 1 9.4 4a6.8 6.8 0 0 0 10.6 10.6z"/></symbol>
+  <symbol id="icon-sunset" viewBox="0 0 24 24"><path d="M3 18h18M7 18a5 5 0 0 1 10 0M12 5v4M5.4 9.4l1.7 1.7M18.6 9.4l-1.7 1.7M9 21.5h6"/></symbol>
+  <symbol id="icon-sunrise" viewBox="0 0 24 24"><path d="M3 18h18M7 18a5 5 0 0 1 10 0M12 4v5M9.6 6.4 12 4l2.4 2.4M5.4 11.4l1.7 1.7M18.6 11.4l-1.7 1.7M9 21.5h6"/></symbol>
+  <symbol id="icon-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6.5V12l-3.4 2"/></symbol>
+  <symbol id="icon-zone" viewBox="0 0 24 24"><path d="M12 3l8 5v8l-8 5-8-5V8z" stroke-dasharray="3 2.4"/><circle cx="12" cy="12" r="2.2"/></symbol>
+  <symbol id="icon-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8 5.4-5.6"/></symbol>
+  <symbol id="icon-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.4M12 7.7v.01"/></symbol>
+</svg>

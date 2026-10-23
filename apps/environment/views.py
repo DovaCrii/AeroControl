@@ -22,6 +22,7 @@ from apps.weather.panel import weather_enabled
 from apps.weather.templatetags.gnss_tags import gnss_card_enabled
 
 from .airspace_near import airspace_near_fact
+from .gnss_day import day_geometry, season_geometry
 from .summary import build_summary, season_label
 from .tabs import TABS_BY_KEY, tabs_for
 
@@ -43,7 +44,9 @@ def environment_context(user, now=None):
     location = get_location_for(user)
     forecast, events = None, []
     if location is not None and weather_enabled():
-        forecast = weather_client.panel_forecast(location.latitude, location.longitude)
+        forecast = weather_client.panel_forecast(
+            location.latitude, location.longitude, location.timezone
+        )
         if forecast:
             events = weather_client.regional_events(forecast)
     # El tercer renglón y la celda de la franja salen de ESTE hecho (una sola función, E3).
@@ -63,6 +66,7 @@ def environment_context(user, now=None):
         "env_location": location,
         "env_summary": summary,
         "env_forecast": forecast,
+        "env_credit": weather_client.provider_credit((forecast or {}).get("provider")),
         "env_tabs": tabs_for(user),
     }
 
@@ -129,7 +133,15 @@ class EnvironmentGnssTab(EnvironmentTab):
 
     def extra_context(self, request, context):
         params = gnss.params_from_settings()
+        summary = context["env_summary"]
+        season = season_geometry(summary.now, params)
         return {
+            "gnss_day": day_geometry(
+                summary.now, summary.sunsets, summary.sunrises, params
+            ),
+            "gnss_months": season["months"],
+            "gnss_years": season["years"],
+            "gnss_current_active": season["current_active"],
             "gnss_season": season_label(params),
             "gnss_year_from": params.year_from,
             "gnss_year_to": params.year_to,

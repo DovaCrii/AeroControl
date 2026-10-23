@@ -21,6 +21,7 @@ from apps.weather.models import UserWeatherLocation
 from apps.weather.panel import current_conditions
 
 from . import airspace_near
+from .gnss_day import day_geometry
 from .levels import LEVEL_ORDER
 from .tabs import TABS_BY_KEY
 from .views import environment_context
@@ -89,12 +90,18 @@ def strip_context(user, now=None):
             "fact": summary.airspace,
             "url": reverse("airspace-map"),
         }
+    gnss_day = (
+        day_geometry(summary.now, summary.sunsets, summary.sunrises)
+        if "gnss" in cells and summary.gnss_line is not None
+        else None
+    )
     return {
         "state": "ok",
         "cells": cells,
         "city": summary.city,
         "weather": weather,
         "gnss": summary.gnss_line if "gnss" in cells else None,
+        "gnss_day": gnss_day,
         "airspace": airspace,
         "hub_url": reverse("environment-hub"),
     }

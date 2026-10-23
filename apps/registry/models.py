@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from apps.core.choices import PURPOSE_CHOICES
@@ -894,6 +894,11 @@ class Operator(BaseModel):
         super().clean()
         self._check_name_parts_belong_to_the_full_name()
         self.rut = normalize_rut(self.rut)
+        # LV-368: el número de credencial no se repite en el tenant. Como el RUT,
+        # sólo cuando cambia: una ficha legada con un duplicado sigue editable.
+        self.dgac_credential = (self.dgac_credential or "").strip()
+        if self.dgac_credential and self._credential_changed():
+            self._validate_credential_number(self.dgac_credential)
         self.employee_id = (self.employee_id or "").strip()
         if not self.employee_id and rut_is_valid(self.rut):
             self.employee_id = employee_id_from_rut(self.rut)
@@ -970,6 +975,17 @@ class Operator(BaseModel):
             return f"{self.surnames}, {self.given_names}"
         return self.full_name
 
+    def _credential_changed(self):
+        """True en un alta o cuando el número guardado difiere (`values_list`, LV-143)."""
+        if self._state.adding or self.pk is None:
+            return True
+        previous = (
+            Operator.objects.filter(pk=self.pk)
+            .values_list("dgac_credential", flat=True)
+            .first()
+        )
+        return (previous or "").strip().casefold() != self.dgac_credential.casefold()
+
     def _rut_changed(self):
         """True en un alta, o cuando el RUT guardado difiere del que se va a escribir.
 
@@ -996,6 +1012,155 @@ class Operator(BaseModel):
             self.credential_expiry is not None
             and self.credential_expiry < timezone.localdate()
         )
+
+    # LV-368: la credencial leída del PDF. La regla de negocio vive acá y no en la
+    # vista: la pantalla de confirmación es una de las puertas, no la única.
+
+    @staticmethod
+    def _plain_words(text):
+        import unicodedata
+
+        plain = unicodedata.normalize("NFKD", text or "")
+        plain = "".join(c for c in plain if not unicodedata.combining(c))
+        return set(plain.casefold().split())
+
+    def holder_matches(self, read_name):
+        """Si el titular leído de un documento calza con este nombre de registro.
+
+        Sin tildes ni caja y sin importar el orden (la credencial puede traer
+        «Apellidos Nombres»). Calza cuando todas las palabras de la más corta están
+        en la otra: un segundo nombre omitido de un lado no es otra persona. Solo
+        **avisa**: nunca bloquea (decisión 1.5 de LV-368).
+        """
+        read, own = self._plain_words(read_name), self._plain_words(self.full_name)
+        if not read or not own:
+            return False
+        small, large = (read, own) if len(read) <= len(own) else (own, read)
+        return small <= large
+
+    def rut_matches(self, read_rut):
+        """Si el RUT leído es el de la ficha. El valor leído no se guarda ni se muestra."""
+        from .rut import normalize_rut
+
+        return bool(self.rut) and normalize_rut(read_rut) == normalize_rut(self.rut)
+
+    def _validate_credential_number(self, number):
+        """El número de credencial cabe y no lo tiene otra persona de este tenant.
+
+        Mismo estilo que el RUT (LV-143): el error nombra a quien ya lo tiene, porque
+        sin el nombre manda a buscarlo a mano por toda la app.
+        """
+        from .duplicates import operator_with_credential
+
+        if len(number) > self._meta.get_field("dgac_credential").max_length:
+            raise ValidationError(
+                {
+                    "dgac_credential": _(
+                        "Enter a credential number of up to 30 characters."
+                    )
+                }
+            )
+        existing = operator_with_credential(
+            number, tenant_id=self.tenant_id, exclude_pk=self.pk
+        )
+        if existing is not None:
+            raise ValidationError(
+                {
+                    "dgac_credential": _(
+                        "Credential %(number)s already belongs to %(name)s."
+                    )
+                    % {"number": number, "name": existing.full_name}
+                }
+            )
+
+    @transaction.atomic
+    def apply_credential(
+        self, document, accepted, user=None, holder=None, read_rut=None
+    ):
+        """Aplica lo que la persona **confirmó** de una credencial leída (LV-368).
+
+        `accepted` trae solo los campos con «Usar» marcado, ya con el valor final
+        (`number`: texto; `issue_date`, `expiry_date`: `date`); lo que no está **no se
+        toca**. Valida antes de escribir y levanta `ValidationError` con claves
+        `number` / `issue_date` / `expiry_date`:
+
+        - número y vencimiento tienen que quedar con valor (los pide el resto del
+          sistema: Vencimientos, preparación del vuelo, avisos);
+        - el vencimiento es posterior a la emisión (si ésta se confirmó);
+        - el número no lo tiene otra persona del tenant.
+
+        Escribe `dgac_credential` y `credential_expiry` (las señales existentes
+        resuelven la alerta de vencimiento), completa `issue_date`/`expiry_date` del
+        documento y lo deja como versión vigente, retirando la anterior como hace
+        `DocumentReplace`. **Devuelve los avisos** (titular o RUT leídos que no calzan):
+        no bloquean. `holder` y `read_rut` se usan solo para comparar y no se guardan.
+        """
+        from django.contrib.contenttypes.models import ContentType
+
+        number = accepted.get("number", self.dgac_credential)
+        expiry = accepted.get("expiry_date", self.credential_expiry)
+        issue = accepted.get("issue_date")
+        errors = {}
+        if not number:
+            errors["number"] = _("The credential number is required.")
+        if not expiry:
+            errors["expiry_date"] = _("The credential expiry date is required.")
+        if issue and expiry and expiry <= issue:
+            errors["expiry_date"] = _("The expiry date must be after the issue date.")
+        if "number" in accepted and number:
+            try:
+                self._validate_credential_number(number)
+            except ValidationError as exc:
+                errors["number"] = " ".join(exc.message_dict["dgac_credential"])
+        if errors:
+            raise ValidationError(errors)
+
+        self.dgac_credential = number
+        self.credential_expiry = expiry
+        self.save(update_fields=["dgac_credential", "credential_expiry", "updated_at"])
+
+        from apps.compliance.models import Document
+
+        document_type = ContentType.objects.get_for_model(Operator)
+        for previous in Document.objects.filter(
+            content_type=document_type,
+            object_id=self.pk,
+            doc_type=document.doc_type,
+            is_current_version=True,
+            is_active=True,
+        ).exclude(pk=document.pk):
+            previous.is_current_version = False
+            previous.save(update_fields=["is_current_version", "updated_at"])
+            previous.resolve_related_alerts()
+        if issue:
+            document.issue_date = issue
+        document.expiry_date = expiry
+        document.is_current_version = True
+        document.save(
+            update_fields=[
+                "issue_date",
+                "expiry_date",
+                "is_current_version",
+                "updated_at",
+            ]
+        )
+
+        warnings = []
+        if holder and not self.holder_matches(holder):
+            warnings.append(
+                _(
+                    "The holder read from the file does not match this person. "
+                    "Check that it is the right document."
+                )
+            )
+        if read_rut and self.rut and not self.rut_matches(read_rut):
+            warnings.append(
+                _(
+                    "The RUT read from the file does not match the record. "
+                    "Check that it is the right document."
+                )
+            )
+        return warnings
 
 
 class Assignment(BaseModel):

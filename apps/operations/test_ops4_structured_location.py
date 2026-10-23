@@ -216,6 +216,16 @@ class TestStructuredLocationDetailPage:
         content = response.content.decode()
 
         assert response.status_code == 200
-        assert "Region / Commune" not in content
-        assert "Coordinates" not in content
-        assert "Maximum altitude" not in content
+        # LV-368: estas afirmaciones eran en inglés y la ficha se dibuja en español,
+        # así que pasaban siempre (un `not in` que nunca podía fallar). Ahora se
+        # comparan contra la cadena traducida y acotadas a la sección «Ubicación».
+        from django.utils import translation
+        from django.utils.translation import gettext
+
+        location = content.split('id="permit-location"')[1].split("</details>")[0]
+        with translation.override("es"):
+            assert gettext("Coordinates") not in location
+            assert gettext("Maximum altitude") not in location
+            # La fila de región **siempre** se dibuja (LV-220) y dice que falta.
+            assert gettext("Region / Commune") in location
+            assert gettext("Not recorded") in location

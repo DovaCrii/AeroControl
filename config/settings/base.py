@@ -231,24 +231,42 @@ AIRSPACE_NEAR_KM = config("AIRSPACE_NEAR_KM", default=10, cast=float)
 
 # R8.1 (ISO 8.1 meteorological review). The project's only outgoing HTTP call.
 # LV-353: ON by default (the person's decision of 2026-10-20); WEATHER_ENABLED=False
-# restores the zero-outgoing-calls property. Open-Meteo needs no API key, so
-# there is no credential here -- see apps/core/weather.py for why that decided
-# the provider choice. The call is server-side only, so the CSP below is
+# restores the zero-outgoing-calls property. The call is server-side only, so the CSP below is
 # unaffected (no connect-src exception).
+# LV-365 (2026-10-21): the provider is MET Norway by default (NLOD 2.0 / CC BY 4.0, commercial
+# use allowed, no key); `open_meteo` stays for a paid plan or a self-hosted server. MET requires a
+# User-Agent naming the app and a contact: WEATHER_USER_AGENT comes from the environment only --
+# never the (public) repo -- and without it MET is NOT called (the card says "not available").
 WEATHER_ENABLED = config("WEATHER_ENABLED", default=True, cast=bool)
+WEATHER_PROVIDER = config("WEATHER_PROVIDER", default="met_norway")
+WEATHER_USER_AGENT = config("WEATHER_USER_AGENT", default="")
 WEATHER_API_URL = config(
-    "WEATHER_API_URL", default="https://api.open-meteo.com/v1/forecast"
+    "WEATHER_API_URL",
+    default=(
+        "https://api.open-meteo.com/v1/forecast"
+        if WEATHER_PROVIDER.strip().lower() == "open_meteo"
+        else "https://api.met.no/weatherapi/locationforecast/2.0/complete"
+    ),
 )
 # Short on purpose: a slow third party must not hold a gunicorn worker.
 WEATHER_TIMEOUT_SECONDS = config("WEATHER_TIMEOUT_SECONDS", default=4, cast=int)
 WEATHER_CACHE_SECONDS = config("WEATHER_CACHE_SECONDS", default=3600, cast=int)
-# LV-342: informative weather card on the main page. Open-Meteo's free tier is
-# for non-commercial use only. ACCEPTED RISK (LV-353, 2026-10-20): it is used "for now"
-# from the company server; WEATHER_ENABLED=False switches everything off, and a paid plan
-# or self-hosted server (WEATHER_API_KEY / WEATHER_API_URL) meets the commercial licence. The key comes from the environment only -- never the repo.
+# LV-342: informative weather card on the main page. Open-Meteo's free tier is for
+# non-commercial use only, so it is NOT the default any more (LV-365): a paid plan or self-hosted
+# server (WEATHER_PROVIDER=open_meteo + WEATHER_API_KEY / WEATHER_API_URL) meets the commercial
+# licence. MET Norway needs no key. The key comes from the environment only -- never the repo.
 WEATHER_API_KEY = config("WEATHER_API_KEY", default="")
 WEATHER_GEOCODING_URL = config(
     "WEATHER_GEOCODING_URL", default="https://geocoding-api.open-meteo.com/v1/search"
+)
+# LV-366: city search is LOCAL first (BCN communes, no network). Nominatim (OpenStreetMap) is OPTIONAL
+# and OFF: 1 request/second, cached, no autocomplete, needs WEATHER_USER_AGENT; results must credit
+# "(c) OpenStreetMap contributors".
+WEATHER_NOMINATIM_ENABLED = config(
+    "WEATHER_NOMINATIM_ENABLED", default=False, cast=bool
+)
+WEATHER_NOMINATIM_URL = config(
+    "WEATHER_NOMINATIM_URL", default="https://nominatim.openstreetmap.org/search"
 )
 WEATHER_PANEL_CACHE_SECONDS = config(
     "WEATHER_PANEL_CACHE_SECONDS", default=1800, cast=int
@@ -495,7 +513,21 @@ NVIDIA_API_KEY = config("NVIDIA_API_KEY", default="")
 NVIDIA_BASE_URL = config(
     "NVIDIA_BASE_URL", default="https://integrate.api.nvidia.com/v1"
 )
+# LV-362: la cadena de modelos vive SOLO aquí (el .env.example y la doc remiten a este archivo).
+# Primero `NVIDIA_MODEL`; ante un 404/410 (retirado), una respuesta vacía o sólo razonamiento, se pasa al
+# siguiente de `NVIDIA_MODEL_FALLBACKS` (lista separada por comas). Todos deben admitir llamadas a funciones
+# (`tools`): un modelo que las rechaza se salta. Los ids son del catálogo de build.nvidia.com y cambian;
+# `manage.py assistant_probar --models` dice cuáles responden hoy.
 NVIDIA_MODEL = config("NVIDIA_MODEL", default="meta/llama-3.3-70b-instruct")
+NVIDIA_MODEL_FALLBACKS = config(
+    "NVIDIA_MODEL_FALLBACKS",
+    default="meta/llama-3.1-70b-instruct,nvidia/llama-3.3-nemotron-super-49b-v1",
+)
+# Reintentos ante 429 (máx. 2, tope en el cliente) y espera inicial en segundos (se duplica).
+AI_ASSISTANT_RETRIES_429 = config("AI_ASSISTANT_RETRIES_429", default=2, cast=int)
+AI_ASSISTANT_RETRY_BACKOFF = config(
+    "AI_ASSISTANT_RETRY_BACKOFF", default=1.0, cast=float
+)
 # `LV-346`: botón «Copy answer» del panel. Apagado por omisión: copiar el texto fuera del sistema es
 # redistribuirlo, y eso depende de la licencia del proveedor del modelo.
 AI_ASSISTANT_ALLOW_COPY = config("AI_ASSISTANT_ALLOW_COPY", default=False, cast=bool)

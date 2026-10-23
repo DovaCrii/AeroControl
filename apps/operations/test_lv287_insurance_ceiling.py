@@ -328,7 +328,9 @@ class TestItIsSaidBeforeItIsBroken:
             reverse("permission-detail", args=[permit.pk])
         ).content.decode()
 
-        assert "puede terminar el 2026-12-20 como máximo" in body
+        # LV-368: el aviso del seguro pasó de la fila «Vigencia» a la franja «Qué falta».
+        strip = body.split('id="permit-attention"')[1].split("</section>")[0]
+        assert "puede terminar el 2026-12-20 como máximo" in strip
 
     def test_an_approved_permit_page_shows_no_such_note(self, client, centre):
         permit = FlightPermission.objects.create(

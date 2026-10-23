@@ -132,6 +132,10 @@ def render_sparkline(values, uid, title, desc, width=120, height=28, pad=3):
     return "".join(parts)
 
 
+# Retirada de PANTALLA (LV-367, fase 4), no de código: «Cumplimiento» ya no dibuja anillos, pero la etiqueta
+# sigue registrada y probada. Condición de cierre (paso 2): borrar `ring`, `render_ring` y las reglas
+# `.id-cx-seg*`/`.id-cx-track`/`.id-cx-ring-*` de `identity.css` cuando NINGUNA plantilla la use durante un
+# despliegue completo (`grep "{% ring"` en `templates/` sin resultados en `main` y en `p340`).
 @register.simple_tag
 def ring(segments, uid, title, desc, center="", size=96):
     return mark_safe(render_ring(segments, uid, title, desc, center, size))  # nosec B308 B703
