@@ -8,6 +8,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Changed
+
+- **Lectura de PDF en un solo lugar (`LV-368`, fase 2).** `apps/operations/dgac_pdf.py` pasa a `apps/core/pdf_text.py` con `text_from_pdf(stream, pages=2)`; `folio_from_pdf` y `window_from_pdf` lo usan sin cambiar su comportamiento (`None` ante la duda, nunca lanzan). `dgac_pdf` queda como shim con condición de retiro en su docstring. Sin migración ni estáticos.
+
 ### Removed
 
 - **Expediente operativo sin «Revisión meteorológica registrada» (`LV-344`, paso 1).** La persona dijo que ya no se ocupa: el renglón opcional y su botón «Abrir el plan» salen del expediente; la cuenta de faltas no cambia. El modelo, el registro en el plan geoespacial y las revisiones guardadas siguen intactos hasta el paso 2 (condición de cierre en `MASTER_PLAN.md`).
