@@ -27,7 +27,8 @@ from apps.core.views import ModelViewPermissionRequiredMixin
 from apps.core.tenancy import scope_queryset_to_tenant
 from apps.environment.airspace_near import current_permits
 from apps.environment.views import EnvironmentTab, environment_context
-from apps.geo.airspace_geometry import nearby
+from apps.geo import administrative_layer
+from apps.geo.airspace_geometry import features_in_area, nearby
 from apps.geo.sections import format_dms
 
 from . import payload
@@ -92,6 +93,27 @@ def ui_strings():
         "siteWord": _("Site"),
         "permitWord": _("Permit"),
         "validUntil": _("valid until {date}"),
+        "layerAdmin": _("Administrative boundaries"),
+        "adminLoading": _("Loading the administrative boundaries"),
+        "adminFailed": _(
+            "The administrative boundaries could not be loaded. Try again."
+        ),
+        "adminInside": _("Inside {name}"),
+        "adminCommunes": _("{n} communes"),
+        "adminContained": _("Zones inside"),
+        "adminTouching": _("Zones that touch it"),
+        "adminAerodromes": _("Aerodromes inside"),
+        "adminReferential": _("Referential, BCN source, within about 111 m."),
+        "adminSummary": _("{zones} zones and {aerodromes} aerodromes in {name}"),
+    }
+
+
+def admin_kind_labels():
+    """The labels of the administrative search types (communes, regions and the BCN undemarcated zone)."""
+    return {
+        "commune": _("Commune"),
+        "region": _("Region"),
+        "undemarcated": _("Undemarcated zone"),
     }
 
 
@@ -113,14 +135,22 @@ def own_layers_for(user):
 
 
 def tab_config(reference, own_layers=()):
+    kinds = kind_labels()
+    kinds.update({key: str(label) for key, label in admin_kind_labels().items()})
     return {
         "ownLayers": list(own_layers),
         "dataUrl": reverse("airspace-data"),
         "nearUrl": reverse("airspace-near"),
+        # The administrative layer (LV-367): it is fetched only when the person switches it on.
+        # `{code}` is replaced by the script. The search index travels here (names and frames, no
+        # geometry) so communes and regions can be searched with the layer off.
+        "adminUrl": reverse("airspace-admin"),
+        "adminContainsUrl": reverse("airspace-admin-contains", args=["__code__"]),
+        "adminIndex": administrative_layer.search_index(),
         "nearKm": near_km(),
         "tileProviders": settings.GEO_TILE_PROVIDERS,
         "reference": reference,
-        "kinds": kind_labels(),
+        "kinds": kinds,
         "i18n": ui_strings(),
     }
 
@@ -275,6 +305,25 @@ def _number(request, name, low, high):
     return value
 
 
+def zone_and_aerodrome_features():
+    """The active P/R/D/N zones and aerodromes as GeoJSON-like features (what `near/` and `contains` read)."""
+    return [
+        {
+            "type": "Feature",
+            "properties": {
+                "id": str(row.pk),
+                "kind": row.kind,
+                "code": row.code,
+                "name": row.name,
+            },
+            "geometry": row.geometry,
+        }
+        for row in payload.active_features().filter(
+            kind__in=payload.ZONE_KINDS + payload.AERODROME_KINDS
+        )
+    ]
+
+
 def _entry(item):
     properties = item["feature"]["properties"]
     bearing = item["bearing_deg"]
@@ -309,21 +358,7 @@ class AirspaceNear(ModelViewPermissionRequiredMixin, View):
                 return JsonResponse({"error": "invalid_radius"}, status=400)
         close = near_km()
         snapshot = payload.current_snapshot()
-        features = [
-            {
-                "type": "Feature",
-                "properties": {
-                    "id": str(row.pk),
-                    "kind": row.kind,
-                    "code": row.code,
-                    "name": row.name,
-                },
-                "geometry": row.geometry,
-            }
-            for row in payload.active_features().filter(
-                kind__in=payload.ZONE_KINDS + payload.AERODROME_KINDS
-            )
-        ]
+        features = zone_and_aerodrome_features()
         found = nearby(
             lat,
             lon,
@@ -355,3 +390,92 @@ class AirspaceNear(ModelViewPermissionRequiredMixin, View):
                 "aerodromes": [_entry(item) for item in found["aerodromes"]],
             }
         )
+
+
+class AirspaceAdminLayer(ModelViewPermissionRequiredMixin, View):
+    """The «Administrative boundaries» layer (LV-367, phase 6): communes simplified at two levels.
+
+    `?lod=1` (zoom <= 7) or `?lod=2` (zoom >= 8), built once per process from `apps/geo/data/comunas.txt`
+    (BCN). ETag = sha256 of that file + the simplification's version, so it only changes with a deploy;
+    304 on a match. It is global public cartography, with no tenant: the same for every person, and it
+    needs the map's own permission (`view_airspacefeature`, LV-268) like the rest of the screen."""
+
+    model = AirspaceFeature
+
+    def get(self, request):
+        try:
+            lod = int(request.GET.get("lod", "1"))
+        except ValueError:
+            lod = 0
+        if lod not in administrative_layer.LODS:
+            return JsonResponse({"error": "invalid_lod"}, status=400)
+        etag = administrative_layer.layer_etag(lod)
+        if payload.etag_matches(request.headers.get("If-None-Match"), etag):
+            response = HttpResponseNotModified()
+        else:
+            response = HttpResponse(
+                administrative_layer.layer_bytes(lod),
+                content_type="application/json; charset=utf-8",
+            )
+        response["ETag"] = etag
+        response["Cache-Control"] = "private, no-cache"
+        return response
+
+
+def _contained_entry(item):
+    properties = item["feature"]["properties"]
+    return {
+        "id": properties["id"],
+        "kind": properties["kind"],
+        "code": properties["code"],
+        "name": properties["name"],
+        "relation": item["relation"],
+    }
+
+
+class AirspaceAdminContains(ModelViewPermissionRequiredMixin, View):
+    """Which P/R/D/N zones a commune or region contains or touches, and which aerodromes lie inside it.
+
+    `<code>` is a BCN commune code, `r<N>` for a region, or `0` for the «Zona sin demarcar». Computed
+    against the FULL rings of the data file (not the simplified drawing) with the pure functions of
+    `apps/geo/airspace_geometry.py`. Referential: BCN says so, and its rings come at ~111 m."""
+
+    model = AirspaceFeature
+
+    def get(self, request, code):
+        area = administrative_layer.area(code)
+        if area is None:
+            return JsonResponse({"error": "unknown_area"}, status=404)
+        found = features_in_area(zone_and_aerodrome_features(), area["parts"])
+        kind_rank = {
+            kind: i
+            for i, kind in enumerate(payload.AERODROME_KINDS + payload.ZONE_KINDS)
+        }
+        found.sort(
+            key=lambda item: (
+                kind_rank.get(item["feature"]["properties"]["kind"], 99),
+                item["relation"] != "contained",
+                item["feature"]["properties"]["code"] or "~",
+                item["feature"]["properties"]["name"],
+            )
+        )
+        entries = [_contained_entry(item) for item in found]
+        response = JsonResponse(
+            {
+                "area": {
+                    "code": area["code"],
+                    "name": area["name"],
+                    "kind": area["kind"],
+                    "region": area["region"],
+                    "communes": area["communes"],
+                },
+                "source": administrative_layer.SOURCE_NAME,
+                "tolerance_m": administrative_layer.FILE_TOLERANCE_M,
+                "zones": [e for e in entries if e["kind"] in payload.ZONE_KINDS],
+                "aerodromes": [
+                    e for e in entries if e["kind"] in payload.AERODROME_KINDS
+                ],
+            }
+        )
+        response["Cache-Control"] = "private, no-cache"
+        return response

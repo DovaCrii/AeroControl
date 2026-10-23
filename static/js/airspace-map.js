@@ -92,16 +92,62 @@
     "airstrip",
   ];
   var AIRSTRIP_MIN_ZOOM = 8;
-  var PLANE =
-    '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">' +
-    '<path fill="currentColor" d="M12 2l2 7 8 4v2l-8-1.5V19l2.5 2v1L12 21l-4.5 1v-1L10 19v-5.5L2 15v-2l8-4z"/></svg>';
+  var LABEL_MIN_ZOOM = 9;
+  /* LV-367: los íconos viven en el sprite `air-i-*` de la plantilla; aquí sólo se nombran. */
+  function iconMarkup(name) {
+    return (
+      '<svg class="air-ic" aria-hidden="true" focusable="false"><use href="#air-i-' + name + '"/></svg>'
+    );
+  }
+  function iconNode(name) {
+    var svg = svgNode("svg", { class: "air-ic", "aria-hidden": "true", focusable: "false" });
+    var use = svgNode("use", {});
+    use.setAttribute("href", "#air-i-" + name);
+    svg.appendChild(use);
+    return svg;
+  }
+  var KIND_ICONS = {
+    airport: "airport",
+    aerodrome: "aerodrome",
+    prohibited: "prohibited",
+    restricted: "restricted",
+    danger: "danger",
+    naval: "naval",
+    fir_boundary: "fir_boundary",
+    airstrip: "airstrip",
+    commune: "commune",
+    region: "region",
+    undemarcated: "undemarcated",
+  };
+  /* LV-367 (fase 7): la capa «Límites administrativos». LOD 1 con zoom <= 7, LOD 2 con zoom >= 8; los
+     nombres de región desde el zoom 5 y los de comuna desde el 9. Nada se pide mientras la capa está
+     apagada: el padrón de búsqueda (nombres y encuadres, sin geometría) ya viene en la configuración. */
+  var ADMIN_LOD_SPLIT_ZOOM = 7;
+  var ADMIN_LABEL_ZOOM = { region: 5, commune: 9 };
+  var ADMIN_KINDS = ["commune", "region", "undemarcated"];
 
   var features = [];
   var byId = {};
   var groups = {};
   var map = null;
   var svgRenderer = null;
+  var haloRenderer = null;
+  var adminRenderer = null;
   var canvasRenderer = null;
+  var adminPool = [];
+  var adminById = {};
+  var admin = {
+    on: false,
+    lod: 0,
+    data: {},
+    loading: {},
+    levels: {},
+    labels: [],
+    labelsBuilt: false,
+    highlight: [],
+    selected: null,
+  };
+  var selectedAdminId = null;
   var selectedId = null;
   var reference = cfg.reference || null;
   var tool = "";
@@ -154,6 +200,12 @@
     map = L.map("air-map", { preferCanvas: true, zoomControl: true });
     canvasRenderer = L.canvas({ padding: 0.5 });
     svgRenderer = L.svg({ padding: 0.5 });
+    // El halo oscuro de las zonas va en su propio panel, DEBAJO de todas las líneas (z-index en CSS).
+    map.createPane("airHalo");
+    haloRenderer = L.svg({ padding: 0.5, pane: "airHalo" });
+    // Los límites administrativos van en lienzo (decenas de miles de vértices) y debajo de las zonas.
+    map.createPane("airAdmin");
+    adminRenderer = L.canvas({ padding: 0.5, pane: "airAdmin" });
     var bases = {};
     var providers = cfg.tileProviders || [];
     var initial = providers.find(function (p) { return p.default; }) || providers[0];
@@ -188,6 +240,7 @@
       mapClick(event.latlng);
     });
     map.on("zoomend", syncAirstrips);
+    map.on("zoomend", onAdminZoom);
     map.on("dblclick", function () {
       if (tool !== "measure") {
         return;
@@ -218,18 +271,44 @@
       iconAnchor: [11, 11],
     });
   }
+  /* Jerarquía: aeropuerto = disco de 30 px con borde; aeródromo = 22 px (igual que la insignia de zona). */
   function planeIcon(kind) {
+    var size = kind === "airport" ? 30 : 22;
     return L.divIcon({
       className: "air-plane-wrap",
-      html: '<span class="air-plane air-plane--' + kind + '">' + PLANE + "</span>",
-      iconSize: [26, 26],
-      iconAnchor: [13, 13],
+      html: '<span class="air-plane air-plane--' + kind + '">' + iconMarkup("plane") + "</span>",
+      iconSize: [size, size],
+      iconAnchor: [size / 2, size / 2],
     });
   }
 
+  /* El código de la zona o del aeródromo, con halo, desde el zoom 9. Es un NODO (nunca un string): el
+     texto viene de la fuente y Leaflet metería un string con `innerHTML`. */
+  function codeLabel(entry, below) {
+    var node = el("span", "air-tag", entry.code);
+    var layer = L.marker([entry.lat, entry.lon], {
+      icon: L.divIcon({
+        className: "air-tag-wrap",
+        html: node,
+        iconSize: [80, 14],
+        iconAnchor: [40, -below],
+      }),
+      interactive: false,
+      keyboard: false,
+    });
+    layer.airMinZoom = LABEL_MIN_ZOOM;
+    return layer;
+  }
+
+  function cssVar(name, fallback) {
+    var value = getComputedStyle(document.documentElement).getPropertyValue(name);
+    return (value && value.trim()) || fallback;
+  }
   function airstripColor() {
-    var value = getComputedStyle(document.documentElement).getPropertyValue("--ac-text-secondary");
-    return value.trim() || "#555555";
+    return cssVar("--id-air-dot", "#e6edf6");
+  }
+  function haloColor() {
+    return cssVar("--id-air-halo", "#0b1220");
   }
 
   function marker(entry, icon, title) {
@@ -281,13 +360,23 @@
     var layers = [];
     var zone = LETTERS[kind] != null;
     if (kind === "airstrip") {
+      // Radio 4 con halo oscuro debajo (un segundo círculo, no interactivo): se lee sobre claro y oscuro.
+      var ring = L.circleMarker([entry.lat, entry.lon], {
+        renderer: canvasRenderer,
+        radius: 6.5,
+        weight: 0,
+        fillColor: haloColor(),
+        fillOpacity: 0.9,
+        interactive: false,
+      });
+      ring.options.airHalo = true;
+      layers.push(ring);
       var dot = L.circleMarker([entry.lat, entry.lon], {
         renderer: canvasRenderer,
-        radius: 3,
-        weight: 1,
-        color: airstripColor(),
+        radius: 4,
+        weight: 0,
         fillColor: airstripColor(),
-        fillOpacity: 0.7,
+        fillOpacity: 1,
       });
       dot.on("click", function (event) {
         // Un círculo burbujea al mapa: sin esto, con una herramienta activa el clic contaba dos veces.
@@ -299,7 +388,19 @@
       layers.push(dot);
     } else if (kind === "airport" || kind === "aerodrome") {
       layers.push(marker(entry, planeIcon(kind), titleOf(entry)));
+      if (entry.code) {
+        layers.push(codeLabel(entry, kind === "airport" ? 17 : 13));
+      }
     } else if (outline) {
+      // Doble trazo: un halo oscuro de 4 px (debajo de todo, sin eventos) y la línea de color de 2 px.
+      var halo = L.geoJSON(outline, {
+        renderer: haloRenderer,
+        style: function () {
+          return { className: "air-halo", weight: 4, fill: false, interactive: false };
+        },
+      });
+      halo.airRole = "halo";
+      layers.push(halo);
       var shape = L.geoJSON(outline, {
         renderer: svgRenderer,
         style: function (geo) {
@@ -316,6 +417,7 @@
           return base;
         },
       });
+      shape.airRole = "line";
       shape.on("click", function (event) {
         L.DomEvent.stopPropagation(event);
         featureClick(entry.id, event);
@@ -324,10 +426,21 @@
       layers.push(shape);
       if (zone) {
         layers.push(marker(entry, badgeIcon(kind), titleOf(entry)));
+        if (entry.code) {
+          layers.push(codeLabel(entry, 14));
+        }
       }
     } else if (zone) {
       layers.push(marker(entry, badgeIcon(kind), titleOf(entry)));
+      if (entry.code) {
+        layers.push(codeLabel(entry, 14));
+      }
     }
+    layers.forEach(function (layer) {
+      if (kind === "airstrip") {
+        layer.airMinZoom = AIRSTRIP_MIN_ZOOM;
+      }
+    });
     entry.layers = layers;
     entry.shown = false;
   }
@@ -349,12 +462,15 @@
 
   /* Pone o saca de su grupo lo que pasa (o no) los filtros, y el grupo de la capa. */
   function syncLayers() {
+    var zoom = map.getZoom();
     features.forEach(function (entry) {
-      var want = entry.passes && groupVisible(entry);
-      if (want === entry.shown) {
-        return;
-      }
+      var visible = !!(entry.passes && groupVisible(entry));
       entry.layers.forEach(function (layer) {
+        // Cada pieza tiene su zoom mínimo (los rótulos desde 9, las pistas desde 8).
+        var want = visible && zoom >= (layer.airMinZoom || 0);
+        if (want === !!layer.airOn) {
+          return;
+        }
         try {
           if (want) {
             layer.addTo(map);
@@ -364,8 +480,9 @@
         } catch (error) {
           reportError("layer " + entry.id, error);
         }
+        layer.airOn = want;
       });
-      entry.shown = want;
+      entry.shown = visible;
     });
   }
   function syncAirstrips() {
@@ -409,29 +526,46 @@
       return "";
     }
     var km = haversineKm(reference.lat, reference.lon, entry.lat, entry.lon);
-    return distanceText(km) + (entry.geometry ? " (" + T.toCentre + ")" : "");
+    var heading = headingText(bearingDeg(reference.lat, reference.lon, entry.lat, entry.lon));
+    return distanceText(km) + " · " + heading + (entry.geometry ? " (" + T.toCentre + ")" : "");
+  }
+
+  /* Una fila de resultados: ícono del tipo, código en monoespaciado, nombre, y debajo el tipo y la
+     distancia con su rumbo. Todo con `textContent`: el nombre y el código vienen de la fuente. */
+  function rowButton(entry, distance, unofficial) {
+    var button = el("button", "air-row");
+    button.type = "button";
+    button.dataset.id = entry.id;
+    var icon = el("span", "air-row-icon air-row-icon--" + entry.kind);
+    icon.setAttribute("aria-hidden", "true");
+    icon.appendChild(iconNode(KIND_ICONS[entry.kind] || "airstrip"));
+    button.appendChild(icon);
+    var main = el("span", "air-row-main");
+    main.appendChild(el("strong", "air-row-code", entry.code || ""));
+    main.appendChild(el("span", "air-row-name", entry.name));
+    if (unofficial) {
+      main.appendChild(el("span", "air-row-flag", "(" + T.unofficial + ")"));
+    }
+    button.appendChild(main);
+    var meta = el("span", "air-row-meta");
+    meta.appendChild(el("span", "air-row-kind air-row-kind--" + entry.kind, cfg.kinds[entry.kind]));
+    if (distance) {
+      meta.appendChild(el("span", "air-row-dist", distance));
+    }
+    button.appendChild(meta);
+    return button;
+  }
+
+  function isAdminId(id) {
+    return String(id).indexOf(Search.ADMIN_ID_PREFIX) === 0;
   }
 
   function renderRow(entry, withDistance) {
     var item = el("li", "air-result");
-    var button = el("button", "air-row");
-    button.type = "button";
-    button.dataset.id = entry.id;
-    button.appendChild(el("span", "air-row-kind air-row-kind--" + entry.kind, cfg.kinds[entry.kind]));
-    var main = el("span", "air-row-main");
-    main.appendChild(el("strong", "air-row-code", entry.code || ""));
-    main.appendChild(el("span", "air-row-name", entry.name));
-    if (entry.kind === "airstrip") {
-      main.appendChild(el("span", "air-row-flag", "(" + T.unofficial + ")"));
-    }
-    button.appendChild(main);
-    if (withDistance) {
-      var d = describeDistance(entry);
-      if (d) {
-        button.appendChild(el("span", "air-row-dist", d));
-      }
-    }
-    if (entry.id === selectedId) {
+    var button = isAdminId(entry.id)
+      ? rowButton(entry, entry.region || "", false)
+      : rowButton(entry, withDistance ? describeDistance(entry) : "", entry.kind === "airstrip");
+    if (entry.id === selectedId || entry.id === selectedAdminId) {
       button.setAttribute("aria-current", "true");
     }
     item.appendChild(button);
@@ -439,6 +573,17 @@
   }
 
   var ROW_LIMIT = 150;
+
+  /* Las comunas y regiones no tienen carpeta, FIR ni código de zona: los filtros que los suponen las
+     excluyen, y el de tipo las deja o las saca. */
+  function adminPoolFor(f) {
+    if (f.folder || f.fir || f.onlyCode) {
+      return [];
+    }
+    return adminPool.filter(function (entry) {
+      return !f.kind || entry.kind === f.kind;
+    });
+  }
 
   function currentPool() {
     var f = filters();
@@ -490,8 +635,15 @@
           return entry.kind !== "airstrip" || f.kind === "airstrip";
         })
         .sort(sortBase);
+      // Las comunas y regiones sólo se listan si se pidieron por tipo: 361 filas taparían lo demás.
+      if (ADMIN_KINDS.indexOf(f.kind) !== -1) {
+        rows = adminPoolFor(f).sort(function (a, b) {
+          return a.name.localeCompare(b.name);
+        });
+      }
       total = rows.length;
     } else {
+      pool = pool.concat(adminPoolFor(filters()));
       var found = Search.searchFeatures(query, pool, pool.length);
       rows = found.results.map(function (r) {
         return r.entry;
@@ -533,16 +685,16 @@
     $("air-fiche-body").hidden = false;
     setText("air-fiche-name", (entry.code ? entry.code + " · " : "") + entry.name);
     setText("air-fiche-meta", cfg.kinds[entry.kind] + (entry.folder ? " · " + entry.folder : ""));
+    $("air-fiche-use").setAttribute("href", "#air-i-" + (KIND_ICONS[entry.kind] || "airstrip"));
     $("air-fiche-unofficial").hidden = entry.kind !== "airstrip";
     setText("air-f-vertical", entry.vertical, T.notStated);
     setText("air-f-schedule", entry.schedule, T.notStated);
     setText("air-f-text", entry.text, T.notStated);
     setText("air-f-center", entry.dms);
-    setText(
-      "air-f-place",
-      [entry.region, entry.commune].filter(Boolean).join(" · "),
-      T.notStated
-    );
+    [["air-f-region", entry.region], ["air-f-commune", entry.commune]].forEach(function (pair) {
+      $(pair[0]).textContent = pair[1] || "";
+      $(pair[0]).hidden = !pair[1];
+    });
     var ifis = $("air-f-ifis");
     if (entry.ifis) {
       $("air-f-ifis-link").href = entry.ifis;
@@ -552,10 +704,21 @@
     }
   }
 
+  /* Selección: la línea sube a 3 px (el halo a 5) y la zona se rellena sólido al 12 % (regla CSS
+     `.is-selected`, que gana al patrón); al soltar vuelve al patrón. */
   function styleSelected(entry, on) {
     entry.layers.forEach(function (layer) {
       if (layer.setStyle && layer.eachLayer) {
-        layer.setStyle({ weight: on ? 5 : 2 });
+        var halo = layer.airRole === "halo";
+        layer.setStyle({ weight: halo ? (on ? 5 : 4) : on ? 3 : 2 });
+        if (!halo) {
+          layer.eachLayer(function (part) {
+            var node = part.getElement && part.getElement();
+            if (node) {
+              node.classList.toggle("is-selected", on);
+            }
+          });
+        }
         if (on && layer.bringToFront) {
           layer.bringToFront();
         }
@@ -569,10 +732,15 @@
   }
 
   function select(id, options) {
+    if (isAdminId(id)) {
+      selectAdmin(id, options);
+      return;
+    }
     var entry = byId[id];
     if (!entry) {
       return;
     }
+    selectedAdminId = null;
     if (selectedId && byId[selectedId]) {
       styleSelected(byId[selectedId], false);
     }
@@ -601,13 +769,7 @@
         map.setView([entry.lat, entry.lon], Math.max(map.getZoom(), 11));
       }
     }
-    Array.prototype.forEach.call(resultsNode.querySelectorAll(".air-row"), function (row) {
-      if (row.dataset.id === id) {
-        row.setAttribute("aria-current", "true");
-      } else {
-        row.removeAttribute("aria-current");
-      }
-    });
+    markCurrentRow();
     setStatus(fmt(T.selected, { name: entry.name }));
   }
 
@@ -652,6 +814,8 @@
     $("air-near-out").hidden = true;
     $("air-near-lists").textContent = "";
     $("air-copy").hidden = true;
+    clearAdmin();
+    markCurrentRow();
   }
 
   function stopMeasure(clear) {
@@ -789,22 +953,14 @@
     var list = el("ul", "air-near-list");
     items.forEach(function (item) {
       var li = el("li");
-      var button = el("button", "air-row");
-      button.type = "button";
-      button.dataset.id = item.id;
-      button.appendChild(el("span", "air-row-kind air-row-kind--" + item.kind, cfg.kinds[item.kind]));
-      var main = el("span", "air-row-main");
-      main.appendChild(el("strong", "air-row-code", item.code || ""));
-      main.appendChild(el("span", "air-row-name", item.name));
-      button.appendChild(main);
+      var text = "";
       if (item.distance_km) {
-        var text = distanceText(item.distance_km);
+        text = distanceText(item.distance_km);
         if (withHeading && item.bearing_deg != null) {
           text += " · " + headingText(item.bearing_deg);
         }
-        button.appendChild(el("span", "air-row-dist", text));
       }
-      li.appendChild(button);
+      li.appendChild(rowButton(item, text, false));
       list.appendChild(li);
     });
     section.appendChild(list);
@@ -826,6 +982,403 @@
     }
     host.appendChild(nearSection(T.nearby, data.near, false));
     host.appendChild(nearSection(T.nearestAerodromes, data.aerodromes, true));
+  }
+
+  /* ── límites administrativos (LV-367, fase 7) ────────────────────────────────
+     Comunas (y regiones, que se realzan rellenando sus comunas) de `admin.json`, con su nivel de detalle
+     según el zoom. Colores leídos de variables CSS y releídos al cambiar el tema. Todo texto con
+     `textContent`. Referencial: la fuente (BCN) lo dice, y los números vienen del servidor. */
+  function adminColors() {
+    return {
+      line: cssVar("--id-air-admin-line", "#ffffff"),
+      halo: cssVar("--id-air-admin-halo", "#0b1220"),
+      region: cssVar("--id-air-admin-region", "#ffd166"),
+    };
+  }
+
+  function wantedLod() {
+    return map.getZoom() <= ADMIN_LOD_SPLIT_ZOOM ? 1 : 2;
+  }
+
+  function loadAdminLevel(lod) {
+    if (admin.data[lod]) {
+      return Promise.resolve(admin.data[lod]);
+    }
+    if (admin.loading[lod]) {
+      return admin.loading[lod];
+    }
+    var request = fetch(cfg.adminUrl + "?lod=" + lod, {
+      credentials: "same-origin",
+      headers: { Accept: "application/json" },
+    })
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error("admin.json answered " + response.status);
+        }
+        return response.json();
+      })
+      .then(function (data) {
+        if (!data || !Array.isArray(data.communes)) {
+          throw new Error("unexpected data shape");
+        }
+        admin.data[lod] = data;
+        admin.loading[lod] = null;
+        return data;
+      })
+      .catch(function (error) {
+        admin.loading[lod] = null;
+        throw error;
+      });
+    admin.loading[lod] = request;
+    return request;
+  }
+
+  function ringLatLngs(commune) {
+    return commune.rings.map(function (ring) {
+      var points = ring.map(function (p) {
+        return [p[1], p[0]];
+      });
+      points.push(points[0]);
+      return points;
+    });
+  }
+
+  function drawAdminLevel(lod) {
+    var colors = adminColors();
+    var rings = [];
+    admin.data[lod].communes.forEach(function (commune) {
+      ringLatLngs(commune).forEach(function (ring) {
+        rings.push(ring);
+      });
+    });
+    var base = { renderer: adminRenderer, interactive: false, fill: false, lineJoin: "round" };
+    var halo = L.polyline(rings, Object.assign({ color: colors.halo, weight: 3, opacity: 0.8 }, base));
+    var line = L.polyline(rings, Object.assign({ color: colors.line, weight: 1, opacity: 0.95 }, base));
+    halo.airRole = "adminHalo";
+    line.airRole = "adminLine";
+    admin.levels[lod] = { halo: halo, line: line };
+  }
+
+  function removeAdminLevels() {
+    Object.keys(admin.levels).forEach(function (lod) {
+      map.removeLayer(admin.levels[lod].halo);
+      map.removeLayer(admin.levels[lod].line);
+    });
+  }
+
+  function showAdminLevel(lod) {
+    if (!admin.levels[lod]) {
+      drawAdminLevel(lod);
+    }
+    removeAdminLevels();
+    admin.levels[lod].halo.addTo(map);
+    admin.levels[lod].line.addTo(map);
+    admin.lod = lod;
+    if (admin.selected) {
+      drawAdminHighlight(admin.selected);
+    }
+  }
+
+  /* Los rótulos son nodos (nunca strings): el nombre viene de un archivo de datos. Se crean la primera vez
+     que se enciende la capa, y se ponen o sacan con el zoom. */
+  function buildAdminLabels() {
+    admin.labelsBuilt = true;
+    (cfg.adminIndex || []).forEach(function (item) {
+      if (!ADMIN_LABEL_ZOOM[item.kind]) {
+        return;
+      }
+      var node = el("span", "air-admin-tag air-admin-tag--" + item.kind, item.name);
+      var marker = L.marker(
+        [(item.bbox[1] + item.bbox[3]) / 2, (item.bbox[0] + item.bbox[2]) / 2],
+        {
+          icon: L.divIcon({
+            className: "air-admin-tag-wrap",
+            html: node,
+            iconSize: [160, 16],
+            iconAnchor: [80, 8],
+          }),
+          interactive: false,
+          keyboard: false,
+        }
+      );
+      marker.airMinZoom = ADMIN_LABEL_ZOOM[item.kind];
+      admin.labels.push(marker);
+    });
+  }
+
+  function syncAdminLabels() {
+    if (admin.on && !admin.labelsBuilt) {
+      buildAdminLabels();
+    }
+    var zoom = map.getZoom();
+    admin.labels.forEach(function (label) {
+      var want = admin.on && zoom >= label.airMinZoom;
+      if (want === !!label.airOn) {
+        return;
+      }
+      try {
+        if (want) {
+          label.addTo(map);
+        } else {
+          map.removeLayer(label);
+        }
+      } catch (error) {
+        reportError("admin label", error);
+      }
+      label.airOn = want;
+    });
+  }
+
+  function showAdmin() {
+    var lod = wantedLod();
+    return loadAdminLevel(lod).then(function () {
+      if (admin.on) {
+        showAdminLevel(lod);
+        syncAdminLabels();
+        $("air-tool-hint").textContent = fmt(T.layerShown, { name: T.layerAdmin });
+      }
+    });
+  }
+
+  /* Enciende o apaga la capa. Devuelve la promesa de la carga (para que una búsqueda espere al dibujo). */
+  function setAdminLayer(on, box) {
+    admin.on = on;
+    var retry = $("air-admin-retry");
+    retry.hidden = true;
+    if (!on) {
+      removeAdminLevels();
+      syncAdminLabels();
+      $("air-tool-hint").textContent = fmt(T.layerHidden, { name: T.layerAdmin });
+      return Promise.resolve();
+    }
+    $("air-tool-hint").textContent = T.adminLoading;
+    return showAdmin().catch(function (error) {
+      reportError("admin layer", error);
+      admin.on = false;
+      if (box) {
+        box.checked = false;
+      }
+      $("air-tool-hint").textContent = T.adminFailed;
+      retry.hidden = false;
+    });
+  }
+
+  function onAdminZoom() {
+    if (!admin.on) {
+      return;
+    }
+    syncAdminLabels();
+    if (wantedLod() !== admin.lod) {
+      showAdmin().catch(function (error) {
+        reportError("admin level", error);
+        $("air-tool-hint").textContent = T.adminFailed;
+      });
+    }
+  }
+
+  /* Realce al elegir una comuna: halo, línea de 3 px y relleno del 12 %. Una región no tiene polígono
+     propio (no se disuelve sin una librería de geometría): se rellenan sus comunas, sin trazo interno. */
+  function clearAdminHighlight() {
+    admin.highlight.forEach(function (layer) {
+      map.removeLayer(layer);
+    });
+    admin.highlight = [];
+  }
+
+  function drawAdminHighlight(entry) {
+    clearAdminHighlight();
+    var data = admin.data[admin.lod] || admin.data[1] || admin.data[2];
+    if (!data) {
+      return;
+    }
+    var codes = [entry.code.replace(/^admin:/, "")];
+    var code = codes[0];
+    if (entry.kind === "region") {
+      var region = data.regions.filter(function (r) {
+        return r.code === code;
+      })[0];
+      codes = region ? region.communes : [];
+    }
+    var colors = adminColors();
+    var base = { renderer: adminRenderer, interactive: false, lineJoin: "round" };
+    data.communes.forEach(function (commune) {
+      if (codes.indexOf(commune.code) === -1) {
+        return;
+      }
+      var rings = ringLatLngs(commune);
+      var parts = [];
+      if (entry.kind !== "region") {
+        var halo = L.polygon(
+          rings,
+          Object.assign({ color: colors.halo, weight: 6, opacity: 0.9, fill: false }, base)
+        );
+        halo.airRole = "adminHighlightHalo";
+        parts.push(halo);
+      }
+      var shape = L.polygon(
+        rings,
+        Object.assign(
+          entry.kind === "region"
+            ? { stroke: false, fillColor: colors.region, fillOpacity: 0.12 }
+            : { color: colors.region, weight: 3, fillColor: colors.region, fillOpacity: 0.12 },
+          base
+        )
+      );
+      shape.airRole = "adminHighlight";
+      parts.push(shape);
+      parts.forEach(function (layer) {
+        layer.addTo(map);
+        admin.highlight.push(layer);
+      });
+    });
+  }
+
+  function restyleAdmin() {
+    var colors = adminColors();
+    Object.keys(admin.levels).forEach(function (lod) {
+      admin.levels[lod].halo.setStyle({ color: colors.halo });
+      admin.levels[lod].line.setStyle({ color: colors.line });
+    });
+    admin.highlight.forEach(function (layer) {
+      if (layer.airRole === "adminHighlightHalo") {
+        layer.setStyle({ color: colors.halo });
+      } else if (admin.selected && admin.selected.kind === "region") {
+        layer.setStyle({ fillColor: colors.region });
+      } else {
+        layer.setStyle({ color: colors.region, fillColor: colors.region });
+      }
+    });
+  }
+
+  function adminSection(title, items) {
+    var section = el("section", "air-near-sec");
+    section.appendChild(el("h3", "air-near-title", title + " (" + items.length + ")"));
+    if (!items.length) {
+      section.appendChild(el("p", "air-help", T.none));
+      return section;
+    }
+    var list = el("ul", "air-near-list");
+    items.forEach(function (item) {
+      var li = el("li");
+      li.appendChild(rowButton(item, "", false));
+      list.appendChild(li);
+    });
+    section.appendChild(list);
+    return section;
+  }
+
+  function renderAdminContains(entry, data) {
+    var contained = data.zones.filter(function (z) {
+      return z.relation === "contained";
+    });
+    var touching = data.zones.filter(function (z) {
+      return z.relation !== "contained";
+    });
+    var host = $("air-admin-lists");
+    host.textContent = "";
+    host.appendChild(adminSection(T.adminContained, contained));
+    host.appendChild(adminSection(T.adminTouching, touching));
+    host.appendChild(adminSection(T.adminAerodromes, data.aerodromes));
+    var note = T.adminReferential;
+    if (data.area.kind === "region") {
+      note += " " + fmt(T.adminCommunes, { n: data.area.communes });
+    }
+    $("air-admin-note").textContent = note;
+    $("air-admin-status").textContent = fmt(T.adminSummary, {
+      zones: data.zones.length,
+      aerodromes: data.aerodromes.length,
+      name: entry.name,
+    });
+  }
+
+  var adminTicket = 0;
+
+  function loadAdminContains(entry) {
+    var ticket = (adminTicket += 1);
+    var code = entry.id.replace(/^admin:/, "");
+    $("air-admin-contains-retry").hidden = true;
+    $("air-admin-status").textContent = T.loading;
+    $("air-admin-lists").textContent = "";
+    fetch(cfg.adminContainsUrl.replace("__code__", encodeURIComponent(code)), {
+      credentials: "same-origin",
+      headers: { Accept: "application/json" },
+    })
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error("admin contains answered " + response.status);
+        }
+        return response.json();
+      })
+      .then(function (data) {
+        if (ticket === adminTicket) {
+          renderAdminContains(entry, data);
+        }
+      })
+      .catch(function (error) {
+        reportError("admin contains", error);
+        if (ticket === adminTicket) {
+          $("air-admin-status").textContent = T.nearFailed;
+          $("air-admin-contains-retry").hidden = false;
+        }
+      });
+  }
+
+  function clearAdmin() {
+    adminTicket += 1;
+    admin.selected = null;
+    selectedAdminId = null;
+    clearAdminHighlight();
+    $("air-admin-out").hidden = true;
+    $("air-admin-lists").textContent = "";
+  }
+
+  function selectAdmin(id, options) {
+    var entry = adminById[id];
+    if (!entry) {
+      return;
+    }
+    if (selectedId && byId[selectedId]) {
+      styleSelected(byId[selectedId], false);
+    }
+    selectedId = null;
+    $("air-fiche-empty").hidden = false;
+    $("air-fiche-body").hidden = true;
+    selectedAdminId = id;
+    admin.selected = { code: id, kind: entry.kind, name: entry.name };
+    $("air-admin-out").hidden = false;
+    $("air-admin-name").textContent = entry.name;
+    $("air-admin-note").textContent = T.adminReferential;
+    if ((!options || options.fly !== false) && canMove()) {
+      map.fitBounds(
+        [[entry.bbox[1], entry.bbox[0]], [entry.bbox[3], entry.bbox[2]]],
+        { padding: [30, 30] }
+      );
+    }
+    // El realce necesita la geometría: elegir una comuna enciende la capa (y la pide por primera vez).
+    var box = document.querySelector("[data-admin]");
+    if (box) {
+      box.checked = true;
+    }
+    if (admin.on) {
+      drawAdminHighlight(admin.selected);
+    } else {
+      // Al terminar de cargar, `showAdminLevel` dibuja el realce de lo elegido.
+      setAdminLayer(true, box);
+    }
+    loadAdminContains(entry);
+    markCurrentRow();
+    setStatus(fmt(T.selected, { name: entry.name }));
+  }
+
+  function markCurrentRow() {
+    var current = selectedAdminId || selectedId;
+    Array.prototype.forEach.call(resultsNode.querySelectorAll(".air-row"), function (row) {
+      if (row.dataset.id === current) {
+        row.setAttribute("aria-current", "true");
+      } else {
+        row.removeAttribute("aria-current");
+      }
+    });
   }
 
   /* ── coordenada escrita en el buscador ───────────────────────────────────── */
@@ -856,7 +1409,7 @@
     if (LETTERS[kind]) {
       span.textContent = LETTERS[kind];
     } else if (kind === "airport" || kind === "aerodrome") {
-      span.innerHTML = PLANE; // SVG fijo de este archivo, sin datos de la fuente.
+      span.appendChild(iconNode("plane"));
     }
     return span;
   }
@@ -970,7 +1523,7 @@
     if (!offered.length) {
       return;
     }
-    host.appendChild(el("p", "air-legend-sep", T.layerOwnHeading));
+    $("air-legend-own-group").hidden = false;
     offered.forEach(function (own) {
       ownGroups[own.key] = { url: own.url, layers: [], loaded: false, on: false };
       var label = el("label", "air-legend-item");
@@ -985,8 +1538,36 @@
       swatch.setAttribute("aria-hidden", "true");
       label.appendChild(box);
       label.appendChild(swatch);
-      label.appendChild(el("span", "", ownName(own.key)));
+      label.appendChild(el("span", "air-legend-name", ownName(own.key)));
       host.appendChild(label);
+    });
+  }
+
+  /* «Límites administrativos»: APAGADA al abrir; no se pide nada hasta encenderla. El número es el de
+     comunas (el repositorio no tiene localidades: se ofrecen comunas y la pantalla lo dice). */
+  function buildAdminLegend(host) {
+    var communes = (cfg.adminIndex || []).filter(function (item) {
+      return item.kind === "commune";
+    }).length;
+    var label = el("label", "air-legend-item");
+    var box = el("input");
+    box.type = "checkbox";
+    box.checked = false;
+    box.dataset.admin = "1";
+    box.addEventListener("change", function () {
+      setAdminLayer(box.checked, box);
+    });
+    var swatch = el("span", "air-swatch air-swatch--admin");
+    swatch.setAttribute("aria-hidden", "true");
+    swatch.appendChild(iconNode("boundary"));
+    label.appendChild(box);
+    label.appendChild(swatch);
+    label.appendChild(el("span", "air-legend-name", T.layerAdmin));
+    label.appendChild(el("span", "air-count-pill", String(communes)));
+    host.appendChild(label);
+    $("air-admin-retry").addEventListener("click", function () {
+      box.checked = true;
+      setAdminLayer(true, box);
     });
   }
 
@@ -1010,10 +1591,16 @@
       });
       label.appendChild(box);
       label.appendChild(swatchFor(kind));
-      label.appendChild(el("span", "", cfg.kinds[kind] + " (" + counts[kind] + ")"));
+      label.appendChild(el("span", "air-legend-name", cfg.kinds[kind]));
+      label.appendChild(el("span", "air-count-pill", String(counts[kind])));
       host.appendChild(label);
     });
-    buildOwnLegend(host);
+    buildAdminLegend($("air-legend-admin"));
+    buildOwnLegend($("air-legend-own"));
+    // En un teléfono la leyenda arranca plegada: el mapa va primero.
+    if (window.matchMedia && window.matchMedia("(max-width: 575.98px)").matches) {
+      $("air-legend").removeAttribute("open");
+    }
   }
 
   function fillSelect(id, values) {
@@ -1057,6 +1644,16 @@
         entry.layers = [];
         entry.shown = false;
       }
+    });
+    adminPool = Search.adminEntries(cfg.adminIndex || []);
+    adminPool.forEach(function (entry) {
+      adminById[entry.id] = entry;
+    });
+    // Los tipos de la búsqueda administrativa (sin «Zona sin demarcar»: se encuentra por su nombre).
+    ["commune", "region"].forEach(function (kind) {
+      var option = el("option", "", cfg.kinds[kind]);
+      option.value = kind;
+      $("air-kind").appendChild(option);
     });
     fillSelect("air-folder", unique("folder"));
     fillSelect("air-fir", unique("fir"));
@@ -1103,6 +1700,12 @@
       });
     });
     $("air-tool-clear").addEventListener("click", clearTools);
+    $("air-admin-contains-retry").addEventListener("click", function () {
+      var entry = selectedAdminId && adminById[selectedAdminId];
+      if (entry) {
+        loadAdminContains(entry);
+      }
+    });
     $("air-radius").addEventListener("input", syncRadiusNm);
     syncRadiusNm();
     // Delegación: las filas de resultados y de «cerca» se rehacen a cada consulta.
@@ -1119,13 +1722,19 @@
     });
     new MutationObserver(function () {
       var color = airstripColor();
+      var halo = haloColor();
       features.forEach(function (entry) {
         entry.layers.forEach(function (layer) {
           if (layer.options && layer.options.airstrip) {
-            layer.setStyle({ color: color, fillColor: color });
+            layer.setStyle({ fillColor: color });
+          } else if (layer.options && layer.options.airHalo) {
+            layer.setStyle({ fillColor: halo });
           }
         });
       });
+      if (map) {
+        restyleAdmin();
+      }
     }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
   }
 
