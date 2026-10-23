@@ -11008,3 +11008,27 @@ msgstr "Vigencia y documentos"
 
 msgid "Preflight and flights"
 msgstr "Prevuelo y vuelos"
+
+msgid "Map of the plan area"
+msgstr "Mapa del área del plan"
+
+msgid "The map could not be drawn. The data next to it does not depend on it."
+msgstr "No se pudo dibujar el mapa. Los datos que lo acompañan no dependen de él."
+
+msgid "Reference only: the dashed line goes to the nearest aerodrome."
+msgstr "Solo referencial: la línea punteada va al aeródromo más cercano."
+
+msgid "What the plan brings"
+msgstr "Lo que trae el plan"
+
+msgid "%(n)s areas: separate them into flight requests."
+msgstr "%(n)s áreas: separar en solicitudes de vuelo."
+
+msgid "This plan has no area that can be read."
+msgstr "Este plan no tiene un área que se pueda leer."
+
+msgid "Choose a plan to see what it brings. The empty boxes will be filled from it when you save; what you typed is never overwritten."
+msgstr "Elija un plan para ver lo que trae. Las casillas vacías se rellenan con él al guardar; lo que usted escribió nunca se sobrescribe."
+
+msgid "That plan belongs to cost center %(code)s, not to the one chosen in this form. A plan can only fill in a permit of its own cost center."
+msgstr "Ese plan pertenece al centro de costo %(code)s, no al elegido en este formulario. Un plan solo puede rellenar un permiso de su propio centro de costo."

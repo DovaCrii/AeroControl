@@ -1,0 +1,16 @@
+{% load i18n %}{% comment %}LV-368 (fase 4): mini-mapa de SOLO LECTURA de un plan. Quien incluye esta plantilla pasa `mini_map`
+(`apps.geo.mini_map.mini_map_payload`) y `map_id` (único en la página). Los datos viajan por `json_script`,
+nunca interpolados ni con `|safe`; `static/js/geo/mini-map.js` lo dibuja con Leaflet cuando el contenedor
+tiene tamaño (un `<details>` cerrado mide 0). Abierto en escritorio, cerrado en móvil: lo decide el script.
+Quien lo use carga también `vendor/leaflet/leaflet.css` y `leaflet.js`.{% endcomment %}
+{% if mini_map %}
+<details class="mini-map" data-mini-map-details>
+  <summary>{% translate "Map" %}</summary>
+  <div class="mini-map-body">
+    <div class="mini-map-canvas" data-mini-map data-mini-map-config="{{ map_id }}" role="group" aria-label="{% translate 'Map of the plan area' %}"></div>
+    <p class="mini-map-fallback" hidden>{% translate "The map could not be drawn. The data next to it does not depend on it." %}</p>
+    <p class="mini-map-note">{% translate "Reference only: the dashed line goes to the nearest aerodrome." %}</p>
+  </div>
+  {{ mini_map|json_script:map_id }}
+</details>
+{% endif %}

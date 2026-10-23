@@ -59,6 +59,7 @@ from .forms import (
     StatusCorrectionForm,
 )
 from .dossier import operational_dossier
+from .plan_preview import plan_reading
 from .permit_attention import (
     attention_items,
     open_sections,
@@ -929,6 +930,52 @@ class PermissionFolioFromPdf(ModelPermissionRequiredMixin, View):
             % {"folio": folio},
         )
         return redirect(permission)
+
+
+class PermissionPlanPreview(ModelViewPermissionRequiredMixin, View):
+    """LV-368 (fase 4): «lo que trae el plan», el fragmento que el formulario del permiso pide al elegir uno.
+
+    **Sólo lectura y sin efectos**: no vincula ni rellena nada (el relleno ocurre al guardar, LV-153), así
+    que basta `geo.view_geoplan` --el permiso de leer un plan--, no el de modificarlo. Se acota por tenant
+    **y** por centro de costo: un plan o una faena de otra empresa responde 404 (no «vacío»: un vacío
+    confirmaría que existe), y un plan de otra faena de la misma empresa responde con un aviso, porque ese
+    caso es una equivocación al elegir y no una brecha.
+
+    Sin `plan` devuelve el estado vacío con su ayuda: el formulario lo pide al cargar y al cambiar la faena.
+    """
+
+    model = GeoPlan
+    template_name = "operations/_plan_preview.html"
+
+    def get(self, request):
+        user = request.user
+        cost_center = None
+        raw_cost_center = request.GET.get("cost_center", "")
+        if raw_cost_center:
+            cost_center = lookup_by_pk(
+                scope_queryset_to_tenant(
+                    CostCenter.objects.filter(is_active=True), user
+                ),
+                raw_cost_center,
+            )
+            if cost_center is None:
+                raise Http404
+        raw_plan = request.GET.get("plan", "")
+        if not raw_plan:
+            return render(request, self.template_name, {})
+        plan = lookup_by_pk(
+            scope_queryset_to_tenant(
+                GeoPlan.objects.filter(is_active=True).select_related("cost_center"),
+                user,
+                "cost_center__tenant_id",
+            ),
+            raw_plan,
+        )
+        if plan is None:
+            raise Http404
+        if cost_center is not None and plan.cost_center_id != cost_center.pk:
+            return render(request, self.template_name, {"mismatch": plan.cost_center})
+        return render(request, self.template_name, {"reading": plan_reading(plan)})
 
 
 class NotamReviewCreate(ModelPermissionRequiredMixin, View):
