@@ -38,6 +38,29 @@
     }
   }
 
+  // LV-381 F0: la barra lateral y la superior son fijas, y la lateral cuelga de
+  // la altura **real** de la superior (61 px medidos, no los 58 que decia el CSS)
+  // mas el aviso sin conexion cuando esta visible. Se mide y se escribe en
+  // `documentElement`; el CSS trae el mismo valor de reserva para el caso sin JS.
+  function syncChromeHeights() {
+    var navbar = document.querySelector('.navbar');
+    var banner = document.getElementById('offline-banner');
+    var bannerH = banner && banner.offsetParent !== null ? banner.offsetHeight : 0;
+    var navH = navbar ? navbar.offsetHeight : 61;
+    var root = document.documentElement.style;
+    root.setProperty('--ac-banner-h', bannerH + 'px');
+    root.setProperty('--ac-sidebar-top', (bannerH + navH) + 'px');
+  }
+  syncChromeHeights();
+  window.addEventListener('resize', syncChromeHeights);
+  if (window.ResizeObserver) {
+    var chromeObserver = new ResizeObserver(syncChromeHeights);
+    ['.navbar', '#offline-banner'].forEach(function (selector) {
+      var node = document.querySelector(selector);
+      if (node) chromeObserver.observe(node);
+    });
+  }
+
   function applyTheme(theme) {
     var html = document.documentElement;
     html.setAttribute('data-theme', theme);
@@ -189,6 +212,21 @@
   });
   applyTheme(document.documentElement.getAttribute('data-theme') || 'light');
   if (window.innerWidth >= 769 && recall('sidebar-collapsed') === 'true') setSidebarCollapsed(true);
+  // LV-381 F0: en modo icono el rotulo de cada enlace es una burbuja. Dentro del
+  // contenedor con scroll (y del `overflow:hidden` del propio enlace) quedaba
+  // recortada, asi que el rail mostraba 24 iconos sin nombre. La burbuja pasa a
+  // `position:fixed` (ver identity.css) y esto le da su altura al apuntar o enfocar.
+  function placeRailTip(event) {
+    var link = event.target.closest ? event.target.closest('#sidebar a.nav-item') : null;
+    if (!link) return;
+    var box = link.getBoundingClientRect();
+    link.style.setProperty('--tip-y', Math.round(box.top + box.height / 2) + 'px');
+  }
+  var railSidebar = document.getElementById('sidebar');
+  if (railSidebar) {
+    railSidebar.addEventListener('pointerover', placeRailTip);
+    railSidebar.addEventListener('focusin', placeRailTip);
+  }
   document.querySelectorAll('#sidebar a').forEach(function (link) {
     link.addEventListener('click', function () { setSidebar(false); });
   });

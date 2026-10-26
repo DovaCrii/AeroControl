@@ -8,6 +8,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Changed
+
+- **Barra lateral fija y modo icono completo (`LV-381` F0, `codex/nav-fija-y-rail`).** El menú y la barra superior ya no se van con el scroll: la barra lateral cuelga de la altura real de la superior (medida en `app.js`, también con el aviso sin conexión), se desplaza sólo en la zona de grupos y deja Administración fija abajo. El modo icono muestra los 24 destinos (antes 7: la regla de `LV-170` perdía contra `[hidden]` de Bootstrap) con una línea entre grupos, y las burbujas con el nombre ya no las recorta el contenedor. Vuelve la línea que separa los títulos de grupo. Sin migración; lleva estáticos.
+
 ### Added
 
 - **Informe mensual v2, fase 3: resumen, cobertura y anexo (`LV-378`, `codex/informe-resumen-cobertura-v2`).** En los informes nuevos el resumen cuenta para renovación sólo las faenas con operación (el rojo de «vencen en 60 días» no lo provoca una faena terminada) y desglosa «N vigentes = M en operación + K sin operación»; «Lo próximo que vence» va por faena; aparece «Cambios desde el informe anterior» (congelado en el payload); la cobertura declara su universo, trae una barra apilada, el Estado con símbolo y palabra y un Total que suma las filas, con las faenas sin operación aparte; el anexo pasa a «Registro permiso a permiso» (folio, N° DGAC, CC, vigencia y operadores de todos los permisos). Letra mínima de 8,5 pt en las hojas rediseñadas y «Página N de M» en una línea. Los informes ya emitidos no cambian. Hay que correr `collectstatic`; sin migración.

@@ -100,6 +100,8 @@
           <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
         </button>
       </div>
+      {% comment %}LV-381 F0: `.sidebar-scroll` es la unica zona que se desplaza; la cabecera de arriba y el pie de administración quedan fijos.{% endcomment %}
+      <div class="sidebar-scroll">
       {% with request.resolver_match.url_name as url_name %}
       <a href="{% url 'dashboard' %}" class="nav-item nav-overview {% if url_name == 'dashboard' %}active{% endif %}" {% if url_name == 'dashboard' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-dashboard"/></svg><span class="nav-label">{% translate "Dashboard" %}</span></a>
       {% comment %}LV-358: un solo ítem «Entorno» (tiempo, centelleo GNSS, después espacio aéreo). Aparece sólo si la persona puede abrir alguna pestaña: sin permiso de ninguna no hay ítem, y quien tiene una sola entra directo a esa.{% endcomment %}
@@ -380,6 +382,8 @@ menú deja de leerse de un vistazo.{% endcomment %}
       <a href="{% url 'battery-list' %}" class="nav-item nav-inventory {% if url_name == 'battery-list' %}active{% endif %}" {% if url_name == 'battery-list' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-battery-list"/></svg><span class="nav-label">{% translate "Batteries" %}</span></a>
       <a href="{% url 'resourcemovementlog-list' %}" class="nav-item nav-inventory {% if url_name == 'resourcemovementlog-list' %}active{% endif %}" {% if url_name == 'resourcemovementlog-list' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-resourcemovementlog-list"/></svg><span class="nav-label">{% translate "Resource movements" %}</span></a>
         </div>
+      </div>
+
       </div>
 
       <div class="nav-admin-zone">

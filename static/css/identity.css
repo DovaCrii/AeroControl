@@ -634,6 +634,17 @@
     opacity: 1;
     visibility: visible;
   }
+
+  /* LV-381 F0: la burbuja sale del flujo con `position: fixed`. Como hija
+   * absoluta del enlace la recortaban su `overflow: hidden` y el contenedor con
+   * scroll de la barra (`.sidebar-scroll`), y el rail no decia a donde llevaba
+   * cada icono. `--tip-y` lo escribe app.js al apuntar o enfocar; el borde
+   * izquierdo es el ancho del rail (72 px dentro de `.is-collapsed`). */
+  .sidebar.is-collapsed .nav-label {
+    position: fixed;
+    left: calc(var(--ac-sidebar-width) + 8px);
+    top: var(--tip-y, 0px);
+  }
 }
 
 

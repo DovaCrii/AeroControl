@@ -176,6 +176,8 @@ def test_stylesheet_weight_guard():
     resumen plegable de Cumplimiento con la tabla simple; ~2 KB netos porque Cumplimiento retiró las
     reglas de los anillos) lo sube a 250 KB. Las marcas de la hora actual, del cambio de día y de la
     fila de hoy del Tiempo (LV-373: ~1,4 KB, la base ya estaba a 249,5 KB) lo suben a 252 KB.
+    La barra lateral fija con su zona de desplazamiento, el rail completo y las burbujas del rail
+    (LV-381 F0: ~2,6 KB, casi todo comentario que explica el porqué de cada regla) lo suben a 254 KB.
     """
     total = sum((STATIC / name).stat().st_size for name in ("app.css", "identity.css"))
-    assert total < 252 * 1024
+    assert total < 254 * 1024
