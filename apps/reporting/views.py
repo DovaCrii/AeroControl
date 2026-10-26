@@ -24,7 +24,8 @@ from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.translation import gettext as _
+from django.utils.formats import date_format
+from django.utils.translation import gettext as _, ngettext
 from django.views.generic import TemplateView, View
 
 from apps.core.audit import set_audit_context
@@ -34,7 +35,12 @@ from apps.core.views import (
 )
 from apps.reporting.builder import build, month_bounds
 from apps.reporting.checks import pre_issue_warnings
-from apps.reporting.forms import ActionFormSet, FindingFormSet, PeriodNoteForm
+from apps.reporting.forms import (
+    ActionFormSet,
+    EarlyFreezeForm,
+    FindingFormSet,
+    PeriodNoteForm,
+)
 from apps.reporting.models import ReportRun
 from apps.reporting.summary import executive_summary
 
@@ -130,7 +136,20 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
             .first()
         )
         context["warnings"] = pre_issue_warnings(payload, run, previous)
+        # LV-375: el botón del corte anticipado sólo existe donde la vía lo acepta.
+        context["can_issue_early"] = self._can_issue_early(period, run, today)
         return context
+
+    def _can_issue_early(self, period, run, today):
+        """Mes en curso (con días por delante), sin informe o con un anticipado en
+        borrador, y quien mira tiene el permiso propio. Sin permiso no se dibuja, pero
+        la vista de destino lo vuelve a exigir: esto es sólo la cortesía."""
+        _first, end = month_bounds(period)
+        if not (period == today.replace(day=1) and today < end):
+            return False
+        if run is not None and not (run.is_early_cutoff and run.is_editable):
+            return False
+        return self.request.user.has_perm("reporting.issue_early_reportrun")
 
     @staticmethod
     def _sheets(payload):
@@ -325,6 +344,111 @@ class ReportDraftCreate(ModelPermissionRequiredMixin, View):
         return redirect(f"{reverse('monthly-report')}?period={period:%Y-%m}")
 
 
+def early_confirmation(cutoff, end):
+    """El texto de confirmación del corte anticipado, **traducido acá**.
+
+    LV-198: `{% translate %}` no traduce un literal que lleva `%(algo)s`, y éste lleva
+    la fecha y los días. Se arma en la vista y va por contexto a `data-confirm`.
+    """
+    days = max((end - cutoff).days, 0)
+    return ngettext(
+        "Cutoff on %(cutoff)s; %(days)d day of the month remains. The report will "
+        "be marked as an early cutoff and the closing revision that replaces it "
+        "will be issued on %(closing)s. Continue?",
+        "Cutoff on %(cutoff)s; %(days)d days of the month remain. The report will "
+        "be marked as an early cutoff and the closing revision that replaces it "
+        "will be issued on %(closing)s. Continue?",
+        days,
+    ) % {
+        "cutoff": f"{cutoff:%d-%m-%Y}",
+        "days": days,
+        "closing": date_format(end + timedelta(days=1), "DATE_FORMAT"),
+    }
+
+
+class ReportEarlyFreeze(ModelPermissionRequiredMixin, View):
+    """LV-375: congela el **mes en curso** con corte hoy, a pedido y con motivo.
+
+    Permiso propio (`issue_early_reportrun`), **no** `add`/`change`: emitir con el mes
+    abierto es una decisión de quien responde ante la DGAC, y quien tiene `add` o
+    `change` redacta la narrativa pero no la toma. Sólo se ofrece **hoy** como corte;
+    el modelo valida el resto. Congela, nunca aprueba: aprobar sigue siendo la vista de
+    siempre.
+    """
+
+    model = ReportRun
+    permission_action = "issue_early"
+    template_name = "reporting/early_freeze_form.html"
+
+    @staticmethod
+    def _period(request):
+        raw = request.POST.get("period") or request.GET.get("period")
+        today = timezone.localdate()
+        if not PERIOD.match(raw or ""):
+            return today.replace(day=1)
+        return parse_period(raw, today)
+
+    def _render(self, request, period, form):
+        today = timezone.localdate()
+        _first, end = month_bounds(period)
+        return render(
+            request,
+            self.template_name,
+            {
+                "form": form,
+                "period_date": period,
+                "cutoff": today,
+                "confirm_text": early_confirmation(today, end),
+            },
+        )
+
+    def get(self, request):
+        return self._render(request, self._period(request), EarlyFreezeForm())
+
+    def post(self, request):
+        period = self._period(request)
+        form = EarlyFreezeForm(request.POST)
+        if not form.is_valid():
+            return self._render(request, period, form)
+        today = timezone.localdate()
+        back = f"{reverse('monthly-report')}?period={period:%Y-%m}"
+        try:
+            run, created = ReportRun.freeze(
+                period,
+                request.user.get_username(),
+                early_cutoff=today,
+                reason=form.cleaned_data["reason"],
+            )
+        except ValidationError as refused:
+            messages.error(request, refused.messages[0])
+            return redirect(back)
+        if not created:
+            messages.info(
+                request, _("This early cutoff already existed; opening the latest one.")
+            )
+            return redirect(back)
+        _first, end = month_bounds(period)
+        set_audit_context(
+            request,
+            run,
+            action="create",
+            metadata={
+                "early_cutoff": today.isoformat(),
+                "days_remaining": (end - today).days,
+                "reason": form.cleaned_data["reason"],
+                "replaced_revision": run.revision - 1 if run.revision else None,
+            },
+        )
+        messages.success(
+            request,
+            _(
+                "Early-cutoff draft frozen. The closing revision will be issued when "
+                "the month ends."
+            ),
+        )
+        return redirect(back)
+
+
 class ReportNarrativeUpdate(ModelPermissionRequiredMixin, View):
     """Los hallazgos y la observación del período, escritos a mano.
 
@@ -439,6 +563,14 @@ class ReportCompareView(ModelViewPermissionRequiredMixin, TemplateView):
             baselines=baselines,
             against=against,
             baseline=baseline,
+            # LV-375: las fechas de corte de los dos lados, de sus payloads: un
+            # anticipado y su cierre difieren justamente en eso.
+            run_cutoff=_iso(run.payload.get("meta", {}).get("cutoff")),
+            baseline_cutoff=(
+                _iso(baseline.payload.get("meta", {}).get("cutoff"))
+                if baseline
+                else None
+            ),
         )
         if baseline is not None:
             kpis = compare_kpis(baseline.payload, run.payload)

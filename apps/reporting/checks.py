@@ -15,8 +15,10 @@ puede ser legítimo — por eso dicen qué pasó y no deciden.
 """
 
 import re
+from datetime import date, timedelta
 
-from django.utils.translation import gettext as _
+from django.utils.formats import date_format
+from django.utils.translation import gettext as _, ngettext
 
 # «CC 741» con espacio también: así lo escribió el hallazgo del informe de
 # septiembre, y una comprobación que sólo ve «CC741» no habría visto el error.
@@ -67,9 +69,57 @@ def previous_total_change(payload, previous):
     return before.get("value"), now.get("value")
 
 
+def _day_month(iso):
+    try:
+        return f"{date.fromisoformat(iso):%d-%m}"
+    except (TypeError, ValueError):
+        return str(iso)
+
+
+def early_cutoff_warnings(payload):
+    """LV-375: lo que dice el corte anticipado y su cierre, sólo en pantalla.
+
+    Sin bloquear: emitir con el mes abierto es legítimo, pero hay que saber qué
+    días quedaron fuera y que el cierre vendrá detrás.
+    """
+    meta = payload.get("meta") or {}
+    found = []
+    if meta.get("early_cutoff"):
+        try:
+            closing = date.fromisoformat(meta["covers"]["to"]) + timedelta(days=1)
+            closing_text = date_format(closing, "DATE_FORMAT")
+        except (KeyError, TypeError, ValueError):
+            closing_text = "?"
+        days = int(meta.get("days_remaining") or 0)
+        found.append(
+            ngettext(
+                "Early cutoff on %(cutoff)s: %(days)d day of the month is not "
+                "included; the closing revision will be issued on %(closing)s.",
+                "Early cutoff on %(cutoff)s: %(days)d days of the month are not "
+                "included; the closing revision will be issued on %(closing)s.",
+                days,
+            )
+            % {
+                "cutoff": _day_month(meta.get("cutoff")),
+                "days": days,
+                "closing": closing_text,
+            }
+        )
+    if meta.get("replaces_early_cutoff"):
+        found.append(
+            _(
+                "This revision replaces the early-cutoff one (%(cutoff)s); its "
+                "narrative was copied: review it."
+            )
+            % {"cutoff": _day_month(meta["replaces_early_cutoff"])}
+        )
+    return found
+
+
 def pre_issue_warnings(payload, run, previous=None):
     """Los avisos, ya redactados. Lista vacía si no hay nada que mirar."""
     warnings = []
+    warnings.extend(early_cutoff_warnings(payload))
     for item in permits_outside_coverage(payload):
         warnings.append(
             _(

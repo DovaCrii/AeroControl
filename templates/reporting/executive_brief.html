@@ -33,7 +33,7 @@ evento con su fecha, su faena y su reporte a la DGAC.{% endcomment %}
       </div>
       <button class="btn btn-primary">{% translate "Apply" %}</button>
     </form>
-    <button type="button" class="btn btn-primary" data-print data-print-title="{% translate 'Executive brief' %} {{ payload.meta.code }}"
+    <button type="button" class="btn btn-primary" data-print data-print-title="{% translate 'Executive brief' %} {{ payload.meta.code }}{% if payload.meta.early_cutoff %} (corte {{ cutoff_date|date:'d-m' }}){% endif %}"
             title="{% translate 'Opens the print dialog: choose “Save as PDF” as the destination.' %}">{% translate "Download PDF" %}</button>
     <a class="btn btn-outline-secondary" href="{% url 'monthly-report' %}?period={{ period_date|date:'Y-m' }}">{% translate "Full report" %}</a>
   </div>
@@ -52,7 +52,7 @@ emitido son idénticos, así que la pantalla tiene que decir cuál se mira.{% en
     <div class="rpt-brief-sub">Reporte mensual de operaciones con aeronaves pilotadas a distancia</div>
     <div class="rpt-brief-meta">
       <span class="rpt-brief-month">{{ period_date|date:"F Y"|upper }}</span>
-      <span>Corte al {{ cutoff_date|date:"d-m-Y" }}{% if payload.meta.in_progress %} · período en curso, {{ payload.meta.days_remaining }} día{{ payload.meta.days_remaining|pluralize:"s" }} por transcurrir{% endif %}</span>
+      <span>Corte al {{ cutoff_date|date:"d-m-Y" }}{% if payload.meta.early_cutoff %} · corte anticipado{% endif %}{% if payload.meta.in_progress %} · período en curso, {{ payload.meta.days_remaining }} día{{ payload.meta.days_remaining|pluralize:"s" }} por transcurrir{% endif %}</span>
       <span class="rpt-brief-code">{{ payload.meta.code }}</span>
     </div>
   </div>
