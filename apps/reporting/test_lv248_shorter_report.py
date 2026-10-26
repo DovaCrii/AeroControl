@@ -91,8 +91,11 @@ class TestNothingLeavesThePaper:
 @pytest.mark.django_db
 class TestWhatThePagesSay:
     @pytest.fixture
-    def report(self, client, admin_user):
+    def report(self, client, admin_user, monkeypatch):
         from django.utils import timezone
+
+        # LV-378: la hoja de siempre (diseño 1); ver `test_lv260_executive_report.py`.
+        monkeypatch.setattr("apps.reporting.builder.LAYOUT", 1)
 
         from apps.operations.models import FlightPermission
         from apps.registry.models import CostCenter, Operator
