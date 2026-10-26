@@ -1,0 +1,940 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JEJ-GTE-CT-INF-RPA-2026-10 - AeroControl</title>
+  <link rel="stylesheet" href="/static/vendor/bootstrap/bootstrap.min.css"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+        crossorigin="anonymous">
+  <link rel="stylesheet" href="/static/css/app.css">
+  <link rel="stylesheet" href="/static/css/identity.css">
+  <script src="/static/vendor/htmx/htmx.min.js"
+          integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V"
+          crossorigin="anonymous"></script>
+  <link rel="icon" type="image/svg+xml" href="/static/img/aerocontrol-mark.svg">
+  <link rel="manifest" href="/static/manifest.webmanifest">
+  <meta name="theme-color" content="#1B2A4A">
+  <script src="/static/js/theme-init.js"></script>
+  <link rel="stylesheet" href="/static/css/report-a4.css"><link rel="stylesheet" href="/static/css/report-a4-v2.css">
+</head>
+<body hx-headers='{"X-CSRFToken": "<csrf>"}'>
+  <a class="skip-link" href="#main-content">Saltar al contenido principal</a>
+  <div class="offline-banner d-none" id="offline-banner" role="status" hidden
+       data-stale-label="No connection. You are looking at data saved on %(when)s; nothing can be saved until it comes back."></div>
+  <nav class="navbar navbar-dark navy px-3">
+    <button class="btn btn-sm btn-outline-light sidebar-toggle" type="button" id="sidebar-toggle" aria-controls="sidebar" aria-expanded="false" aria-label="Contraer o expandir panel lateral" title="Contraer o expandir panel lateral">
+      <span class="visually-hidden">Activar navegación</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2"/></svg>
+    </button>
+    <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/">
+      <img class="brand-mark" src="/static/img/aerocontrol-mark.svg" alt="" aria-hidden="true">
+      <span class="brand-lockup">AeroControl<span class="brand-subtitle">Control de operaciones aéreas</span></span>
+    </a>
+    <form method="get" action="/search/" role="search" class="global-search d-none d-md-flex mx-auto" hx-boost="false">
+      <div class="input-group input-group-sm">
+        <input class="form-control" type="search" name="q" value="" placeholder="Buscar en AeroControl" aria-label="Búsqueda global">
+        <button class="btn btn-outline-light" type="submit" aria-label="Buscar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+        </button>
+      </div>
+    </form>
+    <button class="btn btn-sm btn-outline-light d-md-none ms-auto me-2" type="button" id="palette-open"
+            aria-label="Buscar en AeroControl" title="Buscar en AeroControl">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+    </button>
+    <span class="text-white d-flex align-items-center gap-2 small">
+      <span class="opacity-75">lector</span>
+      <a class="btn btn-sm btn-outline-light" href="/accounts/password_change/">Cambiar contraseña</a>
+      <form method="post" action="/i18n/setlang/" class="d-inline" hx-boost="false">
+        <input type="hidden" name="csrfmiddlewaretoken" value="<csrf>"><input type="hidden" name="next" value="/reporting/monthly/?period=2026-10">
+        <select class="form-select form-select-sm language-switch" name="language" data-autosubmit aria-label="Idioma">
+          <option value="en" >EN</option>
+          <option value="es" selected>ES</option>
+        </select>
+      </form>
+      <form method="post" action="/accounts/logout/" class="d-inline"><input type="hidden" name="csrfmiddlewaretoken" value="<csrf>"><button class="btn btn-sm btn-outline-light" type="submit">Cerrar sesión</button></form>
+      <button class="btn btn-sm btn-outline-light" id="density-toggle" type="button" aria-pressed="false" aria-label="Cambiar la densidad de las filas" data-label-compact="Usar filas compactas" data-label-comfortable="Usar filas cómodas">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <button class="btn btn-sm btn-outline-light theme-toggle" id="theme-toggle" type="button" aria-pressed="false" aria-label="Cambiar tema" title="Cambiar tema" data-label-light="Usar tema claro" data-label-dark="Usar tema oscuro">
+        <svg class="theme-icon theme-icon-moon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.6 10.4A6.1 6.1 0 0 1 5.6 2.4a6.5 6.5 0 1 0 8 8z"/></svg>
+        <svg class="theme-icon theme-icon-sun" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3.1"/><path d="M8 1.2v1.5M8 13.3v1.5M1.2 8h1.5M13.3 8h1.5M3.2 3.2l1.1 1.1M11.7 11.7l1.1 1.1M3.2 12.8l1.1-1.1M11.7 4.3l1.1-1.1"/></svg>
+      </button>
+    </span>
+  </nav>
+  <div class="d-flex">
+    <aside class="sidebar p-3 d-flex flex-column" id="sidebar" aria-label="Navegación principal">
+      <div class="sidebar-toolbar">
+        <span class="sidebar-toolbar-title">Navegación</span>
+        <button class="sidebar-collapse" type="button" id="sidebar-collapse" aria-controls="sidebar" aria-label="Contraer panel lateral" title="Contraer panel lateral" data-label-expand="Expandir panel lateral" data-label-collapse="Contraer panel lateral">
+          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+        </button>
+      </div>
+      <a href="/" class="nav-item nav-overview " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-dashboard"/></svg><span class="nav-label">Panel</span></a>
+      <div class="nav-group">
+        <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="flight" aria-expanded="true" aria-controls="nav-group-flight">Vuelo<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
+        <div class="nav-group-items" id="nav-group-flight">
+      <a href="/operations/permissions/" class="nav-item nav-flight " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-permission-list"/></svg><span class="nav-label">Permisos</span></a>
+      <a href="/geo/plans/" class="nav-item nav-flight " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-geo-plan-list"/></svg><span class="nav-label">Planificación geoespacial</span></a>
+      <a href="/operations/records/" class="nav-item nav-flight " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-record-list"/></svg><span class="nav-label">Vuelos</span></a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="compliance" aria-expanded="true" aria-controls="nav-group-compliance">Cumplimiento<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
+        <div class="nav-group-items" id="nav-group-compliance">
+<a href="/bandeja/" class="nav-item nav-compliance " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-work-tray"/></svg><span class="nav-label">Bandeja de trabajo</span></a>
+<a href="/compliance/alert/" class="nav-item nav-compliance " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-alert-list"/></svg><span class="nav-label">Alertas</span>
+<span id="alert-badge" class="badge bg-danger ms-auto d-none"
+      role="status" aria-live="polite"
+      hx-get="/alerts/count/" hx-trigger="every 60s"
+      hx-target="this" hx-swap="outerHTML"></span>
+</a>
+      <a href="/compliance/monthly-review/" class="nav-item nav-compliance " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-monthly-review"/></svg><span class="nav-label">Cierre mensual</span></a>
+      <a href="/compliance/company-documents/" class="nav-item nav-compliance " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-company-documents"/></svg><span class="nav-label">Documentos de la empresa</span></a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="reports" aria-expanded="true" aria-controls="nav-group-reports">Informes<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
+        <div class="nav-group-items" id="nav-group-reports">
+      <a href="/compliance/report/" class="nav-item nav-reports " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-compliance-report"/></svg><span class="nav-label">Reporte</span></a>
+      <a href="/reporting/monthly/" class="nav-item nav-reports active" aria-current="page"><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-monthly-report"/></svg><span class="nav-label">Informe mensual RPA</span></a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="maintenance" aria-expanded="true" aria-controls="nav-group-maintenance">Mantenimiento<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
+        <div class="nav-group-items" id="nav-group-maintenance">
+      <a href="/maintenance/records/" class="nav-item nav-maintenance " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-maintenance-list"/></svg><span class="nav-label">Mantenciones</span></a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="registry" aria-expanded="true" aria-controls="nav-group-registry">Padrón<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
+        <div class="nav-group-items" id="nav-group-registry">
+      <a href="/registry/costcenter/" class="nav-item nav-registry " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-costcenter-list"/></svg><span class="nav-label">Centros de costo</span></a>
+      <a href="/registry/aircraft/" class="nav-item nav-registry " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-aircraft-list"/></svg><span class="nav-label">Aeronaves</span></a>
+      <a href="/registry/operator/" class="nav-item nav-registry " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-operator-list"/></svg><span class="nav-label">Operadores</span></a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="inventory" aria-expanded="true" aria-controls="nav-group-inventory">Inventario y movimientos<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
+        <div class="nav-group-items" id="nav-group-inventory">
+      <a href="/registry/operatorassignment/" class="nav-item nav-inventory " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-operatorassignment-list"/></svg><span class="nav-label">Asignaciones de operador</span></a>
+      <a href="/registry/aircraftassignment/" class="nav-item nav-inventory " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-aircraftassignment-list"/></svg><span class="nav-label">Asignaciones de aeronave</span></a>
+      <a href="/registry/battery/" class="nav-item nav-inventory " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-battery-list"/></svg><span class="nav-label">Baterías</span></a>
+      <a href="/registry/resource-movements/" class="nav-item nav-inventory " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-resourcemovementlog-list"/></svg><span class="nav-label">Movimientos de recursos</span></a>
+        </div>
+      </div>
+      <div class="nav-admin-zone">
+        <span class="sidebar-label nav-admin-label">Administración</span>
+      <a href="/admin/" class="nav-item nav-admin"><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-admin-index"/></svg><span class="nav-label">Administración</span></a>
+      </div>
+      <button class="sidebar-resizer" type="button" role="separator"
+              aria-orientation="vertical" tabindex="0"
+              aria-label="Arrastra, o usa las flechas del teclado, para ajustar el ancho de la navegación. Doble clic para volver al valor original."
+              title="Arrastra para ajustar el ancho · doble clic para restablecer"></button>
+    </aside>
+    <main class="container-fluid p-4" id="main-content" tabindex="-1">
+<div class="page-header d-print-none">
+  <div>
+    <p class="page-eyebrow mb-1">Informes</p>
+    <h1 class="h3 mb-0">JEJ-GTE-CT-INF-RPA-2026-10</h1>
+    <p class="page-description mb-0">Informe mensual de reportabilidad RPA ante la DGAC.</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap align-items-end">
+    <button type="button" class="btn btn-primary" data-print data-print-title="JEJ-GTE-CT-INF-RPA-2026-10 (corte 26-10)"
+            title="Abre el diálogo de impresión: elija «Guardar como PDF» como destino.">Descargar PDF</button>
+    <form method="get" class="d-flex gap-2 align-items-end">
+      <div>
+        <label class="form-label" for="period">Período</label>
+        <input class="form-control" type="month" id="period" name="period" value="2026-10">
+      </div>
+      <button class="btn btn-primary">Aplicar</button>
+    </form>
+    <a class="btn btn-outline-secondary" href="/reporting/monthly/brief/?period=2026-10">Dato Ejecutivo</a>
+      <a class="btn btn-outline-secondary" href="/reporting/monthly/<uuid>/compare/">Ver los cambios</a>
+  </div>
+</div>
+<div class="alert alert-info d-print-none" role="status">
+  Informe congelado, revisión 0 — Borrador.
+</div>
+<div class="alert alert-warning d-print-none" role="status">
+  Informe con corte anticipado al 26-10 · motivo: Motivo ficticio de la prueba del informe v2.
+</div>
+<div class="alert alert-warning d-print-none" role="alert">
+  <strong>Revisar antes de emitir</strong>
+  <ul class="mb-0 mt-1">
+    <li>Corte anticipado al 26-10: 5 días del mes no están incluidos; la revisión de cierre se emitirá el 1 de noviembre de 2026.</li><li>CC904 tiene un permiso vigente (JEJ-2026-011) pero no está en la tabla de cobertura: está cerrada, inactiva o marcada como que no vuela. La cifra «X de N Centros de Costo» no la cuenta.</li><li>CC905 tiene un permiso vigente (JEJ-2026-012) pero no está en la tabla de cobertura: está cerrada, inactiva o marcada como que no vuela. La cifra «X de N Centros de Costo» no la cuenta.</li>
+  </ul>
+</div>
+<div class="rpt-doc">
+<div class="rpt-page">
+  <div style="position: absolute; left: 0; top: 0; width: 10px; height: 1123px; background: #124384;"></div>
+  <img src="/static/reporting/jej-arte.png" alt="" style="position: absolute; right: -8px; bottom: 92px; width: 368px; height: auto;">
+  <div style="padding: 52px 48px 0 56px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 24px;">
+      <img src="/static/reporting/jej-logo.png" alt="J.E.J. Ingeniería" style="width: 168px; height: auto;">
+      <div class="rpt-head-code" style="font-size: 10.5px;">
+        JEJ-GTE-CT-INF-RPA-2026-10<br>
+        INFORME MENSUAL DE REPORTABILIDAD<br>
+        OPERACIONES RPA / DRONES
+      </div>
+    </div>
+    <div style="margin-top: 78px; border-left: 5px solid #00A7BC; padding-left: 19px;">
+      <div style="color: #007585; font-size: 12px; font-weight: bold; letter-spacing: 0.16em; text-transform: uppercase;">Gerencia de Ingeniería · Levantamientos Digitales</div>
+      <div style="color: #124384; font-size: 38px; font-weight: bold; line-height: 1.12; margin-top: 10px;">Informe Mensual de<br>Reportabilidad RPA</div>
+    </div>
+    <div style="margin-top: 30px; padding-left: 24px; width: 560px; color: #0F1B2D; font-size: 19px; line-height: 1.35;">Normalización de las operaciones aéreas con aeronaves pilotadas a distancia en Centros de Costo</div>
+    <div style="margin-top: 24px; padding-left: 24px;">
+      <span style="display: inline-block; background: #124384; color: #FFFFFF; font-size: 20px; font-weight: bold; padding: 7px 18px; letter-spacing: 0.04em;">OCTUBRE 2026</span>
+      <span style="color: #52606D; font-size: 12.5px; padding-left: 12px;">Período 01–31 de octubre de 2026</span>
+    </div>
+    <div style="margin-top: 34px; padding-left: 24px;">
+      <table class="rpt-meta">
+        <tr><th scope="row">Elaborado por</th><td>Gerente de Operaciones Aéreas ante la DGAC</td></tr>
+        <tr><th scope="row">En conjunto con</th><td>Jefe Seguridad Aérea ante la DGAC</td></tr>
+        <tr><th scope="row">Dirigido a</th><td>Gerencia General · Gerencia de Riesgo · Gerencia de Ingeniería · Administradores de Contrato</td></tr>
+        <tr><th scope="row">Alcance del ciclo</th><td>Vigencia de permisos de vuelo ante la DGAC</td></tr>
+        <tr><th scope="row">Fuente de datos</th><td>AeroControl · SIGO — DGAC</td></tr>
+        <tr><th scope="row">Fecha de corte</th><td>26-10-2026 <span style="color: #8A5A12;">· período en curso, 5 días por transcurrir</span></td></tr>
+      </table>
+    </div>
+    <div style="margin-top: 46px; padding-left: 24px;">
+      <div style="width: 340px; border-left: 3px solid #00A7BC; padding: 4px 0 4px 14px;">
+        <div style="color: #124384; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.06em;">Estándar de referencia</div>
+        <div style="color: #52606D; font-size: 11.5px; line-height: 1.5; margin-top: 5px;">JEJ-GRI-SS-INS-096 Rev. 0 — Instructivo Gestión Centralizada de Drones o RPA en Centros de Costo</div>
+      </div>
+    </div>
+  </div>
+<div class="rpt-foot rpt-foot-cover">
+  <div class="rpt-foot-note">
+    <span class="rpt-foot-firm">J.E.J. INGENIERÍA S.A.</span><br>
+    Calle Ejemplo 123, Ciudad<br>
+    Fono +56 2 0000 0000 · contacto@example.com · www.example.com
+  </div>
+  <div class="rpt-foot-id">
+    Revisión 0 · Corte anticipado 26-10-2026 · Página 1 de 7
+    <br>Documento de gestión interna
+  </div>
+</div>
+</div>
+<div class="rpt-page rpt2-page">
+<div class="rpt-head">
+  <img src="/static/reporting/jej-logo.png" alt="J.E.J. Ingeniería" style="width: 108px; height: auto;">
+  <div class="rpt-head-code">
+    JEJ-GTE-CT-INF-RPA-2026-10 · OCTUBRE 2026<br>
+    REPORTABILIDAD OPERACIONES RPA / DRONES
+  </div>
+</div>
+  <div class="rpt-body rpt2-body">
+    <div>
+      <div class="rpt-h2"><span class="rpt-h2-num">1</span><span class="rpt-h2-text">Resumen ejecutivo</span></div>
+      <div class="rpt-h2-rule"></div>
+    </div>
+    <ul class="rpt2-verdict" aria-label="Conclusión del período">
+      <li><b class="rpt2-sym-critical">✕</b> <strong>1 de 11 Centros de Costo sin permiso vigente</strong> — no pueden operar RPA: CC903.</li>
+      <li><b class="rpt2-sym-critical">✕</b> El primer permiso en vencer es <strong>JEJ-2026-001</strong> (CC901), el <strong>23-11-2026</strong>, en 28 días. Vencen <strong>15</strong> en los próximos 60 días (7 en 30 días o menos), contando sólo los Centros de Costo con operación.</li>
+      <li><b class="rpt2-sym-info">○</b> 1 solicitud en trámite ante la DGAC, sin habilitación hasta su aprobación.</li>
+      <li><b class="rpt2-sym-info">○</b> 1 permiso vigente de un Centro de Costo sin operación (JEJ-2026-011, CC904, vence 30-12): no se renueva; cerrar el permiso o dejarlo vencer.</li>
+      <li><b class="rpt2-sym-info">○</b> 1 permiso vigente de un Centro de Costo sin operación (JEJ-2026-012, CC905, vence 28-10): no se renueva; cerrar el permiso o dejarlo vencer.</li>
+      <li><b class="rpt2-sym-critical">✕</b> 1 permiso aprobado con la vigencia vencida y sin cerrar.</li>
+    </ul>
+    <div>
+      <div class="rpt2-label" style="margin-bottom: 7px;">Indicadores al 26 de octubre de 2026</div>
+      <div class="rpt2-kpis">
+        <div class="rpt2-kpi rpt2-tone-critical">
+          <div class="rpt2-kpi-value">10<span class="rpt2-kpi-of"> / 11</span></div>
+          <div class="rpt2-kpi-name">Centros de Costo habilitados</div>
+          <div class="rpt2-kpi-note">Con operación y permiso vigente</div>
+        </div>
+        <div class="rpt2-kpi rpt2-tone-neutral">
+          <div class="rpt2-kpi-value">23</div>
+          <div class="rpt2-kpi-name">Permisos vigentes</div>
+          <div class="rpt2-kpi-note">21 en operación + 2 sin operación</div>
+        </div>
+        <div class="rpt2-kpi rpt2-tone-critical">
+          <div class="rpt2-kpi-value">✕ 15</div>
+          <div class="rpt2-kpi-name">Vencen en 60 días</div>
+          <div class="rpt2-kpi-note">7 en 30 días o menos</div>
+        </div>
+        <div class="rpt2-kpi rpt2-tone-info">
+          <div class="rpt2-kpi-value">1</div>
+          <div class="rpt2-kpi-name">En trámite ante la DGAC</div>
+          <div class="rpt2-kpi-note">Sin habilitación aún</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="rpt2-label" style="margin-bottom: 7px;">Lo próximo que vence — por centro de costo</div>
+      <div class="rpt2-next">
+        <div class="rpt2-next-cc"><strong>CC901</strong> <span class="rpt2-next-n">7 permisos</span></div>
+        <div class="rpt2-next-date">23-11-2026</div>
+        <div class="rpt2-next-bar"><span class="rpt2-bar rpt2-bar-critical" style="width: 47%;"></span></div>
+        <div class="rpt2-next-days rpt2-sym-critical">✕ 28 d</div>
+        <div class="rpt2-next-cc"><strong>CC911</strong> <span class="rpt2-next-n">4 permisos</span></div>
+        <div class="rpt2-next-date">28-11-2026 <span class="rpt2-next-n">(+1 hasta 26-12)</span></div>
+        <div class="rpt2-next-bar"><span class="rpt2-bar rpt2-bar-warning" style="width: 55%;"></span></div>
+        <div class="rpt2-next-days rpt2-sym-warning">▲ 33 d</div>
+        <div class="rpt2-next-cc"><strong>CC906</strong> <span class="rpt2-next-n">1 permiso</span></div>
+        <div class="rpt2-next-date">30-11-2026</div>
+        <div class="rpt2-next-bar"><span class="rpt2-bar rpt2-bar-warning" style="width: 58%;"></span></div>
+        <div class="rpt2-next-days rpt2-sym-warning">▲ 35 d</div>
+        <div class="rpt2-next-cc"><strong>CC907</strong> <span class="rpt2-next-n">1 permiso</span></div>
+        <div class="rpt2-next-date">15-12-2026</div>
+        <div class="rpt2-next-bar"><span class="rpt2-bar rpt2-bar-warning" style="width: 83%;"></span></div>
+        <div class="rpt2-next-days rpt2-sym-warning">▲ 50 d</div>
+        <div class="rpt2-next-cc"><strong>CC902</strong> <span class="rpt2-next-n">1 permiso</span></div>
+        <div class="rpt2-next-date">18-12-2026</div>
+        <div class="rpt2-next-bar"><span class="rpt2-bar rpt2-bar-warning" style="width: 88%;"></span></div>
+        <div class="rpt2-next-days rpt2-sym-warning">▲ 53 d</div>
+        <div class="rpt2-next-cc"><strong>CC913</strong> <span class="rpt2-next-n">2 permisos</span></div>
+        <div class="rpt2-next-date">25-12-2026</div>
+        <div class="rpt2-next-bar"><span class="rpt2-bar rpt2-bar-warning" style="width: 100%;"></span></div>
+        <div class="rpt2-next-days rpt2-sym-warning">▲ 60 d</div>
+      </div>
+      <div class="rpt2-note-line">Y 4 faenas más en la sección 2.</div>
+    </div>
+    <div>
+      <div class="rpt2-label" style="margin-bottom: 7px;">Cambios desde el informe anterior</div>
+      <div class="rpt2-note-line">No hay informe del mes anterior con el que comparar.</div>
+    </div>
+    <div>
+      <div class="rpt2-label" style="margin-bottom: 7px;">Hallazgos del período</div>
+      <div class="rpt2-findings">
+        <div class="rpt2-finding rpt2-finding-warning"><strong>Dependencia de una persona —</strong> La faena CC901 depende de un solo operador designado.</div>
+      </div>
+    </div>
+    <div>
+      <div class="rpt2-label" style="margin-bottom: 7px;">Dotación al corte</div>
+      <div class="rpt2-staff">
+        <div class="rpt2-staff-row">
+          <div>Aeronaves con seguro JAC al día</div>
+          <div class="rpt2-staff-meter"><span style="width: 0%;"></span></div>
+          <div class="rpt2-staff-value"><strong>0 de 12</strong></div>
+          <div class="rpt2-staff-gap">12 sin fecha · 0 vencidos</div>
+        </div>
+        <div class="rpt2-staff-row">
+          <div>Operadores con credencial DGAC vigente</div>
+          <div class="rpt2-staff-meter"><span style="width: 0%;"></span></div>
+          <div class="rpt2-staff-value"><strong>0 de 12</strong></div>
+          <div class="rpt2-staff-gap">12 sin fecha · 0 vencidas</div>
+        </div>
+      </div>
+    </div>
+  </div>
+<div class="rpt-foot">
+  <div class="rpt-foot-note">
+    Fuente: AeroControl, corte al 26-10-2026. Un campo en ámbar punteado no tenía dato al corte.
+  </div>
+  <div class="rpt-foot-id">
+    Revisión 0 · Corte anticipado 26-10-2026 · Página 2 de 7
+  </div>
+</div>
+</div>
+<div class="rpt-page rpt2-page">
+<div class="rpt-head">
+  <img src="/static/reporting/jej-logo.png" alt="J.E.J. Ingeniería" style="width: 108px; height: auto;">
+  <div class="rpt-head-code">
+    JEJ-GTE-CT-INF-RPA-2026-10 · OCTUBRE 2026<br>
+    REPORTABILIDAD OPERACIONES RPA / DRONES
+  </div>
+</div>
+  <div class="rpt-body rpt2-body">
+    <div>
+      <div class="rpt-h2"><span class="rpt-h2-num">2</span><span class="rpt-h2-text">Permisos de vuelo vigentes ante la DGAC</span></div>
+      <div class="rpt-h2-rule"></div>
+    </div>
+    <div>
+      <div class="rpt2-label">Por centro de costo · 21 vigentes en 10 faenas · 2 más sin operación · 1 en trámite · hoja 1 de 2 de la sección</div>
+      <div class="rpt2-legend">
+        <span><b class="rpt2-sym-critical">✕ Crítico</b> ≤30 días</span>
+        <span><b class="rpt2-sym-warning">▲ Por vencer</b> 31–60 días</span>
+        <span><b class="rpt2-sym-nominal">● Vigente</b> &gt;60 días</span>
+      </div>
+    </div>
+    <div><svg class="rpt2-strip" width="690" height="104" viewBox="0 0 690 104" role="img" aria-labelledby="strip-1-t strip-1-d" focusable="false"><title id="strip-1-t">Vencimientos de los permisos vigentes en los próximos 90 días</title><desc id="strip-1-d">De 0 a 90 días desde el corte, por faena con operación: CC901 ×7: 28 días (crítico); CC911 ×3: 33 días (por vencer); CC906 ×1: 35 días (por vencer); CC907 ×1: 50 días (por vencer); CC902 ×1: 53 días (por vencer); CC913 ×2: 60 días (por vencer); CC911 ×1: 61 días (vigente); CC908 ×1: 71 días (vigente); CC909 ×1: 84 días (vigente). Más de 90 días: 3.</desc><rect class="rpt2-zone rpt2-zone-critical" x="14" y="20" width="200" height="22"/><rect class="rpt2-zone rpt2-zone-warning" x="214" y="20" width="200" height="22"/><rect class="rpt2-zone rpt2-zone-nominal" x="414" y="20" width="200" height="22"/><text class="rpt2-axis" x="14" y="14" text-anchor="start">0</text><line class="rpt2-tick" x1="214" y1="20" x2="214" y2="42"/><text class="rpt2-axis" x="214" y="14" text-anchor="middle">30</text><line class="rpt2-tick" x1="414" y1="20" x2="414" y2="42"/><text class="rpt2-axis" x="414" y="14" text-anchor="middle">60</text><line class="rpt2-tick" x1="614" y1="20" x2="614" y2="42"/><text class="rpt2-axis" x="614" y="14" text-anchor="end">90 días</text><path class="rpt2-mark rpt2-mark-critical" d="M196.67 27 L204.67 35 M196.67 35 L204.67 27" fill="none"/><polygon class="rpt2-mark rpt2-mark-warning" points="234,26 239,35 229,35"/><line class="rpt2-lead" x1="234" y1="42" x2="234" y2="60"/><polygon class="rpt2-mark rpt2-mark-warning" points="247.33,26 252.33,35 242.33,35"/><line class="rpt2-lead" x1="247.33" y1="42" x2="247.33" y2="76"/><polygon class="rpt2-mark rpt2-mark-warning" points="347.33,26 352.33,35 342.33,35"/><polygon class="rpt2-mark rpt2-mark-warning" points="367.33,26 372.33,35 362.33,35"/><line class="rpt2-lead" x1="367.33" y1="42" x2="367.33" y2="60"/><polygon class="rpt2-mark rpt2-mark-warning" points="414,26 419,35 409,35"/><circle class="rpt2-mark rpt2-mark-nominal" cx="420.67" cy="31" r="4.5"/><line class="rpt2-lead" x1="420.67" y1="42" x2="420.67" y2="76"/><circle class="rpt2-mark rpt2-mark-nominal" cx="487.33" cy="31" r="4.5"/><circle class="rpt2-mark rpt2-mark-nominal" cx="574" cy="31" r="4.5"/><line class="rpt2-lead" x1="574" y1="42" x2="574" y2="60"/><text class="rpt2-label-svg" x="200.67" y="56" text-anchor="start">×7 CC901</text><text class="rpt2-label-svg" x="234" y="72" text-anchor="start">×3 CC911</text><text class="rpt2-label-svg" x="247.33" y="88" text-anchor="start">×1 CC906</text><text class="rpt2-label-svg" x="347.33" y="56" text-anchor="start">×1 CC907</text><text class="rpt2-label-svg" x="367.33" y="72" text-anchor="start">×1 CC902</text><text class="rpt2-label-svg" x="414" y="56" text-anchor="start">×2 CC913</text><text class="rpt2-label-svg" x="420.67" y="88" text-anchor="start">×1 CC911</text><text class="rpt2-label-svg" x="487.33" y="56" text-anchor="start">×1 CC908</text><text class="rpt2-label-svg" x="574" y="72" text-anchor="end">×1 CC909</text><text class="rpt2-beyond" x="690" y="35" text-anchor="end">›90: 3</text></svg></div>
+    <div>
+      <div class="rpt2-grp rpt2-grp-critical">
+        <div class="rpt2-head">
+          <span class="rpt2-cc"><strong>CC901</strong> Faena Norte</span>
+          <span class="rpt2-main">7 permisos · 28-08 → 23-11-2026</span>
+          <span class="rpt2-chip rpt2-chip-critical">✕ Crítico · 28 d</span>
+        </div>
+        <div class="rpt2-sub">Aeronaves: RPA-9001 · 1 operador · Folios: JEJ-2026-001 · JEJ-2026-002 · JEJ-2026-003 · JEJ-2026-004 · JEJ-2026-005 · JEJ-2026-006 · JEJ-2026-007</div>
+      </div>
+      <div class="rpt2-grp rpt2-grp-warning">
+        <div class="rpt2-head">
+          <span class="rpt2-cc"><strong>CC911</strong> Faena Bosque</span>
+          <span class="rpt2-main">4 permisos · vencen desde el 28-11-2026</span>
+          <span class="rpt2-chip rpt2-chip-warning">▲ Por vencer · 33 d</span>
+        </div>
+        <div class="rpt2-line">
+          <div class="rpt2-line-main">
+            <span class="rpt2-main">3 permisos · 01-09 → 28-11-2026</span>
+            <span class="rpt2-chip rpt2-chip-warning">▲ 33 d</span>
+          </div>
+          <div class="rpt2-sub">Aeronaves: RPA-1133 · 1 operador · Folios: JEJ-2026-019 · JEJ-2026-020 · JEJ-2026-021</div>
+        </div>
+        <div class="rpt2-line">
+          <div class="rpt2-line-main">
+            <span class="rpt2-main">1 permiso · 02-09 → 26-12-2026</span>
+            <span class="rpt2-chip rpt2-chip-nominal">● 61 d</span>
+          </div>
+          <div class="rpt2-sub">Aeronaves: RPA-1161 · 1 operador · Folios: JEJ-2026-022</div>
+        </div>
+      </div>
+      <div class="rpt2-grp rpt2-grp-warning">
+        <div class="rpt2-head">
+          <span class="rpt2-cc"><strong>CC906</strong> Faena Cordillera</span>
+          <span class="rpt2-main">1 permiso · 01-09 → 30-11-2026</span>
+          <span class="rpt2-chip rpt2-chip-warning">▲ Por vencer · 35 d</span>
+        </div>
+        <div class="rpt2-sub">Aeronaves: RPA-0635 · 1 operador · Folios: JEJ-2026-013</div>
+      </div>
+      <div class="rpt2-grp rpt2-grp-warning">
+        <div class="rpt2-head">
+          <span class="rpt2-cc"><strong>CC907</strong> Faena Valle</span>
+          <span class="rpt2-main">1 permiso · 01-09 → 15-12-2026</span>
+          <span class="rpt2-chip rpt2-chip-warning">▲ Por vencer · 50 d</span>
+        </div>
+        <div class="rpt2-sub">Aeronaves: RPA-0750 · 1 operador · Folios: JEJ-2026-014</div>
+      </div>
+      <div class="rpt2-grp rpt2-grp-warning">
+        <div class="rpt2-head">
+          <span class="rpt2-cc"><strong>CC902</strong> Faena Sur</span>
+          <span class="rpt2-main">1 permiso · 01-09 → 18-12-2026</span>
+          <span class="rpt2-chip rpt2-chip-warning">▲ Por vencer · 53 d</span>
+        </div>
+        <div class="rpt2-sub">Aeronaves: RPA-9101 · RPA-9102 · 2 operadores · Folios: JEJ-2026-008</div>
+      </div>
+      <div class="rpt2-grp rpt2-grp-warning">
+        <div class="rpt2-head">
+          <span class="rpt2-cc"><strong>CC913</strong> Faena Lago</span>
+          <span class="rpt2-main">2 permisos · 01-09 → 25-12-2026</span>
+          <span class="rpt2-chip rpt2-chip-warning">▲ Por vencer · 60 d</span>
+        </div>
+        <div class="rpt2-sub">Aeronaves: RPA-1360 · 1 operador · Folios: JEJ-2026-024 · JEJ-2026-025</div>
+      </div>
+      <div class="rpt2-grp rpt2-grp-nominal">
+        <div class="rpt2-head">
+          <span class="rpt2-cc"><strong>CC908</strong> Faena Costa</span>
+          <span class="rpt2-main">1 permiso · 01-09 → 05-01-2027</span>
+          <span class="rpt2-chip rpt2-chip-nominal">● Vigente · 71 d</span>
+        </div>
+        <div class="rpt2-sub">Aeronaves: RPA-0871 · 1 operador · Folios: JEJ-2026-015</div>
+      </div>
+      <div class="rpt2-grp rpt2-grp-nominal">
+        <div class="rpt2-head">
+          <span class="rpt2-cc"><strong>CC909</strong> Faena Altiplano</span>
+          <span class="rpt2-main">1 permiso · 01-09 → 18-01-2027</span>
+          <span class="rpt2-chip rpt2-chip-nominal">● Vigente · 84 d</span>
+        </div>
+        <div class="rpt2-sub">Aeronaves: RPA-0984 · 1 operador · Folios: JEJ-2026-016</div>
+      </div>
+      <div class="rpt2-grp rpt2-grp-nominal">
+        <div class="rpt2-head">
+          <span class="rpt2-cc"><strong>CC912</strong> Faena Desierto</span>
+          <span class="rpt2-main">1 permiso · 01-09 → 29-01-2027</span>
+          <span class="rpt2-chip rpt2-chip-nominal">● Vigente · 95 d</span>
+        </div>
+        <div class="rpt2-sub">Aeronaves: RPA-1295 · 1 operador · Folios: JEJ-2026-023</div>
+      </div>
+    </div>
+  </div>
+<div class="rpt-foot">
+  <div class="rpt-foot-note">
+    Días al 26-10-2026. Estado y población reconstruidos al corte. DAN 91, 137, 151 · INS-096 6.4.1.
+  </div>
+  <div class="rpt-foot-id">
+    Revisión 0 · Corte anticipado 26-10-2026 · Página 3 de 7
+  </div>
+</div>
+</div>
+<div class="rpt-page rpt2-page">
+<div class="rpt-head">
+  <img src="/static/reporting/jej-logo.png" alt="J.E.J. Ingeniería" style="width: 108px; height: auto;">
+  <div class="rpt-head-code">
+    JEJ-GTE-CT-INF-RPA-2026-10 · OCTUBRE 2026<br>
+    REPORTABILIDAD OPERACIONES RPA / DRONES
+  </div>
+</div>
+  <div class="rpt-body rpt2-body">
+    <div>
+      <div class="rpt-h2"><span class="rpt-h2-num">2</span><span class="rpt-h2-text">Permisos de vuelo vigentes ante la DGAC <span style="font-size: 13px; font-weight: normal; color: #52606D;">(continuación)</span></span></div>
+      <div class="rpt-h2-rule"></div>
+    </div>
+    <div>
+      <div class="rpt2-label">Por centro de costo · 21 vigentes en 10 faenas · 2 más sin operación · 1 en trámite · hoja 2 de 2 de la sección</div>
+      <div class="rpt2-legend">
+        <span><b class="rpt2-sym-critical">✕ Crítico</b> ≤30 días</span>
+        <span><b class="rpt2-sym-warning">▲ Por vencer</b> 31–60 días</span>
+        <span><b class="rpt2-sym-nominal">● Vigente</b> &gt;60 días</span>
+      </div>
+    </div>
+    <div>
+      <div class="rpt2-grp rpt2-grp-nominal">
+        <div class="rpt2-head">
+          <span class="rpt2-cc"><strong>CC910</strong> Faena Puerto</span>
+          <span class="rpt2-main">2 permisos · 01-09 → 23-02-2027</span>
+          <span class="rpt2-chip rpt2-chip-nominal">● Vigente · 120 d</span>
+        </div>
+        <div class="rpt2-sub">Aeronaves: RPA-10120 · 1 operador · Folios: JEJ-2026-017 · JEJ-2026-018</div>
+      </div>
+    </div>
+    <div class="rpt2-block">
+      <div class="rpt2-block-title">Sin operación — no cuentan en la cobertura ni en las renovaciones</div>
+      <div class="rpt2-row">
+        <span class="rpt2-row-cc"><strong>CC904</strong> Faena Sin Vuelo<br><span class="rpt2-row-note">No vuela</span></span>
+        <span class="rpt2-row-main">JEJ-2026-011 · 01-09 → 30-12-2026<br><span class="rpt2-row-note">No se renueva: cerrar el permiso o dejarlo vencer.</span></span>
+        <span class="rpt2-chip rpt2-chip-nominal">● 65 d</span>
+      </div>
+      <div class="rpt2-row">
+        <span class="rpt2-row-cc"><strong>CC905</strong> Faena Terminada<br><span class="rpt2-row-note">Contrato terminado</span></span>
+        <span class="rpt2-row-main">JEJ-2026-012 · 28-07 → 28-10-2026<br><span class="rpt2-row-note">No se renueva: cerrar el permiso o dejarlo vencer.</span></span>
+        <span class="rpt2-chip rpt2-chip-critical">✕ 2 d</span>
+      </div>
+    </div>
+    <div class="rpt2-block">
+      <div class="rpt2-block-title">Solicitudes en trámite — sin habilitación hasta su aprobación</div>
+      <div class="rpt2-row">
+        <span class="rpt2-row-cc"><strong>CC903</strong> JEJ-2026-010</span>
+        <span class="rpt2-row-main"><span class="rpt2-dash">sin aeronaves</span> · 1 operador</span>
+        <span class="rpt2-state-wait">En proceso</span>
+      </div>
+    </div>
+    <div class="rpt2-block">
+      <div class="rpt2-block-title rpt2-block-title-bad">Vencidos sin cerrar — la vigencia terminó y el permiso sigue abierto</div>
+      <div class="rpt2-row">
+        <span class="rpt2-row-cc"><strong>CC902</strong> JEJ-2026-009</span>
+        <span class="rpt2-row-main">01-07 → 20-10-2026</span>
+        <span class="rpt2-chip rpt2-chip-critical">✕ -6 d</span>
+      </div>
+    </div>
+    <div>
+      <div class="rpt2-label" style="margin-bottom: 8px;">Observación del período</div>
+      <div class="rpt2-note">Nota ficticia del periodo para la prueba.</div>
+    </div>
+  </div>
+<div class="rpt-foot">
+  <div class="rpt-foot-note">
+    Días al 26-10-2026. Estado y población reconstruidos al corte. DAN 91, 137, 151 · INS-096 6.4.1.
+  </div>
+  <div class="rpt-foot-id">
+    Revisión 0 · Corte anticipado 26-10-2026 · Página 4 de 7
+  </div>
+</div>
+</div>
+<div class="rpt-page rpt2-page">
+<div class="rpt-head">
+  <img src="/static/reporting/jej-logo.png" alt="J.E.J. Ingeniería" style="width: 108px; height: auto;">
+  <div class="rpt-head-code">
+    JEJ-GTE-CT-INF-RPA-2026-10 · OCTUBRE 2026<br>
+    REPORTABILIDAD OPERACIONES RPA / DRONES
+  </div>
+</div>
+  <div class="rpt-body rpt2-body">
+    <div class="rpt2-stack">
+      <div>
+        <div class="rpt-h2"><span class="rpt-h2-num">3</span><span class="rpt-h2-text">Cobertura por Centro de Costo</span></div>
+        <div class="rpt-h2-rule"></div>
+      </div>
+      <p class="rpt2-universe">11 Centros de Costo con operación RPA y contrato vigente. Los que dejaron de operar con permiso aún vigente van aparte, debajo de la tabla.</p>
+      <svg class="rpt2-covbar" width="690" height="44" viewBox="0 0 690 44" role="img" aria-labelledby="cov-bar-t cov-bar-d" focusable="false"><title id="cov-bar-t">Cobertura por Centro de Costo</title><desc id="cov-bar-d">Cobertura de 11 Centros de Costo con operación: 4 vigentes, 5 por vencer, 2 críticos (1 sin habilitación y 1 con permiso a 30 días o menos).</desc><rect class="rpt2-seg rpt2-seg-nominal" x="0" y="0" width="248.91" height="22"/><text class="rpt2-seg-n" x="124.45" y="16" text-anchor="middle">4</text><rect class="rpt2-seg rpt2-seg-warning" x="250.91" y="0" width="311.64" height="22"/><text class="rpt2-seg-n" x="406.73" y="16" text-anchor="middle">5</text><rect class="rpt2-seg rpt2-seg-critical" x="564.55" y="0" width="123.45" height="22"/><text class="rpt2-seg-n" x="626.27" y="16" text-anchor="middle">2</text><circle class="rpt2-mark rpt2-mark-nominal" cx="5" cy="35" r="4.5"/><text class="rpt2-covbar-label" x="15" y="39">4 vigentes</text><polygon class="rpt2-mark rpt2-mark-warning" points="108,30 113,39 103,39"/><text class="rpt2-covbar-label" x="118" y="39">5 por vencer (31–60 d)</text><path class="rpt2-mark rpt2-mark-critical" d="M286.2 31 L294.2 39 M286.2 39 L294.2 31" fill="none"/><text class="rpt2-covbar-label" x="300.2" y="39">2 críticos: 1 sin habilitación, 1 con permiso a ≤30 d</text></svg>
+      <div class="rpt2-table">
+        <div class="rpt2-cov rpt2-cov-head">
+          <div>Código</div>
+          <div>Centro de Costo</div>
+          <div class="rpt2-c">Permisos<br>vigentes</div>
+          <div class="rpt2-c">En<br>trámite</div>
+          <div>Próximo<br>vencimiento</div>
+          <div class="rpt2-c">Días</div>
+          <div>Estado</div>
+        </div>
+        <div class="rpt2-cov rpt2-cov-body">
+          <div class="rpt2-cc-code">CC901</div>
+          <div class="rpt2-cc-name">Faena Norte</div>
+          <div class="rpt2-c rpt2-strong">7</div>
+          <div class="rpt2-c"><span class="rpt2-dash">—</span></div>
+          <div>23-11-2026</div>
+          <div class="rpt2-c rpt2-strong">28</div>
+          <div><span class="rpt2-chip rpt2-chip-critical">✕ Renovar ahora</span></div>
+          <div class="rpt2-cc-code">CC902</div>
+          <div class="rpt2-cc-name">Faena Sur</div>
+          <div class="rpt2-c rpt2-strong">1</div>
+          <div class="rpt2-c"><span class="rpt2-dash">—</span></div>
+          <div>18-12-2026</div>
+          <div class="rpt2-c rpt2-strong">53</div>
+          <div><span class="rpt2-chip rpt2-chip-warning">▲ Por vencer</span></div>
+          <div class="rpt2-cc-code">CC903</div>
+          <div class="rpt2-cc-name">Faena Este</div>
+          <div class="rpt2-c rpt2-strong rpt2-sym-critical">0</div>
+          <div class="rpt2-c">1</div>
+          <div><span class="rpt2-dash">—</span></div>
+          <div class="rpt2-c rpt2-strong"><span class="rpt2-dash">—</span></div>
+          <div><span class="rpt2-chip rpt2-chip-critical">✕ Sin habilitación</span></div>
+          <div class="rpt2-cc-code">CC906</div>
+          <div class="rpt2-cc-name">Faena Cordillera</div>
+          <div class="rpt2-c rpt2-strong">1</div>
+          <div class="rpt2-c"><span class="rpt2-dash">—</span></div>
+          <div>30-11-2026</div>
+          <div class="rpt2-c rpt2-strong">35</div>
+          <div><span class="rpt2-chip rpt2-chip-warning">▲ Por vencer</span></div>
+          <div class="rpt2-cc-code">CC907</div>
+          <div class="rpt2-cc-name">Faena Valle</div>
+          <div class="rpt2-c rpt2-strong">1</div>
+          <div class="rpt2-c"><span class="rpt2-dash">—</span></div>
+          <div>15-12-2026</div>
+          <div class="rpt2-c rpt2-strong">50</div>
+          <div><span class="rpt2-chip rpt2-chip-warning">▲ Por vencer</span></div>
+          <div class="rpt2-cc-code">CC908</div>
+          <div class="rpt2-cc-name">Faena Costa</div>
+          <div class="rpt2-c rpt2-strong">1</div>
+          <div class="rpt2-c"><span class="rpt2-dash">—</span></div>
+          <div>05-01-2027</div>
+          <div class="rpt2-c rpt2-strong">71</div>
+          <div><span class="rpt2-chip rpt2-chip-nominal">● Vigente</span></div>
+          <div class="rpt2-cc-code">CC909</div>
+          <div class="rpt2-cc-name">Faena Altiplano</div>
+          <div class="rpt2-c rpt2-strong">1</div>
+          <div class="rpt2-c"><span class="rpt2-dash">—</span></div>
+          <div>18-01-2027</div>
+          <div class="rpt2-c rpt2-strong">84</div>
+          <div><span class="rpt2-chip rpt2-chip-nominal">● Vigente</span></div>
+          <div class="rpt2-cc-code">CC910</div>
+          <div class="rpt2-cc-name">Faena Puerto</div>
+          <div class="rpt2-c rpt2-strong">2</div>
+          <div class="rpt2-c"><span class="rpt2-dash">—</span></div>
+          <div>23-02-2027</div>
+          <div class="rpt2-c rpt2-strong">120</div>
+          <div><span class="rpt2-chip rpt2-chip-nominal">● Vigente</span></div>
+          <div class="rpt2-cc-code">CC911</div>
+          <div class="rpt2-cc-name">Faena Bosque</div>
+          <div class="rpt2-c rpt2-strong">4</div>
+          <div class="rpt2-c"><span class="rpt2-dash">—</span></div>
+          <div>28-11-2026</div>
+          <div class="rpt2-c rpt2-strong">33</div>
+          <div><span class="rpt2-chip rpt2-chip-warning">▲ Por vencer</span></div>
+          <div class="rpt2-cc-code">CC912</div>
+          <div class="rpt2-cc-name">Faena Desierto</div>
+          <div class="rpt2-c rpt2-strong">1</div>
+          <div class="rpt2-c"><span class="rpt2-dash">—</span></div>
+          <div>29-01-2027</div>
+          <div class="rpt2-c rpt2-strong">95</div>
+          <div><span class="rpt2-chip rpt2-chip-nominal">● Vigente</span></div>
+          <div class="rpt2-cc-code">CC913</div>
+          <div class="rpt2-cc-name">Faena Lago</div>
+          <div class="rpt2-c rpt2-strong">2</div>
+          <div class="rpt2-c"><span class="rpt2-dash">—</span></div>
+          <div>25-12-2026</div>
+          <div class="rpt2-c rpt2-strong">60</div>
+          <div><span class="rpt2-chip rpt2-chip-warning">▲ Por vencer</span></div>
+        </div>
+        <div class="rpt2-cov rpt2-cov-total">
+          <div class="rpt2-strong rpt2-navy">Total</div>
+          <div>11 Centros de Costo · 1 sin habilitación</div>
+          <div class="rpt2-c rpt2-strong rpt2-navy">21</div>
+          <div class="rpt2-c rpt2-strong rpt2-navy">1</div>
+          <div></div>
+          <div></div>
+          <div></div>
+        </div>
+      </div>
+      <div class="rpt2-outside">
+        <div class="rpt2-outside-row"><b class="rpt2-sym-info">○</b> <strong>+ Sin operación:</strong> CC904 Faena Sin Vuelo (no vuela) · 1 vigente · vence 30-12-2026 · no se renueva</div>
+        <div class="rpt2-outside-row"><b class="rpt2-sym-info">○</b> <strong>+ Sin operación:</strong> CC905 Faena Terminada (terminado) · 1 vigente · vence 28-10-2026 · no se renueva</div>
+        <div class="rpt2-outside-row">Total de permisos vigentes: <strong>23</strong> = 21 en Centros de Costo con operación + 2 sin operación.</div>
+      </div>
+      <div class="rpt2-conc">
+        <span>Permisos con un único operador designado <strong class="rpt2-conc-n">20 de 21</strong></span>
+        <span>Dependen de una sola persona: <strong class="rpt2-conc-n">CC901, CC906, CC907, CC908, CC909, CC910, CC911, CC912, CC913</strong> — su ausencia detiene la faena hasta modificar el permiso ante la DGAC.</span>
+      </div>
+    </div>
+  </div>
+<div class="rpt-foot">
+  <div class="rpt-foot-note">
+    Fuente: AeroControl — Permisos, corte al 26-10-2026; estado al corte anticipado del 26-10.
+  </div>
+  <div class="rpt-foot-id">
+    Revisión 0 · Corte anticipado 26-10-2026 · Página 5 de 7
+  </div>
+</div>
+</div>
+<div class="rpt-page">
+<div class="rpt-head">
+  <img src="/static/reporting/jej-logo.png" alt="J.E.J. Ingeniería" style="width: 108px; height: auto;">
+  <div class="rpt-head-code">
+    JEJ-GTE-CT-INF-RPA-2026-10 · OCTUBRE 2026<br>
+    REPORTABILIDAD OPERACIONES RPA / DRONES
+  </div>
+</div>
+  <div class="rpt-body" style="padding-top: 20px;">
+<div class="rpt-stack-12">
+  <div>
+    <div class="rpt-h2"><span class="rpt-h2-num">4</span><span class="rpt-h2-text">Plan de normalización de operaciones aéreas</span></div>
+    <div class="rpt-h2-rule"></div>
+  </div>
+  <div class="rpt-lede">Cuatro fases de un mes. Ninguna exige lo que la anterior no dejó instalado: primero se cierra la habilitación vigente, luego se automatiza su renovación, después se instala el registro de vuelo y solo al final se exige completitud.</div>
+  <div class="rpt-phases" style="grid-template-columns: repeat(4, minmax(0, 1fr));">
+    <div class="rpt-phase rpt-phase-done">
+      <div class="rpt-phase-head">
+        <span class="rpt-phase-n">Fase 0 · <span class="rpt-phase-state">Cumplida</span></span>
+        <span class="rpt-phase-month">Sep 2026</span>
+      </div>
+      <div class="rpt-phase-title">Cierre de brechas de habilitación</div>
+      <div class="rpt-phase-text">Renovar los permisos que vencen dentro del período. Definir cuáles de los Centros de Costo sin permiso tendrán operación aérea y tramitar su carta del mandante y su solicitud en SIGO.</div>
+      <div class="rpt-phase-close"><strong>Cierre:</strong> ningún CC con operación prevista opera sin permiso vigente.</div>
+    </div>
+    <div class="rpt-phase rpt-phase-now">
+      <div class="rpt-phase-head">
+        <span class="rpt-phase-n">Fase 1 · <span class="rpt-phase-state">En curso</span></span>
+        <span class="rpt-phase-month">Oct 2026</span>
+      </div>
+      <div class="rpt-phase-title">Calendario de renovación automático</div>
+      <div class="rpt-phase-text">AeroControl calcula el vencimiento sobre la fecha real de cada resolución —no sobre un plazo supuesto— y dispara alertas a 45 y 30 días: a los 45 el ADC solicita la carta del mandante; a los 30 el Jefe Seguridad Aérea presenta en SIGO y, sin carta, escala al Gerente Operaciones Aéreas.</div>
+      <div class="rpt-phase-close"><strong>Cierre:</strong> ninguna renovación depende de que alguien la recuerde.</div>
+    </div>
+    <div class="rpt-phase">
+      <div class="rpt-phase-head">
+        <span class="rpt-phase-n">Fase 2</span>
+        <span class="rpt-phase-month">Nov 2026</span>
+      </div>
+      <div class="rpt-phase-title">Bitácora digital de vuelo</div>
+      <div class="rpt-phase-text">Se habilita el registro por vuelo: bitácora (JEJ-GTE-CT-REG-015), check list pre-vuelo (LVE-003) e inspección (LVE-002). Cada vuelo se asocia al permiso que lo autoriza, de modo que el sistema no admita registrar un vuelo sin permiso vigente en esa fecha.</div>
+      <div class="rpt-phase-close"><strong>Cierre:</strong> completitud reportada como línea base, sin sanción interna.</div>
+    </div>
+    <div class="rpt-phase">
+      <div class="rpt-phase-head">
+        <span class="rpt-phase-n">Fase 3</span>
+        <span class="rpt-phase-month">Dic 2026</span>
+      </div>
+      <div class="rpt-phase-title">Exigibilidad plena y auditoría</div>
+      <div class="rpt-phase-text">La completitud de bitácoras pasa a indicador exigible por Centro de Costo y se contrasta la coherencia entre vuelos ejecutados y vuelos autorizados. Auditoría interna regulatoria conforme al numeral 5.4.2 del INS-096.</div>
+      <div class="rpt-phase-close"><strong>Cierre:</strong> informe anual consolidado y plan de acción 2027.</div>
+    </div>
+  </div>
+  <div>
+    <div class="rpt-label" style="margin-bottom: 7px;">Exigibilidad progresiva de la reportabilidad</div>
+    <div style="border: 1px solid #D7DEE6; border-bottom: none;">
+      <div class="rpt-matrix rpt-matrix-head" style="grid-template-columns: 1.9fr repeat(4, minmax(0, 1fr));">
+        <div>Qué se reporta</div><div>SEP</div><div>OCT</div><div>NOV</div><div>DIC</div>
+      </div>
+      <div class="rpt-matrix" style="grid-template-columns: 1.9fr repeat(4, minmax(0, 1fr));">
+        <div class="rpt-matrix-row">Permisos de vuelo vigentes por CC</div>
+        <div class="rpt-cell rpt-cell-due">Exigible</div><div class="rpt-cell rpt-cell-due">Exigible</div><div class="rpt-cell rpt-cell-due">Exigible</div><div class="rpt-cell rpt-cell-due rpt-cell-end">Exigible</div>
+        <div class="rpt-matrix-row">Renovación anticipada (carta + solicitud)</div>
+        <div class="rpt-cell rpt-cell-info">Informativo</div><div class="rpt-cell rpt-cell-due">Exigible</div><div class="rpt-cell rpt-cell-due">Exigible</div><div class="rpt-cell rpt-cell-due rpt-cell-end">Exigible</div>
+        <div class="rpt-matrix-row"><strong>Bitácora, check list e inspección por vuelo</strong></div>
+        <div class="rpt-cell rpt-cell-na">No aplica</div><div class="rpt-cell rpt-cell-na">No aplica</div><div class="rpt-cell rpt-cell-info">Informativo</div><div class="rpt-cell rpt-cell-due rpt-cell-end">Exigible</div>
+        <div class="rpt-matrix-row">Coherencia vuelos ejecutados vs. autorizados</div>
+        <div class="rpt-cell rpt-cell-na">No aplica</div><div class="rpt-cell rpt-cell-na">No aplica</div><div class="rpt-cell rpt-cell-info">Informativo</div><div class="rpt-cell rpt-cell-due rpt-cell-end">Exigible</div>
+      </div>
+    </div>
+    <div class="rpt-matrix-legend"><strong>Informativo</strong> = se reporta el dato y se identifican brechas, sin consecuencia para el CC. <strong>Exigible</strong> = la brecha se escala a la Gerencia de Ingeniería y a la Gerencia de Riesgo con plazo de cierre comprometido.</div>
+  </div>
+  <div class="rpt-note"><strong>Ciclo del permiso:</strong> carta del mandante → solicitud en SIGO (KMZ, serie, operadores) → autorización DGAC con <strong>tope de 3 meses</strong> → renovación con <strong>carta nueva</strong>, iniciada 30 días antes. La vigencia otorgada no es uniforme: AeroControl valida el tope, no calcula el vencimiento.</div>
+</div>
+  </div>
+<div class="rpt-foot">
+  <div class="rpt-foot-note">
+    El informe mensual es obligación del Gerente de Operaciones Aéreas ante la DGAC en conjunto
+    con el Jefe Seguridad Aérea ante la DGAC (INS-096, 5.4.2 y 6.5).
+  </div>
+  <div class="rpt-foot-id">
+    Revisión 0 · Corte anticipado 26-10-2026 · Página 6 de 7
+  </div>
+</div>
+</div>
+<div class="rpt-page rpt2-page">
+<div class="rpt-head">
+  <img src="/static/reporting/jej-logo.png" alt="J.E.J. Ingeniería" style="width: 108px; height: auto;">
+  <div class="rpt-head-code">
+    JEJ-GTE-CT-INF-RPA-2026-10 · OCTUBRE 2026<br>
+    REPORTABILIDAD OPERACIONES RPA / DRONES
+  </div>
+</div>
+  <div class="rpt-body rpt2-body">
+    <div>
+      <div class="rpt-h2"><span class="rpt-h2-num">A</span><span class="rpt-h2-text">Anexo · Registro permiso a permiso</span></div>
+      <div class="rpt-h2-rule"></div>
+    </div>
+    <div>
+      <div class="rpt2-label" style="margin-bottom: 8px;">25 permisos: vigentes, en trámite y vencidos sin cerrar</div>
+      <div class="rpt2-table">
+        <div class="rpt2-reg rpt2-reg-head">
+          <div>N° JEJ</div>
+          <div>N° DGAC</div>
+          <div>CC</div>
+          <div>Vigencia</div>
+          <div>Operadores designados</div>
+        </div>
+        <div class="rpt2-reg rpt2-reg-body">
+          <div class="rpt2-reg-folio">JEJ-2026-001</div>
+          <div>7001</div>
+          <div>CC901</div>
+          <div>28-08 → 23-11-2026</div>
+          <div class="rpt2-reg-people">Operador Uno</div>
+          <div class="rpt2-reg-folio">JEJ-2026-002</div>
+          <div>7002</div>
+          <div>CC901</div>
+          <div>28-08 → 23-11-2026</div>
+          <div class="rpt2-reg-people">Operador Uno</div>
+          <div class="rpt2-reg-folio">JEJ-2026-003</div>
+          <div>7003</div>
+          <div>CC901</div>
+          <div>28-08 → 23-11-2026</div>
+          <div class="rpt2-reg-people">Operador Uno</div>
+          <div class="rpt2-reg-folio">JEJ-2026-004</div>
+          <div>7004</div>
+          <div>CC901</div>
+          <div>28-08 → 23-11-2026</div>
+          <div class="rpt2-reg-people">Operador Uno</div>
+          <div class="rpt2-reg-folio">JEJ-2026-005</div>
+          <div>7005</div>
+          <div>CC901</div>
+          <div>28-08 → 23-11-2026</div>
+          <div class="rpt2-reg-people">Operador Uno</div>
+          <div class="rpt2-reg-folio">JEJ-2026-006</div>
+          <div>7006</div>
+          <div>CC901</div>
+          <div>28-08 → 23-11-2026</div>
+          <div class="rpt2-reg-people">Operador Uno</div>
+          <div class="rpt2-reg-folio">JEJ-2026-007</div>
+          <div>7007</div>
+          <div>CC901</div>
+          <div>28-08 → 23-11-2026</div>
+          <div class="rpt2-reg-people">Operador Uno</div>
+          <div class="rpt2-reg-folio">JEJ-2026-008</div>
+          <div>7008</div>
+          <div>CC902</div>
+          <div>01-09 → 18-12-2026</div>
+          <div class="rpt2-reg-people">Operador Tres · Operador Dos</div>
+          <div class="rpt2-reg-folio">JEJ-2026-011</div>
+          <div>7010</div>
+          <div>CC904<span class="rpt2-reg-flag" title="Sin operación">○</span></div>
+          <div>01-09 → 30-12-2026</div>
+          <div class="rpt2-reg-people">Operador Cuatro</div>
+          <div class="rpt2-reg-folio">JEJ-2026-012</div>
+          <div>7011</div>
+          <div>CC905<span class="rpt2-reg-flag" title="Sin operación">○</span></div>
+          <div>28-07 → 28-10-2026</div>
+          <div class="rpt2-reg-people">Operador Cuatro</div>
+          <div class="rpt2-reg-folio">JEJ-2026-013</div>
+          <div>7012</div>
+          <div>CC906</div>
+          <div>01-09 → 30-11-2026</div>
+          <div class="rpt2-reg-people">Operador Cordillera</div>
+          <div class="rpt2-reg-folio">JEJ-2026-014</div>
+          <div>7013</div>
+          <div>CC907</div>
+          <div>01-09 → 15-12-2026</div>
+          <div class="rpt2-reg-people">Operador Valle</div>
+          <div class="rpt2-reg-folio">JEJ-2026-015</div>
+          <div>7014</div>
+          <div>CC908</div>
+          <div>01-09 → 05-01-2027</div>
+          <div class="rpt2-reg-people">Operador Costa</div>
+          <div class="rpt2-reg-folio">JEJ-2026-016</div>
+          <div>7015</div>
+          <div>CC909</div>
+          <div>01-09 → 18-01-2027</div>
+          <div class="rpt2-reg-people">Operador Altiplano</div>
+          <div class="rpt2-reg-folio">JEJ-2026-017</div>
+          <div>7016</div>
+          <div>CC910</div>
+          <div>01-09 → 23-02-2027</div>
+          <div class="rpt2-reg-people">Operador Puerto</div>
+          <div class="rpt2-reg-folio">JEJ-2026-018</div>
+          <div>7017</div>
+          <div>CC910</div>
+          <div>01-09 → 23-02-2027</div>
+          <div class="rpt2-reg-people">Operador Puerto</div>
+          <div class="rpt2-reg-folio">JEJ-2026-019</div>
+          <div>7018</div>
+          <div>CC911</div>
+          <div>01-09 → 28-11-2026</div>
+          <div class="rpt2-reg-people">Operador Bosque</div>
+          <div class="rpt2-reg-folio">JEJ-2026-020</div>
+          <div>7019</div>
+          <div>CC911</div>
+          <div>01-09 → 28-11-2026</div>
+          <div class="rpt2-reg-people">Operador Bosque</div>
+          <div class="rpt2-reg-folio">JEJ-2026-021</div>
+          <div>7020</div>
+          <div>CC911</div>
+          <div>01-09 → 28-11-2026</div>
+          <div class="rpt2-reg-people">Operador Bosque</div>
+          <div class="rpt2-reg-folio">JEJ-2026-022</div>
+          <div>7021</div>
+          <div>CC911</div>
+          <div>02-09 → 26-12-2026</div>
+          <div class="rpt2-reg-people">Operador Bosque</div>
+          <div class="rpt2-reg-folio">JEJ-2026-023</div>
+          <div>7022</div>
+          <div>CC912</div>
+          <div>01-09 → 29-01-2027</div>
+          <div class="rpt2-reg-people">Operador Desierto</div>
+          <div class="rpt2-reg-folio">JEJ-2026-024</div>
+          <div>7023</div>
+          <div>CC913</div>
+          <div>01-09 → 25-12-2026</div>
+          <div class="rpt2-reg-people">Operador Lago</div>
+          <div class="rpt2-reg-folio">JEJ-2026-025</div>
+          <div>7024</div>
+          <div>CC913</div>
+          <div>01-09 → 25-12-2026</div>
+          <div class="rpt2-reg-people">Operador Lago</div>
+          <div class="rpt2-reg-folio">JEJ-2026-010</div>
+          <div><span class="rpt2-state-wait">En proceso</span></div>
+          <div>CC903</div>
+          <div><span class="rpt2-dash">Sin vigencia resuelta</span></div>
+          <div class="rpt2-reg-people">Operador Tres</div>
+          <div class="rpt2-reg-folio">JEJ-2026-009</div>
+          <div>7009</div>
+          <div>CC902</div>
+          <div>01-07 → 20-10-2026</div>
+          <div class="rpt2-reg-people">Operador Dos</div>
+        </div>
+      </div>
+      <div class="rpt2-note-line">○ junto al CC: faena sin operación (no cuenta en la cobertura ni en las renovaciones).</div>
+    </div>
+  </div>
+<div class="rpt-foot">
+  <div class="rpt-foot-note">
+    Registro de cada permiso al 26-10-2026, como figura en el permiso. Detalle de la sección 2.
+  </div>
+  <div class="rpt-foot-id">
+    Revisión 0 · Corte anticipado 26-10-2026 · Página 7 de 7
+  </div>
+</div>
+</div>
+</div>
+      <div class="print-stamp">Impreso desde AeroControl · testserver/reporting/monthly/?period=2026-10 · <now> · lector</div>
+    </main>
+  </div>
+  <div class="command-palette" id="command-palette" hidden
+       data-search-url="/search/"
+       data-search-label="Buscar en todo"
+       data-empty-label="No hay nada que coincida.">
+    <div class="command-palette-backdrop" data-palette-close></div>
+    <div class="command-palette-panel" role="dialog" aria-modal="true" aria-label="Buscar en AeroControl">
+      <input class="command-palette-input" type="search" id="command-palette-input" autocomplete="off"
+             placeholder="Buscar o ir a una pantalla" aria-label="Buscar en AeroControl"
+             aria-controls="command-palette-results" role="combobox" aria-expanded="true">
+      <ul class="command-palette-results list-unstyled" id="command-palette-results" role="listbox"></ul>
+      <div class="command-palette-foot small">
+        Enter para abrir · Esc para cerrar
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="generic-modal" tabindex="-1" aria-labelledby="generic-modal-title" aria-hidden="true"
+       data-unsaved-message="Este formulario tiene cambios sin guardar. ¿Cerrarlo y perderlos?"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="generic-modal-title">Formulario</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div><div class="modal-body" id="modal-content"><div class="text-center text-muted py-4" role="status">Cargando…</div></div></div></div></div>
+  <script src="/static/vendor/bootstrap/bootstrap.bundle.min.js"
+          integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+          crossorigin="anonymous"></script>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/command-palette.js"></script>
+  <script src="/static/js/pwa.js"></script>
+  <script src="/static/js/ambient-motion.js" defer></script>
+  <script src="/static/js/sidebar-resize.js"></script>
+  <script src="/static/js/worktable.js"></script>
+</body>
+</html>

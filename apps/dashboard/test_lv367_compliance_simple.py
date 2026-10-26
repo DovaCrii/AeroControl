@@ -36,10 +36,13 @@ from apps.dashboard.test_lv359_compliance_permits import (  # noqa: F401
     VIEW,
     _page,
     _permit,
+    _head,
     _permits_block,
     _site,
     sites,
 )
+
+from apps.operations.models import FlightPermission  # noqa: E402
 
 URL = "dashboard-compliance"
 HX = {"HTTP_HX_REQUEST": "true"}
@@ -319,35 +322,96 @@ class TestTheSummary:
 
 class TestTheSimplePermitTable:
     @pytest.mark.django_db
-    def test_by_default_only_sites_with_a_problem_show(self, sites):
+    def test_by_default_every_site_shows_healthy_ones_included(self, sites):
         context = _page(login_as(VIEW)).context["cx_permits"]
-        # CC1 (12 d), CC2 (50 d), CC4 (espera) y CC5 (nada) tienen problema; CC3 (200 d) no.
+        # CC3 (200 d) está vigente y sana: antes de LV-374 quedaba tras «Ver todas»; ahora sale.
         assert sorted(r["cost_center"].code for r in context["rows"]) == [
             "CC1",
             "CC2",
+            "CC3",
             "CC4",
             "CC5",
         ]
-        assert (context["total"], context["problems"], context["hidden"]) == (5, 4, 1)
+        assert (context["total"], context["problems"]) == (5, 4)
+        assert "hidden" not in context
 
     @pytest.mark.django_db
-    def test_see_all_says_how_many_more_and_shows_everything(self, sites):
+    def test_there_is_no_see_all_link_and_the_count_is_the_number_of_rows(self, sites):
+        html = _page(login_as(VIEW)).content.decode()
+        assert "See all" not in html and "Show only sites with a problem" not in html
+        block = _permits_block(html)
+        count = re.search(r'<b class="id-cx-count">(\d+)</b>', block).group(1)
+        assert count == "5"
+        assert block.count('class="id-cx-site"') == 5
+
+    @pytest.mark.django_db
+    def test_a_saved_all_1_link_still_works_and_changes_nothing(self, sites):
         client = login_as(VIEW)
-        html = _page(client).content.decode()
-        assert "See all (1 more)" in html and "all=1" in html
-        everything = _page(client, all="1")
-        assert len(everything.context["cx_permits"]["rows"]) == 5
-        assert "Show only sites with a problem" in everything.content.decode()
+        plain = _page(client).context["cx_permits"]["rows"]
+        saved = _page(client, all="1")
+        assert saved.status_code == 200
+        assert [r["cost_center"].code for r in saved.context["cx_permits"]["rows"]] == [
+            r["cost_center"].code for r in plain
+        ]
+        assert "all=1" not in _head(saved.content.decode())
 
     @pytest.mark.django_db
-    def test_the_sort_links_keep_all_and_the_site(self, sites):
-        html = _page(login_as(VIEW), all="1", cost_center=sites[0].pk).content.decode()
-        head = _permits_block(html).split("<thead>")[1].split("</thead>")[0]
-        assert "all=1&amp;sort=code" in head and f"cost_center={sites[0].pk}" in head
+    def test_the_sort_links_keep_the_site(self, sites):
+        html = _page(login_as(VIEW), cost_center=sites[0].pk).content.decode()
+        assert f"cost_center={sites[0].pk}&amp;sort=code" in _head(
+            html
+        ) or f"cost_center={sites[0].pk}&sort=code" in _head(html)
+
+    @pytest.mark.django_db
+    def test_twelve_sites_all_show_in_priority_order_without_extra_queries(self, db):
+        # 12 faenas: 2 sin nada, 1 esperando, 1 a 20 d, 1 a 45 d, 7 vigentes lejos.
+        none_a, none_b = _site("CC01"), _site("CC02")
+        awaiting = _site("CC03")
+        _permit(awaiting, 30, status=FlightPermission.STATUS_REQUESTED)
+        _permit(_site("CC04"), 20)
+        _permit(_site("CC05"), 45)
+        for n in range(6, 13):
+            _permit(_site(f"CC{n:02d}"), 150 + n)
+        client = login_as(VIEW)
+        response = _page(client)
+        context = response.context["cx_permits"]
+        codes = [r["cost_center"].code for r in context["rows"]]
+        assert len(codes) == context["total"] == 12
+        # sin permiso vigente primero (por código), luego los vigentes (por código)
+        assert codes == [f"CC{n:02d}" for n in (1, 2, 3, 4, 5, *range(6, 13))]
+        html = response.content.decode()
+        block = _permits_block(html)
+        for code in codes:
+            assert f'<span class="cc-chip me-2">{code}</span>' in block
+        assert re.search(r'<b class="id-cx-count">12</b>', html)
+        assert "See all" not in html
+        del none_a, none_b
+
+    @pytest.mark.django_db
+    def test_showing_every_site_adds_no_queries_and_details_stay_one_query(self, db):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        client = login_as(VIEW)
+
+        def count():
+            client.get(reverse(URL))  # calienta cachés (ContentType, permisos)
+            with CaptureQueriesContext(connection) as queries:
+                response = client.get(reverse(URL))
+            return len(queries), len(response.context["cx_permits"]["rows"])
+
+        for i in range(3):
+            _permit(_site(f"Z{i:02d}"), 100 + i)
+        few = count()
+        for i in range(3, 15):
+            _permit(_site(f"Z{i:02d}"), 100 + i)
+        many = count()
+        assert (few[1], many[1]) == (3, 15)
+        assert many[0] == few[0]
 
     @pytest.mark.django_db
     def test_it_has_three_columns_and_one_status_chip_per_row(self, sites):
-        html = _page(login_as(VIEW), all="1").content.decode()
+        html = _page(login_as(VIEW)).content.decode()
         table = _permits_block(html)
         assert table.split("<thead>")[1].split("</thead>")[0].count("<th") == 3
         for row in re.findall(
@@ -360,7 +424,7 @@ class TestTheSimplePermitTable:
     def test_the_next_expiry_has_days_and_date_and_the_rest_lives_in_the_details(
         self, sites
     ):
-        html = _page(login_as(VIEW), all="1").content.decode()
+        html = _page(login_as(VIEW)).content.decode()
         table = _permits_block(html)
         row = next(r for r in table.split("<tr") if "CC1" in r)
         assert re.search(r"\d+ d</b>", row) and re.search(r"\d{4}-\d\d-\d\d", row)
@@ -368,13 +432,14 @@ class TestTheSimplePermitTable:
         assert "In force" in details and "expiring soon" in details
 
     @pytest.mark.django_db
-    def test_with_only_healthy_sites_it_says_nothing_is_wrong_and_links_to_all(
+    def test_with_only_healthy_sites_they_still_show_and_the_section_stays_closed(
         self, db
     ):
         _permit(_site("CC9"), 200)
         html = _page(login_as(VIEW)).content.decode()
-        assert "No site has a problem with its permits." in html
-        assert "See all (1 more)" in html
+        assert "CC9" in _permits_block(html)
+        assert "No site has a problem" not in html and "See all" not in html
+        assert "open" not in _fold(html, "permits")
 
     def test_the_problem_rule_uses_the_kpi_scale(self):
         from apps.dashboard.compliance_permits import has_problem

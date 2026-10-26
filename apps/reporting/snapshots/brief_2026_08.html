@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dato Ejecutivo JEJ-GTE-CT-INF-RPA-2026-08 - AeroControl</title>
+  <link rel="stylesheet" href="/static/vendor/bootstrap/bootstrap.min.css"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+        crossorigin="anonymous">
+  <link rel="stylesheet" href="/static/css/app.css">
+  <link rel="stylesheet" href="/static/css/identity.css">
+  <script src="/static/vendor/htmx/htmx.min.js"
+          integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V"
+          crossorigin="anonymous"></script>
+  <link rel="icon" type="image/svg+xml" href="/static/img/aerocontrol-mark.svg">
+  <link rel="manifest" href="/static/manifest.webmanifest">
+  <meta name="theme-color" content="#1B2A4A">
+  <script src="/static/js/theme-init.js"></script>
+  <link rel="stylesheet" href="/static/css/report-a4.css">
+</head>
+<body hx-headers='{"X-CSRFToken": "<csrf>"}'>
+  <a class="skip-link" href="#main-content">Saltar al contenido principal</a>
+  <div class="offline-banner d-none" id="offline-banner" role="status" hidden
+       data-stale-label="No connection. You are looking at data saved on %(when)s; nothing can be saved until it comes back."></div>
+  <nav class="navbar navbar-dark navy px-3">
+    <button class="btn btn-sm btn-outline-light sidebar-toggle" type="button" id="sidebar-toggle" aria-controls="sidebar" aria-expanded="false" aria-label="Contraer o expandir panel lateral" title="Contraer o expandir panel lateral">
+      <span class="visually-hidden">Activar navegación</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2"/></svg>
+    </button>
+    <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/">
+      <img class="brand-mark" src="/static/img/aerocontrol-mark.svg" alt="" aria-hidden="true">
+      <span class="brand-lockup">AeroControl<span class="brand-subtitle">Control de operaciones aéreas</span></span>
+    </a>
+    <form method="get" action="/search/" role="search" class="global-search d-none d-md-flex mx-auto" hx-boost="false">
+      <div class="input-group input-group-sm">
+        <input class="form-control" type="search" name="q" value="" placeholder="Buscar en AeroControl" aria-label="Búsqueda global">
+        <button class="btn btn-outline-light" type="submit" aria-label="Buscar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+        </button>
+      </div>
+    </form>
+    <button class="btn btn-sm btn-outline-light d-md-none ms-auto me-2" type="button" id="palette-open"
+            aria-label="Buscar en AeroControl" title="Buscar en AeroControl">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+    </button>
+    <span class="text-white d-flex align-items-center gap-2 small">
+      <span class="opacity-75">reader</span>
+      <a class="btn btn-sm btn-outline-light" href="/accounts/password_change/">Cambiar contraseña</a>
+      <form method="post" action="/i18n/setlang/" class="d-inline" hx-boost="false">
+        <input type="hidden" name="csrfmiddlewaretoken" value="<csrf>"><input type="hidden" name="next" value="/reporting/monthly/brief/?period=2026-08">
+        <select class="form-select form-select-sm language-switch" name="language" data-autosubmit aria-label="Idioma">
+          <option value="en" >EN</option>
+          <option value="es" selected>ES</option>
+        </select>
+      </form>
+      <form method="post" action="/accounts/logout/" class="d-inline"><input type="hidden" name="csrfmiddlewaretoken" value="<csrf>"><button class="btn btn-sm btn-outline-light" type="submit">Cerrar sesión</button></form>
+      <button class="btn btn-sm btn-outline-light" id="density-toggle" type="button" aria-pressed="false" aria-label="Cambiar la densidad de las filas" data-label-compact="Usar filas compactas" data-label-comfortable="Usar filas cómodas">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <button class="btn btn-sm btn-outline-light theme-toggle" id="theme-toggle" type="button" aria-pressed="false" aria-label="Cambiar tema" title="Cambiar tema" data-label-light="Usar tema claro" data-label-dark="Usar tema oscuro">
+        <svg class="theme-icon theme-icon-moon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.6 10.4A6.1 6.1 0 0 1 5.6 2.4a6.5 6.5 0 1 0 8 8z"/></svg>
+        <svg class="theme-icon theme-icon-sun" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3.1"/><path d="M8 1.2v1.5M8 13.3v1.5M1.2 8h1.5M13.3 8h1.5M3.2 3.2l1.1 1.1M11.7 11.7l1.1 1.1M3.2 12.8l1.1-1.1M11.7 4.3l1.1-1.1"/></svg>
+      </button>
+    </span>
+  </nav>
+  <div class="d-flex">
+    <aside class="sidebar p-3 d-flex flex-column" id="sidebar" aria-label="Navegación principal">
+      <div class="sidebar-toolbar">
+        <span class="sidebar-toolbar-title">Navegación</span>
+        <button class="sidebar-collapse" type="button" id="sidebar-collapse" aria-controls="sidebar" aria-label="Contraer panel lateral" title="Contraer panel lateral" data-label-expand="Expandir panel lateral" data-label-collapse="Contraer panel lateral">
+          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+        </button>
+      </div>
+      <a href="/" class="nav-item nav-overview " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-dashboard"/></svg><span class="nav-label">Panel</span></a>
+      <div class="nav-group">
+        <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="flight" aria-expanded="true" aria-controls="nav-group-flight">Vuelo<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
+        <div class="nav-group-items" id="nav-group-flight">
+      <a href="/operations/permissions/" class="nav-item nav-flight " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-permission-list"/></svg><span class="nav-label">Permisos</span></a>
+      <a href="/geo/plans/" class="nav-item nav-flight " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-geo-plan-list"/></svg><span class="nav-label">Planificación geoespacial</span></a>
+      <a href="/operations/records/" class="nav-item nav-flight " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-record-list"/></svg><span class="nav-label">Vuelos</span></a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="compliance" aria-expanded="true" aria-controls="nav-group-compliance">Cumplimiento<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
+        <div class="nav-group-items" id="nav-group-compliance">
+<a href="/bandeja/" class="nav-item nav-compliance " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-work-tray"/></svg><span class="nav-label">Bandeja de trabajo</span></a>
+<a href="/compliance/alert/" class="nav-item nav-compliance " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-alert-list"/></svg><span class="nav-label">Alertas</span>
+<span id="alert-badge" class="badge bg-danger ms-auto d-none"
+      role="status" aria-live="polite"
+      hx-get="/alerts/count/" hx-trigger="every 60s"
+      hx-target="this" hx-swap="outerHTML"></span>
+</a>
+      <a href="/compliance/monthly-review/" class="nav-item nav-compliance " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-monthly-review"/></svg><span class="nav-label">Cierre mensual</span></a>
+      <a href="/compliance/company-documents/" class="nav-item nav-compliance " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-company-documents"/></svg><span class="nav-label">Documentos de la empresa</span></a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="reports" aria-expanded="true" aria-controls="nav-group-reports">Informes<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
+        <div class="nav-group-items" id="nav-group-reports">
+      <a href="/compliance/report/" class="nav-item nav-reports " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-compliance-report"/></svg><span class="nav-label">Reporte</span></a>
+      <a href="/reporting/monthly/" class="nav-item nav-reports " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-monthly-report"/></svg><span class="nav-label">Informe mensual RPA</span></a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="maintenance" aria-expanded="true" aria-controls="nav-group-maintenance">Mantenimiento<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
+        <div class="nav-group-items" id="nav-group-maintenance">
+      <a href="/maintenance/records/" class="nav-item nav-maintenance " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-maintenance-list"/></svg><span class="nav-label">Mantenciones</span></a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="registry" aria-expanded="true" aria-controls="nav-group-registry">Padrón<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
+        <div class="nav-group-items" id="nav-group-registry">
+      <a href="/registry/costcenter/" class="nav-item nav-registry " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-costcenter-list"/></svg><span class="nav-label">Centros de costo</span></a>
+      <a href="/registry/aircraft/" class="nav-item nav-registry " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-aircraft-list"/></svg><span class="nav-label">Aeronaves</span></a>
+      <a href="/registry/operator/" class="nav-item nav-registry " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-operator-list"/></svg><span class="nav-label">Operadores</span></a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="inventory" aria-expanded="true" aria-controls="nav-group-inventory">Inventario y movimientos<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
+        <div class="nav-group-items" id="nav-group-inventory">
+      <a href="/registry/operatorassignment/" class="nav-item nav-inventory " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-operatorassignment-list"/></svg><span class="nav-label">Asignaciones de operador</span></a>
+      <a href="/registry/aircraftassignment/" class="nav-item nav-inventory " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-aircraftassignment-list"/></svg><span class="nav-label">Asignaciones de aeronave</span></a>
+      <a href="/registry/battery/" class="nav-item nav-inventory " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-battery-list"/></svg><span class="nav-label">Baterías</span></a>
+      <a href="/registry/resource-movements/" class="nav-item nav-inventory " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-resourcemovementlog-list"/></svg><span class="nav-label">Movimientos de recursos</span></a>
+        </div>
+      </div>
+      <div class="nav-admin-zone">
+        <span class="sidebar-label nav-admin-label">Administración</span>
+      <a href="/admin/" class="nav-item nav-admin"><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-admin-index"/></svg><span class="nav-label">Administración</span></a>
+      </div>
+      <button class="sidebar-resizer" type="button" role="separator"
+              aria-orientation="vertical" tabindex="0"
+              aria-label="Arrastra, o usa las flechas del teclado, para ajustar el ancho de la navegación. Doble clic para volver al valor original."
+              title="Arrastra para ajustar el ancho · doble clic para restablecer"></button>
+    </aside>
+    <main class="container-fluid p-4" id="main-content" tabindex="-1">
+<div class="page-header no-print">
+  <div>
+    <p class="page-eyebrow mb-1">Informes</p>
+    <h1 class="h3 mb-0">Dato Ejecutivo</h1>
+    <p class="page-description mb-0">JEJ-GTE-CT-INF-RPA-2026-08</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap align-items-end">
+    <form method="get" class="d-flex gap-2 align-items-end">
+      <div>
+        <label class="form-label" for="period">Período</label>
+        <input class="form-control" type="month" id="period" name="period" value="2026-08">
+      </div>
+      <button class="btn btn-primary">Aplicar</button>
+    </form>
+    <button type="button" class="btn btn-primary" data-print data-print-title="Dato Ejecutivo JEJ-GTE-CT-INF-RPA-2026-08"
+            title="Abre el diálogo de impresión: elija «Guardar como PDF» como destino.">Descargar PDF</button>
+    <a class="btn btn-outline-secondary" href="/reporting/monthly/?period=2026-08">Informe completo</a>
+  </div>
+</div>
+<div class="alert alert-secondary no-print">
+  Frozen payload · Revisión 0
+</div>
+<div class="rpt-sheet rpt-brief">
+  <div class="rpt-brief-head">
+    <div class="rpt-brief-eyebrow">J.E.J. INGENIERÍA S.A. · OPERACIONES AÉREAS</div>
+    <h2 class="rpt-brief-title">Dato Ejecutivo RPA</h2>
+    <div class="rpt-brief-sub">Reporte mensual de operaciones con aeronaves pilotadas a distancia</div>
+    <div class="rpt-brief-meta">
+      <span class="rpt-brief-month">AGOSTO 2026</span>
+      <span>Corte al 31-08-2026</span>
+      <span class="rpt-brief-code">JEJ-GTE-CT-INF-RPA-2026-08</span>
+    </div>
+  </div>
+  <div class="rpt-brief-kpis">
+    <div class="rpt-brief-kpi"><div class="rpt-brief-kpi-v">4</div><div class="rpt-brief-kpi-n">Centros de Costo registrados</div></div>
+    <div class="rpt-brief-kpi"><div class="rpt-brief-kpi-v">2</div><div class="rpt-brief-kpi-n">CC habilitados para operar</div></div>
+    <div class="rpt-brief-kpi"><div class="rpt-brief-kpi-v">3</div><div class="rpt-brief-kpi-n">Permisos de vuelo vigentes</div></div>
+    <div class="rpt-brief-kpi"><div class="rpt-brief-kpi-v">2</div><div class="rpt-brief-kpi-n">Por vencer en 60 días</div></div>
+    <div class="rpt-brief-kpi"><div class="rpt-brief-kpi-v">1</div><div class="rpt-brief-kpi-n">Solicitudes en trámite</div></div>
+    <div class="rpt-brief-kpi"><div class="rpt-brief-kpi-v">1</div><div class="rpt-brief-kpi-n">Incidentes del período</div></div>
+  </div>
+  <div class="rpt-label">Estado por Centro de Costo</div>
+  <table class="rpt-table rpt-brief-table">
+    <colgroup><col style="width: 14%"><col><col style="width: 12%"><col style="width: 18%"></colgroup>
+    <thead><tr><th scope="col">Código</th><th scope="col">Centro de Costo</th><th scope="col">Perm.</th><th scope="col">Vence</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>CC101</strong></td>
+        <td>Faena Norte</td>
+        <td>2</td>
+        <td>25-10-2026</td>
+      </tr>
+      <tr>
+        <td><strong>CC102</strong></td>
+        <td>Faena Sur</td>
+        <td>1</td>
+        <td>20-09-2026</td>
+      </tr>
+      <tr>
+        <td><strong>CC103</strong></td>
+        <td>Faena Este</td>
+        <td>0</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td><strong>CC104</strong></td>
+        <td>Faena Oeste</td>
+        <td>0</td>
+        <td>—</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="rpt-brief-cols">
+    <div>
+      <div class="rpt-label">Por vencer y por renovar</div>
+      <ul class="rpt-brief-list">
+        <li>Permisos por vencer · <strong>2</strong> <span class="rpt-brief-crit">(1 en 30 días o menos)</span></li>
+        <li>Seguros JAC por renovar · <strong>0</strong> <span class="rpt-brief-crit">(+1 sin fecha cargada)</span></li>
+        <li>Credenciales DGAC por renovar · <strong>0</strong> <span class="rpt-brief-crit">(+1 sin fecha cargada)</span></li>
+      </ul>
+    </div>
+    <div>
+      <div class="rpt-label">Solicitudes en trámite ante la DGAC</div>
+      <ul class="rpt-brief-list">
+        <li><strong>JEJ-2026-904</strong> · CC103</li>
+      </ul>
+    </div>
+  </div>
+  <div class="rpt-label">Incidentes y eventos operacionales</div>
+  <table class="rpt-table rpt-brief-table">
+    <thead><tr><th scope="col">Evento</th><th scope="col">Fecha</th><th scope="col">CC</th><th scope="col">Estado</th><th scope="col">Reporte DGAC</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Aterrizaje de precaucion</td>
+        <td>12-08-2026</td>
+        <td>CC101</td>
+        <td>Open</td>
+        <td>13-08-2026 · DGAC-0001</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="rpt-label">Acciones requeridas este mes</div>
+  <table class="rpt-table rpt-brief-table">
+    <colgroup><col><col style="width: 26%"><col style="width: 18%"></colgroup>
+    <thead><tr><th scope="col">Acción</th><th scope="col">Responsable</th><th scope="col">Plazo</th></tr></thead>
+    <tbody>
+      <tr><td>Renovar el permiso JEJ-2026-901</td><td>ADC</td><td>15-09-2026</td></tr>
+    </tbody>
+  </table>
+  <div class="rpt-brief-foot">
+    <div class="rpt-foot-note">Emite: Gerente de Operaciones Aéreas ante la DGAC, en conjunto con el Jefe Seguridad Aérea ante la DGAC (INS-096, 5.4.2). Fuente: AeroControl · SIGO — DGAC.</div>
+    <div class="rpt-foot-id">Revisión 0 · corte al 31-08-2026</div>
+  </div>
+</div>
+      <div class="print-stamp">Impreso desde AeroControl · testserver/reporting/monthly/brief/?period=2026-08 · <now> · reader</div>
+    </main>
+  </div>
+  <div class="command-palette" id="command-palette" hidden
+       data-search-url="/search/"
+       data-search-label="Buscar en todo"
+       data-empty-label="No hay nada que coincida.">
+    <div class="command-palette-backdrop" data-palette-close></div>
+    <div class="command-palette-panel" role="dialog" aria-modal="true" aria-label="Buscar en AeroControl">
+      <input class="command-palette-input" type="search" id="command-palette-input" autocomplete="off"
+             placeholder="Buscar o ir a una pantalla" aria-label="Buscar en AeroControl"
+             aria-controls="command-palette-results" role="combobox" aria-expanded="true">
+      <ul class="command-palette-results list-unstyled" id="command-palette-results" role="listbox"></ul>
+      <div class="command-palette-foot small">
+        Enter para abrir · Esc para cerrar
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="generic-modal" tabindex="-1" aria-labelledby="generic-modal-title" aria-hidden="true"
+       data-unsaved-message="Este formulario tiene cambios sin guardar. ¿Cerrarlo y perderlos?"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="generic-modal-title">Formulario</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div><div class="modal-body" id="modal-content"><div class="text-center text-muted py-4" role="status">Cargando…</div></div></div></div></div>
+  <script src="/static/vendor/bootstrap/bootstrap.bundle.min.js"
+          integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+          crossorigin="anonymous"></script>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/command-palette.js"></script>
+  <script src="/static/js/pwa.js"></script>
+  <script src="/static/js/ambient-motion.js" defer></script>
+  <script src="/static/js/sidebar-resize.js"></script>
+  <script src="/static/js/worktable.js"></script>
+</body>
+</html>

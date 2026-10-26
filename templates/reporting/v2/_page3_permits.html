@@ -1,0 +1,138 @@
+{% load i18n static report_leaf report_svg %}
+{% comment %}LV-378 · Página 3 v2: los permisos vigentes **por faena**, no permiso a permiso.
+
+Sólo se dibuja con `payload.meta.layout == 2` (ver `monthly_report.html`); la página 3
+de siempre (`reporting/_page3_permits.html`) sigue dibujando los informes ya emitidos.
+
+La agrupación la arma `apps/reporting/groups.py` desde el payload, sin tocar la base:
+una línea por faena si todos sus permisos comparten vigencia, aeronaves y operadores;
+una sublínea por grupo si no. **Los folios se listan siempre explícitos**: un rango
+escondería que falta uno. El detalle permiso a permiso —con el N° DGAC, la vigencia y la
+nómina de cada uno— vive en el anexo del final.
+
+Texto en español y sin `{% translate %}`: es el papel que se firma ante la DGAC.
+
+⚠️ **El rótulo declara los totales de la sección, no los de la hoja**: es lo que vuelve
+detectable un recorte (el cuerpo es `overflow: hidden`). El reparto en hojas lo hace
+`MonthlyReportView._sheets` con `pagination.sheets_for` y las constantes `V2_*`, medidas
+en el navegador, y la invariante I8 comprueba que la suma de los grupos da el total.{% endcomment %}
+<div class="rpt-page rpt2-page">
+
+  {% include "reporting/_head.html" %}
+
+  <div class="rpt-body rpt2-body">
+
+    <div>
+      <div class="rpt-h2"><span class="rpt-h2-num">2</span><span class="rpt-h2-text">Permisos de vuelo vigentes ante la DGAC{% if not sheet.first %} <span style="font-size: 13px; font-weight: normal; color: #52606D;">(continuación)</span>{% endif %}</span></div>
+      <div class="rpt-h2-rule"></div>
+    </div>
+
+    <div>
+      <div class="rpt2-label">Por centro de costo · {{ sheet.summary.operating_in_force }} vigente{{ sheet.summary.operating_in_force|pluralize:"s" }} en {{ sheet.summary.centres }} faena{{ sheet.summary.centres|pluralize:"s" }}{% if sheet.summary.outside_in_force %} · {{ sheet.summary.outside_in_force }} más sin operación{% endif %}{% if sheet.summary.awaiting|length %} · {{ sheet.summary.awaiting|length }} en trámite{% endif %}{% if sheet.of > 1 %} · hoja {{ sheet.index }} de {{ sheet.of }} de la sección{% endif %}</div>
+      {% comment %}Los umbrales, declarados arriba y con símbolo: la banda no depende del
+      color. Son los mismos 30/60 del panel (`apps/dashboard/compliance_permits.py`).{% endcomment %}
+      <div class="rpt2-legend">
+        <span><b class="rpt2-sym-critical">✕ Crítico</b> ≤30 días</span>
+        <span><b class="rpt2-sym-warning">▲ Por vencer</b> 31–60 días</span>
+        <span><b class="rpt2-sym-nominal">● Vigente</b> &gt;60 días</span>
+      </div>
+    </div>
+
+    {% if sheet.first %}
+    <div>{% expiry_strip sheet.summary.operating sheet.strip_uid %}</div>
+    {% endif %}
+
+    <div>
+      {% for group in sheet.groups %}
+      <div class="rpt2-grp rpt2-grp-{{ group.band }}">
+        <div class="rpt2-head">
+          <span class="rpt2-cc"><strong>{{ group.code }}</strong> {{ group.name }}</span>
+          <span class="rpt2-main">{{ group.count }} permiso{{ group.count|pluralize:"s" }}{% if group.single %}{% with line=group.lines.0 %} · {{ line.valid_from|as_date|date:"d-m"|default:"—" }} → {{ line.valid_until|as_date|date:"d-m-Y" }}{% endwith %}{% else %} · vencen desde el {{ group.next_expiry|as_date|date:"d-m-Y" }}{% endif %}</span>
+          <span class="rpt2-chip rpt2-chip-{{ group.band }}">{{ group.band|band_symbol }} {{ group.band|band_word }} · {{ group.days }} d</span>
+        </div>
+        {% if group.single %}
+        {% with line=group.lines.0 %}
+        {% comment %}Aeronaves, operadores y folios en **un** párrafo: son el detalle de la línea y
+        se leen juntos; en dos renglones fijos cada faena costaba 17 px más y el cierre de
+        octubre no cabía en una hoja (medido).{% endcomment %}
+        <div class="rpt2-sub">Aeronaves: {% for tail in line.aircraft %}{{ tail }}{% if not forloop.last %} · {% endif %}{% empty %}<span class="rpt2-dash">—</span>{% endfor %} · {% if line.operators %}{{ line.operators }} operador{{ line.operators|pluralize:"es" }}{% else %}<span class="rpt2-dash">sin operadores</span>{% endif %} · Folios: {% for item in line.permits %}{{ item.folio }}{% if not forloop.last %} · {% endif %}{% endfor %}</div>
+        {% endwith %}
+        {% else %}
+        {% for line in group.lines %}
+        <div class="rpt2-line">
+          <div class="rpt2-line-main">
+            <span class="rpt2-main">{{ line.count }} permiso{{ line.count|pluralize:"s" }} · {{ line.valid_from|as_date|date:"d-m"|default:"—" }} → {{ line.valid_until|as_date|date:"d-m-Y" }}</span>
+            <span class="rpt2-chip rpt2-chip-{{ line.band }}">{{ line.band|band_symbol }} {{ line.days }} d</span>
+          </div>
+          <div class="rpt2-sub">Aeronaves: {% for tail in line.aircraft %}{{ tail }}{% if not forloop.last %} · {% endif %}{% empty %}<span class="rpt2-dash">—</span>{% endfor %} · {% if line.operators %}{{ line.operators }} operador{{ line.operators|pluralize:"es" }}{% else %}<span class="rpt2-dash">sin operadores</span>{% endif %} · Folios: {% for item in line.permits %}{{ item.folio }}{% if not forloop.last %} · {% endif %}{% endfor %}</div>
+        </div>
+        {% endfor %}
+        {% endif %}
+      </div>
+      {% empty %}
+      {% if sheet.first %}<p class="rpt2-note">Ningún permiso vigente de una faena con operación al corte.</p>{% endif %}
+      {% endfor %}
+    </div>
+
+    {% comment %}⚠️ Los bloques de cierre van sólo en la última hoja: el reparto descuenta
+    su alto del techo de esa hoja y no del de las otras.{% endcomment %}
+    {% if sheet.last %}
+
+    {% if sheet.outside %}
+    <div class="rpt2-block">
+      <div class="rpt2-block-title">Sin operación — no cuentan en la cobertura ni en las renovaciones</div>
+      {% for group in sheet.outside %}
+      <div class="rpt2-row">
+        <span class="rpt2-row-cc"><strong>{{ group.code }}</strong> {{ group.name }}<br><span class="rpt2-row-note">{% if group.reason == "closed" %}Contrato terminado{% elif group.reason == "not_flying" %}No vuela{% else %}Archivada{% endif %}</span></span>
+        <span class="rpt2-row-main">{{ group.folios|join:" · " }} · {% with line=group.lines.0 %}{{ line.valid_from|as_date|date:"d-m"|default:"—" }} → {{ line.valid_until|as_date|date:"d-m-Y" }}{% endwith %}<br><span class="rpt2-row-note">No se renueva: cerrar el permiso o dejarlo vencer.</span></span>
+        <span class="rpt2-chip rpt2-chip-{{ group.band }}">{{ group.band|band_symbol }} {{ group.days }} d</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if sheet.awaiting %}
+    <div class="rpt2-block">
+      <div class="rpt2-block-title">Solicitudes en trámite — sin habilitación hasta su aprobación</div>
+      {% for permit in sheet.awaiting %}
+      <div class="rpt2-row">
+        <span class="rpt2-row-cc"><strong>{{ permit.cost_centre }}</strong> {{ permit.folio }}</span>
+        <span class="rpt2-row-main">{% for tail in permit.aircraft %}{{ tail }}{% if not forloop.last %} · {% endif %}{% empty %}<span class="rpt2-dash">sin aeronaves</span>{% endfor %} · {% with n=permit.operators|length %}{% if n %}{{ n }} operador{{ n|pluralize:"es" }}{% else %}<span class="rpt2-dash">sin operadores</span>{% endif %}{% endwith %}</span>
+        <span class="rpt2-state-wait">En proceso</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% comment %}Un permiso aprobado cuya vigencia ya pasó y que nadie cerró. Antes se
+    imprimía como «en trámite · En proceso» (falso); va aparte y sólo si existe.{% endcomment %}
+    {% if sheet.lapsed %}
+    <div class="rpt2-block">
+      <div class="rpt2-block-title rpt2-block-title-bad">Vencidos sin cerrar — la vigencia terminó y el permiso sigue abierto</div>
+      {% for permit in sheet.lapsed %}
+      <div class="rpt2-row">
+        <span class="rpt2-row-cc"><strong>{{ permit.cost_centre }}</strong> {{ permit.folio }}</span>
+        <span class="rpt2-row-main">{{ permit.valid_from|as_date|date:"d-m"|default:"—" }} → {{ permit.valid_until|as_date|date:"d-m-Y" }}</span>
+        <span class="rpt2-chip rpt2-chip-critical">✕ {{ permit.days_remaining }} d</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div>
+      <div class="rpt2-label" style="margin-bottom: 8px;">Observación del período</div>
+      {% if run.period_note %}
+      {% include "reporting/_written.html" with anchor="period_note" %}
+      <div class="rpt2-note">{{ run.period_note|linebreaksbr }}</div>
+      {% else %}
+      {% pending "la observación se redacta y se aprueba antes de emitir" "LV-227" %}
+      {% endif %}
+    </div>
+
+    {% endif %}
+
+  </div>
+
+  {% include "reporting/_foot.html" with section="permits_v2" %}
+
+</div>

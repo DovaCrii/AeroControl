@@ -1,0 +1,334 @@
+{
+ "meta": {
+  "period": "2026-08",
+  "code": "JEJ-GTE-CT-INF-RPA-2026-08",
+  "cutoff": "2026-08-31",
+  "covers": {
+   "from": "2026-08-01",
+   "to": "2026-08-31"
+  },
+  "in_progress": false,
+  "days_remaining": 0,
+  "issued_by": "Gerente de Operaciones Aéreas ante la DGAC",
+  "jointly_with": "Jefe Seguridad Aérea ante la DGAC",
+  "standard": "JEJ-GRI-SS-INS-096 Rev. 0",
+  "addressed_to": "Gerencia General · Gerencia de Riesgo · Gerencia de Ingeniería · Administradores de Contrato",
+  "scope": "Vigencia de permisos de vuelo ante la DGAC",
+  "sources": "AeroControl · SIGO — DGAC"
+ },
+ "kpis": {
+  "cost_centres_with_operation": {
+   "value": 4,
+   "source": "registry",
+   "cutoff": "2026-08-31"
+  },
+  "cost_centres_without_permit": {
+   "value": 2,
+   "source": "operations",
+   "cutoff": "2026-08-31"
+  },
+  "permits_in_force": {
+   "value": 3,
+   "source": "operations",
+   "cutoff": "2026-08-31"
+  },
+  "permits_awaiting": {
+   "value": 1,
+   "source": "operations",
+   "cutoff": "2026-08-31"
+  },
+  "permits_lapsed": {
+   "value": 0,
+   "source": "operations",
+   "cutoff": "2026-08-31"
+  },
+  "permits_expiring_30d": {
+   "value": 1,
+   "source": "operations",
+   "cutoff": "2026-08-31"
+  },
+  "permits_expiring_60d": {
+   "value": 2,
+   "source": "operations",
+   "cutoff": "2026-08-31"
+  },
+  "incidents": {
+   "value": 1,
+   "source": "compliance",
+   "cutoff": "2026-08-31"
+  },
+  "incidents_open": {
+   "value": 1,
+   "source": "compliance",
+   "cutoff": "2026-08-31"
+  },
+  "fleet_total": {
+   "value": 5,
+   "source": "registry",
+   "cutoff": "2026-08-31"
+  },
+  "fleet_flyable": {
+   "value": 4,
+   "source": "registry",
+   "cutoff": "2026-08-31"
+  },
+  "insurance_up_to_date": {
+   "value": 4,
+   "source": "registry",
+   "cutoff": "2026-08-31"
+  },
+  "insurance_missing": {
+   "value": 1,
+   "source": "registry",
+   "cutoff": "2026-08-31"
+  },
+  "insurance_lapsed": {
+   "value": 0,
+   "source": "registry",
+   "cutoff": "2026-08-31"
+  },
+  "operators_total": {
+   "value": 6,
+   "source": "registry",
+   "cutoff": "2026-08-31"
+  },
+  "operators_credentialed": {
+   "value": 5,
+   "source": "registry",
+   "cutoff": "2026-08-31"
+  },
+  "credentials_missing": {
+   "value": 1,
+   "source": "registry",
+   "cutoff": "2026-08-31"
+  },
+  "credentials_lapsed": {
+   "value": 0,
+   "source": "registry",
+   "cutoff": "2026-08-31"
+  }
+ },
+ "cost_centres": [
+  {
+   "code": "CC101",
+   "name": "Faena Norte",
+   "permits_in_force": 2,
+   "permits_awaiting": 0,
+   "permits_lapsed": 0,
+   "permits_expiring_30d": 0,
+   "next_expiry": "2026-10-25",
+   "days_remaining": 55,
+   "band": "warning"
+  },
+  {
+   "code": "CC102",
+   "name": "Faena Sur",
+   "permits_in_force": 1,
+   "permits_awaiting": 0,
+   "permits_lapsed": 0,
+   "permits_expiring_30d": 1,
+   "next_expiry": "2026-09-20",
+   "days_remaining": 20,
+   "band": "critical"
+  },
+  {
+   "code": "CC103",
+   "name": "Faena Este",
+   "permits_in_force": 0,
+   "permits_awaiting": 1,
+   "permits_lapsed": 0,
+   "permits_expiring_30d": 0,
+   "next_expiry": null,
+   "days_remaining": null,
+   "band": "critical"
+  },
+  {
+   "code": "CC104",
+   "name": "Faena Oeste",
+   "permits_in_force": 0,
+   "permits_awaiting": 0,
+   "permits_lapsed": 0,
+   "permits_expiring_30d": 0,
+   "next_expiry": null,
+   "days_remaining": null,
+   "band": "critical"
+  }
+ ],
+ "permits": [
+  {
+   "folio": "JEJ-2026-901",
+   "dgac_number": "D-100",
+   "status": "approved",
+   "cost_centre": "CC102",
+   "operators": [
+    "Persona Uno"
+   ],
+   "aircraft": [
+    "RPA-901"
+   ],
+   "valid_from": "2026-06-20",
+   "valid_until": "2026-09-20",
+   "days_remaining": 20,
+   "band": "critical",
+   "in_force": true
+  },
+  {
+   "folio": "JEJ-2026-902",
+   "dgac_number": "D-101",
+   "status": "approved",
+   "cost_centre": "CC101",
+   "operators": [
+    "Persona Uno",
+    "Persona Dos"
+   ],
+   "aircraft": [
+    "RPA-901",
+    "RPA-902"
+   ],
+   "valid_from": "2026-07-01",
+   "valid_until": "2026-10-25",
+   "days_remaining": 55,
+   "band": "warning",
+   "in_force": true
+  },
+  {
+   "folio": "JEJ-2026-903",
+   "dgac_number": "D-102",
+   "status": "approved",
+   "cost_centre": "CC101",
+   "operators": [
+    "Persona Tres"
+   ],
+   "aircraft": [
+    "RPA-903"
+   ],
+   "valid_from": "2026-08-20",
+   "valid_until": "2026-11-20",
+   "days_remaining": 81,
+   "band": "nominal",
+   "in_force": true
+  },
+  {
+   "folio": "JEJ-2026-904",
+   "dgac_number": null,
+   "status": "requested",
+   "cost_centre": "CC103",
+   "operators": [
+    "Persona Cuatro"
+   ],
+   "aircraft": [],
+   "valid_from": null,
+   "valid_until": null,
+   "days_remaining": null,
+   "band": null,
+   "in_force": false
+  }
+ ],
+ "concentration": {
+  "permits_in_force": 3,
+  "permits_with_one_operator": 2,
+  "cost_centres_on_one_person": [
+   "CC102"
+  ]
+ },
+ "incidents": [
+  {
+   "title": "Aterrizaje de precaucion",
+   "detected_on": "2026-08-12",
+   "cost_centre": "CC101",
+   "status": "open",
+   "status_label": "Open",
+   "reported_to_dgac": "2026-08-13",
+   "dgac_reference": "DGAC-0001"
+  }
+ ],
+ "plan": {
+  "phases": [
+   {
+    "number": 0,
+    "month": "Sep 2026",
+    "title": "Cierre de brechas de habilitación",
+    "text": "Renovar los permisos que vencen dentro del período. Definir cuáles de los Centros de Costo sin permiso tendrán operación aérea y tramitar su carta del mandante y su solicitud en SIGO.",
+    "close": "ningún CC con operación prevista opera sin permiso vigente.",
+    "state": "pending"
+   },
+   {
+    "number": 1,
+    "month": "Oct 2026",
+    "title": "Calendario de renovación automático",
+    "text": "AeroControl calcula el vencimiento sobre la fecha real de cada resolución —no sobre un plazo supuesto— y dispara alertas a 45 y 30 días: a los 45 el ADC solicita la carta del mandante; a los 30 el Jefe Seguridad Aérea presenta en SIGO y, sin carta, escala al Gerente Operaciones Aéreas.",
+    "close": "ninguna renovación depende de que alguien la recuerde.",
+    "state": "pending"
+   },
+   {
+    "number": 2,
+    "month": "Nov 2026",
+    "title": "Bitácora digital de vuelo",
+    "text": "Se habilita el registro por vuelo: bitácora (JEJ-GTE-CT-REG-015), check list pre-vuelo (LVE-003) e inspección (LVE-002). Cada vuelo se asocia al permiso que lo autoriza, de modo que el sistema no admita registrar un vuelo sin permiso vigente en esa fecha.",
+    "close": "completitud reportada como línea base, sin sanción interna.",
+    "state": "pending"
+   },
+   {
+    "number": 3,
+    "month": "Dic 2026",
+    "title": "Exigibilidad plena y auditoría",
+    "text": "La completitud de bitácoras pasa a indicador exigible por Centro de Costo y se contrasta la coherencia entre vuelos ejecutados y vuelos autorizados. Auditoría interna regulatoria conforme al numeral 5.4.2 del INS-096.",
+    "close": "informe anual consolidado y plan de acción 2027.",
+    "state": "pending"
+   }
+  ],
+  "lede": "Cuatro fases de un mes. Ninguna exige lo que la anterior no dejó instalado: primero se cierra la habilitación vigente, luego se automatiza su renovación, después se instala el registro de vuelo y solo al final se exige completitud.",
+  "matrix": {
+   "columns": [
+    "SEP",
+    "OCT",
+    "NOV",
+    "DIC"
+   ],
+   "rows": [
+    {
+     "label": "Permisos de vuelo vigentes por CC",
+     "emphasis": false,
+     "cells": [
+      "due",
+      "due",
+      "due",
+      "due"
+     ]
+    },
+    {
+     "label": "Renovación anticipada (carta + solicitud)",
+     "emphasis": false,
+     "cells": [
+      "info",
+      "due",
+      "due",
+      "due"
+     ]
+    },
+    {
+     "label": "Bitácora, check list e inspección por vuelo",
+     "emphasis": true,
+     "cells": [
+      "na",
+      "na",
+      "info",
+      "due"
+     ]
+    },
+    {
+     "label": "Coherencia vuelos ejecutados vs. autorizados",
+     "emphasis": false,
+     "cells": [
+      "na",
+      "na",
+      "info",
+      "due"
+     ]
+    }
+   ]
+  },
+  "concluded": false,
+  "not_started": true
+ }
+}
