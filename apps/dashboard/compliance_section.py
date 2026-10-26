@@ -40,7 +40,6 @@ from .compliance_data import (
 from .compliance_permits import (
     PERMIT_PERMISSION,
     permit_table,
-    requested_all,
     requested_sort,
     sort_context,
 )
@@ -260,7 +259,6 @@ def section_context(request):
                 tenant_ids,
                 column,
                 direction,
-                requested_all(request.GET),
             )
             context["worktable_sort"] = sort_context(request, cost_center)
         if blocks["history"]:

@@ -11950,16 +11950,6 @@ msgstr ""
 msgid "No expiry date"
 msgstr "Sin fecha de vencimiento"
 
-#, python-format
-msgid "See all (%(count)s more)"
-msgstr "Ver todas (%(count)s más)"
-
-msgid "Show only sites with a problem"
-msgstr "Ver sólo las faenas con problema"
-
-msgid "No site has a problem with its permits."
-msgstr "Ninguna faena tiene problemas con sus permisos."
-
 msgid "Permit in force"
 msgstr "Permiso vigente"
 

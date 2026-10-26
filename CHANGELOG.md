@@ -20,6 +20,8 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **«Cumplimiento»: todas las faenas siempre visibles en la tabla de permisos (`LV-374`). Sin migración ni estáticos; LLEVA `.mo`.** Se retira el truncado de `LV-367`: la tabla muestra todos los centros de costo, también los vigentes, en el mismo orden de atención; el contador del encabezado es el número de filas y desaparecen «Ver todas (N más)» y «Ver sólo las faenas con problema». `?all=1` se acepta sin efecto. Cifras y cálculo sin cambio; el detalle por faena sigue en una consulta.
+
 - **Lectura de PDF en un solo lugar (`LV-368`, fase 2).** `apps/operations/dgac_pdf.py` pasa a `apps/core/pdf_text.py` con `text_from_pdf(stream, pages=2)`; `folio_from_pdf` y `window_from_pdf` lo usan sin cambiar su comportamiento (`None` ante la duda, nunca lanzan). `dgac_pdf` queda como shim con condición de retiro en su docstring. Sin migración ni estáticos.
 ### Changed
 
