@@ -532,6 +532,21 @@ def _resolution_stats(start, end, user=None):
     }
 
 
+SNAPSHOT_COUNTERS = ("total", "valid", "expired", "due_7", "due_15", "due_30")
+
+
+def documentary_rows(centers, doc_type, today):
+    """Las filas documentales de cada faena y sus totales: `([(faena, fila)], totales)`.
+
+    Es lo que el informe y `snapshot_compliance` (LV-372, F-08) comparten: el comando necesita la
+    faena **con** su fila para guardar la FK y la empresa, y el informe sólo las filas. Los totales
+    llevan los seis contadores; `valid_pct` lo agrega quien lo muestra.
+    """
+    pairs = [(center, _cost_center_row(center, doc_type, today)) for center in centers]
+    totals = {key: sum(row[key] for _center, row in pairs) for key in SNAPSHOT_COUNTERS}
+    return pairs, totals
+
+
 def build_compliance_report(
     start=None, end=None, cost_center=None, doc_type=None, user=None
 ):
@@ -561,11 +576,8 @@ def build_compliance_report(
     if cost_center:
         centers = centers.filter(pk=cost_center.pk)
 
-    rows = [_cost_center_row(center, doc_type, today) for center in centers]
-    totals = {
-        key: sum(row[key] for row in rows)
-        for key in ("total", "valid", "expired", "due_7", "due_15", "due_30")
-    }
+    pairs, totals = documentary_rows(centers, doc_type, today)
+    rows = [row for _center, row in pairs]
     totals["valid_pct"] = (
         round(totals["valid"] * 100 / totals["total"], 1) if totals["total"] else 0.0
     )
@@ -605,6 +617,15 @@ def latest_snapshot_before(day, cost_center=None, user=None):
     `None` when no history has been recorded yet -- a fresh install, or one
     where `snapshot_compliance` has never run. Callers must degrade instead of
     failing: an empty history is the normal state on day one.
+
+    LV-372 (F-08): la fila consolidada es **una por empresa**. Para la consolidada se toman las
+    empresas que la persona ve (todas las activas si es superusuario o no hay `user`, como en los
+    jobs) y la última fecha anterior que tenga consolidadas de ellas; si esa fecha no tiene la fila
+    de **todas**, devuelve `None` y el informe recalcula el periodo anterior (el camino de siempre
+    sin historial), porque una suma parcial leería como una baja que no ocurrió. Con una sola
+    empresa devuelve su fila; con varias, la suma de los seis contadores en un `ComplianceSnapshot`
+    **sin guardar** (`valid_pct` es una propiedad). Las filas por faena no tienen el problema: la
+    faena ya viene acotada.
     """
     from apps.core.models import OperationalTenant
 
@@ -613,24 +634,34 @@ def latest_snapshot_before(day, cost_center=None, user=None):
     queryset = ComplianceSnapshot.objects.filter(
         date__lt=day, cost_center=cost_center, is_active=True
     )
-    if user is not None and not user.is_superuser:
-        # LV-372 (F-08). La fila consolidada (`cost_center=None`) la escribe `snapshot_compliance`
-        # **sumando todas las empresas** bajo el tenant por defecto: para quien no ve todas, esa
-        # suma incluye lo de otra empresa. Sólo se usa si la persona ve todas las empresas
-        # activas (hoy, la instalación de una sola); si no, el informe cae a recalcular el
-        # periodo anterior, que es el camino de siempre sin historial. Las filas por faena no
-        # tienen el problema: la faena ya viene acotada. Cerrarlo del todo es que el comando
-        # escriba una fila consolidada **por empresa** (pendiente anotado en `MASTER_PLAN.md`).
-        if cost_center is None:
-            if len(visible_tenant_ids(user)) < (
-                OperationalTenant.objects.filter(is_active=True).count()
-            ):
-                return None
-        else:
+    if cost_center is not None:
+        if user is not None:
             queryset = scope_queryset_to_visible_tenants(
                 queryset, user, "cost_center__tenant_id"
             )
-    return queryset.order_by("-date").first()
+        return queryset.order_by("-date").first()
+
+    tenant_ids = None if user is None else visible_tenant_ids(user)
+    if tenant_ids is None:
+        tenant_ids = list(
+            OperationalTenant.objects.filter(is_active=True).values_list(
+                "pk", flat=True
+            )
+        )
+    queryset = queryset.filter(tenant_id__in=tenant_ids)
+    latest = queryset.order_by("-date").values_list("date", flat=True).first()
+    if latest is None:
+        return None
+    rows = list(queryset.filter(date=latest).order_by("tenant_id"))
+    if {row.tenant_id for row in rows} != set(tenant_ids):
+        return None
+    if len(rows) == 1:
+        return rows[0]
+    return ComplianceSnapshot(
+        date=latest,
+        cost_center=None,
+        **{key: sum(getattr(row, key) for row in rows) for key in SNAPSHOT_COUNTERS},
+    )
 
 
 def totals_from_snapshot(snapshot):
