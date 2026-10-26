@@ -217,15 +217,23 @@ def test_the_sidebar_is_wide_enough_for_its_longest_row():
     )
 
 
-def test_the_folded_state_is_remembered_by_what_is_folded():
-    """Guardar los abiertos haría nacer invisible a cualquier grupo nuevo."""
+def test_the_open_groups_are_remembered_as_a_list():
+    """Reescrito A PROPOSITO en `LV-381` F3 (D1).
+
+    Antes se guardaba lo **plegado** para que un grupo nuevo naciera abierto
+    (guardar los abiertos lo haria nacer invisible). La decision D1 pide guardar
+    la **lista de abiertos** (`nav-groups-open`): el costo conocido es que un grupo
+    que se agregue en el futuro aparece plegado para quien ya tenia una
+    preferencia guardada, hasta que lo abra; se acepta porque el de la pagina
+    activa siempre se abre solo y los grupos cambian rara vez (F2 fijo cinco).
+    """
     source = APP_JS.read_text(encoding="utf-8")
 
-    assert "nav-groups-collapsed" in source
+    assert "nav-groups-open" in source
     assert "localStorage" in source
 
 
-def test_the_group_of_the_current_page_is_opened_even_if_it_was_folded():
+def test_the_group_of_the_current_page_is_opened_even_if_it_was_not_remembered():
     """Si no, la pantalla en la que estás parado no figura en el menú."""
     source = APP_JS.read_text(encoding="utf-8")
 

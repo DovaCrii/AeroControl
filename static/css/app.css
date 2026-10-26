@@ -292,6 +292,19 @@ body.is-resizing-sidebar {
 
 .nav-group-toggle[aria-expanded="false"] .nav-group-chevron { transform: rotate(-90deg); }
 
+/* LV-381 F3: el grupo de la página actual no se cierra (el JS pone aria-disabled). */
+.nav-group-toggle[aria-disabled="true"] { cursor: default; }
+.nav-group-toggle[aria-disabled="true"]:hover { color: inherit; }
+
+/* LV-381 F3: migas de las fichas; contraste medido sobre --ac-bg: 4.53 y 7.35. */
+.ac-breadcrumb .breadcrumb {
+  --bs-breadcrumb-divider: "›";
+  --bs-breadcrumb-divider-color: var(--ac-text-secondary);
+  --bs-breadcrumb-item-active-color: var(--ac-text-secondary);
+}
+.ac-breadcrumb a { color: var(--ac-primary); }
+.ac-breadcrumb a:hover { color: var(--ac-primary-hover); }
+
 .nav-group-items { display: flex; flex-direction: column; gap: 0.15rem; }
 
 .sidebar hr {

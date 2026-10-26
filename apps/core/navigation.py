@@ -21,8 +21,13 @@ sumar ni quitar destinos: son los mismos veinticuatro.
 - `staff_only`: sólo `is_staff`. El administrador técnico de Django no admite
   a nadie más, y mostrar el enlace a quien rebota al inicio de sesión es el mismo
   defecto que un 403.
-- `active`: los nombres de URL, además del propio, donde la entrada se marca
-  actual (las fichas y pantallas hijas de una lista).
+- `active_url_names`: los nombres de URL, además del propio, donde la entrada se
+  marca actual (pantallas hijas de una lista: altas, ediciones, importadores).
+- `detail_url_names` (`LV-381` F3): las **fichas** del destino. También lo marcan
+  activo, y además son las únicas pantallas con migas de pan
+  (`Grupo › Lista › ficha`, derivadas de este mismo registro): una lista y sus
+  pantallas hijas no las necesitan, la ficha sí porque ahí es donde la persona se
+  pierde (V8).
 
 ⚠️ **El guardián que importa no está acá, está en
 `test_lv381_nav_registry.py`**: por cada rol de `bootstrap_roles`, cada enlace que
@@ -48,7 +53,8 @@ class NavItem:
     permissions: tuple[str, ...] = ()
     any_permissions: tuple[str, ...] = ()
     staff_only: bool = False
-    active: tuple[str, ...] = ()
+    active_url_names: tuple[str, ...] = ()
+    detail_url_names: tuple[str, ...] = ()
     badge: bool = False  # el contador de alertas sin resolver
     dynamic_url: str = ""  # `environment`: la URL depende de las pestañas del usuario
 
@@ -65,7 +71,7 @@ class NavItem:
 
     @property
     def active_names(self) -> tuple[str, ...]:
-        return (self.url_name, *self.active)
+        return (self.url_name, *self.active_url_names, *self.detail_url_names)
 
 
 @dataclass(frozen=True)
@@ -95,6 +101,7 @@ ALERTS = NavItem(
     "alert-list",
     "overview",
     permissions=("compliance.view_alert",),
+    active_url_names=("alert-create",),
     badge=True,
 )
 
@@ -108,7 +115,7 @@ ENVIRONMENT = NavItem(
     _("Environment"),
     "environment",
     "flight",
-    active=("environment-weather", "environment-gnss", "airspace-map"),
+    active_url_names=("environment-weather", "environment-gnss", "airspace-map"),
     dynamic_url="environment",
 )
 
@@ -128,6 +135,8 @@ FLIGHT = NavGroup(
             "permission-list",
             "flight",
             permissions=("operations.view_flightpermission",),
+            active_url_names=("permission-create", "permission-update"),
+            detail_url_names=("permission-detail",),
         ),
         NavItem(
             "geo-plan-list",
@@ -135,7 +144,8 @@ FLIGHT = NavGroup(
             "geo-plan-list",
             "flight",
             permissions=("geo.view_geoplan",),
-            active=("geo-plan-detail", "geo-plan-import"),
+            active_url_names=("geo-plan-import",),
+            detail_url_names=("geo-plan-detail",),
         ),
         # LV-291: «Vuelos» volvió al menú con el registro de operaciones DGAC.
         NavItem(
@@ -144,7 +154,12 @@ FLIGHT = NavGroup(
             "record-list",
             "flight",
             permissions=("operations.view_flightrecord",),
-            active=("record-detail", "permission-operations"),
+            active_url_names=(
+                "permission-operations",
+                "permission-operations-pick",
+                "record-create",
+            ),
+            detail_url_names=("record-detail",),
         ),
         ENVIRONMENT,
     ),
@@ -162,7 +177,7 @@ COMPLIANCE = NavGroup(
             "monthly-review",
             "compliance",
             permissions=("compliance.view_monthlycompliancereview",),
-            active=("operational-records",),
+            active_url_names=("operational-records",),
         ),
         NavItem(
             "nonconformity-list",
@@ -170,6 +185,8 @@ COMPLIANCE = NavGroup(
             "nonconformity-list",
             "compliance",
             permissions=("compliance.view_nonconformity",),
+            active_url_names=("nonconformity-create", "nonconformity-update"),
+            detail_url_names=("nonconformity-detail",),
         ),
         NavItem(
             "company-documents",
@@ -225,6 +242,8 @@ FLEET = NavGroup(
             "aircraft-list",
             "fleet",
             permissions=("registry.view_aircraft",),
+            active_url_names=("aircraft-create", "aircraft-update", "aircraft-import"),
+            detail_url_names=("aircraft-detail",),
         ),
         NavItem(
             "battery-list",
@@ -239,6 +258,8 @@ FLEET = NavGroup(
             "maintenance-list",
             "fleet",
             permissions=("maintenance.view_maintenancerecord",),
+            active_url_names=("maintenance-create", "history-list"),
+            detail_url_names=("maintenance-detail",),
         ),
         NavItem(
             "operator-list",
@@ -246,6 +267,8 @@ FLEET = NavGroup(
             "operator-list",
             "fleet",
             permissions=("registry.view_operator",),
+            active_url_names=("operator-create", "operator-update", "operator-import"),
+            detail_url_names=("operator-detail",),
         ),
         # LV-158: la prueba de conocimientos, para quien la rinde (`add_`).
         NavItem(
@@ -254,6 +277,8 @@ FLEET = NavGroup(
             "assessment-take",
             "fleet",
             permissions=("registry.add_knowledgeassessment",),
+            active_url_names=("assessment-start",),
+            detail_url_names=("assessment-detail",),
         ),
     ),
 )
@@ -270,6 +295,12 @@ SITES = NavGroup(
             "costcenter-list",
             "sites",
             permissions=("registry.view_costcenter",),
+            active_url_names=(
+                "costcenter-create",
+                "costcenter-update",
+                "costcenter-import",
+            ),
+            detail_url_names=("costcenter-detail",),
         ),
         NavItem(
             "operatorassignment-list",
@@ -277,6 +308,8 @@ SITES = NavGroup(
             "operatorassignment-list",
             "sites",
             permissions=("registry.view_operatorassignment",),
+            active_url_names=("operatorassignment-create", "operatorassignment-update"),
+            detail_url_names=("operatorassignment-detail",),
         ),
         NavItem(
             "aircraftassignment-list",
@@ -284,6 +317,8 @@ SITES = NavGroup(
             "aircraftassignment-list",
             "sites",
             permissions=("registry.view_aircraftassignment",),
+            active_url_names=("aircraftassignment-create", "aircraftassignment-update"),
+            detail_url_names=("aircraftassignment-detail",),
         ),
         NavItem(
             "resourcemovementlog-list",
@@ -442,6 +477,25 @@ class ResolvedItem:
     section: str
     active: bool
     badge: bool
+    ficha: bool = False  # la página actual es una ficha de este destino
+
+    @property
+    def aria_current(self) -> str:
+        """`page` si es esta pantalla; `true` si es una ficha **de** este destino.
+
+        La ficha ya lleva su propio `aria-current="page"` (el último elemento de
+        las migas); dos «página actual» en una pantalla confunden a un lector de
+        pantalla, así que el menú sólo dice que el destino contiene a la actual.
+        """
+        if not self.active:
+            return ""
+        return "true" if self.ficha else "page"
+
+
+@dataclass(frozen=True)
+class Crumb:
+    label: object
+    url: str = ""  # vacío: el grupo no es una página
 
 
 @dataclass(frozen=True)
@@ -456,6 +510,23 @@ class SidebarMenu:
     top: tuple[ResolvedItem, ...]
     groups: tuple[ResolvedGroup, ...]
     footer: tuple[ResolvedItem, ...]
+
+    @property
+    def breadcrumbs(self) -> tuple[Crumb, ...]:
+        """`Grupo › Lista` de la ficha actual; vacío si la página no es una ficha.
+
+        Salen del **mismo** registro que el menú: no hay una segunda tabla de
+        migas que se desincronice. Falta el último eslabón (la ficha misma): lo
+        pone la plantilla con el objeto que la vista ya tiene.
+        """
+        for group in self.groups:
+            for item in group.items:
+                if item.ficha:
+                    return (Crumb(group.label), Crumb(item.label, item.url))
+        for item in (*self.top, *self.footer):
+            if item.ficha:
+                return (Crumb(item.label, item.url),)
+        return ()
 
 
 def _environment_url(user) -> str:
@@ -483,6 +554,7 @@ def _resolve(item: NavItem, user, url_name: str) -> ResolvedItem | None:
         section=item.section,
         active=url_name in item.active_names,
         badge=item.badge,
+        ficha=url_name in item.detail_url_names,
     )
 
 

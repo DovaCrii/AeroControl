@@ -1,0 +1,20 @@
+{% load i18n %}{% comment %}`LV-381` F3 (V8): las migas de pan, **sólo en fichas**.
+
+`Grupo › Lista › ficha`. Los dos primeros eslabones salen del registro de
+navegación (`SidebarMenu.breadcrumbs`, el mismo que dibuja el menú, así que no
+hay una segunda tabla que se desincronice); el último es el objeto que la vista
+ya trae (`object`) y lleva `aria-current="page"`. Una lista o una pantalla hija
+no tienen migas: el menú ya dice dónde están.
+
+El grupo no es una página, así que no es un enlace.{% endcomment %}
+{% if sidebar_menu.breadcrumbs %}
+<nav class="ac-breadcrumb d-print-none" aria-label="{% translate 'Breadcrumb' %}">
+  <ol class="breadcrumb small mb-3">
+    {% for crumb in sidebar_menu.breadcrumbs %}
+    <li class="breadcrumb-item">{% if crumb.url %}<a href="{{ crumb.url }}">{{ crumb.label }}</a>{% else %}{{ crumb.label }}{% endif %}</li>
+    {% endfor %}
+    {% translate "Details" as fallback_label %}
+    <li class="breadcrumb-item active" aria-current="page">{{ object|default:fallback_label|truncatechars:60 }}</li>
+  </ol>
+</nav>
+{% endif %}

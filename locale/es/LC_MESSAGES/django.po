@@ -12646,6 +12646,14 @@ msgstr ""
 "Formato del documento: v%(before)s → v%(now)s. Algunas cifras cambian por "
 "cómo se cuentan y no sólo por lo ocurrido."
 
+#: templates/core/_breadcrumbs.html
+msgid "Breadcrumb"
+msgstr "Ruta"
+
+#: templates/core/_breadcrumbs.html
+msgid "Details"
+msgstr "Detalle"
+
 #~ msgid "Credential file"
 #~ msgstr "Credencial adjunta"
 
