@@ -414,7 +414,27 @@ class FlightPermissionCreate(OCreate):
             initial["aircraft_fleet"] = list(
                 renewed.aircraft_fleet.values_list("pk", flat=True)
             )
+        elif self.request.method == "GET":
+            # LV-376 (fase 1a): «Nuevo permiso» desde la fila de una faena de Cumplimiento
+            # (`?cost_center=<pk>`). Sólo se precarga lo que el formulario OFRECE (su propio
+            # queryset, activo y dentro de los tenants de la persona): una faena de otra
+            # empresa, archivada, inexistente o un valor que no es un UUID se ignora sin
+            # error y el formulario sale en blanco, como siempre.
+            centre = self._preselected_cost_center()
+            if centre is not None:
+                initial["cost_center"] = centre.pk
         return initial
+
+    def _preselected_cost_center(self):
+        raw = self.request.GET.get("cost_center")
+        if not raw:
+            return None
+        offered = self.form_class.base_fields["cost_center"].queryset.filter(
+            is_active=True
+        )
+        return lookup_by_pk(
+            scope_queryset_to_tenant(offered, self.request.user, "tenant_id"), raw
+        )
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
