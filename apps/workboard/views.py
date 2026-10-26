@@ -17,9 +17,11 @@ from apps.core.views import (
     ModelPermissionRequiredMixin,
     ModelViewPermissionRequiredMixin,
     SearchMixin,
+    TenantScopedChoicesMixin,
 )
 from apps.core.audit import set_audit_context
 from apps.core.exports import neutralize
+from apps.core.tenancy import scope_queryset_to_tenant
 from apps.registry.models import Operator
 from .models import (
     KanbanBoard,
@@ -79,7 +81,7 @@ class WList(CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListV
         return c
 
 
-class WCreate(ModelPermissionRequiredMixin, CreateView):
+class WCreate(TenantScopedChoicesMixin, ModelPermissionRequiredMixin, CreateView):
     permission_action = "add"
     template_name = "generic/form.html"
     success_url_name = None
@@ -200,16 +202,21 @@ class KanbanTaskListView(ModelViewPermissionRequiredMixin, ListView):
         context.update(
             {
                 "boards": accessible_boards(self.request.user),
-                "operators": Operator.objects.filter(is_active=True).order_by(
-                    "full_name"
-                ),
+                "operators": scope_queryset_to_tenant(
+                    Operator.objects.filter(is_active=True), self.request.user
+                ).order_by("full_name"),
                 "priorities": KanbanTask.PRIORITIES,
                 "states": KanbanStage.STATUS_TYPES,
                 "labels": KanbanLabel.objects.filter(
-                    board_id=self.request.GET.get("board"), is_active=True
+                    board_id=self.request.GET.get("board"),
+                    board__in=accessible_boards(self.request.user).values("pk"),
+                    is_active=True,
                 )
                 if self.request.GET.get("board")
-                else KanbanLabel.objects.filter(is_active=True),
+                else KanbanLabel.objects.filter(
+                    board__in=accessible_boards(self.request.user).values("pk"),
+                    is_active=True,
+                ),
                 "filter_params": self.request.GET,
                 "group_by": group_by,
                 "grouped_tasks": self._grouped_tasks(context["tasks"], group_by)
@@ -398,7 +405,7 @@ class TaskDetailView(ModelViewPermissionRequiredMixin, View):
         )
 
 
-class TaskEditView(ModelPermissionRequiredMixin, UpdateView):
+class TaskEditView(TenantScopedChoicesMixin, ModelPermissionRequiredMixin, UpdateView):
     model = KanbanTask
     form_class = KanbanTaskForm
     template_name = "workboard/_task_form.html"
@@ -442,9 +449,8 @@ class ChecklistItemCreate(ModelPermissionRequiredMixin, View):
     permission_action = "add"
 
     def post(self, request, pk):
-        task = get_object_or_404(
-            KanbanTask, pk=pk, is_active=True, board__is_active=True
-        )
+        # LV-372 (F-08): sólo tareas de tableros que la persona puede ver; la de otra empresa es 404.
+        task = get_object_or_404(visible_tasks_for_user(request.user), pk=pk)
         if not user_can_edit_board(request.user, task.board):
             return HttpResponse(status=403)
         form = KanbanChecklistItemForm(request.POST)
@@ -469,7 +475,13 @@ class ChecklistItemToggle(ModelPermissionRequiredMixin, View):
     permission_action = "change"
 
     def post(self, request, pk):
-        item = get_object_or_404(KanbanChecklistItem, pk=pk, task__is_active=True)
+        item = get_object_or_404(
+            KanbanChecklistItem.objects.filter(
+                task__in=visible_tasks_for_user(request.user).values("pk")
+            ),
+            pk=pk,
+            task__is_active=True,
+        )
         if not user_can_edit_board(request.user, item.task.board):
             return HttpResponse(status=403)
         item.is_completed = not item.is_completed
@@ -541,7 +553,9 @@ class KanbanBoardView(ModelViewPermissionRequiredMixin, TemplateView):
                 # it needs its own view permission rather than riding along with
                 # access to the board.
                 "operators": (
-                    Operator.objects.filter(is_active=True).order_by("full_name")
+                    scope_queryset_to_tenant(
+                        Operator.objects.filter(is_active=True), self.request.user
+                    ).order_by("full_name")
                     if self.request.user.has_perm("registry.view_operator")
                     else Operator.objects.none()
                 ),
@@ -599,7 +613,7 @@ class BoardPartialView(ModelViewPermissionRequiredMixin, View):
         return response
 
 
-class StageCreate(ModelPermissionRequiredMixin, CreateView):
+class StageCreate(TenantScopedChoicesMixin, ModelPermissionRequiredMixin, CreateView):
     """Shadows the generated StageCreate (this class is defined later, and
     urls.py routes it), so it must repeat WCreate's board-membership check --
     the generated variant had it and this one silently dropped it."""
@@ -637,7 +651,7 @@ class BoardArchiveView(ModelPermissionRequiredMixin, View):
     permission_action = "change"
 
     def post(self, request, pk):
-        board = get_object_or_404(KanbanBoard, pk=pk, is_active=True)
+        board = get_object_or_404(accessible_boards(request.user), pk=pk)
         if not user_can_edit_board(request.user, board):
             return HttpResponse(status=403)
         board.is_active = False
@@ -744,12 +758,15 @@ class QuickTaskCreate(ModelPermissionRequiredMixin, View):
                 pk=stage_id,
                 is_active=True,
                 board__is_active=True,
+                board__in=accessible_boards(request.user).values("pk"),
             ).first()
         except (ValueError, TypeError, ValidationError):
             stage = None
         if stage is None:
             return HttpResponse(status=400)
-        operators = Operator.objects.filter(is_active=True).order_by("full_name")
+        operators = scope_queryset_to_tenant(
+            Operator.objects.filter(is_active=True), request.user
+        ).order_by("full_name")
         return render(
             request,
             "workboard/_quick_form.html",
@@ -774,6 +791,7 @@ class QuickTaskCreate(ModelPermissionRequiredMixin, View):
                 pk=stage_id,
                 is_active=True,
                 board__is_active=True,
+                board__in=accessible_boards(request.user).values("pk"),
             ).first()
         except (ValueError, TypeError, ValidationError):
             stage = None
@@ -783,9 +801,13 @@ class QuickTaskCreate(ModelPermissionRequiredMixin, View):
             return HttpResponse(status=403)
         if assigned_to:
             try:
-                operator = Operator.objects.filter(
-                    pk=assigned_to, is_active=True
-                ).first()
+                operator = (
+                    scope_queryset_to_tenant(
+                        Operator.objects.filter(is_active=True), request.user
+                    )
+                    .filter(pk=assigned_to)
+                    .first()
+                )
             except (ValueError, TypeError, ValidationError):
                 return HttpResponse(status=400)
             if operator is None:

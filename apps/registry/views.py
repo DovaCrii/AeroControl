@@ -61,6 +61,28 @@ from .selectors import filter_by_credential, filter_by_insurance
 from .services import bulk_assign_aircraft, bulk_assign_operators
 
 
+# LV-372 (F-08): ruta al tenant de los modelos del padrón que **no** lo llevan directo. Los que sí
+# (CostCenter, Aircraft, Operator, Battery) usan su propio `tenant_id`; un modelo que no figura acá ni
+# tiene `tenant` es un catálogo global (tipos de habilitación, aeródromos) y no se acota.
+REGISTRY_TENANT_PATHS = {
+    "assignment": "cost_center__tenant_id",
+    "operatorassignment": "cost_center__tenant_id",
+    "aircraftassignment": "cost_center__tenant_id",
+    "qualification": "operator__tenant_id",
+    "knowledgeassessment": "operator__tenant_id",
+}
+
+
+def registry_tenant_path(model):
+    """Camino ORM del modelo del padrón a su tenant, o `None` si es un catálogo global."""
+    path = REGISTRY_TENANT_PATHS.get(model._meta.model_name)
+    if path:
+        return path
+    if any(field.name == "tenant" for field in model._meta.fields):
+        return "tenant_id"
+    return None
+
+
 class RegistryList(
     CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListView
 ):
@@ -86,6 +108,12 @@ class RegistryList(
             capfirst(self.model._meta.verbose_name_plural),
         )
         return context
+
+    @property
+    def tenant_scope(self):
+        # LV-372: acotar por empresa **toda** lista del padrón (búsqueda, filtros, CSV y parciales
+        # htmx incluidos) en `SearchMixin.get_queryset`, no sólo las que se acordaban de hacerlo.
+        return registry_tenant_path(self.model)
 
     def scope_by_tenant(self, queryset, field="tenant_id"):
         """T3.2 Fase 2: restrict a list to the user's tenant(s).
@@ -202,7 +230,11 @@ class RegistryArchive(ModelPermissionRequiredMixin, View):
         from apps.core.tenancy import scope_queryset_to_tenant
 
         obj = get_object_or_404(
-            scope_queryset_to_tenant(self.model._default_manager.all(), request.user),
+            scope_queryset_to_tenant(
+                self.model._default_manager.all(),
+                request.user,
+                registry_tenant_path(self.model),
+            ),
             pk=pk,
             is_active=True,
         )
@@ -254,7 +286,11 @@ class RegistryRestore(ModelPermissionRequiredMixin, View):
         from apps.core.tenancy import scope_queryset_to_tenant
 
         obj = get_object_or_404(
-            scope_queryset_to_tenant(self.model._default_manager.all(), request.user),
+            scope_queryset_to_tenant(
+                self.model._default_manager.all(),
+                request.user,
+                registry_tenant_path(self.model),
+            ),
             pk=pk,
             is_active=False,
         )
@@ -279,7 +315,13 @@ class CostCenterArchive(RegistryArchive):
     model = CostCenter
 
     def post(self, request, pk):
-        obj = get_object_or_404(CostCenter, pk=pk, is_active=True)
+        from apps.core.tenancy import scope_queryset_to_tenant
+
+        obj = get_object_or_404(
+            scope_queryset_to_tenant(CostCenter.objects.all(), request.user),
+            pk=pk,
+            is_active=True,
+        )
         dependents = {
             "operators": obj.operators.filter(is_active=True).count(),
             "aircraft": obj.aircraft.filter(is_active=True).count(),
@@ -317,8 +359,14 @@ class KnowledgeAssessmentArchive(RegistryArchive):
     model = KnowledgeAssessment
 
     def post(self, request, pk):
+        from apps.core.tenancy import scope_queryset_to_tenant
+
         obj = get_object_or_404(
-            KnowledgeAssessment.objects.select_related("operator"),
+            scope_queryset_to_tenant(
+                KnowledgeAssessment.objects.select_related("operator"),
+                request.user,
+                registry_tenant_path(KnowledgeAssessment),
+            ),
             pk=pk,
             is_active=True,
         )
@@ -1028,6 +1076,8 @@ class AircraftInsuranceTransition(StatusTransitionView):
 
     model = Aircraft
     status_field = "insurance_status"
+    # LV-372 (F-08): la aeronave de otra empresa es 404.
+    tenant_scope = "tenant_id"
 
 
 class AircraftInsurancePending(AircraftInsuranceTransition):
@@ -1063,7 +1113,7 @@ class AircraftInsuranceActive(AircraftInsuranceTransition):
     success_message = gettext_lazy("Insurance recorded as authorized.")
 
     def post(self, request, pk):
-        aircraft = get_object_or_404(Aircraft, pk=pk, is_active=True)
+        aircraft = self.get_object(pk)
         if aircraft.insurance_expiry is None:
             messages.error(
                 request,
@@ -1153,6 +1203,9 @@ class AssignmentList(RegistryList):
         "aircraft__model",
         "cost_center__code",
     ]
+    # Acota por su cuenta (abajo): una asignación heredada sin faena cae al tenant de su operador,
+    # y el acotado genérico por faena la dejaría fuera (LV-372).
+    tenant_scope = None
 
     def get_queryset(self):
         from django.db.models import Q

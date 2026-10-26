@@ -24,6 +24,10 @@ from .forms import MaintenanceCompletionForm, MaintenanceRecordForm
 from .models import MaintenanceHistory, MaintenanceRecord
 
 
+# LV-372 (F-08): el tenant de una mantención es el de su aeronave.
+MAINTENANCE_TENANT_PATH = "aircraft__tenant_id"
+
+
 class MList(CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListView):
     template_name = "generic/list.html"
     context_object_name = "objects"
@@ -63,6 +67,7 @@ class MaintenanceRecordList(MList):
     }
     search_fields = ["aircraft__registration", "description", "performed_by"]
     cost_center_filter = None
+    tenant_scope = MAINTENANCE_TENANT_PATH
 
     def get_queryset(self):
         # LV-252: `select_related("aircraft")` porque cada fila dibuja su aeronave:
@@ -126,7 +131,7 @@ class MaintenanceRecordDetail(
     model = MaintenanceRecord
     template_name = "maintenance/record_detail.html"
     context_object_name = "record"
-    tenant_path = "aircraft__tenant_id"
+    tenant_path = MAINTENANCE_TENANT_PATH
 
     def get_queryset(self):
         return super().get_queryset().filter(is_active=True).select_related("aircraft")
@@ -160,6 +165,7 @@ class MaintenanceRecordDetail(
 
 class MaintenanceStart(StatusTransitionView):
     model = MaintenanceRecord
+    tenant_scope = MAINTENANCE_TENANT_PATH
     target_status = "in_progress"
     valid_from_statuses = ["pending"]
     success_message = gettext_lazy("Maintenance started.")
@@ -171,6 +177,7 @@ class MaintenanceSend(StatusTransitionView):
     Aircraft.current_location/status side effect this triggers."""
 
     model = MaintenanceRecord
+    tenant_scope = MAINTENANCE_TENANT_PATH
     target_status = "sent"
     valid_from_statuses = ["pending"]
     success_message = gettext_lazy("Aircraft sent to the workshop.")
@@ -178,6 +185,7 @@ class MaintenanceSend(StatusTransitionView):
 
 class MaintenanceArriveAtWorkshop(StatusTransitionView):
     model = MaintenanceRecord
+    tenant_scope = MAINTENANCE_TENANT_PATH
     target_status = "at_workshop"
     valid_from_statuses = ["sent"]
     success_message = gettext_lazy("Aircraft arrived at the workshop.")
@@ -185,6 +193,7 @@ class MaintenanceArriveAtWorkshop(StatusTransitionView):
 
 class MaintenanceFinish(StatusTransitionView):
     model = MaintenanceRecord
+    tenant_scope = MAINTENANCE_TENANT_PATH
     target_status = "finished"
     valid_from_statuses = ["at_workshop"]
     success_message = gettext_lazy("Repair finished at the workshop.")
@@ -192,6 +201,7 @@ class MaintenanceFinish(StatusTransitionView):
 
 class MaintenanceDepart(StatusTransitionView):
     model = MaintenanceRecord
+    tenant_scope = MAINTENANCE_TENANT_PATH
     target_status = "in_transit"
     valid_from_statuses = ["finished"]
     success_message = gettext_lazy("Aircraft in transit back to headquarters.")
@@ -199,6 +209,7 @@ class MaintenanceDepart(StatusTransitionView):
 
 class MaintenanceComplete(StatusTransitionView):
     model = MaintenanceRecord
+    tenant_scope = MAINTENANCE_TENANT_PATH
     target_status = "completed"
     # R5.1: valid from either path's last working state -- in_progress (the
     # short in-house path) or in_transit (arrived home from the workshop
@@ -211,7 +222,7 @@ class MaintenanceComplete(StatusTransitionView):
     def post(self, request, pk):
         record = get_object_or_404(
             scope_queryset_to_tenant(
-                self.model._default_manager.all(), request.user, "aircraft__tenant_id"
+                self.model._default_manager.all(), request.user, MAINTENANCE_TENANT_PATH
             ),
             pk=pk,
             is_active=True,
@@ -297,7 +308,9 @@ class AircraftReportIncident(ModelPermissionRequiredMixin, View):
 
 
 MaintenanceHistoryList = type(
-    "MaintenanceHistoryList", (MList,), {"model": MaintenanceHistory}
+    "MaintenanceHistoryList",
+    (MList,),
+    {"model": MaintenanceHistory, "tenant_scope": "record__aircraft__tenant_id"},
 )
 MaintenanceHistoryCreate = type(
     "MaintenanceHistoryCreate", (MCreate,), {"model": MaintenanceHistory}
