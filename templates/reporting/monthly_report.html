@@ -22,7 +22,7 @@ con siete páginas para un informe de cinco.{% endcomment %}
     <p class="page-description mb-0">{% translate "Monthly RPA reportability report to the DGAC." %}</p>
   </div>
   <div class="d-flex gap-2 flex-wrap align-items-end">
-    <button type="button" class="btn btn-primary" data-print data-print-title="{{ payload.meta.code }}"
+    <button type="button" class="btn btn-primary" data-print data-print-title="{{ payload.meta.code }}{% if payload.meta.early_cutoff %} (corte {{ cutoff_date|date:'d-m' }}){% endif %}"
             title="{% translate 'Opens the print dialog: choose “Save as PDF” as the destination.' %}">{% translate "Download PDF" %}</button>
     <form method="get" class="d-flex gap-2 align-items-end">
       <div>
@@ -39,6 +39,10 @@ con siete páginas para un informe de cinco.{% endcomment %}
     permiso que la narrativa y fuera del `{% if run %}`: los textos fijos no son de
     un informe en particular, y se ajustan antes de congelar el próximo.{% endcomment %}
     {% if perms.reporting.change_reportrun %}<a class="btn btn-outline-secondary" href="{% url 'monthly-report-template' %}">{% translate "Report texts" %}</a>{% endif %}
+    {% comment %}LV-375: congelar el mes en curso con corte anticipado. Va a una
+    pantalla con el motivo y la confirmación, no a un POST directo: es una
+    decisión que se justifica por escrito.{% endcomment %}
+    {% if can_issue_early %}<a class="btn btn-outline-warning" href="{% url 'monthly-report-early' %}?period={{ period_date|date:'Y-m' }}">{% translate "Issue with early cutoff" %}</a>{% endif %}
     {% comment %}LV-227: escribir la narrativa necesita un informe donde
     guardarla, y congelar el borrador es un acto explícito — no un efecto
     secundario de teclear el primer hallazgo.{% endcomment %}
@@ -91,6 +95,14 @@ hoy.{% endcomment %}
   <span class="ms-1">{% blocktranslate count counter=missing_fields|length %}{{ counter }} field had no data at the cutoff.{% plural %}{{ counter }} fields had no data at the cutoff.{% endblocktranslate %}</span>
   {% endif %}
 </div>
+
+{% comment %}LV-375: el aviso de pantalla del corte anticipado, con su motivo. El
+motivo **no** va al papel: `d-print-none`, y el papel dice sólo «corte anticipado».{% endcomment %}
+{% if payload.meta.early_cutoff %}
+<div class="alert alert-warning d-print-none" role="status">
+  {% blocktranslate with cutoff=cutoff_date|date:"d-m" reason=payload.meta.early_reason %}Report with an early cutoff on {{ cutoff }} · reason: {{ reason }}{% endblocktranslate %}
+</div>
+{% endif %}
 
 {% comment %}LV-265: lo que conviene mirar antes de emitir. Sólo en pantalla
 (`d-print-none`): son avisos para quien emite, no parte del documento. No bloquean

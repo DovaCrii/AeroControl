@@ -65,7 +65,12 @@ class Command(BaseCommand):
             latest = (
                 ReportRun.objects.filter(period=period).order_by("-revision").first()
             )
-            if latest and not force:
+            # LV-375: un informe de corte anticipado cuyo mes ya cerró **no** es
+            # «ya existe»: octubre emitido el día 26 con datos al 26 tiene que
+            # recibir su revisión de cierre el día 1, sin que nadie recuerde
+            # `--force`. Es el riesgo grave de la vía anticipada.
+            closing_early = bool(latest and latest.closes_early_cutoff)
+            if latest and not force and not closing_early:
                 # **No es un error y no sale con código distinto de cero**: es el
                 # resultado normal de un timer que ya corrió. Fallar acá haría
                 # que el scheduler marcara en rojo la noche en que todo salió
@@ -81,7 +86,15 @@ class Command(BaseCommand):
 
             if dry_run:
                 what = f"revisión {latest.revision + 1}" if latest else "revisión 0"
-                message = f"[dry-run] Se congelaría {period:%Y-%m} como {what}."
+                if closing_early:
+                    cut = latest.payload["meta"]["cutoff"]
+                    message = (
+                        f"[dry-run] Se emitiría la revisión de cierre de "
+                        f"{period:%Y-%m} como {what}; reemplaza a la de corte "
+                        f"anticipado ({cut})."
+                    )
+                else:
+                    message = f"[dry-run] Se congelaría {period:%Y-%m} como {what}."
                 run["summary"] = message
                 self.stdout.write(message)
                 return
@@ -112,6 +125,11 @@ class Command(BaseCommand):
                 f"{missing} campo(s) sin dato al corte "
                 f"({report.get_completeness_display()})."
             )
+            if closing_early:
+                message += (
+                    f" Reemplaza a la de corte anticipado "
+                    f"({report.payload['meta']['replaces_early_cutoff']})."
+                )
             run["summary"] = message
             logger.info("monthly_report_frozen", extra={"code": report.code})
             self.stdout.write(self.style.SUCCESS(message))

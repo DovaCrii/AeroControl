@@ -44,7 +44,7 @@ def leaf(value, source, cutoff):
     return {"value": value, "source": source, "cutoff": cutoff.isoformat()}
 
 
-def collect_meta(period, cutoff):
+def collect_meta(period, cutoff, early=False, early_reason=""):
     start, end = month_bounds(period)
     return {
         "period": f"{period:%Y-%m}",
@@ -57,6 +57,12 @@ def collect_meta(period, cutoff):
         # congeló a mitad de mes, aunque se lea en diciembre.
         "in_progress": cutoff < end,
         "days_remaining": max((end - cutoff).days, 0),
+        # LV-375: un informe emitido **a propósito** con el mes abierto. Es distinto
+        # de `in_progress`, que también es cierto para una vista previa: acá una
+        # persona lo congeló y respondió por el motivo. Sólo se escribe la llave si
+        # es anticipado, para que los informes cerrados no cambien ni un byte. El
+        # motivo queda en el payload (auditoría) y **no se imprime**.
+        **({"early_cutoff": True, "early_reason": early_reason} if early else {}),
         # LV-249: los textos de la portada salen de los **bloques editables**
         # (`ReportTemplate`) y no de literales de este archivo. Siguen yendo al
         # payload —no a la plantilla— por la razón que `R3` dejó escrita acá: el
@@ -675,7 +681,7 @@ def find_missing(node, path=""):
     return missing
 
 
-def build(period, cutoff=None):
+def build(period, cutoff=None, early=False, early_reason=""):
     """El payload del período, listo para congelar en un `ReportRun`.
 
     `cutoff` por defecto es el último día del mes: un informe mensual describe el
@@ -705,7 +711,7 @@ def build(period, cutoff=None):
     cost_centres = collect_cost_centres(cutoff)
     permits = collect_permits(cutoff)
     payload = {
-        "meta": collect_meta(period, cutoff),
+        "meta": collect_meta(period, cutoff, early, early_reason),
         "kpis": collect_kpis(cutoff, cost_centres, permits),
         "cost_centres": cost_centres,
         "permits": permits,
