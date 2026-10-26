@@ -34,7 +34,6 @@ from apps.reporting.builder import build
 from apps.reporting.groups import permit_groups, strip_marks
 from apps.reporting.models import ReportRun
 from apps.reporting.pagination import (
-    V2_FOLIOS_PER_LINE,
     closing_px_v2,
     group_px,
     observation_px,
@@ -301,14 +300,22 @@ class TestThePaperReadsWithoutColour:
         assert "No se renueva: cerrar el permiso o dejarlo vencer." in html
         assert "Contrato terminado" in html and "No vuela" in html
         assert "Vencidos sin cerrar" in html
-        assert html.count(">En proceso<") == 1
+        # «En proceso» es sólo de lo que está en trámite (página 3 y anexo), nunca de un
+        # aprobado vencido.
+        waiting = html.split("Solicitudes en trámite", 1)[1].split("rpt2-block", 1)[0]
+        assert "En proceso" in waiting and "CC902" not in waiting
+        assert html.count(">En proceso<") == 2  # el bloque y la fila del anexo
 
-    def test_the_dgac_number_is_still_on_paper(self, client, payload):
-        """Hasta que el anexo de registro lo traiga, la hoja 3 lo dice junto al folio."""
+    def test_the_dgac_number_lives_in_the_annex_next_to_its_folio(
+        self, client, payload
+    ):
+        """La sección 2 agrupa y ya no lo lleva: el anexo «registro permiso a permiso»
+        lo recupera, fila por fila, junto al folio."""
         html = _page(_reader(client), payload).content.decode()
-        number = next(r["dgac_number"] for r in payload["permits"] if r["dgac_number"])
+        row = next(r for r in payload["permits"] if r["dgac_number"])
 
-        assert f"({number})" in html
+        annex = html.split("Registro permiso a permiso", 1)[1]
+        assert row["folio"] in annex and row["dgac_number"] in annex
 
 
 def _load_contrast():
@@ -367,6 +374,21 @@ class TestTheContrastIsCalculated:
 
         assert _ratio(contrast, tokens[mark], tokens[zone]) >= 3
 
+    @pytest.mark.parametrize("ink", ["crit-ink", "warn-ink", "ok-ink", "navy"])
+    def test_white_text_over_the_bars_and_headers_reaches_four_and_a_half(self, ink):
+        """La barra apilada de la cobertura imprime su cifra en blanco sobre la tinta, y
+        los encabezados de tabla son blancos sobre el azul."""
+        contrast, tokens = _load_contrast(), _tokens()
+
+        assert _ratio(contrast, self.WHITE, tokens[ink]) >= 4.5
+
+    @pytest.mark.parametrize("ink", ["crit-ink", "warn-ink", "ok-ink"])
+    def test_the_progress_bars_read_over_their_track(self, ink):
+        """Las barras de «lo próximo que vence» sobre su carril gris (≥3)."""
+        contrast, tokens = _load_contrast(), _tokens()
+
+        assert _ratio(contrast, tokens[ink], tokens["hair"]) >= 3
+
     def test_the_axis_and_ticks_read_over_every_zone(self):
         contrast, tokens = _load_contrast(), _tokens()
 
@@ -384,13 +406,24 @@ class TestThePaginationUsesMeasuredConstants:
     def test_a_one_line_group_costs_the_measured_pitch(self, groups):
         group = next(g for g in groups["operating"] if g["code"] == "CC902")
 
-        assert group_px(group) == 74
+        assert group_px(group) == 53
 
-    def test_folio_lines_beyond_the_first_cost_a_line_each(self, groups):
+    def test_detail_lines_beyond_the_first_cost_a_line_each(self, groups):
+        """Siete folios con su aeronave no caben en un renglón de detalle."""
         north = next(g for g in groups["operating"] if g["code"] == "CC901")
 
-        extra = -(-7 // V2_FOLIOS_PER_LINE) - 1
-        assert group_px(north) == 74 + 16 * extra
+        assert group_px(north) == 53 + 16
+
+    def test_a_centre_with_sublines_costs_its_head_plus_each_subline(self, case):
+        from apps.reporting.v2_case import _permit
+
+        _permit(case["CC902"], start=date(2026, 9, 5), end=date(2027, 2, 1))
+        payload = build(PERIOD, cutoff=CUTOFF)[0]
+        group = next(
+            g for g in permit_groups(payload)["operating"] if g["code"] == "CC902"
+        )
+
+        assert group_px(group) == 36 + 42 * 2
 
     def test_the_first_group_falls_below_the_strip(self):
         assert v2_first_top_px(104) == 225 + 104 + 11

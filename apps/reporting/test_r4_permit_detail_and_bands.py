@@ -342,7 +342,9 @@ class TestItAllReachesThePage:
         assert permit.internal_folio in body
         assert "5808" in body
         assert "Axel Lagos Paz" in body
-        assert "rpt-sev-critical" in body
+        # LV-378: la vista previa sale en diseño 2, donde la banda es una pastilla
+        # con símbolo y palabra (`rpt2-chip-critical`) y no la celda `rpt-sev-*`.
+        assert "rpt2-chip-critical" in body
         # Y el vocabulario viejo no vuelve por la puerta de atrás.
         assert "rpt-est-none" not in body
 

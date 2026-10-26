@@ -152,3 +152,25 @@ def strip_marks(groups):
         key=lambda mark: (mark[0], mark[2]),
     )
     return marks, beyond
+
+
+def register_rows(payload):
+    """Las filas del anexo «registro permiso a permiso», en el orden del documento.
+
+    Primero los vigentes (por faena y folio, para encontrar un folio donde lo dice la
+    sección 2), después los que esperan a la DGAC y al final los aprobados vencidos sin
+    cerrar. Es el único lugar del papel que lista **todos** los permisos uno por uno:
+    la sección 2 los agrupa por faena.
+    """
+    permits = payload.get("permits") or []
+    in_force = sorted(
+        (row for row in permits if row.get("in_force")),
+        key=lambda row: (row["cost_centre"], row["folio"]),
+    )
+    awaiting = [row for row in permits if row.get("status") == "requested"]
+    lapsed = [
+        row
+        for row in permits
+        if not row.get("in_force") and row.get("status") == "approved"
+    ]
+    return in_force + awaiting + lapsed

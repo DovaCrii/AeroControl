@@ -52,8 +52,10 @@ en el navegador, y la invariante I8 comprueba que la suma de los grupos da el to
         </div>
         {% if group.single %}
         {% with line=group.lines.0 %}
-        <div class="rpt2-sub">Aeronaves: {% for tail in line.aircraft %}{{ tail }}{% if not forloop.last %} · {% endif %}{% empty %}<span class="rpt2-dash">—</span>{% endfor %} · {% if line.operators %}{{ line.operators }} operador{{ line.operators|pluralize:"es" }}{% else %}<span class="rpt2-dash">sin operadores</span>{% endif %}</div>
-        <div class="rpt2-folios">Folios (N° DGAC): {% for item in line.permits %}{{ item.folio }}{% if item.dgac %} ({{ item.dgac }}){% endif %}{% if not forloop.last %} · {% endif %}{% endfor %}</div>
+        {% comment %}Aeronaves, operadores y folios en **un** párrafo: son el detalle de la línea y
+        se leen juntos; en dos renglones fijos cada faena costaba 17 px más y el cierre de
+        octubre no cabía en una hoja (medido).{% endcomment %}
+        <div class="rpt2-sub">Aeronaves: {% for tail in line.aircraft %}{{ tail }}{% if not forloop.last %} · {% endif %}{% empty %}<span class="rpt2-dash">—</span>{% endfor %} · {% if line.operators %}{{ line.operators }} operador{{ line.operators|pluralize:"es" }}{% else %}<span class="rpt2-dash">sin operadores</span>{% endif %} · Folios: {% for item in line.permits %}{{ item.folio }}{% if not forloop.last %} · {% endif %}{% endfor %}</div>
         {% endwith %}
         {% else %}
         {% for line in group.lines %}
@@ -62,8 +64,7 @@ en el navegador, y la invariante I8 comprueba que la suma de los grupos da el to
             <span class="rpt2-main">{{ line.count }} permiso{{ line.count|pluralize:"s" }} · {{ line.valid_from|as_date|date:"d-m"|default:"—" }} → {{ line.valid_until|as_date|date:"d-m-Y" }}</span>
             <span class="rpt2-chip rpt2-chip-{{ line.band }}">{{ line.band|band_symbol }} {{ line.days }} d</span>
           </div>
-          <div class="rpt2-sub">Aeronaves: {% for tail in line.aircraft %}{{ tail }}{% if not forloop.last %} · {% endif %}{% empty %}<span class="rpt2-dash">—</span>{% endfor %} · {% if line.operators %}{{ line.operators }} operador{{ line.operators|pluralize:"es" }}{% else %}<span class="rpt2-dash">sin operadores</span>{% endif %}</div>
-          <div class="rpt2-folios">Folios (N° DGAC): {% for item in line.permits %}{{ item.folio }}{% if item.dgac %} ({{ item.dgac }}){% endif %}{% if not forloop.last %} · {% endif %}{% endfor %}</div>
+          <div class="rpt2-sub">Aeronaves: {% for tail in line.aircraft %}{{ tail }}{% if not forloop.last %} · {% endif %}{% empty %}<span class="rpt2-dash">—</span>{% endfor %} · {% if line.operators %}{{ line.operators }} operador{{ line.operators|pluralize:"es" }}{% else %}<span class="rpt2-dash">sin operadores</span>{% endif %} · Folios: {% for item in line.permits %}{{ item.folio }}{% if not forloop.last %} · {% endif %}{% endfor %}</div>
         </div>
         {% endfor %}
         {% endif %}
@@ -83,7 +84,7 @@ en el navegador, y la invariante I8 comprueba que la suma de los grupos da el to
       {% for group in sheet.outside %}
       <div class="rpt2-row">
         <span class="rpt2-row-cc"><strong>{{ group.code }}</strong> {{ group.name }}<br><span class="rpt2-row-note">{% if group.reason == "closed" %}Contrato terminado{% elif group.reason == "not_flying" %}No vuela{% else %}Archivada{% endif %}</span></span>
-        <span class="rpt2-row-main">{% for item in group.lines.0.permits %}{{ item.folio }}{% if item.dgac %} ({{ item.dgac }}){% endif %}{% if not forloop.last %} · {% endif %}{% endfor %} · {% with line=group.lines.0 %}{{ line.valid_from|as_date|date:"d-m"|default:"—" }} → {{ line.valid_until|as_date|date:"d-m-Y" }}{% endwith %}<br><span class="rpt2-row-note">No se renueva: cerrar el permiso o dejarlo vencer.</span></span>
+        <span class="rpt2-row-main">{{ group.folios|join:" · " }} · {% with line=group.lines.0 %}{{ line.valid_from|as_date|date:"d-m"|default:"—" }} → {{ line.valid_until|as_date|date:"d-m-Y" }}{% endwith %}<br><span class="rpt2-row-note">No se renueva: cerrar el permiso o dejarlo vencer.</span></span>
         <span class="rpt2-chip rpt2-chip-{{ group.band }}">{{ group.band|band_symbol }} {{ group.days }} d</span>
       </div>
       {% endfor %}
@@ -110,7 +111,7 @@ en el navegador, y la invariante I8 comprueba que la suma de los grupos da el to
       <div class="rpt2-block-title rpt2-block-title-bad">Vencidos sin cerrar — la vigencia terminó y el permiso sigue abierto</div>
       {% for permit in sheet.lapsed %}
       <div class="rpt2-row">
-        <span class="rpt2-row-cc"><strong>{{ permit.cost_centre }}</strong> {{ permit.folio }}{% if permit.dgac_number %} ({{ permit.dgac_number }}){% endif %}</span>
+        <span class="rpt2-row-cc"><strong>{{ permit.cost_centre }}</strong> {{ permit.folio }}</span>
         <span class="rpt2-row-main">{{ permit.valid_from|as_date|date:"d-m"|default:"—" }} → {{ permit.valid_until|as_date|date:"d-m-Y" }}</span>
         <span class="rpt2-chip rpt2-chip-critical">✕ {{ permit.days_remaining }} d</span>
       </div>
@@ -132,6 +133,6 @@ en el navegador, y la invariante I8 comprueba que la suma de los grupos da el to
 
   </div>
 
-  {% include "reporting/_foot.html" with section="permits" %}
+  {% include "reporting/_foot.html" with section="permits_v2" %}
 
 </div>

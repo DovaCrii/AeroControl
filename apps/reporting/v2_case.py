@@ -41,7 +41,7 @@ _dgac = count(7001)
 def _permit(centre, *, status="approved", start=None, end=None, operators=(), tails=()):
     permit = FlightPermission.objects.create(
         cost_center=centre,
-        permission_number="" if status == "requested" else str(next(_dgac)),
+        permission_number=None if status == "requested" else str(next(_dgac)),
         purpose="photogrammetry",
         status=status,
         location="Sector ficticio",
@@ -142,3 +142,59 @@ def make_case():
         operators=[four],
     )
     return {c.code: c for c in (north, south, east, ground, ended)}
+
+
+#: El corte del cierre de octubre (1-nov): el que el informe de cierre usa.
+CLOSING_CUTOFF = date(2026, 10, 31)
+
+
+def make_closing_case(cutoff=CLOSING_CUTOFF):
+    """El caso con la forma del cierre de octubre: **once** faenas con operación, seis
+    con permisos vigentes (una con siete permisos iguales y otra con cuatro, tres de
+    ellos iguales), dos solicitudes en trámite y **nada** sin operación ni vencido. Es
+    lo que debería dar un informe de seis páginas con su anexo: portada, resumen,
+    permisos, cobertura, plan y anexo. Devuelve `{código: centro}`.
+    """
+    centres = {}
+    for n in range(21, 32):
+        code = f"CC9{n}"
+        centres[code] = CostCenter.objects.create(
+            code=code, name=f"Faena {n}", operates_flights=True
+        )
+
+    people = {}
+
+    def person(code):
+        if code not in people:
+            people[code] = _operator(
+                f"R{code[-2:]}", f"Operador {code[-2:]}", centres[code]
+            )
+        return people[code]
+
+    def permits(code, days, copies=1, tails=1):
+        centre = centres[code]
+        who = person(code)
+        tail = [_aircraft(f"RPA-{code[-2:]}{days}", centre) for _i in range(tails)]
+        for _i in range(copies):
+            _permit(
+                centre,
+                start=date(2026, 8, 28),
+                end=cutoff + timedelta(days=days),
+                operators=[who],
+                tails=tail,
+            )
+
+    permits("CC921", 28, copies=7)
+    permits("CC922", 35, copies=3)
+    permits("CC922", 71)
+    permits("CC923", 50)
+    permits("CC924", 53)
+    permits("CC925", 71)
+    permits("CC926", 84)
+    for code in ("CC927", "CC928"):
+        _permit(
+            centres[code],
+            status=FlightPermission.STATUS_REQUESTED,
+            operators=[person(code)],
+        )
+    return centres
