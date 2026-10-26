@@ -12585,3 +12585,114 @@ msgstr "El comparado es de corte anticipado."
 #~ msgstr ""
 #~ "La fila ↳ aparece cuando el área dibujada no es una circunferencia: SIGO "
 #~ "acepta una por solicitud, y ésa es la más chica que cubre toda el área."
+
+msgid "One row per site that flies; sites that cannot fly today come first."
+msgstr "Una fila por faena que vuela; primero las que hoy no pueden volar."
+
+msgid "Filter the sites by status"
+msgstr "Filtrar las faenas por estado"
+
+#, python-format
+msgid "%(count)s site:"
+msgid_plural "%(count)s sites:"
+msgstr[0] "%(count)s faena:"
+msgstr[1] "%(count)s faenas:"
+
+msgid "without a permit"
+msgstr "sin permiso"
+
+msgid "waiting"
+msgstr "esperando"
+
+msgid "to renew"
+msgstr "por renovar"
+
+msgid "Find a site"
+msgstr "Buscar una faena"
+
+msgid "Code or name"
+msgstr "Código o nombre"
+
+msgid "Show all"
+msgstr "Ver todas"
+
+msgid "No site matches this filter."
+msgstr "Ninguna faena coincide con este filtro."
+
+#, python-format
+msgid "Showing %(shown)s of %(total)s"
+msgstr "Mostrando %(shown)s de %(total)s"
+
+msgid "What to do"
+msgstr "Qué hay que hacer"
+
+msgid "Permits and dates"
+msgstr "Permisos y fechas"
+
+msgid "New permit for this site"
+msgstr "Nuevo permiso para esta faena"
+
+msgid "✕ no permit · ◐ waiting for the DGAC, or approved and not started yet · ▲ renew now (30 days or less) · ◆ renew soon (31 to 60 days) · ● up to date (over 60 days). The bar shows the days left of the first permit to expire (0 to 90) with marks at 30 and 60; the word and the date carry the meaning."
+msgstr "✕ sin permiso · ◐ esperando a la DGAC, o aprobado que aún no empieza · ▲ renovar ya (30 días o menos) · ◆ renovar pronto (31 a 60 días) · ● al día (más de 60 días). La barra muestra los días que le quedan al primer permiso en vencer (0 a 90) con marcas en 30 y 60; la palabra y la fecha son las que dicen el estado."
+
+msgid "No permit"
+msgstr "Sin permiso"
+
+msgid "Waiting for the DGAC"
+msgstr "Esperando a la DGAC"
+
+msgid "Renew now"
+msgstr "Renovar ya"
+
+msgid "Renew soon"
+msgstr "Renovar pronto"
+
+#, python-format
+msgid "in %(n)s day"
+msgid_plural "in %(n)s days"
+msgstr[0] "en %(n)s día"
+msgstr[1] "en %(n)s días"
+
+#, python-format
+msgid "%(n)s in force"
+msgid_plural "%(n)s in force"
+msgstr[0] "%(n)s vigente"
+msgstr[1] "%(n)s vigentes"
+
+#, python-format
+msgid "%(n)s in progress"
+msgid_plural "%(n)s in progress"
+msgstr[0] "%(n)s en trámite"
+msgstr[1] "%(n)s en trámite"
+
+msgid "Request a permit"
+msgstr "Solicitar permiso"
+
+#, python-format
+msgid "Waiting for the DGAC since %(date)s"
+msgstr "Esperando a la DGAC desde el %(date)s"
+
+#, python-format
+msgid "Starts on %(date)s; nothing to do until then"
+msgstr "Rige desde el %(date)s; nada que hacer hasta entonces"
+
+msgid "Expires today: renew now"
+msgstr "Vence hoy: renovar ya"
+
+#, python-format
+msgid "Expires in %(n)s day: renew now"
+msgid_plural "Expires in %(n)s days: renew now"
+msgstr[0] "Vence en %(n)s día: renovar ya"
+msgstr[1] "Vence en %(n)s días: renovar ya"
+
+#, python-format
+msgid "Expires in %(n)s day: prepare the renewal"
+msgid_plural "Expires in %(n)s days: prepare the renewal"
+msgstr[0] "Vence en %(n)s día: preparar la renovación"
+msgstr[1] "Vence en %(n)s días: preparar la renovación"
+
+#, python-format
+msgid "%(n)s permit with a validity that has passed and is still open: review"
+msgid_plural "%(n)s permits with a validity that has passed and is still open: review"
+msgstr[0] "%(n)s permiso con vigencia pasada sin cerrar: revisar"
+msgstr[1] "%(n)s permisos con vigencia pasada sin cerrar: revisar"

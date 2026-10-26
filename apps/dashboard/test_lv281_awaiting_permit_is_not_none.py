@@ -50,11 +50,12 @@ def test_a_waiting_permit_shows_awaiting_in_warning_colour(client, admin_user):
 
     table = _page(client, admin_user)
 
+    # LV-376: el chip de espera es sólido (`.id-cx-state--wait`), con símbolo ◐ y la palabra completa
     assert (
-        '<span class="id-chip id-chip--warning"><span aria-hidden="true">▲</span> Esperando</span>'
-        in table
+        '<span class="id-cx-state id-cx-state--wait"><span aria-hidden="true">◐</span>'
+        " Esperando a la DGAC</span>" in table
     )
-    assert "Ninguno" not in table.split("</thead>")[-1]
+    assert "Sin permiso" not in table.split("</thead>")[-1].split("</table>")[0]
 
 
 @pytest.mark.django_db
@@ -63,6 +64,6 @@ def test_a_site_with_nothing_still_says_none(client, admin_user):
 
     table = _page(client, admin_user)
 
-    assert "Ninguno" in table
+    assert "Sin permiso" in table.split("</table>")[0]
     # sólo la tabla: la guía de la sección también dibuja chips de ese tono
     assert "id-chip--warning" not in table.split("</table>")[0]

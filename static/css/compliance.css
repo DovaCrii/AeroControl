@@ -1,11 +1,6 @@
-/* LV-376 (fase 0): CSS de la sección «Cumplimiento», mudado de `identity.css` sin cambio de resultado
-   (el mismo cascado, por eso se carga después de ella). Se carga en `{% block extrahead %}` de
-   `dashboard/index.html` (sólo con el hueco de Cumplimiento) y de `dashboard/compliance.html`.
-   Sólo define `--id-*`; sin `animation` ni `transition` (el único bloque de movimiento sigue en
-   `identity.css`). Guardián: `apps/dashboard/test_lv376_compliance_css.py`. */
+/* LV-376: CSS de «Cumplimiento» (antes en `identity.css`); se carga después de ella. Sólo `--id-*`, sin `animation` ni `transition`. Guardián: `test_lv376_compliance_css.py`. */
 
-/* D2: sección «Cumplimiento» del panel (LV-359). Contenedor, cabecera, rejilla y esqueleto. Sin
-   animación (el esqueleto es estático). Sólo lee tokens `--ac-*`, `--sev-*` e `--id-*`. */
+/* D2 (LV-359): contenedor, cabecera, rejilla y esqueleto (estático). */
 .id-cx {
   display: grid;
   gap: var(--id-sp-2);
@@ -35,12 +30,7 @@
   .id-cx-block--rings { grid-column: 1 / -1; }
 }
 
-/* D3: «Cumplimiento», gráficos y mapa de calor (LV-359, fase 2). Sin animación. Los rellenos de los
-   gráficos usan `--sev-*-text` (5,75–7,11:1 en claro, 8,1–14 en oscuro), NUNCA `--sev-*-border`
-   (1,58–1,81:1: no se distingue del fondo). Dos tramos comparten color en `app.css` (≤7 y ≤15 días:
-   `--sev-warning-*` y `--sev-caution-*` tienen el mismo hex), así que el símbolo y el texto van
-   siempre: ✕ vencido, ▲ ≤7, ◆ ≤15, ● ≤30, ○ después. El contraste de cada par lo calcula
-   `test_lv359_compliance_charts.py` y se mide con `contrast.py` (ver `diseno-ui/SKILL.md`). */
+/* D3 (LV-359): gráficos y mapa de calor. Rellenos con `--sev-*-text`, nunca `-border`; símbolo y texto siempre (ver `test_lv359_compliance_charts.py`). */
 :root {
   --id-cx-ink: #172238;
   --id-cx-track: #e4e9f1;
@@ -49,6 +39,8 @@
   --id-cx-heat-2: #f7d9a3;
   --id-cx-heat-3: #f1ab90;
   --id-cx-heat-4: #e07f86;
+  --id-cx-wait-bg: #ffedd5;
+  --id-cx-wait-fg: #9a3412;
 }
 
 [data-theme="dark"] {
@@ -59,6 +51,8 @@
   --id-cx-heat-2: #5c4516;
   --id-cx-heat-3: #7a3b2e;
   --id-cx-heat-4: #8f2f3a;
+  --id-cx-wait-bg: #3b1d0a;
+  --id-cx-wait-fg: #fdba74;
 }
 
 .id-cx-block--rings { min-width: 0; }
@@ -99,20 +93,64 @@
 .id-cx-heat-4 { background: var(--id-cx-heat-4); color: var(--id-cx-ink); border-color: var(--id-cx-ink); }
 .id-cx-legend { margin: var(--id-sp-1) 0 0; font-size: var(--id-fs-sm); color: var(--ac-text-secondary); }
 /* Fase 3: historial de revisión y guía de lectura. Sin tokens nuevos: los chips ya llevan su contraste. */
-/* Fase 4: «Permisos por faena». Las filas rojas y ámbar son las de app.css (`tr.row-critical`,
-   `tr.row-awaiting`); aquí sólo la forma. El medidor es ayuda visual: el número y el chip llevan el
-   significado, así que no se le fuerza color. Sin `colspan` ni `.table-normalized`. */
-.id-cx-permits-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem var(--id-sp-3); }
+/* Permisos por faena (LV-359, v4 en LV-376): tabla real, sin `colspan` ni `.table-normalized`. */
+.id-cx-permits-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--id-sp-1) var(--id-sp-3); }
 .id-cx-permits-head .id-cx-link { margin-left: 0; }
+.id-cx-sub { margin: 0 0 var(--id-sp-1); font-size: 0.875rem; color: var(--ac-text-secondary); }
+/* Resumen filtrable: símbolo, cifra y palabra; el activo lleva `aria-current` y subrayado grueso. */
+.id-cx-tally { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem var(--id-sp-1); font-size: 1rem; }
+.id-cx-tally-total { font-weight: 700; }
+.id-cx-tally ul { display: flex; flex-wrap: wrap; gap: 0.25rem 0.5rem; margin: 0; padding: 0; list-style: none; }
+.id-cx-tally-item { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.15rem 0.6rem; border: 1px solid var(--id-edge); border-radius: var(--id-r-pill); background: var(--id-tile); color: var(--ac-text); font-size: 0.9375rem; text-decoration: none; }
+.id-cx-tally-item:hover { text-decoration: underline; }
+.id-cx-tally-item[aria-current="true"] { text-decoration: underline; text-decoration-thickness: 2px; font-weight: 700; }
+.id-cx-tally-item--none > span { color: var(--sev-critical-text); }
+.id-cx-tally-item--wait { background: var(--id-cx-wait-bg); color: var(--id-cx-wait-fg); }
+.id-cx-tally-item--warning > span { color: var(--sev-warning-text); }
+.id-cx-tally-item--ok > span { color: var(--id-ok-text); }
+.id-cx-find { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem var(--id-sp-1); margin: var(--id-sp-1) 0; }
+.id-cx-find label { font-size: 0.875rem; font-weight: 600; }
+.id-cx-find .form-control { width: 14rem; max-width: 100%; }
 .id-cx-permits-wrap { overflow-x: auto; }
-.id-cx-permits { font-size: var(--id-fs-sm); }
-.id-cx-permits th, .id-cx-permits td { vertical-align: middle; }
+.id-cx-permits { font-size: 1rem; }
+.id-cx-permits th, .id-cx-permits td { vertical-align: top; }
+.id-cx-permits th { font-size: 0.875rem; }
 .id-cx-permits .worktable-sort { white-space: nowrap; }
-.id-cx-site-details > summary { cursor: pointer; font-weight: 600; }
-.id-cx-permit-list { margin: 0.35rem 0; padding-left: 1.1rem; display: grid; gap: 0.2rem; font-weight: 400; }
-.id-cx-days { display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
-.id-cx-meter { width: 5.5rem; height: 0.9rem; vertical-align: middle; }
-.id-cx-date { color: var(--ac-text-secondary); white-space: nowrap; }
+.id-cx-site-name { font-weight: 600; color: var(--ac-text); }
+.id-cx-permits .id-cx-note { margin: 0.15rem 0 0; font-size: 0.875rem; color: var(--ac-text-secondary); }
+.id-cx-todo-text { margin: 0; }
+.id-cx-todo-text a { color: var(--ac-text); font-weight: 600; text-decoration: underline; }
+/* Chip sólido: letra `--ac-surface` sobre `--sev-*-text` (5,35 a 9,92 en los dos temas), sans, sin versalitas. Ámbar y espera casi no se distinguen por tono: símbolo y palabra. */
+.id-cx-state { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.15rem 0.65rem; border-radius: var(--id-r-pill); color: var(--ac-surface); font-size: 0.9375rem; font-weight: 700; line-height: 1.35; }
+.id-cx-state--none { background: var(--sev-critical-text); }
+.id-cx-state--wait { background: var(--id-cx-wait-fg); }
+.id-cx-state--warning { background: var(--sev-warning-text); }
+.id-cx-state--advisory { background: var(--sev-advisory-text); }
+.id-cx-state--ok { background: var(--id-ok-text); }
+/* La fila no se tiñe entera: filete de 4 px en el color del nivel más el chip. */
+.id-cx-permits tr.row-critical > td, .id-cx-permits tr.row-awaiting > td { background-color: transparent; color: inherit; }
+.id-cx-permits.table-hover > tbody > tr.row-critical:hover > *, .id-cx-permits.table-hover > tbody > tr.row-awaiting:hover > * { --bs-table-bg-state: var(--bs-table-hover-bg); color: inherit; }
+.id-cx-permits tr.row-critical > td:first-child { box-shadow: inset 4px 0 0 var(--sev-critical-text), inset 0 0 0 9999px var(--bs-table-bg-state, transparent); }
+.id-cx-permits tr.row-awaiting > td:first-child { box-shadow: inset 4px 0 0 var(--id-cx-wait-fg), inset 0 0 0 9999px var(--bs-table-bg-state, transparent); }
+.id-cx-site-details { margin-top: 0.35rem; }
+.id-cx-site-details > summary { cursor: pointer; font-size: 0.875rem; font-weight: 600; color: var(--ac-text-secondary); }
+.id-cx-permit-list { margin: 0.35rem 0; padding-left: 1.1rem; display: grid; gap: 0.2rem; font-weight: 400; font-size: 0.875rem; }
+.id-cx-date { white-space: nowrap; }
+.id-cx-in { color: var(--ac-text-secondary); font-size: 0.875rem; }
+.id-cx-expiry .id-cx-daybar { display: block; margin-top: 0.25rem; }
+.id-cx-day-track { fill: var(--id-cx-track); }
+.id-cx-day--soon { fill: var(--sev-warning-text); }
+.id-cx-day--mid { fill: var(--sev-advisory-text); }
+.id-cx-day--far { fill: var(--id-ok-text); }
+.id-cx-day-mark { stroke: var(--id-edge); stroke-width: 1.5; }
+/* A 375 px cada faena es una tarjeta (`data-cx-label`: `worktable.js` pisa `data-label`; sin `style=""`, por la CSP). */
+@media (max-width: 575.98px) {
+  .id-cx-permits thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .id-cx-permits, .id-cx-permits tbody, .id-cx-permits tr, .id-cx-permits td { display: block; }
+  .id-cx-permits tr { margin: 0 0 var(--id-sp-1); border: 1px solid var(--id-edge); border-radius: var(--id-r-control); overflow: hidden; }
+  .id-cx-permits td { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 0.5rem; padding: 0.4rem 0.75rem; border: 0; }
+  .id-cx-permits td::before { content: attr(data-cx-label); font-size: 0.875rem; font-weight: 600; color: var(--ac-text-secondary); }
+}
 .id-cx-hist { border-collapse: collapse; width: 100%; font-size: var(--id-fs-sm); }
 .id-cx-hist th, .id-cx-hist td { padding: 0.3rem 0.4rem; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--ac-border); }
 .id-cx-hist thead th { color: var(--ac-text-secondary); font-weight: 600; }
@@ -124,8 +162,7 @@
 .id-cx-guide-body .id-cx-h3 { margin-top: var(--id-sp-1); }
 .id-cx-steps { margin: 0; padding-left: 1.25rem; display: grid; gap: 0.25rem; font-size: var(--id-fs-sm); }
 .id-cx-steps a { color: var(--ac-text); font-weight: 600; text-decoration: underline; }
-/* Fase 4 (LV-367): resumen de un vistazo y secciones plegables. Sin tokens nuevos: usa `--id-edge`, `--id-tile`
-   y los chips. Los anillos ya no se dibujan (`ring` sigue en `compliance_charts`). */
+/* LV-367 (fase 4): resumen de un vistazo y secciones plegables. */
 .id-cx-first { padding: var(--id-sp-1) var(--id-sp-2); border: 1px solid var(--id-edge); border-left: 4px solid var(--sev-warning-text); border-radius: var(--id-r-control); background: var(--id-tile); }
 .id-cx-first-list { margin: 0; padding-left: 1.25rem; display: grid; gap: 0.25rem; font-size: var(--id-fs-md); }
 .id-cx-first-list a { color: var(--ac-text); font-weight: 700; text-decoration: underline; }
@@ -163,6 +200,8 @@
     --id-cx-heat-2: #f7d9a3;
     --id-cx-heat-3: #f1ab90;
     --id-cx-heat-4: #e07f86;
+    --id-cx-wait-bg: #ffedd5;
+    --id-cx-wait-fg: #9a3412;
   }
   .id-cx-cell { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }

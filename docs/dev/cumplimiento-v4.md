@@ -56,3 +56,9 @@ Riesgos: pruebas atadas al marcado (`data-cx-block` 22, `id-chip--` 27, `data-cx
 ## G. Decisiones (tomadas según lo recomendado; la persona puede revertirlas antes de fusionar)
 
 1. Un permiso vigente que vence en ≤30 días se ve **ámbar «Renovar ya»**, no rojo (el rojo queda solo para «no se puede volar»). 2. Filas con **filete de 4 px y chip sólido**, no tinte entero (la clase se conserva). 3. **CSS de Cumplimiento a su archivo propio** (más guardián en bytes LF). 4. **Se retira de pantalla el mapa de calor «Próximos 90 días»** (lo reemplazan tiras por categoría; paso 1 con condición de cierre). 5. **Tarjetas de resumen también dentro del panel** (mismas cifras por prueba; «Qué atender primero» solo en la página completa).
+
+## Implementación (LV-376): desviaciones del diseño
+
+- **`data-cx-label` en vez de `data-label`** (fase 1b): `worktable.js` reescribe `data-label` de toda celda de toda tabla con el texto del `<th>`, flechita de orden incluida (`Estado⇵`); un atributo propio evita las dos cosas. Defecto ajeno anotado: los rótulos de las demás tablas llevan esa flechita.
+- **Sin `table-sm`** en la tabla de permisos (filas más altas para el cuerpo de 1 rem).
+- **`--id-ok-text`** no se mide con `contrast.py` (el bloque `print` de `identity.css` lo confunde); lo cubre la prueba pytest.

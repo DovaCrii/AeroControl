@@ -40,7 +40,9 @@ from .compliance_data import (
 from .compliance_permits import (
     PERMIT_PERMISSION,
     permit_table,
+    requested_query,
     requested_sort,
+    requested_state,
     sort_context,
 )
 from .selection import resolve_cost_center
@@ -252,6 +254,14 @@ def section_context(request):
             context["cx_alerts"] = alert_ages(user, cost_center, today, tenant_ids)
         if blocks["permits"]:
             column, direction = requested_sort(request.GET)
+            # LV-376: `?state=` (lista permitida) filtra en las dos vistas; `?q=` sólo en la página
+            # completa, que es donde existe el cuadro de búsqueda (el fragmento del panel no lo dibuja).
+            state = requested_state(request.GET)
+            query = (
+                requested_query(request.GET)
+                if request.headers.get("HX-Request") != "true"
+                else ""
+            )
             context["cx_permits"] = permit_table(
                 user,
                 cost_center,
@@ -259,8 +269,12 @@ def section_context(request):
                 tenant_ids,
                 column,
                 direction,
+                state,
+                query,
             )
-            context["worktable_sort"] = sort_context(request, cost_center)
+            context["worktable_sort"] = sort_context(
+                request, cost_center, state=state, query=query
+            )
         if blocks["history"]:
             context["cx_history"] = review_history(user, cost_center, today, tenant_ids)
         context["cx_guide"] = guide_steps(user, cost_center)

@@ -13,6 +13,7 @@ Lo que se vigila:
 - el panel ya no dibuja la tabla y su hueco lleva el ancla `#cx-permits`.
 """
 
+import re
 from datetime import timedelta
 
 import pytest
@@ -20,7 +21,7 @@ from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.translation import gettext
+from django.utils.translation import gettext, ngettext
 
 from apps.compliance.kpis import permit_band, permit_status_by_cost_center
 from apps.core.models import OperationalTenant
@@ -117,8 +118,8 @@ def test_the_rows_are_the_ones_the_kpi_computes(sites):
 @pytest.mark.django_db
 def test_without_a_requested_order_the_sites_without_a_permit_lead(sites):
     codes = _codes(_rows(login_as(VIEW)))
-    # LV-246: sin permiso vigente primero (CC4 espera, CC5 nada), después por código
-    assert codes == ["CC4", "CC5", "CC1", "CC2", "CC3"]
+    # LV-376: por urgencia, sin permiso (CC5) > esperando (CC4) > ≤30 d (CC1) > ≤60 d (CC2) > al día (CC3)
+    assert codes == ["CC5", "CC4", "CC1", "CC2", "CC3"]
 
 
 # --- el orden ---------------------------------------------------------------------------------
@@ -190,9 +191,9 @@ def test_headers_carry_aria_sort_and_flip_their_link(sites):
     client = login_as(VIEW)
     html = _page(client, sort="days", dir="asc").content.decode()
     head = _head(html)
-    assert (
-        head.count("aria-sort=") == 3
-    )  # LV-367: tres columnas (Faena, Estado, Próximo vencimiento)
+    # LV-376: tres columnas ordenables (Faena, Estado, Próximo vencimiento) y «Qué hay que hacer», que no ordena
+    assert head.count("aria-sort=") == 3
+    assert head.count("<th") == 4
     assert head.count('aria-sort="ascending"') == 1
     assert head.count('aria-sort="none"') == 2
     # el enlace de la columna ya ordenada pide el sentido contrario, con ruta propia y ancla
@@ -292,49 +293,62 @@ def test_the_detail_of_a_foreign_site_is_not_reachable_by_choosing_it(sites):
 @pytest.mark.parametrize(
     ("days", "symbol", "tone"),
     [
-        (30, "✕", "critical"),
-        (31, "▲", "warning"),
-        (60, "▲", "warning"),
+        # LV-376 (G1): hasta 30 días es ámbar «Renovar ya» (el rojo es sólo «sin permiso»)
+        (30, "▲", "warning"),
+        (31, "◆", "advisory"),
+        (60, "◆", "advisory"),
         (61, "●", "ok"),
     ],
 )
 def test_the_band_boundaries_are_the_kpis_30_and_60(db, days, symbol, tone):
     site = _site("CC1")
     _permit(site, days)
-    html = _page(login_as(VIEW)).content.decode()
+    response = _page(login_as(VIEW))
+    html = response.content.decode()
     cell = _permits_block(html).split("<tbody>")[1].split("</tr>")[0].split("<td")[2]
     assert (
-        f'<span class="id-chip id-chip--{tone}"><span aria-hidden="true">{symbol}</span>'
+        f'<span class="id-cx-state id-cx-state--{tone}"><span aria-hidden="true">{symbol}</span>'
         in cell
     )
+    # la escala es la del KPI: la fila lleva el mismo tramo que `permit_band`
+    row = response.context["cx_permits"]["rows"][0]
+    assert row["band"] == permit_band(days)
 
 
 @pytest.mark.django_db
-def test_the_meter_has_the_scale_and_the_text_carries_the_days(db):
+def test_the_daybar_has_the_marks_and_the_text_carries_the_days(db):
     site = _site("CC1")
     _permit(site, 17)
     _permit(_site("CC2"), 200)
     html = _page(login_as(VIEW)).content.decode()
-    assert 'min="0" max="90" low="30" high="60" optimum="90" value="17"' in html
-    assert gettext("%(n)s d") % {"n": 17} in html
-    # más de 90 días: el valor se acota al máximo del medidor, el texto dice los 200 reales
-    assert 'value="90"' in html
-    assert gettext("%(n)s d") % {"n": 200} in html
+    bars = re.findall(r'<svg class="id-cx-svg id-cx-daybar".*?</svg>', html, re.S)
+    assert len(bars) == 2
+    for bar in bars:
+        # decorativa (`aria-hidden`), sin `style` (CSP) y con las marcas en 30 y 60 días de 90
+        assert 'aria-hidden="true"' in bar and "style=" not in bar
+        assert bar.count('class="id-cx-day-mark"') == 2
+        assert 'x1="42.67"' in bar and 'x1="85.33"' in bar
+    # 17 días: ámbar y 24,18 de 128; más de 90: se acota al ancho completo, y el texto dice los 200 reales
+    assert "id-cx-day--soon" in bars[0] and 'width="24.18"' in bars[0]
+    assert "id-cx-day--far" in bars[1] and 'width="128"' in bars[1]
+    assert ngettext("in %(n)s day", "in %(n)s days", 17) % {"n": 17} in html
+    assert ngettext("in %(n)s day", "in %(n)s days", 200) % {"n": 200} in html
 
 
 @pytest.mark.django_db
-def test_a_row_without_a_date_has_no_meter(db):
+def test_a_row_without_a_date_has_no_bar(db):
     _site("CC5")
     html = _page(login_as(VIEW)).content.decode()
-    assert "<meter" not in html
+    assert "<meter" not in html and "id-cx-daybar" not in html
+    assert 'class="id-cx-zero"' in html  # el guion dice «sin fecha», no «vence hoy»
 
 
 @pytest.mark.django_db
 def test_the_state_cell_says_what_there_is_with_symbol_and_word(sites):
     html = _page(login_as(VIEW)).content.decode()
     body = _permits_block(html).split("<tbody>")[1]
-    assert f"▲</span> {gettext('Awaiting')}" in body  # CC4
-    assert f"✕</span> {gettext('None')}" in body  # CC5
+    assert f"◐</span> {gettext('Waiting for the DGAC')}" in body  # CC4
+    assert f"✕</span> {gettext('No permit')}" in body  # CC5
 
 
 # --- la fila expandible -----------------------------------------------------------------------
@@ -343,15 +357,17 @@ def test_the_state_cell_says_what_there_is_with_symbol_and_word(sites):
 @pytest.mark.django_db
 def test_the_site_is_a_details_inside_its_cell_with_no_colspan(sites):
     html = _page(login_as(VIEW)).content.decode()
-    table = html.split('<table class="table table-sm table-hover mb-0 id-cx-permits">')[
-        1
-    ].split("</table>")[0]
+    table = html.split('<table class="table table-hover mb-0 id-cx-permits">')[1].split(
+        "</table>"
+    )[0]
     assert "colspan" not in table
     assert "table-normalized" not in table
     assert table.count("<details") == 5
-    first_cell = table.split("<tbody>")[1].split("</td>")[0]
-    assert "<details" in first_cell and "<summary>" in first_cell
-    assert "Faena CC4" in first_cell  # sin permiso vigente va primero
+    cells = table.split("<tbody>")[1].split("</td>")
+    assert "Faena CC5" in cells[0]  # sin permiso vigente va primero
+    # LV-376: el detalle vive en la celda «Qué hay que hacer», debajo de la frase
+    assert "<details" in cells[2] and "<summary>" in cells[2]
+    assert "<details" not in cells[0]
 
 
 @pytest.mark.django_db

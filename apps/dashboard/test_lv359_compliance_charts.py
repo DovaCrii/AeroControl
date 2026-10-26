@@ -620,7 +620,17 @@ class TestContrast:
         )
         assert set(re.findall(r"(?m)^\s*(--[\w-]+)\s*:", block)) <= {
             f"--id-cx-{name}"
-            for name in ("ink", "track", "edge", "heat-1", "heat-2", "heat-3", "heat-4")
+            for name in (
+                "ink",
+                "track",
+                "edge",
+                "heat-1",
+                "heat-2",
+                "heat-3",
+                "heat-4",
+                "wait-bg",
+                "wait-fg",
+            )
         }
 
     def test_every_color_used_in_the_heat_cells_resolves_to_a_hex(self):

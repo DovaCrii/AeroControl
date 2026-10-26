@@ -413,15 +413,15 @@ class TestTheSimplePermitTable:
         assert many[0] == few[0]
 
     @pytest.mark.django_db
-    def test_it_has_three_columns_and_one_status_chip_per_row(self, sites):
+    def test_it_has_four_columns_and_one_status_chip_per_row(self, sites):
         html = _page(login_as(VIEW)).content.decode()
         table = _permits_block(html)
-        assert table.split("<thead>")[1].split("</thead>")[0].count("<th") == 3
+        assert table.split("<thead>")[1].split("</thead>")[0].count("<th") == 4
         for row in re.findall(
             r"<tr[ >].*?</tr>", table.split("<tbody>")[1], flags=re.S
         ):
             status_cell = row.split("<td")[2]
-            assert status_cell.count("id-chip ") == 1
+            assert status_cell.count("id-cx-state ") == 1
 
     @pytest.mark.django_db
     def test_the_next_expiry_has_days_and_date_and_the_rest_lives_in_the_details(
@@ -430,7 +430,7 @@ class TestTheSimplePermitTable:
         html = _page(login_as(VIEW)).content.decode()
         table = _permits_block(html)
         row = next(r for r in table.split("<tr") if "CC1" in r)
-        assert re.search(r"\d+ d</b>", row) and re.search(r"\d{4}-\d\d-\d\d", row)
+        assert re.search(r"in \d+ days", row) and re.search(r"\d\d-\d\d-\d{4}", row)
         details = row.split("<details")[1].split("</details>")[0]
         assert "In force" in details and "expiring soon" in details
 

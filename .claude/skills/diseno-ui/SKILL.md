@@ -48,6 +48,19 @@ python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css static/cs
   --pair sev-advisory-text:id-cx-track --pair sev-nominal-text:id-cx-track
 ```
 
+Pares de «Cumplimiento v4» (`LV-376`, chips sólidos: letra `--ac-surface` sobre el relleno; tokens de espera `--id-cx-wait-*` de `compliance.css`):
+
+```bash
+python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css static/css/identity.css static/css/compliance.css \
+  --pair ac-surface:sev-critical-text --pair ac-surface:sev-warning-text --pair ac-surface:sev-advisory-text \
+  --pair ac-surface:id-cx-wait-fg --pair id-cx-wait-fg:id-cx-wait-bg
+python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css static/css/identity.css static/css/compliance.css --min 3 \
+  --pair sev-critical-text:ac-surface --pair id-cx-wait-fg:ac-surface --pair sev-warning-text:id-cx-track \
+  --pair sev-advisory-text:id-cx-track --pair id-edge:ac-surface
+```
+
+`--id-ok-text` (chip «Al día») NO se mide con el script: el bloque `@media print` de `identity.css` lista `html[data-theme="dark"]` y el script lo lee como tema oscuro (3,09 falso; el real es 9,49). Lo cubre `test_lv376_permits_v4.py`, que sí lee el tema oscuro de verdad.
+
 Pares de «Visual v3» (`LV-367`, tokens `--id-edge` e `--id-tile`; el borde de una figura o tarjeta debe llegar a 3:1):
 
 ```bash
