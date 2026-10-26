@@ -1,0 +1,109 @@
+{% load i18n static report_leaf report_svg %}
+{% comment %}LV-378 · Página 4 v2: cobertura por Centro de Costo, y el plan cuando cabe.
+
+Sólo se dibuja con `payload.meta.layout == 2`. Lo que cambia contra la hoja de siempre:
+
+- **el universo se declara** en el título: «N Centros de Costo con operación RPA y
+  contrato vigente». Los que dejaron de operar con permiso aún vigente **van aparte**,
+  debajo de la tabla (regla a′ de LV-378): la cobertura y el «X de N» siguen siendo sólo
+  de faenas con operación (decisión del 2026-09-14: cerrada es cerrada), pero un permiso
+  vigente existe ante la DGAC y callarlo en un papel firmado sería una omisión;
+- **barra apilada** de las tres bandas, con las cifras impresas;
+- **Estado con símbolo y palabra**: ● Vigente, ▲ Por vencer, ✕ Renovar ahora, ✕ Sin
+  habilitación. Con sólo color, en blanco y negro dos filas se ven iguales;
+- **Total que suma**: la fila dice lo que suman las filas visibles y, aparte, «+ Sin
+  operación … → total 15», que es el hecho legal;
+- **concentración corregida**: «7 de 14» y «CC738», sólo de faenas con operación (una
+  faena terminada con un permiso que se deja vencer inflaba la cifra).
+
+El plan compacto se dibuja debajo cuando cabe (`MonthlyReportView._sheets`, con alturas
+medidas); la hoja del plan no cambia. Texto en español y sin `{% translate %}`.{% endcomment %}
+<div class="rpt-page rpt2-page">
+
+  {% include "reporting/_head.html" %}
+
+  <div class="rpt-body rpt2-body">
+
+    <div class="rpt2-stack">
+      <div>
+        <div class="rpt-h2"><span class="rpt-h2-num">3</span><span class="rpt-h2-text">Cobertura por Centro de Costo</span></div>
+        <div class="rpt-h2-rule"></div>
+      </div>
+
+      {% comment %}El universo, declarado (S10 de `informes-optimizacion.md`).{% endcomment %}
+      <p class="rpt2-universe">{% leaf payload.kpis.cost_centres_with_operation %} Centros de Costo con operación RPA y contrato vigente. Los que dejaron de operar con permiso aún vigente van aparte, debajo de la tabla.</p>
+
+      {% coverage_bar payload.cost_centres "cov-bar" %}
+
+      <div class="rpt2-table">
+        <div class="rpt2-cov rpt2-cov-head">
+          <div>Código</div>
+          <div>Centro de Costo</div>
+          <div class="rpt2-c">Permisos<br>vigentes</div>
+          <div class="rpt2-c">En<br>trámite</div>
+          <div>Próximo<br>vencimiento</div>
+          <div class="rpt2-c">Días</div>
+          <div>Estado</div>
+        </div>
+        <div class="rpt2-cov rpt2-cov-body">
+          {% for row in payload.cost_centres %}
+          {% with state=row|coverage_state %}
+          <div class="rpt2-cc-code">{{ row.code }}</div>
+          <div class="rpt2-cc-name">{{ row.name }}</div>
+          <div class="rpt2-c rpt2-strong{% if not row.permits_in_force %} rpt2-sym-critical{% endif %}">{{ row.permits_in_force }}</div>
+          <div class="rpt2-c">{% if row.permits_awaiting %}{{ row.permits_awaiting }}{% else %}<span class="rpt2-dash">—</span>{% endif %}</div>
+          {% comment %}El **primer** permiso que vence, con sus días. Sin permiso vigente van
+          guiones y no un cero: «sin fecha» no es «vence hoy».{% endcomment %}
+          <div>{% if row.next_expiry %}{{ row.next_expiry|as_date|date:"d-m-Y" }}{% else %}<span class="rpt2-dash">—</span>{% endif %}</div>
+          <div class="rpt2-c rpt2-strong">{% if row.days_remaining is not None %}{{ row.days_remaining }}{% else %}<span class="rpt2-dash">—</span>{% endif %}</div>
+          <div><span class="rpt2-chip rpt2-chip-{{ state|coverage_band }}">{% if state == "nominal" or state == "warning" %}{{ state|coverage_band|band_symbol }}{% else %}✕{% endif %} {{ state|coverage_word }}</span></div>
+          {% endwith %}
+          {% empty %}
+          <div class="rpt2-empty">Ninguna faena con operación RPA registrada al corte.</div>
+          {% endfor %}
+        </div>
+        {% comment %}El total **suma las filas visibles**; lo que no opera va en la línea de
+        abajo y el total legal las junta. Antes decía 15 sobre filas que sumaban 14.{% endcomment %}
+        <div class="rpt2-cov rpt2-cov-total">
+          <div class="rpt2-strong rpt2-navy">Total</div>
+          <div>{% leaf payload.kpis.cost_centres_with_operation %} Centros de Costo · {% leaf payload.kpis.cost_centres_without_permit %} sin habilitación</div>
+          <div class="rpt2-c rpt2-strong rpt2-navy">{% leaf payload.kpis.permits_in_force_operating %}</div>
+          <div class="rpt2-c rpt2-strong rpt2-navy">{% leaf payload.kpis.permits_awaiting %}</div>
+          <div></div>
+          <div></div>
+          <div></div>
+        </div>
+      </div>
+
+      {% if payload.outside_centres %}
+      <div class="rpt2-outside">
+        {% for item in payload.outside_centres %}
+        {% if item.permits_in_force %}
+        <div class="rpt2-outside-row"><b class="rpt2-sym-info">○</b> <strong>+ Sin operación:</strong> {{ item.code }} {{ item.name }} ({% if item.reason == "closed" %}terminado{% elif item.reason == "not_flying" %}no vuela{% else %}archivado{% endif %}) · {{ item.permits_in_force }} vigente{{ item.permits_in_force|pluralize:"s" }} · vence {{ item.next_expiry|as_date|date:"d-m-Y" }} · no se renueva</div>
+        {% endif %}
+        {% endfor %}
+        <div class="rpt2-outside-row">Total de permisos vigentes: <strong>{% leaf payload.kpis.permits_in_force %}</strong> = {% leaf payload.kpis.permits_in_force_operating %} en Centros de Costo con operación + {% leaf payload.kpis.permits_in_force_outside %} sin operación.</div>
+      </div>
+      {% endif %}
+
+      {% comment %}Una faena depende de una persona cuando la unión de los operadores de todos
+      sus permisos vigentes tiene un solo miembro. Sólo se cuentan las faenas con operación.{% endcomment %}
+      <div class="rpt2-conc">
+        <span>Permisos con un único operador designado <strong class="rpt2-conc-n">{{ payload.concentration.permits_with_one_operator_operating }} de {{ payload.concentration.permits_in_force_operating }}</strong></span>
+        {% if payload.concentration.cost_centres_on_one_person_operating %}
+        <span>Dependen de una sola persona: <strong class="rpt2-conc-n">{{ payload.concentration.cost_centres_on_one_person_operating|join:", " }}</strong> — su ausencia detiene la faena hasta modificar el permiso ante la DGAC.</span>
+        {% else %}
+        <span>Ninguna faena depende de una sola persona.</span>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if plan_joins_coverage %}
+    {% include "reporting/_plan_block.html" %}
+    {% endif %}
+
+  </div>
+
+  {% include "reporting/_foot.html" with section=coverage_section %}
+
+</div>

@@ -1,0 +1,171 @@
+{% load i18n static report_leaf report_svg %}
+{% comment %}LV-378 · Página 2 v2: el resumen ejecutivo del diseño 2.
+
+Sólo se dibuja con `payload.meta.layout == 2`. Lo que cambia contra la hoja de siempre:
+
+- **lo que mide renovación cuenta sólo las faenas con operación**: «vencen en 60 días»
+  y «el primero en vencer» ya no los provoca una faena terminada con un permiso que se
+  deja vencer (el rojo de octubre lo daba CC716). Ese permiso se dice aparte, en una
+  línea propia, y entra en «permisos vigentes» porque es un hecho legal: SIGO lo tiene;
+- **la tarjeta de vigentes se desglosa**: «15 · 14 en operación + 1 sin operación»;
+- **«Lo próximo que vence» es por faena**, no por permiso: siete permisos de la misma
+  fecha son una fila, no cuatro filas repitiendo la fecha;
+- **«Cambios desde el informe anterior»**: sale de `payload.changes`, **congelado al
+  construir**; no se calcula acá.
+
+Todo viene de `summary.executive_summary_v2(payload)`: un informe congelado dice lo mismo
+el día que se reabra. Los hallazgos no se generan: son un juicio de quien firma. Texto en
+español y sin `{% translate %}`: es el papel que se firma.{% endcomment %}
+<div class="rpt-page rpt2-page">
+
+  {% include "reporting/_head.html" %}
+
+  <div class="rpt-body rpt2-body">
+
+    <div>
+      <div class="rpt-h2"><span class="rpt-h2-num">1</span><span class="rpt-h2-text">Resumen ejecutivo</span></div>
+      <div class="rpt-h2-rule"></div>
+    </div>
+
+    {% with s=summary_v2 %}
+    {% comment %}La conclusión: cada línea con su símbolo, que sobrevive a una copia en
+    blanco y negro (el color solo no lo hace).{% endcomment %}
+    <ul class="rpt2-verdict" aria-label="Conclusión del período">
+      {% if s.without_permit %}
+      <li><b class="rpt2-sym-critical">✕</b> <strong>{{ s.without_permit|length }} de {{ s.cost_centres_total }} Centro{{ s.cost_centres_total|pluralize:"s" }} de Costo sin permiso vigente</strong> — no pueden operar RPA: {{ s.without_permit|join:", " }}.</li>
+      {% elif s.cost_centres_total %}
+      <li><b class="rpt2-sym-nominal">●</b> <strong>Los {{ s.cost_centres_total }} Centros de Costo con operación tienen permiso vigente.</strong></li>
+      {% else %}
+      <li>Ningún Centro de Costo con operación RPA registrada al corte.</li>
+      {% endif %}
+
+      {% if s.first_to_expire %}
+      <li><b class="rpt2-sym-{{ s.first_to_expire.band }}">{{ s.first_to_expire.band|band_symbol }}</b> El primer permiso en vencer es <strong>{{ s.first_to_expire.folio }}</strong> ({{ s.first_to_expire.cost_centre }}), el <strong>{{ s.first_to_expire.valid_until|as_date|date:"d-m-Y" }}</strong>, en {{ s.first_to_expire.days_remaining }} día{{ s.first_to_expire.days_remaining|pluralize:"s" }}. Vencen <strong>{{ s.within_60 }}</strong> en los próximos 60 días{% if s.within_30 %} ({{ s.within_30 }} en 30 días o menos){% endif %}, contando sólo los Centros de Costo con operación.</li>
+      {% elif s.cost_centres_total %}
+      <li><b class="rpt2-sym-critical">✕</b> <strong>Ningún permiso de vuelo vigente en un Centro de Costo con operación al corte.</strong></li>
+      {% endif %}
+
+      {% if s.awaiting %}
+      <li><b class="rpt2-sym-info">○</b> {{ s.awaiting }} solicitud{{ s.awaiting|pluralize:"es" }} en trámite ante la DGAC, sin habilitación hasta su aprobación.</li>
+      {% endif %}
+      {% for item in s.outside %}
+      {% if item.count %}
+      <li><b class="rpt2-sym-info">○</b> {{ item.count }} permiso{{ item.count|pluralize:"s" }} vigente{{ item.count|pluralize:"s" }} de un Centro de Costo sin operación ({{ item.folios|join:", " }}, {{ item.code }}, vence {{ item.valid_until|as_date|date:"d-m" }}): no se renueva; cerrar el permiso o dejarlo vencer.</li>
+      {% endif %}
+      {% endfor %}
+      {% if s.lapsed %}
+      <li><b class="rpt2-sym-critical">✕</b> {{ s.lapsed }} permiso{{ s.lapsed|pluralize:"s" }} aprobado{{ s.lapsed|pluralize:"s" }} con la vigencia vencida y sin cerrar.</li>
+      {% endif %}
+      {% if s.incidents %}
+      <li><b class="rpt2-sym-warning">▲</b> {{ s.incidents }} incidente{{ s.incidents|pluralize:"s" }} en el período{% if s.incidents_open %}, {{ s.incidents_open }} sin cerrar al corte{% endif %}.</li>
+      {% endif %}
+    </ul>
+
+    <div>
+      <div class="rpt2-label" style="margin-bottom: 7px;">Indicadores al {{ cutoff_date|date:"d" }} de {{ cutoff_date|date:"F" }} de {{ cutoff_date|date:"Y" }}</div>
+      <div class="rpt2-kpis">
+        <div class="rpt2-kpi rpt2-tone-{{ s.kpis.enabled }}">
+          <div class="rpt2-kpi-value">{{ s.enabled }}<span class="rpt2-kpi-of"> / {{ s.cost_centres_total }}</span></div>
+          <div class="rpt2-kpi-name">Centros de Costo habilitados</div>
+          <div class="rpt2-kpi-note">Con operación y permiso vigente</div>
+        </div>
+        <div class="rpt2-kpi rpt2-tone-{{ s.kpis.in_force }}">
+          <div class="rpt2-kpi-value">{{ s.in_force_total }}</div>
+          <div class="rpt2-kpi-name">Permisos vigentes</div>
+          <div class="rpt2-kpi-note">{{ s.in_force_operating }} en operación{% if s.in_force_outside %} + {{ s.in_force_outside }} sin operación{% endif %}</div>
+        </div>
+        <div class="rpt2-kpi rpt2-tone-{{ s.kpis.expiring }}">
+          <div class="rpt2-kpi-value">{% if s.kpis.expiring == "critical" %}✕{% elif s.kpis.expiring == "warning" %}▲{% else %}●{% endif %} {{ s.within_60 }}</div>
+          <div class="rpt2-kpi-name">Vencen en 60 días</div>
+          <div class="rpt2-kpi-note">{{ s.within_30 }} en 30 días o menos</div>
+        </div>
+        <div class="rpt2-kpi rpt2-tone-{{ s.kpis.awaiting }}">
+          <div class="rpt2-kpi-value">{{ s.awaiting }}</div>
+          <div class="rpt2-kpi-name">En trámite ante la DGAC</div>
+          <div class="rpt2-kpi-note">Sin habilitación aún</div>
+        </div>
+      </div>
+    </div>
+
+    {% comment %}Una fila por **faena**: la fecha que manda es la del primer permiso, y lo
+    que vence después se dice entre paréntesis. El detalle está en la sección 2.{% endcomment %}
+    <div>
+      <div class="rpt2-label" style="margin-bottom: 7px;">Lo próximo que vence — por centro de costo</div>
+      {% if s.next_centres %}
+      <div class="rpt2-next">
+        {% for row in s.next_centres %}
+        <div class="rpt2-next-cc"><strong>{{ row.code }}</strong> <span class="rpt2-next-n">{{ row.count }} permiso{{ row.count|pluralize:"s" }}</span></div>
+        <div class="rpt2-next-date">{{ row.valid_until|as_date|date:"d-m-Y" }}{% if row.later_count %} <span class="rpt2-next-n">(+{{ row.later_count }} hasta {{ row.later_until|as_date|date:"d-m" }})</span>{% endif %}</div>
+        <div class="rpt2-next-bar"><span class="rpt2-bar rpt2-bar-{{ row.band }}" style="width: {{ row.bar_pct }}%;"></span></div>
+        <div class="rpt2-next-days rpt2-sym-{{ row.band }}">{{ row.band|band_symbol }} {{ row.days }} d</div>
+        {% endfor %}
+      </div>
+      {% if s.more_centres %}<div class="rpt2-note-line">Y {{ s.more_centres }} faena{{ s.more_centres|pluralize:"s" }} más en la sección 2.</div>{% endif %}
+      {% else %}
+      <div class="rpt2-note-line">Ningún permiso vigente en un Centro de Costo con operación al corte.</div>
+      {% endif %}
+    </div>
+
+    {% comment %}Congelado en `payload.changes` al construir el informe: contra la última
+    revisión del mes anterior, por folio. «Sin cambios» y «sin informe anterior» son
+    afirmaciones distintas y se dicen distinto.{% endcomment %}
+    <div>
+      <div class="rpt2-label" style="margin-bottom: 7px;">Cambios desde el informe anterior</div>
+      {% with c=s.changes %}
+      {% if c %}
+      <ul class="rpt2-changes">
+        <li class="rpt2-changes-head">Contra el informe de {{ c.against.period }} (revisión {{ c.against.revision }}{% if c.against.cutoff %}, corte {{ c.against.cutoff|as_date|date:"d-m-Y" }}{% endif %}).{% if c.in_force and c.in_force.before is not None %} Permisos vigentes: {{ c.in_force.before }} → {{ c.in_force.after }}.{% endif %}</li>
+        {% if c.entered %}<li><b class="rpt2-sym-nominal">●</b> Entraron como vigentes: {{ c.entered|join:", " }}.</li>{% endif %}
+        {% if c.left %}<li><b class="rpt2-sym-critical">✕</b> Salieron de vigentes: {{ c.left|join:", " }}.</li>{% endif %}
+        {% if c.awaiting_in or c.awaiting_out %}<li><b class="rpt2-sym-info">○</b> En trámite:{% if c.awaiting_in %} nuevas {{ c.awaiting_in|join:", " }}{% endif %}{% if c.awaiting_out %}{% if c.awaiting_in %};{% endif %} ya no están {{ c.awaiting_out|join:", " }}{% endif %}.</li>{% endif %}
+        {% if c.without_in %}<li><b class="rpt2-sym-critical">✕</b> Quedaron sin habilitación: {{ c.without_in|join:", " }}.</li>{% endif %}
+        {% if c.without_out %}<li><b class="rpt2-sym-nominal">●</b> Recuperaron habilitación: {{ c.without_out|join:", " }}.</li>{% endif %}
+        {% if c.unchanged %}<li>Sin cambios en los permisos vigentes, en trámite ni en las faenas sin habilitación.</li>{% endif %}
+      </ul>
+      {% else %}
+      <div class="rpt2-note-line">No hay informe del mes anterior con el que comparar.</div>
+      {% endif %}
+      {% endwith %}
+    </div>
+    {% endwith %}
+
+    {% comment %}`LV-227`: los hallazgos salen del informe guardado, no de la base. Sin
+    ninguno escrito la hoja dice que están pendientes y no que no hay.{% endcomment %}
+    <div>
+      <div class="rpt2-label" style="margin-bottom: 7px;">Hallazgos del período</div>
+      {% if run.findings %}
+      {% include "reporting/_written.html" with anchor="findings" %}
+      <div class="rpt2-findings">
+        {% for finding in run.findings %}
+        <div class="rpt2-finding rpt2-finding-{% if finding.severity == 'critical' %}critical{% else %}warning{% endif %}"><strong>{{ finding.title }} —</strong> {{ finding.text }}</div>
+        {% endfor %}
+      </div>
+      {% else %}
+      {% pending "los hallazgos se redactan y se aprueban antes de emitir" "LV-227" %}
+      {% endif %}
+    </div>
+
+    {% comment %}La brecha va partida en «sin fecha» y «vencida»: se arreglan distinto (LV-129).{% endcomment %}
+    <div>
+      <div class="rpt2-label" style="margin-bottom: 7px;">Dotación al corte</div>
+      <div class="rpt2-staff">
+        <div class="rpt2-staff-row">
+          <div>Aeronaves con seguro JAC al día</div>
+          <div class="rpt2-staff-meter"><span style="width: {% widthratio payload.kpis.insurance_up_to_date.value|default:0 payload.kpis.fleet_total.value|default:1 100 %}%;"></span></div>
+          <div class="rpt2-staff-value"><strong>{% leaf payload.kpis.insurance_up_to_date %} de {% leaf payload.kpis.fleet_total %}</strong></div>
+          <div class="rpt2-staff-gap">{% leaf payload.kpis.insurance_missing %} sin fecha · {% leaf payload.kpis.insurance_lapsed %} vencido{{ payload.kpis.insurance_lapsed.value|pluralize:"s" }}</div>
+        </div>
+        <div class="rpt2-staff-row">
+          <div>Operadores con credencial DGAC vigente</div>
+          <div class="rpt2-staff-meter"><span style="width: {% widthratio payload.kpis.operators_credentialed.value|default:0 payload.kpis.operators_total.value|default:1 100 %}%;"></span></div>
+          <div class="rpt2-staff-value"><strong>{% leaf payload.kpis.operators_credentialed %} de {% leaf payload.kpis.operators_total %}</strong></div>
+          <div class="rpt2-staff-gap">{% leaf payload.kpis.credentials_missing %} sin fecha · {% leaf payload.kpis.credentials_lapsed %} vencida{{ payload.kpis.credentials_lapsed.value|pluralize:"s" }}</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  {% include "reporting/_foot.html" with section="summary_v2" %}
+
+</div>

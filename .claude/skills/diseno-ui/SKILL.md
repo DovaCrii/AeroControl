@@ -57,6 +57,13 @@ python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css static/cs
   --pair ac-text:id-tile --pair ac-text-secondary:id-tile
 ```
 
+Pares de la hora actual de la franja del Tiempo (`LV-373`; el contorno de la columna y el filo del cambio de día son formas, 3:1; el texto sobre el resalte lo mide `apps/weather/test_lv373_now_marks.py`, porque el resalte es una mezcla y no un token):
+
+```bash
+python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css static/css/identity.css --min 3 \
+  --pair ac-primary:ac-surface --pair ac-primary:id-tile --pair id-edge:ac-surface
+```
+
 Los rellenos de gráficos usan `--sev-*-text`, nunca `--sev-*-border`. Cuidado: un bloque `@media print` que reasigne
 tokens en `html[data-theme="dark"]` hace que este script los lea como oscuros y mida mal; reasignarlos en `html body`.
 

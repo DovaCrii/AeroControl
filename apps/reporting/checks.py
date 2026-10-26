@@ -15,8 +15,12 @@ puede ser legítimo — por eso dicen qué pasó y no deciden.
 """
 
 import re
+from datetime import date, timedelta
 
-from django.utils.translation import gettext as _
+from django.utils.formats import date_format
+from django.utils.translation import gettext as _, ngettext
+
+from apps.reporting import invariants
 
 # «CC 741» con espacio también: así lo escribió el hallazgo del informe de
 # septiembre, y una comprobación que sólo ve «CC741» no habría visto el error.
@@ -56,6 +60,87 @@ def unknown_codes_in_text(payload, run):
     return sorted({f"CC{number}" for number in CODE.findall(text)} - known)
 
 
+#: LV-378: cuántos caracteres hacia atrás se mira una negación antes de «vigente».
+#: «sin permiso vigente», «no tiene permisos vigentes», «ningún permiso vigente».
+NEGATION_WINDOW = 40
+NEGATION = re.compile(r"\b(sin|no|ning\w+|carece\w*)\b", re.IGNORECASE)
+CURRENT = re.compile(r"\bvigentes?\b", re.IGNORECASE)
+NO_PERMIT = re.compile(
+    r"\b(?:sin|no\s+(?:tiene|cuenta\s+con|posee))\s+(?:ning\w+\s+)?permisos?\b",
+    re.IGNORECASE,
+)
+SENTENCE = re.compile(r"(?<=[.;!?\n])\s+")
+
+
+def _figures_by_centre(payload):
+    """`{código: (vigentes, en trámite)}` de la cobertura y de las faenas sin operación."""
+    found = {}
+    for row in (payload.get("cost_centres") or []) + (
+        payload.get("outside_centres") or []
+    ):
+        found[row["code"]] = (
+            row.get("permits_in_force") or 0,
+            row.get("permits_awaiting") or 0,
+        )
+    return found
+
+
+def narrative_vs_figures(payload, run):
+    """LV-378: las contradicciones entre lo escrito y las cifras, sólo en pantalla.
+
+    El informe de octubre decía «permisos vigentes del CC 706» y CC706 tenía **cero**
+    vigentes y uno en trámite al corte: lo detectó quien lo leyó, no el sistema. Se
+    parte la observación y los hallazgos en oraciones; si una nombra una faena y
+    dice «vigente(s)» **sin negación delante**, y esa faena tiene cero vigentes, se
+    avisa. Y al revés: «sin permiso» sobre una faena que sí tiene vigentes.
+
+    Es una heurística, no una prueba: no bloquea y dice qué vio. Una oración que
+    nombra varias faenas se juzga por cada una, y un aviso de más cuesta una lectura;
+    uno de menos, un papel firmado con una frase falsa.
+    """
+    if run is None:
+        return []
+    figures = _figures_by_centre(payload)
+    texts = [run.period_note or ""] + [
+        f"{f.get('title', '')}. {f.get('text', '')}" for f in run.findings or []
+    ]
+    found, seen = [], set()
+    for text in texts:
+        for sentence in SENTENCE.split(text):
+            codes = {f"CC{n}" for n in CODE.findall(sentence)} & set(figures)
+            if not codes:
+                continue
+            claims_current = any(
+                not NEGATION.search(
+                    sentence[max(0, m.start() - NEGATION_WINDOW) : m.start()]
+                )
+                for m in CURRENT.finditer(sentence)
+            )
+            claims_none = bool(NO_PERMIT.search(sentence))
+            for code in sorted(codes):
+                in_force, awaiting = figures[code]
+                if claims_current and not in_force and (code, "current") not in seen:
+                    seen.add((code, "current"))
+                    found.append(
+                        _(
+                            "The text speaks of permits in force of %(code)s, which "
+                            "has %(in_force)s in force and %(awaiting)s awaiting the "
+                            "DGAC at the cutoff."
+                        )
+                        % {"code": code, "in_force": in_force, "awaiting": awaiting}
+                    )
+                if claims_none and in_force and (code, "none") not in seen:
+                    seen.add((code, "none"))
+                    found.append(
+                        _(
+                            "The text says %(code)s has no permit, but it has "
+                            "%(in_force)s in force at the cutoff."
+                        )
+                        % {"code": code, "in_force": in_force}
+                    )
+    return found
+
+
 def previous_total_change(payload, previous):
     """(antes, ahora) si el total de faenas con operación cambió contra el mes anterior."""
     if previous is None:
@@ -67,9 +152,61 @@ def previous_total_change(payload, previous):
     return before.get("value"), now.get("value")
 
 
+def _day_month(iso):
+    try:
+        return f"{date.fromisoformat(iso):%d-%m}"
+    except (TypeError, ValueError):
+        return str(iso)
+
+
+def early_cutoff_warnings(payload):
+    """LV-375: lo que dice el corte anticipado y su cierre, sólo en pantalla.
+
+    Sin bloquear: emitir con el mes abierto es legítimo, pero hay que saber qué
+    días quedaron fuera y que el cierre vendrá detrás.
+    """
+    meta = payload.get("meta") or {}
+    found = []
+    if meta.get("early_cutoff"):
+        try:
+            closing = date.fromisoformat(meta["covers"]["to"]) + timedelta(days=1)
+            closing_text = date_format(closing, "DATE_FORMAT")
+        except (KeyError, TypeError, ValueError):
+            closing_text = "?"
+        days = int(meta.get("days_remaining") or 0)
+        found.append(
+            ngettext(
+                "Early cutoff on %(cutoff)s: %(days)d day of the month is not "
+                "included; the closing revision will be issued on %(closing)s.",
+                "Early cutoff on %(cutoff)s: %(days)d days of the month are not "
+                "included; the closing revision will be issued on %(closing)s.",
+                days,
+            )
+            % {
+                "cutoff": _day_month(meta.get("cutoff")),
+                "days": days,
+                "closing": closing_text,
+            }
+        )
+    if meta.get("replaces_early_cutoff"):
+        found.append(
+            _(
+                "This revision replaces the early-cutoff one (%(cutoff)s); its "
+                "narrative was copied: review it."
+            )
+            % {"cutoff": _day_month(meta["replaces_early_cutoff"])}
+        )
+    return found
+
+
 def pre_issue_warnings(payload, run, previous=None):
     """Los avisos, ya redactados. Lista vacía si no hay nada que mirar."""
     warnings = []
+    warnings.extend(early_cutoff_warnings(payload))
+    # LV-378: que las cifras del documento cuadren entre sí, y que lo escrito no
+    # las contradiga. Avisos, no bloqueos.
+    warnings.extend(invariants.check(payload))
+    warnings.extend(narrative_vs_figures(payload, run))
     for item in permits_outside_coverage(payload):
         warnings.append(
             _(
