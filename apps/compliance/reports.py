@@ -8,14 +8,14 @@ email quotes. No wording or formatting decisions live here.
 from datetime import timedelta
 
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Count, Q
+from django.db.models import Count, Exists, Q
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from apps.compliance.digest import HORIZON_DAYS
 from apps.compliance.kpis import operational_kpis, permit_counts
 from apps.compliance.models import Alert, Document
-from apps.core.tenancy import scope_queryset_to_visible_tenants, visible_tenant_ids
+from apps.core.tenancy import DEFAULT_TENANT_SLUG, scope_queryset_to_visible_tenants
 from apps.registry.models import Aircraft, CostCenter, Operator
 
 
@@ -595,7 +595,7 @@ def build_compliance_report(
         # mira dejan de coincidir. A diferencia de `operational_kpis`, éste **sí**
         # respeta el filtro por faena: un permiso pertenece a una, y la pregunta
         # "cuántos tengo vigentes" se hace por faena.
-        "permits": permit_counts(today, cost_center, user),
+        "permits": permit_counts(today, cost_center, user, lazy_scope=True),
     }
 
 
@@ -622,10 +622,17 @@ def latest_snapshot_before(day, cost_center=None, user=None):
         # tienen el problema: la faena ya viene acotada. Cerrarlo del todo es que el comando
         # escriba una fila consolidada **por empresa** (pendiente anotado en `MASTER_PLAN.md`).
         if cost_center is None:
-            if len(visible_tenant_ids(user)) < (
-                OperationalTenant.objects.filter(is_active=True).count()
-            ):
-                return None
+            # Una sola consulta, sin resolver ids con `visible_tenant_ids`: «hay una empresa
+            # activa que la persona no ve». Es la regla de `visible_tenant_ids` (miembro activo
+            # de alguna; si de ninguna, la empresa por defecto) como subconsulta.
+            member_of = OperationalTenant.objects.filter(members=user, is_active=True)
+            # Va dentro de la misma consulta del snapshot (`~Exists`): si hay una empresa que la
+            # persona no ve, no devuelve fila y el informe recalcula el periodo anterior.
+            hidden = OperationalTenant.objects.filter(is_active=True).exclude(
+                Q(pk__in=member_of.values("pk"))
+                | (~Exists(member_of) & Q(slug=DEFAULT_TENANT_SLUG))
+            )
+            queryset = queryset.filter(~Exists(hidden))
         else:
             queryset = scope_queryset_to_visible_tenants(
                 queryset, user, "cost_center__tenant_id"
