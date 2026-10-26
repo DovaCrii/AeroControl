@@ -3913,6 +3913,10 @@ msgstr ""
 msgid "%(count)s imported records archived."
 msgstr "%(count)s registros importados archivados."
 
+#: .\apps\compliance\forms.py:780
+msgid "No record of that type with this id was found."
+msgstr "No se encontró un registro de ese tipo con este identificador."
+
 #: .\apps\registry\views.py:1740
 msgid ""
 "You belong to more than one organization, so the import cannot tell which one "
