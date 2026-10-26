@@ -3913,6 +3913,15 @@ msgstr ""
 msgid "%(count)s imported records archived."
 msgstr "%(count)s registros importados archivados."
 
+#: .\apps\registry\views.py:1740
+msgid ""
+"You belong to more than one organization, so the import cannot tell which one "
+"should receive the records. Ask an administrator to import on your behalf."
+msgstr ""
+"Usted pertenece a más de una organización, así que la importación no puede "
+"saber cuál debe recibir los registros. Pida a un administrador que importe "
+"en su nombre."
+
 #: .\apps\workboard\forms.py:25
 msgid "Tenant"
 msgstr "Organización"
