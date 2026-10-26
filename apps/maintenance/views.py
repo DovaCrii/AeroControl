@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy
 from django.views.generic import CreateView, DetailView, ListView, View
 from django.utils.text import capfirst
 
+from apps.compliance.attachments import attached_documents_context
 from apps.core.audit import set_audit_context
 from apps.core.views import (
     apply_cost_center_filter,
@@ -160,6 +161,11 @@ class MaintenanceRecordDetail(
             "at_workshop": [("finish", _("Finish repair"), "btn-info")],
             "finished": [("depart", _("Departed workshop"), "btn-info")],
         }.get(self.object.status, [])
+        # LV-379: the Documents section every other ficha already carries. A
+        # Document can hang from a maintenance record (it is in
+        # DOCUMENTABLE_MODELS) but the ficha never listed it. The helper hides
+        # the section without compliance.view_document.
+        context.update(attached_documents_context(self.request.user, self.object))
         return context
 
 
