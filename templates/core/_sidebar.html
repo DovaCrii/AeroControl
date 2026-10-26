@@ -15,8 +15,11 @@ colapsar y el tirador del ancho son controles de la barra, no enlaces del menú.
 </div>
 <nav class="sidebar-nav" aria-label="{% translate 'Main menu' %}">
   <div class="sidebar-scroll">
-    {% for item in sidebar_menu.top %}{% include "core/_nav_item.html" %}
-    {% endfor %}
+    {% comment %}LV-381 F2: el bloque sin título de arriba (panel, bandeja, alertas).{% endcomment %}
+    <div class="nav-top">
+      {% for item in sidebar_menu.top %}{% include "core/_nav_item.html" %}
+      {% endfor %}
+    </div>
     {% comment %}`UX-31` · Los atajos del rol.
 
     ⚠️ **Son un añadido, no un menú recortado.** Cada uno de estos destinos sigue

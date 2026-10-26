@@ -130,4 +130,5 @@ def test_group_titles_keep_their_separator_line():
 
 
 def test_the_rail_separates_groups_with_a_line_since_it_hides_the_titles():
-    assert ".sidebar.is-collapsed .nav-group + .nav-group" in APP_CSS
+    # F2: todos los grupos llevan la linea (el primero separa del bloque de arriba).
+    assert re.search(r"\.sidebar\.is-collapsed \.nav-group \{[^}]*border-top", APP_CSS)

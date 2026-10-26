@@ -7,8 +7,9 @@ enlaces que terminaban en 403 para Operations, Maintenance y Compliance, y un
 `admin:index` visible para quien no es del equipo técnico.
 
 Acá cada entrada declara **a qué permiso responde**, y la plantilla sólo recorre el
-resultado. El orden y los grupos son los de siempre (F2 los reagrupa): este
-bloque no mueve ninguna entrada de sitio.
+resultado. F1 la dejó con el orden y los seis grupos de siempre; **F2 la
+reagrupa** (bloque sin título arriba, cinco grupos, pie de Administración) sin
+sumar ni quitar destinos: son los mismos veinticuatro.
 
 ## Reglas de la tabla
 
@@ -75,23 +76,47 @@ class NavGroup:
 
 
 # --- Arriba, sin título ------------------------------------------------------
+#
+# LV-381 F2: lo que se abre todos los días y no es de ningún módulo en particular
+# —el panel, la bandeja de trabajo y las alertas— va junto, sin título y con el
+# color de `overview`. La bandeja y las alertas salen de Cumplimiento: son la cola
+# de pendientes de cualquiera, no sólo de quien gestiona cumplimiento.
 
 DASHBOARD = NavItem("dashboard", _("Dashboard"), "dashboard", "overview")
 
+# UX-13: la bandeja va **primera** y encima de las alertas: es con lo que se
+# empieza el día. No pide permiso de modelo (cada fuente se gatea sola,
+# `tray.SOURCES`).
+WORK_TRAY = NavItem("work-tray", _("Work tray"), "work-tray", "overview")
+
+ALERTS = NavItem(
+    "alert-list",
+    _("Alerts"),
+    "alert-list",
+    "overview",
+    permissions=("compliance.view_alert",),
+    badge=True,
+)
+
+NAV_TOP: tuple[NavItem, ...] = (DASHBOARD, WORK_TRAY, ALERTS)
+
 # LV-358: un solo ítem «Entorno» (tiempo, centelleo GNSS, espacio aéreo). Aparece
 # sólo si la persona puede abrir alguna pestaña; quien tiene una sola entra directo.
+# LV-381 F2: pasa a Vuelo, que es para lo que se consulta (¿se puede volar hoy?).
 ENVIRONMENT = NavItem(
     "environment-hub",
     _("Environment"),
     "environment",
-    "overview",
+    "flight",
     active=("environment-weather", "environment-gnss", "airspace-map"),
     dynamic_url="environment",
 )
 
-NAV_TOP: tuple[NavItem, ...] = (DASHBOARD, ENVIRONMENT)
-
-# --- Grupos (el orden operativo de LV-61: el flujo del permiso primero) ------
+# --- Grupos ------------------------------------------------------------------
+#
+# LV-381 F2: cinco grupos (D2 del diseño), con los mismos veinticuatro destinos.
+# El flujo del permiso primero (LV-61), después lo que lo respalda, lo que se
+# informa, y el padrón y las faenas, que se dan de alta una vez.
 
 FLIGHT = NavGroup(
     "flight",
@@ -121,6 +146,7 @@ FLIGHT = NavGroup(
             permissions=("operations.view_flightrecord",),
             active=("record-detail", "permission-operations"),
         ),
+        ENVIRONMENT,
     ),
 )
 
@@ -128,18 +154,6 @@ COMPLIANCE = NavGroup(
     "compliance",
     _("Compliance"),
     (
-        # UX-13: la bandeja va primera y encima de las alertas: es con lo que se
-        # empieza el día. No pide permiso de modelo (cada fuente se gatea sola,
-        # `tray.SOURCES`).
-        NavItem("work-tray", _("Work tray"), "work-tray", "compliance"),
-        NavItem(
-            "alert-list",
-            _("Alerts"),
-            "alert-list",
-            "compliance",
-            permissions=("compliance.view_alert",),
-            badge=True,
-        ),
         # LV-262: «Registros operacionales» y «Cumplimiento mensual» son una sola
         # entrada; la lista de registros se abre desde cada fila del cierre.
         NavItem(
@@ -169,6 +183,8 @@ COMPLIANCE = NavGroup(
 
 # LV-170: Informes junta el catastro y el reporte de vigencias. El catastro
 # lleva flota **y** personal, así que exige las dos lecturas, como su vista.
+# LV-381 F2: el reporte de vigencias se llama así (antes «Reporte» a secas, que
+# no decía de qué, y se confundía con el informe mensual RPA de al lado).
 REPORTS = NavGroup(
     "reports",
     _("Reports"),
@@ -182,7 +198,7 @@ REPORTS = NavGroup(
         ),
         NavItem(
             "compliance-report",
-            _("Report"),
+            _("Validity report"),
             "compliance-report",
             "reports",
             permissions=("compliance.view_document",),
@@ -197,45 +213,38 @@ REPORTS = NavGroup(
     ),
 )
 
-MAINTENANCE = NavGroup(
-    "maintenance",
-    _("Maintenance"),
+# LV-381 F2: «Mantenimiento» tenía una sola entrada; las mantenciones son del
+# equipo, igual que las aeronaves y las baterías que se mantienen.
+FLEET = NavGroup(
+    "fleet",
+    _("Fleet and personnel"),
     (
-        NavItem(
-            "maintenance-list",
-            _("Maintenance jobs"),
-            "maintenance-list",
-            "maintenance",
-            permissions=("maintenance.view_maintenancerecord",),
-        ),
-    ),
-)
-
-# `context`: un «Registry» a secas es el eyebrow de la importación de centros
-# de costo («Registro»); como grupo de padrón se lee «Padrón».
-REGISTRY = NavGroup(
-    "registry",
-    pgettext_lazy("sidebar group", "Registry"),
-    (
-        NavItem(
-            "costcenter-list",
-            _("Cost Centers"),
-            "costcenter-list",
-            "registry",
-            permissions=("registry.view_costcenter",),
-        ),
         NavItem(
             "aircraft-list",
             _("Aircraft"),
             "aircraft-list",
-            "registry",
+            "fleet",
             permissions=("registry.view_aircraft",),
+        ),
+        NavItem(
+            "battery-list",
+            _("Batteries"),
+            "battery-list",
+            "fleet",
+            permissions=("registry.view_battery",),
+        ),
+        NavItem(
+            "maintenance-list",
+            _("Maintenance jobs"),
+            "maintenance-list",
+            "fleet",
+            permissions=("maintenance.view_maintenancerecord",),
         ),
         NavItem(
             "operator-list",
             _("Operators"),
             "operator-list",
-            "registry",
+            "fleet",
             permissions=("registry.view_operator",),
         ),
         # LV-158: la prueba de conocimientos, para quien la rinde (`add_`).
@@ -243,57 +252,50 @@ REGISTRY = NavGroup(
             "assessment-take",
             _("Knowledge assessment"),
             "assessment-take",
-            "registry",
+            "fleet",
             permissions=("registry.add_knowledgeassessment",),
         ),
     ),
 )
 
-# LV-170: lo que se mueve todos los días, separado del padrón que se da de alta
-# una vez.
-INVENTORY = NavGroup(
-    "inventory",
-    _("Inventory and movements"),
+# La faena (centro de costo) y lo que se mueve en ella: quién y qué está
+# asignado dónde, y la bitácora de esos movimientos.
+SITES = NavGroup(
+    "sites",
+    _("Sites and movements"),
     (
+        NavItem(
+            "costcenter-list",
+            _("Cost Centers"),
+            "costcenter-list",
+            "sites",
+            permissions=("registry.view_costcenter",),
+        ),
         NavItem(
             "operatorassignment-list",
             _("Operator assignments"),
             "operatorassignment-list",
-            "inventory",
+            "sites",
             permissions=("registry.view_operatorassignment",),
         ),
         NavItem(
             "aircraftassignment-list",
             _("Aircraft assignments"),
             "aircraftassignment-list",
-            "inventory",
+            "sites",
             permissions=("registry.view_aircraftassignment",),
-        ),
-        NavItem(
-            "battery-list",
-            _("Batteries"),
-            "battery-list",
-            "inventory",
-            permissions=("registry.view_battery",),
         ),
         NavItem(
             "resourcemovementlog-list",
             _("Resource movements"),
             "resourcemovementlog-list",
-            "inventory",
+            "sites",
             permissions=("registry.view_resourcemovementlog",),
         ),
     ),
 )
 
-NAV_GROUPS: tuple[NavGroup, ...] = (
-    FLIGHT,
-    COMPLIANCE,
-    REPORTS,
-    MAINTENANCE,
-    REGISTRY,
-    INVENTORY,
-)
+NAV_GROUPS: tuple[NavGroup, ...] = (FLIGHT, COMPLIANCE, REPORTS, FLEET, SITES)
 
 # --- Pie fijo: Administración ------------------------------------------------
 
@@ -324,7 +326,7 @@ NAV_FOOTER: tuple[NavItem, ...] = (
     ),
     NavItem(
         "admin:index",
-        _("Admin"),
+        _("Technical administration"),
         "admin-index",
         "admin",
         staff_only=True,

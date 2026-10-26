@@ -178,6 +178,8 @@ def test_stylesheet_weight_guard():
     fila de hoy del Tiempo (LV-373: ~1,4 KB, la base ya estaba a 249,5 KB) lo suben a 252 KB.
     La barra lateral fija con su zona de desplazamiento, el rail completo y las burbujas del rail
     (LV-381 F0: ~2,6 KB, casi todo comentario que explica el porqué de cada regla) lo suben a 254 KB.
+    Los siete colores de sección del menú agrupado y el bloque de arriba (LV-381 F2: ~0,7 KB, sin
+    ningún hex nuevo) lo suben a 255 KB.
     """
     total = sum((STATIC / name).stat().st_size for name in ("app.css", "identity.css"))
-    assert total < 254 * 1024
+    assert total < 255 * 1024

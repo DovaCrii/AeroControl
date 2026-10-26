@@ -19,7 +19,7 @@ es directa, con `Maintenance` sumado porque existe y trabaja distinto:
 
 | Grupo | Aterriza en | Por qué |
 |---|---|---|
-| `Operations` | «¿Puedo volar?» | Es literalmente su primera pregunta del día. |
+| `Operations` | Permisos de vuelo | Es el trámite con el que trabaja todos los días. Hasta `LV-381` aterrizaba en «¿Puedo volar?», que `LV-284` sacó del menú: mandar a alguien a una pantalla que el menú no ofrece es esconderla con otro nombre. |
 | `Compliance` | La bandeja de trabajo | Su jornada **es** la cola de pendientes. |
 | `Maintenance` | Mantenciones | Lo mismo, con otra cola. |
 | `Administrator`, `Viewer`, y quien no tenga rol | El panel | Es la vista de conjunto, que es lo que mira quien no ejecuta una cola. |
@@ -40,7 +40,9 @@ panel; el panel no pide ninguno.
 #: bandeja no pide ninguno (cada fuente se gatea sola), así que preguntárselo a
 #: la vista daría "ninguno" y mandaría gente a una bandeja vacía sin explicación.
 ROLE_LANDING = {
-    "Operations": ("can-i-fly", None),
+    # LV-381 D6: «¿Puedo volar?» salió del menú (LV-284) y con ella sus atajos y su
+    # aterrizaje, **mientras siga fuera**. Si vuelve al menú, vuelve acá.
+    "Operations": ("permission-list", "operations.view_flightpermission"),
     "Compliance": ("work-tray", None),
     "Maintenance": ("maintenance-list", "maintenance.view_maintenancerecord"),
 }
@@ -52,7 +54,7 @@ ROLE_LANDING = {
 #: para quien los usa todos los días. Un operador no deja de ver «Documentos de
 #: la empresa» — deja de tener que bajar hasta ellos.
 ROLE_SHORTCUTS = {
-    "Operations": ("can-i-fly", "permission-list", "record-list"),
+    "Operations": ("permission-list", "record-list"),
     "Compliance": ("work-tray", "alert-list", "monthly-report"),
     "Maintenance": ("maintenance-list", "alert-list"),
 }
@@ -61,7 +63,6 @@ ROLE_SHORTCUTS = {
 #: (`LV-130`: un enlace que falla enseña a desconfiar de la pantalla). `None` es
 #: "no pide ninguno", no "no se sabe".
 SHORTCUT_PERMISSIONS = {
-    "can-i-fly": None,
     "work-tray": None,
     "permission-list": "operations.view_flightpermission",
     "record-list": "operations.view_flightrecord",
@@ -74,13 +75,12 @@ SHORTCUT_PERMISSIONS = {
 #: abajo, a propósito: dos nombres para la misma pantalla es cómo alguien cree
 #: que son dos pantallas.
 SHORTCUT_LABELS = {
-    "can-i-fly": "Can I fly?",
     "work-tray": "Work tray",
     "permission-list": "Permissions",
     "record-list": "Flights",
     "alert-list": "Alerts",
     "monthly-report": "Monthly RPA report",
-    "maintenance-list": "Maintenance",
+    "maintenance-list": "Maintenance jobs",
 }
 
 

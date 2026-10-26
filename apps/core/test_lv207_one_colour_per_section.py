@@ -218,7 +218,7 @@ class TestTheContrastIsCalculatedNotAssumed:
         Decía `registry 2.41`. Este test fija el valor real para que nadie vuelva
         a "corregir" un color que cumple de sobra.
         """
-        assert contrast(_icon_colours()["registry"], LIGHT_SURFACE) > 5
+        assert contrast(_icon_colours()["fleet"], LIGHT_SURFACE) > 5
 
     def test_the_new_green_was_chosen_by_measurement(self):
         """`#65a30d`, el candidato del diagnóstico previo, daba 3.09 en claro.
@@ -234,10 +234,12 @@ class TestTheScreenRendersThem:
     def test_the_menu_uses_the_section_classes(self, db):
         # `LV-381` F1: el menú respeta los permisos, así que hacen falta los de
         # una entrada de cada sección para que se dibujen.
-        client = login_as("view_flightpermission", "view_document", "view_battery")
+        client = login_as(
+            "view_flightpermission", "view_document", "view_aircraft", "view_costcenter"
+        )
         body = client.get(reverse("dashboard")).content.decode()
 
-        for family in ("nav-flight", "nav-reports", "nav-inventory"):
+        for family in ("nav-flight", "nav-reports", "nav-fleet", "nav-sites"):
             assert family in body
 
     @pytest.mark.django_db
@@ -251,3 +253,19 @@ class TestTheScreenRendersThem:
 
         assert "nav-operations" not in body
         assert "nav-workboard" not in body
+
+    @pytest.mark.django_db
+    def test_the_classes_retired_by_the_regrouping_are_gone(self, db):
+        """LV-381 F2: seis grupos pasan a cinco y tres clases de color se
+        retiran (`nav-maintenance`, `nav-registry`, `nav-inventory`): `fleet` es
+        el azul de `registry` y `sites` el violeta de `maintenance`. Con una
+        clase vieja viva, alguien volveria a asignarla por app."""
+        client = login_as(
+            "view_flightpermission", "view_document", "view_aircraft", "view_costcenter"
+        )
+        body = client.get(reverse("dashboard")).content.decode()
+        css = CSS.read_text(encoding="utf-8")
+
+        for old in ("nav-maintenance", "nav-registry", "nav-inventory"):
+            assert old not in body
+            assert f".{old} .nav-icon" not in css

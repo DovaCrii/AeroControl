@@ -84,7 +84,8 @@ def test_no_two_menu_entries_draw_the_same_icon():
         ("Operators", "Operator assignments"),
         ("Aircraft", "Aircraft assignments"),
         ("Permissions", "Maintenance jobs"),
-        ("Administration center", "Admin"),
+        # LV-381 F2: «Admin» pasó a llamarse «Technical administration».
+        ("Administration center", "Technical administration"),
     ],
 )
 def test_the_pairs_that_used_to_collide_stay_apart(first, second):

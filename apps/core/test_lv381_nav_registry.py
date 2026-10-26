@@ -133,9 +133,9 @@ def test_a_group_without_any_permitted_entry_is_not_drawn(db):
     body = client.get(reverse("dashboard")).content.decode()
     sidebar = body[body.index('<aside class="sidebar') : body.index("</aside>")]
 
-    assert 'data-nav-group="inventory"' in sidebar
+    assert 'data-nav-group="fleet"' in sidebar
     assert 'data-nav-group="flight"' not in sidebar
-    assert 'data-nav-group="registry"' not in sidebar
+    assert 'data-nav-group="sites"' not in sidebar
 
 
 @pytest.mark.django_db

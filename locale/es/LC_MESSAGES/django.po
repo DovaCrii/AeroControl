@@ -4207,6 +4207,22 @@ msgstr "Centro de administración"
 msgid "Admin"
 msgstr "Administración"
 
+#: apps/core/navigation.py
+msgid "Technical administration"
+msgstr "Administración técnica"
+
+#: apps/core/navigation.py
+msgid "Validity report"
+msgstr "Reporte de vigencias"
+
+#: apps/core/navigation.py
+msgid "Fleet and personnel"
+msgstr "Flota y personal"
+
+#: apps/core/navigation.py
+msgid "Sites and movements"
+msgstr "Faenas y movimientos"
+
 #: .\templates\base.html:304 .\templates\base.html:311
 #: .\templates\compliance\_document_preview_modal.html:25
 #: .\templates\compliance\nonconformity_detail.html:62

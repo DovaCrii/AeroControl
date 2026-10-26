@@ -76,7 +76,7 @@ class TestTheAccordion:
     def test_the_html_still_degrades_to_everything_open(self):
         toggles = re.findall(r"<button[^>]*nav-group-toggle[^>]*>", _sidebar_markup())
 
-        assert len(toggles) == 6
+        assert len(toggles) == 5  # LV-381 F2: cinco grupos
         assert all('aria-expanded="true"' in toggle for toggle in toggles)
 
 

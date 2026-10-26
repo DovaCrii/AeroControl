@@ -39,12 +39,24 @@ class TestWhereEachRoleLands:
     @pytest.mark.parametrize(
         ("group", "expected"),
         [
-            ("Operations", "can-i-fly"),
+            # LV-381 D6: Operations aterrizaba en «¿Puedo volar?», que LV-284 sacó
+            # del menú; ahora aterriza en sus permisos de vuelo, y como esa
+            # pantalla exige `view_flightpermission`, sin él no hay destino.
             ("Compliance", "work-tray"),
         ],
     )
     def test_the_role_decides_the_first_screen(self, db, group, expected):
         assert landing_url_name(_user(group)) == expected
+
+    @pytest.mark.django_db
+    def test_operations_lands_on_its_permissions_and_needs_the_permission(self, db):
+        """LV-381 D6: no se manda a nadie a una pantalla que el menú no ofrece, ni
+        a una que da 403."""
+        assert landing_url_name(_user("Operations")) is None
+        assert (
+            landing_url_name(_user("Operations", permissions=["view_flightpermission"]))
+            == "permission-list"
+        )
 
     @pytest.mark.django_db
     def test_maintenance_needs_its_permission_to_land_there(self, db):
@@ -85,7 +97,7 @@ class TestWhereEachRoleLands:
 class TestTheLoginHonoursIt:
     @pytest.mark.django_db
     def test_signing_in_lands_on_the_role_screen(self, client, db):
-        user = _user("Operations")
+        user = _user("Operations", permissions=["view_flightpermission"])
         user.set_password("pw")
         user.save()
 
@@ -93,7 +105,7 @@ class TestTheLoginHonoursIt:
             reverse("login"), {"username": user.username, "password": "pw"}
         )
 
-        assert response.url == reverse("can-i-fly")
+        assert response.url == reverse("permission-list")
 
     @pytest.mark.django_db
     def test_but_an_explicit_next_always_wins(self, client, db):
@@ -136,7 +148,14 @@ class TestNothingIsHidden:
         # persona puede abrir. El grupo de padrón no es de este rol y, con su
         # permiso de lectura, tiene que seguir ahí aunque haya atajos arriba.
         client.force_login(
-            _user("Operations", permissions=["view_aircraft", "view_costcenter"])
+            _user(
+                "Operations",
+                permissions=[
+                    "view_flightpermission",
+                    "view_aircraft",
+                    "view_costcenter",
+                ],
+            )
         )
 
         body = client.get(reverse("dashboard")).content.decode()
@@ -172,7 +191,8 @@ class TestTheShortcuts:
         repartido en la plantilla es un `if` que alguien olvida."""
         bare = _user("Operations")
 
-        assert shortcuts_for(bare) == ["can-i-fly"]
+        # LV-381 D6: «¿Puedo volar?» ya no es atajo (salió del menú, LV-284).
+        assert shortcuts_for(bare) == []
 
     @pytest.mark.django_db
     def test_and_appear_once_the_permission_is_there(self, db):
@@ -180,16 +200,16 @@ class TestTheShortcuts:
             "Operations", permissions=["view_flightpermission", "view_flightrecord"]
         )
 
-        assert shortcuts_for(able) == ["can-i-fly", "permission-list", "record-list"]
+        assert shortcuts_for(able) == ["permission-list", "record-list"]
 
     @pytest.mark.django_db
     def test_they_reach_the_page(self, client, db):
-        client.force_login(_user("Operations"))
+        client.force_login(_user("Operations", permissions=["view_flightpermission"]))
 
         body = client.get(reverse("dashboard")).content.decode()
 
         assert "nav-shortcuts" in body
-        assert reverse("can-i-fly") in body
+        assert reverse("permission-list") in body
 
     @pytest.mark.django_db
     def test_they_cost_one_query_and_it_does_not_grow(
