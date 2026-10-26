@@ -1,6 +1,24 @@
 # HANDOFF — AeroControl
 
-## 🟡 2026-10-23 — tanda «tiempo sin Open-Meteo, AIP-Chile, permiso, credencial, baja y visual v3» **fusionada sin desplegar** (`main` en `472e192`; la VM sigue en `c4c6b85`)
+## ✅ 2026-10-26 — tanda del 21 al 23 de octubre y emisión con corte anticipado **desplegadas** (`32dce41`)
+
+`p340` corre **`32dce41`**. Se desplegó en dos pasadas, leídas de la salida pegada: (1) `d42c0f1` (la tanda tiempo/AIP/permiso/credencial/baja/visual v3 de la entrada de abajo, ya fusionada el 23) y (2) `32dce41`: **emisión del informe mensual con corte anticipado** (`LV-375`) y **todos los centros de costo visibles** en la tabla de permisos de Cumplimiento (`LV-374`). Cada pasada con respaldo previo (`restorable.`), `git pull` + `migrate` (`reporting.0006_lv375_early_cutoff_permission`, solo el permiso), reinicio (`active`, hash leído), `health: 200` y `bootstrap_roles`. Los estáticos se copiaron en la primera pasada (la segunda no llevó). `WEATHER_USER_AGENT` ya está definido en la VM y el clima funciona con MET Norway.
+
+**Emisión con corte anticipado (`LV-375`):** permiso propio `reporting.issue_early_reportrun`, **solo Administrator** (y el superusuario). Botón «Emitir con corte anticipado» en `Informe mensual RPA` con `?period=AAAA-MM` solo si el mes está abierto; motivo obligatorio (10 a 300 caracteres, auditado y no impreso); la **portada no cambia**; el pie dice «Revisión 0 · Corte anticipado dd-mm-aaaa · Página N de M» y las notas de cobertura «estado al corte anticipado». **El 1 de noviembre el timer emite solo la revisión de cierre**, que reemplaza a la anticipada (la anticipada pasa a `superseded` conservando quién la aprobó; la narrativa viaja): confirmar con `generate_monthly_report --dry-run` ese día. La regla general no cambia: el botón normal y el timer siguen rechazando un mes abierto (`LV-233`). Verificado de forma independiente: flujo completo, PDF A4 (5 páginas, pie en una línea), agosto cerrado idéntico byte a byte, y el cierre simulado al 1 de noviembre.
+
+**Seguimiento — fusionado sin desplegar: nada.** Queda por **fusionar y desplegar en una segunda tanda** (ramas locales o PR abiertos):
+- **`LV-372` aislamiento por empresa completo (F-08):** rama `codex/tenant-listas-transiciones` (sobre `codex/tenant-geo-panel`); suite completa en verde (6715 pasaron, 6 saltadas) pero es un cambio **amplio** (listas, fichas, acciones, formularios, bandeja, búsqueda, calendario, tableros, informe de cumplimiento); sin migración ni estáticos. Pendientes de esa fila: `snapshot_compliance`, `AuditEvent` sin empresa, el admin de Django, la reversión de importación de centros de costo. El informe mensual DGAC y `report_notice` quedan **globales por diseño** (`ReportRun` sin empresa): `view_reportrun` y `change_reportrun` solo a roles de toda la organización.
+- **`LV-373` marca de la hora actual, cambio de día y fecha en los 7 días del clima:** PR #172 abierto; lleva estáticos.
+- **Informes F1 y F2** (`LV-355`): ramas `codex/informes-f1-export` y `codex/informes-f2-cabecera-a4` (la F0 ya está en `main` dentro de `LV-375`); nombres de archivo con fecha, una sola tubería de exportación, cabecera única y A4; lleva estáticos (una regla de `identity.css`).
+- **Rediseño de Cumplimiento v4** (tabla «Permisos de vuelo por centro de costo» y tarjetas de estado): diseño de Opus en curso; ver `LV-376`.
+
+**Para la próxima vez:** `pip-audit` hizo fallar el CI cuatro veces por vulnerabilidades nuevas en dependencias (`certifi`, `pillow`, `djangorestframework`, `pypdf`, `filelock`): conviene mirar `uv run pip-audit` al empezar la jornada.
+
+**No verificado a ojo (el navegador integrado no compone):** el aspecto de la capa del AIP y los límites administrativos en el mapa, la pantalla de revisión del AIP, el formulario del permiso con el mini-mapa, el chip y el banner de «Ex colaborador», la cifra «Aeronaves con seguro JAC al día» del Resumen ejecutivo (usa un criterio distinto al del panel: **revisarla antes de aprobar**), y el tema claro de varias pantallas.
+
+**Pendiente — del usuario:** una credencial de ejemplo anonimizada fuera del repo para fijar las etiquetas del lector; quién revisa cada enmienda del AIP y el umbral de discrepancia en metros (`AIRSPACE_CROSSCHECK_THRESHOLD_M`); si `pdfplumber` entra como dependencia; las respuestas de la DGAC y del revisor sobre punto centro y radio en áreas no circulares (la hoja SIGO **no se tocó** a la espera de eso); el orden de «Qué atender primero» (`PRIORITY_ORDER`); decisiones de Informes (`docs/dev/informes-optimizacion.md` §7); licencias (`docs/dev/licencias-y-terminos.md`).
+
+## ✅ 2026-10-23 — tanda «tiempo sin Open-Meteo, AIP-Chile, permiso, credencial, baja y visual v3» fusionada (desplegada el 2026-10-26 en `d42c0f1`; ver la entrada de arriba)
 
 Todo lo de abajo está en `main` con el CI verde; **nada se ha desplegado** desde `c4c6b85` (la tanda Entorno + Espacio aéreo + Cumplimiento, ya en producción). Son ~180 archivos.
 
