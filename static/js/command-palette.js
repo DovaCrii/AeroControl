@@ -351,7 +351,7 @@
   }
   var hint = document.querySelector('.global-search-hint');
   var platform = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '';
-  if (hint && /Mac|iPhone|iPad/i.test(platform)) hint.textContent = '⌘ K';
+  if (hint && /Mac|iPhone|iPad/i.test(platform)) hint.textContent = '⌘' + String.fromCharCode(160) + 'K';
 
   palette.addEventListener('click', function (event) {
     if (event.target.closest('[data-palette-close]')) close();

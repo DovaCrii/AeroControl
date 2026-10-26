@@ -756,11 +756,24 @@ body.palette-open { overflow: hidden; }
     width: min(86vw, var(--ac-sidebar-width));
     overflow-y: auto;
     transform: translateX(-105%);
+    /* LV-381 F5: cerrado, fuera de la tabulacion y de los lectores de pantalla
+       (al terminar de salir); abierto, visible de inmediato. */
+    visibility: hidden;
+    overscroll-behavior: contain;
+    transition: transform 0.2s ease, visibility 0s linear 0.2s;
     /* transition lives in the base .sidebar rule now (LV-63) -- it already
        includes transform, and duplicating it here is exactly the trap this
        fix removes elsewhere. */
   }
-  .sidebar.is-open { transform: translateX(0); }
+  .sidebar.is-open { transform: translateX(0); visibility: visible; transition-delay: 0s; }
+  .sidebar-backdrop:not([hidden]) {
+    position: fixed;
+    inset: 0;
+    z-index: 1039; /* bajo el cajon (1040), sobre la barra superior */
+    display: block;
+    background: rgb(6 12 24 / 55%);
+  }
+  body.drawer-open { overflow: hidden; }
   .sidebar-toggle { display: inline-flex; align-items: center; justify-content: center; }
   .brand-subtitle { display: none; }
   .navbar > .d-flex { margin-left: auto; }

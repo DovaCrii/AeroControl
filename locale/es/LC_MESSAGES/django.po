@@ -12662,6 +12662,10 @@ msgstr "Recientes"
 msgid "Go to"
 msgstr "Ir a"
 
+#: templates/core/_sidebar.html
+msgid "Close navigation"
+msgstr "Cerrar navegación"
+
 #~ msgid "Credential file"
 #~ msgstr "Credencial adjunta"
 

@@ -34,7 +34,7 @@
     <form method="get" action="/search/" role="search" class="global-search d-none d-md-flex mx-auto" hx-boost="false">
       <div class="input-group input-group-sm">
         <input class="form-control global-search-input" type="search" name="q" value="" placeholder="Buscar en AeroControl" aria-label="Búsqueda global" aria-keyshortcuts="Control+K Meta+K">
-        <kbd class="global-search-hint" aria-hidden="true">Ctrl K</kbd>
+        <kbd class="global-search-hint" aria-hidden="true">Ctrl&nbsp;K</kbd>
         <button class="btn btn-outline-light" type="submit" aria-label="Buscar">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
         </button>
@@ -64,11 +64,12 @@
       </button>
     </span>
   </nav>
+  <div class="sidebar-backdrop" id="sidebar-backdrop" hidden></div>
   <div class="d-flex">
     <aside class="sidebar p-3 d-flex flex-column" id="sidebar" aria-label="Navegación principal">
 <div class="sidebar-toolbar">
   <span class="sidebar-toolbar-title">Navegación</span>
-  <button class="sidebar-collapse" type="button" id="sidebar-collapse" aria-controls="sidebar" aria-label="Contraer panel lateral" title="Contraer panel lateral" data-label-expand="Expandir panel lateral" data-label-collapse="Contraer panel lateral">
+  <button class="sidebar-collapse" type="button" id="sidebar-collapse" aria-controls="sidebar" aria-label="Contraer panel lateral" title="Contraer panel lateral" data-label-expand="Expandir panel lateral" data-label-collapse="Contraer panel lateral" data-label-close="Cerrar navegación">
     <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
   </button>
 </div>

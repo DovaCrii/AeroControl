@@ -53,7 +53,7 @@
         <input class="form-control global-search-input" type="search" name="q" value="{{ request.GET.q|default:'' }}" placeholder="{% translate 'Search in AeroControl' %}" aria-label="{% translate 'Global search' %}" aria-keyshortcuts="Control+K Meta+K">
         {% comment %}LV-381 F4 (V7): la pista del atajo. Decorativa para el lector de pantalla
         (el atajo se anuncia con `aria-keyshortcuts`); `command-palette.js` la cambia a ⌘ K en Mac.{% endcomment %}
-        <kbd class="global-search-hint" aria-hidden="true">Ctrl K</kbd>
+        <kbd class="global-search-hint" aria-hidden="true">Ctrl&nbsp;K</kbd>
         <button class="btn btn-outline-light" type="submit" aria-label="{% translate 'Search' %}">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
         </button>
@@ -95,6 +95,10 @@
     </span>
   </nav>
 
+  {% comment %}LV-381 F5: el fondo del cajón móvil (<769 px). `app.js` lo muestra mientras el cajón está
+  abierto; tocarlo lo cierra. Es un `<div>` y no un botón a propósito: el cierre por teclado es Esc y el
+  botón de la cabecera de la barra; esto es sólo el gesto de tocar fuera.{% endcomment %}
+  <div class="sidebar-backdrop" id="sidebar-backdrop" hidden></div>
   <div class="d-flex">
     <aside class="sidebar p-3 d-flex flex-column" id="sidebar" aria-label="{% translate 'Main navigation' %}">
       {% include "core/_sidebar.html" %}

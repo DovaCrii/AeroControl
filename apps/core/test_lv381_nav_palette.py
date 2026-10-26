@@ -90,7 +90,9 @@ class TestTheDestinationsAreTheMenuOnes:
 class TestTheTopBarBoxOpensIt:
     def test_the_box_announces_the_shortcut(self):
         assert 'aria-keyshortcuts="Control+K Meta+K"' in BASE
-        assert re.search(r'<kbd class="global-search-hint"[^>]*>Ctrl K</kbd>', BASE)
+        assert re.search(
+            r'<kbd class="global-search-hint"[^>]*>Ctrl&nbsp;K</kbd>', BASE
+        )
 
     def test_the_hint_is_decorative_for_screen_readers(self):
         hint = re.search(r'<kbd class="global-search-hint"[^>]*>', BASE).group(0)
@@ -112,7 +114,7 @@ class TestTheTopBarBoxOpensIt:
         assert "!restoringFocus && palette.hidden" in code
 
     def test_the_hint_reads_command_k_on_a_mac(self):
-        assert "'⌘ K'" in PALETTE
+        assert "String.fromCharCode(160)" in PALETTE
 
 
 class TestRecents:

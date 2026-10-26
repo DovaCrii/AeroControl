@@ -181,7 +181,8 @@ def test_stylesheet_weight_guard():
     Los siete colores de sección del menú agrupado y el bloque de arriba (LV-381 F2: ~0,7 KB, sin
     ningún hex nuevo) lo suben a 255 KB. El grupo en cada fila de la paleta, los títulos de
     «Recientes» y la pista `Ctrl K` del cuadro de la barra (LV-381 F4: ~0,8 KB, sin hex nuevo)
-    lo suben a 256 KB.
+    lo suben a 256 KB. El fondo y la visibilidad del cajón móvil (LV-381 F5: ~0,3 KB, sin hex
+    nuevo) lo suben a 257 KB.
     """
     total = sum((STATIC / name).stat().st_size for name in ("app.css", "identity.css"))
-    assert total < 256 * 1024
+    assert total < 257 * 1024

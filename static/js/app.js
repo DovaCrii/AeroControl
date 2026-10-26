@@ -81,17 +81,69 @@
   function toggleTheme() {
     applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
   }
+  // LV-381 F5 (V10): bajo 769 px la barra es un cajon. Un cajon abierto es modal:
+  // fondo oscuro que cierra al tocar fuera, el foco entra al primer enlace y
+  // vuelve al boton que lo abrio, y el resto de la pagina queda `inert` (ni se
+  // tabula, ni se lee, ni recibe clics) mientras esta abierto. `inert` va sobre
+  // los hermanos y no sobre `body`: el cajon cuelga de `body` y quedaria inerte
+  // con todo lo demas.
+  var DRAWER_BELOW = 769;
+  var INERT_WHILE_OPEN = '.skip-link, #offline-banner, body > .navbar, #main-content';
+  function isNarrow() {
+    return window.innerWidth < DRAWER_BELOW;
+  }
+  function setPageInert(on) {
+    document.querySelectorAll(INERT_WHILE_OPEN).forEach(function (node) {
+      node.inert = on;
+    });
+  }
   function setSidebar(open) {
     var sidebar = document.getElementById('sidebar');
     var toggle = document.getElementById('sidebar-toggle');
+    var backdrop = document.getElementById('sidebar-backdrop');
+    var narrow = isNarrow();
+    var wasOpen = sidebar.classList.contains('is-open');
     sidebar.classList.toggle('is-open', open);
-    if (toggle && window.innerWidth < 769) toggle.setAttribute('aria-expanded', String(open));
+    if (toggle && narrow) toggle.setAttribute('aria-expanded', String(open));
+    var modal = narrow && open;
+    if (backdrop) backdrop.hidden = !modal;
+    document.body.classList.toggle('drawer-open', modal);
+    setPageInert(modal);
+    if (narrow && open && !wasOpen) {
+      var first = sidebar.querySelector('nav a[href]');
+      if (first) first.focus();
+    } else if (narrow && !open && wasOpen && toggle) {
+      toggle.focus();
+    }
   }
-  function setSidebarCollapsed(collapsed) {
+  // El boton de la cabecera de la barra colapsa a modo icono en escritorio y
+  // **cierra el cajon** en el telefono: su rotulo tiene que decir lo que hace.
+  function syncToolbarLabel() {
+    var sidebar = document.getElementById('sidebar');
+    var button = document.getElementById('sidebar-collapse');
+    if (!sidebar || !button) return;
+    var label = isNarrow()
+      ? button.dataset.labelClose
+      : (sidebar.classList.contains('is-collapsed') ? button.dataset.labelExpand : button.dataset.labelCollapse);
+    if (label) {
+      button.setAttribute('aria-label', label);
+      button.setAttribute('title', label);
+    }
+  }
+  // Si se agranda la ventana con el cajon abierto, deja de ser cajon: sin esto el
+  // contenido quedaria inerte en escritorio sin forma de cerrarlo.
+  window.addEventListener('resize', function () {
+    var sidebar = document.getElementById('sidebar');
+    if (!isNarrow() && sidebar && sidebar.classList.contains('is-open')) setSidebar(false);
+    syncToolbarLabel();
+  });
+  function setSidebarCollapsed(collapsed, persist) {
     var sidebar = document.getElementById('sidebar');
     if (!sidebar) return;
     sidebar.classList.toggle('is-collapsed', collapsed);
-    remember('sidebar-collapsed', String(collapsed));
+    // `persist === false`: el modo icono por defecto de la tableta no es una
+    // preferencia de la persona y no debe quedar guardado como si lo fuera.
+    if (persist !== false) remember('sidebar-collapsed', String(collapsed));
     var toggle = document.getElementById('sidebar-toggle');
     var innerToggle = document.getElementById('sidebar-collapse');
     if (toggle && window.innerWidth >= 769) toggle.setAttribute('aria-expanded', String(!collapsed));
@@ -225,10 +277,24 @@
     }
   });
   document.getElementById('sidebar-collapse').addEventListener('click', function () {
-    setSidebarCollapsed(!document.getElementById('sidebar').classList.contains('is-collapsed'));
+    if (isNarrow()) {
+      setSidebar(false);  // en el telefono este boton cierra el cajon
+    } else {
+      setSidebarCollapsed(!document.getElementById('sidebar').classList.contains('is-collapsed'));
+    }
   });
+  var drawerBackdrop = document.getElementById('sidebar-backdrop');
+  if (drawerBackdrop) drawerBackdrop.addEventListener('click', function () { setSidebar(false); });
   applyTheme(document.documentElement.getAttribute('data-theme') || 'light');
-  if (window.innerWidth >= 769 && recall('sidebar-collapsed') === 'true') setSidebarCollapsed(true);
+  // LV-381 F5 (D5): una preferencia guardada manda; sin ella, la tableta
+  // (769-1199 px) arranca en modo icono para no quitarle un tercio al contenido, y
+  // eso **no se guarda**: no es una eleccion de la persona.
+  if (!isNarrow()) {
+    var savedRail = recall('sidebar-collapsed');
+    if (savedRail === 'true') setSidebarCollapsed(true);
+    else if (savedRail === null && window.innerWidth < 1200) setSidebarCollapsed(true, false);
+  }
+  syncToolbarLabel();
   // LV-381 F0: en modo icono el rotulo de cada enlace es una burbuja. Dentro del
   // contenedor con scroll (y del `overflow:hidden` del propio enlace) quedaba
   // recortada, asi que el rail mostraba 24 iconos sin nombre. La burbuja pasa a
