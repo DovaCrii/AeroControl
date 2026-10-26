@@ -165,12 +165,17 @@ class TestThePlanSharesTheSheetWhenItFits:
 @pytest.mark.django_db
 class TestThePaper:
     @pytest.fixture
-    def body(self, client, admin_user):
+    def body(self, client, admin_user, monkeypatch):
         from django.utils import timezone
 
         from apps.operations.models import FlightPermission
         from apps.registry.models import CostCenter
 
+        # LV-378: estos tests describen **la hoja de siempre** (diseño 1), que sigue
+        # dibujando los informes ya emitidos. La vista previa de hoy sale en diseño 2,
+        # así que se fija el 1 para seguir vigilando la hoja vieja; las del diseño 2
+        # las vigila `test_lv378_summary_coverage_v2.py`.
+        monkeypatch.setattr("apps.reporting.builder.LAYOUT", 1)
         today = timezone.localdate()
         centre = CostCenter.objects.create(
             code="CC260", name="Faena", operates_flights=True

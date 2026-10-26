@@ -20,6 +20,11 @@ no deja ver contra qué.{% endcomment %}
     {% if baseline %}
     <p class="page-description mb-0">{% blocktranslate with code=baseline.code revision=baseline.revision %}Compared with {{ code }} rev. {{ revision }}.{% endblocktranslate %}</p>
     {% endif %}
+    {% comment %}LV-375: las fechas de corte de los dos lados. Un anticipado y su
+    cierre sólo difieren en eso, y sin la fecha la tabla de abajo parece un error.{% endcomment %}
+    {% if baseline and run_cutoff and baseline_cutoff %}
+    <p class="page-description mb-0">{% blocktranslate with now=run_cutoff|date:"d-m-Y" before=baseline_cutoff|date:"d-m-Y" %}Cutoff of this report: {{ now }} · of the compared one: {{ before }}.{% endblocktranslate %}{% if run.is_early_cutoff %} {% translate "This one is an early cutoff." %}{% endif %}{% if baseline.is_early_cutoff %} {% translate "The compared one is an early cutoff." %}{% endif %}</p>
+    {% endif %}
   </div>
   <a class="btn btn-outline-secondary" href="{% url 'monthly-report' %}?period={{ run.period|date:'Y-m' }}">{% translate "Back to the report" %}</a>
 </div>
@@ -39,6 +44,7 @@ no deja ver contra qué.{% endcomment %}
 
 <section class="card p-3 mb-3">
   <h2 class="h5">{% translate "Indicators" %}</h2>
+  {% if layouts %}<p class="small mb-2"><strong>{% blocktranslate with before=layouts.0 now=layouts.1 %}Document format: v{{ before }} → v{{ now }}. Some figures changed because of how they are counted, not only because of what happened.{% endblocktranslate %}</strong></p>{% endif %}
   <p class="text-muted small mb-2">{% blocktranslate count counter=changed_count %}{{ counter }} indicator changed.{% plural %}{{ counter }} indicators changed.{% endblocktranslate %}</p>
   <div class="table-responsive">
     <table class="table table-sm align-middle mb-0">

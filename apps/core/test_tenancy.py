@@ -527,3 +527,21 @@ class TestLazyScopeEqualsEagerScope:
         )
         with django_assert_num_queries(0):
             str(queryset.query)
+
+
+@pytest.mark.django_db
+def test_visible_tenant_ids_is_asked_once_per_user_object(django_assert_num_queries):
+    """El Reporte de vigencia la llamaba 7 veces por petición (2 consultas cada una)."""
+    from django.contrib.auth.models import User
+
+    from apps.core.tenancy import visible_tenant_ids
+
+    user = User.objects.create_user("memo", password="x")
+    first = visible_tenant_ids(user)
+    with django_assert_num_queries(0):
+        second = visible_tenant_ids(user)
+    assert second == first
+    # Otra persona no hereda la respuesta: se calcula con sus propias membresías.
+    other = User.objects.create_user("memo2", password="x")
+    assert not hasattr(other, "_ac_visible_tenant_ids")
+    assert visible_tenant_ids(other) == first

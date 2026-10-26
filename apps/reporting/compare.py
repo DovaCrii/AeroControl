@@ -34,10 +34,22 @@ KPI_LABELS = [
     ("cost_centres_with_operation", _("Sites with operation")),
     ("cost_centres_without_permit", _("Sites without a permit in force")),
     ("permits_in_force", _("Permits in force")),
+    # LV-378: las llaves nuevas. Un informe anterior al diseño 2 no las trae y se
+    # muestra «—», no cero: `None` no es cero.
+    ("permits_in_force_operating", _("Permits in force at sites with operation")),
+    ("permits_in_force_outside", _("Permits in force at sites without operation")),
     ("permits_awaiting", _("Permits awaiting the DGAC")),
     ("permits_lapsed", _("Permits lapsed and not closed")),
     ("permits_expiring_30d", _("Permits expiring within 30 days")),
+    (
+        "permits_expiring_30d_operating",
+        _("Permits expiring within 30 days, sites with operation"),
+    ),
     ("permits_expiring_60d", _("Permits expiring within 60 days")),
+    (
+        "permits_expiring_60d_operating",
+        _("Permits expiring within 60 days, sites with operation"),
+    ),
     ("incidents", _("Incidents in the period")),
     ("incidents_open", _("Incidents still open")),
     ("fleet_total", _("Aircraft on the register")),
@@ -82,6 +94,21 @@ def compare_kpis(before, after):
             }
         )
     return rows
+
+
+def layout_of(payload):
+    """El diseño con el que se emitió un informe: `1` si el payload no lo declara."""
+    return ((payload or {}).get("meta") or {}).get("layout") or 1
+
+
+def layout_change(before, after):
+    """`(antes, ahora)` si los dos informes se emitieron con diseños distintos.
+
+    Sin esto, comparar el informe de corte anticipado con su cierre muestra cifras
+    que se mueven por **cómo se cuentan** y no sólo por lo que pasó en la operación.
+    """
+    old, new = layout_of(before), layout_of(after)
+    return (old, new) if old != new else None
 
 
 def _folios(payload, *, in_force):
