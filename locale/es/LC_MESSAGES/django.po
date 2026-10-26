@@ -3913,6 +3913,10 @@ msgstr ""
 msgid "%(count)s imported records archived."
 msgstr "%(count)s registros importados archivados."
 
+#: .\apps\compliance\models.py:1080
+msgid "The record belongs to a different organization than the alert rule."
+msgstr "El registro pertenece a una organización distinta de la de la regla de alerta."
+
 #: .\apps\compliance\forms.py:780
 msgid "No record of that type with this id was found."
 msgstr "No se encontró un registro de ese tipo con este identificador."

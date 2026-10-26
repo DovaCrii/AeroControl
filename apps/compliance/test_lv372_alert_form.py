@@ -105,7 +105,7 @@ class TestAlertCreate:
 @pytest.mark.django_db
 class TestAlertFormAlone:
     def test_without_a_user_the_record_only_has_to_exist(self, world):
-        form = AlertForm(data=_payload(world, "a", world["b"]["aircraft"].pk))
+        form = AlertForm(data=_payload(world, "b", world["b"]["aircraft"].pk))
         assert form.is_valid(), form.errors
         missing = AlertForm(data=_payload(world, "a", uuid.uuid4()))
         assert not missing.is_valid()
