@@ -1,0 +1,69 @@
+{% load static i18n %}
+{% comment %}LV-381 F1: el contenido del `<aside id="sidebar">` de `base.html`.
+
+El menú ya no se escribe acá: viene de `apps/core/navigation.py` (el registro) vía
+el context processor `sidebar_menu`, con el permiso de cada entrada ya aplicado y
+la actual marcada. Esta plantilla sólo recorre el resultado. El hito `<nav>` va
+**dentro** del `<aside>` (que conserva su `aria-label`), y agrupa lo que es
+navegación: la zona con desplazamiento y el pie de Administración. El botón de
+colapsar y el tirador del ancho son controles de la barra, no enlaces del menú.{% endcomment %}
+<div class="sidebar-toolbar">
+  <span class="sidebar-toolbar-title">{% translate "Navigation" %}</span>
+  <button class="sidebar-collapse" type="button" id="sidebar-collapse" aria-controls="sidebar" aria-label="{% translate 'Collapse sidebar' %}" title="{% translate 'Collapse sidebar' %}" data-label-expand="{% translate 'Expand sidebar' %}" data-label-collapse="{% translate 'Collapse sidebar' %}">
+    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+  </button>
+</div>
+<nav class="sidebar-nav" aria-label="{% translate 'Main menu' %}">
+  <div class="sidebar-scroll">
+    {% for item in sidebar_menu.top %}{% include "core/_nav_item.html" %}
+    {% endfor %}
+    {% comment %}`UX-31` · Los atajos del rol.
+
+    ⚠️ **Son un añadido, no un menú recortado.** Cada uno de estos destinos sigue
+    estando en su grupo de siempre: lo que hace esta tira es ponerlos primero para
+    quien los usa todos los días (*«ocultar genera desconfianza; priorizar genera
+    velocidad»*). Van **sin icono** para que no parezca que el menú se duplicó
+    (`UX-05` fijó un icono por destino, no por enlace). Sin rol: la lista llega
+    vacía y el bloque desaparece.{% endcomment %}
+    {% if role_shortcuts %}
+    <div class="nav-shortcuts">
+      <span class="sidebar-label nav-shortcuts-label">{% translate "Your day" %}</span>
+      {% for shortcut in role_shortcuts %}
+      <a href="{{ shortcut.url }}" class="nav-item nav-shortcut {% if request.resolver_match.url_name == shortcut.url_name %}active{% endif %}" {% if request.resolver_match.url_name == shortcut.url_name %}aria-current="page"{% endif %}><span class="nav-label">{% translate shortcut.label %}</span></a>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% comment %}LV-170: los grupos se pliegan y recuerdan su estado. El rótulo es un
+    `<button>` porque acciona algo (un `<span>` con click no llega por teclado ni
+    se anuncia); `aria-expanded` lo escribe la plantilla y no sólo el JS: sin JS
+    los grupos quedan abiertos, que es el estado correcto para degradar. Un grupo
+    sin ninguna entrada permitida no llega acá (`build_sidebar`).{% endcomment %}
+    {% for group in sidebar_menu.groups %}
+    <div class="nav-group">
+      <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="{{ group.key }}" aria-expanded="true" aria-controls="nav-group-{{ group.key }}">{{ group.label }}<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
+      <div class="nav-group-items" id="nav-group-{{ group.key }}">
+        {% for item in group.items %}{% include "core/_nav_item.html" %}
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if sidebar_menu.footer %}
+  <div class="nav-admin-zone">
+    <span class="sidebar-label nav-admin-label">{% translate "Administration" context "sidebar zone" %}</span>
+    {% for item in sidebar_menu.footer %}{% include "core/_nav_item.html" %}
+    {% endfor %}
+  </div>
+  {% endif %}
+</nav>
+{% comment %}LV-208: el tirador del ancho. Va **dentro** del `<aside>` y al final: se
+posiciona sobre el borde derecho con `position:absolute` (el contexto lo da el
+`position:sticky` de la barra) y al final del contenido para que el orden de
+tabulación lo encuentre después de los enlaces. `role="separator"` con
+`tabindex="0"` lo vuelve alcanzable por teclado; los `aria-value*` los mantiene el
+JS (`LV-185`: un control sólo de ratón no se da por bueno).{% endcomment %}
+<button class="sidebar-resizer" type="button" role="separator"
+        aria-orientation="vertical" tabindex="0"
+        aria-label="{% translate 'Drag, or use the arrow keys, to set the navigation width. Double-click to reset it.' %}"
+        title="{% translate 'Drag to set the width · double-click to reset' %}"></button>

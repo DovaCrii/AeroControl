@@ -26,7 +26,7 @@ from django.urls import reverse
 from apps.core.testing import login_as
 
 CSS = Path("static/css/app.css")
-BASE_TEMPLATE = Path("templates/base.html")
+SIDEBAR_TEMPLATE = Path("templates/core/_sidebar.html")
 RESIZE_JS = Path("static/js/sidebar-resize.js")
 
 
@@ -59,7 +59,8 @@ class TestTheNavigationWidthIsAdjustable:
         lector de pantalla anuncia como movible, y las flechas son lo que lo
         mueve (verificado con node).
         """
-        template = BASE_TEMPLATE.read_text(encoding="utf-8")
+        # `LV-381` F1: el tirador vive en la plantilla del menú, no en `base.html`.
+        template = SIDEBAR_TEMPLATE.read_text(encoding="utf-8")
 
         assert 'role="separator"' in template
         assert 'tabindex="0"' in template

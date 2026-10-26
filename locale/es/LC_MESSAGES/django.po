@@ -4109,6 +4109,10 @@ msgstr "Usar tema oscuro"
 msgid "Main navigation"
 msgstr "Navegación principal"
 
+#: .\templates\core\_sidebar.html:16
+msgid "Main menu"
+msgstr "Menú principal"
+
 #: .\templates\base.html:60
 msgid "Navigation"
 msgstr "Navegación"

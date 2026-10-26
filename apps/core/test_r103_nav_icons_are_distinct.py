@@ -12,25 +12,25 @@ carga, el enlace funciona, el HTML es válido. Lo que se pierde es la única
 función del icono, que es **distinguir de un vistazo** — y cuanto más crece el
 menú, más caro sale.
 
-Este test lee **el archivo**, no una página renderizada: la mitad de las
-entradas están tras un permiso, así que una página cualquiera no las dibuja
-todas, y ese es justo el punto ciego donde el defecto vivió.
+Este test renderiza el menú **completo** (`full_sidebar_html`, con un usuario que
+lo puede todo): la mitad de las entradas están tras un permiso, así que una
+página cualquiera no las dibuja todas, y ese es justo el punto ciego donde el
+defecto vivió. Desde `LV-381` F1 el menú sale de `apps/core/navigation.py` y no
+de `base.html`, y se lee ejecutando el mismo código que ejecuta el usuario.
 """
 
 import re
-from pathlib import Path
 
 import pytest
-from django.conf import settings
 
-BASE_HTML = Path(settings.BASE_DIR) / "templates" / "base.html"
+from apps.core.testing import full_sidebar_html
 
 # Cada entrada del menú es un `<a … class="nav-item …">` con su `<svg>` dentro y
 # la etiqueta traducible después. Se captura el dibujo y el nombre.
 NAV_ENTRY = re.compile(
     r'<a\s[^>]*class="nav-item[^"]*"[^>]*>\s*'
-    r"(?P<svg><svg\b.*?</svg>)\s*(?:<span class=\"nav-label\">)?"
-    r'\{%\s*translate\s+"(?P<label>[^"]+)"',
+    r"(?P<svg><svg\b.*?</svg>)\s*"
+    r'<span class="nav-label">(?P<label>[^<]+)</span>',
     re.DOTALL,
 )
 
@@ -42,12 +42,9 @@ def _entries():
     saltos de línea son el mismo icono para quien lo mira, y no queremos que un
     reformateo haga pasar el test por casualidad.
     """
-    html = BASE_HTML.read_text(encoding="utf-8")
-    # Los bloques comentados no se dibujan; incluirlos daría falsos positivos
+    # Lo renderizado no trae las entradas retiradas: no hay falsos positivos
     # sobre iconos que hoy nadie ve.
-    html = re.sub(
-        r"\{%\s*comment\s*%\}.*?\{%\s*endcomment\s*%\}", "", html, flags=re.DOTALL
-    )
+    html = full_sidebar_html()
     return [
         (match.group("label"), re.sub(r"\s+", "", match.group("svg")))
         for match in NAV_ENTRY.finditer(html)

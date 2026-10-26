@@ -48,7 +48,10 @@ def _f2_css():
 
 class TestEveryModuleHasItsMask:
     def test_the_modules_are_the_ones_of_the_sidebar(self):
-        groups = set(re.findall(r'data-nav-group="(\w+)"', BASE))
+        # `LV-381` F1: los grupos viven en el registro del menú, no en `base.html`.
+        from apps.core.navigation import NAV_GROUPS
+
+        groups = {group.key for group in NAV_GROUPS}
         assert set(MODULES) <= groups
         assert set(NAV_MODULE_STEMS) == set(MODULES)
 

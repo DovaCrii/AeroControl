@@ -217,6 +217,12 @@ body.is-resizing-sidebar {
    administracion quedan siempre a la vista, asi que Administracion no cae bajo el
    borde en 1366x768 aunque haya grupos abiertos. El tirador del ancho queda fuera
    del contenedor con scroll: dentro se iria con el contenido. */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
 .sidebar-scroll {
   flex: 1 1 auto;
   min-height: 0;

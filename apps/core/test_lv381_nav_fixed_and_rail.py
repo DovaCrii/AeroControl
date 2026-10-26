@@ -30,9 +30,9 @@ APP_CSS = (ROOT / "static" / "css" / "app.css").read_text(encoding="utf-8")
 BOOTSTRAP = (ROOT / "static" / "vendor" / "bootstrap" / "bootstrap.min.css").read_text(
     encoding="utf-8"
 )
-BASE = (ROOT / "templates" / "base.html").read_text(encoding="utf-8")
+SIDEBAR = (ROOT / "templates" / "core" / "_sidebar.html").read_text(encoding="utf-8")
 _COMMENT = re.compile(r"\{%\s*comment\s*%\}.*?\{%\s*endcomment\s*%\}", re.DOTALL)
-MARKUP = _COMMENT.sub("", BASE)
+MARKUP = _COMMENT.sub("", SIDEBAR)
 
 
 def _rule_body(css: str, selector: str) -> str:
@@ -78,7 +78,7 @@ def test_the_admin_footer_is_outside_the_scroll_zone():
     admin = MARKUP.index('<div class="nav-admin-zone">')
     between = MARKUP[scroll_open:admin]
 
-    assert between.rstrip().endswith("</div>")
+    assert re.sub(r"\{%.*?%\}", "", between).rstrip().endswith("</div>")
     assert between.count("<div") == between.count("</div>")
     # Y el tirador del ancho, tambien fuera: dentro se iria con el contenido.
     assert MARKUP.index('class="sidebar-resizer"') > admin
@@ -118,7 +118,9 @@ def test_the_icon_rail_rule_beats_the_bootstrap_hidden_rule():
 @pytest.mark.parametrize("name", ["costcenter-list", "operator-list", "battery-list"])
 def test_every_group_keeps_its_rows_in_the_rail(name):
     """Los grupos siguen siendo `.nav-group-items` con `id`, para el JS y el rail."""
-    assert f"{{% url '{name}' %}}" in MARKUP
+    from apps.core.navigation import all_items
+
+    assert name in {item.url_name for item in all_items()}
 
 
 def test_group_titles_keep_their_separator_line():

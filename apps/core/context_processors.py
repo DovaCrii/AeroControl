@@ -12,7 +12,21 @@ rol decide qué se ve eso es exactamente el tipo de desfase que no conviene.
 
 from django.urls import reverse
 
+from .navigation import build_sidebar
 from .roles import SHORTCUT_LABELS, shortcuts_for
+
+
+def sidebar_menu(request):
+    """`LV-381` F1: el menú lateral que esta persona puede usar, con la entrada actual marcada.
+
+    Es la única fuente del menú (`apps/core/navigation.py`): la plantilla no decide permisos.
+    Anónimo no recibe menú (las pantallas de inicio de sesión no lo dibujan).
+    """
+    user = getattr(request, "user", None)
+    if user is None or not user.is_authenticated:
+        return {}
+    match = getattr(request, "resolver_match", None)
+    return {"sidebar_menu": build_sidebar(user, getattr(match, "url_name", "") or "")}
 
 
 def role_shortcuts(request):

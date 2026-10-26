@@ -11,11 +11,10 @@ from pathlib import Path
 import pytest
 from django.urls import reverse
 
-from apps.core.testing import login_as
+from apps.core.testing import full_sidebar_html, login_as
 
 APP_JS = Path("static/js/app.js")
 IDENTITY_CSS = Path("static/css/identity.css")
-BASE = Path("templates/base.html")
 
 NO_PREFERENCE = "@media (prefers-reduced-motion: no-preference) {"
 
@@ -34,14 +33,8 @@ def _no_preference_block(css):
 
 
 def _sidebar_markup():
-    html = re.sub(
-        r"\{%\s*comment\s*%\}.*?\{%\s*endcomment\s*%\}",
-        "",
-        BASE.read_text(encoding="utf-8"),
-        flags=re.DOTALL,
-    )
-    start = html.index('<aside class="sidebar')
-    return html[start : html.index("</aside>", start)]
+    """El menú renderizado completo (`LV-381` F1: ya no está escrito en `base.html`)."""
+    return full_sidebar_html()
 
 
 class TestTheAccordion:
@@ -97,7 +90,7 @@ class TestTheLabelsAndTheTooltip:
         assert all('<span class="nav-label">' in link for link in links)
 
     def test_the_current_page_is_announced(self):
-        assert "aria-current=" in _sidebar_markup()
+        assert 'aria-current="page"' in full_sidebar_html("dashboard")
 
     @pytest.mark.django_db
     def test_the_rendered_menu_marks_exactly_the_current_page(self, db):

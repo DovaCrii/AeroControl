@@ -31,35 +31,31 @@ from pathlib import Path
 import pytest
 from django.conf import settings
 
-BASE = Path(settings.BASE_DIR) / "templates" / "base.html"
+from apps.core.navigation import NAV_FOOTER, NAV_GROUPS, NAV_TOP
+from apps.core.testing import full_sidebar_html
+
 CSS = Path(settings.BASE_DIR) / "static" / "css" / "app.css"
 APP_JS = Path(settings.BASE_DIR) / "static" / "js" / "app.js"
 
 # El mínimo medido en el navegador: 248 px de la fila más larga + 24 de relleno.
 MIN_SIDEBAR_WIDTH = 272
 
-_COMMENT = re.compile(r"\{%\s*comment\s*%\}.*?\{%\s*endcomment\s*%\}", re.DOTALL)
-_GROUP = re.compile(
-    r'<div class="nav-group">\s*(?P<toggle><button[^>]*nav-group-toggle[^>]*>)'
-    r"(?P<body>.*?)</div>\s*</div>",
-    re.DOTALL,
-)
-
 
 @pytest.fixture(scope="module")
 def markup():
-    """La plantilla sin los bloques comentados: no se dibujan, no cuentan."""
-    return _COMMENT.sub("", BASE.read_text(encoding="utf-8"))
+    """El menú **renderizado** con todas las entradas.
+
+    `LV-381` F1: el menú ya no está escrito en `base.html` sino que sale del
+    registro (`apps/core/navigation.py`), así que el guardián lo lee renderizado
+    con un usuario que lo puede todo: el mismo código que ejecuta quien lo usa.
+    """
+    return full_sidebar_html()
 
 
 @pytest.fixture(scope="module")
-def groups(markup):
-    """{nombre del grupo: sus urls}, leído de la plantilla."""
-    found = {}
-    for match in _GROUP.finditer(markup):
-        name = re.search(r'data-nav-group="([^"]+)"', match.group("toggle")).group(1)
-        found[name] = set(re.findall(r"\{%\s*url '([^']+)'", match.group("body")))
-    return found
+def groups():
+    """{nombre del grupo: sus nombres de URL}, leído del registro."""
+    return {group.key: {item.url_name for item in group.items} for group in NAV_GROUPS}
 
 
 def test_the_six_groups_are_there(groups):
@@ -113,19 +109,26 @@ def test_inventory_takes_what_moves_every_day(groups):
 def test_no_menu_row_is_left_outside_a_group(markup, groups):
     """Una fila suelta se dibuja pegada al grupo anterior y parece suya.
 
-    ⚠️ El corte llega hasta `</aside>` y no hasta el final del archivo. Cortaba
-    hasta el final, que funcionó mientras el menú fuera lo último con enlaces, y
-    `UX-25` lo rompió: la paleta de comandos lleva `{% url 'global-search' %}` en
-    un `data-*`, o sea un destino que no es una fila de menú, y el guardián lo
-    contó como si lo fuera. Un guardián que se equivoca de región acusa a quien
-    no toca lo que él vigila.
+    ⚠️ Mide la región del menú y nada más. Antes leía `base.html` hasta
+    `</aside>` (y, antes todavía, hasta el final del archivo, que `UX-25` rompió
+    al poner `{% url 'global-search' %}` en un `data-*` de la paleta: un destino
+    que no es una fila de menú, contado como si lo fuera). Desde `LV-381` F1 la
+    región es el menú renderizado, así que la paleta ni entra. Un guardián que se
+    equivoca de región acusa a quien no toca lo que él vigila.
     """
-    start = markup.index('<aside class="sidebar')
-    sidebar = markup[start : markup.index("</aside>", start)]
-    everything = set(re.findall(r"\{%\s*url '([^']+)'", sidebar))
+    everything = {item.url_name for item in (*NAV_TOP, *NAV_FOOTER)}
     grouped = set().union(*groups.values())
-    # Fuera de grupo sólo el panel (encabeza el menú) y el pie de administración.
-    assert everything - grouped == {"dashboard", "administration", "admin:index"}
+    # Fuera de grupo sólo lo que encabeza el menú (el panel y «Entorno», LV-358) y
+    # el pie de administración.
+    assert everything == {
+        "dashboard",
+        "environment-hub",
+        "administration",
+        "admin:index",
+    }
+    assert grouped.isdisjoint(everything)
+    # Y lo dibujado es exactamente eso: ninguna fila fuera de un grupo ni de los extremos.
+    assert markup.count('class="nav-item') == len(everything) + len(grouped)
 
 
 def test_every_toggle_points_at_the_container_it_folds(markup):

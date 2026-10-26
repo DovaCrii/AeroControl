@@ -53,6 +53,7 @@
   }
   syncChromeHeights();
   window.addEventListener('resize', syncChromeHeights);
+  window.addEventListener('load', syncChromeHeights);  // tipografias y estilos ya asentados
   if (window.ResizeObserver) {
     var chromeObserver = new ResizeObserver(syncChromeHeights);
     ['.navbar', '#offline-banner'].forEach(function (selector) {

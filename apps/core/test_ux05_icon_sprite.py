@@ -18,7 +18,7 @@ from pathlib import Path
 from django.conf import settings
 
 SPRITE = Path(settings.BASE_DIR) / "static" / "img" / "icons.svg"
-BASE = Path(settings.BASE_DIR) / "templates" / "base.html"
+TEMPLATES = Path(settings.BASE_DIR) / "templates"
 
 
 def _sprite():
@@ -30,9 +30,18 @@ def _symbol_ids():
 
 
 def _referenced_ids():
-    return set(
-        re.findall(r"icons\.svg' %\}#([a-z0-9-]+)", BASE.read_text(encoding="utf-8"))
-    )
+    """Los símbolos que el menú usa **o reserva**.
+
+    `LV-381` F1: el menú vive en `apps/core/navigation.py`. Los iconos de las
+    entradas retiradas (`RETIRED`) siguen contando como referenciados: volver una
+    entrada al menú es pasarla de ahí a su grupo, y su símbolo tiene que seguir en
+    el sprite. Antes los reservaba el enlace comentado de `base.html`.
+    """
+    from apps.core.navigation import RETIRED, all_items
+
+    return {f"icon-{item.icon}" for item in all_items()} | {
+        f"icon-{item.icon}" for item in RETIRED
+    }
 
 
 class TestThereIsOneSpriteAndTheMenuUsesIt:
@@ -55,10 +64,15 @@ class TestThereIsOneSpriteAndTheMenuUsesIt:
         menú, la lupa, el chevron de los grupos, el sol y la luna del tema—, que
         no son iconos de sección y no comparten su vocabulario de color.
         """
-        source = BASE.read_text(encoding="utf-8")
+        from apps.core.navigation import all_items
+        from apps.core.testing import full_sidebar_html
 
-        assert '<svg class="nav-icon" viewBox' not in source
-        assert source.count("<use href=") == 30
+        for name in ("base.html", "core/_sidebar.html", "core/_nav_item.html"):
+            source = (TEMPLATES / name).read_text(encoding="utf-8")
+            assert '<svg class="nav-icon" viewBox' not in source, name
+
+        # Y lo que se dibuja: cada entrada es **una** referencia al sprite.
+        assert full_sidebar_html().count("<use href=") == len(all_items())
 
     def test_every_reference_points_at_a_symbol_that_exists(self):
         """**Un `<use>` a un id inexistente no falla: dibuja nada.**

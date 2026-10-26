@@ -131,13 +131,29 @@ class TestNothingIsHidden:
     def test_the_full_menu_is_still_drawn(self, client, db):
         """Los atajos son un **añadido**: cada destino sigue estando más abajo,
         en su grupo de siempre."""
+        # `LV-381` F1: el menú respeta los permisos (antes dibujaba enlaces que
+        # terminaban en 403), así que «el menú completo» es el de lo que esta
+        # persona puede abrir. El grupo de padrón no es de este rol y, con su
+        # permiso de lectura, tiene que seguir ahí aunque haya atajos arriba.
+        client.force_login(
+            _user("Operations", permissions=["view_aircraft", "view_costcenter"])
+        )
+
+        body = client.get(reverse("dashboard")).content.decode()
+
+        assert "nav-shortcuts" in body
+        assert reverse("aircraft-list") in body
+        assert reverse("costcenter-list") in body
+
+    @pytest.mark.django_db
+    def test_a_link_the_role_cannot_open_is_not_offered(self, client, db):
+        """El otro lado de la misma regla: un atajo y un grupo no ofrecen lo que
+        termina en 403 (`LV-130`, `LV-381`)."""
         client.force_login(_user("Operations"))
 
         body = client.get(reverse("dashboard")).content.decode()
 
-        # El grupo de padrón no es de este rol y tiene que seguir ahí.
-        assert reverse("aircraft-list") in body
-        assert reverse("costcenter-list") in body
+        assert reverse("aircraft-list") not in body
 
     @pytest.mark.django_db
     def test_a_user_without_a_role_sees_the_menu_of_always(self, client, db):
@@ -219,13 +235,21 @@ class TestTheShortcuts:
     def test_the_labels_are_the_ones_the_menu_already_uses(self):
         """Dos nombres para la misma pantalla es cómo alguien cree que son dos
         pantallas."""
-        from pathlib import Path
+        from apps.core.navigation import NAV_GROUPS, RETIRED, all_items
 
-        from django.conf import settings
+        # `LV-381` F1: los nombres del menú viven en el registro. Un atajo puede
+        # apuntar a una entrada retirada (hoy, «¿Puedo volar?»), y entonces su
+        # rótulo es el que la entrada retirada conserva.
+        from django.utils import translation
 
-        base = (Path(settings.BASE_DIR) / "templates" / "base.html").read_text(
-            encoding="utf-8"
-        )
+        with translation.override("en"):  # los msgid son el texto fuente
+            # Rótulos de entrada, de grupo («Maintenance» es el de Mantenimiento) y
+            # de las retiradas.
+            names = (
+                {str(item.label) for item in all_items()}
+                | {str(group.label) for group in NAV_GROUPS}
+                | {item.label for item in RETIRED}
+            )
 
         for label in SHORTCUT_LABELS.values():
-            assert f'{{% translate "{label}" %}}' in base, label
+            assert label in names, label

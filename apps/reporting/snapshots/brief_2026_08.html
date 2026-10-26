@@ -65,75 +65,33 @@
   </nav>
   <div class="d-flex">
     <aside class="sidebar p-3 d-flex flex-column" id="sidebar" aria-label="Navegación principal">
-      <div class="sidebar-toolbar">
-        <span class="sidebar-toolbar-title">Navegación</span>
-        <button class="sidebar-collapse" type="button" id="sidebar-collapse" aria-controls="sidebar" aria-label="Contraer panel lateral" title="Contraer panel lateral" data-label-expand="Expandir panel lateral" data-label-collapse="Contraer panel lateral">
-          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
-        </button>
+<div class="sidebar-toolbar">
+  <span class="sidebar-toolbar-title">Navegación</span>
+  <button class="sidebar-collapse" type="button" id="sidebar-collapse" aria-controls="sidebar" aria-label="Contraer panel lateral" title="Contraer panel lateral" data-label-expand="Expandir panel lateral" data-label-collapse="Contraer panel lateral">
+    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+  </button>
+</div>
+<nav class="sidebar-nav" aria-label="Menú principal">
+  <div class="sidebar-scroll">
+    <a href="/" class="nav-item nav-overview"><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-dashboard"/></svg><span class="nav-label">Panel</span></a>
+    <div class="nav-group">
+      <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="compliance" aria-expanded="true" aria-controls="nav-group-compliance">Cumplimiento<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
+      <div class="nav-group-items" id="nav-group-compliance">
+        <a href="/bandeja/" class="nav-item nav-compliance"><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-work-tray"/></svg><span class="nav-label">Bandeja de trabajo</span></a>
       </div>
-      <div class="sidebar-scroll">
-      <a href="/" class="nav-item nav-overview " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-dashboard"/></svg><span class="nav-label">Panel</span></a>
-      <div class="nav-group">
-        <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="flight" aria-expanded="true" aria-controls="nav-group-flight">Vuelo<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
-        <div class="nav-group-items" id="nav-group-flight">
-      <a href="/operations/permissions/" class="nav-item nav-flight " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-permission-list"/></svg><span class="nav-label">Permisos</span></a>
-      <a href="/geo/plans/" class="nav-item nav-flight " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-geo-plan-list"/></svg><span class="nav-label">Planificación geoespacial</span></a>
-      <a href="/operations/records/" class="nav-item nav-flight " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-record-list"/></svg><span class="nav-label">Vuelos</span></a>
-        </div>
+    </div>
+    <div class="nav-group">
+      <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="reports" aria-expanded="true" aria-controls="nav-group-reports">Informes<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
+      <div class="nav-group-items" id="nav-group-reports">
+        <a href="/reporting/monthly/" class="nav-item nav-reports"><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-monthly-report"/></svg><span class="nav-label">Informe mensual RPA</span></a>
       </div>
-      <div class="nav-group">
-        <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="compliance" aria-expanded="true" aria-controls="nav-group-compliance">Cumplimiento<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
-        <div class="nav-group-items" id="nav-group-compliance">
-<a href="/bandeja/" class="nav-item nav-compliance " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-work-tray"/></svg><span class="nav-label">Bandeja de trabajo</span></a>
-<a href="/compliance/alert/" class="nav-item nav-compliance " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-alert-list"/></svg><span class="nav-label">Alertas</span>
-<span id="alert-badge" class="badge bg-danger ms-auto d-none"
-      role="status" aria-live="polite"
-      hx-get="/alerts/count/" hx-trigger="every 60s"
-      hx-target="this" hx-swap="outerHTML"></span>
-</a>
-      <a href="/compliance/monthly-review/" class="nav-item nav-compliance " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-monthly-review"/></svg><span class="nav-label">Cierre mensual</span></a>
-      <a href="/compliance/company-documents/" class="nav-item nav-compliance " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-company-documents"/></svg><span class="nav-label">Documentos de la empresa</span></a>
-        </div>
-      </div>
-      <div class="nav-group">
-        <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="reports" aria-expanded="true" aria-controls="nav-group-reports">Informes<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
-        <div class="nav-group-items" id="nav-group-reports">
-      <a href="/compliance/report/" class="nav-item nav-reports " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-compliance-report"/></svg><span class="nav-label">Reporte</span></a>
-      <a href="/reporting/monthly/" class="nav-item nav-reports " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-monthly-report"/></svg><span class="nav-label">Informe mensual RPA</span></a>
-        </div>
-      </div>
-      <div class="nav-group">
-        <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="maintenance" aria-expanded="true" aria-controls="nav-group-maintenance">Mantenimiento<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
-        <div class="nav-group-items" id="nav-group-maintenance">
-      <a href="/maintenance/records/" class="nav-item nav-maintenance " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-maintenance-list"/></svg><span class="nav-label">Mantenciones</span></a>
-        </div>
-      </div>
-      <div class="nav-group">
-        <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="registry" aria-expanded="true" aria-controls="nav-group-registry">Padrón<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
-        <div class="nav-group-items" id="nav-group-registry">
-      <a href="/registry/costcenter/" class="nav-item nav-registry " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-costcenter-list"/></svg><span class="nav-label">Centros de costo</span></a>
-      <a href="/registry/aircraft/" class="nav-item nav-registry " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-aircraft-list"/></svg><span class="nav-label">Aeronaves</span></a>
-      <a href="/registry/operator/" class="nav-item nav-registry " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-operator-list"/></svg><span class="nav-label">Operadores</span></a>
-        </div>
-      </div>
-      <div class="nav-group">
-        <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="inventory" aria-expanded="true" aria-controls="nav-group-inventory">Inventario y movimientos<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
-        <div class="nav-group-items" id="nav-group-inventory">
-      <a href="/registry/operatorassignment/" class="nav-item nav-inventory " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-operatorassignment-list"/></svg><span class="nav-label">Asignaciones de operador</span></a>
-      <a href="/registry/aircraftassignment/" class="nav-item nav-inventory " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-aircraftassignment-list"/></svg><span class="nav-label">Asignaciones de aeronave</span></a>
-      <a href="/registry/battery/" class="nav-item nav-inventory " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-battery-list"/></svg><span class="nav-label">Baterías</span></a>
-      <a href="/registry/resource-movements/" class="nav-item nav-inventory " ><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-resourcemovementlog-list"/></svg><span class="nav-label">Movimientos de recursos</span></a>
-        </div>
-      </div>
-      </div>
-      <div class="nav-admin-zone">
-        <span class="sidebar-label nav-admin-label">Administración</span>
-      <a href="/admin/" class="nav-item nav-admin"><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-admin-index"/></svg><span class="nav-label">Administración</span></a>
-      </div>
-      <button class="sidebar-resizer" type="button" role="separator"
-              aria-orientation="vertical" tabindex="0"
-              aria-label="Arrastra, o usa las flechas del teclado, para ajustar el ancho de la navegación. Doble clic para volver al valor original."
-              title="Arrastra para ajustar el ancho · doble clic para restablecer"></button>
+    </div>
+  </div>
+</nav>
+<button class="sidebar-resizer" type="button" role="separator"
+        aria-orientation="vertical" tabindex="0"
+        aria-label="Arrastra, o usa las flechas del teclado, para ajustar el ancho de la navegación. Doble clic para volver al valor original."
+        title="Arrastra para ajustar el ancho · doble clic para restablecer"></button>
     </aside>
     <main class="container-fluid p-4" id="main-content" tabindex="-1">
 <div class="page-header no-print">
