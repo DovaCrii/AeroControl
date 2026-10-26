@@ -1,7 +1,35 @@
-{% load i18n %}{% comment %}LV-359 (fase 3): «Cómo leer y revisar esta sección». `<details>` cerrado por defecto: la leyenda de símbolos y colores, por qué dos escalas de umbrales (7/15/30 en documentos y alertas, 30/60 en permisos), «hoy» frente al corte del informe, y los cinco pasos con su enlace para corregir. Cada enlace existe sólo si la persona puede abrir esa pantalla (`guide_steps`). Los umbrales son texto: los números viven en `digest` y `kpis.permit_band`.{% endcomment %}
+{% load i18n %}{% comment %}LV-359 (fase 3) y LV-376 (fase 3): «Cómo leer y revisar esta sección». `<details>` cerrado por defecto. Primero la leyenda de ESTADOS de la tabla de permisos en forma de tabla (estado con su chip sólido, qué significa, qué hacer y un enlace que sólo existe si la persona puede abrir esa pantalla: `guide_states`); después los símbolos de los vencimientos, las dos escalas, «hoy» frente al corte del informe, y los cinco pasos con su enlace para corregir (`guide_steps`). Los umbrales 30/60 (permisos) y 7/15/30 (documentos y alertas) viven en `kpis.permit_band` y `digest`; los números de la leyenda salen de esas constantes y los de la frase de las escalas los vigila una prueba.
+
+PENDIENTE (de la persona, `MASTER_PLAN.md` LV-376): el MOTIVO DE NEGOCIO de que los permisos se midan a 30 y 60 días (lo que tarda la DGAC) NO está escrito en ningún documento del repo y aquí no se inventa: la guía sólo dice que es «la escala del informe». Cuando la persona lo valide, se escribe en la frase de «Why there are two scales».{% endcomment %}
 <details class="id-cx-guide" id="cx-guide">
   <summary>{% translate "How to read and review this section" %}</summary>
   <div class="id-cx-guide-body">
+    {% if cx_blocks.permits %}
+    <h3 class="id-cx-h3">{% translate "Status of each site" %}</h3>
+    <div class="id-cx-gwrap">
+      <table class="id-cx-gtable" data-cx-legend>
+        <thead>
+          <tr>
+            <th scope="col">{% translate "Status" %}</th>
+            <th scope="col">{% translate "What it means" %}</th>
+            <th scope="col">{% translate "What to do" %}</th>
+            <th scope="col"><span class="visually-hidden">{% translate "Screen" %}</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for state in cx_guide_states %}
+          <tr data-cx-state="{{ state.kind }}">
+            <th scope="row"><span class="id-cx-state id-cx-state--{{ state.tone }}"><span aria-hidden="true">{{ state.symbol }}</span> {{ state.label }}</span></th>
+            <td>{{ state.meaning }}</td>
+            <td>{{ state.todo }}</td>
+            <td>{% if state.url %}<a href="{{ state.url }}">{% translate "Open the screen" %} <span aria-hidden="true">→</span></a>{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
     <h3 class="id-cx-h3">{% translate "Symbols and colors" %}</h3>
     <ul class="id-cx-levels">
       <li><span class="id-chip id-chip--critical"><span aria-hidden="true">✕</span> {% translate "Overdue" context "compliance level" %}</span></li>
@@ -13,10 +41,10 @@
     <p class="id-cx-note">{% translate "The symbol and the word carry the meaning; the color only helps to scan, and ▲ and ◆ share a color." %}</p>
 
     <h3 class="id-cx-h3">{% translate "Why there are two scales" %}</h3>
-    <p class="id-cx-note">{% translate "Documents and alerts are graded at 7, 15 and 30 days. Flight permits are graded at 30 and 60 days: renewing one involves a request to the DGAC, which takes longer than renewing a document." %}</p>
+    <p class="id-cx-note">{% translate "Flight permits follow the scale of the report: 30 and 60 days. Documents and alerts are graded at 7, 15 and 30 days." %}</p>
 
     <h3 class="id-cx-h3">{% translate "Today and the report cut-off" %}</h3>
-    <p class="id-cx-note">{% translate "Everything here is as of today. The DGAC monthly report is frozen at its own cut-off date, so its figures can differ from these without either being wrong." %}</p>
+    <p class="id-cx-note">{% blocktranslate with date=cx_today|date:"d-m-Y" %}Everything above is as of today, {{ date }}.{% endblocktranslate %} {% if cx_report.cutoff %}{% blocktranslate with date=cx_report.cutoff|date:"d-m-Y" %}The DGAC monthly report is a snapshot at its own cut-off date ({{ date }}), so its figures can differ from these without either being wrong.{% endblocktranslate %}{% else %}{% translate "The DGAC monthly report is a snapshot at its own cut-off date, so its figures can differ from these without either being wrong." %}{% endif %}</p>
 
     <h3 class="id-cx-h3">{% translate "How to review it, in five steps" %}</h3>
     <ol class="id-cx-steps">

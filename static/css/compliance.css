@@ -145,6 +145,11 @@
 .id-cx-guide-body .id-cx-h3 { margin-top: var(--id-sp-1); }
 .id-cx-steps { margin: 0; padding-left: 1.25rem; display: grid; gap: 0.25rem; font-size: var(--id-fs-sm); }
 .id-cx-steps a { color: var(--ac-text); font-weight: 600; text-decoration: underline; }
+.id-cx-gwrap { overflow-x: auto; }
+.id-cx-gtable { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.id-cx-gtable th, .id-cx-gtable td { padding: 0.35rem 0.5rem; text-align: left; vertical-align: top; border-bottom: 1px solid var(--ac-border); }
+.id-cx-gtable thead th { color: var(--ac-text-secondary); font-weight: 600; }
+.id-cx-gtable a { color: var(--ac-text); font-weight: 600; text-decoration: underline; }
 /* LV-367 (fase 4): resumen de un vistazo y secciones plegables. */
 .id-cx-first { padding: var(--id-sp-1) var(--id-sp-2); border: 1px solid var(--id-edge); border-left: 4px solid var(--sev-warning-text); border-radius: var(--id-r-control); background: var(--id-tile); }
 .id-cx-first-list { margin: 0; padding-left: 1.25rem; display: grid; gap: 0.25rem; font-size: var(--id-fs-md); }

@@ -55,7 +55,8 @@ def test_a_waiting_permit_shows_awaiting_in_warning_colour(client, admin_user):
         '<span class="id-cx-state id-cx-state--wait"><span aria-hidden="true">◐</span>'
         " Esperando a la DGAC</span>" in table
     )
-    assert "Sin permiso" not in table.split("</thead>")[-1].split("</table>")[0]
+    # sólo las filas de la tabla de permisos (la guía trae su propia tabla de leyenda)
+    assert "Sin permiso" not in table.split("</thead>")[1].split("</table>")[0]
 
 
 @pytest.mark.django_db

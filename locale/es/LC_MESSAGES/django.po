@@ -10682,26 +10682,8 @@ msgstr ""
 msgid "Why there are two scales"
 msgstr "Por qué hay dos escalas"
 
-msgid ""
-"Documents and alerts are graded at 7, 15 and 30 days. Flight permits are "
-"graded at 30 and 60 days: renewing one involves a request to the DGAC, which"
-" takes longer than renewing a document."
-msgstr ""
-"Los documentos y las alertas se gradúan a 7, 15 y 30 días. Los permisos de "
-"vuelo, a 30 y 60 días: renovar uno implica una solicitud a la DGAC, que "
-"demora más que renovar un documento."
-
 msgid "Today and the report cut-off"
 msgstr "Hoy y el corte del informe"
-
-msgid ""
-"Everything here is as of today. The DGAC monthly report is frozen at its own"
-" cut-off date, so its figures can differ from these without either being "
-"wrong."
-msgstr ""
-"Todo lo de aquí es a hoy. El informe mensual DGAC queda congelado en su "
-"propia fecha de corte, así que sus cifras pueden diferir de estas sin que "
-"ninguna esté mal."
 
 msgid "How to review it, in five steps"
 msgstr "Cómo revisarla, en cinco pasos"
@@ -12766,3 +12748,65 @@ msgstr "%(n)s más adelante"
 
 msgid "Nothing in 90 days"
 msgstr "Nada en 90 días"
+
+msgid "Status of each site"
+msgstr "Estado de cada faena"
+
+msgid "What it means"
+msgstr "Qué significa"
+
+msgid "Screen"
+msgstr "Pantalla"
+
+msgid "No permit in force: the site cannot fly."
+msgstr "Sin permiso vigente: la faena no puede volar."
+
+msgid "Follow up with the DGAC"
+msgstr "Hacer seguimiento con la DGAC"
+
+msgid "Requested; there is no answer yet."
+msgstr "Solicitado; todavía no hay respuesta."
+
+msgid "Starts later"
+msgstr "Empieza más adelante"
+
+msgid "Approved; it takes effect from its start date."
+msgstr "Aprobado; rige desde su fecha de inicio."
+
+msgid "Nothing to do until that date"
+msgstr "Nada que hacer hasta esa fecha"
+
+#, python-format
+msgid "Expires in %(n)s days or less."
+msgstr "Vence en %(n)s días o menos."
+
+msgid "Prepare the renewal today"
+msgstr "Preparar la renovación hoy"
+
+#, python-format
+msgid "Expires in %(a)s to %(b)s days."
+msgstr "Vence en %(a)s a %(b)s días."
+
+msgid "Plan the renewal"
+msgstr "Planificar la renovación"
+
+#, python-format
+msgid "More than %(n)s days left."
+msgstr "Quedan más de %(n)s días."
+
+msgid "Nothing to do"
+msgstr "Nada que hacer"
+
+msgid "Flight permits follow the scale of the report: 30 and 60 days. Documents and alerts are graded at 7, 15 and 30 days."
+msgstr "Los permisos de vuelo siguen la escala del informe: 30 y 60 días. Los documentos y las alertas se gradúan a 7, 15 y 30 días."
+
+#, python-format
+msgid "Everything above is as of today, %(date)s."
+msgstr "Todo lo de arriba es a hoy, %(date)s."
+
+#, python-format
+msgid "The DGAC monthly report is a snapshot at its own cut-off date (%(date)s), so its figures can differ from these without either being wrong."
+msgstr "El informe mensual DGAC es una foto a su propia fecha de corte (%(date)s), así que sus cifras pueden diferir de estas sin que ninguna esté mal."
+
+msgid "The DGAC monthly report is a snapshot at its own cut-off date, so its figures can differ from these without either being wrong."
+msgstr "El informe mensual DGAC es una foto a su propia fecha de corte, así que sus cifras pueden diferir de estas sin que ninguna esté mal."

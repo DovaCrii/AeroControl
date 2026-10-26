@@ -27,6 +27,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import ngettext, pgettext
 
 from apps.compliance.expirations import EXPIRATION_PERMISSIONS
+from apps.compliance.kpis import PERMIT_CRITICAL_DAYS, PERMIT_WARNING_DAYS
 from apps.core.tenancy import visible_tenant_ids
 from apps.reporting.models import ReportRun
 
@@ -38,6 +39,7 @@ from .compliance_data import (
     visible_categories,
 )
 from .compliance_permits import (
+    KIND_CHIP,
     PERMIT_PERMISSION,
     permit_table,
     requested_query,
@@ -169,6 +171,78 @@ def guide_steps(user, cost_center):
             "text": _("Review the monthly DGAC report before approving it."),
             "url": link(REPORT_PERMISSION, reverse("monthly-report")),
         },
+    ]
+
+
+def guide_states(user):
+    """La leyenda de estados de la guía (LV-376, fase 3): qué significa cada uno, qué hacer y, si se puede, a dónde ir.
+
+    Los números (30 y 60 días) salen de las constantes de `kpis`, no de un texto tecleado, así que la guía no
+    puede quedar atrás si se mueven. El enlace sólo existe si la persona puede abrir esa pantalla: la guía nunca
+    manda a un 403 (`url` vacío si no).
+    """
+    permits = reverse("permission-list") if user.has_perm(PERMIT_PERMISSION) else ""
+    create = (
+        reverse("permission-create")
+        if user.has_perm("operations.add_flightpermission")
+        else ""
+    )
+    critical, warning = PERMIT_CRITICAL_DAYS, PERMIT_WARNING_DAYS
+    rows = [
+        (
+            "none",
+            _("No permit"),
+            _("No permit in force: the site cannot fly."),
+            _("Request a permit"),
+            create,
+        ),
+        (
+            "awaiting",
+            _("Waiting for the DGAC"),
+            _("Requested; there is no answer yet."),
+            _("Follow up with the DGAC"),
+            permits,
+        ),
+        (
+            "not_started",
+            _("Starts later"),
+            _("Approved; it takes effect from its start date."),
+            _("Nothing to do until that date"),
+            "",
+        ),
+        (
+            "renew_now",
+            _("Renew now"),
+            _("Expires in %(n)s days or less.") % {"n": critical},
+            _("Prepare the renewal today"),
+            permits,
+        ),
+        (
+            "renew_soon",
+            _("Renew soon"),
+            _("Expires in %(a)s to %(b)s days.") % {"a": critical + 1, "b": warning},
+            _("Plan the renewal"),
+            "",
+        ),
+        (
+            "ok",
+            _("Up to date"),
+            _("More than %(n)s days left.") % {"n": warning},
+            _("Nothing to do"),
+            "",
+        ),
+    ]
+    return [
+        {
+            "kind": kind,
+            "symbol": KIND_CHIP[kind][0],
+            "tone": KIND_CHIP[kind][1],
+            "label": label,
+            "meaning": meaning,
+            "todo": todo,
+            "url": url,
+        }
+        for kind, label, meaning, todo, url in rows
     ]
 
 
@@ -372,6 +446,7 @@ def section_context(request):
         if blocks["history"]:
             context["cx_history"] = review_history(user, cost_center, today, tenant_ids)
         context["cx_guide"] = guide_steps(user, cost_center)
+        context["cx_guide_states"] = guide_states(user)
         rings = context.get("cx_rings") or []
         context["cx_attention"] = [r for r in rings if r["attend"]]
         context["cx_clear"] = [r for r in rings if not r["attend"]]
