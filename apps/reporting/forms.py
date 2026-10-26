@@ -120,6 +120,26 @@ class PeriodNoteForm(forms.ModelForm):
         }
 
 
+class EarlyFreezeForm(forms.Form):
+    """LV-375: el motivo de emitir un informe con el mes todavía abierto.
+
+    Obligatorio y acotado igual que en el modelo (`ReportRun.EARLY_REASON_*`): el
+    formulario no es el único camino, pero es el que le dice a la persona qué
+    falta antes de que el modelo se lo rechace.
+    """
+
+    reason = forms.CharField(
+        label=_("Reason for the early cutoff"),
+        min_length=ReportRun.EARLY_REASON_MIN,
+        max_length=ReportRun.EARLY_REASON_MAX,
+        widget=forms.Textarea(attrs={"rows": 3}),
+        help_text=_(
+            "It is kept in the audit log and shown on screen. It is not printed in "
+            "the report."
+        ),
+    )
+
+
 class ActionForm(forms.Form):
     """Una fila de "Acciones requeridas este mes", del Dato Ejecutivo.
 
