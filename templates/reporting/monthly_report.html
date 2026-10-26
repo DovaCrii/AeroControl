@@ -9,7 +9,9 @@ el usuario: **HTML en la app primero, PDF automático después.** Al imprimir,
 `report-a4.css` y el bloque `@media print` de `app.css` (`UX-06`) sacan el menú,
 la barra y los botones, y quedan las cinco hojas A4 solas.{% endcomment %}
 
-{% block extrahead %}<link rel="stylesheet" href="{% static 'css/report-a4.css' %}">{% endblock %}
+{% comment %}LV-378: `report-a4-v2.css` se carga SOLO con diseño 2. `report-a4.css` no se toca:
+los informes ya emitidos se vuelven a dibujar desde su payload con estos estilos.{% endcomment %}
+{% block extrahead %}<link rel="stylesheet" href="{% static 'css/report-a4.css' %}">{% if payload.meta.layout == 2 %}<link rel="stylesheet" href="{% static 'css/report-a4-v2.css' %}">{% endif %}{% endblock %}
 
 {% block content %}
 {% comment %}LV-263: `d-print-none` porque el encabezado de la pantalla, impreso,
@@ -22,7 +24,7 @@ con siete páginas para un informe de cinco.{% endcomment %}
     <p class="page-description mb-0">{% translate "Monthly RPA reportability report to the DGAC." %}</p>
   </div>
   <div class="d-flex gap-2 flex-wrap align-items-end">
-    <button type="button" class="btn btn-primary" data-print data-print-title="{{ payload.meta.code }}"
+    <button type="button" class="btn btn-primary" data-print data-print-title="{{ payload.meta.code }}{% if payload.meta.early_cutoff %} (corte {{ cutoff_date|date:'d-m' }}){% endif %}"
             title="{% translate 'Opens the print dialog: choose “Save as PDF” as the destination.' %}">{% translate "Download PDF" %}</button>
     <form method="get" class="d-flex gap-2 align-items-end">
       <div>
@@ -39,6 +41,10 @@ con siete páginas para un informe de cinco.{% endcomment %}
     permiso que la narrativa y fuera del `{% if run %}`: los textos fijos no son de
     un informe en particular, y se ajustan antes de congelar el próximo.{% endcomment %}
     {% if perms.reporting.change_reportrun %}<a class="btn btn-outline-secondary" href="{% url 'monthly-report-template' %}">{% translate "Report texts" %}</a>{% endif %}
+    {% comment %}LV-375: congelar el mes en curso con corte anticipado. Va a una
+    pantalla con el motivo y la confirmación, no a un POST directo: es una
+    decisión que se justifica por escrito.{% endcomment %}
+    {% if can_issue_early %}<a class="btn btn-outline-warning" href="{% url 'monthly-report-early' %}?period={{ period_date|date:'Y-m' }}">{% translate "Issue with early cutoff" %}</a>{% endif %}
     {% comment %}LV-227: escribir la narrativa necesita un informe donde
     guardarla, y congelar el borrador es un acto explícito — no un efecto
     secundario de teclear el primer hallazgo.{% endcomment %}
@@ -92,6 +98,14 @@ hoy.{% endcomment %}
   {% endif %}
 </div>
 
+{% comment %}LV-375: el aviso de pantalla del corte anticipado, con su motivo. El
+motivo **no** va al papel: `d-print-none`, y el papel dice sólo «corte anticipado».{% endcomment %}
+{% if payload.meta.early_cutoff %}
+<div class="alert alert-warning d-print-none" role="status">
+  {% blocktranslate with cutoff=cutoff_date|date:"d-m" reason=payload.meta.early_reason %}Report with an early cutoff on {{ cutoff }} · reason: {{ reason }}{% endblocktranslate %}
+</div>
+{% endif %}
+
 {% comment %}LV-265: lo que conviene mirar antes de emitir. Sólo en pantalla
 (`d-print-none`): son avisos para quien emite, no parte del documento. No bloquean
 aprobar, porque el motivo puede ser legítimo.{% endcomment %}
@@ -115,6 +129,22 @@ la DGAC diciendo «detalle permiso a permiso». La numeración la asigna
 documento termina con dos hojas numeradas igual.{% endcomment %}
 <div class="rpt-doc">
   {% include "reporting/_page1_cover.html" with page=1 pages=total_pages %}
+  {% if payload.meta.layout == 2 %}
+  {% comment %}LV-378: las hojas del diseño 2 (resumen, permisos agrupados por faena,
+  cobertura y anexo «registro permiso a permiso»). La portada y la hoja del plan no
+  cambian.{% endcomment %}
+  {% include "reporting/v2/_page2_summary.html" with page=2 pages=total_pages %}
+  {% for sheet in permit_sheets %}
+  {% include "reporting/v2/_page3_permits.html" with sheet=sheet page=sheet.page pages=total_pages %}
+  {% endfor %}
+  {% include "reporting/v2/_page4_coverage.html" with page=coverage_page pages=total_pages %}
+  {% if not plan_joins_coverage %}
+  {% include "reporting/_page5_plan.html" with page=plan_page pages=total_pages %}
+  {% endif %}
+  {% for sheet in roster_sheets %}
+  {% include "reporting/v2/_page6_roster.html" with sheet=sheet page=sheet.page pages=total_pages %}
+  {% endfor %}
+  {% else %}
   {% include "reporting/_page2_summary.html" with page=2 pages=total_pages %}
   {% for sheet in permit_sheets %}
   {% include "reporting/_page3_permits.html" with sheet=sheet page=sheet.page pages=total_pages %}
@@ -130,5 +160,6 @@ documento termina con dos hojas numeradas igual.{% endcomment %}
   {% for sheet in roster_sheets %}
   {% include "reporting/_page6_roster.html" with sheet=sheet page=sheet.page pages=total_pages %}
   {% endfor %}
+  {% endif %}
 </div>
 {% endblock %}

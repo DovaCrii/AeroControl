@@ -1,0 +1,904 @@
+{
+ "meta": {
+  "period": "2026-10",
+  "code": "JEJ-GTE-CT-INF-RPA-2026-10",
+  "cutoff": "2026-10-26",
+  "covers": {
+   "from": "2026-10-01",
+   "to": "2026-10-31"
+  },
+  "in_progress": true,
+  "days_remaining": 5,
+  "early_cutoff": true,
+  "early_reason": "Motivo ficticio de la prueba del informe v2.",
+  "layout": 2,
+  "issued_by": "Gerente de Operaciones Aéreas ante la DGAC",
+  "jointly_with": "Jefe Seguridad Aérea ante la DGAC",
+  "standard": "JEJ-GRI-SS-INS-096 Rev. 0",
+  "addressed_to": "Gerencia General · Gerencia de Riesgo · Gerencia de Ingeniería · Administradores de Contrato",
+  "scope": "Vigencia de permisos de vuelo ante la DGAC",
+  "sources": "AeroControl · SIGO — DGAC"
+ },
+ "kpis": {
+  "cost_centres_with_operation": {
+   "value": 11,
+   "source": "registry",
+   "cutoff": "2026-10-26"
+  },
+  "cost_centres_without_permit": {
+   "value": 1,
+   "source": "operations",
+   "cutoff": "2026-10-26"
+  },
+  "permits_in_force": {
+   "value": 23,
+   "source": "operations",
+   "cutoff": "2026-10-26"
+  },
+  "permits_awaiting": {
+   "value": 1,
+   "source": "operations",
+   "cutoff": "2026-10-26"
+  },
+  "permits_lapsed": {
+   "value": 1,
+   "source": "operations",
+   "cutoff": "2026-10-26"
+  },
+  "permits_expiring_30d": {
+   "value": 8,
+   "source": "operations",
+   "cutoff": "2026-10-26"
+  },
+  "permits_expiring_60d": {
+   "value": 16,
+   "source": "operations",
+   "cutoff": "2026-10-26"
+  },
+  "permits_in_force_operating": {
+   "value": 21,
+   "source": "operations",
+   "cutoff": "2026-10-26"
+  },
+  "permits_in_force_outside": {
+   "value": 2,
+   "source": "operations",
+   "cutoff": "2026-10-26"
+  },
+  "permits_expiring_30d_operating": {
+   "value": 7,
+   "source": "operations",
+   "cutoff": "2026-10-26"
+  },
+  "permits_expiring_60d_operating": {
+   "value": 15,
+   "source": "operations",
+   "cutoff": "2026-10-26"
+  },
+  "incidents": {
+   "value": 0,
+   "source": "compliance",
+   "cutoff": "2026-10-26"
+  },
+  "incidents_open": {
+   "value": 0,
+   "source": "compliance",
+   "cutoff": "2026-10-26"
+  },
+  "fleet_total": {
+   "value": 12,
+   "source": "registry",
+   "cutoff": "2026-10-26"
+  },
+  "fleet_flyable": {
+   "value": 12,
+   "source": "registry",
+   "cutoff": "2026-10-26"
+  },
+  "insurance_up_to_date": {
+   "value": 0,
+   "source": "registry",
+   "cutoff": "2026-10-26"
+  },
+  "insurance_missing": {
+   "value": 12,
+   "source": "registry",
+   "cutoff": "2026-10-26"
+  },
+  "insurance_lapsed": {
+   "value": 0,
+   "source": "registry",
+   "cutoff": "2026-10-26"
+  },
+  "operators_total": {
+   "value": 12,
+   "source": "registry",
+   "cutoff": "2026-10-26"
+  },
+  "operators_credentialed": {
+   "value": 0,
+   "source": "registry",
+   "cutoff": "2026-10-26"
+  },
+  "credentials_missing": {
+   "value": 12,
+   "source": "registry",
+   "cutoff": "2026-10-26"
+  },
+  "credentials_lapsed": {
+   "value": 0,
+   "source": "registry",
+   "cutoff": "2026-10-26"
+  }
+ },
+ "cost_centres": [
+  {
+   "code": "CC901",
+   "name": "Faena Norte",
+   "permits_in_force": 7,
+   "permits_awaiting": 0,
+   "permits_lapsed": 0,
+   "permits_expiring_30d": 7,
+   "next_expiry": "2026-11-23",
+   "days_remaining": 28,
+   "band": "critical"
+  },
+  {
+   "code": "CC902",
+   "name": "Faena Sur",
+   "permits_in_force": 1,
+   "permits_awaiting": 0,
+   "permits_lapsed": 1,
+   "permits_expiring_30d": 0,
+   "next_expiry": "2026-12-18",
+   "days_remaining": 53,
+   "band": "warning"
+  },
+  {
+   "code": "CC903",
+   "name": "Faena Este",
+   "permits_in_force": 0,
+   "permits_awaiting": 1,
+   "permits_lapsed": 0,
+   "permits_expiring_30d": 0,
+   "next_expiry": null,
+   "days_remaining": null,
+   "band": "critical"
+  },
+  {
+   "code": "CC906",
+   "name": "Faena Cordillera",
+   "permits_in_force": 1,
+   "permits_awaiting": 0,
+   "permits_lapsed": 0,
+   "permits_expiring_30d": 0,
+   "next_expiry": "2026-11-30",
+   "days_remaining": 35,
+   "band": "warning"
+  },
+  {
+   "code": "CC907",
+   "name": "Faena Valle",
+   "permits_in_force": 1,
+   "permits_awaiting": 0,
+   "permits_lapsed": 0,
+   "permits_expiring_30d": 0,
+   "next_expiry": "2026-12-15",
+   "days_remaining": 50,
+   "band": "warning"
+  },
+  {
+   "code": "CC908",
+   "name": "Faena Costa",
+   "permits_in_force": 1,
+   "permits_awaiting": 0,
+   "permits_lapsed": 0,
+   "permits_expiring_30d": 0,
+   "next_expiry": "2027-01-05",
+   "days_remaining": 71,
+   "band": "nominal"
+  },
+  {
+   "code": "CC909",
+   "name": "Faena Altiplano",
+   "permits_in_force": 1,
+   "permits_awaiting": 0,
+   "permits_lapsed": 0,
+   "permits_expiring_30d": 0,
+   "next_expiry": "2027-01-18",
+   "days_remaining": 84,
+   "band": "nominal"
+  },
+  {
+   "code": "CC910",
+   "name": "Faena Puerto",
+   "permits_in_force": 2,
+   "permits_awaiting": 0,
+   "permits_lapsed": 0,
+   "permits_expiring_30d": 0,
+   "next_expiry": "2027-02-23",
+   "days_remaining": 120,
+   "band": "nominal"
+  },
+  {
+   "code": "CC911",
+   "name": "Faena Bosque",
+   "permits_in_force": 4,
+   "permits_awaiting": 0,
+   "permits_lapsed": 0,
+   "permits_expiring_30d": 0,
+   "next_expiry": "2026-11-28",
+   "days_remaining": 33,
+   "band": "warning"
+  },
+  {
+   "code": "CC912",
+   "name": "Faena Desierto",
+   "permits_in_force": 1,
+   "permits_awaiting": 0,
+   "permits_lapsed": 0,
+   "permits_expiring_30d": 0,
+   "next_expiry": "2027-01-29",
+   "days_remaining": 95,
+   "band": "nominal"
+  },
+  {
+   "code": "CC913",
+   "name": "Faena Lago",
+   "permits_in_force": 2,
+   "permits_awaiting": 0,
+   "permits_lapsed": 0,
+   "permits_expiring_30d": 0,
+   "next_expiry": "2026-12-25",
+   "days_remaining": 60,
+   "band": "warning"
+  }
+ ],
+ "outside_centres": [
+  {
+   "code": "CC904",
+   "name": "Faena Sin Vuelo",
+   "reason": "not_flying",
+   "permits_in_force": 1,
+   "permits_awaiting": 0,
+   "permits_lapsed": 0,
+   "next_expiry": "2026-12-30",
+   "days_remaining": 65,
+   "band": "nominal",
+   "folios": [
+    "JEJ-2026-011"
+   ]
+  },
+  {
+   "code": "CC905",
+   "name": "Faena Terminada",
+   "reason": "closed",
+   "permits_in_force": 1,
+   "permits_awaiting": 0,
+   "permits_lapsed": 0,
+   "next_expiry": "2026-10-28",
+   "days_remaining": 2,
+   "band": "critical",
+   "folios": [
+    "JEJ-2026-012"
+   ]
+  }
+ ],
+ "permits": [
+  {
+   "folio": "JEJ-2026-010",
+   "dgac_number": null,
+   "status": "requested",
+   "cost_centre": "CC903",
+   "operators": [
+    "Operador Tres"
+   ],
+   "aircraft": [],
+   "valid_from": null,
+   "valid_until": null,
+   "days_remaining": null,
+   "band": null,
+   "in_force": false,
+   "in_operation": true,
+   "cost_centre_name": "Faena Este",
+   "outside_reason": null
+  },
+  {
+   "folio": "JEJ-2026-009",
+   "dgac_number": "7009",
+   "status": "approved",
+   "cost_centre": "CC902",
+   "operators": [
+    "Operador Dos"
+   ],
+   "aircraft": [],
+   "valid_from": "2026-07-01",
+   "valid_until": "2026-10-20",
+   "days_remaining": -6,
+   "band": "critical",
+   "in_force": false,
+   "in_operation": true,
+   "cost_centre_name": "Faena Sur",
+   "outside_reason": null
+  },
+  {
+   "folio": "JEJ-2026-012",
+   "dgac_number": "7011",
+   "status": "approved",
+   "cost_centre": "CC905",
+   "operators": [
+    "Operador Cuatro"
+   ],
+   "aircraft": [],
+   "valid_from": "2026-07-28",
+   "valid_until": "2026-10-28",
+   "days_remaining": 2,
+   "band": "critical",
+   "in_force": true,
+   "in_operation": false,
+   "cost_centre_name": "Faena Terminada",
+   "outside_reason": "closed"
+  },
+  {
+   "folio": "JEJ-2026-001",
+   "dgac_number": "7001",
+   "status": "approved",
+   "cost_centre": "CC901",
+   "operators": [
+    "Operador Uno"
+   ],
+   "aircraft": [
+    "RPA-9001"
+   ],
+   "valid_from": "2026-08-28",
+   "valid_until": "2026-11-23",
+   "days_remaining": 28,
+   "band": "critical",
+   "in_force": true,
+   "in_operation": true,
+   "cost_centre_name": "Faena Norte",
+   "outside_reason": null
+  },
+  {
+   "folio": "JEJ-2026-002",
+   "dgac_number": "7002",
+   "status": "approved",
+   "cost_centre": "CC901",
+   "operators": [
+    "Operador Uno"
+   ],
+   "aircraft": [
+    "RPA-9001"
+   ],
+   "valid_from": "2026-08-28",
+   "valid_until": "2026-11-23",
+   "days_remaining": 28,
+   "band": "critical",
+   "in_force": true,
+   "in_operation": true,
+   "cost_centre_name": "Faena Norte",
+   "outside_reason": null
+  },
+  {
+   "folio": "JEJ-2026-003",
+   "dgac_number": "7003",
+   "status": "approved",
+   "cost_centre": "CC901",
+   "operators": [
+    "Operador Uno"
+   ],
+   "aircraft": [
+    "RPA-9001"
+   ],
+   "valid_from": "2026-08-28",
+   "valid_until": "2026-11-23",
+   "days_remaining": 28,
+   "band": "critical",
+   "in_force": true,
+   "in_operation": true,
+   "cost_centre_name": "Faena Norte",
+   "outside_reason": null
+  },
+  {
+   "folio": "JEJ-2026-004",
+   "dgac_number": "7004",
+   "status": "approved",
+   "cost_centre": "CC901",
+   "operators": [
+    "Operador Uno"
+   ],
+   "aircraft": [
+    "RPA-9001"
+   ],
+   "valid_from": "2026-08-28",
+   "valid_until": "2026-11-23",
+   "days_remaining": 28,
+   "band": "critical",
+   "in_force": true,
+   "in_operation": true,
+   "cost_centre_name": "Faena Norte",
+   "outside_reason": null
+  },
+  {
+   "folio": "JEJ-2026-005",
+   "dgac_number": "7005",
+   "status": "approved",
+   "cost_centre": "CC901",
+   "operators": [
+    "Operador Uno"
+   ],
+   "aircraft": [
+    "RPA-9001"
+   ],
+   "valid_from": "2026-08-28",
+   "valid_until": "2026-11-23",
+   "days_remaining": 28,
+   "band": "critical",
+   "in_force": true,
+   "in_operation": true,
+   "cost_centre_name": "Faena Norte",
+   "outside_reason": null
+  },
+  {
+   "folio": "JEJ-2026-006",
+   "dgac_number": "7006",
+   "status": "approved",
+   "cost_centre": "CC901",
+   "operators": [
+    "Operador Uno"
+   ],
+   "aircraft": [
+    "RPA-9001"
+   ],
+   "valid_from": "2026-08-28",
+   "valid_until": "2026-11-23",
+   "days_remaining": 28,
+   "band": "critical",
+   "in_force": true,
+   "in_operation": true,
+   "cost_centre_name": "Faena Norte",
+   "outside_reason": null
+  },
+  {
+   "folio": "JEJ-2026-007",
+   "dgac_number": "7007",
+   "status": "approved",
+   "cost_centre": "CC901",
+   "operators": [
+    "Operador Uno"
+   ],
+   "aircraft": [
+    "RPA-9001"
+   ],
+   "valid_from": "2026-08-28",
+   "valid_until": "2026-11-23",
+   "days_remaining": 28,
+   "band": "critical",
+   "in_force": true,
+   "in_operation": true,
+   "cost_centre_name": "Faena Norte",
+   "outside_reason": null
+  },
+  {
+   "folio": "JEJ-2026-019",
+   "dgac_number": "7018",
+   "status": "approved",
+   "cost_centre": "CC911",
+   "operators": [
+    "Operador Bosque"
+   ],
+   "aircraft": [
+    "RPA-1133"
+   ],
+   "valid_from": "2026-09-01",
+   "valid_until": "2026-11-28",
+   "days_remaining": 33,
+   "band": "warning",
+   "in_force": true,
+   "in_operation": true,
+   "cost_centre_name": "Faena Bosque",
+   "outside_reason": null
+  },
+  {
+   "folio": "JEJ-2026-020",
+   "dgac_number": "7019",
+   "status": "approved",
+   "cost_centre": "CC911",
+   "operators": [
+    "Operador Bosque"
+   ],
+   "aircraft": [
+    "RPA-1133"
+   ],
+   "valid_from": "2026-09-01",
+   "valid_until": "2026-11-28",
+   "days_remaining": 33,
+   "band": "warning",
+   "in_force": true,
+   "in_operation": true,
+   "cost_centre_name": "Faena Bosque",
+   "outside_reason": null
+  },
+  {
+   "folio": "JEJ-2026-021",
+   "dgac_number": "7020",
+   "status": "approved",
+   "cost_centre": "CC911",
+   "operators": [
+    "Operador Bosque"
+   ],
+   "aircraft": [
+    "RPA-1133"
+   ],
+   "valid_from": "2026-09-01",
+   "valid_until": "2026-11-28",
+   "days_remaining": 33,
+   "band": "warning",
+   "in_force": true,
+   "in_operation": true,
+   "cost_centre_name": "Faena Bosque",
+   "outside_reason": null
+  },
+  {
+   "folio": "JEJ-2026-013",
+   "dgac_number": "7012",
+   "status": "approved",
+   "cost_centre": "CC906",
+   "operators": [
+    "Operador Cordillera"
+   ],
+   "aircraft": [
+    "RPA-0635"
+   ],
+   "valid_from": "2026-09-01",
+   "valid_until": "2026-11-30",
+   "days_remaining": 35,
+   "band": "warning",
+   "in_force": true,
+   "in_operation": true,
+   "cost_centre_name": "Faena Cordillera",
+   "outside_reason": null
+  },
+  {
+   "folio": "JEJ-2026-014",
+   "dgac_number": "7013",
+   "status": "approved",
+   "cost_centre": "CC907",
+   "operators": [
+    "Operador Valle"
+   ],
+   "aircraft": [
+    "RPA-0750"
+   ],
+   "valid_from": "2026-09-01",
+   "valid_until": "2026-12-15",
+   "days_remaining": 50,
+   "band": "warning",
+   "in_force": true,
+   "in_operation": true,
+   "cost_centre_name": "Faena Valle",
+   "outside_reason": null
+  },
+  {
+   "folio": "JEJ-2026-008",
+   "dgac_number": "7008",
+   "status": "approved",
+   "cost_centre": "CC902",
+   "operators": [
+    "Operador Tres",
+    "Operador Dos"
+   ],
+   "aircraft": [
+    "RPA-9101",
+    "RPA-9102"
+   ],
+   "valid_from": "2026-09-01",
+   "valid_until": "2026-12-18",
+   "days_remaining": 53,
+   "band": "warning",
+   "in_force": true,
+   "in_operation": true,
+   "cost_centre_name": "Faena Sur",
+   "outside_reason": null
+  },
+  {
+   "folio": "JEJ-2026-024",
+   "dgac_number": "7023",
+   "status": "approved",
+   "cost_centre": "CC913",
+   "operators": [
+    "Operador Lago"
+   ],
+   "aircraft": [
+    "RPA-1360"
+   ],
+   "valid_from": "2026-09-01",
+   "valid_until": "2026-12-25",
+   "days_remaining": 60,
+   "band": "warning",
+   "in_force": true,
+   "in_operation": true,
+   "cost_centre_name": "Faena Lago",
+   "outside_reason": null
+  },
+  {
+   "folio": "JEJ-2026-025",
+   "dgac_number": "7024",
+   "status": "approved",
+   "cost_centre": "CC913",
+   "operators": [
+    "Operador Lago"
+   ],
+   "aircraft": [
+    "RPA-1360"
+   ],
+   "valid_from": "2026-09-01",
+   "valid_until": "2026-12-25",
+   "days_remaining": 60,
+   "band": "warning",
+   "in_force": true,
+   "in_operation": true,
+   "cost_centre_name": "Faena Lago",
+   "outside_reason": null
+  },
+  {
+   "folio": "JEJ-2026-022",
+   "dgac_number": "7021",
+   "status": "approved",
+   "cost_centre": "CC911",
+   "operators": [
+    "Operador Bosque"
+   ],
+   "aircraft": [
+    "RPA-1161"
+   ],
+   "valid_from": "2026-09-02",
+   "valid_until": "2026-12-26",
+   "days_remaining": 61,
+   "band": "nominal",
+   "in_force": true,
+   "in_operation": true,
+   "cost_centre_name": "Faena Bosque",
+   "outside_reason": null
+  },
+  {
+   "folio": "JEJ-2026-011",
+   "dgac_number": "7010",
+   "status": "approved",
+   "cost_centre": "CC904",
+   "operators": [
+    "Operador Cuatro"
+   ],
+   "aircraft": [],
+   "valid_from": "2026-09-01",
+   "valid_until": "2026-12-30",
+   "days_remaining": 65,
+   "band": "nominal",
+   "in_force": true,
+   "in_operation": false,
+   "cost_centre_name": "Faena Sin Vuelo",
+   "outside_reason": "not_flying"
+  },
+  {
+   "folio": "JEJ-2026-015",
+   "dgac_number": "7014",
+   "status": "approved",
+   "cost_centre": "CC908",
+   "operators": [
+    "Operador Costa"
+   ],
+   "aircraft": [
+    "RPA-0871"
+   ],
+   "valid_from": "2026-09-01",
+   "valid_until": "2027-01-05",
+   "days_remaining": 71,
+   "band": "nominal",
+   "in_force": true,
+   "in_operation": true,
+   "cost_centre_name": "Faena Costa",
+   "outside_reason": null
+  },
+  {
+   "folio": "JEJ-2026-016",
+   "dgac_number": "7015",
+   "status": "approved",
+   "cost_centre": "CC909",
+   "operators": [
+    "Operador Altiplano"
+   ],
+   "aircraft": [
+    "RPA-0984"
+   ],
+   "valid_from": "2026-09-01",
+   "valid_until": "2027-01-18",
+   "days_remaining": 84,
+   "band": "nominal",
+   "in_force": true,
+   "in_operation": true,
+   "cost_centre_name": "Faena Altiplano",
+   "outside_reason": null
+  },
+  {
+   "folio": "JEJ-2026-023",
+   "dgac_number": "7022",
+   "status": "approved",
+   "cost_centre": "CC912",
+   "operators": [
+    "Operador Desierto"
+   ],
+   "aircraft": [
+    "RPA-1295"
+   ],
+   "valid_from": "2026-09-01",
+   "valid_until": "2027-01-29",
+   "days_remaining": 95,
+   "band": "nominal",
+   "in_force": true,
+   "in_operation": true,
+   "cost_centre_name": "Faena Desierto",
+   "outside_reason": null
+  },
+  {
+   "folio": "JEJ-2026-017",
+   "dgac_number": "7016",
+   "status": "approved",
+   "cost_centre": "CC910",
+   "operators": [
+    "Operador Puerto"
+   ],
+   "aircraft": [
+    "RPA-10120"
+   ],
+   "valid_from": "2026-09-01",
+   "valid_until": "2027-02-23",
+   "days_remaining": 120,
+   "band": "nominal",
+   "in_force": true,
+   "in_operation": true,
+   "cost_centre_name": "Faena Puerto",
+   "outside_reason": null
+  },
+  {
+   "folio": "JEJ-2026-018",
+   "dgac_number": "7017",
+   "status": "approved",
+   "cost_centre": "CC910",
+   "operators": [
+    "Operador Puerto"
+   ],
+   "aircraft": [
+    "RPA-10120"
+   ],
+   "valid_from": "2026-09-01",
+   "valid_until": "2027-02-23",
+   "days_remaining": 120,
+   "band": "nominal",
+   "in_force": true,
+   "in_operation": true,
+   "cost_centre_name": "Faena Puerto",
+   "outside_reason": null
+  }
+ ],
+ "concentration": {
+  "permits_in_force": 23,
+  "permits_with_one_operator": 22,
+  "cost_centres_on_one_person": [
+   "CC901",
+   "CC904",
+   "CC905",
+   "CC906",
+   "CC907",
+   "CC908",
+   "CC909",
+   "CC910",
+   "CC911",
+   "CC912",
+   "CC913"
+  ],
+  "permits_in_force_operating": 21,
+  "permits_with_one_operator_operating": 20,
+  "cost_centres_on_one_person_operating": [
+   "CC901",
+   "CC906",
+   "CC907",
+   "CC908",
+   "CC909",
+   "CC910",
+   "CC911",
+   "CC912",
+   "CC913"
+  ]
+ },
+ "changes": null,
+ "incidents": [],
+ "plan": {
+  "phases": [
+   {
+    "number": 0,
+    "month": "Sep 2026",
+    "title": "Cierre de brechas de habilitación",
+    "text": "Renovar los permisos que vencen dentro del período. Definir cuáles de los Centros de Costo sin permiso tendrán operación aérea y tramitar su carta del mandante y su solicitud en SIGO.",
+    "close": "ningún CC con operación prevista opera sin permiso vigente.",
+    "state": "done"
+   },
+   {
+    "number": 1,
+    "month": "Oct 2026",
+    "title": "Calendario de renovación automático",
+    "text": "AeroControl calcula el vencimiento sobre la fecha real de cada resolución —no sobre un plazo supuesto— y dispara alertas a 45 y 30 días: a los 45 el ADC solicita la carta del mandante; a los 30 el Jefe Seguridad Aérea presenta en SIGO y, sin carta, escala al Gerente Operaciones Aéreas.",
+    "close": "ninguna renovación depende de que alguien la recuerde.",
+    "state": "current"
+   },
+   {
+    "number": 2,
+    "month": "Nov 2026",
+    "title": "Bitácora digital de vuelo",
+    "text": "Se habilita el registro por vuelo: bitácora (JEJ-GTE-CT-REG-015), check list pre-vuelo (LVE-003) e inspección (LVE-002). Cada vuelo se asocia al permiso que lo autoriza, de modo que el sistema no admita registrar un vuelo sin permiso vigente en esa fecha.",
+    "close": "completitud reportada como línea base, sin sanción interna.",
+    "state": "pending"
+   },
+   {
+    "number": 3,
+    "month": "Dic 2026",
+    "title": "Exigibilidad plena y auditoría",
+    "text": "La completitud de bitácoras pasa a indicador exigible por Centro de Costo y se contrasta la coherencia entre vuelos ejecutados y vuelos autorizados. Auditoría interna regulatoria conforme al numeral 5.4.2 del INS-096.",
+    "close": "informe anual consolidado y plan de acción 2027.",
+    "state": "pending"
+   }
+  ],
+  "lede": "Cuatro fases de un mes. Ninguna exige lo que la anterior no dejó instalado: primero se cierra la habilitación vigente, luego se automatiza su renovación, después se instala el registro de vuelo y solo al final se exige completitud.",
+  "matrix": {
+   "columns": [
+    "SEP",
+    "OCT",
+    "NOV",
+    "DIC"
+   ],
+   "rows": [
+    {
+     "label": "Permisos de vuelo vigentes por CC",
+     "emphasis": false,
+     "cells": [
+      "due",
+      "due",
+      "due",
+      "due"
+     ]
+    },
+    {
+     "label": "Renovación anticipada (carta + solicitud)",
+     "emphasis": false,
+     "cells": [
+      "info",
+      "due",
+      "due",
+      "due"
+     ]
+    },
+    {
+     "label": "Bitácora, check list e inspección por vuelo",
+     "emphasis": true,
+     "cells": [
+      "na",
+      "na",
+      "info",
+      "due"
+     ]
+    },
+    {
+     "label": "Coherencia vuelos ejecutados vs. autorizados",
+     "emphasis": false,
+     "cells": [
+      "na",
+      "na",
+      "info",
+      "due"
+     ]
+    }
+   ]
+  },
+  "concluded": false,
+  "not_started": false
+ }
+}
