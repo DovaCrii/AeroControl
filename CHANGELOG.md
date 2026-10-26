@@ -35,6 +35,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **Los mensajes de confirmación ya no se imprimen (`LV-377`).** El aviso «Informe aprobado…» salía como una hoja propia al guardar el informe mensual como PDF y empujaba la portada a la página 2; el bloque de mensajes de `base.html` ahora lleva `d-print-none`. Sin migración ni estáticos.
 - **Espacio aéreo: el mapa real dejaba el panel vacío y las herramientas muertas (`LV-363`). Sin migración; LLEVA ESTÁTICOS (`airspace-map.js`) y `.mo`.** Un `MultiGeometry` del KML (SC-P29) se servía con `coordinates: null`, Leaflet lanzaba al dibujarlo y el `catch` mostraba «no se pudieron cargar» sin rastro. Ahora el servidor envía las piezas de la colección, «¿qué hay cerca?» las entiende, el script aísla el dibujo de cada elemento, deja el motivo en la consola y ofrece «Reintentar»; medir termina con doble clic y una pista chica ya no cuenta dos clics.
 
 ### Added
