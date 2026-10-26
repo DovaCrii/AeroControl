@@ -99,6 +99,24 @@ detalle de formato en un papel que va a la DGAC.{% endcomment %}
           {% endfor %}
         </div>
         {% endif %}
+
+        {% comment %}LV-378: un permiso aprobado cuya vigencia ya pasó y que nadie
+        cerró. Antes se imprimía arriba, como «En proceso»: falso. Sólo se dibuja si
+        existe, así que el papel de los informes ya emitidos no cambia.{% endcomment %}
+        {% if sheet.lapsed %}
+        <div style="background: #F4F7FA; border-top: 1px solid #D7DEE6; padding: 6px 10px; color: #B23B34; font-size: 8.6px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em;">Vencidos sin cerrar — la vigencia terminó y el permiso sigue abierto</div>
+        <div class="rpt-grid-permits">
+          {% for permit in sheet.lapsed %}
+          <div class="c rpt-num">{{ permit.folio }}</div>
+          <div class="c">{% if permit.dgac_number %}{{ permit.dgac_number }}{% else %}<span class="rpt-dash">—</span>{% endif %}</div>
+          <div class="c">{{ permit.cost_centre }}</div>
+          <div class="c">{% with n=permit.operators|length %}{% if n %}{{ n }} operador{{ n|pluralize:"es" }}{% else %}<span class="rpt-dash">—</span>{% endif %}{% endwith %}</div>
+          <div class="c rpt-tail">{% for tail in permit.aircraft %}{{ tail }}{% if not forloop.last %} · {% endif %}{% empty %}<span class="rpt-dash">—</span>{% endfor %}</div>
+          <div class="c rpt-tail">{{ permit.valid_from|as_date|date:"d-m"|default:"—" }} → <strong style="color: #B23B34;">{{ permit.valid_until|as_date|date:"d-m-Y" }}</strong></div>
+          <div class="c rpt-sev-{{ permit.band }}" style="text-align: center; font-weight: bold;">{{ permit.days_remaining }}</div>
+          {% endfor %}
+        </div>
+        {% endif %}
       </div>
     </div>
 

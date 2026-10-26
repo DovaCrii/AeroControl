@@ -228,8 +228,10 @@ class TestTheDetailTable:
                 )
             )
 
+        # LV-378: con los códigos de las faenas con operación ya leídos (así los pasa
+        # `build`): sin ellos `collect_permits` hace una consulta más, constante.
         with django_assert_max_num_queries(4):
-            collect_permits(CUTOFF)
+            collect_permits(CUTOFF, {"CC738"})
 
 
 class TestTheNextExpiryPerCostCentre:
