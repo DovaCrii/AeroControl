@@ -1,0 +1,121 @@
+{
+ "order": [
+  "Flota",
+  "Personal"
+ ],
+ "sheets": {
+  "Flota": {
+   "bold_rows": [
+    3
+   ],
+   "filter": "A3:I4",
+   "freeze": "A4",
+   "rows": [
+    [
+     "1 aeronave y 1 operador inscritos al 2026-10-26.",
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    [
+     "Matrícula",
+     "Tipo",
+     "Modelo",
+     "Fabricante",
+     "Número de serie",
+     "Año",
+     "Estado",
+     "Centro de costo",
+     "Vencimiento seguro JAC"
+    ],
+    [
+     "RPA-7126",
+     "Multirotor",
+     "'=cmd|' /C calc'!A0",
+     "DJI",
+     "—",
+     "—",
+     "Activo",
+     "CC738",
+     "—"
+    ]
+   ],
+   "widths": {
+    "A": 40.0,
+    "B": 12.0,
+    "C": 21.0,
+    "D": 12.0,
+    "E": 17.0,
+    "F": 5.0,
+    "G": 8.0,
+    "H": 17.0,
+    "I": 24.0
+   }
+  },
+  "Personal": {
+   "bold_rows": [
+    3
+   ],
+   "filter": "A3:F4",
+   "freeze": "A4",
+   "rows": [
+    [
+     "1 aeronave y 1 operador inscritos al 2026-10-26.",
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    [
+     "Nombre completo",
+     "RUT",
+     "Credencial DGAC",
+     "Tipo de operador",
+     "Centro de costo",
+     "Vencimiento credencial DGAC"
+    ],
+    [
+     "Ana Rivas",
+     "—",
+     "—",
+     "'+piloto",
+     "CC738",
+     "—"
+    ]
+   ],
+   "widths": {
+    "A": 40.0,
+    "B": 5.0,
+    "C": 17.0,
+    "D": 18.0,
+    "E": 17.0,
+    "F": 29.0
+   }
+  }
+ }
+}

@@ -1,4 +1,3 @@
-import csv
 from itertools import groupby
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -19,7 +18,17 @@ from apps.core.views import (
     SearchMixin,
 )
 from apps.core.audit import set_audit_context
-from apps.core.exports import neutralize
+from apps.reporting.export import (
+    CSV_TYPE,
+    DOCX_TYPE,
+    XLSX_TYPE,
+    Table,
+    dated_filename,
+    download,
+    to_csv,
+    to_docx,
+    to_xlsx,
+)
 from apps.registry.models import Operator
 from .models import (
     KanbanBoard,
@@ -238,136 +247,89 @@ class KanbanTaskListView(ModelViewPermissionRequiredMixin, ListView):
         return [(label, list(items)) for label, items in groupby(tasks, key=key)]
 
 
+# El encabezado del CSV y del XLSX; el DOCX usa un subconjunto traducido.
+TASK_REPORT_HEADERS = (
+    "Task",
+    "Board",
+    "State",
+    "Labels",
+    "Assignee",
+    "Priority",
+    "Due",
+    "Progress",
+)
+
+
+def _task_listing(request):
+    listing = KanbanTaskListView()
+    listing.request = request
+    return listing.get_queryset()
+
+
 class TaskReportCsvView(ModelViewPermissionRequiredMixin, View):
     model = KanbanTask
     permission_action = "view"
 
     def get(self, request):
-        response = HttpResponse(content_type="text/csv; charset=utf-8")
-        response["Content-Disposition"] = 'attachment; filename="aerocontrol-tasks.csv"'
-        response.write("\ufeff")
-        writer = csv.writer(response, lineterminator="\r\n")
-        writer.writerow(
-            [
-                "Task",
-                "Board",
-                "State",
-                "Labels",
-                "Assignee",
-                "Priority",
-                "Due",
-                "Progress",
-            ]
+        # La neutralización de fórmulas (T4.4: un título «=HYPERLINK(...)» se
+        # ejecutaría al abrir el CSV) la hace `export.to_csv`, no esta vista.
+        table = Table(
+            headers=TASK_REPORT_HEADERS,
+            rows=tuple(task_row(task) for task in _task_listing(request)),
         )
-        listing = KanbanTaskListView()
-        listing.request = request
-        tasks = listing.get_queryset()
-        for task in tasks:
-            # Neutralize before writing: a task title like "=HYPERLINK(...)"
-            # would otherwise execute when the CSV is opened in Excel/LibreOffice
-            # (T4.4 / AGENTS.md formula-injection rule).
-            writer.writerow([neutralize(value) for value in task_row(task)])
-        return response
+        return download(
+            to_csv([table]),
+            CSV_TYPE,
+            dated_filename("aerocontrol-tasks", timezone.localdate(), "csv"),
+        )
 
 
 class TaskReportXlsxView(TaskReportCsvView):
     def get(self, request):
-        from io import BytesIO
-        from openpyxl import Workbook
-        from openpyxl.styles import Font
-
-        listing = KanbanTaskListView()
-        listing.request = request
-        workbook = Workbook()
-        sheet = workbook.active
-        sheet.title = "Tasks"
-        headers = [
-            "Task",
-            "Board",
-            "State",
-            "Labels",
-            "Assignee",
-            "Priority",
-            "Due",
-            "Progress",
-        ]
-        sheet.append(headers)
-        for cell in sheet[1]:
-            cell.font = Font(bold=True)
-        for task in listing.get_queryset():
-            # Same formula-injection neutralization as the CSV (T4.4): XLSX is
-            # executed by the spreadsheet just like CSV.
-            sheet.append([neutralize(value) for value in task_row(task)])
-        sheet.freeze_panes = "A2"
-        sheet.auto_filter.ref = sheet.dimensions
-        for column in sheet.columns:
-            sheet.column_dimensions[column[0].column_letter].width = min(
-                max(len(str(cell.value or "")) for cell in column) + 2, 40
-            )
-        output = BytesIO()
-        workbook.save(output)
-        response = HttpResponse(
-            output.getvalue(),
-            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        table = Table(
+            headers=TASK_REPORT_HEADERS,
+            rows=tuple(task_row(task) for task in _task_listing(request)),
+            sheet="Tasks",
         )
-        response["Content-Disposition"] = (
-            'attachment; filename="aerocontrol-tasks.xlsx"'
+        return download(
+            to_xlsx([table]),
+            XLSX_TYPE,
+            dated_filename("aerocontrol-tasks", timezone.localdate(), "xlsx"),
         )
-        return response
 
 
 class TaskReportDocxView(TaskReportCsvView):
     def get(self, request):
-        from io import BytesIO
-        from docx import Document
-        from docx.shared import Inches
-        from django.utils import timezone
-
-        listing = KanbanTaskListView()
-        listing.request = request
-        document = Document()
-        document.add_heading(_("AeroControl — Operational task report"), 0)
-        document.add_paragraph(
-            _("Generated: %(date)s") % {"date": timezone.localdate().isoformat()}
-        )
-        table = document.add_table(rows=1, cols=6)
-        table.style = "Light Shading Accent 1"
-        headers = [
+        headers = (
             _("Task"),
             _("Board"),
             _("State"),
             _("Assignee"),
             _("Priority"),
             _("Progress"),
-        ]
-        for cell, header in zip(table.rows[0].cells, headers):
-            cell.text = header
-        for task in listing.get_queryset():
-            row = table.add_row().cells
-            row_values = task_row(task)
-            values = [
-                row_values[0],
-                row_values[1],
-                row_values[2],
-                row_values[4],
-                row_values[5],
-                row_values[7],
-            ]
-            for cell, value in zip(row, values):
-                cell.text = str(value)
-        for section in document.sections:
-            section.left_margin = Inches(0.6)
-            section.right_margin = Inches(0.6)
-        output = BytesIO()
-        document.save(output)
-        response = HttpResponse(
-            output.getvalue(),
-            content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         )
-        response["Content-Disposition"] = (
-            'attachment; filename="aerocontrol-tasks.docx"'
+        rows = []
+        for task in _task_listing(request):
+            values = task_row(task)
+            rows.append(
+                (values[0], values[1], values[2], values[4], values[5], values[7])
+            )
+        content = to_docx(
+            _("AeroControl — Operational task report"),
+            [
+                (
+                    "paragraph",
+                    _("Generated: %(date)s")
+                    % {"date": timezone.localdate().isoformat()},
+                ),
+                ("table", Table(headers=headers, rows=tuple(rows))),
+            ],
         )
-        return response
+        return download(
+            content,
+            DOCX_TYPE,
+            dated_filename("aerocontrol-tasks", timezone.localdate(), "docx"),
+        )
 
 
 # LV-78 step 1: `ApiIndexView` moved to `apps.core.api`. It documents the whole

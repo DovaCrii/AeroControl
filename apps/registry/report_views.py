@@ -8,16 +8,22 @@ The PDF wears the corporate letterhead from LV-144; this is the report that
 letterhead was built shared for.
 """
 
-import csv
-from io import BytesIO
-
-from django.http import HttpResponse
 from django.utils.translation import gettext as _
 from django.views.generic import TemplateView, View
 
 from apps.compliance.digest import bucket_for
 from apps.core.exports import neutralize
-from apps.core.views import ModelPermissionRequiredMixin, lookup_by_pk
+from apps.core.views import ModelPermissionRequiredMixin
+from apps.reporting.export import (
+    CSV_TYPE,
+    XLSX_TYPE,
+    Table,
+    cost_center_filter,
+    dated_filename,
+    download,
+    to_csv,
+    to_xlsx,
+)
 from .catastro import (
     AIRCRAFT_EXPIRY_COLUMN,
     AIRCRAFT_HEADERS,
@@ -68,11 +74,7 @@ class CatastroMixin(ModelPermissionRequiredMixin):
         return ("registry.view_aircraft", "registry.view_operator")
 
     def filters_for(self, request):
-        cost_center = None
-        if request.GET.get("cost_center"):
-            cost_center = lookup_by_pk(
-                CostCenter.objects.filter(is_active=True), request.GET["cost_center"]
-            )
+        cost_center = cost_center_filter(request.GET)
         # An unknown status is "no status filter", not an empty roster: the value
         # comes from a query string, and a stale bookmark should not answer
         # "you have no aircraft".
@@ -230,95 +232,54 @@ class CatastroReportPdfView(CatastroMixin, View):
         from reportlab.lib.pagesizes import landscape, letter
 
         return corepdf.pdf_response(
-            elements, letterhead, f"{FILENAME_STEM}.pdf", pagesize=landscape(letter)
+            elements,
+            letterhead,
+            dated_filename(FILENAME_STEM, catastro["as_of"], "pdf"),
+            pagesize=landscape(letter),
         )
+
+
+def _tables(catastro):
+    return [
+        Table(
+            headers=tuple(AIRCRAFT_HEADERS),
+            rows=tuple(aircraft_rows(catastro)),
+            sheet="Flota",
+            heading=_("Fleet"),
+        ),
+        Table(
+            headers=tuple(OPERATOR_HEADERS),
+            rows=tuple(operator_rows(catastro)),
+            sheet="Personal",
+            heading=_("Personnel"),
+        ),
+    ]
 
 
 class CatastroReportXlsxView(CatastroMixin, View):
     def get(self, request):
-        from openpyxl import Workbook
-        from openpyxl.styles import Font
-        from openpyxl.utils import get_column_letter
-
         catastro = self.catastro_for(request)
-        sentences = totals_sentence(catastro)
-        workbook = Workbook()
-
-        def fill(sheet, headers, rows):
-            """Preamble, then the table, with the filter anchored on the header
-            row rather than on `sheet.dimensions`.
-
-            The compliance report puts its headers on row 1 and can hand
-            openpyxl the whole sheet; here the cut-off sentences come first, so
-            an auto-filter over the dimensions would take the sentences for
-            column titles.
-
-            Written by coordinate and not with `append`: an `append([])` for the
-            blank separator advances openpyxl's internal cursor but creates no
-            cell, so `max_row` still points at the sentence above it -- which
-            put the bold font on an empty row and the filter one row short of
-            the headers.
-            """
-            for offset, sentence in enumerate(sentences, start=1):
-                sheet.cell(row=offset, column=1, value=str(sentence))
-            header_row = len(sentences) + 2  # one blank row of separation
-            for column, head in enumerate(headers, start=1):
-                sheet.cell(row=header_row, column=column, value=str(head)).font = Font(
-                    bold=True
-                )
-            for index, row in enumerate(rows, start=header_row + 1):
-                for column, value in enumerate(row, start=1):
-                    sheet.cell(row=index, column=column, value=neutralize(value))
-            last_row = header_row + len(rows)
-            sheet.freeze_panes = f"A{header_row + 1}"
-            sheet.auto_filter.ref = (
-                f"A{header_row}:{get_column_letter(len(headers))}{last_row}"
-            )
-            for column in sheet.columns:
-                sheet.column_dimensions[column[0].column_letter].width = min(
-                    max(len(str(cell.value or "")) for cell in column) + 2, 40
-                )
-
-        fleet = workbook.active
-        fleet.title = "Flota"
-        fill(fleet, AIRCRAFT_HEADERS, aircraft_rows(catastro))
-        fill(
-            workbook.create_sheet("Personal"),
-            OPERATOR_HEADERS,
-            operator_rows(catastro),
+        content = to_xlsx(
+            _tables(catastro), preamble=[str(s) for s in totals_sentence(catastro)]
         )
-
-        output = BytesIO()
-        workbook.save(output)
-        response = HttpResponse(
-            output.getvalue(),
-            content_type=(
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            ),
+        return download(
+            content,
+            XLSX_TYPE,
+            dated_filename(FILENAME_STEM, catastro["as_of"], "xlsx"),
         )
-        response["Content-Disposition"] = f'attachment; filename="{FILENAME_STEM}.xlsx"'
-        return response
 
 
 class CatastroReportCsvView(CatastroMixin, View):
     def get(self, request):
         catastro = self.catastro_for(request)
-        response = HttpResponse(content_type="text/csv; charset=utf-8")
-        response["Content-Disposition"] = f'attachment; filename="{FILENAME_STEM}.csv"'
-        response.write("﻿")  # BOM so Excel detects UTF-8
-        writer = csv.writer(response, lineterminator="\r\n")
-        writer.writerow([_("Fleet and personnel roster")])
-        for sentence in totals_sentence(catastro):
-            writer.writerow([neutralize(sentence)])
-        writer.writerow([])
-
-        for heading, headers, rows in (
-            (_("Fleet"), AIRCRAFT_HEADERS, aircraft_rows(catastro)),
-            (_("Personnel"), OPERATOR_HEADERS, operator_rows(catastro)),
-        ):
-            writer.writerow([neutralize(heading)])
-            writer.writerow([str(head) for head in headers])
-            for row in rows:
-                writer.writerow([neutralize(value) for value in row])
-            writer.writerow([])
-        return response
+        content = to_csv(
+            _tables(catastro),
+            preamble=[[_("Fleet and personnel roster")]]
+            + [[sentence] for sentence in totals_sentence(catastro)],
+            trailing_blank=True,
+        )
+        return download(
+            content,
+            CSV_TYPE,
+            dated_filename(FILENAME_STEM, catastro["as_of"], "csv"),
+        )

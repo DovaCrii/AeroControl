@@ -8,6 +8,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Changed
+
+- **Una sola tubería de exportación para los informes operativos (`LV-355`, F1).** `apps/reporting/export.py` (`to_csv`, `to_xlsx`, `to_docx`, `Table`, `dated_filename`, `cost_center_filter`) reemplaza los cuatro escritores XLSX, los CSV con BOM escritos a mano y el bucle de autoancho copiado en Reporte de vigencia, Catastro, informe de tareas y el adjunto del correo ejecutivo; la neutralización de fórmulas (`apps.core.exports.neutralize`) se aplica al escribir, también en pie de totales, preámbulo y encabezados. Contenido idéntico (hojas, filas, columnas, negritas, filtro y anchos), comprobado contra salidas guardadas con el código anterior; solo cambia que el adjunto del correo ahora se autoajusta como la descarga. **Los archivos descargados llevan la fecha**: `aerocontrol-cumplimiento_AAAA-MM-DD.pdf|csv|xlsx|docx`, `aerocontrol-catastro_AAAA-MM-DD.pdf|xlsx|csv`, `aerocontrol-tasks_AAAA-MM-DD.csv|xlsx|docx` y el adjunto del correo (antes `aerocontrol-cumplimiento-AAAA-MM-DD.xlsx`). El informe mensual a la DGAC no cambia. Sin migración ni estáticos.
+
 ### Added
 
 - **Red de seguridad de los informes (`LV-355`, F0).** Prueba de instantánea del informe mensual a la DGAC y del Dato Ejecutivo: el HTML normalizado de un informe congelado de datos ficticios (`apps/reporting/snapshots/`) falla ante cualquier cambio de salida, y los presupuestos de consultas del Reporte de vigencia y del mensual en vista previa quedan fijados en lo que cuestan hoy (sin optimizar). Solo pruebas; el A4 no cambia. Sin migración ni estáticos.
