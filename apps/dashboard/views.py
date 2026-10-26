@@ -18,6 +18,7 @@ from apps.compliance.models import Alert, AlertRule, Document, DocumentType
 # dos de las seis fuentes que esta pantalla recorre: `compliance.digest` no podía
 # importar de una vista que a su vez lo importa a él. Se siguen usando igual.
 from apps.compliance.expirations import upcoming_expirations
+from apps.core.tenancy import scope_queryset_to_visible_tenants
 from apps.maintenance.models import MaintenanceRecord
 from apps.operations.models import FlightRecord, FlightRequest
 from apps.registry.models import Aircraft, CostCenter, Operator
@@ -27,7 +28,7 @@ from .compliance_section import can_see_compliance
 from .selection import resolve_cost_center
 
 
-def panel_readiness(today, cost_center=None):
+def panel_readiness(today, cost_center=None, user=None):
     """LV-89: can we operate today? -- as three counts, not two pie charts.
 
     Replaces "Aircraft by status" (two slices) and "Permissions by status" (one
@@ -60,10 +61,16 @@ def panel_readiness(today, cost_center=None):
     # `RPA-2019` en `CC110` que lo motivó) vive ahora en ese docstring, junto al
     # criterio que aplica.
     fleet = operational_fleet()
+    # LV-372 (F-08): con `user`, sólo la flota y el padrón de las empresas que esa persona ve (y,
+    # abajo, sólo sus permisos). Sin `user` —los llamadores internos— nada cambia.
+    if user is not None:
+        fleet = scope_queryset_to_visible_tenants(fleet, user, "tenant_id")
     # LV-369: el padrón se pide **al corte**. Quien salió de la empresa después de
     # esa fecha estaba ese día (cuenta); quien salió antes o en la fecha, no. Con
     # la fecha de hoy es el padrón de hoy, así que el panel no cambia.
     operators = operational_roster(today)
+    if user is not None:
+        operators = scope_queryset_to_visible_tenants(operators, user, "tenant_id")
 
     # **El padrón que se cuenta es el que existía en `today`, no el de hoy.**
     #
@@ -120,7 +127,7 @@ def panel_readiness(today, cost_center=None):
     # dos cálculos separados de la misma cifra es exactamente cómo el panel y el
     # informe terminan diciendo números distintos. `LV-188` acabó de mostrar el
     # costo de esa separación en otra función.
-    permits = permit_counts(today, cost_center)
+    permits = permit_counts(today, cost_center, user, lazy_scope=True)
 
     return {
         "readiness": [
@@ -273,13 +280,24 @@ def dashboard(request):
     # en `selection.resolve_cost_center`, que comparte con la sección «Cumplimiento»
     # (LV-359). Un valor que no resuelve —UUID inválido, archivada, inexistente— es un
     # no-op, no un error (LV-146).
-    selected_cost_center = resolve_cost_center(request, remember=True)
+    user = request.user
+
+    # LV-372 (F-08): **todo lo que este panel cuenta se acota a las empresas de quien lo abre**,
+    # no sólo por permiso de modelo. Con una sola empresa en producción no se notaba; la regla del
+    # proyecto es que toda vista acote. Es subconsulta y no una lista resuelta de antemano a
+    # propósito: así no suma consultas al techo de `LV-237` (ver `scope_queryset_to_visible_tenants`).
+    def scoped(queryset, path=None):
+        return scope_queryset_to_visible_tenants(queryset, user, path)
+
+    selected_cost_center = resolve_cost_center(
+        request, remember=True, scope_user=user, lazy_scope=True
+    )
     show_compliance_slot = can_see_compliance(request.user)
-    cost_centers = CostCenter.objects.filter(is_active=True).order_by("code")
+    cost_centers = scoped(CostCenter.objects.filter(is_active=True)).order_by("code")
 
     # --- Summary counts ---
-    aircraft_qs = Aircraft.objects.filter(is_active=True)
-    operator_qs = Operator.objects.filter(is_active=True)
+    aircraft_qs = scoped(Aircraft.objects.filter(is_active=True))
+    operator_qs = scoped(Operator.objects.filter(is_active=True))
     if selected_cost_center:
         aircraft_qs = aircraft_qs.filter(cost_center=selected_cost_center)
         operator_qs = operator_qs.filter(cost_center=selected_cost_center)
@@ -290,7 +308,11 @@ def dashboard(request):
     # cambiaba todas las tarjetas menos ésta — un número ajeno al filtro puesto
     # al lado de otros que sí lo obedecen.
     alert_count = alerts_for_cost_center(
-        Alert.objects.filter(is_active=True, is_resolved=False), selected_cost_center
+        scoped(
+            Alert.objects.filter(is_active=True, is_resolved=False),
+            "alert_rule__tenant_id",
+        ),
+        selected_cost_center,
     ).count()
 
     # --- Compliance module setup state ---
@@ -300,8 +322,8 @@ def dashboard(request):
     # what turns the digest, the alerts and the report from built to working.
     compliance_setup = {
         "doc_types": DocumentType.objects.filter(is_active=True).exists(),
-        "documents": Document.objects.filter(is_active=True).exists(),
-        "rules": AlertRule.objects.filter(is_active=True).exists(),
+        "documents": scoped(Document.objects.filter(is_active=True)).exists(),
+        "rules": scoped(AlertRule.objects.filter(is_active=True)).exists(),
     }
     compliance_incomplete = not all(compliance_setup.values())
 
@@ -316,7 +338,7 @@ def dashboard(request):
     from apps.compliance.kpis import permit_status_by_cost_center
 
     today = timezone.localdate()
-    permit_status_rows = permit_status_by_cost_center(today)
+    permit_status_rows = permit_status_by_cost_center(today, user, lazy_scope=True)
     # LV-310: la tabla y su cifra respetan la faena elegida, como el resto del
     # panel. Antes `permit_status_by_cost_center` devolvía **todas** las faenas
     # aunque hubiera una elegida, así que «Faenas sin permiso» decía 7 sobre un
@@ -389,7 +411,10 @@ def dashboard(request):
     from apps.compliance.models import MonthlyComplianceReview
 
     monthly_records = None
-    review_qs = MonthlyComplianceReview.objects.filter(is_active=True)
+    review_qs = scoped(
+        MonthlyComplianceReview.objects.filter(is_active=True),
+        "cost_center__tenant_id",
+    )
     if selected_cost_center:
         review_qs = review_qs.filter(cost_center=selected_cost_center)
     latest_period = review_qs.aggregate(latest=Max("period"))["latest"]
@@ -434,7 +459,9 @@ def dashboard(request):
     # cuántas hay de cada tipo; la agregación y su canvas se van juntos, porque
     # `test_lv109` empareja gráfico y canvas y una consulta sin gráfico es el
     # defecto que `LV-237` ya pagó una vez.
-    maintenance_qs = MaintenanceRecord.objects.filter(is_active=True)
+    maintenance_qs = scoped(
+        MaintenanceRecord.objects.filter(is_active=True), "aircraft__tenant_id"
+    )
     if selected_cost_center:
         maintenance_qs = maintenance_qs.filter(
             aircraft__cost_center=selected_cost_center
@@ -478,8 +505,9 @@ def dashboard(request):
     # más antigua; poner "atrasada a los N días" exigiría un plazo de respuesta
     # de la DGAC que nadie confirmó, y un umbral inventado que resulta corto
     # enseña a ignorar la tarjeta.
-    request_qs = FlightRequest.objects.filter(
-        is_active=True, status=FlightRequest.STATUS_FILED
+    request_qs = scoped(
+        FlightRequest.objects.filter(is_active=True, status=FlightRequest.STATUS_FILED),
+        "cost_center__tenant_id",
     )
     if selected_cost_center:
         request_qs = request_qs.filter(cost_center=selected_cost_center)
@@ -496,8 +524,9 @@ def dashboard(request):
 
     # --- Chart: Monthly flight records (last 6 months) ---
     six_months_ago = timezone.localdate() - timedelta(days=180)
-    flight_records_qs = FlightRecord.objects.filter(
-        is_active=True, actual_date__gte=six_months_ago
+    flight_records_qs = scoped(
+        FlightRecord.objects.filter(is_active=True, actual_date__gte=six_months_ago),
+        "aircraft__tenant_id",
     )
     if selected_cost_center:
         flight_records_qs = flight_records_qs.filter(
@@ -532,12 +561,15 @@ def dashboard(request):
     # los mismos argumentos, así que la tira se arma primero y el encabezado lee
     # de ella. Dos llamadas separadas además podían llegar a discrepar, que es
     # justo lo que `LV-201` centralizó `permit_counts` para evitar.
-    readiness = panel_readiness(today, selected_cost_center)
+    readiness = panel_readiness(today, selected_cost_center, user)
     permits_in_force = next(
         row["count"] for row in readiness["readiness"] if row["key"] == "permits"
     )
 
-    flights_today = FlightRecord.objects.filter(is_active=True, actual_date=today)
+    flights_today = scoped(
+        FlightRecord.objects.filter(is_active=True, actual_date=today),
+        "aircraft__tenant_id",
+    )
     if selected_cost_center:
         flights_today = flights_today.filter(
             permission__cost_center=selected_cost_center
