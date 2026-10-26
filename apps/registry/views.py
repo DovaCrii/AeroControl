@@ -57,7 +57,12 @@ from .forms import (
     QualificationForm,
     QualificationTypeForm,
 )
-from .selectors import filter_by_credential, filter_by_insurance
+from .selectors import (
+    closed_centre_permit_warning,
+    filter_by_credential,
+    filter_by_insurance,
+    is_operating,
+)
 from .services import bulk_assign_aircraft, bulk_assign_operators
 
 
@@ -290,7 +295,14 @@ class CostCenterArchive(RegistryArchive):
                 "registry/costcenter_archive_confirm.html",
                 {"object": obj, "dependents": dependents},
             )
-        return super().post(request, pk)
+        response = super().post(request, pk)
+        # LV-378 fase 4: archivar una faena con permisos vivos no los cierra;
+        # se dice cuáles son (sin bloquear: ya quedó archivada).
+        obj.refresh_from_db()
+        warning = closed_centre_permit_warning(obj, request.user)
+        if warning:
+            messages.warning(request, warning)
+        return response
 
 
 class KnowledgeAssessmentArchive(RegistryArchive):
@@ -578,9 +590,30 @@ def make_views(model, form, prefix):
     )
 
 
-_CostCenterAutoList, _CostCenterAutoDetail, CostCenterCreate, CostCenterUpdate = (
-    make_views(CostCenter, CostCenterForm, "CostCenter")
-)
+(
+    _CostCenterAutoList,
+    _CostCenterAutoDetail,
+    CostCenterCreate,
+    _CostCenterAutoUpdate,
+) = make_views(CostCenter, CostCenterForm, "CostCenter")
+
+
+class CostCenterUpdate(_CostCenterAutoUpdate):
+    """LV-378 fase 4: al sacar una faena de operación (contrato cerrado o sin
+    vuelo) se avisa de los permisos vivos que deja, con folio y enlace. No
+    bloquea el guardado y no cambia el estado de ningún permiso."""
+
+    def form_valid(self, form):
+        before = CostCenter.objects.get(pk=self.object.pk)
+        was_operating = is_operating(before)
+        response = super().form_valid(form)
+        if was_operating and not is_operating(self.object):
+            warning = closed_centre_permit_warning(self.object, self.request.user)
+            if warning:
+                messages.warning(self.request, warning)
+        return response
+
+
 # LV-36: the cost-center form is grouped into labelled sections (Identification
 # / Responsible / Notes) instead of one flat list. Both entry points are
 # covered: full page (Edit from the detail) and HTMX modal (Edit from the list).

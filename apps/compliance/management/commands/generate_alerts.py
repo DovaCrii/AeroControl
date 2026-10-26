@@ -13,7 +13,8 @@ from apps.compliance.watchables import (
     watchable_fields,
 )
 from apps.core.jobs import record_job_run
-from apps.registry.selectors import without_departed
+from apps.operations.models import FlightPermission
+from apps.registry.selectors import operating_cost_centers, without_departed
 
 logger = logging.getLogger("compliance.alerts")
 
@@ -173,6 +174,12 @@ class Command(BaseCommand):
             retired = terminal_statuses(model)
             if retired and any(f.name == "status" for f in model._meta.fields):
                 records = records.exclude(status__in=retired)
+            # LV-378 fase 4: un permiso de una faena sin operación (cerrada, que
+            # no vuela o archivada) no se renueva, así que no genera el aviso de
+            # renovación 45/30/15. La definición de «con operación» es la de
+            # `operating_cost_centers`, la misma de cobertura e informe.
+            if model is FlightPermission:
+                records = records.filter(cost_center__in=operating_cost_centers())
             # The field is known to be watchable at this point, so branch on its
             # actual type rather than guessing from the name.
             if isinstance(model._meta.get_field(field), models.DateField):

@@ -3793,6 +3793,15 @@ msgstr "Baterías"
 msgid "%(name)s archived. It can be restored from the archived filter."
 msgstr "%(name)s archivado. Se puede restaurar desde el filtro de archivados."
 
+#: .\apps\registry\selectors.py:90
+#, python-brace-format
+msgid ""
+"{code} no longer operates, but these flight permits are still live: "
+"{permits}. They are not renewed: let them expire or archive them."
+msgstr ""
+"{code} ya no opera, pero estos permisos de vuelo siguen vigentes: "
+"{permits}. No se renuevan: conviene dejarlos vencer o archivarlos."
+
 #: .\apps\registry\views.py:244
 #, python-format
 msgid "%(name)s restored."
