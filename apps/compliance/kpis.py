@@ -120,7 +120,8 @@ def fleet_availability(user=None):
 
     fleet = Aircraft.objects.filter(is_active=True).exclude(status="retired")
     if user is not None:
-        fleet = scope_queryset_to_tenant(fleet, user, "tenant_id")
+        # Subconsulta, sin consultas propias: la misma regla que `scope_queryset_to_tenant`.
+        fleet = scope_queryset_to_visible_tenants(fleet, user, "tenant_id")
     total = fleet.count()
     if not total:
         return {

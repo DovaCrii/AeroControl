@@ -8,14 +8,14 @@ email quotes. No wording or formatting decisions live here.
 from datetime import timedelta
 
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Count, Q
+from django.db.models import Count, Exists, Q, Subquery
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from apps.compliance.digest import HORIZON_DAYS
 from apps.compliance.kpis import operational_kpis, permit_counts
 from apps.compliance.models import Alert, Document
-from apps.core.tenancy import scope_queryset_to_visible_tenants, visible_tenant_ids
+from apps.core.tenancy import DEFAULT_TENANT_SLUG, scope_queryset_to_visible_tenants
 from apps.registry.models import Aircraft, CostCenter, Operator
 
 
@@ -607,7 +607,7 @@ def build_compliance_report(
         # mira dejan de coincidir. A diferencia de `operational_kpis`, éste **sí**
         # respeta el filtro por faena: un permiso pertenece a una, y la pregunta
         # "cuántos tengo vigentes" se hace por faena.
-        "permits": permit_counts(today, cost_center, user),
+        "permits": permit_counts(today, cost_center, user, lazy_scope=True),
     }
 
 
@@ -641,24 +641,29 @@ def latest_snapshot_before(day, cost_center=None, user=None):
             )
         return queryset.order_by("-date").first()
 
-    tenant_ids = None if user is None else visible_tenant_ids(user)
-    if tenant_ids is None:
-        tenant_ids = list(
-            OperationalTenant.objects.filter(is_active=True).values_list(
-                "pk", flat=True
-            )
-        )
-    queryset = queryset.filter(tenant_id__in=tenant_ids)
-    latest = queryset.order_by("-date").values_list("date", flat=True).first()
-    if latest is None:
-        return None
-    rows = list(queryset.filter(date=latest).order_by("tenant_id"))
-    if {row.tenant_id for row in rows} != set(tenant_ids):
+    if user is None or user.is_superuser:
+        expected = OperationalTenant.objects.filter(is_active=True)
+    else:
+        # La regla de `visible_tenant_ids` (miembro activo de alguna; si de ninguna, la empresa por
+        # defecto) como subconsulta: llamarla aquí costaría 2 consultas que el Reporte de vigencia
+        # no tiene en su presupuesto (#181), porque el resto de su alcance es perezoso.
+        member_of = OperationalTenant.objects.filter(members=user, is_active=True)
+        expected = OperationalTenant.objects.filter(
+            Q(pk__in=member_of.values("pk"))
+            | (~Exists(member_of) & Q(slug=DEFAULT_TENANT_SLUG))
+        )  # Una sola consulta (techo de consultas del Reporte de vigencia, #181): la última fecha con
+    # consolidadas de esas empresas y «no falta la fila de ninguna» van como subconsultas.
+    queryset = queryset.filter(tenant_id__in=expected.values("pk"))
+    latest_day = queryset.order_by("-date").values("date")[:1]
+    day_rows = queryset.filter(date=Subquery(latest_day))
+    missing = expected.exclude(pk__in=day_rows.values("tenant_id"))
+    rows = list(day_rows.filter(~Exists(missing)).order_by("tenant_id"))
+    if not rows:
         return None
     if len(rows) == 1:
         return rows[0]
     return ComplianceSnapshot(
-        date=latest,
+        date=rows[0].date,
         cost_center=None,
         **{key: sum(getattr(row, key) for row in rows) for key in SNAPSHOT_COUNTERS},
     )

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Issue with early cutoff" %} - AeroControl{% endblock %}
+
+{% comment %}LV-375: emitir el informe del mes en curso con corte anticipado.
+
+El motivo es obligatorio y queda en la auditoría. La pregunta de confirmación la
+engancha `app.js` leyendo `data-confirm` (sin manejadores en línea: la política de
+seguridad de contenido no los ejecuta), y su texto llega **ya traducido desde la
+vista** porque lleva fecha y días (`{% translate %}` no traduce un literal con
+`%(algo)s`, LV-198). Si el navegador no corre JS el POST pasa igual: el guard de
+verdad vive en `ReportRun.freeze`.{% endcomment %}
+
+{% block content %}
+{% translate "Reports" as page_eyebrow %}
+{% translate "Issue with early cutoff" as page_title %}
+{% translate "Freezes the month in progress with today as the cutoff. It is a draft: it is not approved until a person approves it." as page_description %}
+<div class="page-header">
+  {% include "generic/_page_header.html" %}
+  <a class="btn btn-outline-secondary" href="{% url 'monthly-report' %}?period={{ period_date|date:'Y-m' }}">{% translate "Back to the report" %}</a>
+</div>
+
+<form method="post" class="card p-3" data-confirm="{{ confirm_text }}">
+  {% csrf_token %}
+  <input type="hidden" name="period" value="{{ period_date|date:'Y-m' }}">
+  <p class="mb-3">{% blocktranslate with cutoff=cutoff|date:"d-m-Y" %}Cutoff: {{ cutoff }} (today).{% endblocktranslate %}</p>
+  <div class="mb-3">
+    <label class="form-label" for="{{ form.reason.id_for_label }}">{{ form.reason.label }}</label>
+    {{ form.reason }}
+    <div class="form-text">{{ form.reason.help_text }}</div>
+    {{ form.reason.errors }}
+  </div>
+  <div>
+    <button class="btn btn-primary">{% translate "Freeze early-cutoff draft" %}</button>
+  </div>
+</form>
+{% endblock %}

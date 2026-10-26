@@ -1,6 +1,6 @@
-{% load i18n static aero_tags %}{% comment %}LV-359 (fase 4) y LV-367 (fase 4): «Permisos por faena», SIMPLE. El cálculo es uno: `kpis.permit_status_by_cost_center` y `permit_band` (30/60 días), nada se recalcula aquí. Tres columnas: Faena, Estado (UN chip con símbolo y palabra) y Próximo vencimiento (días y fecha, con el medidor 0 a 90 sólo como ayuda visual); todo lo demás (permisos vivos, cuántos vencen pronto, esperando o con vigencia pasada) va en el `<details>` de la celda de la faena. Por omisión sólo salen las faenas CON PROBLEMA (`has_problem`: sin permiso vigente, por empezar, esperando, o con el primero a 60 días o menos); «Ver todas (N)» pide `?all=1`. Columnas ordenables con `?sort=&dir=` y lista permitida en Python (`worktable_th` pone `aria-sort`; el enlace lleva su propia ruta porque el fragmento se pinta dentro del panel). No hay `colspan` ni `.table-normalized`. La sección entera es un `<details>` abierto sólo si hay un problema (`cx_open.permits`). Sólo con `view_flightpermission` (`cx_blocks.permits`).{% endcomment %}
+{% load i18n static aero_tags %}{% comment %}LV-359 (fase 4) y LV-367 (fase 4): «Permisos por faena», SIMPLE. El cálculo es uno: `kpis.permit_status_by_cost_center` y `permit_band` (30/60 días), nada se recalcula aquí. Tres columnas: Faena, Estado (UN chip con símbolo y palabra) y Próximo vencimiento (días y fecha, con el medidor 0 a 90 sólo como ayuda visual); todo lo demás (permisos vivos, cuántos vencen pronto, esperando o con vigencia pasada) va en el `<details>` de la celda de la faena. LV-374: salen TODAS las faenas, también las vigentes, en el orden de atención (sin permiso, por empezar, esperando, 30/60 días, vigentes); el contador del encabezado es el número de filas, y `?all=1` se acepta sin efecto. Columnas ordenables con `?sort=&dir=` y lista permitida en Python (`worktable_th` pone `aria-sort`; el enlace lleva su propia ruta porque el fragmento se pinta dentro del panel). No hay `colspan` ni `.table-normalized`. La sección entera es un `<details>` abierto sólo si hay un problema (`cx_open.permits`). Sólo con `view_flightpermission` (`cx_blocks.permits`).{% endcomment %}
 <details class="id-cx-fold" data-cx-block="permits" id="cx-permits"{% if cx_open.permits %} open{% endif %}>
-  <summary><span>{% translate "Flight permits by cost center" %}</span> <b class="id-cx-count">{{ cx_permits.problems }}</b></summary>
+  <summary><span>{% translate "Flight permits by cost center" %}</span> <b class="id-cx-count">{{ cx_permits.total }}</b></summary>
   <div class="id-cx-permits-head">
     <a class="id-cx-link" href="{% url 'permission-list' %}{% if cx_cost_center %}?cost_center={{ cx_cost_center.pk }}{% endif %}">{% translate "Open the permits" %}</a>
   </div>
@@ -42,15 +42,7 @@
       </tbody>
     </table>
   </div>
-  {% if cx_permits.hidden %}
-  <p class="id-cx-note"><a href="{{ worktable_sort.url_prefix }}?{{ worktable_sort.base_query }}all=1{% if worktable_sort.column %}&amp;sort={{ worktable_sort.column }}&amp;dir={{ worktable_sort.direction }}{% endif %}#cx-permits">{% blocktranslate with count=cx_permits.hidden %}See all ({{ count }} more){% endblocktranslate %}</a></p>
-  {% elif cx_permits.show_all and cx_permits.problems != cx_permits.total %}
-  <p class="id-cx-note"><a href="{{ worktable_sort.url_prefix }}?{{ worktable_sort.base_query|cut:'all=1&' }}#cx-permits">{% translate "Show only sites with a problem" %}</a></p>
-  {% endif %}
   <p class="id-cx-legend">{% translate "✕ no permit in force, or 30 days or less · ▲ awaiting, not started yet, or 60 days or less · ● more than 60 days. The meter shows the days left of the first permit to expire (0 to 90); the number and the word carry the meaning." %}</p>
-  {% elif cx_permits.total %}
-  {% translate "No site has a problem with its permits." as no_problem %}{% include "generic/_signal.html" with kind="ok" text=no_problem %}
-  {% if cx_permits.hidden %}<p class="id-cx-note"><a href="{{ worktable_sort.url_prefix }}?{{ worktable_sort.base_query }}all=1#cx-permits">{% blocktranslate with count=cx_permits.hidden %}See all ({{ count }} more){% endblocktranslate %}</a></p>{% endif %}
   {% else %}
   {% translate "No sites with flight operations." as no_sites %}{% include "generic/_signal.html" with kind="ok" text=no_sites %}
   {% endif %}
