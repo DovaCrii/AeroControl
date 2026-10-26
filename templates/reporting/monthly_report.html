@@ -129,17 +129,26 @@ la DGAC diciendo «detalle permiso a permiso». La numeración la asigna
 documento termina con dos hojas numeradas igual.{% endcomment %}
 <div class="rpt-doc">
   {% include "reporting/_page1_cover.html" with page=1 pages=total_pages %}
-  {% include "reporting/_page2_summary.html" with page=2 pages=total_pages %}
   {% if payload.meta.layout == 2 %}
-  {% comment %}LV-378: la sección 2 del diseño 2, agrupada por faena.{% endcomment %}
+  {% comment %}LV-378: las hojas del diseño 2 (resumen, permisos agrupados por faena,
+  cobertura y anexo «registro permiso a permiso»). La portada y la hoja del plan no
+  cambian.{% endcomment %}
+  {% include "reporting/v2/_page2_summary.html" with page=2 pages=total_pages %}
   {% for sheet in permit_sheets %}
   {% include "reporting/v2/_page3_permits.html" with sheet=sheet page=sheet.page pages=total_pages %}
   {% endfor %}
+  {% include "reporting/v2/_page4_coverage.html" with page=coverage_page pages=total_pages %}
+  {% if not plan_joins_coverage %}
+  {% include "reporting/_page5_plan.html" with page=plan_page pages=total_pages %}
+  {% endif %}
+  {% for sheet in roster_sheets %}
+  {% include "reporting/v2/_page6_roster.html" with sheet=sheet page=sheet.page pages=total_pages %}
+  {% endfor %}
   {% else %}
+  {% include "reporting/_page2_summary.html" with page=2 pages=total_pages %}
   {% for sheet in permit_sheets %}
   {% include "reporting/_page3_permits.html" with sheet=sheet page=sheet.page pages=total_pages %}
   {% endfor %}
-  {% endif %}
   {% include "reporting/_page4_coverage.html" with page=coverage_page pages=total_pages %}
   {% comment %}LV-260: el plan compacto va debajo de la cobertura cuando cabe, y
   sólo si no cabe se emite su hoja. Lo decide `_sheets`.{% endcomment %}
@@ -151,5 +160,6 @@ documento termina con dos hojas numeradas igual.{% endcomment %}
   {% for sheet in roster_sheets %}
   {% include "reporting/_page6_roster.html" with sheet=sheet page=sheet.page pages=total_pages %}
   {% endfor %}
+  {% endif %}
 </div>
 {% endblock %}

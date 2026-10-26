@@ -91,8 +91,8 @@
 .rpt2-grp {
   border: 1px solid var(--rpt2-rule);
   border-left-width: 4px;
-  padding: 6px 10px 7px;
-  margin-bottom: 6px;
+  padding: 5px 10px 6px;
+  margin-bottom: 5px;
   color: var(--rpt2-ink);
   font-size: 11.5px;
   line-height: 1.35;
@@ -110,7 +110,7 @@
 .rpt2-main { flex: 1 1 auto; min-width: 0; }
 .rpt2-sub { color: var(--rpt2-muted); margin-top: 2px; }
 .rpt2-folios { color: var(--rpt2-muted); margin-top: 2px; word-spacing: 1px; }
-.rpt2-line { margin-top: 5px; padding-top: 4px; border-top: 1px dotted var(--rpt2-rule); }
+.rpt2-line { margin-top: 3px; padding-top: 3px; border-top: 1px dotted var(--rpt2-rule); }
 .rpt2-line-main { display: flex; gap: 14px; align-items: baseline; }
 
 .rpt2-chip {
@@ -167,3 +167,177 @@
   font-size: 11.5px;
   line-height: 1.5;
 }
+
+
+/* == PR 3 · resumen, cobertura y anexo ======================================== */
+
+.rpt2-stack > * { margin-bottom: 10px; }
+.rpt2-stack > :last-child { margin-bottom: 0; }
+
+/* El pie de las hojas rediseñadas también va a 11,3 px (8,5 pt). Las notas del pie del
+ * diseño 2 son más cortas (ver `_foot.html`) para que no pasen de dos renglones; la
+ * portada y la hoja del plan no llevan `rpt2-page` y no cambian. «Página N de M» va en
+ * una línea: `.rpt-foot-id` es `nowrap`. */
+.rpt2-page .rpt-foot { font-size: 11.3px; line-height: 1.35; }
+
+.rpt2-sym-info { color: var(--rpt2-navy); }
+
+/* -- hoja 2 · resumen ----------------------------------------------------------- */
+
+.rpt2-verdict {
+  list-style: none;
+  margin: 0;
+  padding: 10px 14px;
+  background: var(--rpt2-wash);
+  border: 1px solid var(--rpt2-rule);
+  border-left: 4px solid var(--rpt2-navy);
+  display: grid;
+  gap: 5px;
+}
+.rpt2-verdict li { color: var(--rpt2-ink); font-size: 11.5px; line-height: 1.4; }
+.rpt2-verdict li b { font-weight: bold; margin-right: 2px; }
+
+.rpt2-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.rpt2-kpi { border: 1px solid var(--rpt2-rule); border-top: 3px solid var(--rpt2-navy); padding: 9px 11px; }
+.rpt2-kpi-value { color: var(--rpt2-navy); font-size: 28px; font-weight: bold; line-height: 1.05; }
+.rpt2-kpi-of { color: var(--rpt2-muted); font-size: 18px; }
+.rpt2-kpi-name { color: var(--rpt2-ink); font-size: 11.5px; font-weight: bold; margin-top: 5px; line-height: 1.3; }
+.rpt2-kpi-note { color: var(--rpt2-muted); font-size: 11.5px; line-height: 1.3; margin-top: 2px; }
+.rpt2-tone-critical { border-top-color: var(--rpt2-crit-ink); }
+.rpt2-tone-critical .rpt2-kpi-value { color: var(--rpt2-crit-ink); }
+.rpt2-tone-warning { border-top-color: var(--rpt2-warn-ink); }
+.rpt2-tone-warning .rpt2-kpi-value { color: var(--rpt2-warn-ink); }
+.rpt2-tone-good { border-top-color: var(--rpt2-ok-ink); }
+.rpt2-tone-good .rpt2-kpi-value { color: var(--rpt2-ok-ink); }
+
+/* Lo próximo que vence: una fila por faena, con barra que satura a 60 días (el
+ * horizonte del indicador «vencen en 60 días»: llena dice «fuera del horizonte»). */
+.rpt2-next {
+  display: grid;
+  grid-template-columns: 188px 168px 1fr 76px;
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 5px;
+  font-size: 11.5px;
+  color: var(--rpt2-ink);
+}
+.rpt2-next-cc strong { color: var(--rpt2-navy); }
+.rpt2-next-n { color: var(--rpt2-muted); }
+.rpt2-next-date { white-space: nowrap; }
+.rpt2-next-bar { height: 8px; background: var(--rpt2-hair); border-radius: 4px; overflow: hidden; }
+.rpt2-bar { display: block; height: 100%; border-radius: 4px; }
+.rpt2-bar-critical { background: var(--rpt2-crit-ink); }
+.rpt2-bar-warning { background: var(--rpt2-warn-ink); }
+.rpt2-bar-nominal { background: var(--rpt2-ok-ink); }
+.rpt2-next-days { text-align: right; font-weight: bold; white-space: nowrap; }
+.rpt2-note-line { color: var(--rpt2-muted); font-size: 11.5px; line-height: 1.4; margin-top: 5px; }
+
+.rpt2-changes {
+  list-style: none;
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--rpt2-rule);
+  border-left: 3px solid #00a7bc;
+  display: grid;
+  gap: 3px;
+  color: var(--rpt2-ink);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+.rpt2-changes li b { font-weight: bold; margin-right: 2px; }
+.rpt2-changes-head { color: var(--rpt2-muted); }
+
+.rpt2-findings > * { margin-bottom: 7px; }
+.rpt2-findings > :last-child { margin-bottom: 0; }
+.rpt2-finding {
+  border-left: 3px solid var(--rpt2-warn-ink);
+  background: var(--rpt2-wash);
+  padding: 7px 11px;
+  color: var(--rpt2-ink);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+.rpt2-finding-critical { border-left-color: var(--rpt2-crit-ink); }
+
+.rpt2-staff { display: grid; gap: 7px; }
+.rpt2-staff-row {
+  display: grid;
+  grid-template-columns: 230px 1fr 76px 150px;
+  align-items: center;
+  column-gap: 12px;
+  font-size: 11.5px;
+  color: var(--rpt2-ink);
+}
+.rpt2-staff-meter { height: 8px; background: var(--rpt2-hair); border-radius: 4px; overflow: hidden; }
+.rpt2-staff-meter > span { display: block; height: 100%; background: var(--rpt2-navy); }
+.rpt2-staff-value { text-align: right; white-space: nowrap; }
+.rpt2-staff-gap { color: var(--rpt2-muted); }
+
+/* -- hoja 4 · cobertura ------------------------------------------------------------ */
+
+.rpt2-universe { margin: 0; color: var(--rpt2-muted); font-size: 11.5px; line-height: 1.4; }
+.rpt2-covbar { display: block; max-width: 100%; height: auto; }
+.rpt2-seg-nominal { fill: var(--rpt2-ok-ink); }
+.rpt2-seg-warning { fill: var(--rpt2-warn-ink); }
+.rpt2-seg-critical { fill: var(--rpt2-crit-ink); }
+.rpt2-seg-n { fill: #ffffff; font-size: 12px; font-weight: bold; font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; }
+.rpt2-covbar-label { fill: var(--rpt2-ink); font-size: 11.5px; font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; }
+
+.rpt2-table { border: 1px solid var(--rpt2-rule); }
+.rpt2-cov { display: grid; grid-template-columns: 58px 1fr 72px 56px 102px 48px 150px; }
+.rpt2-cov-head { background: var(--rpt2-navy); color: #ffffff; }
+.rpt2-cov-head > div { padding: 6px 8px; font-size: 11.5px; font-weight: bold; line-height: 1.25; }
+.rpt2-cov-body > div {
+  padding: 5px 8px;
+  font-size: 11.5px;
+  line-height: 1.3;
+  color: var(--rpt2-ink);
+  border-bottom: 1px solid var(--rpt2-hair);
+  min-width: 0;
+}
+.rpt2-cov-body > .rpt2-cc-code { font-weight: bold; color: var(--rpt2-navy); }
+.rpt2-cov-body > .rpt2-cc-name { color: var(--rpt2-muted); }
+.rpt2-c { text-align: center; }
+.rpt2-strong { font-weight: bold; }
+.rpt2-navy { color: var(--rpt2-navy); }
+.rpt2-cov-body > .rpt2-empty { grid-column: 1 / -1; text-align: center; color: var(--rpt2-muted); padding: 16px; }
+.rpt2-cov-total { background: var(--rpt2-wash); border-top: 2px solid var(--rpt2-navy); }
+.rpt2-cov-total > div { padding: 6px 8px; font-size: 11.5px; color: var(--rpt2-muted); }
+.rpt2-cov-total > .rpt2-navy { color: var(--rpt2-navy); }
+
+.rpt2-outside {
+  border: 1px solid var(--rpt2-rule);
+  border-left: 3px solid var(--rpt2-navy);
+  background: var(--rpt2-wash);
+  padding: 6px 12px;
+  color: var(--rpt2-ink);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+.rpt2-outside-row b { font-weight: bold; margin-right: 2px; }
+.rpt2-conc {
+  display: flex;
+  gap: 4px 18px;
+  flex-wrap: wrap;
+  color: var(--rpt2-muted);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+.rpt2-conc-n { color: var(--rpt2-warn-ink); }
+
+/* -- anexo · registro permiso a permiso -------------------------------------------- */
+
+.rpt2-reg { display: grid; grid-template-columns: 100px 82px 70px 128px 1fr; }
+.rpt2-reg-head { background: var(--rpt2-navy); color: #ffffff; }
+.rpt2-reg-head > div { padding: 6px 8px; font-size: 11.5px; font-weight: bold; line-height: 1.25; }
+.rpt2-reg-body > div {
+  padding: 5px 8px;
+  font-size: 11.5px;
+  line-height: 1.3;
+  color: var(--rpt2-ink);
+  border-bottom: 1px solid var(--rpt2-hair);
+  min-width: 0;
+}
+.rpt2-reg-body > .rpt2-reg-folio { font-weight: bold; color: var(--rpt2-navy); white-space: nowrap; }
+.rpt2-reg-people { color: var(--rpt2-ink); }
+.rpt2-reg-flag { margin-left: 3px; color: var(--rpt2-navy); font-weight: bold; }

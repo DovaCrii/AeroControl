@@ -336,10 +336,15 @@ class TestAPermitLiveAtTheCutoffDoesNotVanish:
         assert invariants.violations(payload) == []
 
 
+@pytest.mark.parametrize("layout", [1, 2], ids=["v1", "v2"])
 class TestALapsedPermitIsNotAwaitingTheDgac:
+    """Los dos diseños: el informe de siempre (payload sin `layout`) y el nuevo."""
+
     @pytest.fixture
-    def paper(self, case, client):
+    def paper(self, case, client, layout):
         payload = build(PERIOD, cutoff=CUTOFF)[0]
+        if layout == 1:
+            payload["meta"].pop("layout")  # como un informe emitido antes de LV-378
         ReportRun.objects.create(
             period=PERIOD, revision=0, generated_by="test", payload=payload
         )
@@ -352,26 +357,29 @@ class TestALapsedPermitIsNotAwaitingTheDgac:
         client.force_login(user)
         return client.get(reverse("monthly-report"), {"period": "2026-10"})
 
-    def test_the_sheets_split_requested_from_lapsed(self, paper):
+    def test_the_sheets_split_requested_from_lapsed(self, paper, layout):
         last = paper.context["permit_sheets"][-1]
 
         assert [row["cost_centre"] for row in last["awaiting"]] == ["CC903"]
         assert [row["cost_centre"] for row in last["lapsed"]] == ["CC902"]
         assert all(row["status"] == "requested" for row in last["awaiting"])
 
-    def test_the_paper_prints_it_under_its_own_heading(self, paper):
+    def test_the_paper_prints_it_under_its_own_heading(self, paper, layout):
         html = paper.content.decode()
 
         assert "Vencidos sin cerrar" in html
-        # Una sola fila «En proceso»: la solicitud de CC903, no el vencido de CC902.
-        assert html.count(">En proceso<") == 1
+        # «En proceso» es sólo de la solicitud de CC903 —en la sección 2 y, en el
+        # diseño 2, también en su fila del anexo—, nunca del vencido de CC902.
+        assert html.count(">En proceso<") == (1 if layout == 1 else 2)
 
-    def test_the_roster_still_lists_every_permit(self, paper):
+    def test_the_roster_still_lists_every_permit(self, paper, layout):
         listed = sum(len(sheet["rows"]) for sheet in paper.context["roster_sheets"])
 
         assert listed == 12  # 10 vigentes + 1 en trámite + 1 vencido sin cerrar
 
-    def test_a_report_without_lapsed_permits_prints_no_such_block(self, db, client):
+    def test_a_report_without_lapsed_permits_prints_no_such_block(
+        self, db, client, layout
+    ):
         """Los informes ya emitidos no cambian: sin vencidos no hay bloque."""
         frozen = json.loads((SNAPSHOTS / "payload_2026_08.json").read_text("utf-8"))
         ReportRun.objects.create(

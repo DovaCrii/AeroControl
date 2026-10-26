@@ -188,3 +188,117 @@ def render_expiry_strip(groups, uid):
 @register.simple_tag
 def expiry_strip(groups, uid):
     return mark_safe(render_expiry_strip(groups, uid))  # nosec B308 B703
+
+
+# -- cobertura por faena (PR 3) ------------------------------------------------
+
+
+@register.filter
+def coverage_state(row):
+    """El estado de una faena en la cobertura: `nominal`, `warning`, `renew` (permiso
+    a ≤30 días) o `none` (sin permiso vigente). El peor permiso manda, nunca el promedio."""
+    if not row.get("permits_in_force"):
+        return "none"
+    band = row.get("band")
+    return "renew" if band == "critical" else (band or "nominal")
+
+
+COVERAGE_WORDS = {
+    "nominal": "Vigente",
+    "warning": "Por vencer",
+    "renew": "Renovar ahora",
+    "none": "Sin habilitación",
+}
+COVERAGE_BANDS = {
+    "nominal": "nominal",
+    "warning": "warning",
+    "renew": "critical",
+    "none": "critical",
+}
+
+
+@register.filter
+def coverage_word(state):
+    return COVERAGE_WORDS.get(state, "")
+
+
+@register.filter
+def coverage_band(state):
+    return COVERAGE_BANDS.get(state, "")
+
+
+def render_coverage_bar(rows, uid):
+    """Barra apilada de la cobertura: `● N vigente | ▲ N por vencer | ✕ N críticos`.
+
+    Un segmento por banda, proporcional a las faenas, con la cifra impresa dentro
+    (`<text>`) y la leyenda debajo con forma + palabra + cifra. Los críticos se
+    parten en su leyenda: sin permiso (la faena no puede volar) y con permiso a ≤30
+    días (hay que renovar ya). Sin faenas no se dibuja barra: se dice.
+    """
+    rows = list(rows)
+    states = [coverage_state(row) for row in rows]
+    count = {key: states.count(key) for key in COVERAGE_WORDS}
+    critical = count["renew"] + count["none"]
+    total = len(rows)
+    height = 44
+    desc = (
+        f"Cobertura de {total} Centros de Costo con operación: {count['nominal']} "
+        f"vigentes, {count['warning']} por vencer, {critical} críticos "
+        f"({count['none']} sin habilitación y {count['renew']} con permiso a 30 "
+        "días o menos)."
+    )
+    uid = escape(uid)
+    out = [
+        f'<svg class="rpt2-covbar" width="{WIDTH}" height="{height}" '
+        f'viewBox="0 0 {WIDTH} {height}" role="img" '
+        f'aria-labelledby="{uid}-t {uid}-d" focusable="false">',
+        f'<title id="{uid}-t">Cobertura por Centro de Costo</title>',
+        f'<desc id="{uid}-d">{escape(desc)}</desc>',
+    ]
+    segments = (
+        ("nominal", count["nominal"], "rpt2-seg rpt2-seg-nominal"),
+        ("warning", count["warning"], "rpt2-seg rpt2-seg-warning"),
+        ("critical", critical, "rpt2-seg rpt2-seg-critical"),
+    )
+    x = 0.0
+    for _key, n, css in segments:
+        if not n or not total:
+            continue
+        width = WIDTH * n / total
+        out.append(
+            f'<rect class="{css}" x="{_n(x)}" y="0" width="{_n(max(width - 2, 1))}" '
+            f'height="22"/>'
+        )
+        if width >= 26:
+            out.append(
+                f'<text class="rpt2-seg-n" x="{_n(x + (width - 2) / 2)}" y="16" '
+                f'text-anchor="middle">{n}</text>'
+            )
+        x += width
+    legend = (
+        (
+            "nominal",
+            f"{count['nominal']} vigente{'s' if count['nominal'] != 1 else ''}",
+        ),
+        ("warning", f"{count['warning']} por vencer (31–60 d)"),
+        (
+            "critical",
+            f"{critical} crítico{'s' if critical != 1 else ''}: "
+            f"{count['none']} sin habilitación, {count['renew']} con permiso a ≤30 d",
+        ),
+    )
+    cursor = 0.0
+    for band, text in legend:
+        out.append(_mark(band, cursor + 5, 35))
+        out.append(
+            f'<text class="rpt2-covbar-label" x="{_n(cursor + 15)}" y="39">'
+            f"{escape(text)}</text>"
+        )
+        cursor += 15 + len(text) * CHAR_PX + 22
+    out.append("</svg>")
+    return "".join(out)
+
+
+@register.simple_tag
+def coverage_bar(rows, uid):
+    return mark_safe(render_coverage_bar(rows, uid))  # nosec B308 B703

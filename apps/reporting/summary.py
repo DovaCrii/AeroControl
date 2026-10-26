@@ -109,3 +109,137 @@ def _bar_pct(days):
     if days is None:
         return 100
     return max(4, min(100, round(100 * max(days, 0) / HORIZON_DAYS)))
+
+
+# == LV-378 · La hoja ejecutiva del diseño 2 ===================================
+#
+# Lo que cambia contra `executive_summary` (que sigue dibujando los informes ya
+# emitidos): **lo que mide renovación cuenta sólo las faenas con operación** y el
+# resto se dice aparte. Un permiso vigente de una faena terminada es un hecho legal
+# —SIGO lo tiene, y la hoja dice «15 vigentes»—, pero no se renueva, así que no pinta de
+# rojo «vencen en 60 días» ni es «el primero en vencer».
+#
+# Todo sale del payload, como el resto de este módulo.
+
+#: Cuántas faenas lista «Lo próximo que vence». Una fila por **faena**, no por
+#: permiso: siete permisos de la misma fecha son una fila, y con una por permiso el
+#: resumen repetía cuatro veces la misma fecha.
+NEXT_CENTRES = 6
+
+
+def _rows_in_force(payload):
+    return [row for row in (payload.get("permits") or []) if row.get("in_force")]
+
+
+def executive_summary_v2(payload):
+    """La hoja ejecutiva del diseño 2, calculada una sola vez desde el payload."""
+    from .groups import permit_groups
+
+    groups = permit_groups(payload)
+    centres = payload.get("cost_centres") or []
+    without = [row["code"] for row in centres if not row.get("permits_in_force")]
+    total = _value(payload, "cost_centres_with_operation")
+    if total is None:
+        total = len(centres)
+
+    in_operation = [row for row in _rows_in_force(payload) if row.get("in_operation")]
+    first = min(
+        in_operation,
+        key=lambda row: (row["days_remaining"], row["folio"]),
+        default=None,
+    )
+    within_30 = _value(payload, "permits_expiring_30d_operating") or 0
+    within_60 = _value(payload, "permits_expiring_60d_operating") or 0
+    awaiting = _value(payload, "permits_awaiting") or 0
+
+    next_rows = []
+    for group in groups["operating"][:NEXT_CENTRES]:
+        first_line = min(group["lines"], key=lambda line: line["days"])
+        others = [line for line in group["lines"] if line is not first_line]
+        next_rows.append(
+            {
+                "code": group["code"],
+                "count": group["count"],
+                "valid_until": group["next_expiry"],
+                "days": group["days"],
+                "band": group["band"],
+                "bar_pct": _bar_pct(group["days"]),
+                # «(+1 hasta 13-01)»: los permisos de la faena que vencen después.
+                "later_count": sum(line["count"] for line in others),
+                "later_until": max(
+                    (line["valid_until"] for line in others), default=None
+                ),
+            }
+        )
+
+    outside = [
+        {
+            "code": group["code"],
+            "reason": group.get("reason"),
+            "count": group["count"],
+            "folios": group["folios"],
+            "valid_until": group["next_expiry"],
+        }
+        for group in groups["outside"]
+    ]
+    return {
+        "cost_centres_total": total,
+        "without_permit": without,
+        "enabled": total - len(without),
+        "in_force_total": _value(payload, "permits_in_force") or 0,
+        "in_force_operating": _value(payload, "permits_in_force_operating") or 0,
+        "in_force_outside": _value(payload, "permits_in_force_outside") or 0,
+        "first_to_expire": first,
+        "within_30": within_30,
+        "within_60": within_60,
+        "awaiting": awaiting,
+        "lapsed": _value(payload, "permits_lapsed") or 0,
+        "incidents": _value(payload, "incidents") or 0,
+        "incidents_open": _value(payload, "incidents_open") or 0,
+        "next_centres": next_rows,
+        "more_centres": max(len(groups["operating"]) - NEXT_CENTRES, 0),
+        "outside": outside,
+        "kpis": {
+            "enabled": "critical" if without else "good",
+            "in_force": (
+                "critical"
+                if not (_value(payload, "permits_in_force") or 0)
+                else "neutral"
+            ),
+            "expiring": _tone_for_expiring(within_30, within_60),
+            "awaiting": "info" if awaiting else "neutral",
+        },
+        "changes": changes_view(payload),
+    }
+
+
+def changes_view(payload):
+    """«Cambios desde el informe anterior», desde `payload.changes` (congelado).
+
+    `None` cuando el informe no trae comparación (no había informe del mes anterior):
+    «sin cambios» y «no hay contra qué comparar» son afirmaciones distintas.
+    """
+    raw = payload.get("changes")
+    if not raw:
+        return None
+    entered = raw["in_force"]["added"]
+    left = raw["in_force"]["removed"]
+    waiting_in = raw["awaiting"]["added"]
+    waiting_out = raw["awaiting"]["removed"]
+    without_in = raw["without_permit"]["added"]
+    without_out = raw["without_permit"]["removed"]
+    kpis = raw.get("kpis") or {}
+    return {
+        "against": raw["against"],
+        "entered": entered,
+        "left": left,
+        "awaiting_in": waiting_in,
+        "awaiting_out": waiting_out,
+        "without_in": without_in,
+        "without_out": without_out,
+        "in_force": kpis.get("permits_in_force"),
+        "awaiting": kpis.get("permits_awaiting"),
+        "unchanged": not any(
+            (entered, left, waiting_in, waiting_out, without_in, without_out)
+        ),
+    }

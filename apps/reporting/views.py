@@ -42,7 +42,7 @@ from apps.reporting.forms import (
     PeriodNoteForm,
 )
 from apps.reporting.models import ReportRun
-from apps.reporting.summary import executive_summary
+from apps.reporting.summary import executive_summary, executive_summary_v2
 
 # Cuatro dígitos de año y dos de mes, exactos. Partir por el guion y confiar en
 # `int()` acepta `26-8` y devuelve **el año 26**: un informe fechado dieciocho
@@ -130,6 +130,9 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
         context.update(self._sheets(payload, run.period_note if run else ""))
         # LV-260: la hoja ejecutiva, calculada del payload y no de la base.
         context["summary"] = executive_summary(payload)
+        # LV-378: la del diseño 2 (sólo se dibuja con `meta.layout == 2`).
+        if (payload.get("meta") or {}).get("layout") == 2:
+            context["summary_v2"] = executive_summary_v2(payload)
         # LV-265: lo que conviene mirar antes de emitir, sólo en pantalla.
         previous_month = (period.replace(day=1) - timedelta(days=1)).replace(day=1)
         previous = (
@@ -225,6 +228,10 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
 
         plan = payload.get("plan") or {}
         matrix_rows = len((plan.get("matrix") or {}).get("rows") or []) or 4
+        if layout >= 2:
+            return MonthlyReportView._tail_v2(
+                payload, permit_sheets, after, matrix_rows
+            )
         plan_joins = plan_fits_with_coverage(
             len(payload.get("cost_centres") or []), matrix_rows
         )
@@ -261,6 +268,65 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
             "coverage_section": "coverage_plan" if plan_joins else "coverage",
             "roster_sheets": roster_sheets,
             "total_pages": last_fixed + len(roster_sheets),
+        }
+
+    @staticmethod
+    def _tail_v2(payload, permit_sheets, after, matrix_rows):
+        """LV-378: la cobertura, el plan y el anexo del diseño 2.
+
+        Misma lógica que la de siempre —el plan compacto comparte hoja con la cobertura
+        si caben, medidos— con las alturas **del diseño 2** (letra de 8,5 pt, barra
+        apilada y bloque de faenas sin operación) y el anexo «registro permiso a
+        permiso», que lista todos los permisos con su N° DGAC y sus operadores.
+        """
+        from .groups import register_rows
+        from .pagination import (
+            V2_ROSTER_CONTINUATION_TOP_PX,
+            V2_ROSTER_FIRST_TOP_PX,
+            V2_ROSTER_NOTE_PX,
+            V2_SAFETY_PX,
+            plan_fits_with_coverage_v2,
+            roster_row_px_v2,
+            sheets_for,
+        )
+
+        outside = [
+            row
+            for row in payload.get("outside_centres") or []
+            if row.get("permits_in_force")
+        ]
+        plan_joins = plan_fits_with_coverage_v2(
+            len(payload.get("cost_centres") or []), matrix_rows, len(outside)
+        )
+        coverage_page = after
+        plan_page = None if plan_joins else after + 1
+        last_fixed = coverage_page if plan_joins else plan_page
+
+        # El anexo lista **todos** los permisos (vigentes, en trámite y vencidos sin
+        # cerrar), con o sin operadores: es el registro, y su total declarado es el de
+        # la invariante I8.
+        rows = register_rows(payload)
+        roster_sheets = sheets_for(
+            rows,
+            closing_px=V2_ROSTER_NOTE_PX,  # la nota de debajo de la tabla
+            estimate=roster_row_px_v2,
+            first_top=V2_ROSTER_FIRST_TOP_PX,
+            continuation_top=V2_ROSTER_CONTINUATION_TOP_PX,
+            safety=V2_SAFETY_PX,
+        )
+        for offset, sheet in enumerate(roster_sheets):
+            sheet["page"] = last_fixed + 1 + offset
+            sheet["index"] = offset + 1
+            sheet["of"] = len(roster_sheets)
+            sheet["total"] = len(rows)
+        return {
+            "permit_sheets": permit_sheets,
+            "coverage_page": coverage_page,
+            "plan_page": plan_page,
+            "plan_joins_coverage": plan_joins,
+            "coverage_section": "coverage_plan_v2" if plan_joins else "coverage_v2",
+            "roster_sheets": roster_sheets if rows else [],
+            "total_pages": last_fixed + (len(roster_sheets) if rows else 0),
         }
 
     @staticmethod
