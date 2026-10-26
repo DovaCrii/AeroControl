@@ -12696,3 +12696,73 @@ msgid "%(n)s permit with a validity that has passed and is still open: review"
 msgid_plural "%(n)s permits with a validity that has passed and is still open: review"
 msgstr[0] "%(n)s permiso con vigencia pasada sin cerrar: revisar"
 msgstr[1] "%(n)s permisos con vigencia pasada sin cerrar: revisar"
+
+#, python-format
+msgid "Situation as of today, %(date)s · site %(site)s"
+msgstr "Situación a hoy, %(date)s · faena %(site)s"
+
+#, python-format
+msgid "Situation as of today, %(date)s · all sites"
+msgstr "Situación a hoy, %(date)s · todas las faenas"
+
+#, python-format
+msgid "DGAC monthly report for %(month)s: snapshot of %(date)s · %(status)s. What follows is today's situation, not the report's."
+msgstr "Informe mensual DGAC de %(month)s: foto al %(date)s · %(status)s. Lo de abajo es la situación de hoy, no la del informe."
+
+#, python-format
+msgid "DGAC monthly report for %(month)s: %(status)s. What follows is today's situation, not the report's."
+msgstr "Informe mensual DGAC de %(month)s: %(status)s. Lo de abajo es la situación de hoy, no la del informe."
+
+msgid "Up to date:"
+msgstr "Al día:"
+
+msgid "Expiries in the next 90 days"
+msgstr "Vencimientos de los próximos 90 días"
+
+msgid "Red: already overdue · Amber: 15 days or less · Cyan: 30 days or less · Gray: later"
+msgstr "Rojo: ya venció · Ámbar: 15 días o menos · Cian: 30 días o menos · Gris: más adelante"
+
+msgid "They cannot fly today"
+msgstr "Hoy no pueden volar"
+
+msgid "Every site that flies has a permit"
+msgstr "Todas las faenas que vuelan tienen permiso"
+
+msgid "Dates already past: documents, people, aircraft and permits"
+msgstr "Fechas ya pasadas: documentos, personas, aeronaves y permisos"
+
+msgid "Nothing overdue"
+msgstr "Nada vencido"
+
+msgid "Worth renewing now"
+msgstr "Conviene renovarlo ahora"
+
+msgid "Nothing expires within 30 days"
+msgstr "Nada vence en 30 días"
+
+msgid "Requested, or approved and not started yet"
+msgstr "Solicitados, o aprobados que aún no empiezan"
+
+msgid "Nothing is waiting"
+msgstr "Nada en espera"
+
+#, python-format
+msgid "%(n)s of %(m)s sites with a permit in force"
+msgstr "%(n)s de %(m)s faenas con permiso vigente"
+
+#, python-format
+msgid "%(n)s overdue"
+msgid_plural "%(n)s overdue"
+msgstr[0] "%(n)s vencido"
+msgstr[1] "%(n)s vencidos"
+
+#, python-format
+msgid "%(n)s to attend within 30 days"
+msgstr "%(n)s por atender en 30 días"
+
+#, python-format
+msgid "%(n)s later"
+msgstr "%(n)s más adelante"
+
+msgid "Nothing in 90 days"
+msgstr "Nada en 90 días"

@@ -175,7 +175,9 @@ def test_each_block_needs_the_permission_of_its_source(operation):
 
     document = _get(login_as("view_document")).content.decode()
     assert 'data-cx-block="rings"' in document
-    assert 'data-cx-block="heat"' in document
+    assert 'data-cx-block="expiries"' in document
+    # LV-376 (G4): el mapa de calor salió de pantalla
+    assert 'data-cx-block="heat"' not in document
     assert 'data-cx-block="alerts"' not in document
 
 

@@ -1,0 +1,23 @@
+/* LV-376 (fase 2): reglas del mapa de calor «Próximos 90 días», RETIRADO DE PANTALLA (decisión G4), no de código. Ninguna plantilla carga esta hoja: la plantilla estacionada es `templates/dashboard/_compliance_heat.html`, que dice cómo volver a mostrarlo y la condición de cierre (borrar plantilla, esta hoja, `heat_step`, `heat_rows` y los tokens `--id-cx-heat-*`). Los tokens siguen en `compliance.css`. */
+/* Mapa de calor: una tabla real (sin `.table-normalized` ni `colspan`), cifra y borde en cada celda. */
+.id-cx-heat-wrap { overflow-x: auto; }
+.id-cx-heat { border-collapse: separate; border-spacing: 2px; width: 100%; font-size: var(--id-fs-sm); }
+.id-cx-heat--narrow { display: none; }
+.id-cx-heat th, .id-cx-heat td { padding: 0.25rem 0.2rem; text-align: center; }
+.id-cx-col { font-weight: 600; color: var(--ac-text-secondary); line-height: 1.2; }
+.id-cx-col .id-cx-sym { display: block; }
+.id-cx-rowhead { text-align: left; font-weight: 700; white-space: nowrap; padding-right: var(--id-sp-1); }
+.id-cx-cell { min-width: 1.9rem; border: 1px solid var(--id-cx-edge); border-radius: 4px; font-variant-numeric: tabular-nums; }
+.id-cx-heat-0 { background: var(--ac-surface); color: var(--ac-text-muted); }
+.id-cx-heat-1 { background: var(--id-cx-heat-1); color: var(--id-cx-ink); border-color: var(--id-cx-ink); }
+.id-cx-heat-2 { background: var(--id-cx-heat-2); color: var(--id-cx-ink); border-color: var(--id-cx-ink); }
+.id-cx-heat-3 { background: var(--id-cx-heat-3); color: var(--id-cx-ink); border-color: var(--id-cx-ink); }
+.id-cx-heat-4 { background: var(--id-cx-heat-4); color: var(--id-cx-ink); border-color: var(--id-cx-ink); }
+@media (max-width: 575.98px) {
+  .id-cx-heat--wide { display: none; }
+  .id-cx-heat--narrow { display: table; }
+  .id-cx-heat--narrow .id-cx-rowhead { white-space: normal; padding-right: 0.25rem; }
+}
+@media print {
+  .id-cx-cell { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}

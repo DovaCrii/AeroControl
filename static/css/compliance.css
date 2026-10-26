@@ -25,10 +25,6 @@
 .id-cx-h3 { margin: 0 0 var(--id-sp-1); font-size: var(--id-fs-md); font-weight: 700; }
 .id-cx-skel { height: 1rem; margin: 0.4rem 0; border-radius: var(--id-r-control); background: var(--sev-nominal-bg); border: 1px solid var(--sev-nominal-border); }
 .id-cx-skel--short { width: 60%; }
-@media (min-width: 992px) {
-  .id-cx-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); }
-  .id-cx-block--rings { grid-column: 1 / -1; }
-}
 
 /* D3 (LV-359): gráficos y mapa de calor. Rellenos con `--sev-*-text`, nunca `-border`; símbolo y texto siempre (ver `test_lv359_compliance_charts.py`). */
 :root {
@@ -77,20 +73,6 @@
 .id-cx-spark-end { fill: var(--ac-text-secondary); }
 .id-cx-unowned { white-space: nowrap; }
 
-/* Mapa de calor: una tabla real (sin `.table-normalized` ni `colspan`), cifra y borde en cada celda. */
-.id-cx-heat-wrap { overflow-x: auto; }
-.id-cx-heat { border-collapse: separate; border-spacing: 2px; width: 100%; font-size: var(--id-fs-sm); }
-.id-cx-heat--narrow { display: none; }
-.id-cx-heat th, .id-cx-heat td { padding: 0.25rem 0.2rem; text-align: center; }
-.id-cx-col { font-weight: 600; color: var(--ac-text-secondary); line-height: 1.2; }
-.id-cx-col .id-cx-sym { display: block; }
-.id-cx-rowhead { text-align: left; font-weight: 700; white-space: nowrap; padding-right: var(--id-sp-1); }
-.id-cx-cell { min-width: 1.9rem; border: 1px solid var(--id-cx-edge); border-radius: 4px; font-variant-numeric: tabular-nums; }
-.id-cx-heat-0 { background: var(--ac-surface); color: var(--ac-text-muted); }
-.id-cx-heat-1 { background: var(--id-cx-heat-1); color: var(--id-cx-ink); border-color: var(--id-cx-ink); }
-.id-cx-heat-2 { background: var(--id-cx-heat-2); color: var(--id-cx-ink); border-color: var(--id-cx-ink); }
-.id-cx-heat-3 { background: var(--id-cx-heat-3); color: var(--id-cx-ink); border-color: var(--id-cx-ink); }
-.id-cx-heat-4 { background: var(--id-cx-heat-4); color: var(--id-cx-ink); border-color: var(--id-cx-ink); }
 .id-cx-legend { margin: var(--id-sp-1) 0 0; font-size: var(--id-fs-sm); color: var(--ac-text-secondary); }
 /* Fase 3: historial de revisión y guía de lectura. Sin tokens nuevos: los chips ya llevan su contraste. */
 /* Permisos por faena (LV-359, v4 en LV-376): tabla real, sin `colspan` ni `.table-normalized`. */
@@ -114,8 +96,9 @@
 .id-cx-permits-wrap { overflow-x: auto; }
 .id-cx-permits { font-size: 1rem; }
 .id-cx-permits th, .id-cx-permits td { vertical-align: top; }
+.id-cx-permits.table td, .id-cx-permits.table td:first-child { white-space: normal; }
 .id-cx-permits th { font-size: 0.875rem; }
-.id-cx-permits .worktable-sort { white-space: nowrap; }
+.id-cx-permits .worktable-sort { white-space: normal; }
 .id-cx-site-name { font-weight: 600; color: var(--ac-text); }
 .id-cx-permits .id-cx-note { margin: 0.15rem 0 0; font-size: 0.875rem; color: var(--ac-text-secondary); }
 .id-cx-todo-text { margin: 0; }
@@ -135,9 +118,9 @@
 .id-cx-site-details { margin-top: 0.35rem; }
 .id-cx-site-details > summary { cursor: pointer; font-size: 0.875rem; font-weight: 600; color: var(--ac-text-secondary); }
 .id-cx-permit-list { margin: 0.35rem 0; padding-left: 1.1rem; display: grid; gap: 0.2rem; font-weight: 400; font-size: 0.875rem; }
-.id-cx-date { white-space: nowrap; }
+.id-cx-date b { white-space: nowrap; }
 .id-cx-in { color: var(--ac-text-secondary); font-size: 0.875rem; }
-.id-cx-expiry .id-cx-daybar { display: block; margin-top: 0.25rem; }
+.id-cx-expiry .id-cx-daybar { display: block; width: 100%; max-width: 8rem; margin-top: 0.25rem; }
 .id-cx-day-track { fill: var(--id-cx-track); }
 .id-cx-day--soon { fill: var(--sev-warning-text); }
 .id-cx-day--mid { fill: var(--sev-advisory-text); }
@@ -168,28 +151,50 @@
 .id-cx-first-list a { color: var(--ac-text); font-weight: 700; text-decoration: underline; }
 .id-cx-calm { display: flex; align-items: center; gap: 0.4rem; margin: 0; font-size: 0.875rem; }
 .id-cx-calm .nav-icon { width: 1.1rem; height: 1.1rem; flex: 0 0 1.1rem; color: var(--id-ok-text); }
-.id-cx-ind { display: grid; gap: var(--id-sp-1); margin: 0; padding: 0; list-style: none; }
-.id-cx-ind-item { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.75rem; padding: 0.5rem 0.75rem; border: 1px solid var(--id-edge); border-radius: var(--id-r-control); background: var(--id-tile); }
-.id-cx-ind-item .nav-icon { width: 1.4rem; height: 1.4rem; flex: 0 0 1.4rem; color: var(--ac-text-secondary); }
-.id-cx-ind-name { min-width: 6rem; font-size: 0.875rem; font-weight: 700; }
-.id-cx-ind-fig { font-size: 0.875rem; }
-.id-cx-clear { margin-top: var(--id-sp-1); }
-.id-cx-clear-list { display: flex; flex-wrap: wrap; gap: 0.25rem 0.75rem; margin: 0.25rem 0 0; padding: 0; list-style: none; font-size: 0.875rem; color: var(--ac-text-secondary); }
-.id-cx-clear-list .nav-icon { width: 1rem; height: 1rem; vertical-align: -0.15em; }
 .id-cx-fold { grid-column: 1 / -1; min-width: 0; padding: 0.5rem 0.75rem; border: 1px solid var(--id-edge); border-radius: var(--id-r-control); }
 .id-cx-fold > summary { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: var(--id-fs-md); font-weight: 700; }
 .id-cx-fold[open] > summary { margin-bottom: var(--id-sp-1); }
 .id-cx-count { min-width: 1.6rem; padding: 0 0.5rem; border: 1px solid var(--sev-nominal-border); border-radius: var(--id-r-pill); background: var(--sev-nominal-bg); color: var(--sev-nominal-text); font-size: var(--id-fs-sm); text-align: center; font-variant-numeric: tabular-nums; }
-.id-cx-lv-wrap { overflow-x: auto; }
 .id-cx .id-chip { font-size: var(--id-fs-sm); }
-.id-cx-lv { border-collapse: separate; border-spacing: 0 0.25rem; width: 100%; font-size: 0.875rem; }
-.id-cx-lv th, .id-cx-lv td { padding: 0.15rem 0.35rem; text-align: left; }
 .id-cx-zero { color: var(--ac-text-muted); }
-.id-cx-zero-rows { color: var(--ac-text-secondary); }
-@media (max-width: 575.98px) {
-  .id-cx-heat--wide { display: none; }
-  .id-cx-heat--narrow { display: table; }
-  .id-cx-heat--narrow .id-cx-rowhead { white-space: normal; padding-right: 0.25rem; }
+/* LV-376 (fase 2): cuatro tarjetas (2x2 hasta 1199 px, 4 en una fila desde 1200), tiras por categoría y la rejilla. */
+.id-cx-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--id-sp-1); margin: 0 0 var(--id-sp-1); padding: 0; list-style: none; }
+.id-cx-card { border: 1px solid var(--id-edge); border-left: 4px solid var(--id-edge); border-radius: var(--id-r-control); background: var(--id-tile); }
+.id-cx-card > a { display: grid; gap: 0.15rem; height: 100%; padding: 0.55rem 0.75rem; color: var(--ac-text); text-decoration: none; }
+.id-cx-card > a:hover .id-cx-card-name { text-decoration: underline; }
+.id-cx-card-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.1rem 0.4rem; }
+.id-cx-card-sym { font-size: 1.1rem; font-weight: 700; }
+.id-cx-card-fig { font-size: var(--id-fs-xl); font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.id-cx-card-name { font-size: 1rem; font-weight: 700; }
+.id-cx-card-sub { font-size: 0.875rem; color: var(--ac-text-secondary); }
+.id-cx-card--none, .id-cx-card--overdue { border-left-color: var(--sev-critical-text); }
+.id-cx-card--none .id-cx-card-sym, .id-cx-card--overdue .id-cx-card-sym { color: var(--sev-critical-text); }
+.id-cx-card--soon { border-left-color: var(--sev-warning-text); }
+.id-cx-card--soon .id-cx-card-sym { color: var(--sev-warning-text); }
+.id-cx-card--wait { border-left-color: var(--id-cx-wait-fg); }
+.id-cx-card--wait .id-cx-card-sym { color: var(--id-cx-wait-fg); }
+.id-cx-card--zero { border-left-color: var(--id-ok-text); }
+.id-cx-card--zero .id-cx-card-sym { color: var(--id-ok-text); }
+.id-cx-strips { display: grid; gap: var(--id-sp-1); margin: 0; padding: 0; list-style: none; }
+.id-cx-strip { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0.25rem var(--id-sp-1); padding-bottom: var(--id-sp-1); border-bottom: 1px solid var(--ac-border); }
+.id-cx-strip:last-child { padding-bottom: 0; border-bottom: 0; }
+.id-cx-strip-bar, .id-cx-strip-text { grid-column: 1 / -1; }
+.id-cx-strip-name { display: flex; align-items: center; gap: 0.4rem; font-weight: 700; }
+.id-cx-strip-name .nav-icon { width: 1.2rem; height: 1.2rem; flex: 0 0 1.2rem; color: var(--ac-text-secondary); }
+.id-cx-strip-text { font-size: 0.875rem; }
+.id-cx-strip-link { grid-column: 2; grid-row: 1; font-size: 0.875rem; font-weight: 600; color: var(--ac-text); text-decoration: underline; white-space: nowrap; }
+.id-cx-stk-track { fill: var(--id-cx-track); }
+.id-cx-stk--overdue { fill: var(--sev-critical-text); }
+.id-cx-stk--soon { fill: var(--sev-warning-text); }
+.id-cx-stk--mid { fill: var(--sev-advisory-text); }
+.id-cx-stk--later { fill: var(--sev-nominal-text); }
+.id-cx-side { display: grid; gap: var(--id-sp-2); align-content: start; min-width: 0; }
+@media (min-width: 768px) { .id-cx-card-fig { font-size: var(--id-fs-2xl); } }
+@media (min-width: 1200px) {
+  .id-cx-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .id-cx-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+  .id-cx-fold--wide { grid-column: span 7; }
+  .id-cx-side { grid-column: span 5; }
 }
 @media print {
   html body {
@@ -203,5 +208,4 @@
     --id-cx-wait-bg: #ffedd5;
     --id-cx-wait-fg: #9a3412;
   }
-  .id-cx-cell { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }

@@ -132,6 +132,42 @@ def render_sparkline(values, uid, title, desc, width=120, height=28, pad=3):
     return "".join(parts)
 
 
+def render_stack(parts, uid, title, desc, width=240, height=14, gap=1):
+    """Barra apilada de una categoría (LV-376, fase 2). `parts`: [(clase_css, valor)]; el valor 0 no se dibuja.
+
+    Cada tramo es un `<rect>` con ancho proporcional a su cifra (mínimo 3 px para que un 1 entre 40 se
+    vea) y un hueco de `gap` entre tramos. `role="img"` con `<title>` y `<desc>`: la cifra va impresa
+    fuera de la imagen, en la plantilla. Con todos los tramos en cero no hay barra.
+    """
+    parts = [(css, int(value)) for css, value in parts if int(value) > 0]
+    if not parts:
+        return ""
+    usable = width - gap * (len(parts) - 1)
+    total = sum(value for _css, value in parts)
+    widths = [max(usable * value / total, 3) for _css, value in parts]
+    scale = min(1, usable / sum(widths))
+    out = [
+        _head(uid, title, desc, width, height, "id-cx-stack-svg"),
+        f'<rect class="id-cx-stk-track" x="0" y="0" width="{_n(width)}" '
+        f'height="{_n(height)}" rx="3"/>',
+    ]
+    x = 0.0
+    for (css, _value), size in zip(parts, widths, strict=True):
+        size *= scale
+        out.append(
+            f'<rect class="id-cx-stk {escape(css)}" x="{_n(x)}" y="0" '
+            f'width="{_n(size)}" height="{_n(height)}" rx="2"/>'
+        )
+        x += size + gap
+    out.append("</svg>")
+    return "".join(out)
+
+
+@register.simple_tag
+def stack(parts, uid, title, desc, width=240):
+    return mark_safe(render_stack(parts, uid, title, desc, width))  # nosec B308 B703
+
+
 def render_daybar(days, width=128, height=14, horizon=90, marks=(30, 60)):
     """Barra de días 0 a `horizon` con marcas en 30 y 60 (LV-376, fase 1b). Decorativa: `aria-hidden`.
 

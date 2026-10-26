@@ -24,7 +24,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import urlencode
 from django.utils.translation import gettext as _
-from django.utils.translation import ngettext
+from django.utils.translation import ngettext, pgettext
 
 from apps.compliance.expirations import EXPIRATION_PERMISSIONS
 from apps.core.tenancy import visible_tenant_ids
@@ -216,6 +216,100 @@ def attention_first(rings, alerts, permits):
     return items[:PRIORITY_LIMIT]
 
 
+def _card(key, symbol, tone, n, url, name, sub, zero):
+    return {
+        "key": key,
+        "symbol": symbol,
+        "tone": tone,
+        "n": n,
+        "url": url,
+        "name": name,
+        "sub": sub,
+        "zero": zero,
+    }
+
+
+def summary_cards(rings, permits):
+    """Las cuatro tarjetas de arriba (LV-376, fase 2): ¿hay algo que no pueda esperar?
+
+    Sale todo de lo ya calculado para la sección, cero consultas y ninguna cifra nueva: «sin permiso» es
+    `without_permit` de la tabla; «vencido» y «vence en 30 días» son las del panel (`overdue_count` y
+    `expiring_count`: SIN mantención, que el panel no cuenta y una prueba compara); «esperando a la DGAC»
+    son las faenas con un permiso solicitado o aprobado que aún no empieza (el «esperando» del resumen de
+    la tabla). Una tarjeta sólo existe si quien mira puede ver su fuente, y un cero se dice con palabras.
+    """
+    cards = []
+    if permits:
+        cards.append(
+            _card(
+                "no_permit",
+                "✕",
+                "none",
+                permits["without_permit"],
+                "#cx-permits",
+                _("Sites without a permit"),
+                _("They cannot fly today"),
+                _("Every site that flies has a permit"),
+            )
+        )
+    counted = [r for r in rings or () if r["key"] != "maintenance"]
+    if counted:
+        cards.append(
+            _card(
+                "overdue",
+                "✕",
+                "overdue",
+                sum(r["counts"]["overdue"] for r in counted),
+                "#cx-expiries",
+                pgettext("compliance level", "Overdue"),
+                _("Dates already past: documents, people, aircraft and permits"),
+                _("Nothing overdue"),
+            )
+        )
+        cards.append(
+            _card(
+                "expiring",
+                "▲",
+                "soon",
+                sum(
+                    r["counts"]["due_7"] + r["counts"]["due_15"] + r["counts"]["due_30"]
+                    for r in counted
+                ),
+                "#cx-expiries",
+                _("Expiring within 30 days"),
+                _("Worth renewing now"),
+                _("Nothing expires within 30 days"),
+            )
+        )
+    if permits:
+        waiting = next((t["n"] for t in permits["tally"] if t["key"] == "waiting"), 0)
+        cards.append(
+            _card(
+                "waiting",
+                "◐",
+                "wait",
+                waiting,
+                "#cx-permits",
+                _("Waiting for the DGAC"),
+                _("Requested, or approved and not started yet"),
+                _("Nothing is waiting"),
+            )
+        )
+    return cards
+
+
+def calm_line(rings, permits):
+    """«✓ Al día: Personas, Mantenimiento · 8 de 11 faenas con permiso vigente», o `None` si no hay nada que decir."""
+    names = ", ".join(str(r["label"]) for r in rings or () if not r["attend"])
+    sites = ""
+    if permits and permits["total"]:
+        sites = _("%(n)s of %(m)s sites with a permit in force") % {
+            "n": permits["total"] - permits["without_permit"],
+            "m": permits["total"],
+        }
+    return {"names": names, "sites": sites} if names or sites else None
+
+
 def open_flags(context):
     """Qué secciones plegables salen abiertas: sólo las que tienen algo. Se decide acá, no en la plantilla.
 
@@ -281,9 +375,8 @@ def section_context(request):
         rings = context.get("cx_rings") or []
         context["cx_attention"] = [r for r in rings if r["attend"]]
         context["cx_clear"] = [r for r in rings if not r["attend"]]
-        # Filas en cero resumidas: una categoría sin vencimientos a 90 días no ocupa una fila de ceros.
-        context["cx_listed"] = [r for r in rings if r["total"]]
-        context["cx_unlisted"] = [r for r in rings if not r["total"]]
+        context["cx_cards"] = summary_cards(rings, context.get("cx_permits"))
+        context["cx_calm"] = calm_line(rings, context.get("cx_permits"))
         context["cx_priorities"] = attention_first(
             rings, context.get("cx_alerts"), context.get("cx_permits")
         )

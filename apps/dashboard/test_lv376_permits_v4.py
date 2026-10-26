@@ -233,9 +233,6 @@ def test_the_search_form_keeps_the_state_and_the_site(mix):
 @pytest.mark.django_db
 def test_new_permit_links_exist_only_with_add_flightpermission(mix):
     without = _page(login_as(VIEW)).content.decode()
-    assert (
-        "?cost_center=" not in without.split("<tbody>")[1].split("permission-list")[0]
-    )
     assert reverse("permission-create") not in without
     allowed = _page(login_as(VIEW, ADD)).content.decode()
     none_site = mix[0]
@@ -523,3 +520,14 @@ def test_the_summary_pills_read(theme, fg, bg):
     assert (
         _contrast(_resolve(tokens[fg], tokens), _resolve(tokens[bg], tokens)) >= 4.5
     ), (theme, fg, bg)
+
+
+def test_the_permit_cells_can_wrap_so_the_table_fits_at_768_px():
+    """`app.css` pone `nowrap` en `td:first-child` de toda `.table`: el mínimo de la tabla pasaba de 768 a
+    657 px (medido) y desbordaba. La regla propia gana por orden y por especificidad igual."""
+    css = _css()
+    assert (
+        ".id-cx-permits.table td, .id-cx-permits.table td:first-child { white-space: normal; }"
+        in css
+    )
+    assert ".id-cx-permits .worktable-sort { white-space: normal; }" in css

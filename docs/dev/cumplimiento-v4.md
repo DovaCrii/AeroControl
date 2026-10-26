@@ -62,3 +62,6 @@ Riesgos: pruebas atadas al marcado (`data-cx-block` 22, `id-chip--` 27, `data-cx
 - **`data-cx-label` en vez de `data-label`** (fase 1b): `worktable.js` reescribe `data-label` de toda celda de toda tabla con el texto del `<th>`, flechita de orden incluida (`Estado⇵`); un atributo propio evita las dos cosas. Defecto ajeno anotado: los rótulos de las demás tablas llevan esa flechita.
 - **Sin `table-sm`** en la tabla de permisos (filas más altas para el cuerpo de 1 rem).
 - **`--id-ok-text`** no se mide con `contrast.py` (el bloque `print` de `identity.css` lo confunde); lo cubre la prueba pytest.
+- **Tiras en una sola columna** (fase 2): en la columna de 7/12 (507 px) la fila de cuatro columnas dejaba el texto en 36 px (medido); la tira es nombre + «Ver →», barra y texto apilados a todo ancho.
+- **«Esperando a la DGAC»** cuenta las faenas con un permiso solicitado **o aprobado que aún no empieza** (el «esperando» del resumen de la tabla) y su explicación lo dice; el diseño decía sólo «solicitados».
+- **La tabla de permisos** pone `white-space: normal` en sus celdas y encabezados: `.table:not(.table-normalized) td:first-child` de `app.css` es `nowrap` y la tabla pasaba de 768 a 657 px de mínimo (medido), así que a 768 px desbordaba.
