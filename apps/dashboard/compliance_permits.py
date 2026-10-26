@@ -137,16 +137,11 @@ def _details(tenant_ids, rows):
     return grouped
 
 
-def requested_all(params):
-    """¿Se pidió ver TODAS las faenas (`?all=1`)? Por omisión sólo las que tienen un problema."""
-    return params.get("all") == "1"
-
-
 def has_problem(row):
     """Una faena «con problema»: sin permiso vigente, uno por empezar o esperando, o con el primero a 60 días o menos.
 
-    LV-367: la tabla simple muestra sólo estas por omisión; el resto se ve con «Ver todas». La escala es la
-    de PERMISOS (30/60 días, `permit_band`), la misma de los chips; nada se recalcula.
+    LV-367 la usaba para truncar la tabla; LV-374 lo retiró (salen TODAS las faenas) y queda para el
+    orden de atención y para decidir si la sección sale abierta. La escala es la de PERMISOS (30/60 días, `permit_band`), la misma de los chips; nada se recalcula.
     """
     if _state(row) != "in_force":
         return True
@@ -156,13 +151,12 @@ def has_problem(row):
     )
 
 
-def permit_table(
-    user, cost_center, today, tenant_ids, column="", direction="", show_all=False
-):
+def permit_table(user, cost_center, today, tenant_ids, column="", direction=""):
     """La tabla lista para dibujar, o `None` sin `view_flightpermission`.
 
     `rows` ya viene ordenada; cada fila lleva su tramo (`band`, símbolo y tono), el valor del
-    medidor, el texto de días y su detalle. Con una faena elegida sólo queda esa fila.
+    medidor, el texto de días y su detalle. Salen TODAS las faenas visibles (LV-374), también las
+    vigentes; con una faena elegida sólo queda esa fila.
     """
     if not user.has_perm(PERMIT_PERMISSION):
         return None
@@ -173,8 +167,6 @@ def permit_table(
     total = len(rows)
     without_permit = sum(1 for row in rows if not row["in_force"])
     problems = sum(1 for row in rows if has_problem(row))
-    if not show_all:
-        rows = [row for row in rows if has_problem(row)]
     details = _details(tenant_ids, rows)
     items = []
     for row in rows:
@@ -205,8 +197,6 @@ def permit_table(
         "rows": items,
         "total": total,
         "problems": problems,
-        "hidden": total - len(items),
-        "show_all": show_all,
         "without_permit": without_permit,
         "column": column,
         "direction": direction,
@@ -253,8 +243,6 @@ def sort_context(request, cost_center, columns=tuple(SORT_KEYS)):
     """
     column, direction = requested_sort(request.GET)
     query = f"cost_center={cost_center.pk}&" if cost_center else ""
-    if requested_all(request.GET):
-        query += "all=1&"
     return {
         "columns": {key: key for key in columns},
         "column": column,

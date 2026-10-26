@@ -9,6 +9,7 @@ rows are never NULL. When real multi-tenancy arrives, the request's tenant
 
 DEFAULT_TENANT_SLUG = "default"
 DEFAULT_TENANT_NAME = "AeroControl"
+_VISIBLE_IDS_ATTR = "_ac_visible_tenant_ids"
 
 
 def get_default_tenant():
@@ -210,6 +211,13 @@ def visible_tenant_ids(user):
     """
     if user.is_superuser:
         return None
+    # Memoizado en el objeto `user` (que es el de la petición: se construye de nuevo en cada
+    # una), no entre peticiones ni entre personas. Una página llama esto una vez por
+    # queryset acotado (el Reporte de vigencia: 7 veces, 2 consultas cada una) y la respuesta
+    # no cambia dentro de la petición. Se devuelve una copia para que nadie mute la lista común.
+    cached = getattr(user, _VISIBLE_IDS_ATTR, None)
+    if cached is not None:
+        return list(cached)
     from apps.core.models import OperationalTenant
 
     ids = list(
@@ -217,4 +225,6 @@ def visible_tenant_ids(user):
             "pk", flat=True
         )
     )
-    return ids or [get_default_tenant()]
+    ids = ids or [get_default_tenant()]
+    setattr(user, _VISIBLE_IDS_ATTR, tuple(ids))
+    return ids

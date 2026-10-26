@@ -191,7 +191,13 @@ def roster_row_px(row):
 
 
 def sheet_budget_px(
-    *, first, last, closing_px=CLOSING_PX, first_top=FIRST_SHEET_ROW_TOP_PX
+    *,
+    first,
+    last,
+    closing_px=CLOSING_PX,
+    first_top=FIRST_SHEET_ROW_TOP_PX,
+    continuation_top=CONTINUATION_ROW_TOP_PX,
+    safety=SAFETY_PX,
 ):
     """Cuántos píxeles de filas caben en una hoja de la sección.
 
@@ -201,8 +207,8 @@ def sheet_budget_px(
     apretado. `first_top` deja que otra sección —el anexo, `LV-248`— declare dónde
     empieza su primera fila.
     """
-    top = first_top if first else CONTINUATION_ROW_TOP_PX
-    available = FOOTER_TOP_PX - top - (closing_px if last else 0) - SAFETY_PX
+    top = first_top if first else continuation_top
+    available = FOOTER_TOP_PX - top - (closing_px if last else 0) - safety
     return max(ROW_BASE_PX, available)
 
 
@@ -212,6 +218,8 @@ def paginate(
     closing_px=CLOSING_PX,
     estimate=row_px,
     first_top=FIRST_SHEET_ROW_TOP_PX,
+    continuation_top=CONTINUATION_ROW_TOP_PX,
+    safety=SAFETY_PX,
 ):
     """Reparte `rows` en hojas, devolviendo una lista de listas.
 
@@ -230,7 +238,9 @@ def paginate(
     if not rows:
         return [[]]
     for sheets in range(1, len(rows) + 1):
-        packed = _pack(rows, sheets, closing_px, estimate, first_top)
+        packed = _pack(
+            rows, sheets, closing_px, estimate, first_top, continuation_top, safety
+        )
         if packed is not None:
             return packed
     # Inalcanzable: con `sheets == len(rows)` cada hoja lleva una fila, y
@@ -240,7 +250,15 @@ def paginate(
     return [rows]
 
 
-def _pack(rows, sheets, closing_px, estimate, first_top):
+def _pack(
+    rows,
+    sheets,
+    closing_px,
+    estimate,
+    first_top,
+    continuation_top=CONTINUATION_ROW_TOP_PX,
+    safety=SAFETY_PX,
+):
     """Intenta meter `rows` en exactamente `sheets` hojas. `None` si no entran."""
     out, index = [], 0
     for sheet in range(sheets):
@@ -249,6 +267,8 @@ def _pack(rows, sheets, closing_px, estimate, first_top):
             last=sheet == sheets - 1,
             closing_px=closing_px,
             first_top=first_top,
+            continuation_top=continuation_top,
+            safety=safety,
         )
         chunk = []
         while index < len(rows):
@@ -286,6 +306,8 @@ def sheets_for(
     closing_px=CLOSING_PX,
     estimate=row_px,
     first_top=FIRST_SHEET_ROW_TOP_PX,
+    continuation_top=CONTINUATION_ROW_TOP_PX,
+    safety=SAFETY_PX,
 ):
     """Las hojas de la sección, cada una con lo que la plantilla necesita saber.
 
@@ -295,7 +317,12 @@ def sheets_for(
     un informe termina con dos hojas numeradas igual.
     """
     chunks = paginate(
-        rows, closing_px=closing_px, estimate=estimate, first_top=first_top
+        rows,
+        closing_px=closing_px,
+        estimate=estimate,
+        first_top=first_top,
+        continuation_top=continuation_top,
+        safety=safety,
     )
     return [
         {
@@ -305,3 +332,176 @@ def sheets_for(
         }
         for index, chunk in enumerate(chunks)
     ]
+
+
+# == LV-378 · El reparto del diseño 2 ==========================================
+#
+# La sección 2 del diseño 2 reparte **faenas**, no permisos: la unidad que no se parte
+# es el bloque de una faena (cabecera, sublíneas y folios). Las constantes salen de
+# **medir en el navegador** el informe renderizado (Edge, el caso ficticio de
+# `v2_case.py` con once faenas; `getBoundingClientRect` sobre cada bloque), **no** de
+# la propuesta del diseño, que daba 440 y 78:
+#
+# | | medido | usado |
+# |---|---|---|
+# | Tira de vencimientos: arriba de ella (cabecera, título, rótulo de dos líneas, leyenda) | 224,9 | 225 |
+# | Separación entre bloques | 6 (faena) / 11 (sección) | |
+# | Primera faena en una hoja de continuación | 224,9 | 225 |
+# | Faena de una línea, detalle (aeronaves, operadores y folios) de un renglón (48 + 5 de margen) | 53 | 53 |
+# | Renglón de detalle de más | 15,5 | 16 |
+# | Faena con sublíneas: cabecera, y por cada sublínea con un renglón de detalle | 35,5 / 42 | 36 / 42 |
+# | Bloque «sin operación»: título (28,3 + bordes) y fila de dos renglones | 30,3 / 43 | 31 / 44 |
+# | Bloque «en trámite»: fila | 25,5 | 26 |
+# | Bloque «vencidos sin cerrar»: fila | 27,5 | 28 |
+# | Observación del período: rótulo + caja, y cada renglón de texto | 42 / 17,25 | 42 / 18 |
+# | Pie | 1059,9 | `FOOTER_TOP_PX` |
+#
+# ⚠️ Sigue siendo una estimación: el ancho real de cada texto decide cuántos caben en un
+# renglón. El detalle de 145 caracteres midió dos renglones y uno de 85 midió uno, así
+# que `V2_DETAIL_CHARS_PER_LINE` se fija en **100**, por debajo de lo que caben (~112):
+# equivocarse por exceso deja un hueco, por defecto recorta. Lo contienen el margen de
+# una hoja (`V2_SAFETY_PX`), el total declarado en el rótulo de cada hoja y la
+# invariante I8 (`invariants.py`). Y `TestThePrintedPdfIsWhatTheSheetsPredict` imprime a
+# PDF con Edge y compara las páginas contra esta predicción.
+V2_STRIP_TOP_PX = 225
+V2_SECTION_GAP_PX = 11
+V2_CONTINUATION_TOP_PX = 225
+V2_GROUP_BASE_PX = 53
+V2_DETAIL_LINE_PX = 16
+V2_DETAIL_CHARS_PER_LINE = 100
+V2_MULTI_HEAD_PX = 36
+V2_LINE_PX = 42
+V2_BLOCK_TITLE_PX = 31
+V2_OUTSIDE_ROW_PX = 44
+V2_AWAITING_ROW_PX = 26
+V2_LAPSED_ROW_PX = 28
+V2_OBSERVATION_BASE_PX = 42
+V2_OBSERVATION_LINE_PX = 18
+#: Caracteres por renglón de la observación (11,5 px en 690 px de ancho útil menos relleno).
+V2_OBSERVATION_CHARS = 90
+#: El pie de las hojas del diseño 2 va a 11,3 px y empieza en **1055,5**, no en 1060
+#: (medido, con notas de dos renglones): el margen de seguridad absorbe la diferencia
+#: en vez de pasar un tope distinto por todas las funciones.
+V2_FOOTER_SHIFT_PX = 5
+V2_MARGIN_PX = 30
+V2_SAFETY_PX = V2_MARGIN_PX + V2_FOOTER_SHIFT_PX
+
+
+def _detail_lines(line):
+    """Renglones del detalle de una línea: aeronaves, operadores y folios en un párrafo.
+
+    Por caracteres: el ancho real de cada texto decide cuántos caben. Se cuenta con
+    `V2_DETAIL_CHARS_PER_LINE` por renglón (de más, no de menos) para no recortar.
+    """
+    tails = line.get("aircraft") or []
+    folios = line.get("folios") or []
+    chars = (
+        len("Aeronaves: ")
+        + sum(len(tail) + 3 for tail in tails)
+        + len("12 operadores · Folios: ")
+        + sum(len(folio) + 3 for folio in folios)
+    )
+    return max(1, -(-chars // V2_DETAIL_CHARS_PER_LINE))
+
+
+def v2_first_top_px(strip_height):
+    """Dónde cae la primera faena en la primera hoja: arriba de la tira, la tira (su
+    alto varía con las filas de rótulos que pida) y la separación."""
+    return V2_STRIP_TOP_PX + strip_height + V2_SECTION_GAP_PX
+
+
+def group_px(group):
+    """El alto estimado del bloque de una faena del diseño 2.
+
+    Una faena de una sola línea (todos sus permisos con la misma vigencia, aeronaves
+    y operadores) cuesta lo de base más las líneas de folios que pasen de una. Una
+    faena con sublíneas cuesta su cabecera más, por cada sublínea, su cuerpo y sus
+    propias líneas de folios de más.
+    """
+    lines = group["lines"]
+    if len(lines) == 1:
+        return V2_GROUP_BASE_PX + V2_DETAIL_LINE_PX * (_detail_lines(lines[0]) - 1)
+    cost = V2_MULTI_HEAD_PX
+    for line in lines:
+        cost += V2_LINE_PX + V2_DETAIL_LINE_PX * (_detail_lines(line) - 1)
+    return cost
+
+
+def observation_px(note=""):
+    """Alto de la observación del período: su rótulo y su caja, que crece con el texto."""
+    lines = max(2, -(-len(note or "") // V2_OBSERVATION_CHARS))
+    return V2_OBSERVATION_BASE_PX + V2_OBSERVATION_LINE_PX * lines + V2_SECTION_GAP_PX
+
+
+def closing_px_v2(groups, note=""):
+    """Lo que cierra la sección 2 v2 en su última hoja: los bloques de debajo y la
+    observación del período. Cada bloque cuesta su título, sus filas y la separación."""
+    cost = observation_px(note)
+    for rows, per_row in (
+        (groups["outside"], V2_OUTSIDE_ROW_PX),
+        (groups["awaiting"], V2_AWAITING_ROW_PX),
+        (groups["lapsed"], V2_LAPSED_ROW_PX),
+    ):
+        if rows:
+            cost += V2_BLOCK_TITLE_PX + per_row * len(rows) + V2_SECTION_GAP_PX
+    return cost
+
+
+# -- La cobertura y el anexo del diseño 2 (PR 3) --------------------------------------
+#
+# Medidos en el navegador igual que los de arriba (ver la tabla en el commit y en
+# `MASTER_PLAN.md`, `LV-378`). El plan compacto **no cambia** (es la misma sección 4 de
+# siempre, en las clases de la hoja base): se usan sus medidas de arriba.
+#
+# | | medido | usado |
+# |---|---|---|
+# | Primera fila de faena (título, universo de dos renglones, barra, encabezado) | 284,1 | 285 |
+# | Alto de una fila de faena | 27,9 | 28 |
+# | Total + concentración (de tres renglones) + separaciones, sin faenas sin operación | 110,8 | 114 |
+# | Bloque «sin operación»: relleno y línea del total legal | 40 | 40 |
+# | Una faena sin operación más en ese bloque | 16,1 | 17 |
+# | Anexo: primera fila (título, rótulo, encabezado) | 209,8 | 210 |
+# | Anexo: fila de un renglón | 25,9 | 26 |
+# | Anexo: renglón de más / nota bajo la tabla (con su separación) | 15 / 21 | 15 / 22 |
+V2_COVERAGE_FIRST_ROW_TOP_PX = 285
+V2_COVERAGE_ROW_PX = 28
+V2_COVERAGE_TAIL_PX = 114
+V2_COVERAGE_OUTSIDE_BLOCK_PX = 40
+V2_COVERAGE_OUTSIDE_ROW_PX = 17
+V2_ROSTER_FIRST_TOP_PX = 210
+V2_ROSTER_CONTINUATION_TOP_PX = 210
+V2_ROSTER_ROW_BASE_PX = 26
+V2_ROSTER_LINE_PX = 15
+V2_ROSTER_NOTE_PX = 22
+#: Caracteres que caben en el renglón de operadores del anexo (296 px útiles a 11,5 px,
+#: nombres de ancho medio): se cuenta con 44, por defecto, para no recortar.
+V2_ROSTER_CHARS_PER_LINE = 44
+
+
+def plan_fits_with_coverage_v2(cost_centres, matrix_rows, outside_rows=0):
+    """¿Caben la tabla de faenas del diseño 2 y el plan compacto en la misma hoja?
+
+    Igual que `plan_fits_with_coverage`, con las alturas del diseño 2: más altas
+    (letra de 8,5 pt), la barra apilada arriba y, abajo, el total, las líneas de las
+    faenas sin operación y la concentración. Con margen (`V2_SAFETY_PX`): equivocarse
+    por exceso manda el plan a su hoja; por defecto, lo recortaría bajo el pie.
+    """
+    coverage = (
+        V2_COVERAGE_FIRST_ROW_TOP_PX
+        + V2_COVERAGE_ROW_PX * max(cost_centres, 1)
+        + V2_COVERAGE_TAIL_PX
+        + (V2_COVERAGE_OUTSIDE_BLOCK_PX if outside_rows else 0)
+        + V2_COVERAGE_OUTSIDE_ROW_PX * outside_rows
+    )
+    plan = PLAN_BLOCK_BASE_PX + PLAN_MATRIX_ROW_PX * matrix_rows
+    return coverage + plan + V2_SAFETY_PX <= FOOTER_TOP_PX
+
+
+def roster_row_px_v2(row):
+    """El alto estimado de una fila del anexo «registro permiso a permiso»."""
+    names = row.get("operators") or []
+    # Por caracteres y no por cantidad de nombres: a 11,5 px caben uno o dos por renglón
+    # según su largo, y contar dos siempre recortaría las filas de nombres largos.
+    chars = sum(len(name) for name in names) + 3 * max(len(names) - 1, 0)
+    lines = max(1, -(-chars // V2_ROSTER_CHARS_PER_LINE))
+    return V2_ROSTER_ROW_BASE_PX + V2_ROSTER_LINE_PX * (lines - 1)
