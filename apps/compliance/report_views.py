@@ -26,6 +26,7 @@ from apps.reporting.export import (
     to_docx,
     to_xlsx,
 )
+from apps.registry.selectors import cost_center_universe, universe_sentence
 from .digest import BUCKETS
 from .models import Document, DocumentType
 from .reports import (
@@ -123,6 +124,12 @@ class ComplianceReportView(ComplianceReportMixin, TemplateView):
             # from. "Compared with the previous period" is misleading when
             # there is no history and both sides are the same instant.
             comparison_baseline=snapshot,
+            # LV-355 F2: las cifras de permisos son **de hoy** (`permit_counts(today)`),
+            # y el informe mensual cuenta al corte: la etiqueta lo dice (S7).
+            permits_as_of=_("as of %(date)s")
+            % {"date": report["generated_on"].strftime("%d-%m-%Y")},
+            # LV-355 F2 (S10): el universo de la tabla por faena.
+            universe=universe_sentence(cost_center_universe()),
             title=_("Compliance status report"),
             cost_centers=CostCenter.objects.filter(is_active=True).order_by("code"),
             document_types=DocumentType.objects.filter(is_active=True).order_by("name"),

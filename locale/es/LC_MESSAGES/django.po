@@ -3737,6 +3737,16 @@ msgstr "movimientos de recursos"
 msgid "Fleet and personnel roster"
 msgstr "Catastro de flota y personal"
 
+#: .\apps\registry\selectors.py:90
+#, python-format
+msgid "Active cost centers: %(active)s · with operation: %(operating)s"
+msgstr "Faenas activas: %(active)s · con operación: %(operating)s"
+
+#: .\apps\compliance\report_views.py:105
+#, python-format
+msgid "as of %(date)s"
+msgstr "al %(date)s"
+
 #: .\apps\registry\report_views.py:128
 msgid "AeroControl — Fleet and personnel roster"
 msgstr "AeroControl — Catastro de flota y personal"

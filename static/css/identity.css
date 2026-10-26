@@ -1405,6 +1405,11 @@ form.is-submitting-slow .btn-primary::after {
   /* Estados: texto + color, y el color se imprime. */
   .id-chip { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 
+  /* LV-355 F2: la frase de universo («faenas activas: N · con operación: M») va pegada a la
+   * tabla que explica; sin esto, medido con Edge sin cabeza, quedaba sola al tope de la hoja
+   * siguiente, separada de su tabla. */
+  [data-universe] { break-before: avoid; }
+
   /* Encabezado y pie de papel: el pie se repite al fondo de cada hoja. */
   .id-print-head {
     display: flex;

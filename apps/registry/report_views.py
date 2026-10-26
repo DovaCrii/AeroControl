@@ -39,18 +39,30 @@ from .catastro import (
     totals_sentence,
 )
 from .models import Aircraft, CostCenter
+from .selectors import cost_center_universe, universe_sentence
 
 FILENAME_STEM = "aerocontrol-catastro"
 
-# LV-167: carta **horizontal**. Con la columna de vigencia la flota pasa a nueve
+# LV-167: **horizontal** (LV-355 F2: A4, el único papel de los informes). Con la columna de vigencia la flota pasa a nueve
 # columnas, y en vertical (525.6 pt útiles) la matrícula y el número de serie se
 # cortaban -- justo los dos datos con los que se identifica una aeronave. En
-# horizontal hay 705.6, y los anchos se reparten a mano en vez de dejarlos a las
+# horizontal hay 755.5 pt útiles en A4 (705.6 en Carta), y los anchos se reparten a mano en vez de dejarlos a las
 # partes iguales de reportlab: "Año" necesita 34 pt y "Modelo" ciento doce, y con
 # columnas iguales la página se gasta en las cortas y las largas cortan a tres
 # líneas.
-AIRCRAFT_COL_WIDTHS = [72, 58, 112, 74, 112, 34, 66, 60, 117.6]
-OPERATOR_COL_WIDTHS = [190, 100, 100, 130, 85, 100.6]
+# Ancho útil de A4 horizontal: 841.89 pt menos los dos márgenes laterales de la
+# cabecera única (pps.core.pdf.SIDE_MARGIN, 43.2 pt). Las proporciones son las que
+# LV-167 eligió a mano; sólo se escalan para llenar la hoja.
+USABLE_WIDTH = 841.89 - 2 * 43.2
+
+
+def _fit(widths):
+    scale = USABLE_WIDTH / sum(widths)
+    return [round(width * scale, 1) for width in widths]
+
+
+AIRCRAFT_COL_WIDTHS = _fit([72, 58, 112, 74, 112, 34, 66, 60, 117.6])
+OPERATOR_COL_WIDTHS = _fit([190, 100, 100, 130, 85, 100.6])
 
 
 class CatastroMixin(ModelPermissionRequiredMixin):
@@ -109,6 +121,8 @@ class CatastroReportView(CatastroMixin, TemplateView):
             operator_headers=OPERATOR_HEADERS,
             sentences=totals_sentence(catastro),
             closing=closing_total(catastro),
+            # LV-355 F2 (S10): el universo, bajo cada tabla.
+            universe=universe_sentence(cost_center_universe(self.request.user)),
             title=_("Fleet and personnel roster"),
             cost_centers=CostCenter.objects.filter(is_active=True).order_by("code"),
             statuses=Aircraft.STATUS_CHOICES,
@@ -229,13 +243,13 @@ class CatastroReportPdfView(CatastroMixin, View):
 
         # LV-167: horizontal. Ver el comentario de los anchos: con nueve columnas
         # la vertical cortaba la matrícula y el número de serie.
-        from reportlab.lib.pagesizes import landscape, letter
+        from reportlab.lib.pagesizes import A4, landscape
 
         return corepdf.pdf_response(
             elements,
             letterhead,
             dated_filename(FILENAME_STEM, catastro["as_of"], "pdf"),
-            pagesize=landscape(letter),
+            pagesize=landscape(A4),
         )
 
 

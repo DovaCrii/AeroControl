@@ -12,6 +12,7 @@ from datetime import timedelta
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from .models import (
     Aircraft,
@@ -61,6 +62,38 @@ def operating_cost_centers():
     return CostCenter.objects.filter(is_active=True, operates_flights=True).exclude(
         contract_status=CostCenter.CONTRACT_CLOSED
     )
+
+
+def cost_center_universe(user=None):
+    """LV-355 F2 (S10): cuántas faenas hay y cuántas **entran en los registros**.
+
+    Las tablas de los informes tienen universos distintos y legítimos: el Reporte
+    de vigencia lista todas las faenas activas, y el informe mensual a la DGAC
+    sólo las que operan y tienen contrato. Sin decirlo, dos tablas del mismo
+    informe parecen contradecirse. «Con operación» sale de
+    `operating_cost_centers()`, **la** definición (LV-266): contarla de nuevo acá
+    sería la cuarta copia.
+
+    Con `user`, acotado a su tenant (como el catastro); sin él, todas (como el
+    Reporte, que hoy no acota). Dos `COUNT`, fuera de `build_catastro` (que
+    conserva sus 2+2 consultas medidas).
+    """
+    active = CostCenter.objects.filter(is_active=True)
+    operating = operating_cost_centers()
+    if user is not None:
+        from apps.core.tenancy import scope_queryset_to_tenant
+
+        active = scope_queryset_to_tenant(active, user)
+        operating = scope_queryset_to_tenant(operating, user)
+    return {"active": active.count(), "operating": operating.count()}
+
+
+def universe_sentence(universe):
+    """La frase de universo que va bajo cada tabla, ya traducida."""
+    return _("Active cost centers: %(active)s · with operation: %(operating)s") % {
+        "active": universe["active"],
+        "operating": universe["operating"],
+    }
 
 
 def operational_fleet():
