@@ -52,6 +52,42 @@ def scope_queryset_to_tenant(queryset, user, tenant_path=None):
     return queryset.filter(**{f"{tenant_path}__in": tenant_ids})
 
 
+def scope_queryset_to_visible_tenants(queryset, user, tenant_path=None):
+    """Lo mismo que `scope_queryset_to_tenant`, **sin consultas propias** (LV-372).
+
+    `scope_queryset_to_tenant` resuelve primero los tenants de la persona con una consulta
+    (dos si no tiene membresía: la de membresías y la del tenant por defecto) y filtra con esa
+    lista. Eso cuesta una o dos consultas **por llamada**, y el panel y el contador de alertas
+    de la barra lateral —que se arman en cada carga de página— tienen techo de consultas: acotar
+    ocho querysets de ahí con la función eager habría sumado más de diez.
+
+    Esta variante expresa la misma regla como subconsulta dentro del `WHERE`: la persona ve los
+    tenants de los que es miembro activo y, si no es miembro de ninguno, el tenant por defecto
+    (`DEFAULT_TENANT_SLUG`, el mismo respaldo de `visible_tenant_ids`). Un superusuario no se
+    acota. `tenant_path` es el mismo camino ORM al id del tenant (`"cost_center__tenant_id"`,
+    `"alert_rule__tenant_id"`...); sin él, el `tenant` propio del modelo, o ningún filtro si no
+    lo tiene.
+
+    La igualdad con `visible_tenant_ids` la fija `apps/core/test_tenancy.py`.
+    """
+    from django.db.models import Exists, Q
+
+    if user.is_superuser:
+        return queryset
+    if tenant_path is None:
+        if not any(field.name == "tenant" for field in queryset.model._meta.fields):
+            return queryset
+        tenant_path = "tenant_id"
+    from apps.core.models import OperationalTenant
+
+    member_of = OperationalTenant.objects.filter(members=user, is_active=True)
+    slug_path = f"{tenant_path.removesuffix('_id')}__slug"
+    return queryset.filter(
+        Q(**{f"{tenant_path}__in": member_of.values("pk")})
+        | (~Exists(member_of) & Q(**{slug_path: DEFAULT_TENANT_SLUG}))
+    )
+
+
 def visible_tenant_ids(user):
     """Tenant ids a user may see, or ``None`` for "all tenants" (T3.2 Fase 1).
 

@@ -866,7 +866,15 @@ class AlertCountPartial(LoginRequiredMixin, View):
             return render(
                 request, "core/_alert_badge.html", {"unresolved_alert_count": None}
             )
-        count = Alert.objects.filter(is_active=True, is_resolved=False).count()
+        # LV-372 (F-08): sólo las alertas de las empresas de quien pregunta (ver el procesador de
+        # contexto `unresolved_alert_count`, que dibuja el mismo número en cada página).
+        from apps.core.tenancy import scope_queryset_to_visible_tenants
+
+        count = scope_queryset_to_visible_tenants(
+            Alert.objects.filter(is_active=True, is_resolved=False),
+            request.user,
+            "alert_rule__tenant_id",
+        ).count()
         return render(
             request, "core/_alert_badge.html", {"unresolved_alert_count": count}
         )
@@ -1710,12 +1718,22 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
     def _situation_metrics(self, user):
         from datetime import timedelta
 
+        from apps.core.tenancy import scope_queryset_to_visible_tenants
+
+        def scoped(queryset, path=None):
+            return scope_queryset_to_visible_tenants(queryset, user, path)
+
         metrics = []
         today = timezone.localdate()
         if user.has_perm("compliance.view_alert"):
             from apps.compliance.models import Alert
 
-            count = Alert.objects.filter(is_active=True, is_resolved=False).count()
+            # LV-372 (F-08): estas tres cifras del centro de administración contaban todas las
+            # empresas; ahora sólo las de quien mira.
+            count = scoped(
+                Alert.objects.filter(is_active=True, is_resolved=False),
+                "alert_rule__tenant_id",
+            ).count()
             metrics.append(
                 {
                     "label": _("Unresolved alerts"),
@@ -1727,11 +1745,13 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
         if user.has_perm("compliance.view_document"):
             from apps.compliance.models import Document
 
-            count = Document.objects.filter(
-                is_active=True,
-                is_current_version=True,
-                expiry_date__isnull=False,
-                expiry_date__lte=today + timedelta(days=30),
+            count = scoped(
+                Document.objects.filter(
+                    is_active=True,
+                    is_current_version=True,
+                    expiry_date__isnull=False,
+                    expiry_date__lte=today + timedelta(days=30),
+                )
             ).count()
             metrics.append(
                 {
@@ -1744,7 +1764,9 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
         if user.has_perm("compliance.view_alertrule"):
             from apps.compliance.models import AlertRule
 
-            count = AlertRule.objects.filter(is_active=True, enabled=True).count()
+            count = scoped(
+                AlertRule.objects.filter(is_active=True, enabled=True)
+            ).count()
             metrics.append(
                 {"label": _("Active alert rules"), "value": count, "tone": "muted"}
             )
@@ -1980,13 +2002,25 @@ class StatusTransitionView(ModelPermissionRequiredMixin, View):
     # airframe's condition and moving it would ground the aircraft instead of
     # recording that its policy came through.
     status_field = "status"
+    # LV-372 (F-08): ruta ORM del modelo a su tenant (p. ej. "cost_center__tenant_id"). Con
+    # valor, la fila de otra empresa es 404; `None` (lo de siempre) no acota. Es opt-in a
+    # propósito: acotar por defecto cambiaría de golpe las transiciones de otras apps, que se
+    # auditan por separado (ver `MASTER_PLAN.md`, LV-372).
+    tenant_scope = None
     # Subclasses must set this with a *marked* literal (gettext_lazy):
     # `_(self.success_message)` on a variable is invisible to makemessages, so
     # every transition message rendered in English inside a Spanish UI.
     success_message = gettext_lazy("Status updated.")
 
     def post(self, request, pk):
-        obj = get_object_or_404(self.model, pk=pk, is_active=True)
+        queryset = self.model._default_manager.all()
+        if self.tenant_scope:
+            from apps.core.tenancy import scope_queryset_to_visible_tenants
+
+            queryset = scope_queryset_to_visible_tenants(
+                queryset, request.user, self.tenant_scope
+            )
+        obj = get_object_or_404(queryset, pk=pk, is_active=True)
         field = self.status_field
         from_status = getattr(obj, field)
         if from_status not in self.valid_from_statuses:

@@ -39,7 +39,10 @@ from apps.core.views import (
     TenantScopedQuerysetMixin,
     filter_options,
 )
-from apps.core.tenancy import scope_queryset_to_tenant
+from apps.core.tenancy import (
+    scope_queryset_to_tenant,
+    scope_queryset_to_visible_tenants,
+)
 from apps.registry.models import CostCenter
 from .reports import alerts_for_cost_center, cost_centers_for_refs
 from .reuse import reusable_documents
@@ -1316,6 +1319,17 @@ class DocumentDelete(
 # button in its Actions column (just "2 alertas") and offered its members a
 # text link instead, so the same action lived in two different places depending
 # on whether a neighbouring record happened to share a date.
+# LV-372: una alerta no lleva `tenant` propio; es el de la regla que la disparó.
+ALERT_TENANT_PATH = "alert_rule__tenant_id"
+
+
+def _tenant_alerts(user):
+    """Las alertas que `user` puede alcanzar: las de las empresas que ve (F-08)."""
+    return scope_queryset_to_visible_tenants(
+        Alert.objects.all(), user, ALERT_TENANT_PATH
+    )
+
+
 class AlertList(ComplianceList):
     model = Alert
     template_name = "compliance/alert_list.html"
@@ -1365,7 +1379,13 @@ class AlertList(ComplianceList):
             resolved = None
             if raw and self.request.user.has_perm("registry.view_costcenter"):
                 try:
-                    resolved = CostCenter.objects.filter(pk=raw, is_active=True).first()
+                    # LV-372 (F-08): sólo faenas de las empresas de quien mira.
+                    resolved = (
+                        scope_queryset_to_visible_tenants(
+                            CostCenter.objects.filter(pk=raw, is_active=True),
+                            self.request.user,
+                        )
+                    ).first()
                 except (ValueError, ValidationError):
                     resolved = None
             self._selected_cost_center = resolved
@@ -1384,9 +1404,12 @@ class AlertList(ComplianceList):
         # own `__str__` crosses a relation (a qualification names its operator
         # and its type), so the row still cost two queries. The per-model
         # querysets carry those joins -- see `alert_subject_querysets`.
+        # LV-372 (F-08): la bandeja, su CSV y sus filtros salen de este queryset, que traía las
+        # alertas de todas las empresas. La empresa de una alerta es la de su regla.
         queryset = (
-            super()
-            .get_queryset()
+            scope_queryset_to_visible_tenants(
+                super().get_queryset(), self.request.user, ALERT_TENANT_PATH
+            )
             .select_related("alert_rule", "content_type")
             .prefetch_related(
                 GenericPrefetch("content_object", alert_subject_querysets())
@@ -1709,7 +1732,7 @@ class AlertResolve(ModelPermissionRequiredMixin, View):
     permission_action = "change"
 
     def get(self, request, pk):
-        get_object_or_404(Alert, pk=pk, is_active=True)
+        get_object_or_404(_tenant_alerts(request.user), pk=pk, is_active=True)
         return render(
             request,
             "generic/_form_content.html",
@@ -1717,7 +1740,7 @@ class AlertResolve(ModelPermissionRequiredMixin, View):
         )
 
     def post(self, request, pk):
-        alert = get_object_or_404(Alert, pk=pk, is_active=True)
+        alert = get_object_or_404(_tenant_alerts(request.user), pk=pk, is_active=True)
         form = AlertResolveForm(request.POST)
         if not form.is_valid():
             return render(
@@ -1761,7 +1784,7 @@ class AlertReopen(ModelPermissionRequiredMixin, View):
     permission_action = "change"
 
     def post(self, request, pk):
-        alert = get_object_or_404(Alert, pk=pk, is_active=True)
+        alert = get_object_or_404(_tenant_alerts(request.user), pk=pk, is_active=True)
         moved_task = alert.reopen()
         metadata = {"moved_task_id": str(moved_task.pk)} if moved_task else {}
         set_audit_context(request, alert, action="alert_reopened", metadata=metadata)
@@ -1785,7 +1808,7 @@ class AlertVerifyEffectiveness(ModelPermissionRequiredMixin, View):
     permission_action = "change"
 
     def post(self, request, pk):
-        alert = get_object_or_404(Alert, pk=pk, is_active=True)
+        alert = get_object_or_404(_tenant_alerts(request.user), pk=pk, is_active=True)
         note = (request.POST.get("note") or "").strip()
         if not alert.verify_effectiveness(user=request.user, note=note):
             messages.error(
@@ -1809,7 +1832,7 @@ class AlertCreateTask(ModelPermissionRequiredMixin, View):
     permission_action = "add"
 
     def post(self, request, pk):
-        alert = get_object_or_404(Alert, pk=pk, is_active=True)
+        alert = get_object_or_404(_tenant_alerts(request.user), pk=pk, is_active=True)
         task = alert.ensure_follow_up_task(allow_default_board=True)
         if task is None:
             messages.error(
