@@ -1,4 +1,4 @@
-"""LV-379: la ficha de la mantencion lista los documentos que se le cuelgan.
+"""LV-382: la ficha de la mantencion lista los documentos que se le cuelgan.
 
 `("maintenance", "maintenancerecord")` esta en `DOCUMENTABLE_MODELS`, asi que un
 documento se puede subir contra un registro de mantencion, pero la ficha no

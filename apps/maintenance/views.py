@@ -161,7 +161,7 @@ class MaintenanceRecordDetail(
             "at_workshop": [("finish", _("Finish repair"), "btn-info")],
             "finished": [("depart", _("Departed workshop"), "btn-info")],
         }.get(self.object.status, [])
-        # LV-379: the Documents section every other ficha already carries. A
+        # LV-382: the Documents section every other ficha already carries. A
         # Document can hang from a maintenance record (it is in
         # DOCUMENTABLE_MODELS) but the ficha never listed it. The helper hides
         # the section without compliance.view_document.
