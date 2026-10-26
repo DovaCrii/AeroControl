@@ -12522,6 +12522,110 @@ msgstr "Este es de corte anticipado."
 msgid "The compared one is an early cutoff."
 msgstr "El comparado es de corte anticipado."
 
+#: apps/reporting/checks.py
+msgid ""
+"The text speaks of permits in force of %(code)s, which has %(in_force)s in "
+"force and %(awaiting)s awaiting the DGAC at the cutoff."
+msgstr ""
+"El texto habla de permisos vigentes de %(code)s, que al corte tiene "
+"%(in_force)s vigentes y %(awaiting)s en trámite ante la DGAC."
+
+#: apps/reporting/checks.py
+msgid ""
+"The text says %(code)s has no permit, but it has %(in_force)s in force at "
+"the cutoff."
+msgstr ""
+"El texto dice que %(code)s no tiene permiso, pero al corte tiene "
+"%(in_force)s vigentes."
+
+#: apps/reporting/invariants.py
+msgid ""
+"The coverage figure says %(kpi)s cost centres with operation but the table "
+"lists %(rows)s."
+msgstr ""
+"La cifra de cobertura dice %(kpi)s Centros de Costo con operación, pero la "
+"tabla lista %(rows)s."
+
+#: apps/reporting/invariants.py
+msgid ""
+"The figure “cost centres without a permit in force” (%(kpi)s) does not match"
+" the table (%(rows)s)."
+msgstr ""
+"La cifra «Centros de Costo sin permiso vigente» (%(kpi)s) no coincide con la"
+" tabla (%(rows)s)."
+
+#: apps/reporting/invariants.py
+msgid ""
+"The permits in force do not add up: %(rows)s in the coverage table plus "
+"%(outside)s outside it, against %(kpi)s in the figure and %(permits)s in the"
+" list."
+msgstr ""
+"Los permisos vigentes no cuadran: %(rows)s en la tabla de cobertura más "
+"%(outside)s fuera de ella, contra %(kpi)s en la cifra y %(permits)s en la "
+"lista."
+
+#: apps/reporting/invariants.py
+msgid ""
+"The permits awaiting the DGAC do not add up: %(rows)s in the coverage table "
+"plus %(outside)s outside it, against %(kpi)s in the figure and %(permits)s "
+"in the list."
+msgstr ""
+"Los permisos en trámite ante la DGAC no cuadran: %(rows)s en la tabla de "
+"cobertura más %(outside)s fuera de ella, contra %(kpi)s en la cifra y "
+"%(permits)s en la lista."
+
+#: apps/reporting/invariants.py
+msgid ""
+"These cost centres have permits but are in neither the coverage table nor "
+"the block of centres without operation: %(codes)s."
+msgstr ""
+"Estos Centros de Costo tienen permisos pero no están ni en la tabla de "
+"cobertura ni en el bloque de centros sin operación: %(codes)s."
+
+#: apps/reporting/invariants.py
+msgid ""
+"The first expiry shown for %(code)s is not that of its earliest permit."
+msgstr ""
+"El primer vencimiento que se muestra para %(code)s no es el de su permiso "
+"más próximo a vencer."
+
+#: apps/reporting/invariants.py
+msgid ""
+"The figure “%(key)s” (%(kpi)s) does not match what the rows give (%(rows)s)."
+msgstr ""
+"La cifra «%(key)s» (%(kpi)s) no coincide con lo que dan las filas "
+"(%(rows)s)."
+
+#: apps/reporting/invariants.py
+msgid "The list of permits has rows that fit no block (%(permits)s in total)."
+msgstr ""
+"La lista de permisos tiene filas que no caben en ningún bloque (%(permits)s "
+"en total)."
+
+#: apps/reporting/compare.py
+msgid "Permits in force at sites with operation"
+msgstr "Permisos vigentes en faenas con operación"
+
+#: apps/reporting/compare.py
+msgid "Permits in force at sites without operation"
+msgstr "Permisos vigentes en faenas sin operación"
+
+#: apps/reporting/compare.py
+msgid "Permits expiring within 30 days, sites with operation"
+msgstr "Permisos por vencer en 30 días, faenas con operación"
+
+#: apps/reporting/compare.py
+msgid "Permits expiring within 60 days, sites with operation"
+msgstr "Permisos por vencer en 60 días, faenas con operación"
+
+#: templates/reporting/compare.html
+msgid ""
+"Document format: v%(before)s → v%(now)s. Some figures changed because of how"
+" they are counted, not only because of what happened."
+msgstr ""
+"Formato del documento: v%(before)s → v%(now)s. Algunas cifras cambian por "
+"cómo se cuentan y no sólo por lo ocurrido."
+
 #~ msgid "Credential file"
 #~ msgstr "Credencial adjunta"
 

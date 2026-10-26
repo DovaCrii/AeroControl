@@ -168,7 +168,15 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
 
         permits = payload.get("permits") or []
         in_force = [row for row in permits if row.get("in_force")]
-        awaiting = [row for row in permits if not row.get("in_force")]
+        not_in_force = [row for row in permits if not row.get("in_force")]
+        # ⚠️ LV-378: **«en trámite» es `requested`, no «todo lo que no está
+        # vigente».** `awaiting` era lo segundo, así que un permiso aprobado cuya
+        # vigencia ya pasó y que nadie cerró se imprimía como «Solicitudes en
+        # trámite · En proceso» —una afirmación falsa en un papel firmado—. Va a
+        # su propio bloque, «Vencidos sin cerrar». Para un payload sin esos
+        # permisos (todos los emitidos hasta hoy) el resultado es idéntico.
+        awaiting = [row for row in not_in_force if row.get("status") == "requested"]
+        lapsed = [row for row in not_in_force if row.get("status") != "requested"]
         # El bloque de "en trámite" cierra la sección junto a la observación y la
         # leyenda, así que su alto se descuenta del techo de la última hoja: si
         # no, cinco solicitudes en trámite volverían a empujar el cierre fuera.
@@ -176,6 +184,9 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
         # escasa.
         closing = CLOSING_PX + sum(row_px(row) for row in awaiting)
         if awaiting:
+            closing += ROW_BASE_PX
+        closing += sum(row_px(row) for row in lapsed)
+        if lapsed:
             closing += ROW_BASE_PX
         permit_sheets = sheets_for(in_force, closing_px=closing)
 
@@ -194,6 +205,7 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
             # Las solicitudes en trámite van en la última hoja de la sección,
             # que es donde el documento emitido las tenía.
             sheet["awaiting"] = awaiting if sheet["last"] else []
+            sheet["lapsed"] = lapsed if sheet["last"] else []
         after = first_permit_page + len(permit_sheets)
         # LV-260: el plan compacto comparte hoja con la cobertura cuando los dos
         # bloques caben, medidos (`pagination.plan_fits_with_coverage`). Si no,
@@ -216,7 +228,7 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
         # lector que falta algo que nunca existió.
         from .pagination import ROSTER_FIRST_ROW_TOP_PX, roster_row_px
 
-        roster = in_force + awaiting
+        roster = in_force + not_in_force
         roster_sheets = []
         if any(row.get("operators") for row in roster):
             roster_sheets = sheets_for(
@@ -549,6 +561,7 @@ class ReportCompareView(ModelViewPermissionRequiredMixin, TemplateView):
             compare_kpis,
             compare_narrative,
             compare_permits,
+            layout_change,
         )
 
         context = super().get_context_data(**kwargs)
@@ -579,6 +592,8 @@ class ReportCompareView(ModelViewPermissionRequiredMixin, TemplateView):
                 changed_count=sum(1 for row in kpis if row["changed"]),
                 permits=compare_permits(baseline.payload, run.payload),
                 narrative=compare_narrative(baseline, run),
+                # LV-378: «Formato del documento: v1 → v2» cuando difiere.
+                layouts=layout_change(baseline.payload, run.payload),
             )
         return context
 
