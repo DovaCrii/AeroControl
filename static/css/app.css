@@ -403,6 +403,34 @@ body.is-resizing-sidebar {
 .command-palette-item.is-active { background: var(--ac-surface); }
 .command-palette-item.is-search { font-weight: 600; }
 .command-palette-empty { padding: var(--sp-4); color: var(--ac-text-muted); }
+/* LV-381 F4: grupo en cada fila y títulos de «Recientes»/«Ir a»; texto sobre
+   --ac-surface(-raised) medido: 7.89:1 claro, 8.27:1 oscuro. */
+.command-palette-group,
+.command-palette-heading { color: var(--ac-text-secondary); }
+.command-palette-heading {
+  padding: var(--sp-3) var(--sp-4) var(--sp-1);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+/* La pista `Ctrl K` vive dentro del cuadro de la barra, sobre su propio fondo. */
+.global-search .input-group { position: relative; }
+.global-search-input { padding-right: 76px; }
+.global-search-hint {
+  position: absolute;
+  top: 50%;
+  right: 46px;
+  z-index: 5;
+  transform: translateY(-50%);
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--ac-border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ac-text-secondary);
+  font: inherit;
+  font-size: var(--fs-xs);
+  pointer-events: none;
+}
 .command-palette-foot {
   flex: none;
   padding: var(--sp-3) var(--sp-5);

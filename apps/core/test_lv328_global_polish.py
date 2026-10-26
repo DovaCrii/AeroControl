@@ -179,7 +179,9 @@ def test_stylesheet_weight_guard():
     La barra lateral fija con su zona de desplazamiento, el rail completo y las burbujas del rail
     (LV-381 F0: ~2,6 KB, casi todo comentario que explica el porqué de cada regla) lo suben a 254 KB.
     Los siete colores de sección del menú agrupado y el bloque de arriba (LV-381 F2: ~0,7 KB, sin
-    ningún hex nuevo) lo suben a 255 KB.
+    ningún hex nuevo) lo suben a 255 KB. El grupo en cada fila de la paleta, los títulos de
+    «Recientes» y la pista `Ctrl K` del cuadro de la barra (LV-381 F4: ~0,8 KB, sin hex nuevo)
+    lo suben a 256 KB.
     """
     total = sum((STATIC / name).stat().st_size for name in ("app.css", "identity.css"))
-    assert total < 255 * 1024
+    assert total < 256 * 1024

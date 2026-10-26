@@ -12654,6 +12654,14 @@ msgstr "Ruta"
 msgid "Details"
 msgstr "Detalle"
 
+#: templates/base.html
+msgid "Recent"
+msgstr "Recientes"
+
+#: templates/base.html
+msgid "Go to"
+msgstr "Ir a"
+
 #~ msgid "Credential file"
 #~ msgstr "Credencial adjunta"
 

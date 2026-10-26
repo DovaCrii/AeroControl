@@ -50,7 +50,10 @@
     </a>
     <form method="get" action="{% url 'global-search' %}" role="search" class="global-search d-none d-md-flex mx-auto" hx-boost="false">
       <div class="input-group input-group-sm">
-        <input class="form-control" type="search" name="q" value="{{ request.GET.q|default:'' }}" placeholder="{% translate 'Search in AeroControl' %}" aria-label="{% translate 'Global search' %}">
+        <input class="form-control global-search-input" type="search" name="q" value="{{ request.GET.q|default:'' }}" placeholder="{% translate 'Search in AeroControl' %}" aria-label="{% translate 'Global search' %}" aria-keyshortcuts="Control+K Meta+K">
+        {% comment %}LV-381 F4 (V7): la pista del atajo. Decorativa para el lector de pantalla
+        (el atajo se anuncia con `aria-keyshortcuts`); `command-palette.js` la cambia a ⌘ K en Mac.{% endcomment %}
+        <kbd class="global-search-hint" aria-hidden="true">Ctrl K</kbd>
         <button class="btn btn-outline-light" type="submit" aria-label="{% translate 'Search' %}">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
         </button>
@@ -137,7 +140,10 @@
   <div class="command-palette" id="command-palette" hidden
        data-search-url="{% url 'global-search' %}"
        data-search-label="{% translate 'Search everywhere for' %}"
-       data-empty-label="{% translate 'Nothing matches that.' %}">
+       data-empty-label="{% translate 'Nothing matches that.' %}"
+       data-recent-label="{% translate 'Recent' %}"
+       data-goto-label="{% translate 'Go to' %}"
+       data-user="{{ user.pk }}">
     <div class="command-palette-backdrop" data-palette-close></div>
     <div class="command-palette-panel" role="dialog" aria-modal="true" aria-label="{% translate 'Search in AeroControl' %}">
       <input class="command-palette-input" type="search" id="command-palette-input" autocomplete="off"
